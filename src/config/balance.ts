@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 11;
+export const BALANCE_VERSION = 12;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -76,24 +76,50 @@ export const BALANCE = {
         pet: { risk: -10, stability: 8 },
       },
     },
-    // ── 진화(C.9) 임시값: 다마고치형 조합 진화 (GDD 4-2). 방식은 확정, 수치·데이터는 전부 임시 ──
+    // ── 진화(C.9→C.11) 임시값: 단계별 진화체 테이블 (GDD 4-2 v1.0). 방식은 확정, 수치·데이터는 전부 임시 ──
     evolution: {
       /** 진화에 필요한 현재 단계 흡수 횟수(가중 없는 원래 횟수): index 0 = 1→2단계 … index 3 = 4→5단계 */
       absorbsNeeded: [27, 30, 34, 38],
       /** 희귀 개체 흡수의 계통 누적 가중 */
       rareWeight: 2,
-      /** 3위 계통 누적이 2위의 이 비율 이상이면 3조합 */
-      thirdRatio: 0.7,
-      /** 안정 수치가 이 값 이상이면 정통형, 미만이면 변이형 */
-      stabilityThreshold: 60,
       /** 진화마다 슬롯 +1 (GDD 4장) */
       slotsPerEvolution: 1,
-      /** 형태 종류별 효과 배율(진화할 때마다 곱해진다): 체력은 플레이어 최대 체력, 공격은 기본 공격 위력.
-       *  돌파 형태는 효과가 변이형과 같다 (정식 결과는 11-4 미정) */
-      formEffects: {
-        orthodox: { hp: 1.1, attack: 1.05 },
-        mutant: { hp: 1.05, attack: 1.1 },
-        breakthrough: { hp: 1.05, attack: 1.1 },
+      /** 진화체 데이터 자동 생성 템플릿 (src/data/evolution/generate.ts). 생성 결과는 forms.json 에 커밋되고 손으로 고칠 수 있다.
+       *  비율은 단계 필요 흡수 횟수 N 에 대한 값 또는 계통 비중(0~1)이다 */
+      template: {
+        /** 균형형: 최다 비중 ≤ 이 값(계통이 적으면 1/계통 수 + 0.03 이상으로 올린다), 누적 1 이상인 계통 수 ≥ min(이 값, 계통 수) */
+        balancedMaxShare: 0.35,
+        balancedMinActive: 4,
+        /** 편식형: 최다 비중 ≥ 이 값 */
+        pickyMinShare: 0.7,
+        /** 희귀형: 희귀 흡수 수 ≥ max(1, ceil(이 비율 × N)) */
+        rareMinRatio: 0.2,
+        /** 2조합 심화: 1·2위 두 계통의 비중 합 ≥ 이 값 */
+        deepPairMinShare: 0.7,
+        /** 균등형(아란칼): 1·2·3위 각 계통 비중 ≥ evenMinShare 이고 최다 비중 ≤ evenMaxShare. 편중형: 최다 비중 ≥ skewMinShare */
+        evenMinShare: 0.15,
+        evenMaxShare: 0.4,
+        skewMinShare: 0.4,
+        /** 우선순위: 좁은(까다로운) 진화체일수록 높다. 같은 단계에서 겹칠 수 있는 종류끼리 값이 달라야 한다 */
+        priority: { base: 0, dominant: 10, pair: 20, triple: 20, skew: 20, even: 25, 'deep-pair': 25, balanced: 30, picky: 40, rare: 50 },
+        /** 효과 배율(진화할 때마다 곱해진다): 기본형은 낮게, 그 외는 normal + perWeight × 가중. 가중은 종류별(요구 계통 수 기반) */
+        effects: {
+          base: { hp: 1.03, attack: 1.03 },
+          normal: { hp: 1.05, attack: 1.04 },
+          perWeight: { hp: 0.01, attack: 0.01 },
+          weight: { base: 0, dominant: 1, pair: 2, triple: 3, skew: 3, even: 4, 'deep-pair': 3, balanced: 2, picky: 2, rare: 3 },
+        },
+      },
+      /** 점검 도구(analysis.ts, npm run balance)의 임시 기준 */
+      analysis: {
+        /** 무작위 분포 샘플에서 "후보 없음 → 기본형" 비율 상한 (경로 무시) */
+        maxFallbackRate: 0.2,
+        /** 무작위 샘플 수(단계당)와 시드, 편향 지수 목록(클수록 한 계통에 쏠림) */
+        randomSamples: 20000,
+        seed: 20261018,
+        skews: [0.5, 1, 2, 3, 5],
+        /** 계통이 이 수 이하면 가능한 모든 흡수 분포를 전수 조사한다 (그 이상은 무작위만) */
+        enumerateMaxLineages: 5,
       },
     },
     // ── 원정 루프(P2) 임시값. 기획서 2-1·6·7장에 수치가 없는 것 ──

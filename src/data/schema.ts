@@ -128,24 +128,73 @@ export interface TitleDef {
   condition: null;
 }
 
-/** 진화 형태 종류 (GDD 4-2): 안정 수치 높음 = 정통, 낮음 = 변이, 그 단계에서 한계 돌파 = 세 번째 후보(효과는 변이와 같은 임시값) */
-export const FORM_VARIANTS = ['orthodox', 'mutant', 'breakthrough'] as const;
-export type FormVariant = (typeof FORM_VARIANTS)[number];
+/**
+ * 진화 조건 어휘 (GDD 4-2 v1.0). 전부 "현재 단계 계통별 누적" 기준이다. 안정 수치·리스크 돌파·전투 성과는 쓰지 않는다.
+ * 비율(ratio)은 단계 필요 흡수 횟수 N 에 곱해 올림한 값이 기준, 비중(min/max)은 계통 누적 ÷ 전체 누적(0~1).
+ */
+export type FormCondition =
+  /** 계통 X 누적 ≥ ceil(ratio × N) */
+  | { type: 'lineageCount'; lineage: string; ratio: number }
+  /** 계통 X 비중 ≥ min */
+  | { type: 'lineageShare'; lineage: string; min: number }
+  /** 계통들의 비중 합 ≥ min (lineageShare 의 합산 확장: 2조합 심화에 쓴다) */
+  | { type: 'lineagesShareSum'; lineages: string[]; min: number }
+  /** 1위 계통 = X */
+  | { type: 'top1'; lineage: string }
+  /** 1·2위 계통 = {X, Y} (순서 무관) */
+  | { type: 'top2'; lineages: string[] }
+  /** 1·2·3위 계통 = {X, Y, Z} (순서 무관) */
+  | { type: 'top3'; lineages: string[] }
+  /** 최다 비중 ≥ min (편식형) */
+  | { type: 'maxShareAtLeast'; min: number }
+  /** 최다 비중 ≤ max (균형형) */
+  | { type: 'maxShareAtMost'; max: number }
+  /** 누적 1 이상인 계통 수 ≥ min */
+  | { type: 'activeLineages'; min: number }
+  /** 모든 계통 누적 ≥ ceil(ratio × N) */
+  | { type: 'allLineagesCount'; ratio: number }
+  /** 희귀 흡수 수 ≥ max(1, ceil(ratio × N)) */
+  | { type: 'rareCount'; ratio: number };
 
-/** 진화 형태 (GDD 4-2). 지금은 템플릿 자동 생성(src/data/evolution)이고, 손으로 쓴 정식 형태는 forms.json 이 id 로 덮어쓴다 */
-export interface FormDef {
-  /** `${comboKey}@${toTier}:${variant}` — 조합 키·진화해서 도달하는 단계(1~4)·종류에서 정해진다 */
-  id: string;
-  comboKey: string;
-  /** 진화해서 도달하는 단계 index (1~4) */
-  toTier: number;
-  variant: FormVariant;
-  /** 손으로 쓴 이름(정식 형태). 없으면 조합 키에서 자동 생성 */
-  name?: PerFaction<string>;
-  /** 플레이어 최대 체력·기본 공격 위력 배율 */
+export const FORM_CONDITION_TYPES = [
+  'lineageCount', 'lineageShare', 'lineagesShareSum', 'top1', 'top2', 'top3', 'maxShareAtLeast', 'maxShareAtMost', 'activeLineages', 'allLineagesCount', 'rareCount',
+] as const;
+
+/** 템플릿 종류. 이름 자리 표시("A우세형" 등)와 효과 가중을 정한다. 정식 이름은 name 에 손으로 넣는다 */
+export const FORM_KINDS = ['dominant', 'pair', 'triple', 'deep-pair', 'balanced', 'picky', 'rare', 'even', 'skew', 'base'] as const;
+export type FormKind = (typeof FORM_KINDS)[number];
+
+export interface FormLabel {
+  kind: FormKind;
+  /** 이름·힌트에 쓰는 계통들 (특수형·기본형은 빈 목록) */
+  lineages: string[];
+}
+
+export interface FormEffects {
+  /** 플레이어 최대 체력·기본 공격 위력 배율 (진화할 때마다 곱해진다). 슬롯 +1 은 BALANCE.evolution.slotsPerEvolution */
   hpMultiplier: number;
   attackMultiplier: number;
-  /** 조합의 계통 성향에서 파생된 패시브 1개 (기본 조합이면 빈 객체) */
+  /** 요구 계통들의 tendency 를 섞은 패시브 (없으면 빈 객체) */
   passive: Partial<Record<PassiveStat, number>>;
+}
+
+/** 진화체 (GDD 4-2 v1.0). 단계(2~5)마다 테이블이 따로 있다. 데이터는 src/data/evolution/forms.json */
+export interface FormDef {
+  /** 예 "t3:pair@lineage-a+lineage-b" */
+  id: string;
+  /** 진화해서 도달하는 단계 (2~5, 1-based) */
+  tier: number;
+  /** 손으로 쓴 정식 이름(종족별). 없으면 label 에서 "A+B형" 같은 자리 표시를 만든다 */
+  name?: PerFaction<string>;
+  label: FormLabel;
+  /** 이 진화체로 올 수 있는 이전 단계 진화체 id. 'any' 면 제한 없음 (2단계 진화체는 항상 'any') */
+  from: string[] | 'any';
+  /** 진화 조건 목록 (전부 만족, AND) */
+  requires: FormCondition[];
+  /** 후보가 여럿이면 높은 쪽 → 조건 수 많은 쪽 → id 순 */
+  priority: number;
+  /** 기본형: 단계마다 정확히 1개. 후보가 없을 때 선택된다 */
+  fallback?: true;
+  effects: FormEffects;
   provisional?: boolean;
 }

@@ -1,6 +1,8 @@
 // 런 로그 구조 (GDD 9장). 히든 등급·태그 조건이 나중에 이 기록을 읽는다.
 // 지금은 구조만 있고 기록하는 로직은 없다. 필드를 빼지 말고, 필요하면 더한다.
 
+import type { Accumulation } from './evolution/select';
+
 export interface AbsorbRecord {
   runId: number;
   /** 적 종족 (src/data/enemies 의 id) */
@@ -92,18 +94,23 @@ export interface BattleRecord {
   absorbable: boolean;
 }
 
-/** 진화 1회 기록 (GDD 4-2, 9장): 히든 조건이 나중에 읽는다 */
+/** 진화 1회 기록 (GDD 4-2, 9장): 히든 조건이 나중에 읽는다. C.11 에서 단계별 진화체 테이블 구조로 바뀌었다 */
 export interface EvolutionRecord {
   fromTier: number;
   toTier: number;
-  /** 조합 키 ("lineage-a+lineage-b", 흡수 0이면 "base") */
-  comboKey: string;
-  /** 형태 id (src/data/evolution) */
-  formId: string;
-  /** 진화 순간의 안정 수치 */
-  stability: number;
+  /** C.11: 진화 전 진화체 id (1→2단계 진화면 null) */
+  fromFormId: string | null;
+  /** C.11: 진화한 진화체 id (src/data/evolution) */
+  toFormId: string;
+  /** 진화 순간의 현재 단계 계통별 누적 스냅샷 */
+  accumulation: Accumulation;
   /** 진화한 시각(ms) */
   at: number;
+  /** C.9 호환용 = toFormId. 새 기록에도 채운다 */
+  formId: string;
+  /** C.9 필드(조합 키, 진화 순간의 안정 수치): 의미가 사라져 새 기록에서는 비운다. C.9 기록에만 있다 */
+  comboKey?: string;
+  stability?: number;
 }
 
 export interface TierRecord {

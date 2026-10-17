@@ -21,6 +21,7 @@ import { el, mountScreen } from './dom';
 import { battleLabels, endReasonText } from './labels';
 import { absorbConditionText } from './absorbView';
 import { expeditionView } from './expeditionView';
+import { dexView } from './dexView';
 import { evolutionView } from './evolutionPanel';
 import { nestView } from './nestView';
 
@@ -66,6 +67,7 @@ export function startApp(root: HTMLElement): void {
         persist();
         evolutionView(root, faction, from, s.evolution.tierIndex, r.form, nestScreen);
       },
+      onDex: () => dexView(root, faction, s, nestScreen),
       onChangeFaction: factionScreen,
     });
   }

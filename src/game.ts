@@ -6,14 +6,15 @@ import { completedLineages, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, summarize, type ExpeditionState } from './engine/expedition';
 import {
-  cloneEvolution, evolve, newEvolution, noteEvolutionBreakthrough, recordEvolutionAbsorb, type EvolutionState, type EvolveResult,
+  cloneEvolution, evolve, newEvolution, recordEvolutionAbsorb, type EvolutionState, type EvolveResult,
 } from './engine/evolution';
+import { formsOfTier, tierFallback } from './data/evolution';
 import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
 import { tilesFor } from './data/tiles';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 6;
+export const SAVE_FORMAT_VERSION = 7;
 
 export interface SaveMeta {
   format: number;
@@ -34,8 +35,10 @@ export interface SaveData {
   nest: NestState;
   /** 흡수 빌드: 가진 특성과 슬롯 (GDD 4장). 계통·특성은 임시 데이터 */
   build: BuildState;
-  /** 진화 상태: 현재 단계(0~4), 현재 단계 계통별 흡수 누적, 지금까지의 형태 (GDD 4-2). 수치·데이터는 임시 */
+  /** 진화 상태: 현재 단계(0~4), 현재 단계 계통별 흡수 누적, 현재 진화체 id와 지금까지의 진화체 (GDD 4-2 v1.0). 수치·데이터는 임시 */
   evolution: EvolutionState;
+  /** 진화체 도감 해금 목록 (진화체 id). 한 번 진화한 진화체가 해금된다 (C.11) */
+  formDex: string[];
   /** 보유 타일 수량과 원정에 가져갈 덱 (GDD 6장). 시작 구성은 임시 */
   tiles: TileStock;
   /** 히든 조건용 영구 기록 */
@@ -53,7 +56,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), tiles: newTileStock(), runLog: emptyRunLog() };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog() };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
@@ -78,9 +81,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
     }
   }
   save.build = cloneBuildOf(exp.build);
-  // 진화 상태: 원정 중 쌓인 흡수 누적을 합치고, 이 원정에서 한계 돌파를 했으면 이 단계의 세 번째 후보가 열린다 (GDD 4-2)
+  // 진화 상태: 원정 중 쌓인 흡수 누적을 합친다 (한계 돌파는 진화체 선택에 쓰지 않는다, GDD 4-2 v1.0)
   save.evolution = cloneEvolution(exp.evolution);
-  if (exp.breakthrough) noteEvolutionBreakthrough(save.evolution);
   for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   applyExpeditionEnd(save.nest, exp, nowMs);
 }
@@ -89,10 +91,13 @@ function cloneBuildOf(b: BuildState): BuildState {
   return { owned: [...b.owned], slots: [...b.slots] };
 }
 
-/** 둥지에서 진화를 확정한다 (원정 중에는 부르지 않는다). 슬롯 +1, 누적 리셋, 런 로그에 기록. 안정 수치·리스크는 그대로 */
+/** 둥지에서 진화를 확정한다 (원정 중에는 부르지 않는다). 슬롯 +1, 누적 리셋, 도감 해금, 런 로그에 기록. 안정 수치·리스크는 그대로 */
 export function performEvolution(save: SaveData, nowMs: number = Date.now()): EvolveResult {
-  const r = evolve(save.evolution, save.build, save.nest.stability, nowMs);
-  if (r.ok) save.runLog.tiers.evolutions.push(r.record);
+  const r = evolve(save.evolution, save.build, nowMs);
+  if (r.ok) {
+    save.runLog.tiers.evolutions.push(r.record);
+    if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
+  }
   return r;
 }
 
@@ -188,6 +193,11 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.tiers = { ...save.runLog.tiers, evolutions: save.runLog.tiers?.evolutions ?? [] };
     save.meta.format = 6;
   }
+  if (save.meta.format < 7) {
+    // 형식 6 → 7 (C.11 단계별 진화체 테이블): 현재 단계는 유지하고 현재 진화체는 그 단계 기본형으로. 도감은 과거 진화 기록(조합 키)에서 가능한 만큼 채운다
+    migrateEvolutionV7(save);
+    save.meta.format = 7;
+  }
   return save;
 }
 
@@ -232,4 +242,40 @@ export function sanitizeDeck(stock: TileStock, factionId: string, size: number =
     }
   }
   return deck;
+}
+
+/** C.9 조합 키("lineage-a+lineage-b" / "base")를 새 진화체로 옮긴다. 맞는 것이 없으면 undefined (예: 5단계 3조합은 균등/편중을 알 수 없다) */
+function legacyComboToForm(comboKey: string | undefined, tier: number): string | undefined {
+  if (!comboKey || comboKey === 'base') return undefined;
+  const key = comboKey.split('+').sort().join('+');
+  return formsOfTier(tier).find(
+    (f) => !f.fallback && ['dominant', 'pair', 'triple'].includes(f.label.kind) && f.label.lineages.join('+') === key,
+  )?.id;
+}
+
+function migrateEvolutionV7(save: SaveData): void {
+  const old = (save.evolution ?? newEvolution()) as EvolutionState & { breakthroughThisTier?: boolean };
+  const tierIndex = old.tierIndex ?? 0;
+  const history: string[] = [];
+  const dex = new Set<string>();
+  const records = save.runLog.tiers?.evolutions ?? [];
+  for (let t = 1; t <= tierIndex; t++) {
+    const mapped = legacyComboToForm(records.find((r) => r.toTier === t)?.comboKey, t + 1);
+    if (mapped) dex.add(mapped);
+    // 현재 단계는 기본형으로 시작한다
+    history.push(t === tierIndex ? tierFallback(t + 1).id : (mapped ?? tierFallback(t + 1).id));
+  }
+  if (tierIndex > 0) dex.add(history[tierIndex - 1]!);
+  const rare = tierIndex === 0 ? (save.runLog.absorbs ?? []).filter((a) => a.absorbed && a.rare).length : 0;
+  save.evolution = {
+    tierIndex,
+    formId: tierIndex > 0 ? history[tierIndex - 1]! : null,
+    formHistory: history,
+    absorbs: old.absorbs ?? 0,
+    lineageScores: { ...(old.lineageScores ?? {}) },
+    lastAbsorbSeq: { ...(old.lastAbsorbSeq ?? {}) },
+    seq: old.seq ?? 0,
+    rareAbsorbs: old.rareAbsorbs ?? rare,
+  };
+  save.formDex = [...dex];
 }

@@ -6,7 +6,9 @@ import { ENEMIES } from '../src/data/enemies';
 import { createCombat, elapsedSeconds, playCombatBot, type CombatParams, type CombatState } from '../src/engine/combat';
 import { createExpedition, playExpedition } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedLineages, gainTrait, newBuild } from '../src/engine/absorb';
-import { comboKeyOf, canEvolve } from '../src/engine/evolution';
+import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
+import { LINEAGES } from '../src/data/lineages';
+import { analyzeTable, canEvolve, reportProblems } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performEvolution, recordExpedition, sanitizeDeck, newTileStock } from '../src/game';
 
 const check = process.argv.includes('--check');
@@ -186,12 +188,12 @@ for (const lap of [4, 6]) {
 
 // ── 진화(C.9·C.10, GDD 2-3·4-2): 흡수하는 봇이 4바퀴 원정을 반복하다 진화할 수 있으면 둥지에서 진화한다 ──
 // C.10: 목표는 "진화 1단계 ≈ 원정 8~12회, 5단계 ≈ 원정 40~50회". 단계마다 걸린 원정 수(그 단계 시작부터)를 표로 낸다
-// 가드: 단계별 평균 6~14, 5단계 도달 평균 30~60번째 원정, 첫 진화 조합 한 가지가 90% 미만
+// 가드: 단계별 평균 6~14, 5단계 도달 평균 30~60번째 원정, 단계별 진화체 한 가지가 90% 미만 (C.11)
 const CAMPAIGNS = 30;
 const MAX_RUNS = 60;
 const firstEvoRuns: number[] = [];
-const combos: Record<string, number> = {};
-const variants: Record<string, number> = {};
+/** 단계(2~5)별 진화체 선택 횟수 (봇 실제 경로 포함) */
+const formCounts: Record<number, Record<string, number>> = { 2: {}, 3: {}, 4: {}, 5: {} };
 let allEvos = 0;
 const stageRuns: number[][] = [[], [], [], []];
 const finalRuns: number[] = [];
@@ -214,24 +216,19 @@ for (let seed = 1; seed <= CAMPAIGNS; seed++) {
     save.nest.weakened = false;
     if (canEvolve(save.evolution)) {
       const tier = save.evolution.tierIndex;
-      const key = comboKeyOf(save.evolution);
       const r = performEvolution(save, 0);
       if (r.ok) {
         allEvos++;
         stageRuns[tier]!.push(run - stageStart);
         stageStart = run;
-        if (tier === 0) {
-          firstEvoRuns.push(run);
-          combos[key] = (combos[key] ?? 0) + 1;
-        }
+        if (tier === 0) firstEvoRuns.push(run);
         if (tier === 3) finalRuns.push(run);
-        variants[r.form.variant] = (variants[r.form.variant] ?? 0) + 1;
+        formCounts[r.form.tier]![r.form.id] = (formCounts[r.form.tier]![r.form.id] ?? 0) + 1;
       }
     }
   }
 }
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-const topCombo = Object.entries(combos).sort((a, b) => b[1] - a[1])[0];
 console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 진화 가능하면 둥지에서 진화) — 필요 흡수 ${BALANCE.provisional.evolution.absorbsNeeded.join('/')}`);
 console.log('  단계(진화)   도달 인원  평균 원정  최소  최대   (그 단계 시작부터 센 원정 수)');
 const stageNames = ['1→2', '2→3', '3→4', '4→5'];
@@ -239,8 +236,22 @@ stageRuns.forEach((rs, i) => {
   console.log(`  ${stageNames[i]}단계      ${String(rs.length).padStart(2)}/${CAMPAIGNS}     ${avg(rs).toFixed(1).padStart(5)}    ${String(rs.length ? Math.min(...rs) : '-').padStart(3)}   ${String(rs.length ? Math.max(...rs) : '-').padStart(3)}`);
 });
 console.log(`  5단계 도달 ${finalRuns.length}/${CAMPAIGNS} · 평균 ${avg(finalRuns).toFixed(1)}번째 원정 (최소 ${finalRuns.length ? Math.min(...finalRuns) : '-'} · 최대 ${finalRuns.length ? Math.max(...finalRuns) : '-'})`);
-console.log(`  첫 진화 조합 분포 (${Object.keys(combos).length}종): ${Object.entries(combos).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k.replaceAll('lineage-', '')} ${n}`).join(' · ')}`);
-console.log(`  형태 종류: ${Object.entries(variants).map(([k, n]) => `${k} ${n}`).join(' · ')} (총 진화 ${allEvos}회)`);
+// 진화체 분포: 단계별로 나온 진화체와 비율 (이름은 자리 표시, 호로 설정). 기본형 = 후보 없음 (경로 포함)
+console.log(`  진화체 분포 (총 진화 ${allEvos}회)`);
+for (const tier of [2, 3, 4, 5]) {
+  const counts = formCounts[tier]!;
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const top = sorted.map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).slice(0, 8).join(' · ');
+  const base = FORM_TABLE.find((f) => f.tier === tier && f.fallback)!.id;
+  const baseShare = (counts[base] ?? 0) / Math.max(1, total);
+  console.log(`    ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종 (기본형 ${(baseShare * 100).toFixed(0)}%): ${top}`);
+  // 독점 가드는 기본형을 뺀 진화체 기준. 기본형 비율은 참고로 출력한다 (봇 분포가 1~2계통에 몰려 높게 나온다: dev-log C.11)
+  const real = sorted.filter(([id]) => id !== base);
+  const realTotal = real.reduce((a, [, n]) => a + n, 0);
+  if (realTotal >= 5 && real[0]![1] / realTotal >= 0.9) failures.push(`진화: ${tier}단계 ${formName(FORM_TABLE.find((f) => f.id === real[0]![0])!, 'hollow')} 가 ${((real[0]![1] / realTotal) * 100).toFixed(0)}% 독점 (>= 90%, 기본형 제외)`);
+  if (baseShare > 0.8) console.log(`      → 참고: 기본형이 ${(baseShare * 100).toFixed(0)}% (봇이 1~2계통에 집중해 흡수해서 조건에 맞는 진화체가 없다)`);
+}
 if (firstEvoRuns.length < CAMPAIGNS * 0.8) failures.push(`진화: 흡수 봇 중 첫 진화 도달 ${firstEvoRuns.length}/${CAMPAIGNS} < 80%`);
 stageRuns.forEach((rs, i) => {
   const m = avg(rs);
@@ -251,7 +262,19 @@ if (finalRuns.length >= CAMPAIGNS * 0.8) {
   const m = avg(finalRuns);
   if (m < 30 || m > 60) failures.push(`진화: 5단계 도달 평균 ${m.toFixed(1)}번째 원정 (목표 30~60)`);
 }
-if (topCombo && firstEvoRuns.length > 0 && topCombo[1] / firstEvoRuns.length >= 0.9) failures.push(`진화: 첫 진화 조합 ${topCombo[0]} 가 ${((topCombo[1] / firstEvoRuns.length) * 100).toFixed(0)}% 독점 (>= 90%)`);
+
+// ── 진화체 테이블 점검 (GDD 4-2 v1.0): 도달 가능성 · 기본형 1개 · 선택 모호성 · "후보 없음 → 기본형" 비율 ──
+{
+  const EVC = BALANCE.provisional.evolution;
+  const t0 = Date.now();
+  const reports = analyzeTable(FORM_TABLE, LINEAGES.map((l) => l.id), EVC.absorbsNeeded, { ...EVC.analysis, skews: [...EVC.analysis.skews], rareWeight: EVC.rareWeight });
+  console.log(`\n진화체 테이블 점검 (계통 ${LINEAGES.length}개, 흡수 분포 전수+무작위, ${((Date.now() - t0) / 1000).toFixed(1)}초)`);
+  console.log('  단계  진화체(+기본형)  필요 흡수  분포 샘플  도달 불가  모호  후보 없음→기본형(경로 무시)  (경로 포함)');
+  for (const r of reports) {
+    console.log(`  ${r.tier}     ${String(r.formCount).padStart(3)}(+${r.fallbackCount})        ${String(r.need).padStart(3)}    ${String(r.samples).padStart(8)}    ${String(r.unreachable.length).padStart(3)}    ${String(r.ambiguous).padStart(3)}      ${(r.fallbackRate * 100).toFixed(1).padStart(5)}%                    ${(r.fallbackRateWithPath * 100).toFixed(1).padStart(5)}%`);
+  }
+  failures.push(...reportProblems(reports, EVC.analysis.maxFallbackRate).map((p) => `진화체 테이블: ${p}`));
+}
 
 if (check) {
   if (failures.length > 0) {

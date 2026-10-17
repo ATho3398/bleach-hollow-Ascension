@@ -16,6 +16,8 @@ export interface NestViewHandlers {
   onPractice: () => void;
   /** 진화 확정: 앱이 performEvolution 을 부르고 연출 화면을 보여 준다 */
   onEvolve: () => void;
+  /** 진화체 도감 화면 */
+  onDex: () => void;
   onChangeFaction: () => void;
   persist: () => void;
 }
@@ -101,7 +103,7 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     el('p', 'dim', `사냥터: ${faction.huntingGroundName}. 원정 ${runs.length}회 · 귀환 ${runs.filter((r) => r.outcome === 'returned').length} · 패배 ${runs.filter((r) => r.outcome === 'defeated').length}`),
     ...status,
     el('h2', '', '진화'),
-    evolutionPanel(faction, save.evolution, h.onEvolve),
+    evolutionPanel(faction, save.evolution, h.onEvolve, h.onDex),
     el('h2', '', '돌보기'),
     actions,
     el('h2', '', `흡수 특성 (${faction.slotName})`),

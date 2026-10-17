@@ -1,96 +1,93 @@
-// 진화 형태 테이블 (GDD 4-2). 조합 키 + 단계에서 형태 후보(정통·변이·돌파)를 템플릿으로 자동 생성한다.
-// 손으로 쓴 정식 형태는 forms.json 에 id 로 넣으면 템플릿을 덮어쓴다 (11-3 계통이 확정된 뒤). 지금은 비어 있다.
-import { BALANCE } from '../../config/balance';
-import { getLineage, lineageShortName } from '../lineages';
-import { FORM_VARIANTS, PASSIVE_STATS, pickFaction, type FormDef, type FormVariant, type PassiveStat } from '../schema';
+// 진화체 테이블 (GDD 4-2 v1.0). 단계(2~5)마다 진화체 목록이 있고, 데이터는 forms.json (생성기 결과를 커밋한 것 — 손으로 고칠 수 있다).
+// 생성기: generate.ts / `npm run gen:forms`. 이름은 자리 표시이며, 정식 이름은 진화체의 name 에 종족별로 넣으면 그것이 우선한다.
+import { validateFormTable } from '../../engine/evolution/select';
+import { LINEAGES, getLineage, lineageShortName } from '../lineages';
+import { PASSIVE_STATS, pickFaction, type FormDef, type FormKind, type PassiveStat } from '../schema';
+import { generateFormTable } from './build';
+import { generateForms } from './generate';
 import raw from './forms.json';
 
-const EV = BALANCE.provisional.evolution;
+export { generateFormTable, generateForms };
 
-/** 흡수가 없었던 단계의 조합 키 (GDD 4-2 "기본 조합") */
-export const BASE_COMBO = 'base';
-
-export const VARIANT_NAMES: Record<FormVariant, string> = { orthodox: '정통', mutant: '변이', breakthrough: '돌파' };
-
-export function comboLineages(comboKey: string): string[] {
-  return comboKey === BASE_COMBO ? [] : comboKey.split('+');
+function parseTable(r: unknown): FormDef[] {
+  if (!Array.isArray(r)) throw new Error('진화체 데이터 오류: forms.json 은 배열이어야 한다');
+  const table = r as FormDef[];
+  const errors = validateFormTable(table, LINEAGES.map((l) => l.id));
+  if (errors.length > 0) throw new Error(`진화체 데이터 오류:\n- ${errors.join('\n- ')}`);
+  return table;
 }
 
-export function formId(comboKey: string, toTier: number, variant: FormVariant): string {
-  return `${comboKey}@${toTier}:${variant}`;
-}
+export const FORM_TABLE: readonly FormDef[] = parseTable(raw);
 
-/** 조합의 계통 성향을 섞은 패시브: 계통 n개면 각 성향을 1/n 만큼 반영한다 (임시) */
-function derivePassive(lineageIds: string[]): Partial<Record<PassiveStat, number>> {
-  const out: Partial<Record<PassiveStat, number>> = {};
-  for (const id of lineageIds) {
-    const t = getLineage(id).tendency;
-    if (!t) continue;
-    out[t.stat] = (out[t.stat] ?? 1) * (1 + (t.multiplier - 1) / lineageIds.length);
-  }
-  return out;
-}
+const BY_ID = new Map(FORM_TABLE.map((f) => [f.id, f]));
 
-function generate(comboKey: string, toTier: number, variant: FormVariant): FormDef {
-  const fx = EV.formEffects[variant];
-  return {
-    id: formId(comboKey, toTier, variant),
-    comboKey,
-    toTier,
-    variant,
-    hpMultiplier: fx.hp,
-    attackMultiplier: fx.attack,
-    passive: derivePassive(comboLineages(comboKey)),
-    provisional: true,
-  };
-}
-
-const OVERRIDES = new Map<string, FormDef>((raw as FormDef[]).map((f) => [f.id, f]));
-
-/** 형태 한 개 (손으로 쓴 것이 있으면 그것, 없으면 템플릿) */
-export function makeForm(comboKey: string, toTier: number, variant: FormVariant): FormDef {
-  return OVERRIDES.get(formId(comboKey, toTier, variant)) ?? generate(comboKey, toTier, variant);
-}
-
-/** 이 조합·단계의 진화 테이블: 정통 / 변이 / 돌파(세 번째 후보) */
-export function formsFor(comboKey: string, toTier: number): FormDef[] {
-  return FORM_VARIANTS.map((v) => makeForm(comboKey, toTier, v));
-}
-
-/** id 로 형태를 얻는다. "조합@단계:종류" 형식이 아니면 던진다 */
 export function getForm(id: string): FormDef {
-  const m = /^(.+)@(\d+):(orthodox|mutant|breakthrough)$/.exec(id);
-  if (!m) throw new Error(`알 수 없는 형태 id: ${id}`);
-  const form = makeForm(m[1]!, Number(m[2]), m[3] as FormVariant);
-  for (const l of comboLineages(form.comboKey)) getLineage(l);
-  return form;
+  const f = BY_ID.get(id);
+  if (!f) throw new Error(`알 수 없는 진화체 id: ${id}`);
+  return f;
 }
 
-/** 조합 키 표시: "A+B" (계통 짧은 이름). 기본 조합은 "기본" */
-export function comboLabel(comboKey: string, factionId: string): string {
-  const ids = comboLineages(comboKey);
-  return ids.length === 0 ? '기본' : ids.map((l) => lineageShortName(l, factionId)).join('+');
+export function tryGetForm(id: string): FormDef | undefined {
+  return BY_ID.get(id);
 }
 
-/** 형태 이름: 손으로 쓴 이름, 없으면 "A+B형 (정통)" */
+export function formsOfTier(tier: number, table: readonly FormDef[] = FORM_TABLE): FormDef[] {
+  return table.filter((f) => f.tier === tier);
+}
+
+export function tierFallback(tier: number, table: readonly FormDef[] = FORM_TABLE): FormDef {
+  const f = table.find((x) => x.tier === tier && x.fallback);
+  if (!f) throw new Error(`${tier}단계 기본형이 없다`);
+  return f;
+}
+
+const joinNames = (form: FormDef, factionId: string, sep: string) => form.label.lineages.map((l) => lineageShortName(l, factionId)).join(sep);
+
+/** 이름 자리 표시: "A우세형", "A+B형", "A+B형(심화)", "균형형", "기본형" … */
+export function placeholderName(form: FormDef, factionId: string): string {
+  const names = joinNames(form, factionId, '+');
+  const byKind: Record<FormKind, string> = {
+    dominant: `${names}우세형`,
+    pair: `${names}형`,
+    triple: `${names}형`,
+    'deep-pair': `${names}형(심화)`,
+    balanced: '균형형',
+    picky: '편식형',
+    rare: '희귀형',
+    even: `${names}형(균등)`,
+    skew: `${names}형(편중)`,
+    base: '기본형',
+  };
+  return byKind[form.label.kind];
+}
+
+/** 표시 이름: 손으로 쓴 정식 이름(종족별)이 있으면 그것, 없으면 자리 표시 */
 export function formName(form: FormDef, factionId: string): string {
-  if (form.name) return pickFaction(form.name, factionId);
-  return `${comboLabel(form.comboKey, factionId)}형 (${VARIANT_NAMES[form.variant]})`;
+  return form.name ? pickFaction(form.name, factionId) : placeholderName(form, factionId);
+}
+
+/** 도감 "요구 계통 힌트" (해금된 진화체에만 보인다) */
+export function formHint(form: FormDef, factionId: string): string {
+  const names = joinNames(form, factionId, '·');
+  const byKind: Record<FormKind, string> = {
+    dominant: `${names}를 가장 많이 흡수`,
+    pair: `${names}를 가장 많이 흡수 (1·2위)`,
+    triple: `${names}를 가장 많이 흡수 (1·2·3위)`,
+    'deep-pair': `${names} 두 계통에 크게 집중`,
+    balanced: '여러 계통을 고르게 흡수',
+    picky: '한 계통에 크게 치우쳐 흡수',
+    rare: '희귀 개체를 여러 번 흡수',
+    even: `${names}를 고르게 흡수`,
+    skew: `${names} 중 한 계통에 치우쳐 흡수`,
+    base: '맞는 진화체가 없을 때',
+  };
+  return byKind[form.label.kind];
 }
 
 /** 패시브 이름·효과 텍스트 (예 "A+B 성향: 기본 공격 위력 ×1.03, 받는 피해 ×0.97") */
 const STAT_TEXT: Record<PassiveStat, string> = { attackPower: '기본 공격 위력', attackSpeed: '기본 공격 속도', damageTaken: '받는 피해' };
 export function formPassiveText(form: FormDef, factionId: string): string {
-  const parts = PASSIVE_STATS.filter((s) => form.passive[s] !== undefined).map((s) => `${STAT_TEXT[s]} ×${form.passive[s]!.toFixed(2)}`);
-  return parts.length === 0 ? '패시브 없음' : `${comboLabel(form.comboKey, factionId)} 성향: ${parts.join(', ')}`;
-}
-
-/** 계통 id 목록에서 만들 수 있는 모든 조합 키 (기본 + 1~3계통 부분집합은 아니고 실제 키 형태: 2조합·3조합, 단일 계통 포함) */
-export function allComboKeys(lineageIds: readonly string[]): string[] {
-  const sorted = [...lineageIds].sort();
-  const keys: string[] = [BASE_COMBO];
-  for (let i = 0; i < sorted.length; i++) keys.push(sorted[i]!);
-  for (let i = 0; i < sorted.length; i++) for (let j = i + 1; j < sorted.length; j++) keys.push(`${sorted[i]}+${sorted[j]}`);
-  for (let i = 0; i < sorted.length; i++) for (let j = i + 1; j < sorted.length; j++) for (let k = j + 1; k < sorted.length; k++) keys.push(`${sorted[i]}+${sorted[j]}+${sorted[k]}`);
-  return keys;
+  const e = form.effects.passive;
+  const parts = PASSIVE_STATS.filter((s) => e[s] !== undefined).map((s) => `${STAT_TEXT[s]} ×${e[s]!.toFixed(2)}`);
+  return parts.length === 0 ? '패시브 없음' : `${joinNames(form, factionId, '+')} 성향: ${parts.join(', ')}`;
 }

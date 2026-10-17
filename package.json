@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "balance": "vite-node scripts/balance.ts",
-    "balance:check": "vite-node scripts/balance.ts -- --check"
+    "balance:check": "vite-node scripts/balance.ts -- --check",
+    "gen:forms": "vite-node scripts/gen-forms.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
