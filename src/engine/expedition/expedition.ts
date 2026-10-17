@@ -316,7 +316,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (exp.victoriesThisLap === 0) drawTile(exp);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
   exp.victoriesThisLap++;
-  // 흡수 조건(마무리 일격이 약점 계통 스킬 / 체인3 2회 이상)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
+  // 흡수 조건(마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
   if (canAbsorb(battle)) {
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle);
     exp.phase = 'absorb';

@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 7;
+export const BALANCE_VERSION = 8;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -31,8 +31,9 @@ export const BALANCE = {
   provisional: {
     // ── 흡수·리스크(P3) 임시값. 기획서 4-1: 11-3(계통·특성 풀), 11-4(리스크 수치)가 미정 ──
     absorb: {
-      /** 흡수 가능 조건 (GDD 3-5): 마무리 일격이 약점 계통 스킬이거나, 그 전투에서 체인3 을 이 횟수 이상 발동 (C.6, 옛 흡수 게이지 임계값 폐기) */
-      chain3ForAbsorb: 2,
+      /** 흡수 가능 조건 (GDD 3-5 v0.7): 마무리 일격이 약점 계통 스킬이거나, 그 전투에서 약점 계통 스킬 블록의 체인3 을 이 횟수 이상 발동.
+       *  장착 skill 특성이 없으면 조건 없이 가능(첫 흡수 보장). 옛 "체인3 계통 무관 2회"는 폐기 (C.7) */
+      weakChain3ForAbsorb: 1,
       /** 특성 후보 수: 일반 적은 1~2개 중 무작위, 강적은 항상 2개 (GDD 4장 "후보 1~2개") */
       candidatesElite: 2,
       candidatesNormalMax: 2,
@@ -51,7 +52,8 @@ export const BALANCE = {
       /** 공허 블록 1개 사용 → 리스크 게이지 상승량 (GDD 3-5). 옛 "공허 매칭 1회 5 × 0.25 = 1.25" 보다 크게: 블록은 매칭보다 드물고 피해가 크다 */
       perVoidBlock: 2.5,
       /** 강한 적 흡수 시 리스크 상승 = 적 hpInAttacks(바퀴 강화 포함) × 이 값. 옛 0.55/매칭 회분 × (6회분 → 30회분 환산) ≈ 0.11. 강적(70)이 일반(30)의 약 2.3배 */
-      absorbPerHpAttack: 0.12,
+      /* C.7: 0.12→0.22 (첫 흡수 보장·새 조건으로 흡수 횟수가 줄어 6바퀴 돌파 가드 유지) */
+      absorbPerHpAttack: 0.22,
       /** 놓아주면 하락 */
       releaseRelief: 8,
       /** 휴식 타일에서 하락 */

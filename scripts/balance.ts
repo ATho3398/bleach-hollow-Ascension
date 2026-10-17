@@ -15,16 +15,24 @@ const CX = BALANCE.provisional.combat;
 console.log(`밸런스 버전 ${BALANCE_VERSION}`);
 
 // ── 전투 v2(P4): 블록 봇 N판, 시드 고정 ──
-// 기준 빌드 = 빈 슬롯(기본 블록 생성원 1개). 비교 빌드 = 공격·막기·회복 skill 3개 장착(생성원 3개, 블록 3배)
+// C.7 (GDD 3-5 v0.7): 승률 목표의 기준 빌드 = skill 특성 1~2개 장착 (공격 1개 / 공격+막기 2개).
+// 빈 슬롯(기본 블록만)은 일반 적 승률 90%↑만 가드, 강적은 참고 출력. skill 3개 빌드는 비교용.
 const N = 200;
-const mixed = newBuild();
-for (const id of ['trait-a1', 'trait-b1', 'trait-c1']) gainTrait(mixed, id);
-const builds: { name: string; params: Partial<CombatParams> }[] = [
-  { name: '빈 슬롯(기본 블록)', params: {} },
-  { name: 'skill 3개(공격·막기·회복)', params: buildCombatParams(mixed) },
+const buildOf = (ids: string[]): Partial<CombatParams> => {
+  const b = newBuild();
+  for (const id of ids) gainTrait(b, id);
+  return buildCombatParams(b);
+};
+type BuildDef = { name: string; params: Partial<CombatParams>; ref: boolean };
+const builds: BuildDef[] = [
+  { name: '빈 슬롯(기본 블록)', params: {}, ref: false },
+  { name: 'skill 1개(공격)', params: buildOf(['trait-c5']), ref: true },
+  { name: 'skill 2개(공격·막기)', params: buildOf(['trait-c5', 'trait-a5']), ref: true },
+  { name: 'skill 3개(공격·막기·회복)', params: buildOf(['trait-a1', 'trait-b1', 'trait-c1']), ref: false },
 ];
 const TARGET = { normal: { seconds: 45, win: 0.9 }, elite: { seconds: 90, winLo: 0.6, winHi: 0.85 } };
-console.log(`\n전투 (블록 봇 ${N}판, 시드 1~${N}, 입력 0.5초 간격) — 임시 목표(GDD 3-5): 일반 약 ${TARGET.normal.seconds}초·승률 ${TARGET.normal.win * 100}%↑, 강적 약 ${TARGET.elite.seconds}초·승률 ${TARGET.elite.winLo * 100}~${TARGET.elite.winHi * 100}%`);
+console.log(`\n전투 (블록 봇 ${N}판, 시드 1~${N}, 입력 0.5초 간격) — 임시 목표(GDD 3-5 v0.7, 기준 빌드 = skill 1~2개): 일반 약 ${TARGET.normal.seconds}초·승률 ${TARGET.normal.win * 100}%↑, 강적 약 ${TARGET.elite.seconds}초·승률 ${TARGET.elite.winLo * 100}~${TARGET.elite.winHi * 100}%`);
+const eliteRef: Record<string, number[]> = {}; // 기준 빌드별 강적 승률·승리 평균 시간 (참고 출력용)
 for (const build of builds) {
   console.log(`  [${build.name}]`);
   for (const enemy of ENEMIES) {
@@ -60,15 +68,28 @@ for (const build of builds) {
       `    ${enemy.id} (${enemy.class}, 체력 ${enemy.hpInAttacks}회분): 승률 ${(winRate * 100).toFixed(0)}% · 평균 ${(secs / N).toFixed(1)}초(승리 ${avgWin.toFixed(1)}초) · 남은 체력 ${wins ? ((hpLeft / wins) * 100).toFixed(0) : '-'}% · 체인3 ${(chain3 / N).toFixed(1)}회 · 막기 성공 ${(guards / N).toFixed(1)} · 공허 ${(voids / N).toFixed(1)} · 필살 ${((specials / N) * 100).toFixed(0)}% · 흡수 가능 ${((absorbable / N) * 100).toFixed(0)}% · 시간 초과 ${timeouts}`,
     );
     if (build.name.startsWith('빈')) {
-      // 회귀 가드 (기준 빌드): 목표 근처에서 크게 벗어나면 수치가 어긋난 것. 목표 자체는 위에 출력한다
+      // 회귀 가드 (빈 슬롯): 일반 적 승률 90%↑ 와 길이만. 강적은 참고 출력(가드 아님, C.7)
       if (enemy.class === 'normal') {
-        if (winRate < 0.8) failures.push(`${enemy.id}: 봇 승률 ${(winRate * 100).toFixed(0)}% < 80%`);
-        if (avgWin < 30 || avgWin > 60) failures.push(`${enemy.id}: 승리 평균 ${avgWin.toFixed(1)}초 (30~60 밖)`);
-      } else {
-        if (winRate < 0.4 || winRate > 0.97) failures.push(`${enemy.id}: 강적 봇 승률 ${(winRate * 100).toFixed(0)}% (40~97% 밖)`);
-        if (avgWin < 60 || avgWin > 120) failures.push(`${enemy.id}: 강적 승리 평균 ${avgWin.toFixed(1)}초 (60~120 밖)`);
+        if (winRate < 0.9) failures.push(`${enemy.id}: 빈 슬롯 봇 승률 ${(winRate * 100).toFixed(0)}% < 90%`);
+        if (avgWin < 30 || avgWin > 60) failures.push(`${enemy.id}: 빈 슬롯 승리 평균 ${avgWin.toFixed(1)}초 (30~60 밖)`);
+        if (timeouts / N > 0.05) failures.push(`${enemy.id}: 빈 슬롯 시간 초과 패배 ${timeouts}/${N}`);
       }
-      if (timeouts / N > 0.05) failures.push(`${enemy.id}: 시간 초과 패배 ${timeouts}/${N}`);
+    } else if (build.ref) {
+      // 회귀 가드 (기준 빌드 skill 1~2개): 일반 적 승률 90%↑·길이, 강적은 길이·승률 넓은 범위
+      if (enemy.class === 'normal') {
+        if (winRate < 0.9) failures.push(`${enemy.id}: ${build.name} 봇 승률 ${(winRate * 100).toFixed(0)}% < 90%`);
+        if (avgWin < 25 || avgWin > 60) failures.push(`${enemy.id}: ${build.name} 승리 평균 ${avgWin.toFixed(1)}초 (25~60 밖)`);
+      } else {
+        eliteRef[build.name] = [winRate, avgWin];
+        if (avgWin < 55 || avgWin > 120) failures.push(`${enemy.id}: ${build.name} 강적 승리 평균 ${avgWin.toFixed(1)}초 (55~120 밖)`);
+        // 승률은 1개 빌드(공격)만 가드: 막기를 더한 2개 빌드는 봇이 강공격을 거의 다 막아 승률이 쉽게 100% 로 간다(참고 출력, dev-log C.7)
+        if (build.name.includes('1개') && (winRate < 0.4 || winRate > 0.97)) failures.push(`${enemy.id}: ${build.name} 강적 봇 승률 ${(winRate * 100).toFixed(0)}% (40~97% 밖)`);
+      }
+      if (timeouts / N > 0.05) failures.push(`${enemy.id}: ${build.name} 시간 초과 패배 ${timeouts}/${N}`);
+    }
+    if (enemy.class === 'elite' && build.ref) {
+      const ok = winRate >= TARGET.elite.winLo && winRate <= TARGET.elite.winHi;
+      console.log(`      → 기준 빌드 강적 승률 목표 ${TARGET.elite.winLo * 100}~${TARGET.elite.winHi * 100}%: ${ok ? '맞음' : '벗어남(참고)'}`);
     }
     const ref = CX.enemyHpInAttacks[enemy.class];
     if (Math.abs(enemy.hpInAttacks - ref) > ref * 0.15) failures.push(`${enemy.id}: hpInAttacks ${enemy.hpInAttacks} 가 기준 ${ref}(±15%) 밖`);
@@ -111,7 +132,7 @@ for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 �
 }
 
 // ── 흡수·리스크(P3, C.6 조건): 흡수 가능 비율, 흡수 자동 플레이(계통 모으기) ──
-console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 계통을 모음 / 비교: 항상 놓아줌) — 흡수 조건(임시): 마무리 일격이 약점 계통 스킬 또는 체인3 ${BALANCE.provisional.absorb.chain3ForAbsorb}회 이상`);
+console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 계통을 모음 / 비교: 항상 놓아줌) — 흡수 조건(임시): 마무리 일격이 약점 계통 스킬 또는 약점 계통 체인3 ${BALANCE.provisional.absorb.weakChain3ForAbsorb}회 이상, 장착 skill 없으면 첫 흡수 보장`);
 const absorbStats: Record<string, { breakthrough: number; defeated: number; absorbableRate: number }> = {};
 for (const stopLap of [4, 6]) {
   for (const policy of ['absorb', 'release'] as const) {
@@ -154,11 +175,13 @@ for (const stopLap of [4, 6]) {
 if ((absorbStats['4-absorb']?.breakthrough ?? 0) > M * 0.5) failures.push(`4바퀴 흡수 플레이 돌파 ${absorbStats['4-absorb']?.breakthrough}/${M} > 50%`);
 if ((absorbStats['6-absorb']?.breakthrough ?? 0) < M * 0.6) failures.push(`6바퀴 흡수 플레이 돌파 ${absorbStats['6-absorb']?.breakthrough}/${M} < 60% (리스크가 약하다)`);
 if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에서 항상 놓아줘도 한계 돌파가 생긴다');
-// 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않는다(가드 25% 이상). C.6: 체인3 2회 조건은 봇이 거의 항상 채워(약 100%) 옛 상한 85% 는
-// 가드에서 빼고 경고로만 출력한다 (기획 확인 사항, dev-log C.6)
-const ar = absorbStats['4-release']?.absorbableRate ?? 0;
-if (ar < 0.25) failures.push(`원정 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% < 25%`);
-if (ar > 0.85) console.log(`  경고: 원정 승리 중 흡수 가능 ${(ar * 100).toFixed(0)}% > 85% — 흡수 조건이 거의 항상 열린다 (기획 확인)`);
+// 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않고(가드 25% 이상), 거의 항상이면 조건이 의미 없다(가드 85% 이하).
+// C.7: 측정은 "흡수하는 봇" 기준. 항상 놓아주는 봇은 skill 이 하나도 없어 첫 흡수 보장으로 늘 100% 라 의미가 없다 (참고 출력만)
+for (const lap of [4, 6]) {
+  const ar = absorbStats[`${lap}-absorb`]?.absorbableRate ?? 0;
+  if (ar < 0.25) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% < 25%`);
+  if (ar > 0.85) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% > 85% (조건이 거의 항상 열린다)`);
+}
 
 if (check) {
   if (failures.length > 0) {

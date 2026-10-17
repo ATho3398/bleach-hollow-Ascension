@@ -151,6 +151,8 @@ export interface CombatState {
   blocksByTrait: Record<string, number>;
   blocksByChain: [number, number, number];
   chain3Count: number;
+  /** 약점 계통 스킬 블록으로 발동한 체인3 횟수 (흡수 조건, GDD 3-5 v0.7) */
+  weakChain3Count: number;
   guardSuccesses: number;
   voidUsed: number;
   specialUsed: boolean;
@@ -222,6 +224,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     blocksByTrait: {},
     blocksByChain: [0, 0, 0],
     chain3Count: 0,
+    weakChain3Count: 0,
     guardSuccesses: 0,
     voidUsed: 0,
     specialUsed: false,
@@ -355,7 +358,10 @@ function useBlock(s: CombatState, cell: number): boolean {
   s.skillsUsed.push(id);
   s.blocksByTrait[id] = (s.blocksByTrait[id] ?? 0) + 1;
   s.blocksByChain[Math.min(3, b.chain) - 1]!++;
-  if (b.chain >= maxChain(p)) s.chain3Count++;
+  if (b.chain >= maxChain(p)) {
+    s.chain3Count++;
+    if (weak) s.weakChain3Count++;
+  }
   addSp(s, p.spPerBlock);
   let heal = 0;
   let guardSeconds = 0;

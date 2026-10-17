@@ -9,21 +9,26 @@ import type { BuildState } from './build';
 
 const AX = BALANCE.provisional.absorb;
 
-/** 흡수 가능 이유: 마무리 일격이 약점 계통 스킬 / 그 전투에서 체인3 을 2회 이상 (GDD 3-5, 임시 수치) */
-export type AbsorbReason = 'weakness-finisher' | 'chain3';
+/** 흡수 가능 이유: 마무리 일격이 약점 계통 스킬 / 약점 계통 스킬 블록의 체인3 1회 이상 / 첫 흡수 보장 — 장착 skill 특성 없음 (GDD 3-5 v0.7, 임시 수치) */
+export type AbsorbReason = 'weakness-finisher' | 'weakness-chain3' | 'first-absorb';
 
 /** 전투 결과에서 흡수 조건 판정에 쓰는 부분 */
-export type AbsorbInput = Pick<CombatState, 'status' | 'finisher' | 'chain3Count'> & { enemy: { def: { weaknessLineageId: string } } };
+export type AbsorbInput = Pick<CombatState, 'status' | 'finisher' | 'chain3Count' | 'weakChain3Count'> & {
+  enemy: { def: { weaknessLineageId: string } };
+  params: { skills: readonly unknown[] };
+};
 
 export function absorbReasons(c: AbsorbInput): AbsorbReason[] {
   if (c.status !== 'won') return [];
   const out: AbsorbReason[] = [];
   if (c.finisher?.kind === 'skill' && c.finisher.lineageId !== null && c.finisher.lineageId === c.enemy.def.weaknessLineageId) out.push('weakness-finisher');
-  if (c.chain3Count >= AX.chain3ForAbsorb) out.push('chain3');
+  if (c.weakChain3Count >= AX.weakChain3ForAbsorb) out.push('weakness-chain3');
+  // 첫 흡수 보장: 장착한 skill 특성이 하나도 없으면 조건 없이 흡수할 수 있다
+  if (c.params.skills.length === 0) out.push('first-absorb');
   return out;
 }
 
-/** 이긴 전투가 흡수 조건을 채웠는가 (옛 흡수 게이지 임계값은 폐기, C.6) */
+/** 이긴 전투가 흡수 조건을 채웠는가 (옛 흡수 게이지 임계값은 폐기, C.6; 체인3 계통 무관 2회는 폐기, C.7) */
 export function canAbsorb(c: AbsorbInput): boolean {
   return absorbReasons(c).length > 0;
 }
@@ -42,6 +47,7 @@ export interface AbsorbOffer {
   reasons: AbsorbReason[];
   /** 그 전투의 체인3 횟수와 마무리 일격 계통 (화면 문구용) */
   chain3Count: number;
+  weakChain3Count: number;
   finisherLineageId: string | null;
 }
 
@@ -75,6 +81,7 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     candidates,
     reasons: absorbReasons(combat),
     chain3Count: combat.chain3Count,
+    weakChain3Count: combat.weakChain3Count,
     finisherLineageId: combat.finisher?.lineageId ?? null,
   };
 }

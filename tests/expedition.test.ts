@@ -21,6 +21,8 @@ function winBattle(exp: ExpeditionState): void {
   const b = startBattle(exp);
   b.enemy.hp = 0;
   b.status = 'won';
+  // 흡수 조건 미달로 친다: 첫 흡수 보장(장착 skill 없음)이 적용되지 않게 skill 이 장착된 전투로 만든다 (C.7)
+  b.params = { ...b.params, skills: [{ id: 'trait-a1', lineageId: 'lineage-a', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 }] };
   finishBattle(exp, b);
 }
 function loseBattle(exp: ExpeditionState): void {

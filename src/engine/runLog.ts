@@ -88,7 +88,7 @@ export interface BattleRecord {
   finisherKind: FinisherKind | null;
   finisherTraitId: string | null;
   finisherLineageId: string | null;
-  /** 이 전투로 흡수 조건을 채웠는가 (마무리 일격이 약점 계통 스킬 / 체인3 2회 이상) */
+  /** 이 전투로 흡수 조건을 채웠는가 (마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장) */
   absorbable: boolean;
 }
 

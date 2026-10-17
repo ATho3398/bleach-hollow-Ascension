@@ -16,13 +16,15 @@ const RX = BALANCE.provisional.risk;
 
 /** 흡수 조건 안내 (GDD 3-5, 임시 수치): 마무리 일격이 약점 계통 스킬 / 체인3 N회 이상 */
 export function absorbConditionText(faction: FactionConfig, weaknessLineageId: string): string {
-  return `${faction.absorbActionName} 조건: 마무리 일격이 약점 계통(${lineageName(weaknessLineageId, faction.id)}) ${faction.skillBlockName}이거나, 그 전투에서 ${faction.chainName}3 을 ${AX.chain3ForAbsorb}회 이상 (임시)`;
+  const lin = lineageName(weaknessLineageId, faction.id);
+  return `${faction.absorbActionName} 조건: 마무리 일격이 약점 계통(${lin}) ${faction.skillBlockName}이거나, 그 전투에서 약점 계통(${lin}) ${faction.skillBlockName}의 ${faction.chainName}3 을 ${AX.weakChain3ForAbsorb}회 이상. 장착한 ${faction.skillBlockName} 특성이 없으면 조건 없이 가능 (첫 ${faction.absorbActionName}, 임시)`;
 }
 
-function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
+export function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
   const out: string[] = [];
   if (offer.reasons.includes('weakness-finisher')) out.push(`약점 계통(${lineageName(offer.finisherLineageId!, faction.id)})으로 마무리`);
-  if (offer.reasons.includes('chain3')) out.push(`${faction.chainName}3 ${offer.chain3Count}회 (필요 ${AX.chain3ForAbsorb})`);
+  if (offer.reasons.includes('weakness-chain3')) out.push(`약점 계통 ${faction.chainName}3 ${offer.weakChain3Count}회 (필요 ${AX.weakChain3ForAbsorb})`);
+  if (offer.reasons.includes('first-absorb')) out.push(`첫 ${faction.absorbActionName} 보장 (장착한 ${faction.skillBlockName} 특성 없음)`);
   return out.join(' · ');
 }
 

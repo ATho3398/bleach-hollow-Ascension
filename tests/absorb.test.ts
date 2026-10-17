@@ -29,19 +29,23 @@ const A = lin('lineage-a');
 const B = lin('lineage-b');
 
 /** 다음 전투를 이긴 것으로 치고 끝낸다. absorbable: 흡수 조건을 채움(체인3 횟수), risk: 공허 블록 리스크 값 */
-function winWith(exp: ExpeditionState, opt: { absorbable?: boolean; risk?: number } = {}): void {
+function winWith(exp: ExpeditionState, opt: { absorbable?: boolean; risk?: number; firstAbsorb?: boolean } = {}): void {
   const b = startBattle(exp);
   b.enemy.hp = 0;
   b.status = 'won';
   b.finisher = { kind: 'basic-attack', traitId: null, lineageId: null };
-  b.chain3Count = opt.absorbable ? AX.chain3ForAbsorb : 0;
+  b.weakChain3Count = opt.absorbable ? AX.weakChain3ForAbsorb : 0;
+  // 첫 흡수 보장(장착 skill 없음)을 피하려고 기본은 skill 이 장착된 전투로 친다
+  if (!opt.firstAbsorb) b.params = { ...b.params, skills: [{ id: 'trait-a1', lineageId: 'lineage-a', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 }] };
   b.riskGained = opt.risk ?? 0;
   finishBattle(exp, b);
 }
 /** 흡수 조건 판정용 전투 결과 */
-const result = (o: { won?: boolean; chain3?: number; finisher?: CombatState['finisher']; weak?: string }) => ({
+const result = (o: { won?: boolean; chain3?: number; weakChain3?: number; skills?: number; finisher?: CombatState['finisher']; weak?: string }) => ({
   status: (o.won ?? true) ? ('won' as const) : ('lost' as const),
   chain3Count: o.chain3 ?? 0,
+  weakChain3Count: o.weakChain3 ?? 0,
+  params: { skills: Array.from({ length: o.skills ?? 1 }) as unknown[] },
   finisher: o.finisher ?? null,
   enemy: { def: { weaknessLineageId: o.weak ?? 'lineage-b' } },
 });
@@ -98,10 +102,37 @@ describe('흡수 가능 조건', () => {
     for (const kind of ['basic-attack', 'special', 'void', 'reflect'] as const) {
       expect(canAbsorb(result({ finisher: { kind, traitId: null, lineageId: null } }))).toBe(false);
     }
-    expect(canAbsorb(result({ chain3: AX.chain3ForAbsorb - 1 }))).toBe(false);
-    expect(absorbReasons(result({ chain3: AX.chain3ForAbsorb }))).toEqual(['chain3']);
-    expect(absorbReasons(result({ chain3: 5, finisher: weakSkill }))).toEqual(['weakness-finisher', 'chain3']);
-    expect(canAbsorb(result({ won: false, chain3: 5, finisher: weakSkill }))).toBe(false);
+    // 약점 계통이 아닌 체인3 은 몇 번이든 불충분 (C.7: 옛 "체인3 2회 이상, 계통 무관" 폐기)
+    expect(canAbsorb(result({ chain3: 9 }))).toBe(false);
+    // 약점 계통 스킬 블록의 체인3 1회 이상
+    expect(canAbsorb(result({ weakChain3: AX.weakChain3ForAbsorb - 1 }))).toBe(false);
+    expect(absorbReasons(result({ weakChain3: AX.weakChain3ForAbsorb }))).toEqual(['weakness-chain3']);
+    expect(absorbReasons(result({ weakChain3: 5, finisher: weakSkill }))).toEqual(['weakness-finisher', 'weakness-chain3']);
+    expect(canAbsorb(result({ won: false, weakChain3: 5, finisher: weakSkill }))).toBe(false);
+  });
+
+  it('첫 흡수 보장: 장착한 skill 특성이 하나도 없으면 조건 없이 가능, 하나라도 있으면 보장 없음 (GDD 3-5 v0.7)', () => {
+    expect(absorbReasons(result({ skills: 0 }))).toEqual(['first-absorb']);
+    expect(canAbsorb(result({ skills: 0, chain3: 0 }))).toBe(true);
+    expect(canAbsorb(result({ skills: 1 }))).toBe(false);
+    expect(absorbReasons(result({ skills: 0, finisher: { kind: 'skill', traitId: 'trait-b1', lineageId: 'lineage-b' } }))).toEqual(['weakness-finisher', 'first-absorb']);
+    // 졌으면 보장도 없다
+    expect(canAbsorb(result({ won: false, skills: 0 }))).toBe(false);
+  });
+
+  it('실제 전투: 약점 계통 스킬 블록 체인3 을 쓰면 weakChain3Count 가 오르고, 다른 계통·기본 블록 체인3 은 오르지 않는다', () => {
+    const b = newBuild();
+    gainTrait(b, 'trait-b1'); // test-a 의 약점 계통 B
+    gainTrait(b, 'trait-a1');
+    const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
+    s.enemy.hp = s.enemy.maxHp * 100;
+    s.tray[0] = { uid: 90, kind: 'skill', traitId: 'trait-a1', chain: 3 };
+    s.tray[1] = { uid: 91, kind: 'skill', traitId: 'trait-b1', chain: 3 };
+    applyInput(s, { type: 'use', cell: 0 });
+    expect([s.chain3Count, s.weakChain3Count]).toEqual([1, 0]);
+    applyInput(s, { type: 'use', cell: 1 });
+    expect([s.chain3Count, s.weakChain3Count]).toEqual([2, 1]);
+    expect(absorbReasons({ ...s, status: 'won' })).toEqual(['weakness-chain3']);
   });
 
   it('실제 전투: 약점 계통 스킬 블록으로 마무리하면 흡수 조건이 된다', () => {
@@ -126,7 +157,7 @@ describe('흡수 가능 조건', () => {
     fightNext(b);
     winWith(b, { absorbable: true });
     expect(b.phase).toBe('absorb');
-    expect(b.absorbOffer!.reasons).toEqual(['chain3']);
+    expect(b.absorbOffer!.reasons).toEqual(['weakness-chain3']);
     expect(b.absorbOffer).not.toBeNull();
     expect(advance(b)).toBeNull(); // 흡수를 고르기 전에는 이동하지 않는다
   });
@@ -689,5 +720,38 @@ describe('종족 설정만 바꿔도 표기가 바뀐다', () => {
     expect(s.appearanceChange).toBe(false);
     expect([h.riskGaugeName, s.riskGaugeName]).toEqual(['광기', '호로화']);
     expect(h.traitKindNames.part).not.toBe(s.traitKindNames.part);
+  });
+});
+
+describe('C.7 흡수 문구와 기준 빌드 봇', () => {
+  it('흡수 조건 안내·이유 문구가 새 조건(약점 계통 마무리 / 약점 계통 체인3 / 첫 흡수 보장)을 말한다', async () => {
+    const { absorbConditionText, reasonText } = await import('../src/ui/absorbView');
+    const hollow = getFaction('hollow');
+    const cond = absorbConditionText(hollow, 'lineage-b');
+    expect(cond).toContain('마무리 일격이 약점 계통');
+    expect(cond).toContain(`${hollow.chainName}3 을 ${AX.weakChain3ForAbsorb}회 이상`);
+    expect(cond).toContain('특성이 없으면 조건 없이 가능');
+    const offer = (reasons: string[]) =>
+      ({ reasons, finisherLineageId: 'lineage-b', chain3Count: 3, weakChain3Count: 1 }) as unknown as Parameters<typeof reasonText>[1];
+    expect(reasonText(hollow, offer(['weakness-finisher']))).toContain('약점 계통');
+    expect(reasonText(hollow, offer(['weakness-chain3']))).toContain(`${hollow.chainName}3 1회`);
+    expect(reasonText(hollow, offer(['first-absorb']))).toContain(`첫 ${hollow.absorbActionName} 보장`);
+  });
+
+  it('기준 빌드(skill 1개 공격)를 쓴 봇: 일반 적은 90%↑, 강적은 승률이 0/100% 로 쏠리지 않는다 (참고 점검 40~97%)', async () => {
+    const { playCombatBot } = await import('../src/engine/combat');
+    const b = newBuild();
+    gainTrait(b, 'trait-c5');
+    const params = buildCombatParams(b);
+    const rate = (id: string) => {
+      let w = 0;
+      for (let seed = 1; seed <= 60; seed++) if (playCombatBot(createCombat(seed, { enemy: getEnemy(id), params })).status === 'won') w++;
+      return w / 60;
+    };
+    expect(rate('test-a')).toBeGreaterThanOrEqual(0.9);
+    expect(rate('test-b')).toBeGreaterThanOrEqual(0.9);
+    const elite = rate('test-elite');
+    expect(elite).toBeGreaterThan(0.4);
+    expect(elite).toBeLessThan(0.97);
   });
 });

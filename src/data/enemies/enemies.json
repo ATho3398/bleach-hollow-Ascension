@@ -31,8 +31,8 @@
       "*": "테스트 강적"
     },
     "class": "elite",
-    "hpInAttacks": 62,
-    "attackInAttacks": 0.16,
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.18,
     "weaknessLineageId": "lineage-a",
     "pattern": {
       "everySeconds": 8,
@@ -41,7 +41,7 @@
         "seal"
       ],
       "castSeconds": 2,
-      "heavyInAttacks": 1.5,
+      "heavyInAttacks": 1.6,
       "sealSeconds": 4,
       "provisional": true
     },
