@@ -126,3 +126,10 @@ GDD 제안(마스터가 반영): 2-1 표에 “놓은 전투 타일이 기본 �
 GDD 제안(마스터가 반영): 4-1 흡수 임계값(4)·희귀 확률·후보 규칙·교체/포기·skill 순환 사용·허기 0 리셋·리스크 환산(×0.25, ×0.55)·돌파 임시 페널티(+0.2/−25/60)·둥지 행동별 수치, 9장 런 로그에 `traitId`·`gainedTraits`·`lostTraits` 필드. (v0.6 의 전투 v2 스킬 블록 체인형(3-5)은 이번 패치에서 건드리지 않았다: 아직 P1 기술 규칙 위에 흡수 기술을 연결했다.)
 
 사용 모델: Sonnet (Opus 승격 없음).
+
+**코딩4가 바꿀 지점 (전투 v2 교체용, 마스터 공지 반영)**
+- 흡수 가능 조건: `src/engine/absorb/offer.ts` 의 `canAbsorb(absorbGained)` 한 곳. 호출은 `expedition.ts` `finishBattle` 한 곳(`canAbsorb(battle.absorbGained)`). 임계값은 `BALANCE.provisional.absorb.threshold`.
+- 리스크 입력(공허 매칭 → 리스크): `expedition.ts` `finishBattle` 의 `changeRisk(exp, battle.riskGained * RX.voidMatchFactor, 'void-match')` 한 줄. 환산 계수 `voidMatchFactor`. 5바퀴 이후(`advance`)·흡수(`chooseAbsorb`)·놓아주기·휴식 입력은 전투와 무관해서 그대로 쓴다.
+- 전투 → 빌드 연결: `absorb/build.ts` 의 `buildBattleParams`(→ `BattleParams.skills`·`damage/shield/spiritEffectMultiplier`)와 `battle.ts` `useSkill` 의 장착 skill 순환. skill 특성 형태(`TraitDef.skillPowerInMatches` 위력 숫자)는 블록 체인형에 맞춰 다시 정해야 한다.
+- 전투 기록 입력: `BattleState.absorbGained`·`riskGained`·`skillsUsed`(→ `buildBattleRecord`). 새 전투가 같은 이름으로 채우면 위 연결은 그대로 동작한다.
+- 그대로 쓰는 것: 슬롯·계통 보너스·특성 후보·희귀·리스크 게이지·안정 수치·돌파·런 로그·원정/둥지 연결.
