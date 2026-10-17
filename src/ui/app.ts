@@ -4,19 +4,21 @@ import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
 import { pickFaction, type EnemyDef } from '../data/schema';
 import { tileName } from '../data/tiles';
-import { buildBattleRecord, createBattle, type BattleState } from '../engine/battle';
-import { buildBattleParams, canAbsorb } from '../engine/absorb';
+import { buildBattleRecord, createCombat, elapsedSeconds, type CombatState } from '../engine/combat';
+import { absorbReasons, buildCombatParams } from '../engine/absorb';
 import { createExpedition, drainEvents, finishBattle, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
-import { TILE_ROLES, type FactionConfig } from '../engine/faction';
+import type { FactionConfig } from '../engine/faction';
 import {
   loadSave, newSaveData, nextRunId, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import { versionLabel } from '../version';
 import { traitName } from '../data/traits';
+import { lineageName } from '../data/lineages';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { el, mountScreen } from './dom';
 import { battleLabels, endReasonText } from './labels';
+import { absorbConditionText } from './absorbView';
 import { expeditionView } from './expeditionView';
 import { nestView } from './nestView';
 
@@ -107,7 +109,7 @@ export function startApp(root: HTMLElement): void {
     go.onclick = resume;
     mount(
       el('div', 'breakthrough', faction.breakthroughText),
-      el('p', 'dim', `임시 페널티: 이 원정 동안 공허 타일이 크게 늘고, ${faction.nestName}에 돌아오면 ${faction.stabilityName}이(가) 떨어진다.`),
+      el('p', 'dim', `임시 페널티: 이 원정 동안 공허 블록이 크게 늘고, ${faction.nestName}에 돌아오면 ${faction.stabilityName}이(가) 떨어진다.`),
       go,
     );
   }
@@ -143,13 +145,13 @@ export function startApp(root: HTMLElement): void {
     );
   }
 
-  // ── 전투 연습 (P1 화면 그대로) ──
+  // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
     const labels = battleLabels(faction);
     const list = el('div', 'stack');
     for (const enemy of ENEMIES) {
       const name = pickFaction(enemy.name, faction.id);
-      const b = el('button', '', `${name} (${enemy.class === 'elite' ? '강적' : '일반'}) — 약점 ${labels.tile[enemy.weakness]}`);
+      const b = el('button', '', `${name} (${enemy.class === 'elite' ? '강적' : '일반'}) — 약점 ${lineageName(enemy.weaknessLineageId, faction.id)}`);
       b.onclick = () => practiceBattle(faction, enemy);
       list.append(b);
     }
@@ -164,7 +166,7 @@ export function startApp(root: HTMLElement): void {
   }
 
   function practiceBattle(faction: FactionConfig, enemy: EnemyDef): void {
-    const s = createBattle({ seed: Math.floor(Math.random() * 2 ** 32), enemy, params: save ? buildBattleParams(save.build) : undefined });
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params: save ? buildCombatParams(save.build) : undefined });
     battleView(root, faction, s, {
       onQuit: () => practiceScreen(faction),
       onEnd: (done) => {
@@ -177,24 +179,31 @@ export function startApp(root: HTMLElement): void {
     });
   }
 
-  function practiceResult(faction: FactionConfig, enemy: EnemyDef, s: BattleState): void {
+  function practiceResult(faction: FactionConfig, enemy: EnemyDef, s: CombatState): void {
     const labels = battleLabels(faction);
     const won = s.status === 'won';
-    const rows = TILE_ROLES.map((r) => `<tr><td>${labels.tile[r]} 매칭</td><td>${s.matchesByRole[r]}회</td></tr>`).join('');
+    const reasons = absorbReasons(s);
+    const fin = s.finisher;
+    const finText = !fin ? '-' : fin.kind === 'skill' ? `${fin.traitId && fin.lineageId ? traitName(fin.traitId, faction.id) : labels.basicBlock}${fin.lineageId ? ` (${lineageName(fin.lineageId, faction.id)})` : ''}` : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', skill: '' }[fin.kind];
     const detail = el('div');
     detail.innerHTML = `<table>
-      <tr><td>턴 수</td><td>${s.turns}턴</td></tr>${rows}
-      <tr><td>${labels.riskGauge} 상승(공허 매칭)</td><td>+${s.riskGained}</td></tr>
-      <tr><td>${labels.absorbGauge}</td><td>${s.absorbGained.toFixed(1)} (${canAbsorb(s.absorbGained) ? `${faction.absorbActionName} 가능` : `${faction.absorbActionName} 불가`}, 연습에서는 쓰지 않음)</td></tr>
-      <tr><td>쓴 기술</td><td>${s.skillsUsed.length}회</td></tr></table>`;
+      <tr><td>전투 시간</td><td>${elapsedSeconds(s).toFixed(1)}초</td></tr>
+      <tr><td>블록 사용 (${labels.chain}1 / 2 / 3)</td><td>${s.blocksByChain.join(' / ')}</td></tr>
+      <tr><td>${labels.chain}3 발동</td><td>${s.chain3Count}회</td></tr>
+      <tr><td>강공격 막기</td><td>${s.guardSuccesses}회</td></tr>
+      <tr><td>${labels.specialBlock}</td><td>${s.specialUsed ? '사용' : '안 씀'}</td></tr>
+      <tr><td>${labels.voidBlock} (${labels.riskGauge} 상승)</td><td>${s.voidUsed}회 (+${s.riskGained})</td></tr>
+      <tr><td>마무리 일격</td><td>${finText}</td></tr>
+      <tr><td>${faction.absorbActionName}</td><td>${reasons.length > 0 ? '가능' : '불가'} (연습에서는 쓰지 않음)</td></tr></table>`;
     const again = el('button', 'primary', '같은 상대와 다시');
     again.onclick = () => practiceBattle(faction, enemy);
     const menu = el('button', '', '연습 메뉴로');
     menu.onclick = () => practiceScreen(faction);
     mount(
       el('div', `result-title ${won ? 'win' : 'lose'}`, won ? '승리' : labels.defeatState),
-      el('p', 'dim', won ? `${pickFaction(enemy.name, faction.id)}을(를) 쓰러뜨렸다.` : s.lossReason === 'timeout' ? '턴 한도를 넘겼다.' : '체력이 다했다.'),
+      el('p', 'dim', won ? `${pickFaction(enemy.name, faction.id)}을(를) 쓰러뜨렸다.` : s.lossReason === 'timeout' ? '시간 제한을 넘겼다.' : '체력이 다했다.'),
       detail,
+      el('small', 'dim', absorbConditionText(faction, enemy.weaknessLineageId)),
       el('small', 'dim', `시드 ${s.seed} · 기록이 런 로그에 저장됨`),
       again,
       menu,

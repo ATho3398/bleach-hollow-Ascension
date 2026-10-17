@@ -1,13 +1,9 @@
 // 종족 설정(faction config) 타입과 검증. 종족 차이는 전부 이 설정에서 읽는다 (CLAUDE.md 규칙 2).
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
-/** 5색 타일의 역할. 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 (GDD 3-1) */
-export const TILE_ROLES = ['damage', 'spirit', 'shield', 'absorb', 'risk'] as const;
-export type TileRole = (typeof TILE_ROLES)[number];
-
-/** 약점이 될 수 있는 역할: 데미지·영력·실드 3색만 (GDD 3-4). 흡수·공허는 불가 */
-export const WEAKNESS_ROLES = ['damage', 'spirit', 'shield'] as const satisfies readonly TileRole[];
-export type WeaknessRole = (typeof WEAKNESS_ROLES)[number];
+/** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
+export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
+export type BlockRole = (typeof BLOCK_ROLES)[number];
 
 /** 둥지 행동 종류. 이름은 종족 설정이, 효과는 엔진(nest.ts)이 정한다 */
 export const NEST_ACTIONS = ['feed', 'sleep', 'pet'] as const;
@@ -26,8 +22,16 @@ export interface FactionConfig {
   tierNames: [string, string, string, string, string];
   /** 등급 4단계 이름 (GDD 8-2) */
   rankNames: [string, string, string, string];
-  /** 타일 역할 → 종족별 표시 이름 (GDD 3-1) */
-  tileNames: Record<TileRole, string>;
+  /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 필살 블록 / 공허 블록 */
+  skillBlockName: string;
+  specialBlockName: string;
+  voidBlockName: string;
+  /** 체인 표기 (예: "체인") */
+  chainName: string;
+  /** 필살 블록을 채우는 SP 게이지 이름 */
+  spName: string;
+  /** 스킬 블록 역할 → 종족별 표시 이름 (공격 / 막기 / 회복) */
+  roleNames: Record<BlockRole, string>;
   /** 리스크 게이지 이름 (GDD 5장) */
   riskGaugeName: string;
   /** 흡수 행위 이름 (GDD 4장) */
@@ -38,7 +42,7 @@ export interface FactionConfig {
   rankMode: RankMode;
   /** 패배 상태 이름 (GDD 1장) */
   defeatStateName: string;
-  /** 육성 1단계부터 쓰는 기본 기술 이름: 호로=본체 능력, 사신=시해 (GDD 4장). 흡수 특성 기술(P3)이 생기기 전까지의 임시 기술 */
+  /** 육성 1단계부터 쓰는 기본 기술 이름: 호로=본체 능력, 사신=시해 (GDD 4장). 슬롯에 skill 특성이 없을 때 나오는 기본 블록 이름 */
   basicSkillName: string;
   /** 안정 수치 이름: 호로 자아 / 사신 영압 안정도 (GDD 4장). 컨디션·허기와 별개 */
   stabilityName: string;
@@ -70,14 +74,14 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText']) {
+  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'voidBlockName', 'chainName', 'spName']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
   if (!isStringTuple(r.rankNames, 4)) errors.push('rankNames: 문자열 4개여야 한다');
-  const tn = (r.tileNames ?? {}) as Record<string, unknown>;
-  for (const role of TILE_ROLES) {
-    if (!isString(tn[role])) errors.push(`tileNames.${role}: 비어 있지 않은 문자열이어야 한다`);
+  const rn = (r.roleNames ?? {}) as Record<string, unknown>;
+  for (const role of BLOCK_ROLES) {
+    if (!isString(rn[role])) errors.push(`roleNames.${role}: 비어 있지 않은 문자열이어야 한다`);
   }
   const tk = (r.traitKindNames ?? {}) as Record<string, unknown>;
   for (const k of ['skill', 'passive', 'part']) {

@@ -3,14 +3,29 @@
 import { BALANCE } from '../../config/balance';
 import { TRAITS } from '../../data/traits';
 import type { EnemyDef } from '../../data/schema';
-import { nextInt, type Rng } from '../battle/rng';
+import type { CombatState } from '../combat/combat';
+import { nextInt, type Rng } from '../rng';
 import type { BuildState } from './build';
 
 const AX = BALANCE.provisional.absorb;
 
-/** 전투에서 모은 흡수 게이지가 임계값 이상이면 승리 후 흡수할 수 있다 (GDD 4-1) */
-export function canAbsorb(absorbGained: number): boolean {
-  return absorbGained >= AX.threshold;
+/** 흡수 가능 이유: 마무리 일격이 약점 계통 스킬 / 그 전투에서 체인3 을 2회 이상 (GDD 3-5, 임시 수치) */
+export type AbsorbReason = 'weakness-finisher' | 'chain3';
+
+/** 전투 결과에서 흡수 조건 판정에 쓰는 부분 */
+export type AbsorbInput = Pick<CombatState, 'status' | 'finisher' | 'chain3Count'> & { enemy: { def: { weaknessLineageId: string } } };
+
+export function absorbReasons(c: AbsorbInput): AbsorbReason[] {
+  if (c.status !== 'won') return [];
+  const out: AbsorbReason[] = [];
+  if (c.finisher?.kind === 'skill' && c.finisher.lineageId !== null && c.finisher.lineageId === c.enemy.def.weaknessLineageId) out.push('weakness-finisher');
+  if (c.chain3Count >= AX.chain3ForAbsorb) out.push('chain3');
+  return out;
+}
+
+/** 이긴 전투가 흡수 조건을 채웠는가 (옛 흡수 게이지 임계값은 폐기, C.6) */
+export function canAbsorb(c: AbsorbInput): boolean {
+  return absorbReasons(c).length > 0;
 }
 
 export interface AbsorbOffer {
@@ -19,11 +34,15 @@ export interface AbsorbOffer {
   /** 희귀 개체: 흡수 화면에서 미리 표시되고 희귀 특성이 확정 후보로 나온다 */
   rare: boolean;
   elite: boolean;
-  /** 적 강함(hpInMatches, 바퀴 강화 포함): 리스크 상승량의 기준 */
+  /** 적 강함(hpInAttacks, 바퀴 강화 포함): 리스크 상승량의 기준 */
   strength: number;
   /** 특성 후보(1~2개). 비어 있으면 얻을 특성이 없다(흡수 효과만) */
   candidates: string[];
-  absorbGained: number;
+  /** 흡수 조건을 채운 이유 (화면 문구용) */
+  reasons: AbsorbReason[];
+  /** 그 전투의 체인3 횟수와 마무리 일격 계통 (화면 문구용) */
+  chain3Count: number;
+  finisherLineageId: string | null;
 }
 
 function pick<T>(rng: Rng, list: T[]): T {
@@ -31,7 +50,7 @@ function pick<T>(rng: Rng, list: T[]): T {
 }
 
 /** 후보 만들기: 그 계통의 아직 없는 특성 중에서. 희귀 개체는 희귀 특성이 첫 후보로 확정, 일반 후보는 희귀 아닌 특성에서 무작위 */
-export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, absorbGained: number): AbsorbOffer {
+export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput): AbsorbOffer {
   const elite = enemy.class === 'elite';
   const rare = enemy.rare === true;
   const pool = TRAITS.filter((t) => t.lineageId === enemy.lineageId && !build.owned.includes(t.id));
@@ -47,5 +66,15 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, absorbG
     candidates.push(t.id);
     normal.splice(normal.indexOf(t), 1);
   }
-  return { enemyId: enemy.id, lineageId: enemy.lineageId, rare, elite, strength: enemy.hpInMatches, candidates, absorbGained };
+  return {
+    enemyId: enemy.id,
+    lineageId: enemy.lineageId,
+    rare,
+    elite,
+    strength: enemy.hpInAttacks,
+    candidates,
+    reasons: absorbReasons(combat),
+    chain3Count: combat.chain3Count,
+    finisherLineageId: combat.finisher?.lineageId ?? null,
+  };
 }

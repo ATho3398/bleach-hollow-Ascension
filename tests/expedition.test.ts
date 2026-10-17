@@ -7,7 +7,7 @@ import {
   playExpedition, startBattle, summarize, buildRunRecord, type ExpeditionState,
 } from '../src/engine/expedition';
 import { applyIdle, doNestAction, newNest } from '../src/engine/nest';
-import { createBattle } from '../src/engine/battle';
+import { createCombat } from '../src/engine/combat';
 import { getEnemy } from '../src/data/enemies';
 import { loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { emptyRunLog } from '../src/engine/runLog';
@@ -220,8 +220,8 @@ describe('허기', () => {
     const a = grab(1);
     const b = grab(4);
     expect(b.id).toBe(a.id);
-    expect(b.hpInMatches).toBeGreaterThan(a.hpInMatches);
-    expect(b.attackInMatches).toBeGreaterThan(a.attackInMatches);
+    expect(b.hpInAttacks).toBeGreaterThan(a.hpInAttacks);
+    expect(b.attackInAttacks).toBeGreaterThan(a.attackInAttacks);
   });
 });
 
@@ -309,7 +309,7 @@ describe('타일 배치', () => {
     expect(seen.find((x) => x.cell === 4)).toMatchObject({ elite: false });
   });
 
-  it('환경 타일은 전투 조건을 바꾼다 (전투 파라미터)', () => {
+  it('환경 타일 4종은 새 전투 조건을 바꾼다: 안개=트레이 섞임, 황무지=공격 ×1.3, 결계=받는 피해 경감, 폐가=공허 블록 증가', () => {
     const run = (tile: string) => {
       const e = mk({ seed: 34, condition: 100 });
       e.hand = [tile];
@@ -318,20 +318,25 @@ describe('타일 배치', () => {
       expect(e.pending!.tileId).toBe(tile);
       return startBattle(e).params;
     };
-    expect(run('env-fog').reshuffleEachTurn).toBe(true);
-    expect(run('env-wasteland').damageEffectMultiplier).toBeGreaterThan(1);
-    expect(run('env-barrier').shieldEffectMultiplier).toBeGreaterThan(1);
-    expect(run('env-ruin').riskSpawnBonus).toBeGreaterThan(0);
+    const T = BALANCE.provisional.tiles;
+    const base = run('prey-nest-a');
+    expect(run('env-fog').trayShuffleSeconds).toBe(T.reshuffle.trayShuffleSeconds);
+    expect(run('env-wasteland').playerPowerMultiplier).toBeCloseTo(T.power.playerPowerMultiplier);
+    expect(run('env-barrier').damageTakenMultiplier).toBeCloseTo(T.shield.damageTakenMultiplier);
+    expect(run('env-ruin').voidChanceBonus).toBeCloseTo(base.voidChanceBonus + T.void.voidChanceBonus);
+    expect(base.trayShuffleSeconds).toBe(0);
+    expect(base.playerPowerMultiplier).toBe(1);
+    expect(base.damageTakenMultiplier).toBe(1);
   });
 });
 
 describe('컨디션과 둥지', () => {
-  it('컨디션이 나쁘면 전투 시작 보드에 공허가 늘 확률 가산이 붙는다', () => {
+  it('컨디션이 나쁘면 전투의 공허 블록 생성 확률 가산이 붙는다', () => {
     const grab = (condition: number) => {
       const e = mk({ seed: 40, condition });
       e.wildCells = [1];
       advance(e);
-      return startBattle(e).params.riskSpawnBonus;
+      return startBattle(e).params.voidChanceBonus;
     };
     expect(grab(100)).toBe(0);
     expect(grab(20)).toBeGreaterThan(grab(80));
@@ -386,12 +391,12 @@ describe('시드 결정성', () => {
     expect(buildRunRecord(e).laps).toBe(3);
   });
 
-  it('P1 전투 엔진을 그대로 쓴다: 원정 전투 상태는 createBattle 결과와 같다', () => {
+  it('원정 전투는 전투 엔진 v2 그대로다: 원정 전투 상태는 createCombat 결과와 같다', () => {
     const e = mk({ seed: 80 });
     e.wildCells = [1];
     advance(e);
     const p = e.pending!;
-    expect(startBattle(e)).toEqual(createBattle({ seed: p.seed, enemy: p.enemy, params: p.params }));
+    expect(startBattle(e)).toEqual(createCombat(p.seed, { enemy: p.enemy, params: p.params }));
     expect(getEnemy(p.enemy.id)).toBeDefined();
   });
 });

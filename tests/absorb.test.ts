@@ -6,11 +6,11 @@ import { getFaction } from '../src/data/factions';
 import { LINEAGES } from '../src/data/lineages';
 import { TRAITS, getTrait, traitDescription } from '../src/data/traits';
 import {
-  absorbRisk, buildBattleParams, buildOffer, canAbsorb, changeRisk, completedLineages, equippedSkills, gainTrait, lateLapRisk, newBuild,
+  absorbReasons, absorbRisk, buildCombatParams, buildOffer, canAbsorb, changeRisk, completedLineages, equippedSkills, gainTrait, lateLapRisk, newBuild,
   passiveMultipliers, setSlot, settleRiskToNest, type BuildState,
 } from '../src/engine/absorb';
-import { BASIC_SKILL_ID, createBattle, useSkill, type BattleState } from '../src/engine/battle';
-import { createRng } from '../src/engine/battle/rng';
+import { BASIC_SKILL_ID, applyInput, blockSources, createCombat, type CombatState } from '../src/engine/combat';
+import { createRng } from '../src/engine/rng';
 import {
   advance, chooseAbsorb, chooseContinue, chooseRelease, chooseReturn, createExpedition, drainEvents, finishBattle, finishRest, placeTile,
   playExpedition, startBattle, summarize, type ExpeditionState,
@@ -28,15 +28,24 @@ const lin = (id: string) => TRAITS.filter((t) => t.lineageId === id).map((t) => 
 const A = lin('lineage-a');
 const B = lin('lineage-b');
 
-/** 다음 전투를 이긴 것으로 치고 끝낸다. absorb: 그 전투의 흡수 게이지, risk: 공허 리스크 값 */
-function winWith(exp: ExpeditionState, opt: { absorb?: number; risk?: number } = {}): void {
+/** 다음 전투를 이긴 것으로 치고 끝낸다. absorbable: 흡수 조건을 채움(체인3 횟수), risk: 공허 블록 리스크 값 */
+function winWith(exp: ExpeditionState, opt: { absorbable?: boolean; risk?: number } = {}): void {
   const b = startBattle(exp);
   b.enemy.hp = 0;
   b.status = 'won';
-  b.absorbGained = opt.absorb ?? 0;
+  b.finisher = { kind: 'basic-attack', traitId: null, lineageId: null };
+  b.chain3Count = opt.absorbable ? AX.chain3ForAbsorb : 0;
   b.riskGained = opt.risk ?? 0;
   finishBattle(exp, b);
 }
+/** 흡수 조건 판정용 전투 결과 */
+const result = (o: { won?: boolean; chain3?: number; finisher?: CombatState['finisher']; weak?: string }) => ({
+  status: (o.won ?? true) ? ('won' as const) : ('lost' as const),
+  chain3Count: o.chain3 ?? 0,
+  finisher: o.finisher ?? null,
+  enemy: { def: { weaknessLineageId: o.weak ?? 'lineage-b' } },
+});
+const NO = result({});
 function fightNext(exp: ExpeditionState): void {
   exp.wildCells = [exp.pos + 1];
   advance(exp);
@@ -45,7 +54,7 @@ function fightNext(exp: ExpeditionState): void {
 function toAbsorb(exp: ExpeditionState, enemy?: Partial<EnemyDef>): void {
   fightNext(exp);
   if (enemy) Object.assign(exp.pending!.enemy, enemy);
-  winWith(exp, { absorb: AX.threshold });
+  winWith(exp, { absorbable: true });
   expect(exp.phase).toBe('absorb');
 }
 
@@ -79,21 +88,45 @@ describe('임시 데이터', () => {
 });
 
 describe('흡수 가능 조건', () => {
-  it('흡수 게이지가 임계값 이상일 때만 가능하다', () => {
-    expect(canAbsorb(AX.threshold - 0.01)).toBe(false);
-    expect(canAbsorb(AX.threshold)).toBe(true);
+  it('마무리 일격이 약점 계통 스킬이거나, 체인3 을 2회(임시) 이상 발동했을 때만 가능하다 (GDD 3-5)', () => {
+    const weakSkill = { kind: 'skill' as const, traitId: 'trait-b1', lineageId: 'lineage-b' };
+    expect(canAbsorb(NO)).toBe(false);
+    expect(absorbReasons(result({ finisher: weakSkill }))).toEqual(['weakness-finisher']);
+    // 약점이 아닌 계통 스킬, 기본 블록(계통 없음), 기본 공격·필살·공허로 마무리하면 조건이 아니다
+    expect(canAbsorb(result({ finisher: { kind: 'skill', traitId: 'trait-a1', lineageId: 'lineage-a' } }))).toBe(false);
+    expect(canAbsorb(result({ finisher: { kind: 'skill', traitId: BASIC_SKILL_ID, lineageId: null } }))).toBe(false);
+    for (const kind of ['basic-attack', 'special', 'void', 'reflect'] as const) {
+      expect(canAbsorb(result({ finisher: { kind, traitId: null, lineageId: null } }))).toBe(false);
+    }
+    expect(canAbsorb(result({ chain3: AX.chain3ForAbsorb - 1 }))).toBe(false);
+    expect(absorbReasons(result({ chain3: AX.chain3ForAbsorb }))).toEqual(['chain3']);
+    expect(absorbReasons(result({ chain3: 5, finisher: weakSkill }))).toEqual(['weakness-finisher', 'chain3']);
+    expect(canAbsorb(result({ won: false, chain3: 5, finisher: weakSkill }))).toBe(false);
   });
 
-  it('원정 전투 승리 후 임계값 미달이면 흡수 화면 없이 이동, 이상이면 흡수 화면', () => {
+  it('실제 전투: 약점 계통 스킬 블록으로 마무리하면 흡수 조건이 된다', () => {
+    const b = newBuild();
+    gainTrait(b, 'trait-b1'); // test-a 의 약점 계통 B 스킬
+    const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
+    s.tray[0] = { uid: 99, kind: 'skill', traitId: 'trait-b1', chain: 1 };
+    s.enemy.hp = 1;
+    expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
+    expect(s.status).toBe('won');
+    expect(s.finisher).toEqual({ kind: 'skill', traitId: 'trait-b1', lineageId: 'lineage-b' });
+    expect(absorbReasons(s)).toEqual(['weakness-finisher']);
+  });
+
+  it('원정 전투 승리 후 조건 미달이면 흡수 화면 없이 이동, 채우면 흡수 화면', () => {
     const a = mk({ seed: 3 });
     fightNext(a);
-    winWith(a, { absorb: AX.threshold - 1 });
+    winWith(a, { absorbable: false });
     expect(a.phase).toBe('moving');
     expect(a.absorbOffer).toBeNull();
     const b = mk({ seed: 3 });
     fightNext(b);
-    winWith(b, { absorb: AX.threshold });
+    winWith(b, { absorbable: true });
     expect(b.phase).toBe('absorb');
+    expect(b.absorbOffer!.reasons).toEqual(['chain3']);
     expect(b.absorbOffer).not.toBeNull();
     expect(advance(b)).toBeNull(); // 흡수를 고르기 전에는 이동하지 않는다
   });
@@ -104,7 +137,7 @@ describe('흡수 가능 조건', () => {
     const b = startBattle(exp);
     b.status = 'lost';
     b.lossReason = 'hp';
-    b.absorbGained = 99;
+    b.chain3Count = 9;
     finishBattle(exp, b);
     expect(exp.phase).toBe('ended');
     expect(exp.absorbOffer).toBeNull();
@@ -181,15 +214,16 @@ describe('계통 보너스와 특성 효과', () => {
     return b;
   };
 
-  it('슬롯 안 같은 계통 3개면 그 계통 기술 위력이 +50%', () => {
+  it('슬롯 안 같은 계통 3개면 그 계통 스킬 블록 위력이 +50%', () => {
     const two = build(A.slice(0, 2));
     expect(completedLineages(two)).toEqual([]);
     const three = build(A.slice(0, 3));
     expect(completedLineages(three)).toEqual(['lineage-a']);
     const skillId = A.find((id) => getTrait(id).kind === 'skill')!;
-    const base = getTrait(skillId).skillPowerInMatches!;
-    expect(equippedSkills(two).find((s) => s.id === skillId)!.powerInMatches).toBe(base);
-    expect(equippedSkills(three).find((s) => s.id === skillId)!.powerInMatches).toBeCloseTo(base * 1.5);
+    const one = equippedSkills(two).find((s) => s.id === skillId)!;
+    expect(one.powerInAttacks).toBe(getTrait(skillId).powerInAttacks);
+    expect(one.powerMultiplier).toBe(1);
+    expect(equippedSkills(three).find((s) => s.id === skillId)!.powerMultiplier).toBeCloseTo(1 + AX.lineageSkillBonus);
   });
 
   it('다른 계통이 섞이면 보너스가 없다', () => {
@@ -197,55 +231,62 @@ describe('계통 보너스와 특성 효과', () => {
     expect(completedLineages(mix)).toEqual([]);
   });
 
-  it('passive 는 매칭 효과 배율, part 는 전투에 영향이 없다', () => {
+  it('passive 는 기본 공격 위력·속도·받는 피해 자동 배율, part 는 전투에 영향이 없다', () => {
     const passiveId = A.find((id) => getTrait(id).kind === 'passive')!;
     const partId = A.find((id) => getTrait(id).kind === 'part')!;
     const only = build([passiveId, partId]);
-    expect(passiveMultipliers(only).damage).toBeCloseTo(getTrait(passiveId).passive!.multiplier);
-    expect(passiveMultipliers(build([partId]))).toEqual({ damage: 1, spirit: 1, shield: 1 });
+    expect(getTrait(passiveId).passive!.stat).toBe('attackPower');
+    expect(passiveMultipliers(only).attackPower).toBeCloseTo(getTrait(passiveId).passive!.multiplier);
+    expect(passiveMultipliers(build([partId]))).toEqual({ attackPower: 1, attackSpeed: 1, damageTaken: 1 });
     expect(equippedSkills(only)).toEqual([]);
-    const p = buildBattleParams(only);
-    expect(p.damageEffectMultiplier).toBeGreaterThan(1);
+    const p = buildCombatParams(only);
+    expect(p.attackPowerMultiplier).toBeGreaterThan(1);
+    expect(buildCombatParams(build(['trait-b2'])).damageTakenMultiplier).toBeLessThan(1);
+    expect(buildCombatParams(build(['trait-c2'])).attackSpeedMultiplier).toBeGreaterThan(1);
   });
 });
 
-describe('skill 특성이 전투 기술에 반영된다', () => {
-  const enemy = getEnemy('test-a');
-  const cast = (params = {}): { s: BattleState; damage: number } => {
-    const s = createBattle({ seed: 1, enemy, params });
-    s.spiritMatches = s.params.spiritMatchesPerSkill;
-    const r = useSkill(s);
-    return { s, damage: r.phases[0]!.damageDealt };
+describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
+  const enemy = getEnemy('test-a'); // 약점 계통 B
+  /** 트레이 0번 칸에 블록을 놓고 써서 피해를 잰다 */
+  const fire = (params: Parameters<typeof createCombat>[1]['params'], traitId: string, chain = 1): { s: CombatState; damage: number } => {
+    const s = createCombat(1, { enemy, params });
+    s.tray[0] = { uid: 99, kind: 'skill', traitId, chain };
+    const before = s.enemy.hp;
+    applyInput(s, { type: 'use', cell: 0 });
+    return { s, damage: before - s.enemy.hp };
   };
 
-  it('장착한 skill 이 없으면 기본 기술', () => {
-    const { s, damage } = cast();
+  it('장착한 skill 이 없으면 기본 블록 하나가 생성원이다', () => {
+    const src = blockSources(createCombat(1, { enemy }).params);
+    expect(src.map((x) => x.id)).toEqual([BASIC_SKILL_ID]);
+    const { s, damage } = fire({}, BASIC_SKILL_ID);
     expect(s.skillsUsed).toEqual([BASIC_SKILL_ID]);
-    expect(damage).toBe(s.params.skillPowerInMatches * s.params.playerMatchDamage);
+    expect(damage).toBeCloseTo(s.params.basicBlockPowerInAttacks * s.params.playerAttackDamage);
   });
 
-  it('장착한 skill 특성의 위력과 id 로 발동하고, 여럿이면 돌아가며 쓴다 (skillsUsed 는 실제 특성 id)', () => {
+  it('장착한 skill 특성마다 역할·위력·추가 효과를 가진 블록 생성원이 되고, skillsUsed 는 실제 특성 id', () => {
     const skills = A.filter((id) => getTrait(id).kind === 'skill');
     expect(skills.length).toBeGreaterThanOrEqual(2);
     const b = newBuild();
     for (const id of skills) gainTrait(b, id);
-    const params = buildBattleParams(b);
-    const { s, damage } = cast(params);
+    const params = buildCombatParams(b);
+    expect(params.skills!.map((x) => x.id)).toEqual(skills.filter((id) => b.slots.includes(id)));
+    expect(params.skills!.every((x) => ['attack', 'guard', 'heal'].includes(x.role) && x.chainBonus.value > 0)).toBe(true);
+    const { s, damage } = fire(params, skills[0]!);
     expect(s.skillsUsed).toEqual([skills[0]]);
-    expect(damage).toBe(getTrait(skills[0]!).skillPowerInMatches! * s.params.playerMatchDamage);
-    s.spiritMatches = s.params.spiritMatchesPerSkill;
-    useSkill(s);
-    expect(s.skillsUsed).toEqual([skills[0], skills[1]]);
+    // 같은 계통 3개라 계통 보너스(위력 배율)가 곱해진다
+    expect(damage).toBeCloseTo(getTrait(skills[0]!).powerInAttacks! * params.skills![0]!.powerMultiplier * s.params.playerAttackDamage);
   });
 
-  it('계통 보너스가 켜지면 기술 피해가 1.5배', () => {
+  it('계통 보너스가 켜지면 블록 위력이 1.5배', () => {
     const skillId = A.find((id) => getTrait(id).kind === 'skill')!;
     const one = newBuild();
     gainTrait(one, skillId);
     const full = newBuild();
     for (const id of A.slice(0, 3)) gainTrait(full, id);
-    const d1 = cast({ ...buildBattleParams(one), damageEffectMultiplier: 1 }).damage;
-    const d3 = cast({ ...buildBattleParams(full), damageEffectMultiplier: 1 }).damage;
+    const d1 = fire({ ...buildCombatParams(one), attackPowerMultiplier: 1 }, skillId).damage;
+    const d3 = fire({ ...buildCombatParams(full), attackPowerMultiplier: 1 }, skillId).damage;
     expect(d3).toBeCloseTo(d1 * 1.5);
   });
 
@@ -262,7 +303,7 @@ describe('희귀 개체', () => {
   it('희귀 개체는 계통의 희귀 특성이 확정 후보로 나온다 (여러 시드)', () => {
     for (const lineageId of ['lineage-a', 'lineage-b', 'lineage-c']) {
       for (let seed = 1; seed <= 30; seed++) {
-        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), lineageId, rare: true }, newBuild(), 5);
+        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), lineageId, rare: true }, newBuild(), NO);
         expect(offer.rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).lineageId).toBe(lineageId);
@@ -274,13 +315,13 @@ describe('희귀 개체', () => {
     const build = newBuild();
     gainTrait(build, A[0]!);
     for (let seed = 1; seed <= 30; seed++) {
-      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), lineageId: 'lineage-a', rare: false }, build, 5);
+      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), lineageId: 'lineage-a', rare: false }, build, NO);
       expect(offer.rare).toBe(false);
       expect(offer.candidates.length).toBeGreaterThanOrEqual(1);
       expect(offer.candidates.length).toBeLessThanOrEqual(2);
       expect(offer.candidates.every((id) => !getTrait(id).rare && id !== A[0])).toBe(true);
     }
-    expect(buildOffer(createRng(1), { ...getEnemy('test-elite'), rare: false }, newBuild(), 5).candidates).toHaveLength(AX.candidatesElite);
+    expect(buildOffer(createRng(1), { ...getEnemy('test-elite'), rare: false }, newBuild(), NO).candidates).toHaveLength(AX.candidatesElite);
   });
 
   it('조우한 적의 희귀 여부는 시드로 정해지고 흡수 제안에 그대로 실린다', () => {
@@ -290,7 +331,7 @@ describe('희귀 개체', () => {
       fightNext(exp);
       const rare = exp.pending!.enemy.rare === true;
       rares.add(rare);
-      winWith(exp, { absorb: AX.threshold });
+      winWith(exp, { absorbable: true });
       expect(exp.absorbOffer!.rare).toBe(rare);
     }
     expect(rares).toEqual(new Set([true, false]));
@@ -319,7 +360,7 @@ describe('흡수의 효과', () => {
     // 한 바퀴 안에 여러 번 이기고 흡수해도 완주 보상 자리가 남는다
     for (let i = 0; i < 3; i++) {
       fightNext(exp);
-      winWith(exp, { absorb: AX.threshold });
+      winWith(exp, { absorbable: true });
       chooseAbsorb(exp, null);
     }
     expect(exp.tilesThisLap).toBeLessThanOrEqual(BALANCE.expedition.tilesPerLap.max - 1);
@@ -343,11 +384,18 @@ describe('흡수의 효과', () => {
 });
 
 describe('리스크 게이지', () => {
-  it('공허 매칭이 게이지를 올린다 (전투의 riskGained × 환산 계수)', () => {
+  it('공허 블록 사용이 게이지를 올린다 (전투의 riskGained = 사용 횟수 × perVoidBlock, 그대로 반영)', () => {
+    const s = createCombat(1, { enemy: getEnemy('test-a') });
+    s.tray[0] = { uid: 98, kind: 'void', traitId: null, chain: 1 };
+    s.tray[1] = { uid: 99, kind: 'void', traitId: null, chain: 1 };
+    applyInput(s, { type: 'use', cell: 0 });
+    applyInput(s, { type: 'use', cell: 1 });
+    expect(s.voidUsed).toBe(2);
+    expect(s.riskGained).toBeCloseTo(2 * RX.perVoidBlock);
     const exp = mk({ seed: 11 });
     fightNext(exp);
-    winWith(exp, { risk: 20 });
-    expect(exp.risk).toBeCloseTo(20 * RX.voidMatchFactor);
+    winWith(exp, { risk: s.riskGained });
+    expect(exp.risk).toBeCloseTo(2 * RX.perVoidBlock);
   });
 
   it('5바퀴째부터 칸을 지날 때마다 오르고, 4바퀴까지는 오르지 않는다', () => {
@@ -413,10 +461,10 @@ describe('리스크 게이지', () => {
 describe('한계 돌파', () => {
   it('한계값 이상이 되면 breakthrough 이벤트가 한 번만 나오고 값은 한계에서 멈춘다', () => {
     const exp = mk({ seed: 20, risk: RX.limit - 5 });
-    changeRisk(exp, 10, 'void-match');
+    changeRisk(exp, 10, 'void-block');
     expect(exp.risk).toBe(RX.limit);
     expect(exp.breakthrough).not.toBeNull();
-    changeRisk(exp, 10, 'void-match');
+    changeRisk(exp, 10, 'void-block');
     const ev = drainEvents(exp);
     expect(ev).toHaveLength(1);
     expect(ev[0]).toMatchObject({ kind: 'breakthrough', lap: 1 });
@@ -440,13 +488,13 @@ describe('한계 돌파', () => {
     expect(save.runLog.runs[0]).toMatchObject({ breakthrough: true, riskPeak: RX.limit });
   });
 
-  it('임시 페널티: 돌파 뒤 남은 원정 동안 공허 생성률 가산', () => {
+  it('임시 페널티: 돌파 뒤 남은 원정 동안 공허 블록 생성 확률 가산', () => {
     const bonus = (risk: number) => {
       const e = mk({ seed: 22, risk, condition: 100 });
       e.wildCells = [1];
-      changeRisk(e, 0, 'void-match');
+      changeRisk(e, 0, 'void-block');
       advance(e);
-      return startBattle(e).params.riskSpawnBonus;
+      return startBattle(e).params.voidChanceBonus;
     };
     const normal = bonus(10);
     const broken = bonus(RX.limit);
@@ -584,8 +632,8 @@ describe('시드 결정성', () => {
 
   it('흡수 제안(후보)은 시드로 결정된다', () => {
     const enemy = { ...getEnemy('test-b'), rare: false };
-    const a = buildOffer(createRng(9), enemy, newBuild(), 5);
-    expect(buildOffer(createRng(9), enemy, newBuild(), 5)).toEqual(a);
+    const a = buildOffer(createRng(9), enemy, newBuild(), NO);
+    expect(buildOffer(createRng(9), enemy, newBuild(), NO)).toEqual(a);
   });
 
   it('전투 기록의 skillsUsed 는 장착한 특성 id', () => {
@@ -600,9 +648,9 @@ describe('시드 결정성', () => {
 });
 
 describe('저장 구조', () => {
-  it('새 세이브에는 빌드·리스크·안정 수치가 있고 형식 4 이다', () => {
+  it('새 세이브에는 빌드·리스크·안정 수치가 있다', () => {
     const s = newSaveData('hollow', 0);
-    expect(SAVE_FORMAT_VERSION).toBe(4);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(4);
     expect(s.build).toEqual(newBuild());
     expect(s.nest.risk).toBe(0);
     expect(s.nest.stability).toBe(RX.stabilityStart);
@@ -620,7 +668,7 @@ describe('저장 구조', () => {
     const storage = { getItem: (k: string) => store[k] ?? null, setItem: (k: string, v: string) => void (store[k] = v) };
     writeSave(storage, old as never);
     const s = loadSave(storage)!;
-    expect(s.meta.format).toBe(4);
+    expect(s.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(s.build).toEqual(newBuild());
     expect(s.nest.risk).toBe(0);
     expect(s.nest.stability).toBe(RX.stabilityStart);

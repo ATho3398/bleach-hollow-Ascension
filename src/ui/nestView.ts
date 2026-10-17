@@ -36,7 +36,7 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   const status = [
     rowOf(el('span', '', '허기'), el('span', 'dim', `${Math.round(n.hunger)} / 100`)),
     barOf('hunger', hungerFill),
-    rowOf(el('span', '', '컨디션'), el('span', 'dim', `${Math.round(n.condition)} / 100${n.condition < 40 ? ' (나쁨: 전투 보드에 공허 ↑)' : ''}`)),
+    rowOf(el('span', '', '컨디션'), el('span', 'dim', `${Math.round(n.condition)} / 100${n.condition < 40 ? ' (나쁨: 전투에 공허 블록 ↑)' : ''}`)),
     barOf('cond', condFill),
     rowOf(el('span', '', faction.stabilityName), el('span', 'dim', `${Math.round(n.stability)} / ${B.provisional.risk.stabilityMax}`)),
     barOf('stab', stabFill),

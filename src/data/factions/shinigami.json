@@ -14,12 +14,15 @@
     "대장 대행",
     "대장"
   ],
-  "tileNames": {
-    "damage": "참격",
-    "spirit": "영력",
-    "shield": "귀도(결계)",
-    "absorb": "정화",
-    "risk": "공허"
+  "skillBlockName": "시해 블록",
+  "specialBlockName": "귀도",
+  "voidBlockName": "공허 블록",
+  "chainName": "체인",
+  "spName": "영력",
+  "roleNames": {
+    "attack": "참격",
+    "guard": "결계",
+    "heal": "회도"
   },
   "riskGaugeName": "호로화",
   "absorbActionName": "정화 흡수",

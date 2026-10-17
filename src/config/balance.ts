@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 6;
+export const BALANCE_VERSION = 7;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -20,21 +20,7 @@ export const BALANCE = {
     tilesPerLap: { min: 2, max: 3 },
   },
   battle: {
-    boardSize: 6,
-    /** 매치3: 같은 색 3개 이상이 한 줄. 이 개수가 "매칭 1회 분량"의 타일 수 */
-    minMatch: 3,
-    tileColors: 5,
-    /** 영력 타일 매칭 3회 → 기술 1회 발동 */
-    spiritMatchesPerSkill: 3,
-    /** 4매치 → 줄 폭발, 5매치 → 해당 색 전체 제거 */
-    specialMatch: { lineBlast: 4, colorClear: 5 },
-    /** 약점 색(데미지·영력·실드) 매칭 효과 배율 (GDD 3-4) */
-    weaknessMultiplier: 1.5,
-    /** 영력 게이지 상한 = 기술 2회분 (GDD 3-4) */
-    spiritGaugeCapInSkills: 2,
-    /** 적 체력은 "플레이어 매칭 N회 분량" (CLAUDE.md 규칙 3) */
-    enemyHpInMatches: { normal: 6, elite: { min: 10, max: 12 } },
-    /** 강적은 바퀴당 최대 1마리 */
+    /** 강적은 바퀴당 최대 1마리 (GDD 2-1) */
     maxElitesPerLap: 1,
   },
   /** 흡수 슬롯: 초기 3칸 (GDD 4장 확정. 진화마다 +1 은 진화 시스템 이후) */
@@ -45,14 +31,14 @@ export const BALANCE = {
   provisional: {
     // ── 흡수·리스크(P3) 임시값. 기획서 4-1: 11-3(계통·특성 풀), 11-4(리스크 수치)가 미정 ──
     absorb: {
-      /** 흡수 가능 임계값: 전투 중 흡수 타일 매칭 N회분 이상이면 승리 후 흡수할 수 있다 (실제 봇 시뮬로 정함, npm run balance) */
-      threshold: 4,
+      /** 흡수 가능 조건 (GDD 3-5): 마무리 일격이 약점 계통 스킬이거나, 그 전투에서 체인3 을 이 횟수 이상 발동 (C.6, 옛 흡수 게이지 임계값 폐기) */
+      chain3ForAbsorb: 2,
       /** 특성 후보 수: 일반 적은 1~2개 중 무작위, 강적은 항상 2개 (GDD 4장 "후보 1~2개") */
       candidatesElite: 2,
       candidatesNormalMax: 2,
       /** 슬롯 안 같은 계통 N개 → 계통 보너스 */
       lineageBonusCount: 3,
-      /** 계통 보너스: 그 계통 skill 특성 위력에 가산하는 비율 (GDD 4-1 +50%) */
+      /** 계통 보너스: 그 계통 skill 특성 블록의 위력(피해·막기 지속·회복량)에 가산하는 비율 (GDD 4-1 +50%, C.6 새 전투) */
       lineageSkillBonus: 0.5,
       /** 흡수하면 허기가 이 값으로 리셋 (GDD 4장 "허기 리셋") */
       hungerAfterAbsorb: 0,
@@ -62,10 +48,10 @@ export const BALANCE = {
     risk: {
       /** 한계값: 이상이 되면 돌파 (GDD 4-1) */
       limit: 100,
-      /** 전투의 공허 매칭 리스크 값(riskGained)에 곱하는 환산 계수. 1 = 그대로 */
-      voidMatchFactor: 0.25,
-      /** 강한 적 흡수 시 리스크 상승 = 적 hpInMatches(바퀴 강화 포함) × 이 값. 강적(11회분)이 일반(6회분)의 약 2배 */
-      absorbPerHpMatch: 0.55,
+      /** 공허 블록 1개 사용 → 리스크 게이지 상승량 (GDD 3-5). 옛 "공허 매칭 1회 5 × 0.25 = 1.25" 보다 크게: 블록은 매칭보다 드물고 피해가 크다 */
+      perVoidBlock: 2.5,
+      /** 강한 적 흡수 시 리스크 상승 = 적 hpInAttacks(바퀴 강화 포함) × 이 값. 옛 0.55/매칭 회분 × (6회분 → 30회분 환산) ≈ 0.11. 강적(70)이 일반(30)의 약 2.3배 */
+      absorbPerHpAttack: 0.12,
       /** 놓아주면 하락 */
       releaseRelief: 8,
       /** 휴식 타일에서 하락 */
@@ -122,10 +108,14 @@ export const BALANCE = {
     },
     /** 환경 타일 프리셋: 전투 조건 변경. 이름은 종족 스킨, 효과 종류는 엔진 (GDD 6장) */
     tiles: {
-      reshuffle: { reshuffleEachTurn: true },
-      power: { damageEffectMultiplier: 1.3 },
-      shield: { shieldEffectMultiplier: 1.5 },
-      void: { riskSpawnBonus: 0.1 },
+      /** 안개(호로 스킨): 트레이 블록이 이 간격(초)마다 섞인다 */
+      reshuffle: { trayShuffleSeconds: 6 },
+      /** 황무지: 내 공격 위력(기본 공격·블록·필살·공허) ×1.3 */
+      power: { playerPowerMultiplier: 1.3 },
+      /** 결계(사신 스킨): 받는 피해 ×0.8 (GDD 6장 "실드↑" 를 새 전투에서 받는 피해 경감으로) */
+      shield: { damageTakenMultiplier: 0.8 },
+      /** 폐가: 공허 블록 생성 확률 +0.1 */
+      void: { voidChanceBonus: 0.1 },
     },
     /** 둥지 최소 버전(P2): 허기·컨디션 두 수치만 (GDD 7장) */
     nest: {
@@ -141,31 +131,59 @@ export const BALANCE = {
       defeatCondition: 15,
       defeatHunger: 10,
     },
-    // ── 전투 코어(P1) 임시값. 기획서에 없는 수치. 모든 "양"은 매칭 1회(3타일) = 1 단위 기준 ──
-    battle: {
-      /** 플레이어 매칭 1회 데미지. 적 체력은 이 값 × hpInMatches 로 환산되므로 기준 단위일 뿐이다 */
-      playerMatchDamage: 10,
-      /** "매칭 N회 분량" 보정: 플레이어는 한 턴에 연쇄·특수 매치로 데미지 매칭 여러 번을 얻으므로, 적 체력 1회분 = 매칭 1회 데미지 × 이 값.
-       *  탐욕 봇 시뮬(npm run balance)로 일반 5~7턴, 강적 8~10턴 근처가 되게 맞췄다 (C.3: 기술이 턴을 쓰고 적 공격이 2턴 주기가 된 뒤 3.2→2.1). 사람은 봇보다 느리다 */
-      hpMatchScale: 2.1,
-      /** 육성이 올리는 값: 매칭 1회당 데미지 배율 (GDD 3-2). 육성 없음 = 1 */
-      playerDamageMultiplier: 1,
-      /** 플레이어 체력: 실드 매칭 10회 분량 (적 평균 공격 1회 ≈ 0.5~0.9 실드 매칭 → 일반 적은 맞아도 버틴다) */
-      playerMaxHp: 100,
-      /** 실드 매칭 1회가 막는 피해. 적 공격력(attackInMatches)의 기준 단위 */
-      shieldPerMatch: 10,
-      /** 기본 기술 위력: 데미지 매칭 N회 분량. 영력 3회로 1회 쓰므로 데미지 매칭 3~4회 가치 */
-      skillPowerInMatches: 4,
-      /** 공허 타일 자연 생성률 (GDD 3-1 "보드에 자연 생성"). 5색 균등이면 20%이므로 그보다 낮게 */
-      riskSpawnRate: 0.1,
-      /** 공허 매칭 데미지 배율: "데미지 大" = 데미지 타일의 2배 */
-      riskDamageMultiplier: 2,
-      /** 공허 매칭 1회당 리스크 값 상승. 기록만 하고 게이지 효과는 P3 */
-      riskPerMatch: 5,
-      /** 무한 대치 방지: 이 턴수를 넘기면 패배 (GDD 2-2 평균 6~8턴의 약 3배) */
-      maxTurns: 25,
-      /** 적 공격 주기: 플레이어 N턴마다 1회 (GDD 3-4 임시) */
-      enemyAttackEveryTurns: 2,
+    // ── 전투 v2(P4, C.6) 임시값: 실시간 자동 전투 + 스킬 블록 체인 (GDD 3-5). 시간은 초, 엔진은 틱으로 환산한다 ──
+    // 모든 "양"은 플레이어 기본 공격 1회 피해(playerAttackDamage) = 1 단위 기준 (CLAUDE.md 규칙 3)
+    combat: {
+      /** 고정 틱 길이(초). 같은 시드 + 같은 입력 = 같은 결과 (GDD 3-5 임시 0.1초) */
+      tickSeconds: 0.1,
+      /** 자동 기본 공격 간격(초): 내 캐릭터 1.0, 적 1.5 (GDD 3-5) */
+      playerAttackSeconds: 1.0,
+      enemyAttackSeconds: 1.5,
+      /** 플레이어 기본 공격 1회 피해. 적 체력·공격력은 이 값의 N회 분량이라 기준 단위일 뿐이다 */
+      playerAttackDamage: 10,
+      /** "기본 공격 N회 분량" 보정: 적 체력 = hpInAttacks × 이 값 × 기본 공격 피해.
+       *  블록·필살이 시간을 줄이므로, 봇(빈 슬롯 = 기본 블록만) 기준 일반 약 45초·강적 약 90초가 되게 맞춘다 (npm run balance) */
+      hpAttackScale: 2.8,
+      /** 적 데이터 hpInAttacks 기준값 (GDD 3-5 임시: 일반 약 30회, 강적 약 70회 분량). 밸런스 점검이 데이터가 이 근처인지 본다 */
+      enemyHpInAttacks: { normal: 30, elite: 70 },
+      /** 육성이 올리는 값: 공격 배율 (GDD 3-2). 적 체력도 같이 올라 비율 유지. 육성 없음 = 1 */
+      growthMultiplier: 1,
+      /** 플레이어 체력 (= 기본 공격 15회 분량). 한 조우마다 새로 시작. 강적(약 90초)을 기본 블록만으로도 버틸 여지가 있게 100→150 (C.6 봇 점검) */
+      playerMaxHp: 150,
+      /** 조우당 시간 제한(초). 넘기면 패배 (GDD 3-5) */
+      timeLimitSeconds: 150,
+      /** 적 공격 피해 흔들림 ±비율 (같은 시드면 같다). 봇 승률이 0/100% 로만 갈리지 않게 */
+      enemyDamageVariance: 0.25,
+      /** 블록 트레이 3열×2행 (GDD 3-5) */
+      trayCols: 3,
+      trayRows: 2,
+      /** 슬롯 skill 특성(없으면 기본 블록) 하나당 블록 생성 간격(초). 트레이가 가득 차거나 봉인 중이면 멈춘다 */
+      blockSpawnSeconds: 4,
+      /** 체인 배율: 체인1 ×1.0, 체인2 ×2.2, 체인3 ×3.6 (GDD 3-5) */
+      chainMultipliers: [1, 2.2, 3.6],
+      /** 특성별 추가 효과가 붙는 최소 체인 (GDD 3-5 "체인3 … + 추가 효과") */
+      chainBonusFromChain: 3,
+      /** 블록 하나 사용 → SP +20, SP 100 → 필살 블록 (GDD 3-5) */
+      spPerBlock: 20,
+      spMax: 100,
+      /** 필살 블록 피해: 기본 공격 N회 분량 ("큰 피해") */
+      specialPowerInAttacks: 15,
+      /** 슬롯에 skill 특성이 없을 때의 기본 블록 ("기본 공격 강화"): 공격, 기본 공격 N회 분량 */
+      basicBlockPowerInAttacks: 3,
+      basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
+      /** 약점 계통 스킬 블록 위력 배율 (GDD 3-5 ×1.5) */
+      weaknessMultiplier: 1.5,
+      /** guard 블록: 막기 상태 지속(초, 위력 배율만큼 늘어남), 그동안 기본 공격 피해 경감, 강공격 경감(= 막기 성공) */
+      guardSeconds: 3,
+      guardReduction: 0.5,
+      heavyGuardReduction: 0.8,
+      /** heal 블록: 최대 체력 × 이 비율 × 위력 배율 회복 */
+      healFraction: 0.12,
+      /** 공허 블록: 이 간격(초)마다 확률로 트레이에 생성 (컨디션·환경·5바퀴 이후·한계 돌파가 확률을 더한다), 사용 피해 = 기본 공격 N회 분량 */
+      voidCheckSeconds: 5,
+      voidChance: 0.15,
+      voidChanceMax: 0.8,
+      voidPowerInAttacks: 8,
     },
   },
 } as const;

@@ -3,7 +3,8 @@
 
 import { BALANCE } from '../../config/balance';
 import { getTrait } from '../../data/traits';
-import type { BattleParams, BattleSkill } from '../battle/battle';
+import type { PassiveStat } from '../../data/schema';
+import type { CombatParams, CombatSkill } from '../combat/combat';
 
 const AX = BALANCE.provisional.absorb;
 
@@ -82,37 +83,44 @@ export function completedLineages(b: BuildState): string[] {
     .map(([id]) => id);
 }
 
-/** 장착한 skill 특성 기술 목록 (계통 보너스 반영: 완성된 계통의 기술 위력 +50%) */
-export function equippedSkills(b: BuildState): BattleSkill[] {
+/** 장착한 skill 특성 → 블록 생성원 목록 (슬롯 순서). 계통 보너스: 완성된 계통의 블록 위력 +50% (피해·막기 지속·회복량 모두) */
+export function equippedSkills(b: BuildState): CombatSkill[] {
   const bonus = new Set(completedLineages(b));
-  const out: BattleSkill[] = [];
+  const out: CombatSkill[] = [];
   for (const id of b.slots) {
     if (!id) continue;
     const t = getTrait(id);
-    if (t.kind !== 'skill' || t.skillPowerInMatches === undefined) continue;
-    out.push({ id, powerInMatches: t.skillPowerInMatches * (bonus.has(t.lineageId) ? 1 + AX.lineageSkillBonus : 1) });
+    if (t.kind !== 'skill' || !t.role || t.powerInAttacks === undefined || !t.chainBonus) continue;
+    out.push({
+      id,
+      lineageId: t.lineageId,
+      role: t.role,
+      powerInAttacks: t.powerInAttacks,
+      chainBonus: { ...t.chainBonus },
+      powerMultiplier: bonus.has(t.lineageId) ? 1 + AX.lineageSkillBonus : 1,
+    });
   }
   return out;
 }
 
-/** passive 특성: 역할별 매칭 효과 배율 (같은 역할은 곱) */
-export function passiveMultipliers(b: BuildState): Record<'damage' | 'spirit' | 'shield', number> {
-  const m = { damage: 1, spirit: 1, shield: 1 };
+/** passive 특성: 기본 공격 위력·속도, 받는 피해 배율 (같은 값은 곱) */
+export function passiveMultipliers(b: BuildState): Record<PassiveStat, number> {
+  const m: Record<PassiveStat, number> = { attackPower: 1, attackSpeed: 1, damageTaken: 1 };
   for (const id of b.slots) {
     if (!id) continue;
     const t = getTrait(id);
-    if (t.kind === 'passive' && t.passive) m[t.passive.role] *= t.passive.multiplier;
+    if (t.kind === 'passive' && t.passive) m[t.passive.stat] *= t.passive.multiplier;
   }
   return m;
 }
 
-/** 빌드 → 전투 파라미터 (전투 엔진에 "장착 skill 특성 → 기술 위력, passive → 매칭 효과 배율"을 연결) */
-export function buildBattleParams(b: BuildState): Partial<BattleParams> {
+/** 빌드 → 전투 파라미터 (장착 skill 특성 → 스킬 블록, passive → 자동 적용 배율, part → 영향 없음) */
+export function buildCombatParams(b: BuildState): Partial<CombatParams> {
   const pm = passiveMultipliers(b);
   return {
     skills: equippedSkills(b),
-    damageEffectMultiplier: pm.damage,
-    shieldEffectMultiplier: pm.shield,
-    spiritEffectMultiplier: pm.spirit,
+    attackPowerMultiplier: pm.attackPower,
+    attackSpeedMultiplier: pm.attackSpeed,
+    damageTakenMultiplier: pm.damageTaken,
   };
 }

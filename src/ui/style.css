@@ -1,5 +1,5 @@
 :root { color-scheme: dark; --bg:#0d0d12; --panel:#181822; --line:#2a2a3a; --text:#e8e8ef; --dim:#9a9aae;
-  --damage:#e5484d; --spirit:#3e8bff; --shield:#2fb36b; --absorb:#a371f7; --risk:#1a1a22; }
+  --attack:#e5484d; --guard:#2fb36b; --heal:#3e8bff; --sp:#d9a441; --void:#1a1a22; }
 * { box-sizing: border-box; }
 body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
 .screen { max-width:480px; margin:0 auto; padding:16px; min-height:100vh; display:flex; flex-direction:column; gap:12px; }
@@ -11,17 +11,10 @@ button.primary { background:#3b3b8f; border-color:#5a5ad0; }
 .stack { display:flex; flex-direction:column; gap:8px; }
 .bar { height:14px; background:#000; border-radius:7px; overflow:hidden; border:1px solid var(--line); }
 .bar > i { display:block; height:100%; transition:width .25s; }
-.bar.enemy > i { background:var(--damage); } .bar.player > i { background:var(--shield); } .bar.skill > i { background:var(--spirit); }
+.bar.enemy > i { background:var(--attack); } .bar.player > i { background:var(--guard); } .bar.sp > i { background:var(--sp); }
 .row { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:14px; }
 .chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; background:var(--panel); border:1px solid var(--line); font-size:12px; }
 .chip b { width:12px; height:12px; border-radius:50%; display:inline-block; }
-.board { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; touch-action:none; user-select:none; width:100%; aspect-ratio:1; }
-.tile { border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:clamp(14px,5vw,22px); color:#fff; border:2px solid transparent; transition:transform .15s; }
-.tile.damage { background:var(--damage); } .tile.spirit { background:var(--spirit); } .tile.shield { background:var(--shield); }
-.tile.absorb { background:var(--absorb); } .tile.risk { background:var(--risk); border-color:#ff4fd8; color:#ff4fd8; }
-.tile.sel { border-color:#fff; transform:scale(.92); } .tile.clearing { transform:scale(.4); opacity:.3; transition:transform .25s,opacity .25s; }
-.tile.bad { animation:shake .25s; }
-@keyframes shake { 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 .msg { min-height:20px; font-size:14px; text-align:center; }
 .result-title { font-size:28px; text-align:center; margin:24px 0 8px; }
 .win { color:#7ee2a8; } .lose { color:#ff7b80; }
@@ -55,3 +48,24 @@ button.cand { text-align:left; display:flex; flex-direction:column; gap:3px; }
 .slotbtns { display:flex; gap:4px; }
 .breakthrough { text-align:center; padding:24px 8px; font-size:20px; color:#ff4fd8; font-weight:700; line-height:1.5; }
 .mini { display:flex; justify-content:space-between; font-size:12px; color:var(--dim); }
+
+/* 전투 v2 (C.6): 블록 트레이 */
+.chip.weak { border-color:#d9a441; color:#ffd24d; }
+.bar.cast { height:8px; } .bar.cast > i { background:#ff9f43; transition:none; }
+.casttext { min-height:18px; font-size:13px; color:#ff9f43; font-weight:700; text-align:center; }
+.stage { min-height:66px; display:flex; flex-direction:column; justify-content:flex-start; gap:2px; font-size:14px; text-align:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; }
+.stage .line { transition:opacity .3s; }
+.status { min-height:16px; font-size:12px; color:var(--dim); }
+.tray { display:grid; gap:8px; touch-action:none; user-select:none; -webkit-user-select:none; padding:8px; background:#111118; border:1px solid var(--line); border-radius:14px; }
+.tray.sealed { border-color:#a371f7; box-shadow:inset 0 0 12px #a371f7; } .tray.paused { opacity:.6; }
+.tcell { aspect-ratio:1.15; border-radius:12px; border:2px dashed var(--line); display:flex; }
+.tcell.can-merge .tblock { box-shadow:0 0 0 3px #fff8, 0 0 10px #fff6; }
+.tcell.merge-target { border-color:#ffd24d; border-style:solid; background:#2e2410; }
+.tcell.move-target { border-color:#5a5ad0; }
+.tblock { flex:1; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px; text-align:center; color:#fff; cursor:grab; line-height:1.15; }
+.tblock b { font-size:clamp(12px,3.6vw,15px); } .tblock small { font-size:11px; opacity:.9; } .tblock .pips { font-size:12px; letter-spacing:2px; }
+.tblock.role-attack { background:var(--attack); } .tblock.role-guard { background:var(--guard); } .tblock.role-heal { background:var(--heal); }
+.tblock.special { background:linear-gradient(135deg,#d9a441,#ff6b3d); }
+.tblock.void { background:var(--void); border:2px solid #ff4fd8; color:#ff4fd8; }
+.tblock.weak { outline:3px solid #ffd24d; }
+.tblock.dragging { z-index:10; position:relative; cursor:grabbing; opacity:.9; }

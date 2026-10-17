@@ -6,7 +6,7 @@ import type { NestAction } from '../faction';
 
 const RX = BALANCE.provisional.risk;
 
-export type RiskCause = 'void-match' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action';
+export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action';
 
 /** 엔진 공통 이벤트. 화면이 비워 가며(drainEvents) 연출한다 */
 export type EngineEvent = { kind: 'breakthrough'; lap: number; cell: number; risk: number };
@@ -42,9 +42,9 @@ export function changeStability(s: { stability: number }, delta: number): void {
   s.stability = clamp(s.stability + delta, 0, RX.stabilityMax);
 }
 
-/** 강한 적을 흡수했을 때의 상승량: 적 강함(hpInMatches)에 비례 — 강적이 일반 적의 약 2배 */
+/** 강한 적을 흡수했을 때의 상승량: 적 강함(hpInAttacks)에 비례 — 강적이 일반 적의 약 2배 */
 export function absorbRisk(strength: number): number {
-  return strength * RX.absorbPerHpMatch;
+  return strength * RX.absorbPerHpAttack;
 }
 
 /** 5바퀴째부터 칸을 지날 때마다 오르는 양 (GDD 5장 "5바퀴 이후") */

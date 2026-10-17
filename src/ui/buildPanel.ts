@@ -31,7 +31,7 @@ export function slotPanel(faction: FactionConfig, build: BuildState): HTMLElemen
   const done = completedLineages(build);
   const progress = Object.entries(counts).map(([l, n]) => `${lineageName(l, faction.id)} ${n}/${BALANCE.provisional.absorb.lineageBonusCount}`);
   if (done.length > 0) {
-    box.append(el('div', 'notice good', `${faction.lineageBonusName}: ${done.map((l) => lineageName(l, faction.id)).join(', ')} 기술 위력 +${Math.round(BALANCE.provisional.absorb.lineageSkillBonus * 100)}% (임시)`));
+    box.append(el('div', 'notice good', `${faction.lineageBonusName}: ${done.map((l) => lineageName(l, faction.id)).join(', ')} 블록 위력(피해·막기·회복) +${Math.round(BALANCE.provisional.absorb.lineageSkillBonus * 100)}% (임시)`));
   } else if (progress.length > 0) {
     box.append(el('small', 'dim', `${faction.lineageBonusName} 진행: ${progress.join(' · ')} (같은 계통 ${BALANCE.provisional.absorb.lineageBonusCount}개)`));
   }

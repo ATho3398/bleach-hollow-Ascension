@@ -5,12 +5,12 @@ import { BALANCE } from './config/balance';
 import { completedLineages, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, summarize, type ExpeditionState } from './engine/expedition';
-import { emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
+import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
 import { tilesFor } from './data/tiles';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 4;
+export const SAVE_FORMAT_VERSION = 5;
 
 export interface SaveMeta {
   format: number;
@@ -144,6 +144,26 @@ export function migrateSave(raw: unknown): SaveData | null {
       breakthrough: r.breakthrough ?? false,
     }));
     save.meta.format = 4;
+  }
+  if (save.meta.format < 5) {
+    // 형식 4 → 5 (C.6 전투 v2): BattleRecord 에 전투 시간·블록 사용·체인3·막기·공허·필살·마무리 일격·흡수 조건 필드 추가.
+    // 매치3 시절 기록은 그 값이 없으므로 0/빈 값으로 채운다 (기존 필드는 그대로)
+    save.runLog.battles = save.runLog.battles.map((b) => ({
+      ...b,
+      matchesByRole: { ...emptyLegacyMatches(), ...(b.matchesByRole ?? {}) },
+      durationSeconds: b.durationSeconds ?? 0,
+      blocksByTrait: b.blocksByTrait ?? {},
+      blocksByChain: b.blocksByChain ?? [0, 0, 0],
+      chain3Count: b.chain3Count ?? 0,
+      guardSuccesses: b.guardSuccesses ?? 0,
+      voidUsed: b.voidUsed ?? 0,
+      specialUsed: b.specialUsed ?? false,
+      finisherKind: b.finisherKind ?? null,
+      finisherTraitId: b.finisherTraitId ?? null,
+      finisherLineageId: b.finisherLineageId ?? null,
+      absorbable: b.absorbable ?? false,
+    }));
+    save.meta.format = 5;
   }
   return save;
 }

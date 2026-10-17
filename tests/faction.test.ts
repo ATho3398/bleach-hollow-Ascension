@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FACTIONS, getFaction } from '../src/data/factions';
-import { parseFactionConfig, TILE_ROLES } from '../src/engine/faction';
+import { BLOCK_ROLES, parseFactionConfig } from '../src/engine/faction';
 import { emptyRunLog } from '../src/engine/runLog';
 import { newSaveData } from '../src/game';
 import enemies from '../src/data/enemies/enemies.json';
@@ -16,7 +16,7 @@ describe('종족 설정', () => {
   it('두 종족의 설정 키 구성이 같다 (종족 추가가 config 하나로 가능)', () => {
     const keys = (id: string) => Object.keys(getFaction(id)).sort();
     expect(keys('hollow')).toEqual(keys('shinigami'));
-    for (const f of FACTIONS) expect(Object.keys(f.tileNames).sort()).toEqual([...TILE_ROLES].sort());
+    for (const f of FACTIONS) expect(Object.keys(f.roleNames).sort()).toEqual([...BLOCK_ROLES].sort());
   });
 
   it('기획서 표 값이 들어 있다', () => {
@@ -24,6 +24,16 @@ describe('종족 설정', () => {
     expect(getFaction('shinigami').tierNames[4]).toBe('수석 대원');
     expect(getFaction('hollow').rankMode).toBe('challenge');
     expect(getFaction('shinigami').rankMode).toBe('promotion');
+  });
+
+  it('타일 이름(tileNames)은 폐기되고 블록 표시 이름이 있다 (GDD 3-5)', () => {
+    for (const f of FACTIONS) {
+      expect('tileNames' in f).toBe(false);
+      for (const k of ['skillBlockName', 'specialBlockName', 'voidBlockName', 'chainName', 'spName'] as const) expect(f[k].length).toBeGreaterThan(0);
+    }
+    const { skillBlockName: _drop, ...noBlock } = getFaction('hollow');
+    expect(() => parseFactionConfig(noBlock)).toThrow(/skillBlockName/);
+    expect(() => parseFactionConfig({ ...getFaction('hollow'), roleNames: { attack: '파괴' } })).toThrow(/roleNames.guard/);
   });
 
   it('잘못된 설정은 이유와 함께 거부한다', () => {

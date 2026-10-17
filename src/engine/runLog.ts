@@ -1,8 +1,6 @@
 // 런 로그 구조 (GDD 9장). 히든 등급·태그 조건이 나중에 이 기록을 읽는다.
 // 지금은 구조만 있고 기록하는 로직은 없다. 필드를 빼지 말고, 필요하면 더한다.
 
-import type { TileRole } from './faction';
-
 export interface AbsorbRecord {
   runId: number;
   /** 적 종족 (src/data/enemies 의 id) */
@@ -35,14 +33,26 @@ export interface RiskRecord {
   survivedBreakthroughs: number;
 }
 
+/** 매치3 시절(형식 4까지) 타일 역할 키. 전투 v2(C.6) 이후 기록은 모두 0 (호환용) */
+export const LEGACY_TILE_ROLES = ['damage', 'spirit', 'shield', 'absorb', 'risk'] as const;
+export type LegacyTileRole = (typeof LEGACY_TILE_ROLES)[number];
+
+export function emptyLegacyMatches(): Record<LegacyTileRole, number> {
+  return { damage: 0, spirit: 0, shield: 0, absorb: 0, risk: 0 };
+}
+
+/** 마무리 일격(적을 쓰러뜨린 공격) 종류 (C.6) */
+export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect';
+
 export interface BattleRecord {
   runId: number;
   lap: number;
+  /** 매치3 턴 수. 전투 v2(C.6) 이후는 0 — 길이는 durationSeconds */
   turns: number;
-  /** 타일 종류별 매칭 횟수 (비율은 여기서 계산) */
-  matchesByRole: Record<TileRole, number>;
+  /** 매치3 타일 종류별 매칭 횟수. 전투 v2(C.6) 이후는 모두 0 (호환용) */
+  matchesByRole: Record<LegacyTileRole, number>;
   won: boolean;
-  /** 사용한 기술(특성) id. P3 부터 장착한 skill 특성 id, 없으면 basic-skill */
+  /** 사용한 기술(특성) id. C.6 부터 사용한 스킬 블록의 특성 id (기본 블록은 basic-skill), 사용 순서대로 */
   skillsUsed: string[];
   /** 적 등급 (일반/강적 등) */
   enemyClass: string;
@@ -54,12 +64,32 @@ export interface BattleRecord {
   factionId: string;
   /** 전투 난수 시드(같은 시드 = 같은 전투) */
   seed: number;
-  /** 공허 매칭으로 오른 리스크 값 (게이지 반영은 P3) */
+  /** 리스크 게이지 상승량: C.6 부터 공허 블록 사용으로 오른 값(게이지 단위) */
   riskGained: number;
-  /** 흡수 타일 매칭 누적 (흡수 판정은 P3) */
+  /** 매치3 흡수 타일 매칭 누적. 전투 v2(C.6) 이후는 0 (흡수 조건이 바뀜) */
   absorbGained: number;
-  /** 패배 사유: hp = 체력 0, timeout = 턴 초과. 승리면 null */
+  /** 패배 사유: hp = 체력 0, timeout = 시간 제한(C.6 부터 초). 승리면 null */
   lossReason: 'hp' | 'timeout' | null;
+  /** C.6 에서 더한 필드 (세이브 형식 5, 전투 v2) */
+  /** 전투 시간(초) */
+  durationSeconds: number;
+  /** 블록 사용 횟수: 특성 id 별(기본 블록 basic-skill), 체인 단계별([체인1, 체인2, 체인3]) */
+  blocksByTrait: Record<string, number>;
+  blocksByChain: [number, number, number];
+  /** 체인3 발동 횟수 */
+  chain3Count: number;
+  /** 강공격을 막기(guard)로 막은 횟수 */
+  guardSuccesses: number;
+  /** 공허 블록 사용 횟수 */
+  voidUsed: number;
+  /** 필살 블록을 썼는가 */
+  specialUsed: boolean;
+  /** 마무리 일격: 종류와 그 블록의 특성·계통 (스킬 블록이 아니면 null). 패배면 kind 도 null */
+  finisherKind: FinisherKind | null;
+  finisherTraitId: string | null;
+  finisherLineageId: string | null;
+  /** 이 전투로 흡수 조건을 채웠는가 (마무리 일격이 약점 계통 스킬 / 체인3 2회 이상) */
+  absorbable: boolean;
 }
 
 export interface TierRecord {

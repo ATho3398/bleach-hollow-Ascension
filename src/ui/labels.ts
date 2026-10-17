@@ -1,31 +1,34 @@
 // 전투 화면 텍스트: 전부 종족 설정(FactionConfig)에서 읽는다. 종족 id 로 분기하지 않는다.
 import type { TerrainTileDef } from '../data/schema';
 import type { EndReason } from '../engine/expedition';
-import { TILE_ROLES, type FactionConfig, type TileRole } from '../engine/faction';
+import type { BlockRole, FactionConfig } from '../engine/faction';
 
 export interface BattleLabels {
-  tile: Record<TileRole, string>;
-  /** 타일에 쓰는 한 글자 */
-  tileShort: Record<TileRole, string>;
-  skillGauge: string;
-  absorbGauge: string;
+  /** 블록 역할 이름 (공격/막기/회복) */
+  role: Record<BlockRole, string>;
+  skillBlock: string;
+  specialBlock: string;
+  voidBlock: string;
+  /** 기본 블록 (슬롯에 skill 이 없을 때) */
+  basicBlock: string;
+  chain: string;
+  sp: string;
   riskGauge: string;
-  skillButton: string;
   defeatState: string;
   huntingGround: string;
   factionName: string;
 }
 
 export function battleLabels(f: FactionConfig): BattleLabels {
-  const short = {} as Record<TileRole, string>;
-  for (const r of TILE_ROLES) short[r] = [...f.tileNames[r]][0] ?? '?';
   return {
-    tile: { ...f.tileNames },
-    tileShort: short,
-    skillGauge: `${f.tileNames.spirit} 게이지`,
-    absorbGauge: `${f.tileNames.absorb} 게이지`,
+    role: { ...f.roleNames },
+    skillBlock: f.skillBlockName,
+    specialBlock: f.specialBlockName,
+    voidBlock: f.voidBlockName,
+    basicBlock: f.basicSkillName,
+    chain: f.chainName,
+    sp: f.spName,
     riskGauge: f.riskGaugeName,
-    skillButton: f.basicSkillName,
     defeatState: f.defeatStateName,
     huntingGround: f.huntingGroundName,
     factionName: f.name,
@@ -38,10 +41,10 @@ export function tileHint(t: TerrainTileDef): string {
   if (e.type === 'spawn') return e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
   if (e.type === 'rest') return '허기·컨디션 회복 (시간 소모)';
   return {
-    reshuffle: '전투 중 매 턴 보드가 섞인다',
-    power: '전투 화력 ↑',
-    shield: '전투 실드 ↑',
-    void: '전투 공허 타일 ↑',
+    reshuffle: '전투 중 블록 트레이가 주기적으로 섞인다',
+    power: '전투 공격 위력 ×1.3',
+    shield: '전투에서 받는 피해 ↓',
+    void: '전투 공허 블록 ↑',
   }[e.preset];
 }
 

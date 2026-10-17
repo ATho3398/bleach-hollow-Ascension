@@ -14,12 +14,15 @@
     "에스파다 No.4",
     "에스파다 No.1"
   ],
-  "tileNames": {
-    "damage": "파괴",
-    "spirit": "영력",
-    "shield": "가면",
-    "absorb": "포식",
-    "risk": "공허"
+  "skillBlockName": "기술 블록",
+  "specialBlockName": "세로",
+  "voidBlockName": "공허 블록",
+  "chainName": "체인",
+  "spName": "영력",
+  "roleNames": {
+    "attack": "파괴",
+    "guard": "가면",
+    "heal": "재생"
   },
   "riskGaugeName": "광기",
   "absorbActionName": "포식",

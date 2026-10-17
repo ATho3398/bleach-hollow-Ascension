@@ -3,12 +3,12 @@
 
 import { BALANCE } from '../../config/balance';
 import { ENEMIES } from '../../data/enemies';
-import type { EnemyDef } from '../../data/schema';
+import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
 import { getTile, tilesFor } from '../../data/tiles';
-import { buildBattleRecord, createBattle, type BattleParams, type BattleState } from '../battle';
-import { createRng, nextFloat, nextInt, type Rng } from '../battle/rng';
+import { buildBattleRecord, createCombat, type CombatParams, type CombatState } from '../combat';
+import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import {
-  absorbRisk, breakthroughSpawnBonus, buildBattleParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
+  absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
   newBuild, releaseEffect, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
@@ -25,7 +25,7 @@ export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhaus
 export interface PendingBattle {
   enemy: EnemyDef;
   seed: number;
-  params: Partial<BattleParams>;
+  params: Partial<CombatParams>;
   cell: number;
   lap: number;
   elite: boolean;
@@ -183,7 +183,7 @@ export function lapScale(lap: number): { hp: number; attack: number } {
   return { hp: 1 + PX.lapHpScale * (lap - 1), attack: 1 + PX.lapAttackScale * (lap - 1) };
 }
 
-/** 컨디션이 나쁠수록 시작 보드에 공허가 늘고, 5바퀴 이후는 공허 생성률이 오른다 */
+/** 공허 블록 생성 확률 가산: 컨디션이 나쁠수록, 5바퀴 이후, 한계 돌파 뒤 (GDD 3-2, 2-1, 4-1) */
 export function riskBonus(exp: ExpeditionState): number {
   const cond = PX.conditionRiskBonusMax * (1 - exp.condition / PX.conditionMax);
   const late = Math.max(0, exp.lap - PX.lateLapStart + 1) * PX.lateLapRiskBonusPerLap;
@@ -196,7 +196,8 @@ function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite'): EnemyDef {
   const base = pool[nextInt(exp.rng, pool.length)]!;
   const k = lapScale(exp.lap);
   const rare = nextFloat(exp.rng) < base.rareChance;
-  return { ...base, rare, hpInMatches: base.hpInMatches * k.hp, attackInMatches: base.attackInMatches * k.attack };
+  const pattern = base.pattern ? { ...base.pattern, heavyInAttacks: base.pattern.heavyInAttacks * k.attack } : undefined;
+  return { ...base, rare, hpInAttacks: base.hpInAttacks * k.hp, attackInAttacks: base.attackInAttacks * k.attack, ...(pattern ? { pattern } : {}) };
 }
 
 /** 이 칸이 조합(같은 comboGroup 3칸 인접)의 끝 칸인가 */
@@ -262,15 +263,9 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     combo = false;
   }
   if (cls === 'elite') exp.elitesThisLap++;
-  // 장착한 특성(skill → 기술, passive → 매칭 효과 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 곱한다
-  const params: Partial<BattleParams> = { ...buildBattleParams(exp.build), riskSpawnBonus: riskBonus(exp) };
-  if (tile?.effect.type === 'environment') {
-    const preset = BALANCE.provisional.tiles[tile.effect.preset];
-    if ('riskSpawnBonus' in preset) params.riskSpawnBonus = (params.riskSpawnBonus ?? 0) + preset.riskSpawnBonus;
-    else if ('damageEffectMultiplier' in preset) params.damageEffectMultiplier = (params.damageEffectMultiplier ?? 1) * preset.damageEffectMultiplier;
-    else if ('shieldEffectMultiplier' in preset) params.shieldEffectMultiplier = (params.shieldEffectMultiplier ?? 1) * preset.shieldEffectMultiplier;
-    else Object.assign(params, preset);
-  }
+  // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
+  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build), voidChanceBonus: riskBonus(exp) };
+  if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
   const pending: PendingBattle = {
     enemy: pickEnemy(exp, cls),
     seed: randomSeed(exp.rng),
@@ -286,14 +281,23 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   return { kind: 'battle', cell, battle: pending };
 }
 
-/** 대기 중인 전투를 전투 엔진으로 만든다 (P1 엔진 그대로) */
-export function startBattle(exp: ExpeditionState): BattleState {
+/** 환경 타일 프리셋 → 전투 조건 (GDD 6장, 효과 종류는 엔진·이름은 종족 스킨): 안개 = 트레이 섞임, 황무지 = 공격 위력, 결계 = 받는 피해 경감, 폐가 = 공허 블록 증가 */
+export function applyEnvironment(params: Partial<CombatParams>, preset: EnvironmentPreset): void {
+  const T = BALANCE.provisional.tiles;
+  if (preset === 'reshuffle') params.trayShuffleSeconds = T.reshuffle.trayShuffleSeconds;
+  else if (preset === 'power') params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * T.power.playerPowerMultiplier;
+  else if (preset === 'shield') params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * T.shield.damageTakenMultiplier;
+  else params.voidChanceBonus = (params.voidChanceBonus ?? 0) + T.void.voidChanceBonus;
+}
+
+/** 대기 중인 전투를 전투 엔진(v2)으로 만든다 */
+export function startBattle(exp: ExpeditionState): CombatState {
   if (exp.phase !== 'battle' || !exp.pending) throw new Error('치를 전투가 없다');
-  return createBattle({ seed: exp.pending.seed, enemy: exp.pending.enemy, params: exp.pending.params });
+  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params: exp.pending.params });
 }
 
 /** 끝난 전투를 원정에 반영한다. 승리 → 이동 재개, 패배 → 원정 끝 */
-export function finishBattle(exp: ExpeditionState, battle: BattleState): BattleRecord {
+export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleRecord {
   const pending = exp.pending;
   if (exp.phase !== 'battle' || !pending || battle.status === 'playing') throw new Error('끝나지 않은 전투');
   const record = buildBattleRecord(battle, { factionId: exp.factionId, runId: exp.runId, lap: exp.lap });
@@ -302,8 +306,8 @@ export function finishBattle(exp: ExpeditionState, battle: BattleState): BattleR
   exp.pending = null;
   exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle);
   exp.condition = Math.max(0, exp.condition - PX.conditionPerBattle);
-  // 공허 타일 매칭 → 리스크 게이지 상승 (GDD 4-1)
-  if (battle.riskGained > 0) changeRisk(exp, battle.riskGained * RX.voidMatchFactor, 'void-match');
+  // 공허 블록 사용 → 리스크 게이지 상승 (GDD 3-5)
+  if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
   if (battle.status === 'lost') {
     endExpedition(exp, 'defeated', 'battle-lost');
     return record;
@@ -312,9 +316,9 @@ export function finishBattle(exp: ExpeditionState, battle: BattleState): BattleR
   if (exp.victoriesThisLap === 0) drawTile(exp);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
   exp.victoriesThisLap++;
-  // 흡수 게이지가 임계값 이상이면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
-  if (canAbsorb(battle.absorbGained)) {
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle.absorbGained);
+  // 흡수 조건(마무리 일격이 약점 계통 스킬 / 체인3 2회 이상)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
+  if (canAbsorb(battle)) {
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle);
     exp.phase = 'absorb';
   } else exp.phase = 'moving';
   return record;

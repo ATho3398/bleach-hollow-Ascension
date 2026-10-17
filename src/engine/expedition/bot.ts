@@ -1,7 +1,7 @@
 // 원정 자동 플레이어: 밸런스 점검·테스트용. 손에 든 타일을 앞쪽 빈 슬롯에 놓고, 정해진 바퀴에서 귀환한다.
 import { getTrait } from '../../data/traits';
 import { lineageCounts, type BuildState } from '../absorb';
-import { playGreedy } from '../battle';
+import { playCombatBot } from '../combat';
 import {
   advance, chooseAbsorb, chooseContinue, chooseRelease, chooseReturn, finishBattle, finishRest, placeTile, startBattle,
   type ExpeditionState,
@@ -10,7 +10,7 @@ import {
 export interface AutoOptions {
   /** 이 바퀴를 마치면 귀환 */
   returnAfterLap: number;
-  /** 전투 대신 플레이: 기본은 탐욕 봇 */
+  /** 전투 대신 플레이: 기본은 블록 봇 */
   playBattle?: (s: ReturnType<typeof startBattle>) => void;
   /** 손에 든 타일을 놓는가 (기본 true) */
   place?: boolean;
@@ -66,7 +66,7 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
       advance(exp);
     } else if (exp.phase === 'battle') {
       const b = startBattle(exp);
-      (opt.playBattle ?? playGreedy)(b);
+      (opt.playBattle ?? playCombatBot)(b);
       finishBattle(exp, b);
     } else if (exp.phase === 'absorb') {
       if (opt.absorb === 'absorb') {

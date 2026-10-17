@@ -5,9 +5,9 @@
       "*": "테스트 적 A"
     },
     "class": "normal",
-    "hpInMatches": 6,
-    "attackInMatches": 0.5,
-    "weakness": "damage",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.22,
+    "weaknessLineageId": "lineage-b",
     "provisional": true,
     "lineageId": "lineage-a",
     "rareChance": 0.1
@@ -18,9 +18,9 @@
       "*": "테스트 적 B"
     },
     "class": "normal",
-    "hpInMatches": 6,
-    "attackInMatches": 0.6,
-    "weakness": "shield",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.26,
+    "weaknessLineageId": "lineage-c",
     "provisional": true,
     "lineageId": "lineage-b",
     "rareChance": 0.1
@@ -31,9 +31,20 @@
       "*": "테스트 강적"
     },
     "class": "elite",
-    "hpInMatches": 11,
-    "attackInMatches": 0.9,
-    "weakness": "spirit",
+    "hpInAttacks": 62,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-a",
+    "pattern": {
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.5,
+      "sealSeconds": 4,
+      "provisional": true
+    },
     "provisional": true,
     "lineageId": "lineage-c",
     "rareChance": 0.25

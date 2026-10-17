@@ -1,11 +1,11 @@
 // 흡수 화면 (GDD 4장, 4-1): 전투 승리 후 흡수 / 놓아줌 → 특성 후보 선택 → 슬롯 장착(가득 차면 교체/포기).
-// 문구는 FactionConfig(absorbActionName, tileNames, riskGaugeName, stabilityName …)에서 읽는다.
+// 문구는 FactionConfig(absorbActionName, chainName, riskGaugeName, stabilityName …)에서 읽는다.
 import { BALANCE } from '../config/balance';
 import { getEnemy } from '../data/enemies';
 import { lineageName } from '../data/lineages';
 import { pickFaction } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbRisk, isFull, lineageCounts } from '../engine/absorb';
+import { absorbRisk, isFull, lineageCounts, type AbsorbOffer } from '../engine/absorb';
 import { chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { el, mountScreen } from './dom';
@@ -13,6 +13,18 @@ import { PROVISIONAL_NOTE, slotPanel, traitLabel } from './buildPanel';
 
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;
+
+/** 흡수 조건 안내 (GDD 3-5, 임시 수치): 마무리 일격이 약점 계통 스킬 / 체인3 N회 이상 */
+export function absorbConditionText(faction: FactionConfig, weaknessLineageId: string): string {
+  return `${faction.absorbActionName} 조건: 마무리 일격이 약점 계통(${lineageName(weaknessLineageId, faction.id)}) ${faction.skillBlockName}이거나, 그 전투에서 ${faction.chainName}3 을 ${AX.chain3ForAbsorb}회 이상 (임시)`;
+}
+
+function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
+  const out: string[] = [];
+  if (offer.reasons.includes('weakness-finisher')) out.push(`약점 계통(${lineageName(offer.finisherLineageId!, faction.id)})으로 마무리`);
+  if (offer.reasons.includes('chain3')) out.push(`${faction.chainName}3 ${offer.chain3Count}회 (필요 ${AX.chain3ForAbsorb})`);
+  return out.join(' · ');
+}
 
 export function absorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: (absorbed: boolean) => void): void {
   const offer = exp.absorbOffer;
@@ -36,13 +48,14 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     info.innerHTML = `<table>
       <tr><td>상대</td><td>${pickFaction(enemy.name, faction.id)} (${offer!.elite ? '강적' : '일반'})</td></tr>
       <tr><td>계통</td><td>${lineageName(offer!.lineageId, faction.id)}</td></tr>
-      <tr><td>${faction.tileNames.absorb} 게이지</td><td>${offer!.absorbGained.toFixed(1)} / 필요 ${AX.threshold}</td></tr>
+      <tr><td>${act} 조건</td><td>${reasonText(faction, offer!)}</td></tr>
       <tr><td>${act}하면</td><td>허기 리셋 · ${faction.riskGaugeName} +${Math.round(risk)} · 타일 +1</td></tr>
       <tr><td>놓아주면</td><td>${faction.riskGaugeName} −${RX.releaseRelief} · ${faction.stabilityName} +${RX.releaseStability}</td></tr>
       <tr><td>지금 ${faction.riskGaugeName}</td><td>${Math.round(exp.risk)} / ${RX.limit}${exp.risk + risk >= RX.limit ? ' — 흡수하면 한계 돌파!' : ''}</td></tr></table>`;
     const nodes: HTMLElement[] = [
       el('h1', '', `${act} 가능`),
       el('p', 'dim', `${pickFaction(enemy.name, faction.id)}을(를) 쓰러뜨렸다.`),
+      el('small', 'dim', absorbConditionText(faction, enemy.weaknessLineageId)),
     ];
     if (offer!.rare) nodes.push(el('div', 'notice rare', '희귀 개체! 이 개체의 희귀 특성이 후보에 확정으로 나온다.'));
     nodes.push(info, slotPanel(faction, exp.build));
