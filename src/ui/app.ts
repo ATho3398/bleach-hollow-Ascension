@@ -4,7 +4,7 @@ import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
 import { pickFaction, type EnemyDef } from '../data/schema';
 import {
-  buildBattleRecord, createBattle, findMoves, playerSwap, useSkill, hudOf, isAdjacent,
+  buildBattleRecord, createBattle, playerSwap, useSkill, hudOf, isAdjacent, spiritCap,
   type ActionResult, type BattleState, type Cell, type Hud,
 } from '../engine/battle';
 import { TILE_ROLES, type FactionConfig } from '../engine/faction';
@@ -140,11 +140,11 @@ export function startApp(root: HTMLElement): void {
     const drawHud = (h: Hud) => {
       enemyHp.style.width = pct(h.enemyHp, h.enemyMaxHp);
       playerHp.style.width = pct(h.playerHp, h.playerMaxHp);
-      skillBar.style.width = pct(Math.min(h.spiritMatches, s.params.spiritMatchesPerSkill), s.params.spiritMatchesPerSkill);
+      skillBar.style.width = pct(h.spiritMatches, spiritCap(s.params));
       enemyText.textContent = `${Math.ceil(h.enemyHp - 1e-6)} / ${Math.round(h.enemyMaxHp)}`;
       playerText.textContent = `${Math.ceil(h.playerHp)} / ${h.playerMaxHp}` + (h.shield > 0 ? ` (실드 ${Math.round(h.shield)})` : '');
-      skillText.textContent = `${Math.min(h.spiritMatches, 99)} / ${s.params.spiritMatchesPerSkill}`;
-      extraText.textContent = `${labels.riskGauge} +${h.riskGained} · ${labels.absorbGauge} ${h.absorbGained.toFixed(1)} · ${h.turns}턴`;
+      skillText.textContent = `${h.spiritMatches.toFixed(1)} / ${spiritCap(s.params)} (기술 1회 ${s.params.spiritMatchesPerSkill})`;
+      extraText.textContent = `적 공격 ${h.enemyAttackIn}턴 후 · ${labels.riskGauge} +${h.riskGained} · ${h.turns}턴`;
       skillBtn.disabled = busy || !h.skillReady;
     };
 
@@ -177,7 +177,7 @@ export function startApp(root: HTMLElement): void {
         const note: string[] = [];
         if (ph.damageDealt > 0) note.push(`${ph.kind === 'skill' ? labels.skillButton : '공격'} ${Math.round(ph.damageDealt)} 피해${ph.weakHit ? ' (약점!)' : ''}`);
         if (ph.shieldGained > 0) note.push(`${labels.tile.shield} +${Math.round(ph.shieldGained)}`);
-        if (ph.kind === 'enemy') note.push(`적 공격 ${Math.round(ph.damageTaken + ph.blocked)}${ph.blocked > 0 ? ` (${Math.round(ph.blocked)} 막음)` : ''}`);
+        if (ph.attacked) note.push(`적 공격 ${Math.round(ph.damageTaken + ph.blocked)}${ph.blocked > 0 ? ` (${Math.round(ph.blocked)} 막음)` : ''}`);
         if (note.length > 0) msg.textContent = note.join(' · ');
         drawHud(ph.hud);
         await sleep(250);

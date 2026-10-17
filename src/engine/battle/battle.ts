@@ -5,7 +5,7 @@ import { BALANCE } from '../../config/balance';
 import type { EnemyDef } from '../../data/schema';
 import { TILE_ROLES, type TileRole } from '../faction';
 import {
-  createBoard, emptyRoleCount, findMoves, inBounds, isAdjacent, resolveBoard, swapCells,
+  createBoard, emptyRoleCount, findMoves, inBounds, isAdjacent, reshuffleBoard, resolveBoard, swapCells,
   findRuns, type Board, type Cell, type ResolveStep,
 } from './board';
 import { createRng, nextInt, type Rng } from './rng';
@@ -24,8 +24,19 @@ export interface BattleParams {
   riskDamageMultiplier: number;
   riskPerMatch: number;
   maxTurns: number;
+  /** 적이 플레이어 N턴마다 한 번 공격한다 (GDD 3-4, 임시) */
+  enemyAttackEveryTurns: number;
+  /** 전투 시작 보드의 공허 생성률 가산(둥지 컨디션·환경 등). 기본 0 */
+  riskSpawnBonus: number;
+  /** 환경 타일: 데미지·실드 효과 배율. 기본 1 */
+  damageEffectMultiplier: number;
+  shieldEffectMultiplier: number;
+  /** 환경 타일: 매 플레이어 턴 뒤 보드를 섞는다 (호로 스킨 안개) */
+  reshuffleEachTurn: boolean;
   weaknessMultiplier: number;
   spiritMatchesPerSkill: number;
+  /** 영력 게이지 상한 = 기술 N회분 (GDD 3-4: 2) */
+  spiritGaugeCapInSkills: number;
 }
 
 export function defaultBattleParams(): BattleParams {
@@ -33,6 +44,11 @@ export function defaultBattleParams(): BattleParams {
     ...BALANCE.provisional.battle,
     weaknessMultiplier: BALANCE.battle.weaknessMultiplier,
     spiritMatchesPerSkill: BALANCE.battle.spiritMatchesPerSkill,
+    spiritGaugeCapInSkills: BALANCE.battle.spiritGaugeCapInSkills,
+    riskSpawnBonus: 0,
+    damageEffectMultiplier: 1,
+    shieldEffectMultiplier: 1,
+    reshuffleEachTurn: false,
   };
 }
 
@@ -68,6 +84,8 @@ export interface Hud {
   spiritMatches: number;
   skillReady: boolean;
   turns: number;
+  /** 적 공격까지 남은 플레이어 턴 (1 = 이번 턴 뒤 공격) */
+  enemyAttackIn: number;
   riskGained: number;
   absorbGained: number;
 }
@@ -80,6 +98,8 @@ export interface PhaseReport {
   shieldGained: number;
   damageTaken: number;
   blocked: number;
+  /** 이 적 턴에 공격이 있었는가 */
+  attacked: boolean;
   hud: Hud;
 }
 
@@ -100,7 +120,7 @@ export interface BattleSetup {
 export function createBattle(setup: BattleSetup): BattleState {
   const params = { ...defaultBattleParams(), ...setup.params };
   const rng = createRng(setup.seed);
-  const board = createBoard(rng, params.riskSpawnRate);
+  const board = createBoard(rng, spawnRate(params));
   // 적 체력 = 플레이어 매칭 N회 분량 (CLAUDE.md 규칙 3). 육성으로 공격력이 오르면 같이 오른다
   const maxHp = setup.enemy.hpInMatches * params.hpMatchScale * params.playerMatchDamage * params.playerDamageMultiplier;
   return {
@@ -122,6 +142,20 @@ export function createBattle(setup: BattleSetup): BattleState {
   };
 }
 
+/** 보드에 공허가 생기는 비율: 기본 생성률 + 컨디션·환경 가산 */
+export function spawnRate(p: BattleParams): number {
+  return Math.min(0.6, p.riskSpawnRate + p.riskSpawnBonus);
+}
+
+export function spiritCap(p: BattleParams): number {
+  return p.spiritMatchesPerSkill * p.spiritGaugeCapInSkills;
+}
+
+function attackIn(s: BattleState): number {
+  const n = s.params.enemyAttackEveryTurns;
+  return n - (s.turns % n) || n;
+}
+
 export function hudOf(s: BattleState): Hud {
   return {
     enemyHp: s.enemy.hp,
@@ -132,6 +166,7 @@ export function hudOf(s: BattleState): Hud {
     spiritMatches: s.spiritMatches,
     skillReady: canUseSkill(s),
     turns: s.turns,
+    enemyAttackIn: attackIn(s),
     riskGained: s.riskGained,
     absorbGained: s.absorbGained,
   };
@@ -142,34 +177,33 @@ export function canUseSkill(s: BattleState): boolean {
 }
 
 function newPhase(s: BattleState, kind: PhaseReport['kind']): PhaseReport {
-  return { kind, steps: [], damageDealt: 0, weakHit: false, shieldGained: 0, damageTaken: 0, blocked: 0, hud: hudOf(s) };
+  return { kind, steps: [], damageDealt: 0, weakHit: false, shieldGained: 0, damageTaken: 0, blocked: 0, attacked: false, hud: hudOf(s) };
 }
 
-/** 플레이어 매칭 효과 적용. 3타일 = 매칭 1회 분량(단위)으로 환산한다 */
+/** 플레이어 매칭 효과 적용. 3타일 = 매칭 1회 분량(단위)으로 환산한다.
+ *  약점 색(데미지·영력·실드 중 하나) 매칭은 그 매칭의 효과가 1.5배 (GDD 3-4) */
 function applySteps(s: BattleState, steps: ResolveStep[], rep: PhaseReport): void {
   const p = s.params;
   const weak = s.enemy.def.weakness;
-  const unitDamage = p.playerMatchDamage * p.playerDamageMultiplier;
+  const unitDamage = p.playerMatchDamage * p.playerDamageMultiplier * p.damageEffectMultiplier;
+  let spiritGain = 0;
   for (const step of steps) {
     for (const role of TILE_ROLES) {
       s.matchesByRole[role] += step.matchesByRole[role];
       s.tilesByRole[role] += step.clearedByRole[role];
       const units = step.clearedByRole[role] / BALANCE.battle.minMatch;
       if (units === 0) continue;
-      // 데미지=1배, 공허=riskDamageMultiplier배, 그 외 색은 약점일 때만 1배로 타격
-      let perUnit = role === 'damage' ? 1 : role === 'risk' ? p.riskDamageMultiplier : 0;
-      if (role === weak) {
-        if (perUnit === 0) perUnit = 1;
-        perUnit *= p.weaknessMultiplier;
-        rep.weakHit = true;
-      }
-      rep.damageDealt += units * perUnit * unitDamage;
-      if (role === 'spirit') s.spiritMatches += step.matchesByRole.spirit;
-      else if (role === 'shield') rep.shieldGained += units * p.shieldPerMatch;
+      const mult = role === weak ? p.weaknessMultiplier : 1;
+      if (role === weak) rep.weakHit = true;
+      if (role === 'damage') rep.damageDealt += units * unitDamage * mult;
+      else if (role === 'risk') rep.damageDealt += units * p.riskDamageMultiplier * unitDamage;
+      else if (role === 'spirit') spiritGain += step.matchesByRole.spirit * mult;
+      else if (role === 'shield') rep.shieldGained += units * p.shieldPerMatch * p.shieldEffectMultiplier * mult;
       else if (role === 'absorb') s.absorbGained += units;
-      else if (role === 'risk') s.riskGained += units * p.riskPerMatch;
+      if (role === 'risk') s.riskGained += units * p.riskPerMatch;
     }
   }
+  s.spiritMatches = Math.min(spiritCap(p), s.spiritMatches + spiritGain);
   s.enemy.hp = Math.max(0, s.enemy.hp - rep.damageDealt);
   s.player.shield += rep.shieldGained;
 }
@@ -189,56 +223,66 @@ export function playerSwap(s: BattleState, a: Cell, b: Cell): ActionResult {
   }
   const phases: PhaseReport[] = [];
   const rep = newPhase(s, 'player');
-  rep.steps = resolveBoard(s.board, s.rng, s.params.riskSpawnRate);
+  rep.steps = resolveBoard(s.board, s.rng, spawnRate(s.params));
   applySteps(s, rep.steps, rep);
   s.turns++;
   checkWin(s);
   rep.hud = hudOf(s);
   phases.push(rep);
+  return finishTurn(s, phases);
+}
+
+/** 플레이어가 턴을 쓴 뒤 처리: 적 턴 → 턴 한도 → 막힌 보드 섞기 */
+function finishTurn(s: BattleState, phases: PhaseReport[]): ActionResult {
   if (s.status === 'playing') phases.push(enemyTurn(s));
   if (s.status === 'playing' && s.turns >= s.params.maxTurns) {
     s.status = 'lost';
     s.lossReason = 'timeout';
   }
   let reshuffled = false;
-  if (s.status === 'playing' && findMoves(s.board).length === 0) {
-    s.board = createBoard(s.rng, s.params.riskSpawnRate);
+  if (s.status === 'playing' && (s.params.reshuffleEachTurn || findMoves(s.board).length === 0)) {
+    s.board = reshuffleBoard(s.board, s.rng, spawnRate(s.params));
     reshuffled = true;
   }
   return { accepted: true, phases, reshuffled, status: s.status };
 }
 
-/** 적 턴: 같은 보드에서 가능한 교환 중 하나를 골라 매칭(보드가 바뀜), 이어서 공격 */
+/** 적 턴: 같은 보드에서 가능한 교환 중 하나를 골라 자동 매칭(보드만 바뀜, 효과 없음).
+ *  공격은 별도 주기(enemyAttackEveryTurns)마다 한 번, 실드가 먼저 흡수 (GDD 3-4) */
 function enemyTurn(s: BattleState): PhaseReport {
   const rep = newPhase(s, 'enemy');
   const moves = findMoves(s.board);
   if (moves.length > 0) {
     const [a, b] = moves[nextInt(s.rng, moves.length)]!;
     swapCells(s.board, a, b);
-    rep.steps = resolveBoard(s.board, s.rng, s.params.riskSpawnRate);
+    rep.steps = resolveBoard(s.board, s.rng, spawnRate(s.params));
   }
-  const damage = s.enemy.def.attackInMatches * s.params.shieldPerMatch;
-  rep.blocked = Math.min(s.player.shield, damage);
-  s.player.shield -= rep.blocked;
-  rep.damageTaken = damage - rep.blocked;
-  s.player.hp = Math.max(0, s.player.hp - rep.damageTaken);
-  if (s.player.hp <= 0) {
-    s.status = 'lost';
-    s.lossReason = 'hp';
+  if (s.turns % s.params.enemyAttackEveryTurns === 0) {
+    const damage = s.enemy.def.attackInMatches * s.params.shieldPerMatch;
+    rep.attacked = true;
+    rep.blocked = Math.min(s.player.shield, damage);
+    s.player.shield -= rep.blocked;
+    rep.damageTaken = damage - rep.blocked;
+    s.player.hp = Math.max(0, s.player.hp - rep.damageTaken);
+    if (s.player.hp <= 0) {
+      s.status = 'lost';
+      s.lossReason = 'hp';
+    }
   }
   rep.hud = hudOf(s);
   return rep;
 }
 
-/** 기술 발동: 턴을 쓰지 않는 즉시 행동. 영력 매칭 spiritMatchesPerSkill 회를 소모 */
+/** 기술 발동: 그 턴을 쓴다(적 턴이 이어진다). 영력 매칭 spiritMatchesPerSkill 회를 소모 (GDD 3-4) */
 export function useSkill(s: BattleState): ActionResult {
   if (!canUseSkill(s)) return { accepted: false, phases: [], reshuffled: false, status: s.status };
   s.spiritMatches -= s.params.spiritMatchesPerSkill;
   s.skillsUsed.push(BASIC_SKILL_ID);
   const rep = newPhase(s, 'skill');
-  rep.damageDealt = s.params.skillPowerInMatches * s.params.playerMatchDamage * s.params.playerDamageMultiplier;
+  rep.damageDealt = s.params.skillPowerInMatches * s.params.playerMatchDamage * s.params.playerDamageMultiplier * s.params.damageEffectMultiplier;
   s.enemy.hp = Math.max(0, s.enemy.hp - rep.damageDealt);
+  s.turns++;
   checkWin(s);
   rep.hud = hudOf(s);
-  return { accepted: true, phases: [rep], reshuffled: false, status: s.status };
+  return finishTurn(s, [rep]);
 }

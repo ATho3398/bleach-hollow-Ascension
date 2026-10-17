@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 3;
+export const BALANCE_VERSION = 4;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -28,8 +28,10 @@ export const BALANCE = {
     spiritMatchesPerSkill: 3,
     /** 4매치 → 줄 폭발, 5매치 → 해당 색 전체 제거 */
     specialMatch: { lineBlast: 4, colorClear: 5 },
-    /** 약점 색 매칭 배율 */
+    /** 약점 색(데미지·영력·실드) 매칭 효과 배율 (GDD 3-4) */
     weaknessMultiplier: 1.5,
+    /** 영력 게이지 상한 = 기술 2회분 (GDD 3-4) */
+    spiritGaugeCapInSkills: 2,
     /** 적 체력은 "플레이어 매칭 N회 분량" (CLAUDE.md 규칙 3) */
     enemyHpInMatches: { normal: 6, elite: { min: 10, max: 12 } },
     /** 강적은 바퀴당 최대 1마리 */
@@ -45,8 +47,8 @@ export const BALANCE = {
       /** 플레이어 매칭 1회 데미지. 적 체력은 이 값 × hpInMatches 로 환산되므로 기준 단위일 뿐이다 */
       playerMatchDamage: 10,
       /** "매칭 N회 분량" 보정: 플레이어는 한 턴에 연쇄·특수 매치로 데미지 매칭 여러 번을 얻으므로, 적 체력 1회분 = 매칭 1회 데미지 × 이 값.
-       *  탐욕 봇 시뮬(npm run balance)로 일반 적이 평균 6~8턴이 되게 맞췄다 (GDD 2-2). 사람은 봇보다 느리므로 봇은 6턴 안팎을 목표 */
-      hpMatchScale: 3.2,
+       *  탐욕 봇 시뮬(npm run balance)로 일반 5~7턴, 강적 8~10턴 근처가 되게 맞췄다 (C.3: 기술이 턴을 쓰고 적 공격이 2턴 주기가 된 뒤 3.2→2.1). 사람은 봇보다 느리다 */
+      hpMatchScale: 2.1,
       /** 육성이 올리는 값: 매칭 1회당 데미지 배율 (GDD 3-2). 육성 없음 = 1 */
       playerDamageMultiplier: 1,
       /** 플레이어 체력: 실드 매칭 10회 분량 (적 평균 공격 1회 ≈ 0.5~0.9 실드 매칭 → 일반 적은 맞아도 버틴다) */
@@ -63,6 +65,8 @@ export const BALANCE = {
       riskPerMatch: 5,
       /** 무한 대치 방지: 이 턴수를 넘기면 패배 (GDD 2-2 평균 6~8턴의 약 3배) */
       maxTurns: 25,
+      /** 적 공격 주기: 플레이어 N턴마다 1회 (GDD 3-4 임시) */
+      enemyAttackEveryTurns: 2,
     },
   },
 } as const;

@@ -1,12 +1,12 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ENEMIES, getEnemy } from '../src/data/enemies';
+import { ENEMIES, getEnemy, parseEnemy } from '../src/data/enemies';
 import { FACTIONS, getFaction } from '../src/data/factions';
 import { pickFaction } from '../src/data/schema';
 import {
   buildBattleRecord, createBattle, createBoard, createRng, findMoves, findRuns, playGreedy, playerSwap,
-  resolveBoard, useSkill, type Board,
+  reshuffleBoard, resolveBoard, useSkill, type Board,
 } from '../src/engine/battle';
 import { parseFactionConfig, TILE_ROLES, type TileRole } from '../src/engine/faction';
 import { emptyRunLog } from '../src/engine/runLog';
@@ -171,9 +171,9 @@ describe('효과와 약점', () => {
   const oneMatch = (role: string): Board => board(['hahaha', 'ah' + role + 'hah', `${role}${role}ahah`, 'ahahah', 'hahaha', 'ahahah']);
   const mv = [{ r: 1, c: 2 }, { r: 2, c: 2 }] as const;
 
-  it('약점 색 매칭은 1.5배', () => {
+  it('약점 색 매칭은 그 매칭의 효과가 1.5배 (데미지=피해량)', () => {
     const weak = createBattle({ seed: 1, enemy: getEnemy('test-a'), params: { riskSpawnRate: 0 } }); // 약점 damage
-    const normal = createBattle({ seed: 1, enemy: { ...getEnemy('test-a'), weakness: 'risk' }, params: { riskSpawnRate: 0 } });
+    const normal = createBattle({ seed: 1, enemy: { ...getEnemy('test-a'), weakness: 'spirit' }, params: { riskSpawnRate: 0 } });
     weak.board = oneMatch('d');
     normal.board = oneMatch('d');
     const rw = playerSwap(weak, mv[0], mv[1]);
@@ -183,6 +183,88 @@ describe('효과와 약점', () => {
     expect(rn.phases[0]!.weakHit).toBe(false);
     expect(rn.phases[0]!.damageDealt).toBeGreaterThan(0);
     expect(rw.phases[0]!.damageDealt).toBeCloseTo(rn.phases[0]!.damageDealt * 1.5);
+  });
+
+  it('약점이 영력이면 게이지 증가가, 실드면 실드량이 1.5배', () => {
+    const run = (weakness: 'spirit' | 'shield' | 'damage', role: string) => {
+      const s = createBattle({ seed: 1, enemy: { ...getEnemy('test-a'), weakness }, params: { riskSpawnRate: 0 } });
+      s.board = oneMatch(role);
+      const res = playerSwap(s, mv[0], mv[1]);
+      expect(res.accepted).toBe(true);
+      return { s, rep: res.phases[0]! };
+    };
+    const sp = run('spirit', 's');
+    const spBase = run('damage', 's');
+    expect(spBase.s.spiritMatches).toBe(1);
+    expect(sp.s.spiritMatches).toBeCloseTo(1.5);
+    const sh = run('shield', 'h');
+    const shBase = run('damage', 'h');
+    expect(sh.rep.shieldGained).toBeCloseTo(shBase.rep.shieldGained * 1.5);
+    expect(sp.rep.weakHit).toBe(true);
+  });
+
+  it('데미지가 아닌 색은 약점이어도 피해를 주지 않는다', () => {
+    const s = createBattle({ seed: 1, enemy: getEnemy('test-b'), params: { riskSpawnRate: 0 } }); // 약점 shield
+    s.board = oneMatch('h');
+    expect(playerSwap(s, mv[0], mv[1]).phases[0]!.damageDealt).toBe(0);
+  });
+
+  it('적 약점은 데미지·영력·실드 3색 안이다 (흡수·공허 불가)', () => {
+    for (const e of ENEMIES) expect(['damage', 'spirit', 'shield']).toContain(e.weakness);
+    expect(() => parseEnemy({ ...getEnemy('test-a'), weakness: 'risk' })).toThrow(/weakness/);
+    expect(() => parseEnemy({ ...getEnemy('test-a'), weakness: 'absorb' })).toThrow(/weakness/);
+  });
+
+  it('적 공격은 주기마다(임시 2턴) 한 번만 들어가고 실드가 먼저 흡수한다', () => {
+    const s = createBattle({ seed: 3, enemy: { ...getEnemy('test-a'), hpInMatches: 1000 }, params: { riskSpawnRate: 0 } });
+    const attacks: boolean[] = [];
+    for (let i = 0; i < 4; i++) {
+      const [a, b] = findMoves(s.board)[0]!;
+      s.player.shield = i === 1 ? 5 : 0;
+      const res = playerSwap(s, a, b);
+      const enemy = res.phases.find((p) => p.kind === 'enemy')!;
+      attacks.push(enemy.attacked);
+      if (enemy.attacked && i === 1) {
+        expect(enemy.blocked).toBe(5);
+        expect(enemy.damageTaken).toBeCloseTo(s.enemy.def.attackInMatches * s.params.shieldPerMatch - 5);
+      }
+    }
+    expect(attacks).toEqual([false, true, false, true]);
+  });
+
+  it('적 자동 매칭은 보드만 바꾼다 (적 효과 없음)', () => {
+    const s = createBattle({ seed: 3, enemy: getEnemy('test-a'), params: { riskSpawnRate: 0 } });
+    const [a, b] = findMoves(s.board)[0]!;
+    const res = playerSwap(s, a, b);
+    const enemy = res.phases.find((p) => p.kind === 'enemy')!;
+    expect(enemy.steps.length).toBeGreaterThan(0);
+    expect(enemy.damageDealt).toBe(0);
+    expect(enemy.shieldGained).toBe(0);
+  });
+
+  it('기술을 쓰면 그 턴을 쓰고 적 턴이 이어진다', () => {
+    const s = createBattle({ seed: 1, enemy: getEnemy('test-b') });
+    s.spiritMatches = 3;
+    const res = useSkill(s);
+    expect(s.turns).toBe(1);
+    expect(res.phases.map((p) => p.kind)).toEqual(['skill', 'enemy']);
+  });
+
+  it('영력 게이지 상한은 기술 2회분', () => {
+    const s = createBattle({ seed: 1, enemy: { ...getEnemy('test-a'), weakness: 'spirit' }, params: { riskSpawnRate: 0 } });
+    s.spiritMatches = 5.5;
+    s.board = oneMatch('s');
+    playerSwap(s, mv[0], mv[1]);
+    expect(s.spiritMatches).toBe(s.params.spiritMatchesPerSkill * 2);
+  });
+
+  it('가능한 교환이 없으면 무료로 섞고, 섞은 보드는 매치가 없고 움직일 수 있다', () => {
+    const rng = createRng(11);
+    const stuck = createBoard(createRng(4), 0.1);
+    const mixed = reshuffleBoard(stuck, rng, 0);
+    expect(findRuns(mixed)).toEqual([]);
+    expect(findMoves(mixed).length).toBeGreaterThan(0);
+    expect(mixed.flat().sort()).toEqual(stuck.flat().sort());
   });
 
   it('영력 3회 매칭이면 기술을 쓸 수 있고, 쓰면 적 체력이 줄고 기록된다', () => {

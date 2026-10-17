@@ -114,6 +114,22 @@ export function createBoard(rng: Rng, riskRate: number, size: number = BALANCE.b
   }
 }
 
+/** 막힌 보드를 무료로 섞는다: 같은 타일을 다시 배치해 즉시 매치가 없고 움직일 수 있는 배치를 만든다.
+ *  여러 번 시도해도 안 되면(타일 구성이 극단적일 때) 새 보드를 만든다 */
+export function reshuffleBoard(b: Board, rng: Rng, riskRate: number): Board {
+  const flat = b.flat();
+  const n = b.length;
+  for (let attempt = 0; attempt < 50; attempt++) {
+    for (let i = flat.length - 1; i > 0; i--) {
+      const j = nextInt(rng, i + 1);
+      [flat[i], flat[j]] = [flat[j]!, flat[i]!];
+    }
+    const nb: Board = Array.from({ length: n }, (_, r) => flat.slice(r * n, r * n + n));
+    if (findRuns(nb).length === 0 && findMoves(nb).length > 0) return nb;
+  }
+  return createBoard(rng, riskRate, n);
+}
+
 /** 한 번의 제거 단위(연쇄 1단계) */
 export interface ResolveStep {
   /** 제거 직전 보드 */

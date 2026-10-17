@@ -1,6 +1,6 @@
 // 데이터 파일(src/data/**) 구조. 내용은 아직 비어 있다. 임시 데이터에는 provisional: true 를 붙인다 (GDD 12장).
 
-import type { TileRole } from '../engine/faction';
+import type { WeaknessRole } from '../engine/faction';
 
 /** 종족별로 달라지는 표시 텍스트: 종족 id → 문자열. 엔진 로직은 id 만 쓰고 텍스트는 여기서 읽는다 */
 /** 키 '*' 는 모든 종족 공통 값(해당 종족 키가 없을 때 쓴다) */
@@ -20,8 +20,8 @@ export interface EnemyDef {
   hpInMatches: number;
   /** 공격력: 한 번 공격할 때 "플레이어 실드 매칭 N회 분량" 피해 (절대값 금지, CLAUDE.md 규칙 3) */
   attackInMatches: number;
-  /** 약점 색(역할) 1개 (GDD 2-2) */
-  weakness: TileRole;
+  /** 약점 색(역할) 1개: 데미지·영력·실드 중 (GDD 3-4) */
+  weakness: WeaknessRole;
   rare?: boolean;
   provisional?: boolean;
 }

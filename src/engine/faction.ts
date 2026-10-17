@@ -5,6 +5,10 @@
 export const TILE_ROLES = ['damage', 'spirit', 'shield', 'absorb', 'risk'] as const;
 export type TileRole = (typeof TILE_ROLES)[number];
 
+/** 약점이 될 수 있는 역할: 데미지·영력·실드 3색만 (GDD 3-4). 흡수·공허는 불가 */
+export const WEAKNESS_ROLES = ['damage', 'spirit', 'shield'] as const satisfies readonly TileRole[];
+export type WeaknessRole = (typeof WEAKNESS_ROLES)[number];
+
 /** 슬롯 위치: 호로=본체(body), 사신=참백도(zanpakuto) (GDD 4장) */
 export type SlotLocation = 'body' | 'zanpakuto';
 /** 등급 방식: 호로=도전(challenge), 사신=승진(promotion) (GDD 8-2) */
