@@ -13,4 +13,4 @@ npm run balance    # 밸런스 점검 (CI 는 balance:check)
 
 밸런스 수치는 모두 `src/config/balance.ts` 한 곳에 있다.
 
-플레이: https://atho3398.github.io/bleach-hollow-ascension/ (main 브랜치에 푸시하면 GitHub Actions 가 자동 배포)
+플레이: https://atho3398.github.io/bleach-hollow-Ascension/ (main 브랜치에 푸시하면 GitHub Actions 가 자동 배포)
