@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 4;
+export const BALANCE_VERSION = 5;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -42,6 +42,59 @@ export const BALANCE = {
   // 여기 값은 확정이 아니다. 확정되면 기획서에 반영하고 이 구역에서 옮긴다.
   provisional: {
     // 리스크 게이지 상승·하락량·한계값(11-4): P3 에서 채운다
+    // ── 원정 루프(P2) 임시값. 기획서 2-1·6·7장에 수치가 없는 것 ──
+    expedition: {
+      /** 허기 100이면 탈진 → 패배 처리(마지막 바퀴 획득물 상실). 강제 귀환 유도 (GDD 2-1) */
+      hungerMax: 100,
+      hungerPerTile: 0.4,
+      hungerPerBattle: 1,
+      /** 이 바퀴부터 허기가 급상승 (GDD 2-1 "6바퀴째부터") */
+      hungerSpikeLap: 6,
+      hungerPerTileSpike: 4,
+      conditionMax: 100,
+      conditionPerBattle: 2,
+      /** 바퀴가 돌 때마다 길이 강해진다: 적 hpInMatches·attackInMatches 에 곱하는 (바퀴-1)당 가산 배율 */
+      lapHpScale: 0.12,
+      lapAttackScale: 0.08,
+      /** 5바퀴째부터 공허 생성률 가산 (GDD 2-1 "공허 타일 생성률 ↑"): (바퀴-4)당 */
+      lateLapStart: 5,
+      lateLapRiskBonusPerLap: 0.04,
+      /** 컨디션 0 일 때 공허 생성률 가산(컨디션 비율만큼 선형 감소). 기존 생성률에 더한다 (GDD 3-2) */
+      conditionRiskBonusMax: 0.15,
+      /** 강적 소굴·조합으로 나온 강적을 이기면 추가 타일 1장 (바퀴 합계는 tilesPerLap.max 까지) */
+      eliteBonusTiles: 1,
+      /** 휴식 타일: 허기 감소, 컨디션 회복, 시간 소모(칸 수 환산) */
+      restHunger: 25,
+      restCondition: 20,
+      restTimeTiles: 2,
+      /** 원정에 가져가는 덱 크기와 새 세이브의 타일 보유량 (시작 덱 임시 구성) */
+      deckSize: 8,
+      startingCollection: {
+        'prey-nest-a': 4, 'prey-nest-b': 3, 'elite-den-a': 2, 'elite-den-b': 2,
+        'env-fog': 2, 'env-wasteland': 2, 'env-barrier': 2, 'env-ruin': 2, 'rest-a': 2,
+      } as Record<string, number>,
+    },
+    /** 환경 타일 프리셋: 전투 조건 변경. 이름은 종족 스킨, 효과 종류는 엔진 (GDD 6장) */
+    tiles: {
+      reshuffle: { reshuffleEachTurn: true },
+      power: { damageEffectMultiplier: 1.3 },
+      shield: { shieldEffectMultiplier: 1.5 },
+      void: { riskSpawnBonus: 0.1 },
+    },
+    /** 둥지 최소 버전(P2): 허기·컨디션 두 수치만 (GDD 7장) */
+    nest: {
+      startHunger: 20,
+      startCondition: 80,
+      /** 방치 시 시간당 허기 상승. 죽지 않으므로 상한이 있다 */
+      idleHungerPerHour: 6,
+      idleHungerCap: 90,
+      feedHunger: 35,
+      sleepCondition: 30,
+      petCondition: 8,
+      /** 패배(가면이 깨져 쇠약 / 영력 고갈) 후 컨디션과 허기 가산 */
+      defeatCondition: 15,
+      defeatHunger: 10,
+    },
     // ── 전투 코어(P1) 임시값. 기획서에 없는 수치. 모든 "양"은 매칭 1회(3타일) = 1 단위 기준 ──
     battle: {
       /** 플레이어 매칭 1회 데미지. 적 체력은 이 값 × hpInMatches 로 환산되므로 기준 단위일 뿐이다 */

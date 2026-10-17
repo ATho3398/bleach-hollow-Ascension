@@ -9,6 +9,10 @@ export type TileRole = (typeof TILE_ROLES)[number];
 export const WEAKNESS_ROLES = ['damage', 'spirit', 'shield'] as const satisfies readonly TileRole[];
 export type WeaknessRole = (typeof WEAKNESS_ROLES)[number];
 
+/** 둥지 행동 종류. 이름은 종족 설정이, 효과는 엔진(nest.ts)이 정한다 */
+export const NEST_ACTIONS = ['feed', 'sleep', 'pet'] as const;
+export type NestAction = (typeof NEST_ACTIONS)[number];
+
 /** 슬롯 위치: 호로=본체(body), 사신=참백도(zanpakuto) (GDD 4장) */
 export type SlotLocation = 'body' | 'zanpakuto';
 /** 등급 방식: 호로=도전(challenge), 사신=승진(promotion) (GDD 8-2) */
@@ -38,6 +42,10 @@ export interface FactionConfig {
   basicSkillName: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
+  /** 둥지 / 대원실 (GDD 7장) */
+  nestName: string;
+  /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
+  nestActions: Record<NestAction, string>;
 }
 
 function isString(v: unknown): v is string {
@@ -52,7 +60,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName']) {
+  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
@@ -60,6 +68,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const tn = (r.tileNames ?? {}) as Record<string, unknown>;
   for (const role of TILE_ROLES) {
     if (!isString(tn[role])) errors.push(`tileNames.${role}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  const na = (r.nestActions ?? {}) as Record<string, unknown>;
+  for (const a of NEST_ACTIONS) {
+    if (!isString(na[a])) errors.push(`nestActions.${a}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (r.slotLocation !== 'body' && r.slotLocation !== 'zanpakuto') errors.push('slotLocation: body | zanpakuto');
   if (typeof r.appearanceChange !== 'boolean') errors.push('appearanceChange: boolean');

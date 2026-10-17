@@ -4,6 +4,8 @@
 import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import { ENEMIES } from '../src/data/enemies';
 import { createBattle, playGreedy } from '../src/engine/battle';
+import { createExpedition, playExpedition } from '../src/engine/expedition';
+import { sanitizeDeck, newTileStock } from '../src/game';
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
@@ -35,6 +37,32 @@ for (const enemy of ENEMIES) {
   const hp = enemy.class === 'normal' ? BALANCE.battle.enemyHpInMatches.normal : BALANCE.battle.enemyHpInMatches.elite;
   const [lo, hi] = typeof hp === 'number' ? [hp, hp] : [hp.min, hp.max];
   if (enemy.hpInMatches < lo || enemy.hpInMatches > hi) failures.push(`${enemy.id}: hpInMatches ${enemy.hpInMatches} 가 기획서 범위 ${lo}~${hi} 밖`);
+}
+
+// ── 원정 루프(P2): 자동 플레이(타일을 앞 슬롯에 채워 놓음, 탐욕 봇), 시드 고정 ──
+const M = 60;
+const deck = sanitizeDeck(newTileStock(), 'hollow');
+console.log(`\n원정 (자동 플레이 ${M}회, 타일 배치 포함, 시작 허기 20·컨디션 80)`);
+for (const stopLap of [4, 6]) {
+  let exhausted = 0;
+  let defeated = 0;
+  let battles = 0;
+  let tiles = 0;
+  let hunger = 0;
+  const byLap = Array.from({ length: 6 }, () => 0);
+  for (let seed = 1; seed <= M; seed++) {
+    const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: stopLap });
+    if (e.endReason === 'exhausted') exhausted++;
+    if (e.outcome === 'defeated') defeated++;
+    battles += e.battles.length;
+    tiles += e.acquired.length;
+    hunger += e.hunger;
+    e.battlesByLap.forEach((n, i) => (byLap[i] = (byLap[i] ?? 0) + n));
+  }
+  console.log(`  ${stopLap}바퀴 귀환 계획: 패배 ${defeated}/${M} (탈진 ${exhausted}) · 평균 전투 ${(battles / M).toFixed(1)}회 · 타일 ${(tiles / M).toFixed(1)}장 · 끝 허기 ${(hunger / M).toFixed(0)} · 바퀴별 전투 ${byLap.map((n) => (n / M).toFixed(1)).join('/')}`);
+  // 회귀 가드: 기본 4바퀴 런은 허기로 쓰러지지 않아야 하고, 6바퀴 런은 허기 급상승으로 쓰러질 만해야 한다
+  if (stopLap === 4 && exhausted > 0) failures.push(`4바퀴 런에서 탈진 ${exhausted}회`);
+  if (stopLap === 6 && exhausted < M * 0.5) failures.push(`6바퀴 런 탈진 ${exhausted}/${M} < 50% (허기 급상승이 약하다)`);
 }
 
 if (check) {

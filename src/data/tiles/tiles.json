@@ -1,1 +1,114 @@
-[]
+[
+  {
+    "id": "prey-nest-a",
+    "kind": "prey-nest",
+    "name": {
+      "hollow": "떠도는 영혼",
+      "shinigami": "하급 호로 출몰지"
+    },
+    "effect": {
+      "type": "spawn",
+      "enemyClass": "normal"
+    },
+    "comboGroup": "prey",
+    "provisional": true
+  },
+  {
+    "id": "prey-nest-b",
+    "kind": "prey-nest",
+    "name": {
+      "hollow": "하급 호로"
+    },
+    "effect": {
+      "type": "spawn",
+      "enemyClass": "normal"
+    },
+    "comboGroup": "prey",
+    "provisional": true
+  },
+  {
+    "id": "elite-den-a",
+    "kind": "elite-den",
+    "name": {
+      "hollow": "상급 호로",
+      "shinigami": "메노스 출현 지점"
+    },
+    "effect": {
+      "type": "spawn",
+      "enemyClass": "elite"
+    },
+    "provisional": true
+  },
+  {
+    "id": "elite-den-b",
+    "kind": "elite-den",
+    "name": {
+      "hollow": "다른 메노스"
+    },
+    "effect": {
+      "type": "spawn",
+      "enemyClass": "elite"
+    },
+    "provisional": true
+  },
+  {
+    "id": "env-fog",
+    "kind": "environment",
+    "name": {
+      "hollow": "안개"
+    },
+    "effect": {
+      "type": "environment",
+      "preset": "reshuffle"
+    },
+    "provisional": true
+  },
+  {
+    "id": "env-wasteland",
+    "kind": "environment",
+    "name": {
+      "hollow": "황무지"
+    },
+    "effect": {
+      "type": "environment",
+      "preset": "power"
+    },
+    "provisional": true
+  },
+  {
+    "id": "env-barrier",
+    "kind": "environment",
+    "name": {
+      "shinigami": "결계"
+    },
+    "effect": {
+      "type": "environment",
+      "preset": "shield"
+    },
+    "provisional": true
+  },
+  {
+    "id": "env-ruin",
+    "kind": "environment",
+    "name": {
+      "shinigami": "폐가"
+    },
+    "effect": {
+      "type": "environment",
+      "preset": "void"
+    },
+    "provisional": true
+  },
+  {
+    "id": "rest-a",
+    "kind": "rest",
+    "name": {
+      "hollow": "영혼 웅덩이",
+      "shinigami": "전령신기 보급소"
+    },
+    "effect": {
+      "type": "rest"
+    },
+    "provisional": true
+  }
+]

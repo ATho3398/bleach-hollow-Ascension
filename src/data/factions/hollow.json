@@ -28,5 +28,11 @@
   "rankMode": "challenge",
   "defeatStateName": "가면이 깨져 쇠약",
   "basicSkillName": "본체 능력",
-  "huntingGroundName": "웨코문도"
+  "huntingGroundName": "웨코문도",
+  "nestName": "둥지",
+  "nestActions": {
+    "feed": "먹이 주기",
+    "sleep": "재우기",
+    "pet": "쓰다듬기"
+  }
 }

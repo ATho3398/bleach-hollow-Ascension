@@ -36,10 +36,22 @@ export interface TraitDef {
   provisional?: boolean;
 }
 
+/** 환경 타일이 바꾸는 전투 조건 종류 (효과 수치는 BALANCE.provisional.tiles). 이름만 종족 스킨 (GDD 6장) */
+export type EnvironmentPreset = 'reshuffle' | 'power' | 'shield' | 'void';
+
+export type TileEffect =
+  | { type: 'spawn'; enemyClass: 'normal' | 'elite' }
+  | { type: 'environment'; preset: EnvironmentPreset }
+  | { type: 'rest' };
+
 export interface TerrainTileDef {
   id: string;
   kind: 'prey-nest' | 'elite-den' | 'environment' | 'rest' | 'combo';
+  /** 종족별 스킨 이름. 해당 종족 키(또는 '*')가 없으면 그 종족은 이 타일을 쓰지 않는다 */
   name: PerFaction<string>;
+  effect: TileEffect;
+  /** 같은 값이 인접 3칸이면 조합 효과(임시: 강적 1마리 확정). GDD 6장 "둥지 3개" */
+  comboGroup?: string;
   provisional?: boolean;
 }
 

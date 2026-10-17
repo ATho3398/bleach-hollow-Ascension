@@ -77,6 +77,10 @@ export interface RunRecord {
   /** 획득한 것 / 잃은 것 (마지막 바퀴 손실 등) id 목록 */
   gained: string[];
   lost: string[];
+  /** P2 에서 더한 필드 (세이브 형식 3): 끝난 이유, 시드, 종족 */
+  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted';
+  seed: number;
+  factionId: string;
 }
 
 export interface RunLog {

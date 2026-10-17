@@ -28,5 +28,11 @@
   "rankMode": "promotion",
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
-  "huntingGroundName": "현세 순찰 구역 / 루콘가이"
+  "huntingGroundName": "현세 순찰 구역 / 루콘가이",
+  "nestName": "대원실",
+  "nestActions": {
+    "feed": "식사 / 영력 보급",
+    "sleep": "재우기",
+    "pet": "참백도 손질"
+  }
 }

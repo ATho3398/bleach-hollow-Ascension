@@ -1,11 +1,15 @@
 // 게임 상태와 세이브. 런 로그(GDD 9장)는 처음부터 저장 구조에 들어 있다 (CLAUDE.md 규칙 4)
 
 import { BALANCE_VERSION } from './config/balance';
+import { BALANCE } from './config/balance';
+import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
+import { buildRunRecord, summarize, type ExpeditionState } from './engine/expedition';
 import { emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
+import { tilesFor } from './data/tiles';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 2;
+export const SAVE_FORMAT_VERSION = 3;
 
 export interface SaveMeta {
   format: number;
@@ -22,12 +26,39 @@ export interface SaveData {
   meta: SaveMeta;
   /** 선택한 종족 id (src/data/factions). 게임 시작 때 고른다 (GDD 12장) */
   factionId: string;
+  /** 둥지 상태: 허기·컨디션 (GDD 7장) */
+  nest: NestState;
+  /** 보유 타일 수량과 원정에 가져갈 덱 (GDD 6장). 시작 구성은 임시 */
+  tiles: TileStock;
   /** 히든 조건용 영구 기록 */
   runLog: RunLog;
 }
 
-export function newSaveData(factionId: string): SaveData {
-  return { meta: newSaveMeta(), factionId, runLog: emptyRunLog() };
+export interface TileStock {
+  collection: Record<string, number>;
+  /** 가져갈 덱: 타일 id 목록(중복 가능, 보유 수량 이내) */
+  deck: string[];
+}
+
+export function newTileStock(): TileStock {
+  return { collection: { ...BALANCE.provisional.expedition.startingCollection }, deck: [] };
+}
+
+export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), tiles: newTileStock(), runLog: emptyRunLog() };
+}
+
+/** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
+export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): void {
+  save.runLog.battles.push(...exp.battles);
+  save.runLog.runs.push(buildRunRecord(exp));
+  for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
+  applyExpeditionEnd(save.nest, exp, nowMs);
+}
+
+/** 새 원정의 runId = 지금까지 기록된 원정 수 + 1 */
+export function nextRunId(save: SaveData): number {
+  return save.runLog.runs.length + 1;
 }
 
 /** 세이브에 전투 기록을 더한다 */
@@ -63,6 +94,18 @@ export function migrateSave(raw: unknown): SaveData | null {
     }));
     save.meta.format = 2;
   }
+  if (save.meta.format < 3) {
+    // 형식 2 → 3: 둥지 상태·타일 보유 추가, RunRecord 에 endReason/seed/factionId 추가
+    save.nest = newNest(Date.now());
+    save.tiles = newTileStock();
+    save.runLog.runs = (save.runLog.runs ?? []).map((r) => ({
+      ...r,
+      endReason: r.endReason ?? (r.outcome === 'returned' ? 'returned' : 'battle-lost'),
+      seed: r.seed ?? 0,
+      factionId: r.factionId ?? save.factionId,
+    }));
+    save.meta.format = 3;
+  }
   return save;
 }
 
@@ -81,4 +124,30 @@ export function writeSave(storage: StorageLike, save: SaveData): void {
   } catch {
     // 저장 공간이 막힌 환경(시크릿 모드 등)에서는 이번 판만 기록이 남지 않는다
   }
+}
+
+/** 가져갈 덱을 정리한다: 이 종족이 쓰는 타일만, 보유 수량 이내로. 비면 보유량이 많은 순으로 채운다 */
+export function sanitizeDeck(stock: TileStock, factionId: string, size: number = BALANCE.provisional.expedition.deckSize): string[] {
+  const options = tilesFor(factionId).map((t) => t.id);
+  const used: Record<string, number> = {};
+  const deck: string[] = [];
+  for (const id of stock.deck) {
+    if (deck.length >= size || !options.includes(id)) continue;
+    if ((used[id] ?? 0) >= (stock.collection[id] ?? 0)) continue;
+    used[id] = (used[id] ?? 0) + 1;
+    deck.push(id);
+  }
+  if (deck.length === 0) {
+    for (let round = 0; deck.length < size; round++) {
+      let added = false;
+      for (const id of options) {
+        if (deck.length < size && (stock.collection[id] ?? 0) > round) {
+          deck.push(id);
+          added = true;
+        }
+      }
+      if (!added) break;
+    }
+  }
+  return deck;
 }
