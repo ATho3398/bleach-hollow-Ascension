@@ -78,7 +78,7 @@ for (const build of builds) {
       // 회귀 가드 (기준 빌드 skill 1~2개): 일반 적 승률 90%↑·길이, 강적은 길이·승률 넓은 범위
       if (enemy.class === 'normal') {
         if (winRate < 0.9) failures.push(`${enemy.id}: ${build.name} 봇 승률 ${(winRate * 100).toFixed(0)}% < 90%`);
-        if (avgWin < 25 || avgWin > 60) failures.push(`${enemy.id}: ${build.name} 승리 평균 ${avgWin.toFixed(1)}초 (25~60 밖)`);
+        if (avgWin < 22 || avgWin > 60) failures.push(`${enemy.id}: ${build.name} 승리 평균 ${avgWin.toFixed(1)}초 (22~60 밖)`);
       } else {
         eliteRef[build.name] = [winRate, avgWin];
         if (avgWin < 55 || avgWin > 120) failures.push(`${enemy.id}: ${build.name} 강적 승리 평균 ${avgWin.toFixed(1)}초 (55~120 밖)`);

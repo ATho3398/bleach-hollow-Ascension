@@ -41,7 +41,7 @@ export function tileHint(t: TerrainTileDef): string {
   if (e.type === 'spawn') return e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
   if (e.type === 'rest') return '허기·컨디션 회복 (시간 소모)';
   return {
-    reshuffle: '전투 중 블록 트레이가 주기적으로 섞인다',
+    reshuffle: '전투 중 블록 바의 순서가 주기적으로 섞인다',
     power: '전투 공격 위력 ×1.3',
     shield: '전투에서 받는 피해 ↓',
     void: '전투 공허 블록 ↑',

@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 8;
+export const BALANCE_VERSION = 9;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -119,6 +119,13 @@ export const BALANCE = {
       /** 폐가: 공허 블록 생성 확률 +0.1 */
       void: { voidChanceBonus: 0.1 },
     },
+    /** 블록 바 조작 (C.8, GDD 3-5 v0.8): 화면이 실시간으로 판정하고 엔진은 결과(use/move)만 받는다 */
+    input: {
+      /** 누른 뒤 이 시간(초) 이내에 떼면 사용(클릭). 넘기면 "들었다 놓은 것"이라 사용되지 않는다 (사용자 지시 N초, 임시 0.3) */
+      clickMaxSeconds: 0.3,
+      /** 손가락이 이 거리(px) 이상 움직이면 시간과 무관하게 드래그 (임시 10) */
+      dragThresholdPx: 10,
+    },
     /** 둥지 최소 버전(P2): 허기·컨디션 두 수치만 (GDD 7장) */
     nest: {
       startHunger: 20,
@@ -144,8 +151,8 @@ export const BALANCE = {
       /** 플레이어 기본 공격 1회 피해. 적 체력·공격력은 이 값의 N회 분량이라 기준 단위일 뿐이다 */
       playerAttackDamage: 10,
       /** "기본 공격 N회 분량" 보정: 적 체력 = hpInAttacks × 이 값 × 기본 공격 피해.
-       *  블록·필살이 시간을 줄이므로, 봇(빈 슬롯 = 기본 블록만) 기준 일반 약 45초·강적 약 90초가 되게 맞춘다 (npm run balance, C.6 조정 1.5→2.8) */
-      hpAttackScale: 2.8,
+       *  블록·필살이 시간을 줄이므로, 봇(빈 슬롯 = 기본 블록만) 기준 일반 약 45초·강적 약 90초가 되게 맞춘다 (npm run balance, C.6 조정 1.5→2.8, C.8 일자 8칸 바에서 봇이 더 잘 붙여 일반 36초로 짧아져 2.8→3.4) */
+      hpAttackScale: 3.4,
       /** 적 데이터 hpInAttacks 기준값 (GDD 3-5 임시: 일반 약 30회, 강적 약 70회 분량). 밸런스 점검이 데이터가 이 근처인지 본다 */
       enemyHpInAttacks: { normal: 30, elite: 70 },
       /** 육성이 올리는 값: 공격 배율 (GDD 3-2). 적 체력도 같이 올라 비율 유지. 육성 없음 = 1 */
@@ -156,10 +163,9 @@ export const BALANCE = {
       timeLimitSeconds: 150,
       /** 적 공격 피해 흔들림 ±비율 (같은 시드면 같다). 봇 승률이 0/100% 로만 갈리지 않게 */
       enemyDamageVariance: 0.25,
-      /** 블록 트레이 3열×2행 (GDD 3-5) */
-      trayCols: 3,
-      trayRows: 2,
-      /** 슬롯 skill 특성(없으면 기본 블록) 하나당 블록 생성 간격(초). 트레이가 가득 차거나 봉인 중이면 멈춘다 */
+      /** 블록 바 일자 8칸 (GDD 3-5 v0.8, 크퀘식). 6칸 트레이(C.6) → 8칸: 한 줄에 같은 블록을 붙여 놓을 여유를 준다 */
+      trayCapacity: 8,
+      /** 슬롯 skill 특성(없으면 기본 블록) 하나당 블록 생성 간격(초). 바가 가득 차거나 봉인 중이면 멈춘다 */
       blockSpawnSeconds: 4,
       /** 체인 배율: 체인1 ×1.0, 체인2 ×2.2, 체인3 ×3.6 (GDD 3-5) */
       chainMultipliers: [1, 2.2, 3.6],

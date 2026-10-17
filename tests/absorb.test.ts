@@ -9,7 +9,7 @@ import {
   absorbReasons, absorbRisk, buildCombatParams, buildOffer, canAbsorb, changeRisk, completedLineages, equippedSkills, gainTrait, lateLapRisk, newBuild,
   passiveMultipliers, setSlot, settleRiskToNest, type BuildState,
 } from '../src/engine/absorb';
-import { BASIC_SKILL_ID, applyInput, blockSources, createCombat, type CombatState } from '../src/engine/combat';
+import { BASIC_SKILL_ID, applyInput, blockSources, createCombat, type Block, type CombatState } from '../src/engine/combat';
 import { createRng } from '../src/engine/rng';
 import {
   advance, chooseAbsorb, chooseContinue, chooseRelease, chooseReturn, createExpedition, drainEvents, finishBattle, finishRest, placeTile,
@@ -126,11 +126,11 @@ describe('흡수 가능 조건', () => {
     gainTrait(b, 'trait-a1');
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
     s.enemy.hp = s.enemy.maxHp * 100;
-    s.tray[0] = { uid: 90, kind: 'skill', traitId: 'trait-a1', chain: 3 };
-    s.tray[1] = { uid: 91, kind: 'skill', traitId: 'trait-b1', chain: 3 };
+    const three = (traitId: string, uid: number): Block[] => [0, 1, 2].map((k) => ({ uid: uid + k, kind: 'skill', traitId }));
+    s.tray = [...three('trait-a1', 90), ...three('trait-b1', 91)];
     applyInput(s, { type: 'use', cell: 0 });
     expect([s.chain3Count, s.weakChain3Count]).toEqual([1, 0]);
-    applyInput(s, { type: 'use', cell: 1 });
+    applyInput(s, { type: 'use', cell: 0 });
     expect([s.chain3Count, s.weakChain3Count]).toEqual([2, 1]);
     expect(absorbReasons({ ...s, status: 'won' })).toEqual(['weakness-chain3']);
   });
@@ -139,7 +139,7 @@ describe('흡수 가능 조건', () => {
     const b = newBuild();
     gainTrait(b, 'trait-b1'); // test-a 의 약점 계통 B 스킬
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
-    s.tray[0] = { uid: 99, kind: 'skill', traitId: 'trait-b1', chain: 1 };
+    s.tray = [{ uid: 99, kind: 'skill', traitId: 'trait-b1' }];
     s.enemy.hp = 1;
     expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
     expect(s.status).toBe('won');
@@ -282,7 +282,7 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
   /** 트레이 0번 칸에 블록을 놓고 써서 피해를 잰다 */
   const fire = (params: Parameters<typeof createCombat>[1]['params'], traitId: string, chain = 1): { s: CombatState; damage: number } => {
     const s = createCombat(1, { enemy, params });
-    s.tray[0] = { uid: 99, kind: 'skill', traitId, chain };
+    s.tray = Array.from({ length: chain }, (_, k) => ({ uid: 99 + k, kind: 'skill' as const, traitId }));
     const before = s.enemy.hp;
     applyInput(s, { type: 'use', cell: 0 });
     return { s, damage: before - s.enemy.hp };
@@ -417,10 +417,9 @@ describe('흡수의 효과', () => {
 describe('리스크 게이지', () => {
   it('공허 블록 사용이 게이지를 올린다 (전투의 riskGained = 사용 횟수 × perVoidBlock, 그대로 반영)', () => {
     const s = createCombat(1, { enemy: getEnemy('test-a') });
-    s.tray[0] = { uid: 98, kind: 'void', traitId: null, chain: 1 };
-    s.tray[1] = { uid: 99, kind: 'void', traitId: null, chain: 1 };
+    s.tray = [{ uid: 98, kind: 'void', traitId: null }, { uid: 99, kind: 'void', traitId: null }];
     applyInput(s, { type: 'use', cell: 0 });
-    applyInput(s, { type: 'use', cell: 1 });
+    applyInput(s, { type: 'use', cell: 0 });
     expect(s.voidUsed).toBe(2);
     expect(s.riskGained).toBeCloseTo(2 * RX.perVoidBlock);
     const exp = mk({ seed: 11 });

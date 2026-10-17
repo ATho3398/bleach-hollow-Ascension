@@ -1,16 +1,18 @@
-// 전투 화면 v2 (GDD 3-5): 실시간 자동 전투 + 스킬 블록 트레이. 원정과 연습이 같이 쓴다.
-// 엔진 틱(0.1초)을 실시간 1x/2x 로 돌린다. 탭 = 블록 사용, 드래그 = 이동(빈 칸/이웃과 맞바꿈), 같은 블록 위에 놓기 = 합치기(체인 +1).
+// 전투 화면 v2 (GDD 3-5 v0.8): 실시간 자동 전투 + 일자 8칸 스킬 블록 바. 원정과 연습이 같이 쓴다.
+// 엔진 틱(0.1초)을 실시간 1x/2x 로 돌린다. 클릭(누른 뒤 0.3초 이내 떼기) = 블록 사용(붙은 같은 블록이 함께 발동해 체인),
+// 드래그 = 놓은 칸에 끼워 넣어 순서 변경. 오래 누르면 사용되지 않는다. 클릭 판정은 여기(실시간)서, 엔진은 use/move 결과만 받는다.
 // 텍스트는 FactionConfig·데이터에서 읽고 종족 id 로 분기하지 않는다.
 import { lineageName } from '../data/lineages';
 import { pickFaction } from '../data/schema';
 import { traitName } from '../data/traits';
 import {
-  BASIC_SKILL_ID, blockEffect, canMerge, canMove, drainCombatEvents, maxChain, mergePairs, step, timeLeftSeconds,
+  BASIC_SKILL_ID, blockEffect, drainCombatEvents, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type CombatInput, type CombatState,
 } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
 import { barOf, el, mountScreen, pct, rowOf } from './dom';
 import { battleLabels, type BattleLabels } from './labels';
+import { classifyRelease, POINTER_RULES, releaseInput, slotAt } from './pointer';
 
 export interface BattleViewOptions {
   /** 머리말: 원정이면 바퀴·칸·타일 정보 */
@@ -51,10 +53,8 @@ function eventText(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return e.guarded ? `강공격을 막았다! ${n(e.damage)} 피해${e.reflected > 0 ? ` · ${n(e.reflected)} 반사` : ''}` : `강공격 적중! ${n(e.damage)} 피해`;
     case 'seal':
       return `봉인! ${e.seconds}초 동안 ${labels.skillBlock} 생성 정지`;
-    case 'merge':
-      return `${labels.chain}${e.chain}!`;
     case 'shuffle':
-      return '트레이가 섞였다';
+      return '블록 바의 순서가 섞였다';
     case 'end':
       return e.status === 'won' ? `${pickFaction(s.enemy.def.name, factionId)}을(를) 쓰러뜨렸다!` : null;
     default:
@@ -87,14 +87,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const head = el('div', 'row');
   head.append(el('b', '', `${enemyName}${enemy.class === 'elite' ? ' (강적)' : ''}`), weakChip);
 
+  const cap = p.trayCapacity;
   const trayEl = el('div', 'tray');
-  trayEl.style.gridTemplateColumns = `repeat(${p.trayCols}, 1fr)`;
-  const cellEls = s.tray.map((_, i) => {
+  trayEl.style.gridTemplateColumns = `repeat(${cap}, 1fr)`;
+  const cellEls = Array.from({ length: cap }, () => {
     const c = el('div', 'tcell');
-    c.dataset.i = String(i);
     trayEl.append(c);
     return c;
   });
+  // 붙은 같은 블록 위에 "체인N" 묶음 표시
+  const runRow = el('div', 'runrow');
+  runRow.style.gridTemplateColumns = `repeat(${cap}, 1fr)`;
+  const holdNote = el('small', 'holdnote', '');
 
   let speed = 1;
   let paused = false;
@@ -135,8 +139,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     status,
     barOf('sp', spBar),
     rowOf(el('span', 'dim', labels.sp), spText),
+    runRow,
     trayEl,
-    el('small', 'dim', `탭 = 사용 · 드래그 = 옮기기 · 같은 블록 위에 놓기 = ${labels.chain} +1 (최대 ${top})`),
+    holdNote,
+    el('small', 'dim', `클릭(${POINTER_RULES.clickMaxSeconds}초 안에 떼기) = 사용 · 오래 누르면 사용 안 됨 · 끌어서 순서 바꾸기 · 같은 블록을 붙이면 ${labels.chain}(최대 ${top})`),
     rowOf(controls, timeText),
   );
 
@@ -148,34 +154,57 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     lines.forEach((l, i) => (l.style.opacity = String(1 - i * 0.3)));
   };
 
-  // ── 트레이 그리기 ──
-  let dragFrom: number | null = null;
+  // ── 블록 바 그리기 ──
+  /** 드래그 중인 블록: 누른 블록의 uid 로 추적한다 (그 사이 앞 블록이 쓰여 칸 번호가 바뀌어도 따라간다) */
+  let drag: { uid: number; dx: number; dy: number; to: number } | null = null;
+  const indexOfUid = (uid: number) => s.tray.findIndex((b) => b.uid === uid);
   const sig: string[] = [];
   const drawTray = () => {
-    const pairs = mergePairs(s.tray, p.trayCols, top);
-    const mergeable = new Set(pairs.flat());
-    s.tray.forEach((b, i) => {
-      const c = cellEls[i]!;
-      const targets = dragFrom !== null && dragFrom !== i;
-      const canM = targets && canMerge(s.tray, dragFrom!, i, p.trayCols, top);
-      const canMv = targets && !canM && canMove(s.tray, dragFrom!, i, p.trayCols);
-      c.className = `tcell${canM ? ' merge-target' : canMv ? ' move-target' : ''}${dragFrom === null && mergeable.has(i) ? ' can-merge' : ''}`;
+    const runs = runsOf(s.tray);
+    const dragFrom = drag ? indexOfUid(drag.uid) : -1;
+    const inRun = new Map<number, string>();
+    runRow.replaceChildren();
+    for (const r of runs) {
+      if (r.length < 2 || s.tray[r.start]!.kind !== 'skill') continue;
+      for (let k = 0; k < r.length; k++) inRun.set(r.start + k, `run${k === 0 ? ' run-l' : ''}${k === r.length - 1 ? ' run-r' : ''}`);
+      const tag = el('span', 'runtag', `${labels.chain}${Math.min(top, r.length)}${r.length > top ? ' (누른 곳 기준)' : ''}`);
+      tag.style.gridColumn = `${r.start + 1} / span ${r.length}`;
+      runRow.append(tag);
+    }
+    cellEls.forEach((c, i) => {
+      const b = s.tray[i];
+      const mark = drag && dragFrom >= 0 && i === Math.min(s.tray.length - 1, drag.to) && i !== dragFrom ? (i > dragFrom ? ' drop-after' : ' drop-before') : '';
+      c.className = `tcell${b ? ' filled' : ''}${b ? (inRun.get(i) ? ` ${inRun.get(i)}` : '') : ''}${mark}`;
       const eff = b ? blockEffect(s, b) : null;
-      const key = b ? `${b.uid}:${b.chain}:${eff?.weak ? 1 : 0}` : '';
+      const key = b ? `${b.uid}:${eff?.weak ? 1 : 0}` : '';
       if (sig[i] === key) return;
       sig[i] = key;
       c.replaceChildren();
       if (!b) return;
       const role = eff?.skill.role ?? null;
       const blk = el('div', `tblock ${b.kind === 'skill' ? `role-${role}` : b.kind}${eff?.weak ? ' weak' : ''}`);
+      blk.dataset.uid = String(b.uid);
       blk.append(el('b', '', blockName(b, labels, faction.id)));
-      if (b.kind === 'skill') {
-        blk.append(el('small', '', `${role ? labels.role[role] : ''}${eff?.weak ? ' · 약점' : ''}`));
-        blk.append(el('span', 'pips', '●'.repeat(b.chain) + '○'.repeat(top - b.chain)));
-      } else if (b.kind === 'void') blk.append(el('small', '', `큰 피해 · ${labels.riskGauge} ↑`));
-      else blk.append(el('small', '', '큰 피해'));
+      if (b.kind === 'skill') blk.append(el('small', '', `${role ? labels.role[role] : ''}${eff?.weak ? '·약점' : ''}`));
+      else if (b.kind === 'void') blk.append(el('small', '', `${labels.riskGauge}↑`));
       c.append(blk);
     });
+    // 누르고 있는 블록이 손가락을 따라다닌다 (다시 그려도 유지)
+    trayEl.querySelectorAll<HTMLElement>('.tblock.dragging').forEach((x) => {
+      if (!drag || x.dataset.uid !== String(drag.uid)) {
+        x.classList.remove('dragging');
+        x.style.transform = '';
+        x.style.pointerEvents = '';
+      }
+    });
+    if (drag) {
+      const d = trayEl.querySelector<HTMLElement>(`.tblock[data-uid="${drag.uid}"]`);
+      if (d) {
+        d.style.transform = `translate(${drag.dx}px, ${drag.dy}px) scale(1.08)`;
+        d.style.pointerEvents = 'none';
+        d.classList.add('dragging');
+      }
+    }
   };
 
   const drawHud = () => {
@@ -199,62 +228,62 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     trayEl.classList.toggle('sealed', s.sealTicks > 0);
   };
 
-  // ── 입력: 탭 = 사용, 드래그 = 이동/합치기 (터치·마우스 모두 pointer 이벤트) ──
+  // ── 입력: 포인터 이벤트(터치·마우스 공통). 판정은 pointer.ts, 시각은 performance.now(실시간)이라 배속·일시정지와 무관 ──
   const queue: CombatInput[] = [];
-  let down: { i: number; x: number; y: number; id: number; moved: boolean } | null = null;
-  const cellAt = (x: number, y: number): number | null => {
-    const t = document.elementFromPoint(x, y)?.closest<HTMLElement>('.tcell');
-    return t?.dataset.i !== undefined ? Number(t.dataset.i) : null;
+  let down: { uid: number; x: number; y: number; id: number; at: number; maxMoved: number; holdTimer: number } | null = null;
+  const barRect = () => trayEl.getBoundingClientRect();
+  const slotOf = (x: number) => {
+    const r = barRect();
+    const inner = trayEl.clientWidth;
+    const pad = (r.width - inner) / 2;
+    return slotAt(x, r.left + pad, inner, cap);
   };
-  const dragged = () => (down ? cellEls[down.i]!.querySelector<HTMLElement>('.tblock') : null);
-  const resetDrag = () => {
-    const d = dragged();
-    if (d) {
-      d.style.transform = '';
-      d.style.pointerEvents = '';
-      d.classList.remove('dragging');
-    }
+  const endPress = () => {
+    if (down) window.clearTimeout(down.holdTimer);
     down = null;
-    dragFrom = null;
+    drag = null;
+    trayEl.classList.remove('held');
+    holdNote.textContent = '';
     drawTray();
   };
   trayEl.addEventListener('pointerdown', (e) => {
-    const i = cellAt(e.clientX, e.clientY);
-    if (i === null || !s.tray[i] || s.status !== 'playing') return;
-    down = { i, x: e.clientX, y: e.clientY, id: e.pointerId, moved: false };
+    if (down || s.status !== 'playing') return;
+    const i = slotOf(e.clientX);
+    const b = s.tray[i];
+    if (!b) return;
     trayEl.setPointerCapture(e.pointerId);
+    const holdTimer = window.setTimeout(() => {
+      // 제한 시간을 넘겼다: 놓아도 사용되지 않는다는 것을 보여 준다 (드래그 중이면 상관없다)
+      if (down && down.maxMoved < POINTER_RULES.dragThresholdPx) {
+        trayEl.classList.add('held');
+        holdNote.textContent = '오래 눌러서 사용되지 않아요 — 그냥 놓으면 제자리';
+      }
+    }, POINTER_RULES.clickMaxSeconds * 1000);
+    down = { uid: b.uid, x: e.clientX, y: e.clientY, id: e.pointerId, at: performance.now(), maxMoved: 0, holdTimer };
+    drawTray();
   });
   trayEl.addEventListener('pointermove', (e) => {
     if (!down || e.pointerId !== down.id) return;
     const dx = e.clientX - down.x;
     const dy = e.clientY - down.y;
-    if (!down.moved && Math.hypot(dx, dy) > 10) {
-      down.moved = true;
-      dragFrom = down.i;
-      sig.length = 0;
+    down.maxMoved = Math.max(down.maxMoved, Math.hypot(dx, dy));
+    if (down.maxMoved >= POINTER_RULES.dragThresholdPx) {
+      trayEl.classList.remove('held');
+      holdNote.textContent = '';
+      drag = { uid: down.uid, dx, dy, to: slotOf(e.clientX) };
       drawTray();
     }
-    if (down.moved) {
-      const d = dragged();
-      if (d) {
-        d.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
-        d.style.pointerEvents = 'none';
-        d.classList.add('dragging');
-      }
-    }
   });
-  trayEl.addEventListener('pointercancel', resetDrag);
+  trayEl.addEventListener('pointercancel', endPress);
   trayEl.addEventListener('pointerup', (e) => {
     if (!down || e.pointerId !== down.id) return;
-    const from = down.i;
-    if (!down.moved) queue.push({ type: 'use', cell: from });
-    else {
-      const to = cellAt(e.clientX, e.clientY);
-      if (to !== null && to !== from) {
-        queue.push(canMerge(s.tray, from, to, p.trayCols, top) ? { type: 'merge', from, to } : { type: 'move', from, to });
-      }
+    const from = indexOfUid(down.uid); // 누르는 사이 앞 블록이 쓰여 번호가 바뀌었을 수 있다. 블록이 사라졌으면 -1
+    const kind = classifyRelease(performance.now() - down.at, down.maxMoved);
+    if (from >= 0 && s.status === 'playing' && !paused) {
+      const input = releaseInput(kind, from, slotOf(e.clientX), s.tray.length);
+      if (input) queue.push(input);
     }
-    resetDrag();
+    endPress();
   });
 
   // ── 실시간 루프: 화면 프레임마다 쌓인 시간만큼 엔진 틱을 돌린다 (1x/2x) ──
@@ -289,6 +318,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   drawHud();
   drawTray();
-  say(`${enemyName}과(와) 조우! 블록을 탭해 쓰고, 같은 블록끼리 붙여 ${labels.chain}을 올린다`);
+  say(`${enemyName}과(와) 조우! 블록을 눌러 쓰고, 같은 블록을 붙여 놓으면 함께 발동해 ${labels.chain}이 된다`);
   requestAnimationFrame(frame);
 }

@@ -7,7 +7,7 @@ import { BALANCE } from '../../config/balance';
 import type { ChainBonus, ChainBonusKind, EnemyDef, SkillRole } from '../../data/schema';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
-import { canMerge, canMove, emptyCells, inTray, type Block, type Tray } from './tray';
+import { canMove, chainGroup, inTray, movedTray, type Block, type Tray } from './tray';
 
 const CX = BALANCE.provisional.combat;
 
@@ -37,8 +37,8 @@ export interface CombatParams {
   playerMaxHp: number;
   timeLimitSeconds: number;
   enemyDamageVariance: number;
-  trayCols: number;
-  trayRows: number;
+  /** 블록 바 칸 수 (일자 8칸, GDD 3-5 v0.8) */
+  trayCapacity: number;
   blockSpawnSeconds: number;
   chainMultipliers: readonly number[];
   chainBonusFromChain: number;
@@ -67,7 +67,7 @@ export interface CombatParams {
   damageTakenMultiplier: number;
   /** 환경(황무지): 내 공격 위력 전체 배율 */
   playerPowerMultiplier: number;
-  /** 환경(안개): 이 간격(초)마다 트레이 블록이 섞인다. 0 = 없음 */
+  /** 환경(안개): 이 간격(초)마다 블록 바의 순서가 섞인다. 0 = 없음 */
   trayShuffleSeconds: number;
   /** 컨디션·환경(폐가)·5바퀴 이후·한계 돌파: 공허 블록 생성 확률 가산 */
   voidChanceBonus: number;
@@ -87,10 +87,12 @@ export function defaultCombatParams(): CombatParams {
   };
 }
 
+/** 엔진이 받는 입력은 둘뿐이다 (클릭 시간 판정은 화면 몫, GDD 3-5 v0.8).
+ *  use: 바의 cell 번째 블록 클릭 — 붙어 있는 같은 특성 블록이 함께 발동해 체인이 된다.
+ *  move: 드래그로 from 블록을 빼서 to 위치에 끼워 넣는다 (나머지는 밀림). */
 export type CombatInput =
   | { type: 'use'; cell: number }
-  | { type: 'move'; from: number; to: number }
-  | { type: 'merge'; from: number; to: number };
+  | { type: 'move'; from: number; to: number };
 
 export type CombatStatus = 'playing' | 'won' | 'lost';
 
@@ -108,8 +110,7 @@ export type CombatEvent =
   | { kind: 'heavy-cast'; seconds: number }
   | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number }
   | { kind: 'seal'; seconds: number }
-  | { kind: 'spawn'; cell: number; block: Block['kind'] }
-  | { kind: 'merge'; cell: number; chain: number }
+  | { kind: 'spawn'; index: number; block: Block['kind'] }
   | { kind: 'shuffle' }
   | { kind: 'end'; status: CombatStatus };
 
@@ -211,7 +212,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
       cast: null,
     },
     player: { hp: params.playerMaxHp, maxHp: params.playerMaxHp, attackTimer: t(params.playerAttackSeconds / params.attackSpeedMultiplier) },
-    tray: Array.from({ length: params.trayCols * params.trayRows }, () => null),
+    tray: [],
     nextUid: 1,
     // 생성원이 여럿이면 생성 시점을 고르게 엇갈린다 (첫 블록은 간격의 절반 뒤)
     spawnTimers: sources.map((_, i) => Math.max(1, Math.round((spawnTicks * (i + 0.5)) / sources.length))),
@@ -253,22 +254,22 @@ function unitDamage(p: CombatParams): number {
   return p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier;
 }
 
-/** 스킬 블록 위력 배율: 계통 보너스 × 체인 배율 × 약점(×1.5) */
-export function blockEffect(s: CombatState, b: Block): { skill: CombatSkill; mult: number; weak: boolean } | null {
+/** 스킬 블록 위력 배율: 계통 보너스 × 체인 배율 × 약점(×1.5). chain = 함께 발동하는 블록 수(1~3), 바에 있는 블록 하나만 볼 때는 1 */
+export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: CombatSkill; mult: number; weak: boolean } | null {
   if (b.kind !== 'skill') return null;
   const skill = sourceOf(s.params, b.traitId);
   if (!skill) return null;
   const weak = skill.lineageId !== null && skill.lineageId === s.enemy.def.weaknessLineageId;
-  const chainMult = s.params.chainMultipliers[b.chain - 1] ?? 1;
+  const chainMult = s.params.chainMultipliers[chain - 1] ?? 1;
   return { skill, mult: skill.powerMultiplier * chainMult * (weak ? s.params.weaknessMultiplier : 1), weak };
 }
 
 /** 이 블록을 지금 쓰면 줄 피해 (봇·화면 예고용) */
-export function blockDamage(s: CombatState, b: Block): number {
+export function blockDamage(s: CombatState, b: Block, chain = 1): number {
   const p = s.params;
   if (b.kind === 'special') return p.specialPowerInAttacks * unitDamage(p);
   if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p);
-  const e = blockEffect(s, b);
+  const e = blockEffect(s, b, chain);
   return e ? e.skill.powerInAttacks * e.mult * unitDamage(p) : 0;
 }
 
@@ -301,11 +302,9 @@ function takeDamage(s: CombatState, amount: number): void {
 }
 
 function spawn(s: CombatState, kind: Block['kind'], traitId: string | null): boolean {
-  const free = emptyCells(s.tray);
-  if (free.length === 0) return false;
-  const cell = free[nextInt(s.rng, free.length)]!;
-  s.tray[cell] = { uid: s.nextUid++, kind, traitId, chain: 1 };
-  emit(s, { kind: 'spawn', cell, block: kind });
+  if (s.tray.length >= s.params.trayCapacity) return false;
+  s.tray.push({ uid: s.nextUid++, kind, traitId });
+  emit(s, { kind: 'spawn', index: s.tray.length - 1, block: kind });
   return true;
 }
 
@@ -329,13 +328,13 @@ function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
   }
 }
 
-/** 블록 사용 (탭). 스킬 블록 = 역할 효과 + 피해, 필살 = 큰 피해, 공허 = 큰 피해 + 리스크 상승 */
-function useBlock(s: CombatState, cell: number): boolean {
-  const b = s.tray[cell];
+/** 블록 사용 (클릭). 스킬 블록 = 붙어 있는 같은 특성 블록이 함께 발동(체인) → 역할 효과 + 피해, 필살 = 큰 피해, 공허 = 큰 피해 + 리스크 상승 */
+function useBlock(s: CombatState, index: number): boolean {
+  const b = s.tray[index];
   if (!b) return false;
-  s.tray[cell] = null;
   const p = s.params;
   if (b.kind === 'special') {
+    s.tray.splice(index, 1);
     s.specialUsed = true;
     const damage = blockDamage(s, b);
     emit(s, { kind: 'block', block: 'special', traitId: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
@@ -343,6 +342,7 @@ function useBlock(s: CombatState, cell: number): boolean {
     return true;
   }
   if (b.kind === 'void') {
+    s.tray.splice(index, 1);
     s.voidUsed++;
     s.riskGained += p.riskPerVoidBlock;
     addSp(s, p.spPerBlock);
@@ -351,18 +351,23 @@ function useBlock(s: CombatState, cell: number): boolean {
     dealDamage(s, damage, { kind: 'void', traitId: null, lineageId: null });
     return true;
   }
-  const eff = blockEffect(s, b);
+  // 스킬 블록: 함께 발동하는 칸들이 모두 소모된다. 체인 단계 = 함께 쓰인 블록 수
+  const group = chainGroup(s.tray, index, maxChain(p));
+  const chain = group.length;
+  s.tray.splice(group[0]!, chain);
+  const eff = blockEffect(s, b, chain);
   if (!eff) return true; // 생성원에 없는 블록(있을 수 없음)은 그냥 사라진다
   const { skill, mult, weak } = eff;
   const id = skill.id;
-  s.skillsUsed.push(id);
-  s.blocksByTrait[id] = (s.blocksByTrait[id] ?? 0) + 1;
-  s.blocksByChain[Math.min(3, b.chain) - 1]!++;
-  if (b.chain >= maxChain(p)) {
+  // 기록: 특성별·skillsUsed 는 소모된 블록 수, 체인별은 발동 횟수 (한 번 눌러 체인N = blocksByChain[N-1] + 1)
+  for (let k = 0; k < chain; k++) s.skillsUsed.push(id);
+  s.blocksByTrait[id] = (s.blocksByTrait[id] ?? 0) + chain;
+  s.blocksByChain[chain - 1]!++;
+  if (chain >= maxChain(p)) {
     s.chain3Count++;
     if (weak) s.weakChain3Count++;
   }
-  addSp(s, p.spPerBlock);
+  addSp(s, p.spPerBlock * chain);
   let heal = 0;
   let guardSeconds = 0;
   if (skill.role === 'guard') {
@@ -372,10 +377,10 @@ function useBlock(s: CombatState, cell: number): boolean {
     heal = Math.min(s.player.maxHp - s.player.hp, s.player.maxHp * p.healFraction * mult);
     s.player.hp += heal;
   }
-  const bonus = b.chain >= p.chainBonusFromChain ? skill.chainBonus : null;
+  const bonus = chain >= p.chainBonusFromChain ? skill.chainBonus : null;
   if (bonus) applyChainBonus(s, bonus);
-  const damage = blockDamage(s, b);
-  emit(s, { kind: 'block', block: 'skill', traitId: id, role: skill.role, chain: b.chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
+  const damage = blockDamage(s, b, chain);
+  emit(s, { kind: 'block', block: 'skill', traitId: id, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
   dealDamage(s, damage, { kind: 'skill', traitId: id, lineageId: skill.lineageId });
   return true;
 }
@@ -383,22 +388,11 @@ function useBlock(s: CombatState, cell: number): boolean {
 /** 입력 하나 적용. 규칙에 맞지 않으면 false (상태 그대로) */
 export function applyInput(s: CombatState, input: CombatInput): boolean {
   if (s.status !== 'playing') return false;
-  const p = s.params;
   let ok = false;
   if (input.type === 'use') {
     ok = inTray(s.tray, input.cell) && useBlock(s, input.cell);
-  } else if (input.type === 'merge') {
-    if (canMerge(s.tray, input.from, input.to, p.trayCols, maxChain(p))) {
-      const target = s.tray[input.to]!;
-      target.chain++;
-      s.tray[input.from] = null;
-      emit(s, { kind: 'merge', cell: input.to, chain: target.chain });
-      ok = true;
-    }
-  } else if (canMove(s.tray, input.from, input.to, p.trayCols)) {
-    const t = s.tray[input.to]!;
-    s.tray[input.to] = s.tray[input.from]!;
-    s.tray[input.from] = t;
+  } else if (input.type === 'move' && canMove(s.tray, input.from, input.to)) {
+    s.tray = movedTray(s.tray, input.from, input.to);
     ok = true;
   }
   if (ok) s.inputs.push({ tick: s.tick, input });
@@ -448,11 +442,11 @@ function advanceTick(s: CombatState): void {
     s.shuffleTimer = t(p.trayShuffleSeconds);
     shuffleTray(s);
   }
-  // 블록 생성: 생성원마다 일정 간격. 트레이가 가득 차거나 봉인 중이면 타이머가 멈춘다
+  // 블록 생성: 생성원마다 일정 간격. 바가 가득 차거나 봉인 중이면 타이머가 멈춘다
   if (s.sealTicks === 0) {
     const sources = blockSources(p);
     sources.forEach((src, i) => {
-      if (emptyCells(s.tray).length === 0) return;
+      if (s.tray.length >= p.trayCapacity) return;
       if (--s.spawnTimers[i]! <= 0) {
         spawn(s, 'skill', src.id);
         s.spawnTimers[i] = t(p.blockSpawnSeconds);

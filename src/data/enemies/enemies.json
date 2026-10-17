@@ -32,7 +32,7 @@
     },
     "class": "elite",
     "hpInAttacks": 66,
-    "attackInAttacks": 0.18,
+    "attackInAttacks": 0.16,
     "weaknessLineageId": "lineage-a",
     "pattern": {
       "everySeconds": 8,

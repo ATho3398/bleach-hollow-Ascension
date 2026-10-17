@@ -8,7 +8,7 @@ import { FACTIONS, getFaction } from '../src/data/factions';
 import { pickFaction, type EnemyDef } from '../src/data/schema';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import {
-  BASIC_SKILL_ID, applyInput, blockSources, buildBattleRecord, canMerge, canMove, createCombat, drainCombatEvents, elapsedSeconds,
+  BASIC_SKILL_ID, applyInput, blockSources, buildBattleRecord, chainGroup, createCombat, drainCombatEvents, elapsedSeconds,
   playCombatBot, replayCombat, step, ticksOf, type Block, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { createExpedition, playExpedition } from '../src/engine/expedition';
@@ -23,7 +23,14 @@ const elite = getEnemy('test-elite');
 const mk = (opt: { seed?: number; enemy?: EnemyDef; params?: Partial<CombatParams> } = {}) =>
   createCombat(opt.seed ?? 1, { enemy: opt.enemy ?? normal, params: opt.params });
 let uid = 1000;
-const blk = (traitId: string | null, chain = 1, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId, chain });
+const blk = (traitId: string | null, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId });
+/** 바를 이 블록들로 채운다 (왼쪽부터) */
+const put = (s: CombatState, ...blocks: Block[]) => {
+  s.tray = blocks;
+  return s;
+};
+/** 같은 특성 블록 n 개 */
+const many = (traitId: string, n: number) => Array.from({ length: n }, () => blk(traitId));
 /** 입력 없이 n 초 진행 */
 const wait = (s: CombatState, seconds: number) => {
   for (let i = 0; i < ticksOf(s.params, seconds) && s.status === 'playing'; i++) step(s);
@@ -67,12 +74,14 @@ describe('고정 틱 시뮬레이션', () => {
     }
   });
 
-  it('시드가 다르면 블록 위치 등이 달라진다', () => {
-    const a = mk({ seed: 1 });
-    const b = mk({ seed: 2 });
-    wait(a, 12);
-    wait(b, 12);
-    expect(a.tray.map((x) => (x ? 1 : 0))).not.toEqual(b.tray.map((x) => (x ? 1 : 0)));
+  it('시드가 다르면 공허 블록이 나오는 순서가 달라진다', () => {
+    const kinds = (seed: number) => {
+      const s = mk({ seed, params: { voidChance: 0.5, voidChanceMax: 0.5 } });
+      s.player.hp = 1e9;
+      wait(s, 40);
+      return s.tray.map((x) => x.kind).join();
+    };
+    expect(new Set([1, 2, 3, 4, 5, 6].map(kinds)).size).toBeGreaterThan(1);
   });
 
   it('입력이 없어도 자동 기본 공격(내 1.0초, 적 1.5초)이 오간다', () => {
@@ -102,89 +111,162 @@ describe('고정 틱 시뮬레이션', () => {
   });
 });
 
-describe('블록 생성과 트레이', () => {
-  it('트레이는 3열×2행 6칸, 슬롯이 비면 기본 블록만 생성된다', () => {
+describe('블록 생성과 블록 바 (일자 8칸)', () => {
+  it('바는 8칸, 비어 있으면 기본 블록만 생성되고 왼쪽부터 빈 칸 없이 오른쪽 끝에 붙는다', () => {
     const s = mk();
-    expect(s.tray).toHaveLength(6);
+    expect(s.params.trayCapacity).toBe(8);
+    expect(s.tray).toHaveLength(0);
     expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID]);
     s.voidTimer = 1e9;
     wait(s, CX.blockSpawnSeconds * 2);
-    const blocks = s.tray.filter(Boolean);
-    expect(blocks.length).toBe(2);
-    expect(blocks.every((b) => b!.traitId === BASIC_SKILL_ID)).toBe(true);
+    expect(s.tray).toHaveLength(2);
+    expect(s.tray.every((b) => b.traitId === BASIC_SKILL_ID)).toBe(true);
+    const spawns = drainCombatEvents(s).filter((e) => e.kind === 'spawn');
+    expect(spawns.map((e) => e.kind === 'spawn' && e.index)).toEqual([0, 1]);
   });
 
   it('슬롯 skill 특성마다 일정 간격(임시 4초)으로 블록이 생긴다', () => {
     const s = mk({ params: build('trait-a1', 'trait-b1') });
     s.voidTimer = 1e9;
     wait(s, CX.blockSpawnSeconds);
-    const ids = s.tray.filter(Boolean).map((b) => b!.traitId).sort();
+    const ids = s.tray.map((b) => b.traitId).sort();
     expect(ids).toEqual(['trait-a1', 'trait-b1']);
   });
 
-  it('트레이가 가득 차면 생성이 멈추고, 칸이 비면 다시 생긴다', () => {
+  it('8개가 되면 생성이 멈추고(타이머도 멈춤), 하나를 쓰면 오른쪽 블록이 당겨지고 새 블록은 맨 오른쪽에 생긴다', () => {
     const s = mk({ params: build('trait-a1', 'trait-b1', 'trait-c1') });
     s.voidTimer = 1e9;
     s.player.hp = 1e9;
-    wait(s, 30);
-    expect(s.tray.every(Boolean)).toBe(true);
+    wait(s, 40);
+    expect(s.tray).toHaveLength(8);
     const timers = [...s.spawnTimers];
     wait(s, 10);
     expect(s.spawnTimers).toEqual(timers);
-    useAt(s, 0);
+    expect(s.tray).toHaveLength(8);
+    const ids = s.tray.map((b) => b.uid);
+    useAt(s, 2);
+    const used = s.tray.length;
+    expect(used).toBeLessThan(8);
+    // 쓴 칸 오른쪽은 한 칸씩 당겨졌다 (같은 특성이 붙어 체인이 됐다면 그 개수만큼)
+    const gone = 8 - used;
+    expect(s.tray.map((b) => b.uid)).toEqual([...ids.slice(0, 2), ...ids.slice(2 + gone)]);
     wait(s, CX.blockSpawnSeconds);
-    expect(s.tray.every(Boolean)).toBe(true);
+    expect(s.tray.length).toBeGreaterThan(used);
+    expect(s.tray.slice(0, used).map((b) => b.uid)).toEqual([...ids.slice(0, 2), ...ids.slice(2 + gone)]);
   });
 });
 
-describe('이동과 합치기 (상하좌우 인접 규칙)', () => {
-  it('빈 칸으로는 어디든 옮기고, 블록이 있는 칸과는 이웃일 때만 맞바꾼다', () => {
-    const s = quiet(mk());
-    s.tray[0] = blk('x');
-    s.tray[5] = blk('y');
-    expect(canMove(s.tray, 0, 4, 3)).toBe(true); // 빈 칸(대각선이어도)
-    expect(canMove(s.tray, 0, 5, 3)).toBe(false); // 이웃 아닌 블록
-    expect(applyInput(s, { type: 'move', from: 0, to: 2 })).toBe(true);
-    expect(s.tray[2]!.traitId).toBe('x');
-    expect(applyInput(s, { type: 'move', from: 2, to: 5 })).toBe(true); // 2와 5는 세로 이웃 → 맞바꿈
-    expect(s.tray[2]!.traitId).toBe('y');
-    expect(s.tray[5]!.traitId).toBe('x');
-    expect(applyInput(s, { type: 'move', from: 1, to: 0 })).toBe(false); // 빈 칸에서 옮길 것은 없다
+describe('드래그 이동 (끼워넣기)', () => {
+  const order = (s: CombatState) => s.tray.map((b) => b.traitId).join('');
+  const abcde = () => put(quiet(mk()), blk('a'), blk('b'), blk('c'), blk('d'), blk('e'));
+
+  it('앞에서 뒤로: to 위치에 끼워지고 나머지는 밀린다', () => {
+    const s = abcde();
+    expect(applyInput(s, { type: 'move', from: 0, to: 3 })).toBe(true);
+    expect(order(s)).toBe('bcdae');
   });
 
-  it('같은 특성 블록이 상하좌우로 이웃하면 합쳐져 체인 +1 (최대 3), 대각선·다른 특성은 안 된다', () => {
-    const s = quiet(mk());
-    s.tray[0] = blk(BASIC_SKILL_ID);
-    s.tray[1] = blk(BASIC_SKILL_ID);
-    s.tray[4] = blk(BASIC_SKILL_ID);
-    s.tray[2] = blk('trait-a1');
-    expect(canMerge(s.tray, 0, 4, 3, 3)).toBe(false); // 대각선
-    expect(canMerge(s.tray, 1, 2, 3, 3)).toBe(false); // 다른 특성
-    expect(applyInput(s, { type: 'merge', from: 0, to: 1 })).toBe(true);
-    expect(s.tray[0]).toBeNull();
-    expect(s.tray[1]!.chain).toBe(2);
-    expect(applyInput(s, { type: 'merge', from: 4, to: 1 })).toBe(true);
-    expect(s.tray[1]!.chain).toBe(3);
-    s.tray[0] = blk(BASIC_SKILL_ID);
-    expect(applyInput(s, { type: 'merge', from: 0, to: 1 })).toBe(false); // 최대 체인
+  it('뒤에서 앞으로', () => {
+    const s = abcde();
+    expect(applyInput(s, { type: 'move', from: 4, to: 1 })).toBe(true);
+    expect(order(s)).toBe('aebcd');
   });
 
-  it('필살·공허 블록은 합칠 수 없다', () => {
-    const s = quiet(mk());
-    s.tray[0] = blk(null, 1, 'void');
-    s.tray[1] = blk(null, 1, 'void');
-    s.tray[3] = blk(null, 1, 'special');
-    s.tray[4] = blk(null, 1, 'special');
-    expect(applyInput(s, { type: 'merge', from: 0, to: 1 })).toBe(false);
-    expect(applyInput(s, { type: 'merge', from: 3, to: 4 })).toBe(false);
+  it('이웃과도 같은 규칙, 같은 칸이거나 범위 밖(빈 칸)은 거절하고 입력 기록에도 남지 않는다', () => {
+    const s = abcde();
+    expect(applyInput(s, { type: 'move', from: 1, to: 2 })).toBe(true);
+    expect(order(s)).toBe('acbde');
+    expect(applyInput(s, { type: 'move', from: 2, to: 2 })).toBe(false);
+    expect(applyInput(s, { type: 'move', from: 0, to: 5 })).toBe(false);
+    expect(applyInput(s, { type: 'move', from: 7, to: 0 })).toBe(false);
+    expect(applyInput(s, { type: 'merge', from: 0, to: 1 } as never)).toBe(false); // 합치기 입력은 없다
+    expect(s.inputs).toHaveLength(1);
+    expect(order(s)).toBe('acbde');
+  });
+
+  it('옮겨도 블록 수·소모·SP 는 그대로 (순서만 바뀐다)', () => {
+    const s = abcde();
+    const uids = s.tray.map((b) => b.uid).sort();
+    applyInput(s, { type: 'move', from: 0, to: 4 });
+    expect(s.tray.map((b) => b.uid).sort()).toEqual(uids);
+    expect(s.sp).toBe(0);
+  });
+});
+
+describe('붙어 있는 같은 블록 = 클릭 시 함께 발동 (체인)', () => {
+  const T = BASIC_SKILL_ID;
+  const left = (s: CombatState) => s.tray.map((b) => b.traitId).join();
+
+  it('붙은 같은 특성 2개·3개를 누르면 모두 소모되고 체인 단계 = 개수', () => {
+    for (const n of [1, 2, 3]) {
+      const s = put(quiet(mk()), ...many(T, n), blk('z'));
+      useAt(s, n - 1);
+      expect(left(s)).toBe('z');
+      expect(s.blocksByChain.map((v, k) => (k === n - 1 ? v : 0))).toEqual(s.blocksByChain);
+      expect(s.blocksByChain[n - 1]).toBe(1);
+      expect(s.skillsUsed).toHaveLength(n);
+      expect(s.blocksByTrait[T]).toBe(n);
+    }
+  });
+
+  it('붙어 있지 않은 같은 블록은 체인이 아니다 (사이에 다른 블록이 있으면 개별 사용)', () => {
+    const s = put(quiet(mk()), blk(T), blk('z'), blk(T));
+    useAt(s, 0);
+    expect(left(s)).toBe('z,' + T);
+    expect(s.blocksByChain).toEqual([1, 0, 0]);
+    useAt(s, 1);
+    expect(s.blocksByChain).toEqual([2, 0, 0]);
+  });
+
+  it('붙은 블록이 4개 이상이면 클릭한 블록을 포함한 3개 (오른쪽 우선, 모자라면 왼쪽)', () => {
+    const s = put(quiet(mk()), ...many(T, 5));
+    // 5개 덩어리에서 클릭 위치별로 묶이는 칸
+    expect(chainGroup(s.tray, 0, 3)).toEqual([0, 1, 2]);
+    expect(chainGroup(s.tray, 1, 3)).toEqual([1, 2, 3]);
+    expect(chainGroup(s.tray, 2, 3)).toEqual([2, 3, 4]);
+    expect(chainGroup(s.tray, 3, 3)).toEqual([2, 3, 4]); // 오른쪽에 1개뿐 → 왼쪽으로 확장
+    expect(chainGroup(s.tray, 4, 3)).toEqual([2, 3, 4]);
+    const a = put(quiet(mk()), ...many(T, 4));
+    useAt(a, 3);
+    expect(a.tray).toHaveLength(1); // 3개 소모, 맨 왼쪽 1개 남음
+    expect(a.blocksByChain).toEqual([0, 0, 1]);
+    const b = put(quiet(mk()), blk('z'), ...many(T, 4), blk('y'));
+    useAt(b, 2);
+    expect(left(b)).toBe(['z', T, 'y'].join()); // 2번 클릭 → 2,3,4 가 발동, 1번 남음
+  });
+
+  it('덩어리가 아닌 다른 특성/공허/필살은 끼지 않는다', () => {
+    const s = put(quiet(mk({ params: build('trait-a1') })), blk('trait-a1'), blk('trait-a1'), blk(null, 'void'), blk('trait-a1'));
+    useAt(s, 1);
+    expect(s.tray.map((b) => b.kind)).toEqual(['void', 'skill']);
+  });
+
+  it('공허 블록은 다른 공허 블록과 붙어 있어도 체인이 되지 않고 개별 사용, 필살도 단독', () => {
+    const s = put(quiet(mk()), blk(null, 'void'), blk(null, 'void'), blk(null, 'special'), blk(null, 'special'));
+    expect(chainGroup(s.tray, 0, 3)).toEqual([0]);
+    expect(chainGroup(s.tray, 3, 3)).toEqual([3]);
+    useAt(s, 0);
+    expect(s.voidUsed).toBe(1);
+    expect(s.tray.map((b) => b.kind)).toEqual(['void', 'special', 'special']);
+    useAt(s, 1);
+    expect(s.tray).toHaveLength(2);
+    expect(s.blocksByChain).toEqual([0, 0, 0]); // 스킬 체인 기록은 오르지 않는다
+  });
+
+  it('붙이기: move 로 떨어진 같은 블록을 붙이면 그다음 클릭이 체인', () => {
+    const s = put(quiet(mk()), blk(T), blk('z'), blk('y'), blk(T));
+    applyInput(s, { type: 'move', from: 3, to: 1 });
+    expect(left(s)).toBe([T, T, 'z', 'y'].join());
+    useAt(s, 0);
+    expect(s.blocksByChain).toEqual([0, 1, 0]);
+    expect(left(s)).toBe('z,y');
   });
 });
 
 describe('체인 배율과 SP·필살', () => {
-  it('체인 효과 ×1.0 / ×2.2 / ×3.6', () => {
-    const dmg = (chain: number) => {
-      const s = quiet(mk());
-      s.tray[0] = blk(BASIC_SKILL_ID, chain);
+  it('체인 효과 ×1.0 / ×2.2 / ×3.6 (붙은 블록 1·2·3개)', () => {
+    const dmg = (n: number) => {
+      const s = put(quiet(mk()), ...many(BASIC_SKILL_ID, n));
       const before = s.enemy.hp;
       useAt(s, 0);
       return before - s.enemy.hp;
@@ -195,44 +277,59 @@ describe('체인 배율과 SP·필살', () => {
     expect(dmg(3) / d1).toBeCloseTo(3.6);
   });
 
-  it('체인3 은 특성별 추가 효과가 붙는다: stagger(적 행동 지연), reflect(막기 반사), cleanse(봉인 해제 + SP)', () => {
+  it('체인3 은 특성별 추가 효과가 붙는다: stagger(적 행동 지연), reflect(막기 반사), cleanse(봉인 해제 + SP). 체인2 는 없음', () => {
     const s = quiet(mk({ params: build('trait-a1', 'trait-b1', 'trait-c1') }));
     s.enemy.attackTimer = 10;
-    s.tray[0] = blk('trait-a1', 2);
+    put(s, ...many('trait-a1', 2));
     useAt(s, 0);
     expect(s.enemy.attackTimer).toBe(10); // 체인2 는 추가 효과 없음
-    s.tray[0] = blk('trait-a1', 3);
+    put(s, ...many('trait-a1', 3));
     useAt(s, 0);
     expect(s.enemy.attackTimer).toBe(10 + ticksOf(s.params, 1.5));
-    s.tray[1] = blk('trait-b1', 3);
-    useAt(s, 1);
+    put(s, ...many('trait-b1', 3));
+    useAt(s, 0);
     expect(s.guard.reflect).toBe(1);
     s.sealTicks = 30;
-    const sp = s.sp;
-    s.tray[2] = blk('trait-c1', 3);
-    useAt(s, 2);
+    s.sp = 0;
+    put(s, ...many('trait-c1', 3));
+    useAt(s, 0);
     expect(s.sealTicks).toBe(0);
-    expect(s.sp).toBe(Math.min(CX.spMax, sp + CX.spPerBlock + 40));
+    expect(s.sp).toBe(Math.min(CX.spMax, 3 * CX.spPerBlock + 40)); // 블록 3개 +60, cleanse +40
     expect(s.chain3Count).toBe(3);
     expect(s.blocksByChain).toEqual([0, 1, 3]);
   });
 
-  it('블록 하나 사용 → SP +20, SP 100 이면 필살 블록이 생기고 큰 피해를 준다', () => {
+  it('함께 쓰인 블록 하나마다 SP +20, SP 100 이면 필살 블록이 맨 오른쪽에 생기고 큰 피해를 준다', () => {
     const s = quiet(mk());
-    for (let i = 0; i < 5; i++) {
-      s.tray[0] = blk(BASIC_SKILL_ID);
+    put(s, ...many(BASIC_SKILL_ID, 3));
+    useAt(s, 0);
+    expect(s.sp).toBe(3 * CX.spPerBlock);
+    for (let i = 0; i < 2; i++) {
+      put(s, blk(BASIC_SKILL_ID));
       useAt(s, 0);
     }
     expect(s.sp).toBe(CX.spMax);
+    put(s, blk('z'));
     step(s);
-    const cell = s.tray.findIndex((b) => b?.kind === 'special');
-    expect(cell).toBeGreaterThanOrEqual(0);
+    const cell = s.tray.findIndex((b) => b.kind === 'special');
+    expect(cell).toBe(1); // 맨 오른쪽
     expect(s.sp).toBe(0);
     const before = s.enemy.hp;
     useAt(s, cell);
     expect(before - s.enemy.hp).toBeCloseTo(CX.specialPowerInAttacks * CX.playerAttackDamage);
     expect(s.specialUsed).toBe(true);
     expect(s.sp).toBe(0); // 필살은 SP 를 주지 않는다
+  });
+
+  it('가득 찬 바에서는 SP 100 이어도 필살 블록이 대기하고, 칸이 비면 생긴다', () => {
+    const s = quiet(mk());
+    put(s, ...Array.from({ length: 8 }, (_, i) => blk(`t${i}`)));
+    s.sp = CX.spMax;
+    step(s);
+    expect(s.tray.some((b) => b.kind === 'special')).toBe(false);
+    useAt(s, 3);
+    step(s);
+    expect(s.tray[s.tray.length - 1]!.kind).toBe('special');
   });
 });
 
@@ -280,7 +377,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
       const s = eliteQuiet();
       castNow(s);
       if (guard) {
-        s.tray[0] = blk('trait-b1');
+        put(s, blk('trait-b1'));
         useAt(s, 0);
       }
       const before = s.player.hp;
@@ -302,7 +399,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
   it('reflect 추가 효과가 붙은 막기는 막은 피해를 적에게 돌려준다', () => {
     const s = eliteQuiet();
     castNow(s);
-    s.tray[0] = blk('trait-b1', 3);
+    put(s, ...many('trait-b1', 3));
     useAt(s, 0);
     const before = s.enemy.hp;
     wait(s, elite.pattern!.castSeconds);
@@ -320,9 +417,9 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     step(s);
     expect(s.sealTicks).toBe(ticksOf(s.params, elite.pattern!.sealSeconds) - 0);
     wait(s, elite.pattern!.sealSeconds - 0.2);
-    expect(s.tray.every((b) => b === null)).toBe(true);
+    expect(s.tray).toHaveLength(0);
     wait(s, 1);
-    expect(s.tray.filter(Boolean)).toHaveLength(1);
+    expect(s.tray).toHaveLength(1);
   });
 });
 
@@ -330,7 +427,7 @@ describe('약점·공허·시간 제한', () => {
   it('약점 계통의 스킬 블록은 위력 ×1.5, 다른 계통·기본 블록은 그대로', () => {
     const dmg = (traitId: string) => {
       const s = quiet(mk({ params: build('trait-a1', 'trait-b4', 'trait-c5') }));
-      s.tray[0] = blk(traitId);
+      put(s, blk(traitId));
       const before = s.enemy.hp;
       useAt(s, 0);
       return before - s.enemy.hp;
@@ -345,10 +442,10 @@ describe('약점·공허·시간 제한', () => {
     const s = mk({ params: { voidChance: 1, voidChanceMax: 1 } });
     s.spawnTimers = [1e9];
     wait(s, CX.voidCheckSeconds);
-    const cell = s.tray.findIndex((b) => b?.kind === 'void');
+    const cell = s.tray.findIndex((b) => b.kind === 'void');
     expect(cell).toBeGreaterThanOrEqual(0);
     wait(s, CX.voidCheckSeconds);
-    expect(s.tray.filter((b) => b?.kind === 'void')).toHaveLength(2); // 쓰지 않으면 남는다
+    expect(s.tray.filter((b) => b.kind === 'void')).toHaveLength(2); // 쓰지 않으면 남는다
     quiet(s);
     const before = s.enemy.hp;
     useAt(s, cell);
@@ -393,20 +490,26 @@ describe('약점·공허·시간 제한', () => {
 });
 
 describe('환경 지형 타일 (전투 v2 효과)', () => {
-  it('안개: 트레이 블록이 주기적으로 섞인다', () => {
-    const s = quiet(mk({ params: { trayShuffleSeconds: BALANCE.provisional.tiles.reshuffle.trayShuffleSeconds } }));
-    s.tray = [blk('a'), blk('b'), blk('c'), null, null, null];
-    const before = s.tray.map((b) => b?.traitId ?? null);
+  it('안개: 블록 바의 순서가 주기적으로 섞인다 (블록은 그대로, 빈 칸 없이 왼쪽부터 유지)', () => {
+    const s = quiet(mk({ seed: 4, params: { trayShuffleSeconds: BALANCE.provisional.tiles.reshuffle.trayShuffleSeconds } }));
+    put(s, blk('a'), blk('b'), blk('c'), blk('d'), blk('e'), blk('f'));
+    const before = s.tray.map((b) => b.traitId);
     wait(s, BALANCE.provisional.tiles.reshuffle.trayShuffleSeconds);
     expect(s.events.some((e) => e.kind === 'shuffle')).toBe(true);
-    expect(s.tray.map((b) => b?.traitId ?? null)).not.toEqual(before);
-    expect(s.tray.filter(Boolean)).toHaveLength(3);
+    expect(s.tray.map((b) => b.traitId)).not.toEqual(before);
+    expect(s.tray.map((b) => b.traitId).sort()).toEqual(before);
+    expect(s.tray).toHaveLength(6);
+    // 섞인 뒤에도 같은 입력 기록이면 같은 결과 (결정성)
+    const again = quiet(mk({ seed: 4, params: { trayShuffleSeconds: BALANCE.provisional.tiles.reshuffle.trayShuffleSeconds } }));
+    put(again, ...before.map((id) => blk(id)));
+    wait(again, BALANCE.provisional.tiles.reshuffle.trayShuffleSeconds);
+    expect(again.tray.map((b) => b.traitId)).toEqual(s.tray.map((b) => b.traitId));
   });
 
   it('황무지: 내 공격 위력(기본 공격·블록) ×1.3', () => {
     const k = BALANCE.provisional.tiles.power.playerPowerMultiplier;
     const s = quiet(mk({ params: { playerPowerMultiplier: k } }));
-    s.tray[0] = blk(BASIC_SKILL_ID);
+    put(s, blk(BASIC_SKILL_ID));
     const before = s.enemy.hp;
     useAt(s, 0);
     expect(before - s.enemy.hp).toBeCloseTo(CX.basicBlockPowerInAttacks * CX.playerAttackDamage * k);
@@ -437,7 +540,8 @@ describe('런 로그 BattleRecord (형식 5)', () => {
     const rec = save.runLog.battles[0]!;
     expect(rec.won).toBe(s.status === 'won');
     expect(rec.durationSeconds).toBeCloseTo(elapsedSeconds(s), 1);
-    expect(rec.blocksByChain.reduce((a, b) => a + b, 0)).toBe(s.skillsUsed.length);
+    // 체인별은 발동 횟수, 특성별·skillsUsed 는 소모한 블록 수 (한 번 눌러 체인N = N개 소모)
+    expect(rec.blocksByChain.reduce((a, v, k) => a + v * (k + 1), 0)).toBe(s.skillsUsed.length);
     expect(Object.values(rec.blocksByTrait).reduce((a, b) => a + b, 0)).toBe(s.skillsUsed.length);
     expect(rec.chain3Count).toBe(s.chain3Count);
     expect(rec.guardSuccesses).toBe(s.guardSuccesses);
