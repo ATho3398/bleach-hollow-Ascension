@@ -132,10 +132,12 @@ describe('선택 규칙 selectForm', () => {
   });
 
   it('실제 테이블: 같은 누적이라도 이전 진화체에 따라 갈 수 있는 곳이 좁아진다', () => {
-    const a = acc({ [C]: 15, [D]: 15 }, { need: 30 });
-    expect(selectForm(FORM_TABLE, 3, 't2:dominant@lineage-c', a).id).toBe('t3:pair@lineage-c+lineage-d');
-    expect(selectForm(FORM_TABLE, 3, 't2:dominant@lineage-a', a).id).toBe('t3:base'); // A 우세형에서는 C+D형으로 갈 수 없다
-    expect(selectForm(FORM_TABLE, 3, 't2:base', a).id).toBe('t3:pair@lineage-c+lineage-d'); // 기본형은 막다른 길이 아니다
+    const a = acc({ [C]: 17, [D]: 17 }, { need: 34 });
+    expect(selectForm(FORM_TABLE, 4, 't3:pair@lineage-c+lineage-e', a).id).toBe('t4:deep-pair@lineage-c+lineage-d');
+    expect(selectForm(FORM_TABLE, 4, 't3:pair@lineage-a+lineage-b', a).id).toBe('t4:base'); // A+B형에서는 C+D 심화형으로 갈 수 없다
+    expect(selectForm(FORM_TABLE, 4, 't3:base', a).id).toBe('t4:deep-pair@lineage-c+lineage-d'); // 기본형은 막다른 길이 아니다
+    // 3단계 2조합은 어느 2단계 진화체에서든 갈 수 있다 (v1.1)
+    expect(selectForm(FORM_TABLE, 3, 't2:dominant@lineage-a', acc({ [C]: 15, [D]: 15 }, { need: 30 })).id).toBe('t3:pair@lineage-c+lineage-d');
   });
 
   it('실제 테이블: 특수형이 조합형보다 우선하고, 심화 2조합이 일반 3조합보다 우선한다', () => {
@@ -148,9 +150,10 @@ describe('선택 규칙 selectForm', () => {
     // 4단계: 상위 두 계통 합 ≥ 70% = 심화 (3조합도 성립), 그보다 낮으면 3조합
     expect(selectForm(FORM_TABLE, 4, prev3, acc({ [A]: 14, [B]: 13, [C]: 7 }, { need: 34 })).label.kind).toBe('deep-pair'); // 27/34 = 79%, 최다 41%
     expect(selectForm(FORM_TABLE, 4, prev3, acc({ [A]: 12, [B]: 11, [C]: 11 }, { need: 34 })).label.kind).toBe('triple'); // 34/… 최다 35.3% > 35%
-    // 5단계: 3계통이 고르면 균등형, 한 계통이 40% 이상이면 편중형
-    expect(selectForm(FORM_TABLE, 5, 't4:triple@lineage-a+lineage-b+lineage-c', acc({ [A]: 13, [B]: 13, [C]: 12 }, { need: 38 })).label.kind).toBe('even');
-    expect(selectForm(FORM_TABLE, 5, 't4:triple@lineage-a+lineage-b+lineage-c', acc({ [A]: 24, [B]: 8, [C]: 6 }, { need: 38 })).label.kind).toBe('skew');
+    // 5단계 (v1.1): 3계통을 채우면 3조합, 두 계통에 몰리면 2조합 (3조합이 우선)
+    const prev4 = 't4:triple@lineage-a+lineage-b+lineage-c';
+    expect(selectForm(FORM_TABLE, 5, prev4, acc({ [A]: 15, [B]: 13, [C]: 10 }, { need: 38 })).id).toBe('t5:triple@lineage-a+lineage-b+lineage-c');
+    expect(selectForm(FORM_TABLE, 5, prev4, acc({ [A]: 24, [B]: 14 }, { need: 38 })).id).toBe('t5:pair@lineage-a+lineage-b');
   });
 
   it('입력 누적이 같으면 결과도 같다 (순수 함수)', () => {
@@ -171,7 +174,7 @@ describe('진화체 데이터 생성기', () => {
     const kinds = (tier: number) => Object.fromEntries([...new Set(t.filter((f) => f.tier === tier).map((f) => f.label.kind))].map((k) => [k, t.filter((f) => f.tier === tier && f.label.kind === k).length]));
     expect(kinds(3)).toEqual({ pair: 10, balanced: 1, picky: 1, rare: 1, base: 1 });
     expect(kinds(4)).toEqual({ triple: 10, 'deep-pair': 10, balanced: 1, picky: 1, base: 1 });
-    expect(kinds(5)).toEqual({ even: 10, skew: 10, base: 1 });
+    expect(kinds(5)).toEqual({ triple: 10, pair: 10, base: 1 });
   });
 
   it('커밋된 forms.json 도 같은 규모이고 검사를 통과한다 (손으로 고쳐도 구조는 지켜야 한다)', () => {
@@ -185,8 +188,10 @@ describe('진화체 데이터 생성기', () => {
     const t = generateFormTable(IDS);
     const get = (id: string) => t.find((f) => f.id === id)!;
     expect(get('t2:dominant@lineage-a').from).toBe('any');
-    const ab = get('t3:pair@lineage-a+lineage-b');
-    expect(ab.from).toEqual(['t2:dominant@lineage-a', 't2:dominant@lineage-b', 't2:base']);
+    expect(get('t3:pair@lineage-a+lineage-b').from).toBe('any'); // v1.1
+    const ab = get('t4:deep-pair@lineage-a+lineage-b');
+    expect(ab.from).toEqual(expect.arrayContaining(['t3:pair@lineage-a+lineage-b', 't3:pair@lineage-a+lineage-c', 't3:pair@lineage-b+lineage-e', 't3:base']));
+    expect(ab.from).not.toContain('t3:pair@lineage-c+lineage-d');
     for (const id of ['t3:balanced', 't3:picky', 't3:rare', 't3:base', 't4:balanced', 't4:picky', 't4:base', 't5:base']) expect(get(id).from).toBe('any');
     const abc = get('t4:triple@lineage-a+lineage-b+lineage-c');
     expect(abc.from).toContain('t3:pair@lineage-a+lineage-b');
@@ -219,7 +224,7 @@ describe('진화체 데이터 생성기', () => {
     expect(p.picky).toBeGreaterThan(p.balanced);
     expect(p.balanced).toBeGreaterThan(p.pair);
     expect(p['deep-pair']).toBeGreaterThan(p.triple);
-    expect(p.even).toBeGreaterThan(p.skew);
+    expect(p.triple).toBeGreaterThan(p.pair); // 5단계: 3조합 > 2조합
     expect(p.base).toBe(0);
   });
 
@@ -242,7 +247,7 @@ describe('진화체 데이터 생성기', () => {
       expect(validateFormTable(t, ids)).toEqual([]);
       const pairs = (n * (n - 1)) / 2;
       const triples = (n * (n - 1) * (n - 2)) / 6;
-      expect([2, 3, 4, 5].map((tier) => countOf(t, tier))).toEqual([n, pairs + 3, triples + pairs + 2, triples * 2]);
+      expect([2, 3, 4, 5].map((tier) => countOf(t, tier))).toEqual([n, pairs + 3, triples + pairs + 2, triples + pairs]);
       for (const tier of [2, 3, 4, 5]) expect(t.filter((f) => f.tier === tier && f.fallback)).toHaveLength(1);
       // 선택기: 상위 3계통 x1 > x2 > x3 인 분포가 성립한다
       const a: Accumulation = { need: 30, scores: Object.fromEntries(ids.map((id, i) => [id, i < 3 ? 12 - i * 3 : 0])), rare: 0, lastSeq: Object.fromEntries(ids.map((id) => [id, 1])) };
@@ -272,8 +277,17 @@ describe('도달 가능성 점검 (npm run balance 와 같은 점검)', () => {
   });
 
   it('무작위 분포에서 "후보 없음 → 기본형" 비율이 상한 이하', () => {
-    for (const r of reports) expect(r.fallbackRate).toBeLessThanOrEqual(EV.analysis.maxFallbackRate);
+    for (const r of reports) expect(r.fallbackRateWithPath).toBeLessThanOrEqual(EV.analysis.maxFallbackRate);
+    // v1.1: 1계통·2계통 몰림·3계통·균등 분포 각각도 경로 포함 20% 이하
+    for (const r of reports) for (const v of Object.values(r.fallbackByProfile)) expect(v).toBeLessThanOrEqual(EV.analysis.maxFallbackRate);
     expect(reportProblems(reports, EV.analysis.maxFallbackRate)).toEqual([]);
+  });
+
+  it('3단계 2조합은 경로 제한이 없고(any), 4·5단계는 경로로 좁혀진다', () => {
+    for (const f of FORM_TABLE.filter((x) => x.tier === 3)) expect(f.from).toBe('any');
+    const t5 = FORM_TABLE.find((f) => f.id === 't5:pair@lineage-a+lineage-b')!;
+    expect(t5.from).not.toBe('any');
+    expect(t5.from).toContain('t4:triple@lineage-a+lineage-b+lineage-c');
   });
 
   it('점검 도구는 문제를 잡아낸다 (도달 불가·모호·기본형 없음)', () => {

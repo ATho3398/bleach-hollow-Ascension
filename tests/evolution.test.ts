@@ -153,13 +153,13 @@ describe('진화 조건과 결과', () => {
     expect(r.ok && r.form.id).toBe(peek.id);
     expect(currentCandidates(newEvolution())).toEqual([]); // 흡수 0: 후보 없음 → 진화하면 기본형
     expect(previewForm(newEvolution())!.fallback).toBe(true);
-    // 3단계 후보: 2단계 진화체 경로와 지금 분포에 따라 달라진다
-    const e2 = absorbed(...times(C, 15), ...times(D, 15));
-    e2.tierIndex = 1;
-    e2.formId = 't2:dominant@lineage-c';
-    expect(currentCandidates(e2).map((f) => f.id)).toContain('t3:pair@lineage-c+lineage-d');
-    e2.formId = 't2:dominant@lineage-a';
-    expect(currentCandidates(e2).map((f) => f.id)).not.toContain('t3:pair@lineage-c+lineage-d');
+    // 4단계 후보: 3단계 진화체 경로와 지금 분포에 따라 달라진다 (3단계 2조합은 경로 제한 없음, v1.1)
+    const e2 = absorbed(...times(C, 17), ...times(D, 17));
+    e2.tierIndex = 2;
+    e2.formId = 't3:pair@lineage-c+lineage-e';
+    expect(currentCandidates(e2).map((f) => f.id)).toContain('t4:deep-pair@lineage-c+lineage-d');
+    e2.formId = 't3:pair@lineage-a+lineage-b';
+    expect(currentCandidates(e2).map((f) => f.id)).not.toContain('t4:deep-pair@lineage-c+lineage-d');
   });
 });
 

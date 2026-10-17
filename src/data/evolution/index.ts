@@ -54,8 +54,6 @@ export function placeholderName(form: FormDef, factionId: string): string {
     balanced: '균형형',
     picky: '편식형',
     rare: '희귀형',
-    even: `${names}형(균등)`,
-    skew: `${names}형(편중)`,
     base: '기본형',
   };
   return byKind[form.label.kind];
@@ -77,8 +75,6 @@ export function formHint(form: FormDef, factionId: string): string {
     balanced: '여러 계통을 고르게 흡수',
     picky: '한 계통에 크게 치우쳐 흡수',
     rare: '희귀 개체를 여러 번 흡수',
-    even: `${names}를 고르게 흡수`,
-    skew: `${names} 중 한 계통에 치우쳐 흡수`,
     base: '맞는 진화체가 없을 때',
   };
   return byKind[form.label.kind];

@@ -16,6 +16,41 @@ export interface AnalysisConfig {
   enumerateMaxLineages: number;
   /** 희귀 흡수 가중 (누적에 더해지는 값, 임시 ×2) */
   rareWeight: number;
+  /** 집중형 분포(1계통·2계통·3계통 몰림, 균등) 프로필마다의 샘플 수 (v1.1) */
+  concentratedSamples: number;
+}
+
+/** 집중형 분포 프로필: 몰아 먹는 계통 수 (0 = 균등) */
+export const CONCENTRATION_PROFILES = [
+  { key: 'focus1', label: '1계통 몰림', focus: 1 },
+  { key: 'focus2', label: '2계통 몰림', focus: 2 },
+  { key: 'focus3', label: '3계통', focus: 3 },
+  { key: 'even', label: '균등', focus: 0 },
+] as const;
+export type ProfileKey = (typeof CONCENTRATION_PROFILES)[number]['key'];
+
+/** 집중형 분포 하나: focus 개 계통에 가중 1, 나머지는 0~0.15 의 소량(가끔 0)으로 need 번 흡수한다 */
+export function concentratedAccumulation(lineageIds: readonly string[], need: number, focus: number, rng: Rng, cfg: AnalysisConfig): Accumulation {
+  const n = lineageIds.length;
+  const k = focus === 0 ? n : Math.min(focus, n);
+  const order = lineageIds.map((_, i) => i).sort(() => nextFloat(rng) - 0.5);
+  const focused = new Set(order.slice(0, k));
+  const weights = lineageIds.map((_, i) => (focused.has(i) ? 0.6 + nextFloat(rng) * 0.4 : nextFloat(rng) < 0.5 ? 0 : nextFloat(rng) * 0.15));
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const rareP = [0, 0.1, 0.1, 0.25][nextInt(rng, 4)]!;
+  const scores = lineageIds.map(() => 0);
+  const lastSeq = lineageIds.map(() => 0);
+  let rare = 0;
+  for (let i = 0; i < need; i++) {
+    let x = nextFloat(rng) * sum;
+    let j = 0;
+    while (j < weights.length - 1 && x >= weights[j]!) x -= weights[j++]!;
+    const isRare = nextFloat(rng) < rareP;
+    scores[j]! += isRare ? cfg.rareWeight : 1;
+    if (isRare) rare++;
+    lastSeq[j] = i + 1;
+  }
+  return accOf(lineageIds, need, scores, lastSeq, rare);
 }
 
 /** 모든 횟수 조합 (합 = total, 각 ≥ 0). 순서대로 하나씩 낸다 */
@@ -97,6 +132,8 @@ export interface TierReport {
   fallbackRate: number;
   /** 경로를 포함한 비율 (참고: 현재 진화체를 이전 단계 진화체 중 균등하게 본다) */
   fallbackRateWithPath: number;
+  /** 집중형 프로필별 "후보 없음 → 기본형" 비율(경로 포함) */
+  fallbackByProfile: Record<ProfileKey, number>;
   /** 우선순위·조건 수까지 같아 id 순으로만 갈린 경우 수와 예 */
   ambiguous: number;
   ambiguousExamples: string[];
@@ -112,13 +149,23 @@ export function analyzeTier(table: readonly FormDef[], tier: number, lineageIds:
   let fb = 0;
   let fbPath = 0;
   let ambiguous = 0;
-  for (const acc of accumulationSamples(lineageIds, need, cfg)) {
+  const profFb = {} as Record<ProfileKey, number>;
+  const profRng = createRng(cfg.seed * 7 + need);
+  const profileSamples = CONCENTRATION_PROFILES.flatMap((pr) =>
+    Array.from({ length: cfg.concentratedSamples }, () => ({ key: pr.key as ProfileKey, acc: concentratedAccumulation(lineageIds, need, pr.focus, profRng, cfg) })),
+  );
+  const all: { key: ProfileKey | null; acc: Accumulation }[] = [...accumulationSamples(lineageIds, need, cfg)].map((acc) => ({ key: null, acc }));
+  all.push(...profileSamples);
+  for (const { key, acc } of all) {
     samples++;
     const matching = matchingForms(forms, contextOf(acc));
     if (matching.length === 0) fb++;
     for (const cur of currents) {
       const cand = matching.filter((f) => fromMatches(f, cur));
-      if (cand.length === 0) fbPath++;
+      if (cand.length === 0) {
+        fbPath++;
+        if (key) profFb[key] = (profFb[key] ?? 0) + 1;
+      }
       selected[(cand[0] ?? fallback).id]!++;
       if (cand.length >= 2 && tiedByRules(cand[0]!, cand[1]!)) {
         ambiguous++;
@@ -136,6 +183,9 @@ export function analyzeTier(table: readonly FormDef[], tier: number, lineageIds:
     unreachable: forms.filter((f) => !f.fallback && selected[f.id] === 0).map((f) => f.id),
     fallbackRate: fb / samples,
     fallbackRateWithPath: fbPath / (samples * currents.length),
+    fallbackByProfile: Object.fromEntries(
+      CONCENTRATION_PROFILES.map((pr) => [pr.key, (profFb[pr.key] ?? 0) / (cfg.concentratedSamples * currents.length)]),
+    ) as Record<ProfileKey, number>,
     ambiguous,
     ambiguousExamples,
   };
@@ -146,14 +196,17 @@ export function analyzeTable(table: readonly FormDef[], lineageIds: readonly str
   return [2, 3, 4, 5].map((tier) => analyzeTier(table, tier, lineageIds, needs[tier - 2]!, cfg));
 }
 
-/** 점검 결과에서 문제 목록을 뽑는다 (비면 통과). maxFallbackRate 는 경로 무시 기준 */
+/** 점검 결과에서 문제 목록을 뽑는다 (비면 통과). maxFallbackRate 는 경로 포함 기준(v1.1), 집중형 프로필도 각각 본다 */
 export function reportProblems(reports: readonly TierReport[], maxFallbackRate: number): string[] {
   const out: string[] = [];
   for (const r of reports) {
     if (r.fallbackCount !== 1) out.push(`${r.tier}단계 기본형 ${r.fallbackCount}개`);
     if (r.unreachable.length > 0) out.push(`${r.tier}단계 도달 불가 ${r.unreachable.length}종: ${r.unreachable.join(', ')}`);
     if (r.ambiguous > 0) out.push(`${r.tier}단계 선택 모호 ${r.ambiguous}건: ${r.ambiguousExamples.join(' ; ')}`);
-    if (r.fallbackRate > maxFallbackRate) out.push(`${r.tier}단계 "후보 없음 → 기본형" ${(r.fallbackRate * 100).toFixed(1)}% > ${(maxFallbackRate * 100).toFixed(0)}%`);
+    if (r.fallbackRateWithPath > maxFallbackRate) out.push(`${r.tier}단계 "후보 없음 → 기본형"(경로 포함) ${(r.fallbackRateWithPath * 100).toFixed(1)}% > ${(maxFallbackRate * 100).toFixed(0)}%`);
+    for (const pr of CONCENTRATION_PROFILES) {
+      if (r.fallbackByProfile[pr.key] > maxFallbackRate) out.push(`${r.tier}단계 ${pr.label} 분포 기본형(경로 포함) ${(r.fallbackByProfile[pr.key] * 100).toFixed(1)}% > ${(maxFallbackRate * 100).toFixed(0)}%`);
+    }
   }
   return out;
 }

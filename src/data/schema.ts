@@ -161,7 +161,7 @@ export const FORM_CONDITION_TYPES = [
 ] as const;
 
 /** 템플릿 종류. 이름 자리 표시("A우세형" 등)와 효과 가중을 정한다. 정식 이름은 name 에 손으로 넣는다 */
-export const FORM_KINDS = ['dominant', 'pair', 'triple', 'deep-pair', 'balanced', 'picky', 'rare', 'even', 'skew', 'base'] as const;
+export const FORM_KINDS = ['dominant', 'pair', 'triple', 'deep-pair', 'balanced', 'picky', 'rare', 'base'] as const;
 export type FormKind = (typeof FORM_KINDS)[number];
 
 export interface FormLabel {

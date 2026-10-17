@@ -157,11 +157,7 @@
         "lineage-b"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-a",
-      "t2:dominant@lineage-b",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -192,11 +188,7 @@
         "lineage-c"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-a",
-      "t2:dominant@lineage-c",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -227,11 +219,7 @@
         "lineage-d"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-a",
-      "t2:dominant@lineage-d",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -262,11 +250,7 @@
         "lineage-e"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-a",
-      "t2:dominant@lineage-e",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -296,11 +280,7 @@
         "lineage-c"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-b",
-      "t2:dominant@lineage-c",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -331,11 +311,7 @@
         "lineage-d"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-b",
-      "t2:dominant@lineage-d",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -365,11 +341,7 @@
         "lineage-e"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-b",
-      "t2:dominant@lineage-e",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -400,11 +372,7 @@
         "lineage-d"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-c",
-      "t2:dominant@lineage-d",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -435,11 +403,7 @@
         "lineage-e"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-c",
-      "t2:dominant@lineage-e",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -470,11 +434,7 @@
         "lineage-e"
       ]
     },
-    "from": [
-      "t2:dominant@lineage-d",
-      "t2:dominant@lineage-e",
-      "t2:base"
-    ],
+    "from": "any",
     "requires": [
       {
         "type": "top2",
@@ -619,7 +579,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -667,7 +627,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -714,7 +674,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -761,7 +721,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -809,7 +769,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -856,7 +816,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -903,7 +863,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -950,7 +910,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -998,7 +958,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -1045,7 +1005,7 @@
         ]
       }
     ],
-    "priority": 20,
+    "priority": 22,
     "effects": {
       "hpMultiplier": 1.08,
       "attackMultiplier": 1.07,
@@ -1632,10 +1592,10 @@
     "provisional": true
   },
   {
-    "id": "t5:even@lineage-a+lineage-b+lineage-c",
+    "id": "t5:triple@lineage-a+lineage-b+lineage-c",
     "tier": 5,
     "label": {
-      "kind": "even",
+      "kind": "triple",
       "lineages": [
         "lineage-a",
         "lineage-b",
@@ -1674,31 +1634,12 @@
           "lineage-b",
           "lineage-c"
         ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-a",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-b",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-c",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
       }
     ],
-    "priority": 25,
+    "priority": 22,
     "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
       "passive": {
         "attackPower": 1.02,
         "damageTaken": 0.98,
@@ -1708,13 +1649,570 @@
     "provisional": true
   },
   {
-    "id": "t5:skew@lineage-a+lineage-b+lineage-c",
+    "id": "t5:triple@lineage-a+lineage-b+lineage-d",
     "tier": 5,
     "label": {
-      "kind": "skew",
+      "kind": "triple",
       "lineages": [
         "lineage-a",
         "lineage-b",
+        "lineage-d"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-a",
+          "lineage-b",
+          "lineage-d"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "attackPower": 1.02,
+        "damageTaken": 0.9637
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-a+lineage-b+lineage-e",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-a",
+        "lineage-b",
+        "lineage-e"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-a",
+          "lineage-b",
+          "lineage-e"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "attackPower": 1.037,
+        "damageTaken": 0.98
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-a+lineage-c+lineage-d",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-a",
+        "lineage-c",
+        "lineage-d"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-a",
+          "lineage-c",
+          "lineage-d"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "attackPower": 1.02,
+        "attackSpeed": 1.0167,
+        "damageTaken": 0.9833
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-a+lineage-c+lineage-e",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-a",
+        "lineage-c",
+        "lineage-e"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-a",
+          "lineage-c",
+          "lineage-e"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "attackPower": 1.037,
+        "attackSpeed": 1.0167
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-a+lineage-d+lineage-e",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-a",
+        "lineage-d",
+        "lineage-e"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-a",
+          "lineage-d",
+          "lineage-e"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "attackPower": 1.037,
+        "damageTaken": 0.9833
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-b+lineage-c+lineage-d",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-b",
+        "lineage-c",
+        "lineage-d"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-b",
+          "lineage-c",
+          "lineage-d"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "damageTaken": 0.9637,
+        "attackSpeed": 1.0167
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-b+lineage-c+lineage-e",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-b",
+        "lineage-c",
+        "lineage-e"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-b",
+          "lineage-c",
+          "lineage-e"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "damageTaken": 0.98,
+        "attackSpeed": 1.0167,
+        "attackPower": 1.0167
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-b+lineage-d+lineage-e",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-b",
+        "lineage-d",
+        "lineage-e"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-b",
+          "lineage-d",
+          "lineage-e"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "damageTaken": 0.9637,
+        "attackPower": 1.0167
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:triple@lineage-c+lineage-d+lineage-e",
+    "tier": 5,
+    "label": {
+      "kind": "triple",
+      "lineages": [
+        "lineage-c",
+        "lineage-d",
+        "lineage-e"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top3",
+        "lineages": [
+          "lineage-c",
+          "lineage-d",
+          "lineage-e"
+        ]
+      }
+    ],
+    "priority": 22,
+    "effects": {
+      "hpMultiplier": 1.08,
+      "attackMultiplier": 1.07,
+      "passive": {
+        "attackSpeed": 1.0167,
+        "damageTaken": 0.9833,
+        "attackPower": 1.0167
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:pair@lineage-a+lineage-b",
+    "tier": 5,
+    "label": {
+      "kind": "pair",
+      "lineages": [
+        "lineage-a",
+        "lineage-b"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top2",
+        "lineages": [
+          "lineage-a",
+          "lineage-b"
+        ]
+      }
+    ],
+    "priority": 20,
+    "effects": {
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
+      "passive": {
+        "attackPower": 1.03,
+        "damageTaken": 0.97
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:pair@lineage-a+lineage-c",
+    "tier": 5,
+    "label": {
+      "kind": "pair",
+      "lineages": [
+        "lineage-a",
         "lineage-c"
       ]
     },
@@ -1727,12 +2225,161 @@
       "t4:triple@lineage-a+lineage-d+lineage-e",
       "t4:triple@lineage-b+lineage-c+lineage-d",
       "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-c",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top2",
+        "lineages": [
+          "lineage-a",
+          "lineage-c"
+        ]
+      }
+    ],
+    "priority": 20,
+    "effects": {
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
+      "passive": {
+        "attackPower": 1.03,
+        "attackSpeed": 1.025
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:pair@lineage-a+lineage-d",
+    "tier": 5,
+    "label": {
+      "kind": "pair",
+      "lineages": [
+        "lineage-a",
+        "lineage-d"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
       "t4:triple@lineage-b+lineage-d+lineage-e",
       "t4:triple@lineage-c+lineage-d+lineage-e",
       "t4:deep-pair@lineage-a+lineage-b",
       "t4:deep-pair@lineage-a+lineage-c",
       "t4:deep-pair@lineage-a+lineage-d",
       "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-d",
+      "t4:deep-pair@lineage-c+lineage-d",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top2",
+        "lineages": [
+          "lineage-a",
+          "lineage-d"
+        ]
+      }
+    ],
+    "priority": 20,
+    "effects": {
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
+      "passive": {
+        "attackPower": 1.03,
+        "damageTaken": 0.975
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:pair@lineage-a+lineage-e",
+    "tier": 5,
+    "label": {
+      "kind": "pair",
+      "lineages": [
+        "lineage-a",
+        "lineage-e"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-a+lineage-d+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
+      "t4:deep-pair@lineage-a+lineage-d",
+      "t4:deep-pair@lineage-a+lineage-e",
+      "t4:deep-pair@lineage-b+lineage-e",
+      "t4:deep-pair@lineage-c+lineage-e",
+      "t4:deep-pair@lineage-d+lineage-e",
+      "t4:balanced",
+      "t4:picky",
+      "t4:base"
+    ],
+    "requires": [
+      {
+        "type": "top2",
+        "lineages": [
+          "lineage-a",
+          "lineage-e"
+        ]
+      }
+    ],
+    "priority": 20,
+    "effects": {
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
+      "passive": {
+        "attackPower": 1.0558
+      }
+    },
+    "provisional": true
+  },
+  {
+    "id": "t5:pair@lineage-b+lineage-c",
+    "tier": 5,
+    "label": {
+      "kind": "pair",
+      "lineages": [
+        "lineage-b",
+        "lineage-c"
+      ]
+    },
+    "from": [
+      "t4:triple@lineage-a+lineage-b+lineage-c",
+      "t4:triple@lineage-a+lineage-b+lineage-d",
+      "t4:triple@lineage-a+lineage-b+lineage-e",
+      "t4:triple@lineage-a+lineage-c+lineage-d",
+      "t4:triple@lineage-a+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-c+lineage-d",
+      "t4:triple@lineage-b+lineage-c+lineage-e",
+      "t4:triple@lineage-b+lineage-d+lineage-e",
+      "t4:triple@lineage-c+lineage-d+lineage-e",
+      "t4:deep-pair@lineage-a+lineage-b",
+      "t4:deep-pair@lineage-a+lineage-c",
       "t4:deep-pair@lineage-b+lineage-c",
       "t4:deep-pair@lineage-b+lineage-d",
       "t4:deep-pair@lineage-b+lineage-e",
@@ -1744,37 +2391,30 @@
     ],
     "requires": [
       {
-        "type": "top3",
+        "type": "top2",
         "lineages": [
-          "lineage-a",
           "lineage-b",
           "lineage-c"
         ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
       }
     ],
     "priority": 20,
     "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
       "passive": {
-        "attackPower": 1.02,
-        "damageTaken": 0.98,
-        "attackSpeed": 1.0167
+        "damageTaken": 0.97,
+        "attackSpeed": 1.025
       }
     },
     "provisional": true
   },
   {
-    "id": "t5:even@lineage-a+lineage-b+lineage-d",
+    "id": "t5:pair@lineage-b+lineage-d",
     "tier": 5,
     "label": {
-      "kind": "even",
+      "kind": "pair",
       "lineages": [
-        "lineage-a",
         "lineage-b",
         "lineage-d"
       ]
@@ -1784,16 +2424,13 @@
       "t4:triple@lineage-a+lineage-b+lineage-d",
       "t4:triple@lineage-a+lineage-b+lineage-e",
       "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
       "t4:triple@lineage-a+lineage-d+lineage-e",
       "t4:triple@lineage-b+lineage-c+lineage-d",
       "t4:triple@lineage-b+lineage-c+lineage-e",
       "t4:triple@lineage-b+lineage-d+lineage-e",
       "t4:triple@lineage-c+lineage-d+lineage-e",
       "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
       "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
       "t4:deep-pair@lineage-b+lineage-c",
       "t4:deep-pair@lineage-b+lineage-d",
       "t4:deep-pair@lineage-b+lineage-e",
@@ -1805,111 +2442,29 @@
     ],
     "requires": [
       {
-        "type": "top3",
+        "type": "top2",
         "lineages": [
-          "lineage-a",
           "lineage-b",
           "lineage-d"
         ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-a",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-b",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-d",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "attackPower": 1.02,
-        "damageTaken": 0.9637
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-a+lineage-b+lineage-d",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-d"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-d"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
       }
     ],
     "priority": 20,
     "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
       "passive": {
-        "attackPower": 1.02,
-        "damageTaken": 0.9637
+        "damageTaken": 0.9458
       }
     },
     "provisional": true
   },
   {
-    "id": "t5:even@lineage-a+lineage-b+lineage-e",
+    "id": "t5:pair@lineage-b+lineage-e",
     "tier": 5,
     "label": {
-      "kind": "even",
+      "kind": "pair",
       "lineages": [
-        "lineage-a",
         "lineage-b",
         "lineage-e"
       ]
@@ -1918,7 +2473,6 @@
       "t4:triple@lineage-a+lineage-b+lineage-c",
       "t4:triple@lineage-a+lineage-b+lineage-d",
       "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
       "t4:triple@lineage-a+lineage-c+lineage-e",
       "t4:triple@lineage-a+lineage-d+lineage-e",
       "t4:triple@lineage-b+lineage-c+lineage-d",
@@ -1926,8 +2480,6 @@
       "t4:triple@lineage-b+lineage-d+lineage-e",
       "t4:triple@lineage-c+lineage-d+lineage-e",
       "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
       "t4:deep-pair@lineage-a+lineage-e",
       "t4:deep-pair@lineage-b+lineage-c",
       "t4:deep-pair@lineage-b+lineage-d",
@@ -1940,111 +2492,30 @@
     ],
     "requires": [
       {
-        "type": "top3",
+        "type": "top2",
         "lineages": [
-          "lineage-a",
           "lineage-b",
           "lineage-e"
         ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-a",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-b",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-e",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.98
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-a+lineage-b+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
       }
     ],
     "priority": 20,
     "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
       "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.98
+        "damageTaken": 0.97,
+        "attackPower": 1.025
       }
     },
     "provisional": true
   },
   {
-    "id": "t5:even@lineage-a+lineage-c+lineage-d",
+    "id": "t5:pair@lineage-c+lineage-d",
     "tier": 5,
     "label": {
-      "kind": "even",
+      "kind": "pair",
       "lineages": [
-        "lineage-a",
         "lineage-c",
         "lineage-d"
       ]
@@ -2052,7 +2523,6 @@
     "from": [
       "t4:triple@lineage-a+lineage-b+lineage-c",
       "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
       "t4:triple@lineage-a+lineage-c+lineage-d",
       "t4:triple@lineage-a+lineage-c+lineage-e",
       "t4:triple@lineage-a+lineage-d+lineage-e",
@@ -2060,10 +2530,8 @@
       "t4:triple@lineage-b+lineage-c+lineage-e",
       "t4:triple@lineage-b+lineage-d+lineage-e",
       "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
       "t4:deep-pair@lineage-a+lineage-c",
       "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
       "t4:deep-pair@lineage-b+lineage-c",
       "t4:deep-pair@lineage-b+lineage-d",
       "t4:deep-pair@lineage-c+lineage-d",
@@ -2075,120 +2543,36 @@
     ],
     "requires": [
       {
-        "type": "top3",
+        "type": "top2",
         "lineages": [
-          "lineage-a",
           "lineage-c",
           "lineage-d"
         ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-a",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-c",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-d",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "attackPower": 1.02,
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-a+lineage-c+lineage-d",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-a",
-        "lineage-c",
-        "lineage-d"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-c",
-          "lineage-d"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
       }
     ],
     "priority": 20,
     "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
       "passive": {
-        "attackPower": 1.02,
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833
+        "attackSpeed": 1.025,
+        "damageTaken": 0.975
       }
     },
     "provisional": true
   },
   {
-    "id": "t5:even@lineage-a+lineage-c+lineage-e",
+    "id": "t5:pair@lineage-c+lineage-e",
     "tier": 5,
     "label": {
-      "kind": "even",
+      "kind": "pair",
       "lineages": [
-        "lineage-a",
         "lineage-c",
         "lineage-e"
       ]
     },
     "from": [
       "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
       "t4:triple@lineage-a+lineage-b+lineage-e",
       "t4:triple@lineage-a+lineage-c+lineage-d",
       "t4:triple@lineage-a+lineage-c+lineage-e",
@@ -2197,9 +2581,7 @@
       "t4:triple@lineage-b+lineage-c+lineage-e",
       "t4:triple@lineage-b+lineage-d+lineage-e",
       "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
       "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
       "t4:deep-pair@lineage-a+lineage-e",
       "t4:deep-pair@lineage-b+lineage-c",
       "t4:deep-pair@lineage-b+lineage-e",
@@ -2212,117 +2594,35 @@
     ],
     "requires": [
       {
-        "type": "top3",
+        "type": "top2",
         "lineages": [
-          "lineage-a",
           "lineage-c",
           "lineage-e"
         ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-a",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-c",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-e",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "attackPower": 1.037,
-        "attackSpeed": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-a+lineage-c+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-a",
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-c",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
       }
     ],
     "priority": 20,
     "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
       "passive": {
-        "attackPower": 1.037,
-        "attackSpeed": 1.0167
+        "attackSpeed": 1.025,
+        "attackPower": 1.025
       }
     },
     "provisional": true
   },
   {
-    "id": "t5:even@lineage-a+lineage-d+lineage-e",
+    "id": "t5:pair@lineage-d+lineage-e",
     "tier": 5,
     "label": {
-      "kind": "even",
+      "kind": "pair",
       "lineages": [
-        "lineage-a",
         "lineage-d",
         "lineage-e"
       ]
     },
     "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
       "t4:triple@lineage-a+lineage-b+lineage-d",
       "t4:triple@lineage-a+lineage-b+lineage-e",
       "t4:triple@lineage-a+lineage-c+lineage-d",
@@ -2332,8 +2632,6 @@
       "t4:triple@lineage-b+lineage-c+lineage-e",
       "t4:triple@lineage-b+lineage-d+lineage-e",
       "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
       "t4:deep-pair@lineage-a+lineage-d",
       "t4:deep-pair@lineage-a+lineage-e",
       "t4:deep-pair@lineage-b+lineage-d",
@@ -2347,644 +2645,20 @@
     ],
     "requires": [
       {
-        "type": "top3",
+        "type": "top2",
         "lineages": [
-          "lineage-a",
           "lineage-d",
           "lineage-e"
         ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-a",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-d",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-e",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.9833
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-a+lineage-d+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-a",
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-d",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
       }
     ],
     "priority": 20,
     "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
       "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.9833
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:even@lineage-b+lineage-c+lineage-d",
-    "tier": 5,
-    "label": {
-      "kind": "even",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-d"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-d"
-        ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-b",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-c",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-d",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackSpeed": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-b+lineage-c+lineage-d",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-d"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-d"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackSpeed": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:even@lineage-b+lineage-c+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "even",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-b",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-c",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-e",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "damageTaken": 0.98,
-        "attackSpeed": 1.0167,
-        "attackPower": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-b+lineage-c+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.98,
-        "attackSpeed": 1.0167,
-        "attackPower": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:even@lineage-b+lineage-d+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "even",
-      "lineages": [
-        "lineage-b",
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-d",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-b",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-d",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-e",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackPower": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-b+lineage-d+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-b",
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-d",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackPower": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:even@lineage-c+lineage-d+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "even",
-      "lineages": [
-        "lineage-c",
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-c",
-          "lineage-d",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-c",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-d",
-        "min": 0.15
-      },
-      {
-        "type": "lineageShare",
-        "lineage": "lineage-e",
-        "min": 0.15
-      },
-      {
-        "type": "maxShareAtMost",
-        "max": 0.4
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.09,
-      "attackMultiplier": 1.08,
-      "passive": {
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833,
-        "attackPower": 1.0167
-      }
-    },
-    "provisional": true
-  },
-  {
-    "id": "t5:skew@lineage-c+lineage-d+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "skew",
-      "lineages": [
-        "lineage-c",
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-c",
-          "lineage-d",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.4
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833,
-        "attackPower": 1.0167
+        "damageTaken": 0.975,
+        "attackPower": 1.025
       }
     },
     "provisional": true

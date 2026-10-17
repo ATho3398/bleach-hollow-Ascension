@@ -16,6 +16,8 @@ export interface AutoOptions {
   place?: boolean;
   /** 흡수 화면에서: 'release' = 항상 놓아줌(기본, P2 가드 유지), 'absorb' = 흡수하고 계통을 모으는 쪽으로 장착 */
   absorb?: 'release' | 'absorb';
+  /** absorb 가 'absorb' 일 때만: 이 제안(계통)을 흡수할지 정하는 정책. false 면 놓아준다 (계통을 몰거나 흩는 점검 봇용, 없으면 항상 흡수) */
+  absorbWanted?: (exp: ExpeditionState) => boolean;
 }
 
 const KIND_SCORE = { skill: 3, passive: 2, part: 1 } as const;
@@ -69,7 +71,7 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
       (opt.playBattle ?? playCombatBot)(b);
       finishBattle(exp, b);
     } else if (exp.phase === 'absorb') {
-      if (opt.absorb === 'absorb') {
+      if (opt.absorb === 'absorb' && (opt.absorbWanted?.(exp) ?? true)) {
         const pick = botPickTrait(exp);
         chooseAbsorb(exp, pick.traitId, pick.replaceSlot);
       } else chooseRelease(exp);

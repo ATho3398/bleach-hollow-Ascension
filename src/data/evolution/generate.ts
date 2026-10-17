@@ -8,9 +8,6 @@ export interface FormTemplate {
   pickyMinShare: number;
   rareMinRatio: number;
   deepPairMinShare: number;
-  evenMinShare: number;
-  evenMaxShare: number;
-  skewMinShare: number;
   priority: Record<FormKind, number>;
   effects: {
     base: { hp: number; attack: number };
@@ -98,8 +95,8 @@ export function generateForms(lineageIds: readonly string[], tpl: FormTemplate, 
   out.push(...cur);
   prev = cur;
 
-  // 3단계: 2조합 + 균형형 + 편식형 + 희귀형
-  cur = combinations(ids, 2).map((c) => make(3, 'pair', c, [{ type: 'top2', lineages: c }], connect(c)));
+  // 3단계 (v1.1: 2조합은 경로 제한 없음): 2조합 + 균형형 + 편식형 + 희귀형
+  cur = combinations(ids, 2).map((c) => make(3, 'pair', c, [{ type: 'top2', lineages: c }], 'any'));
   cur.push(...specials(3, ['balanced', 'picky', 'rare']), make(3, 'base', [], [], 'any'));
   out.push(...cur);
   prev = cur;
@@ -116,19 +113,11 @@ export function generateForms(lineageIds: readonly string[], tpl: FormTemplate, 
   out.push(...cur);
   prev = cur;
 
-  // 5단계: 3조합 × (균등형, 편중형)
-  cur = [];
-  for (const c of combinations(ids, 3)) {
-    const from = connect(c);
-    cur.push(
-      make(5, 'even', c, [
-        { type: 'top3', lineages: c },
-        ...c.map((l): FormCondition => ({ type: 'lineageShare', lineage: l, min: tpl.evenMinShare })),
-        { type: 'maxShareAtMost', max: tpl.evenMaxShare },
-      ], from),
-      make(5, 'skew', c, [{ type: 'top3', lineages: c }, { type: 'maxShareAtLeast', min: tpl.skewMinShare }], from),
-    );
-  }
+  // 5단계 (v1.1): 3조합 + 2조합. 3조합이 우선순위가 높아 3계통을 채우면 더 구체적인 형태, 몰린 분포는 2조합으로 간다
+  cur = [
+    ...combinations(ids, 3).map((c) => make(5, 'triple', c, [{ type: 'top3', lineages: c }], connect(c))),
+    ...combinations(ids, 2).map((c) => make(5, 'pair', c, [{ type: 'top2', lineages: c }], connect(c))),
+  ];
   cur.push(make(5, 'base', [], [], 'any'));
   out.push(...cur);
   return out;

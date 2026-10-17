@@ -4,11 +4,11 @@
 import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import { ENEMIES } from '../src/data/enemies';
 import { createCombat, elapsedSeconds, playCombatBot, type CombatParams, type CombatState } from '../src/engine/combat';
-import { createExpedition, playExpedition } from '../src/engine/expedition';
+import { createExpedition, playExpedition, type ExpeditionState } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedLineages, gainTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
 import { LINEAGES } from '../src/data/lineages';
-import { analyzeTable, canEvolve, reportProblems } from '../src/engine/evolution';
+import { analyzeTable, canEvolve, CONCENTRATION_PROFILES, reportProblems } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performEvolution, recordExpedition, sanitizeDeck, newTileStock } from '../src/game';
 
 const check = process.argv.includes('--check');
@@ -263,6 +263,72 @@ if (finalRuns.length >= CAMPAIGNS * 0.8) {
   if (m < 30 || m > 60) failures.push(`진화: 5단계 도달 평균 ${m.toFixed(1)}번째 원정 (목표 30~60)`);
 }
 
+// ── 정책 봇 (C.12, GDD 4-2 v1.1): 집중 봇(1~2계통만 선호해 흡수)과 분산 봇(가장 적게 쌓인 계통을 선호)으로 같은 캠페인을 돌린다 ──
+// 선호하지 않는 계통은 50% 확률로만 흡수한다(0 이면 진화에 필요한 횟수를 못 채울 수 있다). 독점 가드는 기본형 제외 진화체 기준
+{
+  const LIDS = LINEAGES.map((l) => l.id);
+  type Policy = { name: string; wanted: (seed: number) => (exp: ExpeditionState) => boolean };
+  const policies: Policy[] = [
+    { name: '집중 봇(1계통 선호)', wanted: (seed) => { const f = LIDS[seed % LIDS.length]!; return (exp) => exp.absorbOffer!.lineageId === f || (exp.absorbRecords.length * 7 + seed) % 2 === 0; } },
+    { name: '집중 봇(2계통 선호)', wanted: (seed) => { const f = [LIDS[seed % LIDS.length]!, LIDS[(seed + 2) % LIDS.length]!]; return (exp) => f.includes(exp.absorbOffer!.lineageId) || (exp.absorbRecords.length * 7 + seed) % 2 === 0; } },
+    { name: '분산 봇', wanted: (seed) => (exp) => {
+      const sc = LIDS.map((l) => exp.evolution.lineageScores[l] ?? 0);
+      return (exp.evolution.lineageScores[exp.absorbOffer!.lineageId] ?? 0) <= Math.min(...sc) + 1 || (exp.absorbRecords.length * 7 + seed) % 2 === 0;
+    } },
+  ];
+  console.log(`\n정책 봇 진화 (봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 선호 밖 계통은 약 50%만 흡수)`);
+  console.log('  봇                  1→2    2→3    3→4    4→5   (도달/평균 원정)   단계별 기본형 비율');
+  for (const pol of policies) {
+    const reach: number[][] = [[], [], [], []];
+    const counts: Record<number, Record<string, number>> = { 2: {}, 3: {}, 4: {}, 5: {} };
+    for (let seed = 1; seed <= CAMPAIGNS; seed++) {
+      const save = newSaveData('hollow', 0);
+      save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
+      let stageStart = 0;
+      const wanted = pol.wanted(seed);
+      for (let run = 1; run <= MAX_RUNS; run++) {
+        const e = playExpedition(
+          createExpedition({
+            factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
+            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+          }),
+          { returnAfterLap: 4, absorb: 'absorb', absorbWanted: wanted },
+        );
+        recordExpedition(save, e, 0);
+        save.nest.hunger = 20;
+        save.nest.condition = 80;
+        save.nest.weakened = false;
+        if (canEvolve(save.evolution)) {
+          const tier = save.evolution.tierIndex;
+          const r = performEvolution(save, 0);
+          if (r.ok) {
+            reach[tier]!.push(run - stageStart);
+            stageStart = run;
+            counts[r.form.tier]![r.form.id] = (counts[r.form.tier]![r.form.id] ?? 0) + 1;
+          }
+        }
+      }
+    }
+    const baseRates = [2, 3, 4, 5].map((tier) => {
+      const base = FORM_TABLE.find((f) => f.tier === tier && f.fallback)!.id;
+      const total = Object.values(counts[tier]!).reduce((a, b) => a + b, 0);
+      return total ? `${(((counts[tier]![base] ?? 0) / total) * 100).toFixed(0)}%` : '-';
+    });
+    console.log(`  ${pol.name.padEnd(18)} ${reach.map((rs) => `${String(rs.length).padStart(2)}/${avg(rs).toFixed(1).padStart(4)}`).join('  ')}   ${baseRates.join(' / ')}`);
+    for (const tier of [2, 3, 4, 5]) {
+      const base = FORM_TABLE.find((f) => f.tier === tier && f.fallback)!.id;
+      const sorted = Object.entries(counts[tier]!).sort((a, b) => b[1] - a[1]);
+      const top = sorted.map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).slice(0, 6).join(' · ');
+      console.log(`      ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종: ${top}`);
+      const real = sorted.filter(([id]) => id !== base);
+      const realTotal = real.reduce((a, [, n]) => a + n, 0);
+      if (realTotal >= 5 && real[0]![1] / realTotal >= 0.9) failures.push(`진화(${pol.name}): ${tier}단계 ${formName(FORM_TABLE.find((f) => f.id === real[0]![0])!, 'hollow')} 가 ${((real[0]![1] / realTotal) * 100).toFixed(0)}% 독점 (>= 90%, 기본형 제외)`);
+    }
+    const lastRuns = reach[3]!;
+    if (lastRuns.length < CAMPAIGNS * 0.8) console.log(`      → 참고: 5단계 도달 ${lastRuns.length}/${CAMPAIGNS}`);
+  }
+}
+
 // ── 진화체 테이블 점검 (GDD 4-2 v1.0): 도달 가능성 · 기본형 1개 · 선택 모호성 · "후보 없음 → 기본형" 비율 ──
 {
   const EVC = BALANCE.provisional.evolution;
@@ -272,6 +338,10 @@ if (finalRuns.length >= CAMPAIGNS * 0.8) {
   console.log('  단계  진화체(+기본형)  필요 흡수  분포 샘플  도달 불가  모호  후보 없음→기본형(경로 무시)  (경로 포함)');
   for (const r of reports) {
     console.log(`  ${r.tier}     ${String(r.formCount).padStart(3)}(+${r.fallbackCount})        ${String(r.need).padStart(3)}    ${String(r.samples).padStart(8)}    ${String(r.unreachable.length).padStart(3)}    ${String(r.ambiguous).padStart(3)}      ${(r.fallbackRate * 100).toFixed(1).padStart(5)}%                    ${(r.fallbackRateWithPath * 100).toFixed(1).padStart(5)}%`);
+  }
+  console.log('  단계별 집중형 분포 기본형 비율(경로 포함): 1계통 몰림 / 2계통 몰림 / 3계통 / 균등');
+  for (const r of reports) {
+    console.log(`  ${r.tier}     ${CONCENTRATION_PROFILES.map((p) => `${(r.fallbackByProfile[p.key] * 100).toFixed(1).padStart(5)}%`).join(' / ')}`);
   }
   failures.push(...reportProblems(reports, EVC.analysis.maxFallbackRate).map((p) => `진화체 테이블: ${p}`));
 }
