@@ -1,0 +1,102 @@
+[
+  {
+    "id": "rank-1",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.10",
+      "shinigami": "석관"
+    },
+    "condition": null
+  },
+  {
+    "id": "rank-2",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.7",
+      "shinigami": "부대장"
+    },
+    "condition": null
+  },
+  {
+    "id": "rank-3",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.4",
+      "shinigami": "대장 대행"
+    },
+    "condition": null
+  },
+  {
+    "id": "rank-4",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.1",
+      "shinigami": "대장"
+    },
+    "condition": null
+  },
+  {
+    "id": "hidden-rank-1",
+    "kind": "hidden-rank",
+    "hidden": true,
+    "name": {
+      "hollow": "에스파다 0번",
+      "shinigami": "총대장"
+    },
+    "condition": null
+  },
+  {
+    "id": "hidden-rank-2",
+    "kind": "hidden-rank",
+    "hidden": true,
+    "name": {
+      "hollow": "웨코문도의 왕",
+      "shinigami": "0번대"
+    },
+    "condition": null
+  },
+  {
+    "id": "hidden-rank-3",
+    "kind": "hidden-rank",
+    "hidden": true,
+    "name": {
+      "hollow": "에스파다 No.100",
+      "shinigami": "대귀도장"
+    },
+    "condition": null
+  },
+  {
+    "id": "tag-1",
+    "kind": "tag",
+    "hidden": true,
+    "name": {
+      "hollow": "최초의 호로",
+      "shinigami": "은밀기동대장"
+    },
+    "condition": null
+  },
+  {
+    "id": "tag-2",
+    "kind": "tag",
+    "hidden": true,
+    "name": {
+      "hollow": "모든 것을 먹은 자",
+      "shinigami": "기술개발국장"
+    },
+    "condition": null
+  },
+  {
+    "id": "tag-3",
+    "kind": "tag",
+    "hidden": true,
+    "name": {
+      "hollow": "세군도 에타파",
+      "shinigami": "켄파치"
+    },
+    "condition": null
+  }
+]

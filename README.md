@@ -1,6 +1,6 @@
 # 블리치 할로우 어센션 (Bleach Hollow Ascension)
 
-가벼운 웹 게임. 기획과 개발 순서는 `docs/game-design.md`.
+호로 또는 사신을 키우는 다마고치형 로그라이크 육성 게임 (모바일 세로 기준 웹).
 
 ```bash
 npm install

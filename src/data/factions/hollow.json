@@ -1,0 +1,31 @@
+{
+  "id": "hollow",
+  "name": "호로",
+  "tierNames": [
+    "호로",
+    "길리안",
+    "아쥬커스",
+    "바스트로데",
+    "아란칼"
+  ],
+  "rankNames": [
+    "에스파다 No.10",
+    "에스파다 No.7",
+    "에스파다 No.4",
+    "에스파다 No.1"
+  ],
+  "tileNames": {
+    "damage": "파괴",
+    "spirit": "영력",
+    "shield": "가면",
+    "absorb": "포식",
+    "risk": "공허"
+  },
+  "riskGaugeName": "광기",
+  "absorbActionName": "포식",
+  "slotLocation": "body",
+  "appearanceChange": true,
+  "rankMode": "challenge",
+  "defeatStateName": "가면이 깨져 쇠약",
+  "huntingGroundName": "웨코문도"
+}

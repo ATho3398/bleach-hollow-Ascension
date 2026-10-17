@@ -1,0 +1,31 @@
+{
+  "id": "shinigami",
+  "name": "사신",
+  "tierNames": [
+    "혼백",
+    "영술원 학생",
+    "견습 대원",
+    "평대원",
+    "수석 대원"
+  ],
+  "rankNames": [
+    "석관",
+    "부대장",
+    "대장 대행",
+    "대장"
+  ],
+  "tileNames": {
+    "damage": "참격",
+    "spirit": "영력",
+    "shield": "귀도(결계)",
+    "absorb": "정화",
+    "risk": "공허"
+  },
+  "riskGaugeName": "호로화",
+  "absorbActionName": "정화 흡수",
+  "slotLocation": "zanpakuto",
+  "appearanceChange": false,
+  "rankMode": "promotion",
+  "defeatStateName": "영력 고갈",
+  "huntingGroundName": "현세 순찰 구역 / 루콘가이"
+}

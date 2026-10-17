@@ -7,7 +7,7 @@ const check = process.argv.includes('--check');
 const failures: string[] = [];
 
 console.log(`밸런스 버전 ${BALANCE_VERSION}`);
-console.log(`설정 항목 ${Object.keys(BALANCE).length}개 (0단계: 지표 없음)`);
+console.log(`설정 항목 ${Object.keys(BALANCE).length}개 (뼈대 단계: 지표 없음)`);
 
 if (check) {
   if (failures.length > 0) {
