@@ -2,9 +2,9 @@
 
 블리치 할로우 어센션 (Bleach Hollow Ascension) — 블리치 세계관의 **호로** 또는 **사신**을 키우는 다마고치형 로그라이크 육성 게임. 둥지 → 루프 원정(지형 타일 배치) → 매치3 전투(6×6, 5색) → 흡수(빌드) → 진화·승급. 호로판과 사신판은 엔진이 같고 종족 설정 파일(faction config)로만 달라진다.
 
-- **기획서: `docs/GDD.md` (현재 v0.2).** 이 문서가 기준이다. 12장에 결정 기록과 변경 이력이 있다.
-- **기획이 바뀌면 코드만 고치지 말고 기획서도 같이 수정하고 버전을 올린다**(v0.2 → v0.3, 12장에 기록).
-- 개발 순서·패치 기록: `docs/dev-log.md`.
+- **기획서: `docs/GDD.md` (현재 v0.3).** 이 문서가 기준이다. 12장에 결정 기록과 변경 이력이 있다.
+- **기획이 바뀌면 코드만 고치지 말고 기획서도 같이 수정하고 버전을 올린다**(v0.3 → v0.4, 12장에 기록).
+- 개발 순서(로드맵)는 기획서 13장, 패치 기록은 `docs/dev-log.md`. 기획 문서는 `docs/GDD.md` 하나뿐이다.
 
 ## 반드시 지킬 것
 
@@ -24,8 +24,8 @@
 ## 폴더 구조 (기획서 10장 기준)
 
 ```
-docs/GDD.md          기획서 (원본 기준)
-docs/dev-log.md      로드맵·패치 기록
+docs/GDD.md          기획서 (유일한 기획 문서, 로드맵 포함)
+docs/dev-log.md      패치 기록
 docs/automation.md   세션 운영·모델 선택 규칙
 src/engine/          루프, 매치3, 흡수, 리스크, 진화 판정, 런 로그 — 종족 무관 공통 로직
 src/data/
@@ -46,5 +46,5 @@ src/version.ts       PATCH_LABEL / STAGE_LABEL
 - 사용자가 "시작해"라고 하기 전에는 실제 게임 로직(루프, 매치3, 흡수 판정 등)을 구현하지 않는다. 지금은 뼈대·스키마 단계다.
 - 패치할 때마다 배포까지 한다: 커밋·푸시 후 main 에 푸시하면 GitHub Actions(`.github/workflows/pages.yml`)가 타입체크·테스트·밸런스 점검·빌드 후 배포한다.
 - 푸시 전에 `npm run typecheck`, `npm test` 를 통과시킨다. 밸런스 수치를 바꿨으면 `npm run balance` 결과도 보고한다.
-- 패치마다 `PATCH_LABEL`(`src/version.ts`)을 `docs/dev-log.md`의 최신 소절 번호로, `STAGE_LABEL`을 같은 문서 로드맵 표의 단계로 갱신한다.
+- 패치마다 `PATCH_LABEL`(`src/version.ts`)을 `docs/dev-log.md`의 최신 소절 번호로, `STAGE_LABEL`을 기획서 13장 로드맵 표의 단계(예 `P1`)로 갱신한다.
 - 밸런스 수치는 모두 `src/config/balance.ts` 에 둔다. 수치를 바꾸면 `BALANCE_VERSION` 을 올린다. 세이브 구조를 바꾸면 `src/game.ts` 의 `SAVE_FORMAT_VERSION` 을 올리고 기존 세이브가 열리게 마이그레이션한다.
