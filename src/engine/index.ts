@@ -5,3 +5,4 @@ export * from './combat';
 export * from './expedition';
 export * from './nest';
 export * from './absorb';
+export * from './evolution';

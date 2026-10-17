@@ -63,9 +63,9 @@ function toAbsorb(exp: ExpeditionState, enemy?: Partial<EnemyDef>): void {
 }
 
 describe('임시 데이터', () => {
-  it('계통 3개, 계통마다 특성 3개 이상(skill/passive/part 골고루), 전부 provisional', () => {
-    expect(LINEAGES).toHaveLength(3);
-    expect(LINEAGES.map((l) => l.name['*'])).toEqual(['계통A', '계통B', '계통C']);
+  it('계통 5개(C.9에서 D·E 추가), 계통마다 특성 3개 이상(skill/passive/part 골고루), 전부 provisional', () => {
+    expect(LINEAGES).toHaveLength(5);
+    expect(LINEAGES.map((l) => l.name['*'])).toEqual(['계통A', '계통B', '계통C', '계통D', '계통E']);
     for (const l of LINEAGES) {
       const ts = TRAITS.filter((t) => t.lineageId === l.id);
       expect(ts.length).toBeGreaterThanOrEqual(3);
@@ -74,7 +74,7 @@ describe('임시 데이터', () => {
     }
     expect(TRAITS.every((t) => t.provisional === true)).toBe(true);
     expect(LINEAGES.every((l) => l.provisional === true)).toBe(true);
-    expect(TRAITS.every((t) => /^임시 특성 [ABC]\d$/.test(t.name['*']!))).toBe(true);
+    expect(TRAITS.every((t) => /^임시 특성 [A-E]\d$/.test(t.name['*']!))).toBe(true);
   });
 
   it('기존 테스트 적 3종에 계통과 희귀 확률이 있다', () => {

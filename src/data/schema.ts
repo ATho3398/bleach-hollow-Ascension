@@ -50,6 +50,10 @@ export interface EnemyPattern {
 export interface LineageDef {
   id: string;
   name: PerFaction<string>;
+  /** 조합 키 표시용 짧은 이름 ("A"). 없으면 name */
+  shortName?: PerFaction<string>;
+  /** 이 계통의 성향 (GDD 4-2): 진화 형태 패시브가 조합의 계통 성향을 섞어 만든다. 임시 */
+  tendency?: { stat: PassiveStat; multiplier: number };
   provisional?: boolean;
 }
 
@@ -122,4 +126,26 @@ export interface TitleDef {
   name: PerFaction<string>;
   /** 획득 조건. 11-6, 11-7 미정이므로 null (구조만 있음). 런 로그(runLog.ts)를 읽게 될 것 */
   condition: null;
+}
+
+/** 진화 형태 종류 (GDD 4-2): 안정 수치 높음 = 정통, 낮음 = 변이, 그 단계에서 한계 돌파 = 세 번째 후보(효과는 변이와 같은 임시값) */
+export const FORM_VARIANTS = ['orthodox', 'mutant', 'breakthrough'] as const;
+export type FormVariant = (typeof FORM_VARIANTS)[number];
+
+/** 진화 형태 (GDD 4-2). 지금은 템플릿 자동 생성(src/data/evolution)이고, 손으로 쓴 정식 형태는 forms.json 이 id 로 덮어쓴다 */
+export interface FormDef {
+  /** `${comboKey}@${toTier}:${variant}` — 조합 키·진화해서 도달하는 단계(1~4)·종류에서 정해진다 */
+  id: string;
+  comboKey: string;
+  /** 진화해서 도달하는 단계 index (1~4) */
+  toTier: number;
+  variant: FormVariant;
+  /** 손으로 쓴 이름(정식 형태). 없으면 조합 키에서 자동 생성 */
+  name?: PerFaction<string>;
+  /** 플레이어 최대 체력·기본 공격 위력 배율 */
+  hpMultiplier: number;
+  attackMultiplier: number;
+  /** 조합의 계통 성향에서 파생된 패시브 1개 (기본 조합이면 빈 객체) */
+  passive: Partial<Record<PassiveStat, number>>;
+  provisional?: boolean;
 }

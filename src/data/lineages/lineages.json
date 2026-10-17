@@ -4,19 +4,68 @@
     "name": {
       "*": "계통A"
     },
-    "provisional": true
+    "provisional": true,
+    "shortName": {
+      "*": "A"
+    },
+    "tendency": {
+      "stat": "attackPower",
+      "multiplier": 1.06
+    }
   },
   {
     "id": "lineage-b",
     "name": {
       "*": "계통B"
     },
-    "provisional": true
+    "provisional": true,
+    "shortName": {
+      "*": "B"
+    },
+    "tendency": {
+      "stat": "damageTaken",
+      "multiplier": 0.94
+    }
   },
   {
     "id": "lineage-c",
     "name": {
       "*": "계통C"
+    },
+    "provisional": true,
+    "shortName": {
+      "*": "C"
+    },
+    "tendency": {
+      "stat": "attackSpeed",
+      "multiplier": 1.05
+    }
+  },
+  {
+    "id": "lineage-d",
+    "name": {
+      "*": "계통D"
+    },
+    "shortName": {
+      "*": "D"
+    },
+    "tendency": {
+      "stat": "damageTaken",
+      "multiplier": 0.95
+    },
+    "provisional": true
+  },
+  {
+    "id": "lineage-e",
+    "name": {
+      "*": "계통E"
+    },
+    "shortName": {
+      "*": "E"
+    },
+    "tendency": {
+      "stat": "attackPower",
+      "multiplier": 1.05
     },
     "provisional": true
   }

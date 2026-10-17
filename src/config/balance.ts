@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 9;
+export const BALANCE_VERSION = 10;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -23,7 +23,7 @@ export const BALANCE = {
     /** 강적은 바퀴당 최대 1마리 (GDD 2-1) */
     maxElitesPerLap: 1,
   },
-  /** 흡수 슬롯: 초기 3칸 (GDD 4장 확정. 진화마다 +1 은 진화 시스템 이후) */
+  /** 흡수 슬롯: 초기 3칸, 진화마다 +1 (GDD 4장 확정. 진화는 provisional.evolution) */
   absorb: { slotCount: 3 },
 
   // ── 임시값(provisional): 기획서 미정 항목을 프로토타입용으로 채우는 구역 (GDD 12장) ──
@@ -53,7 +53,7 @@ export const BALANCE = {
       perVoidBlock: 2.5,
       /** 강한 적 흡수 시 리스크 상승 = 적 hpInAttacks(바퀴 강화 포함) × 이 값. 옛 0.55/매칭 회분 × (6회분 → 30회분 환산) ≈ 0.11. 강적(70)이 일반(30)의 약 2.3배 */
       /* C.7: 0.12→0.22 (첫 흡수 보장·새 조건으로 흡수 횟수가 줄어 6바퀴 돌파 가드 유지) */
-      absorbPerHpAttack: 0.22,
+      absorbPerHpAttack: 0.3,
       /** 놓아주면 하락 */
       releaseRelief: 8,
       /** 휴식 타일에서 하락 */
@@ -74,6 +74,26 @@ export const BALANCE = {
         feed: { risk: -5, stability: 2 },
         sleep: { risk: -10, stability: 3 },
         pet: { risk: -10, stability: 8 },
+      },
+    },
+    // ── 진화(C.9) 임시값: 다마고치형 조합 진화 (GDD 4-2). 방식은 확정, 수치·데이터는 전부 임시 ──
+    evolution: {
+      /** 진화에 필요한 현재 단계 흡수 횟수(가중 없는 원래 횟수): index 0 = 1→2단계 … index 3 = 4→5단계 */
+      absorbsNeeded: [3, 5, 7, 9],
+      /** 희귀 개체 흡수의 계통 누적 가중 */
+      rareWeight: 2,
+      /** 3위 계통 누적이 2위의 이 비율 이상이면 3조합 */
+      thirdRatio: 0.7,
+      /** 안정 수치가 이 값 이상이면 정통형, 미만이면 변이형 */
+      stabilityThreshold: 60,
+      /** 진화마다 슬롯 +1 (GDD 4장) */
+      slotsPerEvolution: 1,
+      /** 형태 종류별 효과 배율(진화할 때마다 곱해진다): 체력은 플레이어 최대 체력, 공격은 기본 공격 위력.
+       *  돌파 형태는 효과가 변이형과 같다 (정식 결과는 11-4 미정) */
+      formEffects: {
+        orthodox: { hp: 1.1, attack: 1.05 },
+        mutant: { hp: 1.05, attack: 1.1 },
+        breakthrough: { hp: 1.05, attack: 1.1 },
       },
     },
     // ── 원정 루프(P2) 임시값. 기획서 2-1·6·7장에 수치가 없는 것 ──

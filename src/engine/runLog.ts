@@ -92,9 +92,25 @@ export interface BattleRecord {
   absorbable: boolean;
 }
 
+/** 진화 1회 기록 (GDD 4-2, 9장): 히든 조건이 나중에 읽는다 */
+export interface EvolutionRecord {
+  fromTier: number;
+  toTier: number;
+  /** 조합 키 ("lineage-a+lineage-b", 흡수 0이면 "base") */
+  comboKey: string;
+  /** 형태 id (src/data/evolution) */
+  formId: string;
+  /** 진화 순간의 안정 수치 */
+  stability: number;
+  /** 진화한 시각(ms) */
+  at: number;
+}
+
 export interface TierRecord {
   /** 건너뛴 단계가 있는가 */
   skipped: boolean;
+  /** 진화 기록 (C.9) */
+  evolutions: EvolutionRecord[];
   /** 특정 단계에 머문 채 격파한 적 등급 기록: 단계 index → 적 등급 목록 */
   defeatedWhileAtTier: Record<number, string[]>;
 }
@@ -139,7 +155,7 @@ export function emptyRunLog(): RunLog {
     lineages: [],
     risk: { peak: 0, breakthroughs: 0, survivedBreakthroughs: 0 },
     battles: [],
-    tiers: { skipped: false, defeatedWhileAtTier: {} },
+    tiers: { skipped: false, evolutions: [], defeatedWhileAtTier: {} },
     rankChanges: [],
     runs: [],
   };

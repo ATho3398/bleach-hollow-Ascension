@@ -40,7 +40,7 @@ button.small { padding:6px 12px; border-radius:8px; } button.on { border-color:#
 .speeds { display:flex; gap:6px; justify-content:center; }
 
 .bar.risk > i { background:#ff4fd8; } .bar.stab > i { background:#7ee2a8; }
-.slots { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.slots { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:6px; }
 .slotbox { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px; font-size:13px; text-align:center; display:flex; flex-direction:column; gap:2px; }
 .slotbox.empty { opacity:.55; border-style:dashed; }
 .notice.good { border-color:#2f7a4f; background:#14281c; } .notice.rare { border-color:#d9a441; background:#2e2410; color:#ffd24d; font-weight:700; }
@@ -79,3 +79,12 @@ button.cand { text-align:left; display:flex; flex-direction:column; gap:3px; }
 .tblock.void { background:var(--void); border:2px solid #ff4fd8; color:#ff4fd8; }
 .tblock.weak { outline:3px solid #ffd24d; }
 .tblock.dragging { z-index:10; position:relative; cursor:grabbing; opacity:.9; }
+
+/* 진화 (C.9): 둥지 진화 패널·진화 연출 */
+.evo { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+.evo .tier { font-size:18px; font-weight:700; }
+.evo .combo { font-size:15px; } .evo .unknown { font-size:20px; font-weight:700; color:#ffd24d; letter-spacing:2px; }
+.bar.lin { height:10px; } .bar.lin > i { background:#8f8fff; } .bar.lin.top > i { background:#ffd24d; }
+.evo-line { text-align:center; font-size:16px; line-height:1.7; animation:evofade .6s both; }
+@keyframes evofade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.evo-result { text-align:center; font-size:24px; font-weight:700; color:#ffd24d; margin:12px 0 4px; }

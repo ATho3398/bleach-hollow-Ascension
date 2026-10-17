@@ -260,5 +260,181 @@
       "value": 1.5
     },
     "provisional": true
+  },
+  {
+    "id": "trait-d1",
+    "lineageId": "lineage-d",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 D1"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록). 위력 기본 공격 3.5회분, 체인3 추가 효과: 적 행동 1.5초 지연.",
+      "shinigami": "[임시] 시해 능력(공격 블록). 위력 기본 공격 3.5회분, 체인3 추가 효과: 적 행동 1.5초 지연."
+    },
+    "role": "attack",
+    "powerInAttacks": 3.5,
+    "chainBonus": {
+      "kind": "stagger",
+      "value": 1.5
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-d2",
+    "lineageId": "lineage-d",
+    "kind": "passive",
+    "name": {
+      "*": "임시 특성 D2"
+    },
+    "description": {
+      "hollow": "[임시] 본체 패시브. 기본 공격 속도 ×1.1.",
+      "shinigami": "[임시] 참백도 패시브. 기본 공격 속도 ×1.1."
+    },
+    "passive": {
+      "stat": "attackSpeed",
+      "multiplier": 1.1
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-d3",
+    "lineageId": "lineage-d",
+    "kind": "part",
+    "name": {
+      "*": "임시 특성 D3"
+    },
+    "description": {
+      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-d4",
+    "lineageId": "lineage-d",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 D4"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(회복 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 봉인 해제 + 영력 40.",
+      "shinigami": "[임시] 시해 능력(회복 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 봉인 해제 + 영력 40."
+    },
+    "role": "heal",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "rare": true,
+    "provisional": true
+  },
+  {
+    "id": "trait-d5",
+    "lineageId": "lineage-d",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 D5"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사.",
+      "shinigami": "[임시] 시해 능력(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-e1",
+    "lineageId": "lineage-e",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 E1"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사.",
+      "shinigami": "[임시] 시해 능력(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-e2",
+    "lineageId": "lineage-e",
+    "kind": "passive",
+    "name": {
+      "*": "임시 특성 E2"
+    },
+    "description": {
+      "hollow": "[임시] 본체 패시브. 기본 공격 위력 ×1.12.",
+      "shinigami": "[임시] 참백도 패시브. 기본 공격 위력 ×1.12."
+    },
+    "passive": {
+      "stat": "attackPower",
+      "multiplier": 1.12
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-e3",
+    "lineageId": "lineage-e",
+    "kind": "part",
+    "name": {
+      "*": "임시 특성 E3"
+    },
+    "description": {
+      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-e4",
+    "lineageId": "lineage-e",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 E4"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록). 위력 기본 공격 5회분, 체인3 추가 효과: 적 행동 1.5초 지연.",
+      "shinigami": "[임시] 시해 능력(공격 블록). 위력 기본 공격 5회분, 체인3 추가 효과: 적 행동 1.5초 지연."
+    },
+    "role": "attack",
+    "powerInAttacks": 5,
+    "chainBonus": {
+      "kind": "stagger",
+      "value": 2.5
+    },
+    "rare": true,
+    "provisional": true
+  },
+  {
+    "id": "trait-e5",
+    "lineageId": "lineage-e",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 E5"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + 영력 40.",
+      "shinigami": "[임시] 시해 능력(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + 영력 40."
+    },
+    "role": "heal",
+    "powerInAttacks": 1,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "provisional": true
   }
 ]

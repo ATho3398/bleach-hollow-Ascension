@@ -26,6 +26,32 @@
     "rareChance": 0.1
   },
   {
+    "id": "test-d",
+    "name": {
+      "*": "테스트 적 D"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-e",
+    "provisional": true,
+    "lineageId": "lineage-d",
+    "rareChance": 0.1
+  },
+  {
+    "id": "test-e",
+    "name": {
+      "*": "테스트 적 E"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.25,
+    "weaknessLineageId": "lineage-d",
+    "provisional": true,
+    "lineageId": "lineage-e",
+    "rareChance": 0.1
+  },
+  {
     "id": "test-elite",
     "name": {
       "*": "테스트 강적"

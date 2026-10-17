@@ -6,10 +6,11 @@ import { pickFaction, type EnemyDef } from '../data/schema';
 import { tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, elapsedSeconds, type CombatState } from '../engine/combat';
 import { absorbReasons, buildCombatParams } from '../engine/absorb';
+import { applyEvolutionToParams } from '../engine/evolution';
 import { createExpedition, drainEvents, finishBattle, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  loadSave, newSaveData, nextRunId, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
+  loadSave, newSaveData, nextRunId, performEvolution, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import { versionLabel } from '../version';
 import { traitName } from '../data/traits';
@@ -20,6 +21,7 @@ import { el, mountScreen } from './dom';
 import { battleLabels, endReasonText } from './labels';
 import { absorbConditionText } from './absorbView';
 import { expeditionView } from './expeditionView';
+import { evolutionView } from './evolutionPanel';
 import { nestView } from './nestView';
 
 export function startApp(root: HTMLElement): void {
@@ -57,6 +59,13 @@ export function startApp(root: HTMLElement): void {
       persist,
       onDepart: () => departScreen(faction),
       onPractice: () => practiceScreen(faction),
+      onEvolve: () => {
+        const from = s.evolution.tierIndex;
+        const r = performEvolution(s);
+        if (!r.ok) return nestScreen();
+        persist();
+        evolutionView(root, faction, from, s.evolution.tierIndex, r.form, nestScreen);
+      },
       onChangeFaction: factionScreen,
     });
   }
@@ -74,6 +83,7 @@ export function startApp(root: HTMLElement): void {
       risk: save.nest.risk,
       stability: save.nest.stability,
       build: save.build,
+      evolution: save.evolution,
     });
     showExpedition(faction, exp, `${faction.huntingGroundName}으로 출발!`);
   }
@@ -166,12 +176,14 @@ export function startApp(root: HTMLElement): void {
   }
 
   function practiceBattle(faction: FactionConfig, enemy: EnemyDef): void {
-    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params: save ? buildCombatParams(save.build) : undefined });
+    const params = save ? buildCombatParams(save.build) : undefined;
+    if (save && params) applyEvolutionToParams(params, save.evolution);
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     battleView(root, faction, s, {
       onQuit: () => practiceScreen(faction),
       onEnd: (done) => {
         if (save) {
-          recordBattle(save, buildBattleRecord(done, { factionId: faction.id }));
+          recordBattle(save, buildBattleRecord(done, { factionId: faction.id, tierIndex: save.evolution.tierIndex }));
           persist();
         }
         practiceResult(faction, enemy, done);

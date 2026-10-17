@@ -1,11 +1,17 @@
-// 흡수 계통 테이블 (GDD 4장). 11-3 이 미정이라 임시 계통 3개("계통A/B/C" 자리 표시)만 있다.
-import { pickFaction, type LineageDef } from '../schema';
+// 흡수 계통 테이블 (GDD 4장). 11-3 이 미정이라 임시 계통 5개("계통A~E" 자리 표시)만 있다 (GDD 4-2).
+import { PASSIVE_STATS, pickFaction, type LineageDef } from '../schema';
 import raw from './lineages.json';
 
 export function parseLineage(r: unknown): LineageDef {
   const l = (r ?? {}) as Record<string, unknown>;
   if (typeof l.id !== 'string' || !l.id || typeof l.name !== 'object' || l.name === null) {
     throw new Error(`계통 데이터 오류 (${String(l.id ?? '?')}): id, name`);
+  }
+  if (l.tendency !== undefined) {
+    const t = l.tendency as Record<string, unknown>;
+    if (!(PASSIVE_STATS as readonly unknown[]).includes(t.stat) || typeof t.multiplier !== 'number' || t.multiplier <= 0) {
+      throw new Error(`계통 데이터 오류 (${l.id}): tendency { stat, multiplier: 양수 }`);
+    }
   }
   return r as LineageDef;
 }
@@ -20,4 +26,10 @@ export function getLineage(id: string): LineageDef {
 
 export function lineageName(id: string, factionId: string): string {
   return pickFaction(getLineage(id).name, factionId);
+}
+
+/** 조합 키 표시용 짧은 이름 ("A") */
+export function lineageShortName(id: string, factionId: string): string {
+  const l = getLineage(id);
+  return pickFaction(l.shortName ?? l.name, factionId);
 }

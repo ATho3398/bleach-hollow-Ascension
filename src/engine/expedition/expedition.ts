@@ -11,6 +11,7 @@ import {
   absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
   newBuild, releaseEffect, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
+import { applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, type EvolutionState } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
 
 const EX = BALANCE.expedition;
@@ -79,6 +80,8 @@ export interface ExpeditionState extends RiskState {
   /** 흡수 화면 대기 중인 제안 (phase 'absorb') */
   absorbOffer: AbsorbOffer | null;
   absorbRecords: AbsorbRecord[];
+  /** 진화 상태 사본 (GDD 4-2): 흡수가 확정되면 계통별 누적이 오르고, 귀환하면 세이브에 합쳐진다. 진화 자체는 둥지에서만 */
+  evolution: EvolutionState;
   /** 지나온 시간(초, 배속 전 기준) */
   elapsedSeconds: number;
   lapsCompleted: number;
@@ -99,6 +102,8 @@ export interface ExpeditionSetup {
   risk?: number;
   stability?: number;
   build?: BuildState;
+  /** 둥지에서 가져온 진화 상태 (없으면 1단계 새 상태) */
+  evolution?: EvolutionState;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -130,6 +135,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     acquiredTraits: [],
     absorbOffer: null,
     absorbRecords: [],
+    evolution: setup.evolution ? cloneEvolution(setup.evolution) : newEvolution(),
     risk: setup.risk ?? 0,
     riskPeak: setup.risk ?? 0,
     stability: setup.stability ?? RX.stabilityStart,
@@ -265,6 +271,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   if (cls === 'elite') exp.elitesThisLap++;
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build), voidChanceBonus: riskBonus(exp) };
+  applyEvolutionToParams(params, exp.evolution);
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
   const pending: PendingBattle = {
     enemy: pickEnemy(exp, cls),
@@ -300,7 +307,7 @@ export function startBattle(exp: ExpeditionState): CombatState {
 export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleRecord {
   const pending = exp.pending;
   if (exp.phase !== 'battle' || !pending || battle.status === 'playing') throw new Error('끝나지 않은 전투');
-  const record = buildBattleRecord(battle, { factionId: exp.factionId, runId: exp.runId, lap: exp.lap });
+  const record = buildBattleRecord(battle, { factionId: exp.factionId, runId: exp.runId, lap: exp.lap, tierIndex: exp.evolution.tierIndex });
   exp.battles.push(record);
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
   exp.pending = null;
@@ -353,6 +360,7 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
     exp.acquiredTraits.push({ traitId, lap: exp.lap });
   }
   logAbsorb(exp, offer, true, traitId);
+  recordEvolutionAbsorb(exp.evolution, offer.lineageId, offer.rare);
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
   changeRisk(exp, absorbRisk(offer.strength), 'absorb');
