@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 10;
+export const BALANCE_VERSION = 11;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -79,7 +79,7 @@ export const BALANCE = {
     // ── 진화(C.9) 임시값: 다마고치형 조합 진화 (GDD 4-2). 방식은 확정, 수치·데이터는 전부 임시 ──
     evolution: {
       /** 진화에 필요한 현재 단계 흡수 횟수(가중 없는 원래 횟수): index 0 = 1→2단계 … index 3 = 4→5단계 */
-      absorbsNeeded: [3, 5, 7, 9],
+      absorbsNeeded: [27, 30, 34, 38],
       /** 희귀 개체 흡수의 계통 누적 가중 */
       rareWeight: 2,
       /** 3위 계통 누적이 2위의 이 비율 이상이면 3조합 */

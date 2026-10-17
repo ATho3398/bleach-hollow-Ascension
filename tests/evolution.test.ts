@@ -26,6 +26,9 @@ function absorbed(...ids: string[]): EvolutionState {
   return e;
 }
 const times = (id: string, n: number) => Array.from({ length: n }, () => id);
+/** 1→2단계 진화에 필요한 횟수(BALANCE 값)만큼, x 2 : y 1 비율로 흡수 (옛 A,A,B / C,C,D) */
+const need0 = () => EV.absorbsNeeded[0]!;
+const mix = (x: string, y: string) => [...times(x, need0() - Math.floor(need0() / 3)), ...times(y, Math.floor(need0() / 3))];
 
 describe('조합 키', () => {
   it('누적 1·2위 계통의 2조합이고 순서와 상관없이 같은 키다', () => {
@@ -102,10 +105,10 @@ describe('진화 조건과 결과', () => {
     for (let i = 0; i < n; i++) recordEvolutionAbsorb(e, i % 2 === 0 ? A : B, false);
   };
 
-  it('단계별 필요 흡수 횟수: 3·5·7·9, 모자라면 진화할 수 없다', () => {
-    expect([0, 1, 2, 3].map((t) => absorbsNeeded({ ...newEvolution(), tierIndex: t }))).toEqual([3, 5, 7, 9]);
+  it('단계별 필요 흡수 횟수는 BALANCE 값, 모자라면 진화할 수 없다', () => {
+    expect([0, 1, 2, 3].map((t) => absorbsNeeded({ ...newEvolution(), tierIndex: t }))).toEqual([...EV.absorbsNeeded]);
     const e = newEvolution();
-    fill(e, 2);
+    fill(e, EV.absorbsNeeded[0]! - 1);
     expect(absorbsRemaining(e)).toBe(1);
     expect(canEvolve(e)).toBe(false);
     const r = evolve(e, newBuild(), 50, 0);
@@ -120,7 +123,7 @@ describe('진화 조건과 결과', () => {
     expect(chooseVariant(EV.stabilityThreshold - 1, false)).toBe('mutant');
     expect(chooseVariant(100, true)).toBe('breakthrough');
     const run = (stability: number, bt: boolean) => {
-      const e = absorbed(A, A, B);
+      const e = absorbed(...mix(A, B));
       e.breakthroughThisTier = bt;
       const r = evolve(e, newBuild(), stability, 7);
       return r.ok ? r.form : null;
@@ -136,7 +139,7 @@ describe('진화 조건과 결과', () => {
   });
 
   it('진화하면 단계 +1, 슬롯 +1, 누적 리셋, 형태 기록. 안정 수치는 건드리지 않는다', () => {
-    const e = absorbed(A, A, B);
+    const e = absorbed(...mix(A, B));
     e.breakthroughThisTier = true;
     const build = newBuild();
     const before = build.slots.length;
@@ -173,7 +176,7 @@ describe('진화 조건과 결과', () => {
   });
 
   it('형태 효과: 진화마다 체력·공격 배율이 곱해지고 전투 파라미터에 반영된다', () => {
-    const e = absorbed(A, A, B);
+    const e = absorbed(...mix(A, B));
     expect(evolutionMultipliers(e)).toMatchObject({ hp: 1, attack: 1 });
     const p0: { playerMaxHp?: number } = {};
     applyEvolutionToParams(p0, e);
@@ -193,7 +196,7 @@ describe('진화 조건과 결과', () => {
   });
 
   it('미리보기는 같은 조건에서 실제 진화 결과와 같다', () => {
-    const e = absorbed(C, C, D);
+    const e = absorbed(...mix(C, D));
     const peek = previewForm(e, 30)!;
     const r = evolve(cloneEvolution(e), newBuild(), 30, 0);
     expect(r.ok && r.form.id).toBe(peek.id);
@@ -205,7 +208,7 @@ describe('세이브·런 로그 연결', () => {
     const save = newSaveData('hollow', 0);
     save.nest.stability = 72;
     save.nest.risk = 33;
-    for (const id of [A, A, B]) recordEvolutionAbsorb(save.evolution, id, false);
+    for (const id of mix(A, B)) recordEvolutionAbsorb(save.evolution, id, false);
     const r = performEvolution(save, 5000);
     expect(r.ok).toBe(true);
     expect(save.runLog.tiers.evolutions).toEqual([{ fromTier: 0, toTier: 1, comboKey: 'lineage-a+lineage-b', formId: save.evolution.formId, stability: 72, at: 5000 }]);
@@ -298,7 +301,7 @@ describe('종족 설정만 바꿔 표기가 바뀐다 (코드 분기 없음)', (
     expect(s.tierNames[1]).not.toBe(h.tierNames[1]);
     // 같은 흡수 이력이면 두 종족의 엔진 결과가 같다
     const run = () => {
-      const e = absorbed(A, A, B);
+      const e = absorbed(...mix(A, B));
       const r = evolve(e, newBuild(), 80, 0);
       return r.ok ? r.form : null;
     };

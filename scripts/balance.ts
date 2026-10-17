@@ -184,20 +184,21 @@ for (const lap of [4, 6]) {
   if (ar > 0.85) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% > 85% (조건이 거의 항상 열린다)`);
 }
 
-// ── 진화(C.9, GDD 4-2): 흡수하는 봇이 4바퀴 원정을 반복하다 진화할 수 있으면 둥지에서 진화한다 ──
-// 약한 가드: 흡수하는 봇이 첫 진화에 도달할 수 있어야 하고, 첫 진화 조합이 한 가지에 90% 이상 쏠리지 않아야 한다
-const CAMPAIGNS = 40;
-const MAX_RUNS = 15;
+// ── 진화(C.9·C.10, GDD 2-3·4-2): 흡수하는 봇이 4바퀴 원정을 반복하다 진화할 수 있으면 둥지에서 진화한다 ──
+// C.10: 목표는 "진화 1단계 ≈ 원정 8~12회, 5단계 ≈ 원정 40~50회". 단계마다 걸린 원정 수(그 단계 시작부터)를 표로 낸다
+// 가드: 단계별 평균 6~14, 5단계 도달 평균 30~60번째 원정, 첫 진화 조합 한 가지가 90% 미만
+const CAMPAIGNS = 30;
+const MAX_RUNS = 60;
 const firstEvoRuns: number[] = [];
 const combos: Record<string, number> = {};
 const variants: Record<string, number> = {};
-let reachedTier = 0;
 let allEvos = 0;
-const evoRuns = [0, 0, 0, 0];
-const evoCount = [0, 0, 0, 0];
+const stageRuns: number[][] = [[], [], [], []];
+const finalRuns: number[] = [];
 for (let seed = 1; seed <= CAMPAIGNS; seed++) {
   const save = newSaveData('hollow', 0);
   save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
+  let stageStart = 0;
   for (let run = 1; run <= MAX_RUNS; run++) {
     const e = playExpedition(
       createExpedition({
@@ -217,27 +218,39 @@ for (let seed = 1; seed <= CAMPAIGNS; seed++) {
       const r = performEvolution(save, 0);
       if (r.ok) {
         allEvos++;
-        evoCount[tier] = (evoCount[tier] ?? 0) + 1;
-        evoRuns[tier] = (evoRuns[tier] ?? 0) + run;
+        stageRuns[tier]!.push(run - stageStart);
+        stageStart = run;
         if (tier === 0) {
           firstEvoRuns.push(run);
           combos[key] = (combos[key] ?? 0) + 1;
         }
+        if (tier === 3) finalRuns.push(run);
         variants[r.form.variant] = (variants[r.form.variant] ?? 0) + 1;
       }
     }
   }
-  reachedTier += save.evolution.tierIndex;
 }
+const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
 const topCombo = Object.entries(combos).sort((a, b) => b[1] - a[1])[0];
 console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 진화 가능하면 둥지에서 진화) — 필요 흡수 ${BALANCE.provisional.evolution.absorbsNeeded.join('/')}`);
-console.log(
-  `  첫 진화 도달 ${firstEvoRuns.length}/${CAMPAIGNS} · 첫 진화까지 평균 ${firstEvoRuns.length ? (firstEvoRuns.reduce((a, b) => a + b, 0) / firstEvoRuns.length).toFixed(1) : '-'}번째 원정 · ` +
-    `평균 도달 단계 ${(reachedTier / CAMPAIGNS + 1).toFixed(2)}단계 · 단계별 평균 진화 원정 ${evoCount.map((n, i) => (n ? (evoRuns[i]! / n).toFixed(1) : '-')).join('/')}`,
-);
+console.log('  단계(진화)   도달 인원  평균 원정  최소  최대   (그 단계 시작부터 센 원정 수)');
+const stageNames = ['1→2', '2→3', '3→4', '4→5'];
+stageRuns.forEach((rs, i) => {
+  console.log(`  ${stageNames[i]}단계      ${String(rs.length).padStart(2)}/${CAMPAIGNS}     ${avg(rs).toFixed(1).padStart(5)}    ${String(rs.length ? Math.min(...rs) : '-').padStart(3)}   ${String(rs.length ? Math.max(...rs) : '-').padStart(3)}`);
+});
+console.log(`  5단계 도달 ${finalRuns.length}/${CAMPAIGNS} · 평균 ${avg(finalRuns).toFixed(1)}번째 원정 (최소 ${finalRuns.length ? Math.min(...finalRuns) : '-'} · 최대 ${finalRuns.length ? Math.max(...finalRuns) : '-'})`);
 console.log(`  첫 진화 조합 분포 (${Object.keys(combos).length}종): ${Object.entries(combos).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k.replaceAll('lineage-', '')} ${n}`).join(' · ')}`);
 console.log(`  형태 종류: ${Object.entries(variants).map(([k, n]) => `${k} ${n}`).join(' · ')} (총 진화 ${allEvos}회)`);
 if (firstEvoRuns.length < CAMPAIGNS * 0.8) failures.push(`진화: 흡수 봇 중 첫 진화 도달 ${firstEvoRuns.length}/${CAMPAIGNS} < 80%`);
+stageRuns.forEach((rs, i) => {
+  const m = avg(rs);
+  if (rs.length < CAMPAIGNS * 0.8) failures.push(`진화: ${stageNames[i]}단계 도달 ${rs.length}/${CAMPAIGNS} < 80% (원정 ${MAX_RUNS}회 안)`);
+  else if (m < 6 || m > 14) failures.push(`진화: ${stageNames[i]}단계 평균 ${m.toFixed(1)}번째 원정 (목표 6~14)`);
+});
+if (finalRuns.length >= CAMPAIGNS * 0.8) {
+  const m = avg(finalRuns);
+  if (m < 30 || m > 60) failures.push(`진화: 5단계 도달 평균 ${m.toFixed(1)}번째 원정 (목표 30~60)`);
+}
 if (topCombo && firstEvoRuns.length > 0 && topCombo[1] / firstEvoRuns.length >= 0.9) failures.push(`진화: 첫 진화 조합 ${topCombo[0]} 가 ${((topCombo[1] / firstEvoRuns.length) * 100).toFixed(0)}% 독점 (>= 90%)`);
 
 if (check) {
