@@ -43,6 +43,18 @@ export interface BattleRecord {
   enemyClass: string;
   /** 이 전투 때 머물던 육성 단계(0부터) */
   tierIndex: number;
+  /** P1 에서 더한 필드 (세이브 형식 2) */
+  enemyId: string;
+  /** 어느 종족으로 치렀는가 */
+  factionId: string;
+  /** 전투 난수 시드(같은 시드 = 같은 전투) */
+  seed: number;
+  /** 공허 매칭으로 오른 리스크 값 (게이지 반영은 P3) */
+  riskGained: number;
+  /** 흡수 타일 매칭 누적 (흡수 판정은 P3) */
+  absorbGained: number;
+  /** 패배 사유: hp = 체력 0, timeout = 턴 초과. 승리면 null */
+  lossReason: 'hp' | 'timeout' | null;
 }
 
 export interface TierRecord {

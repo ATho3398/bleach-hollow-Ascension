@@ -3,7 +3,14 @@
 import type { TileRole } from '../engine/faction';
 
 /** 종족별로 달라지는 표시 텍스트: 종족 id → 문자열. 엔진 로직은 id 만 쓰고 텍스트는 여기서 읽는다 */
+/** 키 '*' 는 모든 종족 공통 값(해당 종족 키가 없을 때 쓴다) */
 export type PerFaction<T> = Record<string, T>;
+
+export function pickFaction<T>(map: PerFaction<T>, factionId: string): T {
+  const v = map[factionId] ?? map['*'];
+  if (v === undefined) throw new Error(`종족 ${factionId} 의 표시 텍스트가 없다`);
+  return v;
+}
 
 export interface EnemyDef {
   id: string;
@@ -11,6 +18,8 @@ export interface EnemyDef {
   class: 'normal' | 'elite';
   /** 체력: 절대값이 아니라 "플레이어 매칭 N회 분량" (CLAUDE.md 규칙 3) */
   hpInMatches: number;
+  /** 공격력: 한 번 공격할 때 "플레이어 실드 매칭 N회 분량" 피해 (절대값 금지, CLAUDE.md 규칙 3) */
+  attackInMatches: number;
   /** 약점 색(역할) 1개 (GDD 2-2) */
   weakness: TileRole;
   rare?: boolean;

@@ -27,5 +27,6 @@
   "appearanceChange": false,
   "rankMode": "promotion",
   "defeatStateName": "영력 고갈",
+  "basicSkillName": "시해",
   "huntingGroundName": "현세 순찰 구역 / 루콘가이"
 }

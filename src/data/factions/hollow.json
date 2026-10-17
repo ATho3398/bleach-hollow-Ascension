@@ -27,5 +27,6 @@
   "appearanceChange": true,
   "rankMode": "challenge",
   "defeatStateName": "가면이 깨져 쇠약",
+  "basicSkillName": "본체 능력",
   "huntingGroundName": "웨코문도"
 }

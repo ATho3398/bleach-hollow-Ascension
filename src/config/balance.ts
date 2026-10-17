@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 2;
+export const BALANCE_VERSION = 3;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -21,6 +21,8 @@ export const BALANCE = {
   },
   battle: {
     boardSize: 6,
+    /** 매치3: 같은 색 3개 이상이 한 줄. 이 개수가 "매칭 1회 분량"의 타일 수 */
+    minMatch: 3,
     tileColors: 5,
     /** 영력 타일 매칭 3회 → 기술 1회 발동 */
     spiritMatchesPerSkill: 3,
@@ -37,6 +39,30 @@ export const BALANCE = {
   // ── 임시값(provisional): 기획서 미정 항목을 프로토타입용으로 채우는 구역 (GDD 12장) ──
   // 여기 값은 확정이 아니다. 확정되면 기획서에 반영하고 이 구역에서 옮긴다.
   provisional: {
-    // 리스크 게이지 상승·하락량·한계값(11-4): 프로토타입 시작 때 채운다
+    // 리스크 게이지 상승·하락량·한계값(11-4): P3 에서 채운다
+    // ── 전투 코어(P1) 임시값. 기획서에 없는 수치. 모든 "양"은 매칭 1회(3타일) = 1 단위 기준 ──
+    battle: {
+      /** 플레이어 매칭 1회 데미지. 적 체력은 이 값 × hpInMatches 로 환산되므로 기준 단위일 뿐이다 */
+      playerMatchDamage: 10,
+      /** "매칭 N회 분량" 보정: 플레이어는 한 턴에 연쇄·특수 매치로 데미지 매칭 여러 번을 얻으므로, 적 체력 1회분 = 매칭 1회 데미지 × 이 값.
+       *  탐욕 봇 시뮬(npm run balance)로 일반 적이 평균 6~8턴이 되게 맞췄다 (GDD 2-2). 사람은 봇보다 느리므로 봇은 6턴 안팎을 목표 */
+      hpMatchScale: 3.2,
+      /** 육성이 올리는 값: 매칭 1회당 데미지 배율 (GDD 3-2). 육성 없음 = 1 */
+      playerDamageMultiplier: 1,
+      /** 플레이어 체력: 실드 매칭 10회 분량 (적 평균 공격 1회 ≈ 0.5~0.9 실드 매칭 → 일반 적은 맞아도 버틴다) */
+      playerMaxHp: 100,
+      /** 실드 매칭 1회가 막는 피해. 적 공격력(attackInMatches)의 기준 단위 */
+      shieldPerMatch: 10,
+      /** 기본 기술 위력: 데미지 매칭 N회 분량. 영력 3회로 1회 쓰므로 데미지 매칭 3~4회 가치 */
+      skillPowerInMatches: 4,
+      /** 공허 타일 자연 생성률 (GDD 3-1 "보드에 자연 생성"). 5색 균등이면 20%이므로 그보다 낮게 */
+      riskSpawnRate: 0.1,
+      /** 공허 매칭 데미지 배율: "데미지 大" = 데미지 타일의 2배 */
+      riskDamageMultiplier: 2,
+      /** 공허 매칭 1회당 리스크 값 상승. 기록만 하고 게이지 효과는 P3 */
+      riskPerMatch: 5,
+      /** 무한 대치 방지: 이 턴수를 넘기면 패배 (GDD 2-2 평균 6~8턴의 약 3배) */
+      maxTurns: 25,
+    },
   },
 } as const;

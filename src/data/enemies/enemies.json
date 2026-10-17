@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "id": "test-a",
+    "name": { "*": "테스트 적 A" },
+    "class": "normal",
+    "hpInMatches": 6,
+    "attackInMatches": 0.5,
+    "weakness": "damage",
+    "provisional": true
+  },
+  {
+    "id": "test-b",
+    "name": { "*": "테스트 적 B" },
+    "class": "normal",
+    "hpInMatches": 6,
+    "attackInMatches": 0.6,
+    "weakness": "shield",
+    "provisional": true
+  },
+  {
+    "id": "test-elite",
+    "name": { "*": "테스트 강적" },
+    "class": "elite",
+    "hpInMatches": 11,
+    "attackInMatches": 0.9,
+    "weakness": "spirit",
+    "provisional": true
+  }
+]

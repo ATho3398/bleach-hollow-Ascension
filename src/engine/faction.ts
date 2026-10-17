@@ -30,6 +30,8 @@ export interface FactionConfig {
   rankMode: RankMode;
   /** 패배 상태 이름 (GDD 1장) */
   defeatStateName: string;
+  /** 육성 1단계부터 쓰는 기본 기술 이름: 호로=본체 능력, 사신=시해 (GDD 4장). 흡수 특성 기술(P3)이 생기기 전까지의 임시 기술 */
+  basicSkillName: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
 }
@@ -46,7 +48,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName']) {
+  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
