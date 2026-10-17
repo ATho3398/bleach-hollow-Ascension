@@ -10,8 +10,14 @@ import {
 } from './board';
 import { createRng, nextInt, type Rng } from './rng';
 
-/** 기본 기술 id. 흡수 특성 기술(P3)이 생기면 그 id 가 들어간다 */
+/** 기본 기술 id. 장착한 skill 특성이 없으면 이 기술을 쓴다 (GDD 3-2, 4-1) */
 export const BASIC_SKILL_ID = 'basic-skill';
+
+/** 전투에 가져온 장착 skill 특성 하나: 위력은 계통 보너스가 이미 반영된 "데미지 매칭 N회 분량" */
+export interface BattleSkill {
+  id: string;
+  powerInMatches: number;
+}
 
 export interface BattleParams {
   playerMatchDamage: number;
@@ -37,6 +43,10 @@ export interface BattleParams {
   spiritMatchesPerSkill: number;
   /** 영력 게이지 상한 = 기술 N회분 (GDD 3-4: 2) */
   spiritGaugeCapInSkills: number;
+  /** 장착한 skill 특성 기술들(슬롯 순서). 비면 기본 기술. 기술을 쓸 때마다 순서대로 돌아가며 쓴다 */
+  skills: BattleSkill[];
+  /** passive 특성: 영력 매칭 효과 배율. 기본 1 */
+  spiritEffectMultiplier: number;
 }
 
 export function defaultBattleParams(): BattleParams {
@@ -49,6 +59,8 @@ export function defaultBattleParams(): BattleParams {
     damageEffectMultiplier: 1,
     shieldEffectMultiplier: 1,
     reshuffleEachTurn: false,
+    skills: [],
+    spiritEffectMultiplier: 1,
   };
 }
 
@@ -197,7 +209,7 @@ function applySteps(s: BattleState, steps: ResolveStep[], rep: PhaseReport): voi
       if (role === weak) rep.weakHit = true;
       if (role === 'damage') rep.damageDealt += units * unitDamage * mult;
       else if (role === 'risk') rep.damageDealt += units * p.riskDamageMultiplier * unitDamage;
-      else if (role === 'spirit') spiritGain += step.matchesByRole.spirit * mult;
+      else if (role === 'spirit') spiritGain += step.matchesByRole.spirit * mult * p.spiritEffectMultiplier;
       else if (role === 'shield') rep.shieldGained += units * p.shieldPerMatch * p.shieldEffectMultiplier * mult;
       else if (role === 'absorb') s.absorbGained += units;
       if (role === 'risk') s.riskGained += units * p.riskPerMatch;
@@ -277,9 +289,11 @@ function enemyTurn(s: BattleState): PhaseReport {
 export function useSkill(s: BattleState): ActionResult {
   if (!canUseSkill(s)) return { accepted: false, phases: [], reshuffled: false, status: s.status };
   s.spiritMatches -= s.params.spiritMatchesPerSkill;
-  s.skillsUsed.push(BASIC_SKILL_ID);
+  const equipped = s.params.skills;
+  const skill = equipped.length > 0 ? equipped[s.skillsUsed.length % equipped.length]! : { id: BASIC_SKILL_ID, powerInMatches: s.params.skillPowerInMatches };
+  s.skillsUsed.push(skill.id);
   const rep = newPhase(s, 'skill');
-  rep.damageDealt = s.params.skillPowerInMatches * s.params.playerMatchDamage * s.params.playerDamageMultiplier * s.params.damageEffectMultiplier;
+  rep.damageDealt = skill.powerInMatches * s.params.playerMatchDamage * s.params.playerDamageMultiplier * s.params.damageEffectMultiplier;
   s.enemy.hp = Math.max(0, s.enemy.hp - rep.damageDealt);
   s.turns++;
   checkWin(s);

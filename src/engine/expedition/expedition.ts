@@ -7,12 +7,18 @@ import type { EnemyDef } from '../../data/schema';
 import { getTile, tilesFor } from '../../data/tiles';
 import { buildBattleRecord, createBattle, type BattleParams, type BattleState } from '../battle';
 import { createRng, nextFloat, nextInt, type Rng } from '../battle/rng';
-import type { BattleRecord, RunRecord } from '../runLog';
+import {
+  absorbRisk, breakthroughSpawnBonus, buildBattleParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
+  newBuild, releaseEffect, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
+} from '../absorb';
+import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
+const AX = BALANCE.provisional.absorb;
+const RX = BALANCE.provisional.risk;
 
-export type ExpeditionPhase = 'moving' | 'battle' | 'rest' | 'nest-choice' | 'ended';
+export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'ended';
 export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted';
 
 /** 지금 치를 전투 (전투 엔진에 넘길 재료) */
@@ -34,16 +40,17 @@ export interface Acquired {
   lap: number;
 }
 
-export interface ExpeditionState {
+export interface AcquiredTrait {
+  traitId: string;
+  lap: number;
+}
+
+export interface ExpeditionState extends RiskState {
   runId: number;
   factionId: string;
   seed: number;
   rng: Rng;
   maxLaps: number;
-  /** 지금 도는 바퀴 (1부터) */
-  lap: number;
-  /** 길 위 위치 0..loopTiles-1, 0 = 둥지 칸 */
-  pos: number;
   phase: ExpeditionPhase;
   hunger: number;
   condition: number;
@@ -63,6 +70,15 @@ export interface ExpeditionState {
   battlesByLap: number[];
   pending: PendingBattle | null;
   battles: BattleRecord[];
+  /** 흡수 빌드(특성 보유·슬롯) 사본. 귀환하면 세이브에 합쳐진다 */
+  build: BuildState;
+  /** 이번 바퀴 시작 때의 슬롯. 패배하면 슬롯을 이것으로 되돌린다("마지막 바퀴에서 얻은 것만 잃는다") */
+  lapStartSlots: (string | null)[];
+  /** 원정 중 새로 얻은 특성 (패배 시 마지막 바퀴 것을 잃는다) */
+  acquiredTraits: AcquiredTrait[];
+  /** 흡수 화면 대기 중인 제안 (phase 'absorb') */
+  absorbOffer: AbsorbOffer | null;
+  absorbRecords: AbsorbRecord[];
   /** 지나온 시간(초, 배속 전 기준) */
   elapsedSeconds: number;
   lapsCompleted: number;
@@ -79,6 +95,10 @@ export interface ExpeditionSetup {
   condition: number;
   deck: string[];
   maxLaps?: number;
+  /** 둥지에서 가져온 리스크 게이지·안정 수치·흡수 빌드 (없으면 0 / 시작값 / 빈 빌드) */
+  risk?: number;
+  stability?: number;
+  build?: BuildState;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -105,6 +125,16 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     battlesByLap: [0],
     pending: null,
     battles: [],
+    build: setup.build ? cloneBuild(setup.build) : newBuild(),
+    lapStartSlots: [],
+    acquiredTraits: [],
+    absorbOffer: null,
+    absorbRecords: [],
+    risk: setup.risk ?? 0,
+    riskPeak: setup.risk ?? 0,
+    stability: setup.stability ?? RX.stabilityStart,
+    breakthrough: null,
+    events: [],
     elapsedSeconds: 0,
     lapsCompleted: 0,
     outcome: null,
@@ -131,6 +161,7 @@ function causesBattle(id: string | null): boolean {
 
 /** 새 바퀴 시작: 야생 전투 칸을 뽑는다. 놓은 전투 타일이 기본 전투 횟수를 대신하고, 기본 횟수보다 많이 놓으면 그만큼 전투가 는다 */
 function planLap(exp: ExpeditionState): void {
+  exp.lapStartSlots = [...exp.build.slots];
   const free: number[] = [];
   let tileBattles = 0;
   for (let c = 1; c < EX.loopTiles; c++) {
@@ -156,7 +187,7 @@ export function lapScale(lap: number): { hp: number; attack: number } {
 export function riskBonus(exp: ExpeditionState): number {
   const cond = PX.conditionRiskBonusMax * (1 - exp.condition / PX.conditionMax);
   const late = Math.max(0, exp.lap - PX.lateLapStart + 1) * PX.lateLapRiskBonusPerLap;
-  return cond + late;
+  return cond + late + breakthroughSpawnBonus(exp);
 }
 
 function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite'): EnemyDef {
@@ -164,7 +195,8 @@ function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite'): EnemyDef {
   if (pool.length === 0) throw new Error(`적 테이블에 ${cls} 적이 없다`);
   const base = pool[nextInt(exp.rng, pool.length)]!;
   const k = lapScale(exp.lap);
-  return { ...base, hpInMatches: base.hpInMatches * k.hp, attackInMatches: base.attackInMatches * k.attack };
+  const rare = nextFloat(exp.rng) < base.rareChance;
+  return { ...base, rare, hpInMatches: base.hpInMatches * k.hp, attackInMatches: base.attackInMatches * k.attack };
 }
 
 /** 이 칸이 조합(같은 comboGroup 3칸 인접)의 끝 칸인가 */
@@ -190,6 +222,8 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   exp.pos = (exp.pos + 1) % EX.loopTiles;
   exp.elapsedSeconds += EX.secondsPerTile;
   exp.hunger += exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile;
+  const late = lateLapRisk(exp.lap, PX.lateLapStart);
+  if (late > 0) changeRisk(exp, late, 'late-lap');
   if (exp.hunger >= PX.hungerMax) {
     exp.hunger = PX.hungerMax;
     return endExpedition(exp, 'defeated', 'exhausted');
@@ -228,10 +262,13 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     combo = false;
   }
   if (cls === 'elite') exp.elitesThisLap++;
-  const params: Partial<BattleParams> = { riskSpawnBonus: riskBonus(exp) };
+  // 장착한 특성(skill → 기술, passive → 매칭 효과 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 곱한다
+  const params: Partial<BattleParams> = { ...buildBattleParams(exp.build), riskSpawnBonus: riskBonus(exp) };
   if (tile?.effect.type === 'environment') {
     const preset = BALANCE.provisional.tiles[tile.effect.preset];
     if ('riskSpawnBonus' in preset) params.riskSpawnBonus = (params.riskSpawnBonus ?? 0) + preset.riskSpawnBonus;
+    else if ('damageEffectMultiplier' in preset) params.damageEffectMultiplier = (params.damageEffectMultiplier ?? 1) * preset.damageEffectMultiplier;
+    else if ('shieldEffectMultiplier' in preset) params.shieldEffectMultiplier = (params.shieldEffectMultiplier ?? 1) * preset.shieldEffectMultiplier;
     else Object.assign(params, preset);
   }
   const pending: PendingBattle = {
@@ -265,6 +302,8 @@ export function finishBattle(exp: ExpeditionState, battle: BattleState): BattleR
   exp.pending = null;
   exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle);
   exp.condition = Math.max(0, exp.condition - PX.conditionPerBattle);
+  // 공허 타일 매칭 → 리스크 게이지 상승 (GDD 4-1)
+  if (battle.riskGained > 0) changeRisk(exp, battle.riskGained * RX.voidMatchFactor, 'void-match');
   if (battle.status === 'lost') {
     endExpedition(exp, 'defeated', 'battle-lost');
     return record;
@@ -273,14 +312,61 @@ export function finishBattle(exp: ExpeditionState, battle: BattleState): BattleR
   if (exp.victoriesThisLap === 0) drawTile(exp);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
   exp.victoriesThisLap++;
-  exp.phase = 'moving';
+  // 흡수 게이지가 임계값 이상이면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
+  if (canAbsorb(battle.absorbGained)) {
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle.absorbGained);
+    exp.phase = 'absorb';
+  } else exp.phase = 'moving';
   return record;
+}
+
+export type AbsorbResult = { ok: true } | { ok: false; reason: string };
+
+function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null): void {
+  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, lineageId: offer.lineageId, rare: offer.rare, absorbed, traitId, lap: exp.lap });
+}
+
+/** 놓아줌: 리스크 하락 + 안정 수치 상승 (GDD 4장 "흡수 안 하면") */
+export function chooseRelease(exp: ExpeditionState): AbsorbResult {
+  const offer = exp.absorbOffer;
+  if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
+  logAbsorb(exp, offer, false, null);
+  releaseEffect(exp);
+  exp.absorbOffer = null;
+  exp.phase = 'moving';
+  return { ok: true };
+}
+
+/** 흡수: 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체, traitId null 이면 특성을 포기하고 효과만).
+ *  효과: 허기 리셋, 리스크 상승(강할수록 많이), 보상 타일 +1 (GDD 4장, 4-1). 실패하면 아무것도 바뀌지 않는다 */
+export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: number | null): AbsorbResult {
+  const offer = exp.absorbOffer;
+  if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
+  if (traitId !== null) {
+    if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 특성이다' };
+    const r = gainTrait(exp.build, traitId, replaceSlot);
+    if (!r.ok) return r;
+    exp.acquiredTraits.push({ traitId, lap: exp.lap });
+  }
+  logAbsorb(exp, offer, true, traitId);
+  exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
+  for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
+  changeRisk(exp, absorbRisk(offer.strength), 'absorb');
+  exp.absorbOffer = null;
+  exp.phase = 'moving';
+  return { ok: true };
+}
+
+/** 쌓인 엔진 이벤트(한계 돌파 등)를 꺼낸다. 화면이 연출하고 비운다 */
+export function drainEvents(exp: ExpeditionState): EngineEvent[] {
+  return exp.events.splice(0, exp.events.length);
 }
 
 /** 휴식 타일 효과: 허기·컨디션 회복, 시간 소모 */
 export function finishRest(exp: ExpeditionState): void {
   if (exp.phase !== 'rest') throw new Error('휴식 중이 아니다');
   exp.hunger = Math.max(0, exp.hunger - PX.restHunger);
+  changeRisk(exp, -RX.restRelief, 'rest');
   exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition);
   exp.elapsedSeconds += PX.restTimeTiles * EX.secondsPerTile;
   exp.phase = 'moving';
@@ -301,9 +387,9 @@ export function chooseContinue(exp: ExpeditionState): void {
   exp.phase = 'moving';
 }
 
-/** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다 */
-function drawTile(exp: ExpeditionState): string | null {
-  if (exp.deck.length === 0 || exp.tilesThisLap >= EX.tilesPerLap.max) return null;
+/** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다. reserve 만큼은 남겨 둔다(흡수 보상이 바퀴 완주 보상을 밀어내지 않게) */
+function drawTile(exp: ExpeditionState, reserve = 0): string | null {
+  if (exp.deck.length === 0 || exp.tilesThisLap >= EX.tilesPerLap.max - reserve) return null;
   const id = exp.deck[nextInt(exp.rng, exp.deck.length)]!;
   exp.acquired.push({ tileId: id, lap: exp.lap });
   exp.hand.push(id);
@@ -338,6 +424,13 @@ export function placeTile(exp: ExpeditionState, tileId: string, cell: number): P
 
 function endExpedition(exp: ExpeditionState, outcome: 'returned' | 'defeated', reason: EndReason): StepEvent {
   exp.phase = 'ended';
+  exp.absorbOffer = null;
+  if (outcome === 'defeated') {
+    // 마지막 바퀴에서 얻은 특성·계통 진행도를 잃는다: 보유에서 빼고 슬롯은 바퀴 시작 때로 되돌린다
+    const lostIds = new Set(exp.acquiredTraits.filter((a) => a.lap === exp.lap).map((a) => a.traitId));
+    exp.build.owned = exp.build.owned.filter((id) => !lostIds.has(id));
+    exp.build.slots = exp.lapStartSlots.map((id) => (id !== null && exp.build.owned.includes(id) ? id : null));
+  }
   exp.outcome = outcome;
   exp.endReason = reason;
   exp.pending = null;
@@ -350,6 +443,9 @@ export interface ExpeditionSummary {
   kept: string[];
   /** 잃는 타일: 패배 시 마지막 바퀴에서 얻은 것만 */
   lost: string[];
+  /** 보존되는 / 잃는 새 특성 */
+  keptTraits: string[];
+  lostTraits: string[];
   laps: number;
 }
 
@@ -357,10 +453,13 @@ export function summarize(exp: ExpeditionState): ExpeditionSummary {
   if (exp.phase !== 'ended' || !exp.outcome) throw new Error('원정이 끝나지 않았다');
   const lostEntries = exp.outcome === 'defeated' ? exp.acquired.filter((a) => a.lap === exp.lap) : [];
   const keptEntries = exp.acquired.filter((a) => !lostEntries.includes(a));
+  const lostTraitEntries = exp.outcome === 'defeated' ? exp.acquiredTraits.filter((a) => a.lap === exp.lap) : [];
   return {
     outcome: exp.outcome,
     kept: keptEntries.map((a) => a.tileId),
     lost: lostEntries.map((a) => a.tileId),
+    keptTraits: exp.acquiredTraits.filter((a) => !lostTraitEntries.includes(a)).map((a) => a.traitId),
+    lostTraits: lostTraitEntries.map((a) => a.traitId),
     laps: exp.outcome === 'returned' ? exp.lapsCompleted : exp.lap,
   };
 }
@@ -374,6 +473,10 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     outcome: s.outcome,
     gained: s.kept,
     lost: s.lost,
+    gainedTraits: s.keptTraits,
+    lostTraits: s.lostTraits,
+    riskPeak: exp.riskPeak,
+    breakthrough: exp.breakthrough !== null,
     endReason: exp.endReason!,
     seed: exp.seed,
     factionId: exp.factionId,

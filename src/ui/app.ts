@@ -5,12 +5,15 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { pickFaction, type EnemyDef } from '../data/schema';
 import { tileName } from '../data/tiles';
 import { buildBattleRecord, createBattle, type BattleState } from '../engine/battle';
-import { createExpedition, finishBattle, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
+import { buildBattleParams, canAbsorb } from '../engine/absorb';
+import { createExpedition, drainEvents, finishBattle, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import { TILE_ROLES, type FactionConfig } from '../engine/faction';
 import {
   loadSave, newSaveData, nextRunId, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import { versionLabel } from '../version';
+import { traitName } from '../data/traits';
+import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { el, mountScreen } from './dom';
 import { battleLabels, endReasonText } from './labels';
@@ -66,6 +69,9 @@ export function startApp(root: HTMLElement): void {
       hunger: save.nest.hunger,
       condition: save.nest.condition,
       deck: sanitizeDeck(save.tiles, faction.id),
+      risk: save.nest.risk,
+      stability: save.nest.stability,
+      build: save.build,
     });
     showExpedition(faction, exp, `${faction.huntingGroundName}으로 출발!`);
   }
@@ -79,13 +85,31 @@ export function startApp(root: HTMLElement): void {
           banner: where,
           onEnd: (done) => {
             finishBattle(exp, done);
-            if (exp.phase === 'ended') endExpedition(faction, exp);
-            else showExpedition(faction, exp, '전투 승리!');
+            // 승리 후 흡수 가능하면 흡수 화면 → 한계 돌파 연출 → 원정으로 돌아간다
+            const proceed = () => {
+              const next = () => (exp.phase === 'ended' ? endExpedition(faction, exp) : showExpedition(faction, exp, '전투 승리!'));
+              if (drainEvents(exp).length > 0) breakthroughScreen(faction, next);
+              else next();
+            };
+            if (exp.phase === 'absorb') absorbView(root, faction, exp, proceed);
+            else proceed();
           },
         });
       },
       onEnded: () => endExpedition(faction, exp),
+      onBreakthrough: (resume) => breakthroughScreen(faction, resume),
     }, msg);
+  }
+
+  /** 한계 돌파 연출 (텍스트 수준). 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 임시 페널티만 있다 */
+  function breakthroughScreen(faction: FactionConfig, resume: () => void): void {
+    const go = el('button', 'primary', '계속');
+    go.onclick = resume;
+    mount(
+      el('div', 'breakthrough', faction.breakthroughText),
+      el('p', 'dim', `임시 페널티: 이 원정 동안 공허 타일이 크게 늘고, ${faction.nestName}에 돌아오면 ${faction.stabilityName}이(가) 떨어진다.`),
+      go,
+    );
   }
 
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
@@ -96,12 +120,17 @@ export function startApp(root: HTMLElement): void {
     const s = summarize(exp);
     const returned = s.outcome === 'returned';
     const list = (ids: string[]) => (ids.length === 0 ? '없음' : ids.map((id) => tileName(id, faction.id)).join(', '));
+    const traits = (ids: string[]) => (ids.length === 0 ? '없음' : ids.map((id) => traitName(id, faction.id)).join(', '));
     const detail = el('div');
     detail.innerHTML = `<table>
       <tr><td>도달 바퀴</td><td>${s.laps}바퀴</td></tr>
       <tr><td>치른 전투</td><td>${exp.battles.length}회 (승 ${exp.battles.filter((b) => b.won).length})</td></tr>
       <tr><td>지킨 타일</td><td>${list(s.kept)}</td></tr>
       <tr><td>잃은 타일</td><td>${list(s.lost)}</td></tr>
+      <tr><td>얻은 특성</td><td>${traits(s.keptTraits)}</td></tr>
+      <tr><td>잃은 특성</td><td>${traits(s.lostTraits)}</td></tr>
+      <tr><td>${faction.riskGaugeName} (최고 / 끝)</td><td>${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}${exp.breakthrough ? ' — 한계 돌파' : ''}</td></tr>
+      <tr><td>${faction.stabilityName}</td><td>${Math.round(save?.nest.stability ?? exp.stability)}</td></tr>
       <tr><td>남은 허기 / 컨디션</td><td>${Math.round(exp.hunger)} / ${Math.round(exp.condition)}</td></tr></table>`;
     const home = el('button', 'primary', `${faction.nestName}으로`);
     home.onclick = nestScreen;
@@ -135,7 +164,7 @@ export function startApp(root: HTMLElement): void {
   }
 
   function practiceBattle(faction: FactionConfig, enemy: EnemyDef): void {
-    const s = createBattle({ seed: Math.floor(Math.random() * 2 ** 32), enemy });
+    const s = createBattle({ seed: Math.floor(Math.random() * 2 ** 32), enemy, params: save ? buildBattleParams(save.build) : undefined });
     battleView(root, faction, s, {
       onQuit: () => practiceScreen(faction),
       onEnd: (done) => {
@@ -155,8 +184,8 @@ export function startApp(root: HTMLElement): void {
     const detail = el('div');
     detail.innerHTML = `<table>
       <tr><td>턴 수</td><td>${s.turns}턴</td></tr>${rows}
-      <tr><td>${labels.riskGauge} 상승(기록)</td><td>+${s.riskGained}</td></tr>
-      <tr><td>${labels.absorbGauge}(기록)</td><td>${s.absorbGained.toFixed(1)}</td></tr>
+      <tr><td>${labels.riskGauge} 상승(공허 매칭)</td><td>+${s.riskGained}</td></tr>
+      <tr><td>${labels.absorbGauge}</td><td>${s.absorbGained.toFixed(1)} (${canAbsorb(s.absorbGained) ? `${faction.absorbActionName} 가능` : `${faction.absorbActionName} 불가`}, 연습에서는 쓰지 않음)</td></tr>
       <tr><td>쓴 기술</td><td>${s.skillsUsed.length}회</td></tr></table>`;
     const again = el('button', 'primary', '같은 상대와 다시');
     again.onclick = () => practiceBattle(faction, enemy);
@@ -164,7 +193,7 @@ export function startApp(root: HTMLElement): void {
     menu.onclick = () => practiceScreen(faction);
     mount(
       el('div', `result-title ${won ? 'win' : 'lose'}`, won ? '승리' : labels.defeatState),
-      el('p', 'dim', won ? `${pickFaction(enemy.name, faction.id)}을(를) 쓰러뜨렸다. (흡수 판정은 P3)` : s.lossReason === 'timeout' ? '턴 한도를 넘겼다.' : '체력이 다했다.'),
+      el('p', 'dim', won ? `${pickFaction(enemy.name, faction.id)}을(를) 쓰러뜨렸다.` : s.lossReason === 'timeout' ? '턴 한도를 넘겼다.' : '체력이 다했다.'),
       detail,
       el('small', 'dim', `시드 ${s.seed} · 기록이 런 로그에 저장됨`),
       again,

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "lineage-a",
+    "name": {
+      "*": "계통A"
+    },
+    "provisional": true
+  },
+  {
+    "id": "lineage-b",
+    "name": {
+      "*": "계통B"
+    },
+    "provisional": true
+  },
+  {
+    "id": "lineage-c",
+    "name": {
+      "*": "계통C"
+    },
+    "provisional": true
+  }
+]

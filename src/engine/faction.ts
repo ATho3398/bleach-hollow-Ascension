@@ -40,6 +40,16 @@ export interface FactionConfig {
   defeatStateName: string;
   /** 육성 1단계부터 쓰는 기본 기술 이름: 호로=본체 능력, 사신=시해 (GDD 4장). 흡수 특성 기술(P3)이 생기기 전까지의 임시 기술 */
   basicSkillName: string;
+  /** 안정 수치 이름: 호로 자아 / 사신 영압 안정도 (GDD 4장). 컨디션·허기와 별개 */
+  stabilityName: string;
+  /** 흡수 특성 슬롯 이름 (슬롯 위치 slotLocation 과 짝): 본체 슬롯 / 참백도 슬롯 */
+  slotName: string;
+  /** 계통 보너스 표기: 호로 계열 기술 강화 / 사신 참백도 속성 확정 (GDD 4장, 효과 수치는 엔진 공통) */
+  lineageBonusName: string;
+  /** 특성 종류 표기 (GDD 4장): 기술·시해 능력 / 패시브 / 외형·참백도 파츠 */
+  traitKindNames: Record<'skill' | 'passive' | 'part', string>;
+  /** 리스크 한계 돌파 연출 문구 (정식 결과는 미정, 텍스트만) */
+  breakthroughText: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
   /** 둥지 / 대원실 (GDD 7장) */
@@ -60,7 +70,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName']) {
+  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
@@ -68,6 +78,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const tn = (r.tileNames ?? {}) as Record<string, unknown>;
   for (const role of TILE_ROLES) {
     if (!isString(tn[role])) errors.push(`tileNames.${role}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  const tk = (r.traitKindNames ?? {}) as Record<string, unknown>;
+  for (const k of ['skill', 'passive', 'part']) {
+    if (!isString(tk[k])) errors.push(`traitKindNames.${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   const na = (r.nestActions ?? {}) as Record<string, unknown>;
   for (const a of NEST_ACTIONS) {

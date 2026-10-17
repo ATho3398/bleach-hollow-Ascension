@@ -1,1 +1,182 @@
-[]
+[
+  {
+    "id": "trait-a1",
+    "lineageId": "lineage-a",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 A1"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술. 위력 데미지 매칭 4.5회분.",
+      "shinigami": "[임시] 시해 능력. 위력 데미지 매칭 4.5회분."
+    },
+    "skillPowerInMatches": 4.5,
+    "provisional": true
+  },
+  {
+    "id": "trait-a2",
+    "lineageId": "lineage-a",
+    "kind": "passive",
+    "name": {
+      "*": "임시 특성 A2"
+    },
+    "description": {
+      "hollow": "[임시] 본체 패시브. 데미지 매칭 효과 ×1.15.",
+      "shinigami": "[임시] 참백도 패시브. 데미지 매칭 효과 ×1.15."
+    },
+    "passive": {
+      "role": "damage",
+      "multiplier": 1.15
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-a3",
+    "lineageId": "lineage-a",
+    "kind": "part",
+    "name": {
+      "*": "임시 특성 A3"
+    },
+    "description": {
+      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-a4",
+    "lineageId": "lineage-a",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 A4"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술. 위력 데미지 매칭 6.0회분.",
+      "shinigami": "[임시] 시해 능력. 위력 데미지 매칭 6.0회분."
+    },
+    "skillPowerInMatches": 6.0,
+    "rare": true,
+    "provisional": true
+  },
+  {
+    "id": "trait-b1",
+    "lineageId": "lineage-b",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 B1"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술. 위력 데미지 매칭 5.0회분.",
+      "shinigami": "[임시] 시해 능력. 위력 데미지 매칭 5.0회분."
+    },
+    "skillPowerInMatches": 5.0,
+    "provisional": true
+  },
+  {
+    "id": "trait-b2",
+    "lineageId": "lineage-b",
+    "kind": "passive",
+    "name": {
+      "*": "임시 특성 B2"
+    },
+    "description": {
+      "hollow": "[임시] 본체 패시브. 실드 매칭 효과 ×1.2.",
+      "shinigami": "[임시] 참백도 패시브. 실드 매칭 효과 ×1.2."
+    },
+    "passive": {
+      "role": "shield",
+      "multiplier": 1.2
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-b3",
+    "lineageId": "lineage-b",
+    "kind": "part",
+    "name": {
+      "*": "임시 특성 B3"
+    },
+    "description": {
+      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-b4",
+    "lineageId": "lineage-b",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 B4"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술. 위력 데미지 매칭 6.5회분.",
+      "shinigami": "[임시] 시해 능력. 위력 데미지 매칭 6.5회분."
+    },
+    "skillPowerInMatches": 6.5,
+    "rare": true,
+    "provisional": true
+  },
+  {
+    "id": "trait-c1",
+    "lineageId": "lineage-c",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 C1"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술. 위력 데미지 매칭 4.0회분.",
+      "shinigami": "[임시] 시해 능력. 위력 데미지 매칭 4.0회분."
+    },
+    "skillPowerInMatches": 4.0,
+    "provisional": true
+  },
+  {
+    "id": "trait-c2",
+    "lineageId": "lineage-c",
+    "kind": "passive",
+    "name": {
+      "*": "임시 특성 C2"
+    },
+    "description": {
+      "hollow": "[임시] 본체 패시브. 영력 매칭 효과 ×1.2.",
+      "shinigami": "[임시] 참백도 패시브. 영력 매칭 효과 ×1.2."
+    },
+    "passive": {
+      "role": "spirit",
+      "multiplier": 1.2
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-c3",
+    "lineageId": "lineage-c",
+    "kind": "part",
+    "name": {
+      "*": "임시 특성 C3"
+    },
+    "description": {
+      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "trait-c4",
+    "lineageId": "lineage-c",
+    "kind": "passive",
+    "name": {
+      "*": "임시 특성 C4"
+    },
+    "description": {
+      "hollow": "[임시] 본체 패시브. 데미지 매칭 효과 ×1.3.",
+      "shinigami": "[임시] 참백도 패시브. 데미지 매칭 효과 ×1.3."
+    },
+    "passive": {
+      "role": "damage",
+      "multiplier": 1.3
+    },
+    "rare": true,
+    "provisional": true
+  }
+]

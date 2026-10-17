@@ -5,7 +5,9 @@ import { NEST_ACTIONS, type FactionConfig } from '../engine/faction';
 import { applyIdle, doNestAction } from '../engine/nest';
 import { sanitizeDeck, type SaveData } from '../game';
 import { versionLabel } from '../version';
+import { BALANCE as B } from '../config/balance';
 import { barOf, el, mountScreen, pct, rowOf } from './dom';
+import { organizer, PROVISIONAL_NOTE } from './buildPanel';
 import { tileHint } from './labels';
 
 export interface NestViewHandlers {
@@ -27,11 +29,19 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   hungerFill.style.width = pct(n.hunger, 100);
   const condFill = el('i');
   condFill.style.width = pct(n.condition, 100);
+  const riskFill = el('i');
+  riskFill.style.width = pct(n.risk, B.provisional.risk.limit);
+  const stabFill = el('i');
+  stabFill.style.width = pct(n.stability, B.provisional.risk.stabilityMax);
   const status = [
     rowOf(el('span', '', '허기'), el('span', 'dim', `${Math.round(n.hunger)} / 100`)),
     barOf('hunger', hungerFill),
     rowOf(el('span', '', '컨디션'), el('span', 'dim', `${Math.round(n.condition)} / 100${n.condition < 40 ? ' (나쁨: 전투 보드에 공허 ↑)' : ''}`)),
     barOf('cond', condFill),
+    rowOf(el('span', '', faction.stabilityName), el('span', 'dim', `${Math.round(n.stability)} / ${B.provisional.risk.stabilityMax}`)),
+    barOf('stab', stabFill),
+    rowOf(el('span', '', faction.riskGaugeName), el('span', 'dim', `${Math.round(n.risk)} / ${B.provisional.risk.limit}${n.risk >= 60 ? ' (높음: 원정 시작부터 위험)' : ''}`)),
+    barOf('risk', riskFill),
   ];
   if (n.weakened) status.push(el('div', 'notice', `${faction.defeatStateName} 상태. 재우기로 회복한다.`));
 
@@ -89,6 +99,12 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     ...status,
     el('h2', '', '돌보기'),
     actions,
+    el('h2', '', `흡수 특성 (${faction.slotName})`),
+    organizer(faction, save.build, () => {
+      h.persist();
+      rerender();
+    }),
+    el('small', 'dim', PROVISIONAL_NOTE),
     el('h2', '', `타일 덱 (${save.tiles.deck.length} / ${deckSize})`),
     el('p', 'dim', '원정 중 보상으로 이 덱에서 타일이 뽑힌다. 뽑힌 타일만 길 옆에 놓을 수 있다.'),
     deckBox,

@@ -22,17 +22,38 @@ export interface EnemyDef {
   attackInMatches: number;
   /** 약점 색(역할) 1개: 데미지·영력·실드 중 (GDD 3-4) */
   weakness: WeaknessRole;
+  /** 흡수 계통 id (src/data/lineages). 임시 계통만 있다 (GDD 4-1) */
+  lineageId: string;
+  /** 조우할 때 희귀 개체일 확률 (임시, GDD 4장). 조우가 정해지면 rare 가 채워진다 */
+  rareChance: number;
+  /** 이 개체가 희귀 개체인가: 흡수 화면에 미리 표시되고 계통의 희귀 특성이 확정 후보로 나온다 */
   rare?: boolean;
   provisional?: boolean;
 }
+
+export interface LineageDef {
+  id: string;
+  name: PerFaction<string>;
+  provisional?: boolean;
+}
+
+export const TRAIT_KINDS = ['skill', 'passive', 'part'] as const;
+export type TraitKind = (typeof TRAIT_KINDS)[number];
 
 export interface TraitDef {
   id: string;
   /** 계통 id (GDD 4장, 11-3 미정이라 임시 계통만 가능) */
   lineageId: string;
-  kind: 'skill' | 'passive' | 'part';
+  kind: TraitKind;
   name: PerFaction<string>;
+  /** 설명: 종족별 텍스트(키 '*' 는 공통) */
   description: PerFaction<string>;
+  /** 희귀 개체에서만 나오는 특성 (확정 등장) */
+  rare?: boolean;
+  /** skill: 기술 위력 = 데미지 매칭 N회 분량 */
+  skillPowerInMatches?: number;
+  /** passive: 해당 역할 매칭 효과 배율 */
+  passive?: { role: 'damage' | 'spirit' | 'shield'; multiplier: number };
   provisional?: boolean;
 }
 

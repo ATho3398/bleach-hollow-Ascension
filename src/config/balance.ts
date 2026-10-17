@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 5;
+export const BALANCE_VERSION = 6;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -37,11 +37,57 @@ export const BALANCE = {
     /** 강적은 바퀴당 최대 1마리 */
     maxElitesPerLap: 1,
   },
+  /** 흡수 슬롯: 초기 3칸 (GDD 4장 확정. 진화마다 +1 은 진화 시스템 이후) */
+  absorb: { slotCount: 3 },
 
   // ── 임시값(provisional): 기획서 미정 항목을 프로토타입용으로 채우는 구역 (GDD 12장) ──
   // 여기 값은 확정이 아니다. 확정되면 기획서에 반영하고 이 구역에서 옮긴다.
   provisional: {
-    // 리스크 게이지 상승·하락량·한계값(11-4): P3 에서 채운다
+    // ── 흡수·리스크(P3) 임시값. 기획서 4-1: 11-3(계통·특성 풀), 11-4(리스크 수치)가 미정 ──
+    absorb: {
+      /** 흡수 가능 임계값: 전투 중 흡수 타일 매칭 N회분 이상이면 승리 후 흡수할 수 있다 (실제 봇 시뮬로 정함, npm run balance) */
+      threshold: 4,
+      /** 특성 후보 수: 일반 적은 1~2개 중 무작위, 강적은 항상 2개 (GDD 4장 "후보 1~2개") */
+      candidatesElite: 2,
+      candidatesNormalMax: 2,
+      /** 슬롯 안 같은 계통 N개 → 계통 보너스 */
+      lineageBonusCount: 3,
+      /** 계통 보너스: 그 계통 skill 특성 위력에 가산하는 비율 (GDD 4-1 +50%) */
+      lineageSkillBonus: 0.5,
+      /** 흡수하면 허기가 이 값으로 리셋 (GDD 4장 "허기 리셋") */
+      hungerAfterAbsorb: 0,
+      /** 흡수 시 보상 타일 (GDD 2-1 "흡수 시 1"). 바퀴 합계는 tilesPerLap.max 안, 바퀴 완주 보상 1장은 남겨 둔다 */
+      bonusTiles: 1,
+    },
+    risk: {
+      /** 한계값: 이상이 되면 돌파 (GDD 4-1) */
+      limit: 100,
+      /** 전투의 공허 매칭 리스크 값(riskGained)에 곱하는 환산 계수. 1 = 그대로 */
+      voidMatchFactor: 0.25,
+      /** 강한 적 흡수 시 리스크 상승 = 적 hpInMatches(바퀴 강화 포함) × 이 값. 강적(11회분)이 일반(6회분)의 약 2배 */
+      absorbPerHpMatch: 0.55,
+      /** 놓아주면 하락 */
+      releaseRelief: 8,
+      /** 휴식 타일에서 하락 */
+      restRelief: 15,
+      /** 5바퀴째부터 칸을 지날 때마다 상승: (바퀴 − 5 + 1) × 이 값 (GDD 5장 "5바퀴 이후") */
+      lateLapPerTile: 0.5,
+      /** 돌파 임시 페널티: 그 원정 남은 동안 공허 생성률 가산, 둥지 복귀 시 안정 수치 하락 */
+      breakthroughSpawnBonus: 0.2,
+      breakthroughStabilityLoss: 25,
+      /** 돌파한 원정에서 귀환하면 게이지가 이 값으로 가라앉는다(바로 또 돌파하지 않게) */
+      riskAfterBreakthrough: 60,
+      /** 안정 수치(호로 자아 / 사신 영압 안정도): 시작값·상한, 놓아줄 때 상승 */
+      stabilityStart: 50,
+      stabilityMax: 100,
+      releaseStability: 6,
+      /** 둥지 행동의 리스크 하락·안정 수치 상승 (GDD 5장 "둥지 쓰다듬기" 등) */
+      nestActions: {
+        feed: { risk: -5, stability: 2 },
+        sleep: { risk: -10, stability: 3 },
+        pet: { risk: -10, stability: 8 },
+      },
+    },
     // ── 원정 루프(P2) 임시값. 기획서 2-1·6·7장에 수치가 없는 것 ──
     expedition: {
       /** 허기 100이면 탈진 → 패배 처리(마지막 바퀴 획득물 상실). 강제 귀환 유도 (GDD 2-1) */

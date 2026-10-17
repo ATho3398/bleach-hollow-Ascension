@@ -12,13 +12,18 @@ export interface AbsorbRecord {
   rare: boolean;
   /** 흡수했는가(false = 놓아줌) */
   absorbed: boolean;
+  /** P3 에서 더한 필드 (세이브 형식 4): 얻은 특성 id(없으면 null), 몇 바퀴째 */
+  traitId: string | null;
+  lap: number;
 }
 
 export interface LineageRecord {
   lineageId: string;
   completed: boolean;
-  /** 상극 조합을 시도했는가 */
+  /** 상극 조합을 시도했는가 (상극 규칙은 미정이라 지금은 항상 false) */
   conflictingTried: boolean;
+  /** P3 에서 더한 필드 (세이브 형식 4): 처음 완성한 원정 runId */
+  firstCompletedRunId?: number;
 }
 
 export interface RiskRecord {
@@ -37,7 +42,7 @@ export interface BattleRecord {
   /** 타일 종류별 매칭 횟수 (비율은 여기서 계산) */
   matchesByRole: Record<TileRole, number>;
   won: boolean;
-  /** 사용한 기술(특성) id */
+  /** 사용한 기술(특성) id. P3 부터 장착한 skill 특성 id, 없으면 basic-skill */
   skillsUsed: string[];
   /** 적 등급 (일반/강적 등) */
   enemyClass: string;
@@ -81,6 +86,11 @@ export interface RunRecord {
   endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted';
   seed: number;
   factionId: string;
+  /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 한계 돌파 여부 */
+  gainedTraits: string[];
+  lostTraits: string[];
+  riskPeak: number;
+  breakthrough: boolean;
 }
 
 export interface RunLog {

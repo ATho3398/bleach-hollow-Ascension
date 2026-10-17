@@ -2,6 +2,7 @@
 
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
+import { completedLineages, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, summarize, type ExpeditionState } from './engine/expedition';
 import { emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
@@ -9,7 +10,7 @@ import { tilesFor } from './data/tiles';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 3;
+export const SAVE_FORMAT_VERSION = 4;
 
 export interface SaveMeta {
   format: number;
@@ -28,6 +29,8 @@ export interface SaveData {
   factionId: string;
   /** 둥지 상태: 허기·컨디션 (GDD 7장) */
   nest: NestState;
+  /** 흡수 빌드: 가진 특성과 슬롯 (GDD 4장). 계통·특성은 임시 데이터 */
+  build: BuildState;
   /** 보유 타일 수량과 원정에 가져갈 덱 (GDD 6장). 시작 구성은 임시 */
   tiles: TileStock;
   /** 히든 조건용 영구 기록 */
@@ -45,15 +48,37 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), tiles: newTileStock(), runLog: emptyRunLog() };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), tiles: newTileStock(), runLog: emptyRunLog() };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
 export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): void {
-  save.runLog.battles.push(...exp.battles);
-  save.runLog.runs.push(buildRunRecord(exp));
+  const log = save.runLog;
+  log.battles.push(...exp.battles);
+  log.runs.push(buildRunRecord(exp));
+  log.absorbs.push(...exp.absorbRecords);
+  // 리스크 기록: 최고치, 한계 돌파 횟수, 돌파 후 생존(= 돌파하고도 귀환) 횟수 (GDD 9장)
+  log.risk.peak = Math.max(log.risk.peak, exp.riskPeak);
+  if (exp.breakthrough) {
+    log.risk.breakthroughs++;
+    if (exp.outcome === 'returned') log.risk.survivedBreakthroughs++;
+  }
+  // 이 원정이 끝난 뒤의 슬롯으로 계통 완성 기록 (패배로 잃은 진행도는 세지 않는다)
+  for (const lineageId of completedLineages(exp.build)) {
+    let rec = log.lineages.find((l) => l.lineageId === lineageId);
+    if (!rec) log.lineages.push((rec = { lineageId, completed: false, conflictingTried: false }));
+    if (!rec.completed) {
+      rec.completed = true;
+      rec.firstCompletedRunId = exp.runId;
+    }
+  }
+  save.build = cloneBuildOf(exp.build);
   for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   applyExpeditionEnd(save.nest, exp, nowMs);
+}
+
+function cloneBuildOf(b: BuildState): BuildState {
+  return { owned: [...b.owned], slots: [...b.slots] };
 }
 
 /** 새 원정의 runId = 지금까지 기록된 원정 수 + 1 */
@@ -105,6 +130,20 @@ export function migrateSave(raw: unknown): SaveData | null {
       factionId: r.factionId ?? save.factionId,
     }));
     save.meta.format = 3;
+  }
+  if (save.meta.format < 4) {
+    // 형식 3 → 4 (P3): 둥지에 리스크 게이지·안정 수치, 흡수 빌드 추가, AbsorbRecord·RunRecord 필드 추가
+    save.nest = { ...save.nest, risk: save.nest.risk ?? 0, stability: save.nest.stability ?? BALANCE.provisional.risk.stabilityStart };
+    save.build = save.build ?? newBuild();
+    save.runLog.absorbs = (save.runLog.absorbs ?? []).map((a) => ({ ...a, traitId: a.traitId ?? null, lap: a.lap ?? 0 }));
+    save.runLog.runs = save.runLog.runs.map((r) => ({
+      ...r,
+      gainedTraits: r.gainedTraits ?? [],
+      lostTraits: r.lostTraits ?? [],
+      riskPeak: r.riskPeak ?? 0,
+      breakthrough: r.breakthrough ?? false,
+    }));
+    save.meta.format = 4;
   }
   return save;
 }

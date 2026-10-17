@@ -5,6 +5,7 @@ import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import { ENEMIES } from '../src/data/enemies';
 import { createBattle, playGreedy } from '../src/engine/battle';
 import { createExpedition, playExpedition } from '../src/engine/expedition';
+import { canAbsorb, completedLineages } from '../src/engine/absorb';
 import { sanitizeDeck, newTileStock } from '../src/game';
 
 const check = process.argv.includes('--check');
@@ -64,6 +65,61 @@ for (const stopLap of [4, 6]) {
   if (stopLap === 4 && exhausted > 0) failures.push(`4바퀴 런에서 탈진 ${exhausted}회`);
   if (stopLap === 6 && exhausted < M * 0.5) failures.push(`6바퀴 런 탈진 ${exhausted}/${M} < 50% (허기 급상승이 약하다)`);
 }
+
+// ── 흡수·리스크(P3): 임계값을 넘는 전투 비율, 흡수 자동 플레이(계통 모으기) ──
+console.log(`\n흡수 임계값 ${BALANCE.provisional.absorb.threshold} (임시) — 탐욕 봇 ${N}판당 흡수 가능 비율`);
+let absorbableTotal = 0;
+for (const enemy of ENEMIES) {
+  let ok = 0;
+  let gained = 0;
+  let risk = 0;
+  for (let seed = 1; seed <= N; seed++) {
+    const s = playGreedy(createBattle({ seed, enemy }));
+    gained += s.absorbGained;
+    risk += s.riskGained;
+    if (s.status === 'won' && canAbsorb(s.absorbGained)) ok++;
+  }
+  absorbableTotal += ok / N;
+  console.log(`  ${enemy.id}: 흡수 가능 ${((ok / N) * 100).toFixed(0)}% · 평균 흡수 게이지 ${(gained / N).toFixed(1)} · 평균 공허 리스크 +${(risk / N).toFixed(1)}`);
+}
+const absorbableAvg = absorbableTotal / ENEMIES.length;
+if (absorbableAvg < 0.25 || absorbableAvg > 0.85) failures.push(`흡수 가능 비율 평균 ${(absorbableAvg * 100).toFixed(0)}% (25~85% 밖)`);
+
+console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 계통을 모음 / 비교: 항상 놓아줌)`);
+const absorbStats: Record<string, { breakthrough: number; defeated: number }> = {};
+for (const stopLap of [4, 6]) {
+  for (const policy of ['absorb', 'release'] as const) {
+    let absorbs = 0;
+    let releases = 0;
+    let bt = 0;
+    let defeated = 0;
+    let traits = 0;
+    let lineage = 0;
+    let risk = 0;
+    let turns = 0;
+    let battles = 0;
+    for (let seed = 1; seed <= M; seed++) {
+      const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: stopLap, absorb: policy });
+      absorbs += e.absorbRecords.filter((a) => a.absorbed).length;
+      releases += e.absorbRecords.filter((a) => !a.absorbed).length;
+      if (e.breakthrough) bt++;
+      if (e.outcome === 'defeated') defeated++;
+      traits += e.build.owned.length;
+      if (completedLineages(e.build).length > 0) lineage++;
+      risk += e.risk;
+      for (const b of e.battles) {
+        turns += b.turns;
+        battles++;
+      }
+    }
+    absorbStats[`${stopLap}-${policy}`] = { breakthrough: bt, defeated };
+    console.log(`  ${stopLap}바퀴 ${policy === 'absorb' ? '흡수' : '놓아줌'}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 계통 완성 ${lineage}/${M} · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(turns / battles).toFixed(1)}턴`);
+  }
+}
+// 회귀 가드(흡수 봇은 쉬지도 놓아주지도 않는 극단이다): 기본 4바퀴 흡수 플레이는 절반 이하만 돌파하고, 항상 놓아주면 돌파하지 않으며, 6바퀴 흡수 플레이는 돌파가 의미 있게 생겨야 한다
+if ((absorbStats['4-absorb']?.breakthrough ?? 0) > M * 0.5) failures.push(`4바퀴 흡수 플레이 돌파 ${absorbStats['4-absorb']?.breakthrough}/${M} > 50%`);
+if ((absorbStats['6-absorb']?.breakthrough ?? 0) < M * 0.6) failures.push(`6바퀴 흡수 플레이 돌파 ${absorbStats['6-absorb']?.breakthrough}/${M} < 60% (리스크가 약하다)`);
+if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에서 항상 놓아줘도 한계 돌파가 생긴다');
 
 if (check) {
   if (failures.length > 0) {

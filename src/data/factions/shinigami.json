@@ -34,5 +34,14 @@
     "feed": "식사 / 영력 보급",
     "sleep": "재우기",
     "pet": "참백도 손질"
-  }
+  },
+  "stabilityName": "영압 안정도",
+  "slotName": "참백도 슬롯",
+  "lineageBonusName": "참백도 속성 확정",
+  "traitKindNames": {
+    "skill": "시해 능력",
+    "passive": "패시브",
+    "part": "참백도 파츠"
+  },
+  "breakthroughText": "호로화가 한계를 넘었다. 영압이 일그러지고 공허가 몰려든다…"
 }

@@ -2,8 +2,10 @@
 // 시간(칸당 5초, 1x/2x/4x)은 여기서 돌리고, 규칙은 engine/expedition 이 정한다.
 import { BALANCE } from '../config/balance';
 import { getTile, tileName } from '../data/tiles';
+import { traitName } from '../data/traits';
 import {
-  advance, chooseContinue, chooseReturn, finishRest, placeTile, riskBonus, type ExpeditionState, type PendingBattle,
+  advance, chooseContinue, chooseReturn, drainEvents, finishRest, placeTile, riskBonus, type ExpeditionState, type PendingBattle,
+  type StepEvent,
 } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { barOf, el, mountScreen, pct, rowOf } from './dom';
@@ -13,6 +15,8 @@ export interface ExpeditionViewHandlers {
   /** 전투가 시작될 때: 전투 화면으로 넘어간다. 끝나면 호출자가 expeditionView 를 다시 부른다 */
   onBattle: (p: PendingBattle) => void;
   onEnded: () => void;
+  /** 한계 돌파가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
+  onBreakthrough: (resume: () => void) => void;
 }
 
 const SPEEDS = [1, 2, 4] as const;
@@ -47,6 +51,15 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const ev = advance(exp);
     if (!ev) return;
     const got = exp.hand.length - before;
+    if (drainEvents(exp).length > 0) {
+      clear();
+      h.onBreakthrough(() => handle(ev, got));
+      return;
+    }
+    handle(ev, got);
+  }
+
+  function handle(ev: StepEvent, got: number): void {
     switch (ev.kind) {
       case 'move':
         msg = '';
@@ -89,6 +102,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const condFill = el('i');
     condFill.style.width = pct(exp.condition, BALANCE.provisional.expedition.conditionMax);
     const spike = exp.lap >= BALANCE.provisional.expedition.hungerSpikeLap;
+    const riskFill = el('i');
+    riskFill.style.width = pct(exp.risk, BALANCE.provisional.risk.limit);
+    const equipped = exp.build.slots.map((id) => (id ? traitName(id, faction.id) : '—')).join(' / ');
 
     const top = rowOf(
       el('b', '', `${exp.lap} / ${exp.maxLaps}바퀴`),
@@ -173,6 +189,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       barOf('hunger', hungerFill),
       rowOf(el('span', '', '컨디션'), el('span', 'dim', `${Math.round(exp.condition)}${riskBonus(exp) > 0 ? ` · 공허 +${Math.round(riskBonus(exp) * 100)}%` : ''}`)),
       barOf('cond', condFill),
+      rowOf(
+        el('span', '', faction.riskGaugeName),
+        el('span', exp.breakthrough ? 'warn' : 'dim', exp.breakthrough ? `한계 돌파! 공허 ↑ (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${BALANCE.provisional.risk.limit}`),
+      ),
+      barOf('risk', riskFill),
+      el('div', 'mini', `${faction.slotName}: ${equipped}`),
       ring,
       el('div', 'msg', msg),
     ];

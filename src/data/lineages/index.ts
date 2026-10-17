@@ -1,0 +1,23 @@
+// 흡수 계통 테이블 (GDD 4장). 11-3 이 미정이라 임시 계통 3개("계통A/B/C" 자리 표시)만 있다.
+import { pickFaction, type LineageDef } from '../schema';
+import raw from './lineages.json';
+
+export function parseLineage(r: unknown): LineageDef {
+  const l = (r ?? {}) as Record<string, unknown>;
+  if (typeof l.id !== 'string' || !l.id || typeof l.name !== 'object' || l.name === null) {
+    throw new Error(`계통 데이터 오류 (${String(l.id ?? '?')}): id, name`);
+  }
+  return r as LineageDef;
+}
+
+export const LINEAGES: readonly LineageDef[] = (raw as unknown[]).map(parseLineage);
+
+export function getLineage(id: string): LineageDef {
+  const l = LINEAGES.find((x) => x.id === id);
+  if (!l) throw new Error(`알 수 없는 계통: ${id}`);
+  return l;
+}
+
+export function lineageName(id: string, factionId: string): string {
+  return pickFaction(getLineage(id).name, factionId);
+}

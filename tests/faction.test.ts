@@ -37,10 +37,11 @@ describe('종족 설정', () => {
 });
 
 describe('데이터 폴더와 저장 구조', () => {
-  it('적 데이터는 임시 테스트 적이고, 특성 데이터는 아직 비어 있고 지형 타일은 임시 데이터다', () => {
+  it('적·계통·특성·지형 타일은 모두 임시(provisional) 데이터다', () => {
     expect(enemies.length).toBeGreaterThanOrEqual(2);
     expect(enemies.every((e) => e.provisional === true)).toBe(true);
-    expect(traits).toEqual([]);
+    expect(traits.length).toBeGreaterThanOrEqual(9);
+    expect(traits.every((t) => t.provisional === true)).toBe(true);
     expect(tiles.length).toBeGreaterThan(0);
     expect(tiles.every((t) => t.provisional === true)).toBe(true);
   });

@@ -34,5 +34,14 @@
     "feed": "먹이 주기",
     "sleep": "재우기",
     "pet": "쓰다듬기"
-  }
+  },
+  "stabilityName": "자아",
+  "slotName": "본체 슬롯",
+  "lineageBonusName": "계열 기술 강화",
+  "traitKindNames": {
+    "skill": "기술",
+    "passive": "패시브",
+    "part": "외형 파츠"
+  },
+  "breakthroughText": "광기가 한계를 넘었다. 자아가 흔들리고 공허가 몰려든다…"
 }

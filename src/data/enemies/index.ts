@@ -11,6 +11,8 @@ export function parseEnemy(r: unknown): EnemyDef {
   if (e.class !== 'normal' && e.class !== 'elite') errors.push('class: normal | elite');
   if (typeof e.hpInMatches !== 'number' || e.hpInMatches <= 0) errors.push('hpInMatches: 양수');
   if (typeof e.attackInMatches !== 'number' || e.attackInMatches < 0) errors.push('attackInMatches: 0 이상');
+  if (typeof e.lineageId !== 'string' || !e.lineageId) errors.push('lineageId');
+  if (typeof e.rareChance !== 'number' || e.rareChance < 0 || e.rareChance > 1) errors.push('rareChance: 0~1');
   if (!(WEAKNESS_ROLES as readonly unknown[]).includes(e.weakness)) errors.push('weakness: damage | spirit | shield');
   if (errors.length > 0) throw new Error(`적 데이터 오류 (${String(e.id ?? '?')}): ${errors.join(', ')}`);
   return r as EnemyDef;

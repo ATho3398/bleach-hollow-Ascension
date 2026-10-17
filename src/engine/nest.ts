@@ -2,6 +2,7 @@
 // 행동 이름·문구는 종족 설정(FactionConfig.nestActions)에서 읽는다. 자아/영압 안정도 같은 수치는 아직 없다.
 
 import { BALANCE } from '../config/balance';
+import { nestRiskAction, settleRiskToNest } from './absorb/risk';
 import type { NestAction } from './faction';
 import type { ExpeditionState } from './expedition';
 import { summarize } from './expedition';
@@ -16,12 +17,16 @@ export interface NestState {
   condition: number;
   /** 패배 후 쇠약 상태 (GDD 1장). 재우기로 풀린다 */
   weakened: boolean;
+  /** 리스크 게이지(호로 광기 / 사신 호로화) 둥지 저장값. 원정은 이 값으로 시작하고 귀환하면 합쳐진다 */
+  risk: number;
+  /** 안정 수치(호로 자아 / 사신 영압 안정도). 컨디션·허기와 별개 */
+  stability: number;
   /** 마지막으로 방치 허기를 계산한 시각(ms) */
   lastTickMs: number;
 }
 
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, lastTickMs: nowMs };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs };
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -41,6 +46,7 @@ export function doNestAction(nest: NestState, action: NestAction): void {
     nest.condition = clamp(nest.condition + NX.sleepCondition, 0, MAX);
     nest.weakened = false;
   } else nest.condition = clamp(nest.condition + NX.petCondition, 0, MAX);
+  nestRiskAction(nest, action);
 }
 
 /** 원정이 끝난 뒤 둥지 상태 갱신. 귀환: 원정에서 남은 허기·컨디션 그대로. 패배: 쇠약 + 컨디션 급락 */
@@ -49,5 +55,6 @@ export function applyExpeditionEnd(nest: NestState, exp: ExpeditionState, nowMs:
   nest.hunger = Math.min(100, exp.hunger + (s.outcome === 'defeated' ? NX.defeatHunger : 0));
   nest.condition = s.outcome === 'defeated' ? Math.min(exp.condition, NX.defeatCondition) : exp.condition;
   nest.weakened = s.outcome === 'defeated';
+  settleRiskToNest(nest, exp);
   nest.lastTickMs = nowMs;
 }
