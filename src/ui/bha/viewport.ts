@@ -18,6 +18,9 @@ export interface Fit {
   /** 뷰포트 크기 */
   vw: number;
   vh: number;
+  /** PC 고정 모드(GDD 17-5): 기기 왼쪽 위가 화면의 (ox, oy) 에 있고, 크기는 CSS 변수/zoom(scale)으로 키웠다. 없으면 0 */
+  ox?: number;
+  oy?: number;
 }
 
 export interface Insets {
@@ -52,6 +55,11 @@ export function computeFit(vw: number, vh: number): Fit {
   return { rotated, scale, w: long / scale, h: short / scale, vw, vh };
 }
 
+/** PC 고정 모드: 기준 크기 w×h 를 scale 배로 키워 뷰포트 가운데에 둔다 (회전 없음) */
+export function computePcFit(vw: number, vh: number, scale: number, w: number, h: number): Fit {
+  return { rotated: false, scale, w, h, vw, vh, ox: (vw - w * scale) / 2, oy: (vh - h * scale) / 2 };
+}
+
 /** 기기에 줄 CSS transform. 기기 원점은 왼쪽 위 (transform-origin: 0 0) */
 export function fitTransform(f: Fit): string {
   // 순서(오른쪽부터 적용): 축소 → 시계 방향 90도 → 오른쪽 끝으로 이동
@@ -60,8 +68,8 @@ export function fitTransform(f: Fit): string {
 
 /** 화면 좌표(clientX/Y) → 기기 안 좌표(논리 px). 기기 왼쪽 위가 (0,0) */
 export function toLocal(f: Fit, x: number, y: number): { x: number; y: number } {
-  const sx = f.rotated ? y : x;
-  const sy = f.rotated ? f.vw - x : y;
+  const sx = f.rotated ? y : x - (f.ox ?? 0);
+  const sy = f.rotated ? f.vw - x : y - (f.oy ?? 0);
   return { x: sx / f.scale, y: sy / f.scale };
 }
 

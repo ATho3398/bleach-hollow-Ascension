@@ -10,6 +10,9 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   padding: max(var(--bha-sp-4), var(--dev-inset-top, 0px)) max(var(--bha-sp-4), var(--dev-inset-right, 0px)) max(var(--bha-sp-4), var(--dev-inset-bottom, 0px)) max(var(--bha-sp-4), var(--dev-inset-left, 0px));  /* 안전 영역은 device.ts 가 돌림·축소를 반영해 넣는다 */
   background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop);
 }
+/* PC 고정 모드 (GDD 17-5): 기준 크기 844×390 을 창 가운데에 두고 --bha-scale 배로 키운다(zoom: 글자·터치 영역도 같이 커짐, transform: scale 아님). 바깥은 어두운 배경 */
+html.bha-pc, html.bha-pc body { background: var(--bha-bg-0); }
+.bha-dev.is-pc { zoom: var(--bha-scale, 1); box-shadow: 0 0 0 1px var(--bha-line-1), 0 0 40px rgb(0 0 0 / 0.7); }
 /* 뷰포트·안전 영역 측정용 보이지 않는 틀 (device.ts): inset 0 인 고정 요소 = 지금 보이는 영역 */
 .bha-dev__probe {
   position: fixed; inset: 0; visibility: hidden; pointer-events: none;

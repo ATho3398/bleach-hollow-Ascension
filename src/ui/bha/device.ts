@@ -6,7 +6,8 @@
 import { el, icon } from './dom';
 import { keepSelection, orderByRank, stepIndex } from './select';
 import { setOverlayHost } from './overlayHost';
-import { computeFit, deviceInsets, fitTransform, pickViewport, setFit } from './viewport';
+import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewScale, saveViewScale, setViewState, shortcutScale, VIEW_SCALE_EVENT } from '../viewScale';
+import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, setFit } from './viewport';
 
 export interface SelectItem {
   el: HTMLElement;
@@ -93,14 +94,36 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   // ── 화면 맞춤: 가로면 그대로, 세로면 기기 전체를 돌려 채운다 (GDD 16-6). 방향이 바뀌어도 화면은 다시 만들지 않고 틀만 다시 계산한다 ──
   // 뷰포트 크기는 고정 위치 프로브로 잰다: iOS Safari 의 주소창이 접히고 펴져 보이는 높이가 바뀌어도(100dvh 와 같은 값) 따라간다.
   // 프로브 padding 에 안전 영역(env)을 넣어 같이 읽어, 돌린·줄인 기기 안 여백으로 바꿔 쓴다 (viewport-fit=cover 를 켰을 때만 0 이 아니다)
+  const matchesMedia = (q: string): boolean => {
+    try {
+      return typeof matchMedia === 'function' && matchMedia(q).matches;
+    } catch {
+      return false;
+    }
+  };
+  const safeStorage = (): Storage | null => {
+    try {
+      return localStorage;
+    } catch {
+      return null;
+    }
+  };
   const probe = el('div', 'bha-dev__probe');
   probe.setAttribute('aria-hidden', 'true');
   let lastRotated: boolean | null = null;
   const fitDevice = () => {
     const r = probe.getBoundingClientRect();
     const vp = pickViewport(r, window);
-    const f = computeFit(vp.w, vp.h);
+    // PC(마우스·넓은 창)는 기기를 기준 크기로 고정해 가운데에 두고, 배율은 CSS 변수 --bha-scale 로 키운다 (GDD 17-5). 터치 폰·태블릿은 아래 기존 맞춤
+    const pc = isPcMode(matchesMedia('(hover: hover)'), matchesMedia('(pointer: fine)'), vp.w, vp.h);
+    const pref = loadViewScale(safeStorage());
+    const view = resolveViewScale(pref, vp.w, vp.h);
+    setViewState({ pc, pref, view });
+    const f = pc ? computePcFit(vp.w, vp.h, view.scale, BASE_W, BASE_H) : computeFit(vp.w, vp.h);
     setFit(f);
+    document.documentElement.classList.toggle('bha-pc', pc);
+    dev.classList.toggle('is-pc', pc);
+    dev.style.setProperty('--bha-scale', pc ? String(view.scale) : '1');
     dev.classList.toggle('is-rotated', f.rotated);
     if (f.rotated !== lastRotated) {
       const first = lastRotated === null; // 시작할 때의 방향은 "전환"이 아니다
@@ -110,8 +133,17 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     dev.classList.toggle('is-narrow', f.scale < 1); // 긴 쪽이 740px 미만인 좁은 폰: 블록 바를 아래 전폭으로 (lcd.css)
     dev.style.width = `${f.w}px`;
     dev.style.height = `${f.h}px`;
-    dev.style.transform = fitTransform(f);
-    dev.style.setProperty('--dev-scale', String(f.scale));
+    if (pc) {
+      // zoom 은 레이아웃 크기를 실제로 키운다(글자·터치 영역 포함). left/top 도 zoom 단위라 배율로 나눠 넣는다
+      dev.style.transform = 'translateZ(0)';
+      dev.style.left = `${(f.ox ?? 0) / f.scale}px`;
+      dev.style.top = `${(f.oy ?? 0) / f.scale}px`;
+    } else {
+      dev.style.transform = fitTransform(f);
+      dev.style.left = '';
+      dev.style.top = '';
+    }
+    dev.style.setProperty('--dev-scale', pc ? '1' : String(f.scale));
     const cs = getComputedStyle(probe);
     const ins = deviceInsets(f, { top: parseFloat(cs.paddingTop) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, left: parseFloat(cs.paddingLeft) || 0 });
     dev.style.setProperty('--dev-inset-top', `${ins.top}px`);
@@ -128,6 +160,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     window.setTimeout(fitDevice, 300);
   };
   window.addEventListener('resize', fitDevice);
+  window.addEventListener(VIEW_SCALE_EVENT, fitDevice);
   window.addEventListener('orientationchange', refit);
   window.visualViewport?.addEventListener('resize', fitDevice);
 
@@ -255,6 +288,19 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   }, true);
 
   const onKey = (e: KeyboardEvent) => {
+    // PC: +/- 로 1배↔2배 (GDD 17-5). 입력칸에서 칠 때는 무시
+    const t = e.target as HTMLElement | null;
+    const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    const want = currentViewState().pc ? shortcutScale(e.key, { ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey }, typing) : null;
+    if (want !== null) {
+      if (want !== currentViewState().pref) {
+        saveViewScale(safeStorage(), want);
+        fitDevice();
+        window.dispatchEvent(new CustomEvent(VIEW_SCALE_EVENT));
+      }
+      e.preventDefault();
+      return;
+    }
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === 'ArrowUp') move(-1);
     else if (e.key === 'ArrowDown') move(1);
@@ -294,6 +340,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     destroy() {
       mo.disconnect();
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener(VIEW_SCALE_EVENT, fitDevice);
       window.removeEventListener('resize', schedule);
       window.removeEventListener('resize', fitDevice);
       window.removeEventListener('orientationchange', refit);

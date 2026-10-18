@@ -5,6 +5,7 @@ import { lcdHead, lcdPage } from './bha/lcdpage';
 import { LEGACY_POINTER_SETTINGS_KEY } from './pointer';
 import { loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
 import { emitFeedback, hookAudioUnlock } from './fx';
+import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 
 export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onTutorial?: () => void): void {
   const storage = (() => {
@@ -45,6 +46,43 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     fxPanel.append(b, el('p', 'bha-faint', row.hint));
   }
 
+  // 화면 크기 (GDD 17-5): PC 에서만 적용. 선택은 이 기기에만 저장(키 bha-view-scale)
+  const sizePanel = el('section', 'bha-panel');
+  sizePanel.append(el('h2', 'bha-panel__title', '화면 크기'));
+  const sizeNote = el('p', 'bha-faint');
+  const sizeBtns = new Map<ViewScalePref, HTMLButtonElement>();
+  const paintSize = () => {
+    const st = currentViewState();
+    const pref = loadViewScale(storage);
+    for (const [v, b] of sizeBtns) {
+      b.classList.toggle('is-on', v === pref);
+      b.setAttribute('aria-pressed', String(v === pref));
+    }
+    sizeNote.textContent = !st.pc
+      ? '컴퓨터(마우스·넓은 창)에서만 바뀐다. 폰·태블릿은 화면에 맞춰 보인다.'
+      : shrunkNote({ ...st.view }, pref) ?? `기기 틀을 ${st.view.scale}배(${Math.round(844 * st.view.scale)}×${Math.round(390 * st.view.scale)})로 표시 중. 키보드 + / − 로도 바꾼다.`;
+  };
+  for (const v of VIEW_SCALES) {
+    const b = button({
+      label: `${v}배`,
+      onClick: () => {
+        saveViewScale(storage, v);
+        window.dispatchEvent(new CustomEvent(VIEW_SCALE_EVENT));
+        paintSize();
+      },
+    });
+    sizeBtns.set(v, b);
+    sizePanel.append(b);
+  }
+  sizePanel.append(sizeNote);
+  paintSize();
+  // 키보드 단축키로 바뀌어도 문구가 따라가도록 한 번 더 그린다
+  const onScaleEvent = () => {
+    if (!sizePanel.isConnected) window.removeEventListener(VIEW_SCALE_EVENT, onScaleEvent);
+    else paintSize();
+  };
+  window.addEventListener(VIEW_SCALE_EVENT, onScaleEvent);
+
   const panelOf = (...n: Node[]) => {
     const p = el('section', 'bha-panel');
     p.append(...n);
@@ -67,5 +105,5 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [sizePanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
 }
