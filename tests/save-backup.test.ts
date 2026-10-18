@@ -88,12 +88,12 @@ describe('진화 예고·성장 요약', () => {
   it('상위 계통은 최대 2개 — 둘째는 첫째의 절반 이상일 때만, 남은 수가 같이 나온다', () => {
     const e = newEvolution();
     for (let i = 0; i < 6; i++) recordEvolutionAbsorb(e, 'lineage-a', false);
-    expect(evolutionHint(e)).toEqual({ leads: ['lineage-a'], remaining: 21 });
+    expect(evolutionHint(e)).toEqual({ leads: ['lineage-a'], remaining: 28 });
     for (let i = 0; i < 4; i++) recordEvolutionAbsorb(e, 'lineage-b', false);
     recordEvolutionAbsorb(e, 'lineage-c', false);
     const h = evolutionHint(e)!;
     expect(h.leads).toEqual(['lineage-a', 'lineage-b']);
-    expect(hintText(h, nameOf)).toBe('지금 흐름이면 <lineage-a>·<lineage-b> 쪽 · 진화까지 16회');
+    expect(hintText(h, nameOf)).toBe('지금 흐름이면 <lineage-a>·<lineage-b> 쪽 · 진화까지 23회');
   });
 
   it('마지막 단계는 예고가 없다', () => {

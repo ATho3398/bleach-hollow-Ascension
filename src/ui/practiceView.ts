@@ -127,7 +127,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     ? '-'
     : fin.kind === 'skill'
       ? `${fin.traitId && fin.lineageId ? traitName(fin.traitId, faction.id) : labels.basicBlock}${fin.lineageId ? ` (${lineageName(fin.lineageId, faction.id)})` : ''}`
-      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, skill: '' }[fin.kind];
+      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: '콤보 블록', skill: '' }[fin.kind];
   const name = pickFaction(enemy.name, faction.id);
 
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);

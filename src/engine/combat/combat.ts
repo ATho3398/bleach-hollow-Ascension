@@ -5,6 +5,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { hasSpecialActions } from '../../data/enemies';
+import { lineageFamily } from '../../data/lineages';
 import type { ChainBonus, ChainBonusKind, EnemyDef, EnemyPattern, SkillRole } from '../../data/schema';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
@@ -30,6 +31,11 @@ export interface CombatSkill {
   powerMultiplier: number;
 }
 
+/** 계열 한 개의 단계별 효과 (GDD 17-3, 종족 설정 families 에서 옮긴다). tiers[k] = (k+1)단계 */
+export interface FamilyCombat {
+  tiers: { multiplier: number; bonus?: ChainBonus }[];
+}
+
 export interface CombatParams {
   tickSeconds: number;
   playerAttackSeconds: number;
@@ -43,8 +49,11 @@ export interface CombatParams {
   /** 블록 바 칸 수 (일자 8칸, GDD 3-5 v0.8) */
   trayCapacity: number;
   blockSpawnSeconds: number;
+  familySpawnSlowdown: number;
   chainMultipliers: readonly number[];
   chainBonusFromChain: number;
+  /** 계열 id → 단계별 위력 배율·추가 효과 (종족 설정에서 옮김, GDD 17-3). 없는 계열·기본/막기/회복 블록은 chainMultipliers·skill.chainBonus 를 쓴다 */
+  families: Record<string, FamilyCombat>;
   spPerBlock: number;
   spMax: number;
   specialPowerInAttacks: number;
@@ -89,6 +98,7 @@ export interface CombatParams {
 export function defaultCombatParams(): CombatParams {
   return {
     ...CX,
+    families: {},
     riskPerVoidBlock: BALANCE.provisional.risk.perVoidBlock,
     storedStartGauge: 0,
     skills: [],
@@ -102,7 +112,7 @@ export function defaultCombatParams(): CombatParams {
 }
 
 /** 엔진이 받는 입력은 둘뿐이다 (GDD 3-5, 17-2: 블록 순서는 바꿀 수 없다 — 나온 순서대로 쓴다).
- *  use: 바의 cell 번째 블록 클릭 — 붙어 있는 같은 특성 블록이 함께 발동해 체인이 된다.
+ *  use: 바의 cell 번째 블록 클릭 — 붙어 있는 같은 계열 공격 블록(막기·회복·기본 블록은 같은 특성)이 함께 발동해 체인이 된다 (GDD 17-3).
  *  stored: 저장형 필살기 사용 (충전 1개 소모, GDD 14-6). */
 export type CombatInput =
   | { type: 'use'; cell: number }
@@ -114,13 +124,17 @@ export interface Finisher {
   kind: FinisherKind;
   traitId: string | null;
   lineageId: string | null;
+  /** 마무리 일격 블록의 계열 (계열 없는 블록은 null) */
+  family?: string | null;
+  /** 마무리 일격이 약점 계열(약점 ×1.5)이었는가 (흡수 조건, GDD 17-3) */
+  weak?: boolean;
 }
 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
   | { kind: 'player-attack'; damage: number }
   | { kind: 'enemy-attack'; damage: number; guarded: boolean }
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null }
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null }
   | { kind: 'heavy-cast'; seconds: number }
   | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number }
   | { kind: 'seal'; seconds: number }
@@ -153,6 +167,8 @@ export interface CombatState {
     actionIndex: number;
     /** 강공격 시전(예고) 중이면 남은 틱. hitsLeft = 이 시전 뒤에 이어질 연속 강공격 수 */
     cast: { ticks: number; total: number; hitsLeft: number } | null;
+    /** 이 적의 약점 계열 (약점 계통의 계열, GDD 17-3). 약점 계통에 계열이 없으면 null */
+    weakFamily?: string | null;
     /** 방어 자세 중이면 남은 틱: 내 블록 피해가 줄고, 블록을 쓸 때마다 반격을 받는다 */
     stance: { ticks: number } | null;
   };
@@ -178,7 +194,12 @@ export interface CombatState {
   skillsUsed: string[];
   blocksByTrait: Record<string, number>;
   blocksByChain: [number, number, number];
+  /** 계열별 체인 발동 횟수: 계열 id → [체인1, 체인2, 체인3] (계열 있는 공격 블록만, GDD 17-3) */
+  chainsByFamily: Record<string, [number, number, number]>;
   chain3Count: number;
+  /** 콤보 발동(특수 블록 생성) 횟수와 콤보 블록 사용 횟수 (GDD 17-3) */
+  combosTriggered: number;
+  comboBlocksUsed: number;
   /** 약점 계통 스킬 블록으로 발동한 체인3 횟수 (흡수 조건, GDD 3-5 v0.7) */
   weakChain3Count: number;
   guardSuccesses: number;
@@ -208,7 +229,14 @@ export function maxChain(p: CombatParams): number {
 /** 블록 생성원: 장착 skill 특성들, 하나도 없으면 기본 블록 */
 export function blockSources(p: CombatParams): CombatSkill[] {
   if (p.skills.length > 0) return p.skills;
-  return [{ id: BASIC_SKILL_ID, lineageId: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 }];
+  return [{ id: BASIC_SKILL_ID, lineageId: null, family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 }];
+}
+
+/** 이 생성원의 블록 생성 간격(초): 같은 계열 공격 특성이 여럿이면 체인이 쉬워지므로 그만큼 늘린다 (GDD 17-3, familySpawnSlowdown) */
+export function spawnSecondsOf(p: CombatParams, src: CombatSkill): number {
+  if (!src.family) return p.blockSpawnSeconds;
+  const same = blockSources(p).filter((x) => x.family === src.family).length;
+  return p.blockSpawnSeconds * (1 + p.familySpawnSlowdown * (same - 1));
 }
 
 export function sourceOf(p: CombatParams, traitId: string | null): CombatSkill | undefined {
@@ -221,7 +249,6 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
   // 적 체력 = 플레이어 기본 공격 N회 분량 (CLAUDE.md 규칙 3). 육성으로 공격력이 오르면 같이 오른다
   const maxHp = setup.enemy.hpInAttacks * params.hpAttackScale * params.playerAttackDamage * params.growthMultiplier;
   const sources = blockSources(params);
-  const spawnTicks = t(params.blockSpawnSeconds);
   return {
     seed,
     params,
@@ -236,6 +263,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
       attackTimer: t(enemyAttackSecondsOf(params, setup.enemy.pattern)),
       actionTimer: hasSpecialActions(setup.enemy.pattern) ? t(setup.enemy.pattern.everySeconds) : 0,
       actionIndex: 0,
+      weakFamily: lineageFamily(setup.enemy.weaknessLineageId),
       cast: null,
       stance: null,
     },
@@ -243,7 +271,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     tray: [],
     nextUid: 1,
     // 생성원이 여럿이면 생성 시점을 고르게 엇갈린다 (첫 블록은 간격의 절반 뒤)
-    spawnTimers: sources.map((_, i) => Math.max(1, Math.round((spawnTicks * (i + 0.5)) / sources.length))),
+    spawnTimers: sources.map((src, i) => Math.max(1, Math.round((t(spawnSecondsOf(params, src)) * (i + 0.5)) / sources.length))),
     voidTimer: t(params.voidCheckSeconds),
     shuffleTimer: params.trayShuffleSeconds > 0 ? t(params.trayShuffleSeconds) : 0,
     sp: 0,
@@ -255,7 +283,10 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     skillsUsed: [],
     blocksByTrait: {},
     blocksByChain: [0, 0, 0],
+    chainsByFamily: {},
     chain3Count: 0,
+    combosTriggered: 0,
+    comboBlocksUsed: 0,
     weakChain3Count: 0,
     guardSuccesses: 0,
     voidUsed: 0,
@@ -298,14 +329,26 @@ function unitDamage(p: CombatParams): number {
   return p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier;
 }
 
-/** 스킬 블록 위력 배율: 계통 보너스 × 체인 배율 × 약점(×1.5). chain = 함께 발동하는 블록 수(1~3), 바에 있는 블록 하나만 볼 때는 1 */
+/** 약점인가 (GDD 17-3): 공격 블록은 적의 약점 계열과 같은 계열이면, 계열 없는 블록(막기·회복)은 약점 계통과 같은 계통이면 ×1.5 */
+export function isWeak(s: CombatState, skill: CombatSkill): boolean {
+  if (skill.family) return skill.family === (s.enemy.weakFamily ?? null);
+  return skill.lineageId !== null && skill.lineageId === s.enemy.def.weaknessLineageId;
+}
+
+/** 계열 단계 기술(위력 배율·추가 효과): 종족 설정에서 온 계열 표가 있으면 그것, 없으면 체인 배율 + 특성의 체인 추가 효과 (chain = 1~3) */
+export function tierEffect(p: CombatParams, skill: CombatSkill, chain: number): { multiplier: number; bonus: ChainBonus | null } {
+  const fam = skill.family ? p.families[skill.family]?.tiers[chain - 1] : undefined;
+  if (fam) return { multiplier: fam.multiplier, bonus: fam.bonus ?? null };
+  return { multiplier: p.chainMultipliers[chain - 1] ?? 1, bonus: chain >= p.chainBonusFromChain ? skill.chainBonus : null };
+}
+
+/** 스킬 블록 위력 배율: 계통 보너스 × 단계 기술 배율(체인 배율을 이어받음) × 약점(×1.5). chain = 함께 발동하는 블록 수(1~3), 바에 있는 블록 하나만 볼 때는 1 */
 export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: CombatSkill; mult: number; weak: boolean } | null {
   if (b.kind !== 'skill') return null;
   const skill = sourceOf(s.params, b.traitId);
   if (!skill) return null;
-  const weak = skill.lineageId !== null && skill.lineageId === s.enemy.def.weaknessLineageId;
-  const chainMult = s.params.chainMultipliers[chain - 1] ?? 1;
-  return { skill, mult: skill.powerMultiplier * chainMult * (weak ? s.params.weaknessMultiplier : 1), weak };
+  const weak = isWeak(s, skill);
+  return { skill, mult: skill.powerMultiplier * tierEffect(s.params, skill, chain).multiplier * (weak ? s.params.weaknessMultiplier : 1), weak };
 }
 
 /** 이 블록을 지금 쓰면 줄 피해 (봇·화면 예고용) */
@@ -357,9 +400,9 @@ function takeDamage(s: CombatState, amount: number): void {
   }
 }
 
-function spawn(s: CombatState, kind: Block['kind'], traitId: string | null): boolean {
+function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, family: string | null = null): boolean {
   if (s.tray.length >= s.params.trayCapacity) return false;
-  s.tray.push({ uid: s.nextUid++, kind, traitId });
+  s.tray.push({ uid: s.nextUid++, kind, traitId, family });
   emit(s, { kind: 'spawn', index: s.tray.length - 1, block: kind });
   return true;
 }
@@ -430,7 +473,7 @@ function useBlock(s: CombatState, index: number): boolean {
     s.specialUsed = true;
     addStored(s, p.storedGaugePerBlock);
     const damage = blockDamage(s, b);
-    emit(s, { kind: 'block', block: 'special', traitId: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
+    emit(s, { kind: 'block', block: 'special', traitId: null, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'special', traitId: null, lineageId: null });
     counterIfStance(s);
     return true;
@@ -442,7 +485,7 @@ function useBlock(s: CombatState, index: number): boolean {
     addStored(s, p.storedGaugePerBlock);
     addSp(s, p.spPerBlock);
     const damage = blockDamage(s, b);
-    emit(s, { kind: 'block', block: 'void', traitId: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
+    emit(s, { kind: 'block', block: 'void', traitId: null, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'void', traitId: null, lineageId: null });
     counterIfStance(s);
     return true;
@@ -459,6 +502,10 @@ function useBlock(s: CombatState, index: number): boolean {
   for (let k = 0; k < chain; k++) s.skillsUsed.push(id);
   s.blocksByTrait[id] = (s.blocksByTrait[id] ?? 0) + chain;
   s.blocksByChain[chain - 1]!++;
+  if (skill.family) {
+    const rec = (s.chainsByFamily[skill.family] ??= [0, 0, 0]);
+    rec[chain - 1]!++;
+  }
   if (chain >= maxChain(p)) {
     s.chain3Count++;
     if (weak) s.weakChain3Count++;
@@ -474,11 +521,11 @@ function useBlock(s: CombatState, index: number): boolean {
     heal = Math.min(s.player.maxHp - s.player.hp, s.player.maxHp * p.healFraction * mult);
     s.player.hp += heal;
   }
-  const bonus = chain >= p.chainBonusFromChain ? skill.chainBonus : null;
+  const bonus = tierEffect(p, skill, chain).bonus;
   if (bonus) applyChainBonus(s, bonus);
   const damage = blockDamage(s, b, chain);
-  emit(s, { kind: 'block', block: 'skill', traitId: id, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
-  dealDamage(s, damage, { kind: 'skill', traitId: id, lineageId: skill.lineageId });
+  emit(s, { kind: 'block', block: 'skill', traitId: id, family: skill.family ?? null, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
+  dealDamage(s, damage, { kind: 'skill', traitId: id, lineageId: skill.lineageId, family: skill.family ?? null, weak });
   counterIfStance(s);
   return true;
 }
@@ -580,8 +627,8 @@ function advanceTick(s: CombatState): void {
     sources.forEach((src, i) => {
       if (s.tray.length >= p.trayCapacity) return;
       if (--s.spawnTimers[i]! <= 0) {
-        spawn(s, 'skill', src.id);
-        s.spawnTimers[i] = t(p.blockSpawnSeconds);
+        spawn(s, 'skill', src.id, src.family ?? null);
+        s.spawnTimers[i] = t(spawnSecondsOf(p, src));
       }
     });
   }

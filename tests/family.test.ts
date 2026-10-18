@@ -5,7 +5,12 @@ import { LINEAGES } from '../src/data/lineages';
 import { TRAITS, parseTrait } from '../src/data/traits';
 import { FAMILY_TIERS, parseFactionConfig } from '../src/engine/faction';
 import { BALANCE } from '../src/config/balance';
-import { equippedSkills, gainTrait, newBuild } from '../src/engine/absorb';
+import { absorbReasons, buildCombatParams, equippedSkills, gainTrait, newBuild } from '../src/engine/absorb';
+import { applyInput, createCombat, runAt, spawnSecondsOf as spawnSecondsOfTest, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
+import { chainGroup } from '../src/engine/combat/tray';
+import { getEnemy } from '../src/data/enemies';
+import { emptyLegacyMatches, emptyRunLog } from '../src/engine/runLog';
+import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
 
 describe('계열 데이터 (GDD 17-3)', () => {
   it('모든 종족 설정에 계열 목록이 있고 단계 기술은 체인 단계 수와 같다', () => {
@@ -67,5 +72,156 @@ describe('계열 데이터 (GDD 17-3)', () => {
     const skills = equippedSkills(b);
     expect(skills.find((s) => s.id === 'trait-c5')!.family).toBe('family-c');
     expect(skills.find((s) => s.id === 'trait-a5')!.family).toBeNull();
+  });
+});
+
+// ── ② 전투 엔진: 계열 체인 ──
+const CX = BALANCE.provisional.combat;
+const target = getEnemy('test-a'); // 약점 계통 B → 약점 계열 family-b
+let uid = 5000;
+const blk = (traitId: string | null, family: string | null = null, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId, family });
+const mk = (params: Partial<CombatParams> = {}, enemy = target): CombatState => createCombat(1, { enemy, params });
+const build = (...ids: string[]) => {
+  const b = newBuild();
+  for (const id of ids) gainTrait(b, id);
+  return buildCombatParams(b, 'hollow');
+};
+const quiet = (s: CombatState) => {
+  s.spawnTimers = s.spawnTimers.map(() => 1e9);
+  s.voidTimer = 1e9;
+  s.enemy.attackTimer = 1e9;
+  s.player.attackTimer = 1e9;
+  s.enemy.actionTimer = 1e9;
+  return s;
+};
+
+describe('계열 체인 판정 (GDD 17-3)', () => {
+  it('같은 계열 공격 블록은 특성이 달라도 연속이면 한 덩어리다', () => {
+    const t = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-c5', 'family-c'), blk('trait-a1', 'family-a')];
+    expect(runAt(t, 1)).toEqual([0, 2]);
+    expect(chainGroup(t, 0, 3)).toEqual([0, 1, 2]);
+    expect(runAt(t, 3)).toEqual([3, 3]);
+  });
+
+  it('다른 계열 사이에 끼면 끊긴다 (a c a 는 체인 아님)', () => {
+    const t = [blk('trait-a1', 'family-a'), blk('trait-c5', 'family-c'), blk('trait-a1', 'family-a')];
+    expect(chainGroup(t, 0, 3)).toEqual([0]);
+    expect(chainGroup(t, 2, 3)).toEqual([2]);
+  });
+
+  it('막기·회복·기본 블록은 계열이 없어 같은 특성끼리만 묶인다', () => {
+    const t = [blk('trait-a5'), blk('trait-b1'), blk('trait-a5'), blk('trait-a5'), blk('basic-skill'), blk('basic-skill')];
+    expect(chainGroup(t, 0, 3)).toEqual([0]);
+    expect(chainGroup(t, 2, 3)).toEqual([2, 3]);
+    expect(chainGroup(t, 4, 3)).toEqual([4, 5]);
+    // 공격 계열 블록과 계열 없는 블록은 묶이지 않는다
+    expect(chainGroup([blk('trait-c5', 'family-c'), blk('trait-a5')], 0, 3)).toEqual([0]);
+  });
+
+  it('4개 이상 붙어 있으면 클릭한 블록을 포함한 최대 3개가 발동한다', () => {
+    const t = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c')];
+    expect(chainGroup(t, 0, 3)).toEqual([0, 1, 2]);
+    expect(chainGroup(t, 3, 3)).toEqual([1, 2, 3]);
+  });
+
+  it('다른 특성 같은 계열 2개를 누르면 체인2: 두 블록 소모, 2단계 배율 ×2.2', () => {
+    const s = quiet(mk(build('trait-c5', 'trait-e4')));
+    s.tray = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-a1', 'family-a')];
+    expect(applyInput(s, { type: 'use', cell: 1 })).toBe(true);
+    expect(s.tray.map((b) => b.traitId)).toEqual(['trait-a1']);
+    expect(s.blocksByChain).toEqual([0, 1, 0]);
+    expect(s.chainsByFamily).toEqual({ 'family-c': [0, 1, 0] });
+    // 클릭한 블록(e4 위력 5)의 2단계: 5 × 2.2 × 기본 공격 10 (test-a 약점은 계열 b 라 약점 아님)
+    const ev = s.events.find((e) => e.kind === 'block');
+    expect(ev).toMatchObject({ chain: 2, family: 'family-c', weak: false });
+    expect(ev && ev.kind === 'block' ? ev.damage : 0).toBeCloseTo(5 * 2.2 * CX.playerAttackDamage);
+  });
+
+  it('3단계는 종족 설정의 계열 추가 효과(적 행동 지연)가 붙는다', () => {
+    const s = quiet(mk(build('trait-c5', 'trait-e4')));
+    s.enemy.attackTimer = 100;
+    s.tray = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-c5', 'family-c')];
+    applyInput(s, { type: 'use', cell: 0 });
+    expect(s.blocksByChain).toEqual([0, 0, 1]);
+    expect(s.enemy.attackTimer).toBe(100 + ticksOf(s.params, 1.5));
+    expect(s.chain3Count).toBe(1);
+    // 2단계에는 추가 효과가 없다
+    const s2 = quiet(mk(build('trait-c5', 'trait-e4')));
+    s2.enemy.attackTimer = 100;
+    s2.tray = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c')];
+    applyInput(s2, { type: 'use', cell: 0 });
+    expect(s2.enemy.attackTimer).toBe(100);
+  });
+
+  it('약점은 계열 기준이다: 약점 계통의 계열 공격 블록 ×1.5, 같은 계통 아니어도 계열이 맞으면 약점', () => {
+    // test-a 약점 계통 B → family-b. d1(계통 d, 계열 b)도 약점이다
+    const s = quiet(mk(build('trait-d1')));
+    expect(s.enemy.weakFamily).toBe('family-b');
+    s.tray = [blk('trait-d1', 'family-b')];
+    applyInput(s, { type: 'use', cell: 0 });
+    const ev = s.events.find((e) => e.kind === 'block');
+    expect(ev).toMatchObject({ weak: true });
+    expect(ev && ev.kind === 'block' ? ev.damage : 0).toBeCloseTo(3.5 * 1.5 * CX.playerAttackDamage);
+    // 반대로 계통 b 약점인 적에게 계통이 다른 c5(family-c)는 약점이 아니다
+    const s2 = quiet(mk(build('trait-c5')));
+    s2.tray = [blk('trait-c5', 'family-c')];
+    applyInput(s2, { type: 'use', cell: 0 });
+    expect(s2.events.find((e) => e.kind === 'block')).toMatchObject({ weak: false });
+  });
+
+  it('약점 계열 체인3 은 흡수 조건 (weakChain3Count), 약점 계열 마무리도 조건', () => {
+    const s = quiet(mk(build('trait-b4', 'trait-d1')));
+    s.enemy.hp = 1e9;
+    s.tray = [blk('trait-b4', 'family-b'), blk('trait-d1', 'family-b'), blk('trait-b4', 'family-b')];
+    applyInput(s, { type: 'use', cell: 0 });
+    expect(s.weakChain3Count).toBe(1);
+    s.enemy.hp = 1;
+    s.status = 'playing';
+    s.tray = [blk('trait-d1', 'family-b')];
+    applyInput(s, { type: 'use', cell: 0 });
+    expect(s.status).toBe('won');
+    expect(s.finisher).toMatchObject({ kind: 'skill', family: 'family-b', weak: true });
+    expect(absorbReasons(s)).toEqual(['weakness-finisher', 'weakness-chain3']);
+  });
+
+  it('블록은 장착한 특성의 계열대로 나온다', () => {
+    const s = mk(build('trait-c5', 'trait-a1'));
+    for (let i = 0; i < 400 && s.tray.length < 4; i++) step(s);
+    const fams = new Set(s.tray.filter((b) => b.kind === 'skill').map((b) => b.family));
+    expect(fams).toEqual(new Set(['family-c', 'family-a']));
+    for (const b of s.tray) if (b.kind === 'skill') expect(b.family).toBe(b.traitId === 'trait-c5' ? 'family-c' : 'family-a');
+  });
+
+  it('같은 계열 특성이 여럿이면 그 계열 블록의 생성 간격이 늘어난다', () => {
+    const one = mk(build('trait-c5'));
+    const two = mk(build('trait-c5', 'trait-e4'));
+    const p = two.params;
+    const [c5, e4] = [p.skills[0]!, p.skills[1]!];
+    expect(spawnSecondsOfTest(one.params, one.params.skills[0]!)).toBe(CX.blockSpawnSeconds);
+    expect(spawnSecondsOfTest(p, c5)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
+    expect(spawnSecondsOfTest(p, e4)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
+    // 계열이 다르거나 계열이 없는 특성끼리는 느려지지 않는다
+    const mixed = mk(build('trait-c5', 'trait-a1', 'trait-a5')).params;
+    for (const sk of mixed.skills) expect(spawnSecondsOfTest(mixed, sk)).toBe(CX.blockSpawnSeconds);
+  });
+});
+
+describe('세이브 마이그레이션 (형식 11 → 12)', () => {
+  it('옛 전투 기록에 계열별 체인·콤보 횟수 기본값이 채워지고 빌드·슬롯은 그대로 열린다', () => {
+    const save = newSaveData('hollow', 1);
+    gainTrait(save.build, 'trait-c5');
+    const old = JSON.parse(JSON.stringify(save));
+    old.meta.format = 11;
+    old.runLog.battles = [{
+      runId: 1, lap: 1, turns: 0, matchesByRole: emptyLegacyMatches(), won: true, skillsUsed: [], enemyClass: 'normal', tierIndex: 0, enemyId: 'e',
+      factionId: 'hollow', seed: 1, riskGained: 0, absorbGained: 0, lossReason: null, durationSeconds: 30, blocksByTrait: {}, blocksByChain: [0, 0, 0],
+      chain3Count: 0, guardSuccesses: 0, voidUsed: 0, specialUsed: false, finisherKind: null, finisherTraitId: null, finisherLineageId: null,
+      absorbable: false, storedUsed: 0, storedWasted: 0,
+    }];
+    const m = migrateSave(old)!;
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
+    expect(m.runLog.battles[0]).toMatchObject({ chainsByFamily: {}, combosTriggered: 0, comboBlocksUsed: 0 });
+    expect(m.build.slots[0]).toBe('trait-c5');
+    expect(emptyRunLog().battles).toEqual([]);
   });
 });

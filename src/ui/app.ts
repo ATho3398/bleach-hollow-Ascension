@@ -111,7 +111,7 @@ export function startApp(host: HTMLElement): void {
 
   function runTutorialDemo(faction: FactionConfig): void {
     const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!;
-    const params = save ? buildCombatParams(save.build) : undefined;
+    const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
       applyEvolutionToParams(params, save.evolution);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
@@ -468,7 +468,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   function runPractice(faction: FactionConfig, enemy: EnemyDef): void {
-    const params = save ? buildCombatParams(save.build) : undefined;
+    const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
       applyEvolutionToParams(params, save.evolution);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);

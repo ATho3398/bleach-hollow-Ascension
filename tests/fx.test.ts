@@ -38,7 +38,7 @@ describe('전투 효과 설정', () => {
 
 describe('효과 신호', () => {
   const block = (chain: number, extra: Partial<Extract<CombatEvent, { kind: 'block' }>> = {}): CombatEvent => ({
-    kind: 'block', block: 'skill', traitId: null, role: 'attack', chain, damage: 5, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...extra,
+    kind: 'block', block: 'skill', traitId: null, family: null, role: 'attack', chain, damage: 5, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...extra,
   });
   it('블록·체인·막기·피격·필살기·승패가 신호로 바뀐다', () => {
     expect(cueOf(block(1), 3)).toBe('block');

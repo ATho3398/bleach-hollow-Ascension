@@ -23,18 +23,22 @@ console.log(`밸런스 버전 ${BALANCE_VERSION}`);
 // C.7 (GDD 3-5 v0.7): 승률 목표의 기준 빌드 = skill 특성 1~2개 장착 (공격 1개 / 공격+막기 2개).
 // 빈 슬롯(기본 블록만)은 일반 적 승률 90%↑만 가드, 강적은 참고 출력. skill 3개 빌드는 비교용.
 const N = 200;
+/** 계열 단계 기술 표를 읽을 종족 (두 종족의 계열 수치는 같으므로 하나로 점검한다) */
+const BALANCE_FACTION = 'hollow';
 const buildOf = (ids: string[]): Partial<CombatParams> => {
   const b = newBuild();
   for (const id of ids) gainTrait(b, id);
-  return { ...buildCombatParams(b), ...START };
+  return { ...buildCombatParams(b, BALANCE_FACTION), ...START };
 };
 /** C.17: 점검 봇의 시작 저장 게이지 = 새 세이브 안정 수치(stabilityStart)에 비례한 값 */
 const START = { storedStartGauge: storedStartGaugeOf(BALANCE.provisional.risk.stabilityStart) };
-type BuildDef = { name: string; params: Partial<CombatParams>; ref: boolean };
+type BuildDef = { name: string; params: Partial<CombatParams>; ref: boolean; /** 사람형 봇 강적 승률 목표 [하한, 상한]. 없으면 참고 출력만 */ elite?: [number, number] };
 const builds: BuildDef[] = [
   { name: '빈 슬롯(기본 블록)', params: { ...START }, ref: false },
-  { name: 'skill 1개(공격)', params: buildOf(['trait-c5']), ref: true },
-  { name: 'skill 2개(공격·막기)', params: buildOf(['trait-c5', 'trait-a5']), ref: true },
+  { name: 'skill 1개(공격)', params: buildOf(['trait-c5']), ref: true, elite: [0.6, 0.85] },
+  { name: 'skill 2개(공격·막기)', params: buildOf(['trait-c5', 'trait-a5']), ref: true, elite: [0.6, 0.85] },
+  // C.34 (GDD 17-3): 같은 계열 공격 특성 둘은 서로 체인이 된다 — 체인이 쉬워진 빌드
+  { name: 'skill 2개(같은 계열 공격 2)', params: buildOf(['trait-c5', 'trait-e4']), ref: true, elite: [0.6, 0.85] },
   { name: 'skill 3개(공격·막기·회복)', params: buildOf(['trait-a1', 'trait-b1', 'trait-c1']), ref: false },
 ];
 // C.16 (GDD 14-4): 완벽형 봇(참고)과 사람형 봇(목표 기준) 둘 다 돌린다.
@@ -43,15 +47,14 @@ const builds: BuildDef[] = [
 const TARGET = {
   normal: { seconds: 45, win: 0.9 },
   elite: { seconds: 90 },
-  /** 사람형 봇 강적 승률 목표 (빌드 이름 접두사별 [하한, 상한]) */
-  eliteWin: { '빈': [0.3, 0.55], 'skill 1': [0.55, 0.75], 'skill 2': [0.7, 0.9], 'skill 3': [0, 0.95] } as Record<string, [number, number]>,
+  /** 사람형 봇 강적 승률 목표 (C.34: 빈 슬롯은 참고만, skill 1~2개 60~85%, skill 3개 이상은 목표 미달 유지 가능 — 빌드별 elite 필드) */
+  eliteWin: { 'skill 1·2개': [0.6, 0.85] } as Record<string, [number, number]>,
 };
-const targetOf = (buildName: string) => Object.entries(TARGET.eliteWin).find(([k]) => buildName.startsWith(k))![1];
 const BOTS = [
   { key: 'perfect', name: '완벽형 봇', play: (s: CombatState) => playCombatBot(s) },
   { key: 'human', name: '사람형 봇', play: (s: CombatState) => playCombatHuman(s) },
 ] as const;
-console.log(`\n전투 (봇 ${N}판, 시드 1~${N}) — 사람형 봇 목표(GDD 14-4, 임시): 일반 승률 ${TARGET.normal.win * 100}%↑·약 ${TARGET.normal.seconds}초, 강적 약 ${TARGET.elite.seconds}초, 강적 승률 ${Object.entries(TARGET.eliteWin).map(([k, [lo, hi]]) => `${k} ${lo * 100}~${hi * 100}%`).join(' / ')}`);
+console.log(`\n전투 (봇 ${N}판, 시드 1~${N}) — 사람형 봇 목표(GDD 14-4, 임시): 일반 승률 ${TARGET.normal.win * 100}%↑·약 ${TARGET.normal.seconds}초, 강적 약 ${TARGET.elite.seconds}초, 강적 승률 ${Object.entries(TARGET.eliteWin).map(([k, [lo, hi]]) => `${k} ${Math.round(lo * 100)}~${Math.round(hi * 100)}%`).join(' / ')} (빈 슬롯·skill 3개는 참고)`);
 // C.15 (GDD 14-5): 적 풀 전체(테스트 고정 적 제외)를 패턴 종류별로 묶어서 본다. 종류마다 적 5종(계통 A~E 약점) × N판
 const POOL_ENEMIES = ENEMIES.filter((e) => !e.testOnly);
 const KINDS = ENEMY_PATTERN_KINDS.filter((k) => POOL_ENEMIES.some((e) => enemyPatternKind(e) === k));
@@ -118,11 +121,15 @@ for (const bot of BOTS) {
     console.log(`      → 일반 전체(풀 가중): 승률 ${(pn.win * 100).toFixed(0)}% · 승리 ${pn.winSecs.toFixed(1)}초 / 강적 전체(풀 가중): 승률 ${(pe.win * 100).toFixed(0)}% · 승리 ${pe.winSecs.toFixed(1)}초`);
     if (bot.key === 'human') {
       humanElite[build.name] = pe;
-      const [lo, hi] = targetOf(build.name);
-      const ok = pe.win >= lo && pe.win <= hi;
-      console.log(`      → 강적 승률 목표 ${Math.round(lo * 100)}~${Math.round(hi * 100)}%: ${ok ? '맞음' : '벗어남'}`);
-      // skill 3개 이상 상한 95%: 3개 빌드는 강적 남은 체력이 95% 이상일 만큼 압도적이라 강적 패턴·체력·공격만으로는 못 맞춘다 (dev-log C.16 목표 미달). 참고 출력만
-      if (!ok && !build.name.startsWith('skill 3')) failures.push(`사람형 봇/${build.name}: 강적 승률 ${(pe.win * 100).toFixed(0)}% (목표 ${Math.round(lo * 100)}~${Math.round(hi * 100)}% 밖)`);
+      if (build.elite) {
+        const [lo, hi] = build.elite;
+        const ok = pe.win >= lo && pe.win <= hi;
+        console.log(`      → 강적 승률 목표 ${Math.round(lo * 100)}~${Math.round(hi * 100)}%: ${ok ? '맞음' : '벗어남'}`);
+        if (!ok) failures.push(`사람형 봇/${build.name}: 강적 승률 ${(pe.win * 100).toFixed(0)}% (목표 ${Math.round(lo * 100)}~${Math.round(hi * 100)}% 밖)`);
+      } else {
+        // 빈 슬롯은 참고 값. skill 3개 이상은 강적 남은 체력이 95% 이상일 만큼 압도적이라 강적 패턴·체력·공격만으로는 못 맞춘다 (dev-log C.16 목표 미달 유지)
+        console.log(`      → 강적 승률 ${Math.round(pe.win * 100)}% (참고, 목표 없음)`);
+      }
       if (build.name.startsWith('skill 1') && (pe.winSecs < 75 || pe.winSecs > 105)) failures.push(`사람형 봇/${build.name}: 강적 승리 평균 ${pe.winSecs.toFixed(1)}초 (목표 약 90초, 75~105 밖)`);
     }
   }

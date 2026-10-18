@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 18;
+export const BALANCE_VERSION = 19;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -79,7 +79,7 @@ export const BALANCE = {
     // ── 진화(C.9→C.11) 임시값: 단계별 진화체 테이블 (GDD 4-2 v1.0). 방식은 확정, 수치·데이터는 전부 임시 ──
     evolution: {
       /** 진화에 필요한 현재 단계 흡수 횟수(가중 없는 원래 횟수): index 0 = 1→2단계 … index 3 = 4→5단계 */
-      absorbsNeeded: [27, 30, 34, 38],
+      absorbsNeeded: [34, 38, 43, 48],
       /** 희귀 개체 흡수의 계통 누적 가중 */
       rareWeight: 2,
       /** 진화마다 슬롯 +1 (GDD 4장) */
@@ -206,6 +206,8 @@ export const BALANCE = {
       trayCapacity: 8,
       /** 슬롯 skill 특성(없으면 기본 블록) 하나당 블록 생성 간격(초). 바가 가득 차거나 봉인 중이면 멈춘다 */
       blockSpawnSeconds: 4,
+      /** 같은 계열 공격 특성이 슬롯에 둘 이상이면 서로 체인이 쉬워지므로(GDD 17-3), 그 계열 블록의 생성 간격을 (같은 계열 특성 수 − 1)당 이 비율만큼 늘린다 (C.34). 계열이 하나뿐이면 영향 없음 */
+      familySpawnSlowdown: 1,
       /** 체인 배율: 체인1 ×1.0, 체인2 ×2.2, 체인3 ×3.6 (GDD 3-5) */
       chainMultipliers: [1, 2.2, 3.6],
       /** 특성별 추가 효과가 붙는 최소 체인 (GDD 3-5 "체인3 … + 추가 효과") */

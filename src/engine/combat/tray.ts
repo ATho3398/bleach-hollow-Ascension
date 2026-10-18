@@ -7,6 +7,8 @@ export interface Block {
   kind: 'skill' | 'special' | 'void';
   /** skill 블록의 특성 id (기본 블록은 BASIC_SKILL_ID). special·void 는 null */
   traitId: string | null;
+  /** skill 공격 블록의 계열 id (GDD 17-3): 같은 계열이면 특성이 달라도 체인이 된다. 막기·회복·기본 블록·special·void 는 null (옛 데이터는 없음 = null) */
+  family?: string | null;
 }
 
 /** 블록 바. 길이 = 지금 놓인 블록 수 (최대 BALANCE trayCapacity), 빈 칸이 없다 */
@@ -16,12 +18,16 @@ export function inTray(t: Tray, i: number): boolean {
   return Number.isInteger(i) && i >= 0 && i < t.length;
 }
 
-/** 서로 체인으로 묶일 수 있는 블록인가: 같은 특성의 skill 블록만. 공허·필살은 단독 */
+/** 서로 체인으로 묶일 수 있는 블록인가 (GDD 17-3): 공격 블록은 같은 계열이면 특성이 달라도 묶이고, 계열이 없는 skill 블록(막기·회복·기본 블록)은 같은 특성끼리만 묶인다. 공허·필살은 단독 */
 export function sameChainKind(a: Block | undefined, b: Block | undefined): boolean {
-  return !!a && !!b && a.kind === 'skill' && b.kind === 'skill' && a.traitId === b.traitId;
+  if (!a || !b || a.kind !== 'skill' || b.kind !== 'skill') return false;
+  const fa = a.family ?? null;
+  const fb = b.family ?? null;
+  if (fa !== null || fb !== null) return fa === fb;
+  return a.traitId === b.traitId;
 }
 
-/** index 블록이 속한, 바에서 연속으로 붙은 같은 특성 블록 덩어리 [시작, 끝] (포함). 단독 블록은 [i, i] */
+/** index 블록이 속한, 바에서 연속으로 붙은 같은 계열(또는 같은 특성) 블록 덩어리 [시작, 끝] (포함). 단독 블록은 [i, i] */
 export function runAt(t: Tray, i: number): [number, number] {
   if (!inTray(t, i)) return [i, i];
   let lo = i;
@@ -45,7 +51,7 @@ export function chainGroup(t: Tray, i: number, maxChain: number): number[] {
   return out;
 }
 
-/** 바 전체를 같은 특성으로 붙은 덩어리로 나눈다 (화면의 묶음 표시용). 단독 블록도 길이 1 덩어리로 나온다 */
+/** 바 전체를 같은 계열로 붙은 덩어리로 나눈다 (화면의 묶음 표시용). 단독 블록도 길이 1 덩어리로 나온다 */
 export function runsOf(t: Tray): { start: number; length: number }[] {
   const out: { start: number; length: number }[] = [];
   for (let i = 0; i < t.length; ) {

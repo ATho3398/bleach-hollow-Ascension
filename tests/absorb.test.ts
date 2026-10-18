@@ -143,7 +143,7 @@ describe('흡수 가능 조건', () => {
     s.enemy.hp = 1;
     expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
     expect(s.status).toBe('won');
-    expect(s.finisher).toEqual({ kind: 'skill', traitId: 'trait-b1', lineageId: 'lineage-b' });
+    expect(s.finisher).toEqual({ kind: 'skill', traitId: 'trait-b1', lineageId: 'lineage-b', family: null, weak: true });
     expect(absorbReasons(s)).toEqual(['weakness-finisher']);
   });
 

@@ -270,7 +270,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   if (cls === 'elite') exp.elitesThisLap++;
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
-  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability) };
+  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability) };
   applyEvolutionToParams(params, exp.evolution);
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
   const pending: PendingBattle = {

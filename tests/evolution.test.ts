@@ -58,8 +58,8 @@ describe('흡수 누적', () => {
 });
 
 describe('진화 조건과 결과', () => {
-  it('단계별 필요 흡수 횟수는 BALANCE 값 (27/30/34/38), 모자라면 진화할 수 없다', () => {
-    expect([...EV.absorbsNeeded]).toEqual([27, 30, 34, 38]);
+  it('단계별 필요 흡수 횟수는 BALANCE 값 (34/38/43/48), 모자라면 진화할 수 없다', () => {
+    expect([...EV.absorbsNeeded]).toEqual([34, 38, 43, 48]);
     const e = absorbed(...mix(A, B).slice(0, need0() - 1));
     expect(absorbsNeeded(e)).toBe(need0());
     expect(absorbsRemaining(e)).toBe(1);
@@ -287,7 +287,7 @@ describe('세이브·런 로그 연결', () => {
     // 진화 형태 id 는 모두 새 테이블에 있다 (효과 계산이 던지지 않는다)
     expect(() => evolutionMultipliers(m.evolution)).not.toThrow();
     // 이어서 진화가 된다
-    for (let i = 0; i < 26; i++) recordEvolutionAbsorb(m.evolution, D, false);
+    for (let i = 0; i < EV.absorbsNeeded[3]! - 12; i++) recordEvolutionAbsorb(m.evolution, D, false);
     const r = performEvolution(m, 9);
     expect(r.ok).toBe(true);
     expect(m.evolution.tierIndex).toBe(4);

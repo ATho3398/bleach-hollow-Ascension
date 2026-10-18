@@ -9,7 +9,7 @@ import type { BuildState } from './build';
 
 const AX = BALANCE.provisional.absorb;
 
-/** 흡수 가능 이유: 마무리 일격이 약점 계통 스킬 / 약점 계통 스킬 블록의 체인3 1회 이상 / 첫 흡수 보장 — 장착 skill 특성 없음 (GDD 3-5 v0.7, 임시 수치) */
+/** 흡수 가능 이유: 마무리 일격이 약점 계열 스킬 / 약점 계열 스킬 블록의 체인3 1회 이상 / 첫 흡수 보장 — 장착 skill 특성 없음 (GDD 3-5 v0.7, 임시 수치) */
 export type AbsorbReason = 'weakness-finisher' | 'weakness-chain3' | 'first-absorb';
 
 /** 전투 결과에서 흡수 조건 판정에 쓰는 부분 */
@@ -21,7 +21,8 @@ export type AbsorbInput = Pick<CombatState, 'status' | 'finisher' | 'chain3Count
 export function absorbReasons(c: AbsorbInput): AbsorbReason[] {
   if (c.status !== 'won') return [];
   const out: AbsorbReason[] = [];
-  if (c.finisher?.kind === 'skill' && c.finisher.lineageId !== null && c.finisher.lineageId === c.enemy.def.weaknessLineageId) out.push('weakness-finisher');
+  // 약점 계열 마무리 (GDD 17-3): 엔진이 마무리 일격의 약점 여부(weak)를 정해 준다. 옛 기록(weak 없음)은 계통 비교로 대신한다
+  if (c.finisher?.kind === 'skill' && (c.finisher.weak ?? (c.finisher.lineageId !== null && c.finisher.lineageId === c.enemy.def.weaknessLineageId))) out.push('weakness-finisher');
   if (c.weakChain3Count >= AX.weakChain3ForAbsorb) out.push('weakness-chain3');
   // 첫 흡수 보장: 장착한 skill 특성이 하나도 없으면 조건 없이 흡수할 수 있다
   if (c.params.skills.length === 0) out.push('first-absorb');

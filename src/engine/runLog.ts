@@ -44,7 +44,7 @@ export function emptyLegacyMatches(): Record<LegacyTileRole, number> {
 }
 
 /** 마무리 일격(적을 쓰러뜨린 공격) 종류 (C.6) */
-export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored';
+export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo';
 
 export interface BattleRecord {
   runId: number;
@@ -80,6 +80,10 @@ export interface BattleRecord {
   blocksByChain: [number, number, number];
   /** 체인3 발동 횟수 */
   chain3Count: number;
+  /** C.34 에서 더한 필드 (세이브 형식 12, 체인 계열 개편 GDD 17-3): 계열별 체인 발동 횟수(계열 id → [체인1, 체인2, 체인3]), 콤보 발동(특수 블록 생성) 횟수, 콤보 블록 사용 횟수. 옛 기록은 빈 객체/0 */
+  chainsByFamily: Record<string, [number, number, number]>;
+  combosTriggered: number;
+  comboBlocksUsed: number;
   /** 강공격을 막기(guard)로 막은 횟수 */
   guardSuccesses: number;
   /** 공허 블록 사용 횟수 */

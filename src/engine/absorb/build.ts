@@ -4,7 +4,8 @@
 import { BALANCE } from '../../config/balance';
 import { getTrait } from '../../data/traits';
 import type { PassiveStat } from '../../data/schema';
-import type { CombatParams, CombatSkill } from '../combat/combat';
+import { getFaction } from '../../data/factions';
+import type { CombatParams, CombatSkill, FamilyCombat } from '../combat/combat';
 
 const AX = BALANCE.provisional.absorb;
 
@@ -118,10 +119,18 @@ export function passiveMultipliers(b: BuildState): Record<PassiveStat, number> {
   return m;
 }
 
-/** 빌드 → 전투 파라미터 (장착 skill 특성 → 스킬 블록, passive → 자동 적용 배율, part → 영향 없음) */
-export function buildCombatParams(b: BuildState): Partial<CombatParams> {
+/** 종족 설정의 계열 단계 기술 → 전투 엔진의 계열 표 (GDD 17-3). 엔진은 종족을 모르고 이 표만 읽는다 */
+export function familyTable(factionId: string): Record<string, FamilyCombat> {
+  const out: Record<string, FamilyCombat> = {};
+  for (const f of getFaction(factionId).families) out[f.id] = { tiers: f.tiers.map((t) => ({ multiplier: t.multiplier, ...(t.bonus ? { bonus: { ...t.bonus } } : {}) })) };
+  return out;
+}
+
+/** 빌드 → 전투 파라미터 (장착 skill 특성 → 스킬 블록, passive → 자동 적용 배율, part → 영향 없음). factionId 가 있으면 그 종족의 계열 단계 기술을 싣는다 */
+export function buildCombatParams(b: BuildState, factionId?: string): Partial<CombatParams> {
   const pm = passiveMultipliers(b);
   return {
+    ...(factionId ? { families: familyTable(factionId) } : {}),
     skills: equippedSkills(b),
     attackPowerMultiplier: pm.attackPower,
     attackSpeedMultiplier: pm.attackSpeed,

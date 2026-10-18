@@ -18,7 +18,7 @@ import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 11;
+export const SAVE_FORMAT_VERSION = 12;
 
 export interface SaveMeta {
   format: number;
@@ -255,6 +255,12 @@ export function migrateSave(raw: unknown): SaveData | null {
     // 형식 10 → 11 (C.19 튜토리얼): 도움말 플래그 추가. 이전 세이브는 '이미 봄'으로 두지 않고 한 번 보여 준다
     save.help = newHelpState();
     save.meta.format = 11;
+  }
+  if (save.meta.format < 12) {
+    // 형식 11 → 12 (C.34 체인 계열 개편): BattleRecord 에 계열별 체인·콤보 횟수 추가 (옛 기록은 빈 객체/0).
+    // 장착 특성은 id 만 저장하고 계열은 데이터(특성 family)에서 읽으므로 빌드·슬롯은 그대로 열린다
+    save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, chainsByFamily: b.chainsByFamily ?? {}, combosTriggered: b.combosTriggered ?? 0, comboBlocksUsed: b.comboBlocksUsed ?? 0 }));
+    save.meta.format = 12;
   }
   save.help = sanitizeHelpState(save.help);
   // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)

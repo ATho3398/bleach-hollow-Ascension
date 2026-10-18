@@ -13,7 +13,8 @@ const battle = (o: Partial<BattleRecord> = {}): BattleRecord => ({
   runId: 1, lap: 1, turns: 0, matchesByRole: { damage: 0, spirit: 0, shield: 0, absorb: 0, risk: 0 }, won: true, skillsUsed: [],
   enemyClass: 'normal', tierIndex: 0, enemyId: 'e', factionId: 'hollow', seed: 1, riskGained: 0, absorbGained: 0, lossReason: null,
   durationSeconds: 30, blocksByTrait: {}, blocksByChain: [0, 0, 0], chain3Count: 0, guardSuccesses: 0, voidUsed: 0, specialUsed: false,
-  finisherKind: null, finisherTraitId: null, finisherLineageId: null, absorbable: false, storedUsed: 0, storedWasted: 0, ...o,
+  finisherKind: null, finisherTraitId: null, finisherLineageId: null, absorbable: false, storedUsed: 0, storedWasted: 0,
+  chainsByFamily: {}, combosTriggered: 0, comboBlocksUsed: 0, ...o,
 });
 const run = (o: Partial<RunRecord> = {}): RunRecord => ({
   runId: 1, laps: 1, outcome: 'returned', gained: [], lost: [], endReason: 'returned', seed: 1, factionId: 'hollow',
