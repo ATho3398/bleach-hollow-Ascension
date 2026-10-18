@@ -21,6 +21,9 @@ import { speciesView, startView } from './startView';
 import { slotPickView } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { setTitleRequest, signalHold } from './bha/hold';
+import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
+import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { button, el } from './bha/dom';
 import { allSlotSummaries, lastPlayedSlot, slotKey, stashSlot, touchSlot } from '../saveSlots';
 import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
@@ -63,6 +66,7 @@ export function startApp(host: HTMLElement): void {
       return true;
     },
     canCancel: () => nav.top !== undefined && nav.top.id !== 'title',
+    onRotate: (rotated) => rotateEvent(rotated ? 'portrait' : 'landscape'),
   });
   const root = dev.view;
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로) */
@@ -134,6 +138,8 @@ export function startApp(host: HTMLElement): void {
     save = null;
     slot = 0;
     activeExp = null;
+    rotate = IDLE;
+    renderRotateCard();
     armBackTrap();
     nav.reset({ id: 'title', render: () => { renderTitle(note); root.scrollTop = 0; } });
   }
@@ -205,6 +211,54 @@ export function startApp(host: HTMLElement): void {
     persist(); // 마지막 플레이 시각 기록(+ 로드 때 해금된 칭호 저장)
     armBackTrap();
     nestScreen();
+  }
+
+  // ── 세로 전환 멈춤·가로 복귀 카운트다운 (Q-3): 전투·원정 중에 세로로 돌리면 멈추고, 가로로 돌아오면 3초 뒤 이어한다 ──
+  let rotate: RotateState = IDLE;
+  let rotateCard: { layer: HTMLElement; off: () => void; text: HTMLElement; actions: HTMLElement } | null = null;
+  let rotateTimer: ReturnType<typeof setInterval> | undefined;
+
+  function rotateEvent(ev: RotateEvent): void {
+    if (confirmingTitle) return; // 처음 화면 확인창이 이미 게임을 멈추고 있다
+    const inGame = !!root.querySelector('.bha-battle, .bha-exp');
+    const r = rotateStep(rotate, ev, inGame);
+    rotate = r.state;
+    if (r.effect === 'hold') signalHold('hold');
+    if (r.effect === 'release') signalHold('release');
+    renderRotateCard();
+  }
+
+  function renderRotateCard(): void {
+    clearInterval(rotateTimer);
+    rotateTimer = undefined;
+    if (rotate.phase === 'idle') {
+      rotateCard?.off();
+      rotateCard?.layer.remove();
+      rotateCard = null;
+      return;
+    }
+    if (!rotateCard) {
+      const layer = el('div', 'bha-overlay bha-overlay--in-app bha-confirm');
+      layer.setAttribute('role', 'alertdialog');
+      layer.setAttribute('aria-modal', 'true');
+      const modal = el('div', 'bha-modal');
+      const text = el('p', 'bha-modal__body');
+      const actions = el('div', 'bha-modal__actions');
+      modal.append(el('h2', 'bha-modal__title', '일시정지'), text, actions);
+      layer.append(modal);
+      getOverlayHost().append(layer);
+      rotateCard = { layer, off: registerLayer(layer, () => rotateEvent('cancel')), text, actions };
+    }
+    const c = rotateCard;
+    const resume = button({ label: rotate.phase === 'counting' ? '지금 계속' : '계속', variant: 'primary', onClick: () => rotateEvent('resume') });
+    if (rotate.phase === 'counting') {
+      c.text.textContent = `가로로 돌아왔다. ${rotate.left}초 뒤 이어서 한다.`;
+      c.actions.replaceChildren(button({ label: '취소', variant: 'ghost', onClick: () => rotateEvent('cancel') }), resume);
+      rotateTimer = setInterval(() => rotateEvent('tick'), 1000);
+    } else {
+      c.text.textContent = rotate.phase === 'portrait' ? '세로로 돌려서 멈췄다. 가로로 돌리면 3초 뒤 이어한다.' : '멈춰 있다. 준비되면 [계속]을 누른다.';
+      c.actions.replaceChildren(resume);
+    }
   }
 
   // ── 처음 화면으로 돌아가기 (Q-3): 뒤로가기 → 방에서 확인 → 저장 → 시작 화면 ──

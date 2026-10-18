@@ -19,6 +19,8 @@ export interface DeviceOpts {
   onCancel: () => boolean;
   /** 취소로 닫을 화면이 있는가 (버튼 표시용) */
   canCancel: () => boolean;
+  /** 세로/가로가 바뀔 때부른다. true = 세로(기기를 돌려 놓음) */
+  onRotate?: (rotated: boolean) => void;
 }
 
 export interface Device {
@@ -93,12 +95,18 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   // 프로브 padding 에 안전 영역(env)을 넣어 같이 읽어, 돌린·줄인 기기 안 여백으로 바꿔 쓴다 (viewport-fit=cover 를 켰을 때만 0 이 아니다)
   const probe = el('div', 'bha-dev__probe');
   probe.setAttribute('aria-hidden', 'true');
+  let lastRotated: boolean | null = null;
   const fitDevice = () => {
     const r = probe.getBoundingClientRect();
     const vp = pickViewport(r, window);
     const f = computeFit(vp.w, vp.h);
     setFit(f);
     dev.classList.toggle('is-rotated', f.rotated);
+    if (f.rotated !== lastRotated) {
+      const first = lastRotated === null; // 시작할 때의 방향은 "전환"이 아니다
+      lastRotated = f.rotated;
+      if (!first) opts.onRotate?.(f.rotated);
+    }
     dev.classList.toggle('is-narrow', f.scale < 1); // 긴 쪽이 740px 미만인 좁은 폰: 블록 바를 아래 전폭으로 (lcd.css)
     dev.style.width = `${f.w}px`;
     dev.style.height = `${f.h}px`;
