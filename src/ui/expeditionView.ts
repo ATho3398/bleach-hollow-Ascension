@@ -10,6 +10,7 @@ import {
 } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { button, el, icon, meter, mountApp, notice } from './bha/dom';
+import { onHold } from './bha/hold';
 import {
   canPlaceAt, MSG_ICON, msgKind, needsWalkerSnap, ringDisplayPos, ringState, tileCss, tileIconId,
 } from './bha/expedition';
@@ -55,9 +56,20 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (timer !== undefined) clearTimeout(timer);
     timer = undefined;
   };
+  /** 처음 화면 복귀 확인창(Q-3)이 열려 있으면 true: 예약된 일은 풀릴 때까지 미뤄진다. dead = 이 화면을 떠났다 */
+  let held = false;
+  let dead = false;
   const later = (ms: number, fn: () => void) => {
     clear();
-    timer = setTimeout(fn, ms);
+    const run = () => {
+      if (dead) return;
+      if (held) {
+        timer = setTimeout(run, 150);
+        return;
+      }
+      fn();
+    };
+    timer = setTimeout(run, ms);
   };
   const stepMs = () => (EX.secondsPerTile * 1000) / speed;
 
@@ -390,4 +402,25 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   render();
   schedule();
+
+  let wasPaused = false;
+  const offHold = onHold((sig) => {
+    if (!main.isConnected || dead) return offHold();
+    if (sig === 'hold') {
+      if (held) return;
+      held = true;
+      wasPaused = paused;
+      paused = true; // 모양만 일시정지로: 타이머는 건드리지 않고 later 가 미룬다
+      render();
+    } else if (sig === 'release') {
+      if (!held) return;
+      held = false;
+      paused = wasPaused;
+      render();
+    } else {
+      dead = true;
+      clear();
+      offHold();
+    }
+  });
 }

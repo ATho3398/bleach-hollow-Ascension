@@ -1,10 +1,11 @@
 // 세이브 백업: 내보내기·불러오기의 순수 로직 (Q-1, C.29). 세이브 구조는 건드리지 않고 기존 SaveData 를 그대로 직렬화한다.
 // 입력 설정(bha-input-settings)은 기기마다 다른 값이라 담지 않는다 (dev-log C.29).
 import { FACTIONS } from './data/factions';
-import { migrateSave, SAVE_FORMAT_VERSION, SAVE_KEY, type SaveData, type StorageLike } from './game';
+import { migrateSave, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
+import { slotBackupKey, slotKey } from './saveSlots';
 
-/** 가져오기 직전 현재 세이브를 한 번 보관하는 키 */
-export const BACKUP_KEY = `${SAVE_KEY}.backup`;
+/** 가져오기 직전 현재 세이브를 한 번 보관하는 키 (슬롯 1). 슬롯별 키는 saveSlots 의 slotBackupKey */
+export const BACKUP_KEY = slotBackupKey(1);
 
 export type ImportFailure = 'empty' | 'not-json' | 'not-save' | 'newer' | 'corrupt' | 'faction';
 
@@ -77,34 +78,34 @@ export interface ApplyStorage extends StorageLike {
   removeItem?(key: string): void;
 }
 
-/** 가져오기 적용: 현재 세이브를 백업 키에 한 번 보관한 뒤 덮어쓴다. 쓰기가 막히면 false (현재 세이브는 그대로) */
-export function applyImport(storage: ApplyStorage, save: SaveData): boolean {
+/** 가져오기 적용: 그 슬롯의 현재 세이브를 백업 키에 한 번 보관한 뒤 덮어쓴다. 쓰기가 막히면 false (현재 세이브는 그대로) */
+export function applyImport(storage: ApplyStorage, save: SaveData, slot = 1): boolean {
   try {
-    const current = storage.getItem(SAVE_KEY);
-    if (current !== null) storage.setItem(BACKUP_KEY, current);
-    storage.setItem(SAVE_KEY, serializeSave(save));
+    const current = storage.getItem(slotKey(slot));
+    if (current !== null) storage.setItem(slotBackupKey(slot), current);
+    storage.setItem(slotKey(slot), serializeSave(save));
     return true;
   } catch {
     return false;
   }
 }
 
-export function hasBackup(storage: StorageLike | null): boolean {
+export function hasBackup(storage: StorageLike | null, slot = 1): boolean {
   try {
-    return !!storage?.getItem(BACKUP_KEY);
+    return !!storage?.getItem(slotBackupKey(slot));
   } catch {
     return false;
   }
 }
 
 /** 백업과 현재 세이브를 맞바꾼다 (다시 누르면 원래대로). 백업이 없거나 쓰기가 막히면 false */
-export function swapWithBackup(storage: StorageLike): boolean {
+export function swapWithBackup(storage: StorageLike, slot = 1): boolean {
   try {
-    const backup = storage.getItem(BACKUP_KEY);
+    const backup = storage.getItem(slotBackupKey(slot));
     if (!backup) return false;
-    const current = storage.getItem(SAVE_KEY);
-    storage.setItem(SAVE_KEY, backup);
-    if (current !== null) storage.setItem(BACKUP_KEY, current);
+    const current = storage.getItem(slotKey(slot));
+    storage.setItem(slotKey(slot), backup);
+    if (current !== null) storage.setItem(slotBackupKey(slot), current);
     return true;
   } catch {
     return false;

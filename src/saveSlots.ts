@@ -1,0 +1,118 @@
+// 세이브 슬롯 (Q-3, C.31): 슬롯 3개, 슬롯별 localStorage 키. 슬롯 1 = 기존 키 그대로라 옛 세이브는 마이그레이션 없이 슬롯 1이 된다.
+// 슬롯 밖 정보(마지막 플레이 시각)는 별도 키 하나에 둔다 → SaveData 구조와 SAVE_FORMAT_VERSION 은 그대로.
+// 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
+import { migrateSave, SAVE_KEY, type SaveData, type StorageLike } from './game';
+
+export const SLOT_COUNT = 3;
+/** 슬롯별 마지막 플레이 시각 */
+export const SLOTS_META_KEY = `${SAVE_KEY}.slots`;
+
+/** 슬롯 번호(1~SLOT_COUNT)의 세이브 키. 슬롯 1 은 예전 단일 세이브 키 */
+export const slotKey = (slot: number): string => (slot === 1 ? SAVE_KEY : `${SAVE_KEY}.slot${slot}`);
+/** 슬롯의 백업(덮어쓰기 직전 한 번 보관) 키. 슬롯 1 은 C.29 의 백업 키와 같다 */
+export const slotBackupKey = (slot: number): string => `${slotKey(slot)}.backup`;
+
+export const slotNumbers = (): number[] => Array.from({ length: SLOT_COUNT }, (_, i) => i + 1);
+
+export type SlotSummary =
+  | { slot: number; state: 'empty' }
+  | { slot: number; state: 'broken' }
+  | {
+      slot: number;
+      state: 'ok';
+      factionId: string;
+      tierIndex: number;
+      expeditions: number;
+      /** 마지막 플레이 시각(ms). 슬롯 기록이 없던 옛 세이브는 null */
+      playedAt: number | null;
+      /** 원정 중간 저장이 있는가 */
+      inExpedition: boolean;
+    };
+
+interface SlotsMeta {
+  played: Record<string, number>;
+}
+
+function readMeta(storage: StorageLike): SlotsMeta {
+  try {
+    const raw: unknown = JSON.parse(storage.getItem(SLOTS_META_KEY) ?? 'null');
+    const played = (raw as SlotsMeta | null)?.played;
+    if (played && typeof played === 'object') {
+      const clean: Record<string, number> = {};
+      for (const [k, v] of Object.entries(played)) if (typeof v === 'number' && Number.isFinite(v)) clean[k] = v;
+      return { played: clean };
+    }
+  } catch {
+    // 손상된 메타는 없는 것으로 본다
+  }
+  return { played: {} };
+}
+
+/** 슬롯을 플레이했다고 기록한다 (저장할 때마다). 저장소가 막혀 있으면 조용히 넘어간다 */
+export function touchSlot(storage: StorageLike, slot: number, nowMs: number = Date.now()): void {
+  try {
+    const meta = readMeta(storage);
+    meta.played[String(slot)] = nowMs;
+    storage.setItem(SLOTS_META_KEY, JSON.stringify(meta));
+  } catch {
+    // 시각 기록만 못 남긴다
+  }
+}
+
+/** 슬롯 하나의 요약. 비어 있음 / 손상 / 정상. 로드 부작용(칭호 평가)은 일으키지 않는다 */
+export function slotSummary(storage: StorageLike, slot: number): SlotSummary {
+  let text: string | null;
+  try {
+    text = storage.getItem(slotKey(slot));
+  } catch {
+    return { slot, state: 'empty' };
+  }
+  if (!text) return { slot, state: 'empty' };
+  let save: SaveData | null = null;
+  try {
+    save = migrateSave(JSON.parse(text));
+  } catch {
+    save = null;
+  }
+  if (!save || !save.evolution || !save.runLog || !Array.isArray(save.runLog.runs)) return { slot, state: 'broken' };
+  return {
+    slot,
+    state: 'ok',
+    factionId: save.factionId,
+    tierIndex: save.evolution.tierIndex,
+    expeditions: save.runLog.runs.length,
+    playedAt: readMeta(storage).played[String(slot)] ?? null,
+    inExpedition: save.activeExpedition != null,
+  };
+}
+
+export const allSlotSummaries = (storage: StorageLike): SlotSummary[] => slotNumbers().map((n) => slotSummary(storage, n));
+
+/** 이어하기가 열 슬롯: 정상 세이브 중 마지막 플레이가 가장 최근인 것(시각이 같거나 없으면 번호가 작은 쪽). 없으면 null */
+export function lastPlayedSlot(summaries: readonly SlotSummary[]): number | null {
+  let best: { slot: number; at: number } | null = null;
+  for (const s of summaries) {
+    if (s.state !== 'ok') continue;
+    const at = s.playedAt ?? 0;
+    if (!best || at > best.at) best = { slot: s.slot, at };
+  }
+  return best ? best.slot : null;
+}
+
+/** 슬롯을 덮어쓰기 전에 지금 내용을 그 슬롯의 백업 키에 보관한다. 비어 있으면 아무것도 하지 않는다. 저장소가 막히면 false */
+export function stashSlot(storage: StorageLike, slot: number): boolean {
+  try {
+    const cur = storage.getItem(slotKey(slot));
+    if (cur !== null) storage.setItem(slotBackupKey(slot), cur);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** "10/18 23:10" 꼴 (기기 시간대) */
+export function formatPlayedAt(ms: number): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}

@@ -205,3 +205,28 @@
 .bha-evo__hint { color: var(--bha-text-1); font-weight: 600; }
 .bha-growth { padding: var(--bha-sp-2) var(--bha-sp-4); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1); }
 .bha-growth__line { margin: 0; font-size: var(--bha-fs-sm); line-height: 1.35; font-variant-numeric: tabular-nums; }
+
+/* ═════ 시작 화면 슬롯·메뉴 (Q-3, C.31 — 임시 스타일: 기존 토큰만) ═════ */
+.bha-start__right { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3); overflow-y: auto; }
+.bha-start__right > * { flex: none; }
+.bha-start__slotshead { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); letter-spacing: var(--bha-tracking-label); }
+.bha-start__menu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-3); }
+.bha-lcd .bha-start__right .bha-btn { padding: 0 var(--bha-sp-3); font-size: var(--bha-fs-sm); gap: var(--bha-sp-3); }
+.bha-slots { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-slot {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--bha-sp-4); width: 100%; min-height: var(--bha-touch);
+  padding: var(--bha-sp-2) var(--bha-sp-4); text-align: left; color: var(--bha-text-1); font: inherit;
+  border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); background: var(--bha-bg-1);
+}
+button.bha-slot { cursor: pointer; }
+.bha-slot.is-last { border-color: var(--bha-primary-line); }
+.bha-slot.is-empty { color: var(--bha-text-2); }
+.bha-slot__no { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); white-space: nowrap; }
+.bha-slot__body { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.bha-slot__main { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); overflow-wrap: anywhere; }
+.bha-slot__sub { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-slotpage .bha-slots { gap: var(--bha-sp-3); }
+.bha-lcd .bha-confirm .bha-modal { gap: var(--bha-sp-3); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); width: min(380px, 100%); }
+.bha-lcd .bha-confirm .bha-modal__title { font-size: var(--bha-fs-xl); }
+.bha-lcd .bha-confirm .bha-modal__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
+.bha-lcd .bha-overlay.bha-confirm { z-index: calc(var(--bha-z-tutorial) + 1); } /* 튜토리얼·도움말 위에서도 보인다 */

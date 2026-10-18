@@ -17,7 +17,11 @@ import {
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { applyTheme } from './bha/theme';
-import { startView } from './startView';
+import { speciesView, startView } from './startView';
+import { slotPickView } from './slotView';
+import { confirmDialog } from './confirmDialog';
+import { setTitleRequest, signalHold } from './bha/hold';
+import { allSlotSummaries, lastPlayedSlot, slotKey, stashSlot, touchSlot } from '../saveSlots';
 import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { resultView } from './resultView';
@@ -42,16 +46,33 @@ function titleLabel(id: string, factionId: string): string {
 }
 
 export function startApp(host: HTMLElement): void {
-  let save: SaveData | null = loadSave(localStorage);
+  // 세이브 슬롯 (Q-3): 시작 화면에서 슬롯을 고르기 전에는 세이브가 없다. slot = 지금 플레이 중인 슬롯(1~3), 0 = 시작 화면
+  let save: SaveData | null = null;
+  let slot = 0;
+  /** 지금 진행 중인 원정 (처음 화면으로 돌아갈 때 중간 저장하려고 들고 있는다) */
+  let activeExp: ExpeditionState | null = null;
+  let confirmingTitle = false;
 
-  // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 취소 버튼 = 화면 스택 한 단계 뒤로
+  // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 취소 버튼 = 화면 스택 한 단계 뒤로, 더 갈 곳이 없으면 처음 화면 복귀 확인 (Q-3)
   const nav = new ScreenStack();
-  const dev = createDevice(host, { onCancel: () => nav.back(), canCancel: () => nav.size > 1 && !nav.top?.locked });
+  const dev = createDevice(host, {
+    onCancel: () => {
+      if (nav.back()) return true;
+      if (nav.top?.id === 'title') return false;
+      askReturnToTitle();
+      return true;
+    },
+    canCancel: () => nav.top !== undefined && nav.top.id !== 'title',
+  });
   const root = dev.view;
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로) */
   const open = (id: string, render: () => void, locked = false) => nav.push({ id, locked, render: () => { render(); root.scrollTop = 0; } });
 
-  const persist = () => save && writeSave(localStorage, save);
+  const persist = () => {
+    if (!save || slot === 0) return;
+    writeSave(localStorage, save, slotKey(slot));
+    touchSlot(localStorage, slot);
+  };
   /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
   let resumeNote = '';
 
@@ -99,35 +120,141 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  function factionScreen(): void {
-    // 이미 방에서 왔으면 취소로 돌아갈 수 있게 쌓고, 처음이면 홈으로 둔다
-    if (nav.size > 0) open('faction', renderFaction);
-    else nav.reset({ id: 'faction', render: renderFaction });
+  // ── 시작 화면·슬롯 (Q-3) ──
+  const settingsOpener = (withBackup: boolean) => () =>
+    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined));
+
+  /** 가져오기·되돌리기가 끝난 뒤: 그 슬롯을 저장소에서 다시 읽어 방으로 */
+  function reloadSlot(): void {
+    enterSlot(slot);
   }
 
-  function renderFaction(): void {
-    // 시작 화면의 기본 테마: 세이브가 있으면 그 종족, 없으면 등록된 첫 종족 (종족 id 로 분기하지 않는다)
+  /** 시작 화면으로: 스택을 비우고 처음 화면 하나만 남긴다 */
+  function titleScreen(note = ''): void {
+    save = null;
+    slot = 0;
+    activeExp = null;
+    armBackTrap();
+    nav.reset({ id: 'title', render: () => { renderTitle(note); root.scrollTop = 0; } });
+  }
+
+  function renderTitle(note = ''): void {
+    const sums = allSlotSummaries(localStorage);
+    const last = lastPlayedSlot(sums);
+    // 시작 화면의 테마: 가장 최근 슬롯의 종족, 없으면 등록된 첫 종족 (종족 id 로 분기하지 않는다)
+    const lastSum = sums.find((x) => x.slot === last);
+    applyTheme(lastSum && lastSum.state === 'ok' ? getFaction(lastSum.factionId) : FACTIONS[0]!);
+    startView(root, FACTIONS, sums, {
+      onNew: () => open('slot-new', () => renderSlotPick('new')),
+      onContinue: () => last !== null && enterSlot(last),
+      onImport: () => open('slot-import', () => renderSlotPick('import')),
+      onSettings: settingsOpener(false),
+      onHelp: () => openHelp(undefined, true),
+    }, note);
+  }
+
+  function renderSlotPick(mode: 'new' | 'import'): void {
+    const sums = allSlotSummaries(localStorage);
+    slotPickView(root, mode, sums, FACTIONS, (sum) => {
+      if (mode === 'new') {
+        const begin = () => open('species', () => renderSpecies(sum.slot));
+        if (sum.state === 'empty') begin();
+        else confirmDialog({
+          title: `슬롯 ${sum.slot}을 덮어쓸까요?`,
+          body: '이 슬롯의 기록이 새 세이브로 바뀝니다. 덮어쓰기 전의 세이브는 슬롯 백업에 한 번 보관됩니다.',
+          yes: '덮어쓰기', no: '아니오', danger: true,
+          onYes: begin,
+        });
+      } else {
+        open('backup-import', () => backupView(root, null, () => {}, { slot: sum.slot, importOnly: true, onApplied: () => enterSlot(sum.slot) }));
+      }
+    });
+  }
+
+  /** 종족 고르기: newSlot 이 있으면 그 슬롯에 새 세이브를 만든다, 없으면(방에서 종족 바꾸기) 지금 세이브의 종족을 바꾼다 */
+  function renderSpecies(newSlot?: number): void {
     applyTheme(helpFaction());
-    startView(root, FACTIONS, {
+    speciesView(root, FACTIONS, {
       onPick: (f) => {
-        if (save) save.factionId = f.id;
-        else save = newSaveData(f.id);
+        if (newSlot !== undefined) {
+          stashSlot(localStorage, newSlot);
+          slot = newSlot;
+          save = newSaveData(f.id);
+        } else if (save) save.factionId = f.id;
         persist();
         nestScreen();
       },
-      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true), false, () => open('backup', () => backupView(root, save, persist)))),
+      onSettings: settingsOpener(false),
       onHelp: () => openHelp(undefined, true),
     });
   }
 
+  /** 방에서 종족 바꾸기 */
+  function factionScreen(): void {
+    open('faction', () => renderSpecies());
+  }
+
+  /** 슬롯을 열어 방으로. 읽을 수 없으면 시작 화면에 알린다 */
+  function enterSlot(n: number): void {
+    const loaded = loadSave(localStorage, slotKey(n));
+    if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
+    save = loaded;
+    slot = n;
+    activeExp = null;
+    resumeNote = '';
+    persist(); // 마지막 플레이 시각 기록(+ 로드 때 해금된 칭호 저장)
+    armBackTrap();
+    nestScreen();
+  }
+
+  // ── 처음 화면으로 돌아가기 (Q-3): 뒤로가기 → 방에서 확인 → 저장 → 시작 화면 ──
+  function askReturnToTitle(): void {
+    if (confirmingTitle || nav.top?.id === 'title') return;
+    confirmingTitle = true;
+    signalHold('hold'); // 전투·원정은 확인창이 떠 있는 동안 멈춘다
+    const inExpedition = activeExp !== null && activeExp.phase !== 'ended';
+    confirmDialog({
+      title: '처음 화면으로 돌아갈까요?',
+      body: inExpedition ? '원정은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다 (싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
+      yes: '예', no: '아니오',
+      onYes: () => {
+        confirmingTitle = false;
+        signalHold('leave');
+        if (activeExp && activeExp.phase !== 'ended' && activeExp.phase !== 'battle') saveProgress(activeExp); // 전투 직전 상태는 이미 저장돼 있다
+        else persist();
+        titleScreen();
+      },
+      onNo: () => {
+        confirmingTitle = false;
+        signalHold('release');
+      },
+    });
+  }
+
+  /** 브라우저 뒤로가기도 같은 취소로 받는다: 기록 한 칸을 더 쌓아 두고, 되돌아오면 취소 처리 후 다시 쌓는다. 시작 화면에서는 그대로 앱 밖으로 나가게 둔다 */
+  function armBackTrap(): void {
+    try {
+      if (history.state?.bhaTrap !== true) history.pushState({ bhaTrap: true }, '');
+    } catch {
+      // history 를 못 쓰는 환경은 버튼·Esc 로만 돌아간다
+    }
+  }
+  setTitleRequest(askReturnToTitle);
+  window.addEventListener('popstate', () => {
+    if (nav.top === undefined || nav.top.id === 'title') return;
+    dev.cancel();
+    armBackTrap();
+  });
+
   /** 홈(방)으로: 스택을 비우고 방 하나만 남긴다 */
   function nestScreen(): void {
-    if (!save) return factionScreen();
+    if (!save) return titleScreen();
+    activeExp = null;
     nav.reset({ id: 'room', render: () => { renderRoom(); root.scrollTop = 0; } });
   }
 
   function renderRoom(): void {
-    if (!save) return factionScreen();
+    if (!save) return titleScreen();
     const faction = getFaction(save.factionId);
     applyTheme(faction);
     const s = save;
@@ -152,7 +279,7 @@ export function startApp(host: HTMLElement): void {
       onCare: () => open('care', () => careView(dev, faction, s, props.care, persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
       onChangeFaction: factionScreen,
-      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true), false, () => open('backup', () => backupView(root, save, persist)))),
+      onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
     });
   }
@@ -188,6 +315,7 @@ export function startApp(host: HTMLElement): void {
       evolution: save.evolution,
     });
     resumeNote = '';
+    activeExp = exp;
     saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
     // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
     open('expedition', () => showExpedition(faction, exp, `${faction.huntingGroundName}으로 출발!`), true);
@@ -196,6 +324,7 @@ export function startApp(host: HTMLElement): void {
   /** 저장된 원정으로 돌아간다: 저장된 시점의 화면(전투 직전·흡수·둥지 칸 귀환 선택·이동 중)으로 복원 */
   function resumeExpedition(exp: ExpeditionState, speed: number): void {
     const faction = getFaction(exp.factionId);
+    activeExp = exp;
     setSpeed(speed);
     if (exp.phase === 'battle') runBattle(faction, exp);
     else if (exp.phase === 'absorb') afterBattle(faction, exp);
@@ -204,6 +333,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   function runBattle(faction: FactionConfig, exp: ExpeditionState): void {
+    activeExp = exp;
     const p = exp.pending!;
     const s = startBattle(exp);
     const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}`;
@@ -220,6 +350,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 승리 후 흡수 가능하면 흡수 화면 → 한계 돌파 연출 → 원정으로 돌아간다 */
   function afterBattle(faction: FactionConfig, exp: ExpeditionState): void {
+    activeExp = exp;
     const proceed = () => {
       saveProgress(exp);
       const next = () => (exp.phase === 'ended' ? endExpedition(faction, exp) : showExpedition(faction, exp, '전투 승리!'));
@@ -231,6 +362,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   function showExpedition(faction: FactionConfig, exp: ExpeditionState, msg = ''): void {
+    activeExp = exp;
     expeditionView(root, faction, exp, {
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
@@ -246,6 +378,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
+    activeExp = null;
     let growth: GrowthInput | undefined;
     if (save) {
       const had = new Set(save.titles.map((t) => t.titleId));
@@ -297,6 +430,5 @@ export function startApp(host: HTMLElement): void {
     practiceResultView(root, faction, enemy, s, { onAgain: () => practiceBattle(faction, enemy, true), onMenu: () => nav.pop() });
   }
 
-  if (save) nestScreen();
-  else factionScreen();
+  titleScreen();
 }

@@ -252,9 +252,9 @@ export function migrateSave(raw: unknown): SaveData | null {
   return save;
 }
 
-export function loadSave(storage: StorageLike): SaveData | null {
+export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData | null {
   try {
-    const text = storage.getItem(SAVE_KEY);
+    const text = storage.getItem(key);
     const save = text ? migrateSave(JSON.parse(text)) : null;
     if (save) checkTitles(save, 'load');
     return save;
@@ -263,9 +263,9 @@ export function loadSave(storage: StorageLike): SaveData | null {
   }
 }
 
-export function writeSave(storage: StorageLike, save: SaveData): void {
+export function writeSave(storage: StorageLike, save: SaveData, key: string = SAVE_KEY): void {
   try {
-    storage.setItem(SAVE_KEY, JSON.stringify(save));
+    storage.setItem(key, JSON.stringify(save));
   } catch {
     // 저장 공간이 막힌 환경(시크릿 모드 등)에서는 이번 판만 기록이 남지 않는다
   }

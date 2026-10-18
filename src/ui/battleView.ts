@@ -15,6 +15,7 @@ import {
 import type { FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
+import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, chainLevelAt, floatPool, floatSpot, foeEl, HURT_SPOTS, insertEl, insertMark, logLineEl, LOG_ICON, nudgeOf, PATTERN_VIEW, pickAbbr,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setInsert, setText, trayEl,
@@ -408,6 +409,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     showOverlay(inner);
   };
   pauseBtn.onclick = () => setPaused(!paused);
+  // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니오로 닫히면 우리가 멈춘 것만 풀어 준다
+  let heldByApp = false;
+  const offHold = onHold((sig) => {
+    if (!app.isConnected || stopped) return offHold();
+    if (sig === 'hold') {
+      if (!paused && !overlayOpen && s.status === 'playing') {
+        setPaused(true);
+        heldByApp = true;
+      }
+    } else if (sig === 'release') {
+      if (heldByApp && paused) setPaused(false);
+      heldByApp = false;
+    } else {
+      stopped = true;
+      tutorial?.dismiss(); // 튜토리얼은 본 것으로 치지 않는다 (다음 첫 전투에서 다시)
+      tutorial = null;
+      offHold();
+    }
+  });
   speedBtn.onclick = () => {
     speed = speed === 1 ? 2 : 1;
     setText(speedText, `${speed}x`);

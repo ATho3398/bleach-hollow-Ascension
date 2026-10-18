@@ -19,7 +19,21 @@ function storageOrNull(): Storage | null {
   }
 }
 
-export function backupView(root: HTMLElement, current: SaveData | null, persist: () => void): void {
+export interface BackupViewOptions {
+  /** 대상 슬롯 (기본 1). 불러오기·되돌리기는 이 슬롯의 키에 쓴다 */
+  slot?: number;
+  /** true 면 내보내기 칸을 숨기고 불러오기만 (시작 화면의 [불러오기]) */
+  importOnly?: boolean;
+  /** 가져오기·되돌리기가 저장소에 반영된 뒤 부른다. 없으면 페이지를 새로 연다 */
+  onApplied?: () => void;
+}
+
+export function backupView(root: HTMLElement, current: SaveData | null, persist: () => void, opts: BackupViewOptions = {}): void {
+  const slot = opts.slot ?? 1;
+  const applied = () => {
+    if (opts.onApplied) opts.onApplied();
+    else location.reload();
+  };
   const storage = storageOrNull();
   let status: Status = null;
   let pending: Pending | null = null;
@@ -103,19 +117,19 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
 
   const apply = () => {
     if (!pending) return;
-    if (!storage || !applyImport(storage, pending.save)) {
+    if (!storage || !applyImport(storage, pending.save, slot)) {
       pending = null;
       return say('danger', '저장 공간이 막혀 있어 가져오지 못했다. 현재 세이브는 그대로다.');
     }
     pending = null;
     say('good', '가져왔다. 화면을 새로 연다…');
-    setTimeout(() => location.reload(), 700);
+    setTimeout(applied, 700);
   };
 
   const revert = () => {
-    if (!storage || !swapWithBackup(storage)) return say('danger', '되돌릴 백업이 없다.');
+    if (!storage || !swapWithBackup(storage, slot)) return say('danger', '되돌릴 백업이 없다.');
     say('good', '이전 세이브로 되돌렸다. 화면을 새로 연다…');
-    setTimeout(() => location.reload(), 700);
+    setTimeout(applied, 700);
   };
 
   const textArea = (): HTMLElement | null => {
@@ -135,6 +149,7 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
   const confirmPanel = (p: Pending): HTMLElement => {
     const f = getFaction(p.save.factionId);
     const rows = [
+      { label: '슬롯', value: `슬롯 ${slot}` },
       { label: '종족', value: f.name },
       { label: '단계', value: `${p.save.evolution.tierIndex + 1}단계 ${f.tierNames[p.save.evolution.tierIndex] ?? ''}` },
       { label: '원정', value: `${p.save.runLog.runs.length}회` },
@@ -167,9 +182,12 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
     }
 
     const foot: Node[] = [];
-    if (hasBackup(storage)) foot.push(button({ label: '이전 세이브로 되돌리기', icon: 'i-loop', onClick: revert }));
+    if (hasBackup(storage, slot)) foot.push(button({ label: '이전 세이브로 되돌리기', icon: 'i-loop', onClick: revert }));
     if (status) foot.push(notice(status.kind, status.text));
-    const p = lcdPageParts({ cls: 'bha-backup-page', foot }, lcdHead({ title: '세이브 백업', sub: '내보내기 · 불러오기' }), [exportP], [right]);
+    const head = lcdHead({ title: opts.importOnly ? '불러오기' : '세이브 백업', sub: opts.importOnly ? `슬롯 ${slot}에 넣는다` : `슬롯 ${slot} · 내보내기 · 불러오기` });
+    const p = opts.importOnly
+      ? lcdPageParts({ cls: 'bha-backup-page', foot }, head, [right], [])
+      : lcdPageParts({ cls: 'bha-backup-page', foot }, head, [exportP], [right]);
     mountApp(root, { cls: p.cls }, ...p.nodes);
   };
   render();

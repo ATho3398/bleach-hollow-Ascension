@@ -5,12 +5,15 @@ import { helpVars, renderHelpText, TUTORIAL_SCENES } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
+import { requestTitle } from './bha/hold';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
 import { placeCard, placeCardBox, unionRect, type Rect } from './helpLayout';
 
 export interface TutorialHandle {
   close(): void;
+  /** 끝낸 것으로 치지 않고 조용히 치운다 (화면을 떠날 때, Q-3). onFinish 는 부르지 않는다 */
+  dismiss(): void;
 }
 
 export interface TutorialOverlayOptions {
@@ -57,12 +60,15 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   layer.append(pauseTag, hole, card);
   const host = getOverlayHost();
   host.append(layer);
-  const unregister = registerLayer(layer, () => {});
+  const unregister = registerLayer(layer, requestTitle); // 취소 = 처음 화면으로 돌아갈지 확인 (Q-3)
 
-  const finish = (status: Exclude<TutorialStatus, 'active'>) => {
+  const teardown = () => {
     window.removeEventListener('resize', layout);
     unregister();
     layer.remove();
+  };
+  const finish = (status: Exclude<TutorialStatus, 'active'>) => {
+    teardown();
     opts.onFinish(status);
   };
 
@@ -170,5 +176,5 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
 
   window.addEventListener('resize', layout);
   render();
-  return { close: () => finish('skipped') };
+  return { close: () => finish('skipped'), dismiss: teardown };
 }
