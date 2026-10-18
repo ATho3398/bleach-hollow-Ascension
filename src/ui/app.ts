@@ -6,7 +6,7 @@ import type { EnemyPatternKind } from '../data/schema';
 import { FACTIONS, getFaction } from '../data/factions';
 import { pickFaction, type EnemyDef } from '../data/schema';
 import { tileName } from '../data/tiles';
-import { buildBattleRecord, createCombat, elapsedSeconds, type CombatState } from '../engine/combat';
+import { buildBattleRecord, createCombat, elapsedSeconds, storedStartGaugeOf, type CombatState } from '../engine/combat';
 import { absorbReasons, buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams } from '../engine/evolution';
 import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
@@ -229,7 +229,10 @@ export function startApp(root: HTMLElement): void {
 
   function practiceBattle(faction: FactionConfig, enemy: EnemyDef): void {
     const params = save ? buildCombatParams(save.build) : undefined;
-    if (save && params) applyEvolutionToParams(params, save.evolution);
+    if (save && params) {
+      applyEvolutionToParams(params, save.evolution);
+      params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
+    }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     battleView(root, faction, s, {
       onQuit: () => practiceScreen(faction),
@@ -248,13 +251,14 @@ export function startApp(root: HTMLElement): void {
     const won = s.status === 'won';
     const reasons = absorbReasons(s);
     const fin = s.finisher;
-    const finText = !fin ? '-' : fin.kind === 'skill' ? `${fin.traitId && fin.lineageId ? traitName(fin.traitId, faction.id) : labels.basicBlock}${fin.lineageId ? ` (${lineageName(fin.lineageId, faction.id)})` : ''}` : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', skill: '' }[fin.kind];
+    const finText = !fin ? '-' : fin.kind === 'skill' ? `${fin.traitId && fin.lineageId ? traitName(fin.traitId, faction.id) : labels.basicBlock}${fin.lineageId ? ` (${lineageName(fin.lineageId, faction.id)})` : ''}` : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, skill: '' }[fin.kind];
     const detail = el('div');
     detail.innerHTML = `<table>
       <tr><td>전투 시간</td><td>${elapsedSeconds(s).toFixed(1)}초</td></tr>
       <tr><td>블록 사용 (${labels.chain}1 / 2 / 3)</td><td>${s.blocksByChain.join(' / ')}</td></tr>
       <tr><td>${labels.chain}3 발동</td><td>${s.chain3Count}회</td></tr>
       <tr><td>강공격 막기</td><td>${s.guardSuccesses}회</td></tr>
+      <tr><td>${labels.storedSkill}</td><td>${s.storedUsed}회 사용 (낭비 ${Math.round(s.storedWasted)})</td></tr>
       <tr><td>${labels.specialBlock}</td><td>${s.specialUsed ? '사용' : '안 씀'}</td></tr>
       <tr><td>${labels.voidBlock} (${labels.riskGauge} 상승)</td><td>${s.voidUsed}회 (+${s.riskGained})</td></tr>
       <tr><td>마무리 일격</td><td>${finText}</td></tr>

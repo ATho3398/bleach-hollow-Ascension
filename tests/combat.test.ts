@@ -577,7 +577,7 @@ describe('런 로그 BattleRecord (형식 5)', () => {
     expect(m.runLog.battles[0]).toMatchObject({
       turns: 7, matchesByRole: { damage: 3, absorb: 4 }, absorbGained: 4, skillsUsed: ['trait-a1'],
       durationSeconds: 0, blocksByTrait: {}, blocksByChain: [0, 0, 0], chain3Count: 0, guardSuccesses: 0, voidUsed: 0, specialUsed: false,
-      finisherKind: null, finisherTraitId: null, finisherLineageId: null, absorbable: false,
+      finisherKind: null, finisherTraitId: null, finisherLineageId: null, absorbable: false, storedUsed: 0, storedWasted: 0,
     });
   });
 

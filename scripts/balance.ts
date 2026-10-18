@@ -4,7 +4,7 @@
 import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import { ENEMIES, enemyPatternKind, POOL_CONFIG } from '../src/data/enemies';
 import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
-import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, type CombatParams, type CombatState } from '../src/engine/combat';
+import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, storedStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
 import { createExpedition, playExpedition, type ExpeditionState } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedLineages, gainTrait, newBuild } from '../src/engine/absorb';
@@ -26,11 +26,13 @@ const N = 200;
 const buildOf = (ids: string[]): Partial<CombatParams> => {
   const b = newBuild();
   for (const id of ids) gainTrait(b, id);
-  return buildCombatParams(b);
+  return { ...buildCombatParams(b), ...START };
 };
+/** C.17: 점검 봇의 시작 저장 게이지 = 새 세이브 안정 수치(stabilityStart)에 비례한 값 */
+const START = { storedStartGauge: storedStartGaugeOf(BALANCE.provisional.risk.stabilityStart) };
 type BuildDef = { name: string; params: Partial<CombatParams>; ref: boolean };
 const builds: BuildDef[] = [
-  { name: '빈 슬롯(기본 블록)', params: {}, ref: false },
+  { name: '빈 슬롯(기본 블록)', params: { ...START }, ref: false },
   { name: 'skill 1개(공격)', params: buildOf(['trait-c5']), ref: true },
   { name: 'skill 2개(공격·막기)', params: buildOf(['trait-c5', 'trait-a5']), ref: true },
   { name: 'skill 3개(공격·막기·회복)', params: buildOf(['trait-a1', 'trait-b1', 'trait-c1']), ref: false },
@@ -56,7 +58,7 @@ const KINDS = ENEMY_PATTERN_KINDS.filter((k) => POOL_ENEMIES.some((e) => enemyPa
 type KindStat = { kind: string; cls: string; games: number; wins: number; secs: number; winSecs: number; timeouts: number; line: string };
 function measureKind(play: (s: CombatState) => CombatState, build: BuildDef, kind: string): KindStat {
   const group = POOL_ENEMIES.filter((e) => enemyPatternKind(e) === kind);
-  const st = { games: 0, wins: 0, secs: 0, winSecs: 0, timeouts: 0, chain3: 0, guards: 0, voids: 0, specials: 0, absorbable: 0, hpLeft: 0 };
+  const st = { games: 0, wins: 0, secs: 0, winSecs: 0, timeouts: 0, chain3: 0, guards: 0, voids: 0, specials: 0, absorbable: 0, hpLeft: 0, stored: 0, wasted: 0 };
   for (const enemy of group) {
     for (let seed = 1; seed <= N; seed++) {
       const s = play(createCombat(seed, { enemy, params: build.params }));
@@ -72,12 +74,14 @@ function measureKind(play: (s: CombatState) => CombatState, build: BuildDef, kin
       st.chain3 += s.chain3Count;
       st.guards += s.guardSuccesses;
       st.voids += s.voidUsed;
+      st.stored += s.storedUsed;
+      st.wasted += s.storedWasted;
       if (s.specialUsed) st.specials++;
       if (canAbsorb(s)) st.absorbable++;
     }
   }
   const g = st.games;
-  const line = `    ${kind.padEnd(11)} (${group[0]!.class}, 체력 ${group[0]!.hpInAttacks}회분, 적 ${group.length}종): 승률 ${((st.wins / g) * 100).toFixed(0)}% · 평균 ${(st.secs / g).toFixed(1)}초(승리 ${(st.wins ? st.winSecs / st.wins : 0).toFixed(1)}초) · 남은 체력 ${st.wins ? ((st.hpLeft / st.wins) * 100).toFixed(0) : '-'}% · 체인3 ${(st.chain3 / g).toFixed(1)}회 · 막기 성공 ${(st.guards / g).toFixed(1)} · 공허 ${(st.voids / g).toFixed(1)} · 필살 ${((st.specials / g) * 100).toFixed(0)}% · 흡수 가능 ${((st.absorbable / g) * 100).toFixed(0)}% · 시간 초과 ${st.timeouts}`;
+  const line = `    ${kind.padEnd(11)} (${group[0]!.class}, 체력 ${group[0]!.hpInAttacks}회분, 적 ${group.length}종): 승률 ${((st.wins / g) * 100).toFixed(0)}% · 평균 ${(st.secs / g).toFixed(1)}초(승리 ${(st.wins ? st.winSecs / st.wins : 0).toFixed(1)}초) · 남은 체력 ${st.wins ? ((st.hpLeft / st.wins) * 100).toFixed(0) : '-'}% · 체인3 ${(st.chain3 / g).toFixed(1)}회 · 막기 성공 ${(st.guards / g).toFixed(1)} · 공허 ${(st.voids / g).toFixed(1)} · 필살 ${((st.specials / g) * 100).toFixed(0)}% · 저장필살 ${(st.stored / g).toFixed(1)}회(낭비 ${(st.wasted / g).toFixed(0)}) · 흡수 가능 ${((st.absorbable / g) * 100).toFixed(0)}% · 시간 초과 ${st.timeouts}`;
   return { kind, cls: group[0]!.class, games: g, wins: st.wins, secs: st.secs, winSecs: st.winSecs, timeouts: st.timeouts, line };
 }
 /** 풀 가중치(POOL_CONFIG)로 종류별 결과를 합친 승률·승리 평균 시간 */

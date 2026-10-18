@@ -8,6 +8,8 @@ export interface BattleLabels {
   role: Record<BlockRole, string>;
   skillBlock: string;
   specialBlock: string;
+  /** 저장형 필살기 (GDD 14-6) */
+  storedSkill: string;
   voidBlock: string;
   /** 기본 블록 (슬롯에 skill 이 없을 때) */
   basicBlock: string;
@@ -24,6 +26,7 @@ export function battleLabels(f: FactionConfig): BattleLabels {
     role: { ...f.roleNames },
     skillBlock: f.skillBlockName,
     specialBlock: f.specialBlockName,
+    storedSkill: f.storedSkillName,
     voidBlock: f.voidBlockName,
     basicBlock: f.basicSkillName,
     chain: f.chainName,

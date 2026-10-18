@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 15;
+export const BALANCE_VERSION = 16;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -200,7 +200,7 @@ export const BALANCE = {
       /** 적 데이터 hpInAttacks 기준값 (GDD 3-5 임시: 일반 약 30회, 강적 약 70회 분량). 밸런스 점검이 데이터가 이 근처인지 본다 */
       enemyHpInAttacks: { normal: 30, elite: 70 },
       /** 패턴 종류별 hpInAttacks 기준값 (C.15, GDD 14-5 임시): 속공은 약간 적게, 단단은 많게. 밸런스 점검이 데이터가 ±15% 안인지 본다 */
-      enemyHpByKind: { basic: 30, swift: 28, sturdy: 40, 'heavy-seal': 66, 'heavy-chain': 66, stance: 58 },
+      enemyHpByKind: { basic: 30, swift: 28, sturdy: 40, 'heavy-seal': 80, 'heavy-chain': 80, stance: 70 },
       /** 육성이 올리는 값: 공격 배율 (GDD 3-2). 적 체력도 같이 올라 비율 유지. 육성 없음 = 1 */
       growthMultiplier: 1,
       /** 플레이어 체력 (= 기본 공격 15회 분량). 한 조우마다 새로 시작. 강적(약 90초)을 기본 블록만으로도 버틸 여지가 있게 100→150 (C.6 봇 점검) */
@@ -238,6 +238,17 @@ export const BALANCE = {
       voidChance: 0.15,
       voidChanceMax: 0.8,
       voidPowerInAttacks: 8,
+      /** 저장형 필살기 (C.17, GDD 14-6, 모두 임시): 블록 1개 사용당 게이지 +12, 체인 2·3 이면 사용 한 번에 보너스 +4 / +10.
+       *  게이지 100 = 충전 1개 (최대 3개, 가득 차면 넘친 게이지는 낭비로 기록). 전투 간 이월 없음 */
+      storedGaugePerBlock: 12,
+      storedChainBonus: [0, 4, 10],
+      storedGaugeMax: 100,
+      storedChargesMax: 3,
+      /** 사용 피해: 기본 공격 N회 분량 (약점·체인·방어 자세 무시), 사용 직후 막기 상태 지속(초) */
+      storedPowerInAttacks: 25,
+      storedGuardSeconds: 2,
+      /** 시작 게이지 = 안정 수치(0~stabilityMax) 비례로 0~이 값 (둥지 애착 반영) */
+      storedStartGaugeMax: 50,
     },
   },
 } as const;

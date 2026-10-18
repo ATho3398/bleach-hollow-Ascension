@@ -44,7 +44,7 @@ export function emptyLegacyMatches(): Record<LegacyTileRole, number> {
 }
 
 /** 마무리 일격(적을 쓰러뜨린 공격) 종류 (C.6) */
-export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect';
+export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored';
 
 export interface BattleRecord {
   runId: number;
@@ -92,6 +92,9 @@ export interface BattleRecord {
   finisherLineageId: string | null;
   /** 이 전투로 흡수 조건을 채웠는가 (마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장) */
   absorbable: boolean;
+  /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0 */
+  storedUsed: number;
+  storedWasted: number;
 }
 
 /** 진화 1회 기록 (GDD 4-2, 9장): 히든 조건이 나중에 읽는다. C.11 에서 단계별 진화체 테이블 구조로 바뀌었다 */

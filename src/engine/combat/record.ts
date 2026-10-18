@@ -38,5 +38,7 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     finisherTraitId: s.finisher?.traitId ?? null,
     finisherLineageId: s.finisher?.lineageId ?? null,
     absorbable: canAbsorb(s),
+    storedUsed: s.storedUsed,
+    storedWasted: Math.round(s.storedWasted * 10) / 10,
   };
 }

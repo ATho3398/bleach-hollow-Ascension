@@ -737,14 +737,14 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     expect(reasonText(hollow, offer(['first-absorb']))).toContain(`첫 ${hollow.absorbActionName} 보장`);
   });
 
-  it('기준 빌드(skill 1개 공격)를 쓴 봇: 일반 적은 90%↑, 강적은 승률이 0/100% 로 쏠리지 않는다 (참고 점검 40~97%)', async () => {
-    const { playCombatBot } = await import('../src/engine/combat');
+  it('기준 빌드(skill 1개 공격)를 쓴 봇: 일반 적은 90%↑, 강적은 승률이 0/100% 로 쏠리지 않는다 (사람형 봇, 참고 점검 40~97%. 완벽형 봇은 저장 필살기로 100% 허용 — C.17)', async () => {
+    const { playCombatHuman } = await import('../src/engine/combat');
     const b = newBuild();
     gainTrait(b, 'trait-c5');
     const params = buildCombatParams(b);
     const rate = (id: string) => {
       let w = 0;
-      for (let seed = 1; seed <= 60; seed++) if (playCombatBot(createCombat(seed, { enemy: getEnemy(id), params })).status === 'won') w++;
+      for (let seed = 1; seed <= 60; seed++) if (playCombatHuman(createCombat(seed, { enemy: getEnemy(id), params })).status === 'won') w++;
       return w / 60;
     };
     expect(rate('test-a')).toBeGreaterThanOrEqual(0.9);

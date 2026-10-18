@@ -25,6 +25,8 @@ export interface FactionConfig {
   /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 필살 블록 / 공허 블록 */
   skillBlockName: string;
   specialBlockName: string;
+  /** 저장형 필살기 표시 이름 (GDD 14-6, 임시 자리 표시 이름). SP 필살 블록(specialBlockName)과 별개 */
+  storedSkillName: string;
   voidBlockName: string;
   /** 체인 표기 (예: "체인") */
   chainName: string;
@@ -74,7 +76,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'voidBlockName', 'chainName', 'spName']) {
+  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');

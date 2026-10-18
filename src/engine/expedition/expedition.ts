@@ -6,7 +6,7 @@ import { scaleEnemy } from '../../data/enemies';
 import { enemyPool, pickFromPool } from '../enemyPool';
 import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
 import { getTile, tilesFor } from '../../data/tiles';
-import { buildBattleRecord, createCombat, type CombatParams, type CombatState } from '../combat';
+import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import {
   absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
@@ -270,7 +270,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   if (cls === 'elite') exp.elitesThisLap++;
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
-  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build), voidChanceBonus: riskBonus(exp) };
+  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability) };
   applyEvolutionToParams(params, exp.evolution);
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
   const pending: PendingBattle = {

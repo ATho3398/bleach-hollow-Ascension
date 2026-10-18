@@ -57,6 +57,16 @@ export interface CombatParams {
   voidChance: number;
   voidChanceMax: number;
   voidPowerInAttacks: number;
+  /** 저장형 필살기 (C.17, GDD 14-6) */
+  storedGaugePerBlock: number;
+  storedChainBonus: readonly number[];
+  storedGaugeMax: number;
+  storedChargesMax: number;
+  storedPowerInAttacks: number;
+  storedGuardSeconds: number;
+  storedStartGaugeMax: number;
+  /** 전투 시작 저장 게이지 (둥지 애착: 안정 수치에 비례, storedStartGaugeOf). 0 = 없음 */
+  storedStartGauge: number;
   /** 공허 블록 1개 사용 → 리스크 게이지 상승량 (BALANCE.provisional.risk.perVoidBlock) */
   riskPerVoidBlock: number;
   /** 장착 skill 특성 블록 생성원(슬롯 순서). 비면 기본 블록 하나 */
@@ -78,6 +88,7 @@ export function defaultCombatParams(): CombatParams {
   return {
     ...CX,
     riskPerVoidBlock: BALANCE.provisional.risk.perVoidBlock,
+    storedStartGauge: 0,
     skills: [],
     attackPowerMultiplier: 1,
     attackSpeedMultiplier: 1,
@@ -90,9 +101,11 @@ export function defaultCombatParams(): CombatParams {
 
 /** 엔진이 받는 입력은 둘뿐이다 (클릭 시간 판정은 화면 몫, GDD 3-5 v0.8).
  *  use: 바의 cell 번째 블록 클릭 — 붙어 있는 같은 특성 블록이 함께 발동해 체인이 된다.
+ *  stored: 저장형 필살기 사용 (충전 1개 소모, GDD 14-6).
  *  move: 드래그로 from 블록을 빼서 to 위치에 끼워 넣는다 (나머지는 밀림). */
 export type CombatInput =
   | { type: 'use'; cell: number }
+  | { type: 'stored' }
   | { type: 'move'; from: number; to: number };
 
 export type CombatStatus = 'playing' | 'won' | 'lost';
@@ -114,6 +127,8 @@ export type CombatEvent =
   | { kind: 'stance'; seconds: number }
   | { kind: 'stance-end' }
   | { kind: 'counter'; damage: number; guarded: boolean }
+  | { kind: 'stored-use'; damage: number; guardSeconds: number; charges: number }
+  | { kind: 'stored-ready'; charges: number }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
   | { kind: 'shuffle' }
   | { kind: 'end'; status: CombatStatus };
@@ -149,6 +164,12 @@ export interface CombatState {
   voidTimer: number;
   shuffleTimer: number;
   sp: number;
+  /** 저장 게이지(0~storedGaugeMax 미만)와 충전 개수 (전투 안에서만 유효, GDD 14-6) */
+  storedGauge: number;
+  storedCharges: number;
+  storedUsed: number;
+  /** 충전이 상한이라 버려진 게이지 합계 */
+  storedWasted: number;
   /** 봉인: 남은 틱 동안 스킬 블록 생성 정지 */
   sealTicks: number;
   /** 막기 상태: 남은 틱, 그 막기에 붙은 반사 배율 */
@@ -226,6 +247,9 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     voidTimer: t(params.voidCheckSeconds),
     shuffleTimer: params.trayShuffleSeconds > 0 ? t(params.trayShuffleSeconds) : 0,
     sp: 0,
+    ...startStored(params),
+    storedUsed: 0,
+    storedWasted: 0,
     sealTicks: 0,
     guard: { ticks: 0, reflect: 0 },
     skillsUsed: [],
@@ -241,6 +265,19 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     inputs: [],
     events: [],
   };
+}
+
+/** 안정 수치(0~stabilityMax) → 전투 시작 저장 게이지 (0~storedStartGaugeMax, 비례) */
+export function storedStartGaugeOf(stability: number): number {
+  const max = BALANCE.provisional.risk.stabilityMax;
+  return (Math.min(max, Math.max(0, stability)) / max) * CX.storedStartGaugeMax;
+}
+
+/** 시작 게이지를 게이지·충전으로 나눈다 (시작 게이지가 100 이상이어도 되게 충전 환산) */
+function startStored(p: CombatParams): { storedGauge: number; storedCharges: number } {
+  const total = Math.max(0, p.storedStartGauge);
+  const charges = Math.min(p.storedChargesMax, Math.floor(total / p.storedGaugeMax));
+  return { storedGauge: charges >= p.storedChargesMax ? 0 : total - charges * p.storedGaugeMax, storedCharges: charges };
 }
 
 export function elapsedSeconds(s: CombatState): number {
@@ -327,6 +364,42 @@ function spawn(s: CombatState, kind: Block['kind'], traitId: string | null): boo
   return true;
 }
 
+/** 저장 게이지 적립: 100 이 차면 충전 +1 (최대 storedChargesMax), 상한이면 버려진 양을 기록 */
+function addStored(s: CombatState, v: number): void {
+  const p = s.params;
+  s.storedGauge += v;
+  while (s.storedGauge >= p.storedGaugeMax) {
+    s.storedGauge -= p.storedGaugeMax;
+    if (s.storedCharges < p.storedChargesMax) {
+      s.storedCharges++;
+      emit(s, { kind: 'stored-ready', charges: s.storedCharges });
+    } else {
+      s.storedWasted += p.storedGaugeMax;
+    }
+  }
+  if (s.storedCharges >= p.storedChargesMax && s.storedGauge > 0) {
+    s.storedWasted += s.storedGauge;
+    s.storedGauge = 0;
+  }
+}
+
+/** 저장형 필살기 사용: 충전 1개 소모, 기본 공격 N회 분량 피해(약점·체인·방어 자세 무시) + 직후 막기 상태 */
+export function storedDamage(s: CombatState): number {
+  return s.params.storedPowerInAttacks * unitDamage(s.params);
+}
+
+function useStored(s: CombatState): boolean {
+  if (s.storedCharges <= 0) return false;
+  const p = s.params;
+  s.storedCharges--;
+  s.storedUsed++;
+  s.guard.ticks = Math.max(s.guard.ticks, ticksOf(p, p.storedGuardSeconds));
+  const damage = storedDamage(s);
+  emit(s, { kind: 'stored-use', damage, guardSeconds: p.storedGuardSeconds, charges: s.storedCharges });
+  dealDamage(s, damage, { kind: 'stored', traitId: null, lineageId: null });
+  return true;
+}
+
 function addSp(s: CombatState, v: number): void {
   s.sp = Math.min(s.params.spMax, s.sp + v);
 }
@@ -355,6 +428,7 @@ function useBlock(s: CombatState, index: number): boolean {
   if (b.kind === 'special') {
     s.tray.splice(index, 1);
     s.specialUsed = true;
+    addStored(s, p.storedGaugePerBlock);
     const damage = blockDamage(s, b);
     emit(s, { kind: 'block', block: 'special', traitId: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'special', traitId: null, lineageId: null });
@@ -365,6 +439,7 @@ function useBlock(s: CombatState, index: number): boolean {
     s.tray.splice(index, 1);
     s.voidUsed++;
     s.riskGained += p.riskPerVoidBlock;
+    addStored(s, p.storedGaugePerBlock);
     addSp(s, p.spPerBlock);
     const damage = blockDamage(s, b);
     emit(s, { kind: 'block', block: 'void', traitId: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
@@ -389,6 +464,7 @@ function useBlock(s: CombatState, index: number): boolean {
     if (weak) s.weakChain3Count++;
   }
   addSp(s, p.spPerBlock * chain);
+  addStored(s, p.storedGaugePerBlock * chain + (p.storedChainBonus[chain - 1] ?? 0));
   let heal = 0;
   let guardSeconds = 0;
   if (skill.role === 'guard') {
@@ -411,7 +487,9 @@ function useBlock(s: CombatState, index: number): boolean {
 export function applyInput(s: CombatState, input: CombatInput): boolean {
   if (s.status !== 'playing') return false;
   let ok = false;
-  if (input.type === 'use') {
+  if (input.type === 'stored') {
+    ok = useStored(s);
+  } else if (input.type === 'use') {
     ok = inTray(s.tray, input.cell) && useBlock(s, input.cell);
   } else if (input.type === 'move' && canMove(s.tray, input.from, input.to)) {
     s.tray = movedTray(s.tray, input.from, input.to);

@@ -17,7 +17,7 @@ import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 9;
+export const SAVE_FORMAT_VERSION = 10;
 
 export interface SaveMeta {
   format: number;
@@ -232,6 +232,11 @@ export function migrateSave(raw: unknown): SaveData | null {
     // 형식 8 → 9 (C.13 원정 중간 저장): 원정 중 저장 영역 추가. 이전 세이브는 중간 저장이 없다
     save.activeExpedition = null;
     save.meta.format = 9;
+  }
+  if (save.meta.format < 10) {
+    // 형식 9 → 10 (C.17 저장형 필살기): BattleRecord 에 저장 필살 사용 횟수·충전 낭비 추가 (옛 기록은 0)
+    save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, storedUsed: b.storedUsed ?? 0, storedWasted: b.storedWasted ?? 0 }));
+    save.meta.format = 10;
   }
   // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)
   if (typeof save.activeExpedition !== 'object' || Array.isArray(save.activeExpedition)) save.activeExpedition = null;

@@ -47,6 +47,10 @@ function eventText(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       if (e.block === 'void') parts.push(`${labels.riskGauge} ↑`);
       return parts.join(' · ');
     }
+    case 'stored-use':
+      return `${labels.storedSkill}! ${n(e.damage)} 피해 · ${labels.role.guard} ${e.guardSeconds}초 (남은 충전 ${e.charges})`;
+    case 'stored-ready':
+      return `${labels.storedSkill} 충전! (${e.charges}/${s.params.storedChargesMax})`;
     case 'heavy-cast':
       return `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 블록으로 막아라`;
     case 'heavy-hit':
@@ -105,6 +109,17 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const runRow = el('div', 'runrow');
   runRow.style.gridTemplateColumns = `repeat(${cap}, 1fr)`;
   const holdNote = el('small', 'holdnote', '');
+  // 저장 필살기 버튼 (GDD 14-6): 블록과 같은 클릭 판정. 충전 칸 3개 + 게이지
+  const storedGauge = el('i');
+  const storedPips = Array.from({ length: p.storedChargesMax }, () => el('span', 'pip'));
+  const storedName = el('b', '', labels.storedSkill);
+  const storedHint = el('small', '', '');
+  const storedBtn = el('div', 'stored');
+  const storedPipRow = el('span', 'pips');
+  storedPipRow.append(...storedPips);
+  storedBtn.append(el('div', 'storedtop'), storedHint);
+  storedBtn.firstElementChild!.append(storedName, storedPipRow);
+  storedBtn.append(barOf('stgauge', storedGauge));
 
   let speed = 1;
   let paused = false;
@@ -147,8 +162,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     rowOf(el('span', 'dim', labels.sp), spText),
     runRow,
     trayEl,
+    storedBtn,
     holdNote,
-    el('small', 'dim', `클릭(${POINTER_RULES.clickMaxSeconds}초 안에 떼기) = 사용 · 오래 누르면 사용 안 됨 · 끌어서 순서 바꾸기 · 같은 블록을 붙이면 ${labels.chain}(최대 ${top})`),
+    el('small', 'dim', `클릭(${POINTER_RULES.clickMaxSeconds}초 안에 떼기) = 사용(${labels.storedSkill} 버튼도 같음) · 오래 누르면 사용 안 됨 · 끌어서 순서 바꾸기 · 같은 블록을 붙이면 ${labels.chain}(최대 ${top})`),
     rowOf(controls, timeText),
   );
 
@@ -233,6 +249,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (s.chain3Count > 0) chips.push(`${labels.chain}${top} ${s.chain3Count}회`);
     status.textContent = chips.join(' · ');
     trayEl.classList.toggle('sealed', s.sealTicks > 0);
+    storedPips.forEach((pip, i) => pip.classList.toggle('on', i < s.storedCharges));
+    storedGauge.style.width = pct(s.storedCharges >= p.storedChargesMax ? p.storedGaugeMax : s.storedGauge, p.storedGaugeMax);
+    storedBtn.classList.toggle('ready', s.storedCharges > 0);
+    storedBtn.classList.toggle('urgent', s.storedCharges > 0 && s.enemy.cast !== null);
+    storedBtn.classList.toggle('full', s.storedCharges >= p.storedChargesMax);
+    storedHint.textContent = s.storedCharges > 0
+      ? `${s.enemy.cast ? '강공격 예고! ' : ''}${Math.round(p.storedPowerInAttacks)}회분 피해 · 쓰면 ${p.storedGuardSeconds}초 ${labels.role.guard}`
+      : `${Math.floor(s.storedGauge)} / ${p.storedGaugeMax} — 블록을 쓸수록 충전`;
   };
 
   // ── 입력: 포인터 이벤트(터치·마우스 공통). 판정은 pointer.ts, 시각은 performance.now(실시간)이라 배속·일시정지와 무관 ──
@@ -245,6 +269,29 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const pad = (r.width - inner) / 2;
     return slotAt(x, r.left + pad, inner, cap);
   };
+  // 저장 필살기 버튼: 블록과 같은 판정 (누른 지 clickMaxSeconds 이내에 떼면 사용, 오래 누르거나 끌면 사용 안 됨)
+  let storedDown: { id: number; x: number; y: number; at: number; maxMoved: number } | null = null;
+  storedBtn.addEventListener('pointerdown', (e) => {
+    if (storedDown || s.status !== 'playing') return;
+    storedBtn.setPointerCapture(e.pointerId);
+    storedDown = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now(), maxMoved: 0 };
+    storedBtn.classList.add('pressed');
+  });
+  storedBtn.addEventListener('pointermove', (e) => {
+    if (!storedDown || e.pointerId !== storedDown.id) return;
+    storedDown.maxMoved = Math.max(storedDown.maxMoved, Math.hypot(e.clientX - storedDown.x, e.clientY - storedDown.y));
+  });
+  storedBtn.addEventListener('pointercancel', () => {
+    storedDown = null;
+    storedBtn.classList.remove('pressed');
+  });
+  storedBtn.addEventListener('pointerup', (e) => {
+    if (!storedDown || e.pointerId !== storedDown.id) return;
+    const kind = classifyRelease(performance.now() - storedDown.at, storedDown.maxMoved);
+    storedDown = null;
+    storedBtn.classList.remove('pressed');
+    if (kind === 'use' && s.status === 'playing' && !paused) queue.push({ type: 'stored' });
+  });
   const endPress = () => {
     if (down) window.clearTimeout(down.holdTimer);
     down = null;
