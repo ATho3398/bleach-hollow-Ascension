@@ -36,6 +36,16 @@ export interface FamilyCombat {
   tiers: { multiplier: number; bonus?: ChainBonus }[];
 }
 
+/** 켜져 있는 콤보 규칙 하나 (GDD 17-3, 데이터는 src/data/evolution/combos.json): 같은 계열의 minChain 단계 이상 체인을 사이에 다른 블록 사용 없이 repeat 번 연속 쓰면 콤보 블록이 생긴다 */
+export interface ComboRule {
+  id: string;
+  family: string;
+  minChain: number;
+  repeat: number;
+  /** 콤보 블록 피해: 기본 공격 N회 분량 */
+  powerInAttacks: number;
+}
+
 export interface CombatParams {
   tickSeconds: number;
   playerAttackSeconds: number;
@@ -68,6 +78,8 @@ export interface CombatParams {
   voidChance: number;
   voidChanceMax: number;
   voidPowerInAttacks: number;
+  /** 켜져 있는 콤보 규칙 (진화 단계마다 열림, applyEvolutionToParams 가 채운다). 비면 콤보 없음 */
+  combos: ComboRule[];
   /** 저장형 필살기 (C.17, GDD 14-6) */
   storedGaugePerBlock: number;
   storedChainBonus: readonly number[];
@@ -99,6 +111,7 @@ export function defaultCombatParams(): CombatParams {
   return {
     ...CX,
     families: {},
+    combos: [],
     riskPerVoidBlock: BALANCE.provisional.risk.perVoidBlock,
     storedStartGauge: 0,
     skills: [],
@@ -144,6 +157,8 @@ export type CombatEvent =
   | { kind: 'stored-use'; damage: number; guardSeconds: number; charges: number }
   | { kind: 'stored-ready'; charges: number }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
+  /** 콤보 발동: 콤보 블록이 바 맨 오른쪽에 생겼다 (GDD 17-3) */
+  | { kind: 'combo'; comboId: string }
   | { kind: 'shuffle' }
   | { kind: 'end'; status: CombatStatus };
 
@@ -197,6 +212,8 @@ export interface CombatState {
   /** 계열별 체인 발동 횟수: 계열 id → [체인1, 체인2, 체인3] (계열 있는 공격 블록만, GDD 17-3) */
   chainsByFamily: Record<string, [number, number, number]>;
   chain3Count: number;
+  /** 콤보 규칙별 지금까지 이어진 연속 횟수 (다른 블록을 쓰면 0). 콤보 id → 횟수 */
+  comboStreaks: Record<string, number>;
   /** 콤보 발동(특수 블록 생성) 횟수와 콤보 블록 사용 횟수 (GDD 17-3) */
   combosTriggered: number;
   comboBlocksUsed: number;
@@ -237,6 +254,10 @@ export function spawnSecondsOf(p: CombatParams, src: CombatSkill): number {
   if (!src.family) return p.blockSpawnSeconds;
   const same = blockSources(p).filter((x) => x.family === src.family).length;
   return p.blockSpawnSeconds * (1 + p.familySpawnSlowdown * (same - 1));
+}
+
+export function comboOf(p: CombatParams, id: string | null): ComboRule | undefined {
+  return p.combos.find((c) => c.id === id);
 }
 
 export function sourceOf(p: CombatParams, traitId: string | null): CombatSkill | undefined {
@@ -285,6 +306,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     blocksByChain: [0, 0, 0],
     chainsByFamily: {},
     chain3Count: 0,
+    comboStreaks: {},
     combosTriggered: 0,
     comboBlocksUsed: 0,
     weakChain3Count: 0,
@@ -357,6 +379,7 @@ export function blockDamage(s: CombatState, b: Block, chain = 1): number {
   const guardPose = stanceMultiplier(s);
   if (b.kind === 'special') return p.specialPowerInAttacks * unitDamage(p) * guardPose;
   if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p) * guardPose;
+  if (b.kind === 'combo') return (comboOf(p, b.traitId)?.powerInAttacks ?? 0) * unitDamage(p) * guardPose;
   const e = blockEffect(s, b, chain);
   return e ? e.skill.powerInAttacks * e.mult * unitDamage(p) * guardPose : 0;
 }
@@ -463,6 +486,21 @@ function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
   }
 }
 
+/** 블록 하나를 쓴 뒤 콤보 규칙을 갱신한다 (GDD 17-3): 쓴 것이 규칙의 계열·단계를 채우면 연속 +1, 아니면(다른 블록·모자란 체인) 0.
+ *  연속이 repeat 에 닿으면 콤보 블록이 바 맨 오른쪽에 생긴다. family 가 null 이면 계열 체인이 아닌 블록(필살·공허·콤보·막기·회복·기본)이다 */
+function updateCombos(s: CombatState, family: string | null, chain: number): void {
+  for (const rule of s.params.combos) {
+    const hit = family !== null && family === rule.family && chain >= rule.minChain;
+    const n = hit ? (s.comboStreaks[rule.id] ?? 0) + 1 : 0;
+    s.comboStreaks[rule.id] = n;
+    if (n >= rule.repeat && spawn(s, 'combo', rule.id)) {
+      s.comboStreaks[rule.id] = 0;
+      s.combosTriggered++;
+      emit(s, { kind: 'combo', comboId: rule.id });
+    }
+  }
+}
+
 /** 블록 사용 (클릭). 스킬 블록 = 붙어 있는 같은 특성 블록이 함께 발동(체인) → 역할 효과 + 피해, 필살 = 큰 피해, 공허 = 큰 피해 + 리스크 상승 */
 function useBlock(s: CombatState, index: number): boolean {
   const b = s.tray[index];
@@ -475,6 +513,7 @@ function useBlock(s: CombatState, index: number): boolean {
     const damage = blockDamage(s, b);
     emit(s, { kind: 'block', block: 'special', traitId: null, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'special', traitId: null, lineageId: null });
+    updateCombos(s, null, 0);
     counterIfStance(s);
     return true;
   }
@@ -487,6 +526,18 @@ function useBlock(s: CombatState, index: number): boolean {
     const damage = blockDamage(s, b);
     emit(s, { kind: 'block', block: 'void', traitId: null, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'void', traitId: null, lineageId: null });
+    updateCombos(s, null, 0);
+    counterIfStance(s);
+    return true;
+  }
+  if (b.kind === 'combo') {
+    s.tray.splice(index, 1);
+    s.comboBlocksUsed++;
+    addStored(s, p.storedGaugePerBlock);
+    const damage = blockDamage(s, b);
+    emit(s, { kind: 'block', block: 'combo', traitId: b.traitId, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
+    dealDamage(s, damage, { kind: 'combo', traitId: b.traitId, lineageId: null });
+    updateCombos(s, null, 0);
     counterIfStance(s);
     return true;
   }
@@ -526,6 +577,7 @@ function useBlock(s: CombatState, index: number): boolean {
   const damage = blockDamage(s, b, chain);
   emit(s, { kind: 'block', block: 'skill', traitId: id, family: skill.family ?? null, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
   dealDamage(s, damage, { kind: 'skill', traitId: id, lineageId: skill.lineageId, family: skill.family ?? null, weak });
+  updateCombos(s, skill.family ?? null, chain);
   counterIfStance(s);
   return true;
 }

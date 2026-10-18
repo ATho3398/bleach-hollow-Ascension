@@ -207,6 +207,27 @@ export interface TitleDef {
 }
 
 /**
+ * 콤보 규칙 (GDD 17-3): "같은 계열의 minChain 단계 이상 체인을, 사이에 다른 블록 사용 없이 repeat 번 연속(시간 제한 없음) 쓰면" 특수 블록(콤보 블록)이 바 맨 오른쪽에 생기고,
+ * 쓰면 powerInAttacks 회분의 큰 피해를 준다. 진화 단계(tier)마다 열린다 — 그 단계 이상이면 규칙이 켜진다. 이름·수치는 전부 provisional.
+ * 계열 id 는 종족 중립(family-a/b/c)이고, 콤보 블록 이름만 종족별이다.
+ */
+export interface ComboDef {
+  id: string;
+  /** 열리는 육성 단계 (1~5, 1-based) */
+  tier: number;
+  /** 규칙의 계열 id (종족 설정 families) */
+  family: string;
+  /** 이 단계 이상의 체인만 센다 (1~3) */
+  minChain: number;
+  /** 연속 횟수 (2 이상) */
+  repeat: number;
+  /** 콤보 블록 피해: 플레이어 기본 공격 N회 분량 (필살 블록처럼 약점·체인 배율 없이 방어 자세 배율만 받는다) */
+  powerInAttacks: number;
+  name: PerFaction<string>;
+  provisional?: boolean;
+}
+
+/**
  * 진화 조건 어휘 (GDD 4-2 v1.0). 전부 "현재 단계 계통별 누적" 기준이다. 안정 수치·리스크 돌파·전투 성과는 쓰지 않는다.
  * 비율(ratio)은 단계 필요 흡수 횟수 N 에 곱해 올림한 값이 기준, 비중(min/max)은 계통 누적 ÷ 전체 누적(0~1).
  */

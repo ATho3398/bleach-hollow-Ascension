@@ -9,6 +9,9 @@ import { absorbReasons, buildCombatParams, equippedSkills, gainTrait, newBuild }
 import { applyInput, createCombat, runAt, spawnSecondsOf as spawnSecondsOfTest, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
 import { chainGroup } from '../src/engine/combat/tray';
 import { getEnemy } from '../src/data/enemies';
+import { combosAtTier, COMBOS, comboName } from '../src/data/evolution';
+import { applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engine/evolution';
+import { buildBattleRecord, playCombatBot, playCombatHuman, replayCombat } from '../src/engine/combat';
 import { emptyLegacyMatches, emptyRunLog } from '../src/engine/runLog';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
 
@@ -223,5 +226,160 @@ describe('세이브 마이그레이션 (형식 11 → 12)', () => {
     expect(m.runLog.battles[0]).toMatchObject({ chainsByFamily: {}, combosTriggered: 0, comboBlocksUsed: 0 });
     expect(m.build.slots[0]).toBe('trait-c5');
     expect(emptyRunLog().battles).toEqual([]);
+  });
+});
+
+// ── ③ 콤보 블록 ──
+const RULE2 = { id: 'combo-x', family: 'family-c', minChain: 2, repeat: 2, powerInAttacks: 20 };
+const fill = (s: CombatState, ...fams: ('family-c' | 'family-a' | 'void' | 'guard')[]) => {
+  s.tray = fams.map((f) => (f === 'void' ? blk(null, null, 'void') : f === 'guard' ? blk('trait-a5') : blk(f === 'family-c' ? 'trait-c5' : 'trait-a1', f)));
+};
+const comboCombat = (rules = [RULE2]) => quiet(mk({ ...build('trait-c5', 'trait-a1', 'trait-a5'), combos: rules }));
+const use = (s: CombatState, cell: number) => applyInput(s, { type: 'use', cell });
+
+describe('콤보 데이터 (진화 단계마다 1개씩 열림, GDD 17-3)', () => {
+  it('단계가 오를 때마다 콤보가 하나씩 열린다', () => {
+    expect([0, 1, 2, 3, 4].map((t) => combosAtTier(t).length)).toEqual([0, 1, 2, 3, 4]);
+    const e = newEvolution();
+    expect(comboRulesOf(e)).toEqual([]);
+    e.tierIndex = 1;
+    expect(comboRulesOf(e)).toEqual([{ id: COMBOS[0]!.id, family: 'family-c', minChain: 2, repeat: 2, powerInAttacks: 20 }]);
+    const params: Parameters<typeof applyEvolutionToParams>[0] = {};
+    applyEvolutionToParams(params, { ...e, tierIndex: 3 });
+    expect(params.combos).toHaveLength(3);
+  });
+
+  it('호로는 탄 계열 2체인 연속 2번 → 그랑 레이 세로, 이름은 종족별로 읽는다', () => {
+    const c = COMBOS[0]!;
+    expect(c).toMatchObject({ family: 'family-c', minChain: 2, repeat: 2 });
+    expect(comboName(c.id, 'hollow')).toBe('그랑 레이 세로');
+    expect(comboName(c.id, 'shinigami')).not.toBe(comboName(c.id, 'hollow'));
+    expect(COMBOS.every((x) => x.provisional)).toBe(true);
+  });
+});
+
+describe('콤보 발동 (GDD 17-3)', () => {
+  it('같은 계열 2체인을 사이에 다른 블록 없이 연속 2번 쓰면 콤보 블록이 바 맨 오른쪽에 생긴다', () => {
+    const s = comboCombat();
+    fill(s, 'family-c', 'family-c', 'family-a', 'family-c', 'family-c');
+    expect(use(s, 0)).toBe(true); // 체인2 (1번째)
+    expect(s.comboStreaks['combo-x']).toBe(1);
+    expect(s.tray.map((b) => b.kind)).toEqual(['skill', 'skill', 'skill']);
+    expect(s.combosTriggered).toBe(0);
+    s.events.length = 0;
+    expect(use(s, 1)).toBe(true); // 체인2 (2번째): a c c 에서 c c
+    // 남은 a 다음, 맨 오른쪽에 콤보 블록
+    expect(s.tray.map((b) => b.kind)).toEqual(['skill', 'combo']);
+    expect(s.tray[1]).toMatchObject({ kind: 'combo', traitId: 'combo-x' });
+    expect(s.comboStreaks['combo-x']).toBe(0);
+    expect(s.combosTriggered).toBe(1);
+    expect(s.events.some((e) => e.kind === 'combo' && e.comboId === 'combo-x')).toBe(true);
+  });
+
+  it('사이에 다른 블록을 쓰면 연속이 끊긴다 (다른 계열·공허·막기·필살·모자란 체인)', () => {
+    for (const mid of ['family-a', 'void', 'guard'] as const) {
+      const s = comboCombat();
+      fill(s, 'family-c', 'family-c', mid, 'family-c', 'family-c');
+      use(s, 0);
+      expect(s.comboStreaks['combo-x']).toBe(1);
+      use(s, 0); // 가운데 블록을 쓴다
+      expect(s.comboStreaks['combo-x']).toBe(0);
+      use(s, 0); // 체인2 (c c)
+      expect(s.comboStreaks['combo-x']).toBe(1);
+      expect(s.tray.some((b) => b.kind === 'combo')).toBe(false);
+      expect(s.combosTriggered).toBe(0);
+    }
+    // 체인1 은 2단계에 못 미쳐 연속을 끊는다
+    const s = comboCombat();
+    fill(s, 'family-c', 'family-c', 'family-a', 'family-c', 'family-a');
+    use(s, 0);
+    use(s, 1); // a 블록(체인1)
+    expect(s.comboStreaks['combo-x']).toBe(0);
+    // 필살 블록
+    const s2 = comboCombat();
+    s2.tray = [blk('trait-c5', 'family-c'), blk('trait-c5', 'family-c'), blk(null, null, 'special'), blk('trait-c5', 'family-c'), blk('trait-c5', 'family-c')];
+    use(s2, 0);
+    use(s2, 0);
+    expect(s2.comboStreaks['combo-x']).toBe(0);
+  });
+
+  it('체인 단계가 모자라거나 계열이 다르면 연속으로 세지 않는다 (minChain 3 규칙)', () => {
+    const s = comboCombat([{ ...RULE2, minChain: 3 }]);
+    fill(s, 'family-c', 'family-c', 'family-a', 'family-c', 'family-c');
+    use(s, 0); // 체인2 → minChain 3 에 못 미친다
+    expect(s.comboStreaks['combo-x']).toBe(0);
+    const t = comboCombat([{ ...RULE2, minChain: 3 }]);
+    fill(t, 'family-c', 'family-c', 'family-c', 'family-a', 'family-c', 'family-c', 'family-c');
+    use(t, 0);
+    expect(t.comboStreaks['combo-x']).toBe(1);
+    use(t, 1); // a 가 맨 앞으로 당겨졌다
+    expect(t.comboStreaks['combo-x']).toBe(0);
+    // 다른 계열의 체인은 이 규칙에 안 센다
+    const u = comboCombat();
+    fill(u, 'family-a', 'family-a');
+    use(u, 0);
+    expect(u.comboStreaks['combo-x']).toBe(0);
+  });
+
+  it('규칙이 없으면(진화 전) 콤보는 생기지 않는다', () => {
+    const s = comboCombat([]);
+    fill(s, 'family-c', 'family-c', 'family-c', 'family-c');
+    use(s, 0);
+    use(s, 0);
+    expect(s.tray.some((b) => b.kind === 'combo')).toBe(false);
+    expect(s.combosTriggered).toBe(0);
+  });
+
+  it('콤보 블록을 쓰면 기본 공격 약 20회분 피해, 마무리 일격 종류 combo, 기록에 남는다', () => {
+    const s = comboCombat();
+    s.enemy.hp = 1e9;
+    s.tray = [{ uid: uid++, kind: 'combo', traitId: 'combo-x', family: null }];
+    use(s, 0);
+    const ev = s.events.find((e) => e.kind === 'block');
+    expect(ev).toMatchObject({ block: 'combo', traitId: 'combo-x', damage: 20 * CX.playerAttackDamage });
+    expect(s.comboBlocksUsed).toBe(1);
+    expect(s.comboStreaks['combo-x']).toBe(0);
+    const k = comboCombat();
+    k.enemy.hp = 10;
+    k.tray = [{ uid: uid++, kind: 'combo', traitId: 'combo-x', family: null }];
+    use(k, 0);
+    expect(k.finisher).toMatchObject({ kind: 'combo' });
+    const rec = buildBattleRecord(k, { factionId: 'hollow' });
+    expect(rec).toMatchObject({ comboBlocksUsed: 1, finisherKind: 'combo', combosTriggered: 0 });
+  });
+
+  it('런 로그 BattleRecord 에 계열별 체인 횟수와 콤보 발동 횟수가 담긴다', () => {
+    const s = comboCombat();
+    s.enemy.hp = 1e9;
+    fill(s, 'family-c', 'family-c', 'family-a', 'family-c', 'family-c');
+    use(s, 0);
+    use(s, 1);
+    const rec = buildBattleRecord(s, { factionId: 'hollow' });
+    expect(rec.chainsByFamily).toEqual({ 'family-c': [0, 2, 0] });
+    expect(rec.combosTriggered).toBe(1);
+  });
+});
+
+describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
+  const params = (): Partial<CombatParams> => ({ ...build('trait-c5', 'trait-e4'), combos: [RULE2] });
+  it('완벽형·사람형 봇이 콤보를 발동하고 콤보 블록을 쓴다', () => {
+    let perfect = 0, human = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const a = playCombatBot(createCombat(seed, { enemy: getEnemy('test-elite'), params: params() }));
+      perfect += a.combosTriggered;
+      expect(a.comboBlocksUsed).toBeLessThanOrEqual(a.combosTriggered);
+      const h = playCombatHuman(createCombat(seed, { enemy: getEnemy('test-elite'), params: params() }));
+      human += h.combosTriggered;
+    }
+    expect(perfect).toBeGreaterThan(20);
+    expect(human).toBeGreaterThan(5);
+  });
+
+  it('같은 시드와 입력 기록이면 콤보가 있어도 같은 결과', () => {
+    const a = playCombatBot(createCombat(7, { enemy: getEnemy('test-a'), params: params() }));
+    const again = replayCombat(7, { enemy: getEnemy('test-a'), params: params() }, a.inputs);
+    expect(again.combosTriggered).toBe(a.combosTriggered);
+    expect(again.tick).toBe(a.tick);
+    expect(again.enemy.hp).toBe(a.enemy.hp);
   });
 });

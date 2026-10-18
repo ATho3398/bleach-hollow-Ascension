@@ -1,0 +1,54 @@
+[
+  {
+    "id": "combo-t2",
+    "tier": 2,
+    "family": "family-c",
+    "minChain": 2,
+    "repeat": 2,
+    "powerInAttacks": 20,
+    "name": {
+      "hollow": "그랑 레이 세로",
+      "shinigami": "파도의 90 흑관"
+    },
+    "provisional": true
+  },
+  {
+    "id": "combo-t3",
+    "tier": 3,
+    "family": "family-a",
+    "minChain": 2,
+    "repeat": 2,
+    "powerInAttacks": 20,
+    "name": {
+      "hollow": "야수의 폭풍",
+      "shinigami": "월아 연참"
+    },
+    "provisional": true
+  },
+  {
+    "id": "combo-t4",
+    "tier": 4,
+    "family": "family-b",
+    "minChain": 2,
+    "repeat": 2,
+    "powerInAttacks": 20,
+    "name": {
+      "hollow": "맹수의 턱",
+      "shinigami": "철권 난타"
+    },
+    "provisional": true
+  },
+  {
+    "id": "combo-t5",
+    "tier": 5,
+    "family": "family-c",
+    "minChain": 3,
+    "repeat": 2,
+    "powerInAttacks": 24,
+    "name": {
+      "hollow": "세로 오스쿠라스 포화",
+      "shinigami": "파도의 91 천번 흑관"
+    },
+    "provisional": true
+  }
+]

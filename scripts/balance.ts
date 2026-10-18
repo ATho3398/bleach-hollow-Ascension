@@ -10,7 +10,7 @@ import { createExpedition, playExpedition, type ExpeditionState } from '../src/e
 import { buildCombatParams, canAbsorb, completedLineages, gainTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
 import { LINEAGES } from '../src/data/lineages';
-import { analyzeTable, canEvolve, CONCENTRATION_PROFILES, reportProblems } from '../src/engine/evolution';
+import { analyzeTable, canEvolve, comboRulesOf, CONCENTRATION_PROFILES, newEvolution, reportProblems } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performEvolution, recordExpedition, sanitizeDeck, newTileStock } from '../src/game';
 
 const check = process.argv.includes('--check');
@@ -28,7 +28,8 @@ const BALANCE_FACTION = 'hollow';
 const buildOf = (ids: string[]): Partial<CombatParams> => {
   const b = newBuild();
   for (const id of ids) gainTrait(b, id);
-  return { ...buildCombatParams(b, BALANCE_FACTION), ...START };
+  // 점검 봇은 1단계(진화 전)라 켜진 콤보가 없다. 콤보 효과는 아래 참고 빌드로 따로 본다 (GDD 17-3)
+  return { ...buildCombatParams(b, BALANCE_FACTION), combos: comboRulesOf(newEvolution()), ...START };
 };
 /** C.17: 점검 봇의 시작 저장 게이지 = 새 세이브 안정 수치(stabilityStart)에 비례한 값 */
 const START = { storedStartGauge: storedStartGaugeOf(BALANCE.provisional.risk.stabilityStart) };
@@ -39,6 +40,8 @@ const builds: BuildDef[] = [
   { name: 'skill 2개(공격·막기)', params: buildOf(['trait-c5', 'trait-a5']), ref: true, elite: [0.6, 0.85] },
   // C.34 (GDD 17-3): 같은 계열 공격 특성 둘은 서로 체인이 된다 — 체인이 쉬워진 빌드
   { name: 'skill 2개(같은 계열 공격 2)', params: buildOf(['trait-c5', 'trait-e4']), ref: true, elite: [0.6, 0.85] },
+  // C.34 ③ (GDD 17-3): 2단계 콤보(탄 계열 체인2 연속 2번 → 콤보 블록)가 켜진 같은 빌드 — 참고 출력만
+  { name: 'skill 1개(공격)+콤보(2단계 규칙)', params: { ...buildOf(['trait-c5']), combos: comboRulesOf({ ...newEvolution(), tierIndex: 1 }) }, ref: false },
   { name: 'skill 3개(공격·막기·회복)', params: buildOf(['trait-a1', 'trait-b1', 'trait-c1']), ref: false },
 ];
 // C.16 (GDD 14-4): 완벽형 봇(참고)과 사람형 봇(목표 기준) 둘 다 돌린다.
@@ -130,7 +133,7 @@ for (const bot of BOTS) {
         // 빈 슬롯은 참고 값. skill 3개 이상은 강적 남은 체력이 95% 이상일 만큼 압도적이라 강적 패턴·체력·공격만으로는 못 맞춘다 (dev-log C.16 목표 미달 유지)
         console.log(`      → 강적 승률 ${Math.round(pe.win * 100)}% (참고, 목표 없음)`);
       }
-      if (build.name.startsWith('skill 1') && (pe.winSecs < 75 || pe.winSecs > 105)) failures.push(`사람형 봇/${build.name}: 강적 승리 평균 ${pe.winSecs.toFixed(1)}초 (목표 약 90초, 75~105 밖)`);
+      if (build.elite && build.name.startsWith('skill 1') && (pe.winSecs < 75 || pe.winSecs > 105)) failures.push(`사람형 봇/${build.name}: 강적 승리 평균 ${pe.winSecs.toFixed(1)}초 (목표 약 90초, 75~105 밖)`);
     }
   }
 }

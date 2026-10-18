@@ -2,7 +2,8 @@
 // 모든 수치·규칙은 임시(provisional)다. 사망·퇴화·단계 스킵은 없다. 어떤 진화체로 가는지는 select.ts 의 selectForm 이 정한다.
 
 import { BALANCE } from '../../config/balance';
-import { FORM_TABLE, getForm } from '../../data/evolution';
+import { combosAtTier, FORM_TABLE, getForm } from '../../data/evolution';
+import type { ComboRule } from '../combat/combat';
 import { LINEAGES } from '../../data/lineages';
 import type { FormDef, PassiveStat } from '../../data/schema';
 import type { BuildState } from '../absorb/build';
@@ -147,10 +148,16 @@ export function evolutionMultipliers(e: EvolutionState): EvolutionMultipliers {
 }
 
 /** 형태 효과를 전투 파라미터에 곱한다 (전투 엔진은 건드리지 않고 기존 파라미터만 쓴다) */
+/** 이 육성 단계에서 켜진 콤보 규칙 (GDD 17-3, 진화 단계마다 1개씩 열림) */
+export function comboRulesOf(e: EvolutionState): ComboRule[] {
+  return combosAtTier(e.tierIndex).map((c) => ({ id: c.id, family: c.family, minChain: c.minChain, repeat: c.repeat, powerInAttacks: c.powerInAttacks }));
+}
+
 export function applyEvolutionToParams(
-  params: { playerMaxHp?: number; attackPowerMultiplier?: number; attackSpeedMultiplier?: number; damageTakenMultiplier?: number },
+  params: { playerMaxHp?: number; attackPowerMultiplier?: number; attackSpeedMultiplier?: number; damageTakenMultiplier?: number; combos?: ComboRule[] },
   e: EvolutionState,
 ): void {
+  params.combos = comboRulesOf(e);
   if (e.formHistory.length === 0) return;
   const m = evolutionMultipliers(e);
   params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * m.hp;

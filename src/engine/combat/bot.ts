@@ -4,7 +4,7 @@
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
 import { hasSpecialActions } from '../../data/enemies';
 import {
-  blockDamage, blockEffect, maxChain, step, ticksOf, type CombatInput, type CombatState,
+  blockDamage, blockEffect, maxChain, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
 } from './combat';
 import { createRng, nextFloat } from '../rng';
 import { chainGroup, runAt, type Block, type Tray } from './tray';
@@ -22,11 +22,16 @@ export interface BotOptions {
   allowStored?: boolean;
   /** true 면 충전이 상한일 때도 낭비를 막으려고 쓴다 (완벽형). 기본 true */
   storedWhenFull?: boolean;
+  /** false 면 콤보 연속을 이어 가는 중에도 기다리지 않고 다른 블록을 쓴다 (콤보를 모르는 플레이). 기본 true */
+  comboHold?: boolean;
   /** true 면 상대의 방어 자세를 알아채지 못한 것처럼 플레이한다 (블록을 아끼지 않고 평소대로 쓴다). 기본 false */
   ignoreStance?: boolean;
 }
 
 type Cell = { i: number; b: Block };
+
+/** 콤보 연속을 이어 가는 중에 같은 계열 체인이 만들어지길 기다리는 최대 시간(초): 이 시간 안에 다음 블록을 쓴 적이 있으면 기다린다 */
+const COMBO_HOLD_SECONDS = 6;
 
 function cells(s: CombatState): Cell[] {
   const out: Cell[] = [];
@@ -66,7 +71,7 @@ function joinUse(s: CombatState, top: number): CombatInput | null {
   const hasPattern = hasSpecialActions(s.enemy.def.pattern);
   let best: { i: number; run: number } | null = null;
   for (const c of cells(s)) {
-    if (c.b.kind === 'special') continue;
+    if (c.b.kind === 'special' || c.b.kind === 'combo') continue;
     // 낭비가 큰 블록은 붙이려고 쓰지 않는다: 막기는 강적(강공격)이 없을 때만, 회복은 다쳤을 때만
     const role = c.b.kind === 'skill' ? roleOf(s, c.b) : null;
     if (role === 'guard' && hasPattern) continue;
@@ -111,8 +116,8 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     }
     return null;
   }
-  // 2. 필살 블록은 바로
-  const special = all.find((c) => c.b.kind === 'special');
+  // 2. 필살 블록·콤보 블록은 바로
+  const special = all.find((c) => c.b.kind === 'special' || c.b.kind === 'combo');
   if (special) return use(special);
   // 3. 체력이 절반 아래면 회복
   if (s.player.hp < s.player.maxHp * 0.5) {
@@ -125,6 +130,17 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     return blockEffect(s, c.b, g)?.weak && blockDamage(s, c.b, g) >= s.enemy.hp;
   });
   if (finisher) return use(finisher);
+  // 4.5 콤보 (GDD 17-3): 연속을 이어 가는 중이면 같은 계열 체인을 바로 쓰고, 쓸 수 없으면 다른 블록을 쓰지 않고 잠깐 기다린다(연속이 끊기므로)
+  const comboRules = p.combos;
+  const qualifying = (r: ComboRule) =>
+    skills.filter((c) => (c.b.family ?? null) === r.family && groupSize(s, c) >= r.minChain).sort((a, b) => groupSize(s, b) - groupSize(s, a))[0];
+  const running = comboRules.filter((r) => (s.comboStreaks[r.id] ?? 0) > 0);
+  for (const r of running) {
+    const c = qualifying(r);
+    if (c) return use(c);
+  }
+  const lastUseTick = s.inputs.length > 0 ? s.inputs[s.inputs.length - 1]!.tick : -Infinity;
+  if (running.length > 0 && opt.comboHold !== false && s.tray.length < p.trayCapacity && s.tick - lastUseTick < ticksOf(p, COMBO_HOLD_SECONDS)) return null;
   const voids = all.filter((c) => c.b.kind === 'void');
   if (voids[0] && (voidPolicy === 'always' || (voidPolicy === 'smart' && voids.length >= 2))) return use(voids[0]);
   // 5. 체인3 이 붙어 있으면 사용 (막기는 강적이면 강공격용으로 아껴 둔다, 회복은 다쳤을 때)
@@ -137,6 +153,11 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   // 6. 같은 특성 블록을 붙인다 (끼어 있는 다른 블록을 먼저 쓴다)
   const join = opt.allowJoin === false ? null : joinUse(s, top);
   if (join) return join;
+  // 6.2 쓸 수 있는 콤보 시작 체인이 있으면 쓴다 (체인3 으로 더 붙일 방법이 없을 때)
+  for (const r of comboRules) {
+    const c = qualifying(r);
+    if (c) return use(c);
+  }
   // 6.5 충전이 상한이면 낭비를 막으려고 쓴다
   if (storedOk && opt.storedWhenFull !== false && s.storedCharges >= p.storedChargesMax) return { type: 'stored' };
   // 7. 가득 찼으면 하나 쓴다: 공허(허용 시) → 체인 높은 공격 → 회복 → 막기

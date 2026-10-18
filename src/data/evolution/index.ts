@@ -87,3 +87,48 @@ export function formPassiveText(form: FormDef, factionId: string): string {
   const parts = PASSIVE_STATS.filter((s) => e[s] !== undefined).map((s) => `${STAT_TEXT[s]} ×${e[s]!.toFixed(2)}`);
   return parts.length === 0 ? '패시브 없음' : `${joinNames(form, factionId, '+')} 성향: ${parts.join(', ')}`;
 }
+
+// ── 콤보 규칙 (GDD 17-3): 진화 단계마다 1개씩 열리는 특수 블록 규칙. 데이터는 combos.json ──
+import { FACTIONS } from '../factions';
+import type { ComboDef } from '../schema';
+import combosRaw from './combos.json';
+
+export const COMBO_MAX_TIER = 5;
+
+export function parseCombos(r: unknown): ComboDef[] {
+  if (!Array.isArray(r)) throw new Error('콤보 데이터 오류: combos.json 은 배열이어야 한다');
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const c of r as Partial<ComboDef>[]) {
+    const id = String(c.id ?? '?');
+    if (!c.id || seen.has(c.id)) errors.push(`${id}: id 가 비었거나 겹친다`);
+    seen.add(id);
+    if (!Number.isInteger(c.tier) || c.tier! < 1 || c.tier! > COMBO_MAX_TIER) errors.push(`${id}: tier 1~${COMBO_MAX_TIER}`);
+    if (!Number.isInteger(c.minChain) || c.minChain! < 1 || c.minChain! > 3) errors.push(`${id}: minChain 1~3`);
+    if (!Number.isInteger(c.repeat) || c.repeat! < 2) errors.push(`${id}: repeat 2 이상`);
+    if (!(typeof c.powerInAttacks === 'number' && c.powerInAttacks > 0)) errors.push(`${id}: powerInAttacks 양수`);
+    for (const f of FACTIONS) {
+      if (!f.families.some((x) => x.id === c.family)) errors.push(`${id}: ${f.id} 종족 설정에 없는 계열 ${String(c.family)}`);
+      if (!c.name || (c.name[f.id] ?? c.name['*']) === undefined) errors.push(`${id}: ${f.id} 이름 없음`);
+    }
+  }
+  if (errors.length > 0) throw new Error(`콤보 데이터 오류:\n- ${errors.join('\n- ')}`);
+  return r as ComboDef[];
+}
+
+export const COMBOS: readonly ComboDef[] = parseCombos(combosRaw);
+
+export function getCombo(id: string): ComboDef {
+  const c = COMBOS.find((x) => x.id === id);
+  if (!c) throw new Error(`알 수 없는 콤보: ${id}`);
+  return c;
+}
+
+/** 육성 단계(0부터 tierIndex)에서 켜져 있는 콤보 규칙: tier(1-based) ≤ tierIndex + 1 */
+export function combosAtTier(tierIndex: number, list: readonly ComboDef[] = COMBOS): ComboDef[] {
+  return list.filter((c) => c.tier <= tierIndex + 1);
+}
+
+export function comboName(id: string, factionId: string): string {
+  return pickFaction(getCombo(id).name, factionId);
+}
