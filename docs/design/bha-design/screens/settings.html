@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>설정 — BHA</title>
+<!--
+  화면 2. 설정 (조작 판정)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  tapMaxSec   : 0.15 ~ 0.6, 기본 0.3, 0.05 단위   → 미리보기 --t (초)
+  dragPx      : 6 ~ 20, 기본 10, 1 단위           → 미리보기 --d (px)
+  슬라이더 채움: --pct = (값 - 최소) / (최대 - 최소)
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app">
+  <header class="bha-topbar">
+    <div class="bha-topbar__main"><h1 class="bha-topbar__title">설정</h1><p class="bha-topbar__sub">조작 판정 — 블록과 저장 필살기에 똑같이 적용</p></div>
+  </header>
+
+  <section class="bha-panel">
+    <div class="bha-slider">
+      <div class="bha-slider__head"><label class="bha-slider__label" for="tap">클릭 판정 시간</label><output class="bha-slider__value" for="tap" id="tapV">0.30<small>초</small></output></div>
+      <input class="bha-slider__input" id="tap" type="range" min="0.15" max="0.6" step="0.05" value="0.3">
+      <div class="bha-slider__scale"><span>0.15초</span><span>기본 0.3</span><span>0.6초</span></div>
+      <p class="bha-slider__hint">눌렀다 떼는 시간이 이보다 길면 사용 안 됨 (들었다 놓은 것으로 본다).</p>
+      <div class="bha-press" id="press" style="--t:.3"><span class="bha-press__ok"></span><span class="bha-press__lbl bha-press__lbl--ok">이 안에 떼면 사용</span><span class="bha-press__lbl bha-press__lbl--no">사용 안 됨</span></div>
+      <div class="bha-press__scale"><span>0초</span><span>0.4초</span><span>0.8초</span></div>
+    </div>
+  </section>
+
+  <section class="bha-panel">
+    <div class="bha-slider">
+      <div class="bha-slider__head"><label class="bha-slider__label" for="drag">드래그 거리</label><output class="bha-slider__value" for="drag" id="dragV">10<small>px</small></output></div>
+      <input class="bha-slider__input" id="drag" type="range" min="6" max="20" step="1" value="10">
+      <div class="bha-slider__scale"><span>6px</span><span>기본 10</span><span>20px</span></div>
+      <div class="bha-dragprev"><span class="bha-dragprev__pad"><span class="bha-dragprev__ring" id="ring" style="--d:10"></span><span class="bha-dragprev__dot"></span></span><p>손가락이 점선 원 밖으로 움직이면 드래그(순서 바꾸기)로 본다. 작을수록 쉽게 끌리고, 클수록 누르기가 안정적이다.</p></div>
+    </div>
+  </section>
+
+  <div class="bha-notice bha-notice--good" data-show="restored" hidden><svg class="bha-icon"><use href="#i-check"/></svg><div class="bha-notice__body">기본값으로 되돌렸다 (0.3초 · 10px).</div></div>
+
+  <div class="bha-stack">
+    <button class="bha-btn bha-btn--block" type="button" id="reset"><svg class="bha-icon"><use href="#i-loop"/></svg>기본값 복원</button>
+    <button class="bha-btn bha-btn--block" type="button"><svg class="bha-icon"><use href="#i-help"/></svg>도움말·튜토리얼 다시 보기</button>
+  </div>
+  <div class="bha-dock"><button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block" type="button"><svg class="bha-icon"><use href="#i-chevron-left"/></svg>돌아가기</button></div>
+</main>
+</div>
+<script>
+(function () {
+  var tap = document.getElementById('tap'), drag = document.getElementById('drag');
+  function sync() {
+    var t = +tap.value, d = +drag.value;
+    tap.style.setProperty('--pct', ((t - 0.15) / 0.45).toFixed(3));
+    drag.style.setProperty('--pct', ((d - 6) / 14).toFixed(3));
+    document.getElementById('tapV').innerHTML = t.toFixed(2) + '<small>초</small>';
+    document.getElementById('dragV').innerHTML = d + '<small>px</small>';
+    document.getElementById('press').style.setProperty('--t', t);
+    document.getElementById('ring').style.setProperty('--d', d);
+  }
+  tap.addEventListener('input', sync); drag.addEventListener('input', sync);
+  document.getElementById('reset').addEventListener('click', function () { window.bhaSetState('restored'); });
+  window.BHA_DEMO = { title: '2. 설정', initial: 'default', states: [['default', '기본값'], ['custom', '바꾼 값 (0.45초 · 16px)'], ['restored', '기본값 복원 후']],
+    onState: function (s) { if (s === 'custom') { tap.value = 0.45; drag.value = 16; } else { tap.value = 0.3; drag.value = 10; } sync(); } };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>전투 — BHA</title>
+<!--
+  화면 12. 전투 (390×844 기준, 360×740에서도 스크롤 없음)
+  ─ 샘플 데이터 (필드 이름: 값) ───────────────────────────────
+  enemy.name            : "잿빛 포식자"            (임시 데이터)
+  enemy.rank            : "elite" | "normal"        → .bha-tag--elite / --normal
+  enemy.weakLineage     : "B"                       → .bha-chip--weak + .bha-lin--b, 실루엣 오라 --aura
+  enemy.pattern         : "강공격형" (i-pattern-heavy) | "속공형" (i-pattern-fast) | "단단형" (i-pattern-tough)
+  enemy.hp / hpMax      : 820 / 1020                → --fill, 감소 잔상 --ghost
+  enemy.status[]        : 방어 자세 / 봉인 부여 등  → .bha-chip--guard / --seal
+  enemy.cast            : null | { fill: 0~1 }      → .bha-cast --fill (2초)
+  player.hp / hpMax     : 120 / 150
+  player.guard          : null | 남은 초            → 칩 "막기 1.2초"
+  player.seal           : null | 남은 초            → 칩 "봉인 3.0초" + .bha-tray.is-sealed
+  player.sp / spMax     : 64 / 100                  → 가득 차면 .is-full + "필살 블록 생성" 알림
+  tray[8]               : { kind, abbr, chain, weak } | null
+  runs[]                : [start, len]              → .bha-tray__run --start --len
+  stored                : { name:"응축 일격"(임시), gauge:25, charges:0~3 }
+  log[3]                : { role, text }            → .bha-log__line--{role}
+  speed                 : 1 | 2,   paused: bool,   timeLeft: 130
+  종족 설정 값: data-sp 가 붙은 글자 (역할 이름, 필살 이름, 저장 필살기 이름, 흡수 행위 등)
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app bha-app--fixed bha-battle" id="battle">
+
+  <!-- 1. 적 영역 -->
+  <section class="bha-battle__enemy" aria-label="적">
+    <header class="bha-battle__foehead">
+      <div class="bha-battle__foename"><h1 class="bha-battle__name">잿빛 포식자</h1><span class="bha-tag bha-tag--elite">강적</span><span class="bha-tag bha-tag--provisional">임시</span></div>
+      <span class="bha-chip bha-chip--weak"><svg class="bha-icon"><use href="#i-weak"/></svg>약점 <span class="bha-lin bha-lin--b"><svg class="bha-icon"><use href="#i-lin-b"/></svg>B</span></span>
+    </header>
+    <div class="bha-battle__foetags" id="foeTags"></div>
+    <div id="enemyHp"></div>
+    <div class="bha-battle__castslot" id="castSlot"></div>
+  </section>
+
+  <!-- 2. 무대: 실루엣 + 플로팅 숫자 + 사건 로그 3줄 -->
+  <section class="bha-battle__arena" aria-label="전투 상황">
+    <div class="bha-foe" id="foe" style="--aura:var(--bha-lin-b)"><span class="bha-foe__aura"></span><span class="bha-foe__body"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#foe-a"/></svg></span></div>
+    <div class="bha-battle__floats" id="floats"></div>
+    <div class="bha-log" id="log" aria-live="polite"></div>
+  </section>
+
+  <!-- 3. 내 영역 -->
+  <section class="bha-battle__me" aria-label="나">
+    <div id="playerHp"></div>
+    <div class="bha-battle__mestatus" id="meStatus"></div>
+    <div class="bha-battle__sp" id="spWrap"></div>
+  </section>
+
+  <!-- 4~6. 블록 바 · 저장 필살기 · 범례 · 힌트 -->
+  <section class="bha-battle__controls" aria-label="블록 조작">
+    <div class="bha-tray" id="tray"></div>
+    <p class="bha-tray__note" id="trayNote"></p>
+    <button class="bha-stored" id="stored" type="button"></button>
+    <div class="bha-legend" aria-label="범례">
+      <span class="bha-legend__item bha-legend__item--attack"><svg class="bha-icon"><use href="#i-attack"/></svg><span data-sp="roleAtk">파괴</span></span>
+      <span class="bha-legend__item bha-legend__item--guard"><svg class="bha-icon"><use href="#i-guard"/></svg><span data-sp="roleGrd">가면</span></span>
+      <span class="bha-legend__item bha-legend__item--heal"><svg class="bha-icon"><use href="#i-heal"/></svg><span data-sp="roleHeal">재생</span></span>
+      <span class="bha-legend__item bha-legend__item--special"><svg class="bha-icon"><use href="#i-special"/></svg><span data-sp="special">세로</span></span>
+      <span class="bha-legend__item bha-legend__item--void"><svg class="bha-icon"><use href="#i-void"/></svg>공허 블록</span>
+    </div>
+    <p class="bha-battle__hint"><b>짧게 눌러 떼기(0.3초 안)</b>=사용 · 오래 누르면 사용 안 됨 · 끌어서 순서 바꾸기 · 같은 블록을 붙이면 체인</p>
+  </section>
+
+  <!-- 7. 하단 컨트롤 -->
+  <footer class="bha-battle__bar">
+    <button class="bha-btn bha-btn--icon" id="speedBtn" type="button" aria-label="배속 바꾸기"><span class="bha-num" style="font-weight:800">1x</span></button>
+    <button class="bha-btn bha-btn--icon" id="pauseBtn" type="button" aria-label="일시정지"><svg class="bha-icon"><use href="#i-pause"/></svg></button>
+    <button class="bha-btn bha-btn--icon" type="button" aria-label="도움말"><svg class="bha-icon"><use href="#i-help"/></svg></button>
+    <button class="bha-btn bha-btn--ghost bha-btn--quit" type="button"><svg class="bha-icon"><use href="#i-quit"/></svg>그만두기</button>
+    <span class="bha-battle__time" id="time"><svg class="bha-icon"><use href="#i-timer"/></svg><span class="bha-battle__timelabel">남은 시간</span> <b>130</b>초</span>
+  </footer>
+
+  <!-- 8. 오버레이 (상태별) -->
+  <div class="bha-overlay bha-overlay--in-app" data-show="encounter" hidden>
+    <div class="bha-battle-ov bha-battle-ov--encounter">
+      <span class="bha-battle-ov__eyebrow"><span data-sp="ground">웨코문도</span> · 2바퀴 5칸</span>
+      <span class="bha-battle-ov__line"></span>
+      <h2 class="bha-battle-ov__title">잿빛 포식자과(와) 조우!</h2>
+      <span class="bha-battle-ov__line"></span>
+      <div class="bha-battle-ov__stats"><span class="bha-tag bha-tag--elite">강적</span><span class="bha-chip bha-chip--weak"><svg class="bha-icon"><use href="#i-weak"/></svg>약점 B</span><span class="bha-chip bha-chip--pattern"><svg class="bha-icon"><use href="#i-pattern-heavy"/></svg>강공격형</span></div>
+    </div>
+  </div>
+  <div class="bha-overlay bha-overlay--in-app" data-show="paused" hidden>
+    <div class="bha-battle-ov">
+      <span class="bha-battle-ov__mark"><svg class="bha-icon"><use href="#i-pause"/></svg></span>
+      <h2 class="bha-battle-ov__title">일시정지</h2>
+      <p class="bha-battle-ov__sub">전투가 멈춰 있다. 블록 바와 시간도 멈춘다.</p>
+      <div class="bha-battle-ov__actions">
+        <button class="bha-btn bha-btn--primary bha-btn--lg"><svg class="bha-icon"><use href="#i-play"/></svg>계속</button>
+        <div class="bha-grid2"><button class="bha-btn"><svg class="bha-icon"><use href="#i-help"/></svg>도움말</button><button class="bha-btn bha-btn--danger"><svg class="bha-icon"><use href="#i-quit"/></svg>그만두기</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="bha-overlay bha-overlay--in-app" data-show="win" hidden>
+    <div class="bha-battle-ov bha-battle-ov--win">
+      <span class="bha-battle-ov__mark"><svg class="bha-icon"><use href="#i-flag-win"/></svg></span>
+      <span class="bha-battle-ov__eyebrow">전투 시간 48초 · 체인3 2회</span>
+      <h2 class="bha-battle-ov__title">승리</h2>
+      <p class="bha-battle-ov__sub">잿빛 포식자이(가) 쓰러졌다.</p>
+      <div class="bha-battle-ov__actions"><button class="bha-btn bha-btn--primary bha-btn--lg"><svg class="bha-icon"><use href="#i-absorb"/></svg><span data-sp="absorbAble">포식 가능</span><svg class="bha-icon"><use href="#i-chevron-right"/></svg></button></div>
+    </div>
+  </div>
+  <div class="bha-overlay bha-overlay--in-app" data-show="lose" hidden>
+    <div class="bha-battle-ov bha-battle-ov--lose">
+      <span class="bha-battle-ov__mark" style="color:var(--bha-danger)"><svg class="bha-icon"><use href="#i-broken"/></svg></span>
+      <span class="bha-battle-ov__eyebrow">패배</span>
+      <h2 class="bha-battle-ov__title" data-sp="defeat">가면이 깨져 쇠약</h2>
+      <p class="bha-battle-ov__sub">체력이 0이 되었다. 원정이 끝난다.</p>
+      <div class="bha-battle-ov__actions"><button class="bha-btn bha-btn--lg">원정 결과 보기<svg class="bha-icon"><use href="#i-chevron-right"/></svg></button></div>
+    </div>
+  </div>
+  <div class="bha-overlay bha-overlay--in-app" data-show="timeout" hidden>
+    <div class="bha-battle-ov bha-battle-ov--lose">
+      <span class="bha-battle-ov__mark" style="color:var(--bha-warn)"><svg class="bha-icon"><use href="#i-timer"/></svg></span>
+      <span class="bha-battle-ov__eyebrow">시간 초과 패배</span>
+      <h2 class="bha-battle-ov__title">시간이 다 됐다</h2>
+      <p class="bha-battle-ov__sub">남은 시간 안에 쓰러뜨리지 못했다. 적 체력 <b class="bha-num">212 / 1020</b></p>
+      <div class="bha-battle-ov__actions"><button class="bha-btn bha-btn--lg">원정 결과 보기<svg class="bha-icon"><use href="#i-chevron-right"/></svg></button></div>
+    </div>
+  </div>
+</main>
+</div>
+<!-- 튜토리얼 오버레이 (8장면) : 전투 위를 덮고 대상만 뚫는다 -->
+<div class="bha-tut" id="tut" role="dialog" aria-modal="true" aria-labelledby="tutTitle" data-show="tut1 tut2 tut3 tut4 tut5 tut6 tut7 tut8" hidden>
+  <span class="bha-chip bha-battle__pausetag" style="z-index:2"><svg class="bha-icon"><use href="#i-pause"/></svg>튜토리얼 중 — 전투 멈춤</span>
+  <div class="bha-tut__hole" id="tutHole"></div>
+  <div class="bha-tut__card" id="tutCard">
+    <div class="bha-tut__top"><span class="bha-tut__step" id="tutStep">1 / 8</span><div class="bha-dots" id="tutDots"></div></div>
+    <h2 class="bha-tut__title" id="tutTitle"></h2>
+    <p class="bha-tut__body" id="tutBody"></p>
+    <div class="bha-tut__actions">
+      <button class="bha-btn bha-btn--ghost" type="button" id="tutSkip">건너뛰기</button>
+      <button class="bha-btn" type="button" id="tutPrev"><svg class="bha-icon"><use href="#i-chevron-left"/></svg>이전</button>
+      <button class="bha-btn bha-btn--primary" type="button" id="tutNext">다음<svg class="bha-icon"><use href="#i-chevron-right"/></svg></button>
+    </div>
+  </div>
+</div>
+<div class="bha-edgeflash bha-edgeflash--void" id="edgeVoid"></div>
+<div class="bha-edgeflash bha-edgeflash--hit" id="edgeHit"></div>
+
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var K = window.bhaKit, ic = K.icon;
+  var $ = function (id) { return document.getElementById(id); };
+  var A = function (chain, weak, st) { return { kind: 'attack', abbr: '찢는 발톱', sp: 'atkAbbr', chain: chain, weak: weak, state: st }; };
+  var G = function (chain, st) { return { kind: 'guard', abbr: '굳은 가면', sp: 'grdAbbr', chain: chain, state: st }; };
+  var H = function (chain, st) { return { kind: 'heal', abbr: '재생 체액', sp: 'healAbbr', chain: chain, state: st }; };
+  var V = function (st) { return { kind: 'void', abbr: '공허', state: st }; };
+  var S = function (st) { return { kind: 'special', abbr: '세로', sp: 'special', state: st }; };
+  var B = function (st) { return { kind: 'basic', abbr: '기본 타격', sp: 'basicAbbr', state: st }; };
+
+  var castTimer = null;
+  function stopCast() { if (castTimer) cancelAnimationFrame(castTimer); castTimer = null; }
+  function runCast(el) {
+    var t0 = performance.now();
+    (function f(t) { var p = ((t - t0) % 2400) / 2000; el.style.setProperty('--fill', Math.min(1, p).toFixed(3)); castTimer = requestAnimationFrame(f); })(t0);
+  }
+  var LOG = {
+    base: [['attack', 'i-attack', '찢는 발톱 <b>−48</b>'], ['heal', 'i-heal', '재생 체액 <b>+18</b>'], ['chain', 'i-chain-2', '체인2 발동! 찢는 발톱 <b>−124</b>']],
+    cast: [['attack', 'i-attack', '찢는 발톱 <b>−48</b>'], ['chain', 'i-chain-2', '체인2 발동! <b>−124</b>'], ['cast', 'i-cast', '강공격 예고! 막기 블록을 눌러라']],
+    chain3: [['heal', 'i-heal', '재생 체액 <b>+18</b>'], ['attack', 'i-attack', '찢는 발톱 <b>−48</b>'], ['chain', 'i-chain-3', '체인3 발동! 찢는 발톱 <b>−212</b>']],
+    guard: [['cast', 'i-cast', '강공격 예고!'], ['guard', 'i-guard', '굳은 가면 — 막기 자세'], ['guard', 'i-guard', '강공격을 막았다! 피해 <b>0</b>']],
+    void: [['attack', 'i-attack', '찢는 발톱 <b>−48</b>'], ['void', 'i-void', '공허 블록 <b>−90</b>'], ['void', 'i-risk', '광기 <b>+6</b> (45 → 51)']],
+    sp: [['attack', 'i-attack', '찢는 발톱 <b>−48</b>'], ['chain', 'i-chain-2', '체인2 발동! <b>−124</b>'], ['chain', 'i-special', '영력 가득 — 세로 블록 생성!']],
+    seal: [['attack', 'i-attack', '찢는 발톱 <b>−48</b>'], ['cast', 'i-seal', '적이 봉인을 걸었다!'], ['cast', 'i-seal', '블록 생성 정지 3초']],
+    held: [['attack', 'i-attack', '찢는 발톱 <b>−48</b>'], ['heal', 'i-heal', '재생 체액 <b>+18</b>'], ['chain', 'i-grip', '찢는 발톱을 들었다 놓았다 (사용 안 함)']]
+  };
+  function renderLog(lines, animateLast) {
+    $('log').innerHTML = lines.map(function (l, i) {
+      return '<p class="bha-log__line bha-log__line--' + l[0] + (animateLast && i === lines.length - 1 ? ' is-new' : '') + '">' + ic(l[1]) + '<span>' + l[2] + '</span></p>';
+    }).join('');
+  }
+  function floats(list) {
+    $('floats').innerHTML = list.map(function (f) { return '<span class="bha-float bha-float--' + f[0] + '" style="left:' + f[1] + ';top:' + f[2] + ';animation-delay:' + (f[4] || 0) + 's;animation-iteration-count:infinite;animation-duration:2.2s">' + f[3] + '</span>'; }).join('');
+  }
+  function stored(gauge, charges) {
+    var el = $('stored');
+    el.className = 'bha-stored' + (charges > 0 ? ' is-ready' : '') + (charges >= 3 ? ' is-full' : '');
+    el.disabled = charges === 0;
+    el.style.setProperty('--fill', (gauge / 100).toFixed(2));
+    var pips = ''; for (var i = 0; i < 3; i++) pips += '<i' + (i < charges ? ' class="is-on"' : '') + '></i>';
+    el.innerHTML = '<span class="bha-stored__icon">' + ic('i-stored') + '</span><span class="bha-stored__body"><span class="bha-stored__name"><span data-sp="stored">응축 일격</span><span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-stored__meta">' +
+      (charges >= 3 ? '<b>가득</b> · 지금 쓰지 않으면 충전이 낭비된다' : '<b>' + gauge + '</b> / 100 · 블록을 쓸수록 충전') + '</span><span class="bha-stored__gauge"><i></i></span></span><span class="bha-stored__pips" aria-label="충전 ' + charges + '칸">' + pips + '</span>';
+    el.setAttribute('aria-label', '저장 필살기, 충전 ' + charges + '칸');
+  }
+
+  function render(s) {
+    stopCast();
+    var app = $('battle'); app.classList.toggle('is-paused', s === 'paused');
+    $('foe').className = 'bha-foe' + (s === 'cast' ? ' is-casting' : '') + (s === 'chain3' || s === 'void' ? ' is-hit' : '');
+    var enemyHp = { base: 820, cast: 760, chain3: 548, guard: 760, void: 670, sp: 700, seal: 760, held: 820, drag: 820, paused: 820, encounter: 1020, win: 0, lose: 410, timeout: 212 }[s];
+    if (enemyHp == null) enemyHp = 820;
+    $('enemyHp').innerHTML = K.meter({ mod: 'enemy', label: '적 체력', value: enemyHp, max: 1020, compact: true, lg: true, ghost: s === 'chain3' ? 0.745 : (s === 'void' ? 0.745 : null) });
+
+    $('foeTags').innerHTML =
+      '<span class="bha-chip bha-chip--pattern">' + ic('i-pattern-heavy') + '강공격형</span>' +
+      (s === 'guard' || s === 'base' ? '<span class="bha-chip bha-chip--guard">' + ic('i-guard') + '방어 자세 <span class="bha-chip__time">2.0초</span></span>' : '') +
+      (s === 'seal' ? '<span class="bha-chip bha-chip--seal">' + ic('i-seal') + '봉인 부여 중</span>' : '');
+
+    $('castSlot').innerHTML = (s === 'cast')
+      ? '<div class="bha-cast" id="cast" style="--fill:.4" role="alert"><span class="bha-cast__title">' + ic('i-cast') + '강공격 예고!</span><span class="bha-cast__track"><i></i></span><span class="bha-cast__hint">' + ic('i-guard') + '막기</span></div>'
+      : (s === 'guard')
+        ? '<div class="bha-cast is-blocked" style="--fill:1"><span class="bha-cast__title">' + ic('i-guard') + '막았다!</span><span class="bha-cast__track"><i></i></span><span class="bha-cast__hint">' + ic('i-check') + '피해 0</span></div>'
+        : '<div class="bha-battle__castidle">' + ic('i-cast') + '강공격 예고가 뜨면 여기에 시전 바가 찬다</div>';
+    if (s === 'cast') runCast($('cast'));
+
+    var playerHp = { base: 120, cast: 120, chain3: 126, guard: 120, void: 104, sp: 120, seal: 98, lose: 0, timeout: 64, win: 88, encounter: 150 }[s] || 120;
+    $('playerHp').innerHTML = K.meter({ mod: 'player', label: '내 체력', value: playerHp, max: 150, compact: true, lg: true, danger: playerHp < 40 });
+    $('meStatus').innerHTML =
+      (s === 'guard' ? '<span class="bha-chip bha-chip--guard">' + ic('i-guard') + '막기 <span class="bha-chip__time">1.2초</span></span>' : '') +
+      (s === 'seal' ? '<span class="bha-chip bha-chip--seal">' + ic('i-seal') + '봉인 <span class="bha-chip__time">3.0초</span></span>' : '') +
+      (s !== 'guard' && s !== 'seal' ? '<span class="bha-faint">상태 이상 없음</span>' : '');
+    var spv = s === 'sp' ? 100 : (s === 'encounter' ? 0 : 64);
+    $('spWrap').innerHTML = K.meter({ mod: 'sp', label: '영력', sp: 'sp', icon: 'i-sp', value: spv, max: 100, compact: true, full: spv === 100 }) +
+      (s === 'sp' ? '<span class="bha-battle__spnote">' + ic('i-special') + '<span data-sp-tpl="{} 블록 생성!" data-sp="special">세로 블록 생성!</span></span>' : '');
+    if (s === 'sp') $('spWrap').firstElementChild.classList.add('is-burst');
+
+    // 블록 바
+    var cells, runs = [], opt = {}, trayCls = 'bha-tray', note = '';
+    switch (s) {
+      case 'cast': cells = [A(2, true), A(2, true), G(1, 'is-cue'), H(1), V(), B(), G(1, 'is-cue'), null]; runs = [[1, 2]]; break;
+      case 'chain3': cells = [G(1), A(3, true, 'is-pressed'), A(3, true), A(3, true), H(1), B(), null, null]; runs = [[2, 3, 'is-fire demo-loop']]; break;
+      case 'guard': cells = [A(2, true), A(2, true), H(1), V(), B(), null, null, null]; runs = [[1, 2]]; break;
+      case 'void': cells = [A(1, true), G(1), H(2), H(2), B(), null, null, null]; runs = [[3, 2]]; break;
+      case 'sp': cells = [A(2, true), A(2, true), G(1), H(1), B(), V(), S('is-popin'), null]; runs = [[1, 2]]; break;
+      case 'seal': cells = [A(1, true), G(1), H(1), B(), null, null, null, null]; trayCls += ' is-sealed'; opt.sealText = '봉인 — 블록 생성 정지 3.0초'; break;
+      case 'held': cells = [A(1, true), G(1), H(2), H(2), V(), B(), null, null]; runs = [[3, 2]]; trayCls += ' is-held'; note = 'held'; break;
+      case 'drag': cells = [A(1, true), G(1), H(1, 'is-nudge-r'), V('is-nudge-r'), { kind: 'attack', abbr: '찢는 발톱', sp: 'atkAbbr', chain: 1, weak: true, state: 'is-dragging', style: '--drag-x:-104px;--drag-y:-6px' }, B(), null, null]; opt.insertAt = 3; opt.origin = 5; note = 'drag'; break;
+      case 'paused': cells = [A(2, true), A(2, true), G(1), H(1), V(), B(), null, null]; runs = [[1, 2]]; trayCls += ' is-paused'; break;
+      case 'encounter': cells = [null, null, null, null, null, null, null, null]; break;
+      default: cells = [A(2, true), A(2, true), G(1), H(1), V(), B(), H(1, 'is-popin'), null]; runs = [[1, 2]];
+    }
+    $('tray').className = trayCls;
+    $('tray').innerHTML = K.tray(cells, runs, opt);
+    var tn = $('trayNote');
+    tn.className = 'bha-tray__note' + (note === 'held' ? ' is-held' : '');
+    tn.innerHTML = note === 'held' ? ic('i-grip', 'bha-icon--sm') + '들었다 놓았다 — 0.3초보다 길게 눌러 사용하지 않음'
+      : note === 'drag' ? '<span style="color:var(--bha-insert)">' + ic('i-grip', 'bha-icon--sm') + '3번 칸 앞에 끼워 넣기 — 놓으면 순서가 바뀐다</span>'
+      : s === 'seal' ? '<span style="color:#c9a8ff">' + ic('i-seal', 'bha-icon--sm') + '봉인 중: 새 블록이 생기지 않는다. 있는 블록은 쓸 수 있다</span>'
+      : '';
+
+    stored(s === 'sp' ? 100 : 25 + (s === 'chain3' ? 40 : 0), s === 'sp' ? 3 : (s === 'chain3' || s === 'guard' ? 1 : 0));
+
+    renderLog(LOG[s] || LOG.base, true);
+    floats(
+      s === 'chain3' ? [['attack is-crit', '30%', '24%', '−212'], ['chain bha-float--chain3', '52%', '12%', '체인3!', .2]] :
+      s === 'guard' ? [['guard', '40%', '40%', ic('i-guard') + '막음']] :
+      s === 'void' ? [['void', '44%', '28%', ic('i-void') + '−90'], ['attack', '24%', '40%', '−48', .5]] :
+      s === 'base' ? [['attack', '36%', '30%', '−48'], ['heal', '58%', '62%', '18', .7]] :
+      s === 'sp' ? [['chain', '40%', '28%', '−124']] : []
+    );
+    var tm = $('time'); tm.classList.toggle('is-urgent', s === 'timeout');
+    tm.querySelector('b').textContent = { timeout: '0', lose: '72', win: '82', encounter: '150' }[s] || '130';
+
+    // 공허 / 피격 번쩍임 (반복 시연)
+    $('edgeVoid').classList.remove('is-on'); $('edgeHit').classList.remove('is-on');
+    if (s === 'void') { void $('edgeVoid').offsetWidth; $('edgeVoid').classList.add('is-on'); }
+  }
+
+  // 블록 직접 눌러 보기: 0.3초 안에 떼면 발동, 길면 "들었다 놓음"
+  $('tray').addEventListener('pointerdown', function (e) {
+    var b = e.target.closest('.bha-block'); if (!b || $('tray').classList.contains('is-paused')) return;
+    var t0 = performance.now(); b.classList.add('is-pressed');
+    function up() {
+      window.removeEventListener('pointerup', up);
+      b.classList.remove('is-pressed');
+      if (performance.now() - t0 > 300) {
+        var tn = $('trayNote'); tn.className = 'bha-tray__note is-held'; tn.innerHTML = ic('i-grip', 'bha-icon--sm') + '들었다 놓았다 — 사용하지 않음'; return;
+      }
+      b.classList.add('is-fire');
+      setTimeout(function () { b.classList.remove('is-fire'); b.classList.add('is-popin'); setTimeout(function () { b.classList.remove('is-popin'); }, 300); }, 400);
+    }
+    window.addEventListener('pointerup', up);
+  });
+  $('speedBtn').addEventListener('click', function () { var n = this.querySelector('span'); n.textContent = n.textContent === '1x' ? '2x' : '1x'; this.classList.toggle('is-on', n.textContent === '2x'); });
+
+  /* ---- 튜토리얼: 대상 요소를 측정해 구멍과 카드 위치를 정한다 ---- */
+  var TUT = [
+    { base: 'base', target: '.bha-battle__arena', icon: 'i-play', title: '자동 전투', body: '나와 적은 <b>알아서 공격을 주고받아요</b>. 적 체력을 0으로 만들면 이기고, 남은 시간이 다 되면 져요.' },
+    { base: 'base', target: '#tray', icon: 'i-attack', title: '블록 바 — 눌러서 사용', body: '블록은 왼쪽부터 쌓여요. <b>짧게 눌렀다 떼면(0.3초 안)</b> 그 블록의 기술이 나가요. 오래 누르면 쓰지 않아요.' },
+    { base: 'base', target: '#tray', icon: 'i-chain-2', title: '끌어서 순서 바꾸기 · 붙이면 체인', body: '블록을 끌어서 순서를 바꿀 수 있어요. <b>같은 블록을 나란히 붙이면</b> 하나만 눌러도 함께 발동하는 체인이 돼요. 최대 3개.' },
+    { base: 'cast', target: '#castSlot', icon: 'i-cast', title: '강공격 예고와 막기', body: '적이 강공격을 준비하면 이 바가 차올라요. <b>다 차기 전에 막기 블록</b>을 쓰면 막을 수 있어요. 못 막으면 큰 피해를 받아요.' },
+    { base: 'base', target: '#tray .bha-tray__cell:nth-child(5)', icon: 'i-void', title: '공허 블록', body: '컨디션이 나쁘면 공허 블록이 섞여요. 쓰면 강하지만 <b data-sp="risk">광기</b> 게이지가 올라요.' },
+    { base: 'sp', target: '#spWrap', icon: 'i-special', title: 'SP와 필살 블록', body: '블록을 쓰면 <b data-sp="sp">영력</b>이 차요. 가득 차면 블록 바에 <b>필살 블록</b>이 생겨요.' },
+    { base: 'sp', target: '#stored', icon: 'i-stored', title: '저장 필살기', body: '블록을 쓸수록 충전돼요. <b>충전 칸이 하나라도 있으면</b> 눌러서 쓸 수 있어요. 3칸이 다 차면 더 모이지 않아요.' },
+    { base: 'base', target: '.bha-battle__enemy', icon: 'i-evolve', title: '이기면 흡수 → 진화', body: '적을 쓰러뜨리면 <b data-sp="absorb">포식</b>해서 특성을 얻어요. 흡수 기록이 쌓이면 <b data-sp="nest">둥지</b>에서 진화해요.' }
+  ];
+  var tutIdx = 0;
+  function placeTut() {
+    var sc = TUT[tutIdx], t = document.querySelector(sc.target); if (!t) return;
+    var r = t.getBoundingClientRect(), pad = 6, vh = window.innerHeight, vw = window.innerWidth;
+    var hole = $('tutHole'), card = $('tutCard');
+    hole.style.left = (r.left - pad) + 'px'; hole.style.top = (r.top - pad) + 'px';
+    hole.style.width = (r.width + pad * 2) + 'px'; hole.style.height = (r.height + pad * 2) + 'px';
+    var below = (r.top + r.height / 2) < vh / 2;
+    card.classList.toggle('is-below', below); card.classList.toggle('is-above', !below);
+    card.style.top = below ? (r.bottom + pad + 14) + 'px' : 'auto';
+    card.style.bottom = below ? 'auto' : (vh - r.top + pad + 14) + 'px';
+    var cw = Math.min(448, vw - 24), cl = (vw - cw) / 2;
+    card.style.setProperty('--tail', Math.max(24, Math.min(cw - 24, r.left + r.width / 2 - cl)) + 'px');
+  }
+  function showTut(i) {
+    tutIdx = i; var sc = TUT[i];
+    render(sc.base);
+    $('tutStep').textContent = (i + 1) + ' / 8';
+    $('tutTitle').innerHTML = ic(sc.icon) + sc.title;
+    $('tutBody').innerHTML = sc.body;
+    $('tutDots').innerHTML = TUT.map(function (_, k) { return '<i class="bha-dots__dot' + (k < i ? ' is-done' : k === i ? ' is-active' : '') + '"></i>'; }).join('');
+    $('tutPrev').disabled = i === 0;
+    $('tutNext').innerHTML = i === 7 ? '전투 시작' + ic('i-play') : '다음' + ic('i-chevron-right');
+    $('battle').classList.add('is-paused');
+    requestAnimationFrame(placeTut);
+  }
+  $('tutNext').addEventListener('click', function () { if (tutIdx < 7) window.bhaSetState('tut' + (tutIdx + 2)); else window.bhaSetState('base'); });
+  $('tutPrev').addEventListener('click', function () { if (tutIdx > 0) window.bhaSetState('tut' + tutIdx); });
+  $('tutSkip').addEventListener('click', function () { window.bhaSetState('base'); });
+  window.addEventListener('resize', function () { if (!$('tut').hidden) placeTut(); });
+
+  window.BHA_DEMO = {
+    title: '12. 전투 · 4. 튜토리얼',
+    initial: 'base',
+    states: [['base', '기본 진행 (체인2 묶음)'], ['cast', '강공격 예고 (막기 안내)'], ['guard', '막기 성공'], ['chain3', '체인3 발동'], ['drag', '끌어서 순서 바꾸기'], ['held', '오래 누름 → 사용 안 됨'], ['seal', '봉인 (생성 정지)'], ['sp', 'SP 가득 → 필살 블록 생성 · 저장 3칸'], ['void', '공허 블록 사용 (가장자리 번쩍임)'], ['encounter', '시작 연출: 조우'], ['paused', '일시정지'], ['win', '승리 → 흡수로'], ['lose', '패배'], ['timeout', '시간 초과 패배'],
+      ['tut1', '튜토리얼 1/8 자동 전투'], ['tut2', '튜토리얼 2/8 블록 바'], ['tut3', '튜토리얼 3/8 순서·체인'], ['tut4', '튜토리얼 4/8 강공격 막기'], ['tut5', '튜토리얼 5/8 공허 블록'], ['tut6', '튜토리얼 6/8 SP·필살 블록'], ['tut7', '튜토리얼 7/8 저장 필살기'], ['tut8', '튜토리얼 8/8 흡수 → 진화']],
+    onState: function (id) { if (/^tut\d$/.test(id)) showTut(+id.slice(3) - 1); else render(id); }
+  };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

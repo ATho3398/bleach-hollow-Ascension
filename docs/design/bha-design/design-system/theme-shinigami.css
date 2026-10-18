@@ -1,0 +1,47 @@
+/* ==========================================================================
+   테마: 사신 (Shinigami) — 먹색·남빛 + 은청색 포인트, 단정하고 차가운 느낌
+   적용: <html data-bha-theme="shinigami">
+   이 파일은 "테마 토큰"만 바꾼다. 레이아웃·컴포넌트는 손대지 않는다.
+   ========================================================================== */
+[data-bha-theme="shinigami"] {
+  --bha-theme-name: "shinigami";
+
+  /* 바탕: 먹 + 남빛 */
+  --bha-backdrop: #03050a;
+  --bha-bg-0: #080b12;
+  --bha-bg-1: #0f1420;
+  --bha-bg-2: #161d2b;
+  --bha-bg-3: #1f2839;
+  --bha-line-1: #232d40;
+  --bha-line-2: #3a4862;
+
+  /* 글자: 차가운 백색 */
+  --bha-text-1: #e6ebf3;
+  --bha-text-2: #a9b4c6;
+  --bha-text-3: #8692a7;
+
+  /* 포인트: 은청색 */
+  --bha-accent: #7fa6d6;
+  --bha-accent-hi: #b7d4ff;
+  --bha-accent-soft: rgb(127 166 214 / 0.16);
+  --bha-focus: #b7d4ff;
+
+  /* 주 버튼 = 은빛 칼날 판에 먹 글자 */
+  --bha-primary-bg: #c9d7e8;
+  --bha-primary-ink: #0b1020;
+  --bha-primary-line: #eef5ff;
+
+  /* 모서리: 반듯하게 */
+  --bha-r-xs: 2px;
+  --bha-r-sm: 3px;
+  --bha-r-md: 4px;
+  --bha-r-lg: 6px;
+
+  /* 아이콘 선 굵기: 가늘고 단정하게 */
+  --bha-icon-stroke: 1.5;
+
+  /* 질감: 가는 마름모 격자 (오리지널 기하 문양) */
+  --bha-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='28' viewBox='0 0 48 28'%3E%3Cg fill='none' stroke='%23b7d4ff' stroke-opacity='.045' stroke-width='1'%3E%3Cpath d='M0 14L24 0l24 14-24 14z'/%3E%3Cpath d='M24 7l12 7-12 7-12-7z'/%3E%3C/g%3E%3C/svg%3E");
+  --bha-pattern-size: 48px 28px;
+  --bha-vignette: radial-gradient(120% 70% at 50% 0%, rgb(127 166 214 / 0.08), transparent 60%);
+}

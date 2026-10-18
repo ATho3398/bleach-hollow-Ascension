@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BHA 디자인 시스템 시트</title>
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="./components.css">
+<style>
+/* ---- 시트 전용 레이아웃 (앱에는 들어가지 않음) ---- */
+body { background: var(--bha-backdrop); }
+.sheet { max-width: 1120px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 80px max(16px, env(safe-area-inset-left, 0px)); }
+.sheet__bar { position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: max(10px, env(safe-area-inset-top, 0px)) 0 10px; background: color-mix(in srgb, var(--bha-backdrop) 90%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--bha-line-1); }
+.sheet__brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.sheet__brand b { font-family: var(--bha-font-display); font-weight: 800; font-size: 18px; }
+.sheet__brand span { font-size: 12px; color: var(--bha-text-3); }
+.sheet__nav { display: flex; gap: 6px; overflow-x: auto; padding: 10px 0 0; scrollbar-width: none; }
+.sheet__nav a { flex: none; display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--bha-line-1); color: var(--bha-text-2); text-decoration: none; font-size: 13px; font-weight: 700; }
+.sheet__nav a:hover { color: var(--bha-text-1); border-color: var(--bha-line-2); }
+.hero { padding: 40px 0 24px; display: grid; gap: 14px; }
+.hero__eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--bha-accent-hi); }
+.hero h1 { font-family: var(--bha-font-display); font-weight: 800; font-size: clamp(34px, 7vw, 60px); line-height: 1.02; letter-spacing: -0.02em; text-wrap: balance; }
+.hero p { max-width: 62ch; color: var(--bha-text-2); font-size: 15px; line-height: 1.65; }
+.sec { padding-top: 56px; scroll-margin-top: 110px; }
+.sec__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--bha-line-1); }
+.sec__no { font-family: var(--bha-font-display); font-weight: 800; color: var(--bha-accent-hi); font-size: 14px; font-variant-numeric: tabular-nums; }
+.sec__title { font-family: var(--bha-font-display); font-weight: 800; font-size: 26px; }
+.sec__desc { flex-basis: 100%; color: var(--bha-text-2); font-size: 14px; max-width: 70ch; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; align-items: start; }
+.grid-wide { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 16px; align-items: start; }
+.spec { border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-lg); background: var(--bha-bg-0); overflow: hidden; min-width: 0; }
+.spec__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; padding: 12px 14px; border-bottom: 1px solid var(--bha-line-1); background: var(--bha-bg-1); }
+.spec__name { font-weight: 800; font-size: 15px; }
+.spec__cls { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--bha-accent-hi); }
+.spec__body { padding: 16px 14px; display: flex; flex-direction: column; gap: 14px; background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-bg-0); }
+.spec__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.spec__cap { font-size: 12px; color: var(--bha-text-3); font-weight: 700; letter-spacing: .02em; }
+.spec__states { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.state { display: flex; flex-direction: column; gap: 6px; }
+.state > .spec__cap { order: 2; text-align: center; }
+.spec__code { border-top: 1px solid var(--bha-line-1); }
+.spec__code summary { list-style: none; cursor: pointer; padding: 10px 14px; font-size: 12px; font-weight: 700; color: var(--bha-text-3); display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.spec__code summary::-webkit-details-marker { display: none; }
+.spec__code pre { margin: 0; padding: 12px 14px; max-height: 280px; overflow: auto; background: #000; color: #cfd6e2; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-all; }
+.note { font-size: 13px; color: var(--bha-text-2); line-height: 1.6; }
+.note code, .spec code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--bha-text-1); background: var(--bha-bg-2); padding: 1px 5px; border-radius: 4px; }
+
+/* 스와치 */
+.sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.sw { display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: center; padding: 8px; border-radius: var(--bha-r-md); background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); min-width: 0; }
+.sw i { width: 44px; height: 44px; border-radius: var(--bha-r-sm); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12); display: grid; place-items: center; color: #fff; }
+.sw i .bha-icon { width: 22px; height: 22px; }
+.sw b { display: block; font-size: 13px; }
+.sw small { display: block; font: 12px/1.4 ui-monospace, Menlo, monospace; color: var(--bha-text-3); word-break: break-all; }
+.sw-h { font-size: 13px; font-weight: 800; color: var(--bha-text-2); margin: 18px 0 8px; }
+
+/* 테마 비교 */
+.cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px; }
+.cmp__col { border-radius: var(--bha-r-lg); overflow: hidden; border: 1px solid var(--bha-line-2); }
+.cmp__label { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bha-bg-1); border-bottom: 1px solid var(--bha-line-1); color: var(--bha-text-1); font-weight: 800; }
+.cmp__label code { font: 12px ui-monospace, Menlo, monospace; color: var(--bha-accent-hi); }
+.cmp__app { padding: 16px; display: flex; flex-direction: column; gap: 12px; color: var(--bha-text-1); background: var(--bha-vignette), var(--bha-pattern) center top / var(--bha-pattern-size), var(--bha-bg-0); }
+
+/* 타이포 / 토큰 표 */
+.ty { display: grid; grid-template-columns: 90px 1fr; gap: 6px 14px; align-items: baseline; }
+.ty small { font: 12px ui-monospace, Menlo, monospace; color: var(--bha-text-3); }
+.tok { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.tok div { padding: 10px; border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); background: var(--bha-bg-1); font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.tok code { font: 12px ui-monospace, Menlo, monospace; color: var(--bha-text-3); }
+.tok .vis { height: 10px; background: var(--bha-accent); border-radius: 2px; }
+.radius-demo { width: 56px; height: 40px; border: 2px solid var(--bha-text-2); }
+.motion-demo { width: 100%; height: 6px; border-radius: 3px; background: var(--bha-bg-3); position: relative; overflow: hidden; }
+.motion-demo::after { content: ""; position: absolute; top: 0; bottom: 0; width: 30%; background: var(--bha-accent-hi); animation: md 1.6s infinite; animation-timing-function: inherit; }
+@keyframes md { from { left: -30%; } to { left: 100%; } }
+
+/* 아이콘 */
+.ic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.ic { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 4px 8px; border-radius: var(--bha-r-md); border: 1px solid var(--bha-line-1); background: var(--bha-bg-1); text-align: center; min-width: 0; }
+.ic .bha-icon { width: 28px; height: 28px; }
+.ic b { font-size: 12px; font-weight: 700; color: var(--bha-text-1); }
+.ic small { font: 12px ui-monospace, Menlo, monospace; color: var(--bha-text-3); word-break: break-all; }
+.ic-group { font-size: 13px; font-weight: 800; color: var(--bha-text-2); margin: 20px 0 8px; }
+
+/* 블록 매트릭스 */
+.bm-wrap { overflow-x: auto; padding-bottom: 6px; }
+.bm { border-collapse: separate; border-spacing: 6px; width: auto; }
+.bm th { font-size: 12px; font-weight: 700; color: var(--bha-text-3); text-align: center; white-space: nowrap; padding: 0 2px; }
+.bm th[scope=row] { text-align: right; padding-right: 6px; color: var(--bha-text-2); font-size: 12px; }
+.bm td { width: 46px; height: 68px; padding: 0; }
+.bm td > .bha-block { width: 46px; height: 68px; }
+.phone { width: 100%; max-width: 390px; margin: 0 auto; padding: 14px 4px; border-radius: var(--bha-r-lg); background: var(--bha-bg-0); border: 1px solid var(--bha-line-1); }
+.phone--pad { padding: 14px 12px; }
+.fl-stage { position: relative; height: 120px; border-radius: var(--bha-r-md); background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); overflow: hidden; }
+.fl-stage .bha-float { animation-iteration-count: infinite; animation-duration: 1.8s; }
+.toast-demo { position: relative; height: 84px; }
+.toast-demo .bha-toast { position: absolute; top: 8px; }
+.modal-demo { position: relative; display: grid; place-items: center; padding: 20px 12px; border-radius: var(--bha-r-md); background: rgb(0 0 0 / .72); }
+.modal-demo .bha-modal { animation: none; }
+.prov-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+</style>
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+
+<div class="sheet">
+  <header class="sheet__bar">
+    <div class="sheet__brand"><b>BHA 디자인 시스템</b><span>v0.1 · 2026-10-18</span></div>
+    <div class="bha-seg bha-seg--sm" role="tablist" aria-label="종족 테마" style="min-width:200px">
+      <button class="bha-seg__item" role="tab" aria-selected="true" data-theme-btn="hollow">호로 테마</button>
+      <button class="bha-seg__item" role="tab" aria-selected="false" data-theme-btn="shinigami">사신 테마</button>
+    </div>
+    <nav class="sheet__nav" style="flex-basis:100%">
+      <a href="#direction">방향·테마 비교</a><a href="#color">색</a><a href="#type">타이포·간격·모션</a><a href="#icons">아이콘</a><a href="#basic">기본 컴포넌트</a><a href="#game">게임 컴포넌트</a><a href="#battle">전투 부품</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <span class="hero__eyebrow">BLEACH HOLLOW ASCENSION · UI 1단계</span>
+    <h1>깨진 가면, 단정한 칼날.<br>하나의 틀, 두 개의 피부.</h1>
+    <p>모든 화면은 같은 컴포넌트로 만들고, 종족은 <code>&lt;html data-bha-theme="…"&gt;</code> 하나로 갈아끼웁니다. 바탕은 어둡고 절제된 고딕, 선은 얇게, 색은 역할(공격·막기·회복·SP·공허)과 위기(위험·희귀·해방)에만 씁니다. 역할은 항상 <b>색 + 아이콘 + 표면 무늬</b> 세 가지로 구분해 색약 사용자도 읽을 수 있게 했습니다. 오른쪽 위에서 테마를 바꿔 보세요.</p>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="sec" id="direction">
+    <div class="sec__head"><span class="sec__no">00</span><h2 class="sec__title">방향 · 호로 / 사신 비교</h2>
+      <p class="sec__desc">같은 HTML, 같은 클래스. 루트 속성만 다릅니다. 호로는 뼈백색 판과 크림슨, 둥근 모서리와 굵은 선, 균열 질감. 사신은 은청색 판, 반듯한 모서리와 가는 선, 마름모 격자 질감. 종족 이름(둥지/대원실, 자아/영압 안정도, 광기/호로화 등)은 종족 설정에서 오는 값입니다.</p></div>
+    <div class="cmp">
+      <div class="cmp__col" data-bha-theme="hollow">
+        <div class="cmp__label">호로 <code>data-bha-theme="hollow"</code></div>
+        <div class="cmp__app" id="cmpHollow"></div>
+      </div>
+      <div class="cmp__col" data-bha-theme="shinigami">
+        <div class="cmp__label">사신 <code>data-bha-theme="shinigami"</code></div>
+        <div class="cmp__app" id="cmpShini"></div>
+      </div>
+    </div>
+    <template id="cmpTpl">
+      <div class="bha-row"><h3 class="bha-h1" data-sp="nest">둥지</h3><span class="bha-chip"><svg class="bha-icon"><use href="#i-evolve"/></svg><span data-sp="stage">2단계 · 길리안</span></span></div>
+      <div class="bha-meter bha-meter--hunger" style="--fill:.2"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-hunger"/></svg>허기</span><span class="bha-meter__value">20<small> / 100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i></div></div>
+      <div class="bha-meter bha-meter--stab" style="--fill:.5"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-stab"/></svg><span data-sp="stab">자아</span></span><span class="bha-meter__value">50<small> / 100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i></div></div>
+      <div class="bha-meter bha-meter--risk is-danger" style="--fill:.72"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-risk"/></svg><span data-sp="risk">광기</span></span><span class="bha-meter__value">72<small> / 100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i><i class="bha-meter__zone" style="--zone:.6"></i></div><p class="bha-meter__note"><svg class="bha-icon"><use href="#i-warn"/></svg>높음</p></div>
+      <div class="bha-tray" style="padding-top:22px">
+        <div class="bha-tray__grid">
+          <div class="bha-tray__cell"><div class="bha-block bha-block--attack is-chain2"><span class="bha-block__pips"><i></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-icon"><use href="#i-attack"/></svg></span><b class="bha-block__abbr" data-sp="atk">찢는 발톱</b></div></div>
+          <div class="bha-tray__cell"><div class="bha-block bha-block--attack is-chain2"><span class="bha-block__pips"><i></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-icon"><use href="#i-attack"/></svg></span><b class="bha-block__abbr" data-sp="atk">찢는 발톱</b></div></div>
+          <div class="bha-tray__cell"><div class="bha-block bha-block--guard"><span class="bha-block__pips"><i></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-icon"><use href="#i-guard"/></svg></span><b class="bha-block__abbr" data-sp="grd">굳은 가면</b></div></div>
+          <div class="bha-tray__cell"><div class="bha-block bha-block--special"><span class="bha-block__icon"><svg class="bha-icon"><use href="#i-special"/></svg></span><b class="bha-block__abbr" data-sp="sp">세로</b></div></div>
+          <div class="bha-tray__cell"><div class="bha-block bha-block--void"><span class="bha-block__icon"><svg class="bha-icon"><use href="#i-void"/></svg></span><b class="bha-block__abbr">공허</b></div></div>
+          <div class="bha-tray__cell"><div class="bha-block bha-block--heal is-weak"><span class="bha-block__pips"><i></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-icon"><use href="#i-heal"/></svg></span><b class="bha-block__abbr" data-sp="heal">재생 체액</b><span class="bha-block__weak"><svg class="bha-icon"><use href="#i-weak"/></svg></span></div></div>
+          <div class="bha-tray__cell"></div><div class="bha-tray__cell"></div>
+          <div class="bha-tray__run" style="--start:1;--len:2"><span class="bha-tray__runlabel"><svg class="bha-icon"><use href="#i-chain-2"/></svg>체인2</span></div>
+        </div>
+      </div>
+      <button class="bha-stored is-ready" style="--fill:.25"><span class="bha-stored__icon"><svg class="bha-icon"><use href="#i-stored"/></svg></span><span class="bha-stored__body"><span class="bha-stored__name"><span data-sp="stored">응축 일격</span><span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-stored__meta"><b>25</b> / 100 · 블록을 쓸수록 충전</span><span class="bha-stored__gauge"><i></i></span></span><span class="bha-stored__pips"><i class="is-on"></i><i></i><i></i></span></button>
+      <div class="bha-grid2"><button class="bha-btn bha-btn--primary"><svg class="bha-icon"><use href="#i-nest"/></svg>원정 출발</button><button class="bha-btn"><svg class="bha-icon"><use href="#i-practice"/></svg>전투 연습</button></div>
+      <div class="bha-notice bha-notice--warn"><svg class="bha-icon"><use href="#i-warn"/></svg><div class="bha-notice__body"><span class="bha-notice__title" data-sp="defeat">가면이 깨져 쇠약</span><span>다음 원정 전까지 컨디션 회복이 느리다.</span></div></div>
+    </template>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="sec" id="color">
+    <div class="sec__head"><span class="sec__no">01</span><h2 class="sec__title">색 토큰</h2>
+      <p class="sec__desc">테마 토큰은 테마마다 바뀌고, 의미 색·계통·타일 색은 종족과 무관하게 고정입니다. 모든 글자 색은 패널(bg-1) 위에서 WCAG AA(4.5:1) 이상입니다.</p></div>
+    <div class="sw-h">테마 토큰 (현재 테마 값 · 테마 바꾸면 바뀜)</div>
+    <div class="sw-grid" id="swTheme"></div>
+    <div class="sw-h">역할 · 전투 의미 색 (색 + 아이콘)</div>
+    <div class="sw-grid" id="swRole"></div>
+    <div class="sw-h">생활 수치 · 상태</div>
+    <div class="sw-grid" id="swLife"></div>
+    <div class="sw-h">계통 A~E (임시 마크: 색 + 모양)</div>
+    <div class="sw-grid" id="swLin"></div>
+    <div class="sw-h">타일 4종 (색 + 아이콘)</div>
+    <div class="sw-grid" id="swTile"></div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="sec" id="type">
+    <div class="sec__head"><span class="sec__no">02</span><h2 class="sec__title">타이포 · 간격 · 모서리 · 모션 · 층</h2>
+      <p class="sec__desc">본문 Pretendard, 제목 Hahmlet(날 선 세리프, 화면 제목·연출·필살기 이름에만). 숫자는 항상 tabular-nums. 최소 12px, 핵심 수치 14px 이상.</p></div>
+    <div class="grid-wide">
+      <div class="spec"><div class="spec__head"><span class="spec__name">글자 크기</span><span class="spec__cls">--bha-fs-*</span></div>
+        <div class="spec__body ty">
+          <small>5xl · 48</small><span class="bha-display" style="font-size:48px">어센션</span>
+          <small>4xl · 36</small><span class="bha-display" style="font-size:36px">한계 돌파</span>
+          <small>3xl · 28</small><span class="bha-display" style="font-size:28px">귀환</span>
+          <small>2xl · 22</small><span class="bha-h1">둥지</span>
+          <small>xl · 18</small><span class="bha-h2">진화</span>
+          <small>lg · 16</small><span class="bha-h3">흡수 특성</span>
+          <small>md · 14</small><span class="bha-body">적 체력 <b class="bha-num">820 / 1020</b></span>
+          <small>sm · 13</small><span class="bha-dim">사냥터: 웨코문도 · 원정 3회</span>
+          <small>xs · 12</small><span class="bha-faint">P7 · 버전 C.19 · 밸런스 16</span>
+        </div></div>
+      <div class="spec"><div class="spec__head"><span class="spec__name">간격 · 모서리 · 층</span><span class="spec__cls">--bha-sp-* · --bha-r-* · --bha-z-*</span></div>
+        <div class="spec__body">
+          <div class="tok" id="tokSpace"></div>
+          <div class="spec__row" id="tokRadius"></div>
+          <p class="note">모서리는 테마 토큰입니다. 호로는 둥글게(7/11/16), 사신은 반듯하게(3/4/6).</p>
+          <div class="tok">
+            <div><b>z-index 층</b><code>base 0 · raised 10 · sticky 20 · drag 50 · float 60 · flash 70 · toast 80 · overlay 90 · modal 95 · tutorial 100</code></div>
+            <div><b>터치 영역</b><code>--bha-touch: 44px · 블록 칸 68px · 드래그 띄움 28px</code></div>
+          </div>
+        </div></div>
+      <div class="spec"><div class="spec__head"><span class="spec__name">모션</span><span class="spec__cls">--bha-dur-* · --bha-ease-*</span></div>
+        <div class="spec__body">
+          <div class="tok">
+            <div><b>dur-1 · 90ms</b><code>눌림</code></div><div><b>dur-2 · 160ms</b><code>상태 전환</code></div><div><b>dur-3 · 260ms</b><code>바 변화, 팝인</code></div><div><b>dur-4 · 420ms</b><code>오버레이, 토스트</code></div><div><b>dur-5 · 900ms</b><code>연출, 플로팅 숫자</code></div>
+          </div>
+          <div class="tok">
+            <div><b>ease-out</b><code>cubic-bezier(.2,.8,.2,1)</code><span class="motion-demo" style="animation-timing-function:cubic-bezier(.2,.8,.2,1)"></span></div>
+            <div><b>ease-snap (팝인 반동)</b><code>cubic-bezier(.3,1.5,.5,1)</code><span class="motion-demo" style="animation-timing-function:cubic-bezier(.3,1.5,.5,1)"></span></div>
+          </div>
+          <p class="note">애니메이션은 transform·opacity만 씁니다. <code>prefers-reduced-motion: reduce</code>에서는 맥동·광택·흔들림을 끄고 테두리/무늬로 정적 대체합니다.</p>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="sec" id="icons">
+    <div class="sec__head"><span class="sec__no">03</span><h2 class="sec__title">아이콘 세트</h2>
+      <p class="sec__desc">24px 격자, 선 스타일로 통일, currentColor. 선 굵기는 테마 토큰(<code>--bha-icon-stroke</code>: 호로 2 / 사신 1.5)을 따라갑니다. <code>icons/sprite.svg</code>의 <code>&lt;symbol&gt;</code>을 <code>&lt;use href="#i-…"&gt;</code>로 씁니다. 개별 파일은 <code>icons/i-*.svg</code>.</p></div>
+    <div id="iconGroups"></div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="sec" id="basic">
+    <div class="sec__head"><span class="sec__no">04</span><h2 class="sec__title">기본 컴포넌트</h2>
+      <p class="sec__desc">각 카드 아래 "HTML 보기"를 열면 그대로 옮겨 쓸 수 있는 DOM 구조가 나옵니다. 상태는 <code>is-*</code> 클래스, 변형은 <code>--mod</code>.</p></div>
+
+    <div class="grid-auto">
+      <!-- 버튼 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">버튼</span><span class="spec__cls">.bha-btn</span></div>
+        <div class="spec__body" data-snippet-root>
+          <span class="spec__cap">변형</span>
+          <div class="bha-stack">
+            <button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block"><svg class="bha-icon"><use href="#i-nest"/></svg><span class="bha-btn__label">원정 출발<span class="bha-btn__sub">덱 8 / 8</span></span></button>
+            <div class="bha-grid2"><button class="bha-btn">돌아가기</button><button class="bha-btn bha-btn--danger"><svg class="bha-icon"><use href="#i-quit"/></svg>그만두기</button></div>
+            <div class="spec__row"><button class="bha-btn bha-btn--small">2x</button><button class="bha-btn bha-btn--small is-on">1x</button><button class="bha-btn bha-btn--icon" aria-label="도움말"><svg class="bha-icon"><use href="#i-help"/></svg></button><button class="bha-btn bha-btn--icon bha-btn--small" aria-label="일시정지"><svg class="bha-icon"><use href="#i-pause"/></svg></button><button class="bha-btn bha-btn--ghost">건너뛰기</button></div>
+          </div>
+          <span class="spec__cap">상태: 기본 · 눌림 · 비활성 · 포커스</span>
+          <div class="bha-grid2">
+            <button class="bha-btn bha-btn--primary">기본</button><button class="bha-btn bha-btn--primary is-pressed">눌림</button>
+            <button class="bha-btn bha-btn--primary" disabled>비활성</button><button class="bha-btn bha-btn--primary" style="outline:2px solid var(--bha-focus);outline-offset:2px">포커스</button>
+            <button class="bha-btn">기본</button><button class="bha-btn is-pressed">눌림</button>
+            <button class="bha-btn" disabled>비활성</button><button class="bha-btn" style="outline:2px solid var(--bha-focus);outline-offset:2px">포커스</button>
+          </div>
+          <p class="note">작은 버튼은 보이는 높이 36px, <code>::after</code>로 누르는 영역 44px을 확보합니다.</p>
+        </div></div>
+
+      <!-- 칩 / 태그 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">칩 · 태그</span><span class="spec__cls">.bha-chip · .bha-tag · .bha-lin</span></div>
+        <div class="spec__body" data-snippet-root>
+          <span class="spec__cap">칩</span>
+          <div class="spec__row">
+            <span class="bha-chip bha-chip--weak"><svg class="bha-icon"><use href="#i-weak"/></svg>약점 <span class="bha-lin bha-lin--b"><svg class="bha-icon"><use href="#i-lin-b"/></svg>B</span></span>
+            <span class="bha-chip bha-chip--rare"><svg class="bha-icon"><use href="#i-rare"/></svg>희귀 개체</span>
+            <span class="bha-chip bha-chip--pattern"><svg class="bha-icon"><use href="#i-pattern-fast"/></svg>속공형</span>
+            <span class="bha-chip bha-chip--guard"><svg class="bha-icon"><use href="#i-guard"/></svg>방어 자세</span>
+            <span class="bha-chip bha-chip--seal"><svg class="bha-icon"><use href="#i-seal"/></svg>봉인 <span class="bha-chip__time">3.2초</span></span>
+            <span class="bha-chip bha-chip--danger"><svg class="bha-icon"><use href="#i-warn"/></svg>허기 위험</span>
+            <span class="bha-chip">상태</span>
+          </div>
+          <span class="spec__cap">태그 · 임시 표시 (bha-tag--provisional)</span>
+          <div class="prov-row">
+            <span>찢는 발톱 <span class="bha-tag bha-tag--provisional">임시</span></span>
+            <span class="bha-tag bha-tag--kind">기술</span><span class="bha-tag bha-tag--kind">패시브</span><span class="bha-tag bha-tag--kind">외형 파츠</span>
+            <span class="bha-tag bha-tag--elite">강적</span><span class="bha-tag bha-tag--normal">일반</span>
+          </div>
+          <span class="spec__cap">계통 마크 A~E (색 + 모양)</span>
+          <div class="spec__row">
+            <span class="bha-lin bha-lin--a"><svg class="bha-icon"><use href="#i-lin-a"/></svg>계통A</span>
+            <span class="bha-lin bha-lin--b"><svg class="bha-icon"><use href="#i-lin-b"/></svg>계통B</span>
+            <span class="bha-lin bha-lin--c"><svg class="bha-icon"><use href="#i-lin-c"/></svg>계통C</span>
+            <span class="bha-lin bha-lin--d"><svg class="bha-icon"><use href="#i-lin-d"/></svg>계통D</span>
+            <span class="bha-lin bha-lin--e"><svg class="bha-icon"><use href="#i-lin-e"/></svg>계통E</span>
+          </div>
+        </div></div>
+
+      <!-- 상태 바 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">상태 바</span><span class="spec__cls">.bha-meter</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-meter bha-meter--hunger" style="--fill:.2"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-hunger"/></svg>허기</span><span class="bha-meter__value">20<small> / 100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i><i class="bha-meter__zone" style="--zone:.8"></i></div></div>
+          <div class="bha-meter bha-meter--cond is-danger" style="--fill:.34"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-cond"/></svg>컨디션</span><span class="bha-meter__value">34<small> / 100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i></div><p class="bha-meter__note"><svg class="bha-icon"><use href="#i-warn"/></svg>나쁨: 전투에 공허 블록 ↑</p></div>
+          <div class="bha-meter bha-meter--stab" style="--fill:.5"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-stab"/></svg>자아</span><span class="bha-meter__value">50<small> / 100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i></div></div>
+          <div class="bha-meter bha-meter--risk is-danger" style="--fill:.66"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-risk"/></svg>광기</span><span class="bha-meter__value">66<small> / 100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i><i class="bha-meter__zone" style="--zone:.6"></i></div><p class="bha-meter__note"><svg class="bha-icon"><use href="#i-warn"/></svg>높음</p></div>
+          <span class="spec__cap">한 줄형 (--compact) · 체력 감소 잔상(__ghost)</span>
+          <div class="bha-meter bha-meter--enemy bha-meter--compact bha-meter--lg" style="--fill:.80;--ghost:.88"><div class="bha-meter__head"><span class="bha-meter__label">적 체력</span><span class="bha-meter__value">820<small>/1020</small></span></div><div class="bha-meter__track"><i class="bha-meter__ghost"></i><i class="bha-meter__fill"></i></div></div>
+          <div class="bha-meter bha-meter--player bha-meter--compact bha-meter--lg" style="--fill:.93"><div class="bha-meter__head"><span class="bha-meter__label">내 체력</span><span class="bha-meter__value">139<small>/150</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i></div></div>
+          <div class="bha-meter bha-meter--sp bha-meter--compact is-full" style="--fill:1"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-sp"/></svg>영력</span><span class="bha-meter__value">100<small>/100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i></div></div>
+          <div class="bha-meter bha-meter--stored bha-meter--compact bha-meter--thin" style="--fill:.25"><div class="bha-meter__head"><span class="bha-meter__label"><svg class="bha-icon"><use href="#i-stored"/></svg>저장</span><span class="bha-meter__value">25<small>/100</small></span></div><div class="bha-meter__track"><i class="bha-meter__fill"></i></div></div>
+          <p class="note">위험 구간은 색이 아니라 <b>사선 무늬 + 흰 눈금선</b>으로 표시. JS는 <code>--fill</code>(0~1), <code>--ghost</code>, <code>--zone</code>만 넣습니다. 시전 바는 아래 전투 부품 참고.</p>
+        </div></div>
+
+      <!-- 탭 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">탭 · 세그먼트 · 하단 내비</span><span class="spec__cls">.bha-seg · .bha-tabbar</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-seg" role="tablist">
+            <button class="bha-seg__item" role="tab" aria-selected="true">2단계 <span class="bha-seg__count">3/6</span></button>
+            <button class="bha-seg__item" role="tab" aria-selected="false">3단계 <span class="bha-seg__count">1/14</span></button>
+            <button class="bha-seg__item" role="tab" aria-selected="false">4단계 <span class="bha-seg__count">0/23</span></button>
+            <button class="bha-seg__item" role="tab" aria-selected="false">5단계 <span class="bha-seg__count">0/21</span></button>
+          </div>
+          <div class="bha-seg bha-seg--sm"><button class="bha-seg__item is-active">1x</button><button class="bha-seg__item">2x</button><button class="bha-seg__item">4x</button></div>
+          <div style="position:relative;border-radius:var(--bha-r-md);overflow:hidden">
+            <nav class="bha-tabbar" style="position:static;margin:0;padding:4px 4px 6px">
+              <button class="bha-tabbar__item is-active"><svg class="bha-icon"><use href="#i-nest"/></svg>둥지</button>
+              <button class="bha-tabbar__item"><svg class="bha-icon"><use href="#i-slot"/></svg>특성<span class="bha-tabbar__badge">1</span></button>
+              <button class="bha-tabbar__item"><svg class="bha-icon"><use href="#i-deck"/></svg>덱</button>
+              <button class="bha-tabbar__item"><svg class="bha-icon"><use href="#i-dex"/></svg>도감</button>
+            </nav>
+          </div>
+        </div></div>
+
+      <!-- 패널 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">카드 · 패널</span><span class="spec__cls">.bha-panel</span></div>
+        <div class="spec__body" data-snippet-root>
+          <section class="bha-panel">
+            <header class="bha-panel__head"><h3 class="bha-panel__title"><svg class="bha-icon"><use href="#i-evolve"/></svg>진화</h3><span class="bha-panel__aside">2단계 · 길리안</span></header>
+            <p class="bha-dim">이 단계 포식 12 / 27회</p>
+          </section>
+          <section class="bha-panel bha-panel--accent"><header class="bha-panel__head"><h3 class="bha-panel__title">강조 패널 (--accent)</h3></header><p class="bha-dim">진화 가능, 해방 같은 순간에만.</p></section>
+          <section class="bha-panel bha-panel--inset"><p class="bha-dim">안쪽 패널 (--inset) — 빈 목록, 가려진 결과.</p></section>
+        </div></div>
+
+      <!-- 알림 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">알림 박스</span><span class="spec__cls">.bha-notice</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-notice"><svg class="bha-icon"><use href="#i-info"/></svg><div class="bha-notice__body">원정 중 보상으로 이 덱에서 타일이 뽑힌다.</div></div>
+          <div class="bha-notice bha-notice--warn"><svg class="bha-icon"><use href="#i-warn"/></svg><div class="bha-notice__body"><span class="bha-notice__title">새 원정을 시작하면</span>이어하던 원정은 패배 처리 없이 버려진다.</div></div>
+          <div class="bha-notice bha-notice--good"><svg class="bha-icon"><use href="#i-check"/></svg><div class="bha-notice__body">같은 계통 3개 장착 — 계통A 보너스 발동</div></div>
+          <div class="bha-notice bha-notice--rare"><svg class="bha-icon"><use href="#i-rare"/></svg><div class="bha-notice__body"><span class="bha-notice__title">희귀 개체!</span>흡수하면 특성 후보가 하나 더 나온다.</div></div>
+          <div class="bha-notice bha-notice--danger"><svg class="bha-icon"><use href="#i-broken"/></svg><div class="bha-notice__body"><span class="bha-notice__title">가면이 깨져 쇠약</span>다음 원정 전까지 돌보기로 회복하자.</div></div>
+        </div></div>
+
+      <!-- 토스트 · 모달 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">토스트 · 모달</span><span class="spec__cls">.bha-toast · .bha-overlay · .bha-modal</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="toast-demo"><div class="bha-toast is-in" id="toastDemo"><span class="bha-toast__icon"><svg class="bha-icon"><use href="#i-title"/></svg></span><span><span class="bha-toast__eyebrow">칭호 해금</span><br><span class="bha-toast__title">세 번째 귀환자</span><br><span class="bha-toast__meta">원정에서 3번 귀환</span></span></div></div>
+          <button class="bha-btn bha-btn--small" id="toastReplay">토스트 다시 보기</button>
+          <div class="modal-demo"><div class="bha-modal"><h3 class="bha-modal__title">원정을 그만둘까?</h3><p class="bha-modal__body">지금 그만두면 이번 전투는 패배로 처리된다.</p><div class="bha-modal__actions"><button class="bha-btn">계속 싸운다</button><button class="bha-btn bha-btn--danger">그만둔다</button></div></div></div>
+        </div></div>
+
+      <!-- 정보 표 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">표 (정보 행)</span><span class="spec__cls">.bha-info</span></div>
+        <div class="spec__body" data-snippet-root>
+          <dl class="bha-info">
+            <div class="bha-info__row"><dt>도달 바퀴</dt><dd>4 <small>/ 4</small></dd></div>
+            <div class="bha-info__row"><dt>치른 전투</dt><dd>7회 <small>(승 6)</small></dd></div>
+            <div class="bha-info__row bha-info__row--good"><dt>얻은 특성</dt><dd>2</dd></div>
+            <div class="bha-info__row bha-info__row--bad"><dt>잃은 타일</dt><dd>1</dd></div>
+            <div class="bha-info__row bha-info__row--em"><dt><svg class="bha-icon"><use href="#i-risk"/></svg>광기 최고 / 끝</dt><dd>104 / 88 <small>한계 돌파</small></dd></div>
+          </dl>
+        </div></div>
+
+      <!-- 덱 행 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">리스트 행 (덱)</span><span class="spec__cls">.bha-deckrow</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-deckrow" style="--tile:var(--bha-tile-prey)"><span class="bha-deckrow__icon"><svg class="bha-icon"><use href="#i-tile-prey"/></svg></span><span class="bha-deckrow__main"><span class="bha-deckrow__name">떠도는 영혼</span><span class="bha-deckrow__desc">약한 적 출현 · <span class="bha-deckrow__own">보유 4</span></span></span><span class="bha-deckrow__stepper"><button class="bha-btn" aria-label="빼기"><svg class="bha-icon"><use href="#i-minus"/></svg></button><span class="bha-deckrow__count">2</span><button class="bha-btn" aria-label="더하기"><svg class="bha-icon"><use href="#i-plus"/></svg></button></span></div>
+          <div class="bha-deckrow" style="--tile:var(--bha-tile-elite)"><span class="bha-deckrow__icon"><svg class="bha-icon"><use href="#i-tile-elite"/></svg></span><span class="bha-deckrow__main"><span class="bha-deckrow__name">상급 호로</span><span class="bha-deckrow__desc">강적 출현 + 좋은 보상 · <span class="bha-deckrow__own">보유 2</span></span></span><span class="bha-deckrow__stepper"><button class="bha-btn" aria-label="빼기"><svg class="bha-icon"><use href="#i-minus"/></svg></button><span class="bha-deckrow__count">2</span><button class="bha-btn" aria-label="더하기" disabled><svg class="bha-icon"><use href="#i-plus"/></svg></button></span></div>
+          <div class="bha-deckrow is-zero" style="--tile:var(--bha-tile-env)"><span class="bha-deckrow__icon"><svg class="bha-icon"><use href="#i-tile-env"/></svg></span><span class="bha-deckrow__main"><span class="bha-deckrow__name">안개</span><span class="bha-deckrow__desc">전투 중 블록 바의 순서가 주기적으로 섞인다 · <span class="bha-deckrow__own">보유 2</span></span></span><span class="bha-deckrow__stepper"><button class="bha-btn" aria-label="빼기" disabled><svg class="bha-icon"><use href="#i-minus"/></svg></button><span class="bha-deckrow__count">0</span><button class="bha-btn" aria-label="더하기"><svg class="bha-icon"><use href="#i-plus"/></svg></button></span></div>
+        </div></div>
+
+      <!-- 슬롯 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">슬롯 칸</span><span class="spec__cls">.bha-slot</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-slots">
+            <div class="bha-slot bha-slot--filled bha-lin--a"><span class="bha-slot__num">1번</span><span class="bha-slot__name">찢는 발톱</span><span class="bha-slot__meta"><span class="bha-tag bha-tag--kind">기술</span><span class="bha-lin bha-lin--a"><svg class="bha-icon"><use href="#i-lin-a"/></svg>A</span></span></div>
+            <div class="bha-slot bha-slot--filled bha-lin--c is-target"><span class="bha-slot__num">2번</span><span class="bha-slot__name">굳은 껍질</span><span class="bha-slot__meta"><span class="bha-tag bha-tag--kind">패시브</span><span class="bha-lin bha-lin--c"><svg class="bha-icon"><use href="#i-lin-c"/></svg>C</span></span></div>
+            <div class="bha-slot bha-slot--empty"><span class="bha-slot__num">3번</span><svg class="bha-icon"><use href="#i-plus"/></svg>비어 있음</div>
+          </div>
+          <div class="spec__row"><span class="bha-setbonus bha-lin--a is-active"><svg class="bha-icon bha-icon--sm"><use href="#i-lin-a"/></svg>계통A 3/3 보너스</span><span class="bha-setbonus bha-lin--c"><svg class="bha-icon bha-icon--sm"><use href="#i-lin-c"/></svg>계통C 1/3</span></div>
+          <p class="note">채움 · 빈칸(점선) · 교체 대상(<code>is-target</code>, 크림슨 맥동 + "교체" 꼬리표).</p>
+        </div></div>
+
+      <!-- 후보 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">후보 선택 버튼</span><span class="spec__cls">.bha-cand</span></div>
+        <div class="spec__body" data-snippet-root>
+          <button class="bha-cand bha-lin--a"><span class="bha-cand__mark"><svg class="bha-icon"><use href="#i-lin-a"/></svg></span><span class="bha-cand__body"><span class="bha-cand__top"><span class="bha-cand__name">찢는 발톱</span><span class="bha-tag bha-tag--kind">기술</span><span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-cand__desc">공격 블록. 체인3이면 피해 1.5배.</span><span class="bha-cand__foot"><span class="bha-pips"><i class="is-on"></i><i class="is-next"></i><i></i></span>장착하면 계통A 2/3</span></span></button>
+          <button class="bha-cand bha-lin--d is-selected"><span class="bha-cand__mark"><svg class="bha-icon"><use href="#i-lin-d"/></svg></span><span class="bha-cand__body"><span class="bha-cand__top"><span class="bha-cand__name">공허의 눈</span><span class="bha-tag bha-tag--kind">패시브</span></span><span class="bha-cand__desc">약점 계통 블록 피해 +20%.</span><span class="bha-cand__foot"><span class="bha-pips"><i class="is-next"></i><i></i><i></i></span>장착하면 계통D 1/3</span></span></button>
+        </div></div>
+
+      <!-- 슬라이더 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">슬라이더</span><span class="spec__cls">.bha-slider</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-slider">
+            <div class="bha-slider__head"><label class="bha-slider__label" for="sl1">클릭 판정 시간</label><output class="bha-slider__value" for="sl1">0.30<small>초</small></output></div>
+            <input class="bha-slider__input" id="sl1" type="range" min="0.15" max="0.6" step="0.05" value="0.3" style="--pct:.333">
+            <div class="bha-slider__scale"><span>0.15초</span><span>0.6초</span></div>
+            <p class="bha-slider__hint">눌렀다 떼는 시간이 이보다 길면 사용 안 됨.</p>
+          </div>
+        </div></div>
+
+      <!-- 진행 점 · 아코디언 -->
+      <div class="spec"><div class="spec__head"><span class="spec__name">진행 점 · 도움말 아코디언</span><span class="spec__cls">.bha-dots · .bha-acc</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-dots" aria-label="3 / 8"><i class="bha-dots__dot is-done"></i><i class="bha-dots__dot is-done"></i><i class="bha-dots__dot is-active"></i><i class="bha-dots__dot"></i><i class="bha-dots__dot"></i><i class="bha-dots__dot"></i><i class="bha-dots__dot"></i><i class="bha-dots__dot"></i></div>
+          <div>
+            <details class="bha-acc" open><summary class="bha-acc__summary"><svg class="bha-icon"><use href="#i-chain-3"/></svg>체인<svg class="bha-icon bha-acc__chev"><use href="#i-chevron-down"/></svg></summary><div class="bha-acc__body">같은 특성 블록을 나란히 붙여 두면 하나를 눌렀을 때 함께 발동한다. 2개는 체인2, 3개는 체인3.</div></details>
+            <details class="bha-acc"><summary class="bha-acc__summary"><svg class="bha-icon"><use href="#i-void"/></svg>공허 블록<svg class="bha-icon bha-acc__chev"><use href="#i-chevron-down"/></svg></summary><div class="bha-acc__body">컨디션이 나쁘면 자주 생긴다. 쓰면 강하지만 리스크가 오른다.</div></details>
+          </div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="sec" id="game">
+    <div class="sec__head"><span class="sec__no">05</span><h2 class="sec__title">게임 전용 컴포넌트</h2>
+      <p class="sec__desc">블록 · 블록 바 · 저장 필살기 · 원형 길 · 타일 칩. 블록을 눌러 보면 발동 이펙트가 나옵니다.</p></div>
+
+    <div class="spec" style="margin-bottom:16px"><div class="spec__head"><span class="spec__name">블록 — 종류 × 체인 단계 × 상태</span><span class="spec__cls">.bha-block --attack|--guard|--heal|--basic|--special|--void</span></div>
+      <div class="spec__body">
+        <div class="bm-wrap"><table class="bm" id="blockMatrix"></table></div>
+        <p class="note">역할은 색 + 아이콘 + <b>표면 무늬</b>(공격=사선, 막기=가로 판, 회복=점)로 구분. 위쪽 점 ●○○ / ●●○ / ●●●은 체인 단계(<code>is-chain2</code>, <code>is-chain3</code>). 약점 계통은 금색 안테두리 + 오른쪽 위 금빛 모서리(<code>is-weak</code>).</p>
+      </div>
+      <details class="spec__code"><summary><svg class="bha-icon bha-icon--sm"><use href="#i-chevron-right"/></svg>HTML 보기</summary><pre>&lt;div class="bha-block bha-block--attack is-chain2 is-weak"&gt;
+  &lt;span class="bha-block__pips"&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;/span&gt;
+  &lt;span class="bha-block__icon"&gt;&lt;svg class="bha-icon"&gt;&lt;use href="#i-attack"/&gt;&lt;/svg&gt;&lt;/span&gt;
+  &lt;b class="bha-block__abbr"&gt;찢는 발톱&lt;/b&gt;        ← 특성 이름 약어 (최대 2줄)
+  &lt;span class="bha-block__weak"&gt;&lt;svg class="bha-icon"&gt;&lt;use href="#i-weak"/&gt;&lt;/svg&gt;&lt;/span&gt;
+&lt;/div&gt;
+상태 클래스: is-weak · is-pressed · is-dragging(--drag-x/--drag-y) · is-nudge-l/r · is-held · is-sealed · is-disabled · is-popin · is-fire
+아이콘: attack=i-attack · guard=i-guard · heal=i-heal · basic=i-basic · special=i-special · void=i-void</pre></details>
+    </div>
+
+    <div class="grid-wide">
+      <div class="spec"><div class="spec__head"><span class="spec__name">블록 바 (8칸) — 묶음 표시</span><span class="spec__cls">.bha-tray</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="phone"><div class="bha-tray" id="trayMain"></div></div>
+          <p class="note">묶음 = 노란 테두리 + 아래 연결선 + 위 꼬리표 "체인2". 체인3은 주황, 더 강한 글로우. JS는 묶음마다 <code>--start</code>(시작 칸 1~8)와 <code>--len</code>만 넣습니다. 칸 = 바 폭 ÷ 8 (360px 화면에서 44px), 높이 68px.</p>
+        </div></div>
+
+      <div class="spec"><div class="spec__head"><span class="spec__name">블록 바 — 드래그 · 봉인 · 일시정지 · 들었다 놓음</span><span class="spec__cls">.bha-tray.is-*</span></div>
+        <div class="spec__body" data-snippet-root>
+          <span class="spec__cap">드래그 중: 블록은 28px 위로 떠서 손가락을 따라감, 파란 삽입 막대, 옆 블록은 살짝 밀림</span>
+          <div class="phone"><div class="bha-tray" id="trayDrag"></div></div>
+          <span class="spec__cap">봉인 (생성 정지): 보라 잠금 오버레이</span>
+          <div class="phone"><div class="bha-tray is-sealed" id="traySeal"></div></div>
+          <span class="spec__cap">일시정지: 바 흐림</span>
+          <div class="phone"><div class="bha-tray is-paused" id="trayPause"></div></div>
+          <span class="spec__cap">오래 누름(0.3초 초과): 사용 안 됨 + 회색 안내</span>
+          <div class="phone"><div class="bha-tray is-held" id="trayHeld"></div><p class="bha-tray__note is-held"><svg class="bha-icon bha-icon--sm"><use href="#i-grip"/></svg>들었다 놓았다 — 사용하지 않음</p></div>
+        </div></div>
+
+      <div class="spec"><div class="spec__head"><span class="spec__name">저장형 필살기 버튼</span><span class="spec__cls">.bha-stored</span></div>
+        <div class="spec__body" data-snippet-root>
+          <span class="spec__cap">충전 0 (비활성)</span>
+          <button class="bha-stored" disabled style="--fill:.25"><span class="bha-stored__icon"><svg class="bha-icon"><use href="#i-stored"/></svg></span><span class="bha-stored__body"><span class="bha-stored__name">응축 일격 <span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-stored__meta"><b>25</b> / 100 · 블록을 쓸수록 충전</span><span class="bha-stored__gauge"><i></i></span></span><span class="bha-stored__pips"><i></i><i></i><i></i></span></button>
+          <span class="spec__cap">충전 1 (준비됨 · 글로우)</span>
+          <button class="bha-stored is-ready" style="--fill:.6"><span class="bha-stored__icon"><svg class="bha-icon"><use href="#i-stored"/></svg></span><span class="bha-stored__body"><span class="bha-stored__name">응축 일격 <span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-stored__meta"><b>60</b> / 100 · 블록을 쓸수록 충전</span><span class="bha-stored__gauge"><i></i></span></span><span class="bha-stored__pips"><i class="is-on"></i><i></i><i></i></span></button>
+          <span class="spec__cap">충전 3 (가득)</span>
+          <button class="bha-stored is-ready is-full" style="--fill:1"><span class="bha-stored__icon"><svg class="bha-icon"><use href="#i-stored"/></svg></span><span class="bha-stored__body"><span class="bha-stored__name">응축 일격 <span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-stored__meta"><b>가득</b> · 지금 쓰지 않으면 충전이 낭비된다</span><span class="bha-stored__gauge"><i></i></span></span><span class="bha-stored__pips"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span></button>
+        </div></div>
+
+      <div class="spec"><div class="spec__head"><span class="spec__name">원형 길 (12칸) · 타일 칩</span><span class="spec__cls">.bha-ring · .bha-tilechip</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-ring" id="ringDemo" style="--pos:4.0"></div>
+          <div class="spec__row">
+            <button class="bha-tilechip bha-tilechip--prey is-selected"><span class="bha-tilechip__icon"><svg class="bha-icon"><use href="#i-tile-prey"/></svg></span>먹잇감 둥지<span class="bha-tilechip__count">2</span></button>
+            <button class="bha-tilechip bha-tilechip--elite"><span class="bha-tilechip__icon"><svg class="bha-icon"><use href="#i-tile-elite"/></svg></span>강적 소굴<span class="bha-tilechip__count">1</span></button>
+            <button class="bha-tilechip bha-tilechip--env"><span class="bha-tilechip__icon"><svg class="bha-icon"><use href="#i-tile-env"/></svg></span>환경<span class="bha-tilechip__count">1</span></button>
+            <button class="bha-tilechip bha-tilechip--rest" disabled><span class="bha-tilechip__icon"><svg class="bha-icon"><use href="#i-tile-rest"/></svg></span>휴식<span class="bha-tilechip__count">0</span></button>
+          </div>
+          <p class="note">칸·슬롯·표식 위치는 CSS가 각도로 계산합니다. JS는 칸/슬롯에 <code>--i</code>, 표식과 링에 <code>--pos</code>(현재 칸, 소수 가능)만 넣습니다. 놓을 수 있는 슬롯은 <code>is-can</code>(파란 맥동).</p>
+          <div class="spec__row"><button class="bha-btn bha-btn--small" id="ringStep">한 칸 이동</button></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="sec" id="battle">
+    <div class="sec__head"><span class="sec__no">06</span><h2 class="sec__title">전투 부품</h2>
+      <p class="sec__desc">강공격 예고, 사건 로그, 플로팅 숫자, 적 실루엣, 범례. 전체 전투 화면은 2단계에서 조립합니다.</p></div>
+    <div class="grid-auto">
+      <div class="spec"><div class="spec__head"><span class="spec__name">강공격 예고 시전 바</span><span class="spec__cls">.bha-cast</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-cast" style="--fill:.3"><span class="bha-cast__title"><svg class="bha-icon"><use href="#i-cast"/></svg>강공격 예고!</span><span class="bha-cast__track"><i></i></span><span class="bha-cast__hint"><svg class="bha-icon"><use href="#i-guard"/></svg>막기</span></div>
+          <div class="bha-cast" style="--fill:.85"><span class="bha-cast__title"><svg class="bha-icon"><use href="#i-cast"/></svg>강공격 예고!</span><span class="bha-cast__track"><i></i></span><span class="bha-cast__hint"><svg class="bha-icon"><use href="#i-guard"/></svg>막기</span></div>
+          <div class="bha-cast is-blocked" style="--fill:1"><span class="bha-cast__title"><svg class="bha-icon"><use href="#i-guard"/></svg>막기 준비됨</span><span class="bha-cast__track"><i></i></span><span class="bha-cast__hint"><svg class="bha-icon"><use href="#i-check"/></svg>막음</span></div>
+          <p class="note">2초간 <code>--fill</code> 0→1. 차오를수록 호박색 → 빨강으로 바뀌고 글로우가 커집니다. 오른쪽 초록 "막기" 배지가 해야 할 일을 바로 알려 줍니다.</p>
+        </div></div>
+      <div class="spec"><div class="spec__head"><span class="spec__name">사건 로그 (3줄)</span><span class="spec__cls">.bha-log</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-log" id="logDemo">
+            <p class="bha-log__line bha-log__line--attack"><svg class="bha-icon"><use href="#i-attack"/></svg>찢는 발톱 <b>−48</b></p>
+            <p class="bha-log__line bha-log__line--guard"><svg class="bha-icon"><use href="#i-guard"/></svg>강공격을 막았다!</p>
+            <p class="bha-log__line bha-log__line--chain"><svg class="bha-icon"><use href="#i-chain-3"/></svg>체인3 발동! 찢는 발톱 <b>−212</b></p>
+          </div>
+          <button class="bha-btn bha-btn--small" id="logAdd">사건 추가</button>
+        </div></div>
+      <div class="spec"><div class="spec__head"><span class="spec__name">플로팅 숫자</span><span class="spec__cls">.bha-float --attack|--guard|--heal|--void|--chain</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="fl-stage">
+            <span class="bha-float bha-float--attack" style="left:8%;top:60px">−212</span>
+            <span class="bha-float bha-float--guard" style="left:32%;top:62px;animation-delay:.3s"><svg class="bha-icon"><use href="#i-guard"/></svg>막음</span>
+            <span class="bha-float bha-float--heal" style="left:56%;top:60px;animation-delay:.6s">24</span>
+            <span class="bha-float bha-float--void" style="left:76%;top:60px;animation-delay:.9s"><svg class="bha-icon"><use href="#i-void"/></svg>−90</span>
+          </div>
+          <p class="note">공격=기울어진 큰 숫자, 막기=방패꼴 배지, 회복=+숫자, 공허=기울임 + 소용돌이. 색이 안 보여도 모양으로 구분됩니다.</p>
+        </div></div>
+      <div class="spec"><div class="spec__head"><span class="spec__name">적 실루엣 자리 · 범례</span><span class="spec__cls">.bha-foe · .bha-legend</span></div>
+        <div class="spec__body" data-snippet-root>
+          <div class="bha-grid2">
+            <div class="bha-foe" style="--aura:var(--bha-lin-b);height:130px"><span class="bha-foe__aura"></span><span class="bha-foe__body"><svg viewBox="0 0 100 100"><use href="#foe-a"/></svg></span></div>
+            <div class="bha-foe is-casting" style="--aura:var(--bha-lin-d);height:130px"><span class="bha-foe__aura"></span><span class="bha-foe__body"><svg viewBox="0 0 100 100"><use href="#foe-b"/></svg></span></div>
+          </div>
+          <div class="bha-legend">
+            <span class="bha-legend__item bha-legend__item--attack"><svg class="bha-icon"><use href="#i-attack"/></svg>파괴</span>
+            <span class="bha-legend__item bha-legend__item--guard"><svg class="bha-icon"><use href="#i-guard"/></svg>가면</span>
+            <span class="bha-legend__item bha-legend__item--heal"><svg class="bha-icon"><use href="#i-heal"/></svg>재생</span>
+            <span class="bha-legend__item bha-legend__item--special"><svg class="bha-icon"><use href="#i-special"/></svg>세로</span>
+            <span class="bha-legend__item bha-legend__item--void"><svg class="bha-icon"><use href="#i-void"/></svg>공허 블록</span>
+          </div>
+          <p class="note">실루엣은 오리지널 추상형 플레이스홀더(<code>#foe-a</code>, <code>#foe-b</code>). 오라 색 = 약점 계통 색(<code>--aura</code>). 나중에 일러스트가 생기면 <code>.bha-foe__body</code> 안만 바꾸면 됩니다.</p>
+        </div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  /* ---- 테마 토글 ---- */
+  var root = document.documentElement;
+  function setTheme(t) {
+    root.setAttribute('data-bha-theme', t);
+    document.querySelectorAll('[data-theme-btn]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.themeBtn === t)); });
+    try { localStorage.setItem('bha-theme', t); } catch (e) {}
+    paintSwatches();
+  }
+  document.querySelectorAll('[data-theme-btn]').forEach(function (b) { b.addEventListener('click', function () { setTheme(b.dataset.themeBtn); }); });
+
+  /* ---- 비교 시트: 같은 템플릿에 종족 문자열만 다르게 ---- */
+  var SPECIES = {
+    hollow:    { nest: '둥지', stage: '2단계 · 길리안', stab: '자아', risk: '광기', atk: '찢는 발톱', grd: '굳은 가면', heal: '재생 체액', sp: '세로', stored: '응축 일격', defeat: '가면이 깨져 쇠약' },
+    shinigami: { nest: '대원실', stage: '2단계 · 영술원 학생', stab: '영압 안정도', risk: '호로화', atk: '일섬', grd: '결계 귀도', heal: '회도 치료', sp: '섬광', stored: '응축 베기', defeat: '영력 고갈' }
+  };
+  var tpl = document.getElementById('cmpTpl');
+  [['cmpHollow', 'hollow'], ['cmpShini', 'shinigami']].forEach(function (p) {
+    var host = document.getElementById(p[0]); host.appendChild(tpl.content.cloneNode(true));
+    host.querySelectorAll('[data-sp]').forEach(function (n) { n.textContent = SPECIES[p[1]][n.dataset.sp]; });
+  });
+
+  /* ---- 스와치 ---- */
+  function sw(host, list) {
+    host.innerHTML = list.map(function (s) {
+      var val = getComputedStyle(root).getPropertyValue(s[0]).trim();
+      return '<div class="sw"><i style="background:var(' + s[0] + ')' + (s[3] ? ';color:' + s[3] : '') + '">' + (s[2] ? '<svg class="bha-icon"><use href="#' + s[2] + '"/></svg>' : '') + '</i><span><b>' + s[1] + '</b><small>' + s[0] + '<br>' + val + '</small></span></div>';
+    }).join('');
+  }
+  function paintSwatches() {
+    sw(document.getElementById('swTheme'), [['--bha-backdrop','바깥 장식'],['--bha-bg-0','화면 바탕'],['--bha-bg-1','패널'],['--bha-bg-2','버튼·행'],['--bha-bg-3','눌림·선택'],['--bha-line-1','선'],['--bha-line-2','강한 선'],['--bha-text-1','글자 1'],['--bha-text-2','글자 2'],['--bha-text-3','글자 3 (보조)'],['--bha-accent','포인트'],['--bha-accent-hi','포인트 밝음'],['--bha-primary-bg','주 버튼 판'],['--bha-focus','포커스 링']]);
+  }
+  paintSwatches();
+  sw(document.getElementById('swRole'), [['--bha-attack','공격 · 파괴','i-attack'],['--bha-guard','막기 · 가면','i-guard'],['--bha-heal','회복 · 재생','i-heal'],['--bha-sp','SP · 필살','i-special'],['--bha-void','공허 블록','i-void','#ff4fd8'],['--bha-risk','리스크','i-risk'],['--bha-cast','강공격 예고','i-cast'],['--bha-chain2','묶음 · 체인2','i-chain-2','#2a1f00'],['--bha-chain3','체인3','i-chain-3'],['--bha-insert','드롭 삽입 막대','i-grip','#00263d'],['--bha-seal','봉인','i-seal'],['--bha-weak','약점','i-weak','#2a1d05']]);
+  sw(document.getElementById('swLife'), [['--bha-hunger','허기','i-hunger'],['--bha-cond','컨디션','i-cond'],['--bha-stab','안정 수치','i-stab','#08261a'],['--bha-good','좋음','i-check','#08261a'],['--bha-warn','경고','i-warn','#2a1500'],['--bha-danger','위험','i-warn'],['--bha-rare','희귀','i-rare','#2a1f00']]);
+  sw(document.getElementById('swLin'), [['--bha-lin-a','계통 A · 원','i-lin-a','#1a0d07'],['--bha-lin-b','계통 B · 삼각','i-lin-b','#141a05'],['--bha-lin-c','계통 C · 사각','i-lin-c','#031a1a'],['--bha-lin-d','계통 D · 마름모','i-lin-d','#0d0b26'],['--bha-lin-e','계통 E · 육각','i-lin-e','#260a16']]);
+  sw(document.getElementById('swTile'), [['--bha-tile-prey','먹잇감 둥지','i-tile-prey'],['--bha-tile-elite','강적 소굴','i-tile-elite'],['--bha-tile-env','환경','i-tile-env'],['--bha-tile-rest','휴식','i-tile-rest']]);
+
+  document.getElementById('tokSpace').innerHTML = [['sp-1',2],['sp-2',4],['sp-3',6],['sp-4',8],['sp-5',12],['sp-6',16],['sp-7',20],['sp-8',24],['sp-9',32],['sp-10',48]].map(function (s) { return '<div><b>' + s[0] + ' · ' + s[1] + 'px</b><span class="vis" style="width:' + s[1] * 2 + 'px"></span></div>'; }).join('');
+  document.getElementById('tokRadius').innerHTML = ['xs','sm','md','lg'].map(function (r) { return '<div class="state"><span class="radius-demo" style="border-radius:var(--bha-r-' + r + ')"></span><span class="spec__cap">r-' + r + '</span></div>'; }).join('');
+
+  /* ---- 아이콘 목록 ---- */
+  var GROUPS = [
+    ['역할 · 블록', [['i-attack','공격'],['i-guard','막기'],['i-heal','회복'],['i-basic','기본 블록'],['i-special','필살 블록'],['i-stored','저장형 필살기'],['i-void','공허 블록']]],
+    ['체인 · 전투 상태', [['i-chain-1','체인 1'],['i-chain-2','체인 2'],['i-chain-3','체인 3'],['i-sp','SP 영력'],['i-seal','봉인'],['i-weak','약점'],['i-cast','강공격 예고'],['i-pattern-fast','속공형'],['i-pattern-tough','단단형'],['i-pattern-heavy','강공격형'],['i-timer','남은 시간']]],
+    ['생활 수치 · 돌보기', [['i-hunger','허기'],['i-cond','컨디션'],['i-stab','안정 수치'],['i-risk','리스크 게이지'],['i-care-feed','먹이 주기'],['i-care-sleep','재우기'],['i-care-pet','쓰다듬기']]],
+    ['메뉴 · 조작', [['i-evolve','진화'],['i-dex','도감'],['i-title','칭호'],['i-settings','설정'],['i-help','도움말'],['i-speed','배속'],['i-pause','일시정지'],['i-play','재생'],['i-return','귀환'],['i-nest','둥지'],['i-quit','그만두기'],['i-practice','전투 연습'],['i-swap-species','종족 바꾸기'],['i-deck','타일 덱'],['i-slot','흡수 슬롯'],['i-absorb','흡수'],['i-release','놓아주기'],['i-loop','한 바퀴 더']]],
+    ['타일', [['i-tile-prey','먹잇감 둥지'],['i-tile-elite','강적 소굴'],['i-tile-env','환경'],['i-tile-rest','휴식'],['i-tile-combo','조합']]],
+    ['계통 A~E (임시)', [['i-lin-a','계통 A'],['i-lin-b','계통 B'],['i-lin-c','계통 C'],['i-lin-d','계통 D'],['i-lin-e','계통 E']]],
+    ['희귀 · 잠금 · 결과', [['i-rare','희귀'],['i-lock','잠금'],['i-unknown','미발견 ?'],['i-flag-win','승리'],['i-broken','패배 (깨짐)']]],
+    ['공용', [['i-plus','더하기'],['i-minus','빼기'],['i-close','닫기'],['i-check','확인'],['i-warn','경고'],['i-info','안내'],['i-chevron-left','이전'],['i-chevron-right','다음'],['i-chevron-down','펼치기'],['i-swap','교체'],['i-grip','끌기']]]
+  ];
+  var linColor = { 'i-lin-a':'var(--bha-lin-a)','i-lin-b':'var(--bha-lin-b)','i-lin-c':'var(--bha-lin-c)','i-lin-d':'var(--bha-lin-d)','i-lin-e':'var(--bha-lin-e)','i-attack':'#ff7b7f','i-guard':'#5fd394','i-heal':'#7cb0ff','i-special':'var(--bha-sp-hi)','i-void':'var(--bha-risk)','i-tile-prey':'var(--bha-tile-prey)','i-tile-elite':'var(--bha-tile-elite)','i-tile-env':'var(--bha-tile-env)','i-tile-rest':'var(--bha-tile-rest)' };
+  document.getElementById('iconGroups').innerHTML = GROUPS.map(function (g) {
+    return '<div class="ic-group">' + g[0] + '</div><div class="ic-grid">' + g[1].map(function (i) { return '<div class="ic"><svg class="bha-icon" style="color:' + (linColor[i[0]] || 'var(--bha-text-1)') + '"><use href="#' + i[0] + '"/></svg><b>' + i[1] + '</b><small>' + i[0] + '</small></div>'; }).join('') + '</div>';
+  }).join('');
+
+  /* ---- 블록 HTML 생성기 (화면들과 같은 구조) ---- */
+  var ICON = { attack: 'i-attack', guard: 'i-guard', heal: 'i-heal', basic: 'i-basic', special: 'i-special', void: 'i-void' };
+  function block(kind, abbr, cls) {
+    cls = cls || '';
+    var pips = (kind === 'special' || kind === 'void' || kind === 'basic') ? '' : '<span class="bha-block__pips"><i></i><i></i><i></i></span>';
+    return '<div class="bha-block bha-block--' + kind + ' ' + cls + '">' + pips + '<span class="bha-block__icon"><svg class="bha-icon"><use href="#' + ICON[kind] + '"/></svg></span><b class="bha-block__abbr">' + abbr + '</b><span class="bha-block__weak"><svg class="bha-icon"><use href="#i-weak"/></svg></span></div>';
+  }
+  window.bhaBlock = block;
+  var KINDS = [['attack','공격','찢는 발톱'],['guard','막기','굳은 가면'],['heal','회복','재생 체액'],['basic','기본','기본 타격'],['special','필살','세로'],['void','공허','공허']];
+  var STATES = [['','●○○'],['is-chain2','●●○'],['is-chain3','●●●'],['is-weak','약점'],['is-pressed','눌림'],['is-dragging','드래그'],['is-sealed','봉인'],['is-disabled','비활성'],['is-held','들었다 놓음']];
+  var bm = '<thead><tr><th></th>' + STATES.map(function (s) { return '<th scope="col">' + s[1] + '</th>'; }).join('') + '</tr></thead><tbody>';
+  KINDS.forEach(function (k) {
+    bm += '<tr><th scope="row">' + k[1] + '</th>' + STATES.map(function (s) {
+      var c = s[0]; if ((k[0] === 'special' || k[0] === 'void' || k[0] === 'basic') && /chain/.test(c)) return '<td></td>';
+      if (c === 'is-dragging') c += '" style="--drag-y:20px';
+      return '<td>' + block(k[0], k[2], c) + '</td>';
+    }).join('') + '</tr>';
+  });
+  document.getElementById('blockMatrix').innerHTML = bm + '</tbody>';
+
+  /* ---- 블록 바 ---- */
+  function tray(cells, runs, extra) {
+    var html = '<div class="bha-tray__grid">';
+    for (var i = 0; i < 8; i++) html += '<div class="bha-tray__cell' + (cells[i] && cells[i].cell ? ' ' + cells[i].cell : '') + '">' + (cells[i] && cells[i].html ? cells[i].html : '') + '</div>';
+    (runs || []).forEach(function (r) { html += '<div class="bha-tray__run' + (r[1] === 3 ? ' bha-tray__run--chain3' : '') + '" style="--start:' + r[0] + ';--len:' + r[1] + '"><span class="bha-tray__runlabel"><svg class="bha-icon"><use href="#i-chain-' + r[1] + '"/></svg>체인' + r[1] + '</span></div>'; });
+    html += (extra || '') + '</div><div class="bha-tray__veil"><svg class="bha-icon"><use href="#i-seal"/></svg>봉인 — 블록 생성 정지 3초</div>';
+    return html;
+  }
+  window.bhaTray = tray;
+  var main = [
+    { html: block('attack', '찢는 발톱', 'is-chain2') }, { html: block('attack', '찢는 발톱', 'is-chain2') },
+    { html: block('guard', '굳은 가면') }, { html: block('void', '공허') },
+    { html: block('special', '세로', 'is-popin') },
+    { html: block('heal', '재생 체액', 'is-chain3 is-weak') }, { html: block('heal', '재생 체액', 'is-chain3 is-weak') }, { html: block('heal', '재생 체액', 'is-chain3 is-weak') }
+  ];
+  document.getElementById('trayMain').innerHTML = tray(main, [[1, 2], [6, 3]]);
+  var drag = [
+    { html: block('attack', '찢는 발톱') }, { html: block('guard', '굳은 가면') },
+    { html: block('heal', '재생 체액', 'is-nudge-r') }, { html: block('basic', '기본 타격', 'is-nudge-r') },
+    { cell: 'is-origin', html: block('attack', '찢는 발톱', 'is-dragging" style="--drag-x:-96px') },
+    { html: block('void', '공허') }, {}, {}
+  ];
+  document.getElementById('trayDrag').innerHTML = tray(drag, [], '<i class="bha-tray__insert" style="--at:3"></i>');
+  var four = [{ html: block('attack', '찢는 발톱') }, { html: block('guard', '굳은 가면') }, { html: block('heal', '재생 체액') }, { html: block('basic', '기본 타격') }, {}, {}, {}, {}];
+  document.getElementById('traySeal').innerHTML = tray(four);
+  document.getElementById('trayPause').innerHTML = tray(four);
+  document.getElementById('trayHeld').innerHTML = tray(four);
+
+  /* 블록 눌러 보기: 눌림 → 발동 → 팝인으로 복귀 */
+  document.getElementById('trayMain').addEventListener('pointerdown', function (e) {
+    var b = e.target.closest('.bha-block'); if (!b) return;
+    b.classList.add('is-pressed');
+    var up = function () {
+      b.classList.remove('is-pressed'); b.classList.add('is-fire');
+      setTimeout(function () { b.classList.remove('is-fire'); b.classList.add('is-popin'); setTimeout(function () { b.classList.remove('is-popin'); }, 300); }, 420);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointerup', up);
+  });
+
+  /* ---- 원형 길 ---- */
+  var ring = document.getElementById('ringDemo');
+  var tiles = { 2: 'prey', 3: 'env', 6: 'elite', 9: 'rest' };
+  var tileIcon = { prey: 'i-tile-prey', elite: 'i-tile-elite', env: 'i-tile-env', rest: 'i-tile-rest' };
+  function drawRing(pos) {
+    var h = '<span class="bha-ring__track"></span><span class="bha-ring__done"></span>';
+    for (var i = 0; i < 12; i++) {
+      if (i === 0) h += '<span class="bha-ring__cell bha-ring__cell--nest" style="--i:0"><svg class="bha-icon"><use href="#i-nest"/></svg>둥지</span>';
+      else h += '<span class="bha-ring__cell' + (i < pos ? ' is-past' : '') + (i === Math.round(pos) ? ' is-current' : '') + '" style="--i:' + i + '">' + i + '</span>';
+    }
+    for (var s = 1; s <= 11; s++) {
+      var t = tiles[s], past = s < pos, can = !t && s > pos && s <= pos + 3;
+      h += '<button class="bha-ring__slot' + (t ? ' is-has bha-ring__slot--' + t : '') + (can ? ' is-can' : '') + (past ? ' is-past' : '') + '" style="--i:' + s + '" aria-label="타일 슬롯 ' + s + '"><svg class="bha-icon"><use href="#' + (t ? tileIcon[t] : 'i-plus') + '"/></svg><span class="bha-ring__slotnum">' + s + '</span></button>';
+    }
+    h += '<span class="bha-ring__walker"></span><div class="bha-ring__hub"><span class="bha-ring__lap">2<small>/4 바퀴</small></span><span class="bha-ring__state"><svg class="bha-icon"><use href="#i-play"/></svg>이동 중</span></div>';
+    ring.innerHTML = h; ring.style.setProperty('--pos', pos);
+  }
+  var pos = 4; drawRing(pos);
+  document.getElementById('ringStep').addEventListener('click', function () {
+    pos = (pos + 1) % 12; ring.style.setProperty('--pos', pos);
+    ring.querySelectorAll('.bha-ring__cell').forEach(function (c, i) { if (i) { c.classList.toggle('is-past', i < pos); c.classList.toggle('is-current', i === pos); } });
+    ring.querySelectorAll('.bha-ring__slot').forEach(function (s, k) { var n = k + 1, t = tiles[n]; s.classList.toggle('is-past', n < pos); s.classList.toggle('is-can', !t && n > pos && n <= pos + 3); });
+  });
+
+  /* ---- 로그 · 토스트 ---- */
+  var LOG = [['attack','i-attack','찢는 발톱 <b>−51</b>'],['heal','i-heal','재생 체액 <b>+24</b>'],['void','i-void','공허 블록! 광기 <b>+6</b>'],['cast','i-cast','강공격 예고!'],['guard','i-guard','강공격을 막았다!'],['chain','i-chain-2','체인2 발동! <b>−130</b>']];
+  var li = 0;
+  document.getElementById('logAdd').addEventListener('click', function () {
+    var log = document.getElementById('logDemo'), d = LOG[li++ % LOG.length];
+    var p = document.createElement('p'); p.className = 'bha-log__line bha-log__line--' + d[0] + ' is-new';
+    p.innerHTML = '<svg class="bha-icon"><use href="#' + d[1] + '"/></svg>' + d[2];
+    log.appendChild(p); while (log.children.length > 3) log.removeChild(log.firstElementChild);
+  });
+  document.getElementById('toastReplay').addEventListener('click', function () {
+    var t = document.getElementById('toastDemo'); t.classList.remove('is-in'); void t.offsetWidth; t.classList.add('is-in');
+  });
+  document.getElementById('sl1').addEventListener('input', function (e) {
+    var v = +e.target.value; e.target.style.setProperty('--pct', (v - 0.15) / 0.45);
+    e.target.closest('.bha-slider').querySelector('output').innerHTML = v.toFixed(2) + '<small>초</small>';
+  });
+
+  /* ---- HTML 보기: 각 카드의 실제 DOM을 그대로 보여 준다 ---- */
+  function fmt(html) {
+    return html.replace(/\s+data-snippet-root/g, '').replace(/></g, '>\n<').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  }
+  document.querySelectorAll('[data-snippet-root]').forEach(function (body) {
+    var d = document.createElement('details'); d.className = 'spec__code';
+    d.innerHTML = '<summary><svg class="bha-icon bha-icon--sm"><use href="#i-chevron-right"/></svg>HTML 보기</summary><pre></pre>';
+    d.addEventListener('toggle', function () {
+      if (!d.open) return;
+      var parts = []; body.querySelectorAll(':scope > :not(.spec__cap):not(.note):not(#toastReplay):not(#logAdd)').forEach(function (n) { parts.push(n.outerHTML); });
+      d.querySelector('pre').innerHTML = fmt(parts.join('\n\n'));
+    });
+    body.parentNode.appendChild(d);
+  });
+
+  var saved = null; try { saved = localStorage.getItem('bha-theme'); } catch (e) {}
+  if (saved === 'shinigami') setTheme('shinigami');
+})();
+</script>
+</body>
+</html>

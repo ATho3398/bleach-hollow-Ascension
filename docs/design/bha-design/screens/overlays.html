@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>공용 오버레이 — BHA</title>
+<!--
+  공용 오버레이: 토스트(칭호 해금) · 모달(확인) · 바텀 시트
+  모달은 "패턴 예시"다. 지금 게임에 이미 확인 단계가 있는 행동에만 쓴다 (새 확인 단계를 만들지 않는다).
+  구조: .bha-overlay > .bha-modal > .bha-modal__title / __body / __actions
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app">
+  <header class="bha-topbar"><div class="bha-topbar__main"><h1 class="bha-topbar__title" data-sp="nest">둥지</h1><p class="bha-topbar__sub">뒤 화면 (오버레이 아래 깔림)</p></div></header>
+  <section class="bha-panel"><p class="bha-dim">오버레이는 앱 열(최대 480px) 위를 덮고, 바깥은 어둡게 가린다.</p></section>
+
+  <div class="bha-overlay" data-show="modal" hidden>
+    <div class="bha-modal" role="dialog" aria-modal="true" aria-labelledby="m1">
+      <h2 class="bha-modal__title" id="m1">전투를 그만둘까?</h2>
+      <p class="bha-modal__body">지금 그만두면 이 전투는 패배로 처리된다.</p>
+      <div class="bha-modal__actions"><button class="bha-btn bha-btn--lg" type="button">계속 싸운다</button><button class="bha-btn bha-btn--danger bha-btn--lg" type="button">그만둔다</button></div>
+    </div>
+  </div>
+  <div class="bha-overlay" data-show="modalInfo" hidden>
+    <div class="bha-modal" role="dialog" aria-modal="true" aria-labelledby="m2">
+      <h2 class="bha-modal__title" id="m2">종족을 바꿀까?</h2>
+      <p class="bha-modal__body">시작 화면으로 돌아가 종족을 다시 고른다.</p>
+      <div class="bha-modal__actions"><button class="bha-btn bha-btn--lg" type="button">취소</button><button class="bha-btn bha-btn--primary bha-btn--lg" type="button">바꾸러 가기</button></div>
+    </div>
+  </div>
+</main>
+</div>
+<div class="bha-toast" id="toast" role="status" hidden>
+  <span class="bha-toast__icon"><svg class="bha-icon"><use href="#i-title"/></svg></span>
+  <span><span class="bha-toast__eyebrow">칭호 해금</span><br><span class="bha-toast__title">공허를 삼킨 자</span><br><span class="bha-toast__meta">히든 등급 · 칭호 도감에서 확인</span></span>
+</div>
+<script>
+  window.BHA_DEMO = { title: '공용 오버레이', initial: 'toast', states: [['toast', '토스트 (칭호 해금)'], ['modal', '모달 — 위험 확인'], ['modalInfo', '모달 — 일반 확인']],
+    onState: function (s) { var t = document.getElementById('toast'); t.hidden = s !== 'toast'; t.className = 'bha-toast'; if (s === 'toast') { void t.offsetWidth; t.classList.add('is-in'); } } };
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

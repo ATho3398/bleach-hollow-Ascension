@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>흡수 — BHA</title>
+<!--
+  화면 13. 흡수 (3단계: ① 선택 → ② 특성 후보 → ③ 교체)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  foe              : { name: "잿빛 포식자", rank: "elite"|"normal", lineage: "B", rare: bool }
+  reason           : 흡수 조건 충족 이유 (임시 문장)
+  onAbsorb         : { hungerReset: true, risk: +12, tile: +1 }   onRelease: { risk: −8, stab: +5 }  (임시 수치)
+  risk             : 45 / 100   → risk + 12 > 100 이면 "흡수하면 한계 돌파!" 경고
+  slots            : { used: 2, max: 3, items: [...] }
+  candidates[]     : { name, kind, lineage, desc, setAfter: "계통B 2/3" }  (0개면 후보 없음 상태)
+  error            : null | 문자열
+  흡수 행위 이름(포식/정화 흡수)은 종족 설정 값
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app" id="abs">
+  <nav class="bha-steps" aria-label="흡수 단계" id="steps"></nav>
+  <div id="view"></div>
+</main>
+</div>
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var ic = window.bhaKit.icon, $ = function (id) { return document.getElementById(id); };
+  var FOE = '<article class="bha-foecard"><div class="bha-foe" style="--aura:var(--bha-lin-b)"><span class="bha-foe__aura"></span><span class="bha-foe__body"><svg viewBox="0 0 100 100"><use href="#foe-a"/></svg></span></div><div><h2 class="bha-foecard__name">잿빛 포식자 <span class="bha-tag bha-tag--provisional">임시</span></h2><div class="bha-foecard__tags"><span class="bha-tag bha-tag--elite">강적</span><span class="bha-lin bha-lin--b">' + ic('i-lin-b') + '계통B</span></div></div></article>';
+  function steps(n) {
+    var L = ['선택', '특성 고르기', '교체'];
+    $('steps').innerHTML = L.map(function (l, i) { return (i ? '<b></b>' : '') + '<span class="' + (i + 1 === n ? 'is-active' : i + 1 < n ? 'is-done' : '') + '"><i>' + (i + 1) + '</i>' + l + '</span>'; }).join('');
+  }
+  function select(s) {
+    var warn = s === 'warn', rare = s === 'rare', risk = warn ? 92 : 45;
+    return '<div class="bha-stack bha-stack--loose">' +
+      '<h1 class="bha-h1"><span data-sp="absorbAble">포식 가능</span></h1>' + FOE +
+      (rare ? '<div class="bha-notice bha-notice--rare"><svg class="bha-icon"><use href="#i-rare"/></svg><div class="bha-notice__body"><span class="bha-notice__title">희귀 개체!</span>흡수하면 특성 후보가 하나 더 나온다. <span class="bha-tag bha-tag--provisional">임시</span></div></div>' : '') +
+      '<section class="bha-panel"><dl class="bha-info">' +
+      '<div class="bha-info__row"><dt>상대</dt><dd>잿빛 포식자 <small>강적</small></dd></div>' +
+      '<div class="bha-info__row"><dt>계통</dt><dd><span class="bha-lin bha-lin--b">' + ic('i-lin-b') + 'B</span></dd></div>' +
+      '<div class="bha-info__row bha-info__row--stack"><dt>흡수 조건</dt><dd>약점 계통(B) 블록으로 마무리 일격 — 충족 <span class="bha-tag bha-tag--provisional">임시</span></dd></div>' +
+      '<div class="bha-info__row bha-info__row--stack"><dt>' + ic('i-absorb') + '<span data-sp="absorb" data-sp-tpl="{}하면">포식하면</span></dt><dd>허기 리셋 · <span data-sp="risk">광기</span> <b style="color:var(--bha-risk)">+12</b> · 타일 +1</dd></div>' +
+      '<div class="bha-info__row bha-info__row--stack"><dt>' + ic('i-release') + '놓아주면</dt><dd><span data-sp="risk">광기</span> <b style="color:var(--bha-good)">−8</b> · <span data-sp="stab">자아</span> <b style="color:var(--bha-good)">+5</b></dd></div>' +
+      '</dl></section>' +
+      window.bhaKit.meter({ mod: 'risk', label: '지금 광기', sp: 'risk', spTpl: '지금 {}', icon: 'i-risk', value: risk, max: 100, zone: 0.6, danger: risk >= 60, note: warn ? '포식하면 한계 돌파! (92 + 12 = 104)' : '' }) +
+      '<div class="bha-row"><span class="bha-dim"><span data-sp="slot">본체 슬롯</span></span><b class="bha-num">2 / 3</b></div>' +
+      (s === 'error' ? '<div class="bha-notice bha-notice--danger"><svg class="bha-icon"><use href="#i-warn"/></svg><div class="bha-notice__body"><span class="bha-notice__title">흡수를 처리하지 못했다</span>저장 중 문제가 생겼다. 다시 눌러 주세요.</div></div>' : '') +
+      '<div class="bha-absorb__actions"><button class="bha-btn bha-btn--' + (warn ? 'danger' : 'primary') + ' bha-btn--lg" type="button">' + ic('i-absorb') + '<span data-sp="absorb">포식</span><small>' + (warn ? '한계 돌파한다' : '특성 후보 보기') + '</small></button><button class="bha-btn bha-btn--lg" type="button">' + ic('i-release') + '놓아준다<small>안정 쪽으로</small></button></div></div>';
+  }
+  var CANDS = [['a', '찢는 발톱 II', '기술', '공격 블록. 체인3이면 피해 1.5배.', '계통A 3/3 — 보너스!'], ['b', '뼈 갑주', '패시브', '강공격 막기 성공 시 체력 8 회복.', '계통B 2/3'], ['b', '흰 갈기', '외형 파츠', '컨디션이 나쁠 때 공허 블록 피해 +15%.', '계통B 2/3']];
+  function cands(none) {
+    return '<div class="bha-stack bha-stack--loose"><h1 class="bha-h1">특성 하나 고르기</h1><p class="bha-dim">잿빛 포식자에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.</p>' +
+      (none ? '<div class="bha-panel bha-panel--inset bha-center" style="align-items:center;padding:28px 16px">' + ic('i-unknown', 'bha-icon--lg') + '<b>나올 수 있는 특성이 없다</b><p class="bha-dim">이 상대의 계통 특성을 이미 모두 가지고 있다. 흡수 효과(허기 리셋 등)는 그대로 받는다.</p></div><button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block" type="button">계속</button>'
+        : '<div class="bha-stack">' + CANDS.map(function (c, i) { return '<button class="bha-cand bha-lin--' + c[0] + (i === 1 ? ' is-selected' : '') + '" type="button"><span class="bha-cand__mark">' + ic('i-lin-' + c[0]) + '</span><span class="bha-cand__body"><span class="bha-cand__top"><span class="bha-cand__name">' + c[1] + '</span><span class="bha-tag bha-tag--kind">' + c[2] + '</span><span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-cand__desc">' + c[3] + '</span><span class="bha-cand__foot"><span class="bha-pips"><i class="is-on"></i><i class="' + (c[0] === 'a' ? 'is-on' : 'is-next') + '"></i><i class="' + (c[0] === 'a' ? 'is-next' : '') + '"></i></span>장착하면 ' + c[4] + '</span></span></button>'; }).join('') + '</div>') +
+      '<button class="bha-btn bha-btn--ghost bha-btn--block" type="button">' + ic('i-chevron-left') + '돌아가기</button></div>';
+  }
+  function swap() {
+    var S = [['a', '찢는 발톱', '기술'], ['a', '굳은 껍질', '패시브'], ['c', '재생 체액', '기술']];
+    return '<div class="bha-stack bha-stack--loose"><h1 class="bha-h1">슬롯이 가득 찼다</h1>' +
+      '<div class="bha-notice bha-notice--warn"><svg class="bha-icon"><use href="#i-swap"/></svg><div class="bha-notice__body"><span class="bha-notice__title">어느 슬롯과 바꿀까?</span>‘뼈 갑주’를 넣을 슬롯을 누른다. 빠진 특성은 사라진다.</div></div>' +
+      '<div class="bha-stack">' + S.map(function (x, i) { return '<button class="bha-slot bha-slot--filled bha-lin--' + x[0] + (i === 2 ? ' is-target' : '') + '" type="button" style="min-height:72px"><span class="bha-slot__num">' + (i + 1) + '번 · 지금 특성</span><span class="bha-slot__name">' + x[1] + '</span><span class="bha-slot__meta"><span class="bha-tag bha-tag--kind">' + x[2] + '</span><span class="bha-lin bha-lin--' + x[0] + '">' + ic('i-lin-' + x[0]) + x[0].toUpperCase() + '</span></span></button>'; }).join('') + '</div>' +
+      '<div class="bha-grid2"><button class="bha-btn bha-btn--lg" type="button">' + ic('i-chevron-left') + '돌아가기</button><button class="bha-btn bha-btn--danger bha-btn--lg" type="button">포기</button></div></div>';
+  }
+  function render(s) {
+    var step = s === 'cands' || s === 'candsNone' ? 2 : s === 'swap' ? 3 : 1;
+    steps(step);
+    $('view').innerHTML = step === 1 ? select(s) : step === 2 ? cands(s === 'candsNone') : swap();
+  }
+  window.BHA_DEMO = { title: '13. 흡수', initial: 'select', states: [['select', '① 선택'], ['rare', '① 선택 — 희귀 개체'], ['warn', '① 선택 — 흡수하면 한계 돌파'], ['error', '① 선택 — 에러'], ['cands', '② 특성 후보'], ['candsNone', '② 후보 없음'], ['swap', '③ 교체 (슬롯 가득)']], onState: render };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

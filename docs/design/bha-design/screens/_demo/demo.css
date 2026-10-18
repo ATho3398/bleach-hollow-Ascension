@@ -1,0 +1,39 @@
+/* 데모 전용 (게임 UI 아님): 일부러 중립 회색·고정폭 글꼴로 게임 화면과 구분 */
+.demo-fab {
+  position: fixed; z-index: 1000; right: max(0px, env(safe-area-inset-right, 0px)); top: 42%;
+  writing-mode: vertical-rl; min-height: 64px; width: 26px; padding: 8px 0;
+  border: 1px solid #555; border-right: 0; border-radius: 8px 0 0 8px;
+  background: #2b2b2b; color: #ddd; font: 700 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .1em;
+  opacity: .82; cursor: pointer;
+}
+.demo-fab:hover { opacity: 1; }
+.demo-panel {
+  position: fixed; z-index: 1001; top: 0; right: 0; bottom: 0; width: min(300px, 86vw);
+  padding: max(12px, env(safe-area-inset-top, 0px)) 12px 16px;
+  background: #1e1e1e; color: #e6e6e6; border-left: 1px solid #444;
+  font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  transform: translateX(105%); transition: transform .22s ease; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 14px; box-shadow: -10px 0 30px rgb(0 0 0 / .5);
+}
+.demo-panel.is-open { transform: none; }
+.demo-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.demo-panel__head b { font-size: 13px; }
+.demo-x { width: 44px; height: 44px; border: 0; background: transparent; color: #ccc; font-size: 22px; cursor: pointer; }
+.demo-panel__sec { display: flex; flex-direction: column; gap: 6px; }
+.demo-cap { font-size: 11px; color: #9a9a9a; letter-spacing: .06em; }
+.demo-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-list { display: flex; flex-direction: column; gap: 4px; }
+.demo-panel button[data-demo-theme], .demo-panel button[data-demo-state-btn] {
+  min-height: 40px; padding: 0 10px; border: 1px solid #444; border-radius: 6px; background: #2a2a2a; color: #ddd;
+  font: inherit; text-align: left; cursor: pointer;
+}
+.demo-panel button[data-demo-theme] { flex: 1; text-align: center; }
+.demo-panel button[aria-pressed="true"] { background: #e6e6e6; color: #111; border-color: #e6e6e6; }
+.demo-panel a { color: #9cc7ff; }
+.demo-check { display: flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; }
+.demo-check input { width: 18px; height: 18px; }
+/* 종족 설정 문구 표시 */
+.demo-mark-sp [data-sp] { outline: 1px dashed #9cc7ff; outline-offset: 1px; background: rgb(156 199 255 / .12); }
+
+/* 데모에서 한 번 하는 연출을 반복 재생 */
+.demo-loop { animation-iteration-count: infinite !important; }

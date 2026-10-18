@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>기기 크기 확인 — BHA</title>
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<style>
+body { background: var(--bha-backdrop); color: var(--bha-text-1); }
+.fit { max-width: 1400px; margin: 0 auto; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 60px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 16px; }
+.fit h1 { font-family: var(--bha-font-display); font-weight: 800; font-size: 26px; }
+.fit p { color: var(--bha-text-2); font-size: 14px; max-width: 70ch; line-height: 1.6; }
+.fit__row { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 12px; align-items: flex-start; }
+.dev { flex: none; display: flex; flex-direction: column; gap: 8px; }
+.dev b { font-size: 13px; } .dev small { color: var(--bha-text-3); font-size: 12px; }
+.dev__frame { border: 1px solid var(--bha-line-2); border-radius: 18px; overflow: hidden; background: #000; }
+.dev iframe { display: block; border: 0; transform-origin: 0 0; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { color: var(--bha-text-1); border: 1px solid var(--bha-line-2); border-radius: 8px; padding: 10px 12px; text-decoration: none; font-size: 13px; font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+</style>
+</head>
+<body>
+<main class="fit">
+  <a href="../index.html" style="color:var(--bha-text-2);font-size:13px">← 패키지 처음으로</a>
+  <h1>기기 크기 확인</h1>
+  <p>같은 화면을 실제 크기로 띄운 뒤 0.6배로 줄여 보여 줍니다. 전투 화면은 세로가 짧은 360×740에서도 스크롤 없이 하단 컨트롤까지 보여야 합니다. 높이 780px 이하에서는 조작 힌트 줄이 [?]로 들어가고 사건 로그가 2줄로 줄어듭니다.</p>
+  <div class="links" id="pick"></div>
+  <div class="fit__row" id="row"></div>
+</main>
+<script>
+(function () {
+  var DEV = [[360, 740, '작은 폰 (높이 740)'], [390, 844, '기준 390×844'], [430, 932, '큰 폰 430×932'], [800, 600, '데스크톱 창 (가운데 480 + 양옆 장식)']];
+  var PAGES = [['battle.html#base', '전투'], ['battle.html#cast', '전투 · 강공격 예고'], ['battle.html#tut3', '튜토리얼 3'], ['battle.html#sp', '전투 · SP 가득']];
+  var S = 0.6, cur = PAGES[0][0];
+  function draw() {
+    document.getElementById('row').innerHTML = DEV.map(function (d) {
+      return '<div class="dev"><b>' + d[2] + '</b><small>' + d[0] + ' × ' + d[1] + '</small><div class="dev__frame" style="width:' + d[0] * S + 'px;height:' + d[1] * S + 'px"><iframe src="' + cur + '" width="' + d[0] + '" height="' + d[1] + '" style="transform:scale(' + S + ')" title="' + d[2] + '"></iframe></div></div>';
+    }).join('');
+  }
+  document.getElementById('pick').innerHTML = PAGES.map(function (p) { return '<a href="#" data-p="' + p[0] + '">' + p[1] + '</a>'; }).join('');
+  document.getElementById('pick').addEventListener('click', function (e) { var a = e.target.closest('a'); if (!a) return; e.preventDefault(); cur = a.dataset.p; draw(); });
+  window.bhaFitPages = function (list) { PAGES = list; };
+  draw();
+})();
+</script>
+</body>
+</html>

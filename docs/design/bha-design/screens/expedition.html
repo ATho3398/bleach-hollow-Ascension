@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>원정 — BHA</title>
+<!--
+  화면 9. 원정 (12칸 원형 길, 한 화면 · 스크롤 없음)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  ground(종족)     : "웨코문도"
+  lap / baseLaps   : 2 / 4          (4바퀴 초과 시 경고)
+  pos              : 0~11 (0 = 둥지 칸). 표식 --pos, 지난 칸 .is-past, 현재 칸 .is-current
+  slots[1..11]     : null | "prey"|"elite"|"env"|"rest"   → .bha-ring__slot.is-has --{tile}
+  canPlace[]       : 고른 타일을 놓을 수 있는 슬롯(현재 위치보다 앞쪽 빈 슬롯) → .is-can
+  hand[]           : { tile, name, count, selected }        → .bha-tilechip
+  hunger / risk    : 0~100   · slots(장착 특성) 한 줄 요약
+  speed            : 1|2|4,  paused: bool,  phase: "move"|"fight"|"rest"|"choice"
+  message          : 메시지 줄 (상태별 아이콘·색)
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app bha-app--fixed bha-exp" id="exp">
+  <section class="bha-exp__top">
+    <div class="bha-exp__head">
+      <div class="bha-exp__where"><b data-sp="ground">웨코문도</b><small id="lapLine">원정 · 2바퀴째 / 기본 4바퀴</small></div>
+      <button class="bha-btn bha-btn--icon bha-btn--ghost" type="button" aria-label="도움말"><svg class="bha-icon"><use href="#i-help"/></svg></button>
+    </div>
+    <div id="meters" class="bha-stack bha-stack--tight"></div>
+    <div class="bha-exp__slots"><svg class="bha-icon bha-icon--sm"><use href="#i-slot"/></svg><span data-sp="slot">본체 슬롯</span>
+      <span class="bha-lin bha-lin--a"><svg class="bha-icon"><use href="#i-lin-a"/></svg>찢는 발톱</span>
+      <span class="bha-lin bha-lin--a"><svg class="bha-icon"><use href="#i-lin-a"/></svg>굳은 껍질</span>
+      <span class="bha-faint">빈칸 1</span></div>
+  </section>
+
+  <section class="bha-exp__ringwrap"><div class="bha-ring" id="ring"></div></section>
+
+  <p class="bha-exp__msg" id="msg" aria-live="polite"></p>
+  <div>
+    <p class="bha-exp__handcap">보유 타일 — 고른 뒤 앞쪽 빈 슬롯을 누르면 놓인다</p>
+    <div class="bha-exp__hand" id="hand"></div>
+  </div>
+  <footer class="bha-exp__bar">
+    <div class="bha-seg bha-seg--sm" role="radiogroup" aria-label="배속" id="speed"><button class="bha-seg__item is-active" role="radio" aria-checked="true">1x</button><button class="bha-seg__item" role="radio" aria-checked="false">2x</button><button class="bha-seg__item" role="radio" aria-checked="false">4x</button></div>
+    <button class="bha-btn bha-btn--icon" type="button" id="pause" aria-label="일시정지"><svg class="bha-icon"><use href="#i-pause"/></svg></button>
+    <span></span>
+    <span class="bha-faint bha-num" id="tilesLeft">덱 남은 타일 5</span>
+  </footer>
+
+  <div data-show="nest nestOver" hidden>
+    <div class="bha-sheet__scrim"></div>
+    <div class="bha-sheet" role="dialog" aria-labelledby="sheetT">
+      <h2 class="bha-sheet__title" id="sheetT"><svg class="bha-icon"><use href="#i-nest"/></svg><span data-sp="nest" data-sp-tpl="{} 칸에 도착했다">둥지 칸에 도착했다</span></h2>
+      <p class="bha-sheet__body" id="sheetBody">2바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.</p>
+      <div class="bha-notice bha-notice--warn" data-show="nestOver" hidden><svg class="bha-icon"><use href="#i-warn"/></svg><div class="bha-notice__body"><span class="bha-notice__title">기본 4바퀴를 넘긴다</span>바퀴를 더 돌수록 보상도 위험도 커진다.</div></div>
+      <div class="bha-grid2">
+        <button class="bha-btn bha-btn--primary bha-btn--lg" type="button"><svg class="bha-icon"><use href="#i-return"/></svg>귀환</button>
+        <button class="bha-btn bha-btn--lg" type="button" id="moreBtn"><svg class="bha-icon"><use href="#i-loop"/></svg><span class="bha-btn__label">한 바퀴 더<span class="bha-btn__sub" id="moreSub">3바퀴째로</span></span></button>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var K = window.bhaKit, ic = K.icon, $ = function (id) { return document.getElementById(id); };
+  var TILE_ICON = { prey: 'i-tile-prey', elite: 'i-tile-elite', env: 'i-tile-env', rest: 'i-tile-rest' };
+  var tiles = { 2: 'prey', 3: 'env', 6: 'elite', 7: 'prey', 9: 'rest' };
+  var walkT = null;
+
+  function ring(pos, opt) {
+    opt = opt || {};
+    var h = '<span class="bha-ring__track"></span><span class="bha-ring__done"></span>';
+    for (var i = 0; i < 12; i++) {
+      if (i === 0) h += '<span class="bha-ring__cell bha-ring__cell--nest' + (pos === 0 || pos === 12 ? ' is-current' : '') + '" style="--i:0">' + ic('i-nest') + '<span data-sp="nest">둥지</span></span>';
+      else h += '<span class="bha-ring__cell' + (i < pos ? ' is-past' : '') + (i === Math.round(pos) ? ' is-current' : '') + (opt.event === i ? ' is-event' : '') + '" style="--i:' + i + '">' + i + '</span>';
+    }
+    for (var s = 1; s <= 11; s++) {
+      var t = tiles[s], past = s < pos, can = opt.place && !t && s > pos;
+      h += '<button class="bha-ring__slot' + (t ? ' is-has bha-ring__slot--' + t : '') + (can ? ' is-can' : '') + (past ? ' is-past' : '') + '" style="--i:' + s + '" type="button" aria-label="타일 슬롯 ' + s + (t ? ' (놓임)' : can ? ' (놓을 수 있음)' : ' (비어 있음)') + '">' + ic(t ? TILE_ICON[t] : 'i-plus') + '<span class="bha-ring__slotnum">' + s + '</span></button>';
+    }
+    h += '<span class="bha-ring__walker"></span><div class="bha-ring__hub"><span class="bha-ring__lap">' + (opt.lap || 2) + '<small>/4 바퀴</small></span><span class="bha-ring__state">' + ic(opt.stateIcon || 'i-play') + (opt.state || '이동 중') + '</span></div>';
+    $('ring').innerHTML = h; $('ring').style.setProperty('--pos', pos);
+  }
+  function hand(sel, emptyRest) {
+    var H = [['prey', '먹잇감 둥지', 2], ['elite', '강적 소굴', 1], ['env', '환경', 1], ['rest', '휴식', emptyRest ? 0 : 1]];
+    $('hand').innerHTML = H.map(function (x) { return '<button class="bha-tilechip bha-tilechip--' + x[0] + (sel === x[0] ? ' is-selected' : '') + '" type="button"' + (x[2] ? '' : ' disabled') + ' aria-pressed="' + (sel === x[0]) + '"><span class="bha-tilechip__icon">' + ic(TILE_ICON[x[0]]) + '</span>' + x[1] + '<span class="bha-tilechip__count">' + x[2] + '</span></button>'; }).join('');
+  }
+  function meters(hunger, risk) {
+    $('meters').innerHTML = K.meter({ mod: 'hunger', label: '허기', icon: 'i-hunger', value: hunger, max: 100, compact: true, zone: 0.8, danger: hunger >= 80 }) +
+      K.meter({ mod: 'risk', label: '광기', sp: 'risk', icon: 'i-risk', value: risk, max: 100, compact: true, zone: 0.6, danger: risk >= 60 });
+  }
+  function msg(kind, icon, text) { var m = $('msg'); m.className = 'bha-exp__msg' + (kind ? ' bha-exp__msg--' + kind : ''); m.innerHTML = ic(icon) + '<span>' + text + '</span>'; }
+
+  function render(s) {
+    clearInterval(walkT);
+    $('exp').classList.toggle('is-paused', s === 'paused');
+    var pos = 4, opt = {}, hunger = 36, risk = 42, sel = null;
+    switch (s) {
+      case 'place': sel = 'prey'; opt.place = true; opt.state = '타일 놓는 중'; opt.stateIcon = 'i-tile-combo'; msg('', 'i-tile-prey', '먹잇감 둥지를 골랐다 — 파랗게 빛나는 앞쪽 슬롯을 누르면 놓인다'); break;
+      case 'fight': pos = 6; opt.event = 6; opt.state = '전투 대기'; opt.stateIcon = 'i-practice'; msg('fight', 'i-tile-elite', '강적 소굴 — 강적이 나타났다! 곧 전투가 시작된다'); break;
+      case 'rest': pos = 9; opt.state = '휴식 중'; opt.stateIcon = 'i-tile-rest'; hunger = 22; msg('rest', 'i-tile-rest', '영혼 웅덩이에서 쉬는 중… 허기·컨디션이 회복된다 (시간 소모)'); break;
+      case 'hunger': hunger = 88; msg('warn', 'i-hunger', '허기 위험 — 먹잇감 둥지 타일을 놓아 포식할 기회를 만들자'); break;
+      case 'nest': pos = 12; opt.state = '도착'; opt.stateIcon = 'i-nest'; msg('', 'i-nest', '한 바퀴를 돌았다'); break;
+      case 'nestOver': pos = 12; opt.lap = 4; opt.state = '도착'; opt.stateIcon = 'i-nest'; risk = 64; msg('', 'i-nest', '4바퀴를 돌았다'); break;
+      case 'paused': opt.state = '일시정지'; opt.stateIcon = 'i-pause'; msg('', 'i-pause', '일시정지 — 다시 누르면 이어서 걷는다'); break;
+      default: msg('', 'i-play', '길을 따라 걷는 중… 다음 칸: 5');
+    }
+    meters(hunger, risk); ring(pos, opt); hand(sel, s === 'rest');
+    $('lapLine').textContent = '원정 · ' + (opt.lap || 2) + '바퀴째 / 기본 4바퀴';
+    $('moreSub').textContent = (s === 'nestOver' ? 5 : 3) + '바퀴째로';
+    $('sheetBody').textContent = s === 'nestOver' ? '4바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.' : '2바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.';
+    $('pause').innerHTML = ic(s === 'paused' ? 'i-play' : 'i-pause'); $('pause').classList.toggle('is-on', s === 'paused');
+    if (s === 'move') { var p = 4; walkT = setInterval(function () { p = p >= 5 ? 3 : p + 1; ring(p, opt); window.bhaApplySpecies(); }, 1100); }
+  }
+  window.BHA_DEMO = { title: '9. 원정', initial: 'move', states: [['move', '이동 중 (표식이 걸어감)'], ['place', '타일 고름 → 놓을 슬롯 맥동'], ['fight', '전투 대기 (강적 소굴)'], ['rest', '휴식 중'], ['hunger', '허기 위험'], ['nest', '둥지 칸 도착: 귀환 / 한 바퀴 더'], ['nestOver', '4바퀴 넘김 경고'], ['paused', '일시정지']], onState: render };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

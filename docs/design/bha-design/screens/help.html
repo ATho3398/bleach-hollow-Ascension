@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>도움말 — BHA</title>
+<!--
+  화면 3. 도움말 (화면별 요약 4 + 용어 13, 펼침/접힘)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  openedFrom   : "title" | "nest" | "battle"   → battle 이면 "전투가 멈춰 있다" 표시, [닫기] = 전투로 돌아가 재개
+  summaries[4] : 둥지 / 원정 / 전투 / 진화       terms[13]: 아래 목록 (이름 일부는 종족 설정 값)
+  기존 코드: .help-layer / .help-head / .help-body / .help-item(details) → .bha-help__head / .bha-acc
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app">
+  <header class="bha-help__head">
+    <h1 class="bha-topbar__title">도움말</h1>
+    <button class="bha-btn bha-btn--primary" type="button"><span id="closeLabel">닫기</span></button>
+  </header>
+  <div class="bha-notice bha-notice--warn" data-show="battle" hidden><svg class="bha-icon"><use href="#i-pause"/></svg><div class="bha-notice__body"><span class="bha-notice__title">전투가 멈춰 있다</span>닫으면 전투로 돌아가 이어서 진행된다.</div></div>
+  <button class="bha-btn bha-btn--block" type="button"><svg class="bha-icon"><use href="#i-play"/></svg>튜토리얼 다시 보기</button>
+
+  <section class="bha-help__sec">
+    <h2 class="bha-help__cap">화면별 요약</h2>
+    <details class="bha-acc" open><summary class="bha-acc__summary"><svg class="bha-icon"><use href="#i-nest"/></svg><span data-sp="nest">둥지</span><svg class="bha-icon bha-acc__chev"><use href="#i-chevron-down"/></svg></summary><div class="bha-acc__body">원정 사이에 쉬는 곳. 돌보기로 허기·컨디션·<span data-sp="stab">자아</span>를 관리하고, 흡수 특성을 슬롯에 장착하고, 타일 덱을 짠다. 진화도 여기서만 한다.</div></details>
+    <details class="bha-acc"><summary class="bha-acc__summary"><svg class="bha-icon"><use href="#i-loop"/></svg>원정<svg class="bha-icon bha-acc__chev"><use href="#i-chevron-down"/></svg></summary><div class="bha-acc__body">12칸 원형 길을 자동으로 걷는다. 길 옆 슬롯에 타일을 놓아 무엇을 만날지 설계한다. <span data-sp="nest">둥지</span> 칸에 오면 귀환하거나 한 바퀴 더 돈다.</div></details>
+    <details class="bha-acc"><summary class="bha-acc__summary"><svg class="bha-icon"><use href="#i-practice"/></svg>전투<svg class="bha-icon bha-acc__chev"><use href="#i-chevron-down"/></svg></summary><div class="bha-acc__body">실시간 자동 전투. 하단 블록 바의 블록을 짧게 눌러 쓰고, 끌어서 순서를 바꾼다. 같은 블록을 붙이면 체인이 된다.</div></details>
+    <details class="bha-acc"><summary class="bha-acc__summary"><svg class="bha-icon"><use href="#i-evolve"/></svg>진화<svg class="bha-icon bha-acc__chev"><use href="#i-chevron-down"/></svg></summary><div class="bha-acc__body">흡수한 적의 계통 기록이 쌓이면 다음 단계로 진화한다. 어떤 진화체가 될지는 계통 분포로 정해진다.</div></details>
+  </section>
+
+  <section class="bha-help__sec">
+    <h2 class="bha-help__cap">용어 사전 (13)</h2>
+    <div id="terms"></div>
+  </section>
+  <div style="height:16px"></div>
+</main>
+</div>
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var ic = window.bhaKit.icon;
+  var T = [
+    ['i-lin-a', '계통', null, '적과 특성이 속한 갈래(A~E). 색과 모양으로 구분한다. 같은 계통 특성 3개를 장착하면 보너스가 붙는다. <span class="bha-tag bha-tag--provisional">임시</span>'],
+    ['i-chain-3', '체인', null, '같은 특성 블록을 나란히 붙이면 하나를 눌렀을 때 함께 발동한다. 2개는 체인2, 3개는 체인3.'],
+    ['i-sp', 'SP', 'sp', '블록을 쓰면 차오른다. 가득 차면 필살 블록이 생긴다.'],
+    ['i-special', '필살 블록', 'special', 'SP가 가득 차면 블록 바에 생기는 금색 블록. 강한 한 방.'],
+    ['i-stored', '저장 필살기', 'stored', '블록 바 아래 버튼. 블록을 쓸수록 충전되고, 충전 칸이 하나라도 있으면 쓸 수 있다. 최대 3칸.'],
+    ['i-void', '공허 블록', null, '컨디션이 나쁘면 섞여 나오는 불길한 블록. 쓰면 강하지만 리스크 게이지가 오른다.'],
+    ['i-weak', '약점', null, '적마다 약한 계통이 있다. 그 계통 블록은 금빛 모서리가 붙고 더 아프다.'],
+    ['i-stab', '안정 수치', 'stab', '정신이 버티는 힘. 놓아주기·쓰다듬기 등으로 오른다. <span class="bha-tag bha-tag--provisional">임시</span>'],
+    ['i-risk', '리스크 게이지', 'risk', '흡수와 공허 블록으로 오른다. 100을 넘으면 한계 돌파.'],
+    ['i-evolve', '진화 조건', null, '이 단계에서 정해진 횟수만큼 흡수하면 진화할 수 있다. 결과는 계통 분포로 정해진다. <span class="bha-tag bha-tag--provisional">임시</span>'],
+    ['i-dex', '진화체 도감', null, '진화한 적 있는 진화체만 보인다. 나머지는 ?로 가려진다.'],
+    ['i-title', '칭호 도감', null, '조건을 채우면 칭호가 해금된다. 히든 칭호는 조건도 비공개.'],
+    ['i-return', '원정 이어하기', null, '원정 도중 게임을 끄면 다음에 이어할 수 있다. 새 원정을 시작하면 이어하던 원정은 패배 처리 없이 버려진다.']
+  ];
+  document.getElementById('terms').innerHTML = T.map(function (t) {
+    var name = t[2] ? '<span data-sp="' + t[2] + '">' + t[1] + '</span>' + (t[2] === 'sp' ? '' : ' <span class="bha-faint">(' + t[1] + ')</span>') : t[1];
+    if (t[2] === 'sp') name = 'SP · <span data-sp="sp">영력</span>';
+    return '<details class="bha-acc"><summary class="bha-acc__summary">' + ic(t[0]) + '<span>' + name + '</span>' + ic('i-chevron-down', 'bha-acc__chev') + '</summary><div class="bha-acc__body">' + t[3] + '</div></details>';
+  }).join('');
+  window.BHA_DEMO = { title: '3. 도움말', initial: 'title', states: [['title', '시작 화면에서 열림'], ['battle', '전투 중 열림 (전투 멈춤 표시)']],
+    onState: function (s) { document.getElementById('closeLabel').textContent = s === 'battle' ? '닫고 전투로' : '닫기'; } };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

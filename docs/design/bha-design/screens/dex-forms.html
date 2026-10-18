@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>진화체 도감 — BHA</title>
+<!--
+  화면 7. 진화체 도감
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  tabs[4]        : { stage: 2~5, stageName(종족 설정), found, total }  — 2단계 길리안 5종+기본형 1 = 6, 3단계 13+1 = 14, 4단계 22+1 = 23, 5단계 20+1 = 21
+  forms[]        : { id, name: "A+B형", needs: ["a","a","b"], effect: "…", found: bool, isBase: bool, isCurrent: bool }  (전부 임시)
+  미발견 칸은 이름·조건을 숨기고 "?"만 보인다. 기본형은 조건 없이 진화하는 형태.
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app">
+  <header class="bha-topbar">
+    <div class="bha-topbar__main">
+      <h1 class="bha-topbar__title">진화체 도감</h1>
+      <p class="bha-topbar__sub">발견 <b id="total">4</b> / 64 · 진화한 적 있는 진화체만 보인다</p>
+    </div>
+  </header>
+  <div class="bha-seg bha-seg--stack" role="tablist" aria-label="단계" id="tabs"></div>
+  <p class="bha-dim" id="tabDesc"></p>
+  <div class="bha-formgrid" id="grid"></div>
+  <p class="bha-faint">진화 조건·수치·진화체 데이터는 임시 <span class="bha-tag bha-tag--provisional">임시</span></p>
+  <div class="bha-dock"><button class="bha-btn bha-btn--lg bha-btn--block" type="button"><svg class="bha-icon"><use href="#i-nest"/></svg><span data-sp="nest" data-sp-tpl="{}로">둥지로</span></button></div>
+</main>
+</div>
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var ic = window.bhaKit.icon;
+  var TABS = [[2, 'stage2', '길리안', 3, 6], [3, 'stage3', '아쥬커스', 1, 14], [4, 'stage4', '바스트로데', 0, 23], [5, 'stage5', '아란칼', 0, 21]];
+  var FOUND = {
+    2: [{ name: '기본형', needs: [], effect: '조건 없이 진화. 능력치 고르게 상승', base: true }, { name: 'A+B형', needs: ['a', 'a', 'b'], effect: '공격 배율 ×1.10, 약점 계통 피해 +10%', current: true }, { name: 'A형', needs: ['a', 'a', 'a'], effect: '공격 블록 생성 확률 ↑' }],
+    3: [{ name: '기본형', needs: [], effect: '조건 없이 진화', base: true }]
+  };
+  function render(s) {
+    var n = +s.slice(3), t = TABS.filter(function (x) { return x[0] === n; })[0];
+    document.getElementById('tabs').innerHTML = TABS.map(function (x) {
+      return '<button class="bha-seg__item" role="tab" aria-selected="' + (x[0] === n) + '" data-go="tab' + x[0] + '"><span data-sp="' + x[1] + '">' + x[2] + '</span><span class="bha-seg__count">' + x[3] + '/' + x[4] + '</span></button>';
+    }).join('');
+    document.getElementById('tabDesc').innerHTML = t[0] + '단계 · <span data-sp="' + t[1] + '">' + t[2] + '</span> — ' + t[4] + '종 중 ' + t[3] + '종 발견';
+    var found = FOUND[n] || [], h = '';
+    found.forEach(function (f) {
+      var lin = f.needs[0] || '';
+      h += '<article class="bha-formcard' + (f.base ? ' bha-formcard--base' : '') + (f.current ? ' is-current' : '') + (lin ? ' bha-lin--' + lin : '') + '">' +
+        '<span class="bha-formcard__marks">' + (f.needs.length ? f.needs.map(function (k) { return '<span style="color:var(--bha-lin-' + k + ')">' + ic('i-lin-' + k) + '</span>'; }).join('') : '<span class="bha-faint">조건 없음</span>') + '</span>' +
+        '<h3 class="bha-formcard__name">' + f.name + '</h3><p class="bha-formcard__effect">' + f.effect + '</p><span class="bha-formcard__foot"><span class="bha-tag bha-tag--provisional">임시</span></span></article>';
+    });
+    for (var i = found.length; i < t[4]; i++) h += '<article class="bha-formcard bha-formcard--unknown" aria-label="미발견">' + ic('i-unknown') + '<small>미발견</small></article>';
+    document.getElementById('grid').innerHTML = h;
+  }
+  document.getElementById('tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-go]'); if (b) window.bhaSetState(b.dataset.go); });
+  window.BHA_DEMO = { title: '7. 진화체 도감', initial: 'tab2', states: [['tab2', '2단계 (3/6 발견, 지금 진화체 표시)'], ['tab3', '3단계 (1/14)'], ['tab4', '4단계 (전부 미발견)'], ['tab5', '5단계 (전부 미발견)']], onState: render };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

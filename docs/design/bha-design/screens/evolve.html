@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>진화 — BHA</title>
+<!--
+  화면 6b. 진화 연출 → 결과
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  lines[3]        : 연출 줄 (종족 설정 evo1~3)
+  from            : { stage: 1, name: "호로" }   to: { stage: 2, name: "길리안" }  (단계 이름 = 종족 설정)
+  form            : "A+B형" (임시)
+  effects[]       : [{ label: "흡수 특성 슬롯", value: "3 → 4칸" }, { label: "체력 배율", value: "×1.15" },
+                     { label: "공격 배율", value: "×1.10" }, { label: "패시브", value: "약점 계통 피해 +10%" }]  (임시)
+  연출: 줄이 0.9초 간격으로 하나씩 떠오르고(--k), 끝나면 결과로 바뀐다. reduced-motion이면 한 번에 표시.
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app bha-evolve" id="evo">
+  <span class="bha-evolve__burst"></span>
+
+  <section data-show="lines" hidden>
+    <div class="bha-evolve__crack"><svg class="bha-icon"><use href="#i-broken"/></svg></div>
+    <div class="bha-evolve__lines" id="lines">
+      <p class="bha-evolve__line" style="--k:0" data-sp="evo1">삼킨 영혼들이 몸 안에서 요동친다…</p>
+      <p class="bha-evolve__line" style="--k:1" data-sp="evo2">가면에 금이 간다…</p>
+      <p class="bha-evolve__line" style="--k:2" data-sp="evo3">껍질이 깨지고, 새 몸이 드러난다.</p>
+    </div>
+    <button class="bha-btn bha-btn--ghost" type="button" id="skip">건너뛰기</button>
+  </section>
+
+  <section class="bha-stack bha-stack--loose" data-show="result" hidden>
+    <span class="bha-evolve__eyebrow">진화</span>
+    <h1 class="bha-evolve__title"><span data-sp="stage2" data-sp-tpl="{}!">길리안!</span></h1>
+    <p class="bha-evolve__path">1단계 <b data-sp="stage1">호로</b><svg class="bha-icon"><use href="#i-chevron-right"/></svg>2단계 <b data-sp="stage2">길리안</b></p>
+    <div class="bha-evolve__new"><svg class="bha-icon" style="color:var(--bha-lin-a)"><use href="#i-lin-a"/></svg><svg class="bha-icon" style="color:var(--bha-lin-b);margin-left:-10px"><use href="#i-lin-b"/></svg>새 진화체: A+B형 <span class="bha-tag bha-tag--provisional">임시</span></div>
+    <section class="bha-panel bha-evolve__effects">
+      <header class="bha-panel__head"><h2 class="bha-panel__title">달라진 점</h2><span class="bha-tag bha-tag--provisional">임시 수치</span></header>
+      <dl class="bha-info">
+        <div class="bha-info__row bha-info__row--good"><dt><svg class="bha-icon"><use href="#i-slot"/></svg>흡수 특성 슬롯</dt><dd>3 → 4칸 <small>+1</small></dd></div>
+        <div class="bha-info__row"><dt><svg class="bha-icon"><use href="#i-cond"/></svg>체력 배율</dt><dd>×1.15</dd></div>
+        <div class="bha-info__row"><dt><svg class="bha-icon"><use href="#i-attack"/></svg>공격 배율</dt><dd>×1.10</dd></div>
+        <div class="bha-info__row bha-info__row--stack"><dt><svg class="bha-icon"><use href="#i-rare"/></svg>패시브</dt><dd>약점 계통 블록 피해 +10%</dd></div>
+      </dl>
+    </section>
+    <button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block" type="button"><svg class="bha-icon"><use href="#i-nest"/></svg><span data-sp="nest" data-sp-tpl="{}로">둥지로</span></button>
+  </section>
+</main>
+</div>
+<script>
+  window.BHA_DEMO = {
+    title: '6b. 진화 연출',
+    initial: 'lines',
+    states: [['lines', '연출 줄 (0.9초 간격)'], ['result', '결과']],
+    onState: function (s) {
+      if (s === 'lines') {
+        var l = document.getElementById('lines'); var c = l.cloneNode(true); l.parentNode.replaceChild(c, l);
+        clearTimeout(window._evoT); window._evoT = setTimeout(function () { window.bhaSetState('result'); }, 3600);
+      } else clearTimeout(window._evoT);
+    }
+  };
+  document.getElementById('skip').addEventListener('click', function () { window.bhaSetState('result'); });
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

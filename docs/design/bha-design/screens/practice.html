@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>전투 연습 — BHA</title>
+<!--
+  화면 14. 전투 연습 (상대 목록 + 연습 결과)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  foes[35]         : { id, name, rank: "normal"|"elite", pattern: "기본형"|"속공형"|"단단형"|"강공격·봉인"|"연속 강공격"|"방어 자세·반격", weak: "A"~"E" }
+  filter           : { lineage: "all"|"A".."E", rank: "all"|"normal"|"elite" }
+  recordCount      : 12   ("전투 기록 12판 저장됨")
+  result           : { win, time: 48, chainUse: [14,5,2], chain3: 2, heavyBlocked: "3 / 4", stored: { used: 2, wasted: 1 },
+                       special: 1, void: { count: 3, risk: +18 }, finisher: true, absorbable: true }
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app" id="app"></main>
+</div>
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var ic = window.bhaKit.icon, app = document.getElementById('app');
+  var PAT = { '기본형': 'i-basic', '속공형': 'i-pattern-fast', '단단형': 'i-pattern-tough', '강공격·봉인': 'i-pattern-heavy', '연속 강공격': 'i-pattern-heavy', '방어 자세·반격': 'i-guard' };
+  var FOES = [['테스트 적 A', 'normal', '기본형', 'b'], ['테스트 적 B', 'normal', '기본형', 'c'], ['테스트 적 D', 'normal', '기본형', 'e'], ['테스트 적 E', 'normal', '기본형', 'd'], ['테스트 강적', 'elite', '강공격·봉인', 'a']];
+  ['a', 'b', 'c', 'd', 'e'].forEach(function (k) {
+    var K = k.toUpperCase();
+    FOES.push([K + '약점 일반 1', 'normal', '기본형', k], [K + '약점 일반 2', 'normal', '속공형', k], [K + '약점 일반 3', 'normal', '단단형', k], [K + '약점 강적 1', 'elite', '강공격·봉인', k], [K + '약점 강적 2', 'elite', '연속 강공격', k], [K + '약점 강적 3', 'elite', '방어 자세·반격', k]);
+  });
+  var lin = 'all', rank = 'all';
+  function list() {
+    var rows = FOES.filter(function (f) { return (lin === 'all' || f[3] === lin) && (rank === 'all' || f[1] === rank); });
+    app.innerHTML =
+      '<header class="bha-topbar"><div class="bha-topbar__main"><h1 class="bha-topbar__title"><span data-sp="species">호로</span> · 전투 연습</h1><p class="bha-topbar__sub">상대를 고르면 바로 전투가 시작된다 · 전투 기록 <b>12</b>판 저장됨</p></div></header>' +
+      '<div class="bha-practice__filters">' +
+      '<div class="bha-seg bha-seg--sm" role="radiogroup" aria-label="약점 계통">' + ['all', 'a', 'b', 'c', 'd', 'e'].map(function (k) { return '<button class="bha-seg__item' + (lin === k ? ' is-active' : '') + '" data-lin="' + k + '"' + (k === 'all' ? '>전체' : ' aria-label="계통' + k.toUpperCase() + '"><span class="bha-lin bha-lin--' + k + '">' + ic('i-lin-' + k) + k.toUpperCase() + '</span>') + '</button>'; }).join('') + '</div>' +
+      '<div class="bha-row"><div class="bha-seg bha-seg--sm" style="flex:1" role="radiogroup" aria-label="종류">' + [['all', '전체'], ['normal', '일반'], ['elite', '강적']].map(function (r) { return '<button class="bha-seg__item' + (rank === r[0] ? ' is-active' : '') + '" data-rank="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div><span class="bha-faint bha-num">' + rows.length + '명</span></div></div>' +
+      '<div class="bha-foelist">' + rows.map(function (f) {
+        return '<button class="bha-foerow bha-lin--' + f[3] + '" type="button"><span class="bha-foerow__mark">' + ic('i-lin-' + f[3]) + '</span><span><span class="bha-foerow__name">' + f[0] + ' <span class="bha-tag bha-tag--' + f[1] + '">' + (f[1] === 'elite' ? '강적' : '일반') + '</span></span><span class="bha-foerow__meta">' + ic(PAT[f[2]]) + f[2] + ' · 약점 계통' + f[3].toUpperCase() + '</span></span>' + ic('i-chevron-right') + '</button>';
+      }).join('') + '</div>' +
+      '<div class="bha-dock"><button class="bha-btn bha-btn--lg bha-btn--block" type="button">' + ic('i-nest') + '<span data-sp="nest" data-sp-tpl="{}로">둥지로</span></button></div>';
+    window.bhaApplySpecies && window.bhaApplySpecies();
+  }
+  app.addEventListener('click', function (e) {
+    var l = e.target.closest('[data-lin]'), r = e.target.closest('[data-rank]');
+    if (l) { lin = l.dataset.lin; list(); } if (r) { rank = r.dataset.rank; list(); }
+  });
+  function row(icon, label, val, cls) { return '<div class="bha-info__row' + (cls ? ' bha-info__row--' + cls : '') + '"><dt>' + ic(icon) + label + '</dt><dd>' + val + '</dd></div>'; }
+  function result(win) {
+    app.innerHTML = '<header class="bha-result bha-result--' + (win ? 'win' : 'lose') + '"><span class="bha-result__mark">' + ic(win ? 'i-flag-win' : 'i-broken') + '</span><span class="bha-label">연습 결과 · B약점 강적 1</span><h1 class="bha-result__title">' + (win ? '승리' : '패배') + '</h1></header>' +
+      '<section class="bha-panel"><dl class="bha-info">' +
+      row('i-timer', '전투 시간', win ? '48초' : '150초 <small>시간 초과</small>', win ? '' : 'bad') +
+      row('i-chain-1', '블록 사용 (체인1 / 2 / 3)', '14 / 5 / 2') +
+      row('i-chain-3', '체인3 발동', '2회') +
+      row('i-guard', '강공격 막기', win ? '3 / 4' : '1 / 5', win ? 'good' : 'bad') +
+      row('i-stored', '저장 필살기 사용 / 낭비', '2 / 1', 'em') +
+      row('i-special', '필살 블록 사용', '1회') +
+      row('i-void', '공허 블록', '3회 <small><span data-sp="risk">광기</span> +18</small>') +
+      row('i-attack', '마무리 일격', win ? '있음 (약점 계통)' : '없음') +
+      row('i-absorb', '흡수 가능', win ? '가능' : '—', win ? 'good' : '') +
+      '</dl></section><p class="bha-faint bha-center">연습 전투는 둥지 상태와 원정에 영향을 주지 않는다.</p>' +
+      '<div class="bha-dock"><div class="bha-dock__row bha-dock__row--two"><button class="bha-btn bha-btn--primary bha-btn--lg" type="button">' + ic('i-loop') + '같은 상대와 다시</button><button class="bha-btn bha-btn--lg" type="button">연습 메뉴로</button></div></div>';
+  }
+  window.BHA_DEMO = { title: '14. 전투 연습', initial: 'list', states: [['list', '상대 목록 (35명)'], ['filter', '필터: 계통B · 강적'], ['win', '연습 결과: 승리'], ['lose', '연습 결과: 패배']],
+    onState: function (s) { if (s === 'list') { lin = 'all'; rank = 'all'; list(); } else if (s === 'filter') { lin = 'b'; rank = 'elite'; list(); } else result(s === 'win'); } };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

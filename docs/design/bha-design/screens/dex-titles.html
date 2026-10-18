@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>칭호 도감 — BHA</title>
+<!--
+  화면 8. 칭호 도감 + 해금 토스트
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  tabs[3]      : 등급(4) · 히든 등급(3) · 특별 태그(3)  각 { unlocked, total }
+  titles[]     : { id, name, group: "grade"|"hidden"|"tag", unlocked: bool, unlockedAt: "2026-10-18 13:02", condition: "…"(임시) | null }
+  등급은 이름이 공개된 목록(미해금도 이름 보임). 히든 등급·특별 태그의 미해금은 이름·조건 모두 "?".
+  토스트: 해금 순간 화면 위에서 내려와 2.5초 뒤 올라간다 (.bha-toast.is-in → .is-out)
+  등급 이름은 종족 설정 값(grade1~4)
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app">
+  <header class="bha-topbar">
+    <div class="bha-topbar__main">
+      <h1 class="bha-topbar__title">칭호 도감</h1>
+      <p class="bha-topbar__sub">해금 <b>2</b> / 10</p>
+    </div>
+  </header>
+  <div class="bha-seg bha-seg--stack" role="tablist" aria-label="칭호 종류" id="tabs"></div>
+  <div class="bha-titlelist" id="list"></div>
+  <p class="bha-faint">칭호 조건은 모두 임시이거나 아직 없다. "임시" 표시가 붙은 칭호만 해금될 수 있다.</p>
+  <div class="bha-dock"><button class="bha-btn bha-btn--lg bha-btn--block" type="button"><svg class="bha-icon"><use href="#i-nest"/></svg><span data-sp="nest" data-sp-tpl="{}로">둥지로</span></button></div>
+</main>
+</div>
+<div class="bha-toast" id="toast" role="status" aria-live="polite" hidden>
+  <span class="bha-toast__icon"><svg class="bha-icon"><use href="#i-title"/></svg></span>
+  <span><span class="bha-toast__eyebrow">칭호 해금</span><br><span class="bha-toast__title">세 번째 귀환자</span><br><span class="bha-toast__meta">원정에서 3번 귀환 · 칭호 도감에서 확인</span></span>
+</div>
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var ic = window.bhaKit.icon;
+  var TABS = [['grade', '등급', 1, 4], ['hidden', '히든 등급', 1, 3], ['tag', '특별 태그', 0, 3]];
+  var DATA = {
+    grade: [['grade1', '에스파다 No.10', true, '2026-10-12 21:40', '2단계 진화'], ['grade2', '에스파다 No.7', false, null, '3단계 진화'], ['grade3', '에스파다 No.4', false, null, '4단계 진화'], ['grade4', '에스파다 No.1', false, null, '5단계 진화']],
+    hidden: [[null, '공허를 삼킨 자', true, '2026-10-17 23:05', '한 원정에서 공허 블록 10회 사용'], [null, null, false], [null, null, false]],
+    tag: [[null, null, false], [null, null, false], [null, null, false]]
+  };
+  function render(s) {
+    var g = s === 'toast' ? 'grade' : s;
+    document.getElementById('tabs').innerHTML = TABS.map(function (t) { return '<button class="bha-seg__item" role="tab" aria-selected="' + (t[0] === g) + '" data-go="' + t[0] + '">' + t[1] + '<span class="bha-seg__count">' + t[2] + '/' + t[3] + '</span></button>'; }).join('');
+    document.getElementById('list').innerHTML = DATA[g].map(function (r) {
+      if (r[2]) return '<div class="bha-titlerow bha-titlerow--unlocked"><span class="bha-titlerow__icon">' + ic('i-title') + '</span><span class="bha-titlerow__main"><span class="bha-titlerow__name"' + (r[0] ? ' data-sp="' + r[0] + '"' : '') + '>' + r[1] + '</span><span class="bha-titlerow__meta">' + r[3] + ' 해금 · ' + r[4] + ' <span class="bha-tag bha-tag--provisional">임시 조건</span></span></span><span class="bha-titlerow__state">해금</span></div>';
+      if (r[1]) return '<div class="bha-titlerow bha-titlerow--locked"><span class="bha-titlerow__icon">' + ic('i-lock') + '</span><span class="bha-titlerow__main"><span class="bha-titlerow__name"' + (r[0] ? ' data-sp="' + r[0] + '"' : '') + '>' + r[1] + '</span><span class="bha-titlerow__meta">' + r[4] + ' <span class="bha-tag bha-tag--provisional">임시 조건</span></span></span><span class="bha-titlerow__state">미해금</span></div>';
+      return '<div class="bha-titlerow bha-titlerow--hidden" aria-label="숨겨진 칭호"><span class="bha-titlerow__icon">' + ic('i-unknown') + '</span><span class="bha-titlerow__main"><span class="bha-titlerow__name">???</span><span class="bha-titlerow__meta">조건 비공개</span></span><span class="bha-titlerow__state">미해금</span></div>';
+    }).join('');
+    var t = document.getElementById('toast');
+    t.hidden = s !== 'toast'; t.className = 'bha-toast';
+    if (s === 'toast') { void t.offsetWidth; t.classList.add('is-in'); }
+  }
+  document.getElementById('tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-go]'); if (b) window.bhaSetState(b.dataset.go); });
+  window.BHA_DEMO = { title: '8. 칭호 도감', initial: 'grade', states: [['grade', '등급 탭'], ['hidden', '히든 등급 탭'], ['tag', '특별 태그 탭 (전부 미해금)'], ['toast', '해금 토스트']], onState: render };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

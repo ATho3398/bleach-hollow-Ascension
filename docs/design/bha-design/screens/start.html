@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>시작 — BHA</title>
+<!--
+  화면 1. 시작 (종족 선택)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  species[]   : [{ id: "hollow", name: "호로", stages: [...5] }, { id: "shinigami", name: "사신", stages: [...5] }]  — 둘 다 처음부터 개방
+  version     : "P7 · 버전 C.19 · 밸런스 16 · 2026-10-18 배포 (커밋 abc1234)"
+  카드를 누르면 바로 그 종족으로 시작한다 (현재 동작 유지). 카드는 각자 data-bha-theme 를 달아 그 종족 테마로 미리보기된다 (화면 루트 테마와 무관).
+  3번째 종족이 생기면 카드가 한 장 늘고 그리드는 1열(세로 목록)로 바꾼다.
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app bha-start">
+  <header class="bha-start__hero">
+    <span class="bha-start__eyebrow">BLEACH HOLLOW ASCENSION</span>
+    <h1 class="bha-start__title"><span>블리치</span><span>할로우 어센션</span></h1>
+    <p class="bha-start__lead">어느 쪽으로 시작할까? 두 종족 모두 처음부터 개방.</p>
+  </header>
+
+  <div class="bha-species" role="radiogroup" aria-label="종족 선택">
+    <button class="bha-species__card" data-bha-theme="hollow" role="radio" aria-checked="false" type="button" id="cardH">
+      <span class="bha-species__emblem"><svg class="bha-icon"><use href="#i-broken"/></svg></span>
+      <span class="bha-species__name">호로</span>
+      <span class="bha-species__desc">영혼을 포식하며 가면을 깨고 올라선다. <span class="bha-tag bha-tag--provisional">제안 문구</span></span>
+      <span class="bha-species__path"><b>호로</b>→길리안→아쥬커스→바스트로데→아란칼</span>
+    </button>
+    <button class="bha-species__card" data-bha-theme="shinigami" role="radio" aria-checked="false" type="button" id="cardS">
+      <span class="bha-species__emblem"><svg class="bha-icon"><use href="#i-attack"/></svg></span>
+      <span class="bha-species__name">사신</span>
+      <span class="bha-species__desc">순찰로 영혼을 정화하며 칼을 벼린다. <span class="bha-tag bha-tag--provisional">제안 문구</span></span>
+      <span class="bha-species__path"><b>혼백</b>→영술원 학생→견습 대원→평대원→수석 대원</span>
+    </button>
+  </div>
+
+  <div class="bha-stack">
+    <div class="bha-grid2">
+      <button class="bha-btn" type="button"><svg class="bha-icon"><use href="#i-settings"/></svg>설정</button>
+      <button class="bha-btn" type="button"><svg class="bha-icon"><use href="#i-help"/></svg>도움말·튜토리얼</button>
+    </div>
+    <p class="bha-start__ver">P7 · 버전 C.19 · 밸런스 16 · 2026-10-18 배포 (커밋 abc1234)</p>
+  </div>
+</main>
+</div>
+<script>
+(function () {
+  function pick(id) {
+    var H = document.getElementById('cardH'), S = document.getElementById('cardS');
+    H.classList.toggle('is-selected', id === 'hollow'); H.setAttribute('aria-checked', String(id === 'hollow'));
+    S.classList.toggle('is-selected', id === 'shinigami'); S.setAttribute('aria-checked', String(id === 'shinigami'));
+  }
+  document.getElementById('cardH').addEventListener('click', function () { window.bhaSetState('hollow'); });
+  document.getElementById('cardS').addEventListener('click', function () { window.bhaSetState('shinigami'); });
+  window.BHA_DEMO = { title: '1. 시작 (종족 선택)', initial: 'none', states: [['none', '기본'], ['hollow', '호로 카드 누름 (바로 시작)'], ['shinigami', '사신 카드 누름 (바로 시작)']], onState: function (s) { pick(s === 'none' ? null : s); } };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

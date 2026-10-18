@@ -1,0 +1,181 @@
+/* ==========================================================================
+   Bleach Hollow Ascension — 디자인 토큰 (tokens.css)
+   --------------------------------------------------------------------------
+   - 다크 전용. 종족 테마는 루트(<html>)의 data-bha-theme 속성으로 갈아끼운다.
+       <html data-bha-theme="hollow">     → theme-hollow.css 값
+       <html data-bha-theme="shinigami">  → theme-shinigami.css 값
+   - 이 파일 = 테마와 무관한 공통 토큰(의미 색, 타이포, 간격, 모션, 층).
+   - 테마 파일 = "테마 토큰"(바탕/선/글자/포인트/질감 패턴/모서리/아이콘 선 굵기)만 덮어쓴다.
+   - 3번째 종족 추가 = theme-xxx.css 하나 복사해서 값만 바꾸면 끝.
+   ========================================================================== */
+
+/* ---------- 글꼴 ---------- */
+/* 본문: Pretendard Variable (fonts/ 폴더에 포함. CDN을 쓰려면 아래 주석 참고) */
+@font-face {
+  font-family: "Pretendard Variable";
+  src: url("../fonts/PretendardVariable.woff2") format("woff2-variations"),
+       url("../fonts/PretendardVariable.woff2") format("woff2");
+  font-weight: 45 920;
+  font-display: swap;
+}
+/* CDN 대안: @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"); */
+
+/* 제목(디스플레이): Hahmlet 600/800 — 날 선 세리프. 한글 2,600자 서브셋 + 라틴 */
+@font-face { font-family: "BHA Display"; src: url("../fonts/hahmlet-korean-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "BHA Display"; src: url("../fonts/hahmlet-korean-800-normal.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "BHA Display"; src: url("../fonts/hahmlet-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; unicode-range: U+0000-00FF, U+2000-206F; }
+@font-face { font-family: "BHA Display"; src: url("../fonts/hahmlet-latin-800-normal.woff2") format("woff2"); font-weight: 800; font-display: swap; unicode-range: U+0000-00FF, U+2000-206F; }
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- 타이포 ---------- */
+  --bha-font-body: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --bha-font-display: "BHA Display", "Hahmlet", "Noto Serif KR", "Apple SD Gothic Neo", serif;
+  --bha-font-num: var(--bha-font-body);          /* 숫자는 본문 글꼴 + tabular-nums */
+
+  /* 크기 스케일 (최소 12px, 핵심 수치 14px 이상) */
+  --bha-fs-xs: 12px;    /* 보조 라벨, 태그, 범례 */
+  --bha-fs-sm: 13px;    /* 설명, 힌트 */
+  --bha-fs-md: 14px;    /* 본문, 핵심 수치 최소 */
+  --bha-fs-lg: 16px;    /* 버튼, 강조 본문 */
+  --bha-fs-xl: 18px;    /* 패널 제목 */
+  --bha-fs-2xl: 22px;   /* 화면 제목 */
+  --bha-fs-3xl: 28px;   /* 결과 제목 */
+  --bha-fs-4xl: 36px;   /* 연출 제목 */
+  --bha-fs-5xl: 48px;   /* 게임 이름 */
+
+  --bha-lh-tight: 1.2;
+  --bha-lh-body: 1.5;
+  --bha-fw-regular: 400;
+  --bha-fw-medium: 500;
+  --bha-fw-bold: 700;
+  --bha-fw-heavy: 800;
+  --bha-tracking-label: 0.04em;
+
+  /* ---------- 간격 (4px 격자) ---------- */
+  --bha-sp-1: 2px;
+  --bha-sp-2: 4px;
+  --bha-sp-3: 6px;
+  --bha-sp-4: 8px;
+  --bha-sp-5: 12px;
+  --bha-sp-6: 16px;
+  --bha-sp-7: 20px;
+  --bha-sp-8: 24px;
+  --bha-sp-9: 32px;
+  --bha-sp-10: 48px;
+
+  /* ---------- 크기 기준 ---------- */
+  --bha-touch: 44px;          /* 터치 영역 최소 */
+  --bha-app-w: 480px;         /* 최대 콘텐츠 폭 */
+  --bha-gutter: 16px;         /* 화면 좌우 여백 */
+  --bha-block-h: 68px;        /* 블록 칸 높이 (64 이상) */
+  --bha-bar-h: 10px;          /* 상태 바 트랙 높이 */
+  --bha-bar-h-lg: 14px;       /* 체력 바 */
+  --bha-drag-lift: 28px;      /* 드래그 중 블록을 손가락 위로 띄우는 거리 */
+
+  /* ---------- 의미 색 (역할 = 색 + 아이콘 + 모양) ---------- */
+  --bha-attack: #e5484d;      /* 공격 / 파괴 */
+  --bha-attack-ink: #fff4f2;
+  --bha-guard: #2fb36b;       /* 막기 / 가면 */
+  --bha-guard-ink: #f0fff6;
+  --bha-heal: #3e8bff;        /* 회복 / 재생 */
+  --bha-heal-ink: #f2f7ff;
+  --bha-sp: #d9a441;          /* SP / 필살 */
+  --bha-sp-hi: #ffd47a;
+  --bha-special-a: #f2c25b;   /* 필살 블록 광택 그라데이션 */
+  --bha-special-b: #b8741f;
+  --bha-risk: #ff4fd8;        /* 리스크 게이지 (광기/호로화) */
+  --bha-void: #170d1f;        /* 공허 블록: 보라빛 검정 */
+  --bha-void-2: #2a1638;
+  --bha-hunger: #f0a43a;      /* 허기 (호박) */
+  --bha-cond: #4fb8e0;        /* 컨디션 (하늘) */
+  --bha-stab: #6fe0b4;        /* 안정 수치 (민트) */
+  --bha-weak: #e8c15a;        /* 약점 칩 금색 테두리 */
+  --bha-cast: #ff9440;        /* 강공격 예고 시전 바 */
+  --bha-chain2: #ffd24d;      /* 묶음(체인2) 노랑 */
+  --bha-chain3: #ff8a3d;      /* 체인3 주황 */
+  --bha-insert: #6cc4ff;      /* 드래그 삽입 막대 파랑 */
+  --bha-seal: #a371f7;        /* 봉인 보라 */
+  --bha-good: #5fd39a;        /* 좋음 알림 */
+  --bha-warn: #ffad5c;        /* 경고 알림 (텍스트용, AA) */
+  --bha-danger: #ff6b6b;      /* 위험 텍스트 */
+  --bha-rare: #ffd24d;        /* 희귀 */
+  --bha-enemy-hp: var(--bha-attack);
+  --bha-player-hp: var(--bha-guard);
+
+  /* 계통 A~E: 색 + 모양(원·삼각·사각·마름모·육각) — 임시 마크 */
+  --bha-lin-a: #ff8a5c;  /* 원 */
+  --bha-lin-b: #b9d65a;  /* 삼각 */
+  --bha-lin-c: #3fcfcf;  /* 사각 */
+  --bha-lin-d: #9a95ff;  /* 마름모 */
+  --bha-lin-e: #ff7fb0;  /* 육각 */
+
+  /* 타일 4종: 색 + 아이콘 */
+  --bha-tile-prey: #c9603f;   /* 먹잇감 둥지 */
+  --bha-tile-elite: #b83f8f;  /* 강적 소굴 */
+  --bha-tile-env: #3f84c4;    /* 환경 */
+  --bha-tile-rest: #3f9e6c;   /* 휴식 */
+
+  /* ---------- 모서리 (테마가 덮어씀) ---------- */
+  --bha-r-xs: 3px;
+  --bha-r-sm: 6px;
+  --bha-r-md: 10px;
+  --bha-r-lg: 14px;
+  --bha-r-pill: 999px;
+
+  /* ---------- 그림자 / 글로우 ---------- */
+  --bha-shadow-1: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 1px 2px rgb(0 0 0 / 0.5);
+  --bha-shadow-2: 0 6px 18px rgb(0 0 0 / 0.55);
+  --bha-shadow-3: 0 14px 40px rgb(0 0 0 / 0.7);
+  --bha-glow-sp: 0 0 14px rgb(217 164 65 / 0.55);
+  --bha-glow-risk: 0 0 16px rgb(255 79 216 / 0.55);
+  --bha-glow-chain2: 0 0 10px rgb(255 210 77 / 0.45);
+  --bha-glow-chain3: 0 0 16px rgb(255 138 61 / 0.7);
+  --bha-glow-cast: 0 0 18px rgb(255 148 64 / 0.6);
+
+  /* ---------- 모션 ---------- */
+  --bha-dur-1: 90ms;     /* 눌림 */
+  --bha-dur-2: 160ms;    /* 상태 전환 */
+  --bha-dur-3: 260ms;    /* 바 변화, 팝인 */
+  --bha-dur-4: 420ms;    /* 오버레이, 토스트 */
+  --bha-dur-5: 900ms;    /* 연출 */
+  --bha-ease-out: cubic-bezier(.2, .8, .2, 1);
+  --bha-ease-in: cubic-bezier(.5, 0, .9, .3);
+  --bha-ease-snap: cubic-bezier(.3, 1.5, .5, 1);   /* 팝인 반동 */
+  --bha-ease-linear: linear;
+
+  /* ---------- z-index 층 ---------- */
+  --bha-z-base: 0;
+  --bha-z-raised: 10;
+  --bha-z-sticky: 20;
+  --bha-z-drag: 50;
+  --bha-z-float: 60;      /* 플로팅 숫자 */
+  --bha-z-flash: 70;      /* 화면 가장자리 번쩍임 */
+  --bha-z-toast: 80;
+  --bha-z-overlay: 90;    /* 일시정지/승패/도움말 */
+  --bha-z-modal: 95;
+  --bha-z-tutorial: 100;
+
+  /* ---------- 테마 토큰 기본값 (= 호로) : 테마 파일이 덮어쓴다 ---------- */
+  --bha-bg-0: #0b0909;
+  --bha-bg-1: #141010;
+  --bha-bg-2: #1c1716;
+  --bha-bg-3: #26201e;
+  --bha-line-1: #2f2725;
+  --bha-line-2: #4a3d39;
+  --bha-text-1: #efe7da;
+  --bha-text-2: #bdb1a2;
+  --bha-text-3: #978a7c;
+  --bha-accent: #c8303f;
+  --bha-accent-hi: #ff5a6a;
+  --bha-accent-soft: rgb(200 48 63 / 0.18);
+  --bha-primary-bg: #ece2d1;
+  --bha-primary-ink: #1a1110;
+  --bha-primary-line: #fff6e6;
+  --bha-focus: #ff8c96;
+  --bha-icon-stroke: 1.9;
+  --bha-pattern: none;
+  --bha-pattern-size: 220px;
+  --bha-backdrop: #050404;
+}

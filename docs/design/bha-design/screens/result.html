@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>원정 결과 — BHA</title>
+<!--
+  화면 11. 원정 결과 (귀환 / 패배)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  outcome          : "return" | "defeat"      제목 = "귀환" | 패배 상태 이름(종족 설정 defeat)
+  reason           : 이유 문장
+  laps, battles, wins, tilesKept, tilesLost, traitsGained, traitsLost
+  riskMax / riskEnd / broke: bool (한계 돌파 표시) · stab · hungerLeft · condLeft
+  seed: "7F3A-21C9" · saved: bool (기록 저장 표시) · toast: 해금된 칭호 (있으면)
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app">
+  <header class="bha-result" id="head"></header>
+  <section class="bha-panel">
+    <header class="bha-panel__head"><h2 class="bha-panel__title">원정 요약</h2><span class="bha-panel__aside" data-sp="ground">웨코문도</span></header>
+    <dl class="bha-info" id="sum"></dl>
+  </section>
+  <p class="bha-faint bha-center bha-num" id="seed"></p>
+  <div class="bha-dock"><button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block" type="button"><svg class="bha-icon"><use href="#i-nest"/></svg><span data-sp="nest" data-sp-tpl="{}로">둥지로</span></button></div>
+</main>
+</div>
+<div class="bha-toast" id="toast" role="status" hidden>
+  <span class="bha-toast__icon"><svg class="bha-icon"><use href="#i-title"/></svg></span>
+  <span><span class="bha-toast__eyebrow">칭호 해금</span><br><span class="bha-toast__title">세 번째 귀환자</span><br><span class="bha-toast__meta">원정에서 3번 귀환</span></span>
+</div>
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var ic = window.bhaKit.icon;
+  function row(icon, label, val, cls) { return '<div class="bha-info__row' + (cls ? ' bha-info__row--' + cls : '') + '"><dt>' + ic(icon) + label + '</dt><dd>' + val + '</dd></div>'; }
+  function render(s) {
+    var win = s !== 'lose';
+    document.getElementById('head').className = 'bha-result bha-result--' + (win ? 'win' : 'lose');
+    document.getElementById('head').innerHTML = '<span class="bha-result__mark">' + ic(win ? 'i-return' : 'i-broken') + '</span>' +
+      (win ? '<h1 class="bha-result__title">귀환</h1><p class="bha-result__reason">4바퀴를 돌고 <span data-sp="nest">둥지</span>로 돌아왔다. 얻은 것을 모두 지켰다.</p>'
+           : '<h1 class="bha-result__title" data-sp="defeat">가면이 깨져 쇠약</h1><p class="bha-result__reason">3바퀴 7칸, 강적과의 전투에서 체력이 0이 되었다. 놓아 둔 타일 일부와 이번에 얻은 특성을 잃었다.</p>');
+    document.getElementById('sum').innerHTML = win
+      ? row('i-loop', '도달 바퀴', '4 <small>/ 기본 4</small>') + row('i-practice', '치른 전투', '7회 <small>(승 7)</small>') + row('i-deck', '지킨 타일', '5장', 'good') + row('i-deck', '잃은 타일', '0장') + row('i-slot', '얻은 특성', '2개', 'good') + row('i-slot', '잃은 특성', '0개') +
+        row('i-risk', '<span data-sp="risk">광기</span> 최고 / 끝', '58 / 41') + row('i-stab', '<span data-sp="stab">자아</span>', '47') + row('i-hunger', '남은 허기', '35') + row('i-cond', '남은 컨디션', '62')
+      : row('i-loop', '도달 바퀴', '3 <small>/ 기본 4</small>') + row('i-practice', '치른 전투', '6회 <small>(승 5)</small>') + row('i-deck', '지킨 타일', '2장') + row('i-deck', '잃은 타일', '3장', 'bad') + row('i-slot', '얻은 특성', '0개') + row('i-slot', '잃은 특성', '1개', 'bad') +
+        row('i-risk', '<span data-sp="risk">광기</span> 최고 / 끝', '104 / 96 <small>한계 돌파</small>', 'em') + row('i-stab', '<span data-sp="stab">자아</span>', '18', 'bad') + row('i-hunger', '남은 허기', '81', 'bad') + row('i-cond', '남은 컨디션', '20', 'bad');
+    document.getElementById('seed').innerHTML = '시드 7F3A-21C9 · ' + ic('i-check', 'bha-icon--sm').replace('class="bha-icon', 'style="display:inline;vertical-align:-3px" class="bha-icon') + ' 기록 저장됨';
+    var t = document.getElementById('toast'); t.hidden = s !== 'winToast'; t.className = 'bha-toast'; if (s === 'winToast') { void t.offsetWidth; t.classList.add('is-in'); }
+  }
+  window.BHA_DEMO = { title: '11. 원정 결과', initial: 'win', states: [['win', '귀환'], ['winToast', '귀환 + 칭호 해금 토스트'], ['lose', '패배 (한계 돌파 기록)']], onState: render };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

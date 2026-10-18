@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HANDOFF — BHA</title>
+<link rel="stylesheet" href="design-system/tokens.css">
+<link rel="stylesheet" href="design-system/theme-hollow.css">
+<link rel="stylesheet" href="design-system/base.css">
+<style>
+body { background: var(--bha-bg-0); color: var(--bha-text-1); }
+.doc { max-width: 900px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 80px max(16px, env(safe-area-inset-left, 0px)); font-size: 15px; line-height: 1.7; }
+.doc h1 { font-family: var(--bha-font-display); font-weight: 800; font-size: 32px; line-height: 1.2; margin: 12px 0 8px; }
+.doc h2 { font-family: var(--bha-font-display); font-weight: 800; font-size: 24px; margin: 40px 0 12px; padding-top: 12px; border-top: 1px solid var(--bha-line-1); }
+.doc h3 { font-size: 17px; margin: 24px 0 8px; }
+.doc p, .doc ul, .doc ol { margin: 8px 0; color: var(--bha-text-2); }
+.doc ul, .doc ol { padding-left: 1.3em; list-style: disc; } .doc ol { list-style: decimal; }
+.doc li { margin: 3px 0; }
+.doc li.done { list-style: none; margin-left: -1.3em; padding-left: 1.6em; position: relative; }
+.doc li.done::before { content: "✓"; position: absolute; left: 0; color: var(--bha-good); font-weight: 800; }
+.doc strong { color: var(--bha-text-1); }
+.doc code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bha-bg-2); padding: 1px 5px; border-radius: 4px; color: var(--bha-text-1); }
+.doc pre { background: #000; border: 1px solid var(--bha-line-1); border-radius: 8px; padding: 14px; overflow-x: auto; }
+.doc pre code { background: none; padding: 0; color: #cfd6e2; font-size: 12.5px; line-height: 1.55; }
+.doc blockquote { margin: 12px 0; padding: 8px 14px; border-left: 3px solid var(--bha-warn); background: var(--bha-bg-1); border-radius: 0 8px 8px 0; }
+.doc blockquote p { margin: 0; }
+.tw { overflow-x: auto; margin: 12px 0; }
+.doc table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 560px; }
+.doc th, .doc td { border-bottom: 1px solid var(--bha-line-1); padding: 7px 8px; text-align: left; vertical-align: top; }
+.doc th { color: var(--bha-text-2); font-weight: 700; background: var(--bha-bg-1); }
+.doc td { color: var(--bha-text-1); }
+.doc hr { border: 0; border-top: 1px solid var(--bha-line-1); margin: 24px 0; }
+.back { display: inline-flex; min-height: 44px; align-items: center; color: var(--bha-text-2); font-size: 13px; }
+</style>
+</head>
+<body>
+<main class="doc">
+<a class="back" href="index.html">← 패키지 처음으로</a> · <a class="back" href="HANDOFF.md">원본 HANDOFF.md</a>
+<h1 id="bha-ui">BHA UI 핸드오프 — 블리치 할로우 어센션</h1>
+<p>버전 0.1 · 2026-10-18 · 대상: 순수 TypeScript + <code>el(tag, className, text)</code> 헬퍼로 DOM을 만드는 현재 코드</p>
+<p>이 패키지는 게임의 첫 비주얼 아이덴티티입니다. 프레임워크, 빌드 도구, 외부 이미지 파일이 하나도 없습니다. HTML과 CSS 변수만으로 되어 있어서 클래스 이름과 DOM 구조를 그대로 옮기면 됩니다. 각 화면 HTML 파일 맨 위 주석에 그 화면이 쓰는 <strong>샘플 데이터 필드</strong>가 정리돼 있습니다.</p>
+<hr />
+<h2 id="1">1. 패키지 구조</h2>
+<pre><code>bha-design/
+├─ HANDOFF.md                  이 문서
+├─ index.html                  패키지 처음 화면 (모든 화면 링크)
+├─ handoff.html                이 문서를 브라우저에서 보기 좋게 렌더링
+├─ design-system/
+│  ├─ tokens.css               공통 토큰 (의미 색·타이포·간격·모션·z-index·크기) + 글꼴 @font-face
+│  ├─ theme-hollow.css         호로 테마 토큰 (:root 기본값 겸용)
+│  ├─ theme-shinigami.css      사신 테마 토큰
+│  └─ base.css                 리셋 · 화면 틀(.bha-stage/.bha-app) · 타이포 · 레이아웃 유틸 · 아이콘 · 포커스 · reduced-motion
+├─ components/
+│  ├─ components.css           모든 컴포넌트 (32개 블록)
+│  └─ index.html               디자인 시스템 시트: 토큰 · 아이콘 · 컴포넌트 상태 · 호로/사신 비교 (카드마다 &quot;HTML 보기&quot;)
+├─ icons/
+│  ├─ sprite.svg               &lt;symbol&gt; 스프라이트 (아이콘 69 + 적 실루엣 2)
+│  ├─ sprite.js                (데모용) 스프라이트를 문서에 인라인으로 꽂는 스크립트
+│  └─ i-*.svg, foe-*.svg       개별 파일
+├─ fonts/                      PretendardVariable.woff2, Hahmlet 600/800 (한글 2,600자 + 라틴)
+└─ screens/
+   ├─ screens.css              화면 단위 레이아웃 (배치만)
+   ├─ start.html               1 시작(종족 선택)
+   ├─ settings.html            2 설정(조작 판정)
+   ├─ help.html                3 도움말
+   ├─ battle.html              12 전투 + 4 튜토리얼 오버레이(8장면)
+   ├─ nest.html                5 둥지 + 6 진화 패널
+   ├─ evolve.html              6 진화 연출
+   ├─ dex-forms.html           7 진화체 도감
+   ├─ dex-titles.html          8 칭호 도감 + 해금 토스트
+   ├─ expedition.html          9 원정
+   ├─ breakthrough.html        10 한계 돌파
+   ├─ result.html              11 원정 결과
+   ├─ absorb.html              13 흡수 3단계
+   ├─ practice.html            14 전투 연습 + 연습 결과
+   ├─ overlays.html            공용 오버레이 (토스트 · 모달)
+   ├─ fit-check.html           기기 크기 확인 (360×740 / 390×844 / 430×932 / 데스크톱)
+   └─ _demo/                   데모 전용 — 게임에 넣지 않음
+      ├─ demo.js / demo.css    오른쪽 &quot;상태&quot; 탭: 상태 전환 · 종족 테마 · 종족 문구 표시
+      └─ kit.js                블록·블록 바·상태 바의 DOM 생성 참고 구현 (TS로 옮길 때 그대로 따라 하면 됨)
+</code></pre>
+<p>화면 데모 보는 법: 각 화면 오른쪽 가장자리의 <strong>"상태"</strong> 탭을 누르면 상태 목록, 호로/사신 테마 토글, "종족 설정에서 오는 문구 표시" 체크가 나옵니다. URL 끝에 <code>#상태id</code>를 붙이면 바로 그 상태로 열립니다(예: <code>battle.html#cast</code>).</p>
+<hr />
+<h2 id="2">2. 사용법</h2>
+<h3 id="2-1">2-1. 불러오는 순서</h3>
+<pre><code class="language-html">&lt;html lang=&quot;ko&quot; data-bha-theme=&quot;hollow&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;design-system/tokens.css&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;design-system/theme-hollow.css&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;design-system/theme-shinigami.css&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;design-system/base.css&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;components/components.css&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;screens/screens.css&quot;&gt;
+</code></pre>
+<ul>
+<li><code>body</code> 바로 아래에 <code>&lt;div class="bha-stage"&gt;</code>, 그 안에 화면 래퍼 <code>&lt;main class="bha-app"&gt;</code>. 480px을 넘는 화면에서는 가운데 정렬되고 양옆은 어두운 장식 배경이 됩니다.</li>
+<li>스크롤 없는 한 화면(전투·원정)은 <code>bha-app bha-app--fixed</code>.</li>
+</ul>
+<h3 id="2-2">2-2. 아이콘</h3>
+<ul>
+<li><code>icons/sprite.svg</code>의 내용(<code>&lt;svg style="display:none"&gt;…&lt;/svg&gt;</code>)을 <code>index.html</code>의 <code>&lt;body&gt;</code> 맨 앞에 <strong>그대로 붙여 넣는 것</strong>을 권장합니다. 외부 파일 <code>&lt;use href="sprite.svg#…"&gt;</code>는 file:// 환경이나 일부 웹뷰에서 막힐 수 있습니다.</li>
+<li>사용: <code>&lt;svg class="bha-icon" aria-hidden="true"&gt;&lt;use href="#i-attack"/&gt;&lt;/svg&gt;</code></li>
+<li>크기 변형: <code>bha-icon--sm</code>(16) <code>--md</code>(20) 기본(24) <code>--lg</code>(32). 선 굵기는 테마 토큰 <code>--bha-icon-stroke</code>를 따라갑니다(호로 2, 사신 1.5).</li>
+<li>TS 예: <code>const s = document.createElementNS(SVG_NS,'svg'); s.classList.add('bha-icon'); const u = document.createElementNS(SVG_NS,'use'); u.setAttribute('href','#i-attack'); s.append(u);</code></li>
+</ul>
+<h3 id="2-3">2-3. 글꼴</h3>
+<ul>
+<li>본문 Pretendard Variable, 제목 Hahmlet(<code>--bha-font-display</code>). <code>fonts/</code> 폴더를 함께 배포하면 외부 요청이 없습니다. 실패하면 시스템 글꼴(Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic)로 대체됩니다.</li>
+<li>CDN을 쓰려면 <code>tokens.css</code> 안의 주석(jsDelivr 동적 서브셋)으로 바꿔도 됩니다.</li>
+<li>Hahmlet 한글 서브셋은 2,600자 남짓이라, 드문 글자는 본문 글꼴로 대체됩니다. 제목·연출에만 쓰세요.</li>
+</ul>
+<hr />
+<h2 id="3">3. 종족 테마 적용 규칙</h2>
+<ol>
+<li>루트에 속성 하나: <code>document.documentElement.dataset.bhaTheme = 'hollow' | 'shinigami'</code></li>
+<li>테마 파일은 <strong>테마 토큰만</strong> 덮어씁니다. 레이아웃·컴포넌트 CSS는 테마를 모릅니다.</li>
+</ol>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>테마 토큰</th>
+<th>뜻</th>
+<th>호로</th>
+<th>사신</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--bha-backdrop</code> <code>--bha-bg-0~3</code></td>
+<td>바탕 4단</td>
+<td>붉은 기 도는 숯</td>
+<td>먹 + 남빛</td>
+</tr>
+<tr>
+<td><code>--bha-line-1~2</code></td>
+<td>선</td>
+<td>잿빛 갈색</td>
+<td>남회색</td>
+</tr>
+<tr>
+<td><code>--bha-text-1~3</code></td>
+<td>글자 3단 (bg-1 위 AA 이상)</td>
+<td>뼈백색</td>
+<td>차가운 백색</td>
+</tr>
+<tr>
+<td><code>--bha-accent</code> <code>--accent-hi</code> <code>--accent-soft</code></td>
+<td>포인트 (위험·선택·해방에만)</td>
+<td>크림슨</td>
+<td>은청색</td>
+</tr>
+<tr>
+<td><code>--bha-primary-bg/-ink/-line</code></td>
+<td>주 버튼</td>
+<td>뼈 판 + 먹 글자</td>
+<td>은빛 판 + 먹 글자</td>
+</tr>
+<tr>
+<td><code>--bha-r-xs~lg</code></td>
+<td>모서리</td>
+<td>3/7/11/16 둥글게</td>
+<td>2/3/4/6 반듯하게</td>
+</tr>
+<tr>
+<td><code>--bha-icon-stroke</code></td>
+<td>아이콘 선 굵기</td>
+<td>2</td>
+<td>1.5</td>
+</tr>
+<tr>
+<td><code>--bha-pattern</code> <code>--bha-pattern-size</code></td>
+<td>배경 질감 (CSS 안 SVG)</td>
+<td>가면 균열</td>
+<td>마름모 격자</td>
+</tr>
+<tr>
+<td><code>--bha-vignette</code> <code>--bha-focus</code></td>
+<td>위쪽 은은한 빛, 포커스 링</td>
+<td>크림슨</td>
+<td>은청</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>3번째 종족 추가</strong>: <code>theme-hollow.css</code>를 복사해 <code>[data-bha-theme="새이름"]</code>으로 바꾸고 값만 채웁니다. 의미 색(공격·막기·회복·SP·공허·리스크·계통·타일)은 공통이라 건드리지 않습니다.</p>
+<p>부분 미리보기: 시작 화면의 종족 카드처럼, 아무 요소에나 <code>data-bha-theme</code>을 붙이면 그 안만 그 테마가 됩니다.</p>
+<h3 id="3-1-data-sp">3-1. 종족 설정에서 오는 텍스트 (data-sp)</h3>
+<p>샘플 HTML에서 <code>data-sp="키"</code>가 붙은 글자는 <strong>종족 설정 값</strong>입니다(데모 패널의 "종족 설정에서 오는 문구 표시"를 켜면 점선으로 보입니다). <code>data-sp-tpl="{}로"</code>는 조사·문장 틀입니다.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>키</th>
+<th>호로</th>
+<th>사신</th>
+<th>쓰는 곳</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>species</td>
+<td>호로</td>
+<td>사신</td>
+<td>연습 제목, 더보기</td>
+</tr>
+<tr>
+<td>nest</td>
+<td>둥지</td>
+<td>대원실</td>
+<td>둥지 제목, [둥지로] 버튼, 원정 둥지 칸, 도움말</td>
+</tr>
+<tr>
+<td>ground</td>
+<td>웨코문도</td>
+<td>현세 순찰 구역</td>
+<td>둥지 기록 줄, 원정 머리, 조우</td>
+</tr>
+<tr>
+<td>stage1~5</td>
+<td>호로…아란칼</td>
+<td>혼백…수석 대원</td>
+<td>진화 패널, 연출, 도감 탭</td>
+</tr>
+<tr>
+<td>slot</td>
+<td>본체 슬롯</td>
+<td>참백도 슬롯</td>
+<td>특성 패널, 원정 요약, 흡수</td>
+</tr>
+<tr>
+<td>risk</td>
+<td>광기</td>
+<td>호로화</td>
+<td>리스크 바, 결과, 흡수, 튜토리얼</td>
+</tr>
+<tr>
+<td>riskOver</td>
+<td>광기가 한계를 넘었다</td>
+<td>호로화가 한계를 넘었다</td>
+<td>한계 돌파 제목</td>
+</tr>
+<tr>
+<td>stab</td>
+<td>자아</td>
+<td>영압 안정도</td>
+<td>안정 수치 바, 돌보기</td>
+</tr>
+<tr>
+<td>absorb / absorbAble</td>
+<td>포식 / 포식 가능</td>
+<td>정화 흡수 / 정화 흡수 가능</td>
+<td>흡수 화면, 승리 오버레이, 진화</td>
+</tr>
+<tr>
+<td>roleAtk / roleGrd / roleHeal</td>
+<td>파괴 / 가면 / 재생</td>
+<td>참격 / 귀도 / 회도(임시)</td>
+<td>전투 범례</td>
+</tr>
+<tr>
+<td>special</td>
+<td>세로</td>
+<td>섬광(임시)</td>
+<td>필살 블록 이름, SP 알림</td>
+</tr>
+<tr>
+<td>stored</td>
+<td>응축 일격(임시)</td>
+<td>응축 베기(임시)</td>
+<td>저장 필살기</td>
+</tr>
+<tr>
+<td>sp</td>
+<td>영력</td>
+<td>영력</td>
+<td>SP 바</td>
+</tr>
+<tr>
+<td>defeat</td>
+<td>가면이 깨져 쇠약</td>
+<td>영력 고갈</td>
+<td>패배 제목, 쇠약 알림</td>
+</tr>
+<tr>
+<td>care1~3</td>
+<td>먹이 주기 / 재우기 / 쓰다듬기</td>
+<td>식사·영력 보급 / 재우기 / 참백도 손질</td>
+<td>돌보기</td>
+</tr>
+<tr>
+<td>evo1~3</td>
+<td>진화 연출 줄</td>
+<td>진화 연출 줄</td>
+<td>진화 연출 (제안 문구)</td>
+</tr>
+<tr>
+<td>grade1~4</td>
+<td>에스파다 No.10/7/4/1</td>
+<td>제10석/7석/4석/1석(임시)</td>
+<td>칭호 도감 등급</td>
+</tr>
+<tr>
+<td>atkAbbr 등</td>
+<td>블록 약어 샘플</td>
+<td>블록 약어 샘플</td>
+<td>블록 (실제로는 특성 데이터)</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>조사 주의</strong>: 종족 값에 따라 받침이 달라집니다(둥지<strong>로</strong> / 대원실<strong>로</strong>는 같지만, "{적}과(와)"처럼 받침에 따라 갈리는 곳이 있음). 지금 코드의 "과(와)" 병기 방식을 유지하거나, 받침 판별 헬퍼를 두세요.</p>
+<p>사신 쪽 <strong>회복 이름, 필살 블록 이름, 저장 필살기 이름</strong>은 원래 표에서 비어 있던 항목이라, 샘플을 채우려고 임시로 붙인 값입니다. 확정되면 종족 설정만 바꾸면 됩니다.</p>
+</blockquote>
+<hr />
+<h2 id="4-tokenscss">4. 토큰 지도 (tokens.css)</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>분류</th>
+<th>토큰</th>
+<th>값 / 메모</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>글자 크기</td>
+<td><code>--bha-fs-xs/sm/md/lg/xl/2xl/3xl/4xl/5xl</code></td>
+<td>12/13/14/16/18/22/28/36/48. 최소 12, 핵심 수치 14 이상</td>
+</tr>
+<tr>
+<td>글꼴</td>
+<td><code>--bha-font-body</code> <code>--bha-font-display</code> <code>--bha-font-num</code></td>
+<td>숫자는 <code>.bha-num</code> 또는 <code>font-variant-numeric: tabular-nums</code></td>
+</tr>
+<tr>
+<td>간격</td>
+<td><code>--bha-sp-1~10</code></td>
+<td>2/4/6/8/12/16/20/24/32/48</td>
+</tr>
+<tr>
+<td>크기</td>
+<td><code>--bha-touch</code> 44 · <code>--bha-app-w</code> 480 · <code>--bha-gutter</code> 16 · <code>--bha-block-h</code> 68 · <code>--bha-bar-h</code> 10 · <code>--bha-bar-h-lg</code> 14 · <code>--bha-drag-lift</code> 28</td>
+<td></td>
+</tr>
+<tr>
+<td>역할 색</td>
+<td><code>--bha-attack</code> #e5484d · <code>--bha-guard</code> #2fb36b · <code>--bha-heal</code> #3e8bff · <code>--bha-sp</code> #d9a441 · <code>--bha-risk</code> #ff4fd8 · <code>--bha-void</code> #170d1f</td>
+<td>각 <code>-ink</code>(블록 위 글자)</td>
+</tr>
+<tr>
+<td>생활 색</td>
+<td><code>--bha-hunger</code> 호박 · <code>--bha-cond</code> 하늘 · <code>--bha-stab</code> 민트 · <code>--bha-weak</code> 금</td>
+<td></td>
+</tr>
+<tr>
+<td>전투 보조</td>
+<td><code>--bha-cast</code> 강공격 예고 · <code>--bha-chain2</code> 노랑 · <code>--bha-chain3</code> 주황 · <code>--bha-insert</code> 삽입 막대 파랑 · <code>--bha-seal</code> 봉인 보라</td>
+<td></td>
+</tr>
+<tr>
+<td>알림</td>
+<td><code>--bha-good</code> <code>--bha-warn</code> <code>--bha-danger</code> <code>--bha-rare</code></td>
+<td>글자용, AA 확인</td>
+</tr>
+<tr>
+<td>계통</td>
+<td><code>--bha-lin-a~e</code></td>
+<td>A 원 / B 삼각 / C 사각 / D 마름모 / E 육각 (색 + 모양)</td>
+</tr>
+<tr>
+<td>타일</td>
+<td><code>--bha-tile-prey/elite/env/rest</code></td>
+<td>먹잇감 둥지 / 강적 소굴 / 환경 / 휴식</td>
+</tr>
+<tr>
+<td>그림자·글로우</td>
+<td><code>--bha-shadow-1~3</code> <code>--bha-glow-sp/risk/chain2/chain3/cast</code></td>
+<td></td>
+</tr>
+<tr>
+<td>모션</td>
+<td><code>--bha-dur-1~5</code> 90/160/260/420/900ms · <code>--bha-ease-out</code> <code>--bha-ease-in</code> <code>--bha-ease-snap</code></td>
+<td>transform·opacity 위주</td>
+</tr>
+<tr>
+<td>층</td>
+<td><code>--bha-z-base 0 · raised 10 · sticky 20 · drag 50 · float 60 · flash 70 · toast 80 · overlay 90 · modal 95 · tutorial 100</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-componentscss">5. 컴포넌트 지도 (components.css)</h2>
+<p>상태는 <code>is-*</code>, 변형은 <code>--mod</code>. 모든 색은 토큰에서만 가져옵니다.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>컴포넌트</th>
+<th>루트 클래스</th>
+<th>변형</th>
+<th>상태</th>
+<th>JS가 넣는 변수</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>버튼</td>
+<td><code>.bha-btn</code></td>
+<td><code>--primary --danger --ghost --small --icon --lg --block</code></td>
+<td><code>:active/.is-pressed</code> <code>:disabled/.is-disabled</code> <code>:focus-visible</code> <code>.is-on</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>2</td>
+<td>칩 · 태그 · 계통</td>
+<td><code>.bha-chip</code> <code>.bha-tag</code> <code>.bha-lin</code></td>
+<td>칩 <code>--weak --rare --danger --seal --guard --pattern</code> · 태그 <code>--provisional --kind --elite --normal</code> · 계통 <code>--a~e</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>3</td>
+<td>상태 바</td>
+<td><code>.bha-meter</code></td>
+<td><code>--hunger --cond --stab --risk --enemy --player --sp --cast --stored</code> · <code>--compact --lg --thin</code></td>
+<td><code>.is-danger .is-full .is-burst</code></td>
+<td><code>--fill</code> <code>--ghost</code> <code>--zone</code> (0~1)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>탭 · 세그먼트 · 하단 내비</td>
+<td><code>.bha-seg</code> <code>.bha-tabbar</code></td>
+<td><code>--sm --stack</code></td>
+<td><code>[aria-selected=true]</code> / <code>.is-active</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td>패널</td>
+<td><code>.bha-panel</code></td>
+<td><code>--raised --inset --accent --flat</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6</td>
+<td>알림</td>
+<td><code>.bha-notice</code></td>
+<td>기본 · <code>--warn --good --rare --danger --risk</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td>토스트</td>
+<td><code>.bha-toast</code></td>
+<td>—</td>
+<td><code>.is-in .is-out</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td>오버레이 · 모달</td>
+<td><code>.bha-overlay</code> <code>.bha-modal</code></td>
+<td><code>--clear</code> · 앱 안쪽 <code>--in-app</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>정보 표</td>
+<td><code>.bha-info</code> (dl)</td>
+<td>행 <code>--em --good --bad --stack</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>10</td>
+<td>덱 행</td>
+<td><code>.bha-deckrow</code></td>
+<td>—</td>
+<td><code>.is-zero</code></td>
+<td><code>--tile</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td>슬롯 칸</td>
+<td><code>.bha-slots</code> <code>.bha-slot</code> · <code>.bha-setbonus</code></td>
+<td><code>--filled --empty --locked</code> + <code>.bha-lin--*</code></td>
+<td><code>.is-target .is-selected .is-new</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>12</td>
+<td>후보 선택</td>
+<td><code>.bha-cand</code> · <code>.bha-pips</code></td>
+<td>+ <code>.bha-lin--*</code></td>
+<td><code>.is-selected .is-pressed</code> · 핍 <code>.is-on .is-next</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>13</td>
+<td>슬라이더</td>
+<td><code>.bha-slider</code></td>
+<td>—</td>
+<td><code>:focus-visible</code></td>
+<td><code>--pct</code> (0~1)</td>
+</tr>
+<tr>
+<td>14</td>
+<td>진행 점</td>
+<td><code>.bha-dots</code></td>
+<td>—</td>
+<td>점 <code>.is-done .is-active</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>15</td>
+<td>아코디언</td>
+<td><code>details.bha-acc</code></td>
+<td>—</td>
+<td><code>[open]</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>16</td>
+<td>범례</td>
+<td><code>.bha-legend</code></td>
+<td>항목 <code>--attack --guard --heal --special --void</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>블록</strong></td>
+<td><code>.bha-block</code></td>
+<td><code>--attack --guard --heal --basic --special --void</code></td>
+<td><code>.is-chain2 .is-chain3 .is-weak .is-pressed .is-dragging .is-nudge-l/-r .is-held .is-sealed .is-disabled .is-cue .is-popin .is-fire</code></td>
+<td><code>--drag-x</code> <code>--drag-y</code> (px)</td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>블록 바</strong></td>
+<td><code>.bha-tray</code></td>
+<td>—</td>
+<td><code>.is-sealed .is-paused .is-held</code></td>
+<td>묶음 <code>--start --len</code>, 삽입 막대 <code>--at</code></td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>저장 필살기</strong></td>
+<td><code>.bha-stored</code></td>
+<td>—</td>
+<td><code>.is-ready .is-full .is-pressed :disabled</code></td>
+<td><code>--fill</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>원형 길</strong></td>
+<td><code>.bha-ring</code></td>
+<td>칸 <code>--nest</code>, 슬롯 <code>--prey --elite --env --rest</code></td>
+<td>칸 <code>.is-past .is-current .is-event</code> · 슬롯 <code>.is-has .is-can .is-past</code></td>
+<td>칸·슬롯 <code>--i</code>, 표식·링 <code>--pos</code></td>
+</tr>
+<tr>
+<td>21</td>
+<td>타일 칩</td>
+<td><code>.bha-tilechip</code></td>
+<td><code>--prey --elite --env --rest</code></td>
+<td><code>.is-selected :disabled</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>22</td>
+<td>플로팅 숫자</td>
+<td><code>.bha-float</code></td>
+<td><code>--attack(.is-crit) --guard --heal --void --chain --chain3</code></td>
+<td>—</td>
+<td>left/top</td>
+</tr>
+<tr>
+<td>23</td>
+<td>사건 로그</td>
+<td><code>.bha-log</code></td>
+<td>줄 <code>--attack --guard --heal --void --chain --cast</code></td>
+<td>줄 <code>.is-new</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>24</td>
+<td>강공격 예고</td>
+<td><code>.bha-cast</code></td>
+<td>—</td>
+<td><code>.is-blocked</code></td>
+<td><code>--fill</code> (2초간 0→1)</td>
+</tr>
+<tr>
+<td>25</td>
+<td>적 실루엣</td>
+<td><code>.bha-foe</code> · <code>.bha-edgeflash</code></td>
+<td>번쩍임 <code>--void --hit</code></td>
+<td><code>.is-hit .is-casting .is-guard</code> · 번쩍임 <code>.is-on</code></td>
+<td><code>--aura</code> (약점 계통 색)</td>
+</tr>
+<tr>
+<td>26</td>
+<td>화면 머리</td>
+<td><code>.bha-topbar</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>27</td>
+<td>행동 독</td>
+<td><code>.bha-dock</code></td>
+<td><code>--above-tabbar</code> · 줄 <code>--two</code> · 정보 <code>--warn</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>28</td>
+<td>계통 누적 막대</td>
+<td><code>.bha-linbar</code></td>
+<td>범례 항목 <code>.bha-lin--*</code></td>
+<td>항목 <code>.is-zero .is-lead</code></td>
+<td>조각 <code>--n</code> (횟수)</td>
+</tr>
+<tr>
+<td>29</td>
+<td>돌보기</td>
+<td><code>.bha-care</code></td>
+<td>버튼 <code>--feed --sleep --pet</code></td>
+<td><code>:disabled .is-pressed</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>30</td>
+<td>진화체 카드</td>
+<td><code>.bha-formgrid</code> <code>.bha-formcard</code></td>
+<td><code>--unknown --base</code></td>
+<td><code>.is-current</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>31</td>
+<td>칭호 행</td>
+<td><code>.bha-titlelist</code> <code>.bha-titlerow</code></td>
+<td><code>--unlocked --locked --hidden</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>32</td>
+<td>바텀 시트 · 결과 제목</td>
+<td><code>.bha-sheet</code> <code>.bha-result</code></td>
+<td>결과 <code>--win --lose</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>화면 전용 레이아웃(<code>screens.css</code>): <code>.bha-battle__*</code> <code>.bha-battle-ov</code> <code>.bha-tut__*</code> <code>.bha-nest__*</code> <code>.bha-evo__*</code> <code>.bha-owned</code> <code>.bha-menu</code> <code>.bha-evolve__*</code> <code>.bha-exp__*</code> <code>.bha-break__*</code> <code>.bha-foecard</code> <code>.bha-absorb__actions</code> <code>.bha-steps</code> <code>.bha-practice__filters</code> <code>.bha-foelist/.bha-foerow</code> <code>.bha-start__*</code> <code>.bha-species__*</code> <code>.bha-press</code> <code>.bha-dragprev</code> <code>.bha-help__*</code>.</p>
+<h3 id="5-1-dom">5-1. 블록 DOM (가장 중요)</h3>
+<pre><code class="language-html">&lt;div class=&quot;bha-block bha-block--attack is-chain2 is-weak&quot; role=&quot;button&quot; tabindex=&quot;0&quot; aria-label=&quot;찢는 발톱&quot;&gt;
+  &lt;span class=&quot;bha-block__pips&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;/span&gt;   &lt;!-- 공격·막기·회복만 --&gt;
+  &lt;span class=&quot;bha-block__icon&quot;&gt;&lt;svg class=&quot;bha-icon&quot;&gt;&lt;use href=&quot;#i-attack&quot;/&gt;&lt;/svg&gt;&lt;/span&gt;
+  &lt;b class=&quot;bha-block__abbr&quot;&gt;찢는 발톱&lt;/b&gt;                      &lt;!-- 특성 이름 약어: 2줄 × 2~4자 --&gt;
+  &lt;span class=&quot;bha-block__weak&quot;&gt;&lt;svg class=&quot;bha-icon&quot;&gt;&lt;use href=&quot;#i-weak&quot;/&gt;&lt;/svg&gt;&lt;/span&gt;
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>역할 구분 = <strong>색 + 아이콘 + 표면 무늬</strong>(공격 사선 / 막기 가로 판 / 회복 점 / 필살 금색 광택 / 공허 검은 구멍 + 마젠타 테두리 맥동).</li>
+<li>약어는 칸 폭 44px 기준 <strong>2줄 × 2~4자</strong>. 더 길면 잘리므로(<code>-webkit-line-clamp: 2</code>) 특성 데이터에 약어 필드를 따로 두는 것을 권장합니다.</li>
+</ul>
+<h3 id="5-2-dom">5-2. 블록 바 DOM</h3>
+<pre><code class="language-html">&lt;div class=&quot;bha-tray [is-sealed|is-paused|is-held]&quot;&gt;
+  &lt;div class=&quot;bha-tray__grid&quot;&gt;
+    &lt;div class=&quot;bha-tray__cell&quot;&gt;…블록 또는 비어 있음…&lt;/div&gt;  × 8  (n번째 칸은 CSS가 n열에 고정)
+    &lt;div class=&quot;bha-tray__run [bha-tray__run--chain3] [is-fire]&quot; style=&quot;--start:1;--len:2&quot;&gt;
+      &lt;span class=&quot;bha-tray__runlabel&quot;&gt;&lt;svg class=&quot;bha-icon&quot;&gt;&lt;use href=&quot;#i-chain-2&quot;/&gt;&lt;/svg&gt;체인2&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;i class=&quot;bha-tray__insert [bha-tray__insert--end]&quot; style=&quot;--at:3&quot;&gt;&lt;/i&gt;   &lt;!-- 드래그 중에만 --&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;bha-tray__veil&quot;&gt;&lt;svg class=&quot;bha-icon&quot;&gt;&lt;use href=&quot;#i-seal&quot;/&gt;&lt;/svg&gt;봉인 — 블록 생성 정지 3.0초&lt;/div&gt;
+&lt;/div&gt;
+&lt;p class=&quot;bha-tray__note [is-held]&quot;&gt;…들었다 놓았다 — 사용하지 않음…&lt;/p&gt;
+</code></pre>
+<ul>
+<li>칸 폭 = 바 폭 ÷ 8. 전투 화면에서 바는 좌우 4px까지 넓어지므로(<code>.bha-battle__controls .bha-tray</code>) 360px 화면에서 칸이 44px이 됩니다.</li>
+<li>묶음(<code>.bha-tray__run</code>)과 삽입 막대는 칸과 같은 그리드 줄에 겹쳐 놓입니다. JS는 시작 칸과 길이만 넣으면 됩니다.</li>
+<li>드래그 중인 블록: <code>is-dragging</code> + <code>--drag-x/--drag-y</code>(손가락 이동량). CSS가 자동으로 28px 위로 띄우고 살짝 기울입니다. 원래 칸은 <code>.bha-tray__cell.is-origin</code>(점선), 밀려나는 이웃 블록은 <code>is-nudge-l/-r</code>.</li>
+<li>강공격 예고 중에는 막기 블록에 <code>is-cue</code>(초록 고리 + 위 화살표)를 붙이면 "이걸 눌러라"가 바로 보입니다.</li>
+</ul>
+<h3 id="5-3">5-3. 원형 길</h3>
+<ul>
+<li><code>.bha-ring</code>은 <code>container-type: inline-size</code>라서 칸 위치를 <code>cqw</code> 단위 각도로 CSS가 계산합니다. 칸 <code>--i</code>(0~11, 0=둥지), 슬롯 <code>--i</code>(1~11), 표식 <code>.bha-ring__walker</code>와 지난 길 호 <code>.bha-ring__done</code>은 링의 <code>--pos</code>(소수 가능)만 바꾸면 됩니다. 표식은 transform 보간으로 호를 따라 움직입니다.</li>
+<li>타일 슬롯은 보이는 크기 약 42px, <code>::after</code>로 누르는 영역 44px을 확보합니다.</li>
+</ul>
+<h3 id="5-4">5-4. 튜토리얼 컷아웃</h3>
+<ul>
+<li><code>.bha-tut__hole</code>에 대상 요소의 <code>getBoundingClientRect()</code>를 left/top/width/height로 넣습니다(여백 6px). 그림자 <code>0 0 0 100vmax</code>로 나머지를 어둡게 덮습니다.</li>
+<li>카드: 대상 중심이 화면 위쪽 절반이면 아래(<code>.is-below</code>, <code>top</code>), 아니면 위(<code>.is-above</code>, <code>bottom</code>). 꼬리 위치는 <code>--tail</code>(px).</li>
+<li>리사이즈 때 다시 계산합니다. 참고 구현은 <code>battle.html</code>의 <code>placeTut()</code>입니다.</li>
+</ul>
+<hr />
+<h2 id="6">6. 현재 코드 클래스 → 새 컴포넌트 매핑표</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>현재</th>
+<th>새 클래스</th>
+<th>메모</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.screen</code></td>
+<td><code>.bha-app</code> (+ <code>.bha-stage</code> 래퍼)</td>
+<td>스크롤 없는 화면은 <code>.bha-app--fixed</code></td>
+</tr>
+<tr>
+<td><code>.screen.battle</code></td>
+<td><code>.bha-app.bha-app--fixed.bha-battle</code></td>
+<td>좌우 여백 처리는 <code>.bha-battle__controls .bha-tray</code></td>
+</tr>
+<tr>
+<td><code>.stack</code></td>
+<td><code>.bha-stack</code> (<code>--tight --loose</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.row</code></td>
+<td><code>.bha-row</code> (<code>--start --wrap</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.grid2</code> / <code>.grid3</code></td>
+<td><code>.bha-grid2</code> / <code>.bha-grid3</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.dim</code></td>
+<td><code>.bha-dim</code> (보조 <code>.bha-faint</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.warn</code></td>
+<td><code>.bha-warn-text</code> 또는 <code>.bha-meter__note</code></td>
+<td>상태 바 아래 경고는 <code>__note</code></td>
+</tr>
+<tr>
+<td><code>.notice</code> / <code>.good</code> / <code>.rare</code></td>
+<td><code>.bha-notice</code> / <code>--good</code> / <code>--rare</code></td>
+<td><code>--warn --danger --risk</code> 추가</td>
+</tr>
+<tr>
+<td><code>.banner</code></td>
+<td><code>.bha-notice--rare</code> (희귀 개체) 또는 <code>.bha-faint.bha-center</code> (안내 한 줄)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.bar</code> + <code>&gt; i</code></td>
+<td><code>.bha-meter</code> + <code>__head</code> + <code>__track &gt; __fill</code></td>
+<td>너비 대신 <code>--fill</code>(0~1)로 scaleX</td>
+</tr>
+<tr>
+<td><code>.bar.enemy/.player/.sp</code></td>
+<td><code>.bha-meter--enemy/--player/--sp</code> (<code>--compact --lg</code>)</td>
+<td>감소 잔상 <code>__ghost</code> + <code>--ghost</code></td>
+</tr>
+<tr>
+<td><code>.bar.hunger/.cond/.risk/.stab</code></td>
+<td><code>.bha-meter--hunger/--cond/--risk/--stab</code></td>
+<td>위험 구간 <code>__zone</code> + <code>--zone</code></td>
+</tr>
+<tr>
+<td><code>.bar.cast</code> + <code>.casttext</code></td>
+<td><code>.bha-cast</code> (<code>__title __track __hint</code>)</td>
+<td><code>--fill</code>, 막으면 <code>.is-blocked</code></td>
+</tr>
+<tr>
+<td><code>.chip</code> / <code>.chip.weak</code></td>
+<td><code>.bha-chip</code> / <code>.bha-chip--weak</code></td>
+<td>계통 마크 <code>.bha-lin--*</code> 함께</td>
+</tr>
+<tr>
+<td><code>button</code></td>
+<td><code>.bha-btn</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>button.primary</code></td>
+<td><code>.bha-btn--primary</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>button.small</code></td>
+<td><code>.bha-btn--small</code></td>
+<td>누르는 영역 44px 자동 확보</td>
+</tr>
+<tr>
+<td><code>button.on</code></td>
+<td><code>.bha-btn.is-on</code> 또는 <code>.bha-seg__item.is-active</code></td>
+<td>배속 토글은 세그먼트 권장</td>
+</tr>
+<tr>
+<td><code>button.help-btn</code></td>
+<td><code>.bha-btn--icon</code> + <code>#i-help</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>button.cand</code></td>
+<td><code>.bha-cand</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>button.chip-btn</code></td>
+<td><code>.bha-tilechip</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.deckrow</code> / <code>.grow</code> / <code>.cnt</code></td>
+<td><code>.bha-deckrow</code> / <code>__main</code> / <code>__count</code></td>
+<td>−/+ 는 <code>__stepper</code></td>
+</tr>
+<tr>
+<td><code>.slots</code> / <code>.slotbox</code> / <code>.slotbox.empty</code></td>
+<td><code>.bha-slots</code> / <code>.bha-slot--filled</code> / <code>.bha-slot--empty</code></td>
+<td>교체 대상 <code>.is-target</code></td>
+</tr>
+<tr>
+<td><code>.slotbtns</code></td>
+<td><code>.bha-owned__row</code> 안 버튼 또는 흡수 ③ 슬롯 버튼 목록</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.ring</code></td>
+<td><code>.bha-ring</code></td>
+<td><code>container-type</code> 필요</td>
+</tr>
+<tr>
+<td><code>.rcell</code> / <code>.nest</code> / <code>.past</code></td>
+<td><code>.bha-ring__cell</code> / <code>--nest</code> / <code>.is-past</code></td>
+<td>현재 칸 <code>.is-current</code> 추가</td>
+</tr>
+<tr>
+<td><code>.slot</code> / <code>.has</code> / <code>.can</code></td>
+<td><code>.bha-ring__slot</code> / <code>.is-has</code> + <code>--prey…</code> / <code>.is-can</code></td>
+<td><code>prey-nest</code>→<code>--prey</code>, <code>elite-den</code>→<code>--elite</code>, <code>environment</code>→<code>--env</code>, <code>rest</code>→<code>--rest</code></td>
+</tr>
+<tr>
+<td><code>.walker</code></td>
+<td><code>.bha-ring__walker</code></td>
+<td>left/top 대신 링의 <code>--pos</code></td>
+</tr>
+<tr>
+<td><code>.hand</code></td>
+<td><code>.bha-exp__hand</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.speeds</code></td>
+<td><code>.bha-seg.bha-seg--sm</code> (원정) / <code>.bha-battle__bar</code> (전투)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.stage</code> / <code>.line</code></td>
+<td><code>.bha-log</code> / <code>.bha-log__line</code></td>
+<td>3줄, 새 줄 <code>.is-new</code></td>
+</tr>
+<tr>
+<td><code>.status</code></td>
+<td><code>.bha-battle__mestatus</code> (+ 칩) / <code>.bha-battle__foetags</code></td>
+<td>남은 시간은 <code>.bha-chip__time</code></td>
+</tr>
+<tr>
+<td><code>.msg</code></td>
+<td><code>.bha-exp__msg</code> (<code>--warn --fight --rest</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.tray</code> / <code>.sealed</code> / <code>.paused</code> / <code>.held</code></td>
+<td><code>.bha-tray</code> / <code>.is-sealed</code> / <code>.is-paused</code> / <code>.is-held</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.tcell</code> / <code>.filled</code></td>
+<td><code>.bha-tray__cell</code> (빈 칸은 <code>:empty</code>로 자동 홈 표시)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.tcell.run/.run-l/.run-r/.chain3</code></td>
+<td><code>.bha-tray__run</code> (<code>--start --len</code>, <code>--chain3</code>)</td>
+<td>칸마다 테두리 조합하던 방식 → 겹쳐 놓는 한 요소</td>
+</tr>
+<tr>
+<td><code>.tcell.drop-before/.drop-after</code></td>
+<td><code>.bha-tray__insert</code> (<code>--at</code>, <code>--end</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.runrow</code> / <code>.runtag</code></td>
+<td><code>.bha-tray__runlabel</code> (묶음 안에 포함)</td>
+<td>별도 줄 필요 없음</td>
+</tr>
+<tr>
+<td><code>.tblock</code></td>
+<td><code>.bha-block</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.tblock.role-attack/-guard/-heal</code></td>
+<td><code>.bha-block--attack/--guard/--heal</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.tblock.special</code> / <code>.void</code></td>
+<td><code>.bha-block--special</code> / <code>--void</code></td>
+<td>기본 블록 <code>--basic</code> 추가</td>
+</tr>
+<tr>
+<td><code>.tblock.weak</code> / <code>.dragging</code></td>
+<td><code>.is-weak</code> / <code>.is-dragging</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.tblock .ico</code> / <code>b</code> / <code>.wk</code></td>
+<td><code>.bha-block__icon</code> / <code>__abbr</code> / <code>__weak</code></td>
+<td>체인 단계 <code>__pips</code> 추가</td>
+</tr>
+<tr>
+<td><code>.holdnote</code></td>
+<td><code>.bha-tray__note.is-held</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.stored</code> / <code>.storedtop</code> / <code>.pips</code> / <code>.pip.on</code></td>
+<td><code>.bha-stored</code> / <code>__body</code> / <code>__pips</code> / <code>i.is-on</code></td>
+<td>게이지 <code>__gauge</code> + <code>--fill</code></td>
+</tr>
+<tr>
+<td><code>.stored.ready/.full/.urgent/.pressed</code></td>
+<td><code>.is-ready/.is-full/(is-full로 통합)/.is-pressed</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.legend</code> / <code>.lg</code></td>
+<td><code>.bha-legend</code> / <code>__item--*</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.evo</code> / <code>.tier</code></td>
+<td><code>.bha-panel</code> (진화) + <code>.bha-evo__form</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.combo</code></td>
+<td><code>.bha-linbar</code> (계통 누적 막대)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.unknown</code></td>
+<td><code>.bha-evo__fact--hidden</code> (진화 결과 ?) / <code>.bha-formcard--unknown</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.evo-result</code> / <code>.evo-line</code></td>
+<td><code>.bha-evolve__title…</code> / <code>.bha-evolve__line</code> (<code>--k</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.breakthrough</code></td>
+<td><code>.bha-break</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.result-title.win/.lose</code></td>
+<td><code>.bha-result--win/--lose</code> + <code>__title</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>table</code> / <code>td</code></td>
+<td><code>dl.bha-info</code> / <code>.bha-info__row</code> (dt/dd)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.mini</code></td>
+<td><code>.bha-meter--compact</code> 또는 <code>.bha-exp__slots</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.setting</code></td>
+<td><code>.bha-panel</code> + <code>.bha-slider</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>.toast</code></td>
+<td><code>.bha-toast</code> (<code>.is-in/.is-out</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.tut-layer/.tut-dim/.tut-hole/.tut-card/.tut-step/.tut-title/.tut-body/.tut-buttons/.tut-skip</code></td>
+<td><code>.bha-tut</code> / (hole 그림자) / <code>__hole</code> / <code>__card</code> / <code>__step</code> / <code>__title</code> / <code>__body</code> / <code>__actions</code> / <code>.bha-btn--ghost</code></td>
+<td>진행 점 <code>.bha-dots</code> 추가</td>
+</tr>
+<tr>
+<td><code>.help-layer/.help-head/.help-body/.help-section/.help-item</code></td>
+<td><code>.bha-app</code> / <code>.bha-help__head</code> / (본문) / <code>.bha-help__sec</code> / <code>details.bha-acc</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="7">7. 구현 시 주의</h2>
+<p><strong>상태 클래스 목록</strong></p>
+<p><code>is-pressed is-disabled is-on is-active is-selected is-danger is-full is-burst is-zero is-target is-new is-done is-chain2 is-chain3 is-weak is-dragging is-nudge-l is-nudge-r is-held is-sealed is-paused is-cue is-popin is-fire is-origin is-ready is-past is-current is-event is-has is-can is-blocked is-hit is-casting is-guard is-in is-out is-lead is-below is-above is-urgent is-shake</code></p>
+<p><strong>JS가 계산해 넣는 CSS 변수</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>변수</th>
+<th>어디</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--fill</code></td>
+<td><code>.bha-meter</code> <code>.bha-stored</code> <code>.bha-cast</code></td>
+<td>0~1</td>
+</tr>
+<tr>
+<td><code>--ghost</code></td>
+<td><code>.bha-meter</code> (체력)</td>
+<td>직전 값. 0.25초 뒤 늦게 따라옴</td>
+</tr>
+<tr>
+<td><code>--zone</code></td>
+<td><code>.bha-meter__zone</code></td>
+<td>위험 구간 시작 (0~1)</td>
+</tr>
+<tr>
+<td><code>--start</code> <code>--len</code></td>
+<td><code>.bha-tray__run</code></td>
+<td>1~8, 2~3</td>
+</tr>
+<tr>
+<td><code>--at</code></td>
+<td><code>.bha-tray__insert</code></td>
+<td>1~8 (끝이면 <code>--end</code> 변형)</td>
+</tr>
+<tr>
+<td><code>--drag-x</code> <code>--drag-y</code></td>
+<td><code>.bha-block.is-dragging</code></td>
+<td>px</td>
+</tr>
+<tr>
+<td><code>--i</code></td>
+<td><code>.bha-ring__cell</code> <code>.bha-ring__slot</code></td>
+<td>칸 번호</td>
+</tr>
+<tr>
+<td><code>--pos</code></td>
+<td><code>.bha-ring</code></td>
+<td>현재 칸 (소수 가능, 0~12)</td>
+</tr>
+<tr>
+<td><code>--n</code></td>
+<td><code>.bha-linbar__seg</code></td>
+<td>계통별 횟수</td>
+</tr>
+<tr>
+<td><code>--pct</code></td>
+<td><code>.bha-slider__input</code></td>
+<td>0~1 (트랙 채움)</td>
+</tr>
+<tr>
+<td><code>--aura</code></td>
+<td><code>.bha-foe</code></td>
+<td><code>var(--bha-lin-b)</code> 등</td>
+</tr>
+<tr>
+<td><code>--tail</code></td>
+<td><code>.bha-tut__card</code></td>
+<td>꼬리 위치 px</td>
+</tr>
+<tr>
+<td><code>--t</code> <code>--d</code></td>
+<td><code>.bha-press</code> <code>.bha-dragprev__ring</code></td>
+<td>설정 미리보기</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>그 밖에</strong></p>
+<ul>
+<li><strong>애니메이션 재생</strong>: <code>is-fire</code>, <code>is-popin</code>, <code>is-in</code> 같은 1회성 클래스는 붙였다가 <code>animationend</code>에서 떼세요. 다시 재생할 때는 떼고 → <code>void el.offsetWidth</code> → 다시 붙이기.</li>
+<li><strong>블록 발동 순서</strong>: <code>is-pressed</code>(누름) → 떼면 <code>is-fire</code>(380ms) → DOM에서 제거 → 오른쪽 블록이 당겨짐. 새 블록은 맨 오른쪽 빈 칸에 <code>is-popin</code>.</li>
+<li><strong>오래 누름</strong>: 판정 시간(설정값)을 넘기면 <code>is-pressed</code>를 떼고 <code>.bha-tray.is-held</code> + <code>.bha-tray__note.is-held</code> 문구. 손을 떼면 해제.</li>
+<li><strong>짧은 화면</strong>: <code>screens.css</code>의 <code>@media (max-height: 780px)</code>에서 조작 힌트 줄을 숨기고(같은 내용은 [?] 도움말에 있음), 로그를 2줄로, 간격을 줄입니다. 700px 이하는 범례도 숨깁니다. <code>fit-check.html</code>에서 360×740 확인.</li>
+<li><strong>reduced-motion</strong>: <code>base.css</code>가 전체 애니메이션을 1ms로 줄이고, <code>components.css</code> 끝에서 맥동·광택이 사라진 자리를 정적 테두리/글로우로 대체합니다. 위험·준비됨 같은 정보는 원래 모양과 문구로도 전달되므로 정보 손실은 없습니다.</li>
+<li><strong>색에만 의존 금지</strong>: 역할 = 색 + 아이콘 + 무늬, 계통 = 색 + 모양, 위험 구간 = 사선 무늬 + 눈금선, 묶음 = 테두리 + 연결선 + "체인N" 글자, 준비됨 = 글로우 + "준비됨" 꼬리표, 교체 대상 = 맥동 + "교체" 꼬리표.</li>
+<li><strong>터치 영역</strong>: 작은 버튼(<code>--small</code>), 작은 세그먼트(<code>--sm</code>), 원형 길 슬롯은 <code>::after</code>로 44px을 확보합니다. 블록 칸은 44×68.</li>
+<li><strong>줄바꿈</strong>: <code>body</code>에 <code>word-break: keep-all</code> + <code>overflow-wrap: anywhere</code>. 숫자는 <code>tabular-nums</code>.</li>
+<li><strong>접근성</strong>: 블록은 <code>role="button" tabindex="0" aria-label</code>, 상태 바는 <code>role="meter"</code>와 <code>aria-valuenow</code>, 로그는 <code>aria-live="polite"</code>, 강공격 예고는 <code>role="alert"</code>, 튜토리얼은 <code>role="dialog" aria-modal</code>.</li>
+</ul>
+<hr />
+<h2 id="8">8. 아직 디자인하지 않은 것 · 가정한 것</h2>
+<p><strong>가정한 것 (확인 필요)</strong></p>
+<ol>
+<li>블록 위 특성 이름은 2줄 × 2~4자 <strong>약어</strong>라고 가정했습니다. 긴 이름은 잘리니 약어 필드가 필요합니다.</li>
+<li>사신의 회복 역할 이름(회도), 필살 블록 이름(섬광), 저장 필살기 이름(응축 베기), 칭호 등급 이름(제N석)은 <strong>임시 샘플</strong>입니다.</li>
+<li>진화 연출 문구(evo1~3)와 시작 화면 종족 설명은 <strong>제안 문구</strong>입니다(<code>제안 문구</code> 태그).</li>
+<li>둥지를 하단 탭 4개(돌보기·특성·덱·더보기)로 나누고, [원정 출발]·[이어하기]·[전투 연습]은 행동 독에 항상 보이게 재배치했습니다. 기능은 그대로입니다.</li>
+<li>탭바의 "특성" 배지(1)는 "빈 슬롯에 넣을 수 있는 보유 특성 수"를 뜻한다고 가정했습니다. 그런 계산이 없으면 배지를 빼세요.</li>
+<li>이어하기를 숨기는 이유 문구는 "저장 버전 불일치"를 예로 들었습니다. 실제 이유 문자열을 넣으세요.</li>
+<li>쇠약 상태 설명, 한계 돌파 페널티, 흡수 조건 문장, 수치는 모두 <code>임시</code> 태그를 붙인 예시입니다.</li>
+<li>시작 화면은 지금처럼 <strong>카드를 누르면 바로 시작</strong>합니다(확인 버튼 없음).</li>
+<li>공용 모달(<code>overlays.html</code>)은 패턴 예시입니다. 지금 게임에 이미 확인 단계가 있는 행동에만 쓰고, 새 확인 단계를 만들지 마세요.</li>
+</ol>
+<p><strong>아직 디자인하지 않은 것</strong></p>
+<ul>
+<li>실제 적·진화체 일러스트: <code>.bha-foe__body</code> 안의 추상 실루엣(<code>#foe-a</code>, <code>#foe-b</code>)만 교체하면 됩니다.</li>
+<li>로딩/저장 중 화면, 오프라인·저장 실패 전용 화면 (흡수 화면의 에러 notice 패턴을 재사용하세요).</li>
+<li>효과음·진동 타이밍.</li>
+<li>가로 모드 (세로 전용 가정).</li>
+</ul>
+<hr />
+<h2 id="9">9. 빠진 기능 체크리스트 (요청 목록 대비)</h2>
+<p><strong>A. 시작 / 설정 / 도움말</strong>
+- [x] 1 시작: 게임 이름 · 한 줄 안내 · 종족 카드 2장(각자 테마 미리보기) · [설정] · [도움말·튜토리얼] · 버전 표기 — <code>start.html</code>
+- [x] 2 설정: 클릭 판정 슬라이더(0.15~0.6, 기본 0.3) · 드래그 거리(6~20, 기본 10) · 설명 · 시각 미리보기 2종 · 기본값 복원 · 돌아가기 · 도움말·튜토리얼 다시 보기 — <code>settings.html</code>
+- [x] 3 도움말: 화면별 요약 4 · 용어 13 · 펼침/접힘 · [튜토리얼 다시 보기] · [닫기] · 전투 중 "전투가 멈춰 있다" — <code>help.html</code>
+- [x] 4 튜토리얼 8장면: 컷아웃 · 카드 자동 위/아래 배치 · [이전][다음][건너뛰기] · 진행 점 · "튜토리얼 중 — 전투 멈춤" — <code>battle.html#tut1~8</code></p>
+<p><strong>B. 둥지</strong>
+- [x] 5 둥지: 이름 · 사냥터 · 기록 한 줄 · 상태 4바(수치 <code>20/100</code>, 컨디션 40 미만·리스크 60 이상 경고) · 쇠약 notice · 돌보기 3 · 진화 패널 · 흡수 특성 슬롯(3~8칸, 채움/빈칸, 종류 라벨, 계통 마크, 같은 계통 3개 보너스, 보유 목록에서 교체) · 타일 덱(N/8, 이름·효과·보유·−/수량/+) · 원정 이어하기(정보 + 버려짐 경고 + 숨김 이유) · 원정 출발(덱 비면 비활성) · 전투 연습 · 칭호 도감(해금/전체) · 종족 바꾸기 · 설정 · 버전 — <code>nest.html</code>
+- [x] 출발/이어하기 항상 엄지 위치 — 행동 독
+- [x] 6 진화 패널: 단계 · 진화체 이름 · 포식 N/27 진행 바 · 계통 5개 누적 막대 · 후보 N종 · 결과 ? · 남은 횟수 / [진화] 강조 · [진화체 도감] · 마지막 단계 상태 — <code>nest.html#canEvolve</code> <code>#final</code>
+- [x] 6 진화 연출: 연출 줄 → "{단계}!" · "1단계 호로 → 2단계 길리안" · 새 진화체 · 효과 줄 · [둥지로] — <code>evolve.html</code>
+- [x] 7 진화체 도감: 단계 탭 4(발견 수) · 카드(이름·요구 계통 마크·효과) / 미발견 ? · 기본형 · 임시 태그 · [둥지로] — <code>dex-forms.html</code>
+- [x] 8 칭호 도감: 탭 3(n/전체) · 해금(이름·시각·임시 조건) · 히든 ? · 등급 이름 목록 · 해금 토스트 — <code>dex-titles.html</code></p>
+<p><strong>C. 원정</strong>
+- [x] 9 원정: 바퀴 · 허기 바 · 리스크 바 · 장착 슬롯 한 줄 · 12칸 링(둥지 칸 · 지난 칸 흐림 · 현재 위치 표식 이동 · 타일 슬롯 1~11 · 빈 <code>＋</code> · 종류별 색 · 놓을 수 있는 슬롯 맥동) · 메시지 줄 · 타일 칩(수량·선택) · 배속 1/2/4x · 일시정지 · [?] · 둥지 칸 "귀환 / 한 바퀴 더(N바퀴)" · 4바퀴 초과 경고 · 이동·전투 대기·휴식·허기 위험 — <code>expedition.html</code>
+- [x] 10 한계 돌파: "…{리스크}가 한계를 넘었다…" · 임시 페널티 · [계속] · 균열·떨림 — <code>breakthrough.html</code>
+- [x] 11 원정 결과: 귀환/패배 제목 · 이유 · 요약 표(바퀴·전투·지킨/잃은 타일·얻은/잃은 특성·리스크 최고/끝 + 한계 돌파·안정 수치·남은 허기/컨디션) · 시드·기록 저장 · [둥지로] · 칭호 토스트 — <code>result.html</code></p>
+<p><strong>D. 전투</strong>
+- [x] 12 전투: 적 이름 · 약점 칩 · 패턴 표식 · 적 체력 · 상태(방어 자세·봉인 부여) · 강공격 예고 시전 바(맥동·색 변화·막기 안내) · 실루엣 + 약점 색 오라 · 사건 로그 3줄 · 플로팅 숫자 4모양 · 내 체력 · 막기/봉인 남은 시간 · SP 바 + 필살 블록 생성 알림 · 블록 바 8칸(44~48×68, 팝인, 당겨짐, 빈 홈) · 종류별 외형 · 묶음 표시 · 약점 강조 · 눌림/발동 · 오래 누름 회색 안내 · 드래그(28px 띄움, 파란 삽입 막대, 밀려남) · 봉인 오버레이 · 일시정지 흐림 · 저장 필살기(충전 3칸, 게이지, 힌트, 준비됨 글로우, 비활성) · 범례 · 조작 힌트 · 하단 컨트롤(배속·일시정지·?·그만두기·남은 시간) · 조우/일시정지/승리/패배/시간 초과 · 타격 플래시 · 체력 잔상 · 체인 이펙트(체인3 주황) · 막기 실드 · SP 폭발 · 공허 마젠타 번쩍임 — <code>battle.html</code>
+- [x] 390×844 · 360×740 스크롤 없음 — <code>fit-check.html</code>
+- [x] 13 흡수: ① 선택(제목·상대·희귀 배너·정보 표·리스크 + 한계 돌파 경고·슬롯 현황·[흡수][놓아준다]) ② 후보(카드·"장착하면 계통A 2/3"·후보 없음·[돌아가기]) ③ 교체(슬롯 선택·[포기][돌아가기]) · 에러 notice — <code>absorb.html</code>
+- [x] 14 전투 연습: 상대 목록(이름·일반/강적·패턴·약점, 35명, 계통·종류 필터) · 기록 개수 · [둥지로] · 연습 결과(승/패·전투 시간·체인1/2/3·체인3·강공격 막기·저장 필살기 사용/낭비·필살 블록·공허(리스크 +N)·마무리 일격·흡수 가능) · [같은 상대와 다시][연습 메뉴로] — <code>practice.html</code></p>
+<p><strong>디자인 시스템</strong>
+- [x] 토큰(색·테마 2벌·타이포·간격·모서리·그림자/글로우·모션·z-index·터치) · 아이콘 세트(역할 3·체인 1/2/3·SP·필살·저장 필살기·공허·봉인·약점·허기·컨디션·안정·리스크·진화·도감·칭호·설정·도움말·배속·일시정지/재생·귀환·타일 4+조합·계통 5·희귀·잠금/물음표) · 컴포넌트 전 상태 · 호로/사신 비교 시트 — <code>components/index.html</code>
+- [x] 재사용 임시 태그 <code>.bha-tag--provisional</code>
+- [x] reduced-motion 규칙 · 포커스 링 · 색 외 구분 · 터치 44px · 글자 12px 이상</p>
+</main>
+</body>
+</html>

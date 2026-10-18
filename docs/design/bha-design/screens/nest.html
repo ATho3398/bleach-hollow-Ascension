@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko" data-bha-theme="hollow">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>둥지 — BHA</title>
+<!--
+  화면 5·6. 둥지(홈) + 진화 패널
+  정보 구조: 위 = 이름·사냥터·기록·상태 4바 / 가운데 = 탭 내용 / 아래 = 행동 독(원정 출발·이어하기, 항상 보임) + 하단 탭 4개
+  탭: 돌보기(돌보기 3버튼 + 진화 패널) · 특성(흡수 특성 슬롯) · 덱(타일 덱 편성) · 더보기(도감·연습·종족·설정·도움말)
+  ─ 샘플 데이터 ─────────────────────────────────────────
+  nest.name(종족)        : "둥지"  · ground: "웨코문도"
+  record                 : { runs: 3, returned: 2, defeated: 1 }
+  hunger/cond/stab/risk  : 20 / 80 / 50 / 0  (각 0~100). 경고 규칙: cond < 40 → "나쁨: 전투에 공허 블록 ↑", risk ≥ 60 → "높음"
+  weakened               : bool  → 쇠약 notice (패배 상태 이름 = 종족 설정)
+  evo                    : { stage: 2, stageName: "길리안", form: "A+B형"(임시), absorbed: 12, need: 27,
+                             lineage: {A:5,B:4,C:2,D:1,E:0}, candidates: 3, canEvolve: bool, isFinal: bool }
+  slots                  : { max: 3~8, items: [{ name, kind:"기술"|"패시브"|"외형 파츠", lineage:"A"~"E" } | null] }
+  owned[]                : 보유 특성 (슬롯에 없는 것)  · setBonus: 같은 계통 3개
+  deck                   : { size: 8, rows: [{ id, name, tile:"prey"|"elite"|"env"|"rest", hint, owned, count }] }
+  continueRun            : null | { ground, lap, cell, hunger } · continueHiddenReason: null | 문자열
+  titles                 : { unlocked: 2, total: 10 } · version: "P7 · 버전 C.19 · 밸런스 16 · 2026-10-18 배포 (커밋 abc1234)"
+-->
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/theme-hollow.css">
+<link rel="stylesheet" href="../design-system/theme-shinigami.css">
+<link rel="stylesheet" href="../design-system/base.css">
+<link rel="stylesheet" href="../components/components.css">
+<link rel="stylesheet" href="./screens.css">
+<link rel="stylesheet" href="./_demo/demo.css">
+</head>
+<body>
+<script src="../icons/sprite.js"></script>
+<div class="bha-stage">
+<main class="bha-app bha-nest" id="nest">
+
+  <header class="bha-topbar">
+    <div class="bha-topbar__main">
+      <h1 class="bha-topbar__title" data-sp="nest">둥지</h1>
+      <p class="bha-topbar__sub">사냥터 <b data-sp="ground">웨코문도</b> · 원정 <b>3</b>회 · 귀환 <b>2</b> · 패배 <b>1</b></p>
+    </div>
+    <div class="bha-topbar__actions">
+      <button class="bha-btn bha-btn--icon bha-btn--ghost" type="button" aria-label="도움말"><svg class="bha-icon"><use href="#i-help"/></svg></button>
+      <button class="bha-btn bha-btn--icon bha-btn--ghost" type="button" aria-label="설정"><svg class="bha-icon"><use href="#i-settings"/></svg></button>
+    </div>
+  </header>
+
+  <div class="bha-nest__stage">
+    <span class="bha-chip"><svg class="bha-icon"><use href="#i-evolve"/></svg><span id="stageChip">2단계 · <span data-sp="stage2">길리안</span></span></span>
+    <span class="bha-chip">A+B형 <span class="bha-tag bha-tag--provisional" style="min-height:16px">임시</span></span>
+  </div>
+
+  <section class="bha-panel" aria-label="상태">
+    <div class="bha-nest__status" id="status"></div>
+  </section>
+  <div class="bha-notice bha-notice--danger" data-show="weak" hidden><svg class="bha-icon"><use href="#i-broken"/></svg><div class="bha-notice__body"><span class="bha-notice__title" data-sp="defeat">가면이 깨져 쇠약</span><span>지난 원정에서 패배했다. 돌보기로 컨디션을 회복하기 전까지 전투 시작 체력이 줄어 있다. <span class="bha-tag bha-tag--provisional">임시</span></span></div></div>
+
+  <!-- 탭: 돌보기 -->
+  <div class="bha-nest__tab" data-tab="home">
+    <section class="bha-panel">
+      <header class="bha-panel__head"><h2 class="bha-panel__title">돌보기</h2><span class="bha-panel__aside">원정 사이에 무엇이든 몇 번이든</span></header>
+      <div class="bha-care">
+        <button class="bha-care__btn bha-care__btn--feed" type="button"><svg class="bha-icon"><use href="#i-care-feed"/></svg><span data-sp="care1">먹이 주기</span><small>허기 −</small></button>
+        <button class="bha-care__btn bha-care__btn--sleep" type="button"><svg class="bha-icon"><use href="#i-care-sleep"/></svg><span data-sp="care2">재우기</span><small>컨디션 +</small></button>
+        <button class="bha-care__btn bha-care__btn--pet" type="button"><svg class="bha-icon"><use href="#i-care-pet"/></svg><span data-sp="care3">쓰다듬기</span><small><span data-sp="stab">자아</span> +</small></button>
+      </div>
+    </section>
+
+    <section class="bha-panel" id="evoPanel">
+      <header class="bha-panel__head"><h2 class="bha-panel__title"><svg class="bha-icon"><use href="#i-evolve"/></svg>진화</h2><button class="bha-btn bha-btn--small bha-btn--ghost" type="button"><svg class="bha-icon"><use href="#i-dex"/></svg>진화체 도감</button></header>
+      <div id="evoBody"></div>
+    </section>
+  </div>
+
+  <!-- 탭: 특성 -->
+  <div class="bha-nest__tab" data-tab="traits" hidden>
+    <section class="bha-panel">
+      <header class="bha-panel__head"><h2 class="bha-panel__title"><svg class="bha-icon"><use href="#i-slot"/></svg>흡수 특성</h2><span class="bha-panel__aside"><span data-sp="slot">본체 슬롯</span> <b id="slotCount">2 / 3</b></span></header>
+      <div class="bha-notice bha-notice--warn" data-show="swap" hidden><svg class="bha-icon"><use href="#i-swap"/></svg><div class="bha-notice__body"><span class="bha-notice__title">어느 슬롯과 바꿀까?</span>‘공허의 눈’을 넣을 슬롯을 누른다. 빠진 특성은 보유 목록으로 돌아간다.</div></div>
+      <div class="bha-slots" id="slots"></div>
+      <div class="bha-row bha-row--start bha-row--wrap" id="setBonus"></div>
+      <p class="bha-faint">계통·특성 풀과 리스크 수치는 임시 데이터 <span class="bha-tag bha-tag--provisional">임시</span></p>
+    </section>
+    <section class="bha-panel">
+      <header class="bha-panel__head"><h2 class="bha-panel__title">보유 특성</h2><span class="bha-panel__aside">3개</span></header>
+      <div class="bha-owned" id="owned"></div>
+      <div data-show="swap" hidden><button class="bha-btn bha-btn--block" type="button">취소</button></div>
+    </section>
+  </div>
+
+  <!-- 탭: 덱 -->
+  <div class="bha-nest__tab" data-tab="deck" hidden>
+    <section class="bha-panel">
+      <header class="bha-panel__head"><h2 class="bha-panel__title"><svg class="bha-icon"><use href="#i-deck"/></svg>타일 덱</h2><span class="bha-chip" id="deckCount">8 / 8</span></header>
+      <p class="bha-dim">원정 중 보상으로 이 덱에서 타일이 뽑힌다. 뽑힌 타일만 길 옆에 놓을 수 있다.</p>
+      <div class="bha-stack" id="deck"></div>
+    </section>
+  </div>
+
+  <!-- 탭: 더보기 -->
+  <div class="bha-nest__tab" data-tab="more" hidden>
+    <nav class="bha-menu" aria-label="더보기">
+      <button class="bha-menu__row" type="button"><svg class="bha-icon"><use href="#i-dex"/></svg>진화체 도감<small>4 / 64</small><svg class="bha-icon"><use href="#i-chevron-right"/></svg></button>
+      <button class="bha-menu__row" type="button"><svg class="bha-icon"><use href="#i-title"/></svg>칭호 도감<small>2 / 10</small><svg class="bha-icon"><use href="#i-chevron-right"/></svg></button>
+      <button class="bha-menu__row" type="button"><svg class="bha-icon"><use href="#i-practice"/></svg>전투 연습<small></small><svg class="bha-icon"><use href="#i-chevron-right"/></svg></button>
+      <button class="bha-menu__row" type="button"><svg class="bha-icon"><use href="#i-swap-species"/></svg>종족 바꾸기<small data-sp="species">호로</small><svg class="bha-icon"><use href="#i-chevron-right"/></svg></button>
+      <button class="bha-menu__row" type="button"><svg class="bha-icon"><use href="#i-settings"/></svg>설정 (조작 판정)<small></small><svg class="bha-icon"><use href="#i-chevron-right"/></svg></button>
+      <button class="bha-menu__row" type="button"><svg class="bha-icon"><use href="#i-help"/></svg>도움말 · 튜토리얼<small></small><svg class="bha-icon"><use href="#i-chevron-right"/></svg></button>
+    </nav>
+    <p class="bha-nest__foot">P7 · 버전 C.19 · 밸런스 16 · 2026-10-18 배포 (커밋 abc1234)</p>
+  </div>
+
+  <!-- 행동 독: 원정 출발 / 이어하기 (항상 보임) -->
+  <div class="bha-dock bha-dock--above-tabbar" id="dock"></div>
+
+  <nav class="bha-tabbar" role="tablist" aria-label="둥지 메뉴" id="tabbar">
+    <button class="bha-tabbar__item" role="tab" data-tab-btn="home" aria-selected="true"><svg class="bha-icon"><use href="#i-nest"/></svg>돌보기</button>
+    <button class="bha-tabbar__item" role="tab" data-tab-btn="traits" aria-selected="false"><svg class="bha-icon"><use href="#i-slot"/></svg>특성<span class="bha-tabbar__badge" id="traitBadge">1</span></button>
+    <button class="bha-tabbar__item" role="tab" data-tab-btn="deck" aria-selected="false"><svg class="bha-icon"><use href="#i-deck"/></svg>덱</button>
+    <button class="bha-tabbar__item" role="tab" data-tab-btn="more" aria-selected="false"><svg class="bha-icon"><use href="#i-dex"/></svg>더보기</button>
+  </nav>
+</main>
+</div>
+
+<script src="./_demo/kit.js"></script>
+<script>
+(function () {
+  var K = window.bhaKit, ic = K.icon, $ = function (id) { return document.getElementById(id); };
+  var tab = 'home';
+  function setTab(t) {
+    tab = t;
+    document.querySelectorAll('[data-tab]').forEach(function (p) { p.hidden = p.dataset.tab !== t; });
+    document.querySelectorAll('[data-tab-btn]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tabBtn === t)); });
+  }
+  $('tabbar').addEventListener('click', function (e) { var b = e.target.closest('[data-tab-btn]'); if (b) setTab(b.dataset.tabBtn); });
+
+  function status(s) {
+    var v = { hunger: 20, cond: 80, stab: 50, risk: 0 };
+    if (s === 'danger') v = { hunger: 76, cond: 32, stab: 28, risk: 68 };
+    if (s === 'weak') v = { hunger: 40, cond: 22, stab: 41, risk: 12 };
+    $('status').innerHTML =
+      K.meter({ mod: 'hunger', label: '허기', icon: 'i-hunger', value: v.hunger, max: 100, zone: 0.8, danger: v.hunger >= 80, note: v.hunger >= 70 ? '배고픔: 원정 중 허기 위험' : '' }) +
+      K.meter({ mod: 'cond', label: '컨디션', icon: 'i-cond', value: v.cond, max: 100, danger: v.cond < 40, note: v.cond < 40 ? '나쁨: 전투에 공허 블록 ↑' : '' }) +
+      K.meter({ mod: 'stab', label: '자아', sp: 'stab', icon: 'i-stab', value: v.stab, max: 100 }) +
+      K.meter({ mod: 'risk', label: '광기', sp: 'risk', icon: 'i-risk', value: v.risk, max: 100, zone: 0.6, danger: v.risk >= 60, note: v.risk >= 60 ? '높음' : '' });
+  }
+
+  function evo(s) {
+    var can = s === 'canEvolve', fin = s === 'final';
+    var lin = fin ? { a: 9, b: 7, c: 4, d: 3, e: 4 } : can ? { a: 11, b: 9, c: 4, d: 2, e: 1 } : { a: 5, b: 4, c: 2, d: 1, e: 0 };
+    var total = lin.a + lin.b + lin.c + lin.d + lin.e, need = 27, lead = 'a';
+    $('evoPanel').className = 'bha-panel' + (can ? ' bha-panel--accent' : '');
+    var seg = ['a', 'b', 'c', 'd', 'e'].map(function (k) { return lin[k] ? '<span class="bha-linbar__seg bha-lin--' + k + '" style="--n:' + lin[k] + '"></span>' : ''; }).join('') + (total < need ? '<span class="bha-linbar__empty" style="flex:' + (need - total) + ' 1 0"></span>' : '');
+    var legend = ['a', 'b', 'c', 'd', 'e'].map(function (k) { return '<span class="bha-linbar__item bha-lin--' + k + (lin[k] ? '' : ' is-zero') + (k === lead ? ' is-lead' : '') + '">' + ic('i-lin-' + k) + '<b>' + lin[k] + '</b><small>계통' + k.toUpperCase() + '</small></span>'; }).join('');
+    var stageTxt = fin ? '5단계 · <span data-sp="stage5">아란칼</span>' : '2단계 · <span data-sp="stage2">길리안</span>';
+    $('stageChip').innerHTML = stageTxt;
+    $('evoBody').innerHTML =
+      '<div class="bha-stack" style="gap:12px">' +
+      '<div class="bha-evo__form"><span class="bha-evo__formname">' + (fin ? 'A+B+E형' : 'A+B형') + ' <span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-dim">' + stageTxt + '</span></div>' +
+      (fin ? '<div class="bha-notice bha-notice--rare"><svg class="bha-icon"><use href="#i-rare"/></svg><div class="bha-notice__body"><span class="bha-notice__title">마지막 단계에 도달했다</span>더 진화하지 않는다. 포식 기록은 칭호 조건에 계속 쌓인다.</div></div>' :
+        K.meter({ mod: 'stored', label: '이 단계 포식', sp: 'absorb', spTpl: '이 단계 {}', icon: 'i-absorb', value: Math.min(total, need), max: need })) +
+      '<div class="bha-linbar"><div class="bha-linbar__track" aria-label="계통 분포">' + seg + '</div><div class="bha-linbar__legend">' + legend + '</div></div>' +
+      (fin ? '' : '<div class="bha-evo__facts"><div class="bha-evo__fact"><small>지금 분포로 갈 수 있는 후보</small><b>' + (can ? 2 : 3) + '<small style="font-size:13px">종</small></b></div><div class="bha-evo__fact bha-evo__fact--hidden"><small>진화 결과</small><b>?</b></div></div>') +
+      (fin ? '' : can
+        ? '<button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block" type="button">' + ic('i-evolve') + '<span class="bha-btn__label"><span>진화</span><span class="bha-btn__sub">2단계 → 3단계 <span data-sp="stage3">아쥬커스</span></span></span></button>'
+        : '<div class="bha-evo__cta"><span class="bha-evo__left">진화까지 <b>' + (need - total) + '</b>회 남음<br><span class="bha-faint">원정에서 <span data-sp="absorb">포식</span>하면 쌓인다. 진화는 <span data-sp="nest">둥지</span>에서만.</span></span></div>') +
+      '<p class="bha-faint">진화 조건·수치·진화체 데이터는 임시 <span class="bha-tag bha-tag--provisional">임시</span></p></div>';
+  }
+
+  var SLOT_DATA = [{ name: '찢는 발톱', kind: '기술', lin: 'a' }, { name: '굳은 껍질', kind: '패시브', lin: 'a' }, { name: '뼈 갈기', kind: '외형 파츠', lin: 'b' }];
+  function traits(s) {
+    var full = s === 'swap';
+    var items = full ? SLOT_DATA : [SLOT_DATA[0], SLOT_DATA[1], null];
+    $('slotCount').textContent = (full ? 3 : 2) + ' / 3';
+    $('slots').innerHTML = items.map(function (it, i) {
+      if (!it) return '<button class="bha-slot bha-slot--empty" type="button"><span class="bha-slot__num">' + (i + 1) + '번</span>' + ic('i-plus') + '비어 있음</button>';
+      return '<button class="bha-slot bha-slot--filled bha-lin--' + it.lin + (full ? ' is-target' : '') + '" type="button"><span class="bha-slot__num">' + (i + 1) + '번</span><span class="bha-slot__name">' + it.name + '</span><span class="bha-slot__meta"><span class="bha-tag bha-tag--kind">' + it.kind + '</span><span class="bha-lin bha-lin--' + it.lin + '">' + ic('i-lin-' + it.lin) + it.lin.toUpperCase() + '</span></span></button>';
+    }).join('');
+    $('setBonus').innerHTML = full
+      ? '<span class="bha-setbonus bha-lin--a">' + ic('i-lin-a', 'bha-icon--sm') + '계통A 2/3</span><span class="bha-setbonus bha-lin--b">' + ic('i-lin-b', 'bha-icon--sm') + '계통B 1/3</span>'
+      : '<span class="bha-setbonus bha-lin--a">' + ic('i-lin-a', 'bha-icon--sm') + '계통A 2/3 — 하나 더 장착하면 보너스</span>';
+    var OWNED = [{ name: '공허의 눈', kind: '패시브', lin: 'd', desc: '약점 계통 블록 피해 +20%' }, { name: '재생 체액', kind: '기술', lin: 'c', desc: '회복 블록. 체인3이면 회복량 2배' }, { name: '긴 뿔', kind: '외형 파츠', lin: 'a', desc: '강공격 막기 성공 시 반격' }];
+    $('owned').innerHTML = OWNED.map(function (o, i) {
+      return '<div class="bha-owned__row bha-lin--' + o.lin + (full && i === 0 ? ' is-selected' : '') + '"><span class="bha-owned__mark">' + ic('i-lin-' + o.lin) + '</span><span><span class="bha-owned__name">' + o.name + '<span class="bha-tag bha-tag--kind">' + o.kind + '</span><span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-owned__desc">' + o.desc + '</span></span>' +
+        (full ? (i === 0 ? '<span class="bha-chip bha-chip--rare">선택됨</span>' : '') : '<button class="bha-btn bha-btn--small" type="button">' + (items.indexOf(null) >= 0 ? '장착' : '교체') + '</button>') + '</div>';
+    }).join('');
+    $('traitBadge').hidden = full;
+  }
+
+  var DECK = [['떠도는 영혼', 'prey', '약한 적 출현', 4, 2], ['하급 호로', 'prey', '약한 적 출현', 3, 1], ['상급 호로', 'elite', '강적 출현 + 좋은 보상', 2, 1], ['다른 메노스', 'elite', '강적 출현 + 좋은 보상', 2, 1], ['안개', 'env', '전투 중 블록 바의 순서가 주기적으로 섞인다', 2, 1], ['황무지', 'env', '전투 공격 위력 ×1.3', 2, 1], ['영혼 웅덩이', 'rest', '허기·컨디션 회복 (시간 소모)', 2, 1]];
+  var TILE_ICON = { prey: 'i-tile-prey', elite: 'i-tile-elite', env: 'i-tile-env', rest: 'i-tile-rest' };
+  function deck(s) {
+    var empty = s === 'deckEmpty', total = 0;
+    $('deck').innerHTML = DECK.map(function (d) {
+      var c = empty ? 0 : d[4]; total += c;
+      return '<div class="bha-deckrow' + (c ? '' : ' is-zero') + '" style="--tile:var(--bha-tile-' + d[1] + ')"><span class="bha-deckrow__icon">' + ic(TILE_ICON[d[1]]) + '</span><span class="bha-deckrow__main"><span class="bha-deckrow__name">' + d[0] + ' <span class="bha-tag bha-tag--provisional">임시</span></span><span class="bha-deckrow__desc">' + d[2] + ' · <span class="bha-deckrow__own">보유 ' + d[3] + '</span></span></span>' +
+        '<span class="bha-deckrow__stepper"><button class="bha-btn" type="button" aria-label="' + d[0] + ' 빼기"' + (c ? '' : ' disabled') + '>' + ic('i-minus') + '</button><span class="bha-deckrow__count">' + c + '</span><button class="bha-btn" type="button" aria-label="' + d[0] + ' 더하기"' + (empty || total < 8 ? '' : ' disabled') + '>' + ic('i-plus') + '</button></span></div>';
+    }).join('');
+    $('deckCount').textContent = total + ' / 8';
+    $('deckCount').className = 'bha-chip' + (total === 0 ? ' bha-chip--danger' : '');
+    return total;
+  }
+
+  function dock(s, deckTotal) {
+    var h = '';
+    if (s === 'continue') {
+      h = '<p class="bha-dock__info">' + ic('i-return') + '이어하던 원정: <b>' + window.bhaSp('ground') + '</b> 2바퀴 5칸 · 허기 40 · 타일 3장</p>' +
+        '<div class="bha-dock__row bha-dock__row--two"><button class="bha-btn bha-btn--primary bha-btn--lg" type="button">' + ic('i-play') + '원정 이어하기</button><button class="bha-btn bha-btn--lg" type="button">새 원정</button></div>' +
+        '<p class="bha-dock__info bha-dock__info--warn">' + ic('i-warn') + '새 원정을 시작하면 이어하던 원정은 패배 처리 없이 버려진다.</p>';
+    } else if (s === 'continueHidden') {
+      h = '<p class="bha-dock__info bha-dock__info--warn">' + ic('i-warn') + '이어하기를 숨겼다: 저장된 원정이 지금 버전(밸런스 16)과 맞지 않아 이어갈 수 없다.</p>' +
+        '<div class="bha-dock__row bha-dock__row--two"><button class="bha-btn bha-btn--primary bha-btn--lg" type="button">' + ic('i-nest') + '원정 출발</button><button class="bha-btn bha-btn--lg" type="button">' + ic('i-practice') + '전투 연습</button></div>';
+    } else {
+      var off = deckTotal === 0;
+      h = (off ? '<p class="bha-dock__info bha-dock__info--warn">' + ic('i-warn') + '덱이 비어 있다. 덱 탭에서 타일을 1장 이상 넣어야 출발할 수 있다.</p>' : '') +
+        '<div class="bha-dock__row bha-dock__row--two"><button class="bha-btn bha-btn--primary bha-btn--lg" type="button"' + (off ? ' disabled' : '') + '>' + ic('i-nest') + '<span class="bha-btn__label">원정 출발<span class="bha-btn__sub">덱 ' + deckTotal + ' / 8</span></span></button><button class="bha-btn bha-btn--lg" type="button">' + ic('i-practice') + '전투 연습</button></div>';
+    }
+    $('dock').innerHTML = h;
+  }
+
+  function render(s) {
+    status(s); evo(s); traits(s);
+    var total = deck(s);
+    dock(s, total);
+    setTab(s === 'traits' || s === 'swap' ? 'traits' : s === 'deck' || s === 'deckEmpty' ? 'deck' : s === 'more' ? 'more' : 'home');
+  }
+
+  window.BHA_DEMO = {
+    title: '5·6. 둥지 + 진화 패널',
+    initial: 'base',
+    states: [['base', '기본 (돌보기 탭)'], ['canEvolve', '진화 가능'], ['final', '마지막 단계 도달'], ['danger', '컨디션 나쁨 · 리스크 높음'], ['weak', '쇠약 상태'], ['traits', '특성 탭'], ['swap', '특성 교체 (슬롯 가득)'], ['deck', '덱 탭'], ['deckEmpty', '덱 비어 있음 → 출발 비활성'], ['more', '더보기 탭'], ['continue', '원정 이어하기 있음'], ['continueHidden', '이어하기 숨김 (이유 경고)']],
+    onState: render
+  };
+})();
+</script>
+<script src="./_demo/demo.js"></script>
+</body>
+</html>

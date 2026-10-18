@@ -1,0 +1,110 @@
+<title>블리치 할로우 어센션 UI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="design-system/tokens.css">
+<link rel="stylesheet" href="design-system/theme-hollow.css">
+<link rel="stylesheet" href="design-system/theme-shinigami.css">
+<link rel="stylesheet" href="design-system/base.css">
+<link rel="stylesheet" href="components/components.css">
+<style>
+/* 허브 페이지: 앱과 같은 다크 단일 테마 (의도적으로 라이트 없음) */
+:root { color-scheme: dark; }
+html, body { background: var(--bha-backdrop); color: var(--bha-text-1); }
+.hub { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 28px; }
+.hub__top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.hub__eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--bha-accent-hi); }
+.hub h1 { font-family: var(--bha-font-display); font-weight: 800; font-size: clamp(32px, 8vw, 52px); line-height: 1.04; letter-spacing: -.02em; text-wrap: balance; }
+.hub__lead { color: var(--bha-text-2); font-size: 15px; line-height: 1.65; max-width: 60ch; }
+.steps { display: flex; flex-direction: column; gap: 10px; }
+.step { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 14px; border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-lg); background: var(--bha-bg-1); }
+.step.is-done { border-color: var(--bha-line-2); }
+.step.is-next { opacity: .6; border-style: dashed; background: transparent; }
+.step__no { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--bha-line-2); font-family: var(--bha-font-display); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--bha-text-2); }
+.step.is-done .step__no { background: var(--bha-primary-bg); color: var(--bha-primary-ink); border-color: var(--bha-primary-line); }
+.step__body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.step__title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; }
+.step__desc { font-size: 13px; color: var(--bha-text-2); line-height: 1.55; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: var(--bha-r-md); border: 1px solid var(--bha-line-2); background: var(--bha-bg-2); color: var(--bha-text-1); text-decoration: none; font-size: 14px; font-weight: 700; }
+.links a:hover { border-color: var(--bha-text-3); }
+.links a.is-main { background: var(--bha-primary-bg); color: var(--bha-primary-ink); border-color: var(--bha-primary-line); }
+.files { font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--bha-text-2); background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); padding: 14px; overflow-x: auto; white-space: pre; }
+.foot { font-size: 12px; color: var(--bha-text-3); }
+</style>
+
+<main class="hub">
+  <div class="hub__top">
+    <span class="hub__eyebrow">BHA · UI 핸드오프 패키지</span>
+    <div class="bha-seg bha-seg--sm" role="tablist" aria-label="종족 테마" style="min-width:190px">
+      <button class="bha-seg__item" role="tab" aria-selected="true" data-theme-btn="hollow">호로</button>
+      <button class="bha-seg__item" role="tab" aria-selected="false" data-theme-btn="shinigami">사신</button>
+    </div>
+  </div>
+  <div>
+    <h1>블리치 할로우 어센션<br>UI 디자인</h1>
+  </div>
+  <p class="hub__lead">순수 HTML·CSS로 만든 디자인 시스템과 화면 묶음입니다. 단계마다 여기에 화면이 추가됩니다. 각 화면 오른쪽 아래 버튼으로 상태와 종족 테마를 바꿔 볼 수 있습니다.</p>
+
+  <div class="steps" id="steps"></div>
+
+  <div>
+    <p class="step__desc" style="margin-bottom:8px">폴더 구조 (bha-design/)</p>
+    <div class="files">bha-design/
+├─ HANDOFF.md                  핸드오프 문서 (handoff.html 로 읽기)
+├─ design-system/
+│  ├─ tokens.css               공통 토큰
+│  ├─ theme-hollow.css         호로 테마 토큰
+│  ├─ theme-shinigami.css      사신 테마 토큰
+│  └─ base.css                 리셋·화면 틀·타이포·유틸
+├─ components/
+│  ├─ components.css           모든 컴포넌트
+│  └─ index.html               상태 시트
+├─ icons/
+│  ├─ sprite.svg               &lt;symbol&gt; 스프라이트
+│  ├─ sprite.js                (데모용) 스프라이트 인라인 삽입
+│  └─ i-*.svg                  개별 아이콘
+├─ fonts/                      Pretendard Variable, Hahmlet
+└─ screens/
+   ├─ screens.css              화면 레이아웃
+   ├─ start.html               1 시작
+   ├─ settings.html            2 설정
+   ├─ help.html                3 도움말
+   ├─ battle.html              12 전투 + 4 튜토리얼
+   ├─ nest.html                5 둥지 + 6 진화 패널
+   ├─ evolve.html              6 진화 연출
+   ├─ dex-forms.html           7 진화체 도감
+   ├─ dex-titles.html          8 칭호 도감 + 토스트
+   ├─ expedition.html          9 원정
+   ├─ breakthrough.html        10 한계 돌파
+   ├─ result.html              11 원정 결과
+   ├─ absorb.html              13 흡수 3단계
+   ├─ practice.html            14 전투 연습 + 결과
+   ├─ overlays.html            공용 오버레이
+   ├─ fit-check.html           기기 크기 확인
+   └─ _demo/                   데모 전용 (상태 전환·종족 문구·DOM 참고 구현)</div>
+  </div>
+  <p class="foot">2026-10-18 · 5단계 모두 완료</p>
+</main>
+
+<script>
+(function () {
+  var STEPS = [
+    { no: 1, title: '디자인 시스템 시트', state: 'done', desc: '토큰 · 아이콘 70종 · 기본/게임 컴포넌트와 상태 · 호로/사신 비교', links: [['components/index.html', '시트 열기', true]] },
+    { no: 2, title: '전투 화면 + 튜토리얼 오버레이', state: 'done', desc: '전투 상태 14종(강공격 예고·막기·체인3·드래그·오래 누름·봉인·SP 가득·공허·조우·일시정지·승리·패배·시간 초과) + 튜토리얼 8장면 컷아웃. 360×740에서도 스크롤 없음', links: [['screens/battle.html', '전투 화면', true], ['screens/battle.html#tut1', '튜토리얼 8장면'], ['screens/fit-check.html', '기기 크기 확인']] },
+    { no: 3, title: '둥지 + 진화 + 도감 2종', state: 'done', desc: '둥지는 상태 4바 + 하단 탭(돌보기·특성·덱·더보기) + 항상 보이는 행동 독(원정 출발·이어하기). 진화 패널(계통 누적 막대)·진화 연출, 진화체 도감, 칭호 도감·해금 토스트', links: [['screens/nest.html', '둥지', true], ['screens/evolve.html', '진화 연출'], ['screens/dex-forms.html', '진화체 도감'], ['screens/dex-titles.html', '칭호 도감']] },
+    { no: 4, title: '원정 · 한계 돌파 · 결과 · 흡수 · 전투 연습', state: 'done', desc: '12칸 원형 길(이동·타일 놓기·전투 대기·휴식·허기 위험·둥지 칸 선택·4바퀴 초과 경고), 한계 돌파 연출, 원정 결과(귀환/패배), 흡수 3단계(선택·후보·교체), 전투 연습 35명 목록(필터)·결과', links: [['screens/expedition.html', '원정', true], ['screens/breakthrough.html', '한계 돌파'], ['screens/result.html', '원정 결과'], ['screens/absorb.html', '흡수 3단계'], ['screens/practice.html', '전투 연습']] },
+    { no: 5, title: '시작 · 설정 · 도움말 + HANDOFF.md', state: 'done', desc: '종족 선택(카드가 각 종족 테마로 미리보기), 조작 판정 설정(시각 미리보기), 도움말(요약 4 · 용어 13 · 전투 멈춤 표시), 공용 오버레이. HANDOFF: 사용법 · 테마 규칙 · 종족 문구 표 · 컴포넌트 지도 · 현재 클래스 매핑표 · 구현 주의 · 가정 목록 · 체크리스트', links: [['handoff.html', 'HANDOFF 읽기', true], ['screens/start.html', '시작'], ['screens/settings.html', '설정'], ['screens/help.html', '도움말'], ['screens/overlays.html', '공용 오버레이']] }
+  ];
+  document.getElementById('steps').innerHTML = STEPS.map(function (s) {
+    return '<div class="step is-' + s.state + '"><span class="step__no">' + s.no + '</span><div class="step__body"><span class="step__title">' + s.title + (s.state === 'done' ? ' <span class="bha-chip bha-chip--guard">완료</span>' : ' <span class="bha-chip">예정</span>') + '</span><span class="step__desc">' + s.desc + '</span>' +
+      (s.links.length ? '<span class="links">' + s.links.map(function (l) { return '<a href="' + l[0] + '"' + (l[2] ? ' class="is-main"' : '') + '>' + l[1] + '</a>'; }).join('') + '</span>' : '') + '</div></div>';
+  }).join('');
+  var root = document.documentElement;
+  function setTheme(t) {
+    root.setAttribute('data-bha-theme', t);
+    document.querySelectorAll('[data-theme-btn]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.themeBtn === t)); });
+    try { localStorage.setItem('bha-theme', t); } catch (e) {}
+  }
+  document.querySelectorAll('[data-theme-btn]').forEach(function (b) { b.addEventListener('click', function () { setTheme(b.dataset.themeBtn); }); });
+  try { if (localStorage.getItem('bha-theme') === 'shinigami') setTheme('shinigami'); } catch (e) {}
+})();
+</script>
