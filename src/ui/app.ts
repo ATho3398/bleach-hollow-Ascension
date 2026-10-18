@@ -22,6 +22,7 @@ import { battleLabels, endReasonText } from './labels';
 import { absorbConditionText } from './absorbView';
 import { expeditionView } from './expeditionView';
 import { dexView } from './dexView';
+import { showTitleToasts, titleDexView } from './titleDexView';
 import { evolutionView } from './evolutionPanel';
 import { nestView } from './nestView';
 
@@ -56,6 +57,7 @@ export function startApp(root: HTMLElement): void {
     if (!save) return factionScreen();
     const faction = getFaction(save.factionId);
     const s = save;
+    showTitleToasts(s, faction, persist);
     nestView(root, faction, s, {
       persist,
       onDepart: () => departScreen(faction),
@@ -66,8 +68,10 @@ export function startApp(root: HTMLElement): void {
         if (!r.ok) return nestScreen();
         persist();
         evolutionView(root, faction, from, s.evolution.tierIndex, r.form, nestScreen);
+        showTitleToasts(s, faction, persist);
       },
       onDex: () => dexView(root, faction, s, nestScreen),
+      onTitles: () => titleDexView(root, faction, s, nestScreen),
       onChangeFaction: factionScreen,
     });
   }
@@ -155,6 +159,7 @@ export function startApp(root: HTMLElement): void {
       el('small', 'dim', `시드 ${exp.seed} · 기록이 런 로그에 저장됨`),
       home,
     );
+    if (save) showTitleToasts(save, faction, persist);
   }
 
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──

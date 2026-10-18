@@ -118,14 +118,46 @@ export interface TerrainTileDef {
 
 export type TitleKind = 'rank' | 'hidden-rank' | 'tag';
 
+/**
+ * 칭호 조건 어휘 (GDD 14-7, 임시). 런 로그와 진화 기록을 읽는 조건식이며 and/or 로 조합한다.
+ * 모든 min 은 "이상"이다. 어떤 값도 종족 id 를 쓰지 않는다(종족 차이는 데이터 텍스트뿐).
+ */
+export type TitleCondition =
+  | { type: 'and'; all: TitleCondition[] }
+  | { type: 'or'; any: TitleCondition[] }
+  /** 흡수한 횟수(놓아준 것 제외). lineage 가 없으면 전체 계통, rareOnly 면 희귀 개체만 */
+  | { type: 'absorbCount'; min: number; lineage?: string; rareOnly?: boolean }
+  /** 진화 기록에 이 진화체 id 가 있다(진화한 진화체 또는 진화 전 진화체 = 경로 포함) */
+  | { type: 'passedForm'; formId: string }
+  /** 리스크 한계 돌파 횟수 */
+  | { type: 'breakthroughs'; min: number }
+  /** 한계 돌파 후 귀환한 횟수 */
+  | { type: 'survivedBreakthroughs'; min: number }
+  /** 체인3 발동 누계 */
+  | { type: 'chain3Total'; min: number }
+  /** 막기 성공 누계 */
+  | { type: 'guardTotal'; min: number }
+  /** 강적(class elite) 처치 수 */
+  | { type: 'elitesDefeated'; min: number }
+  /** 귀환한 원정 수 */
+  | { type: 'runsReturned'; min: number }
+  /** 패배한 원정 수 */
+  | { type: 'runsDefeated'; min: number }
+  /** 도달한 최대 바퀴 */
+  | { type: 'maxLap'; min: number }
+  /** 특정 단계(0부터)에 머문 채 격파한 적 수. enemyClass 가 없으면 모든 등급 */
+  | { type: 'defeatedAtTier'; tier: number; min: number; enemyClass?: string };
+
 export interface TitleDef {
   id: string;
   kind: TitleKind;
   /** 숨김 항목은 달성 전까지 도감에 물음표로 보인다 (GDD 8-3, 8-4) */
   hidden: boolean;
   name: PerFaction<string>;
-  /** 획득 조건. 11-6, 11-7 미정이므로 null (구조만 있음). 런 로그(runLog.ts)를 읽게 될 것 */
-  condition: null;
+  /** 획득 조건. 11-6, 11-7 미정이므로 대부분 null(해금 불가). 있으면 provisional 임시 조건이다 */
+  condition: TitleCondition | null;
+  /** 이 조건은 임시(확정 아님). 조건이 있으면 반드시 true (GDD 12장, 14-7) */
+  provisional?: boolean;
 }
 
 /**

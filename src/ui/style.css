@@ -92,3 +92,6 @@ button.cand { text-align:left; display:flex; flex-direction:column; gap:3px; }
 .evo-line { text-align:center; font-size:16px; line-height:1.7; animation:evofade .6s both; }
 @keyframes evofade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
 .evo-result { text-align:center; font-size:24px; font-weight:700; color:#ffd24d; margin:12px 0 4px; }
+.title-tabs { grid-template-columns:repeat(3,1fr); }
+.provisional-tag { color:#ffd24d; font-size:11px; }
+.toast { position:fixed; left:50%; transform:translateX(-50%); z-index:50; background:#222; color:#ffd24d; border:1px solid #ffd24d; border-radius:10px; padding:8px 14px; font-size:14px; max-width:90vw; pointer-events:none; }

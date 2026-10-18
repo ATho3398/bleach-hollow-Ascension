@@ -469,3 +469,36 @@ GDD 제안 (마스터가 반영)
 - 12장 v1.1: 우선순위 triple 22 > pair 20 로 5단계 3조합 우선 구현. 집중형 분포 프로필과 정책 봇 점검 추가(4-2 점검 도구에 ⑤ 집중 정책 봇/분산 봇 표). 5단계 1계통 몰림 기본형 18.9% 는 상한에 가까워 후속에서 5단계에 편식형 같은 1계통용 진화체를 둘지 검토.
 
 명령 시각 2026-10-18 06:23 KST / 답변 시각 2026-10-18 06:30 KST / 걸린 시간 약 7분
+
+## C.14 히든 조건 평가기 + 칭호 도감 (GDD 14-7, P7)
+한 일
+- **조건 구조**: `TitleDef.condition` 이 `TitleCondition | null` (`src/data/schema.ts`). 어휘 13종(임시): `absorbCount`(전체/계통별/희귀만), `passedForm`(진화·진화 전 id = 경로 포함), `breakthroughs`, `survivedBreakthroughs`, `chain3Total`, `guardTotal`, `elitesDefeated`, `runsReturned`, `runsDefeated`, `maxLap`, `defeatedAtTier`(단계·적 등급), `and`/`or`(중첩 가능). 필요한 값이 이미 런 로그에 있어 **RunLog 필드는 더하지 않았다**(`defeatedAtTier` 는 `BattleRecord.tierIndex·enemyClass·won` 에서 계산; `tiers.defeatedWhileAtTier` 는 어디서도 안 채워지므로 쓰지 않음).
+- **평가기** `src/engine/titles/evaluate.ts`: 순수 함수 `evaluateTitles(runLog, saveState, titleDefs)`, `checkCondition`, 해금 기록 `unlockTitles`. 해금 기록 = `{ titleId, at, trigger, snapshot, seen }`. 한 번 해금되면 지우지 않는다. 종족 id 분기 없음.
+- **훅(한 줄씩)**: `recordExpedition` 끝, `performEvolution` 성공 시, `loadSave` — 모두 `checkTitles(save, trigger)`(`src/game.ts`). 알림은 `seen:false` 해금을 UI 가 토스트로 띄우고 `seen` 처리(`showTitleToasts`: 둥지 진입·원정 결과·진화 후).
+- **세이브**: `SaveData.titles: UnlockedTitle[]`, `SAVE_FORMAT_VERSION` 7→8(7→8 은 빈 목록, 로드 때 기존 기록으로 평가). 마이그레이션 체인 유지.
+- **칭호 도감** `src/ui/titleDexView.ts`: 등급 / 히든 등급 / 특별 태그 탭, 둥지의 "칭호 도감" 버튼으로 진입. 해금 = 종족별 이름 + 해금 시각(KST) + "임시 조건" 표시, 미해금 히든 = "?"(조건 비공개), 미해금 일반 등급 = 이름 + "미해금". 진화체 도감과 같은 `dex-*` 스타일.
+- **데이터** `src/data/titles/index.ts`: 파서가 "조건이 있으면 provisional 필수", 계통·진화체 id 실존, min≥1 을 검사.
+- `PATCH_LABEL` C.14, `STAGE_LABEL` P7. 밸런스 수치는 바꾸지 않음(`BALANCE_VERSION` 그대로).
+
+기획서 값 / 실제 값 / 이유
+| 항목 | 기획서 v1.2 | 실제 | 이유 |
+|---|---|---|---|
+| 임시 조건 칭호 | 최소 3개(등급 2 + 태그/히든 1) | 4개: 등급 2, 히든 등급 1, 태그 1 | 평가기·AND/OR 동작을 보이기에 충분 |
+| 일반 등급 미해금 표시 | 이름만 | 이름 + "미해금" | 해금 여부를 구분 |
+| RunLog 필드 추가 | 필요하면 | 없음 | 기존 필드로 충분 |
+
+임시로 정한 규칙 (provisional — 원작 설정 해석 아님, 평가기 시연용)
+| 칭호 | 임시 조건 |
+|---|---|
+| rank-1 | 귀환한 원정 1회 이상 |
+| rank-2 | 강적 3마리 처치 AND 최대 2바퀴 이상 도달 |
+| hidden-rank-3 | 흡수 10회 이상 AND `t2:dominant@lineage-a` 진화 경로 통과 |
+| tag-1 | 한계 돌파 후 귀환 1회 이상 OR 체인3 누계 30회 이상 |
+| 나머지 6개 | 조건 없음(해금 불가) |
+
+테스트: `tests/titles.test.ts` 22개(조건 어휘 각각, AND/OR, 순수성·영구 유지, 세 평가 시점 훅, 임시 칭호 해금 흐름·조건 없는 칭호 불가, 파서 오류, "?" 표시·종족별 이름, 7→8 마이그레이션). 기존 `faction.test.ts` 의 "조건 전부 null" 검사는 "조건은 provisional 일부에만"으로 바꿨다(기능 변경에 따른 갱신).
+
+GDD 제안 (마스터가 반영)
+- 14-7 완료 표기, 12장에 "칭호 조건 어휘 13종·해금 기록 구조(seen/스냅샷)·임시 조건 4개" 기록. 11-7 확정 시 `titles.json` 의 condition 만 교체하면 된다.
+
+사용 모델: Sonnet (Opus 승격 없음)

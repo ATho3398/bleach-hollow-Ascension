@@ -7,7 +7,11 @@
       "hollow": "에스파다 No.10",
       "shinigami": "석관"
     },
-    "condition": null
+    "condition": {
+      "type": "runsReturned",
+      "min": 1
+    },
+    "provisional": true
   },
   {
     "id": "rank-2",
@@ -17,7 +21,20 @@
       "hollow": "에스파다 No.7",
       "shinigami": "부대장"
     },
-    "condition": null
+    "condition": {
+      "type": "and",
+      "all": [
+        {
+          "type": "elitesDefeated",
+          "min": 3
+        },
+        {
+          "type": "maxLap",
+          "min": 2
+        }
+      ]
+    },
+    "provisional": true
   },
   {
     "id": "rank-3",
@@ -67,7 +84,20 @@
       "hollow": "에스파다 No.100",
       "shinigami": "대귀도장"
     },
-    "condition": null
+    "condition": {
+      "type": "and",
+      "all": [
+        {
+          "type": "absorbCount",
+          "min": 10
+        },
+        {
+          "type": "passedForm",
+          "formId": "t2:dominant@lineage-a"
+        }
+      ]
+    },
+    "provisional": true
   },
   {
     "id": "tag-1",
@@ -77,7 +107,20 @@
       "hollow": "최초의 호로",
       "shinigami": "은밀기동대장"
     },
-    "condition": null
+    "condition": {
+      "type": "or",
+      "any": [
+        {
+          "type": "survivedBreakthroughs",
+          "min": 1
+        },
+        {
+          "type": "chain3Total",
+          "min": 30
+        }
+      ]
+    },
+    "provisional": true
   },
   {
     "id": "tag-2",

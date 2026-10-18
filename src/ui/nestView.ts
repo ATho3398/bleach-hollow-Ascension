@@ -1,5 +1,6 @@
 // 둥지 / 대원실 화면 (GDD 7장, P2 최소 버전): 허기·컨디션, 행동 3개, 덱 편성, 출발
 import { BALANCE } from '../config/balance';
+import { TITLES } from '../data/titles';
 import { tilesFor, tileName } from '../data/tiles';
 import { NEST_ACTIONS, type FactionConfig } from '../engine/faction';
 import { applyIdle, doNestAction } from '../engine/nest';
@@ -18,6 +19,8 @@ export interface NestViewHandlers {
   onEvolve: () => void;
   /** 진화체 도감 화면 */
   onDex: () => void;
+  /** 칭호 도감 화면 (C.14) */
+  onTitles: () => void;
   onChangeFaction: () => void;
   persist: () => void;
 }
@@ -94,6 +97,8 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   depart.onclick = h.onDepart;
   const practice = el('button', '', '전투 연습 (테스트)');
   practice.onclick = h.onPractice;
+  const titlesBtn = el('button', '', `칭호 도감 (${save.titles.length}/${TITLES.length})`);
+  titlesBtn.onclick = h.onTitles;
   const change = el('button', '', '종족 바꾸기');
   change.onclick = h.onChangeFaction;
   const runs = save.runLog.runs;
@@ -117,6 +122,7 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     deckBox,
     depart,
     practice,
+    titlesBtn,
     change,
     el('small', 'dim', versionLabel()),
   );

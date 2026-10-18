@@ -11,10 +11,13 @@ import {
 import { formsOfTier, tierFallback } from './data/evolution';
 import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
 import { tilesFor } from './data/tiles';
+import { TITLES } from './data/titles';
+import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
+import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 7;
+export const SAVE_FORMAT_VERSION = 8;
 
 export interface SaveMeta {
   format: number;
@@ -43,6 +46,8 @@ export interface SaveData {
   tiles: TileStock;
   /** 히든 조건용 영구 기록 */
   runLog: RunLog;
+  /** 칭호 해금 목록 (C.14, 형식 8): 한 번 해금하면 영구. 해금 시각·시점·스냅샷 포함 */
+  titles: UnlockedTitle[];
 }
 
 export interface TileStock {
@@ -56,7 +61,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog() };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [] };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
@@ -85,6 +90,7 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   save.evolution = cloneEvolution(exp.evolution);
   for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   applyExpeditionEnd(save.nest, exp, nowMs);
+  checkTitles(save, 'expedition', nowMs);
 }
 
 function cloneBuildOf(b: BuildState): BuildState {
@@ -97,8 +103,14 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now()): Ev
   if (r.ok) {
     save.runLog.tiers.evolutions.push(r.record);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
+    checkTitles(save, 'evolution', nowMs);
   }
   return r;
+}
+
+/** 칭호 평가 훅 (원정 종료·진화·로드). 새로 해금된 칭호 정의를 돌려주고, 알림은 UI 가 unlocked.seen 으로 띄운다 */
+export function checkTitles(save: SaveData, trigger: TitleTrigger, nowMs: number = Date.now(), defs: readonly TitleDef[] = TITLES): TitleDef[] {
+  return unlockTitles(save.runLog, save, defs, trigger, nowMs);
 }
 
 /** 새 원정의 runId = 지금까지 기록된 원정 수 + 1 */
@@ -198,13 +210,21 @@ export function migrateSave(raw: unknown): SaveData | null {
     migrateEvolutionV7(save);
     save.meta.format = 7;
   }
+  if (save.meta.format < 8) {
+    // 형식 7 → 8 (C.14 칭호 도감): 해금 목록 추가. 지금까지의 런 로그로 충족된 칭호는 로드 때 평가되어 해금된다
+    save.titles = [];
+    save.meta.format = 8;
+  }
+  save.titles = save.titles ?? [];
   return save;
 }
 
 export function loadSave(storage: StorageLike): SaveData | null {
   try {
     const text = storage.getItem(SAVE_KEY);
-    return text ? migrateSave(JSON.parse(text)) : null;
+    const save = text ? migrateSave(JSON.parse(text)) : null;
+    if (save) checkTitles(save, 'load');
+    return save;
   } catch {
     return null;
   }
