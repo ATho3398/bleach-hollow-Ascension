@@ -18,7 +18,7 @@ import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { applyTheme } from './bha/theme';
 import { speciesView, startView } from './startView';
-import { slotPickView } from './slotView';
+import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { setTitleRequest, signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
@@ -152,19 +152,19 @@ export function startApp(host: HTMLElement): void {
     // 시작 화면의 테마: 가장 최근 슬롯의 종족, 없으면 등록된 첫 종족 (종족 id 로 분기하지 않는다)
     const lastSum = sums.find((x) => x.slot === last);
     applyTheme(lastSum && lastSum.state === 'ok' ? getFaction(lastSum.factionId) : FACTIONS[0]!);
-    startView(root, FACTIONS, sums, {
+    startView(root, sums, {
       onNew: () => open('slot-new', () => renderSlotPick('new')),
-      onContinue: () => last !== null && enterSlot(last),
+      onContinue: () => open('slot-continue', () => renderSlotPick('continue')),
       onImport: () => open('slot-import', () => renderSlotPick('import')),
-      onSettings: settingsOpener(false),
-      onHelp: () => openHelp(undefined, true),
     }, note);
   }
 
-  function renderSlotPick(mode: 'new' | 'import'): void {
+  function renderSlotPick(mode: SlotPickMode): void {
     const sums = allSlotSummaries(localStorage);
     slotPickView(root, mode, sums, FACTIONS, (sum) => {
-      if (mode === 'new') {
+      if (mode === 'continue') {
+        if (sum.state === 'ok') enterSlot(sum.slot);
+      } else if (mode === 'new') {
         const begin = () => open('species', () => renderSpecies(sum.slot));
         if (sum.state === 'empty') begin();
         else confirmDialog({

@@ -237,3 +237,13 @@ button.bha-slot { cursor: pointer; }
 .bha-tut.is-practice { pointer-events: none; }                 /* 전투 화면을 직접 만진다 */
 .bha-tut.is-practice .bha-tut__card { pointer-events: auto; }
 .bha-tut.is-practice .bha-tut__hole { box-shadow: none; }       /* 어둡게 덮지 않고 테두리만 */
+
+/* ═════ 시작 화면 (GDD 18-1): 타이틀 중앙 상단 + 버튼 3개 세로 ═════ */
+.bha-lcd .bha-app.bha-start.bha-start--title {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: var(--bha-sp-5);
+  padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-3);
+}
+.bha-start--title .bha-start__hero { align-items: center; text-align: center; padding-top: 0; }
+.bha-start--title .bha-start__menu { display: flex; flex-direction: column; gap: var(--bha-sp-3); width: min(280px, 100%); }
+.bha-start--title .bha-start__ver { text-align: center; margin-top: auto; }
+.bha-start--title .bha-notice { max-width: 420px; }
