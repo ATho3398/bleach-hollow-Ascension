@@ -14,12 +14,12 @@ import {
   BASIC_SKILL_ID, blockEffect, drainCombatEvents, elapsedSeconds, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type CombatInput, type CombatState,
 } from '../engine/combat';
-import type { FactionConfig } from '../engine/faction';
+import { roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
 import { onHold } from './bha/hold';
 import {
-  blockEl, blockVisual, chainLevelAt, floatPool, floatSpot, foeEl, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
+  blockEl, blockVisual, heroEl, chainLevelAt, floatPool, floatSpot, foeEl, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl,
   type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
@@ -30,7 +30,8 @@ import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
-import { loadFxSettings } from './fxSettings';
+import { loadFxSettings, prefersReducedMotion } from './fxSettings';
+import { attackFx, fxModeOf } from './attackFx';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -215,6 +216,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // ── 2. 무대: 실루엣 + 플로팅 숫자 + 사건 로그 3줄 ──
   const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', slug ? `var(--bha-lin-${slug})` : null);
+  // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
+  const hero = heroEl(roomOf(faction));
   const floats = el('div', 'bha-battle__floats');
   const log = el('div', 'bha-log');
   log.setAttribute('aria-live', 'polite');
@@ -224,7 +227,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 효과 레이어: 번쩍임 한 장(투명도만 애니메이션). 조작을 막지 않는다
   const fxFlash = el('div', 'bha-fxflash');
   fxFlash.setAttribute('aria-hidden', 'true');
-  arena.append(foe, floats, fxFlash, log);
+  arena.append(hero.root, foe, floats, fxFlash, log);
 
   // ── 3. 내 영역 ──
   const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: s.player.maxHp, ghost: s.player.hp, compact: true, lg: true });
@@ -410,6 +413,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const setPaused = (on: boolean) => {
     if (s.status !== 'playing' || overlayOpen) return;
     paused = on;
+    attack.setPaused(halted());
     pauseBtn.replaceChildren(icon(on ? 'i-play' : 'i-pause'));
     pauseBtn.setAttribute('aria-label', on ? '계속' : '일시정지');
     tray.root.classList.toggle('is-paused', on);
@@ -447,6 +451,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   });
   speedBtn.onclick = () => {
     speed = speed === 1 ? 2 : 1;
+    attack.setSpeed(speed);
     setText(speedText, `${speed}x`);
     speedBtn.classList.toggle('is-on', speed === 2);
   };
@@ -479,19 +484,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (fx.shake) replayOnce(arena, 'is-shake', 320);
   };
   const cues: FxCue[] = [];
-  const hitFoe = () => replayOnce(foe, 'is-hit', 600);
+  /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
+  const attack = attackFx({
+    player: { root: hero.root, body: hero.body, dir: 1 },
+    enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: -1 },
+    top,
+    mode: fxModeOf(prefersReducedMotion(), fx.shake),
+    unit: () => 1,
+  });
   const n0 = (v: number) => String(Math.round(v));
   let specialNoteUntil = 0;
   const react = (e: CombatEvent) => {
     const cue = cueOf(e, top);
     if (cue) cues.push(cue);
+    attack.react(e);
     if (e.kind === 'block' || e.kind === 'stored-use') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':
-        if (e.damage > 0) hitFoe();
         break;
       case 'block': {
-        if (e.damage > 0) hitFoe();
         if (e.block === 'void') {
           spawnFloat('void', `−${n0(e.damage)}`, { iconId: 'i-void' });
           replayOnce(flashVoid, 'is-on', 900);
@@ -516,11 +527,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         flash('is-special', 600);
         break;
       case 'stored-use':
-        hitFoe();
         spawnFloat('attack', `−${n0(e.damage)}`, { crit: true });
         spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
         flash('is-special', 600);
-        shake();
         break;
       case 'enemy-attack':
         if (e.guarded) {
@@ -866,12 +875,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // ── 실시간 루프: 화면 프레임마다 쌓인 시간만큼 엔진 틱을 돌린다 (1x/2x) ──
   const tickMs = p.tickSeconds * 1000;
   let acc = 0;
+  let fxHalted = false;
   let last = performance.now();
   const frame = (now: number) => {
     if (stopped) return;
     const dt = Math.min(250, now - last);
     last = now;
     if (s.status === 'playing') {
+      if (halted() !== fxHalted) attack.setPaused((fxHalted = halted()));
       const f = frameTicks(acc, dt, speed, tickMs, halted());
       acc = f.acc;
       for (let n = 0; n < f.ticks && s.status === 'playing'; n++) step(s, queue.splice(0, queue.length));

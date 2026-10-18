@@ -1,6 +1,8 @@
 // 전투 화면 전용 헬퍼 (U-2, 디자인 HANDOFF 5-1·5-2·5-4·7장).
 // 위쪽은 DOM 에 의존하지 않는 순수 함수(약어 선택, 묶음 계산, 삽입 막대·밀림 위치, 로그 역할 …)라 단위 테스트한다 (tests/bha-battle.test.ts).
 // 아래쪽은 블록·블록 바·로그 줄·플로팅 숫자·적 실루엣을 만드는 DOM 조립과 1회성 클래스 재생 도구.
+import { artUrls } from '../../data/art/manifest';
+import type { RoomConfig } from '../../engine/faction';
 import type { EnemyPatternKind } from '../../data/schema';
 import { el, icon } from './dom';
 
@@ -153,6 +155,27 @@ export function foeEl(symbolId: string, aura: string | null): HTMLElement {
   body.append(foeSvg(symbolId));
   foe.append(el('span', 'bha-foe__aura'), body);
   return foe;
+}
+
+const ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+
+/** 내 그림 한 장 (`.bha-hero`): 몸통박치기의 주인공. 그림이 있으면 첫 프레임 한 장(왼쪽을 보는 그림), 없으면 자리표시 도형 */
+export function heroEl(room: RoomConfig): { root: HTMLElement; body: HTMLElement } {
+  const root = el('div', 'bha-hero');
+  const body = el('span', 'bha-hero__body');
+  const { frames, src } = artUrls(room.characterArt, ART_BASE);
+  const url = src ?? frames?.[0] ?? null;
+  if (url) {
+    const img = el('img', 'bha-hero__img') as HTMLImageElement;
+    img.src = url;
+    img.alt = '';
+    body.classList.add('has-art');
+    body.append(img);
+  } else {
+    body.append(el('span', 'bha-hero__eye'), el('span', 'bha-hero__eye'));
+  }
+  root.append(body);
+  return { root, body };
 }
 
 const BLOCK_ICON: Record<BlockVisual, string> = {
