@@ -10,7 +10,8 @@
     "weaknessLineageId": "lineage-b",
     "provisional": true,
     "lineageId": "lineage-a",
-    "rareChance": 0.1
+    "rareChance": 0.1,
+    "testOnly": true
   },
   {
     "id": "test-b",
@@ -23,7 +24,8 @@
     "weaknessLineageId": "lineage-c",
     "provisional": true,
     "lineageId": "lineage-b",
-    "rareChance": 0.1
+    "rareChance": 0.1,
+    "testOnly": true
   },
   {
     "id": "test-d",
@@ -36,7 +38,8 @@
     "weaknessLineageId": "lineage-e",
     "provisional": true,
     "lineageId": "lineage-d",
-    "rareChance": 0.1
+    "rareChance": 0.1,
+    "testOnly": true
   },
   {
     "id": "test-e",
@@ -49,7 +52,8 @@
     "weaknessLineageId": "lineage-d",
     "provisional": true,
     "lineageId": "lineage-e",
-    "rareChance": 0.1
+    "rareChance": 0.1,
+    "testOnly": true
   },
   {
     "id": "test-elite",
@@ -61,6 +65,7 @@
     "attackInAttacks": 0.16,
     "weaknessLineageId": "lineage-a",
     "pattern": {
+      "kind": "heavy-seal",
       "everySeconds": 8,
       "sequence": [
         "heavy",
@@ -73,6 +78,592 @@
     },
     "provisional": true,
     "lineageId": "lineage-c",
-    "rareChance": 0.25
+    "rareChance": 0.25,
+    "testOnly": true
+  },
+  {
+    "id": "a-basic",
+    "name": {
+      "*": "A약점 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-a",
+    "lineageId": "lineage-b",
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "a-swift",
+    "name": {
+      "*": "A약점 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "weaknessLineageId": "lineage-a",
+    "lineageId": "lineage-c",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "a-sturdy",
+    "name": {
+      "*": "A약점 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "weaknessLineageId": "lineage-a",
+    "lineageId": "lineage-d",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "a-heavy-seal",
+    "name": {
+      "*": "A약점 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-a",
+    "lineageId": "lineage-b",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "a-heavy-chain",
+    "name": {
+      "*": "A약점 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-a",
+    "lineageId": "lineage-c",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "a-stance",
+    "name": {
+      "*": "A약점 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 58,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-a",
+    "lineageId": "lineage-d",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.35,
+      "provisional": true
+    }
+  },
+  {
+    "id": "b-basic",
+    "name": {
+      "*": "B약점 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-b",
+    "lineageId": "lineage-c",
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "b-swift",
+    "name": {
+      "*": "B약점 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "weaknessLineageId": "lineage-b",
+    "lineageId": "lineage-d",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "b-sturdy",
+    "name": {
+      "*": "B약점 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "weaknessLineageId": "lineage-b",
+    "lineageId": "lineage-e",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "b-heavy-seal",
+    "name": {
+      "*": "B약점 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-b",
+    "lineageId": "lineage-c",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "b-heavy-chain",
+    "name": {
+      "*": "B약점 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-b",
+    "lineageId": "lineage-d",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "b-stance",
+    "name": {
+      "*": "B약점 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 58,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-b",
+    "lineageId": "lineage-e",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.35,
+      "provisional": true
+    }
+  },
+  {
+    "id": "c-basic",
+    "name": {
+      "*": "C약점 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-c",
+    "lineageId": "lineage-d",
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "c-swift",
+    "name": {
+      "*": "C약점 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "weaknessLineageId": "lineage-c",
+    "lineageId": "lineage-e",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "c-sturdy",
+    "name": {
+      "*": "C약점 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "weaknessLineageId": "lineage-c",
+    "lineageId": "lineage-a",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "c-heavy-seal",
+    "name": {
+      "*": "C약점 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-c",
+    "lineageId": "lineage-d",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "c-heavy-chain",
+    "name": {
+      "*": "C약점 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-c",
+    "lineageId": "lineage-e",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "c-stance",
+    "name": {
+      "*": "C약점 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 58,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-c",
+    "lineageId": "lineage-a",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.35,
+      "provisional": true
+    }
+  },
+  {
+    "id": "d-basic",
+    "name": {
+      "*": "D약점 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-d",
+    "lineageId": "lineage-e",
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "d-swift",
+    "name": {
+      "*": "D약점 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "weaknessLineageId": "lineage-d",
+    "lineageId": "lineage-a",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "d-sturdy",
+    "name": {
+      "*": "D약점 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "weaknessLineageId": "lineage-d",
+    "lineageId": "lineage-b",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "d-heavy-seal",
+    "name": {
+      "*": "D약점 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-d",
+    "lineageId": "lineage-e",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "d-heavy-chain",
+    "name": {
+      "*": "D약점 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-d",
+    "lineageId": "lineage-a",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "d-stance",
+    "name": {
+      "*": "D약점 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 58,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-d",
+    "lineageId": "lineage-b",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.35,
+      "provisional": true
+    }
+  },
+  {
+    "id": "e-basic",
+    "name": {
+      "*": "E약점 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-e",
+    "lineageId": "lineage-a",
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "e-swift",
+    "name": {
+      "*": "E약점 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "weaknessLineageId": "lineage-e",
+    "lineageId": "lineage-b",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "e-sturdy",
+    "name": {
+      "*": "E약점 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "weaknessLineageId": "lineage-e",
+    "lineageId": "lineage-c",
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "e-heavy-seal",
+    "name": {
+      "*": "E약점 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-e",
+    "lineageId": "lineage-a",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "e-heavy-chain",
+    "name": {
+      "*": "E약점 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 66,
+    "attackInAttacks": 0.16,
+    "weaknessLineageId": "lineage-e",
+    "lineageId": "lineage-b",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "e-stance",
+    "name": {
+      "*": "E약점 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 58,
+    "attackInAttacks": 0.24,
+    "weaknessLineageId": "lineage-e",
+    "lineageId": "lineage-c",
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.35,
+      "provisional": true
+    }
   }
 ]

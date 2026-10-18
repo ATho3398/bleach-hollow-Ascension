@@ -53,6 +53,12 @@ function eventText(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return e.guarded ? `강공격을 막았다! ${n(e.damage)} 피해${e.reflected > 0 ? ` · ${n(e.reflected)} 반사` : ''}` : `강공격 적중! ${n(e.damage)} 피해`;
     case 'seal':
       return `봉인! ${e.seconds}초 동안 ${labels.skillBlock} 생성 정지`;
+    case 'stance':
+      return `방어 자세! ${e.seconds}초 동안 내 블록 피해 감소 · 블록을 쓰면 반격`;
+    case 'stance-end':
+      return '방어 자세가 풀렸다';
+    case 'counter':
+      return `반격! ${n(e.damage)} 피해${e.guarded ? ' (막기로 경감)' : ''}`;
     case 'shuffle':
       return '블록 바의 순서가 섞였다';
     case 'end':
@@ -221,6 +227,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     castText.textContent = cast ? `강공격 시전 중 ${(cast.ticks * p.tickSeconds).toFixed(1)}초 — ${labels.role.guard} 블록!` : '';
     const chips: string[] = [];
     if (s.guard.ticks > 0) chips.push(`${labels.role.guard} ${(s.guard.ticks * p.tickSeconds).toFixed(1)}초`);
+    if (s.enemy.stance) chips.push(`적 방어 자세 ${(s.enemy.stance.ticks * p.tickSeconds).toFixed(1)}초 (블록 피해 감소·반격)`);
     if (s.sealTicks > 0) chips.push(`봉인 ${(s.sealTicks * p.tickSeconds).toFixed(1)}초`);
     if (s.voidUsed > 0) chips.push(`${labels.voidBlock} ${s.voidUsed}회`);
     if (s.chain3Count > 0) chips.push(`${labels.chain}${top} ${s.chain3Count}회`);

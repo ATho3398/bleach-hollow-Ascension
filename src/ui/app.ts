@@ -1,6 +1,8 @@
 // 화면 흐름: 종족 선택 → 둥지 → 원정(12칸 길) → 전투 → 원정 결과 → 둥지. DOM/CSS 만 쓴다.
 // 화면 텍스트는 FactionConfig·데이터 스킨에서 읽고, 종족 id 로 분기하지 않는다.
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, enemyPatternKind } from '../data/enemies';
+import type { EnemyPatternKind } from '../data/schema';
+
 import { FACTIONS, getFaction } from '../data/factions';
 import { pickFaction, type EnemyDef } from '../data/schema';
 import { tileName } from '../data/tiles';
@@ -25,6 +27,9 @@ import { dexView } from './dexView';
 import { showTitleToasts, titleDexView } from './titleDexView';
 import { evolutionView } from './evolutionPanel';
 import { nestView } from './nestView';
+
+/** 연습 목록용 패턴 이름 (임시 표시) */
+const PATTERN_LABEL: Record<EnemyPatternKind, string> = { basic: '기본형', swift: '속공형', sturdy: '단단형', 'heavy-seal': '강공격·봉인', 'heavy-chain': '연속 강공격', stance: '방어 자세·반격' };
 
 export function startApp(root: HTMLElement): void {
   let save: SaveData | null = loadSave(localStorage);
@@ -208,7 +213,7 @@ export function startApp(root: HTMLElement): void {
     const list = el('div', 'stack');
     for (const enemy of ENEMIES) {
       const name = pickFaction(enemy.name, faction.id);
-      const b = el('button', '', `${name} (${enemy.class === 'elite' ? '강적' : '일반'}) — 약점 ${lineageName(enemy.weaknessLineageId, faction.id)}`);
+      const b = el('button', '', `${name} (${enemy.class === 'elite' ? '강적' : '일반'}·${PATTERN_LABEL[enemyPatternKind(enemy)]}) — 약점 ${lineageName(enemy.weaknessLineageId, faction.id)}`);
       b.onclick = () => practiceBattle(faction, enemy);
       list.append(b);
     }

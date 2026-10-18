@@ -2,7 +2,8 @@
 // 상태는 평범한 객체(rng 포함)라 structuredClone 으로 복제할 수 있고, 같은 시드 = 같은 원정.
 
 import { BALANCE } from '../../config/balance';
-import { ENEMIES } from '../../data/enemies';
+import { scaleEnemy } from '../../data/enemies';
+import { enemyPool, pickFromPool } from '../enemyPool';
 import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
 import { getTile, tilesFor } from '../../data/tiles';
 import { buildBattleRecord, createCombat, type CombatParams, type CombatState } from '../combat';
@@ -196,14 +197,13 @@ export function riskBonus(exp: ExpeditionState): number {
   return cond + late + breakthroughSpawnBonus(exp);
 }
 
-function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite'): EnemyDef {
-  const pool = ENEMIES.filter((e) => e.class === cls);
-  if (pool.length === 0) throw new Error(`적 테이블에 ${cls} 적이 없다`);
-  const base = pool[nextInt(exp.rng, pool.length)]!;
-  const k = lapScale(exp.lap);
+/** 출처(야생/타일 종류/조합)와 바퀴에 맞는 풀에서 적을 뽑고 바퀴 강화를 입힌다 (GDD 14-5) */
+function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string): EnemyDef {
+  const pool = enemyPool(cls, exp.lap, source);
+  if (pool.length === 0) throw new Error(`적 출현 풀이 비었다: ${cls} ${exp.lap}바퀴 ${source}`);
+  const base = pickFromPool(exp.rng, pool);
   const rare = nextFloat(exp.rng) < base.rareChance;
-  const pattern = base.pattern ? { ...base.pattern, heavyInAttacks: base.pattern.heavyInAttacks * k.attack } : undefined;
-  return { ...base, rare, hpInAttacks: base.hpInAttacks * k.hp, attackInAttacks: base.attackInAttacks * k.attack, ...(pattern ? { pattern } : {}) };
+  return { ...scaleEnemy(base, lapScale(exp.lap)), rare };
 }
 
 /** 이 칸이 조합(같은 comboGroup 3칸 인접)의 끝 칸인가 */
@@ -274,7 +274,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   applyEvolutionToParams(params, exp.evolution);
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
   const pending: PendingBattle = {
-    enemy: pickEnemy(exp, cls),
+    enemy: pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild'),
     seed: randomSeed(exp.rng),
     params,
     cell,

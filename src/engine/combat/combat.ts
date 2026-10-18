@@ -4,7 +4,8 @@
 // 화면은 step 을 실시간(1x/2x)으로 부르고, 테스트·봇은 헤드리스로 빠르게 돌린다.
 
 import { BALANCE } from '../../config/balance';
-import type { ChainBonus, ChainBonusKind, EnemyDef, SkillRole } from '../../data/schema';
+import { hasSpecialActions } from '../../data/enemies';
+import type { ChainBonus, ChainBonusKind, EnemyDef, EnemyPattern, SkillRole } from '../../data/schema';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { canMove, chainGroup, inTray, movedTray, type Block, type Tray } from './tray';
@@ -110,6 +111,9 @@ export type CombatEvent =
   | { kind: 'heavy-cast'; seconds: number }
   | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number }
   | { kind: 'seal'; seconds: number }
+  | { kind: 'stance'; seconds: number }
+  | { kind: 'stance-end' }
+  | { kind: 'counter'; damage: number; guarded: boolean }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
   | { kind: 'shuffle' }
   | { kind: 'end'; status: CombatStatus };
@@ -128,12 +132,14 @@ export interface CombatState {
     maxHp: number;
     /** 다음 기본 공격까지 남은 틱 */
     attackTimer: number;
-    /** 다음 특수 행동(강공격·봉인)까지 남은 틱 (패턴이 있는 강적만) */
+    /** 다음 특수 행동(강공격·봉인·방어 자세)까지 남은 틱 (특수 행동이 있는 패턴만) */
     actionTimer: number;
     /** 다음 특수 행동이 패턴 순서의 몇 번째인가 */
     actionIndex: number;
-    /** 강공격 시전(예고) 중이면 남은 틱 */
-    cast: { ticks: number; total: number } | null;
+    /** 강공격 시전(예고) 중이면 남은 틱. hitsLeft = 이 시전 뒤에 이어질 연속 강공격 수 */
+    cast: { ticks: number; total: number; hitsLeft: number } | null;
+    /** 방어 자세 중이면 남은 틱: 내 블록 피해가 줄고, 블록을 쓸 때마다 반격을 받는다 */
+    stance: { ticks: number } | null;
   };
   player: { hp: number; maxHp: number; attackTimer: number };
   tray: Tray;
@@ -206,10 +212,11 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
       def: setup.enemy,
       hp: maxHp,
       maxHp,
-      attackTimer: t(params.enemyAttackSeconds),
-      actionTimer: setup.enemy.pattern ? t(setup.enemy.pattern.everySeconds) : 0,
+      attackTimer: t(enemyAttackSecondsOf(params, setup.enemy.pattern)),
+      actionTimer: hasSpecialActions(setup.enemy.pattern) ? t(setup.enemy.pattern.everySeconds) : 0,
       actionIndex: 0,
       cast: null,
+      stance: null,
     },
     player: { hp: params.playerMaxHp, maxHp: params.playerMaxHp, attackTimer: t(params.playerAttackSeconds / params.attackSpeedMultiplier) },
     tray: [],
@@ -267,10 +274,22 @@ export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: Comba
 /** 이 블록을 지금 쓰면 줄 피해 (봇·화면 예고용) */
 export function blockDamage(s: CombatState, b: Block, chain = 1): number {
   const p = s.params;
-  if (b.kind === 'special') return p.specialPowerInAttacks * unitDamage(p);
-  if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p);
+  const guardPose = stanceMultiplier(s);
+  if (b.kind === 'special') return p.specialPowerInAttacks * unitDamage(p) * guardPose;
+  if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p) * guardPose;
   const e = blockEffect(s, b, chain);
-  return e ? e.skill.powerInAttacks * e.mult * unitDamage(p) : 0;
+  return e ? e.skill.powerInAttacks * e.mult * unitDamage(p) * guardPose : 0;
+}
+
+/** 방어 자세 중이면 내 블록 피해 배율(<1), 아니면 1 */
+export function stanceMultiplier(s: CombatState): number {
+  const pat = s.enemy.def.pattern;
+  return s.enemy.stance && pat?.kind === 'stance' ? pat.blockDamageMultiplier : 1;
+}
+
+/** 이 적의 기본 공격 간격(초): 패턴이 정하면(속공·단단) 그 값, 아니면 공통 값 */
+export function enemyAttackSecondsOf(p: CombatParams, pattern: EnemyPattern | undefined): number {
+  return pattern && 'attackSeconds' in pattern ? pattern.attackSeconds : p.enemyAttackSeconds;
 }
 
 function emit(s: CombatState, e: CombatEvent): void {
@@ -318,7 +337,7 @@ function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
     // 적의 다음 행동을 늦춘다: 기본 공격, 특수 행동, 시전 중인 강공격 모두
     const d = ticksOf(p, bonus.value);
     s.enemy.attackTimer += d;
-    if (s.enemy.def.pattern) s.enemy.actionTimer += d;
+    if (hasSpecialActions(s.enemy.def.pattern)) s.enemy.actionTimer += d;
     if (s.enemy.cast) s.enemy.cast.ticks += d;
   } else if (bonus.kind === 'reflect') {
     s.guard.reflect = Math.max(s.guard.reflect, bonus.value);
@@ -339,6 +358,7 @@ function useBlock(s: CombatState, index: number): boolean {
     const damage = blockDamage(s, b);
     emit(s, { kind: 'block', block: 'special', traitId: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'special', traitId: null, lineageId: null });
+    counterIfStance(s);
     return true;
   }
   if (b.kind === 'void') {
@@ -349,6 +369,7 @@ function useBlock(s: CombatState, index: number): boolean {
     const damage = blockDamage(s, b);
     emit(s, { kind: 'block', block: 'void', traitId: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'void', traitId: null, lineageId: null });
+    counterIfStance(s);
     return true;
   }
   // 스킬 블록: 함께 발동하는 칸들이 모두 소모된다. 체인 단계 = 함께 쓰인 블록 수
@@ -382,6 +403,7 @@ function useBlock(s: CombatState, index: number): boolean {
   const damage = blockDamage(s, b, chain);
   emit(s, { kind: 'block', block: 'skill', traitId: id, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
   dealDamage(s, damage, { kind: 'skill', traitId: id, lineageId: skill.lineageId });
+  counterIfStance(s);
   return true;
 }
 
@@ -416,7 +438,8 @@ function enemyDamage(s: CombatState, inAttacks: number): number {
 
 /** 강공격 착탄: 막기 상태면 크게 줄고(막기 성공), 반사 효과가 있으면 막은 피해를 돌려준다 */
 function resolveHeavy(s: CombatState): void {
-  const pattern = s.enemy.def.pattern!;
+  const pattern = s.enemy.def.pattern;
+  if (!pattern || !('heavyInAttacks' in pattern)) return;
   let damage = enemyDamage(s, pattern.heavyInAttacks);
   const guarded = s.guard.ticks > 0;
   let reflected = 0;
@@ -428,6 +451,40 @@ function resolveHeavy(s: CombatState): void {
   }
   emit(s, { kind: 'heavy-hit', damage, guarded, reflected });
   if (reflected > 0) dealDamage(s, reflected, { kind: 'reflect', traitId: null, lineageId: null });
+  takeDamage(s, damage);
+}
+
+/** 패턴의 특수 행동 하나를 시작한다 (종류별 일반 처리, 적 id 분기 없음) */
+function startAction(s: CombatState, pattern: Extract<EnemyPattern, { everySeconds: number }>): void {
+  const e = s.enemy;
+  const t = (sec: number) => ticksOf(s.params, sec);
+  if (pattern.kind === 'stance') {
+    e.stance = { ticks: t(pattern.stanceSeconds) };
+    e.actionTimer = t(pattern.everySeconds);
+    emit(s, { kind: 'stance', seconds: pattern.stanceSeconds });
+    return;
+  }
+  const action = pattern.kind === 'heavy-seal' ? pattern.sequence[e.actionIndex % pattern.sequence.length]! : 'heavy';
+  e.actionIndex++;
+  if (action === 'heavy') {
+    const total = t(pattern.castSeconds);
+    e.cast = { ticks: total, total, hitsLeft: pattern.kind === 'heavy-chain' ? pattern.hits - 1 : 0 };
+    emit(s, { kind: 'heavy-cast', seconds: pattern.castSeconds });
+  } else if (pattern.kind === 'heavy-seal') {
+    s.sealTicks = Math.max(s.sealTicks, t(pattern.sealSeconds));
+    emit(s, { kind: 'seal', seconds: pattern.sealSeconds });
+    e.actionTimer = t(pattern.everySeconds);
+  }
+}
+
+/** 방어 자세 중 블록을 쓰면 반격을 받는다 (막기 상태면 기본 공격처럼 경감). 적이 이미 쓰러졌으면 없다 */
+function counterIfStance(s: CombatState): void {
+  const pattern = s.enemy.def.pattern;
+  if (!s.enemy.stance || pattern?.kind !== 'stance' || s.status !== 'playing') return;
+  const raw = enemyDamage(s, pattern.counterInAttacks);
+  const guarded = s.guard.ticks > 0;
+  const damage = guarded ? raw * (1 - s.params.guardReduction) : raw;
+  emit(s, { kind: 'counter', damage, guarded });
   takeDamage(s, damage);
 }
 
@@ -466,38 +523,38 @@ function advanceTick(s: CombatState): void {
     dealDamage(s, damage, { kind: 'basic-attack', traitId: null, lineageId: null });
     if (s.status !== 'playing') return;
   }
-  // 적: 시전 중이면 강공격 대기, 아니면 기본 공격 + 패턴(강공격 예고 / 봉인)
+  // 적: 시전 중이면 강공격 대기, 아니면 기본 공격 + 패턴의 특수 행동(강공격 예고 / 봉인 / 방어 자세)
   const e = s.enemy;
   const pattern = e.def.pattern;
+  const attackTicks = t(enemyAttackSecondsOf(p, pattern));
+  if (e.stance && --e.stance.ticks <= 0) {
+    e.stance = null;
+    emit(s, { kind: 'stance-end' });
+  }
   if (e.cast) {
     if (--e.cast.ticks <= 0) {
+      const more = e.cast.hitsLeft;
       e.cast = null;
       resolveHeavy(s);
-      e.attackTimer = t(p.enemyAttackSeconds);
-      if (pattern) e.actionTimer = t(pattern.everySeconds);
+      if (s.status === 'playing' && more > 0 && pattern?.kind === 'heavy-chain') {
+        const total = t(pattern.followCastSeconds);
+        e.cast = { ticks: total, total, hitsLeft: more - 1 };
+        emit(s, { kind: 'heavy-cast', seconds: pattern.followCastSeconds });
+      } else {
+        e.attackTimer = attackTicks;
+        if (hasSpecialActions(pattern)) e.actionTimer = t(pattern.everySeconds);
+      }
     }
   } else {
     if (--e.attackTimer <= 0) {
-      e.attackTimer = t(p.enemyAttackSeconds);
+      e.attackTimer = attackTicks;
       const raw = enemyDamage(s, e.def.attackInAttacks);
       const guarded = s.guard.ticks > 0;
       const damage = guarded ? raw * (1 - p.guardReduction) : raw;
       emit(s, { kind: 'enemy-attack', damage, guarded });
       takeDamage(s, damage);
     }
-    if (pattern && s.status === 'playing' && --e.actionTimer <= 0) {
-      const action = pattern.sequence[e.actionIndex % pattern.sequence.length]!;
-      e.actionIndex++;
-      if (action === 'heavy') {
-        const total = t(pattern.castSeconds);
-        e.cast = { ticks: total, total };
-        emit(s, { kind: 'heavy-cast', seconds: pattern.castSeconds });
-      } else {
-        s.sealTicks = Math.max(s.sealTicks, t(pattern.sealSeconds));
-        emit(s, { kind: 'seal', seconds: pattern.sealSeconds });
-        e.actionTimer = t(pattern.everySeconds);
-      }
-    }
+    if (hasSpecialActions(pattern) && s.status === 'playing' && --e.actionTimer <= 0) startAction(s, pattern);
   }
   if (s.status === 'playing' && s.tick >= t(p.timeLimitSeconds)) {
     s.status = 'lost';

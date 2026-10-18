@@ -20,6 +20,7 @@ import { battleLabels } from '../src/ui/labels';
 const CX = BALANCE.provisional.combat;
 const normal = getEnemy('test-a'); // 일반, 약점 계통 B
 const elite = getEnemy('test-elite');
+const sealPat = elite.pattern as Extract<NonNullable<EnemyDef['pattern']>, { kind: 'heavy-seal' }>; // 기존 강적 = 강공격↔봉인
 const mk = (opt: { seed?: number; enemy?: EnemyDef; params?: Partial<CombatParams> } = {}) =>
   createCombat(opt.seed ?? 1, { enemy: opt.enemy ?? normal, params: opt.params });
 let uid = 1000;
@@ -366,7 +367,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     expect(seq.slice(0, 4)).toEqual(['heavy-cast', 'seal', 'heavy-cast', 'seal']);
     const t = eliteQuiet();
     castNow(t);
-    expect(t.enemy.cast!.total).toBe(ticksOf(t.params, elite.pattern!.castSeconds));
+    expect(t.enemy.cast!.total).toBe(ticksOf(t.params, sealPat.castSeconds));
     t.enemy.attackTimer = 1;
     wait(t, 1);
     expect(drainCombatEvents(t).some((e) => e.kind === 'enemy-attack')).toBe(false);
@@ -381,7 +382,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
         useAt(s, 0);
       }
       const before = s.player.hp;
-      wait(s, elite.pattern!.castSeconds);
+      wait(s, sealPat.castSeconds);
       const ev = drainCombatEvents(s).find((e) => e.kind === 'heavy-hit');
       return { s, taken: before - s.player.hp, ev };
     };
@@ -391,7 +392,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     expect(guarded.ev).toMatchObject({ guarded: true });
     expect(guarded.s.guardSuccesses).toBe(1);
     expect(open.s.guardSuccesses).toBe(0);
-    const heavy = elite.pattern!.heavyInAttacks * CX.playerAttackDamage;
+    const heavy = sealPat.heavyInAttacks * CX.playerAttackDamage;
     expect(open.taken).toBeGreaterThan(heavy * (1 - CX.enemyDamageVariance) - 1e-9);
     expect(guarded.taken).toBeLessThan(heavy * (1 + CX.enemyDamageVariance) * (1 - CX.heavyGuardReduction) + 1e-9);
   });
@@ -402,7 +403,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     put(s, ...many('trait-b1', 3));
     useAt(s, 0);
     const before = s.enemy.hp;
-    wait(s, elite.pattern!.castSeconds);
+    wait(s, sealPat.castSeconds);
     const ev = drainCombatEvents(s).find((e) => e.kind === 'heavy-hit');
     expect(ev && ev.kind === 'heavy-hit' && ev.reflected).toBeGreaterThan(0);
     expect(s.enemy.hp).toBeLessThan(before);
@@ -415,8 +416,8 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     s.enemy.actionTimer = 1;
     s.spawnTimers = [5];
     step(s);
-    expect(s.sealTicks).toBe(ticksOf(s.params, elite.pattern!.sealSeconds) - 0);
-    wait(s, elite.pattern!.sealSeconds - 0.2);
+    expect(s.sealTicks).toBe(ticksOf(s.params, sealPat.sealSeconds) - 0);
+    wait(s, sealPat.sealSeconds - 0.2);
     expect(s.tray).toHaveLength(0);
     wait(s, 1);
     expect(s.tray).toHaveLength(1);

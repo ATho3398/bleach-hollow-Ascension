@@ -1,6 +1,7 @@
 // 자동 점검 봇 (밸런스 점검·테스트용). 사람처럼 일정 간격(임시 0.5초)마다 입력 하나만 한다.
 // 순서: 강공격 예고엔 막기 → 필살 → 위험하면 회복 → 약점 계통으로 마무리 → 체인3 사용 → 같은 블록 붙이기(move) → 가득 차면 하나 쓰기
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
+import { hasSpecialActions } from '../../data/enemies';
 import {
   blockDamage, blockEffect, maxChain, step, ticksOf, type CombatInput, type CombatState,
 } from './combat';
@@ -66,7 +67,7 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   /** 역할별 후보: 클릭하면 체인이 가장 높게 나오는 블록 먼저 */
   const ofRole = (role: string) => skills.filter((c) => roleOf(s, c.b) === role).sort((a, b) => groupSize(s, b) - groupSize(s, a));
   const use = (c: Cell): CombatInput => ({ type: 'use', cell: c.i });
-  const hasPattern = s.enemy.def.pattern !== undefined;
+  const hasPattern = hasSpecialActions(s.enemy.def.pattern);
   const top = maxChain(p);
 
   // 1. 강공격 예고 중이고 막기 상태가 착탄까지 못 버티면 막기 블록
@@ -74,6 +75,18 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   if (cast && s.guard.ticks <= cast.ticks) {
     const g = ofRole('guard')[0];
     if (g) return use(g);
+  }
+  // 1.5 상대가 방어 자세면(블록 피해 감소 + 쓸 때마다 반격) 자세가 풀릴 때까지 블록을 아낀다: 마무리 가능하면 쓰고, 순서만 붙이고, 바가 가득 차면 하나 쓴다
+  if (s.enemy.stance) {
+    const kill = skills.find((c) => blockDamage(s, c.b, groupSize(s, c)) >= s.enemy.hp);
+    if (kill) return use(kill);
+    const j = joinMove(s, top);
+    if (j) return j;
+    if (s.tray.length >= p.trayCapacity) {
+      const pick = ofRole('guard')[0] ?? ofRole('attack')[0] ?? ofRole('heal')[0];
+      if (pick) return use(pick);
+    }
+    return null;
   }
   // 2. 필살 블록은 바로
   const special = all.find((c) => c.b.kind === 'special');

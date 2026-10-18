@@ -20,7 +20,7 @@ export interface EnemyDef {
   attackInAttacks: number;
   /** 약점 계통 1개 (GDD 3-5): 이 계통의 스킬 블록은 위력 ×1.5. 임시 계통 A/B/C 중에서만 */
   weaknessLineageId: string;
-  /** 강적 패턴 (GDD 3-5): 강공격(시전 예고)과 봉인을 번갈아 한다. 일반 적은 없음(기본 공격만). 수치 전부 임시 */
+  /** 행동 패턴 (GDD 3-5, 14-5). 없으면 기본형(기본 공격만). 수치 전부 임시 */
   pattern?: EnemyPattern;
   /** 흡수 계통 id (src/data/lineages). 임시 계통만 있다 (GDD 4-1) */
   lineageId: string;
@@ -28,24 +28,63 @@ export interface EnemyDef {
   rareChance: number;
   /** 이 개체가 희귀 개체인가: 흡수 화면에 미리 표시되고 계통의 희귀 특성이 확정 후보로 나온다 */
   rare?: boolean;
+  /** true 면 원정 출현 풀에 들어가지 않는다 (테스트·연습용 고정 적) */
+  testOnly?: boolean;
   provisional?: boolean;
 }
 
 export type EnemyAction = 'heavy' | 'seal';
 
-export interface EnemyPattern {
-  /** 특수 행동 간격(초): 직전 행동이 끝난 뒤 이만큼 지나면 다음 행동 */
-  everySeconds: number;
-  /** 행동 순서 (끝나면 처음부터 반복) */
-  sequence: EnemyAction[];
-  /** 강공격 시전(예고) 시간(초). 시전 중에는 기본 공격을 하지 않는다 */
-  castSeconds: number;
-  /** 강공격 피해: 플레이어 기본 공격 N회 분량 */
-  heavyInAttacks: number;
-  /** 봉인: 이 시간(초) 동안 스킬 블록 생성 정지 */
-  sealSeconds: number;
+/** 적 행동 패턴 종류 (GDD 14-5). 엔진은 이 식별자로만 분기한다 (적 id 분기 금지).
+ *  일반 적: basic(기본) / swift(속공: 공격 간격 짧고 한 방은 약함) / sturdy(단단: 체력 많고 느림).
+ *  강적: heavy-seal(강공격↔봉인 번갈아) / heavy-chain(연속 강공격) / stance(방어 자세 구간 + 반격) */
+export type EnemyPatternKind = 'basic' | 'swift' | 'sturdy' | 'heavy-seal' | 'heavy-chain' | 'stance';
+
+export const ENEMY_PATTERN_KINDS: readonly EnemyPatternKind[] = ['basic', 'swift', 'sturdy', 'heavy-seal', 'heavy-chain', 'stance'];
+
+interface PatternBase {
   provisional?: boolean;
 }
+
+export type EnemyPattern =
+  | (PatternBase & { kind: 'basic' })
+  /** 기본 공격 간격(초)을 데이터로 바꾼다. 속공 = 짧게, 단단 = 길게 (한 방 세기는 enemy.attackInAttacks) */
+  | (PatternBase & { kind: 'swift' | 'sturdy'; attackSeconds: number })
+  | (PatternBase & {
+      kind: 'heavy-seal';
+      /** 특수 행동 간격(초): 직전 행동이 끝난 뒤 이만큼 지나면 다음 행동 */
+      everySeconds: number;
+      /** 행동 순서 (끝나면 처음부터 반복) */
+      sequence: EnemyAction[];
+      /** 강공격 시전(예고) 시간(초). 시전 중에는 기본 공격을 하지 않는다 */
+      castSeconds: number;
+      /** 강공격 피해: 플레이어 기본 공격 N회 분량 */
+      heavyInAttacks: number;
+      /** 봉인: 이 시간(초) 동안 스킬 블록 생성 정지 */
+      sealSeconds: number;
+    })
+  | (PatternBase & {
+      kind: 'heavy-chain';
+      everySeconds: number;
+      /** 첫 강공격 시전 시간(초) */
+      castSeconds: number;
+      /** 강공격 한 방의 피해: 기본 공격 N회 분량 */
+      heavyInAttacks: number;
+      /** 한 번의 연속 강공격에서 연달아 치는 횟수 */
+      hits: number;
+      /** 둘째 방부터의 시전 시간(초): 막기 판단이 빨라진다 */
+      followCastSeconds: number;
+    })
+  | (PatternBase & {
+      kind: 'stance';
+      everySeconds: number;
+      /** 방어 자세 지속 시간(초) */
+      stanceSeconds: number;
+      /** 자세 중 내 블록 피해 배율 (<1) */
+      blockDamageMultiplier: number;
+      /** 자세 중 블록을 쓸 때마다 받는 반격: 기본 공격 N회 분량 (막기 상태면 경감) */
+      counterInAttacks: number;
+    });
 
 export interface LineageDef {
   id: string;

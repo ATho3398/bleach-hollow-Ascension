@@ -1,0 +1,12 @@
+{
+  "provisional": true,
+  "kinds": {
+    "basic": { "minLap": 1, "weight": 3 },
+    "swift": { "minLap": 3, "weight": 2 },
+    "sturdy": { "minLap": 3, "weight": 2 },
+    "heavy-seal": { "minLap": 1, "weight": 3 },
+    "stance": { "minLap": 2, "weight": 2 },
+    "heavy-chain": { "minLap": 3, "weight": 2 }
+  },
+  "sourceLapBonus": { "wild": 0, "prey-nest": 0, "elite-den": 0, "environment": 1, "combo": 1 }
+}
