@@ -58,8 +58,8 @@ describe('흡수 누적', () => {
 });
 
 describe('진화 조건과 결과', () => {
-  it('단계별 필요 흡수 횟수는 BALANCE 값 (34/38/43/48), 모자라면 진화할 수 없다', () => {
-    expect([...EV.absorbsNeeded]).toEqual([34, 38, 43, 48]);
+  it('단계별 필요 흡수 횟수는 BALANCE 값 (41/46/52/58, C.41), 모자라면 진화할 수 없다', () => {
+    expect([...EV.absorbsNeeded]).toEqual([41, 46, 52, 58]);
     const e = absorbed(...mix(A, B).slice(0, need0() - 1));
     expect(absorbsNeeded(e)).toBe(need0());
     expect(absorbsRemaining(e)).toBe(1);

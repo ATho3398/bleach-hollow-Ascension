@@ -9,7 +9,7 @@ import { setOverlayHost } from './overlayHost';
 import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewScale, saveViewScale, setViewState, shortcutScale, VIEW_SCALE_EVENT } from '../viewScale';
 import { actionFor, isNavAction } from '../shortcutMap';
 import { KEY_HINTS_EVENT, loadKeyHints } from '../keyHints';
-import { badgePlan, detectCtx, isTypingTarget, runAction, syncBadges } from './shortcuts';
+import { badgePlan, detectCtx, isTypingTarget, runAction, runCancelHooks, syncBadges } from './shortcuts';
 import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, setFit } from './viewport';
 
 export interface SelectItem {
@@ -274,6 +274,12 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     schedule();
   }
 
+  /** 키보드 취소: 화면이 고른 것(배치판의 선택)을 먼저 풀어야 하면 그것만 하고 뒤로 가지 않는다 */
+  function keyCancel(): void {
+    if (runCancelHooks(layers[layers.length - 1]?.el ?? null)) return;
+    cancel();
+  }
+
   up.onclick = () => move(-1);
   down.onclick = () => move(1);
   ok.onclick = confirm;
@@ -313,7 +319,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
           if (action === 'prev') move(-1);
           else if (action === 'next') move(1);
           else if (action === 'confirm') confirm();
-          else if (action === 'cancel') cancel();
+          else if (action === 'cancel') keyCancel();
           else if (!isNavAction(action)) runAction(layers[layers.length - 1]?.el ?? view, action);
           schedule();
         }
@@ -325,7 +331,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     if (e.key === 'ArrowUp') move(-1);
     else if (e.key === 'ArrowDown') move(1);
     else if (e.key === 'Enter') confirm();
-    else if (e.key === 'Escape') cancel();
+    else if (e.key === 'Escape') keyCancel();
     else return;
     e.preventDefault();
   };

@@ -6,7 +6,7 @@ import { getFaction } from '../src/data/factions';
 import { LINEAGES } from '../src/data/lineages';
 import { TRAITS, getTrait, traitDescription } from '../src/data/traits';
 import {
-  absorbReasons, absorbRisk, buildCombatParams, buildOffer, canAbsorb, changeRisk, completedLineages, equippedSkills, gainTrait, lateLapRisk, newBuild,
+  absorbReasons, absorbRisk, attackFamilyOf, buildCombatParams, buildOffer, canAbsorb, changeRisk, completedLineages, equippedAttackFamilies, equippedSkills, gainTrait, lateLapRisk, newBuild,
   passiveMultipliers, setSlot, settleRiskToNest, type BuildState,
 } from '../src/engine/absorb';
 import { BASIC_SKILL_ID, applyInput, blockSources, createCombat, type Block, type CombatState } from '../src/engine/combat';
@@ -127,11 +127,13 @@ describe('흡수 가능 조건', () => {
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
     s.enemy.hp = s.enemy.maxHp * 100;
     const three = (traitId: string, uid: number): Block[] => [0, 1, 2].map((k) => ({ uid: uid + k, kind: 'skill', traitId }));
-    s.tray = [...three('trait-a1', 90), ...three('trait-b1', 91)];
+    s.tray = [...three('trait-a1', 90), ...Array.from({ length: AX.weakChain3ForAbsorb }, (_, k) => three('trait-b1', 100 + k * 10)).flat()];
     applyInput(s, { type: 'use', cell: 0 });
     expect([s.chain3Count, s.weakChain3Count]).toEqual([1, 0]);
     applyInput(s, { type: 'use', cell: 0 });
     expect([s.chain3Count, s.weakChain3Count]).toEqual([2, 1]);
+    for (let k = 1; k < AX.weakChain3ForAbsorb; k++) applyInput(s, { type: 'use', cell: 0 });
+    expect(s.weakChain3Count).toBe(AX.weakChain3ForAbsorb);
     expect(absorbReasons({ ...s, status: 'won' })).toEqual(['weakness-chain3']);
   });
 
@@ -753,5 +755,59 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     const elite = rate('test-elite');
     expect(elite).toBeGreaterThan(0.4);
     expect(elite).toBeLessThan(0.97);
+  });
+});
+
+describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
+  const normal = (lineageId: string): EnemyDef => ({ ...getEnemy('test-a'), lineageId, rare: false });
+  const fams = (ids: string[]) => ids.map(attackFamilyOf).filter((f): f is string => f !== null);
+
+  it('모든 계통이 서로 다른 계열의 일반 공격 특성을 2개 이상 가진다', () => {
+    for (const l of LINEAGES) {
+      const set = new Set(fams(TRAITS.filter((t) => t.lineageId === l.id && !t.rare).map((t) => t.id)));
+      expect(set.size, l.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('첫 흡수(장착 없음)는 어느 계통이든 서로 다른 계열의 공격 후보 2개를 낸다', () => {
+    for (const l of LINEAGES) {
+      for (let seed = 1; seed <= 30; seed++) {
+        const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO);
+        const f = fams(offer.candidates);
+        expect(f.length, `${l.id}/${seed}`).toBeGreaterThanOrEqual(2);
+        expect(new Set(f).size, `${l.id}/${seed}`).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
+  it('이미 장착한 계열만 있으면 다른 계열 공격 후보를 끼워 넣는다 (장착 계열이 보장 수에 차면 손대지 않는다)', () => {
+    const b: BuildState = newBuild();
+    gainTrait(b, 'trait-a1'); // 계열 a 장착
+    for (const l of LINEAGES) {
+      for (let seed = 1; seed <= 30; seed++) {
+        const offer = buildOffer(createRng(seed), normal(l.id), b, NO);
+        expect(fams(offer.candidates).some((f) => !equippedAttackFamilies(b).has(f)), `${l.id}/${seed}`).toBe(true);
+      }
+    }
+    const full: BuildState = newBuild();
+    gainTrait(full, 'trait-a1');
+    gainTrait(full, 'trait-d1'); // 계열 b
+    gainTrait(full, 'trait-c5'); // 계열 c = 보장 수(3)
+    expect(equippedAttackFamilies(full).size).toBeGreaterThanOrEqual(AX.attackFamilyGuarantee);
+    const offer = buildOffer(createRng(3), normal('lineage-b'), full, NO);
+    expect(offer.candidates.length).toBeGreaterThan(0);
+  });
+
+  it('후보는 그 계통의 특성이고 이미 가진 특성은 나오지 않는다', () => {
+    const b: BuildState = newBuild();
+    gainTrait(b, 'trait-a6');
+    for (let seed = 1; seed <= 30; seed++) {
+      const offer = buildOffer(createRng(seed), normal('lineage-a'), b, NO);
+      for (const id of offer.candidates) {
+        expect(getTrait(id).lineageId).toBe('lineage-a');
+        expect(b.owned).not.toContain(id);
+      }
+      expect(new Set(offer.candidates).size).toBe(offer.candidates.length);
+    }
   });
 });

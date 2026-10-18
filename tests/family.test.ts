@@ -51,10 +51,11 @@ describe('계열 데이터 (GDD 17-3)', () => {
     }
   });
 
-  it('계통마다 약점 계열이 있고 그 계통 공격 특성의 계열과 같다', () => {
+  it('계통마다 약점 계열이 있고, 그 계통은 자기 약점 계열의 공격 특성을 가진다(다른 계열 공격 특성이 더 있을 수 있다, v2.7)', () => {
     for (const l of LINEAGES) {
       expect(l.family, l.id).toBeTruthy();
-      for (const t of TRAITS.filter((x) => x.lineageId === l.id && x.kind === 'skill' && x.role === 'attack')) expect(t.family, t.id).toBe(l.family);
+      const attacks = TRAITS.filter((x) => x.lineageId === l.id && x.kind === 'skill' && x.role === 'attack');
+      expect(attacks.some((t) => t.family === l.family), l.id).toBe(true);
     }
     // 모든 계열에 일반(희귀 아닌) 공격 특성이 하나 이상 있다
     const famIds = FACTIONS[0]!.families.map((f) => f.id);
@@ -188,7 +189,7 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.status).toBe('won');
     expect(s.finisher).toMatchObject({ kind: 'skill', family: 'family-b', weak: true });
-    expect(absorbReasons(s)).toEqual(['weakness-finisher', 'weakness-chain3']);
+    expect(absorbReasons(s)).toEqual(s.weakChain3Count >= BALANCE.provisional.absorb.weakChain3ForAbsorb ? ['weakness-finisher', 'weakness-chain3'] : ['weakness-finisher']);
   });
 
   it('블록은 장착한 특성의 계열대로 나온다', () => {

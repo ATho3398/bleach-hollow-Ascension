@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 20;
+export const BALANCE_VERSION = 21;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -33,10 +33,12 @@ export const BALANCE = {
     absorb: {
       /** 흡수 가능 조건 (GDD 3-5 v0.7): 마무리 일격이 약점 계통 스킬이거나, 그 전투에서 약점 계통 스킬 블록의 체인3 을 이 횟수 이상 발동.
        *  장착 skill 특성이 없으면 조건 없이 가능(첫 흡수 보장). 옛 "체인3 계통 무관 2회"는 폐기 (C.7) */
-      weakChain3ForAbsorb: 1,
+      weakChain3ForAbsorb: 3,
       /** 특성 후보 수: 일반 적은 1~2개 중 무작위, 강적은 항상 2개 (GDD 4장 "후보 1~2개") */
       candidatesElite: 2,
       candidatesNormalMax: 2,
+      /** 공격 계열 섞임 (GDD 18-8 ③, C.41, 임시): 장착한 공격 특성이 이 수보다 적은 계열이면, 흡수 후보에 아직 없는 계열의 공격 특성을 1개 끼워 넣는다(그 계통에 있을 때). 첫 흡수(장착 skill 없음)는 서로 다른 계열 공격 후보 2개 */
+      attackFamilyGuarantee: 2,
       /** 슬롯 안 같은 계통 N개 → 계통 보너스 */
       lineageBonusCount: 3,
       /** 계통 보너스: 그 계통 skill 특성 블록의 위력(피해·막기 지속·회복량)에 가산하는 비율 (GDD 4-1 +50%, C.6 새 전투) */
@@ -79,7 +81,7 @@ export const BALANCE = {
     // ── 진화(C.9→C.11) 임시값: 단계별 진화체 테이블 (GDD 4-2 v1.0). 방식은 확정, 수치·데이터는 전부 임시 ──
     evolution: {
       /** 진화에 필요한 현재 단계 흡수 횟수(가중 없는 원래 횟수): index 0 = 1→2단계 … index 3 = 4→5단계 */
-      absorbsNeeded: [34, 38, 43, 48],
+      absorbsNeeded: [41, 46, 52, 58], // C.41: 공격 계열이 섞여 약점 적중이 늘어 흡수가 잦아진 만큼 ×1.2 (옛 34/38/43/48, 5단계 도달 평균 37 유지)
       /** 희귀 개체 흡수의 계통 누적 가중 */
       rareWeight: 2,
       /** 진화마다 슬롯 +1 (GDD 4장) */

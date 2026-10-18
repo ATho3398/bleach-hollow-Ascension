@@ -94,7 +94,7 @@ export interface LineageDef {
   shortName?: PerFaction<string>;
   /** 이 계통의 성향 (GDD 4-2): 진화 형태 패시브가 조합의 계통 성향을 섞어 만든다. 임시 */
   tendency?: { stat: PassiveStat; multiplier: number };
-  /** 약점 계열 (GDD 17-3): 이 계통을 약점으로 가진 적에게는 이 계열의 공격 블록이 위력 ×1.5. 이 계통 공격 특성의 계열과 같다 */
+  /** 약점 계열 (GDD 17-3): 이 계통을 약점으로 가진 적에게는 이 계열의 공격 블록이 위력 ×1.5. 이 계통 공격 특성 중 하나의 계열과 같다 (계통은 다른 계열 공격 특성도 가질 수 있다, v2.7) */
   family?: string;
   provisional?: boolean;
 }

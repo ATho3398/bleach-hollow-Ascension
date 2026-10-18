@@ -32,6 +32,23 @@ export function detectCtx(view: ParentNode, layerOpen: boolean): ShortcutCtx {
   return 'menu';
 }
 
+// ── 취소 키(Q·Esc) 가로채기: 화면이 '고른 것'을 먼저 풀어야 할 때(배치판) 쓴다. 풀었으면 true → 뒤로 가지 않는다. 'gone' 이면 화면이 사라진 것이라 등록을 지운다 ──
+type CancelHook = (topLayer: Element | null) => boolean | 'gone';
+const cancelHooks = new Set<CancelHook>();
+export function registerCancelHook(h: CancelHook): () => void {
+  cancelHooks.add(h);
+  return () => cancelHooks.delete(h);
+}
+export function runCancelHooks(topLayer: Element | null): boolean {
+  let used = false;
+  for (const h of [...cancelHooks]) {
+    const r = h(topLayer);
+    if (r === 'gone') cancelHooks.delete(h);
+    else if (r) used = true;
+  }
+  return used;
+}
+
 // ── 액션 처리기: 화면(전투)이 직접 등록한다. 처리했으면 true ──
 const handlers = new Map<ShortcutAction, () => boolean | void>();
 export function registerShortcutHandlers(h: Record<ShortcutAction, () => boolean | void>): () => void {

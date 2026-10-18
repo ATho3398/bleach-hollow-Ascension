@@ -75,8 +75,6 @@
 .bha-road__note { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); min-height: 1.3em; }
 .bha-road__noterow { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-3); min-width: 0; }
 .bha-road__noterow .bha-road__note { flex: 1 1 auto; min-width: 0; }
-.bha-road__undo { flex: none; }
-.bha-road__undo[hidden] { display: none; }
 .bha-road__cell.is-editable { border-color: var(--bha-insert); }
 .bha-road__cell.is-selected { outline: 2px solid var(--bha-insert); outline-offset: 1px; }
 .bha-road__hand { flex-wrap: wrap; }

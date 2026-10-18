@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
 import {
-  advance, beginPlanning, chooseContinue, chooseReturn, createExpedition, finishBattle, finishPlanning, moveTile, placeTile, startBattle, unplaceTile, unplacedKept,
+  advance, beginPlanning, chooseContinue, chooseReturn, createExpedition, finishBattle, finishPlanning, moveTile, placeTile, startBattle, swapTiles, swapWithHand, unplaceTile, unplacedKept,
   type ExpeditionState,
 } from '../src/engine/expedition';
 import { loadSave, newSaveData, recordExpedition, storeUnplacedTiles, writeSave } from '../src/game';
-import { cellAction, handCounts, roadCellMode } from '../src/ui/bha/road';
+import { cellAction, handCounts, roadCellMode, type RoadSelection } from '../src/ui/bha/road';
 import { isWalking, walkAnimClass, walkState } from '../src/ui/bha/walk';
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'rest-a'];
@@ -211,13 +211,63 @@ describe('타일 이동·되돌리기 (GDD 18-4, C.38)', () => {
     expect(unplaceTile(exp, 2).ok).toBe(false);
   });
 
-  it('칸을 눌렀을 때의 동작 (cellAction)', () => {
-    const base = { selectedTile: null, selectedCell: null, index: 4 };
+  it('칸을 눌렀을 때의 동작 (cellAction, GDD 18-8)', () => {
+    const base = { index: 4, selection: null as RoadSelection };
+    const cell = (c: number): RoadSelection => ({ kind: 'cell', cell: c });
+    const hand: RoadSelection = { kind: 'hand', tileId: 'rest-a' };
+    // 아무것도 안 골랐을 때
     expect(cellAction({ ...base, slot: 'rest-a', editable: false })).toBe('info');
     expect(cellAction({ ...base, slot: 'rest-a', editable: true })).toBe('select-placed');
-    expect(cellAction({ ...base, slot: 'rest-a', editable: true, selectedCell: 4 })).toBe('deselect');
-    expect(cellAction({ ...base, slot: null, editable: false, selectedCell: 2 })).toBe('move');
-    expect(cellAction({ ...base, slot: null, editable: false, selectedTile: 'rest-a' })).toBe('place');
     expect(cellAction({ ...base, slot: null, editable: false })).toBe('need-pick');
+    // 놓은 칸을 골랐을 때: 같은 칸 = 손으로 복귀, 다른 놓은 칸 = 교체, 빈 칸 = 이동, 확정된 타일 = 안내만
+    expect(cellAction({ ...base, slot: 'rest-a', editable: true, selection: cell(4) })).toBe('return-hand');
+    expect(cellAction({ ...base, slot: 'rest-a', editable: true, selection: cell(2) })).toBe('swap-cells');
+    expect(cellAction({ ...base, slot: null, editable: false, selection: cell(2) })).toBe('move');
+    expect(cellAction({ ...base, slot: 'rest-a', editable: false, selection: cell(2) })).toBe('info');
+    // 손 타일을 골랐을 때: 빈 칸 = 놓기, 놓은 칸 = 교체, 확정된 타일 = 안내만
+    expect(cellAction({ ...base, slot: null, editable: false, selection: hand })).toBe('place');
+    expect(cellAction({ ...base, slot: 'rest-a', editable: true, selection: hand })).toBe('swap-hand');
+    expect(cellAction({ ...base, slot: 'rest-a', editable: false, selection: hand })).toBe('info');
+  });
+
+  it('놓은 두 타일을 서로 바꾼다(swapTiles): 빈 칸·지나간 칸·같은 칸은 실패하고 상태는 그대로', () => {
+    const exp = mk();
+    beginPlanning(exp);
+    placeTile(exp, 'prey-nest-a', 2);
+    placeTile(exp, 'elite-den-a', 4);
+    const wild = [...exp.wildCells];
+    expect(swapTiles(exp, 2, 4).ok).toBe(true);
+    expect(exp.slots[2]).toBe('elite-den-a');
+    expect(exp.slots[4]).toBe('prey-nest-a');
+    expect(exp.wildCells).toEqual(wild);
+    expect(swapTiles(exp, 2, 2).ok).toBe(false);
+    expect(swapTiles(exp, 2, 7).ok).toBe(false); // 빈 칸
+    expect(swapTiles(exp, 0, 2).ok).toBe(false); // 둥지 칸
+    exp.pos = 3;
+    expect(swapTiles(exp, 2, 4).ok).toBe(false); // 지나간 칸
+    expect(exp.slots[2]).toBe('elite-den-a');
+  });
+
+  it('손의 타일과 놓은 타일을 바꾼다(swapWithHand): 놓은 것은 손으로, 전투 수는 그대로, 실패하면 불변', () => {
+    const exp = mk();
+    beginPlanning(exp);
+    const battles = (e: ExpeditionState) => e.wildCells.length + e.slots.filter((s) => s === 'prey-nest-a' || s === 'elite-den-a').length;
+    placeTile(exp, 'prey-nest-a', 3);
+    const total = battles(exp);
+    const rest = exp.hand.find((t) => t !== 'prey-nest-a' && t !== 'elite-den-a');
+    expect(rest).toBeDefined();
+    expect(swapWithHand(exp, rest!, 3).ok).toBe(true);
+    expect(exp.slots[3]).toBe(rest);
+    expect(exp.hand).toContain('prey-nest-a');
+    expect(exp.hand).not.toContain(rest!);
+    expect(battles(exp)).toBe(total);
+    expect(swapWithHand(exp, 'prey-nest-a', 3).ok).toBe(true); // 도로 바꾸기
+    expect(exp.slots[3]).toBe('prey-nest-a');
+    expect(battles(exp)).toBe(total);
+    const snap = JSON.stringify(exp);
+    expect(swapWithHand(exp, 'prey-nest-a', 3).ok).toBe(false); // 같은 타일
+    expect(swapWithHand(exp, 'no-such', 3).ok).toBe(false); // 손에 없음
+    expect(swapWithHand(exp, rest!, 9).ok).toBe(false); // 빈 칸
+    expect(JSON.stringify(exp)).toBe(snap);
   });
 });

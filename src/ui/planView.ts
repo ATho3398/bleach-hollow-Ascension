@@ -27,7 +27,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     onClick: () => h.onStart(finishPlanning(exp)),
   });
   start.dataset.sc = 'go';
-  const sub = el('p', 'bha-plan__sub', '덱의 타일을 길 위의 칸에 놓는다. 안 놓은 칸에는 떠돌이 적이 나온다. [출발]을 누르기 전에는 놓은 타일을 눌러 다른 칸으로 옮기거나 손으로 되돌릴 수 있다.');
+  const sub = el('p', 'bha-plan__sub', '덱의 타일을 길 위의 칸에 놓는다. 안 놓은 칸에는 떠돌이 적이 나온다. [출발]을 누르기 전에는 놓은 타일을 눌러 고친다: 선택한 뒤 빈 칸을 누르면 이동, 다른 놓은 타일을 누르면 서로 교체, 같은 칸을 다시 누르면 손으로 돌아온다.');
   const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, sub, planner.el, start);
   main.dataset.screen = 'expedition-plan';
 }

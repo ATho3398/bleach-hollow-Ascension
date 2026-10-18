@@ -387,7 +387,7 @@ describe('시드 결정성', () => {
   });
 
   it('전투 기록의 lap 이 실제 바퀴 수로 채워진다', () => {
-    const e = playExpedition(mk({ seed: 79 }), { returnAfterLap: 3 });
+    const e = playExpedition(mk({ seed: 82 }), { returnAfterLap: 3 });
     expect(new Set(e.battles.map((b) => b.lap))).toEqual(new Set([1, 2, 3]));
     expect(e.battles.length).toBe(e.battlesByLap.reduce((x, y) => x + y, 0));
     expect(buildRunRecord(e).laps).toBe(3);

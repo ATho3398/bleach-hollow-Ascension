@@ -12,7 +12,7 @@
 | 캐릭터, 단계별 | `char-<종족>-<단계번호>.png` (단계번호는 1부터) | `char-hollow-1.png`, `char-shinigami-3.png` |
 | 캐릭터, 종족 공통 | `char-<종족>.png` | `char-hollow.png` |
 | 방 배경 | `scene-cave.png`(호로), `scene-room.png`(사신) | |
-| 방 안 물건 | `prop-door.png` `prop-altar.png` `prop-book.png` `prop-chest.png` `prop-window.png` `prop-care.png` `prop-dummy.png`(훈련 인형) | |
+| 방 안 물건 | `prop-door.png` `prop-altar.png` `prop-book.png` `prop-chest.png` `prop-window.png` `prop-dummy.png`(훈련 인형) | |
 
 - 종족 이름: 호로 = `hollow`, 사신 = `shinigami`.
 - **캐릭터는 단계별 파일이 먼저, 없으면 종족 공통 파일, 그것도 없으면 임시 모양**이 나옵니다. 그림이 한 장뿐이면 `char-hollow.png`만 넣으면 모든 단계에 쓰입니다. 단계별 그림이 생기면 그 단계 파일만 추가하면 됩니다.

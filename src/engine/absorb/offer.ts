@@ -1,7 +1,8 @@
 // 흡수 제안: 전투 승리 뒤 흡수 가능 여부와 특성 후보 (GDD 4장, 4-1). 시드 고정 가능(rng 를 받는다).
 
 import { BALANCE } from '../../config/balance';
-import { TRAITS } from '../../data/traits';
+import { TRAITS, getTrait } from '../../data/traits';
+import type { TraitDef } from '../../data/schema';
 import type { EnemyDef } from '../../data/schema';
 import type { CombatState } from '../combat/combat';
 import { nextInt, type Rng } from '../rng';
@@ -56,6 +57,22 @@ function pick<T>(rng: Rng, list: T[]): T {
   return list[nextInt(rng, list.length)]!;
 }
 
+/** 공격 skill 특성의 계열 (아니면 null) */
+export function attackFamilyOf(id: string): string | null {
+  const t = getTrait(id);
+  return t.kind === 'skill' && t.role === 'attack' ? (t.family ?? null) : null;
+}
+
+/** 장착한 공격 특성의 계열 모음 (GDD 18-8 ③) */
+export function equippedAttackFamilies(build: BuildState): Set<string> {
+  const out = new Set<string>();
+  for (const id of build.slots) {
+    const f = id ? attackFamilyOf(id) : null;
+    if (f) out.add(f);
+  }
+  return out;
+}
+
 /** 후보 만들기: 그 계통의 아직 없는 특성 중에서. 희귀 개체는 희귀 특성이 첫 후보로 확정, 일반 후보는 희귀 아닌 특성에서 무작위 */
 export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput): AbsorbOffer {
   const elite = enemy.class === 'elite';
@@ -73,6 +90,7 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     candidates.push(t.id);
     normal.splice(normal.indexOf(t), 1);
   }
+  mixAttackFamilies(rng, candidates, pool, build);
   return {
     enemyId: enemy.id,
     lineageId: enemy.lineageId,
@@ -85,4 +103,41 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     weakChain3Count: combat.weakChain3Count,
     finisherLineageId: combat.finisher?.lineageId ?? null,
   };
+}
+
+/**
+ * 공격 계열 섞임 (GDD 18-8 ③, C.41, 임시): 한 원정에서 공격 계열이 1가지로만 보이던 문제(옛 데이터는 한 계통에 공격 특성이 0~1개였다)를 막는다.
+ * 장착한 공격 특성의 계열이 attackFamilyGuarantee 가지 미만이면, 후보에 "장착하지 않은 계열의 공격 특성"이 없을 때 그 계통에서 하나를 끼워 넣는다
+ * (후보가 2개 이상이면 희귀가 아닌 마지막 후보를 바꾸고, 하나뿐이면 그것을 바꾼다). 첫 흡수(장착 skill 특성 없음)는 서로 다른 계열 공격 후보 2개를 낸다.
+ * 그 계통에 맞는 특성이 없으면 아무것도 바꾸지 않는다.
+ */
+function mixAttackFamilies(rng: Rng, candidates: string[], pool: TraitDef[], build: BuildState): void {
+  const equipped = equippedAttackFamilies(build);
+  if (equipped.size >= AX.attackFamilyGuarantee) return;
+  const isNewAttack = (id: string) => {
+    const f = attackFamilyOf(id);
+    return f !== null && !equipped.has(f);
+  };
+  const fresh = (): TraitDef[] => pool.filter((t) => !t.rare && !candidates.includes(t.id) && isNewAttack(t.id));
+  if (!candidates.some(isNewAttack)) {
+    const list = fresh();
+    if (list.length > 0) {
+      const t = pick(rng, list);
+      const at = candidates.map((id, i) => ({ id, i })).filter((c) => !getTrait(c.id).rare).map((c) => c.i).pop();
+      if (at === undefined) candidates.push(t.id);
+      else candidates[at] = t.id;
+    }
+  }
+  const firstAbsorb = !build.slots.some((id) => id && getTrait(id).kind === 'skill');
+  if (firstAbsorb) {
+    const have = new Set(candidates.map(attackFamilyOf).filter((f): f is string => f !== null));
+    const list = fresh().filter((t) => !have.has(t.family!));
+    if (have.size < 2 && list.length > 0) {
+      const t = pick(rng, list);
+      // 공격이 아닌 희귀 아닌 후보가 있으면 그것을 바꾸고, 없으면 후보가 1개일 때만 덧붙인다
+      const at = candidates.map((id, i) => ({ id, i })).filter((c) => !getTrait(c.id).rare && attackFamilyOf(c.id) === null).map((c) => c.i).pop();
+      if (at !== undefined) candidates[at] = t.id;
+      else if (candidates.length < 2) candidates.push(t.id);
+    }
+  }
 }

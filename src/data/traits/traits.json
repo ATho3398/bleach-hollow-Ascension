@@ -97,6 +97,25 @@
     "provisional": true
   },
   {
+    "id": "trait-a6",
+    "lineageId": "lineage-a",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 A6"
+    },
+    "abbr": {
+      "*": "A6"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록, 교 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 시해 능력(공격 블록, 권 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 3,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
     "id": "trait-b1",
     "lineageId": "lineage-b",
     "kind": "skill",
@@ -197,6 +216,44 @@
     "provisional": true
   },
   {
+    "id": "trait-b6",
+    "lineageId": "lineage-b",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 B6"
+    },
+    "abbr": {
+      "*": "B6"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 3,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "trait-b7",
+    "lineageId": "lineage-b",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 B7"
+    },
+    "abbr": {
+      "*": "B7"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록, 탄 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 시해 능력(공격 블록, 귀 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 3,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
     "id": "trait-c1",
     "lineageId": "lineage-c",
     "kind": "skill",
@@ -292,6 +349,25 @@
     "role": "attack",
     "powerInAttacks": 3.5,
     "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "trait-c6",
+    "lineageId": "lineage-c",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 C6"
+    },
+    "abbr": {
+      "*": "C6"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 3,
+    "family": "family-a",
     "provisional": true
   },
   {
@@ -395,6 +471,25 @@
     "provisional": true
   },
   {
+    "id": "trait-d6",
+    "lineageId": "lineage-d",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 D6"
+    },
+    "abbr": {
+      "*": "D6"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록, 탄 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 시해 능력(공격 블록, 귀 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 3,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
     "id": "trait-e1",
     "lineageId": "lineage-e",
     "kind": "skill",
@@ -492,6 +587,44 @@
       "kind": "cleanse",
       "value": 40
     },
+    "provisional": true
+  },
+  {
+    "id": "trait-e6",
+    "lineageId": "lineage-e",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 E6"
+    },
+    "abbr": {
+      "*": "E6"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 3,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "trait-e7",
+    "lineageId": "lineage-e",
+    "kind": "skill",
+    "name": {
+      "*": "임시 특성 E7"
+    },
+    "abbr": {
+      "*": "E7"
+    },
+    "description": {
+      "hollow": "[임시] 본체 기술(공격 블록, 교 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 시해 능력(공격 블록, 권 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 3,
+    "family": "family-b",
     "provisional": true
   }
 ]

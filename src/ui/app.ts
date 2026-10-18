@@ -332,7 +332,7 @@ export function startApp(host: HTMLElement): void {
       onBook: () => open('dex', () => dexView(root, faction, s)),
       onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist)),
       onWindow: () => open('titles', () => titleDexView(root, faction, s)),
-      onCare: () => open('care', () => careView(dev, faction, s, props.care, persist)),
+      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
       onChangeFaction: factionScreen,
       onSettings: settingsOpener(true),

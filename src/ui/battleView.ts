@@ -594,6 +594,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       weak: eff?.weak ?? false,
       uid: b.uid,
       family: familyAbbr(labels, b.family),
+      familyId: b.family ?? undefined,
     };
     return blockEl(spec);
   };

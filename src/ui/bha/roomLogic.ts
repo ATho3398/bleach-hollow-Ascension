@@ -16,3 +16,28 @@ export function pickLine(talk: RoomConfig['talk'], key: keyof RoomConfig['talk']
   const list = talk[key];
   return list[Math.min(list.length - 1, Math.floor(rand() * list.length))] ?? '…';
 }
+
+export interface StatusChip {
+  kind: 'hunger' | 'cond' | 'risk' | 'weak';
+  /** 표시 이름(종족 설정에서 온 것은 호출한 쪽이 넘긴다) */
+  label: string;
+  icon: string;
+  /** 칩에 보이는 값. 쇠약 칩은 값 없음 */
+  value: number | null;
+  danger: boolean;
+}
+
+/** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 허기·컨디션·리스크 게이지(+쇠약이면 그 이름). 위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
+export function statusChips(
+  s: { hunger: number; condition: number; risk: number; weakened: boolean },
+  names: { riskGaugeName: string; defeatStateName: string },
+  warn = { hunger: 80, condition: 40, risk: 60 },
+): StatusChip[] {
+  const chips: StatusChip[] = [
+    { kind: 'hunger', label: '허기', icon: 'i-hunger', value: Math.round(s.hunger), danger: s.hunger >= warn.hunger },
+    { kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), danger: s.condition < warn.condition },
+    { kind: 'risk', label: names.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), danger: s.risk >= warn.risk },
+  ];
+  if (s.weakened) chips.push({ kind: 'weak', label: names.defeatStateName, icon: 'i-broken', value: null, danger: true });
+  return chips;
+}

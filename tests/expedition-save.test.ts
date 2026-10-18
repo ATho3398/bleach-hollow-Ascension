@@ -55,7 +55,12 @@ describe('원정 직렬화', () => {
       expect(roundtrip(exp)).toEqual(exp);
       drive(exp, (e) => {
         phases.add(e.phase);
-        expect(roundtrip(e)).toEqual(e);
+        if (e.phase === 'rest') {
+          // 복원은 휴식을 끝낸 상태로 연다(restoreExpedition 의 설계): 휴식을 끝낸 사본과 같아야 한다
+          const settled = structuredClone(e);
+          finishRest(settled);
+          expect(roundtrip(e)).toEqual(settled);
+        } else expect(roundtrip(e)).toEqual(e);
         return e;
       });
     }

@@ -312,6 +312,8 @@ export interface BlockSpec {
   uid: number;
   /** 계열 표시 한 글자 (공격 계열 블록만, GDD 17-3) */
   family?: string;
+  /** 계열 id (종족 중립 family-a/b/c): 계열별 색 띠를 고르는 데이터 속성 (GDD 18-8 ③) */
+  familyId?: string;
 }
 
 /** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림 같은 상태 클래스는 화면이 붙인다 */
@@ -332,7 +334,10 @@ export function blockEl(spec: BlockSpec): HTMLElement {
   const weak = el('span', 'bha-block__weak');
   weak.append(icon('i-weak'));
   node.append(ico, el('b', 'bha-block__abbr', spec.abbr), weak);
-  if (spec.family) node.append(el('span', 'bha-block__fam', spec.family));
+  if (spec.family) {
+    node.append(el('span', 'bha-block__fam', spec.family));
+    if (spec.familyId) node.dataset.fam = spec.familyId;
+  }
   return node;
 }
 

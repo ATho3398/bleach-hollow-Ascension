@@ -301,7 +301,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (over) info.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
     if (exp.hand.length > 0 || planner.canEdit()) {
       // 획득한 타일은 지금 다음 바퀴 칸에 놓는다 (GDD 17-1). 안 놓으면 다음 원정 덱으로 보관된다. 이 팝업이 길 순서가 보이는 유일한 곳
-      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 덱 보관). 계속하기 전에는 놓은 타일을 눌러 옮기거나 되돌릴 수 있다'), planner.el);
+      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 덱 보관). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
       planner.refresh();
     }
     sheet.append(info, grid);

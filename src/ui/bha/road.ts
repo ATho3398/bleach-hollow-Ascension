@@ -2,10 +2,11 @@
 // 원정 중 걷는 화면에는 길 구조를 보이지 않는다 — 칸 순서가 보이는 곳은 여기뿐이다.
 import { BALANCE } from '../../config/balance';
 import { getTile } from '../../data/tiles';
-import { moveTile, placeTile, unplaceTile, type ExpeditionState } from '../../engine/expedition';
+import { moveTile, placeTile, swapTiles, swapWithHand, unplaceTile, type ExpeditionState } from '../../engine/expedition';
 import { tileHint } from '../labels';
-import { button, el, icon } from './dom';
+import { el, icon } from './dom';
 import { canPlaceAt, tileCss, tileIconId } from './expedition';
+import { registerCancelHook } from './shortcuts';
 
 export interface RoadPlanner {
   el: HTMLElement;
@@ -15,6 +16,8 @@ export interface RoadPlanner {
   reset(): void;
   /** 이 배치판에서 놓은(아직 옮기거나 되돌릴 수 있는) 타일이 있는가 */
   canEdit(): boolean;
+  /** 고른 것(손 타일 또는 놓은 칸)을 푼다. 풀 것이 있었으면 true (키보드 Q·Esc) */
+  cancelSelection(): boolean;
 }
 
 export interface RoadPlannerOpts {
@@ -32,17 +35,24 @@ export function roadCellMode(o: { slot: string | null; index: number; pos: numbe
   return canPlaceAt({ slot: o.slot, index: o.index, pos: o.pos, phase: 'moving', hasSelected: o.hasSelected }) ? 'can' : 'empty';
 }
 
-/** 배치판 칸을 눌렀을 때 할 일 (순수, GDD 18-4):
- *  타일이 있는 칸 = 이 배치판에서 놓은 것이면 선택(다시 누르면 선택 해제), 아니면(이전 바퀴에서 확정된 타일) 정보만 보인다.
- *  빈 칸 = 놓은 타일을 골라 둔 상태면 옮기기, 손의 타일을 골라 둔 상태면 놓기, 아무것도 안 골랐으면 안내 */
-export type CellAction = 'info' | 'select-placed' | 'deselect' | 'move' | 'place' | 'need-pick';
-export function cellAction(o: { slot: string | null; editable: boolean; selectedTile: string | null; selectedCell: number | null; index: number }): CellAction {
+/** 지금 고른 것: 손의 타일 / 놓은 칸 / 없음 */
+export type RoadSelection = { kind: 'hand'; tileId: string } | { kind: 'cell'; cell: number } | null;
+
+/** 배치판 칸을 눌렀을 때 할 일 (순수, GDD 18-8 — 터치·마우스·키보드 F 모두 같은 규칙):
+ *  타일이 있는 칸 — 이 배치판에서 놓은 것(editable)이면: 아무것도 안 골랐으면 선택 / 같은 칸을 다시 누르면 손으로 복귀 / 다른 놓은 칸을 골라 둔 상태면 서로 교체 / 손 타일을 골라 둔 상태면 그 칸과 교체.
+ *  이전 바퀴에서 확정된 타일이면 안내만(선택은 그대로).
+ *  빈 칸 — 놓은 칸을 골라 둔 상태면 이동, 손 타일을 골라 둔 상태면 놓기, 아무것도 안 골랐으면 안내 */
+export type CellAction = 'info' | 'select-placed' | 'return-hand' | 'swap-cells' | 'swap-hand' | 'move' | 'place' | 'need-pick';
+export function cellAction(o: { slot: string | null; editable: boolean; selection: RoadSelection; index: number }): CellAction {
+  const sel = o.selection;
   if (o.slot) {
     if (!o.editable) return 'info';
-    return o.selectedCell === o.index ? 'deselect' : 'select-placed';
+    if (sel?.kind === 'cell') return sel.cell === o.index ? 'return-hand' : 'swap-cells';
+    if (sel?.kind === 'hand') return 'swap-hand';
+    return 'select-placed';
   }
-  if (o.selectedCell !== null) return 'move';
-  return o.selectedTile ? 'place' : 'need-pick';
+  if (sel?.kind === 'cell') return 'move';
+  return sel?.kind === 'hand' ? 'place' : 'need-pick';
 }
 
 /** 손에 든 타일을 종류별로 센다 (순수): 같은 id 는 한 칩으로 묶는다 */
@@ -86,27 +96,46 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   }
   const noteEl = el('p', 'bha-road__note');
   noteEl.setAttribute('aria-live', 'polite');
-  const undo = button({ label: '손으로 되돌리기', icon: 'i-return', size: 'small', variant: 'ghost', onClick: () => undoSelected() });
-  undo.classList.add('bha-road__undo');
-  undo.dataset.sc = 'undo';
   const noteRow = el('div', 'bha-road__noterow');
-  noteRow.append(noteEl, undo);
+  noteRow.append(noteEl);
   const hand = el('div', 'bha-exp__hand bha-road__hand');
   hand.dataset.scList = '';
   const root = el('div', 'bha-road__wrap');
   root.append(road, noteRow, hand);
 
+  const selection = (): RoadSelection => (selectedCell !== null ? { kind: 'cell', cell: selectedCell } : selected ? { kind: 'hand', tileId: selected } : null);
+
   function onCell(i: number): void {
     const id = exp.slots[i] ?? null;
-    const act = cellAction({ slot: id, editable: placedHere.has(i), selectedTile: selected, selectedCell, index: i });
-    if (act === 'info') note = `${o.tileName(id!)}: ${tileHint(getTile(id!))} (이전 바퀴에서 확정된 타일)`;
+    const act = cellAction({ slot: id, editable: placedHere.has(i), selection: selection(), index: i });
+    if (act === 'info') note = `${o.tileName(id!)}: ${tileHint(getTile(id!))} (확정된 타일)`;
     else if (act === 'select-placed') {
       selectedCell = i;
       selected = null;
-      note = `${i}번 칸의 ${o.tileName(id!)} 선택: 옮길 빈 칸을 누르거나 [손으로 되돌리기]`;
-    } else if (act === 'deselect') {
-      selectedCell = null;
-      note = '';
+      note = `${i}번 칸의 ${o.tileName(id!)} 선택: 빈 칸을 누르면 이동, 다른 놓은 타일을 누르면 교체, 같은 칸을 다시 누르면 손으로 돌아온다`;
+    } else if (act === 'return-hand') {
+      const r = unplaceTile(exp, i);
+      note = r.ok ? `${o.tileName(id!)}을(를) ${i}번 칸에서 손으로 되돌렸다` : r.reason;
+      if (r.ok) {
+        placedHere.delete(i);
+        selectedCell = null;
+        o.onPlaced?.();
+      }
+    } else if (act === 'swap-cells') {
+      const from = selectedCell!;
+      const r = swapTiles(exp, from, i);
+      note = r.ok ? `${from}번 칸과 ${i}번 칸의 타일을 서로 바꿨다` : r.reason;
+      if (r.ok) {
+        selectedCell = null;
+        o.onPlaced?.();
+      }
+    } else if (act === 'swap-hand') {
+      const r = swapWithHand(exp, selected!, i);
+      note = r.ok ? `${i}번 칸의 ${o.tileName(id!)}은(는) 손으로, ${o.tileName(selected!)}을(를) 그 칸에 놓았다` : r.reason;
+      if (r.ok) {
+        o.onPlaced?.();
+        if (!exp.hand.includes(selected!)) selected = null;
+      }
     } else if (act === 'move') {
       const from = selectedCell!;
       const tid = exp.slots[from]!;
@@ -130,24 +159,32 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     refresh();
   }
 
-  function undoSelected(): void {
-    if (selectedCell === null) return;
-    const from = selectedCell;
-    const tid = exp.slots[from];
-    const r = unplaceTile(exp, from);
-    note = r.ok ? `${o.tileName(tid!)}을(를) ${from}번 칸에서 손으로 되돌렸다` : r.reason;
-    if (r.ok) {
-      placedHere.delete(from);
-      selectedCell = null;
-      o.onPlaced?.();
-    }
+  function cancelSelection(): boolean {
+    if (selected === null && selectedCell === null) return false;
+    selected = null;
+    selectedCell = null;
+    note = '';
     refresh();
+    return true;
   }
+  // 판 바깥 빈 곳(안내 줄·칸 사이)을 누르면 선택만 풀린다. 타일은 그대로
+  root.addEventListener('click', (e) => {
+    // 눌린 칸·칩은 눌린 직후 다시 그려져 target 이 떨어져 나갈 수 있어, 눌린 순간의 경로로 판정한다
+    const onTile = e.composedPath().some((n) => n instanceof Element && n.matches('.bha-road__cell, .bha-tilechip'));
+    if (!onTile) cancelSelection();
+  });
+  // 키보드 Q·Esc: 이 배치판이 화면에 있고 고른 것이 있을 때만 선택 취소로 쓴다 (없으면 평소처럼 뒤로)
+  let wasShown = false;
+  registerCancelHook((top) => {
+    if (root.isConnected) wasShown = true;
+    else return wasShown ? 'gone' : false;
+    if (top && !top.contains(root)) return false; // 다른 레이어(도움말 등)가 위에 열려 있으면 그것이 먼저 닫힌다
+    return cancelSelection();
+  });
 
   function refresh(): void {
     if (selected && !exp.hand.includes(selected)) selected = null;
     if (selectedCell !== null && (!placedHere.has(selectedCell) || !exp.slots[selectedCell])) selectedCell = null;
-    undo.hidden = selectedCell === null;
     for (let i = 1; i < L; i++) {
       const id = exp.slots[i];
       const mode = roadCellMode({ slot: id ?? null, index: i, pos: exp.pos, hasSelected: selected !== null });
@@ -157,9 +194,9 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       b.className = `bha-road__cell${css ? ` is-has bha-road__cell--${css}` : ''}${mode === 'can' || canMove ? ' is-can' : ''}${selectedCell === i ? ' is-selected' : ''}${id && placedHere.has(i) ? ' is-editable' : ''}`;
       b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), el('span', 'bha-road__num', String(i)));
       b.title = id ? `${o.tileName(id)} — ${tileHint(getTile(id))}` : '빈 칸';
-      b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 옮기거나 되돌릴 수 있음' : ''})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
+      b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 확정된 타일'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
     }
-    noteEl.textContent = note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 되돌릴 수 있다' : '놓을 타일이 없다');
+    noteEl.textContent = note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다');
     hand.replaceChildren();
     if (exp.hand.length === 0) hand.append(el('span', 'bha-faint', '손에 든 타일 없음'));
     for (const { id, count } of handCounts(exp.hand)) {
@@ -191,5 +228,6 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       refresh();
     },
     canEdit: () => placedHere.size > 0,
+    cancelSelection,
   };
 }

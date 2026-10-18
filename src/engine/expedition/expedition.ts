@@ -467,6 +467,39 @@ export function moveTile(exp: ExpeditionState, from: number, to: number): PlaceR
   return p;
 }
 
+/** 놓은 타일 두 칸 맞바꾸기 (GDD 18-8): 둘 다 타일이 있는 칸이어야 한다. 야생 전투 칸 계산은 둘 다 이미 찬 칸이라 바뀌지 않는다 */
+export function swapTiles(exp: ExpeditionState, a: number, b: number): PlaceResult {
+  if (exp.phase !== 'moving' && exp.phase !== 'nest-choice') return { ok: false, reason: '지금은 바꿀 수 없다' };
+  if (a === b) return { ok: false, reason: '같은 칸이다' };
+  for (const c of [a, b]) {
+    if (!Number.isInteger(c) || c < 1 || c >= EX.loopTiles) return { ok: false, reason: '슬롯이 없는 칸이다' };
+    if (c <= exp.pos) return { ok: false, reason: '지나간 칸이다' };
+    if (exp.slots[c] === null || exp.slots[c] === undefined) return { ok: false, reason: '타일이 없는 칸이다' };
+  }
+  const t = exp.slots[a]!;
+  exp.slots[a] = exp.slots[b]!;
+  exp.slots[b] = t;
+  return { ok: true };
+}
+
+/** 손의 타일과 놓은 타일 교체 (GDD 18-8): cell 의 타일은 손으로, 손의 tileId 는 그 칸으로. 실패하면 아무것도 바꾸지 않는다 */
+export function swapWithHand(exp: ExpeditionState, tileId: string, cell: number): PlaceResult {
+  const old = exp.slots[cell];
+  if (old === null || old === undefined) return { ok: false, reason: '타일이 없는 칸이다' };
+  if (old === tileId) return { ok: false, reason: '같은 타일이다' };
+  if (!exp.hand.includes(tileId)) return { ok: false, reason: '손에 없는 타일이다' };
+  const before = { slots: [...exp.slots], hand: [...exp.hand], wild: [...exp.wildCells], rng: structuredClone(exp.rng) };
+  const u = unplaceTile(exp, cell);
+  const p = u.ok ? placeTile(exp, tileId, cell) : u;
+  if (!p.ok) {
+    exp.slots = before.slots;
+    exp.hand = before.hand;
+    exp.wildCells = before.wild;
+    exp.rng = before.rng;
+  }
+  return p;
+}
+
 /**
  * 카드 배치 단계 (GDD 17-1): 원정이 시작되기 직전에 덱의 타일을 손에 쥐어 12칸 길에 놓게 한다.
  * 덱은 보상으로 뽑을 타일 목록이기도 해서 그대로 두고, 손에만 사본을 쥔다. 단계가 끝나면 finishPlanning 이 손을 비운다.

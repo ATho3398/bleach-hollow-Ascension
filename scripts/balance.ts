@@ -422,7 +422,10 @@ if (finalRuns.length >= CAMPAIGNS * 0.8) {
       console.log(`      ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종: ${top}`);
       const real = sorted.filter(([id]) => id !== base);
       const realTotal = real.reduce((a, [, n]) => a + n, 0);
-      if (realTotal >= 5 && real[0]![1] / realTotal >= 0.9) failures.push(`진화(${pol.name}): ${tier}단계 ${formName(FORM_TABLE.find((f) => f.id === real[0]![0])!, 'hollow')} 가 ${((real[0]![1] / realTotal) * 100).toFixed(0)}% 독점 (>= 90%, 기본형 제외)`);
+      // 분산 봇이 균형형을 얻는 것은 의도한 결과다(계통을 고르게 쌓는 정책). C.41: 공격 계열이 3가지로 섞여 약점 적중이 빌드와 무관해지면서 흡수 계통 분포가 균일해져
+      // 분산 봇의 4단계가 거의 전부 균형형이 되므로 이 조합만 독점 가드에서 뺀다 (집중 봇·전체 봇 가드는 그대로)
+      const intendedBalanced = pol.name === '분산 봇' && formName(FORM_TABLE.find((f) => f.id === real[0]?.[0])!, 'hollow').startsWith('균형형');
+      if (!intendedBalanced && realTotal >= 5 && real[0]![1] / realTotal >= 0.9) failures.push(`진화(${pol.name}): ${tier}단계 ${formName(FORM_TABLE.find((f) => f.id === real[0]![0])!, 'hollow')} 가 ${((real[0]![1] / realTotal) * 100).toFixed(0)}% 독점 (>= 90%, 기본형 제외)`);
     }
     const lastRuns = reach[3]!;
     if (lastRuns.length < CAMPAIGNS * 0.8) console.log(`      → 참고: 5단계 도달 ${lastRuns.length}/${CAMPAIGNS}`);

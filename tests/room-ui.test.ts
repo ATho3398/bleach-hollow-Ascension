@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { artUrls } from '../src/data/art/manifest';
 import { FACTIONS, getFaction } from '../src/data/factions';
 import { parseFactionConfig, roomOf, ROOM_PROPS, ROOM_TALK } from '../src/engine/faction';
-import { moodOf, pickLine } from '../src/ui/bha/roomLogic';
+import { moodOf, pickLine, statusChips } from '../src/ui/bha/roomLogic';
 
 describe('moodOf', () => {
   const base = { weakened: false, condition: 80, risk: 10, riskLimit: 100 };
@@ -86,5 +86,26 @@ describe('훈련 인형 (GDD 18-3, C.38)', () => {
   });
   it('그림 키 prop.dummy 가 매니페스트에 있다(파일 prop-dummy.png)', () => {
     expect(artUrls('prop.dummy', '/', {}, ['prop-dummy.png']).src).toBe('/art/prop-dummy.png');
+  });
+});
+
+describe('머리 위 상태 칩 (GDD 18-8)', () => {
+  const names = { riskGaugeName: '광기', defeatStateName: '쇠약' };
+  it('허기·컨디션·리스크 순서, 값은 반올림, 위험 구간은 기존 경고 기준과 같다', () => {
+    const chips = statusChips({ hunger: 40.4, condition: 80, risk: 10, weakened: false }, names);
+    expect(chips.map((c) => [c.kind, c.label, c.value, c.danger])).toEqual([
+      ['hunger', '허기', 40, false], ['cond', '컨디션', 80, false], ['risk', '광기', 10, false],
+    ]);
+    const bad = statusChips({ hunger: 85, condition: 30, risk: 61, weakened: false }, names);
+    expect(bad.map((c) => c.danger)).toEqual([true, true, true]);
+  });
+  it('쇠약이면 그 이름의 칩이 하나 더 붙는다', () => {
+    const chips = statusChips({ hunger: 0, condition: 100, risk: 0, weakened: true }, names);
+    expect(chips).toHaveLength(4);
+    expect(chips[3]).toMatchObject({ kind: 'weak', label: '쇠약', value: null, danger: true });
+  });
+  it('방 소품에 상태판(care)은 없다', () => {
+    expect((ROOM_PROPS as readonly string[]).includes('care')).toBe(false);
+    for (const f of FACTIONS) expect(Object.keys(roomOf(f).props)).not.toContain('care');
   });
 });
