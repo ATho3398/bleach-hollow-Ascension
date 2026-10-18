@@ -35,7 +35,14 @@
   border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg); background: var(--bha-bg-1); box-sizing: border-box;
 }
 .bha-homedock__tray[hidden] { display: none; }
-.bha-homedock__tray--more { justify-content: flex-end; flex-wrap: wrap; }
+.bha-homedock__tray--more { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-homedock__moreitem {
+  min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1);
+  padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2);
+  color: var(--bha-text-1); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; text-align: center; touch-action: manipulation;
+}
+.bha-homedock__moreitem .bha-icon { width: 22px; height: 22px; color: var(--bha-text-2); }
+.bha-homedock__moreitem:active { background: var(--bha-bg-3); }
 .bha-homedock__food {
   flex: 1 1 0; min-width: 0; min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
   padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-hunger); border-radius: var(--bha-r-md); background: var(--bha-bg-2);

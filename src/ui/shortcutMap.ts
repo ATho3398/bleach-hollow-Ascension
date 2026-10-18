@@ -1,5 +1,5 @@
 // PC 단축키 매핑 (GDD 18-5): 화면 맥락 → 물리 키(e.code) → 액션. DOM 에 의존하지 않는 순수 데이터·함수라 단위 테스트한다 (tests/shortcut-map.test.ts).
-// 왼손 영역(숫자 1~8, Q W E R, A S D F, Z X C V B N M, T, H, Space)에 몰고, +/-(화면 배율 17-5)·Esc·Enter·방향키는 예약한다.
+// 왼손 영역(숫자 1~8, Q W E R, A S D F, Z X C V, T, G, H, Space)에 몰고, +/-(화면 배율 17-5)·Esc·Enter·방향키는 예약한다.
 // 종족 무관 엔진 UI 규칙이라 종족 설정에서 읽을 것이 없다.
 
 export type ShortcutCtx = 'menu' | 'battle' | 'room' | 'plan';
@@ -35,8 +35,8 @@ export const SHORTCUTS: Record<ShortcutCtx, Record<string, ShortcutAction>> = {
   menu: { ...NAV, ...digits(9, (i) => `pick.${i}`) },
   // 전투(진행 중): 블록 1~8, 저장 필살기 Q, 일시정지 Space(또는 F), 배속 E, 도움말 H
   battle: { ...digits(8, (i) => `block.${i}`), KeyQ: 'stored', Space: 'pause', KeyF: 'confirm', KeyE: 'speed', KeyH: 'help' },
-  // 홈: 돌보기 Z X C, 독 메뉴 V B N M, 훈련 인형 T, 상태 칩 G, 펼친 먹이/더보기 줄은 숫자
-  room: { ...NAV, KeyZ: 'care.feed', KeyX: 'care.sleep', KeyC: 'care.pet', KeyV: 'dock.1', KeyB: 'dock.2', KeyN: 'dock.3', KeyM: 'dock.4', KeyT: 'dummy', KeyG: 'status', ...digits(9, (i) => `pick.${i}`) },
+  // 홈: 돌보기 Z X C, 더보기 V(펼친 격자는 숫자), 훈련 인형 T, 상태 칩 G, 펼친 먹이/더보기 줄은 숫자
+  room: { ...NAV, KeyZ: 'care.feed', KeyX: 'care.sleep', KeyC: 'care.pet', KeyV: 'dock.more', KeyT: 'dummy', KeyG: 'status', ...digits(9, (i) => `pick.${i}`) },
   // 원정 배치판: 이동 W/S/A/D, 그 칸 누르기 F, 선택 취소 Q·Esc, 출발 Space, 숫자 = 손에 든 타일 N번째 (되돌리기 R 키는 18-8 에서 삭제 — 놓은 타일을 선택한 뒤 같은 칸을 다시 누른다)
   plan: { ...NAV, Space: 'go', ...digits(9, (i) => `pick.${i}`) },
 };
@@ -99,10 +99,10 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
     title: '홈',
     rows: [
       { keys: 'Z / X / C', does: '먹이 / 재우기 / 쓰다듬기 (먹이는 펼친 줄에서 1~5로 고른다)' },
-      { keys: 'V / B / N / M', does: '독 메뉴 1~4번째 (종족 바꾸기·설정·도움말·더보기)' },
+      { keys: 'V', does: '더보기 열기/닫기 (설정·도움말·튜토리얼·종족 바꾸기·백업·처음 화면)' },
       { keys: 'T', does: '훈련 인형(전투 연습)' },
       { keys: 'G', does: '캐릭터 머리 위 상태 칩(상태 화면)' },
-      { keys: '1 ~ 9', does: '펼친 먹이·더보기 줄의 N번째' },
+      { keys: '1 ~ 9', does: '펼친 먹이 줄·더보기 격자의 N번째' },
     ],
   },
   {

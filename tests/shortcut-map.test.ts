@@ -52,6 +52,8 @@ describe('단축키 매핑', () => {
     expect(actionFor('plan', 'KeyR')).toBeNull(); // 되돌리기 키는 18-8 에서 삭제
     expect(actionFor('plan', 'KeyQ')).toBe('cancel'); // 선택 취소(배치판이 먼저 가로챈다)
     expect(actionFor('room', 'KeyG')).toBe('status');
+    expect(actionFor('room', 'KeyV')).toBe('dock.more'); // 더보기 하나로 통합 (18-9)
+    for (const k of ['KeyB', 'KeyN', 'KeyM']) expect(actionFor('room', k), k).toBeNull();
     expect(actionFor('plan', 'Space')).toBe('go');
     expect(actionFor('room', 'Digit2')).toBe('pick.2');
   });

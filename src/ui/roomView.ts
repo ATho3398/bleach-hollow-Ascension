@@ -1,5 +1,5 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
-//   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 훈련 인형=전투 연습 · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2)=돌보기 3개·메뉴(종족·설정·도움말)·더보기.
+//   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 훈련 인형=전투 연습 · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·종족 바꾸기·백업·처음 화면).
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
 import { applyIdle, doNestAction } from '../engine/nest';
@@ -136,15 +136,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       void char.offsetWidth;
       char.classList.add('is-react');
     },
-    menu: [
-      { label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction },
+    more: [
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
-    ],
-    more: [
-      { label: '튜토리얼 다시 보기', icon: 'i-play', onClick: hd.onTutorial },
-      { label: '세이브 백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
-      { label: '처음 화면으로', icon: 'i-quit', onClick: hd.onTitle },
+      { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },
+      { label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction },
+      { label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
+      { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
     ],
     onItemsChange: () => registerItems(),
   });
