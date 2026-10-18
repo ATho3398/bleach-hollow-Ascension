@@ -40,8 +40,8 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** 등급 방식: 호로=도전(challenge), 사신=승진(promotion) (GDD 8-2) */
 export type RankMode = 'challenge' | 'promotion';
 
-/** 메인 방 화면의 물건 (GDD 16-1 4번). 이름은 종족 설정이 정한다 */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'window', 'care'] as const;
+/** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'window', 'care', 'dummy'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
@@ -65,10 +65,10 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '제단', book: '책', chest: '상자', window: '창문', care: '돌보기' },
+  props: { door: '문', altar: '제단', book: '책', chest: '상자', window: '창문', care: '상태판', dummy: '훈련 인형' },
   layout: {
     window: { x: 22, y: 26 }, book: { x: 40, y: 22 }, altar: { x: 62, y: 24 }, door: { x: 86, y: 40 },
-    chest: { x: 14, y: 68 }, care: { x: 80, y: 78 },
+    chest: { x: 14, y: 68 }, care: { x: 80, y: 78 }, dummy: { x: 32, y: 76 },
   },
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'],

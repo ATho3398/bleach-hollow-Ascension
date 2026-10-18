@@ -1,5 +1,5 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
-//   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 돌보기 자리=상태·돌보기 · 캐릭터=반응, 가장자리 아이콘=연습·종족·설정·도움말.
+//   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 상태판=상태 · 훈련 인형=전투 연습 · 캐릭터=반응. 아래 독(GDD 18-2)=돌보기 3개·메뉴(종족·설정·도움말)·더보기.
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
 import { applyIdle, doNestAction } from '../engine/nest';
@@ -99,9 +99,10 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     chest: hd.onChest,
     window: hd.onWindow,
     care: hd.onCare,
+    dummy: hd.onPractice, // 훈련 인형 = 전투 연습 (GDD 18-3)
   };
-  // 위/아래 순서: 위쪽 줄(창문·책·제단) → 문 → 상자 → 돌보기 → 캐릭터 → 가장자리 아이콘
-  const order: RoomProp[] = ['window', 'book', 'altar', 'door', 'chest', 'care'];
+  // 위/아래 순서: 위쪽 줄(창문·책·제단) → 문 → 상자 → 돌보기 → 캐릭터 → 독 메뉴
+  const order: RoomProp[] = ['window', 'book', 'altar', 'door', 'chest', 'dummy', 'care'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckCount === 0 });
@@ -136,7 +137,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       char.classList.add('is-react');
     },
     menu: [
-      { label: '전투 연습', icon: 'i-practice', onClick: hd.onPractice },
       { label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction },
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
