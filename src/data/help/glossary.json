@@ -1,18 +1,20 @@
 {
   "provisional": true,
   "terms": [
-    { "id": "lineage", "title": "계통", "body": "적과 {skillBlockName} 특성이 속한 성질의 갈래예요 (지금은 임시 계통 5개). 적마다 약점 계통이 하나 있어서, 그 계통의 블록으로 때리면 더 큰 피해를 줘요. {absorbActionName}으로 쌓인 계통의 분포가 진화 방향을 정해요." },
-    { "id": "chain", "title": "{chainName}", "body": "같은 블록이 블록 바에 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해요. 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 최대 {chainMax}단계이고 단계가 오를수록 위력이 크게 올라가요. 단계 3은 추가 효과도 붙어요." },
-    { "id": "sp", "title": "{spName}", "body": "블록을 쓸 때마다 차는 게이지예요. 가득 차면 {specialBlockName}이(가) 블록 바에 나타나요." },
-    { "id": "special-block", "title": "{specialBlockName}", "body": "{spName}이(가) 가득 차면 블록 바의 빈 칸에 생기는 큰 피해 블록이에요. 빈 칸이 없으면 나오지 못하니 한 칸은 비워 두세요." },
-    { "id": "stored-skill", "title": "{storedSkillName}", "body": "블록 바 아래 버튼이에요. 블록을 쓸수록 충전이 모이고(최대 {storedChargesMax}개) 하나를 써서 기본 공격 {storedPower}회분의 큰 피해를 줘요. 쓴 직후 {storedGuardSeconds}초 동안 {roleNames.guard} 상태가 되어 강공격 예고에도 쓸 수 있어요. 전투가 끝나면 충전은 이월되지 않아요." },
-    { "id": "void-block", "title": "{voidBlockName}", "body": "큰 피해를 주는 대신 쓰면 {riskGaugeName}이(가) 올라가는 블록이에요. 컨디션이 나쁘거나 위험한 상황에서 더 자주 생겨요." },
-    { "id": "weakness", "title": "약점", "body": "적마다 정해진 약점 계통이 있어요. 그 계통의 {skillBlockName}은(는) 위력이 1.5배가 되고, 약점 계통으로 마무리하면 {absorbActionName} 조건을 채울 수 있어요." },
-    { "id": "stability", "title": "{stabilityName}", "body": "적을 놓아주거나 {nestName}에서 돌보면 오르는 안정 수치예요. 높을수록 전투 시작 때 {storedSkillName} 충전이 더 채워져 있어요. 한계 돌파를 겪고 돌아오면 떨어져요." },
-    { "id": "risk-gauge", "title": "{riskGaugeName}", "body": "{voidBlockName}을(를) 쓰거나 강한 적을 {absorbActionName}하면 오르는 게이지예요. 한계를 넘으면 한계 돌파가 일어나 원정이 위험해져요. 적을 놓아주거나 휴식, {nestName}에서 돌보면 내려가요. (수치는 임시)" },
-    { "id": "evolution-condition", "title": "진화 조건", "body": "현재 단계에서 {absorbActionName}한 횟수가 정해진 수에 닿으면 {nestName}에서 [진화]를 누를 수 있어요. 어느 계통을 많이 {absorbActionName}했는지에 따라 갈 수 있는 진화체가 달라져요. 결과는 진화해 보기 전까지 ?로 가려져 있어요. (조건 수치는 임시)" },
-    { "id": "form-dex", "title": "진화체 도감", "body": "{nestName}의 진화 칸에 있는 [진화체 도감]에서 열어요. 한 번 진화해 본 진화체가 기록돼요." },
-    { "id": "title-dex", "title": "칭호 도감", "body": "{nestName}의 [칭호 도감]에서 열어요. 조건을 채우면 칭호가 해금되고, 숨겨진 칭호는 ?로 보여요. (조건은 임시)" },
-    { "id": "resume-expedition", "title": "원정 이어하기", "body": "원정은 전투가 끝날 때마다 자동 저장돼요. 도중에 앱을 닫아도 {nestName}에서 [원정 이어하기]로 돌아올 수 있어요. 전투 도중에 닫으면 그 전투가 시작되기 직전부터 다시 해요. 새 원정을 시작하면 이어하던 원정은 패배 처리 없이 사라져요." }
+    {"id": "lineage", "title": "계통", "body": "적과 {skillBlockName} 특성이 속한 성질의 갈래예요 (지금은 임시 계통 5개). 적마다 약점 계통이 하나 있어서, 그 계통의 블록으로 때리면 더 큰 피해를 줘요. {absorbActionName}으로 쌓인 계통의 분포가 진화 방향을 정해요."},
+    {"id": "family", "title": "계열", "body": "공격 {skillBlockName}이(가) 속한 갈래({familyList})예요. 블록 위 왼쪽 위의 한 글자가 계열이에요. 같은 계열 블록이 붙으면 특성이 달라도 {chainName}이(가) 돼요. 계열마다 1~{chainMax}단계 기술이 있어요."},
+    {"id": "chain", "title": "{chainName}", "body": "같은 계열({familyList}) 공격 블록이 블록 바에 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해요. 특성이 달라도 계열만 같으면 돼요. 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 최대 {chainMax}단계이고 단계가 오를수록 더 강한 기술이 나가요(1단계 → 3단계). {roleNames.guard}·{roleNames.heal} 블록은 계열이 없어서 같은 블록끼리만 붙어요."},
+    {"id": "sp", "title": "{spName}", "body": "블록을 쓸 때마다 차는 게이지예요. 가득 차면 {specialBlockName}이(가) 블록 바에 나타나요."},
+    {"id": "special-block", "title": "{specialBlockName}", "body": "{spName}이(가) 가득 차면 블록 바의 빈 칸에 생기는 큰 피해 블록이에요. 빈 칸이 없으면 나오지 못하니 한 칸은 비워 두세요."},
+    {"id": "combo", "title": "콤보 블록", "body": "같은 계열의 {chainName}을(를) 다른 블록을 쓰지 않고 연달아 두 번 쓰면 블록 바 맨 오른쪽에 큰 피해를 주는 콤보 블록이 생겨요. 콤보는 진화할 때마다 하나씩 열려요(임시)."},
+    {"id": "stored-skill", "title": "{storedSkillName}", "body": "블록 바 아래 버튼이에요. 블록을 쓸수록 충전이 모이고(최대 {storedChargesMax}개) 하나를 써서 기본 공격 {storedPower}회분의 큰 피해를 줘요. 쓴 직후 {storedGuardSeconds}초 동안 {roleNames.guard} 상태가 되어 강공격 예고에도 쓸 수 있어요. 전투가 끝나면 충전은 이월되지 않아요."},
+    {"id": "void-block", "title": "{voidBlockName}", "body": "큰 피해를 주는 대신 쓰면 {riskGaugeName}이(가) 올라가는 블록이에요. 컨디션이 나쁘거나 위험한 상황에서 더 자주 생겨요."},
+    {"id": "weakness", "title": "약점", "body": "적마다 정해진 약점 계열이 있어요. 그 계열의 {skillBlockName}은(는) 위력이 1.5배가 되고, 약점 계열으로 마무리하면 {absorbActionName} 조건을 채울 수 있어요."},
+    {"id": "stability", "title": "{stabilityName}", "body": "적을 놓아주거나 {nestName}에서 돌보면 오르는 안정 수치예요. 높을수록 전투 시작 때 {storedSkillName} 충전이 더 채워져 있어요. 한계 돌파를 겪고 돌아오면 떨어져요."},
+    {"id": "risk-gauge", "title": "{riskGaugeName}", "body": "{voidBlockName}을(를) 쓰거나 강한 적을 {absorbActionName}하면 오르는 게이지예요. 한계를 넘으면 한계 돌파가 일어나 원정이 위험해져요. 적을 놓아주거나 휴식, {nestName}에서 돌보면 내려가요. (수치는 임시)"},
+    {"id": "evolution-condition", "title": "진화 조건", "body": "현재 단계에서 {absorbActionName}한 횟수가 정해진 수에 닿으면 {nestName}에서 [진화]를 누를 수 있어요. 어느 계통을 많이 {absorbActionName}했는지에 따라 갈 수 있는 진화체가 달라져요. 결과는 진화해 보기 전까지 ?로 가려져 있어요. (조건 수치는 임시)"},
+    {"id": "form-dex", "title": "진화체 도감", "body": "{nestName}의 진화 칸에 있는 [진화체 도감]에서 열어요. 한 번 진화해 본 진화체가 기록돼요."},
+    {"id": "title-dex", "title": "칭호 도감", "body": "{nestName}의 [칭호 도감]에서 열어요. 조건을 채우면 칭호가 해금되고, 숨겨진 칭호는 ?로 보여요. (조건은 임시)"},
+    {"id": "resume-expedition", "title": "원정 이어하기", "body": "원정은 전투가 끝날 때마다 자동 저장돼요. 도중에 앱을 닫아도 {nestName}에서 [원정 이어하기]로 돌아올 수 있어요. 전투 도중에 닫으면 그 전투가 시작되기 직전부터 다시 해요. 새 원정을 시작하면 이어하던 원정은 패배 처리 없이 사라져요."}
   ]
 }

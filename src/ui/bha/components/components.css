@@ -452,6 +452,8 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-block__icon .bha-icon { width: 16px; height: 16px; stroke-width: 2.2; }
 .bha-block__abbr { font-size: var(--bha-fs-xs); line-height: 1.08; font-weight: var(--bha-fw-heavy); letter-spacing: -0.03em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; max-width: 100%; text-shadow: 0 1px 1px rgb(0 0 0 / 0.35); }
 /* 체인 단계 표식 ●○○ / ●●○ / ●●● */
+/* 계열 표시(GDD 17-3): 왼쪽 위 한 글자 (조·교·탄 / 참·권·귀). 임시 스타일 — 디자인 시안 대기 */
+.bha-block__fam { position: absolute; top: 2px; left: 3px; font-size: var(--bha-fs-xs); line-height: 1; font-weight: var(--bha-fw-heavy); text-shadow: 0 1px 1px rgb(0 0 0 / 0.45); }
 .bha-block__pips { position: absolute; top: 4px; left: 0; right: 0; display: flex; justify-content: center; gap: 3px; }
 .bha-block__pips i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; opacity: 0.85; }
 .bha-block__pips i:nth-child(-n + 1) { background: currentColor; }

@@ -167,6 +167,8 @@ export interface BlockSpec {
   label: string;
   weak: boolean;
   uid: number;
+  /** 계열 표시 한 글자 (공격 계열 블록만, GDD 17-3) */
+  family?: string;
 }
 
 /** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림 같은 상태 클래스는 화면이 붙인다 */
@@ -187,6 +189,7 @@ export function blockEl(spec: BlockSpec): HTMLElement {
   const weak = el('span', 'bha-block__weak');
   weak.append(icon('i-weak'));
   node.append(ico, el('b', 'bha-block__abbr', spec.abbr), weak);
+  if (spec.family) node.append(el('span', 'bha-block__fam', spec.family));
   return node;
 }
 

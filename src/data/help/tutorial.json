@@ -26,8 +26,8 @@
         "battle.runrow",
         "battle.tray"
       ],
-      "title": "붙여서 {chainName}",
-      "body": "같은 블록이 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해 {chainName}이(가) 돼요 (최대 {chainMax}). 떨어져 있어도 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 많이 붙일수록 위력이 크게 올라요."
+      "title": "같은 계열을 붙여서 {chainName}",
+      "body": "같은 계열({familyList}) 공격 블록이 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해 {chainName}이(가) 돼요 (최대 {chainMax}). 특성이 달라도 계열이 같으면 돼요. 떨어져 있어도 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 많이 붙일수록 더 강한 기술이 나가요. 같은 계열 {chainName}을(를) 연달아 두 번 쓰면 콤보 블록이 생기기도 해요."
     },
     {
       "id": "heavy",
@@ -75,7 +75,7 @@
       "id": "after",
       "targets": [],
       "title": "이기면 {absorbActionName}, 그리고 진화",
-      "body": "적을 쓰러뜨리면 {absorbActionName}과(와) 놓아주기 중에서 골라요. {absorbActionName} 조건: 적의 약점 계통 {skillBlockName}(으)로 마무리하거나, 약점 계통 {skillBlockName}의 {chainName}{chainMax}을(를) {weakChain3}회 이상 발동하기. {absorbActionName}이(가) 쌓이면 {nestName}에서 진화할 수 있어요. 이 설명은 언제든 [?] 도움말에서 다시 볼 수 있어요."
+      "body": "적을 쓰러뜨리면 {absorbActionName}과(와) 놓아주기 중에서 골라요. {absorbActionName} 조건: 적의 약점 계열 {skillBlockName}(으)로 마무리하거나, 약점 계열 {skillBlockName}의 {chainName}{chainMax}을(를) {weakChain3}회 이상 발동하기. {absorbActionName}이(가) 쌓이면 {nestName}에서 진화할 수 있어요. 이 설명은 언제든 [?] 도움말에서 다시 볼 수 있어요."
     }
   ]
 }

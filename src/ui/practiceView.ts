@@ -144,6 +144,10 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     { label: '전투 시간', icon: 'i-timer', value: `${elapsedSeconds(s).toFixed(1)}초` },
     { label: `블록 사용 (${labels.chain}1 / 2 / 3)`, icon: 'i-chain-1', value: s.blocksByChain.join(' / ') },
     { label: `${labels.chain}3 발동`, icon: 'i-chain-3', value: `${s.chain3Count}회` },
+    ...(Object.keys(s.chainsByFamily).length > 0
+      ? [{ label: `계열별 ${labels.chain} (1 / 2 / 3)`, icon: 'i-chain-2', value: Object.entries(s.chainsByFamily).map(([f, v]) => `${labels.families.find((x) => x.id === f)?.abbr ?? f} ${v.join('/')}`).join(' · ') }]
+      : []),
+    ...(s.params.combos.length > 0 ? [{ label: '콤보 (발동 / 사용)', icon: 'i-special', value: `${s.combosTriggered}회 / ${s.comboBlocksUsed}회` }] : []),
     { label: '강공격 막기', icon: 'i-guard', value: `${s.guardSuccesses}회` },
     { label: labels.storedSkill, icon: 'i-stored', mod: 'em', value: `${s.storedUsed}회 사용 (낭비 ${Math.round(s.storedWasted)})` },
     { label: labels.specialBlock, icon: 'i-special', value: s.specialUsed ? '사용' : '안 씀' },

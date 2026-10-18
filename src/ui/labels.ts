@@ -1,7 +1,8 @@
 // 전투 화면 텍스트: 전부 종족 설정(FactionConfig)에서 읽는다. 종족 id 로 분기하지 않는다.
+import { lineageFamily } from '../data/lineages';
 import type { TerrainTileDef } from '../data/schema';
 import type { EndReason } from '../engine/expedition';
-import type { BlockRole, FactionConfig } from '../engine/faction';
+import { familyOf, type BlockRole, type FactionConfig } from '../engine/faction';
 
 export interface BattleLabels {
   /** 블록 역할 이름 (공격/막기/회복) */
@@ -14,6 +15,8 @@ export interface BattleLabels {
   /** 기본 블록 (슬롯에 skill 이 없을 때) */
   basicBlock: string;
   chain: string;
+  /** 공격 계열 이름·약어·단계 기술 이름 (GDD 17-3, 종족 설정 families) */
+  families: FactionConfig['families'];
   sp: string;
   riskGauge: string;
   defeatState: string;
@@ -30,12 +33,30 @@ export function battleLabels(f: FactionConfig): BattleLabels {
     voidBlock: f.voidBlockName,
     basicBlock: f.basicSkillName,
     chain: f.chainName,
+    families: f.families,
     sp: f.spName,
     riskGauge: f.riskGaugeName,
     defeatState: f.defeatStateName,
     huntingGround: f.huntingGroundName,
     factionName: f.name,
   };
+}
+
+/** 계열 단계 기술 이름 (계열·단계가 없으면 null): 예 호로 탄 계열 2단계 = "세로" */
+export function familySkillName(labels: Pick<BattleLabels, 'families'>, familyId: string | null | undefined, chain: number): string | null {
+  if (!familyId) return null;
+  return familyOf(labels, familyId)?.tiers[chain - 1]?.name ?? null;
+}
+
+/** 계열 한 글자 약어 (없으면 undefined) */
+export function familyAbbr(labels: Pick<BattleLabels, 'families'>, familyId: string | null | undefined): string | undefined {
+  return familyId ? familyOf(labels, familyId)?.abbr : undefined;
+}
+
+/** 계통이 약점일 때 ×1.5 를 받는 계열의 이름 (GDD 17-3). 계열이 없으면 null */
+export function weakFamilyName(labels: Pick<BattleLabels, 'families'>, lineageId: string): string | null {
+  const id = lineageFamily(lineageId);
+  return id ? (familyOf(labels, id)?.name ?? null) : null;
 }
 
 /** 지형 타일 효과 설명: 효과 종류는 엔진, 문구는 종족 무관 */

@@ -14,6 +14,10 @@ import { applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engin
 import { buildBattleRecord, playCombatBot, playCombatHuman, replayCombat } from '../src/engine/combat';
 import { emptyLegacyMatches, emptyRunLog } from '../src/engine/runLog';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
+import { battleLabels, familyAbbr, familySkillName, weakFamilyName } from '../src/ui/labels';
+import { blockAbbr, blockName } from '../src/ui/battleView';
+import { helpVars } from '../src/data/help';
+import { getFaction } from '../src/data/factions';
 
 describe('계열 데이터 (GDD 17-3)', () => {
   it('모든 종족 설정에 계열 목록이 있고 단계 기술은 체인 단계 수와 같다', () => {
@@ -381,5 +385,36 @@ describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
     expect(again.combosTriggered).toBe(a.combosTriggered);
     expect(again.tick).toBe(a.tick);
     expect(again.enemy.hp).toBe(a.enemy.hp);
+  });
+});
+
+describe('계열 표시 (④, GDD 17-3)', () => {
+  const hollow = battleLabels(getFaction('hollow'));
+  const shini = battleLabels(getFaction('shinigami'));
+  it('블록 바 계열 약어: 호로 조·교·탄 / 사신 참·권·귀 (종족 설정에서 읽음)', () => {
+    expect(['family-a', 'family-b', 'family-c'].map((f) => familyAbbr(hollow, f))).toEqual(['조', '교', '탄']);
+    expect(['family-a', 'family-b', 'family-c'].map((f) => familyAbbr(shini, f))).toEqual(['참', '권', '귀']);
+    expect(familyAbbr(hollow, null)).toBeUndefined();
+  });
+
+  it('체인 단계 기술 이름은 계열·단계로 읽는다 (플로팅 텍스트·로그)', () => {
+    expect([1, 2, 3].map((n) => familySkillName(hollow, 'family-c', n))).toEqual(['바라', '세로', '세로 오스쿠라스']);
+    expect([1, 2, 3].map((n) => familySkillName(shini, 'family-a', n))).toEqual(['베기', '연참', '대참']);
+    expect(familySkillName(hollow, null, 2)).toBeNull();
+    expect(familySkillName(hollow, 'family-z', 2)).toBeNull();
+  });
+
+  it('약점 계통의 계열 이름과 콤보 블록 이름·약어', () => {
+    expect(weakFamilyName(hollow, 'lineage-c')).toBe('탄(彈)');
+    expect(weakFamilyName(shini, 'lineage-d')).toBe('권(拳)');
+    const b: Block = { uid: 1, kind: 'combo', traitId: 'combo-t2', family: null };
+    expect(blockName(b, hollow, 'hollow')).toBe('그랑 레이 세로');
+    expect(blockAbbr(b, hollow, 'hollow').length).toBeGreaterThan(0);
+    expect(blockName(b, shini, 'shinigami')).toBe('파도의 90 흑관');
+  });
+
+  it('도움말 자리표시자 familyList 는 계열 약어를 가운뎃점으로 잇는다', () => {
+    expect(helpVars(getFaction('hollow')).familyList).toBe('조·교·탄');
+    expect(helpVars(getFaction('shinigami')).familyList).toBe('참·권·귀');
   });
 });

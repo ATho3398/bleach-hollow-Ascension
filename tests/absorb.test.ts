@@ -723,16 +723,17 @@ describe('종족 설정만 바꿔도 표기가 바뀐다', () => {
 });
 
 describe('C.7 흡수 문구와 기준 빌드 봇', () => {
-  it('흡수 조건 안내·이유 문구가 새 조건(약점 계통 마무리 / 약점 계통 체인3 / 첫 흡수 보장)을 말한다', async () => {
+  it('흡수 조건 안내·이유 문구가 새 조건(약점 계열 마무리 / 약점 계열 체인3 / 첫 흡수 보장)을 말한다', async () => {
     const { absorbConditionText, reasonText } = await import('../src/ui/absorbView');
     const hollow = getFaction('hollow');
     const cond = absorbConditionText(hollow, 'lineage-b');
-    expect(cond).toContain('마무리 일격이 약점 계통');
+    expect(cond).toContain('마무리 일격이 약점 계열');
+    expect(cond).toContain('(교(咬))'); // 계통 b 의 약점 계열(호로 교)
     expect(cond).toContain(`${hollow.chainName}3 을 ${AX.weakChain3ForAbsorb}회 이상`);
     expect(cond).toContain('특성이 없으면 조건 없이 가능');
     const offer = (reasons: string[]) =>
       ({ reasons, finisherLineageId: 'lineage-b', chain3Count: 3, weakChain3Count: 1 }) as unknown as Parameters<typeof reasonText>[1];
-    expect(reasonText(hollow, offer(['weakness-finisher']))).toContain('약점 계통');
+    expect(reasonText(hollow, offer(['weakness-finisher']))).toContain('약점 계열');
     expect(reasonText(hollow, offer(['weakness-chain3']))).toContain(`${hollow.chainName}3 1회`);
     expect(reasonText(hollow, offer(['first-absorb']))).toContain(`첫 ${hollow.absorbActionName} 보장`);
   });

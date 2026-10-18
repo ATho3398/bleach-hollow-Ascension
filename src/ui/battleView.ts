@@ -5,6 +5,8 @@
 // 화면 모양(DOM·클래스)은 디자인 패키지 battle.html 을 따른다. 전투는 고정 틱으로 계속 갱신되므로 DOM 을 통째로 다시 만들지 않고
 // 바뀐 곳만 갱신한다(블록은 uid 로 같은 요소를 계속 쓰고, 묶음·삽입 막대는 달라졌을 때만 바꾼다).
 import { enemyPatternKind } from '../data/enemies';
+import { comboName } from '../data/evolution';
+import { lineageFamily } from '../data/lineages';
 import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
@@ -23,7 +25,7 @@ import {
 } from './bha/battle';
 import { lineageKey, linMarkShort } from './bha/lineage';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
-import { battleLabels, type BattleLabels } from './labels';
+import { battleLabels, familyAbbr, familySkillName, weakFamilyName, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -47,6 +49,7 @@ export interface BattleViewOptions {
 export function blockName(b: Block, labels: BattleLabels, factionId: string): string {
   if (b.kind === 'special') return labels.specialBlock;
   if (b.kind === 'void') return labels.voidBlock;
+  if (b.kind === 'combo') return b.traitId ? comboName(b.traitId, factionId) : labels.specialBlock;
   return b.traitId === BASIC_SKILL_ID || !b.traitId ? labels.basicBlock : traitName(b.traitId, factionId);
 }
 
@@ -54,6 +57,7 @@ export function blockName(b: Block, labels: BattleLabels, factionId: string): st
 export function blockAbbr(b: Block, labels: BattleLabels, factionId: string): string {
   if (b.kind === 'special') return pickAbbr(undefined, labels.specialBlock);
   if (b.kind === 'void') return pickAbbr(undefined, labels.voidBlock);
+  if (b.kind === 'combo') return pickAbbr(undefined, blockName(b, labels, factionId));
   if (b.traitId === BASIC_SKILL_ID || !b.traitId) return pickAbbr(undefined, labels.basicBlock);
   return pickAbbr(traitAbbr(b.traitId, factionId), traitName(b.traitId, factionId));
 }
@@ -69,9 +73,11 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
   const n = (v: number) => Math.round(v);
   switch (e.kind) {
     case 'block': {
+      // 계열 공격 블록은 체인 단계 기술 이름(예 세로)으로, 그 밖은 특성 이름으로 (GDD 17-3)
+      const skillName = familySkillName(labels, e.family, e.chain);
       const name = e.block === 'skill'
-        ? `${e.traitId === BASIC_SKILL_ID || !e.traitId ? labels.basicBlock : traitName(e.traitId, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}`
-        : e.block === 'special' ? labels.specialBlock : labels.voidBlock;
+        ? `${skillName ?? (e.traitId === BASIC_SKILL_ID || !e.traitId ? labels.basicBlock : traitName(e.traitId, factionId))}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}`
+        : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? `콤보 ${e.traitId ? comboName(e.traitId, factionId) : labels.specialBlock}` : labels.voidBlock;
       const parts = [`${name}! ${n(e.damage)} 피해${e.weak ? ' (약점!)' : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
@@ -81,11 +87,13 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       if (e.block === 'void') parts.push(`${labels.riskGauge} ↑`);
       const text = parts.join(' · ');
       if (e.block === 'void') return { role: 'void', icon: 'i-void', text };
-      if (e.block === 'special') return { role: 'chain', icon: 'i-special', text };
+      if (e.block === 'special' || e.block === 'combo') return { role: 'chain', icon: 'i-special', text };
       if (e.chain > 1) return { role: 'chain', icon: `i-chain-${Math.min(3, e.chain)}`, text };
       const role: LogRole = e.role ?? 'attack';
       return { role, icon: LOG_ICON[role], text };
     }
+    case 'combo':
+      return { role: 'chain', icon: 'i-special', text: `콤보! ${comboName(e.comboId, factionId)} 블록이 생겼다` };
     case 'stored-use':
       return { role: 'chain', icon: 'i-stored', text: `${labels.storedSkill}! ${n(e.damage)} 피해 · ${labels.role.guard} ${e.guardSeconds}초 (남은 충전 ${e.charges})` };
     case 'stored-ready':
@@ -148,6 +156,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const fx = loadFxSettings(safeStorage());
   if (fx.sound) hookAudioUnlock();
   const slug = lineageKey(enemy.weaknessLineageId);
+  /** 약점 계열 (GDD 17-3): 이 적에게는 그 계열의 공격 블록이 ×1.5 */
+  const weakFamilyText = lineageFamily(enemy.weaknessLineageId) ? ` · ${weakFamilyName(labels, enemy.weaknessLineageId) ?? ''} 계열` : '';
 
   // ── 1. 적 영역 ──
   const foeName = el('div', 'bha-battle__foename');
@@ -155,7 +165,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   if (enemy.class === 'elite') foeName.append(tag('강적', 'elite'));
   if (enemy.provisional) foeName.append(provisionalTag());
   const weakChip = el('span', 'bha-chip bha-chip--weak');
-  weakChip.append(icon('i-weak'), '약점 ', linMarkShort(enemy.weaknessLineageId, faction.id));
+  weakChip.append(icon('i-weak'), '약점 ', linMarkShort(enemy.weaknessLineageId, faction.id), weakFamilyText);
   const foeHead = el('header', 'bha-battle__foehead');
   foeHead.append(foeName, weakChip);
 
@@ -257,6 +267,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     legendItem('heal', 'i-heal', labels.role.heal),
     legendItem('special', 'i-special', labels.specialBlock),
     legendItem('void', 'i-void', labels.voidBlock),
+    ...(p.combos.length > 0 ? [legendItem('special', 'i-special', '콤보 블록')] : []),
   );
 
   // 저장 필살기 버튼 (GDD 14-6): 블록과 같은 클릭 판정. 충전 칸 3개 + 게이지
@@ -492,12 +503,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           spawnFloat('attack', `−${n0(e.damage)}`, { crit: e.chain >= top, weak: e.weak, chained: e.chain > 1 });
         }
         if (e.chain > 1) {
-          spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+          // 계열 공격은 단계 기술 이름(예 세로 오스쿠라스!), 그 밖(막기·회복·기본 블록)은 체인 N
+          const skill = familySkillName(labels, e.family, e.chain);
+          spawnFloat('chain', skill ? `${skill}!` : `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
           flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
         }
-        if (e.block === 'special') flash('is-special', 600);
+        if (e.block === 'special' || e.block === 'combo') flash('is-special', 600);
         break;
       }
+      case 'combo':
+        spawnFloat('chain', `콤보! ${comboName(e.comboId, faction.id)}`, { chain3: true });
+        flash('is-special', 600);
+        break;
       case 'stored-use':
         hitFoe();
         spawnFloat('attack', `−${n0(e.damage)}`, { crit: true });
@@ -541,7 +558,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         flash(e.status === 'won' ? 'is-win' : 'is-lose', 900);
         break;
       case 'spawn':
-        if (e.block === 'special') {
+        if (e.block === 'special' || e.block === 'combo') {
           specialNoteUntil = performance.now() + 1800;
           replayOnce(spMeter, 'is-burst', 900);
         }
@@ -571,6 +588,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       label: blockName(b, labels, faction.id),
       weak: eff?.weak ?? false,
       uid: b.uid,
+      family: familyAbbr(labels, b.family),
     };
     return blockEl(spec);
   };
@@ -892,7 +910,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const stats = el('div', 'bha-battle-ov__stats');
   if (enemy.class === 'elite') stats.append(tag('강적', 'elite'));
   const encWeak = el('span', 'bha-chip bha-chip--weak');
-  encWeak.append(icon('i-weak'), '약점 ', linMarkShort(enemy.weaknessLineageId, faction.id));
+  encWeak.append(icon('i-weak'), '약점 ', linMarkShort(enemy.weaknessLineageId, faction.id), weakFamilyText);
   stats.append(encWeak);
   if (patternView) {
     const pc = el('span', 'bha-chip bha-chip--pattern');

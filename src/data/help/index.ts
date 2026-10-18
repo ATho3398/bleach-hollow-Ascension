@@ -52,6 +52,7 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   walk('', f);
   vars.trayCapacity = String(COMBAT.trayCapacity);
   vars.chainMax = String(COMBAT.chainMultipliers.length);
+  vars.familyList = f.families.map((x) => x.abbr).join('·');
   vars.storedChargesMax = String(COMBAT.storedChargesMax);
   vars.storedPower = String(COMBAT.storedPowerInAttacks);
   vars.storedGuardSeconds = String(COMBAT.storedGuardSeconds);
