@@ -9,8 +9,9 @@ import { button, el, icon, panel } from './bha/dom';
 import { splitApp } from './bha/split';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
+import { growthLines, type GrowthInput } from './bha/growthLogic';
 
-export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, stability: number, onHome: () => void): void {
+export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, stability: number, onHome: () => void, growth?: GrowthInput): void {
   const s = summarize(exp);
   const win = endTone(exp.endReason!) === 'win';
   const wins = exp.battles.filter((b) => b.won).length;
@@ -48,6 +49,9 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
 
   const dock = el('div', 'bha-dock');
   dock.append(button({ label: `${faction.nestName}으로`, icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome }));
-  // 가로 LCD: 왼쪽 = 결과 제목·시드·[둥지로], 오른쪽 = 원정 요약 표
-  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [sum]);
+  // 가로 LCD: 왼쪽 = 결과 제목·시드·[둥지로], 오른쪽 = 성장 요약 한두 줄 + 원정 요약 표 (왼쪽 열이 길어지면 스크롤이 생겨 오른쪽 맨 위에 둔다)
+  const growthBox = growth ? el('div', 'bha-growth') : null;
+  growthBox?.setAttribute('role', 'status');
+  for (const line of growth ? growthLines(growth) : []) growthBox!.append(el('p', 'bha-growth__line', line));
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [...(growthBox ? [growthBox] : []), sum]);
 }

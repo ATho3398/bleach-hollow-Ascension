@@ -1,12 +1,12 @@
 // 설정 화면 (GDD 14-3, C.18 / U-1 새 디자인): 블록 클릭 판정 시간·드래그 임계치. localStorage 별도 키에 저장하고 세이브 구조는 건드리지 않는다.
-import { button, el, notice, slider } from './bha/dom';
+import { button, el, slider } from './bha/dom';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { nudgeValue } from './bha/util';
 import {
   clampPointerRules, DEFAULT_POINTER_RULES, loadPointerRules, POINTER_RANGES, resetPointerRules, savePointerRules, type PointerRules,
 } from './pointer';
 
-export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false): void {
+export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void): void {
   const storage = (() => {
     try {
       return localStorage;
@@ -65,15 +65,13 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     label: '기본값 복원', icon: 'i-loop',
     onClick: () => {
       resetPointerRules(storage);
-      settingsView(root, onHelp, true);
+      settingsView(root, onHelp, true, onBackup);
     },
   });
   const foot: Node[] = [reset];
   if (onHelp) foot.push(button({ label: '도움말·튜토리얼 다시 보기', icon: 'i-help', onClick: onHelp }));
-  foot.push(restored
-    ? notice('good', `기본값으로 되돌렸다 (${DEFAULT_POINTER_RULES.clickMaxSeconds}초 · ${DEFAULT_POINTER_RULES.dragThresholdPx}px).`)
-    : el('p', 'bha-faint', '이 기기에만 저장되고 게임 세이브에는 들어가지 않는다.'));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: '조작 판정 — 블록과 저장 필살기에 똑같이 적용' }), [panelOf(tap)], [panelOf(drag)]);
+  if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? `기본값으로 되돌렸다 (${DEFAULT_POINTER_RULES.clickMaxSeconds}초 · ${DEFAULT_POINTER_RULES.dragThresholdPx}px).` : '조작 판정 — 블록과 저장 필살기에 똑같이 적용 · 이 기기에만 저장(게임 세이브 제외)' }), [panelOf(tap)], [panelOf(drag)]);
 }
 
 /** 슬라이더 양옆에 −/+ 버튼을 붙인다: 위/아래/확정 버튼만으로도 값을 한 칸씩 바꿀 수 있게 (슬라이더 입력 자체는 손가락용, 선택 대상에서 뺀다) */

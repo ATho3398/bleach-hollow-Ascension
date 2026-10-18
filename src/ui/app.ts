@@ -6,8 +6,10 @@ import type { EnemyDef } from '../data/schema';
 import { tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
-import { applyEvolutionToParams } from '../engine/evolution';
-import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, type ExpeditionState } from '../engine/expedition';
+import { absorbsRemaining, applyEvolutionToParams } from '../engine/evolution';
+import { TITLES, titleName } from '../data/titles';
+import type { GrowthInput } from './bha/growthLogic';
+import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
   loadSave, newSaveData, nextRunId, performEvolution, readActiveExpedition, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
@@ -29,8 +31,15 @@ import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { roomOf } from '../engine/faction';
 import { settingsView } from './settingsView';
+import { backupView } from './backupView';
 import { helpOverlay, type HelpScreenId } from './helpView';
 import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
+
+/** 칭호 id → 종족별 표기 이름 */
+function titleLabel(id: string, factionId: string): string {
+  const t = TITLES.find((x) => x.id === id);
+  return t ? titleName(t, factionId) : id;
+}
 
 export function startApp(host: HTMLElement): void {
   let save: SaveData | null = loadSave(localStorage);
@@ -106,7 +115,7 @@ export function startApp(host: HTMLElement): void {
         persist();
         nestScreen();
       },
-      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true))),
+      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true), false, () => open('backup', () => backupView(root, save, persist)))),
       onHelp: () => openHelp(undefined, true),
     });
   }
@@ -143,7 +152,7 @@ export function startApp(host: HTMLElement): void {
       onCare: () => open('care', () => careView(dev, faction, s, props.care, persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
       onChangeFaction: factionScreen,
-      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true))),
+      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true), false, () => open('backup', () => backupView(root, save, persist)))),
       onHelp: () => openHelp('nest', true),
     });
   }
@@ -237,11 +246,18 @@ export function startApp(host: HTMLElement): void {
   }
 
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
+    let growth: GrowthInput | undefined;
     if (save) {
+      const had = new Set(save.titles.map((t) => t.titleId));
       recordExpedition(save, exp);
       persist();
+      growth = {
+        newTraits: summarize(exp).keptTraits.length,
+        remaining: absorbsRemaining(save.evolution),
+        newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
+      };
     }
-    resultView(root, faction, exp, save?.nest.stability ?? exp.stability, nestScreen);
+    resultView(root, faction, exp, save?.nest.stability ?? exp.stability, nestScreen, growth);
     if (save) showTitleToasts(save, faction, persist);
   }
 

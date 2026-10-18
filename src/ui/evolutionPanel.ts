@@ -10,6 +10,8 @@ import { button, h, icon, meter, mountApp, notice, panel, provisionalTag } from 
 import { lineageKey } from './bha/lineage';
 import { linbar } from './bha/nest';
 import { toward } from './bha/nestLogic';
+import { evolutionHint, hintText } from './bha/growthLogic';
+import { lineageName } from '../data/lineages';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -80,7 +82,11 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState, on
   } else {
     cta = h('div', 'bha-evo__cta');
     const text = h('span', 'bha-evo__left');
-    text.append('진화까지 ', h('b', '', String(absorbsRemaining(evo)!)), '회 남음', h('br'), h('span', 'bha-faint', `원정에서 ${faction.absorbActionName}하면 쌓인다. 진화는 ${faction.nestName}에서만.`));
+    // 예고: 누적 상위 계통과 남은 횟수만 (확정 진화체·후보 이름은 숨긴다)
+    const hint = evolutionHint(evo);
+    text.append('진화까지 ', h('b', '', String(absorbsRemaining(evo)!)), '회 남음', h('br'));
+    if (hint) text.append(h('span', 'bha-evo__hint', hintText({ ...hint, remaining: 0 }, (id) => lineageName(id, faction.id))), h('br'));
+    text.append(h('span', 'bha-faint', `${faction.absorbActionName}하면 쌓인다. 진화는 ${faction.nestName}에서만.`));
     cta.append(text);
   }
   return { left, right: [facts, cta, evolutionNote()] };
