@@ -18,6 +18,8 @@ export interface FactionConfig {
   id: string;
   /** 화면 표시 이름 */
   name: string;
+  /** UI 테마 이름: 루트 data-bha-theme 값 (src/ui/bha/design-system/theme-<이름>.css 가 정의). 종족 id 로 분기하지 않고 이 값을 쓴다 */
+  theme: string;
   /** 육성 5단계 이름 (GDD 8-1) */
   tierNames: [string, string, string, string, string];
   /** 등급 4단계 이름 (GDD 8-2) */
@@ -76,7 +78,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FACTIONS, getFaction } from '../src/data/factions';
 import { BLOCK_ROLES, parseFactionConfig } from '../src/engine/faction';
@@ -39,6 +41,20 @@ describe('종족 설정', () => {
   it('잘못된 설정은 이유와 함께 거부한다', () => {
     expect(() => parseFactionConfig({ id: 'x' })).toThrow(/tierNames/);
     expect(() => parseFactionConfig(null)).toThrow();
+  });
+
+  it('UI 테마(theme)가 있고 검증된다 (U-1, 종족 id 분기 없이 data-bha-theme 에 쓰인다)', () => {
+    expect(getFaction('hollow').theme).toBe('hollow');
+    expect(getFaction('shinigami').theme).toBe('shinigami');
+    for (const f of FACTIONS) expect(f.theme.length).toBeGreaterThan(0);
+    const { theme: _drop, ...noTheme } = getFaction('hollow');
+    expect(() => parseFactionConfig(noTheme)).toThrow(/theme/);
+    expect(() => parseFactionConfig({ ...getFaction('hollow'), theme: '' })).toThrow(/theme/);
+  });
+
+  it('테마 CSS 가 등록된 모든 종족 theme 을 정의한다', () => {
+    const css = ['theme-hollow.css', 'theme-shinigami.css'].map((f) => readFileSync(join(__dirname, '../src/ui/bha/design-system', f), 'utf8')).join('\n');
+    for (const f of FACTIONS) expect(css).toContain(`[data-bha-theme="${f.theme}"]`);
   });
 
   it('알 수 없는 종족 id 는 던진다', () => {

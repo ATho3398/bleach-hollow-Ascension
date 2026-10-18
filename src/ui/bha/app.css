@@ -1,0 +1,4 @@
+/* U-1 에서 추가하는 최소 규칙 (디자인 패키지 CSS 는 수정하지 않는다). 새 색·간격은 넣지 않는다. */
+
+/* 다른 화면 위에 덮는 전체 화면 레이어 (도움말 오버레이): .bha-stage 와 함께 쓴다 */
+.bha-layer { position: fixed; inset: 0; z-index: var(--bha-z-overlay); overflow-y: auto; overscroll-behavior: contain; }

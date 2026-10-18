@@ -1,7 +1,8 @@
 :root { color-scheme: dark; --bg:#0d0d12; --panel:#181822; --line:#2a2a3a; --text:#e8e8ef; --dim:#9a9aae;
   --attack:#e5484d; --guard:#2fb36b; --heal:#3e8bff; --sp:#d9a441; --void:#1a1a22; }
 * { box-sizing: border-box; }
-body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+/* 배경·글자색·글꼴은 새 디자인 base.css 의 body 규칙이 맡는다 (옛 화면도 같은 바탕·글꼴을 쓴다). U-5 에서 이 파일 삭제 */
+body { margin:0; }
 .screen { max-width:480px; margin:0 auto; padding:16px; min-height:100vh; display:flex; flex-direction:column; gap:12px; }
 h1 { margin:8px 0 0; font-size:22px; } h2 { margin:0; font-size:18px; }
 .dim { color:var(--dim); font-size:13px; }

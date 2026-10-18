@@ -1,0 +1,48 @@
+/* ==========================================================================
+   테마: 호로 (Hollow) — 뼈백색·잿빛 + 크림슨 포인트, "가면이 깨지는" 느낌
+   적용: <html data-bha-theme="hollow">
+   이 파일은 "테마 토큰"만 바꾼다. 레이아웃·컴포넌트는 손대지 않는다.
+   ========================================================================== */
+:root,
+[data-bha-theme="hollow"] {
+  --bha-theme-name: "hollow";
+
+  /* 바탕: 붉은 기가 아주 약간 도는 재/숯 */
+  --bha-backdrop: #050404;      /* 480px 바깥 장식 배경 */
+  --bha-bg-0: #0b0909;          /* 화면 바탕 */
+  --bha-bg-1: #141010;          /* 패널 */
+  --bha-bg-2: #1c1716;          /* 버튼·행 */
+  --bha-bg-3: #26201e;          /* 눌림·선택 */
+  --bha-line-1: #2f2725;
+  --bha-line-2: #4a3d39;
+
+  /* 글자: 뼈백색 계열 (bg-1 대비 text-3도 4.5:1 이상) */
+  --bha-text-1: #efe7da;
+  --bha-text-2: #bdb1a2;
+  --bha-text-3: #978a7c;
+
+  /* 포인트: 짙은 크림슨 — 위험·선택·해방에서만 */
+  --bha-accent: #c8303f;
+  --bha-accent-hi: #ff5a6a;
+  --bha-accent-soft: rgb(200 48 63 / 0.18);
+  --bha-focus: #ff8c96;
+
+  /* 주 버튼 = 뼈 색 판에 먹 글자 (가면 표면) */
+  --bha-primary-bg: #ece2d1;
+  --bha-primary-ink: #1a1110;
+  --bha-primary-line: #fff6e6;
+
+  /* 모서리: 뼈처럼 둥글되 한 모서리가 깎인 느낌은 clip 없이 반경 차이로 */
+  --bha-r-xs: 3px;
+  --bha-r-sm: 7px;
+  --bha-r-md: 11px;
+  --bha-r-lg: 16px;
+
+  /* 아이콘 선 굵기: 굵고 거칠게 */
+  --bha-icon-stroke: 2;
+
+  /* 질감: 가면 균열 패턴 (CSS 배경용 SVG, 외부 파일 없음) */
+  --bha-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%23efe7da' stroke-opacity='.05' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M8 30l22 8 9-14 18 20 26-6 6 18'/%3E%3Cpath d='M39 24l4-16M57 44l-6 22 14 12'/%3E%3Cpath d='M140 150l18-10 10 16 24-4 12 20M158 140l-4-22 16-8M168 156l-6 26'/%3E%3Cpath d='M110 70l12 14-4 18 16 10'/%3E%3Cpath d='M30 180l14-8 6 14 20 2M44 172l-2-16'/%3E%3Cpath d='M190 40l-12 10 4 16'/%3E%3C/g%3E%3C/svg%3E");
+  --bha-pattern-size: 220px;
+  --bha-vignette: radial-gradient(120% 70% at 50% 0%, rgb(200 48 63 / 0.07), transparent 60%);
+}

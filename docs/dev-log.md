@@ -756,3 +756,70 @@ GDD 제안 (마스터가 반영)
 GDD 제안 (마스터가 반영)
 - 14-2: 8장면 구성, 도움말 진입점(시작·설정·둥지·진화·원정·전투), 튜토리얼 본 기록은 세이브 플래그(형식 11, 이전 세이브는 한 번 더 보여 줌), 직접 해 보는 단계는 넣지 않음, 체험 전투 방식의 다시 보기, 텍스트는 `src/data/help/` 템플릿 + 종족 설정 치환.
 - 13장 P7-5 상태를 "완료"로. 후속 후보: 튜토리얼에 샘플 블록·직접 해 보기 단계.
+
+### C.20 UI 적용 기반 + 시작·설정·도움말 (STAGE U, 코딩16, GDD 15장 U-1)
+
+사용 모델: Sonnet 5.5 (Opus 사용 없음).
+
+**화면 모양만 바꿨다.** 게임 로직·수치·세이브 구조·기능·문구 의미는 그대로(`BALANCE_VERSION` 16, `SAVE_FORMAT_VERSION` 11 그대로). 프레임워크 없음, 새 의존성 없음.
+
+한 일
+- **디자인 시스템 연결** (`src/ui/bha/`): `design-system/{tokens,theme-hollow,theme-shinigami,base}.css`, `components/components.css`, `screens/screens.css`, `fonts/*.woff2`, `sprite.svg` 를 디자인 패키지에서 그대로 복사(원본 `docs/design/bha-design/` 은 수정 안 함). `src/main.ts` 가 HANDOFF 2-1 순서로 임포트하고 마지막에 `app.css`(U-1 추가 규칙: 오버레이 레이어 한 규칙뿐, 새 색·간격 없음), `legacy.css` 를 임포트. 글꼴 `url(../fonts/…)` 는 Vite 가 해시 파일로 풀어 `base: './'` 빌드에서 그대로 동작(빌드 결과 확인). Pretendard 약 2MB 는 `font-display: swap` 그대로(U-5 에서 서브셋 검토, GDD 15-3).
+- **`legacy.css`** = 옛 `style.css` 이름만 변경. 새 `base.css` 와 겹치는 곳은 `body` 한 줄뿐이었다: 옛 `body { background; color; font-family }` 가 뒤에 임포트되어 새 글꼴(Pretendard)을 `system-ui` 로 덮고 있어서 `body { margin:0 }` 만 남겼다(배경·글자색·글꼴은 새 `base.css` 가 담당, 옛 화면도 같은 바탕·글꼴을 쓴다). 그 밖의 옛 규칙은 클래스 접두어가 달라(`.screen` vs `.bha-*`) 충돌 없음. 옛 `h1`/`h2`/`button`/`table` 요소 규칙은 `.bha-*` 클래스(더 높은 특이도)가 이긴다. 옛 둥지·원정 화면 직접 눌러 확인(깨짐 없음).
+- **아이콘 스프라이트**: `src/ui/bha/sprite.ts` 의 `mountSprite()` 가 `sprite.svg?raw` 를 `<body>` 맨 앞에 한 번 삽입(`src/vite-env.d.ts` 추가). 옛 `src/ui/icons.ts` 는 그대로(전투 화면용, 코딩17 이 교체).
+- **종족 테마**: `FactionConfig.theme` 추가(필수, `parseFactionConfig` 검증), `hollow.json` "hollow", `shinigami.json` "shinigami". `src/ui/bha/theme.ts` 의 `applyTheme(faction)` 가 `document.documentElement.dataset.bhaTheme` 를 설정 — 시작 화면(세이브 있으면 그 종족, 없으면 등록된 첫 종족), 둥지 진입 때마다. 종족 id 분기 없음. 시작 화면의 종족 카드는 각자 `data-bha-theme` 로 부분 미리보기.
+- **새 화면 3개**: `src/ui/startView.ts`(시작), `src/ui/settingsView.ts`(설정), `src/ui/helpView.ts`(도움말 오버레이). 이동 함수(`onBack`·`onHelp`·`onClose`·`onReplayTutorial`)와 `pointer.ts` 의 값·키·범위는 그대로. 시작 문구 중 디자인의 "제안 문구"(종족 설명·엠블럼·한 줄 안내)는 `src/data/start/`(`species.json` + `index.ts`)로 분리했고 임시(provisional) 태그를 붙여 보인다. 종족 이름·단계 경로는 종족 설정(`name`, `tierNames`)에서 읽는다.
+- 설정: 기본값 복원 뒤에 "기본값으로 되돌렸다 (0.3초 · 10px)" notice 표시(디자인의 `restored` 상태), 눌림 시간·드래그 거리 시각 미리보기 2종, 도움말·튜토리얼 다시 보기, 돌아가기(하단 독). 도움말: `opts.screen === 'battle'` 이면(전투 위에서 열림) "전투가 멈춰 있다" notice + 닫기 버튼 "닫고 전투로". 화면별 요약 4 + 용어 13 아코디언, 열 때 `screen` 요약을 펼침.
+- **`PATCH_LABEL` C.20, `STAGE_LABEL` U**. `CLAUDE.md`: 기획서 v1.4, 폴더 구조에 `src/ui/bha/`·`docs/design/bha-design/`, 규칙 7 한 줄 추가.
+
+공용 헬퍼 (코딩17~19 용) — `src/ui/bha/dom.ts` 머리 주석에 사용법 있음
+| 함수 | 만드는 것 |
+|---|---|
+| `mountApp(root, { fixed?, cls? }, ...nodes)` | `root > .bha-stage > main.bha-app[.bha-app--fixed]` (옛 `mountScreen` 대체, `main` 반환). 옛 `mountScreen` 은 그대로 |
+| `icon(id, size?, cls?)` | `<svg class="bha-icon"><use href="#i-…"/></svg>` (`size` = `sm`·`md`·`lg`) |
+| `button({ label, variant?, size?, icon?, iconOnly?, block?, on?, disabled?, onClick? })` | `button.bha-btn` |
+| `meter({ kind, label, value, max, icon?, note?, ghost?, zone?, compact?, lg?, thin?, danger?, full?, valueText? })` / `setMeter(el, value, max, ghost?)` | `role=meter` 상태 바 (`--fill`·`--ghost`·`--zone`). 실시간 화면은 `setMeter` 로 값만 갱신 |
+| `chip(text, mod?)` / `tag(text, mod?)` / `provisionalTag(text?)` | `.bha-chip` / `.bha-tag` / 임시 태그 |
+| `notice(kind, text, { title?, icon? })` | `.bha-notice` (`kind` = info·warn·good·rare·danger·risk) |
+| `panel({ title?, aside?, mod? }, ...nodes)` | `.bha-panel` |
+| `info(rows)` | `dl.bha-info` (행: `label`, `value`, `mod?`) — 옛 `table` 대체 |
+| `seg(items, selected, onSelect, { small?, stack? })` | `.bha-seg` 탭·세그먼트 (`aria-selected`) |
+| `dots(count, active)` | `.bha-dots` 진행 점 |
+| `slider({ id, label, min, max, step, value, format, unit, defaultText?, hint?, onInput })` | `.bha-slider` (`--pct`) |
+| `el`, `h` | 옛 `el(tag, cls, text)` 와 같음 |
+- 순수 함수 `src/ui/bha/util.ts`: `ratio`, `cssRatio`(→ `--fill` 문자열), `sliderPct`(→ `--pct`). `theme.ts` `applyTheme`, `sprite.ts` `mountSprite`.
+- 만들지 않은 것: 블록·블록 바·원형 길·저장 필살기·타일 칩 등 전용 컴포넌트(각 화면 세션이 `src/ui/bha/<영역>.ts` 로).
+- 오버레이를 덮을 때는 `.bha-stage.bha-layer`(`app.css`, `position: fixed; z-index: var(--bha-z-overlay)`) 안에 `main.bha-app` 을 넣는다(`helpView.ts` 참고).
+
+확인 (Playwright, 설치된 Chromium; `npm run build && npx vite preview`; 디자인 원본은 `file://` 로 같은 크기로 캡처해 나란히 비교; 스크린샷은 커밋하지 않음)
+| 화면 | 390×844 | 360×740 | 원본과의 차이 |
+|---|---|---|---|
+| 시작 | 원본과 같은 배치, 카드 테마 미리보기 정상 | 같음 | 버전 표기가 실제 값(`U · 버전 C.20 · …`), 호로 카드 설명 줄바꿈 한 줄 차이(글꼴 로딩 순서 차이로 보임; `legacy.css` body 규칙 제거 뒤 계산 스타일이 원본과 일치) |
+| 설정 | 슬라이더 2·미리보기 2·버튼 같음 | 같음(화면이 원본보다 약 58px 길어 스크롤: 아래 "이 설정은 이 기기에만 저장…" 한 줄 때문, 독이 스티키라 정상) | 기존 화면에 있던 "기기에만 저장" 안내 한 줄 추가 유지 |
+| 도움말 | 머리·[튜토리얼 다시 보기]·요약 4·용어 13 같음 | 같음 | 원본은 둥지 요약이 샘플로 펼쳐져 있고 앱은 시작 화면에서 열면 모두 접힘(`screen` 이 있을 때만 해당 요약을 펼침, 기존 동작 유지). 용어 이름은 종족 설정·도움말 데이터 값(예 "세로", "응축 일격") |
+- 전 화면(시작·설정·도움말, 두 해상도): **가로 스크롤 없음, 버튼·슬라이더·요약 머리글 모두 44px 이상, 글자 12px 이상**(측정).
+- 흐름: 시작 → 종족 선택 → 둥지(테마 즉시 변경, 새로고침 뒤에도 유지), 시작 → 설정 → (도움말 → 닫기) → 돌아가기 → 시작, 둥지 [?] → 도움말(둥지 요약 펼침, 다시 보기 보임) → 닫기 → 둥지, 둥지 → 종족 바꾸기 → 시작, 원정 출발 → 원정 [?] 도움말 오버레이, 콘솔 오류 없음.
+- `typecheck`·`test`(313개, 새 테스트 포함)·`balance:check`(회귀 가드 통과)·`build` 통과.
+
+새 테스트: `tests/faction.test.ts` +2(`theme` 있음·검증·누락 시 거부, 테마 CSS 가 모든 종족 theme 을 정의), `tests/bha-util.test.ts`(`ratio`·`cssRatio`·`sliderPct`, 시작 문구 데이터). DOM 테스트는 의존성(jsdom) 없이 가능한 범위가 없어 헬퍼 DOM 구성은 브라우저로 확인했다.
+
+기획서 값 / 실제 값 / 이유
+| 항목 | 지시·기획서 | 실제 | 이유 |
+|---|---|---|---|
+| 사신 임시 이름(회복 역할·필살 블록·저장 필살기) | HANDOFF 3-1: "회도"·"섬광"·"응축 베기" (비었거나 다르면 채움, 값이 있으면 건드리지 않음) | `shinigami.json` 의 기존 값 유지: 회복 "회도"(같음), 필살 블록 "귀도", 저장 필살기 "응축 비기" | 이미 값이 있어 건드리지 않았다(이름이 바뀌면 문구 의미가 달라지고 기존 테스트·도움말이 영향받음). 마스터가 바꾸기로 하면 JSON 두 줄만 고치면 됨 |
+| 시작 화면 종족 설명 데이터 | `src/data/` 아래 분리 | `src/data/start/species.json` 에 종족 id 키로 둠(조회만, 분기 없음). 키가 없는 종족은 설명 없이 기본 엠블럼 | 지시대로 분리. 3번째 종족은 JSON 한 항목을 추가하면 완성 |
+| 도움말 "전투 위에서 열림" 판정 | 전투 위에서 열렸을 때 표시 | `opts.screen === 'battle'` (전투 화면이 이미 그 값을 넘김) | 새 옵션 없이 기존 호출 그대로 사용 |
+
+임시로 정한 규칙(막혔을 때 규칙)
+- `legacy.css` 의 `body` 규칙은 최소 보정(위 설명). 다른 옛 규칙은 건드리지 않음.
+- 시작 화면 카드가 3장 이상이면 그리드를 1열로(디자인의 "3번째 종족이 생기면 세로 목록" 주석 반영, 인라인 한 줄).
+- 도움말 아코디언 아이콘은 id→아이콘 표(`helpView.ts`)로 연결. 모르는 id 는 `i-info`.
+- 시작 화면의 기본 테마는 세이브가 있으면 그 종족, 없으면 등록된 첫 종족.
+
+발견한 기존 문제(고치지 않음, 코딩18 몫)
+- 둥지 화면(`nestView.ts`)은 `[설정 (조작 판정)]` 버튼을 만들지만 `mountScreen` 에 넣지 않아 **둥지에서 설정으로 갈 수 없다**(C.19 이후 상태, 이번 패치와 무관; `onSettings` 핸들러는 `app.ts` 에 이미 있다). 코딩18 이 둥지 더보기 탭을 만들 때 연결하면 된다.
+- 둥지 [?]·원정 [?]·전투 [?] 는 접근성 이름이 "도움말"(아이콘 대체 텍스트)이다.
+
+GDD 제안 (마스터가 반영)
+- 15-1 표 U-1 상태를 "완료(C.20)"로, 13장 현재 단계 U. 15-2 3번(`theme`)·7번(시작 화면 종족 설명은 `src/data/start/`)을 "구현됨"으로.
+- 사신 임시 이름 3개 확정 여부 결정(현재 코드 값: 귀도 / 응축 비기, 디자인 값: 섬광 / 응축 베기).

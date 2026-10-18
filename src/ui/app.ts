@@ -20,6 +20,8 @@ import { lineageName } from '../data/lineages';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { el, mountScreen } from './dom';
+import { applyTheme } from './bha/theme';
+import { startView } from './startView';
 import { battleLabels, endReasonText } from './labels';
 import { absorbConditionText } from './absorbView';
 import { expeditionView, getSpeed, setSpeed } from './expeditionView';
@@ -83,33 +85,24 @@ export function startApp(root: HTMLElement): void {
   }
 
   function factionScreen(): void {
-    const buttons = FACTIONS.map((f) => {
-      const b = el('button', 'primary', f.name);
-      b.onclick = () => {
+    // 시작 화면의 기본 테마: 세이브가 있으면 그 종족, 없으면 등록된 첫 종족 (종족 id 로 분기하지 않는다)
+    applyTheme(helpFaction());
+    startView(root, FACTIONS, {
+      onPick: (f) => {
         if (save) save.factionId = f.id;
         else save = newSaveData(f.id);
         persist();
         nestScreen();
-      };
-      return b;
+      },
+      onSettings: () => settingsView(root, factionScreen, () => openHelp(undefined, factionScreen)),
+      onHelp: () => openHelp(undefined, factionScreen),
     });
-    const settings = el('button', '', '설정 (조작 판정)');
-    settings.onclick = () => settingsView(root, factionScreen, () => openHelp(undefined, factionScreen));
-    const help = el('button', 'help-btn', '도움말 · 튜토리얼');
-    help.onclick = () => openHelp(undefined, factionScreen);
-    const stack = el('div', 'stack');
-    stack.append(...buttons, settings, help);
-    mount(
-      el('h1', '', '블리치 할로우 어센션'),
-      el('p', 'dim', '어느 쪽으로 시작할까? (두 종족 모두 처음부터 개방)'),
-      stack,
-      el('small', 'dim', versionLabel()),
-    );
   }
 
   function nestScreen(): void {
     if (!save) return factionScreen();
     const faction = getFaction(save.factionId);
+    applyTheme(faction);
     const s = save;
     showTitleToasts(s, faction, persist);
     const active = readActiveExpedition(s);

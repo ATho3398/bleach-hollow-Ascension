@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<!--
+  BHA 아이콘 스프라이트 — 24px 격자, 선(stroke) 스타일 통일, currentColor.
+  선 굵기·끝 모양은 사용하는 쪽 CSS(.bha-icon)가 정한다: stroke-width: var(--bha-icon-stroke)
+  면(fill)이 필요한 부분만 fill="currentColor" 를 직접 붙였다.
+  사용: <svg class="bha-icon" aria-hidden="true"><use href="#i-attack"/></svg>
+-->
+
+<!-- ===== 역할 (색약 대비: 모양이 서로 전혀 다름) ===== -->
+<symbol id="i-attack" viewBox="0 0 24 24"><title>공격</title><path d="M4.5 15.5c1.2-4 3.2-7.4 6.2-10.5"/><path d="M7.5 20c2-5.6 5-9.8 9.4-13.6"/><path d="M12.5 21c1.8-3.8 4.2-6.8 7.3-9"/></symbol>
+<symbol id="i-guard" viewBox="0 0 24 24"><title>막기</title><path d="M12 3l7.5 2.8v5.6c0 4.8-3.2 8.3-7.5 9.9-4.3-1.6-7.5-5.1-7.5-9.9V5.8z"/><path d="M12 7v10"/><path d="M8 10.5h8"/></symbol>
+<symbol id="i-heal" viewBox="0 0 24 24"><title>회복</title><path d="M9.8 4.5h4.4v5.3h5.3v4.4h-5.3v5.3H9.8v-5.3H4.5V9.8h5.3z"/></symbol>
+<symbol id="i-basic" viewBox="0 0 24 24"><title>기본 블록</title><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></symbol>
+<symbol id="i-special" viewBox="0 0 24 24"><title>필살 블록</title><path d="M12 2.5l2.3 5.4 5.9-1.1-3.6 4.7 3.6 4.7-5.9-1.1L12 20.5l-2.3-5.4-5.9 1.1 3.6-4.7L3.8 6.8l5.9 1.1z" fill="currentColor" fill-opacity=".25"/></symbol>
+<symbol id="i-void" viewBox="0 0 24 24"><title>공허 블록</title><path d="M12 12a1.5 1.5 0 0 1 3 0a3 3 0 0 1-6 0a4.5 4.5 0 0 1 9 0a6 6 0 0 1-12 0"/></symbol>
+<symbol id="i-stored" viewBox="0 0 24 24"><title>저장형 필살기</title><circle cx="12" cy="14" r="5.5"/><circle cx="12" cy="14" r="2" fill="currentColor"/><path d="M6 4.5v2.5M12 3v3M18 4.5v2.5"/></symbol>
+
+<!-- ===== 체인 표식 ===== -->
+<symbol id="i-chain-1" viewBox="0 0 24 24"><title>체인 1</title><circle cx="5" cy="12" r="2.6" fill="currentColor"/><circle cx="12" cy="12" r="2.6"/><circle cx="19" cy="12" r="2.6"/></symbol>
+<symbol id="i-chain-2" viewBox="0 0 24 24"><title>체인 2</title><circle cx="5" cy="12" r="2.6" fill="currentColor"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/><circle cx="19" cy="12" r="2.6"/></symbol>
+<symbol id="i-chain-3" viewBox="0 0 24 24"><title>체인 3</title><circle cx="5" cy="12" r="2.6" fill="currentColor"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/><circle cx="19" cy="12" r="2.6" fill="currentColor"/></symbol>
+
+<!-- ===== 전투 상태 ===== -->
+<symbol id="i-sp" viewBox="0 0 24 24"><title>영력</title><path d="M12 3c.6 3.6 6 5.8 6 11a6 6 0 0 1-12 0c0-2.9 1.7-4.6 2.9-6.6.9 1.7 1.9 2.4 3 2.6-.4-2.2-.6-4.5.1-7z"/></symbol>
+<symbol id="i-seal" viewBox="0 0 24 24"><title>봉인</title><path d="M8 3h8v18H8z"/><path d="M10.5 7h3M10.5 10h3"/><circle cx="12" cy="15" r="1.8"/><path d="M4 9.5l16 5"/></symbol>
+<symbol id="i-weak" viewBox="0 0 24 24"><title>약점</title><path d="M12 3l9 9-9 9-9-9z"/><path d="M12 7.5l-1.2 3.2 2.4 1.6-1.2 4.2"/></symbol>
+<symbol id="i-cast" viewBox="0 0 24 24"><title>강공격 예고</title><path d="M12 3.5l9 16H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="17" r=".9" fill="currentColor"/></symbol>
+<symbol id="i-pattern-fast" viewBox="0 0 24 24"><title>속공형</title><path d="M13.5 3L5.5 13.5h6L10.5 21l8-10.5h-6z"/></symbol>
+<symbol id="i-pattern-tough" viewBox="0 0 24 24"><title>단단형</title><path d="M4 5.5h16v6H4zM4 12.5h16v6H4z"/><path d="M10 5.5v6M14 12.5v6"/></symbol>
+<symbol id="i-pattern-heavy" viewBox="0 0 24 24"><title>강공격형</title><path d="M4.5 19.5l7-7"/><path d="M10 4.5l9.5 9.5-3 3L7 7.5z"/></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><title>남은 시간</title><circle cx="12" cy="13.5" r="7"/><path d="M12 13.5V10M10 3.5h4M18 6.5l1.5-1.5"/></symbol>
+
+<!-- ===== 생활 수치 ===== -->
+<symbol id="i-hunger" viewBox="0 0 24 24"><title>허기</title><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8.5c0-1.2 1-1.6 1-3M14 8.5c0-1.2 1-1.6 1-3"/></symbol>
+<symbol id="i-cond" viewBox="0 0 24 24"><title>컨디션</title><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/><path d="M7 12.5h2.6l1.4-2.5 2 5 1.4-2.5H17"/></symbol>
+<symbol id="i-stab" viewBox="0 0 24 24"><title>안정 수치</title><circle cx="12" cy="12" r="8"/><path d="M6.5 12h11"/><circle cx="12" cy="12" r="2" fill="currentColor"/></symbol>
+<symbol id="i-risk" viewBox="0 0 24 24"><title>리스크 게이지</title><circle cx="12" cy="12" r="8"/><path d="M13 4l-2.5 5 3.5 2-3.5 4.5 1.5 4.5"/></symbol>
+
+<!-- ===== 돌보기 ===== -->
+<symbol id="i-care-feed" viewBox="0 0 24 24"><title>먹이 주기</title><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M8 9l2-5M13 9l1-5M16.5 9.5L19 6"/></symbol>
+<symbol id="i-care-sleep" viewBox="0 0 24 24"><title>재우기</title><path d="M4 10h5l-5 6h5"/><path d="M12 4h7l-7 9h7"/></symbol>
+<symbol id="i-care-pet" viewBox="0 0 24 24"><title>쓰다듬기</title><path d="M7.5 12.5V7.5a1.5 1.5 0 0 1 3 0V11"/><path d="M10.5 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M13.5 11V6.8a1.5 1.5 0 0 1 3 0V12"/><path d="M16.5 12V9.8a1.5 1.5 0 0 1 3 0v4.2a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-2.7L4.3 15a1.5 1.5 0 0 1 2.6-1.5l.6 1"/></symbol>
+
+<!-- ===== 메뉴 / 내비 ===== -->
+<symbol id="i-evolve" viewBox="0 0 24 24"><title>진화</title><path d="M6 13.5l6-6 6 6"/><path d="M6 19l6-6 6 6"/><path d="M12 3v1.5"/></symbol>
+<symbol id="i-dex" viewBox="0 0 24 24"><title>도감</title><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5z"/><path d="M5 20.5A2.5 2.5 0 0 0 7.5 23"/><path d="M5 20.5V5.5"/><path d="M9.5 8h5"/></symbol>
+<symbol id="i-title" viewBox="0 0 24 24"><title>칭호</title><circle cx="12" cy="9" r="5.5"/><path d="M9 13.8L7.5 21l4.5-2.6 4.5 2.6-1.5-7.2"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><title>설정</title><path d="M4 7h9M18 7h2M4 17h3M12 17h8"/><circle cx="15.5" cy="7" r="2.5"/><circle cx="9.5" cy="17" r="2.5"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><title>도움말</title><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.7.3-1.1.9-1.1 1.7v.4"/><circle cx="12" cy="17" r=".9" fill="currentColor"/></symbol>
+<symbol id="i-speed" viewBox="0 0 24 24"><title>배속</title><path d="M3.5 6.5l7.5 5.5-7.5 5.5zM12.5 6.5l7.5 5.5-7.5 5.5z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><title>일시정지</title><path d="M8.5 5v14M15.5 5v14"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><title>재생</title><path d="M7 5l12 7-12 7z"/></symbol>
+<symbol id="i-return" viewBox="0 0 24 24"><title>귀환</title><path d="M9 14L4 10l5-4"/><path d="M4 10h10a5 5 0 0 1 0 10h-4"/></symbol>
+<symbol id="i-nest" viewBox="0 0 24 24"><title>둥지</title><path d="M3 13c2.5 5.5 15.5 5.5 18 0"/><path d="M5 13c3-2.3 11-2.3 14 0"/><ellipse cx="12" cy="9.5" rx="3" ry="4"/></symbol>
+<symbol id="i-quit" viewBox="0 0 24 24"><title>그만두기</title><path d="M6 21V4"/><path d="M6 4.5h11l-2.2 4 2.2 4H6"/></symbol>
+<symbol id="i-practice" viewBox="0 0 24 24"><title>전투 연습</title><path d="M5 5l14 14M19 5L5 19"/><path d="M5 5h4M5 5v4M19 5h-4M19 5v4"/></symbol>
+<symbol id="i-swap-species" viewBox="0 0 24 24"><title>종족 바꾸기</title><path d="M4.5 11a7.5 7.5 0 0 1 13-4.5"/><path d="M18 3v4h-4"/><path d="M19.5 13a7.5 7.5 0 0 1-13 4.5"/><path d="M6 21v-4h4"/></symbol>
+<symbol id="i-deck" viewBox="0 0 24 24"><title>타일 덱</title><rect x="4" y="7" width="12" height="14" rx="2"/><path d="M8 3.5h10a2 2 0 0 1 2 2V17"/></symbol>
+<symbol id="i-slot" viewBox="0 0 24 24"><title>흡수 특성 슬롯</title><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 8v8M8.5 10l7 4M15.5 10l-7 4"/></symbol>
+<symbol id="i-absorb" viewBox="0 0 24 24"><title>흡수</title><circle cx="12" cy="12" r="8"/><path d="M12 7v7M8.5 11l3.5 3.5 3.5-3.5"/></symbol>
+<symbol id="i-release" viewBox="0 0 24 24"><title>놓아주기</title><circle cx="12" cy="12" r="8"/><path d="M12 17v-7M8.5 13l3.5-3.5 3.5 3.5"/></symbol>
+
+<!-- ===== 타일 4종 + 조합 ===== -->
+<symbol id="i-tile-prey" viewBox="0 0 24 24"><title>먹잇감 둥지</title><path d="M12 4c3 4 5.5 6.5 5.5 9.5a5.5 5.5 0 0 1-11 0C6.5 10.5 9 8 12 4z"/><circle cx="10" cy="13.5" r=".9" fill="currentColor"/><circle cx="14" cy="13.5" r=".9" fill="currentColor"/></symbol>
+<symbol id="i-tile-elite" viewBox="0 0 24 24"><title>강적 소굴</title><path d="M4 19h16"/><path d="M5 19L4 7.5l5 4.5 3-7 3 7 5-4.5-1 11.5"/></symbol>
+<symbol id="i-tile-env" viewBox="0 0 24 24"><title>환경</title><path d="M3 8.5c3-2 6 2 9 0s6 2 9 0M3 13.5c3-2 6 2 9 0s6 2 9 0M3 18.5c3-2 6 2 9 0s6 2 9 0"/></symbol>
+<symbol id="i-tile-rest" viewBox="0 0 24 24"><title>휴식</title><path d="M19.5 14.5A8 8 0 1 1 9.5 4.5a6.3 6.3 0 0 0 10 10z"/></symbol>
+<symbol id="i-tile-combo" viewBox="0 0 24 24"><title>타일 조합</title><rect x="3.5" y="3.5" width="10" height="10" rx="1.5"/><rect x="10.5" y="10.5" width="10" height="10" rx="1.5"/></symbol>
+
+<!-- ===== 계통 A~E (임시 마크: 모양으로 구분, 면 채움) ===== -->
+<symbol id="i-lin-a" viewBox="0 0 24 24"><title>계통 A</title><circle cx="12" cy="12" r="7" fill="currentColor" fill-opacity=".3"/></symbol>
+<symbol id="i-lin-b" viewBox="0 0 24 24"><title>계통 B</title><path d="M12 4.5l8 14H4z" fill="currentColor" fill-opacity=".3"/></symbol>
+<symbol id="i-lin-c" viewBox="0 0 24 24"><title>계통 C</title><rect x="5.5" y="5.5" width="13" height="13" fill="currentColor" fill-opacity=".3"/></symbol>
+<symbol id="i-lin-d" viewBox="0 0 24 24"><title>계통 D</title><path d="M12 3.5l8.5 8.5-8.5 8.5-8.5-8.5z" fill="currentColor" fill-opacity=".3"/></symbol>
+<symbol id="i-lin-e" viewBox="0 0 24 24"><title>계통 E</title><path d="M12 4l7 4v8l-7 4-7-4V8z" fill="currentColor" fill-opacity=".3"/></symbol>
+
+<!-- ===== 희귀 / 잠금 / 미발견 ===== -->
+<symbol id="i-rare" viewBox="0 0 24 24"><title>희귀</title><path d="M11 3c.8 4.5 2.5 6.2 7 7-4.5.8-6.2 2.5-7 7-.8-4.5-2.5-6.2-7-7 4.5-.8 6.2-2.5 7-7z" fill="currentColor" fill-opacity=".3"/><path d="M19 15.5c.3 1.6.9 2.2 2.5 2.5-1.6.3-2.2.9-2.5 2.5-.3-1.6-.9-2.2-2.5-2.5 1.6-.3 2.2-.9 2.5-2.5z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><title>잠금</title><rect x="5.5" y="10.5" width="13" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/><path d="M12 14.5v2"/></symbol>
+<symbol id="i-unknown" viewBox="0 0 24 24"><title>미발견</title><rect x="4" y="4" width="16" height="16" rx="3" stroke-dasharray="3 2.4"/><path d="M9.8 9.8a2.3 2.3 0 1 1 3.3 2.1c-.6.3-1.1.8-1.1 1.5v.3"/><circle cx="12" cy="16.4" r=".9" fill="currentColor"/></symbol>
+
+<!-- ===== 공용 ===== -->
+<symbol id="i-plus" viewBox="0 0 24 24"><title>더하기</title><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><title>빼기</title><path d="M5 12h14"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><title>닫기</title><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><title>확인</title><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><title>경고</title><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".9" fill="currentColor"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><title>안내</title><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.8" r=".9" fill="currentColor"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><title>열기</title><path d="M9 5.5l6.5 6.5L9 18.5"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><title>펼치기</title><path d="M5.5 9l6.5 6.5L18.5 9"/></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><title>이전</title><path d="M15 5.5L8.5 12l6.5 6.5"/></symbol>
+<symbol id="i-swap" viewBox="0 0 24 24"><title>교체</title><path d="M5 8h13l-3.5-3.5"/><path d="M19 16H6l3.5 3.5"/></symbol>
+<symbol id="i-grip" viewBox="0 0 24 24"><title>끌기</title><circle cx="9" cy="6" r="1.2" fill="currentColor"/><circle cx="15" cy="6" r="1.2" fill="currentColor"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><circle cx="9" cy="18" r="1.2" fill="currentColor"/><circle cx="15" cy="18" r="1.2" fill="currentColor"/></symbol>
+<symbol id="i-loop" viewBox="0 0 24 24"><title>한 바퀴 더</title><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
+<symbol id="i-flag-win" viewBox="0 0 24 24"><title>승리</title><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6-4.5-4.1 6-.7z"/></symbol>
+<!-- ===== 적 실루엣 플레이스홀더 (오리지널 추상형, 100px 격자, 면 채움 · 눈/가슴 구멍은 뚫린 부분) ===== -->
+<symbol id="foe-a" viewBox="0 0 100 100"><title>적 실루엣 A</title><path fill="currentColor" stroke="none" fill-rule="evenodd" d="M50 9c11 0 19 7 19 17 0 5-2 9-5 12l11 6c10 6 14 18 12 32l-6 16-9-11-4 13-8-10-10 12-10-12-8 10-4-13-9 11-6-16c-2-14 2-26 12-32l11-6c-3-3-5-7-5-12 0-10 8-17 19-17zM36 14L27 2l13 8zM64 14l9-12-13 8zM40 23.5l7.5 3.5-7.5 1.5zM60 23.5l-7.5 3.5 7.5 1.5zM50 52a9 9 0 1 0 0 18 9 9 0 1 0 0-18z"/></symbol>
+<symbol id="foe-b" viewBox="0 0 100 100"><title>적 실루엣 B</title><path fill="currentColor" stroke="none" fill-rule="evenodd" d="M50 14l14 6 20-6-8 14 14 10-14 4 8 22-16-6-4 20-14-12-14 12-4-20-16 6 8-22-14-4 14-10-8-14 20 6zM42 34l6 3-6 2zM58 34l-6 3 6 2zM50 46l5 8-5 8-5-8z"/></symbol>
+<symbol id="i-broken" viewBox="0 0 24 24"><title>패배</title><path d="M5 5c4-2 10-2 14 0v6.5c0 5-3.5 8-7 9.5-3.5-1.5-7-4.5-7-9.5z"/><path d="M12 3.5l-1.5 4 2.5 2-2.5 3.5 1 3"/><path d="M8 11h2M14 11h2"/></symbol>
+</svg>
