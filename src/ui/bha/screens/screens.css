@@ -49,7 +49,7 @@
 .bha-battle__bar .bha-btn--quit { padding: 0 10px; white-space: nowrap; font-size: var(--bha-fs-md); }
 .bha-battle__time { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: var(--bha-fs-sm); font-weight: 700; color: var(--bha-text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bha-battle__time .bha-icon { width: 16px; height: 16px; }
-@media (max-width: 400px) { .bha-battle__timelabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+@media (max-width: 400px) and (orientation: landscape) { .bha-battle__timelabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
 .bha-battle__time b { font-size: var(--bha-fs-lg); color: var(--bha-text-1); }
 .bha-battle__time.is-urgent, .bha-battle__time.is-urgent b { color: var(--bha-danger); }
 .bha-battle__bar .bha-btn--quit { justify-self: start; }
@@ -62,7 +62,7 @@
 .bha-app.is-shake { animation: bha-shake 320ms linear; }
 
 /* 짧은 화면 (높이 780 이하): 조작 힌트는 [?]로 옮기고 간격을 줄인다 */
-@media (max-height: 780px) {
+@media (max-height: 780px), (orientation: portrait) {
   .bha-battle { gap: 4px; }
   .bha-battle__hint { display: none; }
   .bha-battle__foetags { min-height: 0; }
@@ -71,7 +71,7 @@
   .bha-battle__arena .bha-foe { inset: 0 0 40px; }
   .bha-battle__controls .bha-stored { min-height: 54px; padding-top: 6px; padding-bottom: 6px; }
 }
-@media (max-height: 700px) {
+@media (max-height: 700px), (orientation: portrait) {
   .bha-battle .bha-legend { display: none; }
 }
 
@@ -200,7 +200,7 @@
 .bha-exp__handcap { font-size: var(--bha-fs-xs); color: var(--bha-text-3); flex: none; }
 .bha-exp__bar { display: grid; grid-template-columns: auto auto 1fr auto; gap: 6px; align-items: center; flex: none; }
 .bha-exp__bar .bha-seg { min-width: 150px; }
-@media (max-height: 760px) { .bha-exp__ringwrap .bha-ring { --ring-max: 300px; } .bha-exp__handcap { display: none; } }
+@media (max-height: 760px), (orientation: portrait) { .bha-exp__ringwrap .bha-ring { --ring-max: 300px; } .bha-exp__handcap { display: none; } }
 
 /* =========================================================
    한계 돌파  .bha-break

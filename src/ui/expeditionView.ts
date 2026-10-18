@@ -14,7 +14,6 @@ import {
   canPlaceAt, MSG_ICON, msgKind, needsWalkerSnap, ringDisplayPos, ringState, tileCss, tileIconId,
 } from './bha/expedition';
 import { lineageClass, lineageIconId } from './bha/lineage';
-import { isPortrait, onPortrait } from './bha/orientation';
 import { tileHint } from './labels';
 
 export interface ExpeditionViewHandlers {
@@ -62,21 +61,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   };
   const stepMs = () => (EX.secondsPerTile * 1000) / speed;
 
-  /** 세로로 들어서 멈춘다: 가로로 돌아오면 기기의 선택이 [재개] 버튼에 가 있어 확정으로 계속할 수 있다 */
-  function autoPause(): void {
-    paused = true;
-    pauseBtn.dataset.devFocus = '';
-    render();
-  }
-
   function schedule(): void {
     clear();
     if (exp.phase !== 'moving') return;
-    // 세로로 들면 자동 일시정지한다. 가로로 돌아와도 저절로 재개하지 않는다 (재개 버튼으로 계속)
-    if (!paused && isPortrait()) {
-      autoPause();
-      return;
-    }
     if (!paused) later(stepMs(), tick);
   }
 
@@ -218,7 +205,6 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   pauseBtn.type = 'button';
   pauseBtn.onclick = () => {
     paused = !paused;
-    delete pauseBtn.dataset.devFocus;
     schedule();
     render();
   };
@@ -401,12 +387,6 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     sheet.append(info, grid);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
-
-  onPortrait(() => {
-    if (exp.phase !== 'moving' || paused) return;
-    clear();
-    autoPause();
-  }, () => main.isConnected);
 
   render();
   schedule();

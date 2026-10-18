@@ -20,7 +20,7 @@
 .bha-seedline .bha-icon { display: inline-block; vertical-align: -3px; }
 
 /* 낮은 화면(360×740)에서 4바퀴 초과 경고 + 보유 타일 줄이 있어도 링의 슬롯이 시트 위에 남도록 시트 안 여백을 줄인다 */
-@media (max-height: 780px) {
+@media (max-height: 780px), (orientation: portrait) {
   .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-3) var(--bha-sp-5); }
   .bha-exp .bha-sheet { gap: var(--bha-sp-4); }
 }

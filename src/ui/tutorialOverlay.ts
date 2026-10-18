@@ -6,6 +6,7 @@ import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { elementLocalRect } from './bha/viewport';
 import { placeCard, placeCardBox, unionRect, type Rect } from './helpLayout';
 
 export interface TutorialHandle {
@@ -28,10 +29,11 @@ const SCENE_ICON: Record<string, string> = {
 /** 대상 영역을 오버레이 자리(host: LCD 창 또는 화면 전체) 기준 좌표로 돌려준다 */
 function targetRect(ids: string[], host: HTMLElement): Rect | null {
   const rects: Rect[] = [];
-  const o = host === document.body ? { left: 0, top: 0 } : host.getBoundingClientRect();
+  // 화면 좌표는 기기를 돌려 놓으면 같이 돌아가므로 기기 안 좌표로 바꿔 쓴다 (GDD 16-6)
+  const o = host === document.body ? { left: 0, top: 0 } : elementLocalRect(host);
   for (const id of ids) {
     document.querySelectorAll<HTMLElement>(`[data-help="${id}"]`).forEach((n) => {
-      const r = n.getBoundingClientRect();
+      const r = elementLocalRect(n);
       if (r.width > 0 && r.height > 0) rects.push({ top: r.top - o.top, left: r.left - o.left, width: r.width, height: r.height });
     });
   }

@@ -5,10 +5,13 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 
 /* ── 기기 본체: 왼쪽 [위/아래] · 가운데 LCD · 오른쪽 [확정 / 작은 취소] ── */
 .bha-dev {
-  position: fixed; inset: 0;
+  position: fixed; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 0 0;  /* 크기·회전·축소는 device.ts 가 정한다 (viewport.ts) */
   display: flex; align-items: stretch; gap: var(--bha-sp-4);
   padding: max(var(--bha-sp-4), env(safe-area-inset-top, 0px)) max(var(--bha-sp-4), env(safe-area-inset-right, 0px)) max(var(--bha-sp-4), env(safe-area-inset-bottom, 0px)) max(var(--bha-sp-4), env(safe-area-inset-left, 0px));
   background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop);
+}
+.bha-dev.is-rotated {  /* 돌려 놓은 기기: 화면의 위·오른쪽·아래·왼쪽 안전 영역이 기기의 오른쪽·아래·왼쪽·위가 된다 */
+  padding: max(var(--bha-sp-4), env(safe-area-inset-right, 0px)) max(var(--bha-sp-4), env(safe-area-inset-bottom, 0px)) max(var(--bha-sp-4), env(safe-area-inset-left, 0px)) max(var(--bha-sp-4), env(safe-area-inset-top, 0px));
 }
 .bha-dev__side {
   flex: none; width: calc(var(--bha-touch) + var(--bha-sp-9));
@@ -69,7 +72,7 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   gap: var(--bha-sp-4);
 }
 .bha-lcd .bha-app--fixed { height: auto; min-height: 100%; overflow: visible; padding: var(--bha-sp-4) var(--bha-sp-5); }
-.bha-lcd .bha-layer { position: fixed; inset: 0; }
+.bha-lcd .bha-layer { position: fixed; inset: 0; min-height: 0; }
 
 /* LCD 는 낮아서(약 330~360px) 전체 화면 오버레이를 압축하고 넘치면 창 안에서 스크롤 */
 .bha-lcd .bha-overlay { overflow-y: auto; padding: var(--bha-sp-4) var(--bha-sp-6); place-items: safe center; }
@@ -83,23 +86,3 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 
 /* ── 선택 하이라이트 (위/아래로 옮기는 표시) ── */
 .bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 5px var(--bha-accent-soft); }
-
-/* ── 세로로 들었을 때 안내 ── */
-.bha-rotate {
-  position: fixed; inset: 0; z-index: var(--bha-z-modal);
-  display: none; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-5);
-  padding: var(--bha-sp-8); text-align: center;
-  background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop);
-}
-.bha-rotate__phone {
-  width: var(--bha-sp-9); height: var(--bha-sp-10); margin-bottom: var(--bha-sp-5);
-  border: 2px solid var(--bha-text-1); border-radius: var(--bha-r-sm);
-  animation: bha-rotate-hint 2.4s ease-in-out infinite;
-}
-.bha-rotate__text { font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); }
-.bha-rotate__sub { color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
-@keyframes bha-rotate-hint { 0%, 25% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
-@media (orientation: portrait) {
-  .bha-dev { display: none; }
-  .bha-rotate { display: flex; }
-}

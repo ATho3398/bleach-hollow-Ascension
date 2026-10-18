@@ -1,11 +1,12 @@
 // 다마고치형 기기 틀 + 항목 선택 시스템 (GDD 16장, T-1).
-//   [왼쪽: 위/아래] [가운데: LCD 창] [오른쪽: 확정 / 작은 취소]. 버튼에는 글자 없이 아이콘만. 세로로 들면 "가로로 돌려주세요" 안내.
+//   [왼쪽: 위/아래] [가운데: LCD 창] [오른쪽: 확정 / 작은 취소]. 버튼에는 글자 없이 아이콘만. 세로로 들면 기기 전체를 돌려 출력(viewport.ts).
 // 화면은 두 가지로 항목을 알린다: (1) setItems 로 직접 등록(방 화면), (2) 등록이 없으면 LCD 안의 누를 수 있는 요소를 자동으로 찾는다(옛 화면).
 // 위/아래는 하이라이트(.bha-sel)를 순서대로 옮기고(끝에서 순환), 확정은 실행(click), 취소는 열린 레이어 → 화면 스택 한 단계 뒤로.
 // 전투 화면(.bha-battle)은 터치 위주라 위/아래는 쉬고 확정만 [data-dev-confirm](일시정지)에 쓴다 (dev-log C.25 결정).
 import { el, icon } from './dom';
 import { keepSelection, orderByRank, stepIndex } from './select';
 import { setOverlayHost } from './overlayHost';
+import { computeFit, fitTransform, setFit } from './viewport';
 
 export interface SelectItem {
   el: HTMLElement;
@@ -79,12 +80,20 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   const dev = el('div', 'bha-dev');
   dev.append(left, bezel, right);
 
-  const rotate = el('div', 'bha-rotate');
-  rotate.setAttribute('role', 'status');
-  const rot = el('span', 'bha-rotate__phone');
-  rot.setAttribute('aria-hidden', 'true');
-  rotate.append(rot, el('p', 'bha-rotate__text', '가로로 돌려주세요'), el('p', 'bha-rotate__sub', '이 게임은 기기를 눕혀서 한다'));
-  root.replaceChildren(dev, rotate);
+  root.replaceChildren(dev);
+
+  // ── 화면 맞춤: 가로면 그대로, 세로면 기기 전체를 돌려 채운다 (GDD 16-6). 방향이 바뀌어도 화면은 다시 만들지 않고 틀만 다시 계산한다 ──
+  const fitDevice = () => {
+    const f = computeFit(window.innerWidth, window.innerHeight);
+    setFit(f);
+    dev.classList.toggle('is-rotated', f.rotated);
+    dev.style.width = `${f.w}px`;
+    dev.style.height = `${f.h}px`;
+    dev.style.transform = fitTransform(f);
+  };
+  fitDevice();
+  window.addEventListener('resize', fitDevice);
+  window.addEventListener('orientationchange', fitDevice);
 
   // ── 선택 상태 ──
   let items: SelectItem[] = [];
@@ -92,7 +101,6 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let explicit: { scope: HTMLElement; items: SelectItem[]; onChange?: (i: SelectItem | null) => void } | null = null;
   const layers: { el: HTMLElement; onCancel: () => void }[] = [];
   let touchOnly = false;
-  let focusDone: HTMLElement | null = null;
 
   let lastSel: HTMLElement | null = null;
   const markSel = () => {
@@ -129,13 +137,6 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     } else {
       index = keepSelection(prev.map((i) => i.el), prevIdx, next.map((i) => i.el));
     }
-    // [data-dev-focus] 가 붙은 항목이 나타나면 한 번 선택을 거기로 옮긴다 (세로로 들어 자동 일시정지한 원정의 [재개] 버튼 등, T-2)
-    const fi = items.findIndex((i) => i.el.hasAttribute('data-dev-focus'));
-    if (fi < 0) focusDone = null;
-    else if (items[fi]!.el !== focusDone) {
-      focusDone = items[fi]!.el;
-      index = fi;
-    }
     for (const p of prev) if (!next.includes(p)) p.el.classList.remove('bha-sel');
     markSel();
     const cur = items[index] ?? null;
@@ -162,7 +163,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   const mo = new MutationObserver(schedule);
   // hidden·disabled 가 바뀌어도(진화 연출 줄 → 결과 전환, 비활성 버튼) 항목을 다시 센다 (class 는 보지 않는다: 하이라이트 자신의 변화로 되돌아오지 않게)
   mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled'] });
-  // 세로로 들었다가 돌아오면(LCD 가 숨었다 보임) 화면 속 선택 항목을 다시 센다 (T-2)
+  // 창 크기·방향이 바뀌면 화면 속 선택 항목을 다시 센다 (T-2, 세로 회전 출력은 T-3)
   window.addEventListener('resize', schedule);
 
   function move(dir: 1 | -1): void {
@@ -250,6 +251,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       mo.disconnect();
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', schedule);
+      window.removeEventListener('resize', fitDevice);
+      window.removeEventListener('orientationchange', fitDevice);
       setOverlayHost(null);
     },
   };
