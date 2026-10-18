@@ -17,12 +17,22 @@ export interface ExpeditionViewHandlers {
   onEnded: () => void;
   /** 한계 돌파가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
   onBreakthrough: (resume: () => void) => void;
+  /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더, 배속 변경 */
+  onSave: () => void;
 }
 
 const SPEEDS = [1, 2, 4] as const;
 const EX = BALANCE.expedition;
 
 let speed: (typeof SPEEDS)[number] = 1;
+
+/** 배속 설정은 원정 중간 저장에 같이 들어간다 (이어하기에서 유지) */
+export function getSpeed(): number {
+  return speed;
+}
+export function setSpeed(v: number): void {
+  speed = (SPEEDS as readonly number[]).includes(v) ? (v as (typeof SPEEDS)[number]) : 1;
+}
 
 export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, h: ExpeditionViewHandlers, startMsg = ''): void {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -66,6 +76,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         break;
       case 'battle':
         msg = `${tn_enemy(ev.battle)} 조우!`;
+        h.onSave(); // 전투 시작 직전 상태 (전투 중 새로고침하면 여기서 다시 시작한다)
         render();
         later(700 / speed, () => {
           clear();
@@ -77,6 +88,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         render();
         later((EX.secondsPerTile * 1000 * BALANCE.provisional.expedition.restTimeTiles) / speed, () => {
           finishRest(exp);
+          h.onSave();
           msg = '허기·컨디션이 회복됐다';
           render();
           schedule();
@@ -84,6 +96,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         return;
       case 'lap-complete':
         msg = `${ev.lap}바퀴 완주! ${got > 0 ? `타일 획득: ${tn(ev.rewardTile!)}` : ''} ${faction.nestName} 칸에서 귀환할지 고른다.`;
+        h.onSave();
         break;
       case 'ended':
         clear();
@@ -138,6 +151,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         } else if (selected) {
           const r = placeTile(exp, selected, i);
           msg = r.ok ? `${tn(selected)}을(를) ${i}번 칸에 놓았다` : r.reason;
+          if (r.ok) h.onSave();
           if (r.ok && !exp.hand.includes(selected)) selected = null;
         } else msg = '아래 보유 타일을 먼저 고른다';
         render();
@@ -170,6 +184,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       const b = el('button', `small${speed === sp ? ' on' : ''}`, `${sp}x`);
       b.onclick = () => {
         speed = sp;
+        h.onSave();
         schedule();
         render();
       };
@@ -207,6 +222,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       const more = el('button', '', `한 바퀴 더 (${exp.lap + 1}바퀴)`);
       more.onclick = () => {
         chooseContinue(exp);
+        h.onSave();
         msg = `${exp.lap}바퀴째 출발`;
         render();
         schedule();

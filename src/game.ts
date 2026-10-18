@@ -4,7 +4,7 @@ import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { completedLineages, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
-import { buildRunRecord, summarize, type ExpeditionState } from './engine/expedition';
+import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult } from './engine/expedition';
 import {
   cloneEvolution, evolve, newEvolution, recordEvolutionAbsorb, type EvolutionState, type EvolveResult,
 } from './engine/evolution';
@@ -17,7 +17,7 @@ import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 8;
+export const SAVE_FORMAT_VERSION = 9;
 
 export interface SaveMeta {
   format: number;
@@ -48,6 +48,8 @@ export interface SaveData {
   runLog: RunLog;
   /** 칭호 해금 목록 (C.14, 형식 8): 한 번 해금하면 영구. 해금 시각·시점·스냅샷 포함 */
   titles: UnlockedTitle[];
+  /** 원정 중간 저장 (GDD 14-1, C.13). 완료된 런 로그와 섞이지 않는 별도 영역. 원정이 끝나면(귀환·패배) 비운다 */
+  activeExpedition: ExpeditionSnapshot | null;
 }
 
 export interface TileStock {
@@ -61,7 +63,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [] };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
@@ -90,7 +92,17 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   save.evolution = cloneEvolution(exp.evolution);
   for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   applyExpeditionEnd(save.nest, exp, nowMs);
+  save.activeExpedition = null;
   checkTitles(save, 'expedition', nowMs);
+}
+
+/** 이어할 원정이 있는가. 저장된 값이 손상·구버전이면 영역을 비우고 이유를 알려 준다 (이어하기를 숨긴다) */
+export function readActiveExpedition(save: SaveData): (RestoreResult & { ok: true }) | { ok: false; reason: 'none' | 'corrupt' | 'version' } {
+  if (save.activeExpedition == null) return { ok: false, reason: 'none' };
+  const r = restoreExpedition(save.activeExpedition);
+  if (r.ok) return r;
+  save.activeExpedition = null;
+  return r;
 }
 
 function cloneBuildOf(b: BuildState): BuildState {
@@ -216,6 +228,13 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.meta.format = 8;
   }
   save.titles = save.titles ?? [];
+  if (save.meta.format < 9) {
+    // 형식 8 → 9 (C.13 원정 중간 저장): 원정 중 저장 영역 추가. 이전 세이브는 중간 저장이 없다
+    save.activeExpedition = null;
+    save.meta.format = 9;
+  }
+  // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)
+  if (typeof save.activeExpedition !== 'object' || Array.isArray(save.activeExpedition)) save.activeExpedition = null;
   return save;
 }
 

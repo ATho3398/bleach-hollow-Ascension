@@ -23,6 +23,10 @@ export interface NestViewHandlers {
   onTitles: () => void;
   onChangeFaction: () => void;
   persist: () => void;
+  /** 저장된 원정이 있으면 이어하기 (GDD 14-1) */
+  resume: { info: string; onResume: () => void } | null;
+  /** 이어하기를 숨긴 이유 (손상·구버전) 안내 한 줄 */
+  resumeNote: string;
 }
 
 export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveData, h: NestViewHandlers): void {
@@ -92,7 +96,13 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     deckBox.append(row);
   }
 
-  const depart = el('button', 'primary', '원정 출발');
+  const resumeBox: HTMLElement[] = [];
+  if (h.resume) {
+    const r = el('button', 'primary', `원정 이어하기 (${h.resume.info})`);
+    r.onclick = h.resume.onResume;
+    resumeBox.push(r, el('small', 'dim', '새 원정을 시작하면 이어하던 원정은 패배 처리 없이 버려진다.'));
+  } else if (h.resumeNote) resumeBox.push(el('small', 'warn', h.resumeNote));
+  const depart = el('button', h.resume ? '' : 'primary', '원정 출발');
   depart.disabled = save.tiles.deck.length === 0;
   depart.onclick = h.onDepart;
   const practice = el('button', '', '전투 연습 (테스트)');
@@ -120,6 +130,7 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     el('h2', '', `타일 덱 (${save.tiles.deck.length} / ${deckSize})`),
     el('p', 'dim', '원정 중 보상으로 이 덱에서 타일이 뽑힌다. 뽑힌 타일만 길 옆에 놓을 수 있다.'),
     deckBox,
+    ...resumeBox,
     depart,
     practice,
     titlesBtn,

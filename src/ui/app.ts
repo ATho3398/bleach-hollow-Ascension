@@ -7,10 +7,10 @@ import { tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, elapsedSeconds, type CombatState } from '../engine/combat';
 import { absorbReasons, buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams } from '../engine/evolution';
-import { createExpedition, drainEvents, finishBattle, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
+import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  loadSave, newSaveData, nextRunId, performEvolution, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
+  loadSave, newSaveData, nextRunId, performEvolution, readActiveExpedition, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import { versionLabel } from '../version';
 import { traitName } from '../data/traits';
@@ -20,7 +20,7 @@ import { battleView } from './battleView';
 import { el, mountScreen } from './dom';
 import { battleLabels, endReasonText } from './labels';
 import { absorbConditionText } from './absorbView';
-import { expeditionView } from './expeditionView';
+import { expeditionView, getSpeed, setSpeed } from './expeditionView';
 import { dexView } from './dexView';
 import { showTitleToasts, titleDexView } from './titleDexView';
 import { evolutionView } from './evolutionPanel';
@@ -31,6 +31,15 @@ export function startApp(root: HTMLElement): void {
 
   const mount = (...nodes: HTMLElement[]) => mountScreen(root, ...nodes);
   const persist = () => save && writeSave(localStorage, save);
+  /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
+  let resumeNote = '';
+
+  /** 원정 중간 저장 (GDD 14-1). 끝난 원정은 저장하지 않는다 (recordExpedition 이 영역을 비운다) */
+  const saveProgress = (exp: ExpeditionState) => {
+    if (!save || exp.phase === 'ended') return;
+    save.activeExpedition = serializeExpedition(exp, getSpeed());
+    persist();
+  };
 
   function factionScreen(): void {
     const buttons = FACTIONS.map((f) => {
@@ -58,7 +67,16 @@ export function startApp(root: HTMLElement): void {
     const faction = getFaction(save.factionId);
     const s = save;
     showTitleToasts(s, faction, persist);
+    const active = readActiveExpedition(s);
+    if (!active.ok && active.reason !== 'none') {
+      persist(); // 손상·구버전 영역을 비운 것을 저장
+      resumeNote = active.reason === 'version' ? '저장된 원정이 이전 버전이라 이어할 수 없어 지웠다.' : '저장된 원정이 손상되어 이어할 수 없어 지웠다.';
+    }
     nestView(root, faction, s, {
+      resume: active.ok
+        ? { info: `${active.exp.lap}바퀴 · ${active.exp.pos}번 칸 · 전투 ${active.exp.battles.length}회`, onResume: () => resumeExpedition(active.exp, active.speed) }
+        : null,
+      resumeNote,
       persist,
       onDepart: () => departScreen(faction),
       onPractice: () => practiceScreen(faction),
@@ -91,29 +109,51 @@ export function startApp(root: HTMLElement): void {
       build: save.build,
       evolution: save.evolution,
     });
+    resumeNote = '';
+    saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
     showExpedition(faction, exp, `${faction.huntingGroundName}으로 출발!`);
+  }
+
+  /** 저장된 원정으로 돌아간다: 저장된 시점의 화면(전투 직전·흡수·둥지 칸 귀환 선택·이동 중)으로 복원 */
+  function resumeExpedition(exp: ExpeditionState, speed: number): void {
+    const faction = getFaction(exp.factionId);
+    setSpeed(speed);
+    if (exp.phase === 'battle') runBattle(faction, exp);
+    else if (exp.phase === 'absorb') afterBattle(faction, exp);
+    else if (drainEvents(exp).length > 0) breakthroughScreen(faction, () => showExpedition(faction, exp, '원정을 이어간다'));
+    else showExpedition(faction, exp, '원정을 이어간다');
+  }
+
+  function runBattle(faction: FactionConfig, exp: ExpeditionState): void {
+    const p = exp.pending!;
+    const s = startBattle(exp);
+    const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}`;
+    battleView(root, faction, s, {
+      banner: where,
+      onEnd: (done) => {
+        finishBattle(exp, done);
+        saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
+        afterBattle(faction, exp);
+      },
+    });
+  }
+
+  /** 승리 후 흡수 가능하면 흡수 화면 → 한계 돌파 연출 → 원정으로 돌아간다 */
+  function afterBattle(faction: FactionConfig, exp: ExpeditionState): void {
+    const proceed = () => {
+      saveProgress(exp);
+      const next = () => (exp.phase === 'ended' ? endExpedition(faction, exp) : showExpedition(faction, exp, '전투 승리!'));
+      if (drainEvents(exp).length > 0) breakthroughScreen(faction, next);
+      else next();
+    };
+    if (exp.phase === 'absorb') absorbView(root, faction, exp, proceed);
+    else proceed();
   }
 
   function showExpedition(faction: FactionConfig, exp: ExpeditionState, msg = ''): void {
     expeditionView(root, faction, exp, {
-      onBattle: (p) => {
-        const s = startBattle(exp);
-        const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}`;
-        battleView(root, faction, s, {
-          banner: where,
-          onEnd: (done) => {
-            finishBattle(exp, done);
-            // 승리 후 흡수 가능하면 흡수 화면 → 한계 돌파 연출 → 원정으로 돌아간다
-            const proceed = () => {
-              const next = () => (exp.phase === 'ended' ? endExpedition(faction, exp) : showExpedition(faction, exp, '전투 승리!'));
-              if (drainEvents(exp).length > 0) breakthroughScreen(faction, next);
-              else next();
-            };
-            if (exp.phase === 'absorb') absorbView(root, faction, exp, proceed);
-            else proceed();
-          },
-        });
-      },
+      onBattle: () => runBattle(faction, exp),
+      onSave: () => saveProgress(exp),
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, resume),
     }, msg);
