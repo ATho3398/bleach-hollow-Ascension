@@ -13,7 +13,7 @@ import { combosAtTier, COMBOS, comboName } from '../src/data/evolution';
 import { applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engine/evolution';
 import { buildBattleRecord, playCombatBot, playCombatHuman, replayCombat } from '../src/engine/combat';
 import { emptyLegacyMatches, emptyRunLog } from '../src/engine/runLog';
-import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
+import { loadSave, migrateSave, newSaveData, recordBattle, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { battleLabels, familyAbbr, familySkillName, weakFamilyName } from '../src/ui/labels';
 import { blockAbbr, blockName } from '../src/ui/battleView';
 import { helpVars } from '../src/data/help';
@@ -416,5 +416,36 @@ describe('계열 표시 (④, GDD 17-3)', () => {
   it('도움말 자리표시자 familyList 는 계열 약어를 가운뎃점으로 잇는다', () => {
     expect(helpVars(getFaction('hollow')).familyList).toBe('조·교·탄');
     expect(helpVars(getFaction('shinigami')).familyList).toBe('참·권·귀');
+  });
+});
+
+describe('런 로그: 계열별 체인·콤보 횟수 (⑤)', () => {
+  it('전투 기록이 저장·불러오기를 거쳐도 계열별 체인과 콤보 횟수가 남는다', () => {
+    const save = newSaveData('hollow', 0);
+    for (const id of ['trait-c5', 'trait-e4']) gainTrait(save.build, id);
+    save.evolution.tierIndex = 1;
+    const params: Partial<CombatParams> = { ...buildCombatParams(save.build, 'hollow') };
+    applyEvolutionToParams(params, save.evolution);
+    expect(params.combos).toHaveLength(1);
+    let triggered = 0;
+    for (let seed = 1; seed <= 6; seed++) {
+      const s = playCombatBot(createCombat(seed, { enemy: getEnemy('test-elite'), params }));
+      triggered += s.combosTriggered;
+      recordBattle(save, buildBattleRecord(s, { factionId: 'hollow' }));
+    }
+    const store: Record<string, string> = {};
+    const storage = { getItem: (k: string) => store[k] ?? null, setItem: (k: string, v: string) => { store[k] = v; } };
+    writeSave(storage, save);
+    const back = loadSave(storage)!;
+    expect(back.meta.format).toBe(SAVE_FORMAT_VERSION);
+    expect(back.runLog.battles).toHaveLength(6);
+    const chains = back.runLog.battles.reduce((a, b) => a + (b.chainsByFamily['family-c']?.reduce((x, y) => x + y, 0) ?? 0), 0);
+    expect(chains).toBeGreaterThan(6);
+    expect(back.runLog.battles.reduce((a, b) => a + b.combosTriggered, 0)).toBe(triggered);
+    // 계열 체인 횟수(체인 단계별 합)는 전투의 blocksByChain 과 같다 (계열 공격만 썼으므로)
+    for (const b of back.runLog.battles) {
+      const fam = b.chainsByFamily['family-c'] ?? [0, 0, 0];
+      expect(fam[0]! + fam[1]! + fam[2]!).toBeLessThanOrEqual(b.blocksByChain[0] + b.blocksByChain[1] + b.blocksByChain[2]);
+    }
   });
 });
