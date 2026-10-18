@@ -1,0 +1,23 @@
+/* U-4: 원정·한계 돌파·결과·흡수·연습 화면 전용 최소 규칙. 디자인 원본이 화면 HTML 에 인라인으로 둔 값을 클래스로 옮긴 것이다 (새 색·간격 없음). */
+
+/* 한계 돌파: 균열 선 위에 내용을 올린다 */
+.bha-break > :not(.bha-break__cracks) { position: relative; }
+.bha-break__list { color: var(--bha-text-2); }
+.bha-break > .bha-btn { background: var(--bha-bg-1); }
+
+/* 전투 연습 필터: 종류 세그먼트가 남는 폭을 채운다 */
+.bha-practice__filters .bha-row .bha-seg { flex: 1; }
+
+/* 흡수: 후보 없음 상태 */
+.bha-absorb__none { align-items: center; padding: var(--bha-sp-9) var(--bha-sp-6); }
+
+/* 둥지 칸 선택 시트: 뒤의 원형 길은 계속 눌러서 타일을 놓을 수 있다 (가리지 않고 살짝만 어둡게) */
+.bha-exp .bha-sheet__scrim { pointer-events: none; background: rgb(0 0 0 / .3); }
+.bha-exp .bha-sheet .bha-exp__hand { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.bha-exp .bha-sheet .bha-tilechip { flex: none; }
+
+/* 시드·기록 저장 줄: 체크 아이콘을 글자 줄 안에 */
+.bha-seedline .bha-icon { display: inline-block; vertical-align: -3px; }
+
+/* 옛 legacy.css 의 `h1 { margin: 8px 0 0 }` 요소 규칙이 새 화면 제목에 새지 않게 (U-5 에서 legacy.css 를 지우면 필요 없다) */
+.bha-app h1, .bha-app h2 { margin: 0; }

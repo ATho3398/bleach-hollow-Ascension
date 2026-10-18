@@ -5,11 +5,13 @@ import { getEnemy } from '../data/enemies';
 import { lineageName } from '../data/lineages';
 import { pickFaction } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbRisk, isFull, lineageCounts, type AbsorbOffer } from '../engine/absorb';
+import { absorbRisk, completedLineages, isFull, lineageCounts, type AbsorbOffer } from '../engine/absorb';
 import { chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
-import { el, mountScreen } from './dom';
-import { PROVISIONAL_NOTE, slotPanel, traitLabel } from './buildPanel';
+import { PROVISIONAL_NOTE } from './buildPanel';
+import { button, chip, el, icon, info, meter, mountApp, notice, panel, tag } from './bha/dom';
+import { val } from './bha/expedition';
+import { lineageClass, lineageIconId, lineageKey, lineageMark } from './bha/lineage';
 
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;
@@ -28,11 +30,14 @@ export function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
   return out.join(' · ');
 }
 
+const STEP_LABELS = ['선택', '특성 고르기', '교체'] as const;
+
 export function absorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: (absorbed: boolean) => void): void {
   const offer = exp.absorbOffer;
   if (!offer) return onDone(false);
   const enemy = getEnemy(offer.enemyId);
   const act = faction.absorbActionName;
+  const foeName = pickFaction(enemy.name, faction.id);
   let step: 'choose' | 'pick' | 'replace' = 'choose';
   let picked: string | null = null;
   let error = '';
@@ -44,87 +49,216 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     } else onDone(absorbed);
   };
 
-  function render(): void {
-    const info = el('div');
-    const risk = absorbRisk(offer!.strength);
-    info.innerHTML = `<table>
-      <tr><td>상대</td><td>${pickFaction(enemy.name, faction.id)} (${offer!.elite ? '강적' : '일반'})</td></tr>
-      <tr><td>계통</td><td>${lineageName(offer!.lineageId, faction.id)}</td></tr>
-      <tr><td>${act} 조건</td><td>${reasonText(faction, offer!)}</td></tr>
-      <tr><td>${act}하면</td><td>허기 리셋 · ${faction.riskGaugeName} +${Math.round(risk)} · 타일 +1</td></tr>
-      <tr><td>놓아주면</td><td>${faction.riskGaugeName} −${RX.releaseRelief} · ${faction.stabilityName} +${RX.releaseStability}</td></tr>
-      <tr><td>지금 ${faction.riskGaugeName}</td><td>${Math.round(exp.risk)} / ${RX.limit}${exp.risk + risk >= RX.limit ? ' — 흡수하면 한계 돌파!' : ''}</td></tr></table>`;
-    const nodes: HTMLElement[] = [
-      el('h1', '', `${act} 가능`),
-      el('p', 'dim', `${pickFaction(enemy.name, faction.id)}을(를) 쓰러뜨렸다.`),
-      el('small', 'dim', absorbConditionText(faction, enemy.weaknessLineageId)),
-    ];
-    if (offer!.rare) nodes.push(el('div', 'notice rare', '희귀 개체! 이 개체의 희귀 특성이 후보에 확정으로 나온다.'));
-    nodes.push(info, slotPanel(faction, exp.build));
+  /** 특성 종류 태그 + 희귀 칩 */
+  const traitTags = (id: string): HTMLElement[] => {
+    const t = getTrait(id);
+    const out: HTMLElement[] = [tag(faction.traitKindNames[t.kind], 'kind')];
+    if (t.rare) out.push(chip('희귀', 'rare'));
+    return out;
+  };
 
-    if (step === 'choose') {
-      const a = el('button', 'primary', act);
-      a.onclick = () => {
-        step = 'pick';
-        render();
-      };
-      const r = el('button', '', '놓아준다');
-      r.onclick = () => finish(chooseRelease(exp), false);
-      const row = el('div', 'grid2');
-      row.append(a, r);
-      nodes.push(row);
-    } else if (step === 'pick') {
-      nodes.push(el('h2', '', '특성 후보 (1개 고르기)'));
-      if (offer!.candidates.length === 0) {
-        nodes.push(el('p', 'dim', '이 계통에서 새로 얻을 특성이 없다. 효과만 얻는다.'));
-        const go = el('button', 'primary', `특성 없이 ${act}`);
-        go.onclick = () => finish(chooseAbsorb(exp, null), true);
-        nodes.push(go);
+  const steps = (n: number): HTMLElement => {
+    const nav = el('nav', 'bha-steps');
+    nav.setAttribute('aria-label', '흡수 단계');
+    STEP_LABELS.forEach((l, i) => {
+      if (i) nav.append(el('b'));
+      const sp = el('span', i + 1 === n ? 'is-active' : i + 1 < n ? 'is-done' : '');
+      sp.append(el('i', '', String(i + 1)), l);
+      nav.append(sp);
+    });
+    return nav;
+  };
+
+  const foeCard = (): HTMLElement => {
+    const card = el('article', 'bha-foecard');
+    const foe = el('div', 'bha-foe');
+    const lk = lineageKey(offer!.lineageId);
+    if (lk) foe.style.setProperty('--aura', `var(--bha-lin-${lk})`);
+    const body = el('span', 'bha-foe__body');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', offer!.elite ? '#foe-b' : '#foe-a');
+    svg.append(use);
+    body.append(svg);
+    foe.append(el('span', 'bha-foe__aura'), body);
+    const tags = el('div', 'bha-foecard__tags');
+    tags.append(tag(offer!.elite ? '강적' : '일반', offer!.elite ? 'elite' : 'normal'), lineageMark(offer!.lineageId, faction.id));
+    const text = el('div');
+    text.append(el('h2', 'bha-foecard__name', foeName), tags);
+    card.append(foe, text);
+    return card;
+  };
+
+  /** 슬롯 현황: 칸마다 특성 이름·종류·계통, 계통 보너스 진행/완성, 외형 파츠 문구 */
+  const slotSummary = (): HTMLElement => {
+    const b = exp.build;
+    const box = el('div', 'bha-stack');
+    const head = el('div', 'bha-row');
+    head.append(el('span', 'bha-dim', faction.slotName), el('b', 'bha-num', `${b.slots.filter(Boolean).length} / ${b.slots.length}`));
+    box.append(head);
+    const grid = el('div', 'bha-slots');
+    b.slots.forEach((id, i) => {
+      if (!id) {
+        const s = el('div', 'bha-slot bha-slot--empty');
+        s.append(el('span', 'bha-slot__num', `${i + 1}번`), icon('i-plus'), '비어 있음');
+        grid.append(s);
+        return;
       }
+      const t = getTrait(id);
+      const s = el('div', `bha-slot bha-slot--filled ${lineageClass(t.lineageId)}`);
+      const meta = el('span', 'bha-slot__meta');
+      meta.append(tag(faction.traitKindNames[t.kind], 'kind'), lineageMark(t.lineageId, faction.id));
+      s.append(el('span', 'bha-slot__num', `${i + 1}번`), el('span', 'bha-slot__name', traitName(id, faction.id)), meta);
+      grid.append(s);
+    });
+    box.append(grid);
+    const counts = lineageCounts(b);
+    const done = completedLineages(b);
+    const progress = Object.entries(counts).map(([l, n]) => `${lineageName(l, faction.id)} ${n}/${AX.lineageBonusCount}`);
+    if (done.length > 0) {
+      box.append(notice('good', `${faction.lineageBonusName}: ${done.map((l) => lineageName(l, faction.id)).join(', ')} 블록 위력(피해·막기·회복) +${Math.round(AX.lineageSkillBonus * 100)}% (임시)`));
+    } else if (progress.length > 0) {
+      box.append(el('p', 'bha-faint', `${faction.lineageBonusName} 진행: ${progress.join(' · ')} (같은 계통 ${AX.lineageBonusCount}개)`));
+    }
+    const parts = b.slots.filter((id): id is string => id !== null && getTrait(id).kind === 'part');
+    if (parts.length > 0) {
+      const how = faction.appearanceChange ? '본체 외형이 변한다' : `본체는 그대로, ${faction.slotName} 외형이 변한다`;
+      box.append(el('p', 'bha-faint', `${faction.traitKindNames.part}: ${parts.map((id) => traitName(id, faction.id)).join(', ')} — ${how} (표시만)`));
+    }
+    return box;
+  };
+
+  const backBtn = (to: 'choose' | 'pick', block = true): HTMLButtonElement => {
+    const b = button({ label: '돌아가기', icon: 'i-chevron-left', variant: block ? 'ghost' : undefined, block, size: block ? undefined : 'lg' });
+    b.onclick = () => {
+      step = to;
+      render();
+    };
+    return b;
+  };
+
+  function chooseStep(): HTMLElement[] {
+    const risk = absorbRisk(offer!.strength);
+    const willBreak = exp.risk + risk >= RX.limit;
+    const nodes: HTMLElement[] = [el('h1', 'bha-h1', `${act} 가능`), el('p', 'bha-dim', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
+    if (offer!.rare) nodes.push(notice('rare', '이 개체의 희귀 특성이 후보에 확정으로 나온다.', { title: '희귀 개체!' }));
+    const lin = el('span');
+    lin.append(lineageMark(offer!.lineageId, faction.id));
+    const risky = (n: string, good: boolean) => {
+      const b = el('b', '', n);
+      b.style.color = good ? 'var(--bha-good)' : 'var(--bha-risk)';
+      return b;
+    };
+    const withNum = (...parts: (string | Node)[]) => {
+      const sp = el('span');
+      sp.append(...parts);
+      return sp;
+    };
+    nodes.push(
+      panel(
+        {},
+        info([
+          { label: '상대', value: val(foeName, offer!.elite ? '강적' : '일반') },
+          { label: '계통', value: lin },
+          { label: `${act} 조건`, mod: 'stack', value: reasonText(faction, offer!) },
+          { label: `${act}하면`, mod: 'stack', value: withNum('허기 리셋 · ', `${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), ' · 타일 +1') },
+          { label: '놓아주면', mod: 'stack', value: withNum(`${faction.riskGaugeName} `, risky(`−${RX.releaseRelief}`, true), ` · ${faction.stabilityName} `, risky(`+${RX.releaseStability}`, true)) },
+        ]),
+      ),
+      el('p', 'bha-faint', absorbConditionText(faction, enemy.weaknessLineageId)),
+      meter({
+        kind: 'risk', label: `지금 ${faction.riskGaugeName}`, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, zone: 0.6, danger: exp.risk >= 60 || willBreak,
+        note: willBreak ? `${act}하면 한계 돌파! (${Math.round(exp.risk)} + ${Math.round(risk)} = ${Math.round(exp.risk + risk)})` : undefined,
+      }),
+      slotSummary(),
+    );
+    if (error) nodes.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
+    const sub = (b: HTMLButtonElement, text: string) => {
+      b.append(el('small', '', text));
+      return b;
+    };
+    const a = sub(button({ label: act, icon: 'i-absorb', variant: willBreak ? 'danger' : 'primary', size: 'lg', onClick: () => { step = 'pick'; render(); } }), willBreak ? '한계 돌파한다' : '특성 후보 보기');
+    const r = sub(button({ label: '놓아준다', icon: 'i-release', size: 'lg', onClick: () => finish(chooseRelease(exp), false) }), '안정 쪽으로');
+    const actions = el('div', 'bha-absorb__actions');
+    actions.append(a, r);
+    nodes.push(actions);
+    return nodes;
+  }
+
+  function pickStep(): HTMLElement[] {
+    const nodes: HTMLElement[] = [el('h1', 'bha-h1', '특성 후보 (1개 고르기)'), el('p', 'bha-dim', `${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
+    if (offer!.candidates.length === 0) {
+      const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
+      none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '이 계통에서 새로 얻을 특성이 없다. 효과만 얻는다.'));
+      nodes.push(none, button({ label: `특성 없이 ${act}`, variant: 'primary', size: 'lg', block: true, onClick: () => finish(chooseAbsorb(exp, null), true) }));
+    } else {
+      const list = el('div', 'bha-stack');
       for (const id of offer!.candidates) {
         const t = getTrait(id);
         const n = (lineageCounts(exp.build)[t.lineageId] ?? 0) + 1;
-        const b = el('button', 'cand');
-        b.append(
-          el('b', '', traitLabel(faction, id)),
-          el('div', 'dim', traitDescription(id, faction.id)),
-          el('small', 'dim', `장착하면 ${lineageName(t.lineageId, faction.id)} ${Math.min(n, AX.lineageBonusCount)}/${AX.lineageBonusCount}${n >= AX.lineageBonusCount && !isFull(exp.build) ? ` → ${faction.lineageBonusName}!` : ''}`),
-        );
-        b.onclick = () => {
+        const shown = Math.min(n, AX.lineageBonusCount);
+        const c = el('button', ['bha-cand', lineageClass(t.lineageId)].filter(Boolean).join(' '));
+        c.type = 'button';
+        const mark = el('span', 'bha-cand__mark');
+        mark.append(icon(lineageIconId(t.lineageId)));
+        const top = el('span', 'bha-cand__top');
+        top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), ...traitTags(id));
+        const pips = el('span', 'bha-pips');
+        for (let i = 0; i < AX.lineageBonusCount; i++) pips.append(el('i', i < shown - 1 ? 'is-on' : i === shown - 1 ? 'is-next' : ''));
+        const foot = el('span', 'bha-cand__foot');
+        foot.append(pips, `장착하면 ${lineageName(t.lineageId, faction.id)} ${shown}/${AX.lineageBonusCount}${n >= AX.lineageBonusCount && !isFull(exp.build) ? ` → ${faction.lineageBonusName}!` : ''}`);
+        const body = el('span', 'bha-cand__body');
+        body.append(top, el('span', 'bha-cand__desc', traitDescription(id, faction.id)), foot);
+        c.append(mark, body);
+        c.onclick = () => {
           if (isFull(exp.build)) {
             picked = id;
             step = 'replace';
             render();
           } else finish(chooseAbsorb(exp, id), true);
         };
-        nodes.push(b);
+        list.append(c);
       }
-      const back = el('button', '', '돌아가기');
-      back.onclick = () => {
-        step = 'choose';
-        render();
-      };
-      nodes.push(back);
-    } else {
-      nodes.push(el('h2', '', `${faction.slotName}: 가득 참`), el('p', 'dim', `${traitName(picked!, faction.id)}을(를) 어느 슬롯과 바꿀까? 포기하면 특성 없이 ${act} 효과만 얻는다.`));
-      exp.build.slots.forEach((id, i) => {
-        const b = el('button', 'cand');
-        b.append(el('b', '', `${i + 1}번 교체: ${traitLabel(faction, id!)}`), el('div', 'dim', '교체된 특성은 보유 목록에 남아 둥지에서 다시 장착할 수 있다'));
-        b.onclick = () => finish(chooseAbsorb(exp, picked, i), true);
-        nodes.push(b);
-      });
-      const giveUp = el('button', '', '포기 (특성 없이 흡수)');
-      giveUp.onclick = () => finish(chooseAbsorb(exp, null), true);
-      const back = el('button', '', '돌아가기');
-      back.onclick = () => {
-        step = 'pick';
-        render();
-      };
-      nodes.push(giveUp, back);
+      nodes.push(list);
     }
-    if (error) nodes.push(el('div', 'notice', error));
-    nodes.push(el('small', 'dim', PROVISIONAL_NOTE));
-    mountScreen(root, ...nodes);
+    nodes.push(backBtn('choose'));
+    return nodes;
+  }
+
+  function replaceStep(): HTMLElement[] {
+    const nodes: HTMLElement[] = [
+      el('h1', 'bha-h1', `${faction.slotName}: 가득 참`),
+      notice('warn', `${traitName(picked!, faction.id)}을(를) 어느 슬롯과 바꿀까? 교체된 특성은 보유 목록에 남아 둥지에서 다시 장착할 수 있다. 포기하면 특성 없이 ${act} 효과만 얻는다.`, { title: '어느 슬롯과 바꿀까?', icon: 'i-swap' }),
+    ];
+    const list = el('div', 'bha-stack');
+    exp.build.slots.forEach((id, i) => {
+      const t = getTrait(id!);
+      const b = el('button', `bha-slot bha-slot--filled ${lineageClass(t.lineageId)}`);
+      b.type = 'button';
+      const meta = el('span', 'bha-slot__meta');
+      meta.append(tag(faction.traitKindNames[t.kind], 'kind'), lineageMark(t.lineageId, faction.id));
+      b.append(el('span', 'bha-slot__num', `${i + 1}번 교체`), el('span', 'bha-slot__name', traitName(id!, faction.id)), meta);
+      b.onclick = () => finish(chooseAbsorb(exp, picked, i), true);
+      list.append(b);
+    });
+    const giveUp = button({ variant: 'danger', size: 'lg', onClick: () => finish(chooseAbsorb(exp, null), true) });
+    const lab = el('span', 'bha-btn__label');
+    lab.append('포기', el('span', 'bha-btn__sub', `특성 없이 ${act}`));
+    giveUp.append(lab);
+    const grid = el('div', 'bha-grid2');
+    grid.append(backBtn('pick', false), giveUp);
+    nodes.push(list, grid);
+    return nodes;
+  }
+
+  function render(): void {
+    const stepNo = step === 'choose' ? 1 : step === 'pick' ? 2 : 3;
+    const view = el('div', 'bha-stack bha-stack--loose');
+    view.append(...(step === 'choose' ? chooseStep() : step === 'pick' ? pickStep() : replaceStep()));
+    if (error && step !== 'choose') view.append(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
+    view.append(el('p', 'bha-faint', PROVISIONAL_NOTE));
+    mountApp(root, {}, steps(stepNo), view);
   }
   render();
 }
