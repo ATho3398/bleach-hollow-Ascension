@@ -94,6 +94,8 @@ export interface LineageDef {
   shortName?: PerFaction<string>;
   /** 이 계통의 성향 (GDD 4-2): 진화 형태 패시브가 조합의 계통 성향을 섞어 만든다. 임시 */
   tendency?: { stat: PassiveStat; multiplier: number };
+  /** 약점 계열 (GDD 17-3): 이 계통을 약점으로 가진 적에게는 이 계열의 공격 블록이 위력 ×1.5. 이 계통 공격 특성의 계열과 같다 */
+  family?: string;
   provisional?: boolean;
 }
 
@@ -132,7 +134,9 @@ export interface TraitDef {
   role?: SkillRole;
   /** skill: 블록 위력 = 플레이어 기본 공격 N회 분량의 피해 (guard·heal 도 작은 피해를 준다) */
   powerInAttacks?: number;
-  /** skill: 체인3(chainBonusFromChain) 이상으로 쓰면 붙는 추가 효과 1개 */
+  /** skill 공격 블록: 계열 id (GDD 17-3). 같은 계열 공격 블록이 바에서 연속이면 체인이 된다. 계열 목록·단계별 기술은 종족 설정(families)이 정한다. 막기·회복은 계열 없음 */
+  family?: string;
+  /** skill 막기·회복: 체인3(chainBonusFromChain) 이상으로 쓰면 붙는 추가 효과 1개. 공격은 계열 단계 기술(종족 설정)이 정하므로 없다 */
   chainBonus?: ChainBonus;
   /** passive: 자동 적용 배율 (기본 공격 위력·속도, 받는 피해) */
   passive?: { stat: PassiveStat; multiplier: number };

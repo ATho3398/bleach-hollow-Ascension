@@ -29,9 +29,17 @@ export function parseTrait(r: unknown): TraitDef {
   if (t.kind === 'skill') {
     if (!(SKILL_ROLES as readonly unknown[]).includes(t.role)) errors.push('role: attack | guard | heal');
     if (!(typeof t.powerInAttacks === 'number' && t.powerInAttacks > 0)) errors.push('powerInAttacks: 양수');
-    const b = (t.chainBonus ?? {}) as Record<string, unknown>;
-    if (!(CHAIN_BONUS_KINDS as readonly unknown[]).includes(b.kind) || typeof b.value !== 'number' || b.value <= 0) {
-      errors.push('chainBonus: { kind: stagger | reflect | cleanse, value: 양수 }');
+    if (t.role === 'attack') {
+      // 공격 블록은 계열 체인 (GDD 17-3): 계열이 필수, 추가 효과는 종족 설정의 계열 단계 기술이 정하므로 특성에는 없다
+      if (typeof t.family !== 'string' || !t.family) errors.push('family: 공격 특성은 계열 id 필요');
+      if (t.chainBonus !== undefined) errors.push('chainBonus: 공격 특성에는 없다 (계열 단계 기술이 정한다)');
+    } else {
+      // 막기·회복은 계열이 없고 같은 특성 단독 체인 (GDD 17-3)
+      if (t.family !== undefined) errors.push('family: 막기·회복에는 계열이 없다');
+      const b = (t.chainBonus ?? {}) as Record<string, unknown>;
+      if (!(CHAIN_BONUS_KINDS as readonly unknown[]).includes(b.kind) || typeof b.value !== 'number' || b.value <= 0) {
+        errors.push('chainBonus: { kind: stagger | reflect | cleanse, value: 양수 }');
+      }
     }
   }
   if (t.kind === 'passive') {
@@ -66,4 +74,9 @@ export function traitAbbr(id: string, factionId: string): string | undefined {
   if (!a) return undefined;
   const v = a[factionId] ?? a['*'];
   return v && v.trim() ? v.trim() : undefined;
+}
+
+/** 특성의 계열 id (공격 skill 만, 그 밖은 null) */
+export function traitFamily(id: string): string | null {
+  return getTrait(id).family ?? null;
 }

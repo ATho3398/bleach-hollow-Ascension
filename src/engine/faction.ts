@@ -5,6 +5,28 @@
 export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
 export type BlockRole = (typeof BLOCK_ROLES)[number];
 
+/** 체인 단계 수 = 계열 기술 단계 수 (GDD 17-3: 같은 계열 연속 1·2·3개). BALANCE chainMultipliers 길이와 같다 */
+export const FAMILY_TIERS = 3;
+
+/** 계열의 한 단계 기술 (GDD 17-3, 이름·수치 provisional). multiplier 는 위력 배율(기존 체인 ×1.0/×2.2/×3.6 을 이어받음), bonus 는 그 단계에 붙는 추가 효과 */
+export interface FamilySkillConfig {
+  name: string;
+  multiplier: number;
+  bonus?: { kind: 'stagger'; value: number };
+}
+
+/** 공격 계열 (GDD 17-3): 호로 조·교·탄 / 사신 참·권·귀. 특성의 family 가 이 id 를 가리킨다 */
+export interface FamilyConfig {
+  id: string;
+  /** 계열 이름 (예 "조") */
+  name: string;
+  /** 블록 위에 쓰는 한 글자 */
+  abbr: string;
+  /** 1·2·3단계 기술 */
+  tiers: [FamilySkillConfig, FamilySkillConfig, FamilySkillConfig];
+  provisional?: boolean;
+}
+
 /** 둥지 행동 종류. 이름은 종족 설정이, 효과는 엔진(nest.ts)이 정한다 */
 export const NEST_ACTIONS = ['feed', 'sleep', 'pet'] as const;
 export type NestAction = (typeof NEST_ACTIONS)[number];
@@ -109,6 +131,8 @@ export interface FactionConfig {
   huntingGroundName: string;
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
+  /** 공격 계열 목록과 단계별 기술 (GDD 17-3). 특성 family 가 가리키는 계열은 모두 여기 있어야 한다 */
+  families: FamilyConfig[];
   /** 둥지 / 대원실 (GDD 7장) */
   nestName: string;
   /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
@@ -146,6 +170,31 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   for (const a of NEST_ACTIONS) {
     if (!isString(na[a])) errors.push(`nestActions.${a}: 비어 있지 않은 문자열이어야 한다`);
   }
+  const fams = r.families;
+  if (!Array.isArray(fams) || fams.length === 0) errors.push('families: 계열 1개 이상');
+  else {
+    const seen = new Set<string>();
+    fams.forEach((f: unknown, i: number) => {
+      const x = (f ?? {}) as Record<string, unknown>;
+      if (!isString(x.id) || seen.has(x.id)) errors.push(`families[${i}].id: 비어 있지 않고 겹치지 않는 문자열`);
+      else seen.add(x.id);
+      if (!isString(x.name)) errors.push(`families[${i}].name: 비어 있지 않은 문자열`);
+      if (!isString(x.abbr) || Array.from(x.abbr).length !== 1) errors.push(`families[${i}].abbr: 한 글자`);
+      const tiers = x.tiers;
+      if (!Array.isArray(tiers) || tiers.length !== FAMILY_TIERS) errors.push(`families[${i}].tiers: 기술 ${FAMILY_TIERS}개`);
+      else {
+        tiers.forEach((t: unknown, k: number) => {
+          const y = (t ?? {}) as Record<string, unknown>;
+          if (!isString(y.name)) errors.push(`families[${i}].tiers[${k}].name: 비어 있지 않은 문자열`);
+          if (!(typeof y.multiplier === 'number' && y.multiplier > 0)) errors.push(`families[${i}].tiers[${k}].multiplier: 양수`);
+          if (y.bonus !== undefined) {
+            const b = y.bonus as Record<string, unknown>;
+            if (b.kind !== 'stagger' || !(typeof b.value === 'number' && b.value > 0)) errors.push(`families[${i}].tiers[${k}].bonus: { kind: stagger, value: 양수 }`);
+          }
+        });
+      }
+    });
+  }
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {
     const rm = r.room as Record<string, unknown>;
@@ -158,4 +207,9 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.rankMode !== 'challenge' && r.rankMode !== 'promotion') errors.push('rankMode: challenge | promotion');
   if (errors.length > 0) throw new Error(`종족 설정 오류 (${String(r.id ?? '?')}):\n- ${errors.join('\n- ')}`);
   return raw as FactionConfig;
+}
+
+/** 계열 설정 한 개 (없으면 undefined) */
+export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {
+  return f.families.find((x) => x.id === familyId);
 }

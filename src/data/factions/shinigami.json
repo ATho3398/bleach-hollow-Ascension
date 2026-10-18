@@ -35,6 +35,80 @@
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
   "huntingGroundName": "현세 순찰 구역 / 루콘가이",
+  "families": [
+    {
+      "id": "family-a",
+      "name": "참(斬)",
+      "abbr": "참",
+      "tiers": [
+        {
+          "name": "베기",
+          "multiplier": 1
+        },
+        {
+          "name": "연참",
+          "multiplier": 2.2
+        },
+        {
+          "name": "대참",
+          "multiplier": 3.6,
+          "bonus": {
+            "kind": "stagger",
+            "value": 1.5
+          }
+        }
+      ],
+      "provisional": true
+    },
+    {
+      "id": "family-b",
+      "name": "권(拳)",
+      "abbr": "권",
+      "tiers": [
+        {
+          "name": "타격",
+          "multiplier": 1
+        },
+        {
+          "name": "연권",
+          "multiplier": 2.2
+        },
+        {
+          "name": "강권",
+          "multiplier": 3.6,
+          "bonus": {
+            "kind": "stagger",
+            "value": 2.0
+          }
+        }
+      ],
+      "provisional": true
+    },
+    {
+      "id": "family-c",
+      "name": "귀(鬼)",
+      "abbr": "귀",
+      "tiers": [
+        {
+          "name": "파도의 1 쇼",
+          "multiplier": 1
+        },
+        {
+          "name": "파도의 31 적화포",
+          "multiplier": 2.2
+        },
+        {
+          "name": "파도의 63 뇌오포",
+          "multiplier": 3.6,
+          "bonus": {
+            "kind": "stagger",
+            "value": 1.5
+          }
+        }
+      ],
+      "provisional": true
+    }
+  ],
   "nestName": "대원실",
   "nestActions": {
     "feed": "식사 / 영력 보급",

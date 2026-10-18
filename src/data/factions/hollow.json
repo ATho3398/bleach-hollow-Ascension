@@ -35,6 +35,80 @@
   "defeatStateName": "가면이 깨져 쇠약",
   "basicSkillName": "본체 능력",
   "huntingGroundName": "웨코문도",
+  "families": [
+    {
+      "id": "family-a",
+      "name": "조(爪)",
+      "abbr": "조",
+      "tiers": [
+        {
+          "name": "할퀴기",
+          "multiplier": 1
+        },
+        {
+          "name": "갈퀴 연타",
+          "multiplier": 2.2
+        },
+        {
+          "name": "맹조 난무",
+          "multiplier": 3.6,
+          "bonus": {
+            "kind": "stagger",
+            "value": 1.5
+          }
+        }
+      ],
+      "provisional": true
+    },
+    {
+      "id": "family-b",
+      "name": "교(咬)",
+      "abbr": "교",
+      "tiers": [
+        {
+          "name": "물기",
+          "multiplier": 1
+        },
+        {
+          "name": "물어뜯기",
+          "multiplier": 2.2
+        },
+        {
+          "name": "포식 일격",
+          "multiplier": 3.6,
+          "bonus": {
+            "kind": "stagger",
+            "value": 2.0
+          }
+        }
+      ],
+      "provisional": true
+    },
+    {
+      "id": "family-c",
+      "name": "탄(彈)",
+      "abbr": "탄",
+      "tiers": [
+        {
+          "name": "바라",
+          "multiplier": 1
+        },
+        {
+          "name": "세로",
+          "multiplier": 2.2
+        },
+        {
+          "name": "세로 오스쿠라스",
+          "multiplier": 3.6,
+          "bonus": {
+            "kind": "stagger",
+            "value": 1.5
+          }
+        }
+      ],
+      "provisional": true
+    }
+  ],
   "nestName": "둥지",
   "nestActions": {
     "feed": "먹이 주기",

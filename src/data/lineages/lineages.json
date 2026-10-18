@@ -11,7 +11,8 @@
     "tendency": {
       "stat": "attackPower",
       "multiplier": 1.06
-    }
+    },
+    "family": "family-a"
   },
   {
     "id": "lineage-b",
@@ -25,7 +26,8 @@
     "tendency": {
       "stat": "damageTaken",
       "multiplier": 0.94
-    }
+    },
+    "family": "family-b"
   },
   {
     "id": "lineage-c",
@@ -39,7 +41,8 @@
     "tendency": {
       "stat": "attackSpeed",
       "multiplier": 1.05
-    }
+    },
+    "family": "family-c"
   },
   {
     "id": "lineage-d",
@@ -53,7 +56,8 @@
       "stat": "damageTaken",
       "multiplier": 0.95
     },
-    "provisional": true
+    "provisional": true,
+    "family": "family-b"
   },
   {
     "id": "lineage-e",
@@ -67,6 +71,7 @@
       "stat": "attackPower",
       "multiplier": 1.05
     },
-    "provisional": true
+    "provisional": true,
+    "family": "family-c"
   }
 ]

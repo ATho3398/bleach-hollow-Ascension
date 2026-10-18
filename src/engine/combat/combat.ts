@@ -21,6 +21,8 @@ export interface CombatSkill {
   /** 계통 id (기본 블록은 null). 적 약점 계통과 같으면 위력 ×1.5 */
   lineageId: string | null;
   role: SkillRole;
+  /** 공격 계열 id (GDD 17-3, 종족 설정 families). 막기·회복·기본 블록은 null */
+  family?: string | null;
   /** 블록 위력: 플레이어 기본 공격 N회 분량의 피해 */
   powerInAttacks: number;
   chainBonus: ChainBonus;

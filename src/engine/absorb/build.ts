@@ -90,13 +90,17 @@ export function equippedSkills(b: BuildState): CombatSkill[] {
   for (const id of b.slots) {
     if (!id) continue;
     const t = getTrait(id);
-    if (t.kind !== 'skill' || !t.role || t.powerInAttacks === undefined || !t.chainBonus) continue;
+    if (t.kind !== 'skill' || !t.role || t.powerInAttacks === undefined) continue;
+    // 공격 특성의 추가 효과는 계열 단계 기술로 옮겨 갔다 (②에서 엔진이 읽음). 그전까지는 기본 블록과 같은 추가 효과
+    const chainBonus = t.chainBonus ?? BALANCE.provisional.combat.basicBlockChainBonus;
+    if (!chainBonus) continue;
     out.push({
       id,
       lineageId: t.lineageId,
       role: t.role,
+      family: t.family ?? null,
       powerInAttacks: t.powerInAttacks,
-      chainBonus: { ...t.chainBonus },
+      chainBonus: { ...chainBonus },
       powerMultiplier: bonus.has(t.lineageId) ? 1 + AX.lineageSkillBonus : 1,
     });
   }
