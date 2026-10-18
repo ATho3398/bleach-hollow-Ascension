@@ -80,17 +80,17 @@ describe('사람형 봇', () => {
     expect(hr).toBeLessThan(0.85);
   });
 
-  it('체인 정리 확률 0이면 같은 블록 붙이기(move) 입력이 없고, 1이면 생긴다', () => {
-    const moves = (joinChance: number) => {
+  it('체인 정리 확률이 높을수록 같은 블록을 붙여 체인3이 더 자주 나온다 (순서를 바꾸지 않고 끼어 있는 블록을 먼저 쓴다)', () => {
+    const chain3 = (joinChance: number) => {
       let n = 0;
       for (let seed = 1; seed <= 10; seed++) {
         const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('a-sturdy'), params: two }), { joinChance });
-        n += s.inputs.filter((x) => x.input.type === 'move').length;
+        n += s.chain3Count;
+        expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'stored')).toBe(true);
       }
       return n;
     };
-    expect(moves(0)).toBe(0);
-    expect(moves(1)).toBeGreaterThan(5);
+    expect(chain3(1)).toBeGreaterThan(chain3(0));
   });
 
   it('막기 성공 0이면 예고에 맞춘 막기가 크게 줄어든다 (바가 가득 차서 우연히 쓰는 막기만 남는다)', () => {

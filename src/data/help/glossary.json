@@ -2,7 +2,7 @@
   "provisional": true,
   "terms": [
     { "id": "lineage", "title": "계통", "body": "적과 {skillBlockName} 특성이 속한 성질의 갈래예요 (지금은 임시 계통 5개). 적마다 약점 계통이 하나 있어서, 그 계통의 블록으로 때리면 더 큰 피해를 줘요. {absorbActionName}으로 쌓인 계통의 분포가 진화 방향을 정해요." },
-    { "id": "chain", "title": "{chainName}", "body": "같은 블록을 블록 바에 나란히 붙이고 누르면 붙은 블록이 함께 발동해요. 최대 {chainMax}단계이고 단계가 오를수록 위력이 크게 올라가요. 단계 3은 추가 효과도 붙어요." },
+    { "id": "chain", "title": "{chainName}", "body": "같은 블록이 블록 바에 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해요. 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 최대 {chainMax}단계이고 단계가 오를수록 위력이 크게 올라가요. 단계 3은 추가 효과도 붙어요." },
     { "id": "sp", "title": "{spName}", "body": "블록을 쓸 때마다 차는 게이지예요. 가득 차면 {specialBlockName}이(가) 블록 바에 나타나요." },
     { "id": "special-block", "title": "{specialBlockName}", "body": "{spName}이(가) 가득 차면 블록 바의 빈 칸에 생기는 큰 피해 블록이에요. 빈 칸이 없으면 나오지 못하니 한 칸은 비워 두세요." },
     { "id": "stored-skill", "title": "{storedSkillName}", "body": "블록 바 아래 버튼이에요. 블록을 쓸수록 충전이 모이고(최대 {storedChargesMax}개) 하나를 써서 기본 공격 {storedPower}회분의 큰 피해를 줘요. 쓴 직후 {storedGuardSeconds}초 동안 {roleNames.guard} 상태가 되어 강공격 예고에도 쓸 수 있어요. 전투가 끝나면 충전은 이월되지 않아요." },

@@ -13,7 +13,7 @@
         "battle.tray"
       ],
       "title": "블록 바: 눌러서 사용",
-      "body": "시간이 지나면 {skillBlockName}이(가) 이 블록 바 {trayCapacity}칸에 하나씩 생겨요. 블록을 짧게 톡 누르면 사용돼요. 길게 누르면 사용되지 않고 제자리에 있어요. 색과 아이콘은 역할이에요: {roleNames.attack}(공격) · {roleNames.guard}(막기) · {roleNames.heal}(회복).",
+      "body": "시간이 지나면 {skillBlockName}이(가) 이 블록 바 {trayCapacity}칸에 하나씩 생겨요. 블록을 톡 누르면 바로 사용돼요. 순서는 바꿀 수 없고 나온 순서대로 놓여요. 색과 아이콘은 역할이에요: {roleNames.attack}(공격) · {roleNames.guard}(막기) · {roleNames.heal}(회복).",
       "sample": [
         "attack",
         "guard",
@@ -26,8 +26,8 @@
         "battle.runrow",
         "battle.tray"
       ],
-      "title": "끌어서 순서 바꾸기, 붙여서 {chainName}",
-      "body": "블록을 끌어서 다른 칸에 놓으면 순서가 바뀌어요. 같은 블록을 나란히 붙여 놓고 누르면 붙은 블록이 함께 발동해 {chainName}이(가) 돼요 (최대 {chainMax}). 많이 붙일수록 위력이 크게 올라요."
+      "title": "붙여서 {chainName}",
+      "body": "같은 블록이 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해 {chainName}이(가) 돼요 (최대 {chainMax}). 떨어져 있어도 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 많이 붙일수록 위력이 크게 올라요."
     },
     {
       "id": "heavy",

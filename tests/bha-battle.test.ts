@@ -3,7 +3,7 @@ import { FACTIONS } from '../src/data/factions';
 import { LINEAGES } from '../src/data/lineages';
 import { TRAIT_ABBR_MAX_LENGTH, TRAITS, parseTrait, traitAbbr, traitName } from '../src/data/traits';
 import {
-  blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, hasPips, insertMark, nudgeOf, pickAbbr, runSpecs, secondsText,
+  blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, hasPips, pickAbbr, runSpecs, secondsText,
 } from '../src/ui/bha/battle';
 import { lineageKey } from '../src/ui/bha/lineage';
 import { blockAbbr } from '../src/ui/battleView';
@@ -94,29 +94,6 @@ describe('체인 묶음 --start/--len', () => {
   it('칸 번호 → 체인 단계 (묶음 밖은 1)', () => {
     const specs = runSpecs([{ start: 1, length: 2 }, { start: 4, length: 3 }], skills(8), 3);
     expect([0, 1, 2, 3, 4, 5, 6].map((i) => chainLevelAt(specs, i))).toEqual([1, 2, 2, 1, 3, 3, 3]);
-  });
-});
-
-describe('드래그 삽입 막대 · 밀림', () => {
-  it('오른쪽으로 끌면 그 칸의 오른쪽 가장자리, 왼쪽이면 왼쪽 가장자리, 제자리면 없음', () => {
-    expect(insertMark(1, 4, 8, 8)).toEqual({ at: 6, end: false });
-    expect(insertMark(5, 2, 8, 8)).toEqual({ at: 3, end: false });
-    expect(insertMark(3, 3, 8, 8)).toBeNull();
-    expect(insertMark(-1, 3, 8, 8)).toBeNull();
-  });
-  it('맨 오른쪽 칸 뒤는 끝 변형', () => {
-    expect(insertMark(2, 7, 8, 8)).toEqual({ at: 8, end: true });
-  });
-  it('블록 수를 넘은 칸은 마지막 블록 칸으로 본다 (releaseInput 과 같은 규칙)', () => {
-    expect(insertMark(0, 7, 3, 8)).toEqual({ at: 4, end: false });
-    expect(insertMark(2, 7, 3, 8)).toBeNull();
-  });
-  it('끼워 넣을 때 사이 블록이 밀리는 방향', () => {
-    const dir = (from: number, to: number) => [0, 1, 2, 3, 4, 5].map((i) => nudgeOf(i, from, to, 6));
-    expect(dir(1, 4)).toEqual([null, null, 'l', 'l', 'l', null]);
-    expect(dir(4, 1)).toEqual([null, 'r', 'r', 'r', null, null]);
-    expect(dir(2, 2)).toEqual([null, null, null, null, null, null]);
-    expect(nudgeOf(1, -1, 3, 6)).toBeNull();
   });
 });
 

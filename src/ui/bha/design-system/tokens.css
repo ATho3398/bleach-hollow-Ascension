@@ -73,7 +73,6 @@
   --bha-block-h: 68px;        /* 블록 칸 높이 (64 이상) */
   --bha-bar-h: 10px;          /* 상태 바 트랙 높이 */
   --bha-bar-h-lg: 14px;       /* 체력 바 */
-  --bha-drag-lift: 28px;      /* 드래그 중 블록을 손가락 위로 띄우는 거리 */
 
   /* ---------- 의미 색 (역할 = 색 + 아이콘 + 모양) ---------- */
   --bha-attack: #e5484d;      /* 공격 / 파괴 */
@@ -150,7 +149,6 @@
   --bha-z-base: 0;
   --bha-z-raised: 10;
   --bha-z-sticky: 20;
-  --bha-z-drag: 50;
   --bha-z-float: 60;      /* 플로팅 숫자 */
   --bha-z-flash: 70;      /* 화면 가장자리 번쩍임 */
   --bha-z-toast: 80;

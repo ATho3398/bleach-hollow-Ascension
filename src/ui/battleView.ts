@@ -1,6 +1,6 @@
-// 전투 화면 v3 (GDD 3-5 v0.8, UI 디자인 U-2): 실시간 자동 전투 + 일자 8칸 스킬 블록 바. 원정과 연습이 같이 쓴다.
-// 엔진 틱(0.1초)을 실시간 1x/2x 로 돌린다. 클릭(누른 뒤 0.3초 이내 떼기) = 블록 사용(붙은 같은 블록이 함께 발동해 체인),
-// 드래그 = 놓은 칸에 끼워 넣어 순서 변경. 오래 누르면 사용되지 않는다. 클릭 판정은 여기(실시간)서, 엔진은 use/move 결과만 받는다.
+// 전투 화면 v3 (GDD 3-5, UI 디자인 U-2, R-2): 실시간 자동 전투 + 일자 8칸 스킬 블록 바. 원정과 연습이 같이 쓴다.
+// 엔진 틱(0.1초)을 실시간 1x/2x 로 돌린다. 클릭(같은 블록 위에서 누르고 뗌) = 블록 사용(붙은 같은 블록이 함께 발동해 체인).
+// 블록 순서는 바꿀 수 없다(GDD 17-2): 나온 순서대로 쓴다. 클릭 판정은 여기서, 엔진은 use 결과만 받는다.
 // 텍스트는 FactionConfig·데이터에서 읽고 종족 id 로 분기하지 않는다.
 // 화면 모양(DOM·클래스)은 디자인 패키지 battle.html 을 따른다. 전투는 고정 틱으로 계속 갱신되므로 DOM 을 통째로 다시 만들지 않고
 // 바뀐 곳만 갱신한다(블록은 uid 로 같은 요소를 계속 쓰고, 묶음·삽입 막대는 달라졌을 때만 바꾼다).
@@ -17,8 +17,8 @@ import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
 import { onHold } from './bha/hold';
 import {
-  blockEl, blockVisual, chainLevelAt, floatPool, floatSpot, foeEl, HURT_SPOTS, insertEl, insertMark, logLineEl, LOG_ICON, nudgeOf, PATTERN_VIEW, pickAbbr,
-  playOnce, replayOnce, runEl, runSpecs, secondsText, setInsert, setText, trayEl,
+  blockEl, blockVisual, chainLevelAt, floatPool, floatSpot, foeEl, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
+  playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl,
   type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { lineageKey, linMarkShort } from './bha/lineage';
@@ -26,7 +26,7 @@ import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
-import { classifyRelease, loadPointerRules, releaseInput, slotAt } from './pointer';
+import { releaseUse, slotAt } from './pointer';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings } from './fxSettings';
 
@@ -144,8 +144,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const enemyName = pickFaction(enemy.name, faction.id);
   const top = maxChain(p);
   const cap = p.trayCapacity;
-  /** 설정 화면에서 바꾼 클릭 판정 시간·드래그 임계치 (전투 시작 때 읽는다) */
-  const rules = loadPointerRules(safeStorage());
   /** 설정 화면 '전투 효과' (피해 숫자·진동·효과음·흔들림). 전투 시작 때 읽는다 */
   const fx = loadFxSettings(safeStorage());
   if (fx.sound) hookAudioUnlock();
@@ -282,8 +280,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   const hint = el('p', 'bha-battle__hint');
   hint.append(
-    el('b', '', `짧게 눌러 떼기(${rules.clickMaxSeconds}초 안)`),
-    `=사용(${labels.storedSkill} 버튼도 같음) · 오래 누르면 사용 안 됨 · 끌어서 순서 바꾸기 · 같은 블록을 붙이면 ${labels.chain}(최대 ${top})`,
+    el('b', '', '블록 누르기'),
+    `=사용(${labels.storedSkill} 버튼도 같음) · 순서는 바꿀 수 없다 · 같은 블록이 붙어 있으면 함께 발동해 ${labels.chain}(최대 ${top})`,
   );
   const controls = el('section', 'bha-battle__controls');
   controls.setAttribute('aria-label', '블록 조작');
@@ -554,16 +552,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
 
   // ── 블록 바 그리기 (바뀐 곳만) ──
-  /** 드래그 중인 블록: 누른 블록의 uid 로 추적한다 (그 사이 앞 블록이 쓰여 칸 번호가 바뀌어도 따라간다) */
-  let drag: { uid: number; dx: number; dy: number; to: number } | null = null;
-  let down: { uid: number; x: number; y: number; lx: number; ly: number; id: number; at: number; maxMoved: number; holdTimer: number; held: boolean } | null = null;
+  /** 누르고 있는 블록: uid 로 추적한다 (그 사이 앞 블록이 쓰여 칸 번호가 바뀌어도 따라간다) */
+  let down: { uid: number; id: number } | null = null;
   const indexOfUid = (uid: number) => s.tray.findIndex((b) => b.uid === uid);
   const blockEls = new Map<number, HTMLElement>();
   const placedAt = new Map<number, number>();
   let seeded = false;
   let runSig = '';
   let runEls: { spec: RunSpec; node: HTMLElement }[] = [];
-  let insertBar: HTMLElement | null = null;
   let noteKey = '';
 
   const makeBlock = (b: Block): HTMLElement => {
@@ -584,7 +580,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const fireAway = (node: HTMLElement) => {
     const g = elementLocalRect(tray.grid);
     const r = elementLocalRect(node);
-    node.classList.remove('is-pressed', 'is-dragging', 'is-popin', 'is-cue');
+    node.classList.remove('is-pressed', 'is-popin', 'is-cue');
     node.style.cssText = `position:absolute;left:${r.left - g.left}px;top:${r.top - g.top}px;width:${r.width}px;height:${r.height}px;z-index:5;margin:0`;
     tray.grid.append(node);
     node.classList.add('is-fire');
@@ -594,7 +590,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
 
   const drawTray = () => {
-    const dragFrom = drag ? indexOfUid(drag.uid) : -1;
     const count = s.tray.length;
     // 사라진 블록
     const present = new Set(s.tray.map((b) => b.uid));
@@ -625,15 +620,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       runSig = sig;
       for (const r of runEls) r.node.remove();
       runEls = specs.map((spec) => ({ spec, node: runEl(spec, labels.chain) }));
-      for (const r of runEls) tray.grid.insertBefore(r.node, insertBar);
+      for (const r of runEls) tray.grid.append(r.node);
     }
     // 칸마다 블록 배치 + 상태 클래스
-    const mark = drag && dragFrom >= 0 ? insertMark(dragFrom, drag.to, count, cap) : null;
     const casting = s.enemy.cast !== null;
     tray.cells.forEach((cell, i) => {
       const b = s.tray[i];
-      const dragging = !!b && !!drag && b.uid === drag.uid;
-      cell.classList.toggle('is-origin', dragging);
       if (!b) {
         if (cell.firstChild) cell.replaceChildren();
         return;
@@ -650,44 +642,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       node.classList.toggle('is-chain2', level === 2);
       node.classList.toggle('is-chain3', level >= 3);
       node.classList.toggle('is-cue', casting && visualOf(node) === 'guard');
-      node.classList.toggle('is-pressed', !!down && down.uid === b.uid && !down.held && !drag);
-      node.classList.toggle('is-dragging', dragging);
-      const nudge = drag && dragFrom >= 0 ? nudgeOf(i, dragFrom, drag.to, count) : null;
-      node.classList.toggle('is-nudge-l', nudge === 'l');
-      node.classList.toggle('is-nudge-r', nudge === 'r');
-      if (dragging && drag) {
-        node.style.setProperty('--drag-x', `${Math.round(drag.dx)}px`);
-        node.style.setProperty('--drag-y', `${Math.round(drag.dy)}px`);
-      } else if (node.style.getPropertyValue('--drag-x')) {
-        node.style.removeProperty('--drag-x');
-        node.style.removeProperty('--drag-y');
-      }
+      node.classList.toggle('is-pressed', !!down && down.uid === b.uid);
     });
     seeded = true;
-    // 삽입 막대
-    if (mark) {
-      if (!insertBar) {
-        insertBar = insertEl();
-        tray.grid.append(insertBar);
-      }
-      setInsert(insertBar, mark);
-    } else if (insertBar) {
-      insertBar.remove();
-      insertBar = null;
-    }
-    // 안내 줄: 드래그 > 오래 누름 > 봉인
+    // 안내 줄: 봉인
     const sealed = s.sealTicks > 0;
     tray.root.classList.toggle('is-sealed', sealed);
-    tray.root.classList.toggle('is-held', !!down?.held && !drag);
     let key = '';
     let build: (() => void) | null = null;
-    if (drag && mark) {
-      key = `drag:${mark.at}`;
-      build = () => trayNote.replaceChildren(wrapNote('i-grip', `${Math.min(count - 1, drag!.to) + 1}번 칸으로 끼워 넣기 — 놓으면 순서가 바뀐다`));
-    } else if (down?.held) {
-      key = 'held';
-      build = () => trayNote.replaceChildren(wrapNote('i-grip', '오래 눌러서 사용되지 않아요 — 그냥 놓으면 제자리'));
-    } else if (sealed) {
+    if (sealed) {
       key = 'sealed';
       build = () => trayNote.replaceChildren(wrapNote('i-seal', `봉인 중: 새 ${labels.skillBlock}이(가) 생기지 않는다. 있는 블록은 쓸 수 있다`));
     }
@@ -695,7 +658,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       noteKey = key;
       if (build) build();
       else trayNote.replaceChildren();
-      trayNote.classList.toggle('is-held', key === 'held');
     }
   };
   const wrapNote = (iconId: string, text: string): HTMLElement => {
@@ -785,79 +747,52 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     setText(storedMeta, metaText);
   };
 
-  // ── 입력: 포인터 이벤트(터치·마우스 공통). 판정은 pointer.ts, 시각은 performance.now(실시간)이라 배속·일시정지와 무관 ──
+  // ── 입력: 포인터 이벤트(터치·마우스 공통). 클릭 = 같은 블록 위에서 누르고 뗀 것. 시간·거리 제한은 없다 ──
   const queue: CombatInput[] = [];
   // 칸 찾기는 기기 안 좌표(가로 방향)로: 세로 폰에서는 기기를 돌려 놓았으므로 화면 좌표를 바꿔 쓴다 (GDD 16-6)
   const slotOf = (e: { clientX: number; clientY: number }) => {
     const r = elementLocalRect(tray.grid);
     return slotAt(pointerLocal(e).x, r.left, r.width, cap);
   };
-  // 저장 필살기 버튼: 블록과 같은 판정 (누른 지 clickMaxSeconds 이내에 떼면 사용, 오래 누르거나 끌면 사용 안 됨)
-  let storedDown: { id: number; x: number; y: number; at: number; maxMoved: number } | null = null;
+  // 저장 필살기 버튼: 블록과 같은 판정 (버튼 위에서 누르고 버튼 위에서 떼면 사용)
+  let storedDown: number | null = null;
+  const overStored = (e: PointerEvent) => {
+    const r = storedBtn.getBoundingClientRect();
+    return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  };
   storedBtn.addEventListener('pointerdown', (e) => {
-    if (storedDown || s.status !== 'playing') return;
+    if (storedDown !== null || s.status !== 'playing') return;
     storedBtn.setPointerCapture(e.pointerId);
-    storedDown = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now(), maxMoved: 0 };
+    storedDown = e.pointerId;
     storedBtn.classList.add('is-pressed');
-  });
-  storedBtn.addEventListener('pointermove', (e) => {
-    if (!storedDown || e.pointerId !== storedDown.id) return;
-    storedDown.maxMoved = Math.max(storedDown.maxMoved, Math.hypot(e.clientX - storedDown.x, e.clientY - storedDown.y));
   });
   storedBtn.addEventListener('pointercancel', () => {
     storedDown = null;
     storedBtn.classList.remove('is-pressed');
   });
   storedBtn.addEventListener('pointerup', (e) => {
-    if (!storedDown || e.pointerId !== storedDown.id) return;
-    const kind = classifyRelease(performance.now() - storedDown.at, storedDown.maxMoved, rules);
+    if (storedDown !== e.pointerId) return;
     storedDown = null;
     storedBtn.classList.remove('is-pressed');
-    if (kind === 'use' && s.status === 'playing' && !halted()) queue.push({ type: 'stored' });
+    if (overStored(e) && s.status === 'playing' && !halted()) queue.push({ type: 'stored' });
   });
   const endPress = () => {
-    if (down) window.clearTimeout(down.holdTimer);
     down = null;
-    drag = null;
     drawTray();
   };
   tray.root.addEventListener('pointerdown', (e) => {
     if (down || s.status !== 'playing' || halted()) return;
-    const i = slotOf(e);
-    const b = s.tray[i];
+    const b = s.tray[slotOf(e)];
     if (!b) return;
     tray.root.setPointerCapture(e.pointerId);
-    const holdTimer = window.setTimeout(() => {
-      // 제한 시간을 넘겼다: 놓아도 사용되지 않는다는 것을 보여 준다 (드래그 중이면 상관없다)
-      if (down && down.maxMoved < rules.dragThresholdPx) {
-        down.held = true;
-        drawTray();
-      }
-    }, rules.clickMaxSeconds * 1000);
-    down = { uid: b.uid, x: e.clientX, y: e.clientY, lx: pointerLocal(e).x, ly: pointerLocal(e).y, id: e.pointerId, at: performance.now(), maxMoved: 0, holdTimer, held: false };
+    down = { uid: b.uid, id: e.pointerId };
     drawTray();
-  });
-  tray.root.addEventListener('pointermove', (e) => {
-    if (!down || e.pointerId !== down.id) return;
-    // 움직인 거리(임계치 판정)는 화면 거리, 블록을 따라 움직이는 만큼(dx·dy)은 기기 안 좌표
-    const dx = pointerLocal(e).x - down.lx;
-    const dy = pointerLocal(e).y - down.ly;
-    down.maxMoved = Math.max(down.maxMoved, Math.hypot(e.clientX - down.x, e.clientY - down.y));
-    if (down.maxMoved >= rules.dragThresholdPx) {
-      down.held = false;
-      drag = { uid: down.uid, dx, dy, to: slotOf(e) };
-      drawTray();
-    }
   });
   tray.root.addEventListener('pointercancel', endPress);
   tray.root.addEventListener('pointerup', (e) => {
     if (!down || e.pointerId !== down.id) return;
-    const from = indexOfUid(down.uid); // 누르는 사이 앞 블록이 쓰여 번호가 바뀌었을 수 있다. 블록이 사라졌으면 -1
-    const kind = classifyRelease(performance.now() - down.at, down.maxMoved, rules);
-    if (from >= 0 && s.status === 'playing' && !halted()) {
-      const input = releaseInput(kind, from, slotOf(e), s.tray.length);
-      if (input) queue.push(input);
-    }
+    const input = releaseUse(down.uid, slotOf(e), s.tray);
+    if (input && s.status === 'playing' && !halted()) queue.push(input);
     endPress();
   });
   // 키보드: 블록에 초점을 두고 Enter/Space = 사용

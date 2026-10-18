@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 17;
+export const BALANCE_VERSION = 18;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -162,16 +162,6 @@ export const BALANCE = {
       shield: { damageTakenMultiplier: 0.8 },
       /** 폐가: 공허 블록 생성 확률 +0.1 */
       void: { voidChanceBonus: 0.1 },
-    },
-    /** 블록 바 조작 (C.8, GDD 3-5 v0.8): 화면이 실시간으로 판정하고 엔진은 결과(use/move)만 받는다 */
-    input: {
-      /** 누른 뒤 이 시간(초) 이내에 떼면 사용(클릭). 넘기면 "들었다 놓은 것"이라 사용되지 않는다 (사용자 지시 N초, 임시 0.3) */
-      clickMaxSeconds: 0.3,
-      /** 손가락이 이 거리(px) 이상 움직이면 시간과 무관하게 드래그 (임시 10) */
-      dragThresholdPx: 10,
-      /** 설정 화면에서 조절할 수 있는 범위 (C.18, GDD 14-3) */
-      clickMaxSecondsRange: [0.15, 0.6],
-      dragThresholdPxRange: [6, 20],
     },
     /** 둥지 최소 버전(P2): 허기·컨디션 두 수치만 (GDD 7장) */
     nest: {

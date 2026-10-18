@@ -172,7 +172,7 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
 describe('튜토리얼 일시정지는 전투 결과에 영향이 없다', () => {
   const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly)!;
   /** 틱 번호 → 입력 (같은 입력 기록) */
-  const script = new Map<number, CombatInput>([[30, { type: 'use', cell: 0 }], [60, { type: 'use', cell: 0 }], [90, { type: 'stored' }], [120, { type: 'move', from: 0, to: 1 }]]);
+  const script = new Map<number, CombatInput>([[30, { type: 'use', cell: 0 }], [60, { type: 'use', cell: 0 }], [90, { type: 'stored' }], [120, { type: 'use', cell: 1 }]]);
 
   function play(seed: number, haltAt: (frame: number) => boolean): string {
     const s = createCombat(seed, { enemy });

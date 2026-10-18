@@ -1,6 +1,11 @@
 // 전투 효과 설정 (Q-2, C.30): 피해 숫자·진동·효과음·화면 흔들림. localStorage 별도 키에 저장하고 세이브 구조는 건드리지 않는다.
 // 순수 로직만 둔다(파싱·기본값·저장). 효과를 실제로 내는 쪽은 fx.ts.
-import type { SettingsStorage } from './pointer';
+/** 설정을 읽고 쓰는 저장소 (localStorage 모양). 막혀 있으면 null/예외라 호출하는 쪽이 대비한다 */
+export interface SettingsStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem?(key: string): void;
+}
 
 export interface FxSettings {
   /** 적·나에게 들어간 피해 숫자 팝업 */

@@ -73,36 +73,6 @@ export function chainLevelAt(specs: readonly RunSpec[], index: number): number {
   return 1;
 }
 
-export interface InsertMark {
-  /** CSS --at (1~capacity) */
-  at: number;
-  /** 맨 오른쪽 끝 막대 (`--end` 변형) */
-  end: boolean;
-}
-
-/**
- * 드래그 중 삽입 막대 위치. from = 끌고 있는 블록의 칸, to = 손가락 아래 칸, count = 지금 블록 수.
- * 놓으면 그 칸(블록 수를 넘으면 마지막 블록 칸)에 끼워지므로, 오른쪽으로 가면 그 칸의 오른쪽 가장자리, 왼쪽으로 가면 왼쪽 가장자리에 막대를 둔다.
- * 제자리면 null.
- */
-export function insertMark(from: number, to: number, count: number, capacity: number): InsertMark | null {
-  if (from < 0 || count <= 0) return null;
-  const target = Math.min(count - 1, to);
-  if (target === from) return null;
-  const at = target > from ? target + 2 : target + 1;
-  return at > capacity ? { at: capacity, end: true } : { at, end: false };
-}
-
-/** 드래그 중 이웃 블록이 밀려나는 방향: 오른쪽으로 끌면 사이 블록이 왼쪽(l), 왼쪽으로 끌면 오른쪽(r) */
-export function nudgeOf(index: number, from: number, to: number, count: number): 'l' | 'r' | null {
-  if (from < 0) return null;
-  const target = Math.min(count - 1, to);
-  if (target === from) return null;
-  if (target > from && index > from && index <= target) return 'l';
-  if (target < from && index >= target && index < from) return 'r';
-  return null;
-}
-
 /** 사건 로그 줄의 역할 (`.bha-log__line--*`) */
 export type LogRole = 'attack' | 'guard' | 'heal' | 'void' | 'chain' | 'cast';
 
@@ -199,7 +169,7 @@ export interface BlockSpec {
   uid: number;
 }
 
-/** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림·드래그 같은 상태 클래스는 화면이 붙인다 */
+/** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림 같은 상태 클래스는 화면이 붙인다 */
 export function blockEl(spec: BlockSpec): HTMLElement {
   const node = el('div', `bha-block bha-block--${spec.visual}${spec.weak ? ' is-weak' : ''}`);
   node.setAttribute('role', 'button');
@@ -255,18 +225,6 @@ export function runEl(spec: RunSpec, chainName: string): HTMLElement {
   label.append(icon(`i-chain-${Math.min(3, Math.max(1, spec.level))}`), `${chainName}${spec.level}${spec.over ? '+' : ''}`);
   run.append(label);
   return run;
-}
-
-/** 삽입 막대 (`.bha-tray__insert`) */
-export function insertEl(): HTMLElement {
-  const bar = el('i', 'bha-tray__insert');
-  bar.setAttribute('aria-hidden', 'true');
-  return bar;
-}
-
-export function setInsert(bar: HTMLElement, mark: InsertMark): void {
-  bar.style.setProperty('--at', String(mark.at));
-  bar.classList.toggle('bha-tray__insert--end', mark.end);
 }
 
 /** 사건 로그 한 줄 */

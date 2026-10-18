@@ -417,8 +417,8 @@ button.bha-slot:active { transform: scale(0.98); }
 /* =========================================================
    17. 블록  .bha-block   ★ 전투 핵심
    종류: --attack --guard --heal --basic --special --void
-   상태: .is-weak .is-pressed .is-dragging .is-nudge-l/.is-nudge-r .is-sealed .is-disabled .is-held .is-popin .is-fire
-   체인 단계: 클래스 .is-chain2 / .is-chain3 (없으면 ●○○). JS 변수: --drag-x / --drag-y (드래그 오프셋 px)
+   상태: .is-weak .is-pressed .is-sealed .is-disabled .is-popin .is-fire
+   체인 단계: 클래스 .is-chain2 / .is-chain3 (없으면 ●○○).
    구조:
    <div class="bha-block bha-block--attack is-weak is-chain2">
      <span class="bha-block__pips"><i></i><i></i><i></i></span>
@@ -487,15 +487,6 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-block.is-weak { box-shadow: inset 0 0 0 2px var(--bha-weak), inset 0 1px 0 rgb(255 255 255 / 0.35), 0 0 8px rgb(232 193 90 / 0.45); }
 .bha-block.is-weak .bha-block__weak { display: grid; }
 .bha-block.is-pressed { transform: translateY(2px) scale(0.94); filter: brightness(0.88); transition-duration: var(--bha-dur-1); }
-.bha-block.is-dragging {
-  z-index: var(--bha-z-drag);
-  transform: translate(var(--drag-x, 0px), calc(var(--drag-y, 0px) - var(--bha-drag-lift))) scale(1.1) rotate(-3deg);
-  box-shadow: 0 14px 22px rgb(0 0 0 / 0.65), 0 0 0 2px var(--bha-insert);
-  cursor: grabbing; transition: none; overflow: visible;
-}
-.bha-block.is-nudge-l { transform: translateX(-7px); }
-.bha-block.is-nudge-r { transform: translateX(7px); }
-.bha-block.is-held { filter: grayscale(0.85) brightness(0.8); opacity: 0.7; }
 .bha-block.is-disabled { filter: saturate(0.25) brightness(0.65); opacity: 0.6; cursor: default; }
 .bha-block.is-sealed { filter: grayscale(1) brightness(0.55); }
 .bha-block.is-sealed::before { content: ""; position: absolute; inset: 0; z-index: 2; background: repeating-linear-gradient(45deg, rgb(163 113 247 / 0.35) 0 3px, transparent 3px 8px); }
@@ -509,7 +500,7 @@ button.bha-slot:active { transform: scale(0.98); }
 /* =========================================================
    18. 블록 바  .bha-tray  (8칸 일자)  (현재 .tray / .tcell / .runrow / .runtag)
    JS 변수: 묶음 --start(1~8) --len(2~3), 삽입 막대 --at(1~9: 그 칸의 왼쪽, 9=맨 끝)
-   상태: .is-sealed(봉인: 생성 정지) .is-paused .is-held(들었다 놓음 안내)
+   상태: .is-sealed(봉인: 생성 정지) .is-paused
    폭: 칸 = 바 폭 / 8. 360px 화면(좌우 4px)에서 칸 44px, 높이 68px.
    ========================================================= */
 .bha-tray { position: relative; padding-top: 22px; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -530,7 +521,6 @@ button.bha-slot:active { transform: scale(0.98); }
   content: ""; position: absolute; inset: 7px 5px; border-radius: var(--bha-r-sm);
   border: 1px dashed var(--bha-line-2); background: rgb(0 0 0 / 0.25);
 }
-.bha-tray__cell.is-origin::before { content: ""; position: absolute; inset: 5px 4px; border-radius: var(--bha-r-sm); border: 2px dashed var(--bha-insert); opacity: 0.6; }
 /* 묶음 표시: 붙은 같은 블록 = 함께 발동 */
 .bha-tray__run {
   grid-row: 1; grid-column: var(--start) / span var(--len);
@@ -555,15 +545,6 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-tray__run--chain3 .bha-tray__runlabel { background: var(--bha-chain3); color: #2a1000; }
 .bha-tray__run.is-fire { animation: bha-run-fire 520ms var(--bha-ease-out); }
 .bha-tray__run--chain3.is-fire { animation: bha-run-fire3 700ms var(--bha-ease-out); }
-/* 드롭 위치: 파란 삽입 막대 (손가락에 가려지지 않게 위로 삼각 표식) */
-.bha-tray__insert {
-  grid-row: 1; grid-column: var(--at) / span 1; justify-self: start;
-  position: relative; z-index: 4; width: 4px; margin-left: -2px; margin-top: -8px; margin-bottom: -4px;
-  border-radius: 2px; background: var(--bha-insert); box-shadow: 0 0 10px var(--bha-insert);
-  pointer-events: none;
-}
-.bha-tray__insert::before { content: ""; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-top: 9px solid var(--bha-insert); border-bottom: 0; }
-.bha-tray__insert--end { grid-column: 8 / span 1; justify-self: end; margin-left: 0; margin-right: -2px; }
 /* 봉인 오버레이 */
 .bha-tray__veil {
   position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; height: var(--bha-block-h);
@@ -577,9 +558,7 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-tray__veil .bha-icon { width: 22px; height: 22px; }
 .bha-tray.is-sealed .bha-tray__veil { display: flex; }
 .bha-tray.is-paused .bha-tray__grid > * { opacity: 0.45; filter: saturate(0.5); }
-.bha-tray.is-held .bha-block { filter: grayscale(0.7); opacity: 0.7; }
 .bha-tray__note { min-height: 18px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-3); }
-.bha-tray__note.is-held { color: var(--bha-text-2); }
 .bha-tray__note > span { display: inline-flex; align-items: center; gap: 4px; }
 
 /* =========================================================

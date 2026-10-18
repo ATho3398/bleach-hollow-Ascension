@@ -8,7 +8,7 @@ import { hasSpecialActions } from '../../data/enemies';
 import type { ChainBonus, ChainBonusKind, EnemyDef, EnemyPattern, SkillRole } from '../../data/schema';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
-import { canMove, chainGroup, inTray, movedTray, type Block, type Tray } from './tray';
+import { chainGroup, inTray, type Block, type Tray } from './tray';
 
 const CX = BALANCE.provisional.combat;
 
@@ -99,14 +99,12 @@ export function defaultCombatParams(): CombatParams {
   };
 }
 
-/** 엔진이 받는 입력은 둘뿐이다 (클릭 시간 판정은 화면 몫, GDD 3-5 v0.8).
+/** 엔진이 받는 입력은 둘뿐이다 (GDD 3-5, 17-2: 블록 순서는 바꿀 수 없다 — 나온 순서대로 쓴다).
  *  use: 바의 cell 번째 블록 클릭 — 붙어 있는 같은 특성 블록이 함께 발동해 체인이 된다.
- *  stored: 저장형 필살기 사용 (충전 1개 소모, GDD 14-6).
- *  move: 드래그로 from 블록을 빼서 to 위치에 끼워 넣는다 (나머지는 밀림). */
+ *  stored: 저장형 필살기 사용 (충전 1개 소모, GDD 14-6). */
 export type CombatInput =
   | { type: 'use'; cell: number }
-  | { type: 'stored' }
-  | { type: 'move'; from: number; to: number };
+  | { type: 'stored' };
 
 export type CombatStatus = 'playing' | 'won' | 'lost';
 
@@ -491,9 +489,6 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
     ok = useStored(s);
   } else if (input.type === 'use') {
     ok = inTray(s.tray, input.cell) && useBlock(s, input.cell);
-  } else if (input.type === 'move' && canMove(s.tray, input.from, input.to)) {
-    s.tray = movedTray(s.tray, input.from, input.to);
-    ok = true;
   }
   if (ok) s.inputs.push({ tick: s.tick, input });
   return ok;

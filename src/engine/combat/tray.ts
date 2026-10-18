@@ -2,7 +2,7 @@
 
 /** 바의 블록 하나. skill = 슬롯 특성 블록(기본 블록 포함), special = 필살 블록, void = 공허 블록 */
 export interface Block {
-  /** 블록마다 고유한 번호 (화면 연출·드래그 추적용) */
+  /** 블록마다 고유한 번호 (화면 연출 추적용) */
   uid: number;
   kind: 'skill' | 'special' | 'void';
   /** skill 블록의 특성 id (기본 블록은 BASIC_SKILL_ID). special·void 는 null */
@@ -53,19 +53,5 @@ export function runsOf(t: Tray): { start: number; length: number }[] {
     out.push({ start: i, length: hi - i + 1 });
     i = hi + 1;
   }
-  return out;
-}
-
-/** 드래그 이동 규칙: from 의 블록을 빼서 to 위치에 끼워 넣는다 (나머지는 밀린다). 같은 칸이거나 범위 밖이면 불가 */
-export function canMove(t: Tray, from: number, to: number): boolean {
-  return inTray(t, from) && inTray(t, to) && from !== to;
-}
-
-/** 끼워넣기 결과 바 (원본은 건드리지 않는다) */
-export function movedTray(t: Tray, from: number, to: number): Tray {
-  if (!canMove(t, from, to)) return t.slice();
-  const out = t.slice();
-  const [b] = out.splice(from, 1);
-  out.splice(to, 0, b!);
   return out;
 }

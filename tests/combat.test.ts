@@ -157,40 +157,22 @@ describe('블록 생성과 블록 바 (일자 8칸)', () => {
   });
 });
 
-describe('드래그 이동 (끼워넣기)', () => {
+describe('블록 순서는 바꿀 수 없다 (GDD 17-2)', () => {
   const order = (s: CombatState) => s.tray.map((b) => b.traitId).join('');
   const abcde = () => put(quiet(mk()), blk('a'), blk('b'), blk('c'), blk('d'), blk('e'));
 
-  it('앞에서 뒤로: to 위치에 끼워지고 나머지는 밀린다', () => {
+  it('순서 바꾸기·합치기 같은 입력은 거절하고 바도 입력 기록도 그대로다', () => {
     const s = abcde();
-    expect(applyInput(s, { type: 'move', from: 0, to: 3 })).toBe(true);
-    expect(order(s)).toBe('bcdae');
+    expect(applyInput(s, { type: 'move', from: 0, to: 3 } as never)).toBe(false);
+    expect(applyInput(s, { type: 'merge', from: 0, to: 1 } as never)).toBe(false);
+    expect(s.inputs).toHaveLength(0);
+    expect(order(s)).toBe('abcde');
   });
 
-  it('뒤에서 앞으로', () => {
+  it('블록은 쓰면 사라지고 뒤 블록이 당겨질 뿐 순서는 나온 그대로다', () => {
     const s = abcde();
-    expect(applyInput(s, { type: 'move', from: 4, to: 1 })).toBe(true);
-    expect(order(s)).toBe('aebcd');
-  });
-
-  it('이웃과도 같은 규칙, 같은 칸이거나 범위 밖(빈 칸)은 거절하고 입력 기록에도 남지 않는다', () => {
-    const s = abcde();
-    expect(applyInput(s, { type: 'move', from: 1, to: 2 })).toBe(true);
-    expect(order(s)).toBe('acbde');
-    expect(applyInput(s, { type: 'move', from: 2, to: 2 })).toBe(false);
-    expect(applyInput(s, { type: 'move', from: 0, to: 5 })).toBe(false);
-    expect(applyInput(s, { type: 'move', from: 7, to: 0 })).toBe(false);
-    expect(applyInput(s, { type: 'merge', from: 0, to: 1 } as never)).toBe(false); // 합치기 입력은 없다
-    expect(s.inputs).toHaveLength(1);
-    expect(order(s)).toBe('acbde');
-  });
-
-  it('옮겨도 블록 수·소모·SP 는 그대로 (순서만 바뀐다)', () => {
-    const s = abcde();
-    const uids = s.tray.map((b) => b.uid).sort();
-    applyInput(s, { type: 'move', from: 0, to: 4 });
-    expect(s.tray.map((b) => b.uid).sort()).toEqual(uids);
-    expect(s.sp).toBe(0);
+    expect(applyInput(s, { type: 'use', cell: 1 })).toBe(true);
+    expect(order(s)).toBe('acde');
   });
 });
 
@@ -254,13 +236,13 @@ describe('붙어 있는 같은 블록 = 클릭 시 함께 발동 (체인)', () =
     expect(s.blocksByChain).toEqual([0, 0, 0]); // 스킬 체인 기록은 오르지 않는다
   });
 
-  it('붙이기: move 로 떨어진 같은 블록을 붙이면 그다음 클릭이 체인', () => {
-    const s = put(quiet(mk()), blk(T), blk('z'), blk('y'), blk(T));
-    applyInput(s, { type: 'move', from: 3, to: 1 });
-    expect(left(s)).toBe([T, T, 'z', 'y'].join());
+  it('붙이기: 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 같은 블록이 붙고, 그다음 클릭이 체인', () => {
+    const s = put(quiet(mk()), blk(T), blk('z'), blk(T), blk('y'));
+    useAt(s, 1);
+    expect(left(s)).toBe([T, T, 'y'].join());
     useAt(s, 0);
     expect(s.blocksByChain).toEqual([0, 1, 0]);
-    expect(left(s)).toBe('z,y');
+    expect(left(s)).toBe('y');
   });
 });
 

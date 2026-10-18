@@ -269,18 +269,5 @@
 .bha-species__path b { color: var(--bha-accent-hi); font-weight: 700; }
 .bha-start__ver { font-size: var(--bha-fs-xs); color: var(--bha-text-3); text-align: center; font-variant-numeric: tabular-nums; }
 
-/* 설정: 누름 시간 미리보기 · 드래그 거리 미리보기 */
-.bha-press { position: relative; height: 34px; border-radius: var(--bha-r-sm); background: rgb(0 0 0 / .3); border: 1px solid var(--bha-line-1); overflow: hidden; }
-.bha-press__ok { position: absolute; top: 0; bottom: 0; left: 0; width: calc(var(--t) / 0.8 * 100%); background: repeating-linear-gradient(90deg, rgb(95 211 154 / .18) 0 6px, rgb(95 211 154 / .1) 6px 12px); border-right: 2px solid var(--bha-good); }
-.bha-press__lbl { position: absolute; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 700; white-space: nowrap; }
-.bha-press__lbl--ok { left: 8px; color: var(--bha-good); }
-.bha-press__lbl--no { right: 8px; color: var(--bha-text-3); }
-.bha-press__scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--bha-text-3); font-variant-numeric: tabular-nums; }
-.bha-dragprev { display: flex; align-items: center; gap: 14px; }
-.bha-dragprev__pad { position: relative; width: 72px; height: 72px; flex: none; border-radius: var(--bha-r-md); background: rgb(0 0 0 / .3); border: 1px solid var(--bha-line-1); }
-.bha-dragprev__ring { position: absolute; left: 50%; top: 50%; width: calc(var(--d) * 2px); height: calc(var(--d) * 2px); transform: translate(-50%, -50%); border-radius: 50%; border: 2px dashed var(--bha-insert); }
-.bha-dragprev__dot { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: var(--bha-text-1); }
-.bha-dragprev p { font-size: var(--bha-fs-sm); color: var(--bha-text-2); line-height: 1.5; }
-
 /* 도움말 */
 

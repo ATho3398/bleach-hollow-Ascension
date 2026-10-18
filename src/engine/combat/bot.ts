@@ -1,19 +1,20 @@
 // 자동 점검 봇 (밸런스 점검·테스트용). 사람처럼 일정 간격(임시 0.5초)마다 입력 하나만 한다.
-// 순서: 강공격 예고엔 막기 → 필살 → 위험하면 회복 → 약점 계통으로 마무리 → 체인3 사용 → 같은 블록 붙이기(move) → 가득 차면 하나 쓰기
+// 순서: 강공격 예고엔 막기 → 필살 → 위험하면 회복 → 약점 계통으로 마무리 → 체인3 사용 → 다른 블록을 먼저 써서 같은 블록 붙이기 → 가득 차면 하나 쓰기
+// 블록 순서는 바꿀 수 없다(GDD 17-2): 체인은 '붙은 블록 하나를 클릭'하거나 '끼어 있는 다른 블록을 먼저 써서 같은 블록을 붙이는' 것으로만 만든다.
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
 import { hasSpecialActions } from '../../data/enemies';
 import {
   blockDamage, blockEffect, maxChain, step, ticksOf, type CombatInput, type CombatState,
 } from './combat';
 import { createRng, nextFloat } from '../rng';
-import { chainGroup, movedTray, runAt, type Block, type Tray } from './tray';
+import { chainGroup, runAt, type Block, type Tray } from './tray';
 
 export interface BotOptions {
   /** 공허 블록: never = 안 씀, when-full = 트레이가 가득 찼을 때만, smart(기본) = 가득 찼거나 공허가 2개 이상 쌓였을 때, always = 생기면 바로 */
   voidPolicy?: 'never' | 'when-full' | 'smart' | 'always';
   /** 입력 간격(초). 기본 0.5 (사람의 반응 속도 근사, 임시) */
   actEverySeconds?: number;
-  /** false 면 이번 입력에서 같은 블록 붙이기(move)를 하지 않는다 (사람형 봇의 "체인 정리" 실패). 기본 true */
+  /** false 면 이번 입력에서 같은 블록 붙이기(끼어 있는 블록 먼저 쓰기)를 하지 않는다 (사람형 봇의 "체인 정리" 실패). 기본 true */
   allowJoin?: boolean;
   /** false 면 이번 입력에서 막기 블록을 쓰지 않는다 (사람형 봇의 막기 실패·반응 전). 기본 true */
   allowGuard?: boolean;
@@ -51,21 +52,29 @@ function bestRun(t: Tray, top: number): number {
   return best;
 }
 
-/** 같은 블록을 붙이는 이동 하나 (바에서 가장 긴 덩어리를 더 늘리는 것 중 앞쪽). 없으면 null */
-function joinMove(s: CombatState, top: number): CombatInput | null {
+/** 그 칸을 클릭해 쓴 뒤의 바 (원본은 건드리지 않는다): 함께 발동하는 칸이 빠지고 뒤 블록이 당겨진다 */
+function trayAfterUse(s: CombatState, i: number): Tray {
+  const b = s.tray[i]!;
+  const gone = new Set(b.kind === 'skill' ? chainGroup(s.tray, i, maxChain(s.params)) : [i]);
+  return s.tray.filter((_, k) => !gone.has(k));
+}
+
+/** 다른 블록을 먼저 써서 같은 블록을 붙이는 클릭 하나 (a a b a → b 를 쓰면 a a a). 쓴 뒤 가장 긴 덩어리가 지금보다 길어지는 후보 중 가장 길어지는 것(같으면 앞쪽). 없으면 null */
+function joinUse(s: CombatState, top: number): CombatInput | null {
   const now = bestRun(s.tray, top);
   if (now >= top) return null;
-  let best: { from: number; to: number; run: number } | null = null;
-  const n = s.tray.length;
-  for (let from = 0; from < n; from++) {
-    if (s.tray[from]!.kind !== 'skill') continue;
-    for (let to = 0; to < n; to++) {
-      if (from === to) continue;
-      const run = bestRun(movedTray(s.tray, from, to), top);
-      if (run > now && (!best || run > best.run)) best = { from, to, run };
-    }
+  const hasPattern = hasSpecialActions(s.enemy.def.pattern);
+  let best: { i: number; run: number } | null = null;
+  for (const c of cells(s)) {
+    if (c.b.kind === 'special') continue;
+    // 낭비가 큰 블록은 붙이려고 쓰지 않는다: 막기는 강적(강공격)이 없을 때만, 회복은 다쳤을 때만
+    const role = c.b.kind === 'skill' ? roleOf(s, c.b) : null;
+    if (role === 'guard' && hasPattern) continue;
+    if (role === 'heal' && s.player.hp >= s.player.maxHp * 0.9) continue;
+    const run = bestRun(trayAfterUse(s, c.i), top);
+    if (run > now && (!best || run > best.run)) best = { i: c.i, run };
   }
-  return best ? { type: 'move', from: best.from, to: best.to } : null;
+  return best ? { type: 'use', cell: best.i } : null;
 }
 
 /** 지금 할 입력 하나 (없으면 null) */
@@ -90,11 +99,11 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   // 1.2 막기 블록을 못 쓰는데 강공격이 곧 온다면 저장형 필살기(쓰면 2초간 막기 상태)
   const storedOk = opt.allowStored !== false && s.storedCharges > 0;
   if (cast && storedOk && s.guard.ticks <= cast.ticks) return { type: 'stored' };
-  // 1.5 상대가 방어 자세면(블록 피해 감소 + 쓸 때마다 반격) 자세가 풀릴 때까지 블록을 아낀다: 마무리 가능하면 쓰고, 순서만 붙이고, 바가 가득 차면 하나 쓴다
+  // 1.5 상대가 방어 자세면(블록 피해 감소 + 쓸 때마다 반격) 자세가 풀릴 때까지 블록을 아낀다: 마무리 가능하면 쓰고, 같은 블록만 붙이고, 바가 가득 차면 하나 쓴다
   if (s.enemy.stance && !opt.ignoreStance) {
     const kill = skills.find((c) => blockDamage(s, c.b, groupSize(s, c)) >= s.enemy.hp);
     if (kill) return use(kill);
-    const j = opt.allowJoin === false ? null : joinMove(s, top);
+    const j = opt.allowJoin === false ? null : joinUse(s, top);
     if (j) return j;
     if (s.tray.length >= p.trayCapacity) {
       const pick = ofRole('guard')[0] ?? ofRole('attack')[0] ?? ofRole('heal')[0];
@@ -125,8 +134,8 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     if (role === 'heal' && s.player.hp < s.player.maxHp * 0.9) return use(c);
     if (role === 'guard' && !hasPattern) return use(c);
   }
-  // 6. 같은 특성 블록을 붙인다 (드래그 = move)
-  const join = opt.allowJoin === false ? null : joinMove(s, top);
+  // 6. 같은 특성 블록을 붙인다 (끼어 있는 다른 블록을 먼저 쓴다)
+  const join = opt.allowJoin === false ? null : joinUse(s, top);
   if (join) return join;
   // 6.5 충전이 상한이면 낭비를 막으려고 쓴다
   if (storedOk && opt.storedWhenFull !== false && s.storedCharges >= p.storedChargesMax) return { type: 'stored' };
