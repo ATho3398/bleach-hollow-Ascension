@@ -23,6 +23,8 @@ export function walkSpeedVar(speed: number): string {
 
 export interface WalkScene {
   el: HTMLElement;
+  /** 걷는 캐릭터 상자: 머리 위 말풍선 같은 것을 여기에 붙인다 (캐릭터를 따라다닌다) */
+  walker: HTMLElement;
   /** 걷는 중/멈춤, 배속을 반영한다 */
   update(o: { walking: boolean; speed: number }): void;
 }
@@ -52,6 +54,7 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
   scene.append(far, near, ground, walker);
   return {
     el: scene,
+    walker,
     update: ({ walking, speed }) => {
       scene.classList.toggle('is-walking', walking);
       scene.style.setProperty('--walk-speed', walkSpeedVar(speed));

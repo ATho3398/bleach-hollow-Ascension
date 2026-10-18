@@ -58,12 +58,6 @@
 @keyframes bha-bob-stomp { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10%) rotate(3deg); } }
 @keyframes bha-bob-stride { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4%) rotate(-1.5deg); } }
 
-/* 장면 위에 얹는 줄: 왼쪽 위 작은 상태 줄, 아래 알림 */
-.bha-exp__stateline { position: absolute; top: var(--bha-sp-3); left: var(--bha-sp-3); z-index: 2; }
-.bha-walk__state { display: inline-flex; align-items: center; gap: 4px; padding: 2px var(--bha-sp-3); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .45); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
-.bha-walk__state .bha-icon { width: 14px; height: 14px; }
-.bha-exp__scene .bha-exp__msg { position: absolute; left: var(--bha-sp-3); right: var(--bha-sp-3); bottom: var(--bha-sp-3); z-index: 2; background: rgb(0 0 0 / .6); }
-
 /* 길 배치판 (카드 배치 단계·배치 팝업): 12칸을 6열 2줄로 보인다 */
 .bha-road__wrap { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
 .bha-road { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--bha-sp-2); }

@@ -12,10 +12,10 @@ import {
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { button, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
-import { MSG_ICON, msgKind } from './bha/expedition';
+import { bubbleText, MSG_ICON, msgKind } from './bha/expedition';
 import { lineageClass, lineageIconId } from './bha/lineage';
 import { roadPlanner } from './bha/road';
-import { isWalking, walkScene, walkStateTag } from './bha/walk';
+import { isWalking, walkScene } from './bha/walk';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -136,11 +136,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const tn_enemy = (p: PendingBattle) => `${p.elite ? '강적 ' : ''}${p.tileId ? `(${tn(p.tileId)}) ` : ''}`;
 
   // ── 고정 DOM (한 번만 만든다) ──
+  // 걷는 화면 (GDD 18-7): 캐릭터가 장면 가득 걷고, 정보는 배경 위에 떠 있는 작은 칩(왼쪽 위), 캐릭터 머리 위 말풍선(조우·획득·안내),
+  // 모서리 작은 버튼(오른쪽 위), 귀환·선택 말풍선(장면 위 오버레이)으로 띄운다. 별도 상태 줄·패널은 없다.
   const helpBtn = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small' });
   const where = el('div', 'bha-exp__where');
   where.append(el('b', '', faction.huntingGroundName));
-  const head = el('div', 'bha-exp__head');
-  head.append(where, helpBtn);
 
   const meters = el('div', 'bha-stack bha-stack--tight');
 
@@ -158,16 +158,15 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   }
   if (empty > 0) slotsLine.append(el('span', 'bha-faint', `빈칸 ${empty}`));
 
-  const top = el('section', 'bha-exp__top');
-  top.append(head, meters, slotsLine);
+  const chips = el('section', 'bha-exp__chips');
+  chips.append(where, meters, slotsLine);
 
-  // 걷는 화면: 장면 위에 상태 줄(왼쪽 위)과 조우·획득 알림(아래)을 얹는다
   const walk = walkScene(faction.walkAnim, faction.huntingGroundName, charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE));
-  const stateSlot = el('div', 'bha-exp__stateline');
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
+  walk.walker.append(msgEl); // 머리 위 말풍선
   const sceneWrap = el('section', 'bha-exp__scene');
-  sceneWrap.append(walk.el, stateSlot, msgEl);
+  sceneWrap.append(walk.el);
 
   // 타일 배치판: 바퀴 끝 팝업에서만 쓴다 (원정 시작 전 배치는 placementView)
   const planner = roadPlanner({ exp, tileName: tn, onPlaced: () => h.onSave() });
@@ -188,22 +187,24 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     return b;
   });
   speedSeg.append(...speedBtns);
-  const pauseBtn = el('button', 'bha-btn bha-btn--icon');
+  const pauseBtn = el('button', 'bha-btn bha-btn--icon bha-btn--small');
   pauseBtn.type = 'button';
   pauseBtn.onclick = () => {
     paused = !paused;
     schedule();
     render();
   };
-  const handCount = el('span', 'bha-faint bha-num');
-  const bar = el('footer', 'bha-exp__bar');
-  bar.append(speedSeg, pauseBtn, el('span'), handCount);
+  const handCount = el('span', 'bha-exp__hand-count');
+  // 오른쪽 위 모서리: 일시정지·배속·도움말을 작게 (+ 손에 든 타일 수)
+  const corner = el('div', 'bha-exp__corner');
+  const cornerRow = el('div', 'bha-exp__cornerrow');
+  cornerRow.append(speedSeg, pauseBtn);
+  corner.append(cornerRow, handCount);
 
-  // 가로 2단 (GDD 16장, T-2): 왼쪽 = 걷는 장면, 오른쪽 = 상태·조작 줄. 둥지 칸 도착 시트는 오른쪽 열 안에 놓여 장면을 가리지 않는다
+  // 둥지 칸 도착 선택은 장면 위 말풍선 오버레이 (타일 배치판은 안에 있다)
   const sheetBox = el('div', 'bha-exp__sheetbox');
-  const side = el('div', 'bha-exp__side');
-  side.append(top, bar, sheetBox);
-  const main = mountApp(root, { fixed: true, cls: 'bha-exp' }, sceneWrap, side);
+  sceneWrap.append(chips, corner, sheetBox);
+  const main = mountApp(root, { fixed: true, cls: 'bha-exp' }, sceneWrap);
 
   helpBtn.onclick = () => {
     const wasPaused = paused;
@@ -223,6 +224,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const bonus = riskBonus(exp);
 
     meters.replaceChildren(
+      meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
       meter({ kind: 'hunger', label: '허기', icon: 'i-hunger', value: Math.round(exp.hunger), max: PX.hungerMax, compact: true, zone: 0.8, danger: hungerDanger }),
       meter({
         kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(exp.condition), max: PX.conditionMax, compact: true,
@@ -235,16 +237,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     );
 
     walk.update({ walking: isWalking(exp.phase, paused), speed });
-    stateSlot.replaceChildren(walkStateTag(exp.phase, paused));
 
-    // 메시지 줄
+    // 머리 위 말풍선: 조우·획득·휴식·경고·일시정지·도착 때만 뜬다 (그냥 걷는 중에는 감춘다)
     const kind = msgKind(exp.phase, msg, spike);
-    let text = msg;
-    if (!text) {
-      if (kind === 'warn') text = '허기 급상승 중! 귀환을 서두르자';
-      else if (exp.phase === 'moving') text = paused ? '일시정지 — 다시 누르면 이어서 걷는다' : `${faction.huntingGroundName}을(를) 걷는 중…`;
-      else if (exp.phase === 'nest-choice') text = `${faction.nestName}에 도착했다`;
-    }
+    const text = bubbleText({ phase: exp.phase, paused, msg, kind, nestName: faction.nestName });
+    msgEl.hidden = text === '';
     msgEl.className = `bha-exp__msg${kind ? ` bha-exp__msg--${kind}` : ''}`;
     msgEl.replaceChildren(icon(paused && exp.phase === 'moving' && !msg ? 'i-pause' : MSG_ICON[kind]), el('span', '', text));
 
@@ -257,6 +254,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     pauseBtn.classList.toggle('is-on', paused);
     pauseBtn.setAttribute('aria-label', paused ? '재개' : '일시정지');
     handCount.textContent = exp.hand.length > 0 ? `손에 든 타일 ${exp.hand.length}장` : '';
+    handCount.hidden = exp.hand.length === 0;
     main.classList.toggle('is-paused', paused);
 
     // 둥지 칸 도착: 귀환 / 한 바퀴 더
@@ -264,7 +262,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (exp.phase === 'nest-choice') sheetBox.replaceChildren(...nestSheet());
     else {
       sheetBox.replaceChildren();
-      if (helpBtn.parentElement !== head) head.append(helpBtn);
+      if (helpBtn.parentElement !== cornerRow) cornerRow.append(helpBtn);
     }
   }
 

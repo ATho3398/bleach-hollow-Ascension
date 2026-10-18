@@ -3,7 +3,7 @@ import { ENEMIES } from '../src/data/enemies';
 import { LINEAGES } from '../src/data/lineages';
 import { lineageClass, lineageIconId, lineageKey } from '../src/ui/bha/lineage';
 import {
-  ALL, canPlaceAt, endTone, filterFoes, msgKind, tileCss,
+  ALL, bubbleText, canPlaceAt, endTone, filterFoes, msgKind, tileCss,
 } from '../src/ui/bha/expedition';
 
 describe('타일 놓기 규칙 (지금 .slot/.can/.has)', () => {
@@ -91,5 +91,20 @@ describe('계통 마크', () => {
   });
   it('등록된 모든 계통이 디자인의 계통 키를 가진다', () => {
     for (const l of LINEAGES) expect(lineageKey(l.id)).toBeDefined();
+  });
+});
+
+describe('걷기 화면 머리 위 말풍선 (GDD 18-7)', () => {
+  const base = { phase: 'moving' as const, paused: false, msg: '', kind: '' as const, nestName: '둥지' };
+  it('그냥 걷는 중에는 말풍선이 없다', () => {
+    expect(bubbleText(base)).toBe('');
+  });
+  it('알림(조우·획득)이 있으면 그 글자를 우선한다', () => {
+    expect(bubbleText({ ...base, msg: '조우!', kind: 'fight' })).toBe('조우!');
+  });
+  it('허기 경고·일시정지·도착은 알림이 없을 때 뜬다', () => {
+    expect(bubbleText({ ...base, kind: 'warn' })).toContain('허기');
+    expect(bubbleText({ ...base, paused: true })).toBe('일시정지');
+    expect(bubbleText({ ...base, phase: 'nest-choice' })).toBe('둥지에 도착했다');
   });
 });

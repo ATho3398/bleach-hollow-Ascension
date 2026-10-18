@@ -28,6 +28,15 @@ export function msgKind(phase: ExpeditionPhase, msg: string, hungerSpike: boolea
   return '';
 }
 
+/** 머리 위 말풍선 글자 (GDD 18-7): 알림(msg)이 있으면 그것, 없으면 허기 경고·일시정지·도착만, 그냥 걷는 중에는 빈 글자(말풍선 감춤) */
+export function bubbleText(o: { phase: ExpeditionPhase; paused: boolean; msg: string; kind: MsgKind; nestName: string }): string {
+  if (o.msg) return o.msg;
+  if (o.kind === 'warn') return '허기 급상승 중! 귀환을 서두르자';
+  if (o.phase === 'moving' && o.paused) return '일시정지';
+  if (o.phase === 'nest-choice') return `${o.nestName}에 도착했다`;
+  return '';
+}
+
 export const MSG_ICON: Record<MsgKind, string> = { '': 'i-play', warn: 'i-hunger', fight: 'i-tile-elite', rest: 'i-tile-rest' };
 
 /** 원정이 끝난 이유 → 결과 화면 톤. 귀환 계열 = win, 패배 계열 = lose */

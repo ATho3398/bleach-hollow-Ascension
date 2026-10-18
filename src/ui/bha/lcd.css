@@ -17,54 +17,7 @@
 .bha-lcd .bha-tut__title .bha-icon { width: 18px; height: 18px; }
 .bha-lcd .bha-tut__body { font-size: var(--bha-fs-sm); line-height: 1.45; }
 
-/* ═════ 원정 ═════
-   왼쪽 = 걷는 장면(LCD 높이를 채움) | 오른쪽 = 머리·상태 바·특성 슬롯 / 배속·일시정지 (메시지·상태 줄은 장면 위에 얹힘).
-   둥지 칸 도착 시트(.bha-sheet)는 오른쪽 열의 아래쪽 자리를 채우고 메시지·보유 타일 줄·조작 줄을 대신한다 (타일 배치판은 시트 안에 있다). 장면은 항상 보인다. */
-.bha-lcd .bha-app.bha-exp {
-  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;
-  display: flex; flex-direction: row; align-items: stretch; gap: var(--bha-sp-4);
-  padding: var(--bha-sp-3) var(--bha-sp-4); overflow: hidden;
-}
-.bha-lcd .bha-exp__scene { flex: 1.15 1 0; min-width: 0; }
-.bha-exp__side { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3); }
-.bha-lcd .bha-exp__top { gap: var(--bha-sp-2); }
-.bha-lcd .bha-exp__head { align-items: flex-start; }
-.bha-lcd .bha-exp__where b { font-size: var(--bha-fs-lg); }
-.bha-lcd .bha-exp__where small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.bha-lcd .bha-exp__top .bha-stack { gap: var(--bha-sp-2); }
-.bha-lcd .bha-exp__top .bha-meter--compact { column-gap: var(--bha-sp-3); }
-.bha-lcd .bha-exp__top .bha-meter--compact .bha-meter__value { min-width: 0; font-size: var(--bha-fs-sm); }
-.bha-lcd .bha-exp__slots { flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-3); }
-.bha-lcd .bha-exp__slots > * { flex: none; }
-.bha-lcd .bha-exp__msg { min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-sm); line-height: 1.3; }
-.bha-lcd .bha-exp__hand { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-height: 0; }
-.bha-lcd .bha-exp__hand .bha-tilechip { flex: none; }
-.bha-lcd .bha-exp__bar { grid-template-columns: auto auto minmax(0, 1fr); margin-top: auto; }
-.bha-lcd .bha-exp__bar .bha-seg { min-width: 0; }
-.bha-lcd .bha-exp__bar .bha-seg__item { min-width: var(--bha-touch); }
-.bha-lcd .bha-exp__bar .bha-num { display: none; }
-
-/* 둥지 칸 도착 시트: 바닥에 붙는 시트 대신 오른쪽 열 안의 패널. 시트가 열리면 메시지·보유 타일 줄·조작 줄·특성 슬롯·머리 글자는 시트에 자리를 내준다 */
-.bha-lcd .bha-exp.has-sheet .bha-exp__bar, .bha-lcd .bha-exp.has-sheet .bha-exp__slots, .bha-lcd .bha-exp.has-sheet .bha-exp__head { display: none; }
-.bha-lcd .bha-exp__sheetbox { display: contents; }
-.bha-lcd .bha-exp .bha-sheet__scrim { display: none; }
-.bha-lcd .bha-exp .bha-sheet {
-  position: relative; inset: auto; flex: 1 1 0; min-height: 0; overflow: hidden; animation: none;
-  gap: var(--bha-sp-2); padding: var(--bha-sp-3) var(--bha-sp-4);
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
-  box-shadow: none;
-}
-.bha-lcd .bha-exp .bha-sheet::before { display: none; }
-.bha-sheet__scroll { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-2); overflow-y: auto; overscroll-behavior: contain; }
-.bha-lcd .bha-exp .bha-sheet > .bha-grid2 { flex: none; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: var(--bha-sp-3); }
-.bha-lcd .bha-exp .bha-sheet .bha-btn { padding: 0 var(--bha-sp-3); gap: var(--bha-sp-2); }
-.bha-lcd .bha-exp .bha-sheet .bha-btn__label { white-space: nowrap; }
-.bha-lcd .bha-exp .bha-sheet__title .bha-btn { margin-left: auto; margin-right: var(--bha-sp-3); }  /* 누르는 영역(::after)이 5px 밖으로 나가 가로 스크롤이 생기지 않게 */
-.bha-lcd .bha-exp .bha-sheet__title { font-size: var(--bha-fs-lg); }
-.bha-lcd .bha-exp .bha-sheet__title .bha-icon { width: 18px; height: 18px; }
-.bha-lcd .bha-exp .bha-sheet__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
-.bha-lcd .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-xs); line-height: 1.3; }
-.bha-lcd .bha-exp .bha-sheet .bha-btn--lg { min-height: var(--bha-touch); font-size: var(--bha-fs-md); }
+/* ═════ 원정(걷기) 화면: walk-scene.css (GDD 18-7) ═════ */
 
 /* ═════ 가로 2단 쪽 화면 (.bha-split): 원정 결과·연습 결과·한계 돌파 (목록·상세형 화면은 screens-lcd.css 의 .bha-lcdpage) ═════
    왼쪽(main) 설명·조작 / 오른쪽(side) 표·목록. 머리(첫 자식, main 이 아닌 것)는 두 열 위에 걸친다. 넘치면 창 안에서만 스크롤한다. */

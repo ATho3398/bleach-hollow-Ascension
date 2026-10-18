@@ -1,0 +1,73 @@
+/* 걷기 화면 (GDD 18-7, C.39). 디자인 토큰·bha- 클래스만 쓴다 (새 색·간격 없음).
+   캐릭터가 LCD 가득 걷고, 정보는 배경 위 작은 칩(왼쪽 위)·머리 위 말풍선·모서리 버튼(오른쪽 위)·귀환 말풍선 오버레이로 띄운다. */
+[hidden] { display: none !important; }
+.bha-lcd .bha-app.bha-exp {
+  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;
+  display: flex; padding: var(--bha-sp-2); overflow: hidden;
+}
+.bha-lcd .bha-exp__scene { flex: 1 1 0; min-width: 0; }
+
+/* 캐릭터: 장면 높이의 약 2/3, 가운데. 걷는 상자 안에 머리 위 말풍선을 붙인다 */
+.bha-lcd .bha-walker { left: 50%; transform: translateX(-50%); bottom: 10%; height: 60%; width: auto; max-width: 70%; }
+.bha-walk { background: linear-gradient(180deg, var(--bha-bg-0) 0%, var(--bha-bg-2) 66%, var(--bha-bg-1) 66%); }
+.bha-walk__layer--ground { top: 66%; }
+
+/* 왼쪽 위 칩: 장소 이름, 바퀴 진행, 허기·컨디션·광기/영압, 특성 슬롯 */
+.bha-exp__chips {
+  position: absolute; z-index: 3; top: var(--bha-sp-3); left: var(--bha-sp-3); width: min(180px, 34%);
+  display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-3) var(--bha-sp-4);
+  border-radius: var(--bha-r-md); background: rgb(0 0 0 / 0.45); pointer-events: none;
+}
+.bha-exp__where b { font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-md); line-height: 1.2; }
+.bha-exp__chips .bha-stack { gap: var(--bha-sp-1); }
+.bha-exp__chips .bha-meter--compact { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: var(--bha-sp-3); }
+.bha-exp__chips .bha-meter--compact .bha-meter__head { display: contents; }
+.bha-exp__chips .bha-meter__label span { display: none; }
+.bha-exp__chips .bha-meter--compact .bha-meter__label .bha-icon { width: 14px; height: 14px; }
+.bha-exp__chips .bha-meter--compact .bha-meter__track { height: 6px; }
+.bha-exp__chips .bha-meter--compact .bha-meter__value { min-width: 0; font-size: var(--bha-fs-xs); }
+.bha-exp__chips .bha-meter__value small { display: none; }
+.bha-exp__chips .bha-exp__slots { flex-wrap: wrap; gap: var(--bha-sp-1) var(--bha-sp-3); font-size: var(--bha-fs-xs); }
+.bha-exp__chips .bha-exp__slots > * { flex: none; }
+
+/* 오른쪽 위 모서리: 일시정지·배속·도움말 작게 */
+.bha-exp__corner { position: absolute; z-index: 3; top: var(--bha-sp-3); right: var(--bha-sp-3); display: flex; flex-direction: column; align-items: flex-end; gap: var(--bha-sp-2); }
+.bha-exp__cornerrow { display: flex; align-items: center; gap: var(--bha-sp-3); }
+.bha-exp__corner .bha-seg { min-width: 0; background: rgb(0 0 0 / 0.5); }
+.bha-exp__corner .bha-seg__item { min-width: 34px; min-height: 34px; padding: 0 var(--bha-sp-3); font-size: var(--bha-fs-sm); }
+.bha-exp__corner .bha-btn--small { min-height: 34px; min-width: 34px; background: rgb(0 0 0 / 0.5); }
+.bha-exp__corner .bha-btn--icon.bha-btn--small { width: 34px; }
+.bha-exp__hand-count { padding: 2px var(--bha-sp-3); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / 0.5); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
+.bha-lcd .bha-exp.has-sheet .bha-exp__cornerrow .bha-seg, .bha-lcd .bha-exp.has-sheet .bha-exp__cornerrow .bha-btn--icon:not(:last-child), .bha-lcd .bha-exp.has-sheet .bha-exp__hand-count { display: none; }
+
+/* 머리 위 말풍선 (조우·획득·휴식·경고·일시정지·도착) */
+.bha-exp .bha-exp__msg {
+  position: absolute; z-index: 4; bottom: calc(100% + var(--bha-sp-4)); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 260px; min-height: 0; padding: var(--bha-sp-3) var(--bha-sp-5);
+  border-radius: var(--bha-r-lg); background: rgb(0 0 0 / 0.72); font-size: var(--bha-fs-sm); line-height: 1.3; text-align: left;
+}
+.bha-exp .bha-exp__msg::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border: 6px solid transparent; border-top-color: rgb(0 0 0 / 0.72); }
+
+/* 둥지 칸 도착 선택: 장면 위 말풍선 오버레이 (캐릭터는 그 아래로 보인다). 안은 스크롤, 버튼 줄은 항상 보인다 */
+.bha-exp__sheetbox { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.bha-exp__sheetbox > * { pointer-events: auto; }
+.bha-exp .bha-sheet__scrim { pointer-events: none; display: block; background: rgb(0 0 0 / 0.3); }
+.bha-lcd .bha-exp .bha-sheet {
+  position: absolute; inset: var(--bha-sp-4) 0 auto 0; margin-inline: auto;
+  width: min(460px, calc(100% - 24px)); max-height: calc(100% - 16px); overflow: hidden; animation: bha-popin var(--bha-dur-3) var(--bha-ease-snap) both;
+  gap: var(--bha-sp-2); padding: var(--bha-sp-3) var(--bha-sp-4);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg); box-shadow: 0 8px 28px rgb(0 0 0 / 0.6);
+}
+.bha-lcd .bha-exp .bha-sheet::before { display: none; }
+.bha-sheet__scroll { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-2); overflow-y: auto; overscroll-behavior: contain; }
+.bha-lcd .bha-exp .bha-sheet > .bha-grid2 { flex: none; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: var(--bha-sp-3); }
+.bha-lcd .bha-exp .bha-sheet .bha-btn { padding: 0 var(--bha-sp-3); gap: var(--bha-sp-2); }
+.bha-lcd .bha-exp .bha-sheet .bha-btn__label { white-space: nowrap; }
+.bha-lcd .bha-exp .bha-sheet__title { font-size: var(--bha-fs-md); gap: var(--bha-sp-3); }
+.bha-lcd .bha-exp .bha-sheet__title .bha-btn { margin-left: auto; margin-right: var(--bha-sp-3); }
+.bha-lcd .bha-exp .bha-sheet__title .bha-icon { width: 18px; height: 18px; }
+.bha-lcd .bha-exp .bha-sheet__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
+.bha-lcd .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-xs); line-height: 1.3; }
+.bha-lcd .bha-exp .bha-sheet .bha-btn--lg { min-height: var(--bha-touch); font-size: var(--bha-fs-md); }
+.bha-lcd .bha-exp__hand { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-height: 0; }
+.bha-lcd .bha-exp__hand .bha-tilechip { flex: none; }
