@@ -77,7 +77,7 @@ export function startApp(root: HTMLElement): void {
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     battleView(root, faction, s, {
-      banner: '튜토리얼 체험 전투 (기록되지 않음)',
+      notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
       onQuit: back,
       onEnd: back,

@@ -3,6 +3,9 @@ import { CHAIN_BONUS_KINDS, PASSIVE_STATS, SKILL_ROLES, TRAIT_KINDS, pickFaction
 import { getLineage } from '../lineages';
 import raw from './traits.json';
 
+/** 블록 약어 최대 글자 수: 2줄 × 4자 (공백 포함) */
+export const TRAIT_ABBR_MAX_LENGTH = 9;
+
 export function parseTrait(r: unknown): TraitDef {
   const t = (r ?? {}) as Record<string, unknown>;
   const errors: string[] = [];
@@ -18,6 +21,11 @@ export function parseTrait(r: unknown): TraitDef {
   if (!(TRAIT_KINDS as readonly unknown[]).includes(t.kind)) errors.push('kind: skill | passive | part');
   if (typeof t.name !== 'object' || t.name === null) errors.push('name');
   if (typeof t.description !== 'object' || t.description === null) errors.push('description');
+  if (t.abbr !== undefined) {
+    const a = t.abbr;
+    const ok = typeof a === 'object' && a !== null && Object.values(a).every((v) => typeof v === 'string' && v.trim().length >= 1 && Array.from(v).length <= TRAIT_ABBR_MAX_LENGTH);
+    if (!ok) errors.push(`abbr: 종족별 문자열, 1~${TRAIT_ABBR_MAX_LENGTH}자`);
+  }
   if (t.kind === 'skill') {
     if (!(SKILL_ROLES as readonly unknown[]).includes(t.role)) errors.push('role: attack | guard | heal');
     if (!(typeof t.powerInAttacks === 'number' && t.powerInAttacks > 0)) errors.push('powerInAttacks: 양수');
@@ -50,4 +58,12 @@ export function traitName(id: string, factionId: string): string {
 
 export function traitDescription(id: string, factionId: string): string {
   return pickFaction(getTrait(id).description, factionId);
+}
+
+/** 블록 약어 원문: 데이터에 abbr 가 있으면 그것, 없으면 undefined (대체 규칙은 UI 의 fitAbbr) */
+export function traitAbbr(id: string, factionId: string): string | undefined {
+  const a = getTrait(id).abbr;
+  if (!a) return undefined;
+  const v = a[factionId] ?? a['*'];
+  return v && v.trim() ? v.trim() : undefined;
 }

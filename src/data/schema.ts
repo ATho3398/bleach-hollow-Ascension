@@ -122,6 +122,8 @@ export interface TraitDef {
   lineageId: string;
   kind: TraitKind;
   name: PerFaction<string>;
+  /** 블록 위에 쓰는 약어: 2줄 × 2~4자 (UI 디자인 HANDOFF 5-1, GDD 15-2). 없으면 이름 앞 4글자로 대체한다 */
+  abbr?: PerFaction<string>;
   /** 설명: 종족별 텍스트(키 '*' 는 공통) */
   description: PerFaction<string>;
   /** 희귀 개체에서만 나오는 특성 (확정 등장) */

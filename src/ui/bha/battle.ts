@@ -1,0 +1,290 @@
+// 전투 화면 전용 헬퍼 (U-2, 디자인 HANDOFF 5-1·5-2·5-4·7장).
+// 위쪽은 DOM 에 의존하지 않는 순수 함수(약어 선택, 묶음 계산, 삽입 막대·밀림 위치, 로그 역할 …)라 단위 테스트한다 (tests/bha-battle.test.ts).
+// 아래쪽은 블록·블록 바·로그 줄·플로팅 숫자·적 실루엣을 만드는 DOM 조립과 1회성 클래스 재생 도구.
+import type { EnemyPatternKind } from '../../data/schema';
+import { el, icon } from './dom';
+
+// ───────────────────────── 순수 함수 ─────────────────────────
+
+/** 블록 외형 종류: 스킬 역할 3 + 기본 + 필살 + 공허 (`.bha-block--*`) */
+export type BlockVisual = 'attack' | 'guard' | 'heal' | 'basic' | 'special' | 'void';
+
+/** 블록 약어 한 줄 최대 글자 수 (칸 폭 44px 기준 2줄 × 4자) */
+export const ABBR_LINE_CHARS = 4;
+
+/**
+ * 약어로 쓸 글자를 고른다. 이미 짧으면(단어 1~2개, 단어마다 4자 이하) 그대로, 아니면 앞 4글자.
+ * 특성 데이터에 abbr 가 없을 때와 종족 설정의 블록 이름(기본·필살·공허)에 쓴다. 비어 있으면 빈 문자열.
+ */
+export function fitAbbr(name: string): string {
+  const trimmed = name.trim().replace(/\s+/g, ' ');
+  const words = trimmed.split(' ').filter(Boolean);
+  if (words.length >= 1 && words.length <= 2 && words.every((w) => Array.from(w).length <= ABBR_LINE_CHARS)) return trimmed;
+  return Array.from(trimmed).slice(0, ABBR_LINE_CHARS).join('').trim();
+}
+
+/** 약어 선택: 데이터의 abbr(공백만이면 없는 것으로) → 없으면 이름에서 fitAbbr */
+export function pickAbbr(abbr: string | undefined, name: string): string {
+  const own = abbr?.trim();
+  return own ? own : fitAbbr(name);
+}
+
+/** 블록 외형: 필살·공허는 그대로, 기본 블록(traitId 가 기본 기술이거나 없음)은 basic, 스킬은 역할(모르면 attack) */
+export function blockVisual(kind: 'skill' | 'special' | 'void', isBasic: boolean, role: 'attack' | 'guard' | 'heal' | null): BlockVisual {
+  if (kind === 'special') return 'special';
+  if (kind === 'void') return 'void';
+  if (isBasic) return 'basic';
+  return role ?? 'attack';
+}
+
+/** 체인 단계 표시가 붙는 외형 (공격·막기·회복·기본) */
+export const hasPips = (v: BlockVisual): boolean => v === 'attack' || v === 'guard' || v === 'heal';
+
+export interface RunSpec {
+  /** 시작 칸 (1부터: CSS --start) */
+  start: number;
+  /** 길이 (CSS --len) */
+  len: number;
+  /** 체인 단계 = min(최대 체인, 길이) */
+  level: number;
+  /** 최대 체인에 닿았나 (주황 테두리) */
+  max: boolean;
+  /** 최대 체인보다 길게 붙어 있나 (라벨 "체인3+") */
+  over: boolean;
+}
+
+/**
+ * 붙은 같은 블록 묶음 → CSS 묶음 표시. runs 는 engine runsOf 결과, isSkillAt(i) 는 그 칸이 스킬 블록인가.
+ * 길이 2 미만이거나 스킬 블록이 아니면 묶음이 아니다.
+ */
+export function runSpecs(runs: readonly { start: number; length: number }[], isSkillAt: (index: number) => boolean, top: number): RunSpec[] {
+  const out: RunSpec[] = [];
+  for (const r of runs) {
+    if (r.length < 2 || !isSkillAt(r.start)) continue;
+    const level = Math.min(top, r.length);
+    out.push({ start: r.start + 1, len: r.length, level, max: level >= top, over: r.length > top });
+  }
+  return out;
+}
+
+/** 칸 번호(0부터) → 속한 묶음의 체인 단계 (묶음이 아니면 1) */
+export function chainLevelAt(specs: readonly RunSpec[], index: number): number {
+  for (const r of specs) if (index + 1 >= r.start && index + 1 < r.start + r.len) return r.level;
+  return 1;
+}
+
+export interface InsertMark {
+  /** CSS --at (1~capacity) */
+  at: number;
+  /** 맨 오른쪽 끝 막대 (`--end` 변형) */
+  end: boolean;
+}
+
+/**
+ * 드래그 중 삽입 막대 위치. from = 끌고 있는 블록의 칸, to = 손가락 아래 칸, count = 지금 블록 수.
+ * 놓으면 그 칸(블록 수를 넘으면 마지막 블록 칸)에 끼워지므로, 오른쪽으로 가면 그 칸의 오른쪽 가장자리, 왼쪽으로 가면 왼쪽 가장자리에 막대를 둔다.
+ * 제자리면 null.
+ */
+export function insertMark(from: number, to: number, count: number, capacity: number): InsertMark | null {
+  if (from < 0 || count <= 0) return null;
+  const target = Math.min(count - 1, to);
+  if (target === from) return null;
+  const at = target > from ? target + 2 : target + 1;
+  return at > capacity ? { at: capacity, end: true } : { at, end: false };
+}
+
+/** 드래그 중 이웃 블록이 밀려나는 방향: 오른쪽으로 끌면 사이 블록이 왼쪽(l), 왼쪽으로 끌면 오른쪽(r) */
+export function nudgeOf(index: number, from: number, to: number, count: number): 'l' | 'r' | null {
+  if (from < 0) return null;
+  const target = Math.min(count - 1, to);
+  if (target === from) return null;
+  if (target > from && index > from && index <= target) return 'l';
+  if (target < from && index >= target && index < from) return 'r';
+  return null;
+}
+
+/** 사건 로그 줄의 역할 (`.bha-log__line--*`) */
+export type LogRole = 'attack' | 'guard' | 'heal' | 'void' | 'chain' | 'cast';
+
+/** 로그 역할별 기본 아이콘 */
+export const LOG_ICON: Record<LogRole, string> = { attack: 'i-attack', guard: 'i-guard', heal: 'i-heal', void: 'i-void', chain: 'i-chain-2', cast: 'i-cast' };
+
+export type FloatKind = 'attack' | 'guard' | 'heal' | 'void' | 'chain';
+
+/** 적 행동 패턴 → 표시 (아이콘은 디자인에 있는 3종 중 가장 가까운 것). 기본형은 칩을 만들지 않는다 */
+export const PATTERN_VIEW: Record<EnemyPatternKind, { label: string; icon: string } | null> = {
+  basic: null,
+  swift: { label: '속공형', icon: 'i-pattern-fast' },
+  sturdy: { label: '단단형', icon: 'i-pattern-tough' },
+  'heavy-seal': { label: '강공격·봉인', icon: 'i-pattern-heavy' },
+  'heavy-chain': { label: '연속 강공격', icon: 'i-pattern-heavy' },
+  stance: { label: '방어 자세·반격', icon: 'i-pattern-tough' },
+};
+
+/** 남은 시간 표기 "3.0초" */
+export const secondsText = (seconds: number): string => `${Math.max(0, seconds).toFixed(1)}초`;
+
+/** 플로팅 숫자 자리 (아레나 안의 %). 같은 자리에 겹치지 않게 돌려 쓴다 */
+export const FLOAT_SPOTS: readonly { left: number; top: number }[] = [
+  { left: 36, top: 26 }, { left: 52, top: 18 }, { left: 26, top: 38 }, { left: 46, top: 34 }, { left: 58, top: 28 },
+];
+
+export function floatSpot(n: number): { left: number; top: number } {
+  return FLOAT_SPOTS[((n % FLOAT_SPOTS.length) + FLOAT_SPOTS.length) % FLOAT_SPOTS.length]!;
+}
+
+// ───────────────────────── DOM 도구 ─────────────────────────
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** 텍스트가 달라졌을 때만 쓴다 (프레임마다 부르는 갱신에서 DOM 쓰기를 줄인다) */
+export function setText(node: HTMLElement, text: string): void {
+  if (node.textContent !== text) node.textContent = text;
+}
+
+/** 1회성 클래스: 붙이고, animationend(또는 안전 타이머)에서 뗀다 */
+export function playOnce(node: HTMLElement, cls: string, fallbackMs = 1200): void {
+  node.classList.add(cls);
+  const done = () => {
+    node.classList.remove(cls);
+    node.removeEventListener('animationend', onEnd);
+    window.clearTimeout(timer);
+  };
+  const onEnd = (e: Event) => {
+    if (e.target === node) done();
+  };
+  const timer = window.setTimeout(done, fallbackMs);
+  node.addEventListener('animationend', onEnd);
+}
+
+/** 1회성 클래스 다시 재생: 떼기 → 레이아웃 읽기(리플로) → 붙이기 (HANDOFF 7장) */
+export function replayOnce(node: HTMLElement, cls: string, fallbackMs = 1200): void {
+  node.classList.remove(cls);
+  void node.offsetWidth;
+  playOnce(node, cls, fallbackMs);
+}
+
+/** 적 실루엣 SVG (`.bha-foe__body` 안). id = 스프라이트 심볼 (foe-a / foe-b) */
+export function foeSvg(symbolId: string): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttribute('href', `#${symbolId}`);
+  svg.append(use);
+  return svg;
+}
+
+/** 적 영역 실루엣: 오라 + 몸. aura = 약점 계통 색 변수 (예 `var(--bha-lin-b)`) */
+export function foeEl(symbolId: string, aura: string | null): HTMLElement {
+  const foe = el('div', 'bha-foe');
+  if (aura) foe.style.setProperty('--aura', aura);
+  const body = el('span', 'bha-foe__body');
+  body.append(foeSvg(symbolId));
+  foe.append(el('span', 'bha-foe__aura'), body);
+  return foe;
+}
+
+const BLOCK_ICON: Record<BlockVisual, string> = {
+  attack: 'i-attack', guard: 'i-guard', heal: 'i-heal', basic: 'i-basic', special: 'i-special', void: 'i-void',
+};
+
+export interface BlockSpec {
+  visual: BlockVisual;
+  /** 칸 안에 보이는 약어 */
+  abbr: string;
+  /** 접근성 이름 (약어가 아니라 전체 이름) */
+  label: string;
+  weak: boolean;
+  uid: number;
+}
+
+/** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림·드래그 같은 상태 클래스는 화면이 붙인다 */
+export function blockEl(spec: BlockSpec): HTMLElement {
+  const node = el('div', `bha-block bha-block--${spec.visual}${spec.weak ? ' is-weak' : ''}`);
+  node.setAttribute('role', 'button');
+  node.tabIndex = 0;
+  node.setAttribute('aria-label', spec.label);
+  node.dataset.uid = String(spec.uid);
+  node.dataset.visual = spec.visual;
+  if (hasPips(spec.visual)) {
+    const pips = el('span', 'bha-block__pips');
+    pips.append(el('i'), el('i'), el('i'));
+    node.append(pips);
+  }
+  const ico = el('span', 'bha-block__icon');
+  ico.append(icon(BLOCK_ICON[spec.visual]));
+  const weak = el('span', 'bha-block__weak');
+  weak.append(icon('i-weak'));
+  node.append(ico, el('b', 'bha-block__abbr', spec.abbr), weak);
+  return node;
+}
+
+export interface TrayParts {
+  root: HTMLElement;
+  grid: HTMLElement;
+  cells: HTMLElement[];
+  veil: HTMLElement;
+  veilText: HTMLElement;
+}
+
+/** 블록 바 틀 (HANDOFF 5-2): 칸 N개 + 봉인 가림막. 묶음·삽입 막대는 화면이 grid 에 붙였다 뗀다 */
+export function trayEl(capacity: number): TrayParts {
+  const root = el('div', 'bha-tray');
+  const grid = el('div', 'bha-tray__grid');
+  grid.style.gridTemplateColumns = `repeat(${capacity}, minmax(0, 1fr))`;
+  const cells = Array.from({ length: capacity }, (_, i) => {
+    const c = el('div', 'bha-tray__cell');
+    c.style.gridColumn = String(i + 1);
+    return c;
+  });
+  grid.append(...cells);
+  const veil = el('div', 'bha-tray__veil');
+  const veilText = el('span');
+  veil.append(icon('i-seal'), veilText);
+  root.append(grid, veil);
+  return { root, grid, cells, veil, veilText };
+}
+
+/** 체인 묶음 표시 (`.bha-tray__run`): 라벨 "체인2" / 최대 체인 "체인3" / 더 길면 "체인3+" */
+export function runEl(spec: RunSpec, chainName: string): HTMLElement {
+  const run = el('div', `bha-tray__run${spec.max ? ' bha-tray__run--chain3' : ''}`);
+  run.style.setProperty('--start', String(spec.start));
+  run.style.setProperty('--len', String(spec.len));
+  const label = el('span', 'bha-tray__runlabel');
+  label.append(icon(`i-chain-${Math.min(3, Math.max(1, spec.level))}`), `${chainName}${spec.level}${spec.over ? '+' : ''}`);
+  run.append(label);
+  return run;
+}
+
+/** 삽입 막대 (`.bha-tray__insert`) */
+export function insertEl(): HTMLElement {
+  const bar = el('i', 'bha-tray__insert');
+  bar.setAttribute('aria-hidden', 'true');
+  return bar;
+}
+
+export function setInsert(bar: HTMLElement, mark: InsertMark): void {
+  bar.style.setProperty('--at', String(mark.at));
+  bar.classList.toggle('bha-tray__insert--end', mark.end);
+}
+
+/** 사건 로그 한 줄 */
+export function logLineEl(role: LogRole, iconId: string, text: string): HTMLElement {
+  const line = el('p', `bha-log__line bha-log__line--${role}`);
+  line.append(icon(iconId), el('span', '', text));
+  return line;
+}
+
+/** 플로팅 숫자 (역할별 모양). 내용은 아이콘(선택) + 글자. 위치는 아레나 안 % */
+export function floatEl(kind: FloatKind, text: string, spot: { left: number; top: number }, opts: { crit?: boolean; chain3?: boolean; iconId?: string } = {}): HTMLElement {
+  const cls = ['bha-float', `bha-float--${kind}`];
+  if (opts.crit) cls.push('is-crit');
+  if (opts.chain3) cls.push('bha-float--chain3');
+  const f = el('span', cls.join(' '));
+  f.style.left = `${spot.left}%`;
+  f.style.top = `${spot.top}%`;
+  if (opts.iconId) f.append(icon(opts.iconId));
+  f.append(text);
+  return f;
+}

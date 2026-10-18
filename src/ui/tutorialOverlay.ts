@@ -1,10 +1,10 @@
-// 첫 플레이 튜토리얼 오버레이 (GDD 14-2, C.19): 전투 화면의 해당 요소를 하이라이트하고 설명 카드를 보여 준다.
+// 첫 플레이 튜토리얼 오버레이 (GDD 14-2, C.19 / U-2 새 디자인): 전투 화면의 해당 요소를 컷아웃(구멍)으로 하이라이트하고 설명 카드를 보여 준다.
 // 장면 순서·상태는 engine/tutorial 의 순수 상태 머신이 정하고, 텍스트는 src/data/help 에서 종족 설정으로 치환해 읽는다.
 // 실제로 손을 써 보는 단계는 넣지 않았다: 전투 시간이 멈춘 상태에서 블록을 쓰게 하려면 엔진 입력 경로를 열어야 해서 결정성 규칙(멈춤은 결과에 영향 없음)과 부딪힌다.
 import { helpVars, renderHelpText, TUTORIAL_SCENES } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
-import { el } from './dom';
+import { button, dots, el, icon } from './bha/dom';
 import { placeCard, unionRect, type Rect } from './helpLayout';
 
 export interface TutorialHandle {
@@ -15,6 +15,14 @@ export interface TutorialOverlayOptions {
   /** 끝(마지막 장면 다음)이나 건너뛰기로 닫히면 한 번 불린다 */
   onFinish: (status: Exclude<TutorialStatus, 'active'>) => void;
 }
+
+/** 구멍을 대상보다 이만큼(px) 넓게 판다 (HANDOFF 5-4) */
+export const TUTORIAL_HOLE_PAD = 6;
+
+/** 장면 제목 앞 아이콘 (장면 id → 스프라이트). 모르는 장면은 info */
+const SCENE_ICON: Record<string, string> = {
+  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', sp: 'i-sp', stored: 'i-stored', after: 'i-evolve',
+};
 
 function targetRect(ids: string[]): Rect | null {
   const rects: Rect[] = [];
@@ -32,11 +40,15 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   const t = (s: string) => renderHelpText(s, vars);
   let state: TutorialState = startTutorial(TUTORIAL_SCENES.length);
 
-  const layer = el('div', 'tut-layer');
-  const hole = el('div', 'tut-hole');
-  const card = el('div', 'tut-card');
-  card.setAttribute('role', 'dialog');
-  layer.append(hole, card);
+  const layer = el('div', 'bha-tut');
+  layer.setAttribute('role', 'dialog');
+  layer.setAttribute('aria-modal', 'true');
+  layer.dataset.tutorial = 'true';
+  const pauseTag = el('span', 'bha-chip bha-battle__pausetag');
+  pauseTag.append(icon('i-pause'), '튜토리얼 중 — 전투 멈춤');
+  const hole = el('div', 'bha-tut__hole');
+  const card = el('div', 'bha-tut__card');
+  layer.append(pauseTag, hole, card);
   document.body.append(layer);
 
   const finish = (status: Exclude<TutorialStatus, 'active'>) => {
@@ -51,72 +63,67 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   function layout(): void {
     const scene = TUTORIAL_SCENES[state.index]!;
     const vp = { width: window.innerWidth, height: window.innerHeight };
-    const h = card.offsetHeight;
-    const measure = () => {
-      const rect = targetRect(scene.targets);
-      return { rect, place: placeCard(rect, h, vp, protectedRects()) };
-    };
-    let cur = measure();
-    if (!cur.place.clear) {
-      // 화면 스크롤을 바꿔 보며 가장 덜 가리는 위치를 고른다 (화면 맨 위 / 대상이 맨 위 / 맨 아래 / 지금 위치)
-      const startY = window.scrollY;
-      let bestY = startY;
-      for (const y of [0, startY + (cur.rect ? cur.rect.top - 8 : 0), Number.MAX_SAFE_INTEGER]) {
-        window.scrollTo(0, Math.max(0, y));
-        const m = measure();
-        if (m.place.cost < cur.place.cost) {
-          cur = m;
-          bestY = window.scrollY;
-        }
-      }
-      window.scrollTo(0, bestY);
-      cur = measure();
-    }
-    const { rect, place } = cur;
+    const rect = targetRect(scene.targets);
+    const place = placeCard(rect, card.offsetHeight, vp, protectedRects());
     card.style.top = `${place.top}px`;
-    card.style.left = `${place.left}px`;
-    card.style.width = `${place.width}px`;
-    layer.classList.toggle('tut-dim', !rect);
-    hole.style.display = rect ? 'block' : 'none';
+    card.style.bottom = 'auto';
+    const pad = TUTORIAL_HOLE_PAD;
+    hole.classList.toggle('is-none', !rect);
     if (rect) {
-      hole.style.top = `${rect.top - 4}px`;
-      hole.style.left = `${rect.left - 4}px`;
-      hole.style.width = `${rect.width + 8}px`;
-      hole.style.height = `${rect.height + 8}px`;
+      hole.style.left = `${rect.left - pad}px`;
+      hole.style.top = `${rect.top - pad}px`;
+      hole.style.width = `${rect.width + pad * 2}px`;
+      hole.style.height = `${rect.height + pad * 2}px`;
+    } else {
+      // 대상이 없는 장면(처음·마지막 안내): 크기 0 구멍이 화면 전체를 어둡게 덮는다
+      hole.style.left = `${vp.width / 2}px`;
+      hole.style.top = `${vp.height / 2}px`;
+      hole.style.width = '0px';
+      hole.style.height = '0px';
+    }
+    // 카드가 대상 아래(is-below)면 위쪽 꼬리, 위(is-above)면 아래쪽 꼬리. 대상이 없으면 꼬리 없음
+    const below = !!rect && place.top >= rect.top + rect.height / 2;
+    card.classList.toggle('is-below', !!rect && below);
+    card.classList.toggle('is-above', !!rect && !below);
+    if (rect) {
+      const cw = card.offsetWidth;
+      const cl = (vp.width - cw) / 2;
+      card.style.setProperty('--tail', `${Math.max(24, Math.min(cw - 24, rect.left + rect.width / 2 - cl))}px`);
     }
   }
 
   function render(): void {
     const scene = TUTORIAL_SCENES[state.index]!;
     const last = state.index === state.count - 1;
-    const skip = el('button', 'tut-skip', '건너뛰기');
-    skip.onclick = () => {
+    const skip = button({ label: '건너뛰기', variant: 'ghost', onClick: () => {
       state = tutorialSkip(state);
       finish('skipped');
-    };
-    const prev = el('button', '', '이전');
-    prev.disabled = state.index === 0;
-    prev.onclick = () => {
+    } });
+    const prev = button({ label: '이전', icon: 'i-chevron-left', onClick: () => {
       state = tutorialPrev(state);
       render();
-    };
-    const next = el('button', 'primary', last ? '전투 시작' : '다음');
-    next.onclick = () => {
+    } });
+    prev.disabled = state.index === 0;
+    const next = button({ label: last ? '전투 시작' : '다음', variant: 'primary', onClick: () => {
       state = tutorialNext(state);
       if (isTutorialActive(state)) render();
       else finish('completed');
-    };
-    const buttons = el('div', 'tut-buttons');
-    buttons.append(skip, prev, next);
-    card.replaceChildren(
-      el('small', 'tut-step', `${state.index + 1} / ${state.count}`),
-      el('b', 'tut-title', t(scene.title)),
-      el('p', 'tut-body', t(scene.body)),
-      buttons,
-    );
+    } });
+    next.append(icon(last ? 'i-play' : 'i-chevron-right'));
+    const actions = el('div', 'bha-tut__actions');
+    actions.append(skip, prev, next);
+
+    const title = el('h2', 'bha-tut__title');
+    title.id = 'tutorial-title';
+    title.append(icon(SCENE_ICON[scene.id] ?? 'i-info'), t(scene.title));
+    layer.setAttribute('aria-labelledby', title.id);
+    const top = el('div', 'bha-tut__top');
+    top.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
+    card.replaceChildren(top, title, el('p', 'bha-tut__body', t(scene.body)), actions);
     card.style.visibility = 'hidden';
     layout();
     card.style.visibility = 'visible';
+    next.focus({ preventScroll: true });
   }
 
   window.addEventListener('resize', layout);
