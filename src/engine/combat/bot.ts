@@ -5,6 +5,7 @@ import { hasSpecialActions } from '../../data/enemies';
 import {
   blockDamage, blockEffect, maxChain, step, ticksOf, type CombatInput, type CombatState,
 } from './combat';
+import { createRng, nextFloat } from '../rng';
 import { chainGroup, movedTray, runAt, type Block, type Tray } from './tray';
 
 export interface BotOptions {
@@ -12,6 +13,12 @@ export interface BotOptions {
   voidPolicy?: 'never' | 'when-full' | 'smart' | 'always';
   /** 입력 간격(초). 기본 0.5 (사람의 반응 속도 근사, 임시) */
   actEverySeconds?: number;
+  /** false 면 이번 입력에서 같은 블록 붙이기(move)를 하지 않는다 (사람형 봇의 "체인 정리" 실패). 기본 true */
+  allowJoin?: boolean;
+  /** false 면 이번 입력에서 막기 블록을 쓰지 않는다 (사람형 봇의 막기 실패·반응 전). 기본 true */
+  allowGuard?: boolean;
+  /** true 면 상대의 방어 자세를 알아채지 못한 것처럼 플레이한다 (블록을 아끼지 않고 평소대로 쓴다). 기본 false */
+  ignoreStance?: boolean;
 }
 
 type Cell = { i: number; b: Block };
@@ -72,15 +79,15 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
 
   // 1. 강공격 예고 중이고 막기 상태가 착탄까지 못 버티면 막기 블록
   const cast = s.enemy.cast;
-  if (cast && s.guard.ticks <= cast.ticks) {
+  if (cast && opt.allowGuard !== false && s.guard.ticks <= cast.ticks) {
     const g = ofRole('guard')[0];
     if (g) return use(g);
   }
   // 1.5 상대가 방어 자세면(블록 피해 감소 + 쓸 때마다 반격) 자세가 풀릴 때까지 블록을 아낀다: 마무리 가능하면 쓰고, 순서만 붙이고, 바가 가득 차면 하나 쓴다
-  if (s.enemy.stance) {
+  if (s.enemy.stance && !opt.ignoreStance) {
     const kill = skills.find((c) => blockDamage(s, c.b, groupSize(s, c)) >= s.enemy.hp);
     if (kill) return use(kill);
-    const j = joinMove(s, top);
+    const j = opt.allowJoin === false ? null : joinMove(s, top);
     if (j) return j;
     if (s.tray.length >= p.trayCapacity) {
       const pick = ofRole('guard')[0] ?? ofRole('attack')[0] ?? ofRole('heal')[0];
@@ -112,7 +119,7 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     if (role === 'guard' && !hasPattern) return use(c);
   }
   // 6. 같은 특성 블록을 붙인다 (드래그 = move)
-  const join = joinMove(s, top);
+  const join = opt.allowJoin === false ? null : joinMove(s, top);
   if (join) return join;
   // 7. 가득 찼으면 하나 쓴다: 공허(허용 시) → 체인 높은 공격 → 회복 → 막기
   if (s.tray.length >= p.trayCapacity) {
@@ -130,6 +137,54 @@ export function playCombatBot(s: CombatState, opt: BotOptions = {}): CombatState
   while (s.status === 'playing') {
     step(s, s.tick % every === 0 ? botInput(s, opt) : null);
     s.events.length = 0;
+  }
+  return s;
+}
+
+/** 사람형 봇 설정 (GDD 14-4, 모두 임시). 같은 시드면 같은 플레이 */
+export interface HumanBotOptions extends BotOptions {
+  /** 입력 사이 간격(초): 매번 이 범위에서 무작위. 강공격 예고를 본 뒤 막기까지의 반응 지연도 같은 범위 */
+  reactionSeconds?: [number, number];
+  /** 강공격(시전 하나)을 막으려는 시도가 성공할 확률. 실패하면 그 시전은 막기를 쓰지 않는다 */
+  guardSuccess?: number;
+  /** 붙일 수 있을 때 실제로 같은 블록을 붙이는(체인 정리) 확률. 입력 한 번마다 굴린다 */
+  joinChance?: number;
+  /** 전투마다 한 번 굴려, 방어 자세의 의미(블록 피해 감소·반격)를 알아채고 블록을 아끼는 확률. 못 알아채면 평소대로 쓴다 */
+  stanceAware?: number;
+}
+
+export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, number], guardSuccess: 0.7, joinChance: 0.5, stanceAware: 0.5 };
+
+/** 사람형 봇으로 전투를 끝까지 돌린다: 반응 지연(무작위), 막기 성공률, 체인 정리 확률. 무작위는 전투 시드에서 따로 뽑아 전투 rng 를 건드리지 않는다 */
+export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): CombatState {
+  const [lo, hi] = opt.reactionSeconds ?? HUMAN_BOT_DEFAULTS.reactionSeconds;
+  const guardSuccess = opt.guardSuccess ?? HUMAN_BOT_DEFAULTS.guardSuccess;
+  const joinChance = opt.joinChance ?? HUMAN_BOT_DEFAULTS.joinChance;
+  const stanceAware = opt.stanceAware ?? HUMAN_BOT_DEFAULTS.stanceAware;
+  const rng = createRng((s.seed ^ 0x5bd1e995) >>> 0);
+  const ignoreStance = nextFloat(rng) >= stanceAware;
+  const delay = () => ticksOf(s.params, lo + nextFloat(rng) * (hi - lo));
+  let nextAct = delay();
+  /** 지금 시전(강공격 예고)에 대한 반응: 볼 수 있게 되는 틱과 막기 시도 성공 여부 */
+  let react: { at: number; ok: boolean } | null = null;
+  while (s.status === 'playing') {
+    if (s.events.some((e) => e.kind === 'heavy-cast')) {
+      react = { at: s.tick + delay(), ok: nextFloat(rng) < guardSuccess };
+      nextAct = Math.min(nextAct, react.at);
+    }
+    if (!s.enemy.cast) react = null;
+    let input: CombatInput | null = null;
+    if (s.tick >= nextAct) {
+      input = botInput(s, {
+        ...opt,
+        allowGuard: react !== null && react.ok && s.tick >= react.at,
+        allowJoin: nextFloat(rng) < joinChance,
+        ignoreStance,
+      });
+      nextAct = s.tick + delay();
+    }
+    s.events.length = 0;
+    step(s, input);
   }
   return s;
 }

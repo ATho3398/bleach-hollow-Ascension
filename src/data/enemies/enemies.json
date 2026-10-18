@@ -184,7 +184,7 @@
     },
     "class": "elite",
     "hpInAttacks": 58,
-    "attackInAttacks": 0.24,
+    "attackInAttacks": 0.29,
     "weaknessLineageId": "lineage-a",
     "lineageId": "lineage-d",
     "rareChance": 0.25,
@@ -194,7 +194,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.35,
+      "counterInAttacks": 0.42,
       "provisional": true
     }
   },
@@ -301,7 +301,7 @@
     },
     "class": "elite",
     "hpInAttacks": 58,
-    "attackInAttacks": 0.24,
+    "attackInAttacks": 0.29,
     "weaknessLineageId": "lineage-b",
     "lineageId": "lineage-e",
     "rareChance": 0.25,
@@ -311,7 +311,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.35,
+      "counterInAttacks": 0.42,
       "provisional": true
     }
   },
@@ -418,7 +418,7 @@
     },
     "class": "elite",
     "hpInAttacks": 58,
-    "attackInAttacks": 0.24,
+    "attackInAttacks": 0.29,
     "weaknessLineageId": "lineage-c",
     "lineageId": "lineage-a",
     "rareChance": 0.25,
@@ -428,7 +428,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.35,
+      "counterInAttacks": 0.42,
       "provisional": true
     }
   },
@@ -535,7 +535,7 @@
     },
     "class": "elite",
     "hpInAttacks": 58,
-    "attackInAttacks": 0.24,
+    "attackInAttacks": 0.29,
     "weaknessLineageId": "lineage-d",
     "lineageId": "lineage-b",
     "rareChance": 0.25,
@@ -545,7 +545,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.35,
+      "counterInAttacks": 0.42,
       "provisional": true
     }
   },
@@ -652,7 +652,7 @@
     },
     "class": "elite",
     "hpInAttacks": 58,
-    "attackInAttacks": 0.24,
+    "attackInAttacks": 0.29,
     "weaknessLineageId": "lineage-e",
     "lineageId": "lineage-c",
     "rareChance": 0.25,
@@ -662,7 +662,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.35,
+      "counterInAttacks": 0.42,
       "provisional": true
     }
   }
