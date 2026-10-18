@@ -3,25 +3,8 @@ import { ENEMIES } from '../src/data/enemies';
 import { LINEAGES } from '../src/data/lineages';
 import { lineageClass, lineageIconId, lineageKey } from '../src/ui/bha/lineage';
 import {
-  ALL, canPlaceAt, endTone, filterFoes, msgKind, needsWalkerSnap, ringDisplayPos, ringState, tileCss,
+  ALL, canPlaceAt, endTone, filterFoes, msgKind, tileCss,
 } from '../src/ui/bha/expedition';
-
-describe('원정 링 위치 (--pos)', () => {
-  it('둥지 칸에 도착해 귀환을 고르는 중이면 12 로 보여 호가 한 바퀴를 채운다', () => {
-    expect(ringDisplayPos(0, 'nest-choice')).toBe(12);
-    expect(ringDisplayPos(0, 'moving')).toBe(0);
-    expect(ringDisplayPos(5, 'moving')).toBe(5);
-    expect(ringDisplayPos(5, 'battle')).toBe(5);
-  });
-
-  it('12 → 0 처럼 앞 위치보다 작아질 때만 전환 없이 옮긴다', () => {
-    expect(needsWalkerSnap(12, 0)).toBe(true);
-    expect(needsWalkerSnap(4, 5)).toBe(false);
-    expect(needsWalkerSnap(5, 5)).toBe(false);
-    // 한 칸씩 진행하는 11 → 12(둥지 칸 도착)는 보간
-    expect(needsWalkerSnap(11, 12)).toBe(false);
-  });
-});
 
 describe('타일 놓기 규칙 (지금 .slot/.can/.has)', () => {
   const base = { slot: null, index: 6, pos: 4, phase: 'moving' as const, hasSelected: true };
@@ -42,14 +25,6 @@ describe('타일 놓기 규칙 (지금 .slot/.can/.has)', () => {
 });
 
 describe('원정 상태 표시', () => {
-  it('링 가운데 상태 글자', () => {
-    expect(ringState('moving', false, false).label).toBe('이동 중');
-    expect(ringState('moving', true, false).label).toBe('일시정지');
-    expect(ringState('moving', false, true).label).toBe('타일 놓는 중');
-    expect(ringState('battle', false, false).label).toBe('전투 대기');
-    expect(ringState('rest', false, false).label).toBe('휴식 중');
-    expect(ringState('nest-choice', false, false).label).toBe('도착');
-  });
   it('메시지 줄 종류: 전투 = fight, 휴식 = rest, 메시지 없이 허기 급상승 = warn', () => {
     expect(msgKind('battle', '조우!', false)).toBe('fight');
     expect(msgKind('rest', '쉰다', false)).toBe('rest');

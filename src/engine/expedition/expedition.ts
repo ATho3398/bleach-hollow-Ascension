@@ -434,6 +434,37 @@ export function placeTile(exp: ExpeditionState, tileId: string, cell: number): P
   return { ok: true };
 }
 
+/**
+ * 카드 배치 단계 (GDD 17-1): 원정이 시작되기 직전에 덱의 타일을 손에 쥐어 12칸 길에 놓게 한다.
+ * 덱은 보상으로 뽑을 타일 목록이기도 해서 그대로 두고, 손에만 사본을 쥔다. 단계가 끝나면 finishPlanning 이 손을 비운다.
+ */
+export function beginPlanning(exp: ExpeditionState): void {
+  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 배치 단계를 열 수 있다');
+  exp.hand = [...exp.deck];
+}
+
+/** 배치 단계 끝: 놓지 않은 타일은 버린다(어차피 보유 타일이라 잃지 않는다). 손은 원정 중 획득한 타일 전용이 된다. 놓은 칸 수를 돌려준다 */
+export function finishPlanning(exp: ExpeditionState): number {
+  exp.hand = [];
+  return exp.slots.filter((s) => s !== null).length;
+}
+
+/**
+ * 원정이 끝났을 때 놓지 않고 남은 획득 타일 (GDD 17-1): 다음 원정 덱으로 보관한다. 패배로 잃은 타일(마지막 바퀴 획득분)은 뺀다.
+ * 호출하는 쪽(game.ts)이 덱 상한·보유 수량을 지켜 덱에 넣는다
+ */
+export function unplacedKept(exp: ExpeditionState): string[] {
+  if (exp.phase !== 'ended') throw new Error('원정이 끝나지 않았다');
+  const lost = [...summarize(exp).lost];
+  const kept: string[] = [];
+  for (const id of exp.hand) {
+    const li = lost.indexOf(id);
+    if (li >= 0) lost.splice(li, 1);
+    else kept.push(id);
+  }
+  return kept;
+}
+
 function endExpedition(exp: ExpeditionState, outcome: 'returned' | 'defeated', reason: EndReason): StepEvent {
   exp.phase = 'ended';
   exp.absorbOffer = null;

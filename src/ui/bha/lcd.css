@@ -79,15 +79,14 @@
 .bha-lcd .bha-tut__body { font-size: var(--bha-fs-sm); line-height: 1.45; }
 
 /* ═════ 원정 ═════
-   왼쪽 = 12칸 원형 길(정사각, LCD 높이에 맞춤) | 오른쪽 = 머리·상태 바·특성 슬롯 / 메시지 / 보유 타일(한 줄, 옆으로 밀기) / 배속·일시정지.
-   둥지 칸 도착 시트(.bha-sheet)는 오른쪽 열의 아래쪽 자리를 채우고 메시지·보유 타일 줄·조작 줄을 대신한다 (보유 타일은 시트 안에 있다). 링은 항상 보인다. */
+   왼쪽 = 걷는 장면(LCD 높이를 채움) | 오른쪽 = 머리·상태 바·특성 슬롯 / 배속·일시정지 (메시지·상태 줄은 장면 위에 얹힘).
+   둥지 칸 도착 시트(.bha-sheet)는 오른쪽 열의 아래쪽 자리를 채우고 메시지·보유 타일 줄·조작 줄을 대신한다 (타일 배치판은 시트 안에 있다). 장면은 항상 보인다. */
 .bha-lcd .bha-app.bha-exp {
   position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;
   display: flex; flex-direction: row; align-items: stretch; gap: var(--bha-sp-4);
   padding: var(--bha-sp-3) var(--bha-sp-4); overflow: hidden;
 }
-.bha-lcd .bha-exp__ringwrap { flex: none; align-self: center; height: min(100%, 312px); aspect-ratio: 1; min-height: 0; }
-.bha-lcd .bha-exp__ringwrap .bha-ring { width: 100%; max-width: none; margin: 0; }
+.bha-lcd .bha-exp__scene { flex: 1.15 1 0; min-width: 0; }
 .bha-exp__side { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3); }
 .bha-lcd .bha-exp__top { gap: var(--bha-sp-2); }
 .bha-lcd .bha-exp__head { align-items: flex-start; }
@@ -99,7 +98,6 @@
 .bha-lcd .bha-exp__slots { flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-3); }
 .bha-lcd .bha-exp__slots > * { flex: none; }
 .bha-lcd .bha-exp__msg { min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-sm); line-height: 1.3; }
-.bha-lcd .bha-exp__handcap { display: none; }
 .bha-lcd .bha-exp__hand { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-height: 0; }
 .bha-lcd .bha-exp__hand .bha-tilechip { flex: none; }
 .bha-lcd .bha-exp__bar { grid-template-columns: auto auto minmax(0, 1fr); margin-top: auto; }
@@ -108,7 +106,6 @@
 .bha-lcd .bha-exp__bar .bha-num { display: none; }
 
 /* 둥지 칸 도착 시트: 바닥에 붙는 시트 대신 오른쪽 열 안의 패널. 시트가 열리면 메시지·보유 타일 줄·조작 줄·특성 슬롯·머리 글자는 시트에 자리를 내준다 */
-.bha-lcd .bha-exp.has-sheet .bha-exp__msg, .bha-lcd .bha-exp.has-sheet .bha-exp__handbox,
 .bha-lcd .bha-exp.has-sheet .bha-exp__bar, .bha-lcd .bha-exp.has-sheet .bha-exp__slots, .bha-lcd .bha-exp.has-sheet .bha-exp__head { display: none; }
 .bha-lcd .bha-exp__sheetbox { display: contents; }
 .bha-lcd .bha-exp .bha-sheet__scrim { display: none; }

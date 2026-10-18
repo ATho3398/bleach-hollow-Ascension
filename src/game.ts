@@ -4,7 +4,7 @@ import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { completedLineages, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
-import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult } from './engine/expedition';
+import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult } from './engine/expedition';
 import {
   cloneEvolution, evolve, newEvolution, recordEvolutionAbsorb, type EvolutionState, type EvolveResult,
 } from './engine/evolution';
@@ -94,9 +94,19 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   // 진화 상태: 원정 중 쌓인 흡수 누적을 합친다 (한계 돌파는 진화체 선택에 쓰지 않는다, GDD 4-2 v1.0)
   save.evolution = cloneEvolution(exp.evolution);
   for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
+  storeUnplacedTiles(save.tiles, unplacedKept(exp));
   applyExpeditionEnd(save.nest, exp, nowMs);
   save.activeExpedition = null;
   checkTitles(save, 'expedition', nowMs);
+}
+
+/** 놓지 않고 남은 획득 타일을 다음 원정 덱에 넣는다 (GDD 17-1): 덱 상한과 보유 수량을 넘기면 덱에는 못 넣는다(보유에는 이미 들어 있다) */
+export function storeUnplacedTiles(stock: TileStock, ids: string[], size: number = BALANCE.provisional.expedition.deckSize): void {
+  for (const id of ids) {
+    const inDeck = stock.deck.filter((x) => x === id).length;
+    if (stock.deck.length >= size || inDeck >= (stock.collection[id] ?? 0)) continue;
+    stock.deck.push(id);
+  }
 }
 
 /** 이어할 원정이 있는가. 저장된 값이 손상·구버전이면 영역을 비우고 이유를 알려 준다 (이어하기를 숨긴다) */

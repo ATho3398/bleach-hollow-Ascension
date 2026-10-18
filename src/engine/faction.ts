@@ -107,6 +107,8 @@ export interface FactionConfig {
   breakthroughText: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
+  /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
+  walkAnim?: string;
   /** 둥지 / 대원실 (GDD 7장) */
   nestName: string;
   /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
@@ -144,6 +146,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   for (const a of NEST_ACTIONS) {
     if (!isString(na[a])) errors.push(`nestActions.${a}: 비어 있지 않은 문자열이어야 한다`);
   }
+  if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {
     const rm = r.room as Record<string, unknown>;
     for (const k of ['shape', 'sceneArt', 'characterArt']) if (rm[k] !== undefined && !isString(rm[k])) errors.push(`room.${k}: 비어 있지 않은 문자열이어야 한다`);

@@ -29,6 +29,7 @@ import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { resultView } from './resultView';
 import { expeditionView, getSpeed, setSpeed } from './expeditionView';
+import { planView } from './planView';
 import { dexView } from './dexView';
 import { showTitleToasts, titleDexView } from './titleDexView';
 import { evolutionView } from './evolutionPanel';
@@ -369,10 +370,16 @@ export function startApp(host: HTMLElement): void {
       evolution: save.evolution,
     });
     resumeNote = '';
-    activeExp = exp;
-    saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
-    // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
-    open('expedition', () => showExpedition(faction, exp, `${faction.huntingGroundName}으로 출발!`), true);
+    // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
+    open('expedition-plan', () => planView(root, faction, exp, {
+      onStart: () => {
+        activeExp = exp;
+        saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
+        // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
+        nav.replace({ id: 'expedition', locked: true, render: () => { showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
+      },
+      onHelp: () => openHelp('expedition', false),
+    }));
   }
 
   /** 저장된 원정으로 돌아간다: 저장된 시점의 화면(전투 직전·흡수·둥지 칸 귀환 선택·이동 중)으로 복원 */

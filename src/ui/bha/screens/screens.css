@@ -189,18 +189,15 @@
 .bha-exp__where small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-exp__slots { display: flex; align-items: center; gap: 6px; font-size: var(--bha-fs-xs); color: var(--bha-text-2); flex-wrap: wrap; }
 .bha-exp__slots .bha-lin .bha-icon { width: 14px; height: 14px; }
-.bha-exp__ringwrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
-.bha-exp__ringwrap .bha-ring { width: min(100%, var(--ring-max, 380px)); }
+.bha-exp__scene { position: relative; flex: 1 1 auto; min-height: 0; }
 .bha-exp__msg { min-height: 40px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 10px; border-radius: var(--bha-r-md); background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); font-size: var(--bha-fs-md); text-align: center; flex: none; }
 .bha-exp__msg .bha-icon { width: 18px; height: 18px; flex: none; }
 .bha-exp__msg--warn { border-color: color-mix(in srgb, var(--bha-warn) 50%, transparent); color: var(--bha-warn); }
 .bha-exp__msg--fight { border-color: color-mix(in srgb, var(--bha-attack) 60%, transparent); color: var(--bha-danger); }
 .bha-exp__msg--rest { border-color: color-mix(in srgb, var(--bha-tile-rest) 70%, transparent); color: #7fd6a6; }
 .bha-exp__hand { display: flex; flex-wrap: wrap; gap: 6px; flex: none; min-height: 44px; }
-.bha-exp__handcap { font-size: var(--bha-fs-xs); color: var(--bha-text-3); flex: none; }
 .bha-exp__bar { display: grid; grid-template-columns: auto auto 1fr auto; gap: 6px; align-items: center; flex: none; }
 .bha-exp__bar .bha-seg { min-width: 150px; }
-@media (max-height: 760px), (orientation: portrait) { .bha-exp__ringwrap .bha-ring { --ring-max: 300px; } .bha-exp__handcap { display: none; } }
 
 /* =========================================================
    한계 돌파  .bha-break

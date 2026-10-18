@@ -13,34 +13,9 @@ export function tileCss(kind: TerrainTileDef['kind']): TileCss {
 }
 export const tileIconId = (css: TileCss): string => `i-tile-${css}`;
 
-/** 링에 보일 위치: 한 바퀴를 끝내 둥지 칸에 선 상태(pos 0 + 귀환 선택)는 12 로 보여 호가 한 바퀴를 채운다 */
-export function ringDisplayPos(pos: number, phase: ExpeditionPhase): number {
-  return pos === 0 && (phase === 'nest-choice' || phase === 'ended') ? 12 : pos;
-}
-
-/** 표식이 앞 위치보다 작아지면(12 → 0) 거꾸로 한 바퀴 돌지 않도록 전환을 끄고 바로 옮긴다 */
-export function needsWalkerSnap(prev: number, next: number): boolean {
-  return next < prev;
-}
-
 /** 지금 고른 타일을 이 칸에 놓을 수 있는가: 지금 위치보다 앞쪽 빈 슬롯만 (엔진 규칙을 화면이 그대로 반영) */
 export function canPlaceAt(o: { slot: string | null; index: number; pos: number; phase: ExpeditionPhase; hasSelected: boolean }): boolean {
   return !o.slot && o.hasSelected && (o.phase === 'moving' || o.phase === 'nest-choice') && o.index > o.pos;
-}
-
-export interface RingState {
-  label: string;
-  icon: string;
-}
-
-/** 링 가운데 상태 글자와 아이콘 */
-export function ringState(phase: ExpeditionPhase, paused: boolean, hasSelected: boolean): RingState {
-  if (phase === 'battle') return { label: '전투 대기', icon: 'i-practice' };
-  if (phase === 'rest') return { label: '휴식 중', icon: 'i-tile-rest' };
-  if (phase === 'nest-choice' || phase === 'ended') return { label: '도착', icon: 'i-nest' };
-  if (paused) return { label: '일시정지', icon: 'i-pause' };
-  if (hasSelected) return { label: '타일 놓는 중', icon: 'i-tile-combo' };
-  return { label: '이동 중', icon: 'i-play' };
 }
 
 export type MsgKind = '' | 'warn' | 'fight' | 'rest';
