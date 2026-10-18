@@ -6,7 +6,7 @@
 import { el, icon } from './dom';
 import { keepSelection, orderByRank, stepIndex } from './select';
 import { setOverlayHost } from './overlayHost';
-import { computeFit, fitTransform, setFit } from './viewport';
+import { computeFit, deviceInsets, fitTransform, pickViewport, setFit } from './viewport';
 
 export interface SelectItem {
   el: HTMLElement;
@@ -68,12 +68,18 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   const ok = devButton('bha-dev__btn--ok', '확정', icon('i-check'));
   const back = devButton('bha-dev__btn--back', '취소', icon('i-chevron-left'));
   const left = el('div', 'bha-dev__side bha-dev__side--left');
+  left.setAttribute('role', 'group');
+  left.setAttribute('aria-label', '항목 이동 버튼');
   left.append(up, down);
   const right = el('div', 'bha-dev__side bha-dev__side--right');
+  right.setAttribute('role', 'group');
+  right.setAttribute('aria-label', '확정·취소 버튼');
   right.append(ok, back);
 
   const view = el('div', 'bha-lcd__view');
   const lcd = el('div', 'bha-lcd');
+  lcd.setAttribute('role', 'region');
+  lcd.setAttribute('aria-label', '게임 화면');
   lcd.append(view);
   const bezel = el('div', 'bha-dev__bezel');
   bezel.append(lcd);
@@ -83,17 +89,38 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   root.replaceChildren(dev);
 
   // ── 화면 맞춤: 가로면 그대로, 세로면 기기 전체를 돌려 채운다 (GDD 16-6). 방향이 바뀌어도 화면은 다시 만들지 않고 틀만 다시 계산한다 ──
+  // 뷰포트 크기는 고정 위치 프로브로 잰다: iOS Safari 의 주소창이 접히고 펴져 보이는 높이가 바뀌어도(100dvh 와 같은 값) 따라간다.
+  // 프로브 padding 에 안전 영역(env)을 넣어 같이 읽어, 돌린·줄인 기기 안 여백으로 바꿔 쓴다 (viewport-fit=cover 를 켰을 때만 0 이 아니다)
+  const probe = el('div', 'bha-dev__probe');
+  probe.setAttribute('aria-hidden', 'true');
   const fitDevice = () => {
-    const f = computeFit(window.innerWidth, window.innerHeight);
+    const r = probe.getBoundingClientRect();
+    const vp = pickViewport(r, window);
+    const f = computeFit(vp.w, vp.h);
     setFit(f);
     dev.classList.toggle('is-rotated', f.rotated);
     dev.style.width = `${f.w}px`;
     dev.style.height = `${f.h}px`;
     dev.style.transform = fitTransform(f);
+    dev.style.setProperty('--dev-scale', String(f.scale));
+    const cs = getComputedStyle(probe);
+    const ins = deviceInsets(f, { top: parseFloat(cs.paddingTop) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, left: parseFloat(cs.paddingLeft) || 0 });
+    dev.style.setProperty('--dev-inset-top', `${ins.top}px`);
+    dev.style.setProperty('--dev-inset-right', `${ins.right}px`);
+    dev.style.setProperty('--dev-inset-bottom', `${ins.bottom}px`);
+    dev.style.setProperty('--dev-inset-left', `${ins.left}px`);
   };
+  root.append(probe);
   fitDevice();
+  // 방향 전환 직후에는 브라우저가 옛 크기를 잠깐 돌려주는 일이 있어(iOS) 한 프레임·0.3초 뒤에 한 번씩 더 계산한다
+  const refit = () => {
+    fitDevice();
+    requestAnimationFrame(fitDevice);
+    window.setTimeout(fitDevice, 300);
+  };
   window.addEventListener('resize', fitDevice);
-  window.addEventListener('orientationchange', fitDevice);
+  window.addEventListener('orientationchange', refit);
+  window.visualViewport?.addEventListener('resize', fitDevice);
 
   // ── 선택 상태 ──
   let items: SelectItem[] = [];
@@ -103,10 +130,17 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let touchOnly = false;
 
   let lastSel: HTMLElement | null = null;
+  const unmark = (e: HTMLElement) => {
+    e.classList.remove('bha-sel');
+    e.removeAttribute('aria-current');
+  };
   const markSel = () => {
-    for (const it of items) it.el.classList.remove('bha-sel');
+    for (const it of items) unmark(it.el);
     const cur = items[index];
-    if (cur) cur.el.classList.add('bha-sel');
+    if (cur) {
+      cur.el.classList.add('bha-sel');
+      cur.el.setAttribute('aria-current', 'true');
+    }
     // 하이라이트가 새 항목으로 옮겨 가면 그 요소에 'bha-select' 를 보낸다 (목록 → 상세 화면이 따라 바뀐다, T-3)
     const now = cur?.el ?? null;
     if (now && now !== lastSel) {
@@ -137,7 +171,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     } else {
       index = keepSelection(prev.map((i) => i.el), prevIdx, next.map((i) => i.el));
     }
-    for (const p of prev) if (!next.includes(p)) p.el.classList.remove('bha-sel');
+    for (const p of prev) if (!next.includes(p)) unmark(p.el);
     markSel();
     const cur = items[index] ?? null;
     if (cur && cur !== prev[prevIdx]) {
@@ -150,6 +184,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     down.classList.toggle('is-off', !canMove);
     ok.classList.toggle('is-off', !(canMove || (touchOnly && !!view.querySelector('[data-dev-confirm]'))));
     back.classList.toggle('is-off', layers.length === 0 && !opts.canCancel());
+    for (const b of [up, down, ok, back]) b.setAttribute('aria-disabled', String(b.classList.contains('is-off')));
   }
 
   let raf = 0;
@@ -252,7 +287,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', schedule);
       window.removeEventListener('resize', fitDevice);
-      window.removeEventListener('orientationchange', fitDevice);
+      window.removeEventListener('orientationchange', refit);
+      window.visualViewport?.removeEventListener('resize', fitDevice);
       setOverlayHost(null);
     },
   };

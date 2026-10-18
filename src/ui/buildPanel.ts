@@ -71,6 +71,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   const filled = build.slots.filter(Boolean).length;
   const head = panel({ title: '흡수 특성', aside: h('span', '', `${faction.slotName} ${filled} / ${build.slots.length}`) });
   head.querySelector('.bha-panel__title')?.prepend(icon('i-slot'));
+  head.querySelector('.bha-panel__title')?.append(' ', provisionalTag()); // 임시 데이터 표시는 제목에, 긴 안내 문구는 오른쪽 열 맨 아래에 (왼쪽 열이 낮은 LCD 에서 안 넘치게, T-4)
   if (state.swapTrait !== null) {
     head.append(notice('warn', `‘${traitName(state.swapTrait, faction.id)}’을(를) 넣을 슬롯을 누른다. 빠진 특성은 보유 목록으로 돌아간다.`, { title: '어느 슬롯과 바꿀까?', icon: 'i-swap' }));
   }
@@ -88,12 +89,11 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   }
   const foot = h('p', 'bha-faint', `${filled > 0 && state.swapTrait === null ? '채워진 칸을 누르면 비운다. ' : ''}${PROVISIONAL_NOTE}`);
   foot.append(' ', provisionalTag());
-  head.append(foot);
 
   const spare = unequippedOwned(build);
   const owned = panel({ title: '보유 특성', aside: `${spare.length}개` });
   if (build.owned.length === 0) {
-    owned.append(h('p', 'bha-dim', '아직 얻은 특성이 없다. 원정에서 전투 후 흡수하면 얻는다.'));
+    owned.append(h('p', 'bha-dim', '아직 얻은 특성이 없다. 원정에서 전투 후 흡수하면 얻는다.'), foot);
     return [head, owned];
   }
   if (spare.length === 0) owned.append(h('p', 'bha-dim', '슬롯에 없는 보유 특성이 없다. 모두 장착 중이다.'));
@@ -130,5 +130,6 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   if (state.swapTrait !== null) {
     owned.append(button({ label: '취소', block: true, onClick: () => { state.swapTrait = null; onChange(); } }));
   }
+  owned.append(foot);
   return [head, owned];
 }

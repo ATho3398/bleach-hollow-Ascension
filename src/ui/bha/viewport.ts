@@ -20,6 +20,28 @@ export interface Fit {
   vh: number;
 }
 
+export interface Insets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+/**
+ * 화면의 안전 영역(노치·홈 막대, 화면 기준 px) → 기기 안 여백(논리 px).
+ * 돌려 놓은 기기에서는 화면 위·오른쪽·아래·왼쪽이 기기의 오른쪽·아래·왼쪽·위가 되고, 축소했으면 그만큼 논리 px 로 키운다.
+ */
+export function deviceInsets(f: Fit, s: Insets): Insets {
+  const m = f.rotated ? { top: s.right, right: s.bottom, bottom: s.left, left: s.top } : s;
+  return { top: m.top / f.scale, right: m.right / f.scale, bottom: m.bottom / f.scale, left: m.left / f.scale };
+}
+
+/** 뷰포트 크기를 고른다: 고정 위치 프로브(inset 0)가 재는 "지금 보이는 영역"이 있으면 그것(주소창이 접히고 펴져도 맞음), 없으면 window 크기 */
+export function pickViewport(probe: { width: number; height: number } | null, win: { innerWidth: number; innerHeight: number }): { w: number; h: number } {
+  if (probe && probe.width > 0 && probe.height > 0) return { w: probe.width, h: probe.height };
+  return { w: win.innerWidth, h: win.innerHeight };
+}
+
 export const IDENTITY_FIT: Fit = { rotated: false, scale: 1, w: 0, h: 0, vw: 0, vh: 0 };
 
 export function computeFit(vw: number, vh: number): Fit {

@@ -1,6 +1,6 @@
 /* T-3 (GDD 16장): 방 물건·가장자리 아이콘이 여는 기능 화면을 LCD 가로 비율(높이 약 330~360px)에 맞춘 2단 배치.
    진화 제단·진화체 도감·칭호 도감·상자·돌보기·설정·도움말·시작(종족 바꾸기). 디자인 토큰·bha- 클래스만 쓴다 (새 색·간격 없음).
-   lcd.css 다음에 읽는다. 화면 뼈대는 bha/lcdpage.ts (머리 + 왼쪽/오른쪽 열 + 선택적 아래 줄, 목록 → 상세). */
+   lcd.css 다음에 읽는다. 디자인 원본에 가로 LCD 시안이 없어 이 파일이 목록·상세형 화면의 기준이다. 화면 뼈대는 bha/lcdpage.ts (머리 + 왼쪽/오른쪽 열 + 선택적 아래 줄, 목록 → 상세). */
 
 /* ═════ 공용 뼈대 .bha-lcdpage ═════
    하이라이트(.bha-sel)가 바깥으로 5px 번지므로 안쪽 여백 8px 을 두고, 열은 그 여백만큼 바깥으로 내어 열 안에서 스크롤해도 잘리지 않게 한다 */
@@ -19,7 +19,7 @@
 .bha-lcdpage__col {
   min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3);
   padding: var(--bha-sp-4); margin: calc(-1 * var(--bha-sp-4));
-  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin;
+  overflow: auto; overscroll-behavior: contain; scrollbar-width: thin;  /* overflow-x: hidden 을 쓰지 않는다: 회전한 기기에서 손가락 스크롤이 막힌다(device.css 참고) */
 }
 .bha-lcdpage__col > * { flex: none; }
 .bha-lcdpage__foot { flex: none; display: flex; align-items: center; gap: var(--bha-sp-4); }
@@ -151,7 +151,7 @@
 /* ═════ 원정 결과·연습 결과 (T-2 에서 남은 스크롤 줄이기): 왼쪽을 좁히고 오른쪽 요약 표를 두 줄 칸으로 ═════ */
 .bha-lcd .bha-app.bha-split.bha-resultpage { grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.45fr); }
 .bha-resultpage .bha-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-6); }
-.bha-resultpage .bha-info__row { min-width: 0; }
+.bha-resultpage .bha-info__row { min-width: 0; padding: var(--bha-sp-1) 0; }
 .bha-resultpage .bha-info__row:has(small) { grid-column: 1 / -1; }
 .bha-resultpage .bha-info dt { white-space: normal; }
 .bha-resultpage .bha-info dt, .bha-resultpage .bha-info dd { font-size: var(--bha-fs-xs); }
@@ -187,3 +187,9 @@
 
 /* ═════ 원정 둥지 칸 도착 시트 (T-2 에서 남은 스크롤 줄이기): 제목을 한 줄로 ═════ */
 .bha-lcd .bha-exp .bha-sheet__title { font-size: var(--bha-fs-md); gap: var(--bha-sp-3); }
+
+/* 낮은 LCD(740×360 근처)에서 흡수 ① 이 한 화면에 들어오게: 이미 조건을 채운 뒤라 일반 규칙 설명은 숨기고(도움말에 있음), 슬롯 이름은 한 줄로 */
+.bha-absorbpage .bha-slot__name { font-size: var(--bha-fs-sm); }
+@container lcd (max-height: 345px) {
+  .bha-absorbpage .bha-absorb__rule { display: none; }
+}

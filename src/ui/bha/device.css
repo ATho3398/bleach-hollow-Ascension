@@ -7,11 +7,13 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .bha-dev {
   position: fixed; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 0 0;  /* 크기·회전·축소는 device.ts 가 정한다 (viewport.ts) */
   display: flex; align-items: stretch; gap: var(--bha-sp-4);
-  padding: max(var(--bha-sp-4), env(safe-area-inset-top, 0px)) max(var(--bha-sp-4), env(safe-area-inset-right, 0px)) max(var(--bha-sp-4), env(safe-area-inset-bottom, 0px)) max(var(--bha-sp-4), env(safe-area-inset-left, 0px));
+  padding: max(var(--bha-sp-4), var(--dev-inset-top, 0px)) max(var(--bha-sp-4), var(--dev-inset-right, 0px)) max(var(--bha-sp-4), var(--dev-inset-bottom, 0px)) max(var(--bha-sp-4), var(--dev-inset-left, 0px));  /* 안전 영역은 device.ts 가 돌림·축소를 반영해 넣는다 */
   background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop);
 }
-.bha-dev.is-rotated {  /* 돌려 놓은 기기: 화면의 위·오른쪽·아래·왼쪽 안전 영역이 기기의 오른쪽·아래·왼쪽·위가 된다 */
-  padding: max(var(--bha-sp-4), env(safe-area-inset-right, 0px)) max(var(--bha-sp-4), env(safe-area-inset-bottom, 0px)) max(var(--bha-sp-4), env(safe-area-inset-left, 0px)) max(var(--bha-sp-4), env(safe-area-inset-top, 0px));
+/* 뷰포트·안전 영역 측정용 보이지 않는 틀 (device.ts): inset 0 인 고정 요소 = 지금 보이는 영역 */
+.bha-dev__probe {
+  position: fixed; inset: 0; visibility: hidden; pointer-events: none;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 .bha-dev__side {
   flex: none; width: calc(var(--bha-touch) + var(--bha-sp-9));
@@ -56,18 +58,21 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   overflow: hidden; isolation: isolate; transform: translateZ(0);
   background: var(--bha-bg-0);
   border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md);
+  container: lcd / size;  /* 화면 CSS 가 LCD 크기로 분기한다(@container lcd). 폰을 돌려 놓아도(회전) 뷰포트 미디어 쿼리와 달리 기기 안 크기를 본다 */
 }
 /* 도트 LCD 질감: 아주 옅은 가로줄 */
 .bha-lcd::after {
   content: ""; position: absolute; inset: 0; pointer-events: none; z-index: calc(var(--bha-z-tutorial) + 1);
   background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.05) 0 1px, transparent 1px 3px);
 }
-.bha-lcd__view { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+/* 스크롤 영역에 overflow-x: hidden/clip 을 쓰지 않는다: 90도 돌려 놓은 기기에서 손가락 스크롤(화면 가로 방향 밀기)이 막힌다 (Chromium, T-4 실측). overflow: auto 는 된다 */
+.bha-lcd__view { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; }
 
-/* 옛(세로 기준) 화면을 창 안에 임시로 넣는 규칙: 창 크기에 맞추고 넘치면 창 안에서 스크롤 (가로 비율 재구성은 T-2/T-3) */
-.bha-lcd__view > .bha-stage { min-height: 100%; display: flex; flex-direction: column; background: none; }
+/* LCD 안의 화면 틀: 디자인 시스템의 .bha-stage(데스크톱 장식 배경, 뷰포트 높이)는 쓰지 않고 창 크기에 맞춘다.
+   스크롤이 필요한 화면은 각자 열 안에서 스크롤하므로 창 자체는 넘치지 않는다 */
+.bha-lcd .bha-stage { display: contents; }
 .bha-lcd .bha-app {
-  flex: 1 0 auto; min-height: 0; max-width: none; box-shadow: none;
+  min-height: 100%; max-width: none; box-shadow: none;
   padding: var(--bha-sp-4) var(--bha-sp-5) var(--bha-sp-5);
   gap: var(--bha-sp-4);
 }

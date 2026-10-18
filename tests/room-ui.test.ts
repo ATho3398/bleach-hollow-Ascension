@@ -35,6 +35,11 @@ describe('그림 매니페스트', () => {
     expect(artUrls('char.x', '/repo/', m).frames).toEqual(['/repo/art/x1.png', '/repo/art/x2.png']);
     expect(artUrls('scene.y', '/repo', m).src).toBe('/repo/art/y.png');
   });
+  it('상대 경로 배포(base ./)에서도 파일 경로가 맞고, http·data 주소는 그대로 둔다', () => {
+    const m = { 'scene.y': { src: 'art/y.png' }, 'prop.z': { src: 'https://example.com/z.png' } };
+    expect(artUrls('scene.y', './', m).src).toBe('./art/y.png');
+    expect(artUrls('prop.z', './', m).src).toBe('https://example.com/z.png');
+  });
 });
 
 describe('종족 설정 room', () => {

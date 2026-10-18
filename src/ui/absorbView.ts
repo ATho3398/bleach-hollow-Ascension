@@ -175,7 +175,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
           { label: '놓아주면', mod: 'stack', value: withNum(`${faction.riskGaugeName} `, risky(`−${RX.releaseRelief}`, true), ` · ${faction.stabilityName} `, risky(`+${RX.releaseStability}`, true)) },
         ]),
       ),
-      el('p', 'bha-faint', absorbConditionText(faction, enemy.weaknessLineageId)),
+      el('p', 'bha-faint bha-absorb__rule', absorbConditionText(faction, enemy.weaknessLineageId)),
     );
     const side: HTMLElement[] = [
       meter({
@@ -269,11 +269,12 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const parts = step === 'choose' ? chooseStep() : step === 'pick' ? pickStep() : replaceStep();
     const side = [...parts.side];
     if (error && step !== 'choose') side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
-    side.push(el('p', 'bha-faint', PROVISIONAL_NOTE));
+    // 임시 데이터 안내는 왼쪽 열 맨 아래에 둔다: 오른쪽 열은 행동 버튼까지 스크롤 없이 한 화면에 보이게 (T-4)
+    const main = [...parts.main, el('p', 'bha-faint', PROVISIONAL_NOTE)];
     // 가로 LCD (T-3): 머리 = 단계 표시, 왼쪽·오른쪽 열이 각자 그 안에서 스크롤 (행동 버튼이 있는 오른쪽은 대부분 한 화면)
     const head = el('header', 'bha-absorb__head');
     head.append(steps(stepNo), el('h1', 'bha-h1', parts.title));
-    lcdPage(root, { cls: 'bha-absorbpage', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, head, parts.main, side);
+    lcdPage(root, { cls: 'bha-absorbpage', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, head, main, side);
   }
   render();
 }

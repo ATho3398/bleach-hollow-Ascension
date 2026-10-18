@@ -17,7 +17,9 @@ export function sceneBox(room: RoomConfig): HTMLElement {
   const { src } = artUrls(room.sceneArt, BASE);
   if (src) {
     box.classList.add('has-art');
-    box.style.setProperty('--room-art', `url("${src}")`);
+    // 사용자 정의 속성 안의 url() 은 CSS 파일 기준으로 풀려(상대 경로 배포에서 assets/ 아래를 찾는다) 문서 기준 절대 주소로 바꿔 넣는다
+    const abs = typeof document === 'undefined' ? src : new URL(src, document.baseURI).href;
+    box.style.setProperty('--room-art', `url("${abs}")`);
   }
   // 자리표시 배경: 벽·바닥 면 (그림이 있으면 CSS 가 숨긴다)
   box.append(el('span', 'bha-room__wall'), el('span', 'bha-room__floor'));
@@ -49,6 +51,7 @@ export function propButton(o: PropOpts): HTMLButtonElement {
     img.src = src;
     img.alt = '';
     shape.append(img);
+    shape.classList.add('has-art');
   } else shape.append(icon(PROP_ICON[o.prop]));
   b.append(shape, el('span', 'bha-prop__tag', o.name));
   return b;

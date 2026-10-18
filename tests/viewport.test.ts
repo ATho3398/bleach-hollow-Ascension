@@ -1,6 +1,6 @@
 // 세로 폰에서 기기를 돌려 출력하는 계산 (GDD 16-6, v1.6): 논리 크기·비례 축소·화면 좌표 ↔ 기기 안 좌표
 import { describe, expect, it } from 'vitest';
-import { computeFit, fitTransform, localRect, MIN_LOGICAL_W, toLocal } from '../src/ui/bha/viewport';
+import { computeFit, deviceInsets, fitTransform, localRect, MIN_LOGICAL_W, pickViewport, toLocal } from '../src/ui/bha/viewport';
 
 describe('computeFit', () => {
   it('가로 폰은 회전 없이 뷰포트 그대로', () => {
@@ -59,5 +59,26 @@ describe('좌표 변환', () => {
   it('fitTransform 문자열', () => {
     expect(fitTransform(computeFit(844, 390))).toBe('scale(1)');
     expect(fitTransform(computeFit(390, 844))).toBe('translate(390px, 0) rotate(90deg) scale(1)');
+  });
+});
+
+describe('안전 영역·뷰포트 측정', () => {
+  const ins = { top: 20, right: 47, bottom: 34, left: 10 };
+  it('가로 폰은 그대로 (축소 없음)', () => {
+    expect(deviceInsets(computeFit(844, 390), ins)).toEqual(ins);
+  });
+  it('세로 폰은 돌린 기기의 위·오른쪽·아래·왼쪽으로 바뀐다', () => {
+    // 화면 위(노치) → 기기 왼쪽, 화면 오른쪽 → 기기 위, 화면 아래(홈 막대) → 기기 오른쪽, 화면 왼쪽 → 기기 아래
+    expect(deviceInsets(computeFit(390, 844), ins)).toEqual({ top: 47, right: 34, bottom: 10, left: 20 });
+  });
+  it('축소하면 논리 px 로 키운다', () => {
+    const f = computeFit(360, 640);
+    expect(deviceInsets(f, { top: 0, right: 0, bottom: 0, left: 43 }).bottom).toBeCloseTo(43 / f.scale, 6);
+  });
+  it('프로브가 있으면 프로브 크기, 없거나 0 이면 window 크기', () => {
+    const win = { innerWidth: 390, innerHeight: 844 };
+    expect(pickViewport({ width: 390, height: 760 }, win)).toEqual({ w: 390, h: 760 });
+    expect(pickViewport(null, win)).toEqual({ w: 390, h: 844 });
+    expect(pickViewport({ width: 0, height: 0 }, win)).toEqual({ w: 390, h: 844 });
   });
 });

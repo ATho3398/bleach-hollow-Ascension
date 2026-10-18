@@ -96,7 +96,7 @@
 .bha-lcd .bha-exp__top .bha-stack { gap: var(--bha-sp-2); }
 .bha-lcd .bha-exp__top .bha-meter--compact { column-gap: var(--bha-sp-3); }
 .bha-lcd .bha-exp__top .bha-meter--compact .bha-meter__value { min-width: 0; font-size: var(--bha-fs-sm); }
-.bha-lcd .bha-exp__slots { flex-wrap: nowrap; overflow: hidden; gap: var(--bha-sp-3); }
+.bha-lcd .bha-exp__slots { flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-3); }
 .bha-lcd .bha-exp__slots > * { flex: none; }
 .bha-lcd .bha-exp__msg { min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-sm); line-height: 1.3; }
 .bha-lcd .bha-exp__handcap { display: none; }
@@ -104,6 +104,7 @@
 .bha-lcd .bha-exp__hand .bha-tilechip { flex: none; }
 .bha-lcd .bha-exp__bar { grid-template-columns: auto auto minmax(0, 1fr); margin-top: auto; }
 .bha-lcd .bha-exp__bar .bha-seg { min-width: 0; }
+.bha-lcd .bha-exp__bar .bha-seg__item { min-width: var(--bha-touch); }
 .bha-lcd .bha-exp__bar .bha-num { display: none; }
 
 /* 둥지 칸 도착 시트: 바닥에 붙는 시트 대신 오른쪽 열 안의 패널. 시트가 열리면 메시지·보유 타일 줄·조작 줄·특성 슬롯·머리 글자는 시트에 자리를 내준다 */
@@ -113,23 +114,23 @@
 .bha-lcd .bha-exp .bha-sheet__scrim { display: none; }
 .bha-lcd .bha-exp .bha-sheet {
   position: relative; inset: auto; flex: 1 1 0; min-height: 0; overflow: hidden; animation: none;
-  gap: var(--bha-sp-3); padding: var(--bha-sp-4);
+  gap: var(--bha-sp-2); padding: var(--bha-sp-3) var(--bha-sp-4);
   border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
   box-shadow: none;
 }
 .bha-lcd .bha-exp .bha-sheet::before { display: none; }
-.bha-sheet__scroll { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3); overflow-y: auto; overscroll-behavior: contain; }
+.bha-sheet__scroll { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-2); overflow-y: auto; overscroll-behavior: contain; }
 .bha-lcd .bha-exp .bha-sheet > .bha-grid2 { flex: none; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: var(--bha-sp-3); }
 .bha-lcd .bha-exp .bha-sheet .bha-btn { padding: 0 var(--bha-sp-3); gap: var(--bha-sp-2); }
 .bha-lcd .bha-exp .bha-sheet .bha-btn__label { white-space: nowrap; }
-.bha-lcd .bha-exp .bha-sheet__title .bha-btn { margin-left: auto; }
+.bha-lcd .bha-exp .bha-sheet__title .bha-btn { margin-left: auto; margin-right: var(--bha-sp-3); }  /* 누르는 영역(::after)이 5px 밖으로 나가 가로 스크롤이 생기지 않게 */
 .bha-lcd .bha-exp .bha-sheet__title { font-size: var(--bha-fs-lg); }
 .bha-lcd .bha-exp .bha-sheet__title .bha-icon { width: 18px; height: 18px; }
 .bha-lcd .bha-exp .bha-sheet__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
 .bha-lcd .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-xs); line-height: 1.3; }
 .bha-lcd .bha-exp .bha-sheet .bha-btn--lg { min-height: var(--bha-touch); font-size: var(--bha-fs-md); }
 
-/* ═════ 가로 2단 쪽 화면 (.bha-split): 원정 결과·연습 결과·연습 목록·흡수 3단계·한계 돌파 ═════
+/* ═════ 가로 2단 쪽 화면 (.bha-split): 원정 결과·연습 결과·한계 돌파 (목록·상세형 화면은 screens-lcd.css 의 .bha-lcdpage) ═════
    왼쪽(main) 설명·조작 / 오른쪽(side) 표·목록. 머리(첫 자식, main 이 아닌 것)는 두 열 위에 걸친다. 넘치면 창 안에서만 스크롤한다. */
 .bha-lcd .bha-app.bha-split {
   display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); grid-auto-rows: min-content; align-content: start; align-items: start;
@@ -140,6 +141,7 @@
 .bha-split__main, .bha-split__side { display: flex; flex-direction: column; gap: var(--bha-sp-4); min-width: 0; }
 .bha-split--sticky > .bha-split__main { position: sticky; top: 0; }
 .bha-split .bha-dock { position: static; margin: 0; padding: 0; background: none; }
+.bha-split .bha-dock__row--two { grid-template-columns: minmax(0, 1fr); }
 .bha-split .bha-result { padding: var(--bha-sp-3) 0 0; gap: var(--bha-sp-2); }
 .bha-split .bha-result__mark .bha-icon { width: 36px; height: 36px; }
 .bha-split .bha-result__title { font-size: var(--bha-fs-3xl); }
@@ -147,21 +149,7 @@
 .bha-split .bha-panel { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
 .bha-split .bha-info__row { padding: var(--bha-sp-2) 0; }
 .bha-split .bha-info dd { font-size: var(--bha-fs-sm); }
-.bha-split .bha-h1 { font-size: var(--bha-fs-xl); }
 
-.bha-split .bha-foecard { grid-template-columns: 48px minmax(0, 1fr); gap: var(--bha-sp-4); padding: var(--bha-sp-4); }
-.bha-split .bha-foecard .bha-foe { height: 48px; }
-.bha-split .bha-foecard__name { font-size: var(--bha-fs-lg); }
-.bha-split .bha-absorb__actions { position: sticky; bottom: 0; z-index: var(--bha-z-sticky); padding-top: var(--bha-sp-3); background: linear-gradient(180deg, transparent, var(--bha-bg-0) 10px); }
-.bha-split .bha-absorb__actions .bha-btn { min-height: 52px; }
-.bha-split .bha-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.bha-split .bha-slot { min-height: 64px; }
-.bha-split .bha-cand { padding: var(--bha-sp-4); gap: var(--bha-sp-4); grid-template-columns: 32px minmax(0, 1fr); }
-.bha-split .bha-cand__mark { width: 32px; height: 32px; }
-.bha-split .bha-cand__mark .bha-icon { width: 20px; height: 20px; }
-.bha-split .bha-foerow { min-height: 48px; padding: var(--bha-sp-2) var(--bha-sp-4) var(--bha-sp-2) var(--bha-sp-2); }
-.bha-split .bha-foerow__mark { width: 32px; height: 32px; }
-/* 연습 목록 필터: 계통 6칸은 줄바꿈 */
 
 /* 한계 돌파: 균열 배경 위에 두 열 */
 .bha-lcd .bha-app.bha-break--split { text-align: left; background: radial-gradient(circle at 25% 40%, rgb(255 79 216 / .22), transparent 60%), radial-gradient(circle at 25% 120%, rgb(229 72 77 / .25), transparent 55%), var(--bha-bg-0); }
@@ -176,4 +164,3 @@
 .bha-lcd .bha-toast__icon { width: 28px; height: 28px; }
 .bha-lcd .bha-toast__meta { display: none; }
 .bha-lcd .bha-toast__title { font-size: var(--bha-fs-md); }
-.bha-split .bha-dock__row--two { grid-template-columns: minmax(0, 1fr); }
