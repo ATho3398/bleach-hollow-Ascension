@@ -2664,6 +2664,28 @@
     "provisional": true
   },
   {
+    "id": "t5:picky",
+    "tier": 5,
+    "label": {
+      "kind": "picky",
+      "lineages": []
+    },
+    "from": "any",
+    "requires": [
+      {
+        "type": "maxShareAtLeast",
+        "min": 0.7
+      }
+    ],
+    "priority": 40,
+    "effects": {
+      "hpMultiplier": 1.07,
+      "attackMultiplier": 1.06,
+      "passive": {}
+    },
+    "provisional": true
+  },
+  {
     "id": "t5:base",
     "tier": 5,
     "label": {

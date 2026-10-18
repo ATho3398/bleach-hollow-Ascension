@@ -114,9 +114,11 @@ export function generateForms(lineageIds: readonly string[], tpl: FormTemplate, 
   prev = cur;
 
   // 5단계 (v1.1): 3조합 + 2조합. 3조합이 우선순위가 높아 3계통을 채우면 더 구체적인 형태, 몰린 분포는 2조합으로 간다
+  // (v1.7 보강 C.31: 한 계통에만 몰린 분포는 2조합 조건(1·2위가 모두 누적 있음)을 못 채워 기본형이 18.9%였다 → 편식형 추가)
   cur = [
     ...combinations(ids, 3).map((c) => make(5, 'triple', c, [{ type: 'top3', lineages: c }], connect(c))),
     ...combinations(ids, 2).map((c) => make(5, 'pair', c, [{ type: 'top2', lineages: c }], connect(c))),
+    ...specials(5, ['picky']),
   ];
   cur.push(make(5, 'base', [], [], 'any'));
   out.push(...cur);
