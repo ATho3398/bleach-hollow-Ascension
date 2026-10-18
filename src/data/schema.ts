@@ -49,7 +49,8 @@ interface PatternBase {
 export type EnemyPattern =
   | (PatternBase & { kind: 'basic' })
   /** 기본 공격 간격(초)을 데이터로 바꾼다. 속공 = 짧게, 단단 = 길게 (한 방 세기는 enemy.attackInAttacks) */
-  | (PatternBase & { kind: 'swift' | 'sturdy'; attackSeconds: number })
+  | (PatternBase & { kind: 'swift'; attackSeconds: number })
+  | (PatternBase & { kind: 'sturdy'; attackSeconds: number })
   | (PatternBase & {
       kind: 'heavy-seal';
       /** 특수 행동 간격(초): 직전 행동이 끝난 뒤 이만큼 지나면 다음 행동 */
