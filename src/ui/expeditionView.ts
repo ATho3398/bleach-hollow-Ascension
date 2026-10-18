@@ -365,6 +365,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     grid.append(ret, more);
     const sheet = el('div', 'bha-sheet');
     sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-label', `${faction.nestName} 칸에 도착했다`);
     sheet.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
     if (over) sheet.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
     if (exp.hand.length > 0) {

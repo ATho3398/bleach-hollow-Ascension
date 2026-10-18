@@ -19,5 +19,11 @@
 /* 시드·기록 저장 줄: 체크 아이콘을 글자 줄 안에 */
 .bha-seedline .bha-icon { display: inline-block; vertical-align: -3px; }
 
-/* 옛 legacy.css 의 `h1 { margin: 8px 0 0 }` 요소 규칙이 새 화면 제목에 새지 않게 (U-5 에서 legacy.css 를 지우면 필요 없다) */
-.bha-app h1, .bha-app h2 { margin: 0; }
+/* 낮은 화면(360×740)에서 4바퀴 초과 경고 + 보유 타일 줄이 있어도 링의 슬롯이 시트 위에 남도록 시트 안 여백을 줄인다 */
+@media (max-height: 780px) {
+  .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-3) var(--bha-sp-5); }
+  .bha-exp .bha-sheet { gap: var(--bha-sp-4); }
+}
+
+/* U-5 접근성: 칸 번호 글자는 12px 라 한 단계 밝은 보조색(text-2)으로 대비 4.5 이상 */
+.bha-ring__slot:not(.is-has) .bha-ring__slotnum { color: var(--bha-text-2); }

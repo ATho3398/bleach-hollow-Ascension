@@ -43,6 +43,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   const layer = el('div', 'bha-tut');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
+  layer.setAttribute('aria-label', '튜토리얼');
   layer.dataset.tutorial = 'true';
   const pauseTag = el('span', 'bha-chip bha-battle__pausetag');
   pauseTag.append(icon('i-pause'), '튜토리얼 중 — 전투 멈춤');

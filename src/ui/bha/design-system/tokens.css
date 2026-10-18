@@ -13,9 +13,10 @@
 /* 본문: Pretendard Variable (fonts/ 폴더에 포함. CDN을 쓰려면 아래 주석 참고) */
 @font-face {
   font-family: "Pretendard Variable";
-  src: url("../fonts/PretendardVariable.woff2") format("woff2-variations"),
-       url("../fonts/PretendardVariable.woff2") format("woff2");
-  font-weight: 45 920;
+  /* U-5: 서브셋(KS X 1001 한글 2,350자 + 사용 기호, 굵기 400~800). 만드는 법: scripts/subset-font.py */
+  src: url("../fonts/PretendardSubset.woff2") format("woff2-variations"),
+       url("../fonts/PretendardSubset.woff2") format("woff2");
+  font-weight: 400 800;
   font-display: swap;
 }
 /* CDN 대안: @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"); */

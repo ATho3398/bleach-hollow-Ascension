@@ -15,7 +15,6 @@ import {
 import { versionLabel } from '../version';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
-import { mountScreen } from './dom';
 import { applyTheme } from './bha/theme';
 import { startView } from './startView';
 import { breakthroughView } from './breakthroughView';
@@ -33,7 +32,6 @@ import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
 export function startApp(root: HTMLElement): void {
   let save: SaveData | null = loadSave(localStorage);
 
-  const mount = (...nodes: HTMLElement[]) => mountScreen(root, ...nodes);
   const persist = () => save && writeSave(localStorage, save);
   /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
   let resumeNote = '';

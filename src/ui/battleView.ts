@@ -338,6 +338,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const ov = el('div', 'bha-overlay bha-overlay--in-app');
     ov.setAttribute('role', 'dialog');
     ov.setAttribute('aria-modal', 'true');
+    const ovTitle = inner.querySelector('h2');
+    if (ovTitle) {
+      ovTitle.id = 'bha-battle-ov-title';
+      ov.setAttribute('aria-labelledby', ovTitle.id);
+    }
     ov.append(inner);
     app.append(ov);
     overlayEl = ov;

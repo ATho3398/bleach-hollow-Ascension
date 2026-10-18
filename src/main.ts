@@ -6,8 +6,6 @@ import './ui/bha/components/components.css';
 import './ui/bha/screens/screens.css';
 import './ui/bha/app.css';
 import './ui/bha/expedition.css';
-// 아직 새 디자인으로 옮기지 않은 화면용 (U-5 에서 제거)
-import './ui/legacy.css';
 import { startApp } from './ui/app';
 import { mountSprite } from './ui/bha/sprite';
 

@@ -409,6 +409,7 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-slider__input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--bha-primary-bg); border: 3px solid var(--bha-bg-0); box-shadow: 0 0 0 1px var(--bha-primary-line); }
 .bha-slider__input:focus-visible { outline: none; }
 .bha-slider__input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--bha-focus); }
+.bha-slider__input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--bha-focus); }
 .bha-slider__scale { display: flex; justify-content: space-between; font-size: var(--bha-fs-xs); color: var(--bha-text-3); font-variant-numeric: tabular-nums; margin-top: -6px; }
 .bha-slider__hint { font-size: var(--bha-fs-sm); color: var(--bha-text-2); line-height: 1.5; }
 
