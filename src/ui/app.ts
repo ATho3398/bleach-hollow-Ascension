@@ -123,7 +123,7 @@ export function startApp(root: HTMLElement): void {
         const r = performEvolution(s);
         if (!r.ok) return nestScreen();
         persist();
-        evolutionView(root, faction, from, s.evolution.tierIndex, r.form, nestScreen);
+        evolutionView(root, faction, from, s.evolution.tierIndex, r.form, nestScreen, s.build.slots.length);
         showTitleToasts(s, faction, persist);
       },
       onDex: () => dexView(root, faction, s, nestScreen),

@@ -1,15 +1,19 @@
-// 둥지 / 대원실 화면 (GDD 7장, P2 최소 버전): 허기·컨디션, 행동 3개, 덱 편성, 출발
+// 둥지 / 대원실 화면 (GDD 7장, U-3 새 디자인): 위 = 이름·기록·상태 4바 / 가운데 = 탭 내용 / 아래 = 행동 독(원정 출발·이어하기·전투 연습, 항상 보임) + 하단 탭 4개.
+// 탭: 돌보기(돌보기 3 + 진화 패널) · 특성(슬롯·보유 특성 정리) · 덱(타일 덱 편성) · 더보기(도감·연습·종족·설정·도움말).
+// 탭 전환은 DOM 을 다시 만들지 않고 hidden 만 바꾼다. 행동(돌보기·덱·특성)은 다시 그리되 탭과 탭별 스크롤 위치를 유지한다.
 import { BALANCE } from '../config/balance';
-import { TITLES } from '../data/titles';
+import { FORM_TABLE, formName, tryGetForm } from '../data/evolution';
 import { tilesFor, tileName } from '../data/tiles';
-import { NEST_ACTIONS, type FactionConfig } from '../engine/faction';
-import { applyIdle, doNestAction } from '../engine/nest';
+import { TITLES } from '../data/titles';
+import { doNestAction, applyIdle } from '../engine/nest';
+import type { FactionConfig } from '../engine/faction';
 import { sanitizeDeck, type SaveData } from '../game';
 import { versionLabel } from '../version';
-import { BALANCE as B } from '../config/balance';
-import { barOf, el, mountScreen, pct, rowOf } from './dom';
-import { organizer, PROVISIONAL_NOTE } from './buildPanel';
+import { traitsTab, type TraitsTabState } from './buildPanel';
 import { evolutionPanel } from './evolutionPanel';
+import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
+import { careButtons, deckRow, menuRow, statusBlock, tabbar } from './bha/nest';
+import { countText, toward, traitBadgeCount } from './bha/nestLogic';
 import { tileHint } from './labels';
 
 export interface NestViewHandlers {
@@ -32,120 +36,180 @@ export interface NestViewHandlers {
   resumeNote: string;
 }
 
-export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveData, h: NestViewHandlers): void {
+type NestTab = 'home' | 'traits' | 'deck' | 'more';
+const TAB_IDS: NestTab[] = ['home', 'traits', 'deck', 'more'];
+
+/** 화면을 다시 그려도 남는 UI 상태: 고른 탭, 탭별 스크롤, 특성 교체 중인 특성 */
+const ui = { tab: 'home' as NestTab, scroll: { home: 0, traits: 0, deck: 0, more: 0 } as Record<NestTab, number>, traits: { swapTrait: null } as TraitsTabState };
+
+export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveData, hd: NestViewHandlers): void {
   applyIdle(save.nest, Date.now());
   save.tiles.deck = sanitizeDeck(save.tiles, faction.id);
-  h.persist();
-  const rerender = () => nestView(root, faction, save, h);
+  hd.persist();
+  const rerender = () => {
+    ui.scroll[ui.tab] = window.scrollY;
+    nestView(root, faction, save, hd);
+  };
   const n = save.nest;
+  const RX = BALANCE.provisional.risk;
   const deckSize = BALANCE.provisional.expedition.deckSize;
+  const deckCount = save.tiles.deck.length;
+  const runs = save.runLog.runs;
 
-  const hungerFill = el('i');
-  hungerFill.style.width = pct(n.hunger, 100);
-  const condFill = el('i');
-  condFill.style.width = pct(n.condition, 100);
-  const riskFill = el('i');
-  riskFill.style.width = pct(n.risk, B.provisional.risk.limit);
-  const stabFill = el('i');
-  stabFill.style.width = pct(n.stability, B.provisional.risk.stabilityMax);
-  const status = [
-    rowOf(el('span', '', '허기'), el('span', 'dim', `${Math.round(n.hunger)} / 100`)),
-    barOf('hunger', hungerFill),
-    rowOf(el('span', '', '컨디션'), el('span', 'dim', `${Math.round(n.condition)} / 100${n.condition < 40 ? ' (나쁨: 전투에 공허 블록 ↑)' : ''}`)),
-    barOf('cond', condFill),
-    rowOf(el('span', '', faction.stabilityName), el('span', 'dim', `${Math.round(n.stability)} / ${B.provisional.risk.stabilityMax}`)),
-    barOf('stab', stabFill),
-    rowOf(el('span', '', faction.riskGaugeName), el('span', 'dim', `${Math.round(n.risk)} / ${B.provisional.risk.limit}${n.risk >= 60 ? ' (높음: 원정 시작부터 위험)' : ''}`)),
-    barOf('risk', riskFill),
-  ];
-  if (n.weakened) status.push(el('div', 'notice', `${faction.defeatStateName} 상태. 재우기로 회복한다.`));
+  // ── 머리: 이름·기록 + 도움말·설정 ──
+  const top = h('header', 'bha-topbar');
+  const main = h('div', 'bha-topbar__main');
+  const sub = h('p', 'bha-topbar__sub');
+  sub.append('사냥터 ', h('b', '', faction.huntingGroundName), ' · 원정 ', h('b', '', String(runs.length)), '회 · 귀환 ', h('b', '', String(runs.filter((r) => r.outcome === 'returned').length)), ' · 패배 ', h('b', '', String(runs.filter((r) => r.outcome === 'defeated').length)));
+  main.append(h('h1', 'bha-topbar__title', faction.nestName), sub);
+  const acts = h('div', 'bha-topbar__actions');
+  acts.append(
+    button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', onClick: () => hd.onHelp('nest') }),
+    button({ label: '설정', icon: 'i-settings', iconOnly: true, variant: 'ghost', onClick: hd.onSettings }),
+  );
+  top.append(main, acts);
 
-  const actions = el('div', 'stack');
-  const acts = el('div', 'grid3');
-  for (const a of NEST_ACTIONS) {
-    const b = el('button', '', faction.nestActions[a]);
-    b.onclick = () => {
-      doNestAction(save.nest, a);
-      h.persist();
-      rerender();
-    };
-    acts.append(b);
+  // ── 단계·진화체 칩 ──
+  const evo = save.evolution;
+  const stage = h('div', 'bha-nest__stage');
+  const stageChip = h('span', 'bha-chip');
+  stageChip.append(icon('i-evolve'), `${evo.tierIndex + 1}단계 · ${faction.tierNames[evo.tierIndex]}`);
+  stage.append(stageChip);
+  const form = evo.formId ? tryGetForm(evo.formId) : undefined;
+  if (form) {
+    const fc = h('span', 'bha-chip', formName(form, faction.id));
+    if (form.provisional) fc.append(' ', provisionalTag());
+    stage.append(fc);
   }
-  actions.append(acts);
 
-  // 덱 편성: 가져갈 타일 (원정 중 보상으로 뽑히는 풀)
-  const deckBox = el('div', 'stack');
+  // ── 상태 4바 + 쇠약 알림 ──
+  const status = panel({});
+  status.setAttribute('aria-label', '상태');
+  status.append(statusBlock(faction, {
+    hunger: n.hunger, condition: n.condition, stability: n.stability, stabilityMax: RX.stabilityMax, risk: n.risk, riskLimit: RX.limit, condWarn: 40, riskWarn: 60,
+  }));
+  const weak = n.weakened
+    ? notice('danger', `지난 원정에서 패배했다. ${toward(faction.nestActions.sleep)} 회복한다.`, { title: faction.defeatStateName, icon: 'i-broken' })
+    : null;
+
+  // ── 탭 1: 돌보기 + 진화 ──
+  const care = panel({ title: '돌보기', aside: '원정 사이에 무엇이든 몇 번이든' });
+  care.append(careButtons(faction, (a) => {
+    doNestAction(save.nest, a);
+    hd.persist();
+    rerender();
+  }));
+  const homeTab = tabPanel('home', care, evolutionPanel(faction, evo, hd.onEvolve, hd.onDex, () => hd.onHelp('evolution')));
+
+  // ── 탭 2: 특성 ──
+  const traitsPanels = traitsTab(faction, save.build, ui.traits, () => {
+    hd.persist();
+    rerender();
+  });
+  const traitsPanelsTab = tabPanel('traits', ...traitsPanels);
+
+  // ── 탭 3: 덱 ──
+  const deckPanel = panel({ title: '타일 덱', aside: h('span', deckCount === 0 ? 'bha-chip bha-chip--danger' : 'bha-chip', countText(deckCount, deckSize)) });
+  deckPanel.querySelector('.bha-panel__title')?.prepend(icon('i-deck'));
+  deckPanel.append(h('p', 'bha-dim', '원정 중 보상으로 이 덱에서 타일이 뽑힌다. 뽑힌 타일만 길 옆에 놓을 수 있다.'));
+  const deckList = h('div', 'bha-stack');
   const count = (id: string) => save.tiles.deck.filter((x) => x === id).length;
   for (const t of tilesFor(faction.id)) {
     const owned = save.tiles.collection[t.id] ?? 0;
-    const row = el('div', 'deckrow');
-    const label = el('div', 'grow');
-    label.append(el('b', '', tileName(t.id, faction.id)), el('div', 'dim', `${tileHint(t)} · 보유 ${owned}`));
-    const minus = el('button', 'small', '−');
-    const plus = el('button', 'small', '+');
-    minus.disabled = count(t.id) === 0;
-    plus.disabled = count(t.id) >= owned || save.tiles.deck.length >= deckSize;
-    minus.onclick = () => {
-      save.tiles.deck.splice(save.tiles.deck.indexOf(t.id), 1);
-      h.persist();
-      rerender();
-    };
-    plus.onclick = () => {
-      save.tiles.deck.push(t.id);
-      h.persist();
-      rerender();
-    };
-    row.append(label, minus, el('span', 'cnt', String(count(t.id))), plus);
-    deckBox.append(row);
+    deckList.append(deckRow({
+      name: tileName(t.id, faction.id), hint: tileHint(t), owned, count: count(t.id), tile: t, provisional: true,
+      canAdd: count(t.id) < owned && deckCount < deckSize,
+      onMinus: () => {
+        save.tiles.deck.splice(save.tiles.deck.indexOf(t.id), 1);
+        hd.persist();
+        rerender();
+      },
+      onPlus: () => {
+        save.tiles.deck.push(t.id);
+        hd.persist();
+        rerender();
+      },
+    }));
   }
+  deckPanel.append(deckList);
+  const deckTab = tabPanel('deck', deckPanel);
 
-  const resumeBox: HTMLElement[] = [];
-  if (h.resume) {
-    const r = el('button', 'primary', `원정 이어하기 (${h.resume.info})`);
-    r.onclick = h.resume.onResume;
-    resumeBox.push(r, el('small', 'dim', '새 원정을 시작하면 이어하던 원정은 패배 처리 없이 버려진다.'));
-  } else if (h.resumeNote) resumeBox.push(el('small', 'warn', h.resumeNote));
-  const depart = el('button', h.resume ? '' : 'primary', '원정 출발');
-  depart.disabled = save.tiles.deck.length === 0;
-  depart.onclick = h.onDepart;
-  const practice = el('button', '', '전투 연습 (테스트)');
-  practice.onclick = h.onPractice;
-  const titlesBtn = el('button', '', `칭호 도감 (${save.titles.length}/${TITLES.length})`);
-  titlesBtn.onclick = h.onTitles;
-  const change = el('button', '', '종족 바꾸기');
-  change.onclick = h.onChangeFaction;
-  const settings = el('button', '', '설정 (조작 판정)');
-  settings.onclick = h.onSettings;
-  const runs = save.runLog.runs;
-  const helpBtn = (screen: 'nest' | 'evolution') => {
-    const b = el('button', 'small help-btn', '?');
-    b.setAttribute('aria-label', '도움말');
-    b.onclick = () => h.onHelp(screen);
+  // ── 탭 4: 더보기 ──
+  const formsFound = save.formDex.filter((id) => FORM_TABLE.some((f) => f.id === id)).length;
+  const menu = h('nav', 'bha-menu');
+  menu.setAttribute('aria-label', '더보기');
+  menu.append(
+    menuRow({ icon: 'i-dex', label: '진화체 도감', meta: countText(formsFound, FORM_TABLE.length), onClick: hd.onDex }),
+    menuRow({ icon: 'i-title', label: '칭호 도감', meta: countText(save.titles.length, TITLES.length), onClick: hd.onTitles }),
+    menuRow({ icon: 'i-practice', label: '전투 연습', onClick: hd.onPractice }),
+    menuRow({ icon: 'i-swap-species', label: '종족 바꾸기', meta: faction.name, onClick: hd.onChangeFaction }),
+    menuRow({ icon: 'i-settings', label: '설정 (조작 판정)', onClick: hd.onSettings }),
+    menuRow({ icon: 'i-help', label: '도움말 · 튜토리얼', onClick: () => hd.onHelp('nest') }),
+  );
+  const moreTab = tabPanel('more', menu, h('p', 'bha-nest__foot', versionLabel()));
+
+  // ── 행동 독: 원정 출발 / 이어하기 / 전투 연습 (항상 보임) ──
+  const dock = h('div', 'bha-dock bha-dock--above-tabbar');
+  const departBtn = (primary: boolean, label = '원정 출발') => {
+    const b = button({ icon: 'i-nest', variant: primary ? 'primary' : undefined, size: 'lg', disabled: deckCount === 0, onClick: hd.onDepart });
+    const l = h('span', 'bha-btn__label');
+    l.append(h('span', '', label));
+    if (primary) l.append(h('span', 'bha-btn__sub', `덱 ${deckCount} / ${deckSize}`));
+    b.append(l);
     return b;
   };
-  mountScreen(
-    root,
-    rowOf(el('h1', '', faction.nestName), helpBtn('nest')),
-    el('p', 'dim', `사냥터: ${faction.huntingGroundName}. 원정 ${runs.length}회 · 귀환 ${runs.filter((r) => r.outcome === 'returned').length} · 패배 ${runs.filter((r) => r.outcome === 'defeated').length}`),
-    ...status,
-    rowOf(el('h2', '', '진화'), helpBtn('evolution')),
-    evolutionPanel(faction, save.evolution, h.onEvolve, h.onDex),
-    el('h2', '', '돌보기'),
-    actions,
-    el('h2', '', `흡수 특성 (${faction.slotName})`),
-    organizer(faction, save.build, () => {
-      h.persist();
-      rerender();
-    }),
-    el('small', 'dim', PROVISIONAL_NOTE),
-    el('h2', '', `타일 덱 (${save.tiles.deck.length} / ${deckSize})`),
-    el('p', 'dim', '원정 중 보상으로 이 덱에서 타일이 뽑힌다. 뽑힌 타일만 길 옆에 놓을 수 있다.'),
-    deckBox,
-    ...resumeBox,
-    depart,
-    practice,
-    titlesBtn,
-    change,
-    el('small', 'dim', versionLabel()),
+  const warnInfo = (text: string) => {
+    const p = h('p', 'bha-dock__info bha-dock__info--warn');
+    p.append(icon('i-warn'), text);
+    return p;
+  };
+  if (hd.resume) {
+    const info = h('p', 'bha-dock__info');
+    info.append(icon('i-return'), '이어하던 원정: ', h('b', '', hd.resume.info));
+    const row = h('div', 'bha-dock__row');
+    row.style.gridTemplateColumns = 'minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr)';
+    row.append(
+      button({ label: '원정 이어하기', variant: 'primary', size: 'lg', onClick: hd.resume.onResume }),
+      button({ label: '새 원정', size: 'lg', disabled: deckCount === 0, onClick: hd.onDepart }),
+      button({ label: '전투 연습', size: 'lg', onClick: hd.onPractice }),
+    );
+    dock.append(info, row, warnInfo('새 원정을 시작하면 이어하던 원정은 패배 처리 없이 버려진다.'));
+    if (deckCount === 0) dock.append(warnInfo('덱이 비어 있어 새 원정을 시작할 수 없다. 덱 탭에서 타일을 넣는다.'));
+  } else {
+    if (hd.resumeNote) dock.append(warnInfo(`이어하기를 숨겼다: ${hd.resumeNote}`));
+    if (deckCount === 0) dock.append(warnInfo('덱이 비어 있다. 덱 탭에서 타일을 1장 이상 넣어야 출발할 수 있다.'));
+    const row = h('div', 'bha-dock__row bha-dock__row--two');
+    row.append(departBtn(true), button({ label: '전투 연습', icon: 'i-practice', size: 'lg', onClick: hd.onPractice }));
+    dock.append(row);
+  }
+
+  // ── 탭바 ──
+  const panels: Record<NestTab, HTMLElement> = { home: homeTab, traits: traitsPanelsTab, deck: deckTab, more: moreTab };
+  const bar = tabbar(
+    [
+      { id: 'home', label: '돌보기', icon: 'i-nest' },
+      { id: 'traits', label: '특성', icon: 'i-slot', badge: traitBadgeCount(save.build) },
+      { id: 'deck', label: '덱', icon: 'i-deck' },
+      { id: 'more', label: '더보기', icon: 'i-dex' },
+    ],
+    ui.tab,
+    (id) => {
+      ui.scroll[ui.tab] = window.scrollY;
+      ui.tab = id as NestTab;
+      for (const t of TAB_IDS) panels[t].hidden = t !== ui.tab;
+      window.scrollTo(0, ui.scroll[ui.tab]);
+    },
   );
+  for (const t of TAB_IDS) panels[t].hidden = t !== ui.tab;
+
+  mountApp(root, { cls: 'bha-nest' }, top, stage, status, ...(weak ? [weak] : []), homeTab, traitsPanelsTab, deckTab, moreTab, dock, bar);
+  window.scrollTo(0, ui.scroll[ui.tab]);
+}
+
+function tabPanel(id: NestTab, ...nodes: HTMLElement[]): HTMLElement {
+  const t = h('div', 'bha-nest__tab');
+  t.dataset.tab = id;
+  t.setAttribute('role', 'tabpanel');
+  t.append(...nodes);
+  return t;
 }

@@ -1,16 +1,19 @@
 // 진화 패널과 진화 연출 (GDD 4-2). 문구는 종족 설정(tierNames, slotName, appearanceChange)·진화 데이터에서 읽는다.
 // 결과 형태는 진화를 확정하기 전까지 "?" 로 가린다. 임시 데이터 표시는 작게 유지한다.
 import { formName, formPassiveText, tryGetForm } from '../data/evolution';
-import { LINEAGES, lineageName } from '../data/lineages';
 import type { FormDef } from '../data/schema';
 import { absorbsNeeded, absorbsRemaining, canEvolve, currentCandidates, isMaxTier, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
-import { barOf, el, mountScreen, pct, rowOf } from './dom';
+import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
+import { button, h, icon, meter, mountApp, notice, panel, provisionalTag } from './bha/dom';
+import { lineageKey } from './bha/lineage';
+import { linbar } from './bha/nest';
+import { toward } from './bha/nestLogic';
 
 const EV = BALANCE.provisional.evolution;
 
-export const EVOLUTION_NOTE = '진화 조건·수치·진화체 데이터는 임시입니다 (기획 4-2, 11-3 계통 미정)';
+export const EVOLUTION_NOTE = '진화 조건·수치·진화체 데이터는 임시 (기획 4-2, 11-3 계통 미정)';
 
 /** 외형 변화 문구: 호로 = 본체 파츠, 사신 = 본체 그대로 참백도 외형 (종족 설정 appearanceChange) */
 export function appearanceText(faction: FactionConfig): string {
@@ -28,42 +31,100 @@ export function formEffectLines(faction: FactionConfig, form: FormDef): string[]
   ];
 }
 
-export function evolutionPanel(faction: FactionConfig, evo: EvolutionState, onEvolve: () => void, onDex: () => void): HTMLElement {
-  const box = el('div', 'evo');
-  const tierName = faction.tierNames[evo.tierIndex]!;
-  box.append(el('div', 'tier', `${evo.tierIndex + 1}단계 · ${tierName}`));
-  const current = evo.formId ? tryGetForm(evo.formId) : undefined;
-  if (current) box.append(el('small', 'dim', `지금 진화체: ${formName(current, faction.id)}`));
-  const dexBtn = el('button', 'small', '진화체 도감');
-  dexBtn.onclick = onDex;
-  if (isMaxTier(evo)) {
-    box.append(el('p', 'dim', `마지막 단계(${tierName})에 도달했다. 더 이상 진화하지 않는다.`), dexBtn, el('small', 'dim', EVOLUTION_NOTE));
-    return box;
-  }
-  const need = absorbsNeeded(evo)!;
-  box.append(rowOf(el('span', '', `이 단계 ${faction.absorbActionName}`), el('span', 'dim', `${Math.min(evo.absorbs, need)} / ${need}회`)));
-  const max = Math.max(1, ...LINEAGES.map((l) => evo.lineageScores[l.id] ?? 0));
-  for (const l of LINEAGES) {
-    const score = evo.lineageScores[l.id] ?? 0;
-    const fill = el('i');
-    fill.style.width = pct(score, max);
-    box.append(rowOf(el('span', 'dim', lineageName(l.id, faction.id)), el('span', 'dim', `${score}`)), barOf('lin', fill));
-  }
-  box.append(rowOf(el('span', '', '지금 분포로 갈 수 있는 후보'), el('span', 'combo', `${currentCandidates(evo).length}종`)));
-  box.append(rowOf(el('span', '', '진화 결과'), el('span', 'unknown', '?')));
-  const remaining = absorbsRemaining(evo)!;
-  if (canEvolve(evo)) {
-    const b = el('button', 'primary', '진화');
-    b.onclick = onEvolve;
-    box.append(b);
-  } else {
-    box.append(el('small', 'dim', `진화까지 ${faction.absorbActionName} ${remaining}회 남음 (원정에서 ${faction.absorbActionName}하면 쌓인다. 진화는 ${faction.nestName}에서만)`));
-  }
-  box.append(dexBtn, el('small', 'dim', EVOLUTION_NOTE));
-  return box;
+/** 임시 데이터 안내 한 줄 (작게 + 임시 태그) */
+export function evolutionNote(): HTMLElement {
+  const p = h('p', 'bha-faint', EVOLUTION_NOTE);
+  p.append(' ', provisionalTag());
+  return p;
 }
 
-/** 진화 연출(텍스트 수준) → 결과. 연출 줄은 순서대로 나타나고, 마지막에 새 형태·효과·슬롯 +1을 보여 준다 */
+/**
+ * 진화 패널(둥지 돌보기 탭): 단계·진화체 이름·이 단계 포식 진행·계통 누적 막대·후보 수·결과 ?·[진화]/남은 횟수·[진화체 도감].
+ * 데이터·계산은 엔진(absorbsNeeded 등)에서 그대로 읽는다. 진화 가능하면 패널 테두리가 강조(.bha-panel--accent)된다.
+ */
+export function evolutionPanel(faction: FactionConfig, evo: EvolutionState, onEvolve: () => void, onDex: () => void, onHelp?: () => void): HTMLElement {
+  const tierName = faction.tierNames[evo.tierIndex]!;
+  const can = canEvolve(evo);
+  const p = panel({ mod: can ? 'accent' : undefined });
+  p.id = 'evolution-panel';
+  const head = h('header', 'bha-panel__head');
+  const title = h('h2', 'bha-panel__title');
+  title.append(icon('i-evolve'), '진화');
+  const actions = h('span', 'bha-row');
+  actions.append(button({ label: '진화체 도감', icon: 'i-dex', size: 'small', variant: 'ghost', onClick: onDex }));
+  if (onHelp) actions.append(button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, size: 'small', variant: 'ghost', onClick: onHelp }));
+  head.append(title, actions);
+  p.append(head);
+
+  const body = h('div', 'bha-stack');
+  body.style.gap = '12px';
+  const current = evo.formId ? tryGetForm(evo.formId) : undefined;
+  const form = h('div', 'bha-evo__form');
+  const formName_ = h('span', 'bha-evo__formname', current ? formName(current, faction.id) : tierName);
+  if (current?.provisional) formName_.append(' ', provisionalTag());
+  form.append(formName_, h('span', 'bha-dim', `${evo.tierIndex + 1}단계 · ${tierName}`));
+  body.append(form);
+
+  if (isMaxTier(evo)) {
+    body.append(notice('rare', `더 이상 진화하지 않는다. ${faction.absorbActionName} 기록은 칭호 조건에 계속 쌓인다.`, { title: `마지막 단계(${tierName})에 도달했다`, icon: 'i-rare' }));
+    body.append(linbar(faction, evo.lineageScores, 0));
+    body.append(evolutionNote());
+    p.append(body);
+    return p;
+  }
+
+  const need = absorbsNeeded(evo)!;
+  body.append(meter({ kind: 'stored', label: `이 단계 ${faction.absorbActionName}`, icon: 'i-absorb', value: Math.min(evo.absorbs, need), max: need, valueText: undefined }));
+  body.append(linbar(faction, evo.lineageScores, need));
+  const facts = h('div', 'bha-evo__facts');
+  const cand = h('div', 'bha-evo__fact');
+  const candB = h('b', '', String(currentCandidates(evo).length));
+  candB.append(h('small', '', '종'));
+  candB.querySelector('small')!.style.fontSize = '13px';
+  cand.append(h('small', '', '지금 분포로 갈 수 있는 후보'), candB);
+  const hidden = h('div', 'bha-evo__fact bha-evo__fact--hidden');
+  hidden.append(h('small', '', '진화 결과'), h('b', '', '?'));
+  facts.append(cand, hidden);
+  body.append(facts);
+
+  if (can) {
+    const b = button({ icon: 'i-evolve', variant: 'primary', size: 'lg', block: true, onClick: onEvolve });
+    const label = h('span', 'bha-btn__label');
+    label.append(h('span', '', '진화'), h('span', 'bha-btn__sub', `${evo.tierIndex + 1}단계 → ${evo.tierIndex + 2}단계 ${faction.tierNames[evo.tierIndex + 1] ?? ''}`));
+    b.append(label);
+    body.append(b);
+  } else {
+    const left = h('div', 'bha-evo__cta');
+    const text = h('span', 'bha-evo__left');
+    text.append('진화까지 ', h('b', '', String(absorbsRemaining(evo)!)), '회 남음', h('br'), h('span', 'bha-faint', `원정에서 ${faction.absorbActionName}하면 쌓인다. 진화는 ${faction.nestName}에서만.`));
+    left.append(text);
+    body.append(left);
+  }
+  body.append(evolutionNote());
+  p.append(body);
+  return p;
+}
+
+/** 진화 후 달라진 점 행들(임시 수치): 슬롯·체력·공격 배율·패시브·외형 */
+export function evolutionEffectRows(faction: FactionConfig, form: FormDef, slotsAfter?: number): { icon: string; label: string; value: string; sub?: string; mod?: 'good' | 'stack' }[] {
+  const mult = (m: number) => `×${m.toFixed(2)}`;
+  const slots = EV.slotsPerEvolution;
+  return [
+    {
+      icon: 'i-slot', label: faction.slotName, mod: 'good',
+      value: slotsAfter !== undefined ? `${slotsAfter - slots} → ${slotsAfter}칸` : `+${slots}칸`, sub: `+${slots}`,
+    },
+    { icon: 'i-cond', label: '체력 배율', value: mult(form.effects.hpMultiplier) },
+    { icon: 'i-attack', label: '공격 배율', value: mult(form.effects.attackMultiplier) },
+    { icon: 'i-rare', label: '패시브', value: formPassiveText(form, faction.id), mod: 'stack' },
+    { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },
+  ];
+}
+
+/**
+ * 진화 연출 → 결과 (evolve.html). 연출 줄은 0.9초 간격으로 떠오르고(--k, CSS 지연) 3.6초 뒤 결과로 바뀐다.
+ * [건너뛰기]로 바로 결과를 볼 수 있다. 연출 문구는 src/data/evolution/cutscene.json (종족 설정 값을 끼워 쓴다).
+ */
 export function evolutionView(
   root: HTMLElement,
   faction: FactionConfig,
@@ -71,27 +132,69 @@ export function evolutionView(
   to: number,
   form: FormDef,
   onDone: () => void,
+  slotsAfter?: number,
 ): void {
-  const lines = [
-    `${faction.nestName}이(가) 조용히 흔들린다…`,
-    `지금까지 ${faction.absorbActionName}한 힘이 하나로 모여 간다.`,
-    `${faction.tierNames[from]}의 모습이 허물어지고…`,
-  ];
-  const nodes = lines.map((t, i) => {
-    const n = el('div', 'evo-line', t);
-    n.style.animationDelay = `${i * 0.7}s`;
-    return n;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const burst = h('span', 'bha-evolve__burst');
+
+  const linesSection = h('section');
+  const crack = h('div', 'bha-evolve__crack');
+  crack.append(icon('i-broken'));
+  const lines = h('div', 'bha-evolve__lines');
+  lines.setAttribute('aria-live', 'polite');
+  cutsceneLines(faction.id, { nest: faction.nestName, absorb: faction.absorbActionName, from: faction.tierNames[from]! }).forEach((t, i) => {
+    const line = h('p', 'bha-evolve__line', t);
+    line.style.setProperty('--k', String(i));
+    lines.append(line);
   });
-  const result = el('div', 'stack');
-  result.style.animation = 'evofade .6s 2.4s both';
-  result.append(
-    el('div', 'evo-result', `${faction.tierNames[to]}!`),
-    el('p', 'dim', `${from + 1}단계 ${faction.tierNames[from]} → ${to + 1}단계 ${faction.tierNames[to]}`),
-    el('b', '', `새 진화체: ${formName(form, faction.id)}`),
-    ...formEffectLines(faction, form).map((t) => el('div', 'dim', t)),
-    el('small', 'dim', EVOLUTION_NOTE),
-  );
-  const home = el('button', 'primary', `${faction.nestName}으로`);
-  home.onclick = onDone;
-  mountScreen(root, el('h1', '', '진화'), ...nodes, result, home);
+  const resultSection = h('section', 'bha-stack bha-stack--loose');
+  resultSection.hidden = true;
+
+  const showResult = () => {
+    if (timer !== undefined) clearTimeout(timer);
+    linesSection.hidden = true;
+    resultSection.hidden = false;
+  };
+  const skip = button({ label: '건너뛰기', variant: 'ghost', onClick: showResult });
+  linesSection.append(crack, lines, skip);
+  if (CUTSCENE_PROVISIONAL) linesSection.append(h('p', 'bha-faint', ''));
+  if (CUTSCENE_PROVISIONAL) linesSection.lastElementChild!.append('연출 문구는 제안 문구 ', provisionalTag('제안 문구'));
+
+  const path = h('p', 'bha-evolve__path');
+  path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', faction.tierNames[to]!));
+  const created = h('div', 'bha-evolve__new');
+  form.label.lineages.forEach((l, i) => {
+    const k = lineageKey(l);
+    if (!k) return;
+    const m = icon(`i-lin-${k}`);
+    m.style.color = `var(--bha-lin-${k})`;
+    if (i > 0) m.style.marginLeft = '-10px';
+    created.append(m);
+  });
+  created.append(`새 진화체: ${formName(form, faction.id)}`);
+  if (form.provisional) created.append(' ', provisionalTag());
+
+  const effects = panel({ title: '달라진 점', aside: provisionalTag('임시 수치'), mod: undefined });
+  effects.classList.add('bha-evolve__effects');
+  const dl = h('dl', 'bha-info');
+  for (const r of evolutionEffectRows(faction, form, slotsAfter)) {
+    const row = h('div', `bha-info__row${r.mod ? ` bha-info__row--${r.mod}` : ''}`);
+    const dt = h('dt');
+    dt.append(icon(r.icon), r.label);
+    const dd = h('dd', '', r.value);
+    if (r.sub && r.mod === 'good') dd.append(' ', h('small', '', r.sub));
+    row.append(dt, dd);
+    dl.append(row);
+  }
+  effects.append(dl);
+
+  const home = button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
+    if (timer !== undefined) clearTimeout(timer);
+    onDone();
+  } });
+  const title = h('h1', 'bha-evolve__title', `${faction.tierNames[to]}!`);
+  resultSection.append(h('span', 'bha-evolve__eyebrow', '진화'), title, path, created, effects, evolutionNote(), home);
+
+  mountApp(root, { cls: 'bha-evolve' }, burst, linesSection, resultSection);
+  timer = setTimeout(showResult, 3600);
 }

@@ -4,7 +4,9 @@ import { TITLES, titleName } from '../data/titles';
 import type { TitleDef, TitleKind } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
-import { el, mountScreen } from './dom';
+import { button, h, icon, mountApp, provisionalTag, seg } from './bha/dom';
+import { showToast } from './bha/nest';
+import { titleRowKind, toward } from './bha/nestLogic';
 
 export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
   { kind: 'rank', label: '등급' },
@@ -29,42 +31,62 @@ export function titleCellView(def: TitleDef, factionId: string, unlockedAt: numb
 
 export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, onBack: () => void, kind: TitleKind = 'rank'): void {
   const at = new Map(save.titles.map((t) => [t.titleId, t.at]));
-  const tabs = el('div', 'dex-tabs title-tabs');
-  for (const t of TITLE_TABS) {
-    const defs = TITLES.filter((d) => d.kind === t.kind);
-    const got = defs.filter((d) => at.has(d.id)).length;
-    const b = el('button', `small${t.kind === kind ? ' on' : ''}`, `${t.label} ${got}/${defs.length}`);
-    b.onclick = () => titleDexView(root, faction, save, onBack, t.kind);
-    tabs.append(b);
-  }
-  const list = el('div', 'dex-list');
+
+  const top = h('header', 'bha-topbar');
+  const main = h('div', 'bha-topbar__main');
+  const sub = h('p', 'bha-topbar__sub');
+  sub.append('해금 ', h('b', '', String(save.titles.length)), ` / ${TITLES.length}`);
+  main.append(h('h1', 'bha-topbar__title', '칭호 도감'), sub);
+  top.append(main);
+
+  const tabs = seg(
+    TITLE_TABS.map((t) => {
+      const defs = TITLES.filter((d) => d.kind === t.kind);
+      return { id: t.kind, label: t.label, count: `${defs.filter((d) => at.has(d.id)).length}/${defs.length}` };
+    }),
+    kind,
+    (id) => titleDexView(root, faction, save, onBack, id as TitleKind),
+    { stack: true },
+  );
+  tabs.setAttribute('aria-label', '칭호 종류');
+
+  const list = h('div', 'bha-titlelist');
   for (const def of TITLES.filter((d) => d.kind === kind)) {
-    const v = titleCellView(def, faction.id, at.get(def.id) ?? null);
-    const cell = el('div', `dex-cell${v.locked ? ' locked' : ''}`);
-    if (v.locked) cell.textContent = v.text;
-    else {
-      cell.append(el('b', '', v.text));
-      if (v.sub) cell.append(el('small', 'dim', v.sub));
-      if (def.provisional && at.has(def.id)) cell.append(el('small', 'provisional-tag', '임시 조건'));
+    const unlockedAt = at.get(def.id) ?? null;
+    const v = titleCellView(def, faction.id, unlockedAt);
+    const rk = titleRowKind(def, unlockedAt);
+    const row = h('div', `bha-titlerow bha-titlerow--${rk}`);
+    const ic = h('span', 'bha-titlerow__icon');
+    ic.append(icon(rk === 'unlocked' ? 'i-title' : rk === 'locked' ? 'i-lock' : 'i-unknown'));
+    const body = h('span', 'bha-titlerow__main');
+    if (rk === 'hidden') {
+      row.setAttribute('aria-label', '숨겨진 칭호');
+      body.append(h('span', 'bha-titlerow__name', '???'), h('span', 'bha-titlerow__meta', '조건 비공개'));
+      row.append(ic, body, h('span', 'bha-titlerow__state', '미해금'));
+    } else {
+      const meta = h('span', 'bha-titlerow__meta');
+      meta.append(rk === 'unlocked' ? `${v.sub ?? ''}` : def.condition ? '' : '조건 미정');
+      if (def.provisional) meta.append(' ', provisionalTag('임시 조건'));
+      body.append(h('span', 'bha-titlerow__name', v.text), meta);
+      row.append(ic, body, h('span', 'bha-titlerow__state', rk === 'unlocked' ? '해금' : '미해금'));
     }
-    list.append(cell);
+    list.append(row);
   }
-  const back = el('button', '', `${faction.nestName}으로`);
-  back.onclick = onBack;
-  mountScreen(root, el('h1', '', '칭호 도감'), tabs, list, el('small', 'dim', TITLE_NOTE), back);
+
+  const note = h('p', 'bha-faint', TITLE_NOTE);
+  const dock = h('div', 'bha-dock');
+  dock.append(button({ label: toward(faction.nestName), icon: 'i-nest', size: 'lg', block: true, onClick: onBack }));
+  mountApp(root, {}, top, tabs, list, note, dock);
 }
 
-/** 아직 알리지 않은 해금을 텍스트 토스트로 보여 주고 seen 처리한다 */
+/** 아직 알리지 않은 해금을 토스트(.bha-toast)로 보여 주고 seen 처리한다. 2.5초 뒤 올라가며(is-out) animationend 에서 제거한다 */
 export function showTitleToasts(save: SaveData, faction: FactionConfig, persist: () => void): void {
   const fresh = save.titles.filter((t) => !t.seen);
   if (fresh.length === 0) return;
   fresh.forEach((u, i) => {
     const def = TITLES.find((d) => d.id === u.titleId);
     if (!def) return;
-    const toast = el('div', 'toast', `칭호 해금: ${titleName(def, faction.id)} (임시 조건)`);
-    toast.style.top = `${12 + i * 44}px`;
-    document.body.append(toast);
-    setTimeout(() => toast.remove(), 4000);
+    showToast({ eyebrow: '칭호 해금', title: titleName(def, faction.id), meta: def.provisional ? '임시 조건 · 칭호 도감에서 확인' : '칭호 도감에서 확인' }, i);
     u.seen = true;
   });
   persist();
