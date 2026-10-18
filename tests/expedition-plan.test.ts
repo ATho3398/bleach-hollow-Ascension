@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
 import {
-  advance, beginPlanning, chooseContinue, chooseReturn, createExpedition, finishBattle, finishPlanning, placeTile, startBattle, unplacedKept,
+  advance, beginPlanning, chooseContinue, chooseReturn, createExpedition, finishBattle, finishPlanning, moveTile, placeTile, startBattle, unplaceTile, unplacedKept,
   type ExpeditionState,
 } from '../src/engine/expedition';
 import { loadSave, newSaveData, recordExpedition, storeUnplacedTiles, writeSave } from '../src/game';
-import { handCounts, roadCellMode } from '../src/ui/bha/road';
+import { cellAction, handCounts, roadCellMode } from '../src/ui/bha/road';
 import { isWalking, walkAnimClass, walkState } from '../src/ui/bha/walk';
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'rest-a'];
@@ -142,5 +142,82 @@ describe('걷기 화면 (GDD 17-1)', () => {
     expect(walkState('moving', false).label).toBe('걷는 중');
     expect(walkState('moving', true).label).toBe('일시정지');
     expect(walkState('battle', false).label).toBe('전투 대기');
+  });
+});
+
+describe('타일 이동·되돌리기 (GDD 18-4, C.38)', () => {
+  it('놓은 타일을 손으로 되돌리면 칸이 비고 손에 돌아온다', () => {
+    const exp = mk();
+    beginPlanning(exp);
+    placeTile(exp, 'rest-a', 5);
+    expect(exp.hand).toEqual(['prey-nest-a', 'prey-nest-a', 'elite-den-a']);
+    expect(unplaceTile(exp, 5).ok).toBe(true);
+    expect(exp.slots[5]).toBeNull();
+    expect([...exp.hand].sort()).toEqual([...DECK].sort());
+    expect(unplaceTile(exp, 5).ok).toBe(false); // 이미 빈 칸
+    expect(unplaceTile(exp, 0).ok).toBe(false); // 둥지 칸
+  });
+
+  it('다른 칸으로 옮긴다: 빈 칸만 되고, 실패하면 아무것도 안 바뀐다', () => {
+    const exp = mk();
+    beginPlanning(exp);
+    placeTile(exp, 'prey-nest-a', 2);
+    placeTile(exp, 'elite-den-a', 4);
+    expect(moveTile(exp, 2, 4).ok).toBe(false); // 찬 칸
+    expect(moveTile(exp, 2, 0).ok).toBe(false); // 둥지 칸
+    expect(moveTile(exp, 3, 6).ok).toBe(false); // 빈 칸에서 옮길 수 없다
+    expect(moveTile(exp, 2, 2).ok).toBe(false);
+    expect(exp.slots[2]).toBe('prey-nest-a');
+    expect(exp.slots[4]).toBe('elite-den-a');
+    const handBefore = [...exp.hand];
+    expect(moveTile(exp, 2, 9).ok).toBe(true);
+    expect(exp.slots[2]).toBeNull();
+    expect(exp.slots[9]).toBe('prey-nest-a');
+    expect([...exp.hand].sort()).toEqual([...handBefore].sort());
+  });
+
+  it('전투 타일을 놓았다 되돌려도 이번 바퀴 전투 수는 그대로다(야생 전투가 돌아온다)', () => {
+    const base = mk();
+    const battles = (e: ExpeditionState) => e.wildCells.length + e.slots.filter((s) => s === 'prey-nest-a' || s === 'elite-den-a').length;
+    beginPlanning(base);
+    const total = battles(base);
+    placeTile(base, 'prey-nest-a', 3);
+    placeTile(base, 'elite-den-a', 7);
+    expect(battles(base)).toBe(total);
+    moveTile(base, 3, 8);
+    expect(battles(base)).toBe(total);
+    unplaceTile(base, 8);
+    unplaceTile(base, 7);
+    expect(battles(base)).toBe(total);
+    expect(base.wildCells.length).toBeGreaterThan(0);
+    expect(new Set(base.wildCells).size).toBe(base.wildCells.length);
+    for (const c of base.wildCells) expect(base.slots[c]).toBeNull();
+  });
+
+  it('바퀴 끝 팝업(nest-choice)에서도 되돌릴 수 있고, 지나간 칸은 안 된다', () => {
+    const exp = mk();
+    beginPlanning(exp);
+    finishPlanning(exp);
+    walkToNest(exp);
+    expect(exp.phase).toBe('nest-choice');
+    exp.hand = ['prey-nest-a'];
+    expect(placeTile(exp, 'prey-nest-a', 3).ok).toBe(true);
+    expect(exp.hand).toEqual([]);
+    expect(moveTile(exp, 3, 5).ok).toBe(true);
+    expect(unplaceTile(exp, 5).ok).toBe(true);
+    expect(exp.hand).toEqual(['prey-nest-a']);
+    exp.slots[2] = 'rest-a';
+    exp.pos = 3;
+    expect(unplaceTile(exp, 2).ok).toBe(false);
+  });
+
+  it('칸을 눌렀을 때의 동작 (cellAction)', () => {
+    const base = { selectedTile: null, selectedCell: null, index: 4 };
+    expect(cellAction({ ...base, slot: 'rest-a', editable: false })).toBe('info');
+    expect(cellAction({ ...base, slot: 'rest-a', editable: true })).toBe('select-placed');
+    expect(cellAction({ ...base, slot: 'rest-a', editable: true, selectedCell: 4 })).toBe('deselect');
+    expect(cellAction({ ...base, slot: null, editable: false, selectedCell: 2 })).toBe('move');
+    expect(cellAction({ ...base, slot: null, editable: false, selectedTile: 'rest-a' })).toBe('place');
+    expect(cellAction({ ...base, slot: null, editable: false })).toBe('need-pick');
   });
 });

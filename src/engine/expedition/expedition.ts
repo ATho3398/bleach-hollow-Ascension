@@ -434,6 +434,39 @@ export function placeTile(exp: ExpeditionState, tileId: string, cell: number): P
   return { ok: true };
 }
 
+/** 놓은 타일 되돌리기 (GDD 18-4): 확정(출발·계속) 전에 놓은 타일을 칸에서 빼 손으로 돌려보낸다. 전투 타일이 대신했던 야생 전투는 그 칸으로 돌아온다(길을 걷는 중일 때만 — 바퀴 끝 팝업에서는 다음 바퀴 계획이 새로 짜인다) */
+export function unplaceTile(exp: ExpeditionState, cell: number): PlaceResult {
+  if (exp.phase !== 'moving' && exp.phase !== 'nest-choice') return { ok: false, reason: '지금은 되돌릴 수 없다' };
+  if (!Number.isInteger(cell) || cell < 1 || cell >= EX.loopTiles) return { ok: false, reason: '슬롯이 없는 칸이다' };
+  if (cell <= exp.pos) return { ok: false, reason: '지나간 칸이다' };
+  const id = exp.slots[cell];
+  if (id === null || id === undefined) return { ok: false, reason: '타일이 없는 칸이다' };
+  exp.slots[cell] = null;
+  exp.hand.push(id);
+  if (exp.phase === 'moving' && causesBattle(id)) {
+    const tileBattles = exp.slots.filter((t, c) => c >= 1 && t !== null && causesBattle(t)).length;
+    if (exp.wildCells.length < Math.max(0, plannedBattles(exp.lap) - tileBattles)) exp.wildCells.push(cell);
+  }
+  return { ok: true };
+}
+
+/** 놓은 타일 옮기기 (GDD 18-4): from 칸의 타일을 to 칸(빈 칸)으로. 실패하면 아무것도 바꾸지 않는다 */
+export function moveTile(exp: ExpeditionState, from: number, to: number): PlaceResult {
+  if (from === to) return { ok: false, reason: '같은 칸이다' };
+  const id = exp.slots[from];
+  if (id === null || id === undefined) return { ok: false, reason: '타일이 없는 칸이다' };
+  if (exp.slots[to] !== null && exp.slots[to] !== undefined) return { ok: false, reason: '이미 타일이 있다' };
+  const before = { slots: [...exp.slots], hand: [...exp.hand], wild: [...exp.wildCells] };
+  const u = unplaceTile(exp, from);
+  const p = u.ok ? placeTile(exp, id, to) : u;
+  if (!p.ok) {
+    exp.slots = before.slots;
+    exp.hand = before.hand;
+    exp.wildCells = before.wild;
+  }
+  return p;
+}
+
 /**
  * 카드 배치 단계 (GDD 17-1): 원정이 시작되기 직전에 덱의 타일을 손에 쥐어 12칸 길에 놓게 한다.
  * 덱은 보상으로 뽑을 타일 목록이기도 해서 그대로 두고, 손에만 사본을 쥔다. 단계가 끝나면 finishPlanning 이 손을 비운다.
