@@ -366,14 +366,22 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // ── 튜토리얼·도움말 ──
   let tutorial: TutorialHandle | null = null;
-  const syncPausedLook = () => app.classList.toggle('is-paused', paused || tutorialOpen);
+  let tutorialPractice = false;
+  const syncPausedLook = () => app.classList.toggle('is-paused', paused || (tutorialOpen && !tutorialPractice));
   const startTutorial = () => {
     if (tutorial) return;
     overlayOpen = true;
     tutorialOpen = true;
     syncPausedLook();
     tutorial = tutorialOverlay(faction, {
+      // 직접 해 보기 장면: 전투가 다시 흐르고 블록 바를 만질 수 있다. 장면을 나가면 다시 멈춘다
+      onPractice: (on) => {
+        tutorialPractice = on;
+        overlayOpen = !on;
+        syncPausedLook();
+      },
       onFinish: () => {
+        tutorialPractice = false;
         tutorial = null;
         overlayOpen = false;
         tutorialOpen = false;
@@ -468,6 +476,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const react = (e: CombatEvent) => {
     const cue = cueOf(e, top);
     if (cue) cues.push(cue);
+    if (e.kind === 'block' || e.kind === 'stored-use') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':
         if (e.damage > 0) hitFoe();
@@ -931,6 +940,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       stopped = true;
       if (s.status === 'lost') say({ role: 'cast', icon: 'i-broken', text: s.lossReason === 'timeout' ? '시간 제한을 넘겼다…' : `${labels.defeatState}…` });
       endPress();
+      if (tutorialOpen) tutorial?.close(); // 직접 해 보기 중에 끝나면 튜토리얼도 마무리
       window.setTimeout(showResult, 700);
       return;
     }

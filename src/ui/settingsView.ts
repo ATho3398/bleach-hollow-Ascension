@@ -8,7 +8,7 @@ import {
 import { loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
 import { emitFeedback, hookAudioUnlock } from './fx';
 
-export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void): void {
+export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onTutorial?: () => void): void {
   const storage = (() => {
     try {
       return localStorage;
@@ -99,11 +99,12 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     onClick: () => {
       resetPointerRules(storage);
       resetFxSettings(storage);
-      settingsView(root, onHelp, true, onBackup);
+      settingsView(root, onHelp, true, onBackup, onTutorial);
     },
   });
   const foot: Node[] = [reset];
-  if (onHelp) foot.push(button({ label: '도움말·튜토리얼 다시 보기', icon: 'i-help', onClick: onHelp }));
+  if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
+  if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
   lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? `기본값으로 되돌렸다 (${DEFAULT_POINTER_RULES.clickMaxSeconds}초 · ${DEFAULT_POINTER_RULES.dragThresholdPx}px).` : '조작 판정·전투 효과 — 판정은 블록과 저장 필살기에 똑같이 적용 · 이 기기에만 저장(게임 세이브 제외)' }), [panelOf(tap)], [panelOf(drag), fxPanel]);
 }

@@ -12,6 +12,11 @@ export interface TutorialScene {
   targets: string[];
   title: string;
   body: string;
+  /** 카드 안에 보여 줄 샘플 블록 역할 (attack·guard·heal) */
+  sample?: string[];
+  /** 직접 해 보기 장면: 전투가 다시 흐르고, 블록을 하나 쓰면 done 문구로 바뀐다 */
+  practice?: boolean;
+  done?: string;
 }
 
 export interface GlossaryTerm {

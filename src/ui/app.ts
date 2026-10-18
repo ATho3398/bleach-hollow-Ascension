@@ -122,7 +122,7 @@ export function startApp(host: HTMLElement): void {
 
   // ── 시작 화면·슬롯 (Q-3) ──
   const settingsOpener = (withBackup: boolean) => () =>
-    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined));
+    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined, () => tutorialDemo(helpFaction())));
 
   /** 가져오기·되돌리기가 끝난 뒤: 그 슬롯을 저장소에서 다시 읽어 방으로 */
   function reloadSlot(): void {

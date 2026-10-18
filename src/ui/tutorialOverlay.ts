@@ -14,11 +14,15 @@ export interface TutorialHandle {
   close(): void;
   /** 끝낸 것으로 치지 않고 조용히 치운다 (화면을 떠날 때, Q-3). onFinish 는 부르지 않는다 */
   dismiss(): void;
+  /** 전투 화면이 "플레이어가 블록을 썼다"를 알린다 (직접 해 보기 장면의 통과 조건) */
+  blockUsed(): void;
 }
 
 export interface TutorialOverlayOptions {
   /** 끝(마지막 장면 다음)이나 건너뛰기로 닫히면 한 번 불린다 */
   onFinish: (status: Exclude<TutorialStatus, 'active'>) => void;
+  /** 직접 해 보기 장면에 들어가면 true(전투가 다시 흐른다), 나가면 false(다시 멈춘다) */
+  onPractice?: (on: boolean) => void;
 }
 
 /** 구멍을 대상보다 이만큼(px) 넓게 판다 (HANDOFF 5-4) */
@@ -62,7 +66,16 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   host.append(layer);
   const unregister = registerLayer(layer, requestTitle); // 취소 = 처음 화면으로 돌아갈지 확인 (Q-3)
 
+  let practiceOn = false;
+  let practiced = false;
+  const setPractice = (on: boolean) => {
+    if (on === practiceOn) return;
+    practiceOn = on;
+    layer.classList.toggle('is-practice', on);
+    opts.onPractice?.(on);
+  };
   const teardown = () => {
+    setPractice(false);
     window.removeEventListener('resize', layout);
     unregister();
     layer.remove();
@@ -149,12 +162,15 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
       render();
     } });
     prev.disabled = state.index === 0;
+    const mustTry = !!scene.practice && !practiced;
     const next = button({ label: last ? '전투 시작' : '다음', variant: 'primary', size: 'small', onClick: () => {
       state = tutorialNext(state);
       if (isTutorialActive(state)) render();
       else finish('completed');
     } });
     next.append(icon(last ? 'i-play' : 'i-chevron-right'));
+    next.disabled = mustTry; // 직접 해 보기는 블록을 하나 써야 넘어간다 (건너뛰기는 언제나 가능)
+    setPractice(!!scene.practice);
     const actions = el('div', 'bha-tut__actions');
     actions.append(skip, prev, next);
 
@@ -167,14 +183,37 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     const steps = el('div', 'bha-tut__steps');
     steps.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
     top.append(steps, actions);
-    card.replaceChildren(top, title, el('p', 'bha-tut__body', t(scene.body)));
+    const body = el('p', 'bha-tut__body', t(scene.practice && practiced && scene.done ? scene.done : scene.body));
+    card.replaceChildren(top, title, body);
+    if (scene.sample?.length) card.append(sampleRow(scene.sample));
     card.style.visibility = 'hidden';
     layout();
     card.style.visibility = 'visible';
     next.focus({ preventScroll: true });
   }
 
+  /** 샘플 블록: 블록 바에 생기는 블록의 역할 표시(아이콘 + 색 + 이름)를 카드 안에서 미리 보여 준다 */
+  const sampleRow = (roles: string[]): HTMLElement => {
+    const row = el('div', 'bha-tut__sample');
+    row.setAttribute('aria-label', '샘플 블록');
+    for (const r of roles) {
+      const it = el('span', `bha-legend__item bha-legend__item--${r} bha-tut__sampleblock`);
+      it.append(icon(`i-${r}`), el('span', '', vars[`roleNames.${r}`] ?? r));
+      row.append(it);
+    }
+    return row;
+  };
+
   window.addEventListener('resize', layout);
   render();
-  return { close: () => finish('skipped'), dismiss: teardown };
+  return {
+    close: () => finish('skipped'),
+    dismiss: teardown,
+    blockUsed: () => {
+      if (practiceOn && !practiced) {
+        practiced = true;
+        render();
+      }
+    },
+  };
 }

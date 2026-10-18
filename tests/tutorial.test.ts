@@ -89,9 +89,20 @@ describe('튜토리얼 플래그 저장·마이그레이션', () => {
 });
 
 describe('도움말·튜토리얼 텍스트 데이터', () => {
-  it('장면은 7~8개, 모두 id·제목·본문이 있고 id 가 겹치지 않는다', () => {
+  it('샘플 블록 장면과 직접 해 보기 장면이 있다 (Q-3)', () => {
+    const sample = TUTORIAL_SCENES.find((x) => x.sample?.length);
+    expect(sample?.sample?.every((r) => ['attack', 'guard', 'heal'].includes(r))).toBe(true);
+    const tries = TUTORIAL_SCENES.filter((x) => x.practice);
+    expect(tries).toHaveLength(1);
+    expect(tries[0]!.targets).toContain('battle.tray');
+    expect(tries[0]!.done?.length).toBeGreaterThan(5);
+    // 직접 해 보기는 마지막 안내 바로 앞
+    expect(TUTORIAL_SCENES[TUTORIAL_SCENES.length - 2]!.practice).toBe(true);
+  });
+
+  it('장면은 7~9개, 모두 id·제목·본문이 있고 id 가 겹치지 않는다', () => {
     expect(TUTORIAL_SCENES.length).toBeGreaterThanOrEqual(6);
-    expect(TUTORIAL_SCENES.length).toBeLessThanOrEqual(8);
+    expect(TUTORIAL_SCENES.length).toBeLessThanOrEqual(9);
     for (const sc of TUTORIAL_SCENES) {
       expect(sc.id.length).toBeGreaterThan(0);
       expect(sc.title.length).toBeGreaterThan(0);
@@ -123,7 +134,7 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
 
   it('모든 자리표시자가 모든 종족 설정에서 값으로 풀린다', () => {
     const templates = [
-      ...TUTORIAL_SCENES.flatMap((x) => [x.title, x.body]),
+      ...TUTORIAL_SCENES.flatMap((x) => [x.title, x.body, ...(x.done ? [x.done] : [])]),
       ...GLOSSARY.flatMap((x) => [x.title, x.body]),
       ...SCREEN_HELPS.flatMap((x) => [x.title, x.body]),
     ];

@@ -230,3 +230,10 @@ button.bha-slot { cursor: pointer; }
 .bha-lcd .bha-confirm .bha-modal__title { font-size: var(--bha-fs-xl); }
 .bha-lcd .bha-confirm .bha-modal__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
 .bha-lcd .bha-overlay.bha-confirm { z-index: calc(var(--bha-z-tutorial) + 1); } /* 튜토리얼·도움말 위에서도 보인다 */
+
+/* ═════ 튜토리얼: 샘플 블록·직접 해 보기 (Q-3, C.31) ═════ */
+.bha-tut__sample { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
+.bha-tut__sampleblock { min-height: var(--bha-touch); padding: 0 var(--bha-sp-5); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
+.bha-tut.is-practice { pointer-events: none; }                 /* 전투 화면을 직접 만진다 */
+.bha-tut.is-practice .bha-tut__card { pointer-events: auto; }
+.bha-tut.is-practice .bha-tut__hole { box-shadow: none; }       /* 어둡게 덮지 않고 테두리만 */
