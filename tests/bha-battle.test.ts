@@ -3,7 +3,7 @@ import { FACTIONS } from '../src/data/factions';
 import { LINEAGES } from '../src/data/lineages';
 import { TRAIT_ABBR_MAX_LENGTH, TRAITS, parseTrait, traitAbbr, traitName } from '../src/data/traits';
 import {
-  blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, hasPips, pickAbbr, runSpecs, secondsText,
+  blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, gaugeFill, gaugeSlots, hasPips, pickAbbr, runSpecs, secondsText, trackTotal,
 } from '../src/ui/bha/battle';
 import { lineageKey } from '../src/ui/bha/lineage';
 import { blockAbbr } from '../src/ui/battleView';
@@ -106,5 +106,30 @@ describe('그 밖의 표시 규칙', () => {
     expect(floatSpot(0)).toEqual(FLOAT_SPOTS[0]);
     expect(floatSpot(FLOAT_SPOTS.length)).toEqual(FLOAT_SPOTS[0]);
     expect(floatSpot(-1)).toEqual(FLOAT_SPOTS[FLOAT_SPOTS.length - 1]);
+  });
+});
+
+describe('머리 위 게이지 순수 함수 (GDD 18-6)', () => {
+  it('trackTotal: 가장 큰 남은 값을 처음 길이로 삼고, 끝나면 0 으로 되돌린다', () => {
+    expect(trackTotal(0, 3)).toBe(3);
+    expect(trackTotal(3, 2)).toBe(3);
+    expect(trackTotal(3, 4)).toBe(4); // 도중에 연장되면 더 긴 쪽이 기준
+    expect(trackTotal(3, 0)).toBe(0);
+    expect(trackTotal(3, -1)).toBe(0);
+  });
+
+  it('gaugeFill: 남은/전체 비율을 0~1 로 자른다 (전체가 없으면 0)', () => {
+    expect(gaugeFill(1.5, 3)).toBe(0.5);
+    expect(gaugeFill(3, 3)).toBe(1);
+    expect(gaugeFill(5, 3)).toBe(1);
+    expect(gaugeFill(-1, 3)).toBe(0);
+    expect(gaugeFill(1, 0)).toBe(0);
+  });
+
+  it('gaugeSlots: 켜진 게이지만 머리 위 첫 줄(0)부터 차례로 쌓고 꺼진 것은 -1', () => {
+    expect(gaugeSlots([true, true])).toEqual([0, 1]);
+    expect(gaugeSlots([false, true])).toEqual([-1, 0]);
+    expect(gaugeSlots([true, false])).toEqual([0, -1]);
+    expect(gaugeSlots([false, false])).toEqual([-1, -1]);
   });
 });

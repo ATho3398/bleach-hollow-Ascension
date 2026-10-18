@@ -105,6 +105,26 @@ export function floatSpot(n: number): { left: number; top: number } {
   return FLOAT_SPOTS[((n % FLOAT_SPOTS.length) + FLOAT_SPOTS.length) % FLOAT_SPOTS.length]!;
 }
 
+
+/** 남은 시간 추적: 게이지는 "처음 길이 대비 남은 비율"로 줄어든다. 처음 길이는 이번에 보인 가장 큰 남은 값, 끝나면(0 이하) 0 으로 되돌린다 */
+export function trackTotal(prevTotal: number, remaining: number): number {
+  return remaining <= 0 ? 0 : Math.max(prevTotal, remaining);
+}
+
+/** 게이지 채움 비율 (0~1). 전체가 0 이하면 0 */
+export function gaugeFill(remaining: number, total: number): number {
+  return total > 0 ? Math.min(1, Math.max(0, remaining / total)) : 0;
+}
+
+/** 머리 위 게이지 종류: 시전(강공격 예고)·봉인·막기·방어 자세 (GDD 18-6) */
+export type HeadGaugeKind = 'cast' | 'seal' | 'guard' | 'stance';
+
+/** 켜져 있는 게이지에 쌓는 자리(0이 머리 위 첫 줄, 1부터 그 아래)를 준다. 꺼진 것은 -1 */
+export function gaugeSlots(visible: readonly boolean[]): number[] {
+  let next = 0;
+  return visible.map((v) => (v ? next++ : -1));
+}
+
 // ───────────────────────── DOM 도구 ─────────────────────────
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -196,6 +216,86 @@ export function heroEl(art: ArtUrls): { root: HTMLElement; body: HTMLElement } {
   }
   root.append(body);
   return { root, body };
+}
+
+export interface HeadGaugeState {
+  /** false 면 감춘다 (idle 표시가 있는 게이지는 흐리게 남긴다) */
+  on: boolean;
+  /** 0~1 채움 */
+  fill: number;
+  /** 글자 (예 "강공격 예고! 1.2초") */
+  label: string;
+  /** 쌓는 자리 (gaugeSlots) */
+  slot: number;
+  /** 막았다 같은 결과 표시 */
+  done?: boolean;
+}
+
+export interface HeadGauge {
+  root: HTMLElement;
+  set(state: HeadGaugeState): void;
+}
+
+/**
+ * 유닛 머리 위 게이지 한 개 (`.bha-hgauge`): 아이콘 + 글자 + 채움 바.
+ * 프레임마다 불러도 달라진 값만 DOM 에 쓴다. idleLabel 이 있으면 꺼져도 흐린 빈 바로 자리를 지킨다(튜토리얼이 가리킬 자리).
+ */
+export function headGaugeEl(kind: HeadGaugeKind, iconId: string, idleLabel?: string): HeadGauge {
+  const root = el('div', `bha-hgauge bha-hgauge--${kind}`);
+  const ico = icon(iconId);
+  const label = el('span', 'bha-hgauge__label');
+  const fillEl = el('i', 'bha-hgauge__fill');
+  root.append(fillEl, ico, label);
+  root.hidden = !idleLabel;
+  root.classList.toggle('is-idle', !!idleLabel);
+  if (idleLabel) label.textContent = idleLabel;
+  root.style.setProperty('--fill', '0');
+  let lastFill = 0;
+  let lastSlot = -2;
+  let lastOn = false;
+  let lastDone = false;
+  return {
+    root,
+    set(st) {
+      if (!st.on) {
+        if (lastOn || lastDone) {
+          lastOn = false;
+          lastDone = false;
+          root.classList.remove('is-done');
+          if (idleLabel) {
+            root.classList.add('is-idle');
+            label.textContent = idleLabel;
+            root.style.setProperty('--fill', '0');
+            lastFill = 0;
+          } else root.hidden = true;
+        }
+        if (st.slot !== lastSlot) {
+          lastSlot = st.slot;
+          root.style.setProperty('--slot', String(Math.max(0, st.slot)));
+        }
+        return;
+      }
+      if (!lastOn) {
+        lastOn = true;
+        root.hidden = false;
+        root.classList.remove('is-idle');
+      }
+      if (!!st.done !== lastDone) {
+        lastDone = !!st.done;
+        root.classList.toggle('is-done', lastDone);
+      }
+      const f = Math.round(st.fill * 200) / 200;
+      if (f !== lastFill) {
+        lastFill = f;
+        root.style.setProperty('--fill', String(f));
+      }
+      if (st.slot !== lastSlot) {
+        lastSlot = st.slot;
+        root.style.setProperty('--slot', String(Math.max(0, st.slot)));
+      }
+      setText(label, st.label);
+    },
+  };
 }
 
 const BLOCK_ICON: Record<BlockVisual, string> = {

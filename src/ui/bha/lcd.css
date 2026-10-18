@@ -1,76 +1,7 @@
 /* T-2 (GDD 16장): LCD 창(가로, 높이 약 330~360px) 안에 맞춘 가로 2단 배치. 디자인 토큰·bha- 클래스만 쓴다 (새 색·간격 없음).
    LCD 창 안의 화면만 다루므로 규칙은 .bha-lcd 아래에 둔다(앞선 CSS 를 덮어야 하므로 선택자를 한 단계 더 구체적으로 쓰고, 이 파일은 main.ts 에서 마지막에 읽는다). */
 
-/* ═════ 전투 ═════
-   왼쪽 열(적·나 상태) | 오른쪽 열(배속·일시정지 줄 / 무대 / 블록 바 8칸 / 저장 필살기 / 범례). 스크롤 없음. */
-.bha-lcd .bha-app.bha-battle {
-  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;
-  display: grid; grid-template-columns: clamp(148px, 28%, 216px) minmax(0, 1fr); gap: var(--bha-sp-4);
-  padding: var(--bha-sp-3) var(--bha-sp-5) var(--bha-sp-3) var(--bha-sp-5); overflow: hidden;
-}
-.bha-battle__side, .bha-battle__play { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: var(--bha-sp-3); }
-.bha-battle__side { overflow: hidden; }
-.bha-battle__side .bha-notice { padding: var(--bha-sp-2) var(--bha-sp-3); font-size: var(--bha-fs-xs); line-height: 1.3; }
-
-/* 왼쪽: 적 */
-.bha-lcd .bha-battle__enemy { gap: var(--bha-sp-2); }
-.bha-lcd .bha-battle__foehead { flex-direction: column; align-items: flex-start; gap: var(--bha-sp-2); min-height: 0; }
-.bha-lcd .bha-battle__foename { flex-wrap: wrap; row-gap: var(--bha-sp-1); max-width: 100%; }
-.bha-lcd .bha-battle__name { font-size: var(--bha-fs-xl); white-space: normal; overflow-wrap: anywhere; }
-.bha-lcd .bha-battle__foetags { min-height: 0; gap: var(--bha-sp-2); }
-.bha-lcd .bha-battle__castslot { min-height: 0; }
-.bha-lcd .bha-battle__castidle { height: 30px; }
-/* 체력·SP 바: 이름·값은 윗줄, 바는 아랫줄 (좁은 열에서 바가 짧아지지 않게) */
-.bha-battle__side .bha-meter--compact { grid-template-columns: minmax(0, 1fr) auto; row-gap: var(--bha-sp-1); }
-.bha-battle__side .bha-meter--compact .bha-meter__label { grid-column: 1; grid-row: 1; }
-.bha-battle__side .bha-meter--compact .bha-meter__value { grid-column: 2; grid-row: 1; min-width: 0; }
-.bha-battle__side .bha-meter--compact .bha-meter__track { grid-column: 1 / -1; grid-row: 2; }
-.bha-battle__side .bha-meter--compact .bha-meter__note { grid-column: 1 / -1; grid-row: 3; }
-/* 강공격 예고: 제목+막기 힌트 윗줄, 시전 바 아랫줄 */
-.bha-battle__side .bha-cast { grid-template-columns: minmax(0, 1fr) auto; gap: var(--bha-sp-2) var(--bha-sp-3); padding: var(--bha-sp-2) var(--bha-sp-4); }
-.bha-battle__side .bha-cast__title { grid-column: 1; grid-row: 1; font-size: var(--bha-fs-sm); }
-.bha-battle__side .bha-cast__hint { grid-column: 2; grid-row: 1; }
-.bha-battle__side .bha-cast__track { grid-column: 1 / -1; grid-row: 2; }
-.bha-lcd .bha-battle__me { gap: var(--bha-sp-2); }
-.bha-lcd .bha-battle__mestatus { min-height: 0; gap: var(--bha-sp-2); }
-.bha-lcd .bha-battle__sp { margin-top: var(--bha-sp-1); }
-.bha-lcd .bha-battle__spnote { top: -22px; }
-
-/* 오른쪽 위: 배속·일시정지·도움말·그만두기 + 남은 시간 한 줄 */
-.bha-lcd .bha-battle__bar { grid-template-columns: auto auto auto auto minmax(0, 1fr); gap: var(--bha-sp-3); }
-.bha-lcd .bha-battle__bar .bha-btn--quit { padding: 0 var(--bha-sp-4); font-size: var(--bha-fs-sm); }
-.bha-lcd .bha-battle__timelabel { position: static; width: auto; height: auto; clip: auto; }
-
-/* 오른쪽 가운데: 무대 = 적 실루엣(왼쪽) + 사건 로그(오른쪽) */
-.bha-lcd .bha-battle__arena { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(44px, 16%) minmax(44px, 18%) minmax(0, 1fr); align-items: stretch; column-gap: var(--bha-sp-3); }
-.bha-lcd .bha-battle__arena .bha-foe { position: relative; inset: auto; min-height: 0; }
-/* 내 그림 한 장 (몸통박치기 연출 대상, 임시 도형). 적과 마주 본다 */
-.bha-hero { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; padding-bottom: var(--bha-sp-3); }
-.bha-hero__body { position: relative; display: block; width: 78%; max-width: 64px; aspect-ratio: 52 / 56; background: var(--bha-text-2); border: 2px solid var(--bha-line-2); border-radius: 50% 50% 42% 42%; }
-.bha-hero__body.has-art { width: 100%; max-width: none; height: 100%; aspect-ratio: auto; background: none; border: 0; border-radius: 0; }
-.bha-hero__img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)) scaleX(-1); pointer-events: none; } /* 그림은 왼쪽을 보는 한 장, 내 쪽은 오른쪽을 본다 */
-.bha-hero__eye { position: absolute; top: 38%; right: 20%; width: 6px; height: 9px; border-radius: var(--bha-r-pill); background: var(--bha-bg-0); }
-.bha-hero__eye:nth-of-type(1) { right: 40%; }
-.bha-ghost { pointer-events: none; }
-.bha-lcd .bha-battle__arena .bha-foe__body { max-height: 100%; }
-.bha-lcd .bha-battle__arena .bha-log { height: 100%; min-height: 0; justify-content: flex-end; }
-.bha-lcd .bha-battle__arena .bha-log .bha-log__line { justify-content: flex-start; text-align: left; }
-.bha-lcd .bha-battle__arena .bha-log .bha-log__line:first-child:not(:last-child):not(:nth-last-child(2)) { display: none; }
-
-/* 오른쪽 아래: 블록 바 → 저장 필살기 → 범례 (조작 힌트·설명 문구는 [?] 도움말로) */
-.bha-lcd .bha-battle__controls { gap: var(--bha-sp-2); position: relative; }
-.bha-lcd .bha-battle__controls .bha-tray { margin-inline: 0; padding-top: 18px; }
-.bha-lcd .bha-battle__controls .bha-tray__runlabel { height: 16px; line-height: 16px; }
-.bha-lcd .bha-battle__controls .bha-stored { margin-top: 0; min-height: 48px; padding: var(--bha-sp-2) var(--bha-sp-5) var(--bha-sp-2) var(--bha-sp-3); grid-template-columns: 32px minmax(0, 1fr) auto; gap: var(--bha-sp-4); }
-.bha-lcd .bha-battle__controls .bha-stored__icon { width: 32px; height: 32px; }
-.bha-lcd .bha-battle__controls .bha-stored__name { font-size: var(--bha-fs-md); }
-.bha-lcd .bha-battle__controls .bha-stored__pips i { width: 14px; height: 14px; }
-.bha-lcd .bha-battle__controls .bha-stored__pips { gap: var(--bha-sp-4); }
-.bha-lcd .bha-battle .bha-legend { display: flex; flex-wrap: nowrap; gap: var(--bha-sp-1) var(--bha-sp-4); }
-.bha-lcd .bha-battle__hint { display: none; }
-/* 끌기/오래 누름/봉인 안내: 레이아웃을 밀지 않게 블록 바 위(무대 아래쪽)에 띄운다 */
-.bha-lcd .bha-battle .bha-tray__note { position: absolute; left: 0; right: 0; bottom: calc(100% - 18px); min-height: 0; z-index: 7; pointer-events: none; margin: 0 auto; width: max-content; max-width: 100%; padding: var(--bha-sp-1) var(--bha-sp-4); border-radius: var(--bha-r-pill); background: var(--bha-bg-1); border: 1px solid var(--bha-line-2); }
-.bha-lcd .bha-battle .bha-tray__note:empty { display: none; }
+/* ═════ 전투: battle-scene.css (GDD 18-6) ═════ */
 
 /* ═════ 튜토리얼 오버레이 (.bha-tut): 낮은 LCD 에서는 카드를 컴팩트하게 하고 단계 표시와 버튼을 한 줄에 ═════ */
 .bha-lcd .bha-tut__card { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
@@ -169,17 +100,3 @@
 .bha-lcd .bha-toast__icon { width: 28px; height: 28px; }
 .bha-lcd .bha-toast__meta { display: none; }
 .bha-lcd .bha-toast__title { font-size: var(--bha-fs-md); }
-
-/* ═════ 좁은 폰(긴 쪽 740px 미만, 기기가 축소되는 폰): 블록 바(+저장 필살기·범례)를 두 열 아래 전폭으로 (Q-3, C.31) ═════
-   축소 배율이 곱해지면 블록 칸 터치가 44px 밑으로 내려가므로, 바를 전폭으로 펼쳐 칸을 키운다. 블록 클릭·드래그 판정 코드는 그대로 (칸을 가로로 찾는 좌표 변환은 기기 안 좌표). */
-.bha-dev.is-narrow .bha-lcd .bha-app.bha-battle {
-  grid-template-columns: clamp(132px, 26%, 190px) minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas: "side bar" "side arena" "controls controls";
-}
-.bha-dev.is-narrow .bha-battle__play { display: contents; }
-.bha-dev.is-narrow .bha-battle__side { grid-area: side; }
-.bha-dev.is-narrow .bha-battle__bar { grid-area: bar; }
-.bha-dev.is-narrow .bha-lcd .bha-battle__arena { grid-area: arena; }
-.bha-dev.is-narrow .bha-battle__controls { grid-area: controls; }
-.bha-dev.is-narrow .bha-lcd .bha-battle__castidle { display: none; }  /* 대기 칸 자리표시는 접어 내 영력 줄이 보이게 */

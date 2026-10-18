@@ -10,6 +10,7 @@ import './ui/bha/device.css';
 import './ui/bha/room.css';
 import './ui/bha/lcd.css';
 import './ui/bha/screens-lcd.css';
+import './ui/bha/battle-scene.css';
 import { startApp } from './ui/app';
 import { mountSprite } from './ui/bha/sprite';
 

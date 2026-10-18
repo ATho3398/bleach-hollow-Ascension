@@ -20,7 +20,7 @@ import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, ta
 import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, floatPool, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
-  playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl,
+  playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { lineageKey, linMarkShort } from './bha/lineage';
@@ -162,7 +162,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 약점 계열 (GDD 17-3): 이 적에게는 그 계열의 공격 블록이 ×1.5 */
   const weakFamilyText = lineageFamily(enemy.weaknessLineageId) ? ` · ${weakFamilyName(labels, enemy.weaknessLineageId) ?? ''} 계열` : '';
 
-  // ── 1. 적 영역 ──
+  // ── 1. 적 이름·약점 (장면 왼쪽 위 칩) ──
   const foeName = el('div', 'bha-battle__foename');
   foeName.append(el('h1', 'bha-battle__name', enemyName));
   if (enemy.class === 'elite') foeName.append(tag('강적', 'elite'));
@@ -173,53 +173,48 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   foeHead.append(foeName, weakChip);
 
   const patternView = PATTERN_VIEW[enemyPatternKind(enemy)];
-  const foeTags = el('div', 'bha-battle__foetags');
-  const stanceChip = statusChip('guard', 'i-guard', '방어 자세');
-  stanceChip.root.title = '내 블록 피해 감소 · 블록을 쓰면 반격';
   if (patternView) {
     const pc = el('span', 'bha-chip bha-chip--pattern');
     pc.append(icon(patternView.icon), patternView.label);
-    foeTags.append(pc);
+    foeHead.append(pc);
   }
-  foeTags.append(stanceChip.root);
 
-  const enemyMeter = meter({ kind: 'enemy', label: '적 체력', value: Math.ceil(s.enemy.hp - 1e-6), max: Math.round(s.enemy.maxHp), ghost: s.enemy.hp, compact: true, lg: true });
-
-  // 강공격 예고 (항상 한 칸 자리를 차지한다: 평소엔 안내 점선, 예고 중엔 시전 바)
-  const castSlot = el('div', 'bha-battle__castslot');
-  castSlot.dataset.help = 'battle.cast';
-  const castIdle = el('div', 'bha-battle__castidle');
-  castIdle.append(icon('i-cast'), '강공격 예고 칸');
-  const castEl = el('div', 'bha-cast');
-  castEl.setAttribute('role', 'alert');
-  const castTitle = el('span', 'bha-cast__title');
-  const castTitleText = el('span');
-  const castTime = el('span');
-  castTime.setAttribute('aria-hidden', 'true');
-  const castTrack = el('span', 'bha-cast__track');
-  castTrack.append(el('i'));
-  const castHint = el('span', 'bha-cast__hint');
-  castEl.append(castTitle, castTrack, castHint);
-  castEl.hidden = true;
-  castSlot.append(castIdle, castEl);
-  let castMode: 'idle' | 'active' | 'blocked' = 'idle';
+  // ── 2. 유닛 두 칸: 머리 위 게이지 / 그림 / 작은 체력바 (GDD 18-6) ──
+  // 머리 위 게이지: 적 = 강공격 예고(시전 바, 항상 한 칸 자리를 지킨다) + 방어 자세, 나 = 봉인 + 막기. 엔진 이벤트·상태에서 읽기만 한다
+  const castGauge = headGaugeEl('cast', 'i-cast', '강공격 예고');
+  const stanceGauge = headGaugeEl('stance', 'i-guard');
+  const sealGauge = headGaugeEl('seal', 'i-seal');
+  const guardGauge = headGaugeEl('guard', 'i-guard');
   let blockedUntil = 0;
   let blockedDamage = 0;
-  const setCastMode = (mode: 'active' | 'blocked') => {
-    castTitle.replaceChildren(icon(mode === 'blocked' ? 'i-guard' : 'i-cast'), castTitleText, castTime);
-    castHint.replaceChildren(icon(mode === 'blocked' ? 'i-check' : 'i-guard'), mode === 'blocked' ? `피해 ${Math.round(blockedDamage)}` : labels.role.guard);
-    castEl.classList.toggle('is-blocked', mode === 'blocked');
-    setText(castTitleText, mode === 'blocked' ? '막았다!' : '강공격 예고!');
+  const heads = (...gauges: HeadGauge[]): HTMLElement => {
+    const h = el('div', 'bha-unit__heads');
+    h.append(...gauges.map((g) => g.root));
+    return h;
   };
+  const foeHeads = heads(castGauge, stanceGauge);
+  foeHeads.dataset.help = 'battle.cast';
+  const meHeads = heads(sealGauge, guardGauge);
+  const totals = { seal: 0, guard: 0, stance: 0 };
 
-  const enemySec = el('section', 'bha-battle__enemy');
-  enemySec.setAttribute('aria-label', '적');
-  enemySec.append(foeHead, foeTags, enemyMeter, castSlot);
-
-  // ── 2. 무대: 실루엣 + 플로팅 숫자 + 사건 로그 3줄 ──
   const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', slug ? `var(--bha-lin-${slug})` : null, foeArtOf(enemy.id));
   // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
   const hero = heroEl(heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0));
+
+  const enemyMeter = meter({ kind: 'enemy', label: '적 체력', value: Math.ceil(s.enemy.hp - 1e-6), max: Math.round(s.enemy.maxHp), ghost: s.enemy.hp, compact: true });
+  const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: s.player.maxHp, ghost: s.player.hp, compact: true });
+  const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement): HTMLElement => {
+    const u = el('div', `bha-unit ${cls}`);
+    const figBox = el('div', 'bha-unit__fig');
+    figBox.append(fig);
+    const hpBox = el('div', 'bha-unit__hp');
+    hpBox.append(hp);
+    u.append(headsEl, figBox, hpBox);
+    return u;
+  };
+  const units = el('div', 'bha-battle__units');
+  units.append(unit('bha-unit--me', meHeads, hero.root, playerMeter), unit('bha-unit--foe', foeHeads, foe, enemyMeter));
+
   const floats = el('div', 'bha-battle__floats');
   const log = el('div', 'bha-log');
   log.setAttribute('aria-live', 'polite');
@@ -229,17 +224,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 효과 레이어: 번쩍임 한 장(투명도만 애니메이션). 조작을 막지 않는다
   const fxFlash = el('div', 'bha-fxflash');
   fxFlash.setAttribute('aria-hidden', 'true');
-  arena.append(hero.root, foe, floats, fxFlash, log);
 
-  // ── 3. 내 영역 ──
-  const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: s.player.maxHp, ghost: s.player.hp, compact: true, lg: true });
-  const guardChip = statusChip('guard', 'i-guard', labels.role.guard);
-  const sealChip = statusChip('seal', 'i-seal', '봉인');
+  // ── 3. 내 상태: 영력(SP) 바 + 상태 칩 (블록 바 위 왼쪽) ──
   const voidChip = statusChip(undefined, 'i-void', labels.voidBlock);
   const chain3Chip = statusChip(undefined, 'i-chain-3', `${labels.chain}${top}`);
-  const calm = el('span', 'bha-faint', '상태 이상 없음');
   const meStatus = el('div', 'bha-battle__mestatus');
-  meStatus.append(guardChip.root, sealChip.root, voidChip.root, chain3Chip.root, calm);
+  meStatus.append(voidChip.root, chain3Chip.root);
   const spMeter = meter({ kind: 'sp', label: labels.sp, icon: 'i-sp', value: Math.round(s.sp), max: p.spMax, compact: true });
   const spNoteText = el('span');
   const spNote = el('span', 'bha-battle__spnote');
@@ -248,9 +238,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const spWrap = el('div', 'bha-battle__sp');
   spWrap.dataset.help = 'battle.sp';
   spWrap.append(spMeter, spNote);
-  const meSec = el('section', 'bha-battle__me');
-  meSec.setAttribute('aria-label', '나');
-  meSec.append(playerMeter, meStatus, spWrap);
 
   // ── 4. 블록 바 ──
   const tray = trayEl(cap);
@@ -294,14 +281,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   storedPipRow.append(...storedPips);
   storedBtn.append(storedIcon, storedBody, storedPipRow);
 
-  const hint = el('p', 'bha-battle__hint');
-  hint.append(
-    el('b', '', '블록 누르기'),
-    `=사용(${labels.storedSkill} 버튼도 같음) · 순서는 바꿀 수 없다 · 같은 블록이 붙어 있으면 함께 발동해 ${labels.chain}(최대 ${top})`,
-  );
+  // 블록 바 바로 위 줄: 왼쪽 = 영력 바·상태 칩·범례, 오른쪽 = 저장 필살기 버튼(엄지가 닿는 자리) (GDD 18-6)
+  const midInfo = el('div', 'bha-battle__midinfo');
+  const spRow = el('div', 'bha-battle__sprow');
+  spRow.append(spWrap, meStatus);
+  midInfo.append(spRow, legend);
+  const mid = el('div', 'bha-battle__mid');
+  mid.append(midInfo, storedBtn);
   const controls = el('section', 'bha-battle__controls');
   controls.setAttribute('aria-label', '블록 조작');
-  controls.append(tray.root, trayNote, storedBtn, legend, hint);
+  controls.append(mid, tray.root, trayNote);
 
   // ── 7. 하단 컨트롤 ──
   let speed = 1;
@@ -312,38 +301,36 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let stopped = false;
   const halted = () => paused || overlayOpen;
 
-  const speedBtn = button({ iconOnly: true, label: '배속 바꾸기' });
+  const speedBtn = button({ iconOnly: true, size: 'small', label: '배속 바꾸기' });
   const speedText = el('span', 'bha-num', '1x');
   speedText.style.fontWeight = '800';
   speedBtn.append(speedText);
-  const pauseBtn = button({ iconOnly: true, label: '일시정지', icon: 'i-pause' });
+  const pauseBtn = button({ iconOnly: true, size: 'small', label: '일시정지', icon: 'i-pause' });
   pauseBtn.dataset.devConfirm = ''; // 기기 [확정] 버튼 = 일시정지 (전투는 터치 위주, dev-log C.25)
-  const helpBtn = button({ iconOnly: true, label: '도움말', icon: 'i-help' });
+  const helpBtn = button({ iconOnly: true, size: 'small', label: '도움말', icon: 'i-help' });
   const timeNum = el('b', '', String(Math.ceil(timeLeftSeconds(s))));
   const timeEl = el('span', 'bha-battle__time');
   timeEl.append(icon('i-timer'), el('span', 'bha-battle__timelabel', '남은 시간'), ' ', timeNum, '초');
-  const bar = el('footer', 'bha-battle__bar');
-  bar.append(speedBtn, pauseBtn, helpBtn);
+  // 위 오른쪽 모서리: 남은 시간 + (그만두기) + 배속·일시정지·도움말을 작게
+  const bar = el('div', 'bha-battle__bar');
+  bar.append(timeEl);
   let quitBtn: HTMLButtonElement | null = null;
   if (opts.onQuit) {
-    quitBtn = button({ label: '그만두기', variant: 'ghost', icon: 'i-quit' });
+    quitBtn = button({ label: '그만두기', iconOnly: true, size: 'small', icon: 'i-quit' });
     quitBtn.classList.add('bha-btn--quit');
     quitBtn.onclick = () => quit();
     bar.append(quitBtn);
-  } else {
-    bar.append(el('span'));
   }
-  bar.append(timeEl);
+  bar.append(speedBtn, pauseBtn, helpBtn);
 
   const flashVoid = el('div', 'bha-edgeflash bha-edgeflash--void');
   const flashHit = el('div', 'bha-edgeflash bha-edgeflash--hit');
 
-  // 가로 2단 (GDD 16장, T-2): 왼쪽 열 = 적·나 상태(+체험 전투 안내), 오른쪽 열 = 배속·일시정지 줄 / 무대 / 블록 바 / 저장 필살기 / 범례
-  const sideCol = el('div', 'bha-battle__side');
-  sideCol.append(enemySec, meSec, ...(opts.notice ? [notice('info', opts.notice)] : []));
-  const playCol = el('div', 'bha-battle__play');
-  playCol.append(bar, arena, controls);
-  const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, sideCol, playCol, flashVoid, flashHit);
+  // 한 열 (GDD 18-6): 장면(적 이름·모서리 버튼·유닛 둘·로그가 그 위에 얹힘) / 영력·저장 필살기 줄 / 좌우 폭 전부를 쓰는 블록 바 8칸
+  const topRow = el('div', 'bha-battle__toprow');
+  topRow.append(foeHead, bar);
+  arena.append(units, topRow, floats, fxFlash, log);
+  const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, ...(opts.notice ? [notice('info', opts.notice)] : []), arena, controls, flashVoid, flashHit);
 
   const quit = () => {
     stopped = true;
@@ -492,7 +479,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: -1 },
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
-    unit: () => 1,
+    unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
   });
   const n0 = (v: number) => String(Math.round(v));
   let specialNoteUntil = 0;
@@ -727,38 +714,36 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     setText(timeNum, String(Math.ceil(timeLeftSeconds(s))));
     timeEl.classList.toggle('is-urgent', timeLeftSeconds(s) <= 10);
 
-    // 강공격 예고
+    // 머리 위 게이지: 강공격 예고(시전 바)·방어 자세 (적), 봉인·막기 (나). 엔진 상태에서 읽기만 한다
     const cast = s.enemy.cast;
     const wantBlocked = !cast && now < blockedUntil;
-    const mode = cast ? 'active' : wantBlocked ? 'blocked' : 'idle';
-    if (mode !== castMode) {
-      castMode = mode;
-      castEl.hidden = mode === 'idle';
-      castIdle.hidden = mode !== 'idle';
-      if (mode !== 'idle') setCastMode(mode);
-    }
-    if (cast) {
-      castEl.style.setProperty('--fill', ((cast.total - cast.ticks) / cast.total).toFixed(3));
-      setText(castTime, ` ${secondsText(cast.ticks * p.tickSeconds)}`);
-    } else if (wantBlocked) {
-      castEl.style.setProperty('--fill', '1');
-      setText(castTime, '');
-    }
+    const stanceSec = s.enemy.stance ? s.enemy.stance.ticks * p.tickSeconds : 0;
+    const sealSec = s.sealTicks * p.tickSeconds;
+    const guardSec = s.guard.ticks * p.tickSeconds;
+    totals.stance = trackTotal(totals.stance, stanceSec);
+    totals.seal = trackTotal(totals.seal, sealSec);
+    totals.guard = trackTotal(totals.guard, guardSec);
+    const foeSlots = gaugeSlots([true, stanceSec > 0]);
+    const meSlots = gaugeSlots([sealSec > 0, guardSec > 0]);
+    castGauge.set(
+      cast
+        ? { on: true, fill: (cast.total - cast.ticks) / cast.total, label: `강공격 예고! ${secondsText(cast.ticks * p.tickSeconds)}`, slot: foeSlots[0]! }
+        : wantBlocked
+          ? { on: true, fill: 1, label: `막았다! 피해 ${Math.round(blockedDamage)}`, slot: foeSlots[0]!, done: true }
+          : { on: false, fill: 0, label: '', slot: foeSlots[0]! },
+    );
+    stanceGauge.set({ on: stanceSec > 0, fill: gaugeFill(stanceSec, totals.stance), label: `방어 자세 ${secondsText(stanceSec)}`, slot: foeSlots[1]! });
+    sealGauge.set({ on: sealSec > 0, fill: gaugeFill(sealSec, totals.seal), label: `봉인 ${secondsText(sealSec)}`, slot: meSlots[0]! });
+    guardGauge.set({ on: guardSec > 0, fill: gaugeFill(guardSec, totals.guard), label: `${labels.role.guard} ${secondsText(guardSec)}`, slot: meSlots[1]! });
     foe.classList.toggle('is-casting', cast !== null);
     foe.classList.toggle('is-guard', s.enemy.stance !== null);
+    storedBtn.classList.toggle('is-alert', cast !== null && s.storedCharges > 0);
 
     // 상태 칩
-    stanceChip.root.hidden = s.enemy.stance === null;
-    if (s.enemy.stance) setText(stanceChip.value, secondsText(s.enemy.stance.ticks * p.tickSeconds));
-    guardChip.root.hidden = s.guard.ticks <= 0;
-    if (s.guard.ticks > 0) setText(guardChip.value, secondsText(s.guard.ticks * p.tickSeconds));
-    sealChip.root.hidden = s.sealTicks <= 0;
-    if (s.sealTicks > 0) setText(sealChip.value, secondsText(s.sealTicks * p.tickSeconds));
     voidChip.root.hidden = s.voidUsed <= 0;
     if (s.voidUsed > 0) setText(voidChip.value, `${s.voidUsed}회`);
     chain3Chip.root.hidden = s.chain3Count <= 0;
     if (s.chain3Count > 0) setText(chain3Chip.value, `${s.chain3Count}회`);
-    calm.hidden = !(s.guard.ticks <= 0 && s.sealTicks <= 0 && s.voidUsed <= 0 && s.chain3Count <= 0);
     setText(tray.veilText, `봉인 — ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)}`);
 
     // 저장 필살기
@@ -770,8 +755,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     storedBtn.classList.toggle('is-disabled', !ready);
     storedBtn.setAttribute('aria-disabled', String(!ready));
     storedBtn.setAttribute('aria-label', `${labels.storedSkill}, 충전 ${s.storedCharges}칸`);
-    const metaText = ready
-      ? `${s.enemy.cast ? '강공격 예고! ' : ''}${Math.round(p.storedPowerInAttacks)}회분 피해 · ${p.storedGuardSeconds}초 ${labels.role.guard}`
+    // 칸 안에는 충전 수만(짧게). 자세한 설명은 이름표·도움말
+    const metaText = `충전 ${s.storedCharges}/${p.storedChargesMax}`;
+    storedBtn.title = ready
+      ? `${Math.round(p.storedPowerInAttacks)}회분 피해 · ${p.storedGuardSeconds}초 ${labels.role.guard}`
       : `${Math.floor(s.storedGauge)} / ${p.storedGaugeMax} — 블록을 쓸수록 충전`;
     setText(storedMeta, metaText);
   };
