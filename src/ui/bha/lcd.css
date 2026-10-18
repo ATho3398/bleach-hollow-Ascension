@@ -148,7 +148,7 @@
 .bha-split .bha-info__row { padding: var(--bha-sp-2) 0; }
 .bha-split .bha-info dd { font-size: var(--bha-fs-sm); }
 .bha-split .bha-h1 { font-size: var(--bha-fs-xl); }
-.bha-split .bha-topbar__title { font-size: var(--bha-fs-xl); }
+
 .bha-split .bha-foecard { grid-template-columns: 48px minmax(0, 1fr); gap: var(--bha-sp-4); padding: var(--bha-sp-4); }
 .bha-split .bha-foecard .bha-foe { height: 48px; }
 .bha-split .bha-foecard__name { font-size: var(--bha-fs-lg); }
@@ -162,9 +162,6 @@
 .bha-split .bha-foerow { min-height: 48px; padding: var(--bha-sp-2) var(--bha-sp-4) var(--bha-sp-2) var(--bha-sp-2); }
 .bha-split .bha-foerow__mark { width: 32px; height: 32px; }
 /* 연습 목록 필터: 계통 6칸은 줄바꿈 */
-.bha-split .bha-practice__filters { position: static; margin: 0; padding: 0; background: none; }
-.bha-split .bha-practice__filters .bha-seg { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.bha-split .bha-practice__filters .bha-row .bha-seg { grid-auto-flow: column; grid-template-columns: none; }
 
 /* 한계 돌파: 균열 배경 위에 두 열 */
 .bha-lcd .bha-app.bha-break--split { text-align: left; background: radial-gradient(circle at 25% 40%, rgb(255 79 216 / .22), transparent 60%), radial-gradient(circle at 25% 120%, rgb(229 72 77 / .25), transparent 55%), var(--bha-bg-0); }

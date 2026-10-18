@@ -2,12 +2,6 @@
 import type { BuildState } from '../../engine/absorb';
 import type { FormDef, TitleDef } from '../../data/schema';
 
-/** 탭바 "특성" 배지: 빈 슬롯이 있을 때 넣을 수 있는(슬롯에 없는) 보유 특성 수. 빈 슬롯이 없으면 0 (배지 숨김) */
-export function traitBadgeCount(build: Pick<BuildState, 'owned' | 'slots'>): number {
-  if (!build.slots.includes(null)) return 0;
-  return build.owned.filter((id) => !build.slots.includes(id)).length;
-}
-
 /** 슬롯에 장착되지 않은 보유 특성 id 목록 (보유 특성 패널) */
 export function unequippedOwned(build: Pick<BuildState, 'owned' | 'slots'>): string[] {
   return build.owned.filter((id) => !build.slots.includes(id));

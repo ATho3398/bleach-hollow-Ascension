@@ -73,3 +73,8 @@ export class ScreenStack {
     return true;
   }
 }
+
+/** 선택 순서: rank(기본 0)가 작은 것부터, 같으면 원래(화면) 순서. rank 1 은 "나머지 뒤로" (머리의 탭·버튼 등, T-3) */
+export function orderByRank<T>(items: readonly T[], rank: (t: T) => number): T[] {
+  return items.map((t, i) => ({ t, i })).sort((a, b) => rank(a.t) - rank(b.t) || a.i - b.i).map(({ t }) => t);
+}

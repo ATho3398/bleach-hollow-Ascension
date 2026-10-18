@@ -1,12 +1,13 @@
-// 칭호 도감 화면 (GDD 8장, 14-7): 등급·히든 등급·특별 태그 탭. 해금한 칭호는 종족별 이름·해금 시각,
+// 칭호 도감 화면 (GDD 8장, 14-7, T-3 가로 배치): 머리에 등급·히든 등급·특별 태그 탭, 왼쪽 칭호 목록, 오른쪽 고른 칭호의 상세. 해금한 칭호는 종족별 이름·해금 시각,
 // 미해금 히든은 "?" 칸(조건 비공개), 일반 등급은 이름 목록. 조건은 전부 임시라 작게 표시한다.
 import { TITLES, titleName } from '../data/titles';
 import type { TitleDef, TitleKind } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
-import { button, h, icon, mountApp, provisionalTag, seg } from './bha/dom';
+import { h, icon, provisionalTag, seg } from './bha/dom';
+import { lcdHead, lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { showToast } from './bha/nest';
-import { titleRowKind, toward } from './bha/nestLogic';
+import { titleRowKind } from './bha/nestLogic';
 
 export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
   { kind: 'rank', label: '등급' },
@@ -29,54 +30,47 @@ export function titleCellView(def: TitleDef, factionId: string, unlockedAt: numb
   return { locked: false, text: titleName(def, factionId), sub: '미해금' };
 }
 
-export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, onBack: () => void, kind: TitleKind = 'rank'): void {
+function titleRow(def: TitleDef, factionId: string, unlockedAt: number | null): ListRow {
+  const v = titleCellView(def, factionId, unlockedAt);
+  const rk = titleRowKind(def, unlockedAt);
+  const ic = icon(rk === 'unlocked' ? 'i-title' : rk === 'locked' ? 'i-lock' : 'i-unknown');
+  const name = rk === 'hidden' ? '???' : v.text;
+  const state = rk === 'unlocked' ? '해금' : '미해금';
+  return {
+    label: rk === 'hidden' ? '숨겨진 칭호' : name,
+    cls: `bha-mdrow--${rk}`,
+    content: [ic, h('span', 'bha-mdrow__name', name), h('small', 'bha-mdrow__state', state)],
+    detail: () => {
+      const head = h('div', 'bha-mddetail__head');
+      head.append(h('h2', 'bha-mddetail__title', name), h('span', rk === 'unlocked' ? 'bha-chip bha-chip--good' : 'bha-chip', state));
+      const body = h('p', 'bha-mddetail__body');
+      if (rk === 'hidden') body.append('조건 비공개');
+      else {
+        body.append(rk === 'unlocked' ? (v.sub ?? '') : def.condition ? '조건은 임시다' : '조건 미정');
+        if (def.provisional) body.append(' ', provisionalTag('임시 조건'));
+      }
+      return [head, body, h('p', 'bha-faint', TITLE_NOTE)];
+    },
+  };
+}
+
+export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, kind: TitleKind = 'rank'): void {
   const at = new Map(save.titles.map((t) => [t.titleId, t.at]));
-
-  const top = h('header', 'bha-topbar');
-  const main = h('div', 'bha-topbar__main');
-  const sub = h('p', 'bha-topbar__sub');
-  sub.append('해금 ', h('b', '', String(save.titles.length)), ` / ${TITLES.length}`);
-  main.append(h('h1', 'bha-topbar__title', '칭호 도감'), sub);
-  top.append(main);
-
+  const rowsOf = (k: TitleKind) => TITLES.filter((d) => d.kind === k).map((d) => titleRow(d, faction.id, at.get(d.id) ?? null));
+  const md = masterDetail(rowsOf(kind), 0, '칭호');
   const tabs = seg(
     TITLE_TABS.map((t) => {
       const defs = TITLES.filter((d) => d.kind === t.kind);
       return { id: t.kind, label: t.label, count: `${defs.filter((d) => at.has(d.id)).length}/${defs.length}` };
     }),
     kind,
-    (id) => titleDexView(root, faction, save, onBack, id as TitleKind),
+    (id) => md.setRows(rowsOf(id as TitleKind)),
     { stack: true },
   );
   tabs.setAttribute('aria-label', '칭호 종류');
-
-  const list = h('div', 'bha-titlelist');
-  for (const def of TITLES.filter((d) => d.kind === kind)) {
-    const unlockedAt = at.get(def.id) ?? null;
-    const v = titleCellView(def, faction.id, unlockedAt);
-    const rk = titleRowKind(def, unlockedAt);
-    const row = h('div', `bha-titlerow bha-titlerow--${rk}`);
-    const ic = h('span', 'bha-titlerow__icon');
-    ic.append(icon(rk === 'unlocked' ? 'i-title' : rk === 'locked' ? 'i-lock' : 'i-unknown'));
-    const body = h('span', 'bha-titlerow__main');
-    if (rk === 'hidden') {
-      row.setAttribute('aria-label', '숨겨진 칭호');
-      body.append(h('span', 'bha-titlerow__name', '???'), h('span', 'bha-titlerow__meta', '조건 비공개'));
-      row.append(ic, body, h('span', 'bha-titlerow__state', '미해금'));
-    } else {
-      const meta = h('span', 'bha-titlerow__meta');
-      meta.append(rk === 'unlocked' ? `${v.sub ?? ''}` : def.condition ? '' : '조건 미정');
-      if (def.provisional) meta.append(' ', provisionalTag('임시 조건'));
-      body.append(h('span', 'bha-titlerow__name', v.text), meta);
-      row.append(ic, body, h('span', 'bha-titlerow__state', rk === 'unlocked' ? '해금' : '미해금'));
-    }
-    list.append(row);
-  }
-
-  const note = h('p', 'bha-faint', TITLE_NOTE);
-  const dock = h('div', 'bha-dock');
-  dock.append(button({ label: toward(faction.nestName), icon: 'i-nest', size: 'lg', block: true, onClick: onBack }));
-  mountApp(root, {}, top, tabs, list, note, dock);
+  const sub = h('span');
+  sub.append('해금 ', h('b', '', String(save.titles.length)), ` / ${TITLES.length}`);
+  lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '칭호 도감', sub, aside: [selectLast(tabs)] }), [md.list], [md.detail]);
 }
 
 /** 아직 알리지 않은 해금을 토스트(.bha-toast)로 보여 주고 seen 처리한다. 2.5초 뒤 올라가며(is-out) animationend 에서 제거한다 */

@@ -1,10 +1,12 @@
 // 설정 화면 (GDD 14-3, C.18 / U-1 새 디자인): 블록 클릭 판정 시간·드래그 임계치. localStorage 별도 키에 저장하고 세이브 구조는 건드리지 않는다.
-import { button, el, icon, mountApp, notice, slider } from './bha/dom';
+import { button, el, notice, slider } from './bha/dom';
+import { lcdHead, lcdPage } from './bha/lcdpage';
+import { nudgeValue } from './bha/util';
 import {
   clampPointerRules, DEFAULT_POINTER_RULES, loadPointerRules, POINTER_RANGES, resetPointerRules, savePointerRules, type PointerRules,
 } from './pointer';
 
-export function settingsView(root: HTMLElement, onBack: () => void, onHelp?: () => void, restored = false): void {
+export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false): void {
   const storage = (() => {
     try {
       return localStorage;
@@ -16,11 +18,6 @@ export function settingsView(root: HTMLElement, onBack: () => void, onHelp?: () 
   const apply = (patch: Partial<PointerRules>) => {
     rules = savePointerRules(storage, clampPointerRules({ ...rules, ...patch }));
   };
-
-  const topbar = el('header', 'bha-topbar');
-  const main = el('div', 'bha-topbar__main');
-  main.append(el('h1', 'bha-topbar__title', '설정'), el('p', 'bha-topbar__sub', '조작 판정 — 블록과 저장 필살기에 똑같이 적용'));
-  topbar.append(main);
 
   // 클릭 판정 시간 + 눌림 시간 미리보기
   const press = el('div', 'bha-press');
@@ -37,6 +34,7 @@ export function settingsView(root: HTMLElement, onBack: () => void, onHelp?: () 
       press.style.setProperty('--t', String(v));
     },
   });
+  withSteppers(tap, 'set-tap', 0.05, '클릭 판정 시간');
   tap.append(press, pressScale);
 
   // 드래그 거리 + 임계 원 미리보기
@@ -54,6 +52,7 @@ export function settingsView(root: HTMLElement, onBack: () => void, onHelp?: () 
       ring.style.setProperty('--d', String(v));
     },
   });
+  withSteppers(drag, 'set-drag', 1, '드래그 거리');
   drag.append(prev);
 
   const panelOf = (...n: Node[]) => {
@@ -63,21 +62,35 @@ export function settingsView(root: HTMLElement, onBack: () => void, onHelp?: () 
   };
 
   const reset = button({
-    label: '기본값 복원', icon: 'i-loop', block: true,
+    label: '기본값 복원', icon: 'i-loop',
     onClick: () => {
       resetPointerRules(storage);
-      settingsView(root, onBack, onHelp, true);
+      settingsView(root, onHelp, true);
     },
   });
-  const stack = el('div', 'bha-stack');
-  if (restored) stack.append(notice('good', `기본값으로 되돌렸다 (${DEFAULT_POINTER_RULES.clickMaxSeconds}초 · ${DEFAULT_POINTER_RULES.dragThresholdPx}px).`));
-  stack.append(reset);
-  if (onHelp) stack.append(button({ label: '도움말·튜토리얼 다시 보기', icon: 'i-help', block: true, onClick: onHelp }));
-  stack.append(el('p', 'bha-faint', '이 설정은 이 기기에만 저장되고 게임 세이브에는 들어가지 않는다.'));
+  const foot: Node[] = [reset];
+  if (onHelp) foot.push(button({ label: '도움말·튜토리얼 다시 보기', icon: 'i-help', onClick: onHelp }));
+  foot.push(restored
+    ? notice('good', `기본값으로 되돌렸다 (${DEFAULT_POINTER_RULES.clickMaxSeconds}초 · ${DEFAULT_POINTER_RULES.dragThresholdPx}px).`)
+    : el('p', 'bha-faint', '이 기기에만 저장되고 게임 세이브에는 들어가지 않는다.'));
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: '조작 판정 — 블록과 저장 필살기에 똑같이 적용' }), [panelOf(tap)], [panelOf(drag)]);
+}
 
-  const dock = el('div', 'bha-dock');
-  dock.append(button({ label: '돌아가기', icon: 'i-chevron-left', variant: 'primary', size: 'lg', block: true, onClick: onBack }));
-  mountApp(root, {}, topbar, panelOf(tap), panelOf(drag), stack, dock);
+/** 슬라이더 양옆에 −/+ 버튼을 붙인다: 위/아래/확정 버튼만으로도 값을 한 칸씩 바꿀 수 있게 (슬라이더 입력 자체는 손가락용, 선택 대상에서 뺀다) */
+function withSteppers(root: HTMLElement, id: string, step: number, name: string): void {
+  const input = root.querySelector<HTMLInputElement>(`#${id}`)!;
+  input.setAttribute('data-dev-skip', '');
+  const nudge = (dir: 1 | -1) => {
+    input.value = String(nudgeValue(Number(input.value), dir, step, Number(input.min), Number(input.max)));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const row = el('div', 'bha-slider__row');
+  input.replaceWith(row);
+  row.append(
+    button({ label: `${name} 줄이기`, icon: 'i-minus', iconOnly: true, onClick: () => nudge(-1) }),
+    input,
+    button({ label: `${name} 늘리기`, icon: 'i-plus', iconOnly: true, onClick: () => nudge(1) }),
+  );
 }
 
 function rangeOf(k: keyof typeof POINTER_RANGES): { min: number; max: number } {

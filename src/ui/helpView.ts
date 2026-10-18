@@ -3,6 +3,7 @@
 import { GLOSSARY, helpVars, renderHelpText, SCREEN_HELPS } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { button, el, icon, notice } from './bha/dom';
+import { lcdHead, lcdPageParts, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 
 export type HelpScreenId = 'nest' | 'expedition' | 'battle' | 'evolution';
@@ -43,42 +44,38 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
     opts.onClose();
   };
 
-  const section = (title: string, items: readonly { id: string; title: string; body: string }[], icons: Record<string, string>, openId?: string) => {
-    const box = el('section', 'bha-help__sec');
-    box.append(el('h2', 'bha-help__cap', title));
-    for (const it of items) {
-      const d = el('details', 'bha-acc');
-      d.dataset.id = it.id;
-      d.open = it.id === openId;
-      const sum = el('summary', 'bha-acc__summary');
-      sum.append(icon(icons[it.id] ?? 'i-info'), el('span', '', t(it.title)), icon('i-chevron-down', undefined, 'bha-acc__chev'));
-      d.append(sum, el('div', 'bha-acc__body', t(it.body)));
-      box.append(d);
-    }
-    return box;
-  };
+  const rowOf = (it: { id: string; title: string; body: string }, iconId: string, caption?: string): ListRow => ({
+    label: t(it.title),
+    caption,
+    content: [icon(iconId), el('span', 'bha-mdrow__name', t(it.title))],
+    detail: () => [el('h2', 'bha-mddetail__title', t(it.title)), el('p', 'bha-mddetail__body', t(it.body))],
+  });
+  const rows: ListRow[] = [
+    ...SCREEN_HELPS.map((it, k) => rowOf(it, SCREEN_ICON[it.id] ?? 'i-info', k === 0 ? '화면별 요약' : undefined)),
+    ...GLOSSARY.map((it, k) => rowOf(it, TERM_ICON[it.id] ?? 'i-info', k === 0 ? `용어 사전 (${GLOSSARY.length})` : undefined)),
+  ];
+  const start = Math.max(0, SCREEN_HELPS.findIndex((it) => it.id === opts.screen));
+  const md = masterDetail(rows, start, '도움말 항목');
 
   const closeBtn = button({ label: fromBattle ? '닫고 전투로' : '닫기', variant: 'primary', onClick: close });
-  const head = el('header', 'bha-help__head');
-  head.append(el('h1', 'bha-topbar__title', '도움말'), closeBtn);
-  app.append(head);
-  if (fromBattle) app.append(notice('warn', '닫으면 전투로 돌아가 이어서 진행된다.', { title: '전투가 멈춰 있다', icon: 'i-pause' }));
+  const aside: HTMLElement[] = [];
   if (opts.onReplayTutorial) {
-    app.append(button({
-      label: '튜토리얼 다시 보기', icon: 'i-play', block: true,
+    aside.push(button({
+      label: '튜토리얼 다시 보기', icon: 'i-play',
       onClick: () => {
         close();
         opts.onReplayTutorial!();
       },
     }));
   }
-  app.append(
-    section('화면별 요약', SCREEN_HELPS, SCREEN_ICON, opts.screen),
-    section(`용어 사전 (${GLOSSARY.length})`, GLOSSARY, TERM_ICON),
-  );
+  aside.push(closeBtn);
+  const warn = fromBattle ? notice('warn', '닫으면 전투로 돌아가 이어서 진행된다.', { title: '전투가 멈춰 있다', icon: 'i-pause' }) : null;
+  const page = lcdPageParts({ cls: 'bha-help-page', cols: 'minmax(0, 0.85fr) minmax(0, 1.15fr)' }, lcdHead({ title: '도움말', aside: aside.map((b) => selectLast(b)) }), [md.list], [...(warn ? [warn] : []), md.detail]);
+  app.className = `bha-app ${page.cls}`;
+  app.append(...page.nodes);
   getOverlayHost().append(stage);
   unregister = registerLayer(stage, close);
   closeBtn.focus();
-  app.querySelector('details[open]')?.scrollIntoView({ block: 'start' });
+  md.list.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
   return close;
 }

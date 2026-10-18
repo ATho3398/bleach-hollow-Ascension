@@ -1,6 +1,6 @@
 // 기기 항목 선택 시스템 (GDD 16-1, C.25): 하이라이트 이동·순환, 목록 갱신 때 유지, 화면 스택
 import { describe, expect, it } from 'vitest';
-import { keepSelection, ScreenStack, stepIndex, type ScreenEntry } from '../src/ui/bha/select';
+import { keepSelection, orderByRank, ScreenStack, stepIndex, type ScreenEntry } from '../src/ui/bha/select';
 
 describe('stepIndex', () => {
   it('아래는 한 칸씩, 끝에서 처음으로 순환한다', () => {
@@ -64,5 +64,20 @@ describe('ScreenStack', () => {
     expect(st.top?.id).toBe('b');
     st.reset(mk('room', log));
     expect(st.size).toBe(1);
+  });
+});
+
+describe('orderByRank (T-3: 머리 탭·버튼은 나머지 뒤로)', () => {
+  it('rank 가 같으면 화면 순서를 지킨다', () => {
+    expect(orderByRank(['a', 'b', 'c'], () => 0)).toEqual(['a', 'b', 'c']);
+  });
+  it('rank 1 은 뒤로 가고, 그들 사이 순서도 유지된다', () => {
+    const rank = (s: string) => (s.startsWith('tab') ? 1 : 0);
+    expect(orderByRank(['tab1', 'tab2', 'row1', 'row2', 'tab3'], rank)).toEqual(['row1', 'row2', 'tab1', 'tab2', 'tab3']);
+  });
+  it('원본을 바꾸지 않는다', () => {
+    const src = ['t', 'r'];
+    orderByRank(src, (s) => (s === 't' ? 1 : 0));
+    expect(src).toEqual(['t', 'r']);
   });
 });

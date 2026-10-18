@@ -1,0 +1,189 @@
+/* T-3 (GDD 16장): 방 물건·가장자리 아이콘이 여는 기능 화면을 LCD 가로 비율(높이 약 330~360px)에 맞춘 2단 배치.
+   진화 제단·진화체 도감·칭호 도감·상자·돌보기·설정·도움말·시작(종족 바꾸기). 디자인 토큰·bha- 클래스만 쓴다 (새 색·간격 없음).
+   lcd.css 다음에 읽는다. 화면 뼈대는 bha/lcdpage.ts (머리 + 왼쪽/오른쪽 열 + 선택적 아래 줄, 목록 → 상세). */
+
+/* ═════ 공용 뼈대 .bha-lcdpage ═════
+   하이라이트(.bha-sel)가 바깥으로 5px 번지므로 안쪽 여백 8px 을 두고, 열은 그 여백만큼 바깥으로 내어 열 안에서 스크롤해도 잘리지 않게 한다 */
+.bha-lcd .bha-app.bha-lcdpage {
+  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;
+  display: flex; flex-direction: column; gap: var(--bha-sp-3);
+  padding: var(--bha-sp-4) var(--bha-sp-5); overflow: hidden;
+}
+.bha-lcdpage__head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-4); min-height: var(--bha-touch); }
+.bha-lcdpage__titles { min-width: 0; display: flex; flex-direction: column; }
+.bha-lcdpage__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
+.bha-lcdpage__sub { margin: 0; font-size: var(--bha-fs-xs); line-height: 1.3; color: var(--bha-text-2); font-variant-numeric: tabular-nums; }
+.bha-lcdpage__sub b { color: var(--bha-text-1); }
+.bha-lcdpage__aside { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--bha-sp-3); }
+.bha-lcdpage__body { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--bha-sp-4); }
+.bha-lcdpage__col {
+  min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3);
+  padding: var(--bha-sp-4); margin: calc(-1 * var(--bha-sp-4));
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin;
+}
+.bha-lcdpage__col > * { flex: none; }
+.bha-lcdpage__foot { flex: none; display: flex; align-items: center; gap: var(--bha-sp-4); }
+.bha-lcdpage__foot > p, .bha-lcdpage__foot > .bha-notice { flex: 1 1 0; min-width: 0; margin: 0; font-size: var(--bha-fs-xs); line-height: 1.3; }
+.bha-lcdpage__foot > .bha-notice { padding: var(--bha-sp-2) var(--bha-sp-4); }
+.bha-lcdpage .bha-panel { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-3); }
+.bha-lcdpage .bha-panel__title { font-size: var(--bha-fs-md); }
+.bha-lcdpage .bha-notice { padding: var(--bha-sp-3) var(--bha-sp-4); font-size: var(--bha-fs-xs); line-height: 1.35; }
+.bha-lcdpage__aside .bha-seg .bha-seg__item { min-height: var(--bha-touch); }
+
+/* ═════ 목록 → 상세 (masterDetail): 진화체 도감·칭호 도감·도움말 ═════ */
+.bha-mdlist { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+.bha-mdcap { margin: var(--bha-sp-3) 0 0; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-heavy); letter-spacing: .08em; color: var(--bha-text-3); }
+.bha-mdcap:first-child { margin-top: 0; }
+.bha-mdrow {
+  flex: none; display: flex; align-items: center; gap: var(--bha-sp-4); min-height: var(--bha-touch); padding: 0 var(--bha-sp-5) 0 var(--bha-sp-4);
+  border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); background: var(--bha-bg-2); color: var(--bha-text-1);
+  text-align: left; font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold);
+}
+.bha-mdrow > .bha-icon { flex: none; width: 20px; height: 20px; color: var(--bha-text-2); }
+.bha-mdrow .bha-formcard__marks { flex: none; }
+.bha-mdrow__name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-mdrow__state { flex: none; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-3); white-space: nowrap; }
+.bha-mdrow.is-active { border-color: var(--bha-primary-line); background: var(--bha-bg-3); }
+.bha-mdrow.is-unknown { border-style: dashed; background: rgb(0 0 0 / .25); color: var(--bha-text-3); }
+.bha-mdrow--unlocked > .bha-icon { color: var(--bha-rare); }
+.bha-mdrow--unlocked .bha-mdrow__state { color: var(--bha-rare); }
+.bha-mdrow--locked { color: var(--bha-text-2); }
+.bha-mdrow--hidden { border-style: dashed; background: rgb(0 0 0 / .25); color: var(--bha-text-3); }
+.bha-mdrow--hidden .bha-mdrow__name { letter-spacing: .2em; }
+
+.bha-lcdpage__col > .bha-mddetail { flex: 1 0 auto; }
+.bha-mddetail {
+  display: flex; flex-direction: column; gap: var(--bha-sp-4); padding: var(--bha-sp-5);
+  border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-lg); background: var(--bha-bg-1);
+}
+.bha-mddetail__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-3) var(--bha-sp-4); }
+.bha-mddetail__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-lg); line-height: 1.25; }
+.bha-mddetail__body { margin: 0; font-size: var(--bha-fs-sm); line-height: 1.5; color: var(--bha-text-2); }
+.bha-mdhint { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-3); padding: var(--bha-sp-6) 0; text-align: center; color: var(--bha-text-3); }
+.bha-mdhint .bha-icon { width: 32px; height: 32px; }
+.bha-mdhint small { font-size: var(--bha-fs-xs); }
+
+/* ═════ 진화 제단 ═════ */
+.bha-altar-page .bha-evo__form { flex-wrap: wrap; }
+.bha-altar-page .bha-evo__formname { font-size: var(--bha-fs-lg); }
+.bha-altar-page .bha-evo__fact { padding: var(--bha-sp-4); }
+.bha-altar-page .bha-evo__cta { grid-template-columns: minmax(0, 1fr); }
+.bha-altar-page .bha-btn--lg { min-height: 56px; }
+.bha-altar-page .bha-linbar__legend { flex-wrap: wrap; row-gap: var(--bha-sp-2); }
+
+/* ═════ 진화 연출 (.bha-evolve): 연출 줄은 왼쪽 균열 + 오른쪽 문구, 결과는 왼쪽 이름·경로·[둥지로] / 오른쪽 달라진 점 ═════ */
+.bha-lcd .bha-app.bha-evolve { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; justify-content: center; padding: var(--bha-sp-4) var(--bha-sp-6); gap: 0; }
+.bha-lcd .bha-evolve > section:not(.bha-evolve__result) {
+  display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); align-items: center; gap: var(--bha-sp-3) var(--bha-sp-6); text-align: left;
+}
+.bha-lcd .bha-evolve__crack { width: 100px; height: 100px; grid-row: 1 / span 3; justify-self: center; }
+.bha-lcd .bha-evolve__crack .bha-icon { width: 100px; height: 100px; }
+.bha-lcd .bha-evolve__lines { min-height: 0; gap: var(--bha-sp-3); }
+.bha-lcd .bha-evolve__line { font-size: var(--bha-fs-lg); }
+.bha-lcd .bha-evolve > section > .bha-btn { justify-self: start; }
+.bha-evolve__result { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); align-items: center; gap: var(--bha-sp-6); }
+.bha-evolve__result[hidden] { display: none; }
+.bha-evolve__resmain, .bha-evolve__resside { display: flex; flex-direction: column; gap: var(--bha-sp-4); min-width: 0; }
+.bha-evolve__resmain { align-items: center; text-align: center; }
+.bha-lcd .bha-evolve__title { font-size: var(--bha-fs-4xl); }
+.bha-lcd .bha-evolve__new { padding: var(--bha-sp-3) var(--bha-sp-5); font-size: var(--bha-fs-lg); flex-wrap: wrap; justify-content: center; }
+.bha-evolve__resmain .bha-btn { align-self: stretch; }
+.bha-evolve__resside .bha-panel { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
+.bha-evolve__resside .bha-info__row { padding: var(--bha-sp-2) 0; }
+.bha-evolve__resside .bha-info dd { font-size: var(--bha-fs-sm); }
+
+/* ═════ 돌보기 ═════ */
+.bha-care-page .bha-nest__status { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-4); }
+.bha-care-page .bha-care__btn { min-height: 92px; padding: var(--bha-sp-3); }
+.bha-care-page .bha-care__btn span { text-align: center; line-height: 1.25; }
+
+/* ═════ 상자 ═════ */
+.bha-chest-page .bha-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-chest-page .bha-slot { min-height: 48px; padding: var(--bha-sp-2) var(--bha-sp-4); }
+.bha-chest-page .bha-panel { gap: var(--bha-sp-2); }
+.bha-chest-page .bha-faint { font-size: var(--bha-fs-xs); line-height: 1.3; }
+.bha-chest-page .bha-owned { gap: var(--bha-sp-3); }
+.bha-chest-page .bha-deckrow { padding: var(--bha-sp-3) var(--bha-sp-4); }
+
+/* ═════ 설정 ═════ */
+.bha-settings-page .bha-lcdpage__col > .bha-panel { flex: 1 0 auto; }
+.bha-slider__row { display: grid; grid-template-columns: var(--bha-touch) minmax(0, 1fr) var(--bha-touch); align-items: center; gap: var(--bha-sp-3); }
+.bha-slider__row .bha-btn--icon { padding: 0; }
+.bha-settings-page .bha-slider__scale { display: none; }
+
+/* ═════ 도움말: 왼쪽 항목 목록 / 오른쪽 설명 ═════ */
+.bha-lcd .bha-layer .bha-app.bha-help-page { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; }
+
+/* ═════ 시작 / 종족 바꾸기: 왼쪽 제목·소개·설정/도움말 / 오른쪽 종족 카드 ═════ */
+.bha-lcd .bha-app.bha-start {
+  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;
+  display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); grid-template-rows: minmax(0, 1fr); gap: var(--bha-sp-5); align-items: stretch;
+  padding: var(--bha-sp-4) var(--bha-sp-5); overflow: hidden;
+}
+.bha-start__left { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: var(--bha-sp-4); }
+.bha-lcd .bha-start__hero { padding-top: 0; gap: var(--bha-sp-3); }
+.bha-lcd .bha-start__title { font-size: var(--bha-fs-3xl); }
+.bha-lcd .bha-start__lead { font-size: var(--bha-fs-sm); line-height: 1.4; }
+.bha-lcd .bha-start__left .bha-grid2 { gap: var(--bha-sp-3); }
+.bha-lcd .bha-start__left .bha-btn { padding: 0 var(--bha-sp-3); font-size: var(--bha-fs-sm); gap: var(--bha-sp-3); }
+.bha-lcd .bha-species { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: var(--bha-sp-4); }
+.bha-lcd .bha-species__card {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "emb name" "emb desc" "emb path"; align-content: center; column-gap: var(--bha-sp-5); row-gap: 0;
+  padding: var(--bha-sp-2) var(--bha-sp-5); text-align: left;
+}
+.bha-lcd .bha-species__card.is-selected { padding: var(--bha-sp-2) var(--bha-sp-5); }
+.bha-lcd .bha-species__card { min-height: 0; }
+.bha-lcd .bha-species__emblem { grid-area: emb; align-self: center; width: 44px; height: 44px; }
+.bha-lcd .bha-species__emblem .bha-icon { width: 28px; height: 28px; }
+.bha-lcd .bha-species__name { grid-area: name; font-size: var(--bha-fs-xl); }
+.bha-lcd .bha-species__desc { grid-area: desc; }
+.bha-lcd .bha-species__path { grid-area: path; margin-top: var(--bha-sp-1); line-height: 1.3; }
+.bha-lcd .bha-start__ver { text-align: left; }
+
+/* ═════ 전투 연습 목록: 왼쪽 필터 / 오른쪽 상대 목록 ═════ */
+.bha-practicepage .bha-practice__filters { display: flex; flex-direction: column; gap: var(--bha-sp-4); position: static; margin: 0; padding: 0; background: none; }
+.bha-practicepage .bha-seg__item { min-height: var(--bha-touch); }
+.bha-practicepage .bha-practice__filters > .bha-seg { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bha-practicepage .bha-practice__filters .bha-row { flex-wrap: wrap; row-gap: var(--bha-sp-2); }
+.bha-practicepage .bha-foelist { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+.bha-practicepage .bha-foerow { flex: none; min-height: var(--bha-touch); }
+
+/* ═════ 원정 결과·연습 결과 (T-2 에서 남은 스크롤 줄이기): 왼쪽을 좁히고 오른쪽 요약 표를 두 줄 칸으로 ═════ */
+.bha-lcd .bha-app.bha-split.bha-resultpage { grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.45fr); }
+.bha-resultpage .bha-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-6); }
+.bha-resultpage .bha-info__row { min-width: 0; }
+.bha-resultpage .bha-info__row:has(small) { grid-column: 1 / -1; }
+.bha-resultpage .bha-info dt { white-space: normal; }
+.bha-resultpage .bha-info dt, .bha-resultpage .bha-info dd { font-size: var(--bha-fs-xs); }
+.bha-resultpage .bha-result__title { font-size: var(--bha-fs-2xl); }
+.bha-lcd .bha-app.bha-split.bha-resultpage { padding-block: var(--bha-sp-3); }
+
+/* ═════ 흡수 3단계: 머리 = 단계 표시(낮게), 두 열이 각자 스크롤. ①의 상대·계통 줄은 위 상대 카드에 이미 있어 가로 화면에서는 뺀다 ═════ */
+.bha-absorbpage .bha-lcdpage__head { min-height: 0; }
+.bha-absorbpage .bha-absorb__actions { position: sticky; bottom: calc(-1 * var(--bha-sp-4)); z-index: var(--bha-z-sticky); padding-top: var(--bha-sp-3); background: linear-gradient(180deg, transparent, var(--bha-bg-0) 10px); }
+.bha-absorbpage .bha-absorb__actions .bha-btn { min-height: 52px; }
+.bha-absorbpage .bha-foecard { grid-template-columns: 40px minmax(0, 1fr); gap: var(--bha-sp-4); padding: var(--bha-sp-3) var(--bha-sp-4); }
+.bha-absorbpage .bha-foecard .bha-foe { height: 40px; }
+.bha-absorbpage .bha-foecard__name { font-size: var(--bha-fs-lg); }
+.bha-absorbpage .bha-h1 { font-size: var(--bha-fs-xl); margin: 0; }
+.bha-absorbpage .bha-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bha-absorbpage .bha-cand { padding: var(--bha-sp-4); gap: var(--bha-sp-4); grid-template-columns: 32px minmax(0, 1fr); }
+.bha-absorbpage .bha-cand__mark { width: 32px; height: 32px; }
+.bha-absorbpage .bha-cand__mark .bha-icon { width: 20px; height: 20px; }
+.bha-absorbpage .bha-info__row { padding: var(--bha-sp-1) 0; }
+.bha-absorbpage .bha-info dt, .bha-absorbpage .bha-info dd { font-size: var(--bha-fs-xs); line-height: 1.35; }
+.bha-absorbpage .bha-absorb__lead { display: none; }  /* "…을(를) 쓰러뜨렸다" 는 상대 카드와 겹친다 */
+.bha-absorb__head { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bha-sp-2) var(--bha-sp-5); }
+.bha-absorbpage .bha-slot { min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-4); }
+.bha-absorbpage .bha-slot--empty { flex-direction: row; flex-wrap: wrap; align-content: center; justify-content: center; align-items: center; gap: var(--bha-sp-1) var(--bha-sp-3); min-height: 40px; font-size: var(--bha-fs-xs); }
+.bha-absorbpage .bha-slot--empty .bha-slot__num { position: static; }
+.bha-absorbpage .bha-slot--empty .bha-icon { width: 16px; height: 16px; }
+.bha-absorbpage .bha-panel { padding: var(--bha-sp-3) var(--bha-sp-5); }
+.bha-absorbpage .bha-info__row:nth-child(-n + 2) { display: none; }
+.bha-absorbpage .bha-notice--rare { padding: var(--bha-sp-3) var(--bha-sp-4); font-size: var(--bha-fs-xs); line-height: 1.35; }
+.bha-absorbpage .bha-slot { min-height: 48px; }
+.bha-absorbpage .bha-lcdpage__col { gap: var(--bha-sp-2); }
+.bha-absorbpage .bha-faint { line-height: 1.3; }
+
+/* ═════ 원정 둥지 칸 도착 시트 (T-2 에서 남은 스크롤 줄이기): 제목을 한 줄로 ═════ */
+.bha-lcd .bha-exp .bha-sheet__title { font-size: var(--bha-fs-md); gap: var(--bha-sp-3); }

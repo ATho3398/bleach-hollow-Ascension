@@ -12,7 +12,6 @@ import type { FactionConfig } from '../engine/faction';
 import {
   loadSave, newSaveData, nextRunId, performEvolution, readActiveExpedition, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
-import { versionLabel } from '../version';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { applyTheme } from './bha/theme';
@@ -107,7 +106,7 @@ export function startApp(host: HTMLElement): void {
         persist();
         nestScreen();
       },
-      onSettings: () => open('settings', () => settingsView(root, () => nav.pop(), () => openHelp(undefined, true))),
+      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true))),
       onHelp: () => openHelp(undefined, true),
     });
   }
@@ -138,13 +137,13 @@ export function startApp(host: HTMLElement): void {
       persist,
       onDepart: () => departScreen(faction),
       onAltar: () => open('altar', () => renderAltar(faction, s)),
-      onBook: () => open('dex', () => dexView(root, faction, s, () => nav.back())),
+      onBook: () => open('dex', () => dexView(root, faction, s)),
       onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist)),
-      onWindow: () => open('titles', () => titleDexView(root, faction, s, () => nav.back())),
+      onWindow: () => open('titles', () => titleDexView(root, faction, s)),
       onCare: () => open('care', () => careView(dev, faction, s, props.care, persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
       onChangeFaction: factionScreen,
-      onSettings: () => open('settings', () => settingsView(root, () => nav.back(), () => openHelp(undefined, true))),
+      onSettings: () => open('settings', () => settingsView(root, () => openHelp(undefined, true))),
       onHelp: () => openHelp('nest', true),
     });
   }
@@ -159,7 +158,7 @@ export function startApp(host: HTMLElement): void {
         open('evolve-cutscene', () => evolutionView(root, faction, from, s.evolution.tierIndex, r.form, () => nav.pop(), s.build.slots.length), true);
         showTitleToasts(s, faction, persist);
       },
-      onDex: () => open('dex', () => dexView(root, faction, s, () => nav.back())),
+      onDex: () => open('dex', () => dexView(root, faction, s)),
       onHelp: () => openHelp('evolution', true),
     });
   }
@@ -248,7 +247,7 @@ export function startApp(host: HTMLElement): void {
 
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
-    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy), onHome: () => nav.back() });
+    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy) });
   }
 
   /** 연습 전투: 결과 화면에서 [다시]로 올 때는 같은 자리를 바꿔 끼운다 */

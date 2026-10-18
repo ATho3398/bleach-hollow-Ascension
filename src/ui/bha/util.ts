@@ -15,3 +15,9 @@ export function cssRatio(value: number, max: number): string {
 export function sliderPct(value: number, min: number, max: number): string {
   return cssRatio(value - min, max - min);
 }
+
+/** 슬라이더 −/+ 버튼: 한 칸(step)씩 옮기고 [min, max] 로 자른다. 부동소수 오차는 소수 3자리로 정리 (T-3) */
+export function nudgeValue(value: number, dir: 1 | -1, step: number, min: number, max: number): number {
+  const next = Math.min(max, Math.max(min, value + dir * step));
+  return Math.round(next * 1000) / 1000;
+}

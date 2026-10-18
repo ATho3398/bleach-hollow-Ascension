@@ -4,7 +4,6 @@ import { lineageName } from '../data/lineages';
 import { getTrait, traitDescription, traitName } from '../data/traits';
 import { completedLineages, emptySlot, lineageCounts, setSlot, type BuildState } from '../engine/absorb';
 import type { FactionConfig } from '../engine/faction';
-import { el } from './dom';
 import { button, chip, h, icon, notice, panel, provisionalTag, tag } from './bha/dom';
 import { lineageKey, linMarkShort } from './bha/lineage';
 import { unequippedOwned } from './bha/nestLogic';

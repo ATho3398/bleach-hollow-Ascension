@@ -8,21 +8,17 @@ import { TITLES } from '../src/data/titles';
 import { BALANCE } from '../src/config/balance';
 import { lineageKey, LIN_KEYS } from '../src/ui/bha/lineage';
 import { tileKindOf } from '../src/ui/bha/nest';
-import { countText, formCardModel, linbarModel, sortFormsForDex, titleRowKind, toward, traitBadgeCount, unequippedOwned } from '../src/ui/bha/nestLogic';
+import { countText, formCardModel, linbarModel, sortFormsForDex, titleRowKind, toward, unequippedOwned } from '../src/ui/bha/nestLogic';
 import { evolutionEffectRows } from '../src/ui/evolutionPanel';
 
-describe('특성 탭 배지·보유 목록', () => {
-  it('빈 슬롯이 있을 때만 "슬롯에 없는 보유 특성 수"를 센다', () => {
+describe('보유 목록', () => {
+  it('슬롯에 장착되지 않은 보유 특성만 센다', () => {
     const build = { owned: ['a', 'b', 'c', 'd'], slots: ['a', 'b', null] };
-    expect(traitBadgeCount(build)).toBe(2);
     expect(unequippedOwned(build)).toEqual(['c', 'd']);
   });
-  it('슬롯이 가득 차면 배지 0 (교체는 배지 대상이 아니다)', () => {
-    expect(traitBadgeCount({ owned: ['a', 'b', 'c'], slots: ['a', 'b', 'c'] })).toBe(0);
-  });
-  it('보유가 없거나 전부 장착 중이면 0', () => {
-    expect(traitBadgeCount({ owned: [], slots: [null, null] })).toBe(0);
-    expect(traitBadgeCount({ owned: ['a'], slots: ['a', null] })).toBe(0);
+  it('보유가 없거나 전부 장착 중이면 비어 있다', () => {
+    expect(unequippedOwned({ owned: [], slots: [null, null] })).toEqual([]);
+    expect(unequippedOwned({ owned: ['a'], slots: ['a', null] })).toEqual([]);
   });
 });
 

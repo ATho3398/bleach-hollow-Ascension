@@ -10,7 +10,7 @@ import { chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/exp
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
 import { button, chip, el, icon, info, meter, notice, panel, tag } from './bha/dom';
-import { splitApp } from './bha/split';
+import { lcdPage } from './bha/lcdpage';
 import { val } from './bha/expedition';
 import { lineageClass, lineageIconId, lineageKey, lineageMark } from './bha/lineage';
 
@@ -33,6 +33,8 @@ export function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
 
 /** 한 단계의 두 열 내용: 왼쪽(설명·선택 상대 정보) / 오른쪽(고를 것·조작) — 가로 LCD (T-2) */
 interface StepParts {
+  /** 단계 표시 옆에 보이는 제목 */
+  title: string;
   main: HTMLElement[];
   side: HTMLElement[];
 }
@@ -148,8 +150,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   function chooseStep(): StepParts {
     const risk = absorbRisk(offer!.strength);
     const willBreak = exp.risk + risk >= RX.limit;
-    const nodes: HTMLElement[] = [el('h1', 'bha-h1', `${act} 가능`), el('p', 'bha-dim', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
-    if (offer!.rare) nodes.push(notice('rare', '이 개체의 희귀 특성이 후보에 확정으로 나온다.', { title: '희귀 개체!' }));
+    const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
+    const rareNote = offer!.rare ? notice('rare', '이 개체의 희귀 특성이 후보에 확정으로 나온다.', { title: '희귀 개체!' }) : null;
     const lin = el('span');
     lin.append(lineageMark(offer!.lineageId, faction.id));
     const risky = (n: string, good: boolean) => {
@@ -180,6 +182,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         kind: 'risk', label: `지금 ${faction.riskGaugeName}`, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, zone: 0.6, danger: exp.risk >= 60 || willBreak,
         note: willBreak ? `${act}하면 한계 돌파! (${Math.round(exp.risk)} + ${Math.round(risk)} = ${Math.round(exp.risk + risk)})` : undefined,
       }),
+      ...(rareNote ? [rareNote] : []),
       slotSummary(),
     ];
     if (error) side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
@@ -192,11 +195,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const actions = el('div', 'bha-absorb__actions');
     actions.append(a, r);
     side.push(actions);
-    return { main: nodes, side };
+    return { title: `${act} 가능`, main: nodes, side };
   }
 
   function pickStep(): StepParts {
-    const nodes: HTMLElement[] = [el('h1', 'bha-h1', '특성 후보 (1개 고르기)'), el('p', 'bha-dim', `${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
+    const nodes: HTMLElement[] = [el('p', 'bha-dim', `${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
     const side: HTMLElement[] = [];
     if (offer!.candidates.length === 0) {
       const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
@@ -233,12 +236,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       side.push(list);
     }
     nodes.push(backBtn('choose'));
-    return { main: nodes, side };
+    return { title: '특성 후보 (1개 고르기)', main: nodes, side };
   }
 
   function replaceStep(): StepParts {
     const nodes: HTMLElement[] = [
-      el('h1', 'bha-h1', `${faction.slotName}: 가득 참`),
       notice('warn', `${traitName(picked!, faction.id)}을(를) 어느 슬롯과 바꿀까? 교체된 특성은 보유 목록에 남아 둥지에서 다시 장착할 수 있다. 포기하면 특성 없이 ${act} 효과만 얻는다.`, { title: '어느 슬롯과 바꿀까?', icon: 'i-swap' }),
     ];
     const list = el('div', 'bha-stack');
@@ -259,7 +261,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const grid = el('div', 'bha-grid2');
     grid.append(backBtn('pick', false), giveUp);
     nodes.push(grid);
-    return { main: nodes, side: [list] };
+    return { title: `${faction.slotName}: 가득 참`, main: nodes, side: [list] };
   }
 
   function render(): void {
@@ -268,7 +270,10 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const side = [...parts.side];
     if (error && step !== 'choose') side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
     side.push(el('p', 'bha-faint', PROVISIONAL_NOTE));
-    splitApp(root, { cls: 'bha-absorbpage' }, steps(stepNo), parts.main, side);
+    // 가로 LCD (T-3): 머리 = 단계 표시, 왼쪽·오른쪽 열이 각자 그 안에서 스크롤 (행동 버튼이 있는 오른쪽은 대부분 한 화면)
+    const head = el('header', 'bha-absorb__head');
+    head.append(steps(stepNo), el('h1', 'bha-h1', parts.title));
+    lcdPage(root, { cls: 'bha-absorbpage', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, head, parts.main, side);
   }
   render();
 }

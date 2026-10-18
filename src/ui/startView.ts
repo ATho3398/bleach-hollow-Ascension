@@ -45,7 +45,8 @@ export function startView(root: HTMLElement, factions: readonly FactionConfig[],
 
   const grid = el('div', 'bha-grid2');
   grid.append(button({ label: '설정', icon: 'i-settings', onClick: h.onSettings }), button({ label: '도움말·튜토리얼', icon: 'i-help', onClick: h.onHelp }));
-  const bottom = el('div', 'bha-stack');
-  bottom.append(grid, el('p', 'bha-start__ver', versionLabel()));
-  mountApp(root, { cls: 'bha-start' }, hero, species, bottom);
+  // LCD 가로 (T-3): 왼쪽 = 제목·소개·설정/도움말, 오른쪽 = 종족 카드
+  const left = el('div', 'bha-start__left');
+  left.append(hero, grid, el('p', 'bha-start__ver', versionLabel()));
+  mountApp(root, { cls: 'bha-start' }, left, species);
 }

@@ -4,7 +4,7 @@
 // 위/아래는 하이라이트(.bha-sel)를 순서대로 옮기고(끝에서 순환), 확정은 실행(click), 취소는 열린 레이어 → 화면 스택 한 단계 뒤로.
 // 전투 화면(.bha-battle)은 터치 위주라 위/아래는 쉬고 확정만 [data-dev-confirm](일시정지)에 쓴다 (dev-log C.25 결정).
 import { el, icon } from './dom';
-import { keepSelection, stepIndex } from './select';
+import { keepSelection, orderByRank, stepIndex } from './select';
 import { setOverlayHost } from './overlayHost';
 
 export interface SelectItem {
@@ -43,8 +43,13 @@ function visible(e: HTMLElement): boolean {
   return e.getClientRects().length > 0;
 }
 
+/**
+ * 자동으로 찾는 항목의 순서는 화면(DOM) 순서다. 단, 위/아래로 고르지 않는 요소(보조 슬라이더 입력 등)에는 data-dev-skip 을 붙이고,
+ * 나중에 고르게 하고 싶은 요소(탭·머리 버튼)에는 data-dev-order="1" 을 붙이면 같은 화면의 나머지 뒤로 간다 (손가락으로는 그대로 만진다).
+ */
 export function scanItems(scope: ParentNode): SelectItem[] {
-  return [...scope.querySelectorAll<HTMLElement>(AUTO_SELECTOR)].filter(visible).map((e) => ({ el: e }));
+  const found = [...scope.querySelectorAll<HTMLElement>(AUTO_SELECTOR)].filter((e) => visible(e) && !e.hasAttribute('data-dev-skip'));
+  return orderByRank(found, (e) => Number(e.getAttribute('data-dev-order') ?? 0)).map((e) => ({ el: e }));
 }
 
 function devButton(cls: string, label: string, glyph: HTMLElement | SVGElement): HTMLButtonElement {
@@ -89,10 +94,17 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let touchOnly = false;
   let focusDone: HTMLElement | null = null;
 
+  let lastSel: HTMLElement | null = null;
   const markSel = () => {
     for (const it of items) it.el.classList.remove('bha-sel');
     const cur = items[index];
     if (cur) cur.el.classList.add('bha-sel');
+    // 하이라이트가 새 항목으로 옮겨 가면 그 요소에 'bha-select' 를 보낸다 (목록 → 상세 화면이 따라 바뀐다, T-3)
+    const now = cur?.el ?? null;
+    if (now && now !== lastSel) {
+      lastSel = now;
+      now.dispatchEvent(new CustomEvent('bha-select'));
+    } else if (!now) lastSel = null;
   };
 
   function refresh(): void {
@@ -148,7 +160,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     });
   };
   const mo = new MutationObserver(schedule);
-  mo.observe(lcd, { childList: true, subtree: true });
+  // hidden·disabled 가 바뀌어도(진화 연출 줄 → 결과 전환, 비활성 버튼) 항목을 다시 센다 (class 는 보지 않는다: 하이라이트 자신의 변화로 되돌아오지 않게)
+  mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled'] });
   // 세로로 들었다가 돌아오면(LCD 가 숨었다 보임) 화면 속 선택 항목을 다시 센다 (T-2)
   window.addEventListener('resize', schedule);
 

@@ -1,8 +1,8 @@
-// 둥지 계열 화면 전용 DOM 헬퍼 (U-3): 상태 블록, 돌보기, 계통 누적 막대, 덱 행, 더보기 메뉴, 탭바, 토스트.
+// 둥지 계열 화면 전용 DOM 헬퍼 (U-3, T-3): 상태 블록, 돌보기, 계통 누적 막대, 덱 행, 토스트.
 // 공용 헬퍼는 ./dom, 계통 마크는 ./lineage. 순수 계산은 ./nestLogic (테스트 대상).
 import type { TerrainTileDef } from '../../data/schema';
 import { lineageName } from '../../data/lineages';
-import { button, el, icon, meter, panel } from './dom';
+import { button, el, icon, meter } from './dom';
 import { getOverlayHost } from './overlayHost';
 import { lineageKey } from './lineage';
 import { linbarModel, type LinbarModel } from './nestLogic';
@@ -130,49 +130,6 @@ export function deckRow(o: DeckRowOpts): HTMLElement {
   return row;
 }
 
-/** 더보기 메뉴 한 줄 */
-export function menuRow(o: { icon: string; label: string; meta?: string; onClick: () => void }): HTMLElement {
-  const b = el('button', 'bha-menu__row');
-  b.type = 'button';
-  b.append(icon(o.icon), o.label, el('small', '', o.meta ?? ''), icon('i-chevron-right'));
-  b.onclick = o.onClick;
-  return b;
-}
-
-export interface TabItem {
-  id: string;
-  label: string;
-  icon: string;
-  badge?: number;
-}
-
-/** 하단 탭바 (role=tablist). 선택은 aria-selected, 배지는 0 이면 숨김 */
-export function tabbar(items: TabItem[], selected: string, onSelect: (id: string) => void): HTMLElement {
-  const root = el('nav', 'bha-tabbar');
-  root.setAttribute('role', 'tablist');
-  root.setAttribute('aria-label', '둥지 메뉴');
-  const btns = items.map((it) => {
-    const b = el('button', 'bha-tabbar__item');
-    b.type = 'button';
-    b.setAttribute('role', 'tab');
-    b.dataset.tab = it.id;
-    b.setAttribute('aria-selected', String(it.id === selected));
-    b.append(icon(it.icon), it.label);
-    if (it.badge) {
-      const badge = el('span', 'bha-tabbar__badge', String(it.badge));
-      badge.setAttribute('aria-label', `${it.badge}개`);
-      b.append(badge);
-    }
-    b.onclick = () => {
-      for (const o of btns) o.setAttribute('aria-selected', String(o === b));
-      onSelect(it.id);
-    };
-    return b;
-  });
-  root.append(...btns);
-  return root;
-}
-
 /** 칭호 해금 토스트: 위에서 내려와(is-in) 2.5초 뒤 올라가고(is-out) animationend 에서 제거한다. 여러 개면 위에서부터 겹치지 않게 쌓는다 */
 export function showToast(o: { eyebrow: string; title: string; meta?: string }, index = 0, holdMs = 2500, host: HTMLElement = getOverlayHost()): HTMLElement {
   const toast = el('div', 'bha-toast is-in');
@@ -198,10 +155,3 @@ export function showToast(o: { eyebrow: string; title: string; meta?: string }, 
   }, holdMs + index * 300);
   return toast;
 }
-
-/** 패널 머리에 붙이는 작은 아이콘 + 글자 버튼 (진화체 도감 등) */
-export function panelAction(label: string, iconId: string, onClick: () => void): HTMLButtonElement {
-  return button({ label, icon: iconId, size: 'small', variant: 'ghost', onClick });
-}
-
-export { panel };

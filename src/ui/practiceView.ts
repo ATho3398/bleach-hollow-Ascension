@@ -9,6 +9,7 @@ import type { FactionConfig } from '../engine/faction';
 import { absorbConditionText } from './absorbView';
 import { button, el, icon, panel, tag } from './bha/dom';
 import { splitApp } from './bha/split';
+import { lcdHead, lcdPage } from './bha/lcdpage';
 import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter } from './bha/expedition';
 import { lineageClass, lineageIconId, lineageMark } from './bha/lineage';
 import { battleLabels } from './labels';
@@ -24,7 +25,6 @@ const RANKS: readonly { id: string; label: string }[] = [{ id: ALL, label: '전�
 
 export interface PracticeListHandlers {
   onPick: (enemy: EnemyDef) => void;
-  onHome: () => void;
 }
 
 /** 필터는 화면 상태만 (저장하지 않는다). 연습 메뉴로 돌아와도 처음부터 */
@@ -32,12 +32,8 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
   const labels = battleLabels(faction);
   const filter: PracticeFilter = { lineage: ALL, rank: ALL };
 
-  const topbar = el('header', 'bha-topbar');
-  const main = el('div', 'bha-topbar__main');
-  const sub = el('p', 'bha-topbar__sub');
-  sub.append('상대를 고르면 바로 전투가 시작된다 · 전투 기록 ', el('b', '', String(recordCount)), '판 저장됨');
-  main.append(el('h1', 'bha-topbar__title', `${labels.factionName} · 전투 연습`), sub);
-  topbar.append(main);
+  const sub = el('span');
+  sub.append('상대를 고르면 바로 전투가 시작된다 · 기록 ', el('b', '', String(recordCount)), '판');
 
   const segOf = (label: string, items: HTMLElement[]) => {
     const s = el('div', 'bha-seg bha-seg--sm');
@@ -82,8 +78,6 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
   filters.append(segOf('약점 계통', linBtns.map((x) => x.b)), rankRow);
 
   const listEl = el('div', 'bha-foelist');
-  const dock = el('div', 'bha-dock');
-  dock.append(button({ label: `${faction.nestName}으로`, icon: 'i-nest', size: 'lg', block: true, onClick: h.onHome }));
 
   function refresh(): void {
     for (const x of linBtns) {
@@ -115,8 +109,8 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
     }
   }
   refresh();
-  // 가로 LCD: 왼쪽 = 제목·필터·[둥지로] (붙어 있음), 오른쪽 = 상대 목록
-  splitApp(root, { cls: 'bha-practicepage', sticky: true }, null, [topbar, filters, dock], [listEl]);
+  // 가로 LCD (T-3): 머리 = 제목, 왼쪽 = 필터, 오른쪽 = 상대 목록 (목록만 그 열 안에서 스크롤). 돌아가기는 취소 버튼
+  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 0.8fr) minmax(0, 1.2fr)' }, lcdHead({ title: `${labels.factionName} · 전투 연습`, sub }), [filters], [listEl]);
 }
 
 export interface PracticeResultHandlers {

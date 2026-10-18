@@ -134,15 +134,12 @@
 @media (prefers-reduced-motion: reduce) { .bha-tut__hole::after { display: none; } }
 
 /* =========================================================
-   둥지  .bha-nest   — 위: 상태 / 가운데: 탭 내용 / 아래: 행동 독 + 탭바
+   상태 4바  .bha-nest__status   (돌보기 화면)
    ========================================================= */
-.bha-nest { gap: 12px; padding-bottom: 24px; }
-.bha-nest__stage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
 .bha-nest__status { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
 .bha-nest__status .bha-meter__note { grid-column: auto; }
-.bha-nest__tab { display: flex; flex-direction: column; gap: 12px; }
-.bha-nest__tab[hidden] { display: none; }
-.bha-nest__foot { font-size: var(--bha-fs-xs); color: var(--bha-text-3); text-align: center; padding: 8px 0 4px; font-variant-numeric: tabular-nums; }
+
 .bha-evo__form { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .bha-evo__formname { display: flex; align-items: center; gap: 6px; font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-xl); }
 .bha-evo__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -159,13 +156,6 @@
 .bha-owned__mark { color: var(--bha-lin-color); display: grid; place-items: center; }
 .bha-owned__name { font-size: var(--bha-fs-md); font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .bha-owned__desc { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
-.bha-menu { display: flex; flex-direction: column; border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-lg); background: var(--bha-bg-1); overflow: hidden; }
-.bha-menu__row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto 20px; align-items: center; gap: 12px; min-height: 56px; padding: 0 12px 0 14px; border: 0; border-bottom: 1px solid var(--bha-line-1); background: transparent; color: var(--bha-text-1); text-align: left; font-size: var(--bha-fs-lg); font-weight: 600; }
-.bha-menu__row:last-child { border-bottom: 0; }
-.bha-menu__row:active { background: var(--bha-bg-2); }
-.bha-menu__row > .bha-icon:first-child { color: var(--bha-text-2); }
-.bha-menu__row small { font-size: var(--bha-fs-sm); color: var(--bha-text-3); font-weight: 600; font-variant-numeric: tabular-nums; }
-.bha-menu__row .bha-icon:last-child { width: 18px; height: 18px; color: var(--bha-text-3); }
 
 /* =========================================================
    진화 연출  .bha-evolve
@@ -296,6 +286,4 @@
 .bha-dragprev p { font-size: var(--bha-fs-sm); color: var(--bha-text-2); line-height: 1.5; }
 
 /* 도움말 */
-.bha-help__head { position: sticky; top: 0; z-index: var(--bha-z-sticky); display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -12px calc(-1 * var(--bha-gutter)) 0; padding: max(10px, env(safe-area-inset-top, 0px)) max(var(--bha-gutter), env(safe-area-inset-right, 0px)) 10px max(var(--bha-gutter), env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bha-bg-0) 92%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--bha-line-1); }
-.bha-help__sec { display: flex; flex-direction: column; gap: 0; }
-.bha-help__cap { font-size: var(--bha-fs-sm); font-weight: 800; color: var(--bha-text-2); margin: 6px 0 8px; letter-spacing: .02em; }
+
