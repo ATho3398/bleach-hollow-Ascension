@@ -16,9 +16,9 @@ import type { FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
 import {
-  blockEl, blockVisual, chainLevelAt, floatEl, floatSpot, foeEl, insertEl, insertMark, logLineEl, LOG_ICON, nudgeOf, PATTERN_VIEW, pickAbbr,
+  blockEl, blockVisual, chainLevelAt, floatPool, floatSpot, foeEl, HURT_SPOTS, insertEl, insertMark, logLineEl, LOG_ICON, nudgeOf, PATTERN_VIEW, pickAbbr,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setInsert, setText, trayEl,
-  type BlockSpec, type BlockVisual, type FloatKind, type LogRole, type RunSpec,
+  type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { lineageKey, linMarkShort } from './bha/lineage';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
@@ -26,6 +26,8 @@ import { battleLabels, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { classifyRelease, loadPointerRules, releaseInput, slotAt } from './pointer';
+import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
+import { loadFxSettings } from './fxSettings';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -143,6 +145,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const cap = p.trayCapacity;
   /** 설정 화면에서 바꾼 클릭 판정 시간·드래그 임계치 (전투 시작 때 읽는다) */
   const rules = loadPointerRules(safeStorage());
+  /** 설정 화면 '전투 효과' (피해 숫자·진동·효과음·흔들림). 전투 시작 때 읽는다 */
+  const fx = loadFxSettings(safeStorage());
+  if (fx.sound) hookAudioUnlock();
   const slug = lineageKey(enemy.weaknessLineageId);
 
   // ── 1. 적 영역 ──
@@ -207,7 +212,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   log.dataset.help = 'battle.stage';
   const arena = el('section', 'bha-battle__arena');
   arena.setAttribute('aria-label', '전투 상황');
-  arena.append(foe, floats, log);
+  // 효과 레이어: 번쩍임 한 장(투명도만 애니메이션). 조작을 막지 않는다
+  const fxFlash = el('div', 'bha-fxflash');
+  fxFlash.setAttribute('aria-hidden', 'true');
+  arena.append(foe, floats, fxFlash, log);
 
   // ── 3. 내 영역 ──
   const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: s.player.maxHp, ghost: s.player.hp, compact: true, lg: true });
@@ -416,18 +424,30 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     playOnce(node, 'is-new');
   };
   let floatCount = 0;
-  const spawnFloat = (kind: FloatKind, text: string, opt: { crit?: boolean; chain3?: boolean; iconId?: string } = {}) => {
-    const node = floatEl(kind, text, floatSpot(floatCount++), opt);
-    while (floats.children.length >= 8) floats.firstElementChild!.remove();
-    floats.append(node);
-    const done = () => node.remove();
-    node.addEventListener('animationend', done);
-    window.setTimeout(done, 1500);
+  let hurtCount = 0;
+  const pool = floatPool(floats);
+  /** 피해 숫자(내가 준 것·받은 것·공허)는 설정에서 끌 수 있다. 막기·회복·체인 표시는 그대로 */
+  const spawnFloat = (kind: FloatKind, text: string, opt: FloatOpts = {}) => {
+    if (!fx.damageNumbers && (kind === 'attack' || kind === 'hurt' || kind === 'void')) return;
+    pool.show(kind, text, kind === 'hurt' ? HURT_SPOTS[hurtCount++ % HURT_SPOTS.length]! : floatSpot(floatCount++), opt);
   };
+  /** 번쩍임: 한 번에 한 종류만 */
+  const FLASH_CLASSES = ['is-chain2', 'is-chain3', 'is-guard', 'is-cast', 'is-special', 'is-win', 'is-lose'];
+  const flash = (cls: string, ms = 500) => {
+    fxFlash.classList.remove(...FLASH_CLASSES);
+    replayOnce(fxFlash, cls, ms);
+  };
+  /** 화면 흔들림은 무대(블록 바 밖)만, 짧게. 블록 판정 좌표에는 영향이 없다 */
+  const shake = () => {
+    if (fx.shake) replayOnce(arena, 'is-shake', 320);
+  };
+  const cues: FxCue[] = [];
   const hitFoe = () => replayOnce(foe, 'is-hit', 600);
   const n0 = (v: number) => String(Math.round(v));
   let specialNoteUntil = 0;
   const react = (e: CombatEvent) => {
+    const cue = cueOf(e, top);
+    if (cue) cues.push(cue);
     switch (e.kind) {
       case 'player-attack':
         if (e.damage > 0) hitFoe();
@@ -442,31 +462,56 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         } else if (e.block === 'skill' && e.role === 'heal') {
           spawnFloat('heal', n0(e.heal));
         } else {
-          spawnFloat('attack', `−${n0(e.damage)}`, { crit: e.weak || e.chain >= top });
+          spawnFloat('attack', `−${n0(e.damage)}`, { crit: e.chain >= top, weak: e.weak, chained: e.chain > 1 });
         }
-        if (e.chain > 1) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+        if (e.chain > 1) {
+          spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+          flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
+        }
+        if (e.block === 'special') flash('is-special', 600);
         break;
       }
       case 'stored-use':
         hitFoe();
         spawnFloat('attack', `−${n0(e.damage)}`, { crit: true });
         spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
+        flash('is-special', 600);
+        shake();
         break;
       case 'enemy-attack':
-        if (e.guarded) spawnFloat('guard', labels.role.guard, { iconId: 'i-guard' });
-        else if (e.damage > 0) replayOnce(flashHit, 'is-on', 600);
+        if (e.guarded) {
+          spawnFloat('guard', labels.role.guard, { iconId: 'i-guard' });
+          flash('is-guard');
+        } else if (e.damage > 0) {
+          replayOnce(flashHit, 'is-on', 600);
+          spawnFloat('hurt', `−${n0(e.damage)}`);
+        }
         break;
       case 'heavy-hit':
         if (e.guarded) {
           blockedUntil = performance.now() + 1200;
           blockedDamage = e.damage;
           spawnFloat('guard', labels.role.guard, { iconId: 'i-guard' });
+          flash('is-guard', 600);
         } else {
           replayOnce(flashHit, 'is-on', 600);
+          spawnFloat('hurt', `−${n0(e.damage)}`, { crit: true });
+          shake();
         }
         break;
+      case 'heavy-cast':
+        flash('is-cast', 600);
+        break;
       case 'counter':
-        if (!e.guarded) replayOnce(flashHit, 'is-on', 600);
+        if (e.guarded) {
+          flash('is-guard');
+        } else {
+          replayOnce(flashHit, 'is-on', 600);
+          spawnFloat('hurt', `−${n0(e.damage)}`);
+        }
+        break;
+      case 'end':
+        flash(e.status === 'won' ? 'is-win' : 'is-lose', 900);
         break;
       case 'spawn':
         if (e.block === 'special') {
@@ -854,6 +899,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const line = eventLine(ev, s, labels, faction.id);
       if (line) say(line);
       react(ev);
+    }
+    if (cues.length) {
+      const c = strongestCue(cues);
+      cues.length = 0;
+      if (c) emitFeedback(c, fx);
     }
     drawHud();
     drawTray();

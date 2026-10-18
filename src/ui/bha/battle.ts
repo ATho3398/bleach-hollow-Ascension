@@ -109,7 +109,7 @@ export type LogRole = 'attack' | 'guard' | 'heal' | 'void' | 'chain' | 'cast';
 /** 로그 역할별 기본 아이콘 */
 export const LOG_ICON: Record<LogRole, string> = { attack: 'i-attack', guard: 'i-guard', heal: 'i-heal', void: 'i-void', chain: 'i-chain-2', cast: 'i-cast' };
 
-export type FloatKind = 'attack' | 'guard' | 'heal' | 'void' | 'chain';
+export type FloatKind = 'attack' | 'guard' | 'heal' | 'void' | 'chain' | 'hurt';
 
 /** 적 행동 패턴 → 표시 (아이콘은 디자인에 있는 3종 중 가장 가까운 것). 기본형은 칩을 만들지 않는다 */
 export const PATTERN_VIEW: Record<EnemyPatternKind, { label: string; icon: string } | null> = {
@@ -276,15 +276,72 @@ export function logLineEl(role: LogRole, iconId: string, text: string): HTMLElem
   return line;
 }
 
-/** 플로팅 숫자 (역할별 모양). 내용은 아이콘(선택) + 글자. 위치는 아레나 안 % */
-export function floatEl(kind: FloatKind, text: string, spot: { left: number; top: number }, opts: { crit?: boolean; chain3?: boolean; iconId?: string } = {}): HTMLElement {
+export interface FloatOpts {
+  crit?: boolean;
+  chain3?: boolean;
+  iconId?: string;
+  /** 약점 적중 (1.5배): 따로 눈에 띄는 색 */
+  weak?: boolean;
+  /** 체인(2연쇄 이상)으로 터진 피해: 조금 더 크게 */
+  chained?: boolean;
+}
+
+/** 플로팅 숫자 한 개를 채운다 (새 요소든 풀의 재사용 요소든 같은 모양) */
+function fillFloat(f: HTMLElement, kind: FloatKind, text: string, spot: { left: number; top: number }, opts: FloatOpts): void {
   const cls = ['bha-float', `bha-float--${kind}`];
   if (opts.crit) cls.push('is-crit');
+  if (opts.weak) cls.push('is-weak');
+  if (opts.chained) cls.push('is-chained');
   if (opts.chain3) cls.push('bha-float--chain3');
-  const f = el('span', cls.join(' '));
+  f.className = cls.join(' ');
   f.style.left = `${spot.left}%`;
   f.style.top = `${spot.top}%`;
+  f.replaceChildren();
   if (opts.iconId) f.append(icon(opts.iconId));
   f.append(text);
+}
+
+/** 플로팅 숫자 (역할별 모양). 내용은 아이콘(선택) + 글자. 위치는 아레나 안 % */
+export function floatEl(kind: FloatKind, text: string, spot: { left: number; top: number }, opts: FloatOpts = {}): HTMLElement {
+  const f = el('span', '');
+  fillFloat(f, kind, text, spot, opts);
   return f;
+}
+
+/** 내가 받는 피해 숫자 자리 (아레나 왼쪽 아래 쪽, 내 체력 막대 방향) */
+export const HURT_SPOTS: readonly { left: number; top: number }[] = [{ left: 16, top: 52 }, { left: 28, top: 60 }, { left: 10, top: 62 }];
+
+/** 플로팅 숫자 풀: 요소를 최대 max 개만 만들어 돌려 쓴다 (가장 오래된 것부터 재사용 = 동시 표시 개수 제한). 이벤트 때만 쓰이고 틱마다 만들지 않는다 */
+export function floatPool(container: HTMLElement, max = 6, showMs = 1100): {
+  show(kind: FloatKind, text: string, spot: { left: number; top: number }, opts?: FloatOpts): void;
+  readonly size: number;
+} {
+  const nodes: { node: HTMLElement; timer: number }[] = [];
+  let next = 0;
+  return {
+    show(kind, text, spot, opts = {}) {
+      let slot = nodes[next % max];
+      if (!slot) {
+        const node = el('span', '');
+        node.hidden = true;
+        container.append(node);
+        slot = { node, timer: 0 };
+        nodes.push(slot);
+      }
+      next++;
+      const { node } = slot;
+      window.clearTimeout(slot.timer);
+      fillFloat(node, kind, text, spot, opts);
+      node.hidden = false;
+      node.style.animation = 'none';
+      void node.offsetWidth;
+      node.style.animation = '';
+      slot.timer = window.setTimeout(() => {
+        node.hidden = true;
+      }, showMs);
+    },
+    get size() {
+      return nodes.length;
+    },
+  };
 }
