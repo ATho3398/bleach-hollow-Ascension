@@ -164,3 +164,17 @@
 .bha-lcd .bha-toast__icon { width: 28px; height: 28px; }
 .bha-lcd .bha-toast__meta { display: none; }
 .bha-lcd .bha-toast__title { font-size: var(--bha-fs-md); }
+
+/* ═════ 좁은 폰(긴 쪽 740px 미만, 기기가 축소되는 폰): 블록 바(+저장 필살기·범례)를 두 열 아래 전폭으로 (Q-3, C.31) ═════
+   축소 배율이 곱해지면 블록 칸 터치가 44px 밑으로 내려가므로, 바를 전폭으로 펼쳐 칸을 키운다. 블록 클릭·드래그 판정 코드는 그대로 (칸을 가로로 찾는 좌표 변환은 기기 안 좌표). */
+.bha-dev.is-narrow .bha-lcd .bha-app.bha-battle {
+  grid-template-columns: clamp(132px, 26%, 190px) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "side bar" "side arena" "controls controls";
+}
+.bha-dev.is-narrow .bha-battle__play { display: contents; }
+.bha-dev.is-narrow .bha-battle__side { grid-area: side; }
+.bha-dev.is-narrow .bha-battle__bar { grid-area: bar; }
+.bha-dev.is-narrow .bha-lcd .bha-battle__arena { grid-area: arena; }
+.bha-dev.is-narrow .bha-battle__controls { grid-area: controls; }
+.bha-dev.is-narrow .bha-lcd .bha-battle__castidle { display: none; }  /* 대기 칸 자리표시는 접어 내 영력 줄이 보이게 */

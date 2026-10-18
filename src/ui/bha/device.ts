@@ -99,6 +99,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     const f = computeFit(vp.w, vp.h);
     setFit(f);
     dev.classList.toggle('is-rotated', f.rotated);
+    dev.classList.toggle('is-narrow', f.scale < 1); // 긴 쪽이 740px 미만인 좁은 폰: 블록 바를 아래 전폭으로 (lcd.css)
     dev.style.width = `${f.w}px`;
     dev.style.height = `${f.h}px`;
     dev.style.transform = fitTransform(f);
