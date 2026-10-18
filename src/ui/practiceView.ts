@@ -7,7 +7,8 @@ import { absorbReasons } from '../engine/absorb';
 import { elapsedSeconds, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
 import { absorbConditionText } from './absorbView';
-import { button, el, icon, mountApp, panel, tag } from './bha/dom';
+import { button, el, icon, panel, tag } from './bha/dom';
+import { splitApp } from './bha/split';
 import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter } from './bha/expedition';
 import { lineageClass, lineageIconId, lineageMark } from './bha/lineage';
 import { battleLabels } from './labels';
@@ -114,7 +115,8 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
     }
   }
   refresh();
-  mountApp(root, {}, topbar, filters, listEl, dock);
+  // 가로 LCD: 왼쪽 = 제목·필터·[둥지로] (붙어 있음), 오른쪽 = 상대 목록
+  splitApp(root, { cls: 'bha-practicepage', sticky: true }, null, [topbar, filters, dock], [listEl]);
 }
 
 export interface PracticeResultHandlers {
@@ -165,5 +167,5 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     button({ label: '연습 메뉴로', size: 'lg', onClick: h.onMenu }),
   );
   dock.append(two);
-  mountApp(root, {}, head, panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbConditionText(faction, enemy.weaknessLineageId)), seed, dock);
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbConditionText(faction, enemy.weaknessLineageId))]);
 }

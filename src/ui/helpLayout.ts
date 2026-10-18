@@ -72,3 +72,60 @@ export function placeCard(
   }
   return best!;
 }
+
+export interface BoxPlacement {
+  top: number;
+  left: number;
+  side: 'below' | 'above' | 'top' | 'bottom' | 'right' | 'left' | 'corner' | 'center';
+  clear: boolean;
+  cost: number;
+}
+
+/**
+ * 가로 화면(LCD)용 카드 배치 (T-2): 카드 크기(너비×높이)가 정해져 있을 때, 대상 아래·위·옆(오른쪽·왼쪽)·화면 위·아래·네 모서리를 후보로
+ * 대상(가중 10)과 보호 영역을 가장 적게 가리는 자리를 고른다. 같으면 앞선 후보가 이긴다. 모든 후보는 화면 안(margin)으로 잘라 넣는다.
+ */
+export function placeCardBox(
+  target: Rect | null,
+  card: { width: number; height: number },
+  viewport: { width: number; height: number },
+  protectedRects: Rect[] = [],
+  margin = 8,
+  gap = 8,
+): BoxPlacement {
+  const { width: cw, height: ch } = card;
+  const clampX = (x: number) => Math.round(Math.min(Math.max(margin, viewport.width - cw - margin), Math.max(margin, x)));
+  const clampY = (y: number) => Math.round(Math.min(Math.max(margin, viewport.height - ch - margin), Math.max(margin, y)));
+  const cx = (viewport.width - cw) / 2;
+  const left = margin;
+  const right = viewport.width - cw - margin;
+  const top = margin;
+  const bottom = viewport.height - ch - margin;
+  const candidates: { side: BoxPlacement['side']; left: number; top: number }[] = target
+    ? [
+        { side: 'below', left: cx, top: target.top + target.height + gap },
+        { side: 'above', left: cx, top: target.top - gap - ch },
+        { side: 'right', left: target.left + target.width + gap, top: target.top },
+        { side: 'left', left: target.left - gap - cw, top: target.top },
+        { side: 'top', left: cx, top },
+        { side: 'bottom', left: cx, top: bottom },
+        { side: 'corner', left, top },
+        { side: 'corner', left: right, top },
+        { side: 'corner', left, top: bottom },
+        { side: 'corner', left: right, top: bottom },
+      ]
+    : [
+        { side: 'center', left: cx, top: (viewport.height - ch) / 2 },
+        { side: 'top', left: cx, top },
+        { side: 'bottom', left: cx, top: bottom },
+      ];
+  let best: BoxPlacement | null = null;
+  for (const c of candidates) {
+    const l = clampX(c.left);
+    const t = clampY(c.top);
+    const box: Rect = { top: t, left: l, width: cw, height: ch };
+    const cost = (target ? overlapArea(box, target) * 10 : 0) + protectedRects.reduce((sum, r) => sum + overlapArea(box, r), 0);
+    if (!best || cost < best.cost) best = { top: t, left: l, side: c.side, clear: cost === 0, cost };
+  }
+  return best!;
+}

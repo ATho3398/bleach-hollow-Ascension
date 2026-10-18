@@ -21,6 +21,7 @@ import {
   type BlockSpec, type BlockVisual, type FloatKind, type LogRole, type RunSpec,
 } from './bha/battle';
 import { lineageKey, linMarkShort } from './bha/lineage';
+import { isPortrait } from './bha/orientation';
 import { battleLabels, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
@@ -171,7 +172,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const castSlot = el('div', 'bha-battle__castslot');
   castSlot.dataset.help = 'battle.cast';
   const castIdle = el('div', 'bha-battle__castidle');
-  castIdle.append(icon('i-cast'), '강공격 예고가 뜨면 여기에 시전 바가 찬다');
+  castIdle.append(icon('i-cast'), '강공격 예고 칸');
   const castEl = el('div', 'bha-cast');
   castEl.setAttribute('role', 'alert');
   const castTitle = el('span', 'bha-cast__title');
@@ -314,18 +315,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const flashVoid = el('div', 'bha-edgeflash bha-edgeflash--void');
   const flashHit = el('div', 'bha-edgeflash bha-edgeflash--hit');
 
-  const app = mountApp(
-    root,
-    { fixed: true, cls: 'bha-battle' },
-    ...(opts.notice ? [notice('info', opts.notice)] : []),
-    enemySec,
-    arena,
-    meSec,
-    controls,
-    bar,
-    flashVoid,
-    flashHit,
-  );
+  // 가로 2단 (GDD 16장, T-2): 왼쪽 열 = 적·나 상태(+체험 전투 안내), 오른쪽 열 = 배속·일시정지 줄 / 무대 / 블록 바 / 저장 필살기 / 범례
+  const sideCol = el('div', 'bha-battle__side');
+  sideCol.append(enemySec, meSec, ...(opts.notice ? [notice('info', opts.notice)] : []));
+  const playCol = el('div', 'bha-battle__play');
+  playCol.append(bar, arena, controls);
+  const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, sideCol, playCol, flashVoid, flashHit);
 
   const quit = () => {
     stopped = true;
@@ -847,6 +842,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (stopped) return;
     const dt = Math.min(250, now - last);
     last = now;
+    // 세로로 들면 자동 일시정지 (조우 연출·튜토리얼·도움말이 닫힌 뒤에도 확인). 돌아와도 자동 재개는 없다
+    if (s.status === 'playing' && !paused && !overlayOpen && isPortrait()) setPaused(true);
     if (s.status === 'playing') {
       const f = frameTicks(acc, dt, speed, tickMs, halted());
       acc = f.acc;

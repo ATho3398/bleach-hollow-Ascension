@@ -6,7 +6,7 @@ import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
-import { placeCard, unionRect, type Rect } from './helpLayout';
+import { placeCard, placeCardBox, unionRect, type Rect } from './helpLayout';
 
 export interface TutorialHandle {
   close(): void;
@@ -67,13 +67,44 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   /** 블록 바와 저장 필살기 버튼: 설명 카드가 가리지 않게 보호할 영역 */
   const protectedRects = () => ['battle.tray', 'battle.stored'].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
 
+  /** 가로 화면(LCD)에서 카드가 후보로 삼는 너비: 넓게(위·아래에 걸쳐) / 좁게(옆·모서리) */
+  const WIDE_W = 456;
+  const NARROW_W = 280;
+
   function layout(): void {
     const scene = TUTORIAL_SCENES[state.index]!;
     const vp = host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight };
     const rect = targetRect(scene.targets, host);
-    const place = placeCard(rect, card.offsetHeight, vp, protectedRects());
-    card.style.top = `${place.top}px`;
+    const landscape = vp.width > vp.height;
+    let belowCard = false;
+    let aside = false;
+    let cardLeft = (vp.width - card.offsetWidth) / 2;
+    if (landscape) {
+      // 가로: 너비 두 가지를 시험해 대상·블록 바를 가장 적게 가리는 자리를 고른다 (T-2)
+      const prot = protectedRects();
+      let best: { w: number; h: number; p: ReturnType<typeof placeCardBox> } | null = null;
+      for (const w of [Math.min(WIDE_W, vp.width - 16), Math.min(NARROW_W, vp.width - 16)]) {
+        card.style.width = `${w}px`;
+        const h = card.offsetHeight;
+        const p = placeCardBox(rect, { width: w, height: h }, vp, prot);
+        if (!best || p.cost < best.p.cost) best = { w, h, p };
+      }
+      card.style.width = `${best!.w}px`;
+      card.style.left = `${best!.p.left}px`;
+      card.style.top = `${best!.p.top}px`;
+      cardLeft = best!.p.left;
+      belowCard = !!rect && best!.p.top >= rect.top + rect.height / 2;
+      aside = !rect || best!.p.side === 'right' || best!.p.side === 'left' || best!.p.side === 'corner' || best!.p.side === 'center';
+    } else {
+      card.style.width = '';
+      card.style.left = '';
+      const place = placeCard(rect, card.offsetHeight, vp, protectedRects());
+      card.style.top = `${place.top}px`;
+      belowCard = !!rect && place.top >= rect.top + rect.height / 2;
+      cardLeft = place.left;
+    }
     card.style.bottom = 'auto';
+    card.classList.toggle('is-placed', landscape);
     const pad = TUTORIAL_HOLE_PAD;
     hole.classList.toggle('is-none', !rect);
     if (rect) {
@@ -88,30 +119,29 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
       hole.style.width = '0px';
       hole.style.height = '0px';
     }
-    // 카드가 대상 아래(is-below)면 위쪽 꼬리, 위(is-above)면 아래쪽 꼬리. 대상이 없으면 꼬리 없음
-    const below = !!rect && place.top >= rect.top + rect.height / 2;
-    card.classList.toggle('is-below', !!rect && below);
-    card.classList.toggle('is-above', !!rect && !below);
-    if (rect) {
+    // 카드가 대상 아래(is-below)면 위쪽 꼬리, 위(is-above)면 아래쪽 꼬리. 옆·모서리·대상 없음이면 꼬리 없음
+    const tail = !!rect && !aside;
+    card.classList.toggle('is-below', tail && belowCard);
+    card.classList.toggle('is-above', tail && !belowCard);
+    if (tail && rect) {
       const cw = card.offsetWidth;
-      const cl = (vp.width - cw) / 2;
-      card.style.setProperty('--tail', `${Math.max(24, Math.min(cw - 24, rect.left + rect.width / 2 - cl))}px`);
+      card.style.setProperty('--tail', `${Math.max(24, Math.min(cw - 24, rect.left + rect.width / 2 - cardLeft))}px`);
     }
   }
 
   function render(): void {
     const scene = TUTORIAL_SCENES[state.index]!;
     const last = state.index === state.count - 1;
-    const skip = button({ label: '건너뛰기', variant: 'ghost', onClick: () => {
+    const skip = button({ label: '건너뛰기', variant: 'ghost', size: 'small', onClick: () => {
       state = tutorialSkip(state);
       finish('skipped');
     } });
-    const prev = button({ label: '이전', icon: 'i-chevron-left', onClick: () => {
+    const prev = button({ label: '이전', icon: 'i-chevron-left', size: 'small', onClick: () => {
       state = tutorialPrev(state);
       render();
     } });
     prev.disabled = state.index === 0;
-    const next = button({ label: last ? '전투 시작' : '다음', variant: 'primary', onClick: () => {
+    const next = button({ label: last ? '전투 시작' : '다음', variant: 'primary', size: 'small', onClick: () => {
       state = tutorialNext(state);
       if (isTutorialActive(state)) render();
       else finish('completed');
@@ -124,9 +154,12 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     title.id = 'tutorial-title';
     title.append(icon(SCENE_ICON[scene.id] ?? 'i-info'), t(scene.title));
     layer.setAttribute('aria-labelledby', title.id);
+    // 가로 LCD 는 낮아서 단계 표시와 버튼을 한 줄에 둔다 (T-2)
     const top = el('div', 'bha-tut__top');
-    top.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
-    card.replaceChildren(top, title, el('p', 'bha-tut__body', t(scene.body)), actions);
+    const steps = el('div', 'bha-tut__steps');
+    steps.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
+    top.append(steps, actions);
+    card.replaceChildren(top, title, el('p', 'bha-tut__body', t(scene.body)));
     card.style.visibility = 'hidden';
     layout();
     card.style.visibility = 'visible';

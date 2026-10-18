@@ -1,7 +1,8 @@
 // 한계 돌파 연출 (U-4): 균열·떨림은 CSS(reduced-motion 이면 정지 화면). 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 임시 페널티만 있다.
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
-import { button, chip, el, icon, meter, mountApp, panel, provisionalTag } from './bha/dom';
+import { button, chip, el, icon, meter, panel, provisionalTag } from './bha/dom';
+import { splitApp } from './bha/split';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 /** 디자인 원본의 균열 선 (viewBox 390×844) */
@@ -46,5 +47,7 @@ export function breakthroughView(root: HTMLElement, faction: FactionConfig, risk
 
   const title = el('h1', 'bha-break__title', faction.breakthroughText);
 
-  mountApp(root, { cls: 'bha-break' }, cracks, badge, title, gauge, penalty, go);
+  // 가로 LCD: 왼쪽 = 균열·배지·제목·게이지, 오른쪽 = 임시 페널티·[계속]
+  const app = splitApp(root, { cls: 'bha-break' }, cracks, [badge, title, gauge], [penalty, go]);
+  app.classList.add('bha-break--split');
 }

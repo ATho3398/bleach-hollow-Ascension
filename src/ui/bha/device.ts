@@ -87,6 +87,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let explicit: { scope: HTMLElement; items: SelectItem[]; onChange?: (i: SelectItem | null) => void } | null = null;
   const layers: { el: HTMLElement; onCancel: () => void }[] = [];
   let touchOnly = false;
+  let focusDone: HTMLElement | null = null;
 
   const markSel = () => {
     for (const it of items) it.el.classList.remove('bha-sel');
@@ -116,6 +117,13 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     } else {
       index = keepSelection(prev.map((i) => i.el), prevIdx, next.map((i) => i.el));
     }
+    // [data-dev-focus] 가 붙은 항목이 나타나면 한 번 선택을 거기로 옮긴다 (세로로 들어 자동 일시정지한 원정의 [재개] 버튼 등, T-2)
+    const fi = items.findIndex((i) => i.el.hasAttribute('data-dev-focus'));
+    if (fi < 0) focusDone = null;
+    else if (items[fi]!.el !== focusDone) {
+      focusDone = items[fi]!.el;
+      index = fi;
+    }
     for (const p of prev) if (!next.includes(p)) p.el.classList.remove('bha-sel');
     markSel();
     const cur = items[index] ?? null;
@@ -141,6 +149,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   };
   const mo = new MutationObserver(schedule);
   mo.observe(lcd, { childList: true, subtree: true });
+  // 세로로 들었다가 돌아오면(LCD 가 숨었다 보임) 화면 속 선택 항목을 다시 센다 (T-2)
+  window.addEventListener('resize', schedule);
 
   function move(dir: 1 | -1): void {
     if (items.length === 0) return;
@@ -226,6 +236,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     destroy() {
       mo.disconnect();
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', schedule);
       setOverlayHost(null);
     },
   };

@@ -9,7 +9,8 @@ import { absorbRisk, completedLineages, isFull, lineageCounts, type AbsorbOffer 
 import { chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
-import { button, chip, el, icon, info, meter, mountApp, notice, panel, tag } from './bha/dom';
+import { button, chip, el, icon, info, meter, notice, panel, tag } from './bha/dom';
+import { splitApp } from './bha/split';
 import { val } from './bha/expedition';
 import { lineageClass, lineageIconId, lineageKey, lineageMark } from './bha/lineage';
 
@@ -28,6 +29,12 @@ export function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
   if (offer.reasons.includes('weakness-chain3')) out.push(`약점 계통 ${faction.chainName}3 ${offer.weakChain3Count}회 (필요 ${AX.weakChain3ForAbsorb})`);
   if (offer.reasons.includes('first-absorb')) out.push(`첫 ${faction.absorbActionName} 보장 (장착한 ${faction.skillBlockName} 특성 없음)`);
   return out.join(' · ');
+}
+
+/** 한 단계의 두 열 내용: 왼쪽(설명·선택 상대 정보) / 오른쪽(고를 것·조작) — 가로 LCD (T-2) */
+interface StepParts {
+  main: HTMLElement[];
+  side: HTMLElement[];
 }
 
 const STEP_LABELS = ['선택', '특성 고르기', '교체'] as const;
@@ -138,7 +145,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return b;
   };
 
-  function chooseStep(): HTMLElement[] {
+  function chooseStep(): StepParts {
     const risk = absorbRisk(offer!.strength);
     const willBreak = exp.risk + risk >= RX.limit;
     const nodes: HTMLElement[] = [el('h1', 'bha-h1', `${act} 가능`), el('p', 'bha-dim', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
@@ -167,13 +174,15 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         ]),
       ),
       el('p', 'bha-faint', absorbConditionText(faction, enemy.weaknessLineageId)),
+    );
+    const side: HTMLElement[] = [
       meter({
         kind: 'risk', label: `지금 ${faction.riskGaugeName}`, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, zone: 0.6, danger: exp.risk >= 60 || willBreak,
         note: willBreak ? `${act}하면 한계 돌파! (${Math.round(exp.risk)} + ${Math.round(risk)} = ${Math.round(exp.risk + risk)})` : undefined,
       }),
       slotSummary(),
-    );
-    if (error) nodes.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
+    ];
+    if (error) side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
     const sub = (b: HTMLButtonElement, text: string) => {
       b.append(el('small', '', text));
       return b;
@@ -182,16 +191,17 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const r = sub(button({ label: '놓아준다', icon: 'i-release', size: 'lg', onClick: () => finish(chooseRelease(exp), false) }), '안정 쪽으로');
     const actions = el('div', 'bha-absorb__actions');
     actions.append(a, r);
-    nodes.push(actions);
-    return nodes;
+    side.push(actions);
+    return { main: nodes, side };
   }
 
-  function pickStep(): HTMLElement[] {
+  function pickStep(): StepParts {
     const nodes: HTMLElement[] = [el('h1', 'bha-h1', '특성 후보 (1개 고르기)'), el('p', 'bha-dim', `${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
+    const side: HTMLElement[] = [];
     if (offer!.candidates.length === 0) {
       const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
       none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '이 계통에서 새로 얻을 특성이 없다. 효과만 얻는다.'));
-      nodes.push(none, button({ label: `특성 없이 ${act}`, variant: 'primary', size: 'lg', block: true, onClick: () => finish(chooseAbsorb(exp, null), true) }));
+      side.push(none, button({ label: `특성 없이 ${act}`, variant: 'primary', size: 'lg', block: true, onClick: () => finish(chooseAbsorb(exp, null), true) }));
     } else {
       const list = el('div', 'bha-stack');
       for (const id of offer!.candidates) {
@@ -220,13 +230,13 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         };
         list.append(c);
       }
-      nodes.push(list);
+      side.push(list);
     }
     nodes.push(backBtn('choose'));
-    return nodes;
+    return { main: nodes, side };
   }
 
-  function replaceStep(): HTMLElement[] {
+  function replaceStep(): StepParts {
     const nodes: HTMLElement[] = [
       el('h1', 'bha-h1', `${faction.slotName}: 가득 참`),
       notice('warn', `${traitName(picked!, faction.id)}을(를) 어느 슬롯과 바꿀까? 교체된 특성은 보유 목록에 남아 둥지에서 다시 장착할 수 있다. 포기하면 특성 없이 ${act} 효과만 얻는다.`, { title: '어느 슬롯과 바꿀까?', icon: 'i-swap' }),
@@ -248,17 +258,17 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     giveUp.append(lab);
     const grid = el('div', 'bha-grid2');
     grid.append(backBtn('pick', false), giveUp);
-    nodes.push(list, grid);
-    return nodes;
+    nodes.push(grid);
+    return { main: nodes, side: [list] };
   }
 
   function render(): void {
     const stepNo = step === 'choose' ? 1 : step === 'pick' ? 2 : 3;
-    const view = el('div', 'bha-stack bha-stack--loose');
-    view.append(...(step === 'choose' ? chooseStep() : step === 'pick' ? pickStep() : replaceStep()));
-    if (error && step !== 'choose') view.append(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
-    view.append(el('p', 'bha-faint', PROVISIONAL_NOTE));
-    mountApp(root, {}, steps(stepNo), view);
+    const parts = step === 'choose' ? chooseStep() : step === 'pick' ? pickStep() : replaceStep();
+    const side = [...parts.side];
+    if (error && step !== 'choose') side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
+    side.push(el('p', 'bha-faint', PROVISIONAL_NOTE));
+    splitApp(root, { cls: 'bha-absorbpage' }, steps(stepNo), parts.main, side);
   }
   render();
 }

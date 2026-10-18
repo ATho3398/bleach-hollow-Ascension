@@ -178,7 +178,7 @@ export function showToast(o: { eyebrow: string; title: string; meta?: string }, 
   const toast = el('div', 'bha-toast is-in');
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
-  toast.style.marginTop = `${index * 72}px`;
+  toast.style.setProperty('--toast-i', String(index)); // 겹치지 않게 쌓는 간격은 CSS(.bha-toast, 기본 72px · LCD 는 lcd.css)
   const ic = el('span', 'bha-toast__icon');
   ic.append(icon('i-title'));
   const body = el('span');

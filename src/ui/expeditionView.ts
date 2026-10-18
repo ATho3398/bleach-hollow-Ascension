@@ -14,6 +14,7 @@ import {
   canPlaceAt, MSG_ICON, msgKind, needsWalkerSnap, ringDisplayPos, ringState, tileCss, tileIconId,
 } from './bha/expedition';
 import { lineageClass, lineageIconId } from './bha/lineage';
+import { isPortrait, onPortrait } from './bha/orientation';
 import { tileHint } from './labels';
 
 export interface ExpeditionViewHandlers {
@@ -61,9 +62,22 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   };
   const stepMs = () => (EX.secondsPerTile * 1000) / speed;
 
+  /** 세로로 들어서 멈춘다: 가로로 돌아오면 기기의 선택이 [재개] 버튼에 가 있어 확정으로 계속할 수 있다 */
+  function autoPause(): void {
+    paused = true;
+    pauseBtn.dataset.devFocus = '';
+    render();
+  }
+
   function schedule(): void {
     clear();
-    if (exp.phase === 'moving' && !paused) later(stepMs(), tick);
+    if (exp.phase !== 'moving') return;
+    // 세로로 들면 자동 일시정지한다. 가로로 돌아와도 저절로 재개하지 않는다 (재개 버튼으로 계속)
+    if (!paused && isPortrait()) {
+      autoPause();
+      return;
+    }
+    if (!paused) later(stepMs(), tick);
   }
 
   function tick(): void {
@@ -121,7 +135,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   // ── 고정 DOM (한 번만 만든다) ──
   const lapLine = el('small');
-  const helpBtn = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost' });
+  const helpBtn = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small' });
   const where = el('div', 'bha-exp__where');
   where.append(el('b', '', faction.huntingGroundName), lapLine);
   const head = el('div', 'bha-exp__head');
@@ -181,7 +195,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   msgEl.setAttribute('aria-live', 'polite');
 
   const hand = el('div', 'bha-exp__hand');
-  const handBox = el('div');
+  const handBox = el('div', 'bha-exp__handbox');
   handBox.append(el('p', 'bha-exp__handcap', '보유 타일 — 고른 뒤 앞쪽 빈 슬롯을 누르면 놓인다. 한 번 놓으면 원정 동안 유지'), hand);
 
   const speedSeg = el('div', 'bha-seg bha-seg--sm');
@@ -204,6 +218,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   pauseBtn.type = 'button';
   pauseBtn.onclick = () => {
     paused = !paused;
+    delete pauseBtn.dataset.devFocus;
     schedule();
     render();
   };
@@ -211,8 +226,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const bar = el('footer', 'bha-exp__bar');
   bar.append(speedSeg, pauseBtn, el('span'), handCount);
 
-  const sheetBox = el('div');
-  const main = mountApp(root, { fixed: true, cls: 'bha-exp' }, top, ringWrap, msgEl, handBox, bar, sheetBox);
+  // 가로 2단 (GDD 16장, T-2): 왼쪽 = 원형 길, 오른쪽 = 상태·메시지·보유 타일·조작 줄. 둥지 칸 도착 시트는 오른쪽 열 안에 놓여 링을 가리지 않는다
+  const sheetBox = el('div', 'bha-exp__sheetbox');
+  const side = el('div', 'bha-exp__side');
+  side.append(top, msgEl, handBox, bar, sheetBox);
+  const main = mountApp(root, { fixed: true, cls: 'bha-exp' }, ringWrap, side);
 
   helpBtn.onclick = () => {
     const wasPaused = paused;
@@ -311,8 +329,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     main.classList.toggle('is-paused', paused);
 
     // 둥지 칸 도착: 귀환 / 한 바퀴 더
+    main.classList.toggle('has-sheet', exp.phase === 'nest-choice');
     if (exp.phase === 'nest-choice') sheetBox.replaceChildren(...nestSheet());
-    else sheetBox.replaceChildren();
+    else {
+      sheetBox.replaceChildren();
+      if (helpBtn.parentElement !== head) head.append(helpBtn);
+    }
   }
 
   /** 보유 타일 칩들 (원정 아래쪽 + 둥지 칸 선택 시트 안에서 같이 쓴다) */
@@ -340,7 +362,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   function nestSheet(): HTMLElement[] {
     const over = exp.lap >= EX.defaultLaps;
     const title = el('h2', 'bha-sheet__title');
-    title.append(icon('i-nest'), `${faction.nestName} 칸에 도착했다`);
+    title.append(icon('i-nest'), `${faction.nestName} 칸에 도착했다`, helpBtn); // 시트가 머리 줄을 대신하므로 [?] 도 시트 제목 줄로 옮긴다 (T-2)
     const ret = button({
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
@@ -366,17 +388,25 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const sheet = el('div', 'bha-sheet');
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-label', `${faction.nestName} 칸에 도착했다`);
-    sheet.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
-    if (over) sheet.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
+    // 설명 영역(낮은 LCD 에서는 이 안만 스크롤)과 버튼 줄을 나눈다: 귀환/한 바퀴 더 버튼은 항상 보인다
+    const info = el('div', 'bha-sheet__scroll');
+    info.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
+    if (over) info.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
     if (exp.hand.length > 0) {
       // 둥지 칸에서도 다음 바퀴 슬롯에 타일을 놓을 수 있다 (엔진 규칙 그대로): 시트 안에 보유 타일을 보인다
       const row = el('div', 'bha-exp__hand');
       fillHand(row);
-      sheet.append(row);
+      info.append(row);
     }
-    sheet.append(grid);
+    sheet.append(info, grid);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
+
+  onPortrait(() => {
+    if (exp.phase !== 'moving' || paused) return;
+    clear();
+    autoPause();
+  }, () => main.isConnected);
 
   render();
   schedule();

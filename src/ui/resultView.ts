@@ -5,7 +5,8 @@ import { traitName } from '../data/traits';
 import type { ExpeditionState } from '../engine/expedition';
 import { summarize } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
-import { button, el, icon, mountApp, panel } from './bha/dom';
+import { button, el, icon, panel } from './bha/dom';
+import { splitApp } from './bha/split';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
 
@@ -47,5 +48,6 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
 
   const dock = el('div', 'bha-dock');
   dock.append(button({ label: `${faction.nestName}으로`, icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome }));
-  mountApp(root, {}, head, sum, seed, dock);
+  // 가로 LCD: 왼쪽 = 결과 제목·시드·[둥지로], 오른쪽 = 원정 요약 표
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [sum]);
 }
