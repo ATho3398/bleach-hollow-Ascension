@@ -3,6 +3,7 @@
 import { GLOSSARY, helpVars, renderHelpText, SCREEN_HELPS } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { button, el, icon, notice } from './bha/dom';
+import { getOverlayHost, registerLayer } from './bha/overlayHost';
 
 export type HelpScreenId = 'nest' | 'expedition' | 'battle' | 'evolution';
 
@@ -33,9 +34,11 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
   stage.setAttribute('aria-label', '도움말');
   stage.append(app);
   let closed = false;
+  let unregister = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
+    unregister();
     stage.remove();
     opts.onClose();
   };
@@ -73,7 +76,8 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
     section('화면별 요약', SCREEN_HELPS, SCREEN_ICON, opts.screen),
     section(`용어 사전 (${GLOSSARY.length})`, GLOSSARY, TERM_ICON),
   );
-  document.body.append(stage);
+  getOverlayHost().append(stage);
+  unregister = registerLayer(stage, close);
   closeBtn.focus();
   app.querySelector('details[open]')?.scrollIntoView({ block: 'start' });
   return close;

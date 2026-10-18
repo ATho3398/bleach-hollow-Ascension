@@ -1,0 +1,103 @@
+/* 메인 방 화면 (GDD 16장, T-1). 디자인 토큰만 쓴다. 그림은 매니페스트 키로 참조 — 파일이 없으면 아래 자리표시 도형이 나온다 */
+
+.bha-lcd .bha-app.bha-room { gap: var(--bha-sp-3); padding: var(--bha-sp-3) var(--bha-sp-4); background: none; }
+
+/* 위 한 줄 */
+.bha-room__hud { display: flex; align-items: center; gap: var(--bha-sp-5); min-height: var(--bha-touch); flex: none; }
+.bha-room__hud .bha-meter { flex: 1 1 0; min-width: 0; }
+.bha-room__hud .bha-meter__label span:last-child { display: none; }  /* 한 줄이라 아이콘만 (이름은 aria-label) */
+.bha-room__hud .bha-meter__value { min-width: 0; font-size: var(--bha-fs-xs); }
+.bha-room__resumeinfo { margin-left: var(--bha-sp-2); font-size: var(--bha-fs-xs); font-weight: 500; opacity: 0.85; }
+.bha-room__note { font-size: var(--bha-fs-xs); color: var(--bha-warn); flex: none; }
+
+.bha-room__body { flex: 1 1 auto; min-height: 0; display: flex; gap: var(--bha-sp-3); }
+.bha-room__edge { flex: none; display: flex; flex-direction: column; justify-content: center; gap: var(--bha-sp-2); }
+.bha-room__edge .bha-btn { min-width: var(--bha-touch); min-height: var(--bha-touch); }
+
+/* ── 방 장면 ── */
+.bha-room__scene {
+  position: relative; flex: 1 1 0; min-width: 0; overflow: hidden;
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
+  background: var(--bha-bg-1);
+}
+.bha-room__wall, .bha-room__floor { position: absolute; left: 0; right: 0; }
+.bha-room__wall { top: 0; height: 62%; background: var(--bha-bg-1); }
+.bha-room__floor { bottom: 0; height: 38%; background: var(--bha-bg-2); border-top: 2px solid var(--bha-line-2); }
+/* 방 모양 (종족 설정 room.shape): cave = 둥글게 패인 굴, room = 반듯한 방 */
+.bha-room--cave .bha-room__wall { background: radial-gradient(90% 100% at 50% 110%, var(--bha-bg-2), var(--bha-bg-1) 70%); border-radius: 0 0 60% 60% / 0 0 24% 24%; }
+.bha-room--cave .bha-room__floor { border-top: 0; border-radius: 50% 50% 0 0 / 14% 14% 0 0; background: var(--bha-bg-2); }
+.bha-room--room .bha-room__wall { background: repeating-linear-gradient(90deg, var(--bha-bg-1) 0 28px, var(--bha-bg-2) 28px 29px); }
+.bha-room__scene.has-art { background: var(--room-art) center / cover no-repeat; }
+.bha-room__scene.has-art > .bha-room__wall, .bha-room__scene.has-art > .bha-room__floor { display: none; }
+
+/* ── 방 안 물건 (= 선택 항목) ── */
+.bha-prop {
+  position: absolute; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1);
+  min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-1);
+  color: var(--bha-text-1); background: none; border: 0; border-radius: var(--bha-r-md);
+  touch-action: manipulation;
+}
+.bha-prop__shape {
+  display: grid; place-items: center; width: 44px; height: 40px;
+  color: var(--bha-text-1); background: var(--bha-bg-3);
+  border: 2px solid var(--bha-line-2); border-radius: var(--bha-r-sm);
+}
+.bha-prop__shape .bha-icon { width: 20px; height: 20px; }
+.bha-prop__img { max-width: none; width: 100%; height: 100%; object-fit: contain; }
+.bha-prop__tag {
+  font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; white-space: nowrap;
+  padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill);
+  background: rgb(0 0 0 / 0.55); color: var(--bha-text-1);
+}
+.bha-prop--door .bha-prop__shape { width: 40px; height: 58px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--window .bha-prop__shape { width: 48px; height: 40px; background: linear-gradient(var(--bha-line-2) 0 0) center / 2px 100% no-repeat, linear-gradient(var(--bha-line-2) 0 0) center / 100% 2px no-repeat, var(--bha-accent-soft); }
+.bha-prop--window .bha-prop__shape .bha-icon { display: none; }
+.bha-prop--altar .bha-prop__shape { width: 60px; height: 34px; border-radius: var(--bha-r-xs); }
+.bha-prop--book .bha-prop__shape { width: 40px; height: 34px; border-left-width: 6px; }
+.bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--care .bha-prop__shape { width: 48px; height: 28px; border-radius: 0 0 var(--bha-r-pill) var(--bha-r-pill); }
+.bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
+.bha-prop:active .bha-prop__shape, .bha-char:active .bha-char__body { filter: brightness(1.2); }
+
+/* ── 캐릭터: 제자리 2프레임 숨쉬기 (step-end 로 두 모양만 번갈아) ── */
+.bha-char {
+  position: absolute; left: 50%; top: 60%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center;
+  min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-2);
+  background: none; border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
+}
+.bha-char__body {
+  position: relative; display: block; width: 52px; height: 56px; transform-origin: 50% 100%;
+  background: var(--bha-text-2); border: 2px solid var(--bha-line-2); border-radius: 50% 50% 42% 42%;
+  animation: bha-char-breath 1.6s step-end infinite;
+}
+.bha-char__body.has-art { background: none; border: 0; border-radius: 0; animation: none; }
+.bha-char__eye { position: absolute; top: 38%; width: 6px; height: 9px; border-radius: var(--bha-r-pill); background: var(--bha-bg-0); }
+.bha-char__eye:nth-of-type(1) { left: 26%; }
+.bha-char__eye:nth-of-type(2) { right: 26%; }
+.bha-char__frame { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: contain; }
+.bha-char__frame--1 { animation: bha-frame-a 1.6s step-end infinite; }
+.bha-char__frame--2 { animation: bha-frame-b 1.6s step-end infinite; }
+.bha-char__shadow { width: 40px; height: 6px; margin-top: var(--bha-sp-1); border-radius: 50%; background: rgb(0 0 0 / 0.4); }
+.bha-char.is-react .bha-char__body { animation: bha-char-hop 0.4s ease-out; }
+@keyframes bha-char-breath { 0% { transform: scaleY(1); } 50% { transform: scaleY(0.94); } }
+@keyframes bha-frame-a { 0% { visibility: visible; } 50% { visibility: hidden; } }
+@keyframes bha-frame-b { 0% { visibility: hidden; } 50% { visibility: visible; } }
+@keyframes bha-char-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
+
+/* ── 말풍선 ── */
+.bha-room__bubble {
+  position: absolute; left: 50%; top: 14%; transform: translateX(-50%); z-index: var(--bha-z-raised);
+  max-width: 70%; padding: var(--bha-sp-3) var(--bha-sp-5);
+  font-size: var(--bha-fs-sm); line-height: 1.35; text-align: center; color: var(--bha-text-1);
+  background: var(--bha-bg-0); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
+  pointer-events: none;
+}
+.bha-room__bubble.is-pop { animation: bha-bubble-pop 0.18s ease-out; }
+@keyframes bha-bubble-pop { from { opacity: 0; transform: translateX(-50%) scale(0.9); } }
+
+/* 선택 하이라이트는 물건 모양에 붙인다 */
+.bha-prop.bha-sel, .bha-char.bha-sel { outline: 0; box-shadow: none; }
+.bha-prop.bha-sel .bha-prop__shape, .bha-char.bha-sel .bha-char__body { outline: 2px solid var(--bha-focus); outline-offset: 3px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
+.bha-prop.bha-sel .bha-prop__tag { background: var(--bha-focus); color: var(--bha-bg-0); }

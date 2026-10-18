@@ -6,6 +6,8 @@ import './ui/bha/components/components.css';
 import './ui/bha/screens/screens.css';
 import './ui/bha/app.css';
 import './ui/bha/expedition.css';
+import './ui/bha/device.css';
+import './ui/bha/room.css';
 import { startApp } from './ui/app';
 import { mountSprite } from './ui/bha/sprite';
 

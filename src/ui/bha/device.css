@@ -1,0 +1,105 @@
+/* 다마고치형 기기 틀 (GDD 16장, T-1). 디자인 토큰만 쓴다 (새 색·간격 없음). 기기 로직은 device.ts */
+
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+#app { height: 100%; }
+
+/* ── 기기 본체: 왼쪽 [위/아래] · 가운데 LCD · 오른쪽 [확정 / 작은 취소] ── */
+.bha-dev {
+  position: fixed; inset: 0;
+  display: flex; align-items: stretch; gap: var(--bha-sp-4);
+  padding: max(var(--bha-sp-4), env(safe-area-inset-top, 0px)) max(var(--bha-sp-4), env(safe-area-inset-right, 0px)) max(var(--bha-sp-4), env(safe-area-inset-bottom, 0px)) max(var(--bha-sp-4), env(safe-area-inset-left, 0px));
+  background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop);
+}
+.bha-dev__side {
+  flex: none; width: calc(var(--bha-touch) + var(--bha-sp-9));
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-6);
+}
+.bha-dev__bezel {
+  flex: 1 1 0; min-width: 0; display: flex;
+  padding: var(--bha-sp-3);
+  background: var(--bha-bg-2);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
+  box-shadow: inset 0 0 0 1px var(--bha-line-1), 0 0 24px rgb(0 0 0 / 0.6);
+}
+
+/* ── 버튼: 글자 없이 아이콘만 ── */
+.bha-dev__btn {
+  display: grid; place-items: center; flex: none; padding: 0;
+  width: calc(var(--bha-touch) + var(--bha-sp-4)); height: calc(var(--bha-touch) + var(--bha-sp-4));
+  color: var(--bha-text-1);
+  background: var(--bha-bg-3);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
+  box-shadow: 0 2px 0 var(--bha-line-1);
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  transition: transform 80ms, opacity 120ms;
+}
+.bha-dev__btn:active { transform: translateY(2px); box-shadow: none; }
+.bha-dev__btn.is-off { opacity: 0.4; }
+.bha-dev__btn .bha-icon { width: 28px; height: 28px; }
+.bha-dev__flip { transform: rotate(180deg); }
+.bha-dev__btn--ok {
+  width: calc(var(--bha-touch) + var(--bha-sp-7)); height: calc(var(--bha-touch) + var(--bha-sp-7));
+  border-radius: var(--bha-r-pill);
+  color: var(--bha-primary-ink); background: var(--bha-primary-bg); border-color: var(--bha-primary-line);
+}
+/* 취소: DS 전원 버튼처럼 작고 납작하게 */
+.bha-dev__btn--back { width: var(--bha-touch); height: var(--bha-touch); border-radius: var(--bha-r-pill); }
+.bha-dev__btn--back .bha-icon { width: 20px; height: 20px; }
+.bha-dev__side--right { gap: var(--bha-sp-6); }
+
+/* ── LCD 창: 화면(.bha-lcd__view)이 안에서 스크롤. transform 으로 position:fixed 레이어(도움말·튜토리얼·결과 오버레이)가 창 안에 갇힌다 ── */
+.bha-lcd {
+  position: relative; flex: 1 1 0; min-width: 0;
+  overflow: hidden; isolation: isolate; transform: translateZ(0);
+  background: var(--bha-bg-0);
+  border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md);
+}
+/* 도트 LCD 질감: 아주 옅은 가로줄 */
+.bha-lcd::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: calc(var(--bha-z-tutorial) + 1);
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.05) 0 1px, transparent 1px 3px);
+}
+.bha-lcd__view { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+
+/* 옛(세로 기준) 화면을 창 안에 임시로 넣는 규칙: 창 크기에 맞추고 넘치면 창 안에서 스크롤 (가로 비율 재구성은 T-2/T-3) */
+.bha-lcd__view > .bha-stage { min-height: 100%; display: flex; flex-direction: column; background: none; }
+.bha-lcd .bha-app {
+  flex: 1 0 auto; min-height: 0; max-width: none; box-shadow: none;
+  padding: var(--bha-sp-4) var(--bha-sp-5) var(--bha-sp-5);
+  gap: var(--bha-sp-4);
+}
+.bha-lcd .bha-app--fixed { height: auto; min-height: 100%; overflow: visible; padding: var(--bha-sp-4) var(--bha-sp-5); }
+.bha-lcd .bha-layer { position: fixed; inset: 0; }
+
+/* LCD 는 낮아서(약 330~360px) 전체 화면 오버레이를 압축하고 넘치면 창 안에서 스크롤 */
+.bha-lcd .bha-overlay { overflow-y: auto; padding: var(--bha-sp-4) var(--bha-sp-6); place-items: safe center; }
+.bha-lcd .bha-overlay--in-app { position: fixed; }  /* 전투 화면이 창보다 높아도 오버레이는 창에 맞춘다 */
+.bha-lcd .bha-modal { max-height: 100%; }
+.bha-lcd .bha-battle-ov { gap: var(--bha-sp-3); }
+.bha-lcd .bha-battle-ov__title { font-size: var(--bha-fs-3xl); }
+.bha-lcd .bha-battle-ov--encounter .bha-battle-ov__title { font-size: var(--bha-fs-2xl); }
+.bha-lcd .bha-battle-ov__mark, .bha-lcd .bha-battle-ov__mark .bha-icon { width: 36px; height: 36px; }
+.bha-lcd .bha-battle-ov__sub { font-size: var(--bha-fs-sm); line-height: 1.4; }
+
+/* ── 선택 하이라이트 (위/아래로 옮기는 표시) ── */
+.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 5px var(--bha-accent-soft); }
+
+/* ── 세로로 들었을 때 안내 ── */
+.bha-rotate {
+  position: fixed; inset: 0; z-index: var(--bha-z-modal);
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-5);
+  padding: var(--bha-sp-8); text-align: center;
+  background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop);
+}
+.bha-rotate__phone {
+  width: var(--bha-sp-9); height: var(--bha-sp-10); margin-bottom: var(--bha-sp-5);
+  border: 2px solid var(--bha-text-1); border-radius: var(--bha-r-sm);
+  animation: bha-rotate-hint 2.4s ease-in-out infinite;
+}
+.bha-rotate__text { font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); }
+.bha-rotate__sub { color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+@keyframes bha-rotate-hint { 0%, 25% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) {
+  .bha-dev { display: none; }
+  .bha-rotate { display: flex; }
+}

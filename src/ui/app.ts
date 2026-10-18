@@ -24,13 +24,24 @@ import { expeditionView, getSpeed, setSpeed } from './expeditionView';
 import { dexView } from './dexView';
 import { showTitleToasts, titleDexView } from './titleDexView';
 import { evolutionView } from './evolutionPanel';
-import { nestView } from './nestView';
+import { roomView } from './roomView';
+import { altarView, careView, chestView } from './lcdScreens';
+import { createDevice } from './bha/device';
+import { ScreenStack } from './bha/select';
+import { roomOf } from '../engine/faction';
 import { settingsView } from './settingsView';
 import { helpOverlay, type HelpScreenId } from './helpView';
 import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
 
-export function startApp(root: HTMLElement): void {
+export function startApp(host: HTMLElement): void {
   let save: SaveData | null = loadSave(localStorage);
+
+  // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 취소 버튼 = 화면 스택 한 단계 뒤로
+  const nav = new ScreenStack();
+  const dev = createDevice(host, { onCancel: () => nav.back(), canCancel: () => nav.size > 1 && !nav.top?.locked });
+  const root = dev.view;
+  /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로) */
+  const open = (id: string, render: () => void, locked = false) => nav.push({ id, locked, render: () => { render(); root.scrollTop = 0; } });
 
   const persist = () => save && writeSave(localStorage, save);
   /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
@@ -53,14 +64,18 @@ export function startApp(root: HTMLElement): void {
       : undefined;
 
   /** 도움말을 연다. 튜토리얼 다시 보기는 체험 전투(기록 없음)에서 튜토리얼을 다시 연다 */
-  function openHelp(screen: HelpScreenId | undefined, back: (() => void) | null, onClose: () => void = () => {}): void {
+  function openHelp(screen: HelpScreenId | undefined, canReplay: boolean, onClose: () => void = () => {}): void {
     const faction = helpFaction();
-    // back 이 없으면(원정 화면: 시간이 흐르는 화면 위에서 체험 전투로 갈아타지 않는다) 다시 보기는 숨긴다
-    helpOverlay(faction, { screen, onClose, onReplayTutorial: back ? () => tutorialDemo(faction, back) : undefined });
+    // canReplay 가 false 면(원정 화면: 시간이 흐르는 화면 위에서 체험 전투로 갈아타지 않는다) 다시 보기는 숨긴다
+    helpOverlay(faction, { screen, onClose, onReplayTutorial: canReplay ? () => tutorialDemo(faction) : undefined });
   }
 
   /** 튜토리얼 다시 보기: 연습 상대 하나와의 체험 전투를 튜토리얼과 함께 연다. 결과는 기록하지 않는다 */
-  function tutorialDemo(faction: FactionConfig, back: () => void): void {
+  function tutorialDemo(faction: FactionConfig): void {
+    open('tutorial-demo', () => runTutorialDemo(faction), true);
+  }
+
+  function runTutorialDemo(faction: FactionConfig): void {
     const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!;
     const params = save ? buildCombatParams(save.build) : undefined;
     if (save && params) {
@@ -71,12 +86,18 @@ export function startApp(root: HTMLElement): void {
     battleView(root, faction, s, {
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
-      onQuit: back,
-      onEnd: back,
+      onQuit: () => nav.pop(),
+      onEnd: () => nav.pop(),
     });
   }
 
   function factionScreen(): void {
+    // 이미 방에서 왔으면 취소로 돌아갈 수 있게 쌓고, 처음이면 홈으로 둔다
+    if (nav.size > 0) open('faction', renderFaction);
+    else nav.reset({ id: 'faction', render: renderFaction });
+  }
+
+  function renderFaction(): void {
     // 시작 화면의 기본 테마: 세이브가 있으면 그 종족, 없으면 등록된 첫 종족 (종족 id 로 분기하지 않는다)
     applyTheme(helpFaction());
     startView(root, FACTIONS, {
@@ -86,12 +107,18 @@ export function startApp(root: HTMLElement): void {
         persist();
         nestScreen();
       },
-      onSettings: () => settingsView(root, factionScreen, () => openHelp(undefined, factionScreen)),
-      onHelp: () => openHelp(undefined, factionScreen),
+      onSettings: () => open('settings', () => settingsView(root, () => nav.pop(), () => openHelp(undefined, true))),
+      onHelp: () => openHelp(undefined, true),
     });
   }
 
+  /** 홈(방)으로: 스택을 비우고 방 하나만 남긴다 */
   function nestScreen(): void {
+    if (!save) return factionScreen();
+    nav.reset({ id: 'room', render: () => { renderRoom(); root.scrollTop = 0; } });
+  }
+
+  function renderRoom(): void {
     if (!save) return factionScreen();
     const faction = getFaction(save.factionId);
     applyTheme(faction);
@@ -102,27 +129,38 @@ export function startApp(root: HTMLElement): void {
       persist(); // 손상·구버전 영역을 비운 것을 저장
       resumeNote = active.reason === 'version' ? '저장된 원정이 이전 버전이라 이어할 수 없어 지웠다.' : '저장된 원정이 손상되어 이어할 수 없어 지웠다.';
     }
-    nestView(root, faction, s, {
+    const props = roomOf(faction).props;
+    roomView(dev, faction, s, {
       resume: active.ok
-        ? { info: `${active.exp.lap}바퀴 · ${active.exp.pos}번 칸 · 전투 ${active.exp.battles.length}회`, onResume: () => resumeExpedition(active.exp, active.speed) }
+        ? { info: `${active.exp.lap}바퀴 · ${active.exp.pos}번 칸`, onResume: () => open('expedition', () => resumeExpedition(active.exp, active.speed), true) }
         : null,
       resumeNote,
       persist,
       onDepart: () => departScreen(faction),
-      onPractice: () => practiceScreen(faction),
+      onAltar: () => open('altar', () => renderAltar(faction, s)),
+      onBook: () => open('dex', () => dexView(root, faction, s, () => nav.back())),
+      onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist)),
+      onWindow: () => open('titles', () => titleDexView(root, faction, s, () => nav.back())),
+      onCare: () => open('care', () => careView(dev, faction, s, props.care, persist)),
+      onPractice: () => open('practice', () => practiceScreen(faction)),
+      onChangeFaction: factionScreen,
+      onSettings: () => open('settings', () => settingsView(root, () => nav.back(), () => openHelp(undefined, true))),
+      onHelp: () => openHelp('nest', true),
+    });
+  }
+
+  function renderAltar(faction: FactionConfig, s: SaveData): void {
+    altarView(dev, faction, s, roomOf(faction).props.altar, {
       onEvolve: () => {
         const from = s.evolution.tierIndex;
         const r = performEvolution(s);
-        if (!r.ok) return nestScreen();
+        if (!r.ok) return renderAltar(faction, s);
         persist();
-        evolutionView(root, faction, from, s.evolution.tierIndex, r.form, nestScreen, s.build.slots.length);
+        open('evolve-cutscene', () => evolutionView(root, faction, from, s.evolution.tierIndex, r.form, () => nav.pop(), s.build.slots.length), true);
         showTitleToasts(s, faction, persist);
       },
-      onDex: () => dexView(root, faction, s, nestScreen),
-      onTitles: () => titleDexView(root, faction, s, nestScreen),
-      onChangeFaction: factionScreen,
-      onSettings: () => settingsView(root, nestScreen, () => openHelp(undefined, nestScreen)),
-      onHelp: (screen) => openHelp(screen, nestScreen),
+      onDex: () => open('dex', () => dexView(root, faction, s, () => nav.back())),
+      onHelp: () => openHelp('evolution', true),
     });
   }
 
@@ -143,7 +181,8 @@ export function startApp(root: HTMLElement): void {
     });
     resumeNote = '';
     saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
-    showExpedition(faction, exp, `${faction.huntingGroundName}으로 출발!`);
+    // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
+    open('expedition', () => showExpedition(faction, exp, `${faction.huntingGroundName}으로 출발!`), true);
   }
 
   /** 저장된 원정으로 돌아간다: 저장된 시점의 화면(전투 직전·흡수·둥지 칸 귀환 선택·이동 중)으로 복원 */
@@ -189,7 +228,7 @@ export function startApp(root: HTMLElement): void {
       onSave: () => saveProgress(exp),
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, exp, resume),
-      openHelp: (onClose) => openHelp('expedition', null, onClose),
+      openHelp: (onClose) => openHelp('expedition', false, onClose),
     }, msg);
   }
 
@@ -209,10 +248,17 @@ export function startApp(root: HTMLElement): void {
 
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
-    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy), onHome: nestScreen });
+    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy), onHome: () => nav.back() });
   }
 
-  function practiceBattle(faction: FactionConfig, enemy: EnemyDef): void {
+  /** 연습 전투: 결과 화면에서 [다시]로 올 때는 같은 자리를 바꿔 끼운다 */
+  function practiceBattle(faction: FactionConfig, enemy: EnemyDef, again = false): void {
+    const e = { id: 'practice-battle', locked: true, render: () => { runPractice(faction, enemy); root.scrollTop = 0; } };
+    if (again) nav.replace(e);
+    else nav.push(e);
+  }
+
+  function runPractice(faction: FactionConfig, enemy: EnemyDef): void {
     const params = save ? buildCombatParams(save.build) : undefined;
     if (save && params) {
       applyEvolutionToParams(params, save.evolution);
@@ -221,7 +267,7 @@ export function startApp(root: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     battleView(root, faction, s, {
       tutorial: tutorialFor(),
-      onQuit: () => practiceScreen(faction),
+      onQuit: () => nav.pop(),
       onEnd: (done) => {
         if (save) {
           recordBattle(save, buildBattleRecord(done, { factionId: faction.id, tierIndex: save.evolution.tierIndex }));
@@ -233,7 +279,7 @@ export function startApp(root: HTMLElement): void {
   }
 
   function practiceResult(faction: FactionConfig, enemy: EnemyDef, s: CombatState): void {
-    practiceResultView(root, faction, enemy, s, { onAgain: () => practiceBattle(faction, enemy), onMenu: () => practiceScreen(faction) });
+    practiceResultView(root, faction, enemy, s, { onAgain: () => practiceBattle(faction, enemy, true), onMenu: () => nav.pop() });
   }
 
   if (save) nestScreen();

@@ -3,6 +3,7 @@
 import type { TerrainTileDef } from '../../data/schema';
 import { lineageName } from '../../data/lineages';
 import { button, el, icon, meter, panel } from './dom';
+import { getOverlayHost } from './overlayHost';
 import { lineageKey } from './lineage';
 import { linbarModel, type LinbarModel } from './nestLogic';
 import { LINEAGES } from '../../data/lineages';
@@ -173,7 +174,7 @@ export function tabbar(items: TabItem[], selected: string, onSelect: (id: string
 }
 
 /** 칭호 해금 토스트: 위에서 내려와(is-in) 2.5초 뒤 올라가고(is-out) animationend 에서 제거한다. 여러 개면 위에서부터 겹치지 않게 쌓는다 */
-export function showToast(o: { eyebrow: string; title: string; meta?: string }, index = 0, holdMs = 2500, doc: Document = document): HTMLElement {
+export function showToast(o: { eyebrow: string; title: string; meta?: string }, index = 0, holdMs = 2500, host: HTMLElement = getOverlayHost()): HTMLElement {
   const toast = el('div', 'bha-toast is-in');
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
@@ -184,7 +185,7 @@ export function showToast(o: { eyebrow: string; title: string; meta?: string }, 
   body.append(el('span', 'bha-toast__eyebrow', o.eyebrow), el('br'), el('span', 'bha-toast__title', o.title));
   if (o.meta) body.append(el('br'), el('span', 'bha-toast__meta', o.meta));
   toast.append(ic, body);
-  doc.body.append(toast);
+  host.append(toast);
   // 연출이 꺼진(reduced-motion) 환경에서도 animationend 가 오므로 이 이벤트로 정리한다. 안전 장치로 타이머도 둔다.
   const remove = () => toast.remove();
   toast.addEventListener('animationend', (e) => {

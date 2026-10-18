@@ -293,6 +293,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   speedText.style.fontWeight = '800';
   speedBtn.append(speedText);
   const pauseBtn = button({ iconOnly: true, label: '일시정지', icon: 'i-pause' });
+  pauseBtn.dataset.devConfirm = ''; // 기기 [확정] 버튼 = 일시정지 (전투는 터치 위주, dev-log C.25)
   const helpBtn = button({ iconOnly: true, label: '도움말', icon: 'i-help' });
   const timeNum = el('b', '', String(Math.ceil(timeLeftSeconds(s))));
   const timeEl = el('span', 'bha-battle__time');

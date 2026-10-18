@@ -5,6 +5,7 @@ import { helpVars, renderHelpText, TUTORIAL_SCENES } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
+import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { placeCard, unionRect, type Rect } from './helpLayout';
 
 export interface TutorialHandle {
@@ -24,12 +25,14 @@ const SCENE_ICON: Record<string, string> = {
   auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', sp: 'i-sp', stored: 'i-stored', after: 'i-evolve',
 };
 
-function targetRect(ids: string[]): Rect | null {
+/** 대상 영역을 오버레이 자리(host: LCD 창 또는 화면 전체) 기준 좌표로 돌려준다 */
+function targetRect(ids: string[], host: HTMLElement): Rect | null {
   const rects: Rect[] = [];
+  const o = host === document.body ? { left: 0, top: 0 } : host.getBoundingClientRect();
   for (const id of ids) {
     document.querySelectorAll<HTMLElement>(`[data-help="${id}"]`).forEach((n) => {
       const r = n.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) rects.push({ top: r.top, left: r.left, width: r.width, height: r.height });
+      if (r.width > 0 && r.height > 0) rects.push({ top: r.top - o.top, left: r.left - o.left, width: r.width, height: r.height });
     });
   }
   return unionRect(rects);
@@ -50,21 +53,24 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   const hole = el('div', 'bha-tut__hole');
   const card = el('div', 'bha-tut__card');
   layer.append(pauseTag, hole, card);
-  document.body.append(layer);
+  const host = getOverlayHost();
+  host.append(layer);
+  const unregister = registerLayer(layer, () => {});
 
   const finish = (status: Exclude<TutorialStatus, 'active'>) => {
     window.removeEventListener('resize', layout);
+    unregister();
     layer.remove();
     opts.onFinish(status);
   };
 
   /** 블록 바와 저장 필살기 버튼: 설명 카드가 가리지 않게 보호할 영역 */
-  const protectedRects = () => ['battle.tray', 'battle.stored'].map((id) => targetRect([id])).filter((r): r is Rect => r !== null);
+  const protectedRects = () => ['battle.tray', 'battle.stored'].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
 
   function layout(): void {
     const scene = TUTORIAL_SCENES[state.index]!;
-    const vp = { width: window.innerWidth, height: window.innerHeight };
-    const rect = targetRect(scene.targets);
+    const vp = host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight };
+    const rect = targetRect(scene.targets, host);
     const place = placeCard(rect, card.offsetHeight, vp, protectedRects());
     card.style.top = `${place.top}px`;
     card.style.bottom = 'auto';
