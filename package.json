@@ -11,6 +11,7 @@
     "test": "vitest run",
     "balance": "vite-node scripts/balance.ts",
     "balance:check": "vite-node scripts/balance.ts -- --check",
+    "art:list": "vite-node scripts/art-list.ts",
     "gen:forms": "vite-node scripts/gen-forms.ts"
   },
   "devDependencies": {

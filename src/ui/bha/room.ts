@@ -1,6 +1,6 @@
 // 메인 방 화면의 장면 부품 (GDD 16장, T-1): 방 배경·물건·캐릭터. 그림은 src/data/art 매니페스트의 키로 참조하고,
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
-import { artUrls } from '../../data/art/manifest';
+import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig, RoomProp } from '../../engine/faction';
 import { el, icon } from './dom';
 
@@ -57,14 +57,28 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   return b;
 }
 
-/** 캐릭터: 제자리 2프레임 숨쉬기. 그림이 없으면 둥근 몸 + 눈 두 개 도형 */
-export function characterButton(room: RoomConfig, label: string): HTMLButtonElement {
+/** 종족·단계에 맞는 캐릭터 그림 (GDD 17-6) */
+export function roomCharArt(room: RoomConfig, factionId: string, tierIndex: number): ArtUrls {
+  return charArt(factionId, tierIndex, room.characterArt, BASE);
+}
+
+/** 캐릭터: 새 규칙의 그림 한 장(왼쪽을 보는 그림, 가만히) 또는 기존 제자리 2프레임 숨쉬기. 그림이 없으면 둥근 몸 + 눈 두 개 도형 */
+export function characterButton(art: ArtUrls, label: string): HTMLButtonElement {
   const b = el('button', 'bha-char');
   b.type = 'button';
   b.setAttribute('aria-label', label);
   const body = el('span', 'bha-char__body');
-  const { frames } = artUrls(room.characterArt, BASE);
-  if (frames) {
+  const { frames, src } = art;
+  if (src) {
+    const img = el('img', 'bha-char__frame bha-char__frame--solo') as HTMLImageElement;
+    img.src = src;
+    img.alt = '';
+    img.draggable = false;
+    img.style.setProperty('--art-scale', String(art.scale));
+    img.style.setProperty('--art-dy', `${art.offsetY}%`);
+    body.append(img);
+    body.classList.add('has-art');
+  } else if (frames) {
     frames.forEach((f, i) => {
       const img = el('img', `bha-char__frame bha-char__frame--${i + 1}`) as HTMLImageElement;
       img.src = f;

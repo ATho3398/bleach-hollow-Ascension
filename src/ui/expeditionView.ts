@@ -2,13 +2,14 @@
 // 시간(칸당 5초, 1x/2x/4x)은 여기서 돌리고, 규칙은 engine/expedition 이 정한다. 12칸 길·칸 번호·바퀴는 엔진 안에만 있고 걷는 화면에는 보이지 않는다.
 // 화면 DOM 은 한 번 만들고 상태가 바뀔 때마다 제자리에서 고친다.
 import { BALANCE } from '../config/balance';
+import { charArt } from '../data/art/manifest';
 import { tileName } from '../data/tiles';
 import { getTrait, traitName } from '../data/traits';
 import {
   advance, chooseContinue, chooseReturn, drainEvents, finishRest, riskBonus, type ExpeditionState, type PendingBattle,
   type StepEvent,
 } from '../engine/expedition';
-import type { FactionConfig } from '../engine/faction';
+import { roomOf, type FactionConfig } from '../engine/faction';
 import { button, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
 import { MSG_ICON, msgKind } from './bha/expedition';
@@ -16,7 +17,11 @@ import { lineageClass, lineageIconId } from './bha/lineage';
 import { roadPlanner } from './bha/road';
 import { isWalking, walkScene, walkStateTag } from './bha/walk';
 
+const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+
 export interface ExpeditionViewHandlers {
+  /** 육성 단계(0부터): 걷는 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다 */
+  tierIndex?: number;
   /** 전투가 시작될 때: 전투 화면으로 넘어간다. 끝나면 호출자가 expeditionView 를 다시 부른다 */
   onBattle: (p: PendingBattle) => void;
   onEnded: () => void;
@@ -157,7 +162,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   top.append(head, meters, slotsLine);
 
   // 걷는 화면: 장면 위에 상태 줄(왼쪽 위)과 조우·획득 알림(아래)을 얹는다
-  const walk = walkScene(faction.walkAnim, faction.huntingGroundName);
+  const walk = walkScene(faction.walkAnim, faction.huntingGroundName, charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE));
   const stateSlot = el('div', 'bha-exp__stateline');
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');

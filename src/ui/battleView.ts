@@ -19,7 +19,7 @@ import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
 import { onHold } from './bha/hold';
 import {
-  blockEl, blockVisual, heroEl, chainLevelAt, floatPool, floatSpot, foeEl, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
+  blockEl, blockVisual, heroEl, chainLevelAt, floatPool, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl,
   type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
@@ -42,6 +42,8 @@ export interface BattleViewOptions {
   onQuit?: () => void;
   /** 있으면 전투 시작 직전에 첫 플레이 튜토리얼을 보여 준다 (GDD 14-2). 끝나거나 건너뛰면 한 번 불린다. 튜토리얼 동안 전투 시간은 멈춘다 */
   tutorial?: { onDone: () => void };
+  /** 육성 단계(0부터): 단계별 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다. 없으면 1단계 취급 */
+  tierIndex?: number;
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -215,9 +217,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   enemySec.append(foeHead, foeTags, enemyMeter, castSlot);
 
   // ── 2. 무대: 실루엣 + 플로팅 숫자 + 사건 로그 3줄 ──
-  const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', slug ? `var(--bha-lin-${slug})` : null);
+  const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', slug ? `var(--bha-lin-${slug})` : null, foeArtOf(enemy.id));
   // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
-  const hero = heroEl(roomOf(faction));
+  const hero = heroEl(heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0));
   const floats = el('div', 'bha-battle__floats');
   const log = el('div', 'bha-log');
   log.setAttribute('aria-live', 'polite');

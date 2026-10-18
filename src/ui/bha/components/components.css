@@ -701,6 +701,9 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-foe__aura { position: absolute; inset: 6% 18%; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--aura, var(--bha-lin-b)) 45%, transparent), transparent); filter: blur(6px); animation: bha-breathe 3s ease-in-out infinite; }
 .bha-foe__body { position: relative; height: 100%; max-height: 170px; aspect-ratio: 1; color: #050405; filter: drop-shadow(0 0 1px color-mix(in srgb, var(--aura, #fff) 80%, #fff)) drop-shadow(0 0 10px color-mix(in srgb, var(--aura, #fff) 50%, transparent)); }
 .bha-foe__body svg { width: 100%; height: 100%; }
+/* 그림 파일이 있으면 실루엣 대신 한 장 (GDD 17-6: 256×256 투명, 왼쪽을 보는 그림, 발 = 아래에서 8% 위). 배율·세로 보정은 --art-scale·--art-dy */
+.bha-foe__body.has-art { color: inherit; filter: none; }
+.bha-foe__img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)); pointer-events: none; }
 .bha-foe.is-hit .bha-foe__body { animation: bha-hit 260ms var(--bha-ease-out); }
 .bha-foe.is-casting .bha-foe__aura { background: radial-gradient(closest-side, rgb(255 148 64 / 0.6), transparent); animation-duration: .6s; }
 .bha-foe.is-guard .bha-foe__body::after { content: ""; position: absolute; inset: 8%; border-radius: 50% 50% 46% 46%; border: 2px solid rgb(95 211 154 / 0.7); box-shadow: inset 0 0 18px rgb(95 211 154 / 0.35); }

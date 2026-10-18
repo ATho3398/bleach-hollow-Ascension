@@ -118,6 +118,7 @@ export function startApp(host: HTMLElement): void {
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     battleView(root, faction, s, {
+      tierIndex: save?.evolution.tierIndex,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
       onQuit: () => nav.pop(),
@@ -399,6 +400,7 @@ export function startApp(host: HTMLElement): void {
     const s = startBattle(exp);
     const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}`;
     battleView(root, faction, s, {
+      tierIndex: save?.evolution.tierIndex,
       banner: where,
       tutorial: tutorialFor(),
       onEnd: (done) => {
@@ -425,6 +427,7 @@ export function startApp(host: HTMLElement): void {
   function showExpedition(faction: FactionConfig, exp: ExpeditionState, msg = ''): void {
     activeExp = exp;
     expeditionView(root, faction, exp, {
+      tierIndex: save?.evolution.tierIndex,
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
       onEnded: () => endExpedition(faction, exp),
@@ -475,6 +478,7 @@ export function startApp(host: HTMLElement): void {
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     battleView(root, faction, s, {
+      tierIndex: save?.evolution.tierIndex,
       tutorial: tutorialFor(),
       onQuit: () => nav.pop(),
       onEnd: (done) => {

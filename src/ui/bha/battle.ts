@@ -1,7 +1,7 @@
 // 전투 화면 전용 헬퍼 (U-2, 디자인 HANDOFF 5-1·5-2·5-4·7장).
 // 위쪽은 DOM 에 의존하지 않는 순수 함수(약어 선택, 묶음 계산, 삽입 막대·밀림 위치, 로그 역할 …)라 단위 테스트한다 (tests/bha-battle.test.ts).
 // 아래쪽은 블록·블록 바·로그 줄·플로팅 숫자·적 실루엣을 만드는 DOM 조립과 1회성 클래스 재생 도구.
-import { artUrls } from '../../data/art/manifest';
+import { charArt, enemyArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig } from '../../engine/faction';
 import type { EnemyPatternKind } from '../../data/schema';
 import { el, icon } from './dom';
@@ -148,29 +148,49 @@ export function foeSvg(symbolId: string): SVGSVGElement {
 }
 
 /** 적 영역 실루엣: 오라 + 몸. aura = 약점 계통 색 변수 (예 `var(--bha-lin-b)`) */
-export function foeEl(symbolId: string, aura: string | null): HTMLElement {
+export function foeEl(symbolId: string, aura: string | null, art: ArtUrls | null = null): HTMLElement {
   const foe = el('div', 'bha-foe');
   if (aura) foe.style.setProperty('--aura', aura);
   const body = el('span', 'bha-foe__body');
-  body.append(foeSvg(symbolId));
+  if (art?.src) {
+    body.classList.add('has-art');
+    body.append(artImg(art, art.src, 'bha-foe__img'));
+  } else body.append(foeSvg(symbolId));
   foe.append(el('span', 'bha-foe__aura'), body);
   return foe;
 }
 
+/** 그림 한 장 (256×256 투명, 왼쪽을 보는 그림). 배율·세로 보정은 CSS 변수로 넘기고 모양은 CSS 가 안다 */
+export function artImg(art: ArtUrls, url: string, cls: string): HTMLImageElement {
+  const img = el('img', cls) as HTMLImageElement;
+  img.src = url;
+  img.alt = '';
+  img.draggable = false;
+  img.style.setProperty('--art-scale', String(art.scale));
+  img.style.setProperty('--art-dy', `${art.offsetY}%`);
+  return img;
+}
+
+/** 이 적의 그림(파일이 있을 때만). 화면이 foeEl 에 넘긴다 */
+export function foeArtOf(enemyId: string): ArtUrls | null {
+  return enemyArt(enemyId, ART_BASE);
+}
+
 const ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
+/** 종족·단계에 맞는 내 그림 (새 규칙 파일 > 종족 설정의 기존 키 > 없음). 종족 id 는 키 조립에만 쓴다 */
+export function heroArtOf(room: RoomConfig, factionId: string, tierIndex: number): ArtUrls {
+  return charArt(factionId, tierIndex, room.characterArt, ART_BASE);
+}
+
 /** 내 그림 한 장 (`.bha-hero`): 몸통박치기의 주인공. 그림이 있으면 첫 프레임 한 장(왼쪽을 보는 그림), 없으면 자리표시 도형 */
-export function heroEl(room: RoomConfig): { root: HTMLElement; body: HTMLElement } {
+export function heroEl(art: ArtUrls): { root: HTMLElement; body: HTMLElement } {
   const root = el('div', 'bha-hero');
   const body = el('span', 'bha-hero__body');
-  const { frames, src } = artUrls(room.characterArt, ART_BASE);
-  const url = src ?? frames?.[0] ?? null;
+  const url = art.src ?? art.frames?.[0] ?? null;
   if (url) {
-    const img = el('img', 'bha-hero__img') as HTMLImageElement;
-    img.src = url;
-    img.alt = '';
     body.classList.add('has-art');
-    body.append(img);
+    body.append(artImg(art, url, 'bha-hero__img'));
   } else {
     body.append(el('span', 'bha-hero__eye'), el('span', 'bha-hero__eye'));
   }

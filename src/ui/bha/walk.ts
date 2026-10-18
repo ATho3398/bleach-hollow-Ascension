@@ -1,6 +1,7 @@
 // 원정 걷기 화면 (GDD 17-1): 내 캐릭터가 항상 왼쪽을 향해 걷고 배경이 오른쪽으로 흘러간다. 12칸 길·칸 번호·바퀴는 보이지 않는다.
 // 걷기 모양은 임시 아트(CSS 애니메이션): 종족 설정의 walkAnim 이름이 bha-walker--<이름> 클래스로 붙고, 어떤 이름이 어떤 모양인지는 CSS 만 안다.
 import type { ExpeditionPhase } from '../../engine/expedition';
+import type { ArtUrls } from '../../data/art/manifest';
 import { el, icon } from './dom';
 
 export const DEFAULT_WALK_ANIM = 'plain';
@@ -27,7 +28,7 @@ export interface WalkScene {
 }
 
 /** 걷는 화면 장면: 먼 배경 · 가까운 배경 · 바닥 줄이 오른쪽으로 흐르고, 캐릭터(반측면, 왼쪽 향함)가 제자리에서 걷는다 */
-export function walkScene(walkAnim: string | undefined, label: string): WalkScene {
+export function walkScene(walkAnim: string | undefined, label: string, art: ArtUrls | null = null): WalkScene {
   const scene = el('div', 'bha-walk');
   scene.setAttribute('role', 'img');
   scene.setAttribute('aria-label', `${label}을(를) 걷는 중`);
@@ -36,7 +37,17 @@ export function walkScene(walkAnim: string | undefined, label: string): WalkScen
   const ground = el('span', 'bha-walk__layer bha-walk__layer--ground');
   const walker = el('span', `bha-walker ${walkAnimClass(walkAnim)}`);
   const body = el('span', 'bha-walker__body');
-  body.append(el('span', 'bha-walker__eye'), el('span', 'bha-walker__foot bha-walker__foot--back'), el('span', 'bha-walker__foot bha-walker__foot--front'));
+  if (art?.src) {
+    // 그림 한 장(왼쪽을 보는 그림 그대로 = 왼쪽으로 걷는다). 걸음 흔들림은 몸통 상자가 맡는다
+    walker.classList.add('has-art');
+    const img = el('img', 'bha-walker__img') as HTMLImageElement;
+    img.src = art.src;
+    img.alt = '';
+    img.draggable = false;
+    img.style.setProperty('--art-scale', String(art.scale));
+    img.style.setProperty('--art-dy', `${art.offsetY}%`);
+    body.append(img);
+  } else body.append(el('span', 'bha-walker__eye'), el('span', 'bha-walker__foot bha-walker__foot--back'), el('span', 'bha-walker__foot bha-walker__foot--front'));
   walker.append(body, el('span', 'bha-walker__shadow'));
   scene.append(far, near, ground, walker);
   return {
