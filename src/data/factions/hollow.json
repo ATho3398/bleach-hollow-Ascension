@@ -115,6 +115,13 @@
     "sleep": "재우기",
     "pet": "쓰다듬기"
   },
+  "foodNames": {
+    "snack": "영혼 조각",
+    "basic": "짐승 고기",
+    "hearty": "큰 사냥감",
+    "tonic": "영압 결정",
+    "feast": "영혼 덩어리"
+  },
   "stabilityName": "자아",
   "slotName": "본체 슬롯",
   "lineageBonusName": "계열 기술 강화",
@@ -134,7 +141,7 @@
       "book": "기록서",
       "chest": "수집함",
       "window": "균열 틈",
-      "care": "먹이 자리"
+      "care": "상태 바위"
     },
     "layout": {
       "window": {

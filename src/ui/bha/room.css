@@ -11,8 +11,43 @@
 .bha-room__note { font-size: var(--bha-fs-xs); color: var(--bha-warn); flex: none; }
 
 .bha-room__body { flex: 1 1 auto; min-height: 0; display: flex; gap: var(--bha-sp-3); }
-.bha-room__edge { flex: none; display: flex; flex-direction: column; justify-content: center; gap: var(--bha-sp-2); }
-.bha-room__edge .bha-btn { min-width: var(--bha-touch); min-height: var(--bha-touch); }
+.bha-room__gauges { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--bha-sp-5); }
+.bha-room__gauges .bha-meter { flex: 1 1 0; min-width: 0; }
+
+/* ── 하단 독 (GDD 18-2): 돌보기(색 테두리 버튼) | 메뉴(아이콘). 먹이·더보기는 독 위로 줄이 펼쳐진다(장면에 겹침) ── */
+.bha-homedock { position: relative; flex: none; }
+.bha-homedock__bar { display: flex; align-items: center; gap: var(--bha-sp-3); min-height: var(--bha-touch); }
+.bha-homedock__care { display: flex; gap: var(--bha-sp-2); flex: 1 1 auto; min-width: 0; }
+.bha-homedock__carebtn {
+  flex: 1 1 0; min-width: 0; min-height: var(--bha-touch); display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-2);
+  padding: 0 var(--bha-sp-3); border: 1px solid var(--c); border-radius: var(--bha-r-lg);
+  background: linear-gradient(180deg, rgb(255 255 255 / .06), transparent 70%), var(--bha-bg-2);
+  color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); white-space: nowrap; touch-action: manipulation;
+}
+.bha-homedock__carebtn .bha-icon { width: 20px; height: 20px; color: var(--c); flex: none; }
+.bha-homedock__carebtn:active, .bha-homedock__carebtn.is-active { background: var(--bha-bg-3); }
+.bha-homedock__carebtn--feed { --c: var(--bha-hunger); }
+.bha-homedock__carebtn--sleep { --c: var(--bha-cond); }
+.bha-homedock__carebtn--pet { --c: var(--bha-stab); }
+.bha-homedock__sep { flex: none; width: 1px; align-self: stretch; margin: var(--bha-sp-2) 0; background: var(--bha-line-2); }
+.bha-homedock__menu { flex: none; display: flex; gap: var(--bha-sp-1); }
+.bha-homedock__menu .bha-btn { min-width: var(--bha-touch); min-height: var(--bha-touch); }
+.bha-homedock__menu .bha-btn.is-active { background: var(--bha-bg-3); }
+.bha-homedock__tray {
+  position: absolute; left: 0; right: 0; bottom: calc(100% + var(--bha-sp-2)); z-index: 3;
+  display: flex; align-items: stretch; gap: var(--bha-sp-2); padding: var(--bha-sp-2);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg); background: var(--bha-bg-1); box-sizing: border-box;
+}
+.bha-homedock__tray[hidden] { display: none; }
+.bha-homedock__tray--more { justify-content: flex-end; flex-wrap: wrap; }
+.bha-homedock__food {
+  flex: 1 1 0; min-width: 0; min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-hunger); border-radius: var(--bha-r-md); background: var(--bha-bg-2);
+  color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); touch-action: manipulation;
+}
+.bha-homedock__food small { font-size: var(--bha-fs-xs); font-weight: 500; color: var(--bha-text-2); text-align: center; line-height: 1.2; }
+.bha-homedock__food:active { background: var(--bha-bg-3); }
+.bha-homedock__tray > .bha-tag { position: absolute; top: -9px; right: var(--bha-sp-3); background: var(--bha-bg-1); }
 
 /* ── 방 장면 ── */
 .bha-room__scene {

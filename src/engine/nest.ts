@@ -3,7 +3,7 @@
 
 import { BALANCE } from '../config/balance';
 import { nestRiskAction, settleRiskToNest } from './absorb/risk';
-import type { NestAction } from './faction';
+import type { FoodId, NestAction } from './faction';
 import type { ExpeditionState } from './expedition';
 import { summarize } from './expedition';
 
@@ -39,10 +39,18 @@ export function applyIdle(nest: NestState, nowMs: number): void {
   nest.hunger = Math.min(NX.idleHungerCap, nest.hunger + hours * NX.idleHungerPerHour);
 }
 
-/** 둥지 행동: 먹이(허기↓) / 재우기(컨디션↑, 쇠약 해소) / 쓰다듬기(컨디션 소량↑) */
-export function doNestAction(nest: NestState, action: NestAction): void {
-  if (action === 'feed') nest.hunger = clamp(nest.hunger - NX.feedHunger, 0, 100);
-  else if (action === 'sleep') {
+/** 먹이 한 종류의 효과 (허기 감소, 컨디션 변화). 임시 수치 (BALANCE.provisional.nest.foods) */
+export function foodEffect(food: FoodId): { hunger: number; condition: number } {
+  return NX.foods[food];
+}
+
+/** 둥지 행동: 먹이(허기↓, 종류별 컨디션 변화) / 재우기(컨디션↑, 쇠약 해소) / 쓰다듬기(컨디션 소량↑). food 는 먹이일 때만 쓰고 기본은 basic(예전 단일 먹이) */
+export function doNestAction(nest: NestState, action: NestAction, food: FoodId = 'basic'): void {
+  if (action === 'feed') {
+    const f = foodEffect(food);
+    nest.hunger = clamp(nest.hunger - f.hunger, 0, 100);
+    nest.condition = clamp(nest.condition + f.condition, 0, MAX);
+  } else if (action === 'sleep') {
     nest.condition = clamp(nest.condition + NX.sleepCondition, 0, MAX);
     nest.weakened = false;
   } else nest.condition = clamp(nest.condition + NX.petCondition, 0, MAX);

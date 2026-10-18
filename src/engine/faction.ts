@@ -31,6 +31,10 @@ export interface FamilyConfig {
 export const NEST_ACTIONS = ['feed', 'sleep', 'pet'] as const;
 export type NestAction = (typeof NEST_ACTIONS)[number];
 
+/** 먹이 종류 5종 (GDD 18-2). 수치는 BALANCE.provisional.nest.foods, 표시 이름은 종족 설정 foodNames */
+export const FOOD_IDS = ['snack', 'basic', 'hearty', 'tonic', 'feast'] as const;
+export type FoodId = (typeof FOOD_IDS)[number];
+
 /** 슬롯 위치: 호로=본체(body), 사신=참백도(zanpakuto) (GDD 4장) */
 export type SlotLocation = 'body' | 'zanpakuto';
 /** 등급 방식: 호로=도전(challenge), 사신=승진(promotion) (GDD 8-2) */
@@ -137,6 +141,8 @@ export interface FactionConfig {
   nestName: string;
   /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
   nestActions: Record<NestAction, string>;
+  /** 먹이 종류 이름 (GDD 18-2, 임시) */
+  foodNames: Record<FoodId, string>;
   /** 메인 방 화면: 방 모양·소품 이름·위치·그림 키·반응 문구 (GDD 16장). 없으면 기본값 */
   room?: Partial<Omit<RoomConfig, 'props' | 'layout' | 'talk'>> & { props?: Partial<RoomConfig['props']>; layout?: Partial<RoomConfig['layout']>; talk?: Partial<RoomConfig['talk']> };
 }
@@ -169,6 +175,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const na = (r.nestActions ?? {}) as Record<string, unknown>;
   for (const a of NEST_ACTIONS) {
     if (!isString(na[a])) errors.push(`nestActions.${a}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  const fn = (r.foodNames ?? {}) as Record<string, unknown>;
+  for (const f of FOOD_IDS) {
+    if (!isString(fn[f])) errors.push(`foodNames.${f}: 비어 있지 않은 문자열이어야 한다`);
   }
   const fams = r.families;
   if (!Array.isArray(fams) || fams.length === 0) errors.push('families: 계열 1개 이상');

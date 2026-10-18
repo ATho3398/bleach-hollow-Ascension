@@ -2,7 +2,7 @@
 //   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 돌보기 자리=상태·돌보기 · 캐릭터=반응, 가장자리 아이콘=연습·종족·설정·도움말.
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
-import { applyIdle } from '../engine/nest';
+import { applyIdle, doNestAction } from '../engine/nest';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp } from '../engine/faction';
 import { sanitizeDeck, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
@@ -10,6 +10,8 @@ import { button, el, icon, meter, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { characterButton, propButton, roomCharArt, sceneBox } from './bha/room';
 import { moodOf, pickLine, type Mood } from './bha/roomLogic';
+import { createDock } from './bha/dock';
+import { careFeedback } from './bha/dockLogic';
 
 export interface RoomHandlers {
   onDepart: () => void;
@@ -22,6 +24,10 @@ export interface RoomHandlers {
   onChangeFaction: () => void;
   onSettings: () => void;
   onHelp: () => void;
+  /** 독 '더보기' 항목 */
+  onTutorial: () => void;
+  onBackup: () => void;
+  onTitle: () => void;
   persist: () => void;
   resume: { info: string; onResume: () => void } | null;
   resumeNote: string;
@@ -42,12 +48,18 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const deckCount = save.tiles.deck.length;
   const mood = moodOf({ weakened: n.weakened, condition: n.condition, risk: n.risk, riskLimit: RX.limit });
 
-  // ── 위 한 줄 ──
+  // ── 위 한 줄 ── (허기·컨디션·리스크: 돌보기를 하면 그 자리에서 다시 그린다)
   const hud = el('header', 'bha-room__hud');
-  hud.append(
-    meter({ kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(n.condition), max: 100, compact: true, thin: true, danger: n.condition < 40 }),
-    meter({ kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(n.risk), max: RX.limit, compact: true, thin: true, zone: 60 / RX.limit, danger: n.risk >= 60 }),
-  );
+  const gauges = el('div', 'bha-room__gauges');
+  const paintGauges = () => {
+    gauges.replaceChildren(
+      meter({ kind: 'hunger', label: '허기', icon: 'i-hunger', value: Math.round(n.hunger), max: 100, compact: true, thin: true, danger: n.hunger >= 80 }),
+      meter({ kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(n.condition), max: 100, compact: true, thin: true, danger: n.condition < 40 }),
+      meter({ kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(n.risk), max: RX.limit, compact: true, thin: true, zone: 60 / RX.limit, danger: n.risk >= 60 }),
+    );
+  };
+  paintGauges();
+  hud.append(gauges);
   const items: SelectItem[] = [];
   if (n.weakened) {
     const w = el('span', 'bha-chip bha-chip--danger');
@@ -110,30 +122,49 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   char.onclick = () => react();
   scene.append(char, bubble);
 
-  // ── 가장자리 아이콘 한 줄 (왼쪽 세로): 연습·종족·설정·도움말 ──
-  const edge = el('nav', 'bha-room__edge');
-  edge.setAttribute('aria-label', '메뉴');
-  const edgeBtn = (label: string, ic: string, fn: () => void) => {
-    const b = button({ label, icon: ic, iconOnly: true, variant: 'ghost', onClick: fn });
-    edge.append(b);
-    return b;
-  };
-  const edgeBtns = [
-    edgeBtn('전투 연습', 'i-practice', hd.onPractice),
-    edgeBtn('종족 바꾸기', 'i-swap-species', hd.onChangeFaction),
-    edgeBtn('설정', 'i-settings', hd.onSettings),
-    edgeBtn('도움말', 'i-help', hd.onHelp),
-  ];
+  // ── 하단 독 (GDD 18-2): 돌보기 3개 + 메뉴 아이콘 + 더보기 ──
+  const dock = createDock({
+    faction,
+    onCare: (action, food) => {
+      const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
+      doNestAction(n, action, food);
+      hd.persist();
+      paintGauges();
+      say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }), 3200);
+      char.classList.remove('is-react');
+      void char.offsetWidth;
+      char.classList.add('is-react');
+    },
+    menu: [
+      { label: '전투 연습', icon: 'i-practice', onClick: hd.onPractice },
+      { label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction },
+      { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
+      { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
+    ],
+    more: [
+      { label: '튜토리얼 다시 보기', icon: 'i-play', onClick: hd.onTutorial },
+      { label: '세이브 백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
+      { label: '처음 화면으로', icon: 'i-quit', onClick: hd.onTitle },
+    ],
+    onItemsChange: () => registerItems(),
+  });
 
   const body = el('div', 'bha-room__body');
-  body.append(edge, scene);
+  body.append(scene);
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
-  const main = mountApp(dev.view, { cls: 'bha-room' }, hud, ...(warn ? [warn] : []), body);
+  const main = mountApp(dev.view, { cls: 'bha-room' }, hud, ...(warn ? [warn] : []), body, dock.root);
   main.dataset.deck = `${deckCount}/${deckSize}`;
 
-  for (const p of order) items.push({ el: props.get(p)! });
-  items.push({ el: char }, ...edgeBtns.map((b) => ({ el: b as HTMLElement })));
-  dev.setItems(items, main);
+  // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
+  function registerItems(): void {
+    const list: SelectItem[] = [...items.slice(0, resumeBtn ? 1 : 0)];
+    for (const p of order) list.push({ el: props.get(p)! });
+    list.push({ el: char });
+    dev.setItems([...dock.items().filter((b) => b.closest('.bha-homedock__tray')).map((b) => ({ el: b })), ...list, ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
+  }
+  registerItems();
+  // 독 밖(장면)을 누르면 펼친 줄을 닫는다
+  scene.addEventListener('pointerdown', () => dock.close());
 
   // ── 반응: 상태가 바뀌어 돌아왔을 때, 가끔 혼잣말 ──
   if (lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);

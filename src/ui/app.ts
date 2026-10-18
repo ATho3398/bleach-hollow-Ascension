@@ -337,6 +337,9 @@ export function startApp(host: HTMLElement): void {
       onChangeFaction: factionScreen,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
+      onTutorial: () => tutorialDemo(faction),
+      onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
+      onTitle: askReturnToTitle,
     });
   }
 

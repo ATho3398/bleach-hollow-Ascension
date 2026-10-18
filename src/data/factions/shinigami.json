@@ -115,6 +115,13 @@
     "sleep": "재우기",
     "pet": "참백도 손질"
   },
+  "foodNames": {
+    "snack": "주먹밥",
+    "basic": "도시락",
+    "hearty": "고기 요리",
+    "tonic": "영력 차",
+    "feast": "잔칫상"
+  },
   "stabilityName": "영압 안정도",
   "slotName": "참백도 슬롯",
   "lineageBonusName": "참백도 속성 확정",
@@ -134,7 +141,7 @@
       "book": "기록서",
       "chest": "장롱",
       "window": "창문",
-      "care": "찻상"
+      "care": "상태 병풍"
     },
     "layout": {
       "window": {

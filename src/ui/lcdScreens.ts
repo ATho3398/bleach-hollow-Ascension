@@ -2,7 +2,6 @@
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
 import { BALANCE } from '../config/balance';
 import { tilesFor, tileName } from '../data/tiles';
-import { doNestAction } from '../engine/nest';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
 import { versionLabel } from '../version';
@@ -11,11 +10,11 @@ import { evolutionColumns } from './evolutionPanel';
 import { button, h, icon, notice, panel, seg } from './bha/dom';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
-import { careButtons, deckRow, statusBlock } from './bha/nest';
+import { deckRow, statusBlock } from './bha/nest';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint } from './labels';
 
-/** 돌보기 자리: 왼쪽 상태 4바(허기·컨디션·안정 수치·리스크) / 오른쪽 돌보기 3 + 쇠약 안내 */
+/** 상태 자리: 왼쪽 상태 4바(허기·컨디션·안정 수치·리스크) / 오른쪽 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
 export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
@@ -33,14 +32,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     }));
     weakSlot.replaceChildren(...(n.weakened ? [notice('danger', `지난 원정에서 패배했다. ${toward(faction.nestActions.sleep)} 회복한다.`, { title: faction.defeatStateName, icon: 'i-broken' })] : []));
   };
-  const care = panel({ title: '돌보기' });
-  care.append(careButtons(faction, (a) => {
-    doNestAction(save.nest, a);
-    persist();
-    paint();
-  }));
   paint();
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status], [care, weakSlot, h('p', 'bha-faint', `원정 사이에 무엇이든 몇 번이든. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status], [weakSlot, h('p', 'bha-faint', `돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 type ChestTab = 'slots' | 'deck';

@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 19;
+export const BALANCE_VERSION = 20;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -171,6 +171,14 @@ export const BALANCE = {
       idleHungerPerHour: 6,
       idleHungerCap: 90,
       feedHunger: 35,
+      /** 먹이 5종 (GDD 18-2, 임시 provisional): 허기 감소·컨디션 변화. basic 은 예전 단일 먹이(feedHunger)와 같다. 가진 개수·비용 없음(먹이 자원은 미정) */
+      foods: {
+        snack: { hunger: 15, condition: 4 },
+        basic: { hunger: 35, condition: 0 },
+        hearty: { hunger: 55, condition: 0 },
+        tonic: { hunger: 20, condition: 10 },
+        feast: { hunger: 80, condition: -5 },
+      },
       sleepCondition: 30,
       petCondition: 8,
       /** 패배(가면이 깨져 쇠약 / 영력 고갈) 후 컨디션과 허기 가산 */
