@@ -29,6 +29,8 @@ import { battleLabels, familyAbbr, familySkillName, weakFamilyName, type BattleL
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
+import { registerShortcutHandlers } from './bha/shortcuts';
+import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf } from './attackFx';
@@ -397,6 +399,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     helpOverlay(faction, { screen: 'battle', onClose: () => (overlayOpen = false), onReplayTutorial: () => { overlayOpen = false; startTutorial(); } });
   };
   helpBtn.onclick = openHelp;
+  pauseBtn.dataset.sc = 'pause';
+  speedBtn.dataset.sc = 'speed';
+  helpBtn.dataset.sc = 'help';
+  storedBtn.dataset.sc = 'stored';
+  tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
 
   // ── 일시정지·배속 ──
   const setPaused = (on: boolean) => {
@@ -811,9 +818,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (input && s.status === 'playing' && !halted()) queue.push(input);
     endPress();
   });
-  // 키보드: 블록에 초점을 두고 Enter/Space = 사용
+  // PC 단축키 (GDD 18-5): 숫자 N = N번 칸 블록, Q = 저장 필살기. 클릭과 같은 판정(releaseUse)을 쓴다
+  const offKeys = registerShortcutHandlers({
+    ...Object.fromEntries(Array.from({ length: p.trayCapacity }, (_, i) => [`block.${i + 1}`, () => {
+      const blk = s.tray[i];
+      if (!app.isConnected || stopped || !blk || s.status !== 'playing' || halted()) return false;
+      const input = releaseUse(blk.uid, i, s.tray);
+      if (input) queue.push(input);
+      return !!input;
+    }])),
+    stored: () => {
+      if (!app.isConnected || stopped || s.status !== 'playing' || halted()) return false;
+      queue.push({ type: 'stored' });
+      return true;
+    },
+  });
+  void offKeys;
+  // 키보드: 블록에 초점을 두고 Enter/Space = 사용 (PC 모드의 Space 는 일시정지 단축키라 Enter 만)
   tray.root.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.key !== 'Enter' && !(e.key === ' ' && !currentViewState().pc)) return;
     const uid = Number((e.target as HTMLElement).dataset.uid);
     const from = Number.isFinite(uid) ? indexOfUid(uid) : -1;
     if (from < 0 || s.status !== 'playing' || halted()) return;

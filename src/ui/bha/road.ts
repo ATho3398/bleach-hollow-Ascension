@@ -88,9 +88,11 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   noteEl.setAttribute('aria-live', 'polite');
   const undo = button({ label: '손으로 되돌리기', icon: 'i-return', size: 'small', variant: 'ghost', onClick: () => undoSelected() });
   undo.classList.add('bha-road__undo');
+  undo.dataset.sc = 'undo';
   const noteRow = el('div', 'bha-road__noterow');
   noteRow.append(noteEl, undo);
   const hand = el('div', 'bha-exp__hand bha-road__hand');
+  hand.dataset.scList = '';
   const root = el('div', 'bha-road__wrap');
   root.append(road, noteRow, hand);
 

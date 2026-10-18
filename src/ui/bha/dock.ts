@@ -56,6 +56,7 @@ export function createDock(o: DockOpts): Dock {
     const b = el('button', `bha-homedock__carebtn bha-homedock__carebtn--${CARE_META[a].cls}`);
     b.type = 'button';
     b.dataset.care = a;
+    b.dataset.sc = `care.${a}`;
     b.append(icon(CARE_META[a].icon), el('span', '', faction.nestActions[a]));
     b.onclick = () => {
       if (a === 'feed') return setPanel(togglePanel(panel, 'food'));
@@ -71,11 +72,13 @@ export function createDock(o: DockOpts): Dock {
   const menuBtns: HTMLButtonElement[] = [];
   for (const m of o.menu) {
     const b = button({ label: m.label, icon: m.icon, iconOnly: true, variant: 'ghost', onClick: () => { setPanel(CLOSED); m.onClick(); } });
+    b.dataset.sc = `dock.${menuBtns.length + 1}`;
     menuBtns.push(b);
     menu.append(b);
   }
   const moreBtn = button({ label: '더보기', icon: 'i-grip', iconOnly: true, variant: 'ghost', onClick: () => setPanel(togglePanel(panel, 'more')) });
   moreBtn.dataset.dock = 'more';
+  moreBtn.dataset.sc = `dock.${menuBtns.length + 1}`;
   moreBtn.setAttribute('aria-expanded', 'false');
   menuBtns.push(moreBtn);
   menu.append(moreBtn);
@@ -87,9 +90,11 @@ export function createDock(o: DockOpts): Dock {
   function fillTray(): void {
     tray.replaceChildren();
     trayBtns = [];
+    delete tray.dataset.scList;
     tray.className = `bha-homedock__tray bha-homedock__tray--${panel}`;
     if (panel === 'food') {
       tray.setAttribute('aria-label', '먹이 고르기');
+      tray.dataset.scList = '';
       for (const id of FOOD_IDS) {
         const f = foodEffect(id);
         const b = el('button', 'bha-homedock__food');
@@ -108,6 +113,7 @@ export function createDock(o: DockOpts): Dock {
       tray.append(el('span', 'bha-tag bha-tag--provisional', '임시'));
     } else if (panel === 'more') {
       tray.setAttribute('aria-label', '더보기');
+      tray.dataset.scList = '';
       for (const m of o.more) {
         const b = button({ label: m.label, icon: m.icon, size: 'small', variant: 'ghost', onClick: () => { setPanel(CLOSED); m.onClick(); } });
         b.classList.add('bha-homedock__moreitem');

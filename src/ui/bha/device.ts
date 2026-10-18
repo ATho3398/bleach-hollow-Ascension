@@ -7,6 +7,9 @@ import { el, icon } from './dom';
 import { keepSelection, orderByRank, stepIndex } from './select';
 import { setOverlayHost } from './overlayHost';
 import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewScale, saveViewScale, setViewState, shortcutScale, VIEW_SCALE_EVENT } from '../viewScale';
+import { actionFor, isNavAction } from '../shortcutMap';
+import { KEY_HINTS_EVENT, loadKeyHints } from '../keyHints';
+import { badgePlan, detectCtx, isTypingTarget, runAction, syncBadges } from './shortcuts';
 import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, setFit } from './viewport';
 
 export interface SelectItem {
@@ -289,8 +292,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
 
   const onKey = (e: KeyboardEvent) => {
     // PC: +/- 로 1배↔2배 (GDD 17-5). 입력칸에서 칠 때는 무시
-    const t = e.target as HTMLElement | null;
-    const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    const t = e.target;
+    const typing = isTypingTarget(t);
     const want = currentViewState().pc ? shortcutScale(e.key, { ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey }, typing) : null;
     if (want !== null) {
       if (want !== currentViewState().pref) {
@@ -302,6 +305,23 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       return;
     }
     if (e.altKey || e.ctrlKey || e.metaKey) return;
+    // PC 단축키 (GDD 18-5): 물리 키(e.code) 기준이라 한글 입력기 상태에서도 같다. 글자 입력 중·반복 입력·조합 중에는 무시한다
+    if (!e.defaultPrevented && !typing && !e.isComposing && currentViewState().pc) {
+      const action = actionFor(detectCtx(view, layers.length > 0), e.code);
+      if (action) {
+        if (!e.repeat) {
+          if (action === 'prev') move(-1);
+          else if (action === 'next') move(1);
+          else if (action === 'confirm') confirm();
+          else if (action === 'cancel') cancel();
+          else if (!isNavAction(action)) runAction(layers[layers.length - 1]?.el ?? view, action);
+          schedule();
+        }
+        heldKeys.add(e.code);
+        e.preventDefault();
+        return;
+      }
+    }
     if (e.key === 'ArrowUp') move(-1);
     else if (e.key === 'ArrowDown') move(1);
     else if (e.key === 'Enter') confirm();
@@ -310,6 +330,51 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     e.preventDefault();
   };
   window.addEventListener('keydown', onKey);
+  // 처리한 키는 뗄 때도 브라우저 기본 동작(포커스 있는 버튼의 Space 클릭)을 막고, 창이 포커스를 잃으면 눌림 기록을 비운다
+  const heldKeys = new Set<string>();
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (heldKeys.delete(e.code)) e.preventDefault();
+  };
+  const onBlur = () => heldKeys.clear();
+  window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('blur', onBlur);
+
+  // 버튼 구석의 키 글자 배지: PC 모드에서만, [단축키 표시]가 켜져 있을 때만 (터치 폰에서는 없다)
+  const hintStorage = (): Storage | null => {
+    try {
+      return localStorage;
+    } catch {
+      return null;
+    }
+  };
+  let hintsOn = loadKeyHints(hintStorage());
+  const updateBadges = () => {
+    const on = hintsOn && currentViewState().pc;
+    dev.classList.toggle('has-keycaps', on);
+    syncBadges(view, on ? badgePlan(layers[layers.length - 1]?.el ?? view, detectCtx(view, layers.length > 0)) : new Map());
+  };
+  let badgeRaf = 0;
+  const scheduleBadges = () => {
+    if (badgeRaf) return;
+    badgeRaf = requestAnimationFrame(() => {
+      badgeRaf = 0;
+      updateBadges();
+    });
+  };
+  const onHints = () => {
+    hintsOn = loadKeyHints(hintStorage());
+    scheduleBadges();
+  };
+  window.addEventListener(KEY_HINTS_EVENT, onHints);
+  const badgeMo = new MutationObserver((list) => {
+    // 배지 자신을 붙이고 떼는 변화는 무시한다 (되먹임 방지)
+    if (list.every((m) => [...m.addedNodes, ...m.removedNodes].every((n) => n instanceof HTMLElement && n.classList.contains('bha-keycap')))) return;
+    scheduleBadges();
+  });
+  badgeMo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled'] });
+  window.addEventListener('resize', scheduleBadges);
+  window.addEventListener(VIEW_SCALE_EVENT, scheduleBadges);
+  scheduleBadges();
 
   setOverlayHost(lcd, (layerEl, onCancel) => {
     const entry = { el: layerEl, onCancel };
@@ -340,6 +405,12 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     destroy() {
       mo.disconnect();
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener(KEY_HINTS_EVENT, onHints);
+      window.removeEventListener('resize', scheduleBadges);
+      window.removeEventListener(VIEW_SCALE_EVENT, scheduleBadges);
+      badgeMo.disconnect();
       window.removeEventListener(VIEW_SCALE_EVENT, fitDevice);
       window.removeEventListener('resize', schedule);
       window.removeEventListener('resize', fitDevice);

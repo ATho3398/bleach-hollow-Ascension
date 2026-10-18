@@ -31,6 +31,7 @@ export function slotRows(
   disabled?: (s: SlotSummary) => boolean,
 ): HTMLElement {
   const list = el('div', 'bha-slots');
+  if (onPick) list.dataset.scList = '';
   for (const sum of summaries) {
     const t = slotLine(sum, factions);
     const row = el(onPick ? 'button' : 'div', `bha-slot${sum.state === 'ok' ? '' : ' is-empty'}${highlight === sum.slot ? ' is-last' : ''}`);
@@ -58,6 +59,7 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
 
   const last = lastPlayedSlot(summaries);
   const menu = el('div', 'bha-start__menu');
+  menu.dataset.scList = '';
   menu.append(
     button({ label: '이어하기', icon: 'i-loop', variant: 'primary', disabled: last === null, onClick: h.onContinue }),
     button({ label: '새로 시작', icon: 'i-play', onClick: h.onNew }),
@@ -84,6 +86,7 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
 
   const species = el('div', 'bha-species');
   species.setAttribute('role', 'radiogroup');
+  species.dataset.scList = '';
   species.setAttribute('aria-label', '종족 선택');
   // 3번째 종족부터는 카드를 세로 목록(1열)으로
   if (factions.length > 2) species.style.gridTemplateColumns = 'minmax(0, 1fr)';

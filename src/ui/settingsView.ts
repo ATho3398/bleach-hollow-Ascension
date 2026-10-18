@@ -5,6 +5,7 @@ import { lcdHead, lcdPage } from './bha/lcdpage';
 import { LEGACY_POINTER_SETTINGS_KEY } from './pointer';
 import { loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
 import { emitFeedback, hookAudioUnlock } from './fx';
+import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 
 export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onTutorial?: () => void): void {
@@ -83,6 +84,28 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   };
   window.addEventListener(VIEW_SCALE_EVENT, onScaleEvent);
 
+  // 단축키 표시 (GDD 18-5): 버튼 구석의 키 글자 배지. 컴퓨터에서만 보이고, 켜고 끄는 값은 이 기기에만 저장
+  const keyPanel = el('section', 'bha-panel');
+  keyPanel.append(el('h2', 'bha-panel__title', '단축키'));
+  const keyBtn = button({ label: '' });
+  const keyNote = el('p', 'bha-faint');
+  const paintKeys = () => {
+    const on = loadKeyHints(storage);
+    keyBtn.textContent = `단축키 표시 ${on ? '켬' : '끔'}`;
+    keyBtn.classList.toggle('is-on', on);
+    keyBtn.setAttribute('aria-pressed', String(on));
+    keyNote.textContent = currentViewState().pc
+      ? '버튼 구석에 키 글자를 보인다. 꺼도 단축키는 그대로 쓸 수 있다. 전체 표는 도움말의 [단축키].'
+      : '컴퓨터(마우스·넓은 창)에서만 보인다. 폰·태블릿에서는 나타나지 않는다.';
+  };
+  keyBtn.onclick = () => {
+    saveKeyHints(storage, !loadKeyHints(storage));
+    window.dispatchEvent(new CustomEvent(KEY_HINTS_EVENT));
+    paintKeys();
+  };
+  keyPanel.append(keyBtn, keyNote);
+  paintKeys();
+
   const panelOf = (...n: Node[]) => {
     const p = el('section', 'bha-panel');
     p.append(...n);
@@ -105,5 +128,5 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [sizePanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
 }

@@ -107,6 +107,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckCount === 0 });
     b.onclick = act[p];
+    if (p === 'dummy') b.dataset.sc = 'dummy';
     props.set(p, b);
     scene.append(b);
   }

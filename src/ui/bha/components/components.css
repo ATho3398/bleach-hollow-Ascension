@@ -853,3 +853,14 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-result--win .bha-result__mark { color: var(--bha-rare); }
 .bha-result--win .bha-result__title { text-shadow: 0 0 28px var(--bha-accent-soft); }
 .bha-result--lose .bha-result__mark, .bha-result--lose .bha-result__title { color: var(--bha-danger); }
+
+/* =========================================================
+   PC 단축키 글자 배지  .bha-keycap  (GDD 18-5)
+   PC 모드에서만 .bha-dev.has-keycaps 아래에 붙는다. 터치 폰에서는 배지를 만들지 않는다.
+   ========================================================= */
+.bha-keycap { position: absolute; top: 1px; right: 1px; z-index: var(--bha-z-raised); min-width: var(--bha-sp-4); padding: 0 var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-text-2); font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: var(--bha-lh-tight); text-align: center; pointer-events: none; opacity: 0.9; }
+.bha-dev:not(.has-keycaps) .bha-keycap { display: none; }
+.bha-keytable { margin-top: var(--bha-sp-3); }
+.bha-keytable__title { margin: 0 0 var(--bha-sp-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
+.bha-keytable__row { display: flex; gap: var(--bha-sp-3); align-items: baseline; padding: var(--bha-sp-1) 0; border-top: 1px solid var(--bha-line-1); font-size: var(--bha-fs-sm); }
+.bha-keytable__keys { flex: 0 0 8.5em; font-family: var(--bha-font-num); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }

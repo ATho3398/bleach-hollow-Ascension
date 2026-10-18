@@ -5,6 +5,8 @@ import type { FactionConfig } from '../engine/faction';
 import { button, el, icon, notice } from './bha/dom';
 import { lcdHead, lcdPageParts, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { SHORTCUT_HELP } from './shortcutMap';
+import { currentViewState } from './viewScale';
 
 export type HelpScreenId = 'nest' | 'expedition' | 'battle' | 'evolution';
 
@@ -54,6 +56,28 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
     ...SCREEN_HELPS.map((it, k) => rowOf(it, SCREEN_ICON[it.id] ?? 'i-info', k === 0 ? '화면별 요약' : undefined)),
     ...GLOSSARY.map((it, k) => rowOf(it, TERM_ICON[it.id] ?? 'i-info', k === 0 ? `용어 사전 (${GLOSSARY.length})` : undefined)),
   ];
+  // PC 단축키 표 (GDD 18-5): 마우스 포인터 모드에서만 보인다
+  if (currentViewState().pc) {
+    rows.push({
+      label: '단축키 (PC)',
+      caption: '키보드',
+      content: [icon('i-info'), el('span', 'bha-mdrow__name', '단축키 (PC)')],
+      detail: () => [
+        el('h2', 'bha-mddetail__title', '단축키 (PC)'),
+        el('p', 'bha-mddetail__body', '마우스로 그대로 해도 된다. 왼손 영역 키로 같은 일을 한다. 입력칸에 글자를 칠 때는 꺼진다.'),
+        ...SHORTCUT_HELP.map((g) => {
+          const box = el('div', 'bha-keytable');
+          box.append(el('h3', 'bha-keytable__title', g.title));
+          for (const r of g.rows) {
+            const row = el('div', 'bha-keytable__row');
+            row.append(el('kbd', 'bha-keytable__keys', r.keys), el('span', '', r.does));
+            box.append(row);
+          }
+          return box;
+        }),
+      ],
+    });
+  }
   const start = Math.max(0, SCREEN_HELPS.findIndex((it) => it.id === opts.screen));
   const md = masterDetail(rows, start, '도움말 항목');
 
