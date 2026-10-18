@@ -10,9 +10,12 @@ import {
   type Block, type CombatEvent, type CombatInput, type CombatState,
 } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
+import { frameTicks } from '../engine/tutorial';
 import { barOf, el, mountScreen, pct, rowOf } from './dom';
 import { battleLabels, type BattleLabels } from './labels';
 import { CHAIN_ICON, ROLE_ICON, SPECIAL_ICON, VOID_ICON, WEAK_ICON } from './icons';
+import { helpOverlay } from './helpView';
+import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { classifyRelease, loadPointerRules, releaseInput, slotAt } from './pointer';
 
 export interface BattleViewOptions {
@@ -20,6 +23,8 @@ export interface BattleViewOptions {
   banner?: string;
   /** 있으면 '그만두기' 버튼을 보인다 (원정 중에는 없다) */
   onQuit?: () => void;
+  /** 있으면 전투 시작 직전에 첫 플레이 튜토리얼을 보여 준다 (GDD 14-2). 끝나거나 건너뛰면 한 번 불린다. 튜토리얼 동안 전투 시간은 멈춘다 */
+  tutorial?: { onDone: () => void };
   /** 전투가 끝나면(승·패) 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -102,6 +107,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const castWrap = barOf('cast', castBar);
   const castText = el('div', 'casttext');
   const stage = el('div', 'stage');
+  const spBarWrap = barOf('sp', spBar);
+  const spRow = rowOf(el('span', 'dim', labels.sp), spText);
+  spBarWrap.dataset.help = 'battle.sp';
+  spRow.dataset.help = 'battle.sp';
+  // 튜토리얼이 하이라이트하는 요소 (src/data/help 의 targets)
+  stage.dataset.help = 'battle.stage';
+  castWrap.dataset.help = 'battle.cast';
+  castText.dataset.help = 'battle.cast';
   const lines: HTMLElement[] = [];
 
   const weakChip = el('span', 'chip weak', `약점 ${lineageName(enemy.weaknessLineageId, faction.id)}`);
@@ -118,10 +131,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   });
   // 붙은 같은 블록 위에 "체인N" 묶음 표시
   const runRow = el('div', 'runrow');
+  runRow.dataset.help = 'battle.runrow';
+  trayEl.dataset.help = 'battle.tray';
   runRow.style.gridTemplateColumns = `repeat(${cap}, minmax(0, 1fr))`;
   const holdNote = el('small', 'holdnote', '');
   // 범례: 역할 = 아이콘 + 색 (칸 안에는 이름 대신 아이콘으로 구분)
   const legend = el('div', 'legend');
+  legend.dataset.help = 'battle.legend';
   for (const role of ['attack', 'guard', 'heal'] as const) {
     const item = el('span', `lg role-${role}`);
     item.innerHTML = ROLE_ICON[role];
@@ -141,6 +157,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const storedName = el('b', '', labels.storedSkill);
   const storedHint = el('small', '', '');
   const storedBtn = el('div', 'stored');
+  storedBtn.dataset.help = 'battle.stored';
   const storedPipRow = el('span', 'pips');
   storedPipRow.append(...storedPips);
   storedBtn.append(el('div', 'storedtop'), storedHint);
@@ -149,6 +166,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   let speed = 1;
   let paused = false;
+  /** 튜토리얼·도움말이 열려 있는 동안 true: 엔진 시간이 흐르지 않고 입력도 받지 않는다 (결정성에 영향 없음, engine/tutorial frameTicks) */
+  let overlayOpen = false;
+  const halted = () => paused || overlayOpen;
   const speedBtn = el('button', 'small', '1x');
   speedBtn.onclick = () => {
     speed = speed === 1 ? 2 : 1;
@@ -160,8 +180,27 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     pauseBtn.textContent = paused ? '계속' : '일시정지';
     trayEl.classList.toggle('paused', paused);
   };
+  const helpBtn = el('button', 'small', '?');
+  helpBtn.setAttribute('aria-label', '도움말');
+  let tutorial: TutorialHandle | null = null;
+  const startTutorial = () => {
+    if (tutorial) return;
+    overlayOpen = true;
+    tutorial = tutorialOverlay(faction, {
+      onFinish: () => {
+        tutorial = null;
+        overlayOpen = false;
+        opts.tutorial?.onDone();
+      },
+    });
+  };
+  helpBtn.onclick = () => {
+    if (overlayOpen) return;
+    overlayOpen = true; // 열려 있는 동안 전투를 멈춘다
+    helpOverlay(faction, { screen: 'battle', onClose: () => (overlayOpen = false), onReplayTutorial: () => { overlayOpen = false; startTutorial(); } });
+  };
   const controls = el('div', 'speeds');
-  controls.append(speedBtn, pauseBtn);
+  controls.append(speedBtn, pauseBtn, helpBtn);
   let stopped = false;
   if (opts.onQuit) {
     const quit = el('button', 'small', '그만두기');
@@ -184,8 +223,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     barOf('player', playerHp),
     rowOf(el('span', 'dim', '내 체력'), playerText),
     status,
-    barOf('sp', spBar),
-    rowOf(el('span', 'dim', labels.sp), spText),
+    spBarWrap,
+    spRow,
     runRow,
     trayEl,
     storedBtn,
@@ -328,7 +367,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const kind = classifyRelease(performance.now() - storedDown.at, storedDown.maxMoved, rules);
     storedDown = null;
     storedBtn.classList.remove('pressed');
-    if (kind === 'use' && s.status === 'playing' && !paused) queue.push({ type: 'stored' });
+    if (kind === 'use' && s.status === 'playing' && !halted()) queue.push({ type: 'stored' });
   });
   const endPress = () => {
     if (down) window.clearTimeout(down.holdTimer);
@@ -371,7 +410,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (!down || e.pointerId !== down.id) return;
     const from = indexOfUid(down.uid); // 누르는 사이 앞 블록이 쓰여 번호가 바뀌었을 수 있다. 블록이 사라졌으면 -1
     const kind = classifyRelease(performance.now() - down.at, down.maxMoved, rules);
-    if (from >= 0 && s.status === 'playing' && !paused) {
+    if (from >= 0 && s.status === 'playing' && !halted()) {
       const input = releaseInput(kind, from, slotOf(e.clientX), s.tray.length);
       if (input) queue.push(input);
     }
@@ -386,14 +425,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (stopped) return;
     const dt = Math.min(250, now - last);
     last = now;
-    if (!paused && s.status === 'playing') {
-      acc += dt * speed;
-      let n = 0;
-      while (acc >= tickMs && s.status === 'playing' && n++ < 40) {
-        acc -= tickMs;
-        step(s, queue.splice(0, queue.length));
-      }
-    } else if (paused) queue.length = 0;
+    if (s.status === 'playing') {
+      const f = frameTicks(acc, dt, speed, tickMs, halted());
+      acc = f.acc;
+      for (let n = 0; n < f.ticks && s.status === 'playing'; n++) step(s, queue.splice(0, queue.length));
+    }
+    if (halted()) queue.length = 0;
     for (const ev of drainCombatEvents(s)) {
       const t = eventText(ev, s, labels, faction.id);
       if (t) say(t);
@@ -412,4 +449,5 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   drawTray();
   say(`${enemyName}과(와) 조우! 블록을 눌러 쓰고, 같은 블록을 붙여 놓으면 함께 발동해 ${labels.chain}이 된다`);
   requestAnimationFrame(frame);
+  if (opts.tutorial) startTutorial();
 }

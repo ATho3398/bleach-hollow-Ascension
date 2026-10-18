@@ -1,0 +1,53 @@
+{
+  "provisional": true,
+  "scenes": [
+    {
+      "id": "auto",
+      "targets": [],
+      "title": "전투는 자동으로 진행돼요",
+      "body": "나와 적은 알아서 서로 공격해요. 여러분은 아래 블록을 골라 쓰면 돼요. (설명을 보는 동안 전투는 멈춰 있어요.)"
+    },
+    {
+      "id": "tray",
+      "targets": ["battle.tray"],
+      "title": "블록 바: 눌러서 사용",
+      "body": "시간이 지나면 {skillBlockName}이(가) 이 블록 바 {trayCapacity}칸에 하나씩 생겨요. 블록을 짧게 톡 누르면 사용돼요. 길게 누르면 사용되지 않고 제자리에 있어요. 색과 아이콘은 역할이에요: {roleNames.attack}(공격) · {roleNames.guard}(막기) · {roleNames.heal}(회복)."
+    },
+    {
+      "id": "chain",
+      "targets": ["battle.runrow", "battle.tray"],
+      "title": "끌어서 순서 바꾸기, 붙여서 {chainName}",
+      "body": "블록을 끌어서 다른 칸에 놓으면 순서가 바뀌어요. 같은 블록을 나란히 붙여 놓고 누르면 붙은 블록이 함께 발동해 {chainName}이(가) 돼요 (최대 {chainMax}). 많이 붙일수록 위력이 크게 올라요."
+    },
+    {
+      "id": "heavy",
+      "targets": ["battle.cast"],
+      "title": "강공격 예고와 막기",
+      "body": "적이 강공격을 준비하면 이 바가 차오르고 예고가 떠요. 바가 다 차기 전에 {roleNames.guard} 블록을 쓰면 막을 수 있어요. 못 막으면 큰 피해를 받아요."
+    },
+    {
+      "id": "void",
+      "targets": ["battle.legend"],
+      "title": "{voidBlockName}은 위험한 큰 한 방",
+      "body": "{voidBlockName}은(는) 큰 피해를 주지만 쓰면 {riskGaugeName}이(가) 올라가요. 너무 높아지면 원정이 위험해져요. 쓸지 말지는 여러분 선택이에요. 블록의 모양은 이 범례에서 확인해요."
+    },
+    {
+      "id": "sp",
+      "targets": ["battle.sp"],
+      "title": "{spName}이(가) 차면 {specialBlockName}",
+      "body": "블록을 쓸 때마다 {spName}이(가) 올라가요. 가득 차면 {specialBlockName}이(가) 블록 바의 빈 칸에 나타나요. 큰 피해를 주니 빈 칸을 하나 남겨 두면 좋아요."
+    },
+    {
+      "id": "stored",
+      "targets": ["battle.stored"],
+      "title": "{storedSkillName}: 모아서 쓰는 큰 기술",
+      "body": "블록 바 아래의 [{storedSkillName}]은(는) 블록을 쓸수록 충전돼요 (최대 {storedChargesMax}개). 충전이 있을 때 누르면 기본 공격 {storedPower}회분의 큰 피해를 주고, 직후 {storedGuardSeconds}초 동안 {roleNames.guard} 상태가 돼요. 강공격 예고 중에도 쓸 수 있어 막기 대신으로 좋아요. 누르는 법은 블록과 같아요."
+    },
+    {
+      "id": "after",
+      "targets": [],
+      "title": "이기면 {absorbActionName}, 그리고 진화",
+      "body": "적을 쓰러뜨리면 {absorbActionName}과(와) 놓아주기 중에서 골라요. {absorbActionName} 조건: 적의 약점 계통 {skillBlockName}(으)로 마무리하거나, 약점 계통 {skillBlockName}의 {chainName}{chainMax}을(를) {weakChain3}회 이상 발동하기. {absorbActionName}이(가) 쌓이면 {nestName}에서 진화할 수 있어요. 이 설명은 언제든 [?] 도움말에서 다시 볼 수 있어요."
+    }
+  ]
+}

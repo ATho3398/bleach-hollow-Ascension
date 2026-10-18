@@ -106,3 +106,24 @@ button.cand { text-align:left; display:flex; flex-direction:column; gap:3px; }
 .legend { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 10px; font-size:12px; }
 .legend .lg { display:inline-flex; align-items:center; gap:4px; }
 .legend .role-attack { color:var(--attack); } .legend .role-guard { color:var(--guard); } .legend .role-heal { color:var(--heal); } .legend .special { color:#ffb347; } .legend .void { color:#ff4fd8; }
+
+/* C.19: 튜토리얼 오버레이·도움말. 글자 12px 이상, 터치 영역 44px 이상 */
+.speeds button { min-height:44px; min-width:44px; white-space:nowrap; padding-left:8px; padding-right:8px; }
+.tut-layer { position:fixed; inset:0; z-index:100; touch-action:none; }
+.tut-layer.tut-dim { background:rgba(0,0,0,.72); }
+.tut-hole { position:fixed; border-radius:10px; box-shadow:0 0 0 100vmax rgba(0,0,0,.72); outline:2px solid #ffd24d; pointer-events:none; }
+.tut-card { position:fixed; box-sizing:border-box; background:#1d1d2b; border:2px solid #7bd1ff; border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 6px 24px #000c; max-height:calc(100vh - 24px); overflow:auto; }
+.tut-step { color:var(--dim); font-size:12px; }
+.tut-title { font-size:16px; } .tut-body { margin:0; font-size:14px; line-height:1.5; word-break:keep-all; }
+.tut-buttons { display:flex; gap:8px; margin-top:4px; } .tut-buttons button { flex:1; min-height:44px; min-width:44px; font-size:14px; }
+.tut-buttons .tut-skip { flex:0 0 auto; background:transparent; color:var(--dim); }
+.help-layer { position:fixed; inset:0; z-index:90; background:var(--bg); overflow-y:auto; display:flex; flex-direction:column; }
+.help-head { position:sticky; top:0; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:8px; max-width:480px; width:100%; margin:0 auto; padding:10px 16px; background:var(--bg); border-bottom:1px solid var(--line); box-sizing:border-box; }
+.help-head h1 { margin:0; } .help-head button { min-height:44px; min-width:64px; }
+.help-body { max-width:480px; width:100%; margin:0 auto; padding:12px 16px 32px; display:flex; flex-direction:column; gap:10px; box-sizing:border-box; }
+.help-body > button { min-height:44px; }
+.help-section { display:flex; flex-direction:column; gap:6px; }
+.help-item { background:var(--panel); border:1px solid var(--line); border-radius:10px; }
+.help-item summary { min-height:44px; display:flex; align-items:center; padding:0 12px; font-size:15px; font-weight:700; cursor:pointer; }
+.help-item p { margin:0; padding:0 12px 12px; font-size:14px; line-height:1.55; word-break:keep-all; }
+.help-btn { min-height:44px; min-width:44px; }

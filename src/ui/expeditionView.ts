@@ -19,6 +19,8 @@ export interface ExpeditionViewHandlers {
   onBreakthrough: (resume: () => void) => void;
   /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더, 배속 변경 */
   onSave: () => void;
+  /** [?] 도움말 (C.19): 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다 */
+  openHelp: (onClose: () => void) => void;
 }
 
 const SPEEDS = [1, 2, 4] as const;
@@ -197,6 +199,19 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       render();
     };
     speeds.append(pause);
+    const helpBtn = el('button', 'small', '?');
+    helpBtn.setAttribute('aria-label', '도움말');
+    helpBtn.onclick = () => {
+      const wasPaused = paused;
+      paused = true;
+      schedule();
+      h.openHelp(() => {
+        paused = wasPaused;
+        schedule();
+        render();
+      });
+    };
+    speeds.append(helpBtn);
 
     const nodes: HTMLElement[] = [
       top,

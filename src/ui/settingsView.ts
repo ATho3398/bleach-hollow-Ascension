@@ -24,7 +24,7 @@ function slider(label: string, unit: string, range: readonly [number, number], s
   return box;
 }
 
-export function settingsView(root: HTMLElement, onBack: () => void): void {
+export function settingsView(root: HTMLElement, onBack: () => void, onHelp?: () => void): void {
   const storage = (() => {
     try {
       return localStorage;
@@ -39,13 +39,16 @@ export function settingsView(root: HTMLElement, onBack: () => void): void {
   const reset = el('button', '', '기본값으로 되돌리기');
   reset.onclick = () => {
     resetPointerRules(storage);
-    settingsView(root, onBack);
+    settingsView(root, onBack, onHelp);
   };
   const back = el('button', 'primary', '돌아가기');
   back.onclick = onBack;
+  const help = el('button', 'help-btn', '도움말 · 튜토리얼 다시 보기');
+  if (onHelp) help.onclick = onHelp;
   mountScreen(
     root,
     el('h1', '', '설정'),
+    ...(onHelp ? [el('h2', '', '도움말'), help] : []),
     el('h2', '', '블록 조작'),
     slider('클릭 판정 시간', '초', POINTER_RANGES.clickMaxSeconds, 0.05, rules.clickMaxSeconds, (v) => apply({ clickMaxSeconds: v }), '누른 지 이 시간 안에 떼면 블록 사용. 넘기면 사용 안 됨'),
     slider('드래그 임계치', 'px', POINTER_RANGES.dragThresholdPx, 1, rules.dragThresholdPx, (v) => apply({ dragThresholdPx: v }), '이만큼 움직이면 순서 바꾸기(드래그)로 본다'),

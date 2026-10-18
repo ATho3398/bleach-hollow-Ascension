@@ -12,12 +12,13 @@ import { formsOfTier, tierFallback } from './data/evolution';
 import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
 import { tilesFor } from './data/tiles';
 import { TITLES } from './data/titles';
+import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 10;
+export const SAVE_FORMAT_VERSION = 11;
 
 export interface SaveMeta {
   format: number;
@@ -50,6 +51,8 @@ export interface SaveData {
   titles: UnlockedTitle[];
   /** 원정 중간 저장 (GDD 14-1, C.13). 완료된 런 로그와 섞이지 않는 별도 영역. 원정이 끝나면(귀환·패배) 비운다 */
   activeExpedition: ExpeditionSnapshot | null;
+  /** 도움말 플래그 (C.19, 형식 11): 첫 플레이 튜토리얼을 봤는가. 이전 세이브는 false 로 올려 한 번 보여 준다 */
+  help: HelpState;
 }
 
 export interface TileStock {
@@ -63,7 +66,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState() };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
@@ -238,6 +241,12 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, storedUsed: b.storedUsed ?? 0, storedWasted: b.storedWasted ?? 0 }));
     save.meta.format = 10;
   }
+  if (save.meta.format < 11) {
+    // 형식 10 → 11 (C.19 튜토리얼): 도움말 플래그 추가. 이전 세이브는 '이미 봄'으로 두지 않고 한 번 보여 준다
+    save.help = newHelpState();
+    save.meta.format = 11;
+  }
+  save.help = sanitizeHelpState(save.help);
   // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)
   if (typeof save.activeExpedition !== 'object' || Array.isArray(save.activeExpedition)) save.activeExpedition = null;
   return save;

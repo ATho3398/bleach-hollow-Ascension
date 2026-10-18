@@ -28,6 +28,8 @@ import { showTitleToasts, titleDexView } from './titleDexView';
 import { evolutionView } from './evolutionPanel';
 import { nestView } from './nestView';
 import { settingsView } from './settingsView';
+import { helpOverlay, type HelpScreenId } from './helpView';
+import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
 
 /** 연습 목록용 패턴 이름 (임시 표시) */
 const PATTERN_LABEL: Record<EnemyPatternKind, string> = { basic: '기본형', swift: '속공형', sturdy: '단단형', 'heavy-seal': '강공격·봉인', 'heavy-chain': '연속 강공격', stance: '방어 자세·반격' };
@@ -47,6 +49,39 @@ export function startApp(root: HTMLElement): void {
     persist();
   };
 
+  /** 도움말에 쓸 종족: 세이브가 있으면 그 종족, 없으면(시작 화면) 등록된 첫 종족 */
+  const helpFaction = (): FactionConfig => (save ? getFaction(save.factionId) : FACTIONS[0]!);
+
+  /** 첫 전투 직전 튜토리얼 (GDD 14-2): 아직 안 봤을 때만. 끝내거나 건너뛰면 본 것으로 저장한다 */
+  const tutorialFor = () =>
+    save && shouldAutoShowTutorial(save.help)
+      ? { onDone: () => { markTutorialSeen(save!.help); persist(); } }
+      : undefined;
+
+  /** 도움말을 연다. 튜토리얼 다시 보기는 체험 전투(기록 없음)에서 튜토리얼을 다시 연다 */
+  function openHelp(screen: HelpScreenId | undefined, back: (() => void) | null, onClose: () => void = () => {}): void {
+    const faction = helpFaction();
+    // back 이 없으면(원정 화면: 시간이 흐르는 화면 위에서 체험 전투로 갈아타지 않는다) 다시 보기는 숨긴다
+    helpOverlay(faction, { screen, onClose, onReplayTutorial: back ? () => tutorialDemo(faction, back) : undefined });
+  }
+
+  /** 튜토리얼 다시 보기: 연습 상대 하나와의 체험 전투를 튜토리얼과 함께 연다. 결과는 기록하지 않는다 */
+  function tutorialDemo(faction: FactionConfig, back: () => void): void {
+    const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!;
+    const params = save ? buildCombatParams(save.build) : undefined;
+    if (save && params) {
+      applyEvolutionToParams(params, save.evolution);
+      params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
+    }
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
+    battleView(root, faction, s, {
+      banner: '튜토리얼 체험 전투 (기록되지 않음)',
+      tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
+      onQuit: back,
+      onEnd: back,
+    });
+  }
+
   function factionScreen(): void {
     const buttons = FACTIONS.map((f) => {
       const b = el('button', 'primary', f.name);
@@ -59,9 +94,11 @@ export function startApp(root: HTMLElement): void {
       return b;
     });
     const settings = el('button', '', '설정 (조작 판정)');
-    settings.onclick = () => settingsView(root, factionScreen);
+    settings.onclick = () => settingsView(root, factionScreen, () => openHelp(undefined, factionScreen));
+    const help = el('button', 'help-btn', '도움말 · 튜토리얼');
+    help.onclick = () => openHelp(undefined, factionScreen);
     const stack = el('div', 'stack');
-    stack.append(...buttons, settings);
+    stack.append(...buttons, settings, help);
     mount(
       el('h1', '', '블리치 할로우 어센션'),
       el('p', 'dim', '어느 쪽으로 시작할까? (두 종족 모두 처음부터 개방)'),
@@ -99,7 +136,8 @@ export function startApp(root: HTMLElement): void {
       onDex: () => dexView(root, faction, s, nestScreen),
       onTitles: () => titleDexView(root, faction, s, nestScreen),
       onChangeFaction: factionScreen,
-      onSettings: () => settingsView(root, nestScreen),
+      onSettings: () => settingsView(root, nestScreen, () => openHelp(undefined, nestScreen)),
+      onHelp: (screen) => openHelp(screen, nestScreen),
     });
   }
 
@@ -139,6 +177,7 @@ export function startApp(root: HTMLElement): void {
     const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}`;
     battleView(root, faction, s, {
       banner: where,
+      tutorial: tutorialFor(),
       onEnd: (done) => {
         finishBattle(exp, done);
         saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
@@ -165,6 +204,7 @@ export function startApp(root: HTMLElement): void {
       onSave: () => saveProgress(exp),
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, resume),
+      openHelp: (onClose) => openHelp('expedition', null, onClose),
     }, msg);
   }
 
@@ -239,6 +279,7 @@ export function startApp(root: HTMLElement): void {
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     battleView(root, faction, s, {
+      tutorial: tutorialFor(),
       onQuit: () => practiceScreen(faction),
       onEnd: (done) => {
         if (save) {

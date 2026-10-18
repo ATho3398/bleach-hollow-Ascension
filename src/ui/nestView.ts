@@ -23,6 +23,8 @@ export interface NestViewHandlers {
   onTitles: () => void;
   onChangeFaction: () => void;
   onSettings: () => void;
+  /** [?] 도움말 (C.19). screen = 먼저 펼칠 화면 요약 */
+  onHelp: (screen: 'nest' | 'evolution') => void;
   persist: () => void;
   /** 저장된 원정이 있으면 이어하기 (GDD 14-1) */
   resume: { info: string; onResume: () => void } | null;
@@ -115,12 +117,18 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   const settings = el('button', '', '설정 (조작 판정)');
   settings.onclick = h.onSettings;
   const runs = save.runLog.runs;
+  const helpBtn = (screen: 'nest' | 'evolution') => {
+    const b = el('button', 'small help-btn', '?');
+    b.setAttribute('aria-label', '도움말');
+    b.onclick = () => h.onHelp(screen);
+    return b;
+  };
   mountScreen(
     root,
-    el('h1', '', faction.nestName),
+    rowOf(el('h1', '', faction.nestName), helpBtn('nest')),
     el('p', 'dim', `사냥터: ${faction.huntingGroundName}. 원정 ${runs.length}회 · 귀환 ${runs.filter((r) => r.outcome === 'returned').length} · 패배 ${runs.filter((r) => r.outcome === 'defeated').length}`),
     ...status,
-    el('h2', '', '진화'),
+    rowOf(el('h2', '', '진화'), helpBtn('evolution')),
     evolutionPanel(faction, save.evolution, h.onEvolve, h.onDex),
     el('h2', '', '돌보기'),
     actions,
