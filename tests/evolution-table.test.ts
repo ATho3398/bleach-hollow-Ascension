@@ -165,20 +165,20 @@ describe('선택 규칙 selectForm', () => {
 describe('진화체 데이터 생성기', () => {
   const countOf = (t: FormDef[], tier: number) => t.filter((f) => f.tier === tier && !f.fallback).length;
 
-  it('5계통 기준 단계별 5 / 13 / 22 / 20종, 기본형은 단계마다 정확히 1개 (종 수에 세지 않는다)', () => {
+  it('5계통 기준 단계별 5 / 13 / 22 / 21종, 기본형은 단계마다 정확히 1개 (종 수에 세지 않는다)', () => {
     const t = generateFormTable(IDS);
-    expect([2, 3, 4, 5].map((tier) => countOf(t, tier))).toEqual([5, 13, 22, 20]);
+    expect([2, 3, 4, 5].map((tier) => countOf(t, tier))).toEqual([5, 13, 22, 21]);
     for (const tier of [2, 3, 4, 5]) expect(t.filter((f) => f.tier === tier && f.fallback)).toHaveLength(1);
     expect(new Set(t.map((f) => f.id)).size).toBe(t.length);
     expect(validateFormTable(t, IDS)).toEqual([]);
     const kinds = (tier: number) => Object.fromEntries([...new Set(t.filter((f) => f.tier === tier).map((f) => f.label.kind))].map((k) => [k, t.filter((f) => f.tier === tier && f.label.kind === k).length]));
     expect(kinds(3)).toEqual({ pair: 10, balanced: 1, picky: 1, rare: 1, base: 1 });
     expect(kinds(4)).toEqual({ triple: 10, 'deep-pair': 10, balanced: 1, picky: 1, base: 1 });
-    expect(kinds(5)).toEqual({ triple: 10, pair: 10, base: 1 });
+    expect(kinds(5)).toEqual({ triple: 10, pair: 10, picky: 1, base: 1 });
   });
 
   it('커밋된 forms.json 도 같은 규모이고 검사를 통과한다 (손으로 고쳐도 구조는 지켜야 한다)', () => {
-    expect([2, 3, 4, 5].map((tier) => countOf([...FORM_TABLE], tier))).toEqual([5, 13, 22, 20]);
+    expect([2, 3, 4, 5].map((tier) => countOf([...FORM_TABLE], tier))).toEqual([5, 13, 22, 21]);
     expect(validateFormTable(FORM_TABLE, LINEAGES.map((l) => l.id))).toEqual([]);
     for (const tier of [2, 3, 4, 5]) expect(tierFallback(tier).fallback).toBe(true);
     expect(formsOfTier(3).length).toBe(14);
@@ -247,7 +247,7 @@ describe('진화체 데이터 생성기', () => {
       expect(validateFormTable(t, ids)).toEqual([]);
       const pairs = (n * (n - 1)) / 2;
       const triples = (n * (n - 1) * (n - 2)) / 6;
-      expect([2, 3, 4, 5].map((tier) => countOf(t, tier))).toEqual([n, pairs + 3, triples + pairs + 2, triples + pairs]);
+      expect([2, 3, 4, 5].map((tier) => countOf(t, tier))).toEqual([n, pairs + 3, triples + pairs + 2, triples + pairs + 1]); // 5단계: 3조합 + 2조합 + 편식형(C.31)
       for (const tier of [2, 3, 4, 5]) expect(t.filter((f) => f.tier === tier && f.fallback)).toHaveLength(1);
       // 선택기: 상위 3계통 x1 > x2 > x3 인 분포가 성립한다
       const a: Accumulation = { need: 30, scores: Object.fromEntries(ids.map((id, i) => [id, i < 3 ? 12 - i * 3 : 0])), rare: 0, lastSeq: Object.fromEntries(ids.map((id) => [id, 1])) };
@@ -267,7 +267,7 @@ describe('도달 가능성 점검 (npm run balance 와 같은 점검)', () => {
 
   it('모든 진화체가 어떤 흡수 분포에서 선택될 수 있다 (도달 불가 0)', () => {
     expect(reports.map((r) => [r.tier, r.unreachable])).toEqual([[2, []], [3, []], [4, []], [5, []]]);
-    expect(reports.map((r) => r.formCount)).toEqual([5, 13, 22, 20]);
+    expect(reports.map((r) => r.formCount)).toEqual([5, 13, 22, 21]);
     expect(reports.every((r) => r.samples > 10000)).toBe(true);
   }, 60000);
 
