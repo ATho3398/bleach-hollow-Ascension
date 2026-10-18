@@ -12,7 +12,8 @@ import {
 import type { FactionConfig } from '../engine/faction';
 import { barOf, el, mountScreen, pct, rowOf } from './dom';
 import { battleLabels, type BattleLabels } from './labels';
-import { classifyRelease, POINTER_RULES, releaseInput, slotAt } from './pointer';
+import { CHAIN_ICON, ROLE_ICON, SPECIAL_ICON, VOID_ICON, WEAK_ICON } from './icons';
+import { classifyRelease, loadPointerRules, releaseInput, slotAt } from './pointer';
 
 export interface BattleViewOptions {
   /** 머리말: 원정이면 바퀴·칸·타일 정보 */
@@ -72,12 +73,22 @@ function eventText(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
   }
 }
 
+function safeStorage(): Storage | null {
+  try {
+    return localStorage;
+  } catch {
+    return null;
+  }
+}
+
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
   const labels = battleLabels(faction);
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = pickFaction(enemy.name, faction.id);
   const top = maxChain(p);
+  /** 설정 화면에서 바꾼 클릭 판정 시간·드래그 임계치 (전투 시작 때 읽는다) */
+  const rules = loadPointerRules(safeStorage());
 
   const enemyHp = el('i');
   const playerHp = el('i');
@@ -99,7 +110,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   const cap = p.trayCapacity;
   const trayEl = el('div', 'tray');
-  trayEl.style.gridTemplateColumns = `repeat(${cap}, 1fr)`;
+  trayEl.style.gridTemplateColumns = `repeat(${cap}, minmax(0, 1fr))`;
   const cellEls = Array.from({ length: cap }, () => {
     const c = el('div', 'tcell');
     trayEl.append(c);
@@ -107,8 +118,23 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   });
   // 붙은 같은 블록 위에 "체인N" 묶음 표시
   const runRow = el('div', 'runrow');
-  runRow.style.gridTemplateColumns = `repeat(${cap}, 1fr)`;
+  runRow.style.gridTemplateColumns = `repeat(${cap}, minmax(0, 1fr))`;
   const holdNote = el('small', 'holdnote', '');
+  // 범례: 역할 = 아이콘 + 색 (칸 안에는 이름 대신 아이콘으로 구분)
+  const legend = el('div', 'legend');
+  for (const role of ['attack', 'guard', 'heal'] as const) {
+    const item = el('span', `lg role-${role}`);
+    item.innerHTML = ROLE_ICON[role];
+    item.append(labels.role[role]);
+    legend.append(item);
+  }
+  const lgSpecial = el('span', 'lg special');
+  lgSpecial.innerHTML = SPECIAL_ICON;
+  lgSpecial.append(labels.specialBlock);
+  const lgVoid = el('span', 'lg void');
+  lgVoid.innerHTML = VOID_ICON;
+  lgVoid.append(labels.voidBlock);
+  legend.append(lgSpecial, lgVoid);
   // 저장 필살기 버튼 (GDD 14-6): 블록과 같은 클릭 판정. 충전 칸 3개 + 게이지
   const storedGauge = el('i');
   const storedPips = Array.from({ length: p.storedChargesMax }, () => el('span', 'pip'));
@@ -164,10 +190,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     trayEl,
     storedBtn,
     holdNote,
-    el('small', 'dim', `클릭(${POINTER_RULES.clickMaxSeconds}초 안에 떼기) = 사용(${labels.storedSkill} 버튼도 같음) · 오래 누르면 사용 안 됨 · 끌어서 순서 바꾸기 · 같은 블록을 붙이면 ${labels.chain}(최대 ${top})`),
+    legend,
+    el('small', 'dim', `클릭(${rules.clickMaxSeconds}초 안에 떼기) = 사용(${labels.storedSkill} 버튼도 같음) · 오래 누르면 사용 안 됨 · 끌어서 순서 바꾸기 · 같은 블록을 붙이면 ${labels.chain}(최대 ${top})`),
     rowOf(controls, timeText),
   );
 
+  root.firstElementChild?.classList.add('battle');
   const say = (text: string) => {
     const line = el('div', 'line', text);
     stage.prepend(line);
@@ -188,8 +216,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     runRow.replaceChildren();
     for (const r of runs) {
       if (r.length < 2 || s.tray[r.start]!.kind !== 'skill') continue;
-      for (let k = 0; k < r.length; k++) inRun.set(r.start + k, `run${k === 0 ? ' run-l' : ''}${k === r.length - 1 ? ' run-r' : ''}`);
-      const tag = el('span', 'runtag', `${labels.chain}${Math.min(top, r.length)}${r.length > top ? ' (누른 곳 기준)' : ''}`);
+      const level = Math.min(top, r.length);
+      for (let k = 0; k < r.length; k++) inRun.set(r.start + k, `run${level >= top ? ' chain3' : ''}${k === 0 ? ' run-l' : ''}${k === r.length - 1 ? ' run-r' : ''}`);
+      const tag = el('span', `runtag${level >= top ? ' chain3' : ''}`);
+      tag.innerHTML = CHAIN_ICON;
+      tag.append(`${labels.chain}${level}${r.length > top ? '+' : ''}`);
       tag.style.gridColumn = `${r.start + 1} / span ${r.length}`;
       runRow.append(tag);
     }
@@ -206,9 +237,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const role = eff?.skill.role ?? null;
       const blk = el('div', `tblock ${b.kind === 'skill' ? `role-${role}` : b.kind}${eff?.weak ? ' weak' : ''}`);
       blk.dataset.uid = String(b.uid);
-      blk.append(el('b', '', blockName(b, labels, faction.id)));
-      if (b.kind === 'skill') blk.append(el('small', '', `${role ? labels.role[role] : ''}${eff?.weak ? '·약점' : ''}`));
-      else if (b.kind === 'void') blk.append(el('small', '', `${labels.riskGauge}↑`));
+      // 아이콘(역할) + 이름. 약점은 오른쪽 위 별. 역할은 색 + 아이콘으로도 알 수 있다
+      const ico = el('span', 'ico');
+      ico.innerHTML = b.kind === 'special' ? SPECIAL_ICON : b.kind === 'void' ? VOID_ICON : role ? ROLE_ICON[role] : '';
+      ico.title = b.kind === 'skill' ? (role ? labels.role[role] : '') : b.kind === 'void' ? `${labels.riskGauge}↑` : labels.specialBlock;
+      blk.append(ico, el('b', '', blockName(b, labels, faction.id)));
+      if (eff?.weak) {
+        const wk = el('span', 'wk');
+        wk.innerHTML = WEAK_ICON;
+        blk.append(wk);
+      }
       c.append(blk);
     });
     // 누르고 있는 블록이 손가락을 따라다닌다 (다시 그려도 유지)
@@ -222,7 +260,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (drag) {
       const d = trayEl.querySelector<HTMLElement>(`.tblock[data-uid="${drag.uid}"]`);
       if (d) {
-        d.style.transform = `translate(${drag.dx}px, ${drag.dy}px) scale(1.08)`;
+        d.style.transform = `translate(${drag.dx}px, ${drag.dy - 28}px) scale(1.08)`; // 손가락보다 위로 띄워 가려지지 않게
         d.style.pointerEvents = 'none';
         d.classList.add('dragging');
       }
@@ -287,7 +325,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   });
   storedBtn.addEventListener('pointerup', (e) => {
     if (!storedDown || e.pointerId !== storedDown.id) return;
-    const kind = classifyRelease(performance.now() - storedDown.at, storedDown.maxMoved);
+    const kind = classifyRelease(performance.now() - storedDown.at, storedDown.maxMoved, rules);
     storedDown = null;
     storedBtn.classList.remove('pressed');
     if (kind === 'use' && s.status === 'playing' && !paused) queue.push({ type: 'stored' });
@@ -308,11 +346,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     trayEl.setPointerCapture(e.pointerId);
     const holdTimer = window.setTimeout(() => {
       // 제한 시간을 넘겼다: 놓아도 사용되지 않는다는 것을 보여 준다 (드래그 중이면 상관없다)
-      if (down && down.maxMoved < POINTER_RULES.dragThresholdPx) {
+      if (down && down.maxMoved < rules.dragThresholdPx) {
         trayEl.classList.add('held');
         holdNote.textContent = '오래 눌러서 사용되지 않아요 — 그냥 놓으면 제자리';
       }
-    }, POINTER_RULES.clickMaxSeconds * 1000);
+    }, rules.clickMaxSeconds * 1000);
     down = { uid: b.uid, x: e.clientX, y: e.clientY, id: e.pointerId, at: performance.now(), maxMoved: 0, holdTimer };
     drawTray();
   });
@@ -321,7 +359,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const dx = e.clientX - down.x;
     const dy = e.clientY - down.y;
     down.maxMoved = Math.max(down.maxMoved, Math.hypot(dx, dy));
-    if (down.maxMoved >= POINTER_RULES.dragThresholdPx) {
+    if (down.maxMoved >= rules.dragThresholdPx) {
       trayEl.classList.remove('held');
       holdNote.textContent = '';
       drag = { uid: down.uid, dx, dy, to: slotOf(e.clientX) };
@@ -332,7 +370,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   trayEl.addEventListener('pointerup', (e) => {
     if (!down || e.pointerId !== down.id) return;
     const from = indexOfUid(down.uid); // 누르는 사이 앞 블록이 쓰여 번호가 바뀌었을 수 있다. 블록이 사라졌으면 -1
-    const kind = classifyRelease(performance.now() - down.at, down.maxMoved);
+    const kind = classifyRelease(performance.now() - down.at, down.maxMoved, rules);
     if (from >= 0 && s.status === 'playing' && !paused) {
       const input = releaseInput(kind, from, slotOf(e.clientX), s.tray.length);
       if (input) queue.push(input);

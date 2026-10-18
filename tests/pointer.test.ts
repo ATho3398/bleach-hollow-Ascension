@@ -56,3 +56,80 @@ describe('놓은 칸 → 엔진 입력', () => {
     expect(releaseInput('drag', 4, 7, 5)).toBeNull();
   });
 });
+
+// ── C.18: 설정값 반영 판정, 저장/복원, 범위 클램프 ──
+import {
+  clampPointerRules, DEFAULT_POINTER_RULES, loadPointerRules, POINTER_RANGES, POINTER_SETTINGS_KEY, resetPointerRules, savePointerRules,
+} from '../src/ui/pointer';
+
+const memory = () => {
+  const m = new Map<string, string>();
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), raw: m };
+};
+
+describe('설정값을 받는 포인터 판정 (C.18)', () => {
+  it('클릭 판정 시간 설정이 반영된다 (0.15초 / 0.6초)', () => {
+    const fast = { clickMaxSeconds: 0.15, dragThresholdPx: 10 };
+    const slow = { clickMaxSeconds: 0.6, dragThresholdPx: 10 };
+    expect(classifyRelease(200, 0, fast)).toBe('hold');
+    expect(classifyRelease(200, 0, slow)).toBe('use');
+    expect(classifyRelease(600, 0, slow)).toBe('use');
+    expect(classifyRelease(601, 0, slow)).toBe('hold');
+    expect(classifyRelease(150, 0, fast)).toBe('use');
+  });
+
+  it('드래그 임계치 설정이 반영된다 (6px / 20px)', () => {
+    const tight = { clickMaxSeconds: 0.3, dragThresholdPx: 6 };
+    const loose = { clickMaxSeconds: 0.3, dragThresholdPx: 20 };
+    expect(classifyRelease(100, 8, tight)).toBe('drag');
+    expect(classifyRelease(100, 8, loose)).toBe('use');
+    expect(classifyRelease(100, 20, loose)).toBe('drag');
+  });
+});
+
+describe('설정 저장·복원·범위 (C.18)', () => {
+  it('범위: 클릭 0.15~0.6초, 드래그 6~20px, 기본 0.3초·10px', () => {
+    expect(POINTER_RANGES.clickMaxSeconds).toEqual([0.15, 0.6]);
+    expect(POINTER_RANGES.dragThresholdPx).toEqual([6, 20]);
+    expect(DEFAULT_POINTER_RULES).toEqual({ clickMaxSeconds: 0.3, dragThresholdPx: 10 });
+  });
+
+  it('범위 밖 값은 자르고, 숫자가 아니면 기본값', () => {
+    expect(clampPointerRules({ clickMaxSeconds: 0.01, dragThresholdPx: 99 })).toEqual({ clickMaxSeconds: 0.15, dragThresholdPx: 20 });
+    expect(clampPointerRules({ clickMaxSeconds: 5, dragThresholdPx: 1 })).toEqual({ clickMaxSeconds: 0.6, dragThresholdPx: 6 });
+    expect(clampPointerRules({ clickMaxSeconds: 'x', dragThresholdPx: NaN })).toEqual(DEFAULT_POINTER_RULES);
+    expect(clampPointerRules({})).toEqual(DEFAULT_POINTER_RULES);
+  });
+
+  it('저장하면 다시 읽을 때 같은 값, 저장 키는 세이브와 별개', () => {
+    const st = memory();
+    expect(loadPointerRules(st)).toEqual(DEFAULT_POINTER_RULES);
+    expect(savePointerRules(st, { clickMaxSeconds: 0.45, dragThresholdPx: 14 })).toEqual({ clickMaxSeconds: 0.45, dragThresholdPx: 14 });
+    expect(loadPointerRules(st)).toEqual({ clickMaxSeconds: 0.45, dragThresholdPx: 14 });
+    expect([...st.raw.keys()]).toEqual([POINTER_SETTINGS_KEY]);
+  });
+
+  it('저장하려는 값도 범위로 자른다', () => {
+    const st = memory();
+    expect(savePointerRules(st, { clickMaxSeconds: 9 })).toEqual({ clickMaxSeconds: 0.6, dragThresholdPx: 10 });
+    expect(loadPointerRules(st).clickMaxSeconds).toBe(0.6);
+  });
+
+  it('기본값 복원 버튼 = 저장된 설정을 지운다', () => {
+    const st = memory();
+    savePointerRules(st, { clickMaxSeconds: 0.5, dragThresholdPx: 18 });
+    expect(resetPointerRules(st)).toEqual(DEFAULT_POINTER_RULES);
+    expect(loadPointerRules(st)).toEqual(DEFAULT_POINTER_RULES);
+    expect(st.raw.size).toBe(0);
+  });
+
+  it('깨진 JSON·저장소 오류·저장소 없음이어도 기본값으로 동작한다', () => {
+    const bad = memory();
+    bad.setItem(POINTER_SETTINGS_KEY, '{oops');
+    expect(loadPointerRules(bad)).toEqual(DEFAULT_POINTER_RULES);
+    const throwing = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } };
+    expect(loadPointerRules(throwing)).toEqual(DEFAULT_POINTER_RULES);
+    expect(savePointerRules(throwing, { clickMaxSeconds: 0.4 }).clickMaxSeconds).toBe(0.4);
+    expect(loadPointerRules(null)).toEqual(DEFAULT_POINTER_RULES);
+  });
+});

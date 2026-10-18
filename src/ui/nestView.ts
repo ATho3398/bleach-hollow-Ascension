@@ -22,6 +22,7 @@ export interface NestViewHandlers {
   /** 칭호 도감 화면 (C.14) */
   onTitles: () => void;
   onChangeFaction: () => void;
+  onSettings: () => void;
   persist: () => void;
   /** 저장된 원정이 있으면 이어하기 (GDD 14-1) */
   resume: { info: string; onResume: () => void } | null;
@@ -111,6 +112,8 @@ export function nestView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   titlesBtn.onclick = h.onTitles;
   const change = el('button', '', '종족 바꾸기');
   change.onclick = h.onChangeFaction;
+  const settings = el('button', '', '설정 (조작 판정)');
+  settings.onclick = h.onSettings;
   const runs = save.runLog.runs;
   mountScreen(
     root,

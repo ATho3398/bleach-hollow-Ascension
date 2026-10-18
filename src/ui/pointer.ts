@@ -12,7 +12,68 @@ export interface PointerRules {
   dragThresholdPx: number;
 }
 
-export const POINTER_RULES: PointerRules = BALANCE.provisional.input;
+export const DEFAULT_POINTER_RULES: PointerRules = {
+  clickMaxSeconds: BALANCE.provisional.input.clickMaxSeconds,
+  dragThresholdPx: BALANCE.provisional.input.dragThresholdPx,
+};
+/** 기본 판정값 (설정 전). 화면은 loadPointerRules 로 읽은 값을 쓴다 */
+export const POINTER_RULES: PointerRules = DEFAULT_POINTER_RULES;
+
+export const POINTER_RANGES = {
+  clickMaxSeconds: BALANCE.provisional.input.clickMaxSecondsRange,
+  dragThresholdPx: BALANCE.provisional.input.dragThresholdPxRange,
+};
+
+/** 세이브 구조와 별개인 localStorage 키 (설정은 기기마다) */
+export const POINTER_SETTINGS_KEY = 'bha-input-settings';
+
+export interface SettingsStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem?(key: string): void;
+}
+
+const clamp = (v: number, [lo, hi]: readonly [number, number]) => Math.min(hi, Math.max(lo, v));
+
+/** 범위 밖 값은 자르고, 숫자가 아니면 기본값. 클릭 시간은 0.05초 단위, 임계치는 정수로 맞춘다 */
+export function clampPointerRules(r: Partial<Record<keyof PointerRules, unknown>>): PointerRules {
+  const num = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+  return {
+    clickMaxSeconds: Math.round(clamp(num(r.clickMaxSeconds, DEFAULT_POINTER_RULES.clickMaxSeconds), POINTER_RANGES.clickMaxSeconds) * 100) / 100,
+    dragThresholdPx: Math.round(clamp(num(r.dragThresholdPx, DEFAULT_POINTER_RULES.dragThresholdPx), POINTER_RANGES.dragThresholdPx)),
+  };
+}
+
+/** 저장된 설정을 읽는다. 없거나 깨졌거나 저장소가 막혀 있으면 기본값 */
+export function loadPointerRules(storage?: SettingsStorage | null): PointerRules {
+  try {
+    const text = storage?.getItem(POINTER_SETTINGS_KEY);
+    return clampPointerRules(text ? (JSON.parse(text) as Record<string, unknown>) : {});
+  } catch {
+    return { ...DEFAULT_POINTER_RULES };
+  }
+}
+
+/** 설정을 저장하고, 실제로 저장된(잘린) 값을 돌려준다 */
+export function savePointerRules(storage: SettingsStorage | null | undefined, rules: Partial<PointerRules>): PointerRules {
+  const clean = clampPointerRules(rules);
+  try {
+    storage?.setItem(POINTER_SETTINGS_KEY, JSON.stringify(clean));
+  } catch {
+    /* 저장소를 못 쓰면 이번 실행에서만 적용 */
+  }
+  return clean;
+}
+
+/** 기본값 복원: 저장된 설정을 지운다 */
+export function resetPointerRules(storage?: SettingsStorage | null): PointerRules {
+  try {
+    storage?.removeItem ? storage.removeItem(POINTER_SETTINGS_KEY) : storage?.setItem(POINTER_SETTINGS_KEY, JSON.stringify(DEFAULT_POINTER_RULES));
+  } catch {
+    /* 무시 */
+  }
+  return { ...DEFAULT_POINTER_RULES };
+}
 
 /**
  * 손가락을 뗄 때의 판정.

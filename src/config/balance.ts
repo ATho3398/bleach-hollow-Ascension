@@ -169,6 +169,9 @@ export const BALANCE = {
       clickMaxSeconds: 0.3,
       /** 손가락이 이 거리(px) 이상 움직이면 시간과 무관하게 드래그 (임시 10) */
       dragThresholdPx: 10,
+      /** 설정 화면에서 조절할 수 있는 범위 (C.18, GDD 14-3) */
+      clickMaxSecondsRange: [0.15, 0.6],
+      dragThresholdPxRange: [6, 20],
     },
     /** 둥지 최소 버전(P2): 허기·컨디션 두 수치만 (GDD 7장) */
     nest: {

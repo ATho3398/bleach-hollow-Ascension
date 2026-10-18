@@ -27,6 +27,7 @@ import { dexView } from './dexView';
 import { showTitleToasts, titleDexView } from './titleDexView';
 import { evolutionView } from './evolutionPanel';
 import { nestView } from './nestView';
+import { settingsView } from './settingsView';
 
 /** 연습 목록용 패턴 이름 (임시 표시) */
 const PATTERN_LABEL: Record<EnemyPatternKind, string> = { basic: '기본형', swift: '속공형', sturdy: '단단형', 'heavy-seal': '강공격·봉인', 'heavy-chain': '연속 강공격', stance: '방어 자세·반격' };
@@ -57,8 +58,10 @@ export function startApp(root: HTMLElement): void {
       };
       return b;
     });
+    const settings = el('button', '', '설정 (조작 판정)');
+    settings.onclick = () => settingsView(root, factionScreen);
     const stack = el('div', 'stack');
-    stack.append(...buttons);
+    stack.append(...buttons, settings);
     mount(
       el('h1', '', '블리치 할로우 어센션'),
       el('p', 'dim', '어느 쪽으로 시작할까? (두 종족 모두 처음부터 개방)'),
@@ -96,6 +99,7 @@ export function startApp(root: HTMLElement): void {
       onDex: () => dexView(root, faction, s, nestScreen),
       onTitles: () => titleDexView(root, faction, s, nestScreen),
       onChangeFaction: factionScreen,
+      onSettings: () => settingsView(root, nestScreen),
     });
   }
 
