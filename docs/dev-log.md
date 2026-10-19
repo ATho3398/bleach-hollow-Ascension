@@ -1645,3 +1645,11 @@ GDD 제안 (마스터가 반영)
 
 **정한 것(질문 없이)**: 강조 = 포커스색 1px 외곽선 + 은은한 빛 + 살짝 밝게; 누름은 밝기만; 이름표는 기존대로.
 **캡처** `docs/captures/c42/`: `room-*`, `room-char-selected-*`·`room-prop-selected-*`(선택), `room-focus-pc`(키보드 포커스), `battle-*`, `walk-*`. 각 `phone-land`(844×390)·`phone-port`(390×844)·`pc`(1280×800).
+
+### C.43 머리 위 상태 = 아이콘 + 가는 게이지 3줄 (STAGE S-5, 코딩36, GDD 18-10 v3.1)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.43, `STAGE_LABEL` S-5(18-10에 포함). 새 색·간격 없음(기존 토큰). 밸런스·세이브 변경 없음.
+- 방 캐릭터 머리 위 상태 묶음(`.bha-room__status`)을 글자 칩에서 **아이콘 + 가는 바 3줄(위부터 허기·컨디션·광기/영압, 글자·숫자 없음)**로 교체. 줄 = `.bha-room__gauge`(아이콘 14px + 높이 5px 바), 색은 기존 `--bha-hunger/--bha-cond/--bha-risk`, 위험 구간(`statusChips`의 `danger`, 기준 불변) 줄만 `--bha-danger`. 쇠약이면 줄이 하나 더(`i-broken` 아이콘, 꽉 찬 danger 바).
+- 묶음 폭 74px(그림 84px보다 좁음), `--head-y`(C.42) 위치 그대로 — 그림 윗변 위에 아래 끝을 맞춘다. 바탕은 반투명 검정 한 덩이.
+- 묶음 전체가 버튼(누르면 상태 화면), G 키·키 배지(오른쪽 여백) 유지. `aria-label` 에는 이름·값 전체를 계속 넣음. 걷기 화면 칩은 그대로.
+- 정한 것: 바는 값 그대로 채움(컨디션도 높을수록 가득), 쇠약 줄은 항상 가득.
+- 캡처 `docs/captures/c43/`: `room-{phone-land,phone-port,pc}`, `room-danger-phone-land`(허기 위험 줄 예시).

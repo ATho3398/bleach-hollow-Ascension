@@ -116,10 +116,15 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const paintGauges = () => {
     const chips = statusChips(n, faction);
     statusBtn.setAttribute('aria-label', `상태 보기: ${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
+    // 글자·숫자 없이 아이콘 + 가는 게이지 바 한 줄씩 (GDD 18-10 v3.1). 위험 구간 줄만 danger 색
     statusBtn.replaceChildren(...chips.map((c) => {
-      const chip = el('span', `bha-chip bha-room__chip bha-room__chip--${c.kind}${c.danger ? ' bha-chip--danger' : ''}`);
-      chip.append(icon(c.icon), c.value === null ? c.label : `${c.label} ${c.value}`);
-      return chip;
+      const row = el('span', `bha-room__gauge bha-room__gauge--${c.kind}${c.danger ? ' is-danger' : ''}`);
+      const fill = el('span', 'bha-room__gaugefill');
+      fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
+      const track = el('span', 'bha-room__gaugetrack');
+      track.append(fill);
+      row.append(icon(c.icon), track);
+      return row;
     }));
   };
   paintGauges();

@@ -130,13 +130,18 @@
 /* ── 머리 위 상태 칩 (GDD 18-8): 캐릭터 몸 위, 한 줄. 누르면 상태 화면 ── */
 .bha-room__status {
   position: absolute; left: 50%; top: 60%; transform: translate(-50%, calc(-100% + var(--head-y, -50px) - var(--bha-sp-2))); z-index: 1; /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px) */
-  display: flex; flex-wrap: nowrap; gap: var(--bha-sp-1); padding: var(--bha-sp-1) var(--bha-sp-7) var(--bha-sp-1) var(--bha-sp-1); /* 오른쪽은 키 글자 배지 자리 */
-  background: none; border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
+  display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 52px; box-sizing: content-box; /* 총 폭 74px < 그림 84px */
+  padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3); /* 오른쪽은 키 글자 배지 자리 */
+  background: rgb(0 0 0 / 0.55); border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
 }
-.bha-room__chip { white-space: nowrap; background: rgb(0 0 0 / 0.55); }
-.bha-room__chip--hunger .bha-icon { color: var(--bha-hunger); }
-.bha-room__chip--cond .bha-icon { color: var(--bha-cond); }
-.bha-room__chip--risk .bha-icon { color: var(--bha-risk, var(--bha-danger)); }
+.bha-room__gauge { --c: var(--bha-text-2); display: flex; align-items: center; gap: var(--bha-sp-2); }
+.bha-room__gauge .bha-icon { width: 14px; height: 14px; flex: none; color: var(--c); }
+.bha-room__gaugetrack { flex: 1 1 auto; height: 5px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); overflow: hidden; }
+.bha-room__gaugefill { display: block; height: 100%; border-radius: inherit; background: var(--c); }
+.bha-room__gauge--hunger { --c: var(--bha-hunger); }
+.bha-room__gauge--cond { --c: var(--bha-cond); }
+.bha-room__gauge--risk { --c: var(--bha-risk, var(--bha-danger)); }
+.bha-room__gauge--weak, .bha-room__gauge.is-danger { --c: var(--bha-danger); }
 .bha-room__status:active { filter: brightness(1.2); }
 .bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
 
