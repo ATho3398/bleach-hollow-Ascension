@@ -19,15 +19,19 @@ describe('프레임 파일 찾기 (26-2)', () => {
     expect(frameFiles('char.hollow.1', 'move', files)).toEqual(['char-hollow-1/move-1.webp', 'char-hollow-1/move-2.png']);
     expect(frameFiles('char.hollow.1', 'attack', files)).toEqual([]);
   });
-  it('동작 키는 10종 데이터 표이고 재생 방식·기본 속도가 26-3 표와 같다', () => {
+  it('동작 키는 10종 데이터 표이고 재생 방식·프레임당 ms 가 26-3·26-4b 표와 같다', () => {
     expect(ANIM_ACTIONS.map((a) => a.key)).toEqual(['idle', 'move', 'attack', 'skill', 'hit', 'win', 'lose', 'eat', 'sleep', 'release']);
     const by = Object.fromEntries(ANIM_ACTIONS.map((a) => [a.key, a]));
-    expect([by.idle!.mode, by.idle!.fps]).toEqual(['loop', 6]);
-    expect([by.move!.mode, by.move!.fps]).toEqual(['loop', 10]);
-    expect([by.attack!.mode, by.attack!.fps]).toEqual(['once', 12]);
-    expect([by.win!.mode, by.win!.fps]).toEqual(['hold', 8]);
-    expect([by.lose!.mode, by.lose!.fps]).toEqual(['hold', 8]);
-    expect([by.sleep!.mode, by.sleep!.fps]).toEqual(['loop', 4]);
+    expect([by.idle!.mode, by.idle!.ms, by.idle!.endMs]).toEqual(['loop', 300, 450]);
+    expect([by.move!.mode, by.move!.ms]).toEqual(['loop', 130]);
+    expect([by.attack!.mode, by.attack!.ms]).toEqual(['once', 150]);
+    expect(by.skill!.ms).toBe(150);
+    expect(by.hit!.ms).toBe(140);
+    expect([by.win!.mode, by.win!.ms]).toEqual(['hold', 180]);
+    expect([by.lose!.mode, by.lose!.ms]).toEqual(['hold', 180]);
+    expect([by.sleep!.mode, by.sleep!.ms]).toEqual(['loop', 450]);
+    expect([by.eat!.ms, by.release!.ms]).toEqual([180, 150]);
+    expect(ANIM_ACTIONS.every((a) => a.ms >= 100 && a.ms <= 450)).toBe(true);
   });
   it('동작별 프레임 수 한 줄 (art:list): 없는 동작은 없음', () => {
     const files = [...f('char-hollow-1', 'idle', 3), ...f('char-hollow-1', 'move', 5)];
@@ -47,33 +51,48 @@ describe('동작마다 단계별 폴더 → 종족 공통 폴더 (26-2)', () => 
     expect(a.attack).toBeUndefined();
     expect(a.move!.frames[0]).toBe('./art/char-hollow/move-1.png');
   });
-  it('기본 fps·반복 방식, anim.json 으로 fps 와 타격 프레임(1부터)을 바꾼다. 기본 타격은 가운데', () => {
-    const fs = [...f('x', 'idle', 3), ...f('x', 'attack', 6)];
+  it('기본 프레임당 ms(idle 은 양 끝 450), anim.json 의 ms(숫자·프레임별 배열)·옛 fps·타격 프레임(1부터). 기본 타격은 가운데', () => {
+    const fs = [...f('x', 'idle', 4), ...f('x', 'attack', 6)];
     const d = resolveAnims(['x'], '/', fs, {});
-    expect(d.idle!.fps).toBe(6);
-    expect(d.attack!.fps).toBe(12);
+    expect(d.idle!.frameMs).toEqual([450, 300, 300, 450]);
+    expect(d.attack!.frameMs).toEqual([150, 150, 150, 150, 150, 150]);
     expect(d.attack!.hitFrame).toBe(2); // 6장의 가운데 = 3번째 = 인덱스 2
-    const o = resolveAnims(['x'], '/', fs, { x: { idle: { fps: 5 }, attack: { fps: 14, hit: 5 } } });
-    expect(o.idle!.fps).toBe(5);
-    expect(o.attack!.fps).toBe(14);
+    const o = resolveAnims(['x'], '/', fs, { x: { idle: { ms: [500, 250, 250, 500] }, attack: { ms: 200, hit: 5 } } });
+    expect(o.idle!.frameMs).toEqual([500, 250, 250, 500]);
+    expect(o.attack!.frameMs).toEqual([200, 200, 200, 200, 200, 200]);
     expect(o.attack!.hitFrame).toBe(4);
-    expect(clipHitMs(o.attack!)).toBeCloseTo((4 / 14) * 1000);
-    expect(clipDurationMs(o.attack!)).toBeCloseTo((6 / 14) * 1000);
-    // 엉터리 값은 무시, 범위를 넘는 hit 는 마지막 장
-    const bad = resolveAnims(['x'], '/', fs, { x: { attack: { fps: -3, hit: 99 }, idle: { fps: Number.NaN } } });
-    expect(bad.attack!.fps).toBe(12);
+    expect(clipHitMs(o.attack!)).toBe(800); // 앞의 4장이 지난 뒤 5번째 프레임이 올라오는 순간
+    expect(clipDurationMs(o.attack!)).toBe(1200);
+    // 배열이 모자라면 기본값으로 채우고 넘치면 버린다. ms 가 없을 때만 옛 fps 를 읽는다(ms 우선)
+    expect(resolveAnims(['x'], '/', fs, { x: { idle: { ms: [600, 200] } } }).idle!.frameMs).toEqual([600, 200, 300, 450]);
+    expect(resolveAnims(['x'], '/', fs, { x: { attack: { fps: 10 } } }).attack!.frameMs[0]).toBe(100);
+    expect(resolveAnims(['x'], '/', fs, { x: { attack: { fps: 10, ms: 220 } } }).attack!.frameMs[0]).toBe(220);
+    // 엉터리 값은 무시, 범위를 넘는 hit 는 마지막 장, 너무 작은·큰 ms 는 16~5000 으로
+    const bad = resolveAnims(['x'], '/', fs, { x: { attack: { ms: -3, hit: 99 }, idle: { ms: Number.NaN } } });
+    expect(bad.attack!.frameMs[0]).toBe(150);
     expect(bad.attack!.hitFrame).toBe(5);
-    expect(bad.idle!.fps).toBe(6);
+    expect(bad.idle!.frameMs).toEqual([450, 300, 300, 450]);
+    expect(resolveAnims(['x'], '/', fs, { x: { attack: { ms: 1 } } }).attack!.frameMs[0]).toBe(16);
+  });
+  it('사용자가 넣은 첫 스킨·길리안의 anim.json 값이 그대로 읽힌다 (ms 배열·hit)', () => {
+    const fs = [...f('char-hollow-2', 'idle', 3), ...f('char-hollow-2', 'attack', 4)];
+    const a = resolveAnims(['char.hollow.2'], '/', fs, { 'char-hollow-2': { idle: { ms: [450, 300, 450] }, attack: { ms: [150, 200, 150, 200], hit: 3 } } });
+    expect(a.idle!.frameMs).toEqual([450, 300, 450]);
+    expect(a.attack!.hitFrame).toBe(2);
+    expect(clipHitMs(a.attack!)).toBe(350);
   });
 });
 
 describe('재생 계산 (frameAt)', () => {
   const fs = f('x', 'idle', 3);
-  const loop = resolveAnims(['x'], '/', fs, {}).idle!;
-  it('반복은 계속 돌고 끝나지 않는다', () => {
+  const loop = resolveAnims(['x'], '/', fs, {}).idle!; // [450, 300, 450]
+  it('반복은 프레임마다 정해진 시간만큼 머물며 계속 돌고 끝나지 않는다', () => {
     expect(frameAt(loop, 0)).toEqual({ index: 0, done: false });
-    expect(frameAt(loop, 1000 / 6 + 1).index).toBe(1);
-    expect(frameAt(loop, (3 / 6) * 1000 + 1)).toEqual({ index: 0, done: false });
+    expect(frameAt(loop, 449).index).toBe(0);
+    expect(frameAt(loop, 450).index).toBe(1);
+    expect(frameAt(loop, 749).index).toBe(1);
+    expect(frameAt(loop, 750).index).toBe(2);
+    expect(frameAt(loop, 1200)).toEqual({ index: 0, done: false }); // 한 바퀴 = 1200ms
   });
   it('한 번 재생은 마지막 장에서 끝난다', () => {
     const a = resolveAnims(['x'], '/', f('x', 'attack', 4), {}).attack!;
@@ -131,11 +150,11 @@ describe('재생기 (순수 코어)', () => {
     expect(p.play('move')).toBeNull(); // 없는 동작 — 호출한 쪽이 기존 연출을 쓴다
     p.setLoop('idle');
     p.advance(0);
-    p.advance(1000 / 6 + 5);
+    p.advance(455); // 첫 장 450ms
     expect(shown.at(-1)).toBe('/art/x/idle-2.png');
-    p.advance(1000 / 6);
+    p.advance(300);
     expect(shown.at(-1)).toBe('/art/x/idle-3.png');
-    p.advance(1000 / 6);
+    p.advance(450);
     expect(shown.at(-1)).toBe('/art/x/idle-1.png'); // 반복
   });
   it('쉬는 동작이 없으면(setLoop 안 함 / 없는 동작) 정지 그림을 유지한다', () => {
@@ -151,7 +170,7 @@ describe('재생기 (순수 코어)', () => {
     let hit = 0;
     let end = 0;
     const r = p.play('attack', { onHit: () => hit++, onEnd: () => end++ })!;
-    expect(r.hitAtMs).toBeCloseTo((1 / 12) * 1000); // 4장의 가운데 = 2번째 = 인덱스 1
+    expect(r.hitAtMs).toBe(150); // 4장의 가운데 = 2번째 = 인덱스 1, 앞 1장(150ms) 뒤
     expect(shown.at(-1)).toBe('/art/x/attack-1.png');
     p.advance(r.hitAtMs + 1);
     expect(hit).toBe(1);
@@ -165,7 +184,7 @@ describe('재생기 (순수 코어)', () => {
     const { p, shown } = make();
     p.play('attack');
     p.setRate(2);
-    p.advance(1000 / 12); // 2배라 2프레임 지남
+    p.advance(150); // 2배라 300ms 지남 = 2프레임
     expect(shown.at(-1)).toBe('/art/x/attack-3.png');
     p.setPaused(true);
     p.advance(5000);

@@ -51,6 +51,8 @@ export const GHOST_LAG_MS = 28;
 export const REACH_RATIO = 0.82;
 /** 막힌(guard) 공격을 맞을 때 피격 밀림·번쩍임을 줄이는 비율 */
 export const GUARDED_HIT_RATIO = 0.4;
+/** 기본 피격 연출(흰 깜빡임 2번 + 튕김, GDD 26-4c)의 최소 길이(ms): 깜빡임 두 번이 보이게 */
+export const HIT_FLASH_MIN_MS = 300;
 
 /** 배속은 재생 속도로 그대로 반영한다. 1~4배 */
 export const FX_RATE_MIN = 1;

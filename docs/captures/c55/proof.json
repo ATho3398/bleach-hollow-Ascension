@@ -1,14 +1,10 @@
 {
+ "note": "1=그랜드피셔 스킨(캡처용으로 docs/art-samples/skin-grandfisher-wip 의 move·attack·hit·lose 와 anim.json 을 빌드에만 임시로 넣음, 레포 public/art 는 idle 만 그대로) · 2=idle 만 있는 시험용 임시 폴더(지움) · 3=애니 없음 · 4=실제 길리안 char-hollow-2(idle·move·attack·hit·lose, win·skill 등 없음)",
  "1_all_anims_skin": {
   "tag": "A",
   "which": "hollowSkin",
-  "url": "http://localhost:4173/",
+  "url": "http://localhost:4181/",
   "roomImg": [
-   "skin-grandfisher/idle-4.png",
-   "skin-grandfisher/idle-1.png",
-   "skin-grandfisher/idle-2.png",
-   "skin-grandfisher/idle-3.png",
-   "skin-grandfisher/idle-4.png",
    "skin-grandfisher/idle-1.png",
    "skin-grandfisher/idle-2.png",
    "skin-grandfisher/idle-3.png",
@@ -17,8 +13,6 @@
   ],
   "roomCharClasses": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-hit has-anim-lose",
   "walkImg": [
-   "skin-grandfisher/move-4.png",
-   "skin-grandfisher/move-5.png",
    "skin-grandfisher/move-6.png",
    "skin-grandfisher/move-1.png",
    "skin-grandfisher/move-2.png",
@@ -31,8 +25,7 @@
    "skin-grandfisher/move-3.png",
    "skin-grandfisher/move-4.png",
    "skin-grandfisher/move-5.png",
-   "skin-grandfisher/move-6.png",
-   "skin-grandfisher/move-1.png"
+   "skin-grandfisher/move-6.png"
   ],
   "walkerClasses": "bha-walker bha-walker--stomp has-art has-anim has-anim-idle has-anim-move has-anim-attack has-anim-hit has-anim-lose",
   "walkerBodyAnimation": "none",
@@ -40,51 +33,39 @@
    "skin-grandfisher/idle-1.png",
    "skin-grandfisher/idle-2.png",
    "skin-grandfisher/idle-3.png",
-   "skin-grandfisher/idle-4.png",
    "skin-grandfisher/attack-1.png",
    "skin-grandfisher/attack-2.png",
    "skin-grandfisher/attack-3.png",
    "skin-grandfisher/attack-4.png",
    "skin-grandfisher/attack-5.png",
-   "skin-grandfisher/attack-6.png",
    "skin-grandfisher/hit-1.png",
    "skin-grandfisher/hit-2.png",
    "skin-grandfisher/hit-3.png",
+   "skin-grandfisher/attack-6.png",
    "skin-grandfisher/hit-4.png"
   ],
   "heroLungeAnimations": 0,
   "heroShakeAnimations": 0,
-  "lungeShots": 0
+  "lungeShots": 0,
+  "blinkShots": 0
  },
  "2_idle_only_temp_folder": {
   "tag": "B",
   "which": "hollowBase",
-  "url": "http://localhost:4174/",
+  "url": "http://localhost:4182/",
   "roomImg": [
-   "char-hollow-1/idle-2.png",
    "char-hollow-1/idle-3.png",
    "char-hollow-1/idle-1.png",
    "char-hollow-1/idle-2.png",
-   "char-hollow-1/idle-3.png",
+   "char-hollow-1/idle-3.png"
+  ],
+  "roomCharClasses": "bha-art bha-char has-anim has-anim-idle",
+  "walkImg": [
    "char-hollow-1/idle-1.png",
    "char-hollow-1/idle-2.png",
    "char-hollow-1/idle-3.png",
    "char-hollow-1/idle-1.png",
    "char-hollow-1/idle-2.png"
-  ],
-  "roomCharClasses": "bha-art bha-char has-anim has-anim-idle",
-  "walkImg": [
-   "char-hollow-1/idle-3.png",
-   "char-hollow-1/idle-1.png",
-   "char-hollow-1/idle-2.png",
-   "char-hollow-1/idle-3.png",
-   "char-hollow-1/idle-1.png",
-   "char-hollow-1/idle-2.png",
-   "char-hollow-1/idle-3.png",
-   "char-hollow-1/idle-1.png",
-   "char-hollow-1/idle-2.png",
-   "char-hollow-1/idle-3.png",
-   "char-hollow-1/idle-1.png"
   ],
   "walkerClasses": "bha-walker bha-walker--stomp has-art has-anim has-anim-idle",
   "walkerBodyAnimation": "bha-bob-stomp",
@@ -95,12 +76,13 @@
   ],
   "heroLungeAnimations": 1,
   "heroShakeAnimations": 1,
-  "lungeShots": 2
+  "lungeShots": 2,
+  "blinkShots": 2
  },
  "3_no_anim_default": {
   "tag": "C",
   "which": "hollowBase",
-  "url": "http://localhost:4173/",
+  "url": "http://localhost:4183/",
   "roomImg": [
    "char-hollow.png"
   ],
@@ -115,7 +97,50 @@
   ],
   "heroLungeAnimations": 1,
   "heroShakeAnimations": 1,
-  "lungeShots": 2
+  "lungeShots": 2,
+  "blinkShots": 2
+ },
+ "4_real_gilian_partial": {
+  "tag": "G",
+  "which": "hollowTier2",
+  "url": "http://localhost:4183/",
+  "roomImg": [
+   "char-hollow-2/idle-3.png",
+   "char-hollow-2/idle-1.png",
+   "char-hollow-2/idle-2.png",
+   "char-hollow-2/idle-3.png"
+  ],
+  "roomCharClasses": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-hit has-anim-lose",
+  "walkImg": [
+   "char-hollow-2/move-2.png",
+   "char-hollow-2/move-1.png",
+   "char-hollow-2/move-2.png",
+   "char-hollow-2/move-1.png",
+   "char-hollow-2/move-2.png",
+   "char-hollow-2/move-1.png",
+   "char-hollow-2/move-2.png",
+   "char-hollow-2/move-1.png",
+   "char-hollow-2/move-2.png"
+  ],
+  "walkerClasses": "bha-walker bha-walker--stomp has-art has-anim has-anim-idle has-anim-move has-anim-attack has-anim-hit has-anim-lose",
+  "walkerBodyAnimation": "none",
+  "battleHeroImg": [
+   "char-hollow-2/idle-1.png",
+   "char-hollow-2/idle-2.png",
+   "char-hollow-2/idle-3.png",
+   "char-hollow-2/attack-1.png",
+   "char-hollow-2/attack-2.png",
+   "char-hollow-2/attack-3.png",
+   "char-hollow-2/attack-4.png",
+   "char-hollow-2/hit-1.png",
+   "char-hollow-2/hit-2.png",
+   "char-hollow-2/hit-3.png",
+   "char-hollow-2/hit-4.png"
+  ],
+  "heroLungeAnimations": 0,
+  "heroShakeAnimations": 0,
+  "lungeShots": 0,
+  "blinkShots": 0
  },
  "1_lose": {
   "loseFrames": [
@@ -128,10 +153,10 @@
   ],
   "stayedOnLastFrame": "lose-6.png"
  },
- "4_skin_picker": {
+ "5_skin_picker": {
   "afterPick": "grandfisher",
   "roomSrcAfterPick": "skin-grandfisher/idle-1.png",
-  "roomSrcAfterReload": "skin-grandfisher/idle-2.png",
+  "roomSrcAfterReload": "skin-grandfisher/idle-1.png",
   "afterDefault": null,
   "roomSrcAfterDefault": "char-hollow.png",
   "shinigamiSkinButtons": [],

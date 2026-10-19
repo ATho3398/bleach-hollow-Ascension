@@ -7,7 +7,7 @@ import type { Locomotion } from '../engine/locomotion';
 import type { AnimPlayer } from './bha/animPlayer';
 import { LOCO_LIFT } from './bha/loco';
 import {
-  ATTACK_FX, ATTACK_TIER_ORDER, FAMILY_MOTION, FAMILY_STAGE_FX, FX_RATE_MAX, FX_RATE_MIN, FX_SAFETY_MS, GHOST_LAG_MS, GHOST_OPACITY,
+  ATTACK_FX, ATTACK_TIER_ORDER, FAMILY_MOTION, FAMILY_STAGE_FX, FX_RATE_MAX, FX_RATE_MIN, FX_SAFETY_MS, GHOST_LAG_MS, GHOST_OPACITY, HIT_FLASH_MIN_MS,
   GUARDED_HIT_RATIO, REACH_RATIO, SKILL_NAME_MS, type AttackFxLevel, type AttackTier, type FamilyMotion,
 } from './attackFxConfig';
 
@@ -229,24 +229,46 @@ export function reachOf(gapPx: number): number {
 }
 
 export interface HitPlan {
+  /** 뒤로 튕김 (transform) */
   keyframes: Keyframe[];
+  /** 흰 실루엣 깜빡임 (filter) */
+  blink: Keyframe[];
   durationMs: number;
 }
 
-/** 피격: 짧게 밀리며 번쩍임. flash 모드는 밀림 없이 번쩍임만. guarded 면 약하게 */
+/**
+ * 기본 피격 연출 (GDD 26-4c, v5.19 — hit 애니가 없는 쪽): **흰색 실루엣 깜빡임 2번 + 뒤로 한 번 튕김**.
+ * 깜빡임(blink)은 필터, 튕김(keyframes)은 transform 이라 따로 재생한다(깜빡임은 뚝뚝 끊기고 튕김은 부드럽게).
+ * 막으면 약하게(깜빡임 1번, 튕김 40%), flash 모드(모션 줄이기·흔들림 끔)는 튕김 없이 깜빡임만.
+ */
 export function hitPlan(level: AttackFxLevel, dir: 1 | -1, mode: FxMode, guarded: boolean): HitPlan {
   const k = guarded ? GUARDED_HIT_RATIO : 1;
   const push = mode === 'full' ? level.knockPx * k : 0;
-  const bright = 1 + (level.hitBright - 1) * k;
   const at = (x: number): string => `translateX(${(x * dir).toFixed(1)}px)`;
+  const NEUTRAL = 'brightness(1) invert(0)';
+  const WHITE = 'brightness(0) invert(1)';
+  const STEP = 'steps(1, end)';
+  const blink: Keyframe[] = guarded
+    ? [
+      { offset: 0, filter: WHITE, easing: STEP },
+      { offset: 0.3, filter: NEUTRAL },
+      { offset: 1, filter: NEUTRAL },
+    ]
+    : [
+      { offset: 0, filter: WHITE, easing: STEP },
+      { offset: 0.2, filter: NEUTRAL, easing: STEP },
+      { offset: 0.35, filter: WHITE, easing: STEP },
+      { offset: 0.55, filter: NEUTRAL },
+      { offset: 1, filter: NEUTRAL },
+    ];
   return {
-    durationMs: level.hitMs,
+    durationMs: Math.max(level.hitMs, HIT_FLASH_MIN_MS),
     keyframes: [
-      { offset: 0, transform: at(0), filter: `brightness(${bright.toFixed(2)})`, easing: 'ease-out' },
-      { offset: 0.3, transform: at(push), filter: `brightness(${(1 + (bright - 1) * 0.5).toFixed(2)})`, easing: 'ease-in-out' },
-      { offset: 0.6, transform: at(-push * 0.35), filter: 'brightness(1)', easing: 'ease-out' },
-      { offset: 1, transform: at(0), filter: 'brightness(1)' },
+      { offset: 0, transform: at(0), easing: 'ease-out' },
+      { offset: 0.25, transform: at(push), easing: 'ease-in-out' },
+      { offset: 1, transform: at(0) },
     ],
+    blink,
   };
 }
 
@@ -355,8 +377,10 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       return;
     }
     const plan = hitPlan(scaled(level, unit()), (target.dir * -1) as 1 | -1, mode, guarded);
-    // composite add: 맞는 쪽 원래 filter(적 윤곽 빛 drop-shadow)를 지우지 않고 번쩍임을 덧붙인다 (지우면 검은 실루엣이 배경에 묻힌다)
-    track(target.body.animate(plan.keyframes, { duration: plan.durationMs, delay: delayMs, easing: 'linear', fill: 'none', composite: 'add' }));
+    // composite add: 맞는 쪽 원래 filter(적 윤곽 빛 drop-shadow)를 지우지 않고 흰 깜빡임을 덧붙인다 (지우면 검은 실루엣이 배경에 묻힌다)
+    const opt: KeyframeAnimationOptions = { duration: plan.durationMs, delay: delayMs, easing: 'linear', fill: 'none', composite: 'add' };
+    track(target.body.animate(plan.blink, opt));
+    if (plan.keyframes.some((f) => f.transform !== plan.keyframes[0]!.transform)) track(target.body.animate(plan.keyframes, opt));
   };
 
   /** ms(1배 기준) 뒤에 fn: 연출과 같이 배속·일시정지를 따른다 (빈 애니메이션의 끝을 기다린다) */
@@ -528,7 +552,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       if (a) {
         a.addEventListener('finish', done);
         a.addEventListener('cancel', done);
-        window.setTimeout(done, ((clipPlay?.hitAtMs ?? 0) + level.hitMs) / rate + FX_SAFETY_MS);
+        window.setTimeout(done, ((clipPlay?.hitAtMs ?? 0) + Math.max(level.hitMs, HIT_FLASH_MIN_MS)) / rate + FX_SAFETY_MS);
       } else if (clipPlay) window.setTimeout(done, clipPlay.durationMs / rate + FX_SAFETY_MS / 4);
       else done();
       return;

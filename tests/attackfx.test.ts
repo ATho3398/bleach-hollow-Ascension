@@ -93,15 +93,22 @@ describe('애니메이션 계획', () => {
     const plan = lungePlan(ATTACK_FX.basic, -1, 40);
     expect(String(plan.keyframes[2]!.transform)).toContain('translateX(-40.0px');
   });
-  it('피격: 번쩍임은 항상, 밀림은 full 만, 막으면 약하게', () => {
+  it('피격(hit 애니가 없을 때 기본, GDD 26-4c): 흰 실루엣 깜빡임 2번 + 뒤로 한 번 튕김, 튕김은 full 만, 막으면 약하게(깜빡임 1번)', () => {
     const full = hitPlan(ATTACK_FX.chain3, 1, 'full', false);
     const flash = hitPlan(ATTACK_FX.chain3, 1, 'flash', false);
     const guarded = hitPlan(ATTACK_FX.chain3, 1, 'full', true);
     const px = (p: ReturnType<typeof hitPlan>) => Number(/translateX\((-?[\d.]+)px/.exec(String(p.keyframes[1]!.transform))![1]);
+    const whites = (p: ReturnType<typeof hitPlan>) => p.blink.filter((k) => String(k.filter).includes('invert(1)')).length;
     expect(px(full)).toBeGreaterThan(0);
-    expect(px(flash)).toBe(0);
+    expect(px(flash)).toBe(0); // 모션 줄이기·흔들림 끔: 튕김 없이 깜빡임만
+    expect(px(guarded)).toBeGreaterThan(0);
     expect(px(guarded)).toBeLessThan(px(full));
-    expect(String(flash.keyframes[0]!.filter)).toContain('brightness(');
+    expect(whites(full)).toBe(2);
+    expect(whites(flash)).toBe(2);
+    expect(whites(guarded)).toBe(1);
+    expect(full.durationMs).toBeGreaterThanOrEqual(300); // 깜빡임 두 번이 보이는 최소 길이
+    // 튕김 방향: 맞는 쪽 기준 뒤(dir 부호)
+    expect(px(hitPlan(ATTACK_FX.basic, -1, 'full', false))).toBeLessThan(0);
   });
   it('돌진 거리는 간격에 비례하고 음수 간격은 0', () => {
     expect(reachOf(100)).toBeGreaterThan(0);
