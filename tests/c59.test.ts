@@ -81,14 +81,17 @@ function fusionReady(forms: [string, string] = ['t5:fire:physical', 't5:water:sp
 
 describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 손실 0)', () => {
   it('형식 22 세이브의 모든 값이 그대로 남고, 새 필드만 붙는다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(23);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(23);
     const raw = oldFormat22();
     const before = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(23);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
+    // 옛 값은 하나도 빠지지 않는다 (C.60 형식 24 가 shared·runLog 에 새 키를 붙이는 것만 허용)
     for (const [k, v] of Object.entries(before)) {
       if (k === 'meta') continue;
-      expect((m as unknown as Record<string, unknown>)[k], k).toEqual(v);
+      const got = (m as unknown as Record<string, unknown>)[k];
+      if (typeof v === 'object' && v !== null && !Array.isArray(v)) expect(got, k).toMatchObject(v);
+      else expect(got, k).toEqual(v);
     }
     expect(m.meta.startPatch).toBe((before.meta as { startPatch: string }).startPatch);
     expect(m.otherTracks).toEqual([]);

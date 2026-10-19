@@ -6,5 +6,5 @@ export const TRADE_CURRENCY_NAME = '골드';
 export const TRADE_CURRENCY_PROVISIONAL = true;
 /** 꾸밈 재화 (GDD 25-1 v5.11 사용자 확정): 한 번만 받는 달성 보상에서만 나오고 꾸밈·UI 만 산다. 세이브 shared.jade */
 export const JADE_NAME = '영옥';
-/** 상점 (GDD 23-4): 판매 목록·가격은 [미정]. 지금은 "준비 중" 안내만 */
+/** 옛 상점 자리 안내 (GDD 23-4, C.52). C.60 부터 상점(GDD 25-9)이 열려 화면에서는 쓰지 않는다 */
 export const SHOP_PREPARING_TEXT = '상점은 준비 중이다. 판매 목록과 가격은 아직 정하지 않았다.';

@@ -1,0 +1,60 @@
+/* 꾸밈 착용 모양 (GDD 25-9, C.60). 색은 cosmetics.ts 가 루트에 건 --cos-* (= 디자인 토큰 --bha-cos-* 참조)만 쓴다. 블록 계열 글자·속성 색은 건드리지 않는다.
+   내 캐릭터 = 방 .bha-char · 원정 걷기 .bha-walker · 전투 .bha-hero (적은 .bha-foe 라 영향 없음) */
+
+/* ── 오라: 내 캐릭터 뒤 빛 ── */
+:root[data-cos-aura] .bha-char__lift, :root[data-cos-aura] .bha-hero__lift { position: relative; isolation: isolate; }
+:root[data-cos-aura] .bha-walker, :root[data-cos-trail] .bha-walker { isolation: isolate; }
+:root[data-cos-aura] .bha-char__lift::before, :root[data-cos-aura] .bha-hero__lift::before, :root[data-cos-aura] .bha-walker::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; bottom: 4%; width: 125%; height: 112%; translate: -50% 0;
+  border-radius: 50% 50% 42% 42%; pointer-events: none;
+  background: radial-gradient(closest-side, var(--cos-aura), transparent);
+  filter: blur(2px); opacity: 0.85;
+  animation: bha-cos-aura 1.8s ease-in-out infinite alternate;
+}
+:root[data-cos-aura="smoke"] .bha-char__lift::before, :root[data-cos-aura="smoke"] .bha-hero__lift::before, :root[data-cos-aura="smoke"] .bha-walker::before { filter: blur(6px); animation-duration: 3.2s; }
+:root[data-cos-aura="blue"] .bha-char__lift::before, :root[data-cos-aura="blue"] .bha-hero__lift::before, :root[data-cos-aura="blue"] .bha-walker::before { border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%; animation-name: bha-cos-flame; animation-duration: 0.9s; }
+:root[data-cos-aura="bolt"] .bha-char__lift::before, :root[data-cos-aura="bolt"] .bha-hero__lift::before, :root[data-cos-aura="bolt"] .bha-walker::before { animation: bha-cos-bolt 0.7s steps(2, jump-none) infinite; }
+@keyframes bha-cos-aura { from { opacity: 0.55; scale: 0.94; } to { opacity: 0.95; scale: 1.06; } }
+@keyframes bha-cos-flame { 0% { opacity: 0.6; scale: 0.96 1; } 50% { opacity: 0.95; scale: 1.02 1.1; } 100% { opacity: 0.7; scale: 0.98 1.02; } }
+@keyframes bha-cos-bolt { 0% { opacity: 0.35; } 40% { opacity: 1; } 60% { opacity: 0.5; } 100% { opacity: 0.95; } }
+
+/* ── 색조: 내 캐릭터 그림 (스킨에도) ── */
+:root[data-cos-tint] .bha-char__frame, :root[data-cos-tint] .bha-hero__img, :root[data-cos-tint] .bha-walker__img,
+:root[data-cos-tint] .bha-char__body:not(.has-art), :root[data-cos-tint] .bha-hero__body:not(.has-art), :root[data-cos-tint] .bha-walker:not(.has-art) .bha-walker__body { filter: var(--cos-tint); }
+
+/* ── 발밑·잔상: 원정 걷기 (걷는 쪽 = 왼쪽, 자국은 뒤 = 오른쪽) ── */
+.bha-walker__trail { display: none; }
+:root[data-cos-trail] .bha-walker__trail {
+  display: block; position: absolute; left: 62%; bottom: -4%; width: 110%; height: 12%; pointer-events: none; z-index: -1;
+  color: var(--cos-trail);
+  background: radial-gradient(closest-side, currentColor 70%, transparent 100%) 0 50% / 12px 70% repeat-x;
+  -webkit-mask-image: linear-gradient(to right, currentColor, transparent); mask-image: linear-gradient(to right, currentColor, transparent);
+  opacity: 0.85;
+}
+:root[data-cos-trail="ember"] .bha-walker__trail { filter: drop-shadow(0 0 3px currentColor); background-size: 9px 55%; }
+:root[data-cos-trail="sand"] .bha-walker__trail { background-size: 16px 80%; opacity: 0.7; }
+:root[data-cos-trail] .is-walking .bha-walker__trail { animation: bha-cos-trail calc(.5s / var(--walk-speed, 1)) linear infinite; }
+@keyframes bha-cos-trail { from { background-position: 0 50%; } to { background-position: 24px 50%; } }
+
+/* ── 공격 이펙트 색: 내 기술·필살 자국과 이름 (data-side="player") ── */
+:root[data-cos-fx] .bha-afx[data-side="player"] { color: var(--cos-fx); filter: drop-shadow(0 0 2px var(--cos-fx-edge, currentColor)) drop-shadow(0 0 7px currentColor); }
+:root[data-cos-fx] .bha-afx[data-side="player"] .afx-core { fill: var(--cos-fx-edge, var(--bha-text-1)); }
+:root[data-cos-fx] .bha-afx[data-side="player"] .afx-core-s { stroke: var(--cos-fx-edge, var(--bha-text-1)); }
+:root[data-cos-fx] .bha-afx-name[data-side="player"] { color: var(--cos-fx-edge, var(--bha-text-1)); text-shadow: 0 0 12px var(--cos-fx), 0 0 4px var(--cos-fx), 0 2px 4px var(--bha-bg-0); }
+
+/* ── 블록 바: 바 바탕·블록 테두리 (블록 속성 색·계열 글자·약점·봉인 표시는 그대로) ── */
+:root[data-cos-bar] .bha-tray__grid { background: var(--cos-bar-bg), var(--bha-bg-1); box-shadow: inset 0 0 0 1px var(--cos-bar-line), inset 0 3px 8px rgb(0 0 0 / 0.5); }
+:root[data-cos-bar] .bha-tray .bha-block { border: 2px solid var(--cos-bar-line); }
+
+/* ── 기기 껍데기: 몸체·테두리·LCD 색 (옅은 덮개라 글자 대비는 그대로) ── */
+:root[data-cos-shell] .bha-dev__bezel { background: var(--cos-shell-body); border-color: var(--cos-shell-line); box-shadow: inset 0 0 0 1px var(--cos-shell-line), 0 0 24px rgb(0 0 0 / 0.6); }
+:root[data-cos-shell] .bha-dev__btn { border-color: var(--cos-shell-line); }
+:root[data-cos-shell] .bha-lcd { border-color: var(--cos-shell-line); }
+:root[data-cos-shell] .bha-lcd::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: calc(var(--bha-z-tutorial) + 1); background: var(--cos-shell-lcd); }
+
+/* ── 이름표 테: 방 이름표 ── */
+:root[data-cos-plate] .bha-room__name { padding: var(--bha-sp-1) var(--bha-sp-3); border: 2px solid var(--cos-plate); border-radius: var(--bha-r-sm); box-shadow: 0 0 6px var(--cos-plate), inset 0 0 4px var(--cos-plate); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-cos-aura] .bha-char__lift::before, :root[data-cos-aura] .bha-hero__lift::before, :root[data-cos-aura] .bha-walker::before, :root[data-cos-trail] .bha-walker__trail { animation: none; }
+}

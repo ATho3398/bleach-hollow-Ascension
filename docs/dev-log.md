@@ -2097,3 +2097,29 @@ GDD 제안 (마스터가 반영)
 **밸런스**: `npm run balance:check` 통과(회귀 가드). 봇은 합체하지 않아 보너스 0 — 기존 값 그대로.
 
 **캡처** `docs/captures/c59/` (헤드리스 Chromium 844×390 터치, 시험 세이브를 저장소에 넣고 [이어하기]): `01-old-save-room-track-opened`(형식 22 호로 아란칼 세이브 → 방 + "사신 트랙이 열렸다"), `01b-…-nameplate-switch`(이름표 옆 [사신으로]), `02-track-switched-shinigami-tier1`(혼백 1단계 + 트랙 전환 토스트 + 첫 튜토리얼 보상), `02b-…-back-hollow`, `03-room-hogyoku-tab-notice`("붕옥 탭이 열렸다"), `03b-dock-more-hogyoku`, `04-hogyoku-before-liberation-40`(40/100), `05-hogyoku-gauge-full`([붕옥 해방]), `06-hogyoku-liberated`·`06b-…-stage2`(해방 +5%, 2단계 0/300), `07-hogyoku-stage2-full-ready`(300/300, 두 캐릭터 No.1/대장 ✓, [합체 미리보기]), `08-fusion-preview`(「균열 방랑자」가 된다), `09-fusion-final-confirm`, `10-fusion-scene`, `11-fusion-result`(호로 아란칼 + 사신 수석 대원 → 새 두 트랙 1단계, 1/6, 영옥 +10, +7%), `12-room-new-tier1-after-fusion`, `13-hogyoku-transcendent-dex-after-fusion`(6. 균열 방랑자 · 1번째 합체), `14-status-bonus`(능력치 54 = 50×1.07, 보너스 줄), `15-room-new-shinigami-tier1`. `proof.json` = 마이그레이션 후 형식 23·백업 있음, 전환 전후 트랙, 붕옥 상태, 합체 후 트랙·도감·합체 기록·영옥·백업 키. 콘솔 오류 0.
+
+### C.60 상점 1차 — 골드 소모품·편의 11종 · 영옥 꾸밈 1차 8분류 · 다시 뽑기권 · 스킨 잠금 · 튜토리얼 영옥 (STAGE S-16, 코딩52, GDD 25-9 → 25-10 v5.29)
+사용 모델: Opus 5.5 (마스터 지정, 세이브 구조 변경 + 새 화면 + 흡수 엔진). `PATCH_LABEL` C.60, `STAGE_LABEL` S-16. **`BALANCE_VERSION` 35 → 36**(새 수치 `provisional.shop`, 기존 수치 변경 없음), **`SAVE_FORMAT_VERSION` 23 → 24**, 원정 중간 저장 형식 6 그대로(흡수 제안의 `rerolled` 는 선택 필드). **새 토큰 묶음 `--bha-cos-*`**(마스터 승인, `tokens.css` "꾸밈" 구역) — 새 CSS `src/ui/bha/shop.css`(기존 토큰만)·`src/ui/bha/cosmetics.css`(꾸밈 토큰 참조만).
+
+**데이터·엔진** — 품목 `src/data/shop/items.json` + `index.ts`(골드 11종 `kind` = food·calm·wake·trainingTicket·rareTile·reroll·deckSlot, 꾸밈 분류 8개·품목 23개, 스킨 품목은 스킨 표에서 `skin-<id>`), 가격·상한 `balance.ts` `provisional.shop`. `src/shop.ts`: 줄 상태(`goldRows`·`jadeRows` — 가격·잠김 이유·보유·착용·확인 창 여부), `buyShopItem`(다시 확인 후 즉시 효과 + `runLog.shopPurchases`), `wearCosmetic`·`unwearCategory`(분류당 1개, 스킨은 트랙 `skin`), `useRerollTicket`, `rareTilePool`. 흡수: `rerollCandidates`(absorb/offer.ts — 확정 후보 유지, 같은 수, 지금 후보와 안 겹치게, 원래 규칙 그대로) + `rerollAbsorb`(expedition.ts — 흡수 1번에 1번, 전용 난수 `seed ^ REROLL_SEED_SALT ^ 흡수 순번`). 흡수 기록에 `rerolled`. `deckSizeOf(save)` = 8 + 산 덱 칸 → 덱 화면·출발 덱·남은 타일 보관. 종족 분기 없음(테스트가 상점 파일 4개에 종족 id 문자열이 없는지 확인).
+
+**화면** — 독 [더보기] → [상점]("준비 중" 토스트 대체, `shopView.ts`): 머리 골드·영옥·[골드]/[영옥] 탭, 골드 = 왼쪽 먹이 5 / 오른쪽 소모품·편의, 영옥 = 왼쪽 스킨·오라·색조·발밑 / 오른쪽 이펙트·블록 바·기기·이름표(분류 머리 + 색 견본). 줄 = 이름·효과·보유·가격·[사기](잠기면 자물쇠 + 이유), 영옥 품목·덱 칸만 확인 창, 산 꾸밈은 [착용]/[해제]. 구매·착용 뒤 같은 탭·같은 스크롤 위치로 다시 그림 + 토스트("상점 — 골드 −35"). 흡수 화면 2단계 [다시 뽑기 (n)](쓰면 잠김 + 안내, 바로 원정 중간 저장). 상태 화면 [스킨] 패널은 보유한 스킨만, '가진 것'에 "상점 골드 탭/영옥 탭" 안내와 다시 뽑기권 장수. 꾸밈 표시 `src/ui/bha/cosmetics.ts`(`applyCosmetics` — 방·슬롯 열기·상점 착용 때 루트에 `data-cos-*`·`--cos-*`, 시작 화면에서 벗김) + `cosmetics.css`(오라·색조·발밑 자국 `bha-walker__trail`·내 쪽 공격 자국 `data-side="player"`·블록 바·기기 껍데기·이름표 테). 튜토리얼 목록 보상 줄·토스트에 영옥.
+
+**기획서 값 / 실제 값 / 이유** (GDD 25-10 표와 같음)
+- 정화제·각성제 "둥지에서만" / + 원정 중간 저장이 있는 트랙·이미 0/가득이면 잠김 / 귀환 때 원정 값이 둥지 값을 덮어 효과가 사라지고, 효과 없는 구매를 막는다.
+- 이름표 테 "이름 옆 테두리" / 방 위 이름표(입으면 늘 보임) / 이름표는 환생·투트랙일 때만 있었다. 전투·원정엔 내 이름 자리가 없다.
+- 공격 이펙트 색 "체인 기술·필살 연출 색" / 내 계열 공격 자국·투사체·기술/필살 이름 글자 / 연출 색이 있는 곳이 이 셋. 기본 공격 몸통박치기는 색이 없는 연출이라 그대로.
+- 기기 LCD 색 / LCD 위 옅은 덮개(7~8%) / 글자 대비를 지킨다.
+- 다시 뽑기 / 같은 수, 확정 후보(보스·희귀) 유지 / 확정 후보가 빠지면 손해.
+- 튜토리얼 영옥 소급 "처음 열 때 한꺼번에" / 형식 24 마이그레이션 때 받은 목표 수만큼(토스트 없음) / 옛 수령 기록으로 정확히 셀 수 있고 새 목표는 기존 판정·토스트로 받는다.
+- 정한 것: 색조 핏빛은 처음 값(sepia .7·saturate 3.2)이 갈색 그림에서 거의 안 보여 sepia 1·saturate 6·hue −42 로 진하게(캡처 12 에서 확인).
+
+**세이브 형식 24**: 공유 `rerollTickets`·`deckSlots`·`cosmetics`, 트랙 `wear`(TRACK_KEYS 12개 — 쉬는 트랙도), 런 로그 `shopPurchases`, 흡수 기록 `rerolled`. 마이그레이션 23 → 24: 스킨을 입은 트랙이 있으면 그 스킨 보유(입은 채 유지), 다시 뽑기권 0·덱 칸 0·착용 없음·구매 기록 빈 목록, 받은 튜토리얼 목표 수 × 영옥 1 소급. 보정: 안 산·분류가 다른·모르는 착용은 벗김, 상한 넘는 뽑기권·덱 칸은 상한으로, 안 산 스킨은 null. 직전 자동 백업은 기존 `stashSlot('migration')`. 합체 뒤 새 트랙도 스킨·착용 유지.
+
+**밸런스**: `balance:check` 통과 + 새 가드 한 줄 — "상점 (GDD 25-9): 원정 1판 평균 골드 123.4 → 보통 먹이(35골드) 3.53개 (가드 2~5) · 원정 전리품 먹이 11.29개". 그 밖의 값은 전과 같음(봇은 상점을 쓰지 않는다).
+
+**테스트** 798 → 816 (+18, 지운 테스트 없음): `tests/c60.test.ts` 18개(데이터·가격 1, 꾸밈 토큰 존재 1, 종족 분기 없음 1, 골드 탭 6 — 먹이·정화제/각성제·수련권·희귀 타일·다시 뽑기권·덱 칸, 영옥 탭 4 — 구매/착용/해제·스킨·트랙별 착용·문구, 다시 뽑기 2, 튜토리얼 영옥·마이그레이션·보정 3). 바꾼 테스트(규칙이 바뀐 곳만): c55 스킨 입기 2개(보유해야 입는다), c56 환생 영옥(튜토리얼 영옥 +1 반영), c59 형식 23 무손실 검사(형식 24 가 새 키를 붙이는 것은 `toMatchObject`로 허용, 옛 값 비교는 그대로), economy 형식 16 공유 자원 모양(새 필드).
+
+**캡처** `docs/captures/c60/` (헤드리스 Chromium 844×390 터치·2배, 시험 세이브를 저장소에 넣고 [이어하기], 스크립트는 저장소 밖): `01-shop-gold-hollow`(골드 300·영옥 40, 간식 9/9 잠김, 정화제 "광기 이미 0" 잠김), `02-…-after-buy-basic`(골드 265, 짐승 고기 4/9, 토스트), `03-shop-jade-hollow`, `04-shop-confirm-aura-hollow`(확인 창), `05-…-after-buy-aura`(영옥 32, [착용]), `06-…-worn-aura`(착용 중 테두리·[해제]), `07-shop-confirm-deckslot-hollow`·`07b-…-after-deckslot`(덱 9칸 +1/2, 다음 800 "골드 700 부족"), 사신 `08-shop-gold-shinigami`(먹이 이름 = 사신 설정)·`09-shop-jade-shinigami`(입을 수 있는 스킨 없음 안내), 꾸밈 전부 입은 호로 `10-room-cosmetics`(오라 푸른 불꽃·색조 핏빛·이름표 테 금박·기기 껍데기 금박)·`11-walk-cosmetics`(발밑 불티 자국)·`12-battle-cosmetics`(블록 바 금박 테두리·오라·색조)·`13-battle-fx-color`(푸른 영압: 내 계열 자국·기술 이름), `14/15-absorb-reroll-before/after-{hollow,shinigami}`(후보 바뀜, 버튼 잠김), `16-status-skin-panel-none`·`17-…-owned`(보유한 스킨만). `proof.json` = 줄 상태 목록(두 종족 두 탭), 구매 전후 지갑·먹이·`shopPurchases`, 착용 뒤 `wear`·루트 `data-cos-*`, 덱 칸, 걷기 자국 표시, 전투 색조 필터·블록 테두리 색, 다시 뽑기 전후 후보·남은 장수·저장된 제안(`rerolled`), 스킨 패널 개수. 콘솔 오류 0.
+
+명령 시각 2026-10-20 08:36(지시문, 세션 시계 첫 측정 08:22) / 답변 시각 2026-10-20 08:47 / 걸린 시간 약 30분(세션 시계 기준) (KST)

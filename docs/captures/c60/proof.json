@@ -1,0 +1,586 @@
+{
+  "consoleErrors": [],
+  "shots": [
+    {
+      "file": "01-shop-gold-hollow.png",
+      "note": "골드 탭: 먹이 5종(간식 가득 잠김)·소모품·덱 칸(골드 부족 잠김)"
+    },
+    {
+      "file": "02-shop-gold-after-buy-basic-hollow.png",
+      "note": "보통 먹이 산 뒤: 골드 300 → 265, 보유 +1, 토스트"
+    },
+    {
+      "file": "03-shop-jade-hollow.png",
+      "note": "영옥 탭: 스킨·오라·색조·발밑 / 이펙트·블록 바·기기·이름표"
+    },
+    {
+      "file": "04-shop-confirm-aura-hollow.png",
+      "note": "영옥 품목 확인 창"
+    },
+    {
+      "file": "05-shop-jade-after-buy-aura-hollow.png",
+      "note": "산 뒤 [착용] 버튼, 영옥 40 → 32"
+    },
+    {
+      "file": "06-shop-jade-worn-aura-hollow.png",
+      "note": "[착용] 뒤: 착용 중 테두리 + [해제]"
+    },
+    {
+      "file": "07-shop-confirm-deckslot-hollow.png",
+      "note": "덱 칸 +1 확인 창 (골드 400)"
+    },
+    {
+      "file": "07b-shop-after-deckslot-hollow.png",
+      "note": "덱 칸 산 뒤: 덱 9칸 (+1/2), 다음 800"
+    },
+    {
+      "file": "08-shop-gold-shinigami.png",
+      "note": "사신 골드 탭 (먹이 이름 = 종족 설정)"
+    },
+    {
+      "file": "09-shop-jade-shinigami.png",
+      "note": "사신 영옥 탭 (입을 수 있는 스킨 없음 안내)"
+    },
+    {
+      "file": "10-room-cosmetics-hollow.png",
+      "note": "방: 오라(푸른 불꽃)·색조(핏빛)·이름표 테(금박)·기기 껍데기(금박)"
+    },
+    {
+      "file": "11-walk-cosmetics-hollow.png",
+      "note": "원정 걷기: 발밑(불티)·오라·색조·기기 껍데기"
+    },
+    {
+      "file": "12-battle-cosmetics-hollow.png",
+      "note": "전투: 블록 바(금박)·오라·색조·기기 껍데기"
+    },
+    {
+      "file": "13-battle-fx-color-hollow.png",
+      "note": "공격 이펙트 색(푸른 영압): 내 계열 자국"
+    },
+    {
+      "file": "14-absorb-reroll-before-hollow.png",
+      "note": "특성 후보 + [다시 뽑기 (n)]"
+    },
+    {
+      "file": "15-absorb-reroll-after-hollow.png",
+      "note": "다시 뽑은 뒤: 후보 바뀜, 버튼 잠김(이번 흡수에서는 이미 다시 뽑았다)"
+    },
+    {
+      "file": "14-absorb-reroll-before-shinigami.png",
+      "note": "특성 후보 + [다시 뽑기 (n)]"
+    },
+    {
+      "file": "15-absorb-reroll-after-shinigami.png",
+      "note": "다시 뽑은 뒤: 후보 바뀜, 버튼 잠김(이번 흡수에서는 이미 다시 뽑았다)"
+    },
+    {
+      "file": "16-status-skin-panel-none-hollow.png",
+      "note": "안 산 세이브: 스킨 없음 + 상점 안내"
+    },
+    {
+      "file": "17-status-skin-panel-owned-hollow.png",
+      "note": "산 세이브: 기본 + 그랜드피셔"
+    }
+  ],
+  "goldHollow": {
+    "wallet": "골드 300 · 영옥 40 임시 가격",
+    "rows": [
+      {
+        "id": "food-snack",
+        "cls": "bha-shoprow is-locked",
+        "text": "영혼 조각 먹이 +1 (종류별 보관 9개까지) 보유 9/9 골드 20 사기 보관 가득 (9/9)"
+      },
+      {
+        "id": "food-basic",
+        "cls": "bha-shoprow",
+        "text": "짐승 고기 먹이 +1 (종류별 보관 9개까지) 보유 3/9 골드 35 사기"
+      },
+      {
+        "id": "food-hearty",
+        "cls": "bha-shoprow",
+        "text": "큰 사냥감 먹이 +1 (종류별 보관 9개까지) 보유 2/9 골드 60 사기"
+      },
+      {
+        "id": "food-tonic",
+        "cls": "bha-shoprow",
+        "text": "영압 응축물 먹이 +1 (종류별 보관 9개까지) 보유 0/9 골드 100 사기"
+      },
+      {
+        "id": "food-feast",
+        "cls": "bha-shoprow",
+        "text": "영혼 덩어리 먹이 +1 (종류별 보관 9개까지) 보유 0/9 골드 140 사기"
+      },
+      {
+        "id": "calm",
+        "cls": "bha-shoprow is-locked",
+        "text": "정화제 광기 −30 (0 아래로 안 감), 지금 캐릭터에 바로 지금 0 골드 80 사기 광기 이미 0"
+      },
+      {
+        "id": "wake",
+        "cls": "bha-shoprow",
+        "text": "각성제 컨디션 +30 (100 위로 안 감), 지금 캐릭터에 바로 지금 80 골드 60 사기"
+      },
+      {
+        "id": "rare-tile",
+        "cls": "bha-shoprow",
+        "text": "희귀 타일 꾸러미 덱 밖 타일 무작위 1장 → 수집함 (이벤트 타일 제외) 골드 60 사기"
+      },
+      {
+        "id": "reroll",
+        "cls": "bha-shoprow",
+        "text": "다시 뽑기권 흡수 화면 특성 후보를 한 번 다시 뽑는다 (흡수 1번에 1장, 보유 3장까지) 보유 0/3 골드 120 사기"
+      },
+      {
+        "id": "deck-slot",
+        "cls": "bha-shoprow is-locked",
+        "text": "타일 덱 칸 +1 원정 타일 덱 칸 +1 (영구, 두 트랙 공유, 최대 +2) 덱 8칸 (+0/2) 골드 400 사기 골드 100 부족"
+      }
+    ]
+  },
+  "afterBuyBasic": {
+    "wallet": "골드 265 · 영옥 40 임시 가격",
+    "gold": 265,
+    "basic": 4,
+    "purchases": [
+      {
+        "at": 1792453499309,
+        "factionId": "hollow",
+        "itemId": "food-basic",
+        "currency": "gold",
+        "price": 35
+      }
+    ]
+  },
+  "jadeHollow": {
+    "wallet": "골드 265 · 영옥 40 임시 가격",
+    "rows": [
+      {
+        "id": "skin-grandfisher",
+        "cls": "bha-shoprow",
+        "text": "그랜드피셔(가칭) 영옥 30 사기"
+      },
+      {
+        "id": "aura-smoke",
+        "cls": "bha-shoprow",
+        "text": "영압 연기 영옥 8 사기"
+      },
+      {
+        "id": "aura-blue",
+        "cls": "bha-shoprow",
+        "text": "푸른 불꽃 영옥 8 사기"
+      },
+      {
+        "id": "aura-bolt",
+        "cls": "bha-shoprow",
+        "text": "붉은 번개 영옥 8 사기"
+      },
+      {
+        "id": "aura-gold",
+        "cls": "bha-shoprow",
+        "text": "황금 빛 영옥 8 사기"
+      },
+      {
+        "id": "tint-mono",
+        "cls": "bha-shoprow",
+        "text": "흑백 영옥 6 사기"
+      },
+      {
+        "id": "tint-blood",
+        "cls": "bha-shoprow",
+        "text": "핏빛 영옥 6 사기"
+      },
+      {
+        "id": "tint-pale",
+        "cls": "bha-shoprow",
+        "text": "창백 영옥 6 사기"
+      },
+      {
+        "id": "tint-gold",
+        "cls": "bha-shoprow",
+        "text": "황금 영옥 6 사기"
+      },
+      {
+        "id": "trail-sand",
+        "cls": "bha-shoprow",
+        "text": "모래 영옥 5 사기"
+      },
+      {
+        "id": "trail-blood",
+        "cls": "bha-shoprow",
+        "text": "핏자국 영옥 5 사기"
+      },
+      {
+        "id": "trail-ember",
+        "cls": "bha-shoprow",
+        "text": "불티 영옥 5 사기"
+      },
+      {
+        "id": "fx-black",
+        "cls": "bha-shoprow",
+        "text": "검은 영압 영옥 6 사기"
+      },
+      {
+        "id": "fx-blue",
+        "cls": "bha-shoprow",
+        "text": "푸른 영압 영옥 6 사기"
+      },
+      {
+        "id": "fx-crimson",
+        "cls": "bha-shoprow",
+        "text": "핏빛 영옥 6 사기"
+      },
+      {
+        "id": "bar-bone",
+        "cls": "bha-shoprow",
+        "text": "뼈 영옥 5 사기"
+      },
+      {
+        "id": "bar-ink",
+        "cls": "bha-shoprow",
+        "text": "먹물 영옥 5 사기"
+      },
+      {
+        "id": "bar-gold",
+        "cls": "bha-shoprow",
+        "text": "금박 영옥 5 사기"
+      },
+      {
+        "id": "shell-bone",
+        "cls": "bha-shoprow",
+        "text": "뼈 영옥 6 사기"
+      },
+      {
+        "id": "shell-ink",
+        "cls": "bha-shoprow",
+        "text": "먹물 영옥 6 사기"
+      },
+      {
+        "id": "shell-gold",
+        "cls": "bha-shoprow",
+        "text": "금박 영옥 6 사기"
+      },
+      {
+        "id": "plate-bone",
+        "cls": "bha-shoprow",
+        "text": "뼈 영옥 3 사기"
+      },
+      {
+        "id": "plate-ink",
+        "cls": "bha-shoprow",
+        "text": "먹물 영옥 3 사기"
+      },
+      {
+        "id": "plate-gold",
+        "cls": "bha-shoprow",
+        "text": "금박 영옥 3 사기"
+      }
+    ]
+  },
+  "confirm": "푸른 불꽃 — 영옥 8\n\n오라 · 보이는 곳: 방·원정 걷기·전투의 내 캐릭터 뒤. 산 꾸밈은 두 트랙이 같이 가지고, 입는 것은 트랙마다 따로다.\n\n아니오\n사기",
+  "afterAura": {
+    "jade": 32,
+    "cosmetics": [
+      "aura-blue"
+    ],
+    "wear": {
+      "aura": "aura-blue"
+    },
+    "purchases": [
+      {
+        "at": 1792453499309,
+        "factionId": "hollow",
+        "itemId": "food-basic",
+        "currency": "gold",
+        "price": 35
+      },
+      {
+        "at": 1792453501291,
+        "factionId": "hollow",
+        "itemId": "aura-blue",
+        "currency": "jade",
+        "price": 8
+      }
+    ],
+    "rootAura": "blue"
+  },
+  "deckSlot": {
+    "deckSlots": 1,
+    "gold": 100,
+    "row": {
+      "id": "deck-slot",
+      "cls": "bha-shoprow is-locked",
+      "text": "타일 덱 칸 +1 원정 타일 덱 칸 +1 (영구, 두 트랙 공유, 최대 +2) 덱 9칸 (+1/2) 골드 800 사기 골드 700 부족"
+    }
+  },
+  "goldShinigami": {
+    "wallet": "골드 120 · 영옥 12 임시 가격",
+    "rows": [
+      {
+        "id": "food-snack",
+        "cls": "bha-shoprow",
+        "text": "주먹밥 먹이 +1 (종류별 보관 9개까지) 보유 8/9 골드 20 사기"
+      },
+      {
+        "id": "food-basic",
+        "cls": "bha-shoprow",
+        "text": "도시락 먹이 +1 (종류별 보관 9개까지) 보유 3/9 골드 35 사기"
+      },
+      {
+        "id": "food-hearty",
+        "cls": "bha-shoprow",
+        "text": "고기 요리 먹이 +1 (종류별 보관 9개까지) 보유 0/9 골드 60 사기"
+      },
+      {
+        "id": "food-tonic",
+        "cls": "bha-shoprow",
+        "text": "영력 차 먹이 +1 (종류별 보관 9개까지) 보유 0/9 골드 100 사기"
+      },
+      {
+        "id": "food-feast",
+        "cls": "bha-shoprow is-locked",
+        "text": "잔칫상 먹이 +1 (종류별 보관 9개까지) 보유 0/9 골드 140 사기 골드 20 부족"
+      },
+      {
+        "id": "calm",
+        "cls": "bha-shoprow is-locked",
+        "text": "정화제 호로화 −30 (0 아래로 안 감), 지금 캐릭터에 바로 지금 0 골드 80 사기 호로화 이미 0"
+      },
+      {
+        "id": "wake",
+        "cls": "bha-shoprow",
+        "text": "각성제 컨디션 +30 (100 위로 안 감), 지금 캐릭터에 바로 지금 80 골드 60 사기"
+      },
+      {
+        "id": "rare-tile",
+        "cls": "bha-shoprow",
+        "text": "희귀 타일 꾸러미 덱 밖 타일 무작위 1장 → 수집함 (이벤트 타일 제외) 골드 60 사기"
+      },
+      {
+        "id": "reroll",
+        "cls": "bha-shoprow",
+        "text": "다시 뽑기권 흡수 화면 특성 후보를 한 번 다시 뽑는다 (흡수 1번에 1장, 보유 3장까지) 보유 0/3 골드 120 사기"
+      },
+      {
+        "id": "deck-slot",
+        "cls": "bha-shoprow is-locked",
+        "text": "타일 덱 칸 +1 원정 타일 덱 칸 +1 (영구, 두 트랙 공유, 최대 +2) 덱 8칸 (+0/2) 골드 400 사기 골드 280 부족"
+      }
+    ]
+  },
+  "jadeShinigami": {
+    "rows": [
+      {
+        "id": "aura-smoke",
+        "cls": "bha-shoprow",
+        "text": "영압 연기 영옥 8 사기"
+      },
+      {
+        "id": "aura-blue",
+        "cls": "bha-shoprow",
+        "text": "푸른 불꽃 영옥 8 사기"
+      },
+      {
+        "id": "aura-bolt",
+        "cls": "bha-shoprow",
+        "text": "붉은 번개 영옥 8 사기"
+      },
+      {
+        "id": "aura-gold",
+        "cls": "bha-shoprow",
+        "text": "황금 빛 영옥 8 사기"
+      },
+      {
+        "id": "tint-mono",
+        "cls": "bha-shoprow",
+        "text": "흑백 영옥 6 사기"
+      },
+      {
+        "id": "tint-blood",
+        "cls": "bha-shoprow",
+        "text": "핏빛 영옥 6 사기"
+      },
+      {
+        "id": "tint-pale",
+        "cls": "bha-shoprow",
+        "text": "창백 영옥 6 사기"
+      },
+      {
+        "id": "tint-gold",
+        "cls": "bha-shoprow",
+        "text": "황금 영옥 6 사기"
+      },
+      {
+        "id": "trail-sand",
+        "cls": "bha-shoprow",
+        "text": "모래 영옥 5 사기"
+      },
+      {
+        "id": "trail-blood",
+        "cls": "bha-shoprow",
+        "text": "핏자국 영옥 5 사기"
+      },
+      {
+        "id": "trail-ember",
+        "cls": "bha-shoprow",
+        "text": "불티 영옥 5 사기"
+      },
+      {
+        "id": "fx-black",
+        "cls": "bha-shoprow",
+        "text": "검은 영압 영옥 6 사기"
+      },
+      {
+        "id": "fx-blue",
+        "cls": "bha-shoprow",
+        "text": "푸른 영압 영옥 6 사기"
+      },
+      {
+        "id": "fx-crimson",
+        "cls": "bha-shoprow",
+        "text": "핏빛 영옥 6 사기"
+      },
+      {
+        "id": "bar-bone",
+        "cls": "bha-shoprow",
+        "text": "뼈 영옥 5 사기"
+      },
+      {
+        "id": "bar-ink",
+        "cls": "bha-shoprow",
+        "text": "먹물 영옥 5 사기"
+      },
+      {
+        "id": "bar-gold",
+        "cls": "bha-shoprow",
+        "text": "금박 영옥 5 사기"
+      },
+      {
+        "id": "shell-bone",
+        "cls": "bha-shoprow",
+        "text": "뼈 영옥 6 사기"
+      },
+      {
+        "id": "shell-ink",
+        "cls": "bha-shoprow",
+        "text": "먹물 영옥 6 사기"
+      },
+      {
+        "id": "shell-gold",
+        "cls": "bha-shoprow",
+        "text": "금박 영옥 6 사기"
+      },
+      {
+        "id": "plate-bone",
+        "cls": "bha-shoprow",
+        "text": "뼈 영옥 3 사기"
+      },
+      {
+        "id": "plate-ink",
+        "cls": "bha-shoprow",
+        "text": "먹물 영옥 3 사기"
+      },
+      {
+        "id": "plate-gold",
+        "cls": "bha-shoprow",
+        "text": "금박 영옥 3 사기"
+      }
+    ]
+  },
+  "roomRoot": {
+    "theme": "dark",
+    "bhaTheme": "hollow",
+    "cosAura": "blue",
+    "cosTint": "blood",
+    "cosTrail": "ember",
+    "cosFx": "blue",
+    "cosBar": "gold",
+    "cosShell": "gold",
+    "cosPlate": "gold"
+  },
+  "roomPlate": "길리안",
+  "walk": {
+    "trail": true,
+    "trailVisible": "block",
+    "walking": true
+  },
+  "battleTint": "sepia(1) saturate(6) hue-rotate(-42deg) brightness(0.95)",
+  "battleBarBorder": "rgb(255, 211, 107)",
+  "fxShot": true,
+  "battleBlocks": 0,
+  "reroll_hollow": {
+    "before": [
+      "독 교",
+      "물 탄"
+    ],
+    "after": [
+      "혈 교",
+      "불 조"
+    ],
+    "button": "다시 뽑기 (1)",
+    "ticketsLeft": 1,
+    "savedOffer": {
+      "enemyId": "blood-basic",
+      "element": "blood",
+      "ev": {
+        "atk": 1,
+        "int": 1
+      },
+      "rare": false,
+      "elite": false,
+      "strength": 30,
+      "candidates": [
+        "t-blood-b",
+        "t-fire-a"
+      ],
+      "reasons": [
+        "first-absorb"
+      ],
+      "chain3Count": 0,
+      "weakChain3Count": 0,
+      "finisherElement": null,
+      "rerolled": true
+    }
+  },
+  "reroll_shinigami": {
+    "before": [
+      "독 권",
+      "물 귀"
+    ],
+    "after": [
+      "혈 권",
+      "불 참"
+    ],
+    "button": "다시 뽑기 (0)",
+    "ticketsLeft": 0,
+    "savedOffer": {
+      "enemyId": "blood-basic",
+      "element": "blood",
+      "ev": {
+        "atk": 1,
+        "int": 1
+      },
+      "rare": false,
+      "elite": false,
+      "strength": 30,
+      "candidates": [
+        "t-blood-b",
+        "t-fire-a"
+      ],
+      "reasons": [
+        "first-absorb"
+      ],
+      "chain3Count": 0,
+      "weakChain3Count": 0,
+      "finisherElement": null,
+      "rerolled": true
+    }
+  },
+  "skinNone": {
+    "skins": "0",
+    "text": "스킨\n\n가진 스킨이 없다. 더보기 ⋯ → [상점] 영옥 탭에서 산다."
+  },
+  "skinOwned": {
+    "skins": "1",
+    "text": "스킨\n기본(진화체)\n그랜드피셔(가칭)\n\n입으면 단계와 상관없이 방·원정·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다."
+  }
+}

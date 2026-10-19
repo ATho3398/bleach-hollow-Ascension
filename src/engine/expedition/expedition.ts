@@ -11,7 +11,7 @@ import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams,
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import {
   absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
-  newBuild, releaseEffect, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
+  newBuild, releaseEffect, rerollCandidates, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import {
   applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
@@ -23,7 +23,7 @@ import {
   applyTraitBoosts, combineMods, drawDraft, makeEvent, mutationMods, rollMutation, synergyAt, synergyMods, upgradeMods, type EventPending, type VariantMods,
 } from './variants';
 import type { FoodId } from '../faction';
-import { getBoss } from '../../data/bosses';
+import { getBoss, isBossId } from '../../data/bosses';
 import { getChapter, getEpisode, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
 
@@ -37,6 +37,8 @@ const GX = BALANCE.provisional.gold;
 const LOOT_SEED_SALT = 0x5f3759df;
 /** 타일 변수 난수 시드 = 원정 시드 xor 이 값 (드래프트·변이·이벤트 내용이 적·타일·흡수 난수를 바꾸지 않게) */
 const VARIANT_SEED_SALT = 0x2545f491;
+/** 다시 뽑기(GDD 25-9) 전용 난수 소금 */
+const REROLL_SEED_SALT = 0x6c8e9cf5;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 
@@ -716,7 +718,21 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
 export type AbsorbResult = { ok: true } | { ok: false; reason: string };
 
 function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null): void {
-  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap });
+  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}) });
+}
+
+/** 다시 뽑기 (GDD 25-9): 흡수 화면에서 특성 후보를 한 번 다시 뽑는다(흡수 1번에 1장 — 이미 다시 뽑았으면 거절). 다시 뽑기권은 부르는 쪽(세이브)이 쓴다.
+ *  난수는 원정 난수와 따로(같은 시드 원정의 적·타일·흡수 결과를 바꾸지 않는다) */
+export function rerollAbsorb(exp: ExpeditionState): AbsorbResult {
+  const offer = exp.absorbOffer;
+  if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
+  if (offer.rerolled) return { ok: false, reason: '이 흡수에서는 이미 다시 뽑았다' };
+  if (offer.candidates.length === 0) return { ok: false, reason: '다시 뽑을 후보가 없다' };
+  const rng = createRng((exp.seed ^ REROLL_SEED_SALT ^ Math.imul(exp.absorbRecords.length + 1, 2654435761)) >>> 0);
+  const boss = isBossId(offer.enemyId) ? getBoss(offer.enemyId).trait : null;
+  offer.candidates = rerollCandidates(rng, offer, exp.build, boss);
+  offer.rerolled = true;
+  return { ok: true };
 }
 
 /** 놓아줌: 리스크 하락 + 안정 수치 상승 (GDD 4장 "흡수 안 하면") */

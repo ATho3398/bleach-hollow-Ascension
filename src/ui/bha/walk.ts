@@ -57,7 +57,8 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
     anim = bindAnim(walker, img, art);
     anim?.setLoop('idle');
   } else body.append(el('span', 'bha-walker__eye'), el('span', 'bha-walker__foot bha-walker__foot--back'), el('span', 'bha-walker__foot bha-walker__foot--front'));
-  walker.append(body, el('span', 'bha-walker__shadow'));
+  // 발밑·잔상 꾸밈 자리 (GDD 25-9): 입었을 때만 cosmetics.css 가 보인다
+  walker.append(el('span', 'bha-walker__trail'), body, el('span', 'bha-walker__shadow'));
   scene.append(far, near, ground, walker);
   return {
     el: scene,

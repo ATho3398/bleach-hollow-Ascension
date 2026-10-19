@@ -117,6 +117,52 @@
   --bha-tile-env: #3f84c4;    /* 환경 */
   --bha-tile-rest: #3f9e6c;   /* 휴식 */
 
+  /* ---------- 꾸밈 (GDD 25-9 상점 영옥 탭, C.60 — 마스터 승인 토큰 묶음) ----------
+     이름 = --bha-cos-<분류>-<모양 키>[-<부분>]. 품목 데이터(src/data/shop)의 look 이 모양 키. 화면 코드는 이 토큰만 참조한다(색 직접 금지).
+     블록 계열 글자·속성 색은 바꾸지 않는다 (가독성) */
+  /* 오라: 캐릭터 뒤 빛 색 */
+  --bha-cos-aura-smoke: rgb(176 180 190 / 0.75);
+  --bha-cos-aura-blue: rgb(79 163 255 / 0.85);
+  --bha-cos-aura-bolt: rgb(255 59 72 / 0.85);
+  --bha-cos-aura-gold: rgb(255 204 77 / 0.85);
+  /* 색조: 내 캐릭터 그림 필터 */
+  --bha-cos-tint-mono: grayscale(1) contrast(1.15);
+  --bha-cos-tint-blood: sepia(1) saturate(6) hue-rotate(-42deg) brightness(0.95);
+  --bha-cos-tint-pale: saturate(0.3) brightness(1.28) contrast(0.9);
+  --bha-cos-tint-gold: sepia(0.85) saturate(2.4) hue-rotate(2deg) brightness(1.08);
+  /* 발밑·잔상: 걷기 발자국 색 */
+  --bha-cos-trail-sand: #d8b878;
+  --bha-cos-trail-blood: #b0182c;
+  --bha-cos-trail-ember: #ff8a2b;
+  /* 공격 이펙트 색 (내 기술·필살 연출) */
+  --bha-cos-fx-black: #24132f;
+  --bha-cos-fx-black-edge: #c9a7ff;
+  --bha-cos-fx-blue: #5cb8ff;
+  --bha-cos-fx-blue-edge: #e4f4ff;
+  --bha-cos-fx-crimson: #ff2e4a;
+  --bha-cos-fx-crimson-edge: #ffd0d6;
+  /* 블록 바: 바 바탕(bg)·블록 테두리(line) */
+  --bha-cos-bar-bone-bg: linear-gradient(180deg, rgb(233 223 201 / 0.34), rgb(120 104 80 / 0.4));
+  --bha-cos-bar-bone-line: #efe3c8;
+  --bha-cos-bar-ink-bg: linear-gradient(180deg, rgb(4 4 10 / 0.92), rgb(28 28 44 / 0.85));
+  --bha-cos-bar-ink-line: #3c3c5c;
+  --bha-cos-bar-gold-bg: linear-gradient(180deg, rgb(120 86 20 / 0.7), rgb(56 38 6 / 0.85));
+  --bha-cos-bar-gold-line: #ffd36b;
+  /* 기기 껍데기: 몸체(body)·테두리(line)·LCD 색 덮개(lcd, 옅게) */
+  --bha-cos-shell-bone-body: #cfc3a8;
+  --bha-cos-shell-bone-line: #f4ead4;
+  --bha-cos-shell-bone-lcd: rgb(240 226 196 / 0.07);
+  --bha-cos-shell-ink-body: #0e0e16;
+  --bha-cos-shell-ink-line: #34344e;
+  --bha-cos-shell-ink-lcd: rgb(90 100 190 / 0.08);
+  --bha-cos-shell-gold-body: #7a5a16;
+  --bha-cos-shell-gold-line: #ecbf52;
+  --bha-cos-shell-gold-lcd: rgb(255 206 96 / 0.07);
+  /* 이름표 테 */
+  --bha-cos-plate-bone: #e9dfc9;
+  --bha-cos-plate-ink: #5a5a82;
+  --bha-cos-plate-gold: #ffd24d;
+
   /* ---------- 모서리 (테마가 덮어씀) ---------- */
   --bha-r-xs: 3px;
   --bha-r-sm: 6px;

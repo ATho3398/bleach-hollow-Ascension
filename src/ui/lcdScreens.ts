@@ -2,7 +2,8 @@
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, tileName, upgradeIdOf } from '../data/tiles';
-import { canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { canSynthesize, deckSizeOf, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { skinItemId } from '../data/shop';
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
@@ -65,15 +66,15 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
-/** 스킨 고르기 (GDD 25-1·26-5, C.55): [기본(진화체)]와 이 종족이 입을 수 있는 스킨. 상점 전까지는 있는 스킨이 전부 열려 있다(provisional). 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
- *  종족이 다른 스킨은 목록에 안 보인다(데이터의 종족 필드). 입을 수 있는 스킨이 없는 종족은 그 안내만 */
+/** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
+ *  종족이 다른 스킨·안 산 스킨은 목록에 안 보인다. 보유한 스킨이 없으면 상점 안내만 */
 function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void): HTMLElement {
-  const skins = skinsFor(faction.id);
-  const p = panel(skins.length > 0 ? { title: '스킨', aside: provisionalTag('임시: 전부 열림') } : { title: '스킨' });
+  const skins = skinsFor(faction.id).filter((sk) => save.shared.cosmetics.includes(skinItemId(sk.id)));
+  const p = panel({ title: '스킨' });
   p.setAttribute('aria-label', '스킨');
   p.dataset.skins = String(skins.length);
   if (skins.length === 0) {
-    p.append(h('p', 'bha-faint', '이 종족이 입을 수 있는 스킨은 아직 없다.'));
+    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? '가진 스킨이 없다. 더보기 ⋯ → [상점] 영옥 탭에서 산다.' : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
     return p;
   }
   const list = h('div', 'bha-stack bha-stack--tight');
@@ -110,7 +111,7 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
   return p;
 }
 
-/** 가진 것 (GDD 23-1·22-3·23-4·25-1): 먹이 종류별 개수, 영혼 결정, 골드(쓰는 곳 준비 중), 영옥(꾸밈 재화, 쓰는 곳 준비 중) */
+/** 가진 것 (GDD 23-1·22-3·23-4·25-9): 먹이 종류별 개수, 영혼 결정, 골드·영옥(상점), 다시 뽑기권 */
 function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   const p = panel({ title: '가진 것' });
   p.setAttribute('aria-label', '가진 것');
@@ -120,11 +121,12 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   crystals.append(`${SOUL_CRYSTAL_NAME} `, h('b', 'bha-num', String(save.shared.soulCrystals)));
   const coins = h('p', 'bha-small');
   coins.dataset.currency = 'trade';
-  coins.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ' ', provisionalTag('쓰는 곳 준비 중'));
+  coins.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ' ', h('span', 'bha-faint', '상점 골드 탭'));
   const jade = h('p', 'bha-small');
   jade.dataset.currency = 'jade';
-  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', provisionalTag('꾸밈 · 쓰는 곳 준비 중'));
+  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', h('span', 'bha-faint', '상점 영옥 탭 (꾸밈)'));
   p.append(food, crystals, coins, jade);
+  if (save.shared.rerollTickets > 0) p.append(h('p', 'bha-small', `다시 뽑기권 ${save.shared.rerollTickets}장`));
   return p;
 }
 
@@ -133,7 +135,7 @@ const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab
 
 /** 상자: 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일 덱(왼쪽 설명 / 오른쪽 타일 행) */
 export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
-  const deckSize = BALANCE.provisional.expedition.deckSize;
+  const deckSize = deckSizeOf(save);
   const countOfDeck = () => save.tiles.deck.length;
 
   const tabs = seg([{ id: 'slots', label: '슬롯' }, { id: 'deck', label: '덱', count: countText(countOfDeck(), deckSize) }], chestUi.tab, (id) => {

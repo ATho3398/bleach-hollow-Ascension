@@ -9,14 +9,14 @@ import { buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { createExpedition, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView } from './storyView';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
-  performRebirth, recordTraining, settleLiberationRisk, writeSave, type SaveData,
+  performRebirth, recordTraining, settleLiberationRisk, writeSave, deckSizeOf, type SaveData,
   feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
@@ -63,7 +63,9 @@ import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { toward } from './bha/nestLogic';
-import { SHOP_PREPARING_TEXT } from '../data/economy';
+import { shopView } from './shopView';
+import { applyCosmetics } from './bha/cosmetics';
+import { useRerollTicket } from '../shop';
 
 /** 칭호 id → 종족별 표기 이름 */
 function titleLabel(id: string, factionId: string): string {
@@ -173,6 +175,7 @@ export function startApp(host: HTMLElement): void {
   /** 시작 화면으로: 스택을 비우고 처음 화면 하나만 남긴다 */
   function titleScreen(note = ''): void {
     setBgm('nest');
+    applyCosmetics(null);
     save = null;
     slot = 0;
     activeExp = null;
@@ -262,6 +265,7 @@ export function startApp(host: HTMLElement): void {
     save = loaded;
     slot = n;
     activeExp = null;
+    applyCosmetics(loaded.wear);
     resumeNote = '';
     // 꺼 둔 동안 허기 (GDD 24-1): 원정 중간 저장이 있으면 오르지 않는다
     hungryGreet = applyAbsence(loaded) >= BALANCE.provisional.nest.idleHungerNotice;
@@ -378,6 +382,7 @@ export function startApp(host: HTMLElement): void {
     const faction = getFaction(save.factionId);
     applyTheme(faction);
     const s = save;
+    applyCosmetics(s.wear); // 꾸밈 착용 (GDD 25-9): 지금 트랙 것
     showTitleToasts(s, faction, persist);
     const active = readActiveExpedition(s);
     if (!active.ok && active.reason !== 'none') {
@@ -430,8 +435,8 @@ export function startApp(host: HTMLElement): void {
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
       onTutorial: () => open('tutorials', () => tutorialGoalsView(root, faction, s, () => tutorialDemo(faction))),
-      // 상점 (GDD 23-4): 자리만 — 누르면 "준비 중" 안내
-      onShop: () => showToast({ eyebrow: '상점', title: '준비 중', meta: SHOP_PREPARING_TEXT }, 0, 3000),
+      // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
+      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => applyCosmetics(s.wear) })),
       onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTitle: askReturnToTitle,
     });
@@ -554,7 +559,7 @@ export function startApp(host: HTMLElement): void {
       runId: nextRunId(save),
       hunger: save.nest.hunger,
       condition: save.nest.condition,
-      deck: sanitizeDeck(save.tiles, faction.id),
+      deck: sanitizeDeck(save.tiles, faction.id, deckSizeOf(save)),
       risk: save.nest.risk,
       stability: save.nest.stability,
       build: save.build,
@@ -623,7 +628,7 @@ export function startApp(host: HTMLElement): void {
       runId: nextRunId(save),
       hunger: save.nest.hunger,
       condition: save.nest.condition,
-      deck: sanitizeDeck(save.tiles, faction.id),
+      deck: sanitizeDeck(save.tiles, faction.id, deckSizeOf(save)),
       risk: save.nest.risk,
       stability: save.nest.stability,
       build: save.build,
@@ -723,7 +728,19 @@ export function startApp(host: HTMLElement): void {
       if (drainEvents(exp).length > 0) breakthroughScreen(faction, exp, next);
       else next();
     };
-    if (exp.phase === 'absorb') absorbView(root, faction, exp, proceed);
+    // 다시 뽑기권 (GDD 25-9): 흡수 1번에 1장. 쓰면 바로 저장(원정 중간 저장에 바뀐 후보가 들어간다)
+    if (exp.phase === 'absorb') absorbView(root, faction, exp, proceed, {
+      tickets: () => save?.shared.rerollTickets ?? 0,
+      use: () => {
+        if (!save || !useRerollTicket(save)) return false;
+        if (!rerollAbsorb(exp).ok) {
+          save.shared.rerollTickets++;
+          return false;
+        }
+        saveProgress(exp);
+        return true;
+      },
+    });
     else proceed();
   }
 

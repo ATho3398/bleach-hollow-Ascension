@@ -17,6 +17,8 @@ export interface AbsorbRecord {
   /** P3 에서 더한 필드 (세이브 형식 4): 얻은 특성 id(없으면 null), 몇 바퀴째 */
   traitId: string | null;
   lap: number;
+  /** C.60 (세이브 형식 24, GDD 25-9): 이 흡수에서 다시 뽑기권으로 후보를 다시 뽑았나 (옛 기록은 없음 = false) */
+  rerolled?: boolean;
 }
 
 /** 슬롯 같은 속성 3개 완성 기록 (GDD 4-1 보너스). C.47 부터 lineageId 에는 속성 id 가 들어간다 (옛 기록은 계통 id) */
@@ -283,8 +285,19 @@ export interface RunLog {
   /** 보스전·스토리 화 기록 (C.58, 세이브 형식 22) */
   bossBattles: BossBattleRecord[];
   storyRuns: StoryRunRecord[];
+  /** 상점 구매 기록 (C.60, 세이브 형식 24, GDD 25-9): 한 번 살 때마다 */
+  shopPurchases: ShopPurchaseRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
   fusions?: FusionRecord[];
+}
+
+/** 상점 구매 1건 (GDD 25-9·9장, 세이브 형식 24): 시각·트랙 종족·품목 id·화폐·가격. 꾸밈 착용 변화는 남기지 않는다 */
+export interface ShopPurchaseRecord {
+  at: number;
+  factionId: string;
+  itemId: string;
+  currency: 'gold' | 'jade';
+  price: number;
 }
 
 /** 합체 기록의 캐릭터 한 명 요약 (GDD 22-3, C.59): 합체로 사라진 캐릭터가 어떤 몸이었나 */
@@ -349,6 +362,7 @@ export function emptyRunLog(): RunLog {
     trainings: [],
     rebirths: [],
     bossBattles: [],
+    shopPurchases: [],
     storyRuns: [],
   };
 }

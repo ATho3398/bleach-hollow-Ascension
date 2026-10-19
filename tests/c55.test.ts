@@ -241,6 +241,9 @@ describe('스킨 데이터·세이브 (26-5)', () => {
   it('세이브: 새 세이브는 스킨 없음, 입기·기본 복귀, 입을 수 없는 스킨은 거절', () => {
     const s = newSaveData('hollow', 1);
     expect(s.skin).toBeNull();
+    // C.60 (GDD 25-9): 상점에서 산(보유한) 스킨만 입는다
+    expect(equipSkin(s, 'grandfisher')).toBe(false);
+    s.shared.cosmetics.push('skin-grandfisher');
     expect(equipSkin(s, 'grandfisher')).toBe(true);
     expect(s.skin).toBe('grandfisher');
     expect(equipSkin(s, 'nope')).toBe(false);
@@ -249,6 +252,7 @@ describe('스킨 데이터·세이브 (26-5)', () => {
     expect(s.skin).toBeNull();
     const other = FACTIONS.find((x) => x.id !== 'hollow')!;
     const o = newSaveData(other.id, 1);
+    o.shared.cosmetics.push('skin-grandfisher');
     expect(equipSkin(o, 'grandfisher')).toBe(false);
   });
   it('형식 18 → 19: 스킨 없음으로 열린다. 저장 뒤 다시 열어도 유지, 깨진 값·다른 종족 스킨은 null', () => {
@@ -259,6 +263,7 @@ describe('스킨 데이터·세이브 (26-5)', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(19);
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.skin).toBeNull();
+    m.shared.cosmetics.push('skin-grandfisher'); // C.60: 보유해야 입는다
     equipSkin(m, 'grandfisher');
     expect(migrateSave(JSON.parse(JSON.stringify(m)))!.skin).toBe('grandfisher');
     const bad = JSON.parse(JSON.stringify(m)) as Record<string, any>;

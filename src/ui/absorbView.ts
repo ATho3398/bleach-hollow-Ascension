@@ -48,7 +48,13 @@ interface StepParts {
 
 const STEP_LABELS = ['선택', '특성 고르기', '교체'] as const;
 
-export function absorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: (absorbed: boolean) => void): void {
+/** 다시 뽑기권 (GDD 25-9): 남은 장수와 쓰기(성공하면 후보가 바뀐다). 없으면 버튼을 그리지 않는다 */
+export interface RerollHandle {
+  tickets: () => number;
+  use: () => boolean;
+}
+
+export function absorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: (absorbed: boolean) => void, reroll?: RerollHandle): void {
   const offer = exp.absorbOffer;
   if (!offer) return onDone(false);
   const enemy = findEnemyDef(offer.enemyId) // 보스(GDD 25-3)도 흡수 화면에 온다;
@@ -241,6 +247,17 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         list.append(c);
       }
       side.push(list);
+    }
+    // 다시 뽑기 (GDD 25-9): 흡수 1번에 1장. 다 쓰거나 이미 다시 뽑았으면 잠김
+    const n = reroll?.tickets() ?? 0;
+    if (reroll && offer!.candidates.length > 0 && (n > 0 || offer!.rerolled)) {
+      const line = el('div', 'bha-absorb__reroll');
+      const rb = button({ label: `다시 뽑기 (${n})`, icon: 'i-swap', size: 'small', disabled: offer!.rerolled === true || n <= 0, onClick: () => {
+        if (reroll.use()) render();
+      } });
+      rb.dataset.sc = 'reroll';
+      line.append(rb, el('small', 'bha-faint', offer!.rerolled ? '이번 흡수에서는 이미 다시 뽑았다' : '후보를 한 번 다시 뽑는다 (다시 뽑기권 1장)'));
+      side.push(line);
     }
     nodes.push(backBtn('choose'));
     return { title: '특성 후보 (1개 고르기)', main: nodes, side };

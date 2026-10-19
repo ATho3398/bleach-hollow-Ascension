@@ -387,6 +387,12 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
   if (gInc > 0.25) failures.push(`타일 변수: 골드 보상 +${(gInc * 100).toFixed(1)}% > +25% (GDD 25-5)`);
   if (sumOn.risk < 40 || sumOn.risk > 60) failures.push(`타일 변수: 4바퀴 섞음 끝 리스크 ${sumOn.risk.toFixed(1)} — 목표 40~60 (GDD 25-5)`);
   if (dInc > 0.05) failures.push(`타일 변수: 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 25-5)`);
+  // 상점 (GDD 25-9, C.60): 원정 1판(4바퀴 섞음, 타일 변수 켬) 평균 골드로 살 수 있는 보통 먹이 수 — 원정 전리품(판당 9~11개)을 대체하지 못하게
+  const SHX = BALANCE.provisional.shop;
+  const basicPerRun = sumOn.gold / SHX.goldPrices['food-basic']!;
+  const [bLo, bHi] = SHX.basicFoodPerRunGuard;
+  console.log(`\n상점 (GDD 25-9): 원정 1판 평균 골드 ${sumOn.gold.toFixed(1)} → 보통 먹이(${SHX.goldPrices['food-basic']}골드) ${basicPerRun.toFixed(2)}개 (가드 ${bLo}~${bHi}) · 원정 전리품 먹이 ${sumOn.food.toFixed(2)}개`);
+  if (basicPerRun < bLo! || basicPerRun > bHi!) failures.push(`상점: 판당 골드로 살 수 있는 보통 먹이 ${basicPerRun.toFixed(2)}개 (가드 ${bLo}~${bHi} 밖, GDD 25-9)`);
 }
 // 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않고(가드 25% 이상), 거의 항상이면 조건이 의미 없다(가드 85% 이하).
 // C.7: 측정은 "흡수하는 봇" 기준. 항상 놓아주는 봇은 skill 이 하나도 없어 첫 흡수 보장으로 늘 100% 라 의미가 없다 (참고 출력만)

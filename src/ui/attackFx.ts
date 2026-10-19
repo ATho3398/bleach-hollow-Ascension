@@ -405,12 +405,16 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     return { x: (r.left - L.left + r.width / 2) * k, y: (r.top - L.top + r.height / 2) * k, w: r.width * k, h: r.height * k };
   };
 
+  /** 지금 놓는 효과의 공격 쪽 (계열 자국·투사체를 놓기 직전에 정한다) */
+  let spawnSide: Side = 'player';
+
   /** 효과 하나를 레이어에 놓는다: kind 모양, (x,y) 중심, size 한 변. 끝나면 지운다 */
   const spawn = (layer: HTMLElement, cls: string, html: string, x: number, y: number, w: number, h: number, frames: Keyframe[], ms: number, delay: number, color?: string): HTMLElement => {
     const n = document.createElement('div');
     n.className = `bha-afx ${cls}`;
     n.setAttribute('aria-hidden', 'true');
     if (color) n.dataset.fam = color;
+    n.dataset.side = spawnSide; // 공격 이펙트 색 꾸밈은 내 쪽(player)만 (GDD 25-9)
     n.innerHTML = html;
     // 시작 전(delay)에는 보이지 않게 기본 투명, 애니메이션이 시작돼야 나타난다
     n.style.cssText = `left:${(x - w / 2).toFixed(1)}px;top:${(y - h / 2).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;opacity:0`;
@@ -505,6 +509,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     n.className = `bha-afx-name${cue.ult ? ' is-ult' : ''}${(cue.stage ?? 1) >= 3 ? ' is-big' : ''}`;
     n.setAttribute('aria-hidden', 'true');
     n.textContent = cue.name ?? '';
+    n.dataset.side = cue.side;
     layer.append(n);
     const frames: Keyframe[] = mode === 'flash'
       ? [{ offset: 0, opacity: 0 }, { offset: 0.1, opacity: 1 }, { offset: 0.8, opacity: 1 }, { offset: 1, opacity: 0 }]
@@ -589,6 +594,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       const stage = cue.stage ?? 1;
       const hits = familyHits(stage, plan.hitAtMs);
       const famId = cue.fam;
+      spawnSide = cue.side;
       if (layer) {
         const tgt = boxIn(layer, to.body);
         const src = boxIn(layer, from.body);

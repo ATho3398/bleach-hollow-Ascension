@@ -10,7 +10,7 @@ export interface SkinDef {
   factionId: string;
   /** 이름이 가칭인가 (바뀔 수 있다) */
   tentativeName: boolean;
-  /** 상점(25-1) 구현 전 임시로 전부 열려 있는 상태 — provisional */
+  /** 임시 데이터 (이름·종족 provisional). 열림은 상점 보유(GDD 25-9, shared.cosmetics)로 정한다 */
   provisional: true;
 }
 

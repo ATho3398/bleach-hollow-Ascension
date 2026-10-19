@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 35;
+export const BALANCE_VERSION = 36;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -340,6 +340,28 @@ export const BALANCE = {
       episodeFood: 'basic',
       firstClearJade: 2,
       chapterJade: 5,
+    },
+    /** 상점 1차 (GDD 25-9, S-16 C.60): 가격·상한·효과량. 품목 목록(id·분류·이름·효과 종류)은 src/data/shop. 골드 = 소모품·편의, 영옥 = 꾸밈 */
+    shop: {
+      /** 골드 품목 가격 (품목 id → 골드). 덱 칸은 deckSlotPrices */
+      goldPrices: {
+        'food-snack': 20, 'food-basic': 35, 'food-hearty': 60, 'food-tonic': 100, 'food-feast': 140,
+        calm: 80, wake: 60, 'training-ticket': 90, 'rare-tile': 60, reroll: 120,
+      } as Record<string, number>,
+      /** 타일 덱 칸 +1 의 n번째 가격 (최대 +2: 덱 8 → 9 → 10, 영구·슬롯 공유) */
+      deckSlotPrices: [400, 800],
+      /** 정화제: 리스크 −30 (0 아래로 안 감) · 각성제: 컨디션 +30 (최대값 위로 안 감) */
+      calmRisk: 30,
+      wakeCondition: 30,
+      /** 다시 뽑기권 보유 상한 (흡수 한 번에 1장까지) */
+      rerollMax: 3,
+      /** 영옥 꾸밈 가격: 스킨(앞으로 들어오는 스킨도 기본값), 분류별 (GDD 25-9 영옥 탭) */
+      skinPrice: 30,
+      cosmeticPrices: { aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3 } as Record<string, number>,
+      /** 튜토리얼 목표(23-3) 하나마다 더 주는 영옥 (기존 보상은 그대로, 트랙마다 1회) */
+      tutorialJade: 1,
+      /** balance:check 가드: 4바퀴 원정 1판 평균 골드로 살 수 있는 보통 먹이 수 */
+      basicFoodPerRunGuard: [2, 5],
     },
     /** 타일 변수 5종 (GDD 25-5, S-13 C.57). 표의 이름·짝은 src/data/tiles/*.json, 여기는 수치만. 효과 키는 engine/expedition/variants.ts VariantMods */
     tileVariants: {

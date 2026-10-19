@@ -34,9 +34,10 @@ import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebi
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 import { chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
+import { getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 23;
+export const SAVE_FORMAT_VERSION = 24;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -89,6 +90,8 @@ export interface SaveData {
   skin: string | null;
   /** 환생 (GDD 22-1·22-7, 형식 20): 환생 횟수·누적 계승 노력치. 환생해도 남는다 */
   rebirth: RebirthState;
+  /** 착용한 꾸밈 (GDD 25-9, 형식 24): 분류(오라·색조·발밑·공격 이펙트 색·블록 바·기기 껍데기·이름표 테)마다 품목 id 하나. 스킨은 skin. 보유(shared.cosmetics)한 것만 */
+  wear: WearState;
   /** 스토리 진행 (GDD 25-4, 형식 22): 트랙(종족 id)마다 깬 화와 보상을 받은 장. 환생해도 남는다 */
   story: Record<string, StoryProgress>;
   /** 보스 도감 (GDD 25-3, 형식 22): 보스 id → 처치 수·첫 처치 시각. 세이브 하나에 하나(도감처럼 트랙 구분 없음) */
@@ -106,8 +109,11 @@ export interface SaveData {
   slotLog: SlotLog;
 }
 
+/** 트랙 하나의 꾸밈 착용 (GDD 25-9): 분류 → 품목 id. 없는 분류 = 기본 */
+export type WearState = Partial<Record<WearCategory, string>>;
+
 /** 캐릭터 트랙 하나가 가진 것 (GDD 22-3): 키우기(진화·특성·등급·환생·원정·수련)는 각자. 나머지 SaveData 필드는 슬롯 공유 */
-export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth'] as const;
+export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth', 'wear'] as const;
 export type TrackKey = (typeof TRACK_KEYS)[number];
 export type TrackData = Pick<SaveData, TrackKey> & {
   /** 이 트랙에서 떠난 시각(ms): 돌아오면 그동안의 허기가 오른다 (GDD 24-1 과 같은 계산) */
@@ -223,10 +229,16 @@ export interface SharedState {
   tutorials: Record<string, TutorialClaim[]>;
   /** 도감 보상 수령 기록 (GDD 24-3, 형식 17): 받은 이정표 id. 도감은 세이브 하나에 하나라 트랙 구분 없음 */
   dexRewards: TutorialClaim[];
+  /** 다시 뽑기권 (GDD 25-9, 형식 24): 상점에서 산 장수(상한 3). 흡수 화면에서 1장씩 */
+  rerollTickets: number;
+  /** 산 타일 덱 칸 (형식 24): 0~2, 영구. 원정 덱 = 기본 8 + 이 값 */
+  deckSlots: number;
+  /** 보유한 꾸밈 품목 id (형식 24, 스킨 = skin-<id>). 두 트랙이 같이 쓴다 — 착용은 트랙마다(wear·skin) */
+  cosmetics: string[];
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [] };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: [] };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -241,7 +253,12 @@ export function sanitizeShared(raw: unknown): SharedState {
     }
   }
   const dexRewards = Array.isArray(r.dexRewards) ? sanitizeClaims(r.dexRewards) : [];
-  return { soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards };
+  const SX = BALANCE.provisional.shop;
+  const cosmetics = Array.isArray(r.cosmetics) ? [...new Set(r.cosmetics.filter((id): id is string => typeof id === 'string' && getCosmetic(id) !== undefined))] : [];
+  return {
+    soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards,
+    rerollTickets: Math.min(SX.rerollMax, nonNegInt(r.rerollTickets)), deckSlots: Math.min(SX.deckSlotPrices.length, nonNegInt(r.deckSlots)), cosmetics,
+  };
 }
 
 /** 수령 기록 목록 정리: 깨진 항목·중복 id 를 버린다 */
@@ -266,6 +283,8 @@ export interface TutorialGrant {
   goal: TutorialGoalDef;
   food: [FoodId, number][];
   soulCrystals: number;
+  /** 영옥 (GDD 25-9: 목표마다 +1) */
+  jade: number;
 }
 
 /** 지금 트랙(종족)에서 새로 이룬 튜토리얼 목표를 판정해 보상을 준다 (GDD 23-3). 자동 판정·자동 지급 — 화면은 돌려준 목록으로 토스트를 띄운다.
@@ -281,7 +300,10 @@ export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), d
     for (const [id, n] of Object.entries(goal.reward.food ?? {}) as [FoodId, number][]) food.push([id, addFood(save.shared.food, id, n)]);
     const soulCrystals = goal.reward.soulCrystals ?? 0;
     save.shared.soulCrystals += soulCrystals;
-    return { goal, food, soulCrystals };
+    // 영옥 (GDD 25-9): 목표 하나마다 +1 (기존 보상은 그대로)
+    const jade = BALANCE.provisional.shop.tutorialJade;
+    save.shared.jade += jade;
+    return { goal, food, soulCrystals, jade };
   });
 }
 
@@ -344,7 +366,7 @@ export function newSaveData(factionId: string, nowMs: number = Date.now()): Save
 export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
   return {
     factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), runLog: emptyRunLog(), activeExpedition: null,
-    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(),
+    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: {},
   };
 }
 
@@ -492,7 +514,7 @@ function summaryOf(t: Pick<SaveData, TrackKey>): FusionCharacterSummary {
 
 /** 합체 (GDD 22-3): 되돌릴 수 없다 — 자동 백업(24-5 stashSlot 'fusion')은 부르는 쪽(화면)이 먼저 한다.
  *  두 캐릭터는 초월체가 되어 사라지고(초월체 도감에 보관), 같은 종족들의 새 트랙이 1단계 완전 초기 상태로 열린다(환생 계승 없음).
- *  남김(슬롯): 도감·칭호, 초월체 도감, 붕옥 해방, 먹이·타일·골드·영옥·남은 영혼 결정, 스토리·보스 도감, 스킨(꾸밈). 붕옥 2단계 게이지는 0.
+ *  남김(슬롯): 도감·칭호, 초월체 도감, 붕옥 해방, 먹이·타일·골드·영옥·남은 영혼 결정, 스토리·보스 도감, 스킨·꾸밈 착용과 보유. 붕옥 2단계 게이지는 0.
  *  첫 초월체는 영옥 10. 6종을 다 모으면 칭호 "붕옥 완성"(칭호 평가) */
 export function performFusion(save: SaveData, nowMs: number = Date.now()): FusionResult {
   const gate = fusionGate(save);
@@ -510,7 +532,7 @@ export function performFusion(save: SaveData, nowMs: number = Date.now()): Fusio
   save.hogyoku.fusionFed = 0;
   save.shared.jade += jade;
   // 새 두 트랙: 같은 종족들, 1단계 완전 초기. 스킨(꾸밈)만 그대로 입는다
-  const fresh = (t: Pick<SaveData, TrackKey>, salt: number) => ({ ...newTrack(t.factionId, nowMs, salt), skin: t.skin });
+  const fresh = (t: Pick<SaveData, TrackKey>, salt: number) => ({ ...newTrack(t.factionId, nowMs, salt), skin: t.skin, wear: { ...t.wear } });
   const others = save.otherTracks.map((t, i) => ({ ...fresh(t, i + 1), parkedAt: nowMs }));
   putActiveTrack(save, fresh(save, 0));
   save.otherTracks = others;
@@ -552,7 +574,7 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   save.evolution = cloneEvolution(exp.evolution);
   if (exp.breakthrough) recordEvolutionBreakthrough(save.evolution);
   for (const id of sum.kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
-  storeUnplacedTiles(save.tiles, unplacedKept(exp));
+  storeUnplacedTiles(save.tiles, unplacedKept(exp), deckSizeOf(save));
   applyExpeditionEnd(save.nest, exp, nowMs);
   // 수련권 (GDD 22-5): 원정에서 돌아올 때마다(승패 무관) +1, 최대 3
   addTrainingTicket(save.training);
@@ -630,6 +652,11 @@ export function synthesizeTile(save: SaveData, tileId: string): SynthResult {
 export function canSynthesize(tileId: string): boolean {
   const t = getTile(tileId);
   return !t.upgradeOf && upgradeIdOf(tileId) !== null;
+}
+
+/** 원정에 가져가는 덱 크기 (GDD 25-9): 기본 8 + 상점에서 산 덱 칸(최대 +2, 슬롯 공유) */
+export function deckSizeOf(save: Pick<SaveData, 'shared'>): number {
+  return BALANCE.provisional.expedition.deckSize + (save.shared.deckSlots ?? 0);
 }
 
 /** 놓지 않고 남은 획득 타일을 다음 원정 덱에 넣는다 (GDD 17-1): 덱 상한과 보유 수량을 넘기면 덱에는 못 넣는다(보유에는 이미 들어 있다) */
@@ -978,6 +1005,22 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.slotLog = emptySlotLog();
     save.meta.format = 23;
   }
+  if (save.meta.format < 24) {
+    // 형식 23 → 24 (C.60, GDD 25-9 상점): 꾸밈 착용 없음·상점 구매 기록 빈 목록(트랙마다), 다시 뽑기권 0·덱 칸 +0·보유 꾸밈 —
+    // 지금 스킨을 입고 있는 트랙이 있으면 그 스킨을 보유로 넣는다(입은 옷을 벗기지 않는다). 튜토리얼 목표 영옥 +1 은 이미 받은 목표만큼 소급
+    const owned: string[] = [];
+    let claimed = 0;
+    forEachTrack(save, (t) => {
+      t.wear = {};
+      if (isRec(t.runLog)) t.runLog.shopPurchases = [];
+      if (typeof t.skin === 'string' && canWear(t.factionId, t.skin) && !owned.includes(skinItemId(t.skin))) owned.push(skinItemId(t.skin));
+    });
+    const tut = save.shared?.tutorials;
+    if (tut && typeof tut === 'object') for (const list of Object.values(tut)) if (Array.isArray(list)) claimed += list.length;
+    save.shared = { ...(save.shared ?? newSharedState()), rerollTickets: 0, deckSlots: 0, cosmetics: owned };
+    save.shared.jade = (typeof save.shared.jade === 'number' ? save.shared.jade : 0) + claimed * BALANCE.provisional.shop.tutorialJade;
+    save.meta.format = 24;
+  }
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
   for (const t of save.otherTracks) if (typeof t.parkedAt !== 'number' || !Number.isFinite(t.parkedAt)) t.parkedAt = Date.now();
@@ -985,23 +1028,25 @@ export function migrateSave(raw: unknown): SaveData | null {
   save.hogyoku = sanitizeHogyoku(save.hogyoku);
   save.transcendentDex = sanitizeTranscendentDex(save.transcendentDex);
   save.slotLog = { fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [] };
-  forEachTrack(save, sanitizeTrackFields);
+  save.shared = sanitizeShared(save.shared);
+  forEachTrack(save, (t) => sanitizeTrackFields(t, save.shared.cosmetics));
   save.story = sanitizeStory(save.story);
   save.bossDex = sanitizeBossDex(save.bossDex);
   if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
-  save.shared = sanitizeShared(save.shared);
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
   return save;
 }
 
 /** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
-function sanitizeTrackFields(t: Pick<SaveData, TrackKey>): void {
+function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string[]): void {
+  t.runLog.shopPurchases = Array.isArray(t.runLog.shopPurchases) ? t.runLog.shopPurchases : [];
+  t.wear = sanitizeWear(t.wear, owned);
   t.runLog.bossBattles = Array.isArray(t.runLog.bossBattles) ? t.runLog.bossBattles : [];
   t.runLog.storyRuns = Array.isArray(t.runLog.storyRuns) ? t.runLog.storyRuns : [];
   t.rebirth = sanitizeRebirth(t.rebirth);
   t.runLog.rebirths = Array.isArray(t.runLog.rebirths) ? t.runLog.rebirths : [];
-  t.skin = canWear(t.factionId, t.skin) ? t.skin : null;
+  t.skin = canWear(t.factionId, t.skin) && owned.includes(skinItemId(t.skin!)) ? t.skin : null;
   t.training = sanitizeTraining(t.training);
   t.runLog.trainings = Array.isArray(t.runLog.trainings) ? t.runLog.trainings : [];
   t.rank = sanitizeRankState(t.rank);
@@ -1043,9 +1088,20 @@ export function sanitizeTranscendentDex(raw: unknown): TranscendentEntry[] {
     .map((e) => ({ id: e.id, at: nonNegInt(e.at), fusionIndex: Math.max(1, nonNegInt(e.fusionIndex)) }));
 }
 
-/** 스킨 입기/벗기 (GDD 26-5). 이 종족이 입을 수 없는 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기. 상점 전까지는 있는 스킨 전부 열림(provisional) */
+/** 착용 정리: 아는 분류·그 분류의 품목·보유한 것만 */
+export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState {
+  const out: WearState = {};
+  if (!isRec(raw)) return out;
+  for (const c of WEAR_CATEGORIES) {
+    const id = raw[c];
+    if (typeof id === 'string' && getCosmetic(id)?.category === c && owned.includes(id)) out[c] = id;
+  }
+  return out;
+}
+
+/** 스킨 입기/벗기 (GDD 26-5·25-9). 이 종족이 입을 수 없거나 보유(상점에서 산 것)하지 않은 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기 */
 export function equipSkin(save: SaveData, skinId: string | null): boolean {
-  if (skinId !== null && !canWear(save.factionId, skinId)) return false;
+  if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
   save.skin = skinId;
   return true;
 }

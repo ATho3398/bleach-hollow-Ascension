@@ -101,10 +101,11 @@ describe('환생 결과: 초기화와 남김 (22-7)', () => {
     expect(r1.ok && [r1.soulCrystals, r1.jade]).toEqual([10, RB.firstJade]);
     expect([s.shared.soulCrystals, s.shared.jade]).toEqual([17, 3 + RB.firstJade]);
     expect(claimTutorialGoals(s, 6000).map((g) => g.goal.id)).toContain('first-rebirth');
+    const jadeAfterClaims = s.shared.jade; // C.60: 튜토리얼 목표마다 영옥 +1
     s.evolution.tierIndex = 4;
     const r2 = performRebirth(s, null);
     expect(r2.ok && [r2.soulCrystals, r2.jade]).toEqual([10, 0]);
-    expect(s.shared.jade).toBe(3 + RB.firstJade);
+    expect(s.shared.jade).toBe(jadeAfterClaims);
     expect(claimTutorialGoals(s, 7000).map((g) => g.goal.id)).not.toContain('first-rebirth');
   });
   it('런 로그: 횟수·시각·이전 생 최종 진화체·단계·속성·계승 특성·계승 노력치', () => {

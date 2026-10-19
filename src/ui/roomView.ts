@@ -4,7 +4,7 @@
 import { BALANCE } from '../config/balance';
 import { doNestAction } from '../engine/nest';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { feedNest, sanitizeDeck, type SaveData } from '../game';
+import { deckSizeOf, feedNest, sanitizeDeck, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
@@ -40,7 +40,7 @@ export interface RoomHandlers {
   onHelp: () => void;
   /** 독 '더보기' 항목: 튜토리얼 목록(GDD 23-3) */
   onTutorial: () => void;
-  /** 상점 (GDD 23-4): 지금은 "준비 중" 안내만 */
+  /** 상점 (GDD 25-9) */
   onShop: () => void;
   onBackup: () => void;
   onTitle: () => void;
@@ -56,12 +56,12 @@ let lastMood: Mood | null = null;
 const IDLE_TALK_MS = 14000;
 
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
-  save.tiles.deck = sanitizeDeck(save.tiles, faction.id);
+  save.tiles.deck = sanitizeDeck(save.tiles, faction.id, deckSizeOf(save));
   hd.persist();
   const room = roomOf(faction);
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
-  const deckSize = BALANCE.provisional.expedition.deckSize;
+  const deckSize = deckSizeOf(save);
   const deckCount = save.tiles.deck.length;
   const mood = moodOf({ weakened: n.weakened, condition: n.condition, risk: n.risk, riskLimit: RX.limit });
 
@@ -72,7 +72,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★. 투트랙이면(GDD 22-3) 이름표 옆에 트랙 전환 버튼
   const stars = rebirthMark(save.rebirth.count);
   const others = hd.onSwitchTrack ? save.otherTracks : [];
-  if (stars || others.length > 0) {
+  // 이름표 테 꾸밈(GDD 25-9)을 입었으면 이름표를 늘 보인다
+  if (stars || others.length > 0 || save.wear.plate) {
     const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
     const name = el('span', 'bha-small bha-room__name', form ? formName(form, faction.id, playerElementsOf(save.evolution)) : faction.tierNames[save.evolution.tierIndex]!);
     if (stars) name.append(' ', stars);

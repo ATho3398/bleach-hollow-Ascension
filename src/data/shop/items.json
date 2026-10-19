@@ -1,0 +1,51 @@
+{
+  "provisional": true,
+  "gold": [
+    { "id": "food-snack", "kind": "food", "food": "snack" },
+    { "id": "food-basic", "kind": "food", "food": "basic" },
+    { "id": "food-hearty", "kind": "food", "food": "hearty" },
+    { "id": "food-tonic", "kind": "food", "food": "tonic" },
+    { "id": "food-feast", "kind": "food", "food": "feast" },
+    { "id": "calm", "kind": "calm", "name": "정화제" },
+    { "id": "wake", "kind": "wake", "name": "각성제" },
+    { "id": "training-ticket", "kind": "trainingTicket", "name": "수련권" },
+    { "id": "rare-tile", "kind": "rareTile", "name": "희귀 타일 꾸러미" },
+    { "id": "reroll", "kind": "reroll", "name": "다시 뽑기권" },
+    { "id": "deck-slot", "kind": "deckSlot", "name": "타일 덱 칸 +1" }
+  ],
+  "categories": [
+    { "id": "skin", "name": "스킨", "where": "방·원정·전투의 내 캐릭터 그림 전체" },
+    { "id": "aura", "name": "오라", "where": "방·원정 걷기·전투의 내 캐릭터 뒤" },
+    { "id": "tint", "name": "색조", "where": "내 캐릭터 그림 색 (스킨에도)" },
+    { "id": "trail", "name": "발밑·잔상", "where": "원정 걷기 발밑" },
+    { "id": "fx", "name": "공격 이펙트 색", "where": "내 기술·필살 연출 색 (블록 글자·속성 색은 그대로)" },
+    { "id": "bar", "name": "블록 바", "where": "전투 블록 칸 테두리·배경 (계열 글자·속성 색은 그대로)" },
+    { "id": "shell", "name": "기기 껍데기", "where": "기기 테두리·LCD 색" },
+    { "id": "plate", "name": "이름표 테", "where": "방 이름표 테두리" }
+  ],
+  "cosmetics": [
+    { "id": "aura-smoke", "category": "aura", "name": "영압 연기", "look": "smoke" },
+    { "id": "aura-blue", "category": "aura", "name": "푸른 불꽃", "look": "blue" },
+    { "id": "aura-bolt", "category": "aura", "name": "붉은 번개", "look": "bolt" },
+    { "id": "aura-gold", "category": "aura", "name": "황금 빛", "look": "gold" },
+    { "id": "tint-mono", "category": "tint", "name": "흑백", "look": "mono" },
+    { "id": "tint-blood", "category": "tint", "name": "핏빛", "look": "blood" },
+    { "id": "tint-pale", "category": "tint", "name": "창백", "look": "pale" },
+    { "id": "tint-gold", "category": "tint", "name": "황금", "look": "gold" },
+    { "id": "trail-sand", "category": "trail", "name": "모래", "look": "sand" },
+    { "id": "trail-blood", "category": "trail", "name": "핏자국", "look": "blood" },
+    { "id": "trail-ember", "category": "trail", "name": "불티", "look": "ember" },
+    { "id": "fx-black", "category": "fx", "name": "검은 영압", "look": "black" },
+    { "id": "fx-blue", "category": "fx", "name": "푸른 영압", "look": "blue" },
+    { "id": "fx-crimson", "category": "fx", "name": "핏빛", "look": "crimson" },
+    { "id": "bar-bone", "category": "bar", "name": "뼈", "look": "bone" },
+    { "id": "bar-ink", "category": "bar", "name": "먹물", "look": "ink" },
+    { "id": "bar-gold", "category": "bar", "name": "금박", "look": "gold" },
+    { "id": "shell-bone", "category": "shell", "name": "뼈", "look": "bone" },
+    { "id": "shell-ink", "category": "shell", "name": "먹물", "look": "ink" },
+    { "id": "shell-gold", "category": "shell", "name": "금박", "look": "gold" },
+    { "id": "plate-bone", "category": "plate", "name": "뼈", "look": "bone" },
+    { "id": "plate-ink", "category": "plate", "name": "먹물", "look": "ink" },
+    { "id": "plate-gold", "category": "plate", "name": "금박", "look": "gold" }
+  ]
+}

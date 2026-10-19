@@ -1,5 +1,6 @@
 // 튜토리얼 목록 (GDD 23-3): 독 [더보기] → [튜토리얼]. 왼쪽 목표 목록(달성/미달성/준비 중), 오른쪽 고른 목표의 보상·달성 시각.
 // 목표 문구는 종족 설정 자리표시자로 채우고, 판정·지급은 자동(game.ts claimTutorialGoals) — 여기서는 보기만 한다. 체험 전투(튜토리얼 다시 보기)도 여기서 연다.
+import { BALANCE } from '../config/balance';
 import { TUTORIAL_GOALS, TUTORIAL_GOALS_PROVISIONAL, type TutorialGoalDef, type TutorialReward } from '../data/tutorials';
 import { helpVars, renderHelpText } from '../data/help';
 import { JADE_NAME, SOUL_CRYSTAL_NAME } from '../data/economy';
@@ -45,7 +46,7 @@ function goalRow(def: TutorialGoalDef, faction: FactionConfig, claimedAt: number
     detail: () => {
       const head = h('div', 'bha-mddetail__head');
       head.append(h('h2', 'bha-mddetail__title', name), h('span', st === 'done' ? 'bha-chip bha-chip--good' : 'bha-chip', STATE_TEXT[st]));
-      const reward = h('p', 'bha-mddetail__body', `보상: ${rewardText(def.reward, faction)}`);
+      const reward = h('p', 'bha-mddetail__body', `보상: ${rewardText(def.reward, faction)} · ${JADE_NAME} ${BALANCE.provisional.shop.tutorialJade}`);
       const when = h('p', 'bha-faint', st === 'done' ? `받음 ${formatUnlockTime(claimedAt!)}` : st === 'locked' ? '이 기능이 아직 없다. 열리면 함께 켜진다.' : '이루면 바로 받는다.');
       return [head, reward, when];
     },
@@ -94,7 +95,7 @@ function showRewardToasts(label: string, items: readonly RewardToastItem[], fact
 
 /** 새로 받은 튜토리얼 보상 토스트 (GDD 23-3) */
 export function showTutorialToasts(grants: readonly TutorialGrant[], faction: FactionConfig): void {
-  showRewardToasts('튜토리얼 달성', grants.map((g) => ({ name: tutorialGoalText(g.goal, faction), food: g.food, soulCrystals: g.soulCrystals })), faction);
+  showRewardToasts('튜토리얼 달성', grants.map((g) => ({ name: tutorialGoalText(g.goal, faction), food: g.food, soulCrystals: g.soulCrystals, jade: g.jade })), faction);
 }
 
 /** 도감 이정표 이름: "진화체 도감 10종 등록" */

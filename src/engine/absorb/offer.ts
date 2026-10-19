@@ -53,6 +53,8 @@ export interface AbsorbOffer {
   chain3Count: number;
   weakChain3Count: number;
   finisherElement: string | null;
+  /** 다시 뽑기권으로 후보를 다시 뽑았나 (GDD 25-9, 흡수 1번에 1장) */
+  rerolled?: boolean;
 }
 
 function pick<T>(rng: Rng, list: T[]): T {
@@ -115,6 +117,30 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     weakChain3Count: combat.weakChain3Count,
     finisherElement: combat.finisher?.element ?? null,
   };
+}
+
+/**
+ * 다시 뽑기 (GDD 25-9 다시 뽑기권, C.60): 확정 후보(보스 특성·희귀 개체의 희귀 특성)는 그대로 두고 나머지 후보를 같은 수만큼 새로 뽑는다.
+ * 지금 후보와 겹치지 않게 뽑고(모자라면 겹침 허용), 첫 후보는 적 속성 → 둘째부터 다른 속성 규칙(otherElementCandidate)·공격 계열 섞임은 buildOffer 와 같다
+ */
+export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates' | 'element'>, build: BuildState, bossTrait: string | null = null): string[] {
+  const fixed = offer.candidates.filter((id) => id === bossTrait || getTrait(id).rare === true);
+  const want = offer.candidates.length - fixed.length;
+  const free = TRAITS.filter((t) => !t.boss && !t.rare && !build.owned.includes(t.id) && !fixed.includes(t.id));
+  const fresh = free.filter((t) => !offer.candidates.includes(t.id));
+  const pool = fresh.length >= want ? fresh : free;
+  const own = pool.filter((t) => t.element === offer.element);
+  const other = pool.filter((t) => t.element !== offer.element);
+  const out = [...fixed];
+  for (let n = 0; n < want; n++) {
+    const list = (AX.otherElementCandidate && out.length > 0 && other.length > 0) || own.length === 0 ? other : own;
+    if (list.length === 0) break;
+    const t = pick(rng, list);
+    out.push(t.id);
+    list.splice(list.indexOf(t), 1);
+  }
+  mixAttackFamilies(rng, out, TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id)), build);
+  return out;
 }
 
 /**
