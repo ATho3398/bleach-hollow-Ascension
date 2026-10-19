@@ -4,7 +4,7 @@ import { beginPlanning, chooseGround, finishPlanning, type ExpeditionState } fro
 import { groundName, type FactionConfig } from '../engine/faction';
 import { GROUNDS, type GroundDef } from '../data/grounds';
 import { elementName } from '../data/elements';
-import { tileName } from '../data/tiles';
+import { synergyName, tileName } from '../data/tiles';
 import { button, el, icon, mountApp } from './bha/dom';
 import { roadPlanner } from './bha/road';
 
@@ -25,7 +25,7 @@ export function groundInfo(faction: FactionConfig, g: GroundDef): string {
 
 export function planView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, tierIndex: number, h: PlanViewHandlers): void {
   beginPlanning(exp);
-  const planner = roadPlanner({ exp, tileName: (id) => tileName(id, faction.id) });
+  const planner = roadPlanner({ exp, tileName: (id) => tileName(id, faction.id), synergyName: (id) => synergyName(id, faction.id) });
 
   const title = el('h2', 'bha-plan__title');
   title.append(icon('i-deck'), '길에 타일 놓기');
@@ -63,7 +63,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   });
   start.dataset.sc = 'go';
   // 한 줄 설명: 고른 사냥터(이름·설명·자주 나오는 속성·강도) + 배치 요령 (화면 높이가 낮아 두 줄 안에 둔다)
-  const sub = el('p', 'bha-plan__sub', '덱의 타일을 길 위 칸에 놓는다. 안 놓은 칸에는 떠돌이 적이 나온다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.');
+  const sub = el('p', 'bha-plan__sub', '덱의 타일을 길 위 칸에 놓는다. 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.');
   const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, gInfo, sub, planner.el, start);
   main.dataset.screen = 'expedition-plan';
 }

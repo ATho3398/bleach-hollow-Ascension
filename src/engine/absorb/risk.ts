@@ -6,7 +6,7 @@ import type { NestAction } from '../faction';
 
 const RX = BALANCE.provisional.risk;
 
-export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action' | 'liberation';
+export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action' | 'liberation' | 'synergy' | 'altar';
 
 /** 엔진 공통 이벤트. 화면이 비워 가며(drainEvents) 연출한다 */
 export type EngineEvent =

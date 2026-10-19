@@ -11,7 +11,7 @@ import { migrateBuild, migrateEvolution } from './saveLegacy';
 import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RankBattleRecord, type RebirthRecord, type RunLog } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { buildBattleRecord, type CombatState } from './engine/combat';
-import { tilesFor } from './data/tiles';
+import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES } from './data/titles';
 import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
@@ -29,7 +29,7 @@ import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebi
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 20;
+export const SAVE_FORMAT_VERSION = 21;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -95,7 +95,7 @@ export interface SharedState {
   soulCrystals: number;
   /** 먹이 종류별 보유 개수 (GDD 23-1, 형식 16). 상한 9, 시작 간식 5·보통 3 */
   food: FoodStock;
-  /** 일반 재화 '골드' (GDD 23-4, 형식 16, v5.11 옛 이름 영전 — 키는 그대로): 얻는 곳·쓰는 곳은 [미정]. 지금은 0 자리만 */
+  /** 일반 재화 '골드' (GDD 23-4, 형식 16, v5.11 옛 이름 영전 — 키는 그대로): 원정 전투 승리·보물·갈림길로 얻고 원정 상인에게 쓴다(C.57, GDD 25-5). 상점은 준비 중 */
   tradeCoins: number;
   /** 꾸밈 재화 '영옥' (GDD 25-1 v5.11, 형식 17): 한 번만 받는 달성 보상(도감 이정표 등)에서만 */
   jade: number;
@@ -239,11 +239,13 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
       rec.firstCompletedRunId = exp.runId;
     }
   }
-  // 영혼 결정 (GDD 22-3): 이 원정에서 이긴 강적 수만큼
-  save.shared.soulCrystals += exp.battles.filter((b) => b.won && b.enemyClass === 'elite').length * BALANCE.provisional.soulCrystals.perElite;
+  // 영혼 결정 (GDD 22-3): 이 원정에서 이긴 강적 수만큼 (+ 바퀴 변이 폭풍의 추가분, GDD 25-5)
+  save.shared.soulCrystals += exp.battles.filter((b) => b.won && b.enemyClass === 'elite').length * BALANCE.provisional.soulCrystals.perElite + (exp.bonusSoul ?? 0);
   // 먹이 전리품 (GDD 23-1): 지킨 먹이를 보유에 넣고(상한 9), 그래도 하나도 없으면 간식 2개 (막힘 방지). 결과 화면이 exp.foodSettled 를 읽는다
   const sum = summarize(exp);
   exp.foodSettled = settleFood(save.shared.food, sum.keptFood, sum.lostFood);
+  // 골드 (C.57): 번 것 − 상인에게 쓴 것 (패배하면 마지막 바퀴에 번 것은 잃는다)
+  save.shared.tradeCoins = Math.max(0, save.shared.tradeCoins + sum.keptGold);
   save.build = cloneBuildOf(exp.build);
   // 진화 상태: 원정 중 쌓인 걸음·흡수 속성·노력치·행동 기록을 합친다. 한계 돌파는 원정당 한 번 센다 (아란칼 행동 히든, GDD 20-5)
   save.evolution = cloneEvolution(exp.evolution);
@@ -258,6 +260,33 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   checkTitles(save, 'expedition', nowMs);
   // 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것)
   return canEvolve(save.evolution) ? performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition }) : null;
+}
+
+export type SynthResult = { ok: true; upgradedId: string } | { ok: false; reason: string };
+
+/** 타일 합성 (GDD 25-5 ⑤): 같은 바탕 타일 synthCost(3)장 → 상위 타일("+") 1장. 상위·이벤트 타일은 합성하지 않는다. 덱은 보유 수량에 맞춰 줄인다 */
+export function synthesizeTile(save: SaveData, tileId: string): SynthResult {
+  const cost = BALANCE.provisional.tileVariants.synthCost;
+  let up: string | null;
+  try {
+    up = upgradeIdOf(tileId);
+  } catch {
+    return { ok: false, reason: '모르는 타일이다' };
+  }
+  if (!up || !deckTilesFor(save.factionId).some((t) => t.id === tileId)) return { ok: false, reason: '합성할 수 없는 타일이다' };
+  const have = save.tiles.collection[tileId] ?? 0;
+  if (have < cost) return { ok: false, reason: `같은 타일 ${cost}장이 필요하다` };
+  save.tiles.collection[tileId] = have - cost;
+  save.tiles.collection[up] = (save.tiles.collection[up] ?? 0) + 1;
+  // 덱에 넣어 둔 장수가 보유보다 많아지면 뒤에서부터 뺀다
+  while (save.tiles.deck.filter((x) => x === tileId).length > save.tiles.collection[tileId]!) save.tiles.deck.splice(save.tiles.deck.lastIndexOf(tileId), 1);
+  return { ok: true, upgradedId: up };
+}
+
+/** 합성할 수 있는 타일인가 (보유 수량 무관) */
+export function canSynthesize(tileId: string): boolean {
+  const t = getTile(tileId);
+  return !t.upgradeOf && upgradeIdOf(tileId) !== null;
 }
 
 /** 놓지 않고 남은 획득 타일을 다음 원정 덱에 넣는다 (GDD 17-1): 덱 상한과 보유 수량을 넘기면 덱에는 못 넣는다(보유에는 이미 들어 있다) */
@@ -579,6 +608,12 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.rebirths = [];
     save.meta.format = 20;
   }
+  if (save.meta.format < 21) {
+    // 형식 20 → 21 (C.57, GDD 25-5 타일 변수): 원정 기록에 발동한 시너지·바퀴 변이·이벤트 선택·드래프트·골드(옛 기록은 빈 목록·0).
+    // 상위 타일은 보유 수량(tiles.collection)에 id 로 들어가므로 따로 옮길 것이 없다. 원정 중간 저장은 형식 5 가 아니면 이어하지 않는다(readActiveExpedition)
+    save.runLog.runs = (save.runLog.runs ?? []).map((r) => ({ ...r, synergies: r.synergies ?? [], mutations: r.mutations ?? [], events: r.events ?? [], drafts: r.drafts ?? [], gold: r.gold ?? 0 }));
+    save.meta.format = 21;
+  }
   save.rebirth = sanitizeRebirth(save.rebirth);
   save.runLog.rebirths = Array.isArray(save.runLog.rebirths) ? save.runLog.rebirths : [];
   save.skin = canWear(save.factionId, save.skin) ? save.skin : null;
@@ -624,7 +659,7 @@ export function writeSave(storage: StorageLike, save: SaveData, key: string = SA
 
 /** 가져갈 덱을 정리한다: 이 종족이 쓰는 타일만, 보유 수량 이내로. 비면 보유량이 많은 순으로 채운다 */
 export function sanitizeDeck(stock: TileStock, factionId: string, size: number = BALANCE.provisional.expedition.deckSize): string[] {
-  const options = tilesFor(factionId).map((t) => t.id);
+  const options = deckTilesFor(factionId).map((t) => t.id);
   const used: Record<string, number> = {};
   const deck: string[] = [];
   for (const id of stock.deck) {

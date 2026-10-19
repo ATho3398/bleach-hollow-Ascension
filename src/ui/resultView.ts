@@ -1,6 +1,7 @@
 // 원정 결과 (U-4, 기획서 2-1·9장): 종료 이유 4가지 → 귀환 계열 = 승리 톤, 패배 계열 = 패배 톤. 요약·시드·기록 저장 줄, [둥지로].
 import { BALANCE } from '../config/balance';
-import { tileName } from '../data/tiles';
+import { mutationName, synergyName, tileName } from '../data/tiles';
+import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { traitName } from '../data/traits';
 import type { ExpeditionState } from '../engine/expedition';
 import { summarize } from '../engine/expedition';
@@ -39,6 +40,23 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return { label: '얻은 먹이', icon: 'i-care-feed', value: v, mod: gained.length > 0 || (fs?.fallback ?? 0) > 0 ? 'good' : lost.length > 0 ? 'bad' : undefined };
   }
 
+  // 골드 (C.57, GDD 25-5): 번 것 − 상인에게 쓴 것, 패배로 잃은 것. 타일 변수 기록(시너지·변이·이벤트)은 한 줄로
+  function goldRow(): IconInfoRow {
+    const v = val(`${s.keptGold >= 0 ? '+' : ''}${s.keptGold}`, TRADE_CURRENCY_NAME);
+    if (s.lostGold > 0) v.append(el('br'), el('small', '', `잃음 ${s.lostGold}`));
+    const log = exp.variantLog;
+    const notes: string[] = [];
+    if (log && log.synergies.length > 0) {
+      const n: Record<string, number> = {};
+      for (const x of log.synergies) n[x.id] = (n[x.id] ?? 0) + 1;
+      notes.push(`시너지 ${Object.entries(n).map(([id, k]) => `${synergyName(id, faction.id)}${k > 1 ? ` ×${k}` : ''}`).join(', ')}`);
+    }
+    if (log && log.mutations.length > 0) notes.push(`변이 ${log.mutations.map((m) => `${m.lap}바퀴 ${mutationName(m.id, faction.id)}`).join(', ')}`);
+    if (log && log.events.length > 0) notes.push(`이벤트 ${log.events.length}번`);
+    for (const n of notes) v.append(el('br'), el('small', '', n));
+    return { label: TRADE_CURRENCY_NAME, icon: 'i-rare', value: v, mod: s.keptGold > 0 ? 'good' : s.lostGold > 0 ? 'bad' : undefined };
+  }
+
   const head = el('header', `bha-result bha-result--${win ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(win ? 'i-return' : 'i-broken'));
@@ -52,6 +70,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     countRow('얻은 특성', 'i-slot', s.keptTraits, (id) => traitName(id, faction.id), '개', 'good'),
     countRow('잃은 특성', 'i-slot', s.lostTraits, (id) => traitName(id, faction.id), '개', 'bad'),
     foodRow(),
+    goldRow(),
     {
       label: `${faction.riskGaugeName} (최고 / 끝)`, icon: 'i-risk', mod: exp.breakthrough ? 'em' : undefined,
       value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? `한계 돌파 · ${faction.frenzyName}` : undefined),

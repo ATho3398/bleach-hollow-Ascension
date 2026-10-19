@@ -624,6 +624,7 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-tilechip--elite { --tile: var(--bha-tile-elite); }
 .bha-tilechip--env   { --tile: var(--bha-tile-env); }
 .bha-tilechip--rest  { --tile: var(--bha-tile-rest); }
+.bha-tilechip--event { --tile: var(--bha-seal); }
 .bha-tilechip:active { transform: scale(0.96); }
 .bha-tilechip.is-selected { border: 2px solid var(--tile); padding-left: 5px; background: color-mix(in srgb, var(--tile) 22%, var(--bha-bg-2)); box-shadow: 0 0 12px color-mix(in srgb, var(--tile) 45%, transparent); }
 .bha-tilechip.is-selected::after { content: "선택"; position: absolute; top: -8px; right: 6px; padding: 0 5px; border-radius: var(--bha-r-xs); background: var(--tile); color: #fff; font-size: 12px; font-weight: 800; line-height: 15px; }

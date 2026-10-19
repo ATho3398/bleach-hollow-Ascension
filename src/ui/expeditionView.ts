@@ -3,12 +3,15 @@
 // 화면 DOM 은 한 번 만들고 상태가 바뀔 때마다 제자리에서 고친다.
 import { BALANCE } from '../config/balance';
 import { charArt } from '../data/art/manifest';
-import { tileName } from '../data/tiles';
+import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
+import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
-  advance, chooseContinue, chooseReturn, drainEvents, finishRest, inFrenzy, riskBonus, type ExpeditionState, type PendingBattle,
-  type StepEvent,
+  advance, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, inFrenzy, mutationMods, resolveEvent, riskBonus, type ExpeditionState,
+  type PendingBattle, type StepEvent,
 } from '../engine/expedition';
+import { eventHint, tileHint, variantModsText } from './labels';
+import { tileCss, tileIconId } from './bha/expedition';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
@@ -165,6 +168,13 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         render();
         clock.set('phase', ENCOUNTER_DELAY_MS, enterBattle);
         return;
+      case 'event':
+        // 이벤트 타일 (GDD 25-5 ③): 장면 위 창에서 고른다. 시간은 멈춘다
+        msg = `${tn(exp.eventPending?.tileId ?? exp.slots[ev.cell]!)}!`;
+        eventNote = '';
+        h.onSave();
+        render();
+        return;
       case 'rest':
         msg = `${tn(exp.slots[ev.cell]!)}에서 쉰다…`;
         render();
@@ -228,7 +238,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   sceneWrap.append(walk.el);
 
   // 타일 배치판: 바퀴 끝 팝업에서만 쓴다 (원정 시작 전 배치는 placementView)
-  const planner = roadPlanner({ exp, tileName: tn, onPlaced: () => h.onSave() });
+  const planner = roadPlanner({ exp, tileName: tn, onPlaced: () => h.onSave(), synergyName: (id) => synergyName(id, faction.id) });
+  // 바퀴 변이 배너 (GDD 25-5 ④): 걷는 장면 위 가운데
+  const banner = el('div', 'bha-exp__banner');
+  banner.setAttribute('role', 'status');
+  /** 이벤트 창 안내 한 줄 (골드 부족 등) */
+  let eventNote = '';
 
   const speedSeg = el('div', 'bha-seg bha-seg--sm');
   speedSeg.setAttribute('role', 'radiogroup');
@@ -262,7 +277,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   // 둥지 칸 도착 선택은 장면 위 말풍선 오버레이 (타일 배치판은 안에 있다)
   const sheetBox = el('div', 'bha-exp__sheetbox');
-  sceneWrap.append(chips, corner, sheetBox);
+  sceneWrap.append(chips, corner, banner, sheetBox);
   const main = mountApp(root, { fixed: true, cls: 'bha-exp' }, sceneWrap);
 
   helpBtn.onclick = () => {
@@ -295,6 +310,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       }),
     );
     frenzyChip.hidden = !inFrenzy(exp);
+    banner.hidden = !exp.mutation;
+    if (exp.mutation) {
+      const c = chip(`${exp.lap}바퀴 변이 · ${mutationName(exp.mutation, faction.id)}`, 'rare');
+      c.prepend(icon('i-warn', 'sm'));
+      banner.replaceChildren(c, el('span', 'bha-exp__bannersub', variantModsText(mutationMods(exp.mutation), faction.id).join(' · ')));
+    }
     main.classList.toggle('is-frenzy', inFrenzy(exp));
 
     walk.update({ walking: isWalking(exp.phase, paused), speed });
@@ -318,9 +339,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     handCount.hidden = exp.hand.length === 0;
     main.classList.toggle('is-paused', paused);
 
-    // 둥지 칸 도착: 귀환 / 한 바퀴 더
-    main.classList.toggle('has-sheet', exp.phase === 'nest-choice');
+    // 둥지 칸 도착: 귀환 / 한 바퀴 더. 이벤트 타일: 고르기 창
+    main.classList.toggle('has-sheet', exp.phase === 'nest-choice' || exp.phase === 'event');
     if (exp.phase === 'nest-choice') sheetBox.replaceChildren(...nestSheet());
+    else if (exp.phase === 'event') sheetBox.replaceChildren(...eventSheet());
     else {
       sheetBox.replaceChildren();
       if (helpBtn.parentElement !== cornerRow) cornerRow.append(helpBtn);
@@ -363,11 +385,110 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const info = el('div', 'bha-sheet__scroll');
     info.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
     if (over) info.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
-    if (exp.hand.length > 0 || planner.canEdit()) {
+    // 드래프트 (GDD 25-5 ①): 3장 중 1장 → 이번 바퀴 길에 바로 놓는다(덱에는 안 들어감, 안 놓고 계속하면 사라진다)
+    const d = exp.draft;
+    if (d) {
+      const box = el('div', 'bha-draft');
+      box.dataset.draft = d.picked === null ? 'open' : 'picked';
+      const head = el('p', 'bha-sheet__body bha-draft__head');
+      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 바퀴 길에 바로 놓는다 (덱에는 안 들어간다)' : ` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓는다 (안 놓고 계속하면 사라진다)`);
+      const row = el('div', 'bha-draft__row');
+      d.options.forEach((id, i) => {
+        const t = getTile(id);
+        const css = tileCss(t.kind);
+        const card = el('button', `bha-tilechip bha-tilechip--${css} bha-draft__card${d.picked === i ? ' is-selected' : ''}`);
+        card.type = 'button';
+        card.disabled = d.picked !== null;
+        card.setAttribute('aria-pressed', String(d.picked === i));
+        const ic = el('span', 'bha-tilechip__icon');
+        ic.append(icon(tileIconId(css)));
+        const txt = el('span', 'bha-draft__text');
+        txt.append(el('b', '', tn(id)), el('small', '', tileHint(t)));
+        card.append(ic, txt);
+        if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '덱 밖'));
+        card.onclick = () => {
+          const r = chooseDraft(exp, i);
+          if (!r.ok) return;
+          h.onSave();
+          render();
+        };
+        row.append(card);
+      });
+      box.append(head, row);
+      info.append(box);
+    }
+    if (exp.hand.length > 0 || planner.canEdit() || d) {
       // 획득한 타일은 지금 다음 바퀴 칸에 놓는다 (GDD 17-1). 안 놓으면 다음 원정 덱으로 보관된다. 이 팝업이 길 순서가 보이는 유일한 곳
       info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 덱 보관). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
       planner.refresh();
     }
+    sheet.append(info, grid);
+    return [el('div', 'bha-sheet__scrim'), sheet];
+  }
+
+  /** 이벤트 타일 창 (GDD 25-5 ③): 상인(골드로 1개)·제단(특성 하나 위력↑ 대신 리스크↑)·보물·함정·갈림길(둘 중 하나) */
+  function eventSheet(): HTMLElement[] {
+    const ev = exp.eventPending!;
+    const E = BALANCE.provisional.tileVariants.events;
+    const title = el('h2', 'bha-sheet__title');
+    title.append(icon('i-tile-combo'), tn(ev.tileId), helpBtn);
+    const info = el('div', 'bha-sheet__scroll');
+    info.append(title, el('p', 'bha-sheet__body', eventHint(ev.event)));
+    const choices = el('div', 'bha-event__choices');
+    const act = (choice: number | null) => {
+      const r = resolveEvent(exp, choice);
+      if (!r.ok) {
+        eventNote = r.reason;
+        render();
+        return;
+      }
+      msg = r.text;
+      eventNote = '';
+      h.onSave();
+      render();
+      nextStep();
+    };
+    const gold = goldAvailable(exp);
+    let leave: HTMLElement | null = null;
+    if (ev.event === 'merchant') {
+      info.append(el('p', 'bha-sheet__body', `가진 ${TRADE_CURRENCY_NAME} ${gold}`));
+      (ev.offers ?? []).forEach((o, i) => {
+        const name = o.kind === 'food' ? faction.foodNames[o.id as keyof typeof faction.foodNames] : `타일 ${tn(o.id)}`;
+        const b = button({ label: `${name} — ${o.price} ${TRADE_CURRENCY_NAME}`, icon: o.kind === 'food' ? 'i-care-feed' : 'i-deck', disabled: gold < o.price, onClick: () => act(i) });
+        b.dataset.offer = String(i);
+        choices.append(b);
+      });
+      leave = button({ label: '그냥 지나간다', icon: 'i-chevron-right', variant: 'ghost', onClick: () => act(null) });
+    } else if (ev.event === 'altar') {
+      info.append(el('p', 'bha-sheet__body', `${faction.riskGaugeName} ${Math.round(exp.risk)} → ${Math.min(BALANCE.provisional.risk.limit, Math.round(exp.risk + E.altar.risk))}`));
+      const traits = ev.traits ?? [];
+      if (traits.length === 0) info.append(el('p', 'bha-faint', '장착한 특성이 없다'));
+      traits.forEach((id, i) => {
+        const b = button({ label: `${traitName(id, faction.id)} 위력 +${Math.round(E.altar.traitPower * 100)}%`, icon: 'i-slot', onClick: () => act(i) });
+        b.prepend(elementDot(getTrait(id).element, faction.id));
+        choices.append(b);
+      });
+      leave = button({ label: '바치지 않는다', icon: 'i-close', variant: 'ghost', onClick: () => act(null) });
+    } else if (ev.event === 'treasure') {
+      const t = ev.treasure ?? {};
+      info.append(el('p', 'bha-sheet__body bha-event__loot', t.food ? `${faction.foodNames[t.food]} 1개` : `${TRADE_CURRENCY_NAME} ${t.gold ?? 0}`));
+      choices.append(button({ label: '챙긴다', icon: 'i-check', variant: 'primary', onClick: () => act(null) }));
+    } else if (ev.event === 'trap') {
+      choices.append(button({ label: '각오하고 지나간다', icon: 'i-warn', variant: 'danger', onClick: () => act(null) }));
+    } else {
+      choices.append(
+        button({ label: `보호막 ${Math.round(E.crossroads.shield * 100)}% (다음 전투)`, icon: 'i-guard', onClick: () => act(0) }),
+        button({ label: `${TRADE_CURRENCY_NAME} +${E.crossroads.gold}`, icon: 'i-rare', onClick: () => act(1) }),
+      );
+    }
+    if (eventNote) info.append(notice('warn', eventNote));
+    const sheet = el('div', 'bha-sheet bha-event');
+    sheet.dataset.event = ev.event;
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-label', tn(ev.tileId));
+    const grid = el('div', 'bha-event__foot');
+    grid.append(choices);
+    if (leave) grid.append(leave);
     sheet.append(info, grid);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }

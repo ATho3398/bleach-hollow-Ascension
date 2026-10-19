@@ -222,8 +222,8 @@ describe('세이브 형식 20', () => {
     delete s.rebirth;
     delete s.runLog.rebirths;
     const m = migrateSave(s)!;
-    expect(SAVE_FORMAT_VERSION).toBe(20);
-    expect(m.meta.format).toBe(20);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(20);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.rebirth).toEqual({ count: 0, carry: zeroStats() });
     expect(m.runLog.rebirths).toEqual([]);
     expect(m.evolution.carry).toBeUndefined();

@@ -77,7 +77,8 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
 
 /** 후보 만들기 (C.47): 그 적 속성의 아직 없는 특성 중에서. 희귀 개체는 희귀 특성이 첫 후보로 확정, 일반 후보는 희귀 아닌 특성에서 무작위.
  *  후보가 2개 이상이면 둘째부터는 다른 속성 특성에서 나온다(otherElementCandidate) — 원소 상성 순환(물 → 불 → 흙 → 뇌 → 물)에서 처음 원소를 얻는 길이 막히지 않게 */
-export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput): AbsorbOffer {
+/** extraCandidates: 원정 시너지·바퀴 변이의 흡수 후보 +n (GDD 25-5) */
+export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0): AbsorbOffer {
   const elite = enemy.class === 'elite';
   const rare = enemy.rare === true;
   const free = TRAITS.filter((t) => !build.owned.includes(t.id));
@@ -89,7 +90,7 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
   }
   const own = pool.filter((t) => !t.rare && !candidates.includes(t.id));
   const other = free.filter((t) => !t.rare && t.element !== enemy.element);
-  const want = elite ? AX.candidatesElite : 1 + nextInt(rng, AX.candidatesNormalMax);
+  const want = (elite ? AX.candidatesElite : 1 + nextInt(rng, AX.candidatesNormalMax)) + extraCandidates;
   while (candidates.length < want) {
     const list = (AX.otherElementCandidate && candidates.length > 0 && other.length > 0) || own.length === 0 ? other : own;
     if (list.length === 0) break;

@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 32;
+export const BALANCE_VERSION = 33;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -305,6 +305,56 @@ export const BALANCE = {
       shield: { damageTakenMultiplier: 0.8 },
       /** 폐가: 공허 블록 생성 확률 +0.1 */
       void: { voidChanceBonus: 0.1 },
+    },
+    /** 원정 전투 승리 골드 (GDD 25-5 의 골드 보상 배율이 기대는 바탕값, C.57 정한 것 — 23-4 얻는 곳 중 '원정' 자리). 강적 = 소굴·조합으로 나온 강적 */
+    gold: { normal: 6, elite: 20 },
+    /** 타일 변수 5종 (GDD 25-5, S-13 C.57). 표의 이름·짝은 src/data/tiles/*.json, 여기는 수치만. 효과 키는 engine/expedition/variants.ts VariantMods */
+    tileVariants: {
+      /** ① 드래프트: 바퀴 끝 배치 팝업에서 cards 장 중 1장. 마지막 1장은 specialChance 로 덱 밖 타일/이벤트 타일(그중 이벤트 비율 eventShare) */
+      draft: { cards: 3, specialChance: 0.3, eventShare: 0.5 },
+      /** ④ 바퀴 변이: fromLap 바퀴부터 바퀴 시작마다 chance 확률로 하나 */
+      mutation: { fromLap: 2, chance: 0.3 },
+      /** ② 인접 시너지 효과 (rewardMult = 그 칸 전투 먹이·골드 배율, extraBattle = 오른쪽 칸 전투 한 번 더, nextShield = 왼쪽 칸에 닿을 때 다음 전투 보호막(최대 체력 비율), riskOnce = 오른쪽 칸에 닿을 때 한 번) */
+      synergies: {
+        ambush: { enemyFirstStrike: true, rewardMult: 1.25 },
+        oasis: { restMult: 1.5, foodChanceBonus: 0.1 },
+        battlefield: { enemyAttackMult: 1.05, goldMult: 1.25 },
+        rift: { voidBonus: 0.1, goldMult: 1.5 },
+        sanctuary: { nextShield: 0.15 },
+        hideout: { riskOnce: -5 },
+        pack: { extraBattle: 1 },
+        predator: { absorbBonus: 1 },
+      } as Record<string, Record<string, number | boolean | string>>,
+      /** ④ 바퀴 변이 효과 (voidMult = 공허 블록 기본 확률 배율, foodMult = 먹이 드롭 횟수 배율, elementBias = 그 속성 적 가중치를 사냥터 주 속성처럼) */
+      mutations: {
+        'void-night': { voidMult: 2, rewardMult: 1.25 },
+        famine: { hungerMult: 2, foodMult: 2 },
+        'blood-moon': { elementBias: 'blood', absorbBonus: 1 },
+        calm: { enemyHpMult: 0.85, goldMult: 0.7 },
+        storm: { enemyAttackMult: 1.1, eliteSoulBonus: 1 },
+      } as Record<string, Record<string, number | boolean | string>>,
+      /** ⑤ 상위 타일("+") 강화: 바탕 타일 종류별 (envMult = 환경 효과 크기 배율) */
+      upgrade: {
+        'prey-nest': { rewardMult: 1.3 },
+        'elite-den': { rewardMult: 1.5, eliteHpMult: 1.1 },
+        environment: { envMult: 1.5 },
+        rest: { restMult: 2 },
+      } as Record<string, Record<string, number | boolean | string>>,
+      /** ⑤ 합성: 같은 타일 이 수만큼 → 상위 1장 */
+      synthCost: 3,
+      /** ③ 이벤트 타일 */
+      events: {
+        /** 상인: 판매 줄 수(먹이 2 + 타일 1), 가격(골드) */
+        merchant: { foodOffers: 2, prices: { snack: 15, basic: 25, hearty: 45, tonic: 70, feast: 90, tile: 30 } as Record<string, number> },
+        /** 제단: 리스크 +risk 대신 장착 특성 하나 위력 +traitPower (이번 원정 동안) */
+        altar: { risk: 15, traitPower: 0.1 },
+        /** 보물: foodChance 로 희귀 먹이 1(표), 아니면 골드 gold[0]~gold[1] */
+        treasure: { foodChance: 0.5, foodTable: { tonic: 60, feast: 40 } as Record<string, number>, gold: [20, 40] as [number, number] },
+        /** 함정: 다음 전투 시작 체력 비율, 이기면 보상 배율 */
+        trap: { startHpFraction: 0.8, rewardMult: 1.25 },
+        /** 갈림길: 다음 전투 보호막(최대 체력 비율) / 골드 */
+        crossroads: { shield: 0.3, gold: 25 },
+      },
     },
     /** 둥지 최소 버전(P2): 허기·컨디션 두 수치만 (GDD 7장) */
     nest: {

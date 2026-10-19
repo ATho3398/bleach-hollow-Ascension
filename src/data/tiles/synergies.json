@@ -1,0 +1,14 @@
+{
+  "provisional": true,
+  "note": "GDD 25-5 ② 인접 시너지 8종: 두 칸이 바로 붙으면 발동(a·b 순서 무관). 효과 수치는 src/config/balance.ts provisional.tileVariants.synergies[id], 이름은 종족별",
+  "synergies": [
+    { "id": "ambush", "a": { "kind": "elite-den" }, "b": { "kind": "environment", "preset": "reshuffle" }, "name": { "hollow": "매복", "shinigami": "매복" } },
+    { "id": "oasis", "a": { "kind": "rest" }, "b": { "kind": "prey-nest" }, "name": { "hollow": "오아시스", "shinigami": "샘터" } },
+    { "id": "battlefield", "a": { "kind": "elite-den" }, "b": { "kind": "environment", "preset": "power" }, "name": { "hollow": "격전지", "shinigami": "격전지" } },
+    { "id": "rift", "a": { "kind": "environment", "preset": "void" }, "b": { "kind": "prey-nest" }, "name": { "hollow": "균열", "shinigami": "균열" } },
+    { "id": "sanctuary", "a": { "kind": "environment", "preset": "shield" }, "b": { "kind": "rest" }, "name": { "hollow": "성역", "shinigami": "성역" } },
+    { "id": "hideout", "a": { "kind": "rest" }, "b": { "kind": "rest" }, "name": { "hollow": "은신처", "shinigami": "은신처" } },
+    { "id": "pack", "a": { "kind": "prey-nest" }, "b": { "kind": "prey-nest" }, "name": { "hollow": "사냥 무리", "shinigami": "집단 출몰" } },
+    { "id": "predator", "a": { "kind": "elite-den" }, "b": { "kind": "elite-den" }, "name": { "hollow": "포식자의 길", "shinigami": "메노스의 길" } }
+  ]
+}

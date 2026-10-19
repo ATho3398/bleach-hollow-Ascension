@@ -5,13 +5,14 @@ import { el, icon, type InfoRow } from './dom';
 
 // ── 순수 함수 ──
 
-export type TileCss = 'prey' | 'elite' | 'env' | 'rest';
+export type TileCss = 'prey' | 'elite' | 'env' | 'rest' | 'event';
 
 /** 타일 종류 → 디자인 클래스/아이콘 키. 조합(combo) 타일은 환경 모양으로 보인다 (슬롯에 직접 놓는 타일은 4종뿐) */
 export function tileCss(kind: TerrainTileDef['kind']): TileCss {
-  return { 'prey-nest': 'prey', 'elite-den': 'elite', environment: 'env', rest: 'rest', combo: 'env' }[kind] as TileCss;
+  return { 'prey-nest': 'prey', 'elite-den': 'elite', environment: 'env', rest: 'rest', combo: 'env', event: 'event' }[kind] as TileCss;
 }
-export const tileIconId = (css: TileCss): string => `i-tile-${css}`;
+/** 이벤트 타일(GDD 25-5 ③)은 전용 아이콘이 없어 조합 아이콘을 쓴다 */
+export const tileIconId = (css: TileCss): string => (css === 'event' ? 'i-tile-combo' : `i-tile-${css}`);
 
 /** 지금 고른 타일을 이 칸에 놓을 수 있는가: 지금 위치보다 앞쪽 빈 슬롯만 (엔진 규칙을 화면이 그대로 반영) */
 export function canPlaceAt(o: { slot: string | null; index: number; pos: number; phase: ExpeditionPhase; hasSelected: boolean }): boolean {

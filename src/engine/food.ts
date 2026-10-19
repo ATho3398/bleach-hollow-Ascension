@@ -79,6 +79,16 @@ export function rollBattleFood(rng: Rng, elite: boolean, table: FoodDropTable = 
   return nextFloat(rng) < table.normalDropChance ? [pickWeighted(rng, table.normalTable)] : [];
 }
 
+/** 먹이 드롭 배율 (GDD 25-5 시너지·변이·상위 타일·함정): 드롭 굴림을 mult 번(소수 부분은 그 확률로 한 번 더) 하고, 일반 적 드롭 확률에 chanceBonus 를 더한다. mult 1·bonus 0 이면 rollBattleFood 와 같은 난수 사용 */
+export function rollBattleFoodMult(rng: Rng, elite: boolean, table: FoodDropTable = FX, mult = 1, chanceBonus = 0): FoodId[] {
+  const t: FoodDropTable = chanceBonus > 0 ? { ...table, normalDropChance: Math.min(1, table.normalDropChance + chanceBonus) } : table;
+  const whole = Math.floor(mult);
+  const rolls = whole + (mult - whole > 0 && nextFloat(rng) < mult - whole ? 1 : 0);
+  const out: FoodId[] = [];
+  for (let i = 0; i < rolls; i++) out.push(...rollBattleFood(rng, elite, t));
+  return out;
+}
+
 /** 원정에서 가져온 먹이를 보유에 넣은 결과 (결과 화면 표시용) */
 export interface FoodSettlement {
   /** 원정에서 얻어 지킨 먹이 (상한으로 버려진 것 포함) */

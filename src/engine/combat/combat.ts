@@ -143,6 +143,10 @@ export interface CombatParams {
   liberationBlocks: number;
   liberationPowerInAttacks: number;
   liberationRisk: number;
+  /** 원정 이벤트·시너지 (GDD 25-5, C.57): 전투 시작 체력 비율(함정), 시작 보호막 = 최대 체력 × 비율(성역·갈림길 — 받는 피해를 먼저 막는다), 적이 먼저 공격(매복) */
+  playerStartHpFraction: number;
+  startShieldFraction: number;
+  enemyFirstStrike: boolean;
 }
 
 export function defaultCombatParams(): CombatParams {
@@ -173,6 +177,9 @@ export function defaultCombatParams(): CombatParams {
     playerPowerMultiplier: 1,
     trayShuffleSeconds: 0,
     voidChanceBonus: 0,
+    playerStartHpFraction: 1,
+    startShieldFraction: 0,
+    enemyFirstStrike: false,
     liberationEnabled: false,
     liberationCategory: 'mixed',
     liberationGaugeFraction: LB.gaugeEnemyHpFraction,
@@ -264,7 +271,8 @@ export interface CombatState {
     /** 이 전투에서 흡혈로 되찾은 체력 합계 (상한 drainCapFraction, C.53) */
     drained?: number;
   };
-  player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number };
+  /** shield: 남은 보호막 (GDD 25-5 성역·갈림길, 없으면 0) */
+  player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
   tray: Tray;
   nextUid: number;
   /** 블록 생성원(skills, 비면 기본 블록)마다 다음 생성까지 남은 틱 */
@@ -460,7 +468,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
       def: setup.enemy,
       hp: maxHp,
       maxHp,
-      attackTimer: t(enemyAttackSecondsOf(params, setup.enemy.pattern)),
+      attackTimer: params.enemyFirstStrike ? 1 : t(enemyAttackSecondsOf(params, setup.enemy.pattern)),
       actionTimer: hasSpecialActions(setup.enemy.pattern) ? t(setup.enemy.pattern.everySeconds) : 0,
       actionIndex: 0,
       cast: null,
@@ -468,7 +476,10 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
       stats: enemyStatsOf(params, setup.enemy),
       dot: null,
     },
-    player: { hp: playerHp, maxHp: playerHp, attackTimer: t(playerAttackSecondsOf(params)), stats: pStats, dot: null },
+    player: {
+      hp: playerHp * Math.min(1, Math.max(0.01, params.playerStartHpFraction)), maxHp: playerHp, attackTimer: t(playerAttackSecondsOf(params)), stats: pStats, dot: null,
+      ...(params.startShieldFraction > 0 ? { shield: playerHp * params.startShieldFraction } : {}),
+    },
     tray: [],
     nextUid: 1,
     // 생성원이 여럿이면 생성 시점을 고르게 엇갈린다 (첫 블록은 간격의 절반 뒤)
@@ -657,6 +668,11 @@ function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly st
 
 function takeDamage(s: CombatState, amount: number): void {
   if (s.status !== 'playing') return;
+  if (s.player.shield && s.player.shield > 0) {
+    const absorbed = Math.min(s.player.shield, amount);
+    s.player.shield -= absorbed;
+    amount -= absorbed;
+  }
   s.player.hp = Math.max(0, s.player.hp - amount);
   if (s.player.hp <= 0) {
     s.status = 'lost';

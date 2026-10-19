@@ -1,0 +1,97 @@
+{
+  "synergiesShown": [
+    "사냥 무리",
+    "매복",
+    "오아시스",
+    "격전지"
+  ],
+  "draftAfterPick": {
+    "lap": 1,
+    "options": [
+      "prey-nest-a",
+      "env-wasteland",
+      "event-merchant"
+    ],
+    "picked": 1
+  },
+  "slotsAfterPlace": [
+    null,
+    "prey-nest-a",
+    "prey-nest-b",
+    null,
+    "elite-den-a",
+    "env-fog",
+    null,
+    null,
+    "rest-a",
+    "prey-nest-a",
+    "env-wasteland",
+    "elite-den-b"
+  ],
+  "merchantOffers": [
+    {
+      "kind": "food",
+      "id": "snack",
+      "price": 15
+    },
+    {
+      "kind": "food",
+      "id": "hearty",
+      "price": 45
+    },
+    {
+      "kind": "tile",
+      "id": "prey-nest-a",
+      "price": 30
+    }
+  ],
+  "merchantAfter": {
+    "goldLoot": [
+      {
+        "amount": -15,
+        "lap": 1
+      }
+    ],
+    "foodLoot": [
+      {
+        "food": "snack",
+        "lap": 1
+      }
+    ],
+    "events": [
+      {
+        "event": "merchant",
+        "choice": "buy:food:snack",
+        "lap": 1
+      }
+    ],
+    "slot6": null
+  },
+  "crossroadsAfter": {
+    "goldLoot": [
+      {
+        "amount": 25,
+        "lap": 1
+      }
+    ],
+    "events": [
+      {
+        "event": "crossroads",
+        "choice": "gold",
+        "lap": 1
+      }
+    ]
+  },
+  "banner": "2바퀴 변이 · 공허의 밤보상 ×1.25 · 공허 블록 ×2",
+  "synthCollection": {
+    "prey-nest-a": 1,
+    "prey-nest-a-plus": 1,
+    "format": 21
+  },
+  "synergiesShinigami": [
+    "성역",
+    "균열",
+    "메노스의 길"
+  ],
+  "consoleErrors": []
+}

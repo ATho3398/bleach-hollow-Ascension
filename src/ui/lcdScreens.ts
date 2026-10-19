@@ -1,8 +1,8 @@
 // 방 물건이 여는 기능 화면: 돌보기·상태 / 상자(슬롯·덱) / 제단(진화). LCD 가로 2단 배치 (T-3).
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
 import { BALANCE } from '../config/balance';
-import { tilesFor, tileName } from '../data/tiles';
-import { equipSkin, type SaveData } from '../game';
+import { baseTilesFor, deckTilesFor, tileName, upgradeIdOf } from '../data/tiles';
+import { canSynthesize, equipSkin, synthesizeTile, type SaveData } from '../game';
 import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
 import { versionLabel } from '../version';
@@ -13,14 +13,15 @@ import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
-import { deckRow, statsBlock, statusBlock } from './bha/nest';
+import { deckRow, showToast, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityName } from '../data/evolution';
 import { currentStats, playerElementsOf, refStatOf, zeroStats } from '../engine/evolution';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
 import { elementsMark } from './bha/element';
 import { countText, toward } from './bha/nestLogic';
-import { tileHint } from './labels';
+import { tileHint, variantModsText } from './labels';
+import type { VariantMods } from '../engine/expedition';
 
 /** 상태 자리: 왼쪽 상태 4바(허기·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
 export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
@@ -119,7 +120,7 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
 }
 
 type ChestTab = 'slots' | 'deck';
-const chestUi: { tab: ChestTab; traits: TraitsTabState } = { tab: 'slots', traits: { swapTrait: null } };
+const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'slots', traits: { swapTrait: null }, synth: false };
 
 /** 상자: 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일 덱(왼쪽 설명 / 오른쪽 타일 행) */
 export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
@@ -150,10 +151,57 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     const info = panel({ title: '타일 덱', aside: h('span', deckCount === 0 ? 'bha-chip bha-chip--danger' : 'bha-chip', countText(deckCount, deckSize)) });
     info.querySelector('.bha-panel__title')?.prepend(icon('i-deck'));
     info.append(h('p', 'bha-dim', '원정 중 보상으로 이 덱에서 타일이 뽑힌다. 뽑힌 타일만 길 옆에 놓을 수 있다.'));
+    // 타일 합성 (GDD 25-5 ⑤): 같은 타일 3장 → 상위 타일("+") 1장. 오른쪽 목록을 합성 목록으로 바꾼다
+    const cost = BALANCE.provisional.tileVariants.synthCost;
+    const synthBtn = button({
+      label: chestUi.synth ? '덱 고르기로' : '합성', icon: chestUi.synth ? 'i-deck' : 'i-plus', block: true,
+      onClick: () => {
+        chestUi.synth = !chestUi.synth;
+        fill();
+      },
+    });
+    synthBtn.dataset.sc = 'synth';
+    info.append(synthBtn, h('p', 'bha-faint', `합성: 같은 타일 ${cost}장 → 이름 뒤 "+" 상위 타일 1장 (상위 타일은 다시 합성하지 않는다)`));
+    if (chestUi.synth) {
+      const list = h('div', 'bha-stack');
+      list.dataset.synth = '';
+      for (const t of baseTilesFor(faction.id).filter((x) => canSynthesize(x.id))) {
+        const up = upgradeIdOf(t.id)!;
+        const have = save.tiles.collection[t.id] ?? 0;
+        const row = h('div', have >= cost ? 'bha-deckrow' : 'bha-deckrow is-zero');
+        const kind = tileKindOf(t);
+        row.style.setProperty('--tile', `var(--bha-tile-${kind.cls})`);
+        const ic = h('span', 'bha-deckrow__icon');
+        ic.append(icon(kind.icon));
+        const main = h('span', 'bha-deckrow__main');
+        const upHave = save.tiles.collection[up] ?? 0;
+        main.append(
+          h('span', 'bha-deckrow__name', tileName(up, faction.id)),
+          h('span', 'bha-deckrow__desc', `${variantModsText(BALANCE.provisional.tileVariants.upgrade[t.kind] as VariantMods).join(' · ')} · 재료 ${have}/${cost}${upHave > 0 ? ` · 보유 ${upHave}` : ''}`),
+        );
+        const go = button({
+          label: `합성 (${cost}장)`, size: 'small', disabled: have < cost,
+          onClick: () => {
+            const r = synthesizeTile(save, t.id);
+            if (!r.ok) return;
+            persist();
+            showToast({ eyebrow: '타일 합성', title: tileName(r.upgradedId, faction.id), meta: `${tileName(t.id, faction.id)} ${cost}장 → 1장` });
+            fill();
+          },
+        });
+        go.dataset.synthId = t.id;
+        row.append(ic, main, go);
+        list.append(row);
+      }
+      page.left.replaceChildren(info);
+      page.right.replaceChildren(list);
+      return;
+    }
     const deckList = h('div', 'bha-stack');
     const count = (id: string) => save.tiles.deck.filter((x) => x === id).length;
-    for (const t of tilesFor(faction.id)) {
+    for (const t of deckTilesFor(faction.id)) {
       const owned = save.tiles.collection[t.id] ?? 0;
+      if (t.upgradeOf && owned === 0 && count(t.id) === 0) continue; // 상위 타일은 가진 것만
       deckList.append(deckRow({
         name: tileName(t.id, faction.id), hint: tileHint(t), owned, count: count(t.id), tile: t, provisional: true,
         canAdd: count(t.id) < owned && deckCount < deckSize,

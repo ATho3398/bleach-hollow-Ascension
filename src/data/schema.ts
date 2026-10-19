@@ -168,19 +168,26 @@ export interface TraitDef {
 /** 환경 타일이 바꾸는 전투 조건 종류 (효과 수치는 BALANCE.provisional.tiles). 이름만 종족 스킨 (GDD 6장) */
 export type EnvironmentPreset = 'reshuffle' | 'power' | 'shield' | 'void';
 
+/** 이벤트 타일 종류 (GDD 25-5 ③, 드래프트로만 얻고 한 번 밟으면 사라진다). 수치는 BALANCE.provisional.tileVariants.events */
+export const TILE_EVENTS = ['merchant', 'altar', 'treasure', 'trap', 'crossroads'] as const;
+export type TileEvent = (typeof TILE_EVENTS)[number];
+
 export type TileEffect =
   | { type: 'spawn'; enemyClass: 'normal' | 'elite' }
   | { type: 'environment'; preset: EnvironmentPreset }
-  | { type: 'rest' };
+  | { type: 'rest' }
+  | { type: 'event'; event: TileEvent };
 
 export interface TerrainTileDef {
   id: string;
-  kind: 'prey-nest' | 'elite-den' | 'environment' | 'rest' | 'combo';
+  kind: 'prey-nest' | 'elite-den' | 'environment' | 'rest' | 'combo' | 'event';
   /** 종족별 스킨 이름. 해당 종족 키(또는 '*')가 없으면 그 종족은 이 타일을 쓰지 않는다 */
   name: PerFaction<string>;
   effect: TileEffect;
   /** 같은 값이 인접 3칸이면 조합 효과(임시: 강적 1마리 확정). GDD 6장 "둥지 3개" */
   comboGroup?: string;
+  /** 상위 타일 (GDD 25-5 ⑤ 합성 "+"): 바탕 타일 id. 효과 강화 수치는 BALANCE.provisional.tileVariants.upgrade[종류]. 상위 타일은 다시 합성하지 않는다 */
+  upgradeOf?: string;
   provisional?: boolean;
 }
 

@@ -1,0 +1,11 @@
+{
+  "provisional": true,
+  "note": "GDD 25-5 ④ 바퀴 변이 5종: 2바퀴부터 바퀴 시작마다 확률로 하나. 효과 수치는 src/config/balance.ts provisional.tileVariants.mutations[id], 이름은 종족별(설명 문구는 수치에서 만든다)",
+  "mutations": [
+    { "id": "void-night", "name": { "hollow": "공허의 밤", "shinigami": "공허의 밤" } },
+    { "id": "famine", "name": { "hollow": "굶주림", "shinigami": "기근" } },
+    { "id": "blood-moon", "name": { "hollow": "피의 달", "shinigami": "피의 달" } },
+    { "id": "calm", "name": { "hollow": "고요", "shinigami": "고요" } },
+    { "id": "storm", "name": { "hollow": "모래 폭풍", "shinigami": "영압 폭풍" } }
+  ]
+}

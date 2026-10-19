@@ -220,6 +220,13 @@ export interface RunRecord {
   breakthrough: boolean;
   /** 사냥터 id (GDD 24-2, 세이브 형식 17). 형식 17 마이그레이션이 옛 기록을 기본 사냥터로 채운다 */
   groundId?: string;
+  /** C.57 (세이브 형식 21, GDD 25-5 타일 변수): 발동한 인접 시너지 id(짝에 들어설 때마다), 바퀴 변이, 이벤트 타일 선택, 드래프트로 고른 타일, 지킨 골드(번 것 − 쓴 것).
+   *  형식 21 마이그레이션이 옛 기록을 빈 목록·0 으로 채운다 */
+  synergies?: string[];
+  mutations?: { id: string; lap: number }[];
+  events?: { event: string; choice: string; lap: number }[];
+  drafts?: { tileId: string; lap: number }[];
+  gold?: number;
 }
 
 export interface RunLog {

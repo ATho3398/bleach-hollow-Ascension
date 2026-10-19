@@ -78,6 +78,31 @@
 .bha-road__cell.is-editable { border-color: var(--bha-insert); }
 .bha-road__cell.is-selected { outline: 2px solid var(--bha-insert); outline-offset: 1px; }
 .bha-road__hand { flex-wrap: wrap; }
+/* 인접 시너지 (GDD 25-5 ②, C.57): 두 칸 테두리 + 칸 사이 이름표 + 아래 한 줄 목록. 이벤트 타일 색은 봉인 보라 토큰 */
+.bha-road__cell.has-syn { box-shadow: 0 0 0 2px var(--bha-rare), 0 2px 6px rgb(0 0 0 / .5); }
+.bha-road__syn { position: absolute; top: 0; left: calc(-1 * var(--bha-sp-2) / 2); transform: translate(-50%, -55%); z-index: 1; padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); border: 1px solid var(--bha-rare); background: var(--bha-bg-0); color: var(--bha-rare); font-size: var(--bha-fs-xs); line-height: 1.35; font-weight: 700; white-space: nowrap; pointer-events: none; }
+.bha-road__syn--wrap { left: 0; transform: translate(-10%, -55%); }
+.bha-road__synline { margin: 0; display: flex; flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-road__synline b { color: var(--bha-rare); }
+.bha-road__cell--event.is-has { --tile: var(--bha-seal); }
+
+/* 드래프트 (GDD 25-5 ①, C.57): 바퀴 끝 팝업 안 3장 중 1장 */
+.bha-draft { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+.bha-draft__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-3); }
+.bha-draft__card { position: relative; align-items: flex-start; min-height: var(--bha-touch); height: auto; padding: var(--bha-sp-3) var(--bha-sp-4); text-align: left; }
+.bha-draft__text { display: flex; flex-direction: column; gap: var(--bha-sp-1); min-width: 0; }
+.bha-draft__text small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; white-space: normal; }
+.bha-draft__tag { position: absolute; top: calc(-1 * var(--bha-sp-3)); right: var(--bha-sp-3); }
+.bha-draft__card:disabled:not(.is-selected) { opacity: .45; }
+/* 이벤트 타일 창 (GDD 25-5 ③) */
+.bha-event__choices { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
+.bha-event__choices > .bha-btn { flex: 1 1 40%; }
+.bha-event__foot { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+.bha-event__loot { font-size: var(--bha-fs-lg); font-weight: 700; color: var(--bha-rare); }
+/* 바퀴 변이 배너 (GDD 25-5 ④): 걷는 장면 위 가운데 */
+.bha-exp__banner { position: absolute; top: var(--bha-sp-4); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); max-width: 46%; padding: var(--bha-sp-2) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-rare); background: rgb(0 0 0 / .62); text-align: center; pointer-events: none; }
+.bha-exp__bannersub { font-size: var(--bha-fs-xs); color: var(--bha-text-1); }
+.bha-exp__banner[hidden] { display: none; }
 
 /* 카드 배치 단계 화면 */
 .bha-plan { gap: var(--bha-sp-4); }

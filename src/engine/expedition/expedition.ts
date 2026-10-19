@@ -6,7 +6,7 @@ import { scaleEnemy } from '../../data/enemies';
 import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, pickFromPool } from '../enemyPool';
 import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
-import { getTile, tilesFor } from '../../data/tiles';
+import { deckTilesFor, getTile } from '../../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import {
@@ -18,7 +18,10 @@ import {
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
-import { rollBattleFood, type FoodSettlement } from '../food';
+import { rollBattleFoodMult, type FoodSettlement } from '../food';
+import {
+  applyTraitBoosts, combineMods, drawDraft, makeEvent, mutationMods, rollMutation, synergyAt, synergyMods, upgradeMods, type EventPending, type VariantMods,
+} from './variants';
 import type { FoodId } from '../faction';
 
 const EX = BALANCE.expedition;
@@ -26,10 +29,14 @@ const PX = BALANCE.provisional.expedition;
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;
 const FX = BALANCE.provisional.food;
+const GX = BALANCE.provisional.gold;
 /** 전리품 난수 시드 = 원정 시드 xor 이 값 */
 const LOOT_SEED_SALT = 0x5f3759df;
+/** 타일 변수 난수 시드 = 원정 시드 xor 이 값 (드래프트·변이·이벤트 내용이 적·타일·흡수 난수를 바꾸지 않게) */
+const VARIANT_SEED_SALT = 0x2545f491;
+const TV = BALANCE.provisional.tileVariants;
 
-export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'ended';
+export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'event' | 'ended';
 export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted';
 
 /** 지금 치를 전투 (전투 엔진에 넘길 재료) */
@@ -44,6 +51,48 @@ export interface PendingBattle {
   combo: boolean;
   /** 이 전투를 일으킨 타일 id (야생 전투면 null) */
   tileId: string | null;
+  /** 이긴 뒤 정산 배율 (GDD 25-5 시너지·변이·상위 타일·함정). 없으면 모두 기본값 */
+  mods?: BattleMods;
+  /** 이 칸이 속한 인접 시너지 id (없으면 null) */
+  synergy?: string | null;
+  /** 함정을 밟고 들어온 전투 (시작 체력 ↓, 이기면 보상 ↑) */
+  trap?: boolean;
+  /** 사냥 무리 2연전의 두 번째 전투 */
+  second?: boolean;
+}
+
+/** 전투 정산 배율 (GDD 25-5) */
+export interface BattleMods {
+  rewardMult: number;
+  goldMult: number;
+  foodMult: number;
+  foodChanceBonus: number;
+  absorbBonus: number;
+  extraBattle: number;
+  eliteSoulBonus: number;
+}
+
+const NO_MODS: BattleMods = { rewardMult: 1, goldMult: 1, foodMult: 1, foodChanceBonus: 0, absorbBonus: 0, extraBattle: 0, eliteSoulBonus: 0 };
+
+/** 원정에서 얻거나 쓴 골드 한 건 (GDD 25-5, C.57): 양수 = 얻음(패배하면 마지막 바퀴 것을 잃는다), 음수 = 상인에게 씀 */
+export interface GoldEntry {
+  amount: number;
+  lap: number;
+}
+
+/** 바퀴 끝 드래프트 (GDD 25-5 ①): 카드 3장 중 1장(picked = 고른 칸, 아직이면 null) */
+export interface DraftState {
+  lap: number;
+  options: string[];
+  picked: number | null;
+}
+
+/** 타일 변수 기록 (런 로그 GDD 9장 → RunRecord): 시너지는 짝에 들어설 때마다, 이벤트는 고른 것 */
+export interface VariantLog {
+  synergies: { id: string; lap: number }[];
+  mutations: { id: string; lap: number }[];
+  events: { event: string; choice: string; lap: number }[];
+  drafts: { tileId: string; lap: number }[];
 }
 
 export interface Acquired {
@@ -113,6 +162,32 @@ export interface ExpeditionState extends RiskState {
   foodSettled?: FoodSettlement;
   /** 해방 자격 (GDD 22-5, 출발 때 game.liberationAccess 로 정함): 이 원정 전투에서 해방 버튼을 쓸 수 있는가. 없으면 못 씀 */
   liberationEnabled?: boolean;
+  // ── 타일 변수 (GDD 25-5, C.57, 원정 형식 5) ──
+  /** 드래프트·인접 시너지·이벤트·바퀴 변이를 켠다 (게임은 켬, 옛 점검 봇·테스트는 끔). 상위 타일 효과와 골드는 늘 켜짐 */
+  tileVariants: boolean;
+  /** 타일 변수 전용 난수 */
+  varRng: Rng;
+  /** 이번 바퀴 변이 id (없으면 null) */
+  mutation: string | null;
+  draft: DraftState | null;
+  /** 밟은 이벤트 타일 (phase 'event') */
+  eventPending: EventPending | null;
+  /** 출발 때 가진 골드 (세이브 공유 자원). 상인은 이것 + 원정에서 번 골드로 산다 */
+  goldBank: number;
+  goldLoot: GoldEntry[];
+  /** 제단으로 올린 특성 위력 (특성 id → +비율, 이번 원정 동안) */
+  traitBoosts: Record<string, number>;
+  /** 다음 전투 시작 보호막 (최대 체력 비율) */
+  nextShield: number;
+  /** 함정: 다음 전투 시작 체력 ↓·이기면 보상 ↑ */
+  trapArmed: boolean;
+  /** 사냥 무리 2연전: 다음 advance 에서 같은 칸에서 한 번 더 싸운다 */
+  queuedBattle: { cell: number; synergy: string | null } | null;
+  /** 지금 휴식의 회복 배율 (상위 타일·시너지, phase 'rest') */
+  restMult: number;
+  /** 바퀴 변이(폭풍)로 더 받는 영혼 결정 */
+  bonusSoul: number;
+  variantLog: VariantLog;
 }
 
 export interface ExpeditionSetup {
@@ -134,6 +209,10 @@ export interface ExpeditionSetup {
   evolution?: EvolutionState;
   /** 해방 자격 (수련 완료·등급 이력·5단계 이상). 없으면 false */
   liberationEnabled?: boolean;
+  /** 타일 변수(드래프트·시너지·이벤트·변이)를 켠다 (GDD 25-5). 없으면 false */
+  tileVariants?: boolean;
+  /** 가진 골드 (상인 구매용). 없으면 0 */
+  gold?: number;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -179,6 +258,20 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     outcome: null,
     endReason: null,
     liberationEnabled: setup.liberationEnabled === true,
+    tileVariants: setup.tileVariants === true,
+    varRng: createRng((setup.seed ^ VARIANT_SEED_SALT) >>> 0),
+    mutation: null,
+    draft: null,
+    eventPending: null,
+    goldBank: Math.max(0, Math.floor(setup.gold ?? 0)),
+    goldLoot: [],
+    traitBoosts: {},
+    nextShield: 0,
+    trapArmed: false,
+    queuedBattle: null,
+    restMult: 1,
+    bonusSoul: 0,
+    variantLog: { synergies: [], mutations: [], events: [], drafts: [] },
   };
   planLap(exp);
   return exp;
@@ -194,9 +287,11 @@ function randomSeed(rng: Rng): number {
   return Math.floor(nextFloat(rng) * 2 ** 32);
 }
 
-/** 전투를 일으키는 타일인가 (휴식은 아님) */
+/** 전투를 일으키는 타일인가 (휴식·이벤트는 아님) */
 function causesBattle(id: string | null): boolean {
-  return id !== null && getTile(id).effect.type !== 'rest';
+  if (id === null) return false;
+  const t = getTile(id).effect.type;
+  return t !== 'rest' && t !== 'event';
 }
 
 /** 새 바퀴 시작: 야생 전투 칸을 뽑는다. 놓은 전투 타일이 기본 전투 횟수를 대신하고, 기본 횟수보다 많이 놓으면 그만큼 전투가 는다 */
@@ -217,6 +312,11 @@ function planLap(exp: ExpeditionState): void {
   exp.victoriesThisLap = 0;
   exp.tilesThisLap = 0;
   if (exp.battlesByLap.length < exp.lap) exp.battlesByLap.push(0);
+  // 바퀴 변이 (GDD 25-5 ④): 2바퀴부터 바퀴 시작마다 확률로 하나
+  if (exp.tileVariants) {
+    exp.mutation = rollMutation(exp.varRng, exp.lap);
+    if (exp.mutation) exp.variantLog.mutations.push({ id: exp.mutation, lap: exp.lap });
+  }
 }
 
 export function lapScale(lap: number): { hp: number; attack: number } {
@@ -238,8 +338,11 @@ export function enemyScale(lap: number, groundId: string): { hp: number; attack:
 }
 
 /** 출처(야생/타일 종류/조합)와 바퀴·사냥터에 맞는 풀에서 적을 뽑고 바퀴 강화·사냥터 강도를 입힌다 (GDD 14-5·24-2) */
-function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string): EnemyDef {
-  const pool = enemyPool(cls, exp.lap, source, getGround(exp.groundId));
+function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string, elementBias?: string): EnemyDef {
+  const g = getGround(exp.groundId);
+  // 바퀴 변이(피의 달): 그 속성 적이 사냥터 주 속성처럼 자주 나온다
+  const ground = elementBias && !g.elements.includes(elementBias) ? { ...g, elements: [...g.elements, elementBias] } : g;
+  const pool = enemyPool(cls, exp.lap, source, ground);
   if (pool.length === 0) throw new Error(`적 출현 풀이 비었다: ${cls} ${exp.lap}바퀴 ${source}`);
   const base = pickFromPool(exp.rng, pool);
   const rare = nextFloat(exp.rng) < base.rareChance;
@@ -260,18 +363,26 @@ export type StepEvent =
   | { kind: 'move'; cell: number; lap: number }
   | { kind: 'battle'; cell: number; battle: PendingBattle }
   | { kind: 'rest'; cell: number }
+  | { kind: 'event'; cell: number; event: string }
   | { kind: 'lap-complete'; lap: number; rewardTile: string | null }
   | { kind: 'ended'; outcome: 'returned' | 'defeated'; reason: EndReason };
 
 /** 한 칸 이동. phase 가 moving 일 때만 */
 export function advance(exp: ExpeditionState): StepEvent | null {
   if (exp.phase !== 'moving') return null;
+  // 사냥 무리 2연전 (GDD 25-5 ②): 같은 칸에서 바로 한 번 더 (이동·시간 없음)
+  if (exp.queuedBattle) {
+    const q = exp.queuedBattle;
+    exp.queuedBattle = null;
+    const qid = exp.slots[q.cell] ?? null;
+    return startBattleAt(exp, q.cell, 'normal', false, qid, q.synergy ? { id: q.synergy, role: 'right' } : null, true);
+  }
   exp.pos = (exp.pos + 1) % EX.loopTiles;
   exp.elapsedSeconds += EX.secondsPerTile;
   // 진화 타이밍 = 걸음 수 (GDD 20-5 v4.1). 남은 걸음 20%·10% 순간 임박 알림
   const near = recordEvolutionStep(exp.evolution);
   if (near !== null) exp.events.push({ kind: 'evolution-near', level: near });
-  exp.hunger += exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile;
+  exp.hunger += (exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile) * (mutationMods(exp.mutation).hungerMult ?? 1);
   const late = lateLapRisk(exp.lap, PX.lateLapStart);
   if (late > 0) changeRisk(exp, late, 'late-lap');
   if (exp.hunger >= PX.hungerMax) {
@@ -283,12 +394,30 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     const reward = drawTile(exp);
     if (exp.lap >= exp.maxLaps) return endExpedition(exp, 'returned', 'forced-max-laps');
     exp.phase = 'nest-choice';
+    // 드래프트 (GDD 25-5 ①): 바퀴 끝 배치 팝업에서 3장 중 1장
+    if (exp.tileVariants) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
     return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward };
   }
   const cell = exp.pos;
   const id = exp.slots[cell];
   const tile = id ? getTile(id) : null;
+  // 인접 시너지 (GDD 25-5 ②): 왼쪽 칸에 들어설 때 기록·보호막, 오른쪽 칸에서 한 번 쓰는 리스크
+  const syn = exp.tileVariants ? synergyAt(exp.slots, cell) : null;
+  if (syn) {
+    const m = synergyMods(syn.id);
+    if (syn.role === 'left') {
+      exp.variantLog.synergies.push({ id: syn.id, lap: exp.lap });
+      if (m.nextShield) exp.nextShield = Math.max(exp.nextShield, m.nextShield);
+    } else if (m.riskOnce) changeRisk(exp, m.riskOnce, 'synergy');
+  }
+  // 이벤트 타일 (GDD 25-5 ③): 내용을 미리 굴려 두고 고르기를 기다린다
+  if (tile?.effect.type === 'event') {
+    exp.eventPending = makeEvent(exp.varRng, id!, cell, exp);
+    exp.phase = 'event';
+    return { kind: 'event', cell, event: tile.effect.event };
+  }
   if (tile?.effect.type === 'rest') {
+    exp.restMult = combineMods(upgradeMods(id), syn ? synergyMods(syn.id) : null).restMult ?? 1;
     exp.phase = 'rest';
     return { kind: 'rest', cell };
   }
@@ -312,20 +441,57 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     combo = false;
   }
   if (cls === 'elite') exp.elitesThisLap++;
+  return startBattleAt(exp, cell, cls, combo, id ?? null, syn, false);
+}
+
+/** 전투 재료를 만든다: 장착 특성·진화·환경·폭주 + 타일 변수(시너지·변이·상위 타일·함정·보호막·제단). 타일 변수가 없으면 예전과 같은 난수·같은 값 */
+function startBattleAt(
+  exp: ExpeditionState, cell: number, cls: 'normal' | 'elite', combo: boolean, id: string | null, syn: { id: string; role: 'left' | 'right' } | null, second: boolean,
+): StepEvent {
+  const tile = id ? getTile(id) : null;
+  const sm = syn ? synergyMods(syn.id) : null;
+  const m: VariantMods = combineMods(sm, mutationMods(exp.mutation), upgradeMods(id));
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability), liberationEnabled: exp.liberationEnabled === true };
   applyEvolutionToParams(params, exp.evolution, exp.factionId);
-  if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
+  applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
+  if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset, m.envMult ?? 1);
   if (exp.breakthrough) applyFrenzy(params);
+  if (m.voidBonus) params.voidChanceBonus = (params.voidChanceBonus ?? 0) + m.voidBonus;
+  if (m.voidMult && m.voidMult !== 1) params.voidChanceBonus = (params.voidChanceBonus ?? 0) + BALANCE.provisional.combat.voidChance * (m.voidMult - 1);
+  if (m.enemyFirstStrike) params.enemyFirstStrike = true;
+  let rewardMult = m.rewardMult ?? 1;
+  let trap = false;
+  if (exp.trapArmed) {
+    params.playerStartHpFraction = TV.events.trap.startHpFraction;
+    rewardMult *= TV.events.trap.rewardMult;
+    exp.trapArmed = false;
+    trap = true;
+  }
+  if (exp.nextShield > 0) {
+    params.startShieldFraction = exp.nextShield;
+    exp.nextShield = 0;
+  }
+  let enemy = pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
+  const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1);
+  const atkK = m.enemyAttackMult ?? 1;
+  if (hpK !== 1 || atkK !== 1) enemy = scaleEnemy(enemy, { hp: hpK, attack: atkK });
   const pending: PendingBattle = {
-    enemy: pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild'),
+    enemy,
     seed: randomSeed(exp.rng),
     params,
     cell,
     lap: exp.lap,
     elite: cls === 'elite',
     combo,
-    tileId: id ?? null,
+    tileId: id,
+    mods: {
+      rewardMult, goldMult: m.goldMult ?? 1, foodMult: m.foodMult ?? 1, foodChanceBonus: m.foodChanceBonus ?? 0, absorbBonus: m.absorbBonus ?? 0,
+      extraBattle: !second && syn?.role === 'right' ? sm?.extraBattle ?? 0 : 0, eliteSoulBonus: m.eliteSoulBonus ?? 0,
+    },
+    synergy: syn?.id ?? null,
+    trap,
+    second,
   };
   exp.pending = pending;
   exp.phase = 'battle';
@@ -333,12 +499,13 @@ export function advance(exp: ExpeditionState): StepEvent | null {
 }
 
 /** 환경 타일 프리셋 → 전투 조건 (GDD 6장, 효과 종류는 엔진·이름은 종족 스킨): 안개 = 트레이 섞임, 황무지 = 공격 위력, 결계 = 받는 피해 경감, 폐가 = 공허 블록 증가 */
-export function applyEnvironment(params: Partial<CombatParams>, preset: EnvironmentPreset): void {
+/** strength: 효과 크기 배율 (상위 타일 "+", GDD 25-5 ⑤) — 섞임 간격은 나누고, 배율은 1 에서 벗어난 만큼을 곱한다 */
+export function applyEnvironment(params: Partial<CombatParams>, preset: EnvironmentPreset, strength = 1): void {
   const T = BALANCE.provisional.tiles;
-  if (preset === 'reshuffle') params.trayShuffleSeconds = T.reshuffle.trayShuffleSeconds;
-  else if (preset === 'power') params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * T.power.playerPowerMultiplier;
-  else if (preset === 'shield') params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * T.shield.damageTakenMultiplier;
-  else params.voidChanceBonus = (params.voidChanceBonus ?? 0) + T.void.voidChanceBonus;
+  if (preset === 'reshuffle') params.trayShuffleSeconds = T.reshuffle.trayShuffleSeconds / strength;
+  else if (preset === 'power') params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * (1 + (T.power.playerPowerMultiplier - 1) * strength);
+  else if (preset === 'shield') params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * (1 - (1 - T.shield.damageTakenMultiplier) * strength);
+  else params.voidChanceBonus = (params.voidChanceBonus ?? 0) + T.void.voidChanceBonus * strength;
 }
 
 /** 폭주 (GDD 23-2): 한계 돌파한 원정의 남은 전투는 주는 피해·받는 피해가 함께 오른다 (공허 생성 증가는 riskBonus 가 따로 더한다) */
@@ -366,7 +533,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   exp.battles.push(record);
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
   exp.pending = null;
-  exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle);
+  exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle * (mutationMods(exp.mutation).hungerMult ?? 1));
   exp.condition = Math.max(0, exp.condition - PX.conditionPerBattle);
   // 공허 블록 사용 → 리스크 게이지 상승 (GDD 3-5)
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
@@ -380,12 +547,20 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (exp.victoriesThisLap === 0) drawTile(exp);
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
-  // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더
-  for (const food of rollBattleFood(exp.lootRng, pending.enemy.class === 'elite', getGround(exp.groundId).food)) exp.foodLoot.push({ food, lap: exp.lap });
+  const mods = pending.mods ?? NO_MODS;
+  const elite = pending.enemy.class === 'elite';
+  // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더. 시너지·변이·상위 타일·함정 배율은 굴림 횟수로 (GDD 25-5)
+  for (const food of rollBattleFoodMult(exp.lootRng, elite, getGround(exp.groundId).food, mods.rewardMult * mods.foodMult, mods.foodChanceBonus)) exp.foodLoot.push({ food, lap: exp.lap });
+  // 골드 (C.57): 일반·강적 바탕값 × 보상·골드 배율
+  const gold = Math.round((elite ? GX.elite : GX.normal) * mods.rewardMult * mods.goldMult);
+  if (gold > 0) (exp.goldLoot ??= []).push({ amount: gold, lap: exp.lap });
+  if (elite && mods.eliteSoulBonus > 0) exp.bonusSoul = (exp.bonusSoul ?? 0) + mods.eliteSoulBonus;
   exp.victoriesThisLap++;
+  // 사냥 무리 2연전: 흡수 화면을 마친 뒤 다음 advance 에서
+  if (mods.extraBattle > 0) exp.queuedBattle = { cell: pending.cell, synergy: pending.synergy ?? null };
   // 흡수 조건(마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
   if (canAbsorb(battle)) {
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle);
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus);
     exp.phase = 'absorb';
   } else exp.phase = 'moving';
   return record;
@@ -438,9 +613,12 @@ export function drainEvents(exp: ExpeditionState): EngineEvent[] {
 /** 휴식 타일 효과: 허기·컨디션 회복, 시간 소모 */
 export function finishRest(exp: ExpeditionState): void {
   if (exp.phase !== 'rest') throw new Error('휴식 중이 아니다');
-  exp.hunger = Math.max(0, exp.hunger - PX.restHunger);
-  changeRisk(exp, -RX.restRelief, 'rest');
-  exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition);
+  // 회복 배율: 상위 타일(휴식+)·시너지(오아시스) (GDD 25-5)
+  const k = exp.restMult ?? 1;
+  exp.hunger = Math.max(0, exp.hunger - PX.restHunger * k);
+  changeRisk(exp, -RX.restRelief * k, 'rest');
+  exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition * k);
+  exp.restMult = 1;
   exp.elapsedSeconds += PX.restTimeTiles * EX.secondsPerTile;
   // 휴식 타일을 지나면 간식 +1 (GDD 23-1)
   for (let i = 0; i < FX.restSnack; i++) exp.foodLoot.push({ food: 'snack', lap: exp.lap });
@@ -450,16 +628,116 @@ export function finishRest(exp: ExpeditionState): void {
 /** 둥지 칸에서: 귀환 */
 export function chooseReturn(exp: ExpeditionState): void {
   if (exp.phase !== 'nest-choice') throw new Error('귀환을 고를 수 없는 때');
+  discardDraft(exp);
   endExpedition(exp, 'returned', 'returned');
 }
 
 /** 둥지 칸에서: 한 바퀴 더 */
 export function chooseContinue(exp: ExpeditionState): void {
   if (exp.phase !== 'nest-choice') throw new Error('계속을 고를 수 없는 때');
+  discardDraft(exp);
   exp.lap++;
   exp.pos = 0;
   planLap(exp);
   exp.phase = 'moving';
+}
+
+/** 드래프트 고르기 (GDD 25-5 ①): 바퀴 끝 팝업에서 카드 한 장을 손에 쥔다. 이번 바퀴 길에 놓을 수 있고 덱·보유에는 들어가지 않는다 */
+export function chooseDraft(exp: ExpeditionState, index: number): PlaceResult {
+  const d = exp.draft;
+  if (exp.phase !== 'nest-choice' || !d) return { ok: false, reason: '지금은 고를 수 없다' };
+  if (d.picked !== null) return { ok: false, reason: '이미 골랐다' };
+  const id = d.options[index];
+  if (id === undefined) return { ok: false, reason: '없는 카드다' };
+  d.picked = index;
+  exp.hand.push(id);
+  exp.variantLog.drafts.push({ tileId: id, lap: exp.lap });
+  return { ok: true };
+}
+
+/** 확정(계속·귀환) 때 놓지 않은 드래프트 타일은 사라진다. 같은 타일이 손에 여럿이면 하나만 뺀다 */
+function discardDraft(exp: ExpeditionState): void {
+  const d = exp.draft;
+  exp.draft = null;
+  if (!d || d.picked === null) return;
+  const i = exp.hand.lastIndexOf(d.options[d.picked]!);
+  if (i >= 0) exp.hand.splice(i, 1);
+}
+
+/** 지금 쓸 수 있는 골드: 가진 골드 + 이번 원정에서 번(쓴) 골드 */
+export function goldAvailable(exp: Pick<ExpeditionState, 'goldBank' | 'goldLoot'>): number {
+  return (exp.goldBank ?? 0) + (exp.goldLoot ?? []).reduce((a, g) => a + g.amount, 0);
+}
+
+export type EventResult = { ok: true; text: string } | { ok: false; reason: string };
+
+/** 이벤트 타일 고르기 (GDD 25-5 ③). choice: 상인 = 판매 줄 번호(null 그냥 지나감), 제단 = 특성 후보 번호(null 거절), 갈림길 = 0 보호막 / 1 골드, 보물·함정 = 무시.
+ *  끝나면 그 타일은 길에서 사라지고 이동을 이어간다. 실패하면 아무것도 바뀌지 않는다 */
+export function resolveEvent(exp: ExpeditionState, choice: number | null): EventResult {
+  const ev = exp.eventPending;
+  if (exp.phase !== 'event' || !ev) return { ok: false, reason: '이벤트가 없다' };
+  const E = TV.events;
+  let log: string;
+  let text: string;
+  if (ev.event === 'merchant') {
+    if (choice === null) {
+      log = 'leave';
+      text = '그냥 지나갔다';
+    } else {
+      const o = ev.offers?.[choice];
+      if (!o) return { ok: false, reason: '없는 물건이다' };
+      if (goldAvailable(exp) < o.price) return { ok: false, reason: '골드가 모자란다' };
+      exp.goldLoot.push({ amount: -o.price, lap: exp.lap });
+      if (o.kind === 'food') exp.foodLoot.push({ food: o.id as FoodId, lap: exp.lap });
+      else {
+        exp.acquired.push({ tileId: o.id, lap: exp.lap });
+        exp.hand.push(o.id);
+      }
+      log = `buy:${o.kind}:${o.id}`;
+      text = `${o.price} 골드에 샀다`;
+    }
+  } else if (ev.event === 'altar') {
+    if (choice === null) {
+      log = 'decline';
+      text = '제단을 지나쳤다';
+    } else {
+      const id = ev.traits?.[choice];
+      if (!id) return { ok: false, reason: '없는 특성이다' };
+      changeRisk(exp, E.altar.risk, 'altar');
+      exp.traitBoosts[id] = (exp.traitBoosts[id] ?? 0) + E.altar.traitPower;
+      log = `trait:${id}`;
+      text = `위력 +${Math.round(E.altar.traitPower * 100)}% (이번 원정)`;
+    }
+  } else if (ev.event === 'treasure') {
+    const t = ev.treasure ?? {};
+    if (t.food) {
+      exp.foodLoot.push({ food: t.food, lap: exp.lap });
+      log = `food:${t.food}`;
+    } else {
+      exp.goldLoot.push({ amount: t.gold ?? 0, lap: exp.lap });
+      log = `gold:${t.gold ?? 0}`;
+    }
+    text = '보물을 챙겼다';
+  } else if (ev.event === 'trap') {
+    exp.trapArmed = true;
+    log = 'armed';
+    text = '다음 전투는 상처를 입은 채 시작한다. 이기면 보상이 크다';
+  } else {
+    if (choice === 0) {
+      exp.nextShield = Math.max(exp.nextShield, E.crossroads.shield);
+      log = 'shield';
+      text = `다음 전투 보호막 ${Math.round(E.crossroads.shield * 100)}%`;
+    } else if (choice === 1) {
+      exp.goldLoot.push({ amount: E.crossroads.gold, lap: exp.lap });
+      log = 'gold';
+      text = `골드 +${E.crossroads.gold}`;
+    } else return { ok: false, reason: '길을 골라야 한다' };
+  }
+  exp.variantLog.events.push({ event: ev.event, choice: log, lap: exp.lap });
+  exp.slots[ev.cell] = null; // 한 번 밟으면 사라진다
+  exp.eventPending = null;
+  exp.phase = 'moving';
+  return { ok: true, text };
 }
 
 /** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다. reserve 만큼은 남겨 둔다(흡수 보상이 바퀴 완주 보상을 밀어내지 않게) */
@@ -613,6 +891,9 @@ function endExpedition(exp: ExpeditionState, outcome: 'returned' | 'defeated', r
   exp.outcome = outcome;
   exp.endReason = reason;
   exp.pending = null;
+  exp.eventPending = null;
+  exp.queuedBattle = null;
+  exp.draft = null;
   return { kind: 'ended', outcome, reason };
 }
 
@@ -628,6 +909,9 @@ export interface ExpeditionSummary {
   /** 지킨 / 잃은 먹이 전리품 (GDD 23-1, 패배 시 마지막 바퀴 것만 잃는다) */
   keptFood: FoodId[];
   lostFood: FoodId[];
+  /** 지킨 골드(번 것 − 쓴 것) / 잃은 골드 (패배 시 마지막 바퀴에 번 것) (C.57) */
+  keptGold: number;
+  lostGold: number;
   laps: number;
 }
 
@@ -646,8 +930,16 @@ export function summarize(exp: ExpeditionState): ExpeditionSummary {
     lostTraits: lostTraitEntries.map((a) => a.traitId),
     keptFood: loot.filter((a) => !lostFoodEntries.includes(a)).map((a) => a.food),
     lostFood: lostFoodEntries.map((a) => a.food),
+    ...goldSplit(exp),
     laps: exp.outcome === 'returned' ? exp.lapsCompleted : exp.lap,
   };
+}
+
+function goldSplit(exp: ExpeditionState): { keptGold: number; lostGold: number } {
+  const loot = exp.goldLoot ?? [];
+  const lost = exp.outcome === 'defeated' ? loot.filter((g) => g.lap === exp.lap && g.amount > 0) : [];
+  const lostGold = lost.reduce((a, g) => a + g.amount, 0);
+  return { keptGold: loot.reduce((a, g) => a + g.amount, 0) - lostGold, lostGold };
 }
 
 /** 런 로그 RunRecord (GDD 9장): 바퀴 수, 귀환/패배, 획득·상실 목록 */
@@ -667,10 +959,15 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     seed: exp.seed,
     factionId: exp.factionId,
     groundId: exp.groundId,
+    synergies: (exp.variantLog?.synergies ?? []).map((x) => x.id),
+    mutations: (exp.variantLog?.mutations ?? []).map((x) => ({ ...x })),
+    events: (exp.variantLog?.events ?? []).map((x) => ({ ...x })),
+    drafts: (exp.variantLog?.drafts ?? []).map((x) => ({ ...x })),
+    gold: s.keptGold,
   };
 }
 
-/** 이 종족이 쓸 수 있는 타일만 덱에 넣을 수 있다 (스킨 이름이 있는 타일) */
+/** 이 종족이 쓸 수 있는 타일만 덱에 넣을 수 있다 (스킨 이름이 있는 타일, 이벤트 타일 제외 — 드래프트로만) */
 export function deckOptions(factionId: string): string[] {
-  return tilesFor(factionId).map((t) => t.id);
+  return deckTilesFor(factionId).map((t) => t.id);
 }

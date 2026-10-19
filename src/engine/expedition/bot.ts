@@ -3,9 +3,12 @@ import { getTrait } from '../../data/traits';
 import { elementCounts, type BuildState } from '../absorb';
 import { playCombatBot } from '../combat';
 import {
-  advance, chooseAbsorb, chooseContinue, chooseRelease, chooseReturn, finishBattle, finishRest, placeTile, startBattle,
+  advance, chooseAbsorb, chooseContinue, chooseDraft, chooseRelease, chooseReturn, finishBattle, finishRest, goldAvailable, placeTile, resolveEvent, startBattle,
   type ExpeditionState,
 } from './expedition';
+import { getTile } from '../../data/tiles';
+import { BALANCE } from '../../config/balance';
+import { synergyPairs } from './variants';
 
 export interface AutoOptions {
   /** 이 바퀴를 마치면 귀환 */
@@ -61,6 +64,42 @@ export function placeAll(exp: ExpeditionState, maxTiles = 4): void {
   }
 }
 
+/** 드래프트 봇 (GDD 25-5 ①): 앞쪽 첫 빈 칸에 놓았을 때 시너지가 생기는 카드 > 이벤트 타일 > 첫 카드. 고른 카드는 바로 그 칸에 놓는다(덱 놓기 상한과 별개) */
+export function botDraft(exp: ExpeditionState): void {
+  const d = exp.draft;
+  if (!d || d.picked !== null) return;
+  const cell = exp.slots.findIndex((x, c) => c > exp.pos && c >= 1 && x === null);
+  const before = synergyPairs(exp.slots).length;
+  const score = (id: string): number => {
+    let sc = getTile(id).kind === 'event' ? 1 : 0;
+    if (cell >= 1) {
+      const trial = [...exp.slots];
+      trial[cell] = id;
+      if (synergyPairs(trial).length > before) sc += 2;
+    }
+    return sc;
+  };
+  let best = 0;
+  d.options.forEach((id, i) => {
+    if (score(id) > score(d.options[best]!)) best = i;
+  });
+  chooseDraft(exp, best);
+  if (cell >= 1) placeTile(exp, d.options[best]!, cell);
+}
+
+/** 이벤트 봇 (GDD 25-5 ③): 상인 = 살 수 있는 가장 싼 먹이, 제단 = 리스크가 넉넉하면 첫 특성, 갈림길 = 골드 */
+export function botEvent(exp: ExpeditionState): void {
+  const ev = exp.eventPending;
+  if (!ev) return;
+  let choice: number | null = null;
+  if (ev.event === 'merchant') {
+    const i = (ev.offers ?? []).findIndex((o) => o.kind === 'food' && o.price <= goldAvailable(exp));
+    choice = i >= 0 ? i : null;
+  } else if (ev.event === 'altar') choice = (ev.traits ?? []).length > 0 && exp.risk + BALANCE.provisional.tileVariants.events.altar.risk < 70 ? 0 : null;
+  else if (ev.event === 'crossroads') choice = 1;
+  resolveEvent(exp, choice);
+}
+
 export function playExpedition(exp: ExpeditionState, opt: AutoOptions): ExpeditionState {
   for (let guard = 0; exp.phase !== 'ended' && guard < 10000; guard++) {
     if (exp.phase === 'moving') {
@@ -76,8 +115,10 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
         chooseAbsorb(exp, pick.traitId, pick.replaceSlot);
       } else chooseRelease(exp);
     } else if (exp.phase === 'rest') finishRest(exp);
+    else if (exp.phase === 'event') botEvent(exp);
     else if (exp.phase === 'nest-choice') {
       if (opt.place !== false) placeAll(exp);
+      if (opt.place !== false && exp.lap < opt.returnAfterLap) botDraft(exp);
       if (exp.lap >= opt.returnAfterLap) chooseReturn(exp);
       else chooseContinue(exp);
     }

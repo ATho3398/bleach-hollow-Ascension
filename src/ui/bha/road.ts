@@ -2,8 +2,8 @@
 // 원정 중 걷는 화면에는 길 구조를 보이지 않는다 — 칸 순서가 보이는 곳은 여기뿐이다.
 import { BALANCE } from '../../config/balance';
 import { getTile } from '../../data/tiles';
-import { moveTile, placeTile, swapTiles, swapWithHand, unplaceTile, type ExpeditionState } from '../../engine/expedition';
-import { tileHint } from '../labels';
+import { moveTile, placeTile, swapTiles, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
+import { tileHint, variantModsText } from '../labels';
 import { el, icon } from './dom';
 import { canPlaceAt, tileCss, tileIconId } from './expedition';
 import { registerCancelHook } from './shortcuts';
@@ -27,6 +27,13 @@ export interface RoadPlannerOpts {
   onPlaced?: () => void;
   /** 안내 문구가 바뀌었을 때 (호스트 화면이 따로 보이고 싶을 때). 안 주면 planner 안에 한 줄로 보인다 */
   caption?: string;
+  /** 인접 시너지 이름 (GDD 25-5 ②). 주면 타일 변수가 켜진 원정에서 붙은 두 칸 사이에 이름을 미리 보인다 */
+  synergyName?: (id: string) => string;
+}
+
+/** 배치판에 보일 시너지 짝 (순수): 타일 변수가 꺼졌거나 이름 함수가 없으면 없음 */
+export function roadSynergies(exp: Pick<ExpeditionState, 'slots' | 'tileVariants'>, withNames: boolean): SynergyPair[] {
+  return exp.tileVariants && withNames ? synergyPairs(exp.slots) : [];
 }
 
 /** 배치판 한 칸의 상태: 놓인 타일 / 놓을 수 있음 / 비어 있음 (순수) */
@@ -100,8 +107,10 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   noteRow.append(noteEl);
   const hand = el('div', 'bha-exp__hand bha-road__hand');
   hand.dataset.scList = '';
+  // 시너지 목록 한 줄 (칸 사이 이름표 + 효과 요약)
+  const synLine = el('p', 'bha-road__synline');
   const root = el('div', 'bha-road__wrap');
-  root.append(road, noteRow, hand);
+  root.append(road, synLine, noteRow, hand);
 
   const selection = (): RoadSelection => (selectedCell !== null ? { kind: 'cell', cell: selectedCell } : selected ? { kind: 'hand', tileId: selected } : null);
 
@@ -195,6 +204,21 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), el('span', 'bha-road__num', String(i)));
       b.title = id ? `${o.tileName(id)} — ${tileHint(getTile(id))}` : '빈 칸';
       b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 확정된 타일'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
+    }
+    // 인접 시너지 (GDD 25-5 ②): 붙은 두 칸을 테두리로 묶고 오른쪽 칸 왼쪽 위(두 칸 사이)에 이름표. 줄이 바뀌는 짝(6열 경계)은 오른쪽 칸 모서리에
+    const pairs = roadSynergies(exp, Boolean(o.synergyName));
+    synLine.hidden = pairs.length === 0;
+    synLine.replaceChildren();
+    for (const p of pairs) {
+      const name = o.synergyName!(p.id);
+      for (const c of [p.left, p.right]) cells[c]!.classList.add('has-syn');
+      const badge = el('span', `bha-road__syn${p.right % 6 === 0 ? ' bha-road__syn--wrap' : ''}`, name);
+      badge.setAttribute('aria-hidden', 'true');
+      cells[p.right]!.append(badge);
+      cells[p.right]!.setAttribute('aria-label', `${cells[p.right]!.getAttribute('aria-label')} · 시너지 ${name}`);
+      const item = el('span', 'bha-road__synitem');
+      item.append(el('b', '', `${name}(${p.left}·${p.right})`), ` ${variantModsText(synergyMods(p.id)).join(' · ')}`);
+      synLine.append(item);
     }
     noteEl.textContent = note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다');
     hand.replaceChildren();

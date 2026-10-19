@@ -334,6 +334,57 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
     if (r > -15 || r < -25) failures.push(`둥지 ${a} 리스크 ${r} — 목표 −20 안팎 (GDD 23-2)`);
   }
 }
+// ── 타일 변수 5종 (C.57, GDD 25-5): 4바퀴 섞음 봇으로 타일 변수 끔/켬 비교 (켬 = 드래프트 카드를 시너지 우선으로 골라 바로 놓음, 이벤트는 봇 선택, 바퀴 변이·시너지 발동) ──
+// 가드(두 종족 합산 평균): 보상(먹이 개수·번 골드) 증가 +25% 이하, 켬 끝 리스크 40~60, 패배율 +5%p 이하. 종족별 값은 참고 출력
+{
+  const TVN = 1000;
+  const tvStat = (fid: string, on: boolean) => {
+    const dk = sanitizeDeck(newTileStock(), fid);
+    let food = 0;
+    let gold = 0;
+    let def = 0;
+    let risk = 0;
+    let syn = 0;
+    let ev = 0;
+    let mut = 0;
+    let dr = 0;
+    for (let seed = 1; seed <= TVN; seed++) {
+      const e = playExpedition(createExpedition({ factionId: fid, seed, hunger: 20, condition: 80, deck: dk, tileVariants: on }), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
+      food += e.foodLoot.length;
+      gold += e.goldLoot.filter((g) => g.amount > 0).reduce((x, g) => x + g.amount, 0);
+      if (e.outcome === 'defeated') def++;
+      risk += e.risk;
+      syn += e.variantLog.synergies.length;
+      ev += e.variantLog.events.length;
+      mut += e.variantLog.mutations.length;
+      dr += e.variantLog.drafts.length;
+    }
+    return { food: food / TVN, gold: gold / TVN, def: def / TVN, risk: risk / TVN, syn: syn / TVN, ev: ev / TVN, mut: mut / TVN, dr: dr / TVN };
+  };
+  console.log(`\n타일 변수 (GDD 25-5, 4바퀴 섞음 봇 ${TVN}회 × 종족, 끔 → 켬)`);
+  const sumOff = { food: 0, gold: 0, def: 0, risk: 0 };
+  const sumOn = { food: 0, gold: 0, def: 0, risk: 0 };
+  for (const fid of ['hollow', 'shinigami']) {
+    const off = tvStat(fid, false);
+    const on = tvStat(fid, true);
+    for (const k of ['food', 'gold', 'def', 'risk'] as const) {
+      sumOff[k] += off[k] / 2;
+      sumOn[k] += on[k] / 2;
+    }
+    const pct = (a: number, b: number) => `${b >= a ? '+' : ''}${(((b - a) / a) * 100).toFixed(1)}%`;
+    console.log(
+      `  ${fid.padEnd(9)} 먹이 ${off.food.toFixed(2)} → ${on.food.toFixed(2)} (${pct(off.food, on.food)}) · 골드 ${off.gold.toFixed(1)} → ${on.gold.toFixed(1)} (${pct(off.gold, on.gold)}) · 패배 ${(off.def * 100).toFixed(1)} → ${(on.def * 100).toFixed(1)}% · 끝 리스크 ${off.risk.toFixed(1)} → ${on.risk.toFixed(1)} · 원정당 시너지 ${on.syn.toFixed(2)}·이벤트 ${on.ev.toFixed(2)}·변이 ${on.mut.toFixed(2)}·드래프트 ${on.dr.toFixed(2)}`,
+    );
+  }
+  const fInc = sumOn.food / sumOff.food - 1;
+  const gInc = sumOn.gold / sumOff.gold - 1;
+  const dInc = sumOn.def - sumOff.def;
+  console.log(`  합산 평균: 먹이 +${(fInc * 100).toFixed(1)}% · 골드 +${(gInc * 100).toFixed(1)}% (가드 +25% 이하) · 켬 끝 리스크 ${sumOn.risk.toFixed(1)} (40~60) · 패배율 ${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p (가드 +5%p 이하)`);
+  if (fInc > 0.25) failures.push(`타일 변수: 먹이 보상 +${(fInc * 100).toFixed(1)}% > +25% (GDD 25-5)`);
+  if (gInc > 0.25) failures.push(`타일 변수: 골드 보상 +${(gInc * 100).toFixed(1)}% > +25% (GDD 25-5)`);
+  if (sumOn.risk < 40 || sumOn.risk > 60) failures.push(`타일 변수: 4바퀴 섞음 끝 리스크 ${sumOn.risk.toFixed(1)} — 목표 40~60 (GDD 25-5)`);
+  if (dInc > 0.05) failures.push(`타일 변수: 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 25-5)`);
+}
 // 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않고(가드 25% 이상), 거의 항상이면 조건이 의미 없다(가드 85% 이하).
 // C.7: 측정은 "흡수하는 봇" 기준. 항상 놓아주는 봇은 skill 이 하나도 없어 첫 흡수 보장으로 늘 100% 라 의미가 없다 (참고 출력만)
 for (const lap of [4, 6]) {

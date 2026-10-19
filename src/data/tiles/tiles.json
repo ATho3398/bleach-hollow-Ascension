@@ -110,5 +110,70 @@
       "type": "rest"
     },
     "provisional": true
+  },
+  {
+    "id": "event-merchant",
+    "kind": "event",
+    "name": {
+      "hollow": "떠도는 상인",
+      "shinigami": "떠돌이 상인"
+    },
+    "effect": {
+      "type": "event",
+      "event": "merchant"
+    },
+    "provisional": true
+  },
+  {
+    "id": "event-altar",
+    "kind": "event",
+    "name": {
+      "hollow": "허의 제단",
+      "shinigami": "영압 제단"
+    },
+    "effect": {
+      "type": "event",
+      "event": "altar"
+    },
+    "provisional": true
+  },
+  {
+    "id": "event-treasure",
+    "kind": "event",
+    "name": {
+      "hollow": "묻힌 보물",
+      "shinigami": "버려진 보급 상자"
+    },
+    "effect": {
+      "type": "event",
+      "event": "treasure"
+    },
+    "provisional": true
+  },
+  {
+    "id": "event-trap",
+    "kind": "event",
+    "name": {
+      "hollow": "모래 함정",
+      "shinigami": "귀도 함정"
+    },
+    "effect": {
+      "type": "event",
+      "event": "trap"
+    },
+    "provisional": true
+  },
+  {
+    "id": "event-crossroads",
+    "kind": "event",
+    "name": {
+      "hollow": "갈림길",
+      "shinigami": "갈림길"
+    },
+    "effect": {
+      "type": "event",
+      "event": "crossroads"
+    },
+    "provisional": true
   }
 ]

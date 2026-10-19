@@ -3,7 +3,7 @@
 import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
 import type { EnemyDef } from '../data/schema';
-import { tileName } from '../data/tiles';
+import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
@@ -496,6 +496,9 @@ export function startApp(host: HTMLElement): void {
       evolution: save.evolution,
       groundId: lastGround(save),
       liberationEnabled: liberationAccess(save).usable,
+      // 타일 변수 5종 (GDD 25-5): 드래프트·인접 시너지·이벤트 타일·바퀴 변이. 상인은 가진 골드로 산다
+      tileVariants: true,
+      gold: save.shared.tradeCoins,
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
@@ -531,7 +534,7 @@ export function startApp(host: HTMLElement): void {
     activeExp = exp;
     const p = exp.pending!;
     const s = startBattle(exp);
-    const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}`;
+    const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}${p.synergy ? ` · ${synergyName(p.synergy, faction.id)}${p.second ? ' 2연전' : ''}` : ''}${p.trap ? ' · 함정' : ''}${exp.mutation ? ` · ${mutationName(exp.mutation, faction.id)}` : ''}`;
     setBgm(p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
