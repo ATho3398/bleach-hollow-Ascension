@@ -38,16 +38,28 @@ export function runAt(t: Tray, i: number): [number, number] {
 }
 
 /**
- * 클릭한 블록과 함께 발동할 칸 번호들 (오름차순). 덩어리가 maxChain 이하면 덩어리 전부,
- * 더 길면 클릭한 블록을 포함한 maxChain 개: 클릭 위치에서 오른쪽을 먼저 최대한 채우고, 모자라면 왼쪽으로 확장한다.
+ * 클릭한 블록과 함께 발동할 칸 번호들 (오름차순, GDD 19-2 체인 묶음 상한).
+ * 같은 계열로 붙은 덩어리를 **앞(왼쪽)에서부터 maxChain 개씩** 묶고 남은 것은 새 묶음이다 (3 상한: 4 = 3+1, 5 = 3+2, 7 = 3+3+1).
+ * 누른 블록이 속한 묶음만 발동한다.
  */
 export function chainGroup(t: Tray, i: number, maxChain: number): number[] {
   if (!inTray(t, i)) return [];
   const [lo, hi] = runAt(t, i);
-  const right = Math.min(hi - i, maxChain - 1);
-  const left = Math.min(i - lo, maxChain - 1 - right);
+  const size = Math.max(1, Math.floor(maxChain));
+  const start = lo + Math.floor((i - lo) / size) * size;
+  const end = Math.min(hi, start + size - 1);
   const out: number[] = [];
-  for (let k = i - left; k <= i + right; k++) out.push(k);
+  for (let k = start; k <= end; k++) out.push(k);
+  return out;
+}
+
+/** 바 전체를 발동 묶음으로 나눈다 (GDD 19-2): 같은 계열 덩어리를 앞에서부터 maxChain 개씩. 화면의 묶음 경계 표시용 */
+export function chainGroupsOf(t: Tray, maxChain: number): { start: number; length: number }[] {
+  const size = Math.max(1, Math.floor(maxChain));
+  const out: { start: number; length: number }[] = [];
+  for (const r of runsOf(t)) {
+    for (let k = 0; k < r.length; k += size) out.push({ start: r.start + k, length: Math.min(size, r.length - k) });
+  }
   return out;
 }
 

@@ -299,5 +299,7 @@ export interface FormDef {
   effects: FormEffects;
   /** 이동 방식 (GDD 18-11, 화면 표시 전용). 없으면 종족 기본 → walk */
   locomotion?: Locomotion;
+  /** 체인 묶음 상한 (GDD 19-2). 없으면 종족 설정 maxChain → 3 */
+  maxChain?: number;
   provisional?: boolean;
 }

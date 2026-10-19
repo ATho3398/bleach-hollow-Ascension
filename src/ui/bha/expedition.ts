@@ -37,6 +37,29 @@ export function bubbleText(o: { phase: ExpeditionPhase; paused: boolean; msg: st
   return '';
 }
 
+/** 조우 말풍선을 보여 주고 전투로 넘어가기까지 (1x 기준 ms, 배속만큼 짧아진다) */
+export const ENCOUNTER_DELAY_MS = 700;
+/** 감시 타이머 (GDD 19-1): 조우 뒤 멈추지 않은 시간이 이만큼 지나도 전투가 안 열리면 바로 진입한다 (실제 시간, 배속 무관) */
+export const ENCOUNTER_WATCHDOG_MS = 3000;
+export const WATCHDOG_POLL_MS = 500;
+
+export type WatchdogAction = 'none' | 'resume' | 'enter-battle';
+
+/** 감시 타이머 판단 (순수): 멈춤 중이면 아무것도 안 한다. 조우 대기가 한도를 넘었거나 전투 진입 예약이 사라졌으면 진입,
+ *  이동·휴식 예약이 없거나 타이머가 안 걸려 있으면 다시 건다 */
+export function watchdogAction(o: {
+  phase: ExpeditionPhase; blocked: boolean; pending: 'step' | 'phase' | null; armed: boolean; encounterWaitMs: number; limitMs?: number;
+}): WatchdogAction {
+  if (o.blocked) return 'none';
+  if (o.phase === 'battle') {
+    if (o.encounterWaitMs >= (o.limitMs ?? ENCOUNTER_WATCHDOG_MS) || o.pending !== 'phase') return 'enter-battle';
+    return o.armed ? 'none' : 'resume';
+  }
+  if (o.phase === 'moving') return o.pending === 'step' && o.armed ? 'none' : 'resume';
+  if (o.phase === 'rest') return o.pending === 'phase' && o.armed ? 'none' : 'resume';
+  return 'none';
+}
+
 export const MSG_ICON: Record<MsgKind, string> = { '': 'i-play', warn: 'i-hunger', fight: 'i-tile-elite', rest: 'i-tile-rest' };
 
 /** 원정이 끝난 이유 → 결과 화면 톤. 귀환 계열 = win, 패배 계열 = lose */

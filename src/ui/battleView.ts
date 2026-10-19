@@ -11,15 +11,15 @@ import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import {
-  BASIC_SKILL_ID, blockEffect, drainCombatEvents, elapsedSeconds, maxChain, runsOf, step, timeLeftSeconds,
+  BASIC_SKILL_ID, blockEffect, chainGroupsOf, drainCombatEvents, elapsedSeconds, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type CombatInput, type CombatState,
 } from '../engine/combat';
-import { roomOf, type FactionConfig } from '../engine/faction';
+import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
 import { onHold } from './bha/hold';
 import {
-  blockEl, blockVisual, heroEl, chainLevelAt, floatPool, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
+  blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
@@ -232,6 +232,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 효과 레이어: 번쩍임 한 장(투명도만 애니메이션). 조작을 막지 않는다
   const fxFlash = el('div', 'bha-fxflash');
   fxFlash.setAttribute('aria-hidden', 'true');
+  // 계열 공격 효과·기술 이름 레이어 (GDD 19-2): 자국·투사체·광선·이름이 여기 뜬다. 조작을 막지 않는다
+  const fxLayer = el('div', 'bha-afx-layer');
+  fxLayer.setAttribute('aria-hidden', 'true');
 
   // ── 3. 내 상태: 영력(SP) 바 + 상태 칩 (블록 바 위 왼쪽) ──
   const voidChip = statusChip(undefined, 'i-void', labels.voidBlock);
@@ -337,7 +340,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 한 열 (GDD 18-6): 장면(적 이름·모서리 버튼·유닛 둘·로그가 그 위에 얹힘) / 영력·저장 필살기 줄 / 좌우 폭 전부를 쓰는 블록 바 8칸
   const topRow = el('div', 'bha-battle__toprow');
   topRow.append(foeHead, bar);
-  arena.append(units, topRow, floats, fxFlash, log);
+  arena.append(units, topRow, fxLayer, floats, fxFlash, log);
   const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, ...(opts.notice ? [notice('info', opts.notice)] : []), arena, controls, flashVoid, flashHit);
 
   const quit = () => {
@@ -493,6 +496,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
+    // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
+    layer: fxLayer,
+    familyFx: (id) => familyOf(faction, id)?.fx,
+    nameOf: (e) => {
+      if (e.kind === 'stored-use') return { name: labels.storedSkill, ult: true };
+      if (e.kind !== 'block' || e.damage <= 0) return null;
+      if (e.block === 'special') return { name: labels.specialBlock, ult: true };
+      if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : labels.specialBlock, ult: true };
+      if (e.block !== 'skill' || e.role !== 'attack') return null;
+      const name = familySkillName(labels, e.family, Math.min(e.chain, FAMILY_TIERS));
+      return name ? { name } : null;
+    },
+    shake,
   });
   const n0 = (v: number) => String(Math.round(v));
   let specialNoteUntil = 0;
@@ -516,9 +532,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           spawnFloat('attack', `−${n0(e.damage)}`, { crit: e.chain >= top, weak: e.weak, chained: e.chain > 1 });
         }
         if (e.chain > 1) {
-          // 계열 공격은 단계 기술 이름(예 세로 오스쿠라스!), 그 밖(막기·회복·기본 블록)은 체인 N
-          const skill = familySkillName(labels, e.family, e.chain);
-          spawnFloat('chain', skill ? `${skill}!` : `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+          // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N
+          if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
           flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
         }
         if (e.block === 'special' || e.block === 'combo') flash('is-special', 600);
@@ -588,6 +603,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let seeded = false;
   let runSig = '';
   let runEls: { spec: RunSpec; node: HTMLElement }[] = [];
+  let cutEls: HTMLElement[] = [];
   let noteKey = '';
 
   const makeBlock = (b: Block): HTMLElement => {
@@ -643,14 +659,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         window.setTimeout(done, 900);
       }
     }
-    // 묶음
-    const specs = runSpecs(runsOf(s.tray), (i) => s.tray[i]?.kind === 'skill', top);
-    const sig = specs.map((r) => `${r.start}:${r.len}`).join('|');
+    // 묶음 (GDD 19-2): 같은 계열 덩어리를 앞에서부터 최대 체인 개씩 나눈 발동 묶음 + 덩어리 안 묶음 경계 표시
+    const groups = chainGroupsOf(s.tray, top);
+    const specs = runSpecs(groups, (i) => s.tray[i]?.kind === 'skill', top);
+    const cuts = groupCuts(runsOf(s.tray), groups).filter((i) => s.tray[i]?.kind === 'skill');
+    const sig = `${specs.map((r) => `${r.start}:${r.len}`).join('|')}/${cuts.join(',')}`;
     if (sig !== runSig) {
       runSig = sig;
       for (const r of runEls) r.node.remove();
+      for (const c of cutEls) c.remove();
       runEls = specs.map((spec) => ({ spec, node: runEl(spec, labels.chain) }));
+      cutEls = cuts.map(cutEl);
       for (const r of runEls) tray.grid.append(r.node);
+      for (const c of cutEls) tray.grid.append(c);
     }
     // 칸마다 블록 배치 + 상태 클래스
     const casting = s.enemy.cast !== null;

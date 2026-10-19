@@ -2,7 +2,7 @@
 // 모든 수치·규칙은 임시(provisional)다. 사망·퇴화·단계 스킵은 없다. 어떤 진화체로 가는지는 select.ts 의 selectForm 이 정한다.
 
 import { BALANCE } from '../../config/balance';
-import { combosAtTier, FORM_TABLE, getForm } from '../../data/evolution';
+import { combosAtTier, FORM_TABLE, getForm, tryGetForm } from '../../data/evolution';
 import type { ComboRule } from '../combat/combat';
 import { LINEAGES } from '../../data/lineages';
 import type { FormDef, PassiveStat } from '../../data/schema';
@@ -154,10 +154,13 @@ export function comboRulesOf(e: EvolutionState): ComboRule[] {
 }
 
 export function applyEvolutionToParams(
-  params: { playerMaxHp?: number; attackPowerMultiplier?: number; attackSpeedMultiplier?: number; damageTakenMultiplier?: number; combos?: ComboRule[] },
+  params: { playerMaxHp?: number; attackPowerMultiplier?: number; attackSpeedMultiplier?: number; damageTakenMultiplier?: number; combos?: ComboRule[]; maxChain?: number },
   e: EvolutionState,
 ): void {
   params.combos = comboRulesOf(e);
+  // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
+  const form = e.formId ? tryGetForm(e.formId) : undefined;
+  if (form?.maxChain !== undefined) params.maxChain = form.maxChain;
   if (e.formHistory.length === 0) return;
   const m = evolutionMultipliers(e);
   params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * m.hp;

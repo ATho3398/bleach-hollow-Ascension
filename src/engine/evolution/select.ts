@@ -157,6 +157,7 @@ export function validateFormTable(table: readonly FormDef[], lineageIds: readonl
         else if (prev.tier !== f.tier - 1) errors.push(`${f.id}: from ${p} 는 ${f.tier - 1}단계가 아니다`);
       }
     }
+    if (f.maxChain !== undefined && !(Number.isInteger(f.maxChain) && f.maxChain >= 1)) errors.push(`${f.id}: maxChain 은 1 이상 정수`);
     if (f.locomotion !== undefined && !isLocomotion(f.locomotion)) errors.push(`${f.id}: locomotion '${String(f.locomotion)}' 은 float | walk | fly 가 아니다`);
     checkLineages(f, f.label.lineages);
     for (const r of f.requires) {

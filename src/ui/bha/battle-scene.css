@@ -122,3 +122,31 @@
 .bha-lcd .bha-battle__controls .bha-tray__runlabel { height: 16px; line-height: 16px; }
 .bha-lcd .bha-battle .bha-tray__note { display: none; }  /* 봉인 안내는 머리 위 게이지와 가림막이 대신한다 */
 .bha-battle.is-paused .bha-battle__controls { filter: saturate(0.5) brightness(0.75); }
+
+/* ── 블록 바 묶음 경계 (GDD 19-2): 같은 계열이 최대 체인보다 길게 붙으면 앞에서부터 묶고, 묶음 사이에 끊김 표시 ── */
+.bha-tray__cut { grid-row: 1; grid-column: var(--at); position: relative; z-index: 4; width: 0; justify-self: start; pointer-events: none; }
+.bha-tray__cut::before {
+  content: ""; position: absolute; top: var(--bha-sp-1); bottom: var(--bha-sp-1); left: calc(var(--bha-sp-2) / -2); width: var(--bha-sp-2);
+  border-radius: var(--bha-r-pill); background: var(--bha-bg-0); box-shadow: 0 0 0 1px var(--bha-chain2);
+}
+
+/* ── 계열 공격 효과 (GDD 19-2): 그림 없이 SVG·CSS, 색은 계열 색 토큰 (data-fam), 움직임은 Web Animations 가 준다 ── */
+.bha-afx-layer { position: absolute; inset: 0; z-index: var(--bha-z-float); pointer-events: none; overflow: visible; }
+.bha-afx { position: absolute; color: var(--bha-text-1); filter: drop-shadow(0 0 6px currentColor); will-change: transform, opacity; pointer-events: none; }
+.bha-afx[data-fam="family-a"] { color: var(--bha-lin-a); }
+.bha-afx[data-fam="family-b"] { color: var(--bha-lin-b); }
+.bha-afx[data-fam="family-c"] { color: var(--bha-lin-c); }
+.bha-afx svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.bha-afx .afx-core { fill: var(--bha-text-1); }
+.bha-afx .afx-core-s { stroke: var(--bha-text-1); }
+.bha-afx--ray { border-radius: var(--bha-r-pill); background: linear-gradient(180deg, transparent, currentColor 22%, var(--bha-text-1) 50%, currentColor 78%, transparent); }
+.bha-afx-name {
+  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+  font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-3xl); line-height: var(--bha-lh-tight);
+  letter-spacing: var(--bha-tracking-label); white-space: nowrap; color: var(--bha-text-1);
+  text-shadow: 0 0 10px var(--bha-chain2), 0 2px 4px var(--bha-bg-0);
+}
+.bha-afx-name.is-big { font-size: var(--bha-fs-4xl); text-shadow: 0 0 16px var(--bha-chain3), 0 2px 4px var(--bha-bg-0); }
+.bha-afx-name.is-ult { font-size: var(--bha-fs-4xl); color: var(--bha-sp-hi); text-shadow: var(--bha-glow-sp), 0 2px 4px var(--bha-bg-0); }
+.bha-lcd .bha-battle__arena .bha-log { transition: opacity var(--bha-dur-2) var(--bha-ease-out); }
+.bha-lcd .bha-battle__arena.has-afx-name .bha-log { opacity: 0; }

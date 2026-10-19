@@ -34,6 +34,9 @@ const round = (v: number, digits: number) => Math.round(v * 10 ** digits) / 10 *
 /** 이동 방식 배정 (GDD 18-11, 임시): 요구 계통 번호(정렬 순) 합을 3으로 나눈 나머지로 걷기/부유/날기를 돌려 단계마다 3종이 고르게 나온다. 계통 없는 특수형은 종류별로 고정 */
 const LOCO_CYCLE: readonly Locomotion[] = ['walk', 'float', 'fly'];
 const LOCO_BY_KIND: Partial<Record<FormKind, Locomotion>> = { balanced: 'float', picky: 'fly', rare: 'walk', base: 'walk' };
+/** 진화체 체인 묶음 상한 (GDD 19-2, provisional): 지금은 전원 3. 4·5체인 캐릭터는 그 진화체 값만 올린다(단계 기술·배율도 같이 추가) */
+export const FORM_MAX_CHAIN = 3;
+
 export function locomotionOf(kind: FormKind, lineages: readonly string[], sortedIds: readonly string[]): Locomotion {
   if (lineages.length === 0) return LOCO_BY_KIND[kind] ?? 'walk';
   const sum = lineages.reduce((a, l) => a + Math.max(0, sortedIds.indexOf(l)), 0);
@@ -85,6 +88,7 @@ export function generateForms(lineageIds: readonly string[], tpl: FormTemplate, 
     ...(kind === 'base' ? { fallback: true as const } : {}),
     effects: effectsOf(kind, lineages, tpl, tendencyOf),
     locomotion: locomotionOf(kind, lineages, ids),
+    maxChain: FORM_MAX_CHAIN,
     provisional: true,
   });
   /** 경로 규칙(임시): 이전 단계 진화체가 요구 계통을 하나라도 포함하면 연결. 계통이 없는 이전 진화체(특수형·기본형)는 막다른 길을 피하려 모든 곳에 연결 */

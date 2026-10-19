@@ -10,6 +10,13 @@ export type BlockRole = (typeof BLOCK_ROLES)[number];
 /** 체인 단계 수 = 계열 기술 단계 수 (GDD 17-3: 같은 계열 연속 1·2·3개). BALANCE chainMultipliers 길이와 같다 */
 export const FAMILY_TIERS = 3;
 
+/** 계열 공격 연출 종류 (GDD 19-2): 화면은 종족이 아니라 이 id 별로 효과를 그린다. 새 계열은 이 중 하나를 고르거나 종류를 추가한다 */
+export const ATTACK_FX_KINDS = ['claw', 'bite', 'shot', 'slash', 'impact', 'beam'] as const;
+export type AttackFxKind = (typeof ATTACK_FX_KINDS)[number];
+
+/** 체인 묶음 상한 기본값 (GDD 19-2): 종족 설정 maxChain 이 없을 때 */
+export const DEFAULT_MAX_CHAIN = 3;
+
 /** 계열의 한 단계 기술 (GDD 17-3, 이름·수치 provisional). multiplier 는 위력 배율(기존 체인 ×1.0/×2.2/×3.6 을 이어받음), bonus 는 그 단계에 붙는 추가 효과 */
 export interface FamilySkillConfig {
   name: string;
@@ -24,6 +31,8 @@ export interface FamilyConfig {
   name: string;
   /** 블록 위에 쓰는 한 글자 */
   abbr: string;
+  /** 공격 연출 종류 (GDD 19-2): 조=claw·교=bite·탄=shot / 참=slash·권=impact·귀=beam */
+  fx: AttackFxKind;
   /** 1·2·3단계 기술 */
   tiers: [FamilySkillConfig, FamilySkillConfig, FamilySkillConfig];
   provisional?: boolean;
@@ -143,6 +152,8 @@ export interface FactionConfig {
   locomotion?: Locomotion;
   /** 공격 계열 목록과 단계별 기술 (GDD 17-3). 특성 family 가 가리키는 계열은 모두 여기 있어야 한다 */
   families: FamilyConfig[];
+  /** 1단계(진화 전) 체인 묶음 상한 (GDD 19-2). 비우면 DEFAULT_MAX_CHAIN. 진화체 maxChain 이 있으면 그쪽이 우선 */
+  maxChain?: number;
   /** 둥지 / 대원실 (GDD 7장) */
   nestName: string;
   /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
@@ -196,6 +207,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       else seen.add(x.id);
       if (!isString(x.name)) errors.push(`families[${i}].name: 비어 있지 않은 문자열`);
       if (!isString(x.abbr) || Array.from(x.abbr).length !== 1) errors.push(`families[${i}].abbr: 한 글자`);
+      if (!(ATTACK_FX_KINDS as readonly unknown[]).includes(x.fx)) errors.push(`families[${i}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
       const tiers = x.tiers;
       if (!Array.isArray(tiers) || tiers.length !== FAMILY_TIERS) errors.push(`families[${i}].tiers: 기술 ${FAMILY_TIERS}개`);
       else {
@@ -211,6 +223,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       }
     });
   }
+  if (r.maxChain !== undefined && !(Number.isInteger(r.maxChain) && (r.maxChain as number) >= 1)) errors.push('maxChain: 1 이상 정수');
   if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
@@ -230,6 +243,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
 /** 종족 고르기 화면에 크게 띄울 아이콘: 설정의 이모티콘, 없으면 이름 첫 글자 */
 export function emblemOf(f: Pick<FactionConfig, 'emblem' | 'name'>): string {
   return f.emblem ?? Array.from(f.name)[0] ?? '?';
+}
+
+/** 체인 묶음 상한 (GDD 19-2, 순수): 진화체 값 > 종족 설정 기본값 > DEFAULT_MAX_CHAIN */
+export function resolveMaxChain(f: Pick<FactionConfig, 'maxChain'>, formMaxChain?: number | null): number {
+  return formMaxChain ?? f.maxChain ?? DEFAULT_MAX_CHAIN;
 }
 
 /** 계열 설정 한 개 (없으면 undefined) */

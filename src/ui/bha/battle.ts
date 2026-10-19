@@ -71,6 +71,22 @@ export function runSpecs(runs: readonly { start: number; length: number }[], isS
   return out;
 }
 
+/**
+ * 묶음 경계 (GDD 19-2): 같은 계열 덩어리 안에서 새 묶음이 시작하는 칸 번호들 (0부터).
+ * runs = 덩어리(engine runsOf), groups = 발동 묶음(engine chainGroupsOf). 예: 같은 계열 5개 = 3+2 → [3]
+ */
+export function groupCuts(runs: readonly { start: number; length: number }[], groups: readonly { start: number; length: number }[]): number[] {
+  const starts = new Set(runs.map((r) => r.start));
+  return groups.filter((g) => !starts.has(g.start)).map((g) => g.start);
+}
+
+/** 묶음 경계 표시 하나 (--at = 그 칸의 왼쪽, 1부터) */
+export function cutEl(index: number): HTMLElement {
+  const c = el('div', 'bha-tray__cut');
+  c.style.setProperty('--at', String(index + 1));
+  return c;
+}
+
 /** 칸 번호(0부터) → 속한 묶음의 체인 단계 (묶음이 아니면 1) */
 export function chainLevelAt(specs: readonly RunSpec[], index: number): number {
   for (const r of specs) if (index + 1 >= r.start && index + 1 < r.start + r.len) return r.level;

@@ -1,5 +1,7 @@
 // 공격 연출(몸통박치기) 강도 상수 (GDD 17-4, R-4, C.35). 화면 연출 전용이라 balance.ts 가 아니라 여기에 둔다.
 // 값은 전부 CSS px / ms. 단계가 올라갈수록 물러나는 거리·돌진 속도·크기·잔상·피격 흔들림이 커진다.
+import type { AttackFxKind } from '../engine/faction';
+
 
 /** 연출 강도 단계: 기본 공격 < 체인 1·2·3 < 약점 < 필살 */
 export type AttackTier = 'basic' | 'chain1' | 'chain2' | 'chain3' | 'weak' | 'special';
@@ -56,3 +58,50 @@ export const FX_RATE_MAX = 4;
 
 /** 이 시간(ms)이 지나도 연출이 안 끝나면 강제로 끝낸 것으로 본다 (큐가 멈추는 것 방지) */
 export const FX_SAFETY_MS = 1500;
+
+// ───────────── 계열별 공격 연출 (GDD 19-2, C.45) ─────────────
+// 계열마다 종족 설정 families[].fx 로 연출 종류를 고른다. 여기는 종류별 움직임·효과 값만 있고 종족을 모른다.
+
+/** 몸의 움직임: lunge = 돌진해 붙어서 친다 / cast = 제자리에서 쏜다(몸은 반동만) */
+export type FamilyMove = 'lunge' | 'cast';
+
+export interface FamilyMotion {
+  move: FamilyMove;
+  /** lunge 돌진 거리 배율 (기본 몸통박치기 거리 대비) */
+  reach: number;
+  /** cast: 투사체·광선이 상대에게 닿기까지(ms, 1배 기준). lunge 는 0 */
+  travelMs: number;
+  /** 효과 한 번의 길이(ms, 1배 기준) */
+  markMs: number;
+}
+
+/** 연출 종류별 움직임 (조 할퀴기 자국 / 교 턱 닫힘 / 탄 투사체 / 참 칼선 호 / 권 충격 원 / 귀 빛 구체·광선) */
+export const FAMILY_MOTION: Readonly<Record<AttackFxKind, FamilyMotion>> = {
+  claw:   { move: 'lunge', reach: 0.9,  travelMs: 0,   markMs: 260 },
+  bite:   { move: 'lunge', reach: 1.0,  travelMs: 0,   markMs: 300 },
+  shot:   { move: 'cast',  reach: 0,    travelMs: 230, markMs: 260 },
+  slash:  { move: 'lunge', reach: 0.95, travelMs: 0,   markMs: 260 },
+  impact: { move: 'lunge', reach: 1.0,  travelMs: 0,   markMs: 300 },
+  beam:   { move: 'cast',  reach: 0,    travelMs: 160, markMs: 340 },
+};
+
+/** 단계별 효과: 1단계 = 기본 공격 한 번 / 2단계 = 연타(다단 히트) / 3단계 = 대형 효과 + 화면 흔들림 */
+export interface FamilyStageFx {
+  /** 효과(타격) 횟수 */
+  hits: number;
+  /** 타격 사이 간격(ms, 1배 기준) */
+  gapMs: number;
+  /** 효과 크기 배율 (마지막 타격) */
+  scale: number;
+  /** 화면 흔들림 */
+  shake: boolean;
+}
+
+export const FAMILY_STAGE_FX: readonly FamilyStageFx[] = [
+  { hits: 1, gapMs: 0,   scale: 1,   shake: false },
+  { hits: 3, gapMs: 110, scale: 1.1, shake: false },
+  { hits: 3, gapMs: 90,  scale: 2.0, shake: true },
+];
+
+/** 기술 이름 띄우는 시간(ms, 1배 기준) */
+export const SKILL_NAME_MS = 1100;

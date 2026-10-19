@@ -6,6 +6,7 @@ import { getTrait } from '../../data/traits';
 import type { PassiveStat } from '../../data/schema';
 import { getFaction } from '../../data/factions';
 import type { CombatParams, CombatSkill, FamilyCombat } from '../combat/combat';
+import { resolveMaxChain } from '../faction';
 
 const AX = BALANCE.provisional.absorb;
 
@@ -130,7 +131,7 @@ export function familyTable(factionId: string): Record<string, FamilyCombat> {
 export function buildCombatParams(b: BuildState, factionId?: string): Partial<CombatParams> {
   const pm = passiveMultipliers(b);
   return {
-    ...(factionId ? { families: familyTable(factionId) } : {}),
+    ...(factionId ? { families: familyTable(factionId), maxChain: resolveMaxChain(getFaction(factionId)) } : {}),
     skills: equippedSkills(b),
     attackPowerMultiplier: pm.attackPower,
     attackSpeedMultiplier: pm.attackSpeed,

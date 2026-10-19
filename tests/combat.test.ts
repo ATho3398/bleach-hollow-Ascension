@@ -201,21 +201,24 @@ describe('붙어 있는 같은 블록 = 클릭 시 함께 발동 (체인)', () =
     expect(s.blocksByChain).toEqual([2, 0, 0]);
   });
 
-  it('붙은 블록이 4개 이상이면 클릭한 블록을 포함한 3개 (오른쪽 우선, 모자라면 왼쪽)', () => {
+  it('붙은 블록이 4개 이상이면 앞에서부터 3개씩 묶고, 누른 블록의 묶음만 발동한다 (GDD 19-2: 4=3+1, 5=3+2)', () => {
     const s = put(quiet(mk()), ...many(T, 5));
-    // 5개 덩어리에서 클릭 위치별로 묶이는 칸
+    // 5개 덩어리 = [0,1,2] + [3,4]
     expect(chainGroup(s.tray, 0, 3)).toEqual([0, 1, 2]);
-    expect(chainGroup(s.tray, 1, 3)).toEqual([1, 2, 3]);
-    expect(chainGroup(s.tray, 2, 3)).toEqual([2, 3, 4]);
-    expect(chainGroup(s.tray, 3, 3)).toEqual([2, 3, 4]); // 오른쪽에 1개뿐 → 왼쪽으로 확장
-    expect(chainGroup(s.tray, 4, 3)).toEqual([2, 3, 4]);
+    expect(chainGroup(s.tray, 1, 3)).toEqual([0, 1, 2]);
+    expect(chainGroup(s.tray, 2, 3)).toEqual([0, 1, 2]);
+    expect(chainGroup(s.tray, 3, 3)).toEqual([3, 4]);
+    expect(chainGroup(s.tray, 4, 3)).toEqual([3, 4]);
     const a = put(quiet(mk()), ...many(T, 4));
     useAt(a, 3);
-    expect(a.tray).toHaveLength(1); // 3개 소모, 맨 왼쪽 1개 남음
-    expect(a.blocksByChain).toEqual([0, 0, 1]);
+    expect(a.tray).toHaveLength(3); // 4 = 3+1: 맨 오른쪽 1개 묶음만 쓰인다
+    expect(a.blocksByChain).toEqual([1, 0, 0]);
+    useAt(a, 0);
+    expect(a.tray).toHaveLength(0);
+    expect(a.blocksByChain).toEqual([1, 0, 1]);
     const b = put(quiet(mk()), blk('z'), ...many(T, 4), blk('y'));
     useAt(b, 2);
-    expect(left(b)).toBe(['z', T, 'y'].join()); // 2번 클릭 → 2,3,4 가 발동, 1번 남음
+    expect(left(b)).toBe(['z', T, 'y'].join()); // 2번 클릭 → 1,2,3 이 발동, 4번 남음
   });
 
   it('덩어리가 아닌 다른 특성/공허/필살은 끼지 않는다', () => {

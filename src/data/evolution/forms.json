@@ -24,6 +24,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -51,6 +52,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -78,6 +80,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -105,6 +108,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -132,6 +136,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -151,6 +156,7 @@
       "passive": {}
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -183,6 +189,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -215,6 +222,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -247,6 +255,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -278,6 +287,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -310,6 +320,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -341,6 +352,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -373,6 +385,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -405,6 +418,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -437,6 +451,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -469,6 +484,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -496,6 +512,7 @@
       "passive": {}
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -519,6 +536,7 @@
       "passive": {}
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -542,6 +560,7 @@
       "passive": {}
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -561,6 +580,7 @@
       "passive": {}
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -610,6 +630,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -658,6 +679,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -706,6 +728,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -755,6 +778,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -803,6 +827,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -851,6 +876,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -899,6 +925,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -948,6 +975,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -996,6 +1024,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1045,6 +1074,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1097,6 +1127,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1149,6 +1180,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1201,6 +1233,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1252,6 +1285,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1304,6 +1338,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1355,6 +1390,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1407,6 +1443,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1459,6 +1496,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1511,6 +1549,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1563,6 +1602,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1590,6 +1630,7 @@
       "passive": {}
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1613,6 +1654,7 @@
       "passive": {}
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1632,6 +1674,7 @@
       "passive": {}
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1690,6 +1733,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1747,6 +1791,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1804,6 +1849,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1862,6 +1908,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1919,6 +1966,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -1976,6 +2024,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2033,6 +2082,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2091,6 +2141,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2148,6 +2199,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2206,6 +2258,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2258,6 +2311,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2310,6 +2364,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2362,6 +2417,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2413,6 +2469,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2465,6 +2522,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2516,6 +2574,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2568,6 +2627,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2620,6 +2680,7 @@
       }
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2672,6 +2733,7 @@
       }
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2724,6 +2786,7 @@
       }
     },
     "locomotion": "float",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2747,6 +2810,7 @@
       "passive": {}
     },
     "locomotion": "fly",
+    "maxChain": 3,
     "provisional": true
   },
   {
@@ -2766,6 +2830,7 @@
       "passive": {}
     },
     "locomotion": "walk",
+    "maxChain": 3,
     "provisional": true
   }
 ]

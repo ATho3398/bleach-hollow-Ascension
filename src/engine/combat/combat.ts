@@ -61,6 +61,8 @@ export interface CombatParams {
   blockSpawnSeconds: number;
   familySpawnSlowdown: number;
   chainMultipliers: readonly number[];
+  /** 한 번에 묶이는 최대 블록 수 (GDD 19-2): 진화체 데이터 → 종족 설정 기본값에서 온다. 없으면 chainMultipliers 길이(3). 단계 기술·배율이 있는 만큼(chainMultipliers 길이)까지만 쓰인다 */
+  maxChain?: number;
   chainBonusFromChain: number;
   /** 계열 id → 단계별 위력 배율·추가 효과 (종족 설정에서 옮김, GDD 17-3). 없는 계열·기본/막기/회복 블록은 chainMultipliers·skill.chainBonus 를 쓴다 */
   families: Record<string, FamilyCombat>;
@@ -240,7 +242,8 @@ export function ticksOf(p: CombatParams, seconds: number): number {
 }
 
 export function maxChain(p: CombatParams): number {
-  return p.chainMultipliers.length;
+  const top = p.chainMultipliers.length;
+  return Math.max(1, Math.min(top, Math.floor(p.maxChain ?? top)));
 }
 
 /** 블록 생성원: 장착 skill 특성들, 하나도 없으면 기본 블록 */
@@ -557,7 +560,7 @@ function useBlock(s: CombatState, index: number): boolean {
     const rec = (s.chainsByFamily[skill.family] ??= [0, 0, 0]);
     rec[chain - 1]!++;
   }
-  if (chain >= maxChain(p)) {
+  if (chain >= p.chainMultipliers.length) {
     s.chain3Count++;
     if (weak) s.weakChain3Count++;
   }

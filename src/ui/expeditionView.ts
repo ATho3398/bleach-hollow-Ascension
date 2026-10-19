@@ -12,7 +12,8 @@ import {
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { button, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
-import { bubbleText, MSG_ICON, msgKind } from './bha/expedition';
+import { bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
+import { createExpClock } from './bha/expClock';
 import { lineageClass, lineageIconId } from './bha/lineage';
 import { roadPlanner } from './bha/road';
 import { locoOf } from './bha/loco';
@@ -52,46 +53,92 @@ export function setSpeed(v: number): void {
 }
 
 export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, h: ExpeditionViewHandlers, startMsg = ''): void {
-  let timer: ReturnType<typeof setTimeout> | undefined;
   let paused = false;
   let msg = startMsg;
   const tn = (id: string) => tileName(id, faction.id);
 
-  const clear = () => {
-    if (timer !== undefined) clearTimeout(timer);
-    timer = undefined;
-  };
-  /** 처음 화면 복귀 확인창(Q-3)이 열려 있으면 true: 예약된 일은 풀릴 때까지 미뤄진다. dead = 이 화면을 떠났다 */
+  /** 처음 화면 복귀 확인창(Q-3)·세로 전환이 열려 있으면 true: 시간이 멈춘다. dead = 이 화면을 떠났다(전투·결과로 넘어감). away = 한계 돌파 연출이 덮고 있다 */
   let held = false;
   let dead = false;
-  const later = (ms: number, fn: () => void) => {
-    clear();
-    const run = () => {
-      if (dead) return;
-      if (held) {
-        timer = setTimeout(run, 150);
-        return;
-      }
-      fn();
-    };
-    timer = setTimeout(run, ms);
-  };
-  const stepMs = () => (EX.secondsPerTile * 1000) / speed;
+  let away = false;
+  // 다음 할 일(한 칸 이동·전투 진입·휴식 끝)은 시계가 들고 있다: 배속·일시정지·도움말은 남은 시간만 다시 셈하고 할 일을 지우지 않는다 (19-1)
+  const clock = createExpClock({ speed: () => speed, blocked: () => paused || held || dead || away });
+  const stepMs = EX.secondsPerTile * 1000;
 
-  function schedule(): void {
-    clear();
-    if (exp.phase !== 'moving') return;
-    if (!paused) later(stepMs(), tick);
+  /** 한 칸 이동을 새로 예약 */
+  function nextStep(): void {
+    if (exp.phase === 'moving') clock.set('step', stepMs, tick);
+    else clock.cancel();
+  }
+
+  /** 배속·일시정지·멈춤이 바뀐 뒤: 들고 있는 일을 남은 시간으로 다시 건다. 지금 단계에 맞는 일이 없으면 만든다 */
+  function resumeClock(): void {
+    if (dead) return;
+    const want = exp.phase === 'moving' ? 'step' : exp.phase === 'battle' || exp.phase === 'rest' ? 'phase' : null;
+    if (want && clock.pending() !== want) {
+      if (exp.phase === 'moving') clock.set('step', stepMs, tick);
+      else if (exp.phase === 'battle') clock.set('phase', 0, enterBattle);
+      else clock.set('phase', stepMs * PX.restTimeTiles, endRest);
+    } else clock.rearm();
+  }
+
+  // ── 감시 타이머 (19-1 안전장치): 조우 뒤 멈추지 않은 시간이 ENCOUNTER_WATCHDOG_MS 를 넘도록 전투가 안 열리면 바로 진입,
+  //    할 일이 사라졌거나 타이머가 안 걸려 있으면 다시 건다 ──
+  let encounterWait = 0;
+  let lastWatch = Date.now();
+  const watch = setInterval(() => {
+    const t = Date.now();
+    const dt = t - lastWatch;
+    lastWatch = t;
+    if (dead) return clearInterval(watch);
+    if (away) return;
+    if (!main.isConnected) {
+      dead = true;
+      clock.cancel();
+      return clearInterval(watch);
+    }
+    const blocked = paused || held;
+    if (exp.phase === 'battle' && !blocked) encounterWait += dt;
+    const act = watchdogAction({ phase: exp.phase, blocked, pending: clock.pending(), armed: clock.armed(), encounterWaitMs: encounterWait });
+    if (act === 'enter-battle') enterBattle();
+    else if (act === 'resume') resumeClock();
+  }, WATCHDOG_POLL_MS);
+
+  let battleRef: PendingBattle | null = exp.phase === 'battle' ? exp.pending ?? null : null;
+  function enterBattle(): void {
+    if (dead || exp.phase !== 'battle') return;
+    dead = true;
+    clock.cancel();
+    clearInterval(watch);
+    h.onBattle(battleRef ?? exp.pending!);
+  }
+
+  function endRest(): void {
+    if (exp.phase !== 'rest') return;
+    finishRest(exp);
+    h.onSave();
+    msg = '허기·컨디션이 회복됐다';
+    render();
+    nextStep();
   }
 
   function tick(): void {
     const before = exp.hand.length;
     const ev = advance(exp);
-    if (!ev) return;
+    if (!ev) return resumeClock();
     const got = exp.hand.length - before;
     if (drainEvents(exp).length > 0) {
-      clear();
-      h.onBreakthrough(() => handle(ev, got));
+      // 한계 돌파 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
+      away = true;
+      clock.cancel();
+      const stage = main.parentElement!;
+      h.onBreakthrough(() => {
+        if (dead) return;
+        root.replaceChildren(stage);
+        away = false;
+        lastWatch = Date.now();
+        handle(ev, got);
+      });
       return;
     }
     handle(ev, got);
@@ -104,23 +151,16 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         break;
       case 'battle':
         msg = `${tn_enemy(ev.battle)} 조우!`;
+        battleRef = ev.battle;
+        encounterWait = 0;
         h.onSave(); // 전투 시작 직전 상태 (전투 중 새로고침하면 여기서 다시 시작한다)
         render();
-        later(700 / speed, () => {
-          clear();
-          h.onBattle(ev.battle);
-        });
+        clock.set('phase', ENCOUNTER_DELAY_MS, enterBattle);
         return;
       case 'rest':
         msg = `${tn(exp.slots[ev.cell]!)}에서 쉰다…`;
         render();
-        later((EX.secondsPerTile * 1000 * PX.restTimeTiles) / speed, () => {
-          finishRest(exp);
-          h.onSave();
-          msg = '허기·컨디션이 회복됐다';
-          render();
-          schedule();
-        });
+        clock.set('phase', stepMs * PX.restTimeTiles, endRest);
         return;
       case 'lap-complete':
         planner.reset();
@@ -128,12 +168,14 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         h.onSave();
         break;
       case 'ended':
-        clear();
+        dead = true;
+        clock.cancel();
+        clearInterval(watch);
         h.onEnded();
         return;
     }
     render();
-    schedule();
+    nextStep();
   }
 
   const tn_enemy = (p: PendingBattle) => `${p.elite ? '강적 ' : ''}${p.tileId ? `(${tn(p.tileId)}) ` : ''}`;
@@ -185,7 +227,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     b.onclick = () => {
       speed = sp;
       h.onSave();
-      schedule();
+      resumeClock();
       render();
     };
     return b;
@@ -195,7 +237,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   pauseBtn.type = 'button';
   pauseBtn.onclick = () => {
     paused = !paused;
-    schedule();
+    resumeClock();
     render();
   };
   const handCount = el('span', 'bha-exp__hand-count');
@@ -213,10 +255,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   helpBtn.onclick = () => {
     const wasPaused = paused;
     paused = true;
-    schedule();
+    resumeClock();
     h.openHelp(() => {
       paused = wasPaused;
-      schedule();
+      resumeClock();
       render();
     });
   };
@@ -278,6 +320,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
         chooseReturn(exp);
+        dead = true;
+        clock.cancel();
+        clearInterval(watch);
         h.onEnded();
       },
     });
@@ -288,7 +333,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         h.onSave();
         msg = '다시 출발!';
         render();
-        schedule();
+        nextStep();
       },
     });
     const label = el('span', 'bha-btn__label');
@@ -313,25 +358,28 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   }
 
   render();
-  schedule();
+  resumeClock();
 
   let wasPaused = false;
   const offHold = onHold((sig) => {
-    if (!main.isConnected || dead) return offHold();
+    if (dead || (!main.isConnected && !away)) return offHold();
     if (sig === 'hold') {
       if (held) return;
       held = true;
       wasPaused = paused;
-      paused = true; // 모양만 일시정지로: 타이머는 건드리지 않고 later 가 미룬다
+      paused = true; // 모양도 일시정지로
+      resumeClock();
       render();
     } else if (sig === 'release') {
       if (!held) return;
       held = false;
       paused = wasPaused;
+      resumeClock();
       render();
     } else {
       dead = true;
-      clear();
+      clock.cancel();
+      clearInterval(watch);
       offHold();
     }
   });

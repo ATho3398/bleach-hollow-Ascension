@@ -37,11 +37,13 @@
   "defeatStateName": "가면이 깨져 쇠약",
   "basicSkillName": "본체 능력",
   "huntingGroundName": "웨코문도",
+  "maxChain": 3,
   "families": [
     {
       "id": "family-a",
       "name": "조(爪)",
       "abbr": "조",
+      "fx": "claw",
       "tiers": [
         {
           "name": "할퀴기",
@@ -66,6 +68,7 @@
       "id": "family-b",
       "name": "교(咬)",
       "abbr": "교",
+      "fx": "bite",
       "tiers": [
         {
           "name": "물기",
@@ -90,6 +93,7 @@
       "id": "family-c",
       "name": "탄(彈)",
       "abbr": "탄",
+      "fx": "shot",
       "tiers": [
         {
           "name": "바라",

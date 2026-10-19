@@ -126,10 +126,10 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     expect(chainGroup([blk('trait-c5', 'family-c'), blk('trait-a5')], 0, 3)).toEqual([0]);
   });
 
-  it('4개 이상 붙어 있으면 클릭한 블록을 포함한 최대 3개가 발동한다', () => {
+  it('4개 이상 붙어 있으면 앞에서부터 3개씩 묶인다 (특성이 달라도 같은 계열이면 같은 덩어리, GDD 19-2)', () => {
     const t = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c')];
     expect(chainGroup(t, 0, 3)).toEqual([0, 1, 2]);
-    expect(chainGroup(t, 3, 3)).toEqual([1, 2, 3]);
+    expect(chainGroup(t, 3, 3)).toEqual([3]);
   });
 
   it('다른 특성 같은 계열 2개를 누르면 체인2: 두 블록 소모, 2단계 배율 ×2.2', () => {

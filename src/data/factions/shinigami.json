@@ -37,11 +37,13 @@
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
   "huntingGroundName": "현세 순찰 구역 / 루콘가이",
+  "maxChain": 3,
   "families": [
     {
       "id": "family-a",
       "name": "참(斬)",
       "abbr": "참",
+      "fx": "slash",
       "tiers": [
         {
           "name": "베기",
@@ -66,6 +68,7 @@
       "id": "family-b",
       "name": "권(拳)",
       "abbr": "권",
+      "fx": "impact",
       "tiers": [
         {
           "name": "타격",
@@ -90,6 +93,7 @@
       "id": "family-c",
       "name": "귀(鬼)",
       "abbr": "귀",
+      "fx": "beam",
       "tiers": [
         {
           "name": "파도의 1 쇼",
