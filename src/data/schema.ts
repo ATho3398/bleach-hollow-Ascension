@@ -232,7 +232,9 @@ export type TitleCondition =
   /** 이 보스를 처치한 적이 있다 (GDD 25-3, C.58) */
   | { type: 'bossDefeated'; bossId: string }
   /** 스토리 이 장의 화를 모두 깬 적이 있다 (GDD 25-4, C.58) */
-  | { type: 'storyChapterCleared'; chapterId: string };
+  | { type: 'storyChapterCleared'; chapterId: string }
+  /** 초월체를 이만큼 모았다 (GDD 22-3, C.59 — 슬롯 단위 합체 기록) */
+  | { type: 'transcendentsCollected'; min: number };
 
 export interface TitleDef {
   id: string;

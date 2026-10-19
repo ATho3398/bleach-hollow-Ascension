@@ -9,8 +9,12 @@ export type { StorySettlement } from './engine/expedition';
 import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RankBattleRecord, type RebirthRecord, type RunLog } from './engine/runLog';
-import { applyChallenge, canChallenge, newRankState, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
+import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type RebirthRecord, type RunLog, type SlotLog } from './engine/runLog';
+import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
+import { RANK_HOLDERS } from './data/ranks';
+import { FACTIONS } from './data/factions';
+import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
+import { allTranscendentsOwned, conditionMet, decideTranscendent, slotStatBonus, type FusionInput } from './engine/transcend';
 import { buildBattleRecord, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES } from './data/titles';
@@ -32,7 +36,7 @@ import { chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 22;
+export const SAVE_FORMAT_VERSION = 23;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -89,6 +93,49 @@ export interface SaveData {
   story: Record<string, StoryProgress>;
   /** 보스 도감 (GDD 25-3, 형식 22): 보스 id → 처치 수·첫 처치 시각. 세이브 하나에 하나(도감처럼 트랙 구분 없음) */
   bossDex: Record<string, BossDexEntry>;
+  /** 지금 키우지 않는 캐릭터 트랙 (GDD 22-3, 형식 23). 슬롯 = 캐릭터 트랙 최대 2(지금 트랙은 위 평평한 필드 TRACK_KEYS, 나머지는 여기) + 공유 + 붕옥 + 초월체 도감.
+   *  트랙 전환은 둘을 맞바꾼다(switchTrack). 형식을 올릴 때 트랙 필드를 바꾸면 여기 트랙도 같이 올린다(forEachTrack) */
+  otherTracks: TrackData[];
+  /** 투트랙 개방 알림 (형식 23): 새로 열린 트랙 종족 id — 방에 들어가면 한 번 알리고 비운다 */
+  trackNotice: string | null;
+  /** 붕옥 (GDD 22-3, 형식 23): 탭 개방·1단계 게이지·해방·2단계 게이지 */
+  hogyoku: HogyokuState;
+  /** 초월체 도감 (GDD 22-3, 형식 23): 합체로 얻은 초월체(전시). 슬롯 단위, 합체해도 남는다 */
+  transcendentDex: TranscendentEntry[];
+  /** 슬롯 단위 런 로그 (GDD 9장·22-3, 형식 23): 합체·트랙 개방 기록 */
+  slotLog: SlotLog;
+}
+
+/** 캐릭터 트랙 하나가 가진 것 (GDD 22-3): 키우기(진화·특성·등급·환생·원정·수련)는 각자. 나머지 SaveData 필드는 슬롯 공유 */
+export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth'] as const;
+export type TrackKey = (typeof TRACK_KEYS)[number];
+export type TrackData = Pick<SaveData, TrackKey> & {
+  /** 이 트랙에서 떠난 시각(ms): 돌아오면 그동안의 허기가 오른다 (GDD 24-1 과 같은 계산) */
+  parkedAt: number;
+};
+
+export interface HogyokuState {
+  /** 붕옥 탭이 열렸나 (모든 트랙이 5단계에 한 번씩 닿으면, 영구) */
+  tabOpen: boolean;
+  /** 탭이 열렸다는 알림을 아직 안 보였나 */
+  tabNotice: boolean;
+  /** 1단계에 먹인 영혼 결정 (liberateCost 가 차면 해방할 수 있다) */
+  fed: number;
+  liberated: boolean;
+  liberatedAt: number | null;
+  /** 2단계(합체)에 먹인 영혼 결정. 합체하면 0 */
+  fusionFed: number;
+}
+
+export interface TranscendentEntry {
+  id: string;
+  at: number;
+  /** 몇 번째 합체로 얻었나 */
+  fusionIndex: number;
+}
+
+export function newHogyokuState(): HogyokuState {
+  return { tabOpen: false, tabNotice: false, fed: 0, liberated: false, liberatedAt: null, fusionFed: 0 };
 }
 
 /** 한 트랙의 스토리 진행: 깬 화(키 "ch1/ep2" → 첫 클리어 시각·클리어 횟수), 장 클리어 보상을 받은 장 id */
@@ -287,7 +334,188 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState(), skin: null, rebirth: newRebirthState(), story: {}, bossDex: {} };
+  return {
+    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: newHelpState(), shared: newSharedState(), lastSeenAt: nowMs, story: {}, bossDex: {},
+    otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(),
+  };
+}
+
+/** 새 캐릭터 트랙 (1단계 완전 초기 상태). seedSalt 로 같은 시각에 만든 두 트랙의 단계 시드를 다르게 한다 */
+export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
+  return {
+    factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), runLog: emptyRunLog(), activeExpedition: null,
+    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(),
+  };
+}
+
+/** 지금 트랙의 필드만 떼어 낸다 (같은 객체를 가리킨다) */
+export function activeTrackOf(save: SaveData, nowMs: number = Date.now()): TrackData {
+  const t = { parkedAt: nowMs } as TrackData;
+  for (const k of TRACK_KEYS) (t as Record<string, unknown>)[k] = save[k];
+  return t;
+}
+
+function putActiveTrack(save: SaveData, t: Omit<TrackData, 'parkedAt'>): void {
+  for (const k of TRACK_KEYS) (save as unknown as Record<string, unknown>)[k] = (t as Record<string, unknown>)[k];
+}
+
+/** 슬롯의 모든 트랙 (지금 트랙 먼저) */
+export function allTracks(save: SaveData): Pick<SaveData, TrackKey>[] {
+  return [save, ...save.otherTracks];
+}
+
+/** 트랙마다 같은 일을 한다 (마이그레이션·보정): 지금 트랙(세이브 자신)과 쉬는 트랙 */
+export function forEachTrack(save: SaveData, fn: (t: Pick<SaveData, TrackKey>) => void): void {
+  for (const t of allTracks(save)) fn(t);
+}
+
+/** 이 트랙이 투트랙 개방 단계(5단계)에 한 번이라도 닿았나: 지금 단계·진화 기록·환생(5단계에서만 한다) */
+export function trackReachedOpenTier(t: Pick<SaveData, 'evolution' | 'runLog' | 'rebirth'>): boolean {
+  const at = BALANCE.provisional.twoTrack.openTierIndex;
+  return t.evolution.tierIndex >= at || t.rebirth.count > 0 || t.runLog.tiers.evolutions.some((e) => e.toTier >= at);
+}
+
+/** 투트랙·붕옥 탭 개방 판정 (GDD 22-3): 어떤 트랙이 5단계에 닿았고 트랙 칸이 남았으면 아직 없는 종족(종족 데이터 순서에서 첫 번째) 트랙을 연다.
+ *  모든 트랙(최대 수만큼)이 한 번씩 닿았으면 붕옥 탭을 연다(영구). 새로 연 트랙의 종족 id 를 돌려준다 (없으면 null) */
+export function checkTrackOpen(save: SaveData, nowMs: number = Date.now(), factions: readonly { id: string }[] = FACTIONS): string | null {
+  const TT = BALANCE.provisional.twoTrack;
+  let opened: string | null = null;
+  const tracks = allTracks(save);
+  if (tracks.length < TT.maxTracks) {
+    const by = tracks.find(trackReachedOpenTier);
+    const next = factions.find((f) => !tracks.some((t) => t.factionId === f.id));
+    if (by && next) {
+      save.otherTracks.push({ ...newTrack(next.id, nowMs, 1), parkedAt: nowMs });
+      save.slotLog.trackOpens.push({ at: nowMs, factionId: next.id, byFactionId: by.factionId });
+      save.trackNotice = next.id;
+      opened = next.id;
+    }
+  }
+  const all = allTracks(save);
+  if (!save.hogyoku.tabOpen && all.length >= TT.maxTracks && all.every(trackReachedOpenTier)) {
+    save.hogyoku.tabOpen = true;
+    save.hogyoku.tabNotice = true;
+  }
+  return opened;
+}
+
+/** 트랙 전환 (GDD 22-3): 지금 트랙을 쉬게 하고 그 종족 트랙을 꺼낸다. 쉬는 동안의 허기는 돌아올 때 오른다(원정 중간 저장이 있으면 오르지 않음).
+ *  원정 중간 저장은 트랙마다 따로 남는다. 그 종족 트랙이 없으면 false */
+export function switchTrack(save: SaveData, factionId: string, nowMs: number = Date.now()): boolean {
+  const i = save.otherTracks.findIndex((t) => t.factionId === factionId);
+  if (i < 0 || factionId === save.factionId) return false;
+  const next = save.otherTracks[i]!;
+  const parked = activeTrackOf(save, nowMs);
+  const { parkedAt, ...track } = next;
+  applyAbsenceHunger(track.nest, parkedAt, nowMs, track.activeExpedition != null);
+  putActiveTrack(save, track);
+  save.otherTracks.splice(i, 1, parked);
+  return true;
+}
+
+/** 슬롯 보너스 (GDD 22-3): 붕옥 해방 +5% + 초월체 1종마다 +2%. 지금 캐릭터 둘 모두에 */
+export function statBonusOf(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): ReturnType<typeof slotStatBonus> {
+  return slotStatBonus(save.hogyoku.liberated, save.transcendentDex.length);
+}
+
+/** 붕옥에 영혼 결정을 먹인다 (GDD 22-3): 해방 전에는 1단계, 해방 뒤에는 2단계 게이지에 — 모자란 만큼만(가진 만큼). 먹인 수를 돌려준다 */
+export function feedHogyoku(save: SaveData): number {
+  const HX = BALANCE.provisional.hogyoku;
+  const h = save.hogyoku;
+  if (!h.tabOpen) return 0;
+  const key = h.liberated ? 'fusionFed' : 'fed';
+  const cost = h.liberated ? HX.fusionCost : HX.liberateCost;
+  const n = Math.max(0, Math.min(save.shared.soulCrystals, cost - h[key]));
+  h[key] += n;
+  save.shared.soulCrystals -= n;
+  return n;
+}
+
+/** 붕옥 해방 (GDD 22-3): 1단계 게이지가 차면. 영구 */
+export function liberateHogyoku(save: SaveData, nowMs: number = Date.now()): boolean {
+  const h = save.hogyoku;
+  if (!h.tabOpen || h.liberated || h.fed < BALANCE.provisional.hogyoku.liberateCost) return false;
+  h.liberated = true;
+  h.liberatedAt = nowMs;
+  return true;
+}
+
+/** 이 트랙이 지금 등급 1위인가 (1위 번호는 등급 데이터의 맨 위 번호) */
+export function trackIsTopRank(t: Pick<SaveData, 'rank'>): boolean {
+  return rankOf(t.rank) === RANK_HOLDERS[0]!.rank;
+}
+
+/** 합체 판정에 쓰는 한 캐릭터의 상태 */
+export function fusionInputOf(t: Pick<SaveData, 'evolution' | 'rebirth'>): FusionInput {
+  const form = t.evolution.formId ? tryGetForm(t.evolution.formId) : undefined;
+  return { rebirths: t.rebirth.count, hidden: form?.hidden === true, elements: playerElementsOf(t.evolution), category: form?.label.category ?? 'mixed' };
+}
+
+export type FusionBlock = 'tab' | 'liberation' | 'tracks' | 'gauge' | 'rank' | 'expedition' | 'complete';
+
+/** 합체할 수 있나 (GDD 22-3): 붕옥 해방 + 2단계 게이지 가득 + 모든 트랙 등급 1위 + 원정 중간 저장 없음 + 아직 못 모은 초월체. 막힌 이유를 모두 돌려준다 */
+export function fusionGate(save: SaveData): { ok: boolean; missing: FusionBlock[] } {
+  const h = save.hogyoku;
+  const tracks = allTracks(save);
+  const missing: FusionBlock[] = [];
+  if (!h.tabOpen) missing.push('tab');
+  if (!h.liberated) missing.push('liberation');
+  if (tracks.length < BALANCE.provisional.twoTrack.maxTracks) missing.push('tracks');
+  if (h.fusionFed < BALANCE.provisional.hogyoku.fusionCost) missing.push('gauge');
+  if (!tracks.every(trackIsTopRank)) missing.push('rank');
+  if (tracks.some((t) => t.activeExpedition != null)) missing.push('expedition');
+  if (allTranscendentsOwned(save.transcendentDex.map((x) => x.id))) missing.push('complete');
+  return { ok: missing.length === 0, missing };
+}
+
+/** 합체 미리보기 (GDD 22-3 "이 조합이면 ○○"): 지금 두 캐릭터 상태로 정해질 초월체와 조건이 맞았는지. 다 모았으면 def null */
+export function fusionPreview(save: SaveData): { def: TranscendentDef | null; matched: boolean; inputs: FusionInput[] } {
+  const inputs = allTracks(save).map(fusionInputOf);
+  const owned = save.transcendentDex.map((x) => x.id);
+  const def = decideTranscendent(inputs, owned);
+  return { def, matched: def !== null && conditionMet(def.condition, inputs), inputs };
+}
+
+export type FusionResult =
+  | { ok: true; def: TranscendentDef; record: FusionRecord; jade: number; completed: boolean }
+  | { ok: false; missing: FusionBlock[] };
+
+function summaryOf(t: Pick<SaveData, TrackKey>): FusionCharacterSummary {
+  const inp = fusionInputOf(t);
+  const ev = t.evolution.ev;
+  return {
+    factionId: t.factionId, tierIndex: t.evolution.tierIndex, formId: t.evolution.formId, elements: [...inp.elements], category: inp.category, hidden: inp.hidden, rebirths: t.rebirth.count,
+    rank: rankOf(t.rank), runs: t.runLog.runs.length, elitesDefeated: t.runLog.battles.filter((b) => b.won && b.enemyClass === 'elite').length,
+    evTotal: Object.values(ev).reduce((a, b) => a + b, 0),
+  };
+}
+
+/** 합체 (GDD 22-3): 되돌릴 수 없다 — 자동 백업(24-5 stashSlot 'fusion')은 부르는 쪽(화면)이 먼저 한다.
+ *  두 캐릭터는 초월체가 되어 사라지고(초월체 도감에 보관), 같은 종족들의 새 트랙이 1단계 완전 초기 상태로 열린다(환생 계승 없음).
+ *  남김(슬롯): 도감·칭호, 초월체 도감, 붕옥 해방, 먹이·타일·골드·영옥·남은 영혼 결정, 스토리·보스 도감, 스킨(꾸밈). 붕옥 2단계 게이지는 0.
+ *  첫 초월체는 영옥 10. 6종을 다 모으면 칭호 "붕옥 완성"(칭호 평가) */
+export function performFusion(save: SaveData, nowMs: number = Date.now()): FusionResult {
+  const gate = fusionGate(save);
+  if (!gate.ok) return { ok: false, missing: gate.missing };
+  const { def, matched } = fusionPreview(save);
+  if (!def) return { ok: false, missing: ['complete'] };
+  const HX = BALANCE.provisional.hogyoku;
+  const tracks = allTracks(save);
+  const characters = tracks.map(summaryOf);
+  const jade = save.transcendentDex.length === 0 ? HX.firstTranscendentJade : 0;
+  const index = save.slotLog.fusions.length + 1;
+  const record: FusionRecord = { at: nowMs, index, transcendentId: def.id, matched, characters, soulSpent: save.hogyoku.fusionFed, jade };
+  save.slotLog.fusions.push(record);
+  save.transcendentDex.push({ id: def.id, at: nowMs, fusionIndex: index });
+  save.hogyoku.fusionFed = 0;
+  save.shared.jade += jade;
+  // 새 두 트랙: 같은 종족들, 1단계 완전 초기. 스킨(꾸밈)만 그대로 입는다
+  const fresh = (t: Pick<SaveData, TrackKey>, salt: number) => ({ ...newTrack(t.factionId, nowMs, salt), skin: t.skin });
+  const others = save.otherTracks.map((t, i) => ({ ...fresh(t, i + 1), parkedAt: nowMs }));
+  putActiveTrack(save, fresh(save, 0));
+  save.otherTracks = others;
+  checkTitles(save, 'fusion', nowMs);
+  return { ok: true, def, record, jade, completed: allTranscendentsOwned(save.transcendentDex.map((x) => x.id)) };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -439,13 +667,16 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     save.runLog.tiers.evolutions.push(r.record);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
     checkTitles(save, 'evolution', nowMs);
+    // 5단계에 닿으면 다른 종족 트랙이 열리고, 모든 트랙이 닿으면 붕옥 탭이 열린다 (GDD 22-3)
+    checkTrackOpen(save, nowMs);
   }
   return r;
 }
 
 /** 칭호 평가 훅 (원정 종료·진화·로드). 새로 해금된 칭호 정의를 돌려주고, 알림은 UI 가 unlocked.seen 으로 띄운다 */
 export function checkTitles(save: SaveData, trigger: TitleTrigger, nowMs: number = Date.now(), defs: readonly TitleDef[] = TITLES): TitleDef[] {
-  return unlockTitles(save.runLog, save, defs, trigger, nowMs);
+  // 합체 기록은 슬롯 단위라 지금 트랙의 런 로그에 붙여 읽는다 (칭호 '붕옥 완성')
+  return unlockTitles({ ...save.runLog, fusions: save.slotLog?.fusions ?? [] }, save, defs, trigger, nowMs);
 }
 
 /** 지금까지 마친 원정 수 (등급전 재도전 대기 기준, GDD 21-1) */
@@ -737,25 +968,79 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.storyRuns = [];
     save.meta.format = 22;
   }
+  if (save.meta.format < 23) {
+    // 형식 22 → 23 (C.59, GDD 22-3 투트랙·붕옥): 지금 세이브 = 트랙 1개(위 평평한 필드 그대로 — 데이터 손실 없음), 쉬는 트랙 없음, 붕옥 처음 상태,
+    // 초월체 도감·합체 기록 빈 값. 이미 5단계에 닿은 세이브는 로드 때 checkTrackOpen 이 다른 종족 트랙을 연다
+    save.otherTracks = [];
+    save.trackNotice = null;
+    save.hogyoku = newHogyokuState();
+    save.transcendentDex = [];
+    save.slotLog = emptySlotLog();
+    save.meta.format = 23;
+  }
+  save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
+  if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
+  for (const t of save.otherTracks) if (typeof t.parkedAt !== 'number' || !Number.isFinite(t.parkedAt)) t.parkedAt = Date.now();
+  save.trackNotice = typeof save.trackNotice === 'string' && save.otherTracks.some((t) => t.factionId === save.trackNotice) ? save.trackNotice : null;
+  save.hogyoku = sanitizeHogyoku(save.hogyoku);
+  save.transcendentDex = sanitizeTranscendentDex(save.transcendentDex);
+  save.slotLog = { fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [] };
+  forEachTrack(save, sanitizeTrackFields);
   save.story = sanitizeStory(save.story);
   save.bossDex = sanitizeBossDex(save.bossDex);
-  save.runLog.bossBattles = Array.isArray(save.runLog.bossBattles) ? save.runLog.bossBattles : [];
-  save.runLog.storyRuns = Array.isArray(save.runLog.storyRuns) ? save.runLog.storyRuns : [];
-  save.rebirth = sanitizeRebirth(save.rebirth);
-  save.runLog.rebirths = Array.isArray(save.runLog.rebirths) ? save.runLog.rebirths : [];
-  save.skin = canWear(save.factionId, save.skin) ? save.skin : null;
   if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
-  save.training = sanitizeTraining(save.training);
-  save.runLog.trainings = Array.isArray(save.runLog.trainings) ? save.runLog.trainings : [];
-  save.rank = sanitizeRankState(save.rank);
   save.shared = sanitizeShared(save.shared);
-  save.runLog.rankBattles = Array.isArray(save.runLog.rankBattles) ? save.runLog.rankBattles : [];
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
-  // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)
-  if (typeof save.activeExpedition !== 'object' || Array.isArray(save.activeExpedition)) save.activeExpedition = null;
-  if (!SCREEN_KEYS.includes(save.lastScreen)) save.lastScreen = 'room';
   return save;
+}
+
+/** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
+function sanitizeTrackFields(t: Pick<SaveData, TrackKey>): void {
+  t.runLog.bossBattles = Array.isArray(t.runLog.bossBattles) ? t.runLog.bossBattles : [];
+  t.runLog.storyRuns = Array.isArray(t.runLog.storyRuns) ? t.runLog.storyRuns : [];
+  t.rebirth = sanitizeRebirth(t.rebirth);
+  t.runLog.rebirths = Array.isArray(t.runLog.rebirths) ? t.runLog.rebirths : [];
+  t.skin = canWear(t.factionId, t.skin) ? t.skin : null;
+  t.training = sanitizeTraining(t.training);
+  t.runLog.trainings = Array.isArray(t.runLog.trainings) ? t.runLog.trainings : [];
+  t.rank = sanitizeRankState(t.rank);
+  t.runLog.rankBattles = Array.isArray(t.runLog.rankBattles) ? t.runLog.rankBattles : [];
+  delete (t.runLog as Partial<RunLog>).fusions; // 합체 기록은 슬롯 단위(slotLog)
+  // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)
+  if (typeof t.activeExpedition !== 'object' || Array.isArray(t.activeExpedition)) t.activeExpedition = null;
+  if (!SCREEN_KEYS.includes(t.lastScreen)) t.lastScreen = 'room';
+}
+
+const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** 쉬는 트랙의 뼈대 검사: 화면·엔진이 바로 읽는 구조가 있어야 쓴다 (없으면 그 트랙은 버린다) */
+function isTrackShape(t: unknown): boolean {
+  if (!isRec(t) || typeof t.factionId !== 'string' || !FACTIONS.some((f) => f.id === t.factionId)) return false;
+  const evo = t.evolution, b = t.build, log = t.runLog;
+  return isRec(t.nest) && isRec(b) && Array.isArray(b.owned) && Array.isArray(b.slots) && isRec(evo) && typeof evo.tierIndex === 'number' && isRec(evo.ev) && isRec(evo.elementAbsorbs) && Array.isArray(evo.formHistory)
+    && isRec(log) && Array.isArray(log.battles) && Array.isArray(log.runs) && Array.isArray(log.absorbs) && isRec(log.tiers) && Array.isArray((log.tiers as Record<string, unknown>).evolutions) && isRec(log.risk);
+}
+
+export function sanitizeHogyoku(raw: unknown): HogyokuState {
+  const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof HogyokuState, unknown>>;
+  const HX = BALANCE.provisional.hogyoku;
+  const liberated = r.liberated === true;
+  return {
+    tabOpen: r.tabOpen === true,
+    tabNotice: r.tabNotice === true && r.tabOpen === true,
+    fed: liberated ? HX.liberateCost : Math.min(HX.liberateCost, nonNegInt(r.fed)),
+    liberated,
+    liberatedAt: liberated && typeof r.liberatedAt === 'number' ? r.liberatedAt : null,
+    fusionFed: liberated ? Math.min(HX.fusionCost, nonNegInt(r.fusionFed)) : 0,
+  };
+}
+
+export function sanitizeTranscendentDex(raw: unknown): TranscendentEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  return raw.filter((e): e is TranscendentEntry => isRec(e) && typeof e.id === 'string' && tryGetTranscendent(e.id) !== undefined && !seen.has(e.id) && (seen.add(e.id), true))
+    .map((e) => ({ id: e.id, at: nonNegInt(e.at), fusionIndex: Math.max(1, nonNegInt(e.fusionIndex)) }));
 }
 
 /** 스킨 입기/벗기 (GDD 26-5). 이 종족이 입을 수 없는 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기. 상점 전까지는 있는 스킨 전부 열림(provisional) */
@@ -769,7 +1054,10 @@ export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData
   try {
     const text = storage.getItem(key);
     const save = text ? migrateSave(JSON.parse(text)) : null;
-    if (save) checkTitles(save, 'load');
+    if (save) {
+      checkTitles(save, 'load');
+      checkTrackOpen(save); // 이미 5단계에 닿은 옛 세이브는 여기서 다른 종족 트랙이 열린다 (GDD 22-3)
+    }
     return save;
   } catch {
     return null;

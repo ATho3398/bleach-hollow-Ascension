@@ -2,7 +2,8 @@
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, tileName, upgradeIdOf } from '../data/tiles';
-import { canSynthesize, equipSkin, synthesizeTile, type SaveData } from '../game';
+import { canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
 import { versionLabel } from '../version';
@@ -45,7 +46,15 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const evo = save.evolution;
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
-  stats.append(statsBlock(faction.id, currentStats(evo, faction.id), evo.ev, refStatOf(evo.tierIndex), evo.carry));
+  stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(evo.tierIndex), evo.carry));
+  // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
+  const bonus = bonusLine(save);
+  if (bonus) {
+    const line = h('p', 'bha-small');
+    line.dataset.bonus = String(statBonusOf(save).total);
+    line.append('붕옥·초월체 보너스: ', h('b', '', bonus));
+    stats.append(line);
+  }
   const mark = rebirthMark(save.rebirth.count);
   if (mark) {
     const line = h('p', 'bha-faint');

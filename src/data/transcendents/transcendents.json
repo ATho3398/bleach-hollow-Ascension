@@ -1,0 +1,8 @@
+[
+  { "id": "yhwach", "order": 1, "name": "유하바하", "concept": "모든 것을 거둬들이는 자. 여러 생을 쌓은 끝", "condition": { "type": "rebirthSum", "min": 3 }, "provisional": true },
+  { "id": "aizen", "order": 2, "name": "아이젠", "concept": "붕옥과 하나가 된 자. 규칙 밖의 길만 걸은 끝", "condition": { "type": "allHidden" }, "provisional": true },
+  { "id": "ichigo", "order": 3, "name": "이치고", "concept": "호로와 사신이 한 몸에서 공명한 자", "condition": { "type": "sameElement" }, "provisional": true },
+  { "id": "iron-tyrant", "order": 4, "name": "철혈 패왕", "concept": "맨몸과 칼날로만 정점에 선 무(武)의 왕", "original": true, "condition": { "type": "allCategory", "category": "physical" }, "provisional": true },
+  { "id": "zero-sage", "order": 5, "name": "영식 현자", "concept": "영압을 다루는 술(術)의 극에 닿은 자", "original": true, "condition": { "type": "allCategory", "category": "special" }, "provisional": true },
+  { "id": "rift-wanderer", "order": 6, "name": "균열 방랑자", "concept": "두 세계의 틈을 떠도는, 어느 쪽도 아닌 자", "original": true, "condition": { "type": "otherwise" }, "provisional": true }
+]

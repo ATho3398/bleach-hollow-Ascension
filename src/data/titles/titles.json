@@ -181,5 +181,18 @@
       "bossId": "sand-maw"
     },
     "provisional": true
+  },
+  {
+    "id": "hogyoku-complete",
+    "kind": "tag",
+    "hidden": false,
+    "name": {
+      "*": "붕옥 완성"
+    },
+    "condition": {
+      "type": "transcendentsCollected",
+      "min": 6
+    },
+    "provisional": true
   }
 ]

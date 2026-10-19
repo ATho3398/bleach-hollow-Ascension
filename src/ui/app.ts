@@ -17,7 +17,9 @@ import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
   performRebirth, recordTraining, settleLiberationRisk, writeSave, type SaveData,
+  feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack,
 } from '../game';
+import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { liberationButton } from './labels';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
@@ -60,6 +62,7 @@ import { helpOverlay, type HelpScreenId } from './helpView';
 import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
+import { toward } from './bha/nestLogic';
 import { SHOP_PREPARING_TEXT } from '../data/economy';
 
 /** 칭호 id → 종족별 표기 이름 */
@@ -142,7 +145,7 @@ export function startApp(host: HTMLElement): void {
     const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!;
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
-      applyEvolutionToParams(params, save.evolution, faction.id);
+      applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
@@ -385,6 +388,21 @@ export function startApp(host: HTMLElement): void {
     setBgm('nest');
     const greet = hungryGreet;
     hungryGreet = false;
+    // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
+    const notes: { eyebrow: string; title: string; meta: string }[] = [];
+    if (s.trackNotice) {
+      const opened = getFaction(s.trackNotice);
+      notes.push({ eyebrow: '새 트랙', title: `${opened.name} 트랙이 열렸다`, meta: `같은 슬롯에서 새 ${opened.name} 캐릭터를 1단계부터 키운다. 이름표 옆 [${toward(opened.name)}] 버튼으로 바꾼다.` });
+      s.trackNotice = null;
+    }
+    if (s.hogyoku.tabNotice) {
+      notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 5단계에 닿았다. 더보기 ⋯ → [붕옥]' });
+      s.hogyoku.tabNotice = false;
+    }
+    if (notes.length > 0) {
+      persist();
+      window.setTimeout(() => notes.forEach((n, i) => showToast(n, i, 5200)), 2600);
+    }
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,
       resume: active.ok
@@ -401,7 +419,14 @@ export function startApp(host: HTMLElement): void {
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
       onRank: () => open('rank', () => rankScreen(faction)),
-      onChangeFaction: factionScreen,
+      onChangeFaction: s.otherTracks.length === 0 ? factionScreen : null,
+      onSwitchTrack: s.otherTracks.length > 0 ? (fid) => {
+        if (!switchTrack(s, fid)) return;
+        persist();
+        nestScreen();
+        showToast({ eyebrow: '트랙 전환', title: `${getFaction(fid).name} 트랙`, meta: '키우기는 트랙마다 따로, 먹이·타일·영혼 결정은 같이 쓴다.' }, 0, 3000);
+      } : null,
+      onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
       onTutorial: () => open('tutorials', () => tutorialGoalsView(root, faction, s, () => tutorialDemo(faction))),
@@ -410,6 +435,43 @@ export function startApp(host: HTMLElement): void {
       onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTitle: askReturnToTitle,
     });
+  }
+
+  // ── 붕옥 (GDD 22-3, C.59): 게이지·해방 → 합체 미리보기(확인 1) → 최종 확인(확인 2) → 자동 백업 'fusion' → 합체 → 연출 → 새 1단계 방 ──
+  function renderHogyoku(s: SaveData): void {
+    hogyokuView(dev, s, {
+      onFeed: () => {
+        if (feedHogyoku(s) > 0) persist();
+        nav.top?.render();
+      },
+      onLiberate: () => {
+        if (!liberateHogyoku(s)) return;
+        persist();
+        showToast({ eyebrow: '붕옥', title: '붕옥 해방', meta: `두 캐릭터 모두 전 능력치 +${Math.round(BALANCE.provisional.hogyoku.liberatedBonus * 100)}%` }, 0, 3600);
+        nav.top?.render();
+      },
+      onPreview: () => open('fusion-confirm', () => renderFusionConfirm(s)),
+    });
+  }
+
+  function renderFusionConfirm(s: SaveData): void {
+    fusionConfirmView(dev, s, {
+      onNext: (def) => {
+        const t = fusionFinalText(def);
+        confirmDialog({ title: t.title, body: t.body, yes: '합체', no: '그만둔다', danger: true, onYes: () => doFusion(s) });
+      },
+    });
+  }
+
+  function doFusion(s: SaveData): void {
+    // 되돌릴 수 없는 일 직전 자동 백업 (GDD 24-5): 지금 상태를 저장하고 슬롯 백업에 보관한 뒤 합체한다
+    persist();
+    stashSlot(localStorage, slot, 'fusion');
+    const r = performFusion(s);
+    if (!r.ok) return void nav.pop();
+    persist();
+    const faction = getFaction(s.factionId);
+    nav.reset({ id: 'fusion-scene', locked: true, render: () => { setBgm('nest'); fusionView(root, faction, r.record, s, nestScreen); root.scrollTop = 0; } });
   }
 
   // ── 해방 수련 (GDD 22-4·22-5, C.54) ──
@@ -502,6 +564,7 @@ export function startApp(host: HTMLElement): void {
       // 타일 변수 5종 (GDD 25-5): 드래프트·인접 시너지·이벤트 타일·바퀴 변이. 상인은 가진 골드로 산다
       tileVariants: true,
       gold: save.shared.tradeCoins,
+      statBonus: statBonusOf(save).total,
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
@@ -568,6 +631,7 @@ export function startApp(host: HTMLElement): void {
       liberationEnabled: liberationAccess(save).usable,
       tileVariants: true,
       gold: save.shared.tradeCoins,
+      statBonus: statBonusOf(save).total,
       story: { chapterId, episodeId },
     });
     resumeNote = '';
@@ -738,7 +802,7 @@ export function startApp(host: HTMLElement): void {
   function runPractice(faction: FactionConfig, enemy: EnemyDef): void {
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
-      applyEvolutionToParams(params, save.evolution, faction.id);
+      applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
       params.liberationEnabled = liberationAccess(save).usable;
     }
@@ -782,7 +846,7 @@ export function startApp(host: HTMLElement): void {
     stashSlot(localStorage, slot, 'rank');
     setBgm('rank');
     const params = buildCombatParams(s0.build, faction.id);
-    applyEvolutionToParams(params, s0.evolution, faction.id);
+    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total);
     params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);
     params.liberationEnabled = liberationAccess(s0).usable;
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: holder, params });

@@ -139,6 +139,7 @@ function validShape(e: unknown): e is ExpeditionState {
     if (!isObj(o) || typeof o.enemyId !== 'string' || !isStrArr(o.candidates)) return false;
   } else if (e.absorbOffer !== null) return false;
   if (e.outcome !== null || e.endReason !== null) return false;
+  if (e.statBonus !== undefined && !(isNum(e.statBonus) && e.statBonus >= 0)) return false;
   if (!validStory(e)) return false;
   return validVariants(e);
 }

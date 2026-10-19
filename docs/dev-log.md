@@ -2067,3 +2067,33 @@ GDD 제안 (마스터가 반영)
 **캡처** `docs/captures/c58/` (헤드리스 Chromium 844×390 터치, 시험 세이브(2단계에 갓 닿은 몸)를 저장소에 넣고 [이어하기], 전투는 실제로 블록을 눌러 진행. 보스 시험 세이브만 화면 확인용으로 노력치를 +40 씩 올림): `01-depart-tabs-*`(배치 화면 [자유 원정]/[스토리] 탭), `02-story-list-*`(1장 1/4화 — 1화 ✓·2화 [도전]·3·4화 잠김, 2·3장 잠김 "3단계에 열림"·"5단계에 열림"), `02b-story-ch2-locked-*`, `03-dialogue-start-*`(호로 「나」 / 사신 「분대장」 시작 대사), `04-goal-*`("목표 · 일반 적 3마리 처치 0/3"), `05-dialogue-end-*`(1화 끝 대사), `05b-result-ep1-*`(결과 맨 위 "클리어! 화 보상 골드 +20 · … · 첫 클리어 영옥 +2"), `06-boss-band-*`(보스 등장 이름 띠), `07a-boss-seal-*`(봉인 블록 자물쇠 + 로그), `07-boss-phase2-seal-*`(페이즈 2/2 + 봉인), `08a-boss-trait-candidate-*`(보스 특성 확정 첫 후보), `08b-boss-end-dialogue-*`, `08-boss-reward-*`(보스 첫 처치 영옥 +10·장 완료 영옥 +5·칭호 2개 토스트). 두 종족 모두. `proof.json` = 화 목록 상태, 대사 원문, 목표 줄, 보스 띠·페이즈 칩·봉인 로그, 보스 특성 후보, 결과 줄, 저장된 세이브(형식 22·영옥·보스 도감·칭호·보스전 기록). 콘솔 오류 0.
 
 명령 시각 2026-10-20 07:00 / 답변 시각 2026-10-20 07:45 / 걸린 시간 약 45분 (KST)
+
+### C.59 투트랙·붕옥·합체·초월체 6종 (STAGE S-15, 코딩51, GDD 22-3 → 22-9 v5.27)
+사용 모델: Opus 5.5 (마스터 지정, 세이브 구조 큰 변경 + 새 엔진·화면). `PATCH_LABEL` C.59, `STAGE_LABEL` S-15. **`SAVE_FORMAT_VERSION` 22 → 23**, **`BALANCE_VERSION` 34 → 35**(새 수치 `provisional.twoTrack`·`provisional.hogyoku`, 기존 수치 변경 없음), 원정 중간 저장 형식 6 그대로(`statBonus` 는 없으면 0). 새 색·간격 토큰·CSS 없음 — 붕옥 화면은 기존 `bha-` 컴포넌트(panel·meter `stored`/`sp`·info·notice·button)와 환생 연출 틀(`bha-evolve`)만.
+
+**세이브 구조** — 슬롯 = 캐릭터 트랙 2 + 공유 + 붕옥 + 초월체 도감 + 슬롯 런 로그.
+- 지금 트랙 = 예전 맨 위 필드 그대로(`TRACK_KEYS` 11개), 쉬는 트랙 = `otherTracks[]`(+ `parkedAt`). 이렇게 해서 원정·전투·진화·등급·수련·환생 코드는 한 줄도 트랙을 몰라도 된다. 전환 `switchTrack` = 맞바꿈, 돌아온 트랙은 떠나 있던 시간만큼 허기(24-1 계산). 원정 중간 저장은 트랙마다 따로 남는다.
+- 공유: `shared`(먹이·골드·영옥·영혼 결정·튜토리얼/도감 보상 기록)·`tiles`·`formDex`·`titles`·`story`(종족별 키)·`bossDex`·`help`·`lastSeenAt`.
+- 새 필드 `trackNotice`·`hogyoku`·`transcendentDex`·`slotLog { fusions, trackOpens }`. 쉬는 트랙 보정 = 뼈대 검사(깨진 트랙·지금과 같은 종족·모르는 종족은 버림) + 트랙 필드 보정(`sanitizeTrackFields`, 지금 트랙과 같은 함수).
+- 마이그레이션 22 → 23 = 트랙 1개, 옛 필드 값 전부 그대로(테스트가 키마다 비교 — 데이터 손실 0). 직전 자동 백업은 기존 `stashSlot('migration')`(C.53). 5단계에 이미 닿은 옛 세이브는 열 때 사신(다른 종족) 트랙이 열리고 알림.
+
+**엔진** `src/engine/transcend.ts`(종족 무관): 조건 판정(`conditionMet`), 초월체 결정(`decideTranscendent` — 위에서부터·보유 건너뜀·없으면 미보유 중 표 아래부터), 보너스(`slotStatBonus`). `game.ts`: `checkTrackOpen`(진화 직후·로드 때, 종족은 `FACTIONS` 순서에서 — 하드코딩 없음, 3종족 목록 테스트), `feedHogyoku`·`liberateHogyoku`, `fusionGate`(막힌 이유 목록)·`fusionPreview`·`performFusion`, `statBonusOf`. 능력치 보너스 = `currentStats(e, f, bonus)`·`applyEvolutionToParams(…, bonus)`·`ExpeditionSetup.statBonus` — 원정·연습·등급전·체험 전투 모두.
+**데이터** `src/data/transcendents/`(6종, 이름·조건 provisional, 원작 이름 유하바하·아이젠·이치고, 오리지널 3종 자리 표시 그대로). 칭호 `hogyoku-complete` "붕옥 완성"(조건 `transcendentsCollected` 6 — 슬롯 합체 기록을 칭호 평가 때 런 로그에 붙여 읽음).
+
+**화면**: 방 이름표 옆 [사신으로]/[호로로](투트랙일 때, 환생 ★ 와 같은 자리), 트랙 개방·붕옥 탭 개방 토스트(저장 토스트와 겹치지 않게 2.6초 뒤), 독 더보기 [붕옥](열렸을 때), 붕옥 화면(`hogyokuView.ts`: 게이지·먹이기·해방·합체 조건·[합체 미리보기] / 초월체 도감·보유 보너스), 합체 확인 1(두 캐릭터·사라진다/남는다·"이 조합이면 「○○」가 된다") → 확인 2(확인창) → 자동 백업 'fusion' → 연출·결과 → 새 1단계 방. 상태 화면 능력치 아래 보너스 줄(능력치 숫자에 이미 곱해짐). 투트랙이 열리면 '종족 바꾸기' 숨김.
+
+**정한 것**(기획서 값 / 실제 값 / 이유):
+- 붕옥 해방 시점 / 게이지가 차면 [붕옥 해방] 버튼 / "100% → 해방" 순간을 한 번 누르게(되돌릴 수 없는 손실이 없어 확인창은 없음).
+- 영혼 결정 먹이기 / 한 번에 모자란 만큼(가진 만큼) / 버튼 연타 없이.
+- '등급 1위' / 합체 순간 지금 번호가 등급 데이터 맨 위 번호 / 이력이 아닌 지금 상태(22-3 "양쪽 모두 등급 1위").
+- '속성이 같다' / 함께 가진 속성이 하나 이상 / 융합(두 속성) 진화체도 공명할 수 있게. '그 밖' / 다른 조건이 하나도 안 맞을 때.
+- 보너스 / 해방 5% + 초월체 2%×종 합산(최대 17%), 반올림, 999 상한.
+- 합체 뒤 스킨·스토리 진행·보스 도감 / 유지 / 성장이 아닌 꾸밈·기록이라.
+- 쉬는 트랙 허기 / 돌아올 때 떠나 있던 시간만큼 / 다마고치형 — 두 캐릭터 모두 돌봐야 한다.
+- 타일 덱 공유 / 보유·덱 공유, 그 종족이 못 쓰는 타일은 방에 들어갈 때 덱에서 빠짐(보유는 그대로).
+
+**테스트** 778 → 798 (+20, 지운 테스트 없음): `tests/c59.test.ts` 20개(마이그레이션 4 — 옛 필드 전부 비교·옛 5단계 세이브 개방·저장 왕복·깨진 트랙 보정, 투트랙 4 — 두 종족 개방·3종족 목록·전환·원정 중간 저장, 붕옥 4 — 탭·해방·먹이기·보너스/원정 저장, 합체 3 — 막힘·초기화/남김/기록·6번 = 6종/칭호/막힘, 결정 규칙 5). 바꾼 테스트: c58 형식 번호 검사(→ 상수), 칭호 수 13 → 14.
+
+**밸런스**: `npm run balance:check` 통과(회귀 가드). 봇은 합체하지 않아 보너스 0 — 기존 값 그대로.
+
+**캡처** `docs/captures/c59/` (헤드리스 Chromium 844×390 터치, 시험 세이브를 저장소에 넣고 [이어하기]): `01-old-save-room-track-opened`(형식 22 호로 아란칼 세이브 → 방 + "사신 트랙이 열렸다"), `01b-…-nameplate-switch`(이름표 옆 [사신으로]), `02-track-switched-shinigami-tier1`(혼백 1단계 + 트랙 전환 토스트 + 첫 튜토리얼 보상), `02b-…-back-hollow`, `03-room-hogyoku-tab-notice`("붕옥 탭이 열렸다"), `03b-dock-more-hogyoku`, `04-hogyoku-before-liberation-40`(40/100), `05-hogyoku-gauge-full`([붕옥 해방]), `06-hogyoku-liberated`·`06b-…-stage2`(해방 +5%, 2단계 0/300), `07-hogyoku-stage2-full-ready`(300/300, 두 캐릭터 No.1/대장 ✓, [합체 미리보기]), `08-fusion-preview`(「균열 방랑자」가 된다), `09-fusion-final-confirm`, `10-fusion-scene`, `11-fusion-result`(호로 아란칼 + 사신 수석 대원 → 새 두 트랙 1단계, 1/6, 영옥 +10, +7%), `12-room-new-tier1-after-fusion`, `13-hogyoku-transcendent-dex-after-fusion`(6. 균열 방랑자 · 1번째 합체), `14-status-bonus`(능력치 54 = 50×1.07, 보너스 줄), `15-room-new-shinigami-tier1`. `proof.json` = 마이그레이션 후 형식 23·백업 있음, 전환 전후 트랙, 붕옥 상태, 합체 후 트랙·도감·합체 기록·영옥·백업 키. 콘솔 오류 0.

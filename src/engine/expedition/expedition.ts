@@ -163,6 +163,8 @@ export interface AcquiredTrait {
 }
 
 export interface ExpeditionState extends RiskState {
+  /** 붕옥·초월체 패시브 (GDD 22-3, C.59). 옛 원정 중간 저장에는 없다(= 0) */
+  statBonus?: number;
   runId: number;
   factionId: string;
   /** 사냥터 id (GDD 24-2, 원정 형식 4): 출현 속성·적 강도·먹이 표. 배치 단계에서 고른다 */
@@ -270,6 +272,8 @@ export interface ExpeditionSetup {
   gold?: number;
   /** 스토리 화 (GDD 25-4): 그 화의 고정 길·사냥터·최대 바퀴를 쓴다 (groundId·maxLaps 는 무시) */
   story?: { chapterId: string; episodeId: string };
+  /** 붕옥 해방·초월체 보유 패시브 (GDD 22-3, 0.05 = 전 능력치 +5%). 없으면 0 */
+  statBonus?: number;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -316,6 +320,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     outcome: null,
     endReason: null,
     liberationEnabled: setup.liberationEnabled === true,
+    statBonus: setup.statBonus ?? 0,
     tileVariants: setup.tileVariants === true,
     varRng: createRng((setup.seed ^ VARIANT_SEED_SALT) >>> 0),
     mutation: null,
@@ -562,7 +567,7 @@ function startBattleAt(
   const m: VariantMods = combineMods(sm, mutationMods(exp.mutation), upgradeMods(id));
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability), liberationEnabled: exp.liberationEnabled === true };
-  applyEvolutionToParams(params, exp.evolution, exp.factionId);
+  applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0);
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset, m.envMult ?? 1);
   if (exp.breakthrough) applyFrenzy(params);

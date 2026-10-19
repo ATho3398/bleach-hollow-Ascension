@@ -14,8 +14,10 @@ import { characterButton, charTopOffset, propButton, roomCharArt, sceneBox } fro
 import { moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
+import { toward } from './bha/nestLogic';
 import { rebirthMark } from './rebirthView';
 import { formName, tryGetForm } from '../data/evolution';
+import { getFaction } from '../data/factions';
 import { playerElementsOf } from '../engine/evolution';
 
 export interface RoomHandlers {
@@ -28,7 +30,12 @@ export interface RoomHandlers {
   onPractice: () => void;
   /** 등급전 (GDD 21장): 독 더보기 항목 */
   onRank: () => void;
-  onChangeFaction: () => void;
+  /** 종족 바꾸기: 트랙이 하나일 때만 (투트랙이 열리면 null — 트랙 전환을 쓴다) */
+  onChangeFaction: (() => void) | null;
+  /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 트랙이 하나면 null */
+  onSwitchTrack: ((factionId: string) => void) | null;
+  /** 붕옥 탭 (GDD 22-3): 열렸을 때만 독 더보기에 */
+  onHogyoku: (() => void) | null;
   onSettings: () => void;
   onHelp: () => void;
   /** 독 '더보기' 항목: 튜토리얼 목록(GDD 23-3) */
@@ -62,12 +69,22 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const hud = el('header', 'bha-room__hud');
   const items: SelectItem[] = [];
   let resumeBtn: HTMLButtonElement | null = null;
-  // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★
+  // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★. 투트랙이면(GDD 22-3) 이름표 옆에 트랙 전환 버튼
   const stars = rebirthMark(save.rebirth.count);
-  if (stars) {
+  const others = hd.onSwitchTrack ? save.otherTracks : [];
+  if (stars || others.length > 0) {
     const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
     const name = el('span', 'bha-small bha-room__name', form ? formName(form, faction.id, playerElementsOf(save.evolution)) : faction.tierNames[save.evolution.tierIndex]!);
-    name.append(' ', stars);
+    if (stars) name.append(' ', stars);
+    for (const t of others) {
+      const to = getFaction(t.factionId);
+      const sw = button({ label: toward(to.name), icon: 'i-swap', size: 'small', variant: 'ghost', onClick: () => hd.onSwitchTrack!(t.factionId) });
+      sw.title = `${to.name} 트랙으로 바꾸기`;
+      sw.dataset.sc = 'track-switch';
+      sw.dataset.track = t.factionId;
+      name.append(' ', sw);
+      items.push({ el: sw });
+    }
     hud.append(name);
   }
   if (hd.resume) {
@@ -186,8 +203,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
       { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },
+      ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', onClick: hd.onHogyoku }] : []),
       { label: '상점', icon: 'i-rare', onClick: hd.onShop },
-      { label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction },
+      ...(hd.onChangeFaction ? [{ label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction }] : []),
       { label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
     ],
@@ -202,7 +220,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
 
   // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
   function registerItems(): void {
-    const list: SelectItem[] = [...items.slice(0, resumeBtn ? 1 : 0)];
+    const list: SelectItem[] = [...items];
     for (const p of order) list.push({ el: props.get(p)! });
     list.push({ el: statusBtn }, { el: char });
     dev.setItems([...dock.items().filter((b) => b.closest('.bha-homedock__tray')).map((b) => ({ el: b })), ...list, ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);

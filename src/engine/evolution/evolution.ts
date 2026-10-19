@@ -155,10 +155,14 @@ export function baseStatsOf(e: EvolutionState, factionId: string): Stats {
 /** 능력치 절대 상한 (GDD 22-1 v4.7, 6개 모두) */
 export const STAT_MAX: number = SX.statMax;
 
-/** 지금 능력치 = 종족값 + 노력치 + 환생 계승 (GDD 20-4·22-7), 능력치마다 STAT_MAX 에서 멈춘다 */
-export function currentStats(e: EvolutionState, factionId: string): Stats {
+/** 지금 능력치 = (종족값 + 노력치 + 환생 계승) × (1 + 슬롯 보너스) (GDD 20-4·22-7·22-3), 능력치마다 STAT_MAX 에서 멈춘다.
+ *  statBonus = 붕옥 해방·초월체 보유 패시브 (0.05 = +5%, 반올림). 0 이면 예전과 같은 값 */
+export function currentStats(e: EvolutionState, factionId: string, statBonus = 0): Stats {
   const base = baseStatsOf(e, factionId);
-  for (const s of STAT_IDS) base[s] = Math.min(STAT_MAX, base[s] + e.ev[s] + (e.carry?.[s] ?? 0));
+  for (const s of STAT_IDS) {
+    const raw = base[s] + e.ev[s] + (e.carry?.[s] ?? 0);
+    base[s] = Math.min(STAT_MAX, statBonus > 0 ? Math.round(raw * (1 + statBonus)) : raw);
+  }
   return base;
 }
 
@@ -256,16 +260,16 @@ function applyAbility(params: Partial<CombatParams>, ability: StatId | null): vo
 }
 
 /**
- * 진화 상태를 전투 파라미터에 싣는다: 기준 능력치·내 능력치(종족값+노력치)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
+ * 진화 상태를 전투 파라미터에 싣는다: 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월체 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
  * 전투 엔진은 종족을 모르고 이 값만 쓴다. buildCombatParams(빌드) 뒤에 부른다
  */
-export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string): void {
+export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0): void {
   params.combos = comboRulesOf(e);
   // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
   const form = e.formId ? tryGetForm(e.formId) : undefined;
   if (form?.maxChain !== undefined) params.maxChain = form.maxChain;
   params.refStat = refStatOf(e.tierIndex);
-  params.playerStats = currentStats(e, factionId);
+  params.playerStats = currentStats(e, factionId, statBonus);
   params.playerElements = playerElementsOf(e);
   params.stabMultiplier = stabOf(e);
   // 해방 블록 분류 (GDD 22-5): 진화체 분류(아란칼 일반형), 없으면 혼합

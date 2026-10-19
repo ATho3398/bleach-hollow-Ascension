@@ -1,0 +1,109 @@
+{
+  "afterMigration": {
+    "format": 23,
+    "factionId": "hollow",
+    "tier": 4,
+    "otherTracks": [
+      [
+        "shinigami",
+        0
+      ]
+    ],
+    "soul": 46,
+    "backup": true
+  },
+  "afterSwitch": {
+    "factionId": "shinigami",
+    "tier": 0,
+    "other": [
+      [
+        "hollow",
+        4
+      ]
+    ]
+  },
+  "hogyoku": {
+    "tabOpen": true,
+    "tabNotice": false,
+    "fed": 100,
+    "liberated": true,
+    "liberatedAt": 1792450920566,
+    "fusionFed": 300
+  },
+  "soulLeft": 26,
+  "afterFusion": {
+    "tracks": [
+      [
+        "hollow",
+        0
+      ],
+      [
+        "shinigami",
+        0
+      ]
+    ],
+    "dex": [
+      {
+        "id": "rift-wanderer",
+        "at": 1792450927218,
+        "fusionIndex": 1
+      }
+    ],
+    "fusions": [
+      {
+        "at": 1792450927218,
+        "index": 1,
+        "transcendentId": "rift-wanderer",
+        "matched": true,
+        "characters": [
+          {
+            "factionId": "hollow",
+            "tierIndex": 4,
+            "formId": "t5:fire:physical",
+            "elements": [
+              "fire"
+            ],
+            "category": "physical",
+            "hidden": false,
+            "rebirths": 0,
+            "rank": 1,
+            "runs": 0,
+            "elitesDefeated": 0,
+            "evTotal": 100
+          },
+          {
+            "factionId": "shinigami",
+            "tierIndex": 4,
+            "formId": "t5:water:special",
+            "elements": [
+              "water"
+            ],
+            "category": "special",
+            "hidden": false,
+            "rebirths": 0,
+            "rank": 1,
+            "runs": 0,
+            "elitesDefeated": 0,
+            "evTotal": 100
+          }
+        ],
+        "soulSpent": 300,
+        "jade": 10
+      }
+    ],
+    "jade": 16,
+    "hogyoku": {
+      "tabOpen": true,
+      "tabNotice": false,
+      "fed": 100,
+      "liberated": true,
+      "liberatedAt": 1792450920566,
+      "fusionFed": 0
+    },
+    "backupReason": [
+      "bleach-hollow-ascension.save.backup",
+      "bleach-hollow-ascension.save.backup.meta"
+    ]
+  },
+  "errors": []
+}

@@ -283,6 +283,57 @@ export interface RunLog {
   /** 보스전·스토리 화 기록 (C.58, 세이브 형식 22) */
   bossBattles: BossBattleRecord[];
   storyRuns: StoryRunRecord[];
+  /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
+  fusions?: FusionRecord[];
+}
+
+/** 합체 기록의 캐릭터 한 명 요약 (GDD 22-3, C.59): 합체로 사라진 캐릭터가 어떤 몸이었나 */
+export interface FusionCharacterSummary {
+  factionId: string;
+  tierIndex: number;
+  formId: string | null;
+  elements: string[];
+  category: string;
+  hidden: boolean;
+  rebirths: number;
+  /** 합체 순간의 번호 (1 = 맨 위) */
+  rank: number | null;
+  /** 마친 원정 수·이긴 강적 수 (그 캐릭터의 런 로그) */
+  runs: number;
+  elitesDefeated: number;
+  evTotal: number;
+}
+
+/** 합체 기록 (GDD 22-3·9장, 세이브 형식 23): 슬롯 단위 — 캐릭터 트랙이 새로 시작해도 남는다 */
+export interface FusionRecord {
+  at: number;
+  /** 이 슬롯의 몇 번째 합체 (1부터) */
+  index: number;
+  transcendentId: string;
+  /** 조건이 맞아서 정해졌나 (false = 조건 맞는 미보유가 없어 표 아래쪽부터 채움) */
+  matched: boolean;
+  characters: FusionCharacterSummary[];
+  soulSpent: number;
+  jade: number;
+}
+
+/** 다른 종족 트랙이 열린 기록 (GDD 22-3, 형식 23) */
+export interface TrackOpenRecord {
+  at: number;
+  /** 열린 트랙의 종족 */
+  factionId: string;
+  /** 연 캐릭터의 종족 (5단계에 닿은 쪽, 마이그레이션이면 그 세이브의 종족) */
+  byFactionId: string;
+}
+
+/** 슬롯 단위 런 로그 (GDD 9장·22-3, 형식 23): 캐릭터 트랙마다의 RunLog 와 따로, 슬롯 하나에 하나 */
+export interface SlotLog {
+  fusions: FusionRecord[];
+  trackOpens: TrackOpenRecord[];
+}
+
+export function emptySlotLog(): SlotLog {
+  return { fusions: [], trackOpens: [] };
 }
 
 export function emptyRunLog(): RunLog {

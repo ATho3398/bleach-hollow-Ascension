@@ -26,7 +26,7 @@ export interface UnlockedTitle {
   seen: boolean;
 }
 
-export type TitleTrigger = 'expedition' | 'evolution' | 'load' | 'rank' | 'training';
+export type TitleTrigger = 'expedition' | 'evolution' | 'load' | 'rank' | 'training' | 'fusion';
 
 /** 평가기가 읽는 세이브 상태 (SaveData 의 일부) */
 export interface TitleEvalState {
@@ -71,6 +71,8 @@ export function checkCondition(c: TitleCondition, log: RunLog): boolean {
       return (log.bossBattles ?? []).some((b) => b.won && b.bossId === c.bossId);
     case 'storyChapterCleared':
       return (log.storyRuns ?? []).some((r) => r.chapterCleared && r.chapterId === c.chapterId);
+    case 'transcendentsCollected':
+      return new Set((log.fusions ?? []).map((f) => f.transcendentId)).size >= c.min;
   }
 }
 

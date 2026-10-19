@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 34;
+export const BALANCE_VERSION = 35;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -90,6 +90,25 @@ export const BALANCE = {
     },
     // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 ──
     soulCrystals: { perElite: 1, perRankWin: 3, perRebirth: 10 },
+    // ── 투트랙·붕옥·합체 (GDD 22-3·22-9, 수치 provisional) ──
+    twoTrack: {
+      /** 슬롯 하나의 캐릭터 트랙 수 */
+      maxTracks: 2,
+      /** 이 단계(tierIndex, 4 = 5단계 아란칼/수석 대원)에 닿으면 다른 종족 트랙이 열리고, 모든 트랙이 한 번씩 닿으면 붕옥 탭이 열린다 */
+      openTierIndex: 4,
+    },
+    hogyoku: {
+      /** 붕옥 1단계: 이만큼 영혼 결정을 먹이면 해방 */
+      liberateCost: 100,
+      /** 해방 패시브: 모든 트랙의 전 능력치 배율 + (영구) */
+      liberatedBonus: 0.05,
+      /** 붕옥 2단계: 해방 뒤 이만큼 먹이고 + 모든 트랙 등급 1위면 합체 가능. 합체하면 0 으로 */
+      fusionCost: 300,
+      /** 초월체 보유 1종마다 전 능력치 배율 + */
+      perTranscendentBonus: 0.02,
+      /** 첫 초월체 획득 영옥 (25-1 일회성 달성 보상) */
+      firstTranscendentJade: 10,
+    },
     // ── 환생 (GDD 22-1·22-7, 수치 provisional) ──
     rebirth: {
       /** 들어갈 수 있는 단계 (tierIndex, 4 = 5단계 아란칼/수석 대원) */

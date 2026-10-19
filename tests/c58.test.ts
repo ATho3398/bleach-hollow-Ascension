@@ -411,7 +411,7 @@ describe('세이브·보상·칭호 (형식 22)', () => {
   });
 
   it('세이브 형식 22 마이그레이션: 형식 21 세이브에 빈 스토리 진행·보스 도감·기록', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(22);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(22);
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 1)));
     old.meta.format = 21;
     delete old.story;
@@ -419,7 +419,7 @@ describe('세이브·보상·칭호 (형식 22)', () => {
     delete old.runLog.bossBattles;
     delete old.runLog.storyRuns;
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(22);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.story).toEqual({});
     expect(m.bossDex).toEqual({});
     expect(m.runLog.bossBattles).toEqual([]);
