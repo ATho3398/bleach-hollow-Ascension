@@ -1,7 +1,7 @@
 // 도움말·튜토리얼 텍스트 데이터 (GDD 14-2, C.19). 본문은 템플릿이고 {자리표시자}는 종족 설정(FactionConfig)·밸런스 값으로 치환한다.
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
 import { BALANCE } from '../../config/balance';
-import type { FactionConfig } from '../../engine/faction';
+import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
 import glossaryJson from './glossary.json';
 import screensJson from './screens.json';
 import tutorialJson from './tutorial.json';
@@ -50,6 +50,11 @@ export function helpVars(f: FactionConfig): Record<string, string> {
     }
   };
   walk('', f);
+  // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4: 옛 '포효'·'응축 일격' 등 금지)
+  vars.specialBlockName = `${BLOCK_WORDS.special} 블록`;
+  vars.storedSkillName = BLOCK_WORDS.stored;
+  vars.voidBlockName = `${BLOCK_WORDS.void} 블록`;
+  delete vars.basicSkillName;
   vars.trayCapacity = String(COMBAT.trayCapacity);
   vars.chainMax = String(COMBAT.chainMultipliers.length);
   vars.familyList = f.families.map((x) => x.abbr).join('·');

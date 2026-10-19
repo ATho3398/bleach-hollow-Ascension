@@ -1,18 +1,22 @@
 // 전투 화면 텍스트: 전부 종족 설정(FactionConfig)에서 읽는다. 종족 id 로 분기하지 않는다.
 import type { TerrainTileDef } from '../data/schema';
 import type { EndReason } from '../engine/expedition';
-import { familyOf, type BlockRole, type FactionConfig } from '../engine/faction';
+import { BLOCK_WORDS, familyOf, type BlockRole, type FactionConfig } from '../engine/faction';
+import { elementName } from '../data/elements';
+import type { SkillRole } from '../data/schema';
+
+export { BLOCK_WORDS };
 
 export interface BattleLabels {
   /** 블록 역할 이름 (공격/막기/회복) */
   role: Record<BlockRole, string>;
   skillBlock: string;
+  /** 필살 블록 표시 이름 (GDD 20장 v5.4 `필살`) */
   specialBlock: string;
-  /** 저장형 필살기 (GDD 14-6) */
+  /** 저장형 필살기 (GDD 14-6, v5.4 표시 `저장 필살`) */
   storedSkill: string;
+  /** 공허 블록 표시 이름 (v5.4 `공허`) */
   voidBlock: string;
-  /** 기본 블록 (슬롯에 skill 이 없을 때) */
-  basicBlock: string;
   chain: string;
   /** 공격 계열 이름·약어·단계 기술 이름 (GDD 17-3, 종족 설정 families) */
   families: FactionConfig['families'];
@@ -29,10 +33,9 @@ export function battleLabels(f: FactionConfig): BattleLabels {
   return {
     role: { ...f.roleNames },
     skillBlock: f.skillBlockName,
-    specialBlock: f.specialBlockName,
-    storedSkill: f.storedSkillName,
-    voidBlock: f.voidBlockName,
-    basicBlock: f.basicSkillName,
+    specialBlock: BLOCK_WORDS.special,
+    storedSkill: BLOCK_WORDS.stored,
+    voidBlock: BLOCK_WORDS.void,
     chain: f.chainName,
     families: f.families,
     sp: f.spName,
@@ -53,6 +56,27 @@ export function familySkillName(labels: Pick<BattleLabels, 'families'>, familyId
 /** 계열 한 글자 약어 (없으면 undefined) */
 export function familyAbbr(labels: Pick<BattleLabels, 'families'>, familyId: string | null | undefined): string | undefined {
   return familyId ? familyOf(labels, familyId)?.abbr : undefined;
+}
+
+/** 블록 이름에 쓰는 속성 이름: 괄호 한자 표기는 뺀다 (예 허(虛) → 허) */
+export function blockElementName(elementId: string, factionId: string): string {
+  return elementName(elementId, factionId).replace(/\s*\([^)]*\)/g, '').trim();
+}
+
+/**
+ * 스킬 블록 표시 이름 (GDD 20장 v5.4): 공격 = `속성_계열`(예 불_조), 막기·회복 = `속성_막기`·`속성_회복`.
+ * 속성은 데이터(elements), 계열 약어는 종족 설정 families 에서 읽는다. 속성이 없거나 공격인데 계열이 없으면 null
+ */
+export function skillBlockLabel(labels: Pick<BattleLabels, 'families'>, factionId: string, element: string | null, family: string | null | undefined, role: SkillRole | null): string | null {
+  if (!element) return null;
+  const tail = role === 'guard' ? BLOCK_WORDS.guard : role === 'heal' ? BLOCK_WORDS.heal : familyAbbr(labels, family);
+  return tail ? `${blockElementName(element, factionId)}_${tail}` : null;
+}
+
+/** 콤보 블록 표시 이름 (v5.4 `콤보_계열`). 계열을 모르면 `콤보` */
+export function comboBlockLabel(labels: Pick<BattleLabels, 'families'>, family: string | null | undefined): string {
+  const abbr = familyAbbr(labels, family);
+  return abbr ? `${BLOCK_WORDS.combo}_${abbr}` : BLOCK_WORDS.combo;
 }
 
 /** 지형 타일 효과 설명: 효과 종류는 엔진, 문구는 종족 무관 */

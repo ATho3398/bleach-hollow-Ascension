@@ -4,7 +4,10 @@ import { TRAIT_ABBR_MAX_LENGTH, TRAITS, parseTrait, traitAbbr, traitName } from 
 import {
   blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, gaugeFill, gaugeSlots, hasPips, pickAbbr, runSpecs, secondsText, trackTotal,
 } from '../src/ui/bha/battle';
-import { blockAbbr } from '../src/ui/battleView';
+import { blockAbbr, blockName } from '../src/ui/battleView';
+import { getEnemy } from '../src/data/enemies';
+import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
+import { BASIC_SKILL_ID, blockDamage, createCombat, sameChainKind, step, type Block } from '../src/engine/combat';
 import { battleLabels } from '../src/ui/labels';
 
 describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
@@ -38,16 +41,60 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     expect(() => parseTrait({ ...base, abbr: { '*': '가'.repeat(TRAIT_ABBR_MAX_LENGTH + 1) } })).toThrow(/abbr/);
     expect(() => parseTrait({ ...base, abbr: 'A1' })).toThrow(/abbr/);
   });
-  it('블록 약어: 필살·공허·기본은 종족 설정 이름에서, 스킬은 특성 약어에서 (종족 id 분기 없음)', () => {
+  it('블록 이름 = 속성_계열 (GDD 20장 v5.4): 옛 종족 블록 이름(본체 능력·포효 등)은 쓰지 않는다', () => {
+    const enemy = getEnemy('test-a');
     for (const f of FACTIONS) {
       const labels = battleLabels(f);
-      expect(blockAbbr({ uid: 1, kind: 'special', traitId: null }, labels, f.id)).toBe(fitAbbr(f.specialBlockName));
-      expect(blockAbbr({ uid: 2, kind: 'void', traitId: null }, labels, f.id)).toBe(fitAbbr(f.voidBlockName));
-      expect(blockAbbr({ uid: 3, kind: 'skill', traitId: 'basic-skill' }, labels, f.id)).toBe(fitAbbr(f.basicSkillName));
-      const skill = TRAITS.find((t) => t.kind === 'skill')!;
-      expect(blockAbbr({ uid: 4, kind: 'skill', traitId: skill.id }, labels, f.id)).toBe(traitAbbr(skill.id, f.id));
-      expect(traitName(skill.id, f.id).length).toBeGreaterThan(0);
+      const [a, b, c] = f.families.map((x) => x.abbr);
+      const b0 = newBuild();
+      for (const id of ['t-fire-a', 't-kyo-b', 't-fire-guard']) gainTrait(b0, id);
+      const p0 = createCombat(1, { enemy, params: buildCombatParams(b0, f.id) }).params;
+      const b1 = newBuild();
+      gainTrait(b1, 't-normal-heal');
+      // 생성원 두 묶음을 합친 전투 값 (이름만 본다)
+      const p = { ...p0, skills: [...p0.skills, ...createCombat(1, { enemy, params: buildCombatParams(b1, f.id) }).params.skills] };
+      const name = (blk: Block) => blockName(blk, labels, f.id, p);
+      expect(name({ uid: 1, kind: 'special', traitId: null })).toBe('필살');
+      expect(name({ uid: 2, kind: 'void', traitId: null })).toBe('공허');
+      expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(`불_${a}`);
+      expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(`허_${b}`);
+      expect(name({ uid: 5, kind: 'skill', traitId: 't-fire-guard', family: null })).toBe('불_막기');
+      expect(name({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null })).toBe('노멀_회복');
+      // 4자를 넘으면 _ 뒤에서 두 줄로
+      expect(blockAbbr({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null }, labels, f.id, p)).toBe('노멀_ 회복');
+      expect(blockAbbr({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' }, labels, f.id, p)).toBe(`불_${a}`);
+      // 기본 블록: 내 캐릭터 속성 + 블록 계열
+      const pb = createCombat(1, { enemy, params: { ...buildCombatParams(newBuild(), f.id), playerElements: ['water'] } }).params;
+      expect(blockName({ uid: 7, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-c' }, labels, f.id, pb)).toBe(`물_${c}`);
+      const old = [f.basicSkillName, f.specialBlockName, f.storedSkillName, f.voidBlockName];
+      for (const blk of [{ uid: 8, kind: 'skill' as const, traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 9, kind: 'special' as const, traitId: null }]) {
+        expect(old).not.toContain(blockName(blk, labels, f.id, pb));
+      }
+      expect(old).not.toContain(labels.storedSkill);
+      expect(labels.storedSkill).toBe('저장 필살');
     }
+  });
+
+  it('기본 블록은 종족 계열 3종이 고르게 섞여 나오고, 같은 계열끼리 체인된다 (위력은 기본 블록 값)', () => {
+    const f = FACTIONS[0]!;
+    const seen: Record<string, number> = {};
+    for (let seed = 1; seed <= 40; seed++) {
+      const c = createCombat(seed, { enemy: getEnemy('test-a'), params: buildCombatParams(newBuild(), f.id) });
+      for (let i = 0; i < 5000 && c.status === 'playing' && c.tray.filter((b) => b.kind === 'skill').length < 5; i++) step(c);
+      for (const b of c.tray) if (b.kind === 'skill') seen[b.family ?? 'null'] = (seen[b.family ?? 'null'] ?? 0) + 1;
+    }
+    expect(Object.keys(seen).sort()).toEqual(f.families.map((x) => x.id).sort());
+    const total = Object.values(seen).reduce((x, y) => x + y, 0);
+    expect(total).toBeGreaterThan(60);
+    for (const n of Object.values(seen)) expect(n / total).toBeGreaterThan(0.2);
+    // 같은 계열 = 체인, 다른 계열 = 끊김
+    expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' })).toBe(true);
+    expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-b' })).toBe(false);
+    // 위력: 계열이 달라도 기본 블록 값 그대로
+    const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(newBuild(), f.id) });
+    const dmg = f.families.map((x) => blockDamage(s, { uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: x.id }, 2));
+    expect(new Set(dmg.map((d) => d.toFixed(6))).size).toBe(1);
+    expect(dmg[0]).toBeCloseTo(blockDamage(s, { uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: null }, 2));
   });
 });
 

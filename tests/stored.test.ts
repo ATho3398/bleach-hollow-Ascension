@@ -279,19 +279,19 @@ describe('결정성', () => {
 });
 
 describe('종족 설정', () => {
-  it('저장 필살기 이름이 종족 설정에 있고 라벨로 나온다 (필수 필드)', () => {
+  it('저장 필살기 이름이 종족 설정에 있다 (필수 필드). 전투 표시는 종족 무관 `저장 필살` (GDD 20장 v5.4)', () => {
     for (const f of FACTIONS) {
       expect(f.storedSkillName.length).toBeGreaterThan(0);
-      expect(battleLabels(f).storedSkill).toBe(f.storedSkillName);
+      expect(battleLabels(f).storedSkill).toBe('저장 필살');
     }
     expect(getFaction('hollow').storedSkillName).not.toBe(getFaction('shinigami').storedSkillName);
     const { storedSkillName: _drop, ...none } = getFaction('hollow');
     expect(() => parseFactionConfig(none)).toThrow(/storedSkillName/);
   });
 
-  it('3번째 종족도 이름 하나로 라벨이 나온다', () => {
+  it('3번째 종족도 설정 하나로 열리고 전투 표시는 같은 `저장 필살`', () => {
     const q = parseFactionConfig({ ...getFaction('hollow'), id: 'quincy', storedSkillName: '성은' });
-    expect(battleLabels(q).storedSkill).toBe('성은');
+    expect(battleLabels(q).storedSkill).toBe('저장 필살');
   });
 });
 

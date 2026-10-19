@@ -268,6 +268,9 @@ export function resolveMaxChain(f: Pick<FactionConfig, 'maxChain'>, formMaxChain
   return formMaxChain ?? f.maxChain ?? DEFAULT_MAX_CHAIN;
 }
 
+/** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName·specialBlockName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다 */
+export const BLOCK_WORDS = { special: '필살', stored: '저장 필살', void: '공허', combo: '콤보', guard: '막기', heal: '회복' } as const;
+
 /** 계열 설정 한 개 (없으면 undefined) */
 export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {
   return f.families.find((x) => x.id === familyId);

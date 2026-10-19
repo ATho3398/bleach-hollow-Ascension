@@ -576,6 +576,21 @@ function takeDamage(s: CombatState, amount: number): void {
   }
 }
 
+/** 기본 블록의 계열 (GDD 20장 v5.4): 계열 표(종족 설정 families)에서 고르게 하나를 뽑는다 → 같은 계열끼리 체인. 위력은 기본 블록 값 그대로(계열 단계 배율은 쓰지 않음). 계열 표가 없거나 기본 블록이 아니면 null */
+function basicFamily(s: CombatState, src: CombatSkill): string | null {
+  if (src.id !== BASIC_SKILL_ID) return null;
+  const ids = Object.keys(s.params.families);
+  return ids.length > 0 ? ids[nextInt(s.rng, ids.length)]! : null;
+}
+
+/** 블록 표시용 속성 (GDD 20장 v5.4 `속성_계열`): 생성원의 속성, 속성 없는 기본 블록은 내 캐릭터 속성. 필살·공허·콤보는 null */
+export function blockElementOf(p: CombatParams, b: Block): string | null {
+  if (b.kind !== 'skill') return null;
+  const src = sourceOf(p, b.traitId);
+  if (src?.element) return src.element;
+  return src?.id === BASIC_SKILL_ID ? p.playerElements[0] ?? NORMAL_ELEMENT : null;
+}
+
 function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, family: string | null = null): boolean {
   if (s.tray.length >= s.params.trayCapacity) return false;
   s.tray.push({ uid: s.nextUid++, kind, traitId, family });
@@ -730,8 +745,10 @@ function useBlock(s: CombatState, index: number): boolean {
   const bonus = tierEffect(p, skill, chain).bonus;
   if (bonus) applyChainBonus(s, bonus);
   const damage = blockDamage(s, b, chain);
-  emit(s, { kind: 'block', block: 'skill', traitId: id, family: skill.family ?? null, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
-  dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family: skill.family ?? null, weak, matchup: m });
+  // 표시용 계열: 기본 블록은 블록마다 계열을 가진다 (GDD 20장 v5.4). 기록(chainsByFamily)·콤보는 생성원 계열 기준 그대로
+  const family = skill.family ?? b.family ?? null;
+  emit(s, { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
+  dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m });
   if (skill.element) onHit(s, 'enemy', [skill.element], damage);
   updateCombos(s, skill.family ?? null, chain);
   counterIfStance(s);
@@ -865,7 +882,7 @@ function advanceTick(s: CombatState): void {
     sources.forEach((src, i) => {
       if (s.tray.length >= p.trayCapacity) return;
       if (--s.spawnTimers[i]! <= 0) {
-        spawn(s, 'skill', src.id, src.family ?? null);
+        spawn(s, 'skill', src.id, src.family ?? basicFamily(s, src));
         s.spawnTimers[i] = t(spawnSecondsOf(p, src));
       }
     });
