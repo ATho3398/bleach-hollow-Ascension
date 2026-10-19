@@ -7,7 +7,7 @@ import {
 import { blockAbbr, blockName } from '../src/ui/battleView';
 import { getEnemy } from '../src/data/enemies';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
-import { BASIC_SKILL_ID, blockDamage, createCombat, sameChainKind, step, type Block } from '../src/engine/combat';
+import { BASIC_SKILL_ID, blockDamage, blockEffect, createCombat, tierEffect, sameChainKind, step, type Block } from '../src/engine/combat';
 import { battleLabels } from '../src/ui/labels';
 
 describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
@@ -95,6 +95,12 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     const dmg = f.families.map((x) => blockDamage(s, { uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: x.id }, 2));
     expect(new Set(dmg.map((d) => d.toFixed(6))).size).toBe(1);
     expect(dmg[0]).toBeCloseTo(blockDamage(s, { uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: null }, 2));
+    // 2·3체인은 그 계열 단계 기술(특공): 블록 계열이 생성원 계열로 쓰인다
+    for (const x of f.families) {
+      const eff = blockEffect(s, { uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: x.id }, 3)!;
+      expect(eff.skill.family).toBe(x.id);
+      expect(tierEffect(s.params, eff.skill, 3).bonus).toEqual(x.tiers[2]!.bonus ?? null);
+    }
   });
 });
 

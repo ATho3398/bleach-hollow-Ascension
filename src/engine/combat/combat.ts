@@ -493,8 +493,10 @@ export function tierEffect(p: CombatParams, skill: CombatSkill, chain: number): 
  *  chain = 함께 발동하는 블록 수(1~3), 바에 있는 블록 하나만 볼 때는 1. weak = 흡수 조건의 우위 공격인가 */
 export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: CombatSkill; mult: number; weak: boolean; matchup: Matchup; stab: boolean } | null {
   if (b.kind !== 'skill') return null;
-  const skill = sourceOf(s.params, b.traitId);
-  if (!skill) return null;
+  const src = sourceOf(s.params, b.traitId);
+  if (!src) return null;
+  // 기본 블록은 블록마다 계열을 가진다 (GDD 20장 v5.4): 그 계열 단계 기술(특공)·체인 기록·콤보가 그 계열로 나간다. 위력(powerInAttacks)·분류·속성은 기본 블록 값
+  const skill = src.id === BASIC_SKILL_ID && b.family && !src.family ? { ...src, family: b.family } : src;
   const hit = playerHitMultiplier(s, skill.element ? [skill.element] : [], skill.category);
   const stab = skill.element !== null && s.params.playerElements.includes(skill.element);
   const mult = skill.powerMultiplier * tierEffect(s.params, skill, chain).multiplier * hit.mult * (stab ? s.params.stabMultiplier : 1);
@@ -576,7 +578,7 @@ function takeDamage(s: CombatState, amount: number): void {
   }
 }
 
-/** 기본 블록의 계열 (GDD 20장 v5.4): 계열 표(종족 설정 families)에서 고르게 하나를 뽑는다 → 같은 계열끼리 체인. 위력은 기본 블록 값 그대로(계열 단계 배율은 쓰지 않음). 계열 표가 없거나 기본 블록이 아니면 null */
+/** 기본 블록의 계열 (GDD 20장 v5.4): 계열 표(종족 설정 families)에서 고르게 하나를 뽑는다 → 같은 계열끼리 체인, 2·3체인은 그 계열 단계 기술. 위력(powerInAttacks)은 기본 블록 값. 계열 표가 없거나 기본 블록이 아니면 null */
 function basicFamily(s: CombatState, src: CombatSkill): string | null {
   if (src.id !== BASIC_SKILL_ID) return null;
   const ids = Object.keys(s.params.families);
@@ -745,8 +747,7 @@ function useBlock(s: CombatState, index: number): boolean {
   const bonus = tierEffect(p, skill, chain).bonus;
   if (bonus) applyChainBonus(s, bonus);
   const damage = blockDamage(s, b, chain);
-  // 표시용 계열: 기본 블록은 블록마다 계열을 가진다 (GDD 20장 v5.4). 기록(chainsByFamily)·콤보는 생성원 계열 기준 그대로
-  const family = skill.family ?? b.family ?? null;
+  const family = skill.family ?? null;
   emit(s, { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
   dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m });
   if (skill.element) onHit(s, 'enemy', [skill.element], damage);

@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 26;
+export const BALANCE_VERSION = 27;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
