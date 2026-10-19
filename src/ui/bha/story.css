@@ -1,0 +1,53 @@
+/* 스토리 모드·보스전 (GDD 25-4·25-3·25-7, C.58). 새 색·간격 토큰 없음 — 기존 토큰만 쓴다 */
+
+/* 원정 출발 화면 머리의 [자유 원정]/[스토리] 탭 */
+.bha-depart-tabs { flex: none; }
+
+/* 장 → 화 목록 */
+.bha-story-ch { display: flex; flex-direction: column; gap: var(--bha-sp-1); margin-bottom: var(--bha-sp-3); }
+.bha-story-ch__title { margin: 0; font-family: var(--bha-font-display); font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-heavy); color: var(--bha-text-1); }
+.bha-story-eps { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-story-ep { display: flex; align-items: center; gap: var(--bha-sp-3); padding: var(--bha-sp-2) var(--bha-sp-3); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
+.bha-story-ep__mark { flex: none; display: grid; place-items: center; width: 22px; height: 22px; color: var(--bha-accent-hi); }
+.bha-story-ep__mark > .bha-icon { width: 18px; height: 18px; }
+.bha-story-ep__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bha-story-ep__name { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }
+.bha-story-ep__goal { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: var(--bha-lh-tight); }
+.bha-story-ep__state { flex: none; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-3); white-space: nowrap; }
+.bha-story-ep.is-cleared { border-color: var(--bha-primary-line); }
+.bha-story-ep.is-cleared .bha-story-ep__mark,
+.bha-story-ep.is-cleared .bha-story-ep__state { color: var(--bha-good); }
+.bha-story-ep.is-locked { border-style: dashed; background: rgb(0 0 0 / .25); }
+.bha-story-ep.is-locked .bha-story-ep__mark,
+.bha-story-ep.is-locked .bha-story-ep__name { color: var(--bha-text-3); }
+
+/* 원정 중 목표 줄 (걷는 화면 왼쪽 위 칩 묶음) */
+.bha-exp__goal { display: inline-flex; align-items: center; gap: var(--bha-sp-1); align-self: flex-start; padding: 0 var(--bha-sp-2); border: 1px solid var(--bha-rare); border-radius: var(--bha-r-pill); background: var(--bha-bg-0); color: var(--bha-rare); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.6; }
+.bha-exp__goal .bha-icon { width: 14px; height: 14px; }
+
+/* 대화창: LCD 아래쪽 이름표 + 글 */
+.bha-dialogue { position: absolute; inset: 0; z-index: var(--bha-z-modal); display: flex; flex-direction: column; justify-content: flex-end; gap: var(--bha-sp-2); padding: var(--bha-sp-4); background: linear-gradient(180deg, transparent 35%, rgb(0 0 0 / .72)); cursor: pointer; animation: bha-fade-in var(--bha-dur-3) var(--bha-ease-out) both; }
+.bha-dialogue__caption { align-self: center; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .62); color: var(--bha-text-2); font-size: var(--bha-fs-xs); letter-spacing: .04em; }
+.bha-dialogue__box { position: relative; display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: var(--bha-shadow-2); }
+.bha-dialogue__name { position: absolute; top: 0; left: var(--bha-sp-4); transform: translateY(-55%); padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-accent); border-radius: var(--bha-r-sm); background: var(--bha-bg-3); color: var(--bha-accent-hi); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-heavy); line-height: 1.6; }
+.bha-dialogue__text { margin: 0; min-height: 2.6em; font-size: var(--bha-fs-md); line-height: var(--bha-lh-body); color: var(--bha-text-1); }
+.bha-dialogue__foot { display: flex; align-items: center; gap: var(--bha-sp-3); }
+.bha-dialogue__count { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+.bha-dialogue__hint { flex: 1 1 auto; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+
+/* 보스전: 등장 이름 띠(조우 오버레이 강조) · 페이즈 칩 · 봉인된 블록 */
+.bha-battle-ov--boss .bha-battle-ov__eyebrow { color: var(--bha-danger); font-weight: var(--bha-fw-heavy); letter-spacing: .12em; }
+.bha-battle-ov--boss .bha-battle-ov__title { width: 100%; padding: var(--bha-sp-2) 0; border-block: 2px solid var(--bha-danger); background: rgb(0 0 0 / .55); color: var(--bha-text-1); letter-spacing: .06em; }
+.bha-battle-ov--boss .bha-battle-ov__line { background: linear-gradient(90deg, transparent, var(--bha-danger), transparent); }
+.bha-battle__phase { gap: var(--bha-sp-1); }
+.bha-battle__phase.is-flash { animation: bha-fade-in .3s ease-in-out 4 alternate; }
+.bha-block__lock { position: absolute; inset: 0; z-index: 2; display: none; place-items: center; border-radius: inherit; background: rgb(0 0 0 / .55); color: var(--bha-seal); pointer-events: none; }
+.bha-block__lock > .bha-icon { width: 22px; height: 22px; }
+.bha-block.is-locked { outline: 2px solid var(--bha-seal); outline-offset: -2px; cursor: not-allowed; }
+.bha-block.is-locked > .bha-block__lock { display: grid; }
+
+/* 결과 화면 스토리 보상 줄 */
+.bha-result__story { display: flex; flex-direction: column; gap: var(--bha-sp-1); }
+.bha-exp__goal[hidden] { display: none; }
+.bha-story-ep > .bha-btn { flex: none; white-space: nowrap; }
+.bha-exp__goal { white-space: nowrap; }

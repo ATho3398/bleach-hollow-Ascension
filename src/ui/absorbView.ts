@@ -1,7 +1,7 @@
 // 흡수 화면 (GDD 4장, 4-1): 전투 승리 후 흡수 / 놓아줌 → 특성 후보 선택 → 슬롯 장착(가득 차면 교체/포기).
 // 문구는 FactionConfig(absorbActionName, chainName, riskGaugeName, stabilityName …)에서 읽는다.
 import { BALANCE } from '../config/balance';
-import { getEnemy } from '../data/enemies';
+import { findEnemyDef } from '../data/bosses';
 import { elementName, statName, weaknessesOf } from '../data/elements';
 import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
@@ -51,7 +51,7 @@ const STEP_LABELS = ['선택', '특성 고르기', '교체'] as const;
 export function absorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: (absorbed: boolean) => void): void {
   const offer = exp.absorbOffer;
   if (!offer) return onDone(false);
-  const enemy = getEnemy(offer.enemyId);
+  const enemy = findEnemyDef(offer.enemyId) // 보스(GDD 25-3)도 흡수 화면에 온다;
   const act = faction.absorbActionName;
   const foeName = pickFaction(enemy.name, faction.id);
   let step: 'choose' | 'pick' | 'replace' = 'choose';

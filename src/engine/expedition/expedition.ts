@@ -23,6 +23,9 @@ import {
   applyTraitBoosts, combineMods, drawDraft, makeEvent, mutationMods, rollMutation, synergyAt, synergyMods, upgradeMods, type EventPending, type VariantMods,
 } from './variants';
 import type { FoodId } from '../faction';
+import { getBoss } from '../../data/bosses';
+import { getChapter, getEpisode, type StoryLine } from '../../data/story';
+import type { BossSetup } from '../combat';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
@@ -35,9 +38,11 @@ const LOOT_SEED_SALT = 0x5f3759df;
 /** 타일 변수 난수 시드 = 원정 시드 xor 이 값 (드래프트·변이·이벤트 내용이 적·타일·흡수 난수를 바꾸지 않게) */
 const VARIANT_SEED_SALT = 0x2545f491;
 const TV = BALANCE.provisional.tileVariants;
+const BX = BALANCE.provisional.boss;
 
 export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'event' | 'ended';
-export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted';
+/** story-clear = 스토리 화 목표를 이뤄 바로 귀환 (GDD 25-4, C.58) */
+export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear';
 
 /** 지금 치를 전투 (전투 엔진에 넘길 재료) */
 export interface PendingBattle {
@@ -59,6 +64,8 @@ export interface PendingBattle {
   trap?: boolean;
   /** 사냥 무리 2연전의 두 번째 전투 */
   second?: boolean;
+  /** 보스전이면 보스 id (GDD 25-3, 스토리 보스 화) */
+  boss?: string | null;
 }
 
 /** 전투 정산 배율 (GDD 25-5) */
@@ -98,6 +105,50 @@ export interface VariantLog {
 export interface Acquired {
   tileId: string;
   lap: number;
+}
+
+/** 스토리 화·보스 보상 정산 결과 (결과 화면 표시용) */
+export interface StorySettlement {
+  chapterId: string;
+  episodeId: string;
+  cleared: boolean;
+  firstClear: boolean;
+  /** 화 클리어 보상 (매번): 골드·먹이(상한까지만 들어간 수) */
+  gold: number;
+  food: [FoodId, number];
+  /** 첫 클리어 영옥 + 장 클리어 영옥 + 보스 첫 처치 영옥 */
+  jade: number;
+  chapterCleared: boolean;
+  bossFirstKill: string | null;
+}
+
+/** 보스전 한 판의 결과 (런 로그 bossBattles 재료, GDD 25-3) */
+export interface BossBattleResult {
+  bossId: string;
+  won: boolean;
+  durationSeconds: number;
+  /** 닿은 페이즈 (1부터) */
+  phase: number;
+  /** 기믹으로 봉인된 블록 수 */
+  seals: number;
+  lossReason: 'hp' | 'timeout' | null;
+}
+
+/** 스토리 화 진행 (GDD 25-4·25-7, 원정 형식 6): 어느 장·화, 목표 진행도, 쓰러뜨린 적 수(중간 대사), 보여 줄 대사(cue) */
+export interface StoryRun {
+  chapterId: string;
+  episodeId: string;
+  /** 목표 진행도: 처치·흡수 수, 버티기는 마친 바퀴 수, 보스는 처치 1 */
+  progress: number;
+  /** 목표를 이뤘다 (원정은 story-clear 로 끝난다) */
+  cleared: boolean;
+  /** 이긴 전투 수 (중간 대사 조건) */
+  kills: number;
+  midShown: boolean;
+  /** 화면이 꺼내 보여 줄 대사: mid = 중간 대사 (takeStoryCue 가 비운다) */
+  cue: 'mid' | null;
+  /** 이 화 보스전 결과 (없으면 아직 안 싸움) */
+  bossResult: BossBattleResult | null;
 }
 
 /** 원정에서 얻은 먹이 (GDD 23-1 전리품). 패배하면 마지막 바퀴 것을 잃는다 */
@@ -160,6 +211,8 @@ export interface ExpeditionState extends RiskState {
   endReason: EndReason | null;
   /** 귀환 처리 때(game.ts recordExpedition) 먹이를 보유에 넣은 결과. 결과 화면 표시용, 원정 중에는 없다 */
   foodSettled?: FoodSettlement;
+  /** 귀환 처리 때 스토리 화·보스 보상 정산 결과 (game.ts settleStory). 결과 화면 표시용 */
+  storySettled?: StorySettlement;
   /** 해방 자격 (GDD 22-5, 출발 때 game.liberationAccess 로 정함): 이 원정 전투에서 해방 버튼을 쓸 수 있는가. 없으면 못 씀 */
   liberationEnabled?: boolean;
   // ── 타일 변수 (GDD 25-5, C.57, 원정 형식 5) ──
@@ -188,6 +241,8 @@ export interface ExpeditionState extends RiskState {
   /** 바퀴 변이(폭풍)로 더 받는 영혼 결정 */
   bonusSoul: number;
   variantLog: VariantLog;
+  /** 스토리 화 진행 (GDD 25-4). 자유 원정은 null. 스토리에서는 드래프트·바퀴 변이를 끄고 인접 시너지는 고정 길대로 발동한다 */
+  story: StoryRun | null;
 }
 
 export interface ExpeditionSetup {
@@ -213,17 +268,20 @@ export interface ExpeditionSetup {
   tileVariants?: boolean;
   /** 가진 골드 (상인 구매용). 없으면 0 */
   gold?: number;
+  /** 스토리 화 (GDD 25-4): 그 화의 고정 길·사냥터·최대 바퀴를 쓴다 (groundId·maxLaps 는 무시) */
+  story?: { chapterId: string; episodeId: string };
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
   const rng = createRng(setup.seed);
+  const episode = setup.story ? getEpisode(setup.factionId, setup.story.chapterId, setup.story.episodeId) : null;
   const exp: ExpeditionState = {
     runId: setup.runId ?? 0,
     factionId: setup.factionId,
-    groundId: isGroundId(setup.groundId) ? setup.groundId : DEFAULT_GROUND_ID,
+    groundId: setup.story ? getChapter(setup.story.chapterId).groundId : isGroundId(setup.groundId) ? setup.groundId : DEFAULT_GROUND_ID,
     seed: setup.seed,
     rng,
-    maxLaps: setup.maxLaps ?? EX.maxLaps,
+    maxLaps: episode?.maxLaps ?? setup.maxLaps ?? EX.maxLaps,
     lap: 1,
     pos: 0,
     phase: 'moving',
@@ -272,9 +330,47 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     restMult: 1,
     bonusSoul: 0,
     variantLog: { synergies: [], mutations: [], events: [], drafts: [] },
+    story: setup.story ? { chapterId: setup.story.chapterId, episodeId: setup.story.episodeId, progress: 0, cleared: false, kills: 0, midShown: false, cue: null, bossResult: null } : null,
   };
+  // 스토리 화의 고정 길 (GDD 25-4): 정해진 칸에 정해진 타일
+  if (episode) for (const [cell, id] of Object.entries(episode.road)) exp.slots[Number(cell)] = id;
   planLap(exp);
   return exp;
+}
+
+/** 이 원정이 스토리 화면 그 화 데이터 */
+export function storyEpisodeOf(exp: Pick<ExpeditionState, 'factionId' | 'story'>) {
+  return exp.story ? getEpisode(exp.factionId, exp.story.chapterId, exp.story.episodeId) : null;
+}
+
+/** 스토리 대사 꺼내기 (화면이 보여 주고 비운다): 중간 대사가 기다리고 있으면 그 줄들 */
+export function takeStoryCue(exp: ExpeditionState): StoryLine[] | null {
+  const st = exp.story;
+  if (!st || st.cue === null) return null;
+  st.cue = null;
+  return storyEpisodeOf(exp)?.dialogue.mid?.lines ?? null;
+}
+
+/** 보스 데이터 + BALANCE → 전투 엔진의 보스 재료 */
+export function bossSetupOf(bossId: string): BossSetup {
+  const b = getBoss(bossId);
+  return {
+    id: b.id, phases: b.phases.map((x) => ({ ...x })), gimmick: b.gimmick,
+    sealEverySeconds: BX.seal.everySeconds, sealSeconds: BX.seal.seconds, sealCells: BX.seal.cells, timeLimitSeconds: BX.timeLimitSeconds,
+  };
+}
+
+/** 스토리 목표를 이뤘으면 화를 끝낸다 (이동 중일 때만 — 흡수 화면이 남아 있으면 그것을 마친 뒤). 끝냈으면 true */
+function checkStoryClear(exp: ExpeditionState): boolean {
+  const st = exp.story;
+  if (!st || st.cleared || exp.phase !== 'moving') return false;
+  const ep = storyEpisodeOf(exp)!;
+  const o = ep.objective;
+  const need = o.type === 'survive' ? o.laps : o.type === 'boss' ? 1 : o.count;
+  if (st.progress < need) return false;
+  st.cleared = true;
+  endExpedition(exp, 'returned', 'story-clear');
+  return true;
 }
 
 /** 바퀴별 기본 전투 횟수: 1바퀴 2회, 2바퀴 3회, 3바퀴 이후 4회 (GDD 2-1) */
@@ -299,8 +395,9 @@ function planLap(exp: ExpeditionState): void {
   exp.lapStartSlots = [...exp.build.slots];
   const free: number[] = [];
   let tileBattles = 0;
+  const bossCell = exp.story ? storyEpisodeOf(exp)?.boss?.cell ?? -1 : -1;
   for (let c = 1; c < EX.loopTiles; c++) {
-    if (exp.slots[c] === null) free.push(c);
+    if (exp.slots[c] === null && c !== bossCell) free.push(c);
     else if (causesBattle(exp.slots[c]!)) tileBattles++;
   }
   for (let i = free.length - 1; i > 0; i--) {
@@ -313,7 +410,7 @@ function planLap(exp: ExpeditionState): void {
   exp.tilesThisLap = 0;
   if (exp.battlesByLap.length < exp.lap) exp.battlesByLap.push(0);
   // 바퀴 변이 (GDD 25-5 ④): 2바퀴부터 바퀴 시작마다 확률로 하나
-  if (exp.tileVariants) {
+  if (exp.tileVariants && !exp.story) {
     exp.mutation = rollMutation(exp.varRng, exp.lap);
     if (exp.mutation) exp.variantLog.mutations.push({ id: exp.mutation, lap: exp.lap });
   }
@@ -392,13 +489,25 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   if (exp.pos === 0) {
     exp.lapsCompleted = exp.lap;
     const reward = drawTile(exp);
+    // 스토리 버티기 목표 (GDD 25-4): 마친 바퀴 수
+    const st = exp.story;
+    if (st && storyEpisodeOf(exp)!.objective.type === 'survive') {
+      st.progress = exp.lap;
+      if (checkStoryClear(exp)) return { kind: 'ended', outcome: 'returned', reason: 'story-clear' };
+    }
     if (exp.lap >= exp.maxLaps) return endExpedition(exp, 'returned', 'forced-max-laps');
     exp.phase = 'nest-choice';
-    // 드래프트 (GDD 25-5 ①): 바퀴 끝 배치 팝업에서 3장 중 1장
-    if (exp.tileVariants) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
+    // 드래프트 (GDD 25-5 ①): 바퀴 끝 배치 팝업에서 3장 중 1장 (스토리는 끔)
+    if (exp.tileVariants && !exp.story) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
     return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward };
   }
   const cell = exp.pos;
+  // 스토리 보스 화 (GDD 25-7): 정해진 칸에 보스 (1바퀴, 이기기 전까지)
+  const bossAt = storyEpisodeOf(exp)?.boss;
+  if (bossAt && bossAt.cell === cell && exp.lap === 1 && !exp.story!.bossResult?.won) {
+    exp.elitesThisLap++;
+    return startBattleAt(exp, cell, 'elite', false, null, null, false, bossAt.id);
+  }
   const id = exp.slots[cell];
   const tile = id ? getTile(id) : null;
   // 인접 시너지 (GDD 25-5 ②): 왼쪽 칸에 들어설 때 기록·보호막, 오른쪽 칸에서 한 번 쓰는 리스크
@@ -446,7 +555,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
 
 /** 전투 재료를 만든다: 장착 특성·진화·환경·폭주 + 타일 변수(시너지·변이·상위 타일·함정·보호막·제단). 타일 변수가 없으면 예전과 같은 난수·같은 값 */
 function startBattleAt(
-  exp: ExpeditionState, cell: number, cls: 'normal' | 'elite', combo: boolean, id: string | null, syn: { id: string; role: 'left' | 'right' } | null, second: boolean,
+  exp: ExpeditionState, cell: number, cls: 'normal' | 'elite', combo: boolean, id: string | null, syn: { id: string; role: 'left' | 'right' } | null, second: boolean, bossId: string | null = null,
 ): StepEvent {
   const tile = id ? getTile(id) : null;
   const sm = syn ? synergyMods(syn.id) : null;
@@ -472,7 +581,8 @@ function startBattleAt(
     params.startShieldFraction = exp.nextShield;
     exp.nextShield = 0;
   }
-  let enemy = pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
+  // 보스는 보스 데이터의 적 (바퀴 강화·사냥터 강도만 입힌다), 아니면 출현 풀에서
+  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(exp.lap, exp.groundId)) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1);
   const atkK = m.enemyAttackMult ?? 1;
   if (hpK !== 1 || atkK !== 1) enemy = scaleEnemy(enemy, { hp: hpK, attack: atkK });
@@ -492,6 +602,7 @@ function startBattleAt(
     synergy: syn?.id ?? null,
     trap,
     second,
+    boss: bossId,
   };
   exp.pending = pending;
   exp.phase = 'battle';
@@ -522,7 +633,8 @@ export function inFrenzy(exp: Pick<ExpeditionState, 'breakthrough'>): boolean {
 /** 대기 중인 전투를 전투 엔진(v2)으로 만든다 */
 export function startBattle(exp: ExpeditionState): CombatState {
   if (exp.phase !== 'battle' || !exp.pending) throw new Error('치를 전투가 없다');
-  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params: exp.pending.params });
+  const boss = exp.pending.boss;
+  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params: exp.pending.params, ...(boss ? { boss: bossSetupOf(boss) } : {}) });
 }
 
 /** 끝난 전투를 원정에 반영한다. 승리 → 이동 재개, 패배 → 원정 끝 */
@@ -530,6 +642,12 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   const pending = exp.pending;
   if (exp.phase !== 'battle' || !pending || battle.status === 'playing') throw new Error('끝나지 않은 전투');
   const record = buildBattleRecord(battle, { factionId: exp.factionId, runId: exp.runId, lap: exp.lap, tierIndex: exp.evolution.tierIndex });
+  const st = exp.story;
+  if (pending.boss) {
+    // 보스전 기록 (GDD 25-3): 강적 처치 수(영혼 결정·칭호)에 섞이지 않게 등급을 boss 로
+    record.enemyClass = 'boss';
+    if (st) st.bossResult = { bossId: pending.boss, won: battle.status === 'won', durationSeconds: record.durationSeconds, phase: battle.boss?.phase ?? 1, seals: battle.boss?.seals ?? 0, lossReason: battle.lossReason };
+  }
   exp.battles.push(record);
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
   exp.pending = null;
@@ -549,6 +667,27 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
   const mods = pending.mods ?? NO_MODS;
   const elite = pending.enemy.class === 'elite';
+  if (st) {
+    // 스토리 목표·중간 대사 (GDD 25-4): 처치 목표는 그 등급만, 보스는 보스 처치
+    st.kills++;
+    const o = storyEpisodeOf(exp)!;
+    if (o.objective.type === 'defeat' && !pending.boss && pending.enemy.class === o.objective.enemyClass) st.progress++;
+    if (o.objective.type === 'boss' && pending.boss) st.progress = 1;
+    const mid = o.dialogue.mid;
+    if (mid && !st.midShown && st.kills >= mid.afterKills) {
+      st.midShown = true;
+      st.cue = 'mid';
+    }
+  }
+  if (pending.boss) {
+    // 보스 보상 (GDD 25-3): 골드·희귀 먹이 (일반 전리품 대신), 흡수 화면은 늘 열리고 보스 특성이 확정 후보
+    exp.goldLoot.push({ amount: BX.reward.gold, lap: exp.lap });
+    exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
+    exp.victoriesThisLap++;
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait);
+    exp.phase = 'absorb';
+    return record;
+  }
   // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더. 시너지·변이·상위 타일·함정 배율은 굴림 횟수로 (GDD 25-5)
   for (const food of rollBattleFoodMult(exp.lootRng, elite, getGround(exp.groundId).food, mods.rewardMult * mods.foodMult, mods.foodChanceBonus)) exp.foodLoot.push({ food, lap: exp.lap });
   // 골드 (C.57): 일반·강적 바탕값 × 보상·골드 배율
@@ -562,7 +701,10 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (canAbsorb(battle)) {
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus);
     exp.phase = 'absorb';
-  } else exp.phase = 'moving';
+  } else {
+    exp.phase = 'moving';
+    checkStoryClear(exp);
+  }
   return record;
 }
 
@@ -581,6 +723,7 @@ export function chooseRelease(exp: ExpeditionState): AbsorbResult {
   recordEvolutionRelease(exp.evolution);
   exp.absorbOffer = null;
   exp.phase = 'moving';
+  checkStoryClear(exp);
   return { ok: true };
 }
 
@@ -600,8 +743,12 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
   changeRisk(exp, absorbRisk(offer.strength), 'absorb');
+  // 스토리 흡수 목표 (GDD 25-4): 그 등급 적을 흡수
+  const ob = storyEpisodeOf(exp)?.objective;
+  if (exp.story && ob?.type === 'absorb' && (offer.elite ? 'elite' : 'normal') === ob.enemyClass) exp.story.progress++;
   exp.absorbOffer = null;
   exp.phase = 'moving';
+  checkStoryClear(exp);
   return { ok: true };
 }
 
@@ -964,6 +1111,7 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     events: (exp.variantLog?.events ?? []).map((x) => ({ ...x })),
     drafts: (exp.variantLog?.drafts ?? []).map((x) => ({ ...x })),
     gold: s.keptGold,
+    ...(exp.story ? { story: { chapterId: exp.story.chapterId, episodeId: exp.story.episodeId, cleared: exp.story.cleared } } : {}),
   };
 }
 

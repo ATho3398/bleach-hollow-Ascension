@@ -38,7 +38,7 @@ const COMBO_HOLD_SECONDS = 6;
 function cells(s: CombatState): Cell[] {
   const out: Cell[] = [];
   s.tray.forEach((b, i) => {
-    if (b) out.push({ i, b });
+    if (b && !(b.sealTicks && b.sealTicks > 0)) out.push({ i, b }); // 보스 기믹으로 봉인된 블록은 누를 수 없다
   });
   return out;
 }

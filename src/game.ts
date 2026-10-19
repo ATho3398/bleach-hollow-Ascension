@@ -4,7 +4,8 @@ import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { completedElements, gainTrait, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, doNestAction, newNest, type NestState } from './engine/nest';
-import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult } from './engine/expedition';
+import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
+export type { StorySettlement } from './engine/expedition';
 import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
@@ -27,9 +28,11 @@ import { canWear } from './data/skins';
 import { applyAbsenceHunger } from './engine/nest';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
+import { chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
+import { isBossId } from './data/bosses';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 21;
+export const SAVE_FORMAT_VERSION = 22;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -82,7 +85,77 @@ export interface SaveData {
   skin: string | null;
   /** 환생 (GDD 22-1·22-7, 형식 20): 환생 횟수·누적 계승 노력치. 환생해도 남는다 */
   rebirth: RebirthState;
+  /** 스토리 진행 (GDD 25-4, 형식 22): 트랙(종족 id)마다 깬 화와 보상을 받은 장. 환생해도 남는다 */
+  story: Record<string, StoryProgress>;
+  /** 보스 도감 (GDD 25-3, 형식 22): 보스 id → 처치 수·첫 처치 시각. 세이브 하나에 하나(도감처럼 트랙 구분 없음) */
+  bossDex: Record<string, BossDexEntry>;
 }
+
+/** 한 트랙의 스토리 진행: 깬 화(키 "ch1/ep2" → 첫 클리어 시각·클리어 횟수), 장 클리어 보상을 받은 장 id */
+export interface StoryProgress {
+  cleared: Record<string, { firstAt: number; clears: number }>;
+  chapters: string[];
+}
+
+export interface BossDexEntry {
+  kills: number;
+  firstAt: number;
+}
+
+export function newStoryProgress(): StoryProgress {
+  return { cleared: {}, chapters: [] };
+}
+
+/** 저장된 스토리 진행 정리 (깨진 값 보정) */
+export function sanitizeStory(raw: unknown): Record<string, StoryProgress> {
+  const out: Record<string, StoryProgress> = {};
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
+  for (const [fid, v] of Object.entries(raw as Record<string, unknown>)) {
+    const r = (typeof v === 'object' && v !== null ? v : {}) as Partial<Record<keyof StoryProgress, unknown>>;
+    const cleared: StoryProgress['cleared'] = {};
+    if (typeof r.cleared === 'object' && r.cleared !== null && !Array.isArray(r.cleared)) {
+      for (const [k, c] of Object.entries(r.cleared as Record<string, unknown>)) {
+        const e = (c ?? {}) as { firstAt?: unknown; clears?: unknown };
+        if (typeof k === 'string' && k.includes('/')) cleared[k] = { firstAt: nonNegInt(e.firstAt), clears: Math.max(1, nonNegInt(e.clears)) };
+      }
+    }
+    const chapters = Array.isArray(r.chapters) ? [...new Set(r.chapters.filter((x): x is string => typeof x === 'string'))] : [];
+    out[fid] = { cleared, chapters };
+  }
+  return out;
+}
+
+export function sanitizeBossDex(raw: unknown): Record<string, BossDexEntry> {
+  const out: Record<string, BossDexEntry> = {};
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
+  for (const [id, v] of Object.entries(raw as Record<string, unknown>)) {
+    const e = (v ?? {}) as { kills?: unknown; firstAt?: unknown };
+    if (isBossId(id) && nonNegInt(e.kills) > 0) out[id] = { kills: nonNegInt(e.kills), firstAt: nonNegInt(e.firstAt) };
+  }
+  return out;
+}
+
+/** 지금 트랙의 스토리 진행 (없으면 만든다) */
+export function storyProgressOf(save: Pick<SaveData, 'story' | 'factionId'>): StoryProgress {
+  return (save.story[save.factionId] ??= newStoryProgress());
+}
+
+/** 장이 열렸나 (GDD 25-4): 진화 단계 + 내용이 있는 장 */
+export function chapterOpen(save: Pick<SaveData, 'evolution' | 'factionId'>, chapterId: string): boolean {
+  const c = STORY_CHAPTERS.find((x) => x.id === chapterId);
+  return !!c && save.evolution.tierIndex >= c.unlockTierIndex && chapterContent(save.factionId, chapterId) !== null;
+}
+
+/** 화가 열렸나 (GDD 25-7): 장이 열려 있고, 첫 화이거나 바로 앞 화를 깼다 (순서대로 열림) */
+export function episodeOpen(save: Pick<SaveData, 'evolution' | 'factionId' | 'story'>, chapterId: string, episodeId: string): boolean {
+  if (!chapterOpen(save, chapterId)) return false;
+  const eps = chapterContent(save.factionId, chapterId)!.episodes;
+  const i = eps.findIndex((e) => e.id === episodeId);
+  if (i < 0) return false;
+  return i === 0 || storyProgressOf(save as SaveData).cleared[episodeKey(chapterId, eps[i - 1]!.id)] !== undefined;
+}
+
+
 
 /** 튜토리얼 보상 수령 1건 (GDD 23-3) */
 export interface TutorialClaim {
@@ -214,7 +287,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState(), skin: null, rebirth: newRebirthState() };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState(), skin: null, rebirth: newRebirthState(), story: {}, bossDex: {} };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -257,9 +330,51 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   addTrainingTicket(save.training);
   save.activeExpedition = null;
   save.lastScreen = 'room';
+  // 스토리 화·보스 (GDD 25-3·25-4): 기록·보상. 칭호(보스 첫 처치·장 클리어)는 바로 아래 칭호 평가가 런 로그를 읽어 준다
+  if (exp.story) exp.storySettled = settleStory(save, exp, nowMs);
   checkTitles(save, 'expedition', nowMs);
   // 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것)
   return canEvolve(save.evolution) ? performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition }) : null;
+}
+
+/** 스토리 화가 끝났을 때 (GDD 25-4·25-7): 런 로그(보스전·화), 보스 도감, 보상 — 화 클리어 골드·먹이(매번), 첫 클리어 영옥, 장 첫 완주 영옥, 보스 첫 처치 영옥.
+ *  보스 처치 골드·희귀 먹이는 원정 전리품으로 이미 들어왔다 (패배로 잃지 않게 보스는 화의 마지막). 칭호는 부르는 쪽의 checkTitles 가 런 로그로 준다 */
+export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): StorySettlement {
+  const st = exp.story!;
+  const SX = BALANCE.provisional.story;
+  const BX = BALANCE.provisional.boss;
+  const prog = storyProgressOf(save);
+  const key = episodeKey(st.chapterId, st.episodeId);
+  const out: StorySettlement = { chapterId: st.chapterId, episodeId: st.episodeId, cleared: st.cleared, firstClear: false, gold: 0, food: [SX.episodeFood as FoodId, 0], jade: 0, chapterCleared: false, bossFirstKill: null };
+  const br = st.bossResult;
+  if (br) {
+    const dex = save.bossDex[br.bossId];
+    const firstKill = br.won && !dex;
+    if (br.won) save.bossDex[br.bossId] = { kills: (dex?.kills ?? 0) + 1, firstAt: dex?.firstAt ?? nowMs };
+    if (firstKill) {
+      out.bossFirstKill = br.bossId;
+      out.jade += BX.reward.firstJade;
+    }
+    save.runLog.bossBattles.push({ at: nowMs, runId: exp.runId, factionId: save.factionId, bossId: br.bossId, won: br.won, firstKill, durationSeconds: br.durationSeconds, phase: br.phase, seals: br.seals, lossReason: br.lossReason, tierIndex: exp.evolution.tierIndex, episode: key });
+  }
+  if (st.cleared) {
+    const had = prog.cleared[key];
+    out.firstClear = !had;
+    prog.cleared[key] = { firstAt: had?.firstAt ?? nowMs, clears: (had?.clears ?? 0) + 1 };
+    out.gold = SX.episodeGold;
+    save.shared.tradeCoins += out.gold;
+    out.food = [SX.episodeFood as FoodId, addFood(save.shared.food, SX.episodeFood as FoodId, 1)];
+    if (out.firstClear) out.jade += SX.firstClearJade;
+    const eps = chapterContent(save.factionId, st.chapterId)?.episodes ?? [];
+    if (!prog.chapters.includes(st.chapterId) && eps.length > 0 && eps.every((e) => prog.cleared[episodeKey(st.chapterId, e.id)])) {
+      prog.chapters.push(st.chapterId);
+      out.chapterCleared = true;
+      out.jade += SX.chapterJade;
+    }
+  }
+  save.shared.jade += out.jade;
+  save.runLog.storyRuns.push({ at: nowMs, runId: exp.runId, factionId: save.factionId, chapterId: st.chapterId, episodeId: st.episodeId, cleared: st.cleared, firstClear: out.firstClear, chapterCleared: out.chapterCleared, tierIndex: exp.evolution.tierIndex });
+  return out;
 }
 
 export type SynthResult = { ok: true; upgradedId: string } | { ok: false; reason: string };
@@ -614,6 +729,18 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.runs = (save.runLog.runs ?? []).map((r) => ({ ...r, synergies: r.synergies ?? [], mutations: r.mutations ?? [], events: r.events ?? [], drafts: r.drafts ?? [], gold: r.gold ?? 0 }));
     save.meta.format = 21;
   }
+  if (save.meta.format < 22) {
+    // 형식 21 → 22 (C.58, GDD 25-3·25-4): 스토리 진행(빈 진행)·보스 도감(빈 도감)·보스전·스토리 화 기록(빈 목록). 원정 중간 저장은 형식 6 이 아니면 이어하지 않는다
+    save.story = {};
+    save.bossDex = {};
+    save.runLog.bossBattles = [];
+    save.runLog.storyRuns = [];
+    save.meta.format = 22;
+  }
+  save.story = sanitizeStory(save.story);
+  save.bossDex = sanitizeBossDex(save.bossDex);
+  save.runLog.bossBattles = Array.isArray(save.runLog.bossBattles) ? save.runLog.bossBattles : [];
+  save.runLog.storyRuns = Array.isArray(save.runLog.storyRuns) ? save.runLog.storyRuns : [];
   save.rebirth = sanitizeRebirth(save.rebirth);
   save.runLog.rebirths = Array.isArray(save.runLog.rebirths) ? save.runLog.rebirths : [];
   save.skin = canWear(save.factionId, save.skin) ? save.skin : null;

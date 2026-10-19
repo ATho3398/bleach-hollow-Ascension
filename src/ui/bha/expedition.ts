@@ -65,7 +65,7 @@ export const MSG_ICON: Record<MsgKind, string> = { '': 'i-play', warn: 'i-hunger
 
 /** 원정이 끝난 이유 → 결과 화면 톤. 귀환 계열 = win, 패배 계열 = lose */
 export function endTone(reason: EndReason): 'win' | 'lose' {
-  return reason === 'returned' || reason === 'forced-max-laps' ? 'win' : 'lose';
+  return reason === 'returned' || reason === 'forced-max-laps' || reason === 'story-clear' ? 'win' : 'lose';
 }
 
 export interface PracticeFilter {

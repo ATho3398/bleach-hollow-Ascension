@@ -1,0 +1,60 @@
+{
+  "factionId": "shinigami",
+  "chapterId": "ch1",
+  "title": "입대",
+  "provisional": true,
+  "episodes": [
+    {
+      "id": "ep1",
+      "title": "첫 순찰",
+      "objective": { "type": "defeat", "enemyClass": "normal", "count": 3 },
+      "recommendedTier": 1,
+      "maxLaps": 3,
+      "road": { "2": "prey-nest-a", "5": "prey-nest-a", "8": "prey-nest-a", "10": "rest-a" },
+      "dialogue": {
+        "start": [{ "speaker": "분대장", "text": "신입, 오늘은 순찰이다. 겁먹지 마라." }],
+        "end": [{ "speaker": "분대장", "text": "첫 시해다. 잘했다." }]
+      }
+    },
+    {
+      "id": "ep2",
+      "title": "밤의 루콘가이",
+      "objective": { "type": "survive", "laps": 2 },
+      "recommendedTier": 1,
+      "maxLaps": 2,
+      "road": { "3": "prey-nest-a", "6": "env-ruin", "9": "prey-nest-a", "11": "rest-a" },
+      "dialogue": {
+        "start": [{ "speaker": "분대장", "text": "밤의 루콘가이는 다르다. 정신 바짝 차려라." }],
+        "end": [{ "speaker": "분대장", "text": "…버텼군. 제법이다." }]
+      }
+    },
+    {
+      "id": "ep3",
+      "title": "큰 기척",
+      "objective": { "type": "absorb", "enemyClass": "elite", "count": 1 },
+      "recommendedTier": 2,
+      "maxLaps": 4,
+      "road": { "2": "prey-nest-a", "5": "elite-den-a", "8": "rest-a", "10": "prey-nest-a" },
+      "dialogue": {
+        "start": [{ "speaker": "분대장", "text": "메노스급 기척이다. 혼자 물러서지 마라." }],
+        "end": [{ "speaker": "나", "text": "내 참백도가… 대답했다." }]
+      }
+    },
+    {
+      "id": "ep4",
+      "title": "들개 대허",
+      "objective": { "type": "boss" },
+      "recommendedTier": 2,
+      "maxLaps": 1,
+      "road": { "3": "prey-nest-a", "6": "rest-a", "9": "prey-nest-a" },
+      "boss": { "id": "sand-maw", "cell": 11 },
+      "dialogue": {
+        "start": [
+          { "speaker": "분대장", "text": "주민을 지켜라!" },
+          { "speaker": "들개 대허", "text": "…사신 냄새. 맛있겠군." }
+        ],
+        "end": [{ "speaker": "분대장", "text": "오늘부터 너도 진짜 사신이다." }]
+      }
+    }
+  ]
+}

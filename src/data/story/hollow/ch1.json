@@ -1,0 +1,61 @@
+{
+  "factionId": "hollow",
+  "chapterId": "ch1",
+  "title": "굶주린 영혼",
+  "provisional": true,
+  "episodes": [
+    {
+      "id": "ep1",
+      "title": "첫 사냥",
+      "objective": { "type": "defeat", "enemyClass": "normal", "count": 3 },
+      "recommendedTier": 1,
+      "maxLaps": 3,
+      "road": { "2": "prey-nest-a", "5": "prey-nest-b", "8": "prey-nest-a", "10": "rest-a" },
+      "dialogue": {
+        "start": [{ "speaker": "나", "text": "…배고프다. 무엇이든 먹어야 한다." }],
+        "mid": { "afterKills": 1, "lines": [{ "speaker": "나", "text": "작은 영혼들이 흩어진다. 쫓아라." }] },
+        "end": [{ "speaker": "나", "text": "처음으로, 배가 조금 찼다." }]
+      }
+    },
+    {
+      "id": "ep2",
+      "title": "모래 위의 무리",
+      "objective": { "type": "survive", "laps": 2 },
+      "recommendedTier": 1,
+      "maxLaps": 2,
+      "road": { "3": "prey-nest-a", "6": "env-fog", "9": "prey-nest-b", "11": "rest-a" },
+      "dialogue": {
+        "start": [{ "speaker": "늙은 호로", "text": "새끼, 여기선 먹거나 먹히거나다." }],
+        "end": [{ "speaker": "늙은 호로", "text": "살아남았군. 다음엔 큰 놈이 온다." }]
+      }
+    },
+    {
+      "id": "ep3",
+      "title": "큰 놈의 힘",
+      "objective": { "type": "absorb", "enemyClass": "elite", "count": 1 },
+      "recommendedTier": 2,
+      "maxLaps": 4,
+      "road": { "2": "prey-nest-a", "5": "elite-den-a", "8": "rest-a", "10": "prey-nest-b" },
+      "dialogue": {
+        "start": [{ "speaker": "나", "text": "저 큰 놈의 힘… 내 것으로 만들 수 있다." }],
+        "end": [{ "speaker": "나", "text": "몸이 변해 간다. 나는 무엇이 되는가." }]
+      }
+    },
+    {
+      "id": "ep4",
+      "title": "모래 아귀",
+      "objective": { "type": "boss" },
+      "recommendedTier": 2,
+      "maxLaps": 1,
+      "road": { "3": "prey-nest-a", "6": "rest-a", "9": "prey-nest-b" },
+      "boss": { "id": "sand-maw", "cell": 11 },
+      "dialogue": {
+        "start": [
+          { "speaker": "늙은 호로", "text": "모래 아귀다. 외곽의 영혼을 다 먹어 치운 놈." },
+          { "speaker": "모래 아귀", "text": "…작은 것. 너도 먹이다." }
+        ],
+        "end": [{ "speaker": "나", "text": "굶주림 너머에, 무언가가 있다." }]
+      }
+    }
+  ]
+}

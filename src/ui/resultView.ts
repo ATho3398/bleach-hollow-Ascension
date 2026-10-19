@@ -12,6 +12,22 @@ import { splitApp } from './bha/split';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
 import { growthLines, type GrowthInput } from './bha/growthLogic';
+import { getEpisode } from '../data/story';
+import { bossName } from '../data/bosses';
+import { BALANCE as B } from '../config/balance';
+import { chapterLabel } from './storyView';
+
+/** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
+export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
+  const r = exp.storySettled;
+  if (!r) return [];
+  const ep = getEpisode(faction.id, r.chapterId, r.episodeId);
+  const out = [`${chapterLabel(faction.id, r.chapterId)} · ${ep.title} — ${r.cleared ? '클리어!' : '실패. 다시 도전할 수 있다'}`];
+  if (r.cleared) out.push(`화 보상 ${TRADE_CURRENCY_NAME} +${r.gold} · ${faction.foodNames[r.food[0]]} ${r.food[1] > 0 ? `${r.food[1]}개` : '(보관 한도라 못 받음)'}${r.firstClear ? ` · 첫 클리어 영옥 +${B.provisional.story.firstClearJade}` : ''}`);
+  if (r.bossFirstKill) out.push(`보스 ${bossName(r.bossFirstKill, faction.id)} 첫 처치! 칭호 · 영옥 +${B.provisional.boss.reward.firstJade}`);
+  if (r.chapterCleared) out.push(`${chapterLabel(faction.id, r.chapterId)} 완료! 칭호 · 영옥 +${B.provisional.story.chapterJade}`);
+  return out;
+}
 
 export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, stability: number, onHome: () => void, growth?: GrowthInput): void {
   const s = summarize(exp);
@@ -90,5 +106,10 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const growthBox = growth ? el('div', 'bha-growth') : null;
   growthBox?.setAttribute('role', 'status');
   for (const line of growth ? growthLines(growth) : []) growthBox!.append(el('p', 'bha-growth__line', line));
-  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [...(growthBox ? [growthBox] : []), sum]);
+  // 스토리 화 결과 (GDD 25-7): 성장 요약 위에
+  const storyLines = storyResultLines(exp, faction);
+  const storyBox = storyLines.length > 0 ? el('div', 'bha-growth bha-result__story') : null;
+  storyBox?.setAttribute('role', 'status');
+  for (const line of storyLines) storyBox!.append(el('p', 'bha-growth__line', line));
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [...(storyBox ? [storyBox] : []), ...(growthBox ? [growthBox] : []), sum]);
 }

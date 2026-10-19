@@ -1,0 +1,20 @@
+{
+  "provisional": true,
+  "bosses": [
+    {
+      "id": "sand-maw",
+      "name": { "hollow": "모래 아귀", "shinigami": "들개 대허" },
+      "hpInAttacks": 150,
+      "attackInAttacks": 0.33,
+      "element": "earth",
+      "category": "physical",
+      "statBias": { "def": 1.1, "spr": 0.9 },
+      "ev": { "hp": 3, "def": 2 },
+      "pattern": { "kind": "heavy-chain", "everySeconds": 12, "castSeconds": 2, "heavyInAttacks": 0.8, "hits": 2, "followCastSeconds": 1.2, "provisional": true },
+      "phases": [{ "belowHpFraction": 0.5, "attackSecondsMult": 0.75 }],
+      "gimmick": "seal",
+      "trait": "boss-sand-maw",
+      "provisional": true
+    }
+  ]
+}

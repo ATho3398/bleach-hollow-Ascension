@@ -56,6 +56,8 @@ export interface BattleViewOptions {
   formId?: string | null;
   /** 해방 버튼 (GDD 22-5): 있으면(5단계 이상) 저장 필살기 옆에 보인다. 쓸 수 있는지는 엔진 params.liberationEnabled, 못 쓰면 note(무엇이 부족한지 한 줄)와 함께 잠긴 버튼 */
   liberation?: { note: string | null };
+  /** 보스전 (GDD 25-3·25-7): 등장 이름 띠 위 줄 문구 ("보스"). 있으면 강적 표시 대신 보스 표시·페이즈 칩을 보인다 */
+  boss?: { eyebrow: string };
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -127,6 +129,10 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
         : { role: 'cast', icon: 'i-cast', text: `강공격 적중! ${n(e.damage)} 피해` };
     case 'seal':
       return { role: 'cast', icon: 'i-seal', text: `봉인! ${e.seconds}초 동안 ${labels.skillBlock} 생성 정지` };
+    case 'cell-seal':
+      return { role: 'cast', icon: 'i-lock', text: `블록 봉인! ${labels.skillBlock} 1칸을 ${e.seconds}초 동안 쓸 수 없다` };
+    case 'boss-phase':
+      return { role: 'cast', icon: 'i-warn', text: `페이즈 ${e.phase}! ${pickFaction(s.enemy.def.name, factionId)}의 공격이 빨라졌다` };
     case 'stance':
       return { role: 'guard', icon: 'i-guard', text: `방어 자세! ${e.seconds}초 동안 내 블록 피해 감소 · 블록을 쓰면 반격` };
     case 'stance-end':
@@ -201,7 +207,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // ── 1. 적 이름·약점 (장면 왼쪽 위 칩) ──
   const foeName = el('div', 'bha-battle__foename');
   foeName.append(el('h1', 'bha-battle__name', enemyName));
-  if (enemy.class === 'elite') foeName.append(tag('강적', 'elite'));
+  if (opts.boss) foeName.append(tag('보스', 'elite'));
+  else if (enemy.class === 'elite') foeName.append(tag('강적', 'elite'));
   if (enemy.provisional) foeName.append(provisionalTag());
   const weakChip = elementChip();
   const foeHead = el('header', 'bha-battle__foehead');
@@ -212,6 +219,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const pc = el('span', 'bha-chip bha-chip--pattern');
     pc.append(icon(patternView.icon), patternView.label);
     foeHead.append(pc);
+  }
+  // 보스 페이즈 칩 (GDD 25-3): 지금 페이즈 / 전체 페이즈
+  const phaseChip = el('span', 'bha-chip bha-chip--danger bha-battle__phase');
+  const phaseText = () => `페이즈 ${s.boss?.phase ?? 1}/${(s.boss?.setup.phases.length ?? 0) + 1}`;
+  if (s.boss) {
+    phaseChip.append(icon('i-warn', 'sm'), el('span', '', phaseText()));
+    foeHead.append(phaseChip);
   }
 
   // ── 2. 유닛 두 칸: 머리 위 게이지 / 그림 / 작은 체력바 (GDD 18-6) ──
@@ -778,6 +792,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       node.classList.toggle('is-chain2', level === 2);
       node.classList.toggle('is-chain3', level >= 3);
       node.classList.toggle('is-cue', casting && visualOf(node) === 'guard');
+      // 보스 기믹 칸 봉인 (GDD 25-3): 자물쇠를 얹고 누를 수 없다
+      const locked = (b.sealTicks ?? 0) > 0;
+      if (locked && !node.querySelector('.bha-block__lock')) {
+        const lk = el('span', 'bha-block__lock');
+        lk.append(icon('i-lock'));
+        node.append(lk);
+      }
+      node.classList.toggle('is-locked', locked);
+      node.setAttribute('aria-disabled', String(locked));
       node.classList.toggle('is-pressed', !!down && down.uid === b.uid);
     });
     seeded = true;
@@ -1047,6 +1070,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const line = eventLine(ev, s, labels, faction.id);
       if (line) say(line);
       react(ev);
+      if (ev.kind === 'boss-phase') {
+        setText(phaseChip.lastElementChild as HTMLElement, phaseText());
+        app.classList.add('is-boss-phase');
+        playOnce(phaseChip, 'is-flash');
+      }
     }
     if (cues.length) {
       const c = strongestCue(cues);
@@ -1072,9 +1100,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   requestAnimationFrame(frame);
 
   // 조우 연출 (전투 시간은 멈춰 있다): 눌러서 넘기거나 잠시 뒤 사라진 다음 튜토리얼이 있으면 시작한다
-  const encounter = el('div', 'bha-battle-ov bha-battle-ov--encounter');
+  const encounter = el('div', `bha-battle-ov bha-battle-ov--encounter${opts.boss ? ' bha-battle-ov--boss' : ''}`);
   const stats = el('div', 'bha-battle-ov__stats');
-  if (enemy.class === 'elite') stats.append(tag('강적', 'elite'));
+  if (opts.boss) stats.append(tag('보스', 'elite'));
+  else if (enemy.class === 'elite') stats.append(tag('강적', 'elite'));
   stats.append(elementChip());
   if (patternView) {
     const pc = el('span', 'bha-chip bha-chip--pattern');
@@ -1082,9 +1111,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     stats.append(pc);
   }
   encounter.append(
-    el('span', 'bha-battle-ov__eyebrow', opts.banner ?? '전투 연습'),
+    el('span', 'bha-battle-ov__eyebrow', opts.boss ? `${opts.boss.eyebrow} · ${opts.banner ?? ''}` : opts.banner ?? '전투 연습'),
     el('span', 'bha-battle-ov__line'),
-    el('h2', 'bha-battle-ov__title', `${enemyName}과(와) 조우!`),
+    el('h2', 'bha-battle-ov__title', opts.boss ? enemyName : `${enemyName}과(와) 조우!`),
     el('span', 'bha-battle-ov__line'),
     stats,
   );
@@ -1099,5 +1128,5 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (opts.tutorial) startTutorial();
   };
   encounterOverlay.addEventListener('pointerdown', endEncounter);
-  window.setTimeout(endEncounter, 1500);
+  window.setTimeout(endEncounter, opts.boss ? 2600 : 1500); // 보스 이름 띠는 조금 더 오래
 }

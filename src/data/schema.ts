@@ -152,6 +152,8 @@ export interface TraitDef {
   description: PerFaction<string>;
   /** 희귀 개체에서만 나오는 특성 (확정 등장) */
   rare?: boolean;
+  /** 보스 특성 (GDD 25-3, C.58): 그 보스를 이긴 흡수 화면에서만 확정 후보로 나온다(일반 흡수 후보·희귀 후보에 안 섞인다). rare 와 함께 쓴다 */
+  boss?: boolean;
   /** skill: 블록 역할 (GDD 3-5). 계통과 역할은 별개다 */
   role?: SkillRole;
   /** skill: 블록 위력 = 플레이어 기본 공격 N회 분량의 피해 (guard·heal 도 작은 피해를 준다) */
@@ -191,7 +193,8 @@ export interface TerrainTileDef {
   provisional?: boolean;
 }
 
-export type TitleKind = 'rank' | 'hidden-rank' | 'tag';
+/** story = 스토리 장 클리어·보스 첫 처치 칭호 (GDD 25-3·25-4, C.58) */
+export type TitleKind = 'rank' | 'hidden-rank' | 'tag' | 'story';
 
 /**
  * 칭호 조건 어휘 (GDD 14-7, 임시). 런 로그와 진화 기록을 읽는 조건식이며 and/or 로 조합한다.
@@ -225,7 +228,11 @@ export type TitleCondition =
   /** 해방 수련을 완료한 적이 있다 (GDD 22-5, C.54) */
   | { type: 'trainingCompleted' }
   /** 등급전으로 이 번호 이상(숫자가 같거나 작음)에 오른 적이 있다 (GDD 21장, C.49) */
-  | { type: 'rankReached'; rank: number };
+  | { type: 'rankReached'; rank: number }
+  /** 이 보스를 처치한 적이 있다 (GDD 25-3, C.58) */
+  | { type: 'bossDefeated'; bossId: string }
+  /** 스토리 이 장의 화를 모두 깬 적이 있다 (GDD 25-4, C.58) */
+  | { type: 'storyChapterCleared'; chapterId: string };
 
 export interface TitleDef {
   id: string;

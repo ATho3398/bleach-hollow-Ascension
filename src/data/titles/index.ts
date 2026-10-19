@@ -3,6 +3,8 @@ import { pickFaction, type TitleCondition, type TitleDef } from '../schema';
 import { isElement } from '../elements';
 import { tryGetForm } from '../evolution';
 import raw from './titles.json';
+import { isBossId } from '../bosses';
+import { STORY_CHAPTERS } from '../story';
 
 /** 조건 트리의 오류 목록 (속성·진화체 id 가 실제로 있는지, min 이 양수인지) */
 export function validateCondition(c: TitleCondition): string[] {
@@ -19,6 +21,10 @@ export function validateCondition(c: TitleCondition): string[] {
     }
     case 'rankReached':
       return Number.isInteger(c.rank) && c.rank >= 1 && c.rank <= 10 ? [] : [`rankReached: rank 는 1~10`];
+    case 'bossDefeated':
+      return isBossId(c.bossId) ? [] : [`알 수 없는 보스 ${c.bossId}`];
+    case 'storyChapterCleared':
+      return STORY_CHAPTERS.some((x) => x.id === c.chapterId) ? [] : [`알 수 없는 장 ${c.chapterId}`];
     default:
       return 'min' in c && !(c.min > 0) ? [`${c.type}: min 은 1 이상`] : [];
   }

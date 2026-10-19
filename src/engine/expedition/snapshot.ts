@@ -11,13 +11,16 @@ import { isGroundId } from '../../data/grounds';
 import { isMutationId } from '../../data/tiles';
 import { TILE_EVENTS } from '../../data/schema';
 import { finishRest, type ExpeditionState } from './expedition';
+import { getEpisode } from '../../data/story';
+import { isBossId } from '../../data/bosses';
 
 /** 저장 형식을 바꾸면 올린다 (다르면 이어하기를 숨기고 무시한다) */
 /** C.47: 2 (진화 상태·전투 재료 구조가 바뀜 — 옛 원정 중간 저장은 이어하지 않는다) */
 /** C.52: 3 (먹이 전리품·전리품 난수 추가) */
 /** C.53: 4 (사냥터 groundId 추가) */
 /** C.57: 5 (타일 변수 GDD 25-5: 변이·드래프트·이벤트 진행·골드·제단·보호막·함정·2연전·기록) */
-export const EXPEDITION_SNAPSHOT_VERSION = 5;
+/** C.58: 6 (스토리 화 진행 story, 보스전 pending.boss) */
+export const EXPEDITION_SNAPSHOT_VERSION = 6;
 
 export interface ExpeditionSnapshot {
   version: number;
@@ -88,6 +91,17 @@ function validVariants(e: Record<string, unknown>): boolean {
   return true;
 }
 
+/** 스토리 화 영역 (원정 형식 6): 자유 원정은 null, 스토리면 있는 장·화와 진행도. 보스전 대기면 있는 보스 */
+function validStory(e: Record<string, unknown>): boolean {
+  const p = e.pending;
+  if (isObj(p) && p.boss != null && !isBossId(p.boss)) return false;
+  const st = e.story;
+  if (st === null) return true;
+  if (!isObj(st) || typeof st.chapterId !== 'string' || typeof st.episodeId !== 'string' || !knows(() => getEpisode(e.factionId as string, st.chapterId as string, st.episodeId as string), 'x')) return false;
+  if (!isInt(st.progress) || !isInt(st.kills) || typeof st.cleared !== 'boolean' || typeof st.midShown !== 'boolean' || (st.cue !== null && st.cue !== 'mid')) return false;
+  return st.bossResult === null || isObj(st.bossResult);
+}
+
 /** 손상·형식 불일치 검사. 통과하면 원정 상태로 쓸 수 있다고 본다 (깊은 내용까지는 보지 않고 엔진이 쓰는 뼈대만 본다) */
 function validShape(e: unknown): e is ExpeditionState {
   if (!isObj(e)) return false;
@@ -125,6 +139,7 @@ function validShape(e: unknown): e is ExpeditionState {
     if (!isObj(o) || typeof o.enemyId !== 'string' || !isStrArr(o.candidates)) return false;
   } else if (e.absorbOffer !== null) return false;
   if (e.outcome !== null || e.endReason !== null) return false;
+  if (!validStory(e)) return false;
   return validVariants(e);
 }
 

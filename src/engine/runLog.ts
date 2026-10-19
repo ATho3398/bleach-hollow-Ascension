@@ -210,7 +210,7 @@ export interface RunRecord {
   gained: string[];
   lost: string[];
   /** P2 에서 더한 필드 (세이브 형식 3): 끝난 이유, 시드, 종족 */
-  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted';
+  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear';
   seed: number;
   factionId: string;
   /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 한계 돌파 여부 */
@@ -227,6 +227,43 @@ export interface RunRecord {
   events?: { event: string; choice: string; lap: number }[];
   drafts?: { tileId: string; lap: number }[];
   gold?: number;
+  /** C.58 (세이브 형식 22, GDD 25-4): 스토리 화로 떠난 원정이면 그 장·화와 목표를 이뤘는가. 자유 원정은 없음 */
+  story?: { chapterId: string; episodeId: string; cleared: boolean };
+}
+
+/** 보스전 1회 기록 (GDD 25-3, 세이브 형식 22): 이기든 지든 남긴다. 보스 칭호·히든 조건이 읽는다 */
+export interface BossBattleRecord {
+  /** 시각(ms) */
+  at: number;
+  runId: number;
+  factionId: string;
+  bossId: string;
+  won: boolean;
+  /** 이 판이 그 보스 첫 처치였나 */
+  firstKill: boolean;
+  durationSeconds: number;
+  /** 닿은 페이즈(1부터)·기믹으로 봉인된 블록 수·패배 사유 */
+  phase: number;
+  seals: number;
+  lossReason: 'hp' | 'timeout' | null;
+  tierIndex: number;
+  /** 스토리 화 키 ("ch1/ep4"). 자유 원정 등장은 미정(25-3)이라 지금은 늘 스토리 */
+  episode: string | null;
+}
+
+/** 스토리 화 1회 기록 (GDD 25-4, 세이브 형식 22): 깨든 못 깨든 남긴다 */
+export interface StoryRunRecord {
+  at: number;
+  runId: number;
+  factionId: string;
+  chapterId: string;
+  episodeId: string;
+  cleared: boolean;
+  /** 처음 깬 판인가 */
+  firstClear: boolean;
+  /** 이 판으로 장을 처음 다 깼나 */
+  chapterCleared: boolean;
+  tierIndex: number;
 }
 
 export interface RunLog {
@@ -243,6 +280,9 @@ export interface RunLog {
   trainings: TrainingRecord[];
   /** 환생 기록 (C.56, 세이브 형식 20) */
   rebirths: RebirthRecord[];
+  /** 보스전·스토리 화 기록 (C.58, 세이브 형식 22) */
+  bossBattles: BossBattleRecord[];
+  storyRuns: StoryRunRecord[];
 }
 
 export function emptyRunLog(): RunLog {
@@ -257,5 +297,7 @@ export function emptyRunLog(): RunLog {
     runs: [],
     trainings: [],
     rebirths: [],
+    bossBattles: [],
+    storyRuns: [],
   };
 }

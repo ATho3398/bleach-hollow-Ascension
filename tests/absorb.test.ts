@@ -67,7 +67,7 @@ describe('임시 데이터', () => {
     expect(ELEMENTS).toHaveLength(8);
     expect(ELEMENTS.map((e) => e.name['*'])).toEqual(['노멀', '물', '불', '흙', '뇌', '혈', '독', '허(虛)']);
     for (const e of ELEMENTS) {
-      const ts = TRAITS.filter((t) => t.element === e.id);
+      const ts = TRAITS.filter((t) => t.element === e.id && !t.boss); // 보스 특성(C.58)은 따로
       expect(ts, e.id).toHaveLength(8);
       expect(new Set(ts.map((t) => t.kind))).toEqual(new Set(['skill', 'passive', 'part']));
       expect(new Set(ts.filter((t) => t.role === 'attack' && !t.rare).map((t) => t.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));

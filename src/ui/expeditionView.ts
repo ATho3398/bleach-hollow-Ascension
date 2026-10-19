@@ -21,6 +21,7 @@ import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
 import { locoOf } from './bha/loco';
 import { isWalking, walkScene } from './bha/walk';
+import { storyGoalLine } from './storyView';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -227,7 +228,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   if (empty > 0) slotsLine.append(el('span', 'bha-faint', `빈칸 ${empty}`));
 
   const chips = el('section', 'bha-exp__chips');
-  chips.append(where, meters, slotsLine);
+  // 스토리 화 목표 (GDD 25-7): 진행도와 함께 칩 묶음 맨 위
+  const goal = el('span', 'bha-exp__goal');
+  goal.setAttribute('role', 'status');
+  chips.append(goal, where, meters, slotsLine);
 
   const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
   const walk = walkScene(faction.walkAnim, faction.huntingGroundName, walkArt, locoOf(faction, h.formId, walkArt));
@@ -310,6 +314,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       }),
     );
     frenzyChip.hidden = !inFrenzy(exp);
+    const goalText = storyGoalLine(exp);
+    goal.hidden = goalText === null;
+    if (goalText !== null) goal.replaceChildren(icon('i-flag-win'), goalText);
     banner.hidden = !exp.mutation;
     if (exp.mutation) {
       const c = chip(`${exp.lap}바퀴 변이 · ${mutationName(exp.mutation, faction.id)}`, 'rare');

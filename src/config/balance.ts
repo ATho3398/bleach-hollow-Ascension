@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 33;
+export const BALANCE_VERSION = 34;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -308,6 +308,20 @@ export const BALANCE = {
     },
     /** 원정 전투 승리 골드 (GDD 25-5 의 골드 보상 배율이 기대는 바탕값, C.57 정한 것 — 23-4 얻는 곳 중 '원정' 자리). 강적 = 소굴·조합으로 나온 강적 */
     gold: { normal: 6, elite: 20 },
+    /** 보스전 (GDD 25-3·25-7, S-14 C.58): 보스 데이터(src/data/bosses)의 페이즈·기믹은 종류만 고르고 수치는 여기. 시간 제한(초)·기믹 seal(간격·봉인 시간·칸 수)·
+     *  보상(골드·희귀 먹이·첫 처치 영옥). 보스 체력·공격은 보스 데이터의 hpInAttacks·attackInAttacks (CLAUDE.md 규칙 3) */
+    boss: {
+      timeLimitSeconds: 180,
+      seal: { everySeconds: 10, seconds: 4, cells: 1 },
+      reward: { gold: 100, food: 'feast', firstJade: 10 },
+    },
+    /** 스토리 모드 (GDD 25-4·25-7): 화 클리어(매번) 골드·먹이, 첫 클리어 영옥, 장 클리어 영옥 */
+    story: {
+      episodeGold: 20,
+      episodeFood: 'basic',
+      firstClearJade: 2,
+      chapterJade: 5,
+    },
     /** 타일 변수 5종 (GDD 25-5, S-13 C.57). 표의 이름·짝은 src/data/tiles/*.json, 여기는 수치만. 효과 키는 engine/expedition/variants.ts VariantMods */
     tileVariants: {
       /** ① 드래프트: 바퀴 끝 배치 팝업에서 cards 장 중 1장. 마지막 1장은 specialChance 로 덱 밖 타일/이벤트 타일(그중 이벤트 비율 eventShare) */

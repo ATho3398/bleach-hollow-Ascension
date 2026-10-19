@@ -1,0 +1,193 @@
+{
+  "hollow.list": [
+    "1화 첫 사냥 [bha-story-ep is-cleared] 클리어",
+    "2화 모래 위의 무리 [bha-story-ep] ",
+    "3화 큰 놈의 힘 [bha-story-ep is-locked] 앞 화를 깨면 열린다",
+    "4화 모래 아귀 [bha-story-ep is-locked] 앞 화를 깨면 열린다"
+  ],
+  "hollow.chapters": [
+    "1장 「굶주린 영혼」1/4화",
+    "2장 (준비 중)3단계에 열림",
+    "3장 (준비 중)5단계에 열림"
+  ],
+  "hollow.startDialogue": [
+    "나: …배고프다. 무엇이든 먹어야 한다."
+  ],
+  "hollow.goal": "목표 · 일반 적 3마리 처치 0/3",
+  "hollow.ep1.battle": "승리",
+  "hollow.endDialogue": [
+    "나: 처음으로, 배가 조금 찼다."
+  ],
+  "hollow.ep1.result": "1장 「굶주린 영혼」 · 첫 사냥 — 클리어!\n\n화 보상 골드 +20 · 짐승 고기 (보관 한도라 못 받음) · 첫 클리어 영옥 +2",
+  "hollow.boss.band": "보스 · 1장 「굶주린 영혼」 · 모래 아귀\n모래 아귀\n보스\n흙\n흙\n·\n약점\n불\n연속 강공격",
+  "hollow.boss.sealLog": "블록 봉인! 기술 블록 1칸을 4초 동안 쓸 수 없다",
+  "hollow.boss.phaseChip": "페이즈 2/2",
+  "hollow.boss.battle": "승리",
+  "hollow.boss.candidates": [
+    "모래 아귀의 턱",
+    "독 교",
+    "허 조"
+  ],
+  "hollow.boss.endDialogue": [
+    "나: 굶주림 너머에, 무언가가 있다."
+  ],
+  "hollow.boss.result": "1장 「굶주린 영혼」 · 모래 아귀 — 클리어!\n\n화 보상 골드 +20 · 짐승 고기 (보관 한도라 못 받음) · 첫 클리어 영옥 +2\n\n보스 모래 아귀 첫 처치! 칭호 · 영옥 +10\n\n1장 「굶주린 영혼」 완료! 칭호 · 영옥 +5",
+  "hollow.boss.growth": [
+    "1장 「굶주린 영혼」 · 모래 아귀 — 클리어!\n\n화 보상 골드 +20 · 짐승 고기 (보관 한도라 못 받음) · 첫 클리어 영옥 +2\n\n보스 모래 아귀 첫 처치! 칭호 · 영옥 +10\n\n1장 「굶주린 영혼」 완료! 칭호 · 영옥 +5",
+    "새 특성 1개\n\n새 칭호 「굶주림을 넘은 자」 「모래 아귀 사냥꾼」"
+  ],
+  "hollow.boss.save": {
+    "format": 22,
+    "jade": 17,
+    "gold": 368,
+    "story": {
+      "hollow": {
+        "cleared": {
+          "ch1/ep1": {
+            "firstAt": 1792445428867,
+            "clears": 1
+          },
+          "ch1/ep2": {
+            "firstAt": 1792445428867,
+            "clears": 1
+          },
+          "ch1/ep3": {
+            "firstAt": 1792445428867,
+            "clears": 1
+          },
+          "ch1/ep4": {
+            "firstAt": 1792449259608,
+            "clears": 1
+          }
+        },
+        "chapters": [
+          "ch1"
+        ]
+      }
+    },
+    "bossDex": {
+      "sand-maw": {
+        "kills": 1,
+        "firstAt": 1792449259608
+      }
+    },
+    "titles": [
+      "tag-1",
+      "story-ch1",
+      "boss-sand-maw"
+    ],
+    "bossBattles": [
+      {
+        "at": 1792449259608,
+        "runId": 3,
+        "factionId": "hollow",
+        "bossId": "sand-maw",
+        "won": true,
+        "firstKill": true,
+        "durationSeconds": 47.8,
+        "phase": 2,
+        "seals": 4,
+        "lossReason": null,
+        "tierIndex": 1,
+        "episode": "ch1/ep4"
+      }
+    ],
+    "storyRuns": 1
+  },
+  "shinigami.list": [
+    "1화 첫 순찰 [bha-story-ep is-cleared] 클리어",
+    "2화 밤의 루콘가이 [bha-story-ep] ",
+    "3화 큰 기척 [bha-story-ep is-locked] 앞 화를 깨면 열린다",
+    "4화 들개 대허 [bha-story-ep is-locked] 앞 화를 깨면 열린다"
+  ],
+  "shinigami.chapters": [
+    "1장 「입대」1/4화",
+    "2장 (준비 중)3단계에 열림",
+    "3장 (준비 중)5단계에 열림"
+  ],
+  "shinigami.startDialogue": [
+    "분대장: 신입, 오늘은 순찰이다. 겁먹지 마라."
+  ],
+  "shinigami.goal": "목표 · 일반 적 3마리 처치 0/3",
+  "shinigami.ep1.battle": "승리",
+  "shinigami.endDialogue": [
+    "분대장: 첫 시해다. 잘했다."
+  ],
+  "shinigami.ep1.result": "1장 「입대」 · 첫 순찰 — 클리어!\n\n화 보상 골드 +20 · 도시락 (보관 한도라 못 받음) · 첫 클리어 영옥 +2",
+  "shinigami.boss.band": "보스 · 1장 「입대」 · 들개 대허\n들개 대허\n보스\n흙\n흙\n·\n약점\n불\n연속 강공격",
+  "shinigami.boss.sealLog": "블록 봉인! 기술 블록 1칸을 4초 동안 쓸 수 없다",
+  "shinigami.boss.phaseChip": "페이즈 2/2",
+  "shinigami.boss.battle": "승리",
+  "shinigami.boss.candidates": [
+    "대허의 송곳니",
+    "혈 결계",
+    "노멀 회도"
+  ],
+  "shinigami.boss.endDialogue": [
+    "분대장: 오늘부터 너도 진짜 사신이다."
+  ],
+  "shinigami.boss.result": "1장 「입대」 · 들개 대허 — 클리어!\n\n화 보상 골드 +20 · 도시락 (보관 한도라 못 받음) · 첫 클리어 영옥 +2\n\n보스 들개 대허 첫 처치! 칭호 · 영옥 +10\n\n1장 「입대」 완료! 칭호 · 영옥 +5",
+  "shinigami.boss.growth": [
+    "1장 「입대」 · 들개 대허 — 클리어!\n\n화 보상 골드 +20 · 도시락 (보관 한도라 못 받음) · 첫 클리어 영옥 +2\n\n보스 들개 대허 첫 처치! 칭호 · 영옥 +10\n\n1장 「입대」 완료! 칭호 · 영옥 +5",
+    "새 특성 1개\n\n새 칭호 「진짜 사신」 「들개 대허 퇴치」"
+  ],
+  "shinigami.boss.save": {
+    "format": 22,
+    "jade": 17,
+    "gold": 368,
+    "story": {
+      "shinigami": {
+        "cleared": {
+          "ch1/ep1": {
+            "firstAt": 1792445428971,
+            "clears": 1
+          },
+          "ch1/ep2": {
+            "firstAt": 1792445428971,
+            "clears": 1
+          },
+          "ch1/ep3": {
+            "firstAt": 1792445428971,
+            "clears": 1
+          },
+          "ch1/ep4": {
+            "firstAt": 1792449283423,
+            "clears": 1
+          }
+        },
+        "chapters": [
+          "ch1"
+        ]
+      }
+    },
+    "bossDex": {
+      "sand-maw": {
+        "kills": 1,
+        "firstAt": 1792449283423
+      }
+    },
+    "titles": [
+      "tag-1",
+      "story-ch1",
+      "boss-sand-maw"
+    ],
+    "bossBattles": [
+      {
+        "at": 1792449283423,
+        "runId": 3,
+        "factionId": "shinigami",
+        "bossId": "sand-maw",
+        "won": true,
+        "firstKill": true,
+        "durationSeconds": 30.3,
+        "phase": 2,
+        "seals": 2,
+        "lossReason": null,
+        "tierIndex": 1,
+        "episode": "ch1/ep4"
+      }
+    ],
+    "storyRuns": 1
+  },
+  "errors": []
+}

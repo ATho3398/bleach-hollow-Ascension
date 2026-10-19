@@ -14,6 +14,7 @@ export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
   { kind: 'rank', label: '등급' },
   { kind: 'hidden-rank', label: '히든 등급' },
   { kind: 'tag', label: '특별 태그' },
+  { kind: 'story', label: '스토리' },
 ];
 
 export const TITLE_NOTE = '칭호 조건은 모두 임시이거나 아직 없다(기획서 11-7 미정). "임시" 표시가 붙은 칭호만 해금될 수 있다.';

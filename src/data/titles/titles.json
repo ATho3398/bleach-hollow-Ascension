@@ -153,5 +153,33 @@
       "type": "trainingCompleted"
     },
     "provisional": true
+  },
+  {
+    "id": "story-ch1",
+    "kind": "story",
+    "hidden": false,
+    "name": {
+      "hollow": "굶주림을 넘은 자",
+      "shinigami": "진짜 사신"
+    },
+    "condition": {
+      "type": "storyChapterCleared",
+      "chapterId": "ch1"
+    },
+    "provisional": true
+  },
+  {
+    "id": "boss-sand-maw",
+    "kind": "story",
+    "hidden": false,
+    "name": {
+      "hollow": "모래 아귀 사냥꾼",
+      "shinigami": "들개 대허 퇴치"
+    },
+    "condition": {
+      "type": "bossDefeated",
+      "bossId": "sand-maw"
+    },
+    "provisional": true
   }
 ]

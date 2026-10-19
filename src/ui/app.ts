@@ -9,7 +9,10 @@ import { buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { createExpedition, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
+import { createExpedition, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { getEpisode, type StoryLine } from '../data/story';
+import { chapterLabel, storyView } from './storyView';
+import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
@@ -30,7 +33,7 @@ import { confirmDialog } from './confirmDialog';
 import { setTitleRequest, signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
-import { button, el } from './bha/dom';
+import { button, el, mountApp } from './bha/dom';
 import { allSlotSummaries, lastPlayedSlot, slotKey, stashSlot, touchSlot } from '../saveSlots';
 import { needsMigration } from '../saveBackup';
 import { setBgm } from './bgm';
@@ -481,7 +484,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   // ── 원정 ──
-  function departScreen(faction: FactionConfig): void {
+  function departScreen(faction: FactionConfig, replace = false): void {
     if (!save) return;
     const exp = createExpedition({
       factionId: faction.id,
@@ -502,15 +505,99 @@ export function startApp(host: HTMLElement): void {
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
-    open('expedition-plan', () => planView(root, faction, exp, save!.evolution.tierIndex, {
-      onStart: () => {
-        activeExp = exp;
-        saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
-        // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
-        nav.replace({ id: 'expedition', locked: true, render: () => { showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
+    const entry = {
+      id: 'expedition-plan', locked: false,
+      render: () => {
+        setBgm('expedition');
+        planView(root, faction, exp, save!.evolution.tierIndex, {
+          onStart: () => {
+            activeExp = exp;
+            saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
+            // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
+            nav.replace({ id: 'expedition', locked: true, render: () => { showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
+          },
+          onHelp: () => openHelp('expedition', false),
+          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다
+          onStory: () => storyScreen(faction),
+        });
+        root.scrollTop = 0;
       },
-      onHelp: () => openHelp('expedition', false),
-    }), false, 'expedition');
+    };
+    if (replace) nav.replace(entry);
+    else nav.push(entry);
+  }
+
+  /** 스토리 장·화 목록 (GDD 25-4·25-7): 원정 출발 화면의 [스토리] 탭. [자유 원정] 탭이면 배치 단계로 돌아간다 */
+  function storyScreen(faction: FactionConfig): void {
+    if (!save) return;
+    nav.replace({
+      id: 'story', locked: false,
+      render: () => {
+        setBgm('expedition');
+        storyView(root, faction, save!, {
+          onFree: () => departScreen(faction, true),
+          onPick: (chapterId, episodeId) => startStory(faction, chapterId, episodeId),
+          onHelp: () => openHelp('expedition', false),
+        });
+        root.scrollTop = 0;
+      },
+    });
+  }
+
+  /** 대화 캡션: "1장 「굶주린 영혼」 · 1화 첫 사냥" */
+  const storyCaption = (exp: ExpeditionState, faction: FactionConfig): string => {
+    const st = exp.story!;
+    const ep = storyEpisodeOf(exp)!;
+    return `${chapterLabel(faction.id, st.chapterId)} · ${ep.title}`;
+  };
+
+  /** 스토리 화 시작 (GDD 25-4): 고정 길(배치 단계 없음) → 시작 대사 → 원정. 목표·대화 말고는 자유 원정과 같은 흐름 */
+  function startStory(faction: FactionConfig, chapterId: string, episodeId: string): void {
+    if (!save) return;
+    const exp = createExpedition({
+      factionId: faction.id,
+      seed: Math.floor(Math.random() * 2 ** 32),
+      runId: nextRunId(save),
+      hunger: save.nest.hunger,
+      condition: save.nest.condition,
+      deck: sanitizeDeck(save.tiles, faction.id),
+      risk: save.nest.risk,
+      stability: save.nest.stability,
+      build: save.build,
+      evolution: save.evolution,
+      liberationEnabled: liberationAccess(save).usable,
+      tileVariants: true,
+      gold: save.shared.tradeCoins,
+      story: { chapterId, episodeId },
+    });
+    resumeNote = '';
+    activeExp = exp;
+    saveProgress(exp);
+    const ep = getEpisode(faction.id, chapterId, episodeId);
+    let opened = false;
+    nav.replace({
+      id: 'expedition', locked: true,
+      render: () => {
+        showExpedition(faction, exp, '출발!');
+        root.scrollTop = 0;
+        if (opened) return;
+        opened = true;
+        // 시작 대사: 원정 화면 위에 띄우고, 다 넘긴 뒤 걷기 시작한다 (대화 중에는 원정 시간이 멈춘다)
+        storyTalk(faction, exp, ep.dialogue.start, '시작', () => {}, true);
+      },
+    });
+  }
+
+  /** 스토리 대사 한 묶음 (GDD 25-7): 지금 화면 위에 대화창. hold = 아래 원정 화면의 시간을 대화 동안 멈춘다 */
+  function storyTalk(faction: FactionConfig, exp: ExpeditionState, lines: readonly StoryLine[], when: string, then: () => void, hold = false): void {
+    if (hold) signalHold('hold');
+    playDialogue(lines, {
+      caption: `${storyCaption(exp, faction)} — ${when}`,
+      onDone: () => {
+        if (hold) signalHold('release');
+        then();
+      },
+    });
   }
 
   /** 사냥터 기본 선택 (GDD 24-2): 마지막 원정의 사냥터가 아직 열려 있으면 그것, 아니면 기본 사냥터 */
@@ -535,12 +622,14 @@ export function startApp(host: HTMLElement): void {
     const p = exp.pending!;
     const s = startBattle(exp);
     const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}${p.synergy ? ` · ${synergyName(p.synergy, faction.id)}${p.second ? ' 2연전' : ''}` : ''}${p.trap ? ' · 함정' : ''}${exp.mutation ? ` · ${mutationName(exp.mutation, faction.id)}` : ''}`;
-    setBgm(p.enemy.class === 'elite' ? 'elite' : 'battle');
+    // 보스전 (GDD 25-3): 음악 boss, 등장 이름 띠
+    setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
       skinId: save?.skin,
       formId: save?.evolution.formId,
-      banner: where,
+      banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
+      ...(p.boss ? { boss: { eyebrow: '보스' } } : {}),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       liberation: save ? liberationButton(faction, { ...liberationAccess(save), usable: p.params.liberationEnabled === true }) : undefined,
       tutorial: tutorialFor(),
@@ -557,7 +646,16 @@ export function startApp(host: HTMLElement): void {
     activeExp = exp;
     const proceed = () => {
       saveProgress(exp);
-      const next = () => (exp.phase === 'ended' ? endExpedition(faction, exp) : showExpedition(faction, exp, '전투 승리!'));
+      const next = () => {
+        if (exp.phase === 'ended') return endExpedition(faction, exp);
+        // 스토리 중간 대사 (GDD 25-7): 조건(처치 수)을 채운 뒤 원정으로 돌아가기 전에 한 번
+        const cue = takeStoryCue(exp);
+        showExpedition(faction, exp, '전투 승리!');
+        if (cue) {
+          saveProgress(exp);
+          storyTalk(faction, exp, cue, '중간', () => {}, true);
+        }
+      };
       if (drainEvents(exp).length > 0) breakthroughScreen(faction, exp, next);
       else next();
     };
@@ -606,13 +704,23 @@ export function startApp(host: HTMLElement): void {
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => nav.pop(), s.build.slots.length, extra), true);
       }
     }
-    resultView(root, faction, exp, save?.nest.stability ?? exp.stability, () => {
-      nestScreen();
-      const next = afterResult;
-      afterResult = null;
-      next?.();
-    }, growth);
-    if (save) showTitleToasts(save, faction, persist);
+    const showResult = () => {
+      setBgm('expedition'); // 결과 화면은 원정 음악 (스토리 끝 대사의 story 음악에서 돌아온다)
+      resultView(root, faction, exp, save?.nest.stability ?? exp.stability, () => {
+        nestScreen();
+        const next = afterResult;
+        afterResult = null;
+        next?.();
+      }, growth);
+      if (save) showTitleToasts(save, faction, persist);
+    };
+    // 스토리 화를 깼으면 끝 대사 다음에 결과 (GDD 25-7)
+    const ep = storyEpisodeOf(exp);
+    if (ep && exp.story?.cleared) {
+      mountApp(root, { fixed: true }); // 전투·흡수 화면을 걷고 빈 화면 위에 끝 대사
+      storyTalk(faction, exp, ep.dialogue.end, '끝', showResult);
+    }
+    else showResult();
   }
 
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──

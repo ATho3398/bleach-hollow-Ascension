@@ -432,12 +432,12 @@ describe('골드·런 로그·세이브', () => {
     old.meta.format = 20;
     old.runLog.runs = [{ runId: 1, laps: 2, outcome: 'returned', gained: [], lost: [], endReason: 'returned', seed: 1, factionId: 'hollow', gainedTraits: [], lostTraits: [], riskPeak: 0, breakthrough: false, groundId: 'outskirts' }];
     const m = migrateSave(old)!;
-    expect(SAVE_FORMAT_VERSION).toBe(21);
-    expect(m.meta.format).toBe(21);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(21);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.runLog.runs[0]).toMatchObject({ synergies: [], mutations: [], events: [], drafts: [], gold: 0 });
   });
   it('원정 중간 저장 형식 5: 이벤트·드래프트 진행 왕복, 깨진 값·옛 형식은 이어하지 않는다', () => {
-    expect(EXPEDITION_SNAPSHOT_VERSION).toBe(5);
+    expect(EXPEDITION_SNAPSHOT_VERSION).toBeGreaterThanOrEqual(5);
     const e = exp('hollow', { gold: 40 });
     road(e, { 4: 'event-merchant' });
     stepTo(e, 4);

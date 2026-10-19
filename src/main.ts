@@ -6,6 +6,7 @@ import './ui/bha/components/components.css';
 import './ui/bha/screens/screens.css';
 import './ui/bha/app.css';
 import './ui/bha/expedition.css';
+import './ui/bha/story.css';
 import './ui/bha/device.css';
 import './ui/bha/room.css';
 import './ui/bha/lcd.css';

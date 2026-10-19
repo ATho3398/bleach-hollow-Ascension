@@ -67,6 +67,10 @@ export function checkCondition(c: TitleCondition, log: RunLog): boolean {
       return (log.rankBattles ?? []).some((r) => r.won && r.rankAfter !== null && r.rankAfter <= c.rank);
     case 'trainingCompleted':
       return (log.trainings ?? []).some((t) => t.completedNow);
+    case 'bossDefeated':
+      return (log.bossBattles ?? []).some((b) => b.won && b.bossId === c.bossId);
+    case 'storyChapterCleared':
+      return (log.storyRuns ?? []).some((r) => r.chapterCleared && r.chapterId === c.chapterId);
   }
 }
 

@@ -1,0 +1,8 @@
+{
+  "provisional": true,
+  "chapters": [
+    { "id": "ch1", "number": 1, "unlockTierIndex": 0, "groundId": "outskirts" },
+    { "id": "ch2", "number": 2, "unlockTierIndex": 2, "groundId": "canyon" },
+    { "id": "ch3", "number": 3, "unlockTierIndex": 4, "groundId": "forest" }
+  ]
+}

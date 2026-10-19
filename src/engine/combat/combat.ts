@@ -240,6 +240,10 @@ export type CombatEvent =
   | { kind: 'liberate'; seconds: number; blocks: number }
   /** 해방이 풀렸다: 리스크 게이지 상승량 */
   | { kind: 'liberation-end'; risk: number }
+  /** 보스 페이즈가 바뀌었다 (GDD 25-3): 새 페이즈 번호(2부터) */
+  | { kind: 'boss-phase'; phase: number }
+  /** 보스 기믹 칸 봉인: 봉인된 블록 uid 와 시간 */
+  | { kind: 'cell-seal'; uid: number; seconds: number }
   | { kind: 'end'; status: CombatStatus };
 
 export interface CombatState {
@@ -312,6 +316,8 @@ export interface CombatState {
   finisher: Finisher | null;
   /** 해방 (GDD 22-5): 게이지(0~100), 쓴 틱(전투당 1회), 남은 지속 틱, 쓰기 전 능력치·최대 체력(풀릴 때 되돌린다), 끝날 때 오른 리스크 */
   liberation: LiberationState;
+  /** 보스전이면 페이즈·기믹 상태 (GDD 25-3), 일반 전투는 없음 */
+  boss?: BossState;
   /** 받아들여진 입력 기록 (같은 시드로 다시 돌리면 같은 결과) */
   inputs: { tick: number; input: CombatInput }[];
   events: CombatEvent[];
@@ -334,6 +340,32 @@ export interface Dot {
 export interface CombatSetup {
   enemy: EnemyDef;
   params?: Partial<CombatParams>;
+  /** 보스전 (GDD 25-3, C.58): 페이즈·기믹·시간 제한. 없으면 일반 전투 */
+  boss?: BossSetup;
+}
+
+/** 보스전 재료 (보스 데이터 + BALANCE.provisional.boss): 엔진은 보스 id 로 분기하지 않고 페이즈 구간·기믹 종류만 읽는다 */
+export interface BossSetup {
+  id: string;
+  /** 2페이즈부터: 적 체력이 최대 체력 × belowHpFraction 이하가 되면 그 페이즈로, 기본 공격 간격 × attackSecondsMult */
+  phases: { belowHpFraction: number; attackSecondsMult: number }[];
+  /** 기믹 종류: seal 만 엔진이 처리한다 (summon·element·reflect 는 종류 자리) */
+  gimmick: 'seal' | 'summon' | 'element' | 'reflect';
+  /** seal: 이 간격(초)마다 블록 바의 블록 cells 칸을 seconds 초 동안 봉인 */
+  sealEverySeconds: number;
+  sealSeconds: number;
+  sealCells: number;
+  /** 시간 제한(초): 넘기면 패배 */
+  timeLimitSeconds: number;
+}
+
+/** 보스전 상태: 지금 페이즈(1부터), 기본 공격 간격 배율, 다음 기믹까지 남은 틱, 봉인한 블록 수 (런 로그) */
+export interface BossState {
+  setup: BossSetup;
+  phase: number;
+  attackMult: number;
+  gimmickTimer: number;
+  seals: number;
 }
 
 export function ticksOf(p: CombatParams, seconds: number): number {
@@ -449,7 +481,7 @@ export function sourceOf(p: CombatParams, traitId: string | null): CombatSkill |
 }
 
 export function createCombat(seed: number, setup: CombatSetup): CombatState {
-  const params: CombatParams = { ...defaultCombatParams(), ...setup.params };
+  const params: CombatParams = { ...defaultCombatParams(), ...setup.params, ...(setup.boss ? { timeLimitSeconds: setup.boss.timeLimitSeconds } : {}) };
   const t = (sec: number) => ticksOf(params, sec);
   // 적 체력 = 플레이어 기본 공격 N회 분량 (CLAUDE.md 규칙 3). 육성으로 공격력이 오르면 같이 오른다
   const maxHp = setup.enemy.hpInAttacks * params.hpAttackScale * params.playerAttackDamage * params.growthMultiplier;
@@ -507,6 +539,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     riskGained: 0,
     finisher: null,
     liberation: { gauge: 0, usedAtTick: null, ticksLeft: 0, base: null, risk: 0 },
+    ...(setup.boss ? { boss: { setup: { ...setup.boss, phases: setup.boss.phases.map((x) => ({ ...x })) }, phase: 1, attackMult: 1, gimmickTimer: t(setup.boss.sealEverySeconds), seals: 0 } } : {}),
     inputs: [],
     events: [],
   };
@@ -640,7 +673,47 @@ function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
     s.status = 'won';
     s.finisher = finisher;
     emit(s, { kind: 'end', status: 'won' });
+    return;
   }
+  if (s.boss) updateBossPhase(s, s.boss);
+}
+
+/** 보스 페이즈 (GDD 25-3): 체력이 구간 아래로 내려가면 다음 페이즈로 (한 번에 여러 구간을 넘으면 마지막 것). 기본 공격 간격 배율이 바뀐다 */
+function updateBossPhase(s: CombatState, b: BossState): void {
+  const ratio = s.enemy.hp / s.enemy.maxHp;
+  let phase = b.phase;
+  b.setup.phases.forEach((ph, i) => {
+    if (ratio <= ph.belowHpFraction && i + 2 > phase) phase = i + 2;
+  });
+  if (phase === b.phase) return;
+  b.phase = phase;
+  b.attackMult = b.setup.phases[phase - 2]!.attackSecondsMult;
+  // 다음 기본 공격도 새 간격을 넘지 않게
+  s.enemy.attackTimer = Math.min(s.enemy.attackTimer, ticksOf(s.params, enemyAttackSecondsOf(s.params, s.enemy.def.pattern) * b.attackMult));
+  emit(s, { kind: 'boss-phase', phase });
+}
+
+/** 보스 기믹 seal (GDD 25-3): 간격마다 봉인 안 된 블록 cells 개를 골라 봉인한다. 바가 비어 있으면 블록이 생길 때까지 다음 틱에 다시 본다 */
+function bossGimmick(s: CombatState, b: BossState): void {
+  if (b.setup.gimmick !== 'seal') return; // summon·element·reflect: 종류 자리만 (GDD 25-7)
+  if (--b.gimmickTimer > 0) return;
+  const free = s.tray.filter((x) => !(x.sealTicks && x.sealTicks > 0));
+  if (free.length === 0) {
+    b.gimmickTimer = 1;
+    return;
+  }
+  b.gimmickTimer = ticksOf(s.params, b.setup.sealEverySeconds);
+  for (let k = 0; k < b.setup.sealCells && free.length > 0; k++) {
+    const blk = free.splice(nextInt(s.rng, free.length), 1)[0]!;
+    blk.sealTicks = ticksOf(s.params, b.setup.sealSeconds);
+    b.seals++;
+    emit(s, { kind: 'cell-seal', uid: blk.uid, seconds: b.setup.sealSeconds });
+  }
+}
+
+/** 이 블록이 봉인돼 있나 (보스 기믹) */
+export function blockSealed(b: Block | undefined): boolean {
+  return !!b && (b.sealTicks ?? 0) > 0;
 }
 
 /** 공격자 속성의 맞힌 뒤 효과 (GDD 20-2): 혈 = 준 피해 일부 회복, 독 = 지속 피해. 내 공격(target enemy)과 적 공격(target player) 모두 */
@@ -881,7 +954,7 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
   } else if (input.type === 'liberate') {
     ok = liberate(s);
   } else if (input.type === 'use') {
-    ok = inTray(s.tray, input.cell) && useBlock(s, input.cell);
+    ok = inTray(s.tray, input.cell) && !blockSealed(s.tray[input.cell]) && useBlock(s, input.cell);
   }
   if (ok) s.inputs.push({ tick: s.tick, input });
   return ok;
@@ -1010,6 +1083,7 @@ function advanceTick(s: CombatState): void {
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
   if (s.liberation.ticksLeft > 0 && --s.liberation.ticksLeft === 0) endLiberation(s);
   if (s.sealTicks > 0) s.sealTicks--;
+  for (const b of s.tray) if (b.sealTicks && b.sealTicks > 0) b.sealTicks--;
   // 독 지속 피해 (GDD 20-2)
   if (s.enemy.dot) {
     const d = s.enemy.dot;
@@ -1045,6 +1119,7 @@ function advanceTick(s: CombatState): void {
     if (nextFloat(s.rng) < voidChanceOf(p)) spawn(s, 'void', null);
   }
   if (s.sp >= p.spMax && spawn(s, 'special', null)) s.sp = 0;
+  if (s.boss) bossGimmick(s, s.boss);
   // 내 자동 기본 공격
   if (--s.player.attackTimer <= 0) {
     s.player.attackTimer = t(currentAttackSeconds(s));
@@ -1059,7 +1134,7 @@ function advanceTick(s: CombatState): void {
   // 적: 시전 중이면 강공격 대기, 아니면 기본 공격 + 패턴의 특수 행동(강공격 예고 / 봉인 / 방어 자세)
   const e = s.enemy;
   const pattern = e.def.pattern;
-  const attackTicks = t(enemyAttackSecondsOf(p, pattern));
+  const attackTicks = t(enemyAttackSecondsOf(p, pattern) * (s.boss?.attackMult ?? 1));
   if (e.stance && --e.stance.ticks <= 0) {
     e.stance = null;
     emit(s, { kind: 'stance-end' });

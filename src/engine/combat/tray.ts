@@ -9,6 +9,8 @@ export interface Block {
   traitId: string | null;
   /** skill 공격 블록의 계열 id (GDD 17-3): 같은 계열이면 특성이 달라도 체인이 된다. 막기·회복·기본 블록·special·void 는 null (옛 데이터는 없음 = null) */
   family?: string | null;
+  /** 보스 기믹 칸 봉인 (GDD 25-3 seal, C.58): 남은 틱. 0 보다 크면 누를 수 없고 옆 블록과 체인으로 묶이지 않는다 (없음 = 봉인 안 됨) */
+  sealTicks?: number;
 }
 
 /** 블록 바. 길이 = 지금 놓인 블록 수 (최대 BALANCE trayCapacity), 빈 칸이 없다 */
@@ -21,6 +23,7 @@ export function inTray(t: Tray, i: number): boolean {
 /** 서로 체인으로 묶일 수 있는 블록인가 (GDD 17-3): 공격 블록은 같은 계열이면 특성이 달라도 묶이고, 계열이 없는 skill 블록(막기·회복·기본 블록)은 같은 특성끼리만 묶인다. 공허·필살은 단독 */
 export function sameChainKind(a: Block | undefined, b: Block | undefined): boolean {
   if (!a || !b || a.kind !== 'skill' || b.kind !== 'skill') return false;
+  if ((a.sealTicks ?? 0) > 0 || (b.sealTicks ?? 0) > 0) return false;
   const fa = a.family ?? null;
   const fb = b.family ?? null;
   if (fa !== null || fb !== null) return fa === fb;

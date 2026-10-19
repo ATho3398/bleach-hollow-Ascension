@@ -7,11 +7,14 @@ import { elementName } from '../data/elements';
 import { synergyName, tileName } from '../data/tiles';
 import { button, el, icon, mountApp } from './bha/dom';
 import { roadPlanner } from './bha/road';
+import { departTabs } from './storyView';
 
 export interface PlanViewHandlers {
   /** [출발]: 배치가 끝났다 (손은 이미 비웠다). 원정 시작 */
   onStart: (placed: number) => void;
   onHelp: () => void;
+  /** [스토리] 탭 (GDD 25-7): 있으면 머리에 [자유 원정]/[스토리] 탭을 보인다 */
+  onStory?: () => void;
 }
 
 /** 사냥터 한 줄 설명: 종족 설정 설명 + 자주 나오는 속성 + 적 강도 (데이터에서 조합, GDD 24-2) */
@@ -55,7 +58,8 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   pick(GROUNDS.find((g) => g.id === exp.groundId) ?? GROUNDS[0]!);
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   const head = el('div', 'bha-exp__head');
-  head.append(title, grounds, help);
+  // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
+  head.append(h.onStory ? departTabs('free', () => h.onStory!()) : title, grounds, help);
 
   const start = button({
     label: '출발', icon: 'i-play', variant: 'primary', size: 'lg',

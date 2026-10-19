@@ -16,6 +16,9 @@ import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck,
 import { inheritableTraits } from '../src/engine/rebirth';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import { GROUNDS } from '../src/data/grounds';
+import { BOSSES } from '../src/data/bosses';
+import { STORY_CHAPTERS, chapterContent } from '../src/data/story';
+import { bossSetupOf } from '../src/engine/expedition';
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
@@ -663,6 +666,57 @@ let campaignFinalDefeats: number[] = [];
   if (bodies.length < CAMPAIGNS * 0.8) failures.push(`해방: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
   // 회귀 가드는 목표보다 넓게(+5~25%p): 다른 수치를 고칠 때 해방이 무의미해지거나 압도적이 되는 것만 막는다
   if (gain < 0.05 || gain > 0.25) failures.push(`해방: 강적 승률 변화 ${(gain * 100).toFixed(1)}%p (가드 +5~25%p 밖)`);
+}
+
+// ── 보스전 (C.58, GDD 25-3·25-7): 보스가 나오는 스토리 장의 권장 단계에 갓 닿은 몸(위 진화 봇 세이브)으로 사람형 봇이 보스와 싸운다 ──
+// 목표(마스터 25-7, provisional): 승률 50~70%. 가드는 목표보다 넓게(35~85%) — 다른 수치를 고칠 때 보스가 무의미하거나 못 깨는 벽이 되는 것만 막는다
+{
+  const BR = 4;
+  for (const boss of BOSSES) {
+    // 이 보스가 나오는 화의 권장 단계 (두 종족 중 처음 찾은 것)
+    let tier = -1;
+    let ground = GROUNDS[0]!.id;
+    for (const ch of STORY_CHAPTERS) {
+      for (const fid of ['hollow', 'shinigami']) {
+        const ep = chapterContent(fid, ch.id)?.episodes.find((e) => e.boss?.id === boss.id);
+        if (ep && tier < 0) {
+          tier = ep.recommendedTier - 1;
+          ground = ch.groundId;
+        }
+      }
+    }
+    if (tier < 0) continue;
+    const bodies = campaignFirstAt[tier] ?? [];
+    let wins = 0;
+    let games = 0;
+    let secs = 0;
+    let timeouts = 0;
+    let phase2 = 0;
+    let seals = 0;
+    bodies.forEach((body, bi) => {
+      for (let k = 0; k < BR; k++) {
+        const params = buildCombatParams(body.build, 'hollow');
+        applyEvolutionToParams(params, body.evolution, 'hollow');
+        params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+        const end = playCombatHuman(createCombat(80000 + bi * 131 + k * 17, { enemy: scaleEnemy(boss.enemy, enemyScale(1, ground)), params, boss: bossSetupOf(boss.id) }));
+        games++;
+        if (end.status === 'won') {
+          wins++;
+          secs += elapsedSeconds(end);
+        }
+        if (end.lossReason === 'timeout') timeouts++;
+        if ((end.boss?.phase ?? 1) >= 2) phase2++;
+        seals += end.boss?.seals ?? 0;
+      }
+    });
+    const rate = games ? wins / games : 0;
+    const BX = BALANCE.provisional.boss;
+    console.log(`\n보스전 (사람형 봇, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${BR}판, 사냥터 ${ground}) — 목표(임시): 승률 50~70%`);
+    console.log(`  ${boss.id}: 체력 ${boss.enemy.hpInAttacks}회분 · 공격 ${boss.enemy.attackInAttacks} · 페이즈 ${boss.phases.map((p) => `${p.belowHpFraction * 100}% 이하 공격 간격 ×${p.attackSecondsMult}`).join(' / ')} · 기믹 ${boss.gimmick}(${BX.seal.everySeconds}초마다 ${BX.seal.cells}칸 ${BX.seal.seconds}초) · 시간 ${BX.timeLimitSeconds}초`);
+    console.log(`  승률 ${(rate * 100).toFixed(0)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초 · 시간 초과 ${timeouts}/${games} · 2페이즈 도달 ${phase2}/${games} · 봉인 ${(seals / Math.max(1, games)).toFixed(1)}칸/판`);
+    if (bodies.length < CAMPAIGNS * 0.8) failures.push(`보스전 ${boss.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+    if (rate < 0.35 || rate > 0.85) failures.push(`보스전 ${boss.id}: 승률 ${(rate * 100).toFixed(0)}% (가드 35~85% 밖)`);
+  }
 }
 
 // ── 등급전 (C.49, GDD 21장): 번호 보유자 No.10 → No.1 승률 곡선. 위 진화 봇 중 5단계(아란칼)에 닿은 세이브(원정 MAX_RUNS 회를 마친 몸)로 사람형 봇이 각 보유자와 싸운다 ──
