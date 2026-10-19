@@ -475,7 +475,7 @@ export function startApp(host: HTMLElement): void {
       persist();
       growth = {
         newTraits: summarize(exp).keptTraits.length,
-        evolvedTo: evo?.ok ? formName(evo.form, faction.id) : null,
+        evolvedTo: evo?.ok ? formName(evo.form, faction.id, playerElementsOf(save.evolution)) : null,
         newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
       };
       if (evo?.ok) {

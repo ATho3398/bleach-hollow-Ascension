@@ -52,7 +52,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   const tierName = faction.tierNames[evo.tierIndex]!;
   const current = evo.formId ? tryGetForm(evo.formId) : undefined;
   const form = h('div', 'bha-evo__form');
-  const formName_ = h('span', 'bha-evo__formname', current ? formName(current, faction.id) : tierName);
+  const formName_ = h('span', 'bha-evo__formname', current ? formName(current, faction.id, playerElementsOf(evo)) : tierName);
   if (current?.provisional) formName_.append(' ', provisionalTag());
   const els = h('span', 'bha-dim');
   els.append(`${evo.tierIndex + 1}단계 · ${tierName} · 속성 `, elementsMark(playerElementsOf(evo), faction.id));
@@ -141,7 +141,7 @@ export function evolutionView(
   path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', faction.tierNames[to]!));
   const created = h('div', 'bha-evolve__new');
   for (const e of extra?.elements ?? form.elements ?? []) created.append(elementDot(e, faction.id));
-  created.append(` 새 진화체: ${formName(form, faction.id)}`);
+  created.append(` 새 진화체: ${formName(form, faction.id, extra?.elements ?? [])}`);
   if (form.hidden) created.append(' ', h('span', 'bha-chip bha-chip--rare', '히든'));
   if (form.provisional) created.append(' ', provisionalTag());
 

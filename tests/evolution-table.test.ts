@@ -123,12 +123,32 @@ describe('이름 자리 표시 (종족 설정 단계 이름, 원작 이름 없�
       expect(placeholderName(t4, fac.id)).toContain(fac.tierNames[3]);
       expect(formName(t4, fac.id)).toContain('불');
       const t5 = FORM_TABLE.find((f) => f.id === 't5:water:special')!;
-      expect(formName(t5, fac.id)).toMatch(/물.*특수/);
+      const specialAbbr = fac.families.find((x) => x.category === 'special')!.abbr;
+      expect(formName(t5, fac.id)).toBe(`${fac.tierNames[4]}_물_${specialAbbr}`);
       for (const f of FORM_TABLE) {
         expect(formName(f, fac.id).length).toBeGreaterThan(0);
         expect(formHint(f, fac.id).length).toBeGreaterThan(0);
       }
     }
     expect(formName(FORM_TABLE.find((f) => f.id === 'h4:fusion:water+earth')!, 'hollow')).toContain('융합');
+  });
+  it('형식 `단계_속성_분류` (GDD 20장 v5.3): 1~3단계는 단계 이름만, 히든은 `단계_히든 이름`, 아란칼 히든은 이은 속성을 뒤에', () => {
+    const name = (id: string, fac = 'hollow', inh: string[] = []) => formName(FORM_TABLE.find((f) => f.id === id)!, fac, inh);
+    expect(name('t2:base')).toBe('길리안');
+    expect(name('t3:base')).toBe('아쥬커스');
+    expect(name('t4:fire')).toBe('바스트로데_불');
+    expect(name('t5:fire:special')).toBe('아란칼_불_탄');
+    expect(name('t5:fire:physical')).toBe('아란칼_불_조');
+    expect(name('t5:fire:mixed')).toBe('아란칼_불_교');
+    expect(name('t5:fire:special', 'shinigami')).toBe('수석 대원_불_귀');
+    expect(name('t4:fire', 'shinigami')).toBe('평대원_불');
+    expect(name('h4:fusion:water+earth')).toBe('바스트로데_융합_물흙');
+    expect(name('h4:complete')).toBe('바스트로데_완전체');
+    expect(name('h4:special:blood')).toBe('바스트로데_특수_혈');
+    expect(name('h4:pure')).toBe('바스트로데_순수');
+    expect(name('h4:fail')).toBe('바스트로데_실패');
+    expect(name('h5:limit', 'hollow', ['fire'])).toBe('아란칼_한계돌파_불');
+    expect(name('h5:restraint', 'hollow', ['water', 'earth'])).toBe('아란칼_절제_물흙');
+    expect(name('h5:hunter')).toBe('아란칼_강적사냥꾼'); // 도감처럼 상태가 없으면 속성 생략
   });
 });
