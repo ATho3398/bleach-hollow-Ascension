@@ -43,6 +43,8 @@ export interface EvolutionState {
   ev: Stats;
   /** 지금 진화체의 고유 특성 방향 (진화 순간 노력치 최고 능력치, v4.0). 1단계는 null */
   ability: StatId | null;
+  /** 환생 계승 노력치 (GDD 22-7, 형식 20): 이 생을 시작할 때 받은 값(정수). 단계 상한과 따로 더해진다. 없으면 0 */
+  carry?: Stats;
 }
 
 export function zeroStats(): Stats {
@@ -57,7 +59,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev } };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}) };
 }
 
 export function isMaxTier(e: EvolutionState): boolean {
@@ -150,10 +152,13 @@ export function baseStatsOf(e: EvolutionState, factionId: string): Stats {
   return { ...(form?.stats ?? getFaction(factionId).baseStats) };
 }
 
-/** 지금 능력치 = 종족값 + 노력치 (GDD 20-4) */
+/** 능력치 절대 상한 (GDD 22-1 v4.7, 6개 모두) */
+export const STAT_MAX: number = SX.statMax;
+
+/** 지금 능력치 = 종족값 + 노력치 + 환생 계승 (GDD 20-4·22-7), 능력치마다 STAT_MAX 에서 멈춘다 */
 export function currentStats(e: EvolutionState, factionId: string): Stats {
   const base = baseStatsOf(e, factionId);
-  for (const s of STAT_IDS) base[s] += e.ev[s];
+  for (const s of STAT_IDS) base[s] = Math.min(STAT_MAX, base[s] + e.ev[s] + (e.carry?.[s] ?? 0));
   return base;
 }
 

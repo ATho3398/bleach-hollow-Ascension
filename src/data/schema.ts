@@ -255,11 +255,11 @@ export interface ComboDef {
 
 /**
  * 진화체 종류 (GDD 20-5 v3.7~v4.2): 일반 = 1·2·3단계 base, 바스트로데 element(속성 8), 아란칼 arrancar(속성 × 분류 24).
- * 히든 11종: 바스트로데 시점 fusion 2 · complete 1 · special 3 · pure · fail / 아란칼 시점 limit(한계 돌파) · restraint(절제) · hunter(강적 사냥꾼).
+ * 히든 12종: 바스트로데 시점 fusion 2 · complete 1 · special 3 · pure · fail / 아란칼 시점 limit(한계 돌파) · restraint(절제) · hunter(강적 사냥꾼) · reborn(환생, GDD 22-7 환생 N회 이상).
  */
-export const FORM_KINDS = ['base', 'element', 'arrancar', 'fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter'] as const;
+export const FORM_KINDS = ['base', 'element', 'arrancar', 'fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter', 'reborn'] as const;
 export type FormKind = (typeof FORM_KINDS)[number];
-export const HIDDEN_FORM_KINDS: readonly FormKind[] = ['fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter'];
+export const HIDDEN_FORM_KINDS: readonly FormKind[] = ['fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter', 'reborn'];
 
 export interface FormLabel {
   kind: FormKind;

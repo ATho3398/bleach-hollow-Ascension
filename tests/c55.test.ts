@@ -256,8 +256,8 @@ describe('스킨 데이터·세이브 (26-5)', () => {
     old.meta.format = 18;
     delete old.skin;
     const m = migrateSave(old)!;
-    expect(SAVE_FORMAT_VERSION).toBe(19);
-    expect(m.meta.format).toBe(19);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(19);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.skin).toBeNull();
     equipSkin(m, 'grandfisher');
     expect(migrateSave(JSON.parse(JSON.stringify(m)))!.skin).toBe('grandfisher');

@@ -14,6 +14,9 @@ import { characterButton, charTopOffset, propButton, roomCharArt, sceneBox } fro
 import { moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
+import { rebirthMark } from './rebirthView';
+import { formName, tryGetForm } from '../data/evolution';
+import { playerElementsOf } from '../engine/evolution';
 
 export interface RoomHandlers {
   onDepart: () => void;
@@ -59,6 +62,14 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const hud = el('header', 'bha-room__hud');
   const items: SelectItem[] = [];
   let resumeBtn: HTMLButtonElement | null = null;
+  // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★
+  const stars = rebirthMark(save.rebirth.count);
+  if (stars) {
+    const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
+    const name = el('span', 'bha-small bha-room__name', form ? formName(form, faction.id, playerElementsOf(save.evolution)) : faction.tierNames[save.evolution.tierIndex]!);
+    name.append(' ', stars);
+    hud.append(name);
+  }
   if (hd.resume) {
     resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
     resumeBtn.title = hd.resume.info;

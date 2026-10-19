@@ -71,6 +71,11 @@
 .bha-altar-page .bha-btn--lg { min-height: 56px; }
 .bha-altar-page .bha-linbar__legend { flex-wrap: wrap; row-gap: var(--bha-sp-2); }
 
+/* 환생 연출 (.bha-evolve.bha-rebirth, GDD 22-7): 하얗게 바랬다가 돌아오는 짧은 페이드 */
+.bha-lcd .bha-evolve.bha-rebirth { animation: bha-rebirth-fade 1.1s var(--bha-ease-out) both; }
+@keyframes bha-rebirth-fade { 0% { opacity: 0; filter: brightness(3) saturate(0); } 60% { opacity: 1; filter: brightness(1.6) saturate(0.4); } 100% { opacity: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .bha-lcd .bha-evolve.bha-rebirth { animation-duration: 1ms; } }
+
 /* ═════ 진화 연출 (.bha-evolve): 연출 줄은 왼쪽 균열 + 오른쪽 문구, 결과는 왼쪽 이름·경로·[둥지로] / 오른쪽 달라진 점 ═════ */
 .bha-lcd .bha-app.bha-evolve { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; justify-content: center; padding: var(--bha-sp-4) var(--bha-sp-6); gap: 0; }
 .bha-lcd .bha-evolve > section:not(.bha-evolve__result) {

@@ -2,14 +2,14 @@
 
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
-import { completedElements, newBuild, type BuildState } from './engine/absorb';
+import { completedElements, gainTrait, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, doNestAction, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult } from './engine/expedition';
-import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RankBattleRecord, type RunLog } from './engine/runLog';
-import { applyChallenge, canChallenge, newRankState, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
+import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RankBattleRecord, type RebirthRecord, type RunLog } from './engine/runLog';
+import { applyChallenge, canChallenge, newRankState, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { buildBattleRecord, type CombatState } from './engine/combat';
 import { tilesFor } from './data/tiles';
 import { TITLES } from './data/titles';
@@ -25,10 +25,11 @@ import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './
 import { DEFAULT_GROUND_ID } from './data/grounds';
 import { canWear } from './data/skins';
 import { applyAbsenceHunger } from './engine/nest';
+import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 19;
+export const SAVE_FORMAT_VERSION = 20;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -79,6 +80,8 @@ export interface SaveData {
   training: TrainingState;
   /** 입고 있는 스킨 id (GDD 25-1·26-5, 형식 19). null = 진화체 그림 그대로. 이 종족이 입을 수 있는 스킨이 아니면 null 로 고친다 */
   skin: string | null;
+  /** 환생 (GDD 22-1·22-7, 형식 20): 환생 횟수·누적 계승 노력치. 환생해도 남는다 */
+  rebirth: RebirthState;
 }
 
 /** 튜토리얼 보상 수령 1건 (GDD 23-3) */
@@ -88,7 +91,7 @@ export interface TutorialClaim {
 }
 
 export interface SharedState {
-  /** 영혼 결정: 강적 처치 +1, 등급전 승리 +3 (환생 +10 은 환생 구현 때). 수치 provisional */
+  /** 영혼 결정: 강적 처치 +1, 등급전 승리 +3, 환생 +10. 수치 provisional */
   soulCrystals: number;
   /** 먹이 종류별 보유 개수 (GDD 23-1, 형식 16). 상한 9, 시작 간식 5·보통 3 */
   food: FoodStock;
@@ -150,7 +153,7 @@ export interface TutorialGrant {
 export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), defs: readonly TutorialGoalDef[] = TUTORIAL_GOALS): TutorialGrant[] {
   const claims = (save.shared.tutorials[save.factionId] ??= []);
   const fresh = newlyAchieved(defs, claims.map((c) => c.goalId), {
-    factionId: save.factionId, tutorialSeen: save.help.tutorialSeen, runLog: save.runLog, tierIndex: save.evolution.tierIndex, everRanked: save.rank.history.everRanked, trainingCompleted: save.training.completed,
+    factionId: save.factionId, tutorialSeen: save.help.tutorialSeen, runLog: save.runLog, tierIndex: save.evolution.tierIndex, everRanked: save.rank.history.everRanked, trainingCompleted: save.training.completed, rebirths: save.rebirth.count,
   });
   return fresh.map((goal) => {
     claims.push({ goalId: goal.id, at: nowMs });
@@ -211,7 +214,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState(), skin: null };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState(), skin: null, rebirth: newRebirthState() };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -287,7 +290,7 @@ function cloneBuildOf(b: BuildState): BuildState {
 /** 둥지에서 진화를 확정한다 (원정 중에는 부르지 않는다, 귀환 때 recordExpedition 이 부른다). 그 순간 장착 특성·허기·컨디션으로 판정.
  *  슬롯 +1, 단계 기록 리셋(노력치 유지), 도감 해금, 런 로그에 기록. 안정 수치·리스크는 그대로 */
 export function performEvolution(save: SaveData, nowMs: number = Date.now(), care: { hunger: number; condition: number } = save.nest): EvolveResult {
-  const r = evolve(save.evolution, save.build, { factionId: save.factionId, hunger: care.hunger, condition: care.condition }, nowMs);
+  const r = evolve(save.evolution, save.build, { factionId: save.factionId, hunger: care.hunger, condition: care.condition, rebirths: save.rebirth.count }, nowMs);
   if (r.ok) {
     save.runLog.tiers.evolutions.push(r.record);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
@@ -351,6 +354,47 @@ export function recordTraining(save: SaveData, game: TrainingGameId, won: boolea
   save.runLog.trainings.push({ at: nowMs, factionId: save.factionId, game, won, level: out.level, points: out.points, completedNow: out.completedNow });
   checkTitles(save, 'training', nowMs);
   return out;
+}
+
+/** 환생 결과 (화면이 연출·안내에 쓴다) */
+export type RebirthResult =
+  | { ok: true; record: RebirthRecord; soulCrystals: number; jade: number }
+  | { ok: false; reason: 'tier' | 'expedition' | 'trait' };
+
+/** 환생 (GDD 22-1·22-7): 5단계 이상에서 둥지로부터. 되돌릴 수 없다 — 자동 백업(24-5 stashSlot 'rebirth')은 부르는 쪽(화면)이 먼저 한다.
+ *  초기화: 단계·진화체·경로·장착 특성(계승 1개 제외)·걸음·등급 사다리(번호·전적)·노력치(10% 누적 계승)·리스크 0·허기·컨디션 기본값·원정 중간 저장.
+ *  남김: 도감·칭호, 등급 이력, 수련(완료·수련치·수련권), 공유 자원(먹이·골드·영옥·영혼 결정), 타일, 스킨, 안정 수치, 런 로그.
+ *  보상: 영혼 결정 +10, 첫 환생만 영옥 10 (튜토리얼 first-rebirth 는 다음 저장 때 claimTutorialGoals 가 준다) */
+export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs: number = Date.now()): RebirthResult {
+  if (!canRebirth(save.evolution)) return { ok: false, reason: 'tier' };
+  if (save.activeExpedition != null) return { ok: false, reason: 'expedition' };
+  if (keepTraitId !== null && !inheritableTraits(save.build).includes(keepTraitId)) return { ok: false, reason: 'trait' };
+  const prev = save.evolution;
+  const carry = nextCarry(save.rebirth, prev);
+  const count = save.rebirth.count + 1;
+  save.rebirth = { count, carry };
+  const evolution = newEvolution(nextStageSeed(prev.stageSeed, 100 + count));
+  evolution.carry = startingCarry(carry);
+  save.evolution = evolution;
+  const build = newBuild();
+  if (keepTraitId !== null) gainTrait(build, keepTraitId);
+  save.build = build;
+  save.rank = resetRankKeepHistory(save.rank);
+  const fresh = newNest(nowMs);
+  save.nest = { ...save.nest, hunger: fresh.hunger, condition: fresh.condition, risk: 0, weakened: false };
+  save.activeExpedition = null;
+  save.lastScreen = 'room';
+  const RB = BALANCE.provisional.rebirth;
+  const soulCrystals = BALANCE.provisional.soulCrystals.perRebirth;
+  const jade = count === 1 ? RB.firstJade : 0;
+  save.shared.soulCrystals += soulCrystals;
+  save.shared.jade += jade;
+  const record: RebirthRecord = {
+    at: nowMs, count, factionId: save.factionId, prevFormId: prev.formId, prevTierIndex: prev.tierIndex, prevElements: playerElementsOf(prev),
+    keptTraitId: keepTraitId, carry: { ...evolution.carry }, runsCompleted: runsCompleted(save),
+  };
+  save.runLog.rebirths.push(record);
+  return { ok: true, record, soulCrystals, jade };
 }
 
 /** 새 원정의 runId = 지금까지 기록된 원정 수 + 1 */
@@ -529,6 +573,14 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.skin = null;
     save.meta.format = 19;
   }
+  if (save.meta.format < 20) {
+    // 형식 19 → 20 (C.56, GDD 22-7): 환생 상태(0회·계승 없음)·환생 기록(빈 목록). 진화 상태의 계승 노력치는 없음(0)
+    save.rebirth = newRebirthState();
+    save.runLog.rebirths = [];
+    save.meta.format = 20;
+  }
+  save.rebirth = sanitizeRebirth(save.rebirth);
+  save.runLog.rebirths = Array.isArray(save.runLog.rebirths) ? save.runLog.rebirths : [];
   save.skin = canWear(save.factionId, save.skin) ? save.skin : null;
   if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
   save.training = sanitizeTraining(save.training);

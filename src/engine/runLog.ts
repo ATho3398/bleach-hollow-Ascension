@@ -126,6 +126,25 @@ export interface TrainingRecord {
   completedNow: boolean;
 }
 
+/** 환생 1회 기록 (GDD 22-1·22-7, 세이브 형식 20): 환생 히든·초월체(22-3 유하바하)·태그 조건이 읽는다 */
+export interface RebirthRecord {
+  /** 시각(ms) */
+  at: number;
+  /** 이 환생으로 몇 번째 환생이 되었나 (1부터) */
+  count: number;
+  factionId: string;
+  /** 이전 생의 최종 진화체·단계(tierIndex)·속성 */
+  prevFormId: string | null;
+  prevTierIndex: number;
+  prevElements: string[];
+  /** 계승한 특성 (없으면 null) */
+  keptTraitId: string | null;
+  /** 새 생이 받은 계승 노력치 (정수) */
+  carry: Record<string, number>;
+  /** 환생까지 마친 원정 수 */
+  runsCompleted: number;
+}
+
 /** 진화 1회 기록 (GDD 20-5, 9장): 히든 조건이 나중에 읽는다. C.11 단계별 진화체 테이블 → C.47 속성 트리 */
 export interface EvolutionRecord {
   fromTier: number;
@@ -215,6 +234,8 @@ export interface RunLog {
   runs: RunRecord[];
   /** 수련 기록 (C.54, 세이브 형식 18) */
   trainings: TrainingRecord[];
+  /** 환생 기록 (C.56, 세이브 형식 20) */
+  rebirths: RebirthRecord[];
 }
 
 export function emptyRunLog(): RunLog {
@@ -228,5 +249,6 @@ export function emptyRunLog(): RunLog {
     rankBattles: [],
     runs: [],
     trainings: [],
+    rebirths: [],
   };
 }

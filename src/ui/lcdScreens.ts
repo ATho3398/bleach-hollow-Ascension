@@ -15,7 +15,9 @@ import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { deckRow, statsBlock, statusBlock } from './bha/nest';
 import { abilityName } from '../data/evolution';
-import { currentStats, playerElementsOf, refStatOf } from '../engine/evolution';
+import { currentStats, playerElementsOf, refStatOf, zeroStats } from '../engine/evolution';
+import { canRebirth } from '../engine/rebirth';
+import { carryLine, rebirthMark } from './rebirthView';
 import { elementsMark } from './bha/element';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint } from './labels';
@@ -42,9 +44,15 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const evo = save.evolution;
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
-  stats.append(statsBlock(faction.id, currentStats(evo, faction.id), evo.ev, refStatOf(evo.tierIndex)));
+  stats.append(statsBlock(faction.id, currentStats(evo, faction.id), evo.ev, refStatOf(evo.tierIndex), evo.carry));
+  const mark = rebirthMark(save.rebirth.count);
+  if (mark) {
+    const line = h('p', 'bha-faint');
+    line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 ${carryLine(faction.id, evo.carry ?? zeroStats())}`);
+    stats.append(line);
+  }
   if (evo.ability) stats.append(h('p', 'bha-faint', `고유 특성: ${abilityName(evo.ability, faction.id)}`));
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치. 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5, C.55): [기본(진화체)]와 이 종족이 입을 수 있는 스킨. 상점 전까지는 있는 스킨이 전부 열려 있다(provisional). 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
@@ -167,9 +175,17 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
   fill();
 }
 
-/** 제단: 진화 (왼쪽 지금 진화체·속성·고유 특성 / 오른쪽 진화 안내 — 타이밍은 비밀, 귀환하면 저절로 진화, GDD 20-5) */
-export function altarView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: { onDex: () => void; onHelp: () => void }): void {
+/** 제단: 진화 (왼쪽 지금 진화체·속성·고유 특성 / 오른쪽 진화 안내 — 타이밍은 비밀, 귀환하면 저절로 진화, GDD 20-5).
+ *  5단계 이상이면 오른쪽 아래 [환생] (GDD 22-7, 이름은 종족 설정 rebirth.name). 그 아래 단계에서는 버튼이 없다 */
+export function altarView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: { onDex: () => void; onHelp: () => void; onRebirth: () => void }): void {
   const cols = evolutionColumns(faction, save.evolution);
+  const mark = rebirthMark(save.rebirth.count);
+  if (mark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', mark);
+  if (canRebirth(save.evolution)) {
+    const b = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', block: true, onClick: hd.onRebirth });
+    b.dataset.sc = 'rebirth';
+    cols.right.push(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 특성 1개는 남는다.`), b);
+  }
   const head = lcdHead({
     title,
     aside: [

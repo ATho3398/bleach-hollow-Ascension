@@ -414,9 +414,9 @@ describe('종족 설정만 바꿔 표기가 바뀐다 (코드 분기 없음)', (
       expect(f.baseStats).toBeDefined();
       expect(f.evolutionNearText).toHaveLength(2);
     }
-    // 일반 35종 = 1단계(진화체 없음) + 1 + 1 + 8 + 24, 히든 11
+    // 일반 35종 = 1단계(진화체 없음) + 1 + 1 + 8 + 24, 히든 12 (C.56 환생 전용 1 추가)
     expect(FORM_TABLE.filter((f) => !f.hidden)).toHaveLength(34);
-    expect(FORM_TABLE.filter((f) => f.hidden)).toHaveLength(11);
+    expect(FORM_TABLE.filter((f) => f.hidden)).toHaveLength(12);
   });
 
   it('엔진·데이터 코드에 종족 id 분기가 없다', () => {

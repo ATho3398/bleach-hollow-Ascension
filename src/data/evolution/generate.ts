@@ -99,8 +99,8 @@ export function generateForms(input: GenerateInput): FormDef[] {
       out.push(form(`t5:${el}:${cat}`, 5, 'arrancar', distribute(total(5), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], i + j, cat)),
     ),
   );
-  // 5단계 히든 3: 속성은 바스트로데에서 잇는다 (elements 없음)
-  (['limit', 'restraint', 'hunter'] as const).forEach((kind, i) => out.push(form(`h5:${kind}`, 5, kind, distribute(total(5), T.hidden[kind] ?? {}), {}, [], i)));
+  // 5단계 히든 4: 속성은 바스트로데에서 잇는다 (elements 없음). reborn = 환생 N회 이상 전용 (GDD 22-7)
+  (['limit', 'restraint', 'hunter', 'reborn'] as const).forEach((kind, i) => out.push(form(`h5:${kind}`, 5, kind, distribute(total(5, kind), T.hidden[kind] ?? {}), {}, [], i)));
   return out;
 }
 

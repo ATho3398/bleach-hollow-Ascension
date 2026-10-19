@@ -12,7 +12,8 @@ import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
 import { ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { analyzeTree, applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engine/evolution';
-import { newSaveData, nextRunId, recordExpedition, sanitizeDeck, newTileStock, type SaveData } from '../src/game';
+import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, newTileStock, type SaveData } from '../src/game';
+import { inheritableTraits } from '../src/engine/rebirth';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import { GROUNDS } from '../src/data/grounds';
 
@@ -347,13 +348,14 @@ const CAMPAIGNS = 30;
 const MAX_RUNS = 40;
 const STAGE_TARGET = [1.5, 2.5, 3, 4.5];
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number; saves: SaveData[]; /** 그 단계(tierIndex)에 갓 닿은 순간의 세이브 사본 (사냥터 점검용) */ firstAt: Record<number, SaveData[]> };
+type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number; finalDefeats: number[]; saves: SaveData[]; /** 그 단계(tierIndex)에 갓 닿은 순간의 세이브 사본 (사냥터 점검용) */ firstAt: Record<number, SaveData[]> };
 function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number } = {}): CampaignStats {
-  const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0, saves: [], firstAt: {} };
+  const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0, finalDefeats: [], saves: [], firstAt: {} };
   for (let seed = 1; seed <= CAMPAIGNS; seed++) {
     const save = newSaveData('hollow', seed * 7919);
     save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
     let stageStart = 0;
+    let defeats = 0;
     // 정책은 노리는 단계(stage, tierIndex)에서만 쓴다: 그 전에는 다 흡수해 특성을 모은다 (사람이 노리는 방식)
     const pick = policy.absorbWanted?.(seed);
     const wanted = pick ? (exp: ExpeditionState) => (policy.stage === undefined || exp.evolution.tierIndex === policy.stage ? pick(exp) : true) : undefined;
@@ -372,13 +374,17 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
         { returnAfterLap: 4, absorb: 'absorb', ...(wanted ? { absorbWanted: wanted } : {}) },
       );
       if (save.evolution.tierIndex < 4) out.stepsPerRun.push(e.evolution.steps - save.evolution.steps); // 마지막 단계는 걸음을 세지 않는다
+      if (save.evolution.tierIndex < 4 && e.outcome === 'defeated') defeats++;
       const tier = save.evolution.tierIndex;
       const r = recordExpedition(save, e, 0);
       if (r?.ok) {
         out.evolutions++;
         out.stageRuns[tier]!.push(run - stageStart);
         stageStart = run;
-        if (tier === 3) out.finalRuns.push(run);
+        if (tier === 3) {
+          out.finalRuns.push(run);
+          out.finalDefeats.push(defeats);
+        }
         out.formCounts[r.form.tier]![r.form.id] = (out.formCounts[r.form.tier]![r.form.id] ?? 0) + 1;
         if (r.form.hidden) out.hidden++;
         (out.firstAt[save.evolution.tierIndex] ??= []).push(structuredClone(save));
@@ -391,10 +397,14 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
 const stageNames = ['1→2', '2→3', '3→4', '4→5'];
 let campaignSaves: SaveData[] = [];
 let campaignFirstAt: Record<number, SaveData[]> = {};
+let campaignFinalRuns: number[] = [];
+let campaignFinalDefeats: number[] = [];
 {
   const st = campaign();
   campaignSaves = st.saves;
   campaignFirstAt = st.firstAt;
+  campaignFinalRuns = st.finalRuns;
+  campaignFinalDefeats = st.finalDefeats;
   console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 귀환 때 자동 진화) — 필요 걸음 ${BALANCE.provisional.evolution.stepsNeeded.join('/')}칸 (숨김)`);
   console.log(`  원정 1회 평균 ${avg(st.stepsPerRun).toFixed(1)}칸 (최소 ${Math.min(...st.stepsPerRun)} · 최대 ${Math.max(...st.stepsPerRun)})`);
   console.log('  단계(진화)   도달 인원  평균 원정  목표   최소  최대   (그 단계 시작부터 센 원정 수)');
@@ -411,6 +421,65 @@ let campaignFirstAt: Record<number, SaveData[]> = {};
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const top = sorted.map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).slice(0, 8).join(' · ');
     console.log(`    ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종: ${top}`);
+  }
+}
+
+// ── 환생 (C.56, GDD 22-7): 위 진화 봇 중 5단계에 닿은 세이브(원정 MAX_RUNS 회를 마친 몸)가 환생(장착 첫 특성 계승)하고 같은 방식으로 다시 5단계까지.
+// 계승 효과 = 노력치 10% 누적 + 특성 1개. 진화 타이밍은 걸음 수라 원정 수는 패배(걸음이 덜 쌓임)로만 달라진다 — 그 차이와 패배 수를 본다. 가드는 없음(보고용)
+{
+  const ready = campaignSaves.filter((s) => s.evolution.tierIndex >= 4).map((s) => structuredClone(s));
+  type LifeStat = { runs: number[]; defeats: number[]; carry: number[]; reborn: number };
+  const lives: LifeStat[] = [];
+  // 첫 생: 위 캠페인의 5단계 도달 원정 수·패배 수 (같은 봇·같은 정책)
+  ready.forEach((save, i) => {
+    for (let life = 1; life <= 3; life++) {
+      const st = (lives[life] ??= { runs: [], defeats: [], carry: [], reborn: 0 });
+      const keep = inheritableTraits(save.build)[0] ?? null;
+      if (!performRebirth(save, keep, 0).ok) break;
+      st.carry.push(Object.values(save.evolution.carry ?? {}).reduce((a, b) => a + b, 0));
+      let defeats = 0;
+      for (let run = 1; run <= MAX_RUNS; run++) {
+        save.nest.hunger = 20;
+        save.nest.condition = 80;
+        save.nest.weakened = false;
+        const e = playExpedition(
+          createExpedition({
+            factionId: 'hollow', seed: (i + 1) * 100003 + life * 1009 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
+            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+          }),
+          { returnAfterLap: 4, absorb: 'absorb' },
+        );
+        if (e.outcome === 'defeated') defeats++;
+        const r = recordExpedition(save, e, 0);
+        if (r?.ok && r.form.id === 'h5:reborn') st.reborn++;
+        if (save.evolution.tierIndex >= 4) {
+          st.runs.push(run);
+          st.defeats.push(defeats);
+          break;
+        }
+      }
+      if (save.evolution.tierIndex < 4) break;
+      // 다음 환생 전 5단계에서 노력치를 채운다 (첫 생 세이브처럼 원정을 더 다닌 몸): 남은 원정만큼 더 다닌다
+      for (let run = 1; run <= 6; run++) {
+        const e = playExpedition(
+          createExpedition({
+            factionId: 'hollow', seed: (i + 1) * 7777 + life * 31 + run, runId: nextRunId(save), hunger: 20, condition: 80,
+            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+          }),
+          { returnAfterLap: 4, absorb: 'absorb' },
+        );
+        recordExpedition(save, e, 0);
+      }
+    }
+  });
+  const first = campaignFinalRuns;
+  const firstDefeats = campaignFinalDefeats;
+  console.log(`\n환생 (5단계 세이브 ${ready.length}개가 환생 → 다시 5단계까지, 같은 흡수 봇·4바퀴) — 계승: 노력치 ${BALANCE.provisional.rebirth.evCarryRate * 100}% 누적 + 장착 첫 특성`);
+  console.log(`  첫 생      5단계 평균 ${avg(first).toFixed(2)}번째 원정 · 그때까지 패배 평균 ${avg(firstDefeats).toFixed(2)}회`);
+  for (const life of [1, 2, 3]) {
+    const st = lives[life];
+    if (!st) continue;
+    console.log(`  환생 ${life}회 후 5단계 ${st.runs.length}/${ready.length} · 평균 ${avg(st.runs).toFixed(2)}번째 원정 (첫 생 대비 ${(avg(st.runs) - avg(first)).toFixed(2)}) · 패배 평균 ${avg(st.defeats).toFixed(2)}회 · 계승 노력치 합 평균 ${avg(st.carry).toFixed(1)} · 환생 히든 ${st.reborn}`);
   }
 }
 
@@ -436,7 +505,7 @@ let campaignFirstAt: Record<number, SaveData[]> = {};
   }
 }
 
-// ── 진화 트리 점검 (GDD 20-5): 모든 진화체(일반 35 + 히든 11)가 무작위 상태에서 실제로 뽑히는가, 단계별 히든 비율 ──
+// ── 진화 트리 점검 (GDD 20-5): 모든 진화체(일반 35 + 히든 12)가 무작위 상태에서 실제로 뽑히는가, 단계별 히든 비율 ──
 {
   const EVC = BALANCE.provisional.evolution;
   const t0 = Date.now();
@@ -448,7 +517,7 @@ let campaignFirstAt: Record<number, SaveData[]> = {};
   console.log(`  한 번도 안 뽑힌 진화체: ${rep.unreachable.length ? rep.unreachable.join(', ') : '없음'}`);
   if (rep.unreachable.length > 0) failures.push(`진화 트리: 뽑히지 않는 진화체 ${rep.unreachable.join(', ')}`);
   // 기획의 일반 35종 = 1단계(진화체 없음, 종족 설정 baseStats) + 진화체 34
-  if (normalCount !== 34 || hiddenCount !== 11) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 34(+1단계) + 11)`);
+  if (normalCount !== 34 || hiddenCount !== 12) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 34(+1단계) + 12, 환생 전용 포함)`);
 }
 
 // ── 사냥터 (C.53, GDD 24-2): 단계마다 열리는 사냥터를 그 단계에 갓 닿은 몸(위 진화 봇 세이브)으로 사람형 봇이 4바퀴 원정 ──

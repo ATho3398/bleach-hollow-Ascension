@@ -22,6 +22,8 @@ export interface JudgeContext {
   /** 진화 순간 돌보기 상태 (둥지 귀환 직후) */
   hunger: number;
   condition: number;
+  /** 지금까지 환생한 횟수 (GDD 22-7 환생 전용 히든). 없으면 0 */
+  rebirths?: number;
 }
 
 export interface EvolutionCandidate {
@@ -133,9 +135,10 @@ export function elementHiddenCandidates(e: EvolutionState, ctx: JudgeContext): E
   return out;
 }
 
-/** 아란칼 시점 행동 히든 후보 */
-export function behaviorHiddenCandidates(e: EvolutionState): EvolutionCandidate[] {
+/** 아란칼 시점 행동 히든 후보 (+ 환생 N회 이상 전용 히든, GDD 22-7) */
+export function behaviorHiddenCandidates(e: EvolutionState, rebirths = 0): EvolutionCandidate[] {
   const out: EvolutionCandidate[] = [];
+  if (rebirths >= H.rebirths) out.push(hidden('h5:reborn', rebirths / H.rebirths - 1));
   if (e.breakthroughs >= H.breakthroughs) out.push(hidden('h5:limit', e.breakthroughs / H.breakthroughs - 1));
   if (e.releases > e.absorbs) out.push(hidden('h5:restraint', e.releases / Math.max(1, e.absorbs) - 1));
   if (e.elitesDefeated >= H.elites) out.push(hidden('h5:hunter', e.elitesDefeated / H.elites - 1));
@@ -165,7 +168,7 @@ export function evolutionCandidates(e: EvolutionState, ctx: JudgeContext, table:
     if (isCareFailure(ctx)) return { normal: find('h4:fail'), hidden: [], forced: find('h4:fail') };
     return { normal: find(`t4:${dominantElement(ctx.build)}`), hidden: elementHiddenCandidates(e, ctx).filter(ok), forced: null };
   }
-  return { normal: find(`t5:${vastoElement(e, table)}:${dominantCategory(ctx.build, ctx.factionId)}`), hidden: behaviorHiddenCandidates(e).filter(ok), forced: null };
+  return { normal: find(`t5:${vastoElement(e, table)}:${dominantCategory(ctx.build, ctx.factionId)}`), hidden: behaviorHiddenCandidates(e, ctx.rebirths ?? 0).filter(ok), forced: null };
 }
 
 /** 고유 특성 방향: 노력치가 가장 높은 능력치. 동률(모두 0 포함)이면 진화체 종족값이 높은 쪽 → STAT_IDS 순 */

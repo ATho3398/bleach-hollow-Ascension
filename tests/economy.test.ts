@@ -209,11 +209,11 @@ describe('리스크 수치·폭주 (GDD 23-2)', () => {
 });
 
 describe('튜토리얼 보상 (GDD 23-3)', () => {
-  it('목표 10개 데이터: 문구 자리표시자는 양 종족에서 채워지고, 환생은 비활성 (수련은 C.54 에서 켬)', () => {
+  it('목표 10개 데이터: 문구 자리표시자는 양 종족에서 채워지고, 전부 켜짐 (수련 C.54, 환생 C.56)', () => {
     expect(TUTORIAL_GOALS).toHaveLength(10);
     expect(new Set(TUTORIAL_GOALS.map((g) => g.id)).size).toBe(10);
     for (const f of FACTIONS) for (const g of TUTORIAL_GOALS) for (const k of placeholdersOf(g.text)) expect(helpVars(f)[k], `${g.id} {${k}}`).toBeTruthy();
-    expect(TUTORIAL_GOALS.filter((g) => !g.available).map((g) => g.check)).toEqual(['rebirth']);
+    expect(TUTORIAL_GOALS.filter((g) => !g.available).map((g) => g.check)).toEqual([]); // 환생은 C.56 에서 켬
     expect(() => parseTutorialGoal({ id: 'x', check: 'nope', text: 'a', reward: { soulCrystals: 1 } })).toThrow();
     expect(() => parseTutorialGoal({ id: 'x', check: 'returned', text: 'a', reward: {} })).toThrow();
   });

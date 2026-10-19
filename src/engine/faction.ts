@@ -73,6 +73,16 @@ export interface LiberationConfig {
   endText: string;
 }
 
+/** 환생 (GDD 22-1·22-7): 버튼·확인·연출 문구 */
+export interface RebirthConfig {
+  /** 버튼·화면 이름 */
+  name: string;
+  /** 연출 첫 줄 (몸이 풀려 처음으로 돌아간다) */
+  cutin: string;
+  /** 연출 끝 줄 (호로 "다시 굶주린 영혼으로", 사신 "다시 혼백으로") */
+  rebornText: string;
+}
+
 /** 해방 수련 (GDD 22-4·22-5): 화면 제목·상대 이름·완료 문구·종목별 이름과 설명 (사신판 먹이사슬 = 영자 모으기·대허 피하기) */
 export interface TrainingConfig {
   title: string;
@@ -204,6 +214,8 @@ export interface FactionConfig {
   liberation: LiberationConfig;
   /** 해방 수련 (GDD 22-5): 제단 화면·4종목 문구 */
   training: TrainingConfig;
+  /** 환생 (GDD 22-7): 버튼 이름·연출 문구 */
+  rebirth: RebirthConfig;
   /** 메인 방 화면: 방 모양·소품 이름·위치·그림 키·반응 문구 (GDD 16장). 없으면 기본값 */
   room?: Partial<Omit<RoomConfig, 'props' | 'layout' | 'talk'>> & { props?: Partial<RoomConfig['props']>; layout?: Partial<RoomConfig['layout']>; talk?: Partial<RoomConfig['talk']> };
 }
@@ -293,6 +305,8 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   }
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
   for (const k of ['name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
+  const rb = (r.rebirth ?? {}) as Record<string, unknown>;
+  for (const k of ['name', 'cutin', 'rebornText']) if (!isString(rb[k])) errors.push(`rebirth.${k}: 비어 있지 않은 문자열이어야 한다`);
   const tr = (r.training ?? {}) as Record<string, unknown>;
   for (const k of ['title', 'foe', 'completeText']) if (!isString(tr[k])) errors.push(`training.${k}: 비어 있지 않은 문자열이어야 한다`);
   const tg = (tr.games ?? {}) as Record<string, unknown>;

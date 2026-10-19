@@ -24,18 +24,18 @@ describe('forms.json', () => {
 });
 
 describe('트리 규모 (20-5)', () => {
-  it('2·3단계 1종, 바스트로데 속성 8 + 히든 8, 아란칼 속성 × 분류 24 + 히든 3', () => {
+  it('2·3단계 1종, 바스트로데 속성 8 + 히든 8, 아란칼 속성 × 분류 24 + 히든 4(환생 전용 포함)', () => {
     const n = (tier: number, hidden: boolean) => formsOfTier(tier).filter((f) => !!f.hidden === hidden).length;
     expect([n(2, false), n(3, false), n(4, false), n(5, false)]).toEqual([1, 1, ELEMENT_IDS.length, ELEMENT_IDS.length * ATTACK_CATEGORIES.length]);
-    expect([n(2, true), n(3, true), n(4, true), n(5, true)]).toEqual([0, 0, 8, 3]);
+    expect([n(2, true), n(3, true), n(4, true), n(5, true)]).toEqual([0, 0, 8, 4]);
     for (const el of ELEMENT_IDS) {
       expect(formsOfTier(4).some((f) => f.id === `t4:${el}`)).toBe(true);
       for (const c of ATTACK_CATEGORIES) expect(formsOfTier(5).some((f) => f.id === `t5:${el}:${c}`)).toBe(true);
     }
   });
-  it('히든 11종 = 융합 2 · 완전체 · 특수 3 · 순수 · 실패 · 한계 돌파 · 절제 · 강적 사냥꾼', () => {
+  it('히든 12종 = 융합 2 · 완전체 · 특수 3 · 순수 · 실패 · 한계 돌파 · 절제 · 강적 사냥꾼 · 환생(C.56)', () => {
     const hidden = FORM_TABLE.filter((f) => f.hidden).map((f) => f.label.kind).sort();
-    expect(hidden).toEqual(['complete', 'fail', 'fusion', 'fusion', 'hunter', 'limit', 'pure', 'restraint', 'special', 'special', 'special'].sort());
+    expect(hidden).toEqual(['complete', 'fail', 'fusion', 'fusion', 'hunter', 'limit', 'pure', 'reborn', 'restraint', 'special', 'special', 'special'].sort());
     expect(SPECIAL_ELEMENT_IDS.map((el) => `h4:special:${el}`).every((id) => FORM_TABLE.some((f) => f.id === id))).toBe(true);
   });
   it('융합은 순환에서 마주 보는 쌍(서로 상성이 아닌 원소)만: 물+흙, 불+뇌', () => {
@@ -83,7 +83,7 @@ describe('종족값 (20-4)', () => {
 describe('속성·이동 방식·체인 상한', () => {
   it('5단계 행동 히든만 속성을 잇고(elements 없음), 나머지는 1~2개의 속성을 가진다', () => {
     for (const f of FORM_TABLE) {
-      if (['limit', 'restraint', 'hunter'].includes(f.label.kind)) expect(f.elements, f.id).toBeUndefined();
+      if (['limit', 'restraint', 'hunter', 'reborn'].includes(f.label.kind)) expect(f.elements, f.id).toBeUndefined();
       else expect(f.elements!.length, f.id).toBeGreaterThanOrEqual(1);
     }
   });

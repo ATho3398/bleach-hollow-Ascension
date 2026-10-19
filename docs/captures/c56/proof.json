@@ -1,0 +1,64 @@
+{
+  "keepPicked": "t-normal-c",
+  "hollow": {
+    "tier": 0,
+    "carry": {
+      "hp": 2,
+      "atk": 2,
+      "int": 0,
+      "def": 0,
+      "spr": 0,
+      "spd": 0
+    },
+    "rebirth": {
+      "count": 1,
+      "carry": {
+        "hp": 2,
+        "atk": 2,
+        "int": 0,
+        "def": 0,
+        "spr": 0,
+        "spd": 0
+      }
+    },
+    "slots": [
+      "t-normal-c",
+      null,
+      null
+    ],
+    "soul": 30,
+    "jade": 10,
+    "log": [
+      {
+        "at": 1792444132166,
+        "count": 1,
+        "factionId": "hollow",
+        "prevFormId": "t5:fire:physical",
+        "prevTierIndex": 4,
+        "prevElements": [
+          "fire"
+        ],
+        "keptTraitId": "t-normal-c",
+        "carry": {
+          "hp": 2,
+          "atk": 2,
+          "int": 0,
+          "def": 0,
+          "spr": 0,
+          "spd": 0
+        },
+        "runsCompleted": 0
+      }
+    ],
+    "tutorials": [
+      "tutorial",
+      "first-evolution",
+      "tier5",
+      "first-rebirth"
+    ],
+    "backupTier": 4,
+    "backupMeta": "{\"reason\":\"rebirth\",\"at\":1792444132166}"
+  },
+  "tier3Button": 0,
+  "errors": []
+}

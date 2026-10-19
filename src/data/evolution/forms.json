@@ -1097,5 +1097,25 @@
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
+  },
+  {
+    "id": "h5:reborn",
+    "tier": 5,
+    "label": {
+      "kind": "reborn",
+      "elements": []
+    },
+    "hidden": true,
+    "stats": {
+      "hp": 77,
+      "atk": 70,
+      "int": 70,
+      "def": 70,
+      "spr": 77,
+      "spd": 77
+    },
+    "locomotion": "walk",
+    "maxChain": 3,
+    "provisional": true
   }
 ]

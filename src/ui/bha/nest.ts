@@ -2,9 +2,13 @@
 // 공용 헬퍼는 ./dom, 속성 표시는 ./element. 순수 계산은 ./nestLogic (테스트 대상).
 import { STAT_IDS, type Stats, type TerrainTileDef } from '../../data/schema';
 import { statName } from '../../data/elements';
+import { BALANCE } from '../../config/balance';
 import { button, el, icon, meter } from './dom';
 import { getOverlayHost } from './overlayHost';
 import { NEST_ACTIONS, type FactionConfig, type NestAction } from '../../engine/faction';
+
+/** 능력치 절대 상한 (GDD 22-1) */
+const STAT_MAX = BALANCE.provisional.stats.statMax;
 
 /** 타일 종류 → 덱 행 색·아이콘 (디자인 --bha-tile-*). combo 는 색이 없어 환경으로 본다 */
 const TILE_KIND: Record<string, { cls: string; icon: string }> = {
@@ -65,14 +69,21 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
 }
 
 /** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. 막대 끝은 그 단계 기준 능력치의 1.6배 */
-export function statsBlock(factionId: string, stats: Stats, ev: Stats, ref: number): HTMLElement {
+export function statsBlock(factionId: string, stats: Stats, ev: Stats, ref: number, carry?: Stats): HTMLElement {
   const root = el('div', 'bha-stack bha-stats');
   const max = Math.round(ref * 1.6);
   for (const k of STAT_IDS) {
-    root.append(meter({
-      kind: 'stored', label: statName(k, factionId), value: Math.round(stats[k]), max, compact: true, thin: true,
-      valueText: ev[k] > 0 ? `${Math.round(stats[k])} (+${ev[k]})` : String(Math.round(stats[k])),
-    }));
+    const v = Math.round(stats[k]);
+    const c = carry?.[k] ?? 0;
+    const extra = [ev[k] > 0 ? `+${ev[k]}` : '', c > 0 ? `계승 +${c}` : ''].filter(Boolean).join(' · ');
+    // 능력치 절대 상한 (GDD 22-1): 닿으면 '상한' 표시
+    const capped = v >= STAT_MAX ? ' 상한' : '';
+    const m = meter({
+      kind: 'stored', label: statName(k, factionId), value: v, max, compact: true, thin: true,
+      valueText: `${v}${capped}${extra ? ` (${extra})` : ''}`,
+    });
+    if (capped) m.dataset.capped = 'true';
+    root.append(m);
   }
   return root;
 }

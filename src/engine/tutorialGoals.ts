@@ -13,6 +13,8 @@ export interface TutorialGoalView {
   everRanked: boolean;
   /** 해방 수련 완료 (GDD 22-5) */
   trainingCompleted?: boolean;
+  /** 환생 횟수 (GDD 22-7) */
+  rebirths?: number;
 }
 
 /** 이 목표를 이뤘는가. available: false(아직 없는 시스템) 는 항상 false */
@@ -36,8 +38,7 @@ const CHECKS: Record<TutorialCheck, (v: TutorialGoalView) => boolean> = {
   tier5: (v) => v.tierIndex >= 4,
   ranked: (v) => v.everRanked,
   training: (v) => v.trainingCompleted === true,
-  // 환생은 아직 없다 (S-12). 데이터에서 available: false 로 꺼 두고, 켜질 때 여기를 채운다
-  rebirth: () => false,
+  rebirth: (v) => (v.rebirths ?? 0) >= 1,
 };
 
 /** 아직 받지 않았고 지금 이룬 목표 (목록 순서대로) */

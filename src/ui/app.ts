@@ -13,8 +13,9 @@ import { createExpedition, drainEvents, finishBattle, inFrenzy, serializeExpedit
 import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
-  recordTraining, settleLiberationRisk, writeSave, type SaveData,
+  performRebirth, recordTraining, settleLiberationRisk, writeSave, type SaveData,
 } from '../game';
+import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { liberationButton } from './labels';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
@@ -455,7 +456,28 @@ export function startApp(host: HTMLElement): void {
     altarView(dev, faction, s, roomOf(faction).props.altar, {
       onDex: () => open('dex', () => dexView(root, faction, s)),
       onHelp: () => openHelp('evolution', true),
+      onRebirth: () => open('rebirth', () => renderRebirth(faction, s)),
     });
+  }
+
+  // ── 환생 (GDD 22-1·22-7, C.56): 확인 1(목록·계승 특성) → 확인 2(최종) → 자동 백업 → 환생 → 연출 → 1단계 방 ──
+  function renderRebirth(faction: FactionConfig, s: SaveData): void {
+    rebirthConfirmView(dev, faction, s, {
+      onNext: (keep) => {
+        const t = rebirthFinalText(faction, keep);
+        confirmDialog({ title: t.title, body: t.body, yes: faction.rebirth.name, no: '그만둔다', danger: true, onYes: () => doRebirth(faction, s, keep) });
+      },
+    });
+  }
+
+  function doRebirth(faction: FactionConfig, s: SaveData, keep: string | null): void {
+    // 되돌릴 수 없는 일 직전 자동 백업 (GDD 24-5): 지금 상태를 저장하고 슬롯 백업에 보관한 뒤 환생한다
+    persist();
+    stashSlot(localStorage, slot, 'rebirth');
+    const r = performRebirth(s, keep);
+    if (!r.ok) return void nav.pop();
+    persist();
+    nav.reset({ id: 'rebirth-scene', locked: true, render: () => { setBgm('nest'); rebirthView(root, faction, r.record, r, nestScreen); root.scrollTop = 0; } });
   }
 
   // ── 원정 ──

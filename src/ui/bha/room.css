@@ -6,6 +6,7 @@
 .bha-room__hud { display: flex; align-items: center; justify-content: flex-end; gap: var(--bha-sp-5); min-height: var(--bha-touch); flex: none; }
 .bha-room__hud:empty { display: none; }
 .bha-room__resumeinfo { margin-left: var(--bha-sp-2); font-size: var(--bha-fs-xs); font-weight: 500; opacity: 0.85; }
+.bha-room__name { margin-right: auto; display: inline-flex; align-items: center; gap: var(--bha-sp-2); font-weight: var(--bha-fw-bold); }
 .bha-room__note { font-size: var(--bha-fs-xs); color: var(--bha-warn); flex: none; }
 
 .bha-room__body { flex: 1 1 auto; min-height: 0; display: flex; gap: var(--bha-sp-3); }

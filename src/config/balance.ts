@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 31;
+export const BALANCE_VERSION = 32;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -88,8 +88,19 @@ export const BALANCE = {
         pet: { risk: -20, stability: 8 },
       },
     },
-    // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 (환생 +10 은 환생 구현 때) ──
-    soulCrystals: { perElite: 1, perRankWin: 3 },
+    // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 ──
+    soulCrystals: { perElite: 1, perRankWin: 3, perRebirth: 10 },
+    // ── 환생 (GDD 22-1·22-7, 수치 provisional) ──
+    rebirth: {
+      /** 들어갈 수 있는 단계 (tierIndex, 4 = 5단계 아란칼/수석 대원) */
+      minTierIndex: 4,
+      /** 환생 직전 노력치(계승분 포함)의 이 비율을 누적 계승에 더한다. 누적 상한 없음 */
+      evCarryRate: 0.1,
+      /** 첫 환생에만 주는 영옥 (25-1 일회성 달성 보상) */
+      firstJade: 10,
+      /** 이름 옆 ★ 표시: 이 횟수 미만은 ★ 를 횟수만큼, 이상이면 ★ + 숫자 */
+      starsUpTo: 5,
+    },
     // ── 해방 (GDD 22-2·22-5 v5.13, 수치 provisional): 전투 중 변신. 이름은 종족 설정 liberation ──
     liberation: {
       /** 자격: 지금 단계가 이 값 이상(tierIndex, 4 = 5단계 아란칼/수석 대원) + 수련 완료 + 등급 이력 */
@@ -173,6 +184,8 @@ export const BALANCE = {
       /** 노력치 단계 상한: 합계(index = 단계)와 능력치 하나의 상한(합계 상한 × 비율). 진화해도 유지되고 상한만 오른다 */
       evCapTotal: [8, 16, 24, 32, 40],
       evCapPerStatRatio: 0.5,
+      /** 능력치 절대 상한 (GDD 22-1 v4.7): 종족값 + 노력치 + 환생 계승이 이 값에서 멈춘다 (6개 모두) */
+      statMax: 999,
     },
     /** 진화체 고유 특성 6종 (GDD 20-3·v4.0): 진화 순간 노력치가 가장 높은 능력치 방향. 이름은 src/data/evolution/abilities.json */
     abilities: {
@@ -208,6 +221,8 @@ export const BALANCE = {
         failCondition: 25,
         /** 아란칼 행동 히든: 그 단계 한계 돌파 횟수 / 강적 처치 수. 절제 = 놓아준 수 > 흡수 수 */
         breakthroughs: 3,
+        /** 환생 전용 히든 (GDD 22-7): 환생 횟수가 이 값 이상이면 아란칼 진화 때 후보 (초과량 = 횟수 ÷ 기준 − 1) */
+        rebirths: 3,
         elites: 16, // C.47 봇 점검: 4→5 단계(약 4원정)에 강적을 보통 10~12 처치해 10 이면 60% 가 히든이 됨 → 16
         /** 그 단계에 흡수가 이만큼은 있어야 속성 분포 히든을 본다 (흡수 1~2회로 40% 가 되는 것을 막는다) */
         minAbsorbs: 5,
@@ -235,12 +250,13 @@ export const BALANCE = {
           limit: { atk: 0.2, int: 0.2, def: -0.2, spr: -0.2 },
           restraint: { def: 0.2, spr: 0.2, hp: 0.1, atk: -0.25, int: -0.25 },
           hunter: { hp: 0.15, atk: 0.1, spd: 0.1, def: -0.1, spr: -0.1, int: -0.15 },
+          reborn: { hp: 0.05, spr: 0.05, spd: 0.05, def: -0.05, atk: -0.05, int: -0.05 },
         } as Record<string, Record<string, number>>,
         /** 융합은 두 속성 성향을 더한 것 × 이 값, 특수 히든은 그 속성 성향 × 이 값 */
         fusionScale: 0.75,
         specialScale: 1.5,
         /** 종족값 합계 배율: 완전체 높게, 실패형 낮게 (나머지는 단계 합계 그대로) */
-        totalScale: { complete: 1.08, fail: 0.8 } as Record<string, number>,
+        totalScale: { complete: 1.08, fail: 0.8, reborn: 1.05 } as Record<string, number>,
         /** 노멀 순수형 자기 속성 보정 */
         pureStab: 1.3,
       },
