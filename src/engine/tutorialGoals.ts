@@ -11,6 +11,8 @@ export interface TutorialGoalView {
   runLog: Pick<RunLog, 'runs' | 'battles' | 'absorbs' | 'tiers'>;
   tierIndex: number;
   everRanked: boolean;
+  /** 해방 수련 완료 (GDD 22-5) */
+  trainingCompleted?: boolean;
 }
 
 /** 이 목표를 이뤘는가. available: false(아직 없는 시스템) 는 항상 false */
@@ -33,8 +35,8 @@ const CHECKS: Record<TutorialCheck, (v: TutorialGoalView) => boolean> = {
   eliteWin: (v) => v.runLog.battles.some((b) => b.factionId === v.factionId && b.won && b.enemyClass === 'elite'),
   tier5: (v) => v.tierIndex >= 4,
   ranked: (v) => v.everRanked,
-  // 수련·환생은 아직 없다 (S-11·S-12). 데이터에서 available: false 로 꺼 두고, 켜질 때 여기를 채운다
-  training: () => false,
+  training: (v) => v.trainingCompleted === true,
+  // 환생은 아직 없다 (S-12). 데이터에서 available: false 로 꺼 두고, 켜질 때 여기를 채운다
   rebirth: () => false,
 };
 

@@ -33,9 +33,9 @@ export function pickAbbr(abbr: string | undefined, name: string): string {
   return own ? own : fitAbbr(name);
 }
 
-/** 블록 외형: 필살·공허는 그대로, 기본 블록(traitId 가 기본 기술이거나 없음)은 basic, 스킬은 역할(모르면 attack) */
-export function blockVisual(kind: 'skill' | 'special' | 'void' | 'combo', isBasic: boolean, role: 'attack' | 'guard' | 'heal' | null): BlockVisual {
-  if (kind === 'special' || kind === 'combo') return 'special';
+/** 블록 외형: 필살·공허는 그대로, 콤보·해방은 필살 모양, 기본 블록(traitId 가 기본 기술이거나 없음)은 basic, 스킬은 역할(모르면 attack) */
+export function blockVisual(kind: 'skill' | 'special' | 'void' | 'combo' | 'liberation', isBasic: boolean, role: 'attack' | 'guard' | 'heal' | null): BlockVisual {
+  if (kind === 'special' || kind === 'combo' || kind === 'liberation') return 'special';
   if (kind === 'void') return 'void';
   if (isBasic) return 'basic';
   return role ?? 'attack';

@@ -14,7 +14,7 @@ const battle = (o: Partial<BattleRecord> = {}): BattleRecord => ({
   enemyClass: 'normal', tierIndex: 0, enemyId: 'e', factionId: 'hollow', seed: 1, riskGained: 0, absorbGained: 0, lossReason: null,
   durationSeconds: 30, blocksByTrait: {}, blocksByChain: [0, 0, 0], chain3Count: 0, guardSuccesses: 0, voidUsed: 0, specialUsed: false,
   finisherKind: null, finisherTraitId: null, finisherElement: null, absorbable: false, storedUsed: 0, storedWasted: 0,
-  chainsByFamily: {}, combosTriggered: 0, comboBlocksUsed: 0, ...o,
+  chainsByFamily: {}, combosTriggered: 0, comboBlocksUsed: 0, liberationUsed: false, liberationAt: null, ...o,
 });
 const run = (o: Partial<RunRecord> = {}): RunRecord => ({
   runId: 1, laps: 1, outcome: 'returned', gained: [], lost: [], endReason: 'returned', seed: 1, factionId: 'hollow',

@@ -1,0 +1,100 @@
+/* 해방 수련 (GDD 22-4·22-5, C.54): 제단 화면(수련치·수련권·4종목 카드)과 미니게임 4종 장면. 디자인 토큰·bha- 클래스만 쓴다 (새 색·간격 없음).
+   종목 장면은 그림 없이 도형·글자로만 그린다 (그림은 대기, 11-9). 화면 뼈대는 lcdpage(.bha-lcdpage), 한 판은 .bha-train-play */
+
+/* ── 제단 화면 ── */
+.bha-train__tickets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-3); font-size: var(--bha-fs-sm); }
+.bha-train__ticketlabel { font-weight: var(--bha-fw-bold); color: var(--bha-text-1); white-space: nowrap; }
+.bha-train__tickets > .bha-faint { flex-basis: 100%; font-size: var(--bha-fs-xs); }
+.bha-train__tickets > i { width: 14px; height: 14px; transform: rotate(45deg); border-radius: var(--bha-r-xs); border: 2px solid var(--bha-line-2); background: var(--bha-bg-0); }
+.bha-train__tickets > i.is-on { background: var(--bha-stab); border-color: var(--bha-stab); box-shadow: 0 0 8px var(--bha-stab); }
+.bha-train__cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--bha-sp-4); }
+.bha-train__card {
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--bha-sp-1); min-height: var(--bha-touch); text-align: left;
+  padding: var(--bha-sp-3) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-line-2); background: var(--bha-bg-1); color: var(--bha-text-2); font: inherit; cursor: pointer;
+}
+.bha-train__card:not(:disabled):hover, .bha-train__card.bha-sel { border-color: var(--bha-accent-hi); }
+.bha-train__card.is-locked { opacity: 0.6; cursor: default; }
+.bha-train__card > .bha-icon { align-self: flex-end; color: var(--bha-text-3); }
+.bha-train__cardtop { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-3); }
+.bha-train__cardname { font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-md); color: var(--bha-text-1); }
+.bha-train__line { font-size: var(--bha-fs-xs); line-height: 1.3; }
+.bha-train__line--reward { color: var(--bha-good); }
+.bha-train__complete { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-lg); color: var(--bha-accent-hi); }
+
+/* ── 한 판 ── */
+.bha-lcd .bha-app.bha-train-play {
+  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;
+  display: flex; flex-direction: column; gap: var(--bha-sp-3); padding: var(--bha-sp-4) var(--bha-sp-5); overflow: hidden;
+}
+.bha-train__playhead { flex: none; display: flex; align-items: center; gap: var(--bha-sp-4); }
+.bha-train__title { margin: 0 auto 0 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); white-space: nowrap; }
+.bha-train__hud { display: flex; gap: var(--bha-sp-3); font-variant-numeric: tabular-nums; }
+.bha-train__field {
+  position: relative; flex: 1 1 0; min-height: 0; border-radius: var(--bha-r-lg); border: 1px solid var(--bha-line-1); overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, var(--bha-bg-2), var(--bha-bg-0));
+}
+.bha-train__help { flex: none; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; }
+.bha-train__controls { flex: none; display: flex; justify-content: center; align-items: center; gap: var(--bha-sp-4); min-height: var(--bha-touch); }
+.bha-train__btn { min-width: 96px; }
+.bha-train__btn--wide { min-width: 220px; }
+.bha-train__btn--up .bha-icon { transform: rotate(-90deg); }
+.bha-train__btn--down .bha-icon { transform: rotate(90deg); }
+.bha-train__countdown, .bha-train__end {
+  position: absolute; inset: 0; z-index: var(--bha-z-raised); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-5);
+  background: rgb(0 0 0 / 0.45); font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); color: var(--bha-text-1);
+}
+.bha-train__endtitle { margin: 0; font-size: var(--bha-fs-3xl); }
+.bha-train__end.is-win .bha-train__endtitle { color: var(--bha-good); }
+.bha-train__end.is-lose .bha-train__endtitle { color: var(--bha-danger); }
+
+/* 본능(정령) 대결: 위·정면·아래 세 줄 + 오른쪽 상대. 예고 = 주황 테두리, 덮쳐 오는 순간 = 강조색 채움 */
+.bha-train__lanes { position: absolute; inset: var(--bha-sp-4) 30% var(--bha-sp-4) var(--bha-sp-4); display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-3); }
+.bha-train__lanes--two { inset: var(--bha-sp-4); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.bha-train__lane { position: relative; display: flex; align-items: center; padding-left: var(--bha-sp-5); border-radius: var(--bha-r-md); border: 1px dashed var(--bha-line-2); transition: background var(--bha-dur-2), border-color var(--bha-dur-2); }
+.bha-train__lanemark { font-weight: var(--bha-fw-bold); color: var(--bha-text-3); }
+.bha-train__lane.is-tele { border: 2px solid var(--bha-cast); box-shadow: var(--bha-glow-cast); }
+.bha-train__lane.is-tele .bha-train__lanemark { color: var(--bha-cast); }
+.bha-train__lane.is-strike { border: 2px solid var(--bha-accent-hi); background: var(--bha-accent-soft); box-shadow: var(--bha-glow-risk); }
+.bha-train__lane.is-strike .bha-train__lanemark { color: var(--bha-text-1); }
+.bha-train__lane.is-hit { background: var(--bha-guard); }
+.bha-train__lane.is-miss { background: var(--bha-attack); }
+.bha-train__foe {
+  position: absolute; right: var(--bha-sp-6); top: 50%; transform: translateY(-50%); width: 24%; aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center; text-align: center; padding: var(--bha-sp-4);
+  background: radial-gradient(circle at 40% 35%, var(--bha-accent-hi), var(--bha-accent) 55%, var(--bha-bg-0)); box-shadow: var(--bha-glow-risk);
+}
+.bha-train__foename { font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-sm); color: var(--bha-text-1); text-shadow: 0 1px 3px var(--bha-bg-0); }
+
+/* 탄막 피하기: 위/아래 두 칸, 왼쪽 나, 오른쪽에서 오는 탄 */
+.bha-train__me {
+  position: absolute; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--bha-text-1), var(--bha-stab)); box-shadow: 0 0 12px var(--bha-stab); transition: top var(--bha-dur-2) var(--bha-ease-out);
+}
+.bha-train__me.is-hurt { background: var(--bha-attack); box-shadow: 0 0 14px var(--bha-attack); }
+.bha-train__shot {
+  position: absolute; transform: translate(-50%, -50%); padding: var(--bha-sp-1) var(--bha-sp-3); border-radius: var(--bha-r-pill);
+  background: var(--bha-cast); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-heavy); box-shadow: var(--bha-glow-cast); white-space: nowrap;
+}
+.bha-train__shot.is-hit { background: var(--bha-attack); }
+
+/* 칼날 맞대기: 막대 + 가운데 성공 구간 + 움직이는 표시 */
+.bha-train__bar { position: absolute; left: 8%; right: 8%; top: 42%; height: 28px; border-radius: var(--bha-r-pill); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-2); }
+.bha-train__zone { position: absolute; top: 0; bottom: 0; border-radius: var(--bha-r-pill); background: var(--bha-guard); opacity: 0.55; }
+.bha-train__mark { position: absolute; top: -10px; bottom: -10px; width: 6px; margin-left: -3px; border-radius: var(--bha-r-xs); background: var(--bha-text-1); box-shadow: 0 0 10px var(--bha-sp-hi); }
+.bha-train__bar.is-pause .bha-train__mark { opacity: 0.4; }
+.bha-train__bar.is-ok { box-shadow: inset 0 0 0 2px var(--bha-guard), 0 0 14px var(--bha-guard); }
+.bha-train__bar.is-miss { box-shadow: inset 0 0 0 2px var(--bha-attack), 0 0 14px var(--bha-attack); }
+.bha-train__rounds { position: absolute; left: 0; right: 0; bottom: 18%; display: flex; justify-content: center; gap: var(--bha-sp-4); }
+.bha-train__rounds > i { width: 16px; height: 16px; transform: rotate(45deg); border-radius: var(--bha-r-xs); border: 2px solid var(--bha-line-2); }
+.bha-train__rounds > i.is-ok { background: var(--bha-guard); border-color: var(--bha-guard); }
+.bha-train__rounds > i.is-miss { background: var(--bha-attack); border-color: var(--bha-attack); }
+
+/* 먹이사슬: 3×3 칸. 먹잇감 = 좋음 색, 포식자 = 공격 색 */
+.bha-train__grid { position: absolute; inset: var(--bha-sp-4) 18%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-3); }
+.bha-train__cell {
+  min-height: 0; border-radius: var(--bha-r-md); border: 1px solid var(--bha-line-2); background: var(--bha-bg-1); color: var(--bha-text-1);
+  font: inherit; font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-sm); cursor: pointer;
+}
+.bha-train__cell[data-kind="prey"] { background: var(--bha-good); color: var(--bha-bg-0); }
+.bha-train__cell[data-kind="predator"] { background: var(--bha-attack); color: var(--bha-attack-ink); }
+.bha-train__cell.is-flash { box-shadow: 0 0 0 2px var(--bha-text-1); }

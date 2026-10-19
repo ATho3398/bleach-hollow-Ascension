@@ -1,10 +1,10 @@
 // 블록 바 (GDD 3-5 v0.8): 길이 최대 8의 일자 배열. 빈 칸 없이 왼쪽부터 채우고, 새 블록은 맨 오른쪽에 붙는다. 종족 무관 순수 로직.
 
-/** 바의 블록 하나. skill = 슬롯 특성 블록(기본 블록 포함), special = 필살 블록, void = 공허 블록, combo = 콤보 블록(GDD 17-3, traitId 에 콤보 id) */
+/** 바의 블록 하나. skill = 슬롯 특성 블록(기본 블록 포함), special = 필살 블록, void = 공허 블록, combo = 콤보 블록(GDD 17-3, traitId 에 콤보 id), liberation = 해방 블록(GDD 22-5, 해방하는 순간 들어온다) */
 export interface Block {
   /** 블록마다 고유한 번호 (화면 연출 추적용) */
   uid: number;
-  kind: 'skill' | 'special' | 'void' | 'combo';
+  kind: 'skill' | 'special' | 'void' | 'combo' | 'liberation';
   /** skill 블록의 특성 id (기본 블록은 BASIC_SKILL_ID). combo 는 콤보 id. special·void 는 null */
   traitId: string | null;
   /** skill 공격 블록의 계열 id (GDD 17-3): 같은 계열이면 특성이 달라도 체인이 된다. 막기·회복·기본 블록·special·void 는 null (옛 데이터는 없음 = null) */

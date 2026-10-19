@@ -47,7 +47,7 @@ export function emptyLegacyMatches(): Record<LegacyTileRole, number> {
 }
 
 /** 마무리 일격(적을 쓰러뜨린 공격) 종류 (C.6) */
-export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo' | 'dot';
+export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo' | 'dot' | 'liberation';
 
 export interface BattleRecord {
   runId: number;
@@ -105,6 +105,25 @@ export interface BattleRecord {
   /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0 */
   storedUsed: number;
   storedWasted: number;
+  /** C.54 에서 더한 필드 (세이브 형식 18, 해방 GDD 22-5): 해방을 썼는가, 쓴 시각(전투 시작부터 초, 안 썼으면 null). 옛 기록은 false/null */
+  liberationUsed: boolean;
+  liberationAt: number | null;
+}
+
+/** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */
+export interface TrainingRecord {
+  /** 시각(ms) */
+  at: number;
+  factionId: string;
+  /** 종목 id (duel·dodge·clash·chain) */
+  game: string;
+  won: boolean;
+  /** 그 판의 난이도 단계 (1~4) */
+  level: number;
+  /** 얻은 수련치 */
+  points: number;
+  /** 이 판으로 수련이 완료됐는가 */
+  completedNow: boolean;
 }
 
 /** 진화 1회 기록 (GDD 20-5, 9장): 히든 조건이 나중에 읽는다. C.11 단계별 진화체 테이블 → C.47 속성 트리 */
@@ -194,6 +213,8 @@ export interface RunLog {
   /** 등급전 기록 (C.49, 세이브 형식 15) */
   rankBattles: RankBattleRecord[];
   runs: RunRecord[];
+  /** 수련 기록 (C.54, 세이브 형식 18) */
+  trainings: TrainingRecord[];
 }
 
 export function emptyRunLog(): RunLog {
@@ -206,5 +227,6 @@ export function emptyRunLog(): RunLog {
     rankChanges: [],
     rankBattles: [],
     runs: [],
+    trainings: [],
   };
 }

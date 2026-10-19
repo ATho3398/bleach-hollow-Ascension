@@ -215,6 +215,8 @@ export type TitleCondition =
   | { type: 'maxLap'; min: number }
   /** 특정 단계(0부터)에 머문 채 격파한 적 수. enemyClass 가 없으면 모든 등급 */
   | { type: 'defeatedAtTier'; tier: number; min: number; enemyClass?: string }
+  /** 해방 수련을 완료한 적이 있다 (GDD 22-5, C.54) */
+  | { type: 'trainingCompleted' }
   /** 등급전으로 이 번호 이상(숫자가 같거나 작음)에 오른 적이 있다 (GDD 21장, C.49) */
   | { type: 'rankReached'; rank: number };
 

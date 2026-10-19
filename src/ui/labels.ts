@@ -15,6 +15,8 @@ export interface BattleLabels {
   specialBlock: string;
   /** 저장형 필살기 (GDD 14-6, v5.4 표시 `저장 필살`) */
   storedSkill: string;
+  /** 해방 (GDD 22-5): 종족 설정 liberation (이름·컷인·풀릴 때 문구) */
+  liberation: { name: string; cutin: string; endText: string };
   /** 공허 블록 표시 이름 (v5.4 `공허`) */
   voidBlock: string;
   chain: string;
@@ -35,6 +37,7 @@ export function battleLabels(f: FactionConfig): BattleLabels {
     skillBlock: f.skillBlockName,
     specialBlock: BLOCK_WORDS.special,
     storedSkill: BLOCK_WORDS.stored,
+    liberation: { ...f.liberation },
     voidBlock: BLOCK_WORDS.void,
     chain: f.chainName,
     families: f.families,
@@ -71,6 +74,19 @@ export function skillBlockLabel(labels: Pick<BattleLabels, 'families'>, factionI
   if (!element) return null;
   const tail = role === 'guard' ? BLOCK_WORDS.guard : role === 'heal' ? BLOCK_WORDS.heal : familyAbbr(labels, family);
   return tail ? `${blockElementName(element, factionId)}_${tail}` : null;
+}
+
+/** 해방 블록 표시 이름 (GDD 22-5 `속성_해방`): 내 캐릭터 속성. 속성을 모르면 `해방` */
+export function liberationBlockLabel(factionId: string, element: string | null | undefined): string {
+  return element ? `${blockElementName(element, factionId)}_${BLOCK_WORDS.liberation}` : BLOCK_WORDS.liberation;
+}
+
+/** 해방 버튼 설정 (GDD 22-5): 5단계 미만이면 없음(버튼 숨김), 자격이 모자라면 무엇이 부족한지 한 줄 */
+export function liberationButton(f: Pick<FactionConfig, 'training' | 'rankBattleName'>, access: { visible: boolean; usable: boolean; missing: ('training' | 'rank')[] }): { note: string | null } | undefined {
+  if (!access.visible) return undefined;
+  if (access.usable) return { note: null };
+  const parts = access.missing.map((m) => (m === 'training' ? `${f.training.title} 완료` : `${f.rankBattleName} 번호`));
+  return { note: `잠김 — ${parts.join(' · ')} 필요` };
 }
 
 /** 콤보 블록 표시 이름 (v5.4 `콤보_계열`). 계열을 모르면 `콤보` */

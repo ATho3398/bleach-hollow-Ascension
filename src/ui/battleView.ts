@@ -10,7 +10,7 @@ import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import {
-  BASIC_SKILL_ID, blockEffect, blockElementOf, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, maxChain, runsOf, step, timeLeftSeconds,
+  BASIC_SKILL_ID, blockEffect, blockElementOf, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type CombatInput, type CombatParams, type CombatState,
 } from '../engine/combat';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
@@ -25,7 +25,7 @@ import {
 import { elementColor, elementDot, elementMark } from './bha/element';
 import { weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
-import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, skillBlockLabel, type BattleLabels } from './labels';
+import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -51,6 +51,8 @@ export interface BattleViewOptions {
   tierIndex?: number;
   /** 현재 진화체 id (이동 방식 GDD 18-11). 1단계는 null */
   formId?: string | null;
+  /** 해방 버튼 (GDD 22-5): 있으면(5단계 이상) 저장 필살기 옆에 보인다. 쓸 수 있는지는 엔진 params.liberationEnabled, 못 쓰면 note(무엇이 부족한지 한 줄)와 함께 잠긴 버튼 */
+  liberation?: { note: string | null };
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -60,6 +62,7 @@ export function blockName(b: Block, labels: BattleLabels, factionId: string, p: 
   if (b.kind === 'special') return labels.specialBlock;
   if (b.kind === 'void') return labels.voidBlock;
   if (b.kind === 'combo') return comboBlockLabel(labels, comboOf(p, b.traitId)?.family);
+  if (b.kind === 'liberation') return liberationBlockLabel(factionId, p.playerElements[0]);
   const src = sourceOf(p, b.traitId);
   const name = skillBlockLabel(labels, factionId, blockElementOf(p, b), b.family ?? src?.family, src?.role ?? 'attack');
   return name ?? (b.traitId && b.traitId !== BASIC_SKILL_ID ? traitName(b.traitId, factionId) : labels.skillBlock);
@@ -92,7 +95,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       const skillName = e.block === 'skill' ? familySkillName(labels, e.family, e.chain) : null;
       const name = e.block === 'skill'
         ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
-        : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : labels.voidBlock;
+        : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
       const parts = [`${name}! ${n(e.damage)} 피해${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
@@ -102,7 +105,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       if (e.block === 'void') parts.push(`${labels.riskGauge} ↑`);
       const text = parts.join(' · ');
       if (e.block === 'void') return { role: 'void', icon: 'i-void', text };
-      if (e.block === 'special' || e.block === 'combo') return { role: 'chain', icon: 'i-special', text };
+      if (e.block === 'special' || e.block === 'combo' || e.block === 'liberation') return { role: 'chain', icon: 'i-special', text };
       if (e.chain > 1) return { role: 'chain', icon: `i-chain-${Math.min(3, e.chain)}`, text };
       const role: LogRole = e.role ?? 'attack';
       return { role, icon: LOG_ICON[role], text };
@@ -129,6 +132,10 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'cast', icon: 'i-cast', text: `반격! ${n(e.damage)} 피해${e.guarded ? ' (막기로 경감)' : ''}` };
     case 'shuffle':
       return { role: 'chain', icon: 'i-swap', text: '블록 바의 순서가 섞였다' };
+    case 'liberate':
+      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 능력치 상승 · ${liberationBlockLabel(factionId, s.params.playerElements[0])} ${e.blocks}칸` };
+    case 'liberation-end':
+      return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk)}` };
     case 'end':
       return e.status === 'won' ? { role: 'chain', icon: 'i-flag-win', text: `${pickFaction(s.enemy.def.name, factionId)}을(를) 쓰러뜨렸다!` } : null;
     default:
@@ -154,10 +161,16 @@ function statusChip(mod: 'guard' | 'seal' | undefined, iconId: string, label: st
 }
 
 /** 상태 바 값 글자(첫 글자 노드)만 바꾼다 */
-function setMeterValue(root: HTMLElement, value: number): void {
+function setMeterValue(root: HTMLElement, value: number, max?: number): void {
   const t = root.querySelector('.bha-meter__value')?.firstChild;
   const text = String(value);
   if (t && t.nodeValue !== text) t.nodeValue = text;
+  // 최대값이 바뀌는 경우(해방 중 최대 체력, GDD 22-5)
+  const small = max === undefined ? null : root.querySelector('.bha-meter__value small');
+  if (small && max !== undefined && small.textContent !== ` / ${max}`) {
+    small.textContent = ` / ${max}`;
+    root.setAttribute('aria-valuemax', String(max));
+  }
 }
 
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
@@ -306,13 +319,39 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   storedPipRow.append(...storedPips);
   storedBtn.append(storedIcon, storedBody, storedPipRow);
 
+  // 해방 버튼 (GDD 22-5): 5단계 이상이면 저장 필살기 옆. 게이지가 차면 누를 수 있고(전투당 1회), 자격이 없으면 잠겨 있다
+  const libOn = !!opts.liberation;
+  const libBtn = el('button', 'bha-stored bha-stored--liberation is-disabled');
+  libBtn.type = 'button';
+  const libIcon = el('span', 'bha-stored__icon');
+  libIcon.append(icon(p.liberationEnabled ? 'i-special' : 'i-lock'));
+  const libName = el('span', 'bha-stored__name');
+  libName.append(el('span', '', labels.liberation.name), provisionalTag());
+  const libMeta = el('span', 'bha-stored__meta');
+  const libGaugeFill = el('i');
+  const libGauge = el('span', 'bha-stored__gauge');
+  libGauge.append(libGaugeFill);
+  const libBody = el('span', 'bha-stored__body');
+  libBody.append(libName, libMeta, libGauge);
+  libBtn.append(libIcon, libBody);
+  libBtn.hidden = !libOn;
+  if (!p.liberationEnabled) libBtn.classList.add('is-locked');
+  const libChip = statusChip(undefined, 'i-special', labels.liberation.name);
+  libChip.root.classList.add('bha-chip--liberation');
+  libChip.root.hidden = true;
+  meStatus.prepend(libChip.root);
+  // 해방 컷인 (공통 연출 하나, 11-5 변주는 미정): 장면 위에 한 줄
+  const libCut = el('div', 'bha-libcut');
+  libCut.setAttribute('aria-hidden', 'true');
+  libCut.append(el('span', 'bha-libcut__text', labels.liberation.cutin));
+
   // 블록 바 바로 위 줄: 왼쪽 = 영력 바·상태 칩·범례, 오른쪽 = 저장 필살기 버튼(엄지가 닿는 자리) (GDD 18-6)
   const midInfo = el('div', 'bha-battle__midinfo');
   const spRow = el('div', 'bha-battle__sprow');
   spRow.append(spWrap, meStatus);
   midInfo.append(spRow, legend);
   const mid = el('div', 'bha-battle__mid');
-  mid.append(midInfo, storedBtn);
+  mid.append(midInfo, ...(libOn ? [libBtn] : []), storedBtn);
   const controls = el('section', 'bha-battle__controls');
   controls.setAttribute('aria-label', '블록 조작');
   controls.append(mid, tray.root, trayNote);
@@ -360,7 +399,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 한 열 (GDD 18-6): 장면(적 이름·모서리 버튼·유닛 둘·로그가 그 위에 얹힘) / 영력·저장 필살기 줄 / 좌우 폭 전부를 쓰는 블록 바 8칸
   const topRow = el('div', 'bha-battle__toprow');
   topRow.append(foeHead, bar);
-  arena.append(units, topRow, fxLayer, floats, fxFlash, log);
+  arena.append(units, topRow, fxLayer, floats, fxFlash, libCut, log);
   const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, ...(opts.notice ? [notice('info', opts.notice)] : []), arena, controls, flashVoid, flashHit);
   app.classList.toggle('is-frenzy', !!opts.frenzy);
 
@@ -433,6 +472,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   speedBtn.dataset.sc = 'speed';
   helpBtn.dataset.sc = 'help';
   storedBtn.dataset.sc = 'stored';
+  libBtn.dataset.sc = 'liberate';
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
 
   // ── 일시정지·배속 ──
@@ -566,6 +606,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       case 'combo':
         spawnFloat('chain', `콤보! ${comboName(e.comboId, faction.id)}`, { chain3: true });
         flash('is-special', 600);
+        break;
+      case 'liberate':
+        replayOnce(libCut, 'is-on', 1400);
+        flash('is-special', 700);
+        shake();
+        break;
+      case 'liberation-end':
+        replayOnce(flashVoid, 'is-on', 900);
         break;
       case 'stored-use':
         spawnFloat('attack', `−${n0(e.damage)}`, { crit: true });
@@ -755,11 +803,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       setMeter(enemyMeter, s.enemy.hp, s.enemy.maxHp, s.enemy.hp);
       setMeterValue(enemyMeter, Math.ceil(s.enemy.hp - 1e-6));
     }
-    const pRatio = `${Math.round(s.player.hp * 10)}`;
+    const pRatio = `${Math.round(s.player.hp * 10)}/${Math.round(s.player.maxHp)}`;
     if (meterCache.player !== pRatio) {
       meterCache.player = pRatio;
       setMeter(playerMeter, s.player.hp, s.player.maxHp, s.player.hp);
-      setMeterValue(playerMeter, Math.ceil(s.player.hp - 1e-6));
+      setMeterValue(playerMeter, Math.ceil(s.player.hp - 1e-6), Math.round(s.player.maxHp));
       playerMeter.classList.toggle('is-danger', s.player.hp / s.player.maxHp < 0.3);
     }
     const spKey = `${Math.round(s.sp * 10)}`;
@@ -824,6 +872,28 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       ? `${Math.round(p.storedPowerInAttacks)}회분 피해 · ${p.storedGuardSeconds}초 ${labels.role.guard}`
       : `${Math.floor(s.storedGauge)} / ${p.storedGaugeMax} — 블록을 쓸수록 충전`;
     setText(storedMeta, metaText);
+
+    // 해방 (GDD 22-5)
+    const libActive = liberationActive(s);
+    app.classList.toggle('is-liberated', libActive);
+    libChip.root.hidden = !libActive;
+    if (libActive) setText(libChip.value, secondsText(s.liberation.ticksLeft * p.tickSeconds));
+    if (libOn) {
+      const lb = s.liberation;
+      const used = lb.usedAtTick !== null;
+      const ready = canLiberate(s);
+      libBtn.style.setProperty('--fill', (used ? (libActive ? lb.ticksLeft / Math.max(1, Math.round(p.liberationSeconds / p.tickSeconds)) : 0) : lb.gauge / LIBERATION_GAUGE_MAX).toFixed(3));
+      libBtn.classList.toggle('is-ready', ready);
+      libBtn.classList.toggle('is-disabled', !ready);
+      libBtn.classList.toggle('is-active', libActive);
+      libBtn.setAttribute('aria-disabled', String(!ready));
+      const libText = !p.liberationEnabled
+        ? opts.liberation?.note ?? '잠김'
+        : libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : used ? '이 전투에서 사용함' : ready ? '준비됨 — 눌러 해방' : `게이지 ${Math.floor(lb.gauge)}%`;
+      setText(libMeta, libText);
+      libBtn.title = libText;
+      libBtn.setAttribute('aria-label', `${labels.liberation.name}, ${libText}`);
+    }
   };
 
   // ── 입력: 포인터 이벤트(터치·마우스 공통). 클릭 = 같은 블록 위에서 누르고 뗀 것. 시간·거리 제한은 없다 ──
@@ -854,6 +924,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     storedDown = null;
     storedBtn.classList.remove('is-pressed');
     if (overStored(e) && s.status === 'playing' && !halted()) queue.push({ type: 'stored' });
+  });
+  libBtn.addEventListener('click', () => {
+    if (canLiberate(s) && !halted()) queue.push({ type: 'liberate' });
   });
   const endPress = () => {
     down = null;
@@ -886,6 +959,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     stored: () => {
       if (!app.isConnected || stopped || s.status !== 'playing' || halted()) return false;
       queue.push({ type: 'stored' });
+      return true;
+    },
+    liberate: () => {
+      if (!app.isConnected || stopped || !canLiberate(s) || halted()) return false;
+      queue.push({ type: 'liberate' });
       return true;
     },
   });

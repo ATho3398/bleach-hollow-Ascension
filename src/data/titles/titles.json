@@ -140,5 +140,18 @@
       "shinigami": "켄파치"
     },
     "condition": null
+  },
+  {
+    "id": "training-complete",
+    "kind": "tag",
+    "hidden": false,
+    "name": {
+      "hollow": "본능 지배",
+      "shinigami": "굴복"
+    },
+    "condition": {
+      "type": "trainingCompleted"
+    },
+    "provisional": true
   }
 ]

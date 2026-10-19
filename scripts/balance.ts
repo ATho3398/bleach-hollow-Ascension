@@ -2,11 +2,11 @@
 // 시스템별 지표를 여기에 더한다. 가드를 어기면 --check 일 때 종료 코드 1.
 
 import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
-import { ENEMIES, enemyPatternKind, POOL_CONFIG } from '../src/data/enemies';
+import { ENEMIES, enemyPatternKind, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
 import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
 import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, storedStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
-import { createExpedition, playExpedition, type ExpeditionState } from '../src/engine/expedition';
+import { createExpedition, enemyScale, playExpedition, type ExpeditionState } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
 import { ELEMENT_IDS } from '../src/data/elements';
@@ -496,6 +496,53 @@ let campaignFirstAt: Record<number, SaveData[]> = {};
       if (r.food <= base.food) failures.push(`사냥터 ${g.id}: 먹이 ${r.food.toFixed(1)}개 ≤ 기본 사냥터 ${base.food.toFixed(1)}개`);
     }
   }
+}
+
+// ── 해방 (C.54, GDD 22-5): 5단계에 갓 닿은 몸(위 진화 봇 세이브)이 강적과 싸울 때 해방을 쓰면(봇은 게이지가 차면 바로) 승률이 얼마나 오르나 ──
+// 목표(마스터 v5.13, provisional): 해방 사용 시 강적 승률 +10~15%p. 적은 그 단계에 열리는 사냥터(5단계 = 마지막 사냥터) 1~6바퀴(원정 최대) 강화.
+// 1~4바퀴만 보면 해방 없이도 약 89% 라 올릴 자리가 11%p 뿐이다(dev-log C.54) — 늦은 바퀴까지 넣어 해방이 필요한 싸움을 함께 본다
+{
+  const LR = 3;
+  const tier = BALANCE.provisional.liberation.minTierIndex;
+  const bodies = campaignFirstAt[tier] ?? [];
+  const ground = [...GROUNDS].filter((g) => g.unlockTierIndex <= tier).sort((a, b) => b.unlockTierIndex - a.unlockTierIndex)[0]!;
+  const elites = POOL_ENEMIES.filter((e) => e.class === 'elite');
+  const rate = (liberation: boolean) => {
+    let wins = 0;
+    let games = 0;
+    let used = 0;
+    let usedAt = 0;
+    bodies.forEach((body, bi) => {
+      for (const base of elites) {
+        for (let lap = 1; lap <= BALANCE.expedition.maxLaps; lap++) {
+          for (let k = 0; k < LR; k++) {
+            const params = buildCombatParams(body.build, 'hollow');
+            applyEvolutionToParams(params, body.evolution, 'hollow');
+            params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+            params.liberationEnabled = liberation;
+            const end = playCombatHuman(createCombat(70000 + bi * 1009 + lap * 101 + k * 7 + base.hpInAttacks, { enemy: scaleEnemy(base, enemyScale(lap, ground.id)), params }));
+            games++;
+            if (end.status === 'won') wins++;
+            if (end.liberation.usedAtTick !== null) {
+              used++;
+              usedAt += end.liberation.usedAtTick * end.params.tickSeconds;
+            }
+          }
+        }
+      }
+    });
+    return { win: games ? wins / games : 0, games, used, usedAt: used ? usedAt / used : 0 };
+  };
+  const off = rate(false);
+  const on = rate(true);
+  const gain = on.win - off.win;
+  const LB = BALANCE.provisional.liberation;
+  console.log(`\n해방 (사람형 봇, ${tier + 1}단계 몸 ${bodies.length}명 × 강적 ${elites.length}종 × 1~${BALANCE.expedition.maxLaps}바퀴 × ${LR}판, 사냥터 ${ground.id}) — 목표(임시): 해방 사용 시 강적 승률 +10~15%p`);
+  console.log(`  해방 수치: 게이지 = 적 최대 체력 ${LB.gaugeEnemyHpFraction * 100}%, ${LB.seconds}초 능력치 ×${LB.statMultiplier}, 해방 블록 ${LB.blocks}칸 × 기본 블록 ${LB.blockPowerMultiplier}배, 끝나면 리스크 +${LB.riskOnEnd}`);
+  console.log(`  해방 없음 ${(off.win * 100).toFixed(1)}% → 해방 사용 ${(on.win * 100).toFixed(1)}% (${gain >= 0 ? '+' : ''}${(gain * 100).toFixed(1)}%p) · 해방 쓴 전투 ${on.used}/${on.games} · 평균 ${on.usedAt.toFixed(1)}초에 사용`);
+  if (bodies.length < CAMPAIGNS * 0.8) failures.push(`해방: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+  // 회귀 가드는 목표보다 넓게(+5~25%p): 다른 수치를 고칠 때 해방이 무의미해지거나 압도적이 되는 것만 막는다
+  if (gain < 0.05 || gain > 0.25) failures.push(`해방: 강적 승률 변화 ${(gain * 100).toFixed(1)}%p (가드 +5~25%p 밖)`);
 }
 
 // ── 등급전 (C.49, GDD 21장): 번호 보유자 No.10 → No.1 승률 곡선. 위 진화 봇 중 5단계(아란칼)에 닿은 세이브(원정 MAX_RUNS 회를 마친 몸)로 사람형 봇이 각 보유자와 싸운다 ──

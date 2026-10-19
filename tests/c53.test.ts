@@ -213,8 +213,8 @@ describe('세이브 형식 17', () => {
     old.nest.lastTickMs = 12345;
     old.runLog.runs = [{ runId: 1, laps: 1, outcome: 'returned', gained: [], lost: [], endReason: 'returned', seed: 1, factionId: 'hollow', gainedTraits: [], lostTraits: [], riskPeak: 0, breakthrough: false }];
     const m = migrateSave(old)!;
-    expect(SAVE_FORMAT_VERSION).toBe(17);
-    expect(m.meta.format).toBe(17);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(17); // C.54 에서 18 (형식 18 검사는 c54.test.ts)
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.lastSeenAt).toBe(12345);
     expect(m.shared.dexRewards).toEqual([]);
     expect(m.shared.jade).toBe(0);

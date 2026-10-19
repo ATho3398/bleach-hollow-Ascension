@@ -4,7 +4,7 @@
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
 import { hasSpecialActions } from '../../data/enemies';
 import {
-  blockDamage, blockEffect, maxChain, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
+  blockDamage, blockEffect, canLiberate, maxChain, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
 } from './combat';
 import { createRng, nextFloat } from '../rng';
 import { chainGroup, runAt, type Block, type Tray } from './tray';
@@ -26,6 +26,8 @@ export interface BotOptions {
   comboHold?: boolean;
   /** true 면 상대의 방어 자세를 알아채지 못한 것처럼 플레이한다 (블록을 아끼지 않고 평소대로 쓴다). 기본 false */
   ignoreStance?: boolean;
+  /** false 면 해방(GDD 22-5)을 쓰지 않는다. 기본 true — 자격이 있고 게이지가 차면 바로 쓴다 */
+  liberate?: boolean;
 }
 
 type Cell = { i: number; b: Block };
@@ -71,7 +73,7 @@ function joinUse(s: CombatState, top: number): CombatInput | null {
   const hasPattern = hasSpecialActions(s.enemy.def.pattern);
   let best: { i: number; run: number } | null = null;
   for (const c of cells(s)) {
-    if (c.b.kind === 'special' || c.b.kind === 'combo') continue;
+    if (c.b.kind === 'special' || c.b.kind === 'combo' || c.b.kind === 'liberation') continue;
     // 낭비가 큰 블록은 붙이려고 쓰지 않는다: 막기는 강적(강공격)이 없을 때만, 회복은 다쳤을 때만
     const role = c.b.kind === 'skill' ? roleOf(s, c.b) : null;
     if (role === 'guard' && hasPattern) continue;
@@ -95,6 +97,8 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   const hasPattern = hasSpecialActions(s.enemy.def.pattern);
   const top = maxChain(p);
 
+  // 0. 해방: 자격이 있고 게이지가 차면 바로 (GDD 22-5)
+  if (opt.liberate !== false && canLiberate(s)) return { type: 'liberate' };
   // 1. 강공격 예고 중이고 막기 상태가 착탄까지 못 버티면 막기 블록
   const cast = s.enemy.cast;
   if (cast && opt.allowGuard !== false && s.guard.ticks <= cast.ticks) {
@@ -116,8 +120,8 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     }
     return null;
   }
-  // 2. 필살 블록·콤보 블록은 바로
-  const special = all.find((c) => c.b.kind === 'special' || c.b.kind === 'combo');
+  // 2. 필살 블록·콤보 블록·해방 블록은 바로
+  const special = all.find((c) => c.b.kind === 'special' || c.b.kind === 'combo' || c.b.kind === 'liberation');
   if (special) return use(special);
   // 3. 체력이 절반 아래면 회복
   if (s.player.hp < s.player.maxHp * 0.5) {

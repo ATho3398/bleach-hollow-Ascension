@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 30;
+export const BALANCE_VERSION = 31;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -90,6 +90,52 @@ export const BALANCE = {
     },
     // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 (환생 +10 은 환생 구현 때) ──
     soulCrystals: { perElite: 1, perRankWin: 3 },
+    // ── 해방 (GDD 22-2·22-5 v5.13, 수치 provisional): 전투 중 변신. 이름은 종족 설정 liberation ──
+    liberation: {
+      /** 자격: 지금 단계가 이 값 이상(tierIndex, 4 = 5단계 아란칼/수석 대원) + 수련 완료 + 등급 이력 */
+      minTierIndex: 4,
+      /** 게이지: 내 공격(평타·블록·필살 등)이 준 피해 합이 적 최대 체력의 이 비율이면 가득(100). C.54 봇 조정 2회: 기획 40% → 30% (승률 목표 +10~15%p) */
+      gaugeEnemyHpFraction: 0.3,
+      gaugeMax: 100,
+      /** 지속(초)과 그동안 전 능력치 배율 (체력은 최대 체력이 같이 오르고 끝나면 원래 최대 체력까지로). C.54 봇 조정 2회: 기획 ×1.3 → ×1.5 */
+      seconds: 15,
+      statMultiplier: 1.5,
+      /** 쓰는 순간 블록 바에 넣는 해방 블록 수와 위력 배율 (일반 블록 = basicBlockPowerInAttacks 의 이 배수) */
+      blocks: 2,
+      blockPowerMultiplier: 3,
+      /** 해방이 끝날 때(전투가 먼저 끝나도) 리스크 게이지 상승 */
+      riskOnEnd: 15,
+    },
+    // ── 수련 (GDD 22-4·22-5 v5.13, 수치 provisional): 둥지 제단 → 4종목 미니게임 ──
+    training: {
+      /** 수련 완료에 필요한 수련치 */
+      pointsToComplete: 60,
+      /** 패배해도 얻는 수련치 */
+      lossPoints: 1,
+      /** 수련권: 원정에서 돌아올 때마다(승패 무관) +1, 최대 */
+      ticketsMax: 3,
+      ticketsPerReturn: 1,
+      /** 이 컨디션 미만이면 수련 불가, 리스크가 이 값 이상이면 경고 */
+      minCondition: 30,
+      riskWarn: 80,
+      /** 종목별 누적 승리가 이 값 이상이면 그 단계 (index 0 = 1단계) */
+      levelWins: [0, 3, 6, 10],
+      /** 종목별 승리 보상·비용 (22-4 표). 비용은 이기든 지든. ev = 노력치(상한까지만) */
+      games: {
+        duel: { points: 5, ev: { spr: 2 }, condition: -10, hunger: 0, risk: 5 },
+        dodge: { points: 3, ev: { spd: 3 }, condition: -15, hunger: 0, risk: 0 },
+        clash: { points: 4, ev: { atk: 3 }, condition: -5, hunger: 15, risk: 0 },
+        chain: { points: 3, ev: { hp: 3 }, condition: 0, hunger: 0, risk: 10, winHunger: -20 },
+      } as Record<string, { points: number; ev: Record<string, number>; condition: number; hunger: number; risk: number; winHunger?: number }>,
+      /** 본능 대결: 상대 게이지 hits 번 깎으면 승, misses 번 놓치면 패. 예고 간격(초), 받아치는 창(초, 단계별), 3단계부터 페이크 확률, 4단계 연속 공격 확률 */
+      duel: { hits: 8, misses: 4, gapSeconds: [0.8, 2.0], windowSeconds: [1.0, 0.85, 0.72, 0.6], telegraphSeconds: [0.9, 0.75, 0.6, 0.5], fakeChance: [0, 0, 0.3, 0.35], doubleChance: [0, 0, 0, 0.35] },
+      /** 탄막 피하기: 버틸 시간(초), 맞으면 패배하는 횟수, 탄 간격(초, 단계별), 탄이 화면을 건너는 시간(초, 단계별) */
+      dodge: { seconds: 30, hitsToLose: 3, spawnSeconds: [1.1, 0.95, 0.8, 0.65], travelSeconds: [2.2, 1.9, 1.6, 1.35] },
+      /** 칼날 맞대기: 판 수, 이길 성공 수, 표시 왕복 시간(초, 단계별 범위 — 매번 다름), 가운데 성공 구간 폭(막대 비율) */
+      clash: { rounds: 5, toWin: 4, sweepSeconds: [[1.4, 2.0], [1.1, 1.7], [0.9, 1.4], [0.7, 1.2]], zoneWidth: [0.24, 0.2, 0.17, 0.14] },
+      /** 먹이사슬: 제한 시간(초), 목표 점수, 칸 수, 먹잇감 +1 / 포식자 −3, 나타나 있는 시간(초, 단계별), 새로 나타나는 간격(초, 단계별), 포식자 비율 */
+      chain: { seconds: 30, target: 12, cells: 9, preyScore: 1, predatorScore: -3, showSeconds: [1.3, 1.1, 0.95, 0.8], spawnSeconds: [1.0, 0.9, 0.8, 0.7], predatorShare: [0.3, 0.33, 0.36, 0.4] },
+    },
     // ── 먹이 = 전리품 (GDD 23-1, 수치 provisional): 먹이 5종 개수제, 슬롯 공유 자원 ──
     food: {
       /** 종류별 보관 상한 */
@@ -111,8 +157,8 @@ export const BALANCE = {
     elements: {
       /** 혈: 준 피해의 이 비율만큼 체력 회복 (내 블록·기본 공격, 적의 공격 모두) */
       drainFraction: 0.03,
-      /** 혈 흡혈 상한 (C.53, 마스터 지시 20% → 혈 강적 68% 넘으면 15%까지): 한 전투에서 흡혈로 되찾는 체력 합계 ≤ 최대 체력 × 이 값. 내 쪽·적 쪽 따로 센다 */
-      drainCapFraction: 0.15,
+      /** 혈 흡혈 상한 (C.53 15%, C.54 GDD 22-5 v5.13 마스터 결정 8% — 혈 강적 68% 이하): 한 전투에서 흡혈로 되찾는 체력 합계 ≤ 최대 체력 × 이 값. 내 쪽·적 쪽 따로 센다 */
+      drainCapFraction: 0.08,
       /** 독: 맞힌 피해의 이 비율을 poisonSeconds 동안 나눠 더 준다 (겹치면 남은 양에 더하고 시간은 새로) */
       poisonFraction: 0.2,
       poisonSeconds: 4,

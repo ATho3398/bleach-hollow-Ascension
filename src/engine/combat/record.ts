@@ -1,7 +1,7 @@
 // 전투 결과 → 런 로그 BattleRecord (GDD 9장, CLAUDE.md 규칙 4). 매치3 시절 필드는 0/빈 값으로 채워 호환한다
 import { canAbsorb } from '../absorb/offer';
 import { emptyLegacyMatches, type BattleRecord } from '../runLog';
-import { elapsedSeconds, type CombatState } from './combat';
+import { elapsedSeconds, liberationUsedAt, type CombatState } from './combat';
 
 export interface BattleContext {
   factionId: string;
@@ -43,5 +43,7 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     absorbable: canAbsorb(s),
     storedUsed: s.storedUsed,
     storedWasted: Math.round(s.storedWasted * 10) / 10,
+    liberationUsed: s.liberation.usedAtTick !== null,
+    liberationAt: liberationUsedAt(s),
   };
 }

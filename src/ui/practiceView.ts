@@ -12,7 +12,7 @@ import { splitApp } from './bha/split';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter } from './bha/expedition';
 import { elementDot, elementMark, paintElement } from './bha/element';
-import { battleLabels, comboBlockLabel, skillBlockLabel } from './labels';
+import { battleLabels, comboBlockLabel, liberationBlockLabel, skillBlockLabel } from './labels';
 
 /** 연습 목록용 패턴 이름 (임시 표시) */
 export const PATTERN_LABEL: Record<EnemyPatternKind, string> = {
@@ -134,7 +134,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     ? '-'
     : fin.kind === 'skill'
       ? finSkill()
-      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', skill: '' }[fin.kind];
+      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', liberation: liberationBlockLabel(faction.id, fin.element), skill: '' }[fin.kind];
   const name = pickFaction(enemy.name, faction.id);
 
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);

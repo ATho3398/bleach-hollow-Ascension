@@ -11,6 +11,7 @@ import './ui/bha/room.css';
 import './ui/bha/lcd.css';
 import './ui/bha/screens-lcd.css';
 import './ui/bha/battle-scene.css';
+import './ui/bha/training.css';
 import './ui/bha/walk-scene.css';
 import './ui/bha/loco.css';
 import { startApp } from './ui/app';

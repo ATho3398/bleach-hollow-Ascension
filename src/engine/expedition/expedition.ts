@@ -111,6 +111,8 @@ export interface ExpeditionState extends RiskState {
   endReason: EndReason | null;
   /** 귀환 처리 때(game.ts recordExpedition) 먹이를 보유에 넣은 결과. 결과 화면 표시용, 원정 중에는 없다 */
   foodSettled?: FoodSettlement;
+  /** 해방 자격 (GDD 22-5, 출발 때 game.liberationAccess 로 정함): 이 원정 전투에서 해방 버튼을 쓸 수 있는가. 없으면 못 씀 */
+  liberationEnabled?: boolean;
 }
 
 export interface ExpeditionSetup {
@@ -130,6 +132,8 @@ export interface ExpeditionSetup {
   build?: BuildState;
   /** 둥지에서 가져온 진화 상태 (없으면 1단계 새 상태) */
   evolution?: EvolutionState;
+  /** 해방 자격 (수련 완료·등급 이력·5단계 이상). 없으면 false */
+  liberationEnabled?: boolean;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -174,6 +178,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     lapsCompleted: 0,
     outcome: null,
     endReason: null,
+    liberationEnabled: setup.liberationEnabled === true,
   };
   planLap(exp);
   return exp;
@@ -308,7 +313,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   if (cls === 'elite') exp.elitesThisLap++;
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
-  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability) };
+  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability), liberationEnabled: exp.liberationEnabled === true };
   applyEvolutionToParams(params, exp.evolution, exp.factionId);
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
   if (exp.breakthrough) applyFrenzy(params);
@@ -365,6 +370,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   exp.condition = Math.max(0, exp.condition - PX.conditionPerBattle);
   // 공허 블록 사용 → 리스크 게이지 상승 (GDD 3-5)
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
+  // 해방이 끝나며 오른 리스크 (GDD 22-5)
+  if (battle.liberation.risk > 0) changeRisk(exp, battle.liberation.risk, 'liberation');
   if (battle.status === 'lost') {
     endExpedition(exp, 'defeated', 'battle-lost');
     return record;

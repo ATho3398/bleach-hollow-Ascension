@@ -26,7 +26,7 @@ export interface UnlockedTitle {
   seen: boolean;
 }
 
-export type TitleTrigger = 'expedition' | 'evolution' | 'load' | 'rank';
+export type TitleTrigger = 'expedition' | 'evolution' | 'load' | 'rank' | 'training';
 
 /** 평가기가 읽는 세이브 상태 (SaveData 의 일부) */
 export interface TitleEvalState {
@@ -65,6 +65,8 @@ export function checkCondition(c: TitleCondition, log: RunLog): boolean {
       return log.battles.filter((b) => b.won && b.tierIndex === c.tier && (!c.enemyClass || b.enemyClass === c.enemyClass)).length >= c.min;
     case 'rankReached':
       return (log.rankBattles ?? []).some((r) => r.won && r.rankAfter !== null && r.rankAfter <= c.rank);
+    case 'trainingCompleted':
+      return (log.trainings ?? []).some((t) => t.completedNow);
   }
 }
 

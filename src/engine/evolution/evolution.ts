@@ -263,6 +263,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.playerStats = currentStats(e, factionId);
   params.playerElements = playerElementsOf(e);
   params.stabMultiplier = stabOf(e);
+  // 해방 블록 분류 (GDD 22-5): 진화체 분류(아란칼 일반형), 없으면 혼합
+  params.liberationCategory = form?.label.category ?? 'mixed';
   applyAbility(params, e.ability);
 }
 

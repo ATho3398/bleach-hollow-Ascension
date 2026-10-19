@@ -24,9 +24,10 @@ import { newlyAchieved } from './engine/tutorialGoals';
 import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
 import { DEFAULT_GROUND_ID } from './data/grounds';
 import { applyAbsenceHunger } from './engine/nest';
+import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 17;
+export const SAVE_FORMAT_VERSION = 18;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -73,6 +74,8 @@ export interface SaveData {
   shared: SharedState;
   /** 마지막 접속 시각(ms, GDD 24-1, 형식 17): 저장할 때마다 갱신. 다시 열 때 이 시각부터 꺼 둔 시간만큼 허기가 오른다. 시계를 되돌려도 줄지 않는다 */
   lastSeenAt: number;
+  /** 해방 수련 (GDD 22-4·22-5, 형식 18): 수련치·수련권(이 트랙의 원정 귀환으로만)·종목별 승리 수·완료 여부. 완료는 등급 이력처럼 환생해도 유지할 자리 */
+  training: TrainingState;
 }
 
 /** 튜토리얼 보상 수령 1건 (GDD 23-3) */
@@ -144,7 +147,7 @@ export interface TutorialGrant {
 export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), defs: readonly TutorialGoalDef[] = TUTORIAL_GOALS): TutorialGrant[] {
   const claims = (save.shared.tutorials[save.factionId] ??= []);
   const fresh = newlyAchieved(defs, claims.map((c) => c.goalId), {
-    factionId: save.factionId, tutorialSeen: save.help.tutorialSeen, runLog: save.runLog, tierIndex: save.evolution.tierIndex, everRanked: save.rank.history.everRanked,
+    factionId: save.factionId, tutorialSeen: save.help.tutorialSeen, runLog: save.runLog, tierIndex: save.evolution.tierIndex, everRanked: save.rank.history.everRanked, trainingCompleted: save.training.completed,
   });
   return fresh.map((goal) => {
     claims.push({ goalId: goal.id, at: nowMs });
@@ -205,7 +208,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState() };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -242,6 +245,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   for (const id of sum.kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   storeUnplacedTiles(save.tiles, unplacedKept(exp));
   applyExpeditionEnd(save.nest, exp, nowMs);
+  // 수련권 (GDD 22-5): 원정에서 돌아올 때마다(승패 무관) +1, 최대 3
+  addTrainingTicket(save.training);
   save.activeExpedition = null;
   save.lastScreen = 'room';
   checkTitles(save, 'expedition', nowMs);
@@ -320,6 +325,29 @@ export function recordRankBattle(save: SaveData, s: CombatState, nowMs: number =
   if (won) save.shared.soulCrystals += BALANCE.provisional.soulCrystals.perRankWin;
   checkTitles(save, 'rank', nowMs);
   return r;
+}
+
+/** 해방 자격 (GDD 22-2·22-5): 수련 완료 그리고 등급 이력, 그리고 지금 단계 5 이상.
+ *  visible = 버튼을 보이는가(5단계 이상), usable = 쓸 수 있는가, missing = 부족한 것(잠긴 버튼 한 줄) */
+export function liberationAccess(save: Pick<SaveData, 'training' | 'rank' | 'evolution'>): { visible: boolean; usable: boolean; missing: ('training' | 'rank')[] } {
+  const visible = save.evolution.tierIndex >= BALANCE.provisional.liberation.minTierIndex;
+  const missing: ('training' | 'rank')[] = [];
+  if (!save.training.completed) missing.push('training');
+  if (!save.rank.history.everRanked) missing.push('rank');
+  return { visible, usable: visible && missing.length === 0, missing };
+}
+
+/** 원정 밖 전투(등급전·연습)에서 해방이 끝나며 오른 리스크를 둥지 게이지에 더한다 (원정 전투는 finishBattle 이 원정 게이지에) */
+export function settleLiberationRisk(save: SaveData, s: Pick<CombatState, 'liberation'>): void {
+  if (s.liberation.risk > 0) save.nest.risk = Math.min(BALANCE.provisional.risk.limit, save.nest.risk + s.liberation.risk);
+}
+
+/** 수련 한 판 결과를 세이브에 반영한다 (GDD 22-5): 수련권 1장, 수련치·노력치·둥지 비용, 런 로그, 완료면 칭호 평가. 시작 가능 여부는 부르는 쪽이 trainingGate 로 먼저 본다 */
+export function recordTraining(save: SaveData, game: TrainingGameId, won: boolean, nowMs: number = Date.now()): TrainingOutcome {
+  const out = applyTraining(save.training, save.nest, save.evolution, game, won, nowMs);
+  save.runLog.trainings.push({ at: nowMs, factionId: save.factionId, game, won, level: out.level, points: out.points, completedNow: out.completedNow });
+  checkTitles(save, 'training', nowMs);
+  return out;
 }
 
 /** 새 원정의 runId = 지금까지 기록된 원정 수 + 1 */
@@ -486,7 +514,16 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.runs = (save.runLog.runs ?? []).map((r) => ({ ...r, groundId: r.groundId ?? DEFAULT_GROUND_ID }));
     save.meta.format = 17;
   }
+  if (save.meta.format < 18) {
+    // 형식 17 → 18 (C.54, GDD 22-5): 해방 수련 상태(수련치 0·수련권 0·미완료), 수련 기록(빈 목록), 전투 기록의 해방 사용(옛 기록은 안 씀)
+    save.training = newTrainingState();
+    save.runLog.trainings = [];
+    save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, liberationUsed: b.liberationUsed ?? false, liberationAt: b.liberationAt ?? null }));
+    save.meta.format = 18;
+  }
   if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
+  save.training = sanitizeTraining(save.training);
+  save.runLog.trainings = Array.isArray(save.runLog.trainings) ? save.runLog.trainings : [];
   save.rank = sanitizeRankState(save.rank);
   save.shared = sanitizeShared(save.shared);
   save.runLog.rankBattles = Array.isArray(save.runLog.rankBattles) ? save.runLog.rankBattles : [];

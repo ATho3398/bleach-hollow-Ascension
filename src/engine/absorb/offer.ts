@@ -22,7 +22,7 @@ export function absorbReasons(c: AbsorbInput): AbsorbReason[] {
   if (c.status !== 'won') return [];
   const out: AbsorbReason[] = [];
   // 우위 마무리 (GDD 20-2): 엔진이 마무리 일격의 우위 여부(weak)를 정해 준다
-  if (c.finisher?.kind === 'skill' && c.finisher.weak === true) out.push('weakness-finisher');
+  if ((c.finisher?.kind === 'skill' || c.finisher?.kind === 'liberation') && c.finisher.weak === true) out.push('weakness-finisher');
   if (c.weakChain3Count >= AX.weakChain3ForAbsorb) out.push('weakness-chain3');
   // 첫 흡수 보장: 장착한 skill 특성이 하나도 없으면 조건 없이 흡수할 수 있다
   if (c.params.skills.length === 0) out.push('first-absorb');

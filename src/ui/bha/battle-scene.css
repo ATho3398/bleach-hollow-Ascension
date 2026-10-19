@@ -150,3 +150,27 @@
 .bha-afx-name.is-ult { font-size: var(--bha-fs-4xl); color: var(--bha-sp-hi); text-shadow: var(--bha-glow-sp), 0 2px 4px var(--bha-bg-0); }
 .bha-lcd .bha-battle__arena .bha-log { transition: opacity var(--bha-dur-2) var(--bha-ease-out); }
 .bha-lcd .bha-battle__arena.has-afx-name .bha-log { opacity: 0; }
+
+/* ── 해방 (GDD 22-5): 저장 필살기 옆 버튼 · 해방 중 몸 색 변화 · 짧은 컷인. 색은 테마 강조색(종족 테마가 정함)·리스크 토큰. 11-5 변주(외형)는 미정이라 공통 연출 하나 ── */
+.bha-stored--liberation .bha-stored__gauge i { background: var(--bha-accent-hi); }
+.bha-stored--liberation.is-locked .bha-stored__icon { color: var(--bha-text-3); }
+.bha-stored--liberation.is-locked .bha-stored__name { color: var(--bha-text-3); }
+.bha-stored--liberation.is-ready { border-color: var(--bha-accent-hi); background: linear-gradient(100deg, var(--bha-accent-soft), transparent 70%), var(--bha-bg-1); animation: bha-ready-glow 1.2s ease-in-out infinite alternate; }
+.bha-stored--liberation.is-ready .bha-stored__icon { color: var(--bha-text-1); background: radial-gradient(circle at 40% 35%, var(--bha-accent-hi), var(--bha-accent)); box-shadow: var(--bha-glow-risk); }
+.bha-stored--liberation.is-ready::after { background: var(--bha-accent-hi); color: var(--bha-bg-0); }
+.bha-stored--liberation.is-active { border-color: var(--bha-risk); box-shadow: var(--bha-glow-risk); }
+.bha-lcd .bha-battle__controls .bha-stored--liberation { width: clamp(170px, 27%, 220px); grid-template-columns: 28px minmax(0, 1fr); }
+.bha-stored--liberation .bha-stored__name { white-space: nowrap; }
+.bha-lcd .bha-battle__controls .bha-stored--liberation .bha-stored__meta { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; line-height: 1.2; }
+.bha-chip--liberation { border-color: var(--bha-risk); color: var(--bha-risk); }
+.bha-chip--liberation[hidden] { display: none; }
+.bha-battle.is-liberated { box-shadow: inset 0 0 0 2px var(--bha-accent-hi); }
+.bha-battle.is-liberated .bha-unit--me .bha-unit__fig { filter: drop-shadow(0 0 10px var(--bha-accent-hi)) saturate(1.6) hue-rotate(-18deg); }
+.bha-libcut { position: absolute; inset: 0; z-index: var(--bha-z-float); display: grid; place-items: center; pointer-events: none; opacity: 0; }
+.bha-libcut.is-on { animation: bha-libcut 1400ms var(--bha-ease-out) both; }
+.bha-libcut__text {
+  padding: var(--bha-sp-2) var(--bha-sp-6); border-block: 2px solid var(--bha-accent-hi); background: linear-gradient(90deg, transparent, var(--bha-accent-soft) 20%, var(--bha-accent-soft) 80%, transparent);
+  font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); color: var(--bha-text-1); white-space: nowrap; text-shadow: var(--bha-glow-risk), 0 2px 4px var(--bha-bg-0);
+}
+@keyframes bha-libcut { 0% { opacity: 0; transform: scaleX(0.6); } 15% { opacity: 1; transform: scaleX(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bha-libcut.is-on { animation-duration: 1ms; opacity: 1; } }

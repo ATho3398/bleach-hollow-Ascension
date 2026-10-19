@@ -12,8 +12,12 @@ import type { GrowthInput } from './bha/growthLogic';
 import { createExpedition, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, claimDexRewards, claimTutorialGoals, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck, writeSave, type SaveData,
+  applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
+  recordTraining, settleLiberationRisk, writeSave, type SaveData,
 } from '../game';
+import { liberationButton } from './labels';
+import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
+import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
 import { rankLabel, rankResultView, rankView } from './rankView';
 import { absorbView } from './absorbView';
@@ -384,7 +388,8 @@ export function startApp(host: HTMLElement): void {
       resumeNote,
       persist,
       onDepart: () => departScreen(faction),
-      onAltar: () => open('altar', () => renderAltar(faction, s)),
+      // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]
+      onAltar: () => open('training', () => renderTraining(faction, s)),
       onBook: () => open('dex', () => dexView(root, faction, s)),
       onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist)),
       onWindow: () => open('titles', () => titleDexView(root, faction, s)),
@@ -400,6 +405,49 @@ export function startApp(host: HTMLElement): void {
       onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTitle: askReturnToTitle,
     });
+  }
+
+  // ── 해방 수련 (GDD 22-4·22-5, C.54) ──
+  function renderTraining(faction: FactionConfig, s: SaveData): void {
+    trainingView(dev, faction, s, roomOf(faction).props.altar, {
+      onPlay: (game) => playTraining(faction, s, game, false),
+      onEvolution: () => open('altar', () => renderAltar(faction, s)),
+    });
+  }
+
+  /** 한 판: 수련권을 먼저 쓰고(저장) 미니게임 → 결과. 흐름은 잠겨 있어 취소로 빠지지 않는다. again = 결과 화면의 [한 판 더](자리를 바꿔 끼운다) */
+  function playTraining(faction: FactionConfig, s: SaveData, game: TrainingGameId, again: boolean): void {
+    if (!trainingGate(s.training, s.evolution.tierIndex, s.nest.condition).ok || !beginTraining(s.training)) return;
+    persist();
+    const level = trainingLevel(s.training, game);
+    const seed = Math.floor(Math.random() * 2 ** 32);
+    const e = {
+      id: 'training-play', locked: true,
+      render: () => {
+        setBgm('battle');
+        trainingPlayView(root, faction, game, level, seed, {
+          onDone: (won) => {
+            const out = recordTraining(s, game, won);
+            persist();
+            showTitleToasts(s, faction, persist);
+            nav.replace({
+              id: 'training-result', locked: true,
+              render: () => {
+                setBgm('nest');
+                trainingResultView(dev, faction, s, out, {
+                  onBack: () => nav.pop(),
+                  onAgain: trainingGate(s.training, s.evolution.tierIndex, s.nest.condition).ok ? () => playTraining(faction, s, game, true) : null,
+                });
+                root.scrollTop = 0;
+              },
+            });
+          },
+        });
+        root.scrollTop = 0;
+      },
+    };
+    if (again) nav.replace(e);
+    else nav.push(e);
   }
 
   function renderAltar(faction: FactionConfig, s: SaveData): void {
@@ -424,6 +472,7 @@ export function startApp(host: HTMLElement): void {
       build: save.build,
       evolution: save.evolution,
       groundId: lastGround(save),
+      liberationEnabled: liberationAccess(save).usable,
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
@@ -466,6 +515,7 @@ export function startApp(host: HTMLElement): void {
       formId: save?.evolution.formId,
       banner: where,
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
+      liberation: save ? liberationButton(faction, { ...liberationAccess(save), usable: p.params.liberationEnabled === true }) : undefined,
       tutorial: tutorialFor(),
       onEnd: (done) => {
         finishBattle(exp, done);
@@ -554,6 +604,7 @@ export function startApp(host: HTMLElement): void {
     if (save && params) {
       applyEvolutionToParams(params, save.evolution, faction.id);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
+      params.liberationEnabled = liberationAccess(save).usable;
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
@@ -561,10 +612,12 @@ export function startApp(host: HTMLElement): void {
       tierIndex: save?.evolution.tierIndex,
       formId: save?.evolution.formId,
       tutorial: tutorialFor(),
+      liberation: save ? liberationButton(faction, liberationAccess(save)) : undefined,
       onQuit: () => nav.pop(),
       onEnd: (done) => {
         if (save) {
           recordBattle(save, buildBattleRecord(done, { factionId: faction.id, tierIndex: save.evolution.tierIndex }));
+          settleLiberationRisk(save, done);
           persist();
         }
         practiceResult(faction, enemy, done);
@@ -594,13 +647,16 @@ export function startApp(host: HTMLElement): void {
     const params = buildCombatParams(s0.build, faction.id);
     applyEvolutionToParams(params, s0.evolution, faction.id);
     params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);
+    params.liberationEnabled = liberationAccess(s0).usable;
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: holder, params });
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,
       formId: s0.evolution.formId,
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
+      liberation: liberationButton(faction, liberationAccess(s0)),
       onEnd: (done) => {
         const res = recordRankBattle(s0, done);
+        settleLiberationRisk(s0, done);
         persist();
         // 결과 화면은 전투 자리를 바꿔 끼운다: 돌아가면 등급표(다시 그려 새 번호를 보인다)
         nav.replace({ id: 'rank-result', locked: true, render: () => { rankResultView(root, faction, holder, done, res, { onBack: () => nav.pop() }); root.scrollTop = 0; } });

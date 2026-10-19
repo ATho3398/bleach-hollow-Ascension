@@ -60,6 +60,28 @@ export type RoomProp = (typeof ROOM_PROPS)[number];
 export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy', 'hungry'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
+/** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
+export const TRAINING_GAME_IDS = ['duel', 'dodge', 'clash', 'chain'] as const;
+
+/** 해방 (GDD 22-2·22-5): 버튼·블록·연출 문구. 호로 "레수렉시온" / 사신 "만해" */
+export interface LiberationConfig {
+  /** 버튼·상태 이름 */
+  name: string;
+  /** 해방하는 순간 짧은 컷인 한 줄 */
+  cutin: string;
+  /** 풀릴 때 로그 한 줄 (리스크 상승) */
+  endText: string;
+}
+
+/** 해방 수련 (GDD 22-4·22-5): 화면 제목·상대 이름·완료 문구·종목별 이름과 설명 (사신판 먹이사슬 = 영자 모으기·대허 피하기) */
+export interface TrainingConfig {
+  title: string;
+  /** 본능(정령) 대결의 상대 */
+  foe: string;
+  completeText: string;
+  games: Record<(typeof TRAINING_GAME_IDS)[number], { name: string; desc: string; shot?: string; prey?: string; predator?: string }>;
+}
+
 /** 메인 방 화면 설정 (GDD 16장). 모두 선택 항목이라 비워도 기본값(DEFAULT_ROOM)이 쓰인다 */
 export interface RoomConfig {
   /** 방 모양: bha-room--<shape> 클래스 (CSS 가 모양을 정한다. 예 cave / room) */
@@ -178,6 +200,10 @@ export interface FactionConfig {
   nestActions: Record<NestAction, string>;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;
+  /** 해방 (GDD 22-5): 이름·컷인·풀릴 때 문구 */
+  liberation: LiberationConfig;
+  /** 해방 수련 (GDD 22-5): 제단 화면·4종목 문구 */
+  training: TrainingConfig;
   /** 메인 방 화면: 방 모양·소품 이름·위치·그림 키·반응 문구 (GDD 16장). 없으면 기본값 */
   room?: Partial<Omit<RoomConfig, 'props' | 'layout' | 'talk'>> & { props?: Partial<RoomConfig['props']>; layout?: Partial<RoomConfig['layout']>; talk?: Partial<RoomConfig['talk']> };
 }
@@ -265,6 +291,17 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     for (const k of Object.keys((rm.props ?? {}) as object)) if (!(ROOM_PROPS as readonly string[]).includes(k) || !isString((rm.props as Record<string, unknown>)[k])) errors.push(`room.props.${k}: 알 수 없는 물건이거나 문자열이 아니다`);
     for (const [k, v] of Object.entries((rm.talk ?? {}) as Record<string, unknown>)) if (!(ROOM_TALK as readonly string[]).includes(k) || !Array.isArray(v) || v.length === 0 || !v.every(isString)) errors.push(`room.talk.${k}: 비어 있지 않은 문자열 목록이어야 한다`);
   }
+  const lb = (r.liberation ?? {}) as Record<string, unknown>;
+  for (const k of ['name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
+  const tr = (r.training ?? {}) as Record<string, unknown>;
+  for (const k of ['title', 'foe', 'completeText']) if (!isString(tr[k])) errors.push(`training.${k}: 비어 있지 않은 문자열이어야 한다`);
+  const tg = (tr.games ?? {}) as Record<string, unknown>;
+  for (const g of TRAINING_GAME_IDS) {
+    const x = (tg[g] ?? {}) as Record<string, unknown>;
+    if (!isString(x.name) || !isString(x.desc)) errors.push(`training.games.${g}: { name, desc } 문자열`);
+  }
+  for (const k of ['shot']) if (!isString(((tg.dodge ?? {}) as Record<string, unknown>)[k])) errors.push(`training.games.dodge.${k}: 비어 있지 않은 문자열이어야 한다`);
+  for (const k of ['prey', 'predator']) if (!isString(((tg.chain ?? {}) as Record<string, unknown>)[k])) errors.push(`training.games.chain.${k}: 비어 있지 않은 문자열이어야 한다`);
   if (r.slotLocation !== 'body' && r.slotLocation !== 'zanpakuto') errors.push('slotLocation: body | zanpakuto');
   if (typeof r.appearanceChange !== 'boolean') errors.push('appearanceChange: boolean');
   if (errors.length > 0) throw new Error(`종족 설정 오류 (${String(r.id ?? '?')}):\n- ${errors.join('\n- ')}`);
@@ -282,7 +319,7 @@ export function resolveMaxChain(f: Pick<FactionConfig, 'maxChain'>, formMaxChain
 }
 
 /** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName·specialBlockName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다 */
-export const BLOCK_WORDS = { special: '필살', stored: '저장 필살', void: '공허', combo: '콤보', guard: '막기', heal: '회복' } as const;
+export const BLOCK_WORDS = { special: '필살', stored: '저장 필살', void: '공허', combo: '콤보', guard: '막기', heal: '회복', liberation: '해방' } as const;
 
 /** 계열 설정 한 개 (없으면 undefined) */
 export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {
