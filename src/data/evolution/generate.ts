@@ -1,141 +1,110 @@
-// 진화체 자동 생성기 (GDD 4-2 v1.0, 임시 템플릿). 계통 id 목록만 받아 단계별 테이블을 만든다 — 계통 수가 달라져도 동작한다.
+// 진화체 자동 생성기 (GDD 20-5, 임시 템플릿). 속성·분류 목록과 BALANCE 템플릿만 받아 트리를 만든다 — 속성 수가 달라져도 동작한다.
 // 결과는 forms.json 에 커밋하고 손으로 고쳐 쓴다 (`npm run gen:forms`). 이름은 자리 표시이고 원작 호로 이름은 쓰지 않는다.
 import type { Locomotion } from '../../engine/locomotion';
-import type { FormCondition, FormDef, FormEffects, FormKind, PassiveStat } from '../schema';
+import { STAT_IDS, type AttackCategory, type FormDef, type FormKind, type StatId, type Stats } from '../schema';
+
+export type Tendency = Partial<Record<string, number>>;
 
 export interface FormTemplate {
-  balancedMaxShare: number;
-  balancedMinActive: number;
-  pickyMinShare: number;
-  rareMinRatio: number;
-  deepPairMinShare: number;
-  priority: Record<FormKind, number>;
-  effects: {
-    base: { hp: number; attack: number };
-    normal: { hp: number; attack: number };
-    perWeight: { hp: number; attack: number };
-    weight: Record<FormKind, number>;
-  };
+  base: Record<number, Tendency>;
+  element: Record<string, Tendency>;
+  category: Record<string, Tendency>;
+  hidden: Record<string, Tendency>;
+  fusionScale: number;
+  specialScale: number;
+  totalScale: Record<string, number>;
+  pureStab: number;
 }
 
-export type TendencyOf = (lineageId: string) => { stat: PassiveStat; multiplier: number } | undefined;
-
-function combinations<T>(items: readonly T[], k: number): T[][] {
-  if (k === 0) return [[]];
-  const out: T[][] = [];
-  items.forEach((x, i) => {
-    for (const rest of combinations(items.slice(i + 1), k - 1)) out.push([x, ...rest]);
-  });
-  return out;
+export interface GenerateInput {
+  /** 단계별 종족값 합계 (index 0 = 1단계) */
+  tierTotals: readonly number[];
+  /** 노멀 속성 id, 원소 id(순환 순서), 특수 속성 id */
+  normal: string;
+  elemental: readonly string[];
+  special: readonly string[];
+  categories: readonly AttackCategory[];
+  /** 원소 순환에서 마주 보는 쌍(서로 상성이 아닌 쌍): 융합 히든 */
+  fusionPairs: readonly [string, string][];
+  template: FormTemplate;
 }
 
-const round = (v: number, digits: number) => Math.round(v * 10 ** digits) / 10 ** digits;
-
-/** 이동 방식 배정 (GDD 18-11, 임시): 요구 계통 번호(정렬 순) 합을 3으로 나눈 나머지로 걷기/부유/날기를 돌려 단계마다 3종이 고르게 나온다. 계통 없는 특수형은 종류별로 고정 */
+/** 이동 방식 배정 (GDD 18-11, 임시): 속성 순번 + 분류 순번으로 걷기/부유/날기를 돌려 단계마다 3종이 고르게 나온다 */
 const LOCO_CYCLE: readonly Locomotion[] = ['walk', 'float', 'fly'];
-const LOCO_BY_KIND: Partial<Record<FormKind, Locomotion>> = { balanced: 'float', picky: 'fly', rare: 'walk', base: 'walk' };
 /** 진화체 체인 묶음 상한 (GDD 19-2, provisional): 지금은 전원 3. 4·5체인 캐릭터는 그 진화체 값만 올린다(단계 기술·배율도 같이 추가) */
 export const FORM_MAX_CHAIN = 3;
 
-export function locomotionOf(kind: FormKind, lineages: readonly string[], sortedIds: readonly string[]): Locomotion {
-  if (lineages.length === 0) return LOCO_BY_KIND[kind] ?? 'walk';
-  const sum = lineages.reduce((a, l) => a + Math.max(0, sortedIds.indexOf(l)), 0);
-  return LOCO_CYCLE[sum % LOCO_CYCLE.length]!;
-}
-
-export function formIdOf(tier: number, kind: FormKind, lineages: readonly string[]): string {
-  return `t${tier}:${kind}${lineages.length > 0 ? `@${lineages.join('+')}` : ''}`;
-}
-
-/** 요구 계통의 성향을 섞은 패시브: 계통 n개면 각 성향을 1/n 만큼 반영한다 (C.9 방식 재사용) */
-function derivePassive(lineages: readonly string[], tendencyOf: TendencyOf): FormEffects['passive'] {
-  const out: FormEffects['passive'] = {};
-  for (const id of lineages) {
-    const t = tendencyOf(id);
-    if (!t) continue;
-    out[t.stat] = round((out[t.stat] ?? 1) * (1 + (t.multiplier - 1) / lineages.length), 4);
-  }
+function addTendency(...ts: (Tendency | undefined)[]): Tendency {
+  const out: Tendency = {};
+  for (const t of ts) for (const [k, v] of Object.entries(t ?? {})) out[k] = (out[k] ?? 0) + (v ?? 0);
   return out;
 }
 
-function effectsOf(kind: FormKind, lineages: readonly string[], tpl: FormTemplate, tendencyOf: TendencyOf): FormEffects {
-  const fx = tpl.effects;
-  if (kind === 'base') return { hpMultiplier: fx.base.hp, attackMultiplier: fx.base.attack, passive: {} };
-  const w = fx.weight[kind];
-  return {
-    hpMultiplier: round(fx.normal.hp + fx.perWeight.hp * w, 3),
-    attackMultiplier: round(fx.normal.attack + fx.perWeight.attack * w, 3),
-    passive: derivePassive(lineages, tendencyOf),
-  };
+function scaleTendency(t: Tendency | undefined, k: number): Tendency {
+  return Object.fromEntries(Object.entries(t ?? {}).map(([s, v]) => [s, (v ?? 0) * k]));
 }
 
-/** 계통 id 목록으로 단계(2~5) 전체 진화체 테이블을 만든다 */
-export function generateForms(lineageIds: readonly string[], tpl: FormTemplate, tendencyOf: TendencyOf): FormDef[] {
-  const ids = [...lineageIds].sort();
-  const n = ids.length;
-  const balancedMax = Math.max(tpl.balancedMaxShare, 1 / n + 0.03);
-  const balancedActive = Math.min(tpl.balancedMinActive, n);
-  const out: FormDef[] = [];
-  let prev: FormDef[] = [];
+/** 종족값 분배: 기준 능력치(합계 ÷ 6) × (1 + 성향). 정수로 내리고 합계가 정확히 total 이 되게 남은 값을 큰 소수부 순으로 더한다 */
+export function distribute(total: number, tendency: Tendency): Stats {
+  const ref = total / STAT_IDS.length;
+  const raw = STAT_IDS.map((s) => Math.max(1, ref * (1 + (tendency[s] ?? 0))));
+  const sum = raw.reduce((a, b) => a + b, 0);
+  const scaled = raw.map((v) => (v * total) / sum);
+  const floors = scaled.map(Math.floor);
+  let left = total - floors.reduce((a, b) => a + b, 0);
+  const order = scaled.map((v, i) => ({ i, frac: v - Math.floor(v) })).sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (const o of order) {
+    if (left <= 0) break;
+    floors[o.i]!++;
+    left--;
+  }
+  return Object.fromEntries(STAT_IDS.map((s, i) => [s, floors[i]!])) as Stats;
+}
 
-  const make = (tier: number, kind: FormKind, lineages: string[], requires: FormCondition[], from: FormDef['from']): FormDef => ({
-    id: formIdOf(tier, kind, lineages),
+function form(id: string, tier: number, kind: FormKind, stats: Stats, extra: Partial<FormDef> & { elements?: string[] }, labelEls: string[], loco: number, category?: AttackCategory): FormDef {
+  const hidden = !['base', 'element', 'arrancar'].includes(kind);
+  return {
+    id,
     tier,
-    label: { kind, lineages },
-    from,
-    requires,
-    priority: tpl.priority[kind],
-    ...(kind === 'base' ? { fallback: true as const } : {}),
-    effects: effectsOf(kind, lineages, tpl, tendencyOf),
-    locomotion: locomotionOf(kind, lineages, ids),
+    label: { kind, elements: labelEls, ...(category ? { category } : {}) },
+    ...(hidden ? { hidden: true } : {}),
+    ...extra,
+    stats,
+    locomotion: LOCO_CYCLE[loco % LOCO_CYCLE.length]!,
     maxChain: FORM_MAX_CHAIN,
     provisional: true,
-  });
-  /** 경로 규칙(임시): 이전 단계 진화체가 요구 계통을 하나라도 포함하면 연결. 계통이 없는 이전 진화체(특수형·기본형)는 막다른 길을 피하려 모든 곳에 연결 */
-  const connect = (lineages: readonly string[]): string[] =>
-    prev.filter((p) => p.label.lineages.length === 0 || p.label.lineages.some((l) => lineages.includes(l))).map((p) => p.id);
-
-  const specials = (tier: number, kinds: FormKind[]): FormDef[] => {
-    const conds: Record<string, FormCondition[]> = {
-      balanced: [{ type: 'maxShareAtMost', max: round(balancedMax, 4) }, { type: 'activeLineages', min: balancedActive }],
-      picky: [{ type: 'maxShareAtLeast', min: tpl.pickyMinShare }],
-      rare: [{ type: 'rareCount', ratio: tpl.rareMinRatio }],
-    };
-    return kinds.map((k) => make(tier, k, [], conds[k]!, 'any'));
   };
+}
 
-  // 2단계: 계통별 우세형 (1위 = X)
-  let cur = ids.map((x) => make(2, 'dominant', [x], [{ type: 'top1', lineage: x }], 'any'));
-  cur.push(make(2, 'base', [], [], 'any'));
-  out.push(...cur);
-  prev = cur;
-
-  // 3단계 (v1.1: 2조합은 경로 제한 없음): 2조합 + 균형형 + 편식형 + 희귀형
-  cur = combinations(ids, 2).map((c) => make(3, 'pair', c, [{ type: 'top2', lineages: c }], 'any'));
-  cur.push(...specials(3, ['balanced', 'picky', 'rare']), make(3, 'base', [], [], 'any'));
-  out.push(...cur);
-  prev = cur;
-
-  // 4단계: 3조합 + 2조합 심화 + 균형형 + 편식형
-  cur = combinations(ids, 3).map((c) => make(4, 'triple', c, [{ type: 'top3', lineages: c }], connect(c)));
-  cur.push(
-    ...combinations(ids, 2).map((c) =>
-      make(4, 'deep-pair', c, [{ type: 'top2', lineages: c }, { type: 'lineagesShareSum', lineages: c, min: tpl.deepPairMinShare }], connect(c)),
-    ),
-    ...specials(4, ['balanced', 'picky']),
-    make(4, 'base', [], [], 'any'),
+export function generateForms(input: GenerateInput): FormDef[] {
+  const T = input.template;
+  const total = (tier: number, kind?: string) => Math.round(input.tierTotals[tier - 1]! * (kind ? (T.totalScale[kind] ?? 1) : 1));
+  const all = [input.normal, ...input.elemental, ...input.special];
+  const out: FormDef[] = [];
+  // 1~3단계: 분기 없음 (2·3단계 각 1종)
+  for (const tier of [2, 3]) out.push(form(`t${tier}:base`, tier, 'base', distribute(total(tier), T.base[tier] ?? {}), { elements: [input.normal] }, [], tier));
+  // 4단계 바스트로데: 속성 8
+  all.forEach((el, i) => out.push(form(`t4:${el}`, 4, 'element', distribute(total(4), T.element[el] ?? {}), { elements: [el] }, [el], i)));
+  // 4단계 히든 8: 원소 융합 2 · 완전체 · 특수 3 · 노멀 순수 · 노멀 실패
+  input.fusionPairs.forEach(([a, b], i) =>
+    out.push(form(`h4:fusion:${a}+${b}`, 4, 'fusion', distribute(total(4), scaleTendency(addTendency(T.element[a], T.element[b]), T.fusionScale)), { elements: [a, b] }, [a, b], i + 1)),
   );
-  out.push(...cur);
-  prev = cur;
-
-  // 5단계 (v1.1): 3조합 + 2조합. 3조합이 우선순위가 높아 3계통을 채우면 더 구체적인 형태, 몰린 분포는 2조합으로 간다
-  // (v1.7 보강 C.31: 한 계통에만 몰린 분포는 2조합 조건(1·2위가 모두 누적 있음)을 못 채워 기본형이 18.9%였다 → 편식형 추가)
-  cur = [
-    ...combinations(ids, 3).map((c) => make(5, 'triple', c, [{ type: 'top3', lineages: c }], connect(c))),
-    ...combinations(ids, 2).map((c) => make(5, 'pair', c, [{ type: 'top2', lineages: c }], connect(c))),
-    ...specials(5, ['picky']),
-  ];
-  cur.push(make(5, 'base', [], [], 'any'));
-  out.push(...cur);
+  out.push(form('h4:complete', 4, 'complete', distribute(total(4, 'complete'), T.hidden.complete ?? {}), { elements: [input.normal] }, [], 1));
+  input.special.forEach((el, i) => out.push(form(`h4:special:${el}`, 4, 'special', distribute(total(4), scaleTendency(T.element[el], T.specialScale)), { elements: [el] }, [el], i + 2)));
+  out.push(form('h4:pure', 4, 'pure', distribute(total(4), T.hidden.pure ?? {}), { elements: [input.normal], stab: T.pureStab }, [input.normal], 1));
+  out.push(form('h4:fail', 4, 'fail', distribute(total(4, 'fail'), T.hidden.fail ?? {}), { elements: [input.normal] }, [input.normal], 0));
+  // 5단계 아란칼: 속성 × 분류 24
+  all.forEach((el, i) =>
+    input.categories.forEach((cat, j) =>
+      out.push(form(`t5:${el}:${cat}`, 5, 'arrancar', distribute(total(5), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], i + j, cat)),
+    ),
+  );
+  // 5단계 히든 3: 속성은 바스트로데에서 잇는다 (elements 없음)
+  (['limit', 'restraint', 'hunter'] as const).forEach((kind, i) => out.push(form(`h5:${kind}`, 5, kind, distribute(total(5), T.hidden[kind] ?? {}), {}, [], i)));
   return out;
+}
+
+/** 이 진화체의 가장 높은 종족값 능력치 (동률은 STAT_IDS 순) */
+export function topStat(stats: Stats): StatId {
+  return STAT_IDS.reduce((best, s) => (stats[s] > stats[best] ? s : best), STAT_IDS[0] as StatId);
 }

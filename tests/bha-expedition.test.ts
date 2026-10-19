@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENEMIES } from '../src/data/enemies';
-import { LINEAGES } from '../src/data/lineages';
-import { lineageClass, lineageIconId, lineageKey } from '../src/ui/bha/lineage';
+import { ELEMENTS, getElement } from '../src/data/elements';
 import {
   ALL, bubbleText, canPlaceAt, endTone, filterFoes, msgKind, tileCss,
 } from '../src/ui/bha/expedition';
@@ -52,45 +51,36 @@ describe('원정 결과 톤', () => {
 describe('전투 연습 필터', () => {
   const total = ENEMIES.length;
   it('필터가 전체면 목록 그대로 (순서 유지)', () => {
-    expect(filterFoes(ENEMIES, { lineage: ALL, rank: ALL })).toEqual([...ENEMIES]);
+    expect(filterFoes(ENEMIES, { element: ALL, rank: ALL })).toEqual([...ENEMIES]);
   });
-  it('계통 필터는 약점 계통으로 거른다', () => {
-    for (const l of LINEAGES) {
-      const r = filterFoes(ENEMIES, { lineage: l.id, rank: ALL });
-      expect(r.every((e) => e.weaknessLineageId === l.id)).toBe(true);
+  it('속성 필터는 적 속성으로 거른다 (C.47)', () => {
+    for (const l of ELEMENTS) {
+      const r = filterFoes(ENEMIES, { element: l.id, rank: ALL });
+      expect(r.every((e) => e.element === l.id)).toBe(true);
     }
-    const sum = LINEAGES.reduce((n, l) => n + filterFoes(ENEMIES, { lineage: l.id, rank: ALL }).length, 0);
+    const sum = ELEMENTS.reduce((n, l) => n + filterFoes(ENEMIES, { element: l.id, rank: ALL }).length, 0);
     expect(sum).toBe(total);
   });
   it('종류 필터는 일반/강적으로 거르고 둘을 합치면 전체', () => {
-    const n = filterFoes(ENEMIES, { lineage: ALL, rank: 'normal' });
-    const e = filterFoes(ENEMIES, { lineage: ALL, rank: 'elite' });
+    const n = filterFoes(ENEMIES, { element: ALL, rank: 'normal' });
+    const e = filterFoes(ENEMIES, { element: ALL, rank: 'elite' });
     expect(n.every((x) => x.class === 'normal')).toBe(true);
     expect(e.every((x) => x.class === 'elite')).toBe(true);
     expect(n.length + e.length).toBe(total);
   });
-  it('계통과 종류를 같이 걸 수 있다', () => {
-    const r = filterFoes(ENEMIES, { lineage: 'lineage-b', rank: 'elite' });
-    expect(r.every((x) => x.weaknessLineageId === 'lineage-b' && x.class === 'elite')).toBe(true);
+  it('속성과 종류를 같이 걸 수 있다', () => {
+    const r = filterFoes(ENEMIES, { element: 'fire', rank: 'elite' });
+    expect(r.length).toBeGreaterThan(0);
+    expect(r.every((x) => x.element === 'fire' && x.class === 'elite')).toBe(true);
   });
-  it('연습 목록은 35명', () => {
-    expect(total).toBe(35);
+  it('연습 목록은 53명 (속성 8 × 패턴 6 + 테스트 고정 5)', () => {
+    expect(total).toBe(53);
   });
 });
 
-describe('계통 마크', () => {
-  it('lineage-a~e → a~e, 그 밖은 마크 없음', () => {
-    expect(lineageKey('lineage-a')).toBe('a');
-    expect(lineageKey('lineage-e')).toBe('e');
-    expect(lineageKey('lineage-z')).toBeUndefined();
-    expect(lineageKey('x')).toBeUndefined();
-    expect(lineageClass('lineage-c')).toBe('bha-lin--c');
-    expect(lineageClass('foo')).toBe('');
-    expect(lineageIconId('lineage-d')).toBe('i-lin-d');
-    expect(lineageIconId('foo')).toBe('i-info');
-  });
-  it('등록된 모든 계통이 디자인의 계통 키를 가진다', () => {
-    for (const l of LINEAGES) expect(lineageKey(l.id)).toBeDefined();
+describe('속성 색 (C.47)', () => {
+  it('모든 속성은 기존 디자인 토큰 색을 쓴다', () => {
+    for (const e of ELEMENTS) expect(getElement(e.id).color).toMatch(/^--bha-/);
   });
 });
 

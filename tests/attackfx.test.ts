@@ -7,19 +7,19 @@ import hollow from '../src/data/factions/hollow.json';
 import shinigami from '../src/data/factions/shinigami.json';
 
 const block = (o: Partial<Extract<CombatEvent, { kind: 'block' }>> = {}): CombatEvent => ({
-  kind: 'block', block: 'skill', traitId: 'x', family: null, role: 'attack', chain: 1, damage: 10, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...o,
+  kind: 'block', block: 'skill', traitId: 'x', family: null, element: null, matchup: 'neutral', role: 'attack', chain: 1, damage: 10, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...o,
 });
 
 describe('사건 → 연출 단계', () => {
   it('기본 공격은 basic, 체인 단계는 chain1~3', () => {
-    expect(attackCueOf({ kind: 'player-attack', damage: 5 }, 3)).toEqual({ side: 'player', tier: 'basic', guarded: false });
+    expect(attackCueOf({ kind: 'player-attack', damage: 5, matchup: 'neutral' }, 3)).toEqual({ side: 'player', tier: 'basic', guarded: false });
     expect(attackCueOf(block({ chain: 1 }), 3)?.tier).toBe('chain1');
     expect(attackCueOf(block({ chain: 2 }), 3)?.tier).toBe('chain2');
     expect(attackCueOf(block({ chain: 3 }), 3)?.tier).toBe('chain3');
     expect(chainTier(7, 3)).toBe('chain3');
   });
   it('약점·필살·콤보·저장 필살기는 더 크게', () => {
-    expect(attackCueOf(block({ chain: 3, weak: true }), 3)?.tier).toBe('weak');
+    expect(attackCueOf(block({ chain: 3, matchup: 'strong' }), 3)?.tier).toBe('weak');
     expect(attackCueOf(block({ block: 'special', chain: 1 }), 3)?.tier).toBe('special');
     expect(attackCueOf(block({ block: 'combo' }), 3)?.tier).toBe('special');
     expect(attackCueOf({ kind: 'stored-use', damage: 50, guardSeconds: 1, charges: 0 }, 3)?.tier).toBe('special');
@@ -27,16 +27,16 @@ describe('사건 → 연출 단계', () => {
   it('피해 없는 블록(막기·회복)·공허·그 밖의 사건은 연출이 없다', () => {
     expect(attackCueOf(block({ role: 'guard', damage: 0 }), 3)).toBeNull();
     expect(attackCueOf(block({ block: 'void' }), 3)).toBeNull();
-    expect(attackCueOf({ kind: 'player-attack', damage: 0 }, 3)).toBeNull();
+    expect(attackCueOf({ kind: 'player-attack', damage: 0, matchup: 'neutral' }, 3)).toBeNull();
     expect(attackCueOf({ kind: 'seal', seconds: 3 }, 3)).toBeNull();
     expect(attackCueOf({ kind: 'end', status: 'won' }, 3)).toBeNull();
   });
   it('적 공격: 기본 / 반격 / 강공격, 막았는지 전달', () => {
-    expect(attackCueOf({ kind: 'enemy-attack', damage: 4, guarded: false }, 3)).toEqual({ side: 'enemy', tier: 'basic', guarded: false });
-    expect(attackCueOf({ kind: 'enemy-attack', damage: 0, guarded: true }, 3)).toEqual({ side: 'enemy', tier: 'basic', guarded: true });
-    expect(attackCueOf({ kind: 'enemy-attack', damage: 0, guarded: false }, 3)).toBeNull();
-    expect(attackCueOf({ kind: 'heavy-hit', damage: 30, guarded: false, reflected: 0 }, 3)?.tier).toBe('special');
-    expect(attackCueOf({ kind: 'counter', damage: 3, guarded: true }, 3)?.guarded).toBe(true);
+    expect(attackCueOf({ kind: 'enemy-attack', damage: 4, guarded: false, matchup: 'neutral' }, 3)).toEqual({ side: 'enemy', tier: 'basic', guarded: false });
+    expect(attackCueOf({ kind: 'enemy-attack', damage: 0, guarded: true, matchup: 'neutral' }, 3)).toEqual({ side: 'enemy', tier: 'basic', guarded: true });
+    expect(attackCueOf({ kind: 'enemy-attack', damage: 0, guarded: false, matchup: 'neutral' }, 3)).toBeNull();
+    expect(attackCueOf({ kind: 'heavy-hit', damage: 30, guarded: false, reflected: 0, matchup: 'neutral' }, 3)?.tier).toBe('special');
+    expect(attackCueOf({ kind: 'counter', damage: 3, guarded: true, matchup: 'neutral' }, 3)?.guarded).toBe(true);
   });
 });
 

@@ -6,7 +6,6 @@
 // 바뀐 곳만 갱신한다(블록은 uid 로 같은 요소를 계속 쓰고, 묶음·삽입 막대는 달라졌을 때만 바꾼다).
 import { enemyPatternKind } from '../data/enemies';
 import { comboName } from '../data/evolution';
-import { lineageFamily } from '../data/lineages';
 import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
@@ -23,9 +22,10 @@ import {
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
-import { lineageKey, linMarkShort } from './bha/lineage';
+import { elementColor, elementDot, elementMark } from './bha/element';
+import { weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
-import { battleLabels, familyAbbr, familySkillName, weakFamilyName, type BattleLabels } from './labels';
+import { battleLabels, familyAbbr, familySkillName, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -86,7 +86,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       const name = e.block === 'skill'
         ? `${skillName ?? (e.traitId === BASIC_SKILL_ID || !e.traitId ? labels.basicBlock : traitName(e.traitId, factionId))}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}`
         : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? `콤보 ${e.traitId ? comboName(e.traitId, factionId) : labels.specialBlock}` : labels.voidBlock;
-      const parts = [`${name}! ${n(e.damage)} 피해${e.weak ? ' (약점!)' : ''}`];
+      const parts = [`${name}! ${n(e.damage)} 피해${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
       if (e.bonus === 'stagger') parts.push('적 행동 지연');
@@ -163,17 +163,24 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 설정 화면 '전투 효과' (피해 숫자·진동·효과음·흔들림). 전투 시작 때 읽는다 */
   const fx = loadFxSettings(safeStorage());
   if (fx.sound) hookAudioUnlock();
-  const slug = lineageKey(enemy.weaknessLineageId);
-  /** 약점 계열 (GDD 17-3): 이 적에게는 그 계열의 공격 블록이 ×1.5 */
-  const weakFamilyText = lineageFamily(enemy.weaknessLineageId) ? ` · ${weakFamilyName(labels, enemy.weaknessLineageId) ?? ''} 계열` : '';
+  /** 적 속성 칩 (GDD 20-2): 속성 + 약점 속성(원소만). 약점은 그 속성 블록이 ×1.2 */
+  const weakIds = weaknessesOf([enemy.element]);
+  const elementChip = (): HTMLElement => {
+    const c = el('span', 'bha-chip bha-chip--weak');
+    c.append(elementMark(enemy.element, faction.id));
+    if (weakIds.length > 0) {
+      c.append(' · ', icon('i-weak'), '약점 ');
+      weakIds.forEach((w) => c.append(elementDot(w, faction.id)));
+    }
+    return c;
+  };
 
   // ── 1. 적 이름·약점 (장면 왼쪽 위 칩) ──
   const foeName = el('div', 'bha-battle__foename');
   foeName.append(el('h1', 'bha-battle__name', enemyName));
   if (enemy.class === 'elite') foeName.append(tag('강적', 'elite'));
   if (enemy.provisional) foeName.append(provisionalTag());
-  const weakChip = el('span', 'bha-chip bha-chip--weak');
-  weakChip.append(icon('i-weak'), '약점 ', linMarkShort(enemy.weaknessLineageId, faction.id), weakFamilyText);
+  const weakChip = elementChip();
   const foeHead = el('header', 'bha-battle__foehead');
   foeHead.append(foeName, weakChip);
 
@@ -202,7 +209,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const meHeads = heads(sealGauge, guardGauge);
   const totals = { seal: 0, guard: 0, stance: 0 };
 
-  const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', slug ? `var(--bha-lin-${slug})` : null, foeArtOf(enemy.id));
+  const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', elementColor(enemy.element), foeArtOf(enemy.id));
   // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
   const heroArt = heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0);
   const heroLoco = locoOf(faction, opts.formId, heroArt);
@@ -529,8 +536,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         } else if (e.block === 'skill' && e.role === 'heal') {
           spawnFloat('heal', n0(e.heal));
         } else {
-          spawnFloat('attack', `−${n0(e.damage)}`, { crit: e.chain >= top, weak: e.weak, chained: e.chain > 1 });
+          spawnFloat('attack', `−${n0(e.damage)}`, { crit: e.chain >= top, weak: e.matchup === 'strong', chained: e.chain > 1 });
         }
+        // 상성 문구 (GDD 20-2, 종족 설정 matchupText)
+        if (e.matchup === 'strong') spawnFloat('strong', labels.matchupText.strong);
+        else if (e.matchup === 'weak') spawnFloat('dull', labels.matchupText.weak);
         if (e.chain > 1) {
           // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N
           if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
@@ -613,10 +623,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       visual: blockVisual(b.kind, isBasic, eff?.skill.role ?? null),
       abbr: blockAbbr(b, labels, faction.id),
       label: blockName(b, labels, faction.id),
-      weak: eff?.weak ?? false,
+      weak: eff?.matchup === 'strong',
       uid: b.uid,
       family: familyAbbr(labels, b.family),
       familyId: b.family ?? undefined,
+      elementColor: eff?.skill.element ? elementColor(eff.skill.element) : undefined,
     };
     return blockEl(spec);
   };
@@ -960,9 +971,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const encounter = el('div', 'bha-battle-ov bha-battle-ov--encounter');
   const stats = el('div', 'bha-battle-ov__stats');
   if (enemy.class === 'elite') stats.append(tag('강적', 'elite'));
-  const encWeak = el('span', 'bha-chip bha-chip--weak');
-  encWeak.append(icon('i-weak'), '약점 ', linMarkShort(enemy.weaknessLineageId, faction.id), weakFamilyText);
-  stats.append(encWeak);
+  stats.append(elementChip());
   if (patternView) {
     const pc = el('span', 'bha-chip bha-chip--pattern');
     pc.append(icon(patternView.icon), patternView.label);

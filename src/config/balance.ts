@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 22;
+export const BALANCE_VERSION = 23;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -25,24 +25,28 @@ export const BALANCE = {
   },
   /** 흡수 슬롯: 초기 3칸, 진화마다 +1 (GDD 4장 확정. 진화는 provisional.evolution) */
   absorb: { slotCount: 3 },
+  /** 속성 상성 (GDD 20-2·v3.5 확정): 강 ×1.2 / 약 ×0.85, 자기 속성(내 속성과 같은 속성 블록) ×1.1. 노멀·특수 속성은 상성 없음(×1) */
+  elements: { strong: 1.2, weak: 0.85, stab: 1.1 },
 
   // ── 임시값(provisional): 기획서 미정 항목을 프로토타입용으로 채우는 구역 (GDD 12장) ──
   // 여기 값은 확정이 아니다. 확정되면 기획서에 반영하고 이 구역에서 옮긴다.
   provisional: {
     // ── 흡수·리스크(P3) 임시값. 기획서 4-1: 11-3(계통·특성 풀), 11-4(리스크 수치)가 미정 ──
     absorb: {
-      /** 흡수 가능 조건 (GDD 3-5 v0.7): 마무리 일격이 약점 계통 스킬이거나, 그 전투에서 약점 계통 스킬 블록의 체인3 을 이 횟수 이상 발동.
-       *  장착 skill 특성이 없으면 조건 없이 가능(첫 흡수 보장). 옛 "체인3 계통 무관 2회"는 폐기 (C.7) */
+      /** 흡수 가능 조건 (GDD 3-5 v0.7 → 20-2 C.47): 마무리 일격이 상성 우위(효과가 굉장한) 스킬 블록이거나, 그 전투에서 상성 우위 체인3 을 이 횟수 이상 발동.
+       *  약점이 없는 적(노멀·특수 속성)은 아무 스킬 블록이나 우위로 친다. 장착 skill 특성이 없으면 조건 없이 가능(첫 흡수 보장) */
       weakChain3ForAbsorb: 3,
       /** 특성 후보 수: 일반 적은 1~2개 중 무작위, 강적은 항상 2개 (GDD 4장 "후보 1~2개") */
       candidatesElite: 2,
       candidatesNormalMax: 2,
       /** 공격 계열 섞임 (GDD 18-8 ③, C.41, 임시): 장착한 공격 특성이 이 수보다 적은 계열이면, 흡수 후보에 아직 없는 계열의 공격 특성을 1개 끼워 넣는다(그 계통에 있을 때). 첫 흡수(장착 skill 없음)는 서로 다른 계열 공격 후보 2개 */
       attackFamilyGuarantee: 2,
-      /** 슬롯 안 같은 계통 N개 → 계통 보너스 */
-      lineageBonusCount: 3,
-      /** 계통 보너스: 그 계통 skill 특성 블록의 위력(피해·막기 지속·회복량)에 가산하는 비율 (GDD 4-1 +50%, C.6 새 전투) */
-      lineageSkillBonus: 0.5,
+      /** 슬롯 안 같은 속성 N개 → 속성 보너스 (GDD 4-1 계통 보너스를 속성으로, C.47) */
+      elementBonusCount: 3,
+      /** 속성 보너스: 그 속성 skill 특성 블록의 위력(피해·막기 지속·회복량)에 가산하는 비율 (GDD 4-1 +50%) */
+      elementSkillBonus: 0.5,
+      /** 흡수 후보 섞기 (C.47): 후보가 2개면 하나는 적의 속성, 하나는 다른 속성에서 나온다 (원소 상성 순환에서 처음 원소를 얻는 길) */
+      otherElementCandidate: true,
       /** 흡수하면 허기가 이 값으로 리셋 (GDD 4장 "허기 리셋") */
       hungerAfterAbsorb: 0,
       /** 흡수 시 보상 타일 (GDD 2-1 "흡수 시 1"). 바퀴 합계는 tilesPerLap.max 안, 바퀴 완주 보상 1장은 남겨 둔다 */
@@ -55,7 +59,7 @@ export const BALANCE = {
       perVoidBlock: 2.5,
       /** 강한 적 흡수 시 리스크 상승 = 적 hpInAttacks(바퀴 강화 포함) × 이 값. 옛 0.55/매칭 회분 × (6회분 → 30회분 환산) ≈ 0.11. 강적(70)이 일반(30)의 약 2.3배 */
       /* C.7: 0.12→0.22 (첫 흡수 보장·새 조건으로 흡수 횟수가 줄어 6바퀴 돌파 가드 유지) */
-      absorbPerHpAttack: 0.3,
+      absorbPerHpAttack: 0.2, // C.47: 약점 없는 적(노멀·특수)은 아무 기술로 마무리해도 흡수돼 흡수가 잦아진 만큼(4바퀴 5.3→6.7회) 0.3→0.25→0.2 (조정 2회)
       /** 놓아주면 하락 */
       releaseRelief: 8,
       /** 휴식 타일에서 하락 */
@@ -78,49 +82,97 @@ export const BALANCE = {
         pet: { risk: -10, stability: 8 },
       },
     },
-    // ── 진화(C.9→C.11) 임시값: 단계별 진화체 테이블 (GDD 4-2 v1.0). 방식은 확정, 수치·데이터는 전부 임시 ──
+    // ── 속성 특수 효과 (GDD 20-2, 수치 provisional) ──
+    elements: {
+      /** 혈: 준 피해의 이 비율만큼 체력 회복 (내 블록·기본 공격, 적의 공격 모두) */
+      drainFraction: 0.08,
+      /** 독: 맞힌 피해의 이 비율을 poisonSeconds 동안 나눠 더 준다 (겹치면 남은 양에 더하고 시간은 새로) */
+      poisonFraction: 0.2,
+      poisonSeconds: 4,
+      /** 허: 상대 방어·정신력을 이 비율만큼 무시. 내가 허 블록을 쓰면 블록 1개당 리스크 게이지 + pierceRisk */
+      pierceIgnore: 0.15,
+      pierceRisk: 0.6,
+    },
+    // ── 능력치·성장 (GDD 20-3·20-4, 수치 provisional) ──
+    stats: {
+      /** 단계별 종족값 합계 (index 0 = 1단계). 기준 능력치 = 합계 ÷ 6 — 적 능력치·체력 환산("기본 공격 N회분")의 기준 */
+      tierTotals: [300, 330, 360, 390, 420],
+      /** 노력치 단계 상한: 합계(index = 단계)와 능력치 하나의 상한(합계 상한 × 비율). 진화해도 유지되고 상한만 오른다 */
+      evCapTotal: [8, 16, 24, 32, 40],
+      evCapPerStatRatio: 0.5,
+    },
+    /** 진화체 고유 특성 6종 (GDD 20-3·v4.0): 진화 순간 노력치가 가장 높은 능력치 방향. 이름은 src/data/evolution/abilities.json */
+    abilities: {
+      hp: { maxHp: 1.12 },
+      atk: { physicalPower: 1.12 },
+      int: { blockSpawn: 1.2 },
+      def: { physicalTaken: 0.85 },
+      spr: { specialTaken: 0.85 },
+      spd: { attackSpeed: 1.18 },
+    },
+    // ── 진화 (GDD 20-5 v3.7~v4.2): 트리·타이밍·히든. 수치 provisional ──
     evolution: {
-      /** 진화에 필요한 현재 단계 흡수 횟수(가중 없는 원래 횟수): index 0 = 1→2단계 … index 3 = 4→5단계 */
-      absorbsNeeded: [41, 46, 52, 58], // C.41: 공격 계열이 섞여 약점 적중이 늘어 흡수가 잦아진 만큼 ×1.2 (옛 34/38/43/48, 5단계 도달 평균 37 유지)
-      /** 희귀 개체 흡수의 계통 누적 가중 */
-      rareWeight: 2,
+      /** 진화 타이밍 = 그 단계에서 원정으로 이동한 칸 수 (숨김, v4.1): index 0 = 1→2 … index 3 = 4→5 */
+      stepsNeeded: [50, 80, 110, 150],
+      /** 임박 알림: 남은 걸음이 기준의 이 비율 이하가 되는 순간 한 번씩 */
+      alertsAt: [0.2, 0.1],
       /** 진화마다 슬롯 +1 (GDD 4장) */
       slotsPerEvolution: 1,
-      /** 진화체 데이터 자동 생성 템플릿 (src/data/evolution/generate.ts). 생성 결과는 forms.json 에 커밋되고 손으로 고칠 수 있다.
-       *  비율은 단계 필요 흡수 횟수 N 에 대한 값 또는 계통 비중(0~1)이다 */
+      /** 히든 조건 (20-5): 비율은 그 단계 흡수의 속성 분포, 횟수는 그 단계 기록 */
+      hidden: {
+        /** 원소 융합: 두 속성 각각 이 비율 이상 */
+        fusionShare: 0.4,
+        /** 완전체: 원소 4종 각각 이 비율 이상 */
+        completeShare: 0.15,
+        /** 특수 히든: 특수 속성 하나 이 비율 이상 + 다른 속성 하나도 이 비율 이상 */
+        specialShare: 0.4,
+        /** 노멀 순수형: 장착 최다 속성이 노멀 + 노멀 흡수 이 비율 이상 + 컨디션 pureCondition 이상·허기 pureHungerMax 이하 */
+        pureShare: 0.4,
+        pureCondition: 50,
+        pureHungerMax: 60,
+        /** 노멀 실패형(강제): 장착 특성 없음, 또는 허기 failHunger 이상 / 컨디션 failCondition 이하 */
+        failHunger: 85,
+        failCondition: 25,
+        /** 아란칼 행동 히든: 그 단계 한계 돌파 횟수 / 강적 처치 수. 절제 = 놓아준 수 > 흡수 수 */
+        breakthroughs: 3,
+        elites: 16, // C.47 봇 점검: 4→5 단계(약 4원정)에 강적을 보통 10~12 처치해 10 이면 60% 가 히든이 됨 → 16
+        /** 그 단계에 흡수가 이만큼은 있어야 속성 분포 히든을 본다 (흡수 1~2회로 40% 가 되는 것을 막는다) */
+        minAbsorbs: 5,
+      },
+      /** 후보 가중 랜덤 (v4.2): 일반 1, 히든 = 1 + (max − 1) × min(1, 초과량 ÷ fullExcess). 초과량 = 조건 값 ÷ 기준 − 1 */
+      weight: { normal: 1, max: 9, fullExcess: 0.5 },
+      /** 진화체 데이터 자동 생성 (src/data/evolution/generate.ts): 종족값 분배 = 기준 능력치 × (1 + 성향). 성향 합은 0(합계 유지) */
       template: {
-        /** 균형형: 최다 비중 ≤ 이 값(계통이 적으면 1/계통 수 + 0.03 이상으로 올린다), 누적 1 이상인 계통 수 ≥ min(이 값, 계통 수) */
-        balancedMaxShare: 0.35,
-        balancedMinActive: 4,
-        /** 편식형: 최다 비중 ≥ 이 값 */
-        pickyMinShare: 0.7,
-        /** 희귀형: 희귀 흡수 수 ≥ max(1, ceil(이 비율 × N)) */
-        rareMinRatio: 0.2,
-        /** 2조합 심화: 1·2위 두 계통의 비중 합 ≥ 이 값 */
-        deepPairMinShare: 0.7,
-        /** 우선순위: 좁은(까다로운) 진화체일수록 높다(5단계는 3조합 > 2조합). 같은 단계에서 겹칠 수 있는 종류끼리 값이 달라야 한다 */
-        priority: { base: 0, dominant: 10, pair: 20, triple: 22, 'deep-pair': 25, balanced: 30, picky: 40, rare: 50 },
-        /** 효과 배율(진화할 때마다 곱해진다): 기본형은 낮게, 그 외는 normal + perWeight × 가중. 가중은 종류별(요구 계통 수 기반) */
-        effects: {
-          base: { hp: 1.03, attack: 1.03 },
-          normal: { hp: 1.05, attack: 1.04 },
-          perWeight: { hp: 0.01, attack: 0.01 },
-          weight: { base: 0, dominant: 1, pair: 2, triple: 3, 'deep-pair': 3, balanced: 2, picky: 2, rare: 3 },
-        },
+        base: { 2: { hp: 0.1, atk: 0.05, def: 0, spr: -0.05, int: 0, spd: -0.1 }, 3: { hp: 0, atk: 0, def: -0.05, spr: 0, int: 0.05, spd: 0 } } as Record<number, Record<string, number>>,
+        element: {
+          normal: {},
+          water: { spr: 0.15, hp: 0.1, atk: -0.1, spd: -0.15 },
+          fire: { atk: 0.15, spd: 0.1, def: -0.1, spr: -0.15 },
+          earth: { def: 0.2, hp: 0.1, spd: -0.2, int: -0.1 },
+          thunder: { spd: 0.2, int: 0.1, hp: -0.15, def: -0.15 },
+          blood: { hp: 0.15, atk: 0.1, spr: -0.1, int: -0.15 },
+          poison: { int: 0.15, spr: 0.1, atk: -0.1, hp: -0.15 },
+          kyo: { int: 0.15, atk: 0.1, def: -0.1, spr: -0.15 },
+        } as Record<string, Record<string, number>>,
+        category: { physical: { atk: 0.2, int: -0.2 }, special: { int: 0.2, atk: -0.2 }, mixed: {} } as Record<string, Record<string, number>>,
+        hidden: {
+          complete: {},
+          pure: {},
+          fail: {},
+          limit: { atk: 0.2, int: 0.2, def: -0.2, spr: -0.2 },
+          restraint: { def: 0.2, spr: 0.2, hp: 0.1, atk: -0.25, int: -0.25 },
+          hunter: { hp: 0.15, atk: 0.1, spd: 0.1, def: -0.1, spr: -0.1, int: -0.15 },
+        } as Record<string, Record<string, number>>,
+        /** 융합은 두 속성 성향을 더한 것 × 이 값, 특수 히든은 그 속성 성향 × 이 값 */
+        fusionScale: 0.75,
+        specialScale: 1.5,
+        /** 종족값 합계 배율: 완전체 높게, 실패형 낮게 (나머지는 단계 합계 그대로) */
+        totalScale: { complete: 1.08, fail: 0.8 } as Record<string, number>,
+        /** 노멀 순수형 자기 속성 보정 */
+        pureStab: 1.3,
       },
-      /** 점검 도구(analysis.ts, npm run balance)의 임시 기준 */
-      analysis: {
-        /** 분포 샘플에서 "후보 없음 → 기본형" 비율 상한 (경로 포함, 집중형 프로필별로도) */
-        maxFallbackRate: 0.2,
-        /** 무작위 샘플 수(단계당)와 시드, 편향 지수 목록(클수록 한 계통에 쏠림) */
-        randomSamples: 20000,
-        /** 집중형 분포(1계통·2계통·3계통·균등) 프로필당 샘플 수 */
-        concentratedSamples: 4000,
-        seed: 20261018,
-        skews: [0.5, 1, 2, 3, 5],
-        /** 계통이 이 수 이하면 가능한 모든 흡수 분포를 전수 조사한다 (그 이상은 무작위만) */
-        enumerateMaxLineages: 5,
-      },
+      /** 점검 도구(analysis.ts, npm run balance)의 무작위 분포 샘플 */
+      analysis: { samples: 4000, seed: 20261020 },
     },
     // ── 원정 루프(P2) 임시값. 기획서 2-1·6·7장에 수치가 없는 것 ──
     expedition: {
@@ -230,8 +282,6 @@ export const BALANCE = {
       /** 슬롯에 skill 특성이 없을 때의 기본 블록 ("기본 공격 강화"): 공격, 기본 공격 N회 분량 */
       basicBlockPowerInAttacks: 3,
       basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
-      /** 약점 계통 스킬 블록 위력 배율 (GDD 3-5 ×1.5) */
-      weaknessMultiplier: 1.5,
       /** guard 블록: 막기 상태 지속(초, 위력 배율만큼 늘어남), 그동안 기본 공격 피해 경감, 강공격 경감(= 막기 성공) */
       guardSeconds: 3,
       guardReduction: 0.5,

@@ -2,37 +2,38 @@
 // 문구는 FactionConfig(absorbActionName, chainName, riskGaugeName, stabilityName …)에서 읽는다.
 import { BALANCE } from '../config/balance';
 import { getEnemy } from '../data/enemies';
-import { lineageFamily, lineageName } from '../data/lineages';
-import { pickFaction } from '../data/schema';
+import { elementName, statName, weaknessesOf } from '../data/elements';
+import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbRisk, completedLineages, isFull, lineageCounts, type AbsorbOffer } from '../engine/absorb';
+import { absorbRisk, completedElements, elementCounts, isFull, type AbsorbOffer } from '../engine/absorb';
 import { chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
 import { button, chip, el, icon, info, meter, notice, panel, tag } from './bha/dom';
 import { lcdPage } from './bha/lcdpage';
 import { val } from './bha/expedition';
-import { lineageClass, lineageIconId, lineageKey, lineageMark } from './bha/lineage';
+import { elementColor, elementDot, elementMark, paintElement } from './bha/element';
 
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;
 
-/** 약점 계통이 가리키는 약점 계열 이름 (GDD 17-3). 계열이 없으면 계통 이름 */
-function familyLabel(faction: FactionConfig, lineageId: string): string {
-  const fid = lineageFamily(lineageId);
-  return (fid && faction.families.find((f) => f.id === fid)?.name) || lineageName(lineageId, faction.id);
+/** 이 적의 약점 속성 이름들 ("뇌" / 융합은 "뇌·흙"). 없으면 null (노멀·특수 속성 적) */
+export function weaknessText(enemy: Pick<EnemyDef, 'element'>, factionId: string): string | null {
+  const w = weaknessesOf([enemy.element]);
+  return w.length ? w.map((x) => elementName(x, factionId)).join('·') : null;
 }
 
-/** 흡수 조건 안내 (GDD 3-5, 17-3, 임시 수치): 마무리 일격이 약점 계열 스킬 / 약점 계열 체인3 N회 이상 */
-export function absorbConditionText(faction: FactionConfig, weaknessLineageId: string): string {
-  const lin = familyLabel(faction, weaknessLineageId);
-  return `${faction.absorbActionName} 조건: 마무리 일격이 약점 계열(${lin}) ${faction.skillBlockName}이거나, 그 전투에서 약점 계열(${lin}) ${faction.skillBlockName}의 ${faction.chainName}3 을 ${AX.weakChain3ForAbsorb}회 이상. 장착한 ${faction.skillBlockName} 특성이 없으면 조건 없이 가능 (첫 ${faction.absorbActionName}, 임시)`;
+/** 흡수 조건 안내 (GDD 20-2, 임시 수치): 마무리 일격이 상성 우위 기술 / 상성 우위 체인3 N회 이상. 약점이 없는 적은 아무 기술 */
+export function absorbConditionText(faction: FactionConfig, enemy: Pick<EnemyDef, 'element'>): string {
+  const w = weaknessText(enemy, faction.id);
+  const what = w ? `상성 우위(${w}) ${faction.skillBlockName}` : `${faction.skillBlockName}(이 적은 약점 속성이 없다)`;
+  return `${faction.absorbActionName} 조건: 마무리 일격이 ${what}이거나, 그 전투에서 그 ${faction.skillBlockName}의 ${faction.chainName}3 을 ${AX.weakChain3ForAbsorb}회 이상. 장착한 ${faction.skillBlockName} 특성이 없으면 조건 없이 가능 (첫 ${faction.absorbActionName}, 임시)`;
 }
 
 export function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
   const out: string[] = [];
-  if (offer.reasons.includes('weakness-finisher')) out.push(`약점 계열(${familyLabel(faction, offer.finisherLineageId!)})으로 마무리`);
-  if (offer.reasons.includes('weakness-chain3')) out.push(`약점 계열 ${faction.chainName}3 ${offer.weakChain3Count}회 (필요 ${AX.weakChain3ForAbsorb})`);
+  if (offer.reasons.includes('weakness-finisher')) out.push(offer.finisherElement ? `${elementName(offer.finisherElement, faction.id)} 속성으로 마무리` : `${faction.skillBlockName}으로 마무리`);
+  if (offer.reasons.includes('weakness-chain3')) out.push(`우위 ${faction.chainName}3 ${offer.weakChain3Count}회 (필요 ${AX.weakChain3ForAbsorb})`);
   if (offer.reasons.includes('first-absorb')) out.push(`첫 ${faction.absorbActionName} 보장 (장착한 ${faction.skillBlockName} 특성 없음)`);
   return out.join(' · ');
 }
@@ -87,8 +88,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const foeCard = (): HTMLElement => {
     const card = el('article', 'bha-foecard');
     const foe = el('div', 'bha-foe');
-    const lk = lineageKey(offer!.lineageId);
-    if (lk) foe.style.setProperty('--aura', `var(--bha-lin-${lk})`);
+    foe.style.setProperty('--aura', elementColor(offer!.element));
     const body = el('span', 'bha-foe__body');
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 100 100');
@@ -98,14 +98,14 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     body.append(svg);
     foe.append(el('span', 'bha-foe__aura'), body);
     const tags = el('div', 'bha-foecard__tags');
-    tags.append(tag(offer!.elite ? '강적' : '일반', offer!.elite ? 'elite' : 'normal'), lineageMark(offer!.lineageId, faction.id));
+    tags.append(tag(offer!.elite ? '강적' : '일반', offer!.elite ? 'elite' : 'normal'), elementMark(offer!.element, faction.id));
     const text = el('div');
     text.append(el('h2', 'bha-foecard__name', foeName), tags);
     card.append(foe, text);
     return card;
   };
 
-  /** 슬롯 현황: 칸마다 특성 이름·종류·계통, 계통 보너스 진행/완성, 외형 파츠 문구 */
+  /** 슬롯 현황: 칸마다 특성 이름·종류·속성, 속성 보너스 진행/완성, 외형 파츠 문구 */
   const slotSummary = (): HTMLElement => {
     const b = exp.build;
     const box = el('div', 'bha-stack');
@@ -121,20 +121,20 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         return;
       }
       const t = getTrait(id);
-      const s = el('div', `bha-slot bha-slot--filled ${lineageClass(t.lineageId)}`);
+      const s = paintElement(el('div', 'bha-slot bha-slot--filled'), t.element);
       const meta = el('span', 'bha-slot__meta');
-      meta.append(tag(faction.traitKindNames[t.kind], 'kind'), lineageMark(t.lineageId, faction.id));
+      meta.append(tag(faction.traitKindNames[t.kind], 'kind'), elementMark(t.element, faction.id));
       s.append(el('span', 'bha-slot__num', `${i + 1}번`), el('span', 'bha-slot__name', traitName(id, faction.id)), meta);
       grid.append(s);
     });
     box.append(grid);
-    const counts = lineageCounts(b);
-    const done = completedLineages(b);
-    const progress = Object.entries(counts).map(([l, n]) => `${lineageName(l, faction.id)} ${n}/${AX.lineageBonusCount}`);
+    const counts = elementCounts(b);
+    const done = completedElements(b);
+    const progress = Object.entries(counts).map(([l, n]) => `${elementName(l, faction.id)} ${n}/${AX.elementBonusCount}`);
     if (done.length > 0) {
-      box.append(notice('good', `${faction.lineageBonusName}: ${done.map((l) => lineageName(l, faction.id)).join(', ')} 블록 위력(피해·막기·회복) +${Math.round(AX.lineageSkillBonus * 100)}% (임시)`));
+      box.append(notice('good', `${faction.lineageBonusName}: ${done.map((l) => elementName(l, faction.id)).join(', ')} 블록 위력(피해·막기·회복) +${Math.round(AX.elementSkillBonus * 100)}% (임시)`));
     } else if (progress.length > 0) {
-      box.append(el('p', 'bha-faint', `${faction.lineageBonusName} 진행: ${progress.join(' · ')} (같은 계통 ${AX.lineageBonusCount}개)`));
+      box.append(el('p', 'bha-faint', `${faction.lineageBonusName} 진행: ${progress.join(' · ')} (같은 속성 ${AX.elementBonusCount}개)`));
     }
     const parts = b.slots.filter((id): id is string => id !== null && getTrait(id).kind === 'part');
     if (parts.length > 0) {
@@ -159,7 +159,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
     const rareNote = offer!.rare ? notice('rare', '이 개체의 희귀 특성이 후보에 확정으로 나온다.', { title: '희귀 개체!' }) : null;
     const lin = el('span');
-    lin.append(lineageMark(offer!.lineageId, faction.id));
+    lin.append(elementMark(offer!.element, faction.id));
+    const evText = STAT_IDS.filter((k) => (offer!.ev[k] ?? 0) > 0).map((k) => `${statName(k, faction.id)} +${offer!.ev[k]}`).join(' · ');
     const risky = (n: string, good: boolean) => {
       const b = el('b', '', n);
       b.style.color = good ? 'var(--bha-good)' : 'var(--bha-risk)';
@@ -175,13 +176,13 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         {},
         info([
           { label: '상대', value: val(foeName, offer!.elite ? '강적' : '일반') },
-          { label: '계통', value: lin },
+          { label: '속성', value: lin },
           { label: `${act} 조건`, mod: 'stack', value: reasonText(faction, offer!) },
-          { label: `${act}하면`, mod: 'stack', value: withNum('허기 리셋 · ', `${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), ' · 타일 +1') },
+          { label: `${act}하면`, mod: 'stack', value: withNum('허기 리셋 · ', `${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), ' · 타일 +1', evText ? ` · 노력치 ${evText}` : '') },
           { label: '놓아주면', mod: 'stack', value: withNum(`${faction.riskGaugeName} `, risky(`−${RX.releaseRelief}`, true), ` · ${faction.stabilityName} `, risky(`+${RX.releaseStability}`, true)) },
         ]),
       ),
-      el('p', 'bha-faint bha-absorb__rule', absorbConditionText(faction, enemy.weaknessLineageId)),
+      el('p', 'bha-faint bha-absorb__rule', absorbConditionText(faction, enemy)),
     );
     const side: HTMLElement[] = [
       meter({
@@ -209,24 +210,24 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const side: HTMLElement[] = [];
     if (offer!.candidates.length === 0) {
       const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
-      none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '이 계통에서 새로 얻을 특성이 없다. 효과만 얻는다.'));
+      none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '새로 얻을 특성이 없다. 효과만 얻는다.'));
       side.push(none, button({ label: `특성 없이 ${act}`, variant: 'primary', size: 'lg', block: true, onClick: () => finish(chooseAbsorb(exp, null), true) }));
     } else {
       const list = el('div', 'bha-stack');
       for (const id of offer!.candidates) {
         const t = getTrait(id);
-        const n = (lineageCounts(exp.build)[t.lineageId] ?? 0) + 1;
-        const shown = Math.min(n, AX.lineageBonusCount);
-        const c = el('button', ['bha-cand', lineageClass(t.lineageId)].filter(Boolean).join(' '));
+        const n = (elementCounts(exp.build)[t.element] ?? 0) + 1;
+        const shown = Math.min(n, AX.elementBonusCount);
+        const c = paintElement(el('button', 'bha-cand'), t.element);
         c.type = 'button';
         const mark = el('span', 'bha-cand__mark');
-        mark.append(icon(lineageIconId(t.lineageId)));
+        mark.append(elementDot(t.element, faction.id));
         const top = el('span', 'bha-cand__top');
         top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), ...traitTags(id));
         const pips = el('span', 'bha-pips');
-        for (let i = 0; i < AX.lineageBonusCount; i++) pips.append(el('i', i < shown - 1 ? 'is-on' : i === shown - 1 ? 'is-next' : ''));
+        for (let i = 0; i < AX.elementBonusCount; i++) pips.append(el('i', i < shown - 1 ? 'is-on' : i === shown - 1 ? 'is-next' : ''));
         const foot = el('span', 'bha-cand__foot');
-        foot.append(pips, `장착하면 ${lineageName(t.lineageId, faction.id)} ${shown}/${AX.lineageBonusCount}${n >= AX.lineageBonusCount && !isFull(exp.build) ? ` → ${faction.lineageBonusName}!` : ''}`);
+        foot.append(pips, `장착하면 ${elementName(t.element, faction.id)} ${shown}/${AX.elementBonusCount}${n >= AX.elementBonusCount && !isFull(exp.build) ? ` → ${faction.lineageBonusName}!` : ''}`);
         const body = el('span', 'bha-cand__body');
         body.append(top, el('span', 'bha-cand__desc', traitDescription(id, faction.id)), foot);
         c.append(mark, body);
@@ -252,10 +253,10 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const list = el('div', 'bha-stack');
     exp.build.slots.forEach((id, i) => {
       const t = getTrait(id!);
-      const b = el('button', `bha-slot bha-slot--filled ${lineageClass(t.lineageId)}`);
+      const b = paintElement(el('button', 'bha-slot bha-slot--filled'), t.element);
       b.type = 'button';
       const meta = el('span', 'bha-slot__meta');
-      meta.append(tag(faction.traitKindNames[t.kind], 'kind'), lineageMark(t.lineageId, faction.id));
+      meta.append(tag(faction.traitKindNames[t.kind], 'kind'), elementMark(t.element, faction.id));
       b.append(el('span', 'bha-slot__num', `${i + 1}번 교체`), el('span', 'bha-slot__name', traitName(id!, faction.id)), meta);
       b.onclick = () => finish(chooseAbsorb(exp, picked, i), true);
       list.append(b);

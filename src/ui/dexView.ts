@@ -1,27 +1,21 @@
-// 진화체 도감 화면 (GDD 4-2 v1.0, T-3 가로 배치): 머리에 단계 탭(발견 수) · 왼쪽 진화체 목록 · 오른쪽 고른 진화체의 상세.
-// 해금된 진화체는 이름·요구 계통 마크·효과, 미해금은 "?" 잠금 행. 기본형은 목록 맨 뒤, 지금 진화체는 "지금" 표시. 이름은 자리 표시(임시).
+// 진화체 도감 화면 (GDD 20-5, T-3 가로 배치): 머리에 단계 탭(발견 수) · 왼쪽 진화체 목록 · 오른쪽 고른 진화체의 상세.
+// 해금된 진화체는 이름·속성 마크·종족값, 미해금은 "?" 잠금 행(히든은 "히든 ?"). 히든은 목록 맨 뒤, 지금 진화체는 "지금" 표시. 이름은 자리 표시(임시).
 import { FORM_TABLE, formHint, formName, formsOfTier } from '../data/evolution';
 import type { FormDef } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
 import { h, icon, provisionalTag, seg } from './bha/dom';
 import { lcdHead, lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
-import { lineageKey } from './bha/lineage';
+import { elementDot, paintElement } from './bha/element';
 import { formCardModel, sortFormsForDex } from './bha/nestLogic';
 import { evolutionNote, formEffectLines } from './evolutionPanel';
 
-/** 계통 마크 줄 (요구 계통 없으면 "조건 없음") */
-function marksOf(f: FormDef): HTMLElement {
+/** 속성 마크 줄 (속성을 잇는 진화체는 "속성 잇기") */
+function marksOf(f: FormDef, factionId: string): HTMLElement {
   const marks = h('span', 'bha-formcard__marks');
-  if (f.label.lineages.length === 0) marks.append(h('span', 'bha-faint', '조건 없음'));
-  for (const l of f.label.lineages) {
-    const k = lineageKey(l);
-    if (!k) continue;
-    const mk = h('span');
-    mk.style.color = `var(--bha-lin-${k})`;
-    mk.append(icon(`i-lin-${k}`));
-    marks.append(mk);
-  }
+  const els = f.elements ?? f.label.elements;
+  if (els.length === 0) marks.append(h('span', 'bha-faint', '속성 잇기'));
+  for (const e of els) marks.append(elementDot(e, factionId));
   return marks;
 }
 
@@ -30,7 +24,7 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
   if (m.state === 'unknown') {
     return {
       label: '미발견', cls: 'is-unknown',
-      content: [icon('i-unknown'), h('span', 'bha-mdrow__name', '? ? ?'), h('small', 'bha-mdrow__state', '미발견')],
+      content: [icon('i-unknown'), h('span', 'bha-mdrow__name', '? ? ?'), h('small', 'bha-mdrow__state', m.hidden ? '히든' : '미발견')],
       detail: () => {
         const d = h('div', 'bha-mdhint');
         d.append(icon('i-unknown'), h('b', '', '미발견'), h('small', '', '진화한 적 있는 진화체만 보인다.'));
@@ -38,21 +32,21 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
       },
     };
   }
-  const key = m.lineage ? lineageKey(m.lineage) : undefined;
   const name = formName(f, faction.id);
   return {
     label: name,
-    cls: key ? `bha-lin--${key}` : undefined,
-    content: [marksOf(f), h('span', 'bha-mdrow__name', name), ...(m.current ? [h('small', 'bha-mdrow__state', '지금')] : [])],
+    paint: (node: HTMLElement) => paintElement(node, m.element),
+    content: [marksOf(f, faction.id), h('span', 'bha-mdrow__name', name), ...(m.current ? [h('small', 'bha-mdrow__state', '지금')] : m.hidden ? [h('small', 'bha-mdrow__state', '히든')] : [])],
     detail: () => {
       const lines = formEffectLines(faction, f);
       const title = h('h2', 'bha-mddetail__title', name);
       if (f.provisional) title.append(' ', provisionalTag());
       const head = h('div', 'bha-mddetail__head');
-      head.append(marksOf(f), title);
+      head.append(marksOf(f, faction.id), title);
       if (m.current) head.append(h('span', 'bha-chip bha-chip--good', '지금'));
       const body = h('p', 'bha-mddetail__body');
-      body.append(formHint(f, faction.id), h('br'), lines[1]!, h('br'), lines[2]!, h('br'), lines[3]!);
+      body.append(formHint(f, faction.id));
+      for (const line of lines.slice(1)) body.append(h('br'), line);
       return [head, body, evolutionNote()];
     },
   };

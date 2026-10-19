@@ -94,6 +94,9 @@
 .bha-lin--c { --bha-lin-color: var(--bha-lin-c); }
 .bha-lin--d { --bha-lin-color: var(--bha-lin-d); }
 .bha-lin--e { --bha-lin-color: var(--bha-lin-e); }
+/* 속성 한 글자 동그라미 (C.47, GDD 20-2): 색 = 속성 토큰(--bha-lin-color), 글자 = 속성 약자 */
+.bha-eldot { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: var(--bha-r-pill); background: var(--bha-lin-color, var(--bha-text-3)); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-style: normal; font-weight: var(--bha-fw-heavy); line-height: 1; flex: none; }
+.bha-elmarks { display: inline-flex; gap: var(--bha-sp-2); }
 
 /* =========================================================
    3. 상태 바  .bha-meter   (현재 .bar.*)
@@ -458,7 +461,8 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-block[data-fam="family-a"] { --fam: var(--bha-lin-a); }
 .bha-block[data-fam="family-b"] { --fam: var(--bha-lin-b); }
 .bha-block[data-fam="family-c"] { --fam: var(--bha-lin-c); }
-.bha-block[data-fam]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--fam); }
+.bha-block[data-fam]::after, .bha-block[data-el]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--fam); }
+/* 속성 색 (C.47, GDD 20-2): 블록 = 계열 글자 + 속성 색. 화면이 --fam 을 속성 토큰으로 덮어쓴다 (data-el) */
 .bha-block__pips { position: absolute; top: 4px; left: 0; right: 0; display: flex; justify-content: center; gap: 3px; }
 .bha-block__pips i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; opacity: 0.85; }
 .bha-block__pips i:nth-child(-n + 1) { background: currentColor; }
@@ -652,6 +656,9 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-float--void { color: var(--bha-risk); font-style: italic; letter-spacing: 0.04em; }
 .bha-float--chain { color: var(--bha-chain2); font-size: 16px; font-family: var(--bha-font-body); font-weight: 800; }
 .bha-float--chain3 { color: var(--bha-chain3); font-size: 20px; }
+/* 상성 문구 (C.47, GDD 20-2): 효과가 굉장하다(강) / 효과가 별로…(약) */
+.bha-float--strong { color: var(--bha-warn); font-size: var(--bha-fs-lg); font-family: var(--bha-font-body); font-weight: var(--bha-fw-heavy); }
+.bha-float--dull { color: var(--bha-text-3); font-size: var(--bha-fs-md); font-family: var(--bha-font-body); font-weight: var(--bha-fw-bold); }
 
 /* =========================================================
    23. 사건 로그  .bha-log  (현재 .stage / .line) — 최근 3줄, 위로 흘러 사라짐

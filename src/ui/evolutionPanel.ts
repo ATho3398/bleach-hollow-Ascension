@@ -1,36 +1,33 @@
-// 진화 패널과 진화 연출 (GDD 4-2). 문구는 종족 설정(tierNames, slotName, appearanceChange)·진화 데이터에서 읽는다.
-// 결과 형태는 진화를 확정하기 전까지 "?" 로 가린다. 임시 데이터 표시는 작게 유지한다.
-import { formName, formPassiveText, tryGetForm } from '../data/evolution';
-import type { FormDef } from '../data/schema';
-import { absorbsNeeded, absorbsRemaining, canEvolve, currentCandidates, isMaxTier, type EvolutionState } from '../engine/evolution';
+// 진화 제단·진화 연출 (GDD 20-5). 문구는 종족 설정(tierNames, slotName, appearanceChange)·진화 데이터에서 읽는다.
+// 진화 타이밍(걸음 수)·후보는 숨긴다(v4.1): 제단은 지금 진화체·속성·고유 특성만 보이고, 진화는 둥지에 돌아오면 저절로 일어난다.
+import { abilityDescription, abilityName, formName, tryGetForm } from '../data/evolution';
+import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
+import { statName } from '../data/elements';
+import { isMaxTier, playerElementsOf, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
-import { button, h, icon, meter, mountApp, notice, panel, provisionalTag } from './bha/dom';
-import { lineageKey } from './bha/lineage';
-import { linbar } from './bha/nest';
+import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
+import { elementDot, elementsMark } from './bha/element';
 import { toward } from './bha/nestLogic';
-import { evolutionHint, hintText } from './bha/growthLogic';
-import { lineageName } from '../data/lineages';
 
 const EV = BALANCE.provisional.evolution;
 
-export const EVOLUTION_NOTE = '진화 조건·수치·진화체 데이터는 임시 (기획 4-2, 11-3 계통 미정)';
+export const EVOLUTION_NOTE = '진화 트리·수치·진화체 이름은 임시 (기획 20-5, 이름·그림은 사용자 확정 전 자리 표시)';
 
 /** 외형 변화 문구: 호로 = 본체 파츠, 사신 = 본체 그대로 참백도 외형 (종족 설정 appearanceChange) */
 export function appearanceText(faction: FactionConfig): string {
   return faction.appearanceChange ? '본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)' : `본체는 그대로, ${faction.slotName}의 외형이 변한다`;
 }
 
-/** 형태 효과 한 줄들 (임시 수치) */
+/** 종족값 한 줄 (예 "체력 61 · 힘 58 · …") */
+export function statsLine(factionId: string, stats: Stats): string {
+  return STAT_IDS.map((k) => `${statName(k, factionId)} ${stats[k]}`).join(' · ');
+}
+
+/** 진화체 설명 줄 (도감 상세): 종족값 · 외형 */
 export function formEffectLines(faction: FactionConfig, form: FormDef): string[] {
-  const pctText = (m: number) => `${m >= 1 ? '+' : ''}${Math.round((m - 1) * 100)}%`;
-  return [
-    `${faction.slotName} +${EV.slotsPerEvolution}칸`,
-    `체력 ${pctText(form.effects.hpMultiplier)} · 기본 공격 ${pctText(form.effects.attackMultiplier)}`,
-    formPassiveText(form, faction.id),
-    appearanceText(faction),
-  ];
+  return [`${faction.slotName} +${EV.slotsPerEvolution}칸`, `종족값 ${statsLine(faction.id, form.stats)}`, form.stab ? `자기 속성 보정 ×${form.stab}` : '', appearanceText(faction)].filter(Boolean);
 }
 
 /** 임시 데이터 안내 한 줄 (작게 + 임시 태그) */
@@ -40,72 +37,62 @@ export function evolutionNote(): HTMLElement {
   return p;
 }
 
+/** 고유 특성 한 줄 (1단계는 없음) */
+function abilityLine(faction: FactionConfig, ability: StatId | null): HTMLElement {
+  const p = h('p', 'bha-dim');
+  if (!ability) p.append('고유 특성: 아직 없음 (진화하면 생긴다)');
+  else p.append('고유 특성 ', h('b', '', abilityName(ability, faction.id)), ` — ${abilityDescription(ability, faction.id)}`);
+  return p;
+}
+
 /**
- * 진화 제단 화면의 두 열 (T-3): 왼쪽 = 단계·진화체 이름 + 이 단계 포식 진행 + 계통 누적 막대 / 오른쪽 = 후보 수·결과 ? + [진화] 또는 남은 횟수.
- * 데이터·계산은 엔진(absorbsNeeded 등)에서 그대로 읽는다. 진화 가능하면 오른쪽 칸 테두리가 강조(.bha-panel--accent)된다.
+ * 진화 제단 화면의 두 열: 왼쪽 = 단계·진화체 이름·속성·고유 특성 / 오른쪽 = 진화 안내(타이밍은 비밀) 또는 마지막 단계 안내.
  */
-export function evolutionColumns(faction: FactionConfig, evo: EvolutionState, onEvolve: () => void): { left: HTMLElement[]; right: HTMLElement[] } {
+export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): { left: HTMLElement[]; right: HTMLElement[] } {
   const tierName = faction.tierNames[evo.tierIndex]!;
-  const can = canEvolve(evo);
   const current = evo.formId ? tryGetForm(evo.formId) : undefined;
   const form = h('div', 'bha-evo__form');
   const formName_ = h('span', 'bha-evo__formname', current ? formName(current, faction.id) : tierName);
   if (current?.provisional) formName_.append(' ', provisionalTag());
-  form.append(formName_, h('span', 'bha-dim', `${evo.tierIndex + 1}단계 · ${tierName}`));
-
+  const els = h('span', 'bha-dim');
+  els.append(`${evo.tierIndex + 1}단계 · ${tierName} · 속성 `, elementsMark(playerElementsOf(evo), faction.id));
+  form.append(formName_, els);
+  const left = [form, abilityLine(faction, evo.ability)];
   if (isMaxTier(evo)) {
     return {
-      left: [form, linbar(faction, evo.lineageScores, 0)],
+      left,
       right: [notice('rare', `더 이상 진화하지 않는다. ${faction.absorbActionName} 기록은 칭호 조건에 계속 쌓인다.`, { title: `마지막 단계(${tierName})에 도달했다`, icon: 'i-rare' }), evolutionNote()],
     };
   }
-
-  const need = absorbsNeeded(evo)!;
-  const left = [form, meter({ kind: 'stored', label: `이 단계 ${faction.absorbActionName}`, icon: 'i-absorb', value: Math.min(evo.absorbs, need), max: need, valueText: undefined }), linbar(faction, evo.lineageScores, need)];
-
-  const facts = h('div', 'bha-evo__facts');
-  const cand = h('div', 'bha-evo__fact');
-  const candB = h('b', '', String(currentCandidates(evo).length));
-  candB.append(h('small', '', '종'));
-  cand.append(h('small', '', '지금 분포로 갈 수 있는 후보'), candB);
-  const hidden = h('div', 'bha-evo__fact bha-evo__fact--hidden');
-  hidden.append(h('small', '', '진화 결과'), h('b', '', '?'));
-  facts.append(cand, hidden);
-
-  let cta: HTMLElement;
-  if (can) {
-    const b = button({ icon: 'i-evolve', variant: 'primary', size: 'lg', block: true, onClick: onEvolve });
-    const label = h('span', 'bha-btn__label');
-    label.append(h('span', '', '진화'), h('span', 'bha-btn__sub', `${evo.tierIndex + 1}단계 → ${evo.tierIndex + 2}단계 ${faction.tierNames[evo.tierIndex + 1] ?? ''}`));
-    b.append(label);
-    cta = b;
-  } else {
-    cta = h('div', 'bha-evo__cta');
-    const text = h('span', 'bha-evo__left');
-    // 예고: 누적 상위 계통과 남은 횟수만 (확정 진화체·후보 이름은 숨긴다)
-    const hint = evolutionHint(evo);
-    text.append('진화까지 ', h('b', '', String(absorbsRemaining(evo)!)), '회 남음', h('br'));
-    if (hint) text.append(h('span', 'bha-evo__hint', hintText({ ...hint, remaining: 0 }, (id) => lineageName(id, faction.id))), h('br'));
-    text.append(h('span', 'bha-faint', `${faction.absorbActionName}하면 쌓인다. 진화는 ${faction.nestName}에서만.`));
-    cta.append(text);
-  }
-  return { left, right: [facts, cta, evolutionNote()] };
+  const how = h('div', 'bha-evo__cta');
+  const text = h('span', 'bha-evo__left');
+  text.append(
+    h('b', '', '진화할 때는 비밀이다.'), h('br'),
+    `원정을 다니다 보면 몸에 신호가 온다. 진화는 ${toward(faction.nestName)} 돌아오면 저절로 일어난다.`, h('br'),
+    h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 분류와 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다.`),
+  );
+  how.append(text);
+  return { left, right: [how, evolutionNote()] };
 }
 
-/** 진화 후 달라진 점 행들(임시 수치): 슬롯·체력·공격 배율·패시브·외형 */
-export function evolutionEffectRows(faction: FactionConfig, form: FormDef, slotsAfter?: number): { icon: string; label: string; value: string; sub?: string; mod?: 'good' | 'stack' }[] {
-  const mult = (m: number) => `×${m.toFixed(2)}`;
+/** 진화 후 달라진 점 행들(임시 수치): 슬롯·속성·고유 특성·종족값·외형 */
+export function evolutionEffectRows(
+  faction: FactionConfig, form: FormDef, slotsAfter?: number, extra?: { elements: string[]; ability: StatId | null },
+): { icon: string; label: string; value: string | Node; sub?: string; mod?: 'good' | 'stack' }[] {
   const slots = EV.slotsPerEvolution;
-  return [
+  const rows: { icon: string; label: string; value: string | Node; sub?: string; mod?: 'good' | 'stack' }[] = [
     {
       icon: 'i-slot', label: faction.slotName, mod: 'good',
       value: slotsAfter !== undefined ? `${slotsAfter - slots} → ${slotsAfter}칸` : `+${slots}칸`, sub: `+${slots}`,
     },
-    { icon: 'i-cond', label: '체력 배율', value: mult(form.effects.hpMultiplier) },
-    { icon: 'i-attack', label: '공격 배율', value: mult(form.effects.attackMultiplier) },
-    { icon: 'i-rare', label: '패시브', value: formPassiveText(form, faction.id), mod: 'stack' },
-    { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },
   ];
+  if (extra) rows.push({ icon: 'i-weak', label: '속성', value: elementsMark(extra.elements, faction.id) });
+  if (extra?.ability) rows.push({ icon: 'i-rare', label: '고유 특성', value: `${abilityName(extra.ability, faction.id)} — ${abilityDescription(extra.ability, faction.id)}`, mod: 'stack' });
+  rows.push(
+    { icon: 'i-cond', label: '종족값', value: statsLine(faction.id, form.stats), mod: 'stack' },
+    { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },
+  );
+  return rows;
 }
 
 /**
@@ -120,6 +107,7 @@ export function evolutionView(
   form: FormDef,
   onDone: () => void,
   slotsAfter?: number,
+  extra?: { elements: string[]; ability: StatId | null },
 ): void {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const burst = h('span', 'bha-evolve__burst');
@@ -152,25 +140,20 @@ export function evolutionView(
   const path = h('p', 'bha-evolve__path');
   path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', faction.tierNames[to]!));
   const created = h('div', 'bha-evolve__new');
-  form.label.lineages.forEach((l, i) => {
-    const k = lineageKey(l);
-    if (!k) return;
-    const m = icon(`i-lin-${k}`);
-    m.style.color = `var(--bha-lin-${k})`;
-    if (i > 0) m.style.marginLeft = '-10px';
-    created.append(m);
-  });
-  created.append(`새 진화체: ${formName(form, faction.id)}`);
+  for (const e of extra?.elements ?? form.elements ?? []) created.append(elementDot(e, faction.id));
+  created.append(` 새 진화체: ${formName(form, faction.id)}`);
+  if (form.hidden) created.append(' ', h('span', 'bha-chip bha-chip--rare', '히든'));
   if (form.provisional) created.append(' ', provisionalTag());
 
   const effects = panel({ title: '달라진 점', aside: provisionalTag('임시 수치'), mod: undefined });
   effects.classList.add('bha-evolve__effects');
   const dl = h('dl', 'bha-info');
-  for (const r of evolutionEffectRows(faction, form, slotsAfter)) {
+  for (const r of evolutionEffectRows(faction, form, slotsAfter, extra)) {
     const row = h('div', `bha-info__row${r.mod ? ` bha-info__row--${r.mod}` : ''}`);
     const dt = h('dt');
     dt.append(icon(r.icon), r.label);
-    const dd = h('dd', '', r.value);
+    const dd = h('dd');
+    dd.append(r.value);
     if (r.sub && r.mod === 'good') dd.append(' ', h('small', '', r.sub));
     row.append(dt, dd);
     dl.append(row);

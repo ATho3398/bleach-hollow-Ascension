@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { TITLES, parseTitle } from '../src/data/titles';
 import type { TitleCondition, TitleDef } from '../src/data/schema';
-import { recordEvolutionAbsorb } from '../src/engine/evolution';
+import { gainTrait } from '../src/engine/absorb';
 import { createExpedition } from '../src/engine/expedition';
 import { emptyRunLog, type AbsorbRecord, type BattleRecord, type RunLog, type RunRecord } from '../src/engine/runLog';
 import { checkCondition, evaluateTitles, unlockTitles } from '../src/engine/titles';
@@ -13,7 +13,7 @@ const battle = (o: Partial<BattleRecord> = {}): BattleRecord => ({
   runId: 1, lap: 1, turns: 0, matchesByRole: { damage: 0, spirit: 0, shield: 0, absorb: 0, risk: 0 }, won: true, skillsUsed: [],
   enemyClass: 'normal', tierIndex: 0, enemyId: 'e', factionId: 'hollow', seed: 1, riskGained: 0, absorbGained: 0, lossReason: null,
   durationSeconds: 30, blocksByTrait: {}, blocksByChain: [0, 0, 0], chain3Count: 0, guardSuccesses: 0, voidUsed: 0, specialUsed: false,
-  finisherKind: null, finisherTraitId: null, finisherLineageId: null, absorbable: false, storedUsed: 0, storedWasted: 0,
+  finisherKind: null, finisherTraitId: null, finisherElement: null, absorbable: false, storedUsed: 0, storedWasted: 0,
   chainsByFamily: {}, combosTriggered: 0, comboBlocksUsed: 0, ...o,
 });
 const run = (o: Partial<RunRecord> = {}): RunRecord => ({
@@ -21,19 +21,19 @@ const run = (o: Partial<RunRecord> = {}): RunRecord => ({
   gainedTraits: [], lostTraits: [], riskPeak: 0, breakthrough: false, ...o,
 });
 const absorb = (o: Partial<AbsorbRecord> = {}): AbsorbRecord => ({
-  runId: 1, enemyId: 'e', lineageId: 'lineage-a', rare: false, absorbed: true, traitId: null, lap: 1, ...o,
+  runId: 1, enemyId: 'e', element: 'fire', rare: false, absorbed: true, traitId: null, lap: 1, ...o,
 });
 const logWith = (o: Partial<RunLog>): RunLog => ({ ...emptyRunLog(), ...o });
 const times = <T,>(n: number, f: () => T): T[] => Array.from({ length: n }, f);
 const def = (id: string, condition: TitleCondition | null): TitleDef => ({ id, kind: 'tag', hidden: true, name: { '*': id }, condition, provisional: true });
 
 describe('조건 어휘', () => {
-  it('absorbCount: 전체/계통별/희귀만, 놓아준 것은 세지 않는다', () => {
-    const log = logWith({ absorbs: [absorb(), absorb({ lineageId: 'lineage-b', rare: true }), absorb({ absorbed: false })] });
+  it('absorbCount: 전체/속성별/희귀만, 놓아준 것은 세지 않는다', () => {
+    const log = logWith({ absorbs: [absorb(), absorb({ element: 'water', rare: true }), absorb({ absorbed: false })] });
     expect(checkCondition({ type: 'absorbCount', min: 2 }, log)).toBe(true);
     expect(checkCondition({ type: 'absorbCount', min: 3 }, log)).toBe(false);
-    expect(checkCondition({ type: 'absorbCount', min: 1, lineage: 'lineage-b' }, log)).toBe(true);
-    expect(checkCondition({ type: 'absorbCount', min: 2, lineage: 'lineage-a' }, log)).toBe(false);
+    expect(checkCondition({ type: 'absorbCount', min: 1, element: 'water' }, log)).toBe(true);
+    expect(checkCondition({ type: 'absorbCount', min: 2, element: 'fire' }, log)).toBe(false);
     expect(checkCondition({ type: 'absorbCount', min: 1, rareOnly: true }, log)).toBe(true);
     expect(checkCondition({ type: 'absorbCount', min: 2, rareOnly: true }, log)).toBe(false);
   });
@@ -127,8 +127,9 @@ describe('평가 시점 훅', () => {
   it('진화(performEvolution)에서 평가된다', () => {
     const save = newSaveData('hollow', 0);
     save.runLog.absorbs.push(...times(10, () => absorb()));
-    const need = BALANCE.provisional.evolution.absorbsNeeded[0]!;
-    for (let i = 0; i < need; i++) recordEvolutionAbsorb(save.evolution, 'lineage-a', false);
+    // 3단계(아쥬커스)에서 걸음을 채우고 불 특성을 장착한 채 진화 → 불 바스트로데 (hidden-rank-3 = 흡수 10 + t4:fire 경로)
+    Object.assign(save.evolution, { tierIndex: 2, formId: 't3:base', formHistory: ['t2:base', 't3:base'], steps: BALANCE.provisional.evolution.stepsNeeded[2]! });
+    gainTrait(save.build, 't-fire-a');
     expect(save.titles).toEqual([]);
     expect(performEvolution(save, 4000).ok).toBe(true);
     expect(save.titles.find((t) => t.titleId === 'hidden-rank-3')).toMatchObject({ at: 4000, trigger: 'evolution' });
@@ -179,7 +180,7 @@ describe('임시 조건 칭호의 해금 흐름 (런 로그 합성)', () => {
   it('조건이 있는데 provisional 이 아니거나 모르는 id 를 쓰면 데이터 오류', () => {
     expect(() => parseTitle({ id: 'x', kind: 'tag', hidden: true, name: { '*': 'x' }, condition: { type: 'runsReturned', min: 1 } })).toThrow(/provisional/);
     expect(() => parseTitle({ id: 'x', kind: 'tag', hidden: true, name: { '*': 'x' }, provisional: true, condition: { type: 'passedForm', formId: 'nope' } })).toThrow(/진화체/);
-    expect(() => parseTitle({ id: 'x', kind: 'tag', hidden: true, name: { '*': 'x' }, provisional: true, condition: { type: 'absorbCount', min: 1, lineage: 'nope' } })).toThrow(/계통/);
+    expect(() => parseTitle({ id: 'x', kind: 'tag', hidden: true, name: { '*': 'x' }, provisional: true, condition: { type: 'absorbCount', min: 1, element: 'nope' } })).toThrow(/속성/);
   });
 });
 

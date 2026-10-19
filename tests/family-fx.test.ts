@@ -8,7 +8,7 @@ import { ATTACK_FX, FAMILY_MOTION, FAMILY_STAGE_FX } from '../src/ui/attackFxCon
 import { groupCuts } from '../src/ui/bha/battle';
 
 const block = (o: Partial<Extract<CombatEvent, { kind: 'block' }>> = {}): CombatEvent => ({
-  kind: 'block', block: 'skill', traitId: 'x', family: null, role: 'attack', chain: 1, damage: 10, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...o,
+  kind: 'block', block: 'skill', traitId: 'x', family: null, element: null, matchup: 'neutral', role: 'attack', chain: 1, damage: 10, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...o,
 });
 
 describe('계열 공격 연출 고르기', () => {
@@ -19,11 +19,11 @@ describe('계열 공격 연출 고르기', () => {
     const c1 = attackCueOf(block({ family: 'family-a', chain: 1 }), 3, fxOf);
     expect(c1).toMatchObject({ fx: 'claw', stage: 1, fam: 'family-a', tier: 'chain1' });
     expect(attackCueOf(block({ family: 'family-b', chain: 2 }), 3, fxOf)).toMatchObject({ fx: 'bite', stage: 2 });
-    expect(attackCueOf(block({ family: 'family-c', chain: 3, weak: true }), 3, fxOf)).toMatchObject({ fx: 'shot', stage: 3, tier: 'weak' });
+    expect(attackCueOf(block({ family: 'family-c', chain: 3, matchup: 'strong' }), 3, fxOf)).toMatchObject({ fx: 'shot', stage: 3, tier: 'weak' });
   });
 
   it('자동 기본 공격·계열 없는 블록·막기·회복은 계열 연출 없이 몸통박치기', () => {
-    expect(attackCueOf({ kind: 'player-attack', damage: 5 }, 3, fxOf)?.fx).toBeUndefined();
+    expect(attackCueOf({ kind: 'player-attack', damage: 5, matchup: 'neutral' }, 3, fxOf)?.fx).toBeUndefined();
     expect(attackCueOf(block({ family: null }), 3, fxOf)?.fx).toBeUndefined();
     expect(attackCueOf(block({ family: 'family-a', role: 'guard', damage: 0 }), 3, fxOf)).toBeNull();
     expect(attackCueOf(block({ family: 'family-a', role: 'heal' }), 3, fxOf)?.fx).toBeUndefined();

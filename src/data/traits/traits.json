@@ -1,92 +1,82 @@
 [
   {
-    "id": "trait-a1",
-    "lineageId": "lineage-a",
+    "id": "t-normal-a",
+    "element": "normal",
     "kind": "skill",
     "name": {
-      "*": "임시 특성 A1"
+      "hollow": "노멀 조",
+      "shinigami": "노멀 참"
     },
     "abbr": {
-      "*": "A1"
+      "hollow": "노멀 조",
+      "shinigami": "노멀 참"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 3.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 3.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+      "hollow": "[임시] 노멀 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 노멀 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
     },
     "role": "attack",
-    "powerInAttacks": 3.5,
+    "powerInAttacks": 4.2,
     "family": "family-a",
     "provisional": true
   },
   {
-    "id": "trait-a2",
-    "lineageId": "lineage-a",
-    "kind": "passive",
-    "name": {
-      "*": "임시 특성 A2"
-    },
-    "abbr": {
-      "*": "A2"
-    },
-    "description": {
-      "hollow": "[임시] 본체 패시브. 기본 공격 위력 ×1.15.",
-      "shinigami": "[임시] 참백도 패시브. 기본 공격 위력 ×1.15."
-    },
-    "passive": {
-      "stat": "attackPower",
-      "multiplier": 1.15
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-a3",
-    "lineageId": "lineage-a",
-    "kind": "part",
-    "name": {
-      "*": "임시 특성 A3"
-    },
-    "abbr": {
-      "*": "A3"
-    },
-    "description": {
-      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
-      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-a4",
-    "lineageId": "lineage-a",
+    "id": "t-normal-c",
+    "element": "normal",
     "kind": "skill",
     "name": {
-      "*": "임시 특성 A4"
+      "hollow": "노멀 탄",
+      "shinigami": "노멀 귀"
     },
     "abbr": {
-      "*": "A4"
+      "hollow": "노멀 탄",
+      "shinigami": "노멀 귀"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+      "hollow": "[임시] 노멀 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 노멀 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
     },
-    "rare": true,
     "role": "attack",
-    "powerInAttacks": 5,
-    "family": "family-a",
+    "powerInAttacks": 4.2,
+    "family": "family-c",
     "provisional": true
   },
   {
-    "id": "trait-a5",
-    "lineageId": "lineage-a",
+    "id": "t-normal-b",
+    "element": "normal",
     "kind": "skill",
     "name": {
-      "*": "임시 특성 A5"
+      "hollow": "노멀 교",
+      "shinigami": "노멀 권"
     },
     "abbr": {
-      "*": "A5"
+      "hollow": "노멀 교",
+      "shinigami": "노멀 권"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사.",
-      "shinigami": "[임시] 시해 능력(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사."
+      "hollow": "[임시] 노멀 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 노멀 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-normal-guard",
+    "element": "normal",
+    "kind": "skill",
+    "name": {
+      "hollow": "노멀 가면",
+      "shinigami": "노멀 결계"
+    },
+    "abbr": {
+      "hollow": "노멀 가면",
+      "shinigami": "노멀 결계"
+    },
+    "description": {
+      "hollow": "[임시] 노멀 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 노멀 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
     },
     "role": "guard",
     "powerInAttacks": 1.5,
@@ -97,115 +87,20 @@
     "provisional": true
   },
   {
-    "id": "trait-a6",
-    "lineageId": "lineage-a",
+    "id": "t-normal-heal",
+    "element": "normal",
     "kind": "skill",
     "name": {
-      "*": "임시 특성 A6"
+      "hollow": "노멀 재생",
+      "shinigami": "노멀 회도"
     },
     "abbr": {
-      "*": "A6"
+      "hollow": "노멀 재생",
+      "shinigami": "노멀 회도"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 교 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 권 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "role": "attack",
-    "powerInAttacks": 3,
-    "family": "family-b",
-    "provisional": true
-  },
-  {
-    "id": "trait-b1",
-    "lineageId": "lineage-b",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 B1"
-    },
-    "abbr": {
-      "*": "B1"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사.",
-      "shinigami": "[임시] 시해 능력(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-b2",
-    "lineageId": "lineage-b",
-    "kind": "passive",
-    "name": {
-      "*": "임시 특성 B2"
-    },
-    "abbr": {
-      "*": "B2"
-    },
-    "description": {
-      "hollow": "[임시] 본체 패시브. 받는 피해 ×0.85.",
-      "shinigami": "[임시] 참백도 패시브. 받는 피해 ×0.85."
-    },
-    "passive": {
-      "stat": "damageTaken",
-      "multiplier": 0.85
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-b3",
-    "lineageId": "lineage-b",
-    "kind": "part",
-    "name": {
-      "*": "임시 특성 B3"
-    },
-    "abbr": {
-      "*": "B3"
-    },
-    "description": {
-      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
-      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-b4",
-    "lineageId": "lineage-b",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 B4"
-    },
-    "abbr": {
-      "*": "B4"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 교 계열). 위력 기본 공격 4.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 권 계열). 위력 기본 공격 4.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 4.5,
-    "family": "family-b",
-    "provisional": true
-  },
-  {
-    "id": "trait-b5",
-    "lineageId": "lineage-b",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 B5"
-    },
-    "abbr": {
-      "*": "B5"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + SP +40.",
-      "shinigami": "[임시] 시해 능력(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + SP +40."
+      "hollow": "[임시] 노멀 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 노멀 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
     },
     "role": "heal",
     "powerInAttacks": 1,
@@ -216,314 +111,20 @@
     "provisional": true
   },
   {
-    "id": "trait-b6",
-    "lineageId": "lineage-b",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 B6"
-    },
-    "abbr": {
-      "*": "B6"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "role": "attack",
-    "powerInAttacks": 3,
-    "family": "family-a",
-    "provisional": true
-  },
-  {
-    "id": "trait-b7",
-    "lineageId": "lineage-b",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 B7"
-    },
-    "abbr": {
-      "*": "B7"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 탄 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 귀 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "role": "attack",
-    "powerInAttacks": 3,
-    "family": "family-c",
-    "provisional": true
-  },
-  {
-    "id": "trait-c1",
-    "lineageId": "lineage-c",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 C1"
-    },
-    "abbr": {
-      "*": "C1"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + SP +40.",
-      "shinigami": "[임시] 시해 능력(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + SP +40."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-c2",
-    "lineageId": "lineage-c",
+    "id": "t-normal-passive",
+    "element": "normal",
     "kind": "passive",
     "name": {
-      "*": "임시 특성 C2"
+      "hollow": "노멀 패시브",
+      "shinigami": "노멀 패시브"
     },
     "abbr": {
-      "*": "C2"
+      "hollow": "노멀 패시브",
+      "shinigami": "노멀 패시브"
     },
     "description": {
-      "hollow": "[임시] 본체 패시브. 기본 공격 속도 ×1.2.",
-      "shinigami": "[임시] 참백도 패시브. 기본 공격 속도 ×1.2."
-    },
-    "passive": {
-      "stat": "attackSpeed",
-      "multiplier": 1.2
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-c3",
-    "lineageId": "lineage-c",
-    "kind": "part",
-    "name": {
-      "*": "임시 특성 C3"
-    },
-    "abbr": {
-      "*": "C3"
-    },
-    "description": {
-      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
-      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-c4",
-    "lineageId": "lineage-c",
-    "kind": "passive",
-    "name": {
-      "*": "임시 특성 C4"
-    },
-    "abbr": {
-      "*": "C4"
-    },
-    "description": {
-      "hollow": "[임시] 본체 패시브. 기본 공격 위력 ×1.3.",
-      "shinigami": "[임시] 참백도 패시브. 기본 공격 위력 ×1.3."
-    },
-    "passive": {
-      "stat": "attackPower",
-      "multiplier": 1.3
-    },
-    "rare": true,
-    "provisional": true
-  },
-  {
-    "id": "trait-c5",
-    "lineageId": "lineage-c",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 C5"
-    },
-    "abbr": {
-      "*": "C5"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 탄 계열). 위력 기본 공격 3.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 귀 계열). 위력 기본 공격 3.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "role": "attack",
-    "powerInAttacks": 3.5,
-    "family": "family-c",
-    "provisional": true
-  },
-  {
-    "id": "trait-c6",
-    "lineageId": "lineage-c",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 C6"
-    },
-    "abbr": {
-      "*": "C6"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "role": "attack",
-    "powerInAttacks": 3,
-    "family": "family-a",
-    "provisional": true
-  },
-  {
-    "id": "trait-d1",
-    "lineageId": "lineage-d",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 D1"
-    },
-    "abbr": {
-      "*": "D1"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 교 계열). 위력 기본 공격 3.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 권 계열). 위력 기본 공격 3.5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "role": "attack",
-    "powerInAttacks": 3.5,
-    "family": "family-b",
-    "provisional": true
-  },
-  {
-    "id": "trait-d2",
-    "lineageId": "lineage-d",
-    "kind": "passive",
-    "name": {
-      "*": "임시 특성 D2"
-    },
-    "abbr": {
-      "*": "D2"
-    },
-    "description": {
-      "hollow": "[임시] 본체 패시브. 기본 공격 속도 ×1.1.",
-      "shinigami": "[임시] 참백도 패시브. 기본 공격 속도 ×1.1."
-    },
-    "passive": {
-      "stat": "attackSpeed",
-      "multiplier": 1.1
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-d3",
-    "lineageId": "lineage-d",
-    "kind": "part",
-    "name": {
-      "*": "임시 특성 D3"
-    },
-    "abbr": {
-      "*": "D3"
-    },
-    "description": {
-      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
-      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-d4",
-    "lineageId": "lineage-d",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 D4"
-    },
-    "abbr": {
-      "*": "D4"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(회복 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 봉인 해제 + 영력 40.",
-      "shinigami": "[임시] 시해 능력(회복 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 봉인 해제 + 영력 40."
-    },
-    "role": "heal",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
-    "rare": true,
-    "provisional": true
-  },
-  {
-    "id": "trait-d5",
-    "lineageId": "lineage-d",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 D5"
-    },
-    "abbr": {
-      "*": "D5"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사.",
-      "shinigami": "[임시] 시해 능력(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-d6",
-    "lineageId": "lineage-d",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 D6"
-    },
-    "abbr": {
-      "*": "D6"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 탄 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 귀 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
-    },
-    "role": "attack",
-    "powerInAttacks": 3,
-    "family": "family-c",
-    "provisional": true
-  },
-  {
-    "id": "trait-e1",
-    "lineageId": "lineage-e",
-    "kind": "skill",
-    "name": {
-      "*": "임시 특성 E1"
-    },
-    "abbr": {
-      "*": "E1"
-    },
-    "description": {
-      "hollow": "[임시] 본체 기술(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사.",
-      "shinigami": "[임시] 시해 능력(막기 블록). 위력 기본 공격 1.5회분, 체인3 추가 효과: 막은 피해 1배 반사."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "trait-e2",
-    "lineageId": "lineage-e",
-    "kind": "passive",
-    "name": {
-      "*": "임시 특성 E2"
-    },
-    "abbr": {
-      "*": "E2"
-    },
-    "description": {
-      "hollow": "[임시] 본체 패시브. 기본 공격 위력 ×1.12.",
-      "shinigami": "[임시] 참백도 패시브. 기본 공격 위력 ×1.12."
+      "hollow": "[임시] 노멀 속성 본체 패시브. 기본 공격 위력 ×1.12.",
+      "shinigami": "[임시] 노멀 속성 참백도 패시브. 기본 공격 위력 ×1.12."
     },
     "passive": {
       "stat": "attackPower",
@@ -532,54 +133,147 @@
     "provisional": true
   },
   {
-    "id": "trait-e3",
-    "lineageId": "lineage-e",
+    "id": "t-normal-part",
+    "element": "normal",
     "kind": "part",
     "name": {
-      "*": "임시 특성 E3"
+      "hollow": "노멀 파츠",
+      "shinigami": "노멀 파츠"
     },
     "abbr": {
-      "*": "E3"
+      "hollow": "노멀 파츠",
+      "shinigami": "노멀 파츠"
     },
     "description": {
-      "hollow": "[임시] 본체 외형 파츠. 표시만 바뀐다.",
-      "shinigami": "[임시] 참백도 외형 파츠. 표시만 바뀐다."
+      "hollow": "[임시] 노멀 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 노멀 속성 참백도 외형 파츠. 표시만 바뀐다."
     },
     "provisional": true
   },
   {
-    "id": "trait-e4",
-    "lineageId": "lineage-e",
+    "id": "t-normal-rare",
+    "element": "normal",
     "kind": "skill",
     "name": {
-      "*": "임시 특성 E4"
+      "hollow": "노멀 조·극",
+      "shinigami": "노멀 참·극"
     },
     "abbr": {
-      "*": "E4"
+      "hollow": "노멀 조극",
+      "shinigami": "노멀 참극"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 탄 계열). 위력 기본 공격 5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 귀 계열). 위력 기본 공격 5회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+      "hollow": "[임시] 희귀 노멀 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 노멀 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-water-a",
+    "element": "water",
+    "kind": "skill",
+    "name": {
+      "hollow": "물 조",
+      "shinigami": "물 참"
+    },
+    "abbr": {
+      "hollow": "물 조",
+      "shinigami": "물 참"
+    },
+    "description": {
+      "hollow": "[임시] 물 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 물 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
     },
     "role": "attack",
-    "powerInAttacks": 5,
-    "family": "family-c",
-    "rare": true,
+    "powerInAttacks": 4.2,
+    "family": "family-a",
     "provisional": true
   },
   {
-    "id": "trait-e5",
-    "lineageId": "lineage-e",
+    "id": "t-water-c",
+    "element": "water",
     "kind": "skill",
     "name": {
-      "*": "임시 특성 E5"
+      "hollow": "물 탄",
+      "shinigami": "물 귀"
     },
     "abbr": {
-      "*": "E5"
+      "hollow": "물 탄",
+      "shinigami": "물 귀"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + 영력 40.",
-      "shinigami": "[임시] 시해 능력(회복 블록). 위력 기본 공격 1회분, 체인3 추가 효과: 봉인 해제 + 영력 40."
+      "hollow": "[임시] 물 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 물 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-water-b",
+    "element": "water",
+    "kind": "skill",
+    "name": {
+      "hollow": "물 교",
+      "shinigami": "물 권"
+    },
+    "abbr": {
+      "hollow": "물 교",
+      "shinigami": "물 권"
+    },
+    "description": {
+      "hollow": "[임시] 물 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 물 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-water-guard",
+    "element": "water",
+    "kind": "skill",
+    "name": {
+      "hollow": "물 가면",
+      "shinigami": "물 결계"
+    },
+    "abbr": {
+      "hollow": "물 가면",
+      "shinigami": "물 결계"
+    },
+    "description": {
+      "hollow": "[임시] 물 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 물 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-water-heal",
+    "element": "water",
+    "kind": "skill",
+    "name": {
+      "hollow": "물 재생",
+      "shinigami": "물 회도"
+    },
+    "abbr": {
+      "hollow": "물 재생",
+      "shinigami": "물 회도"
+    },
+    "description": {
+      "hollow": "[임시] 물 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 물 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
     },
     "role": "heal",
     "powerInAttacks": 1,
@@ -590,40 +284,1102 @@
     "provisional": true
   },
   {
-    "id": "trait-e6",
-    "lineageId": "lineage-e",
-    "kind": "skill",
+    "id": "t-water-passive",
+    "element": "water",
+    "kind": "passive",
     "name": {
-      "*": "임시 특성 E6"
+      "hollow": "물 패시브",
+      "shinigami": "물 패시브"
     },
     "abbr": {
-      "*": "E6"
+      "hollow": "물 패시브",
+      "shinigami": "물 패시브"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 조 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 참 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+      "hollow": "[임시] 물 속성 본체 패시브. 받는 피해 ×0.85.",
+      "shinigami": "[임시] 물 속성 참백도 패시브. 받는 피해 ×0.85."
+    },
+    "passive": {
+      "stat": "damageTaken",
+      "multiplier": 0.85
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-water-part",
+    "element": "water",
+    "kind": "part",
+    "name": {
+      "hollow": "물 파츠",
+      "shinigami": "물 파츠"
+    },
+    "abbr": {
+      "hollow": "물 파츠",
+      "shinigami": "물 파츠"
+    },
+    "description": {
+      "hollow": "[임시] 물 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 물 속성 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-water-rare",
+    "element": "water",
+    "kind": "skill",
+    "name": {
+      "hollow": "물 교·극",
+      "shinigami": "물 권·극"
+    },
+    "abbr": {
+      "hollow": "물 교극",
+      "shinigami": "물 권극"
+    },
+    "description": {
+      "hollow": "[임시] 희귀 물 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 물 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-fire-a",
+    "element": "fire",
+    "kind": "skill",
+    "name": {
+      "hollow": "불 조",
+      "shinigami": "불 참"
+    },
+    "abbr": {
+      "hollow": "불 조",
+      "shinigami": "불 참"
+    },
+    "description": {
+      "hollow": "[임시] 불 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 불 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
     },
     "role": "attack",
-    "powerInAttacks": 3,
+    "powerInAttacks": 4.2,
     "family": "family-a",
     "provisional": true
   },
   {
-    "id": "trait-e7",
-    "lineageId": "lineage-e",
+    "id": "t-fire-c",
+    "element": "fire",
     "kind": "skill",
     "name": {
-      "*": "임시 특성 E7"
+      "hollow": "불 탄",
+      "shinigami": "불 귀"
     },
     "abbr": {
-      "*": "E7"
+      "hollow": "불 탄",
+      "shinigami": "불 귀"
     },
     "description": {
-      "hollow": "[임시] 본체 기술(공격 블록, 교 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
-      "shinigami": "[임시] 시해 능력(공격 블록, 권 계열). 위력 기본 공격 3회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+      "hollow": "[임시] 불 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 불 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
     },
     "role": "attack",
-    "powerInAttacks": 3,
+    "powerInAttacks": 4.2,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-fire-b",
+    "element": "fire",
+    "kind": "skill",
+    "name": {
+      "hollow": "불 교",
+      "shinigami": "불 권"
+    },
+    "abbr": {
+      "hollow": "불 교",
+      "shinigami": "불 권"
+    },
+    "description": {
+      "hollow": "[임시] 불 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 불 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-fire-guard",
+    "element": "fire",
+    "kind": "skill",
+    "name": {
+      "hollow": "불 가면",
+      "shinigami": "불 결계"
+    },
+    "abbr": {
+      "hollow": "불 가면",
+      "shinigami": "불 결계"
+    },
+    "description": {
+      "hollow": "[임시] 불 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 불 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-fire-heal",
+    "element": "fire",
+    "kind": "skill",
+    "name": {
+      "hollow": "불 재생",
+      "shinigami": "불 회도"
+    },
+    "abbr": {
+      "hollow": "불 재생",
+      "shinigami": "불 회도"
+    },
+    "description": {
+      "hollow": "[임시] 불 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 불 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
+    },
+    "role": "heal",
+    "powerInAttacks": 1,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-fire-passive",
+    "element": "fire",
+    "kind": "passive",
+    "name": {
+      "hollow": "불 패시브",
+      "shinigami": "불 패시브"
+    },
+    "abbr": {
+      "hollow": "불 패시브",
+      "shinigami": "불 패시브"
+    },
+    "description": {
+      "hollow": "[임시] 불 속성 본체 패시브. 기본 공격 위력 ×1.15.",
+      "shinigami": "[임시] 불 속성 참백도 패시브. 기본 공격 위력 ×1.15."
+    },
+    "passive": {
+      "stat": "attackPower",
+      "multiplier": 1.15
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-fire-part",
+    "element": "fire",
+    "kind": "part",
+    "name": {
+      "hollow": "불 파츠",
+      "shinigami": "불 파츠"
+    },
+    "abbr": {
+      "hollow": "불 파츠",
+      "shinigami": "불 파츠"
+    },
+    "description": {
+      "hollow": "[임시] 불 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 불 속성 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-fire-rare",
+    "element": "fire",
+    "kind": "skill",
+    "name": {
+      "hollow": "불 탄·극",
+      "shinigami": "불 귀·극"
+    },
+    "abbr": {
+      "hollow": "불 탄극",
+      "shinigami": "불 귀극"
+    },
+    "description": {
+      "hollow": "[임시] 희귀 불 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 불 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-earth-a",
+    "element": "earth",
+    "kind": "skill",
+    "name": {
+      "hollow": "흙 조",
+      "shinigami": "흙 참"
+    },
+    "abbr": {
+      "hollow": "흙 조",
+      "shinigami": "흙 참"
+    },
+    "description": {
+      "hollow": "[임시] 흙 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 흙 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-earth-c",
+    "element": "earth",
+    "kind": "skill",
+    "name": {
+      "hollow": "흙 탄",
+      "shinigami": "흙 귀"
+    },
+    "abbr": {
+      "hollow": "흙 탄",
+      "shinigami": "흙 귀"
+    },
+    "description": {
+      "hollow": "[임시] 흙 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 흙 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-earth-b",
+    "element": "earth",
+    "kind": "skill",
+    "name": {
+      "hollow": "흙 교",
+      "shinigami": "흙 권"
+    },
+    "abbr": {
+      "hollow": "흙 교",
+      "shinigami": "흙 권"
+    },
+    "description": {
+      "hollow": "[임시] 흙 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 흙 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-earth-guard",
+    "element": "earth",
+    "kind": "skill",
+    "name": {
+      "hollow": "흙 가면",
+      "shinigami": "흙 결계"
+    },
+    "abbr": {
+      "hollow": "흙 가면",
+      "shinigami": "흙 결계"
+    },
+    "description": {
+      "hollow": "[임시] 흙 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 흙 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-earth-heal",
+    "element": "earth",
+    "kind": "skill",
+    "name": {
+      "hollow": "흙 재생",
+      "shinigami": "흙 회도"
+    },
+    "abbr": {
+      "hollow": "흙 재생",
+      "shinigami": "흙 회도"
+    },
+    "description": {
+      "hollow": "[임시] 흙 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 흙 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
+    },
+    "role": "heal",
+    "powerInAttacks": 1,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-earth-passive",
+    "element": "earth",
+    "kind": "passive",
+    "name": {
+      "hollow": "흙 패시브",
+      "shinigami": "흙 패시브"
+    },
+    "abbr": {
+      "hollow": "흙 패시브",
+      "shinigami": "흙 패시브"
+    },
+    "description": {
+      "hollow": "[임시] 흙 속성 본체 패시브. 받는 피해 ×0.85.",
+      "shinigami": "[임시] 흙 속성 참백도 패시브. 받는 피해 ×0.85."
+    },
+    "passive": {
+      "stat": "damageTaken",
+      "multiplier": 0.85
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-earth-part",
+    "element": "earth",
+    "kind": "part",
+    "name": {
+      "hollow": "흙 파츠",
+      "shinigami": "흙 파츠"
+    },
+    "abbr": {
+      "hollow": "흙 파츠",
+      "shinigami": "흙 파츠"
+    },
+    "description": {
+      "hollow": "[임시] 흙 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 흙 속성 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-earth-rare",
+    "element": "earth",
+    "kind": "skill",
+    "name": {
+      "hollow": "흙 조·극",
+      "shinigami": "흙 참·극"
+    },
+    "abbr": {
+      "hollow": "흙 조극",
+      "shinigami": "흙 참극"
+    },
+    "description": {
+      "hollow": "[임시] 희귀 흙 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 흙 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-a",
+    "element": "thunder",
+    "kind": "skill",
+    "name": {
+      "hollow": "뇌 조",
+      "shinigami": "뇌 참"
+    },
+    "abbr": {
+      "hollow": "뇌 조",
+      "shinigami": "뇌 참"
+    },
+    "description": {
+      "hollow": "[임시] 뇌 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 뇌 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-c",
+    "element": "thunder",
+    "kind": "skill",
+    "name": {
+      "hollow": "뇌 탄",
+      "shinigami": "뇌 귀"
+    },
+    "abbr": {
+      "hollow": "뇌 탄",
+      "shinigami": "뇌 귀"
+    },
+    "description": {
+      "hollow": "[임시] 뇌 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 뇌 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-b",
+    "element": "thunder",
+    "kind": "skill",
+    "name": {
+      "hollow": "뇌 교",
+      "shinigami": "뇌 권"
+    },
+    "abbr": {
+      "hollow": "뇌 교",
+      "shinigami": "뇌 권"
+    },
+    "description": {
+      "hollow": "[임시] 뇌 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 뇌 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-guard",
+    "element": "thunder",
+    "kind": "skill",
+    "name": {
+      "hollow": "뇌 가면",
+      "shinigami": "뇌 결계"
+    },
+    "abbr": {
+      "hollow": "뇌 가면",
+      "shinigami": "뇌 결계"
+    },
+    "description": {
+      "hollow": "[임시] 뇌 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 뇌 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-heal",
+    "element": "thunder",
+    "kind": "skill",
+    "name": {
+      "hollow": "뇌 재생",
+      "shinigami": "뇌 회도"
+    },
+    "abbr": {
+      "hollow": "뇌 재생",
+      "shinigami": "뇌 회도"
+    },
+    "description": {
+      "hollow": "[임시] 뇌 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 뇌 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
+    },
+    "role": "heal",
+    "powerInAttacks": 1,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-passive",
+    "element": "thunder",
+    "kind": "passive",
+    "name": {
+      "hollow": "뇌 패시브",
+      "shinigami": "뇌 패시브"
+    },
+    "abbr": {
+      "hollow": "뇌 패시브",
+      "shinigami": "뇌 패시브"
+    },
+    "description": {
+      "hollow": "[임시] 뇌 속성 본체 패시브. 기본 공격 속도 ×1.15.",
+      "shinigami": "[임시] 뇌 속성 참백도 패시브. 기본 공격 속도 ×1.15."
+    },
+    "passive": {
+      "stat": "attackSpeed",
+      "multiplier": 1.15
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-part",
+    "element": "thunder",
+    "kind": "part",
+    "name": {
+      "hollow": "뇌 파츠",
+      "shinigami": "뇌 파츠"
+    },
+    "abbr": {
+      "hollow": "뇌 파츠",
+      "shinigami": "뇌 파츠"
+    },
+    "description": {
+      "hollow": "[임시] 뇌 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 뇌 속성 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-thunder-rare",
+    "element": "thunder",
+    "kind": "skill",
+    "name": {
+      "hollow": "뇌 교·극",
+      "shinigami": "뇌 권·극"
+    },
+    "abbr": {
+      "hollow": "뇌 교극",
+      "shinigami": "뇌 권극"
+    },
+    "description": {
+      "hollow": "[임시] 희귀 뇌 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 뇌 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-blood-a",
+    "element": "blood",
+    "kind": "skill",
+    "name": {
+      "hollow": "혈 조",
+      "shinigami": "혈 참"
+    },
+    "abbr": {
+      "hollow": "혈 조",
+      "shinigami": "혈 참"
+    },
+    "description": {
+      "hollow": "[임시] 혈 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 혈 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-blood-c",
+    "element": "blood",
+    "kind": "skill",
+    "name": {
+      "hollow": "혈 탄",
+      "shinigami": "혈 귀"
+    },
+    "abbr": {
+      "hollow": "혈 탄",
+      "shinigami": "혈 귀"
+    },
+    "description": {
+      "hollow": "[임시] 혈 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 혈 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-blood-b",
+    "element": "blood",
+    "kind": "skill",
+    "name": {
+      "hollow": "혈 교",
+      "shinigami": "혈 권"
+    },
+    "abbr": {
+      "hollow": "혈 교",
+      "shinigami": "혈 권"
+    },
+    "description": {
+      "hollow": "[임시] 혈 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 혈 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-blood-guard",
+    "element": "blood",
+    "kind": "skill",
+    "name": {
+      "hollow": "혈 가면",
+      "shinigami": "혈 결계"
+    },
+    "abbr": {
+      "hollow": "혈 가면",
+      "shinigami": "혈 결계"
+    },
+    "description": {
+      "hollow": "[임시] 혈 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 혈 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-blood-heal",
+    "element": "blood",
+    "kind": "skill",
+    "name": {
+      "hollow": "혈 재생",
+      "shinigami": "혈 회도"
+    },
+    "abbr": {
+      "hollow": "혈 재생",
+      "shinigami": "혈 회도"
+    },
+    "description": {
+      "hollow": "[임시] 혈 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 혈 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
+    },
+    "role": "heal",
+    "powerInAttacks": 1,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-blood-passive",
+    "element": "blood",
+    "kind": "passive",
+    "name": {
+      "hollow": "혈 패시브",
+      "shinigami": "혈 패시브"
+    },
+    "abbr": {
+      "hollow": "혈 패시브",
+      "shinigami": "혈 패시브"
+    },
+    "description": {
+      "hollow": "[임시] 혈 속성 본체 패시브. 기본 공격 속도 ×1.1.",
+      "shinigami": "[임시] 혈 속성 참백도 패시브. 기본 공격 속도 ×1.1."
+    },
+    "passive": {
+      "stat": "attackSpeed",
+      "multiplier": 1.1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-blood-part",
+    "element": "blood",
+    "kind": "part",
+    "name": {
+      "hollow": "혈 파츠",
+      "shinigami": "혈 파츠"
+    },
+    "abbr": {
+      "hollow": "혈 파츠",
+      "shinigami": "혈 파츠"
+    },
+    "description": {
+      "hollow": "[임시] 혈 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 혈 속성 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-blood-rare",
+    "element": "blood",
+    "kind": "skill",
+    "name": {
+      "hollow": "혈 탄·극",
+      "shinigami": "혈 귀·극"
+    },
+    "abbr": {
+      "hollow": "혈 탄극",
+      "shinigami": "혈 귀극"
+    },
+    "description": {
+      "hollow": "[임시] 희귀 혈 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 혈 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-poison-a",
+    "element": "poison",
+    "kind": "skill",
+    "name": {
+      "hollow": "독 조",
+      "shinigami": "독 참"
+    },
+    "abbr": {
+      "hollow": "독 조",
+      "shinigami": "독 참"
+    },
+    "description": {
+      "hollow": "[임시] 독 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 독 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-poison-c",
+    "element": "poison",
+    "kind": "skill",
+    "name": {
+      "hollow": "독 탄",
+      "shinigami": "독 귀"
+    },
+    "abbr": {
+      "hollow": "독 탄",
+      "shinigami": "독 귀"
+    },
+    "description": {
+      "hollow": "[임시] 독 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 독 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-poison-b",
+    "element": "poison",
+    "kind": "skill",
+    "name": {
+      "hollow": "독 교",
+      "shinigami": "독 권"
+    },
+    "abbr": {
+      "hollow": "독 교",
+      "shinigami": "독 권"
+    },
+    "description": {
+      "hollow": "[임시] 독 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 독 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-poison-guard",
+    "element": "poison",
+    "kind": "skill",
+    "name": {
+      "hollow": "독 가면",
+      "shinigami": "독 결계"
+    },
+    "abbr": {
+      "hollow": "독 가면",
+      "shinigami": "독 결계"
+    },
+    "description": {
+      "hollow": "[임시] 독 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 독 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-poison-heal",
+    "element": "poison",
+    "kind": "skill",
+    "name": {
+      "hollow": "독 재생",
+      "shinigami": "독 회도"
+    },
+    "abbr": {
+      "hollow": "독 재생",
+      "shinigami": "독 회도"
+    },
+    "description": {
+      "hollow": "[임시] 독 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 독 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
+    },
+    "role": "heal",
+    "powerInAttacks": 1,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-poison-passive",
+    "element": "poison",
+    "kind": "passive",
+    "name": {
+      "hollow": "독 패시브",
+      "shinigami": "독 패시브"
+    },
+    "abbr": {
+      "hollow": "독 패시브",
+      "shinigami": "독 패시브"
+    },
+    "description": {
+      "hollow": "[임시] 독 속성 본체 패시브. 블록 생성 속도 ×1.15.",
+      "shinigami": "[임시] 독 속성 참백도 패시브. 블록 생성 속도 ×1.15."
+    },
+    "passive": {
+      "stat": "blockSpawn",
+      "multiplier": 1.15
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-poison-part",
+    "element": "poison",
+    "kind": "part",
+    "name": {
+      "hollow": "독 파츠",
+      "shinigami": "독 파츠"
+    },
+    "abbr": {
+      "hollow": "독 파츠",
+      "shinigami": "독 파츠"
+    },
+    "description": {
+      "hollow": "[임시] 독 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 독 속성 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-poison-rare",
+    "element": "poison",
+    "kind": "skill",
+    "name": {
+      "hollow": "독 조·극",
+      "shinigami": "독 참·극"
+    },
+    "abbr": {
+      "hollow": "독 조극",
+      "shinigami": "독 참극"
+    },
+    "description": {
+      "hollow": "[임시] 희귀 독 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 독 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-a",
+    "element": "kyo",
+    "kind": "skill",
+    "name": {
+      "hollow": "허 조",
+      "shinigami": "허 참"
+    },
+    "abbr": {
+      "hollow": "허 조",
+      "shinigami": "허 참"
+    },
+    "description": {
+      "hollow": "[임시] 허 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 허 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-c",
+    "element": "kyo",
+    "kind": "skill",
+    "name": {
+      "hollow": "허 탄",
+      "shinigami": "허 귀"
+    },
+    "abbr": {
+      "hollow": "허 탄",
+      "shinigami": "허 귀"
+    },
+    "description": {
+      "hollow": "[임시] 허 속성 본체 기술(공격 블록, 탄 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 허 속성 시해 능력(공격 블록, 귀 계열·특수). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-c",
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-b",
+    "element": "kyo",
+    "kind": "skill",
+    "name": {
+      "hollow": "허 교",
+      "shinigami": "허 권"
+    },
+    "abbr": {
+      "hollow": "허 교",
+      "shinigami": "허 권"
+    },
+    "description": {
+      "hollow": "[임시] 허 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다.",
+      "shinigami": "[임시] 허 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 4.2회분. 같은 계열 블록이 붙으면 단계 기술이 강해진다."
+    },
+    "role": "attack",
+    "powerInAttacks": 4.2,
+    "family": "family-b",
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-guard",
+    "element": "kyo",
+    "kind": "skill",
+    "name": {
+      "hollow": "허 가면",
+      "shinigami": "허 결계"
+    },
+    "abbr": {
+      "hollow": "허 가면",
+      "shinigami": "허 결계"
+    },
+    "description": {
+      "hollow": "[임시] 허 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
+      "shinigami": "[임시] 허 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
+    },
+    "role": "guard",
+    "powerInAttacks": 1.5,
+    "chainBonus": {
+      "kind": "reflect",
+      "value": 1
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-heal",
+    "element": "kyo",
+    "kind": "skill",
+    "name": {
+      "hollow": "허 재생",
+      "shinigami": "허 회도"
+    },
+    "abbr": {
+      "hollow": "허 재생",
+      "shinigami": "허 회도"
+    },
+    "description": {
+      "hollow": "[임시] 허 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다.",
+      "shinigami": "[임시] 허 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 영력을 채운다."
+    },
+    "role": "heal",
+    "powerInAttacks": 1,
+    "chainBonus": {
+      "kind": "cleanse",
+      "value": 40
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-passive",
+    "element": "kyo",
+    "kind": "passive",
+    "name": {
+      "hollow": "허 패시브",
+      "shinigami": "허 패시브"
+    },
+    "abbr": {
+      "hollow": "허 패시브",
+      "shinigami": "허 패시브"
+    },
+    "description": {
+      "hollow": "[임시] 허 속성 본체 패시브. 블록 생성 속도 ×1.12.",
+      "shinigami": "[임시] 허 속성 참백도 패시브. 블록 생성 속도 ×1.12."
+    },
+    "passive": {
+      "stat": "blockSpawn",
+      "multiplier": 1.12
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-part",
+    "element": "kyo",
+    "kind": "part",
+    "name": {
+      "hollow": "허 파츠",
+      "shinigami": "허 파츠"
+    },
+    "abbr": {
+      "hollow": "허 파츠",
+      "shinigami": "허 파츠"
+    },
+    "description": {
+      "hollow": "[임시] 허 속성 본체 외형 파츠. 표시만 바뀐다.",
+      "shinigami": "[임시] 허 속성 참백도 외형 파츠. 표시만 바뀐다."
+    },
+    "provisional": true
+  },
+  {
+    "id": "t-kyo-rare",
+    "element": "kyo",
+    "kind": "skill",
+    "name": {
+      "hollow": "허 교·극",
+      "shinigami": "허 권·극"
+    },
+    "abbr": {
+      "hollow": "허 교극",
+      "shinigami": "허 권극"
+    },
+    "description": {
+      "hollow": "[임시] 희귀 허 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 6회분.",
+      "shinigami": "[임시] 희귀 허 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 6회분."
+    },
+    "rare": true,
+    "role": "attack",
+    "powerInAttacks": 6,
     "family": "family-b",
     "provisional": true
   }

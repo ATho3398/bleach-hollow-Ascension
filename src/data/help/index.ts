@@ -57,6 +57,9 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.storedPower = String(COMBAT.storedPowerInAttacks);
   vars.storedGuardSeconds = String(COMBAT.storedGuardSeconds);
   vars.weakChain3 = String(BALANCE.provisional.absorb.weakChain3ForAbsorb);
+  // 진화 단계 이름 (GDD 20-5 설명용): {tier4} = 바스트로데/평대원, {tier5} = 아란칼/수석 대원
+  vars.tier4 = f.tierNames[3];
+  vars.tier5 = f.tierNames[4];
   return vars;
 }
 

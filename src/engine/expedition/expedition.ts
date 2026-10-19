@@ -12,7 +12,10 @@ import {
   absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
   newBuild, releaseEffect, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
-import { applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, type EvolutionState } from '../evolution';
+import {
+  applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
+  type EvolutionState,
+} from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
 
 const EX = BALANCE.expedition;
@@ -81,7 +84,7 @@ export interface ExpeditionState extends RiskState {
   /** 흡수 화면 대기 중인 제안 (phase 'absorb') */
   absorbOffer: AbsorbOffer | null;
   absorbRecords: AbsorbRecord[];
-  /** 진화 상태 사본 (GDD 4-2): 흡수가 확정되면 계통별 누적이 오르고, 귀환하면 세이브에 합쳐진다. 진화 자체는 둥지에서만 */
+  /** 진화 상태 사본 (GDD 20-5): 걸음·흡수 속성·노력치·놓아줌·강적·돌파가 쌓이고, 귀환하면 세이브에 합쳐진다. 진화 자체는 둥지에 돌아와서 */
   evolution: EvolutionState;
   /** 지나온 시간(초, 배속 전 기준) */
   elapsedSeconds: number;
@@ -228,6 +231,9 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   if (exp.phase !== 'moving') return null;
   exp.pos = (exp.pos + 1) % EX.loopTiles;
   exp.elapsedSeconds += EX.secondsPerTile;
+  // 진화 타이밍 = 걸음 수 (GDD 20-5 v4.1). 남은 걸음 20%·10% 순간 임박 알림
+  const near = recordEvolutionStep(exp.evolution);
+  if (near !== null) exp.events.push({ kind: 'evolution-near', level: near });
   exp.hunger += exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile;
   const late = lateLapRisk(exp.lap, PX.lateLapStart);
   if (late > 0) changeRisk(exp, late, 'late-lap');
@@ -271,7 +277,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   if (cls === 'elite') exp.elitesThisLap++;
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability) };
-  applyEvolutionToParams(params, exp.evolution);
+  applyEvolutionToParams(params, exp.evolution, exp.factionId);
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
   const pending: PendingBattle = {
     enemy: pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild'),
@@ -321,6 +327,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   }
   // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지
   if (exp.victoriesThisLap === 0) drawTile(exp);
+  if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
   exp.victoriesThisLap++;
   // 흡수 조건(마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
@@ -334,7 +341,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
 export type AbsorbResult = { ok: true } | { ok: false; reason: string };
 
 function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null): void {
-  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, lineageId: offer.lineageId, rare: offer.rare, absorbed, traitId, lap: exp.lap });
+  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap });
 }
 
 /** 놓아줌: 리스크 하락 + 안정 수치 상승 (GDD 4장 "흡수 안 하면") */
@@ -343,6 +350,7 @@ export function chooseRelease(exp: ExpeditionState): AbsorbResult {
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   logAbsorb(exp, offer, false, null);
   releaseEffect(exp);
+  recordEvolutionRelease(exp.evolution);
   exp.absorbOffer = null;
   exp.phase = 'moving';
   return { ok: true };
@@ -360,7 +368,7 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
     exp.acquiredTraits.push({ traitId, lap: exp.lap });
   }
   logAbsorb(exp, offer, true, traitId);
-  recordEvolutionAbsorb(exp.evolution, offer.lineageId, offer.rare);
+  recordEvolutionAbsorb(exp.evolution, offer.element, offer.ev);
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
   changeRisk(exp, absorbRisk(offer.strength), 'absorb');

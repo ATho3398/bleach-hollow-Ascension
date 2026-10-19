@@ -9,7 +9,10 @@ const RX = BALANCE.provisional.risk;
 export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action';
 
 /** 엔진 공통 이벤트. 화면이 비워 가며(drainEvents) 연출한다 */
-export type EngineEvent = { kind: 'breakthrough'; lap: number; cell: number; risk: number };
+export type EngineEvent =
+  | { kind: 'breakthrough'; lap: number; cell: number; risk: number }
+  /** 진화 임박 알림 (GDD 20-5 v4.1): level 1 = 남은 걸음 20%, 2 = 10%. 수치는 화면에 보이지 않는다 */
+  | { kind: 'evolution-near'; level: number };
 
 /** 리스크를 들고 있는 상태(원정 상태가 이를 확장한다) */
 export interface RiskState {

@@ -68,8 +68,8 @@ export function endTone(reason: EndReason): 'win' | 'lose' {
 }
 
 export interface PracticeFilter {
-  /** 약점 계통 id, 'all' 이면 전체 */
-  lineage: string;
+  /** 적 속성 id, 'all' 이면 전체 */
+  element: string;
   /** 'all' | 'normal' | 'elite' */
   rank: string;
 }
@@ -77,8 +77,8 @@ export interface PracticeFilter {
 export const ALL = 'all';
 
 /** 전투 연습 목록 필터 (순서는 그대로) */
-export function filterFoes<T extends Pick<EnemyDef, 'class' | 'weaknessLineageId'>>(foes: readonly T[], f: PracticeFilter): T[] {
-  return foes.filter((e) => (f.lineage === ALL || e.weaknessLineageId === f.lineage) && (f.rank === ALL || e.class === f.rank));
+export function filterFoes<T extends Pick<EnemyDef, 'class' | 'element'>>(foes: readonly T[], f: PracticeFilter): T[] {
+  return foes.filter((e) => (f.element === ALL || e.element === f.element) && (f.rank === ALL || e.class === f.rank));
 }
 
 // ── DOM 헬퍼 ──

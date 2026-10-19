@@ -1,17 +1,17 @@
-// 전투 연습 (U-4): 상대 목록(계통·종류 필터) + 연습 결과. 연습 전투 화면 자체는 battleView.
+// 전투 연습 (U-4): 상대 목록(속성·종류 필터) + 연습 결과. 연습 전투 화면 자체는 battleView.
 import { ENEMIES, enemyPatternKind } from '../data/enemies';
-import { LINEAGES, lineageName, lineageShortName } from '../data/lineages';
+import { ELEMENT_IDS, elementAbbr, elementName } from '../data/elements';
 import { pickFaction, type EnemyDef, type EnemyPatternKind } from '../data/schema';
 import { traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import { elapsedSeconds, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
-import { absorbConditionText } from './absorbView';
+import { absorbConditionText, weaknessText } from './absorbView';
 import { button, el, icon, panel, tag } from './bha/dom';
 import { splitApp } from './bha/split';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter } from './bha/expedition';
-import { lineageClass, lineageIconId, lineageMark } from './bha/lineage';
+import { elementDot, elementMark, paintElement } from './bha/element';
 import { battleLabels } from './labels';
 
 /** 연습 목록용 패턴 이름 (임시 표시) */
@@ -30,7 +30,7 @@ export interface PracticeListHandlers {
 /** 필터는 화면 상태만 (저장하지 않는다). 연습 메뉴로 돌아와도 처음부터 */
 export function practiceListView(root: HTMLElement, faction: FactionConfig, recordCount: number, h: PracticeListHandlers): void {
   const labels = battleLabels(faction);
-  const filter: PracticeFilter = { lineage: ALL, rank: ALL };
+  const filter: PracticeFilter = { element: ALL, rank: ALL };
 
   const sub = el('span');
   sub.append('상대를 고르면 바로 전투가 시작된다 · 기록 ', el('b', '', String(recordCount)), '판');
@@ -48,15 +48,15 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
     b.setAttribute('role', 'radio');
     return b;
   };
-  const linBtns = [{ id: ALL, label: '전체' }, ...LINEAGES.map((l) => ({ id: l.id, label: '' }))].map((it) => {
+  const linBtns = [{ id: ALL, label: '전체' }, ...ELEMENT_IDS.map((id) => ({ id, label: '' }))].map((it) => {
     const b = choice('bha-seg__item');
     if (it.id === ALL) b.append(it.label);
     else {
-      b.append(lineageMark(it.id, faction.id, lineageShortName(it.id, faction.id)));
-      b.setAttribute('aria-label', lineageName(it.id, faction.id));
+      b.append(elementMark(it.id, faction.id, elementAbbr(it.id, faction.id)));
+      b.setAttribute('aria-label', elementName(it.id, faction.id));
     }
     b.onclick = () => {
-      filter.lineage = it.id;
+      filter.element = it.id;
       refresh();
     };
     return { id: it.id, b };
@@ -75,14 +75,14 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
   const rankRow = el('div', 'bha-row');
   rankRow.append(rankSeg, count);
   const filters = el('div', 'bha-practice__filters');
-  filters.append(segOf('약점 계통', linBtns.map((x) => x.b)), rankRow);
+  filters.append(segOf('적 속성', linBtns.map((x) => x.b)), rankRow);
 
   const listEl = el('div', 'bha-foelist');
 
   function refresh(): void {
     for (const x of linBtns) {
-      x.b.classList.toggle('is-active', x.id === filter.lineage);
-      x.b.setAttribute('aria-checked', String(x.id === filter.lineage));
+      x.b.classList.toggle('is-active', x.id === filter.element);
+      x.b.setAttribute('aria-checked', String(x.id === filter.element));
     }
     for (const x of rankBtns) {
       x.b.classList.toggle('is-active', x.id === filter.rank);
@@ -93,14 +93,15 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
     listEl.replaceChildren();
     for (const enemy of foes) {
       const pat = enemyPatternKind(enemy);
-      const row = el('button', ['bha-foerow', lineageClass(enemy.weaknessLineageId)].filter(Boolean).join(' '));
+      const row = paintElement(el('button', 'bha-foerow'), enemy.element);
       row.type = 'button';
       const mark = el('span', 'bha-foerow__mark');
-      mark.append(icon(lineageIconId(enemy.weaknessLineageId)));
+      mark.append(elementDot(enemy.element, faction.id));
       const name = el('span', 'bha-foerow__name', pickFaction(enemy.name, faction.id));
       name.append(' ', tag(enemy.class === 'elite' ? '강적' : '일반', enemy.class));
       const meta = el('span', 'bha-foerow__meta');
-      meta.append(icon(PATTERN_ICON[pat]), `${PATTERN_LABEL[pat]} · 약점 ${lineageName(enemy.weaknessLineageId, faction.id)}`);
+      const weak = weaknessText(enemy, faction.id);
+      meta.append(icon(PATTERN_ICON[pat]), `${PATTERN_LABEL[pat]} · ${elementName(enemy.element, faction.id)}${weak ? ` · 약점 ${weak}` : ''}`);
       const body = el('span');
       body.append(name, meta);
       row.append(mark, body, icon('i-chevron-right'));
@@ -126,8 +127,8 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
   const finText = !fin
     ? '-'
     : fin.kind === 'skill'
-      ? `${fin.traitId && fin.lineageId ? traitName(fin.traitId, faction.id) : labels.basicBlock}${fin.lineageId ? ` (${lineageName(fin.lineageId, faction.id)})` : ''}`
-      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: '콤보 블록', skill: '' }[fin.kind];
+      ? `${fin.traitId && fin.element ? traitName(fin.traitId, faction.id) : labels.basicBlock}${fin.element ? ` (${elementName(fin.element, faction.id)})` : ''}`
+      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: '콤보 블록', dot: '독', skill: '' }[fin.kind];
   const name = pickFaction(enemy.name, faction.id);
 
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
@@ -165,5 +166,5 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     button({ label: '연습 메뉴로', size: 'lg', onClick: h.onMenu }),
   );
   dock.append(two);
-  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbConditionText(faction, enemy.weaknessLineageId))]);
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbConditionText(faction, enemy))]);
 }

@@ -15,7 +15,7 @@ import { battleLabels } from '../src/ui/labels';
 
 const CX = BALANCE.provisional.combat;
 const normal = getEnemy('test-a');
-const heavy = getEnemy('a-heavy-seal');
+const heavy = getEnemy('fire-heavy-seal');
 const mk = (opt: { seed?: number; enemy?: Parameters<typeof createCombat>[1]['enemy']; params?: Partial<CombatParams> } = {}) =>
   createCombat(opt.seed ?? 1, { enemy: opt.enemy ?? normal, params: opt.params });
 let uid = 5000;
@@ -152,7 +152,7 @@ describe('저장 필살기 사용', () => {
   });
 
   it('충전 1개 소모, 기본 공격 25회분 피해 (약점·체인·방어 자세 무시)', () => {
-    const s = quiet(mk({ enemy: { ...normal, hpInAttacks: 400 }, params: build('trait-c5') }));
+    const s = quiet(mk({ enemy: { ...normal, hpInAttacks: 400 }, params: build('t-thunder-c') }));
     s.storedCharges = 2;
     const hp = s.enemy.hp;
     expect(stored(s)).toBe(true);
@@ -163,7 +163,7 @@ describe('저장 필살기 사용', () => {
   });
 
   it('방어 자세 중에도 피해가 줄지 않고 반격도 받지 않는다', () => {
-    const s = quiet(mk({ enemy: getEnemy('a-stance') }));
+    const s = quiet(mk({ enemy: getEnemy('fire-stance') }));
     s.enemy.stance = { ticks: 50 };
     s.storedCharges = 1;
     const hp = s.enemy.hp;
@@ -256,7 +256,7 @@ describe('런 로그와 세이브', () => {
 
 describe('결정성', () => {
   it('저장 필살 입력이 기록되고 같은 시드 + 기록으로 다시 돌리면 같은 결과', () => {
-    const params = { ...build('trait-c5'), storedStartGauge: 50 };
+    const params = { ...build('t-thunder-c'), storedStartGauge: 50 };
     const s = playCombatBot(createCombat(7, { enemy: heavy, params }));
     expect(s.inputs.some((x) => x.input.type === 'stored')).toBe(true);
     const again = replayCombat(7, { enemy: heavy, params }, s.inputs);
@@ -306,10 +306,10 @@ describe('봇', () => {
   });
 
   it('완벽형: 막기 블록이 있으면 그것을 먼저 쓴다', () => {
-    const s = quiet(mk({ enemy: heavy, params: build('trait-b1') }));
+    const s = quiet(mk({ enemy: heavy, params: build('t-earth-guard') }));
     s.enemy.cast = { ticks: 20, total: 20, hitsLeft: 0 };
     s.storedCharges = 1;
-    s.tray = [blk('trait-b1')];
+    s.tray = [blk('t-earth-guard')];
     expect(botInput(s)).toEqual({ type: 'use', cell: 0 });
   });
 
@@ -325,7 +325,7 @@ describe('봇', () => {
   });
 
   it('사람형: storedUse 확률대로 막기 실패 시 쓴다 (0 이면 절대, 1 이면 항상)', () => {
-    const params = { ...build('trait-c5'), storedStartGauge: 50 };
+    const params = { ...build('t-thunder-c'), storedStartGauge: 50 };
     const used = (storedUse: number, guardSuccess: number) => {
       let n = 0;
       for (let seed = 1; seed <= 15; seed++) n += playCombatHuman(createCombat(seed, { enemy: heavy, params }), { storedUse, guardSuccess }).storedUsed;

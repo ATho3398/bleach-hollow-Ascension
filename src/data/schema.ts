@@ -20,15 +20,19 @@ export interface EnemyDef {
   hpInAttacks: number;
   /** 기본 공격 1회 피해: "플레이어 기본 공격 N회 분량" (절대값 금지, CLAUDE.md 규칙 3) */
   attackInAttacks: number;
-  /** 약점 계통 1개 (GDD 3-5): 이 계통의 스킬 블록은 위력 ×1.5. 임시 계통 A/B/C 중에서만 */
-  weaknessLineageId: string;
+  /** 속성 (GDD 20-2, src/data/elements): 상성·흡수 조건·흡수 특성 후보·속성 노력치가 이것으로 정해진다 (C.47: 옛 약점 계통·흡수 계통을 대체) */
+  element: string;
+  /** 공격 분류 (GDD 20-1): 적의 공격(기본·강공격·반격)이 내 방어(물리)·정신력(특수)·둘의 평균(혼합) 중 무엇에 막히는가 */
+  category: AttackCategory;
+  /** 능력치 성향 (GDD 20-3): 그 단계 기준 능력치에 곱하는 배율. 없는 능력치는 1. 방어·정신력 차이가 내 공격 분류 선택을 의미 있게 한다. 임시 */
+  statBias?: Partial<Record<StatId, number>>;
+  /** 흡수하면 오르는 노력치 (GDD 20-4, 임시): 능력치 → 점수 */
+  ev: Partial<Record<StatId, number>>;
   /** 행동 패턴 (GDD 3-5, 14-5). 없으면 기본형(기본 공격만). 수치 전부 임시 */
   pattern?: EnemyPattern;
-  /** 흡수 계통 id (src/data/lineages). 임시 계통만 있다 (GDD 4-1) */
-  lineageId: string;
   /** 조우할 때 희귀 개체일 확률 (임시, GDD 4장). 조우가 정해지면 rare 가 채워진다 */
   rareChance: number;
-  /** 이 개체가 희귀 개체인가: 흡수 화면에 미리 표시되고 계통의 희귀 특성이 확정 후보로 나온다 */
+  /** 이 개체가 희귀 개체인가: 흡수 화면에 미리 표시되고 그 속성의 희귀 특성이 확정 후보로 나온다 */
   rare?: boolean;
   /** true 면 원정 출현 풀에 들어가지 않는다 (테스트·연습용 고정 적) */
   testOnly?: boolean;
@@ -89,16 +93,32 @@ export type EnemyPattern =
       counterInAttacks: number;
     });
 
-export interface LineageDef {
+/** 능력치 6종 (GDD 20-3): 체력·힘·지능·방어·정신력·속도. 이름은 src/data/elements/stats.json */
+export const STAT_IDS = ['hp', 'atk', 'int', 'def', 'spr', 'spd'] as const;
+export type StatId = (typeof STAT_IDS)[number];
+export type Stats = Record<StatId, number>;
+
+/** 공격 분류 3종 (GDD 20-1): 물리 = 힘 vs 방어, 특수 = 지능 vs 정신력, 혼합 = 둘의 평균. 종족 설정 계열(families[].category)이 정한다 */
+export const ATTACK_CATEGORIES = ['physical', 'special', 'mixed'] as const;
+export type AttackCategory = (typeof ATTACK_CATEGORIES)[number];
+
+/** 속성 종류 (GDD 20-2): 노멀(상성 없음) / 원소(순환 상성) / 특수(상성 대신 효과) */
+export type ElementKind = 'normal' | 'elemental' | 'special';
+/** 특수 속성 효과 (수치는 BALANCE.provisional.elements): drain = 준 피해 일부 흡혈, poison = 지속 피해, pierce = 방어·정신력 일부 무시 + 내가 쓰면 리스크 소량 */
+export type ElementEffect = 'drain' | 'poison' | 'pierce';
+
+export interface ElementDef {
   id: string;
+  kind: ElementKind;
+  /** 원소만: 이 속성이 강하게 치는 속성 1개 (순환: 물 → 불 → 흙 → 뇌 → 물) */
+  beats?: string;
+  /** 특수만: 효과 종류 */
+  effect?: ElementEffect;
   name: PerFaction<string>;
-  /** 조합 키 표시용 짧은 이름 ("A"). 없으면 name */
-  shortName?: PerFaction<string>;
-  /** 이 계통의 성향 (GDD 4-2): 진화 형태 패시브가 조합의 계통 성향을 섞어 만든다. 임시 */
-  tendency?: { stat: PassiveStat; multiplier: number };
-  /** 약점 계열 (GDD 17-3): 이 계통을 약점으로 가진 적에게는 이 계열의 공격 블록이 위력 ×1.5. 이 계통 공격 특성 중 하나의 계열과 같다 (계통은 다른 계열 공격 특성도 가질 수 있다, v2.7) */
-  family?: string;
-  provisional?: boolean;
+  /** 칩에 쓰는 한 글자 */
+  abbr: PerFaction<string>;
+  /** 표시 색: 기존 디자인 토큰 이름 (`--bha-…`). 새 색은 만들지 않는다 (CLAUDE.md 7번) */
+  color: string;
 }
 
 export const TRAIT_KINDS = ['skill', 'passive', 'part'] as const;
@@ -116,14 +136,14 @@ export interface ChainBonus {
   value: number;
 }
 
-/** passive 특성이 바꾸는 값: 기본 공격 위력, 기본 공격 속도, 받는 피해 */
-export const PASSIVE_STATS = ['attackPower', 'attackSpeed', 'damageTaken'] as const;
+/** passive 특성이 바꾸는 값: 기본 공격 위력, 기본 공격 속도, 받는 피해, 블록 생성 속도(GDD 20-3 v3.6: 블록 생성은 패시브·고유 특성으로만 빨라진다) */
+export const PASSIVE_STATS = ['attackPower', 'attackSpeed', 'damageTaken', 'blockSpawn'] as const;
 export type PassiveStat = (typeof PASSIVE_STATS)[number];
 
 export interface TraitDef {
   id: string;
-  /** 계통 id (GDD 4장, 11-3 미정이라 임시 계통만 가능) */
-  lineageId: string;
+  /** 속성 id (GDD 20-2, C.47: 옛 계통을 대체). 블록 색·상성·자기 속성 보정·속성 보너스(같은 속성 3개)·바스트로데 진화 속성을 정한다 */
+  element: string;
   kind: TraitKind;
   name: PerFaction<string>;
   /** 블록 위에 쓰는 약어: 2줄 × 2~4자 (UI 디자인 HANDOFF 5-1, GDD 15-2). 없으면 이름 앞 4글자로 대체한다 */
@@ -140,7 +160,7 @@ export interface TraitDef {
   family?: string;
   /** skill 막기·회복: 체인3(chainBonusFromChain) 이상으로 쓰면 붙는 추가 효과 1개. 공격은 계열 단계 기술(종족 설정)이 정하므로 없다 */
   chainBonus?: ChainBonus;
-  /** passive: 자동 적용 배율 (기본 공격 위력·속도, 받는 피해) */
+  /** passive: 자동 적용 배율 (기본 공격 위력·속도, 받는 피해, 블록 생성 속도) */
   passive?: { stat: PassiveStat; multiplier: number };
   provisional?: boolean;
 }
@@ -173,8 +193,8 @@ export type TitleKind = 'rank' | 'hidden-rank' | 'tag';
 export type TitleCondition =
   | { type: 'and'; all: TitleCondition[] }
   | { type: 'or'; any: TitleCondition[] }
-  /** 흡수한 횟수(놓아준 것 제외). lineage 가 없으면 전체 계통, rareOnly 면 희귀 개체만 */
-  | { type: 'absorbCount'; min: number; lineage?: string; rareOnly?: boolean }
+  /** 흡수한 횟수(놓아준 것 제외). element 가 없으면 전체 속성, rareOnly 면 희귀 개체만 */
+  | { type: 'absorbCount'; min: number; element?: string; rareOnly?: boolean }
   /** 진화 기록에 이 진화체 id 가 있다(진화한 진화체 또는 진화 전 진화체 = 경로 포함) */
   | { type: 'passedForm'; formId: string }
   /** 리스크 한계 돌파 횟수 */
@@ -230,73 +250,38 @@ export interface ComboDef {
 }
 
 /**
- * 진화 조건 어휘 (GDD 4-2 v1.0). 전부 "현재 단계 계통별 누적" 기준이다. 안정 수치·리스크 돌파·전투 성과는 쓰지 않는다.
- * 비율(ratio)은 단계 필요 흡수 횟수 N 에 곱해 올림한 값이 기준, 비중(min/max)은 계통 누적 ÷ 전체 누적(0~1).
+ * 진화체 종류 (GDD 20-5 v3.7~v4.2): 일반 = 1·2·3단계 base, 바스트로데 element(속성 8), 아란칼 arrancar(속성 × 분류 24).
+ * 히든 11종: 바스트로데 시점 fusion 2 · complete 1 · special 3 · pure · fail / 아란칼 시점 limit(한계 돌파) · restraint(절제) · hunter(강적 사냥꾼).
  */
-export type FormCondition =
-  /** 계통 X 누적 ≥ ceil(ratio × N) */
-  | { type: 'lineageCount'; lineage: string; ratio: number }
-  /** 계통 X 비중 ≥ min */
-  | { type: 'lineageShare'; lineage: string; min: number }
-  /** 계통들의 비중 합 ≥ min (lineageShare 의 합산 확장: 2조합 심화에 쓴다) */
-  | { type: 'lineagesShareSum'; lineages: string[]; min: number }
-  /** 1위 계통 = X */
-  | { type: 'top1'; lineage: string }
-  /** 1·2위 계통 = {X, Y} (순서 무관) */
-  | { type: 'top2'; lineages: string[] }
-  /** 1·2·3위 계통 = {X, Y, Z} (순서 무관) */
-  | { type: 'top3'; lineages: string[] }
-  /** 최다 비중 ≥ min (편식형) */
-  | { type: 'maxShareAtLeast'; min: number }
-  /** 최다 비중 ≤ max (균형형) */
-  | { type: 'maxShareAtMost'; max: number }
-  /** 누적 1 이상인 계통 수 ≥ min */
-  | { type: 'activeLineages'; min: number }
-  /** 모든 계통 누적 ≥ ceil(ratio × N) */
-  | { type: 'allLineagesCount'; ratio: number }
-  /** 희귀 흡수 수 ≥ max(1, ceil(ratio × N)) */
-  | { type: 'rareCount'; ratio: number };
-
-export const FORM_CONDITION_TYPES = [
-  'lineageCount', 'lineageShare', 'lineagesShareSum', 'top1', 'top2', 'top3', 'maxShareAtLeast', 'maxShareAtMost', 'activeLineages', 'allLineagesCount', 'rareCount',
-] as const;
-
-/** 템플릿 종류. 이름 자리 표시("A우세형" 등)와 효과 가중을 정한다. 정식 이름은 name 에 손으로 넣는다 */
-export const FORM_KINDS = ['dominant', 'pair', 'triple', 'deep-pair', 'balanced', 'picky', 'rare', 'base'] as const;
+export const FORM_KINDS = ['base', 'element', 'arrancar', 'fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter'] as const;
 export type FormKind = (typeof FORM_KINDS)[number];
+export const HIDDEN_FORM_KINDS: readonly FormKind[] = ['fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter'];
 
 export interface FormLabel {
   kind: FormKind;
-  /** 이름·힌트에 쓰는 계통들 (특수형·기본형은 빈 목록) */
-  lineages: string[];
+  /** 이름 자리 표시·힌트에 쓰는 속성 (융합은 2개, 없으면 빈 목록) */
+  elements: string[];
+  /** 아란칼 일반형의 공격 분류 */
+  category?: AttackCategory;
 }
 
-export interface FormEffects {
-  /** 플레이어 최대 체력·기본 공격 위력 배율 (진화할 때마다 곱해진다). 슬롯 +1 은 BALANCE.evolution.slotsPerEvolution */
-  hpMultiplier: number;
-  attackMultiplier: number;
-  /** 요구 계통들의 tendency 를 섞은 패시브 (없으면 빈 객체) */
-  passive: Partial<Record<PassiveStat, number>>;
-}
-
-/** 진화체 (GDD 4-2 v1.0). 단계(2~5)마다 테이블이 따로 있다. 데이터는 src/data/evolution/forms.json */
+/** 진화체 (GDD 20-5). 데이터는 src/data/evolution/forms.json (생성기 generate.ts 결과를 커밋, 손으로 고칠 수 있다) */
 export interface FormDef {
-  /** 예 "t3:pair@lineage-a+lineage-b" */
+  /** 예 "t4:fire", "t5:fire:physical", "h4:fusion:water+earth" */
   id: string;
   /** 진화해서 도달하는 단계 (2~5, 1-based) */
   tier: number;
-  /** 손으로 쓴 정식 이름(종족별). 없으면 label 에서 "A+B형" 같은 자리 표시를 만든다 */
+  /** 손으로 쓴 정식 이름(종족별). 없으면 label 에서 "불 바스트로데" 같은 자리 표시를 만든다 */
   name?: PerFaction<string>;
   label: FormLabel;
-  /** 이 진화체로 올 수 있는 이전 단계 진화체 id. 'any' 면 제한 없음 (2단계 진화체는 항상 'any') */
-  from: string[] | 'any';
-  /** 진화 조건 목록 (전부 만족, AND) */
-  requires: FormCondition[];
-  /** 후보가 여럿이면 높은 쪽 → 조건 수 많은 쪽 → id 순 */
-  priority: number;
-  /** 기본형: 단계마다 정확히 1개. 후보가 없을 때 선택된다 */
-  fallback?: true;
-  effects: FormEffects;
+  /** 히든 진화체 (도감에서 달성 전에는 ?) */
+  hidden?: boolean;
+  /** 내 캐릭터 속성 (GDD 20-2 v3.5). 없으면 직전 진화체의 속성을 잇는다 (아란칼 행동 히든). 융합은 2개 */
+  elements?: string[];
+  /** 종족값 (GDD 20-4): 같은 단계는 합계 동일(완전체는 높게, 실패형은 낮게) */
+  stats: Stats;
+  /** 자기 속성 보정 배율 (없으면 BALANCE.elements.stab). 노멀 순수형이 크게 갖는다 */
+  stab?: number;
   /** 이동 방식 (GDD 18-11, 화면 표시 전용). 없으면 종족 기본 → walk */
   locomotion?: Locomotion;
   /** 체인 묶음 상한 (GDD 19-2). 없으면 종족 설정 maxChain → 3 */

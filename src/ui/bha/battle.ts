@@ -99,7 +99,8 @@ export type LogRole = 'attack' | 'guard' | 'heal' | 'void' | 'chain' | 'cast';
 /** 로그 역할별 기본 아이콘 */
 export const LOG_ICON: Record<LogRole, string> = { attack: 'i-attack', guard: 'i-guard', heal: 'i-heal', void: 'i-void', chain: 'i-chain-2', cast: 'i-cast' };
 
-export type FloatKind = 'attack' | 'guard' | 'heal' | 'void' | 'chain' | 'hurt';
+/** strong·dull = 상성 문구 (GDD 20-2: 효과가 굉장하다 / 효과가 별로…) */
+export type FloatKind = 'attack' | 'guard' | 'heal' | 'void' | 'chain' | 'hurt' | 'strong' | 'dull';
 
 /** 적 행동 패턴 → 표시 (아이콘은 디자인에 있는 3종 중 가장 가까운 것). 기본형은 칩을 만들지 않는다 */
 export const PATTERN_VIEW: Record<EnemyPatternKind, { label: string; icon: string } | null> = {
@@ -336,6 +337,8 @@ export interface BlockSpec {
   family?: string;
   /** 계열 id (종족 중립 family-a/b/c): 계열별 색 띠를 고르는 데이터 속성 (GDD 18-8 ③) */
   familyId?: string;
+  /** 속성 색 (CSS 값, GDD 20-2: 블록 = 계열 글자 + 속성 색). 있으면 계열 배지·띠를 이 색으로 칠한다 */
+  elementColor?: string;
 }
 
 /** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림 같은 상태 클래스는 화면이 붙인다 */
@@ -359,6 +362,10 @@ export function blockEl(spec: BlockSpec): HTMLElement {
   if (spec.family) {
     node.append(el('span', 'bha-block__fam', spec.family));
     if (spec.familyId) node.dataset.fam = spec.familyId;
+  }
+  if (spec.elementColor) {
+    node.dataset.el = '';
+    node.style.setProperty('--fam', spec.elementColor);
   }
   return node;
 }

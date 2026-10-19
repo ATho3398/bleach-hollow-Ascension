@@ -74,6 +74,8 @@ export interface ListRow {
   detail: () => Node[];
   /** 행 모양 변형 클래스 (예 'is-locked') */
   cls?: string;
+  /** 행 노드에 색 변수 등을 칠한다 (예 속성 색, C.47) */
+  paint?: (node: HTMLElement) => void;
   /** 이 행 앞에 구역 제목 줄을 둔다 (선택 대상 아님) */
   caption?: string;
 }
@@ -119,6 +121,7 @@ export function masterDetail(rows: ListRow[], at = 0, listLabel = '목록'): Mas
       b.setAttribute('role', 'option');
       b.setAttribute('aria-label', r.label);
       b.append(...r.content);
+      r.paint?.(b);
       b.addEventListener('bha-select', () => select(i));
       b.onclick = () => select(i);
       return b;

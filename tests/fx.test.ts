@@ -38,7 +38,7 @@ describe('전투 효과 설정', () => {
 
 describe('효과 신호', () => {
   const block = (chain: number, extra: Partial<Extract<CombatEvent, { kind: 'block' }>> = {}): CombatEvent => ({
-    kind: 'block', block: 'skill', traitId: null, family: null, role: 'attack', chain, damage: 5, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...extra,
+    kind: 'block', block: 'skill', traitId: null, family: null, element: null, matchup: 'neutral', role: 'attack', chain, damage: 5, weak: false, heal: 0, guardSeconds: 0, bonus: null, ...extra,
   });
   it('블록·체인·막기·피격·필살기·승패가 신호로 바뀐다', () => {
     expect(cueOf(block(1), 3)).toBe('block');
@@ -46,9 +46,9 @@ describe('효과 신호', () => {
     expect(cueOf(block(3), 3)).toBe('chain3');
     expect(cueOf(block(1, { block: 'special' }), 3)).toBe('special');
     expect(cueOf({ kind: 'stored-use', damage: 1, guardSeconds: 1, charges: 0 }, 3)).toBe('special');
-    expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: true, reflected: 0 }, 3)).toBe('guard');
-    expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: false, reflected: 0 }, 3)).toBe('heavyhit');
-    expect(cueOf({ kind: 'enemy-attack', damage: 2, guarded: false }, 3)).toBe('hurt');
+    expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: true, reflected: 0, matchup: 'neutral' }, 3)).toBe('guard');
+    expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: false, reflected: 0, matchup: 'neutral' }, 3)).toBe('heavyhit');
+    expect(cueOf({ kind: 'enemy-attack', damage: 2, guarded: false, matchup: 'neutral' }, 3)).toBe('hurt');
     expect(cueOf({ kind: 'heavy-cast', seconds: 3 }, 3)).toBe('cast');
     expect(cueOf({ kind: 'end', status: 'won' }, 3)).toBe('win');
     expect(cueOf({ kind: 'end', status: 'lost' }, 3)).toBe('lose');

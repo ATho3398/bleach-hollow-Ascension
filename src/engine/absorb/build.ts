@@ -3,7 +3,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { getTrait } from '../../data/traits';
-import type { PassiveStat } from '../../data/schema';
+import type { AttackCategory, PassiveStat } from '../../data/schema';
 import { getFaction } from '../../data/factions';
 import type { CombatParams, CombatSkill, FamilyCombat } from '../combat/combat';
 import { resolveMaxChain } from '../faction';
@@ -16,14 +16,29 @@ export interface BuildState {
   owned: string[];
   /** 슬롯(BALANCE.absorb.slotCount 칸). 장착한 특성 id 또는 null */
   slots: (string | null)[];
+  /** 장착한 순서 (C.47, 세이브 형식 14): 마지막이 가장 최근. 진화 속성·분류가 동률이면 최근 장착을 따른다 (GDD 20-5). 옛 세이브는 슬롯 순서로 채운다 */
+  equipOrder?: string[];
 }
 
 export function newBuild(): BuildState {
-  return { owned: [], slots: Array.from({ length: BALANCE.absorb.slotCount }, () => null) };
+  return { owned: [], slots: Array.from({ length: BALANCE.absorb.slotCount }, () => null), equipOrder: [] };
 }
 
 export function cloneBuild(b: BuildState): BuildState {
-  return { owned: [...b.owned], slots: [...b.slots] };
+  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])] };
+}
+
+/** 장착 순서 기록 갱신: 이 특성을 가장 최근으로 */
+function noteEquip(b: BuildState, traitId: string): void {
+  const order = (b.equipOrder ??= []).filter((id) => id !== traitId);
+  order.push(traitId);
+  b.equipOrder = order;
+}
+
+/** 장착한 특성의 최근 순번 (클수록 최근, 기록이 없으면 슬롯 순서) */
+export function equipRecency(b: BuildState, traitId: string): number {
+  const i = (b.equipOrder ?? []).indexOf(traitId);
+  return i >= 0 ? 1000 + i : b.slots.indexOf(traitId);
 }
 
 export type BuildResult = { ok: true } | { ok: false; reason: string };
@@ -44,12 +59,14 @@ export function gainTrait(b: BuildState, traitId: string, replaceSlot?: number |
   if (free >= 0) {
     b.owned.push(traitId);
     b.slots[free] = traitId;
+    noteEquip(b, traitId);
     return { ok: true };
   }
   if (replaceSlot === undefined || replaceSlot === null) return { ok: false, reason: '슬롯이 가득 찼다 (교체할 슬롯을 고르거나 포기)' };
   if (!Number.isInteger(replaceSlot) || replaceSlot < 0 || replaceSlot >= b.slots.length) return { ok: false, reason: '없는 슬롯이다' };
   b.owned.push(traitId);
   b.slots[replaceSlot] = traitId;
+  noteEquip(b, traitId);
   return { ok: true };
 }
 
@@ -64,30 +81,48 @@ export function setSlot(b: BuildState, slot: number, traitId: string | null): Bu
   const at = b.slots.indexOf(traitId);
   if (at >= 0) b.slots[at] = null;
   b.slots[slot] = traitId;
+  noteEquip(b, traitId);
   return { ok: true };
 }
 
-/** 슬롯 안 계통별 특성 개수 */
-export function lineageCounts(b: BuildState): Record<string, number> {
+/** 슬롯 안 속성별 특성 개수 */
+export function elementCounts(b: BuildState): Record<string, number> {
   const out: Record<string, number> = {};
   for (const id of b.slots) {
     if (!id) continue;
-    const l = getTrait(id).lineageId;
-    out[l] = (out[l] ?? 0) + 1;
+    const e = getTrait(id).element;
+    out[e] = (out[e] ?? 0) + 1;
   }
   return out;
 }
 
-/** 계통 보너스가 켜진 계통들: 슬롯 안 같은 계통이 lineageBonusCount 개 이상 (GDD 4-1) */
-export function completedLineages(b: BuildState): string[] {
-  return Object.entries(lineageCounts(b))
-    .filter(([, n]) => n >= AX.lineageBonusCount)
+/** 속성 보너스가 켜진 속성들: 슬롯 안 같은 속성이 elementBonusCount 개 이상 (GDD 4-1, C.47 계통 → 속성) */
+export function completedElements(b: BuildState): string[] {
+  return Object.entries(elementCounts(b))
+    .filter(([, n]) => n >= AX.elementBonusCount)
     .map(([id]) => id);
 }
 
-/** 장착한 skill 특성 → 블록 생성원 목록 (슬롯 순서). 계통 보너스: 완성된 계통의 블록 위력 +50% (피해·막기 지속·회복량 모두) */
-export function equippedSkills(b: BuildState): CombatSkill[] {
-  const bonus = new Set(completedLineages(b));
+/** 계열의 공격 분류 (종족 설정 families[].category, GDD 20-1). 종족을 모르거나 계열이 없으면 혼합 */
+export function familyCategory(factionId: string | undefined, family: string | null | undefined): AttackCategory {
+  if (!factionId || !family) return 'mixed';
+  return getFaction(factionId).families.find((f) => f.id === family)?.category ?? 'mixed';
+}
+
+/** 장착한 공격 특성의 분류별 개수 (GDD 20-5 아란칼 분류) */
+export function categoryCounts(b: BuildState, factionId: string): Record<AttackCategory, number> {
+  const out: Record<AttackCategory, number> = { physical: 0, special: 0, mixed: 0 };
+  for (const id of b.slots) {
+    if (!id) continue;
+    const t = getTrait(id);
+    if (t.kind === 'skill' && t.role === 'attack' && t.family) out[familyCategory(factionId, t.family)]++;
+  }
+  return out;
+}
+
+/** 장착한 skill 특성 → 블록 생성원 목록 (슬롯 순서). 속성 보너스: 완성된 속성의 블록 위력 +50% (피해·막기 지속·회복량 모두). 분류는 종족 설정 계열에서 */
+export function equippedSkills(b: BuildState, factionId?: string): CombatSkill[] {
+  const bonus = new Set(completedElements(b));
   const out: CombatSkill[] = [];
   for (const id of b.slots) {
     if (!id) continue;
@@ -98,20 +133,21 @@ export function equippedSkills(b: BuildState): CombatSkill[] {
     if (!chainBonus) continue;
     out.push({
       id,
-      lineageId: t.lineageId,
+      element: t.element,
+      category: familyCategory(factionId, t.family),
       role: t.role,
       family: t.family ?? null,
       powerInAttacks: t.powerInAttacks,
       chainBonus: { ...chainBonus },
-      powerMultiplier: bonus.has(t.lineageId) ? 1 + AX.lineageSkillBonus : 1,
+      powerMultiplier: bonus.has(t.element) ? 1 + AX.elementSkillBonus : 1,
     });
   }
   return out;
 }
 
-/** passive 특성: 기본 공격 위력·속도, 받는 피해 배율 (같은 값은 곱) */
+/** passive 특성: 기본 공격 위력·속도, 받는 피해, 블록 생성 속도 배율 (같은 값은 곱) */
 export function passiveMultipliers(b: BuildState): Record<PassiveStat, number> {
-  const m: Record<PassiveStat, number> = { attackPower: 1, attackSpeed: 1, damageTaken: 1 };
+  const m: Record<PassiveStat, number> = { attackPower: 1, attackSpeed: 1, damageTaken: 1, blockSpawn: 1 };
   for (const id of b.slots) {
     if (!id) continue;
     const t = getTrait(id);
@@ -132,9 +168,10 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
   const pm = passiveMultipliers(b);
   return {
     ...(factionId ? { families: familyTable(factionId), maxChain: resolveMaxChain(getFaction(factionId)) } : {}),
-    skills: equippedSkills(b),
+    skills: equippedSkills(b, factionId),
     attackPowerMultiplier: pm.attackPower,
     attackSpeedMultiplier: pm.attackSpeed,
     damageTakenMultiplier: pm.damageTaken,
+    blockSpawnMultiplier: pm.blockSpawn,
   };
 }

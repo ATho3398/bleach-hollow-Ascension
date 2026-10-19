@@ -263,13 +263,15 @@ describe('이어하기: 마지막 화면 키 (GDD 19-3, 형식 13)', () => {
     expect(resumeTarget(save)).toBe('room');
   });
 
-  it('마이그레이션 12 → 13: 원정 중간 저장이 있으면 원정, 없으면 방', () => {
+  it('마이그레이션 12 → 13 → 14: 형식 13 은 원정 화면 키를 남기지만 14 가 옛 원정 중간 저장을 비워 방으로 연다', () => {
     const withExp = JSON.parse(JSON.stringify(atBattle()));
     withExp.meta.format = 12;
     delete withExp.lastScreen;
     const m1 = migrateSave(withExp)!;
     expect(m1.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(m1.lastScreen).toBe('expedition');
+    // 형식 13 에서는 원정으로 열렸지만, 형식 14(C.47)가 옛 구조의 원정 중간 저장을 비우므로 지금은 방으로 열린다
+    expect(m1.activeExpedition).toBeNull();
+    expect(m1.lastScreen).toBe('room');
     const noExp = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
     noExp.meta.format = 12;
     delete noExp.lastScreen;

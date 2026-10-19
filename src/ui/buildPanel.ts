@@ -1,24 +1,20 @@
-// 흡수 빌드 표시: 슬롯 현황, 계통 보너스, 외형 파츠 문구. 문구는 종족 설정(slotName 등)에서 읽는다.
+// 흡수 빌드 표시: 슬롯 현황, 속성 보너스, 장착 속성·분류 개수(진화 추리용, GDD 20-5), 외형 파츠 문구. 문구는 종족 설정(slotName 등)에서 읽는다.
 import { BALANCE } from '../config/balance';
-import { lineageName } from '../data/lineages';
+import { categoryName, elementName } from '../data/elements';
+import { ATTACK_CATEGORIES } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { completedLineages, emptySlot, lineageCounts, setSlot, type BuildState } from '../engine/absorb';
+import { categoryCounts, completedElements, elementCounts, emptySlot, setSlot, type BuildState } from '../engine/absorb';
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, h, icon, notice, panel, provisionalTag, tag } from './bha/dom';
-import { lineageKey, linMarkShort } from './bha/lineage';
+import { elementDot, elementMark, paintElement } from './bha/element';
 import { unequippedOwned } from './bha/nestLogic';
 
-export const PROVISIONAL_NOTE = '계통·특성 풀과 리스크 수치는 임시 데이터입니다 (기획 11-3, 11-4 미정)';
+export const PROVISIONAL_NOTE = '속성·특성 풀과 리스크 수치는 임시 데이터입니다 (기획 11-3, 11-4 미정)';
 
 /** 둥지 특성 탭의 상태: 교체 중인 보유 특성 (슬롯이 가득 찼을 때 [교체]를 누르면 정해진다) */
 export interface TraitsTabState {
   swapTrait: string | null;
 }
-
-const markCls = (lineageId: string) => {
-  const k = lineageKey(lineageId);
-  return k ? ` bha-lin--${k}` : '';
-};
 
 /** 슬롯 칸 그리드 (3~8칸): 채움/빈칸/교체 대상. 교체 중이면 채워진 칸이 모두 대상이 된다 */
 function slotGrid(faction: FactionConfig, build: BuildState, state: TraitsTabState, onChange: () => void): HTMLElement {
@@ -32,11 +28,11 @@ function slotGrid(faction: FactionConfig, build: BuildState, state: TraitsTabSta
     }
     const t = getTrait(id);
     const swapping = state.swapTrait !== null;
-    const b = h('button', `bha-slot bha-slot--filled${markCls(t.lineageId)}${swapping ? ' is-target' : ''}`);
+    const b = paintElement(h('button', `bha-slot bha-slot--filled${swapping ? ' is-target' : ''}`), t.element);
     b.type = 'button';
     b.setAttribute('aria-label', swapping ? `${i + 1}번 슬롯 ${traitName(id, faction.id)}과 교체` : `${i + 1}번 슬롯 ${traitName(id, faction.id)} 비우기`);
     const meta = h('span', 'bha-slot__meta');
-    meta.append(tag(faction.traitKindNames[t.kind], 'kind'), linMarkShort(t.lineageId, faction.id));
+    meta.append(tag(faction.traitKindNames[t.kind], 'kind'), elementMark(t.element, faction.id));
     b.append(h('span', 'bha-slot__num', `${i + 1}번`), h('span', 'bha-slot__name', traitName(id, faction.id)), meta);
     b.onclick = () => {
       if (state.swapTrait !== null) {
@@ -50,19 +46,24 @@ function slotGrid(faction: FactionConfig, build: BuildState, state: TraitsTabSta
   return grid;
 }
 
-/** 같은 계통 개수 칩(.bha-setbonus): 진행 중인 계통만. 보너스가 켜진 계통은 is-active */
+/** 같은 속성 개수 칩(.bha-setbonus): 장착한 속성만. 보너스가 켜진 속성은 is-active. 진화(바스트로데 속성)는 이 개수가 가장 많은 속성을 따른다 */
 function setBonusRow(faction: FactionConfig, build: BuildState): HTMLElement {
-  const need = BALANCE.provisional.absorb.lineageBonusCount;
+  const need = BALANCE.provisional.absorb.elementBonusCount;
   const row = h('div', 'bha-row bha-row--start bha-row--wrap');
-  const counts = lineageCounts(build);
-  for (const [lineageId, n] of Object.entries(counts)) {
-    const k = lineageKey(lineageId);
-    const c = h('span', `bha-setbonus${k ? ` bha-lin--${k}` : ''}${n >= need ? ' is-active' : ''}`);
-    if (k) c.append(icon(`i-lin-${k}`, 'sm'));
-    c.append(`${lineageName(lineageId, faction.id)} ${n}/${need}${n >= need ? ' — 보너스 켜짐' : n === need - 1 ? ' — 하나 더 장착하면 보너스' : ''}`);
+  const counts = elementCounts(build);
+  for (const [id, n] of Object.entries(counts)) {
+    const c = paintElement(h('span', `bha-setbonus${n >= need ? ' is-active' : ''}`), id);
+    c.append(elementDot(id, faction.id), `${elementName(id, faction.id)} ${n}/${need}${n >= need ? ' — 보너스 켜짐' : n === need - 1 ? ' — 하나 더 장착하면 보너스' : ''}`);
     row.append(c);
   }
   return row;
+}
+
+/** 장착한 공격 특성의 분류 개수 한 줄 (GDD 20-5: 아란칼은 가장 많은 분류를 따른다). 공격 특성이 없으면 null */
+function categoryRow(faction: FactionConfig, build: BuildState): HTMLElement | null {
+  const counts = categoryCounts(build, faction.id);
+  if (ATTACK_CATEGORIES.every((c) => counts[c] === 0)) return null;
+  return h('p', 'bha-faint', `공격 분류: ${ATTACK_CATEGORIES.map((c) => `${categoryName(c, faction.id)} ${counts[c]}`).join(' · ')}`);
 }
 
 /** 특성 탭: ① 슬롯 현황 + 계통 보너스 + 교체 안내 ② 보유 특성(슬롯에 없는 것) 장착·교체 */
@@ -78,9 +79,11 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   head.append(slotGrid(faction, build, state, onChange));
   const bonus = setBonusRow(faction, build);
   if (bonus.childElementCount > 0) head.append(bonus);
-  const done = completedLineages(build);
+  const cats = categoryRow(faction, build);
+  if (cats) head.append(cats);
+  const done = completedElements(build);
   if (done.length > 0) {
-    head.append(notice('good', `${faction.lineageBonusName}: ${done.map((l) => lineageName(l, faction.id)).join(', ')} 블록 위력(피해·막기·회복) +${Math.round(BALANCE.provisional.absorb.lineageSkillBonus * 100)}% (임시)`));
+    head.append(notice('good', `${faction.lineageBonusName}: ${done.map((l) => elementName(l, faction.id)).join(', ')} 블록 위력(피해·막기·회복) +${Math.round(BALANCE.provisional.absorb.elementSkillBonus * 100)}% (임시)`));
   }
   const parts = build.slots.filter((id): id is string => id !== null && getTrait(id).kind === 'part');
   if (parts.length > 0) {
@@ -102,10 +105,9 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   for (const id of spare) {
     const t = getTrait(id);
     const selected = state.swapTrait === id;
-    const row = h('div', `bha-owned__row${markCls(t.lineageId)}${selected ? ' is-selected' : ''}`);
+    const row = paintElement(h('div', `bha-owned__row${selected ? ' is-selected' : ''}`), t.element);
     const mark = h('span', 'bha-owned__mark');
-    const k = lineageKey(t.lineageId);
-    if (k) mark.append(icon(`i-lin-${k}`));
+    mark.append(elementDot(t.element, faction.id));
     const name = h('span', 'bha-owned__name', traitName(id, faction.id));
     name.append(tag(faction.traitKindNames[t.kind], 'kind'));
     if (t.rare) name.append(chip('희귀', 'rare'));

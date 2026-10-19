@@ -7,53 +7,29 @@ export function unequippedOwned(build: Pick<BuildState, 'owned' | 'slots'>): str
   return build.owned.filter((id) => !build.slots.includes(id));
 }
 
-export interface LinbarSeg {
-  id: string;
-  n: number;
-}
-
-export interface LinbarModel {
-  /** 횟수 > 0 인 계통만, 입력 순서대로 */
-  segs: LinbarSeg[];
-  /** 아직 안 찬 칸 (need - 합계, 0 이상). 막대 뒤 빈 자리 */
-  empty: number;
-  /** 1위 계통 id. 모두 0 이면 null. 동점이면 먼저 나온 계통 */
-  lead: string | null;
-  total: number;
-}
-
-/** 계통 누적 막대 모델: 조각 폭은 --n(횟수), 빈 자리는 need 에서 모자란 만큼 */
-export function linbarModel(scores: Record<string, number | undefined>, lineageIds: readonly string[], need: number): LinbarModel {
-  const all = lineageIds.map((id) => ({ id, n: Math.max(0, scores[id] ?? 0) }));
-  const total = all.reduce((s, x) => s + x.n, 0);
-  let lead: string | null = null;
-  let best = 0;
-  for (const x of all) if (x.n > best) { best = x.n; lead = x.id; }
-  return { segs: all.filter((x) => x.n > 0), empty: Math.max(0, need - total), lead, total };
-}
-
 /** 진화체 도감 카드 상태 */
 export interface FormCardModel {
   state: 'found' | 'unknown';
-  base: boolean;
+  /** 히든 진화체 (GDD 20-5) */
+  hidden: boolean;
   current: boolean;
-  /** 카드 색 기준 계통(첫 요구 계통). 기본형·특수형은 없음 */
-  lineage: string | undefined;
+  /** 카드 색 기준 속성(첫 속성). 속성을 잇는 진화체는 없음 */
+  element: string | undefined;
 }
 
 export function formCardModel(form: FormDef, unlocked: ReadonlySet<string>, currentFormId: string | null): FormCardModel {
   const found = unlocked.has(form.id);
   return {
     state: found ? 'found' : 'unknown',
-    base: !!form.fallback,
+    hidden: form.hidden === true,
     current: found && currentFormId === form.id,
-    lineage: form.label.lineages[0],
+    element: form.label.elements[0] ?? form.elements?.[0],
   };
 }
 
-/** 도감 정렬: 기본형은 목록 맨 뒤 (안정 정렬) */
+/** 도감 정렬: 히든은 목록 맨 뒤 (안정 정렬) */
 export function sortFormsForDex(forms: readonly FormDef[]): FormDef[] {
-  return [...forms].sort((a, b) => Number(!!a.fallback) - Number(!!b.fallback));
+  return [...forms].sort((a, b) => Number(!!a.hidden) - Number(!!b.hidden));
 }
 
 /** 칭호 행 종류: 해금 / 이름이 공개된 미해금 / 숨김(?) */

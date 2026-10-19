@@ -49,7 +49,7 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
     case 'block': {
       if (e.damage <= 0 || e.block === 'void') return null;
       if (e.block === 'special' || e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true };
-      const cue: AttackCue = { side: 'player', tier: e.weak ? 'weak' : chainTier(e.chain, top), guarded: false };
+      const cue: AttackCue = { side: 'player', tier: e.matchup === 'strong' ? 'weak' : chainTier(e.chain, top), guarded: false };
       const fx = e.family && e.role === 'attack' ? familyFx?.(e.family) : null;
       if (fx) {
         cue.fx = fx;

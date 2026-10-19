@@ -38,12 +38,29 @@
   "basicSkillName": "본체 능력",
   "huntingGroundName": "웨코문도",
   "maxChain": 3,
+  "baseStats": {
+    "hp": 50,
+    "atk": 50,
+    "int": 50,
+    "def": 50,
+    "spr": 50,
+    "spd": 50
+  },
+  "matchupText": {
+    "strong": "효과가 굉장하다!",
+    "weak": "효과가 별로인 듯하다…"
+  },
+  "evolutionNearText": [
+    "몸이 근질거린다…",
+    "가면 아래가 뜨겁다… 곧 무언가 바뀐다."
+  ],
   "families": [
     {
       "id": "family-a",
       "name": "조(爪)",
       "abbr": "조",
       "fx": "claw",
+      "category": "physical",
       "tiers": [
         {
           "name": "할퀴기",
@@ -69,6 +86,7 @@
       "name": "교(咬)",
       "abbr": "교",
       "fx": "bite",
+      "category": "mixed",
       "tiers": [
         {
           "name": "물기",
@@ -94,6 +112,7 @@
       "name": "탄(彈)",
       "abbr": "탄",
       "fx": "shot",
+      "category": "special",
       "tiers": [
         {
           "name": "바라",

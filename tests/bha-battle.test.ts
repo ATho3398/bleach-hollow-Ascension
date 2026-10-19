@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
-import { LINEAGES } from '../src/data/lineages';
 import { TRAIT_ABBR_MAX_LENGTH, TRAITS, parseTrait, traitAbbr, traitName } from '../src/data/traits';
 import {
   blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, gaugeFill, gaugeSlots, hasPips, pickAbbr, runSpecs, secondsText, trackTotal,
 } from '../src/ui/bha/battle';
-import { lineageKey } from '../src/ui/bha/lineage';
 import { blockAbbr } from '../src/ui/battleView';
 import { battleLabels } from '../src/ui/labels';
 
@@ -33,7 +31,7 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     }
   });
   it('abbr 데이터 검증: 문자열이 아니거나 너무 길면 거부, 없어도 통과(이름으로 대체)', () => {
-    const base = { id: 'x', lineageId: 'lineage-a', kind: 'part', name: { '*': '이름' }, description: { '*': '설명' } };
+    const base = { id: 'x', element: 'fire', kind: 'part', name: { '*': '이름' }, description: { '*': '설명' } };
     expect(() => parseTrait(base)).not.toThrow();
     expect(() => parseTrait({ ...base, abbr: { '*': 'A1' } })).not.toThrow();
     expect(() => parseTrait({ ...base, abbr: { '*': '' } })).toThrow(/abbr/);
@@ -50,13 +48,6 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
       expect(blockAbbr({ uid: 4, kind: 'skill', traitId: skill.id }, labels, f.id)).toBe(traitAbbr(skill.id, f.id));
       expect(traitName(skill.id, f.id).length).toBeGreaterThan(0);
     }
-  });
-});
-
-describe('계통 마크 매핑', () => {
-  it('계통 A~E → a~e, 모르는 계통은 undefined', () => {
-    LINEAGES.slice(0, 5).forEach((l, i) => expect(lineageKey(l.id)).toBe(['a', 'b', 'c', 'd', 'e'][i]));
-    expect(lineageKey('lineage-zzz')).toBeUndefined();
   });
 });
 

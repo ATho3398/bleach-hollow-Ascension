@@ -1,7 +1,7 @@
 // 체인 계열 개편 (GDD 17-3, R-3 C.34): 데이터 모델
 import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
-import { LINEAGES } from '../src/data/lineages';
+import { ELEMENTS } from '../src/data/elements';
 import { TRAITS, parseTrait } from '../src/data/traits';
 import { FAMILY_TIERS, parseFactionConfig } from '../src/engine/faction';
 import { BALANCE } from '../src/config/balance';
@@ -14,7 +14,7 @@ import { applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engin
 import { buildBattleRecord, playCombatBot, playCombatHuman, replayCombat } from '../src/engine/combat';
 import { emptyLegacyMatches, emptyRunLog } from '../src/engine/runLog';
 import { loadSave, migrateSave, newSaveData, recordBattle, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
-import { battleLabels, familyAbbr, familySkillName, weakFamilyName } from '../src/ui/labels';
+import { battleLabels, familyAbbr, familySkillName } from '../src/ui/labels';
 import { blockAbbr, blockName } from '../src/ui/battleView';
 import { helpVars } from '../src/data/help';
 import { getFaction } from '../src/data/factions';
@@ -51,11 +51,11 @@ describe('계열 데이터 (GDD 17-3)', () => {
     }
   });
 
-  it('계통마다 약점 계열이 있고, 그 계통은 자기 약점 계열의 공격 특성을 가진다(다른 계열 공격 특성이 더 있을 수 있다, v2.7)', () => {
-    for (const l of LINEAGES) {
-      expect(l.family, l.id).toBeTruthy();
-      const attacks = TRAITS.filter((x) => x.lineageId === l.id && x.kind === 'skill' && x.role === 'attack');
-      expect(attacks.some((t) => t.family === l.family), l.id).toBe(true);
+  it('속성마다 세 계열(물리·특수·혼합) 공격 특성이 모두 있다 (C.47: 블록 = 계열 글자 + 속성 색)', () => {
+    const famIds0 = FACTIONS[0]!.families.map((f) => f.id);
+    for (const l of ELEMENTS) {
+      const attacks = TRAITS.filter((x) => x.element === l.id && x.kind === 'skill' && x.role === 'attack' && !x.rare);
+      for (const fam of famIds0) expect(attacks.some((t) => t.family === fam), `${l.id}/${fam}`).toBe(true);
     }
     // 모든 계열에 일반(희귀 아닌) 공격 특성이 하나 이상 있다
     const famIds = FACTIONS[0]!.families.map((f) => f.id);
@@ -75,17 +75,17 @@ describe('계열 데이터 (GDD 17-3)', () => {
 
   it('기존 세이브(특성 id 목록)는 그대로 열리고 장착 특성이 계열을 얻는다', () => {
     const b = newBuild();
-    gainTrait(b, 'trait-c5'); // 옛 세이브에 있던 특성 id
-    gainTrait(b, 'trait-a5');
+    gainTrait(b, 't-thunder-c'); // 옛 세이브에 있던 특성 id
+    gainTrait(b, 't-fire-guard');
     const skills = equippedSkills(b);
-    expect(skills.find((s) => s.id === 'trait-c5')!.family).toBe('family-c');
-    expect(skills.find((s) => s.id === 'trait-a5')!.family).toBeNull();
+    expect(skills.find((s) => s.id === 't-thunder-c')!.family).toBe('family-c');
+    expect(skills.find((s) => s.id === 't-fire-guard')!.family).toBeNull();
   });
 });
 
 // ── ② 전투 엔진: 계열 체인 ──
 const CX = BALANCE.provisional.combat;
-const target = getEnemy('test-a'); // 약점 계통 B → 약점 계열 family-b
+const target = getEnemy('test-a'); // 불 속성 → 물 속성 블록이 상성 우위
 let uid = 5000;
 const blk = (traitId: string | null, family: string | null = null, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId, family });
 const mk = (params: Partial<CombatParams> = {}, enemy = target): CombatState => createCombat(1, { enemy, params });
@@ -105,87 +105,93 @@ const quiet = (s: CombatState) => {
 
 describe('계열 체인 판정 (GDD 17-3)', () => {
   it('같은 계열 공격 블록은 특성이 달라도 연속이면 한 덩어리다', () => {
-    const t = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-c5', 'family-c'), blk('trait-a1', 'family-a')];
+    const t = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-fire-a', 'family-a')];
     expect(runAt(t, 1)).toEqual([0, 2]);
     expect(chainGroup(t, 0, 3)).toEqual([0, 1, 2]);
     expect(runAt(t, 3)).toEqual([3, 3]);
   });
 
   it('다른 계열 사이에 끼면 끊긴다 (a c a 는 체인 아님)', () => {
-    const t = [blk('trait-a1', 'family-a'), blk('trait-c5', 'family-c'), blk('trait-a1', 'family-a')];
+    const t = [blk('t-fire-a', 'family-a'), blk('t-thunder-c', 'family-c'), blk('t-fire-a', 'family-a')];
     expect(chainGroup(t, 0, 3)).toEqual([0]);
     expect(chainGroup(t, 2, 3)).toEqual([2]);
   });
 
   it('막기·회복·기본 블록은 계열이 없어 같은 특성끼리만 묶인다', () => {
-    const t = [blk('trait-a5'), blk('trait-b1'), blk('trait-a5'), blk('trait-a5'), blk('basic-skill'), blk('basic-skill')];
+    const t = [blk('t-fire-guard'), blk('t-earth-guard'), blk('t-fire-guard'), blk('t-fire-guard'), blk('basic-skill'), blk('basic-skill')];
     expect(chainGroup(t, 0, 3)).toEqual([0]);
     expect(chainGroup(t, 2, 3)).toEqual([2, 3]);
     expect(chainGroup(t, 4, 3)).toEqual([4, 5]);
     // 공격 계열 블록과 계열 없는 블록은 묶이지 않는다
-    expect(chainGroup([blk('trait-c5', 'family-c'), blk('trait-a5')], 0, 3)).toEqual([0]);
+    expect(chainGroup([blk('t-thunder-c', 'family-c'), blk('t-fire-guard')], 0, 3)).toEqual([0]);
   });
 
   it('4개 이상 붙어 있으면 앞에서부터 3개씩 묶인다 (특성이 달라도 같은 계열이면 같은 덩어리, GDD 19-2)', () => {
-    const t = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c')];
+    const t = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c')];
     expect(chainGroup(t, 0, 3)).toEqual([0, 1, 2]);
     expect(chainGroup(t, 3, 3)).toEqual([3]);
   });
 
   it('다른 특성 같은 계열 2개를 누르면 체인2: 두 블록 소모, 2단계 배율 ×2.2', () => {
-    const s = quiet(mk(build('trait-c5', 'trait-e4')));
-    s.tray = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-a1', 'family-a')];
+    const s = quiet(mk(build('t-thunder-c', 't-blood-rare')));
+    s.tray = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-fire-a', 'family-a')];
     expect(applyInput(s, { type: 'use', cell: 1 })).toBe(true);
-    expect(s.tray.map((b) => b.traitId)).toEqual(['trait-a1']);
+    expect(s.tray.map((b) => b.traitId)).toEqual(['t-fire-a']);
     expect(s.blocksByChain).toEqual([0, 1, 0]);
     expect(s.chainsByFamily).toEqual({ 'family-c': [0, 1, 0] });
-    // 클릭한 블록(e4 위력 5)의 2단계: 5 × 2.2 × 기본 공격 10 (test-a 약점은 계열 b 라 약점 아님)
+    // 클릭한 블록(희귀 혈 위력 6)의 2단계: 6 × 2.2 × 기본 공격 10 (혈은 상성 없음, test-a 불은 약점 속성이 있어 우위 아님)
     const ev = s.events.find((e) => e.kind === 'block');
-    expect(ev).toMatchObject({ chain: 2, family: 'family-c', weak: false });
-    expect(ev && ev.kind === 'block' ? ev.damage : 0).toBeCloseTo(5 * 2.2 * CX.playerAttackDamage);
+    expect(ev).toMatchObject({ chain: 2, family: 'family-c', weak: false, matchup: 'neutral' });
+    expect(ev && ev.kind === 'block' ? ev.damage : 0).toBeCloseTo(6 * 2.2 * CX.playerAttackDamage);
   });
 
   it('3단계는 종족 설정의 계열 추가 효과(적 행동 지연)가 붙는다', () => {
-    const s = quiet(mk(build('trait-c5', 'trait-e4')));
+    const s = quiet(mk(build('t-thunder-c', 't-blood-rare')));
     s.enemy.attackTimer = 100;
-    s.tray = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c'), blk('trait-c5', 'family-c')];
+    s.tray = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-thunder-c', 'family-c')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.blocksByChain).toEqual([0, 0, 1]);
     expect(s.enemy.attackTimer).toBe(100 + ticksOf(s.params, 1.5));
     expect(s.chain3Count).toBe(1);
     // 2단계에는 추가 효과가 없다
-    const s2 = quiet(mk(build('trait-c5', 'trait-e4')));
+    const s2 = quiet(mk(build('t-thunder-c', 't-blood-rare')));
     s2.enemy.attackTimer = 100;
-    s2.tray = [blk('trait-c5', 'family-c'), blk('trait-e4', 'family-c')];
+    s2.tray = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c')];
     applyInput(s2, { type: 'use', cell: 0 });
     expect(s2.enemy.attackTimer).toBe(100);
   });
 
-  it('약점은 계열 기준이다: 약점 계통의 계열 공격 블록 ×1.5, 같은 계통 아니어도 계열이 맞으면 약점', () => {
-    // test-a 약점 계통 B → family-b. d1(계통 d, 계열 b)도 약점이다
-    const s = quiet(mk(build('trait-d1')));
-    expect(s.enemy.weakFamily).toBe('family-b');
-    s.tray = [blk('trait-d1', 'family-b')];
+  it('우위는 계열이 아니라 속성 상성이다 (C.47): 불 적에게 물 블록은 계열과 무관하게 ×1.2, 뇌 블록은 보통', () => {
+    expect(target.element).toBe('fire');
+    const s = quiet(mk(build('t-water-b')));
+    s.tray = [blk('t-water-b', 'family-b')];
     applyInput(s, { type: 'use', cell: 0 });
     const ev = s.events.find((e) => e.kind === 'block');
-    expect(ev).toMatchObject({ weak: true });
-    expect(ev && ev.kind === 'block' ? ev.damage : 0).toBeCloseTo(3.5 * 1.5 * CX.playerAttackDamage);
-    // 반대로 계통 b 약점인 적에게 계통이 다른 c5(family-c)는 약점이 아니다
-    const s2 = quiet(mk(build('trait-c5')));
-    s2.tray = [blk('trait-c5', 'family-c')];
+    expect(ev).toMatchObject({ weak: true, matchup: 'strong', element: 'water' });
+    expect(ev && ev.kind === 'block' ? ev.damage : 0).toBeCloseTo(4.2 * BALANCE.elements.strong * CX.playerAttackDamage);
+    const s2 = quiet(mk(build('t-thunder-c')));
+    s2.tray = [blk('t-thunder-c', 'family-c')];
     applyInput(s2, { type: 'use', cell: 0 });
-    expect(s2.events.find((e) => e.kind === 'block')).toMatchObject({ weak: false });
+    expect(s2.events.find((e) => e.kind === 'block')).toMatchObject({ weak: false, matchup: 'neutral' });
+  });
+
+  it('약점 속성이 없는 적(노멀)에게는 아무 스킬 블록이나 우위(흡수 조건)지만 상성 배율은 없다', () => {
+    const s = quiet(mk(build('t-thunder-c'), getEnemy('test-e')));
+    expect(getEnemy('test-e').element).toBe('normal');
+    s.tray = [blk('t-thunder-c', 'family-c')];
+    applyInput(s, { type: 'use', cell: 0 });
+    expect(s.events.find((e) => e.kind === 'block')).toMatchObject({ weak: true, matchup: 'neutral' });
   });
 
   it('약점 계열 체인3 은 흡수 조건 (weakChain3Count), 약점 계열 마무리도 조건', () => {
-    const s = quiet(mk(build('trait-b4', 'trait-d1')));
+    const s = quiet(mk(build('t-water-rare', 't-water-b')));
     s.enemy.hp = 1e9;
-    s.tray = [blk('trait-b4', 'family-b'), blk('trait-d1', 'family-b'), blk('trait-b4', 'family-b')];
+    s.tray = [blk('t-water-rare', 'family-b'), blk('t-water-b', 'family-b'), blk('t-water-rare', 'family-b')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.weakChain3Count).toBe(1);
     s.enemy.hp = 1;
     s.status = 'playing';
-    s.tray = [blk('trait-d1', 'family-b')];
+    s.tray = [blk('t-water-b', 'family-b')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.status).toBe('won');
     expect(s.finisher).toMatchObject({ kind: 'skill', family: 'family-b', weak: true });
@@ -193,23 +199,23 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
   });
 
   it('블록은 장착한 특성의 계열대로 나온다', () => {
-    const s = mk(build('trait-c5', 'trait-a1'));
+    const s = mk(build('t-thunder-c', 't-fire-a'));
     for (let i = 0; i < 400 && s.tray.length < 4; i++) step(s);
     const fams = new Set(s.tray.filter((b) => b.kind === 'skill').map((b) => b.family));
     expect(fams).toEqual(new Set(['family-c', 'family-a']));
-    for (const b of s.tray) if (b.kind === 'skill') expect(b.family).toBe(b.traitId === 'trait-c5' ? 'family-c' : 'family-a');
+    for (const b of s.tray) if (b.kind === 'skill') expect(b.family).toBe(b.traitId === 't-thunder-c' ? 'family-c' : 'family-a');
   });
 
   it('같은 계열 특성이 여럿이면 그 계열 블록의 생성 간격이 늘어난다', () => {
-    const one = mk(build('trait-c5'));
-    const two = mk(build('trait-c5', 'trait-e4'));
+    const one = mk(build('t-thunder-c'));
+    const two = mk(build('t-thunder-c', 't-blood-rare'));
     const p = two.params;
     const [c5, e4] = [p.skills[0]!, p.skills[1]!];
     expect(spawnSecondsOfTest(one.params, one.params.skills[0]!)).toBe(CX.blockSpawnSeconds);
     expect(spawnSecondsOfTest(p, c5)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
     expect(spawnSecondsOfTest(p, e4)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
     // 계열이 다르거나 계열이 없는 특성끼리는 느려지지 않는다
-    const mixed = mk(build('trait-c5', 'trait-a1', 'trait-a5')).params;
+    const mixed = mk(build('t-thunder-c', 't-fire-a', 't-fire-guard')).params;
     for (const sk of mixed.skills) expect(spawnSecondsOfTest(mixed, sk)).toBe(CX.blockSpawnSeconds);
   });
 });
@@ -217,7 +223,7 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
 describe('세이브 마이그레이션 (형식 11 → 12)', () => {
   it('옛 전투 기록에 계열별 체인·콤보 횟수 기본값이 채워지고 빌드·슬롯은 그대로 열린다', () => {
     const save = newSaveData('hollow', 1);
-    gainTrait(save.build, 'trait-c5');
+    gainTrait(save.build, 't-thunder-c');
     const old = JSON.parse(JSON.stringify(save));
     old.meta.format = 11;
     old.runLog.battles = [{
@@ -229,7 +235,7 @@ describe('세이브 마이그레이션 (형식 11 → 12)', () => {
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.runLog.battles[0]).toMatchObject({ chainsByFamily: {}, combosTriggered: 0, comboBlocksUsed: 0 });
-    expect(m.build.slots[0]).toBe('trait-c5');
+    expect(m.build.slots[0]).toBe('t-thunder-c');
     expect(emptyRunLog().battles).toEqual([]);
   });
 });
@@ -237,9 +243,9 @@ describe('세이브 마이그레이션 (형식 11 → 12)', () => {
 // ── ③ 콤보 블록 ──
 const RULE2 = { id: 'combo-x', family: 'family-c', minChain: 2, repeat: 2, powerInAttacks: 20 };
 const fill = (s: CombatState, ...fams: ('family-c' | 'family-a' | 'void' | 'guard')[]) => {
-  s.tray = fams.map((f) => (f === 'void' ? blk(null, null, 'void') : f === 'guard' ? blk('trait-a5') : blk(f === 'family-c' ? 'trait-c5' : 'trait-a1', f)));
+  s.tray = fams.map((f) => (f === 'void' ? blk(null, null, 'void') : f === 'guard' ? blk('t-fire-guard') : blk(f === 'family-c' ? 't-thunder-c' : 't-fire-a', f)));
 };
-const comboCombat = (rules = [RULE2]) => quiet(mk({ ...build('trait-c5', 'trait-a1', 'trait-a5'), combos: rules }));
+const comboCombat = (rules = [RULE2]) => quiet(mk({ ...build('t-thunder-c', 't-fire-a', 't-fire-guard'), combos: rules }));
 const use = (s: CombatState, cell: number) => applyInput(s, { type: 'use', cell });
 
 describe('콤보 데이터 (진화 단계마다 1개씩 열림, GDD 17-3)', () => {
@@ -250,7 +256,7 @@ describe('콤보 데이터 (진화 단계마다 1개씩 열림, GDD 17-3)', () =
     e.tierIndex = 1;
     expect(comboRulesOf(e)).toEqual([{ id: COMBOS[0]!.id, family: 'family-c', minChain: 2, repeat: 2, powerInAttacks: 20 }]);
     const params: Parameters<typeof applyEvolutionToParams>[0] = {};
-    applyEvolutionToParams(params, { ...e, tierIndex: 3 });
+    applyEvolutionToParams(params, { ...e, tierIndex: 3 }, 'hollow');
     expect(params.combos).toHaveLength(3);
   });
 
@@ -302,7 +308,7 @@ describe('콤보 발동 (GDD 17-3)', () => {
     expect(s.comboStreaks['combo-x']).toBe(0);
     // 필살 블록
     const s2 = comboCombat();
-    s2.tray = [blk('trait-c5', 'family-c'), blk('trait-c5', 'family-c'), blk(null, null, 'special'), blk('trait-c5', 'family-c'), blk('trait-c5', 'family-c')];
+    s2.tray = [blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c'), blk(null, null, 'special'), blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c')];
     use(s2, 0);
     use(s2, 0);
     expect(s2.comboStreaks['combo-x']).toBe(0);
@@ -366,7 +372,7 @@ describe('콤보 발동 (GDD 17-3)', () => {
 });
 
 describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
-  const params = (): Partial<CombatParams> => ({ ...build('trait-c5', 'trait-e4'), combos: [RULE2] });
+  const params = (): Partial<CombatParams> => ({ ...build('t-thunder-c', 't-blood-rare'), combos: [RULE2] });
   it('완벽형·사람형 봇이 콤보를 발동하고 콤보 블록을 쓴다', () => {
     let perfect = 0, human = 0;
     for (let seed = 1; seed <= 20; seed++) {
@@ -405,9 +411,9 @@ describe('계열 표시 (④, GDD 17-3)', () => {
     expect(familySkillName(hollow, 'family-z', 2)).toBeNull();
   });
 
-  it('약점 계통의 계열 이름과 콤보 블록 이름·약어', () => {
-    expect(weakFamilyName(hollow, 'lineage-c')).toBe('탄(彈)');
-    expect(weakFamilyName(shini, 'lineage-d')).toBe('권(拳)');
+  it('상성 문구(종족 설정)와 콤보 블록 이름·약어', () => {
+    expect(hollow.matchupText.strong).toBe('효과가 굉장하다!');
+    expect(shini.matchupText.weak.length).toBeGreaterThan(0);
     const b: Block = { uid: 1, kind: 'combo', traitId: 'combo-t2', family: null };
     expect(blockName(b, hollow, 'hollow')).toBe('그랑 레이 세로');
     expect(blockAbbr(b, hollow, 'hollow').length).toBeGreaterThan(0);
@@ -423,10 +429,10 @@ describe('계열 표시 (④, GDD 17-3)', () => {
 describe('런 로그: 계열별 체인·콤보 횟수 (⑤)', () => {
   it('전투 기록이 저장·불러오기를 거쳐도 계열별 체인과 콤보 횟수가 남는다', () => {
     const save = newSaveData('hollow', 0);
-    for (const id of ['trait-c5', 'trait-e4']) gainTrait(save.build, id);
+    for (const id of ['t-thunder-c', 't-blood-rare']) gainTrait(save.build, id);
     save.evolution.tierIndex = 1;
     const params: Partial<CombatParams> = { ...buildCombatParams(save.build, 'hollow') };
-    applyEvolutionToParams(params, save.evolution);
+    applyEvolutionToParams(params, save.evolution, 'hollow');
     expect(params.combos).toHaveLength(1);
     let triggered = 0;
     for (let seed = 1; seed <= 6; seed++) {

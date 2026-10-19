@@ -2,8 +2,8 @@ import { BALANCE } from '../src/config/balance';
 import { describe, expect, it } from 'vitest';
 import { newSaveData, SAVE_FORMAT_VERSION, SAVE_KEY } from '../src/game';
 import { applyImport, BACKUP_KEY, backupFileName, hasBackup, parseImport, serializeSave, swapWithBackup } from '../src/saveBackup';
-import { newEvolution, recordEvolutionAbsorb } from '../src/engine/evolution';
-import { evolutionHint, growthLines, hintText } from '../src/ui/bha/growthLogic';
+import { canEvolve, newEvolution, recordEvolutionStep } from '../src/engine/evolution';
+import { growthLines } from '../src/ui/bha/growthLogic';
 
 function memStore(init: Record<string, string> = {}) {
   const m = new Map(Object.entries(init));
@@ -78,34 +78,32 @@ describe('세이브 내보내기·불러오기', () => {
   });
 });
 
-describe('진화 예고·성장 요약', () => {
-  const nameOf = (id: string) => `<${id}>`;
-  it('누적이 없으면 방향이 뚜렷하지 않다고만 한다', () => {
-    const h = evolutionHint(newEvolution())!;
-    expect(h.leads).toEqual([]);
-    expect(hintText(h, nameOf)).toContain('아직 방향이 뚜렷하지 않다');
-  });
-
-  it('상위 계통은 최대 2개 — 둘째는 첫째의 절반 이상일 때만, 남은 수가 같이 나온다', () => {
+describe('진화 신호·성장 요약 (C.47: 걸음 수는 숨기고 임박 알림만)', () => {
+  it('남은 걸음이 20%·10% 가 되는 순간 한 번씩 알림 번호 1·2 를 주고, 다 걸으면 진화할 수 있다', () => {
     const e = newEvolution();
-    for (let i = 0; i < 6; i++) recordEvolutionAbsorb(e, 'lineage-a', false);
-    expect(evolutionHint(e)).toEqual({ leads: ['lineage-a'], remaining: BALANCE.provisional.evolution.absorbsNeeded[0]! - 6 });
-    for (let i = 0; i < 4; i++) recordEvolutionAbsorb(e, 'lineage-b', false);
-    recordEvolutionAbsorb(e, 'lineage-c', false);
-    const h = evolutionHint(e)!;
-    expect(h.leads).toEqual(['lineage-a', 'lineage-b']);
-    expect(hintText(h, nameOf)).toBe(`지금 흐름이면 <lineage-a>·<lineage-b> 쪽 · 진화까지 ${BALANCE.provisional.evolution.absorbsNeeded[0]! - 11}회`);
+    const need = BALANCE.provisional.evolution.stepsNeeded[0]!;
+    const alerts: [number, number][] = [];
+    for (let i = 1; i <= need; i++) {
+      const a = recordEvolutionStep(e);
+      if (a !== null) alerts.push([i, a]);
+      expect(canEvolve(e)).toBe(i >= need);
+    }
+    expect(alerts).toEqual([[need - Math.floor(need * 0.2), 1], [need - Math.floor(need * 0.1), 2]]);
+    // 기준을 넘겨 더 걸어도 알림은 더 없다
+    expect(recordEvolutionStep(e)).toBeNull();
   });
 
-  it('마지막 단계는 예고가 없다', () => {
+  it('마지막 단계는 걸음을 세지 않고 알림도 없다', () => {
     const e = newEvolution();
     e.tierIndex = 4;
-    expect(evolutionHint(e)).toBeNull();
+    expect(recordEvolutionStep(e)).toBeNull();
+    expect(e.steps).toBe(0);
+    expect(canEvolve(e)).toBe(false);
   });
 
   it('성장 요약은 사실만 적고 새 칭호는 있을 때만 둘째 줄', () => {
-    expect(growthLines({ newTraits: 2, remaining: 5, newTitles: [] })).toEqual(['새 특성 2개 · 진화까지 5회']);
-    expect(growthLines({ newTraits: 0, remaining: 0, newTitles: ['가', '나'] })).toEqual(['새 특성 없음 · 진화 가능', '새 칭호 「가」 「나」']);
-    expect(growthLines({ newTraits: 1, remaining: null, newTitles: [] })).toEqual(['새 특성 1개']);
+    expect(growthLines({ newTraits: 2, evolvedTo: null, newTitles: [] })).toEqual(['새 특성 2개']);
+    expect(growthLines({ newTraits: 0, evolvedTo: '불 바스트로데', newTitles: ['가', '나'] })).toEqual(['새 특성 없음 · 진화! 불 바스트로데', '새 칭호 「가」 「나」']);
+    expect(growthLines({ newTraits: 1, evolvedTo: null, newTitles: [] })).toEqual(['새 특성 1개']);
   });
 });

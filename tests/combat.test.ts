@@ -18,7 +18,7 @@ import { loadSave, migrateSave, newSaveData, recordBattle, recordExpedition, SAV
 import { battleLabels } from '../src/ui/labels';
 
 const CX = BALANCE.provisional.combat;
-const normal = getEnemy('test-a'); // 일반, 약점 계통 B
+const normal = getEnemy('test-a'); // 일반, 불 속성
 const elite = getEnemy('test-elite');
 const sealPat = elite.pattern as Extract<NonNullable<EnemyDef['pattern']>, { kind: 'heavy-seal' }>; // 기존 강적 = 강공격↔봉인
 const mk = (opt: { seed?: number; enemy?: EnemyDef; params?: Partial<CombatParams> } = {}) =>
@@ -63,9 +63,9 @@ describe('고정 틱 시뮬레이션', () => {
 
   it('같은 시드 + 같은 입력 기록 = 같은 결과 (봇 플레이를 기록에서 다시 돌려도 같다)', () => {
     for (const enemy of ENEMIES) {
-      const a = playCombatBot(mk({ seed: 5, enemy, params: build('trait-a1', 'trait-b1', 'trait-c1') }));
+      const a = playCombatBot(mk({ seed: 5, enemy, params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }));
       expect(a.inputs.length).toBeGreaterThan(5);
-      const again = replayCombat(5, { enemy, params: build('trait-a1', 'trait-b1', 'trait-c1') }, a.inputs);
+      const again = replayCombat(5, { enemy, params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }, a.inputs);
       expect(again.tick).toBe(a.tick);
       expect(again.status).toBe(a.status);
       expect(again.enemy.hp).toBe(a.enemy.hp);
@@ -127,15 +127,15 @@ describe('블록 생성과 블록 바 (일자 8칸)', () => {
   });
 
   it('슬롯 skill 특성마다 일정 간격(임시 4초)으로 블록이 생긴다', () => {
-    const s = mk({ params: build('trait-a1', 'trait-b1') });
+    const s = mk({ params: build('t-fire-a', 't-earth-guard') });
     s.voidTimer = 1e9;
     wait(s, CX.blockSpawnSeconds);
     const ids = s.tray.map((b) => b.traitId).sort();
-    expect(ids).toEqual(['trait-a1', 'trait-b1']);
+    expect(ids).toEqual(['t-earth-guard', 't-fire-a']);
   });
 
   it('8개가 되면 생성이 멈추고(타이머도 멈춤), 하나를 쓰면 오른쪽 블록이 당겨지고 새 블록은 맨 오른쪽에 생긴다', () => {
-    const s = mk({ params: build('trait-a1', 'trait-b1', 'trait-c1') });
+    const s = mk({ params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') });
     s.voidTimer = 1e9;
     s.player.hp = 1e9;
     wait(s, 40);
@@ -222,7 +222,7 @@ describe('붙어 있는 같은 블록 = 클릭 시 함께 발동 (체인)', () =
   });
 
   it('덩어리가 아닌 다른 특성/공허/필살은 끼지 않는다', () => {
-    const s = put(quiet(mk({ params: build('trait-a1') })), blk('trait-a1'), blk('trait-a1'), blk(null, 'void'), blk('trait-a1'));
+    const s = put(quiet(mk({ params: build('t-fire-a') })), blk('t-fire-a'), blk('t-fire-a'), blk(null, 'void'), blk('t-fire-a'));
     useAt(s, 1);
     expect(s.tray.map((b) => b.kind)).toEqual(['void', 'skill']);
   });
@@ -264,20 +264,20 @@ describe('체인 배율과 SP·필살', () => {
   });
 
   it('체인3 은 특성별 추가 효과가 붙는다: stagger(적 행동 지연), reflect(막기 반사), cleanse(봉인 해제 + SP). 체인2 는 없음', () => {
-    const s = quiet(mk({ params: build('trait-a1', 'trait-b1', 'trait-c1') }));
+    const s = quiet(mk({ params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }));
     s.enemy.attackTimer = 10;
-    put(s, ...many('trait-a1', 2));
+    put(s, ...many('t-fire-a', 2));
     useAt(s, 0);
     expect(s.enemy.attackTimer).toBe(10); // 체인2 는 추가 효과 없음
-    put(s, ...many('trait-a1', 3));
+    put(s, ...many('t-fire-a', 3));
     useAt(s, 0);
     expect(s.enemy.attackTimer).toBe(10 + ticksOf(s.params, 1.5));
-    put(s, ...many('trait-b1', 3));
+    put(s, ...many('t-earth-guard', 3));
     useAt(s, 0);
     expect(s.guard.reflect).toBe(1);
     s.sealTicks = 30;
     s.sp = 0;
-    put(s, ...many('trait-c1', 3));
+    put(s, ...many('t-thunder-heal', 3));
     useAt(s, 0);
     expect(s.sealTicks).toBe(0);
     expect(s.sp).toBe(Math.min(CX.spMax, 3 * CX.spPerBlock + 40)); // 블록 3개 +60, cleanse +40
@@ -321,7 +321,7 @@ describe('체인 배율과 SP·필살', () => {
 
 describe('적 패턴: 강공격 예고·막기, 봉인', () => {
   const eliteQuiet = () => {
-    const s = mk({ enemy: elite, params: build('trait-b1') });
+    const s = mk({ enemy: elite, params: build('t-earth-guard') });
     s.spawnTimers = [1e9];
     s.voidTimer = 1e9;
     s.player.attackTimer = 1e9;
@@ -363,7 +363,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
       const s = eliteQuiet();
       castNow(s);
       if (guard) {
-        put(s, blk('trait-b1'));
+        put(s, blk('t-earth-guard'));
         useAt(s, 0);
       }
       const before = s.player.hp;
@@ -385,7 +385,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
   it('reflect 추가 효과가 붙은 막기는 막은 피해를 적에게 돌려준다', () => {
     const s = eliteQuiet();
     castNow(s);
-    put(s, ...many('trait-b1', 3));
+    put(s, ...many('t-earth-guard', 3));
     useAt(s, 0);
     const before = s.enemy.hp;
     wait(s, sealPat.castSeconds);
@@ -410,18 +410,71 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
 });
 
 describe('약점·공허·시간 제한', () => {
-  it('약점 계통의 스킬 블록은 위력 ×1.5, 다른 계통·기본 블록은 그대로', () => {
-    const dmg = (traitId: string) => {
-      const s = quiet(mk({ params: build('trait-a1', 'trait-b4', 'trait-c5') }));
+  it('상성 (GDD 20-2): 강 ×1.2 / 약 ×0.85 / 그 밖 ×1, 자기 속성 ×1.1, 능력치 비가 곱해진다', () => {
+    const dmg = (traitId: string, extra: Partial<CombatParams> = {}) => {
+      const s = quiet(mk({ params: { ...build(traitId), ...extra } }));
       put(s, blk(traitId));
       const before = s.enemy.hp;
       useAt(s, 0);
       return before - s.enemy.hp;
     };
-    // test-a 의 약점 = 계통 B. b4(B, 공격 4.5) vs a1(A, 공격 3.5)
-    expect(normal.weaknessLineageId).toBe('lineage-b');
-    expect(dmg('trait-b4')).toBeCloseTo(4.5 * CX.playerAttackDamage * CX.weaknessMultiplier);
-    expect(dmg('trait-a1')).toBeCloseTo(3.5 * CX.playerAttackDamage);
+    // test-a 는 불 속성: 물이 불을 이기고(강), 불이 흙을 이긴다(흙 공격은 약)
+    expect(normal.element).toBe('fire');
+    const base = 4.2 * CX.playerAttackDamage;
+    expect(dmg('t-water-a')).toBeCloseTo(base * BALANCE.elements.strong);
+    expect(dmg('t-earth-a')).toBeCloseTo(base * BALANCE.elements.weak);
+    expect(dmg('t-fire-a')).toBeCloseTo(base);
+    // 내 캐릭터 속성이 노멀이면 노멀 블록에 자기 속성 보정
+    expect(dmg('t-normal-a')).toBeCloseTo(base * BALANCE.elements.stab);
+    // 내 힘·지능이 두 배면 (특성 분류가 종족 없이 혼합이라) 피해 두 배
+    const ref = 50;
+    expect(dmg('t-fire-a', { refStat: ref, playerStats: { hp: ref, atk: ref * 2, int: ref * 2, def: ref, spr: ref, spd: ref } })).toBeCloseTo(base * 2);
+  });
+
+  it('특수 속성 (GDD 20-2): 혈 = 준 피해 일부 흡혈, 독 = 지속 피해, 허 = 방어 일부 무시 + 쓰면 리스크', () => {
+    const EL = BALANCE.provisional.elements;
+    const plain = getEnemy('test-e'); // 노멀: 상성 없음
+    const hit = (traitId: string) => {
+      const s = quiet(mk({ enemy: plain, params: build(traitId) }));
+      s.player.hp = 1;
+      put(s, blk(traitId));
+      const before = s.enemy.hp;
+      useAt(s, 0);
+      return { s, damage: before - s.enemy.hp };
+    };
+    const base = 4.2 * CX.playerAttackDamage;
+    const blood = hit('t-blood-a');
+    expect(blood.damage).toBeCloseTo(base);
+    expect(blood.s.player.hp).toBeCloseTo(1 + base * EL.drainFraction);
+    const poison = hit('t-poison-a');
+    expect(poison.s.enemy.dot).not.toBeNull();
+    const d = poison.s.enemy.dot!;
+    expect(d.ticks * d.perTick).toBeCloseTo(base * EL.poisonFraction);
+    const hpBefore = poison.s.enemy.hp;
+    wait(poison.s, EL.poisonSeconds + 0.5);
+    expect(hpBefore - poison.s.enemy.hp).toBeCloseTo(base * EL.poisonFraction);
+    const kyo = hit('t-kyo-a');
+    expect(kyo.damage).toBeCloseTo(base / (1 - EL.pierceIgnore));
+    expect(kyo.s.riskGained).toBeCloseTo(EL.pierceRisk);
+  });
+
+  it('적의 공격도 상성·능력치를 따른다: 내 방어가 두 배면 받는 피해가 절반, 적 속성이 나를 이기면 ×1.2', () => {
+    const taken = (extra: Partial<CombatParams>) => {
+      const s = mk({ seed: 3, params: { enemyDamageVariance: 0, ...extra } });
+      s.spawnTimers = s.spawnTimers.map(() => 1e9);
+      s.voidTimer = 1e9;
+      s.player.attackTimer = 1e9;
+      const before = s.player.hp;
+      wait(s, CX.enemyAttackSeconds + 0.05);
+      return before - s.player.hp;
+    };
+    const one = taken({});
+    expect(one).toBeCloseTo(normal.attackInAttacks * CX.playerAttackDamage);
+    const r = 50;
+    expect(taken({ refStat: r, playerStats: { hp: r, atk: r, int: r, def: r * 2, spr: r * 2, spd: r } })).toBeCloseTo(one / 2);
+    // test-a 는 불: 불이 흙을 이긴다 → 흙 캐릭터는 ×1.2, 물 캐릭터(물이 불을 이김)는 ×0.85
+    expect(taken({ playerElements: ['earth'] })).toBeCloseTo(one * BALANCE.elements.strong);
+    expect(taken({ playerElements: ['water'] })).toBeCloseTo(one * BALANCE.elements.weak);
   });
 
   it('공허 블록: 자연 생성되고, 쓰면 큰 피해 + 리스크 상승, 합칠 수 없고 두면 칸을 차지한다', () => {
@@ -520,7 +573,7 @@ describe('환경 지형 타일 (전투 v2 효과)', () => {
 
 describe('런 로그 BattleRecord (형식 5)', () => {
   it('전투 시간·블록 사용(특성별·체인별)·체인3·막기·공허·필살·마무리 일격이 기록되고, 매치3 필드는 0', () => {
-    const s = playCombatBot(mk({ seed: 9, enemy: elite, params: build('trait-a1', 'trait-b1', 'trait-c1') }));
+    const s = playCombatBot(mk({ seed: 9, enemy: elite, params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }));
     const save = newSaveData('hollow');
     recordBattle(save, buildBattleRecord(s, { factionId: save.factionId }));
     const rec = save.runLog.battles[0]!;
@@ -554,13 +607,13 @@ describe('런 로그 BattleRecord (형식 5)', () => {
     const old = newSaveData('hollow', 0) as unknown as Record<string, any>;
     old.meta.format = 4;
     old.runLog.battles = [{
-      runId: 1, lap: 2, turns: 7, matchesByRole: { damage: 3, spirit: 1, shield: 2, absorb: 4, risk: 1 }, won: true, skillsUsed: ['trait-a1'],
+      runId: 1, lap: 2, turns: 7, matchesByRole: { damage: 3, spirit: 1, shield: 2, absorb: 4, risk: 1 }, won: true, skillsUsed: ['t-fire-a'],
       enemyClass: 'normal', tierIndex: 0, enemyId: 'test-a', factionId: 'hollow', seed: 5, riskGained: 5, absorbGained: 4, lossReason: null,
     }];
     const m = migrateSave(JSON.parse(JSON.stringify(old)))!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.runLog.battles[0]).toMatchObject({
-      turns: 7, matchesByRole: { damage: 3, absorb: 4 }, absorbGained: 4, skillsUsed: ['trait-a1'],
+      turns: 7, matchesByRole: { damage: 3, absorb: 4 }, absorbGained: 4, skillsUsed: ['t-fire-a'],
       durationSeconds: 0, blocksByTrait: {}, blocksByChain: [0, 0, 0], chain3Count: 0, guardSuccesses: 0, voidUsed: 0, specialUsed: false,
       finisherKind: null, finisherTraitId: null, finisherLineageId: null, absorbable: false, storedUsed: 0, storedWasted: 0,
     });

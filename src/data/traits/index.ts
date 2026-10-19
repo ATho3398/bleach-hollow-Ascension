@@ -1,6 +1,6 @@
-// 흡수 특성 테이블 (GDD 4장). 11-3 이 미정이라 전부 임시("임시 특성 A1" 자리 표시). 표현 텍스트만 종족별.
+// 흡수 특성 테이블 (GDD 4장, C.47 속성 8종 × 8개). 11-3 이 미정이라 전부 임시("불 조" 자리 표시). 표현 텍스트만 종족별.
 import { CHAIN_BONUS_KINDS, PASSIVE_STATS, SKILL_ROLES, TRAIT_KINDS, pickFaction, type TraitDef } from '../schema';
-import { getLineage } from '../lineages';
+import { isElement } from '../elements';
 import raw from './traits.json';
 
 /** 블록 약어 최대 글자 수: 2줄 × 4자 (공백 포함) */
@@ -10,14 +10,7 @@ export function parseTrait(r: unknown): TraitDef {
   const t = (r ?? {}) as Record<string, unknown>;
   const errors: string[] = [];
   if (typeof t.id !== 'string' || !t.id) errors.push('id');
-  if (typeof t.lineageId !== 'string') errors.push('lineageId');
-  else {
-    try {
-      getLineage(t.lineageId);
-    } catch {
-      errors.push(`lineageId: 없는 계통 ${t.lineageId}`);
-    }
-  }
+  if (!isElement(t.element)) errors.push(`element: 없는 속성 ${String(t.element)}`);
   if (!(TRAIT_KINDS as readonly unknown[]).includes(t.kind)) errors.push('kind: skill | passive | part');
   if (typeof t.name !== 'object' || t.name === null) errors.push('name');
   if (typeof t.description !== 'object' || t.description === null) errors.push('description');
@@ -45,7 +38,7 @@ export function parseTrait(r: unknown): TraitDef {
   if (t.kind === 'passive') {
     const p = (t.passive ?? {}) as Record<string, unknown>;
     if (!(PASSIVE_STATS as readonly unknown[]).includes(p.stat) || typeof p.multiplier !== 'number' || p.multiplier <= 0) {
-      errors.push('passive: { stat: attackPower | attackSpeed | damageTaken, multiplier: 양수 }');
+      errors.push(`passive: { stat: ${PASSIVE_STATS.join(' | ')}, multiplier: 양수 }`);
     }
   }
   if (errors.length > 0) throw new Error(`특성 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
@@ -79,4 +72,9 @@ export function traitAbbr(id: string, factionId: string): string | undefined {
 /** 특성의 계열 id (공격 skill 만, 그 밖은 null) */
 export function traitFamily(id: string): string | null {
   return getTrait(id).family ?? null;
+}
+
+/** 특성의 속성 id */
+export function traitElement(id: string): string {
+  return getTrait(id).element;
 }

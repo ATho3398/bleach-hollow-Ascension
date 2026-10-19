@@ -5,13 +5,14 @@
 
 import { BALANCE } from '../../config/balance';
 import { hasSpecialActions } from '../../data/enemies';
-import { lineageFamily } from '../../data/lineages';
-import type { ChainBonus, ChainBonusKind, EnemyDef, EnemyPattern, SkillRole } from '../../data/schema';
+import { getElement, matchup, NORMAL_ELEMENT, weaknessesOf, type Matchup } from '../../data/elements';
+import { STAT_IDS, type AttackCategory, type ChainBonus, type ChainBonusKind, type EnemyDef, type EnemyPattern, type SkillRole, type Stats } from '../../data/schema';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { chainGroup, inTray, type Block, type Tray } from './tray';
 
 const CX = BALANCE.provisional.combat;
+const EL = BALANCE.provisional.elements;
 
 /** 기본 블록 특성 id: 슬롯에 skill 특성이 없으면 이 블록만 나온다 (GDD 3-5 "기본 공격 강화") */
 export const BASIC_SKILL_ID = 'basic-skill';
@@ -19,15 +20,17 @@ export const BASIC_SKILL_ID = 'basic-skill';
 /** 전투에 가져온 블록 생성원 하나 (장착 skill 특성, 또는 기본 블록) */
 export interface CombatSkill {
   id: string;
-  /** 계통 id (기본 블록은 null). 적 약점 계통과 같으면 위력 ×1.5 */
-  lineageId: string | null;
+  /** 속성 id (GDD 20-2). 기본 블록은 null(속성 없음 = 상성·자기 속성 보정 없음) */
+  element: string | null;
+  /** 공격 분류 (GDD 20-1): 계열이 정한다. 계열 없는 블록(막기·회복·기본)은 혼합 */
+  category: AttackCategory;
   role: SkillRole;
   /** 공격 계열 id (GDD 17-3, 종족 설정 families). 막기·회복·기본 블록은 null */
   family?: string | null;
   /** 블록 위력: 플레이어 기본 공격 N회 분량의 피해 */
   powerInAttacks: number;
   chainBonus: ChainBonus;
-  /** 위력 배율(계통 보너스 등). 피해·막기 지속·회복량에 모두 곱한다. 1 = 없음 */
+  /** 위력 배율(속성 보너스 등). 피해·막기 지속·회복량에 모두 곱한다. 1 = 없음 */
   powerMultiplier: number;
 }
 
@@ -71,7 +74,26 @@ export interface CombatParams {
   specialPowerInAttacks: number;
   basicBlockPowerInAttacks: number;
   basicBlockChainBonus: ChainBonus;
-  weaknessMultiplier: number;
+  /** 상성 (GDD 20-2): 강 / 약 배율, 자기 속성 보정 (진화체 stab 이 있으면 그 값) */
+  strongMultiplier: number;
+  weakMultiplier: number;
+  stabMultiplier: number;
+  /** 특수 속성 효과 (BALANCE.provisional.elements) */
+  drainFraction: number;
+  poisonFraction: number;
+  poisonSeconds: number;
+  pierceIgnore: number;
+  pierceRisk: number;
+  /** 그 단계 기준 능력치 (GDD 20-3): 적 능력치 = 이 값 × 적 성향, 내 체력·속도도 이 값에 대한 비로 환산한다 ("기본 공격 N회분" 유지) */
+  refStat: number;
+  /** 내 능력치 (종족값 + 노력치). 없으면 모두 refStat (= 옛 전투와 같은 결과) */
+  playerStats?: Stats;
+  /** 내 캐릭터 속성 (1단계 노멀, 융합은 2개). 적의 공격 상성과 내 기본 공격 상성, 자기 속성 보정에 쓴다 */
+  playerElements: string[];
+  /** 고유 특성·패시브: 블록 생성 속도 배율(클수록 빠름), 분류별 내 피해 배율, 분류별 받는 피해 배율 */
+  blockSpawnMultiplier: number;
+  categoryPower: Record<AttackCategory, number>;
+  categoryTaken: Record<AttackCategory, number>;
   guardSeconds: number;
   guardReduction: number;
   heavyGuardReduction: number;
@@ -112,6 +134,19 @@ export interface CombatParams {
 export function defaultCombatParams(): CombatParams {
   return {
     ...CX,
+    strongMultiplier: BALANCE.elements.strong,
+    weakMultiplier: BALANCE.elements.weak,
+    stabMultiplier: BALANCE.elements.stab,
+    drainFraction: EL.drainFraction,
+    poisonFraction: EL.poisonFraction,
+    poisonSeconds: EL.poisonSeconds,
+    pierceIgnore: EL.pierceIgnore,
+    pierceRisk: EL.pierceRisk,
+    refStat: BALANCE.provisional.stats.tierTotals[0]! / STAT_IDS.length,
+    playerElements: [NORMAL_ELEMENT],
+    blockSpawnMultiplier: 1,
+    categoryPower: { physical: 1, special: 1, mixed: 1 },
+    categoryTaken: { physical: 1, special: 1, mixed: 1 },
     families: {},
     combos: [],
     riskPerVoidBlock: BALANCE.provisional.risk.perVoidBlock,
@@ -138,24 +173,31 @@ export type CombatStatus = 'playing' | 'won' | 'lost';
 export interface Finisher {
   kind: FinisherKind;
   traitId: string | null;
-  lineageId: string | null;
+  /** 마무리 일격 블록의 속성 (속성 없는 공격은 null) */
+  element: string | null;
   /** 마무리 일격 블록의 계열 (계열 없는 블록은 null) */
   family?: string | null;
-  /** 마무리 일격이 약점 계열(약점 ×1.5)이었는가 (흡수 조건, GDD 17-3) */
+  /** 마무리 일격이 흡수 조건을 채우는 우위 공격이었는가 (GDD 20-2: 상성 우위, 약점 없는 적은 아무 스킬 블록) */
   weak?: boolean;
+  /** 마무리 일격의 상성 */
+  matchup?: Matchup;
 }
 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
-  | { kind: 'player-attack'; damage: number }
-  | { kind: 'enemy-attack'; damage: number; guarded: boolean }
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null }
+  | { kind: 'player-attack'; damage: number; matchup: Matchup }
+  | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup }
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null }
   | { kind: 'heavy-cast'; seconds: number }
-  | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number }
+  | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number; matchup: Matchup }
+  /** 독 지속 피해 한 번 (GDD 20-2) */
+  | { kind: 'dot'; target: 'enemy' | 'player'; damage: number }
+  /** 혈 흡혈 회복 (GDD 20-2) */
+  | { kind: 'drain'; target: 'enemy' | 'player'; heal: number }
   | { kind: 'seal'; seconds: number }
   | { kind: 'stance'; seconds: number }
   | { kind: 'stance-end' }
-  | { kind: 'counter'; damage: number; guarded: boolean }
+  | { kind: 'counter'; damage: number; guarded: boolean; matchup: Matchup }
   | { kind: 'stored-use'; damage: number; guardSeconds: number; charges: number }
   | { kind: 'stored-ready'; charges: number }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
@@ -184,12 +226,14 @@ export interface CombatState {
     actionIndex: number;
     /** 강공격 시전(예고) 중이면 남은 틱. hitsLeft = 이 시전 뒤에 이어질 연속 강공격 수 */
     cast: { ticks: number; total: number; hitsLeft: number } | null;
-    /** 이 적의 약점 계열 (약점 계통의 계열, GDD 17-3). 약점 계통에 계열이 없으면 null */
-    weakFamily?: string | null;
+    /** 적 능력치 = 기준 능력치 × 성향 (GDD 20-3) */
+    stats: Stats;
+    /** 독 지속 피해: 남은 틱과 틱당 피해 */
+    dot: Dot | null;
     /** 방어 자세 중이면 남은 틱: 내 블록 피해가 줄고, 블록을 쓸 때마다 반격을 받는다 */
     stance: { ticks: number } | null;
   };
-  player: { hp: number; maxHp: number; attackTimer: number };
+  player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null };
   tray: Tray;
   nextUid: number;
   /** 블록 생성원(skills, 비면 기본 블록)마다 다음 생성까지 남은 틱 */
@@ -219,7 +263,7 @@ export interface CombatState {
   /** 콤보 발동(특수 블록 생성) 횟수와 콤보 블록 사용 횟수 (GDD 17-3) */
   combosTriggered: number;
   comboBlocksUsed: number;
-  /** 약점 계통 스킬 블록으로 발동한 체인3 횟수 (흡수 조건, GDD 3-5 v0.7) */
+  /** 우위(상성 우위, 약점 없는 적은 아무 스킬) 블록으로 발동한 체인3 횟수 (흡수 조건, GDD 3-5 v0.7 → 20-2) */
   weakChain3Count: number;
   guardSuccesses: number;
   voidUsed: number;
@@ -230,6 +274,11 @@ export interface CombatState {
   /** 받아들여진 입력 기록 (같은 시드로 다시 돌리면 같은 결과) */
   inputs: { tick: number; input: CombatInput }[];
   events: CombatEvent[];
+}
+
+export interface Dot {
+  ticks: number;
+  perTick: number;
 }
 
 export interface CombatSetup {
@@ -249,14 +298,71 @@ export function maxChain(p: CombatParams): number {
 /** 블록 생성원: 장착 skill 특성들, 하나도 없으면 기본 블록 */
 export function blockSources(p: CombatParams): CombatSkill[] {
   if (p.skills.length > 0) return p.skills;
-  return [{ id: BASIC_SKILL_ID, lineageId: null, family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 }];
+  return [{ id: BASIC_SKILL_ID, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 }];
 }
 
 /** 이 생성원의 블록 생성 간격(초): 같은 계열 공격 특성이 여럿이면 체인이 쉬워지므로 그만큼 늘린다 (GDD 17-3, familySpawnSlowdown) */
 export function spawnSecondsOf(p: CombatParams, src: CombatSkill): number {
-  if (!src.family) return p.blockSpawnSeconds;
+  const base = p.blockSpawnSeconds / p.blockSpawnMultiplier;
+  if (!src.family) return base;
   const same = blockSources(p).filter((x) => x.family === src.family).length;
-  return p.blockSpawnSeconds * (1 + p.familySpawnSlowdown * (same - 1));
+  return base * (1 + p.familySpawnSlowdown * (same - 1));
+}
+
+// ── 능력치·상성 (GDD 20-1~20-3) ──
+
+export function uniformStats(v: number): Stats {
+  return { hp: v, atk: v, int: v, def: v, spr: v, spd: v };
+}
+
+/** 내 능력치: 주어진 값, 없으면 모두 기준 능력치 */
+export function playerStatsOf(p: Pick<CombatParams, 'playerStats' | 'refStat'>): Stats {
+  return p.playerStats ?? uniformStats(p.refStat);
+}
+
+/** 적 능력치 = 그 단계 기준 능력치 × 적 성향 (없는 능력치는 ×1) */
+export function enemyStatsOf(p: Pick<CombatParams, 'refStat'>, enemy: EnemyDef): Stats {
+  const out = uniformStats(p.refStat);
+  for (const k of STAT_IDS) out[k] *= enemy.statBias?.[k] ?? 1;
+  return out;
+}
+
+/** 공격 분류가 쓰는 공격 능력치: 물리 = 힘, 특수 = 지능, 혼합 = 둘의 평균 */
+export function offenseStat(st: Stats, cat: AttackCategory): number {
+  return cat === 'physical' ? st.atk : cat === 'special' ? st.int : (st.atk + st.int) / 2;
+}
+
+/** 공격 분류를 막는 방어 능력치: 물리 = 방어, 특수 = 정신력, 혼합 = 둘의 평균 */
+export function defenseStat(st: Stats, cat: AttackCategory): number {
+  return cat === 'physical' ? st.def : cat === 'special' ? st.spr : (st.def + st.spr) / 2;
+}
+
+/** 피해 능력치 비 = 공격 능력치 ÷ (상대 방어 능력치 × (1 − 무시 비율)). 허 속성은 방어 일부를 무시한다 */
+export function statRatio(att: Stats, def: Stats, cat: AttackCategory, pierce = 0): number {
+  return offenseStat(att, cat) / Math.max(1e-6, defenseStat(def, cat) * (1 - pierce));
+}
+
+export function matchupMultiplier(p: Pick<CombatParams, 'strongMultiplier' | 'weakMultiplier'>, m: Matchup): number {
+  return m === 'strong' ? p.strongMultiplier : m === 'weak' ? p.weakMultiplier : 1;
+}
+
+/** 특수 속성 효과가 있는가 */
+function hasEffect(elements: readonly string[], effect: 'drain' | 'poison' | 'pierce'): boolean {
+  return elements.some((e) => getElement(e).effect === effect);
+}
+
+function pierceOf(p: CombatParams, elements: readonly string[]): number {
+  return hasEffect(elements, 'pierce') ? p.pierceIgnore : 0;
+}
+
+/** 적의 속성 (목록) */
+export function enemyElements(def: EnemyDef): string[] {
+  return [def.element];
+}
+
+/** 내 자동 기본 공격 간격(초): 기본 간격 ÷ 패시브 배율 × (기준 능력치 ÷ 속도) (GDD 20-3 v3.6: 속도는 평타 간격만) */
+export function playerAttackSecondsOf(p: CombatParams): number {
+  return (p.playerAttackSeconds / p.attackSpeedMultiplier) * (p.refStat / playerStatsOf(p).spd);
 }
 
 export function comboOf(p: CombatParams, id: string | null): ComboRule | undefined {
@@ -273,6 +379,9 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
   // 적 체력 = 플레이어 기본 공격 N회 분량 (CLAUDE.md 규칙 3). 육성으로 공격력이 오르면 같이 오른다
   const maxHp = setup.enemy.hpInAttacks * params.hpAttackScale * params.playerAttackDamage * params.growthMultiplier;
   const sources = blockSources(params);
+  const pStats = playerStatsOf(params);
+  // 내 체력 = 기본 체력 × (체력 ÷ 기준 능력치) (GDD 20-3)
+  const playerHp = params.playerMaxHp * (pStats.hp / params.refStat);
   return {
     seed,
     params,
@@ -287,11 +396,12 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
       attackTimer: t(enemyAttackSecondsOf(params, setup.enemy.pattern)),
       actionTimer: hasSpecialActions(setup.enemy.pattern) ? t(setup.enemy.pattern.everySeconds) : 0,
       actionIndex: 0,
-      weakFamily: lineageFamily(setup.enemy.weaknessLineageId),
       cast: null,
       stance: null,
+      stats: enemyStatsOf(params, setup.enemy),
+      dot: null,
     },
-    player: { hp: params.playerMaxHp, maxHp: params.playerMaxHp, attackTimer: t(params.playerAttackSeconds / params.attackSpeedMultiplier) },
+    player: { hp: playerHp, maxHp: playerHp, attackTimer: t(playerAttackSecondsOf(params)), stats: pStats, dot: null },
     tray: [],
     nextUid: 1,
     // 생성원이 여럿이면 생성 시점을 고르게 엇갈린다 (첫 블록은 간격의 절반 뒤)
@@ -354,10 +464,22 @@ function unitDamage(p: CombatParams): number {
   return p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier;
 }
 
-/** 약점인가 (GDD 17-3): 공격 블록은 적의 약점 계열과 같은 계열이면, 계열 없는 블록(막기·회복)은 약점 계통과 같은 계통이면 ×1.5 */
-export function isWeak(s: CombatState, skill: CombatSkill): boolean {
-  if (skill.family) return skill.family === (s.enemy.weakFamily ?? null);
-  return skill.lineageId !== null && skill.lineageId === s.enemy.def.weaknessLineageId;
+/** 이 블록의 상성 (속성 없는 블록은 neutral) */
+export function skillMatchup(s: CombatState, skill: CombatSkill): Matchup {
+  return skill.element ? matchup([skill.element], enemyElements(s.enemy.def)) : 'neutral';
+}
+
+/** 흡수 조건을 채우는 우위 공격인가 (GDD 20-2, C.47): 상성 우위. 그 적에게 약점 속성이 아예 없으면(노멀·특수 속성 적) 아무 스킬 블록이나 우위로 친다 */
+export function isEffective(s: CombatState, skill: CombatSkill): boolean {
+  if (weaknessesOf(enemyElements(s.enemy.def)).length === 0) return skill.id !== BASIC_SKILL_ID;
+  return skillMatchup(s, skill) === 'strong';
+}
+
+/** 내 공격의 상성·능력치 비·분류 배율을 곱한 배율 (속성 = 공격 속성 목록, 비면 상성 없음) */
+function playerHitMultiplier(s: CombatState, elements: readonly string[], cat: AttackCategory): { mult: number; matchup: Matchup } {
+  const p = s.params;
+  const m = elements.length > 0 ? matchup(elements, enemyElements(s.enemy.def)) : 'neutral';
+  return { mult: statRatio(s.player.stats, s.enemy.stats, cat, pierceOf(p, elements)) * matchupMultiplier(p, m) * p.categoryPower[cat], matchup: m };
 }
 
 /** 계열 단계 기술(위력 배율·추가 효과): 종족 설정에서 온 계열 표가 있으면 그것, 없으면 체인 배율 + 특성의 체인 추가 효과 (chain = 1~3) */
@@ -367,22 +489,30 @@ export function tierEffect(p: CombatParams, skill: CombatSkill, chain: number): 
   return { multiplier: p.chainMultipliers[chain - 1] ?? 1, bonus: chain >= p.chainBonusFromChain ? skill.chainBonus : null };
 }
 
-/** 스킬 블록 위력 배율: 계통 보너스 × 단계 기술 배율(체인 배율을 이어받음) × 약점(×1.5). chain = 함께 발동하는 블록 수(1~3), 바에 있는 블록 하나만 볼 때는 1 */
-export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: CombatSkill; mult: number; weak: boolean } | null {
+/** 스킬 블록 위력 배율: 속성 보너스 × 단계 기술 배율(체인 배율을 이어받음) × 상성(강 ×1.2 / 약 ×0.85) × 자기 속성 보정 × 능력치 비 × 분류 배율.
+ *  chain = 함께 발동하는 블록 수(1~3), 바에 있는 블록 하나만 볼 때는 1. weak = 흡수 조건의 우위 공격인가 */
+export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: CombatSkill; mult: number; weak: boolean; matchup: Matchup; stab: boolean } | null {
   if (b.kind !== 'skill') return null;
   const skill = sourceOf(s.params, b.traitId);
   if (!skill) return null;
-  const weak = isWeak(s, skill);
-  return { skill, mult: skill.powerMultiplier * tierEffect(s.params, skill, chain).multiplier * (weak ? s.params.weaknessMultiplier : 1), weak };
+  const hit = playerHitMultiplier(s, skill.element ? [skill.element] : [], skill.category);
+  const stab = skill.element !== null && s.params.playerElements.includes(skill.element);
+  const mult = skill.powerMultiplier * tierEffect(s.params, skill, chain).multiplier * hit.mult * (stab ? s.params.stabMultiplier : 1);
+  return { skill, mult, weak: isEffective(s, skill), matchup: hit.matchup, stab };
+}
+
+/** 속성 없는 큰 블록(필살·공허·콤보·저장 필살)의 능력치 비: 혼합 분류 */
+function plainHitMultiplier(s: CombatState): number {
+  return playerHitMultiplier(s, [], 'mixed').mult;
 }
 
 /** 이 블록을 지금 쓰면 줄 피해 (봇·화면 예고용) */
 export function blockDamage(s: CombatState, b: Block, chain = 1): number {
   const p = s.params;
   const guardPose = stanceMultiplier(s);
-  if (b.kind === 'special') return p.specialPowerInAttacks * unitDamage(p) * guardPose;
-  if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p) * guardPose;
-  if (b.kind === 'combo') return (comboOf(p, b.traitId)?.powerInAttacks ?? 0) * unitDamage(p) * guardPose;
+  if (b.kind === 'special') return p.specialPowerInAttacks * unitDamage(p) * plainHitMultiplier(s) * guardPose;
+  if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p) * plainHitMultiplier(s) * guardPose;
+  if (b.kind === 'combo') return (comboOf(p, b.traitId)?.powerInAttacks ?? 0) * unitDamage(p) * plainHitMultiplier(s) * guardPose;
   const e = blockEffect(s, b, chain);
   return e ? e.skill.powerInAttacks * e.mult * unitDamage(p) * guardPose : 0;
 }
@@ -413,6 +543,26 @@ function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
     s.status = 'won';
     s.finisher = finisher;
     emit(s, { kind: 'end', status: 'won' });
+  }
+}
+
+/** 공격자 속성의 맞힌 뒤 효과 (GDD 20-2): 혈 = 준 피해 일부 회복, 독 = 지속 피해. 내 공격(target enemy)과 적 공격(target player) 모두 */
+function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly string[], damage: number): void {
+  const p = s.params;
+  if (damage <= 0 || s.status !== 'playing') return;
+  if (hasEffect(elements, 'drain')) {
+    const who = target === 'enemy' ? s.player : s.enemy;
+    const heal = Math.min(who.maxHp - who.hp, damage * p.drainFraction);
+    if (heal > 0) {
+      who.hp += heal;
+      emit(s, { kind: 'drain', target: target === 'enemy' ? 'player' : 'enemy', heal });
+    }
+  }
+  if (hasEffect(elements, 'poison')) {
+    const victim = target === 'enemy' ? s.enemy : s.player;
+    const ticks = ticksOf(p, p.poisonSeconds);
+    const left = victim.dot ? victim.dot.ticks * victim.dot.perTick : 0;
+    victim.dot = { ticks, perTick: (left + damage * p.poisonFraction) / ticks };
   }
 }
 
@@ -454,7 +604,7 @@ function addStored(s: CombatState, v: number): void {
 
 /** 저장형 필살기 사용: 충전 1개 소모, 기본 공격 N회 분량 피해(약점·체인·방어 자세 무시) + 직후 막기 상태 */
 export function storedDamage(s: CombatState): number {
-  return s.params.storedPowerInAttacks * unitDamage(s.params);
+  return s.params.storedPowerInAttacks * unitDamage(s.params) * plainHitMultiplier(s);
 }
 
 function useStored(s: CombatState): boolean {
@@ -465,7 +615,7 @@ function useStored(s: CombatState): boolean {
   s.guard.ticks = Math.max(s.guard.ticks, ticksOf(p, p.storedGuardSeconds));
   const damage = storedDamage(s);
   emit(s, { kind: 'stored-use', damage, guardSeconds: p.storedGuardSeconds, charges: s.storedCharges });
-  dealDamage(s, damage, { kind: 'stored', traitId: null, lineageId: null });
+  dealDamage(s, damage, { kind: 'stored', traitId: null, element: null });
   return true;
 }
 
@@ -514,8 +664,8 @@ function useBlock(s: CombatState, index: number): boolean {
     s.specialUsed = true;
     addStored(s, p.storedGaugePerBlock);
     const damage = blockDamage(s, b);
-    emit(s, { kind: 'block', block: 'special', traitId: null, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
-    dealDamage(s, damage, { kind: 'special', traitId: null, lineageId: null });
+    emit(s, { kind: 'block', block: 'special', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
+    dealDamage(s, damage, { kind: 'special', traitId: null, element: null });
     updateCombos(s, null, 0);
     counterIfStance(s);
     return true;
@@ -527,8 +677,8 @@ function useBlock(s: CombatState, index: number): boolean {
     addStored(s, p.storedGaugePerBlock);
     addSp(s, p.spPerBlock);
     const damage = blockDamage(s, b);
-    emit(s, { kind: 'block', block: 'void', traitId: null, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
-    dealDamage(s, damage, { kind: 'void', traitId: null, lineageId: null });
+    emit(s, { kind: 'block', block: 'void', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
+    dealDamage(s, damage, { kind: 'void', traitId: null, element: null });
     updateCombos(s, null, 0);
     counterIfStance(s);
     return true;
@@ -538,8 +688,8 @@ function useBlock(s: CombatState, index: number): boolean {
     s.comboBlocksUsed++;
     addStored(s, p.storedGaugePerBlock);
     const damage = blockDamage(s, b);
-    emit(s, { kind: 'block', block: 'combo', traitId: b.traitId, family: null, role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
-    dealDamage(s, damage, { kind: 'combo', traitId: b.traitId, lineageId: null });
+    emit(s, { kind: 'block', block: 'combo', traitId: b.traitId, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
+    dealDamage(s, damage, { kind: 'combo', traitId: b.traitId, element: null });
     updateCombos(s, null, 0);
     counterIfStance(s);
     return true;
@@ -550,7 +700,7 @@ function useBlock(s: CombatState, index: number): boolean {
   s.tray.splice(group[0]!, chain);
   const eff = blockEffect(s, b, chain);
   if (!eff) return true; // 생성원에 없는 블록(있을 수 없음)은 그냥 사라진다
-  const { skill, mult, weak } = eff;
+  const { skill, mult, weak, matchup: m } = eff;
   const id = skill.id;
   // 기록: 특성별·skillsUsed 는 소모된 블록 수, 체인별은 발동 횟수 (한 번 눌러 체인N = blocksByChain[N-1] + 1)
   for (let k = 0; k < chain; k++) s.skillsUsed.push(id);
@@ -566,6 +716,8 @@ function useBlock(s: CombatState, index: number): boolean {
   }
   addSp(s, p.spPerBlock * chain);
   addStored(s, p.storedGaugePerBlock * chain + (p.storedChainBonus[chain - 1] ?? 0));
+  // 허(虛): 쓰면 리스크 게이지가 블록 1개당 조금 오른다 (GDD 20-2)
+  if (skill.element && hasEffect([skill.element], 'pierce')) s.riskGained += p.pierceRisk * chain;
   let heal = 0;
   let guardSeconds = 0;
   if (skill.role === 'guard') {
@@ -578,8 +730,9 @@ function useBlock(s: CombatState, index: number): boolean {
   const bonus = tierEffect(p, skill, chain).bonus;
   if (bonus) applyChainBonus(s, bonus);
   const damage = blockDamage(s, b, chain);
-  emit(s, { kind: 'block', block: 'skill', traitId: id, family: skill.family ?? null, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
-  dealDamage(s, damage, { kind: 'skill', traitId: id, lineageId: skill.lineageId, family: skill.family ?? null, weak });
+  emit(s, { kind: 'block', block: 'skill', traitId: id, family: skill.family ?? null, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null });
+  dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family: skill.family ?? null, weak, matchup: m });
+  if (skill.element) onHit(s, 'enemy', [skill.element], damage);
   updateCombos(s, skill.family ?? null, chain);
   counterIfStance(s);
   return true;
@@ -607,10 +760,25 @@ function shuffleTray(s: CombatState): void {
   emit(s, { kind: 'shuffle' });
 }
 
+/** 적의 공격 상성 (적 속성 → 내 속성) */
+export function enemyMatchup(s: CombatState): Matchup {
+  return matchup(enemyElements(s.enemy.def), s.params.playerElements);
+}
+
+/** 적 공격 피해 (GDD 20-3): 기본 공격 N회 분량 × 흔들림 × 받는 피해 배율 × 능력치 비(적 → 나, 적 분류) × 상성 × 분류별 받는 피해 */
 function enemyDamage(s: CombatState, inAttacks: number): number {
   const p = s.params;
   const jitter = 1 + (nextFloat(s.rng) * 2 - 1) * p.enemyDamageVariance;
-  return inAttacks * p.playerAttackDamage * jitter * p.damageTakenMultiplier;
+  const cat = s.enemy.def.category;
+  const els = enemyElements(s.enemy.def);
+  const ratio = statRatio(s.enemy.stats, s.player.stats, cat, pierceOf(p, els));
+  return inAttacks * p.playerAttackDamage * jitter * p.damageTakenMultiplier * ratio * matchupMultiplier(p, enemyMatchup(s)) * p.categoryTaken[cat];
+}
+
+/** 적의 공격이 맞았다: 피해 + 적 속성 효과(혈 흡혈·독) */
+function enemyHits(s: CombatState, damage: number): void {
+  takeDamage(s, damage);
+  onHit(s, 'player', enemyElements(s.enemy.def), damage);
 }
 
 /** 강공격 착탄: 막기 상태면 크게 줄고(막기 성공), 반사 효과가 있으면 막은 피해를 돌려준다 */
@@ -626,9 +794,9 @@ function resolveHeavy(s: CombatState): void {
     s.guardSuccesses++;
     reflected = blocked * s.guard.reflect;
   }
-  emit(s, { kind: 'heavy-hit', damage, guarded, reflected });
-  if (reflected > 0) dealDamage(s, reflected, { kind: 'reflect', traitId: null, lineageId: null });
-  takeDamage(s, damage);
+  emit(s, { kind: 'heavy-hit', damage, guarded, reflected, matchup: enemyMatchup(s) });
+  if (reflected > 0) dealDamage(s, reflected, { kind: 'reflect', traitId: null, element: null });
+  enemyHits(s, damage);
 }
 
 /** 패턴의 특수 행동 하나를 시작한다 (종류별 일반 처리, 적 id 분기 없음) */
@@ -661,8 +829,8 @@ function counterIfStance(s: CombatState): void {
   const raw = enemyDamage(s, pattern.counterInAttacks);
   const guarded = s.guard.ticks > 0;
   const damage = guarded ? raw * (1 - s.params.guardReduction) : raw;
-  emit(s, { kind: 'counter', damage, guarded });
-  takeDamage(s, damage);
+  emit(s, { kind: 'counter', damage, guarded, matchup: enemyMatchup(s) });
+  enemyHits(s, damage);
 }
 
 /** 한 틱 진행: 버프 → 안개 섞기 → 블록 생성 → 내 기본 공격 → 적 행동 → 시간 제한 */
@@ -672,6 +840,21 @@ function advanceTick(s: CombatState): void {
   s.tick++;
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
   if (s.sealTicks > 0) s.sealTicks--;
+  // 독 지속 피해 (GDD 20-2)
+  if (s.enemy.dot) {
+    const d = s.enemy.dot;
+    emit(s, { kind: 'dot', target: 'enemy', damage: d.perTick });
+    if (--d.ticks <= 0) s.enemy.dot = null;
+    dealDamage(s, d.perTick, { kind: 'dot', traitId: null, element: null });
+    if (s.status !== 'playing') return;
+  }
+  if (s.player.dot) {
+    const d = s.player.dot;
+    emit(s, { kind: 'dot', target: 'player', damage: d.perTick });
+    if (--d.ticks <= 0) s.player.dot = null;
+    takeDamage(s, d.perTick);
+    if (s.status !== 'playing') return;
+  }
   if (p.trayShuffleSeconds > 0 && --s.shuffleTimer <= 0) {
     s.shuffleTimer = t(p.trayShuffleSeconds);
     shuffleTray(s);
@@ -694,10 +877,13 @@ function advanceTick(s: CombatState): void {
   if (s.sp >= p.spMax && spawn(s, 'special', null)) s.sp = 0;
   // 내 자동 기본 공격
   if (--s.player.attackTimer <= 0) {
-    s.player.attackTimer = t(p.playerAttackSeconds / p.attackSpeedMultiplier);
-    const damage = unitDamage(p) * p.attackPowerMultiplier;
-    emit(s, { kind: 'player-attack', damage });
-    dealDamage(s, damage, { kind: 'basic-attack', traitId: null, lineageId: null });
+    s.player.attackTimer = t(playerAttackSecondsOf(p));
+    // 평타 = 물리, 내 캐릭터 속성 (GDD 20-3 v3.6)
+    const hit = playerHitMultiplier(s, p.playerElements, 'physical');
+    const damage = unitDamage(p) * p.attackPowerMultiplier * hit.mult;
+    emit(s, { kind: 'player-attack', damage, matchup: hit.matchup });
+    dealDamage(s, damage, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
+    onHit(s, 'enemy', p.playerElements, damage);
     if (s.status !== 'playing') return;
   }
   // 적: 시전 중이면 강공격 대기, 아니면 기본 공격 + 패턴의 특수 행동(강공격 예고 / 봉인 / 방어 자세)
@@ -728,8 +914,8 @@ function advanceTick(s: CombatState): void {
       const raw = enemyDamage(s, e.def.attackInAttacks);
       const guarded = s.guard.ticks > 0;
       const damage = guarded ? raw * (1 - p.guardReduction) : raw;
-      emit(s, { kind: 'enemy-attack', damage, guarded });
-      takeDamage(s, damage);
+      emit(s, { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s) });
+      enemyHits(s, damage);
     }
     if (hasSpecialActions(pattern) && s.status === 'playing' && --e.actionTimer <= 0) startAction(s, pattern);
   }

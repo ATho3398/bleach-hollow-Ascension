@@ -14,7 +14,7 @@ import { button, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
 import { bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
 import { createExpClock } from './bha/expClock';
-import { lineageClass, lineageIconId } from './bha/lineage';
+import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
 import { locoOf } from './bha/loco';
 import { isWalking, walkScene } from './bha/walk';
@@ -122,12 +122,17 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     nextStep();
   }
 
+  /** 진화 임박 알림 (GDD 20-5 v4.1): 다음 그냥 걷는 칸에서 말풍선으로 (문구는 종족 설정, 수치는 보이지 않는다) */
+  let nearMsg: string | null = null;
+
   function tick(): void {
     const before = exp.hand.length;
     const ev = advance(exp);
     if (!ev) return resumeClock();
     const got = exp.hand.length - before;
-    if (drainEvents(exp).length > 0) {
+    const events = drainEvents(exp);
+    for (const e of events) if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
+    if (events.some((e) => e.kind === 'breakthrough')) {
       // 한계 돌파 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
       away = true;
       clock.cancel();
@@ -147,7 +152,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   function handle(ev: StepEvent, got: number): void {
     switch (ev.kind) {
       case 'move':
-        msg = '';
+        msg = nearMsg ?? '';
+        nearMsg = null;
         break;
       case 'battle':
         msg = `${tn_enemy(ev.battle)} 조우!`;
@@ -197,8 +203,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       empty++;
       continue;
     }
-    const m = el('span', ['bha-lin', lineageClass(getTrait(id).lineageId)].filter(Boolean).join(' '));
-    m.append(icon(lineageIconId(getTrait(id).lineageId)), traitName(id, faction.id));
+    const m = paintElement(el('span', 'bha-lin'), getTrait(id).element);
+    m.append(elementDot(getTrait(id).element, faction.id), traitName(id, faction.id));
     slotsLine.append(m);
   }
   if (empty > 0) slotsLine.append(el('span', 'bha-faint', `빈칸 ${empty}`));

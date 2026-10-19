@@ -42,7 +42,7 @@ export function checkCondition(c: TitleCondition, log: RunLog): boolean {
     case 'or':
       return c.any.some((x) => checkCondition(x, log));
     case 'absorbCount':
-      return log.absorbs.filter((a) => a.absorbed && (!c.lineage || a.lineageId === c.lineage) && (!c.rareOnly || a.rare)).length >= c.min;
+      return log.absorbs.filter((a) => a.absorbed && (!c.element || a.element === c.element) && (!c.rareOnly || a.rare)).length >= c.min;
     case 'passedForm':
       return log.tiers.evolutions.some((e) => e.toFormId === c.formId || e.fromFormId === c.formId);
     case 'breakthroughs':

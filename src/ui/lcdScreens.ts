@@ -10,11 +10,14 @@ import { evolutionColumns } from './evolutionPanel';
 import { button, h, icon, notice, panel, seg } from './bha/dom';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
-import { deckRow, statusBlock } from './bha/nest';
+import { deckRow, statsBlock, statusBlock } from './bha/nest';
+import { abilityName } from '../data/evolution';
+import { currentStats, playerElementsOf, refStatOf } from '../engine/evolution';
+import { elementsMark } from './bha/element';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint } from './labels';
 
-/** 상태 자리: 왼쪽 상태 4바(허기·컨디션·안정 수치·리스크) / 오른쪽 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
+/** 상태 자리: 왼쪽 상태 4바(허기·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
 export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
@@ -33,7 +36,12 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     weakSlot.replaceChildren(...(n.weakened ? [notice('danger', `지난 원정에서 패배했다. ${toward(faction.nestActions.sleep)} 회복한다.`, { title: faction.defeatStateName, icon: 'i-broken' })] : []));
   };
   paint();
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status], [weakSlot, h('p', 'bha-faint', `돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  const evo = save.evolution;
+  const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
+  stats.setAttribute('aria-label', '능력치');
+  stats.append(statsBlock(faction.id, currentStats(evo, faction.id), evo.ev, refStatOf(evo.tierIndex)));
+  if (evo.ability) stats.append(h('p', 'bha-faint', `고유 특성: ${abilityName(evo.ability, faction.id)}`));
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치. 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 type ChestTab = 'slots' | 'deck';
@@ -93,9 +101,9 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
   fill();
 }
 
-/** 제단: 진화 (왼쪽 단계·진행·계통 / 오른쪽 후보·결과·[진화]) */
-export function altarView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: { onEvolve: () => void; onDex: () => void; onHelp: () => void }): void {
-  const cols = evolutionColumns(faction, save.evolution, hd.onEvolve);
+/** 제단: 진화 (왼쪽 지금 진화체·속성·고유 특성 / 오른쪽 진화 안내 — 타이밍은 비밀, 귀환하면 저절로 진화, GDD 20-5) */
+export function altarView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: { onDex: () => void; onHelp: () => void }): void {
+  const cols = evolutionColumns(faction, save.evolution);
   const head = lcdHead({
     title,
     aside: [
@@ -103,7 +111,5 @@ export function altarView(dev: Device, faction: FactionConfig, save: SaveData, t
       selectLast(button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp })),
     ],
   });
-  const canEvolveNow = cols.right.some((e) => e.classList.contains('bha-btn--primary'));
-  const { right } = lcdPage(dev.view, { cls: 'bha-altar-page' }, head, cols.left, cols.right);
-  right.classList.toggle('is-ready', canEvolveNow);
+  lcdPage(dev.view, { cls: 'bha-altar-page' }, head, cols.left, cols.right);
 }

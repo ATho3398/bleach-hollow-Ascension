@@ -62,7 +62,7 @@ describe('체인 묶음 상한 (GDD 19-2)', () => {
     const p = buildCombatParams(newBuild(), FACTIONS[0]!.id);
     expect(p.maxChain).toBe(3);
     const e = { ...newEvolution(), tierIndex: 1, formId: FORM_TABLE[0]!.id, formHistory: [FORM_TABLE[0]!.id] };
-    applyEvolutionToParams(p, e);
+    applyEvolutionToParams(p, e, FACTIONS[0]!.id);
     expect(p.maxChain).toBe(3);
   });
 });

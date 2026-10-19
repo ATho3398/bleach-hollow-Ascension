@@ -1,10 +1,10 @@
 // 칭호 데이터 (GDD 8장, 14-7). 조건은 전부 임시(provisional)이며 대부분 null(해금 불가)이다.
 import { pickFaction, type TitleCondition, type TitleDef } from '../schema';
-import { LINEAGES } from '../lineages';
+import { isElement } from '../elements';
 import { tryGetForm } from '../evolution';
 import raw from './titles.json';
 
-/** 조건 트리의 오류 목록 (계통·진화체 id 가 실제로 있는지, min 이 양수인지) */
+/** 조건 트리의 오류 목록 (속성·진화체 id 가 실제로 있는지, min 이 양수인지) */
 export function validateCondition(c: TitleCondition): string[] {
   switch (c.type) {
     case 'and':
@@ -15,7 +15,7 @@ export function validateCondition(c: TitleCondition): string[] {
       return tryGetForm(c.formId) ? [] : [`알 수 없는 진화체 ${c.formId}`];
     case 'absorbCount': {
       const e = c.min > 0 ? [] : ['min 은 1 이상'];
-      return c.lineage && !LINEAGES.some((l) => l.id === c.lineage) ? [...e, `알 수 없는 계통 ${c.lineage}`] : e;
+      return c.element && !isElement(c.element) ? [...e, `알 수 없는 속성 ${c.element}`] : e;
     }
     default:
       return 'min' in c && !(c.min > 0) ? [`${c.type}: min 은 1 이상`] : [];

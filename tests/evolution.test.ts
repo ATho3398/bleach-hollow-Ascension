@@ -1,315 +1,400 @@
+// 진화 (GDD 20-5 v3.7~v4.2, C.47): 걸음 수 타이밍·임박 알림·트리 판정(속성·분류·히든·가중 랜덤·실패형)·노력치·고유 특성·세이브 연결·마이그레이션
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { BALANCE } from '../src/config/balance';
-import { FORM_TABLE, getForm, tierFallback } from '../src/data/evolution';
+import { FORM_TABLE, getForm } from '../src/data/evolution';
 import { FACTIONS, getFaction } from '../src/data/factions';
-import { newBuild } from '../src/engine/absorb';
+import { STAT_IDS } from '../src/data/schema';
+import { gainTrait, newBuild, setSlot, type BuildState } from '../src/engine/absorb';
 import {
-  absorbsNeeded, absorbsRemaining, accumulationOf, applyEvolutionToParams, canEvolve, cloneEvolution, currentCandidates, evolutionMultipliers, evolve,
-  newEvolution, previewForm, recordEvolutionAbsorb, type EvolutionState,
+  addEv, applyEvolutionToParams, canEvolve, cloneEvolution, currentStats, dominantCategory, dominantElement, evCaps, evolutionCandidates, evolve, evTotal,
+  hiddenWeight, judgeEvolution, newEvolution, playerElementsOf, recordEvolutionAbsorb, recordEvolutionStep, refStatOf, stabOf, stepsNeeded, type EvolutionState,
 } from '../src/engine/evolution';
 import { advance, chooseAbsorb, chooseRelease, createExpedition, finishBattle, startBattle } from '../src/engine/expedition';
+import type { CombatParams } from '../src/engine/combat';
 import { emptyRunLog } from '../src/engine/runLog';
-import { migrateSave, newSaveData, performEvolution, recordExpedition, SAVE_FORMAT_VERSION } from '../src/game';
+import { loadSave, migrateSave, newSaveData, performEvolution, recordExpedition, SAVE_FORMAT_VERSION } from '../src/game';
+import { LEGACY_TRAIT_MAP, migrateTraitId } from '../src/saveLegacy';
 
 const EV = BALANCE.provisional.evolution;
-const A = 'lineage-a';
-const B = 'lineage-b';
-const C = 'lineage-c';
-const D = 'lineage-d';
-const E = 'lineage-e';
-
-/** 계통 id 목록을 순서대로 흡수한 상태 */
-function absorbed(...ids: string[]): EvolutionState {
-  const e = newEvolution();
-  for (const id of ids) recordEvolutionAbsorb(e, id, false);
+const H = EV.hidden;
+const ctxOf = (build: BuildState, o: { hunger?: number; condition?: number } = {}) => ({ factionId: 'hollow', build, hunger: o.hunger ?? 20, condition: o.condition ?? 80 });
+const buildWith = (...ids: string[]): BuildState => {
+  const b = newBuild();
+  while (b.slots.length < ids.length) b.slots.push(null);
+  for (const id of ids) expect(gainTrait(b, id).ok).toBe(true);
+  return b;
+};
+/** 단계 tierIndex 에 머문 진화 상태 (진화 경로는 일반형) */
+function atTier(tierIndex: number, vasto = 't4:fire'): EvolutionState {
+  const e = newEvolution(12345);
+  const path = ['t2:base', 't3:base', vasto, 't5:fire:physical'].slice(0, tierIndex);
+  e.tierIndex = tierIndex;
+  e.formHistory = path;
+  e.formId = path[path.length - 1] ?? null;
+  e.steps = EV.stepsNeeded[tierIndex] ?? 0;
   return e;
 }
-const times = (id: string, n: number) => Array.from({ length: n }, () => id);
-/** 1→2단계 진화에 필요한 횟수(BALANCE 값)만큼, x 2 : y 1 비율로 흡수 */
-const need0 = () => EV.absorbsNeeded[0]!;
-const mix = (x: string, y: string) => [...times(x, need0() - Math.floor(need0() / 3)), ...times(y, Math.floor(need0() / 3))];
+function absorbs(e: EvolutionState, counts: Record<string, number>): EvolutionState {
+  for (const [el, n] of Object.entries(counts)) for (let i = 0; i < n; i++) recordEvolutionAbsorb(e, el);
+  return e;
+}
 
-describe('흡수 누적', () => {
-  it('흡수가 없으면 누적이 비고, 누적 스냅샷은 모든 계통을 0 포함해 적는다', () => {
-    const acc = accumulationOf(newEvolution());
-    expect(Object.keys(acc.scores).sort()).toEqual([A, B, C, D, E]);
-    expect(Object.values(acc.scores).every((v) => v === 0)).toBe(true);
-    expect(acc.need).toBe(EV.absorbsNeeded[0]);
-    expect(acc.rare).toBe(0);
-  });
-
-  it('희귀 개체 흡수는 가중 ×2 로 누적되고 희귀 수도 센다. 흡수 횟수는 1회다', () => {
+describe('진화 타이밍 = 걸음 수 (v4.1)', () => {
+  it('단계별 필요 걸음은 BALANCE 값, 닿기 전에는 진화할 수 없고 마지막 단계는 없다', () => {
     const e = newEvolution();
-    recordEvolutionAbsorb(e, A, false);
-    recordEvolutionAbsorb(e, A, true);
-    recordEvolutionAbsorb(e, B, true);
-    expect(e.lineageScores).toEqual({ [A]: 1 + EV.rareWeight, [B]: EV.rareWeight });
-    expect(e.absorbs).toBe(3);
-    expect(e.rareAbsorbs).toBe(2);
-    expect(accumulationOf(e)).toMatchObject({ rare: 2, scores: { [A]: 3, [B]: 2, [C]: 0 }, lastSeq: { [A]: 2, [B]: 3, [C]: 0 } });
+    expect(stepsNeeded(e)).toBe(EV.stepsNeeded[0]);
+    expect(canEvolve(e)).toBe(false);
+    for (let i = 0; i < EV.stepsNeeded[0]! - 1; i++) recordEvolutionStep(e);
+    expect(canEvolve(e)).toBe(false);
+    recordEvolutionStep(e);
+    expect(canEvolve(e)).toBe(true);
+    const last = atTier(4);
+    expect(stepsNeeded(last)).toBeNull();
+    expect(recordEvolutionStep(last)).toBeNull();
+    expect(canEvolve(last)).toBe(false);
   });
 
-  it('계통 수가 3개·5개여도 누적 스냅샷이 일반적으로 만들어진다', () => {
-    const e = absorbed(A, B);
-    expect(Object.keys(accumulationOf(e, [A, B, C]).scores)).toEqual([A, B, C]);
-    expect(Object.keys(accumulationOf(e, [A, B, C, D, E]).scores)).toHaveLength(5);
+  it('임박 알림: 남은 걸음 20%·10% 가 되는 순간 각각 한 번 (1, 2), 그 밖에는 null', () => {
+    const e = newEvolution();
+    const need = EV.stepsNeeded[0]!;
+    const fired: { at: number; level: number }[] = [];
+    for (let i = 0; i < need + 5; i++) {
+      const lv = recordEvolutionStep(e);
+      if (lv !== null) fired.push({ at: e.steps, level: lv });
+    }
+    expect(fired.map((f) => f.level)).toEqual([1, 2]);
+    expect(need - fired[0]!.at).toBe(Math.floor(need * EV.alertsAt[0]!));
+    expect(need - fired[1]!.at).toBe(Math.floor(need * EV.alertsAt[1]!));
+  });
+
+  it('원정 한 칸 = 걸음 1, 알림은 엔진 이벤트(evolution-near)로 나온다', () => {
+    const save = newSaveData('hollow', 0);
+    save.evolution.steps = EV.stepsNeeded[0]! - Math.floor(EV.stepsNeeded[0]! * EV.alertsAt[0]!) - 1;
+    const exp = createExpedition({ factionId: 'hollow', seed: 9, runId: 1, hunger: 0, condition: 100, deck: [], evolution: save.evolution });
+    exp.wildCells = [];
+    const before = exp.evolution.steps;
+    advance(exp);
+    expect(exp.evolution.steps).toBe(before + 1);
+    expect(exp.events).toContainEqual({ kind: 'evolution-near', level: 1 });
+    expect(save.evolution.steps).toBe(before);
+  });
+
+  it('귀환하면(패배여도) 걸음이 찼을 때 자동 진화, 안 찼으면 진화하지 않는다', () => {
+    for (const outcome of ['returned', 'defeated'] as const) {
+      const save = newSaveData('hollow', 0);
+      gainTrait(save.build, 't-fire-a');
+      const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 0, condition: 100, deck: [], evolution: save.evolution, build: save.build });
+      exp.evolution.steps = EV.stepsNeeded[0]!;
+      exp.phase = 'ended';
+      exp.outcome = outcome;
+      exp.endReason = outcome === 'returned' ? 'returned' : 'battle-lost';
+      const r = recordExpedition(save, exp, 5);
+      expect(r?.ok).toBe(true);
+      expect(save.evolution.tierIndex).toBe(1);
+      expect(save.evolution.formId).toBe('t2:base');
+      expect(save.formDex).toContain('t2:base');
+      expect(save.runLog.tiers.evolutions).toHaveLength(1);
+      expect(save.evolution.steps).toBe(0);
+    }
+    const save = newSaveData('hollow', 0);
+    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 0, condition: 100, deck: [], evolution: save.evolution });
+    exp.evolution.steps = EV.stepsNeeded[0]! - 1;
+    exp.phase = 'ended';
+    exp.outcome = 'returned';
+    exp.endReason = 'returned';
+    expect(recordExpedition(save, exp, 5)).toBeNull();
+    expect(save.evolution.tierIndex).toBe(0);
   });
 });
 
-describe('진화 조건과 결과', () => {
-  it('단계별 필요 흡수 횟수는 BALANCE 값 (41/46/52/58, C.41), 모자라면 진화할 수 없다', () => {
-    expect([...EV.absorbsNeeded]).toEqual([41, 46, 52, 58]);
-    const e = absorbed(...mix(A, B).slice(0, need0() - 1));
-    expect(absorbsNeeded(e)).toBe(need0());
-    expect(absorbsRemaining(e)).toBe(1);
-    expect(canEvolve(e)).toBe(false);
-    const r = evolve(e, newBuild(), 0);
-    expect(r.ok).toBe(false);
-    expect(e.tierIndex).toBe(0);
-    recordEvolutionAbsorb(e, A, false);
-    expect(canEvolve(e)).toBe(true);
-  });
-
-  it('흡수 분포가 진화체를 정한다 (테이블 선택 규칙). 안정 수치·돌파는 쓰지 않는다', () => {
-    const e = absorbed(...mix(B, C));
-    const r = evolve(e, newBuild(), 0);
-    expect(r.ok && r.form.id).toBe('t2:dominant@lineage-b');
-    // 1→2단계는 항상 1위 계통의 우세형이다
-    for (const id of [A, B, C, D, E]) {
-      const x = evolve(absorbed(...times(id, need0())), newBuild(), 0);
-      expect(x.ok && x.form.id).toBe(`t2:dominant@${id}`);
+describe('트리 판정', () => {
+  it('1~3단계는 분기 없이 base 하나', () => {
+    for (const t of [0, 1]) {
+      const e = atTier(t);
+      expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'))).form.id).toBe(`t${t + 2}:base`);
     }
   });
 
-  it('진화하면 단계 +1, 슬롯 +1, 누적 리셋, 현재 진화체 기록. 런 로그 레코드에 이전·새 진화체와 누적 스냅샷', () => {
-    const e = absorbed(...mix(A, B));
-    const snapshot = accumulationOf(e);
-    const build = newBuild();
-    const before = build.slots.length;
-    const r = evolve(e, build, 1234);
+  it('바스트로데 = 진화 순간 장착 특성 중 가장 많은 속성, 동률이면 가장 최근에 장착한 특성의 속성', () => {
+    const e = atTier(2);
+    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a', 't-water-guard', 't-fire-c'))).form.id).toBe('t4:water');
+    const tie = buildWith('t-water-a', 't-fire-c');
+    expect(dominantElement(tie)).toBe('fire');
+    setSlot(tie, 0, 't-water-a'); // 다시 장착하면 가장 최근이 된다
+    expect(dominantElement(tie)).toBe('water');
+    expect(judgeEvolution(e, ctxOf(tie)).form.id).toBe('t4:water');
+  });
+
+  it('실패형은 강제: 장착 특성 없음 / 허기 높음 / 컨디션 낮음. 히든 조건을 채워도 실패형이 우선', () => {
+    const e = absorbs(atTier(2), { water: 5, earth: 5 });
+    expect(judgeEvolution(e, ctxOf(newBuild())).form.id).toBe('h4:fail');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'), { hunger: H.failHunger })).form.id).toBe('h4:fail');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'), { condition: H.failCondition })).form.id).toBe('h4:fail');
+    const snap = judgeEvolution(e, ctxOf(newBuild())).snapshot;
+    expect(snap.forced).toBe(true);
+    expect(snap.candidates).toHaveLength(1);
+  });
+
+  it('속성 히든 후보: 마주 보는 원소 융합·완전체·특수·순수 (흡수가 minAbsorbs 이상일 때만)', () => {
+    const b = buildWith('t-water-a');
+    const ids = (e: EvolutionState, build = b, o = {}) => evolutionCandidates(e, ctxOf(build, o)).hidden.map((c) => c.formId);
+    expect(ids(absorbs(atTier(2), { water: 5, earth: 5 }))).toEqual(['h4:fusion:water+earth']);
+    expect(ids(absorbs(atTier(2), { fire: 5, thunder: 5 }))).toEqual(['h4:fusion:fire+thunder']);
+    // 상성 관계인 쌍(물+불)은 융합이 없다
+    expect(ids(absorbs(atTier(2), { water: 5, fire: 5 }))).toEqual([]);
+    expect(ids(absorbs(atTier(2), { water: 2, fire: 2, earth: 2, thunder: 2 }))).toEqual(['h4:complete']);
+    expect(ids(absorbs(atTier(2), { blood: 5, fire: 5 }))).toEqual(['h4:special:blood']);
+    // 특수끼리면 흡수 수 많은 쪽 하나
+    expect(ids(absorbs(atTier(2), { poison: 6, kyo: 5 }))).toEqual(['h4:special:poison']);
+    // 순수형: 장착 최다 노멀 + 노멀 흡수 40%↑ + 컨디션 양호
+    const nb = buildWith('t-normal-a', 't-normal-guard');
+    expect(ids(absorbs(atTier(2), { normal: 6 }), nb)).toEqual(['h4:pure']);
+    expect(ids(absorbs(atTier(2), { normal: 6 }), nb, { condition: H.pureCondition - 1 })).toEqual([]);
+    expect(ids(absorbs(atTier(2), { normal: 6 }), b)).toEqual([]);
+    // 흡수가 적으면 분포 히든을 보지 않는다
+    expect(ids(absorbs(atTier(2), { water: 2, earth: 2 }))).toEqual([]);
+  });
+
+  it('아란칼 = 바스트로데 속성 × 장착 최다 공격 분류 (공격 특성이 없으면 혼합)', () => {
+    const e = atTier(3, 't4:thunder');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-a', 't-water-a', 't-fire-c'))).form.id).toBe('t5:thunder:physical');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-c'))).form.id).toBe('t5:thunder:special');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-guard'))).form.id).toBe('t5:thunder:mixed');
+    expect(dominantCategory(buildWith('t-fire-b'), 'hollow')).toBe('mixed');
+  });
+
+  it('아란칼 행동 히든: 한계 돌파·절제(놓아준 수 > 흡수 수)·강적 사냥꾼', () => {
+    const b = buildWith('t-fire-a');
+    const ids = (e: EvolutionState) => evolutionCandidates(e, ctxOf(b)).hidden.map((c) => c.formId).sort();
+    const e = atTier(3);
+    e.breakthroughs = H.breakthroughs;
+    e.releases = 3;
+    e.absorbs = 1;
+    e.elitesDefeated = H.elites;
+    expect(ids(e)).toEqual(['h5:hunter', 'h5:limit', 'h5:restraint']);
+    const none = atTier(3);
+    none.releases = 2;
+    none.absorbs = 2;
+    expect(ids(none)).toEqual([]);
+  });
+
+  it('가중 랜덤 (v4.2): 겨우 채우면 일반과 반반(가중 1), 크게 넘기면 히든 90%(가중 9). 같은 단계 시드 = 같은 결과', () => {
+    expect(hiddenWeight(0)).toBe(1);
+    expect(hiddenWeight(EV.weight.fullExcess)).toBe(EV.weight.max);
+    expect(hiddenWeight(10)).toBe(EV.weight.max);
+    const b = buildWith('t-water-a');
+    const tally = (counts: Record<string, number>) => {
+      let hidden = 0;
+      for (let seed = 1; seed <= 400; seed++) {
+        const e = absorbs(atTier(2), counts);
+        e.stageSeed = seed * 2654435761;
+        if (judgeEvolution(e, ctxOf(b)).form.hidden) hidden++;
+      }
+      return hidden / 400;
+    };
+    expect(tally({ water: 4, earth: 4, fire: 1, thunder: 1 })).toBeGreaterThan(0.35);
+    expect(tally({ water: 4, earth: 4, fire: 1, thunder: 1 })).toBeLessThan(0.65);
+    expect(tally({ water: 5, earth: 5 })).toBeGreaterThan(0.75);
+    const e = absorbs(atTier(2), { water: 4, earth: 4, fire: 2 });
+    expect(judgeEvolution(e, ctxOf(b)).form.id).toBe(judgeEvolution(cloneEvolution(e), ctxOf(b)).form.id);
+  });
+});
+
+describe('속성·자기 속성 보정 잇기', () => {
+  const evolved = (...path: string[]): EvolutionState => ({ ...newEvolution(), tierIndex: path.length, formHistory: path, formId: path[path.length - 1]! });
+  it('1단계는 노멀, 바스트로데부터 그 속성. 융합은 두 속성, 융합에서 온 아란칼도 두 속성', () => {
+    expect(playerElementsOf(newEvolution())).toEqual(['normal']);
+    expect(playerElementsOf(evolved('t2:base', 't3:base', 't4:fire'))).toEqual(['fire']);
+    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:water+earth'))).toEqual(['water', 'earth']);
+    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:water+earth', 't5:water:special'))).toEqual(['water', 'earth']);
+    // 행동 히든은 바스트로데 속성을 잇는다
+    expect(playerElementsOf(evolved('t2:base', 't3:base', 't4:poison', 'h5:hunter'))).toEqual(['poison']);
+    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:fire+thunder', 'h5:limit'))).toEqual(['fire', 'thunder']);
+  });
+  it('순수형은 자기 속성 보정이 크고, 그 아란칼(노멀)·행동 히든이 잇는다', () => {
+    expect(stabOf(newEvolution())).toBe(BALANCE.elements.stab);
+    expect(stabOf(evolved('t2:base', 't3:base', 'h4:pure'))).toBe(EV.template.pureStab);
+    expect(stabOf(evolved('t2:base', 't3:base', 'h4:pure', 't5:normal:mixed'))).toBe(EV.template.pureStab);
+    expect(stabOf(evolved('t2:base', 't3:base', 'h4:pure', 'h5:restraint'))).toBe(EV.template.pureStab);
+    expect(stabOf(evolved('t2:base', 't3:base', 't4:normal', 't5:normal:mixed'))).toBe(BALANCE.elements.stab);
+  });
+});
+
+describe('노력치 (GDD 20-4)', () => {
+  it('흡수하면 적 데이터의 노력치가 오르고, 단계 상한(합계·능력치 하나)에서 멈춘다', () => {
+    const e = newEvolution();
+    const cap = evCaps(0);
+    for (let i = 0; i < 50; i++) recordEvolutionAbsorb(e, 'fire', { atk: 2 });
+    expect(e.ev.atk).toBe(cap.perStat);
+    for (let i = 0; i < 50; i++) recordEvolutionAbsorb(e, 'fire', { def: 2, spd: 2 });
+    expect(evTotal(e.ev)).toBe(cap.total);
+    expect(addEv(e, { hp: 5 })).toEqual({});
+    expect(e.absorbs).toBe(100);
+    expect(e.elementAbsorbs.fire).toBe(100);
+  });
+  it('진화해도 노력치는 유지되고 상한만 오른다. 능력치 = 종족값 + 노력치', () => {
+    const save = newSaveData('hollow', 0);
+    gainTrait(save.build, 't-fire-a');
+    recordEvolutionAbsorb(save.evolution, 'fire', { atk: 2 });
+    save.evolution.steps = EV.stepsNeeded[0]!;
+    expect(performEvolution(save, 1).ok).toBe(true);
+    expect(save.evolution.ev.atk).toBe(2);
+    expect(evCaps(1).total).toBeGreaterThan(evCaps(0).total);
+    const st = currentStats(save.evolution, 'hollow');
+    expect(st.atk).toBe(getForm('t2:base').stats.atk + 2);
+    expect(currentStats(newEvolution(), 'shinigami')).toEqual(getFaction('shinigami').baseStats);
+  });
+  it('고유 특성 = 진화 순간 노력치 최고 능력치 (없으면 진화체 종족값 최고)', () => {
+    const e = atTier(0);
+    recordEvolutionAbsorb(e, 'fire', { int: 2, atk: 1 });
+    const r = evolve(e, buildWith('t-fire-a'), { factionId: 'hollow', hunger: 20, condition: 80 }, 1);
+    expect(r.ok && e.ability).toBe('int');
+    const z = atTier(0);
+    evolve(z, buildWith('t-fire-a'), { factionId: 'hollow', hunger: 20, condition: 80 }, 1);
+    const st = getForm('t2:base').stats;
+    expect(st[z.ability!]).toBe(Math.max(...STAT_IDS.map((k) => st[k])));
+  });
+  it('전투 파라미터: 기준 능력치·내 능력치·속성·고유 특성 효과가 실린다', () => {
+    const e = atTier(1);
+    e.ability = 'int';
+    recordEvolutionAbsorb(e, 'fire', { atk: 2 });
+    const p: Partial<CombatParams> = {};
+    applyEvolutionToParams(p, e, 'hollow');
+    expect(p.refStat).toBe(refStatOf(1));
+    expect(p.playerStats!.atk).toBe(getForm('t2:base').stats.atk + 2);
+    expect(p.playerElements).toEqual(['normal']);
+    expect(p.blockSpawnMultiplier).toBeCloseTo(BALANCE.provisional.abilities.int.blockSpawn);
+    const q: Partial<CombatParams> = {};
+    applyEvolutionToParams(q, { ...e, ability: 'def' }, 'hollow');
+    expect(q.categoryTaken!.physical).toBeCloseTo(BALANCE.provisional.abilities.def.physicalTaken);
+  });
+});
+
+describe('진화 확정', () => {
+  it('단계 +1, 슬롯 +1, 단계 기록 리셋(노력치 유지), 새 단계 시드, 런 로그 스냅샷', () => {
+    const e = absorbs(atTier(2), { water: 3, fire: 1 });
+    e.releases = 2;
+    const seed = e.stageSeed;
+    const b = buildWith('t-water-a');
+    const r = evolve(e, b, { factionId: 'hollow', hunger: 30, condition: 70 }, 77);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(e.tierIndex).toBe(1);
-    expect(build.slots).toHaveLength(before + 1);
-    expect(build.slots.at(-1)).toBeNull();
-    expect(e).toMatchObject({ absorbs: 0, lineageScores: {}, lastAbsorbSeq: {}, seq: 0, rareAbsorbs: 0, formId: r.form.id, formHistory: [r.form.id] });
-    expect(r.record).toEqual({ fromTier: 0, toTier: 1, fromFormId: null, toFormId: r.form.id, formId: r.form.id, accumulation: snapshot, at: 1234 });
-    expect(r.slotsAdded).toBe(EV.slotsPerEvolution);
-    expect(r.form.tier).toBe(2);
+    expect(e.tierIndex).toBe(3);
+    expect(b.slots).toHaveLength(BALANCE.absorb.slotCount + 1);
+    expect([e.steps, e.absorbs, e.releases, e.breakthroughs, e.elitesDefeated, e.alerts]).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(e.elementAbsorbs).toEqual({});
+    expect(e.stageSeed).not.toBe(seed);
+    expect(r.record).toMatchObject({ fromTier: 2, toTier: 3, fromFormId: 't3:base', toFormId: 't4:water', at: 77 });
+    expect(r.record.snapshot).toMatchObject({ elementAbsorbs: { water: 3, fire: 1 }, releases: 2, hunger: 30, condition: 70, equippedElement: 'water' });
   });
-
-  it('5단계까지 한 단계씩 올라가고, 끝 이후에는 진화할 수 없다 (퇴화·스킵 없음). 진화마다 이전 진화체가 다음 진화체의 경로가 된다', () => {
-    const e = newEvolution();
-    const build = newBuild();
-    const tiers = [0];
-    const froms: (string | null)[] = [];
-    for (let t = 0; t < 4; t++) {
-      for (let i = 0; i < EV.absorbsNeeded[t]!; i++) recordEvolutionAbsorb(e, [A, B, C, D, E][i % 5]!, i % 3 === 0);
-      const r = evolve(e, build, t);
-      expect(r.ok).toBe(true);
-      if (r.ok) froms.push(r.record.fromFormId);
-      tiers.push(e.tierIndex);
-    }
-    expect(tiers).toEqual([0, 1, 2, 3, 4]);
-    expect(froms[0]).toBeNull();
-    expect(froms.slice(1)).toEqual(e.formHistory.slice(0, 3));
-    expect(build.slots).toHaveLength(BALANCE.absorb.slotCount + 4);
-    expect(e.formHistory).toHaveLength(4);
-    expect(e.formHistory.map((id, i) => getForm(id).tier === i + 2)).toEqual([true, true, true, true]);
-    for (let i = 0; i < 12; i++) recordEvolutionAbsorb(e, A, false);
-    expect(absorbsNeeded(e)).toBeNull();
-    expect(canEvolve(e)).toBe(false);
-    expect(evolve(e, build, 99).ok).toBe(false);
-    expect(e.tierIndex).toBe(4);
-    expect(previewForm(e)).toBeNull();
-    expect(currentCandidates(e)).toEqual([]);
+  it('5단계 이후에는 진화하지 않는다', () => {
+    const e = atTier(4);
+    e.steps = 999;
+    expect(evolve(e, newBuild(), { factionId: 'hollow', hunger: 0, condition: 100 }, 0).ok).toBe(false);
   });
-
-  it('진화체 효과: 진화마다 체력·공격 배율이 곱해지고 전투 파라미터에 반영된다. 기본형은 효과가 낮다', () => {
-    const e = absorbed(...mix(A, B));
-    expect(evolutionMultipliers(e)).toMatchObject({ hp: 1, attack: 1 });
-    const p0: { playerMaxHp?: number } = {};
-    applyEvolutionToParams(p0, e);
-    expect(p0.playerMaxHp).toBeUndefined();
-    const r = evolve(e, newBuild(), 0);
-    if (!r.ok) throw new Error('진화 실패');
-    const m = evolutionMultipliers(e);
-    expect(m.hp).toBeCloseTo(r.form.effects.hpMultiplier);
-    // 패시브: A 우세형 = A 의 성향(공격 위력 ↑)
-    expect(r.form.effects.passive.attackPower).toBeGreaterThan(1);
-    const params: { playerMaxHp?: number; attackPowerMultiplier?: number } = { attackPowerMultiplier: 1.15 };
-    applyEvolutionToParams(params, e);
-    expect(params.playerMaxHp).toBeCloseTo(BALANCE.provisional.combat.playerMaxHp * r.form.effects.hpMultiplier);
-    expect(params.attackPowerMultiplier).toBeCloseTo(1.15 * r.form.effects.attackMultiplier * r.form.effects.passive.attackPower!);
-    expect(tierFallback(2).effects.hpMultiplier).toBeLessThan(r.form.effects.hpMultiplier);
-  });
-
-  it('미리보기와 후보 수: 실제 진화 결과와 같고, 후보는 기본형을 세지 않는다', () => {
-    const e = absorbed(...mix(C, D));
-    const peek = previewForm(e)!;
-    expect(currentCandidates(e).map((f) => f.id)).toEqual([peek.id]);
-    const r = evolve(cloneEvolution(e), newBuild(), 0);
-    expect(r.ok && r.form.id).toBe(peek.id);
-    expect(currentCandidates(newEvolution())).toEqual([]); // 흡수 0: 후보 없음 → 진화하면 기본형
-    expect(previewForm(newEvolution())!.fallback).toBe(true);
-    // 4단계 후보: 3단계 진화체 경로와 지금 분포에 따라 달라진다 (3단계 2조합은 경로 제한 없음, v1.1)
-    const e2 = absorbed(...times(C, 17), ...times(D, 17));
-    e2.tierIndex = 2;
-    e2.formId = 't3:pair@lineage-c+lineage-e';
-    expect(currentCandidates(e2).map((f) => f.id)).toContain('t4:deep-pair@lineage-c+lineage-d');
-    e2.formId = 't3:pair@lineage-a+lineage-b';
-    expect(currentCandidates(e2).map((f) => f.id)).not.toContain('t4:deep-pair@lineage-c+lineage-d');
-  });
-});
-
-describe('세이브·런 로그 연결', () => {
-  it('performEvolution: 기록이 RunLog.tiers.evolutions 에 쌓이고 도감이 해금되며 안정 수치·리스크는 그대로', () => {
-    const save = newSaveData('hollow', 0);
-    save.nest.stability = 72;
-    save.nest.risk = 33;
-    expect(save.formDex).toEqual([]);
-    for (const id of mix(A, B)) recordEvolutionAbsorb(save.evolution, id, false);
-    const snapshot = accumulationOf(save.evolution);
-    const r = performEvolution(save, 5000);
-    expect(r.ok).toBe(true);
-    expect(save.runLog.tiers.evolutions).toEqual([
-      { fromTier: 0, toTier: 1, fromFormId: null, toFormId: 't2:dominant@lineage-a', formId: 't2:dominant@lineage-a', accumulation: snapshot, at: 5000 },
-    ]);
-    expect(save.formDex).toEqual(['t2:dominant@lineage-a']);
-    expect(save.evolution.formId).toBe('t2:dominant@lineage-a');
-    expect(save.nest.stability).toBe(72);
-    expect(save.nest.risk).toBe(33);
-    expect(save.build.slots).toHaveLength(BALANCE.absorb.slotCount + 1);
-    expect(save.runLog.tiers.defeatedWhileAtTier).toEqual({});
-    expect(performEvolution(save, 6000).ok).toBe(false);
-    expect(save.runLog.tiers.evolutions).toHaveLength(1);
-    // 같은 진화체로 다시 진화해도 도감에 중복 해금되지 않는다
-    for (let i = 0; i < EV.absorbsNeeded[1]!; i++) recordEvolutionAbsorb(save.evolution, A, false);
-    expect(performEvolution(save, 7000).ok).toBe(true);
-    expect(save.formDex).toHaveLength(2);
-    expect(new Set(save.formDex).size).toBe(2);
-    expect(save.runLog.tiers.evolutions[1]!.fromFormId).toBe('t2:dominant@lineage-a');
-  });
-
-  it('원정: 흡수를 확정하면 그 계통의 누적이 오르고, 놓아주면 오르지 않는다. 귀환하면 세이브에 합쳐진다', () => {
+  it('원정: 흡수하면 그 적의 속성·노력치, 놓아주면 놓아준 수가 쌓이고 귀환하면 세이브에 합쳐진다', () => {
     const save = newSaveData('hollow', 0);
     const exp = createExpedition({ factionId: 'hollow', seed: 3, runId: 1, hunger: 0, condition: 100, deck: ['prey-nest-a'], evolution: save.evolution, build: save.build });
-    expect(exp.evolution).toEqual(save.evolution);
-    expect(exp.evolution).not.toBe(save.evolution);
-    for (const rare of [false, true]) {
+    const fight = () => {
       exp.wildCells = [exp.pos + 1];
       advance(exp);
       const b = startBattle(exp);
       b.enemy.hp = 0;
       b.status = 'won';
       b.params = { ...b.params, skills: [] };
-      exp.pending!.enemy.rare = rare;
       finishBattle(exp, b);
       expect(exp.phase).toBe('absorb');
-      expect(chooseAbsorb(exp, null).ok).toBe(true);
-    }
-    const expected: Record<string, number> = {};
-    for (const r of exp.absorbRecords) expected[r.lineageId] = (expected[r.lineageId] ?? 0) + (r.rare ? EV.rareWeight : 1);
-    expect(exp.absorbRecords.map((r) => r.rare)).toEqual([false, true]);
-    expect(exp.evolution.absorbs).toBe(2);
-    expect(exp.evolution.lineageScores).toEqual(expected);
-    expect(save.evolution.absorbs).toBe(0);
-    // 놓아주면 누적이 오르지 않는다
-    exp.wildCells = [exp.pos + 1];
-    advance(exp);
-    const rb = startBattle(exp);
-    rb.enemy.hp = 0;
-    rb.status = 'won';
-    rb.params = { ...rb.params, skills: [] };
-    finishBattle(exp, rb);
+      return exp.absorbOffer!;
+    };
+    const o = fight();
+    expect(chooseAbsorb(exp, null).ok).toBe(true);
+    expect(exp.evolution.elementAbsorbs[o.element]).toBe(1);
+    expect(evTotal(exp.evolution.ev)).toBeGreaterThan(0);
+    fight();
     expect(chooseRelease(exp).ok).toBe(true);
-    expect(exp.evolution.absorbs).toBe(2);
+    expect(exp.evolution.releases).toBe(1);
+    expect(save.evolution.absorbs).toBe(0);
     exp.phase = 'ended';
     exp.outcome = 'returned';
     exp.endReason = 'returned';
     exp.breakthrough = { lap: 1, cell: 1 };
     recordExpedition(save, exp, 10);
-    expect(save.evolution.absorbs).toBe(2);
-    expect(save.evolution).not.toHaveProperty('breakthroughThisTier'); // 돌파는 진화체 선택에 쓰지 않는다 (C.11)
-    expect(save.evolution.tierIndex).toBe(0);
+    expect(save.evolution.absorbs).toBe(1);
+    expect(save.evolution.releases).toBe(1);
+    expect(save.evolution.breakthroughs).toBe(1);
+    expect(save.runLog.absorbs[0]!.element).toBe(o.element);
   });
+});
 
-  it('형식 5 세이브가 열리고 기존 흡수 기록이 1단계 누적이 된다 (희귀 수 포함)', () => {
-    const old = newSaveData('hollow', 0) as unknown as Record<string, unknown>;
-    delete old.evolution;
-    delete old.formDex;
-    const log = emptyRunLog() as unknown as { tiers: Record<string, unknown>; absorbs: unknown[] };
-    delete log.tiers.evolutions;
-    log.absorbs = [
-      { runId: 1, enemyId: 'test-a', lineageId: A, rare: false, absorbed: true, traitId: null, lap: 1 },
-      { runId: 1, enemyId: 'test-b', lineageId: B, rare: true, absorbed: true, traitId: null, lap: 1 },
-      { runId: 1, enemyId: 'test-a', lineageId: C, rare: false, absorbed: false, traitId: null, lap: 2 },
-    ];
-    old.runLog = log;
-    old.meta = { format: 5, balanceVersion: 8, startPatch: 'C.7' };
-    const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(7);
-    expect(m.evolution.tierIndex).toBe(0);
-    expect(m.evolution.formId).toBeNull();
-    expect(m.evolution.absorbs).toBe(2);
-    expect(m.evolution.rareAbsorbs).toBe(1);
-    expect(m.evolution.lineageScores).toEqual({ [A]: 1, [B]: EV.rareWeight });
-    expect(m.formDex).toEqual([]);
-    expect(m.runLog.tiers.evolutions).toEqual([]);
-    expect(m.runLog.tiers.skipped).toBe(false);
-  });
-
-  it('형식 6 세이브(C.9 조합 진화)가 열린다: 현재 단계 유지, 현재 진화체는 그 단계 기본형, 도감은 기록에서 가능한 만큼', () => {
-    const old = newSaveData('hollow', 0) as unknown as Record<string, any>;
-    old.meta = { format: 6, balanceVersion: 11, startPatch: 'C.10' };
-    delete old.formDex;
-    old.evolution = {
-      tierIndex: 3, formId: 'lineage-b+lineage-c@3:mutant', formHistory: ['lineage-a@1:orthodox', 'lineage-a+lineage-b@2:mutant', 'lineage-b+lineage-c@3:mutant'],
-      absorbs: 12, lineageScores: { [C]: 7, [D]: 8 }, lastAbsorbSeq: { [C]: 5, [D]: 12 }, seq: 12, breakthroughThisTier: true,
+describe('세이브 마이그레이션 (형식 13 → 14)', () => {
+  /** 형식 13 세이브 모양 (옛 계통·특성·진화체 id) */
+  function oldSave13(): Record<string, any> {
+    const s = newSaveData('hollow', 0) as unknown as Record<string, any>;
+    s.meta = { format: 13, balanceVersion: 22, startPatch: 'C.46' };
+    s.build = { owned: ['trait-a1', 'trait-b1', 'trait-c5', 'trait-zzz'], slots: ['trait-a1', 'trait-c5', 'trait-b1', null] };
+    s.evolution = {
+      tierIndex: 3, formId: 't4:triple@lineage-c+lineage-a+lineage-b', formHistory: ['t2:dominant@lineage-a', 't3:pair@lineage-a+lineage-b', 't4:triple@lineage-c+lineage-a+lineage-b'],
+      absorbs: 20, lineageScores: { 'lineage-a': 12, 'lineage-c': 8 }, lastAbsorbSeq: {}, seq: 20, rareAbsorbs: 1,
     };
-    old.runLog.tiers.evolutions = [
-      { fromTier: 0, toTier: 1, comboKey: 'lineage-a', formId: 'lineage-a@1:orthodox', stability: 60, at: 1 },
-      { fromTier: 1, toTier: 2, comboKey: 'lineage-a+lineage-b', formId: 'lineage-a+lineage-b@2:mutant', stability: 40, at: 2 },
-      { fromTier: 2, toTier: 3, comboKey: 'lineage-c+lineage-b', formId: 'lineage-b+lineage-c@3:mutant', stability: 40, at: 3 },
-    ];
-    const m = migrateSave(old)!;
+    s.formDex = ['t2:dominant@lineage-a', 't2:base'];
+    s.runLog.absorbs = [{ runId: 1, enemyId: 'a-basic', lineageId: 'lineage-b', rare: false, absorbed: true, traitId: 'trait-a1', lap: 1 }];
+    s.runLog.battles = [];
+    s.activeExpedition = { version: 1, old: true };
+    s.lastScreen = 'expedition';
+    return s;
+  }
+
+  it('옛 특성 id 는 같은 종류·역할·계열의 속성 특성으로, 모르는 id 는 버린다', () => {
+    const m = migrateSave(oldSave13())!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(m.evolution).toEqual({
-      tierIndex: 3, formId: 't4:base', formHistory: ['t2:dominant@lineage-a', 't3:pair@lineage-a+lineage-b', 't4:base'],
-      absorbs: 12, lineageScores: { [C]: 7, [D]: 8 }, lastAbsorbSeq: { [C]: 5, [D]: 12 }, seq: 12, rareAbsorbs: 0,
-    });
-    expect(m.evolution).not.toHaveProperty('breakthroughThisTier');
-    expect(new Set(m.formDex)).toEqual(new Set(['t2:dominant@lineage-a', 't3:pair@lineage-a+lineage-b', 't4:base'])); // 4단계 2조합 기록은 맞는 진화체를 알 수 없다
-    // 옛 기록은 호환용 필드를 그대로 가진다 (빼지 않는다)
-    expect(m.runLog.tiers.evolutions[0]).toMatchObject({ comboKey: 'lineage-a', stability: 60 });
-    // 진화 형태 id 는 모두 새 테이블에 있다 (효과 계산이 던지지 않는다)
-    expect(() => evolutionMultipliers(m.evolution)).not.toThrow();
-    // 이어서 진화가 된다
-    for (let i = 0; i < EV.absorbsNeeded[3]! - 12; i++) recordEvolutionAbsorb(m.evolution, D, false);
-    const r = performEvolution(m, 9);
-    expect(r.ok).toBe(true);
-    expect(m.evolution.tierIndex).toBe(4);
+    expect(SAVE_FORMAT_VERSION).toBe(14);
+    expect(m.build.owned).toEqual(['t-fire-a', 't-earth-guard', 't-thunder-c']);
+    expect(m.build.slots).toEqual(['t-fire-a', 't-thunder-c', 't-earth-guard', null]);
+    expect(m.build.equipOrder).toEqual(['t-fire-a', 't-thunder-c', 't-earth-guard']);
+    for (const id of Object.values(LEGACY_TRAIT_MAP)) expect(migrateTraitId(id)).toBe(id);
+    expect(migrateTraitId('trait-zzz')).toBeNull();
   });
 
-  it('형식 6 세이브: 맞는 진화체를 알 수 없으면(5단계 3조합·기록 없음) 기본형만 해금한다', () => {
-    const old = newSaveData('hollow', 0) as unknown as Record<string, any>;
-    old.meta = { format: 6, balanceVersion: 11, startPatch: 'C.10' };
-    delete old.formDex;
-    old.evolution = { tierIndex: 1, formId: 'base@1:orthodox', formHistory: ['base@1:orthodox'], absorbs: 3, lineageScores: { [A]: 3 }, lastAbsorbSeq: { [A]: 3 }, seq: 3, breakthroughThisTier: false };
+  it('진화: 단계를 유지하고 새 트리의 대응 형태로 (4단계 = 옛 4단계 첫 계통의 속성), 계통 누적은 버리고 걸음 0부터', () => {
+    const m = migrateSave(oldSave13())!;
+    // 옛 4단계 진화체의 첫 계통 lineage-c → 뇌
+    expect(m.evolution.formHistory).toEqual(['t2:base', 't3:base', 't4:thunder']);
+    expect(m.evolution.formId).toBe('t4:thunder');
+    expect(m.evolution.tierIndex).toBe(3);
+    expect(m.evolution.steps).toBe(0);
+    expect(m.evolution.absorbs).toBe(0);
+    expect(evTotal(m.evolution.ev)).toBe(0);
+    expect(m.evolution).not.toHaveProperty('lineageScores');
+    expect(m.evolution.ability).not.toBeNull();
+    expect(m.formDex).toEqual(['t2:base', 't3:base', 't4:thunder']);
+    expect(m.activeExpedition).toBeNull();
+    expect(m.lastScreen).toBe('room');
+    expect(m.runLog.absorbs[0]).toMatchObject({ lineageId: 'lineage-b', element: null });
+  });
+
+  it('5단계 세이브는 바스트로데 속성 × 지금 장착 최다 분류의 아란칼이 되고, 이어서 원정·전투 파라미터가 만들어진다', () => {
+    const old = oldSave13();
+    old.evolution.tierIndex = 4;
+    old.evolution.formHistory.push('t5:pair@lineage-a+lineage-b');
     const m = migrateSave(old)!;
-    expect(m.evolution.formId).toBe('t2:base');
-    expect(m.evolution.formHistory).toEqual(['t2:base']);
-    expect(m.formDex).toEqual(['t2:base']);
+    // 장착: 물리(t-fire-a)·특수(t-thunder-c) 동률 → 더 최근(슬롯 순서상 뒤) 특수
+    expect(m.evolution.formId).toBe('t5:thunder:special');
+    const p: Partial<CombatParams> = {};
+    expect(() => applyEvolutionToParams(p, m.evolution, m.factionId)).not.toThrow();
+    expect(p.playerElements).toEqual(['thunder']);
   });
 
-  it('형식 1 세이브도 끝까지 마이그레이션되어 진화 상태와 도감을 가진다', () => {
+  it('형식 1·5 세이브도 끝까지 열리고, loadSave 로 읽힌다', () => {
     const old = { meta: { format: 1, balanceVersion: 1, startPatch: 'C.1' }, factionId: 'hollow', runLog: { ...emptyRunLog(), battles: [], tiers: { skipped: false, defeatedWhileAtTier: {} } } };
     const m = migrateSave(old)!;
-    expect(m.evolution).toEqual(newEvolution());
+    expect(m.evolution.tierIndex).toBe(0);
+    expect(m.evolution.formId).toBeNull();
     expect(m.formDex).toEqual([]);
-    expect(m.runLog.tiers.evolutions).toEqual([]);
+    const store = new Map<string, string>([['k', JSON.stringify(oldSave13())]]);
+    const loaded = loadSave({ getItem: (k) => store.get(k) ?? null, setItem: () => {} }, 'k');
+    expect(loaded?.meta.format).toBe(14);
+    expect(loaded?.evolution.formId).toBe('t4:thunder');
   });
 
   it('현재 형식 세이브는 그대로 열린다', () => {
@@ -321,27 +406,23 @@ describe('세이브·런 로그 연결', () => {
 });
 
 describe('종족 설정만 바꿔 표기가 바뀐다 (코드 분기 없음)', () => {
-  it('단계 이름은 종족 설정에서 나오고 엔진 결과는 종족과 무관하다', () => {
-    const h = getFaction('hollow');
-    const s = getFaction('shinigami');
-    expect(h.tierNames[1]).toBe('길리안');
-    expect(s.tierNames[1]).not.toBe(h.tierNames[1]);
-    // 같은 흡수 이력이면 두 종족의 엔진 결과가 같다 (진화체 id 는 종족과 무관)
-    const run = () => {
-      const r = evolve(absorbed(...mix(A, B)), newBuild(), 0);
-      return r.ok ? r.form : null;
-    };
-    expect(run()).toEqual(run());
-    expect(run()!.id).toBe('t2:dominant@lineage-a');
-    // 모든 종족 설정에 5단계 이름이 있다 (3번째 종족도 설정 파일만으로 단계 이름을 낸다)
-    for (const f of FACTIONS) expect(f.tierNames).toHaveLength(5);
-    expect(FORM_TABLE.length).toBeGreaterThan(0);
+  it('같은 상태면 두 종족의 판정 결과가 같다 (진화체 id 는 종족과 무관)', () => {
+    const run = (factionId: string) => judgeEvolution(absorbs(atTier(2), { water: 5, earth: 5 }), { ...ctxOf(buildWith('t-water-a')), factionId }).form.id;
+    expect(run('hollow')).toBe(run('shinigami'));
+    for (const f of FACTIONS) {
+      expect(f.tierNames).toHaveLength(5);
+      expect(f.baseStats).toBeDefined();
+      expect(f.evolutionNearText).toHaveLength(2);
+    }
+    // 일반 35종 = 1단계(진화체 없음) + 1 + 1 + 8 + 24, 히든 11
+    expect(FORM_TABLE.filter((f) => !f.hidden)).toHaveLength(34);
+    expect(FORM_TABLE.filter((f) => f.hidden)).toHaveLength(11);
   });
 
   it('엔진·데이터 코드에 종족 id 분기가 없다', () => {
     for (const file of [
-      'src/engine/evolution/evolution.ts', 'src/engine/evolution/select.ts', 'src/engine/evolution/analysis.ts',
-      'src/data/evolution/index.ts', 'src/data/evolution/generate.ts', 'src/data/evolution/build.ts', 'src/ui/dexView.ts', 'src/ui/evolutionPanel.ts',
+      'src/engine/evolution/evolution.ts', 'src/engine/evolution/judge.ts', 'src/engine/evolution/analysis.ts', 'src/engine/combat/combat.ts', 'src/data/elements/index.ts',
+      'src/data/evolution/index.ts', 'src/data/evolution/generate.ts', 'src/data/evolution/build.ts', 'src/saveLegacy.ts', 'src/ui/dexView.ts', 'src/ui/evolutionPanel.ts', 'src/ui/bha/element.ts',
     ]) {
       const src = readFileSync(file, 'utf8');
       expect(src, file).not.toMatch(/===?\s*['"](hollow|shinigami)['"]/);

@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { ENEMIES, enemyPatternKind, getEnemy, hasSpecialActions, parseEnemy, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
-import { LINEAGES } from '../src/data/lineages';
+import { ELEMENTS } from '../src/data/elements';
+const LINEAGES = ELEMENTS; // C.47: 계통 A~E → 속성 8종
 import { ENEMY_PATTERN_KINDS, type EnemyDef, type EnemyPatternKind } from '../src/data/schema';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import { applyInput, blockDamage, createCombat, drainCombatEvents, enemyAttackSecondsOf, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
@@ -40,27 +41,41 @@ const enemyOnly = (enemy: EnemyDef, params?: Partial<CombatParams>) => {
 const events = (s: CombatState) => drainCombatEvents(s);
 const countOf = (s: CombatState, kind: string) => events(s).filter((e) => e.kind === kind).length;
 
-describe('적 데이터 (임시 계통 5개 × 일반 2종+ · 강적 1종+)', () => {
-  it('계통 A~E 각각을 약점으로 가진 일반 적 2종 이상과 강적 1종 이상이 있다, 전부 provisional', () => {
-    expect(LINEAGES).toHaveLength(5);
+describe('적 데이터 (속성 8종 × 일반 3종 · 강적 3종, C.47)', () => {
+  it('속성마다 일반 적 2종 이상과 강적 1종 이상이 있다, 전부 provisional, 분류·노력치가 있다', () => {
+    expect(LINEAGES).toHaveLength(8);
     for (const l of LINEAGES) {
-      expect(pool.filter((e) => e.class === 'normal' && e.weaknessLineageId === l.id).length, l.id).toBeGreaterThanOrEqual(2);
-      expect(pool.filter((e) => e.class === 'elite' && e.weaknessLineageId === l.id).length, l.id).toBeGreaterThanOrEqual(1);
+      expect(pool.filter((e) => e.class === 'normal' && e.element === l.id).length, l.id).toBeGreaterThanOrEqual(2);
+      expect(pool.filter((e) => e.class === 'elite' && e.element === l.id).length, l.id).toBeGreaterThanOrEqual(1);
+    }
+    for (const e of pool) {
+      expect(['physical', 'special', 'mixed']).toContain(e.category);
+      expect(Object.values(e.ev).reduce((a, b) => a + (b ?? 0), 0), e.id).toBeGreaterThan(0);
     }
     for (const e of pool) expect(e.provisional, e.id).toBe(true);
     expect(new Set(ENEMIES.map((e) => e.id)).size).toBe(ENEMIES.length);
   });
 
-  it('이름은 자리 표시("A약점 일반 1")이고 모든 종족에서 읽힌다', () => {
-    for (const e of pool) expect(e.name['*'], e.id).toMatch(/^[A-E]약점 (일반|강적) \d$/);
+  it('이름은 자리 표시("불 일반 1")이고 모든 종족에서 읽힌다', () => {
+    for (const e of pool) expect(e.name['*'], e.id).toMatch(/^\S+ (일반|강적) \d$/);
   });
 
-  it('일반 적 3종류·강적 3종류가 모두 데이터에 있고, 계통마다 종류가 빠짐없다', () => {
+  it('방어·정신력 성향은 분류 선택이 의미 있게 갈리지만 평균은 1 근처 (C.47)', () => {
+    for (const e of pool) {
+      const d = e.statBias?.def ?? 1;
+      const sp = e.statBias?.spr ?? 1;
+      expect(Math.abs(Math.log(d * sp)), e.id).toBeLessThan(0.05);
+    }
+    expect(pool.some((e) => (e.statBias?.def ?? 1) > (e.statBias?.spr ?? 1))).toBe(true);
+    expect(pool.some((e) => (e.statBias?.def ?? 1) < (e.statBias?.spr ?? 1))).toBe(true);
+  });
+
+  it('일반 적 3종류·강적 3종류가 모두 데이터에 있고, 속성마다 종류가 빠짐없다', () => {
     const kinds = new Set(pool.map(enemyPatternKind));
     expect([...kinds].sort()).toEqual([...ENEMY_PATTERN_KINDS].sort());
     for (const k of ENEMY_PATTERN_KINDS) {
       const group = pool.filter((e) => enemyPatternKind(e) === k);
-      for (const l of LINEAGES) expect(group.some((e) => e.weaknessLineageId === l.id), `${k}/${l.id}`).toBe(true);
+      for (const l of LINEAGES) expect(group.some((e) => e.element === l.id), `${k}/${l.id}`).toBe(true);
     }
   });
 
@@ -75,7 +90,11 @@ describe('적 데이터 (임시 계통 5개 × 일반 2종+ · 강적 1종+)', (
   });
 
   it('검증: 알 수 없는 패턴 종류·필드 누락·잘못된 값을 거부한다', () => {
-    const base = { ...getEnemy('a-basic') } as Record<string, unknown>;
+    const base = { ...getEnemy('fire-basic') } as Record<string, unknown>;
+    expect(() => parseEnemy({ ...base, element: 'wind' })).toThrow(/element/);
+    expect(() => parseEnemy({ ...base, category: 'magic' })).toThrow(/category/);
+    expect(() => parseEnemy({ ...base, ev: { luck: 1 } })).toThrow(/ev/);
+    expect(() => parseEnemy({ ...base, statBias: { def: 0 } })).toThrow(/statBias/);
     expect(() => parseEnemy({ ...base, pattern: { kind: 'nope' } })).toThrow(/pattern\.kind/);
     expect(() => parseEnemy({ ...base, pattern: { kind: 'swift' } })).toThrow(/attackSeconds/);
     expect(() => parseEnemy({ ...base, pattern: { kind: 'heavy-chain', everySeconds: 9, castSeconds: 2, heavyInAttacks: 1, hits: 2.5, followCastSeconds: 1 } })).toThrow(/hits/);
@@ -173,11 +192,11 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
     const e = ofKind('elite', 'heavy-chain');
     const p = pat(e, 'heavy-chain');
     const run = (guard: boolean) => {
-      const s = enemyOnly(e, build('trait-b1'));
+      const s = enemyOnly(e, build('t-earth-guard'));
       s.enemy.attackTimer = 1e9;
       wait(s, p.everySeconds + 0.2);
       if (guard) {
-        s.tray = [blk('trait-b1')];
+        s.tray = [blk('t-earth-guard')];
         expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
       }
       const before = s.player.hp;
@@ -196,15 +215,15 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
   it('방어 자세: 자세 중 내 블록 피해가 줄고, 블록을 쓸 때마다 반격을 받으며, 자세가 풀리면 원래대로 돌아온다', () => {
     const e = ofKind('elite', 'stance');
     const p = pat(e, 'stance');
-    const s = enemyOnly(e, build('trait-c5')); // 공격 스킬
+    const s = enemyOnly(e, build('t-thunder-c')); // 공격 스킬
     s.enemy.attackTimer = 1e9;
-    const b = blk('trait-c5');
+    const b = blk('t-thunder-c');
     const normalDamage = blockDamage(s, b);
     wait(s, p.everySeconds + 0.2);
     expect(s.enemy.stance).not.toBeNull();
     expect(events(s).some((x) => x.kind === 'stance')).toBe(true);
     expect(blockDamage(s, b)).toBeCloseTo(normalDamage * p.blockDamageMultiplier);
-    s.tray = [blk('trait-c5')];
+    s.tray = [blk('t-thunder-c')];
     const hp = s.player.hp;
     const hpE = s.enemy.hp;
     expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
@@ -218,7 +237,7 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
     expect(s.enemy.stance).toBeNull();
     expect(events(s).some((x) => x.kind === 'stance-end')).toBe(true);
     expect(blockDamage(s, b)).toBeCloseTo(normalDamage);
-    s.tray = [blk('trait-c5')];
+    s.tray = [blk('t-thunder-c')];
     const hp2 = s.player.hp;
     applyInput(s, { type: 'use', cell: 0 });
     expect(hp2 - s.player.hp).toBe(0); // 자세가 아니면 반격 없음
@@ -228,25 +247,25 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
     const e = ofKind('elite', 'stance');
     const p = pat(e, 'stance');
     const counterTaken = (guardFirst: boolean) => {
-      const s = enemyOnly(e, build('trait-a5', 'trait-c5'));
+      const s = enemyOnly(e, build('t-fire-guard', 't-thunder-c'));
       s.enemy.attackTimer = 1e9;
       wait(s, p.everySeconds + 0.2);
-      s.tray = [blk(guardFirst ? 'trait-a5' : 'trait-c5')];
+      s.tray = [blk(guardFirst ? 't-fire-guard' : 't-thunder-c')];
       const before = s.player.hp;
       applyInput(s, { type: 'use', cell: 0 });
       return before - s.player.hp;
     };
-    // trait-a5 = 막기 블록: 쓰는 순간 막기 상태가 되어 그 블록이 부른 반격이 경감된다
+    // t-fire-guard = 막기 블록: 쓰는 순간 막기 상태가 되어 그 블록이 부른 반격이 경감된다
     expect(counterTaken(true)).toBeLessThan(counterTaken(false) * 0.75);
   });
 
   it('방어 자세: 마무리 일격으로 적이 쓰러지면 반격은 없다', () => {
     const e = ofKind('elite', 'stance');
-    const s = enemyOnly(e, build('trait-c5'));
+    const s = enemyOnly(e, build('t-thunder-c'));
     s.enemy.attackTimer = 1e9;
     wait(s, pat(e, 'stance').everySeconds + 0.2);
     s.enemy.hp = 0.001;
-    s.tray = [blk('trait-c5')];
+    s.tray = [blk('t-thunder-c')];
     const hp = s.player.hp;
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.status).toBe('won');
@@ -256,7 +275,7 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
   it('stagger 추가 효과는 모든 특수 행동 패턴의 다음 행동을 늦춘다 (패턴 종류별 일반 처리)', () => {
     for (const kind of ['heavy-seal', 'heavy-chain', 'stance'] as const) {
       const e = ofKind('elite', kind);
-      const s = enemyOnly(e, { skills: [{ id: 'sk', lineageId: null, role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 2 }, powerMultiplier: 1 }] });
+      const s = enemyOnly(e, { skills: [{ id: 'sk', element: null, category: 'mixed', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 2 }, powerMultiplier: 1 }] });
       const before = s.enemy.actionTimer;
       s.tray = [blk('sk'), blk('sk'), blk('sk')];
       expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
@@ -319,7 +338,7 @@ describe('적 출현 풀 (바퀴·타일 종류)', () => {
         playBattle: (s) => {
           s.enemy.hp = 0;
           s.status = 'won';
-          s.finisher = { kind: 'basic-attack', traitId: null, lineageId: null };
+          s.finisher = { kind: 'basic-attack', traitId: null, element: null };
         },
       });
     const a = run(11);
@@ -343,15 +362,15 @@ describe('적 출현 풀 (바퀴·타일 종류)', () => {
     }
   });
 
-  it('약점 계통이 한쪽에 몰리지 않는다: 어느 바퀴·출처의 풀에서도 각 계통 약점 적이 10% 이상', () => {
+  it('속성이 한쪽에 몰리지 않는다: 어느 바퀴·출처의 풀에서도 각 속성 적이 6% 이상', () => {
     for (const cls of ['normal', 'elite'] as const) {
       for (const source of ['wild', 'environment', 'combo']) {
         for (let lap = 1; lap <= 6; lap++) {
           const p = enemyPool(cls, lap, source);
           const total = p.reduce((a, e) => a + e.weight, 0);
           for (const l of LINEAGES) {
-            const share = p.filter((e) => e.enemy.weaknessLineageId === l.id).reduce((a, e) => a + e.weight, 0) / total;
-            expect(share, `${cls}/${source}/${lap}바퀴/${l.id}`).toBeGreaterThanOrEqual(0.1);
+            const share = p.filter((e) => e.enemy.element === l.id).reduce((a, e) => a + e.weight, 0) / total;
+            expect(share, `${cls}/${source}/${lap}바퀴/${l.id}`).toBeGreaterThanOrEqual(0.06);
           }
         }
       }

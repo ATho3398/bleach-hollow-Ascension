@@ -2,13 +2,12 @@
 
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
-import { completedLineages, newBuild, type BuildState } from './engine/absorb';
+import { completedElements, newBuild, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult } from './engine/expedition';
-import {
-  cloneEvolution, evolve, newEvolution, recordEvolutionAbsorb, type EvolutionState, type EvolveResult,
-} from './engine/evolution';
-import { formsOfTier, tierFallback } from './data/evolution';
+import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { tryGetForm } from './data/evolution';
+import { migrateBuild, migrateEvolution } from './saveLegacy';
 import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
 import { tilesFor } from './data/tiles';
 import { TITLES } from './data/titles';
@@ -18,7 +17,7 @@ import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 13;
+export const SAVE_FORMAT_VERSION = 14;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -41,9 +40,9 @@ export interface SaveData {
   factionId: string;
   /** 둥지 상태: 허기·컨디션 (GDD 7장) */
   nest: NestState;
-  /** 흡수 빌드: 가진 특성과 슬롯 (GDD 4장). 계통·특성은 임시 데이터 */
+  /** 흡수 빌드: 가진 특성과 슬롯·장착 순서 (GDD 4장). 속성·특성은 임시 데이터 */
   build: BuildState;
-  /** 진화 상태: 현재 단계(0~4), 현재 단계 계통별 흡수 누적, 현재 진화체 id와 지금까지의 진화체 (GDD 4-2 v1.0). 수치·데이터는 임시 */
+  /** 진화 상태 (GDD 20-5, 형식 14): 단계·진화 경로·이 단계 걸음/흡수 속성/행동 기록·노력치·고유 특성. 수치·데이터는 임시 */
   evolution: EvolutionState;
   /** 진화체 도감 해금 목록 (진화체 id). 한 번 진화한 진화체가 해금된다 (C.11) */
   formDex: string[];
@@ -72,11 +71,12 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room' };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room' };
 }
 
-/** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
-export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): void {
+/** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
+ *  진화 타이밍(걸음 수)에 닿았으면 둥지에 돌아온 그 순간 상태로 자동 진화한다 (GDD 20-5 v4.1, 패배로 돌아와도). 진화했으면 그 결과를 돌려준다(화면이 연출) */
+export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): EvolveResult | null {
   const log = save.runLog;
   log.battles.push(...exp.battles);
   log.runs.push(buildRunRecord(exp));
@@ -87,8 +87,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
     log.risk.breakthroughs++;
     if (exp.outcome === 'returned') log.risk.survivedBreakthroughs++;
   }
-  // 이 원정이 끝난 뒤의 슬롯으로 계통 완성 기록 (패배로 잃은 진행도는 세지 않는다)
-  for (const lineageId of completedLineages(exp.build)) {
+  // 이 원정이 끝난 뒤의 슬롯으로 속성 보너스 완성 기록 (패배로 잃은 진행도는 세지 않는다). 기록 이름은 옛 구조(lineageId) 그대로, 값은 속성 id
+  for (const lineageId of completedElements(exp.build)) {
     let rec = log.lineages.find((l) => l.lineageId === lineageId);
     if (!rec) log.lineages.push((rec = { lineageId, completed: false, conflictingTried: false }));
     if (!rec.completed) {
@@ -97,14 +97,17 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
     }
   }
   save.build = cloneBuildOf(exp.build);
-  // 진화 상태: 원정 중 쌓인 흡수 누적을 합친다 (한계 돌파는 진화체 선택에 쓰지 않는다, GDD 4-2 v1.0)
+  // 진화 상태: 원정 중 쌓인 걸음·흡수 속성·노력치·행동 기록을 합친다. 한계 돌파는 원정당 한 번 센다 (아란칼 행동 히든, GDD 20-5)
   save.evolution = cloneEvolution(exp.evolution);
+  if (exp.breakthrough) recordEvolutionBreakthrough(save.evolution);
   for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   storeUnplacedTiles(save.tiles, unplacedKept(exp));
   applyExpeditionEnd(save.nest, exp, nowMs);
   save.activeExpedition = null;
   save.lastScreen = 'room';
   checkTitles(save, 'expedition', nowMs);
+  // 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것)
+  return canEvolve(save.evolution) ? performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition }) : null;
 }
 
 /** 놓지 않고 남은 획득 타일을 다음 원정 덱에 넣는다 (GDD 17-1): 덱 상한과 보유 수량을 넘기면 덱에는 못 넣는다(보유에는 이미 들어 있다) */
@@ -131,12 +134,13 @@ export function resumeTarget(save: Pick<SaveData, 'lastScreen' | 'activeExpediti
 }
 
 function cloneBuildOf(b: BuildState): BuildState {
-  return { owned: [...b.owned], slots: [...b.slots] };
+  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])] };
 }
 
-/** 둥지에서 진화를 확정한다 (원정 중에는 부르지 않는다). 슬롯 +1, 누적 리셋, 도감 해금, 런 로그에 기록. 안정 수치·리스크는 그대로 */
-export function performEvolution(save: SaveData, nowMs: number = Date.now()): EvolveResult {
-  const r = evolve(save.evolution, save.build, nowMs);
+/** 둥지에서 진화를 확정한다 (원정 중에는 부르지 않는다, 귀환 때 recordExpedition 이 부른다). 그 순간 장착 특성·허기·컨디션으로 판정.
+ *  슬롯 +1, 단계 기록 리셋(노력치 유지), 도감 해금, 런 로그에 기록. 안정 수치·리스크는 그대로 */
+export function performEvolution(save: SaveData, nowMs: number = Date.now(), care: { hunger: number; condition: number } = save.nest): EvolveResult {
+  const r = evolve(save.evolution, save.build, { factionId: save.factionId, hunger: care.hunger, condition: care.condition }, nowMs);
   if (r.ok) {
     save.runLog.tiers.evolutions.push(r.record);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
@@ -235,16 +239,15 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.meta.format = 5;
   }
   if (save.meta.format < 6) {
-    // 형식 5 → 6 (C.9 조합 진화): 진화 상태 추가(1단계), RunLog.tiers.evolutions 추가.
-    // 지금까지 흡수한 기록(runLog.absorbs)을 1단계 계통별 누적으로 옮겨 기존 세이브도 진화 진행이 시작된다
+    // 형식 5 → 6 (C.9 조합 진화): 진화 상태 추가(1단계), RunLog.tiers.evolutions 추가. (옛 계통 누적 옮기기는 형식 14 에서 버리므로 생략)
     save.evolution = newEvolution();
-    for (const a of save.runLog.absorbs ?? []) if (a.absorbed) recordEvolutionAbsorb(save.evolution, a.lineageId, a.rare);
     save.runLog.tiers = { ...save.runLog.tiers, evolutions: save.runLog.tiers?.evolutions ?? [] };
     save.meta.format = 6;
   }
   if (save.meta.format < 7) {
-    // 형식 6 → 7 (C.11 단계별 진화체 테이블): 현재 단계는 유지하고 현재 진화체는 그 단계 기본형으로. 도감은 과거 진화 기록(조합 키)에서 가능한 만큼 채운다
-    migrateEvolutionV7(save);
+    // 형식 6 → 7 (C.11 단계별 진화체 테이블): 현재 단계만 유지 (진화 경로는 형식 14 가 옛 진화체 id 를 읽어 새 트리로 만든다)
+    save.evolution = save.evolution ?? newEvolution();
+    save.formDex = [];
     save.meta.format = 7;
   }
   if (save.meta.format < 8) {
@@ -279,6 +282,20 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.lastScreen = save.activeExpedition != null ? 'expedition' : 'room';
     save.meta.format = 13;
   }
+  if (save.meta.format < 14) {
+    // 형식 13 → 14 (C.47 속성·능력치·진화 간략화, GDD 20장): 옛 특성 id → 속성 특성, 진화 경로 → 새 트리의 대응 형태(단계 유지), 계통 누적은 버림, 걸음 0부터.
+    // 도감은 새 경로로 다시 채운다. 원정 중간 저장은 옛 전투·빌드 구조라 이어할 수 없어 비운다(빌드는 원정 출발 전 세이브 값이 남아 있다).
+    // 런 로그 옛 기록은 그대로 두고 새 필드(흡수 속성·마무리 속성)는 null 로 채운다
+    save.build = migrateBuild(save.build, save.build?.slots?.length ?? BALANCE.absorb.slotCount);
+    save.evolution = migrateEvolution(save.evolution, save.build, save.factionId, save.runLog.runs?.length ?? 0);
+    save.formDex = [...save.evolution.formHistory];
+    save.activeExpedition = null;
+    if (save.lastScreen === 'expedition') save.lastScreen = 'room';
+    save.runLog.absorbs = (save.runLog.absorbs ?? []).map((a) => ({ ...a, element: a.element ?? null }));
+    save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, finisherElement: b.finisherElement ?? null }));
+    save.meta.format = 14;
+  }
+  save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
   // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)
   if (typeof save.activeExpedition !== 'object' || Array.isArray(save.activeExpedition)) save.activeExpedition = null;
@@ -329,40 +346,4 @@ export function sanitizeDeck(stock: TileStock, factionId: string, size: number =
     }
   }
   return deck;
-}
-
-/** C.9 조합 키("lineage-a+lineage-b" / "base")를 새 진화체로 옮긴다. 맞는 것이 없으면 undefined (예: 5단계 3조합은 균등/편중을 알 수 없다) */
-function legacyComboToForm(comboKey: string | undefined, tier: number): string | undefined {
-  if (!comboKey || comboKey === 'base') return undefined;
-  const key = comboKey.split('+').sort().join('+');
-  return formsOfTier(tier).find(
-    (f) => !f.fallback && ['dominant', 'pair', 'triple'].includes(f.label.kind) && f.label.lineages.join('+') === key,
-  )?.id;
-}
-
-function migrateEvolutionV7(save: SaveData): void {
-  const old = (save.evolution ?? newEvolution()) as EvolutionState & { breakthroughThisTier?: boolean };
-  const tierIndex = old.tierIndex ?? 0;
-  const history: string[] = [];
-  const dex = new Set<string>();
-  const records = save.runLog.tiers?.evolutions ?? [];
-  for (let t = 1; t <= tierIndex; t++) {
-    const mapped = legacyComboToForm(records.find((r) => r.toTier === t)?.comboKey, t + 1);
-    if (mapped) dex.add(mapped);
-    // 현재 단계는 기본형으로 시작한다
-    history.push(t === tierIndex ? tierFallback(t + 1).id : (mapped ?? tierFallback(t + 1).id));
-  }
-  if (tierIndex > 0) dex.add(history[tierIndex - 1]!);
-  const rare = tierIndex === 0 ? (save.runLog.absorbs ?? []).filter((a) => a.absorbed && a.rare).length : 0;
-  save.evolution = {
-    tierIndex,
-    formId: tierIndex > 0 ? history[tierIndex - 1]! : null,
-    formHistory: history,
-    absorbs: old.absorbs ?? 0,
-    lineageScores: { ...(old.lineageScores ?? {}) },
-    lastAbsorbSeq: { ...(old.lastAbsorbSeq ?? {}) },
-    seq: old.seq ?? 0,
-    rareAbsorbs: old.rareAbsorbs ?? rare,
-  };
-  save.formDex = [...dex];
 }

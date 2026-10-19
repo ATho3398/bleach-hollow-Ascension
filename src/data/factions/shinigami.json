@@ -38,12 +38,29 @@
   "basicSkillName": "시해",
   "huntingGroundName": "현세 순찰 구역 / 루콘가이",
   "maxChain": 3,
+  "baseStats": {
+    "hp": 50,
+    "atk": 50,
+    "int": 50,
+    "def": 50,
+    "spr": 50,
+    "spd": 50
+  },
+  "matchupText": {
+    "strong": "효과가 굉장하다!",
+    "weak": "효과가 별로인 듯하다…"
+  },
+  "evolutionNearText": [
+    "영압이 근질거린다…",
+    "참백도가 떨린다… 곧 한 단계 오를 것 같다."
+  ],
   "families": [
     {
       "id": "family-a",
       "name": "참(斬)",
       "abbr": "참",
       "fx": "slash",
+      "category": "physical",
       "tiers": [
         {
           "name": "베기",
@@ -69,6 +86,7 @@
       "name": "권(拳)",
       "abbr": "권",
       "fx": "impact",
+      "category": "mixed",
       "tiers": [
         {
           "name": "타격",
@@ -94,6 +112,7 @@
       "name": "귀(鬼)",
       "abbr": "귀",
       "fx": "beam",
+      "category": "special",
       "tiers": [
         {
           "name": "파도의 1 쇼",

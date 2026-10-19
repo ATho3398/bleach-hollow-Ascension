@@ -1,14 +1,16 @@
 // 런 로그 구조 (GDD 9장). 히든 등급·태그 조건이 나중에 이 기록을 읽는다.
 // 지금은 구조만 있고 기록하는 로직은 없다. 필드를 빼지 말고, 필요하면 더한다.
 
-import type { Accumulation } from './evolution/select';
+import type { EvolutionSnapshot } from './evolution/judge';
 
 export interface AbsorbRecord {
   runId: number;
   /** 적 종족 (src/data/enemies 의 id) */
   enemyId: string;
-  /** 흡수한 계통 id (임시 데이터면 provisional 계통) */
-  lineageId: string;
+  /** 흡수한 적의 속성 id (C.47, 세이브 형식 14). 그 전 기록은 null */
+  element: string | null;
+  /** 옛 흡수 계통 id (형식 13 까지의 기록에만 있다. C.47 에서 계통이 속성으로 바뀜) */
+  lineageId?: string;
   rare: boolean;
   /** 흡수했는가(false = 놓아줌) */
   absorbed: boolean;
@@ -17,6 +19,7 @@ export interface AbsorbRecord {
   lap: number;
 }
 
+/** 슬롯 같은 속성 3개 완성 기록 (GDD 4-1 보너스). C.47 부터 lineageId 에는 속성 id 가 들어간다 (옛 기록은 계통 id) */
 export interface LineageRecord {
   lineageId: string;
   completed: boolean;
@@ -44,7 +47,7 @@ export function emptyLegacyMatches(): Record<LegacyTileRole, number> {
 }
 
 /** 마무리 일격(적을 쓰러뜨린 공격) 종류 (C.6) */
-export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo';
+export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo' | 'dot';
 
 export interface BattleRecord {
   runId: number;
@@ -93,7 +96,10 @@ export interface BattleRecord {
   /** 마무리 일격: 종류와 그 블록의 특성·계통 (스킬 블록이 아니면 null). 패배면 kind 도 null */
   finisherKind: FinisherKind | null;
   finisherTraitId: string | null;
-  finisherLineageId: string | null;
+  /** C.47 (형식 14): 마무리 일격의 속성. 옛 기록은 null */
+  finisherElement: string | null;
+  /** 옛 필드(형식 13 까지): 마무리 일격의 계통 */
+  finisherLineageId?: string | null;
   /** 이 전투로 흡수 조건을 채웠는가 (마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장) */
   absorbable: boolean;
   /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0 */
@@ -101,7 +107,7 @@ export interface BattleRecord {
   storedWasted: number;
 }
 
-/** 진화 1회 기록 (GDD 4-2, 9장): 히든 조건이 나중에 읽는다. C.11 에서 단계별 진화체 테이블 구조로 바뀌었다 */
+/** 진화 1회 기록 (GDD 20-5, 9장): 히든 조건이 나중에 읽는다. C.11 단계별 진화체 테이블 → C.47 속성 트리 */
 export interface EvolutionRecord {
   fromTier: number;
   toTier: number;
@@ -109,8 +115,10 @@ export interface EvolutionRecord {
   fromFormId: string | null;
   /** C.11: 진화한 진화체 id (src/data/evolution) */
   toFormId: string;
-  /** 진화 순간의 현재 단계 계통별 누적 스냅샷 */
-  accumulation: Accumulation;
+  /** C.47: 진화 순간의 단계 기록 스냅샷 (걸음·흡수 속성 분포·장착 속성/분류·돌보기 상태·후보와 가중치·고유 특성) */
+  snapshot?: EvolutionSnapshot;
+  /** C.11~C.46 기록: 진화 순간의 계통별 누적 (C.47 부터는 snapshot) */
+  accumulation?: unknown;
   /** 진화한 시각(ms) */
   at: number;
   /** C.9 호환용 = toFormId. 새 기록에도 채운다 */

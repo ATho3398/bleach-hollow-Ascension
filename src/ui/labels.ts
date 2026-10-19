@@ -1,5 +1,4 @@
 // 전투 화면 텍스트: 전부 종족 설정(FactionConfig)에서 읽는다. 종족 id 로 분기하지 않는다.
-import { lineageFamily } from '../data/lineages';
 import type { TerrainTileDef } from '../data/schema';
 import type { EndReason } from '../engine/expedition';
 import { familyOf, type BlockRole, type FactionConfig } from '../engine/faction';
@@ -22,6 +21,8 @@ export interface BattleLabels {
   defeatState: string;
   huntingGround: string;
   factionName: string;
+  /** 상성 문구 (GDD 20-2) */
+  matchupText: FactionConfig['matchupText'];
 }
 
 export function battleLabels(f: FactionConfig): BattleLabels {
@@ -39,6 +40,7 @@ export function battleLabels(f: FactionConfig): BattleLabels {
     defeatState: f.defeatStateName,
     huntingGround: f.huntingGroundName,
     factionName: f.name,
+    matchupText: { ...f.matchupText },
   };
 }
 
@@ -51,12 +53,6 @@ export function familySkillName(labels: Pick<BattleLabels, 'families'>, familyId
 /** 계열 한 글자 약어 (없으면 undefined) */
 export function familyAbbr(labels: Pick<BattleLabels, 'families'>, familyId: string | null | undefined): string | undefined {
   return familyId ? familyOf(labels, familyId)?.abbr : undefined;
-}
-
-/** 계통이 약점일 때 ×1.5 를 받는 계열의 이름 (GDD 17-3). 계열이 없으면 null */
-export function weakFamilyName(labels: Pick<BattleLabels, 'families'>, lineageId: string): string | null {
-  const id = lineageFamily(lineageId);
-  return id ? (familyOf(labels, id)?.name ?? null) : null;
 }
 
 /** 지형 타일 효과 설명: 효과 종류는 엔진, 문구는 종족 무관 */

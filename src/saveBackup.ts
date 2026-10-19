@@ -40,7 +40,7 @@ const isArr = (v: unknown) => Array.isArray(v);
 function looksComplete(s: SaveData): boolean {
   return (
     isObj(s.nest) && isObj(s.build) && isArr(s.build.owned) && isArr(s.build.slots) &&
-    isObj(s.evolution) && isObj(s.evolution.lineageScores) && isArr(s.evolution.formHistory) && typeof s.evolution.tierIndex === 'number' &&
+    isObj(s.evolution) && isObj(s.evolution.elementAbsorbs) && isObj(s.evolution.ev) && isArr(s.evolution.formHistory) && typeof s.evolution.tierIndex === 'number' &&
     isArr(s.formDex) && isObj(s.tiles) && isObj(s.tiles.collection) && isArr(s.tiles.deck) &&
     isObj(s.runLog) && isArr(s.runLog.battles) && isArr(s.runLog.runs) && isArr(s.runLog.absorbs) &&
     isArr(s.titles) && isObj(s.help)

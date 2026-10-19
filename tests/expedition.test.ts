@@ -22,7 +22,7 @@ function winBattle(exp: ExpeditionState): void {
   b.enemy.hp = 0;
   b.status = 'won';
   // 흡수 조건 미달로 친다: 첫 흡수 보장(장착 skill 없음)이 적용되지 않게 skill 이 장착된 전투로 만든다 (C.7)
-  b.params = { ...b.params, skills: [{ id: 'trait-a1', lineageId: 'lineage-a', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 }] };
+  b.params = { ...b.params, skills: [{ id: 't-fire-a', element: 'fire', category: 'physical', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 }] };
   finishBattle(exp, b);
 }
 function loseBattle(exp: ExpeditionState): void {
@@ -219,11 +219,12 @@ describe('허기', () => {
       advance(e);
       return e.pending!.enemy;
     };
+    // 바퀴마다 출현 풀이 달라 적 종류가 바뀔 수 있으므로, 각자 원본 데이터 대비 배율로 본다 (C.47: 적 수가 늘어 같은 시드에도 다른 적이 나온다)
     const a = grab(1);
     const b = grab(4);
-    expect(b.id).toBe(a.id);
-    expect(b.hpInAttacks).toBeGreaterThan(a.hpInAttacks);
-    expect(b.attackInAttacks).toBeGreaterThan(a.attackInAttacks);
+    expect(a.hpInAttacks).toBeCloseTo(getEnemy(a.id).hpInAttacks);
+    expect(b.hpInAttacks).toBeGreaterThan(getEnemy(b.id).hpInAttacks);
+    expect(b.attackInAttacks).toBeGreaterThan(getEnemy(b.id).attackInAttacks);
   });
 });
 

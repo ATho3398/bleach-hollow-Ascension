@@ -1,6 +1,6 @@
 // 적 테이블 (양쪽 종족 공유, GDD 6장·14-5). 검증을 거쳐 EnemyDef 로 내보낸다.
-import { ENEMY_PATTERN_KINDS, type EnemyDef, type EnemyPattern, type EnemyPatternKind } from '../schema';
-import { LINEAGES } from '../lineages';
+import { ATTACK_CATEGORIES, ENEMY_PATTERN_KINDS, STAT_IDS, type EnemyDef, type EnemyPattern, type EnemyPatternKind } from '../schema';
+import { isElement } from '../elements';
 import raw from './enemies.json';
 import poolRaw from './pools.json';
 
@@ -44,10 +44,12 @@ export function parseEnemy(r: unknown): EnemyDef {
   if (e.class !== 'normal' && e.class !== 'elite') errors.push('class: normal | elite');
   if (typeof e.hpInAttacks !== 'number' || e.hpInAttacks <= 0) errors.push('hpInAttacks: 양수');
   if (typeof e.attackInAttacks !== 'number' || e.attackInAttacks < 0) errors.push('attackInAttacks: 0 이상');
-  if (typeof e.lineageId !== 'string' || !e.lineageId) errors.push('lineageId');
+  if (!isElement(e.element)) errors.push(`element: 없는 속성 ${String(e.element)}`);
+  if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(e.category)) errors.push(`category: ${ATTACK_CATEGORIES.join(' | ')}`);
+  const statMap = (v: unknown, min: number) => typeof v === 'object' && v !== null && Object.entries(v).every(([k, x]) => (STAT_IDS as readonly string[]).includes(k) && typeof x === 'number' && x >= min);
+  if (e.statBias !== undefined && !statMap(e.statBias, 0.01)) errors.push('statBias: { 능력치: 양수 배율 }');
+  if (!statMap(e.ev, 0)) errors.push('ev: { 능력치: 0 이상 }');
   if (typeof e.rareChance !== 'number' || e.rareChance < 0 || e.rareChance > 1) errors.push('rareChance: 0~1');
-  // 약점은 계통 1개 (GDD 3-5). 계통 테이블에 있는 id 만
-  if (typeof e.weaknessLineageId !== 'string' || !LINEAGES.some((l) => l.id === e.weaknessLineageId)) errors.push('weaknessLineageId: 있는 계통 id');
   if (e.pattern !== undefined) errors.push(...patternErrors((e.pattern ?? {}) as Record<string, unknown>));
   if (errors.length > 0) throw new Error(`적 데이터 오류 (${String(e.id ?? '?')}): ${errors.join(', ')}`);
   return r as EnemyDef;

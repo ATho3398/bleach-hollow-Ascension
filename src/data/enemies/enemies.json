@@ -7,10 +7,13 @@
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.22,
-    "weaknessLineageId": "lineage-b",
-    "provisional": true,
-    "lineageId": "lineage-a",
+    "element": "fire",
+    "category": "physical",
+    "ev": {
+      "atk": 2
+    },
     "rareChance": 0.1,
+    "provisional": true,
     "testOnly": true
   },
   {
@@ -21,10 +24,13 @@
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.26,
-    "weaknessLineageId": "lineage-c",
-    "provisional": true,
-    "lineageId": "lineage-b",
+    "element": "water",
+    "category": "special",
+    "ev": {
+      "int": 2
+    },
     "rareChance": 0.1,
+    "provisional": true,
     "testOnly": true
   },
   {
@@ -35,10 +41,14 @@
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.24,
-    "weaknessLineageId": "lineage-e",
-    "provisional": true,
-    "lineageId": "lineage-d",
+    "element": "earth",
+    "category": "mixed",
+    "ev": {
+      "atk": 1,
+      "int": 1
+    },
     "rareChance": 0.1,
+    "provisional": true,
     "testOnly": true
   },
   {
@@ -49,10 +59,13 @@
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.25,
-    "weaknessLineageId": "lineage-d",
-    "provisional": true,
-    "lineageId": "lineage-e",
+    "element": "normal",
+    "category": "physical",
+    "ev": {
+      "atk": 2
+    },
     "rareChance": 0.1,
+    "provisional": true,
     "testOnly": true
   },
   {
@@ -63,7 +76,12 @@
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-a",
+    "element": "thunder",
+    "category": "special",
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
     "pattern": {
       "kind": "heavy-seal",
       "everySeconds": 8,
@@ -76,34 +94,47 @@
       "sealSeconds": 4,
       "provisional": true
     },
-    "provisional": true,
-    "lineageId": "lineage-c",
     "rareChance": 0.25,
+    "provisional": true,
     "testOnly": true
   },
   {
-    "id": "a-basic",
+    "id": "normal-basic",
     "name": {
-      "*": "A약점 일반 1"
+      "*": "노멀 일반 1"
     },
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.24,
-    "weaknessLineageId": "lineage-a",
-    "lineageId": "lineage-b",
+    "element": "normal",
+    "category": "physical",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "atk": 2
+    },
     "rareChance": 0.1,
     "provisional": true
   },
   {
-    "id": "a-swift",
+    "id": "normal-swift",
     "name": {
-      "*": "A약점 일반 2"
+      "*": "노멀 일반 2"
     },
     "class": "normal",
     "hpInAttacks": 28,
     "attackInAttacks": 0.13,
-    "weaknessLineageId": "lineage-a",
-    "lineageId": "lineage-c",
+    "element": "normal",
+    "category": "special",
+    "statBias": {
+      "def": 0.95,
+      "spr": 1.05
+    },
+    "ev": {
+      "spd": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -113,15 +144,22 @@
     }
   },
   {
-    "id": "a-sturdy",
+    "id": "normal-sturdy",
     "name": {
-      "*": "A약점 일반 3"
+      "*": "노멀 일반 3"
     },
     "class": "normal",
     "hpInAttacks": 40,
     "attackInAttacks": 0.34,
-    "weaknessLineageId": "lineage-a",
-    "lineageId": "lineage-d",
+    "element": "normal",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "def": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -131,15 +169,23 @@
     }
   },
   {
-    "id": "a-heavy-seal",
+    "id": "normal-heavy-seal",
     "name": {
-      "*": "A약점 강적 1"
+      "*": "노멀 강적 1"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-a",
-    "lineageId": "lineage-b",
+    "element": "normal",
+    "category": "physical",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -156,15 +202,23 @@
     }
   },
   {
-    "id": "a-heavy-chain",
+    "id": "normal-heavy-chain",
     "name": {
-      "*": "A약점 강적 2"
+      "*": "노멀 강적 2"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-a",
-    "lineageId": "lineage-c",
+    "element": "normal",
+    "category": "special",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "int": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -178,15 +232,24 @@
     }
   },
   {
-    "id": "a-stance",
+    "id": "normal-stance",
     "name": {
-      "*": "A약점 강적 3"
+      "*": "노멀 강적 3"
     },
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.29,
-    "weaknessLineageId": "lineage-a",
-    "lineageId": "lineage-d",
+    "element": "normal",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -199,28 +262,42 @@
     }
   },
   {
-    "id": "b-basic",
+    "id": "water-basic",
     "name": {
-      "*": "B약점 일반 1"
+      "*": "물 일반 1"
     },
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.24,
-    "weaknessLineageId": "lineage-b",
-    "lineageId": "lineage-c",
+    "element": "water",
+    "category": "special",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "int": 2
+    },
     "rareChance": 0.1,
     "provisional": true
   },
   {
-    "id": "b-swift",
+    "id": "water-swift",
     "name": {
-      "*": "B약점 일반 2"
+      "*": "물 일반 2"
     },
     "class": "normal",
     "hpInAttacks": 28,
     "attackInAttacks": 0.13,
-    "weaknessLineageId": "lineage-b",
-    "lineageId": "lineage-d",
+    "element": "water",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.05,
+      "spr": 0.95
+    },
+    "ev": {
+      "spd": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -230,15 +307,22 @@
     }
   },
   {
-    "id": "b-sturdy",
+    "id": "water-sturdy",
     "name": {
-      "*": "B약점 일반 3"
+      "*": "물 일반 3"
     },
     "class": "normal",
     "hpInAttacks": 40,
     "attackInAttacks": 0.34,
-    "weaknessLineageId": "lineage-b",
-    "lineageId": "lineage-e",
+    "element": "water",
+    "category": "physical",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "def": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -248,15 +332,23 @@
     }
   },
   {
-    "id": "b-heavy-seal",
+    "id": "water-heavy-seal",
     "name": {
-      "*": "B약점 강적 1"
+      "*": "물 강적 1"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-b",
-    "lineageId": "lineage-c",
+    "element": "water",
+    "category": "special",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -273,15 +365,24 @@
     }
   },
   {
-    "id": "b-heavy-chain",
+    "id": "water-heavy-chain",
     "name": {
-      "*": "B약점 강적 2"
+      "*": "물 강적 2"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-b",
-    "lineageId": "lineage-d",
+    "element": "water",
+    "category": "mixed",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "atk": 1,
+      "int": 1
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -295,15 +396,24 @@
     }
   },
   {
-    "id": "b-stance",
+    "id": "water-stance",
     "name": {
-      "*": "B약점 강적 3"
+      "*": "물 강적 3"
     },
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.29,
-    "weaknessLineageId": "lineage-b",
-    "lineageId": "lineage-e",
+    "element": "water",
+    "category": "physical",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -316,28 +426,43 @@
     }
   },
   {
-    "id": "c-basic",
+    "id": "fire-basic",
     "name": {
-      "*": "C약점 일반 1"
+      "*": "불 일반 1"
     },
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.24,
-    "weaknessLineageId": "lineage-c",
-    "lineageId": "lineage-d",
+    "element": "fire",
+    "category": "mixed",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "atk": 1,
+      "int": 1
+    },
     "rareChance": 0.1,
     "provisional": true
   },
   {
-    "id": "c-swift",
+    "id": "fire-swift",
     "name": {
-      "*": "C약점 일반 2"
+      "*": "불 일반 2"
     },
     "class": "normal",
     "hpInAttacks": 28,
     "attackInAttacks": 0.13,
-    "weaknessLineageId": "lineage-c",
-    "lineageId": "lineage-e",
+    "element": "fire",
+    "category": "physical",
+    "statBias": {
+      "def": 0.95,
+      "spr": 1.05
+    },
+    "ev": {
+      "spd": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -347,15 +472,22 @@
     }
   },
   {
-    "id": "c-sturdy",
+    "id": "fire-sturdy",
     "name": {
-      "*": "C약점 일반 3"
+      "*": "불 일반 3"
     },
     "class": "normal",
     "hpInAttacks": 40,
     "attackInAttacks": 0.34,
-    "weaknessLineageId": "lineage-c",
-    "lineageId": "lineage-a",
+    "element": "fire",
+    "category": "special",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "def": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -365,15 +497,23 @@
     }
   },
   {
-    "id": "c-heavy-seal",
+    "id": "fire-heavy-seal",
     "name": {
-      "*": "C약점 강적 1"
+      "*": "불 강적 1"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-c",
-    "lineageId": "lineage-d",
+    "element": "fire",
+    "category": "mixed",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -390,15 +530,23 @@
     }
   },
   {
-    "id": "c-heavy-chain",
+    "id": "fire-heavy-chain",
     "name": {
-      "*": "C약점 강적 2"
+      "*": "불 강적 2"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-c",
-    "lineageId": "lineage-e",
+    "element": "fire",
+    "category": "physical",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "atk": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -412,15 +560,24 @@
     }
   },
   {
-    "id": "c-stance",
+    "id": "fire-stance",
     "name": {
-      "*": "C약점 강적 3"
+      "*": "불 강적 3"
     },
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.29,
-    "weaknessLineageId": "lineage-c",
-    "lineageId": "lineage-a",
+    "element": "fire",
+    "category": "special",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -433,28 +590,42 @@
     }
   },
   {
-    "id": "d-basic",
+    "id": "earth-basic",
     "name": {
-      "*": "D약점 일반 1"
+      "*": "흙 일반 1"
     },
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.24,
-    "weaknessLineageId": "lineage-d",
-    "lineageId": "lineage-e",
+    "element": "earth",
+    "category": "physical",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "atk": 2
+    },
     "rareChance": 0.1,
     "provisional": true
   },
   {
-    "id": "d-swift",
+    "id": "earth-swift",
     "name": {
-      "*": "D약점 일반 2"
+      "*": "흙 일반 2"
     },
     "class": "normal",
     "hpInAttacks": 28,
     "attackInAttacks": 0.13,
-    "weaknessLineageId": "lineage-d",
-    "lineageId": "lineage-a",
+    "element": "earth",
+    "category": "special",
+    "statBias": {
+      "def": 1.05,
+      "spr": 0.95
+    },
+    "ev": {
+      "spd": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -464,15 +635,22 @@
     }
   },
   {
-    "id": "d-sturdy",
+    "id": "earth-sturdy",
     "name": {
-      "*": "D약점 일반 3"
+      "*": "흙 일반 3"
     },
     "class": "normal",
     "hpInAttacks": 40,
     "attackInAttacks": 0.34,
-    "weaknessLineageId": "lineage-d",
-    "lineageId": "lineage-b",
+    "element": "earth",
+    "category": "mixed",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "def": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -482,15 +660,23 @@
     }
   },
   {
-    "id": "d-heavy-seal",
+    "id": "earth-heavy-seal",
     "name": {
-      "*": "D약점 강적 1"
+      "*": "흙 강적 1"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-d",
-    "lineageId": "lineage-e",
+    "element": "earth",
+    "category": "physical",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -507,15 +693,23 @@
     }
   },
   {
-    "id": "d-heavy-chain",
+    "id": "earth-heavy-chain",
     "name": {
-      "*": "D약점 강적 2"
+      "*": "흙 강적 2"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-d",
-    "lineageId": "lineage-a",
+    "element": "earth",
+    "category": "special",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "int": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -529,15 +723,24 @@
     }
   },
   {
-    "id": "d-stance",
+    "id": "earth-stance",
     "name": {
-      "*": "D약점 강적 3"
+      "*": "흙 강적 3"
     },
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.29,
-    "weaknessLineageId": "lineage-d",
-    "lineageId": "lineage-b",
+    "element": "earth",
+    "category": "mixed",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -550,28 +753,42 @@
     }
   },
   {
-    "id": "e-basic",
+    "id": "thunder-basic",
     "name": {
-      "*": "E약점 일반 1"
+      "*": "뇌 일반 1"
     },
     "class": "normal",
     "hpInAttacks": 30,
     "attackInAttacks": 0.24,
-    "weaknessLineageId": "lineage-e",
-    "lineageId": "lineage-a",
+    "element": "thunder",
+    "category": "special",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "int": 2
+    },
     "rareChance": 0.1,
     "provisional": true
   },
   {
-    "id": "e-swift",
+    "id": "thunder-swift",
     "name": {
-      "*": "E약점 일반 2"
+      "*": "뇌 일반 2"
     },
     "class": "normal",
     "hpInAttacks": 28,
     "attackInAttacks": 0.13,
-    "weaknessLineageId": "lineage-e",
-    "lineageId": "lineage-b",
+    "element": "thunder",
+    "category": "mixed",
+    "statBias": {
+      "def": 0.95,
+      "spr": 1.05
+    },
+    "ev": {
+      "spd": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -581,15 +798,22 @@
     }
   },
   {
-    "id": "e-sturdy",
+    "id": "thunder-sturdy",
     "name": {
-      "*": "E약점 일반 3"
+      "*": "뇌 일반 3"
     },
     "class": "normal",
     "hpInAttacks": 40,
     "attackInAttacks": 0.34,
-    "weaknessLineageId": "lineage-e",
-    "lineageId": "lineage-c",
+    "element": "thunder",
+    "category": "physical",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "def": 2
+    },
     "rareChance": 0.1,
     "provisional": true,
     "pattern": {
@@ -599,15 +823,23 @@
     }
   },
   {
-    "id": "e-heavy-seal",
+    "id": "thunder-heavy-seal",
     "name": {
-      "*": "E약점 강적 1"
+      "*": "뇌 강적 1"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-e",
-    "lineageId": "lineage-a",
+    "element": "thunder",
+    "category": "special",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -624,15 +856,24 @@
     }
   },
   {
-    "id": "e-heavy-chain",
+    "id": "thunder-heavy-chain",
     "name": {
-      "*": "E약점 강적 2"
+      "*": "뇌 강적 2"
     },
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.16,
-    "weaknessLineageId": "lineage-e",
-    "lineageId": "lineage-b",
+    "element": "thunder",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "atk": 1,
+      "int": 1
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {
@@ -646,15 +887,515 @@
     }
   },
   {
-    "id": "e-stance",
+    "id": "thunder-stance",
     "name": {
-      "*": "E약점 강적 3"
+      "*": "뇌 강적 3"
     },
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.29,
-    "weaknessLineageId": "lineage-e",
-    "lineageId": "lineage-c",
+    "element": "thunder",
+    "category": "physical",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.42,
+      "provisional": true
+    }
+  },
+  {
+    "id": "blood-basic",
+    "name": {
+      "*": "혈 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "element": "blood",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "atk": 1,
+      "int": 1
+    },
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "blood-swift",
+    "name": {
+      "*": "혈 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "element": "blood",
+    "category": "physical",
+    "statBias": {
+      "def": 1.05,
+      "spr": 0.95
+    },
+    "ev": {
+      "spd": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "blood-sturdy",
+    "name": {
+      "*": "혈 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "element": "blood",
+    "category": "special",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "def": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "blood-heavy-seal",
+    "name": {
+      "*": "혈 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 80,
+    "attackInAttacks": 0.16,
+    "element": "blood",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "blood-heavy-chain",
+    "name": {
+      "*": "혈 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 80,
+    "attackInAttacks": 0.16,
+    "element": "blood",
+    "category": "physical",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "atk": 2
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "blood-stance",
+    "name": {
+      "*": "혈 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 70,
+    "attackInAttacks": 0.29,
+    "element": "blood",
+    "category": "special",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.42,
+      "provisional": true
+    }
+  },
+  {
+    "id": "poison-basic",
+    "name": {
+      "*": "독 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "element": "poison",
+    "category": "physical",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "atk": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "poison-swift",
+    "name": {
+      "*": "독 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "element": "poison",
+    "category": "special",
+    "statBias": {
+      "def": 0.95,
+      "spr": 1.05
+    },
+    "ev": {
+      "spd": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "poison-sturdy",
+    "name": {
+      "*": "독 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "element": "poison",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "def": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "poison-heavy-seal",
+    "name": {
+      "*": "독 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 80,
+    "attackInAttacks": 0.16,
+    "element": "poison",
+    "category": "physical",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "poison-heavy-chain",
+    "name": {
+      "*": "독 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 80,
+    "attackInAttacks": 0.16,
+    "element": "poison",
+    "category": "special",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "int": 2
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "poison-stance",
+    "name": {
+      "*": "독 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 70,
+    "attackInAttacks": 0.29,
+    "element": "poison",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "stance",
+      "everySeconds": 9,
+      "stanceSeconds": 5,
+      "blockDamageMultiplier": 0.4,
+      "counterInAttacks": 0.42,
+      "provisional": true
+    }
+  },
+  {
+    "id": "kyo-basic",
+    "name": {
+      "*": "허 일반 1"
+    },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.24,
+    "element": "kyo",
+    "category": "special",
+    "statBias": {
+      "def": 1.1,
+      "spr": 0.9
+    },
+    "ev": {
+      "int": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true
+  },
+  {
+    "id": "kyo-swift",
+    "name": {
+      "*": "허 일반 2"
+    },
+    "class": "normal",
+    "hpInAttacks": 28,
+    "attackInAttacks": 0.13,
+    "element": "kyo",
+    "category": "mixed",
+    "statBias": {
+      "def": 1.05,
+      "spr": 0.95
+    },
+    "ev": {
+      "spd": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "swift",
+      "attackSeconds": 0.9,
+      "provisional": true
+    }
+  },
+  {
+    "id": "kyo-sturdy",
+    "name": {
+      "*": "허 일반 3"
+    },
+    "class": "normal",
+    "hpInAttacks": 40,
+    "attackInAttacks": 0.34,
+    "element": "kyo",
+    "category": "physical",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "def": 2
+    },
+    "rareChance": 0.1,
+    "provisional": true,
+    "pattern": {
+      "kind": "sturdy",
+      "attackSeconds": 2.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "kyo-heavy-seal",
+    "name": {
+      "*": "허 강적 1"
+    },
+    "class": "elite",
+    "hpInAttacks": 80,
+    "attackInAttacks": 0.16,
+    "element": "kyo",
+    "category": "special",
+    "statBias": {
+      "def": 1.25,
+      "spr": 0.8
+    },
+    "ev": {
+      "hp": 2,
+      "spr": 2
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-seal",
+      "everySeconds": 8,
+      "sequence": [
+        "heavy",
+        "seal"
+      ],
+      "castSeconds": 2,
+      "heavyInAttacks": 1.6,
+      "sealSeconds": 4,
+      "provisional": true
+    }
+  },
+  {
+    "id": "kyo-heavy-chain",
+    "name": {
+      "*": "허 강적 2"
+    },
+    "class": "elite",
+    "hpInAttacks": 80,
+    "attackInAttacks": 0.16,
+    "element": "kyo",
+    "category": "mixed",
+    "statBias": {
+      "def": 0.8,
+      "spr": 1.25
+    },
+    "ev": {
+      "hp": 2,
+      "atk": 1,
+      "int": 1
+    },
+    "rareChance": 0.25,
+    "provisional": true,
+    "pattern": {
+      "kind": "heavy-chain",
+      "everySeconds": 11,
+      "castSeconds": 2,
+      "heavyInAttacks": 0.7,
+      "hits": 3,
+      "followCastSeconds": 1.2,
+      "provisional": true
+    }
+  },
+  {
+    "id": "kyo-stance",
+    "name": {
+      "*": "허 강적 3"
+    },
+    "class": "elite",
+    "hpInAttacks": 70,
+    "attackInAttacks": 0.29,
+    "element": "kyo",
+    "category": "physical",
+    "statBias": {
+      "def": 0.9,
+      "spr": 1.1
+    },
+    "ev": {
+      "hp": 2,
+      "def": 1,
+      "spr": 1
+    },
     "rareChance": 0.25,
     "provisional": true,
     "pattern": {

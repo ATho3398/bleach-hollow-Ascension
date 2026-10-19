@@ -2,6 +2,7 @@
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
 import { isLocomotion, type Locomotion } from './locomotion';
+import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type Stats } from '../data/schema';
 
 /** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
 export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
@@ -33,6 +34,8 @@ export interface FamilyConfig {
   abbr: string;
   /** 공격 연출 종류 (GDD 19-2): 조=claw·교=bite·탄=shot / 참=slash·권=impact·귀=beam */
   fx: AttackFxKind;
+  /** 공격 분류 (GDD 20-1): 물리(조·참) / 특수(탄·귀) / 혼합(교·권). 피해 계산에 쓰는 능력치를 정한다 */
+  category: AttackCategory;
   /** 1·2·3단계 기술 */
   tiers: [FamilySkillConfig, FamilySkillConfig, FamilySkillConfig];
   provisional?: boolean;
@@ -154,6 +157,12 @@ export interface FactionConfig {
   families: FamilyConfig[];
   /** 1단계(진화 전) 체인 묶음 상한 (GDD 19-2). 비우면 DEFAULT_MAX_CHAIN. 진화체 maxChain 이 있으면 그쪽이 우선 */
   maxChain?: number;
+  /** 1단계(진화 전) 종족값 (GDD 20-4). 합계는 BALANCE.provisional.stats.tierTotals[0] */
+  baseStats: Stats;
+  /** 상성 표시 문구 (GDD 20-2): 강할 때 / 약할 때 */
+  matchupText: { strong: string; weak: string };
+  /** 진화 임박 알림 문구 (GDD 20-5 v4.1): 남은 걸음 20% / 10% 순간 한 번씩 */
+  evolutionNearText: [string, string];
   /** 둥지 / 대원실 (GDD 7장) */
   nestName: string;
   /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
@@ -208,6 +217,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!isString(x.name)) errors.push(`families[${i}].name: 비어 있지 않은 문자열`);
       if (!isString(x.abbr) || Array.from(x.abbr).length !== 1) errors.push(`families[${i}].abbr: 한 글자`);
       if (!(ATTACK_FX_KINDS as readonly unknown[]).includes(x.fx)) errors.push(`families[${i}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
+      if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`families[${i}].category: ${ATTACK_CATEGORIES.join(' | ')}`);
       const tiers = x.tiers;
       if (!Array.isArray(tiers) || tiers.length !== FAMILY_TIERS) errors.push(`families[${i}].tiers: 기술 ${FAMILY_TIERS}개`);
       else {
@@ -223,6 +233,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       }
     });
   }
+  const bs = (r.baseStats ?? {}) as Record<string, unknown>;
+  for (const k of STAT_IDS) if (!(typeof bs[k] === 'number' && (bs[k] as number) > 0)) errors.push(`baseStats.${k}: 양수`);
+  const mt = (r.matchupText ?? {}) as Record<string, unknown>;
+  if (!isString(mt.strong) || !isString(mt.weak)) errors.push('matchupText: { strong, weak } 문자열');
+  if (!isStringTuple(r.evolutionNearText, 2)) errors.push('evolutionNearText: 문자열 2개');
   if (r.maxChain !== undefined && !(Number.isInteger(r.maxChain) && (r.maxChain as number) >= 1)) errors.push('maxChain: 1 이상 정수');
   if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');

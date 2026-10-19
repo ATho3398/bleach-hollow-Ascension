@@ -1,565 +1,23 @@
 [
   {
-    "id": "t2:dominant@lineage-a",
-    "tier": 2,
-    "label": {
-      "kind": "dominant",
-      "lineages": [
-        "lineage-a"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top1",
-        "lineage": "lineage-a"
-      }
-    ],
-    "priority": 10,
-    "effects": {
-      "hpMultiplier": 1.06,
-      "attackMultiplier": 1.05,
-      "passive": {
-        "attackPower": 1.06
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t2:dominant@lineage-b",
-    "tier": 2,
-    "label": {
-      "kind": "dominant",
-      "lineages": [
-        "lineage-b"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top1",
-        "lineage": "lineage-b"
-      }
-    ],
-    "priority": 10,
-    "effects": {
-      "hpMultiplier": 1.06,
-      "attackMultiplier": 1.05,
-      "passive": {
-        "damageTaken": 0.94
-      }
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t2:dominant@lineage-c",
-    "tier": 2,
-    "label": {
-      "kind": "dominant",
-      "lineages": [
-        "lineage-c"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top1",
-        "lineage": "lineage-c"
-      }
-    ],
-    "priority": 10,
-    "effects": {
-      "hpMultiplier": 1.06,
-      "attackMultiplier": 1.05,
-      "passive": {
-        "attackSpeed": 1.05
-      }
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t2:dominant@lineage-d",
-    "tier": 2,
-    "label": {
-      "kind": "dominant",
-      "lineages": [
-        "lineage-d"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top1",
-        "lineage": "lineage-d"
-      }
-    ],
-    "priority": 10,
-    "effects": {
-      "hpMultiplier": 1.06,
-      "attackMultiplier": 1.05,
-      "passive": {
-        "damageTaken": 0.95
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t2:dominant@lineage-e",
-    "tier": 2,
-    "label": {
-      "kind": "dominant",
-      "lineages": [
-        "lineage-e"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top1",
-        "lineage": "lineage-e"
-      }
-    ],
-    "priority": 10,
-    "effects": {
-      "hpMultiplier": 1.06,
-      "attackMultiplier": 1.05,
-      "passive": {
-        "attackPower": 1.05
-      }
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
     "id": "t2:base",
     "tier": 2,
     "label": {
       "kind": "base",
-      "lineages": []
+      "elements": []
     },
-    "from": "any",
-    "requires": [],
-    "priority": 0,
-    "fallback": true,
-    "effects": {
-      "hpMultiplier": 1.03,
-      "attackMultiplier": 1.03,
-      "passive": {}
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-a+lineage-b",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-b"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-b"
-        ]
-      }
+    "elements": [
+      "normal"
     ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.03,
-        "damageTaken": 0.97
-      }
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-a+lineage-c",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-c"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-c"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.03,
-        "attackSpeed": 1.025
-      }
+    "stats": {
+      "hp": 61,
+      "atk": 58,
+      "int": 55,
+      "def": 55,
+      "spr": 52,
+      "spd": 49
     },
     "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-a+lineage-d",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-d"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.03,
-        "damageTaken": 0.975
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-a+lineage-e",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-e"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.0558
-      }
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-b+lineage-c",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-c"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-c"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.97,
-        "attackSpeed": 1.025
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-b+lineage-d",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-d"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.9458
-      }
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-b+lineage-e",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-e"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.97,
-        "attackPower": 1.025
-      }
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-c+lineage-d",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-c",
-        "lineage-d"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-c",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackSpeed": 1.025,
-        "damageTaken": 0.975
-      }
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-c+lineage-e",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-c",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackSpeed": 1.025,
-        "attackPower": 1.025
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:pair@lineage-d+lineage-e",
-    "tier": 3,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.975,
-        "attackPower": 1.025
-      }
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:balanced",
-    "tier": 3,
-    "label": {
-      "kind": "balanced",
-      "lineages": []
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "maxShareAtMost",
-        "max": 0.35
-      },
-      {
-        "type": "activeLineages",
-        "min": 4
-      }
-    ],
-    "priority": 30,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {}
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:picky",
-    "tier": 3,
-    "label": {
-      "kind": "picky",
-      "lineages": []
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.7
-      }
-    ],
-    "priority": 40,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {}
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t3:rare",
-    "tier": 3,
-    "label": {
-      "kind": "rare",
-      "lineages": []
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "rareCount",
-        "ratio": 0.2
-      }
-    ],
-    "priority": 50,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {}
-    },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -568,2268 +26,1075 @@
     "tier": 3,
     "label": {
       "kind": "base",
-      "lineages": []
+      "elements": []
     },
-    "from": "any",
-    "requires": [],
-    "priority": 0,
-    "fallback": true,
-    "effects": {
-      "hpMultiplier": 1.03,
-      "attackMultiplier": 1.03,
-      "passive": {}
+    "elements": [
+      "normal"
+    ],
+    "stats": {
+      "hp": 60,
+      "atk": 60,
+      "int": 63,
+      "def": 57,
+      "spr": 60,
+      "spd": 60
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-a+lineage-b+lineage-c",
+    "id": "t4:normal",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-c"
+      "kind": "element",
+      "elements": [
+        "normal"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "normal"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-c"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.02,
-        "damageTaken": 0.98,
-        "attackSpeed": 1.0167
-      }
+    "stats": {
+      "hp": 65,
+      "atk": 65,
+      "int": 65,
+      "def": 65,
+      "spr": 65,
+      "spd": 65
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-a+lineage-b+lineage-d",
+    "id": "t4:water",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-d"
+      "kind": "element",
+      "elements": [
+        "water"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "water"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.02,
-        "damageTaken": 0.9637
-      }
+    "stats": {
+      "hp": 72,
+      "atk": 58,
+      "int": 65,
+      "def": 65,
+      "spr": 75,
+      "spd": 55
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-a+lineage-b+lineage-e",
+    "id": "t4:fire",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-e"
+      "kind": "element",
+      "elements": [
+        "fire"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "fire"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.98
-      }
+    "stats": {
+      "hp": 65,
+      "atk": 75,
+      "int": 65,
+      "def": 59,
+      "spr": 55,
+      "spd": 71
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-a+lineage-c+lineage-d",
+    "id": "t4:earth",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-c",
-        "lineage-d"
+      "kind": "element",
+      "elements": [
+        "earth"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "earth"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-c",
-          "lineage-d"
-        ]
-      }
+    "stats": {
+      "hp": 72,
+      "atk": 65,
+      "int": 58,
+      "def": 78,
+      "spr": 65,
+      "spd": 52
+    },
+    "locomotion": "walk",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:thunder",
+    "tier": 4,
+    "label": {
+      "kind": "element",
+      "elements": [
+        "thunder"
+      ]
+    },
+    "elements": [
+      "thunder"
     ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.02,
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833
-      }
+    "stats": {
+      "hp": 55,
+      "atk": 65,
+      "int": 72,
+      "def": 55,
+      "spr": 65,
+      "spd": 78
+    },
+    "locomotion": "float",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:blood",
+    "tier": 4,
+    "label": {
+      "kind": "element",
+      "elements": [
+        "blood"
+      ]
+    },
+    "elements": [
+      "blood"
+    ],
+    "stats": {
+      "hp": 75,
+      "atk": 72,
+      "int": 55,
+      "def": 65,
+      "spr": 58,
+      "spd": 65
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-a+lineage-c+lineage-e",
+    "id": "t4:poison",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-c",
-        "lineage-e"
+      "kind": "element",
+      "elements": [
+        "poison"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "poison"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-c",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.037,
-        "attackSpeed": 1.0167
-      }
+    "stats": {
+      "hp": 55,
+      "atk": 59,
+      "int": 75,
+      "def": 65,
+      "spr": 71,
+      "spd": 65
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-a+lineage-d+lineage-e",
+    "id": "t4:kyo",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-d",
-        "lineage-e"
+      "kind": "element",
+      "elements": [
+        "kyo"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "kyo"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.9833
-      }
+    "stats": {
+      "hp": 65,
+      "atk": 72,
+      "int": 75,
+      "def": 58,
+      "spr": 55,
+      "spd": 65
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-b+lineage-c+lineage-d",
+    "id": "h4:fusion:water+earth",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-d"
+      "kind": "fusion",
+      "elements": [
+        "water",
+        "earth"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "hidden": true,
+    "elements": [
+      "water",
+      "earth"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackSpeed": 1.0167
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t4:triple@lineage-b+lineage-c+lineage-e",
-    "tier": 4,
-    "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.98,
-        "attackSpeed": 1.0167,
-        "attackPower": 1.0167
-      }
+    "stats": {
+      "hp": 75,
+      "atk": 60,
+      "int": 60,
+      "def": 75,
+      "spr": 72,
+      "spd": 48
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-b+lineage-d+lineage-e",
+    "id": "h4:fusion:fire+thunder",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-b",
-        "lineage-d",
-        "lineage-e"
+      "kind": "fusion",
+      "elements": [
+        "fire",
+        "thunder"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "hidden": true,
+    "elements": [
+      "fire",
+      "thunder"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackPower": 1.0167
-      }
+    "stats": {
+      "hp": 58,
+      "atk": 72,
+      "int": 70,
+      "def": 53,
+      "spr": 58,
+      "spd": 79
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:triple@lineage-c+lineage-d+lineage-e",
+    "id": "h4:complete",
     "tier": 4,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-c",
-        "lineage-d",
-        "lineage-e"
-      ]
+      "kind": "complete",
+      "elements": []
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "hidden": true,
+    "elements": [
+      "normal"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-c",
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833,
-        "attackPower": 1.0167
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t4:deep-pair@lineage-a+lineage-b",
-    "tier": 4,
-    "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-b"
-      ]
-    },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
-    ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-b"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-a",
-          "lineage-b"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.03,
-        "damageTaken": 0.97
-      }
+    "stats": {
+      "hp": 71,
+      "atk": 70,
+      "int": 70,
+      "def": 70,
+      "spr": 70,
+      "spd": 70
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:deep-pair@lineage-a+lineage-c",
+    "id": "h4:special:blood",
     "tier": 4,
     "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-c"
+      "kind": "special",
+      "elements": [
+        "blood"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "hidden": true,
+    "elements": [
+      "blood"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-c"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-a",
-          "lineage-c"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.03,
-        "attackSpeed": 1.025
-      }
+    "stats": {
+      "hp": 80,
+      "atk": 75,
+      "int": 50,
+      "def": 65,
+      "spr": 55,
+      "spd": 65
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:deep-pair@lineage-a+lineage-d",
+    "id": "h4:special:poison",
     "tier": 4,
     "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-d"
+      "kind": "special",
+      "elements": [
+        "poison"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "hidden": true,
+    "elements": [
+      "poison"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-d"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-a",
-          "lineage-d"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.03,
-        "damageTaken": 0.975
-      }
+    "stats": {
+      "hp": 50,
+      "atk": 55,
+      "int": 80,
+      "def": 65,
+      "spr": 75,
+      "spd": 65
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:deep-pair@lineage-a+lineage-e",
+    "id": "h4:special:kyo",
     "tier": 4,
     "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-e"
+      "kind": "special",
+      "elements": [
+        "kyo"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "hidden": true,
+    "elements": [
+      "kyo"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-a",
-          "lineage-e"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.0558
-      }
+    "stats": {
+      "hp": 65,
+      "atk": 75,
+      "int": 80,
+      "def": 55,
+      "spr": 50,
+      "spd": 65
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:deep-pair@lineage-b+lineage-c",
+    "id": "h4:pure",
     "tier": 4,
     "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-c"
+      "kind": "pure",
+      "elements": [
+        "normal"
       ]
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "hidden": true,
+    "elements": [
+      "normal"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-c"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-b",
-          "lineage-c"
-        ],
-        "min": 0.7
-      }
+    "stab": 1.3,
+    "stats": {
+      "hp": 65,
+      "atk": 65,
+      "int": 65,
+      "def": 65,
+      "spr": 65,
+      "spd": 65
+    },
+    "locomotion": "float",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h4:fail",
+    "tier": 4,
+    "label": {
+      "kind": "fail",
+      "elements": [
+        "normal"
+      ]
+    },
+    "hidden": true,
+    "elements": [
+      "normal"
     ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.97,
-        "attackSpeed": 1.025
-      }
+    "stats": {
+      "hp": 52,
+      "atk": 52,
+      "int": 52,
+      "def": 52,
+      "spr": 52,
+      "spd": 52
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:deep-pair@lineage-b+lineage-d",
-    "tier": 4,
+    "id": "t5:normal:physical",
+    "tier": 5,
     "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-d"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "normal"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "normal"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-d"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-b",
-          "lineage-d"
-        ],
-        "min": 0.7
-      }
+    "stats": {
+      "hp": 70,
+      "atk": 84,
+      "int": 56,
+      "def": 70,
+      "spr": 70,
+      "spd": 70
+    },
+    "locomotion": "walk",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t5:normal:special",
+    "tier": 5,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "normal"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "normal"
     ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.9458
-      }
+    "stats": {
+      "hp": 70,
+      "atk": 56,
+      "int": 84,
+      "def": 70,
+      "spr": 70,
+      "spd": 70
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:deep-pair@lineage-b+lineage-e",
-    "tier": 4,
+    "id": "t5:normal:mixed",
+    "tier": 5,
     "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-e"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "normal"
+      ],
+      "category": "mixed"
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-b",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "normal"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-b",
-          "lineage-e"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.97,
-        "attackPower": 1.025
-      }
+    "stats": {
+      "hp": 70,
+      "atk": 70,
+      "int": 70,
+      "def": 70,
+      "spr": 70,
+      "spd": 70
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:deep-pair@lineage-c+lineage-d",
-    "tier": 4,
+    "id": "t5:water:physical",
+    "tier": 5,
     "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-c",
-        "lineage-d"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "water"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
+    "elements": [
+      "water"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-c",
-          "lineage-d"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-c",
-          "lineage-d"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackSpeed": 1.025,
-        "damageTaken": 0.975
-      }
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t4:deep-pair@lineage-c+lineage-e",
-    "tier": 4,
-    "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t3:pair@lineage-a+lineage-c",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-c",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
-    ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-c",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-c",
-          "lineage-e"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackSpeed": 1.025,
-        "attackPower": 1.025
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t4:deep-pair@lineage-d+lineage-e",
-    "tier": 4,
-    "label": {
-      "kind": "deep-pair",
-      "lineages": [
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t3:pair@lineage-a+lineage-d",
-      "t3:pair@lineage-a+lineage-e",
-      "t3:pair@lineage-b+lineage-d",
-      "t3:pair@lineage-b+lineage-e",
-      "t3:pair@lineage-c+lineage-d",
-      "t3:pair@lineage-c+lineage-e",
-      "t3:pair@lineage-d+lineage-e",
-      "t3:balanced",
-      "t3:picky",
-      "t3:rare",
-      "t3:base"
-    ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-d",
-          "lineage-e"
-        ]
-      },
-      {
-        "type": "lineagesShareSum",
-        "lineages": [
-          "lineage-d",
-          "lineage-e"
-        ],
-        "min": 0.7
-      }
-    ],
-    "priority": 25,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.975,
-        "attackPower": 1.025
-      }
+    "stats": {
+      "hp": 77,
+      "atk": 77,
+      "int": 56,
+      "def": 70,
+      "spr": 81,
+      "spd": 59
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:balanced",
-    "tier": 4,
+    "id": "t5:water:special",
+    "tier": 5,
     "label": {
-      "kind": "balanced",
-      "lineages": []
+      "kind": "arrancar",
+      "elements": [
+        "water"
+      ],
+      "category": "special"
     },
-    "from": "any",
-    "requires": [
-      {
-        "type": "maxShareAtMost",
-        "max": 0.35
-      },
-      {
-        "type": "activeLineages",
-        "min": 4
-      }
+    "elements": [
+      "water"
     ],
-    "priority": 30,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {}
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t4:picky",
-    "tier": 4,
-    "label": {
-      "kind": "picky",
-      "lineages": []
-    },
-    "from": "any",
-    "requires": [
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.7
-      }
-    ],
-    "priority": 40,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {}
+    "stats": {
+      "hp": 77,
+      "atk": 49,
+      "int": 84,
+      "def": 70,
+      "spr": 81,
+      "spd": 59
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t4:base",
-    "tier": 4,
+    "id": "t5:water:mixed",
+    "tier": 5,
     "label": {
-      "kind": "base",
-      "lineages": []
+      "kind": "arrancar",
+      "elements": [
+        "water"
+      ],
+      "category": "mixed"
     },
-    "from": "any",
-    "requires": [],
-    "priority": 0,
-    "fallback": true,
-    "effects": {
-      "hpMultiplier": 1.03,
-      "attackMultiplier": 1.03,
-      "passive": {}
+    "elements": [
+      "water"
+    ],
+    "stats": {
+      "hp": 77,
+      "atk": 63,
+      "int": 70,
+      "def": 70,
+      "spr": 81,
+      "spd": 59
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:triple@lineage-a+lineage-b+lineage-c",
+    "id": "t5:fire:physical",
     "tier": 5,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-c"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "fire"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "fire"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-c"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.02,
-        "damageTaken": 0.98,
-        "attackSpeed": 1.0167
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:triple@lineage-a+lineage-b+lineage-d",
-    "tier": 5,
-    "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-d"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.02,
-        "damageTaken": 0.9637
-      }
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:triple@lineage-a+lineage-b+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-b",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-b",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.98
-      }
+    "stats": {
+      "hp": 70,
+      "atk": 95,
+      "int": 56,
+      "def": 63,
+      "spr": 59,
+      "spd": 77
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:triple@lineage-a+lineage-c+lineage-d",
+    "id": "t5:fire:special",
     "tier": 5,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-c",
-        "lineage-d"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "fire"
+      ],
+      "category": "special"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "fire"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-c",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.02,
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833
-      }
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:triple@lineage-a+lineage-c+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-c",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.037,
-        "attackSpeed": 1.0167
-      }
+    "stats": {
+      "hp": 70,
+      "atk": 67,
+      "int": 84,
+      "def": 63,
+      "spr": 59,
+      "spd": 77
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:triple@lineage-a+lineage-d+lineage-e",
+    "id": "t5:fire:mixed",
     "tier": 5,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-a",
-        "lineage-d",
-        "lineage-e"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "fire"
+      ],
+      "category": "mixed"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "fire"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-a",
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackPower": 1.037,
-        "damageTaken": 0.9833
-      }
+    "stats": {
+      "hp": 70,
+      "atk": 81,
+      "int": 70,
+      "def": 63,
+      "spr": 59,
+      "spd": 77
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:triple@lineage-b+lineage-c+lineage-d",
+    "id": "t5:earth:physical",
     "tier": 5,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-d"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "earth"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "earth"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackSpeed": 1.0167
-      }
+    "stats": {
+      "hp": 77,
+      "atk": 84,
+      "int": 49,
+      "def": 84,
+      "spr": 70,
+      "spd": 56
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:triple@lineage-b+lineage-c+lineage-e",
+    "id": "t5:earth:special",
     "tier": 5,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-b",
-        "lineage-c",
-        "lineage-e"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "earth"
+      ],
+      "category": "special"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "earth"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-c",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.98,
-        "attackSpeed": 1.0167,
-        "attackPower": 1.0167
-      }
+    "stats": {
+      "hp": 77,
+      "atk": 56,
+      "int": 77,
+      "def": 84,
+      "spr": 70,
+      "spd": 56
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:triple@lineage-b+lineage-d+lineage-e",
+    "id": "t5:earth:mixed",
     "tier": 5,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-b",
-        "lineage-d",
-        "lineage-e"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "earth"
+      ],
+      "category": "mixed"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "earth"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-b",
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "damageTaken": 0.9637,
-        "attackPower": 1.0167
-      }
+    "stats": {
+      "hp": 77,
+      "atk": 70,
+      "int": 63,
+      "def": 84,
+      "spr": 70,
+      "spd": 56
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:triple@lineage-c+lineage-d+lineage-e",
+    "id": "t5:thunder:physical",
     "tier": 5,
     "label": {
-      "kind": "triple",
-      "lineages": [
-        "lineage-c",
-        "lineage-d",
-        "lineage-e"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "thunder"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "thunder"
     ],
-    "requires": [
-      {
-        "type": "top3",
-        "lineages": [
-          "lineage-c",
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 22,
-    "effects": {
-      "hpMultiplier": 1.08,
-      "attackMultiplier": 1.07,
-      "passive": {
-        "attackSpeed": 1.0167,
-        "damageTaken": 0.9833,
-        "attackPower": 1.0167
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:pair@lineage-a+lineage-b",
-    "tier": 5,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-b"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-b"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.03,
-        "damageTaken": 0.97
-      }
+    "stats": {
+      "hp": 60,
+      "atk": 84,
+      "int": 63,
+      "def": 59,
+      "spr": 70,
+      "spd": 84
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:pair@lineage-a+lineage-c",
+    "id": "t5:thunder:special",
     "tier": 5,
     "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-c"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "thunder"
+      ],
+      "category": "special"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "thunder"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-c"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.03,
-        "attackSpeed": 1.025
-      }
+    "stats": {
+      "hp": 60,
+      "atk": 56,
+      "int": 91,
+      "def": 59,
+      "spr": 70,
+      "spd": 84
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:pair@lineage-a+lineage-d",
+    "id": "t5:thunder:mixed",
     "tier": 5,
     "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-d"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "thunder"
+      ],
+      "category": "mixed"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "thunder"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.03,
-        "damageTaken": 0.975
-      }
+    "stats": {
+      "hp": 60,
+      "atk": 70,
+      "int": 77,
+      "def": 59,
+      "spr": 70,
+      "spd": 84
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:pair@lineage-a+lineage-e",
+    "id": "t5:blood:physical",
     "tier": 5,
     "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-a",
-        "lineage-e"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "blood"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "blood"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-a",
-          "lineage-e"
-        ]
-      }
+    "stats": {
+      "hp": 81,
+      "atk": 91,
+      "int": 45,
+      "def": 70,
+      "spr": 63,
+      "spd": 70
+    },
+    "locomotion": "fly",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t5:blood:special",
+    "tier": 5,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "blood"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "blood"
     ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackPower": 1.0558
-      }
+    "stats": {
+      "hp": 81,
+      "atk": 63,
+      "int": 73,
+      "def": 70,
+      "spr": 63,
+      "spd": 70
+    },
+    "locomotion": "walk",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t5:blood:mixed",
+    "tier": 5,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "blood"
+      ],
+      "category": "mixed"
+    },
+    "elements": [
+      "blood"
+    ],
+    "stats": {
+      "hp": 81,
+      "atk": 77,
+      "int": 59,
+      "def": 70,
+      "spr": 63,
+      "spd": 70
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:pair@lineage-b+lineage-c",
+    "id": "t5:poison:physical",
     "tier": 5,
     "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-c"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "poison"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "poison"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-c"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.97,
-        "attackSpeed": 1.025
-      }
+    "stats": {
+      "hp": 60,
+      "atk": 77,
+      "int": 66,
+      "def": 70,
+      "spr": 77,
+      "spd": 70
     },
     "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:pair@lineage-b+lineage-d",
+    "id": "t5:poison:special",
     "tier": 5,
     "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-d"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "poison"
+      ],
+      "category": "special"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "poison"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.9458
-      }
+    "stats": {
+      "hp": 60,
+      "atk": 49,
+      "int": 94,
+      "def": 70,
+      "spr": 77,
+      "spd": 70
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:pair@lineage-b+lineage-e",
+    "id": "t5:poison:mixed",
     "tier": 5,
     "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-b",
-        "lineage-e"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "poison"
+      ],
+      "category": "mixed"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-b",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "poison"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-b",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.97,
-        "attackPower": 1.025
-      }
+    "stats": {
+      "hp": 60,
+      "atk": 63,
+      "int": 80,
+      "def": 70,
+      "spr": 77,
+      "spd": 70
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:pair@lineage-c+lineage-d",
+    "id": "t5:kyo:physical",
     "tier": 5,
     "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-c",
-        "lineage-d"
-      ]
+      "kind": "arrancar",
+      "elements": [
+        "kyo"
+      ],
+      "category": "physical"
     },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
+    "elements": [
+      "kyo"
     ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-c",
-          "lineage-d"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackSpeed": 1.025,
-        "damageTaken": 0.975
-      }
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:pair@lineage-c+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-c",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-c",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-c",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-c",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-c",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "attackSpeed": 1.025,
-        "attackPower": 1.025
-      }
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:pair@lineage-d+lineage-e",
-    "tier": 5,
-    "label": {
-      "kind": "pair",
-      "lineages": [
-        "lineage-d",
-        "lineage-e"
-      ]
-    },
-    "from": [
-      "t4:triple@lineage-a+lineage-b+lineage-d",
-      "t4:triple@lineage-a+lineage-b+lineage-e",
-      "t4:triple@lineage-a+lineage-c+lineage-d",
-      "t4:triple@lineage-a+lineage-c+lineage-e",
-      "t4:triple@lineage-a+lineage-d+lineage-e",
-      "t4:triple@lineage-b+lineage-c+lineage-d",
-      "t4:triple@lineage-b+lineage-c+lineage-e",
-      "t4:triple@lineage-b+lineage-d+lineage-e",
-      "t4:triple@lineage-c+lineage-d+lineage-e",
-      "t4:deep-pair@lineage-a+lineage-d",
-      "t4:deep-pair@lineage-a+lineage-e",
-      "t4:deep-pair@lineage-b+lineage-d",
-      "t4:deep-pair@lineage-b+lineage-e",
-      "t4:deep-pair@lineage-c+lineage-d",
-      "t4:deep-pair@lineage-c+lineage-e",
-      "t4:deep-pair@lineage-d+lineage-e",
-      "t4:balanced",
-      "t4:picky",
-      "t4:base"
-    ],
-    "requires": [
-      {
-        "type": "top2",
-        "lineages": [
-          "lineage-d",
-          "lineage-e"
-        ]
-      }
-    ],
-    "priority": 20,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {
-        "damageTaken": 0.975,
-        "attackPower": 1.025
-      }
+    "stats": {
+      "hp": 70,
+      "atk": 91,
+      "int": 67,
+      "def": 63,
+      "spr": 59,
+      "spd": 70
     },
     "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:picky",
+    "id": "t5:kyo:special",
     "tier": 5,
     "label": {
-      "kind": "picky",
-      "lineages": []
+      "kind": "arrancar",
+      "elements": [
+        "kyo"
+      ],
+      "category": "special"
     },
-    "from": "any",
-    "requires": [
-      {
-        "type": "maxShareAtLeast",
-        "min": 0.7
-      }
+    "elements": [
+      "kyo"
     ],
-    "priority": 40,
-    "effects": {
-      "hpMultiplier": 1.07,
-      "attackMultiplier": 1.06,
-      "passive": {}
+    "stats": {
+      "hp": 70,
+      "atk": 63,
+      "int": 95,
+      "def": 63,
+      "spr": 59,
+      "spd": 70
     },
     "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "t5:base",
+    "id": "t5:kyo:mixed",
     "tier": 5,
     "label": {
-      "kind": "base",
-      "lineages": []
+      "kind": "arrancar",
+      "elements": [
+        "kyo"
+      ],
+      "category": "mixed"
     },
-    "from": "any",
-    "requires": [],
-    "priority": 0,
-    "fallback": true,
-    "effects": {
-      "hpMultiplier": 1.03,
-      "attackMultiplier": 1.03,
-      "passive": {}
+    "elements": [
+      "kyo"
+    ],
+    "stats": {
+      "hp": 70,
+      "atk": 77,
+      "int": 81,
+      "def": 63,
+      "spr": 59,
+      "spd": 70
     },
     "locomotion": "walk",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h5:limit",
+    "tier": 5,
+    "label": {
+      "kind": "limit",
+      "elements": []
+    },
+    "hidden": true,
+    "stats": {
+      "hp": 70,
+      "atk": 84,
+      "int": 84,
+      "def": 56,
+      "spr": 56,
+      "spd": 70
+    },
+    "locomotion": "walk",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h5:restraint",
+    "tier": 5,
+    "label": {
+      "kind": "restraint",
+      "elements": []
+    },
+    "hidden": true,
+    "stats": {
+      "hp": 77,
+      "atk": 53,
+      "int": 52,
+      "def": 84,
+      "spr": 84,
+      "spd": 70
+    },
+    "locomotion": "float",
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h5:hunter",
+    "tier": 5,
+    "label": {
+      "kind": "hunter",
+      "elements": []
+    },
+    "hidden": true,
+    "stats": {
+      "hp": 81,
+      "atk": 77,
+      "int": 59,
+      "def": 63,
+      "spr": 63,
+      "spd": 77
+    },
+    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   }

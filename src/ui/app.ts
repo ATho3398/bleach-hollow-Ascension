@@ -6,13 +6,13 @@ import type { EnemyDef } from '../data/schema';
 import { tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
-import { absorbsRemaining, applyEvolutionToParams } from '../engine/evolution';
+import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
 import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  loadSave, newSaveData, nextRunId, performEvolution, readActiveExpedition, recordBattle, recordExpedition, resumeTarget, sanitizeDeck, writeSave, type SaveData,
+  loadSave, newSaveData, nextRunId, readActiveExpedition, recordBattle, recordExpedition, resumeTarget, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
@@ -32,6 +32,7 @@ import { expeditionView, getSpeed, setSpeed } from './expeditionView';
 import { planView } from './planView';
 import { dexView } from './dexView';
 import { showTitleToasts, titleDexView } from './titleDexView';
+import { formName } from '../data/evolution';
 import { evolutionView } from './evolutionPanel';
 import { roomView } from './roomView';
 import { altarView, careView, chestView } from './lcdScreens';
@@ -115,7 +116,7 @@ export function startApp(host: HTMLElement): void {
     const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!;
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
-      applyEvolutionToParams(params, save.evolution);
+      applyEvolutionToParams(params, save.evolution, faction.id);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
@@ -366,14 +367,6 @@ export function startApp(host: HTMLElement): void {
 
   function renderAltar(faction: FactionConfig, s: SaveData): void {
     altarView(dev, faction, s, roomOf(faction).props.altar, {
-      onEvolve: () => {
-        const from = s.evolution.tierIndex;
-        const r = performEvolution(s);
-        if (!r.ok) return renderAltar(faction, s);
-        persist();
-        open('evolve-cutscene', () => evolutionView(root, faction, from, s.evolution.tierIndex, r.form, () => nav.pop(), s.build.slots.length), true);
-        showTitleToasts(s, faction, persist);
-      },
       onDex: () => open('dex', () => dexView(root, faction, s)),
       onHelp: () => openHelp('evolution', true),
     });
@@ -470,17 +463,30 @@ export function startApp(host: HTMLElement): void {
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
     activeExp = null;
     let growth: GrowthInput | undefined;
+    let afterResult: (() => void) | null = null;
     if (save) {
       const had = new Set(save.titles.map((t) => t.titleId));
-      recordExpedition(save, exp);
+      const fromTier = save.evolution.tierIndex;
+      // 걸음 수가 진화 타이밍에 닿았으면 귀환한 그 순간 자동 진화 (GDD 20-5 v4.1). 결과 화면 다음에 진화 연출을 보여 준다
+      const evo = recordExpedition(save, exp);
       persist();
       growth = {
         newTraits: summarize(exp).keptTraits.length,
-        remaining: absorbsRemaining(save.evolution),
+        evolvedTo: evo?.ok ? formName(evo.form, faction.id) : null,
         newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
       };
+      if (evo?.ok) {
+        const s = save;
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability };
+        afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => nav.pop(), s.build.slots.length, extra), true);
+      }
     }
-    resultView(root, faction, exp, save?.nest.stability ?? exp.stability, nestScreen, growth);
+    resultView(root, faction, exp, save?.nest.stability ?? exp.stability, () => {
+      nestScreen();
+      const next = afterResult;
+      afterResult = null;
+      next?.();
+    }, growth);
     if (save) showTitleToasts(save, faction, persist);
   }
 
@@ -499,7 +505,7 @@ export function startApp(host: HTMLElement): void {
   function runPractice(faction: FactionConfig, enemy: EnemyDef): void {
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
-      applyEvolutionToParams(params, save.evolution);
+      applyEvolutionToParams(params, save.evolution, faction.id);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });

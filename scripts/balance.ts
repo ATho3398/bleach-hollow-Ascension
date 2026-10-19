@@ -7,11 +7,12 @@ import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
 import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, storedStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
 import { createExpedition, playExpedition, type ExpeditionState } from '../src/engine/expedition';
-import { buildCombatParams, canAbsorb, completedLineages, gainTrait, newBuild } from '../src/engine/absorb';
+import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
-import { LINEAGES } from '../src/data/lineages';
-import { analyzeTable, canEvolve, comboRulesOf, CONCENTRATION_PROFILES, newEvolution, reportProblems } from '../src/engine/evolution';
-import { newSaveData, nextRunId, performEvolution, recordExpedition, sanitizeDeck, newTileStock } from '../src/game';
+import { ELEMENT_IDS } from '../src/data/elements';
+import { ATTACK_CATEGORIES } from '../src/data/schema';
+import { analyzeTree, comboRulesOf, newEvolution } from '../src/engine/evolution';
+import { newSaveData, nextRunId, recordExpedition, sanitizeDeck, newTileStock } from '../src/game';
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
@@ -36,13 +37,14 @@ const START = { storedStartGauge: storedStartGaugeOf(BALANCE.provisional.risk.st
 type BuildDef = { name: string; params: Partial<CombatParams>; ref: boolean; /** 사람형 봇 강적 승률 목표 [하한, 상한]. 없으면 참고 출력만 */ elite?: [number, number] };
 const builds: BuildDef[] = [
   { name: '빈 슬롯(기본 블록)', params: { ...START }, ref: false },
-  { name: 'skill 1개(공격)', params: buildOf(['trait-c5']), ref: true, elite: [0.6, 0.85] },
-  { name: 'skill 2개(공격·막기)', params: buildOf(['trait-c5', 'trait-a5']), ref: true, elite: [0.6, 0.85] },
+  // C.47: 특성은 속성 8종 × 8개. 기준 빌드는 원소 공격 특성(적 속성에 따라 강·약·보통이 섞인다)
+  { name: 'skill 1개(공격)', params: buildOf(['t-thunder-c']), ref: true, elite: [0.6, 0.85] },
+  { name: 'skill 2개(공격·막기)', params: buildOf(['t-thunder-c', 't-fire-guard']), ref: true, elite: [0.6, 0.85] },
   // C.34 (GDD 17-3): 같은 계열 공격 특성 둘은 서로 체인이 된다 — 체인이 쉬워진 빌드
-  { name: 'skill 2개(같은 계열 공격 2)', params: buildOf(['trait-c5', 'trait-e4']), ref: true, elite: [0.6, 0.85] },
+  { name: 'skill 2개(같은 계열 공격 2)', params: buildOf(['t-thunder-c', 't-water-c']), ref: true, elite: [0.6, 0.85] },
   // C.34 ③ (GDD 17-3): 2단계 콤보(탄 계열 체인2 연속 2번 → 콤보 블록)가 켜진 같은 빌드 — 참고 출력만
-  { name: 'skill 1개(공격)+콤보(2단계 규칙)', params: { ...buildOf(['trait-c5']), combos: comboRulesOf({ ...newEvolution(), tierIndex: 1 }) }, ref: false },
-  { name: 'skill 3개(공격·막기·회복)', params: buildOf(['trait-a1', 'trait-b1', 'trait-c1']), ref: false },
+  { name: 'skill 1개(공격)+콤보(2단계 규칙)', params: { ...buildOf(['t-thunder-c']), combos: comboRulesOf({ ...newEvolution(), tierIndex: 1 }) }, ref: false },
+  { name: 'skill 3개(공격·막기·회복)', params: buildOf(['t-fire-a', 't-earth-guard', 't-thunder-heal']), ref: false },
 ];
 // C.16 (GDD 14-4): 완벽형 봇(참고)과 사람형 봇(목표 기준) 둘 다 돌린다.
 //  - 완벽형: 0.5초 간격, 반응 지연·실수 없음. 강공격을 다 막고 체인을 다 붙여서 기술 2개부터 100% 로 절벽이 생긴다 → 참고 출력, 일반 적 승률·길이만 가드
@@ -58,7 +60,7 @@ const BOTS = [
   { key: 'human', name: '사람형 봇', play: (s: CombatState) => playCombatHuman(s) },
 ] as const;
 console.log(`\n전투 (봇 ${N}판, 시드 1~${N}) — 사람형 봇 목표(GDD 14-4, 임시): 일반 승률 ${TARGET.normal.win * 100}%↑·약 ${TARGET.normal.seconds}초, 강적 약 ${TARGET.elite.seconds}초, 강적 승률 ${Object.entries(TARGET.eliteWin).map(([k, [lo, hi]]) => `${k} ${Math.round(lo * 100)}~${Math.round(hi * 100)}%`).join(' / ')} (빈 슬롯·skill 3개는 참고)`);
-// C.15 (GDD 14-5): 적 풀 전체(테스트 고정 적 제외)를 패턴 종류별로 묶어서 본다. 종류마다 적 5종(계통 A~E 약점) × N판
+// C.15 (GDD 14-5): 적 풀 전체(테스트 고정 적 제외)를 패턴 종류별로 묶어서 본다. 종류마다 적 8종(속성 8, C.47) × N판
 const POOL_ENEMIES = ENEMIES.filter((e) => !e.testOnly);
 const KINDS = ENEMY_PATTERN_KINDS.filter((k) => POOL_ENEMIES.some((e) => enemyPatternKind(e) === k));
 type KindStat = { kind: string; cls: string; games: number; wins: number; secs: number; winSecs: number; timeouts: number; line: string };
@@ -137,6 +139,40 @@ for (const bot of BOTS) {
     }
   }
 }
+// ── 분류·속성별 승률 (C.47, GDD 20-1·20-2): 공격 특성 1개 빌드를 분류 3종 × 속성 8종으로 바꿔 사람형 봇으로 돌린다. 일반 적 90%↑ 가드, 강적은 참고 ──
+{
+  const NC = 60;
+  const FAM_OF: Record<string, string> = { physical: 'a', special: 'c', mixed: 'b' };
+  console.log(`\n분류·속성별 승률 (사람형 봇, 공격 특성 1개, 적 풀 전체 × ${NC}판) — 일반 ${TARGET.normal.win * 100}%↑ 가드`);
+  const rowOf = (label: string, traitId: string) => {
+    const params = buildOf([traitId]);
+    let nw = 0;
+    let ng = 0;
+    let ew = 0;
+    let eg = 0;
+    let secs = 0;
+    for (const enemy of POOL_ENEMIES) {
+      for (let seed = 1; seed <= NC; seed++) {
+        const st = playCombatHuman(createCombat(seed, { enemy, params }));
+        if (enemy.class === 'normal') {
+          ng++;
+          if (st.status === 'won') {
+            nw++;
+            secs += elapsedSeconds(st);
+          }
+        } else {
+          eg++;
+          if (st.status === 'won') ew++;
+        }
+      }
+    }
+    console.log(`  ${label.padEnd(14)} 일반 ${((nw / ng) * 100).toFixed(0)}% (승리 ${(secs / Math.max(1, nw)).toFixed(1)}초) · 강적 ${((ew / eg) * 100).toFixed(0)}%`);
+    if (nw / ng < TARGET.normal.win) failures.push(`분류·속성 ${label}: 일반 승률 ${((nw / ng) * 100).toFixed(0)}% < ${TARGET.normal.win * 100}%`);
+  };
+  for (const cat of ATTACK_CATEGORIES) rowOf(`분류 ${cat}`, `t-fire-${FAM_OF[cat]}`);
+  for (const el of ELEMENT_IDS) rowOf(`속성 ${el}`, `t-${el}-a`);
+}
+
 for (const enemy of POOL_ENEMIES) {
   const ref = CX.enemyHpByKind[enemyPatternKind(enemy)];
   if (Math.abs(enemy.hpInAttacks - ref) > ref * 0.15) failures.push(`${enemy.id}: hpInAttacks ${enemy.hpInAttacks} 가 ${enemyPatternKind(enemy)} 기준 ${ref}(±15%) 밖`);
@@ -155,7 +191,7 @@ const deck = sanitizeDeck(newTileStock(), 'hollow');
 const autoWin = (s: CombatState) => {
   s.enemy.hp = 0;
   s.status = 'won';
-  s.finisher = { kind: 'basic-attack', traitId: null, lineageId: null };
+  s.finisher = { kind: 'basic-attack', traitId: null, element: null };
 };
 console.log(`\n원정 (자동 플레이 ${M}회, 타일 배치 포함, 시작 허기 20·컨디션 80)`);
 for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 점검: 전투는 승리 처리', autoWin]] as const) {
@@ -183,12 +219,12 @@ for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 �
   }
 }
 
-// ── 적 출현 풀 분포 (C.15, GDD 14-5): 바퀴·출처별 풀 구성과 약점 계통 분포 ──
+// ── 적 출현 풀 분포 (C.15, GDD 14-5): 바퀴·출처별 풀 구성과 속성 분포 (C.47: 약점 계통 → 적 속성) ──
 {
-  const LIDS = LINEAGES.map((l) => l.id);
-  const WEAK_MIN = 0.1; // 가드: 계통 하나의 약점 적 비율 하한 (균등이면 1/계통 수 = 20%)
-  console.log('\n적 출현 풀 (가중치 기준 구성, 약점 계통 분포는 풀 가중치 합산)');
-  console.log('  등급   출처         바퀴  풀(종)  패턴 종류 비율                       약점 계통 비율');
+  const LIDS = [...ELEMENT_IDS];
+  const WEAK_MIN = 0.06; // 가드: 속성 하나의 적 비율 하한 (균등이면 1/속성 수 = 12.5%)
+  console.log('\n적 출현 풀 (가중치 기준 구성, 속성 분포는 풀 가중치 합산)');
+  console.log('  등급   출처         바퀴  풀(종)  패턴 종류 비율                       속성 비율');
   for (const cls of ['normal', 'elite'] as const) {
     for (const source of ['wild', 'environment', 'combo'] as const) {
       if (cls === 'normal' && source === 'combo') continue;
@@ -201,23 +237,23 @@ for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 �
         for (const e of pool) {
           const k = enemyPatternKind(e.enemy);
           byKind[k] = (byKind[k] ?? 0) + e.weight / total;
-          byWeak[e.enemy.weaknessLineageId] = (byWeak[e.enemy.weaknessLineageId] ?? 0) + e.weight / total;
+          byWeak[e.enemy.element] = (byWeak[e.enemy.element] ?? 0) + e.weight / total;
         }
         const kinds = Object.entries(byKind).map(([k, v]) => `${k} ${(v * 100).toFixed(0)}%`).join(' · ');
         const weak = LIDS.map((l) => `${(((byWeak[l] ?? 0)) * 100).toFixed(0)}%`).join('/');
         console.log(`  ${cls.padEnd(6)} ${source.padEnd(11)} ${String(lap).padStart(3)}  ${String(pool.length).padStart(4)}   ${kinds.padEnd(44)} ${weak}`);
         for (const l of LIDS) {
-          if ((byWeak[l] ?? 0) < WEAK_MIN) failures.push(`적 풀(${cls} ${source} ${lap}바퀴): ${l} 약점 적 비율 ${(((byWeak[l] ?? 0)) * 100).toFixed(0)}% < ${WEAK_MIN * 100}%`);
+          if ((byWeak[l] ?? 0) < WEAK_MIN) failures.push(`적 풀(${cls} ${source} ${lap}바퀴): ${l} 속성 적 비율 ${(((byWeak[l] ?? 0)) * 100).toFixed(0)}% < ${WEAK_MIN * 100}%`);
         }
       }
     }
   }
-  // 실제 원정에서 만난 적 (전투 승리 처리, 6바퀴까지): 약점 계통·패턴 종류 분포
+  // 실제 원정에서 만난 적 (전투 승리 처리, 6바퀴까지): 속성·패턴 종류 분포
   const seenWeak: Record<string, number> = {};
   const seenKind: Record<string, number> = {};
   let seen = 0;
   const kindOf = new Map(ENEMIES.map((e) => [e.id, enemyPatternKind(e)]));
-  const weakOf = new Map(ENEMIES.map((e) => [e.id, e.weaknessLineageId]));
+  const weakOf = new Map(ENEMIES.map((e) => [e.id, e.element]));
   for (let seed = 1; seed <= 200; seed++) {
     const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 0, condition: 100, deck: sanitizeDeck(newTileStock(), 'hollow') }), { returnAfterLap: 6, playBattle: autoWin });
     for (const b of e.battles) {
@@ -228,14 +264,14 @@ for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 �
       seenKind[k] = (seenKind[k] ?? 0) + 1;
     }
   }
-  console.log(`  실제 원정 200회(6바퀴까지, 전투 승리 처리)에서 만난 적 ${seen}마리: 약점 ${LIDS.map((l) => `${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}%`).join('/')} · 종류 ${Object.entries(seenKind).map(([k, n]) => `${k} ${((n / seen) * 100).toFixed(0)}%`).join(' · ')}`);
+  console.log(`  실제 원정 200회(6바퀴까지, 전투 승리 처리)에서 만난 적 ${seen}마리: 속성 ${LIDS.map((l) => `${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}%`).join('/')} · 종류 ${Object.entries(seenKind).map(([k, n]) => `${k} ${((n / seen) * 100).toFixed(0)}%`).join(' · ')}`);
   for (const l of LIDS) {
-    if ((seenWeak[l] ?? 0) / seen < WEAK_MIN) failures.push(`원정에서 만난 적: ${l} 약점 적 비율 ${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}% < ${WEAK_MIN * 100}%`);
+    if ((seenWeak[l] ?? 0) / seen < WEAK_MIN) failures.push(`원정에서 만난 적: ${l} 속성 적 비율 ${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}% < ${WEAK_MIN * 100}%`);
   }
 }
 
 // ── 흡수·리스크(P3, C.6 조건): 흡수 가능 비율, 흡수 자동 플레이(계통 모으기) ──
-console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 계통을 모음 / 비교: 항상 놓아줌) — 흡수 조건(임시): 마무리 일격이 약점 계통 스킬 또는 약점 계통 체인3 ${BALANCE.provisional.absorb.weakChain3ForAbsorb}회 이상, 장착 skill 없으면 첫 흡수 보장`);
+console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 같은 속성을 모음 / 비교: 항상 놓아줌) — 흡수 조건(임시): 마무리 일격이 상성 우위 스킬(약점 없는 적은 아무 스킬) 또는 그 체인3 ${BALANCE.provisional.absorb.weakChain3ForAbsorb}회 이상, 장착 skill 없으면 첫 흡수 보장`);
 const absorbStats: Record<string, { breakthrough: number; defeated: number; absorbableRate: number }> = {};
 for (const stopLap of [4, 6]) {
   for (const policy of ['absorb', 'release'] as const) {
@@ -258,7 +294,7 @@ for (const stopLap of [4, 6]) {
       if (e.breakthrough) bt++;
       if (e.outcome === 'defeated') defeated++;
       traits += e.build.owned.length;
-      if (completedLineages(e.build).length > 0) lineage++;
+      if (completedElements(e.build).length > 0) lineage++;
       risk += e.risk;
       for (const b of e.battles) {
         secs += b.durationSeconds;
@@ -270,7 +306,7 @@ for (const stopLap of [4, 6]) {
     }
     absorbStats[`${stopLap}-${policy}`] = { breakthrough: bt, defeated, absorbableRate: wins ? absorbable / wins : 0 };
     console.log(
-      `  ${stopLap}바퀴 ${policy === 'absorb' ? '흡수' : '놓아줌'}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 계통 완성 ${lineage}/${M} · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투`,
+      `  ${stopLap}바퀴 ${policy === 'absorb' ? '흡수' : '놓아줌'}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 속성 보너스 ${lineage}/${M} · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투`,
     );
   }
 }
@@ -286,167 +322,108 @@ for (const lap of [4, 6]) {
   if (ar > 0.85) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% > 85% (조건이 거의 항상 열린다)`);
 }
 
-// ── 진화(C.9·C.10, GDD 2-3·4-2): 흡수하는 봇이 4바퀴 원정을 반복하다 진화할 수 있으면 둥지에서 진화한다 ──
-// C.10: 목표는 "진화 1단계 ≈ 원정 8~12회, 5단계 ≈ 원정 40~50회". 단계마다 걸린 원정 수(그 단계 시작부터)를 표로 낸다
-// 가드: 단계별 평균 6~14, 5단계 도달 평균 30~60번째 원정, 단계별 진화체 한 가지가 90% 미만 (C.11)
+// ── 진화 (C.47, GDD 20-5): 걸음 수 진화. 흡수 봇이 4바퀴 원정을 반복하고, 둥지에 돌아올 때 걸음이 차 있으면 자동 진화한다 ──
+// 목표(provisional, 마스터 레벨 디자인): 단계마다 약 1.5 / 2.5 / 3 / 4.5원정. 가드는 단계별 평균이 목표의 0.6~1.8배, 5단계 도달 80% 이상(원정 MAX_RUNS 안)
 const CAMPAIGNS = 30;
-const MAX_RUNS = 60;
-const firstEvoRuns: number[] = [];
-/** 단계(2~5)별 진화체 선택 횟수 (봇 실제 경로 포함) */
-const formCounts: Record<number, Record<string, number>> = { 2: {}, 3: {}, 4: {}, 5: {} };
-let allEvos = 0;
-const stageRuns: number[][] = [[], [], [], []];
-const finalRuns: number[] = [];
-for (let seed = 1; seed <= CAMPAIGNS; seed++) {
-  const save = newSaveData('hollow', 0);
-  save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
-  let stageStart = 0;
-  for (let run = 1; run <= MAX_RUNS; run++) {
-    const e = playExpedition(
-      createExpedition({
-        factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-        deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
-      }),
-      { returnAfterLap: 4, absorb: 'absorb' },
-    );
-    recordExpedition(save, e, 0);
-    // 둥지에서 쉬고 먹인다 (패배 쇠약 해소). 안정 수치는 둥지 행동으로 오르므로 쓰다듬기 한 번을 돌본다
-    save.nest.hunger = 20;
-    save.nest.condition = 80;
-    save.nest.weakened = false;
-    if (canEvolve(save.evolution)) {
-      const tier = save.evolution.tierIndex;
-      const r = performEvolution(save, 0);
-      if (r.ok) {
-        allEvos++;
-        stageRuns[tier]!.push(run - stageStart);
-        stageStart = run;
-        if (tier === 0) firstEvoRuns.push(run);
-        if (tier === 3) finalRuns.push(run);
-        formCounts[r.form.tier]![r.form.id] = (formCounts[r.form.tier]![r.form.id] ?? 0) + 1;
-      }
-    }
-  }
-}
+const MAX_RUNS = 40;
+const STAGE_TARGET = [1.5, 2.5, 3, 4.5];
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 진화 가능하면 둥지에서 진화) — 필요 흡수 ${BALANCE.provisional.evolution.absorbsNeeded.join('/')}`);
-console.log('  단계(진화)   도달 인원  평균 원정  최소  최대   (그 단계 시작부터 센 원정 수)');
-const stageNames = ['1→2', '2→3', '3→4', '4→5'];
-stageRuns.forEach((rs, i) => {
-  console.log(`  ${stageNames[i]}단계      ${String(rs.length).padStart(2)}/${CAMPAIGNS}     ${avg(rs).toFixed(1).padStart(5)}    ${String(rs.length ? Math.min(...rs) : '-').padStart(3)}   ${String(rs.length ? Math.max(...rs) : '-').padStart(3)}`);
-});
-console.log(`  5단계 도달 ${finalRuns.length}/${CAMPAIGNS} · 평균 ${avg(finalRuns).toFixed(1)}번째 원정 (최소 ${finalRuns.length ? Math.min(...finalRuns) : '-'} · 최대 ${finalRuns.length ? Math.max(...finalRuns) : '-'})`);
-// 진화체 분포: 단계별로 나온 진화체와 비율 (이름은 자리 표시, 호로 설정). 기본형 = 후보 없음 (경로 포함)
-console.log(`  진화체 분포 (총 진화 ${allEvos}회)`);
-for (const tier of [2, 3, 4, 5]) {
-  const counts = formCounts[tier]!;
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  const top = sorted.map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).slice(0, 8).join(' · ');
-  const base = FORM_TABLE.find((f) => f.tier === tier && f.fallback)!.id;
-  const baseShare = (counts[base] ?? 0) / Math.max(1, total);
-  console.log(`    ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종 (기본형 ${(baseShare * 100).toFixed(0)}%): ${top}`);
-  // 독점 가드는 기본형을 뺀 진화체 기준. 기본형 비율은 참고로 출력한다 (봇 분포가 1~2계통에 몰려 높게 나온다: dev-log C.11)
-  const real = sorted.filter(([id]) => id !== base);
-  const realTotal = real.reduce((a, [, n]) => a + n, 0);
-  if (realTotal >= 5 && real[0]![1] / realTotal >= 0.9) failures.push(`진화: ${tier}단계 ${formName(FORM_TABLE.find((f) => f.id === real[0]![0])!, 'hollow')} 가 ${((real[0]![1] / realTotal) * 100).toFixed(0)}% 독점 (>= 90%, 기본형 제외)`);
-  if (baseShare > 0.8) console.log(`      → 참고: 기본형이 ${(baseShare * 100).toFixed(0)}% (봇이 1~2계통에 집중해 흡수해서 조건에 맞는 진화체가 없다)`);
-}
-if (firstEvoRuns.length < CAMPAIGNS * 0.8) failures.push(`진화: 흡수 봇 중 첫 진화 도달 ${firstEvoRuns.length}/${CAMPAIGNS} < 80%`);
-stageRuns.forEach((rs, i) => {
-  const m = avg(rs);
-  if (rs.length < CAMPAIGNS * 0.8) failures.push(`진화: ${stageNames[i]}단계 도달 ${rs.length}/${CAMPAIGNS} < 80% (원정 ${MAX_RUNS}회 안)`);
-  else if (m < 6 || m > 14) failures.push(`진화: ${stageNames[i]}단계 평균 ${m.toFixed(1)}번째 원정 (목표 6~14)`);
-});
-if (finalRuns.length >= CAMPAIGNS * 0.8) {
-  const m = avg(finalRuns);
-  if (m < 30 || m > 60) failures.push(`진화: 5단계 도달 평균 ${m.toFixed(1)}번째 원정 (목표 30~60)`);
-}
-
-// ── 정책 봇 (C.12, GDD 4-2 v1.1): 집중 봇(1~2계통만 선호해 흡수)과 분산 봇(가장 적게 쌓인 계통을 선호)으로 같은 캠페인을 돌린다 ──
-// 선호하지 않는 계통은 50% 확률로만 흡수한다(0 이면 진화에 필요한 횟수를 못 채울 수 있다). 독점 가드는 기본형 제외 진화체 기준
-{
-  const LIDS = LINEAGES.map((l) => l.id);
-  type Policy = { name: string; wanted: (seed: number) => (exp: ExpeditionState) => boolean };
-  const policies: Policy[] = [
-    { name: '집중 봇(1계통 선호)', wanted: (seed) => { const f = LIDS[seed % LIDS.length]!; return (exp) => exp.absorbOffer!.lineageId === f || (exp.absorbRecords.length * 7 + seed) % 2 === 0; } },
-    { name: '집중 봇(2계통 선호)', wanted: (seed) => { const f = [LIDS[seed % LIDS.length]!, LIDS[(seed + 2) % LIDS.length]!]; return (exp) => f.includes(exp.absorbOffer!.lineageId) || (exp.absorbRecords.length * 7 + seed) % 2 === 0; } },
-    { name: '분산 봇', wanted: (seed) => (exp) => {
-      const sc = LIDS.map((l) => exp.evolution.lineageScores[l] ?? 0);
-      return (exp.evolution.lineageScores[exp.absorbOffer!.lineageId] ?? 0) <= Math.min(...sc) + 1 || (exp.absorbRecords.length * 7 + seed) % 2 === 0;
-    } },
-  ];
-  console.log(`\n정책 봇 진화 (봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 선호 밖 계통은 약 50%만 흡수)`);
-  console.log('  봇                  1→2    2→3    3→4    4→5   (도달/평균 원정)   단계별 기본형 비율');
-  for (const pol of policies) {
-    const reach: number[][] = [[], [], [], []];
-    const counts: Record<number, Record<string, number>> = { 2: {}, 3: {}, 4: {}, 5: {} };
-    for (let seed = 1; seed <= CAMPAIGNS; seed++) {
-      const save = newSaveData('hollow', 0);
-      save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
-      let stageStart = 0;
-      const wanted = pol.wanted(seed);
-      for (let run = 1; run <= MAX_RUNS; run++) {
-        const e = playExpedition(
-          createExpedition({
-            factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
-          }),
-          { returnAfterLap: 4, absorb: 'absorb', absorbWanted: wanted },
-        );
-        recordExpedition(save, e, 0);
+type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number };
+function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number } = {}): CampaignStats {
+  const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0 };
+  for (let seed = 1; seed <= CAMPAIGNS; seed++) {
+    const save = newSaveData('hollow', seed * 7919);
+    save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
+    let stageStart = 0;
+    // 정책은 노리는 단계(stage, tierIndex)에서만 쓴다: 그 전에는 다 흡수해 특성을 모은다 (사람이 노리는 방식)
+    const pick = policy.absorbWanted?.(seed);
+    const wanted = pick ? (exp: ExpeditionState) => (policy.stage === undefined || exp.evolution.tierIndex === policy.stage ? pick(exp) : true) : undefined;
+    for (let run = 1; run <= MAX_RUNS; run++) {
+      // 둥지에서 쉬고 먹인다 (패배 쇠약 해소). 돌보지 않는 봇은 허기·컨디션을 그대로 둔다
+      if (policy.care !== 'neglect') {
         save.nest.hunger = 20;
         save.nest.condition = 80;
         save.nest.weakened = false;
-        if (canEvolve(save.evolution)) {
-          const tier = save.evolution.tierIndex;
-          const r = performEvolution(save, 0);
-          if (r.ok) {
-            reach[tier]!.push(run - stageStart);
-            stageStart = run;
-            counts[r.form.tier]![r.form.id] = (counts[r.form.tier]![r.form.id] ?? 0) + 1;
-          }
-        }
+      }
+      const e = playExpedition(
+        createExpedition({
+          factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
+          deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+        }),
+        { returnAfterLap: 4, absorb: 'absorb', ...(wanted ? { absorbWanted: wanted } : {}) },
+      );
+      if (save.evolution.tierIndex < 4) out.stepsPerRun.push(e.evolution.steps - save.evolution.steps); // 마지막 단계는 걸음을 세지 않는다
+      const tier = save.evolution.tierIndex;
+      const r = recordExpedition(save, e, 0);
+      if (r?.ok) {
+        out.evolutions++;
+        out.stageRuns[tier]!.push(run - stageStart);
+        stageStart = run;
+        if (tier === 3) out.finalRuns.push(run);
+        out.formCounts[r.form.tier]![r.form.id] = (out.formCounts[r.form.tier]![r.form.id] ?? 0) + 1;
+        if (r.form.hidden) out.hidden++;
       }
     }
-    const baseRates = [2, 3, 4, 5].map((tier) => {
-      const base = FORM_TABLE.find((f) => f.tier === tier && f.fallback)!.id;
-      const total = Object.values(counts[tier]!).reduce((a, b) => a + b, 0);
-      return total ? `${(((counts[tier]![base] ?? 0) / total) * 100).toFixed(0)}%` : '-';
-    });
-    console.log(`  ${pol.name.padEnd(18)} ${reach.map((rs) => `${String(rs.length).padStart(2)}/${avg(rs).toFixed(1).padStart(4)}`).join('  ')}   ${baseRates.join(' / ')}`);
-    for (const tier of [2, 3, 4, 5]) {
-      const base = FORM_TABLE.find((f) => f.tier === tier && f.fallback)!.id;
-      const sorted = Object.entries(counts[tier]!).sort((a, b) => b[1] - a[1]);
-      const top = sorted.map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).slice(0, 6).join(' · ');
-      console.log(`      ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종: ${top}`);
-      const real = sorted.filter(([id]) => id !== base);
-      const realTotal = real.reduce((a, [, n]) => a + n, 0);
-      // 분산 봇이 균형형을 얻는 것은 의도한 결과다(계통을 고르게 쌓는 정책). C.41: 공격 계열이 3가지로 섞여 약점 적중이 빌드와 무관해지면서 흡수 계통 분포가 균일해져
-      // 분산 봇의 4단계가 거의 전부 균형형이 되므로 이 조합만 독점 가드에서 뺀다 (집중 봇·전체 봇 가드는 그대로)
-      const intendedBalanced = pol.name === '분산 봇' && formName(FORM_TABLE.find((f) => f.id === real[0]?.[0])!, 'hollow').startsWith('균형형');
-      if (!intendedBalanced && realTotal >= 5 && real[0]![1] / realTotal >= 0.9) failures.push(`진화(${pol.name}): ${tier}단계 ${formName(FORM_TABLE.find((f) => f.id === real[0]![0])!, 'hollow')} 가 ${((real[0]![1] / realTotal) * 100).toFixed(0)}% 독점 (>= 90%, 기본형 제외)`);
-    }
-    const lastRuns = reach[3]!;
-    if (lastRuns.length < CAMPAIGNS * 0.8) console.log(`      → 참고: 5단계 도달 ${lastRuns.length}/${CAMPAIGNS}`);
+  }
+  return out;
+}
+const stageNames = ['1→2', '2→3', '3→4', '4→5'];
+{
+  const st = campaign();
+  console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 귀환 때 자동 진화) — 필요 걸음 ${BALANCE.provisional.evolution.stepsNeeded.join('/')}칸 (숨김)`);
+  console.log(`  원정 1회 평균 ${avg(st.stepsPerRun).toFixed(1)}칸 (최소 ${Math.min(...st.stepsPerRun)} · 최대 ${Math.max(...st.stepsPerRun)})`);
+  console.log('  단계(진화)   도달 인원  평균 원정  목표   최소  최대   (그 단계 시작부터 센 원정 수)');
+  st.stageRuns.forEach((rs, i) => {
+    console.log(`  ${stageNames[i]}단계      ${String(rs.length).padStart(2)}/${CAMPAIGNS}     ${avg(rs).toFixed(1).padStart(5)}   ${String(STAGE_TARGET[i]).padStart(4)}   ${String(rs.length ? Math.min(...rs) : '-').padStart(3)}   ${String(rs.length ? Math.max(...rs) : '-').padStart(3)}`);
+    const m = avg(rs);
+    if (rs.length < CAMPAIGNS * 0.8) failures.push(`진화: ${stageNames[i]}단계 도달 ${rs.length}/${CAMPAIGNS} < 80% (원정 ${MAX_RUNS}회 안)`);
+    else if (m < STAGE_TARGET[i]! * 0.6 || m > STAGE_TARGET[i]! * 1.8) failures.push(`진화: ${stageNames[i]}단계 평균 ${m.toFixed(1)}원정 (목표 ${STAGE_TARGET[i]}의 0.6~1.8배 밖)`);
+  });
+  console.log(`  5단계 도달 ${st.finalRuns.length}/${CAMPAIGNS} · 평균 ${avg(st.finalRuns).toFixed(1)}번째 원정 · 히든 ${st.hidden}/${st.evolutions}회`);
+  console.log(`  진화체 분포 (총 진화 ${st.evolutions}회)`);
+  for (const tier of [2, 3, 4, 5]) {
+    const counts = st.formCounts[tier]!;
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const top = sorted.map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).slice(0, 8).join(' · ');
+    console.log(`    ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종: ${top}`);
   }
 }
 
-// ── 진화체 테이블 점검 (GDD 4-2 v1.0): 도달 가능성 · 기본형 1개 · 선택 모호성 · "후보 없음 → 기본형" 비율 ──
+// ── 정책 봇 (C.47): 한 속성만 / 마주 보는 두 원소만 / 노멀만 흡수, 돌보지 않음, 놓아주기 위주. 히든 도달률을 본다 ──
+{
+  type Policy = { name: string; wanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number; expect?: string };
+  const only = (els: string[]) => () => (exp: ExpeditionState) => els.includes(exp.absorbOffer!.element);
+  const policies: Policy[] = [
+    { name: '물·흙만 흡수', wanted: only(['water', 'earth']), stage: 2, expect: 'h4:fusion:water+earth' },
+    { name: '불·뇌만 흡수', wanted: only(['fire', 'thunder']), stage: 2, expect: 'h4:fusion:fire+thunder' },
+    { name: '혈+불만 흡수', wanted: only(['blood', 'fire']), stage: 2, expect: 'h4:special:blood' },
+    { name: '노멀만 흡수', wanted: only(['normal']), stage: 2, expect: 'h4:pure' },
+    { name: '돌보지 않음', care: 'neglect', expect: 'h4:fail' },
+    { name: '대부분 놓아줌', wanted: (seed) => (exp) => (exp.absorbRecords.length * 7 + seed) % 4 === 0, stage: 3, expect: 'h5:restraint' },
+  ];
+  console.log(`\n정책 봇 진화 (봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 정책은 노리는 단계에서만) — 히든 도달 (그 정책이 노리는 히든 / 전체 히든)`);
+  for (const pol of policies) {
+    const st = campaign({ absorbWanted: pol.wanted, care: pol.care, stage: pol.stage });
+    const all = Object.values(st.formCounts).flatMap((c) => Object.entries(c));
+    const target = all.filter(([id]) => id === pol.expect).reduce((a, [, n]) => a + n, 0);
+    const hiddenTop = all.filter(([id]) => FORM_TABLE.find((f) => f.id === id)?.hidden).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).join(' · ');
+    console.log(`  ${pol.name.padEnd(10)} 노림 ${pol.expect} ${target}/${CAMPAIGNS} · 히든 ${st.hidden}/${st.evolutions} · 5단계 ${st.finalRuns.length}/${CAMPAIGNS} — ${hiddenTop || '히든 없음'}`);
+  }
+}
+
+// ── 진화 트리 점검 (GDD 20-5): 모든 진화체(일반 35 + 히든 11)가 무작위 상태에서 실제로 뽑히는가, 단계별 히든 비율 ──
 {
   const EVC = BALANCE.provisional.evolution;
   const t0 = Date.now();
-  const reports = analyzeTable(FORM_TABLE, LINEAGES.map((l) => l.id), EVC.absorbsNeeded, { ...EVC.analysis, skews: [...EVC.analysis.skews], rareWeight: EVC.rareWeight });
-  console.log(`\n진화체 테이블 점검 (계통 ${LINEAGES.length}개, 흡수 분포 전수+무작위, ${((Date.now() - t0) / 1000).toFixed(1)}초)`);
-  console.log('  단계  진화체(+기본형)  필요 흡수  분포 샘플  도달 불가  모호  후보 없음→기본형(경로 무시)  (경로 포함)');
-  for (const r of reports) {
-    console.log(`  ${r.tier}     ${String(r.formCount).padStart(3)}(+${r.fallbackCount})        ${String(r.need).padStart(3)}    ${String(r.samples).padStart(8)}    ${String(r.unreachable.length).padStart(3)}    ${String(r.ambiguous).padStart(3)}      ${(r.fallbackRate * 100).toFixed(1).padStart(5)}%                    ${(r.fallbackRateWithPath * 100).toFixed(1).padStart(5)}%`);
-  }
-  console.log('  단계별 집중형 분포 기본형 비율(경로 포함): 1계통 몰림 / 2계통 몰림 / 3계통 / 균등');
-  for (const r of reports) {
-    console.log(`  ${r.tier}     ${CONCENTRATION_PROFILES.map((p) => `${(r.fallbackByProfile[p.key] * 100).toFixed(1).padStart(5)}%`).join(' / ')}`);
-  }
-  failures.push(...reportProblems(reports, EVC.analysis.maxFallbackRate).map((p) => `진화체 테이블: ${p}`));
+  const rep = analyzeTree(FORM_TABLE, 'hollow', EVC.analysis.samples, EVC.analysis.seed);
+  const normalCount = FORM_TABLE.filter((f) => !f.hidden).length;
+  const hiddenCount = FORM_TABLE.filter((f) => f.hidden).length;
+  console.log(`\n진화 트리 점검 (일반 ${normalCount}+1단계 + 히든 ${hiddenCount}, 단계당 무작위 상태 ${EVC.analysis.samples}개, ${((Date.now() - t0) / 1000).toFixed(1)}초)`);
+  for (const [tier, r] of Object.entries(rep.hiddenRate)) console.log(`  ${tier}단계: 히든 ${((r.hidden / r.samples) * 100).toFixed(1)}%`);
+  console.log(`  한 번도 안 뽑힌 진화체: ${rep.unreachable.length ? rep.unreachable.join(', ') : '없음'}`);
+  if (rep.unreachable.length > 0) failures.push(`진화 트리: 뽑히지 않는 진화체 ${rep.unreachable.join(', ')}`);
+  // 기획의 일반 35종 = 1단계(진화체 없음, 종족 설정 baseStats) + 진화체 34
+  if (normalCount !== 34 || hiddenCount !== 11) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 34(+1단계) + 11)`);
 }
 
 if (check) {

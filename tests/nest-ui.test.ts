@@ -2,14 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
 import { CUTSCENE, CUTSCENE_LINE_COUNT, cutsceneLines, parseCutscene } from '../src/data/evolution/cutscene';
 import { FORM_TABLE, formsOfTier } from '../src/data/evolution';
-import { LINEAGES } from '../src/data/lineages';
+import { ELEMENTS, getElement } from '../src/data/elements';
 import { TERRAIN_TILES } from '../src/data/tiles';
 import { TITLES } from '../src/data/titles';
 import { BALANCE } from '../src/config/balance';
-import { lineageKey, LIN_KEYS } from '../src/ui/bha/lineage';
 import { tileKindOf } from '../src/ui/bha/nest';
-import { countText, formCardModel, linbarModel, sortFormsForDex, titleRowKind, toward, unequippedOwned } from '../src/ui/bha/nestLogic';
-import { evolutionEffectRows } from '../src/ui/evolutionPanel';
+import { countText, formCardModel, sortFormsForDex, titleRowKind, toward, unequippedOwned } from '../src/ui/bha/nestLogic';
+import { evolutionEffectRows, statsLine } from '../src/ui/evolutionPanel';
 
 describe('보유 목록', () => {
   it('슬롯에 장착되지 않은 보유 특성만 센다', () => {
@@ -22,59 +21,46 @@ describe('보유 목록', () => {
   });
 });
 
-describe('계통 누적 막대 모델', () => {
-  const ids = ['x', 'y', 'z'];
-  it('횟수 0 인 계통은 조각에서 빠지고 부족한 칸은 빈 자리가 된다', () => {
-    const m = linbarModel({ x: 5, y: 0, z: 2 }, ids, 27);
-    expect(m.segs).toEqual([{ id: 'x', n: 5 }, { id: 'z', n: 2 }]);
-    expect(m.total).toBe(7);
-    expect(m.empty).toBe(20);
-    expect(m.lead).toBe('x');
+describe('속성 표시 데이터 (C.47)', () => {
+  it('속성 8종이 모두 겹치지 않는 한 글자 약자와 기존 토큰 색을 가진다', () => {
+    expect(ELEMENTS).toHaveLength(8);
+    const abbrs = ELEMENTS.map((e) => e.abbr['*']);
+    expect(new Set(abbrs).size).toBe(ELEMENTS.length);
+    for (const e of ELEMENTS) {
+      expect(Array.from(e.abbr['*']!)).toHaveLength(1);
+      expect(getElement(e.id).color).toMatch(/^--bha-/);
+    }
   });
-  it('희귀 가중으로 합계가 필요 횟수를 넘으면 빈 자리는 0', () => {
-    expect(linbarModel({ x: 20, y: 10 }, ids, 27).empty).toBe(0);
-  });
-  it('전부 0 이면 1위 없음, 동점이면 먼저 나온 계통', () => {
-    expect(linbarModel({}, ids, 27).lead).toBeNull();
-    expect(linbarModel({ x: 3, y: 3 }, ids, 27).lead).toBe('x');
-  });
-  it('음수·누락 값은 0 으로 본다', () => {
-    const m = linbarModel({ x: -4 }, ids, 10);
-    expect(m.total).toBe(0);
-    expect(m.segs).toEqual([]);
-  });
-});
-
-describe('계통 마크 매핑', () => {
-  it('계통 5개가 a~e 로 하나씩 대응한다', () => {
-    const keys = LINEAGES.map((l) => lineageKey(l.id));
-    expect(keys).toEqual([...LIN_KEYS].slice(0, LINEAGES.length));
-    expect(new Set(keys).size).toBe(LINEAGES.length);
-  });
-  it('모르는 계통은 undefined', () => expect(lineageKey('nope')).toBeUndefined());
 });
 
 describe('진화체 도감 카드 상태', () => {
-  const t2 = formsOfTier(2);
-  const base = t2.find((f) => f.fallback)!;
-  const other = t2.find((f) => !f.fallback)!;
+  const t4 = formsOfTier(4);
+  const hiddenForm = t4.find((f) => f.hidden)!;
+  const other = t4.find((f) => !f.hidden)!;
   it('발견하지 않은 진화체는 unknown 이고 지금 표시도 없다', () => {
     const m = formCardModel(other, new Set(), other.id);
     expect(m.state).toBe('unknown');
     expect(m.current).toBe(false);
   });
-  it('발견한 현재 진화체는 current, 기본형은 base', () => {
-    const u = new Set([other.id, base.id]);
-    expect(formCardModel(other, u, other.id)).toMatchObject({ state: 'found', current: true, base: false });
-    expect(formCardModel(base, u, other.id)).toMatchObject({ state: 'found', current: false, base: true });
+  it('발견한 현재 진화체는 current, 히든은 hidden, 카드 색은 첫 속성', () => {
+    const u = new Set([other.id, hiddenForm.id]);
+    expect(formCardModel(other, u, other.id)).toMatchObject({ state: 'found', current: true, hidden: false, element: other.label.elements[0] });
+    expect(formCardModel(hiddenForm, u, other.id)).toMatchObject({ state: 'found', current: false, hidden: true });
   });
-  it('기본형은 목록 맨 뒤로 정렬한다', () => {
-    const sorted = sortFormsForDex(t2);
-    expect(sorted[sorted.length - 1]!.fallback).toBe(true);
-    expect(sorted).toHaveLength(t2.length);
+  it('속성을 잇는 아란칼 히든은 카드 색 속성이 없다', () => {
+    const limit = formsOfTier(5).find((f) => f.label.kind === 'limit')!;
+    expect(formCardModel(limit, new Set([limit.id]), null).element).toBeUndefined();
   });
-  it('모든 단계에 기본형이 정확히 1개', () => {
-    for (const t of [2, 3, 4, 5]) expect(formsOfTier(t).filter((f) => f.fallback)).toHaveLength(1);
+  it('히든은 목록 맨 뒤로 정렬한다 (안정 정렬)', () => {
+    const sorted = sortFormsForDex(t4);
+    const firstHidden = sorted.findIndex((f) => f.hidden);
+    expect(sorted.slice(firstHidden).every((f) => f.hidden)).toBe(true);
+    expect(sorted.slice(0, firstHidden)).toEqual(t4.filter((f) => !f.hidden));
+    expect(sorted).toHaveLength(t4.length);
+  });
+  it('모든 단계에 일반 진화체가 있고, 히든은 4·5단계에만', () => {
+    for (const t of [2, 3, 4, 5]) expect(formsOfTier(t).filter((f) => !f.hidden).length).toBeGreaterThan(0);
+    for (const t of [2, 3]) expect(formsOfTier(t).filter((f) => f.hidden)).toHaveLength(0);
     expect(FORM_TABLE.length).toBeGreaterThan(0);
   });
 });
@@ -141,13 +127,18 @@ describe('진화 연출 문구 데이터', () => {
 
 describe('진화 후 달라진 점 행', () => {
   const faction = FACTIONS[0]!;
-  const form = FORM_TABLE.find((f) => f.tier === 2 && !f.fallback)!;
-  it('슬롯은 진화 전 → 후 칸 수, 그 밖의 행은 배율·패시브·외형', () => {
+  const form = FORM_TABLE.find((f) => f.tier === 2 && !f.hidden)!;
+  it('슬롯은 진화 전 → 후 칸 수, 그 밖의 행은 종족값·외형 (속성·고유 특성은 extra 가 있을 때만)', () => {
     const rows = evolutionEffectRows(faction, form, 4);
     const per = BALANCE.provisional.evolution.slotsPerEvolution;
     expect(rows[0]!.value).toBe(`${4 - per} → 4칸`);
-    expect(rows.map((r) => r.label)).toEqual([faction.slotName, '체력 배율', '공격 배율', '패시브', '외형']);
-    expect(rows[1]!.value).toBe(`×${form.effects.hpMultiplier.toFixed(2)}`);
+    expect(rows.map((r) => r.label)).toEqual([faction.slotName, '종족값', '외형']);
+    expect(rows[1]!.value).toBe(statsLine(faction.id, form.stats));
+  });
+  it('종족값 한 줄은 능력치 6개를 이름과 함께 적는다', () => {
+    const line = statsLine(faction.id, form.stats);
+    expect(line.split(' · ')).toHaveLength(6);
+    expect(line).toContain(`체력 ${form.stats.hp}`);
   });
   it('칸 수를 모르면 +N칸만 보인다', () => {
     expect(evolutionEffectRows(faction, form)[0]!.value).toBe(`+${BALANCE.provisional.evolution.slotsPerEvolution}칸`);

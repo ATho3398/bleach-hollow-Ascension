@@ -1,6 +1,6 @@
 // 원정 자동 플레이어: 밸런스 점검·테스트용. 손에 든 타일을 앞쪽 빈 슬롯에 놓고, 정해진 바퀴에서 귀환한다.
 import { getTrait } from '../../data/traits';
-import { lineageCounts, type BuildState } from '../absorb';
+import { elementCounts, type BuildState } from '../absorb';
 import { playCombatBot } from '../combat';
 import {
   advance, chooseAbsorb, chooseContinue, chooseRelease, chooseReturn, finishBattle, finishRest, placeTile, startBattle,
@@ -22,10 +22,10 @@ export interface AutoOptions {
 
 const KIND_SCORE = { skill: 3, passive: 2, part: 1 } as const;
 
-/** 봇의 특성 점수: 슬롯에 같은 계통이 많을수록(계통 보너스), skill > passive > part, 희귀 가산 */
+/** 봇의 특성 점수: 슬롯에 같은 속성이 많을수록(속성 보너스), skill > passive > part, 희귀 가산 */
 function traitScore(b: BuildState, id: string): number {
   const t = getTrait(id);
-  return (lineageCounts(b)[t.lineageId] ?? 0) * 10 + KIND_SCORE[t.kind] + (t.rare ? 2 : 0);
+  return (elementCounts(b)[t.element] ?? 0) * 10 + KIND_SCORE[t.kind] + (t.rare ? 2 : 0);
 }
 
 /** 후보 중 가장 좋은 특성과, 가득 찼을 때 교체할 슬롯(교체가 이득이 아니면 null = 포기) */
@@ -34,12 +34,12 @@ export function botPickTrait(exp: ExpeditionState): { traitId: string | null; re
   if (!offer || offer.candidates.length === 0) return { traitId: null, replaceSlot: null };
   const best = [...offer.candidates].sort((a, b) => traitScore(exp.build, b) - traitScore(exp.build, a))[0]!;
   if (exp.build.slots.includes(null)) return { traitId: best, replaceSlot: null };
-  // 가득 참: 가장 점수 낮은 슬롯을 비교 (새 특성의 계통 개수는 교체될 슬롯이 빠진 뒤로 계산)
+  // 가득 참: 가장 점수 낮은 슬롯을 비교 (새 특성의 속성 개수는 교체될 슬롯이 빠진 뒤로 계산)
   let worst = 0;
   let worstScore = Infinity;
   exp.build.slots.forEach((id, i) => {
     const t = getTrait(id!);
-    const sc = (lineageCounts(exp.build)[t.lineageId] ?? 0) * 10 + KIND_SCORE[t.kind];
+    const sc = (elementCounts(exp.build)[t.element] ?? 0) * 10 + KIND_SCORE[t.kind];
     if (sc < worstScore) {
       worstScore = sc;
       worst = i;

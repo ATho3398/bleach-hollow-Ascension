@@ -9,9 +9,9 @@ const build = (...ids: string[]) => {
   for (const id of ids) gainTrait(b, id);
   return buildCombatParams(b);
 };
-const heavy = getEnemy('a-heavy-seal');
-const stance = getEnemy('a-stance');
-const two = build('trait-c5', 'trait-a5');
+const heavy = getEnemy('fire-heavy-seal');
+const stance = getEnemy('fire-stance');
+const two = build('t-thunder-c', 't-fire-guard');
 
 describe('사람형 봇', () => {
   it('임시 설정값: 반응 0.5~1.2초, 막기 성공 70%, 체인 정리 50%', () => {
@@ -35,18 +35,18 @@ describe('사람형 봇', () => {
   });
 
   it('사람형 봇은 전투 rng 를 건드리지 않는다 (적 행동·블록 생성은 봇 종류와 무관한 같은 규칙)', () => {
-    const s = playCombatHuman(createCombat(9, { enemy: getEnemy('a-basic') }));
+    const s = playCombatHuman(createCombat(9, { enemy: getEnemy('fire-basic') }));
     expect(['won', 'lost']).toContain(s.status);
     expect(s.rng).toBeDefined();
   });
 
   it('입력 간격이 0.5~1.2초 사이에서 무작위다 (완벽형은 0.5초 고정)', () => {
-    const s = playCombatHuman(createCombat(5, { enemy: getEnemy('a-sturdy'), params: two }));
+    const s = playCombatHuman(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: two }));
     const gaps = s.inputs.slice(1).map((x, i) => (x.tick - s.inputs[i]!.tick) / 10).filter((g) => g > 0);
     expect(gaps.length).toBeGreaterThan(10);
     expect(Math.min(...gaps)).toBeGreaterThanOrEqual(0.1 - 1e-9); // 같은 틱 안의 연속 입력은 없다
     expect(gaps.some((g) => g > 0.5)).toBe(true);
-    const p = playCombatBot(createCombat(5, { enemy: getEnemy('a-sturdy'), params: two }));
+    const p = playCombatBot(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: two }));
     const pg = p.inputs.slice(1).map((x, i) => x.tick - p.inputs[i]!.tick);
     expect(pg.every((g) => g % 5 === 0)).toBe(true);
   });
@@ -84,7 +84,7 @@ describe('사람형 봇', () => {
     const chain3 = (joinChance: number) => {
       let n = 0;
       for (let seed = 1; seed <= 10; seed++) {
-        const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('a-sturdy'), params: two }), { joinChance });
+        const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('fire-sturdy'), params: two }), { joinChance });
         n += s.chain3Count;
         expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'stored')).toBe(true);
       }
@@ -121,7 +121,7 @@ describe('사람형 봇', () => {
 
   it('botInput: allowGuard=false 면 강공격 예고 중에도 막기 블록을 쓰지 않는다', () => {
     const s = createCombat(1, { enemy: heavy, params: two });
-    s.tray = [{ uid: 1, kind: 'skill', traitId: 'trait-a5' }];
+    s.tray = [{ uid: 1, kind: 'skill', traitId: 't-fire-guard' }];
     s.enemy.cast = { ticks: 10, total: 20, hitsLeft: 0 };
     expect(botInput(s)).toEqual({ type: 'use', cell: 0 });
     expect(botInput(s, { allowGuard: false })).toBeNull();
@@ -135,8 +135,8 @@ describe('사람형 봇 목표 곡선(작은 표본): 일반 적은 이기고 �
       for (let seed = 1; seed <= 40; seed++) if ((playCombatHuman(createCombat(seed, { enemy: getEnemy(enemyId), params })) as CombatState).status === 'won') w++;
       return w / 40;
     };
-    expect(rate(undefined, 'a-basic')).toBeGreaterThanOrEqual(0.9);
-    expect(rate(two, 'a-sturdy')).toBeGreaterThanOrEqual(0.9);
-    expect(rate(undefined, 'a-heavy-seal')).toBeLessThan(rate(two, 'a-heavy-seal'));
+    expect(rate(undefined, 'fire-basic')).toBeGreaterThanOrEqual(0.9);
+    expect(rate(two, 'fire-sturdy')).toBeGreaterThanOrEqual(0.9);
+    expect(rate(undefined, 'fire-heavy-seal')).toBeLessThan(rate(two, 'fire-heavy-seal'));
   });
 });

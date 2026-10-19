@@ -39,7 +39,7 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     specialUsed: s.specialUsed,
     finisherKind: s.finisher?.kind ?? null,
     finisherTraitId: s.finisher?.traitId ?? null,
-    finisherLineageId: s.finisher?.lineageId ?? null,
+    finisherElement: s.finisher?.element ?? null,
     absorbable: canAbsorb(s),
     storedUsed: s.storedUsed,
     storedWasted: Math.round(s.storedWasted * 10) / 10,

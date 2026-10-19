@@ -1,0 +1,10 @@
+[
+  { "id": "normal", "kind": "normal", "name": { "*": "노멀" }, "abbr": { "*": "노" }, "color": "--bha-text-2" },
+  { "id": "water", "kind": "elemental", "beats": "fire", "name": { "*": "물" }, "abbr": { "*": "물" }, "color": "--bha-heal" },
+  { "id": "fire", "kind": "elemental", "beats": "earth", "name": { "*": "불" }, "abbr": { "*": "불" }, "color": "--bha-lin-a" },
+  { "id": "earth", "kind": "elemental", "beats": "thunder", "name": { "*": "흙" }, "abbr": { "*": "흙" }, "color": "--bha-hunger" },
+  { "id": "thunder", "kind": "elemental", "beats": "water", "name": { "*": "뇌" }, "abbr": { "*": "뇌" }, "color": "--bha-chain2" },
+  { "id": "blood", "kind": "special", "effect": "drain", "name": { "*": "혈" }, "abbr": { "*": "혈" }, "color": "--bha-attack" },
+  { "id": "poison", "kind": "special", "effect": "poison", "name": { "*": "독" }, "abbr": { "*": "독" }, "color": "--bha-lin-b" },
+  { "id": "kyo", "kind": "special", "effect": "pierce", "name": { "*": "허(虛)" }, "abbr": { "*": "허" }, "color": "--bha-lin-d" }
+]

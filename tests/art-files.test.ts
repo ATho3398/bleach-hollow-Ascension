@@ -71,7 +71,7 @@ describe('scene·prop 은 manifest 없이 파일만 넣어도 인식', () => {
 });
 
 describe('필요 파일 목록', () => {
-  const rows = artWishlist(FACTIONS, ENEMIES, { 'scene.cave': {}, 'prop.door': {}, 'char.hollow': {} }, ['enemy-a-basic.png', 'char-hollow-2.webp']);
+  const rows = artWishlist(FACTIONS, ENEMIES, { 'scene.cave': {}, 'prop.door': {}, 'char.hollow': {} }, ['enemy-fire-basic.png', 'char-hollow-2.webp']);
   it('종족 × 단계 + 종족 공통, 실제 적 전부(테스트용 적 제외), 방 키를 담는다', () => {
     const f = new Set(rows.map((r) => r.file));
     for (const fac of FACTIONS) {
@@ -85,8 +85,8 @@ describe('필요 파일 목록', () => {
     expect(rows.filter((r) => r.file === 'char-hollow.png')).toHaveLength(1);
   });
   it('이미 들어 있는 파일은 present', () => {
-    expect(rows.find((r) => r.file === 'enemy-a-basic.png')!.present).toBe(true);
+    expect(rows.find((r) => r.file === 'enemy-fire-basic.png')!.present).toBe(true);
     expect(rows.find((r) => r.file === 'char-hollow-2.png')!.present).toBe(true);
-    expect(rows.find((r) => r.file === 'enemy-b-basic.png')!.present).toBe(false);
+    expect(rows.find((r) => r.file === 'enemy-water-basic.png')!.present).toBe(false);
   });
 });

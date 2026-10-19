@@ -9,7 +9,8 @@ import { getFaction } from '../../data/factions';
 import { finishRest, type ExpeditionState } from './expedition';
 
 /** 저장 형식을 바꾸면 올린다 (다르면 이어하기를 숨기고 무시한다) */
-export const EXPEDITION_SNAPSHOT_VERSION = 1;
+/** C.47: 2 (진화 상태·전투 재료 구조가 바뀜 — 옛 원정 중간 저장은 이어하지 않는다) */
+export const EXPEDITION_SNAPSHOT_VERSION = 2;
 
 export interface ExpeditionSnapshot {
   version: number;
@@ -76,7 +77,7 @@ function validShape(e: unknown): e is ExpeditionState {
   if (!Array.isArray(b.slots) || !b.slots.every((s) => s === null || knows(getTrait, s))) return false;
   if (!Array.isArray(e.lapStartSlots) || !e.lapStartSlots.every((s) => s === null || typeof s === 'string')) return false;
   const evo = e.evolution;
-  if (!isObj(evo) || !isInt(evo.tierIndex) || !isObj(evo.lineageScores)) return false;
+  if (!isObj(evo) || !isInt(evo.tierIndex) || !isInt(evo.steps) || !isObj(evo.elementAbsorbs) || !isObj(evo.ev)) return false;
   if (e.breakthrough !== null && !(isObj(e.breakthrough) && isInt(e.breakthrough.lap) && isInt(e.breakthrough.cell))) return false;
   // 전투 중이면 전투 재료(시드 포함)가, 흡수 중이면 제안이 있어야 한다
   if (e.phase === 'battle') {

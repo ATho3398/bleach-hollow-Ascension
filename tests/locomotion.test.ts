@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { FORM_TABLE, formsOfTier } from '../src/data/evolution';
+import { FORM_TABLE, formsOfTier, validateFormTable } from '../src/data/evolution';
 import { FACTIONS } from '../src/data/factions';
 import { ART_MANIFEST, charArt } from '../src/data/art/manifest';
-import { validateFormTable } from '../src/engine/evolution/select';
 import { isLocomotion, locomotionFromQuery, LOCOMOTIONS, resolveLocomotion } from '../src/engine/locomotion';
 import { lungePlan } from '../src/ui/attackFx';
 import { ATTACK_FX } from '../src/ui/attackFxConfig';
 import { LOCO_LIFT, locoOf } from '../src/ui/bha/loco';
-import { LINEAGES } from '../src/data/lineages';
 
 describe('이동 방식 해석 (GDD 18-11)', () => {
   it('우선순위 = 그림 manifest > 진화체 > 종족 기본 > walk', () => {
@@ -47,14 +45,15 @@ describe('이동 방식 해석 (GDD 18-11)', () => {
 describe('이동 방식 데이터', () => {
   it('진화체마다 유효한 값이 있고 표 검사를 통과한다', () => {
     for (const f of FORM_TABLE) expect(isLocomotion(f.locomotion), f.id).toBe(true);
-    expect(validateFormTable(FORM_TABLE, LINEAGES.map((l) => l.id))).toEqual([]);
+    expect(validateFormTable(FORM_TABLE)).toEqual([]);
   });
   it('잘못된 값은 표 검사가 잡는다', () => {
     const bad = FORM_TABLE.map((f, i) => (i === 0 ? { ...f, locomotion: 'swim' as never } : f));
-    expect(validateFormTable(bad, LINEAGES.map((l) => l.id)).some((e) => e.includes('locomotion'))).toBe(true);
+    expect(validateFormTable(bad).some((e) => e.includes('locomotion'))).toBe(true);
   });
-  it('단계(2~5)마다 3종이 모두 나온다', () => {
-    for (const tier of [2, 3, 4, 5]) expect(new Set(formsOfTier(tier).map((f) => f.locomotion)), `${tier}단계`).toEqual(new Set(LOCOMOTIONS));
+  it('갈림이 있는 단계(4·5)마다 3종이 모두 나오고, 전체로도 고르게 섞인다 (C.47: 2·3단계는 1종씩)', () => {
+    for (const tier of [4, 5]) expect(new Set(formsOfTier(tier).map((f) => f.locomotion)), `${tier}단계`).toEqual(new Set(LOCOMOTIONS));
+    for (const l of LOCOMOTIONS) expect(FORM_TABLE.filter((f) => f.locomotion === l).length / FORM_TABLE.length, l).toBeGreaterThanOrEqual(0.25);
   });
   it('종족 설정의 기본값은 유효하다 (호로 1단계 = walk)', () => {
     for (const f of FACTIONS) expect(f.locomotion === undefined || isLocomotion(f.locomotion), f.id).toBe(true);

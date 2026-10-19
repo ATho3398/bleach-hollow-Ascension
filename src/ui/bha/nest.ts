@@ -1,12 +1,9 @@
-// 둥지 계열 화면 전용 DOM 헬퍼 (U-3, T-3): 상태 블록, 돌보기, 계통 누적 막대, 덱 행, 토스트.
-// 공용 헬퍼는 ./dom, 계통 마크는 ./lineage. 순수 계산은 ./nestLogic (테스트 대상).
-import type { TerrainTileDef } from '../../data/schema';
-import { lineageName } from '../../data/lineages';
+// 둥지 계열 화면 전용 DOM 헬퍼 (U-3, T-3): 상태 블록, 돌보기, 능력치 6줄, 덱 행, 토스트.
+// 공용 헬퍼는 ./dom, 속성 표시는 ./element. 순수 계산은 ./nestLogic (테스트 대상).
+import { STAT_IDS, type Stats, type TerrainTileDef } from '../../data/schema';
+import { statName } from '../../data/elements';
 import { button, el, icon, meter } from './dom';
 import { getOverlayHost } from './overlayHost';
-import { lineageKey } from './lineage';
-import { linbarModel, type LinbarModel } from './nestLogic';
-import { LINEAGES } from '../../data/lineages';
 import { NEST_ACTIONS, type FactionConfig, type NestAction } from '../../engine/faction';
 
 /** 타일 종류 → 덱 행 색·아이콘 (디자인 --bha-tile-*). combo 는 색이 없어 환경으로 본다 */
@@ -67,33 +64,16 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
   return root;
 }
 
-/** 계통 누적 막대: 조각 폭 --n, 범례 5칸(횟수·1위 강조·0이면 흐림) */
-export function linbar(faction: FactionConfig, scores: Record<string, number | undefined>, need: number): HTMLElement {
-  const m: LinbarModel = linbarModel(scores, LINEAGES.map((l) => l.id), need);
-  const root = el('div', 'bha-linbar');
-  const track = el('div', 'bha-linbar__track');
-  track.setAttribute('aria-label', '계통 분포');
-  for (const s of m.segs) {
-    const key = lineageKey(s.id);
-    const seg = el('span', `bha-linbar__seg${key ? ` bha-lin--${key}` : ''}`);
-    seg.style.setProperty('--n', String(s.n));
-    track.append(seg);
+/** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. 막대 끝은 그 단계 기준 능력치의 1.6배 */
+export function statsBlock(factionId: string, stats: Stats, ev: Stats, ref: number): HTMLElement {
+  const root = el('div', 'bha-stack bha-stats');
+  const max = Math.round(ref * 1.6);
+  for (const k of STAT_IDS) {
+    root.append(meter({
+      kind: 'stored', label: statName(k, factionId), value: Math.round(stats[k]), max, compact: true, thin: true,
+      valueText: ev[k] > 0 ? `${Math.round(stats[k])} (+${ev[k]})` : String(Math.round(stats[k])),
+    }));
   }
-  if (m.empty > 0) {
-    const empty = el('span', 'bha-linbar__empty');
-    empty.style.flex = `${m.empty} 1 0`;
-    track.append(empty);
-  }
-  const legend = el('div', 'bha-linbar__legend');
-  for (const l of LINEAGES) {
-    const key = lineageKey(l.id);
-    const n = scores[l.id] ?? 0;
-    const item = el('span', ['bha-linbar__item', key ? `bha-lin--${key}` : '', n === 0 ? 'is-zero' : '', m.lead === l.id ? 'is-lead' : ''].filter(Boolean).join(' '));
-    if (key) item.append(icon(`i-lin-${key}`));
-    item.append(el('b', '', String(n)), el('small', '', lineageName(l.id, faction.id)));
-    legend.append(item);
-  }
-  root.append(track, legend);
   return root;
 }
 
