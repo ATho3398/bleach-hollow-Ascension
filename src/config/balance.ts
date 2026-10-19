@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 28;
+export const BALANCE_VERSION = 29;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -110,7 +110,7 @@ export const BALANCE = {
     // ── 속성 특수 효과 (GDD 20-2, 수치 provisional) ──
     elements: {
       /** 혈: 준 피해의 이 비율만큼 체력 회복 (내 블록·기본 공격, 적의 공격 모두) */
-      drainFraction: 0.05,
+      drainFraction: 0.03,
       /** 독: 맞힌 피해의 이 비율을 poisonSeconds 동안 나눠 더 준다 (겹치면 남은 양에 더하고 시간은 새로) */
       poisonFraction: 0.2,
       poisonSeconds: 4,

@@ -64,29 +64,34 @@ export function formsOfTier(tier: number, table: readonly FormDef[] = FORM_TABLE
   return table.filter((f) => f.tier === tier);
 }
 
-/** 이름 자리 표시 (단계 이름은 종족 설정 tierNames): "길리안", "불 바스트로데", "불·물리 아란칼", "물·흙 융합 바스트로데" … */
-export function placeholderName(form: FormDef, factionId: string): string {
-  const tierName = getFaction(factionId).tierNames[form.tier - 1] ?? `${form.tier}단계`;
+/** 이름 자리 표시 (GDD 20장 v5.3 `단계_속성_분류`, 사용자 지시): "길리안", "바스트로데_불", "아란칼_불_탄"(분류 = 종족 계열 표시명), 히든 "바스트로데_융합_물흙"·"아란칼_한계돌파_불".
+ *  단계 이름·계열 표시명은 종족 설정에서 읽는다 (종족 분기 없음). 속성을 잇는 아란칼 히든은 inherited(지금 캐릭터 속성)가 있으면 뒤에 `_속성` — 도감처럼 상태가 없으면 생략 */
+export function placeholderName(form: FormDef, factionId: string, inherited: readonly string[] = []): string {
+  const fac = getFaction(factionId);
+  const tierName = fac.tierNames[form.tier - 1] ?? `${form.tier}단계`;
   const els = form.label.elements.map((e) => elementName(e, factionId));
-  const byKind: Record<FormKind, string> = {
-    base: tierName,
-    element: `${els[0]} ${tierName}`,
-    arrancar: `${els[0]}·${form.label.category ? categoryName(form.label.category, factionId) : ''} ${tierName}`,
-    fusion: `${els.join('·')} 융합 ${tierName}`,
-    complete: `완전체 ${tierName}`,
-    special: `${els[0]} 극 ${tierName}`,
-    pure: `순수 ${tierName}`,
-    fail: `어긋난 ${tierName}`,
-    limit: `폭주 ${tierName}`,
-    restraint: `안정 ${tierName}`,
-    hunter: `포식자 ${tierName}`,
+  const cat = form.label.category;
+  const catName = cat ? (fac.families.find((f) => f.category === cat)?.abbr ?? categoryName(cat, factionId)) : '';
+  const heir = inherited.map((e) => elementName(e, factionId)).join('');
+  const parts: Record<FormKind, string[]> = {
+    base: [],
+    element: [els[0] ?? ''],
+    arrancar: [els.join(''), catName],
+    fusion: ['융합', els.join('')],
+    complete: ['완전체'],
+    special: ['특수', els[0] ?? ''],
+    pure: ['순수'],
+    fail: ['실패'],
+    limit: ['한계돌파', heir],
+    restraint: ['절제', heir],
+    hunter: ['강적사냥꾼', heir],
   };
-  return byKind[form.label.kind];
+  return [tierName, ...parts[form.label.kind]].filter(Boolean).join('_');
 }
 
-/** 표시 이름: 손으로 쓴 정식 이름(종족별)이 있으면 그것, 없으면 자리 표시 */
-export function formName(form: FormDef, factionId: string): string {
-  return form.name ? pickFaction(form.name, factionId) : placeholderName(form, factionId);
+/** 표시 이름: 손으로 쓴 정식 이름(종족별)이 있으면 그것, 없으면 자리 표시. inherited = 지금 캐릭터 속성(아란칼 히든의 `_속성`) */
+export function formName(form: FormDef, factionId: string, inherited: readonly string[] = []): string {
+  return form.name ? pickFaction(form.name, factionId) : placeholderName(form, factionId, inherited);
 }
 
 /** 도감 힌트 (해금된 진화체에만 보인다) */
