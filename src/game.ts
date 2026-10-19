@@ -21,9 +21,12 @@ import { addFood, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type Fo
 import type { FoodId } from './engine/faction';
 import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
 import { newlyAchieved } from './engine/tutorialGoals';
+import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
+import { DEFAULT_GROUND_ID } from './data/grounds';
+import { applyAbsenceHunger } from './engine/nest';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 16;
+export const SAVE_FORMAT_VERSION = 17;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -66,8 +69,10 @@ export interface SaveData {
   lastScreen: ScreenKey;
   /** 등급전 상태 (GDD 21장, 형식 15): 번호 사다리·재도전 대기·전적 + 등급 이력(history, 환생해도 유지할 자리 — 22-2 해방 자격) */
   rank: RankState;
-  /** 슬롯 공유 자원 (GDD 22-3, 형식 15·16): 두 트랙이 함께 쓰는 재화 — 영혼 결정, 먹이(23-1), 거래 재화 영전(23-4), 튜토리얼 보상 수령 기록(23-3) */
+  /** 슬롯 공유 자원 (GDD 22-3, 형식 15·16·17): 두 트랙이 함께 쓰는 재화 — 영혼 결정, 먹이(23-1), 골드(23-4)·영옥(25-1), 튜토리얼 보상 수령 기록(23-3), 도감 보상 수령 기록(24-3) */
   shared: SharedState;
+  /** 마지막 접속 시각(ms, GDD 24-1, 형식 17): 저장할 때마다 갱신. 다시 열 때 이 시각부터 꺼 둔 시간만큼 허기가 오른다. 시계를 되돌려도 줄지 않는다 */
+  lastSeenAt: number;
 }
 
 /** 튜토리얼 보상 수령 1건 (GDD 23-3) */
@@ -81,14 +86,18 @@ export interface SharedState {
   soulCrystals: number;
   /** 먹이 종류별 보유 개수 (GDD 23-1, 형식 16). 상한 9, 시작 간식 5·보통 3 */
   food: FoodStock;
-  /** 거래 재화 '영전' (GDD 23-4, 형식 16, 이름 provisional): 얻는 곳·쓰는 곳은 [미정]. 지금은 0 자리만 */
+  /** 일반 재화 '골드' (GDD 23-4, 형식 16, v5.11 옛 이름 영전 — 키는 그대로): 얻는 곳·쓰는 곳은 [미정]. 지금은 0 자리만 */
   tradeCoins: number;
+  /** 꾸밈 재화 '영옥' (GDD 25-1 v5.11, 형식 17): 한 번만 받는 달성 보상(도감 이정표 등)에서만 */
+  jade: number;
   /** 튜토리얼 보상 수령 기록 (GDD 23-3, 형식 16): 트랙(종족 id)마다 받은 목표 */
   tutorials: Record<string, TutorialClaim[]>;
+  /** 도감 보상 수령 기록 (GDD 24-3, 형식 17): 받은 이정표 id. 도감은 세이브 하나에 하나라 트랙 구분 없음 */
+  dexRewards: TutorialClaim[];
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, tutorials: {} };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [] };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -99,16 +108,21 @@ export function sanitizeShared(raw: unknown): SharedState {
   const tutorials: Record<string, TutorialClaim[]> = {};
   if (typeof r.tutorials === 'object' && r.tutorials !== null && !Array.isArray(r.tutorials)) {
     for (const [fid, list] of Object.entries(r.tutorials as Record<string, unknown>)) {
-      if (!Array.isArray(list)) continue;
-      const seen = new Set<string>();
-      tutorials[fid] = list.filter((c): c is TutorialClaim => {
-        const ok = typeof c === 'object' && c !== null && typeof (c as TutorialClaim).goalId === 'string' && !seen.has((c as TutorialClaim).goalId);
-        if (ok) seen.add((c as TutorialClaim).goalId);
-        return ok;
-      }).map((c) => ({ goalId: c.goalId, at: typeof c.at === 'number' ? c.at : 0 }));
+      if (Array.isArray(list)) tutorials[fid] = sanitizeClaims(list);
     }
   }
-  return { soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), tutorials };
+  const dexRewards = Array.isArray(r.dexRewards) ? sanitizeClaims(r.dexRewards) : [];
+  return { soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards };
+}
+
+/** 수령 기록 목록 정리: 깨진 항목·중복 id 를 버린다 */
+function sanitizeClaims(list: unknown[]): TutorialClaim[] {
+  const seen = new Set<string>();
+  return list.filter((c): c is TutorialClaim => {
+    const ok = typeof c === 'object' && c !== null && typeof (c as TutorialClaim).goalId === 'string' && !seen.has((c as TutorialClaim).goalId);
+    if (ok) seen.add((c as TutorialClaim).goalId);
+    return ok;
+  }).map((c) => ({ goalId: c.goalId, at: typeof c.at === 'number' ? c.at : 0 }));
 }
 
 /** 둥지에서 먹이 주기 (GDD 23-1): 그 먹이가 있어야 먹일 수 있고, 하나 쓴다. 없으면 false (아무것도 바뀌지 않는다) */
@@ -142,6 +156,44 @@ export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), d
   });
 }
 
+/** 도감 보상 1건의 실제 지급량 (먹이는 상한까지만) */
+export interface DexGrant {
+  milestone: DexMilestoneDef;
+  food: [FoodId, number][];
+  jade: number;
+}
+
+/** 도감 등록 수 (GDD 24-3): 진화체 도감 = 해금한 진화체, 칭호 도감 = 해금한 칭호 */
+export function dexCounts(save: Pick<SaveData, 'formDex' | 'titles'>): { forms: number; titles: number } {
+  return { forms: save.formDex.length, titles: save.titles.length };
+}
+
+/** 도감 등록 수가 새 이정표에 닿았으면 보상을 준다 (GDD 24-3, 튜토리얼 보상과 같은 틀). 기존 세이브는 처음 부를 때 이미 닿은 이정표를 한꺼번에 받는다 */
+export function claimDexRewards(save: SaveData, nowMs: number = Date.now(), defs: readonly DexMilestoneDef[] = DEX_MILESTONES): DexGrant[] {
+  const claims = save.shared.dexRewards;
+  const fresh = newlyReachedMilestones(defs, claims.map((c) => c.goalId), dexCounts(save));
+  return fresh.map((milestone) => {
+    claims.push({ goalId: milestone.id, at: nowMs });
+    const food: [FoodId, number][] = [];
+    for (const [id, n] of Object.entries(milestone.reward.food ?? {}) as [FoodId, number][]) food.push([id, addFood(save.shared.food, id, n)]);
+    const jade = milestone.reward.jade ?? 0;
+    save.shared.jade += jade;
+    return { milestone, food, jade };
+  });
+}
+
+/** 다시 열 때 꺼 둔 동안의 허기 (GDD 24-1): 마지막 접속 시각부터. 원정 중간 저장이 있으면 오르지 않는다. 오른 양을 돌려주고 접속 시각을 지금으로(되돌린 시계면 그대로) */
+export function applyAbsence(save: SaveData, nowMs: number = Date.now()): number {
+  const gained = applyAbsenceHunger(save.nest, save.lastSeenAt, nowMs, save.activeExpedition != null);
+  markSeen(save, nowMs);
+  return gained;
+}
+
+/** 마지막 접속 시각 갱신 (저장할 때마다). 기기 시계를 되돌렸으면 앞선 값을 그대로 둔다 — 같은 시간을 두 번 세지 않는다 */
+export function markSeen(save: SaveData, nowMs: number = Date.now()): void {
+  if (!(save.lastSeenAt >= nowMs)) save.lastSeenAt = nowMs;
+}
+
 export interface TileStock {
   collection: Record<string, number>;
   /** 가져갈 덱: 타일 id 목록(중복 가능, 보유 수량 이내) */
@@ -153,7 +205,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState() };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -420,11 +472,21 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.meta.format = 15;
   }
   if (save.meta.format < 16) {
-    // 형식 15 → 16 (C.52, GDD 23장): 먹이 개수제(시작 지급량 간식 5·보통 3으로 채움)·거래 재화 영전 0·튜토리얼 보상 기록(빈 기록 —
+    // 형식 15 → 16 (C.52, GDD 23장): 먹이 개수제(시작 지급량 간식 5·보통 3으로 채움)·거래 재화(지금 골드) 0·튜토리얼 보상 기록(빈 기록 —
     // 이미 이룬 목표는 처음 저장할 때 claimTutorialGoals 가 한꺼번에 지급한다)
     save.shared = { ...newSharedState(), soulCrystals: save.shared?.soulCrystals ?? 0 };
     save.meta.format = 16;
   }
+  if (save.meta.format < 17) {
+    // 형식 16 → 17 (C.53, GDD 24장·25-1): 꾸밈 재화 영옥 0·마지막 접속 시각(옛 둥지 방치 시각으로, 미래 값이면 지금)·도감 보상 기록(빈 기록 — 이미 닿은 이정표는 처음 저장 때
+    // claimDexRewards 가 한꺼번에 지급)·원정 기록의 사냥터(옛 기록은 기본 사냥터)
+    const t = save.nest?.lastTickMs;
+    save.lastSeenAt = typeof t === 'number' && Number.isFinite(t) && t >= 0 ? Math.min(t, Date.now()) : Date.now();
+    save.shared = { ...(save.shared ?? newSharedState()), jade: 0, dexRewards: [] };
+    save.runLog.runs = (save.runLog.runs ?? []).map((r) => ({ ...r, groundId: r.groundId ?? DEFAULT_GROUND_ID }));
+    save.meta.format = 17;
+  }
+  if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
   save.rank = sanitizeRankState(save.rank);
   save.shared = sanitizeShared(save.shared);
   save.runLog.rankBattles = Array.isArray(save.runLog.rankBattles) ? save.runLog.rankBattles : [];

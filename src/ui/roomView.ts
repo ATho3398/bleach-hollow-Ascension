@@ -2,8 +2,8 @@
 //   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 훈련 인형=전투 연습 · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·종족 바꾸기·백업·처음 화면).
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
-import { applyIdle, doNestAction } from '../engine/nest';
-import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp } from '../engine/faction';
+import { doNestAction } from '../engine/nest';
+import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
 import { feedNest, sanitizeDeck, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
 import { button, el, icon, mountApp } from './bha/dom';
@@ -36,6 +36,8 @@ export interface RoomHandlers {
   persist: () => void;
   resume: { info: string; onResume: () => void } | null;
   resumeNote: string;
+  /** 들어오자마자 한 번 할 말 (GDD 24-1: 꺼 둔 동안 배고파졌으면 'hungry' — 문구는 종족 설정 room.talk) */
+  greet?: RoomTalk | null;
 }
 
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
@@ -43,7 +45,6 @@ let lastMood: Mood | null = null;
 const IDLE_TALK_MS = 14000;
 
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
-  applyIdle(save.nest, Date.now());
   save.tiles.deck = sanitizeDeck(save.tiles, faction.id);
   hd.persist();
   const room = roomOf(faction);
@@ -104,13 +105,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
   const char = characterButton(charArtUrls, '캐릭터', loco);
   let hop = 0;
-  const react = (line?: string) => {
+  const react = (line?: string, ms?: number) => {
     char.classList.remove('is-react');
     void char.offsetWidth;
     char.classList.add('is-react');
     window.clearTimeout(hop);
     hop = window.setTimeout(() => char.classList.remove('is-react'), 700);
-    say(line ?? pickLine(room.talk, mood === 'idle' && Math.random() < 0.4 ? 'happy' : mood));
+    say(line ?? pickLine(room.talk, mood === 'idle' && Math.random() < 0.4 ? 'happy' : mood), ms);
   };
   char.onclick = () => react();
   // 머리 위 상태 칩 (허기·컨디션·리스크 게이지, 쇠약이면 그 이름). 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
@@ -184,7 +185,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   scene.addEventListener('pointerdown', () => dock.close());
 
   // ── 반응: 상태가 바뀌어 돌아왔을 때, 가끔 혼잣말 ──
-  if (lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);
+  const greet = hd.greet;
+  if (greet) window.setTimeout(() => main.isConnected && react(pickLine(room.talk, greet), 5200), 500);
+  else if (lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);
   lastMood = mood;
   const idle = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);

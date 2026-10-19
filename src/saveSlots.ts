@@ -99,11 +99,44 @@ export function lastPlayedSlot(summaries: readonly SlotSummary[]): number | null
   return best ? best.slot : null;
 }
 
-/** 슬롯을 덮어쓰기 전에 지금 내용을 그 슬롯의 백업 키에 보관한다. 비어 있으면 아무것도 하지 않는다. 저장소가 막히면 false */
-export function stashSlot(storage: StorageLike, slot: number): boolean {
+/** 백업을 남긴 까닭 (GDD 24-5): 되돌리기 화면에 "○○ 직전" 으로 보인다 */
+export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'fusion' | 'revert';
+export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'fusion', 'revert'];
+/** 슬롯 백업의 까닭·시각 기록 키 (세이브 밖 — SaveData 구조와 무관) */
+export const slotBackupMetaKey = (slot: number): string => `${slotBackupKey(slot)}.meta`;
+
+export interface BackupMeta {
+  reason: BackupReason;
+  at: number;
+}
+
+/** 백업 까닭·시각 기록을 읽는다 (없거나 깨졌으면 null) */
+export function readBackupMeta(storage: StorageLike | null, slot: number): BackupMeta | null {
+  try {
+    const raw = JSON.parse(storage?.getItem(slotBackupMetaKey(slot)) ?? 'null') as Partial<BackupMeta> | null;
+    if (raw && BACKUP_REASONS.includes(raw.reason as BackupReason) && typeof raw.at === 'number') return { reason: raw.reason as BackupReason, at: raw.at };
+  } catch {
+    // 깨진 기록은 없는 것으로
+  }
+  return null;
+}
+
+export function writeBackupMeta(storage: StorageLike, slot: number, reason: BackupReason, nowMs: number = Date.now()): void {
+  try {
+    storage.setItem(slotBackupMetaKey(slot), JSON.stringify({ reason, at: nowMs }));
+  } catch {
+    // 까닭 기록만 못 남긴다
+  }
+}
+
+/** 슬롯을 덮어쓰기 전(또는 되돌릴 수 없는 일 직전, GDD 24-5)에 지금 내용을 그 슬롯의 백업 키에 보관한다(최근 1개). 비어 있으면 아무것도 하지 않는다. 저장소가 막히면 false */
+export function stashSlot(storage: StorageLike, slot: number, reason: BackupReason = 'overwrite', nowMs: number = Date.now()): boolean {
   try {
     const cur = storage.getItem(slotKey(slot));
-    if (cur !== null) storage.setItem(slotBackupKey(slot), cur);
+    if (cur !== null) {
+      storage.setItem(slotBackupKey(slot), cur);
+      writeBackupMeta(storage, slot, reason, nowMs);
+    }
     return true;
   } catch {
     return false;

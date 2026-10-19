@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 29;
+export const BALANCE_VERSION = 30;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -111,6 +111,8 @@ export const BALANCE = {
     elements: {
       /** 혈: 준 피해의 이 비율만큼 체력 회복 (내 블록·기본 공격, 적의 공격 모두) */
       drainFraction: 0.03,
+      /** 혈 흡혈 상한 (C.53, 마스터 지시 20% → 혈 강적 68% 넘으면 15%까지): 한 전투에서 흡혈로 되찾는 체력 합계 ≤ 최대 체력 × 이 값. 내 쪽·적 쪽 따로 센다 */
+      drainCapFraction: 0.15,
       /** 독: 맞힌 피해의 이 비율을 poisonSeconds 동안 나눠 더 준다 (겹치면 남은 양에 더하고 시간은 새로) */
       poisonFraction: 0.2,
       poisonSeconds: 4,
@@ -246,9 +248,11 @@ export const BALANCE = {
     nest: {
       startHunger: 20,
       startCondition: 80,
-      /** 방치 시 시간당 허기 상승. 죽지 않으므로 상한이 있다 */
-      idleHungerPerHour: 6,
-      idleHungerCap: 90,
+      /** 꺼 둔 동안 허기 (GDD 24-1 v5.8, provisional): 시간당 상승, 한 번 비운 사이 오르는 양의 상한(+60), 복귀 말풍선을 띄우는 최소 상승량.
+       *  원정 중간 저장이 있으면 오르지 않는다. 허기 자체는 100 을 넘지 않는다(죽지 않음) */
+      idleHungerPerHour: 7.5,
+      idleHungerMaxGain: 60,
+      idleHungerNotice: 5,
       feedHunger: 35,
       /** 먹이 5종 (GDD 18-2, 임시 provisional): 허기 감소·컨디션 변화. basic 은 예전 단일 먹이(feedHunger)와 같다. 가진 개수·비용 없음(먹이 자원은 미정) */
       foods: {

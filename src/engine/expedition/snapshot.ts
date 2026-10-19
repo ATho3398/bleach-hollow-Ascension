@@ -7,12 +7,14 @@ import { getTile } from '../../data/tiles';
 import { getTrait } from '../../data/traits';
 import { getFaction } from '../../data/factions';
 import { FOOD_IDS } from '../faction';
+import { isGroundId } from '../../data/grounds';
 import { finishRest, type ExpeditionState } from './expedition';
 
 /** 저장 형식을 바꾸면 올린다 (다르면 이어하기를 숨기고 무시한다) */
 /** C.47: 2 (진화 상태·전투 재료 구조가 바뀜 — 옛 원정 중간 저장은 이어하지 않는다) */
 /** C.52: 3 (먹이 전리품·전리품 난수 추가) */
-export const EXPEDITION_SNAPSHOT_VERSION = 3;
+/** C.53: 4 (사냥터 groundId 추가) */
+export const EXPEDITION_SNAPSHOT_VERSION = 4;
 
 export interface ExpeditionSnapshot {
   version: number;
@@ -62,6 +64,7 @@ function validShape(e: unknown): e is ExpeditionState {
   if (!isObj(e)) return false;
   const L = BALANCE.expedition.loopTiles;
   if (!knows(getFaction, e.factionId)) return false;
+  if (!isGroundId(e.groundId)) return false;
   if (!isInt(e.seed) || !isInt(e.runId) || !isInt(e.maxLaps, 1) || !isInt(e.lap, 1) || !isInt(e.pos) || (e.pos as number) >= L) return false;
   if (!isObj(e.rng) || !isInt(e.rng.state)) return false;
   if (!isObj(e.lootRng) || !isInt(e.lootRng.state)) return false;

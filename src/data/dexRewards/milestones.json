@@ -1,0 +1,12 @@
+{
+  "provisional": true,
+  "milestones": [
+    { "id": "forms-5", "dex": "forms", "count": 5, "reward": { "food": { "hearty": 1 }, "jade": 1 } },
+    { "id": "forms-10", "dex": "forms", "count": 10, "reward": { "food": { "tonic": 1 }, "jade": 2 } },
+    { "id": "forms-20", "dex": "forms", "count": 20, "reward": { "food": { "tonic": 2 }, "jade": 3 } },
+    { "id": "forms-30", "dex": "forms", "count": 30, "reward": { "food": { "feast": 1 }, "jade": 5 } },
+    { "id": "forms-45", "dex": "forms", "count": 45, "reward": { "food": { "feast": 2 }, "jade": 8 } },
+    { "id": "titles-5", "dex": "titles", "count": 5, "reward": { "food": { "hearty": 1 }, "jade": 1 } },
+    { "id": "titles-10", "dex": "titles", "count": 10, "reward": { "food": { "feast": 1 }, "jade": 2 } }
+  ]
+}

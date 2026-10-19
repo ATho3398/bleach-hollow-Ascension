@@ -80,6 +80,8 @@ export interface CombatParams {
   stabMultiplier: number;
   /** 특수 속성 효과 (BALANCE.provisional.elements) */
   drainFraction: number;
+  /** 한 전투 흡혈 회복 합계 상한 (최대 체력 비율, C.53) */
+  drainCapFraction: number;
   poisonFraction: number;
   poisonSeconds: number;
   pierceIgnore: number;
@@ -138,6 +140,7 @@ export function defaultCombatParams(): CombatParams {
     weakMultiplier: BALANCE.elements.weak,
     stabMultiplier: BALANCE.elements.stab,
     drainFraction: EL.drainFraction,
+    drainCapFraction: EL.drainCapFraction,
     poisonFraction: EL.poisonFraction,
     poisonSeconds: EL.poisonSeconds,
     pierceIgnore: EL.pierceIgnore,
@@ -232,8 +235,10 @@ export interface CombatState {
     dot: Dot | null;
     /** 방어 자세 중이면 남은 틱: 내 블록 피해가 줄고, 블록을 쓸 때마다 반격을 받는다 */
     stance: { ticks: number } | null;
+    /** 이 전투에서 흡혈로 되찾은 체력 합계 (상한 drainCapFraction, C.53) */
+    drained?: number;
   };
-  player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null };
+  player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number };
   tray: Tray;
   nextUid: number;
   /** 블록 생성원(skills, 비면 기본 블록)마다 다음 생성까지 남은 틱 */
@@ -554,9 +559,12 @@ function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly st
   if (damage <= 0 || s.status !== 'playing') return;
   if (hasEffect(elements, 'drain')) {
     const who = target === 'enemy' ? s.player : s.enemy;
-    const heal = Math.min(who.maxHp - who.hp, damage * p.drainFraction);
+    // 한 전투 흡혈 합계 상한 (C.53): 최대 체력 × drainCapFraction 까지만
+    const room = Math.max(0, who.maxHp * p.drainCapFraction - (who.drained ?? 0));
+    const heal = Math.min(who.maxHp - who.hp, damage * p.drainFraction, room);
     if (heal > 0) {
       who.hp += heal;
+      who.drained = (who.drained ?? 0) + heal;
       emit(s, { kind: 'drain', target: target === 'enemy' ? 'player' : 'enemy', heal });
     }
   }

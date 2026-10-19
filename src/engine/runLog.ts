@@ -180,6 +180,8 @@ export interface RunRecord {
   lostTraits: string[];
   riskPeak: number;
   breakthrough: boolean;
+  /** 사냥터 id (GDD 24-2, 세이브 형식 17). 형식 17 마이그레이션이 옛 기록을 기본 사냥터로 채운다 */
+  groundId?: string;
 }
 
 export interface RunLog {

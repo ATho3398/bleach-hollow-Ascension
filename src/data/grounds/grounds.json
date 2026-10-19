@@ -1,0 +1,74 @@
+{
+  "provisional": true,
+  "grounds": [
+    {
+      "id": "outskirts",
+      "unlockTierIndex": 0,
+      "elements": [
+        "normal",
+        "earth",
+        "water"
+      ],
+      "elementWeight": 1.5,
+      "strength": {
+        "hp": 1,
+        "attack": 1
+      }
+    },
+    {
+      "id": "canyon",
+      "unlockTierIndex": 2,
+      "elements": [
+        "fire",
+        "thunder",
+        "poison"
+      ],
+      "elementWeight": 2,
+      "strength": {
+        "hp": 1.25,
+        "attack": 1.5
+      },
+      "food": {
+        "normalDropChance": 0.7,
+        "normalTable": {
+          "snack": 35,
+          "basic": 40,
+          "hearty": 25
+        },
+        "eliteExtraChance": 0.45,
+        "eliteTable": {
+          "hearty": 35,
+          "tonic": 40,
+          "feast": 25
+        }
+      }
+    },
+    {
+      "id": "forest",
+      "unlockTierIndex": 4,
+      "elements": [
+        "blood",
+        "kyo"
+      ],
+      "elementWeight": 2.5,
+      "strength": {
+        "hp": 1.5,
+        "attack": 2.0
+      },
+      "food": {
+        "normalDropChance": 0.8,
+        "normalTable": {
+          "snack": 20,
+          "basic": 40,
+          "hearty": 40
+        },
+        "eliteExtraChance": 0.6,
+        "eliteTable": {
+          "hearty": 25,
+          "tonic": 40,
+          "feast": 35
+        }
+      }
+    }
+  ]
+}

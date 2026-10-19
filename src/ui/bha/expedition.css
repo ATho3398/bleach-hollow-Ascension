@@ -83,6 +83,9 @@
 .bha-plan { gap: var(--bha-sp-4); }
 .bha-plan__title { display: flex; align-items: center; gap: var(--bha-sp-3); margin: 0; font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-xl); }
 .bha-plan__sub { margin: 0; color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+/* 사냥터 고르기 (GDD 24-2) */
+.bha-plan__grounds { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
+.bha-exp__head .bha-plan__grounds { flex: 1; justify-content: flex-end; }
 .bha-lcd .bha-app.bha-plan { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow-y: auto; padding: var(--bha-sp-3) var(--bha-sp-4); }
 .bha-lcd .bha-plan .bha-btn--lg { flex: none; min-height: var(--bha-touch); }
 

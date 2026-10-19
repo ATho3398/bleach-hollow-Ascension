@@ -31,12 +31,16 @@ export function newNest(nowMs: number): NestState {
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-/** 방치한 시간만큼 허기가 오른다 (상한 idleHungerCap, 죽지 않음) */
-export function applyIdle(nest: NestState, nowMs: number): void {
-  const hours = Math.max(0, nowMs - nest.lastTickMs) / 3_600_000;
+/** 꺼 둔 동안 허기 (GDD 24-1): 마지막 접속 시각부터 지금까지 시간당 idleHungerPerHour, 한 번에 최대 +idleHungerMaxGain, 허기 100 이하.
+ *  paused(원정 중간 저장이 있음)면 오르지 않는다. 기기 시계를 되돌려 지금이 마지막 접속보다 앞이면 오르지 않는다(음수 없음).
+ *  올라간 양을 돌려준다 — 접속 시각 갱신은 부르는 쪽(저장할 때)이 한다 */
+export function applyAbsenceHunger(nest: NestState, lastSeenAt: number, nowMs: number, paused = false): number {
+  if (paused || !Number.isFinite(lastSeenAt) || nowMs <= lastSeenAt) return 0;
+  const hours = (nowMs - lastSeenAt) / 3_600_000;
+  const gain = Math.min(NX.idleHungerMaxGain, hours * NX.idleHungerPerHour, Math.max(0, 100 - nest.hunger));
+  nest.hunger += gain;
   nest.lastTickMs = nowMs;
-  if (nest.hunger >= NX.idleHungerCap) return;
-  nest.hunger = Math.min(NX.idleHungerCap, nest.hunger + hours * NX.idleHungerPerHour);
+  return gain;
 }
 
 /** 먹이 한 종류의 효과 (허기 감소, 컨디션 변화). 임시 수치 (BALANCE.provisional.nest.foods) */

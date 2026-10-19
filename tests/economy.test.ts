@@ -276,9 +276,8 @@ describe('세이브 형식 16 (먹이·영전·튜토리얼 기록)', () => {
     old.meta.format = 15;
     old.shared = { soulCrystals: 4 };
     const m = migrateSave(old)!;
-    expect(SAVE_FORMAT_VERSION).toBe(16);
-    expect(m.meta.format).toBe(16);
-    expect(m.shared).toEqual({ soulCrystals: 4, food: newFoodStock(), tradeCoins: 0, tutorials: {} });
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
+    expect(m.shared).toEqual({ soulCrystals: 4, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [] });
   });
 
   it('새 세이브: 영전 0 자리, 저장·불러오기 왕복', () => {

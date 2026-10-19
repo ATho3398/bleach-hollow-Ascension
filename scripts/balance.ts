@@ -14,6 +14,7 @@ import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { analyzeTree, applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engine/evolution';
 import { newSaveData, nextRunId, recordExpedition, sanitizeDeck, newTileStock, type SaveData } from '../src/game';
 import { RANK_HOLDERS } from '../src/data/ranks';
+import { GROUNDS } from '../src/data/grounds';
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
@@ -172,6 +173,7 @@ for (const bot of BOTS) {
   };
   for (const cat of ATTACK_CATEGORIES) rowOf(`분류 ${cat}`, `t-fire-${FAM_OF[cat]}`);
   for (const el of ELEMENT_IDS) rowOf(`속성 ${el}`, `t-${el}-a`);
+  console.log(`  (혈 흡혈 ${BALANCE.provisional.elements.drainFraction * 100}% · 한 전투 상한 최대 체력 ${BALANCE.provisional.elements.drainCapFraction * 100}%, C.53)`);
 }
 
 for (const enemy of POOL_ENEMIES) {
@@ -345,9 +347,9 @@ const CAMPAIGNS = 30;
 const MAX_RUNS = 40;
 const STAGE_TARGET = [1.5, 2.5, 3, 4.5];
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number; saves: SaveData[] };
+type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number; saves: SaveData[]; /** 그 단계(tierIndex)에 갓 닿은 순간의 세이브 사본 (사냥터 점검용) */ firstAt: Record<number, SaveData[]> };
 function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number } = {}): CampaignStats {
-  const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0, saves: [] };
+  const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0, saves: [], firstAt: {} };
   for (let seed = 1; seed <= CAMPAIGNS; seed++) {
     const save = newSaveData('hollow', seed * 7919);
     save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
@@ -379,6 +381,7 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
         if (tier === 3) out.finalRuns.push(run);
         out.formCounts[r.form.tier]![r.form.id] = (out.formCounts[r.form.tier]![r.form.id] ?? 0) + 1;
         if (r.form.hidden) out.hidden++;
+        (out.firstAt[save.evolution.tierIndex] ??= []).push(structuredClone(save));
       }
     }
     out.saves.push(save);
@@ -387,9 +390,11 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
 }
 const stageNames = ['1→2', '2→3', '3→4', '4→5'];
 let campaignSaves: SaveData[] = [];
+let campaignFirstAt: Record<number, SaveData[]> = {};
 {
   const st = campaign();
   campaignSaves = st.saves;
+  campaignFirstAt = st.firstAt;
   console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 귀환 때 자동 진화) — 필요 걸음 ${BALANCE.provisional.evolution.stepsNeeded.join('/')}칸 (숨김)`);
   console.log(`  원정 1회 평균 ${avg(st.stepsPerRun).toFixed(1)}칸 (최소 ${Math.min(...st.stepsPerRun)} · 최대 ${Math.max(...st.stepsPerRun)})`);
   console.log('  단계(진화)   도달 인원  평균 원정  목표   최소  최대   (그 단계 시작부터 센 원정 수)');
@@ -444,6 +449,53 @@ let campaignSaves: SaveData[] = [];
   if (rep.unreachable.length > 0) failures.push(`진화 트리: 뽑히지 않는 진화체 ${rep.unreachable.join(', ')}`);
   // 기획의 일반 35종 = 1단계(진화체 없음, 종족 설정 baseStats) + 진화체 34
   if (normalCount !== 34 || hiddenCount !== 11) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 34(+1단계) + 11)`);
+}
+
+// ── 사냥터 (C.53, GDD 24-2): 단계마다 열리는 사냥터를 그 단계에 갓 닿은 몸(위 진화 봇 세이브)으로 사람형 봇이 4바퀴 원정 ──
+// 목표(provisional, 코딩44 판단): 그 단계에 갓 닿은 몸은 기본 사냥터 원정 패배가 약 1~6% 라, 새로 열린 사냥터는 원정 패배가 기본 사냥터 + 5%p 이상(너무 쉽지 않게)·
+// 45% 이하(너무 어렵지 않게), 전투 승률이 기본 사냥터보다 0.5%p 이상 낮고, 먹이는 더 많이 나온다
+{
+  const GR = 3;
+  console.log(`\n사냥터 (사람형 봇, 그 단계에 갓 닿은 세이브 × ${GR}원정, 4바퀴 귀환·흡수) — 열리는 단계 몸 기준`);
+  for (const tier of [...new Set(GROUNDS.map((g) => g.unlockTierIndex))].filter((t) => t > 0)) {
+    const bodies = campaignFirstAt[tier] ?? [];
+    const rows: Record<string, { win: number; defeat: number; food: number }> = {};
+    for (const g of GROUNDS.filter((x) => x.unlockTierIndex <= tier)) {
+      let battles = 0;
+      let wins = 0;
+      let defeated = 0;
+      let food = 0;
+      let runs = 0;
+      bodies.forEach((body, bi) => {
+        for (let k = 0; k < GR; k++) {
+          const save = structuredClone(body);
+          const e = playExpedition(
+            createExpedition({
+              factionId: 'hollow', groundId: g.id, seed: 50000 + bi * 97 + k * 13 + tier, runId: nextRunId(save), hunger: 20, condition: 80,
+              deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            }),
+            { returnAfterLap: 4, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
+          );
+          runs++;
+          battles += e.battles.length;
+          wins += e.battles.filter((b) => b.won).length;
+          if (e.outcome === 'defeated') defeated++;
+          food += e.foodLoot.length;
+        }
+      });
+      rows[g.id] = { win: battles ? wins / battles : 0, defeat: runs ? defeated / runs : 0, food: runs ? food / runs : 0 };
+      console.log(`  ${tier + 1}단계 몸 ${String(bodies.length).padStart(2)}명 · ${g.id.padEnd(10)} (체력 ×${g.strength.hp}·공격 ×${g.strength.attack}, 주 속성 ${g.elements.join('·')}): 전투 승률 ${(rows[g.id]!.win * 100).toFixed(1)}% · 원정 패배 ${(rows[g.id]!.defeat * 100).toFixed(0)}% · 먹이 ${rows[g.id]!.food.toFixed(1)}개/원정`);
+    }
+    const base = rows[GROUNDS[0]!.id]!;
+    for (const g of GROUNDS.filter((x) => x.unlockTierIndex === tier)) {
+      const r = rows[g.id]!;
+      if (bodies.length < CAMPAIGNS * 0.8) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+      if (r.defeat > 0.45) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 원정 패배 ${(r.defeat * 100).toFixed(0)}% > 45% (너무 어렵다)`);
+      if (r.defeat < base.defeat + 0.05) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 원정 패배 ${(r.defeat * 100).toFixed(0)}% < 기본 사냥터 ${(base.defeat * 100).toFixed(0)}% + 5%p (너무 쉽다)`);
+      if (r.win > base.win - 0.005) failures.push(`사냥터 ${g.id}: 전투 승률 ${(r.win * 100).toFixed(1)}% 가 기본 사냥터 ${(base.win * 100).toFixed(1)}% 보다 0.5%p 이상 낮지 않다 (너무 쉽다)`);
+      if (r.food <= base.food) failures.push(`사냥터 ${g.id}: 먹이 ${r.food.toFixed(1)}개 ≤ 기본 사냥터 ${base.food.toFixed(1)}개`);
+    }
+  }
 }
 
 // ── 등급전 (C.49, GDD 21장): 번호 보유자 No.10 → No.1 승률 곡선. 위 진화 봇 중 5단계(아란칼)에 닿은 세이브(원정 MAX_RUNS 회를 마친 몸)로 사람형 봇이 각 보유자와 싸운다 ──

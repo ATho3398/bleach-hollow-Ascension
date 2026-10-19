@@ -6,6 +6,7 @@ import { LEGACY_POINTER_SETTINGS_KEY } from './pointer';
 import { applyCalmMode, loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
 import { emitFeedback, hookAudioUnlock } from './fx';
 import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
+import { bgm, BGM_SETTINGS_KEY, BGM_VOLUMES, loadBgmSettings, saveBgmSettings } from './bgm';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 
 export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onTutorial?: () => void): void {
@@ -47,6 +48,39 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     };
     fxPanel.append(b, el('p', 'bha-faint', row.hint));
   }
+
+  // 배경 음악 (GDD 24-4): 효과음과 별도로 켬/끔·음량. 이 기기에만 저장(키 bha-bgm-settings). 음원 파일이 없는 트랙은 무음
+  const musicPanel = el('section', 'bha-panel');
+  musicPanel.append(el('h2', 'bha-panel__title', '음악'));
+  const musicBtn = button({ label: '' });
+  const volBtns = BGM_VOLUMES.map((v) => {
+    const b = button({ label: `${Math.round(v * 100)}%`, size: 'small' });
+    b.onclick = () => setMusic({ ...loadBgmSettings(storage), volume: v });
+    return b;
+  });
+  const paintMusic = () => {
+    const m = loadBgmSettings(storage);
+    musicBtn.textContent = `배경 음악 ${m.on ? '켬' : '끔'}`;
+    musicBtn.classList.toggle('is-on', m.on);
+    musicBtn.setAttribute('aria-pressed', String(m.on));
+    volBtns.forEach((b, i) => {
+      const on = Math.abs(BGM_VOLUMES[i]! - m.volume) < 0.01;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  };
+  const setMusic = (m: ReturnType<typeof loadBgmSettings>) => {
+    bgm().setSettings(saveBgmSettings(storage, m));
+    paintMusic();
+  };
+  musicBtn.onclick = () => {
+    const m = loadBgmSettings(storage);
+    setMusic({ ...m, on: !m.on });
+  };
+  const volRow = el('div', 'bha-plan__grounds');
+  volRow.append(el('span', 'bha-faint', '음량'), ...volBtns);
+  musicPanel.append(musicBtn, volRow, el('p', 'bha-faint', '효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다. 음악 파일이 없는 장면은 조용하다.'));
+  paintMusic();
 
   // 화면 크기 (GDD 17-5): PC 에서만 적용. 선택은 이 기기에만 저장(키 bha-view-scale)
   const sizePanel = el('section', 'bha-panel');
@@ -122,6 +156,12 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
         /* 저장소를 못 쓰면 지울 것도 없다 */
       }
       resetFxSettings(storage);
+      try {
+        storage?.removeItem(BGM_SETTINGS_KEY);
+      } catch {
+        /* 무시 */
+      }
+      bgm().setSettings(loadBgmSettings(storage));
       applyCalmMode(storage);
       settingsView(root, onHelp, true, onBackup, onTutorial);
     },
@@ -130,5 +170,5 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
 }

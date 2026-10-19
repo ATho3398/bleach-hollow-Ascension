@@ -10,7 +10,18 @@
     "바스트로데",
     "아란칼"
   ],
-  "rankNames": ["에스파다 No.1", "에스파다 No.2", "에스파다 No.3", "에스파다 No.4", "에스파다 No.5", "에스파다 No.6", "에스파다 No.7", "에스파다 No.8", "에스파다 No.9", "에스파다 No.10"],
+  "rankNames": [
+    "에스파다 No.1",
+    "에스파다 No.2",
+    "에스파다 No.3",
+    "에스파다 No.4",
+    "에스파다 No.5",
+    "에스파다 No.6",
+    "에스파다 No.7",
+    "에스파다 No.8",
+    "에스파다 No.9",
+    "에스파다 No.10"
+  ],
   "unrankedName": "무번호",
   "rankBattleName": "번호 쟁탈전",
   "rankWinText": "{rank}의 번호를 빼앗았다!",
@@ -35,6 +46,20 @@
   "defeatStateName": "가면이 깨져 쇠약",
   "basicSkillName": "본체 능력",
   "huntingGroundName": "웨코문도",
+  "huntingGrounds": {
+    "outskirts": {
+      "name": "웨코문도 외곽",
+      "desc": "흰 모래 언덕이 끝없이 이어진다."
+    },
+    "canyon": {
+      "name": "모래 협곡",
+      "desc": "바람이 우는 좁은 협곡."
+    },
+    "forest": {
+      "name": "허무의 숲",
+      "desc": "메노스의 숲 깊은 곳."
+    }
+  },
   "maxChain": 3,
   "baseStats": {
     "hp": 50,
@@ -142,7 +167,7 @@
     "snack": "영혼 조각",
     "basic": "짐승 고기",
     "hearty": "큰 사냥감",
-    "tonic": "영압 결정",
+    "tonic": "영압 응축물",
     "feast": "영혼 덩어리"
   },
   "stabilityName": "자아",
@@ -213,6 +238,10 @@
       "happy": [
         "크르릉~",
         "기분이 좋다!"
+      ],
+      "hungry": [
+        "배고파하고 있었다… 으르르.",
+        "오래 비웠다. 배 속이 텅 비었다."
       ]
     }
   }

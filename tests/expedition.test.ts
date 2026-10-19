@@ -6,7 +6,7 @@ import {
   advance, chooseContinue, chooseReturn, createExpedition, finishBattle, finishRest, placeTile, plannedBattles,
   playExpedition, startBattle, summarize, buildRunRecord, type ExpeditionState,
 } from '../src/engine/expedition';
-import { applyIdle, doNestAction, newNest } from '../src/engine/nest';
+import { applyAbsenceHunger, doNestAction, newNest } from '../src/engine/nest';
 import { createCombat } from '../src/engine/combat';
 import { getEnemy } from '../src/data/enemies';
 import { loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
@@ -356,9 +356,11 @@ describe('컨디션과 둥지', () => {
     expect(n.condition).toBe(40 + BALANCE.provisional.nest.sleepCondition);
     doNestAction(n, 'pet');
     expect(n.condition).toBe(70 + BALANCE.provisional.nest.petCondition);
-    applyIdle(n, 3_600_000 * 1000);
-    expect(n.hunger).toBe(BALANCE.provisional.nest.idleHungerCap);
-    expect(n.hunger).toBeLessThan(100);
+    // 꺼 둔 동안 허기 (GDD 24-1): 아무리 오래 비워도 한 번에 +idleHungerMaxGain, 100 을 넘지 않는다
+    const before = n.hunger;
+    applyAbsenceHunger(n, 0, 3_600_000 * 1000);
+    expect(n.hunger).toBe(Math.min(100, before + BALANCE.provisional.nest.idleHungerMaxGain));
+    expect(n.hunger).toBeLessThanOrEqual(100);
   });
 
   it('귀환 후 둥지 상태가 원정에서 남은 값으로 갱신되고 보존 타일이 보유에 더해진다', () => {

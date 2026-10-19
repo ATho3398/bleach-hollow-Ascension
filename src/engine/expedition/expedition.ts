@@ -3,6 +3,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { scaleEnemy } from '../../data/enemies';
+import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, pickFromPool } from '../enemyPool';
 import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
 import { getTile, tilesFor } from '../../data/tiles';
@@ -64,6 +65,8 @@ export interface AcquiredTrait {
 export interface ExpeditionState extends RiskState {
   runId: number;
   factionId: string;
+  /** 사냥터 id (GDD 24-2, 원정 형식 4): 출현 속성·적 강도·먹이 표. 배치 단계에서 고른다 */
+  groundId: string;
   seed: number;
   rng: Rng;
   maxLaps: number;
@@ -112,6 +115,8 @@ export interface ExpeditionState extends RiskState {
 
 export interface ExpeditionSetup {
   factionId: string;
+  /** 사냥터 (없으면 기본 사냥터) */
+  groundId?: string;
   seed: number;
   runId?: number;
   /** 둥지에서 가져온 상태 */
@@ -132,6 +137,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
   const exp: ExpeditionState = {
     runId: setup.runId ?? 0,
     factionId: setup.factionId,
+    groundId: isGroundId(setup.groundId) ? setup.groundId : DEFAULT_GROUND_ID,
     seed: setup.seed,
     rng,
     maxLaps: setup.maxLaps ?? EX.maxLaps,
@@ -219,13 +225,20 @@ export function riskBonus(exp: ExpeditionState): number {
   return cond + late + breakthroughSpawnBonus(exp);
 }
 
-/** 출처(야생/타일 종류/조합)와 바퀴에 맞는 풀에서 적을 뽑고 바퀴 강화를 입힌다 (GDD 14-5) */
+/** 바퀴 강화 × 사냥터 강도 (GDD 24-2) */
+export function enemyScale(lap: number, groundId: string): { hp: number; attack: number } {
+  const l = lapScale(lap);
+  const g = getGround(groundId).strength;
+  return { hp: l.hp * g.hp, attack: l.attack * g.attack };
+}
+
+/** 출처(야생/타일 종류/조합)와 바퀴·사냥터에 맞는 풀에서 적을 뽑고 바퀴 강화·사냥터 강도를 입힌다 (GDD 14-5·24-2) */
 function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string): EnemyDef {
-  const pool = enemyPool(cls, exp.lap, source);
+  const pool = enemyPool(cls, exp.lap, source, getGround(exp.groundId));
   if (pool.length === 0) throw new Error(`적 출현 풀이 비었다: ${cls} ${exp.lap}바퀴 ${source}`);
   const base = pickFromPool(exp.rng, pool);
   const rare = nextFloat(exp.rng) < base.rareChance;
-  return { ...scaleEnemy(base, lapScale(exp.lap)), rare };
+  return { ...scaleEnemy(base, enemyScale(exp.lap, exp.groundId)), rare };
 }
 
 /** 이 칸이 조합(같은 comboGroup 3칸 인접)의 끝 칸인가 */
@@ -361,7 +374,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
   // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더
-  for (const food of rollBattleFood(exp.lootRng, pending.enemy.class === 'elite')) exp.foodLoot.push({ food, lap: exp.lap });
+  for (const food of rollBattleFood(exp.lootRng, pending.enemy.class === 'elite', getGround(exp.groundId).food)) exp.foodLoot.push({ food, lap: exp.lap });
   exp.victoriesThisLap++;
   // 흡수 조건(마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
   if (canAbsorb(battle)) {
@@ -547,6 +560,13 @@ export function swapWithHand(exp: ExpeditionState, tileId: string, cell: number)
  * 카드 배치 단계 (GDD 17-1): 원정이 시작되기 직전에 덱의 타일을 손에 쥐어 12칸 길에 놓게 한다.
  * 덱은 보상으로 뽑을 타일 목록이기도 해서 그대로 두고, 손에만 사본을 쥔다. 단계가 끝나면 finishPlanning 이 손을 비운다.
  */
+/** 사냥터 고르기 (GDD 24-2): 배치 단계(출발 전)에서만. 적·먹이는 전투 때 뽑으므로 시드·길 계획은 그대로 */
+export function chooseGround(exp: ExpeditionState, groundId: string): void {
+  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 사냥터를 고를 수 있다');
+  if (!isGroundId(groundId)) throw new Error(`알 수 없는 사냥터: ${groundId}`);
+  exp.groundId = groundId;
+}
+
 export function beginPlanning(exp: ExpeditionState): void {
   if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 배치 단계를 열 수 있다');
   exp.hand = [...exp.deck];
@@ -639,6 +659,7 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     endReason: exp.endReason!,
     seed: exp.seed,
     factionId: exp.factionId,
+    groundId: exp.groundId,
   };
 }
 

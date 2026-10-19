@@ -12,7 +12,7 @@ import type { GrowthInput } from './bha/growthLogic';
 import { createExpedition, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  claimTutorialGoals, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck, writeSave, type SaveData,
+  applyAbsence, claimDexRewards, claimTutorialGoals, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import type { RankHolderDef } from '../data/ranks';
 import { rankLabel, rankResultView, rankView } from './rankView';
@@ -27,6 +27,10 @@ import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rota
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el } from './bha/dom';
 import { allSlotSummaries, lastPlayedSlot, slotKey, stashSlot, touchSlot } from '../saveSlots';
+import { needsMigration } from '../saveBackup';
+import { setBgm } from './bgm';
+import type { BgmTrack } from '../data/audio/bgm';
+import { BALANCE } from '../config/balance';
 import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { resultView } from './resultView';
@@ -41,11 +45,12 @@ import { altarView, careView, chestView } from './lcdScreens';
 import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { roomOf } from '../engine/faction';
+import { openGrounds } from '../data/grounds';
 import { settingsView } from './settingsView';
 import { backupView } from './backupView';
 import { helpOverlay, type HelpScreenId } from './helpView';
 import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
-import { showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
+import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { SHOP_PREPARING_TEXT } from '../data/economy';
 
@@ -76,13 +81,17 @@ export function startApp(host: HTMLElement): void {
     onRotate: (rotated) => rotateEvent(rotated ? 'portrait' : 'landscape'),
   });
   const root = dev.view;
-  /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로) */
-  const open = (id: string, render: () => void, locked = false) => nav.push({ id, locked, render: () => { render(); root.scrollTop = 0; } });
+  /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
+  const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
+    nav.push({ id, locked, render: () => { if (track) setBgm(track); render(); root.scrollTop = 0; } });
 
   const persist = () => {
     if (!save || slot === 0) return;
     // 튜토리얼 보상 (GDD 23-3): 저장할 때마다 새로 이룬 목표를 판정해 바로 지급하고 토스트. 기존 세이브는 처음 저장 때 한꺼번에
     showTutorialToasts(claimTutorialGoals(save), getFaction(save.factionId));
+    // 도감 보상 (GDD 24-3): 같은 틀·같은 토스트. 기존 세이브는 처음 저장 때 이미 닿은 이정표를 한꺼번에
+    showDexToasts(claimDexRewards(save), getFaction(save.factionId));
+    markSeen(save); // 마지막 접속 시각 (GDD 24-1)
     // 마지막 화면 키 (GDD 19-3): 원정 흐름(배치 후 출발 ~ 결과 전) 안이면 원정, 아니면 방
     save.lastScreen = activeExp !== null && activeExp.phase !== 'ended' ? 'expedition' : 'room';
     writeSave(localStorage, save, slotKey(slot));
@@ -90,6 +99,8 @@ export function startApp(host: HTMLElement): void {
   };
   /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
   let resumeNote = '';
+  /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
+  let hungryGreet = false;
 
   /** 원정 중간 저장 (GDD 14-1). 끝난 원정은 저장하지 않는다 (recordExpedition 이 영역을 비운다) */
   const saveProgress = (exp: ExpeditionState) => {
@@ -127,6 +138,7 @@ export function startApp(host: HTMLElement): void {
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
+    setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
       formId: save?.evolution.formId,
@@ -148,6 +160,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 시작 화면으로: 스택을 비우고 처음 화면 하나만 남긴다 */
   function titleScreen(note = ''): void {
+    setBgm('nest');
     save = null;
     slot = 0;
     activeExp = null;
@@ -224,12 +237,22 @@ export function startApp(host: HTMLElement): void {
 
   /** 슬롯을 열어 마지막으로 보던 화면으로 (GDD 19-3): 원정 중이었으면 원정 그 지점(전투 중이었으면 전투 직전), 아니면 방. 읽을 수 없으면 시작 화면에 알린다 */
   function enterSlot(n: number): void {
+    // 세이브 형식 마이그레이션 직전 자동 백업 (GDD 24-5): 옛 형식이면 원문을 슬롯 백업에 보관한 뒤 올린다
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(slotKey(n));
+    } catch {
+      raw = null;
+    }
     const loaded = loadSave(localStorage, slotKey(n));
     if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
+    if (needsMigration(raw)) stashSlot(localStorage, n, 'migration');
     save = loaded;
     slot = n;
     activeExp = null;
     resumeNote = '';
+    // 꺼 둔 동안 허기 (GDD 24-1): 원정 중간 저장이 있으면 오르지 않는다
+    hungryGreet = applyAbsence(loaded) >= BALANCE.provisional.nest.idleHungerNotice;
     armBackTrap();
     const active = resumeTarget(loaded) === 'expedition' ? readActiveExpedition(loaded) : null;
     if (active?.ok) {
@@ -350,7 +373,11 @@ export function startApp(host: HTMLElement): void {
       resumeNote = active.reason === 'version' ? '저장된 원정이 이전 버전이라 이어할 수 없어 지웠다.' : '저장된 원정이 손상되어 이어할 수 없어 지웠다.';
     }
     const props = roomOf(faction).props;
+    setBgm('nest');
+    const greet = hungryGreet;
+    hungryGreet = false;
     roomView(dev, faction, s, {
+      greet: greet ? 'hungry' : null,
       resume: active.ok
         ? { info: `${active.exp.lap}바퀴 · ${active.exp.pos}번 칸`, onResume: () => open('expedition', () => resumeExpedition(active.exp, active.speed), true) }
         : null,
@@ -396,10 +423,11 @@ export function startApp(host: HTMLElement): void {
       stability: save.nest.stability,
       build: save.build,
       evolution: save.evolution,
+      groundId: lastGround(save),
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
-    open('expedition-plan', () => planView(root, faction, exp, {
+    open('expedition-plan', () => planView(root, faction, exp, save!.evolution.tierIndex, {
       onStart: () => {
         activeExp = exp;
         saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
@@ -407,7 +435,13 @@ export function startApp(host: HTMLElement): void {
         nav.replace({ id: 'expedition', locked: true, render: () => { showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
       },
       onHelp: () => openHelp('expedition', false),
-    }));
+    }), false, 'expedition');
+  }
+
+  /** 사냥터 기본 선택 (GDD 24-2): 마지막 원정의 사냥터가 아직 열려 있으면 그것, 아니면 기본 사냥터 */
+  function lastGround(s: SaveData): string | undefined {
+    const last = s.runLog.runs[s.runLog.runs.length - 1]?.groundId;
+    return openGrounds(s.evolution.tierIndex).some((g) => g.id === last) ? last : undefined;
   }
 
   /** 저장된 원정으로 돌아간다: 저장된 시점의 화면(전투 직전·흡수·둥지 칸 귀환 선택·이동 중)으로 복원 */
@@ -426,6 +460,7 @@ export function startApp(host: HTMLElement): void {
     const p = exp.pending!;
     const s = startBattle(exp);
     const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}`;
+    setBgm(p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
       formId: save?.evolution.formId,
@@ -455,6 +490,7 @@ export function startApp(host: HTMLElement): void {
 
   function showExpedition(faction: FactionConfig, exp: ExpeditionState, msg = ''): void {
     activeExp = exp;
+    setBgm('expedition');
     expeditionView(root, faction, exp, {
       tierIndex: save?.evolution.tierIndex,
       formId: save?.evolution.formId,
@@ -520,6 +556,7 @@ export function startApp(host: HTMLElement): void {
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
+    setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
       formId: save?.evolution.formId,
@@ -550,6 +587,10 @@ export function startApp(host: HTMLElement): void {
     const s0 = save;
     const c = rankChallenge(s0);
     if (!c.ok || c.opponentId !== holder.id) return void nav.pop(); // 그사이 상황이 바뀌었으면(다른 탭 등) 목록으로
+    // 되돌릴 수 없는 일 직전 자동 백업 (GDD 24-5): 지금 상태를 저장하고 슬롯 백업에 보관한 뒤 싸운다
+    persist();
+    stashSlot(localStorage, slot, 'rank');
+    setBgm('rank');
     const params = buildCombatParams(s0.build, faction.id);
     applyEvolutionToParams(params, s0.evolution, faction.id);
     params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);

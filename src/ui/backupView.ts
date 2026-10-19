@@ -3,8 +3,9 @@
 import { getFaction } from '../data/factions';
 import type { SaveData } from '../game';
 import {
-  applyImport, backupFileName, hasBackup, IMPORT_FAILURE_TEXT, parseImport, serializeSave, swapWithBackup, type ImportResult,
+  applyImport, BACKUP_REASON_TEXT, backupFileName, hasBackup, IMPORT_FAILURE_TEXT, parseImport, serializeSave, swapWithBackup, type ImportResult,
 } from '../saveBackup';
+import { formatPlayedAt, readBackupMeta } from '../saveSlots';
 import { button, el, info, mountApp, notice, panel, type NoticeKind } from './bha/dom';
 import { lcdHead, lcdPageParts } from './bha/lcdpage';
 
@@ -182,7 +183,12 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
     }
 
     const foot: Node[] = [];
-    if (hasBackup(storage, slot)) foot.push(button({ label: '이전 세이브로 되돌리기', icon: 'i-loop', onClick: revert }));
+    if (hasBackup(storage, slot)) {
+      foot.push(button({ label: '이전 세이브로 되돌리기', icon: 'i-loop', onClick: revert }));
+      // 자동 백업 (GDD 24-5): 언제 무엇 직전에 보관했는지
+      const meta = readBackupMeta(storage, slot);
+      if (meta) foot.push(el('p', 'bha-faint', `보관된 세이브: ${BACKUP_REASON_TEXT[meta.reason]} · ${formatPlayedAt(meta.at)}`));
+    }
     if (status) foot.push(notice(status.kind, status.text));
     const head = lcdHead({ title: opts.importOnly ? '불러오기' : '세이브 백업', sub: opts.importOnly ? `슬롯 ${slot}에 넣는다` : `슬롯 ${slot} · 내보내기 · 불러오기` });
     const p = opts.importOnly

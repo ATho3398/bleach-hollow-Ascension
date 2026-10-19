@@ -2,7 +2,7 @@
 // 입력 설정(bha-input-settings)은 기기마다 다른 값이라 담지 않는다 (dev-log C.29).
 import { FACTIONS } from './data/factions';
 import { migrateSave, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
-import { slotBackupKey, slotKey } from './saveSlots';
+import { slotBackupKey, slotKey, writeBackupMeta, type BackupReason } from './saveSlots';
 
 /** 가져오기 직전 현재 세이브를 한 번 보관하는 키 (슬롯 1). 슬롯별 키는 saveSlots 의 slotBackupKey */
 export const BACKUP_KEY = slotBackupKey(1);
@@ -82,7 +82,10 @@ export interface ApplyStorage extends StorageLike {
 export function applyImport(storage: ApplyStorage, save: SaveData, slot = 1): boolean {
   try {
     const current = storage.getItem(slotKey(slot));
-    if (current !== null) storage.setItem(slotBackupKey(slot), current);
+    if (current !== null) {
+      storage.setItem(slotBackupKey(slot), current);
+      writeBackupMeta(storage, slot, 'import');
+    }
     storage.setItem(slotKey(slot), serializeSave(save));
     return true;
   } catch {
@@ -105,8 +108,33 @@ export function swapWithBackup(storage: StorageLike, slot = 1): boolean {
     if (!backup) return false;
     const current = storage.getItem(slotKey(slot));
     storage.setItem(slotKey(slot), backup);
-    if (current !== null) storage.setItem(slotBackupKey(slot), current);
+    if (current !== null) {
+      storage.setItem(slotBackupKey(slot), current);
+      writeBackupMeta(storage, slot, 'revert');
+    }
     return true;
+  } catch {
+    return false;
+  }
+}
+
+/** 백업 까닭 표시 (GDD 24-5) */
+export const BACKUP_REASON_TEXT: Record<BackupReason, string> = {
+  overwrite: '새로 시작해 덮어쓰기 직전',
+  import: '불러오기로 덮어쓰기 직전',
+  rank: '등급전 도전 직전',
+  migration: '새 버전으로 세이브를 올리기 직전',
+  rebirth: '환생 직전',
+  fusion: '합체 직전',
+  revert: '되돌리기 직전',
+};
+
+/** 세이브 원문이 지금 형식보다 옛 형식인가 (마이그레이션 직전 자동 백업 판단, GDD 24-5). 읽을 수 없으면 false */
+export function needsMigration(text: string | null): boolean {
+  if (!text) return false;
+  try {
+    const f = (JSON.parse(text) as { meta?: { format?: unknown } })?.meta?.format;
+    return typeof f === 'number' && f < SAVE_FORMAT_VERSION;
   } catch {
     return false;
   }

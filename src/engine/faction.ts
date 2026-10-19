@@ -56,7 +56,8 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'window', 'dummy'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
-export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy'] as const;
+/** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
+export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy', 'hungry'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
 /** 메인 방 화면 설정 (GDD 16장). 모두 선택 항목이라 비워도 기본값(DEFAULT_ROOM)이 쓰인다 */
@@ -84,7 +85,7 @@ export const DEFAULT_ROOM: RoomConfig = {
     chest: { x: 14, y: 68 }, dummy: { x: 80, y: 78 },
   },
   talk: {
-    idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'],
+    idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],
   },
 };
 
@@ -155,6 +156,8 @@ export interface FactionConfig {
   frenzyName: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
+  /** 사냥터별 이름·한 줄 설명 (GDD 24-2, 자리 표시): 사냥터 id(src/data/grounds) → 표시. 없는 사냥터는 huntingGroundName + 번호 */
+  huntingGrounds?: Record<string, { name: string; desc?: string }>;
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
   /** 1단계(진화 전) 캐릭터의 이동 방식 기본값 (GDD 18-11). 비우면 walk. 진화체·그림 manifest 가 있으면 그쪽이 우선 */
@@ -211,6 +214,14 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const fn = (r.foodNames ?? {}) as Record<string, unknown>;
   for (const f of FOOD_IDS) {
     if (!isString(fn[f])) errors.push(`foodNames.${f}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  if (r.huntingGrounds !== undefined) {
+    const hg = r.huntingGrounds as Record<string, unknown>;
+    if (typeof hg !== 'object' || hg === null || Array.isArray(hg)) errors.push('huntingGrounds: { 사냥터 id: { name, desc? } }');
+    else for (const [k, v] of Object.entries(hg)) {
+      const x = (v ?? {}) as Record<string, unknown>;
+      if (!isString(x.name) || (x.desc !== undefined && typeof x.desc !== 'string')) errors.push(`huntingGrounds.${k}: { name: 문자열, desc?: 문자열 }`);
+    }
   }
   const fams = r.families;
   if (!Array.isArray(fams) || fams.length === 0) errors.push('families: 계열 1개 이상');
@@ -276,4 +287,9 @@ export const BLOCK_WORDS = { special: '필살', stored: '저장 필살', void: '
 /** 계열 설정 한 개 (없으면 undefined) */
 export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {
   return f.families.find((x) => x.id === familyId);
+}
+
+/** 사냥터 표시 이름 (GDD 24-2): 종족 설정 huntingGrounds, 없으면 "사냥터 이름 n" (n = 데이터 순서) */
+export function groundName(f: Pick<FactionConfig, 'huntingGroundName' | 'huntingGrounds'>, groundId: string, index = 0): string {
+  return f.huntingGrounds?.[groundId]?.name ?? `${f.huntingGroundName} ${index + 1}`;
 }

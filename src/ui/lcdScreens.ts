@@ -8,7 +8,7 @@ import { traitsTab, type TraitsTabState } from './buildPanel';
 import { evolutionColumns } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
 import { FOOD_IDS, type FactionConfig } from '../engine/faction';
-import { SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
+import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { deckRow, statsBlock, statusBlock } from './bha/nest';
@@ -45,7 +45,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치. 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
-/** 가진 것 (GDD 23-1·22-3·23-4): 먹이 종류별 개수, 영혼 결정, 거래 재화 영전(자리만) */
+/** 가진 것 (GDD 23-1·22-3·23-4·25-1): 먹이 종류별 개수, 영혼 결정, 골드(쓰는 곳 준비 중), 영옥(꾸밈 재화, 쓰는 곳 준비 중) */
 function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   const p = panel({ title: '가진 것' });
   p.setAttribute('aria-label', '가진 것');
@@ -56,7 +56,10 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   const coins = h('p', 'bha-small');
   coins.dataset.currency = 'trade';
   coins.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ' ', provisionalTag('쓰는 곳 준비 중'));
-  p.append(food, crystals, coins);
+  const jade = h('p', 'bha-small');
+  jade.dataset.currency = 'jade';
+  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', provisionalTag('꾸밈 · 쓰는 곳 준비 중'));
+  p.append(food, crystals, coins, jade);
   return p;
 }
 

@@ -1,0 +1,187 @@
+{
+  "beforeAudio": [
+    {
+      "src": "nest.ogg",
+      "playCalled": false,
+      "paused": true,
+      "volume": 0.5,
+      "time": 0
+    }
+  ],
+  "slot1": {
+    "formatBefore": 16,
+    "formatAfter": 17,
+    "hungerBefore": 10,
+    "hungerAfter": 70,
+    "lastSeenAt": 1792433740864,
+    "dexRewards": [
+      "forms-5",
+      "forms-10",
+      "forms-20"
+    ],
+    "tradeCoins": 30,
+    "food": {
+      "snack": 9,
+      "basic": 9,
+      "hearty": 9,
+      "tonic": 9,
+      "feast": 4
+    },
+    "autoBackup": {
+      "backup": true,
+      "backupFormat": 16,
+      "meta": {
+        "reason": "migration",
+        "at": 1792433740860
+      }
+    }
+  },
+  "bubble": "오래 비웠다. 배 속이 텅 비었다.",
+  "toasts": [],
+  "afterEnterAudio": [
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": false,
+      "volume": 0.5,
+      "time": 0.1
+    }
+  ],
+  "planTitle": "길에 타일 놓기",
+  "planInfo": "허무의 숲: 메노스의 숲 깊은 곳. 자주 나오는 속성 혈·허(虛) · 적 체력 150%·공격 200%",
+  "planAudio": [
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 0.8
+    }
+  ],
+  "volume25": [
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 0.8
+    },
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": false,
+      "volume": 0.25,
+      "time": 1.1
+    }
+  ],
+  "musicOff": [
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 0.8
+    },
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 1.7
+    }
+  ],
+  "musicOnAgain": [
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 0.8
+    },
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 1.7
+    },
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": false,
+      "volume": 0.5,
+      "time": 1.8
+    }
+  ],
+  "bgmSettings": "{\"on\":true,\"volume\":0.5}",
+  "fxSettings": null,
+  "backupNote": "보관된 세이브: 새 버전으로 세이브를 올리기 직전 · 10/19 18:15",
+  "battleAudio": [
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 0.8
+    },
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 1.7
+    },
+    {
+      "src": "nest.ogg",
+      "playCalled": true,
+      "paused": true,
+      "volume": 0,
+      "time": 1
+    },
+    {
+      "src": "battle.ogg",
+      "playCalled": true,
+      "paused": false,
+      "volume": 0.5,
+      "time": 2
+    }
+  ],
+  "lockedTitles": [
+    {
+      "id": "outskirts",
+      "text": "루콘가이",
+      "disabled": false,
+      "title": ""
+    },
+    {
+      "id": "canyon",
+      "text": "현세 순찰 구역",
+      "disabled": true,
+      "title": "3단계(견습 대원)에 열린다"
+    },
+    {
+      "id": "forest",
+      "text": "단가이",
+      "disabled": true,
+      "title": "5단계(수석 대원)에 열린다"
+    }
+  ],
+  "tier3Grounds": [
+    {
+      "id": "outskirts",
+      "disabled": false,
+      "on": false
+    },
+    {
+      "id": "canyon",
+      "disabled": false,
+      "on": true
+    },
+    {
+      "id": "forest",
+      "disabled": true,
+      "on": false
+    }
+  ],
+  "consoleErrors": []
+}

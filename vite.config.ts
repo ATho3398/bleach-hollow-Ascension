@@ -20,12 +20,22 @@ function artFiles(): string[] {
   }
 }
 
+// 배경 음악 파일 조회 (GDD 24-4): public/audio/bgm/ 안의 mp3·ogg 이름을 빌드 시 모은다 (없으면 무음)
+function bgmFiles(): string[] {
+  try {
+    return existsSync('public/audio/bgm') ? readdirSync('public/audio/bgm').filter((f) => /\.(mp3|ogg)$/i.test(f)).sort() : [];
+  } catch {
+    return [];
+  }
+}
+
 // 상대 경로로 빌드해 GitHub Pages(/bleach-hollow-ascension/) 등 어느 경로에 올려도 동작하게 한다
 export default defineConfig({
   base: './',
   define: {
     __BUILD_COMMIT__: JSON.stringify(gitCommit()),
     __ART_FILES__: JSON.stringify(artFiles()),
+    __BGM_FILES__: JSON.stringify(bgmFiles()),
     __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
   },
   test: { testTimeout: 60_000 },

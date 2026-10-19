@@ -61,14 +61,22 @@ function pickWeighted(rng: Rng, table: Record<string, number>): FoodId {
   return entries[entries.length - 1]![0];
 }
 
-/** 전투 승리 전리품 (GDD 23-1): 일반 적 50% 확률로 1개(간식·보통·든든), 강적 확정 1개 + 30% 확률로 1개 더(든든·보양식·잔치) */
-export function rollBattleFood(rng: Rng, elite: boolean): FoodId[] {
+/** 드롭 표 (사냥터마다 다르다, GDD 24-2). 기본은 BALANCE.provisional.food */
+export interface FoodDropTable {
+  normalDropChance: number;
+  normalTable: Record<string, number>;
+  eliteExtraChance: number;
+  eliteTable: Record<string, number>;
+}
+
+/** 전투 승리 전리품 (GDD 23-1): 일반 적 50% 확률로 1개(간식·보통·든든), 강적 확정 1개 + 30% 확률로 1개 더(든든·보양식·잔치). 확률·표는 사냥터 표 */
+export function rollBattleFood(rng: Rng, elite: boolean, table: FoodDropTable = FX): FoodId[] {
   if (elite) {
-    const out = [pickWeighted(rng, FX.eliteTable)];
-    if (nextFloat(rng) < FX.eliteExtraChance) out.push(pickWeighted(rng, FX.eliteTable));
+    const out = [pickWeighted(rng, table.eliteTable)];
+    if (nextFloat(rng) < table.eliteExtraChance) out.push(pickWeighted(rng, table.eliteTable));
     return out;
   }
-  return nextFloat(rng) < FX.normalDropChance ? [pickWeighted(rng, FX.normalTable)] : [];
+  return nextFloat(rng) < table.normalDropChance ? [pickWeighted(rng, table.normalTable)] : [];
 }
 
 /** 원정에서 가져온 먹이를 보유에 넣은 결과 (결과 화면 표시용) */
