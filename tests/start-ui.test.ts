@@ -29,3 +29,13 @@ describe('이어하기 슬롯 선택 (GDD 18-1)', () => {
     expect(c.defaultSlot).toBe(sums.filter((s) => s.state === 'ok').sort((a, b) => ((b as { playedAt: number | null }).playedAt ?? 0) - ((a as { playedAt: number | null }).playedAt ?? 0))[0]!.slot);
   });
 });
+
+describe('시작·불러오기·종족 고르기 단축키 (C.46)', () => {
+  it('메뉴 맥락: E 설정, H 도움말, R 백업 가져오기 (그 버튼이 있는 화면에서만 눌린다)', async () => {
+    const { actionFor, findProblems } = await import('../src/ui/shortcutMap');
+    expect(actionFor('menu', 'KeyE')).toBe('corner.settings');
+    expect(actionFor('menu', 'KeyH')).toBe('corner.help');
+    expect(actionFor('menu', 'KeyR')).toBe('slots.import');
+    expect(findProblems()).toEqual([]);
+  });
+});

@@ -31,8 +31,9 @@ const digits = (n: number, f: (i: number) => ShortcutAction): Record<string, Sho
 };
 
 export const SHORTCUTS: Record<ShortcutCtx, Record<string, ShortcutAction>> = {
-  // 메뉴·목록·시작 화면·결과/흡수/진화/일시정지 오버레이·열린 레이어: 이동 W/S/A/D, 확정 F/Space, 취소 Q, 숫자 = 번호 목록 N번째
-  menu: { ...NAV, ...digits(9, (i) => `pick.${i}`) },
+  // 메뉴·목록·시작 화면·결과/흡수/진화/일시정지 오버레이·열린 레이어: 이동 W/S/A/D, 확정 F/Space, 취소 Q, 숫자 = 번호 목록 N번째.
+  // 그 화면에 이름 붙은 버튼이 있을 때만: 설정 E·도움말 H(종족 고르기 위 구석), 백업 파일 가져오기 R(불러오기 창) (C.46)
+  menu: { ...NAV, ...digits(9, (i) => `pick.${i}`), KeyE: 'corner.settings', KeyH: 'corner.help', KeyR: 'slots.import' },
   // 전투(진행 중): 블록 1~8, 저장 필살기 Q, 일시정지 Space(또는 F), 배속 E, 도움말 H
   battle: { ...digits(8, (i) => `block.${i}`), KeyQ: 'stored', Space: 'pause', KeyF: 'confirm', KeyE: 'speed', KeyH: 'help' },
   // 홈: 돌보기 Z X C, 더보기 V(펼친 격자는 숫자), 훈련 인형 T, 상태 칩 G, 펼친 먹이/더보기 줄은 숫자
@@ -122,6 +123,16 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
       { keys: 'F, Space', does: '확정' },
       { keys: 'Q, Esc', does: '취소 / 뒤로' },
       { keys: '1 ~ 9', does: '번호가 붙은 목록의 N번째 (시작 화면·슬롯 등)' },
+    ],
+  },
+  {
+    title: '시작 화면·불러오기·종족 고르기',
+    rows: [
+      { keys: '1 / 2 / 3', does: '시작 화면: 이어하기 / 새로 시작 / 불러오기' },
+      { keys: '1 ~ 3', does: '새로 시작·불러오기 창: 슬롯 N' },
+      { keys: 'R', does: '불러오기 창: 백업 파일 가져오기' },
+      { keys: '1 ~ 9', does: '종족 고르기: 왼쪽부터 N번째 종족 (확인창에서 F·Space = 예, Q·Esc = 아니오)' },
+      { keys: 'E / H', does: '종족 고르기: 설정 / 도움말·튜토리얼' },
     ],
   },
   {

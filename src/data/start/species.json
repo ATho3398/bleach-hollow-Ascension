@@ -1,8 +1,0 @@
-{
-  "lead": "어느 쪽으로 시작할까? 두 종족 모두 처음부터 개방.",
-  "provisional": true,
-  "species": {
-    "hollow": { "emblemIcon": "i-broken", "desc": "영혼을 포식하며 가면을 깨고 올라선다." },
-    "shinigami": { "emblemIcon": "i-attack", "desc": "순찰로 영혼을 정화하며 칼을 벼린다." }
-  }
-}

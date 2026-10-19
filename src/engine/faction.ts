@@ -95,6 +95,8 @@ export interface FactionConfig {
   name: string;
   /** UI 테마 이름: 루트 data-bha-theme 값 (src/ui/bha/design-system/theme-<이름>.css 가 정의). 종족 id 로 분기하지 않고 이 값을 쓴다 */
   theme: string;
+  /** 종족 고르기 화면의 큰 아이콘 (GDD 19-4): 이모티콘 한 개. 비우면 이름 첫 글자 */
+  emblem?: string;
   /** 육성 5단계 이름 (GDD 8-1) */
   tierNames: [string, string, string, string, string];
   /** 등급 4단계 이름 (GDD 8-2) */
@@ -210,6 +212,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     });
   }
   if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
+  if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {
     const rm = r.room as Record<string, unknown>;
@@ -222,6 +225,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.rankMode !== 'challenge' && r.rankMode !== 'promotion') errors.push('rankMode: challenge | promotion');
   if (errors.length > 0) throw new Error(`종족 설정 오류 (${String(r.id ?? '?')}):\n- ${errors.join('\n- ')}`);
   return raw as FactionConfig;
+}
+
+/** 종족 고르기 화면에 크게 띄울 아이콘: 설정의 이모티콘, 없으면 이름 첫 글자 */
+export function emblemOf(f: Pick<FactionConfig, 'emblem' | 'name'>): string {
+  return f.emblem ?? Array.from(f.name)[0] ?? '?';
 }
 
 /** 계열 설정 한 개 (없으면 undefined) */

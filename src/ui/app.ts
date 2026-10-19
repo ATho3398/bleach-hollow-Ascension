@@ -12,7 +12,7 @@ import type { GrowthInput } from './bha/growthLogic';
 import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  loadSave, newSaveData, nextRunId, performEvolution, readActiveExpedition, recordBattle, recordExpedition, sanitizeDeck, writeSave, type SaveData,
+  loadSave, newSaveData, nextRunId, performEvolution, readActiveExpedition, recordBattle, recordExpedition, resumeTarget, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
@@ -75,6 +75,8 @@ export function startApp(host: HTMLElement): void {
 
   const persist = () => {
     if (!save || slot === 0) return;
+    // 마지막 화면 키 (GDD 19-3): 원정 흐름(배치 후 출발 ~ 결과 전) 안이면 원정, 아니면 방
+    save.lastScreen = activeExp !== null && activeExp.phase !== 'ended' ? 'expedition' : 'room';
     writeSave(localStorage, save, slotKey(slot));
     touchSlot(localStorage, slot);
   };
@@ -155,15 +157,19 @@ export function startApp(host: HTMLElement): void {
     applyTheme(lastSum && lastSum.state === 'ok' ? getFaction(lastSum.factionId) : FACTIONS[0]!);
     startView(root, sums, {
       onNew: () => open('slot-new', () => renderSlotPick('new')),
-      onContinue: () => open('slot-continue', () => renderSlotPick('continue')),
-      onImport: () => open('slot-import', () => renderSlotPick('import')),
+      // 이어하기 (GDD 19-3): 슬롯 선택 없이 가장 최근 슬롯을 마지막으로 보던 화면부터
+      onContinue: () => {
+        const n = lastPlayedSlot(allSlotSummaries(localStorage));
+        if (n !== null) enterSlot(n);
+      },
+      onImport: () => open('slot-load', () => renderSlotPick('load')),
     }, note);
   }
 
   function renderSlotPick(mode: SlotPickMode): void {
     const sums = allSlotSummaries(localStorage);
     slotPickView(root, mode, sums, FACTIONS, (sum) => {
-      if (mode === 'continue') {
+      if (mode === 'load') {
         if (sum.state === 'ok') enterSlot(sum.slot);
       } else if (mode === 'new') {
         const begin = () => open('species', () => renderSpecies(sum.slot));
@@ -177,7 +183,7 @@ export function startApp(host: HTMLElement): void {
       } else {
         open('backup-import', () => backupView(root, null, () => {}, { slot: sum.slot, importOnly: true, onApplied: () => enterSlot(sum.slot) }));
       }
-    });
+    }, { onImport: () => open('slot-import', () => renderSlotPick('import')) });
   }
 
   /** 종족 고르기: newSlot 이 있으면 그 슬롯에 새 세이브를 만든다, 없으면(방에서 종족 바꾸기) 지금 세이브의 종족을 바꾼다 */
@@ -195,6 +201,11 @@ export function startApp(host: HTMLElement): void {
       },
       onSettings: settingsOpener(false),
       onHelp: () => openHelp(undefined, true),
+      confirm: (f, onYes, onNo) => confirmDialog({
+        title: newSlot !== undefined ? `${f.name} — 이 종족으로 시작할까요?` : `${f.name} — 이 종족으로 바꿀까요?`,
+        yes: newSlot !== undefined ? '시작' : '바꾸기', no: '아니오',
+        onYes, onNo,
+      }),
     });
   }
 
@@ -203,7 +214,7 @@ export function startApp(host: HTMLElement): void {
     open('faction', () => renderSpecies());
   }
 
-  /** 슬롯을 열어 방으로. 읽을 수 없으면 시작 화면에 알린다 */
+  /** 슬롯을 열어 마지막으로 보던 화면으로 (GDD 19-3): 원정 중이었으면 원정 그 지점(전투 중이었으면 전투 직전), 아니면 방. 읽을 수 없으면 시작 화면에 알린다 */
   function enterSlot(n: number): void {
     const loaded = loadSave(localStorage, slotKey(n));
     if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
@@ -211,8 +222,17 @@ export function startApp(host: HTMLElement): void {
     slot = n;
     activeExp = null;
     resumeNote = '';
-    persist(); // 마지막 플레이 시각 기록(+ 로드 때 해금된 칭호 저장)
     armBackTrap();
+    const active = resumeTarget(loaded) === 'expedition' ? readActiveExpedition(loaded) : null;
+    if (active?.ok) {
+      activeExp = active.exp;
+      persist(); // 마지막 플레이 시각 기록(+ 로드 때 해금된 칭호 저장)
+      // 원정 흐름은 취소로 빠지지 않는다(locked). 끝나면 nestScreen 이 방으로 스택을 다시 깐다
+      nav.reset({ id: 'expedition', locked: true, render: () => { resumeExpedition(active.exp, active.speed); root.scrollTop = 0; } });
+      return;
+    }
+    // 손상·구버전 원정이면 readActiveExpedition 이 비웠다 → 방에서 안내 한 줄 (renderRoom 이 다시 확인)
+    persist();
     nestScreen();
   }
 

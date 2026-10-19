@@ -8,8 +8,10 @@ import {
 } from '../src/engine/expedition';
 import { botPickTrait } from '../src/engine/expedition';
 import {
-  loadSave, migrateSave, newSaveData, readActiveExpedition, recordExpedition, SAVE_FORMAT_VERSION, writeSave, type SaveData,
+  loadSave, migrateSave, newSaveData, readActiveExpedition, recordExpedition, resumeTarget, SAVE_FORMAT_VERSION, writeSave, type SaveData,
 } from '../src/game';
+import { firstEmptySlot } from '../src/ui/slotView';
+import { allSlotSummaries, slotKey } from '../src/saveSlots';
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 const mk = (seed = 7) => createExpedition({ factionId: 'hollow', seed, hunger: 10, condition: 100, deck: DECK });
@@ -225,5 +227,68 @@ describe('세이브 구조', () => {
   it('원정 직렬화 코드에 종족 분기가 없다', () => {
     const src = readFileSync('src/engine/expedition/snapshot.ts', 'utf8');
     expect(src).not.toMatch(/factionId\s*===|faction\s*===|'hollow'|'shinigami'/);
+  });
+});
+
+describe('이어하기: 마지막 화면 키 (GDD 19-3, 형식 13)', () => {
+  const memStore = () => {
+    const m = new Map<string, string>();
+    return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) };
+  };
+  const atBattle = (): SaveData => {
+    const save = newSaveData('hollow', 0);
+    save.activeExpedition = serializeExpedition(drive(mk(), (e) => e, (e) => e.phase === 'battle'), 1, 5);
+    save.lastScreen = 'expedition';
+    return save;
+  };
+
+  it('새 세이브는 방에서 시작한다', () => {
+    const save = newSaveData('shinigami', 0);
+    expect(save.lastScreen).toBe('room');
+    expect(resumeTarget(save)).toBe('room');
+  });
+
+  it('전투 중에 저장된 원정은 저장·불러오기 뒤 원정 화면, 그 전투 직전(phase battle)으로 열린다', () => {
+    const store = memStore();
+    writeSave(store, atBattle());
+    const loaded = loadSave(store)!;
+    expect(resumeTarget(loaded)).toBe('expedition');
+    const a = readActiveExpedition(loaded);
+    expect(a.ok && a.exp.phase).toBe('battle');
+  });
+
+  it('마지막 화면이 원정이어도 원정 중간 저장이 없으면 방', () => {
+    const save = atBattle();
+    save.activeExpedition = null;
+    expect(resumeTarget(save)).toBe('room');
+  });
+
+  it('마이그레이션 12 → 13: 원정 중간 저장이 있으면 원정, 없으면 방', () => {
+    const withExp = JSON.parse(JSON.stringify(atBattle()));
+    withExp.meta.format = 12;
+    delete withExp.lastScreen;
+    const m1 = migrateSave(withExp)!;
+    expect(m1.meta.format).toBe(SAVE_FORMAT_VERSION);
+    expect(m1.lastScreen).toBe('expedition');
+    const noExp = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
+    noExp.meta.format = 12;
+    delete noExp.lastScreen;
+    expect(migrateSave(noExp)!.lastScreen).toBe('room');
+  });
+
+  it('모르는 화면 키는 방으로 바로잡는다', () => {
+    const raw = JSON.parse(JSON.stringify(atBattle()));
+    raw.lastScreen = 'battle-mid';
+    expect(migrateSave(raw)!.lastScreen).toBe('room');
+  });
+
+  it('새로 시작은 번호가 가장 작은 빈 슬롯을 먼저 권한다 (모두 차 있으면 없음)', () => {
+    const store = memStore();
+    expect(firstEmptySlot(allSlotSummaries(store))).toBe(1);
+    writeSave(store, newSaveData('hollow', 0), slotKey(1));
+    store.setItem(slotKey(2), '{깨진');
+    expect(firstEmptySlot(allSlotSummaries(store))).toBe(3);
+    writeSave(store, newSaveData('hollow', 0), slotKey(3));
+    expect(firstEmptySlot(allSlotSummaries(store))).toBeNull();
   });
 });

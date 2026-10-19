@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cssRatio, nudgeValue, ratio, sliderPct } from '../src/ui/bha/util';
-import { speciesStartText } from '../src/data/start';
+import { emblemOf } from '../src/engine/faction';
 import { FACTIONS } from '../src/data/factions';
 
 describe('bha 헬퍼 순수 함수', () => {
@@ -25,16 +25,15 @@ describe('bha 헬퍼 순수 함수', () => {
   });
 });
 
-describe('시작 화면 문구 데이터', () => {
-  it('등록된 종족마다 설명과 엠블럼이 있다', () => {
+describe('종족 고르기 아이콘 (GDD 19-4, C.46: 부가 설명 문구 데이터는 삭제)', () => {
+  it('등록된 종족마다 설정에 이모티콘 아이콘이 있다', () => {
     for (const f of FACTIONS) {
-      const t = speciesStartText(f.id);
-      expect(t.desc.length).toBeGreaterThan(0);
-      expect(t.emblemIcon).toMatch(/^i-/);
+      expect(f.emblem).toBeTruthy();
+      expect(emblemOf(f)).toBe(f.emblem);
     }
   });
-  it('모르는 종족은 설명 없이 기본 엠블럼', () => {
-    expect(speciesStartText('quincy')).toEqual({ emblemIcon: 'i-broken', desc: '' });
+  it('아이콘이 없는 종족(3번째 종족 등)은 이름 첫 글자', () => {
+    expect(emblemOf({ name: '멸각사' })).toBe('멸');
   });
 });
 

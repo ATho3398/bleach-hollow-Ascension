@@ -18,7 +18,11 @@ import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 12;
+export const SAVE_FORMAT_VERSION = 13;
+
+/** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
+export type ScreenKey = 'room' | 'expedition';
+export const SCREEN_KEYS: readonly ScreenKey[] = ['room', 'expedition'];
 
 export interface SaveMeta {
   format: number;
@@ -53,6 +57,8 @@ export interface SaveData {
   activeExpedition: ExpeditionSnapshot | null;
   /** 도움말 플래그 (C.19, 형식 11): 첫 플레이 튜토리얼을 봤는가. 이전 세이브는 false 로 올려 한 번 보여 준다 */
   help: HelpState;
+  /** 마지막으로 보던 화면 키 (GDD 19-3, 형식 13). 화면 키만 저장하고 화면 상태는 저장하지 않는다(원정 지점은 activeExpedition 이 갖고 있다) */
+  lastScreen: ScreenKey;
 }
 
 export interface TileStock {
@@ -66,7 +72,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState() };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room' };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신 */
@@ -97,6 +103,7 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   storeUnplacedTiles(save.tiles, unplacedKept(exp));
   applyExpeditionEnd(save.nest, exp, nowMs);
   save.activeExpedition = null;
+  save.lastScreen = 'room';
   checkTitles(save, 'expedition', nowMs);
 }
 
@@ -116,6 +123,11 @@ export function readActiveExpedition(save: SaveData): (RestoreResult & { ok: tru
   if (r.ok) return r;
   save.activeExpedition = null;
   return r;
+}
+
+/** 이어하기가 열 화면 (GDD 19-3): 마지막 화면이 원정이고 원정 중간 저장이 남아 있으면 원정, 아니면 방. 저장 내용의 손상 검사는 readActiveExpedition 이 한다 */
+export function resumeTarget(save: Pick<SaveData, 'lastScreen' | 'activeExpedition'>): ScreenKey {
+  return save.lastScreen === 'expedition' && save.activeExpedition != null ? 'expedition' : 'room';
 }
 
 function cloneBuildOf(b: BuildState): BuildState {
@@ -262,9 +274,15 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, chainsByFamily: b.chainsByFamily ?? {}, combosTriggered: b.combosTriggered ?? 0, comboBlocksUsed: b.comboBlocksUsed ?? 0 }));
     save.meta.format = 12;
   }
+  if (save.meta.format < 13) {
+    // 형식 12 → 13 (C.46 이어하기): 마지막 화면 키 추가. 원정 중간 저장이 있으면 원정, 없으면 방
+    save.lastScreen = save.activeExpedition != null ? 'expedition' : 'room';
+    save.meta.format = 13;
+  }
   save.help = sanitizeHelpState(save.help);
   // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)
   if (typeof save.activeExpedition !== 'object' || Array.isArray(save.activeExpedition)) save.activeExpedition = null;
+  if (!SCREEN_KEYS.includes(save.lastScreen)) save.lastScreen = 'room';
   return save;
 }
 
