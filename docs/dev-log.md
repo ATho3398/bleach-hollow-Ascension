@@ -1939,7 +1939,7 @@ GDD 제안 (마스터가 반영)
 
 **캡처** `docs/captures/c53/` (헤드리스 Chromium 844×390 터치, 새 세이브 3개를 저장소에 넣고 시작 — 슬롯 1 = 형식 16 옛 세이브·5단계·진화체 21종·8시간 전 접속): `01-return-dex-toast`(도감 보상 일괄 토스트 "이미 이룬 목표 3개" — 영옥 6), `01b-return-hungry-bubble`(허기 10 → 70, 말풍선), `02·03-ground-select-tier5`(3곳 열림, 허무의 숲 고름: 설명·주 속성·강도), `04·05-settings-music`(음악 켬/끔·음량), `06-backup-auto-migration`("보관된 세이브: 새 버전으로 세이브를 올리기 직전"), `07-practice-battle-bgm`(battle 트랙), `08-ground-locked-tier1-shinigami`(루콘가이만, 나머지 자물쇠), `09-ground-canyon-tier3`, `10-status-holdings`(가진 것: 골드 0·영옥 6). `proof.json` = 세이브 값(형식 16 → 17, 허기, 도감 보상 id, 영옥 6·골드 0, 백업 까닭) + 오디오 기록(첫 터치 전 정지 → 터치 뒤 nest 재생, 설정 화면 오가도 같은 nest 요소 이어 재생, 음량 0.25, 끔 → 정지, 연습 전투에서 battle.ogg 재생·nest 페이드 아웃). 콘솔 오류 0.
 
-### C.54 해방(레수렉시온/만해) · 해방 수련 4종목 · 혈 흡혈 상한 8% (STAGE S-11, 코딩45, GDD 22-2·22-4·22-5 → 22-6 v5.15)
+### C.54 해방(레수렉시온/만해) · 해방 수련 4종목 · 혈 흡혈 상한 8% (STAGE S-11, 코딩45, GDD 22-2·22-4·22-5 → 22-6 v5.16)
 사용 모델: Opus 5.5 (마스터 지정, 전투 엔진·세이브 구조·새 화면이 함께 바뀜). `PATCH_LABEL` C.54, `STAGE_LABEL` S-11. **`BALANCE_VERSION` 30 → 31**, **`SAVE_FORMAT_VERSION` 17 → 18**. 원정 중간 저장 형식은 그대로(4, `liberationEnabled` 는 선택 필드). 새 색·간격 토큰 없음 — 새 CSS `src/ui/bha/training.css`(수련), `battle-scene.css` 끝(해방 버튼·컷인·몸 색)은 기존 토큰(테마 강조색 `--bha-accent*`·리스크·주의 색)만.
 
 **① 해방 (22-2·22-5)** — 엔진 `combat.ts`(종족 무관): 입력 `liberate`, 상태 `liberation`(게이지·쓴 틱·남은 틱·되돌릴 능력치·끝난 리스크), 블록 종류 `liberation`, 사건 `liberate`·`liberation-end`, 마무리 종류 `liberation`.
