@@ -6,11 +6,11 @@ import { charArt } from '../data/art/manifest';
 import { tileName } from '../data/tiles';
 import { getTrait, traitName } from '../data/traits';
 import {
-  advance, chooseContinue, chooseReturn, drainEvents, finishRest, riskBonus, type ExpeditionState, type PendingBattle,
+  advance, chooseContinue, chooseReturn, drainEvents, finishRest, inFrenzy, riskBonus, type ExpeditionState, type PendingBattle,
   type StepEvent,
 } from '../engine/expedition';
 import { roomOf, type FactionConfig } from '../engine/faction';
-import { button, el, icon, meter, mountApp, notice } from './bha/dom';
+import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
 import { bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
 import { createExpClock } from './bha/expClock';
@@ -192,6 +192,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const helpBtn = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small' });
   const where = el('div', 'bha-exp__where');
   where.append(el('b', '', faction.huntingGroundName));
+  // 폭주 상태 칩 (GDD 23-2): 한계 돌파한 원정의 남은 동안 보인다. 문구는 종족 설정 frenzyName
+  const frenzyChip = chip(faction.frenzyName, 'danger');
+  frenzyChip.classList.add('bha-frenzychip');
+  frenzyChip.prepend(icon('i-risk', 'sm'));
+  where.append(frenzyChip);
 
   const meters = el('div', 'bha-stack bha-stack--tight');
 
@@ -284,9 +289,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       }),
       meter({
         kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
-        valueText: exp.breakthrough ? `한계 돌파! 공허 ↑ (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
+        valueText: exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
       }),
     );
+    frenzyChip.hidden = !inFrenzy(exp);
+    main.classList.toggle('is-frenzy', inFrenzy(exp));
 
     walk.update({ walking: isWalking(exp.phase, paused), speed });
 

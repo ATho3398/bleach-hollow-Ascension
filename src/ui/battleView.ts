@@ -15,7 +15,7 @@ import {
 } from '../engine/combat';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
-import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
+import { button, chip, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
 import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
@@ -41,6 +41,8 @@ export interface BattleViewOptions {
   banner?: string;
   /** 있으면 화면 맨 위에 안내 한 줄(.bha-notice)을 보인다 (체험 전투 "기록되지 않음" 등) */
   notice?: string;
+  /** 폭주 중이면 그 이름 (GDD 23-2, 종족 설정 frenzyName): 위 막대에 상태 칩, 화면 테두리 */
+  frenzy?: string;
   /** 있으면 '그만두기' 버튼을 보인다 (원정 중에는 없다) */
   onQuit?: () => void;
   /** 있으면 전투 시작 직전에 첫 플레이 튜토리얼을 보여 준다 (GDD 14-2). 끝나거나 건너뛰면 한 번 불린다. 튜토리얼 동안 전투 시간은 멈춘다 */
@@ -221,7 +223,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const hero = heroEl(heroArt, heroLoco);
 
   const enemyMeter = meter({ kind: 'enemy', label: '적 체력', value: Math.ceil(s.enemy.hp - 1e-6), max: Math.round(s.enemy.maxHp), ghost: s.enemy.hp, compact: true });
-  const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: s.player.maxHp, ghost: s.player.hp, compact: true });
+  const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: Math.round(s.player.maxHp), ghost: s.player.hp, compact: true });
   const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement): HTMLElement => {
     const u = el('div', `bha-unit ${cls}`);
     if (cls.includes('--me')) setLoco(u, heroLoco); // 유닛 틀에도 붙여 그림 크기(떠오를 여유)를 CSS 가 잡는다
@@ -345,6 +347,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     bar.append(quitBtn);
   }
   bar.append(speedBtn, pauseBtn, helpBtn);
+  if (opts.frenzy) {
+    const fc = chip(opts.frenzy, 'danger');
+    fc.classList.add('bha-frenzychip');
+    fc.prepend(icon('i-risk', 'sm'));
+    bar.prepend(fc);
+  }
 
   const flashVoid = el('div', 'bha-edgeflash bha-edgeflash--void');
   const flashHit = el('div', 'bha-edgeflash bha-edgeflash--hit');
@@ -354,6 +362,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   topRow.append(foeHead, bar);
   arena.append(units, topRow, fxLayer, floats, fxFlash, log);
   const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, ...(opts.notice ? [notice('info', opts.notice)] : []), arena, controls, flashVoid, flashHit);
+  app.classList.toggle('is-frenzy', !!opts.frenzy);
 
   const quit = () => {
     stopped = true;

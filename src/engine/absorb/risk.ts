@@ -1,5 +1,5 @@
 // 리스크 게이지(호로 광기 / 사신 호로화, 이름은 종족 설정) 순수 로직 (GDD 5장, 4-1).
-// 한계 돌파의 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 만들지 않는다. 임시 페널티만 있다.
+// 한계 돌파 = 폭주 (GDD 23-2, 원정당 1회): 남은 원정 주는·받는 피해 증가(expedition applyFrenzy), 공허 생성 증가, 귀환 때 컨디션·안정 수치 하락, 게이지 60.
 
 import { BALANCE } from '../../config/balance';
 import type { NestAction } from '../faction';

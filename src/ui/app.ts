@@ -9,10 +9,10 @@ import { buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
+import { createExpedition, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck, writeSave, type SaveData,
+  claimTutorialGoals, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
 import type { RankHolderDef } from '../data/ranks';
 import { rankLabel, rankResultView, rankView } from './rankView';
@@ -45,6 +45,9 @@ import { settingsView } from './settingsView';
 import { backupView } from './backupView';
 import { helpOverlay, type HelpScreenId } from './helpView';
 import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
+import { showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
+import { showToast } from './bha/nest';
+import { SHOP_PREPARING_TEXT } from '../data/economy';
 
 /** 칭호 id → 종족별 표기 이름 */
 function titleLabel(id: string, factionId: string): string {
@@ -78,6 +81,8 @@ export function startApp(host: HTMLElement): void {
 
   const persist = () => {
     if (!save || slot === 0) return;
+    // 튜토리얼 보상 (GDD 23-3): 저장할 때마다 새로 이룬 목표를 판정해 바로 지급하고 토스트. 기존 세이브는 처음 저장 때 한꺼번에
+    showTutorialToasts(claimTutorialGoals(save), getFaction(save.factionId));
     // 마지막 화면 키 (GDD 19-3): 원정 흐름(배치 후 출발 ~ 결과 전) 안이면 원정, 아니면 방
     save.lastScreen = activeExp !== null && activeExp.phase !== 'ended' ? 'expedition' : 'room';
     writeSave(localStorage, save, slotKey(slot));
@@ -362,7 +367,9 @@ export function startApp(host: HTMLElement): void {
       onChangeFaction: factionScreen,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
-      onTutorial: () => tutorialDemo(faction),
+      onTutorial: () => open('tutorials', () => tutorialGoalsView(root, faction, s, () => tutorialDemo(faction))),
+      // 상점 (GDD 23-4): 자리만 — 누르면 "준비 중" 안내
+      onShop: () => showToast({ eyebrow: '상점', title: '준비 중', meta: SHOP_PREPARING_TEXT }, 0, 3000),
       onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTitle: askReturnToTitle,
     });
@@ -423,6 +430,7 @@ export function startApp(host: HTMLElement): void {
       tierIndex: save?.evolution.tierIndex,
       formId: save?.evolution.formId,
       banner: where,
+      frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       tutorial: tutorialFor(),
       onEnd: (done) => {
         finishBattle(exp, done);

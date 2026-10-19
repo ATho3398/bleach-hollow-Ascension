@@ -50,6 +50,8 @@
 }
 .bha-homedock__food small { font-size: var(--bha-fs-xs); font-weight: 500; color: var(--bha-text-2); text-align: center; line-height: 1.2; }
 .bha-homedock__food:active { background: var(--bha-bg-3); }
+.bha-homedock__food:disabled { opacity: 0.42; border-color: var(--bha-line-2); cursor: default; } /* 0개 = 비활성 (GDD 23-1) */
+.bha-homedock__food .bha-num { color: var(--bha-hunger); }
 .bha-homedock__tray > .bha-tag { position: absolute; top: -9px; right: var(--bha-sp-3); background: var(--bha-bg-1); }
 
 /* ── 방 장면 ── */

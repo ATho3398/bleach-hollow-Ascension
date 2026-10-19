@@ -149,8 +149,10 @@ export interface FactionConfig {
   lineageBonusName: string;
   /** 특성 종류 표기 (GDD 4장): 기술·시해 능력 / 패시브 / 외형·참백도 파츠 */
   traitKindNames: Record<'skill' | 'passive' | 'part', string>;
-  /** 리스크 한계 돌파 연출 문구 (정식 결과는 미정, 텍스트만) */
+  /** 리스크 한계 돌파 연출 문구 */
   breakthroughText: string;
+  /** 한계 돌파 = 폭주 상태 이름 (GDD 23-2): 호로 "폭주", 사신 "가면 폭주". 원정·전투 화면 상태 칩과 결과 화면에 쓴다 */
+  frenzyName: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
@@ -189,7 +191,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');

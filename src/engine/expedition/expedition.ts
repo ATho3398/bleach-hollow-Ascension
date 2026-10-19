@@ -17,11 +17,16 @@ import {
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
+import { rollBattleFood, type FoodSettlement } from '../food';
+import type { FoodId } from '../faction';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;
+const FX = BALANCE.provisional.food;
+/** 전리품 난수 시드 = 원정 시드 xor 이 값 */
+const LOOT_SEED_SALT = 0x5f3759df;
 
 export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'ended';
 export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted';
@@ -42,6 +47,12 @@ export interface PendingBattle {
 
 export interface Acquired {
   tileId: string;
+  lap: number;
+}
+
+/** 원정에서 얻은 먹이 (GDD 23-1 전리품). 패배하면 마지막 바퀴 것을 잃는다 */
+export interface AcquiredFood {
+  food: FoodId;
   lap: number;
 }
 
@@ -84,6 +95,10 @@ export interface ExpeditionState extends RiskState {
   /** 흡수 화면 대기 중인 제안 (phase 'absorb') */
   absorbOffer: AbsorbOffer | null;
   absorbRecords: AbsorbRecord[];
+  /** 먹이 전리품 (GDD 23-1): 얻은 순서대로. 귀환하면 세이브 공유 자원에 들어간다 */
+  foodLoot: AcquiredFood[];
+  /** 전리품 전용 난수: 원정 난수(rng)와 따로 굴려 적·타일·흡수 결과를 바꾸지 않는다 */
+  lootRng: Rng;
   /** 진화 상태 사본 (GDD 20-5): 걸음·흡수 속성·노력치·놓아줌·강적·돌파가 쌓이고, 귀환하면 세이브에 합쳐진다. 진화 자체는 둥지에 돌아와서 */
   evolution: EvolutionState;
   /** 지나온 시간(초, 배속 전 기준) */
@@ -91,6 +106,8 @@ export interface ExpeditionState extends RiskState {
   lapsCompleted: number;
   outcome: 'returned' | 'defeated' | null;
   endReason: EndReason | null;
+  /** 귀환 처리 때(game.ts recordExpedition) 먹이를 보유에 넣은 결과. 결과 화면 표시용, 원정 중에는 없다 */
+  foodSettled?: FoodSettlement;
 }
 
 export interface ExpeditionSetup {
@@ -139,6 +156,8 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     acquiredTraits: [],
     absorbOffer: null,
     absorbRecords: [],
+    foodLoot: [],
+    lootRng: createRng((setup.seed ^ LOOT_SEED_SALT) >>> 0),
     evolution: setup.evolution ? cloneEvolution(setup.evolution) : newEvolution(),
     risk: setup.risk ?? 0,
     riskPeak: setup.risk ?? 0,
@@ -279,6 +298,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability) };
   applyEvolutionToParams(params, exp.evolution, exp.factionId);
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset);
+  if (exp.breakthrough) applyFrenzy(params);
   const pending: PendingBattle = {
     enemy: pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild'),
     seed: randomSeed(exp.rng),
@@ -301,6 +321,17 @@ export function applyEnvironment(params: Partial<CombatParams>, preset: Environm
   else if (preset === 'power') params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * T.power.playerPowerMultiplier;
   else if (preset === 'shield') params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * T.shield.damageTakenMultiplier;
   else params.voidChanceBonus = (params.voidChanceBonus ?? 0) + T.void.voidChanceBonus;
+}
+
+/** 폭주 (GDD 23-2): 한계 돌파한 원정의 남은 전투는 주는 피해·받는 피해가 함께 오른다 (공허 생성 증가는 riskBonus 가 따로 더한다) */
+export function applyFrenzy(params: Partial<CombatParams>): void {
+  params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * RX.frenzyDamageDealt;
+  params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * RX.frenzyDamageTaken;
+}
+
+/** 폭주 중인가: 이번 원정에서 한계 돌파가 일어났다 (원정당 1회) */
+export function inFrenzy(exp: Pick<ExpeditionState, 'breakthrough'>): boolean {
+  return exp.breakthrough !== null;
 }
 
 /** 대기 중인 전투를 전투 엔진(v2)으로 만든다 */
@@ -329,6 +360,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (exp.victoriesThisLap === 0) drawTile(exp);
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
+  // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더
+  for (const food of rollBattleFood(exp.lootRng, pending.enemy.class === 'elite')) exp.foodLoot.push({ food, lap: exp.lap });
   exp.victoriesThisLap++;
   // 흡수 조건(마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
   if (canAbsorb(battle)) {
@@ -389,6 +422,8 @@ export function finishRest(exp: ExpeditionState): void {
   changeRisk(exp, -RX.restRelief, 'rest');
   exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition);
   exp.elapsedSeconds += PX.restTimeTiles * EX.secondsPerTile;
+  // 휴식 타일을 지나면 간식 +1 (GDD 23-1)
+  for (let i = 0; i < FX.restSnack; i++) exp.foodLoot.push({ food: 'snack', lap: exp.lap });
   exp.phase = 'moving';
 }
 
@@ -563,6 +598,9 @@ export interface ExpeditionSummary {
   /** 보존되는 / 잃는 새 특성 */
   keptTraits: string[];
   lostTraits: string[];
+  /** 지킨 / 잃은 먹이 전리품 (GDD 23-1, 패배 시 마지막 바퀴 것만 잃는다) */
+  keptFood: FoodId[];
+  lostFood: FoodId[];
   laps: number;
 }
 
@@ -571,12 +609,16 @@ export function summarize(exp: ExpeditionState): ExpeditionSummary {
   const lostEntries = exp.outcome === 'defeated' ? exp.acquired.filter((a) => a.lap === exp.lap) : [];
   const keptEntries = exp.acquired.filter((a) => !lostEntries.includes(a));
   const lostTraitEntries = exp.outcome === 'defeated' ? exp.acquiredTraits.filter((a) => a.lap === exp.lap) : [];
+  const loot = exp.foodLoot ?? [];
+  const lostFoodEntries = exp.outcome === 'defeated' ? loot.filter((a) => a.lap === exp.lap) : [];
   return {
     outcome: exp.outcome,
     kept: keptEntries.map((a) => a.tileId),
     lost: lostEntries.map((a) => a.tileId),
     keptTraits: exp.acquiredTraits.filter((a) => !lostTraitEntries.includes(a)).map((a) => a.traitId),
     lostTraits: lostTraitEntries.map((a) => a.traitId),
+    keptFood: loot.filter((a) => !lostFoodEntries.includes(a)).map((a) => a.food),
+    lostFood: lostFoodEntries.map((a) => a.food),
     laps: exp.outcome === 'returned' ? exp.lapsCompleted : exp.lap,
   };
 }

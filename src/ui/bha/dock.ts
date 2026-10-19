@@ -1,5 +1,6 @@
 // 홈 하단 독 (GDD 18-2, 18-9): 돌보기 3개(먹이·재우기·쓰다듬기, 효과 있는 버튼) + [더보기 ⋯] 하나. 메뉴는 전부 더보기 안 아이콘+이름 격자.
 // 먹이·더보기를 누르면 독 바로 위에 칸이 펼쳐진다(장면 위에 겹침, 장면 크기는 그대로). 먹이 종류를 하나 고르면 바로 먹는다.
+// 먹이는 개수제(GDD 23-1): 칸마다 보유 개수, 0개는 비활성.
 import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestAction } from '../../engine/faction';
 import { foodEffect } from '../../engine/nest';
 import { button, el, icon } from './dom';
@@ -15,6 +16,8 @@ export interface DockOpts {
   faction: FactionConfig;
   /** 돌보기 실행 (먹이는 고른 종류와 함께) */
   onCare: (action: NestAction, food?: FoodId) => void;
+  /** 먹이 종류별 보유 개수 (GDD 23-1): 먹이 칸에 개수를 보이고 0개는 비활성 */
+  foodCount: (food: FoodId) => number;
   /** 더보기 격자에 펼치는 항목 (아이콘 + 짧은 이름, 이 순서대로) */
   more: DockMenuItem[];
   /** 펼침 상태가 바뀌어 선택 가능 항목이 달라졌을 때 */
@@ -91,10 +94,16 @@ export function createDock(o: DockOpts): Dock {
         const b = el('button', 'bha-homedock__food');
         b.type = 'button';
         b.dataset.food = id;
+        const have = o.foodCount(id);
+        b.disabled = have <= 0;
         const eff = [`허기 −${f.hunger}`];
         if (f.condition !== 0) eff.push(`컨디션 ${f.condition > 0 ? '+' : '−'}${Math.abs(f.condition)}`);
-        b.append(el('span', 'bha-homedock__foodname', faction.foodNames[id]), el('small', '', eff.join(' · ')));
+        const name = el('span', 'bha-homedock__foodname', faction.foodNames[id]);
+        name.append(' ', el('b', 'bha-num', `×${have}`));
+        b.setAttribute('aria-label', `${faction.foodNames[id]} ${have}개`);
+        b.append(name, el('small', '', eff.join(' · ')));
         b.onclick = () => {
+          if (o.foodCount(id) <= 0) return;
           setPanel(CLOSED);
           o.onCare('feed', id);
         };
@@ -132,7 +141,7 @@ export function createDock(o: DockOpts): Dock {
 
   return {
     root,
-    items: () => [...trayBtns, ...careBtns.values(), ...menuBtns],
+    items: () => [...trayBtns.filter((b) => !(b as HTMLButtonElement).disabled), ...careBtns.values(), ...menuBtns],
     panel: () => panel,
     close: () => { if (panel !== CLOSED) setPanel(CLOSED); },
   };

@@ -4,7 +4,8 @@ import { tileName } from '../data/tiles';
 import { traitName } from '../data/traits';
 import type { ExpeditionState } from '../engine/expedition';
 import { summarize } from '../engine/expedition';
-import type { FactionConfig } from '../engine/faction';
+import type { FactionConfig, FoodId } from '../engine/faction';
+import { countFoods } from '../engine/food';
 import { button, el, icon, panel } from './bha/dom';
 import { splitApp } from './bha/split';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
@@ -22,6 +23,22 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return { label, icon: ic, value: v, mod: ids.length > 0 ? mod : undefined };
   };
 
+  // 얻은 먹이 (GDD 23-1 전리품): 종류별 개수, 상한(9)으로 못 넣은 것·패배로 잃은 것, 막힘 방지 간식
+  function foodRow(): IconInfoRow {
+    const fs = exp.foodSettled;
+    const gained = fs?.gained ?? s.keptFood;
+    const lost = fs?.lost ?? s.lostFood;
+    const v = val(`${gained.length}개`);
+    const list = (ids: FoodId[]) => countFoods(ids).map(([id, n]) => `${faction.foodNames[id]} ${n}`).join(', ');
+    const notes: string[] = [];
+    if (gained.length > 0) notes.push(list(gained));
+    if ((fs?.overflow ?? 0) > 0) notes.push(`보관 한도로 ${fs!.overflow}개 버림`);
+    if (lost.length > 0) notes.push(`잃음 ${list(lost)}`);
+    if ((fs?.fallback ?? 0) > 0) notes.push(`주변에서 겨우 먹을 것을 찾았다 (${faction.foodNames.snack} ${fs!.fallback})`);
+    for (const n of notes) v.append(el('br'), el('small', '', n));
+    return { label: '얻은 먹이', icon: 'i-care-feed', value: v, mod: gained.length > 0 || (fs?.fallback ?? 0) > 0 ? 'good' : lost.length > 0 ? 'bad' : undefined };
+  }
+
   const head = el('header', `bha-result bha-result--${win ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(win ? 'i-return' : 'i-broken'));
@@ -34,9 +51,10 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     countRow('잃은 타일', 'i-deck', s.lost, (id) => tileName(id, faction.id), '장', 'bad'),
     countRow('얻은 특성', 'i-slot', s.keptTraits, (id) => traitName(id, faction.id), '개', 'good'),
     countRow('잃은 특성', 'i-slot', s.lostTraits, (id) => traitName(id, faction.id), '개', 'bad'),
+    foodRow(),
     {
       label: `${faction.riskGaugeName} (최고 / 끝)`, icon: 'i-risk', mod: exp.breakthrough ? 'em' : undefined,
-      value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? '한계 돌파' : undefined),
+      value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? `한계 돌파 · ${faction.frenzyName}` : undefined),
     },
     { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
     { label: '남은 허기', icon: 'i-hunger', value: val(`${Math.round(exp.hunger)}`) },

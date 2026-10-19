@@ -7,6 +7,7 @@ import type { SaveData } from '../game';
 import { h, icon, provisionalTag, seg } from './bha/dom';
 import { lcdHead, lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { showToast } from './bha/nest';
+import { getOverlayHost } from './bha/overlayHost';
 import { titleRowKind } from './bha/nestLogic';
 
 export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
@@ -77,10 +78,11 @@ export function titleDexView(root: HTMLElement, faction: FactionConfig, save: Sa
 export function showTitleToasts(save: SaveData, faction: FactionConfig, persist: () => void): void {
   const fresh = save.titles.filter((t) => !t.seen);
   if (fresh.length === 0) return;
+  const base = getOverlayHost().querySelectorAll('.bha-toast').length; // 튜토리얼 달성 토스트가 떠 있으면 그 아래로 (C.52)
   fresh.forEach((u, i) => {
     const def = TITLES.find((d) => d.id === u.titleId);
     if (!def) return;
-    showToast({ eyebrow: '칭호 해금', title: titleName(def, faction.id), meta: def.provisional ? '임시 조건 · 칭호 도감에서 확인' : '칭호 도감에서 확인' }, i);
+    showToast({ eyebrow: '칭호 해금', title: titleName(def, faction.id), meta: def.provisional ? '임시 조건 · 칭호 도감에서 확인' : '칭호 도감에서 확인' }, base + i);
     u.seen = true;
   });
   persist();

@@ -155,7 +155,9 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
     const names = new Set<string>();
     for (const f of FACTIONS) {
       names.add(f.id);
-      for (const [k, v] of Object.entries(helpVars(f))) if (!k.startsWith('traitKindNames.') && v.length >= 2 && !/^[a-z]+$/i.test(v)) names.add(v);
+      // 종족마다 다른 표시 이름만 본다 (양 종족이 같은 낱말 — 범례 공격·막기·회복, 기술 블록 — 은 종족 이름이 아니다, GDD 20장 v5.7)
+      const differs = (k: string, v: string) => FACTIONS.some((o) => helpVars(o)[k] !== v);
+      for (const [k, v] of Object.entries(helpVars(f))) if (!k.startsWith('traitKindNames.') && v.length >= 2 && !/^[a-z]+$/i.test(v) && differs(k, v)) names.add(v);
     }
     // 원작·세계관 고유 이름
     ['웨코문도', '아쥬커스', '길리안', '바스트로데', '아란칼', '세군도 에타파', '레수렉시온', '에스파다', '참백도', '영압'].forEach((n) => names.add(n));

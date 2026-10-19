@@ -22,9 +22,9 @@
   "chainName": "체인",
   "spName": "영력",
   "roleNames": {
-    "attack": "파괴",
-    "guard": "가면",
-    "heal": "재생"
+    "attack": "공격",
+    "guard": "막기",
+    "heal": "회복"
   },
   "riskGaugeName": "광기",
   "absorbActionName": "포식",
@@ -154,6 +154,7 @@
     "part": "외형 파츠"
   },
   "breakthroughText": "광기가 한계를 넘었다. 자아가 흔들리고 공허가 몰려든다…",
+  "frenzyName": "폭주",
   "room": {
     "shape": "cave",
     "sceneArt": "scene.cave",

@@ -3,7 +3,7 @@
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { completedElements, newBuild, type BuildState } from './engine/absorb';
-import { applyExpeditionEnd, newNest, type NestState } from './engine/nest';
+import { applyExpeditionEnd, doNestAction, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult } from './engine/expedition';
 import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
@@ -17,9 +17,13 @@ import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutori
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
+import { addFood, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
+import type { FoodId } from './engine/faction';
+import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
+import { newlyAchieved } from './engine/tutorialGoals';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 15;
+export const SAVE_FORMAT_VERSION = 16;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -62,17 +66,80 @@ export interface SaveData {
   lastScreen: ScreenKey;
   /** 등급전 상태 (GDD 21장, 형식 15): 번호 사다리·재도전 대기·전적 + 등급 이력(history, 환생해도 유지할 자리 — 22-2 해방 자격) */
   rank: RankState;
-  /** 슬롯 공유 자원 (GDD 22-3, 형식 15): 두 트랙이 함께 쓰는 재화. 지금은 영혼 결정만 (붕옥 탭이 열리기 전에도 쌓이고 표시는 붕옥 탭에서) */
+  /** 슬롯 공유 자원 (GDD 22-3, 형식 15·16): 두 트랙이 함께 쓰는 재화 — 영혼 결정, 먹이(23-1), 거래 재화 영전(23-4), 튜토리얼 보상 수령 기록(23-3) */
   shared: SharedState;
+}
+
+/** 튜토리얼 보상 수령 1건 (GDD 23-3) */
+export interface TutorialClaim {
+  goalId: string;
+  at: number;
 }
 
 export interface SharedState {
   /** 영혼 결정: 강적 처치 +1, 등급전 승리 +3 (환생 +10 은 환생 구현 때). 수치 provisional */
   soulCrystals: number;
+  /** 먹이 종류별 보유 개수 (GDD 23-1, 형식 16). 상한 9, 시작 간식 5·보통 3 */
+  food: FoodStock;
+  /** 거래 재화 '영전' (GDD 23-4, 형식 16, 이름 provisional): 얻는 곳·쓰는 곳은 [미정]. 지금은 0 자리만 */
+  tradeCoins: number;
+  /** 튜토리얼 보상 수령 기록 (GDD 23-3, 형식 16): 트랙(종족 id)마다 받은 목표 */
+  tutorials: Record<string, TutorialClaim[]>;
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0 };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, tutorials: {} };
+}
+
+const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+
+/** 저장된 공유 자원을 정리한다 (모르는 값·음수·깨진 기록 보정) */
+export function sanitizeShared(raw: unknown): SharedState {
+  const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<Record<keyof SharedState, unknown>>;
+  const tutorials: Record<string, TutorialClaim[]> = {};
+  if (typeof r.tutorials === 'object' && r.tutorials !== null && !Array.isArray(r.tutorials)) {
+    for (const [fid, list] of Object.entries(r.tutorials as Record<string, unknown>)) {
+      if (!Array.isArray(list)) continue;
+      const seen = new Set<string>();
+      tutorials[fid] = list.filter((c): c is TutorialClaim => {
+        const ok = typeof c === 'object' && c !== null && typeof (c as TutorialClaim).goalId === 'string' && !seen.has((c as TutorialClaim).goalId);
+        if (ok) seen.add((c as TutorialClaim).goalId);
+        return ok;
+      }).map((c) => ({ goalId: c.goalId, at: typeof c.at === 'number' ? c.at : 0 }));
+    }
+  }
+  return { soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), tutorials };
+}
+
+/** 둥지에서 먹이 주기 (GDD 23-1): 그 먹이가 있어야 먹일 수 있고, 하나 쓴다. 없으면 false (아무것도 바뀌지 않는다) */
+export function feedNest(save: SaveData, food: FoodId): boolean {
+  if (!takeFood(save.shared.food, food)) return false;
+  doNestAction(save.nest, 'feed', food);
+  return true;
+}
+
+/** 튜토리얼 보상 1건의 실제 지급량 (먹이는 상한까지만) */
+export interface TutorialGrant {
+  goal: TutorialGoalDef;
+  food: [FoodId, number][];
+  soulCrystals: number;
+}
+
+/** 지금 트랙(종족)에서 새로 이룬 튜토리얼 목표를 판정해 보상을 준다 (GDD 23-3). 자동 판정·자동 지급 — 화면은 돌려준 목록으로 토스트를 띄운다.
+ *  기존 세이브는 처음 부를 때 이미 이룬 목표를 한꺼번에 받는다 */
+export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), defs: readonly TutorialGoalDef[] = TUTORIAL_GOALS): TutorialGrant[] {
+  const claims = (save.shared.tutorials[save.factionId] ??= []);
+  const fresh = newlyAchieved(defs, claims.map((c) => c.goalId), {
+    factionId: save.factionId, tutorialSeen: save.help.tutorialSeen, runLog: save.runLog, tierIndex: save.evolution.tierIndex, everRanked: save.rank.history.everRanked,
+  });
+  return fresh.map((goal) => {
+    claims.push({ goalId: goal.id, at: nowMs });
+    const food: [FoodId, number][] = [];
+    for (const [id, n] of Object.entries(goal.reward.food ?? {}) as [FoodId, number][]) food.push([id, addFood(save.shared.food, id, n)]);
+    const soulCrystals = goal.reward.soulCrystals ?? 0;
+    save.shared.soulCrystals += soulCrystals;
+    return { goal, food, soulCrystals };
+  });
 }
 
 export interface TileStock {
@@ -113,11 +180,14 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   }
   // 영혼 결정 (GDD 22-3): 이 원정에서 이긴 강적 수만큼
   save.shared.soulCrystals += exp.battles.filter((b) => b.won && b.enemyClass === 'elite').length * BALANCE.provisional.soulCrystals.perElite;
+  // 먹이 전리품 (GDD 23-1): 지킨 먹이를 보유에 넣고(상한 9), 그래도 하나도 없으면 간식 2개 (막힘 방지). 결과 화면이 exp.foodSettled 를 읽는다
+  const sum = summarize(exp);
+  exp.foodSettled = settleFood(save.shared.food, sum.keptFood, sum.lostFood);
   save.build = cloneBuildOf(exp.build);
   // 진화 상태: 원정 중 쌓인 걸음·흡수 속성·노력치·행동 기록을 합친다. 한계 돌파는 원정당 한 번 센다 (아란칼 행동 히든, GDD 20-5)
   save.evolution = cloneEvolution(exp.evolution);
   if (exp.breakthrough) recordEvolutionBreakthrough(save.evolution);
-  for (const id of summarize(exp).kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
+  for (const id of sum.kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   storeUnplacedTiles(save.tiles, unplacedKept(exp));
   applyExpeditionEnd(save.nest, exp, nowMs);
   save.activeExpedition = null;
@@ -349,8 +419,14 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.rankBattles = [];
     save.meta.format = 15;
   }
+  if (save.meta.format < 16) {
+    // 형식 15 → 16 (C.52, GDD 23장): 먹이 개수제(시작 지급량 간식 5·보통 3으로 채움)·거래 재화 영전 0·튜토리얼 보상 기록(빈 기록 —
+    // 이미 이룬 목표는 처음 저장할 때 claimTutorialGoals 가 한꺼번에 지급한다)
+    save.shared = { ...newSharedState(), soulCrystals: save.shared?.soulCrystals ?? 0 };
+    save.meta.format = 16;
+  }
   save.rank = sanitizeRankState(save.rank);
-  save.shared = { soulCrystals: typeof save.shared?.soulCrystals === 'number' && save.shared.soulCrystals >= 0 ? Math.floor(save.shared.soulCrystals) : 0 };
+  save.shared = sanitizeShared(save.shared);
   save.runLog.rankBattles = Array.isArray(save.runLog.rankBattles) ? save.runLog.rankBattles : [];
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);

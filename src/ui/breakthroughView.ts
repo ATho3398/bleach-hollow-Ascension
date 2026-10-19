@@ -1,4 +1,4 @@
-// 한계 돌파 연출 (U-4): 균열·떨림은 CSS(reduced-motion 이면 정지 화면). 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 임시 페널티만 있다.
+// 한계 돌파 연출 (U-4): 균열·떨림은 CSS(reduced-motion 이면 정지 화면). 한계 돌파 = 폭주(GDD 23-2): 상태 이름은 종족 설정 frenzyName.
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, panel, provisionalTag } from './bha/dom';
@@ -28,19 +28,22 @@ export function breakthroughView(root: HTMLElement, faction: FactionConfig, risk
     cracks.append(p);
   }
 
-  const badge = chip('한계 돌파', 'danger');
+  const badge = chip(`한계 돌파 · ${faction.frenzyName}`, 'danger');
   badge.prepend(icon('i-risk'));
 
   const gauge = el('div', 'bha-break__gauge');
   gauge.append(meter({ kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(risk), max: BALANCE.provisional.risk.limit, zone: 0.6, danger: true }));
 
   const list = el('ul', 'bha-stack bha-stack--tight bha-small bha-break__list');
+  const RX = BALANCE.provisional.risk;
+  const pct = (m: number) => Math.round((m - 1) * 100);
   for (const t of [
-    '· 이 원정 동안 공허 블록이 크게 늘어난다',
-    `· ${faction.nestName}에 돌아오면 ${faction.stabilityName}이(가) 떨어진다`,
-    "· 원정 결과에 '한계 돌파'가 기록된다",
+    `· 주는 피해 +${pct(RX.frenzyDamageDealt)}% · 받는 피해 +${pct(RX.frenzyDamageTaken)}%`,
+    '· 공허 블록이 크게 늘어난다',
+    `· ${faction.nestName}에 돌아오면 컨디션 −${RX.frenzyConditionLoss}, ${faction.stabilityName}이(가) 떨어진다`,
+    `· ${faction.riskGaugeName}는 ${RX.riskAfterBreakthrough}에서 다시 시작한다`,
   ]) list.append(el('li', '', t));
-  const penalty = panel({ title: '이번 원정 동안', aside: provisionalTag('임시 페널티') }, list);
+  const penalty = panel({ title: `${faction.frenzyName} — 이번 원정 동안`, aside: provisionalTag('임시 수치') }, list);
   penalty.classList.add('bha-break__penalty');
 
   const go = button({ label: '계속', variant: 'danger', size: 'lg', block: true, onClick: resume });

@@ -653,7 +653,10 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
   it('두 종족의 전투 화면 텍스트(블록·역할·체인·SP)가 설정에서 나온다', () => {
     const h = battleLabels(getFaction('hollow'));
     const sh = battleLabels(getFaction('shinigami'));
-    expect(h.role.attack).not.toBe(sh.role.attack);
+    // 범례 역할 이름은 양 종족 같은 공격·막기·회복 (GDD 20장 v5.7), 블록 통칭도 기술 블록으로 통일 — 값은 여전히 종족 설정에서 읽는다
+    expect([h.role.attack, h.role.guard, h.role.heal]).toEqual(['공격', '막기', '회복']);
+    expect(sh.role).toEqual(h.role);
+    expect(sh.skillBlock).toBe('기술 블록');
     // 블록 표시 이름은 종족 무관 고정 낱말 (GDD 20장 v5.4: 옛 basicSkillName·specialBlockName 은 쓰지 않음)
     expect(h.specialBlock).toBe('필살');
     expect(sh.specialBlock).toBe('필살');

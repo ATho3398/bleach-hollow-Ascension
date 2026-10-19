@@ -273,9 +273,12 @@ for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 �
 
 // ── 흡수·리스크(P3, C.6 조건): 흡수 가능 비율, 흡수 자동 플레이(계통 모으기) ──
 console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 같은 속성을 모음 / 비교: 항상 놓아줌) — 흡수 조건(임시): 마무리 일격이 상성 우위 스킬(약점 없는 적은 아무 스킬) 또는 그 체인3 ${BALANCE.provisional.absorb.weakChain3ForAbsorb}회 이상, 장착 skill 없으면 첫 흡수 보장`);
-const absorbStats: Record<string, { breakthrough: number; defeated: number; absorbableRate: number }> = {};
+const absorbStats: Record<string, { breakthrough: number; defeated: number; absorbableRate: number; endRisk: number }> = {};
+// 섞음 봇 (GDD 23-2 "평범한 원정"): 흡수 화면마다 흡수와 놓아주기를 번갈아 한다
+const mixedWanted = (e: ExpeditionState) => e.absorbRecords.filter((a) => a.absorbed).length <= e.absorbRecords.filter((a) => !a.absorbed).length;
+const POLICY_NAME = { absorb: '흡수', mixed: '섞음', release: '놓아줌' } as const;
 for (const stopLap of [4, 6]) {
-  for (const policy of ['absorb', 'release'] as const) {
+  for (const policy of ['absorb', 'mixed', 'release'] as const) {
     let absorbs = 0;
     let releases = 0;
     let bt = 0;
@@ -288,8 +291,9 @@ for (const stopLap of [4, 6]) {
     let wins = 0;
     let absorbable = 0;
     let voids = 0;
+    let food = 0;
     for (let seed = 1; seed <= M; seed++) {
-      const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: stopLap, absorb: policy });
+      const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: stopLap, absorb: policy === 'release' ? 'release' : 'absorb', ...(policy === 'mixed' ? { absorbWanted: mixedWanted } : {}) });
       absorbs += e.absorbRecords.filter((a) => a.absorbed).length;
       releases += e.absorbRecords.filter((a) => !a.absorbed).length;
       if (e.breakthrough) bt++;
@@ -297,6 +301,7 @@ for (const stopLap of [4, 6]) {
       traits += e.build.owned.length;
       if (completedElements(e.build).length > 0) lineage++;
       risk += e.risk;
+      food += e.foodLoot.length;
       for (const b of e.battles) {
         secs += b.durationSeconds;
         battles++;
@@ -305,9 +310,9 @@ for (const stopLap of [4, 6]) {
         if (b.absorbable) absorbable++;
       }
     }
-    absorbStats[`${stopLap}-${policy}`] = { breakthrough: bt, defeated, absorbableRate: wins ? absorbable / wins : 0 };
+    absorbStats[`${stopLap}-${policy}`] = { breakthrough: bt, defeated, absorbableRate: wins ? absorbable / wins : 0, endRisk: risk / M };
     console.log(
-      `  ${stopLap}바퀴 ${policy === 'absorb' ? '흡수' : '놓아줌'}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 속성 보너스 ${lineage}/${M} · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투`,
+      `  ${stopLap}바퀴 ${POLICY_NAME[policy]}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 속성 보너스 ${lineage}/${M} · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투 · 먹이 전리품 ${(food / M).toFixed(1)}개`,
     );
   }
 }
@@ -315,6 +320,17 @@ for (const stopLap of [4, 6]) {
 if ((absorbStats['4-absorb']?.breakthrough ?? 0) > M * 0.5) failures.push(`4바퀴 흡수 플레이 돌파 ${absorbStats['4-absorb']?.breakthrough}/${M} > 50%`);
 if ((absorbStats['6-absorb']?.breakthrough ?? 0) < M * 0.5) failures.push(`6바퀴 흡수 플레이 돌파 ${absorbStats['6-absorb']?.breakthrough}/${M} < 50% (리스크가 약하다)`);
 if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에서 항상 놓아줘도 한계 돌파가 생긴다');
+// GDD 23-2 리스크 목표 (C.52): 평범한 4바퀴(흡수·놓아주기 섞음)는 끝 40~60·돌파 10% 이하, 둥지 재우기·쓰다듬기는 한 번에 −20 안팎(−15~−25)
+{
+  const m4 = absorbStats['4-mixed']!;
+  console.log(`  리스크 목표(23-2): 4바퀴 섞음 끝 ${m4.endRisk.toFixed(0)} (40~60) · 돌파 ${m4.breakthrough}/${M} (10% 이하) · 6바퀴 흡수 돌파 ${absorbStats['6-absorb']!.breakthrough}/${M} (50% 이상) · 둥지 재우기 ${BALANCE.provisional.risk.nestActions.sleep.risk} · 쓰다듬기 ${BALANCE.provisional.risk.nestActions.pet.risk}`);
+  if (m4.endRisk < 40 || m4.endRisk > 60) failures.push(`4바퀴 섞음 원정 끝 리스크 ${m4.endRisk.toFixed(0)} — 목표 40~60 (GDD 23-2)`);
+  if (m4.breakthrough > M * 0.1) failures.push(`4바퀴 섞음 원정 돌파 ${m4.breakthrough}/${M} > 10% (GDD 23-2 "무리해야 돌파")`);
+  for (const a of ['sleep', 'pet'] as const) {
+    const r = BALANCE.provisional.risk.nestActions[a].risk;
+    if (r > -15 || r < -25) failures.push(`둥지 ${a} 리스크 ${r} — 목표 −20 안팎 (GDD 23-2)`);
+  }
+}
 // 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않고(가드 25% 이상), 거의 항상이면 조건이 의미 없다(가드 85% 이하).
 // C.7: 측정은 "흡수하는 봇" 기준. 항상 놓아주는 봇은 skill 이 하나도 없어 첫 흡수 보장으로 늘 100% 라 의미가 없다 (참고 출력만)
 for (const lap of [4, 6]) {

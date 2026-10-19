@@ -4,7 +4,7 @@
 import { BALANCE } from '../config/balance';
 import { applyIdle, doNestAction } from '../engine/nest';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp } from '../engine/faction';
-import { sanitizeDeck, type SaveData } from '../game';
+import { feedNest, sanitizeDeck, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
@@ -27,8 +27,10 @@ export interface RoomHandlers {
   onChangeFaction: () => void;
   onSettings: () => void;
   onHelp: () => void;
-  /** 독 '더보기' 항목 */
+  /** 독 '더보기' 항목: 튜토리얼 목록(GDD 23-3) */
   onTutorial: () => void;
+  /** 상점 (GDD 23-4): 지금은 "준비 중" 안내만 */
+  onShop: () => void;
   onBackup: () => void;
   onTitle: () => void;
   persist: () => void;
@@ -137,9 +139,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // ── 하단 독 (GDD 18-2): 돌보기 3개 + 메뉴 아이콘 + 더보기 ──
   const dock = createDock({
     faction,
+    foodCount: (food) => save.shared.food[food],
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
-      doNestAction(n, action, food);
+      // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
+      if (action === 'feed') {
+        if (!food || !feedNest(save, food)) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.', 3200);
+      } else doNestAction(n, action);
       hd.persist();
       paintGauges();
       say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }), 3200);
@@ -152,6 +158,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
       { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },
+      { label: '상점', icon: 'i-rare', onClick: hd.onShop },
       { label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction },
       { label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },

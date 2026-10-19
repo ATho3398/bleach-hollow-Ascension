@@ -169,10 +169,9 @@ describe('세이브 반영 (형식 15)', () => {
     delete old.runLog.rankBattles;
     old.meta.format = 14;
     const m = migrateSave(old)!;
-    expect(SAVE_FORMAT_VERSION).toBe(15);
-    expect(m.meta.format).toBe(15);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.rank).toEqual(newRankState());
-    expect(m.shared).toEqual({ soulCrystals: 0 });
+    expect(m.shared.soulCrystals).toBe(0);
     expect(m.runLog.rankBattles).toEqual([]);
   });
   it('저장·불러오기 왕복: 사다리·이력·영혼 결정·등급전 기록이 그대로', () => {

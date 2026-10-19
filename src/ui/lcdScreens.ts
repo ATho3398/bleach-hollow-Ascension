@@ -2,12 +2,13 @@
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
 import { BALANCE } from '../config/balance';
 import { tilesFor, tileName } from '../data/tiles';
-import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
 import { versionLabel } from '../version';
 import { traitsTab, type TraitsTabState } from './buildPanel';
 import { evolutionColumns } from './evolutionPanel';
-import { button, h, icon, notice, panel, seg } from './bha/dom';
+import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
+import { FOOD_IDS, type FactionConfig } from '../engine/faction';
+import { SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { deckRow, statsBlock, statusBlock } from './bha/nest';
@@ -41,7 +42,22 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.setAttribute('aria-label', '능력치');
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id), evo.ev, refStatOf(evo.tierIndex)));
   if (evo.ability) stats.append(h('p', 'bha-faint', `고유 특성: ${abilityName(evo.ability, faction.id)}`));
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치. 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치. 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+}
+
+/** 가진 것 (GDD 23-1·22-3·23-4): 먹이 종류별 개수, 영혼 결정, 거래 재화 영전(자리만) */
+function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
+  const p = panel({ title: '가진 것' });
+  p.setAttribute('aria-label', '가진 것');
+  const food = h('p', 'bha-small');
+  food.append('먹이: ', FOOD_IDS.map((id) => `${faction.foodNames[id]} ${save.shared.food[id]}`).join(' · '));
+  const crystals = h('p', 'bha-small');
+  crystals.append(`${SOUL_CRYSTAL_NAME} `, h('b', 'bha-num', String(save.shared.soulCrystals)));
+  const coins = h('p', 'bha-small');
+  coins.dataset.currency = 'trade';
+  coins.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ' ', provisionalTag('쓰는 곳 준비 중'));
+  p.append(food, crystals, coins);
+  return p;
 }
 
 type ChestTab = 'slots' | 'deck';

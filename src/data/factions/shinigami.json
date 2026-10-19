@@ -15,16 +15,16 @@
   "rankBattleName": "석차 도전",
   "rankWinText": "{rank} 자리에 올랐다!",
   "rankLoseText": "패배… 석차가 한 칸 내려갔다.",
-  "skillBlockName": "시해 블록",
+  "skillBlockName": "기술 블록",
   "specialBlockName": "귀도",
   "storedSkillName": "응축 비기",
   "voidBlockName": "공허 블록",
   "chainName": "체인",
   "spName": "영력",
   "roleNames": {
-    "attack": "참격",
-    "guard": "결계",
-    "heal": "회도"
+    "attack": "공격",
+    "guard": "막기",
+    "heal": "회복"
   },
   "riskGaugeName": "호로화",
   "absorbActionName": "정화 흡수",
@@ -154,6 +154,7 @@
     "part": "참백도 파츠"
   },
   "breakthroughText": "호로화가 한계를 넘었다. 영압이 일그러지고 공허가 몰려든다…",
+  "frenzyName": "가면 폭주",
   "room": {
     "shape": "room",
     "sceneArt": "scene.room",
