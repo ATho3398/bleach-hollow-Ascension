@@ -161,5 +161,38 @@
   "roomSrcAfterDefault": "char-hollow.png",
   "shinigamiSkinButtons": [],
   "shinigamiPanelText": "스킨\n\n이 종족이 입을 수 있는 스킨은 아직 없다."
+ },
+ "2a_grandfisher_current_repo_idle_only": {
+  "tag": "S",
+  "which": "hollowSkin",
+  "url": "http://localhost:4183/",
+  "roomImg": [
+   "skin-grandfisher/idle-1.png",
+   "skin-grandfisher/idle-2.png",
+   "skin-grandfisher/idle-3.png",
+   "skin-grandfisher/idle-4.png",
+   "skin-grandfisher/idle-1.png"
+  ],
+  "roomCharClasses": "bha-art bha-char has-anim has-anim-idle",
+  "walkImg": [
+   "skin-grandfisher/idle-4.png",
+   "skin-grandfisher/idle-1.png",
+   "skin-grandfisher/idle-2.png",
+   "skin-grandfisher/idle-3.png",
+   "skin-grandfisher/idle-4.png",
+   "skin-grandfisher/idle-1.png"
+  ],
+  "walkerClasses": "bha-walker bha-walker--stomp has-art has-anim has-anim-idle",
+  "walkerBodyAnimation": "bha-bob-stomp",
+  "battleHeroImg": [
+   "skin-grandfisher/idle-1.png",
+   "skin-grandfisher/idle-2.png",
+   "skin-grandfisher/idle-3.png",
+   "skin-grandfisher/idle-4.png"
+  ],
+  "heroLungeAnimations": 1,
+  "heroShakeAnimations": 1,
+  "lungeShots": 2,
+  "blinkShots": 2
  }
 }
