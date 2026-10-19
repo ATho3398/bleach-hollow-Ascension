@@ -10,12 +10,11 @@
     "바스트로데",
     "아란칼"
   ],
-  "rankNames": [
-    "에스파다 No.10",
-    "에스파다 No.7",
-    "에스파다 No.4",
-    "에스파다 No.1"
-  ],
+  "rankNames": ["에스파다 No.1", "에스파다 No.2", "에스파다 No.3", "에스파다 No.4", "에스파다 No.5", "에스파다 No.6", "에스파다 No.7", "에스파다 No.8", "에스파다 No.9", "에스파다 No.10"],
+  "unrankedName": "무번호",
+  "rankBattleName": "번호 쟁탈전",
+  "rankWinText": "{rank}의 번호를 빼앗았다!",
+  "rankLoseText": "패배… 번호가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
   "specialBlockName": "포효",
   "storedSkillName": "응축 일격",
@@ -33,7 +32,6 @@
   "locomotion": "walk",
   "slotLocation": "body",
   "appearanceChange": true,
-  "rankMode": "challenge",
   "defeatStateName": "가면이 깨져 쇠약",
   "basicSkillName": "본체 능력",
   "huntingGroundName": "웨코문도",

@@ -120,8 +120,9 @@ describe('평가 시점 훅', () => {
     exp.phase = 'ended';
     exp.outcome = 'returned';
     exp.endReason = 'returned';
+    exp.battles.push(battle({ chain3Count: 30 })); // tag-1 = 체인3 누계 30 (C.49: 등급 칭호는 등급전으로만 해금)
     recordExpedition(save, exp, 1234);
-    const u = save.titles.find((t) => t.titleId === 'rank-1');
+    const u = save.titles.find((t) => t.titleId === 'tag-1');
     expect(u).toMatchObject({ at: 1234, trigger: 'expedition' });
   });
   it('진화(performEvolution)에서 평가된다', () => {
@@ -136,12 +137,12 @@ describe('평가 시점 훅', () => {
   });
   it('세이브 로드(loadSave)에서 평가되고, 저장된 해금은 유지된다', () => {
     const save = newSaveData('hollow', 0);
-    save.runLog.runs.push(run());
+    save.runLog.risk.survivedBreakthroughs = 1;
     const mem: Record<string, string> = {};
     const storage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => void (mem[k] = v) };
     writeSave(storage, save);
     const loaded = loadSave(storage)!;
-    expect(loaded.titles.map((t) => t.titleId)).toEqual(['rank-1']);
+    expect(loaded.titles.map((t) => t.titleId)).toEqual(['tag-1']);
     expect(loaded.titles[0]!.trigger).toBe('load');
     writeSave(storage, loaded);
     expect(loadSave(storage)!.titles).toHaveLength(1);
@@ -164,8 +165,13 @@ describe('임시 조건 칭호의 해금 흐름 (런 로그 합성)', () => {
   });
   it('각 칭호가 자기 조건을 채울 때만 해금된다', () => {
     expect(unlockedIds(emptyRunLog())).toEqual([]);
-    expect(unlockedIds(logWith({ runs: [run()] }))).toEqual(['rank-1']);
-    expect(unlockedIds(logWith({ runs: [run({ laps: 2 })], battles: times(3, () => battle({ enemyClass: 'elite' })) }))).toEqual(['rank-1', 'rank-2']);
+    // 등급 칭호 (C.49, GDD 21장): 등급전으로 그 번호 이상에 오른 적이 있으면. 원정·강적 처치만으로는 열리지 않는다
+    expect(unlockedIds(logWith({ runs: [run({ laps: 2 })], battles: times(3, () => battle({ enemyClass: 'elite' })) }))).toEqual([]);
+    const rb = (won: boolean, rankAfter: number | null) => ({ at: 0, runsCompleted: 0, opponentId: 'x', won, rankBefore: null, rankAfter, firstRanked: false, seed: 0, durationSeconds: 1, tierIndex: 4, formId: null });
+    expect(unlockedIds(logWith({ rankBattles: [rb(false, null)] }))).toEqual([]);
+    expect(unlockedIds(logWith({ rankBattles: [rb(true, 10)] }))).toEqual(['rank-1']);
+    expect(unlockedIds(logWith({ rankBattles: [rb(true, 7)] }))).toEqual(['rank-1', 'rank-2']);
+    expect(unlockedIds(logWith({ rankBattles: [rb(true, 1)] }))).toEqual(['rank-1', 'rank-2', 'rank-3', 'rank-4']);
     const risk = emptyRunLog();
     risk.risk.survivedBreakthroughs = 1;
     expect(unlockedIds(risk)).toEqual(['tag-1']);
@@ -193,7 +199,7 @@ describe('도감 표시', () => {
   });
   it('미해금 일반 등급은 종족별 이름 목록으로 보인다', () => {
     expect(titleCellView(normal, 'hollow', null).text).toBe('에스파다 No.4');
-    expect(titleCellView(normal, 'shinigami', null).text).toBe('대장 대행');
+    expect(titleCellView(normal, 'shinigami', null).text).toBe('3석');
   });
   it('해금한 칭호는 종족별 이름과 해금 시각', () => {
     const v = titleCellView(hidden, 'shinigami', Date.UTC(2026, 9, 18, 2, 5));
@@ -217,9 +223,9 @@ describe('세이브 마이그레이션', () => {
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
     delete old.titles;
     old.meta.format = 7;
-    old.runLog.runs.push(run());
+    old.runLog.risk.survivedBreakthroughs = 1;
     const mem: Record<string, string> = { [SAVE_KEY]: JSON.stringify(old) };
     const s = loadSave({ getItem: (k) => mem[k] ?? null, setItem: () => {} })!;
-    expect(s.titles.map((t) => t.titleId)).toEqual(['rank-1']);
+    expect(s.titles.map((t) => t.titleId)).toEqual(['tag-1']);
   });
 });

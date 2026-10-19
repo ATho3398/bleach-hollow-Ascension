@@ -5,11 +5,11 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.10",
-      "shinigami": "석관"
+      "shinigami": "9석"
     },
     "condition": {
-      "type": "runsReturned",
-      "min": 1
+      "type": "rankReached",
+      "rank": 10
     },
     "provisional": true
   },
@@ -19,20 +19,11 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.7",
-      "shinigami": "부대장"
+      "shinigami": "6석"
     },
     "condition": {
-      "type": "and",
-      "all": [
-        {
-          "type": "elitesDefeated",
-          "min": 3
-        },
-        {
-          "type": "maxLap",
-          "min": 2
-        }
-      ]
+      "type": "rankReached",
+      "rank": 7
     },
     "provisional": true
   },
@@ -42,9 +33,13 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.4",
-      "shinigami": "대장 대행"
+      "shinigami": "3석"
     },
-    "condition": null
+    "condition": {
+      "type": "rankReached",
+      "rank": 4
+    },
+    "provisional": true
   },
   {
     "id": "rank-4",
@@ -54,7 +49,11 @@
       "hollow": "에스파다 No.1",
       "shinigami": "대장"
     },
-    "condition": null
+    "condition": {
+      "type": "rankReached",
+      "rank": 1
+    },
+    "provisional": true
   },
   {
     "id": "hidden-rank-1",

@@ -12,8 +12,10 @@ import type { GrowthInput } from './bha/growthLogic';
 import { createExpedition, drainEvents, finishBattle, serializeExpedition, startBattle, summarize, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import {
-  loadSave, newSaveData, nextRunId, readActiveExpedition, recordBattle, recordExpedition, resumeTarget, sanitizeDeck, writeSave, type SaveData,
+  loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck, writeSave, type SaveData,
 } from '../game';
+import type { RankHolderDef } from '../data/ranks';
+import { rankLabel, rankResultView, rankView } from './rankView';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { applyTheme } from './bha/theme';
@@ -356,6 +358,7 @@ export function startApp(host: HTMLElement): void {
       onWindow: () => open('titles', () => titleDexView(root, faction, s)),
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
+      onRank: () => open('rank', () => rankScreen(faction)),
       onChangeFaction: factionScreen,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
@@ -526,6 +529,35 @@ export function startApp(host: HTMLElement): void {
 
   function practiceResult(faction: FactionConfig, enemy: EnemyDef, s: CombatState): void {
     practiceResultView(root, faction, enemy, s, { onAgain: () => practiceBattle(faction, enemy, true), onMenu: () => nav.pop() });
+  }
+
+  // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──
+  function rankScreen(faction: FactionConfig): void {
+    if (!save) return;
+    rankView(root, faction, save, { onChallenge: (holder) => open('rank-battle', () => runRankBattle(faction, holder), true) });
+  }
+
+  function runRankBattle(faction: FactionConfig, holder: RankHolderDef): void {
+    if (!save) return;
+    const s0 = save;
+    const c = rankChallenge(s0);
+    if (!c.ok || c.opponentId !== holder.id) return void nav.pop(); // 그사이 상황이 바뀌었으면(다른 탭 등) 목록으로
+    const params = buildCombatParams(s0.build, faction.id);
+    applyEvolutionToParams(params, s0.evolution, faction.id);
+    params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: holder, params });
+    battleView(root, faction, s, {
+      tierIndex: s0.evolution.tierIndex,
+      formId: s0.evolution.formId,
+      banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
+      onEnd: (done) => {
+        const res = recordRankBattle(s0, done);
+        persist();
+        // 결과 화면은 전투 자리를 바꿔 끼운다: 돌아가면 등급표(다시 그려 새 번호를 보인다)
+        nav.replace({ id: 'rank-result', locked: true, render: () => { rankResultView(root, faction, holder, done, res, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
+        showTitleToasts(s0, faction, persist);
+      },
+    });
   }
 
   titleScreen();

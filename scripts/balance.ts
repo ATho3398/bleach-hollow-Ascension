@@ -11,8 +11,9 @@ import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } 
 import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
 import { ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
-import { analyzeTree, comboRulesOf, newEvolution } from '../src/engine/evolution';
-import { newSaveData, nextRunId, recordExpedition, sanitizeDeck, newTileStock } from '../src/game';
+import { analyzeTree, applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engine/evolution';
+import { newSaveData, nextRunId, recordExpedition, sanitizeDeck, newTileStock, type SaveData } from '../src/game';
+import { RANK_HOLDERS } from '../src/data/ranks';
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
@@ -328,9 +329,9 @@ const CAMPAIGNS = 30;
 const MAX_RUNS = 40;
 const STAGE_TARGET = [1.5, 2.5, 3, 4.5];
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number };
+type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number; saves: SaveData[] };
 function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number } = {}): CampaignStats {
-  const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0 };
+  const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0, saves: [] };
   for (let seed = 1; seed <= CAMPAIGNS; seed++) {
     const save = newSaveData('hollow', seed * 7919);
     save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
@@ -364,12 +365,15 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
         if (r.form.hidden) out.hidden++;
       }
     }
+    out.saves.push(save);
   }
   return out;
 }
 const stageNames = ['1→2', '2→3', '3→4', '4→5'];
+let campaignSaves: SaveData[] = [];
 {
   const st = campaign();
+  campaignSaves = st.saves;
   console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 귀환 때 자동 진화) — 필요 걸음 ${BALANCE.provisional.evolution.stepsNeeded.join('/')}칸 (숨김)`);
   console.log(`  원정 1회 평균 ${avg(st.stepsPerRun).toFixed(1)}칸 (최소 ${Math.min(...st.stepsPerRun)} · 최대 ${Math.max(...st.stepsPerRun)})`);
   console.log('  단계(진화)   도달 인원  평균 원정  목표   최소  최대   (그 단계 시작부터 센 원정 수)');
@@ -424,6 +428,41 @@ const stageNames = ['1→2', '2→3', '3→4', '4→5'];
   if (rep.unreachable.length > 0) failures.push(`진화 트리: 뽑히지 않는 진화체 ${rep.unreachable.join(', ')}`);
   // 기획의 일반 35종 = 1단계(진화체 없음, 종족 설정 baseStats) + 진화체 34
   if (normalCount !== 34 || hiddenCount !== 11) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 34(+1단계) + 11)`);
+}
+
+// ── 등급전 (C.49, GDD 21장): 번호 보유자 No.10 → No.1 승률 곡선. 위 진화 봇 중 5단계(아란칼)에 닿은 세이브(원정 MAX_RUNS 회를 마친 몸)로 사람형 봇이 각 보유자와 싸운다 ──
+// 목표(provisional, 코딩41 판단): 위로 갈수록 내려가 No.1 약 20~30%. 이 봇은 원정 40회를 마친 다 자란 몸이라 No.10 은 거의 이긴다(갓 5단계가 된 몸은 약 85%, dev-log C.49). 가드: No.10 ≥ 60%, No.1 10~50%, 한 칸 위로 갈 때 승률이 12%p 넘게 오르지 않는다
+{
+  const RK = 4;
+  const ready = campaignSaves.filter((s) => s.evolution.tierIndex >= BALANCE.rank.unlockTierIndex);
+  console.log(`\n등급전 (사람형 봇, 5단계 세이브 ${ready.length}개 × 보유자마다 ${RK}판) — 목표(임시): 위로 갈수록 내려가 No.1 약 20~30%`);
+  const rates: number[] = [];
+  for (const h of [...RANK_HOLDERS].reverse()) {
+    let wins = 0;
+    let games = 0;
+    let secs = 0;
+    for (const save of ready) {
+      for (let k = 0; k < RK; k++) {
+        const params = buildCombatParams(save.build, 'hollow');
+        applyEvolutionToParams(params, save.evolution, 'hollow');
+        params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
+        const end = playCombatHuman(createCombat(9000 + h.rank * 100 + k * 7 + games, { enemy: h, params }));
+        games++;
+        if (end.status === 'won') {
+          wins++;
+          secs += elapsedSeconds(end);
+        }
+      }
+    }
+    const rate = games ? wins / games : 0;
+    rates.push(rate);
+    console.log(`  No.${String(h.rank).padStart(2)}  ${h.id.padEnd(15)} 체력 ${h.hpInAttacks}회분 · 공격 ${h.attackInAttacks} · ${h.element}/${h.category}/${enemyPatternKind(h)}  승률 ${(rate * 100).toFixed(0).padStart(3)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초`);
+  }
+  if (ready.length < CAMPAIGNS * 0.8) failures.push(`등급전: 5단계 세이브 ${ready.length}/${CAMPAIGNS}`);
+  const [no10, no1] = [rates[0]!, rates[rates.length - 1]!];
+  if (no10 < 0.6) failures.push(`등급전: No.10 승률 ${(no10 * 100).toFixed(0)}% < 60%`);
+  if (no1 < 0.1 || no1 > 0.5) failures.push(`등급전: No.1 승률 ${(no1 * 100).toFixed(0)}% (10~50% 밖)`);
+  for (let i = 1; i < rates.length; i++) if (rates[i]! > rates[i - 1]! + 0.12) failures.push(`등급전: No.${10 - i} 승률이 No.${11 - i} 보다 ${((rates[i]! - rates[i - 1]!) * 100).toFixed(0)}%p 높다`);
 }
 
 if (check) {

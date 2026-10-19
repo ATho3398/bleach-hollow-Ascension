@@ -10,12 +10,11 @@
     "평대원",
     "수석 대원"
   ],
-  "rankNames": [
-    "석관",
-    "부대장",
-    "대장 대행",
-    "대장"
-  ],
+  "rankNames": ["대장", "대장 대행", "부대장", "3석", "4석", "5석", "6석", "7석", "8석", "9석"],
+  "unrankedName": "무석",
+  "rankBattleName": "석차 도전",
+  "rankWinText": "{rank} 자리에 올랐다!",
+  "rankLoseText": "패배… 석차가 한 칸 내려갔다.",
   "skillBlockName": "시해 블록",
   "specialBlockName": "귀도",
   "storedSkillName": "응축 비기",
@@ -33,7 +32,6 @@
   "locomotion": "walk",
   "slotLocation": "zanpakuto",
   "appearanceChange": false,
-  "rankMode": "promotion",
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
   "huntingGroundName": "현세 순찰 구역 / 루콘가이",

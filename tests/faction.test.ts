@@ -24,8 +24,14 @@ describe('종족 설정', () => {
   it('기획서 표 값이 들어 있다', () => {
     expect(getFaction('hollow').tierNames[4]).toBe('아란칼');
     expect(getFaction('shinigami').tierNames[4]).toBe('수석 대원');
-    expect(getFaction('hollow').rankMode).toBe('challenge');
-    expect(getFaction('shinigami').rankMode).toBe('promotion');
+    // 등급표 (GDD 21-1): 번호 1~10 이름, 무번호 이름. 오르는 방식은 양쪽 동일이라 rankMode 는 없앴다
+    expect(getFaction('hollow').rankNames).toHaveLength(10);
+    expect(getFaction('hollow').rankNames[0]).toBe('에스파다 No.1');
+    expect(getFaction('hollow').rankNames[9]).toBe('에스파다 No.10');
+    expect(getFaction('shinigami').rankNames[0]).toBe('대장');
+    expect(getFaction('shinigami').rankNames[2]).toBe('부대장');
+    expect(getFaction('shinigami').rankNames[9]).toBe('9석');
+    expect('rankMode' in getFaction('hollow')).toBe(false);
   });
 
   it('타일 이름(tileNames)은 폐기되고 블록 표시 이름이 있다 (GDD 3-5)', () => {

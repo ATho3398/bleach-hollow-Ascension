@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 24;
+export const BALANCE_VERSION = 25;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -27,6 +27,8 @@ export const BALANCE = {
   absorb: { slotCount: 3 },
   /** 속성 상성 (GDD 20-2·v3.5 확정): 강 ×1.2 / 약 ×0.85, 자기 속성(내 속성과 같은 속성 블록) ×1.1. 노멀·특수 속성은 상성 없음(×1) */
   elements: { strong: 1.2, weak: 0.85, stab: 1.1 },
+  /** 등급전 (GDD 21장 v4.3·v4.4 확정): 아란칼(5단계, tierIndex 4) 도달 후 해금. 번호 10개, 바로 위 1칸 도전, 진 상대 재도전은 다음 원정 1회 후 */
+  rank: { unlockTierIndex: 4, rematchAfterRuns: 1 },
 
   // ── 임시값(provisional): 기획서 미정 항목을 프로토타입용으로 채우는 구역 (GDD 12장) ──
   // 여기 값은 확정이 아니다. 확정되면 기획서에 반영하고 이 구역에서 옮긴다.
@@ -82,6 +84,8 @@ export const BALANCE = {
         pet: { risk: -10, stability: 8 },
       },
     },
+    // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 (환생 +10 은 환생 구현 때) ──
+    soulCrystals: { perElite: 1, perRankWin: 3 },
     // ── 속성 특수 효과 (GDD 20-2, 수치 provisional) ──
     elements: {
       /** 혈: 준 피해의 이 비율만큼 체력 회복 (내 블록·기본 공격, 적의 공격 모두) */

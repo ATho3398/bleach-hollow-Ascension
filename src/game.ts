@@ -8,7 +8,9 @@ import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type Expedi
 import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RunLog } from './engine/runLog';
+import { emptyLegacyMatches, emptyRunLog, type BattleRecord, type RankBattleRecord, type RunLog } from './engine/runLog';
+import { applyChallenge, canChallenge, newRankState, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
+import { buildBattleRecord, type CombatState } from './engine/combat';
 import { tilesFor } from './data/tiles';
 import { TITLES } from './data/titles';
 import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutorial';
@@ -17,7 +19,7 @@ import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 14;
+export const SAVE_FORMAT_VERSION = 15;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -58,6 +60,19 @@ export interface SaveData {
   help: HelpState;
   /** 마지막으로 보던 화면 키 (GDD 19-3, 형식 13). 화면 키만 저장하고 화면 상태는 저장하지 않는다(원정 지점은 activeExpedition 이 갖고 있다) */
   lastScreen: ScreenKey;
+  /** 등급전 상태 (GDD 21장, 형식 15): 번호 사다리·재도전 대기·전적 + 등급 이력(history, 환생해도 유지할 자리 — 22-2 해방 자격) */
+  rank: RankState;
+  /** 슬롯 공유 자원 (GDD 22-3, 형식 15): 두 트랙이 함께 쓰는 재화. 지금은 영혼 결정만 (붕옥 탭이 열리기 전에도 쌓이고 표시는 붕옥 탭에서) */
+  shared: SharedState;
+}
+
+export interface SharedState {
+  /** 영혼 결정: 강적 처치 +1, 등급전 승리 +3 (환생 +10 은 환생 구현 때). 수치 provisional */
+  soulCrystals: number;
+}
+
+export function newSharedState(): SharedState {
+  return { soulCrystals: 0 };
 }
 
 export interface TileStock {
@@ -71,7 +86,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room' };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState() };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -96,6 +111,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
       rec.firstCompletedRunId = exp.runId;
     }
   }
+  // 영혼 결정 (GDD 22-3): 이 원정에서 이긴 강적 수만큼
+  save.shared.soulCrystals += exp.battles.filter((b) => b.won && b.enemyClass === 'elite').length * BALANCE.provisional.soulCrystals.perElite;
   save.build = cloneBuildOf(exp.build);
   // 진화 상태: 원정 중 쌓인 걸음·흡수 속성·노력치·행동 기록을 합친다. 한계 돌파는 원정당 한 번 센다 (아란칼 행동 히든, GDD 20-5)
   save.evolution = cloneEvolution(exp.evolution);
@@ -152,6 +169,35 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
 /** 칭호 평가 훅 (원정 종료·진화·로드). 새로 해금된 칭호 정의를 돌려주고, 알림은 UI 가 unlocked.seen 으로 띄운다 */
 export function checkTitles(save: SaveData, trigger: TitleTrigger, nowMs: number = Date.now(), defs: readonly TitleDef[] = TITLES): TitleDef[] {
   return unlockTitles(save.runLog, save, defs, trigger, nowMs);
+}
+
+/** 지금까지 마친 원정 수 (등급전 재도전 대기 기준, GDD 21-1) */
+export function runsCompleted(save: SaveData): number {
+  return save.runLog.runs.length;
+}
+
+/** 등급전 도전 가능 여부 (GDD 21장): 아란칼 이상 · 바로 위 1칸 · 진 상대는 다음 원정 1회 후 */
+export function rankChallenge(save: SaveData): ReturnType<typeof canChallenge> {
+  return canChallenge(save.rank, save.evolution.tierIndex, runsCompleted(save));
+}
+
+/** 등급전 결과를 세이브에 반영한다: 사다리(번호 뺏기/한 칸 하락)·등급 이력, 전투 기록(enemyClass 'rank')과 등급전 기록을 런 로그에,
+ *  이기면 영혼 결정 +3. 도전 가능 여부는 부르는 쪽이 rankChallenge 로 먼저 본다 */
+export function recordRankBattle(save: SaveData, s: CombatState, nowMs: number = Date.now()): ChallengeResult {
+  const won = s.status === 'won';
+  const runs = runsCompleted(save);
+  const r = applyChallenge(save.rank, won, runs, nowMs);
+  const battle = buildBattleRecord(s, { factionId: save.factionId, tierIndex: save.evolution.tierIndex });
+  battle.enemyClass = 'rank'; // 강적 처치 수(칭호·히든)에 섞이지 않게
+  save.runLog.battles.push(battle);
+  const rec: RankBattleRecord = {
+    at: nowMs, runsCompleted: runs, opponentId: r.opponentId, won, rankBefore: r.before, rankAfter: r.after, firstRanked: r.firstRanked,
+    seed: s.seed, durationSeconds: battle.durationSeconds, tierIndex: save.evolution.tierIndex, formId: save.evolution.formId,
+  };
+  save.runLog.rankBattles.push(rec);
+  if (won) save.shared.soulCrystals += BALANCE.provisional.soulCrystals.perRankWin;
+  checkTitles(save, 'rank', nowMs);
+  return r;
 }
 
 /** 새 원정의 runId = 지금까지 기록된 원정 수 + 1 */
@@ -295,6 +341,17 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, finisherElement: b.finisherElement ?? null }));
     save.meta.format = 14;
   }
+  if (save.meta.format < 15) {
+    // 형식 14 → 15 (C.49 등급전, GDD 21장·22-3): 등급전 상태(무번호에서 시작, 등급 이력 없음)·슬롯 공유 자원(영혼 결정 0부터)·등급전 기록 추가.
+    // 지난 강적 처치로 영혼 결정을 소급하지 않는다(연습 전투 기록과 섞여 있어 원정 처치만 가려낼 수 없다)
+    save.rank = newRankState();
+    save.shared = newSharedState();
+    save.runLog.rankBattles = [];
+    save.meta.format = 15;
+  }
+  save.rank = sanitizeRankState(save.rank);
+  save.shared = { soulCrystals: typeof save.shared?.soulCrystals === 'number' && save.shared.soulCrystals >= 0 ? Math.floor(save.shared.soulCrystals) : 0 };
+  save.runLog.rankBattles = Array.isArray(save.runLog.rankBattles) ? save.runLog.rankBattles : [];
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
   // 이어하기 영역이 객체가 아니면 비운다 (내용 검사는 이어하기를 열 때 readActiveExpedition 이 한다)

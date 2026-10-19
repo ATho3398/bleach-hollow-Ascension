@@ -100,7 +100,7 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
     title: '홈',
     rows: [
       { keys: 'Z / X / C', does: '먹이 / 재우기 / 쓰다듬기 (먹이는 펼친 줄에서 1~5로 고른다)' },
-      { keys: 'V', does: '더보기 열기/닫기 (설정·도움말·튜토리얼·종족 바꾸기·백업·처음 화면)' },
+      { keys: 'V', does: '더보기 열기/닫기 (등급전·설정·도움말·튜토리얼·종족 바꾸기·백업·처음 화면)' },
       { keys: 'T', does: '훈련 인형(전투 연습)' },
       { keys: 'G', does: '캐릭터 머리 위 상태 칩(상태 화면)' },
       { keys: '1 ~ 9', does: '펼친 먹이 줄·더보기 격자의 N번째' },

@@ -17,6 +17,8 @@ export function validateCondition(c: TitleCondition): string[] {
       const e = c.min > 0 ? [] : ['min 은 1 이상'];
       return c.element && !isElement(c.element) ? [...e, `알 수 없는 속성 ${c.element}`] : e;
     }
+    case 'rankReached':
+      return Number.isInteger(c.rank) && c.rank >= 1 && c.rank <= 10 ? [] : [`rankReached: rank 는 1~10`];
     default:
       return 'min' in c && !(c.min > 0) ? [`${c.type}: min 은 1 이상`] : [];
   }

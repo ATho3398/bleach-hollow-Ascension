@@ -143,6 +143,27 @@ export interface RankChangeRecord {
   kind: 'gained' | 'lost' | 'regained';
 }
 
+/** 등급전 1회 기록 (GDD 21장, 세이브 형식 15): 이기든 지든 남긴다. 히든 등급·태그·해방 조건이 나중에 읽는다 */
+export interface RankBattleRecord {
+  /** 시각(ms) */
+  at: number;
+  /** 이 도전 때까지 마친 원정 수 (재도전 대기 판정과 같은 기준) */
+  runsCompleted: number;
+  /** 상대 번호 보유자 id (src/data/ranks) */
+  opponentId: string;
+  won: boolean;
+  /** 도전 전·후 내 번호 (1 = 맨 위, 무번호 null) */
+  rankBefore: number | null;
+  rankAfter: number | null;
+  /** 이 승리로 처음 번호를 달았는가 */
+  firstRanked: boolean;
+  /** 전투 시드·시간, 그때의 단계·진화체 */
+  seed: number;
+  durationSeconds: number;
+  tierIndex: number;
+  formId: string | null;
+}
+
 export interface RunRecord {
   runId: number;
   laps: number;
@@ -168,6 +189,8 @@ export interface RunLog {
   battles: BattleRecord[];
   tiers: TierRecord;
   rankChanges: RankChangeRecord[];
+  /** 등급전 기록 (C.49, 세이브 형식 15) */
+  rankBattles: RankBattleRecord[];
   runs: RunRecord[];
 }
 
@@ -179,6 +202,7 @@ export function emptyRunLog(): RunLog {
     battles: [],
     tiers: { skipped: false, evolutions: [], defeatedWhileAtTier: {} },
     rankChanges: [],
+    rankBattles: [],
     runs: [],
   };
 }

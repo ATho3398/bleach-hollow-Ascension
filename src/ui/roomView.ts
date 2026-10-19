@@ -22,6 +22,8 @@ export interface RoomHandlers {
   onWindow: () => void;
   onStatus: () => void;
   onPractice: () => void;
+  /** 등급전 (GDD 21장): 독 더보기 항목 */
+  onRank: () => void;
   onChangeFaction: () => void;
   onSettings: () => void;
   onHelp: () => void;
@@ -146,6 +148,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       char.classList.add('is-react');
     },
     more: [
+      { label: faction.rankBattleName, icon: 'i-title', onClick: hd.onRank },
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
       { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },

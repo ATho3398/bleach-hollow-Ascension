@@ -3,6 +3,7 @@
 
 import { isLocomotion, type Locomotion } from './locomotion';
 import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type Stats } from '../data/schema';
+import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
 
 /** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
 export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
@@ -51,8 +52,6 @@ export type FoodId = (typeof FOOD_IDS)[number];
 
 /** 슬롯 위치: 호로=본체(body), 사신=참백도(zanpakuto) (GDD 4장) */
 export type SlotLocation = 'body' | 'zanpakuto';
-/** 등급 방식: 호로=도전(challenge), 사신=승진(promotion) (GDD 8-2) */
-export type RankMode = 'challenge' | 'promotion';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'window', 'dummy'] as const;
@@ -111,8 +110,14 @@ export interface FactionConfig {
   emblem?: string;
   /** 육성 5단계 이름 (GDD 8-1) */
   tierNames: [string, string, string, string, string];
-  /** 등급 4단계 이름 (GDD 8-2) */
-  rankNames: [string, string, string, string];
+  /** 등급 번호 1~10 의 표시 이름 (GDD 21-1, [0] = 1번). 엔진은 번호만 다룬다 */
+  rankNames: string[];
+  /** 번호가 없는 상태의 표시 이름 (GDD 21-1 v4.4, 호로 "무번호") */
+  unrankedName: string;
+  /** 등급전 이름과 결과 문구 ({rank} = 얻은 번호의 표시 이름). 오르는 방식은 양쪽 동일, 차이는 문구뿐 (GDD 21-1) */
+  rankBattleName: string;
+  rankWinText: string;
+  rankLoseText: string;
   /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 필살 블록 / 공허 블록 */
   skillBlockName: string;
   specialBlockName: string;
@@ -132,7 +137,6 @@ export interface FactionConfig {
   slotLocation: SlotLocation;
   /** 흡수로 본체 외형이 변하는가 (호로 true, 사신 false) */
   appearanceChange: boolean;
-  rankMode: RankMode;
   /** 패배 상태 이름 (GDD 1장) */
   defeatStateName: string;
   /** 육성 1단계부터 쓰는 기본 기술 이름: 호로=본체 능력, 사신=시해 (GDD 4장). 슬롯에 skill 특성이 없을 때 나오는 기본 블록 이름 */
@@ -185,11 +189,11 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
-  if (!isStringTuple(r.rankNames, 4)) errors.push('rankNames: 문자열 4개여야 한다');
+  if (!isStringTuple(r.rankNames, RANK_NAME_COUNT)) errors.push(`rankNames: 문자열 ${RANK_NAME_COUNT}개여야 한다 (번호 1~${RANK_NAME_COUNT})`);
   const rn = (r.roleNames ?? {}) as Record<string, unknown>;
   for (const role of BLOCK_ROLES) {
     if (!isString(rn[role])) errors.push(`roleNames.${role}: 비어 있지 않은 문자열이어야 한다`);
@@ -250,7 +254,6 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   }
   if (r.slotLocation !== 'body' && r.slotLocation !== 'zanpakuto') errors.push('slotLocation: body | zanpakuto');
   if (typeof r.appearanceChange !== 'boolean') errors.push('appearanceChange: boolean');
-  if (r.rankMode !== 'challenge' && r.rankMode !== 'promotion') errors.push('rankMode: challenge | promotion');
   if (errors.length > 0) throw new Error(`종족 설정 오류 (${String(r.id ?? '?')}):\n- ${errors.join('\n- ')}`);
   return raw as FactionConfig;
 }

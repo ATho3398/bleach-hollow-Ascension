@@ -120,11 +120,11 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
     for (const t of BATTLE_HELP_TARGETS) expect(src).toContain(`'${t}'`);
   });
 
-  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록)를 모두 갖고 id 중복이 없다', () => {
+  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록·등급전)를 모두 갖고 id 중복이 없다', () => {
     const ids = GLOSSARY.map((x) => x.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids.length).toBe(15);
-    expect(ids).toEqual(expect.arrayContaining(['family', 'combo']));
+    expect(ids.length).toBe(16);
+    expect(ids).toEqual(expect.arrayContaining(['family', 'combo', 'rank']));
     for (const t of GLOSSARY) {
       expect(t.title.length).toBeGreaterThan(0);
       expect(t.body.length).toBeGreaterThan(10);

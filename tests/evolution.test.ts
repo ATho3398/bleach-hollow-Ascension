@@ -348,7 +348,7 @@ describe('세이브 마이그레이션 (형식 13 → 14)', () => {
   it('옛 특성 id 는 같은 종류·역할·계열의 속성 특성으로, 모르는 id 는 버린다', () => {
     const m = migrateSave(oldSave13())!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(SAVE_FORMAT_VERSION).toBe(14);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(14);
     expect(m.build.owned).toEqual(['t-fire-a', 't-earth-guard', 't-thunder-c']);
     expect(m.build.slots).toEqual(['t-fire-a', 't-thunder-c', 't-earth-guard', null]);
     expect(m.build.equipOrder).toEqual(['t-fire-a', 't-thunder-c', 't-earth-guard']);
@@ -393,7 +393,7 @@ describe('세이브 마이그레이션 (형식 13 → 14)', () => {
     expect(m.formDex).toEqual([]);
     const store = new Map<string, string>([['k', JSON.stringify(oldSave13())]]);
     const loaded = loadSave({ getItem: (k) => store.get(k) ?? null, setItem: () => {} }, 'k');
-    expect(loaded?.meta.format).toBe(14);
+    expect(loaded?.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(loaded?.evolution.formId).toBe('t4:thunder');
   });
 

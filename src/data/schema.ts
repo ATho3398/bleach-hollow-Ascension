@@ -214,7 +214,9 @@ export type TitleCondition =
   /** 도달한 최대 바퀴 */
   | { type: 'maxLap'; min: number }
   /** 특정 단계(0부터)에 머문 채 격파한 적 수. enemyClass 가 없으면 모든 등급 */
-  | { type: 'defeatedAtTier'; tier: number; min: number; enemyClass?: string };
+  | { type: 'defeatedAtTier'; tier: number; min: number; enemyClass?: string }
+  /** 등급전으로 이 번호 이상(숫자가 같거나 작음)에 오른 적이 있다 (GDD 21장, C.49) */
+  | { type: 'rankReached'; rank: number };
 
 export interface TitleDef {
   id: string;
