@@ -13,13 +13,14 @@
     "formatAfter": 17,
     "hungerBefore": 10,
     "hungerAfter": 70,
-    "lastSeenAt": 1792433740864,
+    "lastSeenAt": 1792434287896,
     "dexRewards": [
       "forms-5",
       "forms-10",
       "forms-20"
     ],
-    "tradeCoins": 30,
+    "tradeCoins": 0,
+    "jade": 6,
     "food": {
       "snack": 9,
       "basic": 9,
@@ -32,11 +33,11 @@
       "backupFormat": 16,
       "meta": {
         "reason": "migration",
-        "at": 1792433740860
+        "at": 1792434287891
       }
     }
   },
-  "bubble": "오래 비웠다. 배 속이 텅 비었다.",
+  "bubble": "배고파하고 있었다… 으르르.",
   "toasts": [],
   "afterEnterAudio": [
     {
@@ -44,7 +45,7 @@
       "playCalled": true,
       "paused": false,
       "volume": 0.5,
-      "time": 0.1
+      "time": 0.2
     }
   ],
   "planTitle": "길에 타일 놓기",
@@ -71,7 +72,7 @@
       "playCalled": true,
       "paused": false,
       "volume": 0.25,
-      "time": 1.1
+      "time": 1
     }
   ],
   "musicOff": [
@@ -115,7 +116,8 @@
   ],
   "bgmSettings": "{\"on\":true,\"volume\":0.5}",
   "fxSettings": null,
-  "backupNote": "보관된 세이브: 새 버전으로 세이브를 올리기 직전 · 10/19 18:15",
+  "backupNote": "보관된 세이브: 새 버전으로 세이브를 올리기 직전 · 10/19 18:24",
+  "holdings": "가진 것먹이: 영혼 조각 9 · 짐승 고기 9 · 큰 사냥감 9 · 영압 응축물 9 · 영혼 덩어리 4영혼 결정 26골드 0 쓰는 곳 준비 중영옥 6 꾸밈 · 쓰는 곳 준비 중",
   "battleAudio": [
     {
       "src": "nest.ogg",
@@ -136,7 +138,7 @@
       "playCalled": true,
       "paused": true,
       "volume": 0,
-      "time": 1
+      "time": 0.2
     },
     {
       "src": "battle.ogg",
