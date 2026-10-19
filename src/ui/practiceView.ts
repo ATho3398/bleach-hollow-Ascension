@@ -4,7 +4,7 @@ import { ELEMENT_IDS, elementAbbr, elementName } from '../data/elements';
 import { pickFaction, type EnemyDef, type EnemyPatternKind } from '../data/schema';
 import { traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
-import { elapsedSeconds, type CombatState } from '../engine/combat';
+import { BASIC_SKILL_ID, comboOf, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
 import { absorbConditionText, weaknessText } from './absorbView';
 import { button, el, icon, panel, tag } from './bha/dom';
@@ -12,7 +12,7 @@ import { splitApp } from './bha/split';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter } from './bha/expedition';
 import { elementDot, elementMark, paintElement } from './bha/element';
-import { battleLabels } from './labels';
+import { battleLabels, comboBlockLabel, skillBlockLabel } from './labels';
 
 /** 연습 목록용 패턴 이름 (임시 표시) */
 export const PATTERN_LABEL: Record<EnemyPatternKind, string> = {
@@ -124,11 +124,17 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
   const won = s.status === 'won';
   const reasons = absorbReasons(s);
   const fin = s.finisher;
+  // 마무리 일격 이름 (GDD 20장 v5.4): 스킬 = `속성_계열`(기본 블록은 내 캐릭터 속성), 콤보 = `콤보_계열`
+  const finSkill = () => {
+    const src = sourceOf(s.params, fin!.traitId);
+    const element = fin!.element ?? (fin!.traitId === BASIC_SKILL_ID ? s.params.playerElements[0] ?? null : null);
+    return skillBlockLabel(labels, faction.id, element, fin!.family ?? src?.family, src?.role ?? 'attack') ?? (fin!.traitId && fin!.traitId !== BASIC_SKILL_ID ? traitName(fin!.traitId, faction.id) : labels.skillBlock);
+  };
   const finText = !fin
     ? '-'
     : fin.kind === 'skill'
-      ? `${fin.traitId && fin.element ? traitName(fin.traitId, faction.id) : labels.basicBlock}${fin.element ? ` (${elementName(fin.element, faction.id)})` : ''}`
-      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: '콤보 블록', dot: '독', skill: '' }[fin.kind];
+      ? finSkill()
+      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', skill: '' }[fin.kind];
   const name = pickFaction(enemy.name, faction.id);
 
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);

@@ -415,9 +415,12 @@ describe('계열 표시 (④, GDD 17-3)', () => {
     expect(hollow.matchupText.strong).toBe('효과가 굉장하다!');
     expect(shini.matchupText.weak.length).toBeGreaterThan(0);
     const b: Block = { uid: 1, kind: 'combo', traitId: 'combo-t2', family: null };
-    expect(blockName(b, hollow, 'hollow')).toBe('그랑 레이 세로');
-    expect(blockAbbr(b, hollow, 'hollow').length).toBeGreaterThan(0);
-    expect(blockName(b, shini, 'shinigami')).toBe('파도의 90 흑관');
+    // 콤보 블록 표시 = `콤보_계열` (GDD 20장 v5.4), 콤보 기술 이름은 콤보 데이터에 그대로
+    const params = { ...createCombat(1, { enemy: getEnemy('test-a') }).params, combos: comboRulesOf({ tierIndex: 4 }) };
+    expect(blockName(b, hollow, 'hollow', params)).toBe('콤보_탄');
+    expect(blockAbbr(b, hollow, 'hollow', params)).toBe('콤보_탄');
+    expect(blockName(b, shini, 'shinigami', params)).toBe('콤보_귀');
+    expect(comboName('combo-t2', 'hollow')).toBe('그랑 레이 세로');
   });
 
   it('도움말 자리표시자 familyList 는 계열 약어를 가운뎃점으로 잇는다', () => {

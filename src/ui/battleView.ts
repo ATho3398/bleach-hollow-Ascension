@@ -10,22 +10,22 @@ import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import {
-  BASIC_SKILL_ID, blockEffect, chainGroupsOf, drainCombatEvents, elapsedSeconds, maxChain, runsOf, step, timeLeftSeconds,
-  type Block, type CombatEvent, type CombatInput, type CombatState,
+  BASIC_SKILL_ID, blockEffect, blockElementOf, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, maxChain, runsOf, step, timeLeftSeconds,
+  type Block, type CombatEvent, type CombatInput, type CombatParams, type CombatState,
 } from '../engine/combat';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
 import { onHold } from './bha/hold';
 import {
-  blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr,
+  blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDot, elementMark } from './bha/element';
 import { weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
-import { battleLabels, familyAbbr, familySkillName, type BattleLabels } from './labels';
+import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -53,21 +53,26 @@ export interface BattleViewOptions {
   onEnd: (s: CombatState) => void;
 }
 
-/** 블록 이름: 스킬 블록은 특성 이름(기본 블록은 종족 기본 기술 이름), 필살·공허는 종족 표기 */
-export function blockName(b: Block, labels: BattleLabels, factionId: string): string {
+/** 블록 이름 (GDD 20장 v5.4): 스킬 = `속성_계열`·`속성_막기`·`속성_회복`(기본 블록 = 내 캐릭터 속성 + 블록 계열), 필살 = `필살`, 공허 = `공허`, 콤보 = `콤보_계열` */
+export function blockName(b: Block, labels: BattleLabels, factionId: string, p: CombatParams): string {
   if (b.kind === 'special') return labels.specialBlock;
   if (b.kind === 'void') return labels.voidBlock;
-  if (b.kind === 'combo') return b.traitId ? comboName(b.traitId, factionId) : labels.specialBlock;
-  return b.traitId === BASIC_SKILL_ID || !b.traitId ? labels.basicBlock : traitName(b.traitId, factionId);
+  if (b.kind === 'combo') return comboBlockLabel(labels, comboOf(p, b.traitId)?.family);
+  const src = sourceOf(p, b.traitId);
+  const name = skillBlockLabel(labels, factionId, blockElementOf(p, b), b.family ?? src?.family, src?.role ?? 'attack');
+  return name ?? (b.traitId && b.traitId !== BASIC_SKILL_ID ? traitName(b.traitId, factionId) : labels.skillBlock);
 }
 
-/** 블록 약어: 특성 데이터의 abbr, 없으면 이름 앞 4글자. 기본·필살·공허는 종족 설정 이름에서 (종족 id 분기 없음) */
-export function blockAbbr(b: Block, labels: BattleLabels, factionId: string): string {
-  if (b.kind === 'special') return pickAbbr(undefined, labels.specialBlock);
-  if (b.kind === 'void') return pickAbbr(undefined, labels.voidBlock);
-  if (b.kind === 'combo') return pickAbbr(undefined, blockName(b, labels, factionId));
-  if (b.traitId === BASIC_SKILL_ID || !b.traitId) return pickAbbr(undefined, labels.basicBlock);
-  return pickAbbr(traitAbbr(b.traitId, factionId), traitName(b.traitId, factionId));
+/** 블록 약어 = 블록 이름. 한 줄(4자)을 넘으면 `_` 뒤에서 줄을 나눈다 (예 노멀_ 막기) */
+export function blockAbbr(b: Block, labels: BattleLabels, factionId: string, p: CombatParams): string {
+  const name = blockName(b, labels, factionId, p);
+  return pickAbbr(undefined, Array.from(name).length > ABBR_LINE_CHARS ? name.replace('_', '_ ') : name);
+}
+
+/** 사건의 스킬 블록 표시 이름 (기본 블록은 속성이 없으므로 내 캐릭터 속성) */
+function eventBlockLabel(e: Extract<CombatEvent, { kind: 'block' }>, s: CombatState, labels: BattleLabels, factionId: string): string {
+  const element = e.element ?? (e.traitId === BASIC_SKILL_ID ? s.params.playerElements[0] ?? null : null);
+  return skillBlockLabel(labels, factionId, element, e.family, e.role) ?? (e.traitId && e.traitId !== BASIC_SKILL_ID ? traitName(e.traitId, factionId) : labels.skillBlock);
 }
 
 interface LogLine {
@@ -81,11 +86,11 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
   const n = (v: number) => Math.round(v);
   switch (e.kind) {
     case 'block': {
-      // 계열 공격 블록은 체인 단계 기술 이름(예 세로)으로, 그 밖은 특성 이름으로 (GDD 17-3)
-      const skillName = familySkillName(labels, e.family, e.chain);
+      // 블록 이름은 `속성_계열`(GDD 20장 v5.4), 계열 공격은 단계 기술 이름(17-3)을 뒤에 붙인다
+      const skillName = e.block === 'skill' ? familySkillName(labels, e.family, e.chain) : null;
       const name = e.block === 'skill'
-        ? `${skillName ?? (e.traitId === BASIC_SKILL_ID || !e.traitId ? labels.basicBlock : traitName(e.traitId, factionId))}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}`
-        : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? `콤보 ${e.traitId ? comboName(e.traitId, factionId) : labels.specialBlock}` : labels.voidBlock;
+        ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
+        : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : labels.voidBlock;
       const parts = [`${name}! ${n(e.damage)} 피해${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
@@ -101,7 +106,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role, icon: LOG_ICON[role], text };
     }
     case 'combo':
-      return { role: 'chain', icon: 'i-special', text: `콤보! ${comboName(e.comboId, factionId)} 블록이 생겼다` };
+      return { role: 'chain', icon: 'i-special', text: `콤보! ${comboBlockLabel(labels, comboOf(s.params, e.comboId)?.family)} 블록이 생겼다 (${comboName(e.comboId, factionId)})` };
     case 'stored-use':
       return { role: 'chain', icon: 'i-stored', text: `${labels.storedSkill}! ${n(e.damage)} 피해 · ${labels.role.guard} ${e.guardSeconds}초 (남은 충전 ${e.charges})` };
     case 'stored-ready':
@@ -621,13 +626,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const isBasic = b.kind === 'skill' && (b.traitId === BASIC_SKILL_ID || !b.traitId);
     const spec: BlockSpec = {
       visual: blockVisual(b.kind, isBasic, eff?.skill.role ?? null),
-      abbr: blockAbbr(b, labels, faction.id),
-      label: blockName(b, labels, faction.id),
+      abbr: blockAbbr(b, labels, faction.id, s.params),
+      label: blockName(b, labels, faction.id, s.params),
       weak: eff?.matchup === 'strong',
       uid: b.uid,
       family: familyAbbr(labels, b.family),
       familyId: b.family ?? undefined,
-      elementColor: eff?.skill.element ? elementColor(eff.skill.element) : undefined,
+      elementColor: (() => {
+        const elId = blockElementOf(s.params, b);
+        return elId ? elementColor(elId) : undefined;
+      })(),
     };
     return blockEl(spec);
   };

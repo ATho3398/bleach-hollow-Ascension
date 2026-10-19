@@ -654,13 +654,14 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
     const h = battleLabels(getFaction('hollow'));
     const sh = battleLabels(getFaction('shinigami'));
     expect(h.role.attack).not.toBe(sh.role.attack);
-    expect(h.specialBlock).not.toBe(sh.specialBlock);
+    // 블록 표시 이름은 종족 무관 고정 낱말 (GDD 20장 v5.4: 옛 basicSkillName·specialBlockName 은 쓰지 않음)
+    expect(h.specialBlock).toBe('필살');
+    expect(sh.specialBlock).toBe('필살');
     expect(h.riskGauge).toBe('광기');
     expect(sh.riskGauge).toBe('호로화');
     expect(h.defeatState).toBe('가면이 깨져 쇠약');
     expect(sh.defeatState).toBe('영력 고갈');
-    expect(h.basicBlock).toBe('본체 능력');
-    expect(sh.basicBlock).toBe('시해');
+    expect(h.families.map((f) => f.abbr)).not.toEqual(sh.families.map((f) => f.abbr));
   });
 
   it('3번째 종족은 설정 객체 하나만으로 전투 텍스트가 나온다', () => {
@@ -679,10 +680,10 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
     });
     const l = battleLabels(quincy);
     expect(l.role.guard).toBe('블루트');
-    expect(l.specialBlock).toBe('레이시');
+    expect(l.specialBlock).toBe('필살');
     expect(l.chain).toBe('연결');
     expect(l.sp).toBe('영자');
-    expect(l.basicBlock).toBe('성문');
+    expect(l.voidBlock).toBe('공허');
     expect(pickFaction(getEnemy('test-a').name, 'quincy')).toBe('테스트 적 A');
     expect(FACTIONS.length).toBe(2);
   });
