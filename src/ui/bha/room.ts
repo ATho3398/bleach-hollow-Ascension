@@ -38,13 +38,13 @@ export interface PropOpts {
 
 /** 방 안 물건 = 선택 항목(button). 이름표는 항상 보인다 */
 export function propButton(o: PropOpts): HTMLButtonElement {
-  const b = el('button', `bha-prop bha-prop--${o.prop}${o.alert ? ' is-alert' : ''}`);
+  const b = el('button', `bha-art bha-prop bha-prop--${o.prop}${o.alert ? ' is-alert' : ''}`);
   b.type = 'button';
   b.dataset.prop = o.prop;
   b.style.left = `${o.x}%`;
   b.style.top = `${o.y}%`;
   b.setAttribute('aria-label', o.name);
-  const shape = el('span', 'bha-prop__shape');
+  const shape = el('span', 'bha-prop__shape bha-art-img');
   const { src } = artUrls(`prop.${o.prop}`, BASE);
   if (src) {
     const img = el('img', 'bha-prop__img') as HTMLImageElement;
@@ -64,10 +64,10 @@ export function roomCharArt(room: RoomConfig, factionId: string, tierIndex: numb
 
 /** 캐릭터: 새 규칙의 그림 한 장(왼쪽을 보는 그림, 가만히) 또는 기존 제자리 2프레임 숨쉬기. 그림이 없으면 둥근 몸 + 눈 두 개 도형 */
 export function characterButton(art: ArtUrls, label: string): HTMLButtonElement {
-  const b = el('button', 'bha-char');
+  const b = el('button', 'bha-art bha-char');
   b.type = 'button';
   b.setAttribute('aria-label', label);
-  const body = el('span', 'bha-char__body');
+  const body = el('span', 'bha-char__body bha-art-img');
   const { frames, src } = art;
   if (src) {
     const img = el('img', 'bha-char__frame bha-char__frame--solo') as HTMLImageElement;
@@ -91,4 +91,17 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
   }
   b.append(body, el('span', 'bha-char__shadow'));
   return b;
+}
+
+/** 방 캐릭터 그림의 윗변 높이: 캐릭터 상자 중심에서 위로 몇 px 인지(음수). 머리 위 상태 칩이 이 위에 놓인다. room.css 의 .bha-char 치수와 맞출 것 */
+export function charTopOffset(art: ArtUrls): number {
+  const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)
+  const hasArt = !!(art.src || art.frames);
+  const bodyH = hasArt ? 90 : 56;
+  const boxTop = -(PAD * 2 + bodyH + SHADOW) / 2 + PAD; // 몸 상자 윗변
+  if (!art.src) return boxTop;
+  const drawn = 84; // 정사각 그림이 몸 상자(84×90) 안 아래쪽에 맞춰진 크기
+  const pivot = bodyH * 0.92; // transform-origin 세로
+  const top = pivot + (bodyH - drawn - pivot) * art.scale + (art.offsetY / 100) * bodyH;
+  return boxTop + Math.min(top, bodyH);
 }

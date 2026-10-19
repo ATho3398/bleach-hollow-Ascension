@@ -8,7 +8,7 @@ import { sanitizeDeck, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { characterButton, propButton, roomCharArt, sceneBox } from './bha/room';
+import { characterButton, charTopOffset, propButton, roomCharArt, sceneBox } from './bha/room';
 import { moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
@@ -95,7 +95,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     props.set(p, b);
     scene.append(b);
   }
-  const char = characterButton(roomCharArt(room, faction.id, save.evolution.tierIndex), '캐릭터');
+  const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex);
+  const char = characterButton(charArtUrls, '캐릭터');
   let hop = 0;
   const react = (line?: string) => {
     char.classList.remove('is-react');
@@ -110,6 +111,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
   statusBtn.dataset.sc = 'status';
+  statusBtn.style.setProperty('--head-y', `${charTopOffset(charArtUrls)}px`);
   statusBtn.onclick = hd.onStatus;
   const paintGauges = () => {
     const chips = statusChips(n, faction);

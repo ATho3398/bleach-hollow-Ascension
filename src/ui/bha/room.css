@@ -99,7 +99,6 @@
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--dummy .bha-prop__shape { width: 34px; height: 54px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
-.bha-prop:active .bha-prop__shape, .bha-char:active .bha-char__body { filter: brightness(1.2); }
 
 /* ── 캐릭터: 제자리 2프레임 숨쉬기 (step-end 로 두 모양만 번갈아) ── */
 .bha-char {
@@ -130,7 +129,7 @@
 
 /* ── 머리 위 상태 칩 (GDD 18-8): 캐릭터 몸 위, 한 줄. 누르면 상태 화면 ── */
 .bha-room__status {
-  position: absolute; left: 50%; top: 60%; transform: translate(-50%, calc(-50% - 54px)); z-index: 1;
+  position: absolute; left: 50%; top: 60%; transform: translate(-50%, calc(-100% + var(--head-y, -50px) - var(--bha-sp-2))); z-index: 1; /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px) */
   display: flex; flex-wrap: nowrap; gap: var(--bha-sp-1); padding: var(--bha-sp-1) var(--bha-sp-7) var(--bha-sp-1) var(--bha-sp-1); /* 오른쪽은 키 글자 배지 자리 */
   background: none; border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
 }
@@ -152,10 +151,17 @@
 .bha-room__bubble.is-pop { animation: bha-bubble-pop 0.18s ease-out; }
 @keyframes bha-bubble-pop { from { opacity: 0; transform: translateX(-50%) scale(0.9); } }
 
-/* 선택 하이라이트는 물건 모양에 붙인다 */
-.bha-prop.bha-sel, .bha-char.bha-sel { outline: 0; box-shadow: none; }
-.bha-prop.bha-sel .bha-prop__shape, .bha-char.bha-sel .bha-char__body { outline: 2px solid var(--bha-focus); outline-offset: 3px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
-.bha-prop.bha-sel .bha-prop__tag { background: var(--bha-focus); color: var(--bha-bg-0); }
+/* 선택·포커스·누름 표시 (GDD 18-10): 그림 요소(.bha-art)는 사각 테두리·배경 없이 그림 윤곽을 따라 빛난다.
+   그림 파일이든 임시 도형이든 .bha-art-img(그림 자리: 물건 모양·캐릭터 몸) 의 투명하지 않은 부분만 강조된다 */
+.bha-art { -webkit-tap-highlight-color: transparent; outline: 0; box-shadow: none; }
+.bha-art:focus, .bha-art:focus-visible, .bha-art.bha-sel { outline: 0; box-shadow: none; }
+.bha-art:active .bha-art-img { filter: brightness(1.2); }
+.bha-art:focus-visible .bha-art-img, .bha-art.bha-sel .bha-art-img {
+  filter: brightness(1.12)
+    drop-shadow(1px 0 0 var(--bha-focus)) drop-shadow(-1px 0 0 var(--bha-focus)) drop-shadow(0 1px 0 var(--bha-focus)) drop-shadow(0 -1px 0 var(--bha-focus))
+    drop-shadow(0 0 6px var(--bha-focus));
+}
+.bha-art.bha-sel .bha-prop__tag { background: var(--bha-focus); color: var(--bha-bg-0); }
 
 /* 모션 줄이기: 숨쉬기·폴짝·말풍선 팝을 끈다. 두 프레임 그림은 첫 프레임만 보인다 (전역 규칙은 반복 횟수만 1 로 줄여 두 프레임이 겹쳐 보인다) */
 @media (prefers-reduced-motion: reduce) {
