@@ -10,6 +10,7 @@
 // enemy-<적id>.png, char-<종족>-<단계번호>.png, char-<종족>.png)으로 넣으면 이 목록을 고치지 않아도 인식한다(`files.ts`).
 // 이 목록의 src·frames 는 파일 규칙에 맞지 않는 이름을 쓰고 싶을 때의 직접 지정이고, scale·offsetY 는 어느 쪽이든 쓴다.
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
+import type { Locomotion } from '../../engine/locomotion';
 import { charArtKeys, findArtFile, ART_FILES } from './files';
 
 export interface ArtEntry {
@@ -21,6 +22,8 @@ export interface ArtEntry {
   scale?: number;
   /** 세로 위치 보정(기본 0): 칸 높이 대비 %, 양수면 아래로 */
   offsetY?: number;
+  /** 이 그림의 이동 방식(GDD 18-11): 부유 float / 걷기 walk / 날기 fly. 진화체·종족 기본보다 우선한다. 비우면 그쪽 값 */
+  locomotion?: Locomotion;
 }
 
 /** 화면이 쓰는 그림 정보 */
@@ -29,6 +32,8 @@ export interface ArtUrls {
   frames: [string, string] | null;
   scale: number;
   offsetY: number;
+  /** manifest 에서 정한 이동 방식(없으면 undefined = 진화체·종족 기본을 따른다) */
+  locomotion?: Locomotion;
 }
 
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
@@ -54,6 +59,7 @@ export function artUrls(key: string, base = '/', manifest: Readonly<Record<strin
     frames: e?.frames ? [join(e.frames[0]), join(e.frames[1])] : null,
     scale: e?.scale ?? 1,
     offsetY: e?.offsetY ?? 0,
+    locomotion: e?.locomotion,
   };
 }
 
@@ -71,7 +77,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     const file = findArtFile(key, files);
     if (!file) continue;
     const e = manifest[key] ?? manifest[fallbackKey];
-    return { src: join(file), frames: null, scale: e?.scale ?? 1, offsetY: e?.offsetY ?? 0 };
+    return { src: join(file), frames: null, scale: e?.scale ?? 1, offsetY: e?.offsetY ?? 0, locomotion: manifest[key]?.locomotion ?? manifest[fallbackKey]?.locomotion };
   }
   return artUrls(fallbackKey, base, manifest, files);
 }

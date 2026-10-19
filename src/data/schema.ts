@@ -1,5 +1,7 @@
 // 데이터 파일(src/data/**) 구조. 내용은 아직 비어 있다. 임시 데이터에는 provisional: true 를 붙인다 (GDD 12장).
 
+import type { Locomotion } from '../engine/locomotion';
+
 /** 종족별로 달라지는 표시 텍스트: 종족 id → 문자열. 엔진 로직은 id 만 쓰고 텍스트는 여기서 읽는다 */
 /** 키 '*' 는 모든 종족 공통 값(해당 종족 키가 없을 때 쓴다) */
 export type PerFaction<T> = Record<string, T>;
@@ -295,5 +297,7 @@ export interface FormDef {
   /** 기본형: 단계마다 정확히 1개. 후보가 없을 때 선택된다 */
   fallback?: true;
   effects: FormEffects;
+  /** 이동 방식 (GDD 18-11, 화면 표시 전용). 없으면 종족 기본 → walk */
+  locomotion?: Locomotion;
   provisional?: boolean;
 }

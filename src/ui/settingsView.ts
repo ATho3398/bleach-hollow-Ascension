@@ -3,7 +3,7 @@
 import { button, el } from './bha/dom';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { LEGACY_POINTER_SETTINGS_KEY } from './pointer';
-import { loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
+import { applyCalmMode, loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
 import { emitFeedback, hookAudioUnlock } from './fx';
 import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
@@ -37,6 +37,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     paint();
     b.onclick = () => {
       fx = saveFxSettings(storage, { ...fx, [row.key]: !fx[row.key] });
+      if (row.key === 'shake') applyCalmMode(storage);
       if (row.key === 'sound' && fx.sound) {
         hookAudioUnlock();
         emitFeedback('guard', { vibration: false, sound: true });
@@ -121,6 +122,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
         /* 저장소를 못 쓰면 지울 것도 없다 */
       }
       resetFxSettings(storage);
+      applyCalmMode(storage);
       settingsView(root, onHelp, true, onBackup, onTutorial);
     },
   });

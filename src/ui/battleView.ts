@@ -32,6 +32,7 @@ import { releaseUse, slotAt } from './pointer';
 import { registerShortcutHandlers } from './bha/shortcuts';
 import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
+import { locoOf, setLoco } from './bha/loco';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf } from './attackFx';
 
@@ -46,6 +47,8 @@ export interface BattleViewOptions {
   tutorial?: { onDone: () => void };
   /** 육성 단계(0부터): 단계별 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다. 없으면 1단계 취급 */
   tierIndex?: number;
+  /** 현재 진화체 id (이동 방식 GDD 18-11). 1단계는 null */
+  formId?: string | null;
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -201,12 +204,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', slug ? `var(--bha-lin-${slug})` : null, foeArtOf(enemy.id));
   // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
-  const hero = heroEl(heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0));
+  const heroArt = heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0);
+  const heroLoco = locoOf(faction, opts.formId, heroArt);
+  const hero = heroEl(heroArt, heroLoco);
 
   const enemyMeter = meter({ kind: 'enemy', label: '적 체력', value: Math.ceil(s.enemy.hp - 1e-6), max: Math.round(s.enemy.maxHp), ghost: s.enemy.hp, compact: true });
   const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: s.player.maxHp, ghost: s.player.hp, compact: true });
   const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement): HTMLElement => {
     const u = el('div', `bha-unit ${cls}`);
+    if (cls.includes('--me')) setLoco(u, heroLoco); // 유닛 틀에도 붙여 그림 크기(떠오를 여유)를 CSS 가 잡는다
     const figBox = el('div', 'bha-unit__fig');
     figBox.append(fig);
     const hpBox = el('div', 'bha-unit__hp');
@@ -482,7 +488,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const cues: FxCue[] = [];
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
-    player: { root: hero.root, body: hero.body, dir: 1 },
+    player: { root: hero.root, body: hero.body, dir: 1, loco: heroLoco },
     enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: -1 },
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),

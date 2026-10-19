@@ -1,6 +1,8 @@
 // 종족 설정(faction config) 타입과 검증. 종족 차이는 전부 이 설정에서 읽는다 (CLAUDE.md 규칙 2).
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
+import { isLocomotion, type Locomotion } from './locomotion';
+
 /** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
 export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
 export type BlockRole = (typeof BLOCK_ROLES)[number];
@@ -135,6 +137,8 @@ export interface FactionConfig {
   huntingGroundName: string;
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
+  /** 1단계(진화 전) 캐릭터의 이동 방식 기본값 (GDD 18-11). 비우면 walk. 진화체·그림 manifest 가 있으면 그쪽이 우선 */
+  locomotion?: Locomotion;
   /** 공격 계열 목록과 단계별 기술 (GDD 17-3). 특성 family 가 가리키는 계열은 모두 여기 있어야 한다 */
   families: FamilyConfig[];
   /** 둥지 / 대원실 (GDD 7장) */
@@ -205,6 +209,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       }
     });
   }
+  if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {
     const rm = r.room as Record<string, unknown>;

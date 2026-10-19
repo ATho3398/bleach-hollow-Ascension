@@ -29,6 +29,7 @@
   "riskGaugeName": "광기",
   "absorbActionName": "포식",
   "walkAnim": "stomp",
+  "locomotion": "walk",
   "slotLocation": "body",
   "appearanceChange": true,
   "rankMode": "challenge",

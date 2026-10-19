@@ -29,6 +29,7 @@
   "riskGaugeName": "호로화",
   "absorbActionName": "정화 흡수",
   "walkAnim": "stride",
+  "locomotion": "walk",
   "slotLocation": "zanpakuto",
   "appearanceChange": false,
   "rankMode": "promotion",

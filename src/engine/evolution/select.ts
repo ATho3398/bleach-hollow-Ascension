@@ -1,6 +1,7 @@
 // 진화체 선택 (GDD 4-2 v1.0). 종족 무관 순수 함수: 단계별 테이블 + 현재 진화체 + 현재 단계 계통별 누적 → 진화체.
 // 조건은 계통별 누적 카운트 어휘뿐이다 (안정 수치·리스크 돌파·전투 성과는 쓰지 않는다).
 
+import { isLocomotion } from '../locomotion';
 import type { FormCondition, FormDef } from '../../data/schema';
 
 /** 현재 단계 계통별 누적의 스냅샷. 런 로그(EvolutionRecord.accumulation)에도 그대로 기록된다 */
@@ -156,6 +157,7 @@ export function validateFormTable(table: readonly FormDef[], lineageIds: readonl
         else if (prev.tier !== f.tier - 1) errors.push(`${f.id}: from ${p} 는 ${f.tier - 1}단계가 아니다`);
       }
     }
+    if (f.locomotion !== undefined && !isLocomotion(f.locomotion)) errors.push(`${f.id}: locomotion '${String(f.locomotion)}' 은 float | walk | fly 가 아니다`);
     checkLineages(f, f.label.lineages);
     for (const r of f.requires) {
       if ('lineage' in r) checkLineages(f, [r.lineage]);

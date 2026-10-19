@@ -12,9 +12,12 @@ import './ui/bha/lcd.css';
 import './ui/bha/screens-lcd.css';
 import './ui/bha/battle-scene.css';
 import './ui/bha/walk-scene.css';
+import './ui/bha/loco.css';
 import { startApp } from './ui/app';
+import { applyCalmMode } from './ui/fxSettings';
 import { mountSprite } from './ui/bha/sprite';
 
 mountSprite();
+applyCalmMode();
 const app = document.querySelector<HTMLDivElement>('#app');
 if (app) startApp(app);

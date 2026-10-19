@@ -2,7 +2,9 @@
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig, RoomProp } from '../../engine/faction';
+import type { Locomotion } from '../../engine/locomotion';
 import { el, icon } from './dom';
+import { LOCO_LIFT, setLoco } from './loco';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -63,10 +65,11 @@ export function roomCharArt(room: RoomConfig, factionId: string, tierIndex: numb
 }
 
 /** 캐릭터: 새 규칙의 그림 한 장(왼쪽을 보는 그림, 가만히) 또는 기존 제자리 2프레임 숨쉬기. 그림이 없으면 둥근 몸 + 눈 두 개 도형 */
-export function characterButton(art: ArtUrls, label: string): HTMLButtonElement {
+export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 'walk'): HTMLButtonElement {
   const b = el('button', 'bha-art bha-char');
   b.type = 'button';
   b.setAttribute('aria-label', label);
+  setLoco(b, loco);
   const body = el('span', 'bha-char__body bha-art-img');
   const { frames, src } = art;
   if (src) {
@@ -89,19 +92,23 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
   } else {
     body.append(el('span', 'bha-char__eye'), el('span', 'bha-char__eye'));
   }
-  b.append(body, el('span', 'bha-char__shadow'));
+  // 몸은 lift 상자 안: 부유·날기는 이 상자가 떠올라 움직이고, 그림자는 땅에 남는다
+  const lift = el('span', 'bha-char__lift');
+  lift.append(body);
+  b.append(lift, el('span', 'bha-char__shadow'));
   return b;
 }
 
 /** 방 캐릭터 그림의 윗변 높이: 캐릭터 상자 중심에서 위로 몇 px 인지(음수). 머리 위 상태 칩이 이 위에 놓인다. room.css 의 .bha-char 치수와 맞출 것 */
-export function charTopOffset(art: ArtUrls): number {
+export function charTopOffset(art: ArtUrls, loco: Locomotion = 'walk'): number {
   const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)
   const hasArt = !!(art.src || art.frames);
   const bodyH = hasArt ? 90 : 56;
   const boxTop = -(PAD * 2 + bodyH + SHADOW) / 2 + PAD; // 몸 상자 윗변
-  if (!art.src) return boxTop;
+  const lift = bodyH * LOCO_LIFT[loco]; // 떠 있는 만큼 머리가 위로 (움직임 중간 높이)
+  if (!art.src) return boxTop - lift;
   const drawn = 84; // 정사각 그림이 몸 상자(84×90) 안 아래쪽에 맞춰진 크기
   const pivot = bodyH * 0.92; // transform-origin 세로
   const top = pivot + (bodyH - drawn - pivot) * art.scale + (art.offsetY / 100) * bodyH;
-  return boxTop + Math.min(top, bodyH);
+  return boxTop + Math.min(top, bodyH) - lift;
 }

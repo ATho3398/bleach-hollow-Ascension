@@ -1,5 +1,6 @@
 // 진화체 자동 생성기 (GDD 4-2 v1.0, 임시 템플릿). 계통 id 목록만 받아 단계별 테이블을 만든다 — 계통 수가 달라져도 동작한다.
 // 결과는 forms.json 에 커밋하고 손으로 고쳐 쓴다 (`npm run gen:forms`). 이름은 자리 표시이고 원작 호로 이름은 쓰지 않는다.
+import type { Locomotion } from '../../engine/locomotion';
 import type { FormCondition, FormDef, FormEffects, FormKind, PassiveStat } from '../schema';
 
 export interface FormTemplate {
@@ -29,6 +30,15 @@ function combinations<T>(items: readonly T[], k: number): T[][] {
 }
 
 const round = (v: number, digits: number) => Math.round(v * 10 ** digits) / 10 ** digits;
+
+/** 이동 방식 배정 (GDD 18-11, 임시): 요구 계통 번호(정렬 순) 합을 3으로 나눈 나머지로 걷기/부유/날기를 돌려 단계마다 3종이 고르게 나온다. 계통 없는 특수형은 종류별로 고정 */
+const LOCO_CYCLE: readonly Locomotion[] = ['walk', 'float', 'fly'];
+const LOCO_BY_KIND: Partial<Record<FormKind, Locomotion>> = { balanced: 'float', picky: 'fly', rare: 'walk', base: 'walk' };
+export function locomotionOf(kind: FormKind, lineages: readonly string[], sortedIds: readonly string[]): Locomotion {
+  if (lineages.length === 0) return LOCO_BY_KIND[kind] ?? 'walk';
+  const sum = lineages.reduce((a, l) => a + Math.max(0, sortedIds.indexOf(l)), 0);
+  return LOCO_CYCLE[sum % LOCO_CYCLE.length]!;
+}
 
 export function formIdOf(tier: number, kind: FormKind, lineages: readonly string[]): string {
   return `t${tier}:${kind}${lineages.length > 0 ? `@${lineages.join('+')}` : ''}`;
@@ -74,6 +84,7 @@ export function generateForms(lineageIds: readonly string[], tpl: FormTemplate, 
     priority: tpl.priority[kind],
     ...(kind === 'base' ? { fallback: true as const } : {}),
     effects: effectsOf(kind, lineages, tpl, tendencyOf),
+    locomotion: locomotionOf(kind, lineages, ids),
     provisional: true,
   });
   /** 경로 규칙(임시): 이전 단계 진화체가 요구 계통을 하나라도 포함하면 연결. 계통이 없는 이전 진화체(특수형·기본형)는 막다른 길을 피하려 모든 곳에 연결 */
