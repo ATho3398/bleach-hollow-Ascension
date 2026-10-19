@@ -4,6 +4,7 @@
 import type { CombatEvent } from '../engine/combat';
 import type { AttackFxKind } from '../engine/faction';
 import type { Locomotion } from '../engine/locomotion';
+import type { AnimPlayer } from './bha/animPlayer';
 import { LOCO_LIFT } from './bha/loco';
 import {
   ATTACK_FX, ATTACK_TIER_ORDER, FAMILY_MOTION, FAMILY_STAGE_FX, FX_RATE_MAX, FX_RATE_MIN, FX_SAFETY_MS, GHOST_LAG_MS, GHOST_OPACITY,
@@ -263,6 +264,14 @@ export interface AttackActor {
   dir: 1 | -1;
   /** 이동 방식 (GDD 18-11): 돌진 모양만 바뀐다. 없으면 걷기 */
   loco?: Locomotion;
+  /** 프레임 애니 재생기 (GDD 26장). 있는 동작만 애니로 돌고, 없는 동작은 아래 기존 연출(몸통박치기·흔들림)을 쓴다 */
+  anim?: AnimPlayer | null;
+}
+
+/** 이 연출에 쓸 프레임 동작: 필살·콤보·계열 공격·강공격은 skill, 그 밖은 attack. 그 동작이 없으면 null(= 기존 연출. 다른 동작으로 대신하지 않는다) */
+export function animActionOf(cue: Pick<AttackCue, 'ult' | 'fx' | 'tier'>, has: (a: 'attack' | 'skill') => boolean): 'attack' | 'skill' | null {
+  const a = cue.ult || cue.fx || cue.tier === 'special' ? 'skill' : 'attack';
+  return has(a) ? a : null;
 }
 
 export interface AttackFxDriver {
@@ -338,6 +347,13 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
   };
 
   const hit = (target: AttackActor, level: AttackFxLevel, guarded: boolean, delayMs: number): void => {
+    // 맞음 애니가 있으면 흔들림 대신 그 애니 (막았을 땐 기존 막기 표시). 없으면 아래 기존 흔들림
+    const hitAnim = target.anim;
+    if (!guarded && hitAnim?.has('hit')) {
+      if (delayMs <= 0) hitAnim.play('hit');
+      else after(target.body, delayMs, () => hitAnim.play('hit'));
+      return;
+    }
     const plan = hitPlan(scaled(level, unit()), (target.dir * -1) as 1 | -1, mode, guarded);
     // composite add: 맞는 쪽 원래 filter(적 윤곽 빛 drop-shadow)를 지우지 않고 번쩍임을 덧붙인다 (지우면 검은 실루엣이 배경에 묻힌다)
     track(target.body.animate(plan.keyframes, { duration: plan.durationMs, delay: delayMs, easing: 'linear', fill: 'none', composite: 'add' }));
@@ -501,25 +517,32 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     }
     const layer = opts.layer && canAnimate(opts.layer) ? opts.layer : null;
     if (layer && cue.name) showName(layer, cue);
+    // 프레임 애니(GDD 26장): 공격/특수 공격 동작이 있으면 그 애니를 재생하고 몸통박치기 돌진은 하지 않는다(위치 연출은 애니 안에 있다).
+    // 타격 순간은 애니의 hit 프레임. 동작이 없으면 아래 기존 연출 그대로
+    const act = from.anim ? animActionOf(cue, (a) => from.anim!.has(a)) : null;
+    const clipPlay = act ? from.anim!.play(act) : null;
     if (mode === 'flash') {
-      // 돌진 없이 맞는 쪽만 번쩍인다
-      hit(to, level, cue.guarded, 0);
+      // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰)
+      hit(to, level, cue.guarded, clipPlay?.hitAtMs ?? 0);
       const a = [...live].pop();
       if (a) {
         a.addEventListener('finish', done);
         a.addEventListener('cancel', done);
-        window.setTimeout(done, level.hitMs / rate + FX_SAFETY_MS);
-      } else done();
+        window.setTimeout(done, ((clipPlay?.hitAtMs ?? 0) + level.hitMs) / rate + FX_SAFETY_MS);
+      } else if (clipPlay) window.setTimeout(done, clipPlay.durationMs / rate + FX_SAFETY_MS / 4);
+      else done();
       return;
     }
     const lv = scaled(level, unit());
     const motion = cue.fx ? familyMotion(cue.fx) : null;
-    const plan = motion?.move === 'cast'
-      ? castPlan(lv, from.dir, motion.travelMs)
-      : lungePlan(lv, from.dir, reachOf(gapOf(from, to)) * (motion?.reach ?? 1), from.loco, from.root.offsetHeight * LOCO_LIFT[from.loco ?? 'walk']);
+    const plan: LungePlan = clipPlay
+      ? { keyframes: [], durationMs: clipPlay.durationMs, hitAtMs: clipPlay.hitAtMs, ghosts: 0 }
+      : motion?.move === 'cast'
+        ? castPlan(lv, from.dir, motion.travelMs)
+        : lungePlan(lv, from.dir, reachOf(gapOf(from, to)) * (motion?.reach ?? 1), from.loco, from.root.offsetHeight * LOCO_LIFT[from.loco ?? 'walk']);
     const timing: KeyframeAnimationOptions = { duration: plan.durationMs, easing: 'linear', fill: 'none' };
     from.root.style.zIndex = '4';
-    const main = track(from.root.animate(plan.keyframes, timing));
+    const main = track(from.root.animate(clipPlay ? [{}, {}] : plan.keyframes, timing)); // 애니는 길이만 재는 빈 애니메이션(배속·일시정지를 따른다)
     // 잔상: 몸을 복제해 투명도를 낮추고 조금씩 늦게 같은 길을 따라가게 한다
     for (let i = 0; i < plan.ghosts; i++) {
       const g = from.body.cloneNode(true) as HTMLElement;
@@ -590,9 +613,13 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     setSpeed(speed) {
       rate = fxRate(speed);
       for (const a of live) a.playbackRate = rate;
+      opts.player.anim?.setRate(rate);
+      opts.enemy.anim?.setRate(rate);
     },
     setPaused(on) {
       paused = on;
+      opts.player.anim?.setPaused(on);
+      opts.enemy.anim?.setPaused(on);
       for (const a of live) {
         if (on) a.pause();
         else a.play();

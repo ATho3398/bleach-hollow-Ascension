@@ -11,7 +11,9 @@
 // 이 목록의 src·frames 는 파일 규칙에 맞지 않는 이름을 쓰고 싶을 때의 직접 지정이고, scale·offsetY 는 어느 쪽이든 쓴다.
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
 import type { Locomotion } from '../../engine/locomotion';
-import { charArtKeys, findArtFile, ART_FILES } from './files';
+import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
+import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
+import { getSkin, skinArtKey } from '../skins';
 
 export interface ArtEntry {
   /** 한 장짜리 그림 경로 (public/ 기준, 예 "art/scene-hollow.png"). 비우면 자리표시 도형 */
@@ -34,6 +36,8 @@ export interface ArtUrls {
   offsetY: number;
   /** manifest 에서 정한 이동 방식(없으면 undefined = 진화체·종족 기본을 따른다) */
   locomotion?: Locomotion;
+  /** 프레임 애니 (GDD 26장): 동작별로 있는 것만. 없는 동작은 기존 연출을 쓴다 */
+  anims?: AnimSet;
 }
 
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
@@ -63,21 +67,38 @@ export function artUrls(key: string, base = '/', manifest: Readonly<Record<strin
   };
 }
 
-/** 적 그림: `enemy-<적id>` 파일이 있을 때만 값을 돌려준다(없으면 null = 기존 실루엣). 목록에 scale·offsetY 만 적어도 된다 */
-export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): ArtUrls | null {
-  const a = artUrls(`enemy.${enemyId}`, base, manifest, files);
-  return a.src ? a : null;
+const joinBase = (base: string, p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+const withAnims = (a: ArtUrls, anims: AnimSet): ArtUrls => (hasAnims(anims) ? { ...a, anims } : a);
+
+/** 적 그림: `enemy-<적id>` 한 장짜리 파일이나 `idle` 애니가 있을 때만 값을 돌려준다(없으면 null = 기존 실루엣). 목록에 scale·offsetY 만 적어도 된다 */
+export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES, overrides: Readonly<Record<string, AnimOverrides>> = ART_ANIMS as Record<string, AnimOverrides>): ArtUrls | null {
+  const key = `enemy.${enemyId}`;
+  const a = artUrls(key, base, manifest, files);
+  const anims = resolveAnims([key], base, files, overrides);
+  // 한 장짜리 파일이 없고 idle 애니만 있으면 idle-1 을 정지 그림으로도 쓴다 (GDD 26-2)
+  const src = a.src ?? anims.idle?.frames[0] ?? null;
+  return src ? withAnims({ ...a, src }, anims) : null;
 }
 
 /** 캐릭터 그림. 새 규칙(단계별 파일 > 종족 공통 파일)이 있으면 그 한 장이 우선이고(frames 없음),
- *  없으면 종족 설정의 기존 키(`fallbackKey`, 예 char.hollow)의 직접 지정 → 파일 → 자리표시 순서. 종족 id 는 키 조립에만 쓴다 */
-export function charArt(factionId: string, tierIndex: number, fallbackKey: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): ArtUrls {
-  const join = (p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
-  for (const key of charArtKeys(factionId, tierIndex)) {
-    const file = findArtFile(key, files);
-    if (!file) continue;
-    const e = manifest[key] ?? manifest[fallbackKey];
-    return { src: join(file), frames: null, scale: e?.scale ?? 1, offsetY: e?.offsetY ?? 0, locomotion: manifest[key]?.locomotion ?? manifest[fallbackKey]?.locomotion };
+ *  없으면 종족 설정의 기존 키(`fallbackKey`, 예 char.hollow)의 직접 지정 → 파일 → 자리표시 순서. 종족 id 는 키 조립에만 쓴다.
+ *  프레임 애니(GDD 26장)는 동작마다 단계별 폴더 → 종족 공통 폴더 순서로 찾는다.
+ *  skinId 가 있고 그 스킨 그림이 하나라도 있으면 단계와 상관없이 스킨 그림(`skin-<id>` 한 장·폴더)만 쓴다(없는 동작은 기존 연출, 진화체 애니로 대신하지 않는다) */
+export function charArt(factionId: string, tierIndex: number, fallbackKey: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES, skinId?: string | null, overrides: Readonly<Record<string, AnimOverrides>> = ART_ANIMS as Record<string, AnimOverrides>): ArtUrls {
+  const tryKeys = (keys: string[]): ArtUrls | null => {
+    for (const key of keys) {
+      // 정지 그림: 한 장짜리 파일, 없으면 그 폴더의 idle-1 (GDD 26-2)
+      const still = findArtFile(key, files) ?? frameFiles(key, 'idle', files)[0] ?? null;
+      if (!still) continue;
+      const e = manifest[key] ?? manifest[fallbackKey];
+      const a: ArtUrls = { src: joinBase(base, still.startsWith('art/') ? still : `art/${still}`), frames: null, scale: e?.scale ?? 1, offsetY: e?.offsetY ?? 0, locomotion: manifest[key]?.locomotion ?? manifest[fallbackKey]?.locomotion };
+      return withAnims(a, resolveAnims(keys, base, files, overrides));
+    }
+    return null;
+  };
+  if (skinId && getSkin(skinId)) {
+    const skin = tryKeys([skinArtKey(skinId)]);
+    if (skin) return skin; // 스킨 그림이 아직 하나도 없으면 진화체 그림으로 (빈 화면 방지)
   }
-  return artUrls(fallbackKey, base, manifest, files);
+  return tryKeys(charArtKeys(factionId, tierIndex)) ?? artUrls(fallbackKey, base, manifest, files);
 }

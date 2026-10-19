@@ -23,11 +23,12 @@ import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
 import { newlyAchieved } from './engine/tutorialGoals';
 import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
 import { DEFAULT_GROUND_ID } from './data/grounds';
+import { canWear } from './data/skins';
 import { applyAbsenceHunger } from './engine/nest';
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 18;
+export const SAVE_FORMAT_VERSION = 19;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -76,6 +77,8 @@ export interface SaveData {
   lastSeenAt: number;
   /** 해방 수련 (GDD 22-4·22-5, 형식 18): 수련치·수련권(이 트랙의 원정 귀환으로만)·종목별 승리 수·완료 여부. 완료는 등급 이력처럼 환생해도 유지할 자리 */
   training: TrainingState;
+  /** 입고 있는 스킨 id (GDD 25-1·26-5, 형식 19). null = 진화체 그림 그대로. 이 종족이 입을 수 있는 스킨이 아니면 null 로 고친다 */
+  skin: string | null;
 }
 
 /** 튜토리얼 보상 수령 1건 (GDD 23-3) */
@@ -208,7 +211,7 @@ export function newTileStock(): TileStock {
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
-  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState() };
+  return { meta: newSaveMeta(), factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed(Math.floor(nowMs) >>> 0, 0)), formDex: [], tiles: newTileStock(), runLog: emptyRunLog(), titles: [], activeExpedition: null, help: newHelpState(), lastScreen: 'room', rank: newRankState(), shared: newSharedState(), lastSeenAt: nowMs, training: newTrainingState(), skin: null };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -521,6 +524,12 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.runLog.battles = save.runLog.battles.map((b) => ({ ...b, liberationUsed: b.liberationUsed ?? false, liberationAt: b.liberationAt ?? null }));
     save.meta.format = 18;
   }
+  if (save.meta.format < 19) {
+    // 형식 18 → 19 (C.55, GDD 26-5): 입고 있는 스킨 (옛 세이브는 진화체 그림 그대로)
+    save.skin = null;
+    save.meta.format = 19;
+  }
+  save.skin = canWear(save.factionId, save.skin) ? save.skin : null;
   if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
   save.training = sanitizeTraining(save.training);
   save.runLog.trainings = Array.isArray(save.runLog.trainings) ? save.runLog.trainings : [];
@@ -533,6 +542,13 @@ export function migrateSave(raw: unknown): SaveData | null {
   if (typeof save.activeExpedition !== 'object' || Array.isArray(save.activeExpedition)) save.activeExpedition = null;
   if (!SCREEN_KEYS.includes(save.lastScreen)) save.lastScreen = 'room';
   return save;
+}
+
+/** 스킨 입기/벗기 (GDD 26-5). 이 종족이 입을 수 없는 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기. 상점 전까지는 있는 스킨 전부 열림(provisional) */
+export function equipSkin(save: SaveData, skinId: string | null): boolean {
+  if (skinId !== null && !canWear(save.factionId, skinId)) return false;
+  save.skin = skinId;
+  return true;
 }
 
 export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData | null {

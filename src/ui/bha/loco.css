@@ -48,6 +48,15 @@
 .bha-lcd .bha-walker[data-loco] { height: calc(60% / (1 + var(--loco-f, 0))); }
 .bha-walker[data-loco] .bha-exp__msg { bottom: calc(100% + var(--bha-sp-4) + var(--loco-f, 0) * 100%); }
 
+/* 프레임 애니(GDD 26장, C.55)가 있는 동작은 그림이 직접 움직이므로 겹치는 가짜 움직임을 끈다.
+   대기 애니(has-anim-idle): 부유·날기 위아래 출렁임 끔(떠 있는 높이는 그대로). 이동 애니(has-anim-move): 걸음 흔들림·출렁임·기울임 끔(좌우 흐름만 유지).
+   없는 동작은 이 규칙이 붙지 않아 기존 움직임 그대로다. */
+.bha-char.has-anim-idle[data-loco] .bha-char__lift, .bha-char.has-anim-idle[data-loco] .bha-char__shadow,
+.bha-hero.has-anim-idle[data-loco] .bha-hero__lift, .bha-hero.has-anim-idle[data-loco] .bha-hero__shadow { animation: none; }
+.bha-walker.has-anim-move .bha-walker__body, .bha-walker.has-anim-move .bha-walker__foot,
+.bha-walker.has-anim-move[data-loco] .bha-walker__body, .bha-walker.has-anim-move[data-loco] .bha-walker__shadow { animation: none; }
+.bha-walker.has-anim-move[data-loco='fly'] .bha-walker__body, .is-walking .bha-walker.has-anim-move[data-loco='fly'] .bha-walker__body { rotate: 0deg; }
+
 /* 움직임 줄이기 (prefers-reduced-motion 또는 설정의 화면 흔들림 끔 = html[data-calm]): 높이만 유지하고 흔들림은 멈춘다 */
 @media (prefers-reduced-motion: reduce) {
   [data-loco] .bha-char__lift, [data-loco] .bha-hero__lift, [data-loco] .bha-walker__body, [data-loco] .bha-char__shadow, [data-loco] .bha-hero__shadow, [data-loco] .bha-walker__shadow { animation: none; }

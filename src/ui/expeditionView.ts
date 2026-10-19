@@ -24,6 +24,8 @@ const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE
 export interface ExpeditionViewHandlers {
   /** 육성 단계(0부터): 걷는 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다 */
   tierIndex?: number;
+  /** 입고 있는 스킨 id (GDD 26-5). 없으면 진화체 그림 */
+  skinId?: string | null;
   /** 현재 진화체 id (이동 방식 GDD 18-11 을 고른다). 1단계는 null */
   formId?: string | null;
   /** 전투가 시작될 때: 전투 화면으로 넘어간다. 끝나면 호출자가 expeditionView 를 다시 부른다 */
@@ -217,7 +219,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const chips = el('section', 'bha-exp__chips');
   chips.append(where, meters, slotsLine);
 
-  const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE);
+  const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
   const walk = walkScene(faction.walkAnim, faction.huntingGroundName, walkArt, locoOf(faction, h.formId, walkArt));
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');

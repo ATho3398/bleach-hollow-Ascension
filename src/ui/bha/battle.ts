@@ -5,6 +5,7 @@ import { charArt, enemyArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig } from '../../engine/faction';
 import type { EnemyPatternKind } from '../../data/schema';
 import type { Locomotion } from '../../engine/locomotion';
+import { bindAnim } from './animPlayer';
 import { el, icon } from './dom';
 import { setLoco } from './loco';
 
@@ -193,7 +194,9 @@ export function foeEl(symbolId: string, aura: string | null, art: ArtUrls | null
   const body = el('span', 'bha-foe__body');
   if (art?.src) {
     body.classList.add('has-art');
-    body.append(artImg(art, art.src, 'bha-foe__img'));
+    const img = artImg(art, art.src, 'bha-foe__img');
+    body.append(img);
+    bindAnim(foe, img, art)?.setLoop('idle');
   } else body.append(foeSvg(symbolId));
   foe.append(el('span', 'bha-foe__aura'), body);
   return foe;
@@ -218,8 +221,8 @@ export function foeArtOf(enemyId: string): ArtUrls | null {
 const ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
 /** 종족·단계에 맞는 내 그림 (새 규칙 파일 > 종족 설정의 기존 키 > 없음). 종족 id 는 키 조립에만 쓴다 */
-export function heroArtOf(room: RoomConfig, factionId: string, tierIndex: number): ArtUrls {
-  return charArt(factionId, tierIndex, room.characterArt, ART_BASE);
+export function heroArtOf(room: RoomConfig, factionId: string, tierIndex: number, skinId?: string | null): ArtUrls {
+  return charArt(factionId, tierIndex, room.characterArt, ART_BASE, undefined, undefined, skinId);
 }
 
 /** 내 그림 한 장 (`.bha-hero`): 몸통박치기의 주인공. 그림이 있으면 첫 프레임 한 장(왼쪽을 보는 그림), 없으면 자리표시 도형 */
@@ -230,7 +233,9 @@ export function heroEl(art: ArtUrls, loco: Locomotion = 'walk'): { root: HTMLEle
   const url = art.src ?? art.frames?.[0] ?? null;
   if (url) {
     body.classList.add('has-art');
-    body.append(artImg(art, url, 'bha-hero__img'));
+    const img = artImg(art, url, 'bha-hero__img');
+    body.append(img);
+    bindAnim(root, img, art)?.setLoop('idle');
   } else {
     body.append(el('span', 'bha-hero__eye'), el('span', 'bha-hero__eye'));
   }

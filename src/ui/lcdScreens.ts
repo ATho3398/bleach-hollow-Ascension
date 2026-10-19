@@ -2,7 +2,9 @@
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
 import { BALANCE } from '../config/balance';
 import { tilesFor, tileName } from '../data/tiles';
-import type { SaveData } from '../game';
+import { equipSkin, type SaveData } from '../game';
+import { skinsFor, skinLabel } from '../data/skins';
+import { charArt } from '../data/art/manifest';
 import { versionLabel } from '../version';
 import { traitsTab, type TraitsTabState } from './buildPanel';
 import { evolutionColumns } from './evolutionPanel';
@@ -42,7 +44,52 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.setAttribute('aria-label', '능력치');
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id), evo.ev, refStatOf(evo.tierIndex)));
   if (evo.ability) stats.append(h('p', 'bha-faint', `고유 특성: ${abilityName(evo.ability, faction.id)}`));
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치. 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치. 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+}
+
+/** 스킨 고르기 (GDD 25-1·26-5, C.55): [기본(진화체)]와 이 종족이 입을 수 있는 스킨. 상점 전까지는 있는 스킨이 전부 열려 있다(provisional). 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
+ *  종족이 다른 스킨은 목록에 안 보인다(데이터의 종족 필드). 입을 수 있는 스킨이 없는 종족은 그 안내만 */
+function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void): HTMLElement {
+  const skins = skinsFor(faction.id);
+  const p = panel(skins.length > 0 ? { title: '스킨', aside: provisionalTag('임시: 전부 열림') } : { title: '스킨' });
+  p.setAttribute('aria-label', '스킨');
+  p.dataset.skins = String(skins.length);
+  if (skins.length === 0) {
+    p.append(h('p', 'bha-faint', '이 종족이 입을 수 있는 스킨은 아직 없다.'));
+    return p;
+  }
+  const list = h('div', 'bha-stack bha-stack--tight');
+  const rows: { id: string | null; btn: HTMLButtonElement }[] = [];
+  const mark = () => {
+    for (const r of rows) {
+      const on = (save.skin ?? null) === r.id;
+      r.btn.classList.toggle('is-on', on);
+      r.btn.setAttribute('aria-pressed', String(on));
+    }
+  };
+  const add = (id: string | null, label: string, thumb: string | null) => {
+    const btn = button({ label, block: true, onClick: () => {
+      if (!equipSkin(save, id)) return;
+      persist();
+      mark();
+    } });
+    if (thumb) {
+      const img = h('img', 'bha-skinthumb') as HTMLImageElement;
+      img.src = thumb;
+      img.alt = '';
+      img.draggable = false;
+      btn.prepend(img);
+    }
+    btn.dataset.skin = id ?? '';
+    rows.push({ id, btn });
+    list.append(btn);
+  };
+  const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+  add(null, '기본(진화체)', charArt(faction.id, save.evolution.tierIndex, '', base).src);
+  for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, sk.id).src);
+  mark();
+  p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·원정·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
+  return p;
 }
 
 /** 가진 것 (GDD 23-1·22-3·23-4·25-1): 먹이 종류별 개수, 영혼 결정, 골드(쓰는 곳 준비 중), 영옥(꾸밈 재화, 쓰는 곳 준비 중) */

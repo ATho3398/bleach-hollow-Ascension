@@ -3,6 +3,7 @@
 import type { ExpeditionPhase } from '../../engine/expedition';
 import type { ArtUrls } from '../../data/art/manifest';
 import type { Locomotion } from '../../engine/locomotion';
+import { bindAnim, type AnimPlayer } from './animPlayer';
 import { el, icon } from './dom';
 import { setLoco } from './loco';
 
@@ -42,6 +43,7 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
   const walker = el('span', `bha-walker ${walkAnimClass(walkAnim)}`);
   setLoco(walker, loco);
   const body = el('span', 'bha-walker__body');
+  let anim: AnimPlayer | null = null;
   if (art?.src) {
     // 그림 한 장(왼쪽을 보는 그림 그대로 = 왼쪽으로 걷는다). 걸음 흔들림은 몸통 상자가 맡는다
     walker.classList.add('has-art');
@@ -52,6 +54,8 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
     img.style.setProperty('--art-scale', String(art.scale));
     img.style.setProperty('--art-dy', `${art.offsetY}%`);
     body.append(img);
+    anim = bindAnim(walker, img, art);
+    anim?.setLoop('idle');
   } else body.append(el('span', 'bha-walker__eye'), el('span', 'bha-walker__foot bha-walker__foot--back'), el('span', 'bha-walker__foot bha-walker__foot--front'));
   walker.append(body, el('span', 'bha-walker__shadow'));
   scene.append(far, near, ground, walker);
@@ -60,6 +64,11 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
     walker,
     update: ({ walking, speed }) => {
       scene.classList.toggle('is-walking', walking);
+      // 이동 애니가 있으면 걷는 동안 move, 아니면 idle(없으면 정지 그림 + 기존 걷기 연출). 배속만큼 빨리 돈다
+      if (anim) {
+        anim.setLoop(walking && anim.has('move') ? 'move' : 'idle');
+        anim.setRate(Math.max(1, speed));
+      }
       scene.style.setProperty('--walk-speed', walkSpeedVar(speed));
     },
   };

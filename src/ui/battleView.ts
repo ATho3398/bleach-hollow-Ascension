@@ -16,6 +16,7 @@ import {
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, chip, el, icon, meter, mountApp, notice, provisionalTag, setMeter, tag } from './bha/dom';
+import { animOf } from './bha/animPlayer';
 import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
@@ -49,6 +50,8 @@ export interface BattleViewOptions {
   tutorial?: { onDone: () => void };
   /** 육성 단계(0부터): 단계별 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다. 없으면 1단계 취급 */
   tierIndex?: number;
+  /** 입고 있는 스킨 id (GDD 26-5) */
+  skinId?: string | null;
   /** 현재 진화체 id (이동 방식 GDD 18-11). 1단계는 null */
   formId?: string | null;
   /** 해방 버튼 (GDD 22-5): 있으면(5단계 이상) 저장 필살기 옆에 보인다. 쓸 수 있는지는 엔진 params.liberationEnabled, 못 쓰면 note(무엇이 부족한지 한 줄)와 함께 잠긴 버튼 */
@@ -231,9 +234,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', elementColor(enemy.element), foeArtOf(enemy.id));
   // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
-  const heroArt = heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0);
+  const heroArt = heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0, opts.skinId);
   const heroLoco = locoOf(faction, opts.formId, heroArt);
   const hero = heroEl(heroArt, heroLoco);
+  const heroAnim = animOf(hero.root); // 프레임 애니 (GDD 26장): 있는 동작만. 없으면 null / 없는 동작은 기존 연출
+  const foeAnim = animOf(foe);
 
   const enemyMeter = meter({ kind: 'enemy', label: '적 체력', value: Math.ceil(s.enemy.hp - 1e-6), max: Math.round(s.enemy.maxHp), ghost: s.enemy.hp, compact: true });
   const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: Math.round(s.player.maxHp), ghost: s.player.hp, compact: true });
@@ -552,8 +557,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const cues: FxCue[] = [];
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
-    player: { root: hero.root, body: hero.body, dir: 1, loco: heroLoco },
-    enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: -1 },
+    player: { root: hero.root, body: hero.body, dir: 1, loco: heroLoco, anim: heroAnim },
+    enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: -1, anim: foeAnim },
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
@@ -608,7 +613,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         flash('is-special', 600);
         break;
       case 'liberate':
-        replayOnce(libCut, 'is-on', 1400);
+        // 해방 변신 애니(release)가 있으면 그것이 변신 연출이다 — 공통 컷인은 없을 때만 (GDD 26-3)
+        if (!heroAnim?.play('release', { onEnd: () => heroAnim.stop() })) replayOnce(libCut, 'is-on', 1400);
         flash('is-special', 700);
         shake();
         break;
@@ -654,6 +660,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         break;
       case 'end':
         flash(e.status === 'won' ? 'is-win' : 'is-lose', 900);
+        // 승리: 나는 기뻐하고 적은 쓰러진다 / 패배: 나는 쓰러지고 적이 기뻐한다. 마지막 장을 유지. 동작이 없으면 위 번쩍임만 (GDD 26-3)
+        heroAnim?.play(e.status === 'won' ? 'win' : 'lose');
+        foeAnim?.play(e.status === 'won' ? 'lose' : 'win');
         break;
       case 'spawn':
         if (e.block === 'special' || e.block === 'combo') {

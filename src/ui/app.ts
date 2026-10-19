@@ -145,6 +145,7 @@ export function startApp(host: HTMLElement): void {
     setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
+      skinId: save?.skin,
       formId: save?.evolution.formId,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
@@ -512,6 +513,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
+      skinId: save?.skin,
       formId: save?.evolution.formId,
       banner: where,
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
@@ -543,6 +545,7 @@ export function startApp(host: HTMLElement): void {
     setBgm('expedition');
     expeditionView(root, faction, exp, {
       tierIndex: save?.evolution.tierIndex,
+      skinId: save?.skin,
       formId: save?.evolution.formId,
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
@@ -610,6 +613,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
+      skinId: save?.skin,
       formId: save?.evolution.formId,
       tutorial: tutorialFor(),
       liberation: save ? liberationButton(faction, liberationAccess(save)) : undefined,
@@ -651,6 +655,7 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: holder, params });
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,
+      skinId: s0.skin,
       formId: s0.evolution.formId,
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       liberation: liberationButton(faction, liberationAccess(s0)),

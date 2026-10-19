@@ -383,8 +383,8 @@ describe('세이브 형식 18 (C.54)', () => {
     delete old.runLog.trainings;
     old.runLog.battles = [{ runId: 1, won: true, enemyClass: 'normal', factionId: 'hollow' }];
     const m = migrateSave(old)!;
-    expect(SAVE_FORMAT_VERSION).toBe(18);
-    expect(m.meta.format).toBe(18);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(18); // C.55 에서 19 (형식 19 검사는 c55.test.ts)
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.training).toEqual(newTrainingState());
     expect(m.runLog.trainings).toEqual([]);
     expect(m.runLog.battles[0]).toMatchObject({ liberationUsed: false, liberationAt: null });

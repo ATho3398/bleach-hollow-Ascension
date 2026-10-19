@@ -6,6 +6,7 @@ import { doNestAction } from '../engine/nest';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
 import { feedNest, sanitizeDeck, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
+import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
@@ -101,16 +102,31 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     props.set(p, b);
     scene.append(b);
   }
-  const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex);
+  const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, save.skin);
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
   const char = characterButton(charArtUrls, '캐릭터', loco);
-  let hop = 0;
-  const react = (line?: string, ms?: number) => {
+  const charAnim = animOf(char);
+  /** 프레임 애니가 있는 동작이면 재생하고 true (GDD 26-3). 끝나면(hold·반복은 잠시 뒤) 대기로 돌아간다. 없으면 false = 기존 뛰는 반응 */
+  let animTimer = 0;
+  const playAnim = (action: 'win' | 'eat' | 'sleep'): boolean => {
+    if (!charAnim?.has(action)) return false;
+    window.clearTimeout(animTimer);
+    charAnim.play(action, { onEnd: () => (animTimer = window.setTimeout(() => charAnim.stop(), 700)) });
+    if (action === 'sleep') animTimer = window.setTimeout(() => charAnim.stop(), 3200); // 반복 동작: 말풍선 시간만큼
+    return true;
+  };
+  const hopChar = () => {
     char.classList.remove('is-react');
     void char.offsetWidth;
     char.classList.add('is-react');
-    window.clearTimeout(hop);
-    hop = window.setTimeout(() => char.classList.remove('is-react'), 700);
+  };
+  let hop = 0;
+  const react = (line?: string, ms?: number) => {
+    if (!playAnim('win')) {
+      hopChar();
+      window.clearTimeout(hop);
+      hop = window.setTimeout(() => char.classList.remove('is-react'), 700);
+    }
     say(line ?? pickLine(room.talk, mood === 'idle' && Math.random() < 0.4 ? 'happy' : mood), ms);
   };
   char.onclick = () => react();
@@ -150,9 +166,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       hd.persist();
       paintGauges();
       say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }), 3200);
-      char.classList.remove('is-react');
-      void char.offsetWidth;
-      char.classList.add('is-react');
+      // 먹기·잠 애니가 있으면 그것을, 없으면 기존 뛰는 반응 (다른 동작 애니로 대신하지 않는다)
+      const clip = action === 'feed' ? 'eat' : action === 'sleep' ? 'sleep' : null;
+      if (!(clip && playAnim(clip))) hopChar();
     },
     more: [
       { label: faction.rankBattleName, icon: 'i-title', onClick: hd.onRank },

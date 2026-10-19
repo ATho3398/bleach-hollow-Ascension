@@ -277,3 +277,7 @@ button.bha-slot { cursor: pointer; }
 .bha-rankpage .bha-lcdpage__col--right { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
 .bha-rankfoe { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 10px; padding: 8px 10px 8px 8px; border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
 .bha-rankfoe > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* 스킨 고르기 (상태 화면, GDD 26-5): 작은 그림 + 이름 한 줄씩. 입은 스킨은 is-on */
+.bha-care-page .bha-skinthumb { width: 32px; height: 32px; object-fit: contain; object-position: 50% 100%; flex: none; pointer-events: none; }
+.bha-care-page [data-skin] { justify-content: flex-start; gap: var(--bha-sp-3); }

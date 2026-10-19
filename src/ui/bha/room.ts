@@ -3,6 +3,7 @@
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig, RoomProp } from '../../engine/faction';
 import type { Locomotion } from '../../engine/locomotion';
+import { bindAnim } from './animPlayer';
 import { el, icon } from './dom';
 import { LOCO_LIFT, setLoco } from './loco';
 
@@ -60,8 +61,8 @@ export function propButton(o: PropOpts): HTMLButtonElement {
 }
 
 /** 종족·단계에 맞는 캐릭터 그림 (GDD 17-6) */
-export function roomCharArt(room: RoomConfig, factionId: string, tierIndex: number): ArtUrls {
-  return charArt(factionId, tierIndex, room.characterArt, BASE);
+export function roomCharArt(room: RoomConfig, factionId: string, tierIndex: number, skinId?: string | null): ArtUrls {
+  return charArt(factionId, tierIndex, room.characterArt, BASE, undefined, undefined, skinId);
 }
 
 /** 캐릭터: 새 규칙의 그림 한 장(왼쪽을 보는 그림, 가만히) 또는 기존 제자리 2프레임 숨쉬기. 그림이 없으면 둥근 몸 + 눈 두 개 도형 */
@@ -81,6 +82,7 @@ export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 
     img.style.setProperty('--art-dy', `${art.offsetY}%`);
     body.append(img);
     body.classList.add('has-art');
+    bindAnim(b, img, art)?.setLoop('idle'); // 프레임 애니가 있는 동작만 (GDD 26장) — idle 이 없으면 정지 그림
   } else if (frames) {
     frames.forEach((f, i) => {
       const img = el('img', `bha-char__frame bha-char__frame--${i + 1}`) as HTMLImageElement;
