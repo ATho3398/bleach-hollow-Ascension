@@ -407,5 +407,12 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 **캡처** `docs/captures/c79/`(1배, 8장): 걷기 `01` 호로 사막 · `02` 호로 숲 · `03` 사신 현세 거리 · `04` 사신 단가이, `05` 원정 전투(사막), `06` 등급전(세이레이테이 지붕), `07`·`08` 홈 물건 이름(호로·사신).
 
 
+### C.80 홈 물건 이름·아이콘 변경 (STAGE S-22, 코딩64, GDD 34-4 → v5.65)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.80. `BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로.
+사용자 원문: "지금 창문이랑 재단 기능이 뭐지 ?이름하고 아이콘 바꿔야할듯, 그리고 기록서 말고 뭐 다른가로 이름 바꾸고 책장이미지로 바꾸자"
+- **이름**: 두 종족 `room.props` 창문 → 칭호 액자, 제단 → 수련장, 기록서 → 책장(id·그림 파일명 그대로). faction.ts 기본값·주석·art-guide 표·c79 테스트 기대값 갱신.
+- **자리표시 아이콘**: 스프라이트에 `i-frame`(메달 액자)·`i-target`(과녁)·`i-shelf`(책장) 추가, 창문 전용 격자 CSS 제거.
+**캡처** `docs/captures/c80/`(1배 2장): 호로·사신 홈.
+
 ## 그림 반영
 - 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.

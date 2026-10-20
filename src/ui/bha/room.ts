@@ -11,7 +11,7 @@ const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '
 
 /** 물건 → 자리표시 아이콘(스프라이트). 그림이 들어오면 쓰이지 않는다 */
 export const PROP_ICON: Record<RoomProp, string> = {
-  door: 'i-loop', altar: 'i-evolve', book: 'i-dex', chest: 'i-deck', window: 'i-title', dummy: 'i-practice', shop: 'i-rare',
+  door: 'i-loop', altar: 'i-target', book: 'i-shelf', chest: 'i-deck', window: 'i-frame', dummy: 'i-practice', shop: 'i-rare',
 };
 
 /** 방 장면 틀. 배경 그림이 있으면 --room-art 로 깔린다 */

@@ -116,7 +116,7 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '제단', book: '책', chest: '상자', window: '창문', dummy: '훈련 인형', shop: '상점' },
+  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', window: '칭호 액자', dummy: '훈련 인형', shop: '상점' },
   layout: {
     window: { x: 22, y: 26 }, book: { x: 40, y: 22 }, altar: { x: 62, y: 24 }, door: { x: 86, y: 40 },
     chest: { x: 14, y: 68 }, dummy: { x: 80, y: 78 }, shop: { x: 36, y: 80 },

@@ -95,8 +95,7 @@
   background: rgb(0 0 0 / 0.55); color: var(--bha-text-1);
 }
 .bha-prop--door .bha-prop__shape { width: 40px; height: 58px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); }
-.bha-prop--window .bha-prop__shape { width: 48px; height: 40px; background: linear-gradient(var(--bha-line-2) 0 0) center / 2px 100% no-repeat, linear-gradient(var(--bha-line-2) 0 0) center / 100% 2px no-repeat, var(--bha-accent-soft); }
-.bha-prop--window .bha-prop__shape .bha-icon { display: none; }
+.bha-prop--window .bha-prop__shape { width: 48px; height: 40px; }
 .bha-prop--altar .bha-prop__shape { width: 60px; height: 34px; border-radius: var(--bha-r-xs); }
 .bha-prop--book .bha-prop__shape { width: 40px; height: 34px; border-left-width: 6px; }
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }

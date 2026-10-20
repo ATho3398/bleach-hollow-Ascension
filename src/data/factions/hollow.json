@@ -195,10 +195,10 @@
     "characterArt": "char.hollow",
     "props": {
       "door": "출발 문",
-      "altar": "제단",
-      "book": "기록서",
+      "altar": "수련장",
+      "book": "책장",
       "chest": "보관함",
-      "window": "창문",
+      "window": "칭호 액자",
       "dummy": "훈련 인형",
       "shop": "상점"
     },

@@ -1,5 +1,5 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
-//   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면).
+//   문=원정 · 수련장=수련(진화 정보) · 책장=도감 · 상자=덱·슬롯 · 칭호 액자=칭호 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면).
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
 import { doNestAction } from '../engine/nest';
@@ -125,7 +125,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     dummy: hd.onPractice, // 훈련 인형 = 전투 연습 (GDD 18-3)
     shop: hd.onShop, // 상점 (C.63, GDD 28장 9번: 더보기 → 방 물건)
   };
-  // 위/아래 순서: 위쪽 줄(창문·책·제단) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
+  // 위/아래 순서: 위쪽 줄(칭호 액자·책장·수련장) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
   const order: RoomProp[] = ['window', 'book', 'altar', 'door', 'chest', 'shop', 'dummy'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   for (const p of ROOM_PROPS) {
