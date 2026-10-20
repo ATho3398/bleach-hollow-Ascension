@@ -1,7 +1,7 @@
 // 상점 (GDD 25-9, S-16 C.60): 독 [더보기] → [상점]. 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 덱 칸만 확인 창 1번, 나머지는 바로 산다. 꾸밈은 산 뒤 그 줄에서 [착용]/[해제].
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
-import { CATEGORIES, getCosmetic, cosmeticToken, SHOP_PROVISIONAL, type CosmeticCategory } from '../data/shop';
+import { CATEGORIES, cosmeticName, getCosmetic, cosmeticToken, SHOP_PROVISIONAL, type CosmeticCategory } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
@@ -13,6 +13,10 @@ import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
 
 export type ShopTab = 'gold' | 'jade';
+/** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
+const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', shell: 'body', cut: 'line', room: 'line' };
+/** 영옥 탭 왼쪽 열 = 캐릭터·연출, 오른쪽 열 = 화면·방·말풍선·액자 (GDD 25-11) */
+const LEFT_CATEGORIES: readonly CosmeticCategory[] = ['skin', 'aura', 'tint', 'trail', 'enter', 'evo', 'absorb', 'win'];
 /** 마지막으로 본 탭 (다시 열면 그 탭) */
 const shopUi: { tab: ShopTab } = { tab: 'gold' };
 
@@ -77,7 +81,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (cos && cos.category !== 'skin') {
       // 색 견본: 그 꾸밈의 토큰을 참조만 한다
       const sw = h('i', `bha-shoprow__swatch bha-shoprow__swatch--${cos.category}`);
-      sw.style.setProperty('--sw', `var(${cosmeticToken(cos, cos.category === 'bar' ? 'line' : cos.category === 'shell' ? 'body' : '')})`);
+      sw.style.setProperty('--sw', `var(${cosmeticToken(cos, SWATCH_PART[cos.category] ?? '')})`);
       if (cos.category === 'tint') sw.style.setProperty('--sw-filter', `var(${cosmeticToken(cos)})`);
       name.append(sw);
     }
@@ -123,7 +127,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       left = rows.slice(0, 5);
       right = rows.slice(5);
     } else {
-      const rows = jadeRows(save);
+      const rows = jadeRows(save, faction);
       const groups: HTMLElement[] = [];
       for (const cat of CATEGORIES) {
         const list = rows.filter((r) => r.category === cat.id);
@@ -143,10 +147,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
         g.append(head, h('p', 'bha-faint', `${faction.name}이(가) 입을 수 있는 스킨은 아직 없다.`));
         groups.unshift(g);
       }
-      // 스킨·오라·색조·발밑 = 왼쪽(캐릭터), 이펙트·블록 바·기기·이름표 = 오른쪽(화면)
-      const split = groups.findIndex((g) => g.dataset.category === 'fx');
-      left = split < 0 ? groups : groups.slice(0, split);
-      right = split < 0 ? [] : groups.slice(split);
+      left = groups.filter((g) => LEFT_CATEGORIES.includes(g.dataset.category as CosmeticCategory) || g.dataset.category === undefined);
+      right = groups.filter((g) => !left.includes(g));
     }
     const page = lcdPage(root, { cls: 'bha-shop', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, lcdHead({ title: '상점', sub, aside: [selectLast(tabs)] }), left, right);
     page.app.dataset.tab = shopUi.tab;

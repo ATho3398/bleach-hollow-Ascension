@@ -12,6 +12,7 @@ import { PROVISIONAL_NOTE } from './buildPanel';
 import { button, chip, el, icon, info, meter, notice, panel, tag } from './bha/dom';
 import { lcdPage } from './bha/lcdpage';
 import { val } from './bha/expedition';
+import { playCosmeticFx } from './bha/cosmeticFx';
 import { elementColor, elementDot, elementMark, paintElement } from './bha/element';
 
 const AX = BALANCE.provisional.absorb;
@@ -68,6 +69,10 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     if (!r.ok) {
       error = r.reason;
       render();
+    } else if (absorbed) {
+      // 흡수 연출 꾸밈 (GDD 25-11): 적이 사라지는 방식을 보여 준 뒤 넘어간다. 입은 연출이 없으면 바로
+      const card = root.querySelector<HTMLElement>('.bha-foecard');
+      if (!(card && playCosmeticFx('absorb', card, () => onDone(true)))) onDone(true);
     } else onDone(absorbed);
   };
 
@@ -212,7 +217,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   }
 
   function pickStep(): StepParts {
-    const nodes: HTMLElement[] = [el('p', 'bha-dim', `${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
+    // 흡수 연출 꾸밈(GDD 25-11)이 사라지게 할 적이 확정 순간에도 보이도록 적 카드를 같이 둔다
+    const nodes: HTMLElement[] = [foeCard(), el('p', 'bha-dim', `${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
     const side: HTMLElement[] = [];
     if (offer!.candidates.length === 0) {
       const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
@@ -265,6 +271,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
 
   function replaceStep(): StepParts {
     const nodes: HTMLElement[] = [
+      foeCard(),
       notice('warn', `${traitName(picked!, faction.id)}을(를) 어느 슬롯과 바꿀까? 교체된 특성은 보유 목록에 남아 둥지에서 다시 장착할 수 있다. 포기하면 특성 없이 ${act} 효과만 얻는다.`, { title: '어느 슬롯과 바꿀까?', icon: 'i-swap' }),
     ];
     const list = el('div', 'bha-stack');

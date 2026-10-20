@@ -2,7 +2,7 @@
 // 품목은 src/data/shop, 가격·상한·효과량은 balance.ts provisional.shop, 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
 // 산 즉시 쓰는 방식: 먹이 = 먹이 개수 +1, 정화제·각성제 = 지금 캐릭터에 바로, 수련권 = 지금 트랙 +1, 타일 = 수집함 +1. 보관하는 건 다시 뽑기권·덱 칸·꾸밈뿐
 import { BALANCE } from './config/balance';
-import { GOLD_ITEMS, COSMETIC_ITEMS, getCosmetic, getGoldItem, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
+import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, getCosmetic, getGoldItem, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
 import { canWear } from './data/skins';
 import { baseTilesFor, tileName } from './data/tiles';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
@@ -126,12 +126,12 @@ export function isWorn(save: Pick<SaveData, 'skin' | 'wear'>, c: CosmeticItemDef
 }
 
 /** 영옥 탭 줄: 스킨(이 종족이 입을 수 있는 것만) → 꾸밈 분류 순서 */
-export function jadeRows(save: SaveData): ShopRow[] {
+export function jadeRows(save: SaveData, faction?: FactionConfig): ShopRow[] {
   return COSMETIC_ITEMS.filter((c) => c.category !== 'skin' || canWear(save.factionId, c.look)).map((c) => {
     const price = cosmeticPrice(c);
     const owned = save.shared.cosmetics.includes(c.id);
     const short = !owned && wallet(save, 'jade') < price ? shortText('jade', price - wallet(save, 'jade')) : null;
-    return { id: c.id, currency: 'jade', name: c.name, effect: '', price, canBuy: !owned && short === null, lock: owned ? null : short, have: owned ? '보유' : null, confirm: true, category: c.category, owned, worn: isWorn(save, c) };
+    return { id: c.id, currency: 'jade', name: cosmeticName(c, faction), effect: '', price, canBuy: !owned && short === null, lock: owned ? null : short, have: owned ? '보유' : null, confirm: true, category: c.category, owned, worn: isWorn(save, c) };
   });
 }
 
@@ -193,7 +193,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
   save.shared.jade -= price;
   save.shared.cosmetics.push(id);
   record(save, id, 'jade', price, nowMs);
-  return { ok: true, id, price, currency: 'jade', detail: `${c.name} 보유` };
+  return { ok: true, id, price, currency: 'jade', detail: `${cosmeticName(c, faction)} 보유` };
 }
 
 /** 꾸밈 입기 (지금 트랙, 분류마다 하나 — 같은 분류의 다른 것은 벗는다). 보유하지 않았거나 이 종족이 못 입는 스킨이면 false */

@@ -31,14 +31,14 @@ const row = (s: SaveData, id: string) => [...goldRows(s, getFaction(s.factionId)
 describe('상점 데이터 (25-9 표)', () => {
   it('골드 11종·영옥 꾸밈 8분류, 가격은 balance.ts', () => {
     expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'training-ticket', 'rare-tile', 'reroll', 'deck-slot']);
-    expect(CATEGORIES.map((c) => c.id)).toEqual(['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate']);
+    expect(CATEGORIES.map((c) => c.id).slice(0, 8)).toEqual(['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate']); // 2차 분류는 c61
     const count = (c: string) => COSMETIC_ITEMS.filter((x) => x.category === c).length;
     expect([count('aura'), count('tint'), count('trail'), count('fx'), count('bar'), count('shell'), count('plate')]).toEqual([4, 4, 3, 3, 3, 3, 3]);
     expect(getCosmetic('skin-grandfisher')?.category).toBe('skin');
     expect(skinIdOfItem(skinItemId('grandfisher'))).toBe('grandfisher');
     expect(Object.values(SX.goldPrices)).toEqual([20, 35, 60, 100, 140, 80, 60, 90, 60, 120]);
     expect(SX.deckSlotPrices).toEqual([400, 800]);
-    expect(SX.cosmeticPrices).toEqual({ aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3 });
+    expect(SX.cosmeticPrices).toMatchObject({ aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3 }); // 2차 가격은 c61
     expect(SX.skinPrice).toBe(30);
   });
   it('꾸밈마다 쓰는 색 토큰(--bha-cos-*)이 tokens.css 에 있다 — 화면 코드는 토큰만 참조', () => {

@@ -55,6 +55,87 @@
 /* ── 이름표 테: 방 이름표 ── */
 :root[data-cos-plate] .bha-room__name { padding: var(--bha-sp-1) var(--bha-sp-3); border: 2px solid var(--cos-plate); border-radius: var(--bha-r-sm); box-shadow: 0 0 6px var(--cos-plate), inset 0 0 4px var(--cos-plate); }
 
+/* ══════════ 2차 (GDD 25-11, C.61) ══════════ */
+
+/* ── 컷인 띠: 필살·해방 때 가로 띠의 배경 무늬·테두리 (띠 안 글자는 그대로) ── */
+:root[data-cos-cut] .bha-libcut__text { background: var(--cos-cut-bg); border-block-color: var(--cos-cut-line); }
+:root[data-cos-cut] .bha-afx-name.is-ult[data-side="player"] {
+  width: 100%; padding: var(--bha-sp-2) 0; text-align: center;
+  background: var(--cos-cut-bg); border-block: 2px solid var(--cos-cut-line);
+}
+
+/* ── 말풍선 팩: 방 혼잣말 말풍선 모양 (A = 뾰족한 꼬리, B = 각진) ── */
+:root[data-cos-talk] .bha-room__bubble { border-radius: var(--cos-talk); border-color: var(--bha-text-3); }
+:root[data-cos-talk="a"] .bha-room__bubble::after {
+  content: ""; position: absolute; left: 12px; bottom: -8px; width: 12px; height: 10px; background: var(--bha-bg-0);
+  clip-path: polygon(0 0, 100% 0, 0 100%); border: 0;
+}
+:root[data-cos-talk="b"] .bha-room__bubble { border-width: 2px; border-style: solid; }
+
+/* ── 방 꾸미기: 벽·바닥·틀 (물건 좌표는 그대로) ── */
+:root[data-cos-room] .bha-room__scene { border-color: var(--cos-room-line); background: var(--cos-room-bg); }
+:root[data-cos-room] .bha-room__scene > .bha-room__wall, :root[data-cos-room] .bha-room__scene > .bha-room__floor { display: block; border-radius: 0; }
+:root[data-cos-room] .bha-room__scene > .bha-room__wall { background: var(--cos-room-bg); }
+:root[data-cos-room] .bha-room__scene > .bha-room__floor { background: var(--cos-room-floor); border-top: 2px solid var(--cos-room-line); }
+
+/* ── 연출 겹침 (등장·진화·흡수·승리): cosmeticFx.ts 가 .bha-cfx 를 얹는다. 길이는 --cfx-ms, 색은 --cfx (= 꾸밈 토큰) ── */
+.bha-cfx { position: absolute; pointer-events: none; z-index: var(--bha-z-float); overflow: visible; --cfx: var(--bha-text-1); }
+.bha-cfx__p { position: absolute; left: calc(var(--x, 50) * 1%); top: calc(var(--y, 50) * 1%); width: 8px; height: 8px; border-radius: 50%; background: var(--cfx); opacity: 0; animation: bha-cfx-p var(--cfx-ms) ease-out both; animation-delay: calc(var(--i, 0) * 40ms); }
+@keyframes bha-cfx-p { 0% { opacity: 0; transform: translate(0, 0) scale(0.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(var(--dx, 0) * 1px), calc(var(--dy, -40) * 1px)) scale(1); } }
+
+/* 등장 연출: 내 캐릭터가 나타나는 1초 (host = 내 캐릭터) */
+.bha-cfx--enter { inset: -30% -40%; }
+.has-cfx-enter-rift { animation: bha-cfx-rift var(--cfx-ms) ease-out both; }
+.has-cfx-enter-burst { animation: bha-cfx-burst-in var(--cfx-ms) ease-out both; }
+.has-cfx-enter-shadow { animation: bha-cfx-rise var(--cfx-ms) ease-out both; }
+@keyframes bha-cfx-rift { 0%, 20% { clip-path: inset(0 50% 0 50%); opacity: 0.2; } 100% { clip-path: inset(0 0 0 0); opacity: 1; } }
+@keyframes bha-cfx-burst-in { 0%, 35% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes bha-cfx-rise { 0% { clip-path: inset(100% 0 0 0); } 100% { clip-path: inset(0 0 0 0); } }
+.bha-cfx--enter-rift::before { content: ""; position: absolute; left: 50%; top: -6%; bottom: 0; width: 6px; translate: -50% 0; background: linear-gradient(180deg, transparent, var(--cfx) 25%, var(--bha-text-1) 50%, var(--cfx) 75%, transparent); box-shadow: 0 0 14px var(--cfx), 0 0 30px var(--cfx); animation: bha-cfx-crack var(--cfx-ms) ease-out both; }
+@keyframes bha-cfx-crack { 0% { opacity: 0; scale: 1 0.2; } 25% { opacity: 1; scale: 1 1; } 70% { opacity: 1; width: 28px; } 100% { opacity: 0; scale: 3 1; } }
+.bha-cfx--enter-burst::before { content: ""; position: absolute; left: 50%; top: 50%; width: 60%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; border: 4px solid var(--cfx); box-shadow: 0 0 18px var(--cfx), inset 0 0 18px var(--cfx); animation: bha-cfx-ring var(--cfx-ms) ease-out both; }
+@keyframes bha-cfx-ring { 0% { opacity: 1; scale: 0.2; } 100% { opacity: 0; scale: 2.2; } }
+.bha-cfx--enter-shadow::before { content: ""; position: absolute; left: 50%; bottom: 6%; width: 90%; height: 24%; translate: -50% 0; border-radius: 50%; background: radial-gradient(closest-side, var(--cfx), transparent); box-shadow: 0 0 20px var(--cfx); animation: bha-cfx-pool var(--cfx-ms) ease-out both; }
+@keyframes bha-cfx-pool { 0% { opacity: 0; scale: 0.3; } 40% { opacity: 1; scale: 1.1; } 100% { opacity: 0; scale: 1.4; } }
+
+/* 진화 연출: 진화 화면의 변하는 순간 (host = 진화 화면 바탕) */
+.bha-cfx--evo { inset: 0; }
+.bha-cfx--evo-cocoon { background: radial-gradient(closest-side, transparent 0, var(--cfx) 70%); animation: bha-cfx-cocoon var(--cfx-ms) ease-in-out both; }
+@keyframes bha-cfx-cocoon { 0% { opacity: 0; scale: 1.6; } 35% { opacity: 1; scale: 1; } 75% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1.8; } }
+.bha-cfx--evo-pillar::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 22%; translate: -50% 0; background: linear-gradient(90deg, transparent, var(--cfx), transparent); box-shadow: 0 0 40px var(--cfx); animation: bha-cfx-pillar var(--cfx-ms) ease-in-out both; }
+@keyframes bha-cfx-pillar { 0% { opacity: 0; scale: 0.2 1; } 40% { opacity: 0.95; scale: 1 1; } 100% { opacity: 0; scale: 1.8 1; } }
+.bha-cfx--evo-petal .bha-cfx__p { width: 12px; height: 8px; border-radius: 80% 0 80% 0; }
+
+/* 흡수 연출: 흡수를 확정하는 순간 적이 사라지는 방식 (host = 적 그림) */
+.bha-cfx--absorb { inset: auto; left: -16px; top: -14px; width: 132px; height: calc(100% + 28px); }
+.has-cfx-absorb-shadow .bha-foe { animation: bha-cfx-swallow var(--cfx-ms) ease-in both; }
+@keyframes bha-cfx-swallow { 0% { filter: none; scale: 1; opacity: 1; } 60% { filter: brightness(0.1) drop-shadow(0 0 8px var(--bha-bg-0)); scale: 0.8; opacity: 1; } 100% { filter: brightness(0); scale: 0; opacity: 0; } }
+.has-cfx-absorb-light .bha-foe { animation: bha-cfx-scatter var(--cfx-ms) ease-out both; }
+@keyframes bha-cfx-scatter { 0% { filter: none; opacity: 1; } 45% { filter: brightness(2.6) saturate(0.2); opacity: 1; } 100% { filter: brightness(3) saturate(0); opacity: 0; } }
+.bha-cfx--absorb-shadow::before { content: ""; position: absolute; inset: 10%; border-radius: 50%; background: radial-gradient(closest-side, var(--cfx) 45%, transparent); box-shadow: 0 0 18px var(--cfx); animation: bha-cfx-vortex var(--cfx-ms) ease-in both; }
+@keyframes bha-cfx-vortex { 0% { opacity: 0; scale: 1.6; } 50% { opacity: 0.95; } 100% { opacity: 0; scale: 0.1; rotate: 180deg; } }
+
+/* 승리 연출: 결과 화면에 들어올 때 (host = 결과 화면 바탕) */
+.bha-cfx--win { inset: 0; }
+.has-cfx-win-roar { animation: bha-cfx-roar-shake var(--cfx-ms) linear both; }
+@keyframes bha-cfx-roar-shake { 0%, 100% { translate: 0 0; } 10% { translate: -6px 2px; } 20% { translate: 5px -3px; } 30% { translate: -4px 3px; } 40% { translate: 4px -2px; } 55% { translate: -2px 1px; } 70% { translate: 1px 0; } }
+.bha-cfx--win-roar { box-shadow: inset 0 0 0 4px var(--cfx), inset 0 0 36px var(--cfx); animation: bha-cfx-fade var(--cfx-ms) ease-out both; }
+.bha-cfx--win-light { background: linear-gradient(180deg, var(--cfx), transparent 70%); animation: bha-cfx-beam var(--cfx-ms) ease-out both; }
+.bha-cfx--win-calm { background: var(--cfx); animation: bha-cfx-calm var(--cfx-ms) ease-in-out both; }
+@keyframes bha-cfx-fade { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes bha-cfx-beam { 0% { opacity: 0; translate: 0 -100%; } 40% { opacity: 0.95; translate: 0 0; } 100% { opacity: 0; translate: 0 10%; } }
+@keyframes bha-cfx-calm { 0% { opacity: 0.95; } 60% { opacity: 0.5; } 100% { opacity: 0; } }
+
+/* 모션 줄이기: 등장·진화·흡수·승리 연출은 짧은 페이드 한 번 (움직임·흔들림 없음) */
+.bha-cfx.is-reduced { inset: 0; width: auto; height: auto; background: var(--cfx); opacity: 0; box-shadow: none; animation: bha-cfx-soft var(--cfx-ms) ease-out both; }
+.bha-cfx.is-reduced::before, .bha-cfx.is-reduced .bha-cfx__p { display: none; }
+@keyframes bha-cfx-soft { 0% { opacity: 0; } 35% { opacity: 0.45; } 100% { opacity: 0; } }
+.has-cfx-reduced { animation: bha-cfx-hostfade var(--cfx-ms) ease-out both; }
+@keyframes bha-cfx-hostfade { 0% { opacity: 0.35; } 100% { opacity: 1; } }
+
+/* 사진 화면 (GDD 25-11): 미리보기 캔버스 */
+.bha-photo__canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; border-radius: var(--bha-r-sm); box-shadow: 0 0 0 1px var(--bha-line-2); }
+
 @media (prefers-reduced-motion: reduce) {
   :root[data-cos-aura] .bha-char__lift::before, :root[data-cos-aura] .bha-hero__lift::before, :root[data-cos-aura] .bha-walker::before, :root[data-cos-trail] .bha-walker__trail { animation: none; }
 }

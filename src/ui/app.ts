@@ -26,6 +26,8 @@ import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from 
 import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
 import { rankLabel, rankResultView, rankView } from './rankView';
+import { armEnterFx } from './bha/cosmeticFx';
+import { photoView } from './photoView';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
 import { applyTheme } from './bha/theme';
@@ -437,6 +439,7 @@ export function startApp(host: HTMLElement): void {
       onTutorial: () => open('tutorials', () => tutorialGoalsView(root, faction, s, () => tutorialDemo(faction))),
       // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => applyCosmetics(s.wear) })),
+      onPhoto: () => open('photo', () => photoView(dev, faction, s)),
       onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTitle: askReturnToTitle,
     });
@@ -582,7 +585,7 @@ export function startApp(host: HTMLElement): void {
             activeExp = exp;
             saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
             // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
-            nav.replace({ id: 'expedition', locked: true, render: () => { showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
+            nav.replace({ id: 'expedition', locked: true, render: () => { armEnterFx(); showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
           },
           onHelp: () => openHelp('expedition', false),
           // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다
@@ -647,6 +650,7 @@ export function startApp(host: HTMLElement): void {
     nav.replace({
       id: 'expedition', locked: true,
       render: () => {
+        armEnterFx();
         showExpedition(faction, exp, '출발!');
         root.scrollTop = 0;
         if (opened) return;
@@ -872,6 +876,7 @@ export function startApp(host: HTMLElement): void {
       skinId: s0.skin,
       formId: s0.evolution.formId,
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
+      enter: true,
       liberation: liberationButton(faction, liberationAccess(s0)),
       onEnd: (done) => {
         const res = recordRankBattle(s0, done);

@@ -10,6 +10,7 @@ import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene'
 import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { elementDot, elementsMark } from './bha/element';
 import { toward } from './bha/nestLogic';
+import { playCosmeticFx } from './bha/cosmeticFx';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -169,6 +170,7 @@ export function evolutionView(
   resultSide.append(effects, evolutionNote());
   resultSection.append(resultMain, resultSide);
 
-  mountApp(root, { cls: 'bha-evolve' }, burst, linesSection, resultSection);
+  const app = mountApp(root, { cls: 'bha-evolve' }, burst, linesSection, resultSection);
+  playCosmeticFx('evo', app); // 진화 연출 꾸밈 (GDD 25-11): 변하는 순간(연출 줄 동안). 결과·문구는 그대로
   timer = setTimeout(showResult, 3600);
 }

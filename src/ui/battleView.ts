@@ -36,6 +36,7 @@ import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from '
 import { locoOf, setLoco } from './bha/loco';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf } from './attackFx';
+import { playCosmeticFx } from './bha/cosmeticFx';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -58,6 +59,8 @@ export interface BattleViewOptions {
   liberation?: { note: string | null };
   /** 보스전 (GDD 25-3·25-7): 등장 이름 띠 위 줄 문구 ("보스"). 있으면 강적 표시 대신 보스 표시·페이즈 칩을 보인다 */
   boss?: { eyebrow: string };
+  /** 등급전처럼 내 등장 연출(상점 꾸밈, GDD 25-11)을 보이는 전투. 보스전(boss)도 보인다 */
+  enter?: boolean;
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -421,6 +424,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   arena.append(units, topRow, fxLayer, floats, fxFlash, libCut, log);
   const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, ...(opts.notice ? [notice('info', opts.notice)] : []), arena, controls, flashVoid, flashHit);
   app.classList.toggle('is-frenzy', !!opts.frenzy);
+  if (opts.boss || opts.enter) window.setTimeout(() => playCosmeticFx('enter', hero.root), 0); // 등장 연출 (GDD 25-11): 보스·등급전 입장
 
   const quit = () => {
     stopped = true;
@@ -1047,6 +1051,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       );
     }
     showOverlay(inner);
+    if (s.status === 'won') playCosmeticFx('win', inner.parentElement ?? inner); // 승리 연출 꾸밈 (GDD 25-11)
     actions.querySelector<HTMLElement>('button')?.focus();
   };
 

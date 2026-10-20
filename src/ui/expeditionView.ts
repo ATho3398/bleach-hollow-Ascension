@@ -20,6 +20,7 @@ import { createExpClock } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
 import { locoOf } from './bha/loco';
+import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
 import { storyGoalLine } from './storyView';
 
@@ -238,6 +239,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선
+  if (takeEnterFx()) window.setTimeout(() => playCosmeticFx('enter', walk.walker), 0); // 등장 연출 (GDD 25-11): 출발 직후 한 번
   const sceneWrap = el('section', 'bha-exp__scene');
   sceneWrap.append(walk.el);
 

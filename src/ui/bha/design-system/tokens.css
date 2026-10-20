@@ -163,6 +163,50 @@
   --bha-cos-plate-ink: #5a5a82;
   --bha-cos-plate-gold: #ffd24d;
 
+  /* ---- 2차 (GDD 25-11, C.61): 연출·컷인·방·말풍선·액자 ---- */
+  /* 등장 연출 색 */
+  --bha-cos-enter-rift: #c9a7ff;
+  --bha-cos-enter-burst: #ffe08a;
+  --bha-cos-enter-shadow: #1a0f26;
+  /* 진화 연출 색 */
+  --bha-cos-evo-cocoon: #12081c;
+  --bha-cos-evo-pillar: #fff3b0;
+  --bha-cos-evo-petal: #ffb3c7;
+  /* 흡수 연출 색 */
+  --bha-cos-absorb-shadow: #1a0f26;
+  --bha-cos-absorb-light: #fff1a8;
+  /* 컷인 띠: 바탕 무늬·테두리 */
+  --bha-cos-cut-ink-bg: repeating-linear-gradient(115deg, rgb(6 6 14 / 0.92) 0 10px, rgb(30 30 52 / 0.92) 10px 12px);
+  --bha-cos-cut-ink-line: #8c8cc0;
+  --bha-cos-cut-flame-bg: linear-gradient(90deg, rgb(70 8 4 / 0.92), rgb(214 72 18 / 0.9) 50%, rgb(70 8 4 / 0.92));
+  --bha-cos-cut-flame-line: #ffb04d;
+  --bha-cos-cut-gold-bg: repeating-linear-gradient(90deg, rgb(88 62 12 / 0.92) 0 14px, rgb(150 110 28 / 0.92) 14px 16px);
+  --bha-cos-cut-gold-line: #ffd86b;
+  /* 승리 연출 색 */
+  --bha-cos-win-roar: #ff3b48;
+  --bha-cos-win-light: #fff3b0;
+  --bha-cos-win-calm: #05050c;
+  /* 말풍선 팩: 말풍선 모서리 (A = 뾰족한 꼬리, B = 각진) */
+  --bha-cos-talk-a: 18px 18px 18px 2px;
+  --bha-cos-talk-b: 2px;
+  /* 방 꾸미기: 바탕(벽)·바닥·틀 색 */
+  --bha-cos-room-dusk-bg: repeating-linear-gradient(0deg, #4a2d1c 0 22px, #3c2416 22px 23px);
+  --bha-cos-room-dusk-wall: #4a2d1c;
+  --bha-cos-room-dusk-floor: #6b4a2c;
+  --bha-cos-room-dusk-line: #c98a4a;
+  --bha-cos-room-bloom-bg: radial-gradient(circle at 20% 30%, #f4c6d4 0 3px, transparent 4px) 0 0 / 34px 34px, linear-gradient(180deg, #5a3a4e, #3e2a3c);
+  --bha-cos-room-bloom-wall: #4e3446;
+  --bha-cos-room-bloom-floor: #4e6a44;
+  --bha-cos-room-bloom-line: #f4a6c0;
+  --bha-cos-room-night-bg: radial-gradient(circle at 78% 22%, #f4ead4 0 14px, transparent 15px), linear-gradient(180deg, #0c1230, #1a2250);
+  --bha-cos-room-night-wall: #121a3e;
+  --bha-cos-room-night-floor: #1c2438;
+  --bha-cos-room-night-line: #6f86d8;
+  /* 사진 액자 색 */
+  --bha-cos-frame-bone: #efe3c8;
+  --bha-cos-frame-ink: #20203a;
+  --bha-cos-frame-gold: #ffd36b;
+
   /* ---------- 모서리 (테마가 덮어씀) ---------- */
   --bha-r-xs: 3px;
   --bha-r-sm: 6px;

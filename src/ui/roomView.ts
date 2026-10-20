@@ -42,6 +42,8 @@ export interface RoomHandlers {
   onTutorial: () => void;
   /** 상점 (GDD 25-9) */
   onShop: () => void;
+  /** 사진 (GDD 25-11): 독 더보기 항목 */
+  onPhoto: () => void;
   onBackup: () => void;
   onTitle: () => void;
   persist: () => void;
@@ -58,7 +60,7 @@ const IDLE_TALK_MS = 14000;
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
   save.tiles.deck = sanitizeDeck(save.tiles, faction.id, deckSizeOf(save));
   hd.persist();
-  const room = roomOf(faction);
+  const room = roomOf(faction, save.wear.talk); // 말풍선 팩 (GDD 25-11): 입은 팩이 혼잣말 문구를 덮는다
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
   const deckSize = deckSizeOf(save);
@@ -206,6 +208,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },
       ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', onClick: hd.onHogyoku }] : []),
       { label: '상점', icon: 'i-rare', onClick: hd.onShop },
+      { label: '사진', icon: 'i-cast', onClick: hd.onPhoto },
       ...(hd.onChangeFaction ? [{ label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction }] : []),
       { label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },

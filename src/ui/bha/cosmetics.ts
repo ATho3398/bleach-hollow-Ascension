@@ -6,6 +6,7 @@ import type { WearState } from '../../game';
 /** 분류마다 쓰는 토큰 부분 ('' = 토큰 하나) */
 export const COSMETIC_PARTS: Readonly<Record<WearCategory, readonly string[]>> = {
   aura: [''], tint: [''], trail: [''], fx: ['', 'edge'], bar: ['bg', 'line'], shell: ['body', 'line', 'lcd'], plate: [''],
+  enter: [''], evo: [''], absorb: [''], cut: ['bg', 'line'], win: [''], talk: [''], room: ['bg', 'wall', 'floor', 'line'], frame: [''],
 };
 
 const dataKey = (c: WearCategory): string => `cos${c[0]!.toUpperCase()}${c.slice(1)}`;

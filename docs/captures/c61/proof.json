@@ -1,0 +1,425 @@
+{
+  "consoleErrors": [],
+  "shots": [
+    {
+      "file": "01-shop-jade-enter-evo-hollow.png",
+      "note": "호로 영옥 탭 왼쪽: 등장 연출 3 · 진화 연출 3"
+    },
+    {
+      "file": "01-shop-jade-enter-evo-shinigami.png",
+      "note": "사신 영옥 탭 왼쪽: 등장 연출 3 · 진화 연출 3"
+    },
+    {
+      "file": "02-shop-jade-absorb-win-hollow.png",
+      "note": "호로 영옥 탭 왼쪽: 흡수 연출 2 · 승리 연출 3"
+    },
+    {
+      "file": "02-shop-jade-absorb-win-shinigami.png",
+      "note": "사신 영옥 탭 왼쪽: 흡수 연출 2 · 승리 연출 3"
+    },
+    {
+      "file": "03-shop-jade-cut-hollow.png",
+      "note": "호로 영옥 탭 오른쪽: 컷인 띠 3 (공격 이펙트 색 · 블록 바 · 기기 · 이름표 위)"
+    },
+    {
+      "file": "03-shop-jade-cut-shinigami.png",
+      "note": "사신 영옥 탭 오른쪽: 컷인 띠 3 (공격 이펙트 색 · 블록 바 · 기기 · 이름표 위)"
+    },
+    {
+      "file": "04-shop-jade-talk-room-hollow.png",
+      "note": "호로 영옥 탭 오른쪽: 말풍선 팩 2 · 방 꾸미기 3 — 종족 표시 이름"
+    },
+    {
+      "file": "04-shop-jade-talk-room-shinigami.png",
+      "note": "사신 영옥 탭 오른쪽: 말풍선 팩 2 · 방 꾸미기 3 — 종족 표시 이름"
+    },
+    {
+      "file": "05-shop-jade-frame-hollow.png",
+      "note": "호로 영옥 탭 오른쪽: 사진 액자 3"
+    },
+    {
+      "file": "05-shop-jade-frame-shinigami.png",
+      "note": "사신 영옥 탭 오른쪽: 사진 액자 3"
+    },
+    {
+      "file": "06-room-bloom-hollow.png",
+      "note": "호로 방 꾸미기 room-bloom"
+    },
+    {
+      "file": "06-room-bloom-shinigami.png",
+      "note": "사신 방 꾸미기 room-bloom"
+    },
+    {
+      "file": "06-room-dusk-hollow.png",
+      "note": "호로 방 꾸미기 room-dusk"
+    },
+    {
+      "file": "06-room-dusk-shinigami.png",
+      "note": "사신 방 꾸미기 room-dusk"
+    },
+    {
+      "file": "06-room-night-hollow.png",
+      "note": "호로 방 꾸미기 room-night"
+    },
+    {
+      "file": "06-room-night-shinigami.png",
+      "note": "사신 방 꾸미기 room-night"
+    },
+    {
+      "file": "07-room-bubble-talk-a-hollow.png",
+      "note": "호로 말풍선 팩 talk-a 착용 뒤 방 말풍선: \"꼬리가 절로 흔들린다.\""
+    },
+    {
+      "file": "07-room-bubble-talk-a-shinigami.png",
+      "note": "사신 말풍선 팩 talk-a 착용 뒤 방 말풍선: \"(참백도를 휘둘러 본다)\""
+    },
+    {
+      "file": "07-room-bubble-talk-b-hollow.png",
+      "note": "호로 말풍선 팩 talk-b 착용 뒤 방 말풍선: \"(미동도 없이 어둠을 본다)\""
+    },
+    {
+      "file": "07-room-bubble-talk-b-shinigami.png",
+      "note": "사신 말풍선 팩 talk-b 착용 뒤 방 말풍선: \"오늘은 칼이 가볍다.\""
+    },
+    {
+      "file": "08-enter-burst-shinigami.png",
+      "note": "사신 등장 연출 영압 폭발 (출발, 450ms)"
+    },
+    {
+      "file": "08-enter-reduced-motion-hollow.png",
+      "note": "모션 줄이기 켜짐: 등장 연출이 짧은 페이드 (is-reduced, 120ms 시점)"
+    },
+    {
+      "file": "08-enter-rift-hollow.png",
+      "note": "호로 등장 연출 균열 (출발, 연출 450ms 시점)"
+    },
+    {
+      "file": "08-enter-shadow-hollow.png",
+      "note": "호로 등장 연출 그림자 (출발, 450ms)"
+    },
+    {
+      "file": "09-win-calm-hollow.png",
+      "note": "호로 승리 연출 win-calm (귀환 결과 화면 들어올 때, 연출 500ms 시점)"
+    },
+    {
+      "file": "09-win-light-shinigami.png",
+      "note": "사신 승리 연출 win-light (귀환 결과 화면 들어올 때, 연출 500ms 시점)"
+    },
+    {
+      "file": "09-win-roar-hollow.png",
+      "note": "호로 승리 연출 win-roar (귀환 결과 화면 들어올 때, 연출 500ms 시점)"
+    },
+    {
+      "file": "10-evo-cocoon-hollow.png",
+      "note": "호로 진화 연출 evo-cocoon (진화 화면 연출 줄 동안, 1300ms 시점) — 진화 결과·문구는 그대로"
+    },
+    {
+      "file": "10-evo-petal-hollow.png",
+      "note": "호로 진화 연출 evo-petal (진화 화면 연출 줄 동안, 1300ms 시점) — 진화 결과·문구는 그대로"
+    },
+    {
+      "file": "10-evo-pillar-shinigami.png",
+      "note": "사신 진화 연출 evo-pillar (진화 화면 연출 줄 동안, 1300ms 시점) — 진화 결과·문구는 그대로"
+    },
+    {
+      "file": "11-absorb-light-shinigami.png",
+      "note": "사신 흡수 연출 absorb-light (확정 순간 적이 사라지는 중, 450ms 시점)"
+    },
+    {
+      "file": "11-absorb-shadow-hollow.png",
+      "note": "호로 흡수 연출 absorb-shadow (확정 순간 적이 사라지는 중, 450ms 시점)"
+    },
+    {
+      "file": "12-cut-flame-libcut-hollow.png",
+      "note": "호로 컷인 띠 cut-flame: 해방 컷인 띠(.bha-libcut is-on, 420ms 시점) — 띠 안 글자는 그대로"
+    },
+    {
+      "file": "12-cut-flame-ultname-hollow.png",
+      "note": "호로 컷인 띠 cut-flame: 필살 이름 띠 (실제 클래스·CSS의 요소를 합성해 올림 — 실전은 블록 순서가 무작위라 고정 촬영 불가)"
+    },
+    {
+      "file": "12-cut-gold-libcut-hollow.png",
+      "note": "호로 컷인 띠 cut-gold: 해방 컷인 띠(.bha-libcut is-on, 420ms 시점) — 띠 안 글자는 그대로"
+    },
+    {
+      "file": "12-cut-gold-ultname-hollow.png",
+      "note": "호로 컷인 띠 cut-gold: 필살 이름 띠 (실제 클래스·CSS의 요소를 합성해 올림 — 실전은 블록 순서가 무작위라 고정 촬영 불가)"
+    },
+    {
+      "file": "12-cut-ink-libcut-shinigami.png",
+      "note": "사신 컷인 띠 cut-ink: 해방 컷인 띠(.bha-libcut is-on, 420ms 시점) — 띠 안 글자는 그대로"
+    },
+    {
+      "file": "12-cut-ink-ultname-shinigami.png",
+      "note": "사신 컷인 띠 cut-ink: 필살 이름 띠 (실제 클래스·CSS의 요소를 합성해 올림 — 실전은 블록 순서가 무작위라 고정 촬영 불가)"
+    },
+    {
+      "file": "13-photo-view-default-hollow.png",
+      "note": "호로 사진 화면 (액자 기본)"
+    },
+    {
+      "file": "13-photo-view-default-shinigami.png",
+      "note": "사신 사진 화면 (액자 기본)"
+    },
+    {
+      "file": "13-photo-view-gold-hollow.png",
+      "note": "호로 사진 화면 (액자 금박)"
+    },
+    {
+      "file": "13-photo-view-gold-shinigami.png",
+      "note": "사신 사진 화면 (액자 금박)"
+    },
+    {
+      "file": "14-saved-default-bha-hollow-2026-10-20.png",
+      "note": "호로 저장된 PNG 파일 그대로 (액자 기본, 파일명 bha-hollow-2026-10-20.png)"
+    },
+    {
+      "file": "14-saved-default-bha-shinigami-2026-10-20.png",
+      "note": "사신 저장된 PNG 파일 그대로 (액자 기본, 파일명 bha-shinigami-2026-10-20.png)"
+    },
+    {
+      "file": "14-saved-gold-bha-hollow-2026-10-20.png",
+      "note": "호로 저장된 PNG 파일 그대로 (액자 금박, 파일명 bha-hollow-2026-10-20.png)"
+    },
+    {
+      "file": "14-saved-gold-bha-shinigami-2026-10-20.png",
+      "note": "사신 저장된 PNG 파일 그대로 (액자 금박, 파일명 bha-shinigami-2026-10-20.png)"
+    }
+  ],
+  "checks": {
+    "shopRows-hollow": {
+      "enter-rift": "균열 / 영옥 6",
+      "enter-burst": "영압 폭발 / 영옥 6",
+      "enter-shadow": "그림자 / 영옥 6",
+      "evo-cocoon": "검은 고치 / 영옥 8",
+      "evo-pillar": "영압 기둥 / 영옥 8",
+      "evo-petal": "꽃잎 / 영옥 8",
+      "absorb-shadow": "그림자 삼키기 / 영옥 5",
+      "absorb-light": "빛 흩어짐 / 영옥 5",
+      "win-roar": "포효 / 영옥 4",
+      "win-light": "빛 기둥 / 영옥 4",
+      "win-calm": "고요 / 영옥 4",
+      "cut-ink": "먹물 / 영옥 6",
+      "cut-flame": "불꽃 / 영옥 6",
+      "cut-gold": "금박 / 영옥 6",
+      "talk-a": "굶주린 짐승 / 영옥 4",
+      "talk-b": "냉정한 포식자 / 영옥 4",
+      "room-dusk": "모래 동굴 / 영옥 10",
+      "room-bloom": "뼈 정원 / 영옥 10",
+      "room-night": "달빛 사막 / 영옥 10",
+      "frame-bone": "뼈 / 영옥 3",
+      "frame-ink": "먹물 / 영옥 3",
+      "frame-gold": "금박 / 영옥 3"
+    },
+    "shopRows-shinigami": {
+      "enter-rift": "균열 / 영옥 6",
+      "enter-burst": "영압 폭발 / 영옥 6",
+      "enter-shadow": "그림자 / 영옥 6",
+      "evo-cocoon": "검은 고치 / 영옥 8",
+      "evo-pillar": "영압 기둥 / 영옥 8",
+      "evo-petal": "꽃잎 / 영옥 8",
+      "absorb-shadow": "그림자 삼키기 / 영옥 5",
+      "absorb-light": "빛 흩어짐 / 영옥 5",
+      "win-roar": "포효 / 영옥 4",
+      "win-light": "빛 기둥 / 영옥 4",
+      "win-calm": "고요 / 영옥 4",
+      "cut-ink": "먹물 / 영옥 6",
+      "cut-flame": "불꽃 / 영옥 6",
+      "cut-gold": "금박 / 영옥 6",
+      "talk-a": "열혈 신입 / 영옥 4",
+      "talk-b": "무뚝뚝한 무사 / 영옥 4",
+      "room-dusk": "다다미 방 / 영옥 10",
+      "room-bloom": "벚꽃 마당 / 영옥 10",
+      "room-night": "밤의 대원실 / 영옥 10",
+      "frame-bone": "뼈 / 영옥 3",
+      "frame-ink": "먹물 / 영옥 3",
+      "frame-gold": "금박 / 영옥 3"
+    },
+    "room-dusk-hollow": {
+      "dataset": "dusk",
+      "wall": "repeating-linear-gradient(0deg, rgb(74, 45, 28) 0px, rgb(74,"
+    },
+    "room-bloom-hollow": {
+      "dataset": "bloom",
+      "wall": "radial-gradient(circle at 20% 30%, rgb(244, 198, 212) 0px, r"
+    },
+    "room-night-hollow": {
+      "dataset": "night",
+      "wall": "radial-gradient(circle at 78% 22%, rgb(244, 234, 212) 0px, r"
+    },
+    "talk-a-hollow": {
+      "bubble": "꼬리가 절로 흔들린다.",
+      "dataCosTalk": "a",
+      "radius": "18px 18px 18px 2px"
+    },
+    "talk-b-hollow": {
+      "bubble": "(미동도 없이 어둠을 본다)",
+      "dataCosTalk": "b",
+      "radius": "2px"
+    },
+    "room-dusk-shinigami": {
+      "dataset": "dusk",
+      "wall": "repeating-linear-gradient(0deg, rgb(74, 45, 28) 0px, rgb(74,"
+    },
+    "room-bloom-shinigami": {
+      "dataset": "bloom",
+      "wall": "radial-gradient(circle at 20% 30%, rgb(244, 198, 212) 0px, r"
+    },
+    "room-night-shinigami": {
+      "dataset": "night",
+      "wall": "radial-gradient(circle at 78% 22%, rgb(244, 234, 212) 0px, r"
+    },
+    "talk-a-shinigami": {
+      "bubble": "(참백도를 휘둘러 본다)",
+      "dataCosTalk": "a",
+      "radius": "18px 18px 18px 2px"
+    },
+    "talk-b-shinigami": {
+      "bubble": "오늘은 칼이 가볍다.",
+      "dataCosTalk": "b",
+      "radius": "2px"
+    },
+    "08-enter-rift-hollow.png": {
+      "cls": "bha-cfx bha-cfx--enter bha-cfx--enter-rift",
+      "host": [
+        "has-cfx-enter-rift"
+      ]
+    },
+    "08-enter-burst-shinigami.png": {
+      "cls": "bha-cfx bha-cfx--enter bha-cfx--enter-burst",
+      "host": [
+        "has-cfx-enter-burst"
+      ]
+    },
+    "08-enter-shadow-hollow.png": {
+      "cls": "bha-cfx bha-cfx--enter bha-cfx--enter-shadow",
+      "host": [
+        "has-cfx-enter-shadow"
+      ]
+    },
+    "08-enter-reduced-motion-hollow.png": {
+      "cls": "bha-cfx bha-cfx--enter bha-cfx--enter-rift is-reduced",
+      "host": [
+        "has-cfx-reduced"
+      ]
+    },
+    "win-roar-hollow": {
+      "cls": "bha-cfx bha-cfx--win bha-cfx--win-roar",
+      "host": [
+        "has-cfx-win-roar"
+      ]
+    },
+    "evo-cocoon-hollow": {
+      "cls": "bha-cfx bha-cfx--evo bha-cfx--evo-cocoon",
+      "children": 0
+    },
+    "win-light-shinigami": {
+      "cls": "bha-cfx bha-cfx--win bha-cfx--win-light",
+      "host": [
+        "has-cfx-win-light"
+      ]
+    },
+    "evo-pillar-shinigami": {
+      "cls": "bha-cfx bha-cfx--evo bha-cfx--evo-pillar",
+      "children": 0
+    },
+    "win-calm-hollow": {
+      "cls": "bha-cfx bha-cfx--win bha-cfx--win-calm",
+      "host": [
+        "has-cfx-win-calm"
+      ]
+    },
+    "evo-petal-hollow": {
+      "cls": "bha-cfx bha-cfx--evo bha-cfx--evo-petal",
+      "children": 14
+    },
+    "absorb-shadow-hollow": {
+      "cls": "bha-cfx bha-cfx--absorb bha-cfx--absorb-shadow",
+      "host": [
+        "has-cfx-absorb-shadow"
+      ],
+      "particles": 0
+    },
+    "absorb-light-shinigami": {
+      "cls": "bha-cfx bha-cfx--absorb bha-cfx--absorb-light",
+      "host": [
+        "has-cfx-absorb-light"
+      ],
+      "particles": 12
+    },
+    "cut-gold-hollow-libcut": {
+      "dataCosCut": "gold",
+      "text": "본능을 해방한다 — 레수렉시온!",
+      "bg": "repeating-linear-gradient(90deg, rgba(88, 62, 12, 0.92) 0px, rgba(88, ",
+      "borderBlock": "rgb(255, 216, 107)"
+    },
+    "cut-gold-hollow-ultname": {
+      "synthetic": true,
+      "bg": "repeating-linear-gradient(90deg, rgba(88, 62, 12, 0.92) 0px, rgba(88, ",
+      "borderBlock": "rgb(255, 216, 107)",
+      "text": "포효"
+    },
+    "cut-ink-shinigami-libcut": {
+      "dataCosCut": "ink",
+      "text": "참백도의 진명을 부른다 — 만해!",
+      "bg": "repeating-linear-gradient(115deg, rgba(6, 6, 14, 0.92) 0px, rgba(6, 6,",
+      "borderBlock": "rgb(140, 140, 192)"
+    },
+    "cut-ink-shinigami-ultname": {
+      "synthetic": true,
+      "bg": "repeating-linear-gradient(115deg, rgba(6, 6, 14, 0.92) 0px, rgba(6, 6,",
+      "borderBlock": "rgb(140, 140, 192)",
+      "text": "포효"
+    },
+    "cut-flame-hollow-libcut": {
+      "dataCosCut": "flame",
+      "text": "본능을 해방한다 — 레수렉시온!",
+      "bg": "linear-gradient(90deg, rgba(70, 8, 4, 0.92), rgba(214, 72, 18, 0.9) 50",
+      "borderBlock": "rgb(255, 176, 77)"
+    },
+    "cut-flame-hollow-ultname": {
+      "synthetic": true,
+      "bg": "linear-gradient(90deg, rgba(70, 8, 4, 0.92), rgba(214, 72, 18, 0.9) 50",
+      "borderBlock": "rgb(255, 176, 77)",
+      "text": "포효"
+    },
+    "photo-default-hollow": {
+      "downloadName": "bha-hollow-2026-10-20.png",
+      "frameDataset": "default",
+      "canvas": [
+        776,
+        600
+      ]
+    },
+    "photo-gold-hollow": {
+      "downloadName": "bha-hollow-2026-10-20.png",
+      "frameDataset": "frame-gold",
+      "canvas": [
+        776,
+        600
+      ]
+    },
+    "photo-default-shinigami": {
+      "downloadName": "bha-shinigami-2026-10-20.png",
+      "frameDataset": "default",
+      "canvas": [
+        776,
+        600
+      ]
+    },
+    "photo-gold-shinigami": {
+      "downloadName": "bha-shinigami-2026-10-20.png",
+      "frameDataset": "frame-gold",
+      "canvas": [
+        776,
+        600
+      ]
+    }
+  },
+  "notes": [
+    "스크린샷은 844×390 터치·2배, 시험 세이브를 localStorage 에 넣고 [이어하기] (src 함수로 합성). 연출 장면은 document.getAnimations() 로 연출 중간 시점(ms)에 멈춰 촬영.",
+    "토스트는 화면을 가려 촬영 직전에 숨겼다(튜토리얼 영옥 보상 토스트).",
+    "컷인 띠: 해방 컷인 요소(.bha-libcut)에 is-on 을 걸어 재생, 필살 이름 띠는 같은 클래스(.bha-afx-name.is-ult[data-side=player])의 요소를 합성해 올림(실전 블록 순서가 무작위라 고정 촬영 불가).",
+    "저장된 PNG(14-saved-*)는 [사진 저장]이 만든 파일 그대로(download 이벤트)."
+  ]
+}

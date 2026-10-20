@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 36;
+export const BALANCE_VERSION = 37;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -357,7 +357,7 @@ export const BALANCE = {
       rerollMax: 3,
       /** 영옥 꾸밈 가격: 스킨(앞으로 들어오는 스킨도 기본값), 분류별 (GDD 25-9 영옥 탭) */
       skinPrice: 30,
-      cosmeticPrices: { aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3 } as Record<string, number>,
+      cosmeticPrices: { aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3, enter: 6, evo: 8, absorb: 5, cut: 6, win: 4, talk: 4, room: 10, frame: 3 } as Record<string, number>,
       /** 튜토리얼 목표(23-3) 하나마다 더 주는 영옥 (기존 보상은 그대로, 트랙마다 1회) */
       tutorialJade: 1,
       /** balance:check 가드: 4바퀴 원정 1판 평균 골드로 살 수 있는 보통 먹이 수 */

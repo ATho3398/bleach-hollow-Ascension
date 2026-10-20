@@ -9,6 +9,7 @@ import type { FactionConfig, FoodId } from '../engine/faction';
 import { countFoods } from '../engine/food';
 import { button, el, icon, panel } from './bha/dom';
 import { splitApp } from './bha/split';
+import { playCosmeticFx } from './bha/cosmeticFx';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
 import { growthLines, type GrowthInput } from './bha/growthLogic';
@@ -111,5 +112,6 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const storyBox = storyLines.length > 0 ? el('div', 'bha-growth bha-result__story') : null;
   storyBox?.setAttribute('role', 'status');
   for (const line of storyLines) storyBox!.append(el('p', 'bha-growth__line', line));
-  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [...(storyBox ? [storyBox] : []), ...(growthBox ? [growthBox] : []), sum]);
+  const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [...(storyBox ? [storyBox] : []), ...(growthBox ? [growthBox] : []), sum]);
+  if (win) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11)
 }

@@ -1,14 +1,14 @@
 // 상점 품목 표 (GDD 25-9, S-16 C.60, provisional). 품목 id·분류·이름·효과 종류만 — 가격·상한·효과량은 balance.ts provisional.shop.
 // 골드 탭 = 소모품·편의(효과 종류 kind 를 엔진 src/shop.ts 가 읽는다), 영옥 탭 = 꾸밈(분류 category + 모양 키 look → 디자인 토큰 --bha-cos-<분류>-<look>).
 // 스킨 품목은 스킨 표(src/data/skins)에서 만든다(id `skin-<스킨 id>`). 종족 분기 없음: 먹이 이름은 종족 설정, 스킨은 스킨 표의 종족 필드로 거른다.
-import { FOOD_IDS, type FoodId } from '../../engine/faction';
+import { FOOD_IDS, type FactionConfig, type FoodId } from '../../engine/faction';
 import { SKINS, getSkin, skinLabel } from '../skins';
 import raw from './items.json';
 
 export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'rareTile', 'reroll', 'deckSlot'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
 
-export const COSMETIC_CATEGORIES = ['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate'] as const;
+export const COSMETIC_CATEGORIES = ['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate', 'enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame'] as const;
 export type CosmeticCategory = (typeof COSMETIC_CATEGORIES)[number];
 /** 스킨을 뺀 꾸밈 분류 (착용은 트랙의 wear, 스킨은 트랙의 skin) */
 export type WearCategory = Exclude<CosmeticCategory, 'skin'>;
@@ -93,4 +93,9 @@ export function categoryName(c: CosmeticCategory): string {
 /** 꾸밈 색 토큰 이름 (디자인 토큰 --bha-cos-*): 분류·모양 키에서 만든다. 화면 코드는 이 토큰을 참조만 한다 */
 export function cosmeticToken(c: Pick<CosmeticItemDef, 'category' | 'look'>, part = ''): string {
   return `--bha-cos-${c.category}-${c.look}${part ? `-${part}` : ''}`;
+}
+
+/** 화면에 보이는 꾸밈 이름: 종족 설정 cosmetics.names 가 있으면 그것(방 테마·말풍선 팩, GDD 25-11), 없으면 데이터 이름 */
+export function cosmeticName(c: Pick<CosmeticItemDef, 'id' | 'name'>, faction?: Pick<FactionConfig, 'cosmetics'> | null): string {
+  return faction?.cosmetics?.names?.[c.id] ?? c.name;
 }
