@@ -1099,7 +1099,8 @@ export function summarize(exp: ExpeditionState): ExpeditionSummary {
     keptFood: loot.filter((a) => !lostFoodEntries.includes(a)).map((a) => a.food),
     lostFood: lostFoodEntries.map((a) => a.food),
     ...goldSplit(exp),
-    laps: exp.outcome === 'returned' ? exp.lapsCompleted : exp.lap,
+    // 도달 바퀴: 둥지 칸 귀환 = 마친 바퀴, 패배·스토리 목표 달성(바퀴 도중 귀환) = 지금 바퀴 (C.68: 1바퀴 도중 클리어가 0 으로 보이던 것)
+    laps: exp.outcome === 'returned' && exp.endReason !== 'story-clear' ? exp.lapsCompleted : exp.lap,
   };
 }
 

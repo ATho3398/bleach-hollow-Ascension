@@ -18,6 +18,8 @@ import { getEpisode } from '../data/story';
 import { bossName } from '../data/bosses';
 import { BALANCE as B } from '../config/balance';
 import { chapterLabel } from './storyView';
+import { toward } from './bha/nestLogic';
+import { expeditionEndVitals } from '../engine/nest';
 
 /** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
 export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
@@ -80,6 +82,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   mark.append(icon(win ? 'i-return' : 'i-broken'));
   head.append(mark, el('h1', 'bha-result__title', win ? '귀환' : faction.defeatStateName), el('p', 'bha-result__reason', endReasonText(exp.endReason!, faction)));
 
+  const home = expeditionEndVitals(exp);
   const rows: IconInfoRow[] = [
     { label: '도달 바퀴', icon: 'i-loop', value: val(`${s.laps}`, `/ 기본 ${BALANCE.expedition.defaultLaps}`) },
     { label: '치른 전투', icon: 'i-practice', value: val(`${exp.battles.length}회`, `(승 ${wins})`) },
@@ -94,8 +97,9 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
       value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? `한계 돌파 · ${faction.frenzyName}` : undefined),
     },
     { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
-    { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(exp.hunger))}`) },
-    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(exp.condition)}`) },
+    // 둥지로 가져가는 값 = 패배·폭주 감소를 뺀 뒤 (둥지 상태와 같은 값, C.68)
+    { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(home.hunger))}`) },
+    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `원정 끝 ${Math.round(exp.condition)}` : undefined) },
   ];
   const sum = panel({ title: '원정 요약', aside: faction.huntingGroundName }, iconInfo(rows));
 
@@ -103,7 +107,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됨');
 
   const dock = el('div', 'bha-dock');
-  dock.append(button({ label: `${faction.nestName}으로`, icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome }));
+  dock.append(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome }));
   // 가로 LCD: 왼쪽 = 결과 제목·시드·[둥지로], 오른쪽 = 성장 요약 한두 줄 + 원정 요약 표 (왼쪽 열이 길어지면 스크롤이 생겨 오른쪽 맨 위에 둔다)
   const growthBox = growth ? el('div', 'bha-growth') : null;
   growthBox?.setAttribute('role', 'status');

@@ -11,6 +11,7 @@ import { rankChallenge, type SaveData } from '../game';
 import { button, el, icon, notice, panel, provisionalTag, tag } from './bha/dom';
 import { elementDot, paintElement } from './bha/element';
 import { iconInfo, type IconInfoRow } from './bha/expedition';
+import { toward } from './bha/nestLogic';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { splitApp } from './bha/split';
 import { PATTERN_LABEL } from './practiceView';
@@ -30,6 +31,16 @@ function holderMeta(h: RankHolderDef, faction: FactionConfig): string {
 
 export interface RankHandlers {
   onChallenge: (holder: RankHolderDef) => void;
+}
+
+/** 도전 전 안내 (C.68): 무번호에서 지면 내려갈 칸이 없어 그대로다 (엔진 rank.ts 규칙과 같게) */
+export function rankStakeText(faction: Pick<FactionConfig, 'unrankedName'>, target: string, me: number | null): string {
+  return `이기면 ${target}을(를) 빼앗고 상대는 한 칸 내려간다. ${me === null ? `지면 ${faction.unrankedName} 그대로다.` : '지면 한 칸 내려간다.'}`;
+}
+
+/** 패배 문구 (C.68): 원래 무번호였으면 "한 칸 내려갔다" 대신 그대로라고 쓴다 */
+export function rankLoseLine(faction: Pick<FactionConfig, 'unrankedName' | 'rankLoseText'>, res: Pick<ChallengeResult, 'before' | 'after'>): string {
+  return res.before === null && res.after === null ? `패배… ${faction.unrankedName} 그대로다.` : faction.rankLoseText;
 }
 
 export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveData, h: RankHandlers): void {
@@ -71,8 +82,9 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     card.append(mark, body);
     right.push(
       card,
-      el('p', 'bha-faint', `이기면 ${rankLabel(faction, c.targetRank)}을(를) 빼앗고 상대는 한 칸 내려간다. 지면 한 칸 내려간다.`),
-      button({ label: `${faction.rankBattleName} 도전`, icon: 'i-attack', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(holder) }),
+      el('p', 'bha-faint', rankStakeText(faction, rankLabel(faction, c.targetRank), me)),
+      // 버튼 = "<상대 번호>에 도전" (C.68: 사신 이름이 "석차 도전"이라 "석차 도전 도전"으로 겹쳤다)
+      button({ label: `${rankLabel(faction, c.targetRank)}에 도전`, icon: 'i-attack', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(holder) }),
     );
   } else if (c.reason === 'locked') {
     right.push(notice('info', `${faction.tierNames[4]}이(가) 되면 ${faction.rankBattleName}이(가) 열린다.`, { icon: 'i-lock', title: '아직 잠김' }));
@@ -102,7 +114,7 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
     mark,
     el('span', 'bha-label', `${faction.rankBattleName} · ${name}`),
     el('h1', 'bha-result__title', won ? '승리' : labels.defeatState),
-    el('p', 'bha-result__reason', won ? faction.rankWinText.replace('{rank}', rankLabel(faction, res.after)) : faction.rankLoseText),
+    el('p', 'bha-result__reason', won ? faction.rankWinText.replace('{rank}', rankLabel(faction, res.after)) : rankLoseLine(faction, res)),
   );
   const rows: IconInfoRow[] = [
     { label: '내 등급', icon: 'i-title', mod: won ? 'good' : undefined, value: `${rankLabel(faction, res.before)} → ${rankLabel(faction, res.after)}` },
@@ -113,7 +125,7 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
   ];
   if (!won) rows.push({ label: '재도전', icon: 'i-loop', value: '원정을 한 번 다녀온 뒤' });
   const dock = el('div', 'bha-dock');
-  dock.append(button({ label: `${faction.rankBattleName}으로`, icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack }));
+  dock.append(button({ label: toward(faction.rankBattleName), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack }));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);
   if (won) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11): 등급 획득
 }

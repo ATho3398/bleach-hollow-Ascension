@@ -12,6 +12,12 @@ import { elementColor } from './element';
 
 // ───────────────────────── 순수 함수 ─────────────────────────
 
+/** 체력 표시 정수 (C.68): 남은 체력은 올림(1 미만도 1), 최대도 같은 올림 → "4107 / 4106" 처럼 남은 값이 최대를 넘지 않는다 */
+export function hpNumbers(hp: number, maxHp: number): { now: number; max: number } {
+  const max = Math.ceil(maxHp - 1e-6);
+  return { now: Math.min(max, Math.max(0, Math.ceil(hp - 1e-6))), max };
+}
+
 /** 블록 외형 종류: 스킬 역할 3 + 기본 + 필살 + 공허 (`.bha-block--*`) */
 export type BlockVisual = 'attack' | 'guard' | 'heal' | 'basic' | 'special' | 'void';
 

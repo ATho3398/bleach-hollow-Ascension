@@ -84,11 +84,11 @@ export function liberationBlockLabel(factionId: string, element: string | null |
   return element ? `${blockElementName(element, factionId)}_${BLOCK_WORDS.liberation}` : BLOCK_WORDS.liberation;
 }
 
-/** 해방 버튼 설정 (GDD 22-5): 5단계 미만이면 없음(버튼 숨김), 자격이 모자라면 무엇이 부족한지 한 줄 */
+/** 해방 버튼 설정 (GDD 22-5): 5단계 미만이면 없음(버튼 숨김), 자격이 모자라면 무엇이 부족한지 한 줄. 등급은 종족 공통 낱말 "등급" (C.68: "석차 도전 번호" 로 사신에 호로 낱말이 섞였다) */
 export function liberationButton(f: Pick<FactionConfig, 'training' | 'rankBattleName'>, access: { visible: boolean; usable: boolean; missing: ('training' | 'rank')[] }): { note: string | null } | undefined {
   if (!access.visible) return undefined;
   if (access.usable) return { note: null };
-  const parts = access.missing.map((m) => (m === 'training' ? `${f.training.title} 완료` : `${f.rankBattleName} 번호`));
+  const parts = access.missing.map((m) => (m === 'training' ? `${f.training.title} 완료` : `${f.rankBattleName} 등급`));
   return { note: `잠김 — ${parts.join(' · ')} 필요` };
 }
 

@@ -29,12 +29,18 @@ function hasBatchim(word: string): boolean {
   return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0;
 }
 
+/** "이름 +n / 이름 −n" (C.68: 컨디션만 하이픈 "-10" 으로 나와 배부름 "−15" 와 기호가 달랐다) */
+export function signedText(name: string, delta: number): string {
+  const d = Math.round(delta);
+  return `${name} ${d < 0 ? '−' : '+'}${Math.abs(d)}`;
+}
+
 /** 한 판의 보상·비용 한 줄씩 (22-4 표) */
 export function gameRuleLines(f: Pick<FactionConfig, 'riskGaugeName' | 'fullnessName'>, factionId: string, game: TrainingGameId): { reward: string; cost: string } {
   const r = gameRule(game);
   const evText = Object.entries(r.ev).filter(([k]) => (STAT_IDS as readonly string[]).includes(k)).map(([k, v]) => `${statName(k as StatId, factionId)} 노력치 +${v}`);
   const reward = [`수련치 +${r.points}`, ...evText, ...(r.winHunger ? [fullnessDeltaText(f.fullnessName, r.winHunger)] : [])].join(' · ');
-  const cost = [r.condition ? `컨디션 ${r.condition}` : '', r.hunger ? fullnessDeltaText(f.fullnessName, r.hunger) : '', r.risk ? `${f.riskGaugeName} +${r.risk}` : ''].filter(Boolean).join(' · ') || '없음';
+  const cost = [r.condition ? signedText('컨디션', r.condition) : '', r.hunger ? fullnessDeltaText(f.fullnessName, r.hunger) : '', r.risk ? `${f.riskGaugeName} +${r.risk}` : ''].filter(Boolean).join(' · ') || '없음';
   return { reward, cost };
 }
 
@@ -53,7 +59,7 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     title: `${title} · ${faction.training.title}`,
     sub: (() => {
       const s = el('span');
-      s.append(provisionalTag(), ' 수련을 마치고 등급(번호)을 한 번 달면 전투에서 ', el('b', '', faction.liberation.name), '을(를) 쓸 수 있다');
+      s.append(provisionalTag(), ' 수련을 마치고 등급을 한 번 따면 전투에서 ', el('b', '', faction.liberation.name), '을(를) 쓸 수 있다');
       return s;
     })(),
     aside: [selectLast(button({ label: '진화 정보', icon: 'i-evolve', onClick: hd.onEvolution }))],
@@ -77,7 +83,7 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   if (gate.ok || gate.reason !== 'tier') {
     if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). 리스크가 오르는 종목은 조심.`));
     if (t.completed) notes.push(notice('good', faction.training.completeText, { title: '수련 완료' }));
-    else if (!save.rank.history.everRanked) notes.push(notice('info', `${faction.liberation.name}은(는) ${faction.rankBattleName}에서 번호를 한 번 달아야 쓸 수 있다.`));
+    else if (!save.rank.history.everRanked) notes.push(notice('info', `${faction.liberation.name}은(는) ${faction.rankBattleName}에서 등급을 한 번 따야 쓸 수 있다.`));
   }
   prog.append(...notes);
   const left = [prog];
@@ -122,8 +128,10 @@ export function trainingPlayView(root: HTMLElement, faction: FactionConfig, game
   const cfg = faction.training.games[game];
   const s = createMiniGame(game, level, seed);
   const queue: MiniGameInput[] = [];
+  let started = false;
+  // "준비…" 동안 누른 것은 버린다 (C.68: 쌓였다가 시작 순간 한꺼번에 들어가 첫 판이 실패로 셌다)
   const push = (inp: MiniGameInput) => {
-    if (s.status === 'playing') queue.push(inp);
+    if (s.status === 'playing' && started) queue.push(inp);
   };
 
   const head = el('header', 'bha-train__playhead');
@@ -270,7 +278,6 @@ export function trainingPlayView(root: HTMLElement, faction: FactionConfig, game
 
   // ── 실시간 루프 ──
   let last = performance.now();
-  let started = false;
   const countdown = el('div', 'bha-train__countdown', '준비…');
   field.append(countdown);
   window.setTimeout(() => {
@@ -284,6 +291,8 @@ export function trainingPlayView(root: HTMLElement, faction: FactionConfig, game
     const ov = el('div', `bha-train__end ${won ? 'is-win' : 'is-lose'}`);
     const go = button({ label: '결과 보기', variant: 'primary', size: 'lg', onClick: () => hd.onDone(won) });
     ov.append(el('h2', 'bha-train__endtitle', won ? '승리' : '패배'), go);
+    // 끝나면 조작 버튼을 끈다 (C.68: 그대로 살아 있어 기기 확인 키 선택이 [결과 보기] 로 안 옮겨 갔다)
+    for (const b of app.querySelectorAll('button')) b.disabled = true;
     field.append(ov);
     go.focus();
   };
@@ -314,7 +323,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   rows.append(
     el('p', '', `수련치 +${out.points} (지금 ${Math.min(t.points, TX.pointsToComplete)} / ${TX.pointsToComplete})`),
     ...(evText ? [el('p', '', `노력치 ${evText}`)] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
-    el('p', 'bha-faint', [out.condition ? `컨디션 ${Math.round(out.condition)}` : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || '둥지 수치 변화 없음'),
+    el('p', 'bha-faint', [out.condition ? signedText('컨디션', out.condition) : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || '둥지 수치 변화 없음'),
     el('p', 'bha-faint', `남은 수련권 ${t.tickets}/${TX.ticketsMax}`),
   );
   const left = [panel({ title: `${cfg.name} · ${out.level}단계 ${out.won ? '승리' : '패배'}`, aside: out.won ? tag('승리', 'kind') : undefined }, rows)];
@@ -322,7 +331,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   if (out.completedNow) {
     const done = panel({ title: '수련 완료', mod: 'accent' });
     done.dataset.training = 'complete';
-    done.append(el('p', 'bha-train__complete', faction.training.completeText), el('p', 'bha-faint', `칭호 해금 · 튜토리얼 목표 달성. ${save.rank.history.everRanked ? '' : `${faction.rankBattleName}에서 번호를 한 번 달면 ${faction.liberation.name}을(를) 쓸 수 있다.`}`));
+    done.append(el('p', 'bha-train__complete', faction.training.completeText), el('p', 'bha-faint', `칭호 해금 · 튜토리얼 목표 달성. ${save.rank.history.everRanked ? '' : `${faction.rankBattleName}에서 등급을 한 번 따면 ${faction.liberation.name}을(를) 쓸 수 있다.`}`));
     right.push(done);
   }
   const actions = el('div', 'bha-grid2');

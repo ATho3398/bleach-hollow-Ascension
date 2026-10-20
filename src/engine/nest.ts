@@ -61,14 +61,22 @@ export function doNestAction(nest: NestState, action: NestAction, food: FoodId =
   nestRiskAction(nest, action);
 }
 
+/** 원정이 끝나 둥지로 돌아갈 때의 허기·컨디션 (결과 화면 표시와 둥지 갱신이 같은 값을 쓴다, C.68). 패배: 허기 가산 + 컨디션 급락. 폭주했으면 컨디션 추가 하락 */
+export function expeditionEndVitals(exp: ExpeditionState): { hunger: number; condition: number } {
+  const defeated = summarize(exp).outcome === 'defeated';
+  const hunger = Math.min(100, exp.hunger + (defeated ? NX.defeatHunger : 0));
+  let condition = defeated ? Math.min(exp.condition, NX.defeatCondition) : exp.condition;
+  // 폭주(한계 돌파)한 원정에서 돌아오면 컨디션 −30 (GDD 23-2). 패배로 돌아와도 같다
+  if (exp.breakthrough) condition = clamp(condition - BALANCE.provisional.risk.frenzyConditionLoss, 0, MAX);
+  return { hunger, condition };
+}
+
 /** 원정이 끝난 뒤 둥지 상태 갱신. 귀환: 원정에서 남은 허기·컨디션 그대로. 패배: 쇠약 + 컨디션 급락. 폭주했으면 컨디션 추가 하락 */
 export function applyExpeditionEnd(nest: NestState, exp: ExpeditionState, nowMs: number): void {
-  const s = summarize(exp);
-  nest.hunger = Math.min(100, exp.hunger + (s.outcome === 'defeated' ? NX.defeatHunger : 0));
-  nest.condition = s.outcome === 'defeated' ? Math.min(exp.condition, NX.defeatCondition) : exp.condition;
-  nest.weakened = s.outcome === 'defeated';
-  // 폭주(한계 돌파)한 원정에서 돌아오면 컨디션 −30 (GDD 23-2). 패배로 돌아와도 같다
-  if (exp.breakthrough) nest.condition = clamp(nest.condition - BALANCE.provisional.risk.frenzyConditionLoss, 0, MAX);
+  const v = expeditionEndVitals(exp);
+  nest.hunger = v.hunger;
+  nest.condition = v.condition;
+  nest.weakened = summarize(exp).outcome === 'defeated';
   settleRiskToNest(nest, exp);
   nest.lastTickMs = nowMs;
 }

@@ -21,7 +21,7 @@ import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
-  type BlockSpec, type BlockVisual, damageTier, loadBattleSpeed, saveBattleSpeed, BATTLE_LOG_MAX, type BattleSpeed, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
+  type BlockSpec, type BlockVisual, damageTier, loadBattleSpeed, saveBattleSpeed, BATTLE_LOG_MAX, hpNumbers, type BattleSpeed, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDot, elementMark } from './bha/element';
 import { weaknessesOf } from '../data/elements';
@@ -257,8 +257,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const heroAnim = animOf(hero.root); // 프레임 애니 (GDD 26장): 있는 동작만. 없으면 null / 없는 동작은 기존 연출
   const foeAnim = animOf(foe);
 
-  const enemyMeter = meter({ kind: 'enemy', label: '적 체력', value: Math.ceil(s.enemy.hp - 1e-6), max: Math.round(s.enemy.maxHp), ghost: s.enemy.hp, compact: true });
-  const playerMeter = meter({ kind: 'player', label: '내 체력', value: Math.ceil(s.player.hp - 1e-6), max: Math.round(s.player.maxHp), ghost: s.player.hp, compact: true });
+  const enemyMeter = meter({ kind: 'enemy', label: '적 체력', value: hpNumbers(s.enemy.hp, s.enemy.maxHp).now, max: hpNumbers(s.enemy.hp, s.enemy.maxHp).max, ghost: s.enemy.hp, compact: true });
+  const playerMeter = meter({ kind: 'player', label: '내 체력', value: hpNumbers(s.player.hp, s.player.maxHp).now, max: hpNumbers(s.player.hp, s.player.maxHp).max, ghost: s.player.hp, compact: true });
   const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement): HTMLElement => {
     const u = el('div', `bha-unit ${cls}`);
     if (cls.includes('--me')) setLoco(u, heroLoco); // 유닛 틀에도 붙여 그림 크기(떠오를 여유)를 CSS 가 잡는다
@@ -864,13 +864,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (meterCache.enemy !== eRatio) {
       meterCache.enemy = eRatio;
       setMeter(enemyMeter, s.enemy.hp, s.enemy.maxHp, s.enemy.hp);
-      setMeterValue(enemyMeter, Math.ceil(s.enemy.hp - 1e-6));
+      setMeterValue(enemyMeter, hpNumbers(s.enemy.hp, s.enemy.maxHp).now);
     }
     const pRatio = `${Math.round(s.player.hp * 10)}/${Math.round(s.player.maxHp)}`;
     if (meterCache.player !== pRatio) {
       meterCache.player = pRatio;
       setMeter(playerMeter, s.player.hp, s.player.maxHp, s.player.hp);
-      setMeterValue(playerMeter, Math.ceil(s.player.hp - 1e-6), Math.round(s.player.maxHp));
+      const ph = hpNumbers(s.player.hp, s.player.maxHp);
+      setMeterValue(playerMeter, ph.now, ph.max);
       playerMeter.classList.toggle('is-danger', s.player.hp / s.player.maxHp < 0.3);
     }
     const spKey = `${Math.round(s.sp * 10)}`;
@@ -1068,7 +1069,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const go = button({ label: '결과 보기', size: 'lg', onClick: finish });
       go.append(icon('i-chevron-right'));
       actions.append(go);
-      const sub = el('p', 'bha-battle-ov__sub', timeout ? `남은 시간 안에 쓰러뜨리지 못했다. 적 체력 ${Math.ceil(s.enemy.hp - 1e-6)} / ${Math.round(s.enemy.maxHp)}` : '체력이 0이 되었다.');
+      const sub = el('p', 'bha-battle-ov__sub', timeout ? `남은 시간 안에 쓰러뜨리지 못했다. 적 체력 ${hpNumbers(s.enemy.hp, s.enemy.maxHp).now} / ${hpNumbers(s.enemy.hp, s.enemy.maxHp).max}` : '체력이 0이 되었다.');
       inner.append(
         ovMark(timeout ? 'i-timer' : 'i-broken', timeout ? 'var(--bha-warn)' : 'var(--bha-danger)'),
         el('span', 'bha-battle-ov__eyebrow', timeout ? '시간 초과 패배' : '패배'),
