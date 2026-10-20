@@ -108,11 +108,11 @@ export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 
 export function charTopOffset(art: ArtUrls, loco: Locomotion = 'walk'): number {
   const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)
   const hasArt = !!(art.src || art.frames);
-  const bodyH = hasArt ? 90 : 56;
+  const bodyH = hasArt ? 140 : 75;
   const boxTop = -(PAD * 2 + bodyH + SHADOW) / 2 + PAD; // 몸 상자 윗변
   const lift = bodyH * LOCO_LIFT[loco]; // 떠 있는 만큼 머리가 위로 (움직임 중간 높이)
   if (!art.src) return boxTop - lift;
-  const drawn = 84; // 정사각 그림이 몸 상자(84×90) 안 아래쪽에 맞춰진 크기
+  const drawn = 130; // 정사각 그림이 몸 상자(130×140) 안 아래쪽에 맞춰진 크기
   const pivot = bodyH * 0.92; // transform-origin 세로
   const top = pivot + (bodyH - drawn - pivot) * art.scale + (art.offsetY / 100) * bodyH;
   return boxTop + Math.min(top, bodyH) - lift;

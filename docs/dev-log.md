@@ -423,6 +423,12 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 도움말·튜토리얼에는 칭호 액자 언급 없음, 다마고치 모드 window prop 사용처 없음. art-guide 표에서 window 줄 삭제.
 **테스트** 1074 → 1075 (c79 책장 테스트 +1, 이름 기대값 6종으로). **캡처** `docs/captures/c81/`(1배 3장).
 
+### C.83 홈 물건·캐릭터 크게, 바닥 활용 배치 (STAGE S-22, UI담당자A, GDD 34-7 v5.69)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.83. `BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로.
+사용자 원문: "지금 게임화면에 저 기능들 아이콘이 너무 작고 위치가 좀 별로야. 바닥면 파악해서 활용도 있게 배치하고 크기도 키워. 캐릭터도 크기키워"
+- 물건 칸 ×1.35(86×76, 문 74×100), 캐릭터 칸 130×140(×1.55, `charTopOffset` 맞춤)·위치 54%. 배치: 뒷줄 0.85배 책장 19·문 81 / 앞줄 보관함 10·수련장 27·상점 73·훈련 인형 90, 겹침 없음, 두 종족 같은 좌표.
+**캡처** `docs/captures/c83/`(1배 2장).
+
 ## 그림 반영
 - 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.
 - 2026-10-20: 홈 방 배경 교체(scene-cave 호로·scene-room 사신, 도트풍 새 그림, 66·41KB)와 책장 그림(prop-book, 320×320 WebP 15KB). 캡처 `docs/captures/art-apply/*-v2.png`.

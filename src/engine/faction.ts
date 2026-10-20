@@ -118,8 +118,8 @@ export const DEFAULT_ROOM: RoomConfig = {
   characterArt: 'char.hollow',
   props: { door: '문', altar: '수련장', book: '책장', chest: '상자', dummy: '훈련 인형', shop: '상점' },
   layout: {
-    book: { x: 22, y: 88, scale: 0.8 }, altar: { x: 36, y: 86, scale: 0.8 }, door: { x: 74, y: 86, scale: 0.8 },
-    chest: { x: 8, y: 99 }, dummy: { x: 90, y: 99 }, shop: { x: 54, y: 99 },
+    book: { x: 19, y: 66, scale: 0.85 }, door: { x: 81, y: 66, scale: 0.85 },
+    chest: { x: 10, y: 99 }, altar: { x: 27, y: 99 }, shop: { x: 73, y: 99 }, dummy: { x: 90, y: 99 },
   },
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],

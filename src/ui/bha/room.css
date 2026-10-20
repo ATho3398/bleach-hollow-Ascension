@@ -87,8 +87,8 @@
 .bha-prop__shape .bha-icon { width: 20px; height: 20px; }
 .bha-prop__img { max-width: none; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; } /* 160×160(16×16 도트 ×10) 그림도 흐림 없이, 비율 유지로 칸 안에 (GDD 34-2) */
 /* 그림이 들어온 물건: 자리표시 틀(배경·테두리)을 걷고 그림 자체를 보인다. 상자 크기는 모두 같고 그림은 비율을 지켜 그 안에 맞춘다 */
-.bha-prop .bha-prop__shape.has-art { width: 64px; height: 56px; background: none; border: 0; border-radius: var(--bha-r-sm); }
-.bha-prop--door .bha-prop__shape.has-art { width: 56px; height: 76px; }
+.bha-prop .bha-prop__shape.has-art { width: 86px; height: 76px; background: none; border: 0; border-radius: var(--bha-r-sm); }
+.bha-prop--door .bha-prop__shape.has-art { width: 74px; height: 100px; }
 .bha-prop__tag {
   font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; white-space: nowrap;
   padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill);
@@ -104,17 +104,17 @@
 
 /* ── 캐릭터: 제자리 2프레임 숨쉬기 (step-end 로 두 모양만 번갈아) ── */
 .bha-char {
-  position: absolute; left: 50%; top: 60%; transform: translate(-50%, -50%);
+  position: absolute; left: 50%; top: 54%; transform: translate(-50%, -50%);
   display: flex; flex-direction: column; align-items: center;
   min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-2);
   background: none; border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
 }
 .bha-char__body {
-  position: relative; display: block; width: 52px; height: 56px; transform-origin: 50% 100%;
+  position: relative; display: block; width: 70px; height: 75px; transform-origin: 50% 100%;
   background: var(--bha-text-2); border: 2px solid var(--bha-line-2); border-radius: 50% 50% 42% 42%;
   animation: bha-char-breath 1.6s step-end infinite;
 }
-.bha-char__body.has-art { width: 84px; height: 90px; background: none; border: 0; border-radius: 0; animation: none; }
+.bha-char__body.has-art { width: 130px; height: 140px; background: none; border: 0; border-radius: 0; animation: none; }
 .bha-char__eye { position: absolute; top: 38%; width: 6px; height: 9px; border-radius: var(--bha-r-pill); background: var(--bha-bg-0); }
 .bha-char__eye:nth-of-type(1) { left: 26%; }
 .bha-char__eye:nth-of-type(2) { right: 26%; }
@@ -122,7 +122,7 @@
 .bha-char__frame--solo { object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)); pointer-events: none; } /* 새 규칙의 한 장: 가만히 */
 .bha-char__frame--1 { animation: bha-frame-a 1.6s step-end infinite; }
 .bha-char__frame--2 { animation: bha-frame-b 1.6s step-end infinite; }
-.bha-char__shadow { width: 40px; height: 6px; margin-top: var(--bha-sp-1); border-radius: 50%; background: rgb(0 0 0 / 0.4); }
+.bha-char__shadow { width: 52px; height: 7px; margin-top: var(--bha-sp-1); border-radius: 50%; background: rgb(0 0 0 / 0.4); }
 .bha-char.is-react .bha-char__body { animation: bha-char-hop 0.4s ease-out; }
 @keyframes bha-char-breath { 0% { transform: scaleY(1); } 50% { transform: scaleY(0.94); } }
 @keyframes bha-frame-a { 0% { visibility: visible; } 50% { visibility: hidden; } }
@@ -131,8 +131,8 @@
 
 /* ── 머리 위 상태 칩 (GDD 18-8): 캐릭터 몸 위, 한 줄. 누르면 상태 화면 ── */
 .bha-room__status {
-  position: absolute; left: 50%; top: 60%; transform: translate(-50%, calc(-100% + var(--head-y, -50px) - var(--bha-sp-2))); z-index: 1; /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px) */
-  display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 52px; box-sizing: content-box; /* 총 폭 74px < 그림 84px */
+  position: absolute; left: 50%; top: 54%; transform: translate(-50%, calc(-100% + var(--head-y, -50px) - var(--bha-sp-2))); z-index: 1; /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px) */
+  display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 52px; box-sizing: content-box; /* 총 폭 74px < 그림 130px */
   padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3); /* 오른쪽은 키 글자 배지 자리 */
   background: rgb(0 0 0 / 0.55); border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
 }
