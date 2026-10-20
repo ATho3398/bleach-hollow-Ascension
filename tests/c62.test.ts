@@ -9,7 +9,7 @@ import { earliestStamp, migrateSave, newSaveData, SAVE_FORMAT_VERSION, type Save
 import { buyShopItem, grantCosmetic, jadeRows, wearCosmetic } from '../src/shop';
 import { RESERVED_CODES, SHORTCUTS, TAMAGO_CODE, findProblems } from '../src/ui/shortcutMap';
 import {
-  BODY, PHYS, VIEW_HOME, accruePlay, clampView, wheelFactor, zoomAt, defaultGravity, deviceArtPlacement, isResting, kick, loadTamagoPrefs, parseTamagoPrefs, plateRows, playTimeText, restAngle, restingAt, saveTamagoPrefs,
+  BODY, PHYS, VIEW_HOME, accruePlay, clampView, minViewZoom, wheelFactor, zoomAt, defaultGravity, deviceArtPlacement, isResting, kick, loadTamagoPrefs, parseTamagoPrefs, plateRows, playTimeText, restAngle, restingAt, saveTamagoPrefs,
   screenGravity, serialNumber, stepPendulum, tamaLayout, tapKick, toDeviceVec, type Pendulum,
 } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
@@ -30,11 +30,11 @@ const rich = (fid = 'hollow'): SaveData => {
 };
 
 describe('버전·데이터 (GDD 27장 S-17)', () => {
-  it('패치 C.62 / 단계 S-17, BALANCE 38, 세이브 형식 25', () => {
-    expect(PATCH_LABEL).toBe('C.62');
-    expect(STAGE_LABEL).toBe('S-17');
-    expect(BALANCE_VERSION).toBe(38);
-    expect(SAVE_FORMAT_VERSION).toBe(25);
+  it('패치 C.62 / 단계 S-17, BALANCE 38, 세이브 형식 25 (이후 패치는 그 이상)', () => {
+    expect(PATCH_LABEL).toMatch(/^C\.\d+$/);
+    expect(STAGE_LABEL).toMatch(/^S-\d+/);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(38);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(25);
   });
   it('꾸밈 분류 keyring·device 추가, 가격 키링 5·기기 디자인 20 (provisional)', () => {
     expect(CATEGORIES.map((c) => c.id).slice(-2)).toEqual(['keyring', 'device']);
@@ -193,7 +193,8 @@ describe('기울기 → 중력', () => {
 describe('다마고치 모드 확대·축소 (핀치·휠·끌기)', () => {
   const L = tamaLayout(844, 390);
   it('배율은 1(기기 전체) ~ 1/줌(평소 확대 화면 정도), 이동은 화면 밖으로 안 빠지게', () => {
-    expect(clampView({ uz: 0.3, px: 50, py: 0 }, L.zoom, L.box, 844, 390)).toEqual({ uz: 1, px: 0, py: 0 });
+    // C.63: 아래 끝은 실제 배율 0.40 (= minViewZoom), 줄인 동안은 이동 없음
+    expect(clampView({ uz: 0.3, px: 50, py: 0 }, L.zoom, L.box, 844, 390)).toEqual({ uz: minViewZoom(L.zoom), px: 0, py: 0 });
     const big = clampView({ uz: 99, px: 9999, py: -9999 }, L.zoom, L.box, 844, 390);
     expect(big.uz).toBeCloseTo(1 / L.zoom, 3);
     expect(big.px).toBeCloseTo((L.box.w * L.zoom * big.uz - 844) / 2, 1);

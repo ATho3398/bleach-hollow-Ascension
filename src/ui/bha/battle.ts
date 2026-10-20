@@ -8,6 +8,7 @@ import type { Locomotion } from '../../engine/locomotion';
 import { bindAnim } from './animPlayer';
 import { el, icon } from './dom';
 import { setLoco } from './loco';
+import { elementColor } from './element';
 
 // ───────────────────────── 순수 함수 ─────────────────────────
 
@@ -427,7 +428,25 @@ export interface FloatOpts {
   weak?: boolean;
   /** 체인(2연쇄 이상)으로 터진 피해: 조금 더 크게 */
   chained?: boolean;
+  /** 피해 크기 단계 (C.63, GDD 28장 4번): small = 작고 흐림, big = 크고 진하게(속성 색), 없으면 보통 */
+  size?: DamageTier;
+  /** 치명타 (C.63): 가장 크게 + "치명" 표시 */
+  critical?: boolean;
+  /** 큰 피해에 칠할 속성 색 (속성 id, 없으면 체인 색) */
+  element?: string | null;
 }
+
+export type DamageTier = 'small' | 'normal' | 'big';
+
+/** 피해 숫자 크기 단계 (C.63, GDD 28장 4번): 기본 공격 1회분 미만 = small, 체인·필살류(ult) 또는 기본 공격 3회분 이상 = big, 그 사이 = normal */
+export function damageTier(damage: number, unit: number, o: { chain?: number; ult?: boolean } = {}): DamageTier {
+  if (o.ult || (o.chain ?? 1) > 1 || damage >= unit * 3 - 1e-9) return 'big';
+  if (damage < unit - 1e-9) return 'small';
+  return 'normal';
+}
+
+/** 치명타 표시 글자 */
+export const CRIT_LABEL = '치명';
 
 /** 플로팅 숫자 한 개를 채운다 (새 요소든 풀의 재사용 요소든 같은 모양) */
 function fillFloat(f: HTMLElement, kind: FloatKind, text: string, spot: { left: number; top: number }, opts: FloatOpts): void {
@@ -436,10 +455,16 @@ function fillFloat(f: HTMLElement, kind: FloatKind, text: string, spot: { left: 
   if (opts.weak) cls.push('is-weak');
   if (opts.chained) cls.push('is-chained');
   if (opts.chain3) cls.push('bha-float--chain3');
+  if (opts.size === 'small') cls.push('is-small');
+  if (opts.size === 'big') cls.push('is-big');
+  if (opts.critical) cls.push('is-critical');
   f.className = cls.join(' ');
   f.style.left = `${spot.left}%`;
   f.style.top = `${spot.top}%`;
+  if (opts.element) f.style.setProperty('--bha-lin-color', elementColor(opts.element));
+  else f.style.removeProperty('--bha-lin-color');
   f.replaceChildren();
+  if (opts.critical) f.append(el('small', 'bha-float__crit', CRIT_LABEL));
   if (opts.iconId) f.append(icon(opts.iconId));
   f.append(text);
 }
@@ -488,3 +513,28 @@ export function floatPool(container: HTMLElement, max = 6, showMs = 1100): {
     },
   };
 }
+
+/** 전투 배속 기억 (C.63, GDD 28장 6번): 고른 배속을 다음 전투에도 쓴다. 브라우저 저장(세이브 아님), 원정·연습·등급전·보스 공통 */
+export const BATTLE_SPEED_KEY = 'bha-battle-speed';
+export const BATTLE_SPEEDS = [1, 2] as const;
+export type BattleSpeed = (typeof BATTLE_SPEEDS)[number];
+
+export function loadBattleSpeed(st: Pick<Storage, 'getItem'> | null): BattleSpeed {
+  try {
+    const v = Number(st?.getItem(BATTLE_SPEED_KEY));
+    return (BATTLE_SPEEDS as readonly number[]).includes(v) ? (v as BattleSpeed) : 1;
+  } catch {
+    return 1;
+  }
+}
+
+export function saveBattleSpeed(st: Pick<Storage, 'setItem'> | null, v: BattleSpeed): void {
+  try {
+    st?.setItem(BATTLE_SPEED_KEY, String(v));
+  } catch {
+    /* 저장 못 해도 이번 전투는 그 배속 */
+  }
+}
+
+/** 전투 로그 패널에 남기는 최근 줄 수 (C.63: 가운데 실시간 안내 대신 [로그] 버튼) */
+export const BATTLE_LOG_MAX = 40;

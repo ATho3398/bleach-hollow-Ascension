@@ -189,7 +189,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
           { label: '상대', value: val(foeName, offer!.elite ? '강적' : '일반') },
           { label: '속성', value: lin },
           { label: `${act} 조건`, mod: 'stack', value: reasonText(faction, offer!) },
-          { label: `${act}하면`, mod: 'stack', value: withNum('허기 리셋 · ', `${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), ' · 타일 +1', evText ? ` · 노력치 ${evText}` : '') },
+          { label: `${act}하면`, mod: 'stack', value: withNum(`${faction.fullnessName} 가득 · `, `${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), ' · 타일 +1', evText ? ` · 노력치 ${evText}` : '') },
           { label: '놓아주면', mod: 'stack', value: withNum(`${faction.riskGaugeName} `, risky(`−${RX.releaseRelief}`, true), ` · ${faction.stabilityName} `, risky(`+${RX.releaseStability}`, true)) },
         ]),
       ),

@@ -156,6 +156,13 @@ export function passiveMultipliers(b: BuildState): Record<PassiveStat, number> {
   return m;
 }
 
+/** 장착 특성의 치명타 확률 가산 합 (C.63 `critChance` 효과 키) */
+export function critChanceBonus(b: BuildState): number {
+  let sum = 0;
+  for (const id of b.slots) if (id) sum += getTrait(id).critChance ?? 0;
+  return sum;
+}
+
 /** 종족 설정의 계열 단계 기술 → 전투 엔진의 계열 표 (GDD 17-3). 엔진은 종족을 모르고 이 표만 읽는다 */
 export function familyTable(factionId: string): Record<string, FamilyCombat> {
   const out: Record<string, FamilyCombat> = {};
@@ -173,5 +180,6 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
     attackSpeedMultiplier: pm.attackSpeed,
     damageTakenMultiplier: pm.damageTaken,
     blockSpawnMultiplier: pm.blockSpawn,
+    critChance: BALANCE.provisional.combat.critChance + critChanceBonus(b),
   };
 }

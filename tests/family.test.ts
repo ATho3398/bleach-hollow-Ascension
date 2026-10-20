@@ -405,7 +405,7 @@ describe('계열 표시 (④, GDD 17-3)', () => {
   });
 
   it('체인 단계 기술 이름은 계열·단계로 읽는다 (플로팅 텍스트·로그)', () => {
-    expect([1, 2, 3].map((n) => familySkillName(hollow, 'family-c', n))).toEqual(['바라', '세로', '세로 오스쿠라스']);
+    expect([1, 2, 3].map((n) => familySkillName(hollow, 'family-c', n))).toEqual(['바라', '세로', '세로 오스큐라스']);
     expect([1, 2, 3].map((n) => familySkillName(shini, 'family-a', n))).toEqual(['베기', '연참', '대참']);
     expect(familySkillName(hollow, null, 2)).toBeNull();
     expect(familySkillName(hollow, 'family-z', 2)).toBeNull();

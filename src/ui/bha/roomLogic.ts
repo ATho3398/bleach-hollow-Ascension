@@ -1,5 +1,6 @@
 // 메인 방 화면의 순수 계산 (tests/room-ui.test.ts)
 import type { RoomConfig } from '../../engine/faction';
+import { fullnessOf } from './fullness';
 
 export type Mood = 'idle' | 'tired' | 'risk' | 'weak';
 
@@ -27,14 +28,15 @@ export interface StatusChip {
   danger: boolean;
 }
 
-/** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 허기·컨디션·리스크 게이지(+쇠약이면 그 이름). 위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
+/** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지(+쇠약이면 그 이름). 위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
 export function statusChips(
   s: { hunger: number; condition: number; risk: number; weakened: boolean },
-  names: { riskGaugeName: string; defeatStateName: string },
+  names: { riskGaugeName: string; defeatStateName: string; fullnessName?: string },
   warn = { hunger: 80, condition: 40, risk: 60 },
 ): StatusChip[] {
   const chips: StatusChip[] = [
-    { kind: 'hunger', label: '허기', icon: 'i-hunger', value: Math.round(s.hunger), danger: s.hunger >= warn.hunger },
+    // 배부름 (C.63): 값은 100 − 허기 (가득 = 100), 위험 구간은 그대로(허기 80↑ = 배부름 20↓)
+    { kind: 'hunger', label: names.fullnessName ?? '배부름', icon: 'i-hunger', value: Math.round(fullnessOf(s.hunger)), danger: s.hunger >= warn.hunger },
     { kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), danger: s.condition < warn.condition },
     { kind: 'risk', label: names.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), danger: s.risk >= warn.risk },
   ];

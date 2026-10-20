@@ -454,11 +454,17 @@ export function checkTrackOpen(save: SaveData, nowMs: number = Date.now(), facti
   return opened;
 }
 
+/** 다른 종족으로 갈 수 있나 (C.63, GDD 22-3·28장 7번): 다른 트랙이 열렸을 때만 — 트랙은 어떤 트랙이 5단계에 닿아야 checkTrackOpen 이 연다.
+ *  5단계 전에는 어떤 길로도 종족을 바꿀 수 없다(종족 id 분기 없음, 열린 트랙 수만 본다) */
+export function canSwitchFaction(save: Pick<SaveData, 'otherTracks'>): boolean {
+  return save.otherTracks.length > 0;
+}
+
 /** 트랙 전환 (GDD 22-3): 지금 트랙을 쉬게 하고 그 종족 트랙을 꺼낸다. 쉬는 동안의 허기는 돌아올 때 오른다(원정 중간 저장이 있으면 오르지 않음).
  *  원정 중간 저장은 트랙마다 따로 남는다. 그 종족 트랙이 없으면 false */
 export function switchTrack(save: SaveData, factionId: string, nowMs: number = Date.now()): boolean {
   const i = save.otherTracks.findIndex((t) => t.factionId === factionId);
-  if (i < 0 || factionId === save.factionId) return false;
+  if (!canSwitchFaction(save) || i < 0 || factionId === save.factionId) return false;
   const next = save.otherTracks[i]!;
   const parked = activeTrackOf(save, nowMs);
   const { parkedAt, ...track } = next;

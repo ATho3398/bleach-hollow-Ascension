@@ -44,7 +44,7 @@ export function rebirthLists(faction: FactionConfig): { resets: string[]; keeps:
       '진화 걸음',
       `${faction.rankBattleName} 번호·전적`,
       `노력치 (${rate}%는 다음 생에 쌓인다)`,
-      `${faction.riskGaugeName} 0 · 허기·컨디션 처음 값`,
+      `${faction.riskGaugeName} 0 · 배부름·컨디션 처음 값`,
       '사냥터는 단계에 맞춰 다시 1곳부터',
     ],
     keeps: [

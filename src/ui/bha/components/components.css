@@ -139,6 +139,7 @@
   border-left: 2px solid rgb(255 255 255 / 0.55);
   pointer-events: none;
 }
+.bha-meter__zone.is-low { left: 0; right: calc((1 - var(--zone, 0)) * 100%); }  /* C.63 배부름: 아래쪽 위험 구간 */
 .bha-meter__note { display: flex; align-items: center; gap: 4px; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-warn); }
 .bha-meter__note .bha-icon { width: 14px; height: 14px; }
 
@@ -651,10 +652,19 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-float--attack.is-crit { color: var(--bha-chain3); }
 .bha-float--hurt { color: var(--bha-danger); font-size: 22px; transform: rotate(4deg); }
 .bha-float--hurt.is-crit { font-size: 30px; }
-.bha-float--guard { color: #8ff0bb; font-size: 15px; padding: 3px 8px 3px 5px; border: 1.5px solid currentColor; border-radius: 4px 4px 12px 12px; background: rgb(10 40 24 / 0.7); }
-.bha-float--heal { color: #9cc4ff; }
+.bha-float--guard { color: var(--bha-text-3); font-size: 15px; padding: 3px 8px 3px 5px; border: 1.5px solid currentColor; border-radius: 4px 4px 12px 12px; background: rgb(10 40 24 / 0.7); }
+.bha-float--heal { color: var(--bha-good); }
 .bha-float--heal::before { content: "+"; }
 .bha-float--void { color: var(--bha-risk); font-style: italic; letter-spacing: 0.04em; }
+/* 피해 크기 단계 (C.63, GDD 28장 4번): 작음 = 작고 흐림 / 큼 = 크고 진하게(속성 색, 없으면 체인 색) / 치명 = 가장 크게 + "치명" */
+.bha-float.is-small { font-size: var(--bha-fs-lg); opacity: 0.62; color: var(--bha-text-2); }
+.bha-float--hurt.is-small { color: var(--bha-danger); }
+.bha-float--attack.is-big { font-size: var(--bha-fs-4xl); color: var(--bha-lin-color, var(--bha-chain3)); -webkit-text-stroke: 1px rgb(0 0 0 / 0.55); }
+.bha-float--hurt.is-big { font-size: var(--bha-fs-3xl); }
+.bha-float.is-critical { font-size: calc(var(--bha-fs-4xl) * 1.2); color: var(--bha-sp-hi); opacity: 1; display: inline-flex; flex-direction: column; align-items: center; line-height: 0.95; -webkit-text-stroke: 1px rgb(0 0 0 / 0.6); }
+.bha-float--hurt.is-critical { font-size: var(--bha-fs-4xl); color: var(--bha-danger); }
+.bha-float__crit { font-family: var(--bha-font-body); font-size: var(--bha-fs-md); font-weight: var(--bha-fw-heavy); letter-spacing: 0.1em; color: var(--bha-sp-hi); -webkit-text-stroke: 0; text-shadow: 0 1px 3px rgb(0 0 0 / 0.9); }
+.bha-float--hurt .bha-float__crit { color: var(--bha-danger); }
 .bha-float--chain { color: var(--bha-chain2); font-size: 16px; font-family: var(--bha-font-body); font-weight: 800; }
 .bha-float--chain3 { color: var(--bha-chain3); font-size: 20px; }
 /* 상성 문구 (C.47, GDD 20-2): 효과가 굉장하다(강) / 효과가 별로…(약) */

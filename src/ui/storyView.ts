@@ -8,7 +8,7 @@ import { chapterOpen, episodeOpen, storyProgressOf, type SaveData } from '../gam
 import type { ExpeditionState } from '../engine/expedition';
 import { storyEpisodeOf } from '../engine/expedition';
 import { button, el, icon, seg } from './bha/dom';
-import { lcdHead, lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
+import { lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 
 export interface StoryViewHandlers {
   /** [자유 원정] 탭 */
@@ -105,11 +105,9 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
   const md = masterDetail(rows, Math.max(0, STORY_CHAPTERS.findIndex((c) => chapterOpen(save, c.id) && !prog.chapters.includes(c.id))), '장 목록');
 
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
-  const head = lcdHead({
-    title: '스토리',
-    sub: '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다',
-    aside: [departTabs('story', () => h.onFree()), selectLast(help)],
-  });
+  // 머리 (C.63, GDD 28장 8번): [자유 원정]/[스토리] 탭을 출발 화면(planView)과 같은 자리(머리 맨 왼쪽)에 둔다 — 탭을 바꿔도 탭이 움직이지 않게
+  const head = el('header', 'bha-exp__head bha-depart-head');
+  head.append(departTabs('story', () => h.onFree()), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다'), selectLast(help));
   const { app } = lcdPage(root, { cls: 'bha-story', cols: '2fr 3fr' }, head, [md.list], [md.detail]);
   app.dataset.screen = 'story';
 }

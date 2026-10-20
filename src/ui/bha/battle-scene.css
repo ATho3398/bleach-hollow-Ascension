@@ -76,15 +76,18 @@
 .bha-battle__timelabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .bha-battle__time.is-urgent, .bha-battle__time.is-urgent b { color: var(--bha-danger); }
 
-/* 사건 로그: 두 유닛 사이 가운데에 반투명으로 띄운다 (최근 줄이 아래, 위로 흐려짐) */
-.bha-lcd .bha-battle__arena .bha-log {
-  position: absolute; z-index: 3; left: 50%; top: 52%; transform: translate(-50%, -50%);
-  width: min(32%, 220px); height: auto; max-height: 72px; justify-content: flex-end; padding: var(--bha-sp-2) var(--bha-sp-3);
-  border-radius: var(--bha-r-md); background: rgb(0 0 0 / 0.38); pointer-events: none;
+/* 사건 로그 (C.63, GDD 28장 3번): 가운데 실시간 안내를 없애고 위 오른쪽 [로그] 버튼으로 여는 목록. 열려 있어도 전투는 계속(겹쳐 보기) */
+.bha-lcd .bha-battle__arena .bha-battle__logpanel {
+  position: absolute; z-index: var(--bha-z-float); right: var(--bha-sp-3); top: 46px;
+  width: min(62%, 340px); height: auto; max-height: calc(100% - 56px); overflow-y: auto; overscroll-behavior: contain;
+  justify-content: flex-start; gap: var(--bha-sp-1); padding: var(--bha-sp-3);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: rgb(0 0 0 / 0.78);
+  -webkit-mask-image: none; mask-image: none; pointer-events: auto;
 }
-.bha-lcd .bha-battle__arena .bha-log .bha-log__line { justify-content: center; min-height: 0; white-space: normal; overflow: hidden; font-size: var(--bha-fs-xs); line-height: 1.25; text-align: center; max-height: 3.8em; }
-.bha-lcd .bha-battle__arena .bha-log .bha-log__line:last-child { font-size: var(--bha-fs-sm); }
-.bha-lcd .bha-battle__arena .bha-log .bha-log__line:not(:last-child) { display: none; }
+.bha-lcd .bha-battle__arena .bha-battle__logpanel[hidden] { display: none; }
+.bha-lcd .bha-battle__arena .bha-battle__logpanel .bha-log__line { justify-content: flex-start; flex: none; min-height: 0; white-space: normal; font-size: var(--bha-fs-xs); font-weight: 400; line-height: 1.35; text-align: left; color: var(--bha-text-2); }
+.bha-lcd .bha-battle__arena .bha-battle__logpanel .bha-log__line:last-child { color: var(--bha-text-1); font-size: var(--bha-fs-xs); }
+.bha-battle__bar .bha-battle__logbtn.is-on { color: var(--bha-accent); border-color: var(--bha-accent); }
 .bha-battle__floats { position: absolute; inset: 0; pointer-events: none; z-index: var(--bha-z-float); }
 
 /* ── 블록 바 위 줄: 왼쪽 영력·상태·범례 / 오른쪽 저장 필살기 ── */
@@ -140,6 +143,14 @@
 .bha-afx .afx-core { fill: var(--bha-text-1); }
 .bha-afx .afx-core-s { stroke: var(--bha-text-1); }
 .bha-afx--ray { border-radius: var(--bha-r-pill); background: linear-gradient(180deg, transparent, currentColor 22%, var(--bha-text-1) 50%, currentColor 78%, transparent); }
+/* 단계 고유 연출 (C.63, GDD 28장 13번): 세로 오스큐라스 = 검은 빔 몸통 + 녹색 테두리 빛. 공격 이펙트 색 꾸밈(cosmetics.css)보다 우선 — 이 기술 고유색 유지 */
+.bha-afx.bha-afx--look-cero-oscuras, :root[data-cos-fx] .bha-afx.bha-afx--look-cero-oscuras[data-side] {
+  color: var(--bha-fx-cero-oscuras-edge);
+  filter: drop-shadow(0 0 2px var(--bha-fx-cero-oscuras-edge)) drop-shadow(0 0 9px var(--bha-fx-cero-oscuras-edge));
+}
+.bha-afx--ray.bha-afx--look-cero-oscuras { background: linear-gradient(180deg, transparent, var(--bha-fx-cero-oscuras-edge) 12%, var(--bha-fx-cero-oscuras-core) 30%, var(--bha-fx-cero-oscuras-core) 70%, var(--bha-fx-cero-oscuras-edge) 88%, transparent); }
+.bha-afx.bha-afx--look-cero-oscuras .afx-core, :root[data-cos-fx] .bha-afx.bha-afx--look-cero-oscuras[data-side] .afx-core { fill: var(--bha-fx-cero-oscuras-core); }
+.bha-afx.bha-afx--look-cero-oscuras .afx-core-s, :root[data-cos-fx] .bha-afx.bha-afx--look-cero-oscuras[data-side] .afx-core-s { stroke: var(--bha-fx-cero-oscuras-core); }
 .bha-afx-name {
   position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
   font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-3xl); line-height: var(--bha-lh-tight);
@@ -148,8 +159,6 @@
 }
 .bha-afx-name.is-big { font-size: var(--bha-fs-4xl); text-shadow: 0 0 16px var(--bha-chain3), 0 2px 4px var(--bha-bg-0); }
 .bha-afx-name.is-ult { font-size: var(--bha-fs-4xl); color: var(--bha-sp-hi); text-shadow: var(--bha-glow-sp), 0 2px 4px var(--bha-bg-0); }
-.bha-lcd .bha-battle__arena .bha-log { transition: opacity var(--bha-dur-2) var(--bha-ease-out); }
-.bha-lcd .bha-battle__arena.has-afx-name .bha-log { opacity: 0; }
 
 /* ── 해방 (GDD 22-5): 저장 필살기 옆 버튼 · 해방 중 몸 색 변화 · 짧은 컷인. 색은 테마 강조색(종족 테마가 정함)·리스크 토큰. 11-5 변주(외형)는 미정이라 공통 연출 하나 ── */
 .bha-stored--liberation .bha-stored__gauge i { background: var(--bha-accent-hi); }

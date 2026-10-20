@@ -92,8 +92,8 @@ describe('걷기 화면 머리 위 말풍선 (GDD 18-7)', () => {
   it('알림(조우·획득)이 있으면 그 글자를 우선한다', () => {
     expect(bubbleText({ ...base, msg: '조우!', kind: 'fight' })).toBe('조우!');
   });
-  it('허기 경고·일시정지·도착은 알림이 없을 때 뜬다', () => {
-    expect(bubbleText({ ...base, kind: 'warn' })).toContain('허기');
+  it('배고픔 경고·일시정지·도착은 알림이 없을 때 뜬다', () => {
+    expect(bubbleText({ ...base, kind: 'warn' })).toContain('배가 빠르게 고파진다'); // C.63: 배부름 표시
     expect(bubbleText({ ...base, paused: true })).toBe('일시정지');
     expect(bubbleText({ ...base, phase: 'nest-choice' })).toBe('둥지에 도착했다');
   });

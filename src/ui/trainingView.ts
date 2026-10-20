@@ -1,6 +1,7 @@
 // 해방 수련 화면 (GDD 22-4·22-5): 둥지 방 제단 → 수련 화면(수련치·수련권·4종목 카드) → 미니게임 한 판 → 결과.
 // 규칙·시간은 engine/training 이 정하고, 화면은 상태를 그리기만 한다. 문구·종목 이름은 종족 설정 training 에서 읽는다 (종족 id 분기 없음).
 // 조작은 한 손가락: 화면 버튼 / 칸 누르기, PC 는 방향키·스페이스(숫자 1~9 = 먹이사슬 칸).
+import { fullnessDeltaText } from './bha/fullness';
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
 import {
@@ -29,11 +30,11 @@ function hasBatchim(word: string): boolean {
 }
 
 /** 한 판의 보상·비용 한 줄씩 (22-4 표) */
-export function gameRuleLines(f: Pick<FactionConfig, 'riskGaugeName'>, factionId: string, game: TrainingGameId): { reward: string; cost: string } {
+export function gameRuleLines(f: Pick<FactionConfig, 'riskGaugeName' | 'fullnessName'>, factionId: string, game: TrainingGameId): { reward: string; cost: string } {
   const r = gameRule(game);
   const evText = Object.entries(r.ev).filter(([k]) => (STAT_IDS as readonly string[]).includes(k)).map(([k, v]) => `${statName(k as StatId, factionId)} 노력치 +${v}`);
-  const reward = [`수련치 +${r.points}`, ...evText, ...(r.winHunger ? [`허기 ${r.winHunger}`] : [])].join(' · ');
-  const cost = [r.condition ? `컨디션 ${r.condition}` : '', r.hunger ? `허기 +${r.hunger}` : '', r.risk ? `${f.riskGaugeName} +${r.risk}` : ''].filter(Boolean).join(' · ') || '없음';
+  const reward = [`수련치 +${r.points}`, ...evText, ...(r.winHunger ? [fullnessDeltaText(f.fullnessName, r.winHunger)] : [])].join(' · ');
+  const cost = [r.condition ? `컨디션 ${r.condition}` : '', r.hunger ? fullnessDeltaText(f.fullnessName, r.hunger) : '', r.risk ? `${f.riskGaugeName} +${r.risk}` : ''].filter(Boolean).join(' · ') || '없음';
   return { reward, cost };
 }
 
@@ -313,7 +314,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   rows.append(
     el('p', '', `수련치 +${out.points} (지금 ${Math.min(t.points, TX.pointsToComplete)} / ${TX.pointsToComplete})`),
     ...(evText ? [el('p', '', `노력치 ${evText}`)] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
-    el('p', 'bha-faint', [out.condition ? `컨디션 ${Math.round(out.condition)}` : '', out.hunger ? `허기 ${out.hunger > 0 ? '+' : ''}${Math.round(out.hunger)}` : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || '둥지 수치 변화 없음'),
+    el('p', 'bha-faint', [out.condition ? `컨디션 ${Math.round(out.condition)}` : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || '둥지 수치 변화 없음'),
     el('p', 'bha-faint', `남은 수련권 ${t.tickets}/${TX.ticketsMax}`),
   );
   const left = [panel({ title: `${cfg.name} · ${out.level}단계 ${out.won ? '승리' : '패배'}`, aside: out.won ? tag('승리', 'kind') : undefined }, rows)];

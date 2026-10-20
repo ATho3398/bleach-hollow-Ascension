@@ -118,6 +118,9 @@ export function initTamago(dev: Device): Tamago {
   bodyArt.alt = '';
   bodyArt.hidden = true;
   const ring = el('div', 'bha-tama__ring');
+  // 옆면 두께 띠 (C.63, GDD 28장 2번): 뒤집는 동안만 3D 로 세워 종이처럼 안 보이게. 옆면 그림 규칙은 사용자 확인 전이라 CSS 띠만
+  const edgeL = el('div', 'bha-tama__edge bha-tama__edge--l');
+  const edgeR = el('div', 'bha-tama__edge bha-tama__edge--r');
   const backFace = el('div', 'bha-tama__back');
   const backArt = el('img', 'bha-tama__art') as HTMLImageElement;
   backArt.alt = '';
@@ -156,7 +159,7 @@ export function initTamago(dev: Device): Tamago {
     };
     hits.set(b, hb);
   }
-  root.append(body, bodyArt, ring, backFace, key, ctrl, ...hits.values());
+  root.append(edgeL, edgeR, body, bodyArt, ring, backFace, key, ctrl, ...hits.values());
   frame.append(root);
   // 화면(LCD) 탭 = 줌인. 줌아웃 중에만 LCD 를 덮는다 (화면은 그 밑에서 그대로 움직인다)
   const shield = el('button', 'bha-tama__shield');
@@ -275,6 +278,8 @@ export function initTamago(dev: Device): Tamago {
     if (!layout) return;
     box(body, layout.body);
     box(backFace, layout.body);
+    box(edgeL, { x: layout.body.x, y: layout.body.y, w: BODY.edge, h: layout.body.h });
+    box(edgeR, { x: layout.body.x + layout.body.w - BODY.edge, y: layout.body.y, w: BODY.edge, h: layout.body.h });
     if (artBox) {
       box(bodyArt, artBox.box);
       box(backArt, { x: 0, y: 0, w: artBox.box.w, h: artBox.box.h });
@@ -549,6 +554,7 @@ export function initTamago(dev: Device): Tamago {
       return setFaces();
     }
     flipping = true;
+    frame.classList.add('is-tama-flipping');
     const half = 260;
     flipDeg = 90;
     animate(half, () => {
@@ -561,6 +567,7 @@ export function initTamago(dev: Device): Tamago {
       requestAnimationFrame(() => {
         animate(half, () => {
           flipping = false;
+          frame.classList.remove('is-tama-flipping');
         });
         dev.restage();
       });

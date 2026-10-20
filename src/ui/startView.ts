@@ -79,7 +79,7 @@ export interface SpeciesHandlers {
   confirm: (faction: FactionConfig, onYes: () => void, onNo: () => void) => void;
 }
 
-/** 종족 고르기 (GDD 19-4): 설명 없이 종족 수만큼 등분한 칸에 아이콘 + 이름 한 단어. 설정·도움말(튜토리얼)은 위 구석 작은 아이콘 버튼. 방의 종족 바꾸기도 같은 화면 */
+/** 종족 고르기 (GDD 19-4): 설명 없이 종족 수만큼 등분한 칸에 아이콘 + 이름 한 단어. 설정·도움말(튜토리얼)은 위 구석 작은 아이콘 버튼. (C.63: 방의 종족 바꾸기는 지웠다 — 새 슬롯에서만) */
 export function speciesView(root: HTMLElement, factions: readonly FactionConfig[], h: SpeciesHandlers): void {
   const species = el('div', 'bha-species bha-species--split');
   species.setAttribute('role', 'radiogroup');

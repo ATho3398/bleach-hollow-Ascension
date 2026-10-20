@@ -1,6 +1,7 @@
 // 원정 화면 (GDD 1장, 2-1, 6장, 17-1): 캐릭터가 왼쪽을 향해 걷는 화면 + 위에 얹는 상태 줄·조우 알림, 둥지 칸에서 귀환 선택·타일 배치 팝업. (U-4 → R-1)
 // 시간(칸당 5초, 1x/2x/4x)은 여기서 돌리고, 규칙은 engine/expedition 이 정한다. 12칸 길·칸 번호·바퀴는 엔진 안에만 있고 걷는 화면에는 보이지 않는다.
 // 화면 DOM 은 한 번 만들고 상태가 바뀔 때마다 제자리에서 고친다.
+import { fullnessOf } from './bha/fullness';
 import { BALANCE } from '../config/balance';
 import { charArt } from '../data/art/manifest';
 import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
@@ -124,7 +125,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (exp.phase !== 'rest') return;
     finishRest(exp);
     h.onSave();
-    msg = '허기·컨디션이 회복됐다';
+    msg = `${faction.fullnessName}·컨디션이 회복됐다`;
     render();
     nextStep();
   }
@@ -305,7 +306,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
     meters.replaceChildren(
       meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
-      meter({ kind: 'hunger', label: '허기', icon: 'i-hunger', value: Math.round(exp.hunger), max: PX.hungerMax, compact: true, zone: 0.8, danger: hungerDanger }),
+      meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(exp.hunger, PX.hungerMax)), max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
       meter({
         kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(exp.condition), max: PX.conditionMax, compact: true,
         valueText: `${Math.round(exp.condition)}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`,

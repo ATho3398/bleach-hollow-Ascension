@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 38;
+export const BALANCE_VERSION = 39;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -446,8 +446,9 @@ export const BALANCE = {
       /** 플레이어 기본 공격 1회 피해. 적 체력·공격력은 이 값의 N회 분량이라 기준 단위일 뿐이다 */
       playerAttackDamage: 10,
       /** "기본 공격 N회 분량" 보정: 적 체력 = hpInAttacks × 이 값 × 기본 공격 피해.
-       *  블록·필살이 시간을 줄이므로, 봇(빈 슬롯 = 기본 블록만) 기준 일반 약 45초·강적 약 90초가 되게 맞춘다 (npm run balance, C.6 조정 1.5→2.8, C.8 일자 8칸 바에서 봇이 더 잘 붙여 일반 36초로 짧아져 2.8→3.4) */
-      hpAttackScale: 3.4,
+       *  블록·필살이 시간을 줄이므로, 봇(빈 슬롯 = 기본 블록만) 기준 일반 약 45초·강적 약 90초가 되게 맞춘다 (npm run balance, C.6 조정 1.5→2.8, C.8 일자 8칸 바에서 봇이 더 잘 붙여 일반 36초로 짧아져 2.8→3.4,
+       *  C.63 내 치명타 평균 피해 +2.5%(5%·×1.5)만큼 3.4→3.48 — 치명타 전후 처치 시간이 같게) */
+      hpAttackScale: 3.48,
       /** 적 데이터 hpInAttacks 기준값 (GDD 3-5 임시: 일반 약 30회, 강적 약 70회 분량). 밸런스 점검이 데이터가 이 근처인지 본다 */
       enemyHpInAttacks: { normal: 30, elite: 70 },
       /** 패턴 종류별 hpInAttacks 기준값 (C.15, GDD 14-5 임시): 속공은 약간 적게, 단단은 많게. 밸런스 점검이 데이터가 ±15% 안인지 본다 */
@@ -455,7 +456,8 @@ export const BALANCE = {
       /** 육성이 올리는 값: 공격 배율 (GDD 3-2). 적 체력도 같이 올라 비율 유지. 육성 없음 = 1 */
       growthMultiplier: 1,
       /** 플레이어 체력 (= 기본 공격 15회 분량). 한 조우마다 새로 시작. 강적(약 90초)을 기본 블록만으로도 버틸 여지가 있게 100→150 (C.6 봇 점검) */
-      playerMaxHp: 150,
+      /*  C.63: 적 치명타(3%·×1.5)로 늘어난 패배를 치명타 전 수준으로 150→154 (밸런스 조정 4회차, 마스터 결정, dev-log C.63) */
+      playerMaxHp: 154,
       /** 조우당 시간 제한(초). 넘기면 패배 (GDD 3-5) */
       timeLimitSeconds: 150,
       /** 적 공격 피해 흔들림 ±비율 (같은 시드면 같다). 봇 승률이 0/100% 로만 갈리지 않게 */
@@ -500,6 +502,13 @@ export const BALANCE = {
       storedGuardSeconds: 2,
       /** 시작 게이지 = 안정 수치(0~stabilityMax) 비례로 0~이 값 (둥지 애착 반영) */
       storedStartGaugeMax: 50,
+      /** 치명타 (C.63, GDD 28장 5번, 마스터 추천 provisional): 물리·마법 합친 하나. 내 기본 확률 5%, 치명 피해 ×1.5,
+       *  기본 공격·스킬 블록·체인·필살·콤보·해방·저장형 필살 모두 대상(공허 블록·반사·독 지속 피해 제외). 적도 같은 규칙(기본 확률 3%).
+       *  특성 critChance 가 확률을 더하고(합), 상한 critChanceMax */
+      critChance: 0.05,
+      critMultiplier: 1.5,
+      enemyCritChance: 0.03,
+      critChanceMax: 0.5,
     },
   },
 } as const;

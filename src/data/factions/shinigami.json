@@ -171,6 +171,7 @@
     "feast": "잔칫상"
   },
   "stabilityName": "영압 안정도",
+  "fullnessName": "배부름",
   "slotName": "참백도 슬롯",
   "lineageBonusName": "참백도 속성 확정",
   "traitKindNames": {
@@ -190,7 +191,8 @@
       "book": "기록서",
       "chest": "장롱",
       "window": "창문",
-      "dummy": "나무 인형"
+      "dummy": "나무 인형",
+      "shop": "매점"
     },
     "layout": {
       "window": {
@@ -216,6 +218,10 @@
       "dummy": {
         "x": 78,
         "y": 78
+      },
+      "shop": {
+        "x": 36,
+        "y": 80
       }
     },
     "talk": {

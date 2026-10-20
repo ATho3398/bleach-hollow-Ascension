@@ -32,7 +32,7 @@ export function msgKind(phase: ExpeditionPhase, msg: string, hungerSpike: boolea
 /** 머리 위 말풍선 글자 (GDD 18-7): 알림(msg)이 있으면 그것, 없으면 허기 경고·일시정지·도착만, 그냥 걷는 중에는 빈 글자(말풍선 감춤) */
 export function bubbleText(o: { phase: ExpeditionPhase; paused: boolean; msg: string; kind: MsgKind; nestName: string }): string {
   if (o.msg) return o.msg;
-  if (o.kind === 'warn') return '허기 급상승 중! 귀환을 서두르자';
+  if (o.kind === 'warn') return '배가 빠르게 고파진다! 귀환을 서두르자';
   if (o.phase === 'moving' && o.paused) return '일시정지';
   if (o.phase === 'nest-choice') return `${o.nestName}에 도착했다`;
   return '';

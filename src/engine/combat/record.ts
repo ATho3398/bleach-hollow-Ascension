@@ -45,5 +45,7 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     storedWasted: Math.round(s.storedWasted * 10) / 10,
     liberationUsed: s.liberation.usedAtTick !== null,
     liberationAt: liberationUsedAt(s),
+    crits: s.crits ?? 0,
+    enemyCrits: s.enemyCrits ?? 0,
   };
 }

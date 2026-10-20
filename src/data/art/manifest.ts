@@ -51,6 +51,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.chest': {},
   'prop.window': {},
   'prop.dummy': {},
+  'prop.shop': {},
 };
 
 /** 그림 키 → 실제 이미지 URL(없으면 null = 자리표시를 쓴다). base 는 배포 경로(Vite BASE_URL) */

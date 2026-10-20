@@ -91,10 +91,10 @@ describe('훈련 인형 (GDD 18-3, C.38)', () => {
 
 describe('머리 위 상태 칩 (GDD 18-8)', () => {
   const names = { riskGaugeName: '광기', defeatStateName: '쇠약' };
-  it('허기·컨디션·리스크 순서, 값은 반올림, 위험 구간은 기존 경고 기준과 같다', () => {
+  it('배부름·컨디션·리스크 순서, 값은 반올림, 위험 구간은 기존 경고 기준과 같다 (C.63: 배부름 = 100 − 허기)', () => {
     const chips = statusChips({ hunger: 40.4, condition: 80, risk: 10, weakened: false }, names);
     expect(chips.map((c) => [c.kind, c.label, c.value, c.danger])).toEqual([
-      ['hunger', '허기', 40, false], ['cond', '컨디션', 80, false], ['risk', '광기', 10, false],
+      ['hunger', '배부름', 60, false], ['cond', '컨디션', 80, false], ['risk', '광기', 10, false],
     ]);
     const bad = statusChips({ hunger: 85, condition: 30, risk: 61, weakened: false }, names);
     expect(bad.map((c) => c.danger)).toEqual([true, true, true]);

@@ -41,6 +41,7 @@ export function parseTrait(r: unknown): TraitDef {
       errors.push(`passive: { stat: ${PASSIVE_STATS.join(' | ')}, multiplier: 양수 }`);
     }
   }
+  if (t.critChance !== undefined && !(typeof t.critChance === 'number' && t.critChance > 0 && t.critChance <= 1)) errors.push('critChance: 0 초과 1 이하');
   if (errors.length > 0) throw new Error(`특성 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return r as TraitDef;
 }

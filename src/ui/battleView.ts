@@ -21,7 +21,7 @@ import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
-  type BlockSpec, type BlockVisual, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
+  type BlockSpec, type BlockVisual, damageTier, loadBattleSpeed, saveBattleSpeed, BATTLE_LOG_MAX, type BattleSpeed, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDot, elementMark } from './bha/element';
 import { weaknessesOf } from '../data/elements';
@@ -104,7 +104,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       const name = e.block === 'skill'
         ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
         : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
-      const parts = [`${name}! ${n(e.damage)} 피해${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
+      const parts = [`${name}! ${n(e.damage)} 피해${e.crit ? ' (치명!)' : ''}${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
       if (e.bonus === 'stagger') parts.push('적 행동 지연');
@@ -273,9 +273,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   units.append(unit('bha-unit--me', meHeads, hero.root, playerMeter), unit('bha-unit--foe', foeHeads, foe, enemyMeter));
 
   const floats = el('div', 'bha-battle__floats');
-  const log = el('div', 'bha-log');
-  log.setAttribute('aria-live', 'polite');
-  log.dataset.help = 'battle.stage';
+  // 사건 로그 (C.63, GDD 28장 3번): 가운데 실시간 안내 대신 [로그] 버튼으로 여는 목록. 닫혀 있으면 안 보인다(일시정지 없이 겹쳐 본다)
+  const log = el('div', 'bha-log bha-battle__logpanel');
+  log.setAttribute('role', 'log');
+  log.setAttribute('aria-label', '전투 기록');
+  log.hidden = true;
   const arena = el('section', 'bha-battle__arena');
   arena.setAttribute('aria-label', '전투 상황');
   // 효과 레이어: 번쩍임 한 장(투명도만 애니메이션). 조작을 막지 않는다
@@ -379,7 +381,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   controls.append(mid, tray.root, trayNote);
 
   // ── 7. 하단 컨트롤 ──
-  let speed = 1;
+  let speed: BattleSpeed = loadBattleSpeed(safeStorage());
   let paused = false;
   /** 튜토리얼·도움말·조우 연출이 열려 있는 동안 true: 엔진 시간이 흐르지 않고 입력도 받지 않는다 (결정성에 영향 없음, engine/tutorial frameTicks) */
   let overlayOpen = false;
@@ -388,7 +390,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const halted = () => paused || overlayOpen;
 
   const speedBtn = button({ iconOnly: true, size: 'small', label: '배속 바꾸기' });
-  const speedText = el('span', 'bha-num', '1x');
+  const speedText = el('span', 'bha-num', `${speed}x`);
+  speedBtn.classList.toggle('is-on', speed === 2);
   speedText.style.fontWeight = '800';
   speedBtn.append(speedText);
   const pauseBtn = button({ iconOnly: true, size: 'small', label: '일시정지', icon: 'i-pause' });
@@ -407,7 +410,17 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     quitBtn.onclick = () => quit();
     bar.append(quitBtn);
   }
-  bar.append(speedBtn, pauseBtn, helpBtn);
+  const logBtn = button({ label: '로그', size: 'small' });
+  logBtn.classList.add('bha-battle__logbtn');
+  logBtn.setAttribute('aria-expanded', 'false');
+  logBtn.dataset.help = 'battle.stage';
+  logBtn.onclick = () => {
+    log.hidden = !log.hidden;
+    logBtn.classList.toggle('is-on', !log.hidden);
+    logBtn.setAttribute('aria-expanded', String(!log.hidden));
+    if (!log.hidden) log.scrollTop = log.scrollHeight;
+  };
+  bar.append(logBtn, speedBtn, pauseBtn, helpBtn);
   if (opts.frenzy) {
     const fc = chip(opts.frenzy, 'danger');
     fc.classList.add('bha-frenzychip');
@@ -540,6 +553,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   });
   speedBtn.onclick = () => {
     speed = speed === 1 ? 2 : 1;
+    saveBattleSpeed(safeStorage(), speed);
     attack.setSpeed(speed);
     setText(speedText, `${speed}x`);
     speedBtn.classList.toggle('is-on', speed === 2);
@@ -551,8 +565,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const node = logLineEl(line.role, line.icon, line.text);
     log.append(node);
     lines.push(node);
-    while (lines.length > 3) lines.shift()!.remove();
-    playOnce(node, 'is-new');
+    while (lines.length > BATTLE_LOG_MAX) lines.shift()!.remove();
+    if (!log.hidden) log.scrollTop = log.scrollHeight;
   };
   let floatCount = 0;
   let hurtCount = 0;
@@ -582,7 +596,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
     // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
     layer: fxLayer,
-    familyFx: (id) => familyOf(faction, id)?.fx,
+    // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
+    familyFx: (id, stage) => {
+      const f = familyOf(faction, id);
+      if (!f) return null;
+      const t = f.tiers[stage - 1];
+      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null };
+    },
     nameOf: (e) => {
       if (e.kind === 'stored-use') return { name: labels.storedSkill, ult: true };
       if (e.kind !== 'block' || e.damage <= 0) return null;
@@ -594,7 +614,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     },
     shake,
   });
+  if (speed !== 1) attack.setSpeed(speed);
   const n0 = (v: number) => String(Math.round(v));
+  /** 피해 크기 기준 (C.63): 내 기본 공격 1회 피해(육성·환경 반영) / 적 쪽은 기본 공격 피해 단위 */
+  const myUnit = p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier * p.attackPowerMultiplier;
+  const hurtUnit = p.playerAttackDamage;
   let specialNoteUntil = 0;
   const react = (e: CombatEvent) => {
     const cue = cueOf(e, top);
@@ -603,6 +627,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (e.kind === 'block' || e.kind === 'stored-use') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':
+        // 기본 공격 숫자는 평소 띄우지 않는다(화면이 붐빈다). 치명타만 크게
+        if (e.crit) spawnFloat('attack', `−${n0(e.damage)}`, { critical: true });
         break;
       case 'block': {
         if (e.block === 'void') {
@@ -613,7 +639,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         } else if (e.block === 'skill' && e.role === 'heal') {
           spawnFloat('heal', n0(e.heal));
         } else {
-          spawnFloat('attack', `−${n0(e.damage)}`, { crit: e.chain >= top, weak: e.matchup === 'strong', chained: e.chain > 1 });
+          const ult = e.block === 'special' || e.block === 'combo' || e.block === 'liberation';
+          spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });
         }
         // 상성 문구 (GDD 20-2, 종족 설정 matchupText)
         if (e.matchup === 'strong') spawnFloat('strong', labels.matchupText.strong);
@@ -640,7 +667,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         replayOnce(flashVoid, 'is-on', 900);
         break;
       case 'stored-use':
-        spawnFloat('attack', `−${n0(e.damage)}`, { crit: true });
+        spawnFloat('attack', `−${n0(e.damage)}`, { size: 'big', critical: !!e.crit });
         spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
         flash('is-special', 600);
         break;
@@ -650,7 +677,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard');
         } else if (e.damage > 0) {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `−${n0(e.damage)}`);
+          spawnFloat('hurt', `−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit });
         }
         break;
       case 'heavy-hit':
@@ -661,7 +688,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard', 600);
         } else {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `−${n0(e.damage)}`, { crit: true });
+          spawnFloat('hurt', `−${n0(e.damage)}`, { size: 'big', critical: !!e.crit });
           shake();
         }
         break;
@@ -673,7 +700,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard');
         } else {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `−${n0(e.damage)}`);
+          spawnFloat('hurt', `−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit });
         }
         break;
       case 'end':

@@ -110,6 +110,9 @@ export interface BattleRecord {
   /** C.54 에서 더한 필드 (세이브 형식 18, 해방 GDD 22-5): 해방을 썼는가, 쓴 시각(전투 시작부터 초, 안 썼으면 null). 옛 기록은 false/null */
   liberationUsed: boolean;
   liberationAt: number | null;
+  /** 치명타 횟수: 내 공격 / 적 공격 (C.63, GDD 28장 5번). 옛 기록은 없음 */
+  crits?: number;
+  enemyCrits?: number;
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */

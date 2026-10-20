@@ -103,7 +103,7 @@ export function tileHint(t: TerrainTileDef): string {
   const e = t.effect;
   let base: string;
   if (e.type === 'spawn') base = e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
-  else if (e.type === 'rest') base = '허기·컨디션 회복 (시간 소모)';
+  else if (e.type === 'rest') base = '배부름·컨디션 회복 (시간 소모)';
   else if (e.type === 'event') return eventHint(e.event);
   else {
     base = {
@@ -149,7 +149,7 @@ export function variantModsText(m: VariantMods, factionId = ''): string[] {
   if (m.restMult !== undefined) out.push(`휴식 회복 ×${m.restMult}`);
   if (m.nextShield) out.push(`다음 전투 보호막 ${Math.round(m.nextShield * 100)}%`);
   if (m.riskOnce) out.push(`리스크 ${m.riskOnce > 0 ? '+' : '−'}${Math.abs(m.riskOnce)}`);
-  if (m.hungerMult !== undefined) out.push(`허기 ×${m.hungerMult}`);
+  if (m.hungerMult !== undefined) out.push(`배고파지는 속도 ×${m.hungerMult}`);
   if (m.eliteSoulBonus) out.push(`강적 처치 영혼 결정 +${m.eliteSoulBonus}`);
   if (m.envMult !== undefined) out.push(`효과 ×${m.envMult}`);
   return out;

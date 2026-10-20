@@ -329,8 +329,18 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
 // GDD 23-2 리스크 목표 (C.52): 평범한 4바퀴(흡수·놓아주기 섞음)는 끝 40~60·돌파 10% 이하, 둥지 재우기·쓰다듬기는 한 번에 −20 안팎(−15~−25)
 {
   const m4 = absorbStats['4-mixed']!;
-  console.log(`  리스크 목표(23-2): 4바퀴 섞음 끝 ${m4.endRisk.toFixed(0)} (40~60) · 돌파 ${m4.breakthrough}/${M} (10% 이하) · 6바퀴 흡수 돌파 ${absorbStats['6-absorb']!.breakthrough}/${M} (50% 이상) · 둥지 재우기 ${BALANCE.provisional.risk.nestActions.sleep.risk} · 쓰다듬기 ${BALANCE.provisional.risk.nestActions.pet.risk}`);
-  if (m4.endRisk < 40 || m4.endRisk > 60) failures.push(`4바퀴 섞음 원정 끝 리스크 ${m4.endRisk.toFixed(0)} — 목표 40~60 (GDD 23-2)`);
+  // C.63 (마스터 결정): 끝 리스크 판정은 60판이면 잡음이 ±3 쯤이라 경계(40)에서 흔들린다 → 같은 봇을 시드 1~RISK_M 으로 더 돌린 평균으로 판정한다 (위 60판 줄은 참고)
+  const RISK_M = 300;
+  let riskSum = 0;
+  for (let seed = 1; seed <= RISK_M; seed++) {
+    riskSum += playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted }).risk;
+  }
+  m4.endRisk = riskSum / RISK_M;
+  console.log(`  리스크 판정 표본: 4바퀴 섞음 ${RISK_M}판(시드 1~${RISK_M}) 평균 끝 리스크 ${m4.endRisk.toFixed(1)}`);
+  console.log(`  리스크 목표(23-2): 4바퀴 섞음 끝 ${m4.endRisk.toFixed(1)} (목표 40~60, 가드 하한 39 — C.63) · 돌파 ${m4.breakthrough}/${M} (10% 이하) · 6바퀴 흡수 돌파 ${absorbStats['6-absorb']!.breakthrough}/${M} (50% 이상) · 둥지 재우기 ${BALANCE.provisional.risk.nestActions.sleep.risk} · 쓰다듬기 ${BALANCE.provisional.risk.nestActions.pet.risk}`);
+  // C.63 (마스터 승인, GDD 28-1): 300판 판정에서 치명타 전(39.40)·후(39.4) 모두 40 바로 아래 — 목표 40~60(23-2, provisional)은 그대로 두고 회귀 가드 하한만 39
+  const RISK_GUARD_MIN = 39;
+  if (m4.endRisk < RISK_GUARD_MIN || m4.endRisk > 60) failures.push(`4바퀴 섞음 원정 끝 리스크 ${m4.endRisk.toFixed(1)} — 가드 ${RISK_GUARD_MIN}~60 (목표 40~60, GDD 23-2·28-1)`);
   if (m4.breakthrough > M * 0.1) failures.push(`4바퀴 섞음 원정 돌파 ${m4.breakthrough}/${M} > 10% (GDD 23-2 "무리해야 돌파")`);
   for (const a of ['sleep', 'pet'] as const) {
     const r = BALANCE.provisional.risk.nestActions[a].risk;

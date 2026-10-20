@@ -1,5 +1,6 @@
 // 둥지 계열 화면 전용 DOM 헬퍼 (U-3, T-3): 상태 블록, 돌보기, 능력치 6줄, 덱 행, 토스트.
 // 공용 헬퍼는 ./dom, 속성 표시는 ./element. 순수 계산은 ./nestLogic (테스트 대상).
+import { fullnessOf } from './fullness';
 import { STAT_IDS, type Stats, type TerrainTileDef } from '../../data/schema';
 import { statName } from '../../data/elements';
 import { BALANCE } from '../../config/balance';
@@ -23,7 +24,7 @@ export const tileKindOf = (t: Pick<TerrainTileDef, 'kind'>) => TILE_KIND[t.kind]
 /** 돌보기 3버튼: 이름은 종족 설정, 아래 작은 글씨는 효과 */
 export function careButtons(faction: FactionConfig, onAct: (a: NestAction) => void): HTMLElement {
   const meta: Record<NestAction, { icon: string; cls: string; sub: string }> = {
-    feed: { icon: 'i-care-feed', cls: 'feed', sub: '허기 −' },
+    feed: { icon: 'i-care-feed', cls: 'feed', sub: `${faction.fullnessName} +` },
     sleep: { icon: 'i-care-sleep', cls: 'sleep', sub: '컨디션 +' },
     pet: { icon: 'i-care-pet', cls: 'pet', sub: `${faction.stabilityName} +` },
   };
@@ -50,11 +51,11 @@ export interface StatusOpts {
   riskWarn: number;
 }
 
-/** 상태 4바: 허기·컨디션·안정 수치·리스크. 경고 문구는 기존 규칙 그대로 */
+/** 상태 4바: 배부름(허기를 뒤집어 표시, C.63)·컨디션·안정 수치·리스크. 경고 문구는 기존 규칙 그대로 */
 export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement {
   const root = el('div', 'bha-nest__status');
   root.append(
-    meter({ kind: 'hunger', label: '허기', icon: 'i-hunger', value: Math.round(s.hunger), max: 100 }),
+    meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(s.hunger)), max: 100 }),
     meter({
       kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), max: 100,
       danger: s.condition < s.condWarn, note: s.condition < s.condWarn ? '나쁨: 전투에 공허 블록 ↑' : undefined,

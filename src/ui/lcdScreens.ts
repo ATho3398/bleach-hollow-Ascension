@@ -1,5 +1,7 @@
 // 방 물건이 여는 기능 화면: 돌보기·상태 / 상자(슬롯·덱) / 제단(진화). LCD 가로 2단 배치 (T-3).
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
+import { critChanceBonus } from '../engine/absorb/build';
+import { roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, tileName, upgradeIdOf } from '../data/tiles';
 import { canSynthesize, deckSizeOf, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
@@ -25,7 +27,13 @@ import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import type { VariantMods } from '../engine/expedition';
 
-/** 상태 자리: 왼쪽 상태 4바(허기·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
+/** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax */
+export function critPercentText(build: SaveData['build']): string {
+  const CX = BALANCE.provisional.combat;
+  return `${Math.round(Math.min(CX.critChanceMax, CX.critChance + critChanceBonus(build)) * 100)}%`;
+}
+
+/** 상태 자리: 왼쪽 상태 4바(배부름·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
 export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
@@ -48,6 +56,11 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(evo.tierIndex), evo.carry));
+  // 치명타 (C.63, GDD 28장 5번): 기본 + 장착 특성 critChance (물리·마법 합친 하나, 상한 있음)
+  const critLine = h('p', 'bha-small');
+  critLine.dataset.crit = '';
+  critLine.append('치명 ', h('b', 'bha-num', critPercentText(save.build)), ` · 치명 피해 ×${BALANCE.provisional.combat.critMultiplier}`);
+  stats.append(critLine);
   // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
   const bonus = bonusLine(save);
   if (bonus) {
@@ -74,7 +87,7 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
   p.setAttribute('aria-label', '스킨');
   p.dataset.skins = String(skins.length);
   if (skins.length === 0) {
-    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? '가진 스킨이 없다. 더보기 ⋯ → [상점] 영옥 탭에서 산다.' : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
+    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. 방의 ${roomOf(faction).props.shop}(상점) 영옥 탭에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
     return p;
   }
   const list = h('div', 'bha-stack bha-stack--tight');

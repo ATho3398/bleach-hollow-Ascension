@@ -1,4 +1,4 @@
-// 상점 (GDD 25-9, S-16 C.60): 독 [더보기] → [상점]. 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
+// 상점 (GDD 25-9, S-16 C.60): 방 물건 상점(C.63, 이름은 종족 설정 room.props.shop). 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 덱 칸만 확인 창 1번, 나머지는 바로 산다. 꾸밈은 산 뒤 그 줄에서 [착용]/[해제].
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { CATEGORIES, cosmeticName, getCosmetic, cosmeticToken, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory } from '../data/shop';

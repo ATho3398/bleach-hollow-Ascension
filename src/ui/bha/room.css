@@ -101,6 +101,7 @@
 .bha-prop--book .bha-prop__shape { width: 40px; height: 34px; border-left-width: 6px; }
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--dummy .bha-prop__shape { width: 34px; height: 54px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }  /* 상점 (C.63): 좌판·매대 */
 .bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
 
 /* ── 캐릭터: 제자리 2프레임 숨쉬기 (step-end 로 두 모양만 번갈아) ── */

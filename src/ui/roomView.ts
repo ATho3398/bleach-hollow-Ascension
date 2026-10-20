@@ -1,5 +1,5 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
-//   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 훈련 인형=전투 연습 · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·종족 바꾸기·백업·처음 화면).
+//   문=원정 · 제단=진화 · 책=도감 · 상자=덱·슬롯 · 창문=칭호 · 훈련 인형=전투 연습 · 상인/매점=상점(C.63) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면).
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
 import { doNestAction } from '../engine/nest';
@@ -30,9 +30,7 @@ export interface RoomHandlers {
   onPractice: () => void;
   /** 등급전 (GDD 21장): 독 더보기 항목 */
   onRank: () => void;
-  /** 종족 바꾸기: 트랙이 하나일 때만 (투트랙이 열리면 null — 트랙 전환을 쓴다) */
-  onChangeFaction: (() => void) | null;
-  /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 트랙이 하나면 null */
+  /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 다른 트랙이 아직 안 열렸으면(5단계 전) null — 다른 종족으로 가는 유일한 길 (C.63) */
   onSwitchTrack: ((factionId: string) => void) | null;
   /** 붕옥 탭 (GDD 22-3): 열렸을 때만 독 더보기에 */
   onHogyoku: (() => void) | null;
@@ -40,7 +38,7 @@ export interface RoomHandlers {
   onHelp: () => void;
   /** 독 '더보기' 항목: 튜토리얼 목록(GDD 23-3) */
   onTutorial: () => void;
-  /** 상점 (GDD 25-9) */
+  /** 상점 (GDD 25-9): 방 물건 shop (C.63, 더보기에서 옮김) */
   onShop: () => void;
   /** 사진 (GDD 25-11): 독 더보기 항목 */
   onPhoto: () => void;
@@ -124,9 +122,10 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     chest: hd.onChest,
     window: hd.onWindow,
     dummy: hd.onPractice, // 훈련 인형 = 전투 연습 (GDD 18-3)
+    shop: hd.onShop, // 상점 (C.63, GDD 28장 9번: 더보기 → 방 물건)
   };
   // 위/아래 순서: 위쪽 줄(창문·책·제단) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['window', 'book', 'altar', 'door', 'chest', 'dummy'];
+  const order: RoomProp[] = ['window', 'book', 'altar', 'door', 'chest', 'shop', 'dummy'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckCount === 0 });
@@ -209,10 +208,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
       { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },
       ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', onClick: hd.onHogyoku }] : []),
-      { label: '상점', icon: 'i-rare', onClick: hd.onShop },
       { label: '사진', icon: 'i-cast', onClick: hd.onPhoto },
       { label: '다마고치 모드', icon: 'i-minus', onClick: hd.onTamago },
-      ...(hd.onChangeFaction ? [{ label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction }] : []),
       { label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
     ],

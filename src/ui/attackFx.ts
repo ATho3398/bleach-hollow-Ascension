@@ -28,7 +28,12 @@ export interface AttackCue {
   ult?: boolean;
   /** 계열 id (효과 색: data-fam → 계열 색 토큰) */
   fam?: string;
+  /** 단계 고유 모양·색 (C.63, 종족 설정 tiers[].fxLook): bha-afx--look-<id> */
+  look?: string;
 }
+
+/** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
+export type FamilyFxSpec = AttackFxKind | { fx: AttackFxKind; look?: string | null };
 
 /** 단계의 세기 순위 (클수록 세다) */
 export const tierRank = (t: AttackTier): number => ATTACK_TIER_ORDER.indexOf(t);
@@ -43,7 +48,7 @@ export function chainTier(chain: number, top: number): AttackTier {
  * 전투 사건 하나 → 연출. 연출이 필요 없는 사건(막기·회복·공허·상태 변화 …)은 null.
  * familyFx(계열 id) = 그 계열의 연출 종류 (종족 설정에서 읽는 함수, 없으면 몸통박치기). 자동 기본 공격은 늘 몸통박치기.
  */
-export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: string) => AttackFxKind | null | undefined): AttackCue | null {
+export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined): AttackCue | null {
   switch (e.kind) {
     case 'player-attack':
       return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false } : null;
@@ -51,11 +56,14 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       if (e.damage <= 0 || e.block === 'void') return null;
       if (e.block === 'special' || e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true };
       const cue: AttackCue = { side: 'player', tier: e.matchup === 'strong' ? 'weak' : chainTier(e.chain, top), guarded: false };
-      const fx = e.family && e.role === 'attack' ? familyFx?.(e.family) : null;
+      const stage = familyStage(e.chain);
+      const spec = e.family && e.role === 'attack' ? familyFx?.(e.family, stage) : null;
+      const fx = typeof spec === 'string' ? spec : spec?.fx;
       if (fx) {
         cue.fx = fx;
-        cue.stage = familyStage(e.chain);
+        cue.stage = stage;
         cue.fam = e.family!;
+        if (typeof spec === 'object' && spec?.look) cue.look = spec.look;
       }
       return cue;
     }
@@ -319,7 +327,7 @@ export interface AttackFxOptions {
   /** 계열 효과(자국·투사체·광선)와 기술 이름을 그리는 레이어 (장면 위, 조작을 막지 않는다). 없으면 효과 없이 움직임만 */
   layer?: HTMLElement;
   /** 계열 id → 연출 종류 (종족 설정 families[].fx) */
-  familyFx?: (familyId: string) => AttackFxKind | null | undefined;
+  familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined;
   /** 사건 → 크게 띄울 기술 이름 (없으면 null) */
   nameOf?: (e: CombatEvent) => { name: string; ult?: boolean } | null;
   /** 3단계 계열 공격의 화면 흔들림 (설정에서 흔들림을 끄면 호출하는 쪽이 무시한다) */
@@ -341,6 +349,22 @@ const ORB_SVG = `${SVG_OPEN}<circle cx="50" cy="50" r="46" fill="currentColor" o
 
 /** Web Animations 를 지원하지 않는 환경(구형 브라우저·테스트)에서는 아무것도 하지 않는다 */
 const canAnimate = (n: HTMLElement): boolean => typeof n.animate === 'function';
+
+/** 요소의 레이아웃 위치(offsetLeft/Top 을 offsetParent 끝까지 더한 값)와 그 끝(root). 변환(회전·배율·연출 이동)은 들어가지 않는다 */
+export function offsetOrigin(n: HTMLElement): { x: number; y: number; root: Element | null } | null {
+  if (typeof n.offsetLeft !== 'number') return null;
+  let x = 0;
+  let y = 0;
+  let cur: HTMLElement | null = n;
+  let root: Element | null = n;
+  while (cur) {
+    x += cur.offsetLeft;
+    y += cur.offsetTop;
+    root = cur;
+    cur = cur.offsetParent as HTMLElement | null;
+  }
+  return { x, y, root };
+}
 
 export function attackFx(opts: AttackFxOptions): AttackFxDriver {
   const live = new Set<Animation>();
@@ -397,8 +421,13 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     a.addEventListener('cancel', go);
   };
 
-  /** 레이어 안 좌표의 요소 중심·크기 (화면 배율과 무관한 레이아웃 좌표) */
+  /** 레이어 안 좌표의 요소 중심·크기 (화면 배율·회전과 무관한 레이아웃 좌표).
+   *  C.63(GDD 28장 11번): 화면 좌표(getBoundingClientRect)는 세로 회전 출력(16-6, 기기 90° 회전)에서 "적 쪽"이 화면 아래가 되어
+   *  빔·투사체가 아래로 나갔다 → offset 체인(레이아웃 좌표, 변환 없음)으로 잰다. offset 이 없는 요소(SVG 등)만 예전 방식 */
   const boxIn = (layer: HTMLElement, n: HTMLElement): { x: number; y: number; w: number; h: number } => {
+    const a = offsetOrigin(n);
+    const l = offsetOrigin(layer);
+    if (a && l && a.root === l.root) return { x: a.x - l.x + n.offsetWidth / 2, y: a.y - l.y + n.offsetHeight / 2, w: n.offsetWidth, h: n.offsetHeight };
     const L = layer.getBoundingClientRect();
     const r = n.getBoundingClientRect();
     const k = layer.offsetWidth > 0 && L.width > 0 ? layer.offsetWidth / L.width : 1;
@@ -407,11 +436,13 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
 
   /** 지금 놓는 효과의 공격 쪽 (계열 자국·투사체를 놓기 직전에 정한다) */
   let spawnSide: Side = 'player';
+  /** 지금 놓는 효과의 단계 고유 모양 (C.63) */
+  let spawnLook: string | null = null;
 
   /** 효과 하나를 레이어에 놓는다: kind 모양, (x,y) 중심, size 한 변. 끝나면 지운다 */
   const spawn = (layer: HTMLElement, cls: string, html: string, x: number, y: number, w: number, h: number, frames: Keyframe[], ms: number, delay: number, color?: string): HTMLElement => {
     const n = document.createElement('div');
-    n.className = `bha-afx ${cls}`;
+    n.className = `bha-afx ${cls}${spawnLook ? ` bha-afx--look-${spawnLook}` : ''}`;
     n.setAttribute('aria-hidden', 'true');
     if (color) n.dataset.fam = color;
     n.dataset.side = spawnSide; // 공격 이펙트 색 꾸밈은 내 쪽(player)만 (GDD 25-9)
@@ -595,6 +626,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       const hits = familyHits(stage, plan.hitAtMs);
       const famId = cue.fam;
       spawnSide = cue.side;
+      spawnLook = cue.look ?? null;
       if (layer) {
         const tgt = boxIn(layer, to.body);
         const src = boxIn(layer, from.body);
@@ -604,6 +636,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
         }
         for (const [i, h] of hits.entries()) mark(layer, cue.fx, famId, tgt, h.scale, h.atMs, from.dir, motion.markMs, i);
       }
+      spawnLook = null;
       for (const h of hits) hit(to, level, cue.guarded, h.atMs);
       if (familyShakes(stage) && opts.shake) after(from.root, hits[hits.length - 1]!.atMs, opts.shake);
       endAt = Math.max(endAt, hits[hits.length - 1]!.atMs + motion.markMs * 0.6);

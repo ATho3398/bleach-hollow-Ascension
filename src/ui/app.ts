@@ -17,7 +17,7 @@ import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
   performRebirth, recordTraining, settleLiberationRisk, writeSave, deckSizeOf, type SaveData,
-  feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack,
+  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
@@ -242,32 +242,25 @@ export function startApp(host: HTMLElement): void {
     }, { onImport: () => open('slot-import', () => renderSlotPick('import')) });
   }
 
-  /** 종족 고르기: newSlot 이 있으면 그 슬롯에 새 세이브를 만든다, 없으면(방에서 종족 바꾸기) 지금 세이브의 종족을 바꾼다 */
-  function renderSpecies(newSlot?: number): void {
+  /** 종족 고르기: 새 슬롯에 새 세이브를 만든다. (C.63: 방에서 지금 세이브의 종족을 바로 바꾸던 옛 길은 지웠다 — 다른 종족은 5단계 도달 뒤 트랙 전환으로만, GDD 22-3·28장 7번) */
+  function renderSpecies(newSlot: number): void {
     applyTheme(helpFaction());
     speciesView(root, FACTIONS, {
       onPick: (f) => {
-        if (newSlot !== undefined) {
-          stashSlot(localStorage, newSlot);
-          slot = newSlot;
-          save = newSaveData(f.id);
-        } else if (save) save.factionId = f.id;
+        stashSlot(localStorage, newSlot);
+        slot = newSlot;
+        save = newSaveData(f.id);
         persist();
         nestScreen();
       },
       onSettings: settingsOpener(false),
       onHelp: () => openHelp(undefined, true),
       confirm: (f, onYes, onNo) => confirmDialog({
-        title: newSlot !== undefined ? `${f.name} — 이 종족으로 시작할까요?` : `${f.name} — 이 종족으로 바꿀까요?`,
-        yes: newSlot !== undefined ? '시작' : '바꾸기', no: '아니오',
+        title: `${f.name} — 이 종족으로 시작할까요?`,
+        yes: '시작', no: '아니오',
         onYes, onNo,
       }),
     });
-  }
-
-  /** 방에서 종족 바꾸기 */
-  function factionScreen(): void {
-    open('faction', () => renderSpecies());
   }
 
   /** 슬롯을 열어 마지막으로 보던 화면으로 (GDD 19-3): 원정 중이었으면 원정 그 지점(전투 중이었으면 전투 직전), 아니면 방. 읽을 수 없으면 시작 화면에 알린다 */
@@ -445,8 +438,7 @@ export function startApp(host: HTMLElement): void {
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
       onRank: () => open('rank', () => rankScreen(faction)),
-      onChangeFaction: s.otherTracks.length === 0 ? factionScreen : null,
-      onSwitchTrack: s.otherTracks.length > 0 ? (fid) => {
+      onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
         persist();
         nestScreen();

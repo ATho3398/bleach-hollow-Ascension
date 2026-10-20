@@ -22,6 +22,10 @@ export const DEFAULT_MAX_CHAIN = 3;
 /** 계열의 한 단계 기술 (GDD 17-3, 이름·수치 provisional). multiplier 는 위력 배율(기존 체인 ×1.0/×2.2/×3.6 을 이어받음), bonus 는 그 단계에 붙는 추가 효과 */
 export interface FamilySkillConfig {
   name: string;
+  /** 이 단계만 다른 연출 종류 (C.63, GDD 28장 13번 — 예: 호로 탄 3단계 세로 오스큐라스 = 빔). 없으면 계열 fx */
+  fx?: AttackFxKind;
+  /** 이 단계 고유 모양·색 (C.63): CSS 클래스 bha-afx--look-<id>, 색은 전용 토큰. 공격 이펙트 색 꾸밈을 입어도 유지 */
+  fxLook?: string;
   multiplier: number;
   bonus?: { kind: 'stagger'; value: number };
 }
@@ -54,7 +58,8 @@ export type FoodId = (typeof FOOD_IDS)[number];
 export type SlotLocation = 'body' | 'zanpakuto';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'window', 'dummy'] as const;
+/** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'window', 'dummy', 'shop'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy', 'hungry'] as const;
@@ -111,10 +116,10 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '제단', book: '책', chest: '상자', window: '창문', dummy: '훈련 인형' },
+  props: { door: '문', altar: '제단', book: '책', chest: '상자', window: '창문', dummy: '훈련 인형', shop: '상점' },
   layout: {
     window: { x: 22, y: 26 }, book: { x: 40, y: 22 }, altar: { x: 62, y: 24 }, door: { x: 86, y: 40 },
-    chest: { x: 14, y: 68 }, dummy: { x: 80, y: 78 },
+    chest: { x: 14, y: 68 }, dummy: { x: 80, y: 78 }, shop: { x: 36, y: 80 },
   },
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],
@@ -177,6 +182,8 @@ export interface FactionConfig {
   basicSkillName: string;
   /** 안정 수치 이름: 호로 자아 / 사신 영압 안정도 (GDD 4장). 컨디션·허기와 별개 */
   stabilityName: string;
+  /** 배부름 게이지 이름 (C.63, GDD 28장 10번): 화면은 허기를 뒤집어 "가득 → 줄어듦"으로 보인다 */
+  fullnessName: string;
   /** 흡수 특성 슬롯 이름 (슬롯 위치 slotLocation 과 짝): 본체 슬롯 / 참백도 슬롯 */
   slotName: string;
   /** 계통 보너스 표기: 호로 계열 기술 강화 / 사신 참백도 속성 확정 (GDD 4장, 효과 수치는 엔진 공통) */
@@ -236,7 +243,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
@@ -284,6 +291,8 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
           const y = (t ?? {}) as Record<string, unknown>;
           if (!isString(y.name)) errors.push(`families[${i}].tiers[${k}].name: 비어 있지 않은 문자열`);
           if (!(typeof y.multiplier === 'number' && y.multiplier > 0)) errors.push(`families[${i}].tiers[${k}].multiplier: 양수`);
+          if (y.fx !== undefined && !(ATTACK_FX_KINDS as readonly unknown[]).includes(y.fx)) errors.push(`families[${i}].tiers[${k}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
+          if (y.fxLook !== undefined && !(typeof y.fxLook === 'string' && /^[a-z0-9-]+$/.test(y.fxLook))) errors.push(`families[${i}].tiers[${k}].fxLook: 소문자·숫자·하이픈 id`);
           if (y.bonus !== undefined) {
             const b = y.bonus as Record<string, unknown>;
             if (b.kind !== 'stagger' || !(typeof b.value === 'number' && b.value > 0)) errors.push(`families[${i}].tiers[${k}].bonus: { kind: stagger, value: 양수 }`);

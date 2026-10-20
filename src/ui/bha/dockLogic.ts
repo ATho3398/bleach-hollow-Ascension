@@ -28,7 +28,7 @@ export function careFeedback(faction: FactionConfig, action: NestAction, food: F
     const r = Math.round(v);
     if (r !== 0) parts.push(`${name} ${r > 0 ? '+' : '−'}${Math.abs(r)}`);
   };
-  add('허기', d.hunger);
+  add(faction.fullnessName, -d.hunger); // 배부름 = 허기를 뒤집어 표시 (C.63)
   add('컨디션', d.condition);
   add(faction.stabilityName, d.stability);
   add(faction.riskGaugeName, d.risk);

@@ -97,6 +97,8 @@
   --bha-chain3: #ff8a3d;      /* 체인3 주황 */
   --bha-insert: #6cc4ff;      /* 드래그 삽입 막대 파랑 */
   --bha-seal: #a371f7;        /* 봉인 보라 */
+  --bha-fx-cero-oscuras-core: #07050c;  /* 세로 오스큐라스 빔 몸통: 검정 (C.63, 마스터 승인) */
+  --bha-fx-cero-oscuras-edge: #39e27a;  /* 세로 오스큐라스 빔 테두리: 녹색 (C.63, 마스터 승인) */
   --bha-good: #5fd39a;        /* 좋음 알림 */
   --bha-warn: #ffad5c;        /* 경고 알림 (텍스트용, AA) */
   --bha-danger: #ff6b6b;      /* 위험 텍스트 */

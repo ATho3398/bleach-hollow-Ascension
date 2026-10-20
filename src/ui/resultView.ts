@@ -1,4 +1,5 @@
 // 원정 결과 (U-4, 기획서 2-1·9장): 종료 이유 4가지 → 귀환 계열 = 승리 톤, 패배 계열 = 패배 톤. 요약·시드·기록 저장 줄, [둥지로].
+import { fullnessOf } from './bha/fullness';
 import { BALANCE } from '../config/balance';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
@@ -93,7 +94,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
       value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? `한계 돌파 · ${faction.frenzyName}` : undefined),
     },
     { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
-    { label: '남은 허기', icon: 'i-hunger', value: val(`${Math.round(exp.hunger)}`) },
+    { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(exp.hunger))}`) },
     { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(exp.condition)}`) },
   ];
   const sum = panel({ title: '원정 요약', aside: faction.huntingGroundName }, iconInfo(rows));

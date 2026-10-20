@@ -57,7 +57,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   grounds.append(...gBtns);
   pick(GROUNDS.find((g) => g.id === exp.groundId) ?? GROUNDS[0]!);
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
-  const head = el('div', 'bha-exp__head');
+  const head = el('div', `bha-exp__head${h.onStory ? ' bha-depart-head' : ''}`);
   // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
   head.append(h.onStory ? departTabs('free', () => h.onStory!()) : title, grounds, help);
 

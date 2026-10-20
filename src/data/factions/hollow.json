@@ -146,7 +146,9 @@
           "multiplier": 2.2
         },
         {
-          "name": "세로 오스쿠라스",
+          "name": "세로 오스큐라스",
+          "fx": "beam",
+          "fxLook": "cero-oscuras",
           "multiplier": 3.6,
           "bonus": {
             "kind": "stagger",
@@ -171,6 +173,7 @@
     "feast": "영혼 덩어리"
   },
   "stabilityName": "자아",
+  "fullnessName": "배부름",
   "slotName": "본체 슬롯",
   "lineageBonusName": "계열 기술 강화",
   "traitKindNames": {
@@ -190,7 +193,8 @@
       "book": "기록서",
       "chest": "수집함",
       "window": "균열 틈",
-      "dummy": "뼈 인형"
+      "dummy": "뼈 인형",
+      "shop": "떠돌이 상인"
     },
     "layout": {
       "window": {
@@ -216,6 +220,10 @@
       "dummy": {
         "x": 78,
         "y": 78
+      },
+      "shop": {
+        "x": 36,
+        "y": 80
       }
     },
     "talk": {

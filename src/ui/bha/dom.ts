@@ -89,6 +89,8 @@ export interface MeterOpts {
   ghost?: number;
   /** 위험 구간 시작 비율 0~1 */
   zone?: number;
+  /** 아래쪽 위험 구간 (0~1, C.63 배부름처럼 적을수록 위험한 바): 0 ~ 이 비율 */
+  zoneLow?: number;
   compact?: boolean;
   lg?: boolean;
   thin?: boolean;
@@ -128,6 +130,11 @@ export function meter(o: MeterOpts): HTMLElement {
   if (o.zone !== undefined) {
     const z = el('i', 'bha-meter__zone');
     z.style.setProperty('--zone', String(o.zone));
+    track.append(z);
+  }
+  if (o.zoneLow !== undefined) {
+    const z = el('i', 'bha-meter__zone is-low');
+    z.style.setProperty('--zone', String(o.zoneLow));
     track.append(z);
   }
   root.append(head, track);

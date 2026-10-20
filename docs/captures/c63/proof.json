@@ -1,0 +1,187 @@
+{
+  "tabs": {
+    "landscape": {
+      "free": {
+        "x": 108,
+        "y": 23,
+        "w": 127.9,
+        "h": 42
+      },
+      "story": {
+        "x": 108,
+        "y": 23,
+        "w": 127.9,
+        "h": 42
+      },
+      "same": true
+    },
+    "portrait": {
+      "free": {
+        "x": 325,
+        "y": 108,
+        "w": 42,
+        "h": 127.9
+      },
+      "story": {
+        "x": 325,
+        "y": 108,
+        "w": 42,
+        "h": 127.9
+      },
+      "same": true
+    }
+  },
+  "tamago": {
+    "landscape": {
+      "userZoom": "0.573",
+      "transform": "scale(1) translate(422px, 195px) scale(0.4) perspective(2532px) rotateY(0deg) translate(-446px, -198px)"
+    },
+    "portrait": {
+      "userZoom": "0.573",
+      "transform": "translate(390px, 0px) rotate(90deg) scale(1) translate(422px, 195px) scale(0.4) perspective(2532px) rotateY(0deg) translate(-446px, -198px)"
+    }
+  },
+  "speed": {
+    "afterClick-landscape": "2x",
+    "nextEncounter-landscape": "2x",
+    "stored-landscape": "2",
+    "afterClick-portrait": "2x",
+    "nextEncounter-portrait": "2x",
+    "stored-portrait": "2"
+  },
+  "flip": {
+    "landscape": {
+      "flipping": true,
+      "edgeVisible": "visible"
+    },
+    "portrait": {
+      "flipping": true,
+      "edgeVisible": "visible"
+    }
+  },
+  "chainFx": {
+    "chain2-landscape": {
+      "kind": "orb",
+      "classes": "bha-afx bha-afx--orb",
+      "lastKeyframe": "translate(322px, 0px) scale(1.1)",
+      "deviceDirToFoe": [
+        322,
+        0
+      ]
+    },
+    "chain3-landscape": {
+      "kind": "ray",
+      "classes": "bha-afx bha-afx--ray bha-afx--look-cero-oscuras",
+      "lastKeyframe": "rotate(0deg) scaleX(1) scaleY(0.2)",
+      "deviceDirToFoe": [
+        322,
+        0
+      ]
+    },
+    "chain2-portrait": {
+      "kind": "orb",
+      "classes": "bha-afx bha-afx--orb",
+      "lastKeyframe": "translate(322px, 0px) scale(1.1)",
+      "deviceDirToFoe": [
+        322,
+        0
+      ]
+    },
+    "chain3-portrait": {
+      "kind": "ray",
+      "classes": "bha-afx bha-afx--ray bha-afx--look-cero-oscuras",
+      "lastKeyframe": "rotate(0deg) scaleX(1) scaleY(0.2)",
+      "deviceDirToFoe": [
+        322,
+        0
+      ]
+    }
+  },
+  "fullness": {
+    "full-landscape": [
+      "배부름100 / 100"
+    ],
+    "low-landscape": [
+      "배부름40 / 100"
+    ],
+    "full-portrait": [
+      "배부름100 / 100"
+    ],
+    "low-portrait": [
+      "배부름40 / 100"
+    ]
+  },
+  "room": {
+    "landscape": {
+      "shopProp": "떠돌이 상인",
+      "moreItems": [
+        "번호 쟁탈전",
+        "설정",
+        "도움말",
+        "튜토리얼",
+        "사진",
+        "다마고치 모드",
+        "백업·불러오기",
+        "처음 화면"
+      ]
+    },
+    "portrait": {
+      "shopProp": "떠돌이 상인",
+      "moreItems": [
+        "번호 쟁탈전",
+        "설정",
+        "도움말",
+        "튜토리얼",
+        "사진",
+        "다마고치 모드",
+        "백업·불러오기",
+        "처음 화면"
+      ]
+    }
+  },
+  "battle": {
+    "centerLogVisible-landscape": false,
+    "logLines-landscape": [
+      "노멀 일반 1과(와) 조우! 블록을 눌러 쓰고, 붙여 놓아 체인!"
+    ],
+    "centerLogVisible-portrait": false,
+    "logLines-portrait": [
+      "노멀 일반 1과(와) 조우! 블록을 눌러 쓰고, 붙여 놓아 체인!"
+    ]
+  },
+  "consoleErrors": [],
+  "critStats": {
+    "basicOnly200": {
+      "playerHits": 20366,
+      "playerCrits": 1029,
+      "playerRate": 0.0505,
+      "enemyHits": 13472,
+      "enemyCrits": 410,
+      "enemyRate": 0.0304,
+      "expected": {
+        "player": 0.05,
+        "enemy": 0.03
+      }
+    },
+    "humanBot": {
+      "battles": 600,
+      "avgPlayerCritsPerBattle": 3.73,
+      "avgEnemyCritsPerBattle": 1.28,
+      "foes": [
+        "normal-basic",
+        "normal-swift",
+        "normal-sturdy",
+        "normal-heavy-seal",
+        "normal-heavy-chain",
+        "normal-stance"
+      ]
+    }
+  },
+  "chainFxBeforeFix": {
+    "note": "옛 boxIn(getBoundingClientRect, 화면 좌표)으로 잰 나→적 방향: 세로 회전 출력에서 화면상 me(156,116)·foe(156,438) → (0, +322) = 기기 좌표의 아래 방향. 지금은 offset(레이아웃 좌표)으로 (322, 0)",
+    "portraitScreenDelta": [
+      0,
+      322
+    ]
+  }
+}

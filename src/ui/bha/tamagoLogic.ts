@@ -76,6 +76,10 @@ export const BODY = {
   fill: 0.96,
   /** 이보다 크게는 키우지 않는다: "조금 더 멀리서 본" 느낌이 나게 */
   maxZoom: 0.82,
+  /** 핀치·휠로 더 줄일 수 있는 가장 작은 실제 배율 (C.63, GDD 28장 1번: 0.70 → 0.40) */
+  minScale: 0.4,
+  /** 옆면 두께 (C.63, GDD 28장 2번): 뒤집을 때 보이는 몸체 두께 띠 */
+  edge: 18,
 } as const;
 
 export interface Rect {
@@ -160,9 +164,14 @@ export interface TamaView {
 }
 export const VIEW_HOME: TamaView = { uz: 1, px: 0, py: 0 };
 
-/** 배율·이동을 허용 범위로: 배율 1 ~ 1/zoom, 이동은 확대된 기기가 화면 밖으로 빠져나가지 않을 만큼 */
+/** 사용자 배율 uz 의 아래 끝: 실제 배율(zoom × uz)이 BODY.minScale 까지 (C.63). 기본 줌아웃이 이미 그보다 작으면 1 */
+export function minViewZoom(zoom: number): number {
+  return round4(Math.min(1, BODY.minScale / Math.max(0.01, zoom)));
+}
+
+/** 배율·이동을 허용 범위로: 배율 minViewZoom ~ 1/zoom(실제 배율 0.40 ~ 평소 화면), 이동은 확대된 기기가 화면 밖으로 빠져나가지 않을 만큼 */
 export function clampView(v: TamaView, zoom: number, box: Rect, w: number, h: number): TamaView {
-  const uz = Math.min(Math.max(1, 1 / Math.max(0.01, zoom)), Math.max(1, Number.isFinite(v.uz) ? v.uz : 1));
+  const uz = Math.min(Math.max(1, 1 / Math.max(0.01, zoom)), Math.max(minViewZoom(zoom), Number.isFinite(v.uz) ? v.uz : 1));
   const s = zoom * uz;
   const mx = Math.max(0, (box.w * s - w) / 2);
   const my = Math.max(0, (box.h * s - h) / 2);

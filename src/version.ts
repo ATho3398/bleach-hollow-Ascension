@@ -3,9 +3,9 @@
 import { BALANCE_VERSION } from './config/balance';
 
 /** 패치 이름 = docs/dev-log.md 의 최신 소절 번호. 패치마다 갱신한다 (CLAUDE.md) */
-export const PATCH_LABEL = 'C.62';
+export const PATCH_LABEL = 'C.63';
 /** 단계 번호 = docs/dev-log.md 로드맵 표의 단계. PATCH_LABEL 과 같이 패치마다 갱신한다 */
-export const STAGE_LABEL = 'S-17';
+export const STAGE_LABEL = 'S-18';
 
 // 빌드 시점에 vite.config.ts 의 define 으로 채운다. 없으면(테스트 등) dev
 declare const __BUILD_COMMIT__: string | undefined;

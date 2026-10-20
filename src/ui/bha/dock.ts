@@ -96,7 +96,7 @@ export function createDock(o: DockOpts): Dock {
         b.dataset.food = id;
         const have = o.foodCount(id);
         b.disabled = have <= 0;
-        const eff = [`허기 −${f.hunger}`];
+        const eff = [`${faction.fullnessName} +${f.hunger}`];
         if (f.condition !== 0) eff.push(`컨디션 ${f.condition > 0 ? '+' : '−'}${Math.abs(f.condition)}`);
         const name = el('span', 'bha-homedock__foodname', faction.foodNames[id]);
         name.append(' ', el('b', 'bha-num', `×${have}`));
