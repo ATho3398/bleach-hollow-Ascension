@@ -1,11 +1,9 @@
 // 다마고치 모드 (GDD 27장, S-17 C.62): 지금 화면 = 기기의 화면·버튼을 확대해 본 상태, 다마고치 모드 = 카메라가 물러나 기기 전체(몸체·고리·키링)가 보이는 상태.
 // 기기 틀(.bha-dev) 둘레에 몸체를 붙이고, 기기 transform 뒤에 줌아웃(+ 뒤집기)을 붙인다(device.setStage) — 기기 안 좌표라 세로 회전 출력(16-6)·PC 배율에서도 같다.
-// 줌아웃 중에도 화면은 살아 움직이고 기기 버튼은 눌린다. 화면(LCD)을 탭하면 다시 줌인. [뒤집기] = 뒷면(몸체 뒷면 + 기록 판).
+// 줌아웃 중에도 화면은 살아 움직이고 기기 버튼은 눌린다. 화면(LCD)을 탭하면 다시 줌인. [뒤집기] = 뒷면(디자인만, 글자 없음 — GDD 30장 7).
 // 키링 = 고리에 매단 감쇠 진자 2마디(tamagoLogic.ts), 탭·끌기 = 충격, 설정 [기울기로 흔들기]를 켜면 기울기를 중력 방향으로. 다마고치 모드일 때만 돌고 멈추면 쉰다.
 // 켜 둔 상태·기울기 설정은 이 브라우저에만(세이브 아님). 색은 꾸밈 토큰(--cos-shell-*, --bha-cos-keyring-*)만. 종족 분기 없음 — 이름·모양은 종족 설정.
 import { cosmeticName, deviceArt, sourceNote, deviceSideArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
-import { formName, tryGetForm } from '../../data/evolution';
-import { playerElementsOf } from '../../engine/evolution';
 import type { FactionConfig } from '../../engine/faction';
 import type { SaveData } from '../../game';
 import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../../shop';
@@ -19,7 +17,7 @@ import { showToast } from './nest';
 import { isTypingTarget } from './shortcuts';
 import { toLocal, type Fit } from './viewport';
 import {
-  BODY, STACK_LAYERS, stackDepths, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, plateRows, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
+  BODY, STACK_LAYERS, stackDepths, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
   TAMAGO_EVENT, toDeviceVec, clampView, zoomAt, wheelFactor, VIEW_HOME, type Pendulum, type Rect, type TamagoPrefs, type TamaLayout, type TamaView,
 } from './tamagoLogic';
 
@@ -29,7 +27,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const CHAIN_L = 22;
 
 export interface Tamago {
-  /** 기록 판·키링·기기 디자인에 쓸 지금 캐릭터 (시작 화면 = null) */
+  /** 키링·기기 디자인에 쓸 지금 캐릭터 (시작 화면 = null) */
   setContext(faction: FactionConfig | null, save: SaveData | null): void;
   /** 켜고 끈다 (on 이 없으면 바꾼다). 켠 상태는 브라우저에 저장 */
   toggle(on?: boolean): void;
@@ -94,9 +92,18 @@ function charmSvg(shape: KeyringShape): SVGSVGElement {
   return svg;
 }
 
-/** 겹 두께용 어두운 그림: 앞면을 작게(가로 STACK_TEX px) 줄여 어둡게 칠한 한 장. 24겹이 모두 이 작은 그림을 쓴다 — 큰 그림 24장을 겹치면 GPU 메모리·그리기 비용이 크다 */
-const STACK_TEX = 512;
-function stackShade(img: HTMLImageElement): string {
+/** 겹 두께용 어두운 그림: 앞면을 작게(가로 STACK_TEX px) 줄여 어둡게 칠한 사본. 어둡기는 겹마다 CSS filter 가 아니라 그림에 미리 구워(겹마다 필터 면이 생기면 3D 장면이 매우 느리다) 몇 단계만 만들고 캐시한다 */
+const STACK_TEX = 600;
+const shadeCache = new Map<string, string>();
+/** i번째 겹(0 = 앞면 바로 뒤, 끝 = 가장 바깥)의 검정 덮개 농도: 바깥 두 겹은 밝게(윤곽), 사이는 뒤로 갈수록 어둡게. 0.05 단위 */
+export function stackAlpha(i: number, n: number): number {
+  if (i === 0 || i === n - 1) return 0.1;
+  return Math.round((0.35 + (0.4 * i) / Math.max(1, n - 1)) * 20) / 20;
+}
+function stackShade(img: HTMLImageElement, alpha: number): string {
+  const key = `${img.src}|${alpha}`;
+  const hit = shadeCache.get(key);
+  if (hit) return hit;
   try {
     const cv = document.createElement('canvas');
     cv.width = STACK_TEX;
@@ -105,9 +112,11 @@ function stackShade(img: HTMLImageElement): string {
     if (!g) return img.src;
     g.drawImage(img, 0, 0, cv.width, cv.height);
     g.globalCompositeOperation = 'source-atop';
-    g.fillStyle = 'rgb(0 0 0 / 0.4)';
+    g.fillStyle = `rgb(0 0 0 / ${alpha})`;
     g.fillRect(0, 0, cv.width, cv.height);
-    return cv.toDataURL('image/png');
+    const url = cv.toDataURL('image/png');
+    shadeCache.set(key, url);
+    return url;
   } catch {
     return img.src;
   }
@@ -152,7 +161,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     im.alt = '';
     im.hidden = true;
     im.dataset.layer = String(i);
-    im.style.setProperty('--layer-shade', (1 - (0.45 * i) / (STACK_LAYERS - 1)).toFixed(2));
     return im;
   });
   // 옆면 두께 띠 (C.63·C.64, GDD 28장 2번·29장): 뒤집는 동안만 3D 로 세워 종이처럼 안 보이게. 옆면 그림이 있으면 그 그림, 없으면 몸체 색 CSS 띠
@@ -163,8 +171,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   backArt.alt = '';
   backArt.hidden = true;
   const grille = el('div', 'bha-tama__grille');
-  const plate = el('dl', 'bha-tama__plate');
-  backFace.append(backArt, grille, plate);
+  backFace.append(backArt, grille);
   backFace.hidden = true;
   const key = el('div', 'bha-key');
   const seg1 = el('div', 'bha-key__seg1');
@@ -263,8 +270,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     const place = () => {
       if (!bodyArt.naturalWidth || artId !== c.id) return;
       artNat = { w: bodyArt.naturalWidth, h: bodyArt.naturalHeight };
-      const shade = stackShade(bodyArt);
-      for (const l of layers) l.src = shade;
+      layers.forEach((l, i) => (l.src = stackShade(bodyArt, stackAlpha(i, layers.length))));
       frame.classList.add('has-tama-art');
       bodyArt.hidden = false;
       backArt.hidden = !art.back;
@@ -297,24 +303,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       y += e.offsetTop;
     }
     return { x, y, w: l.offsetWidth, h: l.offsetHeight };
-  };
-
-  // ── 기록 판 ──
-  const paintPlate = () => {
-    plate.replaceChildren();
-    if (!faction || !save) {
-      plate.append(el('dt', '', '기록'), el('dd', '', '슬롯을 고르면 이 기기의 기록이 나온다.'));
-      return;
-    }
-    const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
-    const name = form ? formName(form, faction.id, playerElementsOf(save.evolution)) : faction.tierNames[save.evolution.tierIndex]!;
-    const rows = plateRows({ name, stage: `${save.evolution.tierIndex + 1}단계`, playMs: save.machine.playMs, rebirths: save.rebirth.count, createdAt: save.machine.createdAt });
-    for (const [k, v] of rows) {
-      const dt = el('dt', '', k);
-      const dd = el('dd', '', v);
-      dd.dataset.row = k;
-      plate.append(dt, dd);
-    }
   };
 
   // ── 배치 ──
@@ -588,7 +576,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       frame.classList.add('is-tama');
       paintKey();
       paintDevice();
-      paintPlate();
       relayout(); // 몸체·고리를 먼저 그려 둔 뒤 줌아웃
       animate(zoomMs());
       settle();
@@ -669,6 +656,25 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     shield.hidden = true; // 화면 덮개가 목록 탭을 가리지 않게
   }
 
+  // 느린 기기 대비 (30장 6): 뒤집기 첫 프레임들의 평균이 LITE_MS 를 넘으면 겹을 반으로 줄여(홀수 겹 숨김, 간격 두 배) 이후 뒤집기에 적용한다. 한 번 줄이면 이번 실행 동안 유지
+  const LITE_MS = 45;
+  let liteChecked = false;
+  function watchFlipSpeed(): void {
+    if (liteChecked || !frame.classList.contains('has-tama-art') || frame.classList.contains('has-side-art')) return;
+    const dts: number[] = [];
+    let prev = performance.now();
+    const step = (t: number) => {
+      dts.push(t - prev);
+      prev = t;
+      if (dts.length < 5 && flipping) return void requestAnimationFrame(step);
+      liteChecked = true;
+      const avg = dts.slice(1).reduce((a, b) => a + b, 0) / Math.max(1, dts.length - 1);
+      if (avg > LITE_MS) frame.classList.add('is-tama-lite');
+      frame.dataset.tamaFlipMs = avg.toFixed(1);
+    };
+    requestAnimationFrame(step);
+  }
+
   let flipping = false;
   function flip(): void {
     if (!on || flipping) return;
@@ -678,6 +684,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     }
     flipping = true;
     frame.classList.add('is-tama-flipping');
+    watchFlipSpeed();
     const half = 260;
     flipDeg = 90;
     animate(half, () => {
@@ -725,7 +732,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       keyId = '';
       paintKey();
       paintDevice();
-      paintPlate();
       if (on) {
         key.hidden = !worn('keyring');
         settle();

@@ -105,7 +105,7 @@ export function startApp(host: HTMLElement): void {
     applyCosmetics(wear);
     tama.setContext(wear && save ? getFaction(save.factionId) : null, wear ? save : null);
   };
-  // 놀던 시간 (뒷면 기록 판): 슬롯을 열고 화면이 보이는 동안만 센다. 저장은 평소 저장 때 같이 된다
+  // 놀던 시간 (세이브 machine 기록, 화면에는 안 나옴): 슬롯을 열고 화면이 보이는 동안만 센다. 저장은 평소 저장 때 같이 된다
   let playTick = Date.now();
   const tickPlay = () => {
     const now = Date.now();

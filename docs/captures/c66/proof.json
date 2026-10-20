@@ -4,15 +4,19 @@
     "flip-badge-30deg-landscape.png",
     "flip-badge-60deg-landscape.png",
     "flip-badge-85deg-landscape.png",
+    "back-badge-landscape.png",
     "flip-basic-30deg-landscape.png",
     "flip-basic-60deg-landscape.png",
     "flip-basic-85deg-landscape.png",
+    "back-basic-landscape.png",
     "flip-badge-30deg-portrait.png",
     "flip-badge-60deg-portrait.png",
     "flip-badge-85deg-portrait.png",
+    "back-badge-portrait.png",
     "flip-basic-30deg-portrait.png",
     "flip-basic-60deg-portrait.png",
-    "flip-basic-85deg-portrait.png"
+    "flip-basic-85deg-portrait.png",
+    "back-basic-portrait.png"
   ],
   "flips": [
     {
@@ -134,6 +138,110 @@
       "maxX": 326.2013626098633,
       "vw": 390,
       "vh": 844
+    }
+  ],
+  "perf": [
+    {
+      "orient": "landscape",
+      "design": "badge",
+      "run": "first",
+      "lite": true,
+      "frames": 6,
+      "avgMs": 225,
+      "maxMs": 683.3,
+      "over33": 3
+    },
+    {
+      "orient": "landscape",
+      "design": "badge",
+      "run": "second",
+      "lite": true,
+      "frames": 10,
+      "avgMs": 130,
+      "maxMs": 266.6,
+      "over33": 7
+    },
+    {
+      "orient": "landscape",
+      "design": "basic",
+      "run": "first",
+      "lite": true,
+      "frames": 77,
+      "avgMs": 16.9,
+      "maxMs": 33.4,
+      "over33": 1
+    },
+    {
+      "orient": "landscape",
+      "design": "basic",
+      "run": "second",
+      "lite": true,
+      "frames": 78,
+      "avgMs": 16.7,
+      "maxMs": 16.8,
+      "over33": 0
+    },
+    {
+      "orient": "portrait",
+      "design": "badge",
+      "run": "first",
+      "lite": true,
+      "frames": 6,
+      "avgMs": 244.4,
+      "maxMs": 533.3,
+      "over33": 4
+    },
+    {
+      "orient": "portrait",
+      "design": "badge",
+      "run": "second",
+      "lite": true,
+      "frames": 14,
+      "avgMs": 90.5,
+      "maxMs": 333.2,
+      "over33": 5
+    },
+    {
+      "orient": "portrait",
+      "design": "basic",
+      "run": "first",
+      "lite": true,
+      "frames": 77,
+      "avgMs": 16.9,
+      "maxMs": 33.2,
+      "over33": 1
+    },
+    {
+      "orient": "portrait",
+      "design": "basic",
+      "run": "second",
+      "lite": true,
+      "frames": 78,
+      "avgMs": 16.7,
+      "maxMs": 16.8,
+      "over33": 0
+    }
+  ],
+  "backPlate": [
+    {
+      "orient": "landscape",
+      "design": "badge",
+      "plateEls": 0
+    },
+    {
+      "orient": "landscape",
+      "design": "basic",
+      "plateEls": 0
+    },
+    {
+      "orient": "portrait",
+      "design": "badge",
+      "plateEls": 0
+    },
+    {
+      "orient": "portrait",
+      "design": "basic",
+      "plateEls": 0
     }
   ]
 }

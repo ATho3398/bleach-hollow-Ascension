@@ -1,11 +1,9 @@
-// 다마고치 모드 순수 계산 (GDD 27장, S-17 C.62): 브라우저 저장 설정·줌아웃 배치·키링 진자 물리·기울기 → 중력 방향·뒷면 기록 판 글.
+// 다마고치 모드 순수 계산 (GDD 27장, S-17 C.62): 브라우저 저장 설정·줌아웃 배치·키링 진자 물리·기울기 → 중력 방향·놀던 시간 계산.
 // DOM 없이 테스트한다 (tests/c62.test.ts). 화면은 tamago.ts. 종족 무관 — 이름은 종족 설정·세이브에서 받는다.
 //
 // 좌표: 모두 "기기 안 좌표"(논리 px, viewport.ts 의 toLocal 과 같은 틀). 기기 왼쪽 위 (0,0), 오른쪽 +x, 아래 +y.
 // 각도: CSS rotate 와 같은 방향(시계 방향 +). 0 = 기기 아래쪽으로 곧게 매달림. 매단 점에서 끝까지의 벡터는 (−L·sinθ, L·cosθ).
 
-import { rebirthStars } from '../../engine/rebirth';
-import { dateText } from './photo';
 
 // ── 설정 (세이브 아님, 이 기기 브라우저에만) ──
 export const TAMAGO_KEY = 'bha-tamago';
@@ -89,8 +87,8 @@ export function edgeThickness(body: { w: number }): number {
   return r2(body.w * BODY.thicknessRatio);
 }
 
-/** 겹 두께 (GDD 30장 4번): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 count 겹(두께가 25%라 30겹) 뒤로 쌓아 두께를 만든다. 각 겹의 뒤쪽 거리(px, 앞면 바로 뒤 1px부터 두께까지) */
-export const STACK_LAYERS = 30;
+/** 겹 두께 (GDD 30장 4번): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 count 겹(두께가 25%라 36겹) 뒤로 쌓아 두께를 만든다. 각 겹의 뒤쪽 거리(px, 앞면 바로 뒤 1px부터 두께까지) */
+export const STACK_LAYERS = 36;
 export function stackDepths(count: number, thick: number): number[] {
   const n = Math.max(0, Math.floor(count));
   return Array.from({ length: n }, (_, i) => r2(1 + (thick * (i + 1)) / Math.max(1, n)));
@@ -332,43 +330,11 @@ export function smoothVec(prev: { x: number; y: number }, next: { x: number; y: 
   return { x: prev.x + (next.x - prev.x) * k, y: prev.y + (next.y - prev.y) * k };
 }
 
-// ── 뒷면 기록 판 ──
-/** 플레이 시간 한 줄: "12시간 3분", "3분", "1분 미만" */
-export function playTimeText(ms: number): string {
-  const min = Math.floor(Math.max(0, ms) / 60_000);
-  if (min < 1) return '1분 미만';
-  const hr = Math.floor(min / 60);
-  return hr > 0 ? `${hr}시간 ${min % 60}분` : `${min}분`;
-}
-
+// ── 놀던 시간 ──
 /** 놀던 시간 더하기: 마지막으로 잰 때부터 지금까지, 한 번에 cap 넘게는 안 센다(화면을 꺼 둔 시간·시계 되돌림 제외) */
 export function accruePlay(playMs: number, lastTick: number, now: number, cap = 60_000): number {
   const d = now - lastTick;
   return playMs + (Number.isFinite(d) && d > 0 ? Math.min(cap, d) : 0);
-}
-
-/** 제조 번호: 세이브를 만든 시각에서 만든 재미 숫자 "BH-2610-7A3F-09" (만든 해·달 + 섞은 16진수). 같은 시각이면 늘 같다 */
-export function serialNumber(createdAt: number): string {
-  const d = new Date(createdAt);
-  const p = (n: number) => String(n).padStart(2, '0');
-  let x = (Math.floor(createdAt) ^ 0x9e3779b9) >>> 0;
-  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b) >>> 0;
-  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35) >>> 0;
-  x = (x ^ (x >>> 16)) >>> 0;
-  const hex = x.toString(16).toUpperCase().padStart(8, '0');
-  return `BH-${p(d.getFullYear() % 100)}${p(d.getMonth() + 1)}-${hex.slice(0, 4)}-${hex.slice(6, 8)}`;
-}
-
-/** 뒷면 기록 판 줄 (이름·단계·플레이 시간·환생 ★·처음 시작한 날·제조 번호) */
-export function plateRows(p: { name: string; stage: string; playMs: number; rebirths: number; createdAt: number }): [string, string][] {
-  return [
-    ['이름', p.name],
-    ['단계', p.stage],
-    ['플레이 시간', playTimeText(p.playMs)],
-    ['환생', rebirthStars(p.rebirths) || '없음'],
-    ['처음 시작한 날', dateText(new Date(p.createdAt))],
-    ['제조 번호', serialNumber(p.createdAt)],
-  ];
 }
 
 const r2 = (n: number): number => Math.round(n * 100) / 100;

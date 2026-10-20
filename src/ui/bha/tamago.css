@@ -1,4 +1,4 @@
-/* 다마고치 모드 (GDD 27장, C.62): 줌아웃한 기기 몸체·고리·키링·뒷면 기록 판. 배치·크기는 tamago.ts 가 기기 안 좌표(px)로 넣는다.
+/* 다마고치 모드 (GDD 27장, C.62): 줌아웃한 기기 몸체·고리·키링·뒷면. 배치·크기는 tamago.ts 가 기기 안 좌표(px)로 넣는다.
    색은 기기 껍데기 꾸밈(--cos-shell-*, 없으면 기기 틀 기본 --bha-bg-2/--bha-line-2)과 키링 꾸밈 토큰(--bha-cos-keyring-*)만 쓴다 */
 
 /* 줌아웃하면 기기 바깥이 보인다: 기기 틀 바탕(무늬)을 페이지 쪽으로 옮긴다 */
@@ -51,7 +51,7 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
 .bha-dev.has-side-art .bha-tama__edge::before { background: var(--side-art) center / 100% 100% no-repeat; border-radius: 0; box-shadow: none; }
 .bha-dev.has-side-art .bha-tama__edge--l::before { transform: rotateY(180deg) scaleX(-1); }  /* 왼쪽 띠는 그림을 좌우로 뒤집어 앞면 쪽이 같은 쪽을 보게 */
 
-/* 뒷면: 몸체 뒷면 + 스피커 구멍 + 기록 판 */
+/* 뒷면: 몸체 뒷면 + 스피커 구멍 */
 .bha-tama__back {
   position: absolute; z-index: 2;
   display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-9);
@@ -69,15 +69,6 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
   background: radial-gradient(circle, var(--bha-bg-0) 0 3px, transparent 3.5px) 0 0 / 14px 14px;
   box-shadow: inset 0 0 0 2px var(--cos-shell-line, var(--bha-line-2));
 }
-.bha-tama__plate {
-  margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--bha-sp-2) var(--bha-sp-6);
-  min-width: 300px; padding: var(--bha-sp-5) var(--bha-sp-6);
-  background: var(--bha-bg-0); color: var(--bha-text-1);
-  border: 1px solid var(--cos-shell-line, var(--bha-line-2)); border-radius: var(--bha-r-md);
-  font-size: var(--bha-fs-sm);
-}
-.bha-tama__plate dt { color: var(--bha-text-3); }
-.bha-tama__plate dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 /* 뒷면을 보는 동안 앞면(버튼·LCD)은 숨긴다 */
 .bha-dev.is-tama-back > .bha-dev__side, .bha-dev.is-tama-back > .bha-dev__bezel { visibility: hidden; }
 
@@ -129,7 +120,7 @@ html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tam
 /* 겹 두께 (GDD 30장): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 뒤로 쌓는다. 평소엔 안 보이고 뒤집는 동안만 3D 로 (겹마다 --layer-z). 뒷면을 볼 때는 좌우 반전 */
 .bha-tama__layer {
   position: absolute; z-index: -1; max-width: none; max-height: none; pointer-events: none; user-select: none; -webkit-user-select: none;
-  visibility: hidden; transform: translateZ(var(--layer-z, 0px)); filter: brightness(var(--layer-shade, 0.5));
+  visibility: hidden; transform: translateZ(var(--layer-z, 0px));
 }
 .bha-tama__layer[hidden] { display: none; }
 .bha-dev.is-tama-flipping .bha-tama__layer { visibility: visible; }
@@ -149,5 +140,7 @@ html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tam
 .bha-designs__name { grid-area: name; }
 .bha-designs__note { grid-area: note; color: var(--bha-text-3); }
 .bha-designs__worn { grid-area: worn; color: var(--bha-accent); font-weight: 700; font-size: var(--bha-fs-sm); }
-/* 그림 기기의 뒷면은 그림에 이미 무늬가 있으니 CSS 스피커 구멍은 뺀다 (기록 판만 얹는다) */
+/* 그림 기기의 뒷면은 그림에 이미 무늬가 있으니 CSS 스피커 구멍은 뺀다 */
 .bha-dev.has-tama-art .bha-tama__grille { display: none; }
+/* 느린 기기: 겹을 반으로 (tamago.ts watchFlipSpeed) */
+.bha-dev.is-tama-lite .bha-tama__layer:nth-child(odd):not(:first-child) { display: none; }

@@ -9,8 +9,8 @@ import { earliestStamp, migrateSave, newSaveData, SAVE_FORMAT_VERSION, type Save
 import { buyShopItem, grantCosmetic, jadeRows, wearCosmetic } from '../src/shop';
 import { RESERVED_CODES, SHORTCUTS, TAMAGO_CODE, findProblems } from '../src/ui/shortcutMap';
 import {
-  BODY, PHYS, VIEW_HOME, accruePlay, clampView, minViewZoom, wheelFactor, zoomAt, defaultGravity, deviceArtPlacement, isResting, kick, loadTamagoPrefs, parseTamagoPrefs, plateRows, playTimeText, restAngle, restingAt, saveTamagoPrefs,
-  screenGravity, serialNumber, stepPendulum, tamaLayout, tapKick, toDeviceVec, type Pendulum,
+  BODY, PHYS, VIEW_HOME, accruePlay, clampView, minViewZoom, wheelFactor, zoomAt, defaultGravity, deviceArtPlacement, isResting, kick, loadTamagoPrefs, parseTamagoPrefs, restAngle, restingAt, saveTamagoPrefs,
+  screenGravity, stepPendulum, tamaLayout, tapKick, toDeviceVec, type Pendulum,
 } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
@@ -245,18 +245,10 @@ describe('줌아웃 배치·설정·기록 판', () => {
     expect(loadTamagoPrefs(broken)).toEqual({ on: false, tilt: false });
     expect(() => saveTamagoPrefs(broken, { on: true, tilt: true })).not.toThrow();
   });
-  it('기록 판: 이름·단계·플레이 시간·환생 ★·처음 시작한 날·제조 번호', () => {
-    const at = new Date(2026, 9, 3, 10, 0).getTime();
-    const rows = plateRows({ name: '아쥬커스', stage: '3단계', playMs: 207 * 60_000, rebirths: 2, createdAt: at });
-    expect(rows.map((r) => r[0])).toEqual(['이름', '단계', '플레이 시간', '환생', '처음 시작한 날', '제조 번호']);
-    expect(rows[2]![1]).toBe('3시간 27분');
-    expect(rows[3]![1]).toBe('★★');
-    expect(rows[4]![1]).toBe('2026-10-03');
-    expect(rows[5]![1]).toMatch(/^BH-2610-[0-9A-F]{4}-[0-9A-F]{2}$/);
-    expect(serialNumber(at)).toBe(serialNumber(at));
-    expect(serialNumber(at)).not.toBe(serialNumber(at + 1));
-    expect(playTimeText(0)).toBe('1분 미만');
-    expect(playTimeText(59 * 60_000)).toBe('59분');
+  it('뒷면에는 기록 판이 없다 (C.66, 30장 7): 이름·단계·플레이 시간·제조 번호 코드 없음', () => {
+    const t = readFileSync(new URL('../src/ui/bha/tamago.ts', import.meta.url), 'utf8');
+    expect(t).not.toMatch(/bha-tama__plate|plateRows|paintPlate|기록 판|제조 번호/);
+    expect(readFileSync(new URL('../src/ui/bha/tamago.css', import.meta.url), 'utf8')).not.toContain('bha-tama__plate');
   });
   it('놀던 시간: 한 번에 1분 넘게는 안 센다(꺼 둔 시간·시계 되돌림 제외)', () => {
     expect(accruePlay(0, 1000, 16_000)).toBe(15_000);

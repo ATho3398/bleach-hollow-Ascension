@@ -30,9 +30,9 @@ describe('두께 = 가로의 25% (30장 6)', () => {
     expect(L.body.w).toBe(896);
     expect(edgeThickness(L.body)).toBe(224);
   });
-  it('겹은 20~30겹이고 앞면 뒤 1px 에서 두께까지 고르게 늘어난다', () => {
+  it('겹은 20~48겹이고 앞면 뒤 1px 에서 두께까지 고르게 늘어난다', () => {
     expect(STACK_LAYERS).toBeGreaterThanOrEqual(20);
-    expect(STACK_LAYERS).toBeLessThanOrEqual(30);
+    expect(STACK_LAYERS).toBeLessThanOrEqual(48);
     const d = stackDepths(STACK_LAYERS, 250);
     expect(d[d.length - 1]).toBeCloseTo(251, 1);
     expect(d[1]! - d[0]!).toBeCloseTo(250 / STACK_LAYERS, 1);
@@ -55,7 +55,17 @@ describe('뒤집는 동안 화면 안 (30장 6)', () => {
   });
   it('겹 그림은 작은 어두운 그림 한 장을 같이 쓴다 (큰 그림 여러 장 금지)', () => {
     const t = src('src/ui/bha/tamago.ts');
-    expect(t).toContain('stackShade(bodyArt)');
+    expect(t).toContain('stackShade(bodyArt, stackAlpha(i, layers.length))');
     expect(t).not.toMatch(/l\.src = bodyArt\.src/);
+  });
+});
+
+describe('뒷면 기록 판 삭제 (30장 7)', () => {
+  it('뒷면에 기록 판 코드가 없다', () => {
+    expect(src('src/ui/bha/tamago.ts')).not.toMatch(/bha-tama__plate|plateRows|paintPlate|기록 판/);
+    expect(src('src/ui/bha/tamagoLogic.ts')).not.toMatch(/plateRows|serialNumber|playTimeText/);
+  });
+  it('세이브의 machine(만든 시각·논 시간)은 그대로 둔다', () => {
+    expect(src('src/game.ts')).toContain('playMs');
   });
 });
