@@ -3,8 +3,7 @@
 import { isLocomotion } from '../../engine/locomotion';
 import { categoryName, elementName, isElement } from '../elements';
 import { getFaction } from '../factions';
-import { FORM_KINDS, STAT_IDS, pickFaction, type FormDef, type FormKind, type PerFaction, type StatId } from '../schema';
-import abilitiesRaw from './abilities.json';
+import { FORM_KINDS, STAT_IDS, pickFaction, type FormDef, type FormKind } from '../schema';
 import { generateFormTable } from './build';
 import { generateForms } from './generate';
 import raw from './forms.json';
@@ -115,22 +114,8 @@ export function formHint(form: FormDef, factionId: string): string {
   return byKind[form.label.kind];
 }
 
-// ── 고유 특성 (GDD 20-3·v4.0): 능력치 6종 × 1개. 효과 수치는 BALANCE.provisional.abilities, 이름은 abilities.json ──
-interface AbilityText {
-  name: PerFaction<string>;
-  description: PerFaction<string>;
-}
-const ABILITIES = (abilitiesRaw as { abilities: Record<StatId, AbilityText> }).abilities;
-for (const k of STAT_IDS) if (!ABILITIES[k]) throw new Error(`고유 특성 데이터 오류: ${k} 없음`);
-export const ABILITIES_PROVISIONAL: boolean = (abilitiesRaw as { provisional: boolean }).provisional;
-
-export function abilityName(stat: StatId, factionId: string): string {
-  return pickFaction(ABILITIES[stat].name, factionId);
-}
-
-export function abilityDescription(stat: StatId, factionId: string): string {
-  return pickFaction(ABILITIES[stat].description, factionId);
-}
+// ── 특성 (GDD 20-3·v4.0 성향 6종, 39장 속성·전용): 데이터·이름은 abilities.ts, 효과 수치는 BALANCE.provisional.abilities ──
+export { ABILITIES_PROVISIONAL, abilityDescription, abilityName, abilityNameByEffect, elementAbility, kindSlot, uniqueAbility, validateAbilities } from './abilities';
 
 // ── 콤보 규칙 (GDD 17-3): 진화 단계마다 1개씩 열리는 특수 블록 규칙. 데이터는 combos.json ──
 import { FACTIONS } from '../factions';

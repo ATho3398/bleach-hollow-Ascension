@@ -40,6 +40,7 @@ import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
 import type { SceneBg } from '../data/art/backgrounds';
 import { testSpeedMul } from './testMode';
+import { abilityProcText } from './evolutionPanel';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -149,6 +150,9 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'cast', icon: 'i-cast', text: `반격! ${n(e.damage)} 피해${e.guarded ? ' (막기로 경감)' : ''}` };
     case 'shuffle':
       return { role: 'chain', icon: 'i-swap', text: '블록 바의 순서가 섞였다' };
+    case 'ability':
+      // 진화체 특성 발동 (C.89, GDD 39장 5번)
+      return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 능력치 상승 · ${liberationBlockLabel(factionId, s.params.playerElements[0])} ${e.blocks}칸` };
     case 'liberation-end':
@@ -662,6 +666,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         if (e.block === 'special' || e.block === 'combo') flash('is-special', 600);
         break;
       }
+      case 'ability':
+        // 진화체 특성 발동 글자 (GDD 39장 5번): 연타! / 되갚기! / 다시 일어남! / 연쇄!
+        spawnFloat('chain', abilityProcText(e.effect, faction.id), { chain3: e.effect !== 'chainHaste' });
+        if (e.effect === 'thorns') spawnFloat('attack', `−${n0(e.damage)}`, { size: 'big' });
+        break;
       case 'combo':
         spawnFloat('chain', `콤보! ${comboName(e.comboId, faction.id)}`, { chain3: true });
         flash('is-special', 600);

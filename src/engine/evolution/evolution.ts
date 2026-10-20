@@ -10,6 +10,7 @@ import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/sche
 import type { ComboRule, CombatParams } from '../combat/combat';
 import type { BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
+import { abilityEffectsOf, formAbilitiesOf } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
 
 const EV = BALANCE.provisional.evolution;
@@ -280,7 +281,12 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.stabMultiplier = stabOf(e);
   // 해방 블록 분류 (GDD 22-5): 진화체 분류(아란칼 일반형), 없으면 혼합
   params.liberationCategory = form?.label.category ?? 'mixed';
-  applyAbility(params, e.ability);
+  // 특성 칸 2개 (GDD 39장): 성향(실패형 2개) + 속성·전용 효과
+  const fa = formAbilitiesOf(form ?? null, e.ev, e.ability);
+  for (const d of fa.dispositions) applyAbility(params, d);
+  const { effects, critChance } = abilityEffectsOf(fa);
+  params.abilityEffects = effects;
+  if (critChance > 0) params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
 }
 
 /** 진화체 하나 (외부에서 이름·속성 표시용) */

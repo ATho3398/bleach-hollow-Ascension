@@ -1,9 +1,9 @@
 // 진화 제단·진화 연출 (GDD 20-5). 문구는 종족 설정(tierNames, slotName, appearanceChange)·진화 데이터에서 읽는다.
 // 진화 타이밍(걸음 수)·후보는 숨긴다(v4.1): 제단은 지금 진화체·속성·고유 특성만 보이고, 진화는 둥지에 돌아오면 저절로 일어난다.
-import { abilityDescription, abilityName, formName, tryGetForm } from '../data/evolution';
+import { abilityNameByEffect, formName, tryGetForm } from '../data/evolution';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
-import { isMaxTier, playerElementsOf, type EvolutionState } from '../engine/evolution';
+import { abilityLines, formAbilitiesOf, isMaxTier, playerElementsOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
@@ -38,12 +38,36 @@ export function evolutionNote(): HTMLElement {
   return p;
 }
 
-/** 고유 특성 한 줄 (1단계는 없음) */
-function abilityLine(faction: FactionConfig, ability: StatId | null): HTMLElement {
-  const p = h('p', 'bha-dim');
-  if (!ability) p.append('고유 특성: 아직 없음 (진화하면 생긴다)');
-  else p.append('고유 특성 ', h('b', '', abilityName(ability, faction.id)), ` — ${abilityDescription(ability, faction.id)}`);
+/** 지금 진화체의 특성 줄 (GDD 39장): 성향 + 속성·전용 */
+export function evolutionAbilityLines(evo: EvolutionState, factionId: string): AbilityLine[] {
+  const form = evo.formId ? tryGetForm(evo.formId) : undefined;
+  return abilityLines(formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
+}
+
+/** 도감용 특성 줄: 성향은 진화 순간 노력치로 정해지므로 규칙만, 속성·전용은 진화체 label 로 */
+export function dexAbilityLines(form: FormDef, factionId: string): AbilityLine[] {
+  const fa = formAbilitiesOf(form, zeroStats(), null);
+  const twin = formAbilitiesOf(form, zeroStats(), 'hp').dispositions.length > 1;
+  return [{ slot: '성향', name: twin ? '노력치 1·2위 둘' : '노력치 최고 능력치', description: '진화하는 순간 정해진다' }, ...abilityLines(fa, factionId)];
+}
+
+/** 특성 줄 → 문단 (줄마다 "성향 특성 이름 — 설명"). 비면 "아직 없음" */
+export function abilityParagraph(lines: readonly AbilityLine[], cls = 'bha-dim'): HTMLElement {
+  const p = h('p', cls);
+  p.dataset.abilities = String(lines.length);
+  if (lines.length === 0) p.append('특성: 아직 없음 (진화하면 생긴다)');
+  lines.forEach((l, i) => {
+    if (i > 0) p.append(h('br'));
+    const tag = h('span', '', `${l.slot} 특성 `);
+    tag.dataset.abilitySlot = l.slot;
+    p.append(tag, h('b', '', l.name), ` — ${l.description}`);
+  });
   return p;
+}
+
+/** 전투 중 특성 발동 글자 (연타! / 되갚기! / 다시 일어남! / 연쇄!) — 이름은 데이터에서 */
+export function abilityProcText(effect: string, factionId: string): string {
+  return `${abilityNameByEffect(effect, factionId) ?? effect}!`;
 }
 
 /**
@@ -58,7 +82,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   const els = h('span', 'bha-dim');
   els.append(`${evo.tierIndex + 1}단계 · ${tierName} · 속성 `, elementsMark(playerElementsOf(evo), faction.id));
   form.append(formName_, els);
-  const left = [form, abilityLine(faction, evo.ability)];
+  const left = [form, abilityParagraph(evolutionAbilityLines(evo, faction.id))];
   if (isMaxTier(evo)) {
     return {
       left,
@@ -76,9 +100,16 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   return { left, right: [how, evolutionNote()] };
 }
 
+/** 진화 결과 화면에 넘기는 지금 상태: 속성·성향 특성·노력치(실패형 2위 성향) */
+export interface EvolutionExtra {
+  elements: string[];
+  ability: StatId | null;
+  ev?: Stats;
+}
+
 /** 진화 후 달라진 점 행들(임시 수치): 슬롯·속성·고유 특성·종족값·외형 */
 export function evolutionEffectRows(
-  faction: FactionConfig, form: FormDef, slotsAfter?: number, extra?: { elements: string[]; ability: StatId | null },
+  faction: FactionConfig, form: FormDef, slotsAfter?: number, extra?: EvolutionExtra,
 ): { icon: string; label: string; value: string | Node; sub?: string; mod?: 'good' | 'stack' }[] {
   const slots = EV.slotsPerEvolution;
   const rows: { icon: string; label: string; value: string | Node; sub?: string; mod?: 'good' | 'stack' }[] = [
@@ -88,7 +119,8 @@ export function evolutionEffectRows(
     },
   ];
   if (extra) rows.push({ icon: 'i-weak', label: '속성', value: elementsMark(extra.elements, faction.id) });
-  if (extra?.ability) rows.push({ icon: 'i-rare', label: '고유 특성', value: `${abilityName(extra.ability, faction.id)} — ${abilityDescription(extra.ability, faction.id)}`, mod: 'stack' });
+  const lines = extra ? (extra.ev ? abilityLines(formAbilitiesOf(form, extra.ev, extra.ability), faction.id) : abilityLines(formAbilitiesOf(form, zeroStats(), extra.ability), faction.id)) : [];
+  for (const l of lines) rows.push({ icon: 'i-rare', label: `${l.slot} 특성`, value: `${l.name} — ${l.description}`, mod: 'stack' });
   rows.push(
     { icon: 'i-cond', label: '종족값', value: statsLine(faction.id, form.stats), mod: 'stack' },
     { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },
@@ -108,7 +140,7 @@ export function evolutionView(
   form: FormDef,
   onDone: () => void,
   slotsAfter?: number,
-  extra?: { elements: string[]; ability: StatId | null },
+  extra?: EvolutionExtra,
 ): void {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const burst = h('span', 'bha-evolve__burst');

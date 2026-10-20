@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 45;
+export const BALANCE_VERSION = 46;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -255,6 +255,27 @@ export const BALANCE = {
       def: { physicalTaken: 0.85 },
       spr: { specialTaken: 0.85 },
       spd: { attackSpeed: 1.18 },
+      // ── C.89 (GDD 39장): 속성 특성 8종 (4단계 = 1배). 세기(scale)는 main 값에만 곱한다 — 효과 종류는 abilities.json ──
+      element: {
+        normal: { blockPower: 0.06 },
+        water: { critChance: 0.08 },
+        fire: { burnFraction: 0.25, burnSeconds: 3 },
+        earth: { thornsReturn: 0.6, thornsThreshold: 0.2 },
+        thunder: { doubleHitChance: 0.12 },
+        blood: { bloodlustMax: 0.2, bloodlustFullAt: 0.3 },
+        poison: { corrodePer: 0.02, corrodeEverySeconds: 10, corrodeMax: 0.1 },
+        kyo: { chainHastePerChain: 0.15 },
+      } as Record<string, Record<string, number>>,
+      /** 전용 특성 5종 (39장 4번, 세기 배율 없음) */
+      unique: {
+        complete: {},
+        limit: { desperateBelow: 0.5, desperateBonus: 0.25 },
+        restraint: { rampPer: 0.05, rampEverySeconds: 10, rampMax: 0.3 },
+        hunter: { eliteBonus: 0.2 },
+        reborn: { lastStandHp: 0.3 },
+      } as Record<string, Record<string, number>>,
+      /** 세기: 단계별(4단계 1, 5단계 ×1.5), 융합 = 두 속성 각 60%, 특수·순수 = ×1.5 (39장 2·3번) */
+      scale: { tier: { 4: 1, 5: 1.5 } as Record<number, number>, fusion: 0.5, boosted: 1.5 },
     },
     // ── 진화 (GDD 20-5 v3.7~v4.2): 트리·타이밍·히든. 수치 provisional ──
     evolution: {

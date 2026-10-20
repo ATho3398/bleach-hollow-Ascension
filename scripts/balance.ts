@@ -11,7 +11,7 @@ import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } 
 import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
 import { ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
-import { analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, newEvolution, worldRefStat } from '../src/engine/evolution';
+import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, newEvolution, worldRefStat, zeroStats } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, newTileStock, type SaveData } from '../src/game';
 import { inheritableTraits } from '../src/engine/rebirth';
 import { RANK_HOLDERS } from '../src/data/ranks';
@@ -668,6 +668,54 @@ let campaignFinalDefeats: number[] = [];
     if (i === 0) { if (r.eWin < rows[1]!.eWin) failures.push(`권장 단계 등가: 1단계 몸 ★1 강적 승률 ${(r.eWin * 100).toFixed(0)}% < 2단계 ${(rows[1]!.eWin * 100).toFixed(0)}% (입문 보정이 안 먹었다)`); }
     else if (Math.abs(r.eWin - b.eWin) > 0.15) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 강적 승률 ${(r.eWin * 100).toFixed(0)}% 가 2~5단계 평균 ${(b.eWin * 100).toFixed(0)}% 와 15%p 넘게 다르다`);
   });
+}
+
+// ── 진화체 특성 (C.89, GDD 39장 7번): 4·5단계 진화체마다(노력치 0, 성향 = 종족값 최고, skill 1개) 권장 ★ 적 풀과 1:1 — 특성(속성·전용) 켬/끔 ──
+// 가드: 특성이 올려 주는 강적 승률(켬 − 끔)이 같은 단계 평균 ±10%p 안, 특성 끔 대비 일반 처치 시간 −15% 이내(너무 쉬워지지 않게). 5단계 히든(속성 잇기)은 4단계 노멀을 이어받은 몸.
+// 기획서(39장 7번)는 "강적 승률 차 ±10%p" — 특성 끔 상태에서 이미 진화체 종족값·속성 상성 차로 37~88%(실패형 0%) 벌어져 있어 특성 몫(켬 − 끔)만 가드하고 절대 승률은 참고 출력 (C.89 판단)
+{
+  const NA = 32;
+  const t5 = [...ELEMENT_IDS.map((el) => `t5:${el}:mixed`), 'h5:limit', 'h5:restraint', 'h5:hunter', 'h5:reborn'];
+  const groups: [number, string[]][] = [[3, formsOfTier(4).map((f) => f.id)], [4, t5]];
+  console.log(`\n진화체 특성 (GDD 39장 7번, 사람형 봇, 진화체 몸 + skill 1개 vs 권장 ★ 적 풀, 종류마다 ${NA}판) — 특성 몫(켬 − 끔) 강적 승률 단계 평균 ±10%p · 일반 처치 시간 −15% 이내`);
+  for (const [tier, ids] of groups) {
+    const star = recommendedDifficulty(tier);
+    const rows = ids.map((id) => {
+      const form = FORM_TABLE.find((f) => f.id === id)!;
+      const prev = form.tier === 5 && !form.elements ? 't4:normal' : form.tier === 5 ? `t4:${form.label.elements[0]}` : 't3:base';
+      const evo = { ...newEvolution(), tierIndex: tier, formId: id, formHistory: ['t2:base', 't3:base', ...(tier === 4 ? [prev] : []), id], ability: abilityFor(zeroStats(), form) };
+      const stat = (cls: 'normal' | 'elite', on: boolean) => {
+        let g = 0, w = 0, secs = 0;
+        for (const base of POOL_ENEMIES.filter((e) => e.class === cls)) {
+          for (let seed = 1; seed <= NA; seed++) {
+            const params = { ...buildOf(['t-thunder-c']) } as Partial<CombatParams>;
+            applyEvolutionToParams(params, evo, BALANCE_FACTION);
+            if (!on) {
+              params.critChance = (params.critChance ?? CX.critChance) - abilityEffectsOf(formAbilitiesOf(form, evo.ev, evo.ability)).critChance;
+              params.abilityEffects = {};
+            }
+            applyDifficultyToParams(params, star);
+            const end = playCombatHuman(createCombat(seed * 37 + star, { enemy: enemyAtDifficulty(base, star), params }));
+            g++;
+            if (end.status === 'won') { w++; secs += elapsedSeconds(end); }
+          }
+        }
+        return { win: g ? w / g : 0, secs: w ? secs / w : 0 };
+      };
+      return { id, on: { n: stat('normal', true), e: stat('elite', true) }, off: { n: stat('normal', false), e: stat('elite', false) } };
+    });
+    const mean = rows.reduce((a, r) => a + r.on.e.win, 0) / rows.length;
+    const meanOff = rows.reduce((a, r) => a + r.off.e.win, 0) / rows.length;
+    const gain = mean - meanOff;
+    console.log(`  ${tier + 1}단계 ★${star}: 강적 승률 평균 켬 ${(mean * 100).toFixed(0)}% / 끔 ${(meanOff * 100).toFixed(0)}% (특성 몫 평균 +${(gain * 100).toFixed(1)}%p)`);
+    for (const r of rows) {
+      const ratio = r.off.n.secs ? r.on.n.secs / r.off.n.secs : 1;
+      console.log(`    ${r.id.padEnd(22)} 일반 ${r.on.n.secs.toFixed(1).padStart(5)}초 (끔 ${r.off.n.secs.toFixed(1).padStart(5)}, ×${ratio.toFixed(2)}) · 강적 ${(r.on.e.win * 100).toFixed(0).padStart(3)}% (끔 ${(r.off.e.win * 100).toFixed(0).padStart(3)}%, 특성 몫 ${((r.on.e.win - r.off.e.win) * 100).toFixed(0).padStart(3)}%p)`);
+      const g = r.on.e.win - r.off.e.win;
+      if (Math.abs(g - gain) > 0.1) failures.push(`진화체 특성: ${r.id} 특성 몫(강적 승률 켬 − 끔) ${(g * 100).toFixed(0)}%p 가 ${tier + 1}단계 평균 ${(gain * 100).toFixed(1)}%p 와 10%p 넘게 다르다 (GDD 39장 7번)`);
+      if (ratio < 0.85) failures.push(`진화체 특성: ${r.id} 일반 처치 시간 ×${ratio.toFixed(2)} (특성 끔 대비 −15% 넘게 빨라짐, GDD 39장 7번)`);
+    }
+  }
 }
 
 // ── 원정 난이도 ★ (C.75, GDD 32-1): 그 단계에 갓 닿은 몸(위 진화 봇 세이브, 1단계는 새 세이브)으로 사람형 봇이 ★ = 단계−1 / 단계(권장) / 단계+1 에서 4바퀴 원정 ──

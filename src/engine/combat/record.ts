@@ -47,5 +47,6 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     liberationAt: liberationUsedAt(s),
     crits: s.crits ?? 0,
     enemyCrits: s.enemyCrits ?? 0,
+    abilityProcs: { ...s.abilityProcs },
   };
 }

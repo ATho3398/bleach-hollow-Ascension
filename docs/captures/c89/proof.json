@@ -1,0 +1,51 @@
+{
+ "note": "1배 캡처(1280×800). 별도 하네스 페이지에서 실제 화면 함수(careView·evolutionView·dexView·battleView)를 호로 세이브(t4:water / t5:thunder:mixed / t5:earth:mixed)로 그림. 전투는 엔진 abilityProcs 가 처음 오른 직후 찍음(03·04는 조정 전 연타 15% 값 — 글자 모양은 같음).",
+ "captures": [
+  {
+   "file": "01-status-t4-water.png",
+   "url": "?scene=status&form=t4:water",
+   "info": [
+    "치명 13% · 치명 피해 ×1.5 (기본 5% + 물 +8%p)",
+    "성향 특성 괴력 — 물리 공격 피해가 늘어난다.속성 특성 날카로운 물결 — 치명타 확률 +8%p"
+   ]
+  },
+  {
+   "file": "02-evolve-result-t4-water.png",
+   "url": "?scene=evolve&form=t4:water",
+   "info": [
+    "본체 슬롯5 → 6칸 +1",
+    "속성물물",
+    "성향 특성괴력 — 물리 공격 피해가 늘어난다.",
+    "속성 특성날카로운 물결 — 치명타 확률 +8%p",
+    "종족값체력 107 · 힘 88 · 지능 98 · 방어 97 · 정신력 112 · 속도 83",
+    "외형본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)"
+   ]
+  },
+  {
+   "file": "03-battle-doublehit.png",
+   "form": "t5:thunder:mixed",
+   "text": "연타!",
+   "procs": {
+    "doubleHit": 1
+   }
+  },
+  {
+   "file": "04-battle-thorns.png",
+   "form": "t5:earth:mixed",
+   "text": "되갚기!",
+   "procs": {
+    "thorns": 1
+   }
+  },
+  {
+   "file": "05-dex-t4.png",
+   "url": "?scene=dex&form=t4:water",
+   "info": [
+    "성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다속성 특성 날카로운 물결 — 치명타 확률 +8%p"
+   ]
+  }
+ ],
+ "console": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

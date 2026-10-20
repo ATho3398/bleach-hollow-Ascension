@@ -7,5 +7,36 @@
     "def": { "name": { "*": "단단한 껍질" }, "description": { "*": "받는 물리 피해가 줄어든다." } },
     "spr": { "name": { "*": "흔들림 없는 마음" }, "description": { "*": "받는 특수 피해가 줄어든다." } },
     "spd": { "name": { "*": "평타 가속" }, "description": { "*": "자동 공격이 더 빨라진다." } }
+  },
+  "elementAbilities": {
+    "normal": { "effect": "blockPower", "name": { "*": "균형" }, "description": { "*": "모든 블록 위력이 오른다." } },
+    "water": { "effect": "crit", "name": { "*": "날카로운 물결" }, "description": { "*": "치명타 확률이 오른다." } },
+    "fire": { "effect": "burn", "name": { "*": "화상" }, "description": { "*": "블록 공격이 맞으면 잠시 불타 피해가 이어진다." } },
+    "earth": { "effect": "thorns", "name": { "*": "되갚기" }, "description": { "*": "받은 피해를 쌓아 두었다가 한 번에 되돌려준다." } },
+    "thunder": { "effect": "doubleHit", "name": { "*": "연타" }, "description": { "*": "기본 공격이 가끔 한 번 더 나간다." } },
+    "blood": { "effect": "bloodlust", "name": { "*": "피의 갈증" }, "description": { "*": "체력이 낮을수록 공격이 강해진다." } },
+    "poison": { "effect": "corrode", "name": { "*": "부식" }, "description": { "*": "싸울수록 적이 받는 피해가 늘어난다." } },
+    "kyo": { "effect": "chainHaste", "name": { "*": "연쇄" }, "description": { "*": "체인이 이어지면 다음 블록이 빨리 생긴다." } }
+  },
+  "uniqueAbilities": {
+    "complete": { "effect": "noWeak", "name": { "*": "완성" }, "description": { "*": "속성 상성에서 불리 효과를 받지 않는다." } },
+    "limit": { "effect": "desperate", "name": { "*": "한계 돌파" }, "description": { "*": "체력이 절반 아래면 주는 피해가 오른다." } },
+    "restraint": { "effect": "rampUp", "name": { "*": "억눌린 힘" }, "description": { "*": "싸울수록 공격이 강해진다." } },
+    "hunter": { "effect": "eliteSlayer", "name": { "*": "사냥꾼" }, "description": { "*": "강적·보스에게 주는 피해가 오른다." } },
+    "reborn": { "effect": "lastStand", "name": { "*": "다시 일어남" }, "description": { "*": "전투마다 한 번, 쓰러질 때 버틴다." } }
+  },
+  "kindSlots": {
+    "base": { "element": "none" },
+    "element": { "element": "label" },
+    "arrancar": { "element": "label" },
+    "fusion": { "element": "label", "scale": "fusion" },
+    "special": { "element": "label", "scale": "boosted" },
+    "pure": { "element": "label", "scale": "boosted" },
+    "fail": { "element": "none", "dispositions": 2 },
+    "complete": { "element": "unique" },
+    "limit": { "element": "unique" },
+    "restraint": { "element": "unique" },
+    "hunter": { "element": "unique" },
+    "reborn": { "element": "unique" }
   }
 }

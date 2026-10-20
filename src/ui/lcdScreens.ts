@@ -11,15 +11,15 @@ import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
 import { versionLabel } from '../version';
 import { traitsTab, type TraitsTabState } from './buildPanel';
-import { evolutionColumns } from './evolutionPanel';
+import { abilityParagraph, evolutionAbilityLines, evolutionColumns } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
 import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { deckRow, showToast, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityName } from '../data/evolution';
-import { currentStats, playerElementsOf, refStatOf, zeroStats } from '../engine/evolution';
+import { abilityEffectsOf, currentStats, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats } from '../engine/evolution';
+import { tryGetForm } from '../data/evolution';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
 import { elementsMark } from './bha/element';
@@ -28,9 +28,12 @@ import { tileHint, variantModsText } from './labels';
 import type { VariantMods } from '../engine/expedition';
 
 /** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax */
-export function critPercentText(build: SaveData['build']): string {
+export function critPercentText(build: SaveData['build'], evo?: SaveData['evolution']): string {
   const CX = BALANCE.provisional.combat;
-  return `${Math.round(Math.min(CX.critChanceMax, CX.critChance + critChanceBonus(build)) * 100)}%`;
+  // 진화체 속성 특성 '날카로운 물결'(GDD 39장)의 치명타 확률도 더한다
+  const form = evo?.formId ? tryGetForm(evo.formId) : undefined;
+  const fromForm = evo ? abilityEffectsOf(formAbilitiesOf(form ?? null, evo.ev, evo.ability)).critChance : 0;
+  return `${Math.round(Math.min(CX.critChanceMax, CX.critChance + critChanceBonus(build) + fromForm) * 100)}%`;
 }
 
 /** 상태 자리: 왼쪽 상태 4바(배부름·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
@@ -60,7 +63,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 치명타 (C.63, GDD 28장 5번): 기본 + 장착 특성 critChance (물리·마법 합친 하나, 상한 있음)
   const critLine = h('p', 'bha-small');
   critLine.dataset.crit = '';
-  critLine.append('치명 ', h('b', 'bha-num', critPercentText(save.build)), ` · 치명 피해 ×${BALANCE.provisional.combat.critMultiplier}`);
+  critLine.append('치명 ', h('b', 'bha-num', critPercentText(save.build, save.evolution)), ` · 치명 피해 ×${BALANCE.provisional.combat.critMultiplier}`);
   stats.append(critLine);
   // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
   const bonus = bonusLine(save);
@@ -76,7 +79,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 ${carryLine(faction.id, evo.carry ?? zeroStats())}`);
     stats.append(line);
   }
-  if (evo.ability) stats.append(h('p', 'bha-faint', `고유 특성: ${abilityName(evo.ability, faction.id)}`));
+  // 특성 2줄 (GDD 39장): 성향 / 속성·전용
+  if (evo.ability) stats.append(abilityParagraph(evolutionAbilityLines(evo, faction.id), 'bha-faint'));
   lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
