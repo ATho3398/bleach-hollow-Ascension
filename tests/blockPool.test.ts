@@ -1,4 +1,4 @@
-// 블록 풀 (GDD 44장, C.97): 기본 블록 5종은 늘 나오고 흡수 블록은 더해진다. 흡수 몫·성향 보정으로 비율이 바뀐다
+// 블록 풀 (GDD 44장 → 44-1 B안, C.97): 기본 블록 5종은 늘 나오고(별도 타이머, 가중 추첨) 흡수 블록은 특성마다 타이머로 더해진다. 흡수 칸·성향 보정으로 비율이 바뀐다
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
@@ -6,7 +6,7 @@ import { getFaction } from '../src/data/factions';
 import { TRAITS } from '../src/data/traits';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import {
-  absorbedShareOf, BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, blockPoolOf, createCombat, isBasicBlockId, spawnSecondsOf, step, type CombatParams, type CombatState,
+  basicSpawnSecondsOf, BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, blockPoolOf, createCombat, isBasicBlockId, spawnRatesOf, spawnSecondsOf, step, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { applyEvolutionToParams, newEvolution } from '../src/engine/evolution';
 
@@ -40,46 +40,52 @@ function spawned(s: CombatState, n: number): { traitId: string | null; family: s
   return out;
 }
 
-describe('블록 풀 비율 (GDD 44장 2·3번)', () => {
-  it('흡수 0칸 = 기본 5종만: 공격 3계열 각 10 · 막기 7 · 회복 7 의 가중 비율', () => {
-    const p = paramsOf(build());
-    expect(absorbedShareOf(p)).toBe(0);
-    const fams = getFaction(FACTION).families.map((f) => f.id);
-    expect(blockPoolOf(p)).toHaveLength(5);
-    for (const f of fams) expect(chance(p, (id, fam) => id === BASIC_SKILL_ID && fam === f)).toBeCloseTo(W.attack / BASIC_TOTAL);
-    expect(chance(p, (id) => id === BASIC_GUARD_ID)).toBeCloseTo(W.guard / BASIC_TOTAL);
-    expect(chance(p, (id) => id === BASIC_HEAL_ID)).toBeCloseTo(W.heal / BASIC_TOTAL);
-    expect(sum(p)).toBeCloseTo(1);
-  });
-
-  it('독 탄 1칸: 독 탄 35% + 기본 5종이 나머지 65% 를 가중 비율로 (모든 블록이 나오고 독 탄이 더해진다)', () => {
-    const p = paramsOf(build('t-poison-c'));
-    expect(chance(p, (id) => id === 't-poison-c')).toBeCloseTo(0.35);
-    expect(chance(p, (id, f) => id === BASIC_SKILL_ID && f === 'family-a')).toBeCloseTo(0.65 * W.attack / BASIC_TOTAL);
-    expect(chance(p, (id) => id === BASIC_GUARD_ID)).toBeCloseTo(0.65 * W.guard / BASIC_TOTAL);
-    expect(sum(p)).toBeCloseTo(1);
-  });
-
-  it('흡수 몫 = 장착 칸 0/1/2/3 → 0/35/50/65%, 장착 특성끼리 균등 (계열이 다를 때)', () => {
-    const ids = ['t-fire-a', 't-earth-guard', 't-thunder-heal'];
-    for (let n = 1; n <= 3; n++) {
-      const p = paramsOf(build(...ids.slice(0, n)));
-      expect(absorbedShareOf(p)).toBeCloseTo(BP.absorbedShareBySlots[n]!);
-      for (const id of ids.slice(0, n)) expect(chance(p, (x) => x === id)).toBeCloseTo(BP.absorbedShareBySlots[n]! / n);
-      expect(chance(p, (x) => isBasicBlockId(x))).toBeCloseTo(1 - BP.absorbedShareBySlots[n]!);
+describe('기본 블록 풀 (GDD 44장 2번)', () => {
+  it('기본 5종 가중: 공격 3계열 각 10 · 막기 7 · 회복 7 (흡수 칸과 상관없다)', () => {
+    for (const p of [paramsOf(build()), paramsOf(build('t-poison-c'))]) {
+      const fams = getFaction(FACTION).families.map((f) => f.id);
+      expect(blockPoolOf(p)).toHaveLength(5);
+      for (const f of fams) expect(chance(p, (id, fam) => id === BASIC_SKILL_ID && fam === f)).toBeCloseTo(W.attack / BASIC_TOTAL);
+      expect(chance(p, (id) => id === BASIC_GUARD_ID)).toBeCloseTo(W.guard / BASIC_TOTAL);
+      expect(chance(p, (id) => id === BASIC_HEAL_ID)).toBeCloseTo(W.heal / BASIC_TOTAL);
+      expect(sum(p)).toBeCloseTo(1);
     }
   });
 
-  it('실제 생성도 풀 비율을 따른다 (독 탄 1칸, 블록 3000개)', () => {
-    const s = long(3, build('t-poison-c'));
-    expect(spawned(s, 3000).length).toBeGreaterThanOrEqual(3000);
-    const out = spawned(long(4, build('t-poison-c')), 3000);
+  it('흡수 0칸이면 기본 블록만 나온다', () => {
+    const out = spawned(long(2, build()), 300);
+    expect(out.every((b) => isBasicBlockId(b.traitId))).toBe(true);
+  });
+
+  it('독 탄 1칸: 독 탄이 특성 타이머로 나오고 기본 5종도 함께 나온다 (모든 블록 + 독 탄)', () => {
+    const p = build('t-poison-c');
+    const r = spawnRatesOf(paramsOf(p));
+    const out = spawned(long(4, p), 2000);
     const rate = (pred: (b: { traitId: string | null }) => boolean) => out.filter(pred).length / out.length;
-    expect(rate((b) => b.traitId === 't-poison-c')).toBeGreaterThan(0.31);
-    expect(rate((b) => b.traitId === 't-poison-c')).toBeLessThan(0.39);
-    expect(rate((b) => b.traitId === BASIC_GUARD_ID)).toBeGreaterThan(0.07);
-    expect(rate((b) => b.traitId === BASIC_HEAL_ID)).toBeGreaterThan(0.07);
-    expect(new Set(out.filter((b) => b.traitId === BASIC_SKILL_ID).map((b) => (b as { family: string | null }).family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
+    expect(rate((b) => b.traitId === 't-poison-c')).toBeGreaterThan(r.absorbedShare - 0.05);
+    expect(rate((b) => b.traitId === 't-poison-c')).toBeLessThan(r.absorbedShare + 0.05);
+    for (const id of [BASIC_GUARD_ID, BASIC_HEAL_ID]) expect(out.some((b) => b.traitId === id)).toBe(true);
+    expect(new Set(out.filter((b) => b.traitId === BASIC_SKILL_ID).map((b) => b.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
+  });
+});
+
+describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
+  it('흡수 특성은 특성마다 blockSpawnSeconds, 기본 타이머 = basicSpawnSeconds × (1 + basicSlowdownPerSlot × 칸)', () => {
+    const CX = BALANCE.provisional.combat;
+    const one = paramsOf(build('t-poison-c'));
+    expect(spawnSecondsOf(one, one.skills[0]!)).toBeCloseTo(CX.blockSpawnSeconds);
+    for (let n = 0; n <= 3; n++) {
+      const p = paramsOf(build(...['t-fire-a', 't-earth-guard', 't-thunder-heal'].slice(0, n)));
+      expect(basicSpawnSecondsOf(p)).toBeCloseTo(BP.basicSpawnSeconds * (1 + BP.basicSlowdownPerSlot * n));
+    }
+    expect(basicSpawnSecondsOf(paramsOf({ ...build(), blockSpawnMultiplier: 2 }))).toBeCloseTo(BP.basicSpawnSeconds / 2);
+  });
+
+  it('흡수 칸이 늘수록 흡수 블록 비율이 오르고 기본 블록 비율이 줄어든다', () => {
+    const ids = ['t-fire-a', 't-earth-guard', 't-thunder-heal'];
+    const shares = [0, 1, 2, 3].map((n) => spawnRatesOf(paramsOf(build(...ids.slice(0, n)))).absorbedShare);
+    expect(shares[0]).toBe(0);
+    for (let n = 1; n <= 3; n++) expect(shares[n]!).toBeGreaterThan(shares[n - 1]!);
   });
 });
 
@@ -119,7 +125,7 @@ describe('새 몸(흡수 0칸)에서도 막기·회복 블록이 나온다 (사�
   });
 });
 
-describe('성향 특성 보정 (GDD 44장 4번)', () => {
+describe('성향 특성 보정 (GDD 44장 4번, 44-1)', () => {
   const withDisp = (d: CombatParams['dispositions'], ids: string[] = []) => paramsOf({ ...build(...ids), dispositions: d });
   const basicAtk = (p: CombatParams) => chance(p, (id) => id === BASIC_SKILL_ID);
   const guard = (p: CombatParams) => chance(p, (id) => id === BASIC_GUARD_ID);
@@ -134,31 +140,21 @@ describe('성향 특성 보정 (GDD 44장 4번)', () => {
     const spr = withDisp(['spr']);
     expect(guard(spr) / heal(spr)).toBeCloseTo(W.guard / W.heal);
     expect(ratio(spr).a).toBeCloseTo(base.a / 1.4);
-    for (const d of ['atk', 'def', 'hp', 'spr'] as const) expect(sum(withDisp([d], ['t-poison-c']))).toBeCloseTo(1);
+    for (const d of ['atk', 'def', 'hp', 'spr'] as const) expect(sum(withDisp([d]))).toBeCloseTo(1);
   });
 
-  it('속도 → 흡수 몫 +10%p (상한 80%), 0칸이면 몫 0 그대로', () => {
-    expect(absorbedShareOf(withDisp(['spd']))).toBe(0);
-    expect(absorbedShareOf(withDisp(['spd'], ['t-poison-c']))).toBeCloseTo(0.45);
-    expect(absorbedShareOf(withDisp(['spd'], ['t-fire-a', 't-earth-guard', 't-thunder-heal']))).toBeCloseTo(0.75);
-    expect(absorbedShareOf(paramsOf({ ...build('t-fire-a', 't-earth-guard', 't-thunder-heal'), dispositions: ['spd', 'spd'] }))).toBeCloseTo(BP.absorbedShareMax);
+  it('속도 → 흡수 특성 타이머가 빨라져 흡수 블록 비율이 오른다 (0칸이면 변화 없음)', () => {
+    const CX = BALANCE.provisional.combat;
+    const p = withDisp(['spd'], ['t-poison-c']);
+    expect(spawnSecondsOf(p, p.skills[0]!)).toBeCloseTo(CX.blockSpawnSeconds / BP.temperament.spd!.absorbedSpawn!);
+    expect(spawnRatesOf(p).absorbedShare).toBeGreaterThan(spawnRatesOf(withDisp([], ['t-poison-c'])).absorbedShare);
+    expect(spawnRatesOf(withDisp(['spd'])).absorbedShare).toBe(0);
   });
 
   it('진화 상태의 성향이 전투 파라미터로 들어간다', () => {
     const p = build();
     applyEvolutionToParams(p, { ...newEvolution(), ability: 'def' }, FACTION);
     expect(p.dispositions).toEqual(['def']);
-  });
-});
-
-describe('생성 간격 (GDD 44장 1번, 44-1)', () => {
-  it('타이머 하나: 0·1칸은 spawnSeconds, 2칸째부터 칸마다 spawnHastePerSlot 만큼 빨라지고 블록 가속 배율로 나눈다', () => {
-    const sec = (p: Partial<CombatParams>) => spawnSecondsOf(paramsOf(p));
-    expect(sec(build())).toBeCloseTo(BP.spawnSeconds);
-    expect(sec(build('t-poison-c'))).toBeCloseTo(BP.spawnSeconds);
-    expect(sec(build('t-fire-a', 't-earth-guard'))).toBeCloseTo(BP.spawnSeconds / (1 + BP.spawnHastePerSlot));
-    expect(sec(build('t-fire-a', 't-earth-guard', 't-thunder-heal'))).toBeCloseTo(BP.spawnSeconds / (1 + BP.spawnHastePerSlot * 2));
-    expect(sec({ ...build(), blockSpawnMultiplier: 2 })).toBeCloseTo(BP.spawnSeconds / 2);
   });
 });
 

@@ -6,7 +6,7 @@ import { TRAITS, parseTrait } from '../src/data/traits';
 import { FAMILY_TIERS, parseFactionConfig } from '../src/engine/faction';
 import { BALANCE } from '../src/config/balance';
 import { absorbReasons, buildCombatParams, equippedSkills, gainTrait, newBuild } from '../src/engine/absorb';
-import { applyInput, createCombat, runAt, blockPoolOf, BASIC_SKILL_ID, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
+import { applyInput, createCombat, runAt, spawnSecondsOf as spawnSecondsOfTest, BASIC_SKILL_ID, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
 import { chainGroup } from '../src/engine/combat/tray';
 import { getEnemy } from '../src/data/enemies';
 import { combosAtTier, COMBOS, comboName } from '../src/data/evolution';
@@ -85,7 +85,6 @@ describe('계열 데이터 (GDD 17-3)', () => {
 
 // ── ② 전투 엔진: 계열 체인 ──
 const CX = BALANCE.provisional.combat;
-const BP = BALANCE.provisional.blockPool;
 const target = getEnemy('test-a'); // 불 속성 → 물 속성 블록이 상성 우위
 let uid = 5000;
 const blk = (traitId: string | null, family: string | null = null, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId, family });
@@ -212,16 +211,17 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     }
   });
 
-  it('같은 계열 특성이 여럿이면 그 특성들의 몫이 (같은 계열 수 − 1)당 familyShareSlowdown 만큼 줄고, 줄어든 몫은 기본 블록으로 간다', () => {
-    const chanceOf = (p: CombatParams, id: string) => blockPoolOf(p).filter((e) => e.source.id === id).reduce((a, e) => a + e.chance, 0);
-    const two = mk(build('t-thunder-c', 't-blood-rare')).params;
-    const share = BP.absorbedShareBySlots[2]!;
-    expect(chanceOf(two, 't-thunder-c')).toBeCloseTo(share / 2 / (1 + BP.familyShareSlowdown));
-    expect(chanceOf(two, 't-blood-rare')).toBeCloseTo(share / 2 / (1 + BP.familyShareSlowdown));
-    // 계열이 다르거나 계열이 없는 특성끼리는 줄지 않는다
+  it('같은 계열 특성이 여럿이면 그 계열 블록의 생성 간격이 늘어난다', () => {
+    const one = mk(build('t-thunder-c'));
+    const two = mk(build('t-thunder-c', 't-blood-rare'));
+    const p = two.params;
+    const [c5, e4] = [p.skills[0]!, p.skills[1]!];
+    expect(spawnSecondsOfTest(one.params, one.params.skills[0]!)).toBe(CX.blockSpawnSeconds);
+    expect(spawnSecondsOfTest(p, c5)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
+    expect(spawnSecondsOfTest(p, e4)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
+    // 계열이 다르거나 계열이 없는 특성끼리는 느려지지 않는다
     const mixed = mk(build('t-thunder-c', 't-fire-a', 't-fire-guard')).params;
-    for (const sk of mixed.skills) expect(chanceOf(mixed, sk.id)).toBeCloseTo(BP.absorbedShareBySlots[3]! / 3);
-    expect(blockPoolOf(two).reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1);
+    for (const sk of mixed.skills) expect(spawnSecondsOfTest(mixed, sk)).toBe(CX.blockSpawnSeconds);
   });
 });
 
