@@ -187,8 +187,8 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   sh.jade = TEST_WEALTH;
   sh.soulCrystals = TEST_WEALTH;
   for (const id of FOOD_IDS) sh.food[id] = BALANCE.provisional.food.cap;
-  sh.rerollTickets = BALANCE.provisional.shop.rerollMax;
-  sh.deckSlots = BALANCE.provisional.shop.deckSlotPrices.length;
+  sh.rerollTickets = BALANCE.shop.rerollMax;
+  sh.deckSlots = BALANCE.shop.deckSlotPrices.length;
   sh.cosmetics = [...new Set([...sh.cosmetics, ...COSMETIC_ITEMS.map((c) => c.id)])];
   unlockTower(save as SaveData & { tower?: unknown });
   return save;
