@@ -87,11 +87,52 @@ export function edgeThickness(body: { w: number }): number {
   return r2(body.w * BODY.thicknessRatio);
 }
 
-/** 겹 두께 (GDD 30장 4번): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 count 겹(두께가 25%라 36겹) 뒤로 쌓아 두께를 만든다. 각 겹의 뒤쪽 거리(px, 앞면 바로 뒤 1px부터 두께까지) */
-export const STACK_LAYERS = 36;
-export function stackDepths(count: number, thick: number): number[] {
-  const n = Math.max(0, Math.floor(count));
-  return Array.from({ length: n }, (_, i) => r2(1 + (thick * (i + 1)) / Math.max(1, n)));
+/**
+ * 옆면 두께 띠 (GDD 31장 1, C.71 — C.66 의 앞면 36겹 대체): 옆면 그림이 없는 그림 기기는 앞면 실루엣을 가로 띠 SIDE_BANDS 줄로 나눠,
+ * 줄마다 실루엣 왼쪽·오른쪽 끝에 두께만큼 뒤로 세운 작은 단색 면 2장 + 뒤쪽 끝에 어둡게 구운 작은 실루엣 1장으로 두께를 만든다.
+ * 큰 그림 겹이 없어 뒤집는 동안 그리는 면적이 앞면 한 장 + 띠 정도다.
+ */
+export const SIDE_BANDS = 24;
+
+/** 실루엣 한 줄: 위·아래(그림 높이 비율 0~1), 왼쪽·오른쪽 끝(그림 너비 비율 0~1), 색(그 줄 가장자리 평균, 0~255) */
+export interface SilBand {
+  y0: number;
+  y1: number;
+  x0: number;
+  x1: number;
+  rgb: [number, number, number];
+}
+
+/**
+ * 그림 픽셀(RGBA, w×h) → 실루엣 가로 띠 n줄. 불투명(alpha ≥ 128) 픽셀이 없는 줄은 빠진다.
+ * 색 = 그 줄 왼쪽·오른쪽 끝에서 안쪽 몇 픽셀의 평균 (옆면이 테두리 재질을 따라가게)
+ */
+export function silhouetteBands(px: ArrayLike<number>, w: number, h: number, n: number = SIDE_BANDS): SilBand[] {
+  const out: SilBand[] = [];
+  const W = Math.max(1, Math.floor(w)), H = Math.max(1, Math.floor(h)), N = Math.max(1, Math.floor(n));
+  const edge = Math.max(1, Math.round(W * 0.02));
+  for (let b = 0; b < N; b++) {
+    const ya = Math.floor((b * H) / N), yb = Math.max(ya + 1, Math.floor(((b + 1) * H) / N));
+    let x0 = W, x1 = -1;
+    for (let y = ya; y < yb; y++) {
+      for (let x = 0; x < W; x++) if ((px[(y * W + x) * 4 + 3] ?? 0) >= 128) { if (x < x0) x0 = x; break; }
+      for (let x = W - 1; x >= 0; x--) if ((px[(y * W + x) * 4 + 3] ?? 0) >= 128) { if (x > x1) x1 = x; break; }
+    }
+    if (x1 < x0) continue;
+    let r = 0, g = 0, bl = 0, c = 0;
+    for (let y = ya; y < yb; y++) {
+      for (const xs of [x0, x1 - edge + 1]) {
+        for (let x = Math.max(0, xs); x < Math.min(W, xs + edge); x++) {
+          const i = (y * W + x) * 4;
+          if ((px[i + 3] ?? 0) < 128) continue;
+          r += px[i] ?? 0; g += px[i + 1] ?? 0; bl += px[i + 2] ?? 0; c++;
+        }
+      }
+    }
+    const k = c || 1;
+    out.push({ y0: r4(ya / H), y1: r4(yb / H), x0: r4(x0 / W), x1: r4((x1 + 1) / W), rgb: [Math.round(r / k), Math.round(g / k), Math.round(bl / k)] });
+  }
+  return out;
 }
 
 export interface Rect {
@@ -139,13 +180,15 @@ export function tamaLayout(w: number, h: number, art?: { box: Rect; ring: { x: n
   const cx = box.x + box.w / 2;
   const cy = box.y + box.h / 2;
   // 뒤집기 각도는 늘 넣는다 (0도라도): 줌아웃 상태끼리 변환 함수 목록이 같아야 rotateY 가 매끄럽게 이어진다
-  // 두꺼운 기기는 몸체 한가운데(앞면 뒤 두께/2)를 축으로 돌고(0도에서는 서로 상쇄), 옆으로 설수록 조금 줄여 화면 안에 둔다
+  // 두꺼운 기기는 몸체 한가운데(가로 = 몸체 가운데, 앞면 뒤 두께/2)를 축으로 돈다(0도에서는 서로 상쇄) — 180도에서 뒷면이 평소 뒷면 자리와 정확히 겹치게 (GDD 31장 1).
+  // 옆으로 설수록(|sin|) 조금 줄여 화면 안에 둔다 (0·180도에서는 그대로)
   const thick = edgeThickness(body);
-  const flip = ` perspective(${Math.round(Math.max(w, h) * 3)}px) translateZ(${r2(-thick / 2)}px) rotateY(${flipDeg}deg) translateZ(${r2(thick / 2)}px)`;
-  const shrink = 1 - B.flipShrink * Math.min(1, Math.abs(flipDeg) / 90);
+  const bcx = body.x + body.w / 2;
+  const flip = ` translate(${r2(bcx - cx)}px, 0px) perspective(${Math.round(Math.max(w, h) * 3)}px) translateZ(${r2(-thick / 2)}px) rotateY(${flipDeg}deg) translateZ(${r2(thick / 2)}px)`;
+  const shrink = 1 - B.flipShrink * Math.min(1, Math.abs(Math.sin((flipDeg * Math.PI) / 180)));
   // 사용자 확대(핀치·휠)는 같은 함수 목록 안에서 배율·이동만 바꾼다 (전환이 매끄럽게)
   const v = clampView(view, zoom, box, w, h);
-  const stage = `translate(${r2(w / 2 + v.px)}px, ${r2(h / 2 + v.py)}px) scale(${round4(zoom * v.uz * shrink)})${flip} translate(${r2(-cx)}px, ${r2(-cy)}px)`;
+  const stage = `translate(${r2(w / 2 + v.px)}px, ${r2(h / 2 + v.py)}px) scale(${round4(zoom * v.uz * shrink)})${flip} translate(${r2(-bcx)}px, ${r2(-cy)}px)`;
   return { body, ring, ringBack, ctrl, box, zoom, stage };
 }
 
@@ -168,6 +211,41 @@ export function deviceArtPlacement<B extends string>(
   const at = (r: Rect): Rect => ({ x: r2(x + W * (r.x / 100)), y: r2(y + Hh * (r.y / 100)), w: r2(W * (r.w / 100)), h: r2(Hh * (r.h / 100)) });
   const buttons = Object.fromEntries(Object.entries(spec.buttons).map(([b, r]) => [b, at(r as Rect)])) as Record<B, Rect>;
   return { box: { x: r2(x), y: r2(y), w: r2(W), h: r2(Hh) }, ring: { x: r2(x + W * (spec.ring.x / 100)), y: r2(y + Hh * (spec.ring.y / 100)) }, hole: at(spec.screen), buttons };
+}
+
+// ── 그림 기기를 입은 평소 화면 (GDD 31장 2·4, C.71) ──
+/**
+ * 그림 기기를 입으면 게임 화면(LCD)을 기준 크기 그대로(844×390) 그린다 (GDD 31장 2 정정 v5.48, 사용자 "게임 화면비를 왜바꿔. 그냥 다마고치 이미지 ui를 바꾸면 되잖아").
+ * 규칙(frame-v1 구멍 (663, 845) 1410×652)대로 그린 그림이면 구멍에 꽉 차고, 규칙과 다른 그림(옛 2:1)이면 LCD 를 구멍 가로에 맞추고 남는 위아래는 베젤 색. 기본형은 지금 그대로(맞춤이 정함)
+ */
+export const SKIN_LCD = { w: 844, h: 390 } as const;
+/** 평소 화면에서 구멍·버튼 둘레에 더 보여 줄 그림 여백 (그림 너비 대비) */
+export const SKIN_MARGIN = 0.012;
+
+/** 그림 기기 평소 화면 틀: LCD 크기와, 화면에 꼭 보여야 하는 영역(화면 구멍 + 버튼 4개 + 여백, LCD 왼쪽 위 기준 기기 안 px) */
+export interface DeviceSkin {
+  lcd: { w: number; h: number };
+  /** 그림의 화면 구멍 (LCD 왼쪽 위 기준). 규칙(frame-v1 844:390)대로면 LCD 와 같고, 옛 2:1 그림이면 위아래가 남아 베젤 색으로 채운다 */
+  hole: Rect;
+  crop: Rect;
+}
+
+/**
+ * 평소 화면 = 입은 기기를 화면 구멍 중심으로 확대한 모습 (GDD 31장 4): 구멍에 LCD(SKIN_LCD)를 맞춘 배율에서 구멍과 버튼 4개가 다 들어가는 상자.
+ * 기기 맞춤(viewport.computeFit)이 이 상자를 화면에 맞춰 줄인다.
+ */
+export function deviceSkin<B extends string>(natural: { w: number; h: number }, spec: { screen: Rect; ring: { x: number; y: number }; buttons: Record<B, Rect> }, lcd: { w: number; h: number } = SKIN_LCD): DeviceSkin {
+  const p = deviceArtPlacement({ x: 0, y: 0, w: lcd.w, h: lcd.h }, natural, spec);
+  const rs = [p.hole, ...Object.values<Rect>(p.buttons)];
+  const m = p.box.w * SKIN_MARGIN;
+  const x0 = Math.min(...rs.map((r) => r.x)) - m, y0 = Math.min(...rs.map((r) => r.y)) - m;
+  const x1 = Math.max(...rs.map((r) => r.x + r.w)) + m, y1 = Math.max(...rs.map((r) => r.y + r.h)) + m;
+  return { lcd: { w: lcd.w, h: lcd.h }, hole: p.hole, crop: { x: r2(x0), y: r2(y0), w: r2(x1 - x0), h: r2(y1 - y0) } };
+}
+
+/** 틀 상자를 기기 논리 크기(w×h) 가운데에 놓았을 때 LCD 왼쪽 위 (기기 안 px) */
+export function skinLcdAt(skin: DeviceSkin, w: number, h: number): { x: number; y: number } {
+  return { x: r2(w / 2 - (skin.crop.x + skin.crop.w / 2)), y: r2(h / 2 - (skin.crop.y + skin.crop.h / 2)) };
 }
 
 // ── 다마고치 모드 안 확대·축소 (핀치·휠·끌기, GDD 27장 v5.33) ──
@@ -320,9 +398,23 @@ export function toDeviceVec(v: { x: number; y: number }, rotated: boolean): { x:
   return rotated ? { x: v.y, y: -v.x || 0 } : { x: v.x, y: v.y };
 }
 
-/** 기울기를 안 쓸 때의 중력: 화면 아래 */
+/** 회전 출력 각도 (도, 시계 방향): 세로 폰에서 기기를 돌려 그렸으면 90 (viewport.ts fitTransform 과 같은 방향) */
+export const outputAngle = (rotated: boolean): number => (rotated ? 90 : 0);
+
+/** 방향 벡터를 시계 방향으로 deg 도 돌린다 (화면 좌표, 아래 +y) */
+export function rotateVec(v: { x: number; y: number }, deg: number): { x: number; y: number } {
+  const a = deg * DEG, c = Math.cos(a), s = Math.sin(a);
+  return { x: r4(v.x * c - v.y * s) || 0, y: r4(v.x * s + v.y * c) || 0 };
+}
+
+/**
+ * 기울기를 안 쓸 때의 중력 (GDD 31장 3, C.71): 언제나 "실제로 보고 있는 폰 화면의 아래".
+ * 회전 출력(세로 폰에 가로 기기를 90도 돌려 그림)은 폰을 옆으로 눕혀 기기를 똑바로 보라는 출력이라, 보는 사람의 아래 = 폰 세로 화면의 아래가 아니라
+ * 그 아래를 출력 각도만큼 돌린 쪽(세로 화면의 왼쪽)이다. 그것을 기기 안 좌표로 바꾸면 회전 여부와 관계없이 기기 아래(+y).
+ * (C.62~C.70 은 세로 화면 아래 = 기기 +x 로 두어 키링이 옆으로 떨어졌다)
+ */
 export function defaultGravity(rotated: boolean): { x: number; y: number } {
-  return toDeviceVec({ x: 0, y: 1 }, rotated);
+  return toDeviceVec(rotateVec({ x: 0, y: 1 }, outputAngle(rotated)), rotated);
 }
 
 /** 센서 값 흔들림을 누그러뜨린다 (지수 평균) */

@@ -47,16 +47,25 @@ export function pickViewport(probe: { width: number; height: number } | null, wi
 
 export const IDENTITY_FIT: Fit = { rotated: false, scale: 1, w: 0, h: 0, vw: 0, vh: 0 };
 
-export function computeFit(vw: number, vh: number): Fit {
+/**
+ * frame = 그림 기기를 입었을 때 화면에 꼭 들어와야 하는 상자(논리 px, GDD 31장 4 — 화면 구멍 + 버튼 4개). 있으면 그 상자가 가로·세로 모두 들어가게 줄이고
+ * 논리 크기는 뷰포트 비율 그대로 늘린다(남는 곳은 기기 그림이 채운다). 없으면(기본형) 지금처럼 MIN_LOGICAL_W 기준
+ */
+export function computeFit(vw: number, vh: number, frame?: { w: number; h: number } | null): Fit {
   const rotated = vh > vw;
   const long = rotated ? vh : vw;
   const short = rotated ? vw : vh;
-  const scale = long < MIN_LOGICAL_W ? long / MIN_LOGICAL_W : 1;
+  const scale = frame ? Math.min(long / frame.w, short / frame.h) : long < MIN_LOGICAL_W ? long / MIN_LOGICAL_W : 1;
   return { rotated, scale, w: long / scale, h: short / scale, vw, vh };
 }
 
 /** PC 고정 모드: 기준 크기 w×h 를 scale 배로 키워 뷰포트 가운데에 둔다 (회전 없음) */
-export function computePcFit(vw: number, vh: number, scale: number, w: number, h: number): Fit {
+export function computePcFit(vw: number, vh: number, scale: number, w: number, h: number, frame?: { w: number; h: number } | null): Fit {
+  // 그림 기기(GDD 31장 4): 기준 크기 안에 틀 상자가 들어가게 논리 크기를 늘리고 그만큼 배율을 줄인다 (화면에 차지하는 크기는 같다)
+  if (frame) {
+    const k = Math.min(w / frame.w, h / frame.h);
+    return { rotated: false, scale: scale * k, w: w / k, h: h / k, vw, vh, ox: (vw - w * scale) / 2, oy: (vh - h * scale) / 2 };
+  }
   return { rotated: false, scale, w, h, vw, vh, ox: (vw - w * scale) / 2, oy: (vh - h * scale) / 2 };
 }
 

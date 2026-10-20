@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE_VERSION } from '../src/config/balance';
 import { SAVE_FORMAT_VERSION } from '../src/game';
-import { BODY, STACK_LAYERS, edgeThickness, stackDepths, tamaLayout } from '../src/ui/bha/tamagoLogic';
+import { BODY, edgeThickness, tamaLayout } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -30,13 +30,6 @@ describe('두께 = 가로의 25% (30장 6)', () => {
     expect(L.body.w).toBe(896);
     expect(edgeThickness(L.body)).toBe(224);
   });
-  it('겹은 20~48겹이고 앞면 뒤 1px 에서 두께까지 고르게 늘어난다', () => {
-    expect(STACK_LAYERS).toBeGreaterThanOrEqual(20);
-    expect(STACK_LAYERS).toBeLessThanOrEqual(48);
-    const d = stackDepths(STACK_LAYERS, 250);
-    expect(d[d.length - 1]).toBeCloseTo(251, 1);
-    expect(d[1]! - d[0]!).toBeCloseTo(250 / STACK_LAYERS, 1);
-  });
 });
 
 describe('뒤집는 동안 화면 안 (30장 6)', () => {
@@ -53,11 +46,12 @@ describe('뒤집는 동안 화면 안 (30장 6)', () => {
     const t = edgeThickness(L.body) / 2;
     expect(L.stage).toContain(`translateZ(${-t}px) rotateY(60deg) translateZ(${t}px)`);
   });
-  it('겹 그림은 작은 어두운 그림 한 장을 같이 쓴다 (큰 그림 여러 장 금지)', () => {
+  it('큰 그림 여러 장을 쌓지 않는다 (C.71: 36겹 삭제, 실루엣 띠 + 작은 사본)', () => {
     const t = src('src/ui/bha/tamago.ts');
-    expect(t).toContain('stackShade(bodyArt, stackAlpha(i, layers.length))');
-    expect(t).not.toMatch(/l\.src = bodyArt\.src/);
+    expect(t).not.toMatch(/stackShade|STACK_LAYERS|bha-tama__layer/);
+    expect(t).toContain('bakeSilhouette(bodyArt)');
   });
+
 });
 
 describe('뒷면 기록 판 삭제 (30장 7)', () => {

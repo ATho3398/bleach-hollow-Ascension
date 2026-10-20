@@ -144,13 +144,13 @@ describe('키링 진자 (감쇠 2마디, DOM 없음)', () => {
     }
     expect(signs.size).toBe(2);
   });
-  it('세로 회전 출력(16-6): 화면 아래 중력 = 기기 +x → 쉬는 각도 −90도', () => {
+  it('세로 회전 출력(16-6): 중력 = 보는 사람의 아래 = 기기 아래(+y) → 쉬는 각도 0도 (C.71, GDD 31장 3 — C.62 의 기기 +x 대체)', () => {
     expect(defaultGravity(false)).toEqual({ x: 0, y: 1 });
-    expect(defaultGravity(true)).toEqual({ x: 1, y: 0 });
-    expect(deg(restAngle(defaultGravity(true)))).toBeCloseTo(-90);
-    const p = run(restingAt(0), defaultGravity(true), 10);
-    expect(deg(p.a1)).toBeCloseTo(-90, 0);
-    expect(deg(p.a2)).toBeCloseTo(-90, 0);
+    expect(defaultGravity(true)).toEqual({ x: 0, y: 1 });
+    expect(deg(restAngle(defaultGravity(true)))).toBeCloseTo(0);
+    const p = run(restingAt(0.5), defaultGravity(true), 10);
+    expect(deg(p.a1)).toBeCloseTo(0, 0);
+    expect(deg(p.a2)).toBeCloseTo(0, 0);
   });
   it('모션 줄이기: 같은 충격에도 흔들림이 작다(최대 각 제한)', () => {
     let full = kick(restingAt(0), PHYS.tap * 2);

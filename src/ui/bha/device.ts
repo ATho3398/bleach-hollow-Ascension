@@ -11,6 +11,7 @@ import { actionFor, isNavAction } from '../shortcutMap';
 import { KEY_HINTS_EVENT, loadKeyHints } from '../keyHints';
 import { badgePlan, detectCtx, isTypingTarget, runAction, runCancelHooks, syncBadges } from './shortcuts';
 import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, setFit, type Fit } from './viewport';
+import { skinLcdAt, type DeviceSkin } from './tamagoLogic';
 
 export interface SelectItem {
   el: HTMLElement;
@@ -45,7 +46,13 @@ export interface Device {
    * 바꾼 뒤 restage() 로 바로 반영한다
    */
   setStage(fn: ((f: Fit) => string) | null): void;
-  restage(): void;
+  /** light = 크기·맞춤은 그대로 두고 무대 변환만 다시 붙인다 (뒤집기 도중: 배치·측정 없이 transform 하나만 바뀌게, GDD 31장 1) */
+  restage(light?: boolean): void;
+  /**
+   * 그림 기기 틀 (GDD 31장 2·4): 입으면 LCD 를 skin.lcd 크기(게임 기준 844×390)로 고정하고, 화면 구멍 + 버튼 4개 상자(skin.crop)가 화면에 들어가게 맞춘다.
+   * CSS 버튼·테는 숨고 그림 위 누름 영역이 버튼이 된다(tamago.ts). null = 기본형(지금 평소 화면 그대로)
+   */
+  setSkin(skin: DeviceSkin | null): void;
   destroy(): void;
 }
 
@@ -123,6 +130,16 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   probe.setAttribute('aria-hidden', 'true');
   let lastRotated: boolean | null = null;
   let stageFn: ((f: Fit) => string) | null = null;
+  let skin: DeviceSkin | null = null;
+  let lastFit: { f: Fit; pc: boolean } | null = null;
+  /** 다마고치 모드(GDD 27장): 맞춤 변환 뒤에 줌아웃·뒤집기를 붙인다 (기기 안 좌표 기준이라 세로 회전·PC 배율에서도 같다) */
+  const applyStage = () => {
+    if (!lastFit) return;
+    const { f, pc } = lastFit;
+    const stage = stageFn ? stageFn(f) : '';
+    if (pc) dev.style.transform = stage ? `translateZ(0) ${stage}` : 'translateZ(0)';
+    else dev.style.transform = stage ? `${fitTransform(f)} ${stage}` : fitTransform(f);
+  };
   const fitDevice = () => {
     const r = probe.getBoundingClientRect();
     const vp = pickViewport(r, window);
@@ -131,29 +148,40 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     const pref = loadViewScale(safeStorage());
     const view = resolveViewScale(pref, vp.w, vp.h);
     setViewState({ pc, pref, view });
-    const f = pc ? computePcFit(vp.w, vp.h, view.scale, BASE_W, BASE_H) : computeFit(vp.w, vp.h);
+    const crop = skin?.crop ?? null;
+    const f = pc ? computePcFit(vp.w, vp.h, view.scale, BASE_W, BASE_H, crop) : computeFit(vp.w, vp.h, crop);
     setFit(f);
     document.documentElement.classList.toggle('bha-pc', pc);
     dev.classList.toggle('is-pc', pc);
-    dev.style.setProperty('--bha-scale', pc ? String(view.scale) : '1');
+    dev.style.setProperty('--bha-scale', pc ? String(f.scale) : '1');
     dev.classList.toggle('is-rotated', f.rotated);
     if (f.rotated !== lastRotated) {
       const first = lastRotated === null; // 시작할 때의 방향은 "전환"이 아니다
       lastRotated = f.rotated;
       if (!first) opts.onRotate?.(f.rotated);
     }
-    dev.classList.toggle('is-narrow', f.scale < 1); // 긴 쪽이 740px 미만인 좁은 폰: 블록 바를 아래 전폭으로 (lcd.css)
+    dev.classList.toggle('is-narrow', !skin && f.scale < 1); // 긴 쪽이 740px 미만인 좁은 폰: 블록 바를 아래 전폭으로 (lcd.css). 그림 기기 LCD 는 늘 844 폭
     dev.style.width = `${f.w}px`;
     dev.style.height = `${f.h}px`;
-    // 다마고치 모드(GDD 27장): 맞춤 변환 뒤에 줌아웃·뒤집기를 붙인다 (기기 안 좌표 기준이라 세로 회전·PC 배율에서도 같다)
-    const stage = stageFn ? stageFn(f) : '';
+    // 그림 기기: LCD 를 틀 상자 가운데 자리(구멍)에 고정 크기로
+    dev.classList.toggle('is-skin', !!skin);
+    if (skin) {
+      // 테(베젤) = 그림의 화면 구멍 자리, LCD 는 그 가운데 고정 크기 (구멍이 더 크면 남는 띠는 베젤 색)
+      const at = skinLcdAt(skin, f.w, f.h);
+      dev.style.setProperty('--skin-x', `${at.x + skin.hole.x}px`);
+      dev.style.setProperty('--skin-y', `${at.y + skin.hole.y}px`);
+      dev.style.setProperty('--skin-w', `${skin.hole.w}px`);
+      dev.style.setProperty('--skin-h', `${skin.hole.h}px`);
+      dev.style.setProperty('--skin-lcd-w', `${skin.lcd.w}px`);
+      dev.style.setProperty('--skin-lcd-h', `${skin.lcd.h}px`);
+    }
+    lastFit = { f, pc };
+    applyStage();
     if (pc) {
       // zoom 은 레이아웃 크기를 실제로 키운다(글자·터치 영역 포함). left/top 도 zoom 단위라 배율로 나눠 넣는다
-      dev.style.transform = stage ? `translateZ(0) ${stage}` : 'translateZ(0)';
       dev.style.left = `${(f.ox ?? 0) / f.scale}px`;
       dev.style.top = `${(f.oy ?? 0) / f.scale}px`;
     } else {
-      dev.style.transform = stage ? `${fitTransform(f)} ${stage}` : fitTransform(f);
       dev.style.left = '';
       dev.style.top = '';
     }
@@ -423,7 +451,16 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     setStage(fn) {
       stageFn = fn;
     },
-    restage: fitDevice,
+    restage(light = false) {
+      if (light && lastFit) applyStage();
+      else fitDevice();
+    },
+    setSkin(next) {
+      if (JSON.stringify(next) === JSON.stringify(skin)) return;
+      skin = next;
+      fitDevice();
+      schedule();
+    },
     destroy() {
       mo.disconnect();
       window.removeEventListener('keydown', onKey);

@@ -1,6 +1,7 @@
 // 다마고치 모드 (GDD 27장, S-17 C.62): 지금 화면 = 기기의 화면·버튼을 확대해 본 상태, 다마고치 모드 = 카메라가 물러나 기기 전체(몸체·고리·키링)가 보이는 상태.
 // 기기 틀(.bha-dev) 둘레에 몸체를 붙이고, 기기 transform 뒤에 줌아웃(+ 뒤집기)을 붙인다(device.setStage) — 기기 안 좌표라 세로 회전 출력(16-6)·PC 배율에서도 같다.
 // 줌아웃 중에도 화면은 살아 움직이고 기기 버튼은 눌린다. 화면(LCD)을 탭하면 다시 줌인. [뒤집기] = 뒷면(디자인만, 글자 없음 — GDD 30장 7).
+// 그림 기기를 입으면 평소 화면도 그 기기를 화면 구멍 중심으로 확대한 모습(GDD 31장 4, C.71): 그림 + 그림 위 버튼 4개는 다마고치 모드가 아니어도 보이고, LCD 는 게임 기준 844×390 그대로 구멍에(device.setSkin).
 // 키링 = 고리에 매단 감쇠 진자 2마디(tamagoLogic.ts), 탭·끌기 = 충격, 설정 [기울기로 흔들기]를 켜면 기울기를 중력 방향으로. 다마고치 모드일 때만 돌고 멈추면 쉰다.
 // 켜 둔 상태·기울기 설정은 이 브라우저에만(세이브 아님). 색은 꾸밈 토큰(--cos-shell-*, --bha-cos-keyring-*)만. 종족 분기 없음 — 이름·모양은 종족 설정.
 import { cosmeticName, deviceArt, sourceNote, deviceSideArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
@@ -17,8 +18,8 @@ import { showToast } from './nest';
 import { isTypingTarget } from './shortcuts';
 import { toLocal, type Fit } from './viewport';
 import {
-  BODY, STACK_LAYERS, stackDepths, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
-  TAMAGO_EVENT, toDeviceVec, clampView, zoomAt, wheelFactor, VIEW_HOME, type Pendulum, type Rect, type TamagoPrefs, type TamaLayout, type TamaView,
+  BODY, SIDE_BANDS, silhouetteBands, deviceSkin, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
+  TAMAGO_EVENT, toDeviceVec, clampView, zoomAt, wheelFactor, VIEW_HOME, type Pendulum, type Rect, type TamagoPrefs, type TamaLayout, type TamaView, type SilBand,
 } from './tamagoLogic';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -92,34 +93,57 @@ function charmSvg(shape: KeyringShape): SVGSVGElement {
   return svg;
 }
 
-/** 겹 두께용 어두운 그림: 앞면을 작게(가로 STACK_TEX px) 줄여 어둡게 칠한 사본. 어둡기는 겹마다 CSS filter 가 아니라 그림에 미리 구워(겹마다 필터 면이 생기면 3D 장면이 매우 느리다) 몇 단계만 만들고 캐시한다 */
-const STACK_TEX = 600;
-const shadeCache = new Map<string, string>();
-/** i번째 겹(0 = 앞면 바로 뒤, 끝 = 가장 바깥)의 검정 덮개 농도: 바깥 두 겹은 밝게(윤곽), 사이는 뒤로 갈수록 어둡게. 0.05 단위 */
-export function stackAlpha(i: number, n: number): number {
-  if (i === 0 || i === n - 1) return 0.1;
-  return Math.round((0.35 + (0.4 * i) / Math.max(1, n - 1)) * 20) / 20;
-}
-function stackShade(img: HTMLImageElement, alpha: number): string {
-  const key = `${img.src}|${alpha}`;
-  const hit = shadeCache.get(key);
+/**
+ * 옆면 두께 재료 (GDD 31장 1, C.71): 앞면 그림을 작게(가로 SIL_TEX px) 한 번 그려 실루엣 가로 띠(silhouetteBands)와, 뒤쪽 끝에 놓을 어둡게 구운 작은 실루엣 한 장을 만든다.
+ * 그림마다 한 번만 만들고 캐시한다 (CSS filter·겹마다 큰 그림 없음 — C.66 의 36겹이 실기기에서 끊긴 원인)
+ */
+const SIL_TEX = 256;
+const silCache = new Map<string, { bands: SilBand[]; cap: string }>();
+function bakeSilhouette(img: HTMLImageElement): { bands: SilBand[]; cap: string } {
+  const hit = silCache.get(img.src);
   if (hit) return hit;
+  let out: { bands: SilBand[]; cap: string } = { bands: [], cap: img.src };
   try {
     const cv = document.createElement('canvas');
-    cv.width = STACK_TEX;
-    cv.height = Math.max(1, Math.round((STACK_TEX * img.naturalHeight) / img.naturalWidth));
-    const g = cv.getContext('2d');
-    if (!g) return img.src;
-    g.drawImage(img, 0, 0, cv.width, cv.height);
-    g.globalCompositeOperation = 'source-atop';
-    g.fillStyle = `rgb(0 0 0 / ${alpha})`;
-    g.fillRect(0, 0, cv.width, cv.height);
-    const url = cv.toDataURL('image/png');
-    shadeCache.set(key, url);
-    return url;
+    cv.width = SIL_TEX;
+    cv.height = Math.max(1, Math.round((SIL_TEX * img.naturalHeight) / Math.max(1, img.naturalWidth)));
+    const g = cv.getContext('2d', { willReadFrequently: true });
+    if (g) {
+      g.drawImage(img, 0, 0, cv.width, cv.height);
+      const bands = silhouetteBands(g.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, SIDE_BANDS);
+      g.globalCompositeOperation = 'source-atop';
+      g.fillStyle = 'rgb(0 0 0 / 0.6)';
+      g.fillRect(0, 0, cv.width, cv.height);
+      out = { bands, cap: cv.toDataURL('image/png') };
+    }
   } catch {
-    return img.src;
+    /* 그림을 못 읽으면 띠 없이 앞면만 */
   }
+  silCache.set(img.src, out);
+  return out;
+}
+
+/** 뒤집는 동안 쓸 작은 사본 (가로 LITE_TEX px): 원본(가로 2744)을 3D 로 돌리면 GPU 가 큰 그림을 매 프레임 다시 그려 느리다. 줌아웃 크기에서는 차이가 안 보인다 */
+const LITE_TEX = 1024;
+const liteCache = new Map<string, string>();
+function bakeLite(img: HTMLImageElement): string {
+  const hit = liteCache.get(img.src);
+  if (hit) return hit;
+  let url = img.src;
+  try {
+    const cv = document.createElement('canvas');
+    cv.width = Math.min(LITE_TEX, img.naturalWidth || LITE_TEX);
+    cv.height = Math.max(1, Math.round((cv.width * img.naturalHeight) / Math.max(1, img.naturalWidth)));
+    const g = cv.getContext('2d');
+    if (g) {
+      g.drawImage(img, 0, 0, cv.width, cv.height);
+      url = cv.toDataURL('image/png');
+    }
+  } catch {
+    /* 못 줄이면 원본 */
+  }
+  liteCache.set(img.src, url);
+  return url;
 }
 
 export interface TamagoHooks {
@@ -155,14 +179,16 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   bodyArt.alt = '';
   bodyArt.hidden = true;
   const ring = el('div', 'bha-tama__ring');
-  // 겹 두께 (GDD 30장): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 뒤로 쌓아 실루엣을 따라가는 두께를 만든다 (뒤집는 동안만 보임)
-  const layers = Array.from({ length: STACK_LAYERS }, (_, i) => {
-    const im = el('img', 'bha-tama__layer') as HTMLImageElement;
-    im.alt = '';
-    im.hidden = true;
-    im.dataset.layer = String(i);
-    return im;
+  // 옆면 두께 (GDD 31장 1): 옆면 그림이 없는 그림 기기는 실루엣 가로 띠마다 왼쪽·오른쪽 끝에 세운 작은 단색 면 + 뒤쪽 끝에 어두운 작은 실루엣 한 장 (뒤집는 동안만 보임)
+  const cap = el('img', 'bha-tama__cap') as HTMLImageElement;
+  cap.alt = '';
+  cap.hidden = true;
+  const bands = Array.from({ length: SIDE_BANDS * 2 }, (_, i) => {
+    const b = el('i', `bha-tama__band bha-tama__band--${i % 2 ? 'r' : 'l'}`);
+    b.hidden = true;
+    return b;
   });
+  let sil: SilBand[] = [];
   // 옆면 두께 띠 (C.63·C.64, GDD 28장 2번·29장): 뒤집는 동안만 3D 로 세워 종이처럼 안 보이게. 옆면 그림이 있으면 그 그림, 없으면 몸체 색 CSS 띠
   const edgeL = el('div', 'bha-tama__edge bha-tama__edge--l');
   const edgeR = el('div', 'bha-tama__edge bha-tama__edge--r');
@@ -170,8 +196,13 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   const backArt = el('img', 'bha-tama__art') as HTMLImageElement;
   backArt.alt = '';
   backArt.hidden = true;
+  // 뒤집는 동안만 보이는 작은 사본 (앞면·뒷면, GDD 31장 1)
+  const frontLite = el('img', 'bha-tama__lite') as HTMLImageElement;
+  const backLite = el('img', 'bha-tama__lite') as HTMLImageElement;
+  frontLite.alt = backLite.alt = '';
+  frontLite.hidden = backLite.hidden = true;
   const grille = el('div', 'bha-tama__grille');
-  backFace.append(backArt, grille);
+  backFace.append(backArt, backLite, grille);
   backFace.hidden = true;
   const key = el('div', 'bha-key');
   const seg1 = el('div', 'bha-key__seg1');
@@ -205,7 +236,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     };
     hits.set(b, hb);
   }
-  root.append(...layers, edgeL, edgeR, body, bodyArt, ring, backFace, key, ctrl, ...hits.values());
+  root.append(cap, ...bands, edgeL, edgeR, body, bodyArt, frontLite, ring, backFace, key, ctrl, ...hits.values());
   frame.append(root);
   // 화면(LCD) 탭 = 줌인. 줌아웃 중에만 LCD 를 덮는다 (화면은 그 밑에서 그대로 움직인다)
   const shield = el('button', 'bha-tama__shield');
@@ -263,18 +294,40 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     for (const e of [edgeL, edgeR]) e.style.removeProperty('--side-art');
     bodyArt.hidden = true;
     backArt.hidden = true;
-    for (const l of layers) l.hidden = true;
-    if (!c || !art) return relayout();
+    frontLite.hidden = backLite.hidden = true;
+    cap.hidden = true;
+    sil = [];
+    dev.setSkin(null);
+    if (!c || !art) {
+      syncRoot();
+      return relayout();
+    }
     bodyArt.src = `${BASE}${art.front}`;
     if (art.back) backArt.src = `${BASE}${art.back}`;
     const place = () => {
       if (!bodyArt.naturalWidth || artId !== c.id) return;
       artNat = { w: bodyArt.naturalWidth, h: bodyArt.naturalHeight };
-      layers.forEach((l, i) => (l.src = stackShade(bodyArt, stackAlpha(i, layers.length))));
+      const baked = bakeSilhouette(bodyArt);
+      sil = baked.bands;
+      cap.src = baked.cap;
       frame.classList.add('has-tama-art');
       bodyArt.hidden = false;
       backArt.hidden = !art.back;
-      for (const l of layers) l.hidden = false;
+      cap.hidden = !!art.back; // 뒷면 그림이 없을 때만 어두운 실루엣이 뒤 판
+      frontLite.src = bakeLite(bodyArt);
+      frontLite.hidden = false;
+      if (art.back) {
+        const lb = () => {
+          if (artId !== c.id || !backArt.naturalWidth) return;
+          backLite.src = bakeLite(backArt);
+          backLite.hidden = false;
+        };
+        if (backArt.complete) lb();
+        else backArt.onload = lb;
+      }
+      // 평소 화면도 이 기기 틀 (GDD 31장 2·4): LCD 844×390 이 구멍에 꽉, 구멍 + 버튼이 화면에 들어가게
+      dev.setSkin(deviceSkin(artNat, c.device!));
+      syncRoot();
       relayout();
     };
     bodyArt.onload = place;
@@ -305,6 +358,11 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     return { x, y, w: l.offsetWidth, h: l.offsetHeight };
   };
 
+  /** 몸체 층(.bha-tama): 다마고치 모드이거나 그림 기기를 입었으면 보인다 (평소 화면에서는 CSS 가 그림·버튼만 남김) */
+  function syncRoot(): void {
+    root.hidden = !(on || frame.classList.contains('has-tama-art'));
+  }
+
   // ── 배치 ──
   const box = (e: HTMLElement, r: Rect) => {
     e.style.left = `${r.x}px`;
@@ -326,20 +384,30 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     box(body, layout.body);
     box(backFace, layout.body);
     const thick = edgeThickness(layout.body);
+    frame.style.setProperty('--tama-thick', `${thick}px`);
     box(edgeL, { x: layout.body.x, y: layout.body.y, w: thick, h: layout.body.h });
     box(edgeR, { x: layout.body.x + layout.body.w - thick, y: layout.body.y, w: thick, h: layout.body.h });
     if (artBox) {
-      // 겹 두께: 옆면 그림이 없을 때만 (있으면 CSS 가 숨김). 겹마다 뒤로 조금씩
-      const depth = stackDepths(layers.length, edgeThickness(layout.body));
-      layers.forEach((l, i) => {
-        box(l, artBox!.box);
-        l.style.setProperty('--layer-z', `${-depth[i]!}px`);
+      // 옆면 두께: 옆면 그림이 없을 때만 (있으면 CSS 가 숨김). 뒤집기는 늘 앞면 기준 3D 라 실루엣을 그대로 둔다
+      const A = artBox.box;
+      box(cap, A);
+      bands.forEach((b, i) => {
+        const band = sil[i >> 1];
+        b.hidden = !band;
+        if (!band) return;
+        const right = i % 2 === 1;
+        const x = right ? band.x1 : band.x0;
+        // 세운 면: 오른쪽 띠는 실루엣 오른쪽 끝에서 왼쪽으로 두께만큼(오른쪽 끝을 축으로 −90도), 왼쪽 띠는 그 반대
+        box(b, { x: right ? A.x + A.w * x - thick : A.x + A.w * x, y: A.y + A.h * band.y0, w: thick, h: Math.max(1, A.h * (band.y1 - band.y0) + 0.5) });
+        b.style.setProperty('--band-rgb', band.rgb.join(' '));
       });
       box(bodyArt, artBox.box);
+      box(frontLite, artBox.box);
       box(backArt, { x: 0, y: 0, w: artBox.box.w, h: artBox.box.h });
+      box(backLite, { x: 0, y: 0, w: artBox.box.w, h: artBox.box.h });
     }
     for (const [b, hb] of hits) {
-      hb.hidden = !artBox || !on || back;
+      hb.hidden = !artBox || back; // 그림 기기는 평소 화면에서도 그림 위 버튼으로 조작 (GDD 31장 4)
       if (artBox) box(hb, artBox.buttons[b]);
     }
     box(ctrl, layout.ctrl);
@@ -591,8 +659,8 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       shield.hidden = true;
       animate(zoomMs(), () => {
         if (on) return;
-        root.hidden = true;
         frame.classList.remove('is-tama');
+        syncRoot();
       });
       dev.restage();
     }
@@ -611,7 +679,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     layer.setAttribute('aria-modal', 'true');
     layer.setAttribute('aria-label', '기기 디자인');
     const modal = el('div', 'bha-modal');
-    modal.append(el('h2', 'bha-modal__title', '기기 디자인'), el('p', 'bha-modal__body', '다마고치 모드에서 보이는 기기 모양. 고르면 바로 바뀐다.'));
+    modal.append(el('h2', 'bha-modal__title', '기기 디자인'), el('p', 'bha-modal__body', '평소 화면의 틀과 다마고치 모드에서 보이는 기기 모양. 고르면 바로 바뀐다.'));
     const list = el('div', 'bha-designs__list');
     const rows = () => {
       list.replaceChildren();
@@ -656,25 +724,8 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     shield.hidden = true; // 화면 덮개가 목록 탭을 가리지 않게
   }
 
-  // 느린 기기 대비 (30장 6): 뒤집기 첫 프레임들의 평균이 LITE_MS 를 넘으면 겹을 반으로 줄여(홀수 겹 숨김, 간격 두 배) 이후 뒤집기에 적용한다. 한 번 줄이면 이번 실행 동안 유지
-  const LITE_MS = 45;
-  let liteChecked = false;
-  function watchFlipSpeed(): void {
-    if (liteChecked || !frame.classList.contains('has-tama-art') || frame.classList.contains('has-side-art')) return;
-    const dts: number[] = [];
-    let prev = performance.now();
-    const step = (t: number) => {
-      dts.push(t - prev);
-      prev = t;
-      if (dts.length < 5 && flipping) return void requestAnimationFrame(step);
-      liteChecked = true;
-      const avg = dts.slice(1).reduce((a, b) => a + b, 0) / Math.max(1, dts.length - 1);
-      if (avg > LITE_MS) frame.classList.add('is-tama-lite');
-      frame.dataset.tamaFlipMs = avg.toFixed(1);
-    };
-    requestAnimationFrame(step);
-  }
-
+  // 뒤집기 (GDD 31장 1, C.71): 한 번에 3D 로 바꿔 0 → 90 → 180도(뒷면에서는 −180 → −90 → 0)를 변환 값만 바꿔 돈다. 도는 동안 DOM·배치는 바꾸지 않는다
+  // (C.66 은 90도에서 앞뒷면을 바꾸며 다시 배치해 큰 끊김이 났다). 뒷면 판은 두께 뒤쪽 끝에 뒤를 보고 서 있어 180도에서 평소 뒷면 자리와 똑같이 겹친다 → 끝에서 납작한 뒷면으로 바꿔도 보이는 것은 같다
   let flipping = false;
   function flip(): void {
     if (!on || flipping) return;
@@ -683,26 +734,33 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       return setFaces();
     }
     flipping = true;
-    frame.classList.add('is-tama-flipping');
-    watchFlipSpeed();
+    const toBack = !back;
     const half = 260;
-    flipDeg = 90;
-    animate(half, () => {
-      back = !back;
-      setFaces();
-      flipDeg = -90;
-      dev.restage();
-      void frame.offsetWidth; // 옆으로 선 상태를 확정한 뒤 반대쪽에서 돌아온다
-      flipDeg = 0;
-      requestAnimationFrame(() => {
+    if (!toBack) {
+      // 뒷면을 보던 중: 같은 모습의 −180도 3D 상태에서 시작
+      back = false;
+      frame.classList.remove('is-tama-back');
+      flipDeg = -180;
+    }
+    frame.classList.add('is-tama-flipping'); // 뒤집는 동안 LCD 는 정지 화면(움직임 멈춤, CSS)
+    backFace.hidden = false;
+    relayout();
+    void frame.offsetWidth; // 3D 시작 상태를 확정한 뒤 돈다
+    requestAnimationFrame(() => {
+      flipDeg = toBack ? 90 : -90;
+      animate(half, () => {
+        flipDeg = toBack ? 180 : 0;
         animate(half, () => {
           flipping = false;
           frame.classList.remove('is-tama-flipping');
+          back = toBack;
+          flipDeg = 0;
+          setFaces();
         });
-        dev.restage();
-      });
-    }, 'linear'); // 앞 절반은 고르게 돌아 옆으로 선다
-    dev.restage();
+        dev.restage(true);
+      }, 'linear'); // 앞 절반은 고르게 돌아 옆으로 선다
+      dev.restage(true);
+    });
   }
 
   // PC 단축키 (18-5 "어디서나"): B = 다마고치 모드 켬/끔

@@ -5,7 +5,7 @@ import { BALANCE_VERSION } from '../src/config/balance';
 import { COSMETIC_ITEMS, DEVICE_BUTTONS, FREE_COSMETICS, deviceArt, deviceSideArt, getCosmetic, shopVisible, sourceNote } from '../src/data/shop';
 import { loadSave, migrateSave, newSaveData, newSharedState, newTrack, SAVE_FORMAT_VERSION, switchTrack, writeSave, checkTrackOpen } from '../src/game';
 import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../src/shop';
-import { STACK_LAYERS, deviceArtPlacement, stackDepths } from '../src/ui/bha/tamagoLogic';
+import { SIDE_BANDS, deviceArtPlacement } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -40,7 +40,7 @@ describe('사신대행증 데이터 (30장 1번)', () => {
     const near = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThan(2.5);
     const d = c.device!;
     const sc = px(d.screen);
-    [sc.x, sc.y, sc.w, sc.h].forEach((v, i) => near(v, [663, 818, 1410, 705][i]!));
+    [sc.x, sc.y, sc.w, sc.h].forEach((v, i) => near(v, [663, 818, 1410, 705][i]!)); // 그림의 실제 구멍 (새 규칙 v5.48 과 다름 — c71 테스트)
     const want: Record<string, [number, number, number]> = { up: [428, 1048, 208], down: [428, 1292, 208], ok: [2280, 1042, 268], back: [2280, 1298, 172] };
     for (const b of DEVICE_BUTTONS) {
       const r = px(d.buttons[b]);
@@ -165,20 +165,14 @@ describe('[디자인] 목록 (30장 3번)', () => {
   });
 });
 
-describe('겹 두께 (30장 4번)', () => {
-  it('겹 수 (C.66 에서 두께가 커져 20~30겹)', () => {
-    expect(STACK_LAYERS).toBeGreaterThanOrEqual(10);
+describe('옆면 두께 (30장 4번 → C.71 31장 1: 겹 대신 실루엣 띠)', () => {
+  it('띠 수는 12~48 (작은 단색 면, 큰 그림 겹 없음)', () => {
+    expect(SIDE_BANDS).toBeGreaterThanOrEqual(12);
+    expect(SIDE_BANDS).toBeLessThanOrEqual(48);
   });
-  it('겹은 앞면 바로 뒤에서 두께까지 고르게 뒤로 늘어난다', () => {
-    const d = stackDepths(STACK_LAYERS, 60);
-    expect(d.length).toBe(STACK_LAYERS);
-    expect(d[0]).toBeGreaterThan(1);
-    expect(d[d.length - 1]).toBeCloseTo(61, 1);
-    for (let i = 1; i < d.length; i++) expect(d[i]!).toBeGreaterThan(d[i - 1]!);
-  });
-  it('옆면 그림이 있으면 겹은 숨고, 모양 없는 CSS 기기 띠는 그림 기기에서 숨는다 (CSS 검사)', () => {
+  it('옆면 그림이 있으면 띠는 숨고, 모양 없는 CSS 기기 띠는 그림 기기에서 숨는다 (CSS 검사)', () => {
     const css = src('src/ui/bha/tamago.css');
-    expect(css).toContain('.bha-dev.has-side-art .bha-tama__layer { display: none; }');
+    expect(css).toContain('.bha-dev.has-side-art .bha-tama__cap, .bha-dev.has-side-art .bha-tama__band { display: none; }');
     expect(css).toContain('.bha-dev.has-tama-art:not(.has-side-art) .bha-tama__edge { display: none; }');
   });
   it('기본형 CSS 기기는 지금 방식 유지: CSS 띠 코드가 남아 있다', () => {
