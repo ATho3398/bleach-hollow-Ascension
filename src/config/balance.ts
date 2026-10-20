@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 41;
+export const BALANCE_VERSION = 42;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -129,8 +129,9 @@ export const BALANCE = {
       gaugeMax: 100,
       /** 지속(초)과 그동안 전 능력치 배율 (체력은 최대 체력이 같이 오르고 끝나면 원래 최대 체력까지로). C.54 봇 조정 2회: 기획 ×1.3 → ×1.5.
        *  C.69(B-1): 해방 없는 승률이 84.6% → 68.2% 로 내려와(치명타·적 변화) 해방 효과가 +21.5%p(목표 +10~15%p) → ×1.4 +18.9 → ×1.3 +15.6 → 블록 2.5배 +15.4(효과 없어 3 유지). 조정 3회, ×1.3 채택(목표 +0.6%p 초과, 가드 +5~25 안) */
+      /*  C.76(GDD 32-3): 사냥터 강도가 ×1 로 일원화돼 5단계 몸 ★5 강적 승률이 해방 없이 92% 라 +10%p 를 올릴 자리가 없다 → 측정 기준을 "권장 ★ · 연속 5(적 +25%)" 로 바꾸고(해방이 필요한 싸움) ×1.3 +7.6 → ×1.5 **+10.7%p**(조정 1회, ×1.7 은 +12.5 이나 연속 0 에서 99.9% 라 과함) */
       seconds: 15,
-      statMultiplier: 1.3,
+      statMultiplier: 1.5,
       /** 쓰는 순간 블록 바에 넣는 해방 블록 수와 위력 배율 (일반 블록 = basicBlockPowerInAttacks 의 이 배수) */
       blocks: 2,
       blockPowerMultiplier: 3,
@@ -224,6 +225,8 @@ export const BALANCE = {
       rewardPerStar: 0.25,
       /** 기획 +15% → C.75 측정 ★5·10연속 골드 187 = ★1(새 몸) 86 의 2.18배 > 목표 2배 → +10% (조정 1회) */
       goldPerStar: 0.1,
+      /** ★1 입문 보정 (C.76, GDD 32-3): 새 몸(특성 없음)이 ★1 에서 강적 소굴 2칸을 놓고 4바퀴 돌면 패배 37~46% 라(패배는 전부 강적) ★1 강적만 체력·공격을 이 배율로. ★2 부터는 1 */
+      eliteEase: { 1: { hp: 0.78, attack: 0.78 } } as Record<number, { hp: number; attack: number }>,
       /** 연속 클리어 (GDD 32-1 10번): 같은 ★ 자유 원정을 귀환(클리어)할 때마다 다음 원정 적 체력·공격 +enemyPerClear(최대 maxClears 연속), 지거나 ★를 바꾸면 0 */
       streak: { enemyPerClear: 0.05, maxClears: 10, foodPerClear: 0.05, goldPerClear: 0.02, goldMaxBonus: 0.2 },
     },

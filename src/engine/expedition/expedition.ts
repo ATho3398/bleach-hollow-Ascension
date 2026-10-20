@@ -446,10 +446,10 @@ export function riskBonus(exp: ExpeditionState): number {
 }
 
 /** 바퀴 강화 × 사냥터 강도(24-2, C.75 부터 1.0) × 원정 난이도 ★ × 연속 클리어 (GDD 32-1 2·10번) */
-export function enemyScale(lap: number, groundId: string, difficulty = 1, streak = 0): { hp: number; attack: number } {
+export function enemyScale(lap: number, groundId: string, difficulty = 1, streak = 0, cls?: 'normal' | 'elite'): { hp: number; attack: number } {
   const l = lapScale(lap);
   const g = getGround(groundId).strength;
-  const d = difficultyEnemyScale(difficulty);
+  const d = difficultyEnemyScale(difficulty, cls);
   const k = streakEnemyFactor(streak);
   return { hp: l.hp * g.hp * d.hp * k, attack: l.attack * g.attack * d.attack * k };
 }
@@ -463,7 +463,7 @@ function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string
   if (pool.length === 0) throw new Error(`적 출현 풀이 비었다: ${cls} ${exp.lap}바퀴 ${source}`);
   const base = pickFromPool(exp.rng, pool);
   const rare = nextFloat(exp.rng) < base.rareChance;
-  return { ...scaleEnemy(base, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak)), rare };
+  return { ...scaleEnemy(base, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak, cls)), rare };
 }
 
 /** 이 칸이 조합(같은 comboGroup 3칸 인접)의 끝 칸인가 */
@@ -608,7 +608,7 @@ function startBattleAt(
     exp.nextShield = 0;
   }
   // 보스는 보스 데이터의 적 (바퀴 강화·사냥터 강도만 입힌다), 아니면 출현 풀에서
-  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak)) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
+  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1);
   const atkK = m.enemyAttackMult ?? 1;
   if (hpK !== 1 || atkK !== 1) enemy = scaleEnemy(enemy, { hp: hpK, attack: atkK });

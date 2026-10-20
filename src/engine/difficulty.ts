@@ -40,15 +40,16 @@ export function difficultyFactor(star: number): number {
   return difficultyRefStat(star) / worldRefStat();
 }
 
-/** ★n 적 체력·공격 배율 (바퀴 강화·사냥터와 곱한다) */
-export function difficultyEnemyScale(star: number): { hp: number; attack: number } {
+/** ★n 적 체력·공격 배율 (바퀴 강화·사냥터와 곱한다). cls 가 'elite' 면 ★별 입문 보정(eliteEase, C.76)도 곱한다 */
+export function difficultyEnemyScale(star: number, cls?: 'normal' | 'elite' | string): { hp: number; attack: number } {
   const k = difficultyFactor(star);
-  return { hp: 1 + (k - 1) * DX.hpGrowth, attack: 1 + (k - 1) * DX.attackGrowth };
+  const ease = cls === 'elite' ? DX.eliteEase[clampDifficulty(star)] : undefined;
+  return { hp: (1 + (k - 1) * DX.hpGrowth) * (ease?.hp ?? 1), attack: (1 + (k - 1) * DX.attackGrowth) * (ease?.attack ?? 1) };
 }
 
-/** 적 정의에 ★ 배율을 입힌다 (등급전·연습·튜토리얼처럼 원정 밖에서 바로 싸울 때) */
+/** 적 정의에 ★ 배율을 입힌다 (등급전·연습·튜토리얼처럼 원정 밖에서 바로 싸울 때). 강적 입문 보정은 적 등급으로 */
 export function enemyAtDifficulty(enemy: EnemyDef, star: number): EnemyDef {
-  return scaleEnemy(enemy, difficultyEnemyScale(star));
+  return scaleEnemy(enemy, difficultyEnemyScale(star, enemy.class));
 }
 
 /** 전투 파라미터에 ★ 의 적 기준 능력치를 싣는다 (applyEvolutionToParams 뒤에 불러도, 앞에 불러도 된다) */

@@ -593,7 +593,7 @@ let campaignFinalDefeats: number[] = [];
 }
 
 // ── 권장 단계 등가 점검 (C.75, GDD 32-1 2번): n단계 몸(그 단계 기본 진화체, 노력치 0, skill 1개 빌드)이 ★n 적 풀과 1:1 로 싸우면 1단계 몸 ★1 과 같은 길이·승률이어야 한다 ──
-// (내 능력치는 절대값이지만 적 기준 능력치·체력·공격이 ★ 를 따라 같이 오르므로 "권장 단계 = 일반 약 45초·강적 약 90초" 가 단계마다 유지된다.) 가드: 일반 처치 시간이 ★1 의 0.8~1.25배, 강적 승률 차이 ±15%p 안
+// (내 능력치는 절대값이지만 적 기준 능력치·체력·공격이 ★ 를 따라 같이 오르므로 "권장 단계 = 일반 약 45초·강적 약 90초" 가 단계마다 유지된다.) 가드: 일반 처치 시간이 2~5단계 평균의 0.8~1.25배, 강적 승률이 평균 ±15%p 안 (★1 은 입문 보정으로 더 쉬움, C.76)
 {
   const NM = 40;
   const forms = [null, 't2:base', 't3:base', 't4:normal', 't5:normal:mixed'];
@@ -622,10 +622,13 @@ let campaignFinalDefeats: number[] = [];
     const st = currentStats(evo, BALANCE_FACTION);
     console.log(`  ${tier + 1}단계 몸 (체력 ${st.hp}·힘 ${st.atk}·속도 ${st.spd}, 최대 체력 ${Math.round(CX.playerMaxHp * st.hp / worldRefStat())}) vs ★${star}: 일반 ${(n.win * 100).toFixed(0)}% ${n.secs.toFixed(1)}초 · 강적 ${(e.win * 100).toFixed(0)}% ${e.secs.toFixed(1)}초`);
   }
-  const b = rows[0]!;
+  // C.76: ★1 강적은 입문 보정(eliteEase)으로 쉬우므로 기준은 2~5단계의 평균. 1단계 줄은 참고(강적 승률이 2단계보다 높아야 한다)
+  const rest = rows.slice(1);
+  const b = { nSecs: rest.reduce((a, r) => a + r.nSecs, 0) / rest.length, eWin: rest.reduce((a, r) => a + r.eWin, 0) / rest.length };
   rows.forEach((r, i) => {
-    if (r.nSecs < b.nSecs * 0.8 || r.nSecs > b.nSecs * 1.25) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 일반 ${r.nSecs.toFixed(1)}초 가 1단계 ${b.nSecs.toFixed(1)}초 의 0.8~1.25배 밖`);
-    if (Math.abs(r.eWin - b.eWin) > 0.15) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 강적 승률 ${(r.eWin * 100).toFixed(0)}% 가 1단계 ${(b.eWin * 100).toFixed(0)}% 와 15%p 넘게 다르다`);
+    if (r.nSecs < b.nSecs * 0.8 || r.nSecs > b.nSecs * 1.25) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 일반 ${r.nSecs.toFixed(1)}초 가 2~5단계 평균 ${b.nSecs.toFixed(1)}초 의 0.8~1.25배 밖`);
+    if (i === 0) { if (r.eWin < rows[1]!.eWin) failures.push(`권장 단계 등가: 1단계 몸 ★1 강적 승률 ${(r.eWin * 100).toFixed(0)}% < 2단계 ${(rows[1]!.eWin * 100).toFixed(0)}% (입문 보정이 안 먹었다)`); }
+    else if (Math.abs(r.eWin - b.eWin) > 0.15) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 강적 승률 ${(r.eWin * 100).toFixed(0)}% 가 2~5단계 평균 ${(b.eWin * 100).toFixed(0)}% 와 15%p 넘게 다르다`);
   });
 }
 
@@ -680,6 +683,8 @@ let campaignFinalDefeats: number[] = [];
     const R = rows[`${tier}/${rec}`]!;
     recNormalSecs.push(R.nSecs);
     if (R.nWin < 0.85) failures.push(`난이도: ${tier + 1}단계 몸 권장 ★${rec} 일반 승률 ${(R.nWin * 100).toFixed(0)}% < 85%`);
+    // C.76 (마스터G): 새 몸(1단계·특성 없음) ★1 4바퀴 원정 패배 15% 이하 — 새 플레이어 첫 경험
+    if (tier === 0 && R.defeat > 0.15) failures.push(`난이도: 새 몸 ★1 4바퀴 원정 패배 ${(R.defeat * 100).toFixed(0)}% > 15% (C.76 목표)`);
     const up = rows[`${tier}/${rec - 1}`];
     const down = rows[`${tier}/${rec + 1}`];
     if (up && up.eWin < R.eWin) failures.push(`난이도: ${tier + 1}단계 몸이 ★${rec - 1} 에서 강적 승률 ${(up.eWin * 100).toFixed(0)}% < 권장 ${(R.eWin * 100).toFixed(0)}% (한 단계 위가 더 쉽지 않다)`);
@@ -757,6 +762,7 @@ let campaignFinalDefeats: number[] = [];
 // 1~4바퀴만 보면 해방 없이도 약 89% 라 올릴 자리가 11%p 뿐이다(dev-log C.54) — 늦은 바퀴까지 넣어 해방이 필요한 싸움을 함께 본다
 {
   const LR = 3;
+  const LIB_STREAK = 5;
   const tier = BALANCE.provisional.liberation.minTierIndex;
   const bodies = campaignFirstAt[tier] ?? [];
   const ground = [...GROUNDS].filter((g) => g.unlockTierIndex <= tier).sort((a, b) => b.unlockTierIndex - a.unlockTierIndex)[0]!;
@@ -775,7 +781,8 @@ let campaignFinalDefeats: number[] = [];
             params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
             params.liberationEnabled = liberation;
             applyDifficultyToParams(params, recommendedDifficulty(tier));
-            const end = playCombatHuman(createCombat(70000 + bi * 1009 + lap * 101 + k * 7 + base.hpInAttacks, { enemy: scaleEnemy(base, enemyScale(lap, ground.id, recommendedDifficulty(tier))), params }));
+            // C.76: 기준 = 권장 ★ · 연속 LIB_STREAK(적 +25%) — 사냥터 강도 일원화 뒤 "해방이 필요한 싸움"
+            const end = playCombatHuman(createCombat(70000 + bi * 1009 + lap * 101 + k * 7 + base.hpInAttacks, { enemy: scaleEnemy(base, enemyScale(lap, ground.id, recommendedDifficulty(tier), LIB_STREAK, 'elite')), params }));
             games++;
             if (end.status === 'won') wins++;
             if (end.liberation.usedAtTick !== null) {
@@ -792,7 +799,7 @@ let campaignFinalDefeats: number[] = [];
   const on = rate(true);
   const gain = on.win - off.win;
   const LB = BALANCE.provisional.liberation;
-  console.log(`\n해방 (사람형 봇, ${tier + 1}단계 몸 ${bodies.length}명 × 강적 ${elites.length}종 × 1~${BALANCE.expedition.maxLaps}바퀴 × ${LR}판, 사냥터 ${ground.id}) — 목표(임시): 해방 사용 시 강적 승률 +10~15%p`);
+  console.log(`\n해방 (사람형 봇, ${tier + 1}단계 몸 ${bodies.length}명 × 강적 ${elites.length}종 × 1~${BALANCE.expedition.maxLaps}바퀴 × ${LR}판, 사냥터 ${ground.id}, ★${recommendedDifficulty(tier)} 연속 ${LIB_STREAK}) — 목표(임시): 해방 사용 시 강적 승률 +10~15%p`);
   console.log(`  해방 수치: 게이지 = 적 최대 체력 ${LB.gaugeEnemyHpFraction * 100}%, ${LB.seconds}초 능력치 ×${LB.statMultiplier}, 해방 블록 ${LB.blocks}칸 × 기본 블록 ${LB.blockPowerMultiplier}배, 끝나면 리스크 +${LB.riskOnEnd}`);
   console.log(`  해방 없음 ${(off.win * 100).toFixed(1)}% → 해방 사용 ${(on.win * 100).toFixed(1)}% (${gain >= 0 ? '+' : ''}${(gain * 100).toFixed(1)}%p) · 해방 쓴 전투 ${on.used}/${on.games} · 평균 ${on.usedAt.toFixed(1)}초에 사용`);
   if (bodies.length < CAMPAIGNS * 0.8) failures.push(`해방: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
