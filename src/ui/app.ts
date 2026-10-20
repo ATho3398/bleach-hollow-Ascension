@@ -38,7 +38,7 @@ import { setTitleRequest, signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
-import { allSlotSummaries, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
+import { allSlotSummaries, collectSlotChunks, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { needsMigration, recoverFromBackup } from '../saveBackup';
 import { setBgm } from './bgm';
 import type { BgmTrack } from '../data/audio/bgm';
@@ -82,6 +82,12 @@ export function startApp(host: HTMLElement): void {
   // 세이브 슬롯 (Q-3): 시작 화면에서 슬롯을 고르기 전에는 세이브가 없다. slot = 지금 플레이 중인 슬롯(1~3), 0 = 시작 화면
   let save: SaveData | null = null;
   let slot = 0;
+  // 덮어쓴 슬롯·지운 백업만 가리키던 압축 덩어리 정리 (C.72). 저장소가 막힌 환경이면 건너뛴다
+  try {
+    collectSlotChunks(localStorage);
+  } catch {
+    /* 저장소 없음 */
+  }
   /** 지금 진행 중인 원정 (처음 화면으로 돌아갈 때 중간 저장하려고 들고 있는다) */
   let activeExp: ExpeditionState | null = null;
   let confirmingTitle = false;

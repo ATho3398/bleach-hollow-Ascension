@@ -2,6 +2,7 @@
 // 슬롯 밖 정보(마지막 플레이 시각)는 별도 키 하나에 둔다 → SaveData 구조와 SAVE_FORMAT_VERSION 은 그대로.
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
 import { migrateSave, SAVE_KEY, writeSave, type SaveData, type StorageLike } from './game';
+import { collectChunks, parseSaveText } from './saveCodec';
 
 export const SLOT_COUNT = 3;
 /** 슬롯별 마지막 플레이 시각 */
@@ -71,7 +72,7 @@ export function slotSummary(storage: StorageLike, slot: number): SlotSummary {
   if (!text) return { slot, state: 'empty' };
   let save: SaveData | null = null;
   try {
-    save = migrateSave(JSON.parse(text));
+    save = migrateSave(parseSaveText(text, true)); // 요약만: 압축 덩어리는 풀지 않고 개수만 (C.72)
   } catch {
     save = null;
   }
@@ -90,7 +91,7 @@ export function slotSummary(storage: StorageLike, slot: number): SlotSummary {
 function backupReadable(storage: StorageLike, slot: number): boolean {
   try {
     const text = storage.getItem(slotBackupKey(slot));
-    return !!text && migrateSave(JSON.parse(text)) !== null;
+    return !!text && migrateSave(parseSaveText(text, true)) !== null;
   } catch {
     return false;
   }
@@ -160,6 +161,8 @@ export type SlotWrite = 'ok' | 'freed' | 'failed';
 export function writeSlotSave(storage: StorageLike, save: SaveData, slot: number): SlotWrite {
   if (writeSave(storage, save, slotKey(slot))) return 'ok';
   if (!storage.removeItem) return 'failed';
+  // 먼저 아무 세이브도 가리키지 않는 압축 덩어리를 치운다 (C.72) — 백업은 그대로
+  if (collectSlotChunks(storage) > 0 && writeSave(storage, save, slotKey(slot))) return 'ok';
   for (const n of [slot, ...slotNumbers().filter((x) => x !== slot)]) {
     try {
       if (storage.getItem(slotBackupKey(n)) === null) continue;
@@ -168,9 +171,20 @@ export function writeSlotSave(storage: StorageLike, save: SaveData, slot: number
     } catch {
       continue;
     }
+    collectSlotChunks(storage); // 백업만 쓰던 덩어리도 같이 비운다
     if (writeSave(storage, save, slotKey(slot))) return 'freed';
   }
   return 'failed';
+}
+
+/** 슬롯·백업 어느 것도 가리키지 않는 압축 덩어리 키를 지운다 (C.72). 저장소가 막혔거나 키를 셀 수 없으면 0 */
+export function collectSlotChunks(storage: StorageLike): number {
+  try {
+    const texts = slotNumbers().flatMap((n) => [storage.getItem(slotKey(n)), storage.getItem(slotBackupKey(n))]);
+    return collectChunks(storage, texts);
+  } catch {
+    return 0;
+  }
 }
 
 /** "10/18 23:10" 꼴 (기기 시간대) */

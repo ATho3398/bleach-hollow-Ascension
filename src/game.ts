@@ -22,6 +22,7 @@ import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutori
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
+import { encodeSave, parseSaveText } from './saveCodec';
 import { addFood, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
 import type { FoodId } from './engine/faction';
 import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
@@ -37,7 +38,7 @@ import { isBossId } from './data/bosses';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 27;
+export const SAVE_FORMAT_VERSION = 28;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -1102,6 +1103,11 @@ export function migrateSave(raw: unknown): SaveData | null {
     });
     save.meta.format = 27;
   }
+  if (save.meta.format < 28) {
+    // 형식 27 → 28 (C.72, GDD 24-5 저장 압축): 세이브 구조는 그대로. 저장할 때 긴 런 로그 목록을 덩어리로 압축하고(saveCodec), 읽을 때 풀어서 여기로 온다.
+    // 옛 비압축 세이브는 그대로 열리고 다음 저장부터 압축된다
+    save.meta.format = 28;
+  }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
@@ -1111,7 +1117,9 @@ export function migrateSave(raw: unknown): SaveData | null {
   save.transcendentDex = sanitizeTranscendentDex(save.transcendentDex);
   save.slotLog = { fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [] };
   save.shared = sanitizeShared(save.shared);
-  save.machine = sanitizeMachine(save.machine, earliestStamp(save) ?? Date.now());
+  // 처음 시작한 날이 멀쩡하면 런 로그 전체를 훑는 earliestStamp 를 건너뛴다 (C.72: 1000판 세이브 로드가 CPU 4배 감속에서 수백 ms 걸렸다)
+  const mc = (isRec(save.machine) ? save.machine.createdAt : undefined) as unknown;
+  save.machine = sanitizeMachine(save.machine, typeof mc === 'number' && Number.isFinite(mc) && mc >= 0 ? mc : earliestStamp(save) ?? Date.now());
   forEachTrack(save, (t) => sanitizeTrackFields(t, save.shared.cosmetics));
   save.story = sanitizeStory(save.story);
   save.bossDex = sanitizeBossDex(save.bossDex);
@@ -1222,7 +1230,7 @@ export function equipSkin(save: SaveData, skinId: string | null): boolean {
 export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData | null {
   try {
     const text = storage.getItem(key);
-    const save = text ? migrateSave(JSON.parse(text)) : null;
+    const save = text ? migrateSave(parseSaveText(text, false, storage)) : null;
     if (save) {
       checkTitles(save, 'load');
       checkTrackOpen(save); // 이미 5단계에 닿은 옛 세이브는 여기서 다른 종족 트랙이 열린다 (GDD 22-3)
@@ -1233,10 +1241,11 @@ export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData
   }
 }
 
-/** 저장. 쓰기가 막히면(시크릿 모드·저장 공간 가득) false — 공간 확보·알림은 슬롯 쪽(writeSlotSave)이 한다 */
+/** 저장. 긴 런 로그는 덩어리 키에 압축해 두고 본문엔 해시만 (C.72, saveCodec).
+ *  쓰기가 막히면(시크릿 모드·저장 공간 가득) false — 공간 확보·알림은 슬롯 쪽(writeSlotSave)이 한다 */
 export function writeSave(storage: StorageLike, save: SaveData, key: string = SAVE_KEY): boolean {
   try {
-    storage.setItem(key, JSON.stringify(save));
+    storage.setItem(key, encodeSave(save, storage));
     return true;
   } catch {
     return false;

@@ -3,6 +3,7 @@
 import { FACTIONS } from './data/factions';
 import { migrateSave, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
 import { slotBackupKey, slotKey, writeBackupMeta, type BackupReason } from './saveSlots';
+import { encodeSave, expandSave, parseSaveText } from './saveCodec';
 
 /** 가져오기 직전 현재 세이브를 한 번 보관하는 키 (슬롯 1). 슬롯별 키는 saveSlots 의 slotBackupKey */
 export const BACKUP_KEY = slotBackupKey(1);
@@ -22,9 +23,9 @@ export type ImportResult =
   | { ok: true; save: SaveData; fromFormat: number; migrated: boolean }
   | { ok: false; reason: ImportFailure };
 
-/** 내보낼 문자열: 저장되는 것과 같은 JSON (SAVE_FORMAT_VERSION 은 meta.format 에 들어 있다) */
+/** 내보낼 문자열: 저장되는 것과 같은 JSON (SAVE_FORMAT_VERSION 은 meta.format 에 들어 있다). 긴 런 로그는 압축 덩어리($z)로 (C.72) */
 export function serializeSave(save: SaveData): string {
-  return JSON.stringify(save);
+  return encodeSave(save);
 }
 
 /** 내려받을 파일 이름. 예: bha-save-f11-20261018-2245.json */
@@ -63,6 +64,12 @@ export function parseImport(text: string): ImportResult {
     raw = JSON.parse(t);
   } catch {
     return { ok: false, reason: 'not-json' };
+  }
+  // 압축·비압축 둘 다 받는다 (C.72). 압축 덩어리가 깨졌으면 손상
+  try {
+    raw = expandSave(raw);
+  } catch {
+    return { ok: false, reason: 'corrupt' };
   }
   if (!isObj(raw) || typeof raw.factionId !== 'string' || !isObj(raw.runLog) || !isObj(raw.meta) || typeof raw.meta.format !== 'number') {
     return { ok: false, reason: 'not-save' };
@@ -131,7 +138,7 @@ export function swapWithBackup(storage: StorageLike, slot = 1): boolean {
 export function recoverFromBackup(storage: StorageLike, slot = 1): boolean {
   try {
     const backup = storage.getItem(slotBackupKey(slot));
-    if (!backup || !migrateSave(JSON.parse(backup))) return false;
+    if (!backup || !migrateSave(parseSaveText(backup, false, storage))) return false;
   } catch {
     return false;
   }

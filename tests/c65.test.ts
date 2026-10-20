@@ -19,7 +19,7 @@ describe('버전 (S-18c)', () => {
   it('단계 S-18c, 세이브 형식 27, BALANCE 그대로', () => {
     expect(PATCH_LABEL).toMatch(/^C\.\d+$/); // C.66 에서 C.66 (버전 검사는 c66.test.ts)
     expect(STAGE_LABEL).toMatch(/^[A-Z]+-\d+[a-z]?$/); // C.69 에서 B-1 (병렬 단계)
-    expect(SAVE_FORMAT_VERSION).toBe(27);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(27); // C.72 에서 28 (저장 압축)
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(39);
   });
 });
@@ -111,7 +111,7 @@ describe('기본 제공·자동 착용 (30장 2번)', () => {
       return s;
     };
     const m = migrateSave(old())!;
-    expect(m.meta.format).toBe(27);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION); // 27 단계를 지나 현재 형식까지 (C.72)
     expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'bar-ink']);
     expect(m.wear).toEqual({ bar: 'bar-ink', device: 'device-badge' });
     expect(m.wear.keyring).toBeUndefined();
