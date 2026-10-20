@@ -10,8 +10,9 @@ import type { BuildState } from './build';
 const AX = BALANCE.provisional.absorb;
 
 /** 흡수 가능 이유: 마무리 일격이 상성 우위 스킬 / 상성 우위 체인3 N회 이상 / 첫 흡수 보장 — 장착 skill 특성 없음 (GDD 3-5 v0.7 → 20-2, 임시 수치).
- *  약점 속성이 없는 적(노멀·특수)은 아무 스킬 블록이 우위다 */
-export type AbsorbReason = 'weakness-finisher' | 'weakness-chain3' | 'first-absorb';
+ *  약점 속성이 없는 적(노멀·특수)은 아무 스킬 블록이 우위다.
+ *  'story-objective' = 스토리 흡수 목표 화에서 목표 등급 적을 이겨 조건 없이 열림 (GDD 42장 1번, 엔진이 붙인다) */
+export type AbsorbReason = 'weakness-finisher' | 'weakness-chain3' | 'first-absorb' | 'story-objective';
 
 /** 전투 결과에서 흡수 조건 판정에 쓰는 부분 */
 export type AbsorbInput = Pick<CombatState, 'status' | 'finisher' | 'chain3Count' | 'weakChain3Count'> & {

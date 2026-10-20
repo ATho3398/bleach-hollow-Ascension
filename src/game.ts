@@ -23,7 +23,7 @@ import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/ti
 import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
-import { addFood, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
+import { addFood, foodOverflowGold, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
 import type { FoodId } from './engine/faction';
 import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
 import { newlyAchieved } from './engine/tutorialGoals';
@@ -690,6 +690,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   // 먹이 전리품 (GDD 23-1): 지킨 먹이를 보유에 넣고(상한 9), 그래도 하나도 없으면 간식 2개 (막힘 방지). 결과 화면이 exp.foodSettled 를 읽는다
   const sum = summarize(exp);
   exp.foodSettled = settleFood(save.shared.food, sum.keptFood, sum.lostFood);
+  // 보관 한도를 넘친 먹이는 골드로 (GDD 42장 4번)
+  save.shared.tradeCoins += exp.foodSettled.overflowGold ?? 0;
   // 골드 (C.57): 번 것 − 상인에게 쓴 것 (패배하면 마지막 바퀴에 번 것은 잃는다)
   save.shared.tradeCoins = Math.max(0, save.shared.tradeCoins + sum.keptGold);
   save.build = cloneBuildOf(exp.build);
@@ -739,8 +741,13 @@ export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number 
     out.firstClear = !had;
     prog.cleared[key] = { firstAt: had?.firstAt ?? nowMs, clears: (had?.clears ?? 0) + 1 };
     out.gold = SX.episodeGold;
-    save.shared.tradeCoins += out.gold;
     out.food = [SX.episodeFood as FoodId, addFood(save.shared.food, SX.episodeFood as FoodId, 1)];
+    // 화 보상 먹이가 보관 한도에 막히면 골드로 (GDD 42장 4번, 원정 전리품과 같은 규칙)
+    if (out.food[1] === 0) {
+      out.overflowGold = foodOverflowGold(out.food[0]);
+      out.gold += out.overflowGold;
+    }
+    save.shared.tradeCoins += out.gold;
     if (out.firstClear) out.jade += SX.firstClearJade;
     const eps = chapterContent(save.factionId, st.chapterId)?.episodes ?? [];
     if (!prog.chapters.includes(st.chapterId) && eps.length > 0 && eps.every((e) => prog.cleared[episodeKey(st.chapterId, e.id)])) {

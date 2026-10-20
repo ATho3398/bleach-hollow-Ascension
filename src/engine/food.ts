@@ -95,6 +95,8 @@ export interface FoodSettlement {
   gained: FoodId[];
   /** 상한 때문에 못 넣은 개수 */
   overflow: number;
+  /** 못 넣은 먹이를 바꾼 골드 (GDD 42장 4번). 옛 결과에는 없다 */
+  overflowGold?: number;
   /** 패배로 잃은 먹이 (마지막 바퀴 획득분) */
   lost: FoodId[];
   /** 막힘 방지로 받은 간식 개수 (0 = 해당 없음) */
@@ -104,10 +106,21 @@ export interface FoodSettlement {
 /** 원정에서 얻은 먹이를 보유에 넣고, 그래도 하나도 없으면 막힘 방지 간식을 준다 (GDD 23-1) */
 export function settleFood(s: FoodStock, gained: FoodId[], lost: FoodId[] = []): FoodSettlement {
   let overflow = 0;
-  for (const id of gained) overflow += 1 - addFood(s, id, 1);
+  let overflowGold = 0;
+  for (const id of gained) {
+    if (addFood(s, id, 1) === 0) {
+      overflow++;
+      overflowGold += foodOverflowGold(id);
+    }
+  }
   let fallback = 0;
   if (totalFood(s) === 0) fallback = addFood(s, 'snack', FX.fallbackSnack);
-  return { gained: [...gained], overflow, lost: [...lost], fallback };
+  return { gained: [...gained], overflow, overflowGold, lost: [...lost], fallback };
+}
+
+/** 보관 한도를 넘친 먹이 1개의 골드 (GDD 42장 4번): 상점 골드 가격(food-<id>) × overflowGoldRate, 반올림. 상점에 없는 먹이는 0. 부르는 쪽이 골드에 더한다 */
+export function foodOverflowGold(id: FoodId): number {
+  return Math.round((BALANCE.shop.goldPrices[`food-${id}`] ?? 0) * FX.overflowGoldRate);
 }
 
 /** 종류별 개수로 묶는다 (표시용): [[id, 개수]] FOOD_IDS 순서 */

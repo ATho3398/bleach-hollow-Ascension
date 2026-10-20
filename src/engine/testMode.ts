@@ -170,6 +170,7 @@ function unlockTrack(save: SaveData, nowMs: number): void {
  *  탑은 세이브에 `tower.best` 자리가 있으면 최고 층 바로 아래까지 연다(탑 데이터가 들어오면 그대로 따라온다) */
 export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): SaveData {
   unlockTrack(save, nowMs);
+  fillDefaultTraits(save);
   save.formDex = [...new Set([...save.formDex, ...FORM_TABLE.map((f) => f.id)])];
   // 스토리: 모든 종족·장·화 클리어 + 장 보상 받음 (내용이 있는 장만)
   for (const f of FACTIONS) {
@@ -192,6 +193,30 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   sh.cosmetics = [...new Set([...sh.cosmetics, ...COSMETIC_ITEMS.map((c) => c.id)])];
   unlockTower(save as SaveData & { tower?: unknown });
   return save;
+}
+
+/** 기본 특성 (GDD 42장 2번): 장착 특성 칸이 모두 비어 있으면 그 몸 속성(없으면 노멀)의 공격·막기·회복을 채운다. 남는 칸은 같은 속성 공격 → 노멀 공격.
+ *  이미 하나라도 장착했으면 그대로 둔다. 채운 칸 수를 돌려준다 */
+export function fillDefaultTraits(save: SaveData): number {
+  const b = save.build;
+  if (b.slots.some((id) => id !== null)) return 0;
+  const TM = BALANCE.provisional.testMode;
+  const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : null;
+  const element = form?.elements?.[0] ?? TM.fallbackElement;
+  const usable = (el: string, role: string) => TRAITS.filter((t) => t.kind === 'skill' && !t.rare && !t.boss && t.element === el && t.role === role);
+  const picks: string[] = [];
+  const take = (role: string): void => {
+    const t = [...usable(element, role), ...usable(TM.fallbackElement, role)].find((x) => !picks.includes(x.id));
+    if (t) picks.push(t.id);
+  };
+  for (const role of TM.defaultTraitRoles) take(role);
+  while (picks.length < b.slots.length) {
+    const before = picks.length;
+    take('attack');
+    if (picks.length === before) break;
+  }
+  setTraitSlots(save, picks.slice(0, b.slots.length));
+  return Math.min(picks.length, b.slots.length);
 }
 
 /** 탑 최고 층 자리(GDD 36-9 `tower { best }`)가 세이브에 있으면 마지막 층 바로 아래까지 (모든 층 도전 가능) */

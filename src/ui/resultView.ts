@@ -37,7 +37,7 @@ export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): 
   if (!r) return [];
   const ep = getEpisode(faction.id, r.chapterId, r.episodeId);
   const out = [`${chapterLabel(faction.id, r.chapterId)} · ${ep.title} — ${r.cleared ? '클리어!' : '실패. 다시 도전할 수 있다'}`];
-  if (r.cleared) out.push(`화 보상 ${TRADE_CURRENCY_NAME} +${r.gold} · ${faction.foodNames[r.food[0]]} ${r.food[1] > 0 ? `${r.food[1]}개` : '(보관 한도라 못 받음)'}${r.firstClear ? ` · 첫 클리어 영옥 +${B.provisional.story.firstClearJade}` : ''}`);
+  if (r.cleared) out.push(`화 보상 ${TRADE_CURRENCY_NAME} +${r.gold - (r.overflowGold ?? 0)} · ${faction.foodNames[r.food[0]]} ${r.food[1] > 0 ? `${r.food[1]}개` : r.overflowGold !== undefined ? `(보관 한도 초과 → ${TRADE_CURRENCY_NAME} +${r.overflowGold})` : '(보관 한도라 못 받음)'}${r.firstClear ? ` · 첫 클리어 영옥 +${B.provisional.story.firstClearJade}` : ''}`);
   if (r.bossFirstKill) out.push(`보스 ${bossName(r.bossFirstKill, faction.id)} 첫 처치! 칭호 · 영옥 +${B.provisional.boss.reward.firstJade}`);
   if (r.chapterCleared) out.push(`${chapterLabel(faction.id, r.chapterId)} 완료! 칭호 · 영옥 +${chapterClearJade(r.chapterId)}`);
   return out;
@@ -63,7 +63,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const list = (ids: FoodId[]) => countFoods(ids).map(([id, n]) => `${faction.foodNames[id]} ${n}`).join(', ');
     const notes: string[] = [];
     if (gained.length > 0) notes.push(list(gained));
-    if ((fs?.overflow ?? 0) > 0) notes.push(`보관 한도로 ${fs!.overflow}개 버림`);
+    if ((fs?.overflow ?? 0) > 0) notes.push(fs!.overflowGold !== undefined ? `보관 한도 초과 → ${TRADE_CURRENCY_NAME} +${fs!.overflowGold}` : `보관 한도로 ${fs!.overflow}개 버림`);
     if (lost.length > 0) notes.push(`잃음 ${list(lost)}`);
     if ((fs?.fallback ?? 0) > 0) notes.push(`주변에서 겨우 먹을 것을 찾았다 (${faction.foodNames.snack} ${fs!.fallback})`);
     for (const n of notes) v.append(el('br'), el('small', '', n));

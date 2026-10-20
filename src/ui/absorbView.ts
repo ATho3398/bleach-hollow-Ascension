@@ -36,6 +36,7 @@ export function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
   if (offer.reasons.includes('weakness-finisher')) out.push(offer.finisherElement ? `${elementName(offer.finisherElement, faction.id)} 속성으로 마무리` : `${faction.skillBlockName}으로 마무리`);
   if (offer.reasons.includes('weakness-chain3')) out.push(`우위 ${faction.chainName}3 ${offer.weakChain3Count}회 (필요 ${AX.weakChain3ForAbsorb})`);
   if (offer.reasons.includes('first-absorb')) out.push(`첫 ${faction.absorbActionName} 보장 (장착한 ${faction.skillBlockName} 특성 없음)`);
+  if (offer.reasons.includes('story-objective')) out.push(`스토리 목표 (이 화에서는 조건 없이 ${faction.absorbActionName})`);
   return out.join(' · ');
 }
 

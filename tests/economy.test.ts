@@ -197,7 +197,8 @@ describe('리스크 수치·폭주 (GDD 23-2)', () => {
     chooseReturn(e);
     const n = newNest(0);
     applyExpeditionEnd(n, e, 1);
-    expect(n.condition).toBe(Math.max(0, e.condition - RX.frenzyConditionLoss));
+    // C.95 (GDD 42장 3번): 바퀴당 감소 하한(출발 − 25 × 바퀴) 아래로는 안 깎는다
+    expect(n.condition).toBe(Math.max(0, e.condition - RX.frenzyConditionLoss, 80 - BALANCE.provisional.expedition.conditionLossPerLapMax * e.lap));
     expect(n.risk).toBeLessThanOrEqual(RX.riskAfterBreakthrough);
     expect(n.stability).toBe(Math.max(0, e.stability - RX.breakthroughStabilityLoss));
   });

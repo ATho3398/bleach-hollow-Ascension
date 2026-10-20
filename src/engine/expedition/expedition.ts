@@ -121,6 +121,8 @@ export interface StorySettlement {
   /** 화 클리어 보상 (매번): 골드·먹이(상한까지만 들어간 수) */
   gold: number;
   food: [FoodId, number];
+  /** 화 보상 먹이가 보관 한도라 못 들어가 바꾼 골드 (GDD 42장 4번, gold 에 이미 포함). 옛 결과에는 없다 */
+  overflowGold?: number;
   /** 첫 클리어 영옥 + 장 클리어 영옥 + 보스 첫 처치 영옥 */
   jade: number;
   chapterCleared: boolean;
@@ -194,6 +196,8 @@ export interface ExpeditionState extends RiskState {
   phase: ExpeditionPhase;
   hunger: number;
   condition: number;
+  /** 출발 때 컨디션 (GDD 42장 3번: 바퀴당 감소 하한의 기준). 옛 중간 저장에는 없다 → 하한 없음 */
+  startCondition?: number;
   /** 가져온 덱: 보상으로 뽑힐 타일 id (중복 가능) */
   deck: string[];
   /** 원정 중 획득했지만 아직 놓지 않은 타일 */
@@ -320,6 +324,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     phase: 'moving',
     hunger: setup.hunger,
     condition: setup.condition,
+    startCondition: setup.condition,
     deck: [...setup.deck],
     hand: [],
     slots: Array.from({ length: EX.loopTiles }, () => null),
@@ -721,6 +726,13 @@ export function inFrenzy(exp: Pick<ExpeditionState, 'breakthrough'>): boolean {
   return exp.breakthrough !== null;
 }
 
+/** 컨디션 하한 (GDD 42장 3번): 원정 중 감소는 바퀴당 최대 PX.conditionLossPerLapMax — 출발 컨디션 − 그 값 × 지금 바퀴. 출발 값이 없으면(옛 중간 저장) 0.
+ *  이미 하한보다 낮으면(출발이 낮았음) 지금 값 아래로만 막는다 */
+export function conditionFloor(exp: Pick<ExpeditionState, 'startCondition' | 'lap' | 'condition'>): number {
+  if (exp.startCondition === undefined) return 0;
+  return Math.max(0, Math.min(exp.condition, exp.startCondition - PX.conditionLossPerLapMax * exp.lap));
+}
+
 /** 대기 중인 전투를 전투 엔진(v2)으로 만든다 */
 export function startBattle(exp: ExpeditionState): CombatState {
   if (exp.phase !== 'battle' || !exp.pending) throw new Error('치를 전투가 없다');
@@ -745,7 +757,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
   exp.pending = null;
   exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle * (mutationMods(exp.mutation).hungerMult ?? 1));
-  exp.condition = Math.max(0, exp.condition - PX.conditionPerBattle);
+  exp.condition = Math.max(conditionFloor(exp), exp.condition - PX.conditionPerBattle);
   // 공허 블록 사용 → 리스크 게이지 상승 (GDD 3-5)
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
   // 해방이 끝나며 오른 리스크 (GDD 22-5)
@@ -792,8 +804,12 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 사냥 무리 2연전: 흡수 화면을 마친 뒤 다음 advance 에서
   if (mods.extraBattle > 0) exp.queuedBattle = { cell: pending.cell, synergy: pending.synergy ?? null };
   // 흡수 조건(마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
-  if (canAbsorb(battle)) {
+  // 스토리 흡수 목표 화 (GDD 42장 1번): 목표 등급 적을 이기면 흡수 조건과 상관없이 흡수 화면을 연다 (그 화에서만)
+  const ob = st ? storyEpisodeOf(exp)!.objective : null;
+  const storyAbsorb = ob?.type === 'absorb' && pending.enemy.class === ob.enemyClass;
+  if (canAbsorb(battle) || storyAbsorb) {
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus);
+    if (exp.absorbOffer.reasons.length === 0) exp.absorbOffer.reasons.push('story-objective');
     exp.phase = 'absorb';
   } else {
     exp.phase = 'moving';

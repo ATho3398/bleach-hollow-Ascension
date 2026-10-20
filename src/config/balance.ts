@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 48;
+export const BALANCE_VERSION = 49;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -206,6 +206,13 @@ export const BALANCE = {
       restSnack: 1,
       /** 막힘 방지: 원정에서 돌아왔을 때 먹이가 하나도 없으면 간식 이만큼 */
       fallbackSnack: 2,
+      /** 보관 한도를 넘친 먹이 1개 = 상점 골드 가격 × 이 비율 (GDD 42장 4번, 원정 전리품·화 보상 공통) */
+      overflowGoldRate: 0.2,
+    },
+    /** 테스트 모드 전체 해금 때 장착 특성이 비어 있으면 채우는 역할 순서 (GDD 42장 2번). 그 몸 속성(없으면 노멀)의 희귀 아닌 skill 특성. 칸이 더 있으면 공격으로 채운다 */
+    testMode: {
+      defaultTraitRoles: ['attack', 'guard', 'heal'] as string[],
+      fallbackElement: 'normal',
     },
     // ── 속성 특수 효과 (GDD 20-2, 수치 provisional) ──
     elements: {
@@ -383,6 +390,8 @@ export const BALANCE = {
       hungerPerTileSpike: 4,
       conditionMax: 100,
       conditionPerBattle: 2,
+      /** 컨디션 감소 하한 (GDD 42장 3번, provisional): 원정 한 번에 출발 컨디션에서 바퀴당 최대 이만큼만 깎인다(전투·폭주 합). 패배 급락(nest.defeatCondition)은 따로 */
+      conditionLossPerLapMax: 25,
       /** 바퀴가 돌 때마다 길이 강해진다: 적 hpInMatches·attackInMatches 에 곱하는 (바퀴-1)당 가산 배율 */
       lapHpScale: 0.12,
       lapAttackScale: 0.08,
