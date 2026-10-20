@@ -62,8 +62,14 @@ export function towerStar(floor: number): number {
 export function towerFloorMultiplier(floor: number): number {
   const n = clampFloor(floor);
   const inBand = (n - 1) % TX.bandSize;
-  const elite = towerFloorKind(n) === 'elite' ? TX.eliteScale : 1;
-  return (1 + inBand * TX.perFloorInBand) * (n === TOWER_FLOORS ? 1 + TX.finalFloorBonus : 1) * elite;
+  const star = towerStar(n);
+  const kind = towerFloorKind(n);
+  // 구간별 층당 +% (C.94): perFloorByBand 에 그 ★ 값이 있으면 그것, 없으면 perFloorInBand
+  const perFloor = TX.perFloorByBand[star] ?? TX.perFloorInBand;
+  const elite = kind === 'elite' ? TX.eliteScale : 1;
+  // 보스 층 배율 (C.94): bossScaleByBand 에 그 ★ 값이 있으면 그것, 없으면 1
+  const boss = kind === 'boss' ? TX.bossScaleByBand[star] ?? 1 : 1;
+  return (1 + inBand * perFloor) * (n === TOWER_FLOORS ? 1 + TX.finalFloorBonus : 1) * elite * boss;
 }
 
 export function towerFloorKind(floor: number): TowerFloorKind {

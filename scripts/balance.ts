@@ -24,8 +24,6 @@ import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recom
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
-/** 탑 보스 층 중 목표 미달로 기록된 층 (C.85·C.84 dev-log): 가드 대신 참고 줄만 */
-const TOWER_KNOWN_SHORT_FLOORS: readonly number[] = [20];
 const CX = BALANCE.provisional.combat;
 
 console.log(`밸런스 버전 ${BALANCE_VERSION}`);
@@ -538,7 +536,7 @@ let campaignFinalDefeats: number[] = [];
   }
 }
 
-// ── 보스 자유 원정 등장 — 2·3장 사냥터 (C.84, GDD 37장 7번 가드): 그 장 보스를 스토리에서 이긴 몸 = 보스 화의 권장 단계에 갓 닿은 진화 봇 몸, 그 화의 ★.
+// ── 보스 자유 원정 등장 — 2·3장 사냥터 (C.84 측정, C.94 정식 가드, GDD 37장 7번·41장 2번 ④): 그 장 보스를 스토리에서 이긴 몸 = 보스 화의 권장 단계에 갓 닿은 진화 봇 몸, 그 화의 ★.
 // 1단계 새 몸은 이 보스를 만날 수 없다(스토리 보스가 4·5단계 권장). 같은 시드로 보스 처치 전/후 짝 비교, 가드 패배율 +5%p 이하 ──
 {
   const K = 30;
@@ -1067,7 +1065,8 @@ let campaignFinalDefeats: number[] = [];
   const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
   const fresh: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => newSaveData('hollow', 555 + i * 37));
   const TT = BALANCE.provisional.tower;
-  console.log(`\n도전의 탑 (사람형 봇, ★n = n단계 몸 × ${TR}판, 층 배율 구간 안 +${TT.perFloorInBand * 100}%/층·${TT.floors}층 +${TT.finalFloorBonus * 100}%) — 목표(임시): 구간 첫 층 ≈100%, 5층 강적 ≈70%, 끝 층 보스 40~60%, ${TT.floors}층 30~50%`);
+  const bandText = Object.entries(TT.perFloorByBand).map(([k, v]) => `★${k} +${(v * 100).toFixed(0)}%/층`).concat(Object.entries(TT.bossScaleByBand).map(([k, v]) => `★${k} 보스 층 ×${v}`)).join('·');
+  console.log(`\n도전의 탑 (사람형 봇, ★n = n단계 몸 × ${TR}판, 층 배율 구간 안 +${TT.perFloorInBand * 100}%/층${bandText ? `(${bandText})` : ''}·강적 층 ×${TT.eliteScale}·${TT.floors}층 +${TT.finalFloorBonus * 100}%) — 목표(임시): 구간 첫 층 ≈100%, 5층 강적 ≈70%, 끝 층 보스 40~60%, ${TT.floors}층 30~50%`);
   for (let star = 1; star <= TT.floors / TT.bandSize; star++) {
     // ★1 은 탑이 열리는 몸(스토리 1장 보스 권장 = 2단계에 갓 닿은 몸)으로 잰다 — 특성 없는 새 1단계 몸은 탑에 들어올 수 없어 참고 줄만
     const bodies = star === 1 ? campaignFirstAt[1] ?? [] : campaignFirstAt[star - 1] ?? [];
@@ -1090,10 +1089,8 @@ let campaignFinalDefeats: number[] = [];
     // 보스가 아직 없어 fallbackBoss 로 이어 둔 층은 참고만 (그 보스가 들어오면 가드)
     const tempLink = TT.bossFloors[bossFloor] !== bossId;
     if (boss && tempLink) console.log(`    (임시 연결: ${TT.bossFloors[bossFloor]} 없음 → ${bossId}, 가드 제외)`);
-    // 20층(★2 구간)은 보스와 상관없이 2단계 몸 승률 17% 안팎 — C.85 가 '미달'로 기록(sand-maw 임시 연결 때도 17%). canyon-king 연결(C.84) 뒤에도 16~17%라 탑 ★2 구간 조정 전까지 참고만
-    const knownShort = TOWER_KNOWN_SHORT_FLOORS.includes(bossFloor);
-    if (boss && knownShort) console.log(`    (${bossFloor}층 보스: 기록된 미달 — 탑 ★2 구간 조정 대기, 가드 제외)`);
-    if (boss && star > 1 && !tempLink && !knownShort && (boss.rate < 0.2 || boss.rate > 0.85)) failures.push(`탑 ${bossFloor}층: 보스 승률 ${pct(boss.rate)} (가드 20~85% 밖)`);
+    // C.94: ★2 구간은 구간별 층당 +%·보스 층 배율(perFloorByBand·bossScaleByBand)로 맞춰 20층도 가드에 든다 (C.85·C.84 의 '기록된 미달' 예외는 지움)
+    if (boss && star > 1 && !tempLink && (boss.rate < 0.2 || boss.rate > 0.85)) failures.push(`탑 ${bossFloor}층: 보스 승률 ${pct(boss.rate)} (가드 20~85% 밖)`);
   }
   const grown = campaignSaves.filter((s) => s.evolution.tierIndex >= MAX_DIFFICULTY - 1);
   const top = fight(grown, TT.floors, 64000);
