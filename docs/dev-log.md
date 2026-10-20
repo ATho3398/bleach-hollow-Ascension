@@ -406,3 +406,6 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 **테스트** 1067 → 1074 (+7, `tests/c79.test.ts`; c63·room-ui·c60 의 옛 이름 기대값, c75 단계 표시 형식 검사 갱신). typecheck·test·balance:check·build 통과.
 **캡처** `docs/captures/c79/`(1배, 8장): 걷기 `01` 호로 사막 · `02` 호로 숲 · `03` 사신 현세 거리 · `04` 사신 단가이, `05` 원정 전투(사막), `06` 등급전(세이레이테이 지붕), `07`·`08` 홈 물건 이름(호로·사신).
 
+
+## 그림 반영
+- 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.
