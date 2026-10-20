@@ -63,3 +63,17 @@ describe('책장 탭 통합 (34-5)', () => {
     expect(typeof bookView).toBe('function');
   });
 });
+
+describe('배경 확대 (34-6·34-7)', () => {
+  it('땅 띠가 낮은 장면만 같은 배율로 키운다 (하늘:땅 비율 유지, 줄이지 않음)', async () => {
+    const { bgZoom, sceneBg, BG_SCENES } = await import('../src/data/art/backgrounds');
+    expect(bgZoom(36)).toBeCloseTo(50 / 36);
+    expect(bgZoom(58)).toBe(1);
+    expect(bgZoom(95)).toBe(1);
+    expect(bgZoom(1)).toBeLessThanOrEqual(2.2);
+    const d = BG_SCENES.desert!;
+    const bg = sceneBg('desert', '/', ['bg-desert-sky.webp', 'bg-desert-ground.webp'])!;
+    expect(bg.layers[0]!.height / bg.layers[1]!.height).toBeCloseTo(d[0]!.height / d[1]!.height);
+    expect(bg.layers[1]!.height).toBeCloseTo(50);
+  });
+});

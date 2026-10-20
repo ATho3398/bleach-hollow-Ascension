@@ -106,8 +106,8 @@ export interface RoomConfig {
   characterArt: string;
   /** 소품 표시 이름 */
   props: Record<RoomProp, string>;
-  /** 소품 위치: 장면 가로·세로 %(중심) */
-  layout: Record<RoomProp, { x: number; y: number }>;
+  /** 소품 위치: 장면 가로 %(중심)·세로 %(이름표 아래 끝 = 바닥 쪽), scale = 뒷줄을 조금 작게 (기본 1, GDD 34-6) */
+  layout: Record<RoomProp, { x: number; y: number; scale?: number }>;
   /** 캐릭터 반응 말풍선 문구 (상태별 여러 개 중 무작위) */
   talk: Record<RoomTalk, string[]>;
 }
@@ -118,8 +118,8 @@ export const DEFAULT_ROOM: RoomConfig = {
   characterArt: 'char.hollow',
   props: { door: '문', altar: '수련장', book: '책장', chest: '상자', dummy: '훈련 인형', shop: '상점' },
   layout: {
-    book: { x: 28, y: 22 }, altar: { x: 58, y: 22 }, door: { x: 86, y: 40 },
-    chest: { x: 14, y: 68 }, dummy: { x: 80, y: 78 }, shop: { x: 36, y: 80 },
+    book: { x: 22, y: 88, scale: 0.8 }, altar: { x: 36, y: 86, scale: 0.8 }, door: { x: 74, y: 86, scale: 0.8 },
+    chest: { x: 8, y: 99 }, dummy: { x: 90, y: 99 }, shop: { x: 54, y: 99 },
   },
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],

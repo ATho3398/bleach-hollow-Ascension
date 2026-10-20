@@ -26,6 +26,8 @@ export interface SceneBgLayer {
 
 export interface SceneBg {
   id: string;
+  /** 확대 배율 (1 = 그대로) */
+  zoom: number;
   layers: SceneBgLayer[];
 }
 
@@ -67,6 +69,15 @@ export function bgArtKey(sceneId: string, layerId: string): string {
   return `bg.${sceneId}.${layerId}`;
 }
 
+/** 땅 띠가 장면 높이에서 차지할 목표(%, 약 45~55 의 가운데)와 최대 확대 배율 (GDD 34-6·34-7) */
+export const BG_GROUND_TARGET = 50;
+export const BG_ZOOM_MAX = 2.2;
+
+/** 장면 확대 배율: 땅 층이 목표보다 낮으면 그만큼, 이미 넘으면 1 (줄이지 않는다 — 하늘이 장면을 덮어야 한다) */
+export function bgZoom(groundHeight: number): number {
+  return Math.min(BG_ZOOM_MAX, Math.max(1, BG_GROUND_TARGET / groundHeight));
+}
+
 /** 장면 id → 들어 있는 층만 (없거나 모르는 장면이면 null) */
 export function sceneBg(sceneId: string | undefined | null, base = '/', files: readonly string[] = ART_FILES, scenes: Readonly<Record<string, readonly BgLayerDef[]>> = BG_SCENES): SceneBg | null {
   if (!sceneId) return null;
@@ -77,5 +88,9 @@ export function sceneBg(sceneId: string | undefined | null, base = '/', files: r
     const f = findArtFile(bgArtKey(sceneId, d.id), files);
     if (f) layers.push({ url: `${base.replace(/\/$/, '')}/${f}`, ratio: d.w / d.h, height: d.height, speed: d.speed });
   }
-  return layers.length > 0 ? { id: sceneId, layers } : null;
+  if (layers.length === 0) return null;
+  // 모든 층을 같은 배율로 키운다(하늘:땅 비율 그대로, 아래 기준, 넘치는 위쪽은 잘림)
+  const ground = defs.find((d) => d.id === 'ground');
+  const zoom = ground ? bgZoom(ground.height) : 1;
+  return { id: sceneId, zoom, layers: layers.map((l) => ({ ...l, height: l.height * zoom })) };
 }

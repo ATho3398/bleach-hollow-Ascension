@@ -34,6 +34,8 @@ export interface PropOpts {
   name: string;
   x: number;
   y: number;
+  /** 뒷줄 축소 배율 (기본 1) */
+  scale?: number;
   art: boolean;
   /** 수치·상태 표시 (덱 비어 있음 등) */
   alert?: boolean;
@@ -46,6 +48,7 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   b.dataset.prop = o.prop;
   b.style.left = `${o.x}%`;
   b.style.top = `${o.y}%`;
+  if (o.scale !== undefined && o.scale !== 1) b.style.setProperty('--prop-s', String(o.scale));
   b.setAttribute('aria-label', o.name);
   const shape = el('span', 'bha-prop__shape bha-art-img');
   const { src } = artUrls(`prop.${o.prop}`, BASE);
