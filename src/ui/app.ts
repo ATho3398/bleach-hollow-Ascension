@@ -100,7 +100,7 @@ export function startApp(host: HTMLElement): void {
   });
   const root = dev.view;
   // 다마고치 모드 (GDD 27장): 기기 둘레 몸체·키링·뒷면. 꾸밈을 걸 때마다 지금 캐릭터를 알려 준다
-  const tama = initTamago(dev);
+  const tama = initTamago(dev, { persist: () => persist() });
   const dress = (wear: WearState | null) => {
     applyCosmetics(wear);
     tama.setContext(wear && save ? getFaction(save.factionId) : null, wear ? save : null);

@@ -89,6 +89,13 @@ export function edgeThickness(body: { w: number; h: number }, sideArt?: { w: num
   return r2(Math.min(body.w, body.h) * BODY.edgeRatio);
 }
 
+/** 겹 두께 (GDD 30장 4번): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 count 겹 뒤로 쌓아 두께를 만든다. 각 겹의 뒤쪽 거리(px, 앞면 바로 뒤 1px부터 두께까지) */
+export const STACK_LAYERS = 12;
+export function stackDepths(count: number, thick: number): number[] {
+  const n = Math.max(0, Math.floor(count));
+  return Array.from({ length: n }, (_, i) => r2(1 + (thick * (i + 1)) / Math.max(1, n)));
+}
+
 export interface Rect {
   x: number;
   y: number;

@@ -3,11 +3,13 @@
 // 줌아웃 중에도 화면은 살아 움직이고 기기 버튼은 눌린다. 화면(LCD)을 탭하면 다시 줌인. [뒤집기] = 뒷면(몸체 뒷면 + 기록 판).
 // 키링 = 고리에 매단 감쇠 진자 2마디(tamagoLogic.ts), 탭·끌기 = 충격, 설정 [기울기로 흔들기]를 켜면 기울기를 중력 방향으로. 다마고치 모드일 때만 돌고 멈추면 쉰다.
 // 켜 둔 상태·기울기 설정은 이 브라우저에만(세이브 아님). 색은 꾸밈 토큰(--cos-shell-*, --bha-cos-keyring-*)만. 종족 분기 없음 — 이름·모양은 종족 설정.
-import { cosmeticName, deviceArt, deviceSideArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
+import { cosmeticName, deviceArt, sourceNote, deviceSideArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
 import { formName, tryGetForm } from '../../data/evolution';
 import { playerElementsOf } from '../../engine/evolution';
 import type { FactionConfig } from '../../engine/faction';
 import type { SaveData } from '../../game';
+import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../../shop';
+import { getOverlayHost, registerLayer } from './overlayHost';
 import { currentViewState } from '../viewScale';
 import { TAMAGO_CODE } from '../shortcutMap';
 import { motionReduced } from './cosmeticFx';
@@ -17,7 +19,7 @@ import { showToast } from './nest';
 import { isTypingTarget } from './shortcuts';
 import { toLocal, type Fit } from './viewport';
 import {
-  BODY, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, plateRows, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
+  BODY, STACK_LAYERS, stackDepths, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, plateRows, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
   TAMAGO_EVENT, toDeviceVec, clampView, zoomAt, wheelFactor, VIEW_HOME, type Pendulum, type Rect, type TamagoPrefs, type TamaLayout, type TamaView,
 } from './tamagoLogic';
 
@@ -34,6 +36,8 @@ export interface Tamago {
   isOn(): boolean;
   /** 앞면 ↔ 뒷면 (줌아웃 상태에서만) */
   flip(): void;
+  /** [디자인] 목록을 연다/닫는다 (줌아웃 상태에서만) */
+  openDesigns(): void;
   /** 지금 상태 (캡처·시험용): 진자 각도 */
   debug(): { on: boolean; back: boolean; pend: Pendulum; gravity: { x: number; y: number }; zoom: number; resting: boolean };
 }
@@ -90,7 +94,12 @@ function charmSvg(shape: KeyringShape): SVGSVGElement {
   return svg;
 }
 
-export function initTamago(dev: Device): Tamago {
+export interface TamagoHooks {
+  /** 기기 디자인을 바꾼 뒤 저장 */
+  persist?: () => void;
+}
+
+export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   const frame = dev.frame;
   let prefs: TamagoPrefs = loadTamagoPrefs(store());
   let faction: FactionConfig | null = null;
@@ -121,6 +130,15 @@ export function initTamago(dev: Device): Tamago {
   bodyArt.alt = '';
   bodyArt.hidden = true;
   const ring = el('div', 'bha-tama__ring');
+  // 겹 두께 (GDD 30장): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 뒤로 쌓아 실루엣을 따라가는 두께를 만든다 (뒤집는 동안만 보임)
+  const layers = Array.from({ length: STACK_LAYERS }, (_, i) => {
+    const im = el('img', 'bha-tama__layer') as HTMLImageElement;
+    im.alt = '';
+    im.hidden = true;
+    im.dataset.layer = String(i);
+    im.style.setProperty('--layer-shade', (0.6 - (0.24 * i) / (STACK_LAYERS - 1)).toFixed(2));
+    return im;
+  });
   // 옆면 두께 띠 (C.63·C.64, GDD 28장 2번·29장): 뒤집는 동안만 3D 로 세워 종이처럼 안 보이게. 옆면 그림이 있으면 그 그림, 없으면 몸체 색 CSS 띠
   const edgeL = el('div', 'bha-tama__edge bha-tama__edge--l');
   const edgeR = el('div', 'bha-tama__edge bha-tama__edge--r');
@@ -140,11 +158,13 @@ export function initTamago(dev: Device): Tamago {
   key.append(seg1);
   key.hidden = true;
   const ctrl = el('div', 'bha-tama__ctrl');
+  const designBtn = button({ label: '디자인', icon: 'i-rare', size: 'small', variant: 'ghost', onClick: () => openDesigns() });
+  designBtn.dataset.tama = 'design';
   const flipBtn = button({ label: '뒤집기', icon: 'i-swap', size: 'small', onClick: () => flip() });
   flipBtn.dataset.tama = 'flip';
   const zoomBtn = button({ label: '화면 확대', icon: 'i-plus', size: 'small', variant: 'ghost', onClick: () => toggle(false) });
   zoomBtn.dataset.tama = 'zoom-in';
-  ctrl.append(flipBtn, zoomBtn);
+  ctrl.append(flipBtn, designBtn, zoomBtn);
   // 그림 기기의 버튼 4개 누름 영역 (다마고치 모드에서 CSS 버튼 대신, GDD 27장 v5.33): 누르면 기기 버튼과 같다
   const hits = new Map<DeviceButton, HTMLButtonElement>();
   const HIT_LABEL: Record<DeviceButton, string> = { up: '위', down: '아래', ok: '확정', back: '취소' };
@@ -162,7 +182,7 @@ export function initTamago(dev: Device): Tamago {
     };
     hits.set(b, hb);
   }
-  root.append(edgeL, edgeR, body, bodyArt, ring, backFace, key, ctrl, ...hits.values());
+  root.append(...layers, edgeL, edgeR, body, bodyArt, ring, backFace, key, ctrl, ...hits.values());
   frame.append(root);
   // 화면(LCD) 탭 = 줌인. 줌아웃 중에만 LCD 를 덮는다 (화면은 그 밑에서 그대로 움직인다)
   const shield = el('button', 'bha-tama__shield');
@@ -222,8 +242,10 @@ export function initTamago(dev: Device): Tamago {
     for (const e of [edgeL, edgeR]) e.style.removeProperty('--side-art');
     bodyArt.hidden = true;
     backArt.hidden = true;
+    for (const l of layers) l.hidden = true;
     if (!c || !art) return relayout();
     bodyArt.src = `${BASE}${art.front}`;
+    for (const l of layers) l.src = bodyArt.src;
     if (art.back) backArt.src = `${BASE}${art.back}`;
     const place = () => {
       if (!bodyArt.naturalWidth || artId !== c.id) return;
@@ -231,6 +253,7 @@ export function initTamago(dev: Device): Tamago {
       frame.classList.add('has-tama-art');
       bodyArt.hidden = false;
       backArt.hidden = !art.back;
+      for (const l of layers) l.hidden = false;
       relayout();
     };
     bodyArt.onload = place;
@@ -304,6 +327,12 @@ export function initTamago(dev: Device): Tamago {
     box(edgeL, { x: layout.body.x, y: layout.body.y, w: thick, h: layout.body.h });
     box(edgeR, { x: layout.body.x + layout.body.w - thick, y: layout.body.y, w: thick, h: layout.body.h });
     if (artBox) {
+      // 겹 두께: 옆면 그림이 없을 때만 (있으면 CSS 가 숨김). 겹마다 뒤로 조금씩
+      const depth = stackDepths(layers.length, edgeThickness(layout.body, null, thicknessPct));
+      layers.forEach((l, i) => {
+        box(l, artBox!.box);
+        l.style.setProperty('--layer-z', `${-depth[i]!}px`);
+      });
       box(bodyArt, artBox.box);
       box(backArt, { x: 0, y: 0, w: artBox.box.w, h: artBox.box.h });
     }
@@ -552,6 +581,7 @@ export function initTamago(dev: Device): Tamago {
       pend = kick(pend, tapKick(1) * 0.6, reduced()); // 꺼낼 때 한 번 흔들린다
       wake();
     } else {
+      closeDesigns?.();
       if (back) {
         back = false;
         flipDeg = 0;
@@ -567,6 +597,62 @@ export function initTamago(dev: Device): Tamago {
     }
     syncTilt();
     window.dispatchEvent(new CustomEvent(TAMAGO_EVENT));
+  }
+
+  // ── [디자인] 목록 (GDD 30장): 가진 기기 디자인 중 하나를 고르면 바로 바뀐다. 착용은 트랙별(지금 트랙의 wear.device) ──
+  let closeDesigns: (() => void) | null = null;
+  function openDesigns(): void {
+    if (closeDesigns) return closeDesigns();
+    if (!on || !save) return;
+    const s = save;
+    const layer = el('div', 'bha-overlay bha-overlay--in-app bha-designs');
+    layer.setAttribute('role', 'dialog');
+    layer.setAttribute('aria-modal', 'true');
+    layer.setAttribute('aria-label', '기기 디자인');
+    const modal = el('div', 'bha-modal');
+    modal.append(el('h2', 'bha-modal__title', '기기 디자인'), el('p', 'bha-modal__body', '다마고치 모드에서 보이는 기기 모양. 고르면 바로 바뀐다.'));
+    const list = el('div', 'bha-designs__list');
+    const rows = () => {
+      list.replaceChildren();
+      const cur = s.wear.device ?? null;
+      const entries: { id: string | null; name: string; note: string }[] = [
+        { id: null, name: '기본형', note: '기본 제공' },
+        ...ownedDeviceDesigns(s).map((c) => ({ id: c.id, name: cosmeticName(c, faction), note: sourceNote(c) })),
+      ];
+      for (const e of entries) {
+        const worn = e.id === cur;
+        const row = el('button', `bha-designs__row${worn ? ' is-worn' : ''}`);
+        row.type = 'button';
+        row.dataset.design = e.id ?? 'basic';
+        row.setAttribute('aria-pressed', String(worn));
+        row.append(el('b', 'bha-designs__name', e.name), el('small', 'bha-designs__note', e.note), el('span', 'bha-designs__worn', worn ? '착용 중' : ''));
+        row.onclick = () => pick(e.id);
+        list.append(row);
+      }
+    };
+    const pick = (id: string | null) => {
+      if (id === null) unwearCategory(s, 'device');
+      else if (!wearCosmetic(s, id)) return;
+      hooks.persist?.();
+      paintDevice();
+      rows();
+    };
+    rows();
+    const close = () => {
+      if (!closeDesigns) return;
+      closeDesigns = null;
+      unregister();
+      layer.remove();
+      shield.hidden = !on;
+    };
+    const actions = el('div', 'bha-modal__actions');
+    actions.append(button({ label: '닫기', variant: 'primary', onClick: close }));
+    modal.append(list, actions);
+    layer.append(modal);
+    getOverlayHost().append(layer);
+    const unregister = registerLayer(layer, close);
+    closeDesigns = close;
+    shield.hidden = true; // 화면 덮개가 목록 탭을 가리지 않게
   }
 
   let flipping = false;
@@ -619,6 +705,7 @@ export function initTamago(dev: Device): Tamago {
 
   return {
     setContext(f, s) {
+      closeDesigns?.();
       faction = f;
       save = s;
       keyId = '';
@@ -634,6 +721,7 @@ export function initTamago(dev: Device): Tamago {
     toggle,
     isOn: () => on,
     flip,
+    openDesigns,
     debug: () => ({ on, back, pend: { ...pend }, gravity: { ...gravityLocal }, zoom: layout?.zoom ?? 1, resting: !raf }),
   };
 }

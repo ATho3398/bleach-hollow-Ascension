@@ -1,0 +1,263 @@
+{
+  "errors": [],
+  "shots": [
+    "01-badge-front-keyring-landscape.png",
+    "02-design-list-landscape.png",
+    "03a-list-after-basic-pick-landscape.png",
+    "03-basic-design-landscape.png",
+    "04-badge-again-landscape.png",
+    "05-flip-mid-30deg-landscape.png",
+    "05-flip-mid-60deg-landscape.png",
+    "06-back-face-landscape.png",
+    "07-ok-pressed-landscape.png",
+    "07-ok-after-landscape.png",
+    "08-zoomed-normal-landscape.png",
+    "01-badge-front-keyring-portrait.png",
+    "02-design-list-portrait.png",
+    "03a-list-after-basic-pick-portrait.png",
+    "03-basic-design-portrait.png",
+    "04-badge-again-portrait.png",
+    "05-flip-mid-30deg-portrait.png",
+    "05-flip-mid-60deg-portrait.png",
+    "06-back-face-portrait.png",
+    "07-ok-pressed-portrait.png",
+    "07-ok-after-portrait.png",
+    "08-zoomed-normal-portrait.png"
+  ],
+  "states": {
+    "landscape-start": {
+      "wear": {
+        "keyring": "keyring-orb",
+        "device": "device-badge"
+      },
+      "format": 27,
+      "owned": [
+        "keyring-orb",
+        "device-badge"
+      ]
+    },
+    "landscape-geometry": {
+      "art": {
+        "x": 207,
+        "y": 8,
+        "w": 429,
+        "h": 359
+      },
+      "lcd": {
+        "x": 322,
+        "y": 136,
+        "w": 198,
+        "h": 110
+      },
+      "hit": {
+        "up": {
+          "x": 258,
+          "y": 156,
+          "w": 33,
+          "h": 33
+        },
+        "down": {
+          "x": 258,
+          "y": 194,
+          "w": 33,
+          "h": 33
+        },
+        "ok": {
+          "x": 543,
+          "y": 150,
+          "w": 42,
+          "h": 42
+        },
+        "back": {
+          "x": 551,
+          "y": 197,
+          "w": 27,
+          "h": 27
+        }
+      },
+      "key": {
+        "x": 422,
+        "y": 28,
+        "w": 0,
+        "h": 0
+      },
+      "ring": {
+        "x": 419,
+        "y": 25,
+        "w": 7,
+        "h": 7
+      },
+      "layers": 12,
+      "layerZ": [
+        "-7.83px",
+        "-14.67px",
+        "-21.5px",
+        "-28.33px",
+        "-35.17px",
+        "-42px",
+        "-48.83px",
+        "-55.67px",
+        "-62.5px",
+        "-69.33px",
+        "-76.17px",
+        "-83px"
+      ]
+    },
+    "landscape-list": [
+      {
+        "id": "basic",
+        "worn": false,
+        "text": "기본형기본 제공"
+      },
+      {
+        "id": "device-badge",
+        "worn": true,
+        "text": "사신대행증기본 제공착용 중"
+      }
+    ],
+    "landscape-basic": {
+      "wear": {
+        "keyring": "keyring-orb"
+      },
+      "format": 27,
+      "owned": [
+        "keyring-orb",
+        "device-badge"
+      ],
+      "hasArt": false
+    },
+    "landscape-rebadge": {
+      "wear": {
+        "keyring": "keyring-orb",
+        "device": "device-badge"
+      },
+      "format": 27,
+      "owned": [
+        "keyring-orb",
+        "device-badge"
+      ],
+      "hasArt": true
+    },
+    "landscape-ok": {
+      "lcdBefore": "대원실 문\n수련 제단\n기록서\n장롱\n창문\n나무 인형\n매점\n식사 / 영력 보급\n재우기\n참백도 손질",
+      "lcdAfter": "칭호 도감\n\n해금 0 / 14\n\n등급\n0/4\n히든 등급\n0/3\n특별 태그\n0/5\n스토리\n0/2\n9석\n미해금\n"
+    },
+    "portrait-start": {
+      "wear": {
+        "keyring": "keyring-orb",
+        "device": "device-badge"
+      },
+      "format": 27,
+      "owned": [
+        "keyring-orb",
+        "device-badge"
+      ]
+    },
+    "portrait-geometry": {
+      "art": {
+        "x": 23,
+        "y": 207,
+        "w": 359,
+        "h": 429
+      },
+      "lcd": {
+        "x": 144,
+        "y": 322,
+        "w": 110,
+        "h": 198
+      },
+      "hit": {
+        "up": {
+          "x": 202,
+          "y": 258,
+          "w": 33,
+          "h": 33
+        },
+        "down": {
+          "x": 164,
+          "y": 258,
+          "w": 33,
+          "h": 33
+        },
+        "ok": {
+          "x": 198,
+          "y": 543,
+          "w": 42,
+          "h": 42
+        },
+        "back": {
+          "x": 166,
+          "y": 551,
+          "w": 27,
+          "h": 27
+        }
+      },
+      "key": {
+        "x": 362,
+        "y": 422,
+        "w": 0,
+        "h": 0
+      },
+      "ring": {
+        "x": 358,
+        "y": 419,
+        "w": 7,
+        "h": 7
+      },
+      "layers": 12,
+      "layerZ": [
+        "-7.83px",
+        "-14.67px",
+        "-21.5px",
+        "-28.33px",
+        "-35.17px",
+        "-42px",
+        "-48.83px",
+        "-55.67px",
+        "-62.5px",
+        "-69.33px",
+        "-76.17px",
+        "-83px"
+      ]
+    },
+    "portrait-list": [
+      {
+        "id": "basic",
+        "worn": false,
+        "text": "기본형기본 제공"
+      },
+      {
+        "id": "device-badge",
+        "worn": true,
+        "text": "사신대행증기본 제공착용 중"
+      }
+    ],
+    "portrait-basic": {
+      "wear": {
+        "keyring": "keyring-orb"
+      },
+      "format": 27,
+      "owned": [
+        "keyring-orb",
+        "device-badge"
+      ],
+      "hasArt": false
+    },
+    "portrait-rebadge": {
+      "wear": {
+        "keyring": "keyring-orb",
+        "device": "device-badge"
+      },
+      "format": 27,
+      "owned": [
+        "keyring-orb",
+        "device-badge"
+      ],
+      "hasArt": true
+    },
+    "portrait-ok": {
+      "lcdBefore": "대원실 문\n수련 제단\n기록서\n장롱\n창문\n나무 인형\n매점\n식사 / 영력 보급\n재우기\n참백도 손질",
+      "lcdAfter": "칭호 도감\n\n해금 0 / 14\n\n등급\n0/4\n히든 등급\n0/3\n특별 태그\n0/5\n스토리\n0/2\n9석\n미해금\n"
+    }
+  }
+}

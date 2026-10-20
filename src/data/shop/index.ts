@@ -44,7 +44,8 @@ export interface CosmeticItemDef {
   thickness?: number;
 }
 
-export type CosmeticSource = 'shop' | 'reward';
+/** 얻는 곳: shop = 상점 영옥 탭, reward = 보상으로만, default = 기본 제공(모든 세이브 보유, 상점에 안 나옴, GDD 30장) */
+export type CosmeticSource = 'shop' | 'reward' | 'default';
 export interface Pt {
   x: number;
   y: number;
@@ -111,7 +112,7 @@ function parseDevice(r: unknown): CosmeticItemDef {
   if (typeof c.look !== 'string' || !/^[a-z]+$/.test(c.look)) errors.push('look: 영문 소문자');
   if (c.id !== `device-${String(c.look)}`) errors.push('id: device-<look>');
   if (typeof c.name !== 'string' || !c.name) errors.push('name');
-  if (c.source !== 'shop' && c.source !== 'reward') errors.push('source: shop | reward');
+  if (c.source !== 'shop' && c.source !== 'reward' && c.source !== 'default') errors.push('source: shop | reward | default');
   const rect = (v: unknown): v is PctRect => isPct(v, ['x', 'y', 'w', 'h']) && (v as PctRect).w > 0 && (v as PctRect).h > 0;
   if (!rect(c.screen)) errors.push('screen: { x, y, w, h } 0~100');
   const bt = (c.buttons ?? {}) as Record<string, unknown>;
@@ -121,7 +122,7 @@ function parseDevice(r: unknown): CosmeticItemDef {
   if (errors.length) throw new Error(`기기 디자인 데이터 오류 (${String(c.id ?? '?')}): ${errors.join(', ')}`);
   const pr = (v: unknown): PctRect => { const r = v as PctRect; return { x: r.x, y: r.y, w: r.w, h: r.h }; };
   const buttons = Object.fromEntries(DEVICE_BUTTONS.map((b) => [b, pr(bt[b])])) as Record<DeviceButton, PctRect>;
-  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, device: { screen: pr(c.screen), buttons, ring: c.ring as Pt }, ...(c.thickness !== undefined ? { thickness: c.thickness as number } : {}) };
+  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, ...(c.source === 'default' ? { free: true } : {}), device: { screen: pr(c.screen), buttons, ring: c.ring as Pt }, ...(c.thickness !== undefined ? { thickness: c.thickness as number } : {}) };
 }
 
 export const SHOP_PROVISIONAL: boolean = raw.provisional;
@@ -185,6 +186,11 @@ export function deviceSideArt(c: Pick<CosmeticItemDef, 'look'>, files: readonly 
 /** 기본으로 주는 꾸밈 (GDD 29장) */
 export const FREE_COSMETICS: readonly CosmeticItemDef[] = COSMETIC_ITEMS.filter((c) => c.free === true);
 
+/** 얻는 곳 한 줄 (기기 디자인 목록에 보이는 말, GDD 30장). 새 디자인이 오면 사용자가 알려 준 조건대로 source 만 정한다 */
+export function sourceNote(c: Pick<CosmeticItemDef, 'source'>): string {
+  return c.source === 'default' ? '기본 제공' : c.source === 'reward' ? '보상으로 얻음' : '상점에서 구매';
+}
+
 /** 키링 그림 (public/art/keyring-<look>-<종족 모양>.png 먼저, 다음 keyring-<look>.png). 없으면 null = CSS/SVG 모양 */
 export function keyringArt(c: Pick<CosmeticItemDef, 'look'>, shape: string, files: readonly string[] = ART_FILES): string | null {
   return (shape !== c.look ? findArtFile(`keyring.${c.look}.${shape}`, files) : null) ?? findArtFile(`keyring.${c.look}`, files);
@@ -193,5 +199,6 @@ export function keyringArt(c: Pick<CosmeticItemDef, 'look'>, shape: string, file
 /** 상점 영옥 탭에 보이나: 기기 디자인은 그림이 있고 상점 판매(또는 이미 보유)일 때만, 나머지는 늘 */
 export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files: readonly string[] = ART_FILES): boolean {
   if (c.category !== 'device') return c.source !== 'reward' || owned.includes(c.id);
+  if (c.source === 'default') return false;
   return deviceArt(c, files) !== null && (c.source === 'shop' || owned.includes(c.id));
 }

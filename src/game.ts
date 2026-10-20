@@ -37,7 +37,7 @@ import { isBossId } from './data/bosses';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 26;
+export const SAVE_FORMAT_VERSION = 27;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -1085,6 +1085,18 @@ export function migrateSave(raw: unknown): SaveData | null {
       t.wear = w;
     });
     save.meta.format = 26;
+  }
+  if (save.meta.format < 27) {
+    // 형식 26 → 27 (C.65, GDD 30장 기본 기기 디자인 사신대행증): 기본 제공 기기 디자인을 보유로 주고, 기기 디자인을 입은 것이 없는 트랙(쉬는 트랙 포함)은 한 번 입힌다.
+    // 키링은 형식 26 에서 이미 한 번 입혔으므로 건드리지 않는다(해제한 것을 다시 입히지 않음). 이 뒤 [기본형]으로 바꾸면 그대로 둔다
+    const defaults = FREE_COSMETICS.filter((c) => c.category === 'device');
+    save.shared = { ...(save.shared ?? newSharedState()), cosmetics: [...new Set([...freeCosmeticIds(), ...(Array.isArray(save.shared?.cosmetics) ? save.shared.cosmetics : [])])] };
+    forEachTrack(save, (t) => {
+      const w: WearState = isRec(t.wear) ? t.wear : {};
+      for (const c of defaults) if (w[c.category as WearCategory] === undefined) w[c.category as WearCategory] = c.id;
+      t.wear = w;
+    });
+    save.meta.format = 27;
   }
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);

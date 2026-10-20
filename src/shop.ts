@@ -2,7 +2,7 @@
 // 품목은 src/data/shop, 가격·상한·효과량은 balance.ts provisional.shop, 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
 // 산 즉시 쓰는 방식: 먹이 = 먹이 개수 +1, 정화제·각성제 = 지금 캐릭터에 바로, 수련권 = 지금 트랙 +1, 타일 = 수집함 +1. 보관하는 건 다시 뽑기권·덱 칸·꾸밈뿐
 import { BALANCE } from './config/balance';
-import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, getCosmetic, getGoldItem, shopVisible, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
+import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, shopVisible, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
 import { canWear } from './data/skins';
 import { baseTilesFor, tileName } from './data/tiles';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
@@ -220,6 +220,11 @@ export function wearCosmetic(save: SaveData, id: string): boolean {
 export function unwearCategory(save: SaveData, category: CosmeticCategory): void {
   if (category === 'skin') save.skin = null;
   else delete save.wear[category as WearCategory];
+}
+
+/** 다마고치 모드 [디자인] 목록 (GDD 30장): 이 세이브가 가진 기기 디자인 중 그림이 있는 것 (데이터 순서). 기본형(CSS 기기)은 화면이 맨 앞에 따로 둔다 */
+export function ownedDeviceDesigns(save: Pick<SaveData, 'shared'>, files?: readonly string[]): CosmeticItemDef[] {
+  return COSMETIC_ITEMS.filter((c) => c.category === 'device' && save.shared.cosmetics.includes(c.id) && deviceArt(c, files) !== null);
 }
 
 /** 지금 트랙이 입은 꾸밈 품목 (분류 → 품목). 화면 표시(cosmetics.ts)가 읽는다 */
