@@ -4,7 +4,7 @@ import { BG_CREDIT, BG_SCENES, bgArtKey, parseBackgrounds, sceneBg } from '../sr
 import { artStem } from '../src/data/art/files';
 import { GROUNDS } from '../src/data/grounds';
 import { FACTIONS } from '../src/data/factions';
-import { groundBgId, roomOf } from '../src/engine/faction';
+import { groundBgId, roomOf, ROOM_PROPS } from '../src/engine/faction';
 
 describe('배경 데이터 (34-1)', () => {
   it('장면마다 층이 있고 파일 이름은 bg-<장면>-<층>', () => {
@@ -50,8 +50,16 @@ describe('종족 설정의 배경 연결 (34-1)', () => {
 });
 
 describe('홈 물건 이름 두 종족 통일 (34-2)', () => {
-  it('7종 이름이 두 종족 같다', () => {
-    const want = { door: '출발 문', altar: '수련장', book: '책장', chest: '보관함', window: '칭호 액자', dummy: '훈련 인형', shop: '상점' };
+  it('6종 이름이 두 종족 같다', () => {
+    const want = { door: '출발 문', altar: '수련장', book: '책장', chest: '보관함', dummy: '훈련 인형', shop: '상점' };
     for (const f of FACTIONS) expect(roomOf(f).props).toEqual(want);
+  });
+});
+
+describe('책장 탭 통합 (34-5)', () => {
+  it('홈 물건에 window 가 없고 책장 탭 파일이 있다', async () => {
+    expect(ROOM_PROPS as readonly string[]).not.toContain('window');
+    const { bookView } = await import('../src/ui/bookView');
+    expect(typeof bookView).toBe('function');
   });
 });

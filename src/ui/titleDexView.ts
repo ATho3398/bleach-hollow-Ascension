@@ -56,7 +56,7 @@ function titleRow(def: TitleDef, factionId: string, unlockedAt: number | null): 
   };
 }
 
-export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, kind: TitleKind = 'rank'): void {
+export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, kind: TitleKind = 'rank', lead?: HTMLElement): void {
   const at = new Map(save.titles.map((t) => [t.titleId, t.at]));
   const rowsOf = (k: TitleKind) => TITLES.filter((d) => d.kind === k).map((d) => titleRow(d, faction.id, at.get(d.id) ?? null));
   const md = masterDetail(rowsOf(kind), 0, '칭호');
@@ -72,7 +72,7 @@ export function titleDexView(root: HTMLElement, faction: FactionConfig, save: Sa
   tabs.setAttribute('aria-label', '칭호 종류');
   const sub = h('span');
   sub.append('해금 ', h('b', '', String(save.titles.length)), ` / ${TITLES.length}`);
-  lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '칭호 도감', sub, aside: [selectLast(tabs)] }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '칭호 도감', sub, aside: [...(lead ? [lead] : []), selectLast(tabs)] }), [md.list], [md.detail]);
 }
 
 /** 아직 알리지 않은 해금을 토스트(.bha-toast)로 보여 주고 seen 처리한다. 2.5초 뒤 올라가며(is-out) animationend 에서 제거한다 */
@@ -83,7 +83,7 @@ export function showTitleToasts(save: SaveData, faction: FactionConfig, persist:
   fresh.forEach((u, i) => {
     const def = TITLES.find((d) => d.id === u.titleId);
     if (!def) return;
-    showToast({ eyebrow: '칭호 해금', title: titleName(def, faction.id), meta: def.provisional ? '임시 조건 · 칭호 도감에서 확인' : '칭호 도감에서 확인' }, base + i);
+    showToast({ eyebrow: '칭호 해금', title: titleName(def, faction.id), meta: def.provisional ? '임시 조건 · 책장 > 칭호 도감에서 확인' : '책장 > 칭호 도감에서 확인' }, base + i);
     u.seen = true;
   });
   persist();

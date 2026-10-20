@@ -12,7 +12,7 @@
 | 캐릭터, 단계별 | `char-<종족>-<단계번호>.png` (단계번호는 1부터) | `char-hollow-1.png`, `char-shinigami-3.png` |
 | 캐릭터, 종족 공통 | `char-<종족>.png` | `char-hollow.png` |
 | 방 배경 | `scene-cave.png`(호로), `scene-room.png`(사신) | |
-| 방 안 물건 (두 종족 공통 한 장, GDD 34-2) | `prop-door.png`(출발 문) `prop-altar.png`(수련장) `prop-book.png`(책장) `prop-chest.png`(보관함) `prop-window.png`(칭호 액자) `prop-dummy.png`(훈련 인형) `prop-shop.png`(상점) | |
+| 방 안 물건 (두 종족 공통 한 장, GDD 34-2) | `prop-door.png`(출발 문) `prop-altar.png`(수련장) `prop-book.png`(책장) `prop-chest.png`(보관함) `prop-dummy.png`(훈련 인형) `prop-shop.png`(상점) | |
 | 사냥터·무대 배경 | `bg-<장면>-<층>.webp` (아래 11장) | `bg-desert-sky.webp` |
 
 - 종족 이름: 호로 = `hollow`, 사신 = `shinigami`.

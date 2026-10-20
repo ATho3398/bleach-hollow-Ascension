@@ -49,7 +49,6 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.altar': {},
   'prop.book': {},
   'prop.chest': {},
-  'prop.window': {},
   'prop.dummy': {},
   'prop.shop': {},
 };

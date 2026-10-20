@@ -50,8 +50,8 @@ import { practiceListView, practiceResultView } from './practiceView';
 import { resultView } from './resultView';
 import { expeditionView, getSpeed, setSpeed } from './expeditionView';
 import { planView } from './planView';
-import { dexView } from './dexView';
-import { showTitleToasts, titleDexView } from './titleDexView';
+import { bookView } from './bookView';
+import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
 import { evolutionView } from './evolutionPanel';
 import { roomView } from './roomView';
@@ -455,9 +455,8 @@ export function startApp(host: HTMLElement): void {
       onDepart: () => departScreen(faction),
       // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]
       onAltar: () => open('training', () => renderTraining(faction, s)),
-      onBook: () => open('dex', () => dexView(root, faction, s)),
+      onBook: () => open('dex', () => bookView(root, faction, s)),
       onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist)),
-      onWindow: () => open('titles', () => titleDexView(root, faction, s)),
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist)),
       onPractice: () => open('practice', () => practiceScreen(faction)),
       onRank: () => open('rank', () => rankScreen(faction)),
@@ -562,7 +561,7 @@ export function startApp(host: HTMLElement): void {
 
   function renderAltar(faction: FactionConfig, s: SaveData): void {
     altarView(dev, faction, s, roomOf(faction).props.altar, {
-      onDex: () => open('dex', () => dexView(root, faction, s)),
+      onDex: () => open('dex', () => bookView(root, faction, s)),
       onHelp: () => openHelp('evolution', true),
       onRebirth: () => open('rebirth', () => renderRebirth(faction, s)),
     });

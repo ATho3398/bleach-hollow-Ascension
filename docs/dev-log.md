@@ -415,5 +415,13 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - **그림 용량**(마스터G 지시): 홈 물건 7장 약 800~1100px(2.2MB) → 320×320 WebP q95, 합 약 141KB. 화면에서 차이 없음.
 **캡처** `docs/captures/c80/`(1배 2장): 호로·사신 홈.
 
+### C.81 칭호 액자 삭제 · 책장 탭 통합 (STAGE S-22, 코딩64, GDD 34-5 → v5.68)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.81. `BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로.
+사용자 원문: "칭호액자 말고 그냥 탭으로 책장에 통합시키거나 재단에 통합시키면 되잖아 저건" (마스터 결정: 책장에 통합)
+- 홈 물건 `window` 삭제(ROOM_PROPS·두 종족 props/layout·manifest·CSS·`prop-window.webp`), 남은 6종 재배치(책장 28,22 · 수련장 58,22).
+- `src/ui/bookView.ts` 신설: 책장 = [진화체 도감][칭호 도감] 바깥 탭(기본 진화체), 각 도감 머리에 탭줄로 넣어 기기·PC 포커스 이동 그대로. 수련 화면의 [도감] 길도 책장으로. 칭호 토스트 문구 "책장 > 칭호 도감에서 확인".
+- 도움말·튜토리얼에는 칭호 액자 언급 없음, 다마고치 모드 window prop 사용처 없음. art-guide 표에서 window 줄 삭제.
+**테스트** 1074 → 1075 (c79 책장 테스트 +1, 이름 기대값 6종으로). **캡처** `docs/captures/c81/`(1배 3장).
+
 ## 그림 반영
 - 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.

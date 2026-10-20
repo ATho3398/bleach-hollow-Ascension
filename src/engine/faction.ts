@@ -59,7 +59,7 @@ export type SlotLocation = 'body' | 'zanpakuto';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'window', 'dummy', 'shop'] as const;
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'dummy', 'shop'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy', 'hungry'] as const;
@@ -116,9 +116,9 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', window: '칭호 액자', dummy: '훈련 인형', shop: '상점' },
+  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', dummy: '훈련 인형', shop: '상점' },
   layout: {
-    window: { x: 22, y: 26 }, book: { x: 40, y: 22 }, altar: { x: 62, y: 24 }, door: { x: 86, y: 40 },
+    book: { x: 28, y: 22 }, altar: { x: 58, y: 22 }, door: { x: 86, y: 40 },
     chest: { x: 14, y: 68 }, dummy: { x: 80, y: 78 }, shop: { x: 36, y: 80 },
   },
   talk: {
