@@ -25,7 +25,7 @@ import {
 } from './variants';
 import type { FoodId } from '../faction';
 import { getBoss, isBossId } from '../../data/bosses';
-import { getChapter, getEpisode, type StoryLine } from '../../data/story';
+import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
 
 const EX = BALANCE.expedition;
@@ -40,6 +40,8 @@ const LOOT_SEED_SALT = 0x5f3759df;
 const VARIANT_SEED_SALT = 0x2545f491;
 /** 다시 뽑기(GDD 25-9) 전용 난수 소금 */
 const REROLL_SEED_SALT = 0x6c8e9cf5;
+/** 자유 원정 보스 등장 굴림(GDD 37장) 전용 난수 소금: 바퀴마다 시드에서 새로 만든다 (적·타일·흡수 난수를 바꾸지 않는다) */
+const FREE_BOSS_SEED_SALT = 0x1b873593;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 
@@ -67,7 +69,7 @@ export interface PendingBattle {
   trap?: boolean;
   /** 사냥 무리 2연전의 두 번째 전투 */
   second?: boolean;
-  /** 보스전이면 보스 id (GDD 25-3, 스토리 보스 화) */
+  /** 보스전이면 보스 id (GDD 25-3, 스토리 보스 화 · GDD 37장 자유 원정 등장) */
   boss?: string | null;
 }
 
@@ -152,6 +154,16 @@ export interface StoryRun {
   cue: 'mid' | null;
   /** 이 화 보스전 결과 (없으면 아직 안 싸움) */
   bossResult: BossBattleResult | null;
+}
+
+/** 자유 원정 보스 등장 (GDD 37장, 원정 형식 8): 스토리에서 이긴 보스 목록(출발 때 세이브에서), 등장(원정당 최대 1번), 싸운 결과 */
+export interface FreeBossRun {
+  /** 스토리에서 한 번 이긴 보스 id. 이 원정 사냥터의 장 보스(groundBossId)가 여기 있어야 굴린다 */
+  beaten: string[];
+  /** 이번 원정에 나온 보스: 보스 id·바퀴·칸. 아직이면 null */
+  appear: { bossId: string; lap: number; cell: number } | null;
+  /** 싸운 결과 (런 로그 bossBattles 재료). 아직이면 null */
+  result: BossBattleResult | null;
 }
 
 /** 원정에서 얻은 먹이 (GDD 23-1 전리품). 패배하면 마지막 바퀴 것을 잃는다 */
@@ -252,6 +264,8 @@ export interface ExpeditionState extends RiskState {
   variantLog: VariantLog;
   /** 스토리 화 진행 (GDD 25-4). 자유 원정은 null. 스토리에서는 드래프트·바퀴 변이를 끄고 인접 시너지는 고정 길대로 발동한다 */
   story: StoryRun | null;
+  /** 자유 원정 보스 등장 (GDD 37장). 스토리 화는 null */
+  freeBoss: FreeBossRun | null;
 }
 
 export interface ExpeditionSetup {
@@ -285,6 +299,8 @@ export interface ExpeditionSetup {
   story?: { chapterId: string; episodeId: string };
   /** 붕옥 해방·초월체 보유 패시브 (GDD 22-3, 0.05 = 전 능력치 +5%). 없으면 0 */
   statBonus?: number;
+  /** 스토리에서 한 번 이긴 보스 id (GDD 37장, 세이브 보스 도감). 자유 원정에서 그 사냥터 장 보스가 4바퀴째부터 나올 수 있다. 스토리 화는 무시 */
+  bossesBeaten?: string[];
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -349,6 +365,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     bonusSoul: 0,
     variantLog: { synergies: [], mutations: [], events: [], drafts: [] },
     story: setup.story ? { chapterId: setup.story.chapterId, episodeId: setup.story.episodeId, progress: 0, cleared: false, kills: 0, midShown: false, cue: null, bossResult: null } : null,
+    freeBoss: setup.story ? null : { beaten: [...(setup.bossesBeaten ?? [])], appear: null, result: null },
   };
   // 스토리 화의 고정 길 (GDD 25-4): 정해진 칸에 정해진 타일
   if (episode) for (const [cell, id] of Object.entries(episode.road)) exp.slots[Number(cell)] = id;
@@ -432,6 +449,46 @@ function planLap(exp: ExpeditionState): void {
     exp.mutation = rollMutation(exp.varRng, exp.lap);
     if (exp.mutation) exp.variantLog.mutations.push({ id: exp.mutation, lap: exp.lap });
   }
+  rollFreeBoss(exp);
+}
+
+/** 강적 소굴 타일인가 (강적을 부르는 spawn 타일, 상위 타일 포함) */
+function isEliteDen(id: string | null): boolean {
+  if (id === null) return false;
+  const e = getTile(id).effect;
+  return e.type === 'spawn' && e.enemyClass === 'elite';
+}
+
+/** 이 자유 원정에 나올 수 있는 보스: 사냥터 장 보스를 스토리에서 이겼으면 그 id (GDD 37장 1번) */
+export function freeBossCandidate(exp: Pick<ExpeditionState, 'factionId' | 'groundId' | 'story' | 'freeBoss'>): string | null {
+  if (exp.story || !exp.freeBoss) return null;
+  const id = groundBossId(exp.factionId, exp.groundId);
+  return id && exp.freeBoss.beaten.includes(id) ? id : null;
+}
+
+/** 자유 원정 보스 등장 굴림 (GDD 37장 2번): freeFromLap 바퀴째부터 바퀴 시작마다 freeChance, 원정당 최대 1번.
+ *  그 바퀴 길의 강적 소굴 한 칸이 보스 칸(없으면 둥지 앞 칸 = 바퀴 마지막 칸). 굴림은 시드·바퀴로 만든 따로 난수 */
+function rollFreeBoss(exp: ExpeditionState): void {
+  const fb = exp.freeBoss;
+  if (!fb || fb.appear || exp.lap < BX.freeFromLap) return;
+  const bossId = freeBossCandidate(exp);
+  if (!bossId) return;
+  const rng = createRng((exp.seed ^ FREE_BOSS_SEED_SALT ^ Math.imul(exp.lap, 2654435761)) >>> 0);
+  if (nextFloat(rng) >= BX.freeChance) return;
+  const dens: number[] = [];
+  for (let c = 1; c < EX.loopTiles; c++) if (isEliteDen(exp.slots[c] ?? null)) dens.push(c);
+  const cell = dens.length > 0 ? dens[nextInt(rng, dens.length)]! : EX.loopTiles - 1;
+  // 보스 칸은 그 칸의 원래 전투·타일 대신 보스 (야생 전투 칸이었으면 뺀다)
+  const w = exp.wildCells.indexOf(cell);
+  if (w >= 0) exp.wildCells.splice(w, 1);
+  fb.appear = { bossId, lap: exp.lap, cell };
+}
+
+/** 이번 바퀴에 아직 싸우지 않은 자유 원정 보스 칸 (걷기 화면 배너 "보스 기척", GDD 37장 2번). 없으면 null */
+export function pendingFreeBoss(exp: Pick<ExpeditionState, 'freeBoss' | 'lap' | 'pos'>): { bossId: string; cell: number } | null {
+  const a = exp.freeBoss?.appear;
+  if (!a || a.lap !== exp.lap || exp.freeBoss!.result || exp.pos > a.cell) return null;
+  return { bossId: a.bossId, cell: a.cell };
 }
 
 export function lapScale(lap: number): { hp: number; attack: number } {
@@ -528,6 +585,12 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     exp.elitesThisLap++;
     return startBattleAt(exp, cell, 'elite', false, null, null, false, bossAt.id);
   }
+  // 자유 원정 보스 (GDD 37장): 이번 바퀴 보스 칸이면 그 칸의 타일·전투 대신 보스
+  const fa = exp.freeBoss?.appear;
+  if (fa && fa.lap === exp.lap && fa.cell === cell && !exp.freeBoss!.result) {
+    exp.elitesThisLap++;
+    return startBattleAt(exp, cell, 'elite', false, null, null, false, fa.bossId);
+  }
   const id = exp.slots[cell];
   const tile = id ? getTile(id) : null;
   // 인접 시너지 (GDD 25-5 ②): 왼쪽 칸에 들어설 때 기록·보호막, 오른쪽 칸에서 한 번 쓰는 리스크
@@ -607,8 +670,8 @@ function startBattleAt(
     params.startShieldFraction = exp.nextShield;
     exp.nextShield = 0;
   }
-  // 보스는 보스 데이터의 적 (바퀴 강화·사냥터 강도만 입힌다), 아니면 출현 풀에서
-  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
+  // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서
+  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1);
   const atkK = m.enemyAttackMult ?? 1;
   if (hpK !== 1 || atkK !== 1) enemy = scaleEnemy(enemy, { hp: hpK, attack: atkK });
@@ -672,7 +735,9 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (pending.boss) {
     // 보스전 기록 (GDD 25-3): 강적 처치 수(영혼 결정·칭호)에 섞이지 않게 등급을 boss 로
     record.enemyClass = 'boss';
-    if (st) st.bossResult = { bossId: pending.boss, won: battle.status === 'won', durationSeconds: record.durationSeconds, phase: battle.boss?.phase ?? 1, seals: battle.boss?.seals ?? 0, lossReason: battle.lossReason };
+    const br: BossBattleResult = { bossId: pending.boss, won: battle.status === 'won', durationSeconds: record.durationSeconds, phase: battle.boss?.phase ?? 1, seals: battle.boss?.seals ?? 0, lossReason: battle.lossReason };
+    if (st) st.bossResult = br;
+    else if (exp.freeBoss) exp.freeBoss.result = br;
   }
   exp.battles.push(record);
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
@@ -706,8 +771,9 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     }
   }
   if (pending.boss) {
-    // 보스 보상 (GDD 25-3): 골드·희귀 먹이 (일반 전리품 대신), 흡수 화면은 늘 열리고 보스 특성이 확정 후보
-    exp.goldLoot.push({ amount: BX.reward.gold, lap: exp.lap });
+    // 보스 보상 (GDD 25-3): 골드·희귀 먹이 (일반 전리품 대신), 흡수 화면은 늘 열리고 보스 특성이 확정 후보. 자유 원정은 골드 × 원정 골드 배율 (GDD 37장 4번)
+    const bossGold = exp.story ? BX.reward.gold : Math.round(BX.reward.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak));
+    exp.goldLoot.push({ amount: bossGold, lap: exp.lap });
     exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
     exp.victoriesThisLap++;
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait);

@@ -258,8 +258,12 @@ export interface BossBattleRecord {
   seals: number;
   lossReason: 'hp' | 'timeout' | null;
   tierIndex: number;
-  /** 스토리 화 키 ("ch1/ep4"). 자유 원정 등장은 미정(25-3)이라 지금은 늘 스토리 */
+  /** 스토리 화 키 ("ch1/ep4"). 자유 원정 등장이면 null */
   episode: string | null;
+  /** 어디서 싸웠나 (GDD 37장 6번, C.86): story = 스토리 화, free = 자유 원정 등장. C.86 전 기록은 없음(= story) */
+  source?: 'story' | 'free';
+  /** 그 원정 난이도 ★ (C.86 부터) */
+  difficulty?: number;
 }
 
 /** 스토리 화 1회 기록 (GDD 25-4, 세이브 형식 22): 깨든 못 깨든 남긴다 */

@@ -8,7 +8,7 @@ import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
-  advance, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, inFrenzy, mutationMods, resolveEvent, riskBonus, type ExpeditionState,
+  advance, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
@@ -17,7 +17,7 @@ import { groundName, roomOf, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
-import { bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
+import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
 import { createExpClock } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
@@ -26,6 +26,7 @@ import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
 import { groundSceneBg } from './bha/sceneBg';
 import { storyGoalLine } from './storyView';
+import { bossName } from '../data/bosses';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -201,7 +202,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     nextStep();
   }
 
-  const tn_enemy = (p: PendingBattle) => `${p.elite ? '강적 ' : ''}${p.tileId ? `(${tn(p.tileId)}) ` : ''}`;
+  const tn_enemy = (p: PendingBattle) => p.boss ? `보스 ${bossName(p.boss, faction.id)}` : `${p.elite ? '강적 ' : ''}${p.tileId ? `(${tn(p.tileId)}) ` : ''}`;
 
   // ── 고정 DOM (한 번만 만든다) ──
   // 걷는 화면 (GDD 18-7): 캐릭터가 장면 가득 걷고, 정보는 배경 위에 떠 있는 작은 칩(왼쪽 위), 캐릭터 머리 위 말풍선(조우·획득·안내),
@@ -324,12 +325,23 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const goalText = storyGoalLine(exp);
     goal.hidden = goalText === null;
     if (goalText !== null) goal.replaceChildren(icon('i-flag-win'), goalText);
-    banner.hidden = !exp.mutation;
+    // 보스 기척 (GDD 37장 2번): 자유 원정에 보스가 나온 바퀴, 보스 칸을 지나기 전까지. 걷기 화면에는 길이 안 보이므로 칸 번호·남은 칸으로 표시
+    const omen = pendingFreeBoss(exp);
+    banner.hidden = !exp.mutation && !omen;
+    banner.classList.toggle('bha-exp__banner--boss', omen !== null);
+    const bannerKids: HTMLElement[] = [];
+    if (omen) {
+      const c = chip(`보스 기척 · ${bossName(omen.bossId, faction.id)}`, 'danger');
+      c.prepend(icon('i-warn', 'sm'));
+      const den = exp.slots[omen.cell];
+      bannerKids.push(c, el('span', 'bha-exp__bannersub', bossOmenSub(omen.cell, exp.pos, den ? tn(den) : null)));
+    }
     if (exp.mutation) {
       const c = chip(`${exp.lap}바퀴 변이 · ${mutationName(exp.mutation, faction.id)}`, 'rare');
       c.prepend(icon('i-warn', 'sm'));
-      banner.replaceChildren(c, el('span', 'bha-exp__bannersub', variantModsText(mutationMods(exp.mutation), faction.id).join(' · ')));
+      bannerKids.push(c, el('span', 'bha-exp__bannersub', variantModsText(mutationMods(exp.mutation), faction.id).join(' · ')));
     }
+    banner.replaceChildren(...bannerKids);
     main.classList.toggle('is-frenzy', inFrenzy(exp));
 
     walk.update({ walking: isWalking(exp.phase, paused), speed });

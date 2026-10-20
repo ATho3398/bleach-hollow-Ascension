@@ -22,7 +22,8 @@ import { MAX_DIFFICULTY } from '../difficulty';
 /** C.57: 5 (타일 변수 GDD 25-5: 변이·드래프트·이벤트 진행·골드·제단·보호막·함정·2연전·기록) */
 /** C.58: 6 (스토리 화 진행 story, 보스전 pending.boss) */
 /** C.75: 7 (원정 난이도 difficulty, GDD 32-1) */
-export const EXPEDITION_SNAPSHOT_VERSION = 7;
+/** C.86: 8 (자유 원정 보스 등장 freeBoss, GDD 37장 — 7 은 freeBoss 없음(null)으로 이어한다) */
+export const EXPEDITION_SNAPSHOT_VERSION = 8;
 
 export interface ExpeditionSnapshot {
   version: number;
@@ -104,6 +105,16 @@ function validStory(e: Record<string, unknown>): boolean {
   return st.bossResult === null || isObj(st.bossResult);
 }
 
+/** 자유 원정 보스 영역 (원정 형식 8): 스토리면 null, 자유 원정이면 이긴 보스 목록·등장·결과 */
+function validFreeBoss(e: Record<string, unknown>): boolean {
+  const fb = e.freeBoss;
+  if (fb === null) return true;
+  if (!isObj(fb) || !isStrArr(fb.beaten) || e.story !== null) return false;
+  const a = fb.appear;
+  if (a !== null && !(isObj(a) && isBossId(a.bossId) && isInt(a.lap, 1) && isInt(a.cell, 1) && (a.cell as number) < BALANCE.expedition.loopTiles)) return false;
+  return fb.result === null || isObj(fb.result);
+}
+
 /** 손상·형식 불일치 검사. 통과하면 원정 상태로 쓸 수 있다고 본다 (깊은 내용까지는 보지 않고 엔진이 쓰는 뼈대만 본다) */
 function validShape(e: unknown): e is ExpeditionState {
   if (!isObj(e)) return false;
@@ -144,7 +155,7 @@ function validShape(e: unknown): e is ExpeditionState {
   } else if (e.absorbOffer !== null) return false;
   if (e.outcome !== null || e.endReason !== null) return false;
   if (e.statBonus !== undefined && !(isNum(e.statBonus) && e.statBonus >= 0)) return false;
-  if (!validStory(e)) return false;
+  if (!validStory(e) || !validFreeBoss(e)) return false;
   return validVariants(e);
 }
 
@@ -152,7 +163,9 @@ function validShape(e: unknown): e is ExpeditionState {
 export function restoreExpedition(raw: unknown): RestoreResult {
   try {
     if (!isObj(raw)) return { ok: false, reason: 'corrupt' };
-    if (raw.version !== EXPEDITION_SNAPSHOT_VERSION || raw.balanceVersion !== BALANCE_VERSION) return { ok: false, reason: 'version' };
+    if ((raw.version !== EXPEDITION_SNAPSHOT_VERSION && raw.version !== 7) || raw.balanceVersion !== BALANCE_VERSION) return { ok: false, reason: 'version' };
+    // 형식 7 → 8: 자유 원정 보스 영역이 없으면 null (그 원정에는 보스가 나오지 않는다)
+    if (raw.version === 7 && isObj(raw.exp) && raw.exp.freeBoss === undefined) raw.exp.freeBoss = null;
     if (!validShape(raw.exp)) return { ok: false, reason: 'corrupt' };
     const exp = JSON.parse(JSON.stringify(raw.exp)) as ExpeditionState;
     // 휴식 중에는 저장하지 않지만, 혹시 그 상태가 들어오면 휴식을 마친 상태로 되살린다

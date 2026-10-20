@@ -17,7 +17,7 @@ import { inheritableTraits } from '../src/engine/rebirth';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import { GROUNDS } from '../src/data/grounds';
 import { BOSSES } from '../src/data/bosses';
-import { STORY_CHAPTERS, chapterContent } from '../src/data/story';
+import { STORY_CHAPTERS, chapterContent, groundBossId } from '../src/data/story';
 import { bossSetupOf } from '../src/engine/expedition';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
 
@@ -405,6 +405,43 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
   const [bLo, bHi] = SHX.basicFoodPerRunGuard;
   console.log(`\n상점 (GDD 25-9): 원정 1판 평균 골드 ${sumOn.gold.toFixed(1)} → 보통 먹이(${SHX.goldPrices['food-basic']}골드) ${basicPerRun.toFixed(2)}개 (가드 ${bLo}~${bHi}) · 원정 전리품 먹이 ${sumOn.food.toFixed(2)}개`);
   if (basicPerRun < bLo! || basicPerRun > bHi!) failures.push(`상점: 판당 골드로 살 수 있는 보통 먹이 ${basicPerRun.toFixed(2)}개 (가드 ${bLo}~${bHi} 밖, GDD 25-9)`);
+}
+
+// ── 보스 자유 원정 등장 (C.86, GDD 37장): 장 보스가 있는 사냥터마다 4바퀴 섞음 봇(타일 변수 켬, 1단계 새 몸·★1)으로 보스를 이기기 전/후 비교 ──
+// 등장 굴림은 따로 난수라 같은 시드 = 보스 칸 전까지 같은 원정(짝 비교). 가드: 두 종족 합산 패배율 +5%p 이하
+{
+  const FBN = 1000;
+  const BF = BALANCE.provisional.boss;
+  for (const g of GROUNDS) {
+    const bosses = ['hollow', 'shinigami'].map((fid) => groundBossId(fid, g.id));
+    if (bosses.every((b) => b === null)) continue;
+    let defOff = 0;
+    let defOn = 0;
+    let appeared = 0;
+    let bossLost = 0;
+    let goldOn = 0;
+    let goldOff = 0;
+    const runs = FBN * 2;
+    ['hollow', 'shinigami'].forEach((fid, i) => {
+      const dk = sanitizeDeck(newTileStock(), fid);
+      const boss = bosses[i];
+      for (let seed = 1; seed <= FBN; seed++) {
+        const mk = (beaten: string[]) => createExpedition({ factionId: fid, seed, hunger: 20, condition: 80, deck: dk, tileVariants: true, groundId: g.id, bossesBeaten: beaten });
+        const off = playExpedition(mk([]), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
+        const on = playExpedition(mk(boss ? [boss] : []), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
+        if (off.outcome === 'defeated') defOff++;
+        if (on.outcome === 'defeated') defOn++;
+        if (on.freeBoss?.appear) appeared++;
+        if (on.freeBoss?.result && !on.freeBoss.result.won) bossLost++;
+        goldOff += summarize(off).keptGold;
+        goldOn += summarize(on).keptGold;
+      }
+    });
+    const dInc = (defOn - defOff) / runs;
+    console.log(`\n보스 자유 원정 등장 (GDD 37장, 사냥터 ${g.id} 보스 ${bosses.map((b) => b ?? '-').join('/')}, 4바퀴 섞음 봇 ${FBN}회 × 종족, ${BF.freeFromLap}바퀴째부터 ${Math.round(BF.freeChance * 100)}%)`);
+    console.log(`  등장 ${appeared}/${runs}(${((appeared / runs) * 100).toFixed(1)}%) · 보스에게 짐 ${bossLost}/${appeared} · 패배율 ${((defOff / runs) * 100).toFixed(1)} → ${((defOn / runs) * 100).toFixed(1)}% (${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p, 가드 +5%p 이하) · 골드 ${(goldOff / runs).toFixed(1)} → ${(goldOn / runs).toFixed(1)}`);
+    if (dInc > 0.05) failures.push(`보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 37장 7번)`);
+  }
 }
 // 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않고(가드 25% 이상), 거의 항상이면 조건이 의미 없다(가드 85% 이하).
 // C.7: 측정은 "흡수하는 봇" 기준. 항상 놓아주는 봇은 skill 이 하나도 없어 첫 흡수 보장으로 늘 100% 라 의미가 없다 (참고 출력만)

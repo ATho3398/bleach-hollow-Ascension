@@ -39,6 +39,12 @@ export function bubbleText(o: { phase: ExpeditionPhase; paused: boolean; msg: st
 }
 
 /** 조우 말풍선을 보여 주고 전투로 넘어가기까지 (1x 기준 ms, 배속만큼 짧아진다) */
+/** 보스 기척 배너 아래 줄 (GDD 37장 2번, 순수): "7번 칸 · 강적 소굴 · 3칸 앞" — 그 칸에 서 있으면 "지금 이 칸" */
+export function bossOmenSub(cell: number, pos: number, tileLabel: string | null): string {
+  const left = cell - pos;
+  return `${cell}번 칸${tileLabel ? ` · ${tileLabel}` : ''} · ${left > 0 ? `${left}칸 앞` : '지금 이 칸'}`;
+}
+
 export const ENCOUNTER_DELAY_MS = 700;
 /** 감시 타이머 (GDD 19-1): 조우 뒤 멈추지 않은 시간이 이만큼 지나도 전투가 안 열리면 바로 진입한다 (실제 시간, 배속 무관) */
 export const ENCOUNTER_WATCHDOG_MS = 3000;

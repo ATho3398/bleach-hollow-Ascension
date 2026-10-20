@@ -20,9 +20,19 @@ import { BALANCE as B } from '../config/balance';
 import { chapterLabel } from './storyView';
 import { toward } from './bha/nestLogic';
 import { expeditionEndVitals } from '../engine/nest';
+import { difficultyGoldMultiplier } from '../engine/difficulty';
 
 /** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
 export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
+  // 자유 원정 보스 (GDD 37장 4번): 이기면 골드(× 원정 골드 배율)·잔치 — 전리품 줄에도 들어 있다
+  const fb = exp.freeBoss?.result;
+  if (fb) {
+    const BR = B.provisional.boss.reward;
+    const gold = Math.round(BR.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak));
+    return [fb.won
+      ? `자유 원정 보스 ${bossName(fb.bossId, faction.id)} 처치! ${TRADE_CURRENCY_NAME} +${gold} · ${faction.foodNames[BR.food as FoodId]} 1 · 보스 도감 처치 +1`
+      : `자유 원정 보스 ${bossName(fb.bossId, faction.id)}에게 졌다 (마지막 바퀴 전리품을 잃었다)`];
+  }
   const r = exp.storySettled;
   if (!r) return [];
   const ep = getEpisode(faction.id, r.chapterId, r.episodeId);

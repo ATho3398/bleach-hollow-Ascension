@@ -18,7 +18,7 @@ import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
   performRebirth, recordTraining, settleLiberationRisk, deckSizeOf, type SaveData,
-  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor,
+  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
@@ -610,6 +610,8 @@ export function startApp(host: HTMLElement): void {
       tileVariants: true,
       gold: save.shared.tradeCoins,
       statBonus: statBonusOf(save).total,
+      // 보스 자유 원정 등장 (GDD 37장): 스토리에서 이긴 보스. 사냥터는 배치 단계에서 바뀌므로 엔진이 바퀴 시작 때 그 사냥터 장 보스를 찾는다
+      bossesBeaten: bossesBeaten(save),
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
@@ -742,7 +744,7 @@ export function startApp(host: HTMLElement): void {
       skinId: save?.skin,
       formId: save?.evolution.formId,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
-      ...(p.boss ? { boss: { eyebrow: '보스' } } : {}),
+      ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 원정' } } : {}),
       // 배경 (GDD 34-1): 보스전은 무대(없으면 사냥터), 그 밖은 사냥터
       bg: (p.boss ? arenaSceneBg(faction) : null) ?? groundSceneBg(faction, exp.groundId),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,

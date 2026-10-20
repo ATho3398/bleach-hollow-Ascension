@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 43;
+export const BALANCE_VERSION = 44;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -357,6 +357,10 @@ export const BALANCE = {
       timeLimitSeconds: 180,
       seal: { everySeconds: 10, seconds: 4, cells: 1 },
       reward: { gold: 100, food: 'feast', firstJade: 10 },
+      /** 자유 원정 등장 (GDD 37장, C.86): 그 사냥터 장 보스를 스토리에서 이긴 뒤, freeFromLap 바퀴째부터 바퀴 시작마다 freeChance (원정당 최대 1번).
+       *  보상 골드 = reward.gold × 원정 골드 배율(★·연속), 먹이 = reward.food. 첫 처치 영옥·칭호 없음 */
+      freeChance: 0.1,
+      freeFromLap: 4,
     },
     /** 스토리 모드 (GDD 25-4·25-7): 화 클리어(매번) 골드·먹이, 첫 클리어 영옥, 장 클리어 영옥 */
     story: {

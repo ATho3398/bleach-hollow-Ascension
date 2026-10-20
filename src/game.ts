@@ -692,6 +692,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   settleStreak(save, exp);
   // 스토리 화·보스 (GDD 25-3·25-4): 기록·보상. 칭호(보스 첫 처치·장 클리어)는 바로 아래 칭호 평가가 런 로그를 읽어 준다
   if (exp.story) exp.storySettled = settleStory(save, exp, nowMs);
+  // 자유 원정 보스 (GDD 37장): 도감 처치 수·런 로그 (골드·잔치는 원정 전리품으로 이미 들어왔다, 첫 처치 영옥·칭호 없음)
+  settleFreeBoss(save, exp, nowMs);
   checkTitles(save, 'expedition', nowMs);
   // 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것)
   return canEvolve(save.evolution) ? performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition }) : null;
@@ -715,7 +717,7 @@ export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number 
       out.bossFirstKill = br.bossId;
       out.jade += BX.reward.firstJade;
     }
-    save.runLog.bossBattles.push({ at: nowMs, runId: exp.runId, factionId: save.factionId, bossId: br.bossId, won: br.won, firstKill, durationSeconds: br.durationSeconds, phase: br.phase, seals: br.seals, lossReason: br.lossReason, tierIndex: exp.evolution.tierIndex, episode: key });
+    save.runLog.bossBattles.push({ at: nowMs, runId: exp.runId, factionId: save.factionId, bossId: br.bossId, won: br.won, firstKill, durationSeconds: br.durationSeconds, phase: br.phase, seals: br.seals, lossReason: br.lossReason, tierIndex: exp.evolution.tierIndex, episode: key, source: 'story', difficulty: exp.difficulty });
   }
   if (st.cleared) {
     const had = prog.cleared[key];
@@ -735,6 +737,23 @@ export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number 
   save.shared.jade += out.jade;
   save.runLog.storyRuns.push({ at: nowMs, runId: exp.runId, factionId: save.factionId, chapterId: st.chapterId, episodeId: st.episodeId, cleared: st.cleared, firstClear: out.firstClear, chapterCleared: out.chapterCleared, tierIndex: exp.evolution.tierIndex });
   return out;
+}
+
+/** 스토리에서 한 번 이긴 보스 id (GDD 37장 1번): 보스 도감에 처치가 있는 보스. 자유 원정 출발 때 createExpedition 의 bossesBeaten 으로 넘긴다 */
+export function bossesBeaten(save: Pick<SaveData, 'bossDex'>): string[] {
+  return Object.entries(save.bossDex ?? {}).filter(([, d]) => (d?.kills ?? 0) > 0).map(([id]) => id);
+}
+
+/** 자유 원정 보스전 정산 (GDD 37장 4·6번): 이기면 보스 도감 처치 수 +1, 런 로그 bossBattles 에 source "free"·원정 ★. 첫 처치 영옥·칭호는 스토리에서 이미 받았으므로 없다 */
+export function settleFreeBoss(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): void {
+  const br = exp.freeBoss?.result;
+  if (!br) return;
+  const dex = save.bossDex[br.bossId];
+  if (br.won) save.bossDex[br.bossId] = { kills: (dex?.kills ?? 0) + 1, firstAt: dex?.firstAt ?? nowMs };
+  save.runLog.bossBattles.push({
+    at: nowMs, runId: exp.runId, factionId: save.factionId, bossId: br.bossId, won: br.won, firstKill: false, durationSeconds: br.durationSeconds, phase: br.phase, seals: br.seals,
+    lossReason: br.lossReason, tierIndex: exp.evolution.tierIndex, episode: null, source: 'free', difficulty: exp.difficulty,
+  });
 }
 
 export type SynthResult = { ok: true; upgradedId: string } | { ok: false; reason: string };

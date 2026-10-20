@@ -103,6 +103,8 @@
 .bha-exp__banner { position: absolute; top: var(--bha-sp-4); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); max-width: 46%; padding: var(--bha-sp-2) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-rare); background: rgb(0 0 0 / .62); text-align: center; pointer-events: none; }
 .bha-exp__bannersub { font-size: var(--bha-fs-xs); color: var(--bha-text-1); }
 .bha-exp__banner[hidden] { display: none; }
+/* 보스 기척 (GDD 37장): 자유 원정 보스가 나온 바퀴 */
+.bha-exp__banner--boss { border-color: var(--bha-danger); }
 
 /* 카드 배치 단계 화면 */
 .bha-plan { gap: var(--bha-sp-4); }

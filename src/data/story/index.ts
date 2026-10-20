@@ -127,6 +127,18 @@ export function getEpisode(factionId: string, chapterId: string, episodeId: stri
   return e;
 }
 
+/** 사냥터의 장 보스 (GDD 37장, C.86): 그 사냥터를 무대로 하는 장의 마지막 화 보스 id. 그 종족의 장 내용이 아직 없거나 마지막 화에 보스가 없으면 null.
+ *  엔진은 보스 id 를 모른다 — 장 데이터가 생기면 그 사냥터에 자동으로 연결된다 */
+export function groundBossId(factionId: string, groundId: string): string | null {
+  for (const ch of STORY_CHAPTERS) {
+    if (ch.groundId !== groundId) continue;
+    const eps = chapterContent(factionId, ch.id)?.episodes ?? [];
+    const boss = eps[eps.length - 1]?.boss?.id;
+    if (boss) return boss;
+  }
+  return null;
+}
+
 /** 세이브·런 로그 키: "ch1/ep2" */
 export function episodeKey(chapterId: string, episodeId: string): string {
   return `${chapterId}/${episodeId}`;

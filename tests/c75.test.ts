@@ -283,7 +283,7 @@ describe('32-1 4·8번: ★ 열림(세이브)·마이그레이션·런 로그', 
     exp.outcome = 'returned';
     exp.endReason = 'returned';
     expect(buildRunRecord(exp).difficulty).toBe(2);
-    expect(EXPEDITION_SNAPSHOT_VERSION).toBe(7);
+    expect(EXPEDITION_SNAPSHOT_VERSION).toBeGreaterThanOrEqual(7);
     const e2 = mk({ difficulty: 3 });
     toBattle(e2);
     const snap = serializeExpedition(e2, 1, 1)!;
