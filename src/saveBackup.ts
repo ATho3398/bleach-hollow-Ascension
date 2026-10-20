@@ -47,6 +47,13 @@ function looksComplete(s: SaveData): boolean {
   );
 }
 
+/** 가져오기는 고른 파일이라 엄격하게 (C.70): 있는데 모양이 틀린 핵심 영역은 손상으로 본다. 빠진 영역은 기기 세이브처럼 migrateSave 가 채운다 */
+function wrongTyped(raw: Record<string, unknown>): boolean {
+  const log = raw.runLog as Record<string, unknown>;
+  return ['nest', 'build', 'tiles', 'evolution'].some((k) => k in raw && !isObj(raw[k]))
+    || ['battles', 'runs', 'absorbs'].some((k) => k in log && !isArr(log[k]));
+}
+
 /** 문자열을 세이브로 읽는다: 형식 확인 → 이전 버전은 기존 마이그레이션 → 핵심 구조 확인. 새 버전·손상은 거부 */
 export function parseImport(text: string): ImportResult {
   const t = text.replace(/^﻿/, '').trim();
@@ -63,6 +70,8 @@ export function parseImport(text: string): ImportResult {
   const fromFormat = raw.meta.format;
   if (fromFormat > SAVE_FORMAT_VERSION) return { ok: false, reason: 'newer' };
   if (!Number.isInteger(fromFormat) || fromFormat < 1) return { ok: false, reason: 'corrupt' };
+  if (!FACTIONS.some((f) => f.id === raw.factionId)) return { ok: false, reason: 'faction' };
+  if (wrongTyped(raw)) return { ok: false, reason: 'corrupt' };
   let save: SaveData | null;
   try {
     save = migrateSave(raw);
@@ -70,7 +79,6 @@ export function parseImport(text: string): ImportResult {
     return { ok: false, reason: 'corrupt' };
   }
   if (!save || !looksComplete(save)) return { ok: false, reason: 'corrupt' };
-  if (!FACTIONS.some((f) => f.id === save.factionId)) return { ok: false, reason: 'faction' };
   return { ok: true, save, fromFormat, migrated: fromFormat < SAVE_FORMAT_VERSION };
 }
 
@@ -116,6 +124,18 @@ export function swapWithBackup(storage: StorageLike, slot = 1): boolean {
   } catch {
     return false;
   }
+}
+
+/** 세이브가 손상돼 열 수 없을 때 (C.70): 백업이 읽히면 백업과 맞바꾼다 — 손상본은 백업 자리에 남아 [되돌리기]로 다시 볼 수 있다.
+ *  백업도 못 읽거나 쓰기가 막히면 false (아무것도 바꾸지 않는다) */
+export function recoverFromBackup(storage: StorageLike, slot = 1): boolean {
+  try {
+    const backup = storage.getItem(slotBackupKey(slot));
+    if (!backup || !migrateSave(JSON.parse(backup))) return false;
+  } catch {
+    return false;
+  }
+  return swapWithBackup(storage, slot);
 }
 
 /** 백업 까닭 표시 (GDD 24-5) */

@@ -56,6 +56,7 @@ export interface RoomHandlers {
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
 let lastMood: Mood | null = null;
 const IDLE_TALK_MS = 14000;
+let idleTimer = 0;
 
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
   save.tiles.deck = sanitizeDeck(save.tiles, faction.id, deckSizeOf(save));
@@ -238,7 +239,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   if (greet) window.setTimeout(() => main.isConnected && react(pickLine(room.talk, greet), 5200), 500);
   else if (lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);
   lastMood = mood;
-  const idle = window.setInterval(() => {
+  // 방을 다시 그릴 때 이전 방의 혼잣말 타이머를 바로 끈다 (C.70: 화면을 빠르게 오가면 떨어진 방 DOM 이 최대 14초씩 쌓였다)
+  window.clearInterval(idleTimer);
+  const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
     if (Math.random() < 0.5) say(pickLine(room.talk, mood));
   }, IDLE_TALK_MS);

@@ -865,6 +865,7 @@ export const SAVE_KEY = 'bleach-hollow-ascension.save';
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
+  removeItem?(key: string): void;
 }
 
 /** 이전 형식 세이브를 현재 형식으로 올린다. 알 수 없는 데이터는 null */
@@ -874,6 +875,9 @@ export function migrateSave(raw: unknown): SaveData | null {
   if (typeof r.factionId !== 'string' || !r.runLog || typeof r.meta?.format !== 'number') return null;
   const save = r as SaveData;
   if (save.meta.format > SAVE_FORMAT_VERSION) return null;
+  // 형식 번호가 정수가 아니면(NaN 등) 어느 단계도 타지 않고 다음 저장 때 null 로 써져 세이브를 잃는다 → 읽지 않는다 (C.70)
+  if (!Number.isInteger(save.meta.format) || save.meta.format < 1) return null;
+  repairRunLog(save.runLog);
   if (save.meta.format < 2) {
     // 형식 1 → 2: BattleRecord 에 enemyId, factionId, seed, riskGained, absorbGained, lossReason 추가
     save.runLog.battles = save.runLog.battles.map((b) => ({
@@ -1098,6 +1102,7 @@ export function migrateSave(raw: unknown): SaveData | null {
     });
     save.meta.format = 27;
   }
+  if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
   for (const t of save.otherTracks) if (typeof t.parkedAt !== 'number' || !Number.isFinite(t.parkedAt)) t.parkedAt = Date.now();
@@ -1114,6 +1119,36 @@ export function migrateSave(raw: unknown): SaveData | null {
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
   return save;
+}
+
+/** 런 로그 뼈대 보정 (C.70): 빠진 목록·객체는 빈 값으로, 목록 안의 객체가 아닌 항목은 버린다. 있는 기록은 그대로 둔다 (CLAUDE.md 규칙 4).
+ *  형식 단계(.map)가 빠진 목록에서 멈추지 않게 마이그레이션 전에 부른다 */
+function repairRunLog(log: RunLog): void {
+  const l = log as unknown as Record<string, unknown>;
+  const d = emptyRunLog() as unknown as Record<string, unknown>;
+  for (const [k, v] of Object.entries(d)) {
+    if (Array.isArray(v)) l[k] = Array.isArray(l[k]) ? (l[k] as unknown[]).filter(isRec) : [];
+    else if (!isRec(l[k])) l[k] = v;
+  }
+  if (!Array.isArray(log.tiers.evolutions)) log.tiers.evolutions = [];
+}
+
+/** 지금 트랙의 핵심 구조 보정 (C.70). 둥지·빌드·타일·도감 같은 빠진 영역은 처음 값으로 채우고, 진화 상태가 없으면 고칠 수 없으므로 false(→ 백업 복구).
+ *  예전에는 빠진 영역을 그대로 열어 방·원정 화면이 그리다 멈췄다 */
+function repairCore(save: SaveData): boolean {
+  const now = Date.now();
+  const nestDef = newNest(now) as unknown as Record<string, unknown>;
+  const nest: Record<string, unknown> = isRec(save.nest) ? save.nest as unknown as Record<string, unknown> : {};
+  for (const [k, v] of Object.entries(nestDef)) if (typeof nest[k] !== typeof v || (typeof v === 'number' && !Number.isFinite(nest[k] as number))) nest[k] = v;
+  save.nest = nest as unknown as NestState;
+  const b = save.build as Partial<BuildState> | undefined;
+  if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots)) save.build = newBuild();
+  else if (!Array.isArray(b.equipOrder)) b.equipOrder = [];
+  const t = save.tiles as Partial<TileStock> | undefined;
+  save.tiles = isRec(t) ? { collection: isRec(t.collection) ? t.collection as Record<string, number> : newTileStock().collection, deck: Array.isArray(t.deck) ? t.deck.filter((x): x is string => typeof x === 'string') : [] } : newTileStock();
+  save.titles = Array.isArray(save.titles) ? save.titles : [];
+  if (!Array.isArray(save.formDex)) save.formDex = [...(Array.isArray(save.evolution?.formHistory) ? save.evolution.formHistory : [])];
+  return isTrackShape(save);
 }
 
 /** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
@@ -1198,11 +1233,13 @@ export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData
   }
 }
 
-export function writeSave(storage: StorageLike, save: SaveData, key: string = SAVE_KEY): void {
+/** 저장. 쓰기가 막히면(시크릿 모드·저장 공간 가득) false — 공간 확보·알림은 슬롯 쪽(writeSlotSave)이 한다 */
+export function writeSave(storage: StorageLike, save: SaveData, key: string = SAVE_KEY): boolean {
   try {
     storage.setItem(key, JSON.stringify(save));
+    return true;
   } catch {
-    // 저장 공간이 막힌 환경(시크릿 모드 등)에서는 이번 판만 기록이 남지 않는다
+    return false;
   }
 }
 

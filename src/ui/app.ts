@@ -16,7 +16,7 @@ import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
-  performRebirth, recordTraining, settleLiberationRisk, writeSave, deckSizeOf, type SaveData,
+  performRebirth, recordTraining, settleLiberationRisk, deckSizeOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
@@ -38,8 +38,8 @@ import { setTitleRequest, signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
-import { allSlotSummaries, lastPlayedSlot, slotKey, stashSlot, touchSlot } from '../saveSlots';
-import { needsMigration } from '../saveBackup';
+import { allSlotSummaries, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
+import { needsMigration, recoverFromBackup } from '../saveBackup';
 import { setBgm } from './bgm';
 import type { BgmTrack } from '../data/audio/bgm';
 import { BALANCE } from '../config/balance';
@@ -127,9 +127,17 @@ export function startApp(host: HTMLElement): void {
     markSeen(save); // 마지막 접속 시각 (GDD 24-1)
     // 마지막 화면 키 (GDD 19-3): 원정 흐름(배치 후 출발 ~ 결과 전) 안이면 원정, 아니면 방
     save.lastScreen = activeExp !== null && activeExp.phase !== 'ended' ? 'expedition' : 'room';
-    writeSave(localStorage, save, slotKey(slot));
+    // 저장 공간 부족 (C.70): 백업을 지워 썼거나 그래도 못 썼으면 한 번씩 알린다 (예전에는 말없이 진행이 사라졌다)
+    const w = writeSlotSave(localStorage, save, slot);
+    if (w !== 'ok' && !storageWarned.has(w)) {
+      storageWarned.add(w);
+      showToast(w === 'freed'
+        ? { eyebrow: '저장 공간', title: '공간이 부족해 백업을 지웠다', meta: '진행은 저장됐다. 설정 > 백업에서 내보내기를 해 두자.' }
+        : { eyebrow: '저장 공간', title: '저장 공간이 가득 차 저장하지 못했다', meta: '설정 > 백업에서 내보내기를 하고 쓰지 않는 슬롯을 비우자.' }, 0, 5200);
+    }
     touchSlot(localStorage, slot);
   };
+  const storageWarned = new Set<string>();
   /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
   let resumeNote = '';
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
@@ -226,7 +234,7 @@ export function startApp(host: HTMLElement): void {
     const sums = allSlotSummaries(localStorage);
     slotPickView(root, mode, sums, FACTIONS, (sum) => {
       if (mode === 'load') {
-        if (sum.state === 'ok') enterSlot(sum.slot);
+        if (sum.state === 'ok' || (sum.state === 'broken' && sum.recoverable)) enterSlot(sum.slot);
       } else if (mode === 'new') {
         const begin = () => open('species', () => renderSpecies(sum.slot));
         if (sum.state === 'empty') begin();
@@ -272,9 +280,13 @@ export function startApp(host: HTMLElement): void {
     } catch {
       raw = null;
     }
-    const loaded = loadSave(localStorage, slotKey(n));
+    let loaded = loadSave(localStorage, slotKey(n));
+    // 손상된 세이브 (C.70): 백업이 읽히면 맞바꿔 연다(손상본은 백업 자리에 남는다). 백업도 안 되면 시작 화면에 알린다
+    const recovered = !loaded && recoverFromBackup(localStorage, n);
+    if (recovered) loaded = loadSave(localStorage, slotKey(n));
     if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
-    if (needsMigration(raw)) stashSlot(localStorage, n, 'migration');
+    if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: `슬롯 ${n}을 백업에서 열었다`, meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
+    else if (needsMigration(raw)) stashSlot(localStorage, n, 'migration');
     save = loaded;
     slot = n;
     activeExp = null;

@@ -1,7 +1,7 @@
 // 세이브 슬롯 (Q-3, C.31): 슬롯 3개, 슬롯별 localStorage 키. 슬롯 1 = 기존 키 그대로라 옛 세이브는 마이그레이션 없이 슬롯 1이 된다.
 // 슬롯 밖 정보(마지막 플레이 시각)는 별도 키 하나에 둔다 → SaveData 구조와 SAVE_FORMAT_VERSION 은 그대로.
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
-import { migrateSave, SAVE_KEY, type SaveData, type StorageLike } from './game';
+import { migrateSave, SAVE_KEY, writeSave, type SaveData, type StorageLike } from './game';
 
 export const SLOT_COUNT = 3;
 /** 슬롯별 마지막 플레이 시각 */
@@ -16,7 +16,8 @@ export const slotNumbers = (): number[] => Array.from({ length: SLOT_COUNT }, (_
 
 export type SlotSummary =
   | { slot: number; state: 'empty' }
-  | { slot: number; state: 'broken' }
+  /** recoverable: 본 세이브는 손상됐지만 슬롯 백업이 읽힌다 → 열면 백업으로 복구한다 (C.70) */
+  | { slot: number; state: 'broken'; recoverable: boolean }
   | {
       slot: number;
       state: 'ok';
@@ -74,7 +75,7 @@ export function slotSummary(storage: StorageLike, slot: number): SlotSummary {
   } catch {
     save = null;
   }
-  if (!save || !save.evolution || !save.runLog || !Array.isArray(save.runLog.runs)) return { slot, state: 'broken' };
+  if (!save || !save.evolution || !save.runLog || !Array.isArray(save.runLog.runs)) return { slot, state: 'broken', recoverable: backupReadable(storage, slot) };
   return {
     slot,
     state: 'ok',
@@ -84,6 +85,15 @@ export function slotSummary(storage: StorageLike, slot: number): SlotSummary {
     playedAt: readMeta(storage).played[String(slot)] ?? null,
     inExpedition: save.activeExpedition != null,
   };
+}
+
+function backupReadable(storage: StorageLike, slot: number): boolean {
+  try {
+    const text = storage.getItem(slotBackupKey(slot));
+    return !!text && migrateSave(JSON.parse(text)) !== null;
+  } catch {
+    return false;
+  }
 }
 
 export const allSlotSummaries = (storage: StorageLike): SlotSummary[] => slotNumbers().map((n) => slotSummary(storage, n));
@@ -141,6 +151,26 @@ export function stashSlot(storage: StorageLike, slot: number, reason: BackupReas
   } catch {
     return false;
   }
+}
+
+export type SlotWrite = 'ok' | 'freed' | 'failed';
+
+/** 슬롯 저장 (C.70). 저장 공간이 가득 차 쓰기가 막히면 백업부터 지우고 다시 쓴다 — 이 슬롯 백업 → 다른 슬롯 백업 순.
+ *  런 로그는 줄이지 않는다(CLAUDE.md 규칙 4). 지워서 썼으면 'freed', 그래도 막히면 'failed'(지금 세이브 원문은 그대로 남는다) */
+export function writeSlotSave(storage: StorageLike, save: SaveData, slot: number): SlotWrite {
+  if (writeSave(storage, save, slotKey(slot))) return 'ok';
+  if (!storage.removeItem) return 'failed';
+  for (const n of [slot, ...slotNumbers().filter((x) => x !== slot)]) {
+    try {
+      if (storage.getItem(slotBackupKey(n)) === null) continue;
+      storage.removeItem(slotBackupKey(n));
+      storage.removeItem(slotBackupMetaKey(n));
+    } catch {
+      continue;
+    }
+    if (writeSave(storage, save, slotKey(slot))) return 'freed';
+  }
+  return 'failed';
 }
 
 /** "10/18 23:10" 꼴 (기기 시간대) */

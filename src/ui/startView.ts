@@ -14,7 +14,7 @@ export interface StartHandlers {
 /** 슬롯 한 줄의 글: "호로 · 2단계 바이저드 · 원정 5회" / "비어 있음" / "손상됨" 과 마지막 플레이 시각 */
 export function slotLine(sum: SlotSummary, factions: readonly FactionConfig[]): { main: string; sub: string } {
   if (sum.state === 'empty') return { main: '비어 있음', sub: '' };
-  if (sum.state === 'broken') return { main: '읽을 수 없는 세이브', sub: '손상되었거나 알 수 없는 형식' };
+  if (sum.state === 'broken') return sum.recoverable ? { main: '손상된 세이브', sub: '열면 슬롯 백업으로 복구한다' } : { main: '읽을 수 없는 세이브', sub: '손상되었거나 알 수 없는 형식' };
   const f = factions.find((x) => x.id === sum.factionId);
   const tier = f ? `${sum.tierIndex + 1}단계 ${f.tierNames[sum.tierIndex] ?? ''}`.trim() : `${sum.tierIndex + 1}단계`;
   const at = sum.playedAt !== null ? formatPlayedAt(sum.playedAt) : '시각 기록 없음';

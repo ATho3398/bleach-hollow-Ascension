@@ -9,7 +9,7 @@ import { slotRows } from './startView';
 
 /** 열 수 있는 슬롯 = 세이브가 정상인 슬롯. 기본 = 가장 최근에 한 슬롯 (없으면 null). 이어하기는 이 기본 슬롯을 바로 연다, 불러오기는 이것을 강조한다 */
 export function continueChoices(summaries: readonly SlotSummary[]): { openable: number[]; defaultSlot: number | null } {
-  return { openable: summaries.filter((s) => s.state === 'ok').map((s) => s.slot), defaultSlot: lastPlayedSlot(summaries) };
+  return { openable: summaries.filter((s) => s.state === 'ok' || (s.state === 'broken' && s.recoverable)).map((s) => s.slot), defaultSlot: lastPlayedSlot(summaries) };
 }
 
 /** 새로 시작의 기본 슬롯 = 번호가 가장 작은 빈 슬롯 (빈 슬롯이 없으면 null: 덮어쓸 슬롯을 직접 고른다) */
