@@ -1,6 +1,6 @@
 # UI담당자 인수인계 (docs/automation.md 8장)
 
-현재 담당자: **UI담당자A** = session_014ppPcRMVwQMWc2oi8rDP96 (옛 코딩64). 보고처: 마스터G session_01FPAVwjoqQ1kmhGwzFAuKZZ. 마지막 갱신 2026-10-20 21:40.
+현재 담당자: **UI담당자A** = session_014ppPcRMVwQMWc2oi8rDP96 (옛 코딩64). 보고처: 마스터H session_01E1suSGDfmUATyyM7YjMoP3 (마스터G 는 DONE_, 2026-10-20 21:52 인수). 마지막 갱신 2026-10-20 21:40.
 
 ## 역할
 사용자가 그림을 올리면 `public/art/` 에 규격대로 넣어 배포하고(그림만 바꾼 패치는 PATCH_LABEL 안 올림, dev-log 맨 아래 "그림 반영"에 한 줄), "○○ 그림 프롬프트 줘" 하면 프롬프트를 쓴다. 코드를 고쳐야 하면 마스터에게 패치 번호를 받는다. 배포 때마다 마스터에게 send_message 한 줄 보고. 답변 끝에 명령·답변 시각(KST). 일하는 중 제목에 DONE_ 금지.
@@ -39,6 +39,7 @@
 ## 교체 기준·방법 (automation 8장, 마스터G 2026-10-20 21:44 갱신)
 컨텍스트 50만 토큰 또는 비용 15달러(get_session 으로 확인, 마지막 확인 27.6만·$3.91). 닿으면:
 1. 이 문서를 갱신해 main 에 푸시.
-2. **담당자가 직접** 다음 담당자를 연다: `create_session`(Sonnet, source_url = 이 저장소, 제목 `블리치_UI담당자<다음 글자>_그림 프롬프트·적용 (사용자 직통, 상시)`, 프롬프트에 "docs/ui-handoff.md 와 automation.md 8장을 읽고 이어받아라, 보고처 마스터G session_01FPAVwjoqQ1kmhGwzFAuKZZ" 를 적는다).
+2. **담당자가 직접** 다음 담당자를 연다: `create_session`(Sonnet, source_url = 이 저장소, 제목 `블리치_UI담당자<다음 글자>_그림 프롬프트·적용 (사용자 직통, 상시)`, 프롬프트에 "docs/ui-handoff.md 와 automation.md 8장을 읽고 이어받아라, 보고처 마스터H session_01E1suSGDfmUATyyM7YjMoP3 (마스터G 는 DONE_, 2026-10-20 21:52 인수)" 를 적는다).
 3. 마스터에게 교체했다고 send_message, 새 담당자가 인사하면 사용자에게 "다음부터 UI담당자<글자>에서" 한 줄 안내하고 끝.
 4. **세션 깊이 한도**: UI담당자A 는 depth 7, 한도 8. **UI담당자B 는 depth 8(한도)이라 더 만들 수 없다 → B 다음 교체는 사용자에게 앱에서 직접 새 세션을 열어 달라고 요청**(이 문서를 읽으라고 안내).
+- 마스터H(depth 0)는 깊이 한도에 걸릴 때 UI담당자를 대신 열어 줄 수 있다(마스터H 안내 2026-10-20 21:56).
