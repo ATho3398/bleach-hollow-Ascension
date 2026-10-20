@@ -47,9 +47,5 @@
 .bha-break--split .bha-break__gauge { width: 100%; }
 .bha-break--split .bha-split__side { justify-content: center; align-self: stretch; }
 
-/* ═════ 토스트(칭호 해금): 낮은 LCD 에서는 작게 한 덩어리로 ═════ */
-.bha-toast { margin-top: calc(var(--toast-i, 0) * var(--bha-toast-step, 72px)); }
-.bha-lcd .bha-toast { --bha-toast-step: 52px; top: var(--bha-sp-4); width: min(320px, calc(100% - 24px)); padding: var(--bha-sp-2) var(--bha-sp-5); gap: var(--bha-sp-4); }
-.bha-lcd .bha-toast__icon { width: 28px; height: 28px; }
-.bha-lcd .bha-toast__meta { display: none; }
-.bha-lcd .bha-toast__title { font-size: var(--bha-fs-md); }
+/* ═════ 토스트(알림 띠): LCD 도 같은 한 줄 띠 — 위 가장자리, 높이 화면의 약 15% 이하(2개 쌓아도) ═════ */
+.bha-lcd .bha-toast { top: var(--bha-sp-1); }

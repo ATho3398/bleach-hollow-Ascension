@@ -6,7 +6,8 @@ import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { traitName } from '../data/traits';
 import type { ExpeditionState } from '../engine/expedition';
 import { summarize } from '../engine/expedition';
-import type { FactionConfig, FoodId } from '../engine/faction';
+import { groundName, type FactionConfig, type FoodId } from '../engine/faction';
+import { GROUNDS } from '../data/grounds';
 import { countFoods } from '../engine/food';
 import { button, el, icon, panel } from './bha/dom';
 import { splitApp } from './bha/split';
@@ -14,7 +15,7 @@ import { playCosmeticFx } from './bha/cosmeticFx';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
 import { growthLines, type GrowthInput } from './bha/growthLogic';
-import { chapterClearJade, getEpisode } from '../data/story';
+import { chapterClearJade, chapterContent, getEpisode, STORY_CHAPTERS } from '../data/story';
 import { bossName } from '../data/bosses';
 import { BALANCE as B } from '../config/balance';
 import { chapterLabel } from './storyView';
@@ -41,6 +42,18 @@ export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): 
   if (r.bossFirstKill) out.push(`보스 ${bossName(r.bossFirstKill, faction.id)} 첫 처치! 칭호 · 영옥 +${B.provisional.boss.reward.firstJade}`);
   if (r.chapterCleared) out.push(`${chapterLabel(faction.id, r.chapterId)} 완료! 칭호 · 영옥 +${chapterClearJade(r.chapterId)}`);
   return out;
+}
+
+/** 결과 화면 머리의 무대 이름 (GDD 43장 3번, C.96): 스토리 = "n장 m화 · 화 이름", 자유 원정 = 그 사냥터 이름. 이름은 종족 설정·데이터에서 읽는다 */
+export function stageTitle(exp: Pick<ExpeditionState, 'story' | 'factionId' | 'groundId'>, faction: Pick<FactionConfig, 'huntingGroundName' | 'huntingGrounds'>): string {
+  const st = exp.story;
+  const ch = st ? STORY_CHAPTERS.find((c) => c.id === st.chapterId) : undefined;
+  if (st && ch) {
+    const eps = chapterContent(exp.factionId, st.chapterId)?.episodes ?? [];
+    const i = eps.findIndex((e) => e.id === st.episodeId);
+    if (i >= 0) return `${ch.number}장 ${i + 1}화 · ${eps[i]!.title}`;
+  }
+  return groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
 }
 
 export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, stability: number, onHome: () => void, growth?: GrowthInput): void {
@@ -90,7 +103,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const head = el('header', `bha-result bha-result--${win ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(win ? 'i-return' : 'i-broken'));
-  head.append(mark, el('h1', 'bha-result__title', win ? '귀환' : faction.defeatStateName), el('p', 'bha-result__reason', endReasonText(exp.endReason!, faction)));
+  head.append(mark, el('span', 'bha-label', stageTitle(exp, faction)), el('h1', 'bha-result__title', win ? '귀환' : faction.defeatStateName), el('p', 'bha-result__reason', endReasonText(exp.endReason!, faction)));
 
   const home = expeditionEndVitals(exp);
   const rows: IconInfoRow[] = [
@@ -111,7 +124,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(home.hunger))}`) },
     { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `원정 끝 ${Math.round(exp.condition)}` : undefined) },
   ];
-  const sum = panel({ title: '원정 요약', aside: faction.huntingGroundName }, iconInfo(rows));
+  const sum = panel({ title: '원정 요약' }, iconInfo(rows));
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
   seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됨');

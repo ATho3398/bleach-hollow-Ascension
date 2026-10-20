@@ -234,27 +234,29 @@
 .bha-notice--risk { --c: var(--bha-risk); }
 
 /* =========================================================
-   7. 토스트  .bha-toast  (칭호 해금) — 화면 위에서 내려온다
-   상태: .is-in(등장) .is-out(퇴장)
+   7. 토스트  .bha-toast  (칭호 해금·목표 달성·새 트랙) — 화면 위 가장자리 얇은 한 줄 띠 (GDD 43장)
+   최대 2개가 위 칸 → 아래 칸으로 쌓인다(--toast-i). 상태: .is-in(등장) .is-out(퇴장)
    ========================================================= */
 .bha-toast {
   position: fixed; z-index: var(--bha-z-toast);
-  top: calc(env(safe-area-inset-top, 0px) + 12px); left: 50%;
-  width: min(440px, calc(100% - 24px));
-  display: flex; align-items: center; gap: var(--bha-sp-5);
-  padding: 10px 14px;
+  top: calc(env(safe-area-inset-top, 0px) + var(--bha-sp-1)); left: 50%;
+  width: min(440px, calc(100% - 16px));
+  margin-top: calc(var(--toast-i, 0) * 32px);
+  display: flex; align-items: center; gap: var(--bha-sp-3);
+  padding: var(--bha-sp-1) var(--bha-sp-4);
   border: 1px solid var(--bha-rare); border-radius: var(--bha-r-lg);
   background: linear-gradient(100deg, rgb(255 210 77 / 0.16), transparent 70%), var(--bha-bg-2);
-  box-shadow: var(--bha-shadow-3), 0 0 20px rgb(255 210 77 / 0.2);
+  box-shadow: var(--bha-shadow-3);
   transform: translate(-50%, 0);
   pointer-events: none;
 }
 .bha-toast.is-in { animation: bha-toast-in var(--bha-dur-4) var(--bha-ease-snap) both; }
 .bha-toast.is-out { animation: bha-toast-out var(--bha-dur-3) var(--bha-ease-in) both; }
-.bha-toast__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgb(255 210 77 / 0.15); color: var(--bha-rare); flex: none; }
-.bha-toast__eyebrow { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-rare); letter-spacing: var(--bha-tracking-label); }
-.bha-toast__title { font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-lg); color: var(--bha-text-1); }
-.bha-toast__meta { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-toast__icon { display: grid; place-items: center; width: 20px; height: 20px; color: var(--bha-rare); flex: none; }
+.bha-toast__icon .bha-icon { width: 16px; height: 16px; }
+.bha-toast__text { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; }
+.bha-toast__eyebrow { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-rare); }
+.bha-toast__title { font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-sm); color: var(--bha-text-1); }
 
 /* =========================================================
    8. 오버레이 / 모달  .bha-overlay  .bha-modal

@@ -122,28 +122,48 @@ export function deckRow(o: DeckRowOpts): HTMLElement {
   return row;
 }
 
-/** 칭호 해금 토스트: 위에서 내려와(is-in) 2.5초 뒤 올라가고(is-out) animationend 에서 제거한다. 여러 개면 위에서부터 겹치지 않게 쌓는다 */
+/** 한 번에 보이는 토스트 수. 나머지는 자리가 나는 대로 차례로 (GDD 43장 1번) */
+const TOAST_VISIBLE = 2;
+const toastState = new WeakMap<HTMLElement, { slots: (HTMLElement | null)[]; queue: ((slot: number) => void)[] }>();
+
+/** 알림 띠(.bha-toast): 화면 위 가장자리 얇은 한 줄. 위에서 내려와(is-in) holdMs 뒤 올라가고(is-out) animationend 에서 제거한다.
+ *  최대 2개만 보이고(위 칸 → 아래 칸) 나머지는 앞 띠가 사라지면 차례로 뜬다. index 는 옛 호출 호환용(등장 간격만) */
 export function showToast(o: { eyebrow: string; title: string; meta?: string }, index = 0, holdMs = 2500, host: HTMLElement = getOverlayHost()): HTMLElement {
   const toast = el('div', 'bha-toast is-in');
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
-  toast.style.setProperty('--toast-i', String(index)); // 겹치지 않게 쌓는 간격은 CSS(.bha-toast, 기본 72px · LCD 는 lcd.css)
+  if (o.meta) toast.title = o.meta; // 한 줄 띠라 보조 설명은 숨기고 툴팁으로만
   const ic = el('span', 'bha-toast__icon');
   ic.append(icon('i-title'));
-  const body = el('span');
-  body.append(el('span', 'bha-toast__eyebrow', o.eyebrow), el('br'), el('span', 'bha-toast__title', o.title));
-  if (o.meta) body.append(el('br'), el('span', 'bha-toast__meta', o.meta));
-  toast.append(ic, body);
-  host.append(toast);
-  // 연출이 꺼진(reduced-motion) 환경에서도 animationend 가 오므로 이 이벤트로 정리한다. 안전 장치로 타이머도 둔다.
-  const remove = () => toast.remove();
-  toast.addEventListener('animationend', (e) => {
-    if ((e as AnimationEvent).animationName.includes('toast-out')) remove();
-  });
-  setTimeout(() => {
-    toast.classList.remove('is-in');
-    toast.classList.add('is-out');
-    setTimeout(remove, 800);
-  }, holdMs + index * 300);
+  const text = el('span', 'bha-toast__text');
+  text.append(el('span', 'bha-toast__eyebrow', o.eyebrow), ' ', el('span', 'bha-toast__title', o.title));
+  toast.append(ic, text);
+  const st = toastState.get(host) ?? { slots: Array.from({ length: TOAST_VISIBLE }, () => null), queue: [] };
+  toastState.set(host, st);
+  const show = (slot: number) => {
+    st.slots[slot] = toast;
+    toast.style.setProperty('--toast-i', String(slot)); // 칸 간격은 CSS(.bha-toast)
+    host.append(toast);
+    let gone = false;
+    const remove = () => {
+      if (gone) return;
+      gone = true;
+      toast.remove();
+      st.slots[slot] = null;
+      st.queue.shift()?.(slot);
+    };
+    // 연출이 꺼진(reduced-motion) 환경에서도 animationend 가 오므로 이 이벤트로 정리한다. 안전 장치로 타이머도 둔다.
+    toast.addEventListener('animationend', (e) => {
+      if ((e as AnimationEvent).animationName.includes('toast-out')) remove();
+    });
+    setTimeout(() => {
+      toast.classList.remove('is-in');
+      toast.classList.add('is-out');
+      setTimeout(remove, 800);
+    }, holdMs + index * 300);
+  };
+  const free = st.slots.findIndex((x) => !x);
+  if (free >= 0) show(free);
+  else st.queue.push(show);
   return toast;
 }
