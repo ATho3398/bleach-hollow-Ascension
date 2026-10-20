@@ -34,21 +34,12 @@ describe('사신대행증 데이터 (30장 1번)', () => {
     expect(sourceNote(c)).toBe('기본 제공');
     expect(FREE_COSMETICS.map((x) => x.id)).toContain('device-badge');
   });
-  it('좌표 = frame-v1 고정값(2744×2294 px) + 고리 (1373, 131)', () => {
-    const W = 2744, H = 2294;
-    const px = (r: { x: number; y: number; w: number; h: number }) => ({ x: (r.x / 100) * W, y: (r.y / 100) * H, w: (r.w / 100) * W, h: (r.h / 100) * H });
-    const near = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThan(2.5);
+  it('데이터 = frame-v2 (그림 3000×2508, 구멍 왼쪽 위 (531, 624), 고리 (1501, 148))', () => {
     const d = c.device!;
-    const sc = px(d.screen);
-    [sc.x, sc.y, sc.w, sc.h].forEach((v, i) => near(v, [663, 818, 1410, 705][i]!)); // 그림의 실제 구멍 (새 규칙 v5.48 과 다름 — c71 테스트)
-    const want: Record<string, [number, number, number]> = { up: [428, 1048, 208], down: [428, 1292, 208], ok: [2280, 1042, 268], back: [2280, 1298, 172] };
-    for (const b of DEVICE_BUTTONS) {
-      const r = px(d.buttons[b]);
-      const [cx, cy, dia] = want[b]!;
-      near(r.x + r.w / 2, cx); near(r.y + r.h / 2, cy); near(r.w, dia); near(r.h, dia);
-    }
-    near((d.ring.x / 100) * W, 1373);
-    near((d.ring.y / 100) * H, 131);
+    expect(d.frame).toBe('v2');
+    expect(d.hole).toEqual([531, 624]);
+    expect(Math.abs((d.ring.x / 100) * 3000 - 1501)).toBeLessThan(2.5);
+    expect(Math.abs((d.ring.y / 100) * 2508 - 148)).toBeLessThan(2.5);
   });
   it('그림 파일: 앞면·뒷면이 public/art 에 있고 옆면은 없다(겹 두께)', () => {
     for (const f of ART) expect(existsSync(new URL(`../public/art/${f}`, import.meta.url))).toBe(true);

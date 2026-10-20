@@ -10,6 +10,13 @@ import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const badge = getCosmetic('device-badge')!;
+// 사신대행증은 C.84 에서 frame-v2 새 그림으로 바뀜 — 옛 frame-v1 그림(2744×2294)의 실제 좌표를 시험용으로 고정한다
+const OLD_V1 = {
+  ...badge.device!, frame: undefined, hole: undefined,
+  screen: { x: 24.16, y: 35.66, w: 51.38, h: 30.73 },
+  buttons: { up: { x: 11.81, y: 41.15, w: 7.58, h: 9.07 }, down: { x: 11.81, y: 51.79, w: 7.58, h: 9.07 }, ok: { x: 78.21, y: 39.58, w: 9.77, h: 11.68 }, back: { x: 79.96, y: 52.83, w: 6.27, h: 7.5 } },
+  ring: { x: 50.04, y: 5.71 },
+} as NonNullable<typeof badge.device>;
 const NAT = { w: 2744, h: 2294 };
 const scaleOf = (stage: string): number => Number(/scale\(([\d.]+)\)/.exec(stage)![1]);
 
@@ -32,18 +39,18 @@ describe('2. 화면비: 게임 화면 844×390 그대로, 규칙(frame-v1 구멍
     expect(py).toContain("px 더 큼: {fix} {lo}~{hi - 1} 가 투명 → 불투명(테두리)이어야 함");
   });
   it('그림 파일은 그대로(사신대행증 = 옛 2:1 구멍), 데이터는 그림의 실제 구멍', () => {
-    const s = badge.device!.screen;
+    const s = OLD_V1.screen;
     expect(Math.abs((s.y / 100) * NAT.h - 818)).toBeLessThan(2.5);
     expect(Math.abs((s.h / 100) * NAT.h - 705)).toBeLessThan(2.5);
   });
   it('LCD = 844×390 고정, 구멍 가로에 꽉. 규칙과 다른 그림이면 위아래 남는 띠(베젤 색), 규칙대로면 꽉 찬다', () => {
     expect(SKIN_LCD).toEqual({ w: 844, h: 390 });
-    const old = deviceSkin(NAT, badge.device!);
+    const old = deviceSkin(NAT, OLD_V1);
     expect(Math.abs(old.hole.x)).toBeLessThan(1);
     expect(Math.abs(old.hole.w - 844)).toBeLessThan(1);
     expect(old.hole.y).toBeLessThan(-10); // 위아래 약 16px 씩
     expect(Math.abs(old.hole.y + old.hole.h / 2 - 195)).toBeLessThan(1);
-    const rule = { ...badge.device!, screen: { x: (663 / 2744) * 100, y: (845 / 2294) * 100, w: (1410 / 2744) * 100, h: (652 / 2294) * 100 } };
+    const rule = { ...OLD_V1, screen: { x: (663 / 2744) * 100, y: (845 / 2294) * 100, w: (1410 / 2744) * 100, h: (652 / 2294) * 100 } };
     const fit = deviceSkin(NAT, rule);
     expect(Math.abs(fit.hole.y)).toBeLessThan(1);
     expect(Math.abs(fit.hole.h - 390)).toBeLessThan(1);
@@ -52,9 +59,9 @@ describe('2. 화면비: 게임 화면 844×390 그대로, 규칙(frame-v1 구멍
 });
 
 describe('4. 평소 화면도 입은 기기 디자인 (31장 4)', () => {
-  const skin = deviceSkin(NAT, badge.device!);
+  const skin = deviceSkin(NAT, OLD_V1);
   it('틀 상자 = 화면 구멍 + 버튼 4개가 다 들어간다', () => {
-    const p = deviceArtPlacement({ x: 0, y: 0, ...SKIN_LCD }, NAT, badge.device!);
+    const p = deviceArtPlacement({ x: 0, y: 0, ...SKIN_LCD }, NAT, OLD_V1);
     for (const r of [p.hole, ...DEVICE_BUTTONS.map((b) => p.buttons[b])]) {
       expect(r.x).toBeGreaterThanOrEqual(skin.crop.x);
       expect(r.y).toBeGreaterThanOrEqual(skin.crop.y);

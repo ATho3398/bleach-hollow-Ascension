@@ -70,8 +70,8 @@ describe('2. 자유: 그림 크기·모양·구멍 위치는 그림마다', () =
       expect(shopVisible(c, [], [`device-${c.look}-front.png`])).toBe(false);
       expect(has(`public/art/device-${c.look}-back.png`)).toBe(true);
     }
-    expect(getCosmetic('device-badge')!.device!.frame).toBeUndefined(); // 사신대행증 = v1 그대로
-    expect(COSMETIC_ITEMS.filter((c) => c.device?.frame === 'v2')).toHaveLength(2);
+    expect(getCosmetic('device-badge')!.device!.frame).toBe('v2'); // 사신대행증 = 새 그림(C.84)부터 v2
+    expect(COSMETIC_ITEMS.filter((c) => c.device?.frame === 'v2')).toHaveLength(3);
   });
   it('데이터 검증: v2 는 hole 이 없거나 음수면 오류', async () => {
     const mod = await import('../src/data/shop');
