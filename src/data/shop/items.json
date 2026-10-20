@@ -498,6 +498,15 @@
         "y": 4
       },
       "note": "그림 자리 견본(그림 없음 → 상점에 안 보임): public/art/device-sample-front.png·-back.png 가 들어오면 보인다. 좌표는 그림 대비 %"
+    },
+    {
+      "id": "device-vtest",
+      "name": "v2 시험 기기",
+      "look": "vtest",
+      "source": "reward",
+      "frame": "v2",
+      "ring": { "x": 6.7, "y": 3.17 },
+      "note": "frame-v2 시험 그림(단색 판 + 구멍, tests/c77 과 캡처용). 보상으로만 — 상점에 안 나오고 보유 세이브만 입을 수 있다. screen·buttons 는 규격(frameV2.ts)이 채우고 고리만 적는다: 고리 구멍 (60, 14) / 896×442"
     }
   ]
 }

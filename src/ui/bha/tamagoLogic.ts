@@ -5,6 +5,8 @@
 // 각도: CSS rotate 와 같은 방향(시계 방향 +). 0 = 기기 아래쪽으로 곧게 매달림. 매단 점에서 끝까지의 벡터는 (−L·sinθ, L·cosθ).
 
 
+import { FRAME_V2, FRAME_V2_BUTTONS } from '../../data/shop/frameV2';
+
 // ── 설정 (세이브 아님, 이 기기 브라우저에만) ──
 export const TAMAGO_KEY = 'bha-tamago';
 export const TAMAGO_EVENT = 'bha-tamago-change';
@@ -246,6 +248,33 @@ export function deviceSkin<B extends string>(natural: { w: number; h: number }, 
 /** 틀 상자를 기기 논리 크기(w×h) 가운데에 놓았을 때 LCD 왼쪽 위 (기기 안 px) */
 export function skinLcdAt(skin: DeviceSkin, w: number, h: number): { x: number; y: number } {
   return { x: r2(w / 2 - (skin.crop.x + skin.crop.w / 2)), y: r2(h / 2 - (skin.crop.y + skin.crop.h / 2)) };
+}
+
+// ── frame-v2 그림 기기 (GDD 33장, C.77): 평소 화면이 기본형과 같은 배율·같은 자리 ──
+/** 기본형 평소 화면에서 LCD 왼쪽 위를 (0,0)으로 잡은 좌표: 구멍 = LCD 그대로, 틀 상자 = 기본형 기기 전체(844×390) */
+export function deviceSkinV2(): DeviceSkin {
+  const o = { x: FRAME_V2.plain.x - FRAME_V2.lcd.x, y: FRAME_V2.plain.y - FRAME_V2.lcd.y };
+  return {
+    lcd: { w: FRAME_V2.lcd.w, h: FRAME_V2.lcd.h },
+    hole: { x: 0, y: 0, w: FRAME_V2.lcd.w, h: FRAME_V2.lcd.h },
+    crop: { x: o.x, y: o.y, w: FRAME_V2.plain.w, h: FRAME_V2.plain.h },
+  };
+}
+
+/**
+ * frame-v2 그림의 놓는 자리: 그림 크기와 상관없이 그림 한 장 = 기본형 몸체(896×442)이고, 지금 LCD 가 구멍(125,41)에 오게 놓는다.
+ * 버튼 4개 누름 영역 = 기본형 버튼 자리, 고리 = 데이터 ring(그림 대비 %)
+ */
+export function deviceArtPlacementV2<B extends string>(lcd: Rect, spec: { ring: { x: number; y: number } }): { box: Rect; ring: { x: number; y: number }; hole: Rect; buttons: Record<B, Rect> } {
+  const ox = lcd.x - FRAME_V2.lcd.x, oy = lcd.y - FRAME_V2.lcd.y;
+  const at = (r: Rect): Rect => ({ x: r2(ox + r.x), y: r2(oy + r.y), w: r2(r.w), h: r2(r.h) });
+  const buttons = Object.fromEntries(FRAME_V2_BUTTONS.map((b) => [b, at(FRAME_V2.buttons[b])])) as Record<B, Rect>;
+  return {
+    box: { x: r2(ox), y: r2(oy), w: FRAME_V2.canvas.w, h: FRAME_V2.canvas.h },
+    ring: { x: r2(ox + FRAME_V2.canvas.w * (spec.ring.x / 100)), y: r2(oy + FRAME_V2.canvas.h * (spec.ring.y / 100)) },
+    hole: { x: r2(lcd.x), y: r2(lcd.y), w: lcd.w, h: lcd.h },
+    buttons,
+  };
 }
 
 // ── 다마고치 모드 안 확대·축소 (핀치·휠·끌기, GDD 27장 v5.33) ──

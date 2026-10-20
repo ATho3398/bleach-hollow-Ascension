@@ -6,6 +6,7 @@
 import { FOOD_IDS, type FactionConfig, type FoodId } from '../../engine/faction';
 import { SKINS, getSkin, skinLabel } from '../skins';
 import { ART_FILES, findArtFile } from '../art/files';
+import { FRAME_V2, FRAME_V2_BUTTONS, frameV2Pct } from './frameV2';
 import raw from './items.json';
 
 export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'rareTile', 'reroll', 'deckSlot'] as const;
@@ -58,6 +59,8 @@ export interface PctRect {
 export const DEVICE_BUTTONS = ['up', 'down', 'ok', 'back'] as const;
 export type DeviceButton = (typeof DEVICE_BUTTONS)[number];
 export interface DeviceArtSpec {
+  /** 'v2' = 기기 그림 규격 frame-v2 (GDD 33장): screen·buttons 는 규격 값(frameV2.ts)이 들어가고 평소 화면이 기본형과 같은 자리. 없으면 frame-v1 */
+  frame?: 'v2';
   screen: PctRect;
   buttons: Record<DeviceButton, PctRect>;
   ring: Pt;
@@ -105,13 +108,19 @@ const isPct = (v: unknown, keys: string[]): boolean =>
 
 /** 기기 디자인 품목 (GDD 27장): id `device-<look>`, 그림 좌표·얻는 곳 */
 function parseDevice(r: unknown): CosmeticItemDef {
-  const c = (r ?? {}) as Record<string, unknown>;
+  let c = (r ?? {}) as Record<string, unknown>;
   const errors: string[] = [];
   if (typeof c.look !== 'string' || !/^[a-z]+$/.test(c.look)) errors.push('look: 영문 소문자');
   if (c.id !== `device-${String(c.look)}`) errors.push('id: device-<look>');
   if (typeof c.name !== 'string' || !c.name) errors.push('name');
   if (c.source !== 'shop' && c.source !== 'reward' && c.source !== 'default') errors.push('source: shop | reward | default');
   const rect = (v: unknown): v is PctRect => isPct(v, ['x', 'y', 'w', 'h']) && (v as PctRect).w > 0 && (v as PctRect).h > 0;
+  if (c.frame !== undefined && c.frame !== 'v2') errors.push("frame: 'v2' 또는 없음");
+  const v2 = c.frame === 'v2';
+  // frame-v2 는 화면·버튼 자리가 규격으로 정해져 있어 데이터에는 고리만 적는다
+  if (v2) {
+    c = { ...c, screen: frameV2Pct(FRAME_V2.lcd), buttons: Object.fromEntries(FRAME_V2_BUTTONS.map((b) => [b, frameV2Pct(FRAME_V2.buttons[b])])) };
+  }
   if (!rect(c.screen)) errors.push('screen: { x, y, w, h } 0~100');
   const bt = (c.buttons ?? {}) as Record<string, unknown>;
   for (const b of DEVICE_BUTTONS) if (!rect(bt[b])) errors.push(`buttons.${b}: { x, y, w, h } 0~100`);
@@ -119,7 +128,7 @@ function parseDevice(r: unknown): CosmeticItemDef {
   if (errors.length) throw new Error(`기기 디자인 데이터 오류 (${String(c.id ?? '?')}): ${errors.join(', ')}`);
   const pr = (v: unknown): PctRect => { const r = v as PctRect; return { x: r.x, y: r.y, w: r.w, h: r.h }; };
   const buttons = Object.fromEntries(DEVICE_BUTTONS.map((b) => [b, pr(bt[b])])) as Record<DeviceButton, PctRect>;
-  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, ...(c.source === 'default' ? { free: true } : {}), device: { screen: pr(c.screen), buttons, ring: c.ring as Pt } };
+  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, ...(c.source === 'default' ? { free: true } : {}), device: { ...(v2 ? { frame: 'v2' as const } : {}), screen: pr(c.screen), buttons, ring: c.ring as Pt } };
 }
 
 export const SHOP_PROVISIONAL: boolean = raw.provisional;

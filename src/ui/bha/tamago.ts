@@ -18,7 +18,7 @@ import { showToast } from './nest';
 import { isTypingTarget } from './shortcuts';
 import { toLocal, type Fit } from './viewport';
 import {
-  BODY, SIDE_BANDS, silhouetteBands, deviceSkin, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
+  BODY, SIDE_BANDS, silhouetteBands, deviceSkin, deviceSkinV2, defaultGravity, deviceArtPlacement, deviceArtPlacementV2, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
   TAMAGO_EVENT, toDeviceVec, clampView, zoomAt, wheelFactor, VIEW_HOME, type Pendulum, type Rect, type TamagoPrefs, type TamaLayout, type TamaView, type SilBand,
 } from './tamagoLogic';
 
@@ -326,7 +326,8 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
         else backArt.onload = lb;
       }
       // 평소 화면도 이 기기 틀 (GDD 31장 2·4): LCD 844×390 이 구멍에 꽉, 구멍 + 버튼이 화면에 들어가게
-      dev.setSkin(deviceSkin(artNat, c.device!));
+      if (c.device!.frame === 'v2') dev.setSkin(deviceSkinV2()); // frame-v2: 평소 화면이 기본형과 같은 자리 (GDD 33장)
+      else dev.setSkin(deviceSkin(artNat, c.device!));
       syncRoot();
       relayout();
     };
@@ -372,7 +373,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   };
   const stageOf = (f: Fit): string => {
     fit = f;
-    artBox = artSpec && artNat ? deviceArtPlacement(lcdRect(), artNat, artSpec) : null;
+    artBox = artSpec && artNat ? (artSpec.frame === 'v2' ? deviceArtPlacementV2<DeviceButton>(lcdRect(), artSpec) : deviceArtPlacement(lcdRect(), artNat, artSpec)) : null;
     layout = tamaLayout(f.w, f.h, artBox, flipDeg, view);
     view = clampView(view, layout.zoom, layout.box, f.w, f.h);
     gravityLocal = tiltOn() ? gravityLocal : defaultGravity(f.rotated);

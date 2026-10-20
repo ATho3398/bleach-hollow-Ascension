@@ -56,7 +56,7 @@ function atTier(tierIndex: number) {
 describe('버전·밸런스 (C.75)', () => {
   it('PATCH_LABEL C.75 이상, STAGE_LABEL S-20, BALANCE_VERSION 41 이상, 세이브 형식 29 이상', () => {
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(75);
-    expect(STAGE_LABEL).toBe('S-20');
+    expect(STAGE_LABEL).toMatch(/^S-(20|21)$/); // C.77 에서 S-21
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(41);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(29);
   });

@@ -374,3 +374,13 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 **검증** typecheck·test 1055·balance:check(가드 통과)·build. 캡처 없음.
 - **★1 연속**: 그대로(갓 2단계 몸 ★1 연속 10 패배 2%, ★2 연속 5/10 = 20/42%).
 
+
+### C.77 기기 디자인 가이드 frame-v2 = 기본 UI px 그대로 (STAGE S-21, 코딩63, GDD 33장 → 33-1 v5.59)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.77, `STAGE_LABEL` S-21. **`BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로**(밸런스 수치 안 건드림).
+사용자 원문: "지금 근데, 기존 ui사이즈가 딱이거든? 기존 ui 위치랑 픽셀값 뽑아서 다마고치 가이드로 만들어줄래? 다마고치 디자인 거기에 통일시키게."
+- **측정**(33-1 표): 기본형 평소 화면 = 기기 844×390, LCD (99, 15) 646×360, 버튼 ∧(20,135)·∨(20,203) 52, ✓(766,133) 64, <(776,213) 44, 몸체 (−26,−26) 896×442. 가로·세로 출력·PC 1배 모두 기기 안 좌표 같음.
+- **규격 폴더** `docs/design/device-preset/frame-v2/`: preset.json(×1 기준 + ×2·×3·×4), layout-guide.png(2688×1326), README.md(꼭 지킬 곳/자유인 곳), check-device.py(v2 기본·`--frame v1`, 틀린 곳 몇 px), make-guide.py. art-guide 10-1d, claude-design-prompts ①-c. frame-v1 폴더는 "옛 규격" 표시만.
+- **게임**: items.json `frame: "v2"`(고리만 적음, 화면·버튼은 `src/data/shop/frameV2.ts`). `deviceSkinV2`·`deviceArtPlacementV2`(tamagoLogic) — v2 그림 몸체 = 기본형 몸체, 평소 화면 LCD·버튼 자리 기본형과 픽셀 동일, 다마고치 모드 줌·몸체 동일. v1(사신대행증) 그대로. 시험 그림 `device-vtest`(보상 전용, `public/art/device-vtest-front/back.png`).
+- **사신대행증 v2 검사**: 앞면 2744×2294(규격 2688×1326 → 가로 +56·세로 +968px, 비율 1.196 ≠ 2.027), 뒷면 1372×1147(규격과 가로 −1316·세로 −179px). 구멍·버튼 자리는 크기가 달라 모두 어긋남(구멍은 v1 옛 규칙 (663,818) 1410×705 — v2 는 646:360 구멍이라 비율도 다름). 새로 그려야 함. 전체 출력은 마스터 보고에.
+**테스트** 1055 → 1064 (+9, `tests/c77.test.ts`; c75 의 STAGE 검사를 S-20|S-21 로). typecheck·test·balance:check·build 통과.
+**캡처** `docs/captures/c77/`(1배, 5장): `00-basic-landscape`, `01-v2-vs-basic-landscape`·`02-v2-vs-basic-portrait`(v2 평소 화면 위에 기본형 LCD(빨강)·버튼(노랑) 테두리 겹침 — 일치), `03-layout-guide-thumb`, `05-v2-tamago-mode`.

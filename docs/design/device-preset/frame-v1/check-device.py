@@ -1,4 +1,4 @@
-"""기기 그림 규격(frame-v1) 검사
+"""[옛 규격 — 새 그림은 ../frame-v2/check-device.py] 기기 그림 규격(frame-v1) 검사
   python3 check-device.py <앞면.png> [뒷면.png] [--ring X,Y]
 고정 = 이미지 크기·화면 구멍·버튼 4개. 모양·고리는 자유(--ring 에 앞면 고리 중심을 주면 그 구멍도 본다)."""
 import json, sys, os
