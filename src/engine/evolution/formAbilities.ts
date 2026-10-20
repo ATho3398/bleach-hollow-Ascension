@@ -71,7 +71,7 @@ const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
 /** 효과 수치 한 줄 (화면용, 효과 종류별 — 종족 무관) */
 function effectSummary(fx: AbilityEffects, critChance: number): string {
   const parts: string[] = [];
-  if (critChance > 0) parts.push(`치명타 확률 +${pct(critChance)}p`);
+  if (critChance > 0) parts.push(`치명타 확률 +${pct(critChance)}p(상한도 +${pct(critChance)}p)`);
   if (fx.blockPower) parts.push(`블록 위력 +${pct(fx.blockPower)}`);
   if (fx.burn) parts.push(`화상 ${fx.burn.seconds}초 (블록 피해의 ${pct(fx.burn.fraction)})`);
   if (fx.thorns) parts.push(`받은 피해가 최대 체력 ${pct(fx.thorns.threshold)} 쌓이면 ${pct(fx.thorns.ret)} 되돌림`);
