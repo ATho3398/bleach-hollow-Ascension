@@ -259,7 +259,7 @@ describe('튜토리얼 영옥 +1 · 세이브 형식 24', () => {
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.skin).toBe('grandfisher');
-    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'skin-grandfisher']); // 기본 키링 (C.64)·기본 기기 (C.65)
+    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki', 'skin-grandfisher']); // 기본 키링 (C.64)·기본 기기 (C.65)
     expect([m.shared.rerollTickets, m.shared.deckSlots]).toEqual([0, 0]);
     expect(m.shared.jade).toBe(7 + 2 * SX.tutorialJade);
     expect(m.wear).toEqual({ keyring: 'keyring-orb', device: 'device-badge' }); // 기본 키링 (C.64)·기본 기기 (C.65)
@@ -268,7 +268,7 @@ describe('튜토리얼 영옥 +1 · 세이브 형식 24', () => {
     const plain = JSON.parse(JSON.stringify(s)) as Record<string, any>;
     plain.meta.format = 23;
     delete plain.shared.cosmetics;
-    expect(migrateSave(plain)!.shared.cosmetics).toEqual(['keyring-orb', 'device-badge']);
+    expect(migrateSave(plain)!.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki']);
   });
   it('저장 왕복: 깨진 착용·안 산 착용·상한 넘는 값은 보정', () => {
     const s = rich();
@@ -284,7 +284,7 @@ describe('튜토리얼 영옥 +1 · 세이브 형식 24', () => {
     const m = migrateSave(raw)!;
     expect(m.wear).toEqual({ bar: 'bar-ink', keyring: 'keyring-orb', device: 'device-badge' }); // 기본 키링·기기 자동 착용 (C.64·C.65)
     expect([m.shared.rerollTickets, m.shared.deckSlots]).toEqual([SX.rerollMax, SX.deckSlotPrices.length]);
-    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'bar-ink']);
+    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki', 'bar-ink']);
     expect(m.skin).toBeNull();
   });
 });

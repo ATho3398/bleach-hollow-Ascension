@@ -224,6 +224,7 @@ npm run art:list
 - **items.json**: `"frame": "v2"`, `"hole": [x, y]`(구멍 왼쪽 위, 그림 픽셀), `"ring": {x, y}`(그림 대비 %). 화면·버튼 자리는 규격이라 적지 않는다. 예: `device-vtest`(직사각형 2688×1326), `device-vround`(동그라미 3600×3600, 구멍이 위쪽) — 보상 전용 시험 기기.
 - **검사**: `python3 docs/design/device-preset/frame-v2/check-device.py 앞면.png 뒷면.png --hole X,Y --ring X,Y`(그림 픽셀, `--hole` 생략 시 구멍을 찾음). 어디가 몇 px 틀렸는지 말하고 `items.json` 줄을 출력. `--frame v1` 로 옛 규격도 검사.
 - 예시 모양: `example-round/heart/wide.png`.
+- **기본 제공 기기 2개**: 사신대행증(`device-badge`, 기본 착용)·십일번대(`device-zaraki`, 자라키 분위기 노란 직사각형, 2753×2149, 구멍 (411, 647)). 기본 제공이 여럿이면 분류마다 첫 번째만 입는다.
 - **사신대행증**은 2026-10-20 새 그림(3000×2508, 앞면 화면 구멍 (531, 624)) 2판으로 바뀌어 v2 입니다. 키링은 위쪽 사다리꼴 구멍의 **뒷면 기준 왼쪽 테두리**에 걸립니다(앞면 좌표 (1928, 186), 뒷면 자동 반전).
 - 외부 생성기 프롬프트: `docs/design/claude-design-prompts.md` ①-c.
 

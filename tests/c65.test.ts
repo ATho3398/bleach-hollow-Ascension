@@ -103,7 +103,7 @@ describe('기본 제공·자동 착용 (30장 2번)', () => {
     };
     const m = migrateSave(old())!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION); // 27 단계를 지나 현재 형식까지 (C.72)
-    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'bar-ink']);
+    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki', 'bar-ink']);
     expect(m.wear).toEqual({ bar: 'bar-ink', device: 'device-badge' });
     expect(m.wear.keyring).toBeUndefined();
   });
@@ -168,5 +168,28 @@ describe('옆면 두께 (30장 4번 → C.71 31장 1: 겹 대신 실루엣 띠)'
   });
   it('기본형 CSS 기기는 지금 방식 유지: CSS 띠 코드가 남아 있다', () => {
     expect(src('src/ui/bha/tamago.css')).toContain('.bha-tama__edge--l');
+  });
+});
+
+describe('기본 제공 기기 십일번대 (UI담당자A)', () => {
+  it('데이터: frame-v2, 기본 제공, 기본 착용은 첫 번째(사신대행증)', async () => {
+    const z = getCosmetic('device-zaraki')!;
+    expect(z.device!.frame).toBe('v2');
+    expect(z.device!.hole).toEqual([411, 647]);
+    expect(FREE_COSMETICS.map((x) => x.id)).toEqual(expect.arrayContaining(['device-badge', 'device-zaraki']));
+    const { defaultWear } = await import('../src/game');
+    expect(defaultWear().device).toBe('device-badge');
+  });
+  it('그림 파일이 있다', () => {
+    for (const f of ['device-zaraki-front.webp', 'device-zaraki-back.webp']) expect(existsSync(new URL(`../public/art/${f}`, import.meta.url))).toBe(true);
+  });
+  it('형식 30 → 31: 보유로만 주고 착용은 그대로', async () => {
+    const { migrateSave, newSaveData } = await import('../src/game');
+    const old = JSON.parse(JSON.stringify(newSaveData('shinigami', 0)));
+    old.meta.format = 30;
+    old.shared.cosmetics = ['keyring-orb', 'device-badge'];
+    const m = migrateSave(old)!;
+    expect(m.shared.cosmetics).toContain('device-zaraki');
+    expect(m.wear.device).toBe('device-badge');
   });
 });

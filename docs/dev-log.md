@@ -449,6 +449,14 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 탭: 책장·상점·출발 탭을 누르면 화면이 새로 그려져 기기 하이라이트가 첫 항목(탭)으로 가 ✓확정이 탭을 되돌렸다 → `device.ts` 가 마지막 선택이 탭이었으면 새 화면의 같은 탭(탭줄 이름·id)에 선택을 돌려줌. 책장 탭은 목록 뒤 순서로.
 **테스트** 1103 그대로(터치 시험 책장·상점·출발 통과). **캡처** `docs/captures/c90/`(1배 2장).
 
+### C.91 기본 제공 기기 십일번대(자라키 분위기) (STAGE S-23, UI담당자A, GDD 34-9, SAVE_FORMAT 30 → 31)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.91. `SAVE_FORMAT_VERSION` 30 → 31. `BALANCE_VERSION` 그대로.
+사용자 원문: "자라키 다마고치 추가. 이것도 기본제공"
+- 그림: 앞·뒤 2753×2149 WebP(761·710KB), frame-v2 검사 전부 통과(구멍 (411, 647) 1938×1080·버튼 4개 자리·구멍 둘레), 고리 구멍 앞 (1374, 138)·뒤 (1378, 138) 투명. `items.json` device-zaraki(이름 "십일번대", source default, hole [411, 647], ring 49.91/6.42).
+- 기본 제공 기기가 2개 → `defaultWear` 는 분류마다 첫 번째만 입힘(새 트랙 기본 착용 = 사신대행증). 십일번대는 [디자인]에서 고른다.
+- 세이브 31: 형식 30 → 31 에서 기본 제공 꾸밈을 보유로 더함(착용은 그대로). 기존 테스트의 보유 목록 기대값에 device-zaraki 추가, c65 에 십일번대 테스트 3개.
+**테스트** 1125 → 1128(merge 후 전체 1140). **캡처** `docs/captures/c91/`(다마고치 앞·뒤, 평소 화면).
+
 ## 그림 반영
 - 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.
 - 2026-10-20: 홈 방 배경 교체(scene-cave 호로·scene-room 사신, 도트풍 새 그림, 66·41KB)와 책장 그림(prop-book, 320×320 WebP 15KB). 캡처 `docs/captures/art-apply/*-v2.png`.

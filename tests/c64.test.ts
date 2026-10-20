@@ -40,7 +40,7 @@ describe('기본 키링 영옥 구슬 (29장 1번)', () => {
       expect(s.shared.jade).toBe(0);
       expect(s.runLog.shopPurchases).toEqual([]);
     }
-    expect(newSharedState().cosmetics).toEqual(['keyring-orb', 'device-badge']);
+    expect(newSharedState().cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki']);
     expect(newTrack('shinigami', 5).wear).toEqual({ keyring: 'keyring-orb', device: 'device-badge' });
   });
   it('해제할 수 있고, 다시 열어도(저장 왕복) 다시 입히지 않는다', () => {
@@ -101,7 +101,7 @@ describe('세이브 형식 26 마이그레이션 (키링 없던 세이브)', () 
     raw.shared.jade = 7;
     const m = migrateSave(raw)!;
     expect(m.meta.format).toBeGreaterThanOrEqual(26);
-    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'bar-ink']);
+    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki', 'bar-ink']);
     expect(m.wear).toEqual({ bar: 'bar-ink', keyring: 'keyring-orb', device: 'device-badge' });
     expect(m.shared.jade).toBe(7);
   });
@@ -111,7 +111,7 @@ describe('세이브 형식 26 마이그레이션 (키링 없던 세이브)', () 
     raw.wear = { keyring: 'keyring-bell' };
     const m = migrateSave(raw)!;
     expect(m.wear.keyring).toBe('keyring-bell');
-    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'keyring-bell']);
+    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki', 'keyring-bell']);
   });
   it('쉬는 트랙도 입힌다 / 한 번뿐: 해제 뒤 저장→열기는 그대로 해제', () => {
     const s = newSaveData('hollow', 1000);

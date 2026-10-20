@@ -71,7 +71,7 @@ describe('2. 자유: 그림 크기·모양·구멍 위치는 그림마다', () =
       expect(has(`public/art/device-${c.look}-back.png`)).toBe(true);
     }
     expect(getCosmetic('device-badge')!.device!.frame).toBe('v2'); // 사신대행증 = 새 그림(C.84)부터 v2
-    expect(COSMETIC_ITEMS.filter((c) => c.device?.frame === 'v2')).toHaveLength(3);
+    expect(COSMETIC_ITEMS.filter((c) => c.device?.frame === 'v2')).toHaveLength(4);
   });
   it('데이터 검증: v2 는 hole 이 없거나 음수면 오류', async () => {
     const mod = await import('../src/data/shop');

@@ -40,7 +40,7 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 30;
+export const SAVE_FORMAT_VERSION = 31;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -280,7 +280,7 @@ export const freeCosmeticIds = (): string[] => FREE_COSMETICS.map((c) => c.id);
 /** 새 트랙의 기본 착용: 기본으로 주는 꾸밈 (분류마다 하나) */
 export function defaultWear(): WearState {
   const w: WearState = {};
-  for (const c of FREE_COSMETICS) w[c.category as WearCategory] = c.id;
+  for (const c of FREE_COSMETICS) w[c.category as WearCategory] ??= c.id; // 같은 분류의 기본 제공이 여럿이면(기기 디자인) 첫 번째만 입는다
   return w;
 }
 
@@ -1258,6 +1258,11 @@ export function migrateSave(raw: unknown): SaveData | null {
     // 형식 29 → 30 (C.85, GDD 36장 9번 도전의 탑): 트랙마다 tower { best: 0 }, 런 로그 towerBattles 빈 목록(repairRunLog 가 채운다)
     forEachTrack(save, (t) => { t.tower = { best: 0 }; });
     save.meta.format = 30;
+  }
+  if (save.meta.format < 31) {
+    // 형식 30 → 31 (UI담당자A, 기본 제공 기기 디자인 십일번대 추가): 새 기본 제공 꾸밈을 보유로 더한다. 착용은 건드리지 않는다(입던 기기 그대로)
+    save.shared = { ...(save.shared ?? newSharedState()), cosmetics: [...new Set([...freeCosmeticIds(), ...(Array.isArray(save.shared?.cosmetics) ? save.shared.cosmetics : [])])] };
+    save.meta.format = 31;
   }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
