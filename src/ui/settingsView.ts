@@ -1,6 +1,7 @@
 // 설정 화면 (GDD 14-3, C.18 / U-1 새 디자인, R-2): 전투 효과 켬/끔. 블록 클릭 판정 시간·드래그 임계치 설정은 순서 바꾸기 삭제(17-2)와 함께 없앴다.
 // localStorage 별도 키에 저장하고 세이브 구조는 건드리지 않는다.
 import { button, el } from './bha/dom';
+import { BG_CREDIT } from '../data/art/backgrounds';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { LEGACY_POINTER_SETTINGS_KEY } from './pointer';
 import { applyCalmMode, loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
@@ -208,5 +209,5 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, tamaPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, tamaPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT))]);
 }

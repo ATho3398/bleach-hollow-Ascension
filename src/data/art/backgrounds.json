@@ -1,0 +1,41 @@
+{
+  "credit": "배경: Bleach DS 4th Flame Bringer — ripped by Kazushi / Owari / Ichiron47 / DanMT",
+  "scenes": {
+    "desert": {
+      "layers": [
+        { "id": "sky", "w": 464, "h": 512, "height": 100, "speed": 0.15 },
+        { "id": "ground", "w": 1024, "h": 180, "height": 36, "speed": 1 }
+      ]
+    },
+    "forest": {
+      "layers": [
+        { "id": "sky", "w": 464, "h": 512, "height": 100, "speed": 0.15 },
+        { "id": "ground", "w": 464, "h": 283, "height": 58, "speed": 1 }
+      ]
+    },
+    "karakura": {
+      "layers": [
+        { "id": "sky", "w": 464, "h": 512, "height": 100, "speed": 0.15 },
+        { "id": "ground", "w": 896, "h": 448, "height": 80, "speed": 1 }
+      ]
+    },
+    "karakura-night": {
+      "layers": [
+        { "id": "sky", "w": 464, "h": 512, "height": 100, "speed": 0.15 },
+        { "id": "ground", "w": 464, "h": 264, "height": 52, "speed": 1 }
+      ]
+    },
+    "dangai": {
+      "layers": [
+        { "id": "sky", "w": 464, "h": 512, "height": 100, "speed": 0.15 },
+        { "id": "ground", "w": 1088, "h": 576, "height": 95, "speed": 1 }
+      ]
+    },
+    "seireitei": {
+      "layers": [
+        { "id": "sky", "w": 465, "h": 513, "height": 100, "speed": 0.15 },
+        { "id": "ground", "w": 256, "h": 91, "height": 24, "speed": 1 }
+      ]
+    }
+  }
+}

@@ -72,8 +72,8 @@ describe('종족 설정 room', () => {
 
 describe('훈련 인형 (GDD 18-3, C.38)', () => {
   it('이름·위치는 종족 설정에서 오고 다른 물건과 겹치지 않는다', () => {
-    expect(roomOf(getFaction('hollow')).props.dummy).toBe('뼈 인형');
-    expect(roomOf(getFaction('shinigami')).props.dummy).toBe('나무 인형');
+    expect(roomOf(getFaction('hollow')).props.dummy).toBe('훈련 인형');
+    expect(roomOf(getFaction('shinigami')).props.dummy).toBe('훈련 인형');
     for (const f of FACTIONS) {
       const r = roomOf(f);
       const d = r.layout.dummy;

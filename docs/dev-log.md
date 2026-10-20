@@ -394,3 +394,14 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - **사신대행증 v2 검사**: 앞면 2744×2294(크기 자유 ✓), 구멍 (663,818) **1410×705 ≠ 1938×1080**(가로 −528·세로 −375), 구멍 둘레 72px 덮음 66%, 버튼 ✓·< 자리가 그림 밖으로 나감(묶음이 안 들어감), 고리 ✓, 뒷면 1372×1147 ≠ 앞면. 구멍·버튼 묶음을 ×3 크기로 맞춰 다시 그려야 함(그림 크기·모양은 지금 그대로 가능).
 **테스트** 1064 → 1067 (+3, `tests/c78.test.ts`; c77 의 규격 값 테스트는 새 규칙으로 대체). typecheck·test·balance:check·build 통과.
 **캡처** `docs/captures/c78/`(1배, 5장): `01-vtest-vs-basic-landscape`·`02-vround-vs-basic-portrait`(평소 화면 위에 기본형 LCD 빨강·버튼 노랑 테두리 — 일치), `03-vtest-tamago-mode`·`04-vround-tamago-mode`, `05-guide-sticker-thumb`.
+
+### C.79 사냥터 배경 그림 · 홈 물건 이름 통일 (STAGE S-22, 코딩46, GDD 34장 → 34-3 v5.63)
+사용 모델: Opus 5.5. `PATCH_LABEL` C.79, `STAGE_LABEL` S-22. **`BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로.**
+사용자 원문: (배경 시트 6장) "이건 오는대로 주고, 다음패치할거 보고. 그리고 일케 주면 배경 적용 가능? …" → "ㄴㄴ 걍 사신, 호로 아이콘 및 이름 통일시켜. 복잡해지니까 / 배치는 추천대로"
+- **배경**: `public/art/bg-<장면>-<층>.webp` 12장(6장면 × sky·ground, 약 300KB). 데이터 `src/data/art/backgrounds.json`(+ `backgrounds.ts`), 종족 설정 `huntingGrounds.<id>.bg`·`arenaBg`. 걷기 = 층별 시차 스크롤(transform·cqh), 전투 = 정지 배경(보스전·등급전 = seireitei 무대), 어둡기 덮개(토큰 섞음). `src/ui/bha/sceneBg.ts`.
+- **출처**: 설정 > [정보] 한 줄.
+- **홈 물건**: 두 종족 이름 통일(출발 문·제단·기록서·보관함·창문·훈련 인형·상점), 상점 안내 "수집함" → "보관함".
+- **문서**: art-guide 11장·1장 표, GDD 34-3·12장 v5.63·13장 S-22.
+**테스트** 1067 → 1074 (+7, `tests/c79.test.ts`; c63·room-ui·c60 의 옛 이름 기대값, c75 단계 표시 형식 검사 갱신). typecheck·test·balance:check·build 통과.
+**캡처** `docs/captures/c79/`(1배, 8장): 걷기 `01` 호로 사막 · `02` 호로 숲 · `03` 사신 현세 거리 · `04` 사신 단가이, `05` 원정 전투(사막), `06` 등급전(세이레이테이 지붕), `07`·`08` 홈 물건 이름(호로·사신).
+

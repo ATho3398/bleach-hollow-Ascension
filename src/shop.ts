@@ -1,6 +1,6 @@
 // 상점 1차 (GDD 25-9, S-16 C.60): 줄 상태(가격·잠김 이유·보유·착용)·구매·꾸밈 착용·다시 뽑기권 사용. 종족 무관 —
 // 품목은 src/data/shop, 가격·상한·효과량은 balance.ts provisional.shop, 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
-// 산 즉시 쓰는 방식: 먹이 = 먹이 개수 +1, 정화제·각성제 = 지금 캐릭터에 바로, 수련권 = 지금 트랙 +1, 타일 = 수집함 +1. 보관하는 건 다시 뽑기권·덱 칸·꾸밈뿐
+// 산 즉시 쓰는 방식: 먹이 = 먹이 개수 +1, 정화제·각성제 = 지금 캐릭터에 바로, 수련권 = 지금 트랙 +1, 타일 = 보관함 +1. 보관하는 건 다시 뽑기권·덱 칸·꾸밈뿐
 import { BALANCE } from './config/balance';
 import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, shopVisible, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
 import { canWear } from './data/skins';
@@ -65,7 +65,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로 안 감), 지금 캐릭터에 바로`;
     case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로 안 감), 지금 캐릭터에 바로`;
     case 'trainingTicket': return `지금 트랙 수련권 +1 (최대 ${BALANCE.provisional.training.ticketsMax})`;
-    case 'rareTile': return '덱 밖 타일 무작위 1장 → 수집함 (이벤트 타일 제외)';
+    case 'rareTile': return '덱 밖 타일 무작위 1장 → 보관함 (이벤트 타일 제외)';
     case 'reroll': return `흡수 화면 특성 후보를 한 번 다시 뽑는다 (흡수 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `원정 타일 덱 칸 +1 (영구, 두 트랙 공유, 최대 +${SX.deckSlotPrices.length})`;
   }
@@ -169,7 +169,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
         const pool = rareTilePool(save);
         const tile = pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]!;
         save.tiles.collection[tile] = (save.tiles.collection[tile] ?? 0) + 1;
-        detail = `${tileName(tile, save.factionId)} → 수집함`;
+        detail = `${tileName(tile, save.factionId)} → 보관함`;
         break;
       }
       case 'reroll':

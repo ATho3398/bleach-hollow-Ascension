@@ -31,6 +31,7 @@ import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
+import { arenaSceneBg, groundSceneBg } from './bha/sceneBg';
 import { applyTheme } from './bha/theme';
 import { speciesView, startView } from './startView';
 import { slotPickView, type SlotPickMode } from './slotView';
@@ -743,6 +744,8 @@ export function startApp(host: HTMLElement): void {
       formId: save?.evolution.formId,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: '보스' } } : {}),
+      // 배경 (GDD 34-1): 보스전은 무대(없으면 사냥터), 그 밖은 사냥터
+      bg: (p.boss ? arenaSceneBg(faction) : null) ?? groundSceneBg(faction, exp.groundId),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       liberation: save ? liberationButton(faction, { ...liberationAccess(save), usable: p.params.liberationEnabled === true }) : undefined,
       tutorial: tutorialFor(),
@@ -922,6 +925,7 @@ export function startApp(host: HTMLElement): void {
       formId: s0.evolution.formId,
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
+      bg: arenaSceneBg(faction),
       liberation: liberationButton(faction, liberationAccess(s0)),
       onEnd: (done) => {
         const res = recordRankBattle(s0, done);

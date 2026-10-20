@@ -199,7 +199,9 @@ export interface FactionConfig {
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
   /** 사냥터별 이름·한 줄 설명 (GDD 24-2, 자리 표시): 사냥터 id(src/data/grounds) → 표시. 없는 사냥터는 huntingGroundName + 번호 */
-  huntingGrounds?: Record<string, { name: string; desc?: string }>;
+  huntingGrounds?: Record<string, { name: string; desc?: string; bg?: string }>;
+  /** 등급전·보스전 무대 배경 장면 id (GDD 34-1, src/data/art/backgrounds.json). 없으면 그 사냥터 배경 / 임시 배경 */
+  arenaBg?: string;
   /** 원정 난이도 표시 문구 (GDD 32-1 9번, C.75): 이름·★ 글자·"권장" 표시·잠김 문구({tier} = 열리는 단계 번호). 없으면 기본 문구 (difficultyLabels) */
   difficulty?: { name?: string; star?: string; recommended?: string; locked?: string };
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
@@ -278,9 +280,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     if (typeof hg !== 'object' || hg === null || Array.isArray(hg)) errors.push('huntingGrounds: { 사냥터 id: { name, desc? } }');
     else for (const [k, v] of Object.entries(hg)) {
       const x = (v ?? {}) as Record<string, unknown>;
-      if (!isString(x.name) || (x.desc !== undefined && typeof x.desc !== 'string')) errors.push(`huntingGrounds.${k}: { name: 문자열, desc?: 문자열 }`);
+      if (!isString(x.name) || (x.desc !== undefined && typeof x.desc !== 'string') || (x.bg !== undefined && !isString(x.bg))) errors.push(`huntingGrounds.${k}: { name: 문자열, desc?: 문자열, bg?: 배경 장면 id }`);
     }
   }
+  if (r.arenaBg !== undefined && !isString(r.arenaBg)) errors.push('arenaBg: 배경 장면 id');
   const fams = r.families;
   if (!Array.isArray(fams) || fams.length === 0) errors.push('families: 계열 1개 이상');
   else {
@@ -379,6 +382,11 @@ export function difficultyLabels(f: Pick<FactionConfig, 'difficulty'>): { name: 
 /** "★3" 같은 난이도 표시 */
 export function difficultyText(f: Pick<FactionConfig, 'difficulty'>, star: number): string {
   return `${difficultyLabels(f).star}${star}`;
+}
+
+/** 사냥터 배경 장면 id (GDD 34-1): 종족 설정 huntingGrounds.<id>.bg. 없으면 undefined (임시 배경) */
+export function groundBgId(f: Pick<FactionConfig, 'huntingGrounds'>, groundId: string | undefined): string | undefined {
+  return groundId ? f.huntingGrounds?.[groundId]?.bg : undefined;
 }
 
 /** 사냥터 표시 이름 (GDD 24-2): 종족 설정 huntingGrounds, 없으면 "사냥터 이름 n" (n = 데이터 순서) */

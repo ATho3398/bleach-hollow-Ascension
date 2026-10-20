@@ -37,6 +37,8 @@ import { locoOf, setLoco } from './bha/loco';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf } from './attackFx';
 import { playCosmeticFx } from './bha/cosmeticFx';
+import { sceneBgEl } from './bha/sceneBg';
+import type { SceneBg } from '../data/art/backgrounds';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -61,6 +63,8 @@ export interface BattleViewOptions {
   boss?: { eyebrow: string };
   /** 등급전처럼 내 등장 연출(상점 꾸밈, GDD 25-11)을 보이는 전투. 보스전(boss)도 보인다 */
   enter?: boolean;
+  /** 장면 배경 그림 (GDD 34-1): 원정이면 그 사냥터, 등급전·보스전이면 무대. 정지 배경. 없으면 지금 모습 */
+  bg?: SceneBg | null;
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -434,6 +438,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 한 열 (GDD 18-6): 장면(적 이름·모서리 버튼·유닛 둘·로그가 그 위에 얹힘) / 영력·저장 필살기 줄 / 좌우 폭 전부를 쓰는 블록 바 8칸
   const topRow = el('div', 'bha-battle__toprow');
   topRow.append(foeHead, bar);
+  if (opts.bg) {
+    arena.classList.add('has-bg');
+    arena.append(sceneBgEl(opts.bg, false));
+  }
   arena.append(units, topRow, fxLayer, floats, fxFlash, libCut, log);
   const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, ...(opts.notice ? [notice('info', opts.notice)] : []), arena, controls, flashVoid, flashHit);
   app.classList.toggle('is-frenzy', !!opts.frenzy);

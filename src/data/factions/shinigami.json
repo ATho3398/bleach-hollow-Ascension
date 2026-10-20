@@ -48,16 +48,20 @@
   "basicSkillName": "시해",
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "현세 순찰 구역 / 루콘가이",
+  "arenaBg": "seireitei",
   "huntingGrounds": {
     "outskirts": {
+      "bg": "forest",
       "name": "루콘가이",
       "desc": "소울 소사이어티 외곽 마을."
     },
     "canyon": {
+      "bg": "karakura",
       "name": "현세 순찰 구역",
       "desc": "현세의 담당 순찰 구역."
     },
     "forest": {
+      "bg": "dangai",
       "name": "단가이",
       "desc": "세계 사이의 틈."
     }
@@ -188,13 +192,13 @@
     "sceneArt": "scene.room",
     "characterArt": "char.shinigami",
     "props": {
-      "door": "대원실 문",
-      "altar": "수련 제단",
+      "door": "출발 문",
+      "altar": "제단",
       "book": "기록서",
-      "chest": "장롱",
+      "chest": "보관함",
       "window": "창문",
-      "dummy": "나무 인형",
-      "shop": "매점"
+      "dummy": "훈련 인형",
+      "shop": "상점"
     },
     "layout": {
       "window": {

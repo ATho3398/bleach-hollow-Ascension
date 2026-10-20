@@ -48,16 +48,20 @@
   "basicSkillName": "본체 능력",
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "웨코문도",
+  "arenaBg": "seireitei",
   "huntingGrounds": {
     "outskirts": {
+      "bg": "desert",
       "name": "웨코문도 외곽",
       "desc": "흰 모래 언덕이 끝없이 이어진다."
     },
     "canyon": {
+      "bg": "desert",
       "name": "모래 협곡",
       "desc": "바람이 우는 좁은 협곡."
     },
     "forest": {
+      "bg": "forest",
       "name": "허무의 숲",
       "desc": "메노스의 숲 깊은 곳."
     }
@@ -190,13 +194,13 @@
     "sceneArt": "scene.cave",
     "characterArt": "char.hollow",
     "props": {
-      "door": "둥지 입구",
-      "altar": "뼈 제단",
+      "door": "출발 문",
+      "altar": "제단",
       "book": "기록서",
-      "chest": "수집함",
-      "window": "균열 틈",
-      "dummy": "뼈 인형",
-      "shop": "떠돌이 상인"
+      "chest": "보관함",
+      "window": "창문",
+      "dummy": "훈련 인형",
+      "shop": "상점"
     },
     "layout": {
       "window": {

@@ -6,6 +6,8 @@ import type { Locomotion } from '../../engine/locomotion';
 import { bindAnim, type AnimPlayer } from './animPlayer';
 import { el, icon } from './dom';
 import { setLoco } from './loco';
+import { sceneBgEl } from './sceneBg';
+import type { SceneBg } from '../../data/art/backgrounds';
 
 export const DEFAULT_WALK_ANIM = 'plain';
 
@@ -33,7 +35,7 @@ export interface WalkScene {
 }
 
 /** 걷는 화면 장면: 먼 배경 · 가까운 배경 · 바닥 줄이 오른쪽으로 흐르고, 캐릭터(반측면, 왼쪽 향함)가 제자리에서 걷는다 */
-export function walkScene(walkAnim: string | undefined, label: string, art: ArtUrls | null = null, loco: Locomotion = 'walk'): WalkScene {
+export function walkScene(walkAnim: string | undefined, label: string, art: ArtUrls | null = null, loco: Locomotion = 'walk', bg: SceneBg | null = null): WalkScene {
   const scene = el('div', 'bha-walk');
   scene.setAttribute('role', 'img');
   scene.setAttribute('aria-label', `${label}을(를) 걷는 중`);
@@ -59,7 +61,9 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
   } else body.append(el('span', 'bha-walker__eye'), el('span', 'bha-walker__foot bha-walker__foot--back'), el('span', 'bha-walker__foot bha-walker__foot--front'));
   // 발밑·잔상 꾸밈 자리 (GDD 25-9): 입었을 때만 cosmetics.css 가 보인다
   walker.append(el('span', 'bha-walker__trail'), body, el('span', 'bha-walker__shadow'));
-  scene.append(far, near, ground, walker);
+  // 사냥터 배경 그림이 있으면 그 층들이 임시 줄무늬 층을 대신한다 (GDD 34-1)
+  if (bg) scene.classList.add('has-bg');
+  scene.append(...(bg ? [sceneBgEl(bg, true)] : []), far, near, ground, walker);
   return {
     el: scene,
     walker,

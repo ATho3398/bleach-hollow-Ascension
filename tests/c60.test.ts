@@ -99,7 +99,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     expect(s.training.tickets).toBe(3);
     expect(row(s, 'training-ticket')!.canBuy).toBe(false);
   });
-  it('희귀 타일 꾸러미: 덱 밖 바탕 타일 1장 → 수집함', () => {
+  it('희귀 타일 꾸러미: 덱 밖 바탕 타일 1장 → 보관함', () => {
     const s = rich();
     s.tiles.deck = ['prey-nest-a', 'prey-nest-a', 'elite-den-a'];
     const pool = rareTilePool(s);

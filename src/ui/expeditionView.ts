@@ -23,6 +23,7 @@ import { roadPlanner } from './bha/road';
 import { locoOf } from './bha/loco';
 import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
+import { groundSceneBg } from './bha/sceneBg';
 import { storyGoalLine } from './storyView';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -236,7 +237,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   chips.append(goal, where, meters, slotsLine);
 
   const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
-  const walk = walkScene(faction.walkAnim, faction.huntingGroundName, walkArt, locoOf(faction, h.formId, walkArt));
+  const walk = walkScene(faction.walkAnim, faction.huntingGroundName, walkArt, locoOf(faction, h.formId, walkArt), groundSceneBg(faction, exp.groundId));
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선

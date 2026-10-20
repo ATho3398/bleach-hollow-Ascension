@@ -74,3 +74,28 @@
 
 /* 그림 캐릭터: 발바닥이 상자 아래에서 8% 위(art-guide 규격)이므로 그림자도 그 높이에 둔다(발이 떠 보이지 않게) */
 .bha-walker.has-art .bha-walker__shadow { bottom: 3%; }
+
+/* 사냥터 배경 그림 (GDD 34-1, C.79): 층(하늘·땅)을 아래에 붙여 가로로 반복한다. 걷기 화면은 층별 시차 스크롤,
+   전투 화면은 정지. 움직임은 transform 만(합성 단계, 저사양 60fps). 한 칸 너비 = 층 높이 × 그림 비율(cqh 단위).
+   어둡기 덮개(배경색 토큰을 섞은 반투명)로 LCD 위 글자를 읽히게 한다. 그림이 없는 사냥터는 이 상자 자체가 없다. */
+.bha-walk.has-bg > .bha-walk__layer { display: none; }
+.bha-scenebg { position: absolute; inset: 0; overflow: hidden; container-type: size; pointer-events: none; background: var(--bha-bg-0); }
+.bha-scenebg__layer {
+  --tile-w: calc(var(--layer-h) * 1cqh * var(--tile-ratio));
+  position: absolute; left: 0; bottom: 0; height: calc(var(--layer-h) * 1%); width: calc(100% + var(--tile-w));
+  background-image: var(--bg-url); background-size: auto 100%; background-repeat: repeat-x; background-position: 0 100%;
+  image-rendering: pixelated;
+}
+.bha-scenebg.is-moving .bha-scenebg__layer {
+  will-change: transform;
+  animation: bha-scenebg-scroll linear infinite paused;
+  /* 땅(speed 1)이 장면 높이 기준 같은 속도로 흐르도록: 한 칸 너비 ÷ 빠르기. 배속만큼 빨라진다 */
+  animation-duration: calc(var(--layer-h) * var(--tile-ratio) * 0.02s / var(--layer-speed) / var(--walk-speed, 1));
+}
+.is-walking .bha-scenebg.is-moving .bha-scenebg__layer { animation-play-state: running; }
+@keyframes bha-scenebg-scroll { from { transform: translate3d(calc(var(--tile-w) * -1), 0, 0); } to { transform: translate3d(0, 0, 0); } }
+.bha-scenebg__dim { position: absolute; inset: 0; background: color-mix(in srgb, var(--bha-bg-0) 38%, transparent); }
+.bha-lcd .bha-battle__arena.has-bg { border-radius: var(--bha-r-lg); overflow: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .bha-scenebg.is-moving .bha-scenebg__layer { animation: none; transform: none; }
+}

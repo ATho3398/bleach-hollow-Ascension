@@ -193,10 +193,10 @@ describe('출발 화면 탭 고정 (28장 8번)', () => {
 });
 
 describe('방 상점 (28장 9번)', () => {
-  it('방 물건 shop, 이름은 종족 설정(떠돌이 상인 / 매점), 다른 물건과 겹치지 않는다', () => {
+  it('방 물건 shop, 이름은 두 종족 공통 상점(GDD 34-2), 다른 물건과 겹치지 않는다', () => {
     expect(ROOM_PROPS).toContain('shop');
-    expect(roomOf(H).props.shop).toBe('떠돌이 상인');
-    expect(roomOf(S).props.shop).toBe('매점');
+    expect(roomOf(H).props.shop).toBe('상점');
+    expect(roomOf(S).props.shop).toBe('상점');
     for (const f of FACTIONS) {
       const r = roomOf(f);
       for (const p of ROOM_PROPS) {
