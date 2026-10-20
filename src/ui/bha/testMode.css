@@ -1,0 +1,24 @@
+/* 테스트 모드 (GDD 38장, C.88): 화면 위 "테스트" 띠와 테스트 패널. 디자인 토큰만 쓴다 */
+.bha-testband {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  z-index: calc(var(--bha-z-tutorial) + 2); pointer-events: none;
+  padding: 0 var(--bha-sp-3); border-radius: 0 0 var(--bha-r-sm) var(--bha-r-sm);
+  background: var(--bha-warn); color: var(--bha-bg-0);
+  font: var(--bha-fw-heavy) var(--bha-fs-xs) / var(--bha-lh-tight) var(--bha-font-body); letter-spacing: var(--bha-tracking-label);
+  box-shadow: var(--bha-shadow-1);
+}
+.bha-testver { white-space: normal; text-align: left; }
+
+.bha-test__grid { display: grid; grid-template-columns: auto 1fr; gap: var(--bha-sp-1) var(--bha-sp-2); align-items: center; }
+.bha-test__label { color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+.bha-test__input,
+.bha-test__select {
+  min-width: 0; width: 100%; min-height: var(--bha-touch);
+  padding: 0 var(--bha-sp-2); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm);
+  background: var(--bha-bg-2); color: var(--bha-text-1);
+  font: var(--bha-fw-medium) var(--bha-fs-sm) var(--bha-font-num);
+}
+.bha-test__input:focus-visible,
+.bha-test__select:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 1px; }
+.bha-test__row { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); align-items: center; margin-top: var(--bha-sp-2); }
+.bha-test__note { color: var(--bha-text-3); font-size: var(--bha-fs-xs); margin: var(--bha-sp-1) 0 0; }

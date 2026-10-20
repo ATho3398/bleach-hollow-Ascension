@@ -10,7 +10,7 @@ import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { bossSetupOf, createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView } from './storyView';
 import { playDialogue } from './dialogueView';
@@ -73,6 +73,9 @@ import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
 import { useRerollTicket } from '../shop';
+import { clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
+import { initTestMode, testSpeed } from './testMode';
+import { testPanelView, type TestTab } from './testModePanel';
 
 /** 칭호 id → 종족별 표기 이름 */
 function titleLabel(id: string, factionId: string): string {
@@ -81,12 +84,16 @@ function titleLabel(id: string, factionId: string): string {
 }
 
 export function startApp(host: HTMLElement): void {
+  // 테스트 모드 (GDD 38장): 켜져 있으면 세이브 키를 모두 테스트 칸(bha-save-test…)으로 바꿔 끼운 저장소를 쓴다 — 진짜 세이브는 읽지도 쓰지도 않는다
+  const testOn = initTestMode();
+  const store: FullStorage = testOn ? testStorage(localStorage) : localStorage;
+  if (testOn) setSpeed(testSpeed());
   // 세이브 슬롯 (Q-3): 시작 화면에서 슬롯을 고르기 전에는 세이브가 없다. slot = 지금 플레이 중인 슬롯(1~3), 0 = 시작 화면
   let save: SaveData | null = null;
   let slot = 0;
   // 덮어쓴 슬롯·지운 백업만 가리키던 압축 덩어리 정리 (C.72). 저장소가 막힌 환경이면 건너뛴다
   try {
-    collectSlotChunks(localStorage);
+    collectSlotChunks(store);
   } catch {
     /* 저장소 없음 */
   }
@@ -136,14 +143,14 @@ export function startApp(host: HTMLElement): void {
     // 마지막 화면 키 (GDD 19-3): 원정 흐름(배치 후 출발 ~ 결과 전) 안이면 원정, 아니면 방
     save.lastScreen = activeExp !== null && activeExp.phase !== 'ended' ? 'expedition' : 'room';
     // 저장 공간 부족 (C.70): 백업을 지워 썼거나 그래도 못 썼으면 한 번씩 알린다 (예전에는 말없이 진행이 사라졌다)
-    const w = writeSlotSave(localStorage, save, slot);
+    const w = writeSlotSave(store, save, slot);
     if (w !== 'ok' && !storageWarned.has(w)) {
       storageWarned.add(w);
       showToast(w === 'freed'
         ? { eyebrow: '저장 공간', title: '공간이 부족해 백업을 지웠다', meta: '진행은 저장됐다. 설정 > 백업에서 내보내기를 해 두자.' }
         : { eyebrow: '저장 공간', title: '저장 공간이 가득 차 저장하지 못했다', meta: '설정 > 백업에서 내보내기를 하고 쓰지 않는 슬롯을 비우자.' }, 0, 5200);
     }
-    touchSlot(localStorage, slot);
+    touchSlot(store, slot);
   };
   const storageWarned = new Set<string>();
   /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
@@ -204,7 +211,7 @@ export function startApp(host: HTMLElement): void {
 
   // ── 시작 화면·슬롯 (Q-3) ──
   const settingsOpener = (withBackup: boolean) => () =>
-    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined, () => tutorialDemo(helpFaction())));
+    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined, () => tutorialDemo(helpFaction())));
 
   /** 가져오기·되돌리기가 끝난 뒤: 그 슬롯을 저장소에서 다시 읽어 방으로 */
   function reloadSlot(): void {
@@ -225,7 +232,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   function renderTitle(note = ''): void {
-    const sums = allSlotSummaries(localStorage);
+    const sums = allSlotSummaries(store);
     const last = lastPlayedSlot(sums);
     // 시작 화면의 테마: 가장 최근 슬롯의 종족, 없으면 등록된 첫 종족 (종족 id 로 분기하지 않는다)
     const lastSum = sums.find((x) => x.slot === last);
@@ -234,7 +241,7 @@ export function startApp(host: HTMLElement): void {
       onNew: () => open('slot-new', () => renderSlotPick('new')),
       // 이어하기 (GDD 19-3): 슬롯 선택 없이 가장 최근 슬롯을 마지막으로 보던 화면부터
       onContinue: () => {
-        const n = lastPlayedSlot(allSlotSummaries(localStorage));
+        const n = lastPlayedSlot(allSlotSummaries(store));
         if (n !== null) enterSlot(n);
       },
       onImport: () => open('slot-load', () => renderSlotPick('load')),
@@ -242,7 +249,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   function renderSlotPick(mode: SlotPickMode): void {
-    const sums = allSlotSummaries(localStorage);
+    const sums = allSlotSummaries(store);
     slotPickView(root, mode, sums, FACTIONS, (sum) => {
       if (mode === 'load') {
         if (sum.state === 'ok' || (sum.state === 'broken' && sum.recoverable)) enterSlot(sum.slot);
@@ -266,9 +273,9 @@ export function startApp(host: HTMLElement): void {
     applyTheme(helpFaction());
     speciesView(root, FACTIONS, {
       onPick: (f) => {
-        stashSlot(localStorage, newSlot);
+        stashSlot(store, newSlot);
         slot = newSlot;
-        save = newSaveData(f.id);
+        save = testOn ? newTestSave(f.id) : newSaveData(f.id);
         persist();
         nestScreen();
       },
@@ -287,17 +294,17 @@ export function startApp(host: HTMLElement): void {
     // 세이브 형식 마이그레이션 직전 자동 백업 (GDD 24-5): 옛 형식이면 원문을 슬롯 백업에 보관한 뒤 올린다
     let raw: string | null = null;
     try {
-      raw = localStorage.getItem(slotKey(n));
+      raw = store.getItem(slotKey(n));
     } catch {
       raw = null;
     }
-    let loaded = loadSave(localStorage, slotKey(n));
+    let loaded = loadSave(store, slotKey(n));
     // 손상된 세이브 (C.70): 백업이 읽히면 맞바꿔 연다(손상본은 백업 자리에 남는다). 백업도 안 되면 시작 화면에 알린다
-    const recovered = !loaded && recoverFromBackup(localStorage, n);
-    if (recovered) loaded = loadSave(localStorage, slotKey(n));
+    const recovered = !loaded && recoverFromBackup(store, n);
+    if (recovered) loaded = loadSave(store, slotKey(n));
     if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
     if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: `슬롯 ${n}을 백업에서 열었다`, meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
-    else if (needsMigration(raw)) stashSlot(localStorage, n, 'migration');
+    else if (needsMigration(raw)) stashSlot(store, n, 'migration');
     save = loaded;
     slot = n;
     activeExp = null;
@@ -474,7 +481,9 @@ export function startApp(host: HTMLElement): void {
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
       onTamago: () => tama.toggle(true),
-      onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
+      // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)
+      onBackup: testOn ? null : () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
+      onTest: testOn ? () => open('test', () => renderTest(faction, s)) : null,
       onTitle: askReturnToTitle,
     });
   }
@@ -508,7 +517,7 @@ export function startApp(host: HTMLElement): void {
   function doFusion(s: SaveData): void {
     // 되돌릴 수 없는 일 직전 자동 백업 (GDD 24-5): 지금 상태를 저장하고 슬롯 백업에 보관한 뒤 합체한다
     persist();
-    stashSlot(localStorage, slot, 'fusion');
+    stashSlot(store, slot, 'fusion');
     const r = performFusion(s);
     if (!r.ok) return void nav.pop();
     persist();
@@ -580,7 +589,7 @@ export function startApp(host: HTMLElement): void {
   function doRebirth(faction: FactionConfig, s: SaveData, keep: string | null): void {
     // 되돌릴 수 없는 일 직전 자동 백업 (GDD 24-5): 지금 상태를 저장하고 슬롯 백업에 보관한 뒤 환생한다
     persist();
-    stashSlot(localStorage, slot, 'rebirth');
+    stashSlot(store, slot, 'rebirth');
     const r = performRebirth(s, keep);
     if (!r.ok) return void nav.pop();
     persist();
@@ -852,6 +861,44 @@ export function startApp(host: HTMLElement): void {
     else showResult();
   }
 
+  // ── 테스트 패널 (GDD 38-4): 테스트 모드에서만. 값은 테스트 칸에만 저장된다 ──
+  function renderTest(faction: FactionConfig, s: SaveData, tab: TestTab = 'form'): void {
+    testPanelView(root, faction, s, {
+      persist,
+      onBattle: (c) => testBattle(faction, c),
+      onNewFaction: (fid) => confirmDialog({
+        title: `${getFaction(fid).name}(으)로 테스트 칸을 새로 만들까요?`,
+        body: '지금 테스트 칸은 지워지고 전체 해금 상태로 새로 시작한다. 진짜 세이브는 그대로.',
+        yes: '새로 만들기', no: '아니오',
+        onYes: () => {
+          save = newTestSave(fid);
+          persist();
+          nestScreen();
+        },
+      }),
+      onReset: () => confirmDialog({
+        title: '테스트 칸을 초기화할까요?',
+        body: '테스트 칸(슬롯·백업 포함)을 모두 지우고 처음 화면으로 간다. 진짜 세이브는 그대로.',
+        yes: '초기화', no: '아니오', danger: true,
+        onYes: () => {
+          clearTestSlot(localStorage);
+          titleScreen('테스트 칸을 비웠다. [새로 시작]으로 전체 해금 테스트 칸을 만든다.');
+        },
+      }),
+      onBodyChanged: () => {
+        dress(s.wear);
+        nav.top?.render();
+      },
+    }, tab);
+  }
+
+  /** 바로 전투 (38-4): 고른 적·★·연속(또는 탑 층)으로 한 판. 기록은 테스트 칸 런 로그에만 */
+  function testBattle(faction: FactionConfig, c: TestBattleChoice): void {
+    const pick = testBattleEnemy(c);
+    if (!pick) return;
+    open('test-battle', () => runPractice(faction, pick.enemy, pick.star, pick.bossId, c.floor ? `테스트 · 탑 ${c.floor}층 · ★${pick.star}` : `테스트 · ★${pick.star}${c.streak > 0 ? ` · 연속 ${c.streak}` : ''}`), true);
+  }
+
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
     practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy) });
@@ -864,9 +911,10 @@ export function startApp(host: HTMLElement): void {
     else nav.push(e);
   }
 
-  function runPractice(faction: FactionConfig, enemy: EnemyDef): void {
+  /** fixedStar·notice 는 테스트 모드 바로 전투(38-4): 적은 이미 ★·배율을 입혀 넘긴다 */
+  function runPractice(faction: FactionConfig, enemy: EnemyDef, fixedStar?: number, bossId: string | null = null, notice?: string): void {
     // 연습 상대 = 내 단계의 권장 난이도 ★ (GDD 32-1): 훈련 인형은 DPS 측정용이라 권장 세기로 고정
-    const star = recommendedDifficulty(save?.evolution.tierIndex ?? 0);
+    const star = fixedStar ?? recommendedDifficulty(save?.evolution.tierIndex ?? 0);
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
       applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total);
@@ -874,12 +922,13 @@ export function startApp(host: HTMLElement): void {
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
       params.liberationEnabled = liberationAccess(save).usable;
     }
-    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(enemy, star), params });
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
       skinId: save?.skin,
       formId: save?.evolution.formId,
+      notice,
       tutorial: tutorialFor(),
       liberation: save ? liberationButton(faction, liberationAccess(save)) : undefined,
       onQuit: () => nav.pop(),
@@ -889,7 +938,8 @@ export function startApp(host: HTMLElement): void {
           settleLiberationRisk(save, done);
           persist();
         }
-        practiceResult(faction, enemy, done);
+        if (fixedStar === undefined) practiceResult(faction, enemy, done);
+        else practiceResultView(root, faction, enemy, done, { onAgain: () => nav.replace({ id: 'test-battle', locked: true, render: () => { runPractice(faction, enemy, fixedStar, bossId, notice); root.scrollTop = 0; } }), onMenu: () => nav.pop() });
       },
     });
   }
@@ -911,7 +961,7 @@ export function startApp(host: HTMLElement): void {
     if (!c.ok || c.opponentId !== holder.id) return void nav.pop(); // 그사이 상황이 바뀌었으면(다른 탭 등) 목록으로
     // 되돌릴 수 없는 일 직전 자동 백업 (GDD 24-5): 지금 상태를 저장하고 슬롯 백업에 보관한 뒤 싸운다
     persist();
-    stashSlot(localStorage, slot, 'rank');
+    stashSlot(store, slot, 'rank');
     setBgm('rank');
     const params = buildCombatParams(s0.build, faction.id);
     applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total);

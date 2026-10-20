@@ -39,6 +39,7 @@ import { attackFx, fxModeOf } from './attackFx';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
 import type { SceneBg } from '../data/art/backgrounds';
+import { testSpeedMul } from './testMode';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -562,7 +563,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   speedBtn.onclick = () => {
     speed = speed === 1 ? 2 : 1;
     saveBattleSpeed(safeStorage(), speed);
-    attack.setSpeed(speed);
+    attack.setSpeed(speed * testSpeedMul());
     setText(speedText, `${speed}x`);
     speedBtn.classList.toggle('is-on', speed === 2);
   };
@@ -622,7 +623,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     },
     shake,
   });
-  if (speed !== 1) attack.setSpeed(speed);
+  if (speed * testSpeedMul() !== 1) attack.setSpeed(speed * testSpeedMul());
   const n0 = (v: number) => String(Math.round(v));
   /** 피해 크기 기준 (C.63): 내 기본 공격 1회 피해(육성·환경 반영) / 적 쪽은 기본 공격 피해 단위 */
   const myUnit = p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier * p.attackPowerMultiplier;
@@ -1102,7 +1103,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     last = now;
     if (s.status === 'playing') {
       if (halted() !== fxHalted) attack.setPaused((fxHalted = halted()));
-      const f = frameTicks(acc, dt, speed, tickMs, halted());
+      const f = frameTicks(acc, dt, speed * testSpeedMul(), tickMs, halted()); // 테스트 모드 속도 배율 (GDD 38-4), 평소 1
       acc = f.acc;
       for (let n = 0; n < f.ticks && s.status === 'playing'; n++) step(s, queue.splice(0, queue.length));
     }

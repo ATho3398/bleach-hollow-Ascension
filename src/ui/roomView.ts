@@ -43,7 +43,10 @@ export interface RoomHandlers {
   onPhoto: () => void;
   /** 다마고치 모드 켜기 (GDD 27장): 줌아웃해 기기 전체를 본다 */
   onTamago: () => void;
-  onBackup: () => void;
+  /** null = 숨김 (테스트 모드, GDD 38-2) */
+  onBackup: (() => void) | null;
+  /** 테스트 패널 (GDD 38-4): 테스트 모드에서만, 아니면 null */
+  onTest?: (() => void) | null;
   onTitle: () => void;
   persist: () => void;
   resume: { info: string; onResume: () => void } | null;
@@ -209,7 +212,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', onClick: hd.onHogyoku }] : []),
       { label: '사진', icon: 'i-cast', onClick: hd.onPhoto },
       { label: '다마고치 모드', icon: 'i-minus', onClick: hd.onTamago },
-      { label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
+      ...(hd.onTest ? [{ label: '테스트', icon: 'i-settings', onClick: hd.onTest }] : []),
+      ...(hd.onBackup ? [{ label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup }] : []),
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
     ],
     onItemsChange: () => registerItems(),
