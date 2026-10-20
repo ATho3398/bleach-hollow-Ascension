@@ -18,7 +18,7 @@ import { buyShopItem, goldRows, jadeRows, rareTilePool, shortText, unwearCategor
 import { COSMETIC_PARTS } from '../src/ui/bha/cosmetics';
 import { boughtText, shopConfirmText } from '../src/ui/shopView';
 
-const SX = BALANCE.provisional.shop;
+const SX = BALANCE.shop;
 const H = getFaction('hollow');
 const rich = (fid = 'hollow'): SaveData => {
   const s = newSaveData(fid, 1000);

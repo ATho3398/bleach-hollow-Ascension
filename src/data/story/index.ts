@@ -6,7 +6,11 @@ import { isGroundId } from '../grounds';
 import { deckTilesFor } from '../tiles';
 import chaptersRaw from './chapters.json';
 import hollowCh1 from './hollow/ch1.json';
+import hollowCh2 from './hollow/ch2.json';
+import hollowCh3 from './hollow/ch3.json';
 import shinigamiCh1 from './shinigami/ch1.json';
+import shinigamiCh2 from './shinigami/ch2.json';
+import shinigamiCh3 from './shinigami/ch3.json';
 
 /** 대사 한 줄: 이름표 + 글 (그림 없이, GDD 25-4) */
 export interface StoryLine {
@@ -108,7 +112,7 @@ export const STORY_CHAPTERS: readonly StoryChapterDef[] = (chaptersRaw as { chap
 });
 
 /** 종족별 장 내용 목록. 새 종족·새 장은 파일을 만들고 한 줄 더한다 */
-export const STORY_CONTENT: readonly StoryChapterContent[] = [hollowCh1, shinigamiCh1].map(parseChapterContent);
+export const STORY_CONTENT: readonly StoryChapterContent[] = [hollowCh1, hollowCh2, hollowCh3, shinigamiCh1, shinigamiCh2, shinigamiCh3].map(parseChapterContent);
 
 /** 이 종족의 장 내용. 아직 없으면(2·3장 자리) null = 준비 중 */
 export function chapterContent(factionId: string, chapterId: string): StoryChapterContent | null {
@@ -142,4 +146,10 @@ export function groundBossId(factionId: string, groundId: string): string | null
 /** 세이브·런 로그 키: "ch1/ep2" */
 export function episodeKey(chapterId: string, episodeId: string): string {
   return `${chapterId}/${episodeId}`;
+}
+
+/** 장 첫 완료 영옥: 기본 + 그 장의 추가분 (GDD 35장: 3장 = 스킨 자리 영옥 10) */
+export function chapterClearJade(chapterId: string): number {
+  const SX = BALANCE.provisional.story;
+  return SX.chapterJade + (SX.chapterBonusJade[chapterId] ?? 0);
 }

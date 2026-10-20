@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 46;
+export const BALANCE_VERSION = 47;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -29,6 +29,28 @@ export const BALANCE = {
   elements: { strong: 1.2, weak: 0.85, stab: 1.1 },
   /** 등급전 (GDD 21장 v4.3·v4.4 확정): 아란칼(5단계, tierIndex 4) 도달 후 해금. 번호 10개, 바로 위 1칸 도전, 진 상대 재도전은 다음 원정 1회 후 */
   rank: { unlockTierIndex: 4, rematchAfterRuns: 1 },
+  /** 상점 (GDD 25-9, S-16 C.60 → v5.70 사용자 확정 2026-10-20 "상점 가격도 일단 확정", C.84 에서 값 그대로 확정 구역으로): 가격·상한·효과량. 품목 목록(id·분류·이름·효과 종류)은 src/data/shop. 골드 = 소모품·편의, 영옥 = 꾸밈 */
+  shop: {
+    /** 골드 품목 가격 (품목 id → 골드). 덱 칸은 deckSlotPrices */
+    goldPrices: {
+      'food-snack': 20, 'food-basic': 35, 'food-hearty': 60, 'food-tonic': 100, 'food-feast': 140,
+      calm: 80, wake: 60, 'training-ticket': 90, 'rare-tile': 60, reroll: 120,
+    } as Record<string, number>,
+    /** 타일 덱 칸 +1 의 n번째 가격 (최대 +2: 덱 8 → 9 → 10, 영구·슬롯 공유) */
+    deckSlotPrices: [400, 800],
+    /** 정화제: 리스크 −30 (0 아래로 안 감) · 각성제: 컨디션 +30 (최대값 위로 안 감) */
+    calmRisk: 30,
+    wakeCondition: 30,
+    /** 다시 뽑기권 보유 상한 (흡수 한 번에 1장까지) */
+    rerollMax: 3,
+    /** 영옥 꾸밈 가격: 스킨(앞으로 들어오는 스킨도 기본값), 분류별 (GDD 25-9 영옥 탭) */
+    skinPrice: 30,
+    cosmeticPrices: { aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3, enter: 6, evo: 8, absorb: 5, cut: 6, win: 4, talk: 4, room: 10, frame: 3, keyring: 5, device: 20 } as Record<string, number>,
+    /** 튜토리얼 목표(23-3) 하나마다 더 주는 영옥 (기존 보상은 그대로, 트랙마다 1회) */
+    tutorialJade: 1,
+    /** balance:check 가드: 4바퀴 원정 1판 평균 골드로 살 수 있는 보통 먹이 수 */
+    basicFoodPerRunGuard: [2, 5],
+  },
 
   // ── 임시값(provisional): 기획서 미정 항목을 프로토타입용으로 채우는 구역 (GDD 12장) ──
   // 여기 값은 확정이 아니다. 확정되면 기획서에 반영하고 이 구역에서 옮긴다.
@@ -394,6 +416,8 @@ export const BALANCE = {
     boss: {
       timeLimitSeconds: 180,
       seal: { everySeconds: 10, seconds: 4, cells: 1 },
+      /** 기믹 summon (GDD 35장, C.84): everySeconds 마다 졸개 1마리(한 번에 1마리). 졸개 체력 = 기본 공격 hpInAttacks 회분(내 피해를 먼저 받는 방패), attackSeconds 마다 기본 공격 attackInAttacks 회분 */
+      summon: { everySeconds: 20, hpInAttacks: 6, attackSeconds: 3, attackInAttacks: 0.1 },
       reward: { gold: 100, food: 'feast', firstJade: 10 },
       /** 자유 원정 등장 (GDD 37장, C.86): 그 사냥터 장 보스를 스토리에서 이긴 뒤, freeFromLap 바퀴째부터 바퀴 시작마다 freeChance (원정당 최대 1번).
        *  보상 골드 = reward.gold × 원정 골드 배율(★·연속), 먹이 = reward.food. 첫 처치 영옥·칭호 없음 */
@@ -406,28 +430,8 @@ export const BALANCE = {
       episodeFood: 'basic',
       firstClearJade: 2,
       chapterJade: 5,
-    },
-    /** 상점 1차 (GDD 25-9, S-16 C.60): 가격·상한·효과량. 품목 목록(id·분류·이름·효과 종류)은 src/data/shop. 골드 = 소모품·편의, 영옥 = 꾸밈 */
-    shop: {
-      /** 골드 품목 가격 (품목 id → 골드). 덱 칸은 deckSlotPrices */
-      goldPrices: {
-        'food-snack': 20, 'food-basic': 35, 'food-hearty': 60, 'food-tonic': 100, 'food-feast': 140,
-        calm: 80, wake: 60, 'training-ticket': 90, 'rare-tile': 60, reroll: 120,
-      } as Record<string, number>,
-      /** 타일 덱 칸 +1 의 n번째 가격 (최대 +2: 덱 8 → 9 → 10, 영구·슬롯 공유) */
-      deckSlotPrices: [400, 800],
-      /** 정화제: 리스크 −30 (0 아래로 안 감) · 각성제: 컨디션 +30 (최대값 위로 안 감) */
-      calmRisk: 30,
-      wakeCondition: 30,
-      /** 다시 뽑기권 보유 상한 (흡수 한 번에 1장까지) */
-      rerollMax: 3,
-      /** 영옥 꾸밈 가격: 스킨(앞으로 들어오는 스킨도 기본값), 분류별 (GDD 25-9 영옥 탭) */
-      skinPrice: 30,
-      cosmeticPrices: { aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3, enter: 6, evo: 8, absorb: 5, cut: 6, win: 4, talk: 4, room: 10, frame: 3, keyring: 5, device: 20 } as Record<string, number>,
-      /** 튜토리얼 목표(23-3) 하나마다 더 주는 영옥 (기존 보상은 그대로, 트랙마다 1회) */
-      tutorialJade: 1,
-      /** balance:check 가드: 4바퀴 원정 1판 평균 골드로 살 수 있는 보통 먹이 수 */
-      basicFoodPerRunGuard: [2, 5],
+      /** 장 첫 완료에 더 주는 영옥 (GDD 35장, C.84): 3장 = 25-4 "마지막 장에 스킨" 자리 — 그림이 오면 스킨으로 바꾼다 */
+      chapterBonusJade: { ch3: 10 } as Record<string, number>,
     },
     /** 타일 변수 5종 (GDD 25-5, S-13 C.57). 표의 이름·짝은 src/data/tiles/*.json, 여기는 수치만. 효과 키는 engine/expedition/variants.ts VariantMods */
     tileVariants: {

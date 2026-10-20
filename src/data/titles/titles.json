@@ -183,6 +183,62 @@
     "provisional": true
   },
   {
+    "id": "story-ch2",
+    "kind": "story",
+    "hidden": false,
+    "name": {
+      "hollow": "무리를 삼킨 자",
+      "shinigami": "현세 파견 완수"
+    },
+    "condition": {
+      "type": "storyChapterCleared",
+      "chapterId": "ch2"
+    },
+    "provisional": true
+  },
+  {
+    "id": "story-ch3",
+    "kind": "story",
+    "hidden": false,
+    "name": {
+      "hollow": "가면을 깬 자",
+      "shinigami": "석차에 도전하는 자"
+    },
+    "condition": {
+      "type": "storyChapterCleared",
+      "chapterId": "ch3"
+    },
+    "provisional": true
+  },
+  {
+    "id": "boss-canyon-king",
+    "kind": "story",
+    "hidden": false,
+    "name": {
+      "hollow": "협곡의 왕 사냥꾼",
+      "shinigami": "현세의 대허 퇴치"
+    },
+    "condition": {
+      "type": "bossDefeated",
+      "bossId": "canyon-king"
+    },
+    "provisional": true
+  },
+  {
+    "id": "boss-forest-lord",
+    "kind": "story",
+    "hidden": false,
+    "name": {
+      "hollow": "숲의 군주 사냥꾼",
+      "shinigami": "문지기 돌파"
+    },
+    "condition": {
+      "type": "bossDefeated",
+      "bossId": "forest-lord"
+    },
+    "provisional": true
+  },
+  {
     "id": "hogyoku-complete",
     "kind": "tag",
     "hidden": false,

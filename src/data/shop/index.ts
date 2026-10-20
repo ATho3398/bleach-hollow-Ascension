@@ -1,4 +1,4 @@
-// 상점 품목 표 (GDD 25-9, S-16 C.60, provisional). 품목 id·분류·이름·효과 종류만 — 가격·상한·효과량은 balance.ts provisional.shop.
+// 상점 품목 표 (GDD 25-9, S-16 C.60 — v5.70 가격 확정, C.84). 품목 id·분류·이름·효과 종류만 — 가격·상한·효과량은 balance.ts shop(확정).
 // 골드 탭 = 소모품·편의(효과 종류 kind 를 엔진 src/shop.ts 가 읽는다), 영옥 탭 = 꾸밈(분류 category + 모양 키 look → 디자인 토큰 --bha-cos-<분류>-<look>).
 // 스킨 품목은 스킨 표(src/data/skins)에서 만든다(id `skin-<스킨 id>`). 종족 분기 없음: 먹이 이름은 종족 설정, 스킨은 스킨 표의 종족 필드로 거른다.
 // 키링·기기 디자인(GDD 27장, C.62): 키링 = CSS/SVG 모양(종족 설정 keyringShapes 가 덮음) 또는 그림 `keyring-<id>.png`, 기기 디자인 = 그림 `device-<id>-front/back.png`

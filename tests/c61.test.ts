@@ -12,7 +12,7 @@ import { COSMETIC_FX_MS, REDUCED_FX_MS, fxDuration } from '../src/ui/bha/cosmeti
 import { PHOTO_SIZE, captionText, frameChoices, photoFileName } from '../src/ui/bha/photo';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
-const SX = BALANCE.provisional.shop;
+const SX = BALANCE.shop;
 const H = getFaction('hollow');
 const S = getFaction('shinigami');
 const rich = (fid = 'hollow'): SaveData => {

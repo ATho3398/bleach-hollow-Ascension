@@ -3,18 +3,124 @@
   "bosses": [
     {
       "id": "sand-maw",
-      "name": { "hollow": "모래 아귀", "shinigami": "들개 대허" },
+      "name": {
+        "hollow": "모래 아귀",
+        "shinigami": "들개 대허"
+      },
       "hpInAttacks": 150,
       "attackInAttacks": 0.325,
       "element": "earth",
       "category": "physical",
-      "statBias": { "def": 1.1, "spr": 0.9 },
-      "ev": { "hp": 3, "def": 2 },
-      "pattern": { "kind": "heavy-chain", "everySeconds": 12, "castSeconds": 2, "heavyInAttacks": 0.8, "hits": 2, "followCastSeconds": 1.2, "provisional": true },
-      "phases": [{ "belowHpFraction": 0.5, "attackSecondsMult": 0.75 }],
+      "statBias": {
+        "def": 1.1,
+        "spr": 0.9
+      },
+      "ev": {
+        "hp": 3,
+        "def": 2
+      },
+      "pattern": {
+        "kind": "heavy-chain",
+        "everySeconds": 12,
+        "castSeconds": 2,
+        "heavyInAttacks": 0.8,
+        "hits": 2,
+        "followCastSeconds": 1.2,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.5,
+          "attackSecondsMult": 0.75
+        }
+      ],
       "gimmick": "seal",
       "trait": "boss-sand-maw",
       "difficulty": 2,
+      "provisional": true
+    },
+    {
+      "id": "canyon-king",
+      "name": {
+        "hollow": "협곡의 왕",
+        "shinigami": "현세의 대허"
+      },
+      "hpInAttacks": 150,
+      "attackInAttacks": 0.4,
+      "element": "fire",
+      "category": "physical",
+      "statBias": {
+        "atk": 1.1,
+        "spd": 0.9
+      },
+      "ev": {
+        "hp": 3,
+        "atk": 2
+      },
+      "pattern": {
+        "kind": "heavy-chain",
+        "everySeconds": 12,
+        "castSeconds": 2,
+        "heavyInAttacks": 0.8,
+        "hits": 2,
+        "followCastSeconds": 1.2,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.5,
+          "attackSecondsMult": 0.8
+        }
+      ],
+      "gimmick": "summon",
+      "trait": "boss-canyon-king",
+      "difficulty": 4,
+      "provisional": true
+    },
+    {
+      "id": "forest-lord",
+      "name": {
+        "hollow": "숲의 군주",
+        "shinigami": "단가이의 문지기"
+      },
+      "hpInAttacks": 150,
+      "attackInAttacks": 0.55,
+      "element": "thunder",
+      "category": "special",
+      "statBias": {
+        "int": 1.1,
+        "def": 0.9
+      },
+      "ev": {
+        "hp": 3,
+        "int": 2
+      },
+      "pattern": {
+        "kind": "heavy-chain",
+        "everySeconds": 12,
+        "castSeconds": 2,
+        "heavyInAttacks": 0.8,
+        "hits": 2,
+        "followCastSeconds": 1.2,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.66,
+          "attackSecondsMult": 0.9
+        },
+        {
+          "belowHpFraction": 0.33,
+          "attackSecondsMult": 0.81
+        }
+      ],
+      "gimmick": "element",
+      "elementShifts": [
+        "kyo",
+        "water"
+      ],
+      "trait": "boss-forest-lord",
+      "difficulty": 5,
       "provisional": true
     }
   ]

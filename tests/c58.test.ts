@@ -51,7 +51,7 @@ function bossCombat(gimmick: BossSetup['gimmick'] = 'seal', seed = 3): CombatSta
 
 describe('보스 데이터 (GDD 25-3·25-7)', () => {
   it('sand-maw: 두 종족 공유, 이름은 종족별, 체력 150회분, 페이즈 2 (50% 이하 공격 간격 −25%), 기믹 seal, 보스 특성', () => {
-    expect(BOSSES.map((b) => b.id)).toEqual(['sand-maw']);
+    expect(BOSSES.map((b) => b.id)).toEqual(['sand-maw', 'canyon-king', 'forest-lord']); // C.84: 2·3장 보스 추가
     const b = getBoss('sand-maw');
     expect(bossName('sand-maw', 'hollow')).toBe('모래 아귀');
     expect(bossName('sand-maw', 'shinigami')).toBe('들개 대허');
@@ -115,7 +115,7 @@ describe('보스 전투 엔진', () => {
     expect(s.boss!.seals).toBe(1);
   });
 
-  it('summon·element·reflect 는 종류 자리만 (엔진이 아무것도 하지 않는다)', () => {
+  it('seal 이 아닌 기믹(summon·element·reflect)은 블록을 봉인하지 않는다', () => {
     for (const g of ['summon', 'element', 'reflect'] as const) {
       const s = bossCombat(g);
       s.player.hp = 1e9;
@@ -150,7 +150,7 @@ describe('보스 특성 (흡수)', () => {
     const o = buildOffer(createRng(5), boss.enemy, newBuild(), input, 0, boss.trait);
     expect(o.candidates[0]).toBe(boss.trait);
     expect(o.candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite + 1);
-    expect(TRAITS.filter((t) => t.boss).map((t) => t.id)).toEqual(['boss-sand-maw']);
+    expect(TRAITS.filter((t) => t.boss).map((t) => t.id)).toEqual(['boss-sand-maw', 'boss-canyon-king', 'boss-forest-lord']);
     // 흡수 화면은 offer.enemyId 로 적을 찾는다: 보스도 찾아야 한다 (C.58 캡처에서 찾은 버그)
     expect(findEnemyDef('sand-maw').name).toEqual(boss.name);
     expect(findEnemyDef(ENEMIES[0]!.id)).toBe(ENEMIES[0]);
@@ -158,17 +158,17 @@ describe('보스 특성 (흡수)', () => {
 });
 
 describe('스토리 데이터 (GDD 25-4·25-7)', () => {
-  it('장 3개(1장 = 1단계 웨코문도 외곽 자리, 2장 = 3단계, 3장 = 5단계), 1장만 내용이 있고 2·3장은 자리만', () => {
+  it('장 3개(1장 = 1단계 웨코문도 외곽 자리, 2장 = 3단계, 3장 = 5단계), 2·3장 내용은 C.84 에서 채움', () => {
     expect(STORY_CHAPTERS.map((c) => [c.id, c.unlockTierIndex, c.groundId])).toEqual([['ch1', 0, 'outskirts'], ['ch2', 2, 'canyon'], ['ch3', 4, 'forest']]);
     for (const fid of ['hollow', 'shinigami']) {
       expect(chapterContent(fid, 'ch1')!.episodes).toHaveLength(4);
-      expect(chapterContent(fid, 'ch2')).toBeNull();
-      expect(chapterContent(fid, 'ch3')).toBeNull();
+      expect(chapterContent(fid, 'ch2')!.episodes).toHaveLength(4);
+      expect(chapterContent(fid, 'ch3')!.episodes).toHaveLength(4);
       const eps = chapterContent(fid, 'ch1')!.episodes;
       expect(eps.map((e) => e.objective.type)).toEqual(['defeat', 'survive', 'absorb', 'boss']);
       expect(eps[3]!.boss).toEqual({ id: 'sand-maw', cell: 11 });
     }
-    expect(STORY_CONTENT).toHaveLength(2);
+    expect(STORY_CONTENT).toHaveLength(6);
   });
 
   it('대사는 25-7 초안 그대로 (글자 그대로)', () => {
@@ -368,8 +368,10 @@ describe('세이브·보상·칭호 (형식 22)', () => {
     clearEp(s, 'ep1', 1);
     expect(episodeOpen(s, 'ch1', 'ep2')).toBe(true);
     expect(episodeOpen(s, 'ch1', 'ep3')).toBe(false);
+    s.evolution.tierIndex = 1;
+    expect(chapterOpen(s, 'ch2')).toBe(false); // 2장은 3단계부터
     s.evolution.tierIndex = 2;
-    expect(chapterOpen(s, 'ch2')).toBe(false); // 2장은 자리만
+    expect(chapterOpen(s, 'ch2')).toBe(true); // C.84: 2장 내용이 생겼다
   });
 
   it('화 클리어: 골드 20 + 먹이 1(매번), 첫 클리어만 영옥 2. 실패는 보상 없음, 기록만', () => {

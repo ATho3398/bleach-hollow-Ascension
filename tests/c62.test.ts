@@ -16,7 +16,7 @@ import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const H = getFaction('hollow');
 const S = getFaction('shinigami');
-const SX = BALANCE.provisional.shop;
+const SX = BALANCE.shop;
 const deg = (r: number) => (r * 180) / Math.PI;
 const run = (s: Pendulum, g: { x: number; y: number }, secs: number, reduced = false) => {
   let p = s;

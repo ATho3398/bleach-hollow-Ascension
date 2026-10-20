@@ -14,7 +14,7 @@ import { playCosmeticFx } from './bha/cosmeticFx';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
 import { growthLines, type GrowthInput } from './bha/growthLogic';
-import { getEpisode } from '../data/story';
+import { chapterClearJade, getEpisode } from '../data/story';
 import { bossName } from '../data/bosses';
 import { BALANCE as B } from '../config/balance';
 import { chapterLabel } from './storyView';
@@ -39,7 +39,7 @@ export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): 
   const out = [`${chapterLabel(faction.id, r.chapterId)} · ${ep.title} — ${r.cleared ? '클리어!' : '실패. 다시 도전할 수 있다'}`];
   if (r.cleared) out.push(`화 보상 ${TRADE_CURRENCY_NAME} +${r.gold} · ${faction.foodNames[r.food[0]]} ${r.food[1] > 0 ? `${r.food[1]}개` : '(보관 한도라 못 받음)'}${r.firstClear ? ` · 첫 클리어 영옥 +${B.provisional.story.firstClearJade}` : ''}`);
   if (r.bossFirstKill) out.push(`보스 ${bossName(r.bossFirstKill, faction.id)} 첫 처치! 칭호 · 영옥 +${B.provisional.boss.reward.firstJade}`);
-  if (r.chapterCleared) out.push(`${chapterLabel(faction.id, r.chapterId)} 완료! 칭호 · 영옥 +${B.provisional.story.chapterJade}`);
+  if (r.chapterCleared) out.push(`${chapterLabel(faction.id, r.chapterId)} 완료! 칭호 · 영옥 +${chapterClearJade(r.chapterId)}`);
   return out;
 }
 

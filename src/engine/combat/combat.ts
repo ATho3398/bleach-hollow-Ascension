@@ -287,6 +287,12 @@ export type CombatEvent =
   | { kind: 'ability'; effect: AbilityProc; damage: number }
   /** 보스 기믹 칸 봉인: 봉인된 블록 uid 와 시간 */
   | { kind: 'cell-seal'; uid: number; seconds: number }
+  /** 보스 기믹 summon (GDD 35장): 졸개가 보스 앞에 섰다(체력) / 졸개의 작은 공격 / 졸개가 쓰러졌다 */
+  | { kind: 'boss-summon'; hp: number }
+  | { kind: 'minion-attack'; damage: number; guarded: boolean }
+  | { kind: 'minion-down' }
+  /** 보스 기믹 element (GDD 35장): 페이즈가 바뀌며 보스 속성이 바뀌었다 */
+  | { kind: 'boss-element'; element: string }
   | { kind: 'end'; status: CombatStatus };
 
 export interface CombatState {
@@ -405,12 +411,16 @@ export interface BossSetup {
   id: string;
   /** 2페이즈부터: 적 체력이 최대 체력 × belowHpFraction 이하가 되면 그 페이즈로, 기본 공격 간격 × attackSecondsMult */
   phases: { belowHpFraction: number; attackSecondsMult: number }[];
-  /** 기믹 종류: seal 만 엔진이 처리한다 (summon·element·reflect 는 종류 자리) */
+  /** 기믹 종류: seal·summon·element 를 엔진이 처리한다 (reflect 는 종류 자리) */
   gimmick: 'seal' | 'summon' | 'element' | 'reflect';
   /** seal: 이 간격(초)마다 블록 바의 블록 cells 칸을 seconds 초 동안 봉인 */
   sealEverySeconds: number;
   sealSeconds: number;
   sealCells: number;
+  /** summon: everySeconds 마다 졸개 1마리(이미 있으면 건너뜀). 졸개 = 내 피해를 먼저 받는 방패(체력 기본 공격 hpInAttacks 회분), attackSeconds 마다 기본 공격 attackInAttacks 회분 */
+  summon?: { everySeconds: number; hpInAttacks: number; attackSeconds: number; attackInAttacks: number };
+  /** element: 2페이즈부터 페이즈마다 바뀌는 보스 속성 (phases 와 같은 순서·길이) */
+  elementShifts?: string[];
   /** 시간 제한(초): 넘기면 패배 */
   timeLimitSeconds: number;
 }
@@ -422,6 +432,15 @@ export interface BossState {
   attackMult: number;
   gimmickTimer: number;
   seals: number;
+  /** summon: 지금 보스 앞의 졸개(없으면 null)와 부른 수·쓰러뜨린 수 */
+  minion?: { hp: number; maxHp: number; attackTimer: number } | null;
+  summons?: number;
+  minionKills?: number;
+}
+
+/** 첫 기믹까지의 간격(초): 기믹 종류마다 */
+function gimmickEverySeconds(b: BossSetup): number {
+  return b.gimmick === 'summon' && b.summon ? b.summon.everySeconds : b.sealEverySeconds;
 }
 
 export function ticksOf(p: CombatParams, seconds: number): number {
@@ -598,7 +617,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     riskGained: 0,
     finisher: null,
     liberation: { gauge: 0, usedAtTick: null, ticksLeft: 0, base: null, risk: 0 },
-    ...(setup.boss ? { boss: { setup: { ...setup.boss, phases: setup.boss.phases.map((x) => ({ ...x })) }, phase: 1, attackMult: 1, gimmickTimer: t(setup.boss.sealEverySeconds), seals: 0 } } : {}),
+    ...(setup.boss ? { boss: { setup: { ...setup.boss, phases: setup.boss.phases.map((x) => ({ ...x })) }, phase: 1, attackMult: 1, gimmickTimer: t(gimmickEverySeconds(setup.boss)), seals: 0, ...(setup.boss.gimmick === 'summon' ? { minion: null, summons: 0, minionKills: 0 } : {}) } } : {}),
     inputs: [],
     events: [],
   };
@@ -816,6 +835,19 @@ export function drainCombatEvents(s: CombatState): CombatEvent[] {
 
 function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
   if (s.status !== 'playing') return;
+  // 졸개 (보스 기믹 summon): 내 피해를 먼저 받는 방패. 넘친 피해는 보스에게 간다
+  const minion = s.boss?.minion;
+  if (minion) {
+    const absorbed = Math.min(amount, minion.hp);
+    minion.hp -= absorbed;
+    amount -= absorbed;
+    if (minion.hp <= 0) {
+      s.boss!.minion = null;
+      s.boss!.minionKills = (s.boss!.minionKills ?? 0) + 1;
+      emit(s, { kind: 'minion-down' });
+    }
+    if (amount <= 0) return;
+  }
   // 해방 게이지 (GDD 22-5): 내가 준 피해로 찬다. 적 최대 체력 × liberationGaugeFraction 을 깎으면 가득. 쓴 뒤에는 차지 않는다
   const lb = s.liberation;
   if (lb.usedAtTick === null && lb.gauge < LIBERATION_GAUGE_MAX) {
@@ -845,11 +877,18 @@ function updateBossPhase(s: CombatState, b: BossState): void {
   // 다음 기본 공격도 새 간격을 넘지 않게
   s.enemy.attackTimer = Math.min(s.enemy.attackTimer, ticksOf(s.params, enemyAttackSecondsOf(s.params, s.enemy.def.pattern) * b.attackMult));
   emit(s, { kind: 'boss-phase', phase });
+  // 기믹 element (GDD 35장): 페이즈마다 보스 속성이 바뀐다 — 상성(내 블록·적 공격)은 바뀐 속성으로 본다. 능력치는 그대로
+  const next = b.setup.gimmick === 'element' ? b.setup.elementShifts?.[phase - 2] : undefined;
+  if (next && next !== s.enemy.def.element) {
+    s.enemy.def = { ...s.enemy.def, element: next };
+    emit(s, { kind: 'boss-element', element: next });
+  }
 }
 
 /** 보스 기믹 seal (GDD 25-3): 간격마다 봉인 안 된 블록 cells 개를 골라 봉인한다. 바가 비어 있으면 블록이 생길 때까지 다음 틱에 다시 본다 */
 function bossGimmick(s: CombatState, b: BossState): void {
-  if (b.setup.gimmick !== 'seal') return; // summon·element·reflect: 종류 자리만 (GDD 25-7)
+  if (b.setup.gimmick === 'summon') return bossSummon(s, b);
+  if (b.setup.gimmick !== 'seal') return; // element 는 페이즈가 바뀔 때(updateBossPhase), reflect 는 종류 자리만 (GDD 25-7)
   if (--b.gimmickTimer > 0) return;
   const free = s.tray.filter((x) => !(x.sealTicks && x.sealTicks > 0));
   if (free.length === 0) {
@@ -863,6 +902,31 @@ function bossGimmick(s: CombatState, b: BossState): void {
     b.seals++;
     emit(s, { kind: 'cell-seal', uid: blk.uid, seconds: b.setup.sealSeconds });
   }
+}
+
+/** 보스 기믹 summon (GDD 35장): 간격마다 졸개 1마리(한 번에 1마리만 — 있으면 그 차례는 건너뛴다). 졸개는 살아 있는 동안 작은 공격을 한다(막기로 경감) */
+function bossSummon(s: CombatState, b: BossState): void {
+  const sm = b.setup.summon;
+  if (!sm) return;
+  const m = b.minion;
+  if (m && --m.attackTimer <= 0) {
+    m.attackTimer = ticksOf(s.params, sm.attackSeconds);
+    const raw = enemyDamage(s, sm.attackInAttacks);
+    const guarded = s.guard.ticks > 0;
+    const damage = guarded ? raw * (1 - s.params.guardReduction) : raw;
+    emit(s, { kind: 'minion-attack', damage, guarded });
+    takeDamage(s, damage);
+    if (s.status !== 'playing') return;
+  }
+  if (--b.gimmickTimer > 0) return;
+  b.gimmickTimer = ticksOf(s.params, sm.everySeconds);
+  if (b.minion) return;
+  // 졸개 체력 = 기본 공격 N회 분량 (보스 체력과 같은 식, CLAUDE.md 규칙 3)
+  const p = s.params;
+  const hp = sm.hpInAttacks * p.hpAttackScale * p.playerAttackDamage * p.growthMultiplier;
+  b.minion = { hp, maxHp: hp, attackTimer: ticksOf(p, sm.attackSeconds) };
+  b.summons = (b.summons ?? 0) + 1;
+  emit(s, { kind: 'boss-summon', hp });
 }
 
 /** 이 블록이 봉인돼 있나 (보스 기믹) */

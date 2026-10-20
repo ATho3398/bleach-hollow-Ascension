@@ -392,6 +392,8 @@ export function bossSetupOf(bossId: string): BossSetup {
   return {
     id: b.id, phases: b.phases.map((x) => ({ ...x })), gimmick: b.gimmick,
     sealEverySeconds: BX.seal.everySeconds, sealSeconds: BX.seal.seconds, sealCells: BX.seal.cells, timeLimitSeconds: BX.timeLimitSeconds,
+    ...(b.gimmick === 'summon' ? { summon: { ...BX.summon } } : {}),
+    ...(b.elementShifts ? { elementShifts: [...b.elementShifts] } : {}),
   };
 }
 

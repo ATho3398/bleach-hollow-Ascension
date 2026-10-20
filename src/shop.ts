@@ -1,5 +1,5 @@
 // 상점 1차 (GDD 25-9, S-16 C.60): 줄 상태(가격·잠김 이유·보유·착용)·구매·꾸밈 착용·다시 뽑기권 사용. 종족 무관 —
-// 품목은 src/data/shop, 가격·상한·효과량은 balance.ts provisional.shop, 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
+// 품목은 src/data/shop, 가격·상한·효과량은 balance.ts shop(확정), 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
 // 산 즉시 쓰는 방식: 먹이 = 먹이 개수 +1, 정화제·각성제 = 지금 캐릭터에 바로, 수련권 = 지금 트랙 +1, 타일 = 보관함 +1. 보관하는 건 다시 뽑기권·덱 칸·꾸밈뿐
 import { BALANCE } from './config/balance';
 import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, shopVisible, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
@@ -10,7 +10,7 @@ import type { FactionConfig } from './engine/faction';
 import { addFood } from './engine/food';
 import type { SaveData } from './game';
 
-const SX = BALANCE.provisional.shop;
+const SX = BALANCE.shop;
 const FOOD_MAX = BALANCE.provisional.food.cap;
 
 export type ShopCurrency = 'gold' | 'jade';

@@ -142,7 +142,7 @@ for (const profile of ['권장 단계대로(3화 전 2단계까지 자유 원정
     perRun[fid] = net / N;
     console.log(`  ${fid.padEnd(9)} 번 골드 ${(earned / N).toFixed(1)} · 상인 지출 ${(spent / N).toFixed(1)} · 순수입 ${(net / N).toFixed(1)}/판 · 패배 ${pct(defeats / N)} · 먹이 전리품 ${(food / N).toFixed(1)}개`);
   }
-  const SX = BALANCE.provisional.shop;
+  const SX = BALANCE.shop;
   const SY = BALANCE.provisional.story;
   const BX = BALANCE.provisional.boss;
   const storyGold = 4 * SY.episodeGold + BX.reward.gold;

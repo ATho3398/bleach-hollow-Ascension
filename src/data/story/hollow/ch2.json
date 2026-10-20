@@ -1,0 +1,155 @@
+{
+  "factionId": "hollow",
+  "chapterId": "ch2",
+  "title": "무리 속의 나",
+  "provisional": true,
+  "episodes": [
+    {
+      "id": "ep1",
+      "title": "협곡의 무리",
+      "objective": {
+        "type": "defeat",
+        "enemyClass": "normal",
+        "count": 5
+      },
+      "recommendedTier": 3,
+      "difficulty": 3,
+      "maxLaps": 3,
+      "road": {
+        "2": "prey-nest-a",
+        "4": "prey-nest-b",
+        "7": "prey-nest-a",
+        "9": "prey-nest-b",
+        "11": "rest-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "나",
+            "text": "협곡에 들어서자, 수많은 굶주림이 한꺼번에 울린다."
+          },
+          {
+            "speaker": "늙은 호로",
+            "text": "여기선 무리가 곧 몸이다. 무리에 먹히지 마라."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "나",
+            "text": "무리 속에서도, 나는 나를 잃지 않았다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep2",
+      "title": "서로를 먹는 자들",
+      "objective": {
+        "type": "survive",
+        "laps": 3
+      },
+      "recommendedTier": 3,
+      "difficulty": 3,
+      "maxLaps": 3,
+      "road": {
+        "2": "prey-nest-a",
+        "5": "env-wasteland",
+        "6": "prey-nest-b",
+        "9": "prey-nest-a",
+        "11": "rest-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "늙은 호로",
+            "text": "협곡의 호로들은 서로를 먹으며 커진다. 너도 곧 먹히거나 먹는다."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "나",
+            "text": "먹고, 또 먹었다. 그래도 나는 아직 나다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep3",
+      "title": "자아의 눈뜸",
+      "objective": {
+        "type": "absorb",
+        "enemyClass": "elite",
+        "count": 2
+      },
+      "recommendedTier": 4,
+      "difficulty": 4,
+      "maxLaps": 5,
+      "road": {
+        "2": "prey-nest-a",
+        "5": "elite-den-a",
+        "8": "rest-a",
+        "10": "elite-den-b"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "나",
+            "text": "저 거대한 놈들 속에도 목소리가 있다. 하지만 하나뿐이다."
+          }
+        ],
+        "mid": {
+          "afterKills": 2,
+          "lines": [
+            {
+              "speaker": "나",
+              "text": "다른 목소리가 내 안으로 밀려든다… 삼키지 마라, 내가 삼킨다."
+            }
+          ]
+        },
+        "end": [
+          {
+            "speaker": "늙은 호로",
+            "text": "무리를 집어삼키고도 자기를 지킨 놈은 처음 본다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep4",
+      "title": "협곡의 왕",
+      "objective": {
+        "type": "boss"
+      },
+      "recommendedTier": 4,
+      "difficulty": 4,
+      "maxLaps": 1,
+      "road": {
+        "3": "prey-nest-a",
+        "6": "rest-a",
+        "9": "prey-nest-b"
+      },
+      "boss": {
+        "id": "canyon-king",
+        "cell": 11
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "늙은 호로",
+            "text": "협곡의 왕이다. 무리를 거느리고 다니지. 졸개부터 쳐라."
+          },
+          {
+            "speaker": "협곡의 왕",
+            "text": "하나의 목소리로 무엇을 할 수 있지? 내 무리가 되어라."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "나",
+            "text": "무리는 필요 없다. 나는 혼자서 더 커진다."
+          }
+        ]
+      }
+    }
+  ]
+}

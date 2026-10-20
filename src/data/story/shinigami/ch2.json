@@ -1,0 +1,151 @@
+{
+  "factionId": "shinigami",
+  "chapterId": "ch2",
+  "title": "현세 파견",
+  "provisional": true,
+  "episodes": [
+    {
+      "id": "ep1",
+      "title": "첫 파견",
+      "objective": {
+        "type": "defeat",
+        "enemyClass": "normal",
+        "count": 5
+      },
+      "recommendedTier": 3,
+      "difficulty": 3,
+      "maxLaps": 3,
+      "road": {
+        "2": "prey-nest-a",
+        "4": "prey-nest-a",
+        "7": "prey-nest-a",
+        "9": "prey-nest-a",
+        "11": "rest-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "분대장",
+            "text": "오늘부터 너는 현세 지구 담당이다. 혼자지만 혼자가 아니다. 통신은 열어 둬라."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "분대장",
+            "text": "보고 받았다. 첫 파견치고 깔끔하군."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep2",
+      "title": "계속되는 경보",
+      "objective": {
+        "type": "survive",
+        "laps": 3
+      },
+      "recommendedTier": 3,
+      "difficulty": 3,
+      "maxLaps": 3,
+      "road": {
+        "2": "prey-nest-a",
+        "5": "env-ruin",
+        "6": "prey-nest-a",
+        "9": "prey-nest-a",
+        "11": "rest-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "분대장",
+            "text": "경보가 멈추지 않는다. 이 구역에 무언가 허를 끌어들이고 있다."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "나",
+            "text": "쓰러뜨려도 계속 나온다… 원인이 따로 있다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep3",
+      "title": "참백도의 이름",
+      "objective": {
+        "type": "absorb",
+        "enemyClass": "elite",
+        "count": 2
+      },
+      "recommendedTier": 4,
+      "difficulty": 4,
+      "maxLaps": 5,
+      "road": {
+        "2": "prey-nest-a",
+        "5": "elite-den-a",
+        "8": "rest-a",
+        "10": "elite-den-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "나",
+            "text": "큰 허다. 지금의 나로는… 아니, 참백도가 무언가 말하고 있다."
+          }
+        ],
+        "mid": {
+          "afterKills": 2,
+          "lines": [
+            {
+              "speaker": "나",
+              "text": "이름이… 들린다."
+            }
+          ]
+        },
+        "end": [
+          {
+            "speaker": "분대장",
+            "text": "시해를 제대로 익혔군. 이제 진짜 싸움이다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep4",
+      "title": "현세의 대허",
+      "objective": {
+        "type": "boss"
+      },
+      "recommendedTier": 4,
+      "difficulty": 4,
+      "maxLaps": 1,
+      "road": {
+        "3": "prey-nest-a",
+        "6": "rest-a",
+        "9": "prey-nest-a"
+      },
+      "boss": {
+        "id": "canyon-king",
+        "cell": 11
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "분대장",
+            "text": "원인을 찾았다. 졸개를 부르는 대허다. 졸개부터 베어라!"
+          },
+          {
+            "speaker": "현세의 대허",
+            "text": "사신 하나쯤, 내 졸개들 먹이로 충분하다."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "분대장",
+            "text": "지구 경보 해제. 너를 다시 소울 소사이어티로 부른다. 승진이다."
+          }
+        ]
+      }
+    }
+  ]
+}

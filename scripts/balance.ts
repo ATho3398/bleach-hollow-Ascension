@@ -401,7 +401,7 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
   if (sumOn.risk < 40 || sumOn.risk > 60) failures.push(`타일 변수: 4바퀴 섞음 끝 리스크 ${sumOn.risk.toFixed(1)} — 목표 40~60 (GDD 25-5)`);
   if (dInc > 0.05) failures.push(`타일 변수: 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 25-5)`);
   // 상점 (GDD 25-9, C.60): 원정 1판(4바퀴 섞음, 타일 변수 켬) 평균 골드로 살 수 있는 보통 먹이 수 — 원정 전리품(판당 9~11개)을 대체하지 못하게
-  const SHX = BALANCE.provisional.shop;
+  const SHX = BALANCE.shop;
   const basicPerRun = sumOn.gold / SHX.goldPrices['food-basic']!;
   const [bLo, bHi] = SHX.basicFoodPerRunGuard;
   console.log(`\n상점 (GDD 25-9): 원정 1판 평균 골드 ${sumOn.gold.toFixed(1)} → 보통 먹이(${SHX.goldPrices['food-basic']}골드) ${basicPerRun.toFixed(2)}개 (가드 ${bLo}~${bHi}) · 원정 전리품 먹이 ${sumOn.food.toFixed(2)}개`);
@@ -781,7 +781,7 @@ let campaignFinalDefeats: number[] = [];
 
   // ── 재화 경제 (GDD 32-1 10·11번): 권장 ★ × 연속 0/5/10 의 원정 1판 지킨 골드·먹이. 목표: ★5·10연속 골드 ≤ ★1(새 몸, 연속 0)의 2배 ──
   const DX = BALANCE.provisional.difficulty;
-  const SHX = BALANCE.provisional.shop;
+  const SHX = BALANCE.shop;
   console.log(`\n재화 경제 (GDD 32-1 11번, 사람형 봇, 권장 ★ 몸 × ${DR}원정 4바퀴): 골드 ★당 +${DX.goldPerStar * 100}%·연속당 +${DX.streak.goldPerClear * 100}%(최대 +${DX.streak.goldMaxBonus * 100}%), 먹이·노력치 ★당 +${DX.rewardPerStar * 100}%·연속당 +${DX.streak.foodPerClear * 100}%, 적 연속당 +${DX.streak.enemyPerClear * 100}%`);
   const econ: Record<string, Row> = {};
   for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
@@ -918,6 +918,8 @@ let campaignFinalDefeats: number[] = [];
     let timeouts = 0;
     let phase2 = 0;
     let seals = 0;
+    let summons = 0;
+    let minionKills = 0;
     bodies.forEach((body, bi) => {
       for (let k = 0; k < BR; k++) {
         const params = buildCombatParams(body.build, 'hollow');
@@ -933,12 +935,17 @@ let campaignFinalDefeats: number[] = [];
         if (end.lossReason === 'timeout') timeouts++;
         if ((end.boss?.phase ?? 1) >= 2) phase2++;
         seals += end.boss?.seals ?? 0;
+        summons += end.boss?.summons ?? 0;
+        minionKills += end.boss?.minionKills ?? 0;
       }
     });
     const rate = games ? wins / games : 0;
     const BX = BALANCE.provisional.boss;
+    const gimmickText = boss.gimmick === 'seal' ? `seal(${BX.seal.everySeconds}초마다 ${BX.seal.cells}칸 ${BX.seal.seconds}초)`
+      : boss.gimmick === 'summon' ? `summon(${BX.summon.everySeconds}초마다 졸개 1, 체력 ${BX.summon.hpInAttacks}회분, ${BX.summon.attackSeconds}초마다 ${BX.summon.attackInAttacks}회분 · 판당 ${(summons / Math.max(1, games)).toFixed(1)}마리 부름/${(minionKills / Math.max(1, games)).toFixed(1)}마리 쓰러뜨림)`
+      : boss.gimmick === 'element' ? `element(${[boss.enemy.element, ...(boss.elementShifts ?? [])].join(' → ')})` : boss.gimmick;
     console.log(`\n보스전 (사람형 봇, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${BR}판, 사냥터 ${ground}, 보스 ★${boss.difficulty}) — 목표(임시): 승률 50~70%`);
-    console.log(`  ${boss.id}: 체력 ${boss.enemy.hpInAttacks}회분 · 공격 ${boss.enemy.attackInAttacks} · 페이즈 ${boss.phases.map((p) => `${p.belowHpFraction * 100}% 이하 공격 간격 ×${p.attackSecondsMult}`).join(' / ')} · 기믹 ${boss.gimmick}(${BX.seal.everySeconds}초마다 ${BX.seal.cells}칸 ${BX.seal.seconds}초) · 시간 ${BX.timeLimitSeconds}초`);
+    console.log(`  ${boss.id}: 체력 ${boss.enemy.hpInAttacks}회분 · 공격 ${boss.enemy.attackInAttacks} · 페이즈 ${boss.phases.map((p) => `${p.belowHpFraction * 100}% 이하 공격 간격 ×${p.attackSecondsMult}`).join(' / ')} · 기믹 ${gimmickText} · 시간 ${BX.timeLimitSeconds}초`);
     console.log(`  승률 ${(rate * 100).toFixed(0)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초 · 시간 초과 ${timeouts}/${games} · 2페이즈 도달 ${phase2}/${games} · 봉인 ${(seals / Math.max(1, games)).toFixed(1)}칸/판`);
     if (bodies.length < CAMPAIGNS * 0.8) failures.push(`보스전 ${boss.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
     if (rate < 0.35 || rate > 0.85) failures.push(`보스전 ${boss.id}: 승률 ${(rate * 100).toFixed(0)}% (가드 35~85% 밖)`);

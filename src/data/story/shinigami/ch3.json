@@ -1,0 +1,154 @@
+{
+  "factionId": "shinigami",
+  "chapterId": "ch3",
+  "title": "석차를 향해",
+  "provisional": true,
+  "episodes": [
+    {
+      "id": "ep1",
+      "title": "단가이 돌파",
+      "objective": {
+        "type": "defeat",
+        "enemyClass": "elite",
+        "count": 2
+      },
+      "recommendedTier": 5,
+      "difficulty": 5,
+      "maxLaps": 3,
+      "road": {
+        "2": "prey-nest-a",
+        "4": "elite-den-a",
+        "7": "rest-a",
+        "9": "elite-den-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "분대장",
+            "text": "단가이는 시간도 길도 뒤틀린 곳이다. 멈추면 휩쓸린다."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "나",
+            "text": "뒤틀린 길에서도 칼끝은 흔들리지 않았다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep2",
+      "title": "끝없는 길",
+      "objective": {
+        "type": "survive",
+        "laps": 4
+      },
+      "recommendedTier": 5,
+      "difficulty": 5,
+      "maxLaps": 4,
+      "road": {
+        "2": "prey-nest-a",
+        "4": "env-barrier",
+        "5": "prey-nest-a",
+        "8": "elite-den-a",
+        "10": "rest-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "분대장",
+            "text": "숨 고를 틈은 없다. 앞으로만 가라."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "분대장",
+            "text": "…이 길을 끝까지 버틴 신입은 네가 처음이다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep3",
+      "title": "만해의 문턱",
+      "objective": {
+        "type": "absorb",
+        "enemyClass": "elite",
+        "count": 2
+      },
+      "recommendedTier": 5,
+      "difficulty": 5,
+      "maxLaps": 5,
+      "road": {
+        "2": "prey-nest-a",
+        "5": "elite-den-a",
+        "8": "rest-a",
+        "10": "elite-den-a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "나",
+            "text": "참백도가 더 큰 이름을 부른다. 그 끝에 무엇이 있지?"
+          }
+        ],
+        "mid": {
+          "afterKills": 2,
+          "lines": [
+            {
+              "speaker": "나",
+              "text": "영압이 넘친다… 받아들여라."
+            }
+          ]
+        },
+        "end": [
+          {
+            "speaker": "분대장",
+            "text": "그 영압… 이제 나보다 위다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ep4",
+      "title": "단가이의 문지기",
+      "objective": {
+        "type": "boss"
+      },
+      "recommendedTier": 5,
+      "difficulty": 5,
+      "maxLaps": 1,
+      "road": {
+        "3": "prey-nest-a",
+        "6": "rest-a",
+        "9": "prey-nest-a"
+      },
+      "boss": {
+        "id": "forest-lord",
+        "cell": 11
+      },
+      "dialogue": {
+        "start": [
+          {
+            "speaker": "단가이의 문지기",
+            "text": "이 문을 지나려는 사신은 모두 길에 묻혔다."
+          },
+          {
+            "speaker": "나",
+            "text": "그럼 내가 처음이 되겠다."
+          }
+        ],
+        "end": [
+          {
+            "speaker": "대장",
+            "text": "단가이를 넘어온 자가 있다고 들었다. 석차를 원하나? 그럼 증명해라."
+          },
+          {
+            "speaker": "나",
+            "text": "증명하겠습니다."
+          }
+        ]
+      }
+    }
+  ]
+}

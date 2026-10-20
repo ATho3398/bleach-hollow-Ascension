@@ -1407,5 +1407,51 @@
     "powerInAttacks": 6.5,
     "family": "family-a",
     "provisional": true
+  },
+  {
+    "id": "boss-canyon-king",
+    "element": "fire",
+    "kind": "skill",
+    "name": {
+      "hollow": "협곡의 왕의 뿔",
+      "shinigami": "대허의 갑각"
+    },
+    "abbr": {
+      "hollow": "왕의 뿔",
+      "shinigami": "대허 갑각"
+    },
+    "description": {
+      "hollow": "[임시] 보스 협곡의 왕을 쓰러뜨리고 얻는 불 속성 본체 기술(공격 블록, 조 계열·물리). 위력 기본 공격 7회분.",
+      "shinigami": "[임시] 보스 현세의 대허를 쓰러뜨리고 얻는 불 속성 시해 능력(공격 블록, 참 계열·물리). 위력 기본 공격 7회분."
+    },
+    "rare": true,
+    "boss": true,
+    "role": "attack",
+    "powerInAttacks": 7,
+    "family": "family-a",
+    "provisional": true
+  },
+  {
+    "id": "boss-forest-lord",
+    "element": "kyo",
+    "kind": "skill",
+    "name": {
+      "hollow": "숲의 군주의 가면",
+      "shinigami": "문지기의 사슬"
+    },
+    "abbr": {
+      "hollow": "군주 가면",
+      "shinigami": "문지기 사슬"
+    },
+    "description": {
+      "hollow": "[임시] 보스 숲의 군주를 쓰러뜨리고 얻는 허(虛) 속성 본체 기술(공격 블록, 교 계열·혼합). 위력 기본 공격 7.5회분.",
+      "shinigami": "[임시] 보스 단가이의 문지기를 쓰러뜨리고 얻는 허(虛) 속성 시해 능력(공격 블록, 권 계열·혼합). 위력 기본 공격 7.5회분."
+    },
+    "rare": true,
+    "boss": true,
+    "role": "attack",
+    "powerInAttacks": 7.5,
+    "family": "family-b",
+    "provisional": true
   }
 ]

@@ -46,7 +46,7 @@ function goalRow(def: TutorialGoalDef, faction: FactionConfig, claimedAt: number
     detail: () => {
       const head = h('div', 'bha-mddetail__head');
       head.append(h('h2', 'bha-mddetail__title', name), h('span', st === 'done' ? 'bha-chip bha-chip--good' : 'bha-chip', STATE_TEXT[st]));
-      const reward = h('p', 'bha-mddetail__body', `보상: ${rewardText(def.reward, faction)} · ${JADE_NAME} ${BALANCE.provisional.shop.tutorialJade}`);
+      const reward = h('p', 'bha-mddetail__body', `보상: ${rewardText(def.reward, faction)} · ${JADE_NAME} ${BALANCE.shop.tutorialJade}`);
       const when = h('p', 'bha-faint', st === 'done' ? `받음 ${formatUnlockTime(claimedAt!)}` : st === 'locked' ? '이 기능이 아직 없다. 열리면 함께 켜진다.' : '이루면 바로 받는다.');
       return [head, reward, when];
     },

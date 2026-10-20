@@ -34,7 +34,7 @@ import { canWear } from './data/skins';
 import { applyAbsenceHunger } from './engine/nest';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
-import { chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
+import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
@@ -300,7 +300,7 @@ export function sanitizeShared(raw: unknown): SharedState {
     }
   }
   const dexRewards = Array.isArray(r.dexRewards) ? sanitizeClaims(r.dexRewards) : [];
-  const SX = BALANCE.provisional.shop;
+  const SX = BALANCE.shop;
   // 기본으로 주는 꾸밈은 늘 보유 (GDD 29장)
   const cosmetics = [...new Set([...freeCosmeticIds(), ...(Array.isArray(r.cosmetics) ? r.cosmetics.filter((id): id is string => typeof id === 'string' && getCosmetic(id) !== undefined) : [])])];
   return {
@@ -349,7 +349,7 @@ export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), d
     const soulCrystals = goal.reward.soulCrystals ?? 0;
     save.shared.soulCrystals += soulCrystals;
     // 영옥 (GDD 25-9): 목표 하나마다 +1 (기존 보상은 그대로)
-    const jade = BALANCE.provisional.shop.tutorialJade;
+    const jade = BALANCE.shop.tutorialJade;
     save.shared.jade += jade;
     return { goal, food, soulCrystals, jade };
   });
@@ -746,7 +746,7 @@ export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number 
     if (!prog.chapters.includes(st.chapterId) && eps.length > 0 && eps.every((e) => prog.cleared[episodeKey(st.chapterId, e.id)])) {
       prog.chapters.push(st.chapterId);
       out.chapterCleared = true;
-      out.jade += SX.chapterJade;
+      out.jade += chapterClearJade(st.chapterId);
     }
   }
   save.shared.jade += out.jade;
@@ -1213,7 +1213,7 @@ export function migrateSave(raw: unknown): SaveData | null {
     const tut = save.shared?.tutorials;
     if (tut && typeof tut === 'object') for (const list of Object.values(tut)) if (Array.isArray(list)) claimed += list.length;
     save.shared = { ...(save.shared ?? newSharedState()), rerollTickets: 0, deckSlots: 0, cosmetics: owned };
-    save.shared.jade = (typeof save.shared.jade === 'number' ? save.shared.jade : 0) + claimed * BALANCE.provisional.shop.tutorialJade;
+    save.shared.jade = (typeof save.shared.jade === 'number' ? save.shared.jade : 0) + claimed * BALANCE.shop.tutorialJade;
     save.meta.format = 24;
   }
   if (save.meta.format < 25) {

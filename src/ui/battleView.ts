@@ -24,7 +24,7 @@ import {
   type BlockSpec, type BlockVisual, damageTier, loadBattleSpeed, saveBattleSpeed, BATTLE_LOG_MAX, hpNumbers, type BattleSpeed, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDot, elementMark } from './bha/element';
-import { weaknessesOf } from '../data/elements';
+import { elementName, weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
@@ -142,6 +142,14 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'cast', icon: 'i-lock', text: `블록 봉인! ${labels.skillBlock} 1칸을 ${e.seconds}초 동안 쓸 수 없다` };
     case 'boss-phase':
       return { role: 'cast', icon: 'i-warn', text: `페이즈 ${e.phase}! ${pickFaction(s.enemy.def.name, factionId)}의 공격이 빨라졌다` };
+    case 'boss-summon':
+      return { role: 'cast', icon: 'i-warn', text: `졸개가 앞을 막아선다! 내 공격을 먼저 받는다 (체력 ${n(e.hp)})` };
+    case 'minion-attack':
+      return { role: 'cast', icon: 'i-cast', text: `졸개의 공격 ${n(e.damage)} 피해${e.guarded ? ' (막기로 경감)' : ''}` };
+    case 'minion-down':
+      return { role: 'chain', icon: 'i-chain-3', text: '졸개를 쓰러뜨렸다!' };
+    case 'boss-element':
+      return { role: 'cast', icon: 'i-weak', text: `${pickFaction(s.enemy.def.name, factionId)}의 속성이 ${elementName(e.element, factionId)}(으)로 바뀌었다!` };
     case 'stance':
       return { role: 'guard', icon: 'i-guard', text: `방어 자세! ${e.seconds}초 동안 내 블록 피해 감소 · 블록을 쓰면 반격` };
     case 'stance-end':
@@ -205,16 +213,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const fx = loadFxSettings(safeStorage());
   if (fx.sound) hookAudioUnlock();
   /** 적 속성 칩 (GDD 20-2): 속성 + 약점 속성(원소만). 약점은 그 속성 블록이 ×1.2 */
-  const weakIds = weaknessesOf([enemy.element]);
-  const elementChip = (): HTMLElement => {
-    const c = el('span', 'bha-chip bha-chip--weak');
-    c.append(elementMark(enemy.element, faction.id));
+  // 보스 기믹 element 는 전투 중 속성이 바뀐다 (GDD 35장) — 칩은 지금 속성(s.enemy.def)으로 다시 그린다
+  const fillElementChip = (c: HTMLElement): HTMLElement => {
+    const elId = s.enemy.def.element;
+    const weakIds = weaknessesOf([elId]);
+    c.replaceChildren(elementMark(elId, faction.id));
     if (weakIds.length > 0) {
       c.append(' · ', icon('i-weak'), '약점 ');
       weakIds.forEach((w) => c.append(elementDot(w, faction.id)));
     }
     return c;
   };
+  const elementChip = (): HTMLElement => fillElementChip(el('span', 'bha-chip bha-chip--weak'));
 
   // ── 1. 적 이름·약점 (장면 왼쪽 위 칩) ──
   const foeName = el('div', 'bha-battle__foename');
@@ -239,6 +249,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     phaseChip.append(icon('i-warn', 'sm'), el('span', '', phaseText()));
     foeHead.append(phaseChip);
   }
+  // 졸개 칩 (보스 기믹 summon, GDD 35장): 졸개가 서 있는 동안 체력 표시
+  const minionChip = el('span', 'bha-chip bha-chip--danger bha-battle__minion');
+  const minionText = el('span');
+  minionChip.append(icon('i-guard', 'sm'), minionText);
+  minionChip.hidden = true;
+  if (s.boss?.setup.gimmick === 'summon') foeHead.append(minionChip);
 
   // ── 2. 유닛 두 칸: 머리 위 게이지 / 그림 / 작은 체력바 (GDD 18-6) ──
   // 머리 위 게이지: 적 = 강공격 예고(시전 바, 항상 한 칸 자리를 지킨다) + 방어 자세, 나 = 봉인 + 막기. 엔진 이벤트·상태에서 읽기만 한다
@@ -904,6 +920,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     spNote.hidden = noteText === '';
     if (noteText) setText(spNoteText, noteText);
 
+    const mn = s.boss?.minion;
+    minionChip.hidden = !mn;
+    if (mn) setText(minionText, `졸개 ${hpNumbers(mn.hp, mn.maxHp).now}/${hpNumbers(mn.hp, mn.maxHp).max}`);
     setText(timeNum, String(Math.ceil(timeLeftSeconds(s))));
     timeEl.classList.toggle('is-urgent', timeLeftSeconds(s) <= 10);
 
@@ -1126,6 +1145,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         app.classList.add('is-boss-phase');
         playOnce(phaseChip, 'is-flash');
       }
+      if (ev.kind === 'boss-element') {
+        fillElementChip(weakChip);
+        playOnce(weakChip, 'is-flash');
+        showElementBand();
+      }
+      if (ev.kind === 'boss-summon') playOnce(minionChip, 'is-flash');
     }
     if (cues.length) {
       const c = strongestCue(cues);
@@ -1168,6 +1193,26 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     el('span', 'bha-battle-ov__line'),
     stats,
   );
+  // 보스 속성이 바뀔 때 이름 띠 (GDD 35장): 보스 이름 + 새 속성 칩. 잠시 전투 시간이 멈춘다
+  function showElementBand(): void {
+    if (overlayOpen || overlayEl || s.status !== 'playing') return;
+    const band = el('div', 'bha-battle-ov bha-battle-ov--encounter bha-battle-ov--boss');
+    const row = el('div', 'bha-battle-ov__stats');
+    row.append(tag('속성 변화', 'elite'), elementChip());
+    band.append(el('span', 'bha-battle-ov__eyebrow', `페이즈 ${s.boss?.phase ?? 1}`), el('span', 'bha-battle-ov__line'), el('h2', 'bha-battle-ov__title', enemyName), el('span', 'bha-battle-ov__line'), row);
+    overlayOpen = true;
+    const ov = showOverlay(band);
+    let done = false;
+    const close = () => {
+      if (done) return;
+      done = true;
+      if (overlayEl === ov) hideOverlay();
+      overlayOpen = false;
+    };
+    ov.addEventListener('pointerdown', close);
+    window.setTimeout(close, 1400);
+  }
+
   overlayOpen = true;
   const encounterOverlay = showOverlay(encounter);
   let encounterDone = false;
