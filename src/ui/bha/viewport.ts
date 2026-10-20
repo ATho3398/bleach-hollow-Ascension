@@ -115,3 +115,16 @@ export function pointerLocal(e: { clientX: number; clientY: number }): { x: numb
 export function elementLocalRect(el: Element): { left: number; top: number; width: number; height: number } {
   return localRect(current, el.getBoundingClientRect());
 }
+
+/** 스크롤 위치를 0 에 묶는 상자 (기기 틀·LCD). overflow: hidden 상자도 scrollIntoView·focus 로 밀리므로, 밀리면 바로 되돌린다 (C.93 QA) */
+export interface PinnableBox {
+  scrollTop: number;
+  scrollLeft: number;
+  scrollTo(x: number, y: number): void;
+  addEventListener(type: 'scroll', fn: () => void, opts?: AddEventListenerOptions): void;
+}
+export function pinScroll(box: PinnableBox): void {
+  box.addEventListener('scroll', () => {
+    if (box.scrollTop !== 0 || box.scrollLeft !== 0) box.scrollTo(0, 0);
+  }, { passive: true });
+}

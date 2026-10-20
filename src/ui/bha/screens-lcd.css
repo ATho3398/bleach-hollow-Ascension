@@ -155,10 +155,11 @@
 
 /* ═════ 원정 결과·연습 결과 (T-2 에서 남은 스크롤 줄이기): 왼쪽을 좁히고 오른쪽 요약 표를 두 줄 칸으로 ═════ */
 .bha-lcd .bha-app.bha-split.bha-resultpage { grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.45fr); }
-.bha-resultpage .bha-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-6); }
-.bha-resultpage .bha-info__row { min-width: 0; padding: var(--bha-sp-1) 0; }
+.bha-resultpage .bha-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-6); grid-auto-flow: row dense; }  /* 보조 줄(small) 있는 줄은 한 줄 전체 — 짧은 줄끼리 짝지어 빈 반쪽이 안 생기게 (C.93) */
+.bha-resultpage .bha-info__row { min-width: 0; padding: var(--bha-sp-1) 0; grid-template-columns: auto minmax(0, 1fr); }  /* 이름표는 제 너비, 긴 값(등급 → 등급)이 줄을 바꾼다 — 반쪽 칸에서 이름표가 한 글자씩 세로로 깨졌다 (C.93) */
 .bha-resultpage .bha-info__row:has(small) { grid-column: 1 / -1; }
-.bha-resultpage .bha-info dt { white-space: normal; }
+.bha-resultpage .bha-info dt { white-space: nowrap; }
+.bha-resultpage .bha-info dd { min-width: 0; overflow-wrap: anywhere; }
 .bha-resultpage .bha-info dt, .bha-resultpage .bha-info dd { font-size: var(--bha-fs-xs); }
 .bha-resultpage .bha-result__title { font-size: var(--bha-fs-2xl); }
 .bha-lcd .bha-app.bha-split.bha-resultpage { padding-block: var(--bha-sp-3); }

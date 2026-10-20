@@ -185,6 +185,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }));
   };
   paintGauges();
+  requestAnimationFrame(() => statusBtn.style.setProperty('--chip-h', `${statusBtn.offsetHeight}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
   scene.append(char, statusBtn, bubble);
 
   // ── 하단 독 (GDD 18-2): 돌보기 3개 + 메뉴 아이콘 + 더보기 ──

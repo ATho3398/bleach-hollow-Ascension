@@ -18,7 +18,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { deckRow, showToast, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, currentStats, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats } from '../engine/evolution';
+import { abilityEffectsOf, currentStats, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
@@ -79,8 +79,9 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 ${carryLine(faction.id, evo.carry ?? zeroStats())}`);
     stats.append(line);
   }
-  // 특성 2줄 (GDD 39장): 성향 / 속성·전용
-  if (evo.ability) stats.append(abilityParagraph(evolutionAbilityLines(evo, faction.id), 'bha-faint'));
+  // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
+  const abil = statusAbilityLines(evo, faction.id);
+  if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
   lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
@@ -271,4 +272,9 @@ export function altarView(dev: Device, faction: FactionConfig, save: SaveData, t
     ],
   });
   lcdPage(dev.view, { cls: 'bha-altar-page' }, head, cols.left, cols.right);
+}
+
+/** 상태 화면 특성 줄: 진화체가 있으면 성향(비었으면 생략) + 속성·전용, 1단계면 null (C.93) */
+export function statusAbilityLines(evo: EvolutionState, factionId: string): AbilityLine[] | null {
+  return evo.formId ? evolutionAbilityLines(evo, factionId) : null;
 }

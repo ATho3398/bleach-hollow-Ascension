@@ -10,7 +10,7 @@ import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewS
 import { actionFor, isNavAction } from '../shortcutMap';
 import { KEY_HINTS_EVENT, loadKeyHints } from '../keyHints';
 import { badgePlan, detectCtx, isTypingTarget, runAction, runCancelHooks, syncBadges } from './shortcuts';
-import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, setFit, type Fit } from './viewport';
+import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, pinScroll, setFit, type Fit } from './viewport';
 import { skinLcdAt, type DeviceSkin } from './tamagoLogic';
 
 export interface SelectItem {
@@ -108,6 +108,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   dev.append(left, bezel, right);
 
   root.replaceChildren(dev);
+  // 틀·LCD 는 overflow: hidden 으로 자를 뿐 스크롤하지 않는다. 선택 항목 scrollIntoView 가 이 상자까지 밀어 그림 틀이 통째로 어긋났다 (C.93 QA)
+  for (const box of [dev, bezel, lcd]) pinScroll(box);
 
   // ── 화면 맞춤: 가로면 그대로, 세로면 기기 전체를 돌려 채운다 (GDD 16-6). 방향이 바뀌어도 화면은 다시 만들지 않고 틀만 다시 계산한다 ──
   // 뷰포트 크기는 고정 위치 프로브로 잰다: iOS Safari 의 주소창이 접히고 펴져 보이는 높이가 바뀌어도(100dvh 와 같은 값) 따라간다.

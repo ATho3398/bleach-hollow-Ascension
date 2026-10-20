@@ -12,6 +12,7 @@
 //   info(rows)                          → dl.bha-info (행: label, value, mod?)
 //   seg(items, onSelect) / dots(n, active) / slider({...})
 //   h(tag, cls, text)                   → 옛 el 과 같은 헬퍼 (el 도 다시 내보냄)
+import { fixParticles } from '../../engine/josa';
 import { el } from '../dom';
 import { cssRatio, sliderPct } from './util';
 
@@ -171,7 +172,7 @@ export function notice(kind: NoticeKind, text: string, opts: { title?: string; i
   const n = el('div', kind === 'info' ? 'bha-notice' : `bha-notice bha-notice--${kind}`);
   const body = el('div', 'bha-notice__body');
   if (opts.title) body.append(el('span', 'bha-notice__title', opts.title));
-  body.append(text);
+  body.append(fixParticles(text));
   n.append(icon(opts.icon ?? NOTICE_ICON[kind]), body);
   return n;
 }

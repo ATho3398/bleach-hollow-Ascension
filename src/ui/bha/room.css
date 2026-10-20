@@ -131,7 +131,8 @@
 
 /* ── 머리 위 상태 칩 (GDD 18-8): 캐릭터 몸 위, 한 줄. 누르면 상태 화면 ── */
 .bha-room__status {
-  position: absolute; left: 50%; top: 54%; transform: translate(-50%, calc(-100% + var(--head-y, -50px) - var(--bha-sp-2))); z-index: 1; /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px) */
+  /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px). 나는 진화체(머리가 높다)는 칩 윗변이 방 위 끝에 붙어 틀에 가려지므로 방 안으로 내린다(--chip-h = 칩 높이, roomView 가 잰다, C.93) */
+  position: absolute; left: 50%; top: max(calc(54% + var(--head-y, -50px) - var(--bha-sp-2)), calc(var(--chip-h, 0px) + var(--bha-sp-6))); transform: translate(-50%, -100%); z-index: 1;
   display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 52px; box-sizing: content-box; /* 총 폭 74px < 그림 130px */
   padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3); /* 오른쪽은 키 글자 배지 자리 */
   background: rgb(0 0 0 / 0.55); border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;

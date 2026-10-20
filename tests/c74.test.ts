@@ -24,9 +24,9 @@ describe('도움말 등급전 설명의 등급 낱말 = 종족 설정 rankUnitNa
     expect(raw).toContain('{rankUnitName}');
     expect(raw).not.toContain('그 번호를');
     const rank = GLOSSARY.find((g) => g.id === 'rank')!;
-    expect(renderHelpText(rank.body, helpVars(getFaction('shinigami')))).toContain('그 석차을(를) 빼앗고');
+    expect(renderHelpText(rank.body, helpVars(getFaction('shinigami')))).toContain('그 석차를 빼앗고');
     expect(renderHelpText(rank.body, helpVars(getFaction('shinigami')))).not.toContain('번호');
-    expect(renderHelpText(rank.body, helpVars(getFaction('hollow')))).toContain('그 번호을(를) 빼앗고');
+    expect(renderHelpText(rank.body, helpVars(getFaction('hollow')))).toContain('그 번호를 빼앗고');
   });
 });
 

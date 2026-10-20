@@ -2,6 +2,7 @@
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
 import { BALANCE } from '../../config/balance';
 import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
+import { fixParticles } from '../../engine/josa';
 import glossaryJson from './glossary.json';
 import screensJson from './screens.json';
 import tutorialJson from './tutorial.json';
@@ -77,9 +78,11 @@ export function placeholdersOf(template: string): string[] {
 
 /** 자리표시자를 치환한다. 모르는 이름이면 던진다 (조용히 {…} 가 화면에 남지 않게) */
 export function renderHelpText(template: string, vars: Record<string, string>): string {
-  return template.replace(PLACEHOLDER, (_, name: string) => {
+  const text = template.replace(PLACEHOLDER, (_, name: string) => {
     const v = vars[name];
     if (v === undefined) throw new Error(`도움말 자리표시자 {${name}} 를 채울 값이 없다`);
     return v;
   });
+  // 종족 이름과 같은 풀이 괄호는 지운다 ("공격(공격)" → "공격"), 조사는 받침에 맞게 (C.93)
+  return fixParticles(text.replace(/([가-힣]+)\(\1\)/g, '$1'));
 }

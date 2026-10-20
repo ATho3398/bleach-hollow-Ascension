@@ -41,7 +41,7 @@ export function breakthroughView(root: HTMLElement, faction: FactionConfig, risk
     `· 주는 피해 +${pct(RX.frenzyDamageDealt)}% · 받는 피해 +${pct(RX.frenzyDamageTaken)}%`,
     '· 공허 블록이 크게 늘어난다',
     `· ${faction.nestName}에 돌아오면 컨디션 −${RX.frenzyConditionLoss}, ${faction.stabilityName}이(가) 떨어진다`,
-    `· ${faction.riskGaugeName}는 ${RX.riskAfterBreakthrough}에서 다시 시작한다`,
+    `· ${faction.riskGaugeName}은(는) ${RX.riskAfterBreakthrough}에서 다시 시작한다`,
   ]) list.append(el('li', '', t));
   const penalty = panel({ title: `${faction.frenzyName} — 이번 원정 동안`, aside: provisionalTag('임시 수치') }, list);
   penalty.classList.add('bha-break__penalty');
