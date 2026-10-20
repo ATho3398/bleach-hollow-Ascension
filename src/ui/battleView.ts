@@ -10,7 +10,7 @@ import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import {
-  BASIC_SKILL_ID, blockEffect, blockElementOf, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
+  BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type CombatInput, type CombatParams, type CombatState,
 } from '../engine/combat';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
@@ -79,7 +79,7 @@ export function blockName(b: Block, labels: BattleLabels, factionId: string, p: 
   if (b.kind === 'liberation') return liberationBlockLabel(factionId, p.playerElements[0]);
   const src = sourceOf(p, b.traitId);
   const name = skillBlockLabel(labels, factionId, blockElementOf(p, b), b.family ?? src?.family, src?.role ?? 'attack');
-  return name ?? (b.traitId && b.traitId !== BASIC_SKILL_ID ? traitName(b.traitId, factionId) : labels.skillBlock);
+  return name ?? (b.traitId && !isBasicBlockId(b.traitId) ? traitName(b.traitId, factionId) : labels.skillBlock);
 }
 
 /** 블록 약어 = 블록 이름. 한 줄(4자)을 넘으면 `_` 뒤에서 줄을 나눈다 (예 노멀_ 막기) */
@@ -90,8 +90,8 @@ export function blockAbbr(b: Block, labels: BattleLabels, factionId: string, p: 
 
 /** 사건의 스킬 블록 표시 이름 (기본 블록은 속성이 없으므로 내 캐릭터 속성) */
 function eventBlockLabel(e: Extract<CombatEvent, { kind: 'block' }>, s: CombatState, labels: BattleLabels, factionId: string): string {
-  const element = e.element ?? (e.traitId === BASIC_SKILL_ID ? s.params.playerElements[0] ?? null : null);
-  return skillBlockLabel(labels, factionId, element, e.family, e.role) ?? (e.traitId && e.traitId !== BASIC_SKILL_ID ? traitName(e.traitId, factionId) : labels.skillBlock);
+  const element = e.element ?? (isBasicBlockId(e.traitId) ? s.params.playerElements[0] ?? null : null);
+  return skillBlockLabel(labels, factionId, element, e.family, e.role) ?? (e.traitId && !isBasicBlockId(e.traitId) ? traitName(e.traitId, factionId) : labels.skillBlock);
 }
 
 interface LogLine {

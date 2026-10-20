@@ -284,6 +284,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   // 특성 칸 2개 (GDD 39장): 성향(실패형 2개) + 속성·전용 효과
   const fa = formAbilitiesOf(form ?? null, e.ev, e.ability);
   for (const d of fa.dispositions) applyAbility(params, d);
+  // 블록 풀 성향 보정 (GDD 44장 4번)
+  params.dispositions = [...fa.dispositions];
   const { effects, critChance } = abilityEffectsOf(fa);
   params.abilityEffects = effects;
   if (critChance > 0) params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;

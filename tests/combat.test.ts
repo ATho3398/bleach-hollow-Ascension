@@ -8,7 +8,7 @@ import { FACTIONS, getFaction } from '../src/data/factions';
 import { pickFaction, type EnemyDef } from '../src/data/schema';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import {
-  BASIC_SKILL_ID, applyInput, blockSources, buildBattleRecord, chainGroup, createCombat, drainCombatEvents, elapsedSeconds,
+  BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, isBasicBlockId, applyInput, blockSources, buildBattleRecord, chainGroup, createCombat, drainCombatEvents, elapsedSeconds,
   playCombatBot, replayCombat, step, ticksOf, type Block, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { createExpedition, playExpedition } from '../src/engine/expedition';
@@ -18,6 +18,7 @@ import { loadSave, migrateSave, newSaveData, recordBattle, recordExpedition, SAV
 import { battleLabels } from '../src/ui/labels';
 
 const CX = BALANCE.provisional.combat;
+const BP = BALANCE.provisional.blockPool;
 const normal = getEnemy('test-a'); // 일반, 불 속성
 const elite = getEnemy('test-elite');
 const sealPat = elite.pattern as Extract<NonNullable<EnemyDef['pattern']>, { kind: 'heavy-seal' }>; // 기존 강적 = 강공격↔봉인
@@ -113,25 +114,27 @@ describe('고정 틱 시뮬레이션', () => {
 });
 
 describe('블록 생성과 블록 바 (일자 8칸)', () => {
-  it('바는 8칸, 비어 있으면 기본 블록만 생성되고 왼쪽부터 빈 칸 없이 오른쪽 끝에 붙는다', () => {
+  it('바는 8칸, 흡수 0칸이면 기본 블록 5종(공격·막기·회복)만 생성되고 왼쪽부터 빈 칸 없이 오른쪽 끝에 붙는다', () => {
     const s = mk();
     expect(s.params.trayCapacity).toBe(8);
     expect(s.tray).toHaveLength(0);
-    expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID]);
+    expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID]);
     s.voidTimer = 1e9;
-    wait(s, CX.blockSpawnSeconds * 2);
+    wait(s, BP.spawnSeconds * 1.5);
     expect(s.tray).toHaveLength(2);
-    expect(s.tray.every((b) => b.traitId === BASIC_SKILL_ID)).toBe(true);
+    expect(s.tray.every((b) => isBasicBlockId(b.traitId))).toBe(true);
     const spawns = drainCombatEvents(s).filter((e) => e.kind === 'spawn');
     expect(spawns.map((e) => e.kind === 'spawn' && e.index)).toEqual([0, 1]);
   });
 
-  it('슬롯 skill 특성마다 일정 간격(임시 4초)으로 블록이 생긴다', () => {
-    const s = mk({ params: build('t-fire-a', 't-earth-guard') });
-    s.voidTimer = 1e9;
-    wait(s, CX.blockSpawnSeconds);
-    const ids = s.tray.map((b) => b.traitId).sort();
-    expect(ids).toEqual(['t-earth-guard', 't-fire-a']);
+  it('타이머 하나로 일정 간격(blockPool.spawnSeconds)마다 블록이 하나씩 생긴다 (흡수 0·1칸)', () => {
+    for (const params of [{}, build('t-fire-a')]) {
+      const s = mk({ params });
+      s.voidTimer = 1e9;
+      s.player.hp = 1e9;
+      wait(s, BP.spawnSeconds * 3.5);
+      expect(s.tray).toHaveLength(4);
+    }
   });
 
   it('8개가 되면 생성이 멈추고(타이머도 멈춤), 하나를 쓰면 오른쪽 블록이 당겨지고 새 블록은 맨 오른쪽에 생긴다', () => {
@@ -151,7 +154,7 @@ describe('블록 생성과 블록 바 (일자 8칸)', () => {
     // 쓴 칸 오른쪽은 한 칸씩 당겨졌다 (같은 특성이 붙어 체인이 됐다면 그 개수만큼)
     const gone = 8 - used;
     expect(s.tray.map((b) => b.uid)).toEqual([...ids.slice(0, 2), ...ids.slice(2 + gone)]);
-    wait(s, CX.blockSpawnSeconds);
+    wait(s, BP.spawnSeconds);
     expect(s.tray.length).toBeGreaterThan(used);
     expect(s.tray.slice(0, used).map((b) => b.uid)).toEqual([...ids.slice(0, 2), ...ids.slice(2 + gone)]);
   });

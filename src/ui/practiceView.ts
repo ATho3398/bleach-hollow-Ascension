@@ -4,7 +4,7 @@ import { ELEMENT_IDS, elementAbbr, elementName } from '../data/elements';
 import { pickFaction, type EnemyDef, type EnemyPatternKind } from '../data/schema';
 import { traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
-import { BASIC_SKILL_ID, comboOf, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
+import { BASIC_SKILL_ID, comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
 import { absorbConditionText, weaknessText } from './absorbView';
 import { button, el, icon, panel, tag } from './bha/dom';
@@ -127,8 +127,8 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
   // 마무리 일격 이름 (GDD 20장 v5.4): 스킬 = `속성_계열`(기본 블록은 내 캐릭터 속성), 콤보 = `콤보_계열`
   const finSkill = () => {
     const src = sourceOf(s.params, fin!.traitId);
-    const element = fin!.element ?? (fin!.traitId === BASIC_SKILL_ID ? s.params.playerElements[0] ?? null : null);
-    return skillBlockLabel(labels, faction.id, element, fin!.family ?? src?.family, src?.role ?? 'attack') ?? (fin!.traitId && fin!.traitId !== BASIC_SKILL_ID ? traitName(fin!.traitId, faction.id) : labels.skillBlock);
+    const element = fin!.element ?? (isBasicBlockId(fin!.traitId) ? s.params.playerElements[0] ?? null : null);
+    return skillBlockLabel(labels, faction.id, element, fin!.family ?? src?.family, src?.role ?? 'attack') ?? (fin!.traitId && !isBasicBlockId(fin!.traitId) ? traitName(fin!.traitId, faction.id) : labels.skillBlock);
   };
   const finText = !fin
     ? '-'

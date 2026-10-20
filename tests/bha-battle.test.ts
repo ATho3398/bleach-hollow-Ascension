@@ -75,13 +75,13 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     }
   });
 
-  it('기본 블록은 종족 계열 3종이 고르게 섞여 나오고, 같은 계열끼리 체인된다 (위력은 기본 블록 값)', () => {
+  it('기본 공격 블록은 종족 계열 3종이 고르게 섞여 나오고, 같은 계열끼리 체인된다 (위력은 기본 블록 값)', () => {
     const f = FACTIONS[0]!;
     const seen: Record<string, number> = {};
     for (let seed = 1; seed <= 40; seed++) {
       const c = createCombat(seed, { enemy: getEnemy('test-a'), params: buildCombatParams(newBuild(), f.id) });
       for (let i = 0; i < 5000 && c.status === 'playing' && c.tray.filter((b) => b.kind === 'skill').length < 5; i++) step(c);
-      for (const b of c.tray) if (b.kind === 'skill') seen[b.family ?? 'null'] = (seen[b.family ?? 'null'] ?? 0) + 1;
+      for (const b of c.tray) if (b.kind === 'skill' && b.traitId === BASIC_SKILL_ID) seen[b.family ?? 'null'] = (seen[b.family ?? 'null'] ?? 0) + 1;
     }
     expect(Object.keys(seen).sort()).toEqual(f.families.map((x) => x.id).sort());
     const total = Object.values(seen).reduce((x, y) => x + y, 0);

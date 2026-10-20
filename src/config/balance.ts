@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 49;
+export const BALANCE_VERSION = 50;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -520,6 +520,40 @@ export const BALANCE = {
       defeatCondition: 15,
       defeatHunger: 10,
     },
+    // ── 블록 풀 (GDD 44장, C.97, 마스터 추천안 provisional): 기본 블록 5종은 늘 풀에 있고, 장착 흡수 특성 블록이 더해진다. 블록이 나올 때마다 가중 추첨 ──
+    blockPool: {
+      /** 블록 생성 간격(초). 타이머 하나 (블록 가속·속도 배율은 곱한다). 바가 가득 차거나 봉인 중이면 멈춘다.
+       *  기획서 추천 1.6 → 2.8 (C.97 측정: 1.6 이면 사람형 봇 일반 29~34초·강적 승률 87~92% 로 짧고 쉬움, 2.4 → 일반 39~43초·강적 81~90초, 2.8 → 일반 42~47초·강적 86~97초·skill 1~2개 강적 76~79%.
+       *  기본 블록 세기(공격 3 → 1.5·1.0)는 시간·승률에 거의 영향 없어 그대로) */
+      spawnSeconds: 2.8,
+      /** 장착 흡수 특성 2칸째부터 1칸마다 생성 속도 +이 비율 (간격 = spawnSeconds ÷ (1 + 이 값 × (칸 − 1))). 옛 규칙(특성마다 타이머)처럼 칸이 늘면 블록도 늘어난다 — 없으면 후반 몸(칸 4~7)의 블록 수가 크게 줄어 보스·탑·등급전 가드가 깨진다 (C.97 측정) */
+      spawnHastePerSlot: 0.5,
+      /** 기본 블록 가중: 공격은 종족 계열 표의 계열 각각, 막기 1, 회복 1 (합 44) */
+      basicWeights: { attack: 10, guard: 7, heal: 7 },
+      /** 막기·회복 기본 블록 세기 = 같은 역할 흡수 특성 블록 기본값(basicRoleBlocks) × 이 비율 (피해·막기 지속·회복량 모두) */
+      basicGuardRatio: 0.7,
+      basicHealRatio: 0.7,
+      /** 같은 역할 흡수 특성 블록 기본값 (traits.json 의 *-guard·*-heal 과 같은 값, 테스트가 맞는지 본다) */
+      basicRoleBlocks: {
+        guard: { powerInAttacks: 1.5, chainBonus: { kind: 'reflect', value: 1 } },
+        heal: { powerInAttacks: 1, chainBonus: { kind: 'cleanse', value: 40 } },
+      },
+      /** 흡수 몫: 장착 흡수 특성 블록들이 풀에서 차지하는 비율, 장착 칸 수 0/1/2/3 (그 이상은 마지막 값). 장착 특성끼리 균등, 나머지를 기본 5종이 가중 비율로 */
+      absorbedShareBySlots: [0, 0.35, 0.5, 0.65],
+      /** 흡수 몫 상한 (속도 성향 가산 포함) */
+      absorbedShareMax: 0.8,
+      /** 같은 계열 공격 특성이 여럿이면 서로 체인이 쉬워지므로 그 특성들의 몫을 (같은 계열 수 − 1)당 이 비율만큼 나눠 낮춘다 (옛 familySpawnSlowdown 의 가중판, 줄어든 몫은 기본 블록으로) */
+      familyShareSlowdown: 1,
+      /** 성향 특성(GDD 39장 ①) 보정: 기본 블록 가중 배율 (attack = 기본 공격 3종), absorbedShare = 흡수 몫 가산(%p). 종족 무관 엔진 수치 */
+      temperament: {
+        atk: { attack: 1.4 },
+        int: { attack: 1.4 },
+        def: { guard: 1.8 },
+        hp: { heal: 1.8 },
+        spr: { guard: 1.4, heal: 1.4 },
+        spd: { absorbedShare: 0.1 },
+      } as Record<string, { attack?: number; guard?: number; heal?: number; absorbedShare?: number }>,
+    },
     // ── 전투 v2(P4, C.6) 임시값: 실시간 자동 전투 + 스킬 블록 체인 (GDD 3-5). 시간은 초, 엔진은 틱으로 환산한다 ──
     // 모든 "양"은 플레이어 기본 공격 1회 피해(playerAttackDamage) = 1 단위 기준 (CLAUDE.md 규칙 3)
     combat: {
@@ -549,10 +583,6 @@ export const BALANCE = {
       enemyDamageVariance: 0.25,
       /** 블록 바 일자 8칸 (GDD 3-5 v0.8, 크퀘식). 6칸 트레이(C.6) → 8칸: 한 줄에 같은 블록을 붙여 놓을 여유를 준다 */
       trayCapacity: 8,
-      /** 슬롯 skill 특성(없으면 기본 블록) 하나당 블록 생성 간격(초). 바가 가득 차거나 봉인 중이면 멈춘다 */
-      blockSpawnSeconds: 4,
-      /** 같은 계열 공격 특성이 슬롯에 둘 이상이면 서로 체인이 쉬워지므로(GDD 17-3), 그 계열 블록의 생성 간격을 (같은 계열 특성 수 − 1)당 이 비율만큼 늘린다 (C.34). 계열이 하나뿐이면 영향 없음 */
-      familySpawnSlowdown: 1,
       /** 체인 배율: 체인1 ×1.0, 체인2 ×2.2, 체인3 ×3.6 (GDD 3-5) */
       chainMultipliers: [1, 2.2, 3.6],
       /** 특성별 추가 효과가 붙는 최소 체인 (GDD 3-5 "체인3 … + 추가 효과") */
@@ -562,7 +592,7 @@ export const BALANCE = {
       spMax: 100,
       /** 필살 블록 피해: 기본 공격 N회 분량 ("큰 피해") */
       specialPowerInAttacks: 15,
-      /** 슬롯에 skill 특성이 없을 때의 기본 블록 ("기본 공격 강화"): 공격, 기본 공격 N회 분량 */
+      /** 기본 공격 블록 (GDD 44장: 기본 블록 5종 중 공격 3종 — 종족 계열 표의 계열마다 하나): 기본 공격 N회 분량 */
       basicBlockPowerInAttacks: 3,
       basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
       /** guard 블록: 막기 상태 지속(초, 위력 배율만큼 늘어남), 그동안 기본 공격 피해 경감, 강공격 경감(= 막기 성공) */

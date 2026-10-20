@@ -6,7 +6,7 @@ import { TRAITS, parseTrait } from '../src/data/traits';
 import { FAMILY_TIERS, parseFactionConfig } from '../src/engine/faction';
 import { BALANCE } from '../src/config/balance';
 import { absorbReasons, buildCombatParams, equippedSkills, gainTrait, newBuild } from '../src/engine/absorb';
-import { applyInput, createCombat, runAt, spawnSecondsOf as spawnSecondsOfTest, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
+import { applyInput, createCombat, runAt, blockPoolOf, BASIC_SKILL_ID, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
 import { chainGroup } from '../src/engine/combat/tray';
 import { getEnemy } from '../src/data/enemies';
 import { combosAtTier, COMBOS, comboName } from '../src/data/evolution';
@@ -85,6 +85,7 @@ describe('계열 데이터 (GDD 17-3)', () => {
 
 // ── ② 전투 엔진: 계열 체인 ──
 const CX = BALANCE.provisional.combat;
+const BP = BALANCE.provisional.blockPool;
 const target = getEnemy('test-a'); // 불 속성 → 물 속성 블록이 상성 우위
 let uid = 5000;
 const blk = (traitId: string | null, family: string | null = null, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId, family });
@@ -198,25 +199,29 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     expect(absorbReasons(s)).toEqual(s.weakChain3Count >= BALANCE.provisional.absorb.weakChain3ForAbsorb ? ['weakness-finisher', 'weakness-chain3'] : ['weakness-finisher']);
   });
 
-  it('블록은 장착한 특성의 계열대로 나온다', () => {
+  it('흡수 블록은 장착한 특성의 계열대로, 기본 공격 블록은 종족 계열 표의 계열로 나온다', () => {
     const s = mk(build('t-thunder-c', 't-fire-a'));
-    for (let i = 0; i < 400 && s.tray.length < 4; i++) step(s);
-    const fams = new Set(s.tray.filter((b) => b.kind === 'skill').map((b) => b.family));
-    expect(fams).toEqual(new Set(['family-c', 'family-a']));
-    for (const b of s.tray) if (b.kind === 'skill') expect(b.family).toBe(b.traitId === 't-thunder-c' ? 'family-c' : 'family-a');
+    s.player.hp = 1e9;
+    for (let i = 0; i < 4000 && s.tray.length < 8; i++) step(s);
+    for (const b of s.tray) {
+      if (b.kind !== 'skill') continue;
+      if (b.traitId === 't-thunder-c') expect(b.family).toBe('family-c');
+      else if (b.traitId === 't-fire-a') expect(b.family).toBe('family-a');
+      else if (b.traitId === BASIC_SKILL_ID) expect(Object.keys(s.params.families)).toContain(b.family);
+      else expect(b.family ?? null).toBeNull();
+    }
   });
 
-  it('같은 계열 특성이 여럿이면 그 계열 블록의 생성 간격이 늘어난다', () => {
-    const one = mk(build('t-thunder-c'));
-    const two = mk(build('t-thunder-c', 't-blood-rare'));
-    const p = two.params;
-    const [c5, e4] = [p.skills[0]!, p.skills[1]!];
-    expect(spawnSecondsOfTest(one.params, one.params.skills[0]!)).toBe(CX.blockSpawnSeconds);
-    expect(spawnSecondsOfTest(p, c5)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
-    expect(spawnSecondsOfTest(p, e4)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
-    // 계열이 다르거나 계열이 없는 특성끼리는 느려지지 않는다
+  it('같은 계열 특성이 여럿이면 그 특성들의 몫이 (같은 계열 수 − 1)당 familyShareSlowdown 만큼 줄고, 줄어든 몫은 기본 블록으로 간다', () => {
+    const chanceOf = (p: CombatParams, id: string) => blockPoolOf(p).filter((e) => e.source.id === id).reduce((a, e) => a + e.chance, 0);
+    const two = mk(build('t-thunder-c', 't-blood-rare')).params;
+    const share = BP.absorbedShareBySlots[2]!;
+    expect(chanceOf(two, 't-thunder-c')).toBeCloseTo(share / 2 / (1 + BP.familyShareSlowdown));
+    expect(chanceOf(two, 't-blood-rare')).toBeCloseTo(share / 2 / (1 + BP.familyShareSlowdown));
+    // 계열이 다르거나 계열이 없는 특성끼리는 줄지 않는다
     const mixed = mk(build('t-thunder-c', 't-fire-a', 't-fire-guard')).params;
-    for (const sk of mixed.skills) expect(spawnSecondsOfTest(mixed, sk)).toBe(CX.blockSpawnSeconds);
+    for (const sk of mixed.skills) expect(chanceOf(mixed, sk.id)).toBeCloseTo(BP.absorbedShareBySlots[3]! / 3);
+    expect(blockPoolOf(two).reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1);
   });
 });
 
@@ -382,8 +387,9 @@ describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
       const h = playCombatHuman(createCombat(seed, { enemy: getEnemy('test-elite'), params: params() }));
       human += h.combosTriggered;
     }
-    expect(perfect).toBeGreaterThan(20);
-    expect(human).toBeGreaterThan(5);
+    // C.97 (GDD 44장): 기본 블록이 섞여 같은 계열 블록 밀도가 낮아져 콤보가 덜 나온다 (옛 기준 완벽형 20·사람형 5)
+    expect(perfect).toBeGreaterThan(8);
+    expect(human).toBeGreaterThan(2);
   });
 
   it('같은 시드와 입력 기록이면 콤보가 있어도 같은 결과', () => {

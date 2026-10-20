@@ -6,7 +6,7 @@
 import { BALANCE } from '../../config/balance';
 import { hasSpecialActions } from '../../data/enemies';
 import { getElement, matchup, NORMAL_ELEMENT, weaknessesOf, type Matchup } from '../../data/elements';
-import { STAT_IDS, type AttackCategory, type ChainBonus, type ChainBonusKind, type EnemyDef, type EnemyPattern, type SkillRole, type Stats } from '../../data/schema';
+import { STAT_IDS, type AttackCategory, type ChainBonus, type ChainBonusKind, type EnemyDef, type EnemyPattern, type SkillRole, type StatId, type Stats } from '../../data/schema';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { chainGroup, inTray, type Block, type Tray } from './tray';
@@ -14,9 +14,39 @@ import { chainGroup, inTray, type Block, type Tray } from './tray';
 const CX = BALANCE.provisional.combat;
 const EL = BALANCE.provisional.elements;
 const LB = BALANCE.provisional.liberation;
+const BP = BALANCE.provisional.blockPool;
 
-/** 기본 블록 특성 id: 슬롯에 skill 특성이 없으면 이 블록만 나온다 (GDD 3-5 "기본 공격 강화") */
+/** 기본 공격 블록 특성 id (GDD 44장: 기본 블록 5종 중 공격 3종 — 블록마다 계열을 가진다) */
 export const BASIC_SKILL_ID = 'basic-skill';
+/** 기본 막기·회복 블록 특성 id (GDD 44장: 장착 흡수 특성과 상관없이 늘 풀에 있다) */
+export const BASIC_GUARD_ID = 'basic-guard';
+export const BASIC_HEAL_ID = 'basic-heal';
+const BASIC_IDS: readonly string[] = [BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID];
+
+/** 기본 블록(흡수 특성이 아닌 블록)인가 */
+export function isBasicBlockId(id: string | null | undefined): boolean {
+  return id != null && BASIC_IDS.includes(id);
+}
+
+/** 블록 풀 수치 (GDD 44장, BALANCE.provisional.blockPool) */
+export interface BlockPoolParams {
+  basicWeights: { attack: number; guard: number; heal: number };
+  basicGuardRatio: number;
+  basicHealRatio: number;
+  basicRoleBlocks: { guard: { powerInAttacks: number; chainBonus: ChainBonus }; heal: { powerInAttacks: number; chainBonus: ChainBonus } };
+  absorbedShareBySlots: readonly number[];
+  absorbedShareMax: number;
+  spawnHastePerSlot: number;
+  familyShareSlowdown: number;
+  temperament: Record<string, { attack?: number; guard?: number; heal?: number; absorbedShare?: number }>;
+}
+
+/** 풀의 한 칸: 이 생성원·계열 블록이 뽑힐 확률 (합 1) */
+export interface PoolEntry {
+  source: CombatSkill;
+  family: string | null;
+  chance: number;
+}
 
 /** 전투에 가져온 블록 생성원 하나 (장착 skill 특성, 또는 기본 블록) */
 export interface CombatSkill {
@@ -62,8 +92,12 @@ export interface CombatParams {
   enemyDamageVariance: number;
   /** 블록 바 칸 수 (일자 8칸, GDD 3-5 v0.8) */
   trayCapacity: number;
+  /** 블록 생성 간격(초, 타이머 하나 — GDD 44장 blockPool.spawnSeconds) */
   blockSpawnSeconds: number;
-  familySpawnSlowdown: number;
+  /** 블록 풀 가중 (GDD 44장) */
+  blockPool: BlockPoolParams;
+  /** 성향 특성 (GDD 39장 ①, 진화 때 정한 노력치 최고 능력치 — 실패형은 2개): 블록 풀 가중 보정에 쓴다. 비면 보정 없음 */
+  dispositions: StatId[];
   chainMultipliers: readonly number[];
   /** 한 번에 묶이는 최대 블록 수 (GDD 19-2): 진화체 데이터 → 종족 설정 기본값에서 온다. 없으면 chainMultipliers 길이(3). 단계 기술·배율이 있는 만큼(chainMultipliers 길이)까지만 쓰인다 */
   maxChain?: number;
@@ -121,7 +155,7 @@ export interface CombatParams {
   storedStartGauge: number;
   /** 공허 블록 1개 사용 → 리스크 게이지 상승량 (BALANCE.provisional.risk.perVoidBlock) */
   riskPerVoidBlock: number;
-  /** 장착 skill 특성 블록 생성원(슬롯 순서). 비면 기본 블록 하나 */
+  /** 장착 흡수 skill 특성 블록 생성원(슬롯 순서). 기본 블록 5종은 이것과 상관없이 늘 풀에 있다 (GDD 44장) */
   skills: CombatSkill[];
   /** passive: 기본 공격 위력·속도 배율 */
   attackPowerMultiplier: number;
@@ -191,6 +225,9 @@ export type AbilityProc = 'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste' | 
 export function defaultCombatParams(): CombatParams {
   return {
     ...CX,
+    blockSpawnSeconds: BP.spawnSeconds,
+    blockPool: BP as unknown as BlockPoolParams,
+    dispositions: [],
     strongMultiplier: BALANCE.elements.strong,
     weakMultiplier: BALANCE.elements.weak,
     stabMultiplier: BALANCE.elements.stab,
@@ -341,7 +378,7 @@ export interface CombatState {
   player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
   tray: Tray;
   nextUid: number;
-  /** 블록 생성원(skills, 비면 기본 블록)마다 다음 생성까지 남은 틱 */
+  /** 다음 블록 생성까지 남은 틱 (GDD 44장: 타이머 하나, [0] 만 쓴다 — 옛 세이브·테스트 호환으로 배열) */
   spawnTimers: number[];
   voidTimer: number;
   shuffleTimer: number;
@@ -452,18 +489,87 @@ export function maxChain(p: CombatParams): number {
   return Math.max(1, Math.min(top, Math.floor(p.maxChain ?? top)));
 }
 
-/** 블록 생성원: 장착 skill 특성들, 하나도 없으면 기본 블록 */
-export function blockSources(p: CombatParams): CombatSkill[] {
-  if (p.skills.length > 0) return p.skills;
-  return [{ id: BASIC_SKILL_ID, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 }];
+/** 기본 블록 5종의 생성원 (GDD 44장): 공격(계열은 블록마다 풀이 정한다)·막기·회복. 막기·회복 세기 = 같은 역할 흡수 특성 기본값 × 비율 */
+export function basicSources(p: CombatParams): CombatSkill[] {
+  const bp = p.blockPool;
+  return [
+    { id: BASIC_SKILL_ID, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 },
+    { id: BASIC_GUARD_ID, element: null, category: 'mixed', family: null, role: 'guard', powerInAttacks: bp.basicRoleBlocks.guard.powerInAttacks, chainBonus: { ...bp.basicRoleBlocks.guard.chainBonus }, powerMultiplier: bp.basicGuardRatio },
+    { id: BASIC_HEAL_ID, element: null, category: 'mixed', family: null, role: 'heal', powerInAttacks: bp.basicRoleBlocks.heal.powerInAttacks, chainBonus: { ...bp.basicRoleBlocks.heal.chainBonus }, powerMultiplier: bp.basicHealRatio },
+  ];
 }
 
-/** 이 생성원의 블록 생성 간격(초): 같은 계열 공격 특성이 여럿이면 체인이 쉬워지므로 그만큼 늘린다 (GDD 17-3, familySpawnSlowdown) */
-export function spawnSecondsOf(p: CombatParams, src: CombatSkill): number {
-  const base = p.blockSpawnSeconds / p.blockSpawnMultiplier;
-  if (!src.family) return base;
-  const same = blockSources(p).filter((x) => x.family === src.family).length;
-  return base * (1 + p.familySpawnSlowdown * (same - 1));
+/** 블록 생성원: 장착 흡수 skill 특성들 + 기본 블록 5종(공격·막기·회복 생성원 3개) */
+export function blockSources(p: CombatParams): CombatSkill[] {
+  return [...p.skills, ...basicSources(p)];
+}
+
+/** 블록 생성 간격(초): 타이머 하나, 블록 가속(고유 특성·패시브) 배율로 나누고, 장착 흡수 특성 2칸째부터 칸마다 빨라진다 (GDD 44장 1번, 44-1) */
+export function spawnSecondsOf(p: CombatParams): number {
+  const extra = Math.max(0, p.skills.length - 1);
+  return p.blockSpawnSeconds / p.blockSpawnMultiplier / (1 + p.blockPool.spawnHastePerSlot * extra);
+}
+
+/** 흡수 몫 (GDD 44장 3·4번): 장착 칸 수 → 비율, 속도 성향이면 가산, 상한. 0칸 = 0 */
+export function absorbedShareOf(p: CombatParams): number {
+  const n = p.skills.length;
+  if (n === 0) return 0;
+  const bp = p.blockPool;
+  const table = bp.absorbedShareBySlots;
+  let share = table[Math.min(n, table.length - 1)] ?? 0;
+  for (const d of p.dispositions) share += bp.temperament[d]?.absorbedShare ?? 0;
+  return Math.max(0, Math.min(bp.absorbedShareMax, share));
+}
+
+/**
+ * 블록 풀 (GDD 44장): 블록이 나올 때마다 이 확률로 하나를 뽑는다 (합 1).
+ * 흡수 몫을 장착 특성끼리 균등하게 나누고(같은 계열 공격 특성이 여럿이면 familyShareSlowdown 만큼 낮춤), 나머지를 기본 블록 5종이 가중(성향 보정 곱) 비율로 나눈다.
+ * 기본 공격은 종족 계열 표(params.families)의 계열마다 한 칸 — 계열 표가 없으면 계열 없는 한 칸(가중 = 공격 가중 × 3)
+ */
+export function blockPoolOf(p: CombatParams): PoolEntry[] {
+  const bp = p.blockPool;
+  const out: PoolEntry[] = [];
+  const share = absorbedShareOf(p);
+  let absorbed = 0;
+  for (const src of p.skills) {
+    const same = src.family ? p.skills.filter((x) => x.family === src.family).length : 1;
+    const chance = (share / p.skills.length) / (1 + bp.familyShareSlowdown * (same - 1));
+    absorbed += chance;
+    out.push({ source: src, family: src.family ?? null, chance });
+  }
+  const mult = { attack: 1, guard: 1, heal: 1 };
+  for (const d of p.dispositions) {
+    const t = bp.temperament[d];
+    if (!t) continue;
+    mult.attack *= t.attack ?? 1;
+    mult.guard *= t.guard ?? 1;
+    mult.heal *= t.heal ?? 1;
+  }
+  const [atk, guard, heal] = basicSources(p);
+  const fams = Object.keys(p.families);
+  const BASIC_FAMILY_COUNT = 3;
+  const basic: { source: CombatSkill; family: string | null; w: number }[] = [
+    ...(fams.length > 0
+      ? fams.map((f) => ({ source: atk!, family: f, w: bp.basicWeights.attack * mult.attack }))
+      : [{ source: atk!, family: null, w: bp.basicWeights.attack * BASIC_FAMILY_COUNT * mult.attack }]),
+    { source: guard!, family: null, w: bp.basicWeights.guard * mult.guard },
+    { source: heal!, family: null, w: bp.basicWeights.heal * mult.heal },
+  ];
+  const total = basic.reduce((a, x) => a + x.w, 0);
+  const rest = Math.max(0, 1 - absorbed);
+  for (const x of basic) out.push({ source: x.source, family: x.family, chance: total > 0 ? (rest * x.w) / total : 0 });
+  return out;
+}
+
+/** 풀에서 하나를 뽑는다 (전투 난수) */
+function drawFromPool(s: CombatState): PoolEntry | null {
+  const pool = blockPoolOf(s.params);
+  let r = nextFloat(s.rng);
+  for (const e of pool) {
+    if (r < e.chance) return e;
+    r -= e.chance;
+  }
+  return pool[pool.length - 1] ?? null;
 }
 
 // ── 능력치·상성 (GDD 20-1~20-3) ──
@@ -560,7 +666,6 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
   const t = (sec: number) => ticksOf(params, sec);
   // 적 체력 = 플레이어 기본 공격 N회 분량 (CLAUDE.md 규칙 3). 육성으로 공격력이 오르면 같이 오른다
   const maxHp = setup.enemy.hpInAttacks * params.hpAttackScale * params.playerAttackDamage * params.growthMultiplier;
-  const sources = blockSources(params);
   const pStats = playerStatsOf(params);
   // 내 체력 = 기본 체력 × (체력 ÷ 세계 기준 능력치) (GDD 20-3·32-1: 기준은 1단계 값으로 고정 — 진화하면 최대 체력이 실제로 커진다)
   const playerHp = params.playerMaxHp * (pStats.hp / params.playerRefStat);
@@ -592,8 +697,8 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     },
     tray: [],
     nextUid: 1,
-    // 생성원이 여럿이면 생성 시점을 고르게 엇갈린다 (첫 블록은 간격의 절반 뒤)
-    spawnTimers: sources.map((src, i) => Math.max(1, Math.round((t(spawnSecondsOf(params, src)) * (i + 0.5)) / sources.length))),
+    // 타이머 하나 (GDD 44장): 첫 블록은 간격의 절반 뒤
+    spawnTimers: [Math.max(1, Math.round(t(spawnSecondsOf(params)) * 0.5))],
     voidTimer: t(params.voidCheckSeconds),
     shuffleTimer: params.trayShuffleSeconds > 0 ? t(params.trayShuffleSeconds) : 0,
     sp: 0,
@@ -661,7 +766,7 @@ export function skillMatchup(s: CombatState, skill: CombatSkill): Matchup {
 
 /** 흡수 조건을 채우는 우위 공격인가 (GDD 20-2, C.47): 상성 우위. 그 적에게 약점 속성이 아예 없으면(노멀·특수 속성 적) 아무 스킬 블록이나 우위로 친다 */
 export function isEffective(s: CombatState, skill: CombatSkill): boolean {
-  if (weaknessesOf(enemyElements(s.enemy.def)).length === 0) return skill.id !== BASIC_SKILL_ID;
+  if (weaknessesOf(enemyElements(s.enemy.def)).length === 0) return !isBasicBlockId(skill.id);
   return skillMatchup(s, skill) === 'strong';
 }
 
@@ -802,14 +907,12 @@ function applyBurn(s: CombatState, damage: number): void {
   proc(s, 'burn');
 }
 
-/** 연쇄: 체인 N 을 쓰면 모든 생성원의 다음 블록이 간격 × perChain × (N−1) 만큼 빨리 */
+/** 연쇄: 체인 N 을 쓰면 다음 블록이 간격 × perChain × (N−1) 만큼 빨리 */
 function applyChainHaste(s: CombatState, chain: number): void {
   const h = s.params.abilityEffects.chainHaste;
   if (!h || chain < 2) return;
-  blockSources(s.params).forEach((src, i) => {
-    const cut = Math.round(ticksOf(s.params, spawnSecondsOf(s.params, src)) * h * (chain - 1));
-    s.spawnTimers[i] = Math.max(1, s.spawnTimers[i]! - cut);
-  });
+  const cut = Math.round(ticksOf(s.params, spawnSecondsOf(s.params)) * h * (chain - 1));
+  s.spawnTimers = s.spawnTimers.map((x) => Math.max(1, x - cut));
   proc(s, 'chainHaste');
 }
 
@@ -979,19 +1082,12 @@ function takeDamage(s: CombatState, amount: number): void {
   }
 }
 
-/** 기본 블록의 계열 (GDD 20장 v5.4): 계열 표(종족 설정 families)에서 고르게 하나를 뽑는다 → 같은 계열끼리 체인, 2·3체인은 그 계열 단계 기술. 위력(powerInAttacks)은 기본 블록 값. 계열 표가 없거나 기본 블록이 아니면 null */
-function basicFamily(s: CombatState, src: CombatSkill): string | null {
-  if (src.id !== BASIC_SKILL_ID) return null;
-  const ids = Object.keys(s.params.families);
-  return ids.length > 0 ? ids[nextInt(s.rng, ids.length)]! : null;
-}
-
 /** 블록 표시용 속성 (GDD 20장 v5.4 `속성_계열`): 생성원의 속성, 속성 없는 기본 블록은 내 캐릭터 속성. 필살·공허·콤보는 null */
 export function blockElementOf(p: CombatParams, b: Block): string | null {
   if (b.kind !== 'skill') return null;
   const src = sourceOf(p, b.traitId);
   if (src?.element) return src.element;
-  return src?.id === BASIC_SKILL_ID ? p.playerElements[0] ?? NORMAL_ELEMENT : null;
+  return isBasicBlockId(src?.id) ? p.playerElements[0] ?? NORMAL_ELEMENT : null;
 }
 
 function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, family: string | null = null): boolean {
@@ -1334,16 +1430,11 @@ function advanceTick(s: CombatState): void {
     s.shuffleTimer = t(p.trayShuffleSeconds);
     shuffleTray(s);
   }
-  // 블록 생성: 생성원마다 일정 간격. 바가 가득 차거나 봉인 중이면 타이머가 멈춘다
-  if (s.sealTicks === 0) {
-    const sources = blockSources(p);
-    sources.forEach((src, i) => {
-      if (s.tray.length >= p.trayCapacity) return;
-      if (--s.spawnTimers[i]! <= 0) {
-        spawn(s, 'skill', src.id, src.family ?? basicFamily(s, src));
-        s.spawnTimers[i] = t(spawnSecondsOf(p, src));
-      }
-    });
+  // 블록 생성 (GDD 44장): 타이머 하나, 나올 때마다 풀에서 가중 추첨. 바가 가득 차거나 봉인 중이면 타이머가 멈춘다
+  if (s.sealTicks === 0 && s.tray.length < p.trayCapacity && --s.spawnTimers[0]! <= 0) {
+    const e = drawFromPool(s);
+    if (e) spawn(s, 'skill', e.source.id, e.family);
+    s.spawnTimers[0] = t(spawnSecondsOf(p));
   }
   if (--s.voidTimer <= 0) {
     s.voidTimer = t(p.voidCheckSeconds);
