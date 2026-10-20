@@ -808,7 +808,7 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     expect(rate('test-b')).toBeGreaterThanOrEqual(0.9);
     const elite = rate('test-elite');
     expect(elite).toBeGreaterThan(0.4);
-    // C.97 (GDD 44장): 기본 막기·회복 블록이 늘 나와 강공격형 시험 강적은 거의 이긴다(60판 중 59승). 적 풀 강적 승률 60~85% 는 balance:check 가 가드
+    // C.97 (GDD 44-1): 기본 막기·회복 블록이 늘 나와 강공격형 시험 강적은 거의 이긴다(60판 중 59승). 적 풀 강적 승률 60~85% 는 balance:check 가 가드
     expect(elite).toBeLessThan(1);
   });
 });

@@ -387,9 +387,8 @@ describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
       const h = playCombatHuman(createCombat(seed, { enemy: getEnemy('test-elite'), params: params() }));
       human += h.combosTriggered;
     }
-    // C.97 (GDD 44장): 기본 블록이 섞여 같은 계열 블록 밀도가 낮아져 콤보가 덜 나온다 (옛 기준 완벽형 20·사람형 5)
-    expect(perfect).toBeGreaterThan(8);
-    expect(human).toBeGreaterThan(2);
+    expect(perfect).toBeGreaterThan(20);
+    expect(human).toBeGreaterThan(5);
   });
 
   it('같은 시드와 입력 기록이면 콤보가 있어도 같은 결과', () => {

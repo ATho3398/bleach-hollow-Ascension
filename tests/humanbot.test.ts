@@ -75,9 +75,7 @@ describe('사람형 봇', () => {
     expect(hits).toBeGreaterThan(100);
     const hr = guarded / hits;
     const pr = pguarded / phits;
-    // C.97 (GDD 44장): 막기 블록이 풀에서 무작위로 나와 완벽형도 예고 때 막기 블록이 없을 수 있다 (옛 기준 0.9)
-    expect(pr).toBeGreaterThan(0.75);
-    expect(pr).toBeGreaterThan(hr);
+    expect(pr).toBeGreaterThan(0.9);
     expect(hr).toBeGreaterThan(0.55);
     expect(hr).toBeLessThan(0.85);
   });
