@@ -446,7 +446,6 @@
       "name": "사신대행증",
       "look": "badge",
       "source": "default",
-      "thickness": 7,
       "screen": { "x": 24.16, "y": 35.66, "w": 51.38, "h": 30.73 },
       "buttons": {
         "up": { "x": 11.81, "y": 41.15, "w": 7.58, "h": 9.07 },

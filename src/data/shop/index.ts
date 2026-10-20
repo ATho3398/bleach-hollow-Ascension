@@ -40,8 +40,6 @@ export interface CosmeticItemDef {
   hole?: Pt;
   /** 기본으로 주는 꾸밈 (GDD 29장): 모든 세이브가 처음부터 보유하고, 입은 것이 없는 트랙은 열 때 한 번 자동 착용. 상점 줄은 "가짐" */
   free?: boolean;
-  /** 기기 디자인: 옆면 두께, 앞면 높이 대비 % (GDD 29장). 없으면 옆면 그림(`device-<look>-side.png`)의 가로:세로 비율 */
-  thickness?: number;
 }
 
 /** 얻는 곳: shop = 상점 영옥 탭, reward = 보상으로만, default = 기본 제공(모든 세이브 보유, 상점에 안 나옴, GDD 30장) */
@@ -118,11 +116,10 @@ function parseDevice(r: unknown): CosmeticItemDef {
   const bt = (c.buttons ?? {}) as Record<string, unknown>;
   for (const b of DEVICE_BUTTONS) if (!rect(bt[b])) errors.push(`buttons.${b}: { x, y, w, h } 0~100`);
   if (!isPct(c.ring, ['x', 'y'])) errors.push('ring: { x, y } 0~100');
-  if (c.thickness !== undefined && !(typeof c.thickness === 'number' && c.thickness > 0 && c.thickness <= 100)) errors.push('thickness: 0 초과 100 이하 (앞면 높이 대비 %)');
   if (errors.length) throw new Error(`기기 디자인 데이터 오류 (${String(c.id ?? '?')}): ${errors.join(', ')}`);
   const pr = (v: unknown): PctRect => { const r = v as PctRect; return { x: r.x, y: r.y, w: r.w, h: r.h }; };
   const buttons = Object.fromEntries(DEVICE_BUTTONS.map((b) => [b, pr(bt[b])])) as Record<DeviceButton, PctRect>;
-  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, ...(c.source === 'default' ? { free: true } : {}), device: { screen: pr(c.screen), buttons, ring: c.ring as Pt }, ...(c.thickness !== undefined ? { thickness: c.thickness as number } : {}) };
+  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, ...(c.source === 'default' ? { free: true } : {}), device: { screen: pr(c.screen), buttons, ring: c.ring as Pt } };
 }
 
 export const SHOP_PROVISIONAL: boolean = raw.provisional;

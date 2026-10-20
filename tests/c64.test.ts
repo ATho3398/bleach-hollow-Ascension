@@ -6,7 +6,7 @@ import { getFaction } from '../src/data/factions';
 import { COSMETIC_ITEMS, FREE_COSMETICS, deviceSideArt, getCosmetic } from '../src/data/shop';
 import { checkTrackOpen, loadSave, migrateSave, newSaveData, newSharedState, newTrack, performRebirth, SAVE_FORMAT_VERSION, switchTrack, writeSave } from '../src/game';
 import { buyShopItem, jadeRows, unwearCategory, wearCosmetic } from '../src/shop';
-import { BODY, edgeThickness, tamaLayout } from '../src/ui/bha/tamagoLogic';
+import { edgeThickness, tamaLayout } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const H = getFaction('hollow');
@@ -143,23 +143,11 @@ describe('세이브 형식 26 마이그레이션 (키링 없던 세이브)', () 
   });
 });
 
-describe('뒤집기 옆면 두께 4.5배 (29장 2번)', () => {
-  it('844×390 기기에서 C.63 의 18px 의 4.5배(약 81px), 몸체 크기에 비례', () => {
+describe('뒤집기 옆면 두께 (29장 2번 → C.66 에서 가로의 25%, c66.test.ts)', () => {
+  it('두께는 몸체 크기에 비례해 작은 화면에서는 줄어든다', () => {
     const L = tamaLayout(844, 390);
-    const t = edgeThickness(L.body);
     expect(L.body.h).toBe(442);
-    expect(t).toBeGreaterThan(18 * 4.4);
-    expect(t).toBeLessThan(18 * 4.6);
-    const small = tamaLayout(420, 200);
-    expect(edgeThickness(small.body)).toBeLessThan(t);
-    expect(edgeThickness(small.body) / Math.min(small.body.w, small.body.h)).toBeCloseTo(BODY.edgeRatio, 2);
-  });
-  it('옆면 그림이 있으면 그 가로:세로 비율이 두께, 데이터 thickness 가 먼저', () => {
-    const body = { w: 900, h: 400 };
-    expect(edgeThickness(body, { w: 100, h: 400 })).toBe(100);
-    expect(edgeThickness(body, { w: 100, h: 400 }, 10)).toBe(40);
-    expect(edgeThickness(body, { w: 0, h: 0 })).toBe(edgeThickness(body));
-    expect(edgeThickness(body, null, null)).toBeCloseTo(400 * BODY.edgeRatio, 1);
+    expect(edgeThickness(tamaLayout(420, 200).body)).toBeLessThan(edgeThickness(L.body));
   });
   it('CSS: 뒤집는 동안만 3D·보이고 정면(평소)에는 숨김, 색은 토큰만', () => {
     const css = src('src/ui/bha/tamago.css');

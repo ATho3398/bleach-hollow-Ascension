@@ -164,7 +164,7 @@ describe('다마고치 모드 축소·두께 (28장 1·2번)', () => {
     const css = src('src/ui/bha/tamago.css');
     expect(css).toContain('.bha-dev.is-tama-flipping .bha-tama__edge { visibility: visible; }');
     expect(css.slice(css.indexOf('.bha-tama__edge {'), css.indexOf('.bha-tama__edge--l'))).not.toMatch(/#[0-9a-f]{3,6}\b/i);
-    expect(BODY.edgeRatio).toBeGreaterThan(0); // 두께 값은 c64.test.ts (4.5배)
+    expect(BODY.thicknessRatio).toBeGreaterThan(0); // 두께 값은 c66.test.ts (가로의 25%)
   });
 });
 

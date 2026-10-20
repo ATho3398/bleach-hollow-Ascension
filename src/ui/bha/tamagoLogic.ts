@@ -78,19 +78,19 @@ export const BODY = {
   maxZoom: 0.82,
   /** 핀치·휠로 더 줄일 수 있는 가장 작은 실제 배율 (C.63, GDD 28장 1번: 0.70 → 0.40) */
   minScale: 0.4,
-  /** 옆면 두께 (GDD 29장, C.64): 몸체 짧은 변에 비례. C.63 은 18px(844×390 기기에서 짧은 변 442px)였고 그 4.5배 = 약 81px */
-  edgeRatio: 0.1833,
+  /** 옆면 두께 (GDD 30장 6, C.66): 기기(몸체) 가로 길이의 25% — 사용자 "가로 1000px 이면 두께 2~300px"의 가운데. 기본형·그림 기기·옆면 그림 모두 이 값 하나 */
+  thicknessRatio: 0.25,
+  /** 뒤집는 동안(옆으로 설 때) 두꺼운 기기가 화면 밖으로 안 나가게 줄이는 비율 (90도에서 이만큼) */
+  flipShrink: 0.3,
 } as const;
 
-/** 옆면 두께(px): 몸체 짧은 변 × 비율. 옆면 그림이 있으면 그림 가로:세로 비율대로 앞면 높이에 맞추고, 데이터 `thickness`(앞면 높이 %)가 있으면 그것이 먼저 */
-export function edgeThickness(body: { w: number; h: number }, sideArt?: { w: number; h: number } | null, thicknessPct?: number | null): number {
-  if (thicknessPct && thicknessPct > 0) return r2(body.h * (thicknessPct / 100));
-  if (sideArt && sideArt.w > 0 && sideArt.h > 0) return r2(body.h * (sideArt.w / sideArt.h));
-  return r2(Math.min(body.w, body.h) * BODY.edgeRatio);
+/** 옆면 두께(px): 몸체 가로 길이 × BODY.thicknessRatio (GDD 30장 6) */
+export function edgeThickness(body: { w: number }): number {
+  return r2(body.w * BODY.thicknessRatio);
 }
 
-/** 겹 두께 (GDD 30장 4번): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 count 겹 뒤로 쌓아 두께를 만든다. 각 겹의 뒤쪽 거리(px, 앞면 바로 뒤 1px부터 두께까지) */
-export const STACK_LAYERS = 12;
+/** 겹 두께 (GDD 30장 4번): 옆면 그림이 없는 그림 기기는 앞면을 어둡게 한 장을 count 겹(두께가 25%라 30겹) 뒤로 쌓아 두께를 만든다. 각 겹의 뒤쪽 거리(px, 앞면 바로 뒤 1px부터 두께까지) */
+export const STACK_LAYERS = 30;
 export function stackDepths(count: number, thick: number): number[] {
   const n = Math.max(0, Math.floor(count));
   return Array.from({ length: n }, (_, i) => r2(1 + (thick * (i + 1)) / Math.max(1, n)));
@@ -141,10 +141,13 @@ export function tamaLayout(w: number, h: number, art?: { box: Rect; ring: { x: n
   const cx = box.x + box.w / 2;
   const cy = box.y + box.h / 2;
   // 뒤집기 각도는 늘 넣는다 (0도라도): 줌아웃 상태끼리 변환 함수 목록이 같아야 rotateY 가 매끄럽게 이어진다
-  const flip = ` perspective(${Math.round(Math.max(w, h) * 3)}px) rotateY(${flipDeg}deg)`;
+  // 두꺼운 기기는 몸체 한가운데(앞면 뒤 두께/2)를 축으로 돌고(0도에서는 서로 상쇄), 옆으로 설수록 조금 줄여 화면 안에 둔다
+  const thick = edgeThickness(body);
+  const flip = ` perspective(${Math.round(Math.max(w, h) * 3)}px) translateZ(${r2(-thick / 2)}px) rotateY(${flipDeg}deg) translateZ(${r2(thick / 2)}px)`;
+  const shrink = 1 - B.flipShrink * Math.min(1, Math.abs(flipDeg) / 90);
   // 사용자 확대(핀치·휠)는 같은 함수 목록 안에서 배율·이동만 바꾼다 (전환이 매끄럽게)
   const v = clampView(view, zoom, box, w, h);
-  const stage = `translate(${r2(w / 2 + v.px)}px, ${r2(h / 2 + v.py)}px) scale(${round4(zoom * v.uz)})${flip} translate(${r2(-cx)}px, ${r2(-cy)}px)`;
+  const stage = `translate(${r2(w / 2 + v.px)}px, ${r2(h / 2 + v.py)}px) scale(${round4(zoom * v.uz * shrink)})${flip} translate(${r2(-cx)}px, ${r2(-cy)}px)`;
   return { body, ring, ringBack, ctrl, box, zoom, stage };
 }
 

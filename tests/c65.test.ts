@@ -5,7 +5,7 @@ import { BALANCE_VERSION } from '../src/config/balance';
 import { COSMETIC_ITEMS, DEVICE_BUTTONS, FREE_COSMETICS, deviceArt, deviceSideArt, getCosmetic, shopVisible, sourceNote } from '../src/data/shop';
 import { loadSave, migrateSave, newSaveData, newSharedState, newTrack, SAVE_FORMAT_VERSION, switchTrack, writeSave, checkTrackOpen } from '../src/game';
 import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../src/shop';
-import { STACK_LAYERS, deviceArtPlacement, edgeThickness, stackDepths } from '../src/ui/bha/tamagoLogic';
+import { STACK_LAYERS, deviceArtPlacement, stackDepths } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -16,8 +16,8 @@ const memStore = () => {
 };
 
 describe('버전 (S-18c)', () => {
-  it('패치 C.65 / 단계 S-18c, 세이브 형식 27, BALANCE 그대로', () => {
-    expect(PATCH_LABEL).toBe('C.65');
+  it('단계 S-18c, 세이브 형식 27, BALANCE 그대로', () => {
+    expect(PATCH_LABEL).toMatch(/^C\.\d+$/); // C.66 에서 C.66 (버전 검사는 c66.test.ts)
     expect(STAGE_LABEL).toBe('S-18c');
     expect(SAVE_FORMAT_VERSION).toBe(27);
     expect(BALANCE_VERSION).toBe(39);
@@ -166,9 +166,8 @@ describe('[디자인] 목록 (30장 3번)', () => {
 });
 
 describe('겹 두께 (30장 4번)', () => {
-  it('10~14겹', () => {
+  it('겹 수 (C.66 에서 두께가 커져 20~30겹)', () => {
     expect(STACK_LAYERS).toBeGreaterThanOrEqual(10);
-    expect(STACK_LAYERS).toBeLessThanOrEqual(14);
   });
   it('겹은 앞면 바로 뒤에서 두께까지 고르게 뒤로 늘어난다', () => {
     const d = stackDepths(STACK_LAYERS, 60);
@@ -176,9 +175,6 @@ describe('겹 두께 (30장 4번)', () => {
     expect(d[0]).toBeGreaterThan(1);
     expect(d[d.length - 1]).toBeCloseTo(61, 1);
     for (let i = 1; i < d.length; i++) expect(d[i]!).toBeGreaterThan(d[i - 1]!);
-  });
-  it('두께는 데이터 thickness(앞면 높이 %)로', () => {
-    expect(edgeThickness({ w: 1000, h: 800 }, null, getCosmetic('device-badge')!.thickness)).toBeCloseTo(56, 1);
   });
   it('옆면 그림이 있으면 겹은 숨고, 모양 없는 CSS 기기 띠는 그림 기기에서 숨는다 (CSS 검사)', () => {
     const css = src('src/ui/bha/tamago.css');

@@ -1,0 +1,139 @@
+{
+  "errors": [],
+  "shots": [
+    "flip-badge-30deg-landscape.png",
+    "flip-badge-60deg-landscape.png",
+    "flip-badge-85deg-landscape.png",
+    "flip-basic-30deg-landscape.png",
+    "flip-basic-60deg-landscape.png",
+    "flip-basic-85deg-landscape.png",
+    "flip-badge-30deg-portrait.png",
+    "flip-badge-60deg-portrait.png",
+    "flip-badge-85deg-portrait.png",
+    "flip-basic-30deg-portrait.png",
+    "flip-basic-60deg-portrait.png",
+    "flip-basic-85deg-portrait.png"
+  ],
+  "flips": [
+    {
+      "orient": "landscape",
+      "design": "badge",
+      "deg": 30,
+      "transform": "scale(1) translate(422px, 195px) scale(0.2758) perspective(2532px) translateZ(-175.16px) rotateY(30deg) translateZ(175.17px) translate(-424.1px, -207.99px)",
+      "minX": 228.6318817138672,
+      "maxX": 588.871826171875,
+      "vw": 844,
+      "vh": 390
+    },
+    {
+      "orient": "landscape",
+      "design": "badge",
+      "deg": 60,
+      "transform": "scale(1) translate(422px, 195px) scale(0.2452) perspective(2532px) translateZ(-175.16px) rotateY(60deg) translateZ(175.17px) translate(-424.1px, -207.99px)",
+      "minX": 279.3369140625,
+      "maxX": 518.6047973632812,
+      "vw": 844,
+      "vh": 390
+    },
+    {
+      "orient": "landscape",
+      "design": "badge",
+      "deg": 85,
+      "transform": "scale(1) translate(422px, 195px) scale(0.2197) perspective(2532px) translateZ(-175.16px) rotateY(85deg) translateZ(175.17px) translate(-424.1px, -207.99px)",
+      "minX": 357.0018310546875,
+      "maxX": 460.6570129394531,
+      "vw": 844,
+      "vh": 390
+    },
+    {
+      "orient": "landscape",
+      "design": "basic",
+      "deg": 30,
+      "transform": "scale(1) translate(422px, 195px) scale(0.6287) perspective(2532px) translateZ(-112px) rotateY(30deg) translateZ(112px) translate(-446px, -198px)",
+      "minX": 126.65283203125,
+      "maxX": 666.1715087890625,
+      "vw": 844,
+      "vh": 390
+    },
+    {
+      "orient": "landscape",
+      "design": "basic",
+      "deg": 60,
+      "transform": "scale(1) translate(422px, 195px) scale(0.5588) perspective(2532px) translateZ(-112px) rotateY(60deg) translateZ(112px) translate(-446px, -198px)",
+      "minX": 216.369384765625,
+      "maxX": 569.9398803710938,
+      "vw": 844,
+      "vh": 390
+    },
+    {
+      "orient": "landscape",
+      "design": "basic",
+      "deg": 85,
+      "transform": "scale(1) translate(422px, 195px) scale(0.5006) perspective(2532px) translateZ(-112px) rotateY(85deg) translateZ(112px) translate(-446px, -198px)",
+      "minX": 333.3536071777344,
+      "maxX": 483.5914306640625,
+      "vw": 844,
+      "vh": 390
+    },
+    {
+      "orient": "portrait",
+      "design": "badge",
+      "deg": 30,
+      "transform": "translate(390px, 0px) rotate(90deg) scale(1) translate(422px, 195px) scale(0.2758) perspective(2532px) translateZ(-175.16px) rotateY(30deg) translateZ(175.17px) translate(-424.1px, -207.99px)",
+      "minX": 17.42259407043457,
+      "maxX": 388.4100818634033,
+      "vw": 390,
+      "vh": 844
+    },
+    {
+      "orient": "portrait",
+      "design": "badge",
+      "deg": 60,
+      "transform": "translate(390px, 0px) rotate(90deg) scale(1) translate(422px, 195px) scale(0.2452) perspective(2532px) translateZ(-175.16px) rotateY(60deg) translateZ(175.17px) translate(-424.1px, -207.99px)",
+      "minX": 22.038637161254883,
+      "maxX": 383.3825092315674,
+      "vw": 390,
+      "vh": 844
+    },
+    {
+      "orient": "portrait",
+      "design": "badge",
+      "deg": 85,
+      "transform": "translate(390px, 0px) rotate(90deg) scale(1) translate(422px, 195px) scale(0.2197) perspective(2532px) translateZ(-175.16px) rotateY(85deg) translateZ(175.17px) translate(-424.1px, -207.99px)",
+      "minX": 38.55826187133789,
+      "maxX": 365.38998794555664,
+      "vw": 390,
+      "vh": 844
+    },
+    {
+      "orient": "portrait",
+      "design": "basic",
+      "deg": 30,
+      "transform": "translate(390px, 0px) rotate(90deg) scale(1) translate(422px, 195px) scale(0.6287) perspective(2532px) translateZ(-112px) rotateY(30deg) translateZ(112px) translate(-446px, -198px)",
+      "minX": 44.83706283569336,
+      "maxX": 349.2958641052246,
+      "vw": 390,
+      "vh": 844
+    },
+    {
+      "orient": "portrait",
+      "design": "basic",
+      "deg": 60,
+      "transform": "translate(390px, 0px) rotate(90deg) scale(1) translate(422px, 195px) scale(0.5588) perspective(2532px) translateZ(-112px) rotateY(60deg) translateZ(112px) translate(-446px, -198px)",
+      "minX": 53.462242126464844,
+      "maxX": 340.4332809448242,
+      "vw": 390,
+      "vh": 844
+    },
+    {
+      "orient": "portrait",
+      "design": "basic",
+      "deg": 85,
+      "transform": "translate(390px, 0px) rotate(90deg) scale(1) translate(422px, 195px) scale(0.5006) perspective(2532px) translateZ(-112px) rotateY(85deg) translateZ(112px) translate(-446px, -198px)",
+      "minX": 67.3129653930664,
+      "maxX": 326.2013626098633,
+      "vw": 390,
+      "vh": 844
+    }
+  ]
+}

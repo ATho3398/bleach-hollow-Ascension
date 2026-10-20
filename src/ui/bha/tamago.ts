@@ -94,6 +94,25 @@ function charmSvg(shape: KeyringShape): SVGSVGElement {
   return svg;
 }
 
+/** 겹 두께용 어두운 그림: 앞면을 작게(가로 STACK_TEX px) 줄여 어둡게 칠한 한 장. 24겹이 모두 이 작은 그림을 쓴다 — 큰 그림 24장을 겹치면 GPU 메모리·그리기 비용이 크다 */
+const STACK_TEX = 512;
+function stackShade(img: HTMLImageElement): string {
+  try {
+    const cv = document.createElement('canvas');
+    cv.width = STACK_TEX;
+    cv.height = Math.max(1, Math.round((STACK_TEX * img.naturalHeight) / img.naturalWidth));
+    const g = cv.getContext('2d');
+    if (!g) return img.src;
+    g.drawImage(img, 0, 0, cv.width, cv.height);
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = 'rgb(0 0 0 / 0.4)';
+    g.fillRect(0, 0, cv.width, cv.height);
+    return cv.toDataURL('image/png');
+  } catch {
+    return img.src;
+  }
+}
+
 export interface TamagoHooks {
   /** 기기 디자인을 바꾼 뒤 저장 */
   persist?: () => void;
@@ -113,9 +132,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   let artSpec: DeviceArtSpec | null = null;
   let artNat: { w: number; h: number } | null = null;
   let artBox: ReturnType<typeof deviceArtPlacement<DeviceButton>> | null = null;
-  /** 옆면 그림(`device-<look>-side.png`, GDD 29장)의 실제 크기 — 있으면 가로:세로 비율이 두께 */
-  let sideNat: { w: number; h: number } | null = null;
-  let thicknessPct: number | null = null;
   /** 다마고치 모드 안 사용자 확대·이동 (핀치·휠·끌기) */
   let view: TamaView = VIEW_HOME;
   /** 키링에 걸리는 중력 (기기 안 좌표): 기울기를 안 쓰면 화면 아래 */
@@ -136,7 +152,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     im.alt = '';
     im.hidden = true;
     im.dataset.layer = String(i);
-    im.style.setProperty('--layer-shade', (0.6 - (0.24 * i) / (STACK_LAYERS - 1)).toFixed(2));
+    im.style.setProperty('--layer-shade', (1 - (0.45 * i) / (STACK_LAYERS - 1)).toFixed(2));
     return im;
   });
   // 옆면 두께 띠 (C.63·C.64, GDD 28장 2번·29장): 뒤집는 동안만 3D 로 세워 종이처럼 안 보이게. 옆면 그림이 있으면 그 그림, 없으면 몸체 색 CSS 띠
@@ -235,8 +251,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     artSpec = c && art ? c.device! : null;
     artNat = null;
     artBox = null;
-    sideNat = null;
-    thicknessPct = c && art ? c.thickness ?? null : null;
     frame.classList.toggle('has-tama-art', false);
     frame.classList.toggle('has-side-art', false);
     for (const e of [edgeL, edgeR]) e.style.removeProperty('--side-art');
@@ -245,11 +259,12 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     for (const l of layers) l.hidden = true;
     if (!c || !art) return relayout();
     bodyArt.src = `${BASE}${art.front}`;
-    for (const l of layers) l.src = bodyArt.src;
     if (art.back) backArt.src = `${BASE}${art.back}`;
     const place = () => {
       if (!bodyArt.naturalWidth || artId !== c.id) return;
       artNat = { w: bodyArt.naturalWidth, h: bodyArt.naturalHeight };
+      const shade = stackShade(bodyArt);
+      for (const l of layers) l.src = shade;
       frame.classList.add('has-tama-art');
       bodyArt.hidden = false;
       backArt.hidden = !art.back;
@@ -264,7 +279,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       const img = new Image();
       img.onload = () => {
         if (artId !== c.id || !img.naturalWidth) return;
-        sideNat = { w: img.naturalWidth, h: img.naturalHeight };
         // 사용자 지정 속성 안의 url() 은 스타일시트 위치 기준이라(assets/ 밑) 문서 기준 절대 주소로 넣는다
         const abs = new URL(`${BASE}${sidePath}`, document.baseURI).href;
         for (const e of [edgeL, edgeR]) e.style.setProperty('--side-art', `url("${abs}")`);
@@ -323,12 +337,12 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     if (!layout) return;
     box(body, layout.body);
     box(backFace, layout.body);
-    const thick = edgeThickness(layout.body, sideNat, thicknessPct);
+    const thick = edgeThickness(layout.body);
     box(edgeL, { x: layout.body.x, y: layout.body.y, w: thick, h: layout.body.h });
     box(edgeR, { x: layout.body.x + layout.body.w - thick, y: layout.body.y, w: thick, h: layout.body.h });
     if (artBox) {
       // 겹 두께: 옆면 그림이 없을 때만 (있으면 CSS 가 숨김). 겹마다 뒤로 조금씩
-      const depth = stackDepths(layers.length, edgeThickness(layout.body, null, thicknessPct));
+      const depth = stackDepths(layers.length, edgeThickness(layout.body));
       layers.forEach((l, i) => {
         box(l, artBox!.box);
         l.style.setProperty('--layer-z', `${-depth[i]!}px`);
