@@ -9,7 +9,7 @@ import { SIDE_BANDS, deviceArtPlacement } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const ART = ['device-badge-front.png', 'device-badge-back.png'];
+const ART = ['device-badge-front.webp', 'device-badge-back.webp']; // C.71: 고화질 WebP(q92, 투명 그대로)로 바꿈, 원본 PNG 는 docs/art-samples/device-ref
 const memStore = () => {
   const m = new Map<string, string>();
   return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) };
@@ -52,7 +52,7 @@ describe('사신대행증 데이터 (30장 1번)', () => {
   });
   it('그림 파일: 앞면·뒷면이 public/art 에 있고 옆면은 없다(겹 두께)', () => {
     for (const f of ART) expect(existsSync(new URL(`../public/art/${f}`, import.meta.url))).toBe(true);
-    expect(deviceArt(c, ART)).toEqual({ front: 'art/device-badge-front.png', back: 'art/device-badge-back.png' });
+    expect(deviceArt(c, ART)).toEqual({ front: 'art/device-badge-front.webp', back: 'art/device-badge-back.webp' });
     expect(deviceSideArt(c, ART)).toBeNull();
   });
   it('상점에는 안 나온다', () => {

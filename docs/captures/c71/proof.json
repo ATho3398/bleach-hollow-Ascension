@@ -88,8 +88,8 @@
  },
  "keyring": {
   "portrait": {
-   "a1": 0.0023,
-   "a2": 0.0075,
+   "a1": 0.0002,
+   "a2": 0.0044,
    "resting": "false",
    "ringScreen": [
     362,
@@ -279,5 +279,18 @@
    1024
   ],
   "layersOld": 0
+ },
+ "artSize": {
+  "before": {
+   "device-badge-front.png": 4009668,
+   "device-badge-back.png": 2472562,
+   "total": 6482230
+  },
+  "after": {
+   "device-badge-front.webp": 424816,
+   "device-badge-back.webp": 443694,
+   "total": 868510
+  },
+  "note": "WebP q92 method 6, 알파 무손실(alpha diff 0), 앞면 색 PSNR 40.5dB. 원본 PNG 는 docs/art-samples/device-ref/"
  }
 }
