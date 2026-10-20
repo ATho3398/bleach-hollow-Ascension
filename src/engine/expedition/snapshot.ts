@@ -13,6 +13,7 @@ import { TILE_EVENTS } from '../../data/schema';
 import { finishRest, type ExpeditionState } from './expedition';
 import { getEpisode } from '../../data/story';
 import { isBossId } from '../../data/bosses';
+import { MAX_DIFFICULTY } from '../difficulty';
 
 /** 저장 형식을 바꾸면 올린다 (다르면 이어하기를 숨기고 무시한다) */
 /** C.47: 2 (진화 상태·전투 재료 구조가 바뀜 — 옛 원정 중간 저장은 이어하지 않는다) */
@@ -20,7 +21,8 @@ import { isBossId } from '../../data/bosses';
 /** C.53: 4 (사냥터 groundId 추가) */
 /** C.57: 5 (타일 변수 GDD 25-5: 변이·드래프트·이벤트 진행·골드·제단·보호막·함정·2연전·기록) */
 /** C.58: 6 (스토리 화 진행 story, 보스전 pending.boss) */
-export const EXPEDITION_SNAPSHOT_VERSION = 6;
+/** C.75: 7 (원정 난이도 difficulty, GDD 32-1) */
+export const EXPEDITION_SNAPSHOT_VERSION = 7;
 
 export interface ExpeditionSnapshot {
   version: number;
@@ -108,6 +110,8 @@ function validShape(e: unknown): e is ExpeditionState {
   const L = BALANCE.expedition.loopTiles;
   if (!knows(getFaction, e.factionId)) return false;
   if (!isGroundId(e.groundId)) return false;
+  if (!isInt(e.difficulty, 1) || (e.difficulty as number) > MAX_DIFFICULTY) return false;
+  if (!isInt(e.streak) || (e.streak as number) > BALANCE.provisional.difficulty.streak.maxClears) return false;
   if (!isInt(e.seed) || !isInt(e.runId) || !isInt(e.maxLaps, 1) || !isInt(e.lap, 1) || !isInt(e.pos) || (e.pos as number) >= L) return false;
   if (!isObj(e.rng) || !isInt(e.rng.state)) return false;
   if (!isObj(e.lootRng) || !isInt(e.lootRng.state)) return false;

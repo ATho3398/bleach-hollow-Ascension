@@ -46,6 +46,7 @@
   "appearanceChange": true,
   "defeatStateName": "가면이 깨져 쇠약",
   "basicSkillName": "본체 능력",
+  "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "웨코문도",
   "huntingGrounds": {
     "outskirts": {

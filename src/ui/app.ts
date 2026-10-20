@@ -7,6 +7,7 @@ import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
+import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
 import { createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
@@ -17,7 +18,7 @@ import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
   performRebirth, recordTraining, settleLiberationRisk, deckSizeOf, type SaveData,
-  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack,
+  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
@@ -178,10 +179,13 @@ export function startApp(host: HTMLElement): void {
   }
 
   function runTutorialDemo(faction: FactionConfig): void {
-    const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!;
+    // 체험 전투의 적 = 내 단계의 권장 난이도 ★ (GDD 32-1)
+    const star = recommendedDifficulty(save?.evolution.tierIndex ?? 0);
+    const enemy = enemyAtDifficulty(ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!, star);
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
       applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total);
+      applyDifficultyToParams(params, star);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
@@ -598,6 +602,9 @@ export function startApp(host: HTMLElement): void {
       build: save.build,
       evolution: save.evolution,
       groundId: lastGround(save),
+      // 원정 난이도 ★ (GDD 32-1): 기본 = 내 단계(권장), 배치 단계에서 연 ★ 안에서 바꾼다
+      difficulty: defaultDifficulty(save),
+      streak: streakFor(save, defaultDifficulty(save)),
       liberationEnabled: liberationAccess(save).usable,
       // 타일 변수 5종 (GDD 25-5): 드래프트·인접 시너지·이벤트 타일·바퀴 변이. 상인은 가진 골드로 산다
       tileVariants: true,
@@ -611,7 +618,10 @@ export function startApp(host: HTMLElement): void {
       render: () => {
         setBgm('expedition');
         planView(root, faction, exp, save!.evolution.tierIndex, {
+          unlockedDifficulty: save!.difficulty.unlocked,
+          streak: save!.difficulty.streak,
           onStart: () => {
+            save!.difficulty.last = exp.difficulty;
             activeExp = exp;
             saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
             // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
@@ -851,13 +861,16 @@ export function startApp(host: HTMLElement): void {
   }
 
   function runPractice(faction: FactionConfig, enemy: EnemyDef): void {
+    // 연습 상대 = 내 단계의 권장 난이도 ★ (GDD 32-1): 훈련 인형은 DPS 측정용이라 권장 세기로 고정
+    const star = recommendedDifficulty(save?.evolution.tierIndex ?? 0);
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
       applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total);
+      applyDifficultyToParams(params, star);
       params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
       params.liberationEnabled = liberationAccess(save).usable;
     }
-    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(enemy, star), params });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
@@ -898,9 +911,11 @@ export function startApp(host: HTMLElement): void {
     setBgm('rank');
     const params = buildCombatParams(s0.build, faction.id);
     applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total);
+    // 보유자마다 정해진 난이도 ★ (GDD 32-1 7번: 아래 번호일수록 낮고 No.1 = ★5)
+    applyDifficultyToParams(params, holder.difficulty);
     params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);
     params.liberationEnabled = liberationAccess(s0).usable;
-    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: holder, params });
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,
       skinId: s0.skin,

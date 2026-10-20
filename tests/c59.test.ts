@@ -49,6 +49,7 @@ function oldFormat22(): Record<string, unknown> {
   s.skin = null;
   s.tiles.collection['prey-nest-a'] = 7;
   s.story = { hollow: { cleared: { 'ch1/ep1': { firstAt: 10, clears: 2 } }, chapters: [] } };
+  delete (s as unknown as Record<string, unknown>).difficulty; // 형식 29(C.75) 필드 — 형식 22 세이브에는 없다
   s.bossDex = { 'sand-maw': { kills: 1, firstAt: 20 } };
   s.runLog.runs.push({ runId: 1 } as never);
   s.runLog.tiers.evolutions.push({ fromTier: 3, toTier: 4, fromFormId: 't4:fire', toFormId: 't5:fire:physical', formId: 't5:fire:physical', snapshot: {} as never, at: 4000 });

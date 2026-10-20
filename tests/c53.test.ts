@@ -14,7 +14,7 @@ import { FOOD_IDS, groundName, parseFactionConfig, roomOf } from '../src/engine/
 import { rollBattleFood } from '../src/engine/food';
 import { createRng } from '../src/engine/rng';
 import {
-  advance, buildRunRecord, chooseGround, createExpedition, enemyScale, finishRest, lapScale, playExpedition, restoreExpedition, serializeExpedition, startBattle,
+  advance, buildRunRecord, chooseDifficulty, chooseGround, createExpedition, enemyScale, finishRest, lapScale, playExpedition, restoreExpedition, serializeExpedition, startBattle,
   type ExpeditionState,
 } from '../src/engine/expedition';
 import { applyAbsence, claimDexRewards, dexCounts, markSeen, migrateSave, newSaveData, recordExpedition, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
@@ -135,10 +135,15 @@ describe('24-2 사냥터', () => {
     expect(k.hp).toBeCloseTo(lapScale(exp.lap).hp * GROUNDS[2]!.strength.hp);
     expect(p.enemy.hpInAttacks).toBeCloseTo(base.hpInAttacks * k.hp);
     expect(() => chooseGround(exp, DEFAULT_GROUND_ID)).toThrow();
-    // 같은 시드라도 사냥터가 다르면 적 체력이 다르다
+    // C.75 (GDD 32-1 6번): 사냥터 강도는 난이도로 일원화(모두 ×1) — 같은 시드면 사냥터가 달라도 적 체력이 같고, 난이도 ★가 다르면 다르다
+    expect(GROUNDS.every((g) => g.strength.hp === 1 && g.strength.attack === 1)).toBe(true);
     const a = mk();
     toBattle(a);
-    expect(a.pending!.enemy.hpInAttacks).not.toBeCloseTo(p.enemy.hpInAttacks);
+    expect(a.pending!.enemy.hpInAttacks).toBeCloseTo(p.enemy.hpInAttacks);
+    const b = mk();
+    chooseDifficulty(b, 3, 5);
+    toBattle(b);
+    expect(b.pending!.enemy.hpInAttacks).toBeGreaterThan(p.enemy.hpInAttacks);
   });
 
   it('먹이 드롭 표는 사냥터 표를 쓴다', () => {

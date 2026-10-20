@@ -9,6 +9,7 @@
       "title": "첫 순찰",
       "objective": { "type": "defeat", "enemyClass": "normal", "count": 3 },
       "recommendedTier": 1,
+      "difficulty": 1,
       "maxLaps": 3,
       "road": { "2": "prey-nest-a", "5": "prey-nest-a", "8": "prey-nest-a", "10": "rest-a" },
       "dialogue": {
@@ -21,6 +22,7 @@
       "title": "밤의 루콘가이",
       "objective": { "type": "survive", "laps": 2 },
       "recommendedTier": 1,
+      "difficulty": 1,
       "maxLaps": 2,
       "road": { "3": "prey-nest-a", "6": "env-ruin", "9": "prey-nest-a", "11": "rest-a" },
       "dialogue": {
@@ -33,6 +35,7 @@
       "title": "큰 기척",
       "objective": { "type": "absorb", "enemyClass": "elite", "count": 1 },
       "recommendedTier": 2,
+      "difficulty": 2,
       "maxLaps": 4,
       "road": { "2": "prey-nest-a", "5": "elite-den-a", "8": "rest-a", "10": "prey-nest-a" },
       "dialogue": {
@@ -45,6 +48,7 @@
       "title": "들개 대허",
       "objective": { "type": "boss" },
       "recommendedTier": 2,
+      "difficulty": 2,
       "maxLaps": 1,
       "road": { "3": "prey-nest-a", "6": "rest-a", "9": "prey-nest-a" },
       "boss": { "id": "sand-maw", "cell": 11 },

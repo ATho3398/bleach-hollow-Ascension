@@ -200,6 +200,8 @@ export interface FactionConfig {
   huntingGroundName: string;
   /** 사냥터별 이름·한 줄 설명 (GDD 24-2, 자리 표시): 사냥터 id(src/data/grounds) → 표시. 없는 사냥터는 huntingGroundName + 번호 */
   huntingGrounds?: Record<string, { name: string; desc?: string }>;
+  /** 원정 난이도 표시 문구 (GDD 32-1 9번, C.75): 이름·★ 글자·"권장" 표시·잠김 문구({tier} = 열리는 단계 번호). 없으면 기본 문구 (difficultyLabels) */
+  difficulty?: { name?: string; star?: string; recommended?: string; locked?: string };
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
   /** 1단계(진화 전) 캐릭터의 이동 방식 기본값 (GDD 18-11). 비우면 walk. 진화체·그림 manifest 가 있으면 그쪽이 우선 */
@@ -265,6 +267,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const fn = (r.foodNames ?? {}) as Record<string, unknown>;
   for (const f of FOOD_IDS) {
     if (!isString(fn[f])) errors.push(`foodNames.${f}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  if (r.difficulty !== undefined) {
+    const d = r.difficulty as Record<string, unknown>;
+    if (typeof d !== 'object' || d === null || Array.isArray(d)) errors.push('difficulty: { name?, star?, recommended?, locked? }');
+    else for (const k of ['name', 'star', 'recommended', 'locked']) if (d[k] !== undefined && !isString(d[k])) errors.push(`difficulty.${k}: 비어 있지 않은 문자열`);
   }
   if (r.huntingGrounds !== undefined) {
     const hg = r.huntingGrounds as Record<string, unknown>;
@@ -361,6 +368,17 @@ export const BLOCK_WORDS = { special: '필살', stored: '저장 필살', void: '
 /** 계열 설정 한 개 (없으면 undefined) */
 export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {
   return f.families.find((x) => x.id === familyId);
+}
+
+/** 원정 난이도 문구 (GDD 32-1): 종족 설정 difficulty, 빈 곳은 기본 문구 */
+export function difficultyLabels(f: Pick<FactionConfig, 'difficulty'>): { name: string; star: string; recommended: string; locked: string } {
+  const d = f.difficulty ?? {};
+  return { name: d.name ?? '난이도', star: d.star ?? '★', recommended: d.recommended ?? '권장', locked: d.locked ?? '{tier}단계에 열린다' };
+}
+
+/** "★3" 같은 난이도 표시 */
+export function difficultyText(f: Pick<FactionConfig, 'difficulty'>, star: number): string {
+  return `${difficultyLabels(f).star}${star}`;
 }
 
 /** 사냥터 표시 이름 (GDD 24-2): 종족 설정 huntingGrounds, 없으면 "사냥터 이름 n" (n = 데이터 순서) */

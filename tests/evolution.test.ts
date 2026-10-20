@@ -261,7 +261,9 @@ describe('노력치 (GDD 20-4)', () => {
     recordEvolutionAbsorb(e, 'fire', { atk: 2 });
     const p: Partial<CombatParams> = {};
     applyEvolutionToParams(p, e, 'hollow');
-    expect(p.refStat).toBe(refStatOf(1));
+    // C.75 (GDD 32-1): 내 쪽 기준은 세계 기준(1단계)으로 고정, 적 기준(refStat)은 난이도가 정하므로 여기서 건드리지 않는다
+    expect(p.playerRefStat).toBe(refStatOf(0));
+    expect(p.refStat).toBeUndefined();
     expect(p.playerStats!.atk).toBe(getForm('t2:base').stats.atk + 2);
     expect(p.playerElements).toEqual(['normal']);
     expect(p.blockSpawnMultiplier).toBeCloseTo(BALANCE.provisional.abilities.int.blockSpawn);

@@ -69,7 +69,7 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
   return root;
 }
 
-/** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. 막대 끝은 그 단계 기준 능력치의 1.6배 */
+/** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. 막대 끝 = ref × 1.6 — C.75(32-1)부터 ref 는 내 단계가 아니라 마지막 단계 기준 능력치(고정)라 진화하면 막대가 실제로 자란다 */
 export function statsBlock(factionId: string, stats: Stats, ev: Stats, ref: number, carry?: Stats): HTMLElement {
   const root = el('div', 'bha-stack bha-stats');
   const max = Math.round(ref * 1.6);

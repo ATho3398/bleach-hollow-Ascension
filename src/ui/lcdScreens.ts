@@ -55,7 +55,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const evo = save.evolution;
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
-  stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(evo.tierIndex), evo.carry));
+  // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
+  stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry));
   // 치명타 (C.63, GDD 28장 5번): 기본 + 장착 특성 critChance (물리·마법 합친 하나, 상한 있음)
   const critLine = h('p', 'bha-small');
   critLine.dataset.crit = '';

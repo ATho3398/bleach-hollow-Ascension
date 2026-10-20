@@ -6,12 +6,12 @@ import { ENEMIES, enemyPatternKind, POOL_CONFIG, scaleEnemy } from '../src/data/
 import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
 import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, storedStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
-import { createExpedition, enemyScale, playExpedition, type ExpeditionState } from '../src/engine/expedition';
+import { createExpedition, enemyScale, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
 import { ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
-import { analyzeTree, applyEvolutionToParams, comboRulesOf, newEvolution } from '../src/engine/evolution';
+import { analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, newEvolution, worldRefStat } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, newTileStock, type SaveData } from '../src/game';
 import { inheritableTraits } from '../src/engine/rebirth';
 import { RANK_HOLDERS } from '../src/data/ranks';
@@ -19,6 +19,7 @@ import { GROUNDS } from '../src/data/grounds';
 import { BOSSES } from '../src/data/bosses';
 import { STORY_CHAPTERS, chapterContent } from '../src/data/story';
 import { bossSetupOf } from '../src/engine/expedition';
+import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
@@ -591,21 +592,135 @@ let campaignFinalDefeats: number[] = [];
   if (normalCount !== 34 || hiddenCount !== 12) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 34(+1단계) + 12, 환생 전용 포함)`);
 }
 
-// ── 사냥터 (C.53, GDD 24-2): 단계마다 열리는 사냥터를 그 단계에 갓 닿은 몸(위 진화 봇 세이브)으로 사람형 봇이 4바퀴 원정 ──
-// 목표(provisional, 코딩44 판단): 그 단계에 갓 닿은 몸은 기본 사냥터 원정 패배가 약 1~6% 라, 새로 열린 사냥터는 원정 패배가 기본 사냥터 + 5%p 이상(너무 쉽지 않게)·
-// 45% 이하(너무 어렵지 않게), 전투 승률이 기본 사냥터보다 0.5%p 이상 낮고, 먹이는 더 많이 나온다
+// ── 권장 단계 등가 점검 (C.75, GDD 32-1 2번): n단계 몸(그 단계 기본 진화체, 노력치 0, skill 1개 빌드)이 ★n 적 풀과 1:1 로 싸우면 1단계 몸 ★1 과 같은 길이·승률이어야 한다 ──
+// (내 능력치는 절대값이지만 적 기준 능력치·체력·공격이 ★ 를 따라 같이 오르므로 "권장 단계 = 일반 약 45초·강적 약 90초" 가 단계마다 유지된다.) 가드: 일반 처치 시간이 ★1 의 0.8~1.25배, 강적 승률 차이 ±15%p 안
+{
+  const NM = 40;
+  const forms = [null, 't2:base', 't3:base', 't4:normal', 't5:normal:mixed'];
+  console.log(`\n권장 단계 등가 (사람형 봇, n단계 기본 몸 + skill 1개 vs ★n 적 풀, 종류마다 ${NM}판) — 체력 배율 (k−1)×${BALANCE.provisional.difficulty.hpGrowth}, 공격 배율 (k−1)×${BALANCE.provisional.difficulty.attackGrowth}`);
+  const rows: { nSecs: number; eWin: number; eSecs: number }[] = [];
+  for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
+    const star = tier + 1;
+    const evo = { ...newEvolution(), tierIndex: tier, formId: forms[tier] ?? null, formHistory: forms.slice(1, tier + 1) as string[] };
+    const stat = (cls: 'normal' | 'elite') => {
+      let g = 0, w = 0, secs = 0;
+      for (const base of POOL_ENEMIES.filter((e) => e.class === cls)) {
+        for (let seed = 1; seed <= NM; seed++) {
+          const params = { ...buildOf(['t-thunder-c']) } as Partial<CombatParams>;
+          applyEvolutionToParams(params, evo, BALANCE_FACTION);
+          applyDifficultyToParams(params, star);
+          const end = playCombatHuman(createCombat(seed * 31 + star, { enemy: enemyAtDifficulty(base, star), params }));
+          g++;
+          if (end.status === 'won') { w++; secs += elapsedSeconds(end); }
+        }
+      }
+      return { win: g ? w / g : 0, secs: w ? secs / w : 0 };
+    };
+    const n = stat('normal');
+    const e = stat('elite');
+    rows.push({ nSecs: n.secs, eWin: e.win, eSecs: e.secs });
+    const st = currentStats(evo, BALANCE_FACTION);
+    console.log(`  ${tier + 1}단계 몸 (체력 ${st.hp}·힘 ${st.atk}·속도 ${st.spd}, 최대 체력 ${Math.round(CX.playerMaxHp * st.hp / worldRefStat())}) vs ★${star}: 일반 ${(n.win * 100).toFixed(0)}% ${n.secs.toFixed(1)}초 · 강적 ${(e.win * 100).toFixed(0)}% ${e.secs.toFixed(1)}초`);
+  }
+  const b = rows[0]!;
+  rows.forEach((r, i) => {
+    if (r.nSecs < b.nSecs * 0.8 || r.nSecs > b.nSecs * 1.25) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 일반 ${r.nSecs.toFixed(1)}초 가 1단계 ${b.nSecs.toFixed(1)}초 의 0.8~1.25배 밖`);
+    if (Math.abs(r.eWin - b.eWin) > 0.15) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 강적 승률 ${(r.eWin * 100).toFixed(0)}% 가 1단계 ${(b.eWin * 100).toFixed(0)}% 와 15%p 넘게 다르다`);
+  });
+}
+
+// ── 원정 난이도 ★ (C.75, GDD 32-1): 그 단계에 갓 닿은 몸(위 진화 봇 세이브, 1단계는 새 세이브)으로 사람형 봇이 ★ = 단계−1 / 단계(권장) / 단계+1 에서 4바퀴 원정 ──
+// 목표(32-1 3번, provisional): 권장 ★ 에서 일반 약 45초·강적 약 90초(원정 안이라 바퀴 강화·빌드 성장이 섞여 전투 구간보다 짧다 — 1단계 권장 값을 기준선으로 삼아 단계별로 ±25% 안),
+//  한 단계 위(★ = 단계−1)는 일반이 권장의 약 2/3 길이·강적 승률 상승, 한 단계 아래(★ = 단계+1)는 강적 승률이 크게(15%p 이상) 떨어진다.
+// 가드: 권장 ★ 일반 승률 85% 이상, 위·아래 방향이 맞을 것(한 단계 위 강적 승률 ≥ 권장, 한 단계 아래 강적 승률 ≤ 권장 − 10%p)
+{
+  const DR = 3;
+  console.log(`\n원정 난이도 ★ (GDD 32-1, 사람형 봇, 그 단계에 갓 닿은 몸 × ${DR}원정, 4바퀴 귀환·흡수) — 종족값 합계 ${BALANCE.provisional.stats.tierTotals.join('/')}, ★ 체력 배율 ${Array.from({ length: MAX_DIFFICULTY }, (_, i) => difficultyEnemyScale(i + 1).hp.toFixed(2)).join('/')}`);
+  type Row = { win: number; nWin: number; eWin: number; nSecs: number; eSecs: number; defeat: number; n: number; e: number; gold: number; food: number };
+  const rows: Record<string, Row> = {};
+  const measure = (bodies: SaveData[], star: number, tier: number, streak = 0): Row => {
+    let battles = 0, wins = 0, nW = 0, nG = 0, eW = 0, eG = 0, nS = 0, eS = 0, defeated = 0, runs = 0, gold = 0, food = 0;
+    bodies.forEach((body, bi) => {
+      for (let k = 0; k < DR; k++) {
+        const save = structuredClone(body);
+        const e = playExpedition(
+          createExpedition({
+            factionId: 'hollow', difficulty: star, streak, seed: 50000 + bi * 97 + k * 13 + tier * 7 + star * 1000, runId: nextRunId(save), hunger: 20, condition: 80,
+            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+          }),
+          { returnAfterLap: 4, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
+        );
+        runs++;
+        battles += e.battles.length;
+        for (const b of e.battles) {
+          if (b.won) wins++;
+          if (b.enemyClass === 'elite') { eG++; if (b.won) { eW++; eS += b.durationSeconds; } }
+          else if (b.enemyClass === 'normal') { nG++; if (b.won) { nW++; nS += b.durationSeconds; } }
+        }
+        if (e.outcome === 'defeated') defeated++;
+        const sm = summarize(e);
+        gold += sm.keptGold;
+        food += sm.keptFood.length;
+      }
+    });
+    return { win: battles ? wins / battles : 0, nWin: nG ? nW / nG : 0, eWin: eG ? eW / eG : 0, nSecs: nW ? nS / nW : 0, eSecs: eW ? eS / eW : 0, defeat: runs ? defeated / runs : 0, n: nG, e: eG, gold: runs ? gold / runs : 0, food: runs ? food / runs : 0 };
+  };
+  const freshBodies: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => { const sv = newSaveData('hollow', 777 + i * 31); sv.tiles.deck = sanitizeDeck(sv.tiles, 'hollow'); return sv; });
+  const recNormalSecs: number[] = [];
+  for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
+    const bodies = tier === 0 ? freshBodies : campaignFirstAt[tier] ?? [];
+    if (bodies.length < CAMPAIGNS * 0.8) { failures.push(`난이도: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`); continue; }
+    const rec = recommendedDifficulty(tier);
+    const stars = [rec - 1, rec, rec + 1].filter((st) => st >= 1 && st <= MAX_DIFFICULTY);
+    for (const star of stars) {
+      const r = (rows[`${tier}/${star}`] = measure(bodies, star, tier));
+      const tagTxt = star === rec ? '권장' : star < rec ? '한 단계 위 몸' : '한 단계 아래 몸';
+      console.log(`  ${tier + 1}단계 몸 ${String(bodies.length).padStart(2)}명 · ★${star} (${tagTxt.padEnd(7)}) 일반 ${(r.nWin * 100).toFixed(0).padStart(3)}% ${r.nSecs.toFixed(1).padStart(5)}초 (${r.n}판) · 강적 ${(r.eWin * 100).toFixed(0).padStart(3)}% ${r.eSecs.toFixed(1).padStart(5)}초 (${r.e}판) · 원정 패배 ${(r.defeat * 100).toFixed(0)}%`);
+    }
+    const R = rows[`${tier}/${rec}`]!;
+    recNormalSecs.push(R.nSecs);
+    if (R.nWin < 0.85) failures.push(`난이도: ${tier + 1}단계 몸 권장 ★${rec} 일반 승률 ${(R.nWin * 100).toFixed(0)}% < 85%`);
+    const up = rows[`${tier}/${rec - 1}`];
+    const down = rows[`${tier}/${rec + 1}`];
+    if (up && up.eWin < R.eWin) failures.push(`난이도: ${tier + 1}단계 몸이 ★${rec - 1} 에서 강적 승률 ${(up.eWin * 100).toFixed(0)}% < 권장 ${(R.eWin * 100).toFixed(0)}% (한 단계 위가 더 쉽지 않다)`);
+    if (down && down.eWin > R.eWin - 0.1) failures.push(`난이도: ${tier + 1}단계 몸이 ★${rec + 1} 에서 강적 승률 ${(down.eWin * 100).toFixed(0)}% > 권장 ${(R.eWin * 100).toFixed(0)}% − 10%p (한 단계 아래가 충분히 어렵지 않다)`);
+  }
+  // 1단계 몸은 특성이 없는 새 세이브, 2단계부터는 흡수 특성 2~4개·노력치가 있는 진화 봇 몸이라 처치 시간은 참고로만 (단계 간 등가는 위 '권장 단계 등가' 표가 가드)
+  console.log(`  권장 ★ 일반 처치 시간 단계별: ${recNormalSecs.map((x) => x.toFixed(1)).join(' / ')}초 (참고 — 1단계는 특성 없는 새 몸)`);
+
+  // ── 재화 경제 (GDD 32-1 10·11번): 권장 ★ × 연속 0/5/10 의 원정 1판 지킨 골드·먹이. 목표: ★5·10연속 골드 ≤ ★1(새 몸, 연속 0)의 2배 ──
+  const DX = BALANCE.provisional.difficulty;
+  const SHX = BALANCE.provisional.shop;
+  console.log(`\n재화 경제 (GDD 32-1 11번, 사람형 봇, 권장 ★ 몸 × ${DR}원정 4바퀴): 골드 ★당 +${DX.goldPerStar * 100}%·연속당 +${DX.streak.goldPerClear * 100}%(최대 +${DX.streak.goldMaxBonus * 100}%), 먹이·노력치 ★당 +${DX.rewardPerStar * 100}%·연속당 +${DX.streak.foodPerClear * 100}%, 적 연속당 +${DX.streak.enemyPerClear * 100}%`);
+  const econ: Record<string, Row> = {};
+  for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
+    const bodies = tier === 0 ? freshBodies : campaignFirstAt[tier] ?? [];
+    if (bodies.length < CAMPAIGNS * 0.8) continue;
+    const star = recommendedDifficulty(tier);
+    const line: string[] = [];
+    for (const streak of [0, 5, DX.streak.maxClears]) {
+      const r = (econ[`${star}/${streak}`] = streak === 0 ? rows[`${tier}/${star}`]! : measure(bodies, star, tier, streak));
+      line.push(`연속 ${String(streak).padStart(2)}: 골드 ${r.gold.toFixed(0).padStart(4)}·먹이 ${r.food.toFixed(1).padStart(4)}·패배 ${(r.defeat * 100).toFixed(0).padStart(3)}%`);
+    }
+    console.log(`  ${tier + 1}단계 몸 ★${star}  ${line.join(' | ')}`);
+  }
+  const g1 = econ['1/0']?.gold ?? 0;
+  const g5 = econ[`${MAX_DIFFICULTY}/${DX.streak.maxClears}`]?.gold ?? 0;
+  if (g1 > 0 && g5 > 0) {
+    console.log(`  ★1 연속 0 골드 ${g1.toFixed(0)} → ★${MAX_DIFFICULTY} 연속 ${DX.streak.maxClears} 골드 ${g5.toFixed(0)} (${(g5 / g1).toFixed(2)}배, 목표 2배 이하) · 보통 먹이(${SHX.goldPrices['food-basic']}골드) ${(g1 / SHX.goldPrices['food-basic']!).toFixed(1)} → ${(g5 / SHX.goldPrices['food-basic']!).toFixed(1)}개/판 · 다시 뽑기권(${SHX.goldPrices.reroll}) ${(SHX.goldPrices.reroll! / g1).toFixed(1)} → ${(SHX.goldPrices.reroll! / g5).toFixed(1)}판 · 덱 칸(${SHX.deckSlotPrices[0]}) ${(SHX.deckSlotPrices[0]! / g1).toFixed(1)} → ${(SHX.deckSlotPrices[0]! / g5).toFixed(1)}판`);
+    if (g5 > g1 * 2) failures.push(`재화 경제: ★${MAX_DIFFICULTY} ${DX.streak.maxClears}연속 골드 ${g5.toFixed(0)} > ★1 ${g1.toFixed(0)} 의 2배 (GDD 32-1 11번)`);
+  }
+}
+
+// ── 사냥터 (C.53, GDD 24-2 → C.75 32-1 6번): 강도는 난이도로 일원화(모두 ×1). 새로 열린 사냥터는 먹이가 기본 사냥터보다 많이 나오는지만 본다 ──
 {
   const GR = 3;
-  console.log(`\n사냥터 (사람형 봇, 그 단계에 갓 닿은 세이브 × ${GR}원정, 4바퀴 귀환·흡수) — 열리는 단계 몸 기준`);
+  console.log(`\n사냥터 (사람형 봇, 그 단계에 갓 닿은 세이브 × ${GR}원정, 권장 ★, 4바퀴 귀환·흡수) — 강도는 ×1(난이도로 일원화), 먹이만 다르다`);
   for (const tier of [...new Set(GROUNDS.map((g) => g.unlockTierIndex))].filter((t) => t > 0)) {
     const bodies = campaignFirstAt[tier] ?? [];
     const rows: Record<string, { win: number; defeat: number; food: number }> = {};
     for (const g of GROUNDS.filter((x) => x.unlockTierIndex <= tier)) {
-      let battles = 0;
-      let wins = 0;
-      let defeated = 0;
-      let food = 0;
-      let runs = 0;
+      let battles = 0, wins = 0, defeated = 0, food = 0, runs = 0;
       bodies.forEach((body, bi) => {
         for (let k = 0; k < GR; k++) {
           const save = structuredClone(body);
@@ -624,15 +739,14 @@ let campaignFinalDefeats: number[] = [];
         }
       });
       rows[g.id] = { win: battles ? wins / battles : 0, defeat: runs ? defeated / runs : 0, food: runs ? food / runs : 0 };
-      console.log(`  ${tier + 1}단계 몸 ${String(bodies.length).padStart(2)}명 · ${g.id.padEnd(10)} (체력 ×${g.strength.hp}·공격 ×${g.strength.attack}, 주 속성 ${g.elements.join('·')}): 전투 승률 ${(rows[g.id]!.win * 100).toFixed(1)}% · 원정 패배 ${(rows[g.id]!.defeat * 100).toFixed(0)}% · 먹이 ${rows[g.id]!.food.toFixed(1)}개/원정`);
+      console.log(`  ${tier + 1}단계 몸 ${String(bodies.length).padStart(2)}명 · ${g.id.padEnd(10)} (주 속성 ${g.elements.join('·')}): 전투 승률 ${(rows[g.id]!.win * 100).toFixed(1)}% · 원정 패배 ${(rows[g.id]!.defeat * 100).toFixed(0)}% · 먹이 ${rows[g.id]!.food.toFixed(1)}개/원정`);
     }
     const base = rows[GROUNDS[0]!.id]!;
     for (const g of GROUNDS.filter((x) => x.unlockTierIndex === tier)) {
       const r = rows[g.id]!;
       if (bodies.length < CAMPAIGNS * 0.8) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+      if (g.strength.hp !== 1 || g.strength.attack !== 1) failures.push(`사냥터 ${g.id}: 강도 ×${g.strength.hp}·×${g.strength.attack} — C.75 부터 난이도로 일원화(×1)`);
       if (r.defeat > 0.45) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 원정 패배 ${(r.defeat * 100).toFixed(0)}% > 45% (너무 어렵다)`);
-      if (r.defeat < base.defeat + 0.05) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 원정 패배 ${(r.defeat * 100).toFixed(0)}% < 기본 사냥터 ${(base.defeat * 100).toFixed(0)}% + 5%p (너무 쉽다)`);
-      if (r.win > base.win - 0.005) failures.push(`사냥터 ${g.id}: 전투 승률 ${(r.win * 100).toFixed(1)}% 가 기본 사냥터 ${(base.win * 100).toFixed(1)}% 보다 0.5%p 이상 낮지 않다 (너무 쉽다)`);
       if (r.food <= base.food) failures.push(`사냥터 ${g.id}: 먹이 ${r.food.toFixed(1)}개 ≤ 기본 사냥터 ${base.food.toFixed(1)}개`);
     }
   }
@@ -660,7 +774,8 @@ let campaignFinalDefeats: number[] = [];
             applyEvolutionToParams(params, body.evolution, 'hollow');
             params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
             params.liberationEnabled = liberation;
-            const end = playCombatHuman(createCombat(70000 + bi * 1009 + lap * 101 + k * 7 + base.hpInAttacks, { enemy: scaleEnemy(base, enemyScale(lap, ground.id)), params }));
+            applyDifficultyToParams(params, recommendedDifficulty(tier));
+            const end = playCombatHuman(createCombat(70000 + bi * 1009 + lap * 101 + k * 7 + base.hpInAttacks, { enemy: scaleEnemy(base, enemyScale(lap, ground.id, recommendedDifficulty(tier))), params }));
             games++;
             if (end.status === 'won') wins++;
             if (end.liberation.usedAtTick !== null) {
@@ -714,8 +829,9 @@ let campaignFinalDefeats: number[] = [];
       for (let k = 0; k < BR; k++) {
         const params = buildCombatParams(body.build, 'hollow');
         applyEvolutionToParams(params, body.evolution, 'hollow');
+        applyDifficultyToParams(params, boss.difficulty);
         params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
-        const end = playCombatHuman(createCombat(80000 + bi * 131 + k * 17, { enemy: scaleEnemy(boss.enemy, enemyScale(1, ground)), params, boss: bossSetupOf(boss.id) }));
+        const end = playCombatHuman(createCombat(80000 + bi * 131 + k * 17, { enemy: scaleEnemy(boss.enemy, enemyScale(1, ground, boss.difficulty)), params, boss: bossSetupOf(boss.id) }));
         games++;
         if (end.status === 'won') {
           wins++;
@@ -728,7 +844,7 @@ let campaignFinalDefeats: number[] = [];
     });
     const rate = games ? wins / games : 0;
     const BX = BALANCE.provisional.boss;
-    console.log(`\n보스전 (사람형 봇, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${BR}판, 사냥터 ${ground}) — 목표(임시): 승률 50~70%`);
+    console.log(`\n보스전 (사람형 봇, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${BR}판, 사냥터 ${ground}, 보스 ★${boss.difficulty}) — 목표(임시): 승률 50~70%`);
     console.log(`  ${boss.id}: 체력 ${boss.enemy.hpInAttacks}회분 · 공격 ${boss.enemy.attackInAttacks} · 페이즈 ${boss.phases.map((p) => `${p.belowHpFraction * 100}% 이하 공격 간격 ×${p.attackSecondsMult}`).join(' / ')} · 기믹 ${boss.gimmick}(${BX.seal.everySeconds}초마다 ${BX.seal.cells}칸 ${BX.seal.seconds}초) · 시간 ${BX.timeLimitSeconds}초`);
     console.log(`  승률 ${(rate * 100).toFixed(0)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초 · 시간 초과 ${timeouts}/${games} · 2페이즈 도달 ${phase2}/${games} · 봉인 ${(seals / Math.max(1, games)).toFixed(1)}칸/판`);
     if (bodies.length < CAMPAIGNS * 0.8) failures.push(`보스전 ${boss.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
@@ -751,8 +867,9 @@ let campaignFinalDefeats: number[] = [];
       for (let k = 0; k < RK; k++) {
         const params = buildCombatParams(save.build, 'hollow');
         applyEvolutionToParams(params, save.evolution, 'hollow');
+        applyDifficultyToParams(params, h.difficulty);
         params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
-        const end = playCombatHuman(createCombat(9000 + h.rank * 100 + k * 7 + games, { enemy: h, params }));
+        const end = playCombatHuman(createCombat(9000 + h.rank * 100 + k * 7 + games, { enemy: enemyAtDifficulty(h, h.difficulty), params }));
         games++;
         if (end.status === 'won') {
           wins++;
@@ -762,7 +879,7 @@ let campaignFinalDefeats: number[] = [];
     }
     const rate = games ? wins / games : 0;
     rates.push(rate);
-    console.log(`  No.${String(h.rank).padStart(2)}  ${h.id.padEnd(15)} 체력 ${h.hpInAttacks}회분 · 공격 ${h.attackInAttacks} · ${h.element}/${h.category}/${enemyPatternKind(h)}  승률 ${(rate * 100).toFixed(0).padStart(3)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초`);
+    console.log(`  No.${String(h.rank).padStart(2)}  ${h.id.padEnd(15)} ★${h.difficulty} 체력 ${h.hpInAttacks}회분 · 공격 ${h.attackInAttacks} · ${h.element}/${h.category}/${enemyPatternKind(h)}  승률 ${(rate * 100).toFixed(0).padStart(3)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초`);
   }
   if (ready.length < CAMPAIGNS * 0.8) failures.push(`등급전: 5단계 세이브 ${ready.length}/${CAMPAIGNS}`);
   const [no10, no1] = [rates[0]!, rates[rates.length - 1]!];

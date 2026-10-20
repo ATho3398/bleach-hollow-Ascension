@@ -34,9 +34,9 @@ function loseBattle(exp: ExpeditionState): void {
 }
 
 describe('버전 (C.68)', () => {
-  it('패치 번호 C.68 이상, 단계 Q-4', () => {
+  it('패치 번호 C.68 이상 (단계는 Q-4 였고 C.75 부터 S-20 — 뒤 패치가 올린다)', () => {
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(68);
-    expect(STAGE_LABEL).toBe('Q-4');
+    expect(STAGE_LABEL).toMatch(/^(Q-4|S-\d+)/);
   });
 });
 

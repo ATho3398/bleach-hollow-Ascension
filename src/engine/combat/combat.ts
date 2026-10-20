@@ -87,9 +87,11 @@ export interface CombatParams {
   poisonSeconds: number;
   pierceIgnore: number;
   pierceRisk: number;
-  /** 그 단계 기준 능력치 (GDD 20-3): 적 능력치 = 이 값 × 적 성향, 내 체력·속도도 이 값에 대한 비로 환산한다 ("기본 공격 N회분" 유지) */
+  /** 적 기준 능력치 (GDD 20-3·32-1): 적 능력치 = 이 값 × 적 성향. 원정 난이도 ★n 의 기준 능력치(= n단계 기준, 기본 ★1) — src/engine/difficulty.ts 가 채운다 */
   refStat: number;
-  /** 내 능력치 (종족값 + 노력치). 없으면 모두 refStat (= 옛 전투와 같은 결과) */
+  /** 내 쪽 세계 기준 능력치 (GDD 32-1, C.75): 내 체력·평타 간격은 이 고정값(1단계 기준 능력치)에 대한 비로 환산한다 — 진화·노력치가 그대로 강해짐 */
+  playerRefStat: number;
+  /** 내 능력치 (종족값 + 노력치). 없으면 모두 playerRefStat (= 1단계 기준 몸) */
   playerStats?: Stats;
   /** 내 캐릭터 속성 (1단계 노멀, 융합은 2개). 적의 공격 상성과 내 기본 공격 상성, 자기 속성 보정에 쓴다 */
   playerElements: string[];
@@ -167,6 +169,7 @@ export function defaultCombatParams(): CombatParams {
     pierceIgnore: EL.pierceIgnore,
     pierceRisk: EL.pierceRisk,
     refStat: BALANCE.provisional.stats.tierTotals[0]! / STAT_IDS.length,
+    playerRefStat: BALANCE.provisional.stats.tierTotals[0]! / STAT_IDS.length,
     playerElements: [NORMAL_ELEMENT],
     blockSpawnMultiplier: 1,
     categoryPower: { physical: 1, special: 1, mixed: 1 },
@@ -407,12 +410,12 @@ export function uniformStats(v: number): Stats {
   return { hp: v, atk: v, int: v, def: v, spr: v, spd: v };
 }
 
-/** 내 능력치: 주어진 값, 없으면 모두 기준 능력치 */
-export function playerStatsOf(p: Pick<CombatParams, 'playerStats' | 'refStat'>): Stats {
-  return p.playerStats ?? uniformStats(p.refStat);
+/** 내 능력치: 주어진 값, 없으면 모두 세계 기준 능력치 (1단계 기준 몸) */
+export function playerStatsOf(p: Pick<CombatParams, 'playerStats' | 'playerRefStat'>): Stats {
+  return p.playerStats ?? uniformStats(p.playerRefStat);
 }
 
-/** 적 능력치 = 그 단계 기준 능력치 × 적 성향 (없는 능력치는 ×1) */
+/** 적 능력치 = 난이도 기준 능력치 × 적 성향 (없는 능력치는 ×1) */
 export function enemyStatsOf(p: Pick<CombatParams, 'refStat'>, enemy: EnemyDef): Stats {
   const out = uniformStats(p.refStat);
   for (const k of STAT_IDS) out[k] *= enemy.statBias?.[k] ?? 1;
@@ -452,9 +455,9 @@ export function enemyElements(def: EnemyDef): string[] {
   return [def.element];
 }
 
-/** 내 자동 기본 공격 간격(초): 기본 간격 ÷ 패시브 배율 × (기준 능력치 ÷ 속도) (GDD 20-3 v3.6: 속도는 평타 간격만) */
+/** 내 자동 기본 공격 간격(초): 기본 간격 ÷ 패시브 배율 × (세계 기준 능력치 ÷ 속도) (GDD 20-3 v3.6: 속도는 평타 간격만, 32-1: 기준은 고정) */
 export function playerAttackSecondsOf(p: CombatParams): number {
-  return (p.playerAttackSeconds / p.attackSpeedMultiplier) * (p.refStat / playerStatsOf(p).spd);
+  return (p.playerAttackSeconds / p.attackSpeedMultiplier) * (p.playerRefStat / playerStatsOf(p).spd);
 }
 
 // ── 해방 (GDD 22-2·22-5) ──
@@ -497,8 +500,8 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
   const maxHp = setup.enemy.hpInAttacks * params.hpAttackScale * params.playerAttackDamage * params.growthMultiplier;
   const sources = blockSources(params);
   const pStats = playerStatsOf(params);
-  // 내 체력 = 기본 체력 × (체력 ÷ 기준 능력치) (GDD 20-3)
-  const playerHp = params.playerMaxHp * (pStats.hp / params.refStat);
+  // 내 체력 = 기본 체력 × (체력 ÷ 세계 기준 능력치) (GDD 20-3·32-1: 기준은 1단계 값으로 고정 — 진화하면 최대 체력이 실제로 커진다)
+  const playerHp = params.playerMaxHp * (pStats.hp / params.playerRefStat);
   return {
     seed,
     params,

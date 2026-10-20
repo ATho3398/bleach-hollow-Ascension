@@ -27,6 +27,8 @@ export interface StoryEpisode {
   objective: StoryObjective;
   /** 권장 단계 (1부터, 표시만) */
   recommendedTier: number;
+  /** 이 화의 원정 난이도 ★ (GDD 32-1 7번, C.75): 화마다 고정. 적 기준 능력치·체력·보상 배율 */
+  difficulty: number;
   /** 이 화의 최대 바퀴 (목표를 못 이루고 넘기면 실패) */
   maxLaps: number;
   /** 고정 길: 칸 번호(1~11) → 타일 id */
@@ -59,6 +61,8 @@ export interface StoryChapterContent {
 }
 
 const EX = BALANCE.expedition;
+/** ★ 최대 = 단계 수 (engine/difficulty 와 같은 정의, 데이터 쪽은 순환 참조를 피해 직접 읽는다) */
+const MAX_DIFFICULTY = BALANCE.provisional.stats.tierTotals.length;
 
 export function parseChapterContent(r: unknown): StoryChapterContent {
   const c = (r ?? {}) as Partial<StoryChapterContent>;
@@ -80,6 +84,7 @@ export function parseChapterContent(r: unknown): StoryChapterContent {
     else if (o.type === 'boss' && !e.boss) errors.push(`${at}: 보스 목표면 boss 필요`);
     if (!pos(e?.maxLaps) || e.maxLaps > EX.maxLaps) errors.push(`${at}: maxLaps 1~${EX.maxLaps}`);
     if (!pos(e?.recommendedTier)) errors.push(`${at}: recommendedTier`);
+    if (!pos(e?.difficulty) || (e.difficulty as number) > MAX_DIFFICULTY) errors.push(`${at}: difficulty 1~${MAX_DIFFICULTY}`);
     for (const [cell, id] of Object.entries(e?.road ?? {})) {
       const n = Number(cell);
       if (!Number.isInteger(n) || n < 1 || n >= EX.loopTiles) errors.push(`${at}: road 칸 ${cell}`);

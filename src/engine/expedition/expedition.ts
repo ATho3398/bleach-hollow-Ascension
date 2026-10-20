@@ -3,6 +3,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { scaleEnemy } from '../../data/enemies';
+import { applyDifficultyToParams, clampDifficulty, clampStreak, difficultyEnemyScale, difficultyGoldMultiplier, difficultyRewardMultiplier, recommendedDifficulty, scaleEv, streakEnemyFactor } from '../difficulty';
 import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, pickFromPool } from '../enemyPool';
 import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
@@ -169,8 +170,12 @@ export interface ExpeditionState extends RiskState {
   statBonus?: number;
   runId: number;
   factionId: string;
-  /** 사냥터 id (GDD 24-2, 원정 형식 4): 출현 속성·적 강도·먹이 표. 배치 단계에서 고른다 */
+  /** 사냥터 id (GDD 24-2, 원정 형식 4): 출현 속성·먹이 표. 배치 단계에서 고른다 */
   groundId: string;
+  /** 원정 난이도 ★ (GDD 32-1, C.75): 적 기준 능력치 = ★n 단계 기준·체력·공격 배율·보상 배율. 자유 원정은 배치 단계에서 고르고(기본 = 내 단계), 스토리 화는 화 데이터의 ★ */
+  difficulty: number;
+  /** 연속 클리어 수 (GDD 32-1 10번, C.75): 출발 때 세이브에서 가져온 "같은 ★ 연속 클리어" 수 → 적 +5%/연속, 먹이·노력치 +5%/연속, 골드 +2%/연속(상한). 스토리 화는 0 */
+  streak: number;
   seed: number;
   rng: Rng;
   maxLaps: number;
@@ -253,6 +258,10 @@ export interface ExpeditionSetup {
   factionId: string;
   /** 사냥터 (없으면 기본 사냥터) */
   groundId?: string;
+  /** 원정 난이도 ★ (없으면 내 단계 = 권장). 스토리 화는 무시하고 화의 ★ 를 쓴다. 열렸는지(세이브 difficulty.unlocked)는 부르는 쪽이 본다 */
+  difficulty?: number;
+  /** 같은 ★ 연속 클리어 수 (없으면 0). 스토리 화는 무시(0) */
+  streak?: number;
   seed: number;
   runId?: number;
   /** 둥지에서 가져온 상태 */
@@ -285,6 +294,8 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     runId: setup.runId ?? 0,
     factionId: setup.factionId,
     groundId: setup.story ? getChapter(setup.story.chapterId).groundId : isGroundId(setup.groundId) ? setup.groundId : DEFAULT_GROUND_ID,
+    difficulty: episode ? episode.difficulty : clampDifficulty(setup.difficulty ?? recommendedDifficulty(setup.evolution?.tierIndex ?? 0)),
+    streak: episode ? 0 : clampStreak(setup.streak ?? 0),
     seed: setup.seed,
     rng,
     maxLaps: episode?.maxLaps ?? setup.maxLaps ?? EX.maxLaps,
@@ -434,11 +445,13 @@ export function riskBonus(exp: ExpeditionState): number {
   return cond + late + breakthroughSpawnBonus(exp);
 }
 
-/** 바퀴 강화 × 사냥터 강도 (GDD 24-2) */
-export function enemyScale(lap: number, groundId: string): { hp: number; attack: number } {
+/** 바퀴 강화 × 사냥터 강도(24-2, C.75 부터 1.0) × 원정 난이도 ★ × 연속 클리어 (GDD 32-1 2·10번) */
+export function enemyScale(lap: number, groundId: string, difficulty = 1, streak = 0): { hp: number; attack: number } {
   const l = lapScale(lap);
   const g = getGround(groundId).strength;
-  return { hp: l.hp * g.hp, attack: l.attack * g.attack };
+  const d = difficultyEnemyScale(difficulty);
+  const k = streakEnemyFactor(streak);
+  return { hp: l.hp * g.hp * d.hp * k, attack: l.attack * g.attack * d.attack * k };
 }
 
 /** 출처(야생/타일 종류/조합)와 바퀴·사냥터에 맞는 풀에서 적을 뽑고 바퀴 강화·사냥터 강도를 입힌다 (GDD 14-5·24-2) */
@@ -450,7 +463,7 @@ function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string
   if (pool.length === 0) throw new Error(`적 출현 풀이 비었다: ${cls} ${exp.lap}바퀴 ${source}`);
   const base = pickFromPool(exp.rng, pool);
   const rare = nextFloat(exp.rng) < base.rareChance;
-  return { ...scaleEnemy(base, enemyScale(exp.lap, exp.groundId)), rare };
+  return { ...scaleEnemy(base, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak)), rare };
 }
 
 /** 이 칸이 조합(같은 comboGroup 3칸 인접)의 끝 칸인가 */
@@ -570,13 +583,19 @@ function startBattleAt(
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability), liberationEnabled: exp.liberationEnabled === true };
   applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0);
+  // 적 기준 능력치 = 원정 난이도 ★ (GDD 32-1). 내 쪽은 위에서 세계 기준으로 실렸다
+  applyDifficultyToParams(params, exp.difficulty);
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset, m.envMult ?? 1);
   if (exp.breakthrough) applyFrenzy(params);
   if (m.voidBonus) params.voidChanceBonus = (params.voidChanceBonus ?? 0) + m.voidBonus;
   if (m.voidMult && m.voidMult !== 1) params.voidChanceBonus = (params.voidChanceBonus ?? 0) + BALANCE.provisional.combat.voidChance * (m.voidMult - 1);
   if (m.enemyFirstStrike) params.enemyFirstStrike = true;
-  let rewardMult = m.rewardMult ?? 1;
+  // 보상 = 난이도 ★·연속 클리어 배율 (GDD 32-1 5·11번, 재화마다 다름): rewardMult 는 먹이 굴림 배율, 골드는 goldMult 에 (골드 ÷ 먹이) 비를 곱해 따로 간다. 리스크는 그대로
+  const foodK = difficultyRewardMultiplier(exp.difficulty, exp.streak);
+  const goldK = difficultyGoldMultiplier(exp.difficulty, exp.streak);
+  let rewardMult = (m.rewardMult ?? 1) * foodK;
+  const goldMult = (m.goldMult ?? 1) * (goldK / foodK);
   let trap = false;
   if (exp.trapArmed) {
     params.playerStartHpFraction = TV.events.trap.startHpFraction;
@@ -589,7 +608,7 @@ function startBattleAt(
     exp.nextShield = 0;
   }
   // 보스는 보스 데이터의 적 (바퀴 강화·사냥터 강도만 입힌다), 아니면 출현 풀에서
-  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(exp.lap, exp.groundId)) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
+  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak)) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1);
   const atkK = m.enemyAttackMult ?? 1;
   if (hpK !== 1 || atkK !== 1) enemy = scaleEnemy(enemy, { hp: hpK, attack: atkK });
@@ -603,7 +622,7 @@ function startBattleAt(
     combo,
     tileId: id,
     mods: {
-      rewardMult, goldMult: m.goldMult ?? 1, foodMult: m.foodMult ?? 1, foodChanceBonus: m.foodChanceBonus ?? 0, absorbBonus: m.absorbBonus ?? 0,
+      rewardMult, goldMult, foodMult: m.foodMult ?? 1, foodChanceBonus: m.foodChanceBonus ?? 0, absorbBonus: m.absorbBonus ?? 0,
       extraBattle: !second && syn?.role === 'right' ? sm?.extraBattle ?? 0 : 0, eliteSoulBonus: m.eliteSoulBonus ?? 0,
     },
     synergy: syn?.id ?? null,
@@ -760,7 +779,8 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
     exp.acquiredTraits.push({ traitId, lap: exp.lap });
   }
   logAbsorb(exp, offer, true, traitId);
-  recordEvolutionAbsorb(exp.evolution, offer.element, offer.ev);
+  // 흡수 노력치도 난이도 보상 배율 (GDD 32-1 5번, 정수 반올림)
+  recordEvolutionAbsorb(exp.evolution, offer.element, scaleEv(offer.ev, exp.difficulty, exp.streak));
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
   changeRisk(exp, absorbRisk(offer.strength), 'absorb');
@@ -1020,6 +1040,16 @@ export function chooseGround(exp: ExpeditionState, groundId: string): void {
   exp.groundId = groundId;
 }
 
+/** 원정 난이도 ★ 고르기 (GDD 32-1 4번): 배치 단계(출발 전)에서만. 스토리 화는 못 바꾼다. unlockedMax 를 주면 그보다 높은 ★ 는 거부한다 */
+export function chooseDifficulty(exp: ExpeditionState, star: number, unlockedMax?: number): void {
+  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 난이도를 고를 수 있다');
+  if (exp.story) throw new Error('스토리 화의 난이도는 정해져 있다');
+  const s = clampDifficulty(star);
+  if (s !== star) throw new Error(`알 수 없는 난이도: ${star}`);
+  if (unlockedMax !== undefined && s > unlockedMax) throw new Error(`아직 열리지 않은 난이도: ${star}`);
+  exp.difficulty = s;
+}
+
 export function beginPlanning(exp: ExpeditionState): void {
   if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 배치 단계를 열 수 있다');
   exp.hand = [...exp.deck];
@@ -1128,6 +1158,8 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     seed: exp.seed,
     factionId: exp.factionId,
     groundId: exp.groundId,
+    difficulty: exp.difficulty,
+    streak: exp.streak,
     synergies: (exp.variantLog?.synergies ?? []).map((x) => x.id),
     mutations: (exp.variantLog?.mutations ?? []).map((x) => ({ ...x })),
     events: (exp.variantLog?.events ?? []).map((x) => ({ ...x })),

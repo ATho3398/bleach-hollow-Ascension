@@ -10,12 +10,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 61,
-      "atk": 58,
-      "int": 55,
-      "def": 55,
-      "spr": 52,
-      "spd": 49
+      "hp": 69,
+      "atk": 66,
+      "int": 63,
+      "def": 62,
+      "spr": 59,
+      "spd": 56
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -32,12 +32,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 60,
-      "atk": 60,
-      "int": 63,
-      "def": 57,
-      "spr": 60,
-      "spd": 60
+      "hp": 79,
+      "atk": 78,
+      "int": 82,
+      "def": 75,
+      "spr": 78,
+      "spd": 78
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -56,12 +56,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 65,
-      "atk": 65,
-      "int": 65,
-      "def": 65,
-      "spr": 65,
-      "spd": 65
+      "hp": 98,
+      "atk": 98,
+      "int": 98,
+      "def": 97,
+      "spr": 97,
+      "spd": 97
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -80,12 +80,12 @@
       "water"
     ],
     "stats": {
-      "hp": 72,
-      "atk": 58,
-      "int": 65,
-      "def": 65,
-      "spr": 75,
-      "spd": 55
+      "hp": 107,
+      "atk": 88,
+      "int": 98,
+      "def": 97,
+      "spr": 112,
+      "spd": 83
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -104,12 +104,12 @@
       "fire"
     ],
     "stats": {
-      "hp": 65,
-      "atk": 75,
-      "int": 65,
-      "def": 59,
-      "spr": 55,
-      "spd": 71
+      "hp": 98,
+      "atk": 112,
+      "int": 97,
+      "def": 88,
+      "spr": 83,
+      "spd": 107
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -128,12 +128,12 @@
       "earth"
     ],
     "stats": {
-      "hp": 72,
-      "atk": 65,
-      "int": 58,
-      "def": 78,
-      "spr": 65,
-      "spd": 52
+      "hp": 107,
+      "atk": 98,
+      "int": 88,
+      "def": 117,
+      "spr": 97,
+      "spd": 78
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -152,12 +152,12 @@
       "thunder"
     ],
     "stats": {
-      "hp": 55,
-      "atk": 65,
-      "int": 72,
-      "def": 55,
-      "spr": 65,
-      "spd": 78
+      "hp": 83,
+      "atk": 98,
+      "int": 107,
+      "def": 83,
+      "spr": 97,
+      "spd": 117
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -176,12 +176,12 @@
       "blood"
     ],
     "stats": {
-      "hp": 75,
-      "atk": 72,
-      "int": 55,
-      "def": 65,
-      "spr": 58,
-      "spd": 65
+      "hp": 112,
+      "atk": 107,
+      "int": 83,
+      "def": 98,
+      "spr": 88,
+      "spd": 97
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -200,12 +200,12 @@
       "poison"
     ],
     "stats": {
-      "hp": 55,
-      "atk": 59,
-      "int": 75,
-      "def": 65,
-      "spr": 71,
-      "spd": 65
+      "hp": 83,
+      "atk": 88,
+      "int": 112,
+      "def": 98,
+      "spr": 107,
+      "spd": 97
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -224,12 +224,12 @@
       "kyo"
     ],
     "stats": {
-      "hp": 65,
-      "atk": 72,
-      "int": 75,
-      "def": 58,
-      "spr": 55,
-      "spd": 65
+      "hp": 98,
+      "atk": 107,
+      "int": 112,
+      "def": 88,
+      "spr": 83,
+      "spd": 97
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -251,12 +251,12 @@
       "earth"
     ],
     "stats": {
-      "hp": 75,
-      "atk": 60,
-      "int": 60,
-      "def": 75,
-      "spr": 72,
-      "spd": 48
+      "hp": 112,
+      "atk": 90,
+      "int": 90,
+      "def": 112,
+      "spr": 109,
+      "spd": 72
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -278,12 +278,12 @@
       "thunder"
     ],
     "stats": {
-      "hp": 58,
-      "atk": 72,
-      "int": 70,
-      "def": 53,
-      "spr": 58,
-      "spd": 79
+      "hp": 87,
+      "atk": 108,
+      "int": 105,
+      "def": 79,
+      "spr": 87,
+      "spd": 119
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -301,12 +301,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 71,
-      "atk": 70,
-      "int": 70,
-      "def": 70,
-      "spr": 70,
-      "spd": 70
+      "hp": 106,
+      "atk": 106,
+      "int": 105,
+      "def": 105,
+      "spr": 105,
+      "spd": 105
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -326,12 +326,12 @@
       "blood"
     ],
     "stats": {
-      "hp": 80,
-      "atk": 75,
-      "int": 50,
-      "def": 65,
-      "spr": 55,
-      "spd": 65
+      "hp": 119,
+      "atk": 112,
+      "int": 76,
+      "def": 98,
+      "spr": 83,
+      "spd": 97
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -351,12 +351,12 @@
       "poison"
     ],
     "stats": {
-      "hp": 50,
-      "atk": 55,
-      "int": 80,
-      "def": 65,
-      "spr": 75,
-      "spd": 65
+      "hp": 76,
+      "atk": 83,
+      "int": 119,
+      "def": 98,
+      "spr": 112,
+      "spd": 97
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -376,12 +376,12 @@
       "kyo"
     ],
     "stats": {
-      "hp": 65,
-      "atk": 75,
-      "int": 80,
-      "def": 55,
-      "spr": 50,
-      "spd": 65
+      "hp": 98,
+      "atk": 112,
+      "int": 119,
+      "def": 83,
+      "spr": 76,
+      "spd": 97
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -402,12 +402,12 @@
     ],
     "stab": 1.3,
     "stats": {
-      "hp": 65,
-      "atk": 65,
-      "int": 65,
-      "def": 65,
-      "spr": 65,
-      "spd": 65
+      "hp": 98,
+      "atk": 98,
+      "int": 98,
+      "def": 97,
+      "spr": 97,
+      "spd": 97
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -427,12 +427,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 52,
-      "atk": 52,
-      "int": 52,
-      "def": 52,
-      "spr": 52,
-      "spd": 52
+      "hp": 78,
+      "atk": 78,
+      "int": 78,
+      "def": 78,
+      "spr": 78,
+      "spd": 78
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -452,12 +452,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 84,
-      "int": 56,
-      "def": 70,
-      "spr": 70,
-      "spd": 70
+      "hp": 122,
+      "atk": 146,
+      "int": 97,
+      "def": 122,
+      "spr": 122,
+      "spd": 121
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -477,12 +477,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 56,
-      "int": 84,
-      "def": 70,
-      "spr": 70,
-      "spd": 70
+      "hp": 122,
+      "atk": 97,
+      "int": 146,
+      "def": 122,
+      "spr": 122,
+      "spd": 121
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -502,12 +502,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 70,
-      "int": 70,
-      "def": 70,
-      "spr": 70,
-      "spd": 70
+      "hp": 122,
+      "atk": 122,
+      "int": 122,
+      "def": 122,
+      "spr": 121,
+      "spd": 121
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -527,12 +527,12 @@
       "water"
     ],
     "stats": {
-      "hp": 77,
-      "atk": 77,
-      "int": 56,
-      "def": 70,
-      "spr": 81,
-      "spd": 59
+      "hp": 134,
+      "atk": 134,
+      "int": 97,
+      "def": 122,
+      "spr": 140,
+      "spd": 103
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -552,12 +552,12 @@
       "water"
     ],
     "stats": {
-      "hp": 77,
-      "atk": 49,
-      "int": 84,
-      "def": 70,
-      "spr": 81,
-      "spd": 59
+      "hp": 134,
+      "atk": 85,
+      "int": 146,
+      "def": 122,
+      "spr": 140,
+      "spd": 103
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -577,12 +577,12 @@
       "water"
     ],
     "stats": {
-      "hp": 77,
-      "atk": 63,
-      "int": 70,
-      "def": 70,
-      "spr": 81,
-      "spd": 59
+      "hp": 134,
+      "atk": 109,
+      "int": 122,
+      "def": 122,
+      "spr": 140,
+      "spd": 103
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -602,12 +602,12 @@
       "fire"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 95,
-      "int": 56,
-      "def": 63,
-      "spr": 59,
-      "spd": 77
+      "hp": 122,
+      "atk": 164,
+      "int": 97,
+      "def": 110,
+      "spr": 103,
+      "spd": 134
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -627,12 +627,12 @@
       "fire"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 67,
-      "int": 84,
-      "def": 63,
-      "spr": 59,
-      "spd": 77
+      "hp": 122,
+      "atk": 116,
+      "int": 146,
+      "def": 109,
+      "spr": 103,
+      "spd": 134
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -652,12 +652,12 @@
       "fire"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 81,
-      "int": 70,
-      "def": 63,
-      "spr": 59,
-      "spd": 77
+      "hp": 122,
+      "atk": 140,
+      "int": 122,
+      "def": 109,
+      "spr": 103,
+      "spd": 134
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -677,12 +677,12 @@
       "earth"
     ],
     "stats": {
-      "hp": 77,
-      "atk": 84,
-      "int": 49,
-      "def": 84,
-      "spr": 70,
-      "spd": 56
+      "hp": 134,
+      "atk": 146,
+      "int": 85,
+      "def": 146,
+      "spr": 122,
+      "spd": 97
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -702,12 +702,12 @@
       "earth"
     ],
     "stats": {
-      "hp": 77,
-      "atk": 56,
-      "int": 77,
-      "def": 84,
-      "spr": 70,
-      "spd": 56
+      "hp": 134,
+      "atk": 97,
+      "int": 134,
+      "def": 146,
+      "spr": 122,
+      "spd": 97
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -727,12 +727,12 @@
       "earth"
     ],
     "stats": {
-      "hp": 77,
-      "atk": 70,
-      "int": 63,
-      "def": 84,
-      "spr": 70,
-      "spd": 56
+      "hp": 134,
+      "atk": 122,
+      "int": 109,
+      "def": 146,
+      "spr": 122,
+      "spd": 97
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -752,12 +752,12 @@
       "thunder"
     ],
     "stats": {
-      "hp": 60,
-      "atk": 84,
-      "int": 63,
-      "def": 59,
-      "spr": 70,
-      "spd": 84
+      "hp": 103,
+      "atk": 146,
+      "int": 110,
+      "def": 103,
+      "spr": 122,
+      "spd": 146
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -777,12 +777,12 @@
       "thunder"
     ],
     "stats": {
-      "hp": 60,
-      "atk": 56,
-      "int": 91,
-      "def": 59,
-      "spr": 70,
-      "spd": 84
+      "hp": 104,
+      "atk": 97,
+      "int": 158,
+      "def": 103,
+      "spr": 122,
+      "spd": 146
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -802,12 +802,12 @@
       "thunder"
     ],
     "stats": {
-      "hp": 60,
-      "atk": 70,
-      "int": 77,
-      "def": 59,
-      "spr": 70,
-      "spd": 84
+      "hp": 103,
+      "atk": 122,
+      "int": 134,
+      "def": 103,
+      "spr": 122,
+      "spd": 146
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -827,12 +827,12 @@
       "blood"
     ],
     "stats": {
-      "hp": 81,
-      "atk": 91,
-      "int": 45,
-      "def": 70,
-      "spr": 63,
-      "spd": 70
+      "hp": 140,
+      "atk": 158,
+      "int": 79,
+      "def": 122,
+      "spr": 109,
+      "spd": 122
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -852,12 +852,12 @@
       "blood"
     ],
     "stats": {
-      "hp": 81,
-      "atk": 63,
-      "int": 73,
-      "def": 70,
-      "spr": 63,
-      "spd": 70
+      "hp": 140,
+      "atk": 109,
+      "int": 128,
+      "def": 122,
+      "spr": 109,
+      "spd": 122
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -877,12 +877,12 @@
       "blood"
     ],
     "stats": {
-      "hp": 81,
-      "atk": 77,
-      "int": 59,
-      "def": 70,
-      "spr": 63,
-      "spd": 70
+      "hp": 140,
+      "atk": 134,
+      "int": 103,
+      "def": 122,
+      "spr": 109,
+      "spd": 122
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -902,12 +902,12 @@
       "poison"
     ],
     "stats": {
-      "hp": 60,
-      "atk": 77,
-      "int": 66,
-      "def": 70,
-      "spr": 77,
-      "spd": 70
+      "hp": 103,
+      "atk": 134,
+      "int": 115,
+      "def": 122,
+      "spr": 134,
+      "spd": 122
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -927,12 +927,12 @@
       "poison"
     ],
     "stats": {
-      "hp": 60,
-      "atk": 49,
-      "int": 94,
-      "def": 70,
-      "spr": 77,
-      "spd": 70
+      "hp": 103,
+      "atk": 85,
+      "int": 164,
+      "def": 122,
+      "spr": 134,
+      "spd": 122
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -952,12 +952,12 @@
       "poison"
     ],
     "stats": {
-      "hp": 60,
-      "atk": 63,
-      "int": 80,
-      "def": 70,
-      "spr": 77,
-      "spd": 70
+      "hp": 103,
+      "atk": 109,
+      "int": 140,
+      "def": 122,
+      "spr": 134,
+      "spd": 122
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -977,12 +977,12 @@
       "kyo"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 91,
-      "int": 67,
-      "def": 63,
-      "spr": 59,
-      "spd": 70
+      "hp": 122,
+      "atk": 158,
+      "int": 116,
+      "def": 109,
+      "spr": 103,
+      "spd": 122
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -1002,12 +1002,12 @@
       "kyo"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 63,
-      "int": 95,
-      "def": 63,
-      "spr": 59,
-      "spd": 70
+      "hp": 122,
+      "atk": 110,
+      "int": 164,
+      "def": 109,
+      "spr": 103,
+      "spd": 122
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -1027,12 +1027,12 @@
       "kyo"
     ],
     "stats": {
-      "hp": 70,
-      "atk": 77,
-      "int": 81,
-      "def": 63,
-      "spr": 59,
-      "spd": 70
+      "hp": 122,
+      "atk": 134,
+      "int": 140,
+      "def": 109,
+      "spr": 103,
+      "spd": 122
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -1047,12 +1047,12 @@
     },
     "hidden": true,
     "stats": {
-      "hp": 70,
-      "atk": 84,
-      "int": 84,
-      "def": 56,
-      "spr": 56,
-      "spd": 70
+      "hp": 122,
+      "atk": 146,
+      "int": 146,
+      "def": 97,
+      "spr": 97,
+      "spd": 122
     },
     "locomotion": "walk",
     "maxChain": 3,
@@ -1067,12 +1067,12 @@
     },
     "hidden": true,
     "stats": {
-      "hp": 77,
-      "atk": 53,
-      "int": 52,
-      "def": 84,
-      "spr": 84,
-      "spd": 70
+      "hp": 134,
+      "atk": 91,
+      "int": 91,
+      "def": 146,
+      "spr": 146,
+      "spd": 122
     },
     "locomotion": "float",
     "maxChain": 3,
@@ -1087,12 +1087,12 @@
     },
     "hidden": true,
     "stats": {
-      "hp": 81,
-      "atk": 77,
-      "int": 59,
-      "def": 63,
-      "spr": 63,
-      "spd": 77
+      "hp": 140,
+      "atk": 134,
+      "int": 103,
+      "def": 110,
+      "spr": 109,
+      "spd": 134
     },
     "locomotion": "fly",
     "maxChain": 3,
@@ -1107,12 +1107,12 @@
     },
     "hidden": true,
     "stats": {
-      "hp": 77,
-      "atk": 70,
-      "int": 70,
-      "def": 70,
-      "spr": 77,
-      "spd": 77
+      "hp": 134,
+      "atk": 122,
+      "int": 122,
+      "def": 121,
+      "spr": 134,
+      "spd": 134
     },
     "locomotion": "walk",
     "maxChain": 3,

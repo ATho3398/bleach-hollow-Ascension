@@ -306,8 +306,8 @@ describe('스토리 원정', () => {
     expect(e.story!.bossResult!.won).toBe(false);
   });
 
-  it('원정 중간 저장 형식 6: 스토리 진행·보스 대기 왕복, 깨진 스토리 값은 이어하지 않는다', () => {
-    expect(EXPEDITION_SNAPSHOT_VERSION).toBe(6);
+  it('원정 중간 저장 형식 7(C.58 때 6, C.75 난이도 추가): 스토리 진행·보스 대기 왕복, 깨진 스토리 값은 이어하지 않는다', () => {
+    expect(EXPEDITION_SNAPSHOT_VERSION).toBe(7);
     const e = storyExp('hollow', 'ep4');
     for (let g = 0; g < 10 && !e.pending?.boss; g++) {
       walkToBattle(e);

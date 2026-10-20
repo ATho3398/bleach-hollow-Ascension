@@ -1,7 +1,8 @@
 // 카드 배치 단계 (GDD 17-1): 원정을 시작하기 직전, 덱의 지형 타일을 12칸 길에 놓는다. 길 순서가 보이는 두 곳 중 하나(다른 하나는 바퀴 끝 팝업).
 // 엔진 상태는 이 화면이 닫힐 때까지 저장하지 않는다 — 취소하면 이어하던 원정은 그대로 남는다.
-import { beginPlanning, chooseGround, finishPlanning, type ExpeditionState } from '../engine/expedition';
-import { groundName, type FactionConfig } from '../engine/faction';
+import { beginPlanning, chooseDifficulty, chooseGround, finishPlanning, type ExpeditionState } from '../engine/expedition';
+import { difficultyLabels, difficultyText, groundName, type FactionConfig } from '../engine/faction';
+import { clampStreak, difficultyGoldMultiplier, difficultyRewardMultiplier, MAX_DIFFICULTY, recommendedDifficulty, streakEnemyFactor } from '../engine/difficulty';
 import { GROUNDS, type GroundDef } from '../data/grounds';
 import { elementName } from '../data/elements';
 import { synergyName, tileName } from '../data/tiles';
@@ -15,6 +16,24 @@ export interface PlanViewHandlers {
   onHelp: () => void;
   /** [스토리] 탭 (GDD 25-7): 있으면 머리에 [자유 원정]/[스토리] 탭을 보인다 */
   onStory?: () => void;
+  /** 연 원정 난이도 ★ 최대 (GDD 32-1, 세이브 difficulty.unlocked). 없으면 1 */
+  unlockedDifficulty?: number;
+  /** 연속 클리어 (GDD 32-1 10번, 세이브 difficulty.streak): 그 ★를 고르면 "★3 · 연속 4" 와 적·보상 가산을 보인다 */
+  streak?: { star: number; count: number };
+}
+
+/** 난이도 한 줄 설명: "★3 · 연속 4 · 권장: 적은 3단계(아쥬커스) 기준 +20% · 먹이·노력치 +70% · 골드 +38%" (데이터에서 조합, GDD 32-1 5·10·11번) */
+export function difficultyInfo(faction: FactionConfig, star: number, tierIndex: number, streak = 0): string {
+  const L = difficultyLabels(faction);
+  const n = clampStreak(streak);
+  const pct = (m: number) => `${m >= 1 ? '+' : ''}${Math.round((m - 1) * 100)}%`;
+  const food = difficultyRewardMultiplier(star, n);
+  const gold = difficultyGoldMultiplier(star, n);
+  const enemy = streakEnemyFactor(n);
+  const rec = star === recommendedDifficulty(tierIndex) ? ` · ${L.recommended}` : '';
+  const head = `${difficultyText(faction, star)}${n > 0 ? ` · 연속 ${n}` : ''}${rec}`;
+  const bonus = [food > 1 ? `먹이·노력치 ${pct(food)}` : '', gold > 1 ? `골드 ${pct(gold)}` : ''].filter(Boolean).join(' · ');
+  return `${head}: 적은 ${star}단계(${faction.tierNames[star - 1] ?? ''}) 기준${enemy > 1 ? ` ${pct(enemy)}` : ''}${bonus ? ` · ${bonus}` : ''}`;
 }
 
 /** 사냥터 한 줄 설명: 종족 설정 설명 + 자주 나오는 속성 + 적 강도 (데이터에서 조합, GDD 24-2) */
@@ -56,6 +75,36 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   };
   grounds.append(...gBtns);
   pick(GROUNDS.find((g) => g.id === exp.groundId) ?? GROUNDS[0]!);
+
+  // 난이도 ★ 고르기 (GDD 32-1 4번): 열린 ★ 만 고를 수 있고(n단계에 처음 닿으면 ★n), 기본 = 내 단계(권장 표시), 잠긴 ★ 는 열리는 단계를 보인다
+  const L = difficultyLabels(faction);
+  const unlocked = Math.max(1, Math.min(MAX_DIFFICULTY, h.unlockedDifficulty ?? 1));
+  const rec = recommendedDifficulty(tierIndex);
+  const diff = el('div', 'bha-plan__grounds bha-plan__difficulty');
+  diff.setAttribute('role', 'group');
+  diff.setAttribute('aria-label', L.name);
+  const dInfo = el('p', 'bha-plan__sub');
+  dInfo.dataset.difficultyInfo = '';
+  const dBtns = Array.from({ length: MAX_DIFFICULTY }, (_, i) => {
+    const star = i + 1;
+    const open = star <= unlocked;
+    const b = button({ label: difficultyText(faction, star), icon: open ? undefined : 'i-lock', size: 'small', disabled: !open, onClick: () => pickStar(star) });
+    if (!open) b.title = L.locked.replace('{tier}', String(star));
+    if (star === rec) b.append(' ', el('span', 'bha-tag bha-tag--kind', L.recommended));
+    b.dataset.difficulty = String(star);
+    return b;
+  });
+  const pickStar = (star: number) => {
+    chooseDifficulty(exp, star, unlocked);
+    dBtns.forEach((b, i) => {
+      const on = i + 1 === star;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    dInfo.textContent = difficultyInfo(faction, star, tierIndex, h.streak?.star === star ? h.streak.count : 0);
+  };
+  diff.append(el('span', 'bha-plan__label', L.name), ...dBtns);
+  pickStar(Math.min(unlocked, exp.difficulty));
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   const head = el('div', `bha-exp__head${h.onStory ? ' bha-depart-head' : ''}`);
   // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
@@ -68,6 +117,6 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   start.dataset.sc = 'go';
   // 한 줄 설명: 고른 사냥터(이름·설명·자주 나오는 속성·강도) + 배치 요령 (화면 높이가 낮아 두 줄 안에 둔다)
   const sub = el('p', 'bha-plan__sub', '덱의 타일을 길 위 칸에 놓는다. 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.');
-  const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, gInfo, sub, planner.el, start);
+  const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, gInfo, diff, dInfo, sub, planner.el, start);
   main.dataset.screen = 'expedition-plan';
 }

@@ -141,9 +141,14 @@ export function nextTier(e: EvolutionState): number | null {
   return isMaxTier(e) ? null : e.tierIndex + 2;
 }
 
-/** 그 단계 기준 능력치 = 종족값 합계 ÷ 6 (GDD 20-3): 적 능력치·체력·속도 환산의 기준 */
+/** 그 단계 기준 능력치 = 종족값 합계 ÷ 6 (GDD 20-3). C.75(32-1)부터 적 쪽(원정 난이도 ★n = n단계 기준)에만 쓰고, 내 쪽은 worldRefStat 하나로 환산한다 */
 export function refStatOf(tierIndex: number): number {
   return (SX.tierTotals[Math.min(tierIndex, SX.tierTotals.length - 1)] ?? SX.tierTotals[0]!) / STAT_IDS.length;
+}
+
+/** 세계 기준 능력치 (GDD 32-1): 1단계 기준 능력치 하나. 내 체력·평타 간격은 늘 이 값에 대한 비 — 단계가 올라도 나누는 값이 커지지 않는다 */
+export function worldRefStat(): number {
+  return refStatOf(0);
 }
 
 /** 지금 종족값: 진화체 값, 1단계는 종족 설정 baseStats */
@@ -260,7 +265,7 @@ function applyAbility(params: Partial<CombatParams>, ability: StatId | null): vo
 }
 
 /**
- * 진화 상태를 전투 파라미터에 싣는다: 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월체 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
+ * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월체 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
  * 전투 엔진은 종족을 모르고 이 값만 쓴다. buildCombatParams(빌드) 뒤에 부른다
  */
 export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0): void {
@@ -268,7 +273,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
   const form = e.formId ? tryGetForm(e.formId) : undefined;
   if (form?.maxChain !== undefined) params.maxChain = form.maxChain;
-  params.refStat = refStatOf(e.tierIndex);
+  // 내 쪽 기준은 세계 기준(고정). 적 기준(refStat)은 원정 난이도가 정한다 (src/engine/difficulty.ts) — 여기서 내 단계로 덮어쓰지 않는다
+  params.playerRefStat = worldRefStat();
   params.playerStats = currentStats(e, factionId, statBonus);
   params.playerElements = playerElementsOf(e);
   params.stabMultiplier = stabOf(e);

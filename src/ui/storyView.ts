@@ -1,7 +1,7 @@
 // 스토리 모드 화면 (GDD 25-4·25-7): 원정 출발 화면의 [스토리] 탭. 왼쪽 장 목록(잠긴 장은 열리는 단계) → 오른쪽 그 장의 화 목록(순서대로 열림, 클리어 표시, 목표·권장 단계, [도전]).
 // 장·화 이름과 대사는 종족별 스토리 데이터, 화면은 종족 id 로 분기하지 않는다.
 import { chapterContent, episodeKey, STORY_CHAPTERS, type StoryEpisode, type StoryObjective } from '../data/story';
-import { groundName, type FactionConfig } from '../engine/faction';
+import { difficultyText, groundName, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { bossName } from '../data/bosses';
 import { chapterOpen, episodeOpen, storyProgressOf, type SaveData } from '../game';
@@ -69,7 +69,7 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
     mark.append(icon(done ? 'i-check' : open ? 'i-flag-win' : 'i-lock'));
     const txt = el('div', 'bha-story-ep__text');
     const name = el('b', 'bha-story-ep__name', `${i + 1}화 ${ep.title}`);
-    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective)} · 권장 ${ep.recommendedTier}단계${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
+    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective)} · 권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
     txt.append(name, goal);
     const state = el('span', 'bha-story-ep__state', done ? `클리어${done.clears > 1 ? ` ×${done.clears}` : ''}` : open ? '' : '앞 화를 깨면 열린다');
     row.append(mark, txt, state);

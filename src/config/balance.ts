@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 40;
+export const BALANCE_VERSION = 41;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -199,13 +199,33 @@ export const BALANCE = {
     },
     // ── 능력치·성장 (GDD 20-3·20-4, 수치 provisional) ──
     stats: {
-      /** 단계별 종족값 합계 (index 0 = 1단계). 기준 능력치 = 합계 ÷ 6 — 적 능력치·체력 환산("기본 공격 N회분")의 기준 */
-      tierTotals: [300, 330, 360, 390, 420],
+      /** 단계별 종족값 합계 (index 0 = 1단계). 기준 능력치 = 합계 ÷ 6.
+       *  C.75 (GDD 32-1): 내 능력치는 절대값(세계 기준 = 1단계 기준 능력치 = tierTotals[0] ÷ 6 하나로 환산)이고, 적은 원정 난이도 ★n 의 기준 능력치(= n단계 기준)로 만든다.
+       *  단계 간격을 +10% 에서 +25% 로 벌려 한 단계 위·아래가 체감되게 (옛 300/330/360/390/420; C.75 1차 +20% 300/360/430/520/620 은 한 단계 위 일반 처치 시간이 권장의 0.77배라 0.70배가 되는 +25% 로) */
+      tierTotals: [300, 375, 470, 585, 730],
       /** 노력치 단계 상한: 합계(index = 단계)와 능력치 하나의 상한(합계 상한 × 비율). 진화해도 유지되고 상한만 오른다 */
       evCapTotal: [8, 16, 24, 32, 40],
       evCapPerStatRatio: 0.5,
       /** 능력치 절대 상한 (GDD 22-1 v4.7): 종족값 + 노력치 + 환생 계승이 이 값에서 멈춘다 (6개 모두) */
       statMax: 999,
+    },
+    /** 원정 난이도 ★ (GDD 32-1, C.75, provisional): 적 능력치 = ★n 의 기준 능력치(tierTotals[n-1] ÷ 6) × 성향.
+     *  k = ★n 기준 능력치 ÷ 세계 기준(★1). 적 체력·공격의 "기본 공격 N회분"은 그 난이도의 권장 단계 플레이어 기준이므로 ★이 오르면 체력·공격도 k 배 가까이 오른다
+     *  (hpGrowth·attackGrowth = 1 이면 정확히 k 배, 1 보다 작으면 그만큼 덜). 보상은 ★당 rewardPerStar 만큼 는다. 리스크는 그대로 */
+    difficulty: {
+      /** ★ 개수 = 단계 수 (tierTotals.length). ★n 은 n단계에 처음 닿으면 열린다(영구) */
+      /** 적 체력 배율 = 1 + (k − 1) × hpGrowth, 공격 배율 = 1 + (k − 1) × attackGrowth */
+      /** C.75 측정: 블록·필살·콤보 피해는 단계와 무관하게 커지지 않아(블록 생성 속도는 단계와 무관, 20-3 v3.6) 체력을 k 배로 하면 권장 단계 전투가 길어지고 강적 승률이 무너진다
+       *  (5단계 몸 ★5: 체력 ×2.43 → 강적 1%, ×1.86(0.6) → 40%, ×1.5 → 74%; 1단계 ★1 = 61%). 조정 2회: 0.6 → 0.45 — 권장 단계 일반 처치 시간·강적 승률이 ★1 과 같아지는 값 */
+      hpGrowth: 0.45,
+      attackGrowth: 1,
+      /** 보상 배율 (GDD 32-1 5·11번, 재화별): 먹이 굴림·흡수 노력치 = 1 + (★−1) × rewardPerStar + 연속 × streak.foodPerClear,
+       *  골드 = 1 + (★−1) × goldPerStar + min(연속 × streak.goldPerClear, streak.goldMaxBonus). 영옥은 배율 없음. 목표: ★5·10연속 골드 수입 ≤ ★1 의 2배 */
+      rewardPerStar: 0.25,
+      /** 기획 +15% → C.75 측정 ★5·10연속 골드 187 = ★1(새 몸) 86 의 2.18배 > 목표 2배 → +10% (조정 1회) */
+      goldPerStar: 0.1,
+      /** 연속 클리어 (GDD 32-1 10번): 같은 ★ 자유 원정을 귀환(클리어)할 때마다 다음 원정 적 체력·공격 +enemyPerClear(최대 maxClears 연속), 지거나 ★를 바꾸면 0 */
+      streak: { enemyPerClear: 0.05, maxClears: 10, foodPerClear: 0.05, goldPerClear: 0.02, goldMaxBonus: 0.2 },
     },
     /** 진화체 고유 특성 6종 (GDD 20-3·v4.0): 진화 순간 노력치가 가장 높은 능력치 방향. 이름은 src/data/evolution/abilities.json */
     abilities: {

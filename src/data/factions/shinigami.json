@@ -46,6 +46,7 @@
   "appearanceChange": false,
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
+  "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "현세 순찰 구역 / 루콘가이",
   "huntingGrounds": {
     "outskirts": {

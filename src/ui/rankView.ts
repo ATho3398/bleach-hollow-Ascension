@@ -5,7 +5,7 @@ import { RANK_COUNT, getHolder, type RankHolderDef } from '../data/ranks';
 import { enemyPatternKind } from '../data/enemies';
 import { pickFaction } from '../data/schema';
 import { elapsedSeconds, type CombatState } from '../engine/combat';
-import type { FactionConfig } from '../engine/faction';
+import { difficultyText, type FactionConfig } from '../engine/faction';
 import { holderAt, PLAYER_ID, rankOf, type ChallengeResult } from '../engine/rank';
 import { rankChallenge, type SaveData } from '../game';
 import { button, el, icon, notice, panel, provisionalTag, tag } from './bha/dom';
@@ -62,7 +62,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     if (mine) who.append(tag('나', 'kind'));
     else {
       const holder = getHolder(id);
-      who.append(elementDot(holder.element, faction.id), pickFaction(holder.name, faction.id));
+      who.append(elementDot(holder.element, faction.id), pickFaction(holder.name, faction.id), ' ', el('span', 'bha-faint', difficultyText(faction, holder.difficulty)));
     }
     row.append(num, name, who);
     list.append(row);

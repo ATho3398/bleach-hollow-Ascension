@@ -205,6 +205,8 @@ export interface RankBattleRecord {
   durationSeconds: number;
   tierIndex: number;
   formId: string | null;
+  /** C.75 (형식 29, GDD 32-1 7번): 상대 보유자의 난이도 ★. 옛 기록에는 없다 */
+  difficulty?: number;
 }
 
 export interface RunRecord {
@@ -234,6 +236,10 @@ export interface RunRecord {
   gold?: number;
   /** C.58 (세이브 형식 22, GDD 25-4): 스토리 화로 떠난 원정이면 그 장·화와 목표를 이뤘는가. 자유 원정은 없음 */
   story?: { chapterId: string; episodeId: string; cleared: boolean };
+  /** C.75 (세이브 형식 29, GDD 32-1 8번): 이 원정의 난이도 ★ (1~5). 형식 29 이전 기록에는 없다(그때는 적이 내 단계 기준이었다 — 채우지 않는다) */
+  difficulty?: number;
+  /** C.75 (GDD 32-1 10번): 출발 때 적용된 같은 ★ 연속 클리어 수 (0~10). 스토리 화는 0 */
+  streak?: number;
 }
 
 /** 보스전 1회 기록 (GDD 25-3, 세이브 형식 22): 이기든 지든 남긴다. 보스 칭호·히든 조건이 읽는다 */

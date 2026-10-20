@@ -11,11 +11,14 @@ export const RANK_COUNT = 10;
 export interface RankHolderDef extends EnemyDef {
   /** 처음 보유한 번호 (1 = 맨 위). 번호는 등급전으로 바뀌지만 이 NPC 의 강함(데이터)은 그대로다 */
   rank: number;
+  /** 이 보유자의 난이도 ★ (GDD 32-1 7번, C.75): 아래 번호일수록 낮고 No.1 = ★5. 적 기준 능력치·체력·공격 배율 */
+  difficulty: number;
 }
 
 export function parseHolder(r: unknown): RankHolderDef {
   const e = parseEnemy(r) as RankHolderDef;
   if (!Number.isInteger(e.rank) || e.rank < 1 || e.rank > RANK_COUNT) throw new Error(`번호 보유자 데이터 오류 (${e.id}): rank 1~${RANK_COUNT}`);
+  if (!Number.isInteger(e.difficulty) || e.difficulty < 1) throw new Error(`번호 보유자 데이터 오류 (${e.id}): difficulty 1 이상`);
   return e;
 }
 

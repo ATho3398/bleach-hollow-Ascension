@@ -9,6 +9,7 @@
       "title": "첫 사냥",
       "objective": { "type": "defeat", "enemyClass": "normal", "count": 3 },
       "recommendedTier": 1,
+      "difficulty": 1,
       "maxLaps": 3,
       "road": { "2": "prey-nest-a", "5": "prey-nest-b", "8": "prey-nest-a", "10": "rest-a" },
       "dialogue": {
@@ -22,6 +23,7 @@
       "title": "모래 위의 무리",
       "objective": { "type": "survive", "laps": 2 },
       "recommendedTier": 1,
+      "difficulty": 1,
       "maxLaps": 2,
       "road": { "3": "prey-nest-a", "6": "env-fog", "9": "prey-nest-b", "11": "rest-a" },
       "dialogue": {
@@ -34,6 +36,7 @@
       "title": "큰 놈의 힘",
       "objective": { "type": "absorb", "enemyClass": "elite", "count": 1 },
       "recommendedTier": 2,
+      "difficulty": 2,
       "maxLaps": 4,
       "road": { "2": "prey-nest-a", "5": "elite-den-a", "8": "rest-a", "10": "prey-nest-b" },
       "dialogue": {
@@ -46,6 +49,7 @@
       "title": "모래 아귀",
       "objective": { "type": "boss" },
       "recommendedTier": 2,
+      "difficulty": 2,
       "maxLaps": 1,
       "road": { "3": "prey-nest-a", "6": "rest-a", "9": "prey-nest-b" },
       "boss": { "id": "sand-maw", "cell": 11 },

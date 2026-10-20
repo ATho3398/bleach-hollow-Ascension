@@ -29,6 +29,7 @@ import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
 import { newlyAchieved } from './engine/tutorialGoals';
 import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
 import { DEFAULT_GROUND_ID } from './data/grounds';
+import { clampDifficulty, clampStreak, MAX_DIFFICULTY, recommendedDifficulty, unlockedByTier } from './engine/difficulty';
 import { canWear } from './data/skins';
 import { applyAbsenceHunger } from './engine/nest';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
@@ -38,7 +39,7 @@ import { isBossId } from './data/bosses';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 28;
+export const SAVE_FORMAT_VERSION = 29;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -93,6 +94,8 @@ export interface SaveData {
   rebirth: RebirthState;
   /** 착용한 꾸밈 (GDD 25-9, 형식 24): 분류(오라·색조·발밑·공격 이펙트 색·블록 바·기기 껍데기·이름표 테)마다 품목 id 하나. 스킨은 skin. 보유(shared.cosmetics)한 것만 */
   wear: WearState;
+  /** 원정 난이도 (GDD 32-1, 형식 29): 연 ★ 최대(n단계에 처음 닿으면 ★n, 영구 — 환생해도 유지)·마지막으로 고른 ★. 트랙마다 */
+  difficulty: DifficultyState;
   /** 스토리 진행 (GDD 25-4, 형식 22): 트랙(종족 id)마다 깬 화와 보상을 받은 장. 환생해도 남는다 */
   story: Record<string, StoryProgress>;
   /** 보스 도감 (GDD 25-3, 형식 22): 보스 id → 처치 수·첫 처치 시각. 세이브 하나에 하나(도감처럼 트랙 구분 없음) */
@@ -112,6 +115,15 @@ export interface SaveData {
   machine: MachineRecord;
 }
 
+export interface DifficultyState {
+  /** 연 난이도 최대 (1~MAX_DIFFICULTY). 최고 도달 단계 번호와 같다 */
+  unlocked: number;
+  /** 마지막으로 고른 난이도 (기록용·표시용; 기본 선택은 내 단계 = 권장) */
+  last: number;
+  /** 연속 클리어 (GDD 32-1 10번): 어느 ★를 몇 번 연속으로 클리어(귀환)했나. 지거나 다른 ★로 떠나면 0. 스토리 화는 세지 않는다 */
+  streak: { star: number; count: number };
+}
+
 export interface MachineRecord {
   /** 세이브를 만든 시각(ms). 형식 25 이전 세이브는 기록에 남은 가장 이른 시각 */
   createdAt: number;
@@ -123,7 +135,7 @@ export interface MachineRecord {
 export type WearState = Partial<Record<WearCategory, string>>;
 
 /** 캐릭터 트랙 하나가 가진 것 (GDD 22-3): 키우기(진화·특성·등급·환생·원정·수련)는 각자. 나머지 SaveData 필드는 슬롯 공유 */
-export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth', 'wear'] as const;
+export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth', 'wear', 'difficulty'] as const;
 export type TrackKey = (typeof TRACK_KEYS)[number];
 export type TrackData = Pick<SaveData, TrackKey> & {
   /** 이 트랙에서 떠난 시각(ms): 돌아오면 그동안의 허기가 오른다 (GDD 24-1 과 같은 계산) */
@@ -411,8 +423,53 @@ export function sanitizeMachine(raw: unknown, fallbackAt: number): MachineRecord
 export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
   return {
     factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), runLog: emptyRunLog(), activeExpedition: null,
-    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(),
+    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(), difficulty: { unlocked: 1, last: 1, streak: { star: 1, count: 0 } },
   };
+}
+
+/** 이 트랙이 닿아 본 최고 단계(tierIndex): 지금 단계·진화 기록·환생(5단계에서만 한다) (GDD 32-1 8번 마이그레이션·★ 열림) */
+export function maxTierReached(t: Pick<SaveData, 'evolution' | 'runLog' | 'rebirth'>): number {
+  let best = t.evolution?.tierIndex ?? 0;
+  for (const e of t.runLog?.tiers?.evolutions ?? []) if (typeof e.toTier === 'number' && e.toTier > best) best = e.toTier;
+  if ((t.rebirth?.count ?? 0) > 0) best = Math.max(best, MAX_DIFFICULTY - 1);
+  return Math.max(0, Math.min(MAX_DIFFICULTY - 1, best));
+}
+
+/** 난이도 상태 보정: 연 ★ 는 최고 도달 단계 이상, 마지막 선택은 1~연 ★ 안 (없거나 깨졌으면 권장 ★) */
+export function sanitizeDifficulty(t: Pick<SaveData, 'evolution' | 'runLog' | 'rebirth'> & { difficulty?: unknown }): DifficultyState {
+  const d = (typeof t.difficulty === 'object' && t.difficulty !== null ? t.difficulty : {}) as Partial<DifficultyState>;
+  const unlocked = Math.max(unlockedByTier(maxTierReached(t)), typeof d.unlocked === 'number' && Number.isFinite(d.unlocked) ? clampDifficulty(d.unlocked) : 1);
+  const want = typeof d.last === 'number' && Number.isFinite(d.last) ? clampDifficulty(d.last) : recommendedDifficulty(t.evolution?.tierIndex ?? 0);
+  const st = (typeof d.streak === 'object' && d.streak !== null ? d.streak : {}) as Partial<{ star: number; count: number }>;
+  const streak = { star: typeof st.star === 'number' ? clampDifficulty(st.star) : 1, count: typeof st.count === 'number' ? clampStreak(st.count) : 0 };
+  return { unlocked, last: Math.min(unlocked, want), streak };
+}
+
+/** 이 ★로 떠날 때 적용될 연속 클리어 수: 세이브의 연속이 같은 ★일 때만 (GDD 32-1 10번) */
+export function streakFor(save: Pick<SaveData, 'difficulty'>, star: number): number {
+  const s = save.difficulty.streak;
+  return s.star === star ? s.count : 0;
+}
+
+/** 자유 원정이 끝났을 때 연속 클리어 갱신: 귀환이면 같은 ★ +1(상한), 패배면 0, 다른 ★였으면 그 ★부터 다시. 스토리 화는 건드리지 않는다 */
+export function settleStreak(save: Pick<SaveData, 'difficulty'>, exp: Pick<ExpeditionState, 'difficulty' | 'outcome' | 'story'>): void {
+  if (exp.story) return;
+  const s = save.difficulty.streak;
+  const same = s.star === exp.difficulty;
+  save.difficulty.streak = exp.outcome === 'returned' ? { star: exp.difficulty, count: clampStreak((same ? s.count : 0) + 1) } : { star: exp.difficulty, count: 0 };
+}
+
+/** 단계에 닿으면 그 ★ 를 연다 (진화·로드 때). 새로 열렸으면 true */
+export function unlockDifficultyFor(save: Pick<SaveData, 'difficulty' | 'evolution'>): boolean {
+  const star = unlockedByTier(save.evolution.tierIndex);
+  if (star <= save.difficulty.unlocked) return false;
+  save.difficulty.unlocked = star;
+  return true;
+}
+
+/** 원정 출발 때 기본 난이도 = 내 단계(권장, GDD 32-1 4번). 연 범위 안 */
+export function defaultDifficulty(save: Pick<SaveData, 'difficulty' | 'evolution'>): number {
+  return Math.min(save.difficulty.unlocked, recommendedDifficulty(save.evolution.tierIndex));
 }
 
 /** 지금 트랙의 필드만 떼어 낸다 (같은 객체를 가리킨다) */
@@ -631,6 +688,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   addTrainingTicket(save.training);
   save.activeExpedition = null;
   save.lastScreen = 'room';
+  // 연속 클리어 (GDD 32-1 10번): 자유 원정 귀환 +1 / 패배 0
+  settleStreak(save, exp);
   // 스토리 화·보스 (GDD 25-3·25-4): 기록·보상. 칭호(보스 첫 처치·장 클리어)는 바로 아래 칭호 평가가 런 로그를 읽어 준다
   if (exp.story) exp.storySettled = settleStory(save, exp, nowMs);
   checkTitles(save, 'expedition', nowMs);
@@ -743,6 +802,8 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
   const r = evolve(save.evolution, save.build, { factionId: save.factionId, hunger: care.hunger, condition: care.condition, rebirths: save.rebirth.count }, nowMs);
   if (r.ok) {
     save.runLog.tiers.evolutions.push(r.record);
+    // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
+    unlockDifficultyFor(save);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
     checkTitles(save, 'evolution', nowMs);
     // 5단계에 닿으면 다른 종족 트랙이 열리고, 모든 트랙이 닿으면 붕옥 탭이 열린다 (GDD 22-3)
@@ -779,6 +840,7 @@ export function recordRankBattle(save: SaveData, s: CombatState, nowMs: number =
   const rec: RankBattleRecord = {
     at: nowMs, runsCompleted: runs, opponentId: r.opponentId, won, rankBefore: r.before, rankAfter: r.after, firstRanked: r.firstRanked,
     seed: s.seed, durationSeconds: battle.durationSeconds, tierIndex: save.evolution.tierIndex, formId: save.evolution.formId,
+    difficulty: RANK_HOLDERS.find((h) => h.id === r.opponentId)?.difficulty,
   };
   save.runLog.rankBattles.push(rec);
   if (won) save.shared.soulCrystals += BALANCE.provisional.soulCrystals.perRankWin;
@@ -1108,6 +1170,12 @@ export function migrateSave(raw: unknown): SaveData | null {
     // 옛 비압축 세이브는 그대로 열리고 다음 저장부터 압축된다
     save.meta.format = 28;
   }
+  if (save.meta.format < 29) {
+    // 형식 28 → 29 (C.75, GDD 32-1 8번 원정 난이도): 트랙마다 difficulty — 연 ★ = 최고 도달 단계(지금 단계·진화 기록·환생), 마지막 선택 = 권장 ★.
+    // 옛 원정 기록의 difficulty 는 채우지 않는다(그때는 적이 내 단계 기준이었다). 원정 중간 저장은 형식 7 이 아니면 이어하지 않는다
+    forEachTrack(save, (t) => { t.difficulty = sanitizeDifficulty({ ...t, difficulty: undefined }); });
+    save.meta.format = 29;
+  }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
@@ -1162,6 +1230,7 @@ function repairCore(save: SaveData): boolean {
 /** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
 function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string[]): void {
   t.runLog.shopPurchases = Array.isArray(t.runLog.shopPurchases) ? t.runLog.shopPurchases : [];
+  t.difficulty = sanitizeDifficulty(t);
   t.wear = sanitizeWear(t.wear, owned);
   t.runLog.bossBattles = Array.isArray(t.runLog.bossBattles) ? t.runLog.bossBattles : [];
   t.runLog.storyRuns = Array.isArray(t.runLog.storyRuns) ? t.runLog.storyRuns : [];

@@ -25,8 +25,8 @@
       ],
       "elementWeight": 2,
       "strength": {
-        "hp": 1.25,
-        "attack": 1.5
+        "hp": 1,
+        "attack": 1
       },
       "food": {
         "normalDropChance": 0.7,
@@ -52,8 +52,8 @@
       ],
       "elementWeight": 2.5,
       "strength": {
-        "hp": 1.5,
-        "attack": 2.0
+        "hp": 1,
+        "attack": 1
       },
       "food": {
         "normalDropChance": 0.8,

@@ -25,6 +25,8 @@ export interface BossDef {
   gimmick: BossGimmick;
   /** 처치 보상 보스 특성 (희귀, 흡수 화면 확정 후보) */
   trait: string;
+  /** 이 보스의 난이도 ★ (GDD 32-1 7번, C.75): 보스가 나오는 스토리 화의 ★ 와 같아야 한다(테스트가 본다). 자유 원정 등장은 미정 */
+  difficulty: number;
   provisional?: boolean;
 }
 
@@ -44,6 +46,7 @@ export function parseBoss(r: unknown): BossDef {
     else last = f;
     if (typeof m !== 'number' || m <= 0) errors.push('phases.attackSecondsMult: 양수');
   }
+  if (!Number.isInteger(b.difficulty) || (b.difficulty as number) < 1) errors.push('difficulty: 1 이상 정수');
   if (typeof b.trait !== 'string') errors.push('trait');
   else {
     try {
@@ -54,8 +57,8 @@ export function parseBoss(r: unknown): BossDef {
   }
   if (errors.length > 0) throw new Error(`보스 데이터 오류 (${String(b.id ?? '?')}): ${errors.join(', ')}`);
   const enemy = parseEnemy({ ...b, class: 'elite', rareChance: 0 });
-  const { id, name, gimmick, trait, provisional } = b as unknown as BossDef;
-  return { id, name, enemy: { ...enemy, rare: false }, phases: phases as unknown as BossPhase[], gimmick, trait, provisional };
+  const { id, name, gimmick, trait, provisional, difficulty } = b as unknown as BossDef;
+  return { id, name, enemy: { ...enemy, rare: false }, phases: phases as unknown as BossPhase[], gimmick, trait, difficulty, provisional };
 }
 
 export const BOSSES: readonly BossDef[] = ((raw as { bosses: unknown[] }).bosses).map(parseBoss);
