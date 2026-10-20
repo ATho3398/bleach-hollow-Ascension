@@ -180,13 +180,13 @@ describe('영옥 탭: 꾸밈 보유(공유)·착용(트랙별, 분류당 1개)',
     wearCosmetic(s, 'tint-mono');
     const other = s.otherTracks[0]!.factionId;
     expect(switchTrack(s, other, 3000)).toBe(true);
-    expect(s.wear).toEqual({});
+    expect(s.wear).toEqual({ keyring: 'keyring-orb' }); // 새 트랙도 기본 키링 (C.64)
     expect(row(s, 'tint-mono')!.owned).toBe(true);
     wearCosmetic(s, 'tint-mono');
     unwearCategory(s, 'tint');
     switchTrack(s, 'hollow', 4000);
     expect(s.wear.tint).toBe('tint-mono');
-    expect(wornCosmetics(s).map((c) => c.id)).toEqual(['tint-mono']);
+    expect(wornCosmetics(s).map((c) => c.id)).toEqual(['keyring-orb', 'tint-mono']);
   });
   it('확인 창·토스트 문구', () => {
     const s = rich();
@@ -259,16 +259,16 @@ describe('튜토리얼 영옥 +1 · 세이브 형식 24', () => {
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.skin).toBe('grandfisher');
-    expect(m.shared.cosmetics).toEqual(['skin-grandfisher']);
+    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'skin-grandfisher']); // 기본 키링 (C.64)
     expect([m.shared.rerollTickets, m.shared.deckSlots]).toEqual([0, 0]);
     expect(m.shared.jade).toBe(7 + 2 * SX.tutorialJade);
-    expect(m.wear).toEqual({});
+    expect(m.wear).toEqual({ keyring: 'keyring-orb' }); // 기본 키링 (C.64)
     expect(m.runLog.shopPurchases).toEqual([]);
-    // 입지 않은 옛 세이브: 보유 없음
+    // 입지 않은 옛 세이브: 산 것 없음(기본 키링만)
     const plain = JSON.parse(JSON.stringify(s)) as Record<string, any>;
     plain.meta.format = 23;
     delete plain.shared.cosmetics;
-    expect(migrateSave(plain)!.shared.cosmetics).toEqual([]);
+    expect(migrateSave(plain)!.shared.cosmetics).toEqual(['keyring-orb']);
   });
   it('저장 왕복: 깨진 착용·안 산 착용·상한 넘는 값은 보정', () => {
     const s = rich();
@@ -282,9 +282,9 @@ describe('튜토리얼 영옥 +1 · 세이브 형식 24', () => {
     raw.shared.cosmetics.push('nope');
     raw.skin = 'grandfisher'; // 안 샀다
     const m = migrateSave(raw)!;
-    expect(m.wear).toEqual({ bar: 'bar-ink' });
+    expect(m.wear).toEqual({ bar: 'bar-ink', keyring: 'keyring-orb' }); // 기본 키링 자동 착용 (C.64)
     expect([m.shared.rerollTickets, m.shared.deckSlots]).toEqual([SX.rerollMax, SX.deckSlotPrices.length]);
-    expect(m.shared.cosmetics).toEqual(['bar-ink']);
+    expect(m.shared.cosmetics).toEqual(['keyring-orb', 'bar-ink']);
     expect(m.skin).toBeNull();
   });
 });

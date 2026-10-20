@@ -34,10 +34,10 @@ import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebi
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 import { chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
-import { getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
+import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 25;
+export const SAVE_FORMAT_VERSION = 26;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -246,8 +246,18 @@ export interface SharedState {
   cosmetics: string[];
 }
 
+/** 기본으로 주는 꾸밈 id (GDD 29장: 영옥 구슬) */
+export const freeCosmeticIds = (): string[] => FREE_COSMETICS.map((c) => c.id);
+
+/** 새 트랙의 기본 착용: 기본으로 주는 꾸밈 (분류마다 하나) */
+export function defaultWear(): WearState {
+  const w: WearState = {};
+  for (const c of FREE_COSMETICS) w[c.category as WearCategory] = c.id;
+  return w;
+}
+
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: [] };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds() };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -263,7 +273,8 @@ export function sanitizeShared(raw: unknown): SharedState {
   }
   const dexRewards = Array.isArray(r.dexRewards) ? sanitizeClaims(r.dexRewards) : [];
   const SX = BALANCE.provisional.shop;
-  const cosmetics = Array.isArray(r.cosmetics) ? [...new Set(r.cosmetics.filter((id): id is string => typeof id === 'string' && getCosmetic(id) !== undefined))] : [];
+  // 기본으로 주는 꾸밈은 늘 보유 (GDD 29장)
+  const cosmetics = [...new Set([...freeCosmeticIds(), ...(Array.isArray(r.cosmetics) ? r.cosmetics.filter((id): id is string => typeof id === 'string' && getCosmetic(id) !== undefined) : [])])];
   return {
     soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards,
     rerollTickets: Math.min(SX.rerollMax, nonNegInt(r.rerollTickets)), deckSlots: Math.min(SX.deckSlotPrices.length, nonNegInt(r.deckSlots)), cosmetics,
@@ -399,7 +410,7 @@ export function sanitizeMachine(raw: unknown, fallbackAt: number): MachineRecord
 export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
   return {
     factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), runLog: emptyRunLog(), activeExpedition: null,
-    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: {},
+    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(),
   };
 }
 
@@ -1064,6 +1075,16 @@ export function migrateSave(raw: unknown): SaveData | null {
     // 형식 24 → 25 (C.62, GDD 27장 다마고치 모드 뒷면): 기기 기록 — 처음 시작한 날은 기록에 남은 가장 이른 시각(없으면 지금), 논 시간은 0부터
     if (!isRec(save.machine)) save.machine = { createdAt: earliestStamp(save) ?? Date.now(), playMs: 0 };
     save.meta.format = 25;
+  }
+  if (save.meta.format < 26) {
+    // 형식 25 → 26 (C.64, GDD 29장 기본 키링): 기본 꾸밈(영옥 구슬)을 보유로 주고, 같은 분류를 입은 것이 없는 트랙은 한 번 입힌다(그 뒤 해제는 그대로 둔다)
+    save.shared = { ...(save.shared ?? newSharedState()), cosmetics: [...new Set([...freeCosmeticIds(), ...(Array.isArray(save.shared?.cosmetics) ? save.shared.cosmetics : [])])] };
+    forEachTrack(save, (t) => {
+      const w: WearState = isRec(t.wear) ? t.wear : {};
+      for (const c of FREE_COSMETICS) if (w[c.category as WearCategory] === undefined) w[c.category as WearCategory] = c.id;
+      t.wear = w;
+    });
+    save.meta.format = 26;
   }
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);

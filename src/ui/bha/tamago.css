@@ -31,18 +31,25 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
   box-shadow: 0 0 0 1px var(--bha-line-1);
 }
 
-/* 옆면 두께 띠 (C.63, GDD 28장 2번): 뒤집는 동안만 3D 문맥을 켜서 몸체 왼쪽·오른쪽 끝에 뒤로 세운 띠가 보이게 한다(옆으로 선 순간 = 두께).
-   평소에는 납작하게 눌려 안 보인다. 색 = 껍데기 테두리 색을 어둡게. 그림 기기는 모양이 자유라 띠를 쓰지 않는다 */
-.bha-tama__edge {
-  position: absolute; z-index: -1; visibility: hidden;
-  background: linear-gradient(90deg, rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.15) 50%, rgb(0 0 0 / 0.45)), var(--cos-shell-line, var(--bha-line-2));
+/* 옆면 두께 띠 (C.63·C.64, GDD 28장 2번·29장): 뒤집는 동안만 3D 문맥을 켜서 몸체 왼쪽·오른쪽 끝에 뒤로 세운 띠가 보이게 한다(옆으로 선 순간 = 두께).
+   평소에는 납작하게 눌려 안 보인다. 두께 = 몸체 짧은 변의 약 18%(tamago.ts 가 폭으로 넣는다). 색 = 껍데기 테두리 색을 앞쪽은 밝게·뒤쪽은 어둡게.
+   칠은 ::before 에: 바깥쪽 면만 보이게(backface-visibility) 해서, 기기에서 멀어지는 쪽 띠가 모양이 자유로운 그림 기기 뒤로 비쳐 보이지 않게 한다.
+   옆면 그림(device-<look>-side.png)이 있으면 그 그림을 띠에 깐다(has-side-art, --side-art). 그림 = 기기 오른쪽 옆구리를 바깥에서 본 모양(앞면 쪽이 그림 왼쪽) */
+.bha-tama__edge { position: absolute; z-index: -1; visibility: hidden; transform-style: preserve-3d; }
+.bha-tama__edge::before {
+  content: ""; position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden;
+  background: var(--edge-shade), var(--cos-shell-line, var(--bha-line-2));
   border-radius: var(--bha-r-sm);
+  box-shadow: inset 0 0 0 1px var(--bha-line-1);
 }
-.bha-tama__edge--l { transform-origin: left center; transform: rotateY(90deg); }
-.bha-tama__edge--r { transform-origin: right center; transform: rotateY(-90deg); }
+.bha-tama__edge--l { --edge-shade: linear-gradient(90deg, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.6)); transform-origin: left center; transform: rotateY(90deg); }
+.bha-tama__edge--r { --edge-shade: linear-gradient(270deg, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.6)); transform-origin: right center; transform: rotateY(-90deg); }
 .bha-dev.is-tama-flipping, .bha-dev.is-tama-flipping .bha-tama { transform-style: preserve-3d; }
 .bha-dev.is-tama-flipping .bha-tama__edge { visibility: visible; }
-.bha-dev.has-tama-art .bha-tama__edge { display: none; }
+/* 3D 로 돌리는 동안은 겹침이 깊이 순이라, 같은 깊이의 몸체가 LCD·버튼을 덮지 않게 몸체만 살짝 뒤로 */
+.bha-dev.is-tama-flipping .bha-tama__body { transform: translateZ(-1px); }
+.bha-dev.has-side-art .bha-tama__edge::before { background: var(--side-art) center / 100% 100% no-repeat; border-radius: 0; box-shadow: none; }
+.bha-dev.has-side-art .bha-tama__edge--l::before { transform: rotateY(180deg) scaleX(-1); }  /* 왼쪽 띠는 그림을 좌우로 뒤집어 앞면 쪽이 같은 쪽을 보게 */
 
 /* 뒷면: 몸체 뒷면 + 스피커 구멍 + 기록 판 */
 .bha-tama__back {

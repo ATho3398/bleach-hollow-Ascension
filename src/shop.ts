@@ -131,7 +131,7 @@ export function jadeRows(save: SaveData, faction?: FactionConfig, files?: readon
     const price = cosmeticPrice(c);
     const owned = save.shared.cosmetics.includes(c.id);
     const short = !owned && wallet(save, 'jade') < price ? shortText('jade', price - wallet(save, 'jade')) : null;
-    return { id: c.id, currency: 'jade', name: cosmeticName(c, faction), effect: '', price, canBuy: !owned && short === null, lock: owned ? null : short, have: owned ? '보유' : null, confirm: true, category: c.category, owned, worn: isWorn(save, c) };
+    return { id: c.id, currency: 'jade', name: cosmeticName(c, faction), effect: '', price, canBuy: !owned && short === null, lock: owned ? null : short, have: owned ? (c.free ? '가짐' : '보유') : null, confirm: true, category: c.category, owned, worn: isWorn(save, c) };
   });
 }
 

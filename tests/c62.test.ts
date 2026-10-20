@@ -93,12 +93,12 @@ describe('기기 디자인 그림 자리 (그림이 없으면 상점에 안 보�
     expect(shopVisible(rewardOnly, [], ['device-sample-front.png'])).toBe(false);
     expect(shopVisible(rewardOnly, ['device-prize'], ['device-sample-front.png'])).toBe(true);
     const s = rich();
-    expect(grantCosmetic(s, 'keyring-orb')).toBe(true);
-    expect(grantCosmetic(s, 'keyring-orb')).toBe(false);
+    expect(grantCosmetic(s, 'keyring-bell')).toBe(true);
+    expect(grantCosmetic(s, 'keyring-bell')).toBe(false);
     expect(s.shared.jade).toBe(100);
     expect(s.runLog.shopPurchases).toEqual([]);
-    expect(wearCosmetic(s, 'keyring-orb')).toBe(true);
-    expect(s.wear.keyring).toBe('keyring-orb');
+    expect(wearCosmetic(s, 'keyring-bell')).toBe(true);
+    expect(s.wear.keyring).toBe('keyring-bell');
   });
   it('키링 그림: 종족 모양 파일 먼저, 다음 공용 파일, 없으면 CSS 모양', () => {
     const c = getCosmetic('keyring-charm')!;
@@ -284,7 +284,7 @@ describe('세이브 형식 25 (기기 기록)', () => {
     log.shopPurchases.push({ at: 1_780_000_000_000, factionId: 'hollow', itemId: 'calm', currency: 'gold', price: 25 });
     expect(earliestStamp(s)).toBe(1_780_000_000_000);
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(25);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION); // 25 → 26 은 c64.test.ts
     expect(m.machine).toEqual({ createdAt: 1_780_000_000_000, playMs: 0 });
     expect(m.runLog.shopPurchases).toHaveLength(2);
   });

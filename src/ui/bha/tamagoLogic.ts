@@ -78,9 +78,16 @@ export const BODY = {
   maxZoom: 0.82,
   /** 핀치·휠로 더 줄일 수 있는 가장 작은 실제 배율 (C.63, GDD 28장 1번: 0.70 → 0.40) */
   minScale: 0.4,
-  /** 옆면 두께 (C.63, GDD 28장 2번): 뒤집을 때 보이는 몸체 두께 띠 */
-  edge: 18,
+  /** 옆면 두께 (GDD 29장, C.64): 몸체 짧은 변에 비례. C.63 은 18px(844×390 기기에서 짧은 변 442px)였고 그 4.5배 = 약 81px */
+  edgeRatio: 0.1833,
 } as const;
+
+/** 옆면 두께(px): 몸체 짧은 변 × 비율. 옆면 그림이 있으면 그림 가로:세로 비율대로 앞면 높이에 맞추고, 데이터 `thickness`(앞면 높이 %)가 있으면 그것이 먼저 */
+export function edgeThickness(body: { w: number; h: number }, sideArt?: { w: number; h: number } | null, thicknessPct?: number | null): number {
+  if (thicknessPct && thicknessPct > 0) return r2(body.h * (thicknessPct / 100));
+  if (sideArt && sideArt.w > 0 && sideArt.h > 0) return r2(body.h * (sideArt.w / sideArt.h));
+  return r2(Math.min(body.w, body.h) * BODY.edgeRatio);
+}
 
 export interface Rect {
   x: number;

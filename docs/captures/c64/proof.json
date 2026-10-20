@@ -1,0 +1,87 @@
+{
+ "errors": [],
+ "shots": [
+  "01-new-save-keyring-landscape.png",
+  "04-flip-mid-30deg-landscape.png",
+  "04-flip-mid-60deg-landscape.png",
+  "04-flip-mid-85deg-landscape.png",
+  "02-old-save-auto-keyring-landscape.png",
+  "03-shop-keyring-have-landscape.png",
+  "05-art-device-front-landscape.png",
+  "05-art-side-flip-mid-60deg-landscape.png",
+  "01-new-save-keyring-portrait.png",
+  "04-flip-mid-30deg-portrait.png",
+  "04-flip-mid-60deg-portrait.png",
+  "04-flip-mid-85deg-portrait.png",
+  "02-old-save-auto-keyring-portrait.png",
+  "03-shop-keyring-have-portrait.png",
+  "05-art-device-front-portrait.png",
+  "05-art-side-flip-mid-60deg-portrait.png"
+ ],
+ "angles": {
+  "04-flip-mid-30-landscape": 31.2,
+  "04-flip-mid-60-landscape": 60.6,
+  "04-flip-mid-85-landscape": 86.5,
+  "05-art-side-flip-mid-60-landscape": 60.6,
+  "04-flip-mid-30-portrait": 31.2,
+  "04-flip-mid-60-portrait": 60.6,
+  "04-flip-mid-85-portrait": 86.5,
+  "05-art-side-flip-mid-60-portrait": 60.6
+ },
+ "states": {
+  "new-landscape": {
+   "format": 26,
+   "wear": {
+    "keyring": "keyring-orb"
+   },
+   "cosmetics": [
+    "keyring-orb"
+   ]
+  },
+  "old-landscape": {
+   "format": 26,
+   "wear": {
+    "keyring": "keyring-orb"
+   },
+   "cosmetics": [
+    "keyring-orb"
+   ]
+  },
+  "shop-landscape": {
+   "text": "영옥 구슬가짐 · 착용 중해제",
+   "cls": "bha-shoprow is-owned is-worn"
+  },
+  "new-portrait": {
+   "format": 26,
+   "wear": {
+    "keyring": "keyring-orb"
+   },
+   "cosmetics": [
+    "keyring-orb"
+   ]
+  },
+  "old-portrait": {
+   "format": 26,
+   "wear": {
+    "keyring": "keyring-orb"
+   },
+   "cosmetics": [
+    "keyring-orb"
+   ]
+  },
+  "shop-portrait": {
+   "text": "영옥 구슬가짐 · 착용 중해제",
+   "cls": "bha-shoprow is-owned is-worn"
+  }
+ },
+ "samples": {
+  "04-flip-mid-30-landscape": "0,7,17,28",
+  "04-flip-mid-60-landscape": "0,9,19,29,40,50,61",
+  "04-flip-mid-85-landscape": "0,7,17,28,38,48,59,69,80",
+  "05-art-side-flip-mid-60-landscape": "0,10,21,31,42,52",
+  "04-flip-mid-30-portrait": "0,7,17,28",
+  "04-flip-mid-60-portrait": "0,7,17,28,38,48,59",
+  "04-flip-mid-85-portrait": "0,7,17,28,38,48,59,69,80",
+  "05-art-side-flip-mid-60-portrait": "0,10,21,31,42,52"
+ }
+}

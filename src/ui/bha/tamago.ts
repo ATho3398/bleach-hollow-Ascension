@@ -3,7 +3,7 @@
 // 줌아웃 중에도 화면은 살아 움직이고 기기 버튼은 눌린다. 화면(LCD)을 탭하면 다시 줌인. [뒤집기] = 뒷면(몸체 뒷면 + 기록 판).
 // 키링 = 고리에 매단 감쇠 진자 2마디(tamagoLogic.ts), 탭·끌기 = 충격, 설정 [기울기로 흔들기]를 켜면 기울기를 중력 방향으로. 다마고치 모드일 때만 돌고 멈추면 쉰다.
 // 켜 둔 상태·기울기 설정은 이 브라우저에만(세이브 아님). 색은 꾸밈 토큰(--cos-shell-*, --bha-cos-keyring-*)만. 종족 분기 없음 — 이름·모양은 종족 설정.
-import { cosmeticName, deviceArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
+import { cosmeticName, deviceArt, deviceSideArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
 import { formName, tryGetForm } from '../../data/evolution';
 import { playerElementsOf } from '../../engine/evolution';
 import type { FactionConfig } from '../../engine/faction';
@@ -17,7 +17,7 @@ import { showToast } from './nest';
 import { isTypingTarget } from './shortcuts';
 import { toLocal, type Fit } from './viewport';
 import {
-  BODY, defaultGravity, deviceArtPlacement, isResting, kick, loadTamagoPrefs, plateRows, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
+  BODY, defaultGravity, deviceArtPlacement, edgeThickness, isResting, kick, loadTamagoPrefs, plateRows, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
   TAMAGO_EVENT, toDeviceVec, clampView, zoomAt, wheelFactor, VIEW_HOME, type Pendulum, type Rect, type TamagoPrefs, type TamaLayout, type TamaView,
 } from './tamagoLogic';
 
@@ -104,6 +104,9 @@ export function initTamago(dev: Device): Tamago {
   let artSpec: DeviceArtSpec | null = null;
   let artNat: { w: number; h: number } | null = null;
   let artBox: ReturnType<typeof deviceArtPlacement<DeviceButton>> | null = null;
+  /** 옆면 그림(`device-<look>-side.png`, GDD 29장)의 실제 크기 — 있으면 가로:세로 비율이 두께 */
+  let sideNat: { w: number; h: number } | null = null;
+  let thicknessPct: number | null = null;
   /** 다마고치 모드 안 사용자 확대·이동 (핀치·휠·끌기) */
   let view: TamaView = VIEW_HOME;
   /** 키링에 걸리는 중력 (기기 안 좌표): 기울기를 안 쓰면 화면 아래 */
@@ -118,7 +121,7 @@ export function initTamago(dev: Device): Tamago {
   bodyArt.alt = '';
   bodyArt.hidden = true;
   const ring = el('div', 'bha-tama__ring');
-  // 옆면 두께 띠 (C.63, GDD 28장 2번): 뒤집는 동안만 3D 로 세워 종이처럼 안 보이게. 옆면 그림 규칙은 사용자 확인 전이라 CSS 띠만
+  // 옆면 두께 띠 (C.63·C.64, GDD 28장 2번·29장): 뒤집는 동안만 3D 로 세워 종이처럼 안 보이게. 옆면 그림이 있으면 그 그림, 없으면 몸체 색 CSS 띠
   const edgeL = el('div', 'bha-tama__edge bha-tama__edge--l');
   const edgeR = el('div', 'bha-tama__edge bha-tama__edge--r');
   const backFace = el('div', 'bha-tama__back');
@@ -212,7 +215,11 @@ export function initTamago(dev: Device): Tamago {
     artSpec = c && art ? c.device! : null;
     artNat = null;
     artBox = null;
+    sideNat = null;
+    thicknessPct = c && art ? c.thickness ?? null : null;
     frame.classList.toggle('has-tama-art', false);
+    frame.classList.toggle('has-side-art', false);
+    for (const e of [edgeL, edgeR]) e.style.removeProperty('--side-art');
     bodyArt.hidden = true;
     backArt.hidden = true;
     if (!c || !art) return relayout();
@@ -228,6 +235,21 @@ export function initTamago(dev: Device): Tamago {
     };
     bodyArt.onload = place;
     if (bodyArt.complete) place();
+    // 옆면 그림 (없으면 CSS 두께)
+    const sidePath = deviceSideArt(c);
+    if (sidePath) {
+      const img = new Image();
+      img.onload = () => {
+        if (artId !== c.id || !img.naturalWidth) return;
+        sideNat = { w: img.naturalWidth, h: img.naturalHeight };
+        // 사용자 지정 속성 안의 url() 은 스타일시트 위치 기준이라(assets/ 밑) 문서 기준 절대 주소로 넣는다
+        const abs = new URL(`${BASE}${sidePath}`, document.baseURI).href;
+        for (const e of [edgeL, edgeR]) e.style.setProperty('--side-art', `url("${abs}")`);
+        frame.classList.add('has-side-art');
+        relayout();
+      };
+      img.src = `${BASE}${sidePath}`;
+    }
   };
   /** 지금 LCD 의 기기 안 자리 (그림 기기의 화면 구멍에 맞출 것) */
   const lcdRect = (): Rect => {
@@ -278,8 +300,9 @@ export function initTamago(dev: Device): Tamago {
     if (!layout) return;
     box(body, layout.body);
     box(backFace, layout.body);
-    box(edgeL, { x: layout.body.x, y: layout.body.y, w: BODY.edge, h: layout.body.h });
-    box(edgeR, { x: layout.body.x + layout.body.w - BODY.edge, y: layout.body.y, w: BODY.edge, h: layout.body.h });
+    const thick = edgeThickness(layout.body, sideNat, thicknessPct);
+    box(edgeL, { x: layout.body.x, y: layout.body.y, w: thick, h: layout.body.h });
+    box(edgeR, { x: layout.body.x + layout.body.w - thick, y: layout.body.y, w: thick, h: layout.body.h });
     if (artBox) {
       box(bodyArt, artBox.box);
       box(backArt, { x: 0, y: 0, w: artBox.box.w, h: artBox.box.h });

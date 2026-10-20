@@ -39,10 +39,10 @@ function playOut(s: CombatState): CombatEvent[] {
 
 describe('버전 (S-18)', () => {
   it('패치 C.63 / 단계 S-18, BALANCE 39, 세이브 형식 25 그대로(세이브 구조 변화 없음)', () => {
-    expect(PATCH_LABEL).toBe('C.63');
-    expect(STAGE_LABEL).toBe('S-18');
+    expect(PATCH_LABEL).toMatch(/^C\.\d+$/); // C.64 에서 C.64 / S-18b
+    expect(STAGE_LABEL).toMatch(/^S-/);
     expect(BALANCE_VERSION).toBe(39);
-    expect(SAVE_FORMAT_VERSION).toBe(25);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(25); // C.64 에서 26 (형식 26 검사는 c64.test.ts)
   });
 });
 
@@ -164,7 +164,7 @@ describe('다마고치 모드 축소·두께 (28장 1·2번)', () => {
     const css = src('src/ui/bha/tamago.css');
     expect(css).toContain('.bha-dev.is-tama-flipping .bha-tama__edge { visibility: visible; }');
     expect(css.slice(css.indexOf('.bha-tama__edge {'), css.indexOf('.bha-tama__edge--l'))).not.toMatch(/#[0-9a-f]{3,6}\b/i);
-    expect(BODY.edge).toBeGreaterThan(0);
+    expect(BODY.edgeRatio).toBeGreaterThan(0); // 두께 값은 c64.test.ts (4.5배)
   });
 });
 

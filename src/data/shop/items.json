@@ -436,7 +436,8 @@
       "id": "keyring-orb",
       "category": "keyring",
       "name": "영옥 구슬",
-      "look": "orb"
+      "look": "orb",
+      "free": true
     }
   ],
   "devices": [
