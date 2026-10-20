@@ -45,7 +45,7 @@ describe('2차 품목 표 (25-11)', () => {
   it('BALANCE_VERSION 37 이상, 세이브 형식 24 이상 (C.61 당시 37·C.61·S-16b·24 — 이후 패치가 올린다)', () => {
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(37);
     expect(PATCH_LABEL).toMatch(/^C\.\d+$/);
-    expect(STAGE_LABEL).toMatch(/^S-/);
+    expect(STAGE_LABEL).toMatch(/^[A-Z]+-\d+[a-z]?$/); // C.69 부터 병렬 단계(B-1·Q-4·H-1)도 허용
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(24);
   });
   it('새 코드 파일에 종족 id 분기가 없다', () => {

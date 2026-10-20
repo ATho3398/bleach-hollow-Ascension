@@ -32,7 +32,7 @@ const rich = (fid = 'hollow'): SaveData => {
 describe('버전·데이터 (GDD 27장 S-17)', () => {
   it('패치 C.62 / 단계 S-17, BALANCE 38, 세이브 형식 25 (이후 패치는 그 이상)', () => {
     expect(PATCH_LABEL).toMatch(/^C\.\d+$/);
-    expect(STAGE_LABEL).toMatch(/^S-\d+/);
+    expect(STAGE_LABEL).toMatch(/^[A-Z]+-\d+[a-z]?$/); // C.69 부터 병렬 단계(B-1·Q-4·H-1)도 허용
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(38);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(25);
   });

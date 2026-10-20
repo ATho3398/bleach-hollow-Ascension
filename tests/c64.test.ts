@@ -19,9 +19,9 @@ const memStore = () => {
 describe('버전 (S-18b)', () => {
   it('패치 C.64 / 단계 S-18b, 세이브 형식 26, BALANCE 그대로', () => {
     expect(PATCH_LABEL).toMatch(/^C\.\d+$/); // C.65 에서 C.65 / S-18c (버전 검사는 c65.test.ts)
-    expect(STAGE_LABEL).toMatch(/^S-\d+[a-z]?$/);
+    expect(STAGE_LABEL).toMatch(/^[A-Z]+-\d+[a-z]?$/); // C.69 부터 병렬 단계도 허용
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(26); // C.65 에서 27 (형식 27 검사는 c65.test.ts)
-    expect(BALANCE_VERSION).toBe(39);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(39);
   });
 });
 

@@ -18,9 +18,9 @@ const memStore = () => {
 describe('버전 (S-18c)', () => {
   it('단계 S-18c, 세이브 형식 27, BALANCE 그대로', () => {
     expect(PATCH_LABEL).toMatch(/^C\.\d+$/); // C.66 에서 C.66 (버전 검사는 c66.test.ts)
-    expect(STAGE_LABEL).toBe('S-18c');
+    expect(STAGE_LABEL).toMatch(/^[A-Z]+-\d+[a-z]?$/); // C.69 에서 B-1 (병렬 단계)
     expect(SAVE_FORMAT_VERSION).toBe(27);
-    expect(BALANCE_VERSION).toBe(39);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(39);
   });
 });
 

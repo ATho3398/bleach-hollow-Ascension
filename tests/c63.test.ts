@@ -40,8 +40,8 @@ function playOut(s: CombatState): CombatEvent[] {
 describe('버전 (S-18)', () => {
   it('패치 C.63 / 단계 S-18, BALANCE 39, 세이브 형식 25 그대로(세이브 구조 변화 없음)', () => {
     expect(PATCH_LABEL).toMatch(/^C\.\d+$/); // C.64 에서 C.64 / S-18b
-    expect(STAGE_LABEL).toMatch(/^S-/);
-    expect(BALANCE_VERSION).toBe(39);
+    expect(STAGE_LABEL).toMatch(/^[A-Z]+-\d+[a-z]?$/); // C.69 부터 병렬 단계도 허용
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(39);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(25); // C.64 에서 26 (형식 26 검사는 c64.test.ts)
   });
 });
