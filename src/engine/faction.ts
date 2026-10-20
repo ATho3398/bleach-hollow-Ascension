@@ -153,6 +153,8 @@ export interface FactionConfig {
   rankNames: string[];
   /** 번호가 없는 상태의 표시 이름 (GDD 21-1 v4.4, 호로 "무번호") */
   unrankedName: string;
+  /** 등급 한 칸을 부르는 낱말 (호로 번호 / 사신 석차) — 도움말 등 공용 문구용 (C.74) */
+  rankUnitName: string;
   /** 등급전 이름과 결과 문구 ({rank} = 얻은 번호의 표시 이름). 오르는 방식은 양쪽 동일, 차이는 문구뿐 (GDD 21-1) */
   rankBattleName: string;
   rankWinText: string;
@@ -243,7 +245,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');

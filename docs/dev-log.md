@@ -341,3 +341,11 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 **테스트** 1012 → 1025 (+13, `tests/c68.test.ts` — 조사·결과 값·도달 바퀴·체력 표시·무번호 패배·비용 기호·미니게임 입력/종료·버튼 이름·잠김 문구, 지운 테스트 없음). typecheck·test·balance:check·build 통과.
 
 **캡처** `docs/captures/c68/`(1배, 7장): `before/after-defeat-result-hollow`, `before-training-end-hollow`·`after-training-end-shinigami`, `after-rank-shinigami`, `after-training-cost-shinigami`, `portrait-plan-shinigami`. `proof.json` = 돌린 흐름·장면 설명.
+
+### C.74 Q-4 후속: 도움말 등급 낱말·진화 연출 태그·최대 체력 확인 (STAGE Q-4, 코딩58, 마스터G 지시 → 12장 v5.53)
+사용 모델: Opus 5.5. `PATCH_LABEL` C.74, `STAGE_LABEL` Q-4. **`BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로.**
+- ④ 도움말 등급전 설명 "그 번호를 빼앗고"가 사신에도 나옴 → 종족 설정 `rankUnitName`(호로 번호 / 사신 석차) 추가, glossary 는 `{rankUnitName}`(코드 분기 없음).
+- ⑤ 진화 연출 "연출 문구는 제안 문구 [제안 문구]" → "연출 문구는 [제안 문구]".
+- ② 5단계 최대 체력 154: **버그 아님(의도된 정규화)**. 실제 진화 경로(evolve 4회)로 재현: 내 체력 = 154 × (체력 능력치 ÷ 그 단계 기준 능력치 = 합계÷6). 장착 특성 없는 새 세이브 기준 단계별 (진화체 · 기준 · 체력 능력치 · 최대 체력): 1단계 기본 · 50 · 50 · 154 / 2단계 t2:base · 55 · 61 · 170.8 / 3단계 t3:base · 60 · 60 · 154 / 4단계 h4:fail · 65 · 52 · 123.2 / 5단계 t5:normal:mixed · 70 · 70 · 154 (두 종족 같음). QA 의 호로 5단계(아란칼_노멀_조) 체력 70 ÷ 70 → 154 와 일치. 수치 변경 없음.
+- ①③ 그대로(마스터 결정).
+**테스트** 1025 → 1029 (+4, `tests/c74.test.ts`). typecheck·test·balance:check·build 통과. 캡처 없음(문구·확인만).

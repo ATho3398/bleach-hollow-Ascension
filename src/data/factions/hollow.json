@@ -23,6 +23,7 @@
     "에스파다 No.10"
   ],
   "unrankedName": "무번호",
+  "rankUnitName": "번호",
   "rankBattleName": "번호 쟁탈전",
   "rankWinText": "{rank}의 번호를 빼앗았다!",
   "rankLoseText": "패배… 번호가 한 칸 내려갔다.",

@@ -136,7 +136,7 @@ export function evolutionView(
   const skip = button({ label: '건너뛰기', variant: 'ghost', onClick: showResult });
   linesSection.append(crack, lines, skip);
   if (CUTSCENE_PROVISIONAL) linesSection.append(h('p', 'bha-faint', ''));
-  if (CUTSCENE_PROVISIONAL) linesSection.lastElementChild!.append('연출 문구는 제안 문구 ', provisionalTag('제안 문구'));
+  if (CUTSCENE_PROVISIONAL) linesSection.lastElementChild!.append('연출 문구는 ', provisionalTag('제안 문구'));
 
   const path = h('p', 'bha-evolve__path');
   path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', faction.tierNames[to]!));

@@ -23,6 +23,7 @@
     "9석"
   ],
   "unrankedName": "무석",
+  "rankUnitName": "석차",
   "rankBattleName": "석차 도전",
   "rankWinText": "{rank} 자리에 올랐다!",
   "rankLoseText": "패배… 석차가 한 칸 내려갔다.",
