@@ -11,17 +11,19 @@ import { button, el, icon, seg } from './bha/dom';
 import { lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 
 export interface StoryViewHandlers {
-  /** [자유 원정] 탭 */
-  onFree: () => void;
+  /** [자유 원정]·[탑] 탭 */
+  onTab: (id: DepartTab) => void;
   /** 열린 화 [도전] */
   onPick: (chapterId: string, episodeId: string) => void;
   onHelp: () => void;
 }
 
-/** 원정 출발 화면 머리의 [자유 원정] / [스토리] 탭 (GDD 25-7) */
-export function departTabs(current: 'free' | 'story', onSelect: (id: 'free' | 'story') => void): HTMLElement {
-  const t = seg([{ id: 'free', label: '자유 원정' }, { id: 'story', label: '스토리' }], current, (id) => {
-    if (id !== current) onSelect(id as 'free' | 'story');
+export type DepartTab = 'free' | 'story' | 'tower';
+
+/** 원정 출발 화면 머리의 [자유 원정] / [스토리] / [탑] 탭 (GDD 25-7, 36장 3번) */
+export function departTabs(current: DepartTab, onSelect: (id: DepartTab) => void): HTMLElement {
+  const t = seg([{ id: 'free', label: '자유 원정' }, { id: 'story', label: '스토리' }, { id: 'tower', label: '탑' }], current, (id) => {
+    if (id !== current) onSelect(id as DepartTab);
   }, { small: true });
   t.classList.add('bha-depart-tabs');
   t.setAttribute('aria-label', '원정 종류');
@@ -107,7 +109,7 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   // 머리 (C.63, GDD 28장 8번): [자유 원정]/[스토리] 탭을 출발 화면(planView)과 같은 자리(머리 맨 왼쪽)에 둔다 — 탭을 바꿔도 탭이 움직이지 않게
   const head = el('header', 'bha-exp__head bha-depart-head');
-  head.append(departTabs('story', () => h.onFree()), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다'), selectLast(help));
+  head.append(departTabs('story', h.onTab), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다'), selectLast(help));
   const { app } = lcdPage(root, { cls: 'bha-story', cols: '2fr 3fr' }, head, [md.list], [md.detail]);
   app.dataset.screen = 'story';
 }

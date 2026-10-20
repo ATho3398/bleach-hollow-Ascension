@@ -36,10 +36,11 @@ import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebi
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 import { chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
+import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 29;
+export const SAVE_FORMAT_VERSION = 30;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -96,6 +97,8 @@ export interface SaveData {
   wear: WearState;
   /** 원정 난이도 (GDD 32-1, 형식 29): 연 ★ 최대(n단계에 처음 닿으면 ★n, 영구 — 환생해도 유지)·마지막으로 고른 ★. 트랙마다 */
   difficulty: DifficultyState;
+  /** 도전의 탑 (GDD 36장 9번, 형식 30): 깬 최고 층. 트랙마다, 환생해도 유지(기록) */
+  tower: TowerState;
   /** 스토리 진행 (GDD 25-4, 형식 22): 트랙(종족 id)마다 깬 화와 보상을 받은 장. 환생해도 남는다 */
   story: Record<string, StoryProgress>;
   /** 보스 도감 (GDD 25-3, 형식 22): 보스 id → 처치 수·첫 처치 시각. 세이브 하나에 하나(도감처럼 트랙 구분 없음) */
@@ -124,6 +127,18 @@ export interface DifficultyState {
   streak: { star: number; count: number };
 }
 
+export interface TowerState {
+  /** 깬 최고 층 (0 = 아직 없음, 1~TOWER_FLOORS) */
+  best: number;
+}
+
+/** 탑 상태 보정: best 는 0~꼭대기 정수 */
+export function sanitizeTower(raw: unknown): TowerState {
+  const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof TowerState, unknown>>;
+  const b = typeof r.best === 'number' && Number.isFinite(r.best) ? Math.floor(r.best) : 0;
+  return { best: Math.min(TOWER_FLOORS, Math.max(0, b)) };
+}
+
 export interface MachineRecord {
   /** 세이브를 만든 시각(ms). 형식 25 이전 세이브는 기록에 남은 가장 이른 시각 */
   createdAt: number;
@@ -135,7 +150,7 @@ export interface MachineRecord {
 export type WearState = Partial<Record<WearCategory, string>>;
 
 /** 캐릭터 트랙 하나가 가진 것 (GDD 22-3): 키우기(진화·특성·등급·환생·원정·수련)는 각자. 나머지 SaveData 필드는 슬롯 공유 */
-export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth', 'wear', 'difficulty'] as const;
+export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth', 'wear', 'difficulty', 'tower'] as const;
 export type TrackKey = (typeof TRACK_KEYS)[number];
 export type TrackData = Pick<SaveData, TrackKey> & {
   /** 이 트랙에서 떠난 시각(ms): 돌아오면 그동안의 허기가 오른다 (GDD 24-1 과 같은 계산) */
@@ -423,7 +438,7 @@ export function sanitizeMachine(raw: unknown, fallbackAt: number): MachineRecord
 export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
   return {
     factionId, nest: newNest(nowMs), build: newBuild(), evolution: newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), runLog: emptyRunLog(), activeExpedition: null,
-    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(), difficulty: { unlocked: 1, last: 1, streak: { star: 1, count: 0 } },
+    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(), difficulty: { unlocked: 1, last: 1, streak: { star: 1, count: 0 } }, tower: { best: 0 },
   };
 }
 
@@ -867,6 +882,50 @@ export function recordRankBattle(save: SaveData, s: CombatState, nowMs: number =
   return r;
 }
 
+/** 탑 한 판 결과 (화면이 결과 줄에 쓴다) */
+export interface TowerOutcome {
+  won: boolean;
+  /** 이 판이 그 층 첫 클리어 (보상을 받았다) */
+  firstClear: boolean;
+  /** 실제로 받은 보상 (첫 클리어가 아니면 0) */
+  gold: number;
+  food: [FoodId, number] | null;
+  jade: number;
+  /** 다음 도전 층 (꼭대기를 깼으면 null) */
+  next: number | null;
+}
+
+/** 탑 전투 결과를 세이브에 반영한다 (GDD 36장 6~10번): 런 로그(towerBattles·전투 기록 enemyClass 'tower'), 이기면 최고 층·첫 클리어 보상·보스 도감, 칭호 평가.
+ *  리스크·허기·컨디션은 바꾸지 않는다(해방 리스크도 쌓지 않는다). 도전할 수 있는 층은 다음 층(best + 1)뿐 — 다른 층이면 기록만 */
+export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState, nowMs: number = Date.now()): TowerOutcome {
+  const won = s.status === 'won';
+  const battle = buildBattleRecord(s, { factionId: save.factionId, tierIndex: save.evolution.tierIndex });
+  battle.enemyClass = 'tower'; // 강적 처치 수(칭호·히든)에 섞이지 않게
+  save.runLog.battles.push(battle);
+  const firstClear = won && f.floor === save.tower.best + 1;
+  const out: TowerOutcome = { won, firstClear, gold: 0, food: null, jade: 0, next: nextTowerFloor(save.tower.best) };
+  if (firstClear) {
+    save.tower.best = f.floor;
+    out.gold = f.reward.gold;
+    save.shared.tradeCoins += out.gold;
+    if (f.reward.food) out.food = [f.reward.food, addFood(save.shared.food, f.reward.food, 1)];
+    out.jade = f.reward.jade;
+    save.shared.jade += out.jade;
+    out.next = nextTowerFloor(save.tower.best);
+  }
+  // 보스 층은 보스 도감에도 처치 수를 센다 (첫 처치 영옥·보스 특성은 스토리에서만)
+  if (won && f.bossId) {
+    const dex = save.bossDex[f.bossId];
+    save.bossDex[f.bossId] = { kills: (dex?.kills ?? 0) + 1, firstAt: dex?.firstAt ?? nowMs };
+  }
+  save.runLog.towerBattles.push({
+    at: nowMs, factionId: save.factionId, floor: f.floor, star: f.star, enemyId: f.enemy.id, bossId: f.bossId, won, durationSeconds: battle.durationSeconds,
+    tierIndex: save.evolution.tierIndex, formId: save.evolution.formId, firstClear,
+  });
+  checkTitles(save, 'tower', nowMs);
+  return out;
+}
+
 /** 해방 자격 (GDD 22-2·22-5): 수련 완료 그리고 등급 이력, 그리고 지금 단계 5 이상.
  *  visible = 버튼을 보이는가(5단계 이상), usable = 쓸 수 있는가, missing = 부족한 것(잠긴 버튼 한 줄) */
 export function liberationAccess(save: Pick<SaveData, 'training' | 'rank' | 'evolution'>): { visible: boolean; usable: boolean; missing: ('training' | 'rank')[] } {
@@ -1195,6 +1254,11 @@ export function migrateSave(raw: unknown): SaveData | null {
     forEachTrack(save, (t) => { t.difficulty = sanitizeDifficulty({ ...t, difficulty: undefined }); });
     save.meta.format = 29;
   }
+  if (save.meta.format < 30) {
+    // 형식 29 → 30 (C.85, GDD 36장 9번 도전의 탑): 트랙마다 tower { best: 0 }, 런 로그 towerBattles 빈 목록(repairRunLog 가 채운다)
+    forEachTrack(save, (t) => { t.tower = { best: 0 }; });
+    save.meta.format = 30;
+  }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
@@ -1250,6 +1314,8 @@ function repairCore(save: SaveData): boolean {
 function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string[]): void {
   t.runLog.shopPurchases = Array.isArray(t.runLog.shopPurchases) ? t.runLog.shopPurchases : [];
   t.difficulty = sanitizeDifficulty(t);
+  t.tower = sanitizeTower(t.tower);
+  t.runLog.towerBattles = Array.isArray(t.runLog.towerBattles) ? t.runLog.towerBattles : [];
   t.wear = sanitizeWear(t.wear, owned);
   t.runLog.bossBattles = Array.isArray(t.runLog.bossBattles) ? t.runLog.bossBattles : [];
   t.runLog.storyRuns = Array.isArray(t.runLog.storyRuns) ? t.runLog.storyRuns : [];

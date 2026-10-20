@@ -19,6 +19,7 @@ import { GROUNDS } from '../src/data/grounds';
 import { BOSSES } from '../src/data/bosses';
 import { STORY_CHAPTERS, chapterContent, groundBossId } from '../src/data/story';
 import { bossSetupOf } from '../src/engine/expedition';
+import { createTowerCombat, towerFloor } from '../src/engine/tower';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
 
 const check = process.argv.includes('--check');
@@ -930,6 +931,67 @@ let campaignFinalDefeats: number[] = [];
   if (no10 < 0.6) failures.push(`등급전: No.10 승률 ${(no10 * 100).toFixed(0)}% < 60%`);
   if (no1 < 0.1 || no1 > 0.5) failures.push(`등급전: No.1 승률 ${(no1 * 100).toFixed(0)}% (10~50% 밖)`);
   for (let i = 1; i < rates.length; i++) if (rates[i]! > rates[i - 1]! + 0.12) failures.push(`등급전: No.${10 - i} 승률이 No.${11 - i} 보다 ${((rates[i]! - rates[i - 1]!) * 100).toFixed(0)}%p 높다`);
+}
+
+// ── 도전의 탑 (C.85, GDD 36장 11번): 그 ★ 권장 단계 몸(1단계 = 새 몸, 2~5단계 = 그 단계에 갓 닿은 진화 봇 몸)으로 사람형 봇이 구간 첫 층·5층(강적)·끝 층(보스)과 싸운다.
+// 50층은 5단계 + 특성·노력치를 잘 키운 몸(원정 MAX_RUNS 회를 마친 5단계 세이브). 체력 가득·흡수 없음.
+// 목표(provisional): 구간 첫 층 거의 100%, 5층 강적 약 70%, 끝 층 보스 약 40~60%, 50층 약 30~50%. 가드는 목표보다 넓게
+{
+  const TR = 4;
+  const fight = (bodies: SaveData[], floor: number, seedBase: number) => {
+    const f = towerFloor(floor);
+    let wins = 0;
+    let games = 0;
+    let secs = 0;
+    bodies.forEach((body, bi) => {
+      for (let k = 0; k < TR; k++) {
+        const params = buildCombatParams(body.build, 'hollow');
+        applyEvolutionToParams(params, body.evolution, 'hollow');
+        params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+        const end = playCombatHuman(createTowerCombat(f, params, seedBase + floor * 1009 + bi * 131 + k * 17));
+        games++;
+        if (end.status === 'won') {
+          wins++;
+          secs += elapsedSeconds(end);
+        }
+      }
+    });
+    return { rate: games ? wins / games : 0, secs: wins ? secs / wins : 0, games };
+  };
+  const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
+  const fresh: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => newSaveData('hollow', 555 + i * 37));
+  const TT = BALANCE.provisional.tower;
+  console.log(`\n도전의 탑 (사람형 봇, ★n = n단계 몸 × ${TR}판, 층 배율 구간 안 +${TT.perFloorInBand * 100}%/층·${TT.floors}층 +${TT.finalFloorBonus * 100}%) — 목표(임시): 구간 첫 층 ≈100%, 5층 강적 ≈70%, 끝 층 보스 40~60%, ${TT.floors}층 30~50%`);
+  for (let star = 1; star <= TT.floors / TT.bandSize; star++) {
+    // ★1 은 탑이 열리는 몸(스토리 1장 보스 권장 = 2단계에 갓 닿은 몸)으로 잰다 — 특성 없는 새 1단계 몸은 탑에 들어올 수 없어 참고 줄만
+    const bodies = star === 1 ? campaignFirstAt[1] ?? [] : campaignFirstAt[star - 1] ?? [];
+    if (bodies.length < CAMPAIGNS * 0.8) { failures.push(`탑 ★${star}: ${star}단계 몸 ${bodies.length}/${CAMPAIGNS}`); continue; }
+    const base = (star - 1) * TT.bandSize;
+    const first = fight(bodies, base + 1, 61000);
+    const elite = fight(bodies, base + TT.eliteEvery, 62000);
+    const bossFloor = base + TT.bandSize;
+    const boss = bossFloor === TT.floors ? null : fight(bodies, bossFloor, 63000);
+    const bossId = towerFloor(bossFloor).bossId;
+    console.log(`  ★${star} (${star === 1 ? 2 : star}단계 몸 ${bodies.length}명): ${base + 1}층 일반 ${pct(first.rate)} ${first.secs.toFixed(1)}초 · ${base + TT.eliteEvery}층 강적 ${pct(elite.rate)} ${elite.secs.toFixed(1)}초${boss ? ` · ${bossFloor}층 보스 ${bossId} ${pct(boss.rate)} ${boss.secs.toFixed(1)}초` : ''}`);
+    if (star === 1) {
+      const fe = fight(fresh, base + TT.eliteEvery, 62000);
+      const fb = fight(fresh, base + TT.bandSize, 63000);
+      console.log(`    (참고) 특성 없는 새 1단계 몸: ${base + TT.eliteEvery}층 강적 ${pct(fe.rate)} · ${base + TT.bandSize}층 보스 ${pct(fb.rate)}`);
+    }
+    if (first.rate < 0.85) failures.push(`탑 ${base + 1}층: 일반 승률 ${pct(first.rate)} < 85%`);
+    // ★1 은 한 단계 위 몸(탑이 열리는 2단계)이라 강적·보스는 참고만
+    if (star > 1 && (elite.rate < 0.4 || elite.rate > 0.97)) failures.push(`탑 ${base + TT.eliteEvery}층: 강적 승률 ${pct(elite.rate)} (가드 40~97% 밖)`);
+    // 보스가 아직 없어 fallbackBoss 로 이어 둔 층은 참고만 (그 보스가 들어오면 가드)
+    const tempLink = TT.bossFloors[bossFloor] !== bossId;
+    if (boss && tempLink) console.log(`    (임시 연결: ${TT.bossFloors[bossFloor]} 없음 → ${bossId}, 가드 제외)`);
+    if (boss && star > 1 && !tempLink && (boss.rate < 0.2 || boss.rate > 0.85)) failures.push(`탑 ${bossFloor}층: 보스 승률 ${pct(boss.rate)} (가드 20~85% 밖)`);
+  }
+  const grown = campaignSaves.filter((s) => s.evolution.tierIndex >= MAX_DIFFICULTY - 1);
+  const top = fight(grown, TT.floors, 64000);
+  const top5 = fight(campaignFirstAt[MAX_DIFFICULTY - 1] ?? [], TT.floors, 64000);
+  console.log(`  ${TT.floors}층 (${towerFloor(TT.floors).bossId} 강화판): 키운 5단계 몸 ${grown.length}명 ${pct(top.rate)} ${top.secs.toFixed(1)}초 · 갓 5단계 몸 ${pct(top5.rate)} (참고)`);
+  if (grown.length < CAMPAIGNS * 0.8) failures.push(`탑 ${TT.floors}층: 5단계 세이브 ${grown.length}/${CAMPAIGNS}`);
+  if (top.rate < 0.15 || top.rate > 0.75) failures.push(`탑 ${TT.floors}층: 승률 ${pct(top.rate)} (가드 15~75% 밖)`);
 }
 
 if (check) {

@@ -281,6 +281,24 @@ export interface StoryRunRecord {
   tierIndex: number;
 }
 
+/** 도전의 탑 전투 1회 기록 (GDD 36장 10번, C.85): 이기든 지든 남긴다 — 히든 조건·탑 칭호가 읽는다 */
+export interface TowerBattleRecord {
+  at: number;
+  factionId: string;
+  floor: number;
+  /** 그 층의 ★ */
+  star: number;
+  /** 적 id (보스 층은 보스 id) */
+  enemyId: string;
+  bossId: string | null;
+  won: boolean;
+  durationSeconds: number;
+  tierIndex: number;
+  formId: string | null;
+  /** 이 판이 그 층 첫 클리어였나 (보상을 받은 판) */
+  firstClear: boolean;
+}
+
 export interface RunLog {
   absorbs: AbsorbRecord[];
   lineages: LineageRecord[];
@@ -300,6 +318,8 @@ export interface RunLog {
   storyRuns: StoryRunRecord[];
   /** 상점 구매 기록 (C.60, 세이브 형식 24, GDD 25-9): 한 번 살 때마다 */
   shopPurchases: ShopPurchaseRecord[];
+  /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
+  towerBattles: TowerBattleRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
   fusions?: FusionRecord[];
 }
@@ -377,5 +397,6 @@ export function emptyRunLog(): RunLog {
     bossBattles: [],
     shopPurchases: [],
     storyRuns: [],
+    towerBattles: [],
   };
 }

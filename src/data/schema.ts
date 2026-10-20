@@ -196,7 +196,7 @@ export interface TerrainTileDef {
 }
 
 /** story = 스토리 장 클리어·보스 첫 처치 칭호 (GDD 25-3·25-4, C.58) */
-export type TitleKind = 'rank' | 'hidden-rank' | 'tag' | 'story';
+export type TitleKind = 'rank' | 'hidden-rank' | 'tag' | 'story' | 'tower';
 
 /**
  * 칭호 조건 어휘 (GDD 14-7, 임시). 런 로그와 진화 기록을 읽는 조건식이며 and/or 로 조합한다.
@@ -235,6 +235,8 @@ export type TitleCondition =
   | { type: 'bossDefeated'; bossId: string }
   /** 스토리 이 장의 화를 모두 깬 적이 있다 (GDD 25-4, C.58) */
   | { type: 'storyChapterCleared'; chapterId: string }
+  /** 도전의 탑 이 층(이상)을 깬 적이 있다 (GDD 36장, C.85) */
+  | { type: 'towerFloorCleared'; floor: number }
   /** 초월체를 이만큼 모았다 (GDD 22-3, C.59 — 슬롯 단위 합체 기록) */
   | { type: 'transcendentsCollected'; min: number };
 

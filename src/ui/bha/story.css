@@ -3,7 +3,8 @@
 /* 원정 출발 화면 머리의 [자유 원정]/[스토리] 탭 */
 .bha-depart-tabs { flex: none; }
 /* 탭 위치 고정 (C.63, GDD 28장 8번): 출발(배치) 화면과 스토리 화면의 머리·바깥 여백을 같게 해 탭이 같은 자리에 있게 한다 */
-.bha-lcd .bha-app.bha-lcdpage.bha-story { padding: var(--bha-sp-3) var(--bha-sp-4); }
+.bha-lcd .bha-app.bha-lcdpage.bha-story,
+.bha-lcd .bha-app.bha-lcdpage.bha-tower { padding: var(--bha-sp-3) var(--bha-sp-4); }
 .bha-depart-head { flex: none; min-height: var(--bha-touch); }
 .bha-depart-head__sub { flex: 1; min-width: 0; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-3); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -55,3 +56,24 @@
 .bha-exp__goal[hidden] { display: none; }
 .bha-story-ep > .bha-btn { flex: none; white-space: nowrap; }
 .bha-exp__goal { white-space: nowrap; }
+
+/* 도전의 탑 (GDD 36장, C.85): 왼쪽 = 지금 상태·다음 층 카드, 오른쪽 = 층 목록 (위가 높은 층) */
+.bha-tower__status { display: flex; align-items: baseline; justify-content: space-between; gap: var(--bha-sp-2); }
+.bha-tower__name { font-size: var(--bha-fs-md); font-weight: var(--bha-fw-heavy); color: var(--bha-accent-hi); }
+.bha-tower__card { display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
+.bha-tower__card p { margin: 0; font-size: var(--bha-fs-xs); }
+.bha-tower__card.is-boss { border-color: var(--bha-rare); }
+.bha-tower__card.is-locked { border-style: dashed; background: rgb(0 0 0 / .25); color: var(--bha-text-3); align-items: center; text-align: center; }
+.bha-tower__card.is-cleared { border-color: var(--bha-primary-line); color: var(--bha-good); align-items: center; text-align: center; }
+.bha-tower__floor { display: flex; flex-direction: column; gap: 2px; }
+.bha-tower__foe { font-size: var(--bha-fs-md); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }
+.bha-tower__reward { display: flex; align-items: center; gap: var(--bha-sp-1); color: var(--bha-text-2); line-height: var(--bha-lh-tight); }
+.bha-tower__reward .bha-icon { flex: none; width: 14px; height: 14px; color: var(--bha-rare); }
+.bha-tower__card > .bha-btn { align-self: stretch; }
+.bha-tower__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; min-height: 0; }
+.bha-tower__row { display: grid; grid-template-columns: 18px 3.2em minmax(0, 1fr) auto; align-items: center; gap: var(--bha-sp-2); padding: 2px var(--bha-sp-2); border: 1px solid transparent; border-radius: var(--bha-r-sm); color: var(--bha-text-3); font-size: var(--bha-fs-xs); }
+.bha-tower__row .bha-icon { width: 14px; height: 14px; }
+.bha-tower__rowname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-tower__row.is-boss { color: var(--bha-text-2); }
+.bha-tower__row.is-cleared { color: var(--bha-good); }
+.bha-tower__row.is-next { border-color: var(--bha-accent); background: var(--bha-bg-2); color: var(--bha-text-1); font-weight: var(--bha-fw-bold); }

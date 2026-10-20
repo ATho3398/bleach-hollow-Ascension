@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 44;
+export const BALANCE_VERSION = 45;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -229,6 +229,23 @@ export const BALANCE = {
       eliteEase: { 1: { hp: 0.78, attack: 0.78 } } as Record<number, { hp: number; attack: number }>,
       /** 연속 클리어 (GDD 32-1 10번): 같은 ★ 자유 원정을 귀환(클리어)할 때마다 다음 원정 적 체력·공격 +enemyPerClear(최대 maxClears 연속), 지거나 ★를 바꾸면 0 */
       streak: { enemyPerClear: 0.05, maxClears: 10, foodPerClear: 0.05, goldPerClear: 0.02, goldMaxBonus: 0.2 },
+    },
+    /** 도전의 탑 (GDD 36장, C.85): 한 층 = 전투 한 판. 층 n 의 ★ = ⌈n ÷ bandSize⌉, 같은 구간 안에서 층마다 적 체력·공격 +perFloorInBand(구간 첫 층 +0%),
+     *  마지막 층은 finalFloorBonus 를 더 곱한다. 보통 층 = 일반 적, eliteEvery 배수 = 강적, bossEvery 배수 = 보스(bossFloors, 없는 보스 id 는 fallbackBoss).
+     *  보상은 첫 클리어만: 골드 goldPerStar × ★, 강적 층(5의 배수) 먹이 1, 보스 층 영옥 bossJade + 칭호, 마지막 층 영옥 finalJade 추가 */
+    tower: {
+      floors: 50,
+      bandSize: 10,
+      perFloorInBand: 0.04,
+      /** 기획 +20% → C.85 측정: 키운 5단계 몸 50층 승률 87%(목표 30~50%) → +60% 72% → +120% 15% → 조정 3회 +90% (지금은 sand-maw 임시 연결 기준) */
+      finalFloorBonus: 0.9,
+      /** 강적 층(5의 배수, 보스 층 제외)만 체력·공격에 더 곱한다 (C.85 추가): 체력 가득으로 시작해 권장 단계 진화 몸의 강적 승률이 84~100%(목표 약 70%) — 조정 2회 ×1.4 */
+      eliteScale: 1.4,
+      eliteEvery: 5,
+      bossEvery: 10,
+      bossFloors: { 10: 'sand-maw', 20: 'canyon-king', 30: 'forest-lord', 40: 'sand-maw', 50: 'forest-lord' } as Record<number, string>,
+      fallbackBoss: 'sand-maw',
+      reward: { goldPerStar: 10, eliteFood: 'hearty', bossJade: 3, finalJade: 10 },
     },
     /** 진화체 고유 특성 6종 (GDD 20-3·v4.0): 진화 순간 노력치가 가장 높은 능력치 방향. 이름은 src/data/evolution/abilities.json */
     abilities: {

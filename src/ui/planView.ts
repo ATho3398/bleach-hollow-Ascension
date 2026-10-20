@@ -8,14 +8,14 @@ import { elementName } from '../data/elements';
 import { synergyName, tileName } from '../data/tiles';
 import { button, el, icon, mountApp } from './bha/dom';
 import { roadPlanner } from './bha/road';
-import { departTabs } from './storyView';
+import { departTabs, type DepartTab } from './storyView';
 
 export interface PlanViewHandlers {
   /** [출발]: 배치가 끝났다 (손은 이미 비웠다). 원정 시작 */
   onStart: (placed: number) => void;
   onHelp: () => void;
-  /** [스토리] 탭 (GDD 25-7): 있으면 머리에 [자유 원정]/[스토리] 탭을 보인다 */
-  onStory?: () => void;
+  /** [스토리]·[탑] 탭 (GDD 25-7·36장): 있으면 머리에 [자유 원정]/[스토리]/[탑] 탭을 보인다 */
+  onTab?: (id: Exclude<DepartTab, 'free'>) => void;
   /** 연 원정 난이도 ★ 최대 (GDD 32-1, 세이브 difficulty.unlocked). 없으면 1 */
   unlockedDifficulty?: number;
   /** 연속 클리어 (GDD 32-1 10번, 세이브 difficulty.streak): 그 ★를 고르면 "★3 · 연속 4" 와 적·보상 가산을 보인다 */
@@ -106,9 +106,10 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   diff.append(el('span', 'bha-plan__label', L.name), ...dBtns);
   pickStar(Math.min(unlocked, exp.difficulty));
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
-  const head = el('div', `bha-exp__head${h.onStory ? ' bha-depart-head' : ''}`);
-  // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
-  head.append(h.onStory ? departTabs('free', () => h.onStory!()) : title, grounds, help);
+  const head = el('div', `bha-exp__head${h.onTab ? ' bha-depart-head' : ''}`);
+  // [자유 원정]/[스토리]/[탑] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
+  const onTab = h.onTab;
+  head.append(onTab ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }) : title, grounds, help);
 
   const start = button({
     label: '출발', icon: 'i-play', variant: 'primary', size: 'lg',

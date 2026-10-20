@@ -194,5 +194,45 @@
       "min": 6
     },
     "provisional": true
+  },
+  {
+    "id": "tower-10",
+    "kind": "tower",
+    "hidden": false,
+    "name": { "hollow": "탑 10층 돌파", "shinigami": "탑 10층 돌파" },
+    "condition": { "type": "towerFloorCleared", "floor": 10 },
+    "provisional": true
+  },
+  {
+    "id": "tower-20",
+    "kind": "tower",
+    "hidden": false,
+    "name": { "hollow": "탑 20층 돌파", "shinigami": "탑 20층 돌파" },
+    "condition": { "type": "towerFloorCleared", "floor": 20 },
+    "provisional": true
+  },
+  {
+    "id": "tower-30",
+    "kind": "tower",
+    "hidden": false,
+    "name": { "hollow": "탑 30층 돌파", "shinigami": "탑 30층 돌파" },
+    "condition": { "type": "towerFloorCleared", "floor": 30 },
+    "provisional": true
+  },
+  {
+    "id": "tower-40",
+    "kind": "tower",
+    "hidden": false,
+    "name": { "hollow": "탑 40층 돌파", "shinigami": "탑 40층 돌파" },
+    "condition": { "type": "towerFloorCleared", "floor": 40 },
+    "provisional": true
+  },
+  {
+    "id": "tower-50",
+    "kind": "tower",
+    "hidden": false,
+    "name": { "hollow": "탑의 정상", "shinigami": "탑의 정상" },
+    "condition": { "type": "towerFloorCleared", "floor": 50 },
+    "provisional": true
   }
 ]

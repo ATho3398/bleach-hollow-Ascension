@@ -204,6 +204,8 @@ export interface FactionConfig {
   arenaBg?: string;
   /** 원정 난이도 표시 문구 (GDD 32-1 9번, C.75): 이름·★ 글자·"권장" 표시·잠김 문구({tier} = 열리는 단계 번호). 없으면 기본 문구 (difficultyLabels) */
   difficulty?: { name?: string; star?: string; recommended?: string; locked?: string };
+  /** 도전의 탑 문구 (GDD 36장, C.85): 이름·층 표시({n})·꼭대기 보스 이름·잠김 문구·한 줄 설명. 없으면 기본 문구 (towerLabels) */
+  tower?: Partial<TowerLabels>;
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
   /** 1단계(진화 전) 캐릭터의 이동 방식 기본값 (GDD 18-11). 비우면 walk. 진화체·그림 manifest 가 있으면 그쪽이 우선 */
@@ -274,6 +276,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const d = r.difficulty as Record<string, unknown>;
     if (typeof d !== 'object' || d === null || Array.isArray(d)) errors.push('difficulty: { name?, star?, recommended?, locked? }');
     else for (const k of ['name', 'star', 'recommended', 'locked']) if (d[k] !== undefined && !isString(d[k])) errors.push(`difficulty.${k}: 비어 있지 않은 문자열`);
+  }
+  if (r.tower !== undefined) {
+    const t = r.tower as Record<string, unknown>;
+    if (typeof t !== 'object' || t === null || Array.isArray(t)) errors.push('tower: { name?, floor?, finalBossName?, locked?, desc? }');
+    else for (const k of TOWER_LABEL_KEYS) if (t[k] !== undefined && !isString(t[k])) errors.push(`tower.${k}: 비어 있지 않은 문자열`);
   }
   if (r.huntingGrounds !== undefined) {
     const hg = r.huntingGrounds as Record<string, unknown>;
@@ -377,6 +384,34 @@ export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): 
 export function difficultyLabels(f: Pick<FactionConfig, 'difficulty'>): { name: string; star: string; recommended: string; locked: string } {
   const d = f.difficulty ?? {};
   return { name: d.name ?? '난이도', star: d.star ?? '★', recommended: d.recommended ?? '권장', locked: d.locked ?? '{tier}단계에 열린다' };
+}
+
+export interface TowerLabels {
+  /** 탑 이름 ("도전의 탑") */
+  name: string;
+  /** 층 표시 ({n} = 층 번호) */
+  floor: string;
+  /** 꼭대기 층 보스 이름 */
+  finalBossName: string;
+  /** 잠겼을 때 한 줄 */
+  locked: string;
+  /** 탑 화면 머리 한 줄 설명 */
+  desc: string;
+}
+const TOWER_LABEL_KEYS: readonly (keyof TowerLabels)[] = ['name', 'floor', 'finalBossName', 'locked', 'desc'];
+
+/** 도전의 탑 문구 (GDD 36장): 종족 설정 tower, 빈 곳은 기본 문구 */
+export function towerLabels(f: Pick<FactionConfig, 'tower'>): TowerLabels {
+  const t = f.tower ?? {};
+  return {
+    name: t.name ?? '도전의 탑', floor: t.floor ?? '{n}층', finalBossName: t.finalBossName ?? '탑의 주인',
+    locked: t.locked ?? '스토리 1장을 깨면 열린다', desc: t.desc ?? '한 층 = 한 판. 체력 가득으로 시작하고 져도 잃는 것이 없다',
+  };
+}
+
+/** "12층" 같은 층 표시 */
+export function towerFloorText(f: Pick<FactionConfig, 'tower'>, floor: number): string {
+  return towerLabels(f).floor.replace('{n}', String(floor));
 }
 
 /** "★3" 같은 난이도 표시 */

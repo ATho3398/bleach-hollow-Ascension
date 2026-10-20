@@ -12,12 +12,15 @@ import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
 import { bossSetupOf, createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
-import { chapterLabel, storyView } from './storyView';
+import { chapterLabel, storyView, type DepartTab } from './storyView';
+import { towerResultView, towerView } from './towerView';
+import { createTowerCombat, towerFloor, type TowerFloor } from '../engine/tower';
+import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
   applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
-  performRebirth, recordTraining, settleLiberationRisk, deckSizeOf, type SaveData,
+  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, deckSizeOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
@@ -639,8 +642,8 @@ export function startApp(host: HTMLElement): void {
             nav.replace({ id: 'expedition', locked: true, render: () => { armEnterFx(); showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
           },
           onHelp: () => openHelp('expedition', false),
-          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다
-          onStory: () => storyScreen(faction),
+          // [스토리]·[탑] 탭 (GDD 25-7·36장): 같은 자리에서 스토리 장·화 목록 / 탑 화면으로 바꾼다
+          onTab: (id) => (id === 'story' ? storyScreen(faction) : towerScreen(faction)),
         });
         root.scrollTop = 0;
       },
@@ -657,11 +660,80 @@ export function startApp(host: HTMLElement): void {
       render: () => {
         setBgm('expedition');
         storyView(root, faction, save!, {
-          onFree: () => departScreen(faction, true),
+          onTab: (id) => departTab(faction, id),
           onPick: (chapterId, episodeId) => startStory(faction, chapterId, episodeId),
           onHelp: () => openHelp('expedition', false),
         });
         root.scrollTop = 0;
+      },
+    });
+  }
+
+  /** 출발 화면 머리 탭 전환 (자유 원정 = 배치 단계 / 스토리 / 탑) */
+  function departTab(faction: FactionConfig, id: DepartTab): void {
+    if (id === 'free') departScreen(faction, true);
+    else if (id === 'story') storyScreen(faction);
+    else towerScreen(faction);
+  }
+
+  // ── 도전의 탑 (GDD 36장, C.85): 원정 출발 화면의 [탑] 탭. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
+  function towerScreen(faction: FactionConfig): void {
+    if (!save) return;
+    nav.replace({
+      id: 'tower', locked: false,
+      render: () => {
+        setBgm('expedition');
+        towerView(root, faction, save!, {
+          onTab: (id) => departTab(faction, id),
+          onChallenge: (f) => towerBattle(faction, f),
+          onHelp: () => openHelp('expedition', false),
+        });
+        root.scrollTop = 0;
+      },
+    });
+  }
+
+  /** 탑 전투 화면 (결과에서 [다음 층]·[다시 도전]으로 올 때는 같은 자리를 바꿔 끼운다) */
+  function towerBattle(faction: FactionConfig, f: TowerFloor, again = false): void {
+    const e = { id: 'tower-battle', locked: true, render: () => { runTower(faction, f); root.scrollTop = 0; } };
+    if (again) nav.replace(e);
+    else nav.push(e);
+  }
+
+  function runTower(faction: FactionConfig, f: TowerFloor): void {
+    if (!save) return;
+    const s0 = save;
+    const params = buildCombatParams(s0.build, faction.id);
+    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total);
+    params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);
+    params.liberationEnabled = liberationAccess(s0).usable;
+    // 꼭대기 보스 이름은 종족 설정 (적 정의의 이름을 그 문구로 바꿔 끼운다)
+    const floor = f.final ? { ...f, enemy: { ...f.enemy, name: { '*': towerLabels(faction).finalBossName } } } : f;
+    const s = createTowerCombat(floor, params, Math.floor(Math.random() * 2 ** 32));
+    setBgm(f.bossId ? 'boss' : f.kind === 'elite' ? 'elite' : 'battle');
+    battleView(root, faction, s, {
+      tierIndex: s0.evolution.tierIndex,
+      skinId: s0.skin,
+      formId: s0.evolution.formId,
+      banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
+      ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true, bg: arenaSceneBg(faction) } : {}),
+      liberation: liberationButton(faction, liberationAccess(s0)),
+      onQuit: () => nav.pop(),
+      onEnd: (done) => {
+        const res = recordTowerBattle(s0, f, done);
+        persist();
+        nav.replace({
+          id: 'tower-result', locked: true,
+          render: () => {
+            towerResultView(root, faction, f, done, res, {
+              onNext: res.won && res.next !== null ? () => towerBattle(faction, towerFloor(res.next!), true) : null,
+              onAgain: () => towerBattle(faction, f, true),
+              onBack: () => nav.pop(),
+            });
+            root.scrollTop = 0;
+          },
+        });
+        showTitleToasts(s0, faction, persist);
       },
     });
   }
