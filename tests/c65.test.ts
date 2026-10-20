@@ -34,12 +34,12 @@ describe('사신대행증 데이터 (30장 1번)', () => {
     expect(sourceNote(c)).toBe('기본 제공');
     expect(FREE_COSMETICS.map((x) => x.id)).toContain('device-badge');
   });
-  it('데이터 = frame-v2 (그림 3000×2508, 구멍 왼쪽 위 (531, 624), 고리 (1501, 148))', () => {
+  it('데이터 = frame-v2 (그림 3000×2508, 구멍 왼쪽 위 (531, 624), 고리 = 뒷면 기준 위쪽 사다리꼴 구멍 왼쪽 테두리 → 앞면 (1928, 186))', () => {
     const d = c.device!;
     expect(d.frame).toBe('v2');
     expect(d.hole).toEqual([531, 624]);
-    expect(Math.abs((d.ring.x / 100) * 3000 - 1501)).toBeLessThan(2.5);
-    expect(Math.abs((d.ring.y / 100) * 2508 - 148)).toBeLessThan(2.5);
+    expect(Math.abs((d.ring.x / 100) * 3000 - 1928)).toBeLessThan(2.5);
+    expect(Math.abs((d.ring.y / 100) * 2508 - 186)).toBeLessThan(2.5);
   });
   it('그림 파일: 앞면·뒷면이 public/art 에 있고 옆면은 없다(겹 두께)', () => {
     for (const f of ART) expect(existsSync(new URL(`../public/art/${f}`, import.meta.url))).toBe(true);
