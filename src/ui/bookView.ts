@@ -3,6 +3,7 @@
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
 import { seg } from './bha/dom';
+import { selectLast } from './bha/lcdpage';
 import { dexView } from './dexView';
 import { titleDexView } from './titleDexView';
 
@@ -16,6 +17,7 @@ export function bookView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     { small: true },
   );
   lead.setAttribute('aria-label', '책장');
+  selectLast(lead); // 탭은 목록 뒤로(다른 도감 화면과 같은 순서)
   if (tab === 'dex') dexView(root, faction, save, 2, lead);
   else titleDexView(root, faction, save, 'rank', lead);
 }

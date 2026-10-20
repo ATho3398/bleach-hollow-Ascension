@@ -34,7 +34,7 @@
 
 /* 전투: 떠오를 여유만큼 그림을 작게 (머리 높이·머리 위 게이지 자리는 걷기와 같다) */
 .bha-hero__lift { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 100%; }
-.bha-hero__shadow { display: none; position: absolute; left: 22%; right: 22%; bottom: 2%; height: 6%; border-radius: 50%; background: #000; opacity: 0.3; }
+.bha-hero__shadow { display: none; position: absolute; left: 22%; right: 22%; bottom: 5%; height: 6%; border-radius: 50%; background: #000; opacity: 0.3; }
 .bha-hero[data-loco='float'] .bha-hero__shadow { display: block; animation: bha-loco-shadow-float var(--loco-t) ease-in-out infinite; }
 .bha-hero[data-loco='fly'] .bha-hero__shadow { display: block; animation: bha-loco-shadow-fly var(--loco-t) ease-in-out infinite; }
 .bha-lcd .bha-unit__fig > .bha-hero[data-loco] { height: calc(100% / (1 + var(--loco-f, 0))); }

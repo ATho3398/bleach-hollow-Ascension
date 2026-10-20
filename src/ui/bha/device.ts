@@ -214,6 +214,9 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let touchOnly = false;
 
   let lastSel: HTMLElement | null = null;
+  /** 탭(.bha-seg__item)의 이름표: 탭을 눌러 화면이 새로 그려져도 같은 탭에 선택을 돌려주려고 기억한다 */
+  const tabSig = (e: HTMLElement | undefined | null): string | null => (e && e.matches('.bha-seg__item') && e.dataset.id ? `${e.closest('.bha-seg')?.getAttribute('aria-label') ?? ''}|${e.dataset.id}` : null);
+  let lastTabSig: string | null = null;
   const unmark = (e: HTMLElement) => {
     e.classList.remove('bha-sel');
     e.removeAttribute('aria-current');
@@ -221,6 +224,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   const markSel = () => {
     for (const it of items) unmark(it.el);
     const cur = items[index];
+    lastTabSig = tabSig(cur?.el);
     if (cur) {
       cur.el.classList.add('bha-sel');
       cur.el.setAttribute('aria-current', 'true');
@@ -251,7 +255,9 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     if (next.length > 0 && !prev.some((i) => i.el.isConnected && next.some((n) => n.el === i.el))) {
       // 새 화면(이전 항목이 하나도 안 남음): 키보드 초점이 이미 있는 항목이 있으면 그것, 없으면 첫 항목
       const focused = next.findIndex((i) => i.el === document.activeElement);
-      index = focused >= 0 ? focused : 0;
+      // 탭을 눌러 화면이 통째로 다시 그려졌으면(상점·책장·출발 탭) 방금 그 탭에 선택을 둔다 — 안 그러면 첫 항목으로 돌아가 확정이 탭을 되돌린다
+      const sameTab = lastTabSig === null ? -1 : next.findIndex((i) => tabSig(i.el) === lastTabSig);
+      index = sameTab >= 0 ? sameTab : focused >= 0 ? focused : 0;
     } else {
       index = keepSelection(prev.map((i) => i.el), prevIdx, next.map((i) => i.el));
     }

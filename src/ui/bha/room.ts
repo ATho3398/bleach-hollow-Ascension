@@ -68,6 +68,9 @@ export function roomCharArt(room: RoomConfig, factionId: string, tierIndex: numb
   return charArt(factionId, tierIndex, room.characterArt, BASE, undefined, undefined, skinId);
 }
 
+const CHAR_BODY_H = 140; // room.css 의 .bha-char__body.has-art 높이와 맞출 것
+const FOOT_GAP = 0.07; // 발바닥 = 그림 아래에서 약 8% 위(art-guide 2장). 그림은 몸 상자(130×140) 안에 정사각으로 맞춰져 높이 130 기준 7.4% → 상자 대비 약 7%
+
 /** 캐릭터: 새 규칙의 그림 한 장(왼쪽을 보는 그림, 가만히) 또는 기존 제자리 2프레임 숨쉬기. 그림이 없으면 둥근 몸 + 눈 두 개 도형 */
 export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 'walk'): HTMLButtonElement {
   const b = el('button', 'bha-art bha-char');
@@ -100,7 +103,10 @@ export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 
   // 몸은 lift 상자 안: 부유·날기는 이 상자가 떠올라 움직이고, 그림자는 땅에 남는다
   const lift = el('span', 'bha-char__lift');
   lift.append(body);
-  b.append(lift, el('span', 'bha-char__shadow'));
+  const shadow = el('span', 'bha-char__shadow');
+  // 그림 캐릭터의 발바닥은 몸 상자 아래에서 8% 위(art-guide 규격, offsetY 만큼 더 위/아래) — 그림자 중심을 그 높이에 둔다(발이 떠 보이지 않게)
+  if (body.classList.contains('has-art')) shadow.style.marginTop = `${-(CHAR_BODY_H * (FOOT_GAP - art.offsetY / 100) + 3.5)}px`;
+  b.append(lift, shadow);
   return b;
 }
 
@@ -108,7 +114,7 @@ export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 
 export function charTopOffset(art: ArtUrls, loco: Locomotion = 'walk'): number {
   const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)
   const hasArt = !!(art.src || art.frames);
-  const bodyH = hasArt ? 140 : 75;
+  const bodyH = hasArt ? CHAR_BODY_H : 75;
   const boxTop = -(PAD * 2 + bodyH + SHADOW) / 2 + PAD; // 몸 상자 윗변
   const lift = bodyH * LOCO_LIFT[loco]; // 떠 있는 만큼 머리가 위로 (움직임 중간 높이)
   if (!art.src) return boxTop - lift;

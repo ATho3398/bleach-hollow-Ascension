@@ -442,6 +442,13 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 **검증** typecheck · test 1124(c85 +20, faction 칭호 수 검사에서 탑 칭호 제외) · balance:check(회귀 가드 통과) · build 통과.
 **캡처** `docs/captures/c85/`(1배 6장): `01` 출발 화면 탭 3개 · `02` 탑 잠김 · `03` 탑 열림(14층 다음) · `04` 탑 전투 · `05` 보스 층(10층) 전투 · `06` 칭호 도감 '탑' 탭.
 
+### C.90 캐릭터 그림자 발밑 · 탭 선택 유지 (STAGE S-23, UI담당자A, GDD 34-8 v5.77)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.90. `BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로.
+사용자 원문: "내 캐릭터 그림자 봐바. 지금 공중에 떠있어. 그림자 배치 계산 다시. / 그리고 각종 버튼들 탭 이상하게 작동하거든? 확인"
+- 그림자: C.83 에서 캐릭터 칸을 140px 로 키우며 그림자(몸 아래 4px)가 발(그림 아래 약 7%)보다 약 14px 아래 떠 보였다 → `characterButton` 이 그림 있는 캐릭터의 그림자 마진을 발 높이로 계산(offsetY 반영). 전투 영웅 그림자 2→5%.
+- 탭: 책장·상점·출발 탭을 누르면 화면이 새로 그려져 기기 하이라이트가 첫 항목(탭)으로 가 ✓확정이 탭을 되돌렸다 → `device.ts` 가 마지막 선택이 탭이었으면 새 화면의 같은 탭(탭줄 이름·id)에 선택을 돌려줌. 책장 탭은 목록 뒤 순서로.
+**테스트** 1103 그대로(터치 시험 책장·상점·출발 통과). **캡처** `docs/captures/c90/`(1배 2장).
+
 ## 그림 반영
 - 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.
 - 2026-10-20: 홈 방 배경 교체(scene-cave 호로·scene-room 사신, 도트풍 새 그림, 66·41KB)와 책장 그림(prop-book, 320×320 WebP 15KB). 캡처 `docs/captures/art-apply/*-v2.png`.
