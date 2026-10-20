@@ -205,7 +205,7 @@ export interface FactionConfig {
   /** 원정 난이도 표시 문구 (GDD 32-1 9번, C.75): 이름·★ 글자·"권장" 표시·잠김 문구({tier} = 열리는 단계 번호). 없으면 기본 문구 (difficultyLabels) */
   difficulty?: { name?: string; star?: string; recommended?: string; locked?: string };
   /** 도전의 탑 문구 (GDD 36장, C.85): 이름·층 표시({n})·꼭대기 보스 이름·잠김 문구·한 줄 설명. 없으면 기본 문구 (towerLabels) */
-  tower?: Partial<TowerLabels>;
+  tower?: Partial<TowerLabels> & { starGrounds?: Record<string, string> };
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
   /** 1단계(진화 전) 캐릭터의 이동 방식 기본값 (GDD 18-11). 비우면 walk. 진화체·그림 manifest 가 있으면 그쪽이 우선 */
@@ -280,7 +280,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.tower !== undefined) {
     const t = r.tower as Record<string, unknown>;
     if (typeof t !== 'object' || t === null || Array.isArray(t)) errors.push('tower: { name?, floor?, finalBossName?, locked?, desc? }');
-    else for (const k of TOWER_LABEL_KEYS) if (t[k] !== undefined && !isString(t[k])) errors.push(`tower.${k}: 비어 있지 않은 문자열`);
+    else {
+      for (const k of TOWER_LABEL_KEYS) if (t[k] !== undefined && !isString(t[k])) errors.push(`tower.${k}: 비어 있지 않은 문자열`);
+      const sg = t.starGrounds as Record<string, unknown> | undefined;
+      if (sg !== undefined && (typeof sg !== 'object' || sg === null || Array.isArray(sg) || Object.values(sg).some((v) => !isString(v)))) errors.push('tower.starGrounds: { ★: 사냥터 id }');
+    }
   }
   if (r.huntingGrounds !== undefined) {
     const hg = r.huntingGrounds as Record<string, unknown>;
@@ -417,6 +421,12 @@ export function towerFloorText(f: Pick<FactionConfig, 'tower'>, floor: number): 
 /** "★3" 같은 난이도 표시 */
 export function difficultyText(f: Pick<FactionConfig, 'difficulty'>, star: number): string {
   return `${difficultyLabels(f).star}${star}`;
+}
+
+/** 탑 층의 배경 장면 id (GDD 40장, C.92): 보스 층 = arenaBg, 보통 층 = 종족 설정 tower.starGrounds[★] 사냥터의 bg */
+export function towerBgId(f: Pick<FactionConfig, 'tower' | 'huntingGrounds' | 'arenaBg'>, floor: { star: number; kind: string }): string | undefined {
+  if (floor.kind === 'boss') return f.arenaBg;
+  return groundBgId(f, f.tower?.starGrounds?.[String(floor.star)]);
 }
 
 /** 사냥터 배경 장면 id (GDD 34-1): 종족 설정 huntingGrounds.<id>.bg. 없으면 undefined (임시 배경) */

@@ -34,7 +34,7 @@ import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
 import { absorbView } from './absorbView';
 import { battleView } from './battleView';
-import { arenaSceneBg, groundSceneBg } from './bha/sceneBg';
+import { arenaSceneBg, groundSceneBg, towerSceneBg } from './bha/sceneBg';
 import { applyTheme } from './bha/theme';
 import { speciesView, startView } from './startView';
 import { slotPickView, type SlotPickMode } from './slotView';
@@ -716,7 +716,8 @@ export function startApp(host: HTMLElement): void {
       skinId: s0.skin,
       formId: s0.evolution.formId,
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
-      ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true, bg: arenaSceneBg(faction) } : {}),
+      ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
+      bg: towerSceneBg(faction, f),
       liberation: liberationButton(faction, liberationAccess(s0)),
       onQuit: () => nav.pop(),
       onEnd: (done) => {

@@ -1,6 +1,6 @@
 // 사냥터 배경 그림 층 (GDD 34-1): 걷기 화면은 층별 시차 스크롤(가로 반복, transform 만 움직인다), 전투 화면은 정지.
 // 층 위에 어둡기 덮개를 한 겹 깔아 LCD 위 글자가 읽히게 한다. 그림이 없으면 아무것도 만들지 않는다(지금 모습 그대로).
-import { groundBgId, type FactionConfig } from '../../engine/faction';
+import { groundBgId, towerBgId, type FactionConfig } from '../../engine/faction';
 import { sceneBg, type SceneBg } from '../../data/art/backgrounds';
 import { el } from './dom';
 
@@ -32,4 +32,9 @@ export function sceneBgEl(bg: SceneBg, moving: boolean): HTMLElement {
   }
   box.append(el('span', 'bha-scenebg__dim'));
   return box;
+}
+
+/** 탑 전투 배경 (보스 층 = 무대, 보통 층 = ★에 맞는 사냥터, 없으면 null) */
+export function towerSceneBg(faction: Parameters<typeof towerBgId>[0], floor: { star: number; kind: string }): SceneBg | null {
+  return sceneBg(towerBgId(faction, floor), ART_BASE);
 }
