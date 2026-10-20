@@ -400,6 +400,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 사용자 원문: (배경 시트 6장) "이건 오는대로 주고, 다음패치할거 보고. 그리고 일케 주면 배경 적용 가능? …" → "ㄴㄴ 걍 사신, 호로 아이콘 및 이름 통일시켜. 복잡해지니까 / 배치는 추천대로"
 - **배경**: `public/art/bg-<장면>-<층>.webp` 12장(6장면 × sky·ground, 약 300KB). 데이터 `src/data/art/backgrounds.json`(+ `backgrounds.ts`), 종족 설정 `huntingGrounds.<id>.bg`·`arenaBg`. 걷기 = 층별 시차 스크롤(transform·cqh), 전투 = 정지 배경(보스전·등급전 = seireitei 무대), 어둡기 덮개(토큰 섞음). `src/ui/bha/sceneBg.ts`.
 - **출처**: 설정 > [정보] 한 줄.
+- **걷기 화면 장소 이름**: 왼쪽 위 칩이 종족 전체 지역 이름(huntingGroundName, 예 "현세 순찰 구역 / 루콘가이") 대신 지금 고른 사냥터 이름(groundName, 예 "단가이")을 보인다.
 - **홈 물건**: 두 종족 이름 통일(출발 문·제단·기록서·보관함·창문·훈련 인형·상점), 상점 안내 "수집함" → "보관함". 물건 그림 `image-rendering: pixelated` — 160×160(16×16 도트 ×10)이 칸 안에 비율 유지·흐림 없이 들어가는 것 확인(시험 그림으로 확인 후 삭제).
 - **문서**: art-guide 11장·1장 표, GDD 34-3·12장 v5.63·13장 S-22.
 **테스트** 1067 → 1074 (+7, `tests/c79.test.ts`; c63·room-ui·c60 의 옛 이름 기대값, c75 단계 표시 형식 검사 갱신). typecheck·test·balance:check·build 통과.

@@ -13,7 +13,8 @@ import {
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
 import { tileCss, tileIconId } from './bha/expedition';
-import { roomOf, type FactionConfig } from '../engine/faction';
+import { groundName, roomOf, type FactionConfig } from '../engine/faction';
+import { GROUNDS } from '../data/grounds';
 import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
 import { onHold } from './bha/hold';
 import { bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
@@ -207,7 +208,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // 모서리 작은 버튼(오른쪽 위), 귀환·선택 말풍선(장면 위 오버레이)으로 띄운다. 별도 상태 줄·패널은 없다.
   const helpBtn = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small' });
   const where = el('div', 'bha-exp__where');
-  where.append(el('b', '', faction.huntingGroundName));
+  // 지금 고른 사냥터 이름 (GDD 24-2). 종족 전체 지역 이름(huntingGroundName)이 아니라 사냥터별 이름
+  const groundLabel = groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
+  where.append(el('b', '', groundLabel));
   // 폭주 상태 칩 (GDD 23-2): 한계 돌파한 원정의 남은 동안 보인다. 문구는 종족 설정 frenzyName
   const frenzyChip = chip(faction.frenzyName, 'danger');
   frenzyChip.classList.add('bha-frenzychip');
@@ -237,7 +240,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   chips.append(goal, where, meters, slotsLine);
 
   const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
-  const walk = walkScene(faction.walkAnim, faction.huntingGroundName, walkArt, locoOf(faction, h.formId, walkArt), groundSceneBg(faction, exp.groundId));
+  const walk = walkScene(faction.walkAnim, groundLabel, walkArt, locoOf(faction, h.formId, walkArt), groundSceneBg(faction, exp.groundId));
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선
