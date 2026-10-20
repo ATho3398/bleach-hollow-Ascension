@@ -416,6 +416,8 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
   for (const g of GROUNDS) {
     const bosses = ['hollow', 'shinigami'].map((fid) => groundBossId(fid, g.id));
     if (bosses.every((b) => b === null)) continue;
+    // 3·5단계 사냥터(2·3장 보스, C.84)는 그 보스를 스토리에서 이긴 몸만 만난다 — 아래 진화 봇 몸으로 따로 본다
+    if (g.unlockTierIndex > 0) continue;
     let defOff = 0;
     let defOn = 0;
     let appeared = 0;
@@ -531,6 +533,53 @@ let campaignFinalDefeats: number[] = [];
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const top = sorted.map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).slice(0, 8).join(' · ');
     console.log(`    ${tier}단계 ${sorted.length}/${formsOfTier(tier).length}종: ${top}`);
+  }
+}
+
+// ── 보스 자유 원정 등장 — 2·3장 사냥터 (C.84, GDD 37장 7번 가드): 그 장 보스를 스토리에서 이긴 몸 = 보스 화의 권장 단계에 갓 닿은 진화 봇 몸, 그 화의 ★.
+// 1단계 새 몸은 이 보스를 만날 수 없다(스토리 보스가 4·5단계 권장). 같은 시드로 보스 처치 전/후 짝 비교, 가드 패배율 +5%p 이하 ──
+{
+  const K = 30;
+  const BF = BALANCE.provisional.boss;
+  for (const g of GROUNDS.filter((x) => x.unlockTierIndex > 0)) {
+    const boss = groundBossId('hollow', g.id);
+    if (!boss) continue;
+    let tier = 0;
+    let star = 1;
+    for (const ch of STORY_CHAPTERS) {
+      const ep = chapterContent('hollow', ch.id)?.episodes.find((e) => e.boss?.id === boss);
+      if (ep) {
+        tier = ep.recommendedTier - 1;
+        star = ep.difficulty;
+      }
+    }
+    const bodies = campaignFirstAt[tier] ?? [];
+    let defOff = 0;
+    let defOn = 0;
+    let appeared = 0;
+    let bossLost = 0;
+    let runs = 0;
+    bodies.forEach((body, bi) => {
+      for (let k = 1; k <= K; k++) {
+        const seed = 90000 + bi * 101 + k;
+        const mk = (beaten: string[]) => createExpedition({
+          factionId: 'hollow', seed, hunger: 20, condition: 80, deck: sanitizeDeck(body.tiles, 'hollow'), stability: body.nest.stability,
+          build: body.build, evolution: body.evolution, tileVariants: true, groundId: g.id, difficulty: star, bossesBeaten: beaten,
+        });
+        const off = playExpedition(mk([]), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
+        const on = playExpedition(mk([boss]), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
+        runs++;
+        if (off.outcome === 'defeated') defOff++;
+        if (on.outcome === 'defeated') defOn++;
+        if (on.freeBoss?.appear) appeared++;
+        if (on.freeBoss?.result && !on.freeBoss.result.won) bossLost++;
+      }
+    });
+    const dInc = runs ? (defOn - defOff) / runs : 0;
+    console.log(`\n보스 자유 원정 등장 (GDD 37장, 사냥터 ${g.id} 보스 ${boss}, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${K}판 ★${star}, ${BF.freeFromLap}바퀴째부터 ${Math.round(BF.freeChance * 100)}%)`);
+    console.log(`  등장 ${appeared}/${runs}(${((appeared / Math.max(1, runs)) * 100).toFixed(1)}%) · 보스에게 짐 ${bossLost}/${appeared} · 패배율 ${((defOff / Math.max(1, runs)) * 100).toFixed(1)} → ${((defOn / Math.max(1, runs)) * 100).toFixed(1)}% (${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p, 가드 +5%p 이하)`);
+    if (bodies.length < CAMPAIGNS * 0.8) failures.push(`보스 자유 원정(${g.id}): ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+    if (dInc > 0.05) failures.push(`보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 37장 7번)`);
   }
 }
 
