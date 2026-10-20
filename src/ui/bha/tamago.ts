@@ -290,6 +290,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     artNat = null;
     artBox = null;
     frame.classList.toggle('has-tama-art', false);
+    frame.classList.toggle('is-frame-v2', false);
     frame.classList.toggle('has-side-art', false);
     for (const e of [edgeL, edgeR]) e.style.removeProperty('--side-art');
     bodyArt.hidden = true;
@@ -326,7 +327,8 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
         else backArt.onload = lb;
       }
       // 평소 화면도 이 기기 틀 (GDD 31장 2·4): LCD 844×390 이 구멍에 꽉, 구멍 + 버튼이 화면에 들어가게
-      if (c.device!.frame === 'v2') dev.setSkin(deviceSkinV2()); // frame-v2: 평소 화면이 기본형과 같은 자리 (GDD 33장)
+      frame.classList.toggle('is-frame-v2', c.device!.frame === 'v2');
+      if (c.device!.frame === 'v2') dev.setSkin(deviceSkinV2()); // frame-v2: 평소 화면의 UI 묶음이 기본형과 같은 자리 (GDD 33장·33-2)
       else dev.setSkin(deviceSkin(artNat, c.device!));
       syncRoot();
       relayout();
@@ -373,7 +375,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   };
   const stageOf = (f: Fit): string => {
     fit = f;
-    artBox = artSpec && artNat ? (artSpec.frame === 'v2' ? deviceArtPlacementV2<DeviceButton>(lcdRect(), artSpec) : deviceArtPlacement(lcdRect(), artNat, artSpec)) : null;
+    artBox = artSpec && artNat ? (artSpec.frame === 'v2' && artSpec.hole ? deviceArtPlacementV2<DeviceButton>(lcdRect(), artNat, { hole: artSpec.hole, ring: artSpec.ring }) : deviceArtPlacement(lcdRect(), artNat, artSpec)) : null;
     layout = tamaLayout(f.w, f.h, artBox, flipDeg, view);
     view = clampView(view, layout.zoom, layout.box, f.w, f.h);
     gravityLocal = tiltOn() ? gravityLocal : defaultGravity(f.rotated);

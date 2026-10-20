@@ -384,3 +384,13 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - **사신대행증 v2 검사**: 앞면 2744×2294(규격 2688×1326 → 가로 +56·세로 +968px, 비율 1.196 ≠ 2.027), 뒷면 1372×1147(규격과 가로 −1316·세로 −179px). 구멍·버튼 자리는 크기가 달라 모두 어긋남(구멍은 v1 옛 규칙 (663,818) 1410×705 — v2 는 646:360 구멍이라 비율도 다름). 새로 그려야 함. 전체 출력은 마스터 보고에.
 **테스트** 1055 → 1064 (+9, `tests/c77.test.ts`; c75 의 STAGE 검사를 S-20|S-21 로). typecheck·test·balance:check·build 통과.
 **캡처** `docs/captures/c77/`(1배, 5장): `00-basic-landscape`, `01-v2-vs-basic-landscape`·`02-v2-vs-basic-portrait`(v2 평소 화면 위에 기본형 LCD(빨강)·버튼(노랑) 테두리 겹침 — 일치), `03-layout-guide-thumb`, `05-v2-tamago-mode`.
+
+### C.78 frame-v2 수정 — UI 묶음만 고정, 모양·크기·구멍 위치 자유 (STAGE S-21, 코딩63, GDD 33-2 → 33-3 v5.62)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.78, `STAGE_LABEL` S-21. **`BALANCE_VERSION`·`SAVE_FORMAT_VERSION` 그대로.**
+사용자 원문: "저 ui만 맞추면 다마고치 기기 자체 크기는 더 그릴 수 있는거 맞아? 저렇게 직사각형으로 모양까지 고정하면 안되는디" → "ㅇㅇ그게 맞아 그리고 구멍 위치는 규격만 맞으면 그림마다 조절 가능하고.ㅇㅋ?"
+- **규격**: 고정 = UI 묶음(구멍 1938×1080 투명 + 버튼 4개 크기·구멍 기준 상대 위치 + 덮을 곳 구멍 둘레 72·버튼 자리). 자유 = 그림 크기(≤4000)·모양·구멍 위치(items.json `hole: [x, y]`)·고리·재질·뒷면. 2688×1326 고정·"구멍 밖 꽉" 삭제.
+- **게임**: `deviceArtPlacementV2(lcd, natural, {hole, ring})`(그림 1px = 논리 ⅓, 그림의 구멍 왼쪽 위 = LCD 왼쪽 위), 평소 화면 틀 `deviceSkinV2` = 기본형 기기 844×390 고정, 크면 `is-frame-v2` 로 바깥 자름. 다마고치 모드 = 그림 전체 상자(줌·뒤집기 두께·키링). 시험 기기 2종 `device-vtest`(직사각형)·`device-vround`(동그라미 3600², 구멍 위쪽).
+- **가이드**: 스티커 layout-guide.png(2430×1080)·예시 모양 3장·README·preset.json·`check-device.py --hole/--item`(구멍 자동 찾기)·art-guide 10-1d·프롬프트 ①-c.
+- **사신대행증 v2 검사**: 앞면 2744×2294(크기 자유 ✓), 구멍 (663,818) **1410×705 ≠ 1938×1080**(가로 −528·세로 −375), 구멍 둘레 72px 덮음 66%, 버튼 ✓·< 자리가 그림 밖으로 나감(묶음이 안 들어감), 고리 ✓, 뒷면 1372×1147 ≠ 앞면. 구멍·버튼 묶음을 ×3 크기로 맞춰 다시 그려야 함(그림 크기·모양은 지금 그대로 가능).
+**테스트** 1064 → 1067 (+3, `tests/c78.test.ts`; c77 의 규격 값 테스트는 새 규칙으로 대체). typecheck·test·balance:check·build 통과.
+**캡처** `docs/captures/c78/`(1배, 5장): `01-vtest-vs-basic-landscape`·`02-vround-vs-basic-portrait`(평소 화면 위에 기본형 LCD 빨강·버튼 노랑 테두리 — 일치), `03-vtest-tamago-mode`·`04-vround-tamago-mode`, `05-guide-sticker-thumb`.

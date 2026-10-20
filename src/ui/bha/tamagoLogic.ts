@@ -250,28 +250,30 @@ export function skinLcdAt(skin: DeviceSkin, w: number, h: number): { x: number; 
   return { x: r2(w / 2 - (skin.crop.x + skin.crop.w / 2)), y: r2(h / 2 - (skin.crop.y + skin.crop.h / 2)) };
 }
 
-// ── frame-v2 그림 기기 (GDD 33장, C.77): 평소 화면이 기본형과 같은 배율·같은 자리 ──
-/** 기본형 평소 화면에서 LCD 왼쪽 위를 (0,0)으로 잡은 좌표: 구멍 = LCD 그대로, 틀 상자 = 기본형 기기 전체(844×390) */
+// ── frame-v2 그림 기기 (GDD 33장·33-2): 평소 화면의 UI 묶음(구멍 + 버튼 4개)이 기본형과 같은 배율·같은 자리 ──
+/** 기본형 평소 화면에서 LCD 왼쪽 위를 (0,0)으로 잡은 좌표: 구멍 = LCD 그대로, 틀 상자 = 기본형 기기 전체(844×390) — 그림 크기·모양과 상관없다 */
 export function deviceSkinV2(): DeviceSkin {
-  const o = { x: FRAME_V2.plain.x - FRAME_V2.lcd.x, y: FRAME_V2.plain.y - FRAME_V2.lcd.y };
+  const B = FRAME_V2.basic;
   return {
-    lcd: { w: FRAME_V2.lcd.w, h: FRAME_V2.lcd.h },
-    hole: { x: 0, y: 0, w: FRAME_V2.lcd.w, h: FRAME_V2.lcd.h },
-    crop: { x: o.x, y: o.y, w: FRAME_V2.plain.w, h: FRAME_V2.plain.h },
+    lcd: { w: FRAME_V2.hole.w, h: FRAME_V2.hole.h },
+    hole: { x: 0, y: 0, w: FRAME_V2.hole.w, h: FRAME_V2.hole.h },
+    crop: { x: -B.lcdX, y: -B.lcdY, w: B.w, h: B.h },
   };
 }
 
 /**
- * frame-v2 그림의 놓는 자리: 그림 크기와 상관없이 그림 한 장 = 기본형 몸체(896×442)이고, 지금 LCD 가 구멍(125,41)에 오게 놓는다.
- * 버튼 4개 누름 영역 = 기본형 버튼 자리, 고리 = 데이터 ring(그림 대비 %)
+ * frame-v2 그림의 놓는 자리: 그림 1px = 논리 1/3px, 그림 안 구멍 왼쪽 위(spec.hole, 그림 픽셀)가 지금 LCD 왼쪽 위에 오게 놓는다(그림 크기는 자유).
+ * 버튼 4개 누름 영역 = 구멍 기준 규격 위치(기본형 버튼 자리), 고리 = 데이터 ring(그림 대비 %)
  */
-export function deviceArtPlacementV2<B extends string>(lcd: Rect, spec: { ring: { x: number; y: number } }): { box: Rect; ring: { x: number; y: number }; hole: Rect; buttons: Record<B, Rect> } {
-  const ox = lcd.x - FRAME_V2.lcd.x, oy = lcd.y - FRAME_V2.lcd.y;
-  const at = (r: Rect): Rect => ({ x: r2(ox + r.x), y: r2(oy + r.y), w: r2(r.w), h: r2(r.h) });
+export function deviceArtPlacementV2<B extends string>(lcd: Rect, natural: { w: number; h: number }, spec: { hole: readonly [number, number]; ring: { x: number; y: number } }): { box: Rect; ring: { x: number; y: number }; hole: Rect; buttons: Record<B, Rect> } {
+  const k = FRAME_V2.scale;
+  const w = Math.max(1, natural.w) / k, h = Math.max(1, natural.h) / k;
+  const ox = lcd.x - spec.hole[0] / k, oy = lcd.y - spec.hole[1] / k;
+  const at = (r: Rect): Rect => ({ x: r2(lcd.x + r.x), y: r2(lcd.y + r.y), w: r2(r.w), h: r2(r.h) });
   const buttons = Object.fromEntries(FRAME_V2_BUTTONS.map((b) => [b, at(FRAME_V2.buttons[b])])) as Record<B, Rect>;
   return {
-    box: { x: r2(ox), y: r2(oy), w: FRAME_V2.canvas.w, h: FRAME_V2.canvas.h },
-    ring: { x: r2(ox + FRAME_V2.canvas.w * (spec.ring.x / 100)), y: r2(oy + FRAME_V2.canvas.h * (spec.ring.y / 100)) },
+    box: { x: r2(ox), y: r2(oy), w: r2(w), h: r2(h) },
+    ring: { x: r2(ox + w * (spec.ring.x / 100)), y: r2(oy + h * (spec.ring.y / 100)) },
     hole: { x: r2(lcd.x), y: r2(lcd.y), w: lcd.w, h: lcd.h },
     buttons,
   };

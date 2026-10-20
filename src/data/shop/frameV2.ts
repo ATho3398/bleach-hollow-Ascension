@@ -1,6 +1,6 @@
-// 기기 그림 규격 frame-v2 (GDD 33장, C.77): 기본형(CSS 기기) 평소 화면을 844×390 에서 잰 값 그대로.
-// 그림 한 장 = 기본형 몸체(평소 화면 + 둘레 26px) 896×442 의 정수배. 아래 좌표는 모두 "그림 왼쪽 위 (0,0)" 기준 기준 px(×1).
-// 이 값은 docs/design/device-preset/frame-v2/preset.json 과 같아야 한다 (tests/c77.test.ts 가 비교).
+// 기기 그림 규격 frame-v2 (GDD 33장, C.77 → 33-2 C.78): 고정 = **UI 묶음**(화면 구멍 + 버튼 4개의 크기·구멍 기준 상대 위치, 기본형 평소 화면 844×390 실측 그대로).
+// 그림 크기·모양·구멍 위치(데이터 `hole: [x, y]` = 구멍 왼쪽 위, 그림 픽셀)·고리·재질·뒷면은 자유. 그림 1px = 논리 1/scale px.
+// 이 값은 docs/design/device-preset/frame-v2/preset.json 과 같아야 한다 (tests/c78.test.ts 가 비교). 논리 px = 기기 안 좌표(844×390 기준).
 export interface PxRect {
   x: number;
   y: number;
@@ -12,25 +12,26 @@ export const FRAME_V2_BUTTONS = ['up', 'down', 'ok', 'back'] as const;
 export type FrameV2Button = (typeof FRAME_V2_BUTTONS)[number];
 
 export const FRAME_V2 = {
-  /** 그림 기준 크기 = 기본형 몸체 (다마고치 모드의 CSS 몸체 = 평소 화면 + 둘레 BODY.pad 26) */
-  canvas: { w: 896, h: 442 },
-  /** 평소 화면 (844×390)이 그림에서 차지하는 자리 — 이 밖은 다마고치 모드에서만 보인다 */
-  plain: { x: 26, y: 26, w: 844, h: 390 },
-  /** 게임 화면(LCD) 구멍: 완전 투명 */
-  lcd: { x: 125, y: 41, w: 646, h: 360 },
-  /** 버튼 4개 누름 영역 (기본형 버튼과 같은 자리·크기) */
+  /** 그림 1 논리 px = 그림 픽셀 3개 (구멍 646×360 → 1938×1080) */
+  scale: 3,
+  /** 그림 크기 상한(한 변, 그림 픽셀) — 안내값 */
+  maxSide: 4000,
+  /** 화면 구멍 크기(논리 px, 기본형 LCD) — 안은 완전 투명, 모서리 반지름 11 */
+  hole: { w: 646, h: 360, radius: 11 },
+  /** 구멍 둘레에 몸체가 있어야 하는 폭(논리 px, ×3 = 72) */
+  cover: 24,
+  /** 버튼 4개 누름 영역 — 구멍 왼쪽 위를 (0,0)으로 한 논리 px (기본형 버튼 그대로) */
   buttons: {
-    up: { x: 46, y: 161, w: 52, h: 52 },
-    down: { x: 46, y: 229, w: 52, h: 52 },
-    ok: { x: 792, y: 159, w: 64, h: 64 },
-    back: { x: 802, y: 239, w: 44, h: 44 },
+    up: { x: -79, y: 120, w: 52, h: 52 },
+    down: { x: -79, y: 188, w: 52, h: 52 },
+    ok: { x: 667, y: 118, w: 64, h: 64 },
+    back: { x: 677, y: 198, w: 44, h: 44 },
   } satisfies Record<FrameV2Button, PxRect>,
+  /** UI 묶음(구멍 + 버튼 4개)의 바깥 사각형 — 구멍 왼쪽 위 기준 */
+  bundle: { x: -79, y: 0, w: 810, h: 360 },
+  /** 기본형 평소 화면: 기기 전체 844×390 안에서 LCD 왼쪽 위 (99, 15) */
+  basic: { w: 844, h: 390, lcdX: 99, lcdY: 15 },
 } as const;
 
-const pctX = (v: number): number => Math.round((v / FRAME_V2.canvas.w) * 10000) / 100;
-const pctY = (v: number): number => Math.round((v / FRAME_V2.canvas.h) * 10000) / 100;
-
-/** 기준 px 사각형 → 그림 대비 % (items.json 과 같은 단위) */
-export function frameV2Pct(r: PxRect): PxRect {
-  return { x: pctX(r.x), y: pctY(r.y), w: pctX(r.w), h: pctY(r.h) };
-}
+/** 그림 픽셀 → 논리 px */
+export const artToLogical = (px: number): number => Math.round((px / FRAME_V2.scale) * 100) / 100;

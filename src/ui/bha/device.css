@@ -39,6 +39,7 @@ html.bha-pc, html.bha-pc body { background: var(--bha-bg-0); }
   align-items: center; justify-content: center;
   padding: 0; background: var(--bha-bg-0); border: 0; box-shadow: none;  /* 규칙과 다른 그림(구멍이 더 큼)의 남는 띠 = LCD 테두리 색 */
 }
+.bha-dev.is-frame-v2:not(.is-tama) { overflow: hidden; }  /* frame-v2 (GDD 33-2): 그림이 기기(844×390 틀)보다 크면 평소 화면에서는 바깥을 자른다 — PC 의 바깥 배경으로 안 나가게 */
 .bha-dev.is-skin .bha-lcd { flex: none; width: var(--skin-lcd-w); height: var(--skin-lcd-h); border: 0; }
 
 /* ── 버튼: 글자 없이 아이콘만 ── */

@@ -1,173 +1,194 @@
-"""기기 그림 규격 검사 (frame-v2 기본, frame-v1 도 가능)
-  python3 check-device.py <앞면.png> [뒷면.png] [--ring X,Y] [--frame v1|v2]
-  v2(기본): 그림 크기 = 896×442 의 정수배(추천 ×3). 화면 구멍·버튼 4개·구멍 둘레 몸체를 규격 자리와 견줘, 어디가 몇 px 틀렸는지 말한다(그림 픽셀 기준, ×배율 함께 표시).
-  v1: 옛 규격(2744×2294). 새 그림은 v2 로 만든다.
---ring 에는 앞면 고리 구멍 중심(그림 픽셀)을 준다 — 그 구멍이 투명한지 본다."""
-import json, sys, os
+"""기기 그림 검사 (frame-v2, GDD 33-2): UI 묶음(화면 구멍 + 버튼 4개)과 몸체가 덮을 곳만 본다. 그림 크기·모양·구멍 위치는 자유.
+  python3 check-device.py <앞면.png> [뒷면.png] [--hole X,Y] [--ring X,Y] [--item device-id]
+    --hole  구멍 왼쪽 위(그림 픽셀). 없으면 --item(items.json 의 hole)을 읽고, 그것도 없으면 그림에서 투명 구멍을 찾아 그 왼쪽 위를 쓴다
+    --ring  앞면 고리 구멍 중심(그림 픽셀) — 그 구멍이 투명한지 본다
+  규격(×3): 구멍 1938×1080 완전 투명, 구멍 둘레 72px·버튼 4개 자리는 몸체. 어긋나면 어디가 몇 px 틀렸는지 말한다.
+  옛 규격(frame-v1)은 `--frame v1`."""
+import json, os, sys, subprocess
+from collections import deque
 import numpy as np
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 argv = sys.argv[1:]
-frame = 'v2'
-if '--frame' in argv:
-    i = argv.index('--frame'); frame = argv[i + 1]; del argv[i:i + 2]
-ring = None
-if '--ring' in argv:
-    i = argv.index('--ring'); ring = tuple(int(v) for v in argv[i + 1].split(',')); del argv[i:i + 2]
+if '--frame' in argv and argv[argv.index('--frame') + 1] == 'v1':
+    rest = [a for i, a in enumerate(argv) if a != '--frame' and (i == 0 or argv[i - 1] != '--frame')]
+    sys.exit(subprocess.call([sys.executable, os.path.join(HERE, '..', 'frame-v1', 'check-device.py'), *rest]))
+def take(flag):
+    if flag in argv:
+        i = argv.index(flag); v = argv[i + 1]; del argv[i:i + 2]; return v
+    return None
+hole_arg, ring_arg, item_arg = take('--hole'), take('--ring'), take('--item')
 args = [a for a in argv if not a.startswith('--')]
-if not args or frame not in ('v1', 'v2'):
+if not args:
     sys.exit(__doc__)
+P = json.load(open(os.path.join(HERE, 'preset.json'), encoding='utf-8'))
+X3 = P['x3']; HW, HH = X3['hole']['w'], X3['hole']['h']; R = X3['hole']['radius']; M = X3['cover']; MAXS = P['maxSide']
 
 ok = True
 def say(good, msg):
     global ok
     ok &= bool(good)
     print(('✓ ' if good else '✗ ') + msg)
-
-# ── 규격 불러오기: v1 = 고정 크기, v2 = 896×442 의 k 배 (k 는 그림 가로에서 가장 가까운 정수) ──
-im0 = Image.open(args[0]).convert('RGBA')
-iw, ih = im0.size
-if frame == 'v1':
-    P = json.load(open(os.path.join(HERE, '..', 'frame-v1', 'preset.json'), encoding='utf-8'))
-    K, W, H = 1, P['canvas']['w'], P['canvas']['h']
-    S = P['screen']; BT = P['buttons']; PLAIN = None
-else:
-    P = json.load(open(os.path.join(HERE, 'preset.json'), encoding='utf-8'))
-    bw, bh = P['base']['canvas']['w'], P['base']['canvas']['h']
-    K = max(1, round(iw / bw))
-    sc = P['scales'].get(f'x{K}') or {
-        'canvas': {'w': bw * K, 'h': bh * K}, 'plain': {a: v * K for a, v in P['base']['plain'].items()},
-        'screen': {a: v * K for a, v in P['base']['lcd'].items()},
-        'buttons': {n: {'cx': (b['x'] + b['w'] / 2) * K, 'cy': (b['y'] + b['h'] / 2) * K, 'touchR': b['w'] * K / 2} for n, b in P['base']['buttons'].items()}}
-    W, H, S, BT, PLAIN = sc['canvas']['w'], sc['canvas']['h'], sc['screen'], sc['buttons'], sc['plain']
-label = lambda p: os.path.basename(p)
-
-def load(path, first=False):
-    im = im0 if first else Image.open(path).convert('RGBA')
-    w, h = im.size
-    say((w, h) == (W, H), f'{label(path)}: 크기 {w}×{h} (규격 {W}×{H}' + (f' = 896×442 × {K})' if frame == 'v2' else ')'))
-    if (w, h) != (W, H):
-        if frame == 'v2':
-            print(f'   → 가로 {w - W:+d}px · 세로 {h - H:+d}px. 그림 한 장은 896×442 의 정수배(×2 = 1792×884, ×3 = 2688×1326, ×4 = 3584×1768)여야 하고 비율은 896:442 = {896 / 442:.3f}:1 (지금 {w / h:.3f}:1)')
-        print(f'   → 아래 검사는 규격 자리(왼쪽 위 기준, ×{K})와 견줘 계속한다 — 크기를 먼저 맞춰야 정확하다')
-    a = np.zeros((H, W), np.uint8)
-    arr = np.array(im)[:, :, 3]
-    hh, ww = min(H, arr.shape[0]), min(W, arr.shape[1])
-    a[:hh, :ww] = arr[:hh, :ww]
-    return a
-
-yy, xx = np.ogrid[:H, :W]
-def ring_hole(a, cx, cy, label_):
-    cx, cy = max(0, min(W - 1, cx)), max(0, min(H - 1, cy))
-    core = (xx - cx) ** 2 + (yy - cy) ** 2 <= (5 * K if frame == 'v2' else 40) ** 2
-    say(a[core].max() == 0, f'{label_}: 고리 구멍 ({cx}, {cy}) 투명')
-
 def bbox(mask):
     ys, xs = np.nonzero(mask)
     return (xs.min(), ys.min(), xs.max(), ys.max()) if len(xs) else None
 
-a = load(args[0], True)
-sx0, sy0, sx1, sy1 = int(S['x']), int(S['y']), int(S['x'] + S['w']), int(S['y'] + S['h'])
-# 구멍 모서리는 둥글어도 된다(LCD 모서리 반지름 11×배율 — 게임 화면이 그 모서리를 자른다): 모서리 사각형 중 원 밖은 검사에서 뺀다
-cr = 11 * K if frame == 'v2' else 0
-hy, hx = np.ogrid[sy0:sy1, sx0:sx1]
-dx = np.maximum(np.maximum(sx0 + cr - hx, hx - (sx1 - 1 - cr)), 0)
-dy = np.maximum(np.maximum(sy0 + cr - hy, hy - (sy1 - 1 - cr)), 0)
-hole_mask = (dx * dx + dy * dy) <= cr * cr if cr else np.ones((sy1 - sy0, sx1 - sx0), bool)
-inside = np.where(hole_mask, a[sy0:sy1, sx0:sx1], 0)
-say(inside.max() == 0, f'앞면: 화면 구멍 ({sx0}, {sy0}) {sx1 - sx0}×{sy1 - sy0} 안이 완전 투명')
-if inside.max() != 0:
-    b = bbox(inside > 0)
-    print(f'   → 구멍 안에 그림이 있음: x {sx0 + b[0]}~{sx0 + b[2]} · y {sy0 + b[1]}~{sy0 + b[3]} 를 투명하게 지워야 함')
+im = Image.open(args[0]).convert('RGBA')
+W, H = im.size
+a = np.array(im)[:, :, 3]
+name = os.path.basename(args[0])
+say(max(W, H) <= MAXS * 1.05, f'{name}: 크기 {W}×{H} (자유, 한 변 약 {MAXS}px 까지)')
+if max(W, H) > MAXS * 1.05:
+    print(f'   → 긴 변이 {max(W, H) - MAXS}px 넘음. 상한은 안내값이지만 너무 크면 느려진다')
 
-# 실제 그림의 구멍(가운데에서 이어진 투명 영역)을 재서 규칙과 몇 px 다른지 말한다
-cx, cy = (sx0 + sx1) // 2, (sy0 + sy1) // 2
-def edge(line, start, step):
-    i = start
-    while 0 <= i + step < len(line) and line[i + step] == 0:
-        i += step
-    return i
-if a[cy, cx] == 0:
-    cols = range(sx0 + 8, sx1 - 8, 16)
-    rows = range(sy0 + 8, sy1 - 8, 16)
+# ── 구멍 왼쪽 위 정하기 ──
+def read_item(item):
+    for d in json.load(open(os.path.join(HERE, '..', '..', '..', '..', 'src', 'data', 'shop', 'items.json'), encoding='utf-8'))['devices']:
+        if d['id'] == item and d.get('hole'):
+            return tuple(d['hole'])
+    sys.exit(f'items.json 에 {item} 의 hole 이 없다')
+def find_hole():
+    """그림 안(가장자리에 안 닿는) 가장 큰 투명 덩어리의 가운데 → 그 가운데에서 픽셀 단위로 구멍 가장자리를 잰다"""
+    s = 6
+    hh, ww = H // s, W // s
+    small = a[:hh * s, :ww * s].reshape(hh, s, ww, s).max(axis=(1, 3)) == 0
+    seen = np.zeros_like(small)
+    best = None
+    for y0 in range(hh):
+        for x0 in range(ww):
+            if not small[y0, x0] or seen[y0, x0]:
+                continue
+            q = deque([(y0, x0)]); seen[y0, x0] = True; cells = []; edge = False
+            while q:
+                y, x = q.popleft(); cells.append((y, x))
+                if y in (0, hh - 1) or x in (0, ww - 1): edge = True
+                for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    ny, nx = y + dy, x + dx
+                    if 0 <= ny < hh and 0 <= nx < ww and small[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True; q.append((ny, nx))
+            if not edge and (best is None or len(cells) > len(best)):
+                best = cells
+    if not best:
+        return None
+    ys = [c[0] for c in best]; xs = [c[1] for c in best]
+    return ((min(xs) + max(xs) + 1) * s // 2, (min(ys) + max(ys) + 1) * s // 2)
+
+def measure(cx, cy):
+    """가운데 (cx, cy) 에서 이어진 투명 영역의 실제 구멍 사각형(둥근 모서리도 잡도록 여러 줄·열을 본다)"""
+    def edge(line, start, step):
+        i = start
+        while 0 <= i + step < len(line) and line[i + step] == 0:
+            i += step
+        return i
+    cols = range(max(0, cx - HW // 2 + 8), min(W, cx + HW // 2 - 8), 16)
+    rows = range(max(0, cy - HH // 2 + 8), min(H, cy + HH // 2 - 8), 16)
     top = min(edge(a[:, x], cy, -1) for x in cols if a[cy, x] == 0)
     bot = max(edge(a[:, x], cy, 1) for x in cols if a[cy, x] == 0) + 1
     lef = min(edge(a[y, :], cx, -1) for y in rows if a[y, cx] == 0)
     rig = max(edge(a[y, :], cx, 1) for y in rows if a[y, cx] == 0) + 1
-    print(f'   그림의 실제 구멍: ({lef}, {top}) {rig - lef}×{bot - top} (규칙 ({sx0}, {sy0}) {sx1 - sx0}×{sy1 - sy0})')
-    def side(name, have, want, bigger_is_out, fix):
+    return lef, top, rig, bot
+
+if hole_arg:
+    hx, hy = (int(v) for v in hole_arg.split(','))
+    src_note = '--hole'
+elif item_arg:
+    hx, hy = read_item(item_arg); src_note = f'{item_arg} (items.json)'
+else:
+    c = find_hole()
+    if not c:
+        say(False, '그림에서 투명 화면 구멍을 못 찾음 — 구멍이 가장자리에 닿았거나 불투명. 구멍 위치를 --hole X,Y 로 알려 주세요')
+        sys.exit(1)
+    if a[c[1], c[0]] != 0:
+        say(False, '구멍 후보 가운데가 투명하지 않음'); sys.exit(1)
+    lef, top, rig, bot = measure(*c)
+    hx, hy = lef, top; src_note = '그림에서 찾은 구멍 왼쪽 위'
+    print(f'   구멍을 그림에서 찾음: ({lef}, {top}) {rig - lef}×{bot - top}')
+print(f'   구멍 왼쪽 위 hole = [{hx}, {hy}] ({src_note})')
+
+# ── 1. 화면 구멍 ──
+sx0, sy0, sx1, sy1 = hx, hy, hx + HW, hy + HH
+inb = sx0 >= 0 and sy0 >= 0 and sx1 <= W and sy1 <= H
+say(inb, f'구멍 ({sx0}, {sy0}) {HW}×{HH} 이 그림 안에 있음')
+if not inb:
+    print(f'   → 그림 {W}×{H} 밖으로 나감: 왼쪽 {max(0, -sx0)} · 위 {max(0, -sy0)} · 오른쪽 {max(0, sx1 - W)} · 아래 {max(0, sy1 - H)}px')
+    sys.exit(1)
+yy, xx = np.ogrid[sy0:sy1, sx0:sx1]
+dx = np.maximum(np.maximum(sx0 + R - xx, xx - (sx1 - 1 - R)), 0)
+dy = np.maximum(np.maximum(sy0 + R - yy, yy - (sy1 - 1 - R)), 0)
+inside = np.where(dx * dx + dy * dy <= R * R, a[sy0:sy1, sx0:sx1], 0)
+say(inside.max() == 0, f'화면 구멍 안이 완전 투명 (모서리 반지름 {R} 은 둥글어도 됨)')
+if inside.max() != 0:
+    b = bbox(inside > 0)
+    print(f'   → 구멍 안에 그림이 있음: x {sx0 + b[0]}~{sx0 + b[2]} · y {sy0 + b[1]}~{sy0 + b[3]} 를 투명하게 지워야 함')
+cx, cy = (sx0 + sx1) // 2, (sy0 + sy1) // 2
+if a[cy, cx] == 0:
+    lef, top, rig, bot = measure(cx, cy)
+    print(f'   그림의 실제 구멍: ({lef}, {top}) {rig - lef}×{bot - top} (규격 ({sx0}, {sy0}) {HW}×{HH})')
+    def side(nm, have, want, grow_is_out, axis):
         d = have - want
         if d == 0:
-            return say(True, f'화면 구멍 {name} 가장자리 = 규칙 그대로 ({want})')
-        out = (d < 0) == bigger_is_out  # 구멍이 규칙보다 바깥으로 큰가
+            return say(True, f'화면 구멍 {nm} 가장자리 = 규격 그대로 ({want})')
+        out = (d < 0) == grow_is_out
         lo, hi = sorted((have, want))
-        extra = f' (기준 px 로 {abs(d) / K:g})' if K > 1 else ''
         if out:
-            say(False, f'화면 구멍 {name}쪽이 {abs(d)}px 더 큼{extra}: {fix} {lo}~{hi - 1} 가 투명 → 불투명(테두리)이어야 함')
+            say(False, f'화면 구멍 {nm}쪽이 {abs(d)}px 더 큼 (기준 {abs(d) / 3:.1f}px): {axis} {lo}~{hi - 1} 가 투명 → 불투명(테두리)이어야 함')
         else:
-            say(False, f'화면 구멍 {name}쪽이 {abs(d)}px 작음{extra}: {fix} {lo}~{hi - 1} 가 불투명 → 투명이어야 함')
-    side('위', top, sy0, True, 'y')
-    side('아래', bot, sy1, False, 'y')
-    side('왼', lef, sx0, True, 'x')
-    side('오른', rig, sx1, False, 'x')
-    print(f'   구멍 비율: 그림 {(rig - lef) / (bot - top):.3f}:1, 규칙 {(sx1 - sx0) / (sy1 - sy0):.3f}:1')
+            say(False, f'화면 구멍 {nm}쪽이 {abs(d)}px 작음 (기준 {abs(d) / 3:.1f}px): {axis} {lo}~{hi - 1} 가 불투명 → 투명이어야 함')
+    side('위', top, sy0, True, 'y'); side('아래', bot, sy1, False, 'y'); side('왼', lef, sx0, True, 'x'); side('오른', rig, sx1, False, 'x')
+    print(f'   구멍 크기: 그림 {rig - lef}×{bot - top}, 규격 {HW}×{HH} (가로 {rig - lef - HW:+d}px · 세로 {bot - top - HH:+d}px)')
 else:
     say(False, f'구멍 가운데 ({cx}, {cy}) 가 투명하지 않음 — 화면 구멍 자리가 통째로 다름')
 
-m = 24 * (K if frame == 'v2' else 1)
+# ── 3. 몸체가 덮을 곳: 구멍 둘레 72px (그림 안 부분만) ──
 band = np.zeros((H, W), bool)
-band[max(0, sy0 - m):sy1 + m, max(0, sx0 - m):sx1 + m] = True
-if PLAIN:  # v2: 평소 화면 범위 안만 (바깥 둘레 26px 는 자유)
-    pl = np.zeros((H, W), bool)
-    pl[int(PLAIN['y']):int(PLAIN['y'] + PLAIN['h']), int(PLAIN['x']):int(PLAIN['x'] + PLAIN['w'])] = True
-    band &= pl
+band[max(0, sy0 - M):min(H, sy1 + M), max(0, sx0 - M):min(W, sx1 + M)] = True
 band[sy0:sy1, sx0:sx1] = False
 cov = (a[band] > 200).mean()
-say(cov > 0.95, f'앞면: 화면 구멍 둘레 {m}px 를 몸체가 덮음 ({cov:.0%})')
+say(cov > 0.95, f'구멍 둘레 {M}px 를 몸체가 덮음 ({cov:.0%})')
 if cov <= 0.95:
-    for name, ys, xs in [('위', slice(max(0, sy0 - m), sy0), slice(max(0, sx0 - m), sx1 + m)), ('아래', slice(sy1, sy1 + m), slice(max(0, sx0 - m), sx1 + m)),
-                         ('왼', slice(sy0, sy1), slice(max(0, sx0 - m), sx0)), ('오른', slice(sy0, sy1), slice(sx1, sx1 + m))]:
-        mk = np.zeros((H, W), bool)
-        mk[ys, xs] = True
+    for nm, ys, xs in [('위', slice(max(0, sy0 - M), sy0), slice(max(0, sx0 - M), min(W, sx1 + M))), ('아래', slice(sy1, min(H, sy1 + M)), slice(max(0, sx0 - M), min(W, sx1 + M))),
+                       ('왼', slice(sy0, sy1), slice(max(0, sx0 - M), sx0)), ('오른', slice(sy0, sy1), slice(sx1, min(W, sx1 + M)))]:
+        mk = np.zeros((H, W), bool); mk[ys, xs] = True
         b = bbox(mk & (a <= 200))
         if b:
-            print(f'   → 구멍 {name}쪽 테두리 {m}px 에 몸체가 없는 곳: x {b[0]}~{b[2]} · y {b[1]}~{b[3]}')
-for n, b in BT.items():
-    c = (xx - b['cx']) ** 2 + (yy - b['cy']) ** 2 <= b['touchR'] ** 2
+            print(f'   → 구멍 {nm}쪽 테두리 {M}px 에 몸체가 없는 곳: x {b[0]}~{b[2]} · y {b[1]}~{b[3]}')
+    if sx0 - M < 0 or sy0 - M < 0 or sx1 + M > W or sy1 + M > H:
+        print('   → 구멍 둘레 72px 가 그림 밖으로 나가는 쪽이 있음: 구멍을 그림 안쪽으로 옮기거나 그림을 키우세요')
+
+# ── 버튼 4개 (구멍 기준 상대 위치) ──
+Y, Xg = np.ogrid[:H, :W]
+for n, b in X3['buttons'].items():
+    bx, by, r = hx + b['dx'], hy + b['dy'], b['touchR']
+    c = (Xg - bx) ** 2 + (Y - by) ** 2 <= r ** 2
+    inb_btn = bx - r >= 0 and by - r >= 0 and bx + r <= W and by + r <= H
+    if not inb_btn:
+        say(False, f'버튼 {n} 자리 (중심 ({bx:g}, {by:g}) 지름 {r * 2:g}) 가 그림 밖으로 나감 — 구멍을 안쪽으로 옮기거나 그림을 키우세요')
+        continue
     cv = (a[c] > 200).mean()
-    say(cv > 0.9, f'앞면: 버튼 {n} 자리 (중심 ({b["cx"]:g}, {b["cy"]:g}) 지름 {b["touchR"] * 2:g}) 그림 있음 ({cv:.0%})')
+    say(cv > 0.9, f'버튼 {n} 자리 (중심 ({bx:g}, {by:g}) 지름 {r * 2:g}) 에 그림 있음 ({cv:.0%})')
     if cv <= 0.9:
-        mm = bbox(c & (a <= 200))
-        print(f'   → 버튼 {n} 누름 영역에 몸체가 없는 곳: x {mm[0]}~{mm[2]} · y {mm[1]}~{mm[3]} (버튼은 몸체 위에 있어야 함)')
-if PLAIN:
-    # 평소 화면(844×390 범위)에서 구멍 밖은 그림이 있어야 한다 (비어 보이면 뒤 배경이 비침)
-    px0, py0, px1, py1 = int(PLAIN['x']), int(PLAIN['y']), int(PLAIN['x'] + PLAIN['w']), int(PLAIN['y'] + PLAIN['h'])
-    pm = np.zeros((H, W), bool)
-    pm[py0:py1, px0:px1] = True
-    pm[sy0:sy1, sx0:sx1] = False
-    pc = (a[pm] > 200).mean()
-    say(pc > 0.9, f'앞면: 평소 화면 범위 ({px0}, {py0}) {px1 - px0}×{py1 - py0} 에서 구멍 밖을 그림이 덮음 ({pc:.0%})')
-    if pc <= 0.9:
-        mm = bbox(pm & (a <= 200))
-        print(f'   → 평소 화면에 그림이 비는 곳: x {mm[0]}~{mm[2]} · y {mm[1]}~{mm[3]} (모서리 둥근 부분이면 괜찮음)')
+        m = bbox(c & (a <= 200))
+        print(f'   → 버튼 {n} 누름 영역에 몸체가 없는 곳: x {m[0]}~{m[2]} · y {m[1]}~{m[3]} (버튼은 몸체 위에 있어야 함)')
+
+# ── 고리·뒷면 ──
+def ring_hole(arr, rx, ry, label):
+    rx, ry = max(0, min(arr.shape[1] - 1, rx)), max(0, min(arr.shape[0] - 1, ry))
+    yy2, xx2 = np.ogrid[:arr.shape[0], :arr.shape[1]]
+    core = (xx2 - rx) ** 2 + (yy2 - ry) ** 2 <= 15 ** 2
+    say(arr[core].max() == 0, f'{label}: 고리 구멍 ({rx}, {ry}) 투명')
+ring = tuple(int(v) for v in ring_arg.split(',')) if ring_arg else None
 if ring:
     ring_hole(a, *ring, '앞면')
 if len(args) > 1:
-    b = load(args[1])
-    if ring:
-        ring_hole(b, W - 1 - ring[0], ring[1], '뒷면(좌우 반전)')
+    ib = Image.open(args[1]).convert('RGBA')
+    say(ib.size == (W, H), f'{os.path.basename(args[1])}: 앞면과 같은 크기 {ib.size[0]}×{ib.size[1]} (앞면 {W}×{H})')
+    if ring and ib.size == (W, H):
+        ring_hole(np.array(ib)[:, :, 3], W - 1 - ring[0], ring[1], '뒷면(좌우 반전)')
 
-if frame == 'v2':
-    print('\nitems.json 의 devices 줄에 넣을 것 (화면·버튼 자리는 규격이라 적지 않는다):')
-    r = {'frame': 'v2'}
-    if ring:
-        r['ring'] = {'x': round(ring[0] / W * 100, 2), 'y': round(ring[1] / H * 100, 2)}
-    print(json.dumps(r, ensure_ascii=False))
-else:
-    out = {'screen': P['itemsJson']['screen'], 'buttons': P['itemsJson']['buttons']}
-    if ring:
-        out['ring'] = {'x': round(ring[0] / W * 100, 2), 'y': round(ring[1] / H * 100, 2)}
-    print('\nitems.json 의 devices 줄에 넣을 좌표(%):')
-    print(json.dumps(out, ensure_ascii=False))
+print('\nitems.json 의 devices 줄에 넣을 것 (화면·버튼 크기·자리는 규격이라 적지 않는다):')
+out = {'frame': 'v2', 'hole': [hx, hy]}
+if ring:
+    out['ring'] = {'x': round(ring[0] / W * 100, 2), 'y': round(ring[1] / H * 100, 2)}
+print(json.dumps(out, ensure_ascii=False))
 sys.exit(0 if ok else 1)
