@@ -1,7 +1,7 @@
 // 상점 (GDD 25-9, S-16 C.60): 독 [더보기] → [상점]. 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 덱 칸만 확인 창 1번, 나머지는 바로 산다. 꾸밈은 산 뒤 그 줄에서 [착용]/[해제].
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
-import { CATEGORIES, cosmeticName, getCosmetic, cosmeticToken, SHOP_PROVISIONAL, type CosmeticCategory } from '../data/shop';
+import { CATEGORIES, cosmeticName, getCosmetic, cosmeticToken, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
@@ -78,10 +78,10 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const main = h('div', 'bha-shoprow__main');
     const name = h('b', 'bha-shoprow__name');
     const cos = getCosmetic(row.id);
-    if (cos && cos.category !== 'skin') {
-      // 색 견본: 그 꾸밈의 토큰을 참조만 한다
+    if (cos && cos.category !== 'skin' && cos.category !== 'device') {
+      // 색 견본: 그 꾸밈의 토큰을 참조만 한다 (키링은 종족 설정의 모양 색)
       const sw = h('i', `bha-shoprow__swatch bha-shoprow__swatch--${cos.category}`);
-      sw.style.setProperty('--sw', `var(${cosmeticToken(cos, SWATCH_PART[cos.category] ?? '')})`);
+      sw.style.setProperty('--sw', cos.category === 'keyring' ? `var(--bha-cos-keyring-${keyringShapeOf(cos, faction)}-body)` : `var(${cosmeticToken(cos, SWATCH_PART[cos.category] ?? '')})`);
       if (cos.category === 'tint') sw.style.setProperty('--sw-filter', `var(${cosmeticToken(cos)})`);
       name.append(sw);
     }

@@ -251,7 +251,10 @@
       "talk-b": "무뚝뚝한 무사",
       "room-dusk": "다다미 방",
       "room-bloom": "벚꽃 마당",
-      "room-night": "밤의 대원실"
+      "room-night": "밤의 대원실",
+      "keyring-charm": "지옥나비",
+      "keyring-bell": "방울",
+      "keyring-orb": "영옥 구슬"
     },
     "talkPacks": {
       "talk-a": {
@@ -306,6 +309,10 @@
           "빈속으로는 칼을 못 쥔다."
         ]
       }
+    },
+    "keyringShapes": {
+      "keyring-charm": "butterfly",
+      "keyring-bell": "bell"
     }
   },
   "liberation": {

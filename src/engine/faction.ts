@@ -217,8 +217,9 @@ export interface FactionConfig {
   training: TrainingConfig;
   /** 환생 (GDD 22-7): 버튼 이름·연출 문구 */
   rebirth: RebirthConfig;
-  /** 상점 꾸밈의 종족 표시 이름·말풍선 팩 문구 (GDD 25-11): names = 품목 id → 표시 이름(방 테마·말풍선 팩), talkPacks = 팩 id → 방 혼잣말 키별 문구(없는 키는 기본 문구) */
-  cosmetics?: { names?: Record<string, string>; talkPacks?: Record<string, Partial<Record<RoomTalk, string[]>>> };
+  /** 상점 꾸밈의 종족 표시 이름·말풍선 팩 문구 (GDD 25-11): names = 품목 id → 표시 이름(방 테마·말풍선 팩·키링), talkPacks = 팩 id → 방 혼잣말 키별 문구(없는 키는 기본 문구),
+   *  keyringShapes = 키링 품목 id → 그림 모양 키(GDD 27장, 없으면 품목의 look) */
+  cosmetics?: { names?: Record<string, string>; talkPacks?: Record<string, Partial<Record<RoomTalk, string[]>>>; keyringShapes?: Record<string, string> };
   /** 메인 방 화면: 방 모양·소품 이름·위치·그림 키·반응 문구 (GDD 16장). 없으면 기본값 */
   room?: Partial<Omit<RoomConfig, 'props' | 'layout' | 'talk'>> & { props?: Partial<RoomConfig['props']>; layout?: Partial<RoomConfig['layout']>; talk?: Partial<RoomConfig['talk']> };
 }
@@ -309,6 +310,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.cosmetics !== undefined) {
     const cs = (r.cosmetics ?? {}) as Record<string, unknown>;
     for (const [k, v] of Object.entries((cs.names ?? {}) as Record<string, unknown>)) if (!isString(v)) errors.push(`cosmetics.names.${k}: 비어 있지 않은 문자열이어야 한다`);
+    for (const [k, v] of Object.entries((cs.keyringShapes ?? {}) as Record<string, unknown>)) if (!isString(v) || !/^[a-z]+$/.test(v)) errors.push(`cosmetics.keyringShapes.${k}: 영문 소문자 모양 키여야 한다`);
     for (const [pk, pv] of Object.entries((cs.talkPacks ?? {}) as Record<string, unknown>)) {
       for (const [k, v] of Object.entries((pv ?? {}) as Record<string, unknown>)) if (!(ROOM_TALK as readonly string[]).includes(k) || !Array.isArray(v) || v.length === 0 || !v.every(isString)) errors.push(`cosmetics.talkPacks.${pk}.${k}: 알려진 혼잣말 키의 비어 있지 않은 문자열 목록이어야 한다`);
     }

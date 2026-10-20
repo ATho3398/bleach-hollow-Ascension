@@ -2,7 +2,7 @@
 // 품목은 src/data/shop, 가격·상한·효과량은 balance.ts provisional.shop, 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
 // 산 즉시 쓰는 방식: 먹이 = 먹이 개수 +1, 정화제·각성제 = 지금 캐릭터에 바로, 수련권 = 지금 트랙 +1, 타일 = 수집함 +1. 보관하는 건 다시 뽑기권·덱 칸·꾸밈뿐
 import { BALANCE } from './config/balance';
-import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, getCosmetic, getGoldItem, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
+import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, getCosmetic, getGoldItem, shopVisible, skinIdOfItem, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WearCategory } from './data/shop';
 import { canWear } from './data/skins';
 import { baseTilesFor, tileName } from './data/tiles';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
@@ -125,9 +125,9 @@ export function isWorn(save: Pick<SaveData, 'skin' | 'wear'>, c: CosmeticItemDef
   return c.category === 'skin' ? save.skin === c.look : save.wear[c.category as WearCategory] === c.id;
 }
 
-/** 영옥 탭 줄: 스킨(이 종족이 입을 수 있는 것만) → 꾸밈 분류 순서 */
-export function jadeRows(save: SaveData, faction?: FactionConfig): ShopRow[] {
-  return COSMETIC_ITEMS.filter((c) => c.category !== 'skin' || canWear(save.factionId, c.look)).map((c) => {
+/** 영옥 탭 줄: 스킨(이 종족이 입을 수 있는 것만) → 꾸밈 분류 순서. 기기 디자인은 그림이 들어온 것만, 보상 전용은 보유했을 때만 (GDD 27장) */
+export function jadeRows(save: SaveData, faction?: FactionConfig, files?: readonly string[]): ShopRow[] {
+  return COSMETIC_ITEMS.filter((c) => (c.category !== 'skin' || canWear(save.factionId, c.look)) && shopVisible(c, save.shared.cosmetics, files)).map((c) => {
     const price = cosmeticPrice(c);
     const owned = save.shared.cosmetics.includes(c.id);
     const short = !owned && wallet(save, 'jade') < price ? shortText('jade', price - wallet(save, 'jade')) : null;
@@ -140,7 +140,7 @@ function record(save: SaveData, id: string, currency: ShopCurrency, price: numbe
 }
 
 /** 산다 (GDD 25-9): 돈·상한·조건을 다시 확인하고 바로 효과를 낸다. 실패하면 아무것도 바뀌지 않는다. rand = 희귀 타일 굴림(0~1) */
-export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, nowMs: number = Date.now(), rand: () => number = Math.random): BuyResult {
+export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, nowMs: number = Date.now(), rand: () => number = Math.random, files?: readonly string[]): BuyResult {
   const gold = getGoldItem(id);
   if (gold) {
     const row = goldRows(save, faction).find((r) => r.id === id);
@@ -186,7 +186,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
     return { ok: true, id, price, currency: 'gold', detail };
   }
   const c = getCosmetic(id);
-  if (!c || (c.category === 'skin' && !canWear(save.factionId, c.look))) return { ok: false, reason: '지금은 살 수 없는 품목이다' };
+  if (!c || (c.category === 'skin' && !canWear(save.factionId, c.look)) || !shopVisible(c, save.shared.cosmetics, files)) return { ok: false, reason: '지금은 살 수 없는 품목이다' };
   if (save.shared.cosmetics.includes(id)) return { ok: false, reason: '이미 가지고 있다' };
   const price = cosmeticPrice(c);
   if (save.shared.jade < price) return { ok: false, reason: shortText('jade', price - save.shared.jade) };
@@ -194,6 +194,14 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
   save.shared.cosmetics.push(id);
   record(save, id, 'jade', price, nowMs);
   return { ok: true, id, price, currency: 'jade', detail: `${cosmeticName(c, faction)} 보유` };
+}
+
+/** 보상으로 꾸밈을 준다 (GDD 27장 기기 디자인 source 'reward' 등). 돈·상점 노출과 무관, 이미 있으면 false. 구매 기록은 남기지 않는다 */
+export function grantCosmetic(save: SaveData, id: string): boolean {
+  const c = getCosmetic(id);
+  if (!c || c.category === 'skin' || save.shared.cosmetics.includes(id)) return false;
+  save.shared.cosmetics.push(id);
+  return true;
 }
 
 /** 꾸밈 입기 (지금 트랙, 분류마다 하나 — 같은 분류의 다른 것은 벗는다). 보유하지 않았거나 이 종족이 못 입는 스킨이면 false */

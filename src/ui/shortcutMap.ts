@@ -42,6 +42,9 @@ export const SHORTCUTS: Record<ShortcutCtx, Record<string, ShortcutAction>> = {
   plan: { ...NAV, Space: 'go', ...digits(9, (i) => `pick.${i}`) },
 };
 
+/** 어디서나: 다마고치 모드 켬/끔 (GDD 27장, C.62). 맥락 표(SHORTCUTS)에 없는 키여야 한다 — 기기가 아니라 다마고치 모드(tamago.ts)가 받는다 */
+export const TAMAGO_CODE = 'KeyB';
+
 /** 숫자패드 숫자는 윗줄 숫자와 같은 키로 본다. 나머지는 그대로 */
 export function normalizeCode(code: string): string {
   return /^Numpad[0-9]$/.test(code) ? `Digit${code.slice(6)}` : code;
@@ -139,6 +142,7 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
     title: '어디서나',
     rows: [
       { keys: '+ / −', does: '화면 1배 ↔ 2배' },
+      { keys: 'B', does: '다마고치 모드 켬/끔 (멀리서 기기 전체 보기, 화면을 누르면 다시 확대)' },
       { keys: '방향키, Enter, Esc', does: '이동 / 확정 / 취소 (예전과 같다)' },
     ],
   },

@@ -24,7 +24,7 @@ const ids = (cat: string) => COSMETIC_ITEMS.filter((c) => c.category === cat).ma
 
 describe('2차 품목 표 (25-11)', () => {
   it('분류 8개 추가, 품목 수·가격이 표와 같다', () => {
-    expect(CATEGORIES.map((c) => c.id).slice(8)).toEqual(['enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame']);
+    expect(CATEGORIES.map((c) => c.id).slice(8, 16)).toEqual(['enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame']);
     expect(ids('enter')).toEqual(['enter-rift', 'enter-burst', 'enter-shadow']);
     expect(ids('evo')).toEqual(['evo-cocoon', 'evo-pillar', 'evo-petal']);
     expect(ids('absorb')).toEqual(['absorb-shadow', 'absorb-light']);
@@ -42,11 +42,11 @@ describe('2차 품목 표 (25-11)', () => {
       for (const c of COSMETIC_ITEMS.filter((x) => x.category === cat)) for (const part of COSMETIC_PARTS[cat]) expect(css.includes(`${cosmeticToken(c, part)}:`), cosmeticToken(c, part)).toBe(true);
     }
   });
-  it('BALANCE_VERSION 37, 패치 C.61 / 단계 S-16b, 세이브 형식은 24 그대로 (wear 새 키는 없으면 기본)', () => {
-    expect(BALANCE_VERSION).toBe(37);
-    expect(PATCH_LABEL).toBe('C.61');
-    expect(STAGE_LABEL).toBe('S-16b');
-    expect(SAVE_FORMAT_VERSION).toBe(24);
+  it('BALANCE_VERSION 37 이상, 세이브 형식 24 이상 (C.61 당시 37·C.61·S-16b·24 — 이후 패치가 올린다)', () => {
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(37);
+    expect(PATCH_LABEL).toMatch(/^C\.\d+$/);
+    expect(STAGE_LABEL).toMatch(/^S-/);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(24);
   });
   it('새 코드 파일에 종족 id 분기가 없다', () => {
     for (const f of ['src/ui/bha/cosmeticFx.ts', 'src/ui/bha/photo.ts', 'src/ui/photoView.ts']) {

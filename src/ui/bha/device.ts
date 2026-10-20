@@ -10,7 +10,7 @@ import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewS
 import { actionFor, isNavAction } from '../shortcutMap';
 import { KEY_HINTS_EVENT, loadKeyHints } from '../keyHints';
 import { badgePlan, detectCtx, isTypingTarget, runAction, runCancelHooks, syncBadges } from './shortcuts';
-import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, setFit } from './viewport';
+import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, setFit, type Fit } from './viewport';
 
 export interface SelectItem {
   el: HTMLElement;
@@ -38,6 +38,14 @@ export interface Device {
   cancel(): void;
   /** 다시 계산(화면 이동 뒤·상태 변화 뒤) */
   refresh(): void;
+  /** 기기 틀 요소 (.bha-dev: 버튼 + LCD). 다마고치 모드(GDD 27장)가 둘레에 몸체를 붙인다 */
+  frame: HTMLElement;
+  /**
+   * 기기 transform 뒤에 붙일 무대 변환 (다마고치 모드 줌아웃·뒤집기). 맞춤을 다시 계산할 때마다 불러 그 결과를 붙인다. null = 없음.
+   * 바꾼 뒤 restage() 로 바로 반영한다
+   */
+  setStage(fn: ((f: Fit) => string) | null): void;
+  restage(): void;
   destroy(): void;
 }
 
@@ -114,6 +122,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   const probe = el('div', 'bha-dev__probe');
   probe.setAttribute('aria-hidden', 'true');
   let lastRotated: boolean | null = null;
+  let stageFn: ((f: Fit) => string) | null = null;
   const fitDevice = () => {
     const r = probe.getBoundingClientRect();
     const vp = pickViewport(r, window);
@@ -136,13 +145,15 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     dev.classList.toggle('is-narrow', f.scale < 1); // 긴 쪽이 740px 미만인 좁은 폰: 블록 바를 아래 전폭으로 (lcd.css)
     dev.style.width = `${f.w}px`;
     dev.style.height = `${f.h}px`;
+    // 다마고치 모드(GDD 27장): 맞춤 변환 뒤에 줌아웃·뒤집기를 붙인다 (기기 안 좌표 기준이라 세로 회전·PC 배율에서도 같다)
+    const stage = stageFn ? stageFn(f) : '';
     if (pc) {
       // zoom 은 레이아웃 크기를 실제로 키운다(글자·터치 영역 포함). left/top 도 zoom 단위라 배율로 나눠 넣는다
-      dev.style.transform = 'translateZ(0)';
+      dev.style.transform = stage ? `translateZ(0) ${stage}` : 'translateZ(0)';
       dev.style.left = `${(f.ox ?? 0) / f.scale}px`;
       dev.style.top = `${(f.oy ?? 0) / f.scale}px`;
     } else {
-      dev.style.transform = fitTransform(f);
+      dev.style.transform = stage ? `${fitTransform(f)} ${stage}` : fitTransform(f);
       dev.style.left = '';
       dev.style.top = '';
     }
@@ -408,6 +419,11 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     confirm,
     cancel,
     refresh,
+    frame: dev,
+    setStage(fn) {
+      stageFn = fn;
+    },
+    restage: fitDevice,
     destroy() {
       mo.disconnect();
       window.removeEventListener('keydown', onKey);

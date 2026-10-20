@@ -17,6 +17,7 @@ import './ui/bha/walk-scene.css';
 import './ui/bha/loco.css';
 import './ui/bha/shop.css';
 import './ui/bha/cosmetics.css';
+import './ui/bha/tamago.css';
 import { startApp } from './ui/app';
 import { applyCalmMode } from './ui/fxSettings';
 import { mountSprite } from './ui/bha/sprite';

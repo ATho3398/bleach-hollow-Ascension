@@ -44,6 +44,8 @@ export interface RoomHandlers {
   onShop: () => void;
   /** 사진 (GDD 25-11): 독 더보기 항목 */
   onPhoto: () => void;
+  /** 다마고치 모드 켜기 (GDD 27장): 줌아웃해 기기 전체를 본다 */
+  onTamago: () => void;
   onBackup: () => void;
   onTitle: () => void;
   persist: () => void;
@@ -209,6 +211,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', onClick: hd.onHogyoku }] : []),
       { label: '상점', icon: 'i-rare', onClick: hd.onShop },
       { label: '사진', icon: 'i-cast', onClick: hd.onPhoto },
+      { label: '다마고치 모드', icon: 'i-minus', onClick: hd.onTamago },
       ...(hd.onChangeFaction ? [{ label: '종족 바꾸기', icon: 'i-swap-species', onClick: hd.onChangeFaction }] : []),
       { label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup },
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },

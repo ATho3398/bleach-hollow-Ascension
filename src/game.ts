@@ -37,7 +37,7 @@ import { isBossId } from './data/bosses';
 import { getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 24;
+export const SAVE_FORMAT_VERSION = 25;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -107,6 +107,15 @@ export interface SaveData {
   transcendentDex: TranscendentEntry[];
   /** 슬롯 단위 런 로그 (GDD 9장·22-3, 형식 23): 합체·트랙 개방 기록 */
   slotLog: SlotLog;
+  /** 기기 기록 (GDD 27장, 형식 25): 다마고치 모드 뒷면 기록 판 — 세이브를 만든 시각(처음 시작한 날·제조 번호)·켜 두고 논 시간. 슬롯 단위 */
+  machine: MachineRecord;
+}
+
+export interface MachineRecord {
+  /** 세이브를 만든 시각(ms). 형식 25 이전 세이브는 기록에 남은 가장 이른 시각 */
+  createdAt: number;
+  /** 화면을 켜 두고 논 시간(ms). 형식 25 이전은 0부터 센다 */
+  playMs: number;
 }
 
 /** 트랙 하나의 꾸밈 착용 (GDD 25-9): 분류 → 품목 id. 없는 분류 = 기본 */
@@ -358,8 +367,32 @@ export function newTileStock(): TileStock {
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
   return {
     meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: newHelpState(), shared: newSharedState(), lastSeenAt: nowMs, story: {}, bossDex: {},
-    otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(),
+    otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
   };
+}
+
+/** 세이브 안 기록에서 가장 이른 시각(ms): 런 로그·칭호·슬롯 기록의 `at`/`…At` 숫자 (2001년 이후 값만). 없으면 null — 형식 25 마이그레이션의 "처음 시작한 날" */
+export function earliestStamp(raw: unknown): number | null {
+  let best: number | null = null;
+  const walk = (v: unknown, key: string, depth: number): void => {
+    if (depth > 6 || v === null || v === undefined) return;
+    if (typeof v === 'number') {
+      if ((key === 'at' || /At$/.test(key)) && Number.isFinite(v) && v > 1e12 && (best === null || v < best)) best = v;
+      return;
+    }
+    if (Array.isArray(v)) for (const x of v) walk(x, key, depth + 1);
+    else if (typeof v === 'object') for (const [k, x] of Object.entries(v as Record<string, unknown>)) walk(x, k, depth + 1);
+  };
+  const r = (isRec(raw) ? raw : {}) as Record<string, unknown>;
+  for (const k of ['runLog', 'titles', 'slotLog', 'otherTracks', 'transcendentDex', 'lastSeenAt']) walk(r[k], k, 0);
+  return best;
+}
+
+/** 기기 기록 보정 (깨진 값) */
+export function sanitizeMachine(raw: unknown, fallbackAt: number): MachineRecord {
+  const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof MachineRecord, unknown>>;
+  const at = typeof r.createdAt === 'number' && Number.isFinite(r.createdAt) && r.createdAt >= 0 ? r.createdAt : fallbackAt;
+  return { createdAt: at, playMs: nonNegInt(r.playMs) };
 }
 
 /** 새 캐릭터 트랙 (1단계 완전 초기 상태). seedSalt 로 같은 시각에 만든 두 트랙의 단계 시드를 다르게 한다 */
@@ -1021,6 +1054,11 @@ export function migrateSave(raw: unknown): SaveData | null {
     save.shared.jade = (typeof save.shared.jade === 'number' ? save.shared.jade : 0) + claimed * BALANCE.provisional.shop.tutorialJade;
     save.meta.format = 24;
   }
+  if (save.meta.format < 25) {
+    // 형식 24 → 25 (C.62, GDD 27장 다마고치 모드 뒷면): 기기 기록 — 처음 시작한 날은 기록에 남은 가장 이른 시각(없으면 지금), 논 시간은 0부터
+    if (!isRec(save.machine)) save.machine = { createdAt: earliestStamp(save) ?? Date.now(), playMs: 0 };
+    save.meta.format = 25;
+  }
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
   for (const t of save.otherTracks) if (typeof t.parkedAt !== 'number' || !Number.isFinite(t.parkedAt)) t.parkedAt = Date.now();
@@ -1029,6 +1067,7 @@ export function migrateSave(raw: unknown): SaveData | null {
   save.transcendentDex = sanitizeTranscendentDex(save.transcendentDex);
   save.slotLog = { fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [] };
   save.shared = sanitizeShared(save.shared);
+  save.machine = sanitizeMachine(save.machine, earliestStamp(save) ?? Date.now());
   forEachTrack(save, (t) => sanitizeTrackFields(t, save.shared.cosmetics));
   save.story = sanitizeStory(save.story);
   save.bossDex = sanitizeBossDex(save.bossDex);

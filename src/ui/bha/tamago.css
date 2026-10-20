@@ -1,0 +1,107 @@
+/* 다마고치 모드 (GDD 27장, C.62): 줌아웃한 기기 몸체·고리·키링·뒷면 기록 판. 배치·크기는 tamago.ts 가 기기 안 좌표(px)로 넣는다.
+   색은 기기 껍데기 꾸밈(--cos-shell-*, 없으면 기기 틀 기본 --bha-bg-2/--bha-line-2)과 키링 꾸밈 토큰(--bha-cos-keyring-*)만 쓴다 */
+
+/* 줌아웃하면 기기 바깥이 보인다: 기기 틀 바탕(무늬)을 페이지 쪽으로 옮긴다 */
+html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop); }
+.bha-dev.is-tama { background: transparent; }
+.bha-dev.is-tama.is-pc { box-shadow: none; }
+.bha-dev.is-tama-anim { transition: transform var(--tama-dur, var(--bha-dur-4)) var(--tama-ease, var(--bha-ease-out)); }
+
+.bha-tama { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: visible; }  /* z-index 없음: 몸체(-1)는 버튼·LCD 밑, 뒷면·키링·조작 줄은 위 */
+.bha-tama[hidden] { display: none; }
+
+/* 몸체: 지금 기기 상자 둘레 */
+.bha-tama__body {
+  position: absolute; z-index: -1;
+  background: var(--cos-shell-body, var(--bha-bg-2));
+  border: 2px solid var(--cos-shell-line, var(--bha-line-2));
+  border-radius: calc(var(--bha-r-lg) * 3);
+  box-shadow: inset 0 0 0 4px var(--bha-line-1), inset 0 -10px 24px rgb(0 0 0 / 0.35), var(--bha-shadow-3);
+}
+.bha-tama__art { position: absolute; z-index: -1; max-width: none; max-height: none; pointer-events: none; user-select: none; -webkit-user-select: none; }
+.bha-tama__art[hidden] { display: none; }
+.bha-dev.has-tama-art .bha-tama__body, .bha-dev.has-tama-art .bha-tama__ring { visibility: hidden; }
+
+/* 고리: 몸체 왼쪽 위 모서리에서 비스듬히 나온 고리 (뒷면에서는 오른쪽 위) */
+.bha-tama__ring {
+  position: absolute; z-index: -1; width: calc(var(--ring-r) * 2); height: calc(var(--ring-r) * 2);
+  transform: translate(-50%, -50%);
+  border: 4px solid var(--cos-shell-line, var(--bha-line-2)); border-radius: var(--bha-r-pill);
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--bha-line-1);
+}
+
+/* 뒷면: 몸체 뒷면 + 스피커 구멍 + 기록 판 */
+.bha-tama__back {
+  position: absolute; z-index: 2;
+  display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-9);
+  padding: var(--bha-sp-8);
+  background: var(--cos-shell-body, var(--bha-bg-2));
+  border: 2px solid var(--cos-shell-line, var(--bha-line-2));
+  border-radius: calc(var(--bha-r-lg) * 3);
+  box-shadow: inset 0 0 0 4px var(--bha-line-1), inset 0 10px 24px rgb(0 0 0 / 0.35), var(--bha-shadow-3);
+}
+.bha-tama__back[hidden] { display: none; }
+.bha-dev.has-tama-art .bha-tama__back { background: transparent; border-color: transparent; box-shadow: none; }
+.bha-tama__back > .bha-tama__art { left: 0; top: 0; z-index: -1; }
+.bha-tama__grille {
+  flex: none; width: 96px; height: 96px; border-radius: var(--bha-r-pill);
+  background: radial-gradient(circle, var(--bha-bg-0) 0 3px, transparent 3.5px) 0 0 / 14px 14px;
+  box-shadow: inset 0 0 0 2px var(--cos-shell-line, var(--bha-line-2));
+}
+.bha-tama__plate {
+  margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--bha-sp-2) var(--bha-sp-6);
+  min-width: 300px; padding: var(--bha-sp-5) var(--bha-sp-6);
+  background: var(--bha-bg-0); color: var(--bha-text-1);
+  border: 1px solid var(--cos-shell-line, var(--bha-line-2)); border-radius: var(--bha-r-md);
+  font-size: var(--bha-fs-sm);
+}
+.bha-tama__plate dt { color: var(--bha-text-3); }
+.bha-tama__plate dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* 뒷면을 보는 동안 앞면(버튼·LCD)은 숨긴다 */
+.bha-dev.is-tama-back > .bha-dev__side, .bha-dev.is-tama-back > .bha-dev__bezel { visibility: hidden; }
+
+/* 몸체 아래 조작 줄 */
+.bha-tama__ctrl { position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-5); }
+
+/* 화면 덮개: 줌아웃 중 LCD 를 탭하면 줌인 (화면은 밑에서 그대로 움직인다) */
+.bha-tama__shield {
+  position: absolute; inset: 0; z-index: calc(var(--bha-z-tutorial) + 2);
+  padding: 0; border: 0; background: transparent; cursor: zoom-in;
+  touch-action: manipulation;
+}
+.bha-tama__shield[hidden] { display: none; }
+
+/* ── 키링: 고리에 매단 줄(seg1) 끝에 장식(seg2). 각도는 tamago.ts 가 rotate 로 ── */
+.bha-key { position: absolute; z-index: 3; width: 0; height: 0; touch-action: none; }
+.bha-key[hidden] { display: none; }
+.bha-key__seg1 { position: absolute; left: 0; top: 0; width: 0; height: var(--chain-l); transform-origin: 0 0; }
+.bha-key__chain {
+  position: absolute; left: -2px; top: 0; width: 4px; height: var(--chain-l);
+  background: radial-gradient(circle, var(--bha-cos-keyring-chain) 0 1.6px, transparent 2px) 0 0 / 4px 5px repeat-y;
+}
+.bha-key__seg2 { position: absolute; left: 0; top: var(--chain-l); width: 0; height: 0; transform-origin: 0 0; }
+/* 손가락으로 잡기 쉽게 장식 둘레를 넓게 받는다 */
+.bha-key__seg2::before { content: ""; position: absolute; left: -30px; top: -8px; width: 60px; height: 70px; }
+.bha-key__charm-svg { position: absolute; left: -25px; top: -4px; width: 50px; height: 58px; max-width: none; overflow: visible; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.5)); }
+.bha-key__art { position: absolute; left: 0; top: 0; width: 52px; max-width: none; height: auto; pointer-events: none; }
+.bha-key__fill { fill: var(--key-body); stroke: var(--key-line); stroke-width: 1.4; }
+.bha-key__hole { fill: var(--key-line); }
+.bha-key__mark { fill: none; stroke: var(--key-line); stroke-width: 1.4; stroke-linecap: round; }
+.bha-key__loop { fill: none; stroke: var(--bha-cos-keyring-chain); stroke-width: 1.6; }
+.bha-key__cap { fill: var(--bha-cos-keyring-chain); }
+.bha-key__shine { fill: var(--bha-cos-keyring-shine); }
+
+/* 확대·축소 (핀치·휠·끌기)는 tamago.ts 가 직접 받는다: 다마고치 모드 동안 브라우저 기본 핀치·스크롤을 끈다 */
+html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tama-on .bha-dev * { touch-action: none; }
+
+/* 그림 기기(모양 자유, GDD 27장 v5.33): 다마고치 모드에서는 LCD 만 그림의 화면 구멍에 남기고 CSS 버튼·테는 숨긴다 → 그림 위 누름 영역이 버튼 */
+.bha-dev.is-tama.has-tama-art > .bha-dev__side { visibility: hidden; }
+.bha-dev.is-tama.has-tama-art > .bha-dev__bezel { background: transparent; border-color: transparent; box-shadow: none; }
+.bha-tama__hit {
+  position: absolute; z-index: 3; padding: 0; border: 0; background: transparent;
+  border-radius: var(--bha-r-md); touch-action: manipulation;
+}
+.bha-tama__hit:active { background: var(--bha-accent-soft); }
+.bha-tama__hit:focus-visible { outline: 2px solid var(--bha-focus); }
+.bha-tama__hit[hidden] { display: none; }

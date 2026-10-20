@@ -67,6 +67,9 @@ import { showToast } from './bha/nest';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
 import { applyCosmetics } from './bha/cosmetics';
+import { initTamago } from './bha/tamago';
+import { accruePlay } from './bha/tamagoLogic';
+import type { WearState } from '../game';
 import { useRerollTicket } from '../shop';
 
 /** 칭호 id → 종족별 표기 이름 */
@@ -96,6 +99,21 @@ export function startApp(host: HTMLElement): void {
     onRotate: (rotated) => rotateEvent(rotated ? 'portrait' : 'landscape'),
   });
   const root = dev.view;
+  // 다마고치 모드 (GDD 27장): 기기 둘레 몸체·키링·뒷면. 꾸밈을 걸 때마다 지금 캐릭터를 알려 준다
+  const tama = initTamago(dev);
+  const dress = (wear: WearState | null) => {
+    applyCosmetics(wear);
+    tama.setContext(wear && save ? getFaction(save.factionId) : null, wear ? save : null);
+  };
+  // 놀던 시간 (뒷면 기록 판): 슬롯을 열고 화면이 보이는 동안만 센다. 저장은 평소 저장 때 같이 된다
+  let playTick = Date.now();
+  const tickPlay = () => {
+    const now = Date.now();
+    if (save && slot !== 0 && !document.hidden) save.machine.playMs = accruePlay(save.machine.playMs, playTick, now);
+    playTick = now;
+  };
+  window.setInterval(tickPlay, 15_000);
+  document.addEventListener('visibilitychange', tickPlay);
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
   const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
     nav.push({ id, locked, render: () => { if (track) setBgm(track); render(); root.scrollTop = 0; } });
@@ -177,8 +195,8 @@ export function startApp(host: HTMLElement): void {
   /** 시작 화면으로: 스택을 비우고 처음 화면 하나만 남긴다 */
   function titleScreen(note = ''): void {
     setBgm('nest');
-    applyCosmetics(null);
     save = null;
+    dress(null);
     slot = 0;
     activeExp = null;
     rotate = IDLE;
@@ -267,7 +285,8 @@ export function startApp(host: HTMLElement): void {
     save = loaded;
     slot = n;
     activeExp = null;
-    applyCosmetics(loaded.wear);
+    dress(loaded.wear);
+    playTick = Date.now();
     resumeNote = '';
     // 꺼 둔 동안 허기 (GDD 24-1): 원정 중간 저장이 있으면 오르지 않는다
     hungryGreet = applyAbsence(loaded) >= BALANCE.provisional.nest.idleHungerNotice;
@@ -384,7 +403,7 @@ export function startApp(host: HTMLElement): void {
     const faction = getFaction(save.factionId);
     applyTheme(faction);
     const s = save;
-    applyCosmetics(s.wear); // 꾸밈 착용 (GDD 25-9): 지금 트랙 것
+    dress(s.wear); // 꾸밈 착용 (GDD 25-9): 지금 트랙 것
     showTitleToasts(s, faction, persist);
     const active = readActiveExpedition(s);
     if (!active.ok && active.reason !== 'none') {
@@ -438,8 +457,9 @@ export function startApp(host: HTMLElement): void {
       onHelp: () => openHelp('nest', true),
       onTutorial: () => open('tutorials', () => tutorialGoalsView(root, faction, s, () => tutorialDemo(faction))),
       // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
-      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => applyCosmetics(s.wear) })),
+      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
+      onTamago: () => tama.toggle(true),
       onBackup: () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTitle: askReturnToTitle,
     });

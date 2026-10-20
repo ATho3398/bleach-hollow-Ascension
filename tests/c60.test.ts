@@ -245,7 +245,7 @@ describe('튜토리얼 영옥 +1 · 세이브 형식 24', () => {
     expect(TUTORIAL_GOALS.length).toBe(10);
   });
   it('형식 23 → 24: 그랜드피셔를 입고 있으면 보유로(벗기지 않음), 그 밖에는 보유 없음·뽑기권 0·덱 칸 0, 받은 튜토리얼만큼 영옥 소급, 구매 기록 빈 목록', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(24);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(24);
     const s = newSaveData('hollow', 1);
     const old = JSON.parse(JSON.stringify(s)) as Record<string, any>;
     old.meta.format = 23;
@@ -257,7 +257,7 @@ describe('튜토리얼 영옥 +1 · 세이브 형식 24', () => {
     delete old.shared.deckSlots;
     delete old.shared.cosmetics;
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(24);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.skin).toBe('grandfisher');
     expect(m.shared.cosmetics).toEqual(['skin-grandfisher']);
     expect([m.shared.rerollTickets, m.shared.deckSlots]).toEqual([0, 0]);

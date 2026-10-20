@@ -207,6 +207,22 @@
   --bha-cos-frame-ink: #20203a;
   --bha-cos-frame-gold: #ffd36b;
 
+  /* ---- 3차 (GDD 27장, C.62): 다마고치 모드 키링 — 모양(look·종족 설정 keyringShapes)마다 몸(body)·테(line), 줄은 공용 ---- */
+  --bha-cos-keyring-chain: #b9b3a6;
+  --bha-cos-keyring-charm-body: #c9b07a;
+  --bha-cos-keyring-charm-line: #5a4a2a;
+  --bha-cos-keyring-mask-body: #efe7da;
+  --bha-cos-keyring-mask-line: #6a5f50;
+  --bha-cos-keyring-butterfly-body: #1a0f26;
+  --bha-cos-keyring-butterfly-line: #c9a7ff;
+  --bha-cos-keyring-bell-body: #e0b04a;
+  --bha-cos-keyring-bell-line: #6e4f12;
+  --bha-cos-keyring-bonebell-body: #e9dfc9;
+  --bha-cos-keyring-bonebell-line: #7a6c55;
+  --bha-cos-keyring-orb-body: #3fbf8f;
+  --bha-cos-keyring-orb-line: #145c44;
+  --bha-cos-keyring-shine: rgb(255 255 255 / 0.75);
+
   /* ---------- 모서리 (테마가 덮어씀) ---------- */
   --bha-r-xs: 3px;
   --bha-r-sm: 6px;

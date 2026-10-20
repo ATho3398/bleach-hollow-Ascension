@@ -7,6 +7,8 @@ import type { WearState } from '../../game';
 export const COSMETIC_PARTS: Readonly<Record<WearCategory, readonly string[]>> = {
   aura: [''], tint: [''], trail: [''], fx: ['', 'edge'], bar: ['bg', 'line'], shell: ['body', 'line', 'lcd'], plate: [''],
   enter: [''], evo: [''], absorb: [''], cut: ['bg', 'line'], win: [''], talk: [''], room: ['bg', 'wall', 'floor', 'line'], frame: [''],
+  // 키링·기기 디자인(GDD 27장)은 루트 색 변수 없이 다마고치 모드 화면(tamago.ts)이 모양·그림을 직접 그린다
+  keyring: [], device: [],
 };
 
 const dataKey = (c: WearCategory): string => `cos${c[0]!.toUpperCase()}${c.slice(1)}`;

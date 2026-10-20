@@ -251,7 +251,10 @@
       "talk-b": "냉정한 포식자",
       "room-dusk": "모래 동굴",
       "room-bloom": "뼈 정원",
-      "room-night": "달빛 사막"
+      "room-night": "달빛 사막",
+      "keyring-charm": "가면 조각",
+      "keyring-bell": "뼈 방울",
+      "keyring-orb": "영옥 구슬"
     },
     "talkPacks": {
       "talk-a": {
@@ -306,6 +309,10 @@
           "식사 시간이 한참 지났다."
         ]
       }
+    },
+    "keyringShapes": {
+      "keyring-charm": "mask",
+      "keyring-bell": "bonebell"
     }
   },
   "liberation": {

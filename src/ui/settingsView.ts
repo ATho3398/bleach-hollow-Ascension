@@ -7,6 +7,8 @@ import { applyCalmMode, loadFxSettings, prefersReducedMotion, resetFxSettings, s
 import { emitFeedback, hookAudioUnlock } from './fx';
 import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
 import { bgm, BGM_SETTINGS_KEY, BGM_VOLUMES, loadBgmSettings, saveBgmSettings } from './bgm';
+import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogic';
+import { setTiltPref } from './bha/tamago';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 
 export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onTutorial?: () => void): void {
@@ -141,6 +143,42 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   keyPanel.append(keyBtn, keyNote);
   paintKeys();
 
+  // 다마고치 모드 (GDD 27장): 켜면 기기 전체가 보이게 물러난다(화면을 누르면 다시 확대). 기울기로 흔들기 = 키링이 폰 기울기를 따라 흔들림(기본 꺼짐)
+  const tamaPanel = el('section', 'bha-panel');
+  tamaPanel.dataset.panel = 'tamago';
+  tamaPanel.append(el('h2', 'bha-panel__title', '다마고치 모드'));
+  const tamaBtn = button({ label: '' });
+  tamaBtn.dataset.set = 'tamago';
+  const tiltBtn = button({ label: '' });
+  tiltBtn.dataset.set = 'tilt';
+  const paintTama = () => {
+    const p = loadTamagoPrefs(storage);
+    for (const [b, on, label] of [[tamaBtn, p.on, '다마고치 모드'], [tiltBtn, p.tilt, '기울기로 흔들기']] as const) {
+      b.textContent = `${label} ${on ? '켬' : '끔'}`;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    }
+  };
+  tamaBtn.onclick = () => {
+    const p = loadTamagoPrefs(storage);
+    saveTamagoPrefs(storage, { ...p, on: !p.on });
+    window.dispatchEvent(new CustomEvent(TAMAGO_EVENT));
+    paintTama();
+  };
+  tiltBtn.onclick = () => {
+    void setTiltPref(!loadTamagoPrefs(storage).tilt).then(paintTama);
+  };
+  tamaPanel.append(
+    tamaBtn, el('p', 'bha-faint', '기기 전체(몸체·고리·키링)가 보이게 물러난다. 화면은 그대로 움직이고 기기 버튼도 눌린다. 화면을 누르면 다시 확대. 컴퓨터는 B 키.'),
+    tiltBtn, el('p', 'bha-faint', '키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 켤 때 움직임 허용을 묻는다. 꺼도 키링은 탭·끌기로 흔들린다.'),
+  );
+  paintTama();
+  const onTamaEvent = () => {
+    if (!tamaPanel.isConnected) window.removeEventListener(TAMAGO_EVENT, onTamaEvent);
+    else paintTama();
+  };
+  window.addEventListener(TAMAGO_EVENT, onTamaEvent);
+
   const panelOf = (...n: Node[]) => {
     const p = el('section', 'bha-panel');
     p.append(...n);
@@ -170,5 +208,5 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, tamaPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'))]);
 }
