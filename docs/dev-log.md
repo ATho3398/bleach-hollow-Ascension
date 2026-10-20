@@ -425,3 +425,4 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 
 ## 그림 반영
 - 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.
+- 2026-10-20: 홈 방 배경 교체(scene-cave 호로·scene-room 사신, 도트풍 새 그림, 66·41KB)와 책장 그림(prop-book, 320×320 WebP 15KB). 캡처 `docs/captures/art-apply/*-v2.png`.
