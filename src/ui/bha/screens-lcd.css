@@ -293,3 +293,25 @@ button.bha-slot { cursor: pointer; }
 /* 스킨 고르기 (상태 화면, GDD 26-5): 작은 그림 + 이름 한 줄씩. 입은 스킨은 is-on */
 .bha-care-page .bha-skinthumb { width: 32px; height: 32px; object-fit: contain; object-position: 50% 100%; flex: none; pointer-events: none; }
 .bha-care-page [data-skin] { justify-content: flex-start; gap: var(--bha-sp-3); }
+
+/* 책장 머리 제목 토글 (GDD 58, C.114): "진화체 도감 ▾" 버튼 + 아래로 열리는 도감 목록. 제목 글자 모양은 그대로(.bha-lcdpage__title 안) */
+.bha-booktitle { position: relative; display: inline-block; min-width: 0; }
+.bha-booktitle__btn {
+  display: inline-flex; align-items: center; gap: var(--bha-sp-1); min-height: var(--bha-touch); max-width: 100%; padding: 0 var(--bha-sp-1);
+  border: 0; border-radius: var(--bha-r-sm); background: transparent; color: inherit; font: inherit; line-height: inherit; white-space: nowrap; cursor: pointer; touch-action: manipulation;
+}
+.bha-booktitle__btn:active { background: var(--bha-bg-2); }
+.bha-booktitle__btn:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
+.bha-booktitle__caret { flex: none; width: 18px; height: 18px; color: var(--bha-text-2); transition: transform var(--bha-dur-2); }
+.bha-booktitle__btn[aria-expanded="true"] .bha-booktitle__caret { transform: rotate(180deg); }
+.bha-booktitle__list {
+  position: absolute; left: 0; top: calc(100% + var(--bha-sp-1)); z-index: 5; min-width: 100%; display: flex; flex-direction: column; gap: var(--bha-sp-1);
+  padding: var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: var(--bha-shadow-3);
+}
+.bha-booktitle__list[hidden] { display: none; }
+.bha-booktitle__item {
+  min-height: var(--bha-touch); padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-sm); background: var(--bha-bg-2);
+  color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); text-align: left; white-space: nowrap; touch-action: manipulation;
+}
+.bha-booktitle__item.is-on { background: var(--bha-bg-3); border-color: var(--bha-accent); }
+.bha-booktitle__item:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
