@@ -9,6 +9,8 @@ export interface PageHead {
   sub?: Node | string;
   /** 머리 오른쪽에 둘 것 (탭·버튼) */
   aside?: Node[];
+  /** 제목 왼쪽의 작은 종족 로고 (logoMark) */
+  logo?: Node;
 }
 
 /** 위/아래 선택 순서를 화면 나머지 뒤로 미룬다 (머리의 탭·버튼: 목록·본문을 먼저 고르게) */
@@ -27,7 +29,11 @@ export function lcdHead(h: PageHead): HTMLElement {
     sub.append(h.sub);
     main.append(sub);
   }
-  head.append(main);
+  if (h.logo) {
+    const lead = el('div', 'bha-lcdpage__lead');
+    lead.append(h.logo, main);
+    head.append(lead);
+  } else head.append(main);
   if (h.aside?.length) {
     const aside = el('div', 'bha-lcdpage__aside');
     aside.append(...h.aside);

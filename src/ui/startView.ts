@@ -4,6 +4,7 @@ import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
 import { versionLabel } from '../version';
 import { button, el, mountApp, notice } from './bha/dom';
+import { logoMark } from './bha/logo';
 
 export interface StartHandlers {
   onNew: () => void;
@@ -42,7 +43,13 @@ export function slotRows(
     const body = el('span', 'bha-slot__body');
     body.append(el('span', 'bha-slot__main', t.main));
     if (t.sub) body.append(el('span', 'bha-slot__sub', t.sub));
+    const fac = sum.state === 'ok' ? factions.find((x) => x.id === sum.factionId) : undefined;
+    const mark = fac ? logoMark(fac, 'bha-logo--sm') : null;
     row.append(el('span', 'bha-slot__no', `슬롯 ${sum.slot}`), body);
+    if (mark) {
+      row.prepend(mark);
+      row.classList.add('bha-slot--logo');
+    }
     if (onPick) row.onclick = () => onPick(sum);
     list.append(row);
   }
@@ -96,7 +103,8 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
     card.setAttribute('role', 'radio');
     card.setAttribute('aria-checked', 'false');
     card.setAttribute('aria-label', f.name);
-    card.append(el('span', 'bha-species__emblem', emblemOf(f)), el('span', 'bha-species__name', f.name));
+    const mark = logoMark(f, 'bha-logo--xl');
+    card.append(mark ?? el('span', 'bha-species__emblem', emblemOf(f)), el('span', 'bha-species__name', f.name));
     card.onclick = () => {
       for (const c of cards) {
         const on = c === card;

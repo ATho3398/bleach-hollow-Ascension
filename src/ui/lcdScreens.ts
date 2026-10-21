@@ -26,6 +26,7 @@ import { elementDamageLine, elementsMark } from './bha/element';
 import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
+import { logoMark } from './bha/logo';
 import type { VariantMods } from '../engine/expedition';
 
 /** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax (치명 특성이 있는 몸은 상한 + 그 특성 값, GDD 45장 1번 — 전투와 같은 규칙) */
@@ -85,7 +86,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
   const abil = statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.

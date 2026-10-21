@@ -147,6 +147,8 @@ export interface FactionConfig {
   theme: string;
   /** 종족 고르기 화면의 큰 아이콘 (GDD 19-4): 이모티콘 한 개. 비우면 이름 첫 글자 */
   emblem?: string;
+  /** 종족 로고 그림 키 (GDD 50): public/art/<키>.png|webp, 단색 투명 그림 — 알파만 쓰고 테마 글자색으로 칠한다. 없으면 로고 자리를 비운다 */
+  logo?: string;
   /** 육성 5단계 이름 (GDD 8-1) */
   tierNames: [string, string, string, string, string];
   /** 등급 번호 1~10 의 표시 이름 (GDD 21-1, [0] = 1번). 엔진은 번호만 다룬다 */
@@ -332,6 +334,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.maxChain !== undefined && !(Number.isInteger(r.maxChain) && (r.maxChain as number) >= 1)) errors.push('maxChain: 1 이상 정수');
   if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
+  if (r.logo !== undefined && !isString(r.logo)) errors.push('logo: 비어 있지 않은 문자열이어야 한다');
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {
     const rm = r.room as Record<string, unknown>;

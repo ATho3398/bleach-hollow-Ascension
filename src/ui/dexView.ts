@@ -8,6 +8,7 @@ import { h, icon, provisionalTag, seg } from './bha/dom';
 import { lcdHead, lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { elementDot, paintElement } from './bha/element';
 import { formCardModel, sortFormsForDex } from './bha/nestLogic';
+import { logoMark } from './bha/logo';
 import { abilityParagraph, dexAbilityLines, evolutionNote, formEffectLines } from './evolutionPanel';
 
 /** 속성 마크 줄 (속성을 잇는 진화체는 "속성 잇기") */
@@ -71,5 +72,5 @@ export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   tabs.setAttribute('aria-label', '단계');
   const sub = h('span');
   sub.append('발견 ', h('b', '', String(found)), ` / ${FORM_TABLE.length}`);
-  lcdPage(root, { cls: 'bha-dex-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '진화체 도감', sub, aside: [...(lead ? [lead] : []), selectLast(tabs)] }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-dex-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '진화체 도감', sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined, aside: [...(lead ? [lead] : []), selectLast(tabs)] }), [md.list], [md.detail]);
 }
