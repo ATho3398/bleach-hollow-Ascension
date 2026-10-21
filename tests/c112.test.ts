@@ -7,7 +7,7 @@ const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 
 describe('C.112 호로 말투 (GDD 56 4번, 사용자 확정 "오만한 강자")', () => {
   it('room.talk 가 확정 문구이고 "귀여운" 옛 말투가 없다', () => {
-    const t = hollow.room.talk!;
+    const t = hollow.room!.talk!;
     expect(t.idle).toEqual(['하, 시시하군.', '여긴 너무 조용하다.', '더 강한 놈은 없나?']);
     expect(t.tired).toEqual(['…잠깐 눈을 붙이겠다.', '귀찮군. 쉬겠다.']);
     expect(t.risk).toEqual(['가면이 들끓는다… 건드리지 마라.', '안에서 뭔가 날뛰는군.']);
