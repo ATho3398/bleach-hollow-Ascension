@@ -5,7 +5,7 @@
 // 화면 모양(DOM·클래스)은 디자인 패키지 battle.html 을 따른다. 전투는 고정 틱으로 계속 갱신되므로 DOM 을 통째로 다시 만들지 않고
 // 바뀐 곳만 갱신한다(블록은 uid 로 같은 요소를 계속 쓰고, 묶음·삽입 막대는 달라졌을 때만 바꾼다).
 import { enemyPatternKind } from '../data/enemies';
-import { comboName } from '../data/evolution';
+import { comboName, physBlockName } from '../data/evolution';
 import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
@@ -78,6 +78,8 @@ export function blockName(b: Block, labels: BattleLabels, factionId: string, p: 
   if (b.kind === 'combo') return comboBlockLabel(labels, comboOf(p, b.traitId)?.family);
   if (b.kind === 'liberation') return liberationBlockLabel(factionId, p.playerElements[0]);
   const src = sourceOf(p, b.traitId);
+  // 물공 특수 블록 (GDD 49장): 기본 공격 블록이 물공 블록인 몸은 표의 이름(종족별 데이터)
+  if (p.physBlock && isBasicBlockId(src?.id) && src?.role === 'attack') return physBlockName(p.physBlock.element, factionId) ?? labels.skillBlock;
   const name = skillBlockLabel(labels, factionId, blockElementOf(p, b), b.family ?? src?.family, src?.role ?? 'attack');
   return name ?? (b.traitId && !isBasicBlockId(b.traitId) ? traitName(b.traitId, factionId) : labels.skillBlock);
 }
@@ -90,6 +92,7 @@ export function blockAbbr(b: Block, labels: BattleLabels, factionId: string, p: 
 
 /** 사건의 스킬 블록 표시 이름 (기본 블록은 속성이 없으므로 내 캐릭터 속성) */
 function eventBlockLabel(e: Extract<CombatEvent, { kind: 'block' }>, s: CombatState, labels: BattleLabels, factionId: string): string {
+  if (s.params.physBlock && isBasicBlockId(e.traitId) && e.role === 'attack') return physBlockName(s.params.physBlock.element, factionId) ?? labels.skillBlock;
   const element = e.element ?? (isBasicBlockId(e.traitId) ? s.params.playerElements[0] ?? null : null);
   return skillBlockLabel(labels, factionId, element, e.family, e.role) ?? (e.traitId && !isBasicBlockId(e.traitId) ? traitName(e.traitId, factionId) : labels.skillBlock);
 }

@@ -33,8 +33,10 @@ describe('C.89 특성 매핑 (label → 특성, 39장 1·3·4번)', () => {
     expect(validateAbilities()).toEqual([]);
     expect(FORM_TABLE).toHaveLength(46);
     for (const f of FORM_TABLE) {
-      const lines = abilityLines(formAbilitiesOf(f, { hp: 0, atk: 5, int: 3, def: 0, spr: 0, spd: 0 }, 'atk'), 'hollow');
-      expect(lines.length, f.id).toBe(f.tier <= 3 ? 1 : 2);
+      const fa = formAbilitiesOf(f, { hp: 0, atk: 5, int: 3, def: 0, spr: 0, spd: 0 }, 'atk');
+      const lines = abilityLines(fa, 'hollow');
+      // C.103 (GDD 49장): 5단계 물리 단일 속성 6종은 물공 칸 1줄이 더 있다
+      expect(lines.length, f.id).toBe(f.tier <= 3 ? 1 : fa.phys ? 3 : 2);
       for (const l of lines) expect(l.name.length, f.id).toBeGreaterThan(0);
       if (f.tier >= 4) expect(lines[1]!.description.length, f.id).toBeGreaterThan(0);
     }

@@ -116,6 +116,10 @@ export function formHint(form: FormDef, factionId: string): string {
 
 // ── 특성 (GDD 20-3·v4.0 성향 6종, 39장 속성·전용): 데이터·이름은 abilities.ts, 효과 수치는 BALANCE.provisional.abilities ──
 export { ABILITIES_PROVISIONAL, abilityDescription, abilityName, abilityNameByEffect, elementAbility, kindSlot, uniqueAbility, validateAbilities } from './abilities';
+export {
+  PHYS_ABILITY_EFFECTS, PHYS_BLOCK_EFFECTS, PHYS_BLOCKS_PROVISIONAL, PHYS_ELEMENT_IDS, physAbilityName, physBlockName, physElementOf, physProcText, validatePhysBlocks,
+  type PhysAbilityEffect, type PhysBlockEffect, type PhysElementDef,
+} from './physBlocks';
 
 // ── 콤보 규칙 (GDD 17-3): 진화 단계마다 1개씩 열리는 특수 블록 규칙. 데이터는 combos.json ──
 import { FACTIONS } from '../factions';

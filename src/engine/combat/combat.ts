@@ -7,6 +7,7 @@ import { BALANCE } from '../../config/balance';
 import { hasSpecialActions } from '../../data/enemies';
 import { ELEMENTAL_IDS, getElement, matchup, NORMAL_ELEMENT, weaknessesOf, type Matchup } from '../../data/elements';
 import { STAT_IDS, type AttackCategory, type ChainBonus, type ChainBonusKind, type EnemyDef, type EnemyPattern, type SkillRole, type StatId, type Stats } from '../../data/schema';
+import type { PhysAbilityEffect, PhysBlockEffect } from '../../data/evolution/physBlocks';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { chainGroup, inTray, type Block, type Tray } from './tray';
@@ -194,7 +195,24 @@ export interface CombatParams {
   abilityEffects: AbilityEffects;
   /** 속성 피해 (C.101, GDD 48장): 속성 id(노멀 + 기본 원소) → %. 없는 칸은 0. 값은 elementDamageOf(출처 합)가 정한다 */
   elementDamage: Record<string, number>;
+  /** 물공 특수 블록 (GDD 49장, C.103): 있으면 기본 공격 블록 3계열이 전부 이 속성 물공 블록(효과 포함)이 된다. 없으면 보통 기본 블록 */
+  physBlock: PhysBlock | null;
 }
+
+/** 물공 특수 블록 (GDD 49장·49-1 2번): 계열은 블록마다 그대로, 이름·속성·효과만 바뀐다. 수치는 BALANCE.provisional.physBlocks 에서 formAbilities 가 채운다 */
+export type PhysBlock = { element: string; power: number } & (
+  /** 흙: 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 +perHit(최대 max, 평타 한 번에 다 씀) */
+  | { effect: 'stoneStance'; seconds: number; takenReduction: number; perHit: number; max: number }
+  /** 혈: 다음 평타 hits 회 +bonus, 적이 seconds 동안 공격·행동 못 함 */
+  | { effect: 'knockback'; hits: number; bonus: number; seconds: number }
+  /** 불: 약한 불 공격 블록 (쌓아 두는 용, 특성 emberStack 이 센다) */
+  | { effect: 'ember' }
+  /** 물: 사용 후 seconds 동안 평타 간격 −haste */
+  | { effect: 'wave'; seconds: number; haste: number }
+  /** 뇌: 다음 평타 hits 회는 두 번 때림(각 each) */
+  | { effect: 'flash'; hits: number; each: number }
+  /** 노멀: 쓰는 순간 평타 1회가 바로 나가고 평타 타이머는 처음부터 */
+  | { effect: 'shout' });
 
 /** 이 공격에 붙은 속성 피해: 받은 칸(속성 id들, 융합이면 2개)·합친 % (전투 로그 표시용) */
 export interface ElemHit {
@@ -244,10 +262,23 @@ export interface AbilityEffects {
   eliteSlayer?: number;
   /** 전투마다 1번, 쓰러질 때 최대 체력 × 이 비율로 버틴다 (환생 '다시 일어남') */
   lastStand?: number;
+  // ── 물공 특성 (GDD 49장, C.103) — 모두 평타 쪽 ──
+  /** 되갚기가 터지면 다음 평타 hits 회 피해 +bonus (흙 '굳은 주먹') */
+  hardFist?: { hits: number; bonus: number };
+  /** 넉백 중인 적에게 평타 흡혈 ×이 배율 (혈 '피 냄새') */
+  bloodScent?: number;
+  /** 블록 바에 쌓인 element 공격 블록 1개당 평타 피해 +per (최대 +max) (불 '불씨 모으기') */
+  emberStack?: { element: string; per: number; max: number };
+  /** 평타가 연속으로 맞을 때마다 평타 피해 +per (최대 +max), 내가 맞으면 0 (물 '물살') */
+  current?: { per: number; max: number };
+  /** 평타 이 횟수마다 블록 1개가 바로 생긴다 (뇌 '충전') */
+  charge?: number;
+  /** 스킬 블록 1개를 쓸 때마다 이번 전투 평타 피해 +per (최대 +max) (노멀 '단련') */
+  tempering?: { per: number; max: number };
 }
 
-/** 화면 글자가 뜨는 특성 발동 (런 로그 abilityProcs 키) */
-export type AbilityProc = 'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste';
+/** 화면 글자가 뜨는 특성·물공 블록 발동 (런 로그 abilityProcs 키) */
+export type AbilityProc = 'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste' | PhysBlockEffect | PhysAbilityEffect;
 
 export function defaultCombatParams(): CombatParams {
   return {
@@ -291,6 +322,7 @@ export function defaultCombatParams(): CombatParams {
     liberationRisk: LB.riskOnEnd,
     abilityEffects: {},
     elementDamage: zeroElementDamage(),
+    physBlock: null,
   };
 }
 
@@ -374,6 +406,23 @@ export interface CombatState {
   thornsStored?: number;
   /** 다시 일어남을 이 전투에서 썼는가 */
   lastStandUsed?: boolean;
+  // ── 물공 블록·특성 상태 (GDD 49장, C.103) — 없으면 0/없음 ──
+  /** 다음 평타 n회 피해 버프들 (혈 블록·굳은 주먹). 평타마다 hits 가 1 줄고 0 이면 빠진다 */
+  basicBuffs?: { hits: number; bonus: number }[];
+  /** 남은 두 번 때림 평타 수 (뇌 블록) */
+  flashHits?: number;
+  /** 평타 간격 버프: 남은 틱, 줄이는 비율 (물 블록) */
+  basicHaste?: { ticks: number; haste: number };
+  /** 넉백: 적이 공격·행동 못 하는 남은 틱 (혈 블록) */
+  knockbackTicks?: number;
+  /** 바위 자세: 남은 틱, 맞아서 쌓인 다음 평타 보너스 (흙 블록) */
+  stoneStance?: { ticks: number; stacked: number };
+  /** 물살: 연속으로 맞은 평타 수 */
+  currentHits?: number;
+  /** 단련: 이번 전투에 쓴 스킬 블록 수 */
+  temperingBlocks?: number;
+  /** 충전: 지금까지 평타 수 */
+  basicCount?: number;
   /** 지난 틱 수 (전투 시간 = tick × tickSeconds) */
   tick: number;
   status: CombatStatus;
@@ -517,8 +566,13 @@ export function maxChain(p: CombatParams): number {
 /** 기본 블록 5종의 생성원 (GDD 44장): 공격(계열은 블록마다 풀이 정한다)·막기·회복. 막기·회복 세기 = 같은 역할 흡수 특성 기본값 × 비율 */
 export function basicSources(p: CombatParams): CombatSkill[] {
   const bp = p.blockPool;
+  // 물공 특수 블록 (GDD 49-1 2번): 기본 공격 블록 3계열 전부 = 그 속성 · 물리 분류 · 표의 피해 배율. 계열(체인)·막기·회복은 그대로
+  const pb = p.physBlock;
+  const attack: CombatSkill = pb
+    ? { id: BASIC_SKILL_ID, element: pb.element, category: 'physical', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: pb.power }
+    : { id: BASIC_SKILL_ID, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 };
   return [
-    { id: BASIC_SKILL_ID, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 },
+    attack,
     { id: BASIC_GUARD_ID, element: null, category: 'mixed', family: null, role: 'guard', powerInAttacks: bp.basicRoleBlocks.guard.powerInAttacks, chainBonus: { ...bp.basicRoleBlocks.guard.chainBonus }, powerMultiplier: bp.basicGuardRatio },
     { id: BASIC_HEAL_ID, element: null, category: 'mixed', family: null, role: 'heal', powerInAttacks: bp.basicRoleBlocks.heal.powerInAttacks, chainBonus: { ...bp.basicRoleBlocks.heal.chainBonus }, powerMultiplier: bp.basicHealRatio },
   ];
@@ -691,7 +745,8 @@ export function liberationUsedAt(s: CombatState): number | null {
 
 /** 지금 내 평타 간격: 해방 중이면 속도가 오른 만큼 짧다 */
 function currentAttackSeconds(s: CombatState): number {
-  return playerAttackSecondsOf(s.params) / (liberationActive(s) ? s.params.liberationStatMultiplier : 1);
+  const haste = s.basicHaste && s.basicHaste.ticks > 0 ? 1 - s.basicHaste.haste : 1;
+  return (playerAttackSecondsOf(s.params) / (liberationActive(s) ? s.params.liberationStatMultiplier : 1)) * haste;
 }
 
 export function comboOf(p: CombatParams, id: string | null): ComboRule | undefined {
@@ -958,6 +1013,113 @@ function applyThorns(s: CombatState, taken: number): void {
   s.thornsStored = 0;
   proc(s, 'thorns', damage);
   dealDamage(s, damage, { kind: 'reflect', traitId: null, element: null });
+  // 굳은 주먹 (GDD 49장 흙 특성): 되갚기가 터지면 다음 평타 n회 피해 +
+  const hf = s.params.abilityEffects.hardFist;
+  if (hf && s.status === 'playing') {
+    (s.basicBuffs ??= []).push({ hits: hf.hits, bonus: hf.bonus });
+    proc(s, 'hardFist');
+  }
+}
+
+// ── 물공 블록·특성 (GDD 49장, C.103): 평타를 돕는 효과. 종족·진화체는 모르고 params.physBlock·abilityEffects 만 본다 ──
+
+/** 바에 쌓인 그 속성 공격 블록 수 (불씨 모으기) */
+function stackedAttackBlocks(s: CombatState, element: string): number {
+  let n = 0;
+  for (const b of s.tray) {
+    if (b.kind !== 'skill') continue;
+    const src = sourceOf(s.params, b.traitId);
+    if (src?.role === 'attack' && blockElementOf(s.params, b) === element) n++;
+  }
+  return n;
+}
+
+/** 지금 평타 한 번에 곱해지는 물공 배율: 다음 평타 버프 합 × 바위 자세 쌓임 × 물살 × 단련 × 불씨 (화면 예고·테스트용으로도 쓴다) */
+export function basicPowerOf(s: CombatState): number {
+  const a = s.params.abilityEffects;
+  let m = 1 + (s.basicBuffs ?? []).reduce((sum, b) => sum + b.bonus, 0);
+  if (s.stoneStance && s.stoneStance.stacked > 0) m *= 1 + s.stoneStance.stacked;
+  if (a.current) m *= 1 + Math.min(a.current.max, a.current.per * (s.currentHits ?? 0));
+  if (a.tempering) m *= 1 + Math.min(a.tempering.max, a.tempering.per * (s.temperingBlocks ?? 0));
+  if (a.emberStack) m *= 1 + Math.min(a.emberStack.max, a.emberStack.per * stackedAttackBlocks(s, a.emberStack.element));
+  return m;
+}
+
+/** 평타 한 번 (자동 공격 또는 기합으로 바로): 물공 배율·두 번 때림 → 피해 → 버프 소모 → 물살·충전 → 연타 */
+function basicAttack(s: CombatState): void {
+  const p = s.params;
+  const a = p.abilityEffects;
+  // 평타 = 물리, 내 캐릭터 속성 (GDD 20-3 v3.6)
+  const hit = playerHitMultiplier(s, p.playerElements, 'physical');
+  const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s);
+  // 전광 (뇌 블록): 두 번 때림, 각 each. 타격마다 따로 치명 판정
+  const flash = (s.flashHits ?? 0) > 0 && p.physBlock?.effect === 'flash' ? { n: 2, each: p.physBlock.each } : { n: 1, each: 1 };
+  let last = 0;
+  for (let k = 0; k < flash.n; k++) {
+    const { damage, crit, elem } = playerHit(s, base * flash.each, false, p.playerElements);
+    last = damage;
+    emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem });
+    dealDamage(s, damage, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
+    onHit(s, 'enemy', p.playerElements, damage, true);
+    if (s.status !== 'playing') return;
+  }
+  // 버프 소모: 다음 평타 n회 버프는 1회씩, 바위 자세 쌓임은 한 번에, 두 번 때림은 1회
+  if (s.basicBuffs) {
+    for (const b of s.basicBuffs) b.hits--;
+    s.basicBuffs = s.basicBuffs.filter((b) => b.hits > 0);
+  }
+  if (s.stoneStance) s.stoneStance.stacked = 0;
+  if ((s.flashHits ?? 0) > 0) s.flashHits!--;
+  if (a.current) s.currentHits = (s.currentHits ?? 0) + 1;
+  s.basicCount = (s.basicCount ?? 0) + 1;
+  // 충전 (뇌 특성): 평타 n회마다 블록 1개가 바로 (기본 풀 추첨, 바가 가득이거나 봉인 중이면 없음)
+  if (a.charge && a.charge > 0 && s.basicCount % a.charge === 0 && s.sealTicks === 0) {
+    const e = drawBasic(s);
+    if (e && spawn(s, 'skill', e.source.id, e.family)) proc(s, 'charge');
+  }
+  // 연타 (뇌, GDD 39장): 같은 위력으로 한 번 더 — 연타는 다시 연타하지 않는다
+  const dh = a.doubleHit;
+  if (dh && nextFloat((s.abilityRng ??= createRng((s.seed ^ ABILITY_SEED_SALT) >>> 0))) < dh) {
+    proc(s, 'doubleHit', last);
+    emit(s, { kind: 'player-attack', damage: last, matchup: hit.matchup });
+    dealDamage(s, last, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
+    onHit(s, 'enemy', p.playerElements, last, true);
+  }
+}
+
+/** 물공 블록을 썼을 때의 효과 (기본 공격 블록이 물공 블록일 때만). 체인이어도 한 번 */
+function applyPhysBlock(s: CombatState): void {
+  const pb = s.params.physBlock;
+  if (!pb || s.status !== 'playing') return;
+  const t = (sec: number) => ticksOf(s.params, sec);
+  switch (pb.effect) {
+    case 'stoneStance':
+      s.stoneStance = { ticks: t(pb.seconds), stacked: s.stoneStance?.stacked ?? 0 };
+      proc(s, 'stoneStance');
+      break;
+    case 'knockback':
+      (s.basicBuffs ??= []).push({ hits: pb.hits, bonus: pb.bonus });
+      s.knockbackTicks = Math.max(s.knockbackTicks ?? 0, t(pb.seconds));
+      proc(s, 'knockback');
+      break;
+    case 'wave':
+      s.basicHaste = { ticks: t(pb.seconds), haste: pb.haste };
+      // 지금 기다리는 간격도 바로 줄인다
+      s.player.attackTimer = Math.max(1, Math.round(s.player.attackTimer * (1 - pb.haste)));
+      proc(s, 'wave');
+      break;
+    case 'flash':
+      s.flashHits = pb.hits;
+      proc(s, 'flash');
+      break;
+    case 'shout':
+      proc(s, 'shout');
+      s.player.attackTimer = t(currentAttackSeconds(s));
+      basicAttack(s);
+      break;
+    case 'ember':
+      break;
+  }
 }
 
 function emit(s: CombatState, e: CombatEvent): void {
@@ -1070,14 +1232,16 @@ export function blockSealed(b: Block | undefined): boolean {
 }
 
 /** 공격자 속성의 맞힌 뒤 효과 (GDD 20-2): 혈 = 준 피해 일부 회복, 독 = 지속 피해. 내 공격(target enemy)과 적 공격(target player) 모두 */
-function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly string[], damage: number): void {
+function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly string[], damage: number, basic = false): void {
   const p = s.params;
   if (damage <= 0 || s.status !== 'playing') return;
   if (hasEffect(elements, 'drain')) {
     const who = target === 'enemy' ? s.player : s.enemy;
+    // 피 냄새 (GDD 49장): 넉백 중인 적에게 내 평타 흡혈 ×배율
+    const scent = basic && target === 'enemy' && (s.knockbackTicks ?? 0) > 0 ? p.abilityEffects.bloodScent ?? 1 : 1;
     // 한 전투 흡혈 합계 상한 (C.53): 최대 체력 × drainCapFraction 까지만
     const room = Math.max(0, who.maxHp * p.drainCapFraction - (who.drained ?? 0));
-    const heal = Math.min(who.maxHp - who.hp, damage * p.drainFraction, room);
+    const heal = Math.min(who.maxHp - who.hp, damage * p.drainFraction * scent, room);
     if (heal > 0) {
       who.hp += heal;
       who.drained = (who.drained ?? 0) + heal;
@@ -1094,6 +1258,17 @@ function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly st
 
 function takeDamage(s: CombatState, amount: number): void {
   if (s.status !== 'playing') return;
+  if (amount > 0) {
+    // 바위 자세 (GDD 49장 흙 블록): 받는 피해 감소 + 맞을 때마다 다음 평타 보너스 쌓기
+    const st = s.stoneStance;
+    const pb = s.params.physBlock;
+    if (st && st.ticks > 0 && pb?.effect === 'stoneStance') {
+      amount *= 1 - pb.takenReduction;
+      st.stacked = Math.min(pb.max, st.stacked + pb.perHit);
+    }
+    // 물살: 내가 맞으면 연속 평타 수가 0 으로
+    if (s.params.abilityEffects.current) s.currentHits = 0;
+  }
   if (s.player.shield && s.player.shield > 0) {
     const absorbed = Math.min(s.player.shield, amount);
     s.player.shield -= absorbed;
@@ -1291,6 +1466,10 @@ function useBlock(s: CombatState, index: number): boolean {
   emit(s, { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem });
   dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m });
   if (skill.element) onHit(s, 'enemy', [skill.element], damage);
+  // 단련 (GDD 49장 노멀 특성): 스킬 블록 1개마다 이번 전투 평타 +
+  if (p.abilityEffects.tempering) s.temperingBlocks = (s.temperingBlocks ?? 0) + chain;
+  // 물공 블록 효과 (GDD 49장): 기본 공격 블록이 물공 블록인 몸에서 그 블록을 썼을 때
+  if (p.physBlock && id === BASIC_SKILL_ID && skill.role === 'attack') applyPhysBlock(s);
   applyChainHaste(s, chain);
   updateCombos(s, skill.family ?? null, chain);
   counterIfStance(s);
@@ -1440,6 +1619,9 @@ function advanceTick(s: CombatState): void {
   if (s.liberation.ticksLeft > 0 && --s.liberation.ticksLeft === 0) endLiberation(s);
   if (s.sealTicks > 0) s.sealTicks--;
   for (const b of s.tray) if (b.sealTicks && b.sealTicks > 0) b.sealTicks--;
+  // 물공 블록 지속 효과 (GDD 49장): 바위 자세 · 평타 가속
+  if (s.stoneStance && s.stoneStance.ticks > 0 && --s.stoneStance.ticks === 0) s.stoneStance.stacked = 0;
+  if (s.basicHaste && s.basicHaste.ticks > 0) s.basicHaste.ticks--;
   // 독 지속 피해 (GDD 20-2)
   if (s.enemy.dot) {
     const d = s.enemy.dot;
@@ -1484,22 +1666,8 @@ function advanceTick(s: CombatState): void {
   // 내 자동 기본 공격
   if (--s.player.attackTimer <= 0) {
     s.player.attackTimer = t(currentAttackSeconds(s));
-    // 평타 = 물리, 내 캐릭터 속성 (GDD 20-3 v3.6)
-    const hit = playerHitMultiplier(s, p.playerElements, 'physical');
-    const { damage, crit, elem } = playerHit(s, unitDamage(p) * p.attackPowerMultiplier * hit.mult, false, p.playerElements);
-    emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem });
-    dealDamage(s, damage, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
-    onHit(s, 'enemy', p.playerElements, damage);
+    basicAttack(s);
     if (s.status !== 'playing') return;
-    // 연타 (뇌, GDD 39장): 같은 위력으로 한 번 더 — 연타는 다시 연타하지 않는다
-    const dh = p.abilityEffects.doubleHit;
-    if (dh && nextFloat((s.abilityRng ??= createRng((s.seed ^ ABILITY_SEED_SALT) >>> 0))) < dh) {
-      proc(s, 'doubleHit', damage);
-      emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem });
-      dealDamage(s, damage, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
-      onHit(s, 'enemy', p.playerElements, damage);
-      if (s.status !== 'playing') return;
-    }
   }
   // 적: 시전 중이면 강공격 대기, 아니면 기본 공격 + 패턴의 특수 행동(강공격 예고 / 봉인 / 방어 자세)
   const e = s.enemy;
@@ -1509,7 +1677,10 @@ function advanceTick(s: CombatState): void {
     e.stance = null;
     emit(s, { kind: 'stance-end' });
   }
-  if (e.cast) {
+  // 넉백 (GDD 49장 혈 블록): 적의 공격·시전·특수 행동 타이머가 모두 멈춘다
+  if ((s.knockbackTicks ?? 0) > 0) {
+    s.knockbackTicks!--;
+  } else if (e.cast) {
     if (--e.cast.ticks <= 0) {
       const more = e.cast.hitsLeft;
       e.cast = null;

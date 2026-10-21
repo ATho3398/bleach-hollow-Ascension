@@ -113,8 +113,9 @@ export interface BattleRecord {
   /** 치명타 횟수: 내 공격 / 적 공격 (C.63, GDD 28장 5번). 옛 기록은 없음 */
   crits?: number;
   enemyCrits?: number;
-  /** 진화체 특성 발동 횟수 (C.89, GDD 39장 8번): 연타·되갚기·다시 일어남·연쇄 (화상 'burn' 은 C.97 에 삭제 — 옛 기록에만 있다) */
-  abilityProcs?: Partial<Record<'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste' | 'burn', number>>;
+  /** 진화체 특성 발동 횟수 (C.89, GDD 39장 8번): 연타·되갚기·다시 일어남·연쇄 (화상 'burn' 은 C.97 에 삭제 — 옛 기록에만 있다).
+   *  C.103 (GDD 49장): 물공 블록·특성 발동(stoneStance·knockback·wave·flash·shout·hardFist·charge …)도 같은 칸에 효과 종류 이름으로 */
+  abilityProcs?: Partial<Record<string, number>>;
   /** 그 판의 속성 피해 % (C.101, GDD 48장 6번): 속성 id(노멀 + 기본 원소) → %. 옛 기록은 없음(= 모두 0) */
   elementDamage?: Record<string, number>;
 }

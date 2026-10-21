@@ -16,6 +16,8 @@ export interface KindSlot {
   element: 'label' | 'unique' | 'none';
   scale?: 'fusion' | 'boosted';
   dispositions?: number;
+  /** true 면 공격 분류가 물리이고 속성이 하나인 진화체에 물공 특수 블록·특성(GDD 49장, physBlocks.json)이 붙는다 */
+  physical?: boolean;
 }
 
 interface AbilitiesFile {

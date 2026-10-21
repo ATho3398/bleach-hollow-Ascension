@@ -8,7 +8,7 @@ import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, storedSta
 import { enemyPool } from '../src/engine/enemyPool';
 import { createExpedition, enemyScale, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } from '../src/engine/absorb';
-import { FORM_TABLE, formName, formsOfTier } from '../src/data/evolution';
+import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
 import { ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, newEvolution, worldRefStat, zeroStats } from '../src/engine/evolution';
@@ -779,6 +779,83 @@ let campaignFinalDefeats: number[] = [];
       const g = r.on.e.win - r.off.e.win;
       if (Math.abs(g - gain) > 0.1) lateFail(`진화체 특성: ${r.id} 특성 몫(강적 승률 켬 − 끔) ${(g * 100).toFixed(0)}%p 가 ${tier + 1}단계 평균 ${(gain * 100).toFixed(1)}%p 와 10%p 넘게 다르다 (GDD 39장 7번)`);
       if (ratio < 0.85) lateFail(`진화체 특성: ${r.id} 일반 처치 시간 ×${ratio.toFixed(2)} (특성 끔 대비 −15% 넘게 빨라짐, GDD 39장 7번)`);
+    }
+  }
+}
+
+// ── 물공 6속성 (C.103, GDD 49-1 5번): 5단계에 갓 닿은 몸(위 진화 봇 세이브 30명)의 진화체만 t5:<속성>:physical 로 바꿔 사람형 봇이 ★5 적 풀(일반·강적) · forest-lord 보스 · 탑 41/45/50층.
+// '전' = 같은 몸에서 물공 블록·물공 특성만 뗀 옛 규칙, 특수(탄)·혼합(교)은 옛 규칙 그대로(비교표). 목표 ① 6속성 ★5 강적 승률 서로 ±10%p ② 일반 처치 시간 전 대비 −10~−25%. 5단계라 후반 보류(45-6) 경고로 ──
+{
+  const bodies = campaignFirstAt[4] ?? [];
+  const PR = 1;
+  const BR = 2;
+  const FOREST = BOSSES.find((b) => b.id === 'forest-lord');
+  type PhysRow = { nWin: number; nSecs: number; eWin: number; eSecs: number; boss: number; t41: number; t45: number; t50: number };
+  const measure = (formId: string, physOn: boolean, full: boolean): PhysRow => {
+    const paramsOf = (body: SaveData): Partial<CombatParams> => {
+      const params = buildCombatParams(body.build, 'hollow');
+      applyEvolutionToParams(params, { ...body.evolution, formId }, 'hollow');
+      if (!physOn) {
+        params.physBlock = null;
+        const fx = { ...params.abilityEffects } as Record<string, unknown>;
+        for (const k of PHYS_ABILITY_EFFECTS) delete fx[k];
+        params.abilityEffects = fx as CombatParams['abilityEffects'];
+      }
+      params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+      return params;
+    };
+    let ng = 0, nw = 0, ns = 0, eg = 0, ew = 0, es = 0;
+    bodies.forEach((body, bi) => {
+      POOL_ENEMIES.forEach((enemy, ei) => {
+        for (let k = 0; k < PR; k++) {
+          const params = paramsOf(body);
+          applyDifficultyToParams(params, MAX_DIFFICULTY);
+          const end = playCombatHuman(createCombat(90000 + bi * 131 + k * 17 + ei * 7, { enemy: enemyAtDifficulty(enemy, MAX_DIFFICULTY), params }));
+          if (enemy.class === 'normal') { ng++; if (end.status === 'won') { nw++; ns += elapsedSeconds(end); } }
+          else { eg++; if (end.status === 'won') { ew++; es += elapsedSeconds(end); } }
+        }
+      });
+    });
+    const row: PhysRow = { nWin: ng ? nw / ng : 0, nSecs: nw ? ns / nw : 0, eWin: eg ? ew / eg : 0, eSecs: ew ? es / ew : 0, boss: 0, t41: 0, t45: 0, t50: 0 };
+    if (!full) return row;
+    let bw = 0, bg = 0;
+    const tower: Record<number, { w: number; g: number }> = { 41: { w: 0, g: 0 }, 45: { w: 0, g: 0 }, 50: { w: 0, g: 0 } };
+    bodies.forEach((body, bi) => {
+      for (let k = 0; k < BR; k++) {
+        if (FOREST) {
+          const params = paramsOf(body);
+          applyDifficultyToParams(params, FOREST.difficulty);
+          const end = playCombatHuman(createCombat(80000 + bi * 131 + k * 17, { enemy: scaleEnemy(FOREST.enemy, enemyScale(1, 'forest', FOREST.difficulty)), params, boss: bossSetupOf(FOREST.id) }));
+          bg++; if (end.status === 'won') bw++;
+        }
+        for (const f of [41, 45, 50]) {
+          const end = playCombatHuman(createTowerCombat(towerFloor(f), paramsOf(body), 61000 + f * 1009 + bi * 131 + k * 17));
+          tower[f]!.g++; if (end.status === 'won') tower[f]!.w++;
+        }
+      }
+    });
+    row.boss = bg ? bw / bg : 0;
+    row.t41 = tower[41]!.w / Math.max(1, tower[41]!.g);
+    row.t45 = tower[45]!.w / Math.max(1, tower[45]!.g);
+    row.t50 = tower[50]!.w / Math.max(1, tower[50]!.g);
+    return row;
+  };
+  const pct = (x: number) => `${(x * 100).toFixed(0).padStart(3)}%`;
+  const line = (label: string, r: PhysRow, full = true) => console.log(`  ${label.padEnd(16)} 일반 ${pct(r.nWin)} ${r.nSecs.toFixed(1).padStart(5)}초 · 강적 ${pct(r.eWin)} ${r.eSecs.toFixed(1).padStart(5)}초${full ? ` · 보스 ${pct(r.boss)} · 탑 41층 ${pct(r.t41)} · 45층 ${pct(r.t45)} · 50층 ${pct(r.t50)}` : ''}`);
+  console.log(`\n물공 6속성 (C.103, GDD 49-1 5번, 사람형 봇, 5단계에 갓 닿은 몸 ${bodies.length}명 × ★${MAX_DIFFICULTY} 적 풀 ${POOL_ENEMIES.length}종 × ${PR}판 · forest-lord·탑 41/45/50층 × ${BR}판) — 목표 ① 강적 승률 서로 ±10%p ② 일반 처치 시간 전 대비 −10~−25% (후반 보류)`);
+  if (bodies.length < CAMPAIGNS * 0.8) failAt(4, `물공 6속성: 5단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+  else {
+    const rows = PHYS_ELEMENT_IDS.map((el) => ({ el, on: measure(`t5:${el}:physical`, true, true), off: measure(`t5:${el}:physical`, false, true), special: measure(`t5:${el}:special`, false, false), mixed: measure(`t5:${el}:mixed`, false, false) }));
+    const mean = rows.reduce((a, r) => a + r.on.eWin, 0) / rows.length;
+    for (const r of rows) {
+      line(`${r.el} 물공 후`, r.on);
+      line(`${r.el} 물공 전`, r.off);
+      line(`${r.el} 특수(옛)`, r.special, false);
+      line(`${r.el} 혼합(옛)`, r.mixed, false);
+      const ratio = r.off.nSecs ? r.on.nSecs / r.off.nSecs : 1;
+      console.log(`    → 일반 처치 시간 ×${ratio.toFixed(2)} (${((ratio - 1) * 100).toFixed(1)}%) · 강적 승률 ${((r.on.eWin - r.off.eWin) * 100).toFixed(0)}%p · 평균과 차 ${((r.on.eWin - mean) * 100).toFixed(0)}%p`);
+      if (Math.abs(r.on.eWin - mean) > 0.1) failAt(4, `물공 6속성: ${r.el} ★${MAX_DIFFICULTY} 강적 승률 ${pct(r.on.eWin)} 이 6속성 평균 ${pct(mean)} 과 10%p 넘게 다르다 (GDD 49-1 5번 ①)`);
+      if (ratio > 0.9 || ratio < 0.75) failAt(4, `물공 6속성: ${r.el} 일반 처치 시간 ×${ratio.toFixed(2)} (전 대비 −10~−25% 밖, GDD 49-1 5번 ②)`);
     }
   }
 }

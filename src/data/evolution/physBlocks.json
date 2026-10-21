@@ -1,0 +1,30 @@
+{
+  "provisional": true,
+  "_comment": "GDD 49장 물공(조·참) 단일 속성 5단계 진화체의 기본 공격 블록(3계열 전부)과 추가 특성 1칸. 효과 종류는 엔진(combat.ts PhysBlockEffect·AbilityEffects), 수치는 balance.ts provisional.physBlocks. 이름은 종족별, proc 은 전투 중 작은 글자",
+  "elements": {
+    "earth": {
+      "block": { "effect": "stoneStance", "name": { "hollow": "바위 자세", "shinigami": "암반 베기" }, "proc": { "hollow": "바위 자세!", "shinigami": "암반 자세!" }, "description": { "*": "블록 피해는 줄고, 잠시 받는 피해가 줄며 맞을 때마다 다음 기본 공격이 세진다." } },
+      "ability": { "effect": "hardFist", "name": { "*": "굳은 주먹" }, "proc": { "*": "굳은 주먹!" }, "description": { "*": "되갚기가 터지면 다음 기본 공격 몇 번이 세진다." } }
+    },
+    "blood": {
+      "block": { "effect": "knockback", "name": { "hollow": "피 튀기기", "shinigami": "혈참" }, "proc": { "*": "넉백!" }, "description": { "*": "블록 피해는 줄고, 적을 잠시 밀쳐 공격을 멈추며 다음 기본 공격 몇 번이 세진다." } },
+      "ability": { "effect": "bloodScent", "name": { "*": "피 냄새" }, "proc": { "*": "피 냄새!" }, "description": { "*": "밀쳐진 적에게 기본 공격 흡혈이 늘어난다." } }
+    },
+    "fire": {
+      "block": { "effect": "ember", "name": { "hollow": "잔불 할퀴기", "shinigami": "잔불 베기" }, "proc": { "*": "잔불!" }, "description": { "*": "피해가 조금 약한 불 공격 블록. 바에 쌓아 둘수록 기본 공격이 세진다." } },
+      "ability": { "effect": "emberStack", "name": { "*": "불씨 모으기" }, "proc": { "*": "불씨!" }, "description": { "*": "블록 바에 쌓여 있는 불 공격 블록 수만큼 기본 공격이 세진다." } }
+    },
+    "water": {
+      "block": { "effect": "wave", "name": { "hollow": "물결 가르기", "shinigami": "물결 베기" }, "proc": { "*": "물결!" }, "description": { "*": "블록 피해는 줄고, 잠시 기본 공격이 빨라진다." } },
+      "ability": { "effect": "current", "name": { "*": "물살" }, "proc": { "*": "물살!" }, "description": { "*": "기본 공격이 연속으로 맞을 때마다 세지고, 내가 맞으면 처음부터." } }
+    },
+    "thunder": {
+      "block": { "effect": "flash", "name": { "hollow": "전광 발톱", "shinigami": "전광 일섬" }, "proc": { "*": "전광!" }, "description": { "*": "블록 피해는 줄고, 다음 기본 공격 몇 번이 두 번 때린다." } },
+      "ability": { "effect": "charge", "name": { "*": "충전" }, "proc": { "*": "충전!" }, "description": { "*": "기본 공격을 거듭하면 블록 1개가 바로 생긴다." } }
+    },
+    "normal": {
+      "block": { "effect": "shout", "name": { "hollow": "기합", "shinigami": "기합 일격" }, "proc": { "*": "기합!" }, "description": { "*": "블록 피해는 조금 줄고, 쓰는 순간 기본 공격 1회가 바로 나간다." } },
+      "ability": { "effect": "tempering", "name": { "*": "단련" }, "proc": { "*": "단련!" }, "description": { "*": "블록을 쓸 때마다 이번 전투의 기본 공격이 세진다." } }
+    }
+  }
+}

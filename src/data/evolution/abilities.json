@@ -28,7 +28,7 @@
   "kindSlots": {
     "base": { "element": "none" },
     "element": { "element": "label" },
-    "arrancar": { "element": "label" },
+    "arrancar": { "element": "label", "physical": true },
     "fusion": { "element": "label", "scale": "fusion" },
     "special": { "element": "label", "scale": "boosted" },
     "pure": { "element": "label", "scale": "boosted" },

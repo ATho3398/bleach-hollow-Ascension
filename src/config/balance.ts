@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 51;
+export const BALANCE_VERSION = 52;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -308,6 +308,31 @@ export const BALANCE = {
       } as Record<string, Record<string, number>>,
       /** 세기: 단계별(4단계 1, 5단계 ×1.5), 융합 = 두 속성 각 60%, 특수·순수 = ×1.5 (39장 2·3번) */
       scale: { tier: { 4: 1, 5: 1.5 } as Record<number, number>, fusion: 0.5, boosted: 1.5 },
+    },
+    // ── C.103 (GDD 49장·49-1): 5단계 물리(조·참) 단일 속성 진화체의 물공 특수 블록(기본 공격 블록 3계열 전부) + 특성 1칸. 효과 종류·이름은 src/data/evolution/physBlocks.json, 수치는 여기(provisional) ──
+    physBlocks: {
+      /** 블록 피해 배율 (일반 기본 공격 블록 ×1 대비) — 표: 흙·혈·불·물 0.7, 뇌 0.6, 노멀 0.8 */
+      power: { earth: 0.7, blood: 0.7, fire: 0.7, water: 0.7, thunder: 0.6, normal: 0.8 } as Record<string, number>,
+      /** 흙 블록 '바위 자세': 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 피해 +perHit(최대 +max, 평타 한 번에 다 씀) */
+      stoneStance: { seconds: 12, takenReduction: 0.2, perHit: 1.5, max: 4.0 },
+      /** 흙 특성 '굳은 주먹': 되갚기(39장)가 터지면 다음 평타 hits 회 피해 +bonus */
+      hardFist: { hits: 8, bonus: 1.5 },
+      /** 혈 블록 '피 튀기기': 사용 후 다음 평타 hits 회 피해 +bonus + 넉백(적이 seconds 동안 공격·행동 못 함) */
+      knockback: { hits: 14, bonus: 1.2, seconds: 1.0 },
+      /** 혈 특성 '피 냄새': 넉백 중인 적에게 평타 흡혈 ×drainMultiplier */
+      bloodScent: { drainMultiplier: 2 },
+      /** 불 특성 '불씨 모으기': 블록 바에 쌓인 불 공격 블록 1개당 평타 최종 피해 +per (최대 +max = 8개) */
+      emberStack: { per: 0.6, max: 4.8 },
+      /** 물 블록 '물결 가르기': 사용 후 seconds 동안 평타 간격 −haste */
+      wave: { seconds: 10, haste: 0.5 },
+      /** 물 특성 '물살': 평타가 연속으로 맞을 때마다 평타 피해 +per (최대 +max), 내가 맞으면 0 */
+      current: { per: 0.05, max: 0.5 },
+      /** 뇌 블록 '전광 발톱': 사용 후 다음 평타 hits 회는 두 번 때림(각 each) */
+      flash: { hits: 6, each: 0.6 },
+      /** 뇌 특성 '충전': 평타 every 회마다 블록 1개가 바로 생긴다 (기본 풀 추첨) */
+      charge: { every: 10 },
+      /** 노멀 특성 '단련': 블록(스킬 블록) 1개를 쓸 때마다 이번 전투 평타 피해 +per (최대 +max) */
+      tempering: { per: 0.12, max: 1.0 },
     },
     // ── 진화 (GDD 20-5 v3.7~v4.2): 트리·타이밍·히든. 수치 provisional ──
     evolution: {

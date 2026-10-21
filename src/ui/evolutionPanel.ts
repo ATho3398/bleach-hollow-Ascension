@@ -1,6 +1,6 @@
 // 진화 제단·진화 연출 (GDD 20-5). 문구는 종족 설정(tierNames, slotName, appearanceChange)·진화 데이터에서 읽는다.
 // 진화 타이밍(걸음 수)·후보는 숨긴다(v4.1): 제단은 지금 진화체·속성·고유 특성만 보이고, 진화는 둥지에 돌아오면 저절로 일어난다.
-import { abilityNameByEffect, formName, tryGetForm } from '../data/evolution';
+import { abilityNameByEffect, formName, physProcText, tryGetForm } from '../data/evolution';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
 import { abilityLines, formAbilitiesOf, isMaxTier, playerElementsOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
@@ -67,7 +67,8 @@ export function abilityParagraph(lines: readonly AbilityLine[], cls = 'bha-dim')
 
 /** 전투 중 특성 발동 글자 (연타! / 되갚기! / 다시 일어남! / 연쇄!) — 이름은 데이터에서 */
 export function abilityProcText(effect: string, factionId: string): string {
-  return `${abilityNameByEffect(effect, factionId) ?? effect}!`;
+  // 물공 블록·특성 발동 글자 (GDD 49장, 데이터 proc) → 없으면 특성 이름!
+  return physProcText(effect, factionId) ?? `${abilityNameByEffect(effect, factionId) ?? effect}!`;
 }
 
 /**
