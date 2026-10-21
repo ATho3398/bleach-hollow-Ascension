@@ -4,6 +4,7 @@
 
 ```
 python3 scripts/sprite-rig/rig.py scripts/sprite-rig/rigs/skin-brute.json --debug
+python3 scripts/sprite-rig/rig.py scripts/sprite-rig/rigs/skin-brute.json --motion move --frames 3   # 걷기만 3장
 ```
 
 출력 `scripts/sprite-rig/out/<그림 키>/`: `move-1~5.png`, `attack-1~5.png`(기획서 26-2 이름 규칙), `anim.json`(ms·hit),

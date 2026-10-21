@@ -24,7 +24,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from motions import MOTIONS  # noqa: E402
+from motions import MOTIONS, make_loop  # noqa: E402
 
 ROOT = 'root'
 DEBUG_COLORS = [(230, 60, 60), (60, 170, 230), (80, 200, 90), (240, 180, 40),
@@ -278,6 +278,7 @@ def main():
     ap.add_argument('rig')
     ap.add_argument('--motion', help='쉼표로 구분 (기본: 리그 파일의 motions, 없으면 move,attack)')
     ap.add_argument('--out', default='scripts/sprite-rig/out')
+    ap.add_argument('--frames', type=int, help='반복 동작(걷기 등) 장수 (기본: 동작 틀 값, 걷기 5)')
     ap.add_argument('--debug', action='store_true', help='부위 나눔·관절 확인 그림도 저장')
     args = ap.parse_args()
 
@@ -293,6 +294,8 @@ def main():
     anim = {}
     for mname in motions:
         spec = MOTIONS[template][mname]
+        if args.frames:
+            spec = make_loop(template, mname, args.frames) or spec
         # 리그 파일에서 각도 배율을 조절할 수 있다 (큰 몸은 작게, 가는 팔은 크게)
         amp = rig.cfg.get('amp', {}).get(mname, 1.0)
         frames = []

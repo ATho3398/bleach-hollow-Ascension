@@ -61,3 +61,21 @@ MOTIONS = {
         'attack': {'frames': _BIPED_ATTACK, 'ms': [140, 160, 110, 140, 160], 'hit': 3, 'ground': False},
     },
 }
+
+
+# 반복 동작은 장수를 바꿔 다시 만들 수 있다(--frames). 한 바퀴 시간은 그대로 두고 장당 ms 를 나눈다
+LOOP_MAKERS = {
+    'biped': {'move': (_walk, 600)},
+    'float': {'move': (_float, 700)},
+}
+
+
+def make_loop(template: str, motion: str, n: int) -> dict | None:
+    maker = LOOP_MAKERS.get(template, {}).get(motion)
+    if not maker:
+        return None
+    fn, cycle_ms = maker
+    spec = dict(MOTIONS[template][motion])
+    spec['frames'] = fn(n)
+    spec['ms'] = round(cycle_ms / n)
+    return spec
