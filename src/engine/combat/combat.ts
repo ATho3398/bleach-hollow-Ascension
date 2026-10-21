@@ -167,6 +167,8 @@ export interface CombatParams {
   damageTakenMultiplier: number;
   /** 환경(황무지): 내 공격 위력 전체 배율 */
   playerPowerMultiplier: number;
+  /** 블록 관련 피해(블록·체인·필살·저장·콤보·해방 — playerHit 의 block 길) 배율. 실패형 줄기 0.5 (GDD 49-8, C.106), 그 밖 1 */
+  blockDamageMultiplier: number;
   /** 환경(안개): 이 간격(초)마다 블록 바의 순서가 섞인다. 0 = 없음 */
   trayShuffleSeconds: number;
   /** 컨디션·환경(폐가)·5바퀴 이후·한계 돌파: 공허 블록 생성 확률 가산 */
@@ -309,6 +311,7 @@ export function defaultCombatParams(): CombatParams {
     attackSpeedMultiplier: 1,
     damageTakenMultiplier: 1,
     playerPowerMultiplier: 1,
+    blockDamageMultiplier: 1,
     trayShuffleSeconds: 0,
     voidChanceBonus: 0,
     playerStartHpFraction: 1,
@@ -1031,7 +1034,7 @@ export function abilityPowerOf(s: CombatState, block: boolean): number {
 /** 내 공격 피해: 특성 배율 → 속성 피해(GDD 48장, elements = 공격 속성, 비면 무속성) → 치명타. 반사·독·공허 블록은 이 길을 지나지 않는다 */
 function playerHit(s: CombatState, damage: number, block: boolean, elements: readonly string[]): { damage: number; crit: boolean; elem?: ElemHit } {
   const elem = elementDamageBonus(s.params, elements);
-  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * (elem ? 1 + elem.pct / 100 : 1));
+  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * (block ? (s.params.blockDamageMultiplier ?? 1) : 1) * (elem ? 1 + elem.pct / 100 : 1));
   return elem ? { ...hit, elem } : hit;
 }
 

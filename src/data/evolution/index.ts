@@ -67,6 +67,8 @@ export function formsOfTier(tier: number, table: readonly FormDef[] = FORM_TABLE
  *  단계 이름·계열 표시명은 종족 설정에서 읽는다 (종족 분기 없음). 속성을 잇는 아란칼 히든은 inherited(지금 캐릭터 속성)가 있으면 뒤에 `_속성` — 도감처럼 상태가 없으면 생략 */
 export function placeholderName(form: FormDef, factionId: string, inherited: readonly string[] = []): string {
   const fac = getFaction(factionId);
+  // 실패형 (GDD 49-8 2번, C.106): 단계가 올라도 종족 설정 1단계 이름 그대로
+  if (form.label.kind === 'fail') return fac.tierNames[0]!;
   const tierName = fac.tierNames[form.tier - 1] ?? `${form.tier}단계`;
   const els = form.label.elements.map((e) => elementName(e, factionId));
   const cat = form.label.category;

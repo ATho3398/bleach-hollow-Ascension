@@ -1,0 +1,18 @@
+{
+  "viewport": "844x390, deviceScaleFactor 1",
+  "captures": [
+    { "file": "01-altar-fail-line-t5.png", "save": "호로 5단계 t5:normal:physical, formHistory t2:base·t3:base·h4:fail·t5:normal:physical, 노력치 40·계승 142, 환생 16", "altarText": "호로 임시 ★16 · 5단계 · 호로 · 속성 노멀" },
+    { "file": "02-titledex-tags.png", "tagTab": "특별 태그 1/5 (호로 트랙: 최초의 호로 해금, ??? 2, 본능 지배, 붕옥 완성 — 사신 전용 은밀기동대장은 안 보임)" },
+    { "file": "03-dex-tier4-forms.png", "tier4Tab": "바스트로데 9/13 = 일반 5(노멀·물·불·흙·뇌) + 히든 8", "note": "캡처용 세이브에 4단계 진화체를 도감 해금해 이름이 보이게 함" },
+    { "file": "04-absorb-normal-blood-enemy.png", "enemy": "blood-basic (혈 일반, ★1)", "gate": { "chance": 0, "gates": [] }, "candidates": [["t-fire-part", "fire"], ["t-normal-b", "normal"]], "specialTraitOffersIn200": 0 }
+  ],
+  "tagReachBot": {
+    "rule": "실패형 줄기 5단계 + 능력치 6종 합계 >= tierTotals[4] 730",
+    "failLineT5Base": 548,
+    "evCapTier5": 40,
+    "maxWithoutCarry": 588,
+    "firstReachRebirths": { "bonus0": 17, "hogyoku5pct": 15, "hogyokuPlus6Transcendents17pct": 8 },
+    "assumption": "매 생 실패형 줄기로 5단계·노력치 상한 40을 채우고 환생 (계승 = 직전 (노력치+계승) × 0.1 누적, 정수 내림)"
+  },
+  "consoleErrors": []
+}

@@ -6,7 +6,7 @@ import { completedElements, gainTrait, newBuild, type BuildState } from './engin
 import { applyExpeditionEnd, doNestAction, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { canEvolve, cloneEvolution, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
 import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type RebirthRecord, type RunLog, type SlotLog } from './engine/runLog';
@@ -17,10 +17,10 @@ import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/
 import { allTranscendentsOwned, conditionMet, decideTranscendent, slotStatBonus, type FusionInput } from './engine/transcend';
 import { buildBattleRecord, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
-import { TITLES } from './data/titles';
+import { TITLES, titleForFaction } from './data/titles';
 import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
-import type { TitleDef } from './data/schema';
+import { STAT_IDS, type TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
 import { addFood, foodOverflowGold, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
@@ -40,7 +40,7 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 31;
+export const SAVE_FORMAT_VERSION = 32;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -853,10 +853,56 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
   return r;
 }
 
+/** C.106 (형식 32): 옛 4단계 일반 특수 속성 진화체 id → 같은 속성 히든 특수형 id. 표에 그 특수형이 있을 때만 */
+export function remapSpecialVastoId<T extends string | null | undefined>(id: T): T {
+  if (typeof id !== 'string' || !id.startsWith('t4:') || tryGetForm(id)) return id;
+  const to = `h4:special:${id.slice(3)}`;
+  return (tryGetForm(to) ? to : id) as T;
+}
+
+function migrateSpecialVasto(save: SaveData): void {
+  const m = remapSpecialVastoId;
+  const tracks = [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])] as Partial<Pick<SaveData, TrackKey>>[];
+  for (const t of tracks) {
+    const e = t.evolution;
+    if (e && typeof e === 'object') {
+      e.formId = m(e.formId);
+      if (Array.isArray(e.formHistory)) e.formHistory = e.formHistory.map(m);
+    }
+    const log = t.runLog;
+    if (!log) continue;
+    for (const r of log.tiers?.evolutions ?? []) {
+      r.formId = m(r.formId);
+      r.toFormId = m(r.toFormId);
+      r.fromFormId = m(r.fromFormId);
+    }
+    for (const r of log.rebirths ?? []) r.prevFormId = m(r.prevFormId);
+    for (const r of log.rankBattles ?? []) r.formId = m(r.formId);
+    for (const r of log.towerBattles ?? []) r.formId = m(r.formId);
+  }
+  if (Array.isArray(save.formDex)) save.formDex = [...new Set(save.formDex.map(m))];
+  if (Array.isArray(save.titles)) {
+    for (const u of save.titles) {
+      // 종족별로 나뉜 칭호: 해금한 종족이 옛 id 의 종족이 아니면, 그 id 에서 갈라진(splitFrom) 그 종족 칭호로
+      const fid = u.snapshot?.factionId ?? save.factionId;
+      const def = TITLES.find((d) => d.id === u.titleId);
+      if (def && !titleForFaction(def, fid)) u.titleId = TITLES.find((d) => d.splitFrom?.includes(u.titleId) && titleForFaction(d, fid))?.id ?? u.titleId;
+      if (u.snapshot) u.snapshot.formId = m(u.snapshot.formId);
+    }
+  }
+}
+
 /** 칭호 평가 훅 (원정 종료·진화·로드). 새로 해금된 칭호 정의를 돌려주고, 알림은 UI 가 unlocked.seen 으로 띄운다 */
 export function checkTitles(save: SaveData, trigger: TitleTrigger, nowMs: number = Date.now(), defs: readonly TitleDef[] = TITLES): TitleDef[] {
   // 합체 기록은 슬롯 단위라 지금 트랙의 런 로그에 붙여 읽는다 (칭호 '붕옥 완성')
-  return unlockTitles({ ...save.runLog, fusions: save.slotLog?.fusions ?? [] }, save, defs, trigger, nowMs);
+  const e = save.evolution;
+  const stats = currentStats(e, save.factionId, statBonusOf(save).total);
+  const statTotal = STAT_IDS.reduce((a, k) => a + stats[k], 0);
+  const live = { lineageKinds: e.formHistory.map((id) => tryGetForm(id)?.label.kind).filter((k): k is NonNullable<typeof k> => k !== undefined), tier: e.tierIndex + 1, statTotal };
+  const fresh = unlockTitles({ ...save.runLog, fusions: save.slotLog?.fusions ?? [] }, { ...save, titles: save.titles, live }, defs, trigger, nowMs);
+  // 런 로그 (GDD 9장): 칭호 해금 순간의 트랙 상태 — 특별 태그(최초의 호로 등) 지급 기록
+  for (const d of fresh) (save.runLog.titleUnlocks ??= []).push({ at: nowMs, titleId: d.id, factionId: save.factionId, trigger, tierIndex: e.tierIndex, formHistory: [...e.formHistory], statTotal });
+  return fresh;
 }
 
 /** 지금까지 마친 원정 수 (등급전 재도전 대기 기준, GDD 21-1) */
@@ -1270,6 +1316,12 @@ export function migrateSave(raw: unknown): SaveData | null {
     // 형식 30 → 31 (UI담당자A, 기본 제공 기기 디자인 십일번대 추가): 새 기본 제공 꾸밈을 보유로 더한다. 착용은 건드리지 않는다(입던 기기 그대로)
     save.shared = { ...(save.shared ?? newSharedState()), cosmetics: [...new Set([...freeCosmeticIds(), ...(Array.isArray(save.shared?.cosmetics) ? save.shared.cosmetics : [])])] };
     save.meta.format = 31;
+  }
+  if (save.meta.format < 32) {
+    // 형식 31 → 32 (C.106, GDD 49-7 ②·49-8): 4단계 일반 특수 속성 진화체(t4:blood·poison·kyo)가 없어져 같은 속성 히든 특수형(h4:special:*)으로 옮긴다.
+    // 진화 상태·진화 기록·환생/등급전/탑 기록·진화체 도감. 특별 태그 tag-1 의 사신 몫(은밀기동대장)은 사신 전용 태그 tag-1-shinigami 로
+    migrateSpecialVasto(save);
+    save.meta.format = 32;
   }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);

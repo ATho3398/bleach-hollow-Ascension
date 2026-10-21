@@ -747,7 +747,7 @@ let campaignFinalDefeats: number[] = [];
     const star = recommendedDifficulty(tier);
     const rows = ids.map((id) => {
       const form = FORM_TABLE.find((f) => f.id === id)!;
-      const prev = form.tier === 5 && !form.elements ? 't4:normal' : form.tier === 5 ? `t4:${form.label.elements[0]}` : 't3:base';
+      const prev = form.tier === 5 && !form.elements ? 't4:normal' : form.tier === 5 ? (FORM_TABLE.some((f) => f.id === `t4:${form.label.elements[0]}`) ? `t4:${form.label.elements[0]}` : `h4:special:${form.label.elements[0]}`) : 't3:base'; // C.106: 특수 속성 바스트로데는 히든 특수형만
       const evo = { ...newEvolution(), tierIndex: tier, formId: id, formHistory: ['t2:base', 't3:base', ...(tier === 4 ? [prev] : []), id], ability: abilityFor(zeroStats(), form) };
       const stat = (cls: 'normal' | 'elite', on: boolean) => {
         let g = 0, w = 0, secs = 0;

@@ -19,6 +19,10 @@ export interface AbsorbRecord {
   lap: number;
   /** C.60 (세이브 형식 24, GDD 25-9): 이 흡수에서 다시 뽑기권으로 후보를 다시 뽑았나 (옛 기록은 없음 = false) */
   rerolled?: boolean;
+  /** C.106 (GDD 49-7 ①): 특수 속성 특성 숨김이 풀린 흡수 화면이면 그 까닭(elite·boss·mutation·difficulty). 옵션 필드 */
+  specialGates?: string[];
+  /** C.106: 흡수한 특성이 특수 속성(혈·독·허, 숨김) 특성이었나 */
+  hiddenTrait?: boolean;
 }
 
 /** 슬롯 같은 속성 3개 완성 기록 (GDD 4-1 보너스). C.47 부터 lineageId 에는 속성 id 가 들어간다 (옛 기록은 계통 id) */
@@ -304,6 +308,18 @@ export interface TowerBattleRecord {
   firstClear: boolean;
 }
 
+/** 칭호 해금 1건 (C.106, GDD 9장): 어느 트랙·어느 몸으로 받았나 */
+export interface TitleUnlockRecord {
+  at: number;
+  titleId: string;
+  factionId: string;
+  trigger: string;
+  tierIndex: number;
+  formHistory: string[];
+  /** 그 순간 능력치 6종 합계 */
+  statTotal: number;
+}
+
 export interface RunLog {
   absorbs: AbsorbRecord[];
   lineages: LineageRecord[];
@@ -325,6 +341,8 @@ export interface RunLog {
   shopPurchases: ShopPurchaseRecord[];
   /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
   towerBattles: TowerBattleRecord[];
+  /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
+  titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
   fusions?: FusionRecord[];
 }

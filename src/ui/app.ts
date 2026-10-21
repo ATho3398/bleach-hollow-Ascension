@@ -6,7 +6,7 @@ import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
-import { applyEvolutionToParams, playerElementsOf } from '../engine/evolution';
+import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
@@ -915,12 +915,12 @@ export function startApp(host: HTMLElement): void {
       persist();
       growth = {
         newTraits: summarize(exp).keptTraits.length,
-        evolvedTo: evo?.ok ? formName(evo.form, faction.id, playerElementsOf(save.evolution)) : null,
+        evolvedTo: evo?.ok ? formDisplayName(save.evolution, faction.id) : null,
         newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
       };
       if (evo?.ok) {
         const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev } };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id) };
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => nav.pop(), s.build.slots.length, extra), true);
       }
     }

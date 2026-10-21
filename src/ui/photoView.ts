@@ -4,7 +4,7 @@ import { artUrls } from '../data/art/manifest';
 import { formName, tryGetForm } from '../data/evolution';
 import { getCosmetic } from '../data/shop';
 import { roomOf, type FactionConfig } from '../engine/faction';
-import { playerElementsOf } from '../engine/evolution';
+import { formDisplayName, playerElementsOf } from '../engine/evolution';
 import type { SaveData } from '../game';
 import { button, el, seg } from './bha/dom';
 import type { Device } from './bha/device';
@@ -28,7 +28,7 @@ export function photoSceneOf(faction: FactionConfig, save: SaveData, frameId: st
     charOffsetY: art.offsetY,
     sceneSrc: artUrls(room.sceneArt, BASE).src,
     look: { aura: look(save.wear.aura), tint: look(save.wear.tint), room: look(save.wear.room), plate: look(save.wear.plate) },
-    name: form ? formName(form, faction.id, playerElementsOf(save.evolution)) : faction.tierNames[save.evolution.tierIndex]!,
+    name: formDisplayName(save.evolution, faction.id),
     stage: `${save.evolution.tierIndex + 1}단계`,
     date,
     frame,

@@ -7,7 +7,7 @@ import { categoryName } from '../data/elements';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
 import type { FactionConfig } from '../engine/faction';
-import { playerElementsOf } from '../engine/evolution';
+import { formDisplayName, playerElementsOf } from '../engine/evolution';
 import type { FusionRecord } from '../engine/runLog';
 import { allTracks, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type FusionBlock, type SaveData, type TrackKey } from '../game';
 import { rankOf } from '../engine/rank';
@@ -32,8 +32,7 @@ export function subjectParticle(word: string): string {
 /** 트랙 하나의 이름: 진화체 이름(없으면 단계 이름) */
 export function trackName(t: Pick<SaveData, 'factionId' | 'evolution'>): string {
   const f = getFaction(t.factionId);
-  const form = t.evolution.formId ? tryGetForm(t.evolution.formId) : undefined;
-  return form ? formName(form, f.id, playerElementsOf(t.evolution)) : f.tierNames[t.evolution.tierIndex]!;
+  return formDisplayName(t.evolution, f.id);
 }
 
 /** 합체가 막힌 이유 한 줄 */

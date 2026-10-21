@@ -102,10 +102,18 @@
     "id": "tag-1",
     "kind": "tag",
     "hidden": true,
-    "name": {
-      "hollow": "최초의 호로",
-      "shinigami": "은밀기동대장"
-    },
+    "factions": ["hollow"],
+    "name": { "hollow": "최초의 호로" },
+    "condition": { "type": "lineageStatTotal", "lineageKind": "fail", "minTier": 5, "totalOfTier": 5 },
+    "provisional": true
+  },
+  {
+    "id": "tag-1-shinigami",
+    "kind": "tag",
+    "hidden": true,
+    "factions": ["shinigami"],
+    "splitFrom": ["tag-1"],
+    "name": { "shinigami": "은밀기동대장" },
     "condition": {
       "type": "or",
       "any": [

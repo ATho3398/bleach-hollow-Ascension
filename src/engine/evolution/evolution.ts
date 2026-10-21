@@ -3,7 +3,8 @@
 // 사망·퇴화·단계 스킵은 없다. 진화는 둥지로 돌아올 때 자동으로 일어난다(원정 중에는 일어나지 않는다).
 
 import { BALANCE } from '../../config/balance';
-import { combosAtTier, FORM_TABLE, getForm, tryGetForm } from '../../data/evolution';
+import { combosAtTier, FORM_TABLE, formName, getForm, tryGetForm } from '../../data/evolution';
+import { distribute, failLineTotal } from '../../data/evolution/generate';
 import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
@@ -154,10 +155,45 @@ export function worldRefStat(): number {
   return refStatOf(0);
 }
 
-/** 지금 종족값: 진화체 값, 1단계는 종족 설정 baseStats */
+/** 실패형 줄기 (GDD 49-8, C.106): 지금까지 거친 진화체 중 실패형(label.kind fail)이 처음 나온 단계. 실패형을 안 거쳤으면 null */
+export function failLineStartTier(e: Pick<EvolutionState, 'formHistory'>): number | null {
+  for (const id of e.formHistory) {
+    const f = tryGetForm(id);
+    if (f?.label.kind === 'fail') return f.tier;
+  }
+  return null;
+}
+
+export function isFailLine(e: Pick<EvolutionState, 'formHistory'>): boolean {
+  return failLineStartTier(e) !== null;
+}
+
+/** 지금 종족값: 진화체 값, 1단계는 종족 설정 baseStats.
+ *  실패형 줄기(GDD 49-8 1번)는 진화체 값의 비율 그대로 합계만 실패형 합계(단계 오름분 × failLine.gainRatio)로 줄인다 — 5단계 아란칼도 같은 낮춤 */
 export function baseStatsOf(e: EvolutionState, factionId: string): Stats {
   const form = e.formId ? tryGetForm(e.formId) : undefined;
-  return { ...(form?.stats ?? getFaction(factionId).baseStats) };
+  if (!form) return { ...getFaction(factionId).baseStats };
+  const start = failLineStartTier(e);
+  if (start === null || form.tier < start) return { ...form.stats };
+  const target = failLineTotal(SX.tierTotals, EV.failLine.gainRatio, form.tier, start);
+  const sum = STAT_IDS.reduce((a, k) => a + form.stats[k], 0);
+  if (sum === target) return { ...form.stats };
+  const ref = sum / STAT_IDS.length;
+  return distribute(target, Object.fromEntries(STAT_IDS.map((k) => [k, form.stats[k] / ref - 1])));
+}
+
+/** 표시 이름 (GDD 49-8 2번): 실패형 줄기는 4·5단계가 되어도 종족 설정 1단계 이름, 그 밖에는 진화체 이름(1단계는 1단계 이름) */
+export function formDisplayName(e: EvolutionState, factionId: string): string {
+  const fac = getFaction(factionId);
+  if (isFailLine(e)) return fac.tierNames[0]!;
+  const form = e.formId ? tryGetForm(e.formId) : undefined;
+  return form ? formName(form, factionId, playerElementsOf(e)) : fac.tierNames[e.tierIndex]!;
+}
+
+/** 표시 단계 이름 (GDD 49-8 2번): 실패형 줄기는 종족 설정 1단계 이름 그대로 */
+export function tierDisplayName(e: Pick<EvolutionState, 'formHistory' | 'tierIndex'>, factionId: string, tierIndex: number = e.tierIndex): string {
+  const fac = getFaction(factionId);
+  return fac.tierNames[isFailLine(e) ? 0 : tierIndex] ?? `${tierIndex + 1}단계`;
 }
 
 /** 능력치 절대 상한 (GDD 22-1 v4.7, 6개 모두) */
@@ -294,6 +330,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.physBlock = physBlockOf(fa);
   params.physBlockSpawnSeconds = physSpawnSecondsFor(params.physBlock?.element ?? null);
   params.elementDamage = elementDamageOf(e);
+  // 실패형 줄기 (GDD 49-8 1번): 블록 관련 피해 배율
+  params.blockDamageMultiplier = isFailLine(e) ? EV.failLine.blockDamage : 1;
   if (critChance > 0) {
     params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
     // 치명 상한 돌파 (GDD 45장 1번): 치명 특성(물 '날카로운 물결')이 있는 몸만 상한 = 기본 상한 + 그 특성 값

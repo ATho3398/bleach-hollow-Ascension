@@ -7,7 +7,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { statName } from '../data/elements';
 import { STAT_IDS, type Stats } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
-import { playerElementsOf } from '../engine/evolution';
+import { formDisplayName, playerElementsOf } from '../engine/evolution';
 import { inheritableTraits, nextCarry, rebirthStars, startingCarry } from '../engine/rebirth';
 import type { SaveData } from '../game';
 import type { RebirthRecord } from '../engine/runLog';
@@ -74,7 +74,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
   const evo = save.evolution;
   const form = evo.formId ? tryGetForm(evo.formId) : undefined;
   const sub = h('span');
-  sub.append(`지금 ${form ? formName(form, faction.id, playerElementsOf(evo)) : faction.tierNames[evo.tierIndex]} `);
+  sub.append(`지금 ${formDisplayName(evo, faction.id)} `);
   const mark = rebirthMark(save.rebirth.count);
   if (mark) sub.append(mark, ' ');
   sub.append(`· 환생 ${save.rebirth.count}회 → ${save.rebirth.count + 1}회`);

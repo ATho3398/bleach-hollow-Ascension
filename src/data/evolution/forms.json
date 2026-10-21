@@ -164,78 +164,6 @@
     "provisional": true
   },
   {
-    "id": "t4:blood",
-    "tier": 4,
-    "label": {
-      "kind": "element",
-      "elements": [
-        "blood"
-      ]
-    },
-    "elements": [
-      "blood"
-    ],
-    "stats": {
-      "hp": 112,
-      "atk": 107,
-      "int": 83,
-      "def": 98,
-      "spr": 88,
-      "spd": 97
-    },
-    "locomotion": "fly",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t4:poison",
-    "tier": 4,
-    "label": {
-      "kind": "element",
-      "elements": [
-        "poison"
-      ]
-    },
-    "elements": [
-      "poison"
-    ],
-    "stats": {
-      "hp": 83,
-      "atk": 88,
-      "int": 112,
-      "def": 98,
-      "spr": 107,
-      "spd": 97
-    },
-    "locomotion": "walk",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t4:kyo",
-    "tier": 4,
-    "label": {
-      "kind": "element",
-      "elements": [
-        "kyo"
-      ]
-    },
-    "elements": [
-      "kyo"
-    ],
-    "stats": {
-      "hp": 98,
-      "atk": 107,
-      "int": 112,
-      "def": 88,
-      "spr": 83,
-      "spd": 97
-    },
-    "locomotion": "float",
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
     "id": "h4:fusion:water+earth",
     "tier": 4,
     "label": {
@@ -427,12 +355,12 @@
       "normal"
     ],
     "stats": {
-      "hp": 78,
-      "atk": 78,
-      "int": 78,
-      "def": 78,
-      "spr": 78,
-      "spd": 78
+      "hp": 85,
+      "atk": 84,
+      "int": 84,
+      "def": 84,
+      "spr": 84,
+      "spd": 84
     },
     "locomotion": "walk",
     "maxChain": 3,

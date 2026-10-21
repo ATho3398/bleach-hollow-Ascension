@@ -24,12 +24,12 @@ describe('forms.json', () => {
 });
 
 describe('트리 규모 (20-5)', () => {
-  it('2·3단계 1종, 바스트로데 속성 8 + 히든 8, 아란칼 속성 × 분류 24 + 히든 4(환생 전용 포함)', () => {
+  it('2·3단계 1종, 바스트로데 노멀+원소 5 + 히든 8 (C.106, 49-7 ② 특수 속성은 히든 특수형으로만), 아란칼 속성 × 분류 24 + 히든 4(환생 전용 포함)', () => {
     const n = (tier: number, hidden: boolean) => formsOfTier(tier).filter((f) => !!f.hidden === hidden).length;
-    expect([n(2, false), n(3, false), n(4, false), n(5, false)]).toEqual([1, 1, ELEMENT_IDS.length, ELEMENT_IDS.length * ATTACK_CATEGORIES.length]);
+    expect([n(2, false), n(3, false), n(4, false), n(5, false)]).toEqual([1, 1, ELEMENT_IDS.length - SPECIAL_ELEMENT_IDS.length, ELEMENT_IDS.length * ATTACK_CATEGORIES.length]);
     expect([n(2, true), n(3, true), n(4, true), n(5, true)]).toEqual([0, 0, 8, 4]);
     for (const el of ELEMENT_IDS) {
-      expect(formsOfTier(4).some((f) => f.id === `t4:${el}`)).toBe(true);
+      expect(formsOfTier(4).some((f) => f.id === `t4:${el}`)).toBe(!SPECIAL_ELEMENT_IDS.includes(el));
       for (const c of ATTACK_CATEGORIES) expect(formsOfTier(5).some((f) => f.id === `t5:${el}:${c}`)).toBe(true);
     }
   });
@@ -54,7 +54,9 @@ describe('종족값 (20-4)', () => {
   it('같은 단계는 합계가 같다 (완전체는 높게, 실패형은 낮게)', () => {
     for (const f of FORM_TABLE) {
       const scale = BALANCE.provisional.evolution.template.totalScale[f.label.kind] ?? 1;
-      expect(sum(f), f.id).toBe(Math.round(SX.tierTotals[f.tier - 1]! * scale));
+      // 실패형 (C.106, 49-8): 3단계 합계 + 4단계 오름분 × gainRatio
+      const want = f.label.kind === 'fail' ? Math.round(SX.tierTotals[2]! + (SX.tierTotals[3]! - SX.tierTotals[2]!) * BALANCE.provisional.evolution.failLine.gainRatio) : Math.round(SX.tierTotals[f.tier - 1]! * scale);
+      expect(sum(f), f.id).toBe(want);
     }
     const complete = FORM_TABLE.find((f) => f.id === 'h4:complete')!;
     const fail = FORM_TABLE.find((f) => f.id === 'h4:fail')!;
@@ -146,7 +148,8 @@ describe('이름 자리 표시 (종족 설정 단계 이름, 원작 이름 없�
     expect(name('h4:complete')).toBe('바스트로데_완전체');
     expect(name('h4:special:blood')).toBe('바스트로데_특수_혈');
     expect(name('h4:pure')).toBe('바스트로데_순수');
-    expect(name('h4:fail')).toBe('바스트로데_실패');
+    expect(name('h4:fail')).toBe('호로'); // C.106 (49-8 2번): 실패형은 1단계 이름 그대로
+    expect(name('h4:fail', 'shinigami')).toBe('혼백');
     expect(name('h5:limit', 'hollow', ['fire'])).toBe('아란칼_한계돌파_불');
     expect(name('h5:restraint', 'hollow', ['water', 'earth'])).toBe('아란칼_절제_물흙');
     expect(name('h5:hunter')).toBe('아란칼_강적사냥꾼'); // 도감처럼 상태가 없으면 속성 생략

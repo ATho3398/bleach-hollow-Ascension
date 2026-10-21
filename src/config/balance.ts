@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 54;
+export const BALANCE_VERSION = 55;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -75,6 +75,9 @@ export const BALANCE = {
       hungerAfterAbsorb: 0,
       /** 흡수 시 보상 타일 (GDD 2-1 "흡수 시 1"). 바퀴 합계는 tilesPerLap.max 안, 바퀴 완주 보상 1장은 남겨 둔다 */
       bonusTiles: 1,
+      /** 특수 속성(혈·독·허) 특성 숨김 (GDD 49-7 ①, C.106, provisional): 아래 경우에만 그 확률로 흡수 후보 풀에 들어간다(여럿이면 가장 큰 값). 그 밖에는 후보에 안 나온다.
+       *  강적·보스 처치 / 바퀴 변이 효과 specialTraitChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 */
+      specialTraits: { elite: 0.5, boss: 1, minDifficulty: 3, difficulty: 0.3 },
     },
     risk: {
       /** 한계값: 이상이 되면 돌파 (GDD 4-1) */
@@ -399,10 +402,14 @@ export const BALANCE = {
         fusionScale: 0.75,
         specialScale: 1.5,
         /** 종족값 합계 배율: 완전체 높게, 실패형 낮게 (나머지는 단계 합계 그대로) */
-        totalScale: { complete: 1.08, fail: 0.8, reborn: 1.05 } as Record<string, number>,
+        totalScale: { complete: 1.08, reborn: 1.05 } as Record<string, number>,
         /** 노멀 순수형 자기 속성 보정 */
         pureStab: 1.3,
       },
+      /** 실패형 줄기 (GDD 49-8 1번, C.106, provisional): 실패형(label.kind fail)으로 간 뒤의 모든 단계.
+       *  gainRatio = 진화 때 종족값 합계 오름분을 일반 단계 오름분(tierTotals 차이)의 이 비율로 (옛 totalScale.fail 0.8 대체),
+       *  blockDamage = 블록 관련 피해(블록·체인·필살·저장·콤보·해방) 배율 */
+      failLine: { gainRatio: 0.3, blockDamage: 0.5 },
       /** 점검 도구(analysis.ts, npm run balance)의 무작위 분포 샘플 */
       analysis: { samples: 4000, seed: 20261020 },
     },
@@ -494,7 +501,7 @@ export const BALANCE = {
       } as Record<string, Record<string, number | boolean | string>>,
       /** ④ 바퀴 변이 효과 (voidMult = 공허 블록 기본 확률 배율, foodMult = 먹이 드롭 횟수 배율, elementBias = 그 속성 적 가중치를 사냥터 주 속성처럼) */
       mutations: {
-        'void-night': { voidMult: 2, rewardMult: 1.25 },
+        'void-night': { voidMult: 2, rewardMult: 1.25, specialTraitChance: 0.5 }, // specialTraitChance: GDD 49-7 ① 특수 속성 특성이 흡수 후보에 들 확률 (C.106, provisional)
         famine: { hungerMult: 2, foodMult: 2 },
         'blood-moon': { elementBias: 'blood', absorbBonus: 1 },
         calm: { enemyHpMult: 0.85, goldMult: 0.7 },

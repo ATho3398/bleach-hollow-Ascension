@@ -238,7 +238,10 @@ export type TitleCondition =
   /** 도전의 탑 이 층(이상)을 깬 적이 있다 (GDD 36장, C.85) */
   | { type: 'towerFloorCleared'; floor: number }
   /** 초월체를 이만큼 모았다 (GDD 22-3, C.59 — 슬롯 단위 합체 기록) */
-  | { type: 'transcendentsCollected'; min: number };
+  | { type: 'transcendentsCollected'; min: number }
+  /** 진화 줄기 능력치 (GDD 49-8 3번, C.106): 거친 진화체 중 label.kind 가 lineageKind 인 것이 있고(그 줄기), 지금 단계가 minTier(1부터) 이상이며,
+   *  지금 능력치 6종 합계(종족값+노력치+계승, 슬롯 보너스 포함)가 tierTotals[totalOfTier − 1] 이상. 런 로그가 아니라 지금 상태를 읽는다 */
+  | { type: 'lineageStatTotal'; lineageKind: string; minTier: number; totalOfTier: number };
 
 export interface TitleDef {
   id: string;
@@ -250,6 +253,10 @@ export interface TitleDef {
   condition: TitleCondition | null;
   /** 이 조건은 임시(확정 아님). 조건이 있으면 반드시 true (GDD 12장, 14-7) */
   provisional?: boolean;
+  /** 이 종족들만의 칭호 (GDD 49-8 정정, C.106 — 특별 태그는 종족별로 따로). 없으면 모든 종족. 다른 종족 트랙에서는 평가·도감에 안 나온다 */
+  factions?: string[];
+  /** 이 칭호가 갈라져 나온 옛 칭호 id (세이브 마이그레이션이 옛 해금을 이 칭호로 옮긴다, C.106) */
+  splitFrom?: string[];
 }
 
 /**

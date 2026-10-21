@@ -22,5 +22,6 @@ export function generateFormTable(): FormDef[] {
     categories: ATTACK_CATEGORIES,
     fusionPairs: fusionPairs(),
     template: BALANCE.provisional.evolution.template as unknown as FormTemplate,
+    failGainRatio: BALANCE.provisional.evolution.failLine.gainRatio,
   });
 }

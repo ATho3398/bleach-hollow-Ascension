@@ -3,7 +3,7 @@
 import { abilityNameByEffect, formName, physProcText, tryGetForm } from '../data/evolution';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
-import { abilityLines, formAbilitiesOf, isMaxTier, playerElementsOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityLines, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
@@ -75,10 +75,11 @@ export function abilityProcText(effect: string, factionId: string): string {
  * 진화 제단 화면의 두 열: 왼쪽 = 단계·진화체 이름·속성·고유 특성 / 오른쪽 = 진화 안내(타이밍은 비밀) 또는 마지막 단계 안내.
  */
 export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): { left: HTMLElement[]; right: HTMLElement[] } {
-  const tierName = faction.tierNames[evo.tierIndex]!;
+  // 실패형 줄기는 단계 이름·진화체 이름 모두 1단계 이름 (GDD 49-8 2번)
+  const tierName = tierDisplayName(evo, faction.id);
   const current = evo.formId ? tryGetForm(evo.formId) : undefined;
   const form = h('div', 'bha-evo__form');
-  const formName_ = h('span', 'bha-evo__formname', current ? formName(current, faction.id, playerElementsOf(evo)) : tierName);
+  const formName_ = h('span', 'bha-evo__formname', formDisplayName(evo, faction.id));
   if (current?.provisional) formName_.append(' ', provisionalTag());
   const els = h('span', 'bha-dim');
   els.append(`${evo.tierIndex + 1}단계 · ${tierName} · 속성 `, elementsMark(playerElementsOf(evo), faction.id));
@@ -106,6 +107,10 @@ export interface EvolutionExtra {
   elements: string[];
   ability: StatId | null;
   ev?: Stats;
+  /** 실패형 줄기 (GDD 49-8 2번): 단계·진화체 이름을 1단계 이름으로 */
+  failLine?: boolean;
+  /** 실제 종족값 (실패형 줄기 낮춤 반영). 없으면 진화체 값 */
+  stats?: Stats;
 }
 
 /** 진화 후 달라진 점 행들(임시 수치): 슬롯·속성·고유 특성·종족값·외형 */
@@ -123,7 +128,7 @@ export function evolutionEffectRows(
   const lines = extra ? (extra.ev ? abilityLines(formAbilitiesOf(form, extra.ev, extra.ability), faction.id) : abilityLines(formAbilitiesOf(form, zeroStats(), extra.ability), faction.id)) : [];
   for (const l of lines) rows.push({ icon: 'i-rare', label: `${l.slot} 특성`, value: `${l.name} — ${l.description}`, mod: 'stack' });
   rows.push(
-    { icon: 'i-cond', label: '종족값', value: statsLine(faction.id, form.stats), mod: 'stack' },
+    { icon: 'i-cond', label: '종족값', value: statsLine(faction.id, extra?.stats ?? form.stats), mod: 'stack' },
     { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },
   );
   return rows;
@@ -172,10 +177,12 @@ export function evolutionView(
   if (CUTSCENE_PROVISIONAL) linesSection.lastElementChild!.append('연출 문구는 ', provisionalTag('제안 문구'));
 
   const path = h('p', 'bha-evolve__path');
-  path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', faction.tierNames[to]!));
+  const failLine = extra?.failLine === true;
+  const shownTo = faction.tierNames[failLine ? 0 : to]!;
+  path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[failLine && form.label.kind !== 'fail' ? 0 : from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', shownTo));
   const created = h('div', 'bha-evolve__new');
   for (const e of extra?.elements ?? form.elements ?? []) created.append(elementDot(e, faction.id));
-  created.append(` 새 진화체: ${formName(form, faction.id, extra?.elements ?? [])}`);
+  created.append(` 새 진화체: ${failLine ? shownTo : formName(form, faction.id, extra?.elements ?? [])}`);
   if (form.hidden) created.append(' ', h('span', 'bha-chip bha-chip--rare', '히든'));
   if (form.provisional) created.append(' ', provisionalTag());
 
@@ -198,7 +205,7 @@ export function evolutionView(
     if (timer !== undefined) clearTimeout(timer);
     onDone();
   } });
-  const title = h('h1', 'bha-evolve__title', `${faction.tierNames[to]}!`);
+  const title = h('h1', 'bha-evolve__title', `${shownTo}!`);
   resultMain.append(h('span', 'bha-evolve__eyebrow', '진화'), title, path, created, home);
   resultSide.append(effects, evolutionNote());
   resultSection.append(resultMain, resultSide);

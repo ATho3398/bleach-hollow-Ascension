@@ -62,6 +62,13 @@ export function dominantElement(build: BuildState): string {
   return pickTop(counts, build, (id) => getTrait(id).element) ?? NORMAL_ELEMENT;
 }
 
+/** 4단계 일반 진화의 속성 (GDD 49-7 ②, C.106): 일반 바스트로데(t4:속성)가 표에 있는 속성 중 장착 최다. 없는 속성(혈·독·허 — 히든 특수형으로만)은 세지 않는다.
+ *  동률은 최근 장착, 맞는 장착이 없으면 노멀 */
+export function vastoNormalElement(build: BuildState, table: readonly FormDef[] = FORM_TABLE): string {
+  const counts = Object.fromEntries(Object.entries(elementCounts(build)).filter(([el]) => table.some((f) => f.id === `t4:${el}`)));
+  return pickTop(counts, build, (id) => getTrait(id).element) ?? NORMAL_ELEMENT;
+}
+
 /** 장착한 공격 특성 중 가장 많은 분류. 동률이면 최근 장착, 공격 특성이 없으면 혼합 */
 export function dominantCategory(build: BuildState, factionId: string): AttackCategory {
   const counts = categoryCounts(build, factionId);
@@ -166,7 +173,7 @@ export function evolutionCandidates(e: EvolutionState, ctx: JudgeContext, table:
   if (tier <= 3) return { normal: find(`t${tier}:base`), hidden: [], forced: null };
   if (tier === 4) {
     if (isCareFailure(ctx)) return { normal: find('h4:fail'), hidden: [], forced: find('h4:fail') };
-    return { normal: find(`t4:${dominantElement(ctx.build)}`), hidden: elementHiddenCandidates(e, ctx).filter(ok), forced: null };
+    return { normal: find(`t4:${vastoNormalElement(ctx.build, table)}`), hidden: elementHiddenCandidates(e, ctx).filter(ok), forced: null };
   }
   return { normal: find(`t5:${vastoElement(e, table)}:${dominantCategory(ctx.build, ctx.factionId)}`), hidden: behaviorHiddenCandidates(e, ctx.rebirths ?? 0).filter(ok), forced: null };
 }

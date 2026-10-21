@@ -115,14 +115,14 @@ describe('평가기', () => {
 
 describe('평가 시점 훅', () => {
   it('원정 종료(recordExpedition)에서 평가된다', () => {
-    const save = newSaveData('hollow', 0);
-    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 100, condition: 100, deck: [], risk: 0, stability: 50, build: save.build, evolution: save.evolution });
+    const save = newSaveData('shinigami', 0);
+    const exp = createExpedition({ factionId: 'shinigami', seed: 1, runId: 1, hunger: 100, condition: 100, deck: [], risk: 0, stability: 50, build: save.build, evolution: save.evolution });
     exp.phase = 'ended';
     exp.outcome = 'returned';
     exp.endReason = 'returned';
-    exp.battles.push(battle({ chain3Count: 30 })); // tag-1 = 체인3 누계 30 (C.49: 등급 칭호는 등급전으로만 해금)
+    exp.battles.push(battle({ chain3Count: 30 })); // tag-1-shinigami(은밀기동대장, C.106 사신 전용) = 체인3 누계 30 (C.49: 등급 칭호는 등급전으로만 해금)
     recordExpedition(save, exp, 1234);
-    const u = save.titles.find((t) => t.titleId === 'tag-1');
+    const u = save.titles.find((t) => t.titleId === 'tag-1-shinigami');
     expect(u).toMatchObject({ at: 1234, trigger: 'expedition' });
   });
   it('진화(performEvolution)에서 평가된다', () => {
@@ -136,13 +136,13 @@ describe('평가 시점 훅', () => {
     expect(save.titles.find((t) => t.titleId === 'hidden-rank-3')).toMatchObject({ at: 4000, trigger: 'evolution' });
   });
   it('세이브 로드(loadSave)에서 평가되고, 저장된 해금은 유지된다', () => {
-    const save = newSaveData('hollow', 0);
+    const save = newSaveData('shinigami', 0);
     save.runLog.risk.survivedBreakthroughs = 1;
     const mem: Record<string, string> = {};
     const storage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => void (mem[k] = v) };
     writeSave(storage, save);
     const loaded = loadSave(storage)!;
-    expect(loaded.titles.map((t) => t.titleId)).toEqual(['tag-1']);
+    expect(loaded.titles.map((t) => t.titleId)).toEqual(['tag-1-shinigami']);
     expect(loaded.titles[0]!.trigger).toBe('load');
     writeSave(storage, loaded);
     expect(loadSave(storage)!.titles).toHaveLength(1);
@@ -151,8 +151,8 @@ describe('평가 시점 훅', () => {
 });
 
 describe('임시 조건 칭호의 해금 흐름 (런 로그 합성)', () => {
-  const unlockedIds = (log: RunLog) => {
-    const save = newSaveData('hollow', 0);
+  const unlockedIds = (log: RunLog, factionId = 'hollow') => {
+    const save = newSaveData(factionId, 0);
     save.runLog = log;
     return checkTitles(save, 'load', 1).map((d) => d.id).sort();
   };
@@ -174,8 +174,10 @@ describe('임시 조건 칭호의 해금 흐름 (런 로그 합성)', () => {
     expect(unlockedIds(logWith({ rankBattles: [rb(true, 1)] }))).toEqual(['rank-1', 'rank-2', 'rank-3', 'rank-4']);
     const risk = emptyRunLog();
     risk.risk.survivedBreakthroughs = 1;
-    expect(unlockedIds(risk)).toEqual(['tag-1']);
-    expect(unlockedIds(logWith({ battles: [battle({ chain3Count: 30 })] }))).toEqual(['tag-1']);
+    // C.106: 은밀기동대장은 사신 전용(옛 조건 그대로), 호로 트랙에서는 이 기록으로 아무것도 안 열린다
+    expect(unlockedIds(risk)).toEqual([]);
+    expect(unlockedIds(risk, 'shinigami')).toEqual(['tag-1-shinigami']);
+    expect(unlockedIds(logWith({ battles: [battle({ chain3Count: 30 })] }), 'shinigami')).toEqual(['tag-1-shinigami']);
   });
   it('조건 없는 칭호는 어떤 기록으로도 해금되지 않는다', () => {
     const big = logWith({ runs: times(5, () => run({ laps: 9 })), battles: times(20, () => battle({ enemyClass: 'elite', chain3Count: 9 })), absorbs: times(30, () => absorb()) });
@@ -220,12 +222,12 @@ describe('세이브 마이그레이션', () => {
     expect(s.titles).toEqual([]);
   });
   it('형식 7 세이브 로드 때 이미 충족된 임시 조건이 해금된다', () => {
-    const old = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
+    const old = JSON.parse(JSON.stringify(newSaveData('shinigami', 0)));
     delete old.titles;
     old.meta.format = 7;
     old.runLog.risk.survivedBreakthroughs = 1;
     const mem: Record<string, string> = { [SAVE_KEY]: JSON.stringify(old) };
     const s = loadSave({ getItem: (k) => mem[k] ?? null, setItem: () => {} })!;
-    expect(s.titles.map((t) => t.titleId)).toEqual(['tag-1']);
+    expect(s.titles.map((t) => t.titleId)).toEqual(['tag-1-shinigami']);
   });
 });

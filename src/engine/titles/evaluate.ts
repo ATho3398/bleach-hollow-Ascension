@@ -2,6 +2,17 @@
 // 종족 id 로 분기하지 않는다(종족 차이는 칭호 데이터의 이름 텍스트뿐).
 import type { TitleCondition, TitleDef } from '../../data/schema';
 import type { RunLog } from '../runLog';
+import { BALANCE } from '../../config/balance';
+
+/** 지금 상태 (런 로그에 없는 값, lineageStatTotal 조건이 읽는다 — GDD 49-8). 부르는 쪽(game.ts)이 채운다 */
+export interface TitleLive {
+  /** 거친 진화체들의 label.kind */
+  lineageKinds: string[];
+  /** 지금 단계 (1부터) */
+  tier: number;
+  /** 지금 능력치 6종 합계 */
+  statTotal: number;
+}
 
 /** 해금 순간의 스냅샷 (영구 기록) */
 export interface TitleSnapshot {
@@ -33,14 +44,20 @@ export interface TitleEvalState {
   factionId: string;
   titles: UnlockedTitle[];
   evolution: { tierIndex: number; formId: string | null };
+  /** 지금 상태 (없으면 lineageStatTotal 조건은 늘 거짓) */
+  live?: TitleLive;
 }
 
-export function checkCondition(c: TitleCondition, log: RunLog): boolean {
+export function checkCondition(c: TitleCondition, log: RunLog, live?: TitleLive): boolean {
   switch (c.type) {
     case 'and':
-      return c.all.every((x) => checkCondition(x, log));
+      return c.all.every((x) => checkCondition(x, log, live));
     case 'or':
-      return c.any.some((x) => checkCondition(x, log));
+      return c.any.some((x) => checkCondition(x, log, live));
+    case 'lineageStatTotal': {
+      const need = BALANCE.provisional.stats.tierTotals[c.totalOfTier - 1];
+      return live !== undefined && need !== undefined && live.lineageKinds.includes(c.lineageKind) && live.tier >= c.minTier && live.statTotal >= need;
+    }
     case 'absorbCount':
       return log.absorbs.filter((a) => a.absorbed && (!c.element || a.element === c.element) && (!c.rareOnly || a.rare)).length >= c.min;
     case 'passedForm':
@@ -78,10 +95,11 @@ export function checkCondition(c: TitleCondition, log: RunLog): boolean {
   }
 }
 
-/** 새로 충족된 칭호(이미 해금한 것·조건 없는 것 제외). 상태를 바꾸지 않는다 */
-export function evaluateTitles(runLog: RunLog, state: Pick<TitleEvalState, 'titles'>, defs: readonly TitleDef[]): TitleDef[] {
+/** 새로 충족된 칭호(이미 해금한 것·조건 없는 것·다른 종족 전용 제외). 상태를 바꾸지 않는다 */
+export function evaluateTitles(runLog: RunLog, state: Pick<TitleEvalState, 'titles'> & Partial<Pick<TitleEvalState, 'factionId' | 'live'>>, defs: readonly TitleDef[]): TitleDef[] {
   const have = new Set(state.titles.map((t) => t.titleId));
-  return defs.filter((d) => d.condition !== null && !have.has(d.id) && checkCondition(d.condition, runLog));
+  const mine = (d: TitleDef) => d.factions === undefined || state.factionId === undefined || d.factions.includes(state.factionId);
+  return defs.filter((d) => d.condition !== null && !have.has(d.id) && mine(d) && checkCondition(d.condition, runLog, state.live));
 }
 
 export function snapshotOf(runLog: RunLog, state: TitleEvalState): TitleSnapshot {

@@ -29,9 +29,9 @@ const run = (s: CombatState, seconds: number) => {
 const fx = (id: string, ability: 'atk' | null = 'atk') => abilityEffectsOf(formAbilitiesOf(getForm(id), zeroStats(), ability));
 
 describe('C.89 특성 매핑 (label → 특성, 39장 1·3·4번)', () => {
-  it('데이터 검사 통과 · 진화체 46종 전부 특성이 있다 (2·3단계 = 성향 1줄, 4·5단계 = 2줄)', () => {
+  it('데이터 검사 통과 · 진화체 43종 전부 특성이 있다 (2·3단계 = 성향 1줄, 4·5단계 = 2줄)', () => {
     expect(validateAbilities()).toEqual([]);
-    expect(FORM_TABLE).toHaveLength(46);
+    expect(FORM_TABLE).toHaveLength(43); // C.106: 4단계 일반 특수 속성 3종 빠짐
     for (const f of FORM_TABLE) {
       const fa = formAbilitiesOf(f, { hp: 0, atk: 5, int: 3, def: 0, spr: 0, spd: 0 }, 'atk');
       const lines = abilityLines(fa, 'hollow');

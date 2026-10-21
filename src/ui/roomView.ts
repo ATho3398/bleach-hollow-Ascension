@@ -18,7 +18,7 @@ import { toward } from './bha/nestLogic';
 import { rebirthMark } from './rebirthView';
 import { formName, tryGetForm } from '../data/evolution';
 import { getFaction } from '../data/factions';
-import { playerElementsOf } from '../engine/evolution';
+import { formDisplayName, playerElementsOf } from '../engine/evolution';
 
 export interface RoomHandlers {
   onDepart: () => void;
@@ -80,7 +80,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 이름표 테 꾸밈(GDD 25-9)을 입었으면 이름표를 늘 보인다
   if (stars || others.length > 0 || save.wear.plate) {
     const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
-    const name = el('span', 'bha-small bha-room__name', form ? formName(form, faction.id, playerElementsOf(save.evolution)) : faction.tierNames[save.evolution.tierIndex]!);
+    const name = el('span', 'bha-small bha-room__name', formDisplayName(save.evolution, faction.id));
     if (stars) name.append(' ', stars);
     for (const t of others) {
       const to = getFaction(t.factionId);

@@ -27,6 +27,16 @@ export interface GenerateInput {
   /** 원소 순환에서 마주 보는 쌍(서로 상성이 아닌 쌍): 융합 히든 */
   fusionPairs: readonly [string, string][];
   template: FormTemplate;
+  /** 실패형 줄기 종족값 오름분 비율 (GDD 49-8 1번, BALANCE.provisional.evolution.failLine.gainRatio) */
+  failGainRatio: number;
+}
+
+/** 실패형 줄기 종족값 합계 (GDD 49-8 1번): startTier 단계에서 실패형이 된 뒤 tier 단계의 합계.
+ *  startTier − 1 단계 합계에서, 단계마다 일반 오름분(tierTotals 차이) × ratio 만 더한다 */
+export function failLineTotal(tierTotals: readonly number[], ratio: number, tier: number, startTier: number): number {
+  let total = tierTotals[startTier - 2] ?? tierTotals[0]!;
+  for (let t = startTier; t <= tier; t++) total += ((tierTotals[t - 1] ?? total) - (tierTotals[t - 2] ?? total)) * ratio;
+  return Math.round(total);
 }
 
 /** 이동 방식 배정 (GDD 18-11, 임시): 속성 순번 + 분류 순번으로 걷기/부유/날기를 돌려 단계마다 3종이 고르게 나온다 */
@@ -83,8 +93,8 @@ export function generateForms(input: GenerateInput): FormDef[] {
   const out: FormDef[] = [];
   // 1~3단계: 분기 없음 (2·3단계 각 1종)
   for (const tier of [2, 3]) out.push(form(`t${tier}:base`, tier, 'base', distribute(total(tier), T.base[tier] ?? {}), { elements: [input.normal] }, [], tier));
-  // 4단계 바스트로데: 속성 8
-  all.forEach((el, i) => out.push(form(`t4:${el}`, 4, 'element', distribute(total(4), T.element[el] ?? {}), { elements: [el] }, [el], i)));
+  // 4단계 바스트로데 일반: 노멀 + 원소 (GDD 49-7 ②, C.106 — 특수 속성은 히든 특수형으로만)
+  [input.normal, ...input.elemental].forEach((el, i) => out.push(form(`t4:${el}`, 4, 'element', distribute(total(4), T.element[el] ?? {}), { elements: [el] }, [el], i)));
   // 4단계 히든 8: 원소 융합 2 · 완전체 · 특수 3 · 노멀 순수 · 노멀 실패
   input.fusionPairs.forEach(([a, b], i) =>
     out.push(form(`h4:fusion:${a}+${b}`, 4, 'fusion', distribute(total(4), scaleTendency(addTendency(T.element[a], T.element[b]), T.fusionScale)), { elements: [a, b] }, [a, b], i + 1)),
@@ -92,7 +102,7 @@ export function generateForms(input: GenerateInput): FormDef[] {
   out.push(form('h4:complete', 4, 'complete', distribute(total(4, 'complete'), T.hidden.complete ?? {}), { elements: [input.normal] }, [], 1));
   input.special.forEach((el, i) => out.push(form(`h4:special:${el}`, 4, 'special', distribute(total(4), scaleTendency(T.element[el], T.specialScale)), { elements: [el] }, [el], i + 2)));
   out.push(form('h4:pure', 4, 'pure', distribute(total(4), T.hidden.pure ?? {}), { elements: [input.normal], stab: T.pureStab }, [input.normal], 1));
-  out.push(form('h4:fail', 4, 'fail', distribute(total(4, 'fail'), T.hidden.fail ?? {}), { elements: [input.normal] }, [input.normal], 0));
+  out.push(form('h4:fail', 4, 'fail', distribute(failLineTotal(input.tierTotals, input.failGainRatio, 4, 4), T.hidden.fail ?? {}), { elements: [input.normal] }, [input.normal], 0));
   // 5단계 아란칼: 속성 × 분류 24
   all.forEach((el, i) =>
     input.categories.forEach((cat, j) =>

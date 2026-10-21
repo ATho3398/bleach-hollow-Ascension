@@ -79,10 +79,10 @@ describe('데이터 폴더와 저장 구조', () => {
   });
 
   it('등급·히든·태그 정의 18개(C.54 수련 완료 칭호, C.58 스토리 칭호 2개, C.59 붕옥 완성, C.84 스토리 2·3장·보스 칭호 4개 추가): 조건은 임시(provisional)로 일부에만 있고 나머지는 null 이다 (11-6, 11-7 미정)', () => {
-    expect(titles.filter((t) => (t as { kind?: string }).kind !== 'tower')).toHaveLength(18); // 탑 칭호 5개(C.85)는 tests/c85.test.ts
+    expect(titles.filter((t) => (t as { kind?: string }).kind !== 'tower')).toHaveLength(19); // C.106: tag-1 을 호로·사신 전용 2개로 나눔. 탑 칭호 5개(C.85)는 tests/c85.test.ts
     expect(titles.filter((t) => t.condition !== null).every((t) => (t as { provisional?: boolean }).provisional === true)).toBe(true);
     expect(titles.filter((t) => t.condition === null).length).toBeGreaterThan(0);
-    expect(titles.filter((t) => t.hidden)).toHaveLength(6);
+    expect(titles.filter((t) => t.hidden)).toHaveLength(7);
   });
 
   it('새 세이브에는 빈 런 로그가 처음부터 들어 있다', () => {

@@ -10,8 +10,9 @@ import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
 import { deckTilesFor, getTile } from '../../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
+import { getTrait } from '../../data/traits';
 import {
-  absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, cloneBuild, gainTrait, lateLapRisk,
+  absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, isSpecialTrait, specialTraitChance, cloneBuild, gainTrait, lateLapRisk,
   newBuild, releaseEffect, rerollCandidates, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import {
@@ -790,7 +791,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     exp.goldLoot.push({ amount: bossGold, lap: exp.lap });
     exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
     exp.victoriesThisLap++;
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait);
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, specialGateOf(exp, elite, true));
     exp.phase = 'absorb';
     return record;
   }
@@ -808,7 +809,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   const ob = st ? storyEpisodeOf(exp)!.objective : null;
   const storyAbsorb = ob?.type === 'absorb' && pending.enemy.class === ob.enemyClass;
   if (canAbsorb(battle) || storyAbsorb) {
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus);
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, specialGateOf(exp, elite, false));
     if (exp.absorbOffer.reasons.length === 0) exp.absorbOffer.reasons.push('story-objective');
     exp.phase = 'absorb';
   } else {
@@ -820,8 +821,15 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
 
 export type AbsorbResult = { ok: true } | { ok: false; reason: string };
 
+/** 특수 속성 특성 숨김이 풀릴 확률 (GDD 49-7 ①): 강적·보스 / 바퀴 변이 / 원정 난이도 */
+function specialGateOf(exp: ExpeditionState, elite: boolean, boss: boolean): ReturnType<typeof specialTraitChance> {
+  return specialTraitChance({ elite, boss, difficulty: exp.difficulty, mutationChance: mutationMods(exp.mutation).specialTraitChance });
+}
+
 function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null): void {
-  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}) });
+  // 숨김 특성 (GDD 49-7 ①, 9장): 풀이 열린 까닭과, 고른 특성이 특수 속성이었는지
+  const hidden = offer.specialOpen ? { specialGates: [...(offer.specialGates ?? [])], ...(absorbed && traitId && isSpecialTrait(getTrait(traitId)) ? { hiddenTrait: true } : {}) } : {};
+  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden });
 }
 
 /** 다시 뽑기 (GDD 25-9): 흡수 화면에서 특성 후보를 한 번 다시 뽑는다(흡수 1번에 1장 — 이미 다시 뽑았으면 거절). 다시 뽑기권은 부르는 쪽(세이브)이 쓴다.

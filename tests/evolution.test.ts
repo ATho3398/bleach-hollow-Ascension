@@ -209,7 +209,7 @@ describe('속성·자기 속성 보정 잇기', () => {
     expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:water+earth'))).toEqual(['water', 'earth']);
     expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:water+earth', 't5:water:special'))).toEqual(['water', 'earth']);
     // 행동 히든은 바스트로데 속성을 잇는다
-    expect(playerElementsOf(evolved('t2:base', 't3:base', 't4:poison', 'h5:hunter'))).toEqual(['poison']);
+    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:special:poison', 'h5:hunter'))).toEqual(['poison']);
     expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:fire+thunder', 'h5:limit'))).toEqual(['fire', 'thunder']);
   });
   it('순수형은 자기 속성 보정이 크고, 그 아란칼(노멀)·행동 히든이 잇는다', () => {
@@ -416,8 +416,8 @@ describe('종족 설정만 바꿔 표기가 바뀐다 (코드 분기 없음)', (
       expect(f.baseStats).toBeDefined();
       expect(f.evolutionNearText).toHaveLength(2);
     }
-    // 일반 35종 = 1단계(진화체 없음) + 1 + 1 + 8 + 24, 히든 12 (C.56 환생 전용 1 추가)
-    expect(FORM_TABLE.filter((f) => !f.hidden)).toHaveLength(34);
+    // 일반 32종 = 1단계(진화체 없음) + 1 + 1 + 5(C.106 노멀+원소) + 24, 히든 12 (C.56 환생 전용 1 추가)
+    expect(FORM_TABLE.filter((f) => !f.hidden)).toHaveLength(31);
     expect(FORM_TABLE.filter((f) => f.hidden)).toHaveLength(12);
   });
 

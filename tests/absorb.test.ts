@@ -371,7 +371,8 @@ describe('희귀 개체', () => {
   it('희귀 개체는 그 속성의 희귀 특성이 확정 후보로 나온다 (여러 시드)', () => {
     for (const element of ['fire', 'water', 'kyo']) {
       for (let seed = 1; seed <= 30; seed++) {
-        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare: true }, newBuild(), NO);
+        // 특수 속성(허)은 숨김이 풀린 화면에서만 (C.106, 49-7 ①)
+        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare: true }, newBuild(), NO, 0, null, { chance: 1, gates: ['elite'] });
         expect(offer.rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).element).toBe(element);

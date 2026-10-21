@@ -1,6 +1,6 @@
 // 칭호 도감 화면 (GDD 8장, 14-7, T-3 가로 배치): 머리에 등급·히든 등급·특별 태그 탭, 왼쪽 칭호 목록, 오른쪽 고른 칭호의 상세. 해금한 칭호는 종족별 이름·해금 시각,
 // 미해금 히든은 "?" 칸(조건 비공개), 일반 등급은 이름 목록. 조건은 전부 임시라 작게 표시한다.
-import { TITLES, titleName } from '../data/titles';
+import { TITLES, titleName, titlesForFaction } from '../data/titles';
 import type { TitleDef, TitleKind } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
@@ -59,11 +59,13 @@ function titleRow(def: TitleDef, factionId: string, unlockedAt: number | null): 
 
 export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, kind: TitleKind = 'rank', lead?: HTMLElement): void {
   const at = new Map(save.titles.map((t) => [t.titleId, t.at]));
-  const rowsOf = (k: TitleKind) => TITLES.filter((d) => d.kind === k).map((d) => titleRow(d, faction.id, at.get(d.id) ?? null));
+  // 종족 전용 칭호(특별 태그 등, GDD 49-8)는 그 종족 트랙에서만 보인다
+  const defsAll = titlesForFaction(faction.id);
+  const rowsOf = (k: TitleKind) => defsAll.filter((d) => d.kind === k).map((d) => titleRow(d, faction.id, at.get(d.id) ?? null));
   const md = masterDetail(rowsOf(kind), 0, '칭호');
   const tabs = seg(
     TITLE_TABS.map((t) => {
-      const defs = TITLES.filter((d) => d.kind === t.kind);
+      const defs = defsAll.filter((d) => d.kind === t.kind);
       return { id: t.kind, label: t.label, count: `${defs.filter((d) => at.has(d.id)).length}/${defs.length}` };
     }),
     kind,
@@ -72,7 +74,7 @@ export function titleDexView(root: HTMLElement, faction: FactionConfig, save: Sa
   );
   tabs.setAttribute('aria-label', '칭호 종류');
   const sub = h('span');
-  sub.append('해금 ', h('b', '', String(save.titles.length)), ` / ${TITLES.length}`);
+  sub.append('해금 ', h('b', '', String(defsAll.filter((d) => at.has(d.id)).length)), ` / ${defsAll.length}`);
   lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '칭호 도감', sub, aside: [...(lead ? [lead] : []), selectLast(tabs)] }), [md.list], [md.detail]);
 }
 

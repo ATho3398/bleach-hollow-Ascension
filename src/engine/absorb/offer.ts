@@ -2,9 +2,10 @@
 
 import { BALANCE } from '../../config/balance';
 import { TRAITS, getTrait } from '../../data/traits';
+import { SPECIAL_ELEMENT_IDS } from '../../data/elements';
 import type { EnemyDef, StatId, TraitDef } from '../../data/schema';
 import type { CombatState } from '../combat/combat';
-import { nextInt, type Rng } from '../rng';
+import { nextFloat, nextInt, type Rng } from '../rng';
 import type { BuildState } from './build';
 
 const AX = BALANCE.provisional.absorb;
@@ -56,6 +57,29 @@ export interface AbsorbOffer {
   finisherElement: string | null;
   /** 다시 뽑기권으로 후보를 다시 뽑았나 (GDD 25-9, 흡수 1번에 1장) */
   rerolled?: boolean;
+  /** 특수 속성(혈·독·허) 특성이 이번 후보 풀에 들었나 (GDD 49-7 ①, C.106). 없으면 숨김 */
+  specialOpen?: boolean;
+  /** 숨김이 풀린 까닭 (런 로그용, GDD 9장) */
+  specialGates?: SpecialGate[];
+}
+
+/** 특수 속성 특성 숨김이 풀리는 까닭 (GDD 49-7 ①): 강적 / 보스 / 바퀴 변이(공허의 밤) / 원정 난이도 ★minDifficulty 이상 */
+export type SpecialGate = 'elite' | 'boss' | 'mutation' | 'difficulty';
+
+/** 숨김이 풀릴 확률 (여럿이면 가장 큰 값)과 까닭. mutationChance = 지금 바퀴 변이의 specialTraitChance */
+export function specialTraitChance(o: { elite: boolean; boss: boolean; difficulty: number; mutationChance?: number }): { chance: number; gates: SpecialGate[] } {
+  const S = AX.specialTraits;
+  const rows: [SpecialGate, number][] = [];
+  if (o.elite) rows.push(['elite', S.elite]);
+  if (o.boss) rows.push(['boss', S.boss]);
+  if ((o.mutationChance ?? 0) > 0) rows.push(['mutation', o.mutationChance!]);
+  if (o.difficulty >= S.minDifficulty) rows.push(['difficulty', S.difficulty]);
+  return { chance: Math.max(0, ...rows.map((r) => r[1])), gates: rows.map((r) => r[0]) };
+}
+
+/** 특수 속성(혈·독·허) 특성인가 */
+export function isSpecialTrait(t: Pick<TraitDef, 'element'>): boolean {
+  return SPECIAL_ELEMENT_IDS.includes(t.element);
 }
 
 function pick<T>(rng: Rng, list: T[]): T {
@@ -82,10 +106,12 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
  *  후보가 2개 이상이면 둘째부터는 다른 속성 특성에서 나온다(otherElementCandidate) — 원소 상성 순환(물 → 불 → 흙 → 뇌 → 물)에서 처음 원소를 얻는 길이 막히지 않게 */
 /** extraCandidates: 원정 시너지·바퀴 변이의 흡수 후보 +n (GDD 25-5). bossTrait: 보스를 이긴 흡수 화면의 보스 특성 (GDD 25-3, 아직 없으면 첫 후보로 확정).
  *  보스 특성(boss: true)은 그 밖의 후보에는 나오지 않는다 */
-export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null): AbsorbOffer {
+/** special: 특수 속성 특성 숨김 (GDD 49-7 ①) — chance 로 이번 풀에 넣을지 굴린다(0 이면 숨김, 1 이면 늘. 그 사이만 rng 를 쓴다). 없으면 숨김 */
+export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, special: { chance: number; gates: SpecialGate[] } = { chance: 0, gates: [] }): AbsorbOffer {
   const elite = enemy.class === 'elite';
   const rare = enemy.rare === true;
-  const free = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id));
+  const specialOpen = special.chance >= 1 || (special.chance > 0 && nextFloat(rng) < special.chance);
+  const free = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && (specialOpen || !isSpecialTrait(t)));
   const pool = free.filter((t) => t.element === enemy.element);
   const candidates: string[] = [];
   const bossAdded = bossTrait !== null && !build.owned.includes(bossTrait);
@@ -117,6 +143,7 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     chain3Count: combat.chain3Count,
     weakChain3Count: combat.weakChain3Count,
     finisherElement: combat.finisher?.element ?? null,
+    ...(specialOpen ? { specialOpen: true, specialGates: [...special.gates] } : {}),
   };
 }
 
@@ -124,10 +151,11 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
  * 다시 뽑기 (GDD 25-9 다시 뽑기권, C.60): 확정 후보(보스 특성·희귀 개체의 희귀 특성)는 그대로 두고 나머지 후보를 같은 수만큼 새로 뽑는다.
  * 지금 후보와 겹치지 않게 뽑고(모자라면 겹침 허용), 첫 후보는 적 속성 → 둘째부터 다른 속성 규칙(otherElementCandidate)·공격 계열 섞임은 buildOffer 와 같다
  */
-export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates' | 'element'>, build: BuildState, bossTrait: string | null = null): string[] {
+export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates' | 'element' | 'specialOpen'>, build: BuildState, bossTrait: string | null = null): string[] {
   const fixed = offer.candidates.filter((id) => id === bossTrait || getTrait(id).rare === true);
   const want = offer.candidates.length - fixed.length;
-  const free = TRAITS.filter((t) => !t.boss && !t.rare && !build.owned.includes(t.id) && !fixed.includes(t.id));
+  const hide = (t: TraitDef) => offer.specialOpen !== true && isSpecialTrait(t);
+  const free = TRAITS.filter((t) => !t.boss && !t.rare && !build.owned.includes(t.id) && !fixed.includes(t.id) && !hide(t));
   const fresh = free.filter((t) => !offer.candidates.includes(t.id));
   const pool = fresh.length >= want ? fresh : free;
   const own = pool.filter((t) => t.element === offer.element);
@@ -140,7 +168,7 @@ export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates'
     out.push(t.id);
     list.splice(list.indexOf(t), 1);
   }
-  mixAttackFamilies(rng, out, TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id)), build);
+  mixAttackFamilies(rng, out, TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && !hide(t)), build);
   return out;
 }
 
