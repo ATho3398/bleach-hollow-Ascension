@@ -1,4 +1,4 @@
-// 블록 풀 (GDD 44장 → 44-1 B안, C.97): 기본 블록 5종은 늘 나오고(별도 타이머, 가중 추첨) 흡수 블록은 특성마다 타이머로 더해진다. 흡수 칸·성향 보정으로 비율이 바뀐다
+// 블록 풀 (GDD 44장 → 44-1 B안, C.97 → 44-2 재조정, C.98): 기본 블록 5종은 늘 나오고(별도 타이머, 가중 추첨) 흡수 블록은 특성마다 타이머로 더해진다. 흡수 칸·성향 보정으로 비율이 바뀐다
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
@@ -70,15 +70,19 @@ describe('기본 블록 풀 (GDD 44장 2번)', () => {
 });
 
 describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
-  it('흡수 특성은 특성마다 blockSpawnSeconds, 기본 타이머 = basicSpawnSeconds × (1 + basicSlowdownPerSlot × 칸)', () => {
+  it('흡수 특성은 특성마다 blockSpawnSeconds, 기본 타이머 = 0칸 basicSpawnSeconds / 칸이 있으면 흡수 총 간격 × (1 − 몫) / 몫 (C.98)', () => {
     const CX = BALANCE.provisional.combat;
     const one = paramsOf(build('t-poison-c'));
     expect(spawnSecondsOf(one, one.skills[0]!)).toBeCloseTo(CX.blockSpawnSeconds);
-    for (let n = 0; n <= 3; n++) {
+    expect(basicSpawnSecondsOf(paramsOf(build()))).toBeCloseTo(BP.basicSpawnSeconds);
+    for (let n = 1; n <= 3; n++) {
       const p = paramsOf(build(...['t-fire-a', 't-earth-guard', 't-thunder-heal'].slice(0, n)));
-      expect(basicSpawnSecondsOf(p)).toBeCloseTo(BP.basicSpawnSeconds * (1 + BP.basicSlowdownPerSlot * n));
+      const share = BP.basicShareBySlots[n]!;
+      const absorbedTotal = (CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot * (n - 1))) / n;
+      expect(basicSpawnSecondsOf(p)).toBeCloseTo((absorbedTotal * (1 - share)) / share);
     }
     expect(basicSpawnSecondsOf(paramsOf({ ...build(), blockSpawnMultiplier: 2 }))).toBeCloseTo(BP.basicSpawnSeconds / 2);
+    expect(basicSpawnSecondsOf(paramsOf({ ...build('t-poison-c'), blockSpawnMultiplier: 2 }))).toBeCloseTo(basicSpawnSecondsOf(one) / 2);
   });
 
   it('흡수 칸이 늘수록 흡수 블록 비율이 오르고 기본 블록 비율이 줄어든다', () => {
@@ -86,6 +90,41 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
     const shares = [0, 1, 2, 3].map((n) => spawnRatesOf(paramsOf(build(...ids.slice(0, n)))).absorbedShare);
     expect(shares[0]).toBe(0);
     for (let n = 1; n <= 3; n++) expect(shares[n]!).toBeGreaterThan(shares[n - 1]!);
+  });
+
+  // C.98 (GDD 44-2): 기본 블록 몫 목표 0칸 100% · 1칸 약 60% · 2칸 약 45% · 3칸 약 35% (±5%p) — "모든 블록 나오는데, 거기에 독 탄도 같이 나오는거야"
+  it('기본 블록 몫(초당 생성 기대치) = 0칸 100% · 1칸 60% · 2칸 45% · 3칸 35% (±5%p, 표 basicShareBySlots)', () => {
+    const ids = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
+    const target = [1, 0.6, 0.45, 0.35];
+    expect(BP.basicShareBySlots.slice(0, 4)).toEqual(target);
+    for (let i = 1; i < BP.basicShareBySlots.length; i++) expect(BP.basicShareBySlots[i]!).toBeLessThan(BP.basicShareBySlots[i - 1]!);
+    for (let n = 0; n <= 3; n++) {
+      const basicShare = 1 - spawnRatesOf(paramsOf(build(...ids.slice(0, n)))).absorbedShare;
+      expect(Math.abs(basicShare - target[n]!), `${n}칸 기본 몫 ${(basicShare * 100).toFixed(0)}%`).toBeLessThanOrEqual(0.05);
+    }
+    // 흡수 블록 총량은 칸이 늘수록 는다 (C.97 처럼 몸이 강해진다 — 44-3)
+    const totals = [1, 2, 3].map((n) => { const r = spawnRatesOf(paramsOf(build(...ids.slice(0, n)))); return r.absorbed + r.basic; });
+    for (let i = 1; i < totals.length; i++) expect(totals[i]!).toBeGreaterThan(totals[i - 1]!);
+  });
+
+  it('흡수 특성 타이머는 2칸부터 칸당 absorbedSlowdownPerSlot 만큼 늘어난다 (흡수 블록 총량이 완만하게)', () => {
+    const CX = BALANCE.provisional.combat;
+    const ids = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
+    for (let n = 1; n <= 3; n++) {
+      const p = paramsOf(build(...ids.slice(0, n)));
+      for (const sk of p.skills) expect(spawnSecondsOf(p, sk)).toBeCloseTo(CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot * (n - 1)));
+    }
+    // 블록 가속 배율은 흡수·기본 타이머를 모두 나눈다
+    const fast = paramsOf({ ...build('t-poison-c', 't-earth-guard'), blockSpawnMultiplier: 2 });
+    expect(spawnSecondsOf(fast, fast.skills[0]!)).toBeCloseTo((CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot)) / 2);
+  });
+
+  it('독 탄 1칸 몸에서 실제로 나온 블록 중 기본 블록이 절반을 넘고 막기·회복이 섞여 있다 (C.97 캡처 02 문제의 회귀 가드)', () => {
+    const out = spawned(long(5, build('t-poison-c')), 400);
+    const basic = out.filter((b) => isBasicBlockId(b.traitId)).length / out.length;
+    expect(basic).toBeGreaterThan(0.5);
+    expect(out.some((b) => b.traitId === BASIC_GUARD_ID)).toBe(true);
+    expect(out.some((b) => b.traitId === BASIC_HEAL_ID)).toBe(true);
   });
 });
 

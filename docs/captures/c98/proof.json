@@ -1,0 +1,54 @@
+[
+  {
+    "file": "01-poison-tan-1slot-blockbar.png",
+    "traits": [
+      "t-poison-c"
+    ],
+    "trayBlocks": [
+      "독_탄",
+      "노멀_조",
+      "노멀_조",
+      "독_탄",
+      "노멀_회복",
+      "독_탄",
+      "노멀_막기"
+    ],
+    "guardAndHealVisible": true
+  },
+  {
+    "file": "02-attack-guard-2slot-blockbar.png",
+    "traits": [
+      "t-thunder-c",
+      "t-fire-guard"
+    ],
+    "trayBlocks": [
+      "뇌_탄",
+      "노멀_회복",
+      "불_막기",
+      "노멀_탄",
+      "뇌_탄",
+      "불_막기",
+      "노멀_막기"
+    ],
+    "guardAndHealVisible": true
+  },
+  {
+    "file": "03-attack-guard-heal-3slot-blockbar.png",
+    "traits": [
+      "t-fire-a",
+      "t-earth-guard",
+      "t-thunder-heal"
+    ],
+    "trayBlocks": [
+      "노멀_회복",
+      "뇌_회복",
+      "노멀_회복",
+      "흙_막기",
+      "뇌_회복",
+      "공허",
+      "필살",
+      "노멀_막기"
+    ],
+    "guardAndHealVisible": true
+  }
+]

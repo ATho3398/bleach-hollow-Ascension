@@ -216,12 +216,14 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     const two = mk(build('t-thunder-c', 't-blood-rare'));
     const p = two.params;
     const [c5, e4] = [p.skills[0]!, p.skills[1]!];
+    // C.98 (GDD 44-2): 2칸부터 칸당 absorbedSlowdownPerSlot 만큼 모든 흡수 타이머가 늘어나고, 같은 계열 겹침은 그 위에 곱한다
+    const slots = (n: number) => CX.blockSpawnSeconds * (1 + BALANCE.provisional.blockPool.absorbedSlowdownPerSlot * (n - 1));
     expect(spawnSecondsOfTest(one.params, one.params.skills[0]!)).toBe(CX.blockSpawnSeconds);
-    expect(spawnSecondsOfTest(p, c5)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
-    expect(spawnSecondsOfTest(p, e4)).toBe(CX.blockSpawnSeconds * (1 + CX.familySpawnSlowdown));
-    // 계열이 다르거나 계열이 없는 특성끼리는 느려지지 않는다
+    expect(spawnSecondsOfTest(p, c5)).toBeCloseTo(slots(2) * (1 + CX.familySpawnSlowdown));
+    expect(spawnSecondsOfTest(p, e4)).toBeCloseTo(slots(2) * (1 + CX.familySpawnSlowdown));
+    // 계열이 다르거나 계열이 없는 특성끼리는 (칸 수 보정 말고는) 느려지지 않는다
     const mixed = mk(build('t-thunder-c', 't-fire-a', 't-fire-guard')).params;
-    for (const sk of mixed.skills) expect(spawnSecondsOfTest(mixed, sk)).toBe(CX.blockSpawnSeconds);
+    for (const sk of mixed.skills) expect(spawnSecondsOfTest(mixed, sk)).toBeCloseTo(slots(3));
   });
 });
 
@@ -377,7 +379,8 @@ describe('콤보 발동 (GDD 17-3)', () => {
 });
 
 describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
-  const params = (): Partial<CombatParams> => ({ ...build('t-thunder-c', 't-blood-rare'), combos: [RULE2] });
+  // C.98: 같은 계열 2칸의 흡수 타이머가 8초 → 13초로 늘어 콤보가 드물어졌다. 이 테스트는 봇의 콤보 '인식'을 보는 것이라 옛 간격 4초로 고정한다
+  const params = (): Partial<CombatParams> => ({ ...build('t-thunder-c', 't-blood-rare'), combos: [RULE2], blockSpawnSeconds: 4 });
   it('완벽형·사람형 봇이 콤보를 발동하고 콤보 블록을 쓴다', () => {
     let perfect = 0, human = 0;
     for (let seed = 1; seed <= 20; seed++) {
@@ -387,7 +390,7 @@ describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
       const h = playCombatHuman(createCombat(seed, { enemy: getEnemy('test-elite'), params: params() }));
       human += h.combosTriggered;
     }
-    expect(perfect).toBeGreaterThan(20);
+    expect(perfect).toBeGreaterThan(15);
     expect(human).toBeGreaterThan(5);
   });
 

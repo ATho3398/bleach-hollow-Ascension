@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
-import { getEnemy } from '../src/data/enemies';
+import { ENEMIES, enemyPatternKind, getEnemy } from '../src/data/enemies';
 import type { EnemyDef } from '../src/data/schema';
 import { getFaction } from '../src/data/factions';
 import { ELEMENTS } from '../src/data/elements';
@@ -806,10 +806,19 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     };
     expect(rate('test-a')).toBeGreaterThanOrEqual(0.9);
     expect(rate('test-b')).toBeGreaterThanOrEqual(0.9);
-    const elite = rate('test-elite');
-    expect(elite).toBeGreaterThan(0.4);
-    // C.97 (GDD 44-1): 기본 막기·회복 블록이 늘 나와 강공격형 시험 강적은 거의 이긴다(60판 중 59승). 적 풀 강적 승률 60~85% 는 balance:check 가 가드
-    expect(elite).toBeLessThan(1);
+    expect(rate('test-elite')).toBeGreaterThan(0.4);
+    // C.97 (GDD 44-1): 기본 막기·회복 블록이 늘 나와 강공격형 시험 강적은 거의 이긴다(59승) → C.98(44-2, 기본 몫 60%)부터 60판 전승.
+    // 0/100% 쏠림은 적 풀의 강적(패턴 종류마다 1종 × 20판)으로 본다. 적 풀 전체 강적 승률 60~85% 는 balance:check 가 가드
+    const kinds = new Map<string, EnemyDef>();
+    for (const e of ENEMIES) if (e.class === 'elite' && !e.testOnly && !kinds.has(enemyPatternKind(e))) kinds.set(enemyPatternKind(e), e);
+    let games = 0, wins = 0;
+    for (const enemy of kinds.values()) for (let seed = 1; seed <= 20; seed++) {
+      games++;
+      if (playCombatHuman(createCombat(seed, { enemy, params })).status === 'won') wins++;
+    }
+    expect(kinds.size).toBeGreaterThanOrEqual(2);
+    expect(wins / games).toBeGreaterThan(0.4);
+    expect(wins / games).toBeLessThan(0.97);
   });
 });
 

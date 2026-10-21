@@ -36,8 +36,10 @@ export interface BlockPoolParams {
   basicRoleBlocks: { guard: { powerInAttacks: number; chainBonus: ChainBonus }; heal: { powerInAttacks: number; chainBonus: ChainBonus } };
   /** 기본 블록 타이머 간격(초, 흡수 0칸) */
   basicSpawnSeconds: number;
-  /** 장착 흡수 칸 1칸당 기본 타이머 간격 +비율 (간격 = basicSpawnSeconds × (1 + 이 값 × 칸)) */
-  basicSlowdownPerSlot: number;
+  /** 장착 흡수 칸 수별 기본 블록 몫(초당 생성 기대치 비율, [0칸, 1칸, 2칸, …], 표보다 칸이 많으면 마지막 값). 기본 타이머 간격 = 흡수 블록 총 간격 × (1 − 몫) / 몫 (GDD 44-2 → 44-3, C.98) */
+  basicShareBySlots: number[];
+  /** 장착 흡수 칸이 2칸부터 1칸 늘 때마다 흡수 특성 타이머 간격 +비율 (간격 = combat.blockSpawnSeconds × (1 + 이 값 × (칸 − 1))) — 후반(4칸 이상) 블록 총량을 누를 때 쓰는 지렛대 (GDD 44-2) */
+  absorbedSlowdownPerSlot: number;
   temperament: Record<string, { attack?: number; guard?: number; heal?: number; absorbedSpawn?: number }>;
 }
 
@@ -541,18 +543,33 @@ function temperamentOf(p: CombatParams): { attack: number; guard: number; heal: 
   return m;
 }
 
-/** 흡수 특성 블록 생성 간격(초) (GDD 3-5, 44-1 B안): 특성마다 타이머. 같은 계열 공격 특성이 여럿이면 늘리고(familySpawnSlowdown), 블록 가속·속도 성향 배율로 나눈다 */
+/** 흡수 특성 블록 생성 간격(초) (GDD 3-5, 44-1 B안 → 44-2): 특성마다 타이머. 장착 칸이 2칸부터 늘수록(absorbedSlowdownPerSlot)·같은 계열 공격 특성이 여럿이면(familySpawnSlowdown) 늘리고, 블록 가속·속도 성향 배율로 나눈다 */
 export function spawnSecondsOf(p: CombatParams, src: CombatSkill): number {
-  const base = p.blockSpawnSeconds / p.blockSpawnMultiplier / temperamentOf(p).absorbedSpawn;
+  const slots = Math.max(0, p.skills.length - 1);
+  const base = (p.blockSpawnSeconds * (1 + p.blockPool.absorbedSlowdownPerSlot * slots)) / p.blockSpawnMultiplier / temperamentOf(p).absorbedSpawn;
   if (!src.family) return base;
   const same = p.skills.filter((x) => x.family === src.family).length;
   return base * (1 + p.familySpawnSlowdown * (same - 1));
 }
 
-/** 기본 블록 타이머 간격(초) (GDD 44-1 B안): 흡수 칸이 늘수록 느려져 기본 블록 비율이 줄어든다. 블록 가속 배율로 나눈다 */
+/** 칸 수별 기본 블록 몫 (GDD 44-2, 표 밖은 마지막 값) */
+export function basicShareOf(p: CombatParams, slots: number = p.skills.length): number {
+  const t = p.blockPool.basicShareBySlots;
+  return t[Math.min(slots, t.length - 1)] ?? 1;
+}
+
+/**
+ * 기본 블록 타이머 간격(초) (GDD 44-1 B안 → 44-3, C.98): 흡수 0칸이면 basicSpawnSeconds. 흡수 칸이 있으면
+ * 흡수 블록 총 간격(특성마다 blockSpawnSeconds × 칸 보정, 성향·같은 계열 겹침은 빼고) × (1 − 기본 몫) / 기본 몫 → 기본 몫이 표대로 나온다.
+ * 블록 가속 배율로 나눈다
+ */
 export function basicSpawnSecondsOf(p: CombatParams): number {
   const bp = p.blockPool;
-  return (bp.basicSpawnSeconds * (1 + bp.basicSlowdownPerSlot * p.skills.length)) / p.blockSpawnMultiplier;
+  const n = p.skills.length;
+  if (n === 0) return bp.basicSpawnSeconds / p.blockSpawnMultiplier;
+  const share = Math.min(0.999, Math.max(0.001, basicShareOf(p)));
+  const absorbedTotalSeconds = (p.blockSpawnSeconds * (1 + bp.absorbedSlowdownPerSlot * (n - 1))) / n;
+  return (absorbedTotalSeconds * (1 - share)) / share / p.blockSpawnMultiplier;
 }
 
 /**
