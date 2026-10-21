@@ -149,6 +149,8 @@ export interface FactionConfig {
   emblem?: string;
   /** 종족 로고 그림 키 (GDD 50): public/art/<키>.png|webp, 단색 투명 그림 — 알파만 쓰고 테마 글자색으로 칠한다. 없으면 로고 자리를 비운다 */
   logo?: string;
+  /** 새 세이브 시작 외형 후보 (GDD 51): 스킨 id 목록. 기본 외형과 함께 균등 추첨한다. 없거나 비면 기본 외형만 */
+  startLooks?: string[];
   /** 육성 5단계 이름 (GDD 8-1) */
   tierNames: [string, string, string, string, string];
   /** 등급 번호 1~10 의 표시 이름 (GDD 21-1, [0] = 1번). 엔진은 번호만 다룬다 */
@@ -335,6 +337,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.logo !== undefined && !isString(r.logo)) errors.push('logo: 비어 있지 않은 문자열이어야 한다');
+  if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {
     const rm = r.room as Record<string, unknown>;
