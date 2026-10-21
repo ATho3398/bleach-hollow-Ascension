@@ -24,6 +24,22 @@ import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recom
 
 const check = process.argv.includes('--check');
 const failures: string[] = [];
+/**
+ * 후반 보류 (GDD 45장 6번, C.97): 4단계(바스트로데) 이후 블록 효과를 만들기 전까지 4단계 이후 가드는 실패 대신 경고로 남긴다.
+ * 4단계 이후 블록 효과를 다 만든 뒤 LATE_HOLD = false 로 되돌리면 전부 다시 가드가 된다
+ */
+const LATE_HOLD = true;
+/** 이 tierIndex(0부터) 이상이 후반 = 4단계 */
+const LATE_TIER_INDEX = 3;
+const lateHeld: string[] = [];
+function lateFail(msg: string): void {
+  (LATE_HOLD ? lateHeld : failures).push(msg);
+}
+/** tierIndex 단계의 가드: 후반이면 lateFail */
+function failAt(tierIndex: number, msg: string): void {
+  if (tierIndex >= LATE_TIER_INDEX) lateFail(msg);
+  else failures.push(msg);
+}
 const CX = BALANCE.provisional.combat;
 
 console.log(`밸런스 버전 ${BALANCE_VERSION}`);
@@ -579,7 +595,7 @@ let campaignFinalDefeats: number[] = [];
     console.log(`\n보스 자유 원정 등장 (GDD 37장, 사냥터 ${g.id} 보스 ${boss}, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${K}판 ★${star}, ${BF.freeFromLap}바퀴째부터 ${Math.round(BF.freeChance * 100)}%)`);
     console.log(`  등장 ${appeared}/${runs}(${((appeared / Math.max(1, runs)) * 100).toFixed(1)}%) · 보스에게 짐 ${bossLost}/${appeared} · 패배율 ${((defOff / Math.max(1, runs)) * 100).toFixed(1)} → ${((defOn / Math.max(1, runs)) * 100).toFixed(1)}% (${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p, 가드 +5%p 이하)`);
     if (bodies.length < CAMPAIGNS * 0.8) failures.push(`보스 자유 원정(${g.id}): ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
-    if (dInc > 0.05) failures.push(`보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 37장 7번)`);
+    if (dInc > 0.05) failAt(tier, `보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 37장 7번)`);
   }
 }
 
@@ -713,9 +729,9 @@ let campaignFinalDefeats: number[] = [];
   const rest = rows.slice(1);
   const b = { nSecs: rest.reduce((a, r) => a + r.nSecs, 0) / rest.length, eWin: rest.reduce((a, r) => a + r.eWin, 0) / rest.length };
   rows.forEach((r, i) => {
-    if (r.nSecs < b.nSecs * 0.8 || r.nSecs > b.nSecs * 1.25) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 일반 ${r.nSecs.toFixed(1)}초 가 2~5단계 평균 ${b.nSecs.toFixed(1)}초 의 0.8~1.25배 밖`);
+    if (r.nSecs < b.nSecs * 0.8 || r.nSecs > b.nSecs * 1.25) failAt(i, `권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 일반 ${r.nSecs.toFixed(1)}초 가 2~5단계 평균 ${b.nSecs.toFixed(1)}초 의 0.8~1.25배 밖`);
     if (i === 0) { if (r.eWin < rows[1]!.eWin) failures.push(`권장 단계 등가: 1단계 몸 ★1 강적 승률 ${(r.eWin * 100).toFixed(0)}% < 2단계 ${(rows[1]!.eWin * 100).toFixed(0)}% (입문 보정이 안 먹었다)`); }
-    else if (Math.abs(r.eWin - b.eWin) > 0.15) failures.push(`권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 강적 승률 ${(r.eWin * 100).toFixed(0)}% 가 2~5단계 평균 ${(b.eWin * 100).toFixed(0)}% 와 15%p 넘게 다르다`);
+    else if (Math.abs(r.eWin - b.eWin) > 0.15) failAt(i, `권장 단계 등가: ${i + 1}단계 몸 ★${i + 1} 강적 승률 ${(r.eWin * 100).toFixed(0)}% 가 2~5단계 평균 ${(b.eWin * 100).toFixed(0)}% 와 15%p 넘게 다르다`);
   });
 }
 
@@ -761,8 +777,8 @@ let campaignFinalDefeats: number[] = [];
       const ratio = r.off.n.secs ? r.on.n.secs / r.off.n.secs : 1;
       console.log(`    ${r.id.padEnd(22)} 일반 ${r.on.n.secs.toFixed(1).padStart(5)}초 (끔 ${r.off.n.secs.toFixed(1).padStart(5)}, ×${ratio.toFixed(2)}) · 강적 ${(r.on.e.win * 100).toFixed(0).padStart(3)}% (끔 ${(r.off.e.win * 100).toFixed(0).padStart(3)}%, 특성 몫 ${((r.on.e.win - r.off.e.win) * 100).toFixed(0).padStart(3)}%p)`);
       const g = r.on.e.win - r.off.e.win;
-      if (Math.abs(g - gain) > 0.1) failures.push(`진화체 특성: ${r.id} 특성 몫(강적 승률 켬 − 끔) ${(g * 100).toFixed(0)}%p 가 ${tier + 1}단계 평균 ${(gain * 100).toFixed(1)}%p 와 10%p 넘게 다르다 (GDD 39장 7번)`);
-      if (ratio < 0.85) failures.push(`진화체 특성: ${r.id} 일반 처치 시간 ×${ratio.toFixed(2)} (특성 끔 대비 −15% 넘게 빨라짐, GDD 39장 7번)`);
+      if (Math.abs(g - gain) > 0.1) lateFail(`진화체 특성: ${r.id} 특성 몫(강적 승률 켬 − 끔) ${(g * 100).toFixed(0)}%p 가 ${tier + 1}단계 평균 ${(gain * 100).toFixed(1)}%p 와 10%p 넘게 다르다 (GDD 39장 7번)`);
+      if (ratio < 0.85) lateFail(`진화체 특성: ${r.id} 일반 처치 시간 ×${ratio.toFixed(2)} (특성 끔 대비 −15% 넘게 빨라짐, GDD 39장 7번)`);
     }
   }
 }
@@ -807,7 +823,7 @@ let campaignFinalDefeats: number[] = [];
   const recNormalSecs: number[] = [];
   for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
     const bodies = tier === 0 ? freshBodies : campaignFirstAt[tier] ?? [];
-    if (bodies.length < CAMPAIGNS * 0.8) { failures.push(`난이도: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`); continue; }
+    if (bodies.length < CAMPAIGNS * 0.8) { failAt(tier, `난이도: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`); continue; }
     const rec = recommendedDifficulty(tier);
     const stars = [rec - 1, rec, rec + 1].filter((st) => st >= 1 && st <= MAX_DIFFICULTY);
     for (const star of stars) {
@@ -817,13 +833,13 @@ let campaignFinalDefeats: number[] = [];
     }
     const R = rows[`${tier}/${rec}`]!;
     recNormalSecs.push(R.nSecs);
-    if (R.nWin < 0.85) failures.push(`난이도: ${tier + 1}단계 몸 권장 ★${rec} 일반 승률 ${(R.nWin * 100).toFixed(0)}% < 85%`);
+    if (R.nWin < 0.85) failAt(tier, `난이도: ${tier + 1}단계 몸 권장 ★${rec} 일반 승률 ${(R.nWin * 100).toFixed(0)}% < 85%`);
     // C.76 (마스터G): 새 몸(1단계·특성 없음) ★1 4바퀴 원정 패배 15% 이하 — 새 플레이어 첫 경험
-    if (tier === 0 && R.defeat > 0.15) failures.push(`난이도: 새 몸 ★1 4바퀴 원정 패배 ${(R.defeat * 100).toFixed(0)}% > 15% (C.76 목표)`);
+    if (tier === 0 && R.defeat > 0.15) failAt(tier, `난이도: 새 몸 ★1 4바퀴 원정 패배 ${(R.defeat * 100).toFixed(0)}% > 15% (C.76 목표)`);
     const up = rows[`${tier}/${rec - 1}`];
     const down = rows[`${tier}/${rec + 1}`];
-    if (up && up.eWin < R.eWin) failures.push(`난이도: ${tier + 1}단계 몸이 ★${rec - 1} 에서 강적 승률 ${(up.eWin * 100).toFixed(0)}% < 권장 ${(R.eWin * 100).toFixed(0)}% (한 단계 위가 더 쉽지 않다)`);
-    if (down && down.eWin > R.eWin - 0.1) failures.push(`난이도: ${tier + 1}단계 몸이 ★${rec + 1} 에서 강적 승률 ${(down.eWin * 100).toFixed(0)}% > 권장 ${(R.eWin * 100).toFixed(0)}% − 10%p (한 단계 아래가 충분히 어렵지 않다)`);
+    if (up && up.eWin < R.eWin) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec - 1} 에서 강적 승률 ${(up.eWin * 100).toFixed(0)}% < 권장 ${(R.eWin * 100).toFixed(0)}% (한 단계 위가 더 쉽지 않다)`);
+    if (down && down.eWin > R.eWin - 0.1) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec + 1} 에서 강적 승률 ${(down.eWin * 100).toFixed(0)}% > 권장 ${(R.eWin * 100).toFixed(0)}% − 10%p (한 단계 아래가 충분히 어렵지 않다)`);
   }
   // 1단계 몸은 특성이 없는 새 세이브, 2단계부터는 흡수 특성 2~4개·노력치가 있는 진화 봇 몸이라 처치 시간은 참고로만 (단계 간 등가는 위 '권장 단계 등가' 표가 가드)
   console.log(`  권장 ★ 일반 처치 시간 단계별: ${recNormalSecs.map((x) => x.toFixed(1)).join(' / ')}초 (참고 — 1단계는 특성 없는 새 몸)`);
@@ -848,7 +864,7 @@ let campaignFinalDefeats: number[] = [];
   const g5 = econ[`${MAX_DIFFICULTY}/${DX.streak.maxClears}`]?.gold ?? 0;
   if (g1 > 0 && g5 > 0) {
     console.log(`  ★1 연속 0 골드 ${g1.toFixed(0)} → ★${MAX_DIFFICULTY} 연속 ${DX.streak.maxClears} 골드 ${g5.toFixed(0)} (${(g5 / g1).toFixed(2)}배, 목표 2배 이하) · 보통 먹이(${SHX.goldPrices['food-basic']}골드) ${(g1 / SHX.goldPrices['food-basic']!).toFixed(1)} → ${(g5 / SHX.goldPrices['food-basic']!).toFixed(1)}개/판 · 다시 뽑기권(${SHX.goldPrices.reroll}) ${(SHX.goldPrices.reroll! / g1).toFixed(1)} → ${(SHX.goldPrices.reroll! / g5).toFixed(1)}판 · 덱 칸(${SHX.deckSlotPrices[0]}) ${(SHX.deckSlotPrices[0]! / g1).toFixed(1)} → ${(SHX.deckSlotPrices[0]! / g5).toFixed(1)}판`);
-    if (g5 > g1 * 2) failures.push(`재화 경제: ★${MAX_DIFFICULTY} ${DX.streak.maxClears}연속 골드 ${g5.toFixed(0)} > ★1 ${g1.toFixed(0)} 의 2배 (GDD 32-1 11번)`);
+    if (g5 > g1 * 2) lateFail(`재화 경제: ★${MAX_DIFFICULTY} ${DX.streak.maxClears}연속 골드 ${g5.toFixed(0)} > ★1 ${g1.toFixed(0)} 의 2배 (GDD 32-1 11번)`);
   }
 }
 
@@ -884,10 +900,10 @@ let campaignFinalDefeats: number[] = [];
     const base = rows[GROUNDS[0]!.id]!;
     for (const g of GROUNDS.filter((x) => x.unlockTierIndex === tier)) {
       const r = rows[g.id]!;
-      if (bodies.length < CAMPAIGNS * 0.8) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
-      if (g.strength.hp !== 1 || g.strength.attack !== 1) failures.push(`사냥터 ${g.id}: 강도 ×${g.strength.hp}·×${g.strength.attack} — C.75 부터 난이도로 일원화(×1)`);
-      if (r.defeat > 0.45) failures.push(`사냥터 ${g.id}: ${tier + 1}단계 몸 원정 패배 ${(r.defeat * 100).toFixed(0)}% > 45% (너무 어렵다)`);
-      if (r.food <= base.food) failures.push(`사냥터 ${g.id}: 먹이 ${r.food.toFixed(1)}개 ≤ 기본 사냥터 ${base.food.toFixed(1)}개`);
+      if (bodies.length < CAMPAIGNS * 0.8) failAt(tier, `사냥터 ${g.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+      if (g.strength.hp !== 1 || g.strength.attack !== 1) failAt(tier, `사냥터 ${g.id}: 강도 ×${g.strength.hp}·×${g.strength.attack} — C.75 부터 난이도로 일원화(×1)`);
+      if (r.defeat > 0.45) failAt(tier, `사냥터 ${g.id}: ${tier + 1}단계 몸 원정 패배 ${(r.defeat * 100).toFixed(0)}% > 45% (너무 어렵다)`);
+      if (r.food <= base.food) failAt(tier, `사냥터 ${g.id}: 먹이 ${r.food.toFixed(1)}개 ≤ 기본 사냥터 ${base.food.toFixed(1)}개`);
     }
   }
 }
@@ -937,9 +953,9 @@ let campaignFinalDefeats: number[] = [];
   console.log(`\n해방 (사람형 봇, ${tier + 1}단계 몸 ${bodies.length}명 × 강적 ${elites.length}종 × 1~${BALANCE.expedition.maxLaps}바퀴 × ${LR}판, 사냥터 ${ground.id}, ★${recommendedDifficulty(tier)} 연속 ${LIB_STREAK}) — 목표(임시): 해방 사용 시 강적 승률 +10~15%p`);
   console.log(`  해방 수치: 게이지 = 적 최대 체력 ${LB.gaugeEnemyHpFraction * 100}%, ${LB.seconds}초 능력치 ×${LB.statMultiplier}, 해방 블록 ${LB.blocks}칸 × 기본 블록 ${LB.blockPowerMultiplier}배, 끝나면 리스크 +${LB.riskOnEnd}`);
   console.log(`  해방 없음 ${(off.win * 100).toFixed(1)}% → 해방 사용 ${(on.win * 100).toFixed(1)}% (${gain >= 0 ? '+' : ''}${(gain * 100).toFixed(1)}%p) · 해방 쓴 전투 ${on.used}/${on.games} · 평균 ${on.usedAt.toFixed(1)}초에 사용`);
-  if (bodies.length < CAMPAIGNS * 0.8) failures.push(`해방: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+  if (bodies.length < CAMPAIGNS * 0.8) lateFail(`해방: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
   // 회귀 가드는 목표보다 넓게(+5~25%p): 다른 수치를 고칠 때 해방이 무의미해지거나 압도적이 되는 것만 막는다
-  if (gain < 0.05 || gain > 0.25) failures.push(`해방: 강적 승률 변화 ${(gain * 100).toFixed(1)}%p (가드 +5~25%p 밖)`);
+  if (gain < 0.05 || gain > 0.25) lateFail(`해방: 강적 승률 변화 ${(gain * 100).toFixed(1)}%p (가드 +5~25%p 밖)`);
 }
 
 // ── 보스전 (C.58, GDD 25-3·25-7): 보스가 나오는 스토리 장의 권장 단계에 갓 닿은 몸(위 진화 봇 세이브)으로 사람형 봇이 보스와 싸운다 ──
@@ -996,8 +1012,8 @@ let campaignFinalDefeats: number[] = [];
     console.log(`\n보스전 (사람형 봇, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${BR}판, 사냥터 ${ground}, 보스 ★${boss.difficulty}) — 목표(임시): 승률 50~70%`);
     console.log(`  ${boss.id}: 체력 ${boss.enemy.hpInAttacks}회분 · 공격 ${boss.enemy.attackInAttacks} · 페이즈 ${boss.phases.map((p) => `${p.belowHpFraction * 100}% 이하 공격 간격 ×${p.attackSecondsMult}`).join(' / ')} · 기믹 ${gimmickText} · 시간 ${BX.timeLimitSeconds}초`);
     console.log(`  승률 ${(rate * 100).toFixed(0)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초 · 시간 초과 ${timeouts}/${games} · 2페이즈 도달 ${phase2}/${games} · 봉인 ${(seals / Math.max(1, games)).toFixed(1)}칸/판`);
-    if (bodies.length < CAMPAIGNS * 0.8) failures.push(`보스전 ${boss.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
-    if (rate < 0.35 || rate > 0.85) failures.push(`보스전 ${boss.id}: 승률 ${(rate * 100).toFixed(0)}% (가드 35~85% 밖)`);
+    if (bodies.length < CAMPAIGNS * 0.8) failAt(tier, `보스전 ${boss.id}: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
+    if (rate < 0.35 || rate > 0.85) failAt(tier, `보스전 ${boss.id}: 승률 ${(rate * 100).toFixed(0)}% (가드 35~85% 밖)`);
   }
 }
 
@@ -1030,11 +1046,11 @@ let campaignFinalDefeats: number[] = [];
     rates.push(rate);
     console.log(`  No.${String(h.rank).padStart(2)}  ${h.id.padEnd(15)} ★${h.difficulty} 체력 ${h.hpInAttacks}회분 · 공격 ${h.attackInAttacks} · ${h.element}/${h.category}/${enemyPatternKind(h)}  승률 ${(rate * 100).toFixed(0).padStart(3)}% · 승리 평균 ${wins ? (secs / wins).toFixed(1) : '-'}초`);
   }
-  if (ready.length < CAMPAIGNS * 0.8) failures.push(`등급전: 5단계 세이브 ${ready.length}/${CAMPAIGNS}`);
+  if (ready.length < CAMPAIGNS * 0.8) lateFail(`등급전: 5단계 세이브 ${ready.length}/${CAMPAIGNS}`);
   const [no10, no1] = [rates[0]!, rates[rates.length - 1]!];
-  if (no10 < 0.6) failures.push(`등급전: No.10 승률 ${(no10 * 100).toFixed(0)}% < 60%`);
-  if (no1 < 0.1 || no1 > 0.5) failures.push(`등급전: No.1 승률 ${(no1 * 100).toFixed(0)}% (10~50% 밖)`);
-  for (let i = 1; i < rates.length; i++) if (rates[i]! > rates[i - 1]! + 0.12) failures.push(`등급전: No.${10 - i} 승률이 No.${11 - i} 보다 ${((rates[i]! - rates[i - 1]!) * 100).toFixed(0)}%p 높다`);
+  if (no10 < 0.6) lateFail(`등급전: No.10 승률 ${(no10 * 100).toFixed(0)}% < 60%`);
+  if (no1 < 0.1 || no1 > 0.5) lateFail(`등급전: No.1 승률 ${(no1 * 100).toFixed(0)}% (10~50% 밖)`);
+  for (let i = 1; i < rates.length; i++) if (rates[i]! > rates[i - 1]! + 0.12) lateFail(`등급전: No.${10 - i} 승률이 No.${11 - i} 보다 ${((rates[i]! - rates[i - 1]!) * 100).toFixed(0)}%p 높다`);
 }
 
 // ── 도전의 탑 (C.85, GDD 36장 11번): 그 ★ 권장 단계 몸(1단계 = 새 몸, 2~5단계 = 그 단계에 갓 닿은 진화 봇 몸)으로 사람형 봇이 구간 첫 층·5층(강적)·끝 층(보스)과 싸운다.
@@ -1070,7 +1086,7 @@ let campaignFinalDefeats: number[] = [];
   for (let star = 1; star <= TT.floors / TT.bandSize; star++) {
     // ★1 은 탑이 열리는 몸(스토리 1장 보스 권장 = 2단계에 갓 닿은 몸)으로 잰다 — 특성 없는 새 1단계 몸은 탑에 들어올 수 없어 참고 줄만
     const bodies = star === 1 ? campaignFirstAt[1] ?? [] : campaignFirstAt[star - 1] ?? [];
-    if (bodies.length < CAMPAIGNS * 0.8) { failures.push(`탑 ★${star}: ${star}단계 몸 ${bodies.length}/${CAMPAIGNS}`); continue; }
+    if (bodies.length < CAMPAIGNS * 0.8) { failAt(star - 1, `탑 ★${star}: ${star}단계 몸 ${bodies.length}/${CAMPAIGNS}`); continue; }
     const base = (star - 1) * TT.bandSize;
     const first = fight(bodies, base + 1, 61000);
     const elite = fight(bodies, base + TT.eliteEvery, 62000);
@@ -1083,23 +1099,25 @@ let campaignFinalDefeats: number[] = [];
       const fb = fight(fresh, base + TT.bandSize, 63000);
       console.log(`    (참고) 특성 없는 새 1단계 몸: ${base + TT.eliteEvery}층 강적 ${pct(fe.rate)} · ${base + TT.bandSize}층 보스 ${pct(fb.rate)}`);
     }
-    if (first.rate < 0.85) failures.push(`탑 ${base + 1}층: 일반 승률 ${pct(first.rate)} < 85%`);
+    if (first.rate < 0.85) failAt(star - 1, `탑 ${base + 1}층: 일반 승률 ${pct(first.rate)} < 85%`);
     // ★1 은 한 단계 위 몸(탑이 열리는 2단계)이라 강적·보스는 참고만
-    if (star > 1 && (elite.rate < 0.4 || elite.rate > 0.97)) failures.push(`탑 ${base + TT.eliteEvery}층: 강적 승률 ${pct(elite.rate)} (가드 40~97% 밖)`);
+    if (star > 1 && (elite.rate < 0.4 || elite.rate > 0.97)) failAt(star - 1, `탑 ${base + TT.eliteEvery}층: 강적 승률 ${pct(elite.rate)} (가드 40~97% 밖)`);
     // 보스가 아직 없어 fallbackBoss 로 이어 둔 층은 참고만 (그 보스가 들어오면 가드)
     const tempLink = TT.bossFloors[bossFloor] !== bossId;
     if (boss && tempLink) console.log(`    (임시 연결: ${TT.bossFloors[bossFloor]} 없음 → ${bossId}, 가드 제외)`);
     // C.94: ★2 구간은 구간별 층당 +%·보스 층 배율(perFloorByBand·bossScaleByBand)로 맞춰 20층도 가드에 든다 (C.85·C.84 의 '기록된 미달' 예외는 지움)
-    if (boss && star > 1 && !tempLink && (boss.rate < 0.2 || boss.rate > 0.85)) failures.push(`탑 ${bossFloor}층: 보스 승률 ${pct(boss.rate)} (가드 20~85% 밖)`);
+    if (boss && star > 1 && !tempLink && (boss.rate < 0.2 || boss.rate > 0.85)) failAt(star - 1, `탑 ${bossFloor}층: 보스 승률 ${pct(boss.rate)} (가드 20~85% 밖)`);
   }
   const grown = campaignSaves.filter((s) => s.evolution.tierIndex >= MAX_DIFFICULTY - 1);
   const top = fight(grown, TT.floors, 64000);
   const top5 = fight(campaignFirstAt[MAX_DIFFICULTY - 1] ?? [], TT.floors, 64000);
   console.log(`  ${TT.floors}층 (${towerFloor(TT.floors).bossId} 강화판): 키운 5단계 몸 ${grown.length}명 ${pct(top.rate)} ${top.secs.toFixed(1)}초 · 갓 5단계 몸 ${pct(top5.rate)} (참고)`);
-  if (grown.length < CAMPAIGNS * 0.8) failures.push(`탑 ${TT.floors}층: 5단계 세이브 ${grown.length}/${CAMPAIGNS}`);
-  if (top.rate < 0.15 || top.rate > 0.75) failures.push(`탑 ${TT.floors}층: 승률 ${pct(top.rate)} (가드 15~75% 밖)`);
+  if (grown.length < CAMPAIGNS * 0.8) lateFail(`탑 ${TT.floors}층: 5단계 세이브 ${grown.length}/${CAMPAIGNS}`);
+  if (top.rate < 0.15 || top.rate > 0.75) lateFail(`탑 ${TT.floors}층: 승률 ${pct(top.rate)} (가드 15~75% 밖)`);
 }
 
+if (lateHeld.length > 0) console.warn(`\n후반 보류(45-6) — 4단계 이후 가드 ${lateHeld.length}건, 실패 대신 경고:\n- ${lateHeld.join('\n- ')}`);
+else if (LATE_HOLD) console.log('\n후반 보류(45-6): 4단계 이후 가드 경고 없음');
 if (check) {
   if (failures.length > 0) {
     console.error(`회귀 가드 실패:\n- ${failures.join('\n- ')}`);

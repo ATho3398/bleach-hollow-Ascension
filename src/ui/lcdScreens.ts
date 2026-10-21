@@ -27,13 +27,13 @@ import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import type { VariantMods } from '../engine/expedition';
 
-/** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax */
+/** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax (치명 특성이 있는 몸은 상한 + 그 특성 값, GDD 45장 1번 — 전투와 같은 규칙) */
 export function critPercentText(build: SaveData['build'], evo?: SaveData['evolution']): string {
   const CX = BALANCE.provisional.combat;
   // 진화체 속성 특성 '날카로운 물결'(GDD 39장)의 치명타 확률도 더한다
   const form = evo?.formId ? tryGetForm(evo.formId) : undefined;
   const fromForm = evo ? abilityEffectsOf(formAbilitiesOf(form ?? null, evo.ev, evo.ability)).critChance : 0;
-  return `${Math.round(Math.min(CX.critChanceMax, CX.critChance + critChanceBonus(build) + fromForm) * 100)}%`;
+  return `${Math.round(Math.min(CX.critChanceMax + fromForm, CX.critChance + critChanceBonus(build) + fromForm) * 100)}%`;
 }
 
 /** 상태 자리: 왼쪽 상태 4바(배부름·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */

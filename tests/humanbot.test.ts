@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { getEnemy } from '../src/data/enemies';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
-import { botInput, createCombat, HUMAN_BOT_DEFAULTS, playCombatBot, playCombatHuman, replayCombat, type CombatState } from '../src/engine/combat';
+import { botInput, createCombat, elapsedSeconds, HUMAN_BOT_DEFAULTS, playCombatBot, playCombatHuman, replayCombat, type CombatState } from '../src/engine/combat';
 
 const build = (...ids: string[]) => {
   const b = newBuild();
@@ -128,8 +128,8 @@ describe('사람형 봇', () => {
   });
 });
 
-describe('사람형 봇 목표 곡선(작은 표본): 일반 적은 이기고 강적 승률은 빌드가 강해질수록 오른다', () => {
-  it('빈 슬롯 < skill 2개 (강적), 일반 적은 90% 이상', () => {
+describe('사람형 봇 목표 곡선(작은 표본): 일반 적은 이기고 흡수 특성을 장착하면 더 빨리 처치한다', () => {
+  it('일반 적은 90% 이상, 공격 특성 1개 빌드가 빈 슬롯보다 일반 적을 빨리 처치한다', () => {
     const rate = (params: ReturnType<typeof build> | undefined, enemyId: string) => {
       let w = 0;
       for (let seed = 1; seed <= 40; seed++) if ((playCombatHuman(createCombat(seed, { enemy: getEnemy(enemyId), params })) as CombatState).status === 'won') w++;
@@ -137,6 +137,12 @@ describe('사람형 봇 목표 곡선(작은 표본): 일반 적은 이기고 �
     };
     expect(rate(undefined, 'fire-basic')).toBeGreaterThanOrEqual(0.9);
     expect(rate(two, 'fire-sturdy')).toBeGreaterThanOrEqual(0.9);
-    expect(rate(undefined, 'fire-heavy-seal')).toBeLessThan(rate(two, 'fire-heavy-seal'));
+    // C.97 (GDD 44장): 빈 슬롯도 기본 막기·회복 블록이 나와 강공격형 강적 승률은 빌드와 상관없이 높다 → 흡수 공격 특성의 몫은 처치 시간으로 본다
+    const secs = (params: ReturnType<typeof build> | undefined, enemyId: string) => {
+      let t = 0;
+      for (let seed = 1; seed <= 40; seed++) t += elapsedSeconds(playCombatHuman(createCombat(seed, { enemy: getEnemy(enemyId), params })));
+      return t / 40;
+    };
+    expect(secs(build('t-thunder-c'), 'fire-sturdy')).toBeLessThan(secs(undefined, 'fire-sturdy'));
   });
 });

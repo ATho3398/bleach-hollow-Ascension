@@ -6,7 +6,7 @@ import { TRAITS, parseTrait } from '../src/data/traits';
 import { FAMILY_TIERS, parseFactionConfig } from '../src/engine/faction';
 import { BALANCE } from '../src/config/balance';
 import { absorbReasons, buildCombatParams, equippedSkills, gainTrait, newBuild } from '../src/engine/absorb';
-import { applyInput, createCombat, runAt, spawnSecondsOf as spawnSecondsOfTest, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
+import { applyInput, createCombat, runAt, spawnSecondsOf as spawnSecondsOfTest, BASIC_SKILL_ID, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
 import { chainGroup } from '../src/engine/combat/tray';
 import { getEnemy } from '../src/data/enemies';
 import { combosAtTier, COMBOS, comboName } from '../src/data/evolution';
@@ -198,12 +198,17 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     expect(absorbReasons(s)).toEqual(s.weakChain3Count >= BALANCE.provisional.absorb.weakChain3ForAbsorb ? ['weakness-finisher', 'weakness-chain3'] : ['weakness-finisher']);
   });
 
-  it('블록은 장착한 특성의 계열대로 나온다', () => {
+  it('흡수 블록은 장착한 특성의 계열대로, 기본 공격 블록은 종족 계열 표의 계열로 나온다', () => {
     const s = mk(build('t-thunder-c', 't-fire-a'));
-    for (let i = 0; i < 400 && s.tray.length < 4; i++) step(s);
-    const fams = new Set(s.tray.filter((b) => b.kind === 'skill').map((b) => b.family));
-    expect(fams).toEqual(new Set(['family-c', 'family-a']));
-    for (const b of s.tray) if (b.kind === 'skill') expect(b.family).toBe(b.traitId === 't-thunder-c' ? 'family-c' : 'family-a');
+    s.player.hp = 1e9;
+    for (let i = 0; i < 4000 && s.tray.length < 8; i++) step(s);
+    for (const b of s.tray) {
+      if (b.kind !== 'skill') continue;
+      if (b.traitId === 't-thunder-c') expect(b.family).toBe('family-c');
+      else if (b.traitId === 't-fire-a') expect(b.family).toBe('family-a');
+      else if (b.traitId === BASIC_SKILL_ID) expect(Object.keys(s.params.families)).toContain(b.family);
+      else expect(b.family ?? null).toBeNull();
+    }
   });
 
   it('같은 계열 특성이 여럿이면 그 계열 블록의 생성 간격이 늘어난다', () => {

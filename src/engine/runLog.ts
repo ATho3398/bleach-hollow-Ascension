@@ -113,7 +113,7 @@ export interface BattleRecord {
   /** 치명타 횟수: 내 공격 / 적 공격 (C.63, GDD 28장 5번). 옛 기록은 없음 */
   crits?: number;
   enemyCrits?: number;
-  /** 진화체 특성 발동 횟수 (C.89, GDD 39장 8번): 연타·되갚기·다시 일어남·연쇄·화상 */
+  /** 진화체 특성 발동 횟수 (C.89, GDD 39장 8번): 연타·되갚기·다시 일어남·연쇄 (화상 'burn' 은 C.97 에 삭제 — 옛 기록에만 있다) */
   abilityProcs?: Partial<Record<'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste' | 'burn', number>>;
 }
 

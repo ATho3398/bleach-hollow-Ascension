@@ -13,7 +13,7 @@
         "battle.tray"
       ],
       "title": "블록 바: 눌러서 사용",
-      "body": "시간이 지나면 {skillBlockName}이(가) 이 블록 바 {trayCapacity}칸에 하나씩 생겨요. 블록을 톡 누르면 바로 사용돼요. 순서는 바꿀 수 없고 나온 순서대로 놓여요. 색과 아이콘은 역할이에요: {roleNames.attack}(공격) · {roleNames.guard}(막기) · {roleNames.heal}(회복).",
+      "body": "시간이 지나면 {skillBlockName}이(가) 이 블록 바 {trayCapacity}칸에 하나씩 생겨요. 기본 공격·막기·회복 블록은 늘 나오고, {slotName}에 장착한 특성 블록이 거기에 섞여 나와요(많이 장착할수록 특성 블록이 더 자주 나와요). 블록을 톡 누르면 바로 사용돼요. 순서는 바꿀 수 없고 나온 순서대로 놓여요. 색과 아이콘은 역할이에요: {roleNames.attack}(공격) · {roleNames.guard}(막기) · {roleNames.heal}(회복).",
       "sample": [
         "attack",
         "guard",

@@ -14,7 +14,7 @@ export function parseElements(r: unknown): ElementDef[] {
     if (!['normal', 'elemental', 'special'].includes(e.kind)) errors.push(`${e.id}: kind normal | elemental | special`);
     if (e.kind === 'elemental' && (!e.beats || !ids.has(e.beats))) errors.push(`${e.id}: 원소는 beats(있는 속성 id)가 필요`);
     if (e.kind !== 'elemental' && e.beats !== undefined) errors.push(`${e.id}: 원소가 아니면 beats 가 없다 (상성 없음)`);
-    if (e.kind === 'special' && !['drain', 'poison', 'pierce'].includes(e.effect ?? '')) errors.push(`${e.id}: 특수 속성은 effect drain | poison | pierce`);
+    if (e.effect !== undefined && !['drain', 'poison'].includes(e.effect)) errors.push(`${e.id}: effect 는 drain | poison (없으면 효과 없음)`);
     if (typeof e.color !== 'string' || !e.color.startsWith('--bha-')) errors.push(`${e.id}: color 는 디자인 토큰 이름(--bha-…)`);
     if (typeof e.name !== 'object' || typeof e.abbr !== 'object') errors.push(`${e.id}: name·abbr`);
   }

@@ -8,7 +8,7 @@ import { FACTIONS, getFaction } from '../src/data/factions';
 import { pickFaction, type EnemyDef } from '../src/data/schema';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import {
-  BASIC_SKILL_ID, applyInput, blockSources, buildBattleRecord, chainGroup, createCombat, drainCombatEvents, elapsedSeconds,
+  BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, isBasicBlockId, applyInput, blockSources, buildBattleRecord, chainGroup, createCombat, drainCombatEvents, elapsedSeconds,
   playCombatBot, replayCombat, step, ticksOf, type Block, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { createExpedition, playExpedition } from '../src/engine/expedition';
@@ -18,6 +18,7 @@ import { loadSave, migrateSave, newSaveData, recordBattle, recordExpedition, SAV
 import { battleLabels } from '../src/ui/labels';
 
 const CX = BALANCE.provisional.combat;
+const BP = BALANCE.provisional.blockPool;
 const normal = getEnemy('test-a'); // 일반, 불 속성
 const elite = getEnemy('test-elite');
 const sealPat = elite.pattern as Extract<NonNullable<EnemyDef['pattern']>, { kind: 'heavy-seal' }>; // 기존 강적 = 강공격↔봉인
@@ -113,25 +114,26 @@ describe('고정 틱 시뮬레이션', () => {
 });
 
 describe('블록 생성과 블록 바 (일자 8칸)', () => {
-  it('바는 8칸, 비어 있으면 기본 블록만 생성되고 왼쪽부터 빈 칸 없이 오른쪽 끝에 붙는다', () => {
+  it('바는 8칸, 흡수 0칸이면 기본 블록 5종(공격·막기·회복)만 생성되고 왼쪽부터 빈 칸 없이 오른쪽 끝에 붙는다', () => {
     const s = mk();
     expect(s.params.trayCapacity).toBe(8);
     expect(s.tray).toHaveLength(0);
-    expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID]);
+    expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID]);
     s.voidTimer = 1e9;
-    wait(s, CX.blockSpawnSeconds * 2);
+    wait(s, BP.basicSpawnSeconds * 1.5);
     expect(s.tray).toHaveLength(2);
-    expect(s.tray.every((b) => b.traitId === BASIC_SKILL_ID)).toBe(true);
+    expect(s.tray.every((b) => isBasicBlockId(b.traitId))).toBe(true);
     const spawns = drainCombatEvents(s).filter((e) => e.kind === 'spawn');
     expect(spawns.map((e) => e.kind === 'spawn' && e.index)).toEqual([0, 1]);
   });
 
-  it('슬롯 skill 특성마다 일정 간격(임시 4초)으로 블록이 생긴다', () => {
+  it('흡수 skill 특성마다 일정 간격(임시 4초)으로 블록이 생기고, 기본 블록 타이머는 따로 돈다 (GDD 44-1 B안)', () => {
     const s = mk({ params: build('t-fire-a', 't-earth-guard') });
     s.voidTimer = 1e9;
     wait(s, CX.blockSpawnSeconds);
-    const ids = s.tray.map((b) => b.traitId).sort();
+    const ids = s.tray.map((b) => b.traitId).filter((id) => !isBasicBlockId(id)).sort();
     expect(ids).toEqual(['t-earth-guard', 't-fire-a']);
+    expect(s.spawnTimers).toHaveLength(3);
   });
 
   it('8개가 되면 생성이 멈추고(타이머도 멈춤), 하나를 쓰면 오른쪽 블록이 당겨지고 새 블록은 맨 오른쪽에 생긴다', () => {
@@ -454,8 +456,9 @@ describe('약점·공허·시간 제한', () => {
     wait(poison.s, EL.poisonSeconds + 0.5);
     expect(hpBefore - poison.s.enemy.hp).toBeCloseTo(base * EL.poisonFraction);
     const kyo = hit('t-kyo-a');
-    expect(kyo.damage).toBeCloseTo(base / (1 - EL.pierceIgnore));
-    expect(kyo.s.riskGained).toBeCloseTo(EL.pierceRisk);
+    // GDD 45장 5번 "허 방무 없애": 허 블록은 방어 무시·리스크 없이 보통 피해
+    expect(kyo.damage).toBeCloseTo(base);
+    expect(kyo.s.riskGained).toBe(0);
   });
 
   it('적의 공격도 상성·능력치를 따른다: 내 방어가 두 배면 받는 피해가 절반, 적 속성이 나를 이기면 ×1.2', () => {

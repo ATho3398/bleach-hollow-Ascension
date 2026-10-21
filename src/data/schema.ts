@@ -104,8 +104,8 @@ export type AttackCategory = (typeof ATTACK_CATEGORIES)[number];
 
 /** 속성 종류 (GDD 20-2): 노멀(상성 없음) / 원소(순환 상성) / 특수(상성 대신 효과) */
 export type ElementKind = 'normal' | 'elemental' | 'special';
-/** 특수 속성 효과 (수치는 BALANCE.provisional.elements): drain = 준 피해 일부 흡혈, poison = 지속 피해, pierce = 방어·정신력 일부 무시 + 내가 쓰면 리스크 소량 */
-export type ElementEffect = 'drain' | 'poison' | 'pierce';
+/** 특수 속성 효과 (수치는 BALANCE.provisional.elements): drain = 준 피해 일부 흡혈, poison = 지속 피해. 허는 공격 효과 없음 (GDD 45장 5번 "허 방무 없애" — 허의 개성은 속성 특성 '연쇄') */
+export type ElementEffect = 'drain' | 'poison';
 
 export interface ElementDef {
   id: string;

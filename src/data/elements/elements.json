@@ -6,5 +6,5 @@
   { "id": "thunder", "kind": "elemental", "beats": "water", "name": { "*": "뇌" }, "abbr": { "*": "뇌" }, "color": "--bha-chain2" },
   { "id": "blood", "kind": "special", "effect": "drain", "name": { "*": "혈" }, "abbr": { "*": "혈" }, "color": "--bha-attack" },
   { "id": "poison", "kind": "special", "effect": "poison", "name": { "*": "독" }, "abbr": { "*": "독" }, "color": "--bha-lin-b" },
-  { "id": "kyo", "kind": "special", "effect": "pierce", "name": { "*": "허(虛)" }, "abbr": { "*": "허" }, "color": "--bha-lin-d" }
+  { "id": "kyo", "kind": "special", "name": { "*": "허(虛)" }, "abbr": { "*": "허" }, "color": "--bha-lin-d" }
 ]

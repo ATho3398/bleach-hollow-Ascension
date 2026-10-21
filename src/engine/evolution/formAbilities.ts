@@ -45,7 +45,7 @@ export function abilityEffectsOf(fa: FormAbilities): { effects: AbilityEffects; 
     switch (elementAbility(element).effect) {
       case 'blockPower': fx.blockPower = (fx.blockPower ?? 0) + v.blockPower! * scale; break;
       case 'crit': critChance += v.critChance! * scale; break;
-      case 'burn': fx.burn = { fraction: (fx.burn?.fraction ?? 0) + v.burnFraction! * scale, seconds: v.burnSeconds! }; break;
+      case 'ignoreDefense': fx.ignoreDefense = (fx.ignoreDefense ?? 0) + v.ignoreDefense! * scale; break;
       case 'thorns': fx.thorns = { threshold: v.thornsThreshold!, ret: (fx.thorns?.ret ?? 0) + v.thornsReturn! * scale }; break;
       case 'doubleHit': fx.doubleHit = (fx.doubleHit ?? 0) + v.doubleHitChance! * scale; break;
       case 'bloodlust': fx.bloodlust = { max: (fx.bloodlust?.max ?? 0) + v.bloodlustMax! * scale, fullAt: v.bloodlustFullAt! }; break;
@@ -71,9 +71,9 @@ const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
 /** 효과 수치 한 줄 (화면용, 효과 종류별 — 종족 무관) */
 function effectSummary(fx: AbilityEffects, critChance: number): string {
   const parts: string[] = [];
-  if (critChance > 0) parts.push(`치명타 확률 +${pct(critChance)}p`);
+  if (critChance > 0) parts.push(`치명타 확률 +${pct(critChance)}p(상한도 +${pct(critChance)}p)`);
   if (fx.blockPower) parts.push(`블록 위력 +${pct(fx.blockPower)}`);
-  if (fx.burn) parts.push(`화상 ${fx.burn.seconds}초 (블록 피해의 ${pct(fx.burn.fraction)})`);
+  if (fx.ignoreDefense) parts.push(`적 방어·정신력 ${pct(fx.ignoreDefense)} 무시`);
   if (fx.thorns) parts.push(`받은 피해가 최대 체력 ${pct(fx.thorns.threshold)} 쌓이면 ${pct(fx.thorns.ret)} 되돌림`);
   if (fx.doubleHit) parts.push(`기본 공격 ${pct(fx.doubleHit)} 확률 한 번 더`);
   if (fx.bloodlust) parts.push(`체력 ${pct(fx.bloodlust.fullAt)} 이하에서 공격 최대 +${pct(fx.bloodlust.max)}`);

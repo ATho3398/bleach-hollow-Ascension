@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 49;
+export const BALANCE_VERSION = 50;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -83,7 +83,7 @@ export const BALANCE = {
       perVoidBlock: 2.5,
       /** 강한 적 흡수 시 리스크 상승 = 적 hpInAttacks(바퀴 강화 포함) × 이 값. 옛 0.55/매칭 회분 × (6회분 → 30회분 환산) ≈ 0.11. 강적(70)이 일반(30)의 약 2.3배 */
       /* C.7: 0.12→0.22 (첫 흡수 보장·새 조건으로 흡수 횟수가 줄어 6바퀴 돌파 가드 유지) */
-      absorbPerHpAttack: 0.2, // C.47: 약점 없는 적(노멀·특수)은 아무 기술로 마무리해도 흡수돼 흡수가 잦아진 만큼(4바퀴 5.3→6.7회) 0.3→0.25→0.2 (조정 2회)
+      absorbPerHpAttack: 0.28, // C.97: 기본 블록이 섞여 흡수 조건(우위 마무리·체인3)이 덜 채워져 4바퀴 섞음 흡수 5회대→3.9회, 허 리스크 삭제(45장 5번)까지 겹쳐 끝 리스크 34 → 0.2→0.28 (약 44). C.47: 약점 없는 적(노멀·특수)은 아무 기술로 마무리해도 흡수돼 흡수가 잦아진 만큼(4바퀴 5.3→6.7회) 0.3→0.25→0.2 (조정 2회)
       /** 놓아주면 하락. C.52: 8 → 6 (GDD 23-2 목표 — 흡수·놓아주기 섞은 4바퀴 원정 끝 40~60, 조정 1회). C.69(B-1): 4바퀴 섞음 300판 끝 39.4 로 목표 바로 아래 → 6 → 5 (41.3, 조정 1회) */
       releaseRelief: 5,
       /** 휴식 타일에서 하락 */
@@ -223,9 +223,6 @@ export const BALANCE = {
       /** 독: 맞힌 피해의 이 비율을 poisonSeconds 동안 나눠 더 준다 (겹치면 남은 양에 더하고 시간은 새로) */
       poisonFraction: 0.2,
       poisonSeconds: 4,
-      /** 허: 상대 방어·정신력을 이 비율만큼 무시. 내가 허 블록을 쓰면 블록 1개당 리스크 게이지 + pierceRisk */
-      pierceIgnore: 0.15,
-      pierceRisk: 0.6,
     },
     // ── 능력치·성장 (GDD 20-3·20-4, 수치 provisional) ──
     stats: {
@@ -294,7 +291,7 @@ export const BALANCE = {
       element: {
         normal: { blockPower: 0.06 },
         water: { critChance: 0.08 },
-        fire: { burnFraction: 0.25, burnSeconds: 3 },
+        fire: { ignoreDefense: 0.08 }, // C.97 (GDD 45장 3번): 화상 → '작열' 방어·정신력 8% 무시 (블록·평타)
         earth: { thornsReturn: 0.6, thornsThreshold: 0.2 },
         thunder: { doubleHitChance: 0.12 },
         blood: { bloodlustMax: 0.2, bloodlustFullAt: 0.3 },
@@ -520,6 +517,32 @@ export const BALANCE = {
       defeatCondition: 15,
       defeatHunger: 10,
     },
+    // ── 블록 풀 (GDD 44장 → 44-1 B안, C.97, provisional): 흡수 특성 블록은 특성마다 타이머(combat.blockSpawnSeconds), 기본 블록 5종은 별도 타이머 하나에서 가중 추첨 ──
+    blockPool: {
+      /** 기본 블록 타이머 간격(초, 흡수 0칸). 블록 가속 배율은 나눈다. 바가 가득 차거나 봉인 중이면 멈춘다 */
+      basicSpawnSeconds: 2.8,
+      /** 장착 흡수 칸 1칸당 기본 타이머 간격 +비율: 간격 = basicSpawnSeconds × (1 + 이 값 × 칸) → 칸이 늘수록 기본 블록 비율이 줄어든다 */
+      basicSlowdownPerSlot: 3,
+      /** 기본 블록 가중: 공격은 종족 계열 표의 계열 각각, 막기 1, 회복 1 (합 44) */
+      basicWeights: { attack: 10, guard: 7, heal: 7 },
+      /** 막기·회복 기본 블록 세기 = 같은 역할 흡수 특성 블록 기본값(basicRoleBlocks) × 이 비율 (피해·막기 지속·회복량 모두) */
+      basicGuardRatio: 0.7,
+      basicHealRatio: 0.7,
+      /** 같은 역할 흡수 특성 블록 기본값 (traits.json 의 *-guard·*-heal 과 같은 값, 테스트가 맞는지 본다) */
+      basicRoleBlocks: {
+        guard: { powerInAttacks: 1.5, chainBonus: { kind: 'reflect', value: 1 } },
+        heal: { powerInAttacks: 1, chainBonus: { kind: 'cleanse', value: 40 } },
+      },
+      /** 성향 특성(GDD 39장 ①) 보정: 기본 블록 가중 배율 (attack = 기본 공격 3종), absorbedSpawn = 흡수 특성 타이머 속도 배율(속도 성향 — 44장 '흡수 몫 +10%p' 의 B안 판). 종족 무관 엔진 수치 */
+      temperament: {
+        atk: { attack: 1.4 },
+        int: { attack: 1.4 },
+        def: { guard: 1.8 },
+        hp: { heal: 1.8 },
+        spr: { guard: 1.4, heal: 1.4 },
+        spd: { absorbedSpawn: 1.1 },
+      } as Record<string, { attack?: number; guard?: number; heal?: number; absorbedSpawn?: number }>,
+    },
     // ── 전투 v2(P4, C.6) 임시값: 실시간 자동 전투 + 스킬 블록 체인 (GDD 3-5). 시간은 초, 엔진은 틱으로 환산한다 ──
     // 모든 "양"은 플레이어 기본 공격 1회 피해(playerAttackDamage) = 1 단위 기준 (CLAUDE.md 규칙 3)
     combat: {
@@ -549,7 +572,7 @@ export const BALANCE = {
       enemyDamageVariance: 0.25,
       /** 블록 바 일자 8칸 (GDD 3-5 v0.8, 크퀘식). 6칸 트레이(C.6) → 8칸: 한 줄에 같은 블록을 붙여 놓을 여유를 준다 */
       trayCapacity: 8,
-      /** 슬롯 skill 특성(없으면 기본 블록) 하나당 블록 생성 간격(초). 바가 가득 차거나 봉인 중이면 멈춘다 */
+      /** 흡수 skill 특성 하나당 블록 생성 간격(초, 특성마다 타이머 — GDD 44-1 B안). 기본 블록은 blockPool 의 별도 타이머. 바가 가득 차거나 봉인 중이면 멈춘다 */
       blockSpawnSeconds: 4,
       /** 같은 계열 공격 특성이 슬롯에 둘 이상이면 서로 체인이 쉬워지므로(GDD 17-3), 그 계열 블록의 생성 간격을 (같은 계열 특성 수 − 1)당 이 비율만큼 늘린다 (C.34). 계열이 하나뿐이면 영향 없음 */
       familySpawnSlowdown: 1,
@@ -562,7 +585,7 @@ export const BALANCE = {
       spMax: 100,
       /** 필살 블록 피해: 기본 공격 N회 분량 ("큰 피해") */
       specialPowerInAttacks: 15,
-      /** 슬롯에 skill 특성이 없을 때의 기본 블록 ("기본 공격 강화"): 공격, 기본 공격 N회 분량 */
+      /** 기본 공격 블록 (GDD 44장: 기본 블록 5종 중 공격 3종 — 종족 계열 표의 계열마다 하나): 기본 공격 N회 분량 */
       basicBlockPowerInAttacks: 3,
       basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
       /** guard 블록: 막기 상태 지속(초, 위력 배율만큼 늘어남), 그동안 기본 공격 피해 경감, 강공격 경감(= 막기 성공) */

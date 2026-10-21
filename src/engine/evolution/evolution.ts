@@ -284,9 +284,15 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   // 특성 칸 2개 (GDD 39장): 성향(실패형 2개) + 속성·전용 효과
   const fa = formAbilitiesOf(form ?? null, e.ev, e.ability);
   for (const d of fa.dispositions) applyAbility(params, d);
+  // 블록 풀 성향 보정 (GDD 44장 4번)
+  params.dispositions = [...fa.dispositions];
   const { effects, critChance } = abilityEffectsOf(fa);
   params.abilityEffects = effects;
-  if (critChance > 0) params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
+  if (critChance > 0) {
+    params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
+    // 치명 상한 돌파 (GDD 45장 1번): 치명 특성(물 '날카로운 물결')이 있는 몸만 상한 = 기본 상한 + 그 특성 값
+    params.critChanceMax = (params.critChanceMax ?? BALANCE.provisional.combat.critChanceMax) + critChance;
+  }
 }
 
 /** 진화체 하나 (외부에서 이름·속성 표시용) */
