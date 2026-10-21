@@ -67,8 +67,8 @@ describe('기본 제공·자동 착용 (30장 2번)', () => {
   it('새 세이브: 보유 + 착용, 두 번째 트랙도', () => {
     const s = newSaveData('hollow');
     expect(s.shared.cosmetics).toContain('device-badge');
-    expect(s.wear.device).toBe('device-badge');
-    expect(newTrack('shinigami', 5).wear.device).toBe('device-badge');
+    expect(s.wear.device).toBeUndefined(); // 기본 기기는 기본형 (C.112) — 보유만 하고 [디자인]에서 고른다
+    expect(newTrack('shinigami', 5).wear.device).toBeUndefined();
     expect(newSharedState().cosmetics).toContain('device-badge');
   });
   it('[기본형]으로 바꾸고 저장·다시 열어도 그대로, 다시 입을 수 있다', () => {
@@ -90,7 +90,7 @@ describe('기본 제공·자동 착용 (30장 2번)', () => {
     unwearCategory(s, 'device');
     const other = s.otherTracks[0]!.factionId;
     switchTrack(s, other);
-    expect(s.wear.device).toBe('device-badge');
+    expect(s.wear.device).toBeUndefined(); // 다른 종족 트랙도 기본형 (C.112)
   });
   it('형식 26 → 27: 보유로 주고, 기기를 안 입은 트랙(쉬는 트랙 포함)은 한 번 입힌다. 키링 해제는 그대로', () => {
     const old = () => {
@@ -104,7 +104,7 @@ describe('기본 제공·자동 착용 (30장 2번)', () => {
     const m = migrateSave(old())!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION); // 27 단계를 지나 현재 형식까지 (C.72)
     expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki', 'bar-ink']);
-    expect(m.wear).toEqual({ bar: 'bar-ink', device: 'device-badge' });
+    expect(m.wear).toEqual({ bar: 'bar-ink' }); // 형식 27 이 입힌 사신대행증은 형식 36 이 벗긴다 (C.112)
     expect(m.wear.keyring).toBeUndefined();
   });
   it('형식 26: 이미 다른 기기를 입은 트랙은 건드리지 않는다', () => {
@@ -121,7 +121,7 @@ describe('기본 제공·자동 착용 (30장 2번)', () => {
     s.wear = {};
     s.shared.cosmetics = [];
     const m = migrateSave(s)!;
-    expect(m.wear).toEqual({ keyring: 'keyring-orb', device: 'device-badge' });
+    expect(m.wear).toEqual({ keyring: 'keyring-orb' }); // 형식 36 이 옛 기본 기기를 벗긴다 (C.112)
   });
   it('이미 27 인 세이브의 [기본형]은 다시 열어도 입히지 않는다', () => {
     const s = newSaveData('hollow');
@@ -178,7 +178,7 @@ describe('기본 제공 기기 십일번대 (UI담당자A)', () => {
     expect(z.device!.hole).toEqual([411, 647]);
     expect(FREE_COSMETICS.map((x) => x.id)).toEqual(expect.arrayContaining(['device-badge', 'device-zaraki']));
     const { defaultWear } = await import('../src/game');
-    expect(defaultWear().device).toBe('device-badge');
+    expect(defaultWear().device).toBeUndefined(); // 기본은 기본형 (C.112)
   });
   it('그림 파일이 있다', () => {
     for (const f of ['device-zaraki-front.webp', 'device-zaraki-back.webp']) expect(existsSync(new URL(`../public/art/${f}`, import.meta.url))).toBe(true);
@@ -190,6 +190,7 @@ describe('기본 제공 기기 십일번대 (UI담당자A)', () => {
     old.shared.cosmetics = ['keyring-orb', 'device-badge'];
     const m = migrateSave(old)!;
     expect(m.shared.cosmetics).toContain('device-zaraki');
-    expect(m.wear.device).toBe('device-badge');
+    expect(m.wear.device).toBeUndefined(); // 옛 기본값(사신대행증)은 형식 36 이 벗긴다 (C.112)
+    expect(m.shared.cosmetics).toContain('device-badge');
   });
 });
