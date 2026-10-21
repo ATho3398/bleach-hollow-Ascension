@@ -691,8 +691,8 @@ let campaignFinalDefeats: number[] = [];
   for (const [tier, r] of Object.entries(rep.hiddenRate)) console.log(`  ${tier}단계: 히든 ${((r.hidden / r.samples) * 100).toFixed(1)}%`);
   console.log(`  한 번도 안 뽑힌 진화체: ${rep.unreachable.length ? rep.unreachable.join(', ') : '없음'}`);
   if (rep.unreachable.length > 0) failures.push(`진화 트리: 뽑히지 않는 진화체 ${rep.unreachable.join(', ')}`);
-  // 기획의 일반 35종 = 1단계(진화체 없음, 종족 설정 baseStats) + 진화체 34
-  if (normalCount !== 34 || hiddenCount !== 12) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 34(+1단계) + 12, 환생 전용 포함)`);
+  // 기획의 일반 32종 = 1단계(진화체 없음, 종족 설정 baseStats) + 진화체 31 (C.106, GDD 49-7 ②: 4단계 일반 = 노멀 + 원소 5종)
+  if (normalCount !== 31 || hiddenCount !== 12) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 31(+1단계) + 12, 환생 전용 포함)`);
 }
 
 // ── 권장 단계 등가 점검 (C.75, GDD 32-1 2번): n단계 몸(그 단계 기본 진화체, 노력치 0, skill 1개 빌드)이 ★n 적 풀과 1:1 로 싸우면 1단계 몸 ★1 과 같은 길이·승률이어야 한다 ──
