@@ -19,7 +19,7 @@ import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
+  applyAbsence, applyStartLook, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, deckSizeOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -288,6 +288,7 @@ export function startApp(host: HTMLElement): void {
         stashSlot(store, newSlot);
         slot = newSlot;
         save = testOn ? newTestSave(f.id) : newSaveData(f.id);
+        if (!testOn) applyStartLook(save, f, Math.random());
         persist();
         nestScreen();
       },

@@ -208,6 +208,7 @@ export function keyringArt(c: Pick<CosmeticItemDef, 'look'>, shape: string, file
 
 /** 상점 영옥 탭에 보이나: 기기 디자인은 그림이 있고 상점 판매(또는 이미 보유)일 때만, 나머지는 늘 */
 export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files: readonly string[] = ART_FILES): boolean {
+  if (c.category === 'skin' && getSkin(c.look)?.startOnly) return false;
   if (c.category !== 'device') return c.source !== 'reward' || owned.includes(c.id);
   if (c.source === 'default') return false;
   return deviceArt(c, files) !== null && (c.source === 'shop' || owned.includes(c.id));

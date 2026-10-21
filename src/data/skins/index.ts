@@ -12,10 +12,16 @@ export interface SkinDef {
   tentativeName: boolean;
   /** 임시 데이터 (이름·종족 provisional). 열림은 상점 보유(GDD 25-9, shared.cosmetics)로 정한다 */
   provisional: true;
+  /** 시작 전용 (GDD 51): 새 세이브 뽑기(종족 설정 startLooks)로만 얻고 상점에서 팔지 않는다 */
+  startOnly?: true;
 }
 
 export const SKINS: readonly SkinDef[] = [
   { id: 'grandfisher', name: '그랜드피셔', factionId: 'hollow', tentativeName: true, provisional: true },
+  { id: 'stalker', name: '추적자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
+  { id: 'brute', name: '거구', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
+  { id: 'ghoul', name: '망령', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
+  { id: 'shackled', name: '속박자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
 ];
 
 export function getSkin(id: string | null | undefined): SkinDef | undefined {

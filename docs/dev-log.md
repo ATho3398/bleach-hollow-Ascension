@@ -692,3 +692,13 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 확인(마스터J 질문): 캡처 01 '노멀_조'는 테스트 칸 기본 특성(t-normal-a)의 흡수 칸 블록(기본 타이머 산물 아님). '피 튀기기' '교' 배지 = 체인 계열 표시(49-1 2번), 맞음.
 - **테스트** 1290 → 1293 (+3 `tests/c105b.test.ts`: 속성별 값·fallback, applyEvolutionToParams 채움(물공 아닌 몸 null), 첫 블록 시점이 간격을 따름·60초 20개 ±1; `c105.test.ts` 수치 고정에 한 줄).
 - **캡처** `docs/captures/c105b/01-battle-blood-knockback.png`(1배, 혈 전투 '넉백!' 순간) + proof.json(콘솔 에러 0).
+
+### C.107 호로 시작 외형 5종 랜덤 (STAGE S-23, UI담당자B, GDD 51장)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.107. 밸런스·세이브 형식 변경 없음.
+사용자 원문: "잘라서 호로 외형으로 넣어. 그리고 호로로 시작할 때 기존 사마귀형이랑 포함해서 5개중 하나 랜덤으로 시작. 이미지만 다르고 나머진 똑같은"
+- 그림: 아쥬커스급 시트의 가짜 투명 배경(체크무늬)을 지우고 4마리를 256×256 투명 PNG 로 잘라 `public/art/skin-stalker·brute·ghoul·shackled.png`(5d10497). 원본 시트 `docs/design/user-art/hollow-adjuchas-sheet-src.png`.
+- 스킨 기계 재사용: `src/data/skins` 에 4줄(호로 전용, provisional, `startOnly` = 시작 전용), 종족 설정 `startLooks`(검증 포함) = 호로 4종. `pickStartLook(faction, rnd)`(기본 + 목록 균등 5구간) · `applyStartLook`(보유 목록에 넣고 장착) 을 `game.ts` 에 두고, `app.ts` 종족 고르기의 새 세이브 만들기에서만 `Math.random()` 으로 부른다(테스트 모드 칸·환생·트랙 만들기는 안 부름 → 외형 유지). 사신은 `startLooks` 가 없어 항상 기본.
+- 상점: `shopVisible` 이 `startOnly` 스킨을 숨김(시작 전용, 판매 안 함). 스킨 패널에는 가진 것만 나오므로 뽑힌 스킨 + [기본]으로 언제든 되돌릴 수 있음.
+- 이름은 임시 가칭(추적자·거구·망령·속박자), id 는 파일 이름이라 고정.
+- **테스트** `tests/c107.test.ts` +6(설정·그림 파일, 5구간 추첨, 사신 기본, 능력치 등 나머지 동일, 기본이면 불변, 상점 비노출·마이그레이션 뒤 유지).
+- **캡처** `docs/captures/c107/`(1배 4장 + proof.json): 01 추적자 · 02 거구 · 03 속박자 · 04 기본(사마귀) — 새 호로 세이브 방.

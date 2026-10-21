@@ -24,7 +24,7 @@ import type { TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
 import { addFood, foodOverflowGold, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
-import type { FoodId } from './engine/faction';
+import type { FactionConfig, FoodId } from './engine/faction';
 import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
 import { newlyAchieved } from './engine/tutorialGoals';
 import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
@@ -1391,6 +1391,21 @@ export function equipSkin(save: SaveData, skinId: string | null): boolean {
   if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
   save.skin = skinId;
   return true;
+}
+
+/** 새 세이브 시작 외형 추첨 (GDD 51): 기본(null) + 종족 설정 startLooks 중 입을 수 있는 스킨을 균등하게 하나. rnd = 0 이상 1 미만 난수 */
+export function pickStartLook(faction: Pick<FactionConfig, 'id' | 'startLooks'>, rnd: number): string | null {
+  const looks = (faction.startLooks ?? []).filter((id) => canWear(faction.id, id));
+  const i = Math.min(looks.length, Math.max(0, Math.floor(rnd * (looks.length + 1))));
+  return i === 0 ? null : looks[i - 1]!;
+}
+
+/** 뽑은 외형을 새 세이브에 입힌다: 스킨을 보유 목록에 넣고 장착. 기본 외형(null)이면 그대로 둔다. 환생·트랙 만들기는 부르지 않는다(외형 유지) */
+export function applyStartLook(save: SaveData, faction: Pick<FactionConfig, 'id' | 'startLooks'>, rnd: number): string | null {
+  const look = pickStartLook(faction, rnd);
+  if (look === null) return null;
+  if (!save.shared.cosmetics.includes(skinItemId(look))) save.shared.cosmetics.push(skinItemId(look));
+  return equipSkin(save, look) ? look : null;
 }
 
 export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData | null {

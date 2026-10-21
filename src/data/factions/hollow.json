@@ -4,6 +4,7 @@
   "theme": "hollow",
   "emblem": "💀",
   "logo": "logo-hollow",
+  "startLooks": ["stalker", "brute", "ghoul", "shackled"],
   "tierNames": [
     "호로",
     "길리안",
