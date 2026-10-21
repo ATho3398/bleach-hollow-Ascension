@@ -7,11 +7,13 @@ import { pickFaction, STAT_IDS, type StatId } from '../data/schema';
 import { TRAITS, traitName } from '../data/traits';
 import { bossName } from '../data/bosses';
 import { BALANCE } from '../config/balance';
-import { currentStats } from '../engine/evolution';
+import { currentStats, elementDamageOf } from '../engine/evolution';
+import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
+import { elementDamageAbbr, elementDamagePct } from './bha/element';
 import { MAX_DIFFICULTY, recommendedDifficulty } from '../engine/difficulty';
 import type { FactionConfig } from '../engine/faction';
 import {
-  resetStats, setAbility, setCustomStats, setForm, setNestValues, setTraitSlots, testFoes, TEST_SPEEDS, TOWER_FLOORS, type TestBattleChoice,
+  resetStats, setAbility, setCustomStats, setElementDamage, TEST_ELEMENT_DAMAGE_MAX, setForm, setNestValues, setTraitSlots, testFoes, TEST_SPEEDS, TOWER_FLOORS, type TestBattleChoice,
 } from '../engine/testMode';
 import { statBonusOf, type SaveData } from '../game';
 import { button, el, info, panel, seg } from './bha/dom';
@@ -98,6 +100,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     showToast({ eyebrow: '테스트', title: msg, meta: '테스트 칸에만 저장 — 진짜 세이브는 그대로.' }, 0, 1600);
   };
   const stats = currentStats(save.evolution, fid, statBonusOf(save).total);
+  const elemDmg = elementDamageOf(save.evolution);
 
   // 오른쪽: 지금 상태 요약
   const form = save.evolution.formId ? FORM_TABLE.find((f) => f.id === save.evolution.formId) : undefined;
@@ -105,6 +108,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     { label: '종족', value: faction.name },
     { label: '진화체', value: form ? `${form.tier}단계 · ${formName(form, fid)}` : '1단계 (진화 전)' },
     ...STAT_IDS.map((s) => ({ label: statName(s, fid), value: String(stats[s]) })),
+    { label: '속성 피해', value: ELEMENT_DAMAGE_IDS.map((id) => `${elementDamageAbbr(id, fid)} ${elementDamagePct(elemDmg[id] ?? 0)}`).join(' · ') },
     { label: '특성', value: save.build.slots.map((id) => (id ? traitName(id, fid) : '—')).join(' · ') },
     { label: '고유 특성', value: save.evolution.ability ? abilityName(save.evolution.ability, fid) : '없음' },
     { label: '리스크·허기·컨디션', value: `${save.nest.risk} · ${save.nest.hunger} · ${save.nest.condition}` },
@@ -147,10 +151,13 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   function statsTab(): Node[] {
     const max = BALANCE.provisional.stats.statMax;
     const inputs = STAT_IDS.map((s) => [s, numInput(stats[s], 0, max, statName(s, fid))] as const);
+    // 속성 피해 5종 % (GDD 48장 5번)
+    const elemInputs = ELEMENT_DAMAGE_IDS.map((id) => [id, numInput(elemDmg[id] ?? 0, 0, TEST_ELEMENT_DAMAGE_MAX, `${elementDamageAbbr(id, fid)} 피해 %`)] as const);
     const apply = button({ label: '적용', icon: 'i-check', variant: 'primary', onClick: () => {
       const want: Partial<Record<StatId, number>> = {};
       for (const [s, i] of inputs) want[s] = Number(i.value);
       setCustomStats(save, want);
+      setElementDamage(save, Object.fromEntries(elemInputs.map(([id, i]) => [id, Number(i.value)])));
       saved('능력치를 넣었다');
       redraw();
     } });
@@ -159,7 +166,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       saved('진화체 기본값으로 되돌렸다');
       redraw();
     } });
-    return [panel({ title: '능력치 직접 입력', aside: `0~${max}` }, grid(inputs.map(([s, i]) => [statName(s, fid), i])), row(apply, reset),
+    return [panel({ title: '능력치 직접 입력', aside: `0~${max}` }, grid([...inputs.map(([s, i]) => [statName(s, fid), i] as [string, Node]), ...elemInputs.map(([id, i]) => [`${elementDamageAbbr(id, fid)} 피해 %`, i] as [string, Node])]), row(apply, reset),
       note('입력값은 원정·등급전·연습·바로 전투 모두에 그대로 쓰인다(노력치는 0으로).'))];
   }
 

@@ -18,11 +18,12 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { deckRow, showToast, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, currentStats, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
-import { elementsMark } from './bha/element';
+import { elementDamageLine, elementsMark } from './bha/element';
+import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import type { VariantMods } from '../engine/expedition';
@@ -60,6 +61,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.setAttribute('aria-label', '능력치');
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry));
+  // 속성 피해 5종 (C.101, GDD 48장 4번): 0 이어도 보인다
+  stats.append(elementDamageLine(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id));
   // 치명타 (C.63, GDD 28장 5번): 기본 + 장착 특성 critChance (물리·마법 합친 하나, 상한 있음)
   const critLine = h('p', 'bha-small');
   critLine.dataset.crit = '';

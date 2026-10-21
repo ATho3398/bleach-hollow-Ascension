@@ -11,7 +11,7 @@ import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
-  type Block, type CombatEvent, type CombatInput, type CombatParams, type CombatState,
+  type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
 } from '../engine/combat';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
@@ -23,7 +23,7 @@ import {
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, damageTier, loadBattleSpeed, saveBattleSpeed, BATTLE_LOG_MAX, hpNumbers, type BattleSpeed, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
-import { elementColor, elementDot, elementMark } from './bha/element';
+import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
 import { elementName, weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, skillBlockLabel, type BattleLabels } from './labels';
@@ -94,6 +94,11 @@ function eventBlockLabel(e: Extract<CombatEvent, { kind: 'block' }>, s: CombatSt
   return skillBlockLabel(labels, factionId, element, e.family, e.role) ?? (e.traitId && !isBasicBlockId(e.traitId) ? traitName(e.traitId, factionId) : labels.skillBlock);
 }
 
+/** 피해 줄의 속성 피해 표시 (GDD 48장 4번): 0 이 아닐 때만 " (불 +50%)" */
+function elemText(elem: ElemHit | undefined, factionId: string): string {
+  return elem && elem.pct !== 0 ? ` (${elementDamageAbbr(elem.id, factionId)} ${elementDamagePct(elem.pct)})` : '';
+}
+
 interface LogLine {
   role: LogRole;
   icon: string;
@@ -110,7 +115,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       const name = e.block === 'skill'
         ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
         : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
-      const parts = [`${name}! ${n(e.damage)} 피해${e.crit ? ' (치명!)' : ''}${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
+      const parts = [`${name}! ${n(e.damage)} 피해${elemText(e.elem, factionId)}${e.crit ? ' (치명!)' : ''}${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
       if (e.bonus === 'stagger') parts.push('적 행동 지연');
@@ -127,7 +132,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'combo':
       return { role: 'chain', icon: 'i-special', text: `콤보! ${comboBlockLabel(labels, comboOf(s.params, e.comboId)?.family)} 블록이 생겼다 (${comboName(e.comboId, factionId)})` };
     case 'stored-use':
-      return { role: 'chain', icon: 'i-stored', text: `${labels.storedSkill}! ${n(e.damage)} 피해 · ${labels.role.guard} ${e.guardSeconds}초 (남은 충전 ${e.charges})` };
+      return { role: 'chain', icon: 'i-stored', text: `${labels.storedSkill}! ${n(e.damage)} 피해${elemText(e.elem, factionId)} · ${labels.role.guard} ${e.guardSeconds}초 (남은 충전 ${e.charges})` };
     case 'stored-ready':
       return { role: 'chain', icon: 'i-stored', text: `${labels.storedSkill} 충전! (${e.charges}/${s.params.storedChargesMax})` };
     case 'heavy-cast':

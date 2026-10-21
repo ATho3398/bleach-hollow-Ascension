@@ -7,7 +7,7 @@ import { combosAtTier, FORM_TABLE, getForm, tryGetForm } from '../../data/evolut
 import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
-import type { ComboRule, CombatParams } from '../combat/combat';
+import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
 import type { BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, formAbilitiesOf } from './formAbilities';
@@ -46,6 +46,8 @@ export interface EvolutionState {
   ability: StatId | null;
   /** 환생 계승 노력치 (GDD 22-7, 형식 20): 이 생을 시작할 때 받은 값(정수). 단계 상한과 따로 더해진다. 없으면 0 */
   carry?: Stats;
+  /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
+  testElementDamage?: Record<string, number>;
 }
 
 export function zeroStats(): Stats {
@@ -60,7 +62,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
 }
 
 export function isMaxTier(e: EvolutionState): boolean {
@@ -288,11 +290,22 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.dispositions = [...fa.dispositions];
   const { effects, critChance } = abilityEffectsOf(fa);
   params.abilityEffects = effects;
+  params.elementDamage = elementDamageOf(e);
   if (critChance > 0) {
     params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
     // 치명 상한 돌파 (GDD 45장 1번): 치명 특성(물 '날카로운 물결')이 있는 몸만 상한 = 기본 상한 + 그 특성 값
     params.critChanceMax = (params.critChanceMax ?? BALANCE.provisional.combat.critChanceMax) + critChance;
   }
+}
+
+/** 속성 피해 % (C.101, GDD 48장): 출처를 모두 더한 값, 칸 = 노멀 + 기본 원소(ELEMENT_DAMAGE_IDS). 지금 출처는 테스트 모드 입력뿐이라 보통 모두 0 */
+export function elementDamageOf(e: EvolutionState): Record<string, number> {
+  const out = zeroElementDamage();
+  for (const id of ELEMENT_DAMAGE_IDS) {
+    const v = e.testElementDamage?.[id];
+    if (typeof v === 'number' && Number.isFinite(v)) out[id]! += v;
+  }
+  return out;
 }
 
 /** 진화체 하나 (외부에서 이름·속성 표시용) */

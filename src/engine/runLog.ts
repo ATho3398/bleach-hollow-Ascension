@@ -115,6 +115,8 @@ export interface BattleRecord {
   enemyCrits?: number;
   /** 진화체 특성 발동 횟수 (C.89, GDD 39장 8번): 연타·되갚기·다시 일어남·연쇄 (화상 'burn' 은 C.97 에 삭제 — 옛 기록에만 있다) */
   abilityProcs?: Partial<Record<'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste' | 'burn', number>>;
+  /** 그 판의 속성 피해 % (C.101, GDD 48장 6번): 속성 id(노멀 + 기본 원소) → %. 옛 기록은 없음(= 모두 0) */
+  elementDamage?: Record<string, number>;
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */

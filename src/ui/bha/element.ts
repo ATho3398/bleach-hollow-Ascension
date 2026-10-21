@@ -1,6 +1,6 @@
 // 속성 표시 공용 (GDD 20-2, C.47 계통 마크를 대체): 색 = 속성 데이터의 디자인 토큰, 글자 = 속성 한 글자(색에만 의존하지 않는다, HANDOFF 7장).
 // .bha-lin 계열 클래스(색 변수 --bha-lin-color)를 그대로 쓰고 값만 속성 색으로 칠한다.
-import { elementAbbr, elementName, getElement } from '../../data/elements';
+import { elementAbbr, elementName, getElement, NORMAL_ELEMENT } from '../../data/elements';
 import { el } from './dom';
 
 /** 속성 색 (CSS 값): `var(--bha-…)` */
@@ -33,4 +33,32 @@ export function elementsMark(ids: readonly string[], factionId: string): HTMLEle
   const box = el('span', 'bha-elmarks');
   ids.forEach((id) => box.append(elementMark(id, factionId)));
   return box;
+}
+
+/** 속성 피해 칸 글자 (GDD 48장 4번): 노멀 칸 = '무'(무속성), 나머지 = 속성 한 글자 */
+export function elementDamageAbbr(id: string, factionId: string): string {
+  return id === NORMAL_ELEMENT ? '무' : elementAbbr(id, factionId);
+}
+
+/** 속성 피해 % 글자 "+50%" (음수면 −) */
+export function elementDamagePct(pct: number): string {
+  const v = Math.round(pct * 10) / 10;
+  return v < 0 ? `−${-v}%` : `+${v}%`;
+}
+
+/** 상태 화면 속성 피해 한 줄 (GDD 48장 4번): "속성 피해 [무] +0% · [물] +0% · …" — 0 이어도 보인다. 동그라미 = 속성 색 + 칸 글자 */
+export function elementDamageLine(values: Record<string, number>, ids: readonly string[], factionId: string): HTMLElement {
+  const line = el('p', 'bha-small');
+  line.dataset.elemDmg = ids.map((id) => `${id}:${values[id] ?? 0}`).join(',');
+  line.append('속성 피해 ');
+  ids.forEach((id, i) => {
+    if (i > 0) line.append(' · ');
+    const dot = paintElement(el('i', 'bha-eldot', elementDamageAbbr(id, factionId)), id);
+    dot.setAttribute('aria-hidden', 'true');
+    const m = paintElement(el('span', 'bha-lin'), id);
+    m.setAttribute('aria-label', `${id === NORMAL_ELEMENT ? '무속성' : elementName(id, factionId)} 피해 ${elementDamagePct(values[id] ?? 0)}`);
+    m.append(dot, el('b', 'bha-num', elementDamagePct(values[id] ?? 0)));
+    line.append(m);
+  });
+  return line;
 }

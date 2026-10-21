@@ -5,7 +5,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { hasSpecialActions } from '../../data/enemies';
-import { getElement, matchup, NORMAL_ELEMENT, weaknessesOf, type Matchup } from '../../data/elements';
+import { ELEMENTAL_IDS, getElement, matchup, NORMAL_ELEMENT, weaknessesOf, type Matchup } from '../../data/elements';
 import { STAT_IDS, type AttackCategory, type ChainBonus, type ChainBonusKind, type EnemyDef, type EnemyPattern, type SkillRole, type StatId, type Stats } from '../../data/schema';
 import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
@@ -190,6 +190,35 @@ export interface CombatParams {
   critChanceMax: number;
   /** 진화체 특성 효과 (C.89, GDD 39장): 진화체 label 에서 계산한 효과 종류별 값 (src/engine/evolution/formAbilities.ts). 비면 효과 없음 */
   abilityEffects: AbilityEffects;
+  /** 속성 피해 (C.101, GDD 48장): 속성 id(노멀 + 기본 원소) → %. 없는 칸은 0. 값은 elementDamageOf(출처 합)가 정한다 */
+  elementDamage: Record<string, number>;
+}
+
+/** 이 공격에 붙은 속성 피해: 칸(속성 id)·% (전투 로그 표시용) */
+export interface ElemHit {
+  id: string;
+  pct: number;
+}
+
+/** 속성 피해 칸 (GDD 48장 1번): 무속성(노멀) + 기본 원소. 특수 속성은 칸이 없다 */
+export const ELEMENT_DAMAGE_IDS: readonly string[] = [NORMAL_ELEMENT, ...ELEMENTAL_IDS];
+
+/** 속성 피해 5종 모두 0 */
+export function zeroElementDamage(): Record<string, number> {
+  return Object.fromEntries(ELEMENT_DAMAGE_IDS.map((id) => [id, 0]));
+}
+
+/** 이 공격이 받는 속성 피해 (GDD 48장 2번): 속성이 없으면 무속성(노멀) 칸. 특수 속성은 어느 칸도 받지 않는다.
+ *  융합(속성 2개)은 받을 수 있는 칸 중 큰 쪽. 받을 칸이 없거나 0 이면 null */
+export function elementDamageBonus(p: Pick<CombatParams, 'elementDamage'>, elements: readonly string[]): { id: string; pct: number } | null {
+  const els = elements.length > 0 ? elements : [NORMAL_ELEMENT];
+  let best: { id: string; pct: number } | null = null;
+  for (const id of els) {
+    if (!ELEMENT_DAMAGE_IDS.includes(id)) continue;
+    const pct = p.elementDamage?.[id] ?? 0;
+    if (pct !== 0 && (!best || pct > best.pct)) best = { id, pct };
+  }
+  return best;
 }
 
 /** 진화체 특성 효과 종류 (C.89, GDD 39장). 엔진은 진화체·종족을 모르고 효과 종류만 안다. 값은 BALANCE.provisional.abilities × 세기 */
@@ -263,6 +292,7 @@ export function defaultCombatParams(): CombatParams {
     liberationPowerInAttacks: CX.basicBlockPowerInAttacks * LB.blockPowerMultiplier,
     liberationRisk: LB.riskOnEnd,
     abilityEffects: {},
+    elementDamage: zeroElementDamage(),
   };
 }
 
@@ -292,9 +322,9 @@ export interface Finisher {
 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
-  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean }
+  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit }
   | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean }
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean }
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit }
   | { kind: 'heavy-cast'; seconds: number }
   | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number; matchup: Matchup; crit?: boolean }
   /** 독 지속 피해 한 번 (GDD 20-2) */
@@ -305,7 +335,7 @@ export type CombatEvent =
   | { kind: 'stance'; seconds: number }
   | { kind: 'stance-end' }
   | { kind: 'counter'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean }
-  | { kind: 'stored-use'; damage: number; guardSeconds: number; charges: number; crit?: boolean }
+  | { kind: 'stored-use'; damage: number; guardSeconds: number; charges: number; crit?: boolean; elem?: ElemHit }
   | { kind: 'stored-ready'; charges: number }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
   /** 콤보 발동: 콤보 블록이 바 맨 오른쪽에 생겼다 (GDD 17-3) */
@@ -889,9 +919,11 @@ export function abilityPowerOf(s: CombatState, block: boolean): number {
   return m;
 }
 
-/** 내 공격 피해: 특성 배율 → 치명타 */
-function playerHit(s: CombatState, damage: number, block: boolean): { damage: number; crit: boolean } {
-  return playerCrit(s, damage * abilityPowerOf(s, block));
+/** 내 공격 피해: 특성 배율 → 속성 피해(GDD 48장, elements = 공격 속성, 비면 무속성) → 치명타. 반사·독·공허 블록은 이 길을 지나지 않는다 */
+function playerHit(s: CombatState, damage: number, block: boolean, elements: readonly string[]): { damage: number; crit: boolean; elem?: ElemHit } {
+  const elem = elementDamageBonus(s.params, elements);
+  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * (elem ? 1 + elem.pct / 100 : 1));
+  return elem ? { ...hit, elem } : hit;
 }
 
 /** 연쇄: 체인 N 을 쓰면 다음 블록이 간격 × perChain × (N−1) 만큼 빨리 */
@@ -1114,8 +1146,8 @@ function useStored(s: CombatState): boolean {
   s.storedCharges--;
   s.storedUsed++;
   s.guard.ticks = Math.max(s.guard.ticks, ticksOf(p, p.storedGuardSeconds));
-  const { damage, crit } = playerHit(s, storedDamage(s), true);
-  emit(s, { kind: 'stored-use', damage, guardSeconds: p.storedGuardSeconds, charges: s.storedCharges, crit });
+  const { damage, crit, elem } = playerHit(s, storedDamage(s), true, []);
+  emit(s, { kind: 'stored-use', damage, guardSeconds: p.storedGuardSeconds, charges: s.storedCharges, crit, elem });
   dealDamage(s, damage, { kind: 'stored', traitId: null, element: null });
   return true;
 }
@@ -1164,8 +1196,8 @@ function useBlock(s: CombatState, index: number): boolean {
     s.tray.splice(index, 1);
     s.specialUsed = true;
     addStored(s, p.storedGaugePerBlock);
-    const { damage, crit } = playerHit(s, blockDamage(s, b), true);
-    emit(s, { kind: 'block', block: 'special', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit });
+    const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, []);
+    emit(s, { kind: 'block', block: 'special', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
     dealDamage(s, damage, { kind: 'special', traitId: null, element: null });
     updateCombos(s, null, 0);
     counterIfStance(s);
@@ -1188,8 +1220,8 @@ function useBlock(s: CombatState, index: number): boolean {
     s.tray.splice(index, 1);
     s.comboBlocksUsed++;
     addStored(s, p.storedGaugePerBlock);
-    const { damage, crit } = playerHit(s, blockDamage(s, b), true);
-    emit(s, { kind: 'block', block: 'combo', traitId: b.traitId, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit });
+    const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, []);
+    emit(s, { kind: 'block', block: 'combo', traitId: b.traitId, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
     dealDamage(s, damage, { kind: 'combo', traitId: b.traitId, element: null });
     updateCombos(s, null, 0);
     counterIfStance(s);
@@ -1199,9 +1231,9 @@ function useBlock(s: CombatState, index: number): boolean {
     s.tray.splice(index, 1);
     addStored(s, p.storedGaugePerBlock);
     addSp(s, p.spPerBlock);
-    const { damage, crit } = playerHit(s, blockDamage(s, b), true);
+    const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, p.playerElements);
     const hit = liberationHit(s);
-    emit(s, { kind: 'block', block: 'liberation', traitId: null, family: null, element: hit.element, matchup: hit.matchup, role: null, chain: 1, damage, weak: hit.weak, heal: 0, guardSeconds: 0, bonus: null, crit });
+    emit(s, { kind: 'block', block: 'liberation', traitId: null, family: null, element: hit.element, matchup: hit.matchup, role: null, chain: 1, damage, weak: hit.weak, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
     dealDamage(s, damage, { kind: 'liberation', traitId: null, element: hit.element, weak: hit.weak, matchup: hit.matchup });
     onHit(s, 'enemy', p.playerElements, damage);
     updateCombos(s, null, 0);
@@ -1241,9 +1273,9 @@ function useBlock(s: CombatState, index: number): boolean {
   }
   const bonus = tierEffect(p, skill, chain).bonus;
   if (bonus) applyChainBonus(s, bonus);
-  const { damage, crit } = playerHit(s, blockDamage(s, b, chain), true);
+  const { damage, crit, elem } = playerHit(s, blockDamage(s, b, chain), true, skill.element ? [skill.element] : []);
   const family = skill.family ?? null;
-  emit(s, { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit });
+  emit(s, { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem });
   dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m });
   if (skill.element) onHit(s, 'enemy', [skill.element], damage);
   applyChainHaste(s, chain);
@@ -1441,8 +1473,8 @@ function advanceTick(s: CombatState): void {
     s.player.attackTimer = t(currentAttackSeconds(s));
     // 평타 = 물리, 내 캐릭터 속성 (GDD 20-3 v3.6)
     const hit = playerHitMultiplier(s, p.playerElements, 'physical');
-    const { damage, crit } = playerHit(s, unitDamage(p) * p.attackPowerMultiplier * hit.mult, false);
-    emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit });
+    const { damage, crit, elem } = playerHit(s, unitDamage(p) * p.attackPowerMultiplier * hit.mult, false, p.playerElements);
+    emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem });
     dealDamage(s, damage, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
     onHit(s, 'enemy', p.playerElements, damage);
     if (s.status !== 'playing') return;
@@ -1450,7 +1482,7 @@ function advanceTick(s: CombatState): void {
     const dh = p.abilityEffects.doubleHit;
     if (dh && nextFloat((s.abilityRng ??= createRng((s.seed ^ ABILITY_SEED_SALT) >>> 0))) < dh) {
       proc(s, 'doubleHit', damage);
-      emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit });
+      emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem });
       dealDamage(s, damage, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
       onHit(s, 'enemy', p.playerElements, damage);
       if (s.status !== 'playing') return;

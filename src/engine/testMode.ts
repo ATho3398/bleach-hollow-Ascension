@@ -13,7 +13,8 @@ import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
 import { SAVE_KEY, newSaveData, storyProgressOf, type SaveData, type StorageLike } from '../game';
 import { clampDifficulty, clampStreak, enemyAtDifficulty, MAX_DIFFICULTY, streakEnemyFactor } from './difficulty';
-import { baseStatsOf, currentStats, STAT_MAX, zeroStats } from './evolution';
+import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from './evolution';
+import { ELEMENT_DAMAGE_IDS } from './combat/combat';
 import { FOOD_IDS } from './faction';
 
 /** 테스트 칸 저장 키 (38-2). 진짜 세이브 키 `SAVE_KEY…` 는 모두 이 앞부분으로 바뀐다 (슬롯 1 = 이 키 그대로) */
@@ -266,10 +267,27 @@ export function setCustomStats(save: SaveData, want: Partial<Stats>): Stats {
   return currentStats(e, save.factionId);
 }
 
-/** [진화체 기본값으로]: 노력치·계승분을 비운다 */
+/** 속성 피해 입력 상한 % (GDD 48장 5번, 테스트 전용) */
+export const TEST_ELEMENT_DAMAGE_MAX = 500;
+
+/** 속성 피해 직접 입력 (GDD 48장 5번): 칸 = 노멀 + 기본 원소(ELEMENT_DAMAGE_IDS), 0~TEST_ELEMENT_DAMAGE_MAX 정수 %. 모두 0 이면 지운다. 원정·등급전·연습·바로 전투에 실린다 */
+export function setElementDamage(save: SaveData, want: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const id of ELEMENT_DAMAGE_IDS) {
+    const v = want[id];
+    const pct = typeof v === 'number' && Number.isFinite(v) ? Math.min(TEST_ELEMENT_DAMAGE_MAX, Math.max(0, Math.round(v))) : 0;
+    if (pct !== 0) out[id] = pct;
+  }
+  if (Object.keys(out).length > 0) save.evolution.testElementDamage = out;
+  else delete save.evolution.testElementDamage;
+  return elementDamageOf(save.evolution);
+}
+
+/** [진화체 기본값으로]: 노력치·계승분·속성 피해 입력을 비운다 */
 export function resetStats(save: SaveData): Stats {
   save.evolution.ev = zeroStats();
   delete save.evolution.carry;
+  delete save.evolution.testElementDamage;
   return currentStats(save.evolution, save.factionId);
 }
 
