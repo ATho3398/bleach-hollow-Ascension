@@ -13,7 +13,7 @@ import type { BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, formAbilitiesOf, physBlockOf, physSpawnSecondsFor } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
-import { pickTierLook } from './tierLook';
+import { pickLook } from './tierLook';
 
 const EV = BALANCE.provisional.evolution;
 const SX = BALANCE.provisional.stats;
@@ -277,7 +277,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   e.formId = form.id;
   e.formHistory.push(form.id);
   e.ability = snapshot.ability;
-  e.look = pickTierLook(getFaction(ctx.factionId), e.tierIndex + 1, e.ev, form);
+  e.look = pickLook(getFaction(ctx.factionId), form, e.ev, e.stageSeed);
   e.steps = 0;
   e.alerts = 0;
   e.absorbs = 0;

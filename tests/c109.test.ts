@@ -39,8 +39,9 @@ describe('C.109 아쥬커스 외형 = 노력치 1위 능력치 (GDD 53)', () => 
     expect(shin.tierLooks).toEqual({});
   });
   it('표의 모든 외형이 단계 외형 스킨(시작 전용·호로)이고 그림 파일이 있다', () => {
-    const ids = tierLookIds(hollow);
-    expect(ids.sort()).toEqual(['carapace', 'panther', 'raptor', 'rhino', 'scorpion', 'stag', 'wyrm']);
+    const tierIds = ['carapace', 'panther', 'raptor', 'rhino', 'scorpion', 'stag', 'wyrm'];
+    const ids = tierLookIds({ tierLooks: hollow.tierLooks });
+    expect(ids.sort()).toEqual(tierIds);
     for (const id of ids) {
       expect(getSkin(id)).toMatchObject({ factionId: 'hollow', startOnly: true, tierLook: true });
       expect(existsSync(`public/art/skin-${id}.png`), id).toBe(true);
@@ -135,6 +136,6 @@ describe('C.109 세이브 형식 33 마이그레이션', () => {
   });
   it('스킨 표에 시작 전용 4종 + 단계 외형 7종이 모두 호로 전용', () => {
     expect(SKINS.filter((x) => x.startOnly).every((x) => x.factionId === 'hollow')).toBe(true);
-    expect(SKINS.filter((x) => x.tierLook).length).toBe(7);
+    expect(SKINS.filter((x) => x.tierLook).length).toBe(7 + 36); // 아쥬커스 7 + 아란칼 36(C.110)
   });
 });

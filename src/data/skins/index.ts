@@ -18,7 +18,7 @@ export interface SkinDef {
   tierLook?: true;
 }
 
-export const SKINS: readonly SkinDef[] = [
+const BASE_SKINS: readonly SkinDef[] = [
   { id: 'grandfisher', name: '그랜드피셔', factionId: 'hollow', tentativeName: true, provisional: true },
   { id: 'stalker', name: '추적자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'brute', name: '거구', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
@@ -33,6 +33,15 @@ export const SKINS: readonly SkinDef[] = [
   { id: 'scorpion', name: '전갈형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
   { id: 'raptor', name: '새형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
 ];
+/** 아란칼(5단계) 외형 (GDD 54, C.110): 속성 8 × 칸 4 + 히든 4. 종족 설정 formLooks 가 진화체 id → 이 id 로 잇는다(그림 `skin-arr<속성><칸 a~d>.png`, 예 `skin-arrwaterb.png` = 물 2번 칸). 상점·스킨 패널·시작 추첨에는 안 나온다 */
+const ARRANCAR_ELEMENTS: readonly (readonly [string, string])[] = [['normal', '노멀'], ['water', '물'], ['fire', '불'], ['earth', '흙'], ['thunder', '뇌'], ['blood', '혈'], ['poison', '독'], ['kyo', '허']];
+const ARRANCAR_SKINS: readonly SkinDef[] = [
+  ...ARRANCAR_ELEMENTS.flatMap(([id, name]) => [1, 2, 3, 4].map((n): SkinDef => ({ id: `arr${id}${'abcd'[n - 1]}`, name: `아란칼 ${name} ${n}`, factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true }))),
+  ...([['limit', '한계 돌파'], ['restraint', '절제'], ['hunter', '강적 사냥꾼'], ['reborn', '환생']] as const).map(([_k, name], i): SkinDef => ({ id: `arrhidden${'abcd'[i]}`, name: `아란칼 ${name}`, factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true })),
+];
+
+export const SKINS: readonly SkinDef[] = [...BASE_SKINS, ...ARRANCAR_SKINS];
+
 
 export function getSkin(id: string | null | undefined): SkinDef | undefined {
   return id ? SKINS.find((s) => s.id === id) : undefined;

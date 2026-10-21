@@ -6,6 +6,100 @@
   "logo": "logo-hollow",
   "startLooks": ["stalker", "brute", "ghoul", "shackled"],
   "startLookBias": { "base": "hp", "stalker": "spd", "brute": "atk", "ghoul": "spr", "shackled": "def" },
+  "formLooks": {
+    "t5:normal:physical": [
+      "arrnormala",
+      "arrnormald"
+    ],
+    "t5:normal:special": [
+      "arrnormalb"
+    ],
+    "t5:normal:mixed": [
+      "arrnormalc"
+    ],
+    "t5:water:physical": [
+      "arrwaterd"
+    ],
+    "t5:water:special": [
+      "arrwatera",
+      "arrwaterb"
+    ],
+    "t5:water:mixed": [
+      "arrwaterc"
+    ],
+    "t5:fire:physical": [
+      "arrfirea",
+      "arrfired"
+    ],
+    "t5:fire:special": [
+      "arrfireb"
+    ],
+    "t5:fire:mixed": [
+      "arrfirec"
+    ],
+    "t5:earth:physical": [
+      "arreartha",
+      "arrearthd"
+    ],
+    "t5:earth:special": [
+      "arrearthb"
+    ],
+    "t5:earth:mixed": [
+      "arrearthc"
+    ],
+    "t5:thunder:physical": [
+      "arrthundera"
+    ],
+    "t5:thunder:special": [
+      "arrthunderb",
+      "arrthunderd"
+    ],
+    "t5:thunder:mixed": [
+      "arrthunderc"
+    ],
+    "t5:blood:physical": [
+      "arrblooda",
+      "arrbloodd"
+    ],
+    "t5:blood:special": [
+      "arrbloodb"
+    ],
+    "t5:blood:mixed": [
+      "arrbloodc"
+    ],
+    "t5:poison:physical": [
+      "arrpoisona",
+      "arrpoisond"
+    ],
+    "t5:poison:special": [
+      "arrpoisonb"
+    ],
+    "t5:poison:mixed": [
+      "arrpoisonc"
+    ],
+    "t5:kyo:physical": [
+      "arrkyoa",
+      "arrkyod"
+    ],
+    "t5:kyo:special": [
+      "arrkyob"
+    ],
+    "t5:kyo:mixed": [
+      "arrkyoc"
+    ],
+    "h5:limit": [
+      "arrhiddena"
+    ],
+    "h5:restraint": [
+      "arrhiddenb"
+    ],
+    "h5:hunter": [
+      "arrhiddenc"
+    ],
+    "h5:reborn": [
+      "arrhiddend"
+    ]
+  },
   "tierLooks": {
     "3": {
       "stat": { "atk": "carapace", "int": "stag", "hp": "rhino", "spr": "wyrm", "spd": "panther", "def": "scorpion" },

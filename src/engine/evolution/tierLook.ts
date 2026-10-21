@@ -18,9 +18,26 @@ export function pickTierLook(faction: Pick<FactionConfig, 'tierLooks'>, tier: nu
   return first !== undefined ? table.stat[first] ?? null : null;
 }
 
+/** 진화체 id 로 정한 외형 (GDD 54): formLooks[form.id] 가 하나면 그것, 둘 이상이면 seed 로 하나를 뽑는다(같은 seed → 같은 결과). 표에 없으면 null */
+export function pickFormLook(faction: Pick<FactionConfig, 'formLooks'>, formId: string, seed: number): string | null {
+  const list = faction.formLooks?.[formId];
+  if (!list?.length) return null;
+  let x = (seed ^ 0x9e3779b1) >>> 0;
+  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b) >>> 0;
+  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35) >>> 0;
+  x = (x ^ (x >>> 16)) >>> 0;
+  return list[x % list.length]!;
+}
+
+/** 진화체 외형: 진화체 표 → 없으면 단계 표(능력치 순위) */
+export function pickLook(faction: Pick<FactionConfig, 'formLooks' | 'tierLooks'>, form: FormDef, ev: Stats, seed: number): string | null {
+  return pickFormLook(faction, form.id, seed) ?? pickTierLook(faction, form.tier, ev, form);
+}
+
 /** 표에 나오는 모든 외형 id (검증·테스트용) */
-export function tierLookIds(faction: Pick<FactionConfig, 'tierLooks'>): string[] {
+export function tierLookIds(faction: Pick<FactionConfig, 'tierLooks' | 'formLooks'>): string[] {
   const out = new Set<string>();
+  for (const list of Object.values((faction as Pick<FactionConfig, 'formLooks'>).formLooks ?? {})) for (const id of list) out.add(id);
   for (const t of Object.values(faction.tierLooks ?? {})) {
     for (const s of STAT_IDS) if (t.stat[s]) out.add(t.stat[s]!);
     for (const p of t.pairs ?? []) out.add(p.look);

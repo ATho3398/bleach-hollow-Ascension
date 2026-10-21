@@ -8,7 +8,7 @@ import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type Expedi
 export type { StorySettlement } from './engine/expedition';
 import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, startBiasStats, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
-import { pickTierLook } from './engine/evolution/tierLook';
+import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
 import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type RebirthRecord, type RunLog, type SlotLog } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
@@ -41,7 +41,7 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 34;
+export const SAVE_FORMAT_VERSION = 35;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -883,6 +883,23 @@ function migrateTierLooks(save: SaveData): void {
   }
 }
 
+/** 형식 35: 5단계 트랙의 진화체 외형을 채운다. 이미 외형이 있는 트랙·표에 없는 진화체는 그대로 */
+function migrateFormLooks(save: SaveData): void {
+  const tracks = [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])] as Partial<Pick<SaveData, TrackKey>>[];
+  for (const t of tracks) {
+    const e = t.evolution;
+    if (!e || typeof e !== 'object' || typeof t.factionId !== 'string' || typeof e.formId !== 'string') continue;
+    const form = tryGetForm(e.formId);
+    if (!form || typeof e.stageSeed !== 'number') continue;
+    try {
+      const look = pickFormLook(getFaction(t.factionId), form.id, e.stageSeed);
+      if (look !== null) e.look = look;
+    } catch {
+      // 모르는 종족은 건드리지 않는다
+    }
+  }
+}
+
 function migrateSpecialVasto(save: SaveData): void {
   const m = remapSpecialVastoId;
   const tracks = [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])] as Partial<Pick<SaveData, TrackKey>>[];
@@ -1356,6 +1373,11 @@ export function migrateSave(raw: unknown): SaveData | null {
   if (save.meta.format < 34) {
     // 형식 33 → 34 (C.108, GDD 52): 진화 상태 `bias`(시작 외형 스탯 편향, 새 세이브만)·흡수 기록 `mode`(흡수 갈래)가 생겼다. 옛 세이브는 편향 없음·옛 흡수 기록은 둘 다 흡수로 본다 — 값을 채우지 않는다
     save.meta.format = 34;
+  }
+  if (save.meta.format < 35) {
+    // 형식 34 → 35 (C.110, GDD 54): 진화체 외형 표(formLooks)가 생겼다. 이미 아란칼(5단계)인 트랙은 지금 진화체로 외형을 채운다(같은 분류에 칸이 둘이면 그 단계 시드로 하나 고정)
+    migrateFormLooks(save);
+    save.meta.format = 35;
   }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);

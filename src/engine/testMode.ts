@@ -12,7 +12,7 @@ import { COSMETIC_ITEMS } from '../data/shop';
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
 import { SAVE_KEY, newSaveData, storyProgressOf, type SaveData, type StorageLike } from '../game';
-import { pickTierLook } from './evolution/tierLook';
+import { pickLook } from './evolution/tierLook';
 import { clampDifficulty, clampStreak, enemyAtDifficulty, MAX_DIFFICULTY, streakEnemyFactor } from './difficulty';
 import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from './evolution';
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
@@ -238,7 +238,7 @@ export function newTestSave(factionId: string, nowMs: number = Date.now()): Save
 function refreshLook(save: SaveData): void {
   const e = save.evolution;
   const form = e.formId ? tryGetForm(e.formId) : undefined;
-  e.look = form ? pickTierLook(getFaction(save.factionId), form.tier, currentStats(e, save.factionId), form) : null;
+  e.look = form ? pickLook(getFaction(save.factionId), form, currentStats(e, save.factionId), e.stageSeed) : null;
 }
 
 /** 진화체 고르기: null = 1단계(진화 전). 단계·도감·이력도 맞춘다. 고유 특성은 그대로(따로 고른다) */
