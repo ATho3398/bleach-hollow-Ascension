@@ -186,7 +186,9 @@
 .bha-seg__count { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-medium); color: var(--bha-text-3); font-variant-numeric: tabular-nums; }
 .bha-seg__item[aria-selected="true"] .bha-seg__count { color: var(--bha-text-2); }
 .bha-seg--sm .bha-seg__item { min-height: 36px; }
-.bha-seg--stack .bha-seg__item { flex-direction: column; gap: 0; min-height: 50px; line-height: 1.2; white-space: normal; }
+/* 단계 탭 같은 쌓은 탭: 이름이 한 어절 가운데서 끊기지 않게 한 줄 유지(nowrap)하고 칸 폭은 이름 폭 아래로 줄지 않게, 대신 안쪽 여백을 줄인다 (C.113) */
+.bha-seg--stack { grid-auto-columns: minmax(max-content, 1fr); }
+.bha-seg--stack .bha-seg__item { flex-direction: column; gap: 0; min-height: 50px; line-height: 1.2; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; padding: 0 var(--bha-sp-2); }
 .bha-seg--sm .bha-seg__item::after { content: ""; position: absolute; inset: -4px 0; }
 
 /* =========================================================
