@@ -86,6 +86,9 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
 .bha-tama__bar[data-pos="bottom"] {
   bottom: max(var(--bha-sp-2), env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); flex-direction: row;
 }
+/* 세로 폰(GDD 16-6): 기기를 시계 방향 90도 돌려 놓으니 조작 줄도 같은 쪽으로 돌린다 — 버튼이 정사각형이라 제자리에서 돌려도 줄 자리는 그대로, 순서는 기기 위쪽 = 화면 오른쪽이라 오른쪽부터 (C.111) */
+.bha-tama__bar[data-pos="bottom"] { flex-direction: row-reverse; }
+.bha-tama__bar[data-pos="bottom"] .bha-btn { rotate: 90deg; }
 .bha-tama__bar .bha-btn {
   flex-direction: column; justify-content: center; gap: var(--bha-sp-2);
   width: var(--tama-btn); height: var(--tama-btn); min-height: var(--tama-btn); padding: var(--bha-sp-2);
@@ -194,3 +197,6 @@ html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tam
 .bha-designs__worn { grid-area: worn; color: var(--bha-accent); font-weight: 700; font-size: var(--bha-fs-sm); }
 /* 그림 기기의 뒷면은 그림에 이미 무늬가 있으니 CSS 스피커 구멍은 뺀다 */
 .bha-dev.has-tama-art .bha-tama__grille { display: none; }
+/* 세로 폰: 큰 창 레이어를 기기와 같이 가로 기준(뷰포트 세로 × 가로)으로 놓고 시계 방향 90도 돌린다. 크기·위치는 tamago.ts placeDesignsLayer 가 px 로 넣는다 (C.111) */
+.bha-designs.is-rotated { position: fixed; inset: auto; left: 0; top: 0; box-sizing: border-box; transform-origin: 0 0; }
+.bha-designs.is-rotated .bha-designs__win { width: 100%; height: 100%; }

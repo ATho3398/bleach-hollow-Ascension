@@ -41,7 +41,7 @@ describe('기본 키링 영옥 구슬 (29장 1번)', () => {
       expect(s.runLog.shopPurchases).toEqual([]);
     }
     expect(newSharedState().cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki']);
-    expect(newTrack('shinigami', 5).wear).toEqual({ keyring: 'keyring-orb', device: 'device-badge' });
+    expect(newTrack('shinigami', 5).wear).toEqual({ keyring: 'keyring-orb' }); // 기기는 기본형 (C.112)
   });
   it('해제할 수 있고, 다시 열어도(저장 왕복) 다시 입히지 않는다', () => {
     const s = newSaveData('hollow', 1000);
@@ -102,7 +102,7 @@ describe('세이브 형식 26 마이그레이션 (키링 없던 세이브)', () 
     const m = migrateSave(raw)!;
     expect(m.meta.format).toBeGreaterThanOrEqual(26);
     expect(m.shared.cosmetics).toEqual(['keyring-orb', 'device-badge', 'device-zaraki', 'bar-ink']);
-    expect(m.wear).toEqual({ bar: 'bar-ink', keyring: 'keyring-orb', device: 'device-badge' });
+    expect(m.wear).toEqual({ bar: 'bar-ink', keyring: 'keyring-orb' });
     expect(m.shared.jade).toBe(7);
   });
   it('이미 다른 키링을 입은 트랙은 건드리지 않는다', () => {

@@ -15,9 +15,9 @@ import type { Device } from './device';
 import { button, el } from './dom';
 import { showToast } from './nest';
 import { isTypingTarget } from './shortcuts';
-import { toLocal, type Fit } from './viewport';
+import { currentFit, toLocal, type Fit } from './viewport';
 import {
-  BODY, SIDE_BANDS, silhouetteBands, deviceSkin, deviceSkinV2, defaultGravity, deviceArtPlacement, deviceArtPlacementV2, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
+  BODY, SIDE_BANDS, designsLayerPlace, silhouetteBands, deviceSkin, deviceSkinV2, defaultGravity, deviceArtPlacement, deviceArtPlacementV2, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
   TAMAGO_EVENT, toDeviceVec, clampView, zoomAt, wheelFactor, VIEW_HOME, type Pendulum, type Rect, type TamagoPrefs, type TamaLayout, type TamaView, type SilBand,
 } from './tamagoLogic';
 
@@ -679,6 +679,14 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
 
   // ── [디자인] 목록 (GDD 30장, 47장 2번): 기기 바깥, 브라우저 화면 전체 위에 뜨는 큰 창(화면의 약 90%). 카드마다 기기 앞면 큰 그림·이름, 고르면 바로 바뀐다.
   // LCD 안 레이어가 아니라 document.body 에 붙이므로 기기 선택 버튼 등록은 하지 않는다 — [닫기]·바깥 탭·Esc 로 닫는다. 착용은 트랙별(지금 트랙의 wear.device) ──
+  function placeDesignsLayer(layer: HTMLElement, f: Fit): void {
+    const pl = designsLayerPlace(f);
+    layer.classList.toggle('is-rotated', pl !== null);
+    layer.style.width = pl ? `${pl.width}px` : '';
+    layer.style.height = pl ? `${pl.height}px` : '';
+    layer.style.padding = pl ? `${pl.padY}px ${pl.padX}px` : '';
+    layer.style.transform = pl ? pl.transform : '';
+  }
   let closeDesigns: (() => void) | null = null;
   function openDesigns(): void {
     if (closeDesigns) return closeDesigns();
@@ -688,6 +696,10 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     layer.setAttribute('role', 'dialog');
     layer.setAttribute('aria-modal', 'true');
     layer.setAttribute('aria-label', '기기 디자인');
+    // 세로 폰이면 큰 창도 기기와 같은 쪽으로 돌려 가로 기준으로 보인다 (GDD 16-6, C.111)
+    const placeLayer = () => placeDesignsLayer(layer, currentFit());
+    placeLayer();
+    window.addEventListener('resize', placeLayer);
     const win = el('div', 'bha-designs__win');
     win.append(el('h2', 'bha-modal__title', '기기 디자인'), el('p', 'bha-modal__body', '평소 화면의 틀과 다마고치 모드에서 보이는 기기 모양. 고르면 바로 바뀐다.'));
     const list = el('div', 'bha-designs__list');
@@ -731,6 +743,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       if (!closeDesigns) return;
       closeDesigns = null;
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', placeLayer);
       layer.remove();
       shield.hidden = !on;
     };

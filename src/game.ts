@@ -41,7 +41,7 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 35;
+export const SAVE_FORMAT_VERSION = 36;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -278,10 +278,10 @@ export interface SharedState {
 /** 기본으로 주는 꾸밈 id (GDD 29장: 영옥 구슬) */
 export const freeCosmeticIds = (): string[] => FREE_COSMETICS.map((c) => c.id);
 
-/** 새 트랙의 기본 착용: 기본으로 주는 꾸밈 (분류마다 하나) */
+/** 새 트랙의 기본 착용: 기본으로 주는 꾸밈 (분류마다 하나). 기기 디자인은 입히지 않는다 — 기본은 [기본형](CSS 기기)이고, 기본 제공 디자인(사신대행증·십일번대)은 보유만 시켜 [디자인]에서 고른다 (GDD 56, C.112) */
 export function defaultWear(): WearState {
   const w: WearState = {};
-  for (const c of FREE_COSMETICS) w[c.category as WearCategory] ??= c.id; // 같은 분류의 기본 제공이 여럿이면(기기 디자인) 첫 번째만 입는다
+  for (const c of FREE_COSMETICS) if (c.category !== 'device') w[c.category as WearCategory] ??= c.id;
   return w;
 }
 
@@ -1378,6 +1378,13 @@ export function migrateSave(raw: unknown): SaveData | null {
     // 형식 34 → 35 (C.110, GDD 54): 진화체 외형 표(formLooks)가 생겼다. 이미 아란칼(5단계)인 트랙은 지금 진화체로 외형을 채운다(같은 분류에 칸이 둘이면 그 단계 시드로 하나 고정)
     migrateFormLooks(save);
     save.meta.format = 35;
+  }
+  if (save.meta.format < 36) {
+    // 형식 35 → 36 (C.112, GDD 56 4번): 기본 기기는 [기본형]이다. 옛 기본값(사신대행증)이 자꾸 입혀져 있던 트랙은 벗긴다(다른 디자인을 고른 것은 그대로)
+    forEachTrack(save, (t) => {
+      if (isRec(t.wear) && t.wear.device === 'device-badge') delete t.wear.device;
+    });
+    save.meta.format = 36;
   }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
