@@ -37,6 +37,7 @@ import { battleView } from './battleView';
 import { arenaSceneBg, groundSceneBg, towerSceneBg } from './bha/sceneBg';
 import { applyTheme } from './bha/theme';
 import { speciesView, startView } from './startView';
+import { enterFullscreenOnStart, watchFullscreen } from './fullscreen';
 import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { setTitleRequest, signalHold } from './bha/hold';
@@ -131,6 +132,7 @@ export function startApp(host: HTMLElement): void {
     playTick = now;
   };
   window.setInterval(tickPlay, 15_000);
+  watchFullscreen();
   document.addEventListener('visibilitychange', tickPlay);
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
   const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
@@ -241,13 +243,20 @@ export function startApp(host: HTMLElement): void {
     const lastSum = sums.find((x) => x.slot === last);
     applyTheme(lastSum && lastSum.state === 'ok' ? getFaction(lastSum.factionId) : FACTIONS[0]!);
     startView(root, sums, {
-      onNew: () => open('slot-new', () => renderSlotPick('new')),
+      onNew: () => {
+        enterFullscreenOnStart(store);
+        open('slot-new', () => renderSlotPick('new'));
+      },
       // 이어하기 (GDD 19-3): 슬롯 선택 없이 가장 최근 슬롯을 마지막으로 보던 화면부터
       onContinue: () => {
+        enterFullscreenOnStart(store);
         const n = lastPlayedSlot(allSlotSummaries(store));
         if (n !== null) enterSlot(n);
       },
-      onImport: () => open('slot-load', () => renderSlotPick('load')),
+      onImport: () => {
+        enterFullscreenOnStart(store);
+        open('slot-load', () => renderSlotPick('load'));
+      },
     }, note);
   }
 

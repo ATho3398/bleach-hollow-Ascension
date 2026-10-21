@@ -11,6 +11,7 @@ import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
 import { bgm, BGM_SETTINGS_KEY, BGM_VOLUMES, loadBgmSettings, saveBgmSettings } from './bgm';
 import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogic';
 import { setTiltPref } from './bha/tamago';
+import { FULLSCREEN_EVENT, fullscreenSupported, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 
 export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onTutorial?: () => void): void {
@@ -181,6 +182,40 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   };
   window.addEventListener(TAMAGO_EVENT, onTamaEvent);
 
+  // 전체 화면 (GDD 46장): 지원하지 않는 브라우저(아이폰 사파리 등)에서는 패널 자체를 만들지 않는다. 표시는 실제 상태(fullscreenchange)를 따라간다
+  const fsPanel = el('section', 'bha-panel');
+  fsPanel.dataset.panel = 'fullscreen';
+  fsPanel.append(el('h2', 'bha-panel__title', '전체 화면'));
+  const fsBtn = button({ label: '' });
+  fsBtn.dataset.set = 'fullscreen';
+  const fsStartBtn = button({ label: '' });
+  fsStartBtn.dataset.set = 'fullscreen-start';
+  const paintFs = () => {
+    const on = isFullscreen();
+    fsBtn.textContent = `전체 화면 ${on ? '켬' : '끔'}`;
+    fsBtn.classList.toggle('is-on', on);
+    fsBtn.setAttribute('aria-pressed', String(on));
+    const st = loadFullscreenStart(storage);
+    fsStartBtn.textContent = `시작할 때 전체 화면 ${st ? '켬' : '끔'}`;
+    fsStartBtn.classList.toggle('is-on', st);
+    fsStartBtn.setAttribute('aria-pressed', String(st));
+  };
+  fsBtn.onclick = () => {
+    void toggleFullscreen().then(paintFs);
+  };
+  fsStartBtn.onclick = () => {
+    saveFullscreenStart(storage, !loadFullscreenStart(storage));
+    paintFs();
+  };
+  fsPanel.append(fsBtn, el('p', 'bha-faint', '주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다. 뒤로 가기나 제스처로 풀리면 그대로 둔다.'), fsStartBtn, el('p', 'bha-faint', '켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
+  paintFs();
+  const onFsEvent = () => {
+    if (!fsPanel.isConnected) window.removeEventListener(FULLSCREEN_EVENT, onFsEvent);
+    else paintFs();
+  };
+  window.addEventListener(FULLSCREEN_EVENT, onFsEvent);
+  const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];
+
   const panelOf = (...n: Node[]) => {
     const p = el('section', 'bha-panel');
     p.append(...n);
@@ -210,5 +245,5 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, tamaPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes())]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, ...fsPanels, tamaPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes())]);
 }
