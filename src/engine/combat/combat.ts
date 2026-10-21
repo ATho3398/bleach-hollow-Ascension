@@ -194,9 +194,9 @@ export interface CombatParams {
   elementDamage: Record<string, number>;
 }
 
-/** 이 공격에 붙은 속성 피해: 칸(속성 id)·% (전투 로그 표시용) */
+/** 이 공격에 붙은 속성 피해: 받은 칸(속성 id들, 융합이면 2개)·합친 % (전투 로그 표시용) */
 export interface ElemHit {
-  id: string;
+  ids: string[];
   pct: number;
 }
 
@@ -208,17 +208,13 @@ export function zeroElementDamage(): Record<string, number> {
   return Object.fromEntries(ELEMENT_DAMAGE_IDS.map((id) => [id, 0]));
 }
 
-/** 이 공격이 받는 속성 피해 (GDD 48장 2번): 속성이 없으면 무속성(노멀) 칸. 특수 속성은 어느 칸도 받지 않는다.
- *  융합(속성 2개)은 받을 수 있는 칸 중 큰 쪽. 받을 칸이 없거나 0 이면 null */
-export function elementDamageBonus(p: Pick<CombatParams, 'elementDamage'>, elements: readonly string[]): { id: string; pct: number } | null {
+/** 이 공격이 받는 속성 피해 (GDD 48장 2·7번): 속성이 없으면 무속성(노멀) 칸. 특수 속성은 어느 칸도 받지 않는다.
+ *  융합(속성 2개)은 각 속성 값의 1/2 씩 더한다(속성 N개 = 각 1/N). 받을 칸이 없거나 합이 0 이면 null */
+export function elementDamageBonus(p: Pick<CombatParams, 'elementDamage'>, elements: readonly string[]): ElemHit | null {
   const els = elements.length > 0 ? elements : [NORMAL_ELEMENT];
-  let best: { id: string; pct: number } | null = null;
-  for (const id of els) {
-    if (!ELEMENT_DAMAGE_IDS.includes(id)) continue;
-    const pct = p.elementDamage?.[id] ?? 0;
-    if (pct !== 0 && (!best || pct > best.pct)) best = { id, pct };
-  }
-  return best;
+  const ids = els.filter((id) => ELEMENT_DAMAGE_IDS.includes(id));
+  const pct = ids.reduce((sum, id) => sum + (p.elementDamage?.[id] ?? 0) / els.length, 0);
+  return ids.length > 0 && pct !== 0 ? { ids, pct } : null;
 }
 
 /** 진화체 특성 효과 종류 (C.89, GDD 39장). 엔진은 진화체·종족을 모르고 효과 종류만 안다. 값은 BALANCE.provisional.abilities × 세기 */

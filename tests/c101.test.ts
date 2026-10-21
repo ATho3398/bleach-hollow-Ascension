@@ -46,11 +46,10 @@ describe('속성 피해 칸 (GDD 48장 1번)', () => {
     applyEvolutionToParams(params, e, 'hollow');
     expect(params.elementDamage).toEqual(elementDamageOf(e));
   });
-  it('elementDamageBonus: 속성 없음 = 무속성 칸, 특수 = 없음, 융합 = 큰 쪽, 0 이면 없음', () => {
+  it('elementDamageBonus: 속성 없음 = 무속성 칸, 특수 = 없음, 0 이면 없음', () => {
     const p = { elementDamage: { ...all(0), [NORMAL_ELEMENT]: 10, [ELEMENTAL_IDS[0]!]: 20, [ELEMENTAL_IDS[1]!]: 30 } };
-    expect(elementDamageBonus(p, [])).toEqual({ id: NORMAL_ELEMENT, pct: 10 });
-    expect(elementDamageBonus(p, [ELEMENTAL_IDS[0]!])).toEqual({ id: ELEMENTAL_IDS[0], pct: 20 });
-    expect(elementDamageBonus(p, [ELEMENTAL_IDS[0]!, ELEMENTAL_IDS[1]!])).toEqual({ id: ELEMENTAL_IDS[1], pct: 30 });
+    expect(elementDamageBonus(p, [])).toEqual({ ids: [NORMAL_ELEMENT], pct: 10 });
+    expect(elementDamageBonus(p, [ELEMENTAL_IDS[0]!])).toEqual({ ids: [ELEMENTAL_IDS[0]], pct: 20 });
     expect(elementDamageBonus({ elementDamage: { ...all(100), [SPECIAL]: 100 } }, [SPECIAL])).toBeNull();
     expect(elementDamageBonus({ elementDamage: all(0) }, [])).toBeNull();
   });
@@ -62,7 +61,7 @@ describe('속성 피해 배율 (GDD 48장 2번)', () => {
     const own = firstAttack({ playerElements: [id], elementDamage: { ...all(0), [id]: 50 } });
     const other = firstAttack({ playerElements: [id], elementDamage: { ...all(100), [id]: 0 } });
     expect(own.damage / base.damage).toBeCloseTo(1.5, 9);
-    expect(own.elem).toEqual({ id, pct: 50 });
+    expect(own.elem).toEqual({ ids: [id], pct: 50 });
     expect(other.damage).toBe(base.damage);
     expect(other.elem).toBeUndefined();
   });
@@ -73,6 +72,17 @@ describe('속성 피해 배율 (GDD 48장 2번)', () => {
       expect(boosted.damage).toBe(base.damage);
       expect(boosted.elem).toBeUndefined();
     }
+  });
+  it('융합(속성 2개) 공격 = 각 속성 값의 1/2 합 (GDD 48장 7번: 물 +20%·흙 +10% → +15%)', () => {
+    const [w, , e] = ELEMENTAL_IDS as [string, string, string];
+    const p = { elementDamage: { ...all(0), [w]: 20, [e]: 10, [NORMAL_ELEMENT]: 99 } };
+    expect(elementDamageBonus(p, [w, e])).toEqual({ ids: [w, e], pct: 15 });
+    expect(elementDamageBonus(p, [w, SPECIAL])).toEqual({ ids: [w], pct: 10 }); // 특수 쪽 절반은 0
+    expect(elementDamageBonus({ elementDamage: { ...all(0), [NORMAL_ELEMENT]: 50 } }, [w, e])).toBeNull(); // 무속성 칸은 안 받는다
+    const base = firstAttack({ playerElements: [w, e] });
+    const fused = firstAttack({ playerElements: [w, e], elementDamage: p.elementDamage });
+    expect(fused.damage / base.damage).toBeCloseTo(1.15, 9);
+    expect(fused.elem).toEqual({ ids: [w, e], pct: 15 });
   });
   it('치명과 곱한다: 치명 100% + 무속성 +50% = ×1.5 × ×1.5', () => {
     const base = firstAttack({});
@@ -95,7 +105,7 @@ describe('속성 피해 배율 (GDD 48장 2번)', () => {
     expect(voids.length).toBeGreaterThan(0);
     expect(plainSkill.length).toBeGreaterThan(0);
     expect(stored.length).toBeGreaterThan(0);
-    for (const e of [...special, ...plainSkill, ...stored]) expect(e.elem).toEqual({ id: NORMAL_ELEMENT, pct: 40 });
+    for (const e of [...special, ...plainSkill, ...stored]) expect(e.elem).toEqual({ ids: [NORMAL_ELEMENT], pct: 40 });
     for (const e of voids) expect(e.elem).toBeUndefined();
   });
   it('해방 블록은 내 캐릭터 속성 칸', () => {
@@ -111,7 +121,7 @@ describe('속성 피해 배율 (GDD 48장 2번)', () => {
     });
     const lib = ev.filter((e): e is Extract<CombatEvent, { kind: 'block' }> => e.kind === 'block' && e.block === 'liberation');
     expect(lib.length).toBeGreaterThan(0);
-    for (const e of lib) expect(e.elem).toEqual({ id: fire, pct: 50 });
+    for (const e of lib) expect(e.elem).toEqual({ ids: [fire], pct: 50 });
   });
   it('반사(되갚기)·독 지속 피해는 속성 피해를 받지 않는다', () => {
     const thorns = (pct: number) => {

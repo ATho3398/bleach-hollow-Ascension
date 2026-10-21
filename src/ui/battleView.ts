@@ -94,9 +94,9 @@ function eventBlockLabel(e: Extract<CombatEvent, { kind: 'block' }>, s: CombatSt
   return skillBlockLabel(labels, factionId, element, e.family, e.role) ?? (e.traitId && !isBasicBlockId(e.traitId) ? traitName(e.traitId, factionId) : labels.skillBlock);
 }
 
-/** 피해 줄의 속성 피해 표시 (GDD 48장 4번): 0 이 아닐 때만 " (불 +50%)" */
+/** 피해 줄의 속성 피해 표시 (GDD 48장 4·7번): 0 이 아닐 때만 " (불 +50%)", 융합은 " (물·흙 +15%)" */
 function elemText(elem: ElemHit | undefined, factionId: string): string {
-  return elem && elem.pct !== 0 ? ` (${elementDamageAbbr(elem.id, factionId)} ${elementDamagePct(elem.pct)})` : '';
+  return elem && elem.pct !== 0 ? ` (${elem.ids.map((id) => elementDamageAbbr(id, factionId)).join('·')} ${elementDamagePct(elem.pct)})` : '';
 }
 
 interface LogLine {
