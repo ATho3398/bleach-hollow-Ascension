@@ -99,6 +99,11 @@ export function physBlockOf(fa: Pick<FormAbilities, 'phys'>): PhysBlock | null {
   }
 }
 
+/** 물공 생성원 타이머 간격(초) (GDD 49-11, C.105b): 속성별 값이 있으면 그 값, 없으면 공통 spawnSeconds */
+export function physSpawnSecondsFor(element: string | null): number {
+  return (element && PB.spawnSecondsByElement[element]) || PB.spawnSeconds;
+}
+
 const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
 
 /** 물공 블록 효과 한 줄 (화면용, 종족 무관) */

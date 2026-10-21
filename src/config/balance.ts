@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 53;
+export const BALANCE_VERSION = 54;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -314,6 +314,8 @@ export const BALANCE = {
     physBlocks: {
       /** 물공 블록 생성원 타이머 간격(초): 흡수 칸처럼 타이머 하나, 바가 가득 차거나 봉인 중이면 멈춘다. 블록 가속 배율은 나눈다. 기본 블록 타이머는 막기·회복만 내고 그 몫은 그대로(간격을 공격 가중만큼 늘림) */
       spawnSeconds: 6,
+      /** 속성별 생성원 간격(초, 없는 속성은 spawnSeconds) — C.105b: 혈만 짧게(49-9 "혈은 속도") — 첫 블록 시점도 이 간격을 따른다 */
+      spawnSecondsByElement: { blood: 3 } as Record<string, number>,
       /** 블록 피해 배율 (일반 기본 공격 블록 ×1 대비) — 표: 흙·혈·불·물 0.7, 뇌 0.6, 노멀 0.8 */
       power: { earth: 0.7, blood: 0.7, fire: 0.7, water: 0.7, thunder: 0.6, normal: 0.8 } as Record<string, number>,
       /** 흙 블록 '바위 자세': 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 피해 +perHit(최대 +max, 평타 한 번에 다 씀) */

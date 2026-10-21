@@ -10,7 +10,7 @@ import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/sche
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
 import type { BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
-import { abilityEffectsOf, formAbilitiesOf, physBlockOf } from './formAbilities';
+import { abilityEffectsOf, formAbilitiesOf, physBlockOf, physSpawnSecondsFor } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
 
 const EV = BALANCE.provisional.evolution;
@@ -292,6 +292,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.abilityEffects = effects;
   // 물공 특수 블록 (GDD 49장, C.103): 5단계 물리 단일 속성 진화체의 기본 공격 블록이 전부 이 블록이 된다
   params.physBlock = physBlockOf(fa);
+  params.physBlockSpawnSeconds = physSpawnSecondsFor(params.physBlock?.element ?? null);
   params.elementDamage = elementDamageOf(e);
   if (critChance > 0) {
     params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;

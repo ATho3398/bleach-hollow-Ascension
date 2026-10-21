@@ -1,0 +1,22 @@
+{
+  "captures": [
+    {
+      "file": "01-battle-blood-knockback.png",
+      "trayBefore": [
+        "노멀_조",
+        "노멀_막기",
+        "피 튀기기"
+      ],
+      "floats": [
+        "치명−19",
+        "−5",
+        "치명−20",
+        "−30",
+        "넉백!",
+        "−4"
+      ],
+      "shot": true
+    }
+  ],
+  "consoleErrors": []
+}

@@ -172,6 +172,7 @@ describe('C.105 흙 버티기 · 혈 속도 (GDD 49-9)', () => {
 
   it('수치는 49-2 3판 표에서 출발해 49-9 목표로 조정한 값 (provisional)', () => {
     expect(PB.spawnSeconds).toBe(6);
+    expect(PB.spawnSecondsByElement).toEqual({ blood: 3 });
     expect(PB.stoneStance).toEqual({ seconds: 12, takenReduction: 0.55, perHit: 0.1, max: 0.5 });
     expect(PB.hardFist).toEqual({ hits: 3, bonus: 0.4 });
     expect(PB.knockback).toEqual({ hits: 40, bonus: 1.5, seconds: 0.5 });

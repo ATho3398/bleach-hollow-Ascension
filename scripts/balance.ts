@@ -784,6 +784,7 @@ let campaignFinalDefeats: number[] = [];
 }
 
 // ── 물공 6속성 (C.103 → C.105, GDD 49-1 5번 · 49-9 · 49-11): 5단계에 갓 닿은 몸(위 진화 봇 세이브 30명)의 진화체만 t5:<속성>:physical 로 바꿔 사람형 봇이 ★5 적 풀(일반·강적) · forest-lord 보스 · 탑 41/45/50층.
+// 물공 생성원 간격은 속성별(physBlocks.spawnSecondsByElement, 없으면 spawnSeconds — C.105b 혈만 짧게).
 // '전' = 같은 몸에서 물공 블록·물공 특성만 뗀 옛 규칙, 특수(탄)·혼합(교)은 옛 규칙 그대로(비교표). 받은 피해 = 판당 최대 체력 대비 %, 버티는 초 = 판 시간 ÷ 받은 피해(체력 전부를 잃기까지).
 // 목표(49-9): 흙 = 버티기(버티는 초가 다른 5속성 최대의 1.2배 이상 · 강적 패배율이 가장 낮음, 처치 속도 목표 없음) · 혈 = 일반·강적 처치 시간 6속성 중 가장 빠름(승률 ±10%p 예외) ·
 //  불·물·뇌·노멀 = 일반 처치 시간 전 대비 −10~−25% · 혈 뺀 5속성 ★5 강적 승률 서로 ±10%p. 5단계라 후반 보류(45-6) 경고로 ──
@@ -846,7 +847,7 @@ let campaignFinalDefeats: number[] = [];
   };
   const pct = (x: number) => `${(x * 100).toFixed(0).padStart(3)}%`;
   const line = (label: string, r: PhysRow, full = true) => console.log(`  ${label.padEnd(16)} 일반 ${pct(r.nWin)} ${r.nSecs.toFixed(1).padStart(5)}초 · 강적 ${pct(r.eWin)} ${r.eSecs.toFixed(1).padStart(5)}초 · 받은 피해 ${pct(r.taken)} · 버티는 ${r.survive.toFixed(0).padStart(3)}초${full ? ` · 물공 ${r.physPer.toFixed(1)}개/판 · 보스 ${pct(r.boss)} · 탑 41층 ${pct(r.t41)} · 45층 ${pct(r.t45)} · 50층 ${pct(r.t50)}` : ''}`);
-  console.log(`\n물공 6속성 (C.105, GDD 49-9·49-11, 사람형 봇, 5단계에 갓 닿은 몸 ${bodies.length}명 × ★${MAX_DIFFICULTY} 적 풀 ${POOL_ENEMIES.length}종 × ${PR}판 · forest-lord·탑 41/45/50층 × ${BR}판, 물공 생성원 ${BALANCE.provisional.physBlocks.spawnSeconds}초) — 목표 흙 버티기(버티는 초 ≥ 남 최대 ×1.2·강적 패배율 최저) · 혈 처치 시간 최단 · 불·물·뇌·노멀 일반 −10~−25% · 혈 뺀 5속성 강적 승률 ±10%p (후반 보류)`);
+  console.log(`\n물공 6속성 (C.105, GDD 49-9·49-11, 사람형 봇, 5단계에 갓 닿은 몸 ${bodies.length}명 × ★${MAX_DIFFICULTY} 적 풀 ${POOL_ENEMIES.length}종 × ${PR}판 · forest-lord·탑 41/45/50층 × ${BR}판, 물공 생성원 ${BALANCE.provisional.physBlocks.spawnSeconds}초${Object.entries(BALANCE.provisional.physBlocks.spawnSecondsByElement).map(([k, v]) => ` · ${k} ${v}초`).join('')}) — 목표 흙 버티기(버티는 초 ≥ 남 최대 ×1.2·강적 패배율 최저) · 혈 처치 시간 최단 · 불·물·뇌·노멀 일반 −10~−25% · 혈 뺀 5속성 강적 승률 ±10%p (후반 보류)`);
   if (bodies.length < CAMPAIGNS * 0.8) failAt(4, `물공 6속성: 5단계 몸 ${bodies.length}/${CAMPAIGNS}`);
   else {
     const rows = PHYS_ELEMENT_IDS.map((el) => ({ el, on: measure(`t5:${el}:physical`, true, true), off: measure(`t5:${el}:physical`, false, true), special: measure(`t5:${el}:special`, false, false), mixed: measure(`t5:${el}:mixed`, false, false) }));
