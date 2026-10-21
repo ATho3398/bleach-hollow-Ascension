@@ -9,12 +9,18 @@ export function logoUrl(f: Pick<FactionConfig, 'logo'>, base = BASE): string | n
   return f.logo ? `${base}art/${f.logo}.png` : null;
 }
 
+/** 커스텀 속성에 넣는 url("…"): baseURI(문서 주소)가 있으면 절대 주소로 만든다 */
+export function logoCssUrl(url: string, baseURI?: string): string {
+  return `url("${baseURI ? new URL(url, baseURI).href : url}")`;
+}
+
 /** 로고 한 개. size = bha-logo--sm | --md | --xl. 로고가 없는 종족이면 null (호출한 쪽이 기존 표시를 그대로 둔다) */
 export function logoMark(f: Pick<FactionConfig, 'logo' | 'name'>, size: string): HTMLElement | null {
   const url = logoUrl(f);
   if (!url) return null;
   const mark = el('span', `bha-logo ${size}`);
-  mark.style.setProperty('--bha-logo-url', `url("${url}")`);
+  // 커스텀 속성 안의 url() 은 CSS 파일 기준으로 풀린다 → 빌드(base './')에서 './art/…' 가 /assets/art/… 로 가서 404 였다(C.111). 문서 기준 절대 주소로 만든다
+  mark.style.setProperty('--bha-logo-url', logoCssUrl(url, typeof document !== 'undefined' ? document.baseURI : undefined));
   mark.setAttribute('role', 'img');
   mark.setAttribute('aria-label', `${f.name} 로고`);
   return mark;

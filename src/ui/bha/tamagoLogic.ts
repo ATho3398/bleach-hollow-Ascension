@@ -467,3 +467,12 @@ export function accruePlay(playMs: number, lastTick: number, now: number, cap = 
 const r2 = (n: number): number => Math.round(n * 100) / 100;
 const r4 = (n: number): number => Math.round(n * 10000) / 10000;
 const round4 = r4;
+
+/**
+ * [디자인] 큰 창 레이어의 자리 (GDD 16-6, C.111): 세로 폰(rotated)이면 기기와 같이 시계 방향 90도 — 레이어는 (뷰포트 세로 × 가로) 크기로 왼쪽 위에서 돌려 놓고
+ * 둘레 여백은 가로 기준 5%. 가로 폰·PC 는 null(CSS 기본 = 화면 전체, 90%)
+ */
+export function designsLayerPlace(f: { rotated: boolean; vw: number; vh: number }): { width: number; height: number; padX: number; padY: number; transform: string } | null {
+  if (!f.rotated) return null;
+  return { width: f.vh, height: f.vw, padX: Math.round(f.vh * 0.05), padY: Math.round(f.vw * 0.05), transform: `translate(${f.vw}px, 0) rotate(90deg)` };
+}
