@@ -14,6 +14,7 @@ import { statName } from '../data/elements';
 import { button, el, icon, meter, mountApp, notice, panel, provisionalTag, tag } from './bha/dom';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
+import { viewTitle } from './bha/viewtitle';
 
 const TX = BALANCE.provisional.training;
 const LB = BALANCE.provisional.liberation;
@@ -56,13 +57,15 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   const n = save.nest;
   const gate = trainingGate(t, save.evolution.tierIndex, n.condition);
   const head = lcdHead({
-    title: `${title} · ${faction.training.title}`,
+    // 머리의 [진화 정보] 버튼 대신 제목 토글 "<수련장> · 수련 ▾" — 목록에서 [진화 정보]로 바꾼다 (C.114)
+    title: selectLast(viewTitle([{ id: 'training', label: faction.training.title }, { id: 'evolution', label: '진화 정보' }], 'training', (id) => {
+      if (id === 'evolution') hd.onEvolution();
+    }, { prefix: title })),
     sub: (() => {
       const s = el('span');
       s.append(provisionalTag(), ' 수련을 마치고 등급을 한 번 따면 전투에서 ', el('b', '', faction.liberation.name), '을(를) 쓸 수 있다');
       return s;
     })(),
-    aside: [selectLast(button({ label: '진화 정보', icon: 'i-evolve', onClick: hd.onEvolution }))],
   });
 
   // 왼쪽: 수련치 막대(0/60), 수련권(최대 3), 상태 안내

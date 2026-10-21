@@ -542,7 +542,7 @@ export function startApp(host: HTMLElement): void {
   function renderTraining(faction: FactionConfig, s: SaveData): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
-      onEvolution: () => open('altar', () => renderAltar(faction, s)),
+      onEvolution: () => nav.replace({ id: 'altar', locked: false, render: () => { setBgm('nest'); renderAltar(faction, s); root.scrollTop = 0; } }),
     });
   }
 
@@ -586,6 +586,7 @@ export function startApp(host: HTMLElement): void {
       onDex: () => open('dex', () => bookView(root, faction, s)),
       onHelp: () => openHelp('evolution', true),
       onRebirth: () => open('rebirth', () => renderRebirth(faction, s)),
+      onTraining: () => nav.replace({ id: 'training', locked: false, render: () => { setBgm('nest'); renderTraining(faction, s); root.scrollTop = 0; } }),
     });
   }
 

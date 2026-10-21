@@ -17,6 +17,7 @@ import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
+import { viewTitle } from './bha/viewtitle';
 import { deckRow, showToast, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
@@ -172,18 +173,17 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
   const deckSize = deckSizeOf(save);
   const countOfDeck = () => save.tiles.deck.length;
 
-  const tabs = seg([{ id: 'slots', label: '슬롯' }, { id: 'deck', label: '덱', count: countText(countOfDeck(), deckSize) }], chestUi.tab, (id) => {
+  // 머리의 [슬롯][덱] 탭 줄 대신 제목 토글 "보관함 · 슬롯 ▾" (C.114). 덱 항목에는 타일 수를 같이 보인다
+  const viewTitleEl = (): HTMLElement => viewTitle([{ id: 'slots', label: '슬롯' }, { id: 'deck', label: `덱 ${countText(countOfDeck(), deckSize)}` }], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
-  });
-  tabs.classList.add('bha-seg--sm');
-  tabs.setAttribute('aria-label', '상자 종류');
-  const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title, aside: [tabs] }), [], []);
+  }, { prefix: title });
+  const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title: selectLast(viewTitleEl()) }), [], []);
 
   function fill(): void {
     const deckCount = countOfDeck();
-    const deckTab = tabs.querySelector('[data-id="deck"] .bha-seg__count');
-    if (deckTab) deckTab.textContent = countText(deckCount, deckSize);
+    // 제목 토글의 덱 항목에 보이는 타일 수를 새로 맞춘다 (제목 요소만 다시 만든다)
+    dev.view.querySelector('.bha-chest-page .bha-lcdpage__title')?.replaceChildren(selectLast(viewTitleEl()));
     if (chestUi.tab === 'slots') {
       const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
         persist();
@@ -270,7 +270,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
 
 /** 제단: 진화 (왼쪽 지금 진화체·속성·고유 특성 / 오른쪽 진화 안내 — 타이밍은 비밀, 귀환하면 저절로 진화, GDD 20-5).
  *  5단계 이상이면 오른쪽 아래 [환생] (GDD 22-7, 이름은 종족 설정 rebirth.name). 그 아래 단계에서는 버튼이 없다 */
-export function altarView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: { onDex: () => void; onHelp: () => void; onRebirth: () => void }): void {
+export function altarView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: { onDex: () => void; onHelp: () => void; onRebirth: () => void; onTraining: () => void }): void {
   const cols = evolutionColumns(faction, save.evolution);
   const mark = rebirthMark(save.rebirth.count);
   if (mark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', mark);
@@ -280,7 +280,10 @@ export function altarView(dev: Device, faction: FactionConfig, save: SaveData, t
     cols.right.push(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 특성 1개는 남는다.`), b);
   }
   const head = lcdHead({
-    title,
+    // 제목 토글 "<수련장> · 진화 정보 ▾" — 목록에서 [수련]으로 바꾼다 (C.114)
+    title: selectLast(viewTitle([{ id: 'training', label: faction.training.title }, { id: 'evolution', label: '진화 정보' }], 'evolution', (id) => {
+      if (id === 'training') hd.onTraining();
+    }, { prefix: title })),
     aside: [
       selectLast(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex })),
       selectLast(button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp })),

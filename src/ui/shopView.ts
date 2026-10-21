@@ -9,6 +9,7 @@ import { buyShopItem, goldRows, jadeRows, unwearCategory, wearCosmetic, type Buy
 import { button, h, provisionalTag, seg } from './bha/dom';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
+import { viewTitle } from './bha/viewtitle';
 import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
 
@@ -114,11 +115,12 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     sub.dataset.gold = String(save.shared.tradeCoins);
     sub.dataset.jade = String(save.shared.jade);
     if (SHOP_PROVISIONAL) sub.append(' ', provisionalTag('임시 가격'));
-    const tabs = seg([{ id: 'gold', label: TRADE_CURRENCY_NAME }, { id: 'jade', label: JADE_NAME }], shopUi.tab, (id) => {
+    // 머리의 [골드][영옥] 탭 줄 대신 제목 토글 "상점 · 골드 ▾" (C.114)
+    const title = selectLast(viewTitle([{ id: 'gold', label: TRADE_CURRENCY_NAME }, { id: 'jade', label: JADE_NAME }], shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;
       lastScroll = [0, 0];
       render();
-    }, { small: true });
+    }, { prefix: '상점' }));
     let left: HTMLElement[] = [];
     let right: HTMLElement[] = [];
     if (shopUi.tab === 'gold') {
@@ -150,7 +152,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       left = groups.filter((g) => LEFT_CATEGORIES.includes(g.dataset.category as CosmeticCategory) || g.dataset.category === undefined);
       right = groups.filter((g) => !left.includes(g));
     }
-    const page = lcdPage(root, { cls: 'bha-shop', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, lcdHead({ title: '상점', sub, aside: [selectLast(tabs)] }), left, right);
+    const page = lcdPage(root, { cls: 'bha-shop', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, lcdHead({ title, sub }), left, right);
     page.app.dataset.tab = shopUi.tab;
     page.left.scrollTop = lastScroll[0];
     page.right.scrollTop = lastScroll[1];

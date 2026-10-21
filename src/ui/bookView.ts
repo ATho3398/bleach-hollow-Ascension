@@ -2,7 +2,7 @@
 // 예전 머리의 탭 2개 줄은 없앴다(단계 탭 줄을 넓히려고, C.114).
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
-import { bookTitle } from './bha/booktitle';
+import { viewTitle } from './bha/viewtitle';
 import { selectLast } from './bha/lcdpage';
 import { dexView } from './dexView';
 import { titleDexView } from './titleDexView';
@@ -12,7 +12,7 @@ export type BookTab = 'dex' | 'titles';
 export const BOOK_TABS: readonly { id: BookTab; label: string }[] = [{ id: 'dex', label: '진화체 도감' }, { id: 'titles', label: '칭호 도감' }];
 
 export function bookView(root: HTMLElement, faction: FactionConfig, save: SaveData, tab: BookTab = 'dex'): void {
-  const title = selectLast(bookTitle(BOOK_TABS, tab, (id) => bookView(root, faction, save, id as BookTab))); // 제목 토글은 목록 뒤로(다른 도감 화면과 같은 순서)
+  const title = selectLast(viewTitle(BOOK_TABS, tab, (id) => bookView(root, faction, save, id as BookTab))); // 제목 토글은 목록 뒤로(다른 도감 화면과 같은 순서)
   if (tab === 'dex') dexView(root, faction, save, 2, title);
   else titleDexView(root, faction, save, 'rank', title);
 }
