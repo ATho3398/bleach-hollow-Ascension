@@ -6,12 +6,13 @@ import { BALANCE } from '../config/balance';
 import { BOSSES } from '../data/bosses';
 import { ENEMIES, scaleEnemy } from '../data/enemies';
 import { FORM_TABLE, tryGetForm } from '../data/evolution';
-import { FACTIONS } from '../data/factions';
+import { FACTIONS, getFaction } from '../data/factions';
 import { STAT_IDS, type EnemyDef, type FormDef, type Stats, type StatId } from '../data/schema';
 import { COSMETIC_ITEMS } from '../data/shop';
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
 import { SAVE_KEY, newSaveData, storyProgressOf, type SaveData, type StorageLike } from '../game';
+import { pickTierLook } from './evolution/tierLook';
 import { clampDifficulty, clampStreak, enemyAtDifficulty, MAX_DIFFICULTY, streakEnemyFactor } from './difficulty';
 import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from './evolution';
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
@@ -233,6 +234,13 @@ export function newTestSave(factionId: string, nowMs: number = Date.now()): Save
 
 // ── 테스트 패널: 진화체·능력치·특성·둥지 값 (38-4) ──
 
+/** 테스트 칸의 단계 외형 (GDD 53): 지금 능력치(직접 입력 포함) 순위로 다시 정한다. 진짜 게임은 진화 순간 한 번만 정한다 */
+function refreshLook(save: SaveData): void {
+  const e = save.evolution;
+  const form = e.formId ? tryGetForm(e.formId) : undefined;
+  e.look = form ? pickTierLook(getFaction(save.factionId), form.tier, currentStats(e, save.factionId), form) : null;
+}
+
 /** 진화체 고르기: null = 1단계(진화 전). 단계·도감·이력도 맞춘다. 고유 특성은 그대로(따로 고른다) */
 export function setForm(save: SaveData, formId: string | null): boolean {
   const e = save.evolution;
@@ -240,6 +248,7 @@ export function setForm(save: SaveData, formId: string | null): boolean {
     e.tierIndex = 0;
     e.formId = null;
     e.formHistory = [];
+    e.look = null;
     return true;
   }
   const form = tryGetForm(formId);
@@ -248,6 +257,7 @@ export function setForm(save: SaveData, formId: string | null): boolean {
   e.formId = form.id;
   e.formHistory = [form.id];
   if (!save.formDex.includes(form.id)) save.formDex.push(form.id);
+  refreshLook(save);
   return true;
 }
 
@@ -264,6 +274,7 @@ export function setCustomStats(save: SaveData, want: Partial<Stats>): Stats {
   }
   e.ev = zeroStats();
   e.carry = carry;
+  refreshLook(save);
   return currentStats(e, save.factionId);
 }
 

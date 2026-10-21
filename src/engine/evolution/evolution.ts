@@ -13,6 +13,7 @@ import type { BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, formAbilitiesOf, physBlockOf, physSpawnSecondsFor } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
+import { pickTierLook } from './tierLook';
 
 const EV = BALANCE.provisional.evolution;
 const SX = BALANCE.provisional.stats;
@@ -45,6 +46,8 @@ export interface EvolutionState {
   ev: Stats;
   /** 지금 진화체의 고유 특성 방향 (진화 순간 노력치 최고 능력치, v4.0). 1단계는 null */
   ability: StatId | null;
+  /** 단계 외형 스킨 id (GDD 53, 형식 33): 진화 순간 종족 설정 tierLooks 표로 정해 고정한다. 없거나 null = 기존 단계 그림 */
+  look?: string | null;
   /** 환생 계승 노력치 (GDD 22-7, 형식 20): 이 생을 시작할 때 받은 값(정수). 단계 상한과 따로 더해진다. 없으면 0 */
   carry?: Stats;
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
@@ -265,6 +268,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   e.formId = form.id;
   e.formHistory.push(form.id);
   e.ability = snapshot.ability;
+  e.look = pickTierLook(getFaction(ctx.factionId), e.tierIndex + 1, e.ev, form);
   e.steps = 0;
   e.alerts = 0;
   e.absorbs = 0;

@@ -2,7 +2,7 @@
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
 import { isLocomotion, type Locomotion } from './locomotion';
-import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type Stats } from '../data/schema';
+import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Stats } from '../data/schema';
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
 
 /** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
@@ -151,6 +151,8 @@ export interface FactionConfig {
   logo?: string;
   /** 새 세이브 시작 외형 후보 (GDD 51): 스킨 id 목록. 기본 외형과 함께 균등 추첨한다. 없거나 비면 기본 외형만 */
   startLooks?: string[];
+  /** 단계 외형 표 (GDD 53): 단계 번호(문자열) → 진화 순간 노력치 순위로 고르는 스킨 id. stat = 1위 능력치별, pairs = 1·2위 쌍(순서 무관, 먼저 판정). 없으면 기존 단계 그림 */
+  tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[] }>;
   /** 육성 5단계 이름 (GDD 8-1) */
   tierNames: [string, string, string, string, string];
   /** 등급 번호 1~10 의 표시 이름 (GDD 21-1, [0] = 1번). 엔진은 번호만 다룬다 */
@@ -247,6 +249,10 @@ function isString(v: unknown): v is string {
   return typeof v === 'string' && v.length > 0;
 }
 
+function isRec(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
 function isStringTuple(v: unknown, n: number): boolean {
   return Array.isArray(v) && v.length === n && v.every(isString);
 }
@@ -338,6 +344,18 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.logo !== undefined && !isString(r.logo)) errors.push('logo: 비어 있지 않은 문자열이어야 한다');
   if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
+  if (r.tierLooks !== undefined) {
+    const tl = r.tierLooks;
+    const okLook = (v: unknown) => isString(v);
+    const okTier = (t: unknown) => {
+      if (!isRec(t)) return false;
+      const st = (t as Record<string, unknown>).stat;
+      const pairs = (t as Record<string, unknown>).pairs;
+      return isRec(st) && Object.entries(st).every(([k, v]) => (STAT_IDS as readonly string[]).includes(k) && okLook(v))
+        && (pairs === undefined || (Array.isArray(pairs) && pairs.every((p) => isRec(p) && Array.isArray((p as Record<string, unknown>).stats) && ((p as Record<string, unknown>).stats as unknown[]).length === 2 && ((p as Record<string, unknown>).stats as unknown[]).every((s) => (STAT_IDS as readonly string[]).includes(String(s))) && okLook((p as Record<string, unknown>).look))));
+    };
+    if (!isRec(tl) || !Object.entries(tl).every(([k, v]) => /^[1-9]\d*$/.test(k) && okTier(v))) errors.push('tierLooks: { 단계번호: { stat: {능력치: 스킨 id}, pairs?: [{ stats: [a, b], look }] } }');
+  }
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {
     const rm = r.room as Record<string, unknown>;

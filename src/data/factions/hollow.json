@@ -5,6 +5,12 @@
   "emblem": "💀",
   "logo": "logo-hollow",
   "startLooks": ["stalker", "brute", "ghoul", "shackled"],
+  "tierLooks": {
+    "3": {
+      "stat": { "atk": "carapace", "int": "stag", "hp": "rhino", "spr": "wyrm", "spd": "panther", "def": "scorpion" },
+      "pairs": [{ "stats": ["spd", "int"], "look": "raptor" }]
+    }
+  },
   "tierNames": [
     "호로",
     "길리안",

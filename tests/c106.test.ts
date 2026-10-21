@@ -172,7 +172,7 @@ describe('49-8 3번 특별 태그 종족별 · 최초의 호로', () => {
 
 describe('세이브 형식 32 마이그레이션', () => {
   it('옛 t4 특수 속성 진화체 → 같은 속성 h4 특수형 (진화 상태·기록·도감), 사신 tag-1 → tag-1-shinigami', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(32);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(32); // C.109 에서 33 (형식 33 검사는 c109.test.ts)
     expect(remapSpecialVastoId('t4:blood')).toBe('h4:special:blood');
     expect(remapSpecialVastoId('t4:fire')).toBe('t4:fire');
     const old = JSON.parse(JSON.stringify(newSaveData('shinigami', 0)));

@@ -127,7 +127,7 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
     list.append(btn);
   };
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-  add(null, '기본(진화체)', charArt(faction.id, save.evolution.tierIndex, '', base).src);
+  add(null, '기본(진화체)', charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, save.evolution.look).src);
   for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, sk.id).src);
   mark();
   p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·원정·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));

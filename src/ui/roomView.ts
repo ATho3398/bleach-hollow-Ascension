@@ -4,7 +4,7 @@
 import { BALANCE } from '../config/balance';
 import { doNestAction } from '../engine/nest';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { deckSizeOf, feedNest, sanitizeDeck, type SaveData } from '../game';
+import { artSkinOf, deckSizeOf, feedNest, sanitizeDeck, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
@@ -136,7 +136,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     props.set(p, b);
     scene.append(b);
   }
-  const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, save.skin);
+  const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
   const char = characterButton(charArtUrls, '캐릭터', loco);
   const charAnim = animOf(char);

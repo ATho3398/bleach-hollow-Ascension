@@ -20,7 +20,7 @@ export interface FormAbilities {
 }
 
 /** 노력치 순위 (동률이면 진화체 종족값 → STAT_IDS 순). abilityFor 와 같은 규칙 */
-function rankedStats(ev: Stats, form: FormDef): StatId[] {
+export function rankedStats(ev: Stats, form: FormDef): StatId[] {
   return [...STAT_IDS].sort((a, b) => ev[b] - ev[a] || form.stats[b] - form.stats[a] || STAT_IDS.indexOf(a) - STAT_IDS.indexOf(b));
 }
 

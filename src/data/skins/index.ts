@@ -14,6 +14,8 @@ export interface SkinDef {
   provisional: true;
   /** 시작 전용 (GDD 51): 새 세이브 뽑기(종족 설정 startLooks)로만 얻고 상점에서 팔지 않는다 */
   startOnly?: true;
+  /** 단계 외형 (GDD 53, 종족 설정 tierLooks): 진화 때 정해져 자동으로 입혀진다. 상점·스킨 패널에는 안 나온다 */
+  tierLook?: true;
 }
 
 export const SKINS: readonly SkinDef[] = [
@@ -22,6 +24,14 @@ export const SKINS: readonly SkinDef[] = [
   { id: 'brute', name: '거구', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'ghoul', name: '망령', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'shackled', name: '속박자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
+  // 아쥬커스 외형 (GDD 53): 진화 순간 노력치 1위 능력치로 정해진다 (힘 갑충·지능 사슴·체력 코뿔소·정신력 뱀·속도 표범·방어 전갈, 속도+지능 1·2위 = 새)
+  { id: 'carapace', name: '갑충형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
+  { id: 'stag', name: '사슴형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
+  { id: 'rhino', name: '코뿔소형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
+  { id: 'wyrm', name: '뱀형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
+  { id: 'panther', name: '표범형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
+  { id: 'scorpion', name: '전갈형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
+  { id: 'raptor', name: '새형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
 ];
 
 export function getSkin(id: string | null | undefined): SkinDef | undefined {

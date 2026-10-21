@@ -19,7 +19,7 @@ import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, applyStartLook, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
+  applyAbsence, applyStartLook, artSkinOf, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, deckSizeOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -205,7 +205,7 @@ export function startApp(host: HTMLElement): void {
     setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
-      skinId: save?.skin,
+      skinId: save ? artSkinOf(save) : undefined,
       formId: save?.evolution.formId,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
@@ -723,7 +723,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(f.bossId ? 'boss' : f.kind === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,
-      skinId: s0.skin,
+      skinId: artSkinOf(s0),
       formId: s0.evolution.formId,
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
@@ -833,7 +833,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
-      skinId: save?.skin,
+      skinId: save ? artSkinOf(save) : undefined,
       formId: save?.evolution.formId,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 원정' } } : {}),
@@ -889,7 +889,7 @@ export function startApp(host: HTMLElement): void {
     setBgm('expedition');
     expeditionView(root, faction, exp, {
       tierIndex: save?.evolution.tierIndex,
-      skinId: save?.skin,
+      skinId: save ? artSkinOf(save) : undefined,
       formId: save?.evolution.formId,
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
@@ -1009,7 +1009,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
-      skinId: save?.skin,
+      skinId: save ? artSkinOf(save) : undefined,
       formId: save?.evolution.formId,
       notice,
       tutorial: tutorialFor(),
@@ -1055,7 +1055,7 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,
-      skinId: s0.skin,
+      skinId: artSkinOf(s0),
       formId: s0.evolution.formId,
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,

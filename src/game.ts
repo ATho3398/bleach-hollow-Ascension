@@ -8,11 +8,12 @@ import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type Expedi
 export type { StorySettlement } from './engine/expedition';
 import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
+import { pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
 import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type RebirthRecord, type RunLog, type SlotLog } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
-import { FACTIONS } from './data/factions';
+import { FACTIONS, getFaction } from './data/factions';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
 import { allTranscendentsOwned, conditionMet, decideTranscendent, slotStatBonus, type FusionInput } from './engine/transcend';
 import { buildBattleRecord, type CombatState } from './engine/combat';
@@ -30,7 +31,7 @@ import { newlyAchieved } from './engine/tutorialGoals';
 import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
 import { DEFAULT_GROUND_ID } from './data/grounds';
 import { clampDifficulty, clampStreak, MAX_DIFFICULTY, recommendedDifficulty, unlockedByTier } from './engine/difficulty';
-import { canWear } from './data/skins';
+import { canWear, getSkin } from './data/skins';
 import { applyAbsenceHunger } from './engine/nest';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
 import { addTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
@@ -40,7 +41,7 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 32;
+export const SAVE_FORMAT_VERSION = 33;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -846,6 +847,8 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
     unlockDifficultyFor(save);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
+    // 단계 외형이 정해지면 시작 외형(시작 전용 스킨)은 그 외형에 덮인다 (GDD 53). 상점에서 산 스킨은 그대로. 스킨 패널에서 다시 고를 수 있다
+    if (save.evolution.look && getSkin(save.skin)?.startOnly) save.skin = null;
     checkTitles(save, 'evolution', nowMs);
     // 5단계에 닿으면 다른 종족 트랙이 열리고, 모든 트랙이 닿으면 붕옥 탭이 열린다 (GDD 22-3)
     checkTrackOpen(save, nowMs);
@@ -858,6 +861,26 @@ export function remapSpecialVastoId<T extends string | null | undefined>(id: T):
   if (typeof id !== 'string' || !id.startsWith('t4:') || tryGetForm(id)) return id;
   const to = `h4:special:${id.slice(3)}`;
   return (tryGetForm(to) ? to : id) as T;
+}
+
+/** 형식 33: 트랙마다 단계 외형을 채운다. 종족 설정 표에 없는 단계·종족은 null */
+function migrateTierLooks(save: SaveData): void {
+  const tracks = [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])] as Partial<Pick<SaveData, TrackKey>>[];
+  for (const t of tracks) {
+    const e = t.evolution;
+    if (!e || typeof e !== 'object' || typeof t.factionId !== 'string') continue;
+    const form = typeof e.formId === 'string' ? tryGetForm(e.formId) : undefined;
+    const ev = e.ev && typeof e.ev === 'object' ? e.ev : null;
+    let look: string | null = null;
+    if (form && ev && typeof e.tierIndex === 'number') {
+      try {
+        look = pickTierLook(getFaction(t.factionId), e.tierIndex + 1, ev, form);
+      } catch {
+        look = null;
+      }
+    }
+    e.look = look;
+  }
 }
 
 function migrateSpecialVasto(save: SaveData): void {
@@ -1323,6 +1346,11 @@ export function migrateSave(raw: unknown): SaveData | null {
     migrateSpecialVasto(save);
     save.meta.format = 32;
   }
+  if (save.meta.format < 33) {
+    // 형식 32 → 33 (C.109, GDD 53): 진화 상태에 단계 외형 `look` 이 생겼다. 지금 그 단계에 있는 트랙(아쥬커스)은 지금 노력치 순위로 정해 준다(진화 순간 값은 남아 있지 않다)
+    migrateTierLooks(save);
+    save.meta.format = 33;
+  }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
@@ -1439,6 +1467,11 @@ export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState 
 }
 
 /** 스킨 입기/벗기 (GDD 26-5·25-9). 이 종족이 입을 수 없거나 보유(상점에서 산 것)하지 않은 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기 */
+/** 그림에 쓰는 스킨 id: 입은 스킨이 먼저, 없으면 진화 때 정해진 단계 외형 (GDD 53) */
+export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'>): string | null {
+  return s.skin ?? s.evolution.look ?? null;
+}
+
 export function equipSkin(save: SaveData, skinId: string | null): boolean {
   if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
   save.skin = skinId;
