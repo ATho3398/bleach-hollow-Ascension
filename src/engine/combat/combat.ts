@@ -197,6 +197,8 @@ export interface CombatParams {
   elementDamage: Record<string, number>;
   /** 물공 특수 블록 (GDD 49장, C.103): 있으면 기본 공격 블록 3계열이 전부 이 속성 물공 블록(효과 포함)이 된다. 없으면 보통 기본 블록 */
   physBlock: PhysBlock | null;
+  /** 물공 블록 생성원 타이머 간격(초) (GDD 49-11, C.105): 물공 몸은 기본 블록 몫에서 공격이 빠지고 이 타이머 하나가 물공 블록을 낸다. 블록 가속 배율은 나눈다 */
+  physBlockSpawnSeconds: number;
 }
 
 /** 물공 특수 블록 (GDD 49장·49-1 2번): 계열은 블록마다 그대로, 이름·속성·효과만 바뀐다. 수치는 BALANCE.provisional.physBlocks 에서 formAbilities 가 채운다 */
@@ -323,6 +325,7 @@ export function defaultCombatParams(): CombatParams {
     abilityEffects: {},
     elementDamage: zeroElementDamage(),
     physBlock: null,
+    physBlockSpawnSeconds: BALANCE.provisional.physBlocks.spawnSeconds,
   };
 }
 
@@ -452,8 +455,12 @@ export interface CombatState {
   player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
   tray: Tray;
   nextUid: number;
-  /** 다음 블록 생성까지 남은 틱: [흡수 특성마다(슬롯 순서)…, 기본 블록] (GDD 44-1 B안) */
+  /** 다음 블록 생성까지 남은 틱: [흡수 특성마다(슬롯 순서)…, 기본 블록, (물공 몸이면) 물공 블록] (GDD 44-1 B안, 49-11) */
   spawnTimers: number[];
+  /** 물공 생성원 타이머가 낸 블록 수 (GDD 49-11 판당 개수 측정용) */
+  physSpawned?: number;
+  /** 이 전투에서 받은 피해 합계 (바위 자세 감소 뒤, 보호막 전 — GDD 49-9 흙 버티기 측정용) */
+  damageTaken?: number;
   voidTimer: number;
   shuffleTimer: number;
   sp: number;
@@ -620,10 +627,36 @@ export function basicShareOf(p: CombatParams, slots: number = p.skills.length): 
 export function basicSpawnSecondsOf(p: CombatParams): number {
   const bp = p.blockPool;
   const n = p.skills.length;
-  if (n === 0) return bp.basicSpawnSeconds / p.blockSpawnMultiplier;
-  const share = Math.min(0.999, Math.max(0.001, basicShareOf(p)));
-  const absorbedTotalSeconds = (p.blockSpawnSeconds * (1 + bp.absorbedSlowdownPerSlot * (n - 1))) / n;
-  return (absorbedTotalSeconds * (1 - share)) / share / p.blockSpawnMultiplier;
+  const base = n === 0
+    ? bp.basicSpawnSeconds
+    : (() => {
+        const share = Math.min(0.999, Math.max(0.001, basicShareOf(p)));
+        const absorbedTotalSeconds = (p.blockSpawnSeconds * (1 + bp.absorbedSlowdownPerSlot * (n - 1))) / n;
+        return (absorbedTotalSeconds * (1 - share)) / share;
+      })();
+  // 물공 몸 (GDD 49-11): 공격은 자기 타이머로 빠지고 기본 타이머는 막기·회복만 낸다 — 막기·회복이 나오는 속도는 그대로가 되게 간격을 (1 / 막기·회복 가중 몫)만큼 늘린다
+  return base / p.blockSpawnMultiplier / basicTimerPoolShareOf(p);
+}
+
+/** 기본 타이머가 실제로 내는 블록의 가중 몫: 물공 몸이면 막기·회복 가중 / 전체(공격 빼기), 아니면 1 */
+function basicTimerPoolShareOf(p: CombatParams): number {
+  if (!p.physBlock) return 1;
+  const share = blockPoolOf(p).filter((e) => e.source.role !== 'attack').reduce((a, e) => a + e.chance, 0);
+  return Math.max(0.001, share);
+}
+
+/** 기본 타이머가 뽑는 풀 (GDD 49-11): 물공 몸이면 공격 칸을 빼고 다시 합 1, 아니면 blockPoolOf 그대로. 충전(뇌 특성)은 blockPoolOf(공격 포함)에서 뽑는다 */
+export function basicTimerPoolOf(p: CombatParams): PoolEntry[] {
+  const pool = blockPoolOf(p);
+  if (!p.physBlock) return pool;
+  const rest = pool.filter((e) => e.source.role !== 'attack');
+  const total = rest.reduce((a, e) => a + e.chance, 0);
+  return rest.map((e) => ({ ...e, chance: total > 0 ? e.chance / total : 0 }));
+}
+
+/** 물공 블록 생성원 타이머 간격(초) (GDD 49-11, C.105): 물공 몸만. 블록 가속 배율로 나눈다 */
+export function physSpawnSecondsOf(p: CombatParams): number | null {
+  return p.physBlock ? p.physBlockSpawnSeconds / p.blockSpawnMultiplier : null;
 }
 
 /**
@@ -648,15 +681,15 @@ export function blockPoolOf(p: CombatParams): PoolEntry[] {
 }
 
 /** 초당 블록 생성 기대치 (바가 차거나 봉인되지 않을 때): 흡수 특성 블록 합 / 기본 블록. 44-1 비율 표·테스트용 */
-export function spawnRatesOf(p: CombatParams): { absorbed: number; basic: number; absorbedShare: number } {
+export function spawnRatesOf(p: CombatParams): { absorbed: number; basic: number; absorbedShare: number; phys: number } {
   const absorbed = p.skills.reduce((a, src) => a + 1 / spawnSecondsOf(p, src), 0);
   const basic = 1 / basicSpawnSecondsOf(p);
-  return { absorbed, basic, absorbedShare: absorbed / (absorbed + basic) };
+  const physSecs = physSpawnSecondsOf(p);
+  return { absorbed, basic, absorbedShare: absorbed / (absorbed + basic), phys: physSecs ? 1 / physSecs : 0 };
 }
 
-/** 기본 블록 풀에서 하나를 뽑는다 (전투 난수) */
-function drawBasic(s: CombatState): PoolEntry | null {
-  const pool = blockPoolOf(s.params);
+/** 기본 블록 풀에서 하나를 뽑는다 (전투 난수). timer = 기본 타이머용(물공 몸은 공격 빼고), 아니면 전체 풀 */
+function drawBasic(s: CombatState, pool: PoolEntry[] = blockPoolOf(s.params)): PoolEntry | null {
   let r = nextFloat(s.rng);
   for (const e of pool) {
     if (r < e.chance) return e;
@@ -665,9 +698,17 @@ function drawBasic(s: CombatState): PoolEntry | null {
   return pool[pool.length - 1] ?? null;
 }
 
-/** 생성 타이머들의 간격(초): [흡수 특성마다…, 기본 블록] (spawnTimers 와 같은 순서) */
+/** 생성 타이머들의 간격(초): [흡수 특성마다…, 기본 블록, (물공 몸이면) 물공 블록] (spawnTimers 와 같은 순서) */
 function timerSecondsOf(p: CombatParams): number[] {
-  return [...p.skills.map((src) => spawnSecondsOf(p, src)), basicSpawnSecondsOf(p)];
+  const phys = physSpawnSecondsOf(p);
+  return [...p.skills.map((src) => spawnSecondsOf(p, src)), basicSpawnSecondsOf(p), ...(phys !== null ? [phys] : [])];
+}
+
+/** 물공 블록의 계열: 종족 계열 표에서 하나를 고르게 뽑는다 (계열 표가 없으면 계열 없음) */
+function drawPhysFamily(s: CombatState): string | null {
+  const fams = Object.keys(s.params.families);
+  if (fams.length === 0) return null;
+  return fams[Math.min(fams.length - 1, Math.floor(nextFloat(s.rng) * fams.length))] ?? null;
 }
 
 // ── 능력치·상성 (GDD 20-1~20-3) ──
@@ -1268,6 +1309,7 @@ function takeDamage(s: CombatState, amount: number): void {
     }
     // 물살: 내가 맞으면 연속 평타 수가 0 으로
     if (s.params.abilityEffects.current) s.currentHits = 0;
+    s.damageTaken = (s.damageTaken ?? 0) + amount;
   }
   if (s.player.shield && s.player.shield > 0) {
     const absorbed = Math.min(s.player.shield, amount);
@@ -1651,9 +1693,12 @@ function advanceTick(s: CombatState): void {
       s.spawnTimers[i] = t(secs[i]!);
       const src = p.skills[i];
       if (src) spawn(s, 'skill', src.id, src.family ?? null);
-      else {
-        const e = drawBasic(s);
+      else if (i === p.skills.length) {
+        const e = drawBasic(s, basicTimerPoolOf(p));
         if (e) spawn(s, 'skill', e.source.id, e.family);
+      } else if (p.physBlock) {
+        // 물공 생성원 (GDD 49-11): 그 속성 물공 블록(기본 공격 블록) 1개, 계열은 종족 계열 표에서 고르게
+        if (spawn(s, 'skill', BASIC_SKILL_ID, drawPhysFamily(s))) s.physSpawned = (s.physSpawned ?? 0) + 1;
       }
     }
   }

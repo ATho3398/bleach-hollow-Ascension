@@ -1,0 +1,40 @@
+{
+  "captures": [
+    {
+      "file": "01-battle-earth-stone-stance-blocks.png",
+      "tray": [
+        "노멀_조",
+        "노멀_막기",
+        "노멀_회복",
+        "바위 자세"
+      ]
+    },
+    {
+      "file": "03-battle-log-earth.png",
+      "log": [
+        "테스트 적 A과(와) 조우! 블록을 눌러 쓰고, 붙여 놓아 체인!",
+        "바위 자세 「할퀴기」! 24 피해 (효과가 별로인 듯하다…)",
+        "바위 자세!"
+      ]
+    },
+    {
+      "file": "02-battle-blood-knockback.png",
+      "trayBefore": [
+        "노멀_조",
+        "노멀_막기",
+        "노멀_회복",
+        "피 튀기기"
+      ],
+      "floats": [
+        "넉백!",
+        "−5",
+        "치명−20",
+        "−6",
+        "−30",
+        "−7"
+      ],
+      "shot": true
+    }
+  ],
+  "consoleErrors": []
+}
