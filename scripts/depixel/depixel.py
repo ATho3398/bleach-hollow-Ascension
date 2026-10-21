@@ -74,6 +74,33 @@ def depixel(a: np.ndarray, cell: float | None, lo: float, hi: float):
     return out, (cw, ox, sx), (ch, oy, sy)
 
 
+def remove_baked_bg(a: np.ndarray) -> tuple[np.ndarray, bool]:
+    """투명 대신 체크무늬·단색 배경이 그려진 그림이면 바깥 배경을 지운다.
+    가장자리에서 시작해 '밝고 무채색'인 픽셀만 따라 번진다 — 캐릭터는 검은 외곽선에서 멈춘다."""
+    border = np.concatenate([a[0], a[-1], a[:, 0], a[:, -1]])
+    if (border[:, 3] > 200).mean() < 0.9:
+        return a, False  # 이미 투명 배경
+    rgb = a[..., :3]
+    # 배경 = 가장자리에 쓰인 무채색 밝기 범위. 캐릭터의 회색(보통 약간 푸르거나 누렇다)은 남긴다
+    bl = border[:, :3].mean(1)
+    lo, hi = np.percentile(bl, 2) - 6, np.percentile(bl, 98) + 6
+    lum = rgb.mean(2)
+    cand = (rgb.max(2) - rgb.min(2) < 10) & (lum >= lo) & (lum <= hi)
+    region = np.zeros_like(cand)
+    region[0], region[-1], region[:, 0], region[:, -1] = cand[0], cand[-1], cand[:, 0], cand[:, -1]
+    while True:
+        grow = region.copy()
+        grow[1:] |= region[:-1]; grow[:-1] |= region[1:]
+        grow[:, 1:] |= region[:, :-1]; grow[:, :-1] |= region[:, 1:]
+        grow &= cand
+        if (grow == region).all():
+            break
+        region = grow
+    out = a.copy()
+    out[region] = 0
+    return out, True
+
+
 def split(dot: np.ndarray, gap: int = 1, min_px: int = 30) -> list[tuple[int, int, int, int]]:
     """빈 칸으로 떨어진 덩어리마다 상자(x0, y0, x1, y1). gap 칸 이내는 같은 덩어리로 본다."""
     op = dot[..., 3] > 0
@@ -106,6 +133,7 @@ def main():
     ap.add_argument('images', nargs='+')
     ap.add_argument('--out', default='scripts/depixel/out')
     ap.add_argument('--split', action='store_true', help='캐릭터마다 따로 자르기')
+    ap.add_argument('--cells', help='판을 똑같이 나눠 자르기, 예 2x2 (캐릭터끼리 붙어 있을 때)')
     ap.add_argument('--cell', type=float, help='칸 크기(픽셀)를 직접 지정 (자동이 틀릴 때)')
     ap.add_argument('--min', type=float, default=3, help='자동 찾기 최소 칸 크기')
     ap.add_argument('--max', type=float, default=40, help='자동 찾기 최대 칸 크기')
@@ -114,17 +142,34 @@ def main():
     for path in args.images:
         name = os.path.splitext(os.path.basename(path))[0]
         a = np.array(Image.open(path).convert('RGBA')).astype(int)
+        a, had_bg = remove_baked_bg(a)
         dot, gx, gy = depixel(a, args.cell, args.min, args.max)
         d = os.path.join(args.out, name)
         os.makedirs(d, exist_ok=True)
         Image.fromarray(dot).save(os.path.join(d, f'{name}-dot.png'))
         Image.fromarray(dot).resize((dot.shape[1] * 8, dot.shape[0] * 8), Image.NEAREST).save(
             os.path.join(d, f'{name}-x8.png'))
+        if had_bg:
+            print(f'{name}: 그려진 배경(체크무늬 등) 지움')
         warn = '' if min(gx[2], gy[2]) > 0.3 else '  (격자가 뚜렷하지 않음 — 결과 확인, 필요하면 --cell)'
         print(f'{name}: 칸 {gx[0]:.2f}×{gy[0]:.2f}px, 시작 ({gx[1]:.2f}, {gy[1]:.2f}), '
               f'맞음 {gx[2]:.2f}/{gy[2]:.2f} → {dot.shape[1]}×{dot.shape[0]} 도트{warn}')
-        if args.split:
-            for n, (x0, y0, x1, y1) in enumerate(split(dot), 1):
+        if args.split or args.cells:
+            if args.cells:
+                cx, cy = map(int, args.cells.lower().split('x'))
+                boxes = []
+                for j in range(cy):
+                    for i in range(cx):
+                        x0, x1 = dot.shape[1] * i // cx, dot.shape[1] * (i + 1) // cx
+                        y0, y1 = dot.shape[0] * j // cy, dot.shape[0] * (j + 1) // cy
+                        op = dot[y0:y1, x0:x1, 3] > 0
+                        if not op.any():
+                            continue
+                        ys, xs = np.nonzero(op)
+                        boxes.append((x0 + xs.min(), y0 + ys.min(), x0 + xs.max() + 1, y0 + ys.max() + 1))
+            else:
+                boxes = split(dot)
+            for n, (x0, y0, x1, y1) in enumerate(boxes, 1):
                 part = dot[y0:y1, x0:x1]
                 Image.fromarray(part).save(os.path.join(d, f'{name}-{n}.png'))
                 print(f'  {name}-{n}.png  {x1 - x0}×{y1 - y0}')
