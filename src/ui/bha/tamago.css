@@ -72,8 +72,27 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
 /* 뒷면을 보는 동안 앞면(버튼·LCD)은 숨긴다 */
 .bha-dev.is-tama-back > .bha-dev__side, .bha-dev.is-tama-back > .bha-dev__bezel { visibility: hidden; }
 
-/* 몸체 아래 조작 줄 */
-.bha-tama__ctrl { position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-5); }
+/* 조작 줄 (GDD 47장 1번): 기기 바깥, 화면 가장자리에 고정. 가로 = 오른쪽 세로 줄 / 세로 회전 출력 = 아래 가로 줄.
+   버튼 한 변 = 작은 버튼(36px) × 3 = 108px — 아이콘 위·글자 아래 (tamagoLogic BODY.barPx 와 같이 바꾼다) */
+.bha-tama__bar {
+  --tama-btn: calc(36px * 3);
+  position: fixed; z-index: calc(var(--bha-z-overlay) - 10); display: flex; gap: var(--bha-sp-3);
+  padding: var(--bha-sp-2);
+}
+.bha-tama__bar[hidden] { display: none; }
+.bha-tama__bar[data-pos="right"] {
+  right: max(var(--bha-sp-2), env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); flex-direction: column;
+}
+.bha-tama__bar[data-pos="bottom"] {
+  bottom: max(var(--bha-sp-2), env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); flex-direction: row;
+}
+.bha-tama__bar .bha-btn {
+  flex-direction: column; justify-content: center; gap: var(--bha-sp-2);
+  width: var(--tama-btn); height: var(--tama-btn); min-height: var(--tama-btn); padding: var(--bha-sp-2);
+  font-size: var(--bha-fs-xl); line-height: 1.1; border-radius: var(--bha-r-lg);
+  background: var(--bha-bg-1); border: 1px solid var(--bha-line-2);
+}
+.bha-tama__bar .bha-btn .bha-icon { width: 48px; height: 48px; }
 
 /* 화면 덮개: 줌아웃 중 LCD 를 탭하면 줌인 (화면은 밑에서 그대로 움직인다) */
 .bha-tama__shield {
@@ -148,16 +167,29 @@ html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tam
 /* 그림 기기의 평소 화면 (GDD 31장 4): 다마고치 모드가 아니면 몸체 층에서 앞면 그림과 그림 위 버튼만 남긴다 */
 .bha-dev:not(.is-tama) .bha-tama > :not(.bha-tama__art):not(.bha-tama__hit) { display: none; }
 
-/* [디자인] 목록 (GDD 30장): LCD 위 레이어, 기기의 위/아래/확정/취소로 고른다 */
-.bha-designs__list { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+/* [디자인] 고르기 큰 창 (GDD 47장 2번): 기기 바깥, 브라우저 화면 전체 위. 창 = 화면의 약 90%, 카드마다 기기 앞면 큰 그림 */
+.bha-designs { padding: 5dvh 5vw; }
+.bha-designs__win {
+  width: 90vw; height: 90dvh; max-width: 100%; max-height: 100%; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: var(--bha-sp-5); padding: var(--bha-sp-6);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
+  background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-bg-1); box-shadow: var(--bha-shadow-3);
+}
+.bha-designs__list {
+  flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; gap: var(--bha-sp-4); align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+}
 .bha-designs__row {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name worn" "note worn"; align-items: center; column-gap: var(--bha-sp-4);
-  padding: var(--bha-sp-3) var(--bha-sp-4); text-align: left;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "view view" "name worn" "note note"; align-items: center; row-gap: var(--bha-sp-2); column-gap: var(--bha-sp-4);
+  padding: var(--bha-sp-3); text-align: left;
   background: var(--bha-bg-1); color: var(--bha-text-1); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md);
 }
 .bha-designs__row:focus-visible { outline: 2px solid var(--bha-focus); }
 .bha-designs__row.is-worn { background: var(--bha-accent-soft); border-color: var(--bha-accent); }
-.bha-designs__name { grid-area: name; }
+.bha-designs__view { grid-area: view; display: grid; place-items: center; aspect-ratio: 16 / 9; min-height: 0; background: var(--bha-bg-0); border-radius: var(--bha-r-sm); overflow: hidden; }
+.bha-designs__img { width: 100%; height: 100%; object-fit: contain; }
+.bha-designs__basic { width: 70%; height: 70%; border: 2px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
+.bha-designs__name { grid-area: name; font-size: var(--bha-fs-lg); }
 .bha-designs__note { grid-area: note; color: var(--bha-text-3); }
 .bha-designs__worn { grid-area: worn; color: var(--bha-accent); font-weight: 700; font-size: var(--bha-fs-sm); }
 /* 그림 기기의 뒷면은 그림에 이미 무늬가 있으니 CSS 스피커 구멍은 뺀다 */

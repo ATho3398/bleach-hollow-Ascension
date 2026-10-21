@@ -8,7 +8,6 @@ import { cosmeticName, deviceArt, sourceNote, deviceSideArt, getCosmetic, keyrin
 import type { FactionConfig } from '../../engine/faction';
 import type { SaveData } from '../../game';
 import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../../shop';
-import { getOverlayHost, registerLayer } from './overlayHost';
 import { currentViewState } from '../viewScale';
 import { TAMAGO_CODE } from '../shortcutMap';
 import { motionReduced } from './cosmeticFx';
@@ -211,14 +210,17 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   seg1.append(chain, seg2);
   key.append(seg1);
   key.hidden = true;
-  const ctrl = el('div', 'bha-tama__ctrl');
-  const designBtn = button({ label: '디자인', icon: 'i-rare', size: 'small', variant: 'ghost', onClick: () => openDesigns() });
+  // 조작 줄 (GDD 47장 1번, C.100): 기기 바깥 화면 가장자리에 둔다(가로 = 오른쪽 세로 줄, 세로 회전 출력 = 아래 가로 줄). 버튼은 평소 작은 버튼의 약 3배
+  const ctrl = el('div', 'bha-tama__bar');
+  ctrl.hidden = true;
+  const designBtn = button({ label: '디자인', icon: 'i-rare', variant: 'ghost', onClick: () => openDesigns() });
   designBtn.dataset.tama = 'design';
-  const flipBtn = button({ label: '뒤집기', icon: 'i-swap', size: 'small', onClick: () => flip() });
+  const flipBtn = button({ label: '뒤집기', icon: 'i-swap', onClick: () => flip() });
   flipBtn.dataset.tama = 'flip';
-  const zoomBtn = button({ label: '화면 확대', icon: 'i-plus', size: 'small', variant: 'ghost', onClick: () => toggle(false) });
+  const zoomBtn = button({ label: '화면 확대', icon: 'i-plus', variant: 'ghost', onClick: () => toggle(false) });
   zoomBtn.dataset.tama = 'zoom-in';
   ctrl.append(flipBtn, designBtn, zoomBtn);
+  document.body.append(ctrl);
   // 그림 기기의 버튼 4개 누름 영역 (다마고치 모드에서 CSS 버튼 대신, GDD 27장 v5.33): 누르면 기기 버튼과 같다
   const hits = new Map<DeviceButton, HTMLButtonElement>();
   const HIT_LABEL: Record<DeviceButton, string> = { up: '위', down: '아래', ok: '확정', back: '취소' };
@@ -236,7 +238,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     };
     hits.set(b, hb);
   }
-  root.append(cap, ...bands, edgeL, edgeR, body, bodyArt, frontLite, ring, backFace, key, ctrl, ...hits.values());
+  root.append(cap, ...bands, edgeL, edgeR, body, bodyArt, frontLite, ring, backFace, key, ...hits.values());
   frame.append(root);
   // 화면(LCD) 탭 = 줌인. 줌아웃 중에만 LCD 를 덮는다 (화면은 그 밑에서 그대로 움직인다)
   const shield = el('button', 'bha-tama__shield');
@@ -373,11 +375,14 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     e.style.width = `${r.w}px`;
     e.style.height = `${r.h}px`;
   };
+  /** 조작 줄이 차지하는 폭을 기기 안 좌표로(기기의 +x 쪽: 가로 = 화면 오른쪽, 세로 회전 = 화면 아래) */
+  const ctrlReserve = (f: Fit): number => (on ? Math.round(BODY.barPx / Math.max(0.1, f.scale)) : 0);
   const stageOf = (f: Fit): string => {
     fit = f;
     artBox = artSpec && artNat ? (artSpec.frame === 'v2' && artSpec.hole ? deviceArtPlacementV2<DeviceButton>(lcdRect(), artNat, { hole: artSpec.hole, ring: artSpec.ring }) : deviceArtPlacement(lcdRect(), artNat, artSpec)) : null;
-    layout = tamaLayout(f.w, f.h, artBox, flipDeg, view);
-    view = clampView(view, layout.zoom, layout.box, f.w, f.h);
+    ctrl.dataset.pos = f.rotated ? 'bottom' : 'right';
+    layout = tamaLayout(f.w, f.h, artBox, flipDeg, view, ctrlReserve(f));
+    view = clampView(view, layout.zoom, layout.box, f.w - ctrlReserve(f), f.h);
     gravityLocal = tiltOn() ? gravityLocal : defaultGravity(f.rotated);
     return on ? layout.stage : '';
   };
@@ -413,7 +418,6 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       hb.hidden = !artBox || back; // 그림 기기는 평소 화면에서도 그림 위 버튼으로 조작 (GDD 31장 4)
       if (artBox) box(hb, artBox.buttons[b]);
     }
-    box(ctrl, layout.ctrl);
     const rg = back ? layout.ringBack : layout.ring;
     ring.style.left = `${rg.x}px`;
     ring.style.top = `${rg.y}px`;
@@ -644,6 +648,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       root.hidden = false;
       key.hidden = !worn('keyring');
       shield.hidden = false;
+      ctrl.hidden = false;
       frame.classList.add('is-tama');
       paintKey();
       paintDevice();
@@ -660,6 +665,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
         setFaces();
       }
       shield.hidden = true;
+      ctrl.hidden = true;
       animate(zoomMs(), () => {
         if (on) return;
         frame.classList.remove('is-tama');
@@ -671,25 +677,26 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     window.dispatchEvent(new CustomEvent(TAMAGO_EVENT));
   }
 
-  // ── [디자인] 목록 (GDD 30장): 가진 기기 디자인 중 하나를 고르면 바로 바뀐다. 착용은 트랙별(지금 트랙의 wear.device) ──
+  // ── [디자인] 목록 (GDD 30장, 47장 2번): 기기 바깥, 브라우저 화면 전체 위에 뜨는 큰 창(화면의 약 90%). 카드마다 기기 앞면 큰 그림·이름, 고르면 바로 바뀐다.
+  // LCD 안 레이어가 아니라 document.body 에 붙이므로 기기 선택 버튼 등록은 하지 않는다 — [닫기]·바깥 탭·Esc 로 닫는다. 착용은 트랙별(지금 트랙의 wear.device) ──
   let closeDesigns: (() => void) | null = null;
   function openDesigns(): void {
     if (closeDesigns) return closeDesigns();
     if (!on || !save) return;
     const s = save;
-    const layer = el('div', 'bha-overlay bha-overlay--in-app bha-designs');
+    const layer = el('div', 'bha-overlay bha-designs');
     layer.setAttribute('role', 'dialog');
     layer.setAttribute('aria-modal', 'true');
     layer.setAttribute('aria-label', '기기 디자인');
-    const modal = el('div', 'bha-modal');
-    modal.append(el('h2', 'bha-modal__title', '기기 디자인'), el('p', 'bha-modal__body', '평소 화면의 틀과 다마고치 모드에서 보이는 기기 모양. 고르면 바로 바뀐다.'));
+    const win = el('div', 'bha-designs__win');
+    win.append(el('h2', 'bha-modal__title', '기기 디자인'), el('p', 'bha-modal__body', '평소 화면의 틀과 다마고치 모드에서 보이는 기기 모양. 고르면 바로 바뀐다.'));
     const list = el('div', 'bha-designs__list');
     const rows = () => {
       list.replaceChildren();
       const cur = s.wear.device ?? null;
-      const entries: { id: string | null; name: string; note: string }[] = [
-        { id: null, name: '기본형', note: '기본 제공' },
-        ...ownedDeviceDesigns(s).map((c) => ({ id: c.id, name: cosmeticName(c, faction), note: sourceNote(c) })),
+      const entries: { id: string | null; name: string; note: string; front: string | null }[] = [
+        { id: null, name: '기본형', note: '기본 제공', front: null },
+        ...ownedDeviceDesigns(s).map((c) => ({ id: c.id, name: cosmeticName(c, faction), note: sourceNote(c), front: deviceArt(c)?.front ?? null })),
       ];
       for (const e of entries) {
         const worn = e.id === cur;
@@ -697,7 +704,14 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
         row.type = 'button';
         row.dataset.design = e.id ?? 'basic';
         row.setAttribute('aria-pressed', String(worn));
-        row.append(el('b', 'bha-designs__name', e.name), el('small', 'bha-designs__note', e.note), el('span', 'bha-designs__worn', worn ? '착용 중' : ''));
+        const view = el('span', 'bha-designs__view');
+        if (e.front) {
+          const img = el('img', 'bha-designs__img') as HTMLImageElement;
+          img.alt = '';
+          img.src = `${BASE}${e.front}`;
+          view.append(img);
+        } else view.append(el('span', 'bha-designs__basic'));
+        row.append(view, el('b', 'bha-designs__name', e.name), el('small', 'bha-designs__note', e.note), el('span', 'bha-designs__worn', worn ? '착용 중' : ''));
         row.onclick = () => pick(e.id);
         list.append(row);
       }
@@ -710,19 +724,25 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       rows();
     };
     rows();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
     const close = () => {
       if (!closeDesigns) return;
       closeDesigns = null;
-      unregister();
+      window.removeEventListener('keydown', onKey);
       layer.remove();
       shield.hidden = !on;
     };
     const actions = el('div', 'bha-modal__actions');
     actions.append(button({ label: '닫기', variant: 'primary', onClick: close }));
-    modal.append(list, actions);
-    layer.append(modal);
-    getOverlayHost().append(layer);
-    const unregister = registerLayer(layer, close);
+    win.append(list, actions);
+    layer.append(win);
+    layer.addEventListener('click', (e) => {
+      if (e.target === layer) close(); // 바깥 탭
+    });
+    window.addEventListener('keydown', onKey);
+    document.body.append(layer);
     closeDesigns = close;
     shield.hidden = true; // 화면 덮개가 목록 탭을 가리지 않게
   }

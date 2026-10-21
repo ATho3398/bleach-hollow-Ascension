@@ -72,6 +72,8 @@ export const BODY = {
   /** 몸체 아래 조작 줄([뒤집기]·[확대]) 높이와 틈 */
   ctrlGap: 10,
   ctrlH: 40,
+  /** 기기 바깥 조작 줄이 화면 가장자리에서 차지하는 두께(px, 화면 기준): 버튼 108 + 여백 (GDD 47장 1번) */
+  barPx: 124,
   /** 화면을 다 채우지 않게 남기는 여유 (1 = 꽉) */
   fill: 0.96,
   /** 이보다 크게는 키우지 않는다: "조금 더 멀리서 본" 느낌이 나게 */
@@ -164,12 +166,14 @@ export interface TamaLayout {
  * 줌아웃 배치: 기기 상자(0,0,w,h) 둘레에 몸체·고리·키링·조작 줄을 두고, 그 전체가 기기 크기(w×h) 안에 들어가게 줄여 가운데에 놓는다.
  * art = 기기 디자인 그림을 입었을 때 그 그림의 상자·고리(기기 안 좌표) — 없으면 CSS 몸체.
  */
-export function tamaLayout(w: number, h: number, art?: { box: Rect; ring: { x: number; y: number } } | null, flipDeg = 0, view: TamaView = VIEW_HOME): TamaLayout {
+export function tamaLayout(w: number, h: number, art?: { box: Rect; ring: { x: number; y: number } } | null, flipDeg = 0, view: TamaView = VIEW_HOME, reserveX = 0): TamaLayout {
   const B = BODY;
   const body: Rect = art ? art.box : { x: -B.pad, y: -B.pad, w: w + 2 * B.pad, h: h + 2 * B.pad };
   const ring = art ? art.ring : { x: body.x - B.ringOut, y: body.y - B.ringOut };
   const ringBack = { x: r2(body.x + body.w - (ring.x - body.x)), y: ring.y };
   const ctrl: Rect = { x: body.x, y: body.y + body.h + B.ctrlGap, w: body.w, h: B.ctrlH };
+  // 기기 바깥 조작 줄(GDD 47장)이 가리는 +x 쪽 폭만큼 쓸 수 있는 칸을 줄인다 (기기·키링은 남은 칸의 가운데)
+  const uw = w - reserveX;
   // 키링은 고리 아래(가로 기기) 또는 고리 오른쪽(세로로 돌려 놓은 기기: 화면 아래 = 기기 +x)으로 늘어진다 — 두 방향·앞뒤 고리 모두 상자에 넣는다
   // (뒤집어도 줌이 그대로이도록)
   const rx0 = Math.min(ring.x, ringBack.x), rx1 = Math.max(ring.x, ringBack.x);
@@ -178,7 +182,7 @@ export function tamaLayout(w: number, h: number, art?: { box: Rect; ring: { x: n
   const x1 = Math.max(body.x + body.w, rx1 + B.charmL);
   const y1 = Math.max(ctrl.y + ctrl.h, ring.y + B.charmL);
   const box: Rect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
-  const zoom = round4(Math.min(B.maxZoom, Math.min(w / box.w, h / box.h) * B.fill));
+  const zoom = round4(Math.min(B.maxZoom, Math.min(uw / box.w, h / box.h) * B.fill));
   const cx = box.x + box.w / 2;
   const cy = box.y + box.h / 2;
   // 뒤집기 각도는 늘 넣는다 (0도라도): 줌아웃 상태끼리 변환 함수 목록이 같아야 rotateY 가 매끄럽게 이어진다
@@ -189,8 +193,8 @@ export function tamaLayout(w: number, h: number, art?: { box: Rect; ring: { x: n
   const flip = ` translate(${r2(bcx - cx)}px, 0px) perspective(${Math.round(Math.max(w, h) * 3)}px) translateZ(${r2(-thick / 2)}px) rotateY(${flipDeg}deg) translateZ(${r2(thick / 2)}px)`;
   const shrink = 1 - B.flipShrink * Math.min(1, Math.abs(Math.sin((flipDeg * Math.PI) / 180)));
   // 사용자 확대(핀치·휠)는 같은 함수 목록 안에서 배율·이동만 바꾼다 (전환이 매끄럽게)
-  const v = clampView(view, zoom, box, w, h);
-  const stage = `translate(${r2(w / 2 + v.px)}px, ${r2(h / 2 + v.py)}px) scale(${round4(zoom * v.uz * shrink)})${flip} translate(${r2(-bcx)}px, ${r2(-cy)}px)`;
+  const v = clampView(view, zoom, box, uw, h);
+  const stage = `translate(${r2(uw / 2 + v.px)}px, ${r2(h / 2 + v.py)}px) scale(${round4(zoom * v.uz * shrink)})${flip} translate(${r2(-bcx)}px, ${r2(-cy)}px)`;
   return { body, ring, ringBack, ctrl, box, zoom, stage };
 }
 
