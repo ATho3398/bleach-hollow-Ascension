@@ -223,6 +223,8 @@
 .bha-foecard__tags { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 4px; }
 .bha-absorb__actions { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 8px; }
 .bha-absorb__actions .bha-btn { flex-direction: column; gap: 2px; min-height: 64px; }
+/* 흡수 갈래 4개 (GDD 52): 2×2 같은 너비 */
+.bha-absorb__actions--modes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .bha-absorb__actions .bha-btn small { font-size: var(--bha-fs-xs); font-weight: 500; opacity: .85; }
 .bha-steps { display: flex; align-items: center; gap: 6px; font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-3); }
 .bha-steps span { display: inline-flex; align-items: center; gap: 4px; }

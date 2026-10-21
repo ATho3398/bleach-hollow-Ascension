@@ -5,6 +5,15 @@ import { BALANCE } from '../../config/balance';
 import type { NestAction } from '../faction';
 
 const RX = BALANCE.provisional.risk;
+const AX = BALANCE.provisional.absorb;
+
+/** 흡수 갈래 (GDD 52, C.108): 둘 다(특성·속성 + 노력치) / 속성만(특성·속성 카운트) / 스탯만(노력치 ×2). '흡수 안 함'은 chooseRelease */
+export type AbsorbMode = 'both' | 'trait' | 'stat';
+export const ABSORB_MODES: readonly AbsorbMode[] = ['both', 'trait', 'stat'];
+/** 갈래 규칙: ev = 적 노력치 배율, risk = 리스크 상승 배율 (balance.ts provisional) */
+export function absorbModeRule(mode: AbsorbMode): { ev: number; risk: number } {
+  return AX.modes[mode];
+}
 
 export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action' | 'liberation' | 'synergy' | 'altar';
 
@@ -45,9 +54,9 @@ export function changeStability(s: { stability: number }, delta: number): void {
   s.stability = clamp(s.stability + delta, 0, RX.stabilityMax);
 }
 
-/** 강한 적을 흡수했을 때의 상승량: 적 강함(hpInAttacks)에 비례 — 강적이 일반 적의 약 2배 */
-export function absorbRisk(strength: number): number {
-  return strength * RX.absorbPerHpAttack;
+/** 강한 적을 흡수했을 때의 상승량: 적 강함(hpInAttacks)에 비례 — 강적이 일반 적의 약 2배. 갈래(GDD 52)마다 배율(속성만 ×0.7·스탯만 ×0.5) */
+export function absorbRisk(strength: number, mode: AbsorbMode = 'both'): number {
+  return strength * RX.absorbPerHpAttack * absorbModeRule(mode).risk;
 }
 
 /** 5바퀴째부터 칸을 지날 때마다 오르는 양 (GDD 5장 "5바퀴 이후") */

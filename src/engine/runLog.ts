@@ -23,6 +23,13 @@ export interface AbsorbRecord {
   specialGates?: string[];
   /** C.106: 흡수한 특성이 특수 속성(혈·독·허, 숨김) 특성이었나 */
   hiddenTrait?: boolean;
+  /** C.108 (GDD 52, 세이브 형식 34): 흡수 갈래 trait(속성만)·stat(스탯만). 둘 다(both)·옛 기록은 적지 않는다(absorbModeOf 가 both 로 읽음). 놓아줌(absorbed false)은 없음 */
+  mode?: 'both' | 'trait' | 'stat';
+}
+
+/** 흡수 기록의 갈래 (GDD 52): 흡수했으면 mode(없으면 both), 놓아줬으면 null */
+export function absorbModeOf(a: Pick<AbsorbRecord, 'absorbed' | 'mode'>): 'both' | 'trait' | 'stat' | null {
+  return a.absorbed ? (a.mode ?? 'both') : null;
 }
 
 /** 슬롯 같은 속성 3개 완성 기록 (GDD 4-1 보너스). C.47 부터 lineageId 에는 속성 id 가 들어간다 (옛 기록은 계통 id) */

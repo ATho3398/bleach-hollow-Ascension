@@ -21,8 +21,64 @@ import { STORY_CHAPTERS, chapterContent, groundBossId } from '../src/data/story'
 import { bossSetupOf } from '../src/engine/expedition';
 import { createTowerCombat, towerFloor } from '../src/engine/tower';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
+import { spawn } from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
 
 const check = process.argv.includes('--check');
+// ── 구간 선택·병렬 실행 (C.108): 구간은 서로 독립(시드 고정, 공유 상태 없음)이라 --only=이름,… 으로 일부만 돌릴 수 있고,
+//    --parallel 이면 이 프로세스가 구간(--only 가 있으면 그 구간만)을 워커 수(--workers=N, 기본 min(4, CPU))만큼 자식(--only)으로 나눠 돌린 뒤 출력을 모은다. 가드 판정·수치는 직렬과 같다.
+//    진화 봇 세이브(campaign)가 필요한 구간은 자식마다 캠페인을 다시 만든다(약 60초, 중복 허용). seconds = 로컬 직렬 측정(배분용 추정치) ──
+const SECTIONS: { name: string; seconds: number }[] = [
+  { name: 'combat', seconds: 230 }, { name: 'expedition', seconds: 5 }, { name: 'absorb', seconds: 25 }, { name: 'variants', seconds: 105 }, { name: 'boss1', seconds: 31 },
+  { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 },
+  { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 },
+];
+const CAMPAIGN_SECONDS = 63;
+const CAMPAIGN_USERS = ['boss23', 'rebirth', 'phys', 'difficulty', 'grounds', 'liberation', 'bosses', 'rank', 'tower'];
+const onlyArg = process.argv.find((a) => a.startsWith('--only='));
+const ONLY: Set<string> | null = onlyArg ? new Set(onlyArg.slice('--only='.length).split(',').filter(Boolean)) : null;
+if (ONLY) for (const s of ONLY) if (!SECTIONS.some((x) => x.name === s) && s !== 'campaign') throw new Error(`모르는 구간 ${s} (${SECTIONS.map((x) => x.name).join(', ')})`);
+const want = (s: string): boolean => ONLY === null || ONLY.has(s);
+const needCampaign = want('campaign') || CAMPAIGN_USERS.some(want);
+if (process.argv.includes('--parallel')) {
+  const parSections = ONLY ? SECTIONS.filter((s) => ONLY.has(s.name)) : SECTIONS;
+  const wArg = process.argv.find((a) => a.startsWith('--workers='));
+  const cpus = typeof os.availableParallelism === 'function' ? os.availableParallelism() : os.cpus().length;
+  const workers = Math.max(1, Math.min(SECTIONS.length, wArg ? Number(wArg.slice('--workers='.length)) || 1 : Math.min(4, cpus)));
+  // 큰 구간부터 가장 덜 찬 워커에. 캠페인이 필요한 구간이 그 워커에 처음 들어갈 때 캠페인 시간을 더한다
+  const bins = Array.from({ length: workers }, () => ({ names: [] as string[], seconds: 0 }));
+  for (const s of [...parSections].sort((a, b) => b.seconds - a.seconds)) {
+    const bin = bins.reduce((m, b) => (b.seconds < m.seconds ? b : m));
+    const extra = CAMPAIGN_USERS.includes(s.name) && !bin.names.some((n) => CAMPAIGN_USERS.includes(n)) ? CAMPAIGN_SECONDS : 0;
+    bin.names.push(s.name);
+    bin.seconds += s.seconds + extra;
+  }
+  const jobs = bins.filter((b) => b.names.length > 0);
+  const viteNode = path.resolve('node_modules/.bin/vite-node');
+  const t0 = Date.now();
+  console.log(`병렬 ${jobs.length}워커 (CPU ${cpus}): ${jobs.map((b, i) => `#${i + 1} ${b.names.join(',')} (~${b.seconds}초)`).join(' / ')}`);
+  // 자식 stderr(구간 소요 시간·후반 보류 경고)는 바로 흘려보내 진행이 보이게 하고, 끝나면 워커별 stdout 뒤에 다시 모아 적는다
+  const results = await Promise.all(jobs.map((b) => new Promise<{ code: number; out: string; err: string }>((resolve) => {
+    const child = spawn(viteNode, ['scripts/balance.ts', '--', ...(check ? ['--check'] : []), `--only=${b.names.join(',')}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
+    child.stderr.on('data', (d: Buffer) => { err += d.toString(); process.stderr.write(d); });
+    child.on('error', (e) => resolve({ code: 1, out: `${out}\n워커 실행 실패: ${String(e)}`, err }));
+    child.on('close', (code) => resolve({ code: code ?? 1, out, err }));
+  })));
+  const nl = (s: string) => (s.length === 0 || s.endsWith('\n') ? s : s + '\n');
+  results.forEach((r, i) => {
+    console.log(`\n======== 워커 #${i + 1}: ${jobs[i]!.names.join(', ')} (종료 코드 ${r.code}) ========`);
+    process.stdout.write(nl(r.out));
+    if (r.err.trim().length > 0) process.stdout.write(`-- 워커 #${i + 1} stderr --\n${nl(r.err)}`);
+  });
+  const failed = results.map((r, i) => (r.code === 0 ? null : i + 1)).filter((x): x is number => x !== null);
+  console.log(`\n병렬 전체 ${((Date.now() - t0) / 1000).toFixed(0)}초 · ${failed.length === 0 ? '회귀 가드 통과 (전 워커)' : `회귀 가드 실패: 워커 #${failed.join(', #')} (위 출력 참조)`}`);
+  process.exit(failed.length === 0 ? 0 : 1);
+}
+
 const failures: string[] = [];
 /**
  * 후반 보류 (GDD 45장 6번, C.97): 4단계(바스트로데) 이후 블록 효과를 만들기 전까지 4단계 이후 가드는 실패 대신 경고로 남긴다.
@@ -43,6 +99,13 @@ function failAt(tierIndex: number, msg: string): void {
 const CX = BALANCE.provisional.combat;
 
 console.log(`밸런스 버전 ${BALANCE_VERSION}`);
+// 구간 소요 시간 (C.108): 구간 머리글('\n' 으로 시작하는 줄)마다 stderr 에 누적 초를 찍는다. stdout 출력·가드 판정은 그대로
+const T0 = Date.now();
+const origLog = console.log.bind(console);
+console.log = (...a: unknown[]): void => {
+  if (typeof a[0] === 'string' && a[0].startsWith('\n')) process.stderr.write(`[${((Date.now() - T0) / 1000).toFixed(0)}s] ${a[0].trim().split('\n')[0]!.slice(0, 60)}\n`);
+  origLog(...a);
+};
 
 // ── 전투 v2(P4): 블록 봇 N판, 시드 고정 ──
 // C.7 (GDD 3-5 v0.7): 승률 목표의 기준 빌드 = skill 특성 1~2개 장착 (공격 1개 / 공격+막기 2개).
@@ -125,7 +188,7 @@ function pooled(stats: KindStat[]): { win: number; winSecs: number } {
   return { win, winSecs };
 }
 const humanElite: Record<string, { win: number; winSecs: number }> = {};
-for (const bot of BOTS) {
+if (want('combat')) for (const bot of BOTS) {
   console.log(`\n  ===== ${bot.name} =====`);
   for (const build of builds) {
     console.log(`  [${build.name}]`);
@@ -164,7 +227,7 @@ for (const bot of BOTS) {
   }
 }
 // ── 분류·속성별 승률 (C.47, GDD 20-1·20-2): 공격 특성 1개 빌드를 분류 3종 × 속성 8종으로 바꿔 사람형 봇으로 돌린다. 일반 적 90%↑ 가드, 강적은 참고 ──
-{
+if (want('combat')) {
   const NC = 60;
   const FAM_OF: Record<string, string> = { physical: 'a', special: 'c', mixed: 'b' };
   console.log(`\n분류·속성별 승률 (사람형 봇, 공격 특성 1개, 적 풀 전체 × ${NC}판) — 일반 ${TARGET.normal.win * 100}%↑ 가드`);
@@ -198,7 +261,7 @@ for (const bot of BOTS) {
   console.log(`  (혈 흡혈 ${BALANCE.provisional.elements.drainFraction * 100}% · 한 전투 상한 최대 체력 ${BALANCE.provisional.elements.drainCapFraction * 100}%, C.53)`);
 }
 
-for (const enemy of POOL_ENEMIES) {
+if (want('combat')) for (const enemy of POOL_ENEMIES) {
   const ref = CX.enemyHpByKind[enemyPatternKind(enemy)];
   if (Math.abs(enemy.hpInAttacks - ref) > ref * 0.15) failures.push(`${enemy.id}: hpInAttacks ${enemy.hpInAttacks} 가 ${enemyPatternKind(enemy)} 기준 ${ref}(±15%) 밖`);
 }
@@ -219,7 +282,7 @@ const autoWin = (s: CombatState) => {
   s.finisher = { kind: 'basic-attack', traitId: null, element: null };
 };
 console.log(`\n원정 (자동 플레이 ${M}회, 타일 배치 포함, 시작 허기 20·컨디션 80)`);
-for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 점검: 전투는 승리 처리', autoWin]] as const) {
+if (want('expedition')) for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 점검: 전투는 승리 처리', autoWin]] as const) {
   for (const stopLap of [4, 6]) {
     let exhausted = 0;
     let defeated = 0;
@@ -245,7 +308,7 @@ for (const [label, playBattle] of [['블록 봇 전투', undefined], ['허기 �
 }
 
 // ── 적 출현 풀 분포 (C.15, GDD 14-5): 바퀴·출처별 풀 구성과 속성 분포 (C.47: 약점 계통 → 적 속성) ──
-{
+if (want('expedition')) {
   const LIDS = [...ELEMENT_IDS];
   const WEAK_MIN = 0.06; // 가드: 속성 하나의 적 비율 하한 (균등이면 1/속성 수 = 12.5%)
   console.log('\n적 출현 풀 (가중치 기준 구성, 속성 분포는 풀 가중치 합산)');
@@ -301,7 +364,7 @@ const absorbStats: Record<string, { breakthrough: number; defeated: number; abso
 // 섞음 봇 (GDD 23-2 "평범한 원정"): 흡수 화면마다 흡수와 놓아주기를 번갈아 한다
 const mixedWanted = (e: ExpeditionState) => e.absorbRecords.filter((a) => a.absorbed).length <= e.absorbRecords.filter((a) => !a.absorbed).length;
 const POLICY_NAME = { absorb: '흡수', mixed: '섞음', release: '놓아줌' } as const;
-for (const stopLap of [4, 6]) {
+if (want('absorb')) for (const stopLap of [4, 6]) {
   for (const policy of ['absorb', 'mixed', 'release'] as const) {
     let absorbs = 0;
     let releases = 0;
@@ -341,11 +404,13 @@ for (const stopLap of [4, 6]) {
   }
 }
 // 회귀 가드(흡수 봇은 쉬지도 놓아주지도 않는 극단이다): 기본 4바퀴 흡수 플레이는 절반 이하만 돌파하고, 항상 놓아주면 돌파하지 않으며, 6바퀴 흡수 플레이는 돌파가 의미 있게 생겨야 한다
+if (want('absorb')) {
 if ((absorbStats['4-absorb']?.breakthrough ?? 0) > M * 0.5) failures.push(`4바퀴 흡수 플레이 돌파 ${absorbStats['4-absorb']?.breakthrough}/${M} > 50%`);
 if ((absorbStats['6-absorb']?.breakthrough ?? 0) < M * 0.5) failures.push(`6바퀴 흡수 플레이 돌파 ${absorbStats['6-absorb']?.breakthrough}/${M} < 50% (리스크가 약하다)`);
 if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에서 항상 놓아줘도 한계 돌파가 생긴다');
+}
 // GDD 23-2 리스크 목표 (C.52): 평범한 4바퀴(흡수·놓아주기 섞음)는 끝 40~60·돌파 10% 이하, 둥지 재우기·쓰다듬기는 한 번에 −20 안팎(−15~−25)
-{
+if (want('absorb')) {
   const m4 = absorbStats['4-mixed']!;
   // C.63 (마스터 결정): 끝 리스크 판정은 60판이면 잡음이 ±3 쯤이라 경계(40)에서 흔들린다 → 같은 봇을 시드 1~RISK_M 으로 더 돌린 평균으로 판정한다 (위 60판 줄은 참고)
   const RISK_M = 300;
@@ -368,7 +433,7 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
 }
 // ── 타일 변수 5종 (C.57, GDD 25-5): 4바퀴 섞음 봇으로 타일 변수 끔/켬 비교 (켬 = 드래프트 카드를 시너지 우선으로 골라 바로 놓음, 이벤트는 봇 선택, 바퀴 변이·시너지 발동) ──
 // 가드(두 종족 합산 평균): 보상(먹이 개수·번 골드) 증가 +25% 이하, 켬 끝 리스크 40~60, 패배율 +5%p 이하. 종족별 값은 참고 출력
-{
+if (want('variants')) {
   const TVN = 1000;
   const tvStat = (fid: string, on: boolean) => {
     const dk = sanitizeDeck(newTileStock(), fid);
@@ -426,7 +491,7 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
 
 // ── 보스 자유 원정 등장 (C.86, GDD 37장): 장 보스가 있는 사냥터마다 4바퀴 섞음 봇(타일 변수 켬, 1단계 새 몸·★1)으로 보스를 이기기 전/후 비교 ──
 // 등장 굴림은 따로 난수라 같은 시드 = 보스 칸 전까지 같은 원정(짝 비교). 가드: 두 종족 합산 패배율 +5%p 이하
-{
+if (want('boss1')) {
   const FBN = 1000;
   const BF = BALANCE.provisional.boss;
   for (const g of GROUNDS) {
@@ -464,7 +529,7 @@ if ((absorbStats['4-release']?.breakthrough ?? 0) > 0) failures.push('4바퀴에
 }
 // 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않고(가드 25% 이상), 거의 항상이면 조건이 의미 없다(가드 85% 이하).
 // C.7: 측정은 "흡수하는 봇" 기준. 항상 놓아주는 봇은 skill 이 하나도 없어 첫 흡수 보장으로 늘 100% 라 의미가 없다 (참고 출력만)
-for (const lap of [4, 6]) {
+if (want('absorb')) for (const lap of [4, 6]) {
   const ar = absorbStats[`${lap}-absorb`]?.absorbableRate ?? 0;
   if (ar < 0.25) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% < 25%`);
   if (ar > 0.85) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% > 85% (조건이 거의 항상 열린다)`);
@@ -527,7 +592,7 @@ let campaignSaves: SaveData[] = [];
 let campaignFirstAt: Record<number, SaveData[]> = {};
 let campaignFinalRuns: number[] = [];
 let campaignFinalDefeats: number[] = [];
-{
+if (needCampaign) {
   const st = campaign();
   campaignSaves = st.saves;
   campaignFirstAt = st.firstAt;
@@ -554,7 +619,7 @@ let campaignFinalDefeats: number[] = [];
 
 // ── 보스 자유 원정 등장 — 2·3장 사냥터 (C.84 측정, C.94 정식 가드, GDD 37장 7번·41장 2번 ④): 그 장 보스를 스토리에서 이긴 몸 = 보스 화의 권장 단계에 갓 닿은 진화 봇 몸, 그 화의 ★.
 // 1단계 새 몸은 이 보스를 만날 수 없다(스토리 보스가 4·5단계 권장). 같은 시드로 보스 처치 전/후 짝 비교, 가드 패배율 +5%p 이하 ──
-{
+if (want('boss23')) {
   const K = 30;
   const BF = BALANCE.provisional.boss;
   for (const g of GROUNDS.filter((x) => x.unlockTierIndex > 0)) {
@@ -601,7 +666,7 @@ let campaignFinalDefeats: number[] = [];
 
 // ── 환생 (C.56, GDD 22-7): 위 진화 봇 중 5단계에 닿은 세이브(원정 MAX_RUNS 회를 마친 몸)가 환생(장착 첫 특성 계승)하고 같은 방식으로 다시 5단계까지.
 // 계승 효과 = 노력치 10% 누적 + 특성 1개. 진화 타이밍은 걸음 수라 원정 수는 패배(걸음이 덜 쌓임)로만 달라진다 — 그 차이와 패배 수를 본다. 가드는 없음(보고용)
-{
+if (want('rebirth')) {
   const ready = campaignSaves.filter((s) => s.evolution.tierIndex >= 4).map((s) => structuredClone(s));
   type LifeStat = { runs: number[]; defeats: number[]; carry: number[]; reborn: number };
   const lives: LifeStat[] = [];
@@ -659,7 +724,7 @@ let campaignFinalDefeats: number[] = [];
 }
 
 // ── 정책 봇 (C.47): 한 속성만 / 마주 보는 두 원소만 / 노멀만 흡수, 돌보지 않음, 놓아주기 위주. 히든 도달률을 본다 ──
-{
+if (want('policy')) {
   type Policy = { name: string; wanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number; expect?: string };
   const only = (els: string[]) => () => (exp: ExpeditionState) => els.includes(exp.absorbOffer!.element);
   const policies: Policy[] = [
@@ -681,7 +746,7 @@ let campaignFinalDefeats: number[] = [];
 }
 
 // ── 진화 트리 점검 (GDD 20-5): 모든 진화체(일반 35 + 히든 12)가 무작위 상태에서 실제로 뽑히는가, 단계별 히든 비율 ──
-{
+if (want('tree')) {
   const EVC = BALANCE.provisional.evolution;
   const t0 = Date.now();
   const rep = analyzeTree(FORM_TABLE, 'hollow', EVC.analysis.samples, EVC.analysis.seed);
@@ -697,7 +762,7 @@ let campaignFinalDefeats: number[] = [];
 
 // ── 권장 단계 등가 점검 (C.75, GDD 32-1 2번): n단계 몸(그 단계 기본 진화체, 노력치 0, skill 1개 빌드)이 ★n 적 풀과 1:1 로 싸우면 1단계 몸 ★1 과 같은 길이·승률이어야 한다 ──
 // (내 능력치는 절대값이지만 적 기준 능력치·체력·공격이 ★ 를 따라 같이 오르므로 "권장 단계 = 일반 약 45초·강적 약 90초" 가 단계마다 유지된다.) 가드: 일반 처치 시간이 2~5단계 평균의 0.8~1.25배, 강적 승률이 평균 ±15%p 안 (★1 은 입문 보정으로 더 쉬움, C.76)
-{
+if (want('equiv')) {
   const NM = 40;
   const forms = [null, 't2:base', 't3:base', 't4:normal', 't5:normal:mixed'];
   console.log(`\n권장 단계 등가 (사람형 봇, n단계 기본 몸 + skill 1개 vs ★n 적 풀, 종류마다 ${NM}판) — 체력 배율 (k−1)×${BALANCE.provisional.difficulty.hpGrowth}, 공격 배율 (k−1)×${BALANCE.provisional.difficulty.attackGrowth}`);
@@ -738,7 +803,7 @@ let campaignFinalDefeats: number[] = [];
 // ── 진화체 특성 (C.89, GDD 39장 7번): 4·5단계 진화체마다(노력치 0, 성향 = 종족값 최고, skill 1개) 권장 ★ 적 풀과 1:1 — 특성(속성·전용) 켬/끔 ──
 // 가드: 특성이 올려 주는 강적 승률(켬 − 끔)이 같은 단계 평균 ±10%p 안, 특성 끔 대비 일반 처치 시간 −15% 이내(너무 쉬워지지 않게). 5단계 히든(속성 잇기)은 4단계 노멀을 이어받은 몸.
 // 기획서(39장 7번)는 "강적 승률 차 ±10%p" — 특성 끔 상태에서 이미 진화체 종족값·속성 상성 차로 37~88%(실패형 0%) 벌어져 있어 특성 몫(켬 − 끔)만 가드하고 절대 승률은 참고 출력 (C.89 판단)
-{
+if (want('abilities')) {
   const NA = 32;
   const t5 = [...ELEMENT_IDS.map((el) => `t5:${el}:mixed`), 'h5:limit', 'h5:restraint', 'h5:hunter', 'h5:reborn'];
   const groups: [number, string[]][] = [[3, formsOfTier(4).map((f) => f.id)], [4, t5]];
@@ -788,7 +853,7 @@ let campaignFinalDefeats: number[] = [];
 // '전' = 같은 몸에서 물공 블록·물공 특성만 뗀 옛 규칙, 특수(탄)·혼합(교)은 옛 규칙 그대로(비교표). 받은 피해 = 판당 최대 체력 대비 %, 버티는 초 = 판 시간 ÷ 받은 피해(체력 전부를 잃기까지).
 // 목표(49-9): 흙 = 버티기(버티는 초가 다른 5속성 최대의 1.2배 이상 · 강적 패배율이 가장 낮음, 처치 속도 목표 없음) · 혈 = 일반·강적 처치 시간 6속성 중 가장 빠름(승률 ±10%p 예외) ·
 //  불·물·뇌·노멀 = 일반 처치 시간 전 대비 −10~−25% · 혈 뺀 5속성 ★5 강적 승률 서로 ±10%p. 5단계라 후반 보류(45-6) 경고로 ──
-{
+if (want('phys')) {
   const bodies = campaignFirstAt[4] ?? [];
   const PR = 1;
   const BR = 2;
@@ -884,7 +949,7 @@ let campaignFinalDefeats: number[] = [];
 // 목표(32-1 3번, provisional): 권장 ★ 에서 일반 약 45초·강적 약 90초(원정 안이라 바퀴 강화·빌드 성장이 섞여 전투 구간보다 짧다 — 1단계 권장 값을 기준선으로 삼아 단계별로 ±25% 안),
 //  한 단계 위(★ = 단계−1)는 일반이 권장의 약 2/3 길이·강적 승률 상승, 한 단계 아래(★ = 단계+1)는 강적 승률이 크게(15%p 이상) 떨어진다.
 // 가드: 권장 ★ 일반 승률 85% 이상, 위·아래 방향이 맞을 것(한 단계 위 강적 승률 ≥ 권장, 한 단계 아래 강적 승률 ≤ 권장 − 10%p)
-{
+if (want('difficulty')) {
   const DR = 3;
   console.log(`\n원정 난이도 ★ (GDD 32-1, 사람형 봇, 그 단계에 갓 닿은 몸 × ${DR}원정, 4바퀴 귀환·흡수) — 종족값 합계 ${BALANCE.provisional.stats.tierTotals.join('/')}, ★ 체력 배율 ${Array.from({ length: MAX_DIFFICULTY }, (_, i) => difficultyEnemyScale(i + 1).hp.toFixed(2)).join('/')}`);
   type Row = { win: number; nWin: number; eWin: number; nSecs: number; eSecs: number; defeat: number; n: number; e: number; gold: number; food: number };
@@ -966,7 +1031,7 @@ let campaignFinalDefeats: number[] = [];
 }
 
 // ── 사냥터 (C.53, GDD 24-2 → C.75 32-1 6번): 강도는 난이도로 일원화(모두 ×1). 새로 열린 사냥터는 먹이가 기본 사냥터보다 많이 나오는지만 본다 ──
-{
+if (want('grounds')) {
   const GR = 3;
   console.log(`\n사냥터 (사람형 봇, 그 단계에 갓 닿은 세이브 × ${GR}원정, 권장 ★, 4바퀴 귀환·흡수) — 강도는 ×1(난이도로 일원화), 먹이만 다르다`);
   for (const tier of [...new Set(GROUNDS.map((g) => g.unlockTierIndex))].filter((t) => t > 0)) {
@@ -1008,7 +1073,7 @@ let campaignFinalDefeats: number[] = [];
 // ── 해방 (C.54, GDD 22-5): 5단계에 갓 닿은 몸(위 진화 봇 세이브)이 강적과 싸울 때 해방을 쓰면(봇은 게이지가 차면 바로) 승률이 얼마나 오르나 ──
 // 목표(마스터 v5.13, provisional): 해방 사용 시 강적 승률 +10~15%p. 적은 그 단계에 열리는 사냥터(5단계 = 마지막 사냥터) 1~6바퀴(원정 최대) 강화.
 // 1~4바퀴만 보면 해방 없이도 약 89% 라 올릴 자리가 11%p 뿐이다(dev-log C.54) — 늦은 바퀴까지 넣어 해방이 필요한 싸움을 함께 본다
-{
+if (want('liberation')) {
   const LR = 3;
   const LIB_STREAK = 5;
   const tier = BALANCE.provisional.liberation.minTierIndex;
@@ -1057,7 +1122,7 @@ let campaignFinalDefeats: number[] = [];
 
 // ── 보스전 (C.58, GDD 25-3·25-7): 보스가 나오는 스토리 장의 권장 단계에 갓 닿은 몸(위 진화 봇 세이브)으로 사람형 봇이 보스와 싸운다 ──
 // 목표(마스터 25-7, provisional): 승률 50~70%. 가드는 목표보다 넓게(35~85%) — 다른 수치를 고칠 때 보스가 무의미하거나 못 깨는 벽이 되는 것만 막는다
-{
+if (want('bosses')) {
   const BR = 4;
   for (const boss of BOSSES) {
     // 이 보스가 나오는 화의 권장 단계 (두 종족 중 처음 찾은 것)
@@ -1116,7 +1181,7 @@ let campaignFinalDefeats: number[] = [];
 
 // ── 등급전 (C.49, GDD 21장): 번호 보유자 No.10 → No.1 승률 곡선. 위 진화 봇 중 5단계(아란칼)에 닿은 세이브(원정 MAX_RUNS 회를 마친 몸)로 사람형 봇이 각 보유자와 싸운다 ──
 // 목표(provisional, 코딩41 판단): 위로 갈수록 내려가 No.1 약 20~30%. 이 봇은 원정 40회를 마친 다 자란 몸이라 No.10 은 거의 이긴다(갓 5단계가 된 몸은 약 85%, dev-log C.49). 가드: No.10 ≥ 60%, No.1 10~50%, 한 칸 위로 갈 때 승률이 12%p 넘게 오르지 않는다
-{
+if (want('rank')) {
   const RK = 4;
   const ready = campaignSaves.filter((s) => s.evolution.tierIndex >= BALANCE.rank.unlockTierIndex);
   console.log(`\n등급전 (사람형 봇, 5단계 세이브 ${ready.length}개 × 보유자마다 ${RK}판) — 목표(임시): 위로 갈수록 내려가 No.1 약 20~30%`);
@@ -1153,7 +1218,7 @@ let campaignFinalDefeats: number[] = [];
 // ── 도전의 탑 (C.85, GDD 36장 11번): 그 ★ 권장 단계 몸(1단계 = 새 몸, 2~5단계 = 그 단계에 갓 닿은 진화 봇 몸)으로 사람형 봇이 구간 첫 층·5층(강적)·끝 층(보스)과 싸운다.
 // 50층은 5단계 + 특성·노력치를 잘 키운 몸(원정 MAX_RUNS 회를 마친 5단계 세이브). 체력 가득·흡수 없음.
 // 목표(provisional): 구간 첫 층 거의 100%, 5층 강적 약 70%, 끝 층 보스 약 40~60%, 50층 약 30~50%. 가드는 목표보다 넓게
-{
+if (want('tower')) {
   const TR = 4;
   const fight = (bodies: SaveData[], floor: number, seedBase: number) => {
     const f = towerFloor(floor);

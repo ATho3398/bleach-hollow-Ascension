@@ -6,14 +6,14 @@ import { scaleEnemy } from '../../data/enemies';
 import { applyDifficultyToParams, clampDifficulty, clampStreak, difficultyEnemyScale, difficultyGoldMultiplier, difficultyRewardMultiplier, recommendedDifficulty, scaleEv, streakEnemyFactor } from '../difficulty';
 import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, pickFromPool } from '../enemyPool';
-import type { EnemyDef, EnvironmentPreset } from '../../data/schema';
+import type { EnemyDef, EnvironmentPreset, StatId } from '../../data/schema';
 import { deckTilesFor, getTile } from '../../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
-  absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, isSpecialTrait, specialTraitChance, cloneBuild, gainTrait, lateLapRisk,
-  newBuild, releaseEffect, rerollCandidates, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
+  absorbModeRule, absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, isSpecialTrait, specialTraitChance, cloneBuild, gainTrait, lateLapRisk,
+  newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import {
   applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
@@ -826,10 +826,11 @@ function specialGateOf(exp: ExpeditionState, elite: boolean, boss: boolean): Ret
   return specialTraitChance({ elite, boss, difficulty: exp.difficulty, mutationChance: mutationMods(exp.mutation).specialTraitChance });
 }
 
-function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null): void {
+function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null, mode?: AbsorbMode): void {
   // 숨김 특성 (GDD 49-7 ①, 9장): 풀이 열린 까닭과, 고른 특성이 특수 속성이었는지
   const hidden = offer.specialOpen ? { specialGates: [...(offer.specialGates ?? [])], ...(absorbed && traitId && isSpecialTrait(getTrait(traitId)) ? { hiddenTrait: true } : {}) } : {};
-  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden });
+  // 흡수 갈래 (GDD 52, 9장): 흡수했을 때만, 기본 갈래(둘 다)는 적지 않는다(없음 = both, absorbModeOf) — 저장 크기
+  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden, ...(absorbed && mode && mode !== 'both' ? { mode } : {}) });
 }
 
 /** 다시 뽑기 (GDD 25-9): 흡수 화면에서 특성 후보를 한 번 다시 뽑는다(흡수 1번에 1장 — 이미 다시 뽑았으면 거절). 다시 뽑기권은 부르는 쪽(세이브)이 쓴다.
@@ -859,23 +860,33 @@ export function chooseRelease(exp: ExpeditionState): AbsorbResult {
   return { ok: true };
 }
 
-/** 흡수: 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체, traitId null 이면 특성을 포기하고 효과만).
- *  효과: 허기 리셋, 리스크 상승(강할수록 많이), 보상 타일 +1 (GDD 4장, 4-1). 실패하면 아무것도 바뀌지 않는다 */
-export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: number | null): AbsorbResult {
+/** 흡수 갈래의 노력치: 적 ev × 갈래 배율(둘 다 1·속성만 0·스탯만 2) × 난이도 보상 배율 (GDD 52·32-1 5번, 정수 반올림) */
+export function absorbEvOf(offer: Pick<AbsorbOffer, 'ev'>, mode: AbsorbMode, difficulty: number, streak = 0): Partial<Record<StatId, number>> {
+  const k = absorbModeRule(mode).ev;
+  if (k <= 0) return {};
+  const ev: Partial<Record<StatId, number>> = {};
+  for (const [s, v] of Object.entries(offer.ev)) if (typeof v === 'number' && v > 0) ev[s as StatId] = v * k;
+  return scaleEv(ev, difficulty, streak);
+}
+
+/** 흡수 (GDD 4장, 4-1 → 52장 갈래): 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체, traitId null 이면 특성을 포기하고 효과만).
+ *  mode = 'both'(특성·속성 카운트 + 노력치 ×1) / 'trait'(특성·속성 카운트만, 리스크 ×0.7) / 'stat'(노력치 ×2, 리스크 ×0.5, 특성·속성 카운트 없음 — traitId 는 null 이어야 한다).
+ *  공통 효과: 허기 리셋, 리스크 상승(강할수록 많이), 보상 타일 +1. 실패하면 아무것도 바뀌지 않는다 */
+export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: number | null, mode: AbsorbMode = 'both'): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
+  if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' };
   if (traitId !== null) {
     if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 특성이다' };
     const r = gainTrait(exp.build, traitId, replaceSlot);
     if (!r.ok) return r;
     exp.acquiredTraits.push({ traitId, lap: exp.lap });
   }
-  logAbsorb(exp, offer, true, traitId);
-  // 흡수 노력치도 난이도 보상 배율 (GDD 32-1 5번, 정수 반올림)
-  recordEvolutionAbsorb(exp.evolution, offer.element, scaleEv(offer.ev, exp.difficulty, exp.streak));
+  logAbsorb(exp, offer, true, traitId, mode);
+  recordEvolutionAbsorb(exp.evolution, offer.element, absorbEvOf(offer, mode, exp.difficulty, exp.streak), mode !== 'stat');
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
-  changeRisk(exp, absorbRisk(offer.strength), 'absorb');
+  changeRisk(exp, absorbRisk(offer.strength, mode), 'absorb');
   // 스토리 흡수 목표 (GDD 25-4): 그 등급 적을 흡수
   const ob = storyEpisodeOf(exp)?.objective;
   if (exp.story && ob?.type === 'absorb' && (offer.elite ? 'elite' : 'normal') === ob.enemyClass) exp.story.progress++;

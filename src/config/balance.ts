@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 55;
+export const BALANCE_VERSION = 56;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -75,6 +75,13 @@ export const BALANCE = {
       hungerAfterAbsorb: 0,
       /** 흡수 시 보상 타일 (GDD 2-1 "흡수 시 1"). 바퀴 합계는 tilesPerLap.max 안, 바퀴 완주 보상 1장은 남겨 둔다 */
       bonusTiles: 1,
+      /** 흡수 갈래 (GDD 52, C.108, provisional): 둘 다 = 특성·속성 카운트 + 노력치 ×1 · 속성만 = 특성·속성 카운트만, 리스크 ×0.7 · 스탯만 = 노력치 ×2, 리스크 ×0.5 (특성·속성 카운트 없음).
+       *  흡수 안 함 = 놓아주기(releaseEffect) 그대로. 세 갈래 모두 허기 리셋·보상 타일 */
+      modes: {
+        both: { ev: 1, risk: 1 },
+        trait: { ev: 0, risk: 0.7 },
+        stat: { ev: 2, risk: 0.5 },
+      },
       /** 특수 속성(혈·독·허) 특성 숨김 (GDD 49-7 ①, C.106, provisional): 아래 경우에만 그 확률로 흡수 후보 풀에 들어간다(여럿이면 가장 큰 값). 그 밖에는 후보에 안 나온다.
        *  강적·보스 처치 / 바퀴 변이 효과 specialTraitChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 */
       specialTraits: { elite: 0.5, boss: 1, minDifficulty: 3, difficulty: 0.3 },
@@ -179,10 +186,10 @@ export const BALANCE = {
       levelWins: [0, 3, 6, 10],
       /** 종목별 승리 보상·비용 (22-4 표). 비용은 이기든 지든. ev = 노력치(상한까지만) */
       games: {
-        duel: { points: 5, ev: { spr: 2 }, condition: -10, hunger: 0, risk: 5 },
-        dodge: { points: 3, ev: { spd: 3 }, condition: -15, hunger: 0, risk: 0 },
-        clash: { points: 4, ev: { atk: 3 }, condition: -5, hunger: 15, risk: 0 },
-        chain: { points: 3, ev: { hp: 3 }, condition: 0, hunger: 0, risk: 10, winHunger: -20 },
+        duel: { points: 5, ev: { spr: 4 }, condition: -10, hunger: 0, risk: 5 },
+        dodge: { points: 3, ev: { spd: 5 }, condition: -15, hunger: 0, risk: 0 },
+        clash: { points: 4, ev: { atk: 5 }, condition: -5, hunger: 15, risk: 0 },
+        chain: { points: 3, ev: { hp: 5 }, condition: 0, hunger: 0, risk: 10, winHunger: -20 },
       } as Record<string, { points: number; ev: Record<string, number>; condition: number; hunger: number; risk: number; winHunger?: number }>,
       /** 본능 대결: 상대 게이지 hits 번 깎으면 승, misses 번 놓치면 패. 예고 간격(초), 받아치는 창(초, 단계별), 3단계부터 페이크 확률, 4단계 연속 공격 확률 */
       duel: { hits: 8, misses: 4, gapSeconds: [0.8, 2.0], windowSeconds: [1.0, 0.85, 0.72, 0.6], telegraphSeconds: [0.9, 0.75, 0.6, 0.5], fakeChance: [0, 0, 0.3, 0.35], doubleChance: [0, 0, 0, 0.35] },
@@ -234,8 +241,10 @@ export const BALANCE = {
        *  단계 간격을 +10% 에서 +25% 로 벌려 한 단계 위·아래가 체감되게 (옛 300/330/360/390/420; C.75 1차 +20% 300/360/430/520/620 은 한 단계 위 일반 처치 시간이 권장의 0.77배라 0.70배가 되는 +25% 로) */
       tierTotals: [300, 375, 470, 585, 730],
       /** 노력치 단계 상한: 합계(index = 단계)와 능력치 하나의 상한(합계 상한 × 비율). 진화해도 유지되고 상한만 오른다 */
-      evCapTotal: [8, 16, 24, 32, 40],
+      evCapTotal: [45, 56, 70, 88, 110], // C.108 (GDD 52): 단계 종족값 합계의 약 15% (옛 8/16/24/32/40 = 3~5% 는 체감이 없었다)
       evCapPerStatRatio: 0.5,
+      /** 시작 외형 스탯 편향 (GDD 52 연동, C.108, provisional): 종족 설정 startLookBias 의 능력치 +up, 나머지 5개 −down (합계 유지). 새 세이브에만 */
+      startBias: { up: 10, down: 2 },
       /** 능력치 절대 상한 (GDD 22-1 v4.7): 종족값 + 노력치 + 환생 계승이 이 값에서 멈춘다 (6개 모두) */
       statMax: 999,
     },

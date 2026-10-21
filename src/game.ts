@@ -6,7 +6,7 @@ import { completedElements, gainTrait, newBuild, type BuildState } from './engin
 import { applyExpeditionEnd, doNestAction, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, startBiasStats, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
@@ -21,7 +21,7 @@ import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES, titleForFaction } from './data/titles';
 import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
-import { STAT_IDS, type TitleDef } from './data/schema';
+import { STAT_IDS, type Stats, type TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
 import { addFood, foodOverflowGold, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
@@ -41,7 +41,7 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
-export const SAVE_FORMAT_VERSION = 33;
+export const SAVE_FORMAT_VERSION = 34;
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -1044,6 +1044,8 @@ export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs
   save.rebirth = { count, carry };
   const evolution = newEvolution(nextStageSeed(prev.stageSeed, 100 + count));
   evolution.carry = startingCarry(carry);
+  // 시작 외형 편향은 외형(스킨)처럼 환생을 지나도 그대로 (GDD 51·52)
+  if (prev.bias) evolution.bias = { ...prev.bias };
   save.evolution = evolution;
   const build = newBuild();
   if (keepTraitId !== null) gainTrait(build, keepTraitId);
@@ -1351,6 +1353,10 @@ export function migrateSave(raw: unknown): SaveData | null {
     migrateTierLooks(save);
     save.meta.format = 33;
   }
+  if (save.meta.format < 34) {
+    // 형식 33 → 34 (C.108, GDD 52): 진화 상태 `bias`(시작 외형 스탯 편향, 새 세이브만)·흡수 기록 `mode`(흡수 갈래)가 생겼다. 옛 세이브는 편향 없음·옛 흡수 기록은 둘 다 흡수로 본다 — 값을 채우지 않는다
+    save.meta.format = 34;
+  }
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
@@ -1485,9 +1491,19 @@ export function pickStartLook(faction: Pick<FactionConfig, 'id' | 'startLooks'>,
   return i === 0 ? null : looks[i - 1]!;
 }
 
-/** 뽑은 외형을 새 세이브에 입힌다: 스킨을 보유 목록에 넣고 장착. 기본 외형(null)이면 그대로 둔다. 환생·트랙 만들기는 부르지 않는다(외형 유지) */
-export function applyStartLook(save: SaveData, faction: Pick<FactionConfig, 'id' | 'startLooks'>, rnd: number): string | null {
+/** 시작 외형의 스탯 편향 (GDD 52 연동, C.108): 종족 설정 startLookBias 에서 그 외형(기본 외형은 'base')의 능력치를 읽어 ±표(한 능력치 +10·나머지 −2, provisional)를 만든다. 표가 없으면 null */
+export function startBiasOf(faction: Pick<FactionConfig, 'startLookBias'>, look: string | null): Stats | null {
+  const stat = faction.startLookBias?.[look ?? 'base'];
+  return stat ? startBiasStats(stat) : null;
+}
+
+/** 뽑은 외형을 새 세이브에 입힌다: 스킨을 보유 목록에 넣고 장착(기본 외형 null 이면 스킨은 그대로), 외형의 스탯 편향(startBiasOf)을 진화 상태 bias 에 둔다.
+ *  환생·트랙 만들기는 부르지 않는다(외형·편향 유지). 돌려주는 값 = 뽑힌 스킨 id(기본이면 null) */
+export function applyStartLook(save: SaveData, faction: Pick<FactionConfig, 'id' | 'startLooks' | 'startLookBias'>, rnd: number): string | null {
   const look = pickStartLook(faction, rnd);
+  const bias = startBiasOf(faction, look);
+  if (bias) save.evolution.bias = bias;
+  else delete save.evolution.bias;
   if (look === null) return null;
   if (!save.shared.cosmetics.includes(skinItemId(look))) save.shared.cosmetics.push(skinItemId(look));
   return equipSkin(save, look) ? look : null;

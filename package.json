@@ -11,7 +11,8 @@
     "test": "vitest run",
     "balance": "vite-node scripts/balance.ts",
     "family:mix": "vite-node scripts/family-mix.ts",
-    "balance:check": "vite-node scripts/balance.ts -- --check",
+    "balance:check": "vite-node scripts/balance.ts -- --check --parallel",
+    "balance:check:serial": "vite-node scripts/balance.ts -- --check",
     "balance:b1": "vite-node scripts/b1-check.ts",
     "art:list": "vite-node scripts/art-list.ts",
     "gen:forms": "vite-node scripts/gen-forms.ts"

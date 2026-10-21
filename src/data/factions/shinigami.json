@@ -5,6 +5,7 @@
   "emblem": "⚔️",
   "logo": "logo-shinigami",
   "startLooks": [],
+  "startLookBias": {},
   "tierLooks": {},
   "tierNames": [
     "혼백",

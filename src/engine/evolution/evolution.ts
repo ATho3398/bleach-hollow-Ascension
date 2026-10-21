@@ -50,6 +50,8 @@ export interface EvolutionState {
   look?: string | null;
   /** 환생 계승 노력치 (GDD 22-7, 형식 20): 이 생을 시작할 때 받은 값(정수). 단계 상한과 따로 더해진다. 없으면 0 */
   carry?: Stats;
+  /** 시작 외형 스탯 편향 (GDD 52 연동, C.108, 형식 34): 새 세이브 추첨 때 종족 설정 startLookBias 로 정한 ±값(합계 0). 진화·환생을 지나도 그대로. 없으면 0 */
+  bias?: Stats;
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
   testElementDamage?: Record<string, number>;
 }
@@ -66,7 +68,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.bias ? { bias: { ...e.bias } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
 }
 
 export function isMaxTier(e: EvolutionState): boolean {
@@ -100,11 +102,18 @@ export function addEv(e: EvolutionState, gain: Partial<Record<StatId, number>>):
   return out;
 }
 
-/** 흡수가 확정될 때: 단계 기록(속성별 흡수) + 노력치 */
-export function recordEvolutionAbsorb(e: EvolutionState, element: string, ev: Partial<Record<StatId, number>> = {}): Partial<Record<StatId, number>> {
+/** 흡수가 확정될 때: 단계 기록(흡수 수·속성별 흡수) + 노력치. countElement false(스탯만 흡수, GDD 52)면 속성 카운트는 안 올린다(흡수 수는 올린다) */
+export function recordEvolutionAbsorb(e: EvolutionState, element: string, ev: Partial<Record<StatId, number>> = {}, countElement = true): Partial<Record<StatId, number>> {
   e.absorbs++;
-  e.elementAbsorbs[element] = (e.elementAbsorbs[element] ?? 0) + 1;
+  if (countElement) e.elementAbsorbs[element] = (e.elementAbsorbs[element] ?? 0) + 1;
   return addEv(e, ev);
+}
+
+/** 시작 외형 스탯 편향 (GDD 52 연동, C.108): 한 능력치 +up, 나머지 −down (합계 0 이 되게 balance 의 startBias 가 up = 5 × down) */
+export function startBiasStats(stat: StatId): Stats {
+  const out = zeroStats();
+  for (const s of STAT_IDS) out[s] = s === stat ? SX.startBias.up : -SX.startBias.down;
+  return out;
 }
 
 export function recordEvolutionRelease(e: EvolutionState): void {
@@ -202,12 +211,12 @@ export function tierDisplayName(e: Pick<EvolutionState, 'formHistory' | 'tierInd
 /** 능력치 절대 상한 (GDD 22-1 v4.7, 6개 모두) */
 export const STAT_MAX: number = SX.statMax;
 
-/** 지금 능력치 = (종족값 + 노력치 + 환생 계승) × (1 + 슬롯 보너스) (GDD 20-4·22-7·22-3), 능력치마다 STAT_MAX 에서 멈춘다.
+/** 지금 능력치 = (종족값 + 노력치 + 환생 계승 + 시작 외형 편향) × (1 + 슬롯 보너스) (GDD 20-4·22-7·22-3·52), 능력치마다 STAT_MAX 에서 멈춘다.
  *  statBonus = 붕옥 해방·초월체 보유 패시브 (0.05 = +5%, 반올림). 0 이면 예전과 같은 값 */
 export function currentStats(e: EvolutionState, factionId: string, statBonus = 0): Stats {
   const base = baseStatsOf(e, factionId);
   for (const s of STAT_IDS) {
-    const raw = base[s] + e.ev[s] + (e.carry?.[s] ?? 0);
+    const raw = base[s] + e.ev[s] + (e.carry?.[s] ?? 0) + (e.bias?.[s] ?? 0);
     base[s] = Math.min(STAT_MAX, statBonus > 0 ? Math.round(raw * (1 + statBonus)) : raw);
   }
   return base;

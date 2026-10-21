@@ -5,6 +5,7 @@
   "emblem": "💀",
   "logo": "logo-hollow",
   "startLooks": ["stalker", "brute", "ghoul", "shackled"],
+  "startLookBias": { "base": "hp", "stalker": "spd", "brute": "atk", "ghoul": "spr", "shackled": "def" },
   "tierLooks": {
     "3": {
       "stat": { "atk": "carapace", "int": "stag", "hp": "rhino", "spr": "wyrm", "spd": "panther", "def": "scorpion" },

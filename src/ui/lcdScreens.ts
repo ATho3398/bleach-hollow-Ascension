@@ -20,6 +20,8 @@ import type { Device } from './bha/device';
 import { deckRow, showToast, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
+import { STAT_IDS } from '../data/schema';
+import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
 import { elementDamageLine, elementsMark } from './bha/element';
@@ -81,6 +83,15 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   if (mark) {
     const line = h('p', 'bha-faint');
     line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 ${carryLine(faction.id, evo.carry ?? zeroStats())}`);
+    stats.append(line);
+  }
+  // 시작 외형 스탯 편향 (GDD 52 연동, C.108): 능력치에 이미 더해져 있다. 옛 세이브는 없음
+  const bias = evo.bias;
+  const up = bias ? STAT_IDS.filter((s) => (bias[s] ?? 0) > 0) : [];
+  if (bias && up.length > 0) {
+    const line = h('p', 'bha-faint');
+    line.dataset.bias = up.join(',');
+    line.append(`시작 외형 편향: ${up.map((s) => `${statName(s, faction.id)} +${bias[s]}`).join(' · ')} · 나머지 ${bias[STAT_IDS.find((s) => (bias[s] ?? 0) <= 0) ?? up[0]!]}`);
     stats.append(line);
   }
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
