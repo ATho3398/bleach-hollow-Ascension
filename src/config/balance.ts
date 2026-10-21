@@ -291,7 +291,7 @@ export const BALANCE = {
       element: {
         normal: { blockPower: 0.06 },
         water: { critChance: 0.08 },
-        fire: { burnFraction: 0.25, burnSeconds: 3 },
+        fire: { ignoreDefense: 0.08 }, // C.97 (GDD 45장 3번): 화상 → '작열' 방어·정신력 8% 무시 (블록·평타)
         earth: { thornsReturn: 0.6, thornsThreshold: 0.2 },
         thunder: { doubleHitChance: 0.12 },
         blood: { bloodlustMax: 0.2, bloodlustFullAt: 0.3 },

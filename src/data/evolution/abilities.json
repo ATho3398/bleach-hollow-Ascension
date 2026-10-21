@@ -11,7 +11,7 @@
   "elementAbilities": {
     "normal": { "effect": "blockPower", "name": { "*": "균형" }, "description": { "*": "모든 블록 위력이 오른다." } },
     "water": { "effect": "crit", "name": { "*": "날카로운 물결" }, "description": { "*": "치명타 확률이 오른다." } },
-    "fire": { "effect": "burn", "name": { "*": "화상" }, "description": { "*": "블록 공격이 맞으면 잠시 불타 피해가 이어진다." } },
+    "fire": { "effect": "ignoreDefense", "name": { "*": "작열" }, "description": { "*": "블록과 기본 공격이 적의 방어·정신력을 일부 무시한다." } },
     "earth": { "effect": "thorns", "name": { "*": "되갚기" }, "description": { "*": "받은 피해를 쌓아 두었다가 한 번에 되돌려준다." } },
     "thunder": { "effect": "doubleHit", "name": { "*": "연타" }, "description": { "*": "기본 공격이 가끔 한 번 더 나간다." } },
     "blood": { "effect": "bloodlust", "name": { "*": "피의 갈증" }, "description": { "*": "체력이 낮을수록 공격이 강해진다." } },

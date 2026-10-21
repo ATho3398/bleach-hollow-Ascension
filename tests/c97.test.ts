@@ -49,3 +49,25 @@ describe('허 방무 삭제 (GDD 45장 5번)', () => {
     expect('pierceRisk' in BALANCE.provisional.elements).toBe(false);
   });
 });
+
+describe("불 속성 특성 '작열' = 방어·정신력 8% 무시 (GDD 45장 3번)", () => {
+  const ignoreOf = (tier: number, elements: string[]) => {
+    const f = formOf(tier, elements)!;
+    return paramsFor(f.id, tier - 1).abilityEffects?.ignoreDefense ?? 0;
+  };
+  it('4단계 8%, 5단계 ×1.5 = 12%, 융합 불+뇌 50% 세기 = 4%. 다른 속성은 없음', () => {
+    expect(ignoreOf(4, ['fire'])).toBeCloseTo(0.08);
+    expect(ignoreOf(5, ['fire'])).toBeCloseTo(0.12);
+    expect(ignoreOf(4, ['fire', 'thunder'])).toBeCloseTo(0.04);
+    expect(ignoreOf(4, ['water'])).toBe(0);
+  });
+  it('내 블록·평타 피해가 적 방어 × (1 − 8%) 로 계산된다', async () => {
+    const { createCombat, statRatio, uniformStats } = await import('../src/engine/combat');
+    const { getEnemy } = await import('../src/data/enemies');
+    const a = uniformStats(50);
+    expect(statRatio(a, a, 'physical', 0.08)).toBeCloseTo(1 / 0.92);
+    const fire = formOf(4, ['fire'])!;
+    const s = createCombat(1, { enemy: getEnemy('test-a'), params: paramsFor(fire.id, 3) });
+    expect(s.params.abilityEffects.ignoreDefense).toBeCloseTo(0.08);
+  });
+});

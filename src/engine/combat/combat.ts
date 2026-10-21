@@ -196,8 +196,8 @@ export interface CombatParams {
 export interface AbilityEffects {
   /** 모든 블록 위력 +비율 (노멀 '균형') */
   blockPower?: number;
-  /** 스킬 블록이 맞으면 그 피해 × fraction 을 seconds 에 나눠 지속 피해 (불 '화상') */
-  burn?: { fraction: number; seconds: number };
+  /** 내 공격(블록·평타·필살 등)이 적 방어·정신력을 이 비율만큼 무시 (불 '작열', GDD 45장 3번) */
+  ignoreDefense?: number;
   /** 받은 피해를 쌓아 최대 체력 × threshold 에 닿으면 쌓인 양 × ret 를 적에게 (흙 '되갚기') */
   thorns?: { threshold: number; ret: number };
   /** 기본 공격이 이 확률로 한 번 더 (뇌 '연타', 연타는 다시 연타 안 함) */
@@ -220,7 +220,7 @@ export interface AbilityEffects {
 }
 
 /** 화면 글자가 뜨는 특성 발동 (런 로그 abilityProcs 키) */
-export type AbilityProc = 'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste' | 'burn';
+export type AbilityProc = 'doubleHit' | 'thorns' | 'lastStand' | 'chainHaste';
 
 export function defaultCombatParams(): CombatParams {
   return {
@@ -601,9 +601,9 @@ export function defenseStat(st: Stats, cat: AttackCategory): number {
   return cat === 'physical' ? st.def : cat === 'special' ? st.spr : (st.def + st.spr) / 2;
 }
 
-/** 피해 능력치 비 = 공격 능력치 ÷ 상대 방어 능력치 (허의 방어 무시는 GDD 45장 5번에서 삭제) */
-export function statRatio(att: Stats, def: Stats, cat: AttackCategory): number {
-  return offenseStat(att, cat) / Math.max(1e-6, defenseStat(def, cat));
+/** 피해 능력치 비 = 공격 능력치 ÷ (상대 방어 능력치 × (1 − 무시 비율)). 무시 = 불 속성 특성 '작열' (GDD 45장 3번, 허의 방어 무시는 5번에서 삭제) */
+export function statRatio(att: Stats, def: Stats, cat: AttackCategory, ignore = 0): number {
+  return offenseStat(att, cat) / Math.max(1e-6, defenseStat(def, cat) * (1 - ignore));
 }
 
 export function matchupMultiplier(p: Pick<CombatParams, 'strongMultiplier' | 'weakMultiplier'>, m: Matchup): number {
@@ -773,7 +773,7 @@ function playerHitMultiplier(s: CombatState, elements: readonly string[], cat: A
   const p = s.params;
   const m = elements.length > 0 ? matchup(elements, enemyElements(s.enemy.def)) : 'neutral';
   const mm = m === 'weak' && p.abilityEffects.noWeak ? 1 : matchupMultiplier(p, m);
-  return { mult: statRatio(s.player.stats, s.enemy.stats, cat) * mm * p.categoryPower[cat], matchup: m };
+  return { mult: statRatio(s.player.stats, s.enemy.stats, cat, p.abilityEffects.ignoreDefense ?? 0) * mm * p.categoryPower[cat], matchup: m };
 }
 
 /** 계열 단계 기술(위력 배율·추가 효과): 종족 설정에서 온 계열 표가 있으면 그것, 없으면 체인 배율 + 특성의 체인 추가 효과 (chain = 1~3) */
@@ -867,7 +867,7 @@ function playerCrit(s: CombatState, damage: number): { damage: number; crit: boo
 function proc(s: CombatState, effect: AbilityProc, damage = 0): void {
   const m = (s.abilityProcs ??= {});
   m[effect] = (m[effect] ?? 0) + 1;
-  if (effect !== 'burn') emit(s, { kind: 'ability', effect, damage });
+  emit(s, { kind: 'ability', effect, damage });
 }
 
 /** 시간이 갈수록 오르는 보너스: everySeconds 마다 +per, 최대 max */
@@ -892,17 +892,6 @@ export function abilityPowerOf(s: CombatState, block: boolean): number {
 /** 내 공격 피해: 특성 배율 → 치명타 */
 function playerHit(s: CombatState, damage: number, block: boolean): { damage: number; crit: boolean } {
   return playerCrit(s, damage * abilityPowerOf(s, block));
-}
-
-/** 화상: 스킬 블록 피해 × fraction 을 지속 피해로 (독과 같은 칸에 더한다) */
-function applyBurn(s: CombatState, damage: number): void {
-  const b = s.params.abilityEffects.burn;
-  if (!b || damage <= 0 || s.status !== 'playing') return;
-  const ticks = ticksOf(s.params, b.seconds);
-  const left = s.enemy.dot ? s.enemy.dot.ticks * s.enemy.dot.perTick : 0;
-  s.enemy.dot = { ticks: Math.max(ticks, s.enemy.dot?.ticks ?? 0), perTick: 0 };
-  s.enemy.dot.perTick = (left + damage * b.fraction) / s.enemy.dot.ticks;
-  proc(s, 'burn');
 }
 
 /** 연쇄: 체인 N 을 쓰면 다음 블록이 간격 × perChain × (N−1) 만큼 빨리 */
@@ -1257,7 +1246,6 @@ function useBlock(s: CombatState, index: number): boolean {
   emit(s, { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit });
   dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m });
   if (skill.element) onHit(s, 'enemy', [skill.element], damage);
-  applyBurn(s, damage);
   applyChainHaste(s, chain);
   updateCombos(s, skill.family ?? null, chain);
   counterIfStance(s);
