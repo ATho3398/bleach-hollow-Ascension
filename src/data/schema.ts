@@ -128,7 +128,7 @@ export type TraitKind = (typeof TRAIT_KINDS)[number];
 export const SKILL_ROLES = ['attack', 'guard', 'heal'] as const;
 export type SkillRole = (typeof SKILL_ROLES)[number];
 
-/** 체인 추가 효과 종류(엔진): stagger = 적 다음 행동을 value초 늦춤, reflect = 그 막기로 막은 피해의 value배 반사, cleanse = 봉인 해제 + SP +value */
+/** 체인 추가 효과 종류(엔진): stagger = 적 다음 행동을 value초 늦춤, reflect = 그 막기로 막은 피해의 value배 반사, cleanse = 봉인 해제 + 저장형 필살기 게이지 +value (C.118 전에는 SP +value) */
 export const CHAIN_BONUS_KINDS = ['stagger', 'reflect', 'cleanse'] as const;
 export type ChainBonusKind = (typeof CHAIN_BONUS_KINDS)[number];
 export interface ChainBonus {
@@ -274,7 +274,7 @@ export interface ComboDef {
   minChain: number;
   /** 연속 횟수 (2 이상) */
   repeat: number;
-  /** 콤보 블록 피해: 플레이어 기본 공격 N회 분량 (필살 블록처럼 약점·체인 배율 없이 방어 자세 배율만 받는다) */
+  /** 콤보 블록 피해: 플레이어 기본 공격 N회 분량 (약점·체인 배율 없이 방어 자세 배율만 받는다) */
   powerInAttacks: number;
   name: PerFaction<string>;
   provisional?: boolean;

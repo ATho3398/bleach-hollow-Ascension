@@ -90,22 +90,20 @@ describe('속성 피해 배율 (GDD 48장 2번)', () => {
     expect(both.crit).toBe(true);
     expect(both.damage / base.damage).toBeCloseTo(1.5 * 1.5, 9);
   });
-  it('무속성 칸 적용 범위: 필살·콤보·저장 필살·속성 없는 기본 블록은 무속성, 공허 블록은 제외', () => {
+  it('무속성 칸 적용 범위: 저장 필살·속성 없는 기본 블록은 무속성, 공허 블록은 제외 (SP 필살 블록은 C.118 에 삭제)', () => {
     const s = createCombat(3, {
       enemy: getEnemy('test-a'),
-      params: { ...NO_CRIT, spMax: 1, voidCheckSeconds: 1, voidChance: 0.5, voidChanceMax: 0.5, storedGaugePerBlock: 100, elementDamage: { ...all(0), [NORMAL_ELEMENT]: 40 } },
+      params: { ...NO_CRIT, voidCheckSeconds: 1, voidChance: 0.5, voidChanceMax: 0.5, storedGaugePerBlock: 100, elementDamage: { ...all(0), [NORMAL_ELEMENT]: 40 } },
     });
     const ev = playOut(s, (st) => (st.storedCharges > 0 ? { type: 'stored' } : st.tray.length > 0 ? { type: 'use', cell: 0 } : null));
     const blocks = ev.filter((e): e is Extract<CombatEvent, { kind: 'block' }> => e.kind === 'block');
-    const special = blocks.filter((e) => e.block === 'special');
     const voids = blocks.filter((e) => e.block === 'void');
     const plainSkill = blocks.filter((e) => e.block === 'skill' && e.element === null && e.damage > 0);
     const stored = ev.filter((e): e is Extract<CombatEvent, { kind: 'stored-use' }> => e.kind === 'stored-use');
-    expect(special.length).toBeGreaterThan(0);
     expect(voids.length).toBeGreaterThan(0);
     expect(plainSkill.length).toBeGreaterThan(0);
     expect(stored.length).toBeGreaterThan(0);
-    for (const e of [...special, ...plainSkill, ...stored]) expect(e.elem).toEqual({ ids: [NORMAL_ELEMENT], pct: 40 });
+    for (const e of [...plainSkill, ...stored]) expect(e.elem).toEqual({ ids: [NORMAL_ELEMENT], pct: 40 });
     for (const e of voids) expect(e.elem).toBeUndefined();
   });
   it('해방 블록은 내 캐릭터 속성 칸', () => {

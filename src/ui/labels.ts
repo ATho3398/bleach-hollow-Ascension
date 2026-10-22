@@ -14,8 +14,6 @@ export interface BattleLabels {
   /** 블록 역할 이름 (공격/막기/회복) */
   role: Record<BlockRole, string>;
   skillBlock: string;
-  /** 필살 블록 표시 이름 (GDD 20장 v5.4 `필살`) */
-  specialBlock: string;
   /** 저장형 필살기 (GDD 14-6, v5.4 표시 `저장 필살`) */
   storedSkill: string;
   /** 해방 (GDD 22-5): 종족 설정 liberation (이름·컷인·풀릴 때 문구) */
@@ -25,7 +23,6 @@ export interface BattleLabels {
   chain: string;
   /** 공격 계열 이름·약어·단계 기술 이름 (GDD 17-3, 종족 설정 families) */
   families: FactionConfig['families'];
-  sp: string;
   riskGauge: string;
   defeatState: string;
   huntingGround: string;
@@ -38,13 +35,11 @@ export function battleLabels(f: FactionConfig): BattleLabels {
   return {
     role: { ...f.roleNames },
     skillBlock: f.skillBlockName,
-    specialBlock: BLOCK_WORDS.special,
     storedSkill: BLOCK_WORDS.stored,
     liberation: { ...f.liberation },
     voidBlock: BLOCK_WORDS.void,
     chain: f.chainName,
     families: f.families,
-    sp: f.spName,
     riskGauge: f.riskGaugeName,
     defeatState: f.defeatStateName,
     huntingGround: f.huntingGroundName,

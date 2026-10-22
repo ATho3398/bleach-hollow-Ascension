@@ -36,7 +36,7 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     comboBlocksUsed: s.comboBlocksUsed,
     guardSuccesses: s.guardSuccesses,
     voidUsed: s.voidUsed,
-    specialUsed: s.specialUsed,
+    specialUsed: false, // SP 필살 블록은 C.118 에 삭제 (GDD 66장) — 런 로그 필드는 옛 기록 호환으로 남긴다
     finisherKind: s.finisher?.kind ?? null,
     finisherTraitId: s.finisher?.traitId ?? null,
     finisherElement: s.finisher?.element ?? null,

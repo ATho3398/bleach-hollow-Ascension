@@ -42,25 +42,22 @@ export interface ExpeditionViewHandlers {
   onEnded: () => void;
   /** 한계 돌파가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
   onBreakthrough: (resume: () => void) => void;
-  /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더, 배속 변경 */
+  /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더 */
   onSave: () => void;
   /** [?] 도움말 (C.19): 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다 */
   openHelp: (onClose: () => void) => void;
 }
 
-const SPEEDS = [1, 2, 4] as const;
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
 const RX = BALANCE.provisional.risk;
 
-let speed: (typeof SPEEDS)[number] = 1;
+/** 원정 걷기 속도 배율. 배속 버튼(1x·2x·4x)은 C.118 에 삭제 — 1배 고정 (GDD 62장). 세이브의 옛 배속 값은 무시한다. 테스트 모드(GDD 38-4)만 setSpeed 로 바꾼다 */
+let speed = 1;
 
-/** 배속 설정은 원정 중간 저장에 같이 들어간다 (이어하기에서 유지) */
-export function getSpeed(): number {
-  return speed;
-}
+/** 테스트 모드 전용 (GDD 38-4). 일반 플레이는 늘 1 */
 export function setSpeed(v: number): void {
-  speed = (SPEEDS as readonly number[]).includes(v) ? (v as (typeof SPEEDS)[number]) : 1;
+  speed = Number.isFinite(v) && v > 0 ? v : 1;
 }
 
 export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, h: ExpeditionViewHandlers, startMsg = ''): void {
@@ -72,7 +69,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let held = false;
   let dead = false;
   let away = false;
-  // 다음 할 일(한 칸 이동·전투 진입·휴식 끝)은 시계가 들고 있다: 배속·일시정지·도움말은 남은 시간만 다시 셈하고 할 일을 지우지 않는다 (19-1)
+  // 다음 할 일(한 칸 이동·전투 진입·휴식 끝)은 시계가 들고 있다: 일시정지·도움말은 남은 시간만 다시 셈하고 할 일을 지우지 않는다 (19-1)
   const clock = createExpClock({ speed: () => speed, blocked: () => paused || held || dead || away });
   const stepMs = EX.secondsPerTile * 1000;
 
@@ -257,22 +254,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   /** 이벤트 창 안내 한 줄 (골드 부족 등) */
   let eventNote = '';
 
-  const speedSeg = el('div', 'bha-seg bha-seg--sm');
-  speedSeg.setAttribute('role', 'radiogroup');
-  speedSeg.setAttribute('aria-label', '배속');
-  const speedBtns = SPEEDS.map((sp) => {
-    const b = el('button', 'bha-seg__item', `${sp}x`);
-    b.type = 'button';
-    b.setAttribute('role', 'radio');
-    b.onclick = () => {
-      speed = sp;
-      h.onSave();
-      resumeClock();
-      render();
-    };
-    return b;
-  });
-  speedSeg.append(...speedBtns);
+  // 배속 묶음(1x·2x·4x)은 C.118 에 삭제 (GDD 62장: 1배 고정)
   const pauseBtn = el('button', 'bha-btn bha-btn--icon bha-btn--small');
   pauseBtn.type = 'button';
   pauseBtn.onclick = () => {
@@ -281,10 +263,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     render();
   };
   const handCount = el('span', 'bha-exp__hand-count');
-  // 오른쪽 위 모서리: 일시정지·배속·도움말을 작게 (+ 손에 든 타일 수)
+  // 오른쪽 위 모서리: 일시정지·도움말을 작게 (+ 손에 든 타일 수)
   const corner = el('div', 'bha-exp__corner');
   const cornerRow = el('div', 'bha-exp__cornerrow');
-  cornerRow.append(speedSeg, pauseBtn);
+  cornerRow.append(pauseBtn);
   corner.append(cornerRow, handCount);
 
   // 둥지 칸 도착 선택은 장면 위 말풍선 오버레이 (타일 배치판은 안에 있다)
@@ -353,11 +335,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     msgEl.className = `bha-exp__msg${kind ? ` bha-exp__msg--${kind}` : ''}`;
     msgEl.replaceChildren(icon(paused && exp.phase === 'moving' && !msg ? 'i-pause' : MSG_ICON[kind]), el('span', '', text));
 
-    // 배속·일시정지
-    SPEEDS.forEach((sp, i) => {
-      speedBtns[i]!.classList.toggle('is-active', speed === sp);
-      speedBtns[i]!.setAttribute('aria-checked', String(speed === sp));
-    });
+    // 일시정지
     pauseBtn.replaceChildren(icon(paused ? 'i-play' : 'i-pause'));
     pauseBtn.classList.toggle('is-on', paused);
     pauseBtn.setAttribute('aria-label', paused ? '재개' : '일시정지');

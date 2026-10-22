@@ -37,7 +37,10 @@ describe('종족 설정', () => {
   it('타일 이름(tileNames)은 폐기되고 블록 표시 이름이 있다 (GDD 3-5)', () => {
     for (const f of FACTIONS) {
       expect('tileNames' in f).toBe(false);
-      for (const k of ['skillBlockName', 'specialBlockName', 'voidBlockName', 'chainName', 'spName'] as const) expect(f[k].length).toBeGreaterThan(0);
+      for (const k of ['skillBlockName', 'voidBlockName', 'chainName'] as const) expect(f[k].length).toBeGreaterThan(0);
+      // SP 필살 블록 이름·SP 게이지 이름은 C.118 에 삭제 (GDD 66장)
+      expect('specialBlockName' in f).toBe(false);
+      expect('spName' in f).toBe(false);
     }
     const { skillBlockName: _drop, ...noBlock } = getFaction('hollow');
     expect(() => parseFactionConfig(noBlock)).toThrow(/skillBlockName/);

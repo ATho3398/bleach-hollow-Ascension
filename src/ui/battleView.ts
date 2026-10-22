@@ -1,5 +1,5 @@
 // 전투 화면 v3 (GDD 3-5, UI 디자인 U-2, R-2): 실시간 자동 전투 + 일자 8칸 스킬 블록 바. 원정과 연습이 같이 쓴다.
-// 엔진 틱(0.1초)을 실시간 1x/2x 로 돌린다. 클릭(같은 블록 위에서 누르고 뗌) = 블록 사용(붙은 같은 블록이 함께 발동해 체인).
+// 엔진 틱(0.1초)을 실시간 1배 고정으로 돌린다(배속은 C.118 에 삭제, GDD 62장). 클릭(같은 블록 위에서 누르고 뗌) = 블록 사용(붙은 같은 블록이 함께 발동해 체인).
 // 블록 순서는 바꿀 수 없다(GDD 17-2): 나온 순서대로 쓴다. 클릭 판정은 여기서, 엔진은 use 결과만 받는다.
 // 텍스트는 FactionConfig·데이터에서 읽고 종족 id 로 분기하지 않는다.
 // 화면 모양(DOM·클래스)은 디자인 패키지 battle.html 을 따른다. 전투는 고정 틱으로 계속 갱신되므로 DOM 을 통째로 다시 만들지 않고
@@ -21,7 +21,7 @@ import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
-  type BlockSpec, type BlockVisual, damageTier, loadBattleSpeed, saveBattleSpeed, BATTLE_LOG_MAX, hpNumbers, type BattleSpeed, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
+  type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
 import { elementName, weaknessesOf } from '../data/elements';
@@ -71,9 +71,8 @@ export interface BattleViewOptions {
   onEnd: (s: CombatState) => void;
 }
 
-/** 블록 이름 (GDD 20장 v5.4): 스킬 = `속성_계열`·`속성_막기`·`속성_회복`(기본 블록 = 내 캐릭터 속성 + 블록 계열), 필살 = `필살`, 공허 = `공허`, 콤보 = `콤보_계열` */
+/** 블록 이름 (GDD 20장 v5.4): 스킬 = `속성_계열`·`속성_막기`·`속성_회복`(기본 블록 = 내 캐릭터 속성 + 블록 계열), 공허 = `공허`, 콤보 = `콤보_계열` */
 export function blockName(b: Block, labels: BattleLabels, factionId: string, p: CombatParams): string {
-  if (b.kind === 'special') return labels.specialBlock;
   if (b.kind === 'void') return labels.voidBlock;
   if (b.kind === 'combo') return comboBlockLabel(labels, comboOf(p, b.traitId)?.family);
   if (b.kind === 'liberation') return liberationBlockLabel(factionId, p.playerElements[0]);
@@ -117,7 +116,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       const skillName = e.block === 'skill' ? familySkillName(labels, e.family, e.chain) : null;
       const name = e.block === 'skill'
         ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
-        : e.block === 'special' ? labels.specialBlock : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
+        : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
       const parts = [`${name}! ${n(e.damage)} 피해${elemText(e.elem, factionId)}${e.crit ? ' (치명!)' : ''}${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
@@ -127,7 +126,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       if (e.block === 'void') parts.push(`${labels.riskGauge} ↑`);
       const text = parts.join(' · ');
       if (e.block === 'void') return { role: 'void', icon: 'i-void', text };
-      if (e.block === 'special' || e.block === 'combo' || e.block === 'liberation') return { role: 'chain', icon: 'i-special', text };
+      if (e.block === 'combo' || e.block === 'liberation') return { role: 'chain', icon: 'i-special', text };
       if (e.chain > 1) return { role: 'chain', icon: `i-chain-${Math.min(3, e.chain)}`, text };
       const role: LogRole = e.role ?? 'attack';
       return { role, icon: LOG_ICON[role], text };
@@ -320,19 +319,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const fxLayer = el('div', 'bha-afx-layer');
   fxLayer.setAttribute('aria-hidden', 'true');
 
-  // ── 3. 내 상태: 영력(SP) 바 + 상태 칩 (블록 바 위 왼쪽) ──
+  // ── 3. 내 상태: 상태 칩 (블록 바 위 왼쪽). 영력(SP) 바·필살 블록은 C.118 에 삭제 (GDD 66장: 필살기는 저장형만) ──
   const voidChip = statusChip(undefined, 'i-void', labels.voidBlock);
   const chain3Chip = statusChip(undefined, 'i-chain-3', `${labels.chain}${top}`);
   const meStatus = el('div', 'bha-battle__mestatus');
   meStatus.append(voidChip.root, chain3Chip.root);
-  const spMeter = meter({ kind: 'sp', label: labels.sp, icon: 'i-sp', value: Math.round(s.sp), max: p.spMax, compact: true });
-  const spNoteText = el('span');
-  const spNote = el('span', 'bha-battle__spnote');
-  spNote.append(icon('i-special'), spNoteText);
-  spNote.hidden = true;
-  const spWrap = el('div', 'bha-battle__sp');
-  spWrap.dataset.help = 'battle.sp';
-  spWrap.append(spMeter, spNote);
 
   // ── 4. 블록 바 ──
   const tray = trayEl(cap);
@@ -352,7 +343,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     legendItem('attack', 'i-attack', labels.role.attack),
     legendItem('guard', 'i-guard', labels.role.guard),
     legendItem('heal', 'i-heal', labels.role.heal),
-    legendItem('special', 'i-special', labels.specialBlock),
     legendItem('void', 'i-void', labels.voidBlock),
     ...(p.combos.length > 0 ? [legendItem('special', 'i-special', '콤보 블록')] : []),
   );
@@ -402,10 +392,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   libCut.setAttribute('aria-hidden', 'true');
   libCut.append(el('span', 'bha-libcut__text', labels.liberation.cutin));
 
-  // 블록 바 바로 위 줄: 왼쪽 = 영력 바·상태 칩·범례, 오른쪽 = 저장 필살기 버튼(엄지가 닿는 자리) (GDD 18-6)
+  // 블록 바 바로 위 줄: 왼쪽 = 상태 칩·범례, 오른쪽 = 저장 필살기 버튼(엄지가 닿는 자리) (GDD 18-6)
   const midInfo = el('div', 'bha-battle__midinfo');
   const spRow = el('div', 'bha-battle__sprow');
-  spRow.append(spWrap, meStatus);
+  spRow.append(meStatus);
   midInfo.append(spRow, legend);
   const mid = el('div', 'bha-battle__mid');
   mid.append(midInfo, ...(libOn ? [libBtn] : []), storedBtn);
@@ -414,7 +404,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   controls.append(mid, tray.root, trayNote);
 
   // ── 7. 하단 컨트롤 ──
-  let speed: BattleSpeed = loadBattleSpeed(safeStorage());
+  // 배속 버튼은 C.118 에 삭제 — 1배 고정 (GDD 62장). 테스트 모드 속도 배율(GDD 38-4)만 남는다
   let paused = false;
   /** 튜토리얼·도움말·조우 연출이 열려 있는 동안 true: 엔진 시간이 흐르지 않고 입력도 받지 않는다 (결정성에 영향 없음, engine/tutorial frameTicks) */
   let overlayOpen = false;
@@ -422,18 +412,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let stopped = false;
   const halted = () => paused || overlayOpen;
 
-  const speedBtn = button({ iconOnly: true, size: 'small', label: '배속 바꾸기' });
-  const speedText = el('span', 'bha-num', `${speed}x`);
-  speedBtn.classList.toggle('is-on', speed === 2);
-  speedText.style.fontWeight = '800';
-  speedBtn.append(speedText);
   const pauseBtn = button({ iconOnly: true, size: 'small', label: '일시정지', icon: 'i-pause' });
   pauseBtn.dataset.devConfirm = ''; // 기기 [확정] 버튼 = 일시정지 (전투는 터치 위주, dev-log C.25)
   const helpBtn = button({ iconOnly: true, size: 'small', label: '도움말', icon: 'i-help' });
   const timeNum = el('b', '', String(Math.ceil(timeLeftSeconds(s))));
   const timeEl = el('span', 'bha-battle__time');
   timeEl.append(icon('i-timer'), el('span', 'bha-battle__timelabel', '남은 시간'), ' ', timeNum, '초');
-  // 위 오른쪽 모서리: 남은 시간 + (그만두기) + 배속·일시정지·도움말을 작게
+  // 위 오른쪽 모서리: 남은 시간 + (그만두기) + 일시정지·도움말을 작게
   const bar = el('div', 'bha-battle__bar');
   bar.append(timeEl);
   let quitBtn: HTMLButtonElement | null = null;
@@ -453,7 +438,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     logBtn.setAttribute('aria-expanded', String(!log.hidden));
     if (!log.hidden) log.scrollTop = log.scrollHeight;
   };
-  bar.append(logBtn, speedBtn, pauseBtn, helpBtn);
+  bar.append(logBtn, pauseBtn, helpBtn);
   if (opts.frenzy) {
     const fc = chip(opts.frenzy, 'danger');
     fc.classList.add('bha-frenzychip');
@@ -542,13 +527,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   helpBtn.onclick = openHelp;
   pauseBtn.dataset.sc = 'pause';
-  speedBtn.dataset.sc = 'speed';
   helpBtn.dataset.sc = 'help';
   storedBtn.dataset.sc = 'stored';
   libBtn.dataset.sc = 'liberate';
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
 
-  // ── 일시정지·배속 ──
+  // ── 일시정지 ──
   const setPaused = (on: boolean) => {
     if (s.status !== 'playing' || overlayOpen) return;
     paused = on;
@@ -588,14 +572,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       offHold();
     }
   });
-  speedBtn.onclick = () => {
-    speed = speed === 1 ? 2 : 1;
-    saveBattleSpeed(safeStorage(), speed);
-    attack.setSpeed(speed * testSpeedMul());
-    setText(speedText, `${speed}x`);
-    speedBtn.classList.toggle('is-on', speed === 2);
-  };
-
   // ── 사건 로그 · 플로팅 숫자 · 번쩍임 ──
   const lines: HTMLElement[] = [];
   const say = (line: LogLine) => {
@@ -643,20 +619,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     nameOf: (e) => {
       if (e.kind === 'stored-use') return { name: labels.storedSkill, ult: true };
       if (e.kind !== 'block' || e.damage <= 0) return null;
-      if (e.block === 'special') return { name: labels.specialBlock, ult: true };
-      if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : labels.specialBlock, ult: true };
+      if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };
       if (e.block !== 'skill' || e.role !== 'attack') return null;
       const name = familySkillName(labels, e.family, Math.min(e.chain, FAMILY_TIERS));
       return name ? { name } : null;
     },
     shake,
   });
-  if (speed * testSpeedMul() !== 1) attack.setSpeed(speed * testSpeedMul());
+  if (testSpeedMul() !== 1) attack.setSpeed(testSpeedMul());
   const n0 = (v: number) => String(Math.round(v));
   /** 피해 크기 기준 (C.63): 내 기본 공격 1회 피해(육성·환경 반영) / 적 쪽은 기본 공격 피해 단위 */
   const myUnit = p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier * p.attackPowerMultiplier;
   const hurtUnit = p.playerAttackDamage;
-  let specialNoteUntil = 0;
   const react = (e: CombatEvent) => {
     const cue = cueOf(e, top);
     if (cue) cues.push(cue);
@@ -676,7 +650,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         } else if (e.block === 'skill' && e.role === 'heal') {
           spawnFloat('heal', n0(e.heal));
         } else {
-          const ult = e.block === 'special' || e.block === 'combo' || e.block === 'liberation';
+          const ult = e.block === 'combo' || e.block === 'liberation';
           spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });
         }
         // 상성 문구 (GDD 20-2, 종족 설정 matchupText)
@@ -687,7 +661,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
           flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
         }
-        if (e.block === 'special' || e.block === 'combo') flash('is-special', 600);
+        if (e.block === 'combo') flash('is-special', 600);
         break;
       }
       case 'ability':
@@ -750,12 +724,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         // 승리: 나는 기뻐하고 적은 쓰러진다 / 패배: 나는 쓰러지고 적이 기뻐한다. 마지막 장을 유지. 동작이 없으면 위 번쩍임만 (GDD 26-3)
         heroAnim?.play(e.status === 'won' ? 'win' : 'lose');
         foeAnim?.play(e.status === 'won' ? 'lose' : 'win');
-        break;
-      case 'spawn':
-        if (e.block === 'special' || e.block === 'combo') {
-          specialNoteUntil = performance.now() + 1800;
-          replayOnce(spMeter, 'is-burst', 900);
-        }
         break;
       default:
         break;
@@ -916,17 +884,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       setMeterValue(playerMeter, ph.now, ph.max);
       playerMeter.classList.toggle('is-danger', s.player.hp / s.player.maxHp < 0.3);
     }
-    const spKey = `${Math.round(s.sp * 10)}`;
-    if (meterCache.sp !== spKey) {
-      meterCache.sp = spKey;
-      setMeter(spMeter, s.sp, p.spMax);
-      setMeterValue(spMeter, Math.round(s.sp));
-    }
-    const spFull = s.sp >= p.spMax;
-    spMeter.classList.toggle('is-full', spFull);
-    const noteText = spFull ? `${labels.specialBlock} 대기 (빈 칸 필요)` : now < specialNoteUntil ? `${labels.specialBlock} 블록 생성!` : '';
-    spNote.hidden = noteText === '';
-    if (noteText) setText(spNoteText, noteText);
 
     const mn = s.boss?.minion;
     minionChip.hidden = !mn;
@@ -1139,7 +1096,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     last = now;
     if (s.status === 'playing') {
       if (halted() !== fxHalted) attack.setPaused((fxHalted = halted()));
-      const f = frameTicks(acc, dt, speed * testSpeedMul(), tickMs, halted()); // 테스트 모드 속도 배율 (GDD 38-4), 평소 1
+      const f = frameTicks(acc, dt, testSpeedMul(), tickMs, halted()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
       acc = f.acc;
       for (let n = 0; n < f.ticks && s.status === 'playing'; n++) step(s, queue.splice(0, queue.length));
     }

@@ -103,12 +103,20 @@ const quiet = (s: CombatState) => {
   return s;
 };
 
-describe('계열 체인 판정 (GDD 17-3)', () => {
-  it('같은 계열 공격 블록은 특성이 달라도 연속이면 한 덩어리다', () => {
+describe('계열 체인 판정 (GDD 17-3 → 66장 C.118: 완전히 같은 블록끼리만)', () => {
+  it('같은 계열이라도 특성이 다르면 끊기고, 같은 특성이 연속이면 한 덩어리다', () => {
     const t = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-fire-a', 'family-a')];
-    expect(runAt(t, 1)).toEqual([0, 2]);
-    expect(chainGroup(t, 0, 3)).toEqual([0, 1, 2]);
+    expect(runAt(t, 1)).toEqual([1, 1]);
+    expect(chainGroup(t, 0, 3)).toEqual([0]);
     expect(runAt(t, 3)).toEqual([3, 3]);
+    const same = [blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-fire-a', 'family-a')];
+    expect(runAt(same, 1)).toEqual([0, 2]);
+    expect(chainGroup(same, 0, 3)).toEqual([0, 1, 2]);
+    // 같은 특성·계열이라도 속성이 다르면(조 + 불 조) 끊긴다
+    const a: Block = { uid: 1, kind: 'skill', traitId: 'basic-skill', family: 'family-a', element: null };
+    const b: Block = { uid: 2, kind: 'skill', traitId: 'basic-skill', family: 'family-a', element: 'fire' };
+    expect(runAt([a, b], 0)).toEqual([0, 0]);
+    expect(runAt([a, { ...a, uid: 3 }], 0)).toEqual([0, 1]);
   });
 
   it('다른 계열 사이에 끼면 끊긴다 (a c a 는 체인 아님)', () => {
@@ -126,15 +134,19 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     expect(chainGroup([blk('t-thunder-c', 'family-c'), blk('t-fire-guard')], 0, 3)).toEqual([0]);
   });
 
-  it('4개 이상 붙어 있으면 앞에서부터 3개씩 묶인다 (특성이 달라도 같은 계열이면 같은 덩어리, GDD 19-2)', () => {
-    const t = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c')];
+  it('4개 이상 붙어 있으면 앞에서부터 3개씩 묶인다 (같은 블록만, GDD 19-2)', () => {
+    const t = [blk('t-blood-rare', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-blood-rare', 'family-c')];
     expect(chainGroup(t, 0, 3)).toEqual([0, 1, 2]);
     expect(chainGroup(t, 3, 3)).toEqual([3]);
+    // 특성이 다른 같은 계열이 끼면 거기서 끊긴다 (C.118)
+    const mixed = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c')];
+    expect(chainGroup(mixed, 0, 3)).toEqual([0]);
+    expect(chainGroup(mixed, 3, 3)).toEqual([3]);
   });
 
-  it('다른 특성 같은 계열 2개를 누르면 체인2: 두 블록 소모, 2단계 배율 ×2.2', () => {
+  it('같은 블록 2개를 누르면 체인2: 두 블록 소모, 2단계 배율 ×2.2 — 다른 특성 같은 계열은 1개씩만 (C.118)', () => {
     const s = quiet(mk(build('t-thunder-c', 't-blood-rare')));
-    s.tray = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-fire-a', 'family-a')];
+    s.tray = [blk('t-blood-rare', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-fire-a', 'family-a')];
     expect(applyInput(s, { type: 'use', cell: 1 })).toBe(true);
     expect(s.tray.map((b) => b.traitId)).toEqual(['t-fire-a']);
     expect(s.blocksByChain).toEqual([0, 1, 0]);
@@ -143,12 +155,19 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     const ev = s.events.find((e) => e.kind === 'block');
     expect(ev).toMatchObject({ chain: 2, family: 'family-c', weak: false, matchup: 'neutral' });
     expect(ev && ev.kind === 'block' ? ev.damage : 0).toBeCloseTo(6 * 2.2 * CX.playerAttackDamage);
+    // 다른 특성 같은 계열(뇌 탄 + 혈 탄)은 붙어 있어도 누른 블록 하나만 나간다 (체인 보상 수치는 그대로)
+    const s2 = quiet(mk(build('t-thunder-c', 't-blood-rare')));
+    s2.tray = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-fire-a', 'family-a')];
+    expect(applyInput(s2, { type: 'use', cell: 1 })).toBe(true);
+    expect(s2.tray.map((b) => b.traitId)).toEqual(['t-thunder-c', 't-fire-a']);
+    expect(s2.blocksByChain).toEqual([1, 0, 0]);
+    expect(s2.params.chainMultipliers).toEqual([1, 2.2, 3.6]);
   });
 
   it('3단계는 종족 설정의 계열 추가 효과(적 행동 지연)가 붙는다', () => {
     const s = quiet(mk(build('t-thunder-c', 't-blood-rare')));
     s.enemy.attackTimer = 100;
-    s.tray = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c'), blk('t-thunder-c', 'family-c')];
+    s.tray = [blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.blocksByChain).toEqual([0, 0, 1]);
     expect(s.enemy.attackTimer).toBe(100 + ticksOf(s.params, 1.5));
@@ -156,7 +175,7 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
     // 2단계에는 추가 효과가 없다
     const s2 = quiet(mk(build('t-thunder-c', 't-blood-rare')));
     s2.enemy.attackTimer = 100;
-    s2.tray = [blk('t-thunder-c', 'family-c'), blk('t-blood-rare', 'family-c')];
+    s2.tray = [blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c')];
     applyInput(s2, { type: 'use', cell: 0 });
     expect(s2.enemy.attackTimer).toBe(100);
   });
@@ -186,7 +205,7 @@ describe('계열 체인 판정 (GDD 17-3)', () => {
   it('약점 계열 체인3 은 흡수 조건 (weakChain3Count), 약점 계열 마무리도 조건', () => {
     const s = quiet(mk(build('t-water-rare', 't-water-b')));
     s.enemy.hp = 1e9;
-    s.tray = [blk('t-water-rare', 'family-b'), blk('t-water-b', 'family-b'), blk('t-water-rare', 'family-b')];
+    s.tray = [blk('t-water-rare', 'family-b'), blk('t-water-rare', 'family-b'), blk('t-water-rare', 'family-b')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.weakChain3Count).toBe(1);
     s.enemy.hp = 1;
@@ -313,9 +332,9 @@ describe('콤보 발동 (GDD 17-3)', () => {
     use(s, 0);
     use(s, 1); // a 블록(체인1)
     expect(s.comboStreaks['combo-x']).toBe(0);
-    // 필살 블록
+    // 공허 블록 (SP 필살 블록은 C.118 에 삭제)
     const s2 = comboCombat();
-    s2.tray = [blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c'), blk(null, null, 'special'), blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c')];
+    s2.tray = [blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c'), blk(null, null, 'void'), blk('t-thunder-c', 'family-c'), blk('t-thunder-c', 'family-c')];
     use(s2, 0);
     use(s2, 0);
     expect(s2.comboStreaks['combo-x']).toBe(0);
@@ -380,7 +399,7 @@ describe('콤보 발동 (GDD 17-3)', () => {
 
 describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
   // C.98: 같은 계열 2칸의 흡수 타이머가 8초 → 13초로 늘어 콤보가 드물어졌다. 이 테스트는 봇의 콤보 '인식'을 보는 것이라 옛 간격 4초로 고정한다
-  const params = (): Partial<CombatParams> => ({ ...build('t-thunder-c', 't-blood-rare'), combos: [RULE2], blockSpawnSeconds: 4 });
+  const params = (): Partial<CombatParams> => ({ ...build('t-thunder-c', 't-blood-rare'), combos: [RULE2], blockSpawnSeconds: 4, hpScale: 1, playerHpScale: 1 }); // C.118: 콤보 인식 시험이라 옛 전투 길이로
   it('완벽형·사람형 봇이 콤보를 발동하고 콤보 블록을 쓴다', () => {
     let perfect = 0, human = 0;
     for (let seed = 1; seed <= 20; seed++) {
@@ -390,8 +409,9 @@ describe('봇은 콤보를 인식한다 (GDD 17-3)', () => {
       const h = playCombatHuman(createCombat(seed, { enemy: getEnemy('test-elite'), params: params() }));
       human += h.combosTriggered;
     }
-    expect(perfect).toBeGreaterThan(15);
-    expect(human).toBeGreaterThan(5);
+    // C.118: 체인이 완전히 같은 블록끼리만 되어(뇌 탄 + 혈 탄 안 묶임) 20판 콤보 수가 줄었다(완벽형 16+ → 한 자릿수). 봇이 콤보를 '낸다'는 것만 본다
+    expect(perfect).toBeGreaterThanOrEqual(3);
+    expect(human).toBeGreaterThanOrEqual(3);
   });
 
   it('같은 시드와 입력 기록이면 콤보가 있어도 같은 결과', () => {

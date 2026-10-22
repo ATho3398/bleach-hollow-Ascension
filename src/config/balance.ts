@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 57;
+export const BALANCE_VERSION = 58;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -325,9 +325,9 @@ export const BALANCE = {
     // C.105 (GDD 49-11): 물공 블록은 기본 블록 몫(44-3)에서 빠져 자기 타이머 하나(spawnSeconds)로 나오는 보장된 생성원. 발동형 수치는 49-2 '3판 표'로 되돌린 뒤 49-9 목표(흙 버티기·혈 속도)에 맞춰 조정
     physBlocks: {
       /** 물공 블록 생성원 타이머 간격(초): 흡수 칸처럼 타이머 하나, 바가 가득 차거나 봉인 중이면 멈춘다. 블록 가속 배율은 나눈다. 기본 블록 타이머는 막기·회복만 내고 그 몫은 그대로(간격을 공격 가중만큼 늘림) */
-      spawnSeconds: 6,
+      spawnSeconds: 3.5, // C.118: 6 ÷ 1.7 (blockPool.basicSpawnSeconds 주석)
       /** 속성별 생성원 간격(초, 없는 속성은 spawnSeconds) — C.105b: 혈만 짧게(49-9 "혈은 속도") — 첫 블록 시점도 이 간격을 따른다 */
-      spawnSecondsByElement: { blood: 3 } as Record<string, number>,
+      spawnSecondsByElement: { blood: 1.8 } as Record<string, number>, // C.118: 3 ÷ 1.7
       /** 블록 피해 배율 (일반 기본 공격 블록 ×1 대비) — 표: 흙·혈·불·물 0.7, 뇌 0.6, 노멀 0.8 */
       power: { earth: 0.7, blood: 0.7, fire: 0.7, water: 0.7, thunder: 0.6, normal: 0.8 } as Record<string, number>,
       /** 흙 블록 '바위 자세': 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 피해 +perHit(최대 +max, 평타 한 번에 다 씀) */
@@ -567,20 +567,22 @@ export const BALANCE = {
     // 기본 블록 몫(초당 생성 기대치 비율) = basicShareBySlots 표대로: 0칸 100% · 1칸 60% · 2칸 45% · 3칸 35% (GDD 44-2 목표, 4칸부터는 코드 세션 외삽 provisional)
     blockPool: {
       /** 기본 블록 타이머 간격(초, 흡수 0칸). 블록 가속 배율은 나눈다. 바가 가득 차거나 봉인 중이면 멈춘다 (C.98 2.8 → 3.2: 빈 몸 강적 88% 를 낮춰 2칸 빌드와 차를 줄임) */
-      basicSpawnSeconds: 3.2,
+      /*  C.118 (GDD 62장): 전투가 절반으로 짧아져 블록 타이머를 모두 ÷1.7 (3.2 → 1.9, 흡수 6.5 → 3.8, 물공 6 → 3.5·혈 3 → 1.8) — 체력만 반으로 줄이면 짧은 판에 블록·체인이 적어 강적 승률이 60~70% → 15~30% 로 무너진다 (dev-log 표) */
+      basicSpawnSeconds: 1.9,
       /** 장착 흡수 칸 수별 기본 블록 몫 [0칸, 1칸, 2칸, 3칸, 4칸, 5칸, 6칸, 7칸]. 기본 타이머 간격 = 흡수 블록 총 간격 × (1 − 몫) / 몫 (C.98: 칸당 느려짐 k 3 대신 몫 표 — 칸이 늘어도 블록 총량이 C.97 처럼 늘면서 기본 블록이 '같이' 나온다) */
       basicShareBySlots: [1, 0.6, 0.45, 0.35, 0.28, 0.24, 0.21, 0.19],
       /** 장착 흡수 칸이 2칸부터 1칸 늘 때마다 흡수 특성 타이머 간격 +비율: 간격 = combat.blockSpawnSeconds × (1 + 이 값 × (칸 − 1)). 칸이 많은 몸의 블록 총량을 누르는 지렛대 (C.98: 0.4 는 2~4칸 몸의 블록을 반으로 줄여 탑 30층 보스 2%·★1 원정 패배 20% 로 무너짐 → 0.1) */
       absorbedSlowdownPerSlot: 0.1,
-      /** 기본 블록 가중: 공격은 종족 계열 표의 계열 각각, 막기 1, 회복 1 (합 44) */
-      basicWeights: { attack: 10, guard: 7, heal: 7 },
+      /** 기본 블록 가중: 공격은 종족 계열 표의 계열 각각(3종), 막기 1, 회복 1 (합 36) */
+      /*  C.118 (GDD 66장 3번): 막기·회복 7 → 3 — 방어+회복 몫 14/44 = 32% → 6/36 = 17%(약 절반), 그만큼 공격 쪽으로 */
+      basicWeights: { attack: 10, guard: 3, heal: 3 },
       /** 막기·회복 기본 블록 세기 = 같은 역할 흡수 특성 블록 기본값(basicRoleBlocks) × 이 비율 (피해·막기 지속·회복량 모두) */
       basicGuardRatio: 0.7,
       basicHealRatio: 0.7,
       /** 같은 역할 흡수 특성 블록 기본값 (traits.json 의 *-guard·*-heal 과 같은 값, 테스트가 맞는지 본다) */
       basicRoleBlocks: {
         guard: { powerInAttacks: 1.5, chainBonus: { kind: 'reflect', value: 1 } },
-        heal: { powerInAttacks: 1, chainBonus: { kind: 'cleanse', value: 40 } },
+        heal: { powerInAttacks: 1, chainBonus: { kind: 'cleanse', value: 40 } }, // cleanse value = 저장 게이지 (C.118: 옛 SP +40 → 저장 게이지 +40, 100 = 충전 1개라 비율 같음)
       },
       /** 성향 특성(GDD 39장 ①) 보정: 기본 블록 가중 배율 (attack = 기본 공격 3종), absorbedSpawn = 흡수 특성 타이머 속도 배율(속도 성향 — 44장 '흡수 몫 +10%p' 의 B안 판). 종족 무관 엔진 수치 */
       temperament: {
@@ -606,6 +608,12 @@ export const BALANCE = {
        *  블록·필살이 시간을 줄이므로, 봇(빈 슬롯 = 기본 블록만) 기준 일반 약 45초·강적 약 90초가 되게 맞춘다 (npm run balance, C.6 조정 1.5→2.8, C.8 일자 8칸 바에서 봇이 더 잘 붙여 일반 36초로 짧아져 2.8→3.4,
        *  C.63 내 치명타 평균 피해 +2.5%(5%·×1.5)만큼 3.4→3.48 — 치명타 전후 처치 시간이 같게) */
       hpAttackScale: 3.48,
+      /** 전투 시간 배율 (GDD 62장, C.118 — 사용자 "한 전투 시간 자체를 반정도로 줄이고 속도는 고정"): 적·내·졸개 최대 체력에 곱한다. 0.5 = 처치 시간 약 절반.
+       *  내 공격·적 공격·지속 피해·회복(최대 체력 비율)·보호막(최대 체력 비율)이 모두 체력 대비 2배가 되는 것과 같아 승률 구조는 유지된다. 화면 틱 속도(1배)는 그대로 */
+      hpScale: 0.5,
+      /** 내 최대 체력 배율 (C.118): 적과 같은 0.5 로 하면 강공격 한 방이 체력 대비 2배가 되어(피해 기대치는 같아도 한 방 변동이 커져) 강적·원정 패배가 2~4배로 뛴다(dev-log 표 A·B).
+       *  0.7 이면 권장 ★ 강적 승률·원정 패배가 C.115 와 ±5%p(3단계 패배 +7%p), 새 몸 ★1 패배 11%, 보스전 ★2 76%(목표 50~70 보다 +6, D 0.6 은 48%·★1 패배 24% 로 가드 실패) */
+      playerHpScale: 0.7,
       /** 적 데이터 hpInAttacks 기준값 (GDD 3-5 임시: 일반 약 30회, 강적 약 70회 분량). 밸런스 점검이 데이터가 이 근처인지 본다 */
       enemyHpInAttacks: { normal: 30, elite: 70 },
       /** 패턴 종류별 hpInAttacks 기준값 (C.15, GDD 14-5 임시): 속공은 약간 적게, 단단은 많게. 밸런스 점검이 데이터가 ±15% 안인지 본다 */
@@ -622,18 +630,14 @@ export const BALANCE = {
       /** 블록 바 일자 8칸 (GDD 3-5 v0.8, 크퀘식). 6칸 트레이(C.6) → 8칸: 한 줄에 같은 블록을 붙여 놓을 여유를 준다 */
       trayCapacity: 8,
       /** 흡수 skill 특성 하나당 블록 생성 간격(초, 특성마다 타이머 — GDD 44-1 B안, 2칸부터 blockPool.absorbedSlowdownPerSlot 만큼 늘어남). 기본 블록은 blockPool 의 별도 타이머. 바가 가득 차거나 봉인 중이면 멈춘다 (C.98 4 → 6.5: 기본 블록이 같이 나오게) */
-      blockSpawnSeconds: 6.5,
+      blockSpawnSeconds: 3.8, // C.118: 6.5 ÷ 1.7 (blockPool.basicSpawnSeconds 주석)
       /** 같은 계열 공격 특성이 슬롯에 둘 이상이면 서로 체인이 쉬워지므로(GDD 17-3), 그 계열 블록의 생성 간격을 (같은 계열 특성 수 − 1)당 이 비율만큼 늘린다 (C.34). 계열이 하나뿐이면 영향 없음 */
       familySpawnSlowdown: 1,
       /** 체인 배율: 체인1 ×1.0, 체인2 ×2.2, 체인3 ×3.6 (GDD 3-5) */
       chainMultipliers: [1, 2.2, 3.6],
       /** 특성별 추가 효과가 붙는 최소 체인 (GDD 3-5 "체인3 … + 추가 효과") */
       chainBonusFromChain: 3,
-      /** 블록 하나 사용 → SP +20, SP 100 → 필살 블록 (GDD 3-5) */
-      spPerBlock: 20,
-      spMax: 100,
-      /** 필살 블록 피해: 기본 공격 N회 분량 ("큰 피해") */
-      specialPowerInAttacks: 15,
+      // SP 게이지·필살 블록(spPerBlock·spMax·specialPowerInAttacks)은 C.118 에 삭제 (GDD 66장: 필살기는 저장형 필살기만)
       /** 기본 공격 블록 (GDD 44장: 기본 블록 5종 중 공격 3종 — 종족 계열 표의 계열마다 하나): 기본 공격 N회 분량 */
       basicBlockPowerInAttacks: 3,
       basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
@@ -644,7 +648,7 @@ export const BALANCE = {
       /** heal 블록: 최대 체력 × 이 비율 × 위력 배율 회복 */
       healFraction: 0.12,
       /** 공허 블록: 이 간격(초)마다 확률로 트레이에 생성 (컨디션·환경·5바퀴 이후·한계 돌파가 확률을 더한다), 사용 피해 = 기본 공격 N회 분량 */
-      voidCheckSeconds: 5,
+      voidCheckSeconds: 3, // C.118: 5 → 3 (블록 타이머 ÷1.7 과 같은 비율 — 짧아진 전투에서 공허 블록이 덜 나와 4바퀴 끝 리스크가 34.5 로 가드 40 아래로 떨어져서)
       voidChance: 0.15,
       voidChanceMax: 0.8,
       voidPowerInAttacks: 8,

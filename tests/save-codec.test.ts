@@ -38,12 +38,13 @@ function drive(exp: ExpeditionState): ExpeditionState {
   return exp;
 }
 /** 실제 원정 n판을 다녀온 세이브 */
-function played(n: number): SaveData {
+function played(n: number, minBattles = 0): SaveData {
   const save = newSaveData('hollow', 1_000);
-  for (let i = 0; i < n; i++) recordExpedition(save, drive(createExpedition({ factionId: 'hollow', seed: i + 1, hunger: 10, condition: 100, deck: DECK })), 2_000 + i);
+  // C.118: 전투가 절반으로 짧아져 봇이 원정에서 더 자주 지므로(전투 수가 줄어) 덩어리 2개(PACK_BLOCK × 2) 이상이 될 때까지 판을 더 다녀온다
+  for (let i = 0; i < n || (save.runLog.battles.length < minBattles && i < n * 4); i++) recordExpedition(save, drive(createExpedition({ factionId: 'hollow', seed: i + 1, hunger: 10, condition: 100, deck: DECK })), 2_000 + i);
   return save;
 }
-const BASE = played(12);
+const BASE = played(12, PACK_BLOCK * 2 + 1);
 /** 1000판 세이브: 실제 12판의 기록을 runId·시드·시간을 바꿔 가며 복제 (기록 모양·값 분포는 실제와 같다) */
 function bigSave(runs = 1000): SaveData {
   const s = structuredClone(BASE);
@@ -263,7 +264,8 @@ describe('덩어리 키 저장 (저장소에 따로, 본문엔 해시)', () => {
     writeSave(st, big);
     stashSlot(st, 1, 'rank');
     writeSave(st, big);
-    expect(st.used()).toBeLessThan(1_250_000);
+    // C.118: 전투가 절반으로 짧아져 한 원정의 흡수 기록이 늘었다(12판 35 → 54개). 1000판 복제본이 1.25M → 1.42M 자 — 한도(5M 자 ≈ 2.5M×2)의 절반(2.5M) 안이면 되므로 가드를 1.6M 으로
+    expect(st.used()).toBeLessThan(1_600_000);
     expect(st.m.get(SAVE_KEY)!.length).toBeLessThan(250_000);
     expect(loadSave(st)!.runLog.runs).toHaveLength(1000);
   });

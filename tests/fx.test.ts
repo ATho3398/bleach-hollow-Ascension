@@ -44,7 +44,7 @@ describe('효과 신호', () => {
     expect(cueOf(block(1), 3)).toBe('block');
     expect(cueOf(block(2), 3)).toBe('chain2');
     expect(cueOf(block(3), 3)).toBe('chain3');
-    expect(cueOf(block(1, { block: 'special' }), 3)).toBe('special');
+    expect(cueOf(block(1, { block: 'combo' }), 3)).toBe('special');
     expect(cueOf({ kind: 'stored-use', damage: 1, guardSeconds: 1, charges: 0 }, 3)).toBe('special');
     expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: true, reflected: 0, matchup: 'neutral' }, 3)).toBe('guard');
     expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: false, reflected: 0, matchup: 'neutral' }, 3)).toBe('heavyhit');

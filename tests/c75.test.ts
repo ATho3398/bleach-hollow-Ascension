@@ -76,7 +76,7 @@ describe('32-1 1번: 내 능력치는 절대값 (세계 기준 = 1단계 기준 
     expect(p.refStat).toBeUndefined();
   });
   it('5단계 몸의 최대 체력 = 기본 체력 × (체력 ÷ 50), 평타 간격 = 기본 ÷ (속도 ÷ 50) — 1단계보다 실제로 크고 빠르다', () => {
-    const base = BALANCE.provisional.combat.playerMaxHp;
+    const base = BALANCE.provisional.combat.playerMaxHp * BALANCE.provisional.combat.playerHpScale; // C.118: 내 최대 체력 배율
     const enemy = getEnemy('fire-basic');
     const hpAt = (tier: number) => {
       const params = buildCombatParams(newBuild(), 'hollow');

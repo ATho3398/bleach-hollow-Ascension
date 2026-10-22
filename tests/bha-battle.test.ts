@@ -54,7 +54,6 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
       // 생성원 두 묶음을 합친 전투 값 (이름만 본다)
       const p = { ...p0, skills: [...p0.skills, ...createCombat(1, { enemy, params: buildCombatParams(b1, f.id) }).params.skills] };
       const name = (blk: Block) => blockName(blk, labels, f.id, p);
-      expect(name({ uid: 1, kind: 'special', traitId: null })).toBe('필살');
       expect(name({ uid: 2, kind: 'void', traitId: null })).toBe('공허');
       expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(`불_${a}`);
       expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(`허_${b}`);
@@ -66,8 +65,8 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
       // 기본 블록: 내 캐릭터 속성 + 블록 계열
       const pb = createCombat(1, { enemy, params: { ...buildCombatParams(newBuild(), f.id), playerElements: ['water'] } }).params;
       expect(blockName({ uid: 7, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-c' }, labels, f.id, pb)).toBe(`물_${c}`);
-      const old = [f.basicSkillName, f.specialBlockName, f.storedSkillName, f.voidBlockName];
-      for (const blk of [{ uid: 8, kind: 'skill' as const, traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 9, kind: 'special' as const, traitId: null }]) {
+      const old = [f.basicSkillName, f.storedSkillName, f.voidBlockName];
+      for (const blk of [{ uid: 8, kind: 'skill' as const, traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 9, kind: 'void' as const, traitId: null }]) {
         expect(old).not.toContain(blockName(blk, labels, f.id, pb));
       }
       expect(old).not.toContain(labels.storedSkill);
@@ -87,9 +86,10 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     const total = Object.values(seen).reduce((x, y) => x + y, 0);
     expect(total).toBeGreaterThan(60);
     for (const n of Object.values(seen)) expect(n / total).toBeGreaterThan(0.2);
-    // 같은 계열 = 체인, 다른 계열 = 끊김
+    // 같은 계열 + 같은 속성 = 체인, 다른 계열 = 끊김, 같은 계열이라도 속성이 다르면 끊김 (C.118, GDD 66장)
     expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' })).toBe(true);
     expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-b' })).toBe(false);
+    expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a', element: 'normal' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a', element: 'fire' })).toBe(false);
     // 위력: 계열이 달라도 기본 블록 값 그대로
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(newBuild(), f.id) });
     const dmg = f.families.map((x) => blockDamage(s, { uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: x.id }, 2));
@@ -105,8 +105,8 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
 });
 
 describe('블록 외형', () => {
-  it('필살·공허·기본·스킬 역할', () => {
-    expect(blockVisual('special', false, null)).toBe('special');
+  it('콤보·공허·기본·스킬 역할', () => {
+    expect(blockVisual('combo', false, null)).toBe('special');
     expect(blockVisual('void', false, null)).toBe('void');
     expect(blockVisual('skill', true, 'attack')).toBe('basic');
     expect(blockVisual('skill', false, 'heal')).toBe('heal');

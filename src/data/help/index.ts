@@ -37,7 +37,7 @@ export const GLOSSARY: readonly GlossaryTerm[] = glossaryJson.terms;
 export const SCREEN_HELPS: readonly ScreenHelp[] = screensJson.screens;
 
 /** 튜토리얼 장면 targets 가 가리킬 수 있는 전투 화면 요소 id (battleView 가 data-help 로 단다) */
-export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.sp', 'battle.stored'] as const;
+export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.stored'] as const; // battle.sp(영력 바)는 C.118 에 삭제
 
 const COMBAT = BALANCE.provisional.combat;
 
@@ -52,7 +52,6 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   };
   walk('', f);
   // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4: 옛 '포효'·'응축 일격' 등 금지)
-  vars.specialBlockName = `${BLOCK_WORDS.special} 블록`;
   vars.storedSkillName = BLOCK_WORDS.stored;
   vars.voidBlockName = `${BLOCK_WORDS.void} 블록`;
   delete vars.basicSkillName;

@@ -31,9 +31,8 @@ describe('계열 공격 연출 고르기', () => {
     expect(attackCueOf(block({ family: 'family-a' }), 3)?.fx).toBeUndefined();
   });
 
-  it('필살·콤보는 가장 센 단계 + 이름을 크게(ult)', () => {
+  it('콤보는 가장 센 단계 + 이름을 크게(ult)', () => {
     expect(attackCueOf(block({ block: 'combo', family: null }), 3, fxOf)).toMatchObject({ tier: 'special', ult: true });
-    expect(attackCueOf(block({ block: 'special', family: null }), 3, fxOf)).toMatchObject({ tier: 'special', ult: true });
   });
 
   it('연출 종류마다 움직임 데이터가 있고, 탄·귀는 제자리 발사, 조·교·참·권은 돌진', () => {

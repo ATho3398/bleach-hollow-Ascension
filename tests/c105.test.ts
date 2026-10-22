@@ -162,17 +162,23 @@ describe('C.105 흙 버티기 · 혈 속도 (GDD 49-9)', () => {
     for (let i = 0; i < PB.knockback.hits; i++) nextBasic(a);
     expect(basicPowerOf(a)).toBeCloseTo(1);
     expect(PB.knockback.hits).toBeGreaterThanOrEqual(20);
-    // 사람형 봇 1판: 물공 켠 혈이 뗀 혈보다 빠르다
-    const onEnd = playCombatHuman(blood());
-    const offEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'] }, 11));
-    expect(onEnd.status).toBe('won');
-    expect(offEnd.status).toBe('won');
-    expect(elapsedSeconds(onEnd)).toBeLessThan(elapsedSeconds(offEnd) * 0.9);
+    // 사람형 봇: 물공 켠 혈이 뗀 혈보다 빠르다 — 메커니즘 시험이라 옛 전투 길이(hpScale·playerHpScale 1)·시드 6판 평균으로 본다 (C.118: 짧아진 전투에서 혈 우위가 줄어든 것은 balance 후반 보류 경고로 기록)
+    let onSum = 0;
+    let offSum = 0;
+    for (let seed = 1; seed <= 6; seed++) {
+      const onEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: fxOf('t5:blood:physical'), hpScale: 1, playerHpScale: 1 }, seed));
+      const offEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], hpScale: 1, playerHpScale: 1 }, seed));
+      expect(onEnd.status).toBe('won');
+      expect(offEnd.status).toBe('won');
+      onSum += elapsedSeconds(onEnd);
+      offSum += elapsedSeconds(offEnd);
+    }
+    expect(onSum).toBeLessThan(offSum * 0.9);
   });
 
   it('수치는 49-2 3판 표에서 출발해 49-9 목표로 조정한 값 (provisional)', () => {
-    expect(PB.spawnSeconds).toBe(6);
-    expect(PB.spawnSecondsByElement).toEqual({ blood: 3 });
+    expect(PB.spawnSeconds).toBe(3.5); // C.118: 6 ÷ 1.7 (전투 절반, 모든 블록 타이머 같은 비율)
+    expect(PB.spawnSecondsByElement).toEqual({ blood: 1.8 }); // C.118: 3 ÷ 1.7
     expect(PB.stoneStance).toEqual({ seconds: 12, takenReduction: 0.55, perHit: 0.1, max: 0.5 });
     expect(PB.hardFist).toEqual({ hits: 3, bonus: 0.4 });
     expect(PB.knockback).toEqual({ hits: 40, bonus: 1.5, seconds: 0.5 });

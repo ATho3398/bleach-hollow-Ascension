@@ -30,7 +30,7 @@ export const TUTORIAL_HOLE_PAD = 6;
 
 /** 장면 제목 앞 아이콘 (장면 id → 스프라이트). 모르는 장면은 info */
 const SCENE_ICON: Record<string, string> = {
-  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', sp: 'i-sp', stored: 'i-stored', after: 'i-evolve',
+  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', stored: 'i-stored', after: 'i-evolve',
 };
 
 /** 대상 영역을 오버레이 자리(host: LCD 창 또는 화면 전체) 기준 좌표로 돌려준다 */

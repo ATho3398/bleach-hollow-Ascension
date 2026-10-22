@@ -26,8 +26,8 @@
         "battle.runrow",
         "battle.tray"
       ],
-      "title": "같은 계열을 붙여서 {chainName}",
-      "body": "같은 계열({familyList}) 공격 블록이 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해 {chainName}이(가) 돼요 (최대 {chainMax}). 특성이 달라도 계열이 같으면 돼요. 떨어져 있어도 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 많이 붙일수록 더 강한 기술이 나가요. 같은 계열 {chainName}을(를) 연달아 두 번 쓰면 콤보 블록이 생기기도 해요."
+      "title": "같은 블록을 붙여서 {chainName}",
+      "body": "완전히 같은 블록(같은 속성 + 같은 계열)이 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해 {chainName}이(가) 돼요 (최대 {chainMax}). 속성이나 계열이 다르면 붙어 있어도 따로 나가요. 떨어져 있어도 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 많이 붙일수록 더 강한 기술이 나가요. 같은 계열 {chainName}을(를) 연달아 두 번 쓰면 콤보 블록이 생기기도 해요."
     },
     {
       "id": "heavy",
@@ -44,14 +44,6 @@
       ],
       "title": "{voidBlockName}은 위험한 큰 한 방",
       "body": "{voidBlockName}은(는) 큰 피해를 주지만 쓰면 {riskGaugeName}이(가) 올라가요. 너무 높아지면 원정이 위험해져요. 쓸지 말지는 여러분 선택이에요. 블록의 모양은 이 범례에서 확인해요."
-    },
-    {
-      "id": "sp",
-      "targets": [
-        "battle.sp"
-      ],
-      "title": "{spName}이(가) 차면 {specialBlockName}",
-      "body": "블록을 쓸 때마다 {spName}이(가) 올라가요. 가득 차면 {specialBlockName}이(가) 블록 바의 빈 칸에 나타나요. 큰 피해를 주니 빈 칸을 하나 남겨 두면 좋아요."
     },
     {
       "id": "stored",

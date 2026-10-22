@@ -109,9 +109,10 @@ export interface CombatParams {
   chainBonusFromChain: number;
   /** 계열 id → 단계별 위력 배율·추가 효과 (종족 설정에서 옮김, GDD 17-3). 없는 계열·기본/막기/회복 블록은 chainMultipliers·skill.chainBonus 를 쓴다 */
   families: Record<string, FamilyCombat>;
-  spPerBlock: number;
-  spMax: number;
-  specialPowerInAttacks: number;
+  /** 전투 시간 배율 (GDD 62장, C.118): 적·졸개 최대 체력에 곱한다. 0.5 = 한 전투가 약 절반 (내 체력은 playerHpScale) */
+  hpScale: number;
+  /** 내 최대 체력 배율 (C.118): 적 0.5 보다 덜 줄인다(0.7) — 강공격 한 방의 체력 대비 변동이 커지는 것을 눌러 강적·원정 패배율을 C.115 수준으로 유지 */
+  playerHpScale: number;
   basicBlockPowerInAttacks: number;
   basicBlockChainBonus: ChainBonus;
   /** 상성 (GDD 20-2): 강 / 약 배율, 자기 속성 보정 (진화체 stab 이 있으면 그 값) */
@@ -466,7 +467,6 @@ export interface CombatState {
   damageTaken?: number;
   voidTimer: number;
   shuffleTimer: number;
-  sp: number;
   /** 저장 게이지(0~storedGaugeMax 미만)와 충전 개수 (전투 안에서만 유효, GDD 14-6) */
   storedGauge: number;
   storedCharges: number;
@@ -493,7 +493,6 @@ export interface CombatState {
   weakChain3Count: number;
   guardSuccesses: number;
   voidUsed: number;
-  specialUsed: boolean;
   /** 공허 블록 사용으로 오른 리스크 게이지 값 */
   riskGained: number;
   finisher: Finisher | null;
@@ -805,10 +804,10 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
   const params: CombatParams = { ...defaultCombatParams(), ...setup.params, ...(setup.boss ? { timeLimitSeconds: setup.boss.timeLimitSeconds } : {}) };
   const t = (sec: number) => ticksOf(params, sec);
   // 적 체력 = 플레이어 기본 공격 N회 분량 (CLAUDE.md 규칙 3). 육성으로 공격력이 오르면 같이 오른다
-  const maxHp = setup.enemy.hpInAttacks * params.hpAttackScale * params.playerAttackDamage * params.growthMultiplier;
+  const maxHp = setup.enemy.hpInAttacks * params.hpAttackScale * params.playerAttackDamage * params.growthMultiplier * params.hpScale;
   const pStats = playerStatsOf(params);
   // 내 체력 = 기본 체력 × (체력 ÷ 세계 기준 능력치) (GDD 20-3·32-1: 기준은 1단계 값으로 고정 — 진화하면 최대 체력이 실제로 커진다)
-  const playerHp = params.playerMaxHp * (pStats.hp / params.playerRefStat);
+  const playerHp = params.playerMaxHp * (pStats.hp / params.playerRefStat) * params.playerHpScale;
   return {
     seed,
     params,
@@ -841,7 +840,6 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     spawnTimers: timerSecondsOf(params).map((sec, i, all) => Math.max(1, Math.round((t(sec) * (i + 0.5)) / all.length))),
     voidTimer: t(params.voidCheckSeconds),
     shuffleTimer: params.trayShuffleSeconds > 0 ? t(params.trayShuffleSeconds) : 0,
-    sp: 0,
     ...startStored(params),
     storedUsed: 0,
     storedWasted: 0,
@@ -858,7 +856,6 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     weakChain3Count: 0,
     guardSuccesses: 0,
     voidUsed: 0,
-    specialUsed: false,
     riskGained: 0,
     finisher: null,
     liberation: { gauge: 0, usedAtTick: null, ticksLeft: 0, base: null, risk: 0 },
@@ -957,7 +954,6 @@ function plainHitMultiplier(s: CombatState): number {
 export function blockDamage(s: CombatState, b: Block, chain = 1): number {
   const p = s.params;
   const guardPose = stanceMultiplier(s);
-  if (b.kind === 'special') return p.specialPowerInAttacks * unitDamage(p) * plainHitMultiplier(s) * guardPose;
   if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p) * plainHitMultiplier(s) * guardPose;
   if (b.kind === 'combo') return (comboOf(p, b.traitId)?.powerInAttacks ?? 0) * unitDamage(p) * plainHitMultiplier(s) * guardPose;
   if (b.kind === 'liberation') return p.liberationPowerInAttacks * unitDamage(p) * liberationHit(s).mult * guardPose;
@@ -1264,7 +1260,7 @@ function bossSummon(s: CombatState, b: BossState): void {
   if (b.minion) return;
   // 졸개 체력 = 기본 공격 N회 분량 (보스 체력과 같은 식, CLAUDE.md 규칙 3)
   const p = s.params;
-  const hp = sm.hpInAttacks * p.hpAttackScale * p.playerAttackDamage * p.growthMultiplier;
+  const hp = sm.hpInAttacks * p.hpAttackScale * p.playerAttackDamage * p.growthMultiplier * p.hpScale;
   b.minion = { hp, maxHp: hp, attackTimer: ticksOf(p, sm.attackSeconds) };
   b.summons = (b.summons ?? 0) + 1;
   emit(s, { kind: 'boss-summon', hp });
@@ -1344,7 +1340,9 @@ export function blockElementOf(p: CombatParams, b: Block): string | null {
 
 function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, family: string | null = null): boolean {
   if (s.tray.length >= s.params.trayCapacity) return false;
-  s.tray.push({ uid: s.nextUid++, kind, traitId, family });
+  // 블록의 속성 (C.118, GDD 66장): 체인은 같은 계열 + 같은 속성끼리만. skill 블록은 그 특성(기본 블록은 물공 속성)의 속성, 나머지는 없음
+  const element = kind === 'skill' ? (sourceOf(s.params, traitId)?.element ?? null) : null;
+  s.tray.push({ uid: s.nextUid++, kind, traitId, family, element });
   emit(s, { kind: 'spawn', index: s.tray.length - 1, block: kind });
   return true;
 }
@@ -1385,10 +1383,6 @@ function useStored(s: CombatState): boolean {
   return true;
 }
 
-function addSp(s: CombatState, v: number): void {
-  s.sp = Math.min(s.params.spMax, s.sp + v);
-}
-
 function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
   const p = s.params;
   if (bonus.kind === 'stagger') {
@@ -1400,8 +1394,9 @@ function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
   } else if (bonus.kind === 'reflect') {
     s.guard.reflect = Math.max(s.guard.reflect, bonus.value);
   } else {
+    // 정화: 봉인 해제 + 저장 게이지 +value (C.118: SP 필살 블록이 없어져 SP 대신 저장형 필살기 게이지로, GDD 66장)
     s.sealTicks = 0;
-    addSp(s, bonus.value);
+    addStored(s, bonus.value);
   }
 }
 
@@ -1420,28 +1415,16 @@ function updateCombos(s: CombatState, family: string | null, chain: number): voi
   }
 }
 
-/** 블록 사용 (클릭). 스킬 블록 = 붙어 있는 같은 특성 블록이 함께 발동(체인) → 역할 효과 + 피해, 필살 = 큰 피해, 공허 = 큰 피해 + 리스크 상승 */
+/** 블록 사용 (클릭). 스킬 블록 = 붙어 있는 완전히 같은 블록이 함께 발동(체인) → 역할 효과 + 피해, 공허 = 큰 피해 + 리스크 상승 (SP 필살 블록은 C.118 에 삭제 — 필살기는 저장형만, GDD 66장) */
 function useBlock(s: CombatState, index: number): boolean {
   const b = s.tray[index];
   if (!b) return false;
   const p = s.params;
-  if (b.kind === 'special') {
-    s.tray.splice(index, 1);
-    s.specialUsed = true;
-    addStored(s, p.storedGaugePerBlock);
-    const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, []);
-    emit(s, { kind: 'block', block: 'special', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
-    dealDamage(s, damage, { kind: 'special', traitId: null, element: null });
-    updateCombos(s, null, 0);
-    counterIfStance(s);
-    return true;
-  }
   if (b.kind === 'void') {
     s.tray.splice(index, 1);
     s.voidUsed++;
     s.riskGained += p.riskPerVoidBlock;
     addStored(s, p.storedGaugePerBlock);
-    addSp(s, p.spPerBlock);
     const damage = blockDamage(s, b) * abilityPowerOf(s, true);
     emit(s, { kind: 'block', block: 'void', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'void', traitId: null, element: null });
@@ -1463,7 +1446,6 @@ function useBlock(s: CombatState, index: number): boolean {
   if (b.kind === 'liberation') {
     s.tray.splice(index, 1);
     addStored(s, p.storedGaugePerBlock);
-    addSp(s, p.spPerBlock);
     const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, p.playerElements);
     const hit = liberationHit(s);
     emit(s, { kind: 'block', block: 'liberation', traitId: null, family: null, element: hit.element, matchup: hit.matchup, role: null, chain: 1, damage, weak: hit.weak, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
@@ -1493,7 +1475,6 @@ function useBlock(s: CombatState, index: number): boolean {
     s.chain3Count++;
     if (weak) s.weakChain3Count++;
   }
-  addSp(s, p.spPerBlock * chain);
   addStored(s, p.storedGaugePerBlock * chain + (p.storedChainBonus[chain - 1] ?? 0));
   let heal = 0;
   let guardSeconds = 0;
@@ -1709,7 +1690,6 @@ function advanceTick(s: CombatState): void {
     s.voidTimer = t(p.voidCheckSeconds);
     if (nextFloat(s.rng) < voidChanceOf(p)) spawn(s, 'void', null);
   }
-  if (s.sp >= p.spMax && spawn(s, 'special', null)) s.sp = 0;
   if (s.boss) bossGimmick(s, s.boss);
   // 내 자동 기본 공격
   if (--s.player.attackTimer <= 0) {

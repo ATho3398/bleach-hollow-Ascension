@@ -21,16 +21,16 @@ const bodyOf = (formId: string): CombatParams => {
 
 describe('C.105b 속성별 물공 생성원 간격', () => {
   it('혈만 짧고 나머지 5속성은 공통 spawnSeconds (데이터에서 읽는다, 속성 분기 없음)', () => {
-    expect(PB.spawnSecondsByElement).toEqual({ blood: 3 });
-    expect(physSpawnSecondsFor('blood')).toBe(3);
+    expect(PB.spawnSecondsByElement).toEqual({ blood: 1.8 }); // C.118: 3 ÷ 1.7 (모든 블록 타이머 같은 비율)
+    expect(physSpawnSecondsFor('blood')).toBe(1.8);
     for (const el of PHYS_ELEMENT_IDS.filter((e) => e !== 'blood')) expect(physSpawnSecondsFor(el)).toBe(PB.spawnSeconds);
     expect(physSpawnSecondsFor(null)).toBe(PB.spawnSeconds);
     expect(PB.spawnSecondsByElement.blood!).toBeLessThan(PB.spawnSeconds);
   });
 
-  it('applyEvolutionToParams 가 params.physBlockSpawnSeconds 를 채운다: 혈 3초 · 흙 6초 · 물공 아닌 몸은 기본값', () => {
-    expect(bodyOf('t5:blood:physical').physBlockSpawnSeconds).toBe(3);
-    expect(physSpawnSecondsOf(bodyOf('t5:blood:physical'))).toBe(3);
+  it('applyEvolutionToParams 가 params.physBlockSpawnSeconds 를 채운다: 혈 1.8초 · 흙 3.5초(C.118) · 물공 아닌 몸은 기본값', () => {
+    expect(bodyOf('t5:blood:physical').physBlockSpawnSeconds).toBe(1.8);
+    expect(physSpawnSecondsOf(bodyOf('t5:blood:physical'))).toBe(1.8);
     expect(bodyOf('t5:earth:physical').physBlockSpawnSeconds).toBe(PB.spawnSeconds);
     const special = bodyOf('t5:blood:special');
     expect(special.physBlock).toBeNull();
@@ -50,12 +50,12 @@ describe('C.105b 속성별 물공 생성원 간격', () => {
     };
     const blood = firstAt('t5:blood:physical');
     const earth = firstAt('t5:earth:physical');
-    expect(blood).toBeLessThanOrEqual(3);
+    expect(blood).toBeLessThanOrEqual(1.8);
     expect(blood).toBeLessThan(earth);
     expect(earth).toBeLessThanOrEqual(PB.spawnSeconds);
     const s = createCombat(6, { enemy: getEnemy('test-a'), params: { ...bodyOf('t5:blood:physical'), timeLimitSeconds: 1e9 } });
     s.player.hp = s.player.maxHp = 1e12; s.enemy.hp = s.enemy.maxHp = 1e12; s.voidTimer = 1e9;
     for (let i = 0; i < ticksOf(s.params, 60); i++) { step(s); s.tray = []; }
-    expect(Math.abs((s.physSpawned ?? 0) - 60 / 3)).toBeLessThanOrEqual(1);
+    expect(Math.abs((s.physSpawned ?? 0) - 60 / 1.8)).toBeLessThanOrEqual(1);
   });
 });

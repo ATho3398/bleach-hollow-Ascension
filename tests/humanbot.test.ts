@@ -41,12 +41,13 @@ describe('사람형 봇', () => {
   });
 
   it('입력 간격이 0.5~1.2초 사이에서 무작위다 (완벽형은 0.5초 고정)', () => {
-    const s = playCombatHuman(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: two }));
+    // C.118 로 전투가 절반이라 입력 수가 적다 — 입력 간격만 보는 시험이라 옛 길이(hpScale 1)로 돌린다
+    const s = playCombatHuman(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: { ...two, hpScale: 1 } }));
     const gaps = s.inputs.slice(1).map((x, i) => (x.tick - s.inputs[i]!.tick) / 10).filter((g) => g > 0);
     expect(gaps.length).toBeGreaterThan(10);
     expect(Math.min(...gaps)).toBeGreaterThanOrEqual(0.1 - 1e-9); // 같은 틱 안의 연속 입력은 없다
     expect(gaps.some((g) => g > 0.5)).toBe(true);
-    const p = playCombatBot(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: two }));
+    const p = playCombatBot(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: { ...two, hpScale: 1 } }));
     const pg = p.inputs.slice(1).map((x, i) => x.tick - p.inputs[i]!.tick);
     expect(pg.every((g) => g % 5 === 0)).toBe(true);
   });
@@ -58,7 +59,7 @@ describe('사람형 봇', () => {
     let pguarded = 0;
     for (let seed = 1; seed <= 60; seed++) {
       const mkS = () => {
-        const s = createCombat(seed, { enemy: { ...heavy, hpInAttacks: 40 }, params: two });
+        const s = createCombat(seed, { enemy: { ...heavy, hpInAttacks: 80 }, params: two }); // C.118: 적 체력 배율 0.5 라 강공격 착탄 수(100 이상)를 유지하려고 40 → 80
         s.player.hp = s.player.maxHp = 1e9;
         return s;
       };
@@ -107,6 +108,8 @@ describe('사람형 봇', () => {
       let n = 0;
       for (let seed = 1; seed <= 20; seed++) {
         const s = createCombat(seed, { enemy: stance, params: two });
+        // C.118: 반격 피해로 먼저 쓰러지면 반격 수가 잘려 비교가 안 되므로(짧아진 전투·막기 블록 감소) 내 체력을 무한으로 두고 '쓴 블록만큼 반격을 받는다'만 본다
+        s.player.hp = s.player.maxHp = 1e9;
         const push = s.events.push.bind(s.events);
         s.events.push = (...e) => {
           for (const x of e) if (x.kind === 'counter') n++;

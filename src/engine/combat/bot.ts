@@ -73,7 +73,7 @@ function joinUse(s: CombatState, top: number): CombatInput | null {
   const hasPattern = hasSpecialActions(s.enemy.def.pattern);
   let best: { i: number; run: number } | null = null;
   for (const c of cells(s)) {
-    if (c.b.kind === 'special' || c.b.kind === 'combo' || c.b.kind === 'liberation') continue;
+    if (c.b.kind === 'combo' || c.b.kind === 'liberation') continue;
     // 낭비가 큰 블록은 붙이려고 쓰지 않는다: 막기는 강적(강공격)이 없을 때만, 회복은 다쳤을 때만
     const role = c.b.kind === 'skill' ? roleOf(s, c.b) : null;
     if (role === 'guard' && hasPattern) continue;
@@ -120,8 +120,8 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     }
     return null;
   }
-  // 2. 필살 블록·콤보 블록·해방 블록은 바로
-  const special = all.find((c) => c.b.kind === 'special' || c.b.kind === 'combo' || c.b.kind === 'liberation');
+  // 2. 콤보 블록·해방 블록은 바로
+  const special = all.find((c) => c.b.kind === 'combo' || c.b.kind === 'liberation');
   if (special) return use(special);
   // 3. 체력이 절반 아래면 회복
   if (s.player.hp < s.player.maxHp * 0.5) {

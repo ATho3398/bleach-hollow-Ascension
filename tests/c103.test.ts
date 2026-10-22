@@ -207,6 +207,7 @@ describe('C.103 혈 — 피 튀기기(넉백) · 피 냄새', () => {
   it('버프는 평타 n회 뒤 사라진다 (피의 갈증 없이 비교)', () => {
     const a = mk({ playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: { bloodScent: 2 } });
     const b = mk({ playerElements: ['blood'] });
+    a.enemy.hp = a.enemy.maxHp = 1e12; // C.118: 적 체력이 절반이라 40회 평타 전에 죽는다 — 버프 지속만 본다
     const plainHit = nextBasic(b)[0]!.damage;
     a.tray.push(blk(BASIC_SKILL_ID));
     use(a);

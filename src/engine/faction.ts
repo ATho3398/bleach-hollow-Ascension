@@ -169,16 +169,13 @@ export interface FactionConfig {
   rankBattleName: string;
   rankWinText: string;
   rankLoseText: string;
-  /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 필살 블록 / 공허 블록 */
+  /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 공허 블록. SP 필살 블록 이름(specialBlockName)·SP 게이지 이름(spName)은 C.118 에 삭제 (GDD 66장) */
   skillBlockName: string;
-  specialBlockName: string;
-  /** 저장형 필살기 표시 이름 (GDD 14-6, 임시 자리 표시 이름). SP 필살 블록(specialBlockName)과 별개 */
+  /** 저장형 필살기 표시 이름 (GDD 14-6, 임시 자리 표시 이름) */
   storedSkillName: string;
   voidBlockName: string;
   /** 체인 표기 (예: "체인") */
   chainName: string;
-  /** 필살 블록을 채우는 SP 게이지 이름 */
-  spName: string;
   /** 스킬 블록 역할 → 종족별 표시 이름 (공격 / 막기 / 회복) */
   roleNames: Record<BlockRole, string>;
   /** 리스크 게이지 이름 (GDD 5장) */
@@ -265,7 +262,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
@@ -410,8 +407,8 @@ export function resolveMaxChain(f: Pick<FactionConfig, 'maxChain'>, formMaxChain
   return formMaxChain ?? f.maxChain ?? DEFAULT_MAX_CHAIN;
 }
 
-/** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName·specialBlockName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다 */
-export const BLOCK_WORDS = { special: '필살', stored: '저장 필살', void: '공허', combo: '콤보', guard: '막기', heal: '회복', liberation: '해방' } as const;
+/** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다. `special`(필살 블록)은 C.118 에 삭제 */
+export const BLOCK_WORDS = { stored: '저장 필살', void: '공허', combo: '콤보', guard: '막기', heal: '회복', liberation: '해방' } as const;
 
 /** 계열 설정 한 개 (없으면 undefined) */
 export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {

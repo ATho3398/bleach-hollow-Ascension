@@ -52,7 +52,7 @@ import { BALANCE } from '../config/balance';
 import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { resultView } from './resultView';
-import { expeditionView, getSpeed, setSpeed } from './expeditionView';
+import { expeditionView, setSpeed } from './expeditionView';
 import { planView } from './planView';
 import { bookView } from './bookView';
 import { showTitleToasts } from './titleDexView';
@@ -166,7 +166,7 @@ export function startApp(host: HTMLElement): void {
   /** 원정 중간 저장 (GDD 14-1). 끝난 원정은 저장하지 않는다 (recordExpedition 이 영역을 비운다) */
   const saveProgress = (exp: ExpeditionState) => {
     if (!save || exp.phase === 'ended') return;
-    save.activeExpedition = serializeExpedition(exp, getSpeed());
+    save.activeExpedition = serializeExpedition(exp, 1); // 배속은 C.118 에 삭제 — 늘 1 (GDD 62장, 세이브 형식은 그대로)
     persist();
   };
 
@@ -353,7 +353,7 @@ export function startApp(host: HTMLElement): void {
       activeExp = active.exp;
       persist(); // 마지막 플레이 시각 기록(+ 로드 때 해금된 칭호 저장)
       // 원정 흐름은 취소로 빠지지 않는다(locked). 끝나면 nestScreen 이 방으로 스택을 다시 깐다
-      nav.reset({ id: 'expedition', locked: true, render: () => { resumeExpedition(active.exp, active.speed); root.scrollTop = 0; } });
+      nav.reset({ id: 'expedition', locked: true, render: () => { resumeExpedition(active.exp); root.scrollTop = 0; } });
       return;
     }
     // 손상·구버전 원정이면 readActiveExpedition 이 비웠다 → 방에서 안내 한 줄 (renderRoom 이 다시 확인)
@@ -489,7 +489,7 @@ export function startApp(host: HTMLElement): void {
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,
       resume: active.ok
-        ? { info: `${active.exp.lap}바퀴 · ${active.exp.pos}번 칸`, onResume: () => open('expedition', () => resumeExpedition(active.exp, active.speed), true) }
+        ? { info: `${active.exp.lap}바퀴 · ${active.exp.pos}번 칸`, onResume: () => open('expedition', () => resumeExpedition(active.exp), true) }
         : null,
       resumeNote,
       persist,
@@ -836,10 +836,10 @@ export function startApp(host: HTMLElement): void {
   }
 
   /** 저장된 원정으로 돌아간다: 저장된 시점의 화면(전투 직전·흡수·둥지 칸 귀환 선택·이동 중)으로 복원 */
-  function resumeExpedition(exp: ExpeditionState, speed: number): void {
+  function resumeExpedition(exp: ExpeditionState): void {
     const faction = getFaction(exp.factionId);
     activeExp = exp;
-    setSpeed(speed);
+    // 저장된 배속 값은 무시한다 (C.118, GDD 62장: 1배 고정)
     if (exp.phase === 'battle') runBattle(faction, exp);
     else if (exp.phase === 'absorb') afterBattle(faction, exp);
     else if (drainEvents(exp).length > 0) breakthroughScreen(faction, exp, () => showExpedition(faction, exp, '원정을 이어간다'));

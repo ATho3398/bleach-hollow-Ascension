@@ -1,0 +1,34 @@
+{
+  "startedAt": "2026-10-22T04:21:27.711Z",
+  "viewport": "390x844 @1x, 다마고치 모드(bha-tamago on), ?test=0",
+  "shots": [
+    {
+      "file": "1-battle-same-block-chain.png",
+      "tray": [
+        "노멀_ 회복",
+        "노멀_ 회복",
+        "공허"
+      ],
+      "chainAt": 0,
+      "spMeterOrSpecialLegend": false,
+      "bar": [
+        "그만두기",
+        "로그",
+        "일시정지",
+        "도움말"
+      ]
+    },
+    {
+      "file": "2-stored-skill-gauge.png",
+      "stored": "저장 필살, 충전 1칸",
+      "tray": []
+    }
+  ],
+  "buttons": [
+    "그만두기",
+    "로그",
+    "일시정지",
+    "도움말"
+  ],
+  "errors": []
+}

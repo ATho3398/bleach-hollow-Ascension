@@ -120,10 +120,12 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
     for (const t of BATTLE_HELP_TARGETS) expect(src).toContain(`'${t}'`);
   });
 
-  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록·등급전)를 모두 갖고 id 중복이 없다', () => {
+  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록·등급전 − SP·필살 블록 2개, C.118)를 모두 갖고 id 중복이 없다', () => {
     const ids = GLOSSARY.map((x) => x.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids.length).toBe(16);
+    expect(ids.length).toBe(14);
+    expect(ids).not.toContain('sp');
+    expect(ids).not.toContain('special-block');
     expect(ids).toEqual(expect.arrayContaining(['family', 'combo', 'rank']));
     for (const t of GLOSSARY) {
       expect(t.title.length).toBeGreaterThan(0);
@@ -168,7 +170,7 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
       // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4): 옛 '응축 일격'·'포효' 등은 나오지 않는다
       expect(rendered[i]).toContain(helpVars(f).storedSkillName);
       expect(rendered[i]).toContain(helpVars(f).voidBlockName);
-      for (const old of [f.storedSkillName, f.specialBlockName]) expect(rendered[i]).not.toContain(old);
+      for (const old of [f.storedSkillName]) expect(rendered[i]).not.toContain(old);
     }
     if (FACTIONS.length > 1) expect(new Set(rendered).size).toBe(FACTIONS.length);
   });
@@ -191,7 +193,7 @@ describe('튜토리얼 일시정지는 전투 결과에 영향이 없다', () =>
         step(s, input ? [input] : []);
       }
     }
-    return JSON.stringify({ status: s.status, hp: s.enemy.hp, php: s.player.hp, sp: s.sp, tray: s.tray.map((b) => b.kind), tick: s.tick });
+    return JSON.stringify({ status: s.status, hp: s.enemy.hp, php: s.player.hp, stored: s.storedGauge, tray: s.tray.map((b) => b.kind), tick: s.tick });
   }
 
   it('중간에 몇 번이든 멈췄다 풀어도 같은 시드면 결과가 같다', () => {

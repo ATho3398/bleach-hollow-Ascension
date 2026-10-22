@@ -63,9 +63,9 @@ describe('저장 게이지 적립', () => {
     expect(three.storedGauge).toBeGreaterThan(one.storedGauge * 3);
   });
 
-  it('필살 블록·공허 블록을 써도 쌓이고, 잘못된 입력은 쌓이지 않는다', () => {
+  it('공허 블록을 써도 쌓이고, 잘못된 입력은 쌓이지 않는다 (SP 필살 블록은 C.118 에 삭제)', () => {
     const s = quiet(mk());
-    s.tray = [blk(null, 'void'), blk(null, 'special')];
+    s.tray = [blk(null, 'void'), blk(null, 'void')];
     useAt(s, 0);
     useAt(s, 0);
     expect(s.storedGauge).toBe(24);

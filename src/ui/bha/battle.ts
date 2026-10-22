@@ -42,8 +42,8 @@ export function pickAbbr(abbr: string | undefined, name: string): string {
 }
 
 /** 블록 외형: 필살·공허는 그대로, 콤보·해방은 필살 모양, 기본 블록(traitId 가 기본 기술이거나 없음)은 basic, 스킬은 역할(모르면 attack) */
-export function blockVisual(kind: 'skill' | 'special' | 'void' | 'combo' | 'liberation', isBasic: boolean, role: 'attack' | 'guard' | 'heal' | null): BlockVisual {
-  if (kind === 'special' || kind === 'combo' || kind === 'liberation') return 'special';
+export function blockVisual(kind: 'skill' | 'void' | 'combo' | 'liberation', isBasic: boolean, role: 'attack' | 'guard' | 'heal' | null): BlockVisual {
+  if (kind === 'combo' || kind === 'liberation') return 'special';
   if (kind === 'void') return 'void';
   if (isBasic) return 'basic';
   return role ?? 'attack';
@@ -520,27 +520,8 @@ export function floatPool(container: HTMLElement, max = 6, showMs = 1100): {
   };
 }
 
-/** 전투 배속 기억 (C.63, GDD 28장 6번): 고른 배속을 다음 전투에도 쓴다. 브라우저 저장(세이브 아님), 원정·연습·등급전·보스 공통 */
-export const BATTLE_SPEED_KEY = 'bha-battle-speed';
-export const BATTLE_SPEEDS = [1, 2] as const;
-export type BattleSpeed = (typeof BATTLE_SPEEDS)[number];
-
-export function loadBattleSpeed(st: Pick<Storage, 'getItem'> | null): BattleSpeed {
-  try {
-    const v = Number(st?.getItem(BATTLE_SPEED_KEY));
-    return (BATTLE_SPEEDS as readonly number[]).includes(v) ? (v as BattleSpeed) : 1;
-  } catch {
-    return 1;
-  }
-}
-
-export function saveBattleSpeed(st: Pick<Storage, 'setItem'> | null, v: BattleSpeed): void {
-  try {
-    st?.setItem(BATTLE_SPEED_KEY, String(v));
-  } catch {
-    /* 저장 못 해도 이번 전투는 그 배속 */
-  }
-}
+/** 전투 배속 기억(C.63 `bha-battle-speed`)은 C.118 에 삭제 — 전투는 1배 고정 (GDD 62장). 브라우저에 남은 옛 값은 읽지 않는다 */
+export const BATTLE_SPEED_KEY_REMOVED = 'bha-battle-speed';
 
 /** 전투 로그 패널에 남기는 최근 줄 수 (C.63: 가운데 실시간 안내 대신 [로그] 버튼) */
 export const BATTLE_LOG_MAX = 40;

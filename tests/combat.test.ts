@@ -99,7 +99,8 @@ describe('고정 틱 시뮬레이션', () => {
 
   it('적 체력은 "플레이어 기본 공격 N회 분량" (CLAUDE.md 규칙 3)', () => {
     const s = mk();
-    expect(s.enemy.maxHp).toBeCloseTo(normal.hpInAttacks * CX.hpAttackScale * CX.playerAttackDamage);
+    // C.118 (GDD 62장): 전투 시간 배율 hpScale(0.5)이 양쪽 최대 체력에 곱해진다
+    expect(s.enemy.maxHp).toBeCloseTo(normal.hpInAttacks * CX.hpAttackScale * CX.playerAttackDamage * CX.hpScale);
     const grown = mk({ params: { growthMultiplier: 2 } });
     expect(grown.enemy.maxHp / s.enemy.maxHp).toBeCloseTo(2);
   });
@@ -108,7 +109,7 @@ describe('고정 틱 시뮬레이션', () => {
     for (let seed = 1; seed <= 10; seed++) {
       const s = playCombatBot(mk({ seed, enemy: elite }));
       expect(['won', 'lost']).toContain(s.status);
-      expect(mk({ seed }).player.hp).toBe(CX.playerMaxHp);
+      expect(mk({ seed }).player.hp).toBe(CX.playerMaxHp * CX.playerHpScale);
     }
   });
 });
@@ -120,7 +121,7 @@ describe('블록 생성과 블록 바 (일자 8칸)', () => {
     expect(s.tray).toHaveLength(0);
     expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID]);
     s.voidTimer = 1e9;
-    wait(s, BP.basicSpawnSeconds * 1.5);
+    wait(s, BP.basicSpawnSeconds * 1.6); // 첫 블록은 간격의 절반 뒤, 둘째는 1.5배 뒤 (C.118 간격 1.9초 = 19틱이라 반올림 여유로 1.6배)
     expect(s.tray).toHaveLength(2);
     expect(s.tray.every((b) => isBasicBlockId(b.traitId))).toBe(true);
     const spawns = drainCombatEvents(s).filter((e) => e.kind === 'spawn');
@@ -140,6 +141,7 @@ describe('블록 생성과 블록 바 (일자 8칸)', () => {
     const s = mk({ params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') });
     s.voidTimer = 1e9;
     s.player.hp = 1e9;
+    s.enemy.hp = 1e9; // C.118: 적 체력이 절반이라 56초 안에 평타만으로 죽는다 — 생성 규칙만 본다
     wait(s, 40);
     expect(s.tray).toHaveLength(8);
     const timers = [...s.spawnTimers];
@@ -229,13 +231,13 @@ describe('붙어 있는 같은 블록 = 클릭 시 함께 발동 (체인)', () =
     expect(s.tray.map((b) => b.kind)).toEqual(['void', 'skill']);
   });
 
-  it('공허 블록은 다른 공허 블록과 붙어 있어도 체인이 되지 않고 개별 사용, 필살도 단독', () => {
-    const s = put(quiet(mk()), blk(null, 'void'), blk(null, 'void'), blk(null, 'special'), blk(null, 'special'));
+  it('공허 블록은 다른 공허 블록과 붙어 있어도 체인이 되지 않고 개별 사용, 콤보도 단독', () => {
+    const s = put(quiet(mk()), blk(null, 'void'), blk(null, 'void'), blk('combo-x', 'combo'), blk('combo-x', 'combo'));
     expect(chainGroup(s.tray, 0, 3)).toEqual([0]);
     expect(chainGroup(s.tray, 3, 3)).toEqual([3]);
     useAt(s, 0);
     expect(s.voidUsed).toBe(1);
-    expect(s.tray.map((b) => b.kind)).toEqual(['void', 'special', 'special']);
+    expect(s.tray.map((b) => b.kind)).toEqual(['void', 'combo', 'combo']);
     useAt(s, 1);
     expect(s.tray).toHaveLength(2);
     expect(s.blocksByChain).toEqual([0, 0, 0]); // 스킬 체인 기록은 오르지 않는다
@@ -278,46 +280,31 @@ describe('체인 배율과 SP·필살', () => {
     useAt(s, 0);
     expect(s.guard.reflect).toBe(1);
     s.sealTicks = 30;
-    s.sp = 0;
+    s.storedGauge = 0;
+    s.storedCharges = 0;
     put(s, ...many('t-thunder-heal', 3));
     useAt(s, 0);
     expect(s.sealTicks).toBe(0);
-    expect(s.sp).toBe(Math.min(CX.spMax, 3 * CX.spPerBlock + 40)); // 블록 3개 +60, cleanse +40
+    // cleanse +40 은 저장 게이지로 (C.118, GDD 66장): 블록 3개 36 + 체인3 보너스 10 + 정화 40 = 86 (< 100, 충전 없음)
+    expect(s.storedGauge).toBe(3 * CX.storedGaugePerBlock + CX.storedChainBonus[2]! + 40);
+    expect(s.storedCharges).toBe(0);
     expect(s.chain3Count).toBe(3);
     expect(s.blocksByChain).toEqual([0, 1, 3]);
   });
 
-  it('함께 쓰인 블록 하나마다 SP +20, SP 100 이면 필살 블록이 맨 오른쪽에 생기고 큰 피해를 준다', () => {
+  it('SP 게이지·필살 블록은 없다 (C.118, GDD 66장): 블록을 아무리 써도 상태에 sp 가 없고 바에 특수 블록이 생기지 않는다', () => {
     const s = quiet(mk());
-    put(s, ...many(BASIC_SKILL_ID, 3));
-    useAt(s, 0);
-    expect(s.sp).toBe(3 * CX.spPerBlock);
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 6; i++) {
       put(s, blk(BASIC_SKILL_ID));
       useAt(s, 0);
+      step(s);
     }
-    expect(s.sp).toBe(CX.spMax);
-    put(s, blk('z'));
-    step(s);
-    const cell = s.tray.findIndex((b) => b.kind === 'special');
-    expect(cell).toBe(1); // 맨 오른쪽
-    expect(s.sp).toBe(0);
-    const before = s.enemy.hp;
-    useAt(s, cell);
-    expect(before - s.enemy.hp).toBeCloseTo(CX.specialPowerInAttacks * CX.playerAttackDamage);
-    expect(s.specialUsed).toBe(true);
-    expect(s.sp).toBe(0); // 필살은 SP 를 주지 않는다
-  });
-
-  it('가득 찬 바에서는 SP 100 이어도 필살 블록이 대기하고, 칸이 비면 생긴다', () => {
-    const s = quiet(mk());
-    put(s, ...Array.from({ length: 8 }, (_, i) => blk(`t${i}`)));
-    s.sp = CX.spMax;
-    step(s);
-    expect(s.tray.some((b) => b.kind === 'special')).toBe(false);
-    useAt(s, 3);
-    step(s);
-    expect(s.tray[s.tray.length - 1]!.kind).toBe('special');
+    expect('sp' in s).toBe(false);
+    expect('specialUsed' in s).toBe(false);
+    expect(s.tray.every((b) => b.kind === 'skill' || b.kind === 'void' || b.kind === 'combo' || b.kind === 'liberation')).toBe(true);
+    expect('spMax' in CX).toBe(false);
+    expect('spPerBlock' in CX).toBe(false);
+    expect('specialPowerInAttacks' in CX).toBe(false);
   });
 });
 
@@ -588,7 +575,7 @@ describe('런 로그 BattleRecord (형식 5)', () => {
     expect(rec.chain3Count).toBe(s.chain3Count);
     expect(rec.guardSuccesses).toBe(s.guardSuccesses);
     expect(rec.voidUsed).toBe(s.voidUsed);
-    expect(rec.specialUsed).toBe(s.specialUsed);
+    expect(rec.specialUsed).toBe(false); // SP 필살 블록은 C.118 에 삭제 — 런 로그 필드는 옛 기록 호환으로 늘 false
     expect(rec.finisherKind).toBe(s.finisher?.kind ?? null);
     expect(rec.turns).toBe(0);
     expect(rec.absorbGained).toBe(0);
@@ -660,9 +647,9 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
     expect([h.role.attack, h.role.guard, h.role.heal]).toEqual(['공격', '막기', '회복']);
     expect(sh.role).toEqual(h.role);
     expect(sh.skillBlock).toBe('기술 블록');
-    // 블록 표시 이름은 종족 무관 고정 낱말 (GDD 20장 v5.4: 옛 basicSkillName·specialBlockName 은 쓰지 않음)
-    expect(h.specialBlock).toBe('필살');
-    expect(sh.specialBlock).toBe('필살');
+    // 블록 표시 이름은 종족 무관 고정 낱말 (GDD 20장 v5.4). SP 필살 블록 이름은 C.118 에 삭제
+    expect('specialBlock' in h).toBe(false);
+    expect('sp' in h).toBe(false);
     expect(h.riskGauge).toBe('광기');
     expect(sh.riskGauge).toBe('호로화');
     expect(h.defeatState).toBe('가면이 깨져 쇠약');
@@ -676,19 +663,15 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
       id: 'quincy',
       name: '퀸시',
       skillBlockName: '성문 블록',
-      specialBlockName: '레이시',
       voidBlockName: '균열 블록',
       chainName: '연결',
-      spName: '영자',
       roleNames: { attack: '광시', guard: '블루트', heal: '흡수' },
       riskGaugeName: '균열',
       basicSkillName: '성문',
     });
     const l = battleLabels(quincy);
     expect(l.role.guard).toBe('블루트');
-    expect(l.specialBlock).toBe('필살');
     expect(l.chain).toBe('연결');
-    expect(l.sp).toBe('영자');
     expect(l.voidBlock).toBe('공허');
     expect(pickFaction(getEnemy('test-a').name, 'quincy')).toBe('테스트 적 A');
     expect(FACTIONS.length).toBe(2);

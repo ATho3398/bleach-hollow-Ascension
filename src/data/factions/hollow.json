@@ -131,11 +131,9 @@
   "rankWinText": "{rank}의 번호를 빼앗았다!",
   "rankLoseText": "패배… 번호가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
-  "specialBlockName": "포효",
   "storedSkillName": "응축 일격",
   "voidBlockName": "공허 블록",
   "chainName": "체인",
-  "spName": "영력",
   "roleNames": {
     "attack": "공격",
     "guard": "막기",

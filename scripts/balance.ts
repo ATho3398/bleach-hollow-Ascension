@@ -137,8 +137,9 @@ const builds: BuildDef[] = [
 //  - 완벽형: 0.5초 간격, 반응 지연·실수 없음. 강공격을 다 막고 체인을 다 붙여서 기술 2개부터 100% 로 절벽이 생긴다 → 참고 출력, 일반 적 승률·길이만 가드
 //  - 사람형: 입력 간격과 막기 반응 지연 0.5~1.2초 무작위, 막기 성공 70%, 붙이기(체인 정리) 입력당 50%. 승률·길이 목표는 이 봇 기준
 const TARGET = {
-  normal: { seconds: 45, win: 0.9 },
-  elite: { seconds: 90 },
+  // C.118 (GDD 62장): 한 전투 시간 = 옛 목표(일반 45초·강적 90초)의 약 절반
+  normal: { seconds: 22, win: 0.9 },
+  elite: { seconds: 45 },
   /** 사람형 봇 강적 승률 목표 (C.34: 빈 슬롯은 참고만, skill 1~2개 60~85%, skill 3개 이상은 목표 미달 유지 가능 — 빌드별 elite 필드) */
   eliteWin: { 'skill 1·2개': [0.6, 0.85] } as Record<string, [number, number]>,
 };
@@ -153,7 +154,7 @@ const KINDS = ENEMY_PATTERN_KINDS.filter((k) => POOL_ENEMIES.some((e) => enemyPa
 type KindStat = { kind: string; cls: string; games: number; wins: number; secs: number; winSecs: number; timeouts: number; line: string };
 function measureKind(play: (s: CombatState) => CombatState, build: BuildDef, kind: string): KindStat {
   const group = POOL_ENEMIES.filter((e) => enemyPatternKind(e) === kind);
-  const st = { games: 0, wins: 0, secs: 0, winSecs: 0, timeouts: 0, chain3: 0, guards: 0, voids: 0, specials: 0, absorbable: 0, hpLeft: 0, stored: 0, wasted: 0 };
+  const st = { games: 0, wins: 0, secs: 0, winSecs: 0, timeouts: 0, chain3: 0, guards: 0, voids: 0, absorbable: 0, hpLeft: 0, stored: 0, wasted: 0 };
   for (const enemy of group) {
     for (let seed = 1; seed <= N; seed++) {
       const s = play(createCombat(seed, { enemy, params: build.params }));
@@ -171,12 +172,11 @@ function measureKind(play: (s: CombatState) => CombatState, build: BuildDef, kin
       st.voids += s.voidUsed;
       st.stored += s.storedUsed;
       st.wasted += s.storedWasted;
-      if (s.specialUsed) st.specials++;
       if (canAbsorb(s)) st.absorbable++;
     }
   }
   const g = st.games;
-  const line = `    ${kind.padEnd(11)} (${group[0]!.class}, 체력 ${group[0]!.hpInAttacks}회분, 적 ${group.length}종): 승률 ${((st.wins / g) * 100).toFixed(0)}% · 평균 ${(st.secs / g).toFixed(1)}초(승리 ${(st.wins ? st.winSecs / st.wins : 0).toFixed(1)}초) · 남은 체력 ${st.wins ? ((st.hpLeft / st.wins) * 100).toFixed(0) : '-'}% · 체인3 ${(st.chain3 / g).toFixed(1)}회 · 막기 성공 ${(st.guards / g).toFixed(1)} · 공허 ${(st.voids / g).toFixed(1)} · 필살 ${((st.specials / g) * 100).toFixed(0)}% · 저장필살 ${(st.stored / g).toFixed(1)}회(낭비 ${(st.wasted / g).toFixed(0)}) · 흡수 가능 ${((st.absorbable / g) * 100).toFixed(0)}% · 시간 초과 ${st.timeouts}`;
+  const line = `    ${kind.padEnd(11)} (${group[0]!.class}, 체력 ${group[0]!.hpInAttacks}회분, 적 ${group.length}종): 승률 ${((st.wins / g) * 100).toFixed(0)}% · 평균 ${(st.secs / g).toFixed(1)}초(승리 ${(st.wins ? st.winSecs / st.wins : 0).toFixed(1)}초) · 남은 체력 ${st.wins ? ((st.hpLeft / st.wins) * 100).toFixed(0) : '-'}% · 체인3 ${(st.chain3 / g).toFixed(1)}회 · 막기 성공 ${(st.guards / g).toFixed(1)} · 공허 ${(st.voids / g).toFixed(1)} · 저장필살 ${(st.stored / g).toFixed(1)}회(낭비 ${(st.wasted / g).toFixed(0)}) · 흡수 가능 ${((st.absorbable / g) * 100).toFixed(0)}% · 시간 초과 ${st.timeouts}`;
   return { kind, cls: group[0]!.class, games: g, wins: st.wins, secs: st.secs, winSecs: st.winSecs, timeouts: st.timeouts, line };
 }
 /** 풀 가중치(POOL_CONFIG)로 종류별 결과를 합친 승률·승리 평균 시간 */
@@ -199,10 +199,10 @@ if (want('combat')) for (const bot of BOTS) {
       const avgWin = st.wins ? st.winSecs / st.wins : 0;
       const tag = `${bot.name}/${st.kind}/${build.name}`;
       if (st.cls === 'normal') {
-        // 일반 적: 두 봇 모두 승률 90%↑·길이·시간 초과 가드 (빈 슬롯은 약 45초 근처)
+        // 일반 적: 두 봇 모두 승률 90%↑·길이·시간 초과 가드 (빈 슬롯은 약 22초 근처 — C.118 GDD 62장, 옛 45초·가드 18~75/30~70 의 절반)
         if (winRate < TARGET.normal.win) failures.push(`${tag}: 승률 ${(winRate * 100).toFixed(0)}% < ${TARGET.normal.win * 100}%`);
-        if (avgWin < 18 || avgWin > 75) failures.push(`${tag}: 승리 평균 ${avgWin.toFixed(1)}초 (18~75 밖)`);
-        if (build.name.startsWith('빈') && (avgWin < 30 || avgWin > 70)) failures.push(`${tag}: 승리 평균 ${avgWin.toFixed(1)}초 (30~70 밖)`);
+        if (avgWin < 9 || avgWin > 38) failures.push(`${tag}: 승리 평균 ${avgWin.toFixed(1)}초 (9~38 밖)`);
+        if (build.name.startsWith('빈') && (avgWin < 15 || avgWin > 35)) failures.push(`${tag}: 승리 평균 ${avgWin.toFixed(1)}초 (15~35 밖)`);
       }
       if (st.timeouts / st.games > 0.05) failures.push(`${tag}: 시간 초과 패배 ${st.timeouts}/${st.games}`);
     }
@@ -222,7 +222,7 @@ if (want('combat')) for (const bot of BOTS) {
         // 빈 슬롯은 참고 값. skill 3개 이상은 강적 남은 체력이 95% 이상일 만큼 압도적이라 강적 패턴·체력·공격만으로는 못 맞춘다 (dev-log C.16 목표 미달 유지)
         console.log(`      → 강적 승률 ${Math.round(pe.win * 100)}% (참고, 목표 없음)`);
       }
-      if (build.elite && build.name.startsWith('skill 1') && (pe.winSecs < 75 || pe.winSecs > 105)) failures.push(`사람형 봇/${build.name}: 강적 승리 평균 ${pe.winSecs.toFixed(1)}초 (목표 약 90초, 75~105 밖)`);
+      if (build.elite && build.name.startsWith('skill 1') && (pe.winSecs < 37 || pe.winSecs > 53)) failures.push(`사람형 봇/${build.name}: 강적 승리 평균 ${pe.winSecs.toFixed(1)}초 (목표 약 45초, 37~53 밖 — C.118 GDD 62장)`);
     }
   }
 }
