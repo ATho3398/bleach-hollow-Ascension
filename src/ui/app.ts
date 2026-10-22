@@ -69,6 +69,9 @@ import { backupView } from './backupView';
 import { helpOverlay, type HelpScreenId } from './helpView';
 import { guidePending, markGuideDone, markTutorialSeen, queueGuide, shouldAutoShowTutorial, type GuideId, type TextGuideId } from '../engine/tutorial';
 import { playBirth } from './birthFx';
+import { pickFaction } from '../data/schema';
+import { playWarning } from './warningView';
+import { warningKind } from './warningLogic';
 import { showGuide, tutorialAbsorbView } from './guideView';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
@@ -962,7 +965,23 @@ export function startApp(host: HTMLElement): void {
     else showExpedition(faction, exp, '원정을 이어간다');
   }
 
+  /** 전투 직전 강적·보스 WARNING 경고가 떠 있다 (GDD 76장, C.128) */
+  let warnOpen = false;
+
   function runBattle(faction: FactionConfig, exp: ExpeditionState): void {
+    activeExp = exp;
+    const p = exp.pending!;
+    // 강적·보스·포식자 둥지 사냥꾼: 전투 시작 전 약 1.5초 경고 (누르면 건너뜀). 엔진·밸런스 변경 없음
+    const kind = warningKind(p, Boolean(exp.tutorial));
+    if (kind && !warnOpen) {
+      warnOpen = true;
+      playWarning({ kind, name: pickFaction(p.enemy.name, faction.id), elementId: p.enemy.element, factionId: faction.id, onDone: () => { warnOpen = false; beginBattle(faction, exp); } });
+      return;
+    }
+    beginBattle(faction, exp);
+  }
+
+  function beginBattle(faction: FactionConfig, exp: ExpeditionState): void {
     activeExp = exp;
     const p = exp.pending!;
     const s = startBattle(exp);

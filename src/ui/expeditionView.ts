@@ -25,6 +25,7 @@ import { locoOf } from './bha/loco';
 import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
 import { groundSceneBg } from './bha/sceneBg';
+import { nextCellIsElite } from './warningLogic';
 import { storyGoalLine } from './storyView';
 import { bossName } from '../data/bosses';
 import { statName } from '../data/elements';
@@ -220,6 +221,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   frenzyChip.classList.add('bha-frenzychip');
   frenzyChip.prepend(icon('i-risk', 'sm'));
   where.append(frenzyChip);
+  // 다음 칸이 강적 칸이면 작은 ⚠ (GDD 76장 3번): 걷는 화면에는 길이 안 보여 칸 위가 아니라 이 칩으로 미리 알린다
+  const aheadChip = chip('다음 칸 강적', 'danger');
+  aheadChip.classList.add('bha-exp__ahead');
+  aheadChip.prepend(icon('i-warn', 'sm'));
+  aheadChip.hidden = true;
+  where.append(aheadChip);
 
   const meters = el('div', 'bha-stack bha-stack--tight');
 
@@ -310,6 +317,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       }),
     );
     frenzyChip.hidden = !inFrenzy(exp);
+    aheadChip.hidden = !(exp.phase === 'moving' && nextCellIsElite(exp));
     const goalText = storyGoalLine(exp);
     goal.hidden = goalText === null;
     if (goalText !== null) goal.replaceChildren(icon('i-flag-win'), goalText);
