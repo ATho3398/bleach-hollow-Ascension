@@ -11,6 +11,9 @@ import { parseFactionConfig } from '../src/engine/faction';
 import { canRebirth, inheritableTraits, nextCarry, rebirthStars, sanitizeRebirth, startingCarry } from '../src/engine/rebirth';
 import { claimTutorialGoals, migrateSave, newSaveData, performRebirth, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
 import { rebirthFinalText, rebirthLists } from '../src/ui/rebirthView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const RB = BALANCE.provisional.rebirth;
 const traitIds = TRAITS.filter((t) => !t.rare).slice(0, 3).map((t) => t.id);

@@ -20,6 +20,7 @@ import './ui/bha/cosmetics.css';
 import './ui/bha/tamago.css';
 import './ui/bha/testMode.css';
 import './ui/bha/install.css';
+import './ui/bha/guide.css';
 import { startApp } from './ui/app';
 import { applyCalmMode } from './ui/fxSettings';
 import { mountSprite } from './ui/bha/sprite';

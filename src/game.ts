@@ -19,7 +19,7 @@ import { allTranscendentsOwned, conditionMet, decideTranscendent, slotStatBonus,
 import { buildBattleRecord, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES, titleForFaction } from './data/titles';
-import { newHelpState, sanitizeHelpState, type HelpState } from './engine/tutorial';
+import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import { STAT_IDS, type Stats, type TitleDef } from './data/schema';
 import { PATCH_LABEL } from './version';
@@ -41,16 +41,19 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 36;
+export const SAVE_FORMAT_VERSION = 37; // C.120: 타일 보관(unlocked·draws)·도움말 안내(guides)·런 로그 tutorialRewards·구매 기록 result (GDD 64·67장)
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다").
- *  지금은 이미 있는 마이그레이션(형식 1~36)을 그대로 두므로 1(전부 열림). **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
+ *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
  *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 1;
+export const MIN_LOADABLE_SAVE_FORMAT = 37;
+
+/** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
+export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
 
 /** 세이브 형식 번호가 이 버전에서 열리는가: ok / old(문턱보다 옛것) / newer(이 버전보다 새것) / invalid(번호가 이상함) */
 export type SaveFormatStatus = 'ok' | 'old' | 'newer' | 'invalid';
-export function saveFormatStatus(format: unknown, min: number = MIN_LOADABLE_SAVE_FORMAT, current: number = SAVE_FORMAT_VERSION): SaveFormatStatus {
+export function saveFormatStatus(format: unknown, min: number = saveFormatGate.min, current: number = SAVE_FORMAT_VERSION): SaveFormatStatus {
   if (typeof format !== 'number' || !Number.isInteger(format) || format < 1) return 'invalid';
   if (format > current) return 'newer';
   return format < min ? 'old' : 'ok';
@@ -411,15 +414,48 @@ export interface TileStock {
   collection: Record<string, number>;
   /** 가져갈 덱: 타일 id 목록(중복 가능, 보유 수량 이내) */
   deck: string[];
+  /** 타일이 열렸나 (C.120, 형식 37, GDD 64장): 첫 진화 때 시작 타일을 받으면 true. 그 전에는 덱·배치·뽑기가 잠기고 원정은 빈 길 */
+  unlocked: boolean;
+  /** 상점 타일 뽑기 횟수 (GDD 64장 2번: 첫 뽑기는 환경 확정) */
+  draws: number;
 }
 
 export function newTileStock(): TileStock {
-  return { collection: { ...BALANCE.provisional.expedition.startingCollection }, deck: [] };
+  return { collection: { ...BALANCE.provisional.expedition.startingCollection }, deck: [], unlocked: false, draws: 0 };
+}
+
+/** 점검 도구·고정 덱 시험용 보유량 (C.119 까지의 시작 21장, 열린 상태). 게임 세이브에는 쓰지 않는다 */
+export function referenceTileStock(): TileStock {
+  return { collection: { ...BALANCE.provisional.expedition.referenceCollection }, deck: [], unlocked: true, draws: 0 };
+}
+
+/** 타일이 열렸나 (GDD 64장): 첫 진화 전이면 false */
+export function tilesUnlocked(save: Pick<SaveData, 'tiles'>): boolean {
+  return save.tiles.unlocked === true;
+}
+
+/** 첫 진화 시작 타일 (GDD 64장 1번): 아직 안 받았으면 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 보관함과 덱에 넣고 타일 안내를 띄울 차례로. 준 타일 id (이미 받았으면 []) */
+export function grantStarterTiles(save: Pick<SaveData, 'tiles' | 'help' | 'factionId'>): string[] {
+  if (save.tiles.unlocked) return [];
+  save.tiles.unlocked = true;
+  const ids = BALANCE.provisional.expedition.starterTiles.filter((id) => deckTilesFor(save.factionId).some((t) => t.id === id));
+  for (const id of ids) {
+    save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
+    save.tiles.deck.push(id);
+  }
+  queueGuide(save.help, 'tile-intro');
+  queueGuide(save.help, 'tile-plan');
+  return ids;
+}
+
+/** 첫 원정 튜토리얼을 할 차례인가 (GDD 67장 1·4번): 새 세이브에서 첫 원정을 아직 안 떠났다. 첫 원정이 지난 세이브에는 안 뜬다 */
+export function firstRunPending(save: Pick<SaveData, 'help' | 'runLog'>): boolean {
+  return guidePending(save.help, 'first-run') && save.runLog.runs.length === 0;
 }
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
   return {
-    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: newHelpState(), shared: newSharedState(), lastSeenAt: nowMs, story: {}, bossDex: {},
+    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending' } }, shared: newSharedState(), lastSeenAt: nowMs, story: {}, bossDex: {},
     otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
   };
 }
@@ -684,6 +720,13 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   log.battles.push(...exp.battles);
   log.runs.push(buildRunRecord(exp));
   log.absorbs.push(...exp.absorbRecords);
+  // 첫 원정 튜토리얼 (GDD 67장 3·4번): 흡수 기록 대신 '튜토리얼 보상'으로 따로, 방에서 다음 할 일 안내를 띄울 차례로
+  if (exp.tutorial) {
+    const r = exp.tutorialReward;
+    if (r) (log.tutorialRewards ??= []).push({ at: nowMs, runId: exp.runId, factionId: exp.factionId, kind: 'first-absorb', enemyId: r.enemyId, element: r.element, ev: { ...r.ev }, tierIndex: exp.evolution.tierIndex });
+    markGuideDone(save.help, 'first-run');
+    queueGuide(save.help, 'first-run-room');
+  }
   // 리스크 기록: 최고치, 한계 돌파 횟수, 돌파 후 생존(= 돌파하고도 귀환) 횟수 (GDD 9장)
   log.risk.peak = Math.max(log.risk.peak, exp.riskPeak);
   if (exp.breakthrough) {
@@ -825,7 +868,7 @@ export function deckSizeOf(save: Pick<SaveData, 'shared'>): number {
 }
 
 /** 놓지 않고 남은 획득 타일을 다음 원정 덱에 넣는다 (GDD 17-1): 덱 상한과 보유 수량을 넘기면 덱에는 못 넣는다(보유에는 이미 들어 있다) */
-export function storeUnplacedTiles(stock: TileStock, ids: string[], size: number = BALANCE.provisional.expedition.deckSize): void {
+export function storeUnplacedTiles(stock: Pick<TileStock, 'collection' | 'deck'>, ids: string[], size: number = BALANCE.provisional.expedition.deckSize): void {
   for (const id of ids) {
     const inDeck = stock.deck.filter((x) => x === id).length;
     if (stock.deck.length >= size || inDeck >= (stock.collection[id] ?? 0)) continue;
@@ -857,6 +900,8 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
   const r = evolve(save.evolution, save.build, { factionId: save.factionId, hunger: care.hunger, condition: care.condition, rebirths: save.rebirth.count }, nowMs);
   if (r.ok) {
     save.runLog.tiers.evolutions.push(r.record);
+    // 첫 진화 (1→2단계) 때 시작 타일 3장 + 타일 안내 (GDD 64장 1번). 이미 받았으면(환생 뒤 등) 없음
+    if (save.evolution.tierIndex >= 1) grantStarterTiles(save);
     // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
     unlockDifficultyFor(save);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
@@ -1118,7 +1163,7 @@ export interface StorageLike {
 }
 
 /** 이전 형식 세이브를 현재 형식으로 올린다. 알 수 없는 데이터는 null */
-export function migrateSave(raw: unknown): SaveData | null {
+export function migrateSave(raw: unknown, min: number = saveFormatGate.min): SaveData | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const r = raw as { meta?: { format?: number }; factionId?: unknown; runLog?: RunLog };
   if (typeof r.factionId !== 'string' || !r.runLog || typeof r.meta?.format !== 'number') return null;
@@ -1126,7 +1171,7 @@ export function migrateSave(raw: unknown): SaveData | null {
   if (save.meta.format > SAVE_FORMAT_VERSION) return null;
   // 형식 번호가 정수가 아니면(NaN 등) 어느 단계도 타지 않고 다음 저장 때 null 로 써져 세이브를 잃는다 → 읽지 않는다 (C.70)
   if (!Number.isInteger(save.meta.format) || save.meta.format < 1) return null;
-  if (save.meta.format < MIN_LOADABLE_SAVE_FORMAT) return null; // 문턱보다 옛 세이브는 열지 않는다 (GDD 61장)
+  if (save.meta.format < min) return null; // 문턱보다 옛 세이브는 열지 않는다 (GDD 61장)
   repairRunLog(save.runLog);
   if (save.meta.format < 2) {
     // 형식 1 → 2: BattleRecord 에 enemyId, factionId, seed, riskGained, absorbGained, lossReason 추가
@@ -1400,6 +1445,9 @@ export function migrateSave(raw: unknown): SaveData | null {
     });
     save.meta.format = 36;
   }
+  // 형식 37 (C.120) 부터는 마이그레이션을 만들지 않는다 (GDD 61장): 게임은 36 이하를 위 문턱에서 이미 거절한다.
+  // 테스트가 옛 마이그레이션 코드를 시험하려고 문턱을 내렸을 때만 끝까지 올라간 옛 세이브에 지금 번호를 찍는다(새 필드는 아래 보정의 기본값)
+  if (min < MIN_LOADABLE_SAVE_FORMAT && save.meta.format < SAVE_FORMAT_VERSION) save.meta.format = SAVE_FORMAT_VERSION;
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
@@ -1445,7 +1493,9 @@ function repairCore(save: SaveData): boolean {
   if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots)) save.build = newBuild();
   else if (!Array.isArray(b.equipOrder)) b.equipOrder = [];
   const t = save.tiles as Partial<TileStock> | undefined;
-  save.tiles = isRec(t) ? { collection: isRec(t.collection) ? t.collection as Record<string, number> : newTileStock().collection, deck: Array.isArray(t.deck) ? t.deck.filter((x): x is string => typeof x === 'string') : [] } : newTileStock();
+  save.tiles = isRec(t)
+    ? { collection: isRec(t.collection) ? t.collection as Record<string, number> : newTileStock().collection, deck: Array.isArray(t.deck) ? t.deck.filter((x): x is string => typeof x === 'string') : [], unlocked: t.unlocked === true, draws: nonNegInt(t.draws) }
+    : newTileStock();
   save.titles = Array.isArray(save.titles) ? save.titles : [];
   if (!Array.isArray(save.formDex)) save.formDex = [...(Array.isArray(save.evolution?.formHistory) ? save.evolution.formHistory : [])];
   return isTrackShape(save);
@@ -1454,6 +1504,7 @@ function repairCore(save: SaveData): boolean {
 /** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
 function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string[]): void {
   t.runLog.shopPurchases = Array.isArray(t.runLog.shopPurchases) ? t.runLog.shopPurchases : [];
+  t.runLog.tutorialRewards = Array.isArray(t.runLog.tutorialRewards) ? t.runLog.tutorialRewards : [];
   t.difficulty = sanitizeDifficulty(t);
   t.tower = sanitizeTower(t.tower);
   t.runLog.towerBattles = Array.isArray(t.runLog.towerBattles) ? t.runLog.towerBattles : [];
@@ -1578,7 +1629,7 @@ export function writeSave(storage: StorageLike, save: SaveData, key: string = SA
 }
 
 /** 가져갈 덱을 정리한다: 이 종족이 쓰는 타일만, 보유 수량 이내로. 비면 보유량이 많은 순으로 채운다 */
-export function sanitizeDeck(stock: TileStock, factionId: string, size: number = BALANCE.provisional.expedition.deckSize): string[] {
+export function sanitizeDeck(stock: Pick<TileStock, 'collection' | 'deck'>, factionId: string, size: number = BALANCE.provisional.expedition.deckSize): string[] {
   const options = deckTilesFor(factionId).map((t) => t.id);
   const used: Record<string, number> = {};
   const deck: string[] = [];

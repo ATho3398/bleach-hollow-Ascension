@@ -42,6 +42,11 @@
       "name": "수련권"
     },
     {
+      "id": "tile-draw",
+      "kind": "tileDraw",
+      "name": "타일 뽑기"
+    },
+    {
       "id": "rare-tile",
       "kind": "rareTile",
       "name": "희귀 타일 꾸러미"

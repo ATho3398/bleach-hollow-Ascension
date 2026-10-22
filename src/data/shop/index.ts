@@ -8,7 +8,7 @@ import { SKINS, getSkin, skinLabel } from '../skins';
 import { ART_FILES, findArtFile } from '../art/files';
 import raw from './items.json';
 
-export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'rareTile', 'reroll', 'deckSlot'] as const;
+export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
 
 export const COSMETIC_CATEGORIES = ['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate', 'enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame', 'keyring', 'device'] as const;

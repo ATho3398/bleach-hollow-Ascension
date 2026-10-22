@@ -68,6 +68,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const RX = BALANCE.provisional.risk;
   const deckSize = deckSizeOf(save);
   const deckCount = save.tiles.deck.length;
+  // 첫 진화 전(타일 잠김, GDD 64장)에는 덱 없이 빈 길로 떠난다
+  const deckEmpty = deckCount === 0 && save.tiles.unlocked;
   const mood = moodOf({ weakened: n.weakened, condition: n.condition, risk: n.risk, riskLimit: RX.limit });
 
   // ── 위 한 줄 ── (원정 이어하기만. 상태는 캐릭터 머리 위 칩)
@@ -119,7 +121,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
 
   const act: Record<RoomProp, () => void> = {
-    door: () => (deckCount === 0 ? say('덱이 비어 있다. 상자에서 타일을 넣어야 출발할 수 있다.', 3600) : hd.onDepart()),
+    door: () => (deckEmpty ? say('덱이 비어 있다. 상자에서 타일을 넣어야 출발할 수 있다.', 3600) : hd.onDepart()),
     altar: hd.onAltar,
     book: hd.onBook,
     chest: hd.onChest,
@@ -130,7 +132,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop', 'dummy'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   for (const p of ROOM_PROPS) {
-    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckCount === 0 });
+    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckEmpty });
     b.onclick = act[p];
     if (p === 'dummy') b.dataset.sc = 'dummy';
     props.set(p, b);

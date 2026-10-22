@@ -16,6 +16,9 @@ import { applyExpeditionEnd, doNestAction, newNest } from '../src/engine/nest';
 import { goalAchieved } from '../src/engine/tutorialGoals';
 import { claimTutorialGoals, feedNest, loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { emptyRunLog } from '../src/engine/runLog';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const FX = BALANCE.provisional.food;
 const RX = BALANCE.provisional.risk;

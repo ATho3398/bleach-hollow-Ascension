@@ -24,6 +24,9 @@ import {
 import { findProblems, SHORTCUTS } from '../src/ui/shortcutMap';
 import { liberationBlockLabel, liberationButton } from '../src/ui/labels';
 import { gameRuleLines, trainingLockedText } from '../src/ui/trainingView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const LB = BALANCE.provisional.liberation;
 const TX = BALANCE.provisional.training;

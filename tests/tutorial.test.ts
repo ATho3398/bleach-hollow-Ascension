@@ -13,6 +13,9 @@ import {
 } from '../src/engine/tutorial';
 import { loadSave, migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_KEY, writeSave } from '../src/game';
 import { placeCard, unionRect } from '../src/ui/helpLayout';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 describe('튜토리얼 상태 머신', () => {
   it('장면을 순서대로 지나 마지막에서 끝난다', () => {
@@ -78,13 +81,15 @@ describe('튜토리얼 플래그 저장·마이그레이션', () => {
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(11);
-    expect(m.help).toEqual({ tutorialSeen: false });
+    expect(m.help).toEqual({ tutorialSeen: false, guides: {} });
   });
 
   it('깨진 플래그는 안 본 것으로 되돌린다', () => {
-    expect(sanitizeHelpState(undefined)).toEqual({ tutorialSeen: false });
-    expect(sanitizeHelpState({ tutorialSeen: 'yes' })).toEqual({ tutorialSeen: false });
-    expect(sanitizeHelpState({ tutorialSeen: true })).toEqual({ tutorialSeen: true });
+    expect(sanitizeHelpState(undefined)).toEqual({ tutorialSeen: false, guides: {} });
+    expect(sanitizeHelpState({ tutorialSeen: 'yes' })).toEqual({ tutorialSeen: false, guides: {} });
+    expect(sanitizeHelpState({ tutorialSeen: true })).toEqual({ tutorialSeen: true, guides: {} });
+    // C.120 안내 상태: 모르는 id·값은 버린다
+    expect(sanitizeHelpState({ tutorialSeen: true, guides: { 'first-run': 'done', x: 'done', 'tile-draw': 1 } })).toEqual({ tutorialSeen: true, guides: { 'first-run': 'done' } });
   });
 });
 

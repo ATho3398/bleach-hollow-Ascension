@@ -16,6 +16,9 @@ import { parseFactionConfig } from '../src/engine/faction';
 import { emptyRunLog, LEGACY_TILE_ROLES } from '../src/engine/runLog';
 import { loadSave, migrateSave, newSaveData, recordBattle, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { battleLabels } from '../src/ui/labels';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const CX = BALANCE.provisional.combat;
 const BP = BALANCE.provisional.blockPool;

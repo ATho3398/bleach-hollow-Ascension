@@ -12,7 +12,10 @@ import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_I
 import { ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, newEvolution, worldRefStat, zeroStats } from '../src/engine/evolution';
-import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, newTileStock, type SaveData } from '../src/game';
+import { deckSizeOf, newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
+import { buyShopItem } from '../src/shop';
+import { getFaction } from '../src/data/factions';
+import { createRng, nextFloat } from '../src/engine/rng';
 import { inheritableTraits } from '../src/engine/rebirth';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import { GROUNDS } from '../src/data/grounds';
@@ -274,7 +277,7 @@ if (process.argv.includes('--combat')) {
 
 // ── 원정 루프(P2): 자동 플레이(타일을 앞 슬롯에 채워 놓음, 블록 봇), 시드 고정 ──
 const M = 60;
-const deck = sanitizeDeck(newTileStock(), 'hollow');
+const deck = sanitizeDeck(referenceTileStock(), 'hollow');
 /** 허기 가드용: 전투를 바로 이긴 것으로 친다 (허기 시스템만 따로 본다. 전투 승패는 위 전투 점검이 본다) */
 const autoWin = (s: CombatState) => {
   s.enemy.hp = 0;
@@ -343,7 +346,7 @@ if (want('expedition')) {
   const kindOf = new Map(ENEMIES.map((e) => [e.id, enemyPatternKind(e)]));
   const weakOf = new Map(ENEMIES.map((e) => [e.id, e.element]));
   for (let seed = 1; seed <= 200; seed++) {
-    const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 0, condition: 100, deck: sanitizeDeck(newTileStock(), 'hollow') }), { returnAfterLap: 6, playBattle: autoWin });
+    const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 0, condition: 100, deck: sanitizeDeck(referenceTileStock(), 'hollow') }), { returnAfterLap: 6, playBattle: autoWin });
     for (const b of e.battles) {
       seen++;
       const w = weakOf.get(b.enemyId)!;
@@ -436,7 +439,7 @@ if (want('absorb')) {
 if (want('variants')) {
   const TVN = 1000;
   const tvStat = (fid: string, on: boolean) => {
-    const dk = sanitizeDeck(newTileStock(), fid);
+    const dk = sanitizeDeck(referenceTileStock(), fid);
     let food = 0;
     let gold = 0;
     let def = 0;
@@ -507,7 +510,7 @@ if (want('boss1')) {
     let goldOff = 0;
     const runs = FBN * 2;
     ['hollow', 'shinigami'].forEach((fid, i) => {
-      const dk = sanitizeDeck(newTileStock(), fid);
+      const dk = sanitizeDeck(referenceTileStock(), fid);
       const boss = bosses[i];
       for (let seed = 1; seed <= FBN; seed++) {
         const mk = (beaten: string[]) => createExpedition({ factionId: fid, seed, hunger: 20, condition: 80, deck: dk, tileVariants: true, groundId: g.id, bossesBeaten: beaten });
@@ -542,10 +545,32 @@ const MAX_RUNS = 40;
 const STAGE_TARGET = [1.5, 2.5, 3, 4.5];
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
 type CampaignStats = { stageRuns: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number; finalDefeats: number[]; saves: SaveData[]; /** 그 단계(tierIndex)에 갓 닿은 순간의 세이브 사본 (사냥터 점검용) */ firstAt: Record<number, SaveData[]> };
+/** 첫 원정 튜토리얼 (C.120, GDD 67장): 새 세이브는 고정 길 1판(약한 적 1마리 → 튜토리얼 흡수 = 모든 능력치 +3)부터 */
+function botTutorialRun(save: SaveData, seed: number): void {
+  const e = playExpedition(createExpedition({ factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tutorial: true }), { returnAfterLap: 1, absorb: 'absorb' });
+  recordExpedition(save, e, 0);
+}
+/** 타일 뽑기 봇 (C.120, GDD 64장 2번): 타일이 열렸으면 골드가 되는 만큼 상점 [타일 뽑기]를 하고, 덱에 빈 칸이 있으면 넣는다. 뽑은 수를 돌려준다 */
+const botDraws = { count: 0, goldByTier: [[], [], [], [], []] as number[][], battleGoldByTier: [[], [], [], [], []] as number[][] };
+function botBuyTiles(save: SaveData, seed: number): number {
+  if (!save.tiles.unlocked) return 0;
+  const rng = createRng(seed >>> 0);
+  const f = getFaction(save.factionId);
+  let n = 0;
+  for (;;) {
+    const r = buyShopItem(save, f, 'tile-draw', 0, () => nextFloat(rng));
+    if (!r.ok || !r.tile) break;
+    n++;
+    if (save.tiles.deck.length < deckSizeOf(save)) save.tiles.deck.push(r.tile);
+  }
+  botDraws.count += n;
+  return n;
+}
 function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number } = {}): CampaignStats {
   const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0, finalDefeats: [], saves: [], firstAt: {} };
   for (let seed = 1; seed <= CAMPAIGNS; seed++) {
     const save = newSaveData('hollow', seed * 7919);
+    botTutorialRun(save, seed * 1000);
     save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
     let stageStart = 0;
     let defeats = 0;
@@ -562,14 +587,18 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
       const e = playExpedition(
         createExpedition({
           factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-          deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+          deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tilesLocked: !save.tiles.unlocked,
         }),
         { returnAfterLap: 4, absorb: 'absorb', ...(wanted ? { absorbWanted: wanted } : {}) },
       );
+      const goldBefore = save.shared.tradeCoins;
       if (save.evolution.tierIndex < 4) out.stepsPerRun.push(e.evolution.steps - save.evolution.steps); // 마지막 단계는 걸음을 세지 않는다
       if (save.evolution.tierIndex < 4 && e.outcome === 'defeated') defeats++;
       const tier = save.evolution.tierIndex;
       const r = recordExpedition(save, e, 0);
+      botDraws.goldByTier[tier]!.push(save.shared.tradeCoins - goldBefore);
+      botDraws.battleGoldByTier[tier]!.push(summarize(e).keptGold);
+      botBuyTiles(save, seed * 7 + run);
       if (r?.ok) {
         out.evolutions++;
         out.stageRuns[tier]!.push(run - stageStart);
@@ -600,6 +629,15 @@ if (needCampaign) {
   campaignFinalDefeats = st.finalDefeats;
   console.log(`\n진화 (흡수 봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 귀환 때 자동 진화) — 필요 걸음 ${BALANCE.provisional.evolution.stepsNeeded.join('/')}칸 (숨김)`);
   console.log(`  원정 1회 평균 ${avg(st.stepsPerRun).toFixed(1)}칸 (최소 ${Math.min(...st.stepsPerRun)} · 최대 ${Math.max(...st.stepsPerRun)})`);
+  // C.120 (GDD 64·67장): 첫 원정 튜토리얼 1판 → 타일 0장 시작 → 첫 진화 3장 → 상점 타일 뽑기(골드가 되는 만큼)
+  const TDp = BALANCE.provisional.tileDraw.price;
+  const tutOk = st.saves.filter((x) => (x.runLog.tutorialRewards ?? []).length === 1 && x.runLog.runs[0]?.tutorial === true && x.runLog.absorbs.length > 0).length;
+  const goldLine = (by: number[][]) => by.map((g, i) => (g.length ? `${i + 1}단계 ${avg(g).toFixed(0)}` : '')).filter(Boolean).join(' · ');
+  console.log(`  첫 원정 튜토리얼 통과 ${tutOk}/${st.saves.length} · 타일 뽑기 ${botDraws.count}회(가격 ${TDp})`);
+  console.log(`  원정 1회(4바퀴) 골드 = 전투 ${goldLine(botDraws.battleGoldByTier)} / 먹이 넘침 포함 ${goldLine(botDraws.goldByTier)} → 2단계 전투 골드로 뽑기 1회 = 원정 ${(TDp / Math.max(1, avg(botDraws.battleGoldByTier[1]!))).toFixed(1)}회`);
+  if (tutOk !== st.saves.length) failures.push(`첫 원정 튜토리얼: 통과 ${tutOk}/${st.saves.length}`);
+  const unlockedAll = st.saves.filter((x) => x.evolution.tierIndex >= 1).every((x) => x.tiles.unlocked && (x.tiles.collection['prey-nest-a'] ?? 0) >= 1);
+  if (!unlockedAll) failures.push('첫 진화 시작 타일: 진화한 세이브 중 타일이 안 열린 세이브가 있다');
   console.log('  단계(진화)   도달 인원  평균 원정  목표   최소  최대   (그 단계 시작부터 센 원정 수)');
   st.stageRuns.forEach((rs, i) => {
     console.log(`  ${stageNames[i]}단계      ${String(rs.length).padStart(2)}/${CAMPAIGNS}     ${avg(rs).toFixed(1).padStart(5)}   ${String(STAGE_TARGET[i]).padStart(4)}   ${String(rs.length ? Math.min(...rs) : '-').padStart(3)}   ${String(rs.length ? Math.max(...rs) : '-').padStart(3)}`);
@@ -981,7 +1019,8 @@ if (want('difficulty')) {
     });
     return { win: battles ? wins / battles : 0, nWin: nG ? nW / nG : 0, eWin: eG ? eW / eG : 0, nSecs: nW ? nS / nW : 0, eSecs: eW ? eS / eW : 0, defeat: runs ? defeated / runs : 0, n: nG, e: eG, gold: runs ? gold / runs : 0, food: runs ? food / runs : 0 };
   };
-  const freshBodies: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => { const sv = newSaveData('hollow', 777 + i * 31); sv.tiles.deck = sanitizeDeck(sv.tiles, 'hollow'); return sv; });
+  // 새 몸 = 첫 원정 튜토리얼을 마친 1단계 (C.120: 타일 0장·노력치 6종 +3)
+  const freshBodies: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => { const sv = newSaveData('hollow', 777 + i * 31); botTutorialRun(sv, 4242 + i); sv.tiles.deck = sanitizeDeck(sv.tiles, 'hollow'); return sv; });
   const recNormalSecs: number[] = [];
   for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
     const bodies = tier === 0 ? freshBodies : campaignFirstAt[tier] ?? [];
@@ -1000,8 +1039,10 @@ if (want('difficulty')) {
     if (tier === 0 && R.defeat > 0.15) failAt(tier, `난이도: 새 몸 ★1 4바퀴 원정 패배 ${(R.defeat * 100).toFixed(0)}% > 15% (C.76 목표)`);
     const up = rows[`${tier}/${rec - 1}`];
     const down = rows[`${tier}/${rec + 1}`];
-    if (up && up.eWin < R.eWin) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec - 1} 에서 강적 승률 ${(up.eWin * 100).toFixed(0)}% < 권장 ${(R.eWin * 100).toFixed(0)}% (한 단계 위가 더 쉽지 않다)`);
-    if (down && down.eWin > R.eWin - 0.1) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec + 1} 에서 강적 승률 ${(down.eWin * 100).toFixed(0)}% > 권장 ${(R.eWin * 100).toFixed(0)}% − 10%p (한 단계 아래가 충분히 어렵지 않다)`);
+    // C.120: 1단계 몸은 타일이 없어(GDD 64장) 4바퀴 빈 길에 강적이 나오지 않는다 — 강적 표본이 0판인 쪽은 비교하지 않는다
+    const elite = (r: Row | undefined): r is Row => !!r && r.e > 0 && R.e > 0;
+    if (elite(up) && up.eWin < R.eWin) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec - 1} 에서 강적 승률 ${(up.eWin * 100).toFixed(0)}% < 권장 ${(R.eWin * 100).toFixed(0)}% (한 단계 위가 더 쉽지 않다)`);
+    if (elite(down) && down.eWin > R.eWin - 0.1) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec + 1} 에서 강적 승률 ${(down.eWin * 100).toFixed(0)}% > 권장 ${(R.eWin * 100).toFixed(0)}% − 10%p (한 단계 아래가 충분히 어렵지 않다)`);
   }
   // 1단계 몸은 특성이 없는 새 세이브, 2단계부터는 흡수 특성 2~4개·노력치가 있는 진화 봇 몸이라 처치 시간은 참고로만 (단계 간 등가는 위 '권장 단계 등가' 표가 가드)
   console.log(`  권장 ★ 일반 처치 시간 단계별: ${recNormalSecs.map((x) => x.toFixed(1)).join(' / ')}초 (참고 — 1단계는 특성 없는 새 몸)`);

@@ -8,6 +8,9 @@ import { loadSave, migrateSave, newSaveData, readActiveExpedition, recordExpedit
 import { parseImport, recoverFromBackup } from '../src/saveBackup';
 import { slotBackupKey, slotKey, slotSummary, writeSlotSave } from '../src/saveSlots';
 import { continueChoices } from '../src/ui/slotView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 

@@ -6,6 +6,7 @@ import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, tileName, upgradeIdOf } from '../data/tiles';
 import { canSynthesize, deckSizeOf, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
 import { skinItemId } from '../data/shop';
+import { TILES_LOCKED_TEXT } from '../shop';
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
@@ -191,6 +192,16 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       });
       page.left.replaceChildren(slotsPanel!);
       page.right.replaceChildren(ownedPanel!);
+      return;
+    }
+    // 첫 진화 전에는 타일이 잠겨 있다 (GDD 64장 1번): 덱 대신 잠금 안내
+    if (!save.tiles.unlocked) {
+      const lock = panel({ title: '타일 덱', aside: h('span', 'bha-chip', TILES_LOCKED_TEXT) });
+      lock.dataset.tilesLocked = '';
+      lock.querySelector('.bha-panel__title')?.prepend(icon('i-lock'));
+      lock.append(h('p', 'bha-dim', `원정 타일은 첫 진화 후 열린다. 첫 진화 때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 상점 [타일 뽑기]로 모은다.`));
+      page.left.replaceChildren(lock);
+      page.right.replaceChildren(h('p', 'bha-faint', '지금 원정은 타일 없이 기본 길을 걷는다.'));
       return;
     }
     const info = panel({ title: '타일 덱', aside: h('span', deckCount === 0 ? 'bha-chip bha-chip--danger' : 'bha-chip', countText(deckCount, deckSize)) });

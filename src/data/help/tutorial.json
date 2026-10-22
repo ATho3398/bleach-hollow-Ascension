@@ -50,7 +50,7 @@
       "targets": [
         "battle.stored"
       ],
-      "title": "{storedSkillName}: 모아서 쓰는 큰 기술",
+      "title": "{storedSkillName}: 기를 모아 쓰는 필살기",
       "body": "블록 바 아래의 [{storedSkillName}]은(는) 블록을 쓸수록 충전돼요 (최대 {storedChargesMax}개). 충전이 있을 때 누르면 기본 공격 {storedPower}회분의 큰 피해를 주고, 직후 {storedGuardSeconds}초 동안 {roleNames.guard} 상태가 돼요. 강공격 예고 중에도 쓸 수 있어 막기 대신으로 좋아요. 누르는 법은 블록과 같아요."
     },
     {

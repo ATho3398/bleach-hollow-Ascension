@@ -6,6 +6,9 @@ import { fixParticles } from '../../engine/josa';
 import glossaryJson from './glossary.json';
 import screensJson from './screens.json';
 import tutorialJson from './tutorial.json';
+import guidesJson from './guides.json';
+import { synergyName, tileName } from '../tiles';
+import type { GuideId } from '../../engine/tutorial';
 
 /** 튜토리얼 장면: targets = 전투 화면의 data-help 요소 id (비면 하이라이트 없이 가운데 카드) */
 export interface TutorialScene {
@@ -35,6 +38,21 @@ export interface ScreenHelp {
 export const TUTORIAL_SCENES: readonly TutorialScene[] = tutorialJson.scenes;
 export const GLOSSARY: readonly GlossaryTerm[] = glossaryJson.terms;
 export const SCREEN_HELPS: readonly ScreenHelp[] = screensJson.screens;
+/** 한 번만 뜨는 안내 (C.120, GDD 64·67장): 안내 id → 장면 ('first-absorb' 는 튜토리얼 흡수 화면 위 장면, 저장 상태 없음) */
+export const GUIDES: Readonly<Record<GuideId | 'first-absorb', readonly TutorialScene[]>> = guidesJson.guides;
+
+/** 안내 본문 자리표시자 (종족 설정 helpVars 에 더함): 시작 타일 이름·조합 예시·튜토리얼 수치 */
+export function guideVars(f: FactionConfig): Record<string, string> {
+  const [prey, elite, rest] = BALANCE.provisional.expedition.starterTiles;
+  return {
+    'tile.prey': tileName(prey!, f.id), 'tile.elite': tileName(elite!, f.id), 'tile.rest': tileName(rest!, f.id),
+    comboExample: synergyName('oasis', f.id),
+    starterCount: String(BALANCE.provisional.expedition.starterTiles.length),
+    statEv: String(BALANCE.provisional.tutorialRun.statEv),
+    tutorialCell: String(BALANCE.provisional.tutorialRun.cell),
+    deckSize: String(BALANCE.provisional.expedition.deckSize),
+  };
+}
 
 /** 튜토리얼 장면 targets 가 가리킬 수 있는 전투 화면 요소 id (battleView 가 data-help 로 단다) */
 export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.stored'] as const; // battle.sp(영력 바)는 C.118 에 삭제

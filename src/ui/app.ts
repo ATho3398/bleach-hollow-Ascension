@@ -19,7 +19,7 @@ import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, applyStartLook, artSkinOf, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
+  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, deckSizeOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -67,7 +67,8 @@ import { openGrounds } from '../data/grounds';
 import { settingsView } from './settingsView';
 import { backupView } from './backupView';
 import { helpOverlay, type HelpScreenId } from './helpView';
-import { markTutorialSeen, shouldAutoShowTutorial } from '../engine/tutorial';
+import { guidePending, markGuideDone, markTutorialSeen, shouldAutoShowTutorial, type GuideId } from '../engine/tutorial';
+import { showGuide, tutorialAbsorbView } from './guideView';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { toward } from './bha/nestLogic';
@@ -162,6 +163,23 @@ export function startApp(host: HTMLElement): void {
   let resumeNote = '';
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
   let hungryGreet = false;
+  /** 방 안내(GDD 64·67장)를 잠시 미룬다: 귀환 결과 다음에 진화 연출이 뜰 차례면 연출이 끝나고 방으로 돌아올 때 띄운다 */
+  let holdRoomGuides = false;
+  /** 안내 오버레이가 떠 있다 (방을 다시 그려도 겹쳐 띄우지 않는다) */
+  let guideOpen = false;
+
+  /** 한 번만 뜨는 안내 (C.120): 띄울 차례면 띄우고 본 것으로 저장. 띄웠으면 true */
+  function runGuide(id: GuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
+    if (!save || guideOpen || !guidePending(save.help, id)) return false;
+    guideOpen = true;
+    showGuide(faction, id, { ...o, onDone: () => {
+      guideOpen = false;
+      markGuideDone(save!.help, id);
+      persist();
+      o.onDone?.();
+    } });
+    return true;
+  }
 
   /** 원정 중간 저장 (GDD 14-1). 끝난 원정은 저장하지 않는다 (recordExpedition 이 영역을 비운다) */
   const saveProgress = (exp: ExpeditionState) => {
@@ -183,7 +201,20 @@ export function startApp(host: HTMLElement): void {
   function openHelp(screen: HelpScreenId | undefined, canReplay: boolean, onClose: () => void = () => {}): void {
     const faction = helpFaction();
     // canReplay 가 false 면(원정 화면: 시간이 흐르는 화면 위에서 체험 전투로 갈아타지 않는다) 다시 보기는 숨긴다
-    helpOverlay(faction, { screen, onClose, onReplayTutorial: canReplay ? () => tutorialDemo(faction) : undefined });
+    helpOverlay(faction, { screen, onClose, onReplayTutorial: canReplay ? () => tutorialDemo(faction) : undefined, replays: canReplay ? guideReplays(faction) : undefined });
+  }
+
+  /** 안내 다시 보기 (GDD 64장 3번·67장 4번): 첫 원정 안내(걷기·조우 → 흡수 4갈래 → 다음 할 일), 타일 안내(받은 타일 → 덱·배치·조합 → 뽑기)는 타일이 열린 뒤에만 */
+  function guideReplays(faction: FactionConfig): { label: string; run: () => void }[] {
+    const chain = (ids: (GuideId | 'first-absorb')[]) => () => {
+      const next = (i: number): void => {
+        if (i < ids.length) showGuide(faction, ids[i]!, { finishLabel: i === ids.length - 1 ? '닫기' : '다음 안내', onDone: () => next(i + 1) });
+      };
+      next(0);
+    };
+    const out = [{ label: '첫 원정 안내', run: chain(['first-run', 'first-absorb', 'first-run-room']) }];
+    if (save && tilesUnlocked(save)) out.push({ label: '타일 안내', run: chain(['tile-intro', 'tile-plan', 'tile-draw']) });
+    return out;
   }
 
   /** 튜토리얼 다시 보기: 연습 상대 하나와의 체험 전투를 튜토리얼과 함께 연다. 결과는 기록하지 않는다 */
@@ -469,6 +500,11 @@ export function startApp(host: HTMLElement): void {
     }
     const props = roomOf(faction).props;
     setBgm('nest');
+    // 첫 원정 뒤 "다음 할 일", 첫 진화 뒤 "타일 3장" 안내 (GDD 67장 4번·64장 3번): 방을 그린 다음, 진화 연출이 남아 있으면 그 뒤에
+    if (!holdRoomGuides) window.setTimeout(() => {
+      if (nav.top?.id !== 'room' || holdRoomGuides) return;
+      if (!runGuide('first-run-room', faction) && s.tiles.unlocked) runGuide('tile-intro', faction);
+    }, 400);
     const greet = hungryGreet;
     hungryGreet = false;
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
@@ -493,7 +529,8 @@ export function startApp(host: HTMLElement): void {
         : null,
       resumeNote,
       persist,
-      onDepart: () => departScreen(faction),
+      // 새 세이브의 첫 원정은 고정 길 튜토리얼 (GDD 67장)
+      onDepart: () => (firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)),
       // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]
       onAltar: () => open('training', () => renderTraining(faction, s)),
       onBook: () => open('dex', () => bookView(root, faction, s)),
@@ -656,6 +693,8 @@ export function startApp(host: HTMLElement): void {
       statBonus: statBonusOf(save).total,
       // 보스 자유 원정 등장 (GDD 37장): 스토리에서 이긴 보스. 사냥터는 배치 단계에서 바뀌므로 엔진이 바퀴 시작 때 그 사냥터 장 보스를 찾는다
       bossesBeaten: bossesBeaten(save),
+      // 첫 진화 전에는 타일 잠김 (GDD 64장): 드래프트·이벤트 타일 없음
+      tilesLocked: !tilesUnlocked(save),
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
@@ -666,6 +705,7 @@ export function startApp(host: HTMLElement): void {
         planView(root, faction, exp, save!.evolution.tierIndex, {
           unlockedDifficulty: save!.difficulty.unlocked,
           streak: save!.difficulty.streak,
+          tilesLocked: !tilesUnlocked(save!),
           onStart: () => {
             save!.difficulty.last = exp.difficulty;
             activeExp = exp;
@@ -678,6 +718,8 @@ export function startApp(host: HTMLElement): void {
           onTab: (id) => (id === 'story' ? storyScreen(faction) : towerScreen(faction)),
         });
         root.scrollTop = 0;
+        // 진화 후 첫 출발: 덱 고르기 → 첫 배치 → 조합 안내 (GDD 64장 3번 ①~③)
+        if (tilesUnlocked(save!)) runGuide('tile-plan', faction, { finishLabel: '배치하기' });
       },
     };
     if (replace) nav.replace(entry);
@@ -771,6 +813,43 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
+  /** 첫 원정 튜토리얼 (GDD 67장): 고정 짧은 길(배치 단계·탭 없음) → 걷기·조우 안내 → 약한 적 1마리 → 튜토리얼 흡수 → 귀환 */
+  function startTutorialRun(faction: FactionConfig): void {
+    if (!save) return;
+    const exp = createExpedition({
+      factionId: faction.id,
+      seed: Math.floor(Math.random() * 2 ** 32),
+      runId: nextRunId(save),
+      hunger: save.nest.hunger,
+      condition: save.nest.condition,
+      deck: [],
+      risk: save.nest.risk,
+      stability: save.nest.stability,
+      build: save.build,
+      evolution: save.evolution,
+      gold: save.shared.tradeCoins,
+      statBonus: statBonusOf(save).total,
+      tutorial: true,
+    });
+    resumeNote = '';
+    activeExp = exp;
+    saveProgress(exp);
+    let opened = false;
+    nav.replace({
+      id: 'expedition', locked: true,
+      render: () => {
+        armEnterFx();
+        showExpedition(faction, exp, '첫 원정 출발!');
+        root.scrollTop = 0;
+        if (opened) return;
+        opened = true;
+        // 걷기·조우 안내 동안 원정 시간이 멈춘다
+        signalHold('hold');
+        showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 원정 멈춤', onDone: () => signalHold('release') });
+      },
+    });
+  }
+
   /** 대화 캡션: "1장 「굶주린 영혼」 · 1화 첫 사냥" */
   const storyCaption = (exp: ExpeditionState, faction: FactionConfig): string => {
     const st = exp.story!;
@@ -797,6 +876,7 @@ export function startApp(host: HTMLElement): void {
       gold: save.shared.tradeCoins,
       statBonus: statBonusOf(save).total,
       story: { chapterId, episodeId },
+      tilesLocked: !tilesUnlocked(save),
     });
     resumeNote = '';
     activeExp = exp;
@@ -890,6 +970,8 @@ export function startApp(host: HTMLElement): void {
       if (drainEvents(exp).length > 0) breakthroughScreen(faction, exp, next);
       else next();
     };
+    // 첫 원정 튜토리얼의 흡수 화면 (GDD 67장 2·3번): 4갈래 설명 + 시스템상 흡수가 아닌 '모든 능력치 +n'
+    if (exp.phase === 'absorb' && exp.tutorial) return tutorialAbsorbView(root, faction, exp, proceed);
     // 다시 뽑기권 (GDD 25-9): 흡수 1번에 1장. 쓰면 바로 저장(원정 중간 저장에 바뀐 후보가 들어간다)
     if (exp.phase === 'absorb') absorbView(root, faction, exp, proceed, {
       tickets: () => save?.shared.rerollTickets ?? 0,
@@ -944,12 +1026,16 @@ export function startApp(host: HTMLElement): void {
       if (evo?.ok) {
         const s = save;
         const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id) };
-        afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => nav.pop(), s.build.slots.length, extra), true);
+        afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
+          holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
+          nav.pop();
+        }, s.build.slots.length, extra), true);
       }
     }
     const showResult = () => {
       setBgm('expedition'); // 결과 화면은 원정 음악 (스토리 끝 대사의 story 음악에서 돌아온다)
       resultView(root, faction, exp, save?.nest.stability ?? exp.stability, () => {
+        if (afterResult) holdRoomGuides = true;
         nestScreen();
         const next = afterResult;
         afterResult = null;

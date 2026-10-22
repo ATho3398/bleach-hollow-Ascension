@@ -9,8 +9,11 @@ import {
 import { applyAbsenceHunger, doNestAction, newNest } from '../src/engine/nest';
 import { createCombat } from '../src/engine/combat';
 import { getEnemy } from '../src/data/enemies';
-import { loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
+import { loadSave, migrateSave, newSaveData, newTileStock, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { emptyRunLog } from '../src/engine/runLog';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 const mk = (over: Partial<Parameters<typeof createExpedition>[0]> = {}) =>
@@ -447,6 +450,6 @@ describe('저장', () => {
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.nest.hunger).toBe(BALANCE.provisional.nest.startHunger);
-    expect(m.tiles.collection['prey-nest-a']).toBeGreaterThan(0);
+    expect(m.tiles).toEqual(newTileStock()); // C.120 (GDD 64장): 새 타일 보유는 0장·잠김
   });
 });

@@ -11,6 +11,9 @@ import { absorbEvOf, chooseAbsorb, chooseRelease, createExpedition } from '../sr
 import { parseFactionConfig } from '../src/engine/faction';
 import { applyStartLook, migrateSave, newSaveData, performRebirth, sanitizeDeck, startBiasOf, SAVE_FORMAT_VERSION } from '../src/game';
 import { absorbModeOf } from '../src/engine/runLog';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 const shin = FACTIONS.find((f) => f.id !== 'hollow')!;

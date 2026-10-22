@@ -1,19 +1,31 @@
 // 첫 플레이 튜토리얼 상태 머신 (GDD 14-2, C.19). DOM 에 의존하지 않는 순수 함수라 단위 테스트한다.
 // 튜토리얼은 전투 엔진 시간을 멈추는 화면 쪽 덮개일 뿐이다: 엔진 상태·시드·입력 기록을 건드리지 않는다.
 
-/** 세이브에 들어가는 도움말 플래그 (형식 11). 튜토리얼을 끝까지 보거나 건너뛰면 true */
+/** 세이브에 들어가는 도움말 플래그 (형식 11). 튜토리얼을 끝까지 보거나 건너뛰면 true.
+ *  guides (형식 37, C.120 GDD 64·67장): 한 번만 뜨는 안내(첫 원정·타일)의 상태 — id → 'done'(봤다) / 'pending'(띄울 차례). 없으면 아직 아님 */
 export interface HelpState {
   tutorialSeen: boolean;
+  guides: Record<string, GuideMark>;
 }
 
+export type GuideMark = 'pending' | 'done';
+
+/** 한 번만 뜨는 안내 id (GDD 64·67장). 화면 문구는 src/data/help/guides.json */
+export const GUIDE_IDS = ['first-run', 'first-run-room', 'tile-intro', 'tile-plan', 'tile-draw'] as const;
+export type GuideId = (typeof GUIDE_IDS)[number];
+
 export function newHelpState(): HelpState {
-  return { tutorialSeen: false };
+  return { tutorialSeen: false, guides: {} };
 }
 
 /** 저장된 값이 깨졌거나 없으면 "아직 안 봄"으로 되돌린다 */
 export function sanitizeHelpState(raw: unknown): HelpState {
-  const seen = typeof raw === 'object' && raw !== null && (raw as { tutorialSeen?: unknown }).tutorialSeen === true;
-  return { tutorialSeen: seen };
+  const r = (typeof raw === 'object' && raw !== null ? raw : {}) as { tutorialSeen?: unknown; guides?: unknown };
+  const guides: Record<string, GuideMark> = {};
+  if (typeof r.guides === 'object' && r.guides !== null && !Array.isArray(r.guides)) {
+    for (const [k, v] of Object.entries(r.guides as Record<string, unknown>)) if ((GUIDE_IDS as readonly string[]).includes(k) && (v === 'pending' || v === 'done')) guides[k] = v;
+  }
+  return { tutorialSeen: r.tutorialSeen === true, guides };
 }
 
 /** 첫 전투 직전에 자동으로 보여 줄까: 한 번만 */
@@ -23,6 +35,20 @@ export function shouldAutoShowTutorial(help: HelpState): boolean {
 
 export function markTutorialSeen(help: HelpState): void {
   help.tutorialSeen = true;
+}
+
+/** 이 안내를 띄울 차례인가 (pending) */
+export function guidePending(help: HelpState, id: GuideId): boolean {
+  return help.guides[id] === 'pending';
+}
+
+/** 안내를 띄울 차례로 (이미 봤으면 그대로) */
+export function queueGuide(help: HelpState, id: GuideId): void {
+  if (help.guides[id] !== 'done') help.guides[id] = 'pending';
+}
+
+export function markGuideDone(help: HelpState, id: GuideId): void {
+  help.guides[id] = 'done';
 }
 
 export type TutorialStatus = 'active' | 'completed' | 'skipped';

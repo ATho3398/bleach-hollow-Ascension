@@ -24,10 +24,12 @@ const withFormat = (f: number): SaveData => {
 };
 
 describe('C.117 옛 형식 세이브는 열지 않는다 (GDD 61장)', () => {
-  it('지금 문턱은 1 — 현재 형식·기존 마이그레이션 대상은 그대로 열린다', () => {
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(1);
+  it('C.120 부터 문턱 = 현재 형식(37) — 현재 형식만 열리고 36 이하는 이전 버전', () => {
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(37); // C.117 은 1, C.120(형식 37)에 같이 올렸다 (GDD 61장)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
     expect(saveFormatStatus(SAVE_FORMAT_VERSION)).toBe('ok');
-    expect(saveFormatStatus(1)).toBe('ok');
+    expect(saveFormatStatus(36)).toBe('old');
+    expect(saveFormatStatus(1)).toBe('old');
     expect(saveFormatStatus(SAVE_FORMAT_VERSION + 1)).toBe('newer');
     expect(saveFormatStatus(0)).toBe('invalid');
     expect(saveFormatStatus(1.5)).toBe('invalid');
@@ -49,10 +51,12 @@ describe('C.117 옛 형식 세이브는 열지 않는다 (GDD 61장)', () => {
     expect(slotSummary(st, 2, 1, 36)).toMatchObject({ state: 'incompatible', reason: 'newer', format: 37 });
   });
 
-  it('지금 값으로는 옛 형식(예: 30)도 계속 열린다 — 슬롯 요약이 ok', () => {
+  it('지금 값으로는 옛 형식(예: 30·36)은 이전 버전 — 슬롯 요약이 incompatible/old (C.120)', () => {
     const st = memStore();
     writeSave(st, withFormat(30), slotKey(1));
-    expect(allSlotSummaries(st)[0]!.state).toBe('ok');
+    writeSave(st, withFormat(36), slotKey(2));
+    expect(allSlotSummaries(st)[0]).toMatchObject({ state: 'incompatible', reason: 'old' });
+    expect(allSlotSummaries(st)[1]).toMatchObject({ state: 'incompatible', reason: 'old' });
   });
 
   it('옛 세이브 내보내기: 압축 덩어리를 풀어 원문(형식 번호 포함)을 그대로 돌려준다', () => {

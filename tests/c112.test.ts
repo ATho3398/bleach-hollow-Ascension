@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
 import { defaultWear, migrateSave, newSaveData, newTrack, SAVE_FORMAT_VERSION } from '../src/game';
 import { wearCosmetic } from '../src/shop';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 

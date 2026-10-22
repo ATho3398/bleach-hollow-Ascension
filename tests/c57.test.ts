@@ -18,6 +18,9 @@ import { TRAITS } from '../src/data/traits';
 import { canSynthesize, migrateSave, newSaveData, recordExpedition, sanitizeDeck, SAVE_FORMAT_VERSION, synthesizeTile } from '../src/game';
 import { roadSynergies } from '../src/ui/bha/road';
 import { eventHint, tileHint, variantModsText } from '../src/ui/labels';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const TV = BALANCE.provisional.tileVariants;
 const L = BALANCE.expedition.loopTiles;

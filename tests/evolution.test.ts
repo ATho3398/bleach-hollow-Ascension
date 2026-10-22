@@ -15,6 +15,9 @@ import type { CombatParams } from '../src/engine/combat';
 import { emptyRunLog } from '../src/engine/runLog';
 import { loadSave, migrateSave, newSaveData, performEvolution, recordExpedition, SAVE_FORMAT_VERSION } from '../src/game';
 import { LEGACY_TRAIT_MAP, migrateTraitId } from '../src/saveLegacy';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const EV = BALANCE.provisional.evolution;
 const H = EV.hidden;

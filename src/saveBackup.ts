@@ -1,7 +1,7 @@
 // 세이브 백업: 내보내기·불러오기의 순수 로직 (Q-1, C.29). 세이브 구조는 건드리지 않고 기존 SaveData 를 그대로 직렬화한다.
 // 입력 설정(bha-input-settings)은 기기마다 다른 값이라 담지 않는다 (dev-log C.29).
 import { FACTIONS } from './data/factions';
-import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
+import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
 import { slotBackupKey, slotKey, writeBackupMeta, type BackupReason } from './saveSlots';
 import { encodeSave, expandSave, parseSaveText } from './saveCodec';
 
@@ -93,7 +93,7 @@ export function parseImport(text: string): ImportResult {
   const fromFormat = raw.meta.format;
   if (fromFormat > SAVE_FORMAT_VERSION) return { ok: false, reason: 'newer' };
   if (!Number.isInteger(fromFormat) || fromFormat < 1) return { ok: false, reason: 'corrupt' };
-  if (fromFormat < MIN_LOADABLE_SAVE_FORMAT) return { ok: false, reason: 'old' };
+  if (fromFormat < saveFormatGate.min) return { ok: false, reason: 'old' };
   if (!FACTIONS.some((f) => f.id === raw.factionId)) return { ok: false, reason: 'faction' };
   if (wrongTyped(raw)) return { ok: false, reason: 'corrupt' };
   let save: SaveData | null;

@@ -17,6 +17,9 @@ import {
 } from '../src/engine/expedition';
 import { doNestAction, newNest } from '../src/engine/nest';
 import { loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;

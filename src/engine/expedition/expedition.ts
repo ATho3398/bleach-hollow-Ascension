@@ -6,7 +6,7 @@ import { scaleEnemy } from '../../data/enemies';
 import { applyDifficultyToParams, clampDifficulty, clampStreak, difficultyEnemyScale, difficultyGoldMultiplier, difficultyRewardMultiplier, recommendedDifficulty, scaleEv, streakEnemyFactor } from '../difficulty';
 import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, pickFromPool } from '../enemyPool';
-import type { EnemyDef, EnvironmentPreset, StatId } from '../../data/schema';
+import { STAT_IDS, type EnemyDef, type EnvironmentPreset, type StatId } from '../../data/schema';
 import { deckTilesFor, getTile } from '../../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
@@ -16,7 +16,7 @@ import {
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import {
-  applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
+  addEv, applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
@@ -45,10 +45,11 @@ const REROLL_SEED_SALT = 0x6c8e9cf5;
 const FREE_BOSS_SEED_SALT = 0x1b873593;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
+const TUT = BALANCE.provisional.tutorialRun;
 
 export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'event' | 'ended';
 /** story-clear = 스토리 화 목표를 이뤄 바로 귀환 (GDD 25-4, C.58) */
-export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear';
+export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear';
 
 /** 지금 치를 전투 (전투 엔진에 넘길 재료) */
 export interface PendingBattle {
@@ -271,6 +272,20 @@ export interface ExpeditionState extends RiskState {
   story: StoryRun | null;
   /** 자유 원정 보스 등장 (GDD 37장). 스토리 화는 null */
   freeBoss: FreeBossRun | null;
+  /** 첫 원정 튜토리얼 (GDD 67장, C.120): 고정 짧은 길 → 약한 적 1마리 → 흡수 화면(시스템상 흡수 아님) → 끝. 없으면 일반 원정 */
+  tutorial?: boolean;
+  /** 타일 잠금 (GDD 64장, 첫 진화 전): 드래프트(이벤트 타일 포함)가 나오지 않는다. 덱은 비어 있다 */
+  tilesLocked?: boolean;
+  /** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수 기록 대신 모든 능력치 노력치. 귀환 때 런 로그 tutorialRewards 로 */
+  tutorialReward?: TutorialReward | null;
+}
+
+/** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수로 치지 않고 능력치 6종을 같은 양 올린다 */
+export interface TutorialReward {
+  enemyId: string;
+  element: string;
+  /** 실제로 오른 노력치 (단계 상한에 잘리면 그만큼만) */
+  ev: Partial<Record<StatId, number>>;
 }
 
 export interface ExpeditionSetup {
@@ -306,9 +321,14 @@ export interface ExpeditionSetup {
   statBonus?: number;
   /** 스토리에서 한 번 이긴 보스 id (GDD 37장, 세이브 보스 도감). 자유 원정에서 그 사냥터 장 보스가 4바퀴째부터 나올 수 있다. 스토리 화는 무시 */
   bossesBeaten?: string[];
+  /** 첫 원정 튜토리얼 (GDD 67장): 1바퀴·기본 사냥터·★1·타일 변수 끔·보스 없음, 정해진 칸에 약한 적 1마리. 스토리와 같이 쓰지 않는다 */
+  tutorial?: boolean;
+  /** 첫 진화 전 타일 잠금 (GDD 64장): 드래프트·이벤트 타일 없음 */
+  tilesLocked?: boolean;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
+  if (setup.tutorial) setup = { ...setup, story: undefined, groundId: DEFAULT_GROUND_ID, difficulty: 1, streak: 0, maxLaps: 1, tileVariants: false, bossesBeaten: [], tilesLocked: true };
   const rng = createRng(setup.seed);
   const episode = setup.story ? getEpisode(setup.factionId, setup.story.chapterId, setup.story.episodeId) : null;
   const exp: ExpeditionState = {
@@ -371,7 +391,9 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     bonusSoul: 0,
     variantLog: { synergies: [], mutations: [], events: [], drafts: [] },
     story: setup.story ? { chapterId: setup.story.chapterId, episodeId: setup.story.episodeId, progress: 0, cleared: false, kills: 0, midShown: false, cue: null, bossResult: null } : null,
-    freeBoss: setup.story ? null : { beaten: [...(setup.bossesBeaten ?? [])], appear: null, result: null },
+    freeBoss: setup.story || setup.tutorial ? null : { beaten: [...(setup.bossesBeaten ?? [])], appear: null, result: null },
+    ...(setup.tutorial ? { tutorial: true, tutorialReward: null } : {}),
+    ...(setup.tilesLocked ? { tilesLocked: true } : {}),
   };
   // 스토리 화의 고정 길 (GDD 25-4): 정해진 칸에 정해진 타일
   if (episode) for (const [cell, id] of Object.entries(episode.road)) exp.slots[Number(cell)] = id;
@@ -448,6 +470,8 @@ function planLap(exp: ExpeditionState): void {
     [free[i], free[j]] = [free[j]!, free[i]!];
   }
   exp.wildCells = free.slice(0, Math.max(0, plannedBattles(exp.lap) - tileBattles));
+  // 첫 원정 튜토리얼 (GDD 67장 1번): 정해진 칸 하나에서만 싸운다 (고정 길)
+  if (exp.tutorial) exp.wildCells = [TUT.cell];
   exp.elitesThisLap = 0;
   exp.victoriesThisLap = 0;
   exp.tilesThisLap = 0;
@@ -583,7 +607,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     if (exp.lap >= exp.maxLaps) return endExpedition(exp, 'returned', 'forced-max-laps');
     exp.phase = 'nest-choice';
     // 드래프트 (GDD 25-5 ①): 바퀴 끝 배치 팝업에서 3장 중 1장 (스토리는 끔)
-    if (exp.tileVariants && !exp.story) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
+    if (exp.tileVariants && !exp.story && !exp.tilesLocked) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
     return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward };
   }
   const cell = exp.pos;
@@ -680,8 +704,8 @@ function startBattleAt(
   }
   // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서
   let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
-  const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1);
-  const atkK = m.enemyAttackMult ?? 1;
+  const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1) * (exp.tutorial ? TUT.enemyHpMult : 1);
+  const atkK = (m.enemyAttackMult ?? 1) * (exp.tutorial ? TUT.enemyAttackMult : 1);
   if (hpK !== 1 || atkK !== 1) enemy = scaleEnemy(enemy, { hp: hpK, attack: atkK });
   const pending: PendingBattle = {
     enemy,
@@ -808,9 +832,10 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 스토리 흡수 목표 화 (GDD 42장 1번): 목표 등급 적을 이기면 흡수 조건과 상관없이 흡수 화면을 연다 (그 화에서만)
   const ob = st ? storyEpisodeOf(exp)!.objective : null;
   const storyAbsorb = ob?.type === 'absorb' && pending.enemy.class === ob.enemyClass;
-  if (canAbsorb(battle) || storyAbsorb) {
+  // 첫 원정 튜토리얼 (GDD 67장): 이기면 늘 흡수 화면 (시스템상 흡수가 아니라 tutorialAbsorb 로 끝난다)
+  if (canAbsorb(battle) || storyAbsorb || exp.tutorial) {
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, specialGateOf(exp, elite, false));
-    if (exp.absorbOffer.reasons.length === 0) exp.absorbOffer.reasons.push('story-objective');
+    if (exp.absorbOffer.reasons.length === 0) exp.absorbOffer.reasons.push(exp.tutorial ? 'tutorial' : 'story-objective');
     exp.phase = 'absorb';
   } else {
     exp.phase = 'moving';
@@ -851,6 +876,7 @@ export function rerollAbsorb(exp: ExpeditionState): AbsorbResult {
 export function chooseRelease(exp: ExpeditionState): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
+  if (exp.tutorial) return tutorialAbsorb(exp);
   logAbsorb(exp, offer, false, null);
   releaseEffect(exp);
   recordEvolutionRelease(exp.evolution);
@@ -876,6 +902,7 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' };
+  if (exp.tutorial) return tutorialAbsorb(exp);
   if (traitId !== null) {
     if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 특성이다' };
     const r = gainTrait(exp.build, traitId, replaceSlot);
@@ -893,6 +920,20 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   exp.absorbOffer = null;
   exp.phase = 'moving';
   checkStoryClear(exp);
+  return { ok: true };
+}
+
+/** 튜토리얼 첫 흡수 (GDD 67장 3번): 시스템상 흡수가 아니다 — 흡수 수·속성 카운트·특성·리스크·흡수 기록·보상 타일 없음.
+ *  대신 능력치 6종 노력치를 같은 양(tutorialRun.statEv) 올리고(단계 상한 안), 원정을 끝낸다(귀환). 런 로그에는 귀환 때 '튜토리얼 보상'으로 따로 남는다 */
+export function tutorialAbsorb(exp: ExpeditionState): AbsorbResult {
+  const offer = exp.absorbOffer;
+  if (exp.phase !== 'absorb' || !offer || !exp.tutorial) return { ok: false, reason: '튜토리얼 흡수를 고를 수 없는 때' };
+  const want: Partial<Record<StatId, number>> = {};
+  for (const s of STAT_IDS) want[s] = TUT.statEv;
+  exp.tutorialReward = { enemyId: offer.enemyId, element: offer.element, ev: addEv(exp.evolution, want) };
+  exp.absorbOffer = null;
+  exp.phase = 'moving';
+  endExpedition(exp, 'returned', 'tutorial-clear');
   return { ok: true };
 }
 
@@ -1233,7 +1274,7 @@ export function summarize(exp: ExpeditionState): ExpeditionSummary {
     lostFood: lostFoodEntries.map((a) => a.food),
     ...goldSplit(exp),
     // 도달 바퀴: 둥지 칸 귀환 = 마친 바퀴, 패배·스토리 목표 달성(바퀴 도중 귀환) = 지금 바퀴 (C.68: 1바퀴 도중 클리어가 0 으로 보이던 것)
-    laps: exp.outcome === 'returned' && exp.endReason !== 'story-clear' ? exp.lapsCompleted : exp.lap,
+    laps: exp.outcome === 'returned' && exp.endReason !== 'story-clear' && exp.endReason !== 'tutorial-clear' ? exp.lapsCompleted : exp.lap,
   };
 }
 
@@ -1269,6 +1310,7 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     drafts: (exp.variantLog?.drafts ?? []).map((x) => ({ ...x })),
     gold: s.keptGold,
     ...(exp.story ? { story: { chapterId: exp.story.chapterId, episodeId: exp.story.episodeId, cleared: exp.story.cleared } } : {}),
+    ...(exp.tutorial ? { tutorial: true } : {}),
   };
 }
 

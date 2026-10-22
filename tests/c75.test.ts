@@ -22,6 +22,9 @@ import { getFaction } from '../src/data/factions';
 import { defaultDifficulty, maxTierReached, migrateSave, newSaveData, performEvolution, performRebirth, recordExpedition, sanitizeDifficulty, SAVE_FORMAT_VERSION, settleStreak, streakFor, TRACK_KEYS, unlockDifficultyFor, type SaveData } from '../src/game';
 import { difficultyInfo } from '../src/ui/planView';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const SX = BALANCE.provisional.stats;

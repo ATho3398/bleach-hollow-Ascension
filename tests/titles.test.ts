@@ -8,6 +8,9 @@ import { emptyRunLog, type AbsorbRecord, type BattleRecord, type RunLog, type Ru
 import { checkCondition, evaluateTitles, unlockTitles } from '../src/engine/titles';
 import { checkTitles, loadSave, migrateSave, newSaveData, performEvolution, recordExpedition, SAVE_FORMAT_VERSION, SAVE_KEY, writeSave } from '../src/game';
 import { formatUnlockTime, titleCellView } from '../src/ui/titleDexView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const battle = (o: Partial<BattleRecord> = {}): BattleRecord => ({
   runId: 1, lap: 1, turns: 0, matchesByRole: { damage: 0, spirit: 0, shield: 0, absorb: 0, risk: 0 }, won: true, skillsUsed: [],

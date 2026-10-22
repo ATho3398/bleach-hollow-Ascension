@@ -233,7 +233,7 @@ export interface RunRecord {
   gained: string[];
   lost: string[];
   /** P2 에서 더한 필드 (세이브 형식 3): 끝난 이유, 시드, 종족 */
-  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear';
+  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear';
   seed: number;
   factionId: string;
   /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 한계 돌파 여부 */
@@ -256,6 +256,22 @@ export interface RunRecord {
   difficulty?: number;
   /** C.75 (GDD 32-1 10번): 출발 때 적용된 같은 ★ 연속 클리어 수 (0~10). 스토리 화는 0 */
   streak?: number;
+  /** C.120 (세이브 형식 37, GDD 67장): 첫 원정 튜토리얼이면 true. 없으면 일반 원정 */
+  tutorial?: boolean;
+}
+
+/** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장 3번·9장): 첫 원정의 '첫 흡수'는 흡수 기록(absorbs)에 넣지 않고 여기에 따로 남긴다 — 히든 조건이 흡수와 구분해 읽게 */
+export interface TutorialRewardRecord {
+  at: number;
+  runId: number;
+  factionId: string;
+  /** 'first-absorb' = 첫 원정 튜토리얼의 흡수 화면 */
+  kind: 'first-absorb';
+  enemyId: string;
+  element: string;
+  /** 실제로 오른 노력치 */
+  ev: Partial<Record<string, number>>;
+  tierIndex: number;
 }
 
 /** 보스전 1회 기록 (GDD 25-3, 세이브 형식 22): 이기든 지든 남긴다. 보스 칭호·히든 조건이 읽는다 */
@@ -348,6 +364,8 @@ export interface RunLog {
   shopPurchases: ShopPurchaseRecord[];
   /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
   towerBattles: TowerBattleRecord[];
+  /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장): 첫 원정 튜토리얼의 흡수(시스템상 흡수 아님) */
+  tutorialRewards: TutorialRewardRecord[];
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
@@ -361,6 +379,8 @@ export interface ShopPurchaseRecord {
   itemId: string;
   currency: 'gold' | 'jade';
   price: number;
+  /** 뽑기 결과 (C.120, 형식 37): 타일 뽑기·희귀 타일이면 나온 타일 id */
+  result?: string;
 }
 
 /** 합체 기록의 캐릭터 한 명 요약 (GDD 22-3, C.59): 합체로 사라진 캐릭터가 어떤 몸이었나 */
@@ -428,5 +448,6 @@ export function emptyRunLog(): RunLog {
     shopPurchases: [],
     storyRuns: [],
     towerBattles: [],
+    tutorialRewards: [],
   };
 }

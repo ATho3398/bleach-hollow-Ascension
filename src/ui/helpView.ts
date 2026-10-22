@@ -16,6 +16,8 @@ export interface HelpOptions {
   onClose: () => void;
   /** 있으면 [튜토리얼 다시 보기] 를 보인다. 도움말은 이미 닫힌 뒤 불린다 */
   onReplayTutorial?: () => void;
+  /** 한 번만 뜨는 안내 다시 보기 (C.120, GDD 64·67장): 버튼 이름 → 여는 함수. 도움말은 이미 닫힌 뒤 불린다 */
+  replays?: { label: string; run: () => void }[];
 }
 
 /** 아코디언 아이콘 (id → 스프라이트 아이콘). 모르는 id 는 info */
@@ -91,6 +93,14 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
         opts.onReplayTutorial!();
       },
     }));
+  }
+  for (const r of opts.replays ?? []) {
+    const b = button({ label: r.label, icon: 'i-info', onClick: () => {
+      close();
+      r.run();
+    } });
+    b.dataset.replay = r.label;
+    aside.push(b);
   }
   aside.push(closeBtn);
   const warn = fromBattle ? notice('warn', '닫으면 전투로 돌아가 이어서 진행된다.', { title: '전투가 멈춰 있다', icon: 'i-pause' }) : null;

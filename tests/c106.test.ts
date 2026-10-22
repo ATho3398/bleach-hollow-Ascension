@@ -16,6 +16,9 @@ import {
 import { mutationMods } from '../src/engine/expedition/variants';
 import { createRng } from '../src/engine/rng';
 import { checkTitles, migrateSave, newSaveData, remapSpecialVastoId, SAVE_FORMAT_VERSION, statBonusOf } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const NO = { status: 'won' as const, chain3Count: 0, weakChain3Count: 0, params: { skills: [1] as unknown[] }, finisher: null };
 const SX = BALANCE.provisional.stats;

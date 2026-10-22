@@ -13,6 +13,9 @@ import {
   screenGravity, stepPendulum, tamaLayout, tapKick, toDeviceVec, type Pendulum,
 } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const H = getFaction('hollow');
 const S = getFaction('shinigami');

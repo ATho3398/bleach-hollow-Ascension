@@ -12,6 +12,9 @@ import { advance, createExpedition, startBattle } from '../src/engine/expedition
 import { parseFactionConfig } from '../src/engine/faction';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
 import { battleLabels } from '../src/ui/labels';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const CX = BALANCE.provisional.combat;
 const normal = getEnemy('test-a');

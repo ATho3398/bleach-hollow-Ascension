@@ -1,7 +1,7 @@
 // 세이브 슬롯 (Q-3, C.31): 슬롯 3개, 슬롯별 localStorage 키. 슬롯 1 = 기존 키 그대로라 옛 세이브는 마이그레이션 없이 슬롯 1이 된다.
 // 슬롯 밖 정보(마지막 플레이 시각)는 별도 키 하나에 둔다 → SaveData 구조와 SAVE_FORMAT_VERSION 은 그대로.
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
-import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
+import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
 import { collectChunks, parseSaveText } from './saveCodec';
 
 export const SLOT_COUNT = 3;
@@ -75,7 +75,7 @@ export function rawSaveFormat(text: string | null): number | null {
 }
 
 /** 슬롯 하나의 요약. 비어 있음 / 손상 / 열 수 없는 형식 / 정상. 로드 부작용(칭호 평가)은 일으키지 않는다. min·current 는 테스트용(기본 = 지금 문턱·형식) */
-export function slotSummary(storage: StorageLike, slot: number, min: number = MIN_LOADABLE_SAVE_FORMAT, current: number = SAVE_FORMAT_VERSION): SlotSummary {
+export function slotSummary(storage: StorageLike, slot: number, min: number = saveFormatGate.min, current: number = SAVE_FORMAT_VERSION): SlotSummary {
   let text: string | null;
   try {
     text = storage.getItem(slotKey(slot));
@@ -88,7 +88,7 @@ export function slotSummary(storage: StorageLike, slot: number, min: number = MI
   if ((status === 'old' || status === 'newer') && format !== null) return { slot, state: 'incompatible', reason: status, format };
   let save: SaveData | null = null;
   try {
-    save = migrateSave(parseSaveText(text, true)); // 요약만: 압축 덩어리는 풀지 않고 개수만 (C.72)
+    save = migrateSave(parseSaveText(text, true), min); // 요약만: 압축 덩어리는 풀지 않고 개수만 (C.72)
   } catch {
     save = null;
   }

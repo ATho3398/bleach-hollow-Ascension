@@ -9,6 +9,9 @@ import {
   applyChallenge, canChallenge, challengeTarget, holderAt, newRankState, PLAYER_ID, rankOf, rankUnlocked, resetRankKeepHistory, sanitizeRankState,
 } from '../src/engine/rank';
 import { loadSave, migrateSave, newSaveData, rankChallenge, recordExpedition, recordRankBattle, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const UNLOCK = BALANCE.rank.unlockTierIndex;
 

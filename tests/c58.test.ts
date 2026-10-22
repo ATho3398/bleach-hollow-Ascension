@@ -17,6 +17,9 @@ import {
   chapterOpen, episodeOpen, migrateSave, newSaveData, recordExpedition, sanitizeDeck, SAVE_FORMAT_VERSION, storyProgressOf, type SaveData,
 } from '../src/game';
 import { objectiveText, storyGoalLine } from '../src/ui/storyView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const BX = BALANCE.provisional.boss;
 const SX = BALANCE.provisional.story;

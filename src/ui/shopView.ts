@@ -12,6 +12,8 @@ import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
 import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
+import { showGuide, tileDrawCard } from './guideView';
+import { markGuideDone } from '../engine/tutorial';
 
 export type ShopTab = 'gold' | 'jade';
 /** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
@@ -56,8 +58,16 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
         return render();
       }
       hd.persist();
-      showToast(boughtText(row, r), 0, 2600);
       render();
+      // 타일 뽑기 (GDD 64장 2번): 카드 한 장 뒤집기 → 첫 뽑기면 "덱에 넣어야 쓴다" 안내 (한 번)
+      if (r.id === 'tile-draw' && r.tile) {
+        tileDrawCard(faction, r.tile, save.tiles.collection[r.tile] ?? 1, () => {
+          if (save.help.guides['tile-draw'] === 'done') return;
+          markGuideDone(save.help, 'tile-draw');
+          hd.persist();
+          showGuide(faction, 'tile-draw');
+        });
+      } else showToast(boughtText(row, r), 0, 2600);
     };
     if (row.confirm) {
       const t = shopConfirmText(row);

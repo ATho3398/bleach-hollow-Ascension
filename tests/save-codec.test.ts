@@ -7,6 +7,9 @@ import { parseImport, serializeSave } from '../src/saveBackup';
 import { CHUNK_PREFIX, chunkRefsOf, encodeSave, lzCompress, lzDecompress, PACK_BLOCK, PACK_KEY, parseSaveText } from '../src/saveCodec';
 import { collectSlotChunks, slotBackupKey, slotKey, slotSummary, stashSlot, writeSlotSave } from '../src/saveSlots';
 import { recoverFromBackup } from '../src/saveBackup';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 /** 저장소 흉내 (키 세기 가능). cap(글자 수)을 넘기는 쓰기는 QuotaExceededError 처럼 던진다 */

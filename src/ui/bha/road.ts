@@ -84,6 +84,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   let note = o.caption ?? '';
 
   const road = el('div', 'bha-road');
+  road.dataset.help = 'plan.road'; // 타일 안내 장면의 하이라이트 대상 (C.120)
   road.setAttribute('role', 'group');
   road.setAttribute('aria-label', '길');
   const cells: HTMLElement[] = [];
@@ -107,6 +108,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   noteRow.append(noteEl);
   const hand = el('div', 'bha-exp__hand bha-road__hand');
   hand.dataset.scList = '';
+  hand.dataset.help = 'plan.hand';
   // 시너지 목록 한 줄 (칸 사이 이름표 + 효과 요약)
   const synLine = el('p', 'bha-road__synline');
   const root = el('div', 'bha-road__wrap');

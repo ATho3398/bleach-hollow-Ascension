@@ -20,6 +20,8 @@ export interface PlanViewHandlers {
   unlockedDifficulty?: number;
   /** 연속 클리어 (GDD 32-1 10번, 세이브 difficulty.streak): 그 ★를 고르면 "★3 · 연속 4" 와 적·보상 가산을 보인다 */
   streak?: { star: number; count: number };
+  /** 첫 진화 전 타일 잠김 (GDD 64장 1번): 배치 대신 "첫 진화 후 열림" 안내, 길은 빈 길 */
+  tilesLocked?: boolean;
 }
 
 /** 난이도 한 줄 설명: "★3 · 연속 4 · 권장: 적은 3단계(아쥬커스) 기준 +20% · 먹이·노력치 +70% · 골드 +38%" (데이터에서 조합, GDD 32-1 5·10·11번) */
@@ -117,7 +119,13 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   });
   start.dataset.sc = 'go';
   // 한 줄 설명: 고른 사냥터(이름·설명·자주 나오는 속성·강도) + 배치 요령 (화면 높이가 낮아 두 줄 안에 둔다)
-  const sub = el('p', 'bha-plan__sub', '덱의 타일을 길 위 칸에 놓는다. 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.');
+  const sub = h.tilesLocked
+    ? el('p', 'bha-plan__sub', '타일 배치는 첫 진화 후 열림 — 지금은 타일 없이 기본 길을 걷는다. 빈 칸마다 떠돌이 적이 나온다.')
+    : el('p', 'bha-plan__sub', '덱의 타일을 길 위 칸에 놓는다. 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.');
+  if (h.tilesLocked) {
+    sub.prepend(icon('i-lock'), ' ');
+    sub.dataset.tilesLocked = '';
+  }
   const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, gInfo, diff, dInfo, sub, planner.el, start);
   main.dataset.screen = 'expedition-plan';
 }

@@ -14,6 +14,9 @@ import {
   statBonusOf, switchTrack, TRACK_KEYS, trackIsTopRank, writeSave, type SaveData, type TrackKey,
 } from '../src/game';
 import { fusionBlockText, fusionFinalText, fusionLists } from '../src/ui/hogyokuView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const HX = BALANCE.provisional.hogyoku;
 const other = (fid: string) => FACTIONS.find((f) => f.id !== fid)!.id;

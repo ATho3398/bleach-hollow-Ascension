@@ -12,6 +12,9 @@ import {
 } from '../src/game';
 import { firstEmptySlot } from '../src/ui/slotView';
 import { allSlotSummaries, slotKey } from '../src/saveSlots';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 const mk = (seed = 7) => createExpedition({ factionId: 'hollow', seed, hunger: 10, condition: 100, deck: DECK });

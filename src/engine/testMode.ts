@@ -2,6 +2,7 @@
 // - 세이브 분리(38-2): 진짜 세이브 키(SAVE_KEY 로 시작하는 모든 키 — 슬롯·백업·압축 덩어리·슬롯 기록)를 테스트 칸 키(TEST_SAVE_KEY 로 시작)로 바꿔 끼운 저장소를 쓴다.
 //   그래서 슬롯·백업·덩어리 코드를 그대로 써도 진짜 세이브는 읽지도 쓰지도 않는다. SaveData 구조는 그대로(형식 번호 무변화).
 // - 목록(진화체·특성·적·보스·스토리·꾸밈)은 모두 데이터에서 읽는다. 종족 id 로 분기하지 않는다(38-6).
+import { GUIDE_IDS } from './tutorial';
 import { BALANCE } from '../config/balance';
 import { BOSSES } from '../data/bosses';
 import { ENEMIES, scaleEnemy } from '../data/enemies';
@@ -172,6 +173,11 @@ function unlockTrack(save: SaveData, nowMs: number): void {
  *  탑은 세이브에 `tower.best` 자리가 있으면 최고 층 바로 아래까지 연다(탑 데이터가 들어오면 그대로 따라온다) */
 export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): SaveData {
   unlockTrack(save, nowMs);
+  // 타일 (GDD 64장): 열린 상태 + 기준 21장, 첫 원정·타일 안내는 본 것으로 (C.120)
+  for (const [id, n] of Object.entries(BALANCE.provisional.expedition.referenceCollection)) save.tiles.collection[id] = Math.max(save.tiles.collection[id] ?? 0, n);
+  save.tiles.unlocked = true;
+  save.tiles.draws = Math.max(1, save.tiles.draws);
+  for (const g of GUIDE_IDS) save.help.guides[g] = 'done';
   fillDefaultTraits(save);
   save.formDex = [...new Set([...save.formDex, ...FORM_TABLE.map((f) => f.id)])];
   // 스토리: 모든 종족·장·화 클리어 + 장 보상 받음 (내용이 있는 장만)

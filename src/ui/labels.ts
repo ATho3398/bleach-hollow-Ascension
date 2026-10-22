@@ -158,5 +158,6 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
     'battle-lost': `전투에서 졌다. ${f.defeatStateName} 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
     exhausted: `허기로 쓰러졌다. ${f.defeatStateName} 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
+    'tutorial-clear': `첫 원정을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
   }[reason];
 }

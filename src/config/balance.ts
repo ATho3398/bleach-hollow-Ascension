@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 58;
+export const BALANCE_VERSION = 59;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -449,13 +449,27 @@ export const BALANCE = {
       restHunger: 25,
       restCondition: 20,
       restTimeTiles: 2,
-      /** 원정에 가져가는 덱 크기와 새 세이브의 타일 보유량 (시작 덱 임시 구성) */
+      /** 원정에 가져가는 덱 크기와 새 세이브의 타일 보유량. C.120 (GDD 64장 v5.141): 새 세이브는 0장 — 첫 진화 때 starterTiles 3장, 그 뒤는 상점 타일 뽑기 */
       deckSize: 8,
-      startingCollection: {
+      startingCollection: {} as Record<string, number>,
+      /** 첫 진화(1→2단계) 때 주는 타일 (GDD 64장 1번, 덱에 자동): 먹잇감 둥지 A · 강적 소굴 A · 휴식 */
+      starterTiles: ['prey-nest-a', 'elite-den-a', 'rest-a'] as string[],
+      /** 점검 도구(scripts/balance.ts)·고정 덱 시험이 쓰는 기준 보유량 = C.119 까지의 시작 21장. 게임 세이브에는 쓰지 않는다 */
+      referenceCollection: {
         'prey-nest-a': 4, 'prey-nest-b': 3, 'elite-den-a': 2, 'elite-den-b': 2,
         'env-fog': 2, 'env-wasteland': 2, 'env-barrier': 2, 'env-ruin': 2, 'rest-a': 2,
       } as Record<string, number>,
     },
+    /** 상점 타일 뽑기 (GDD 64장 2번, C.120 — 사용자 "숫자 관련은 너가 맞추고", provisional). 1회 = 타일 1장 → 보관함(중복 = 장수 +1).
+     *  묶음 확률(%): 기본 3종(둥지 A·소굴 A·휴식) · 환경(그 종족 스킨이 있는 것) · B형 2종(둥지 B·소굴 B). 그 종족이 못 쓰는 묶음은 빼고 나머지 비율로. 첫 뽑기는 firstGroup 확정 */
+    tileDraw: {
+      price: 300, // C.120 측정: 4바퀴 원정 전투 골드 2단계 133·3단계 136·4단계 155·5단계 166 → 뽑기 1회 = 원정 2.3·2.2·1.9·1.8회 (먹이 넘침 골드 빼고, dev-log C.120). 마스터 추천 '약 30' 은 원정 0.2회분이라 목표(2~3회)에 못 맞춤
+      weights: { basic: 50, env: 35, b: 15 } as Record<string, number>,
+      groups: { basic: ['prey-nest-a', 'elite-den-a', 'rest-a'], b: ['prey-nest-b', 'elite-den-b'] } as Record<string, string[]>,
+      firstGroup: 'env',
+    },
+    /** 첫 원정 튜토리얼 (GDD 67장, C.120, provisional): 고정 길 cell 번 칸에서 약한 적 1마리(체력·공격 배율), 첫 흡수 대신 모든 능력치 노력치 +statEv (1단계 상한 합 24·능력치당 12 안) */
+    tutorialRun: { cell: 3, enemyHpMult: 0.6, enemyAttackMult: 0.5, statEv: 3 },
     /** 환경 타일 프리셋: 전투 조건 변경. 이름은 종족 스킨, 효과 종류는 엔진 (GDD 6장) */
     tiles: {
       /** 안개(호로 스킨): 트레이 블록이 이 간격(초)마다 섞인다 */

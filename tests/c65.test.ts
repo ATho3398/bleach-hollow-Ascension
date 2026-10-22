@@ -7,6 +7,9 @@ import { loadSave, migrateSave, newSaveData, newSharedState, newTrack, SAVE_FORM
 import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../src/shop';
 import { SIDE_BANDS, deviceArtPlacement } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const ART = ['device-badge-front.webp', 'device-badge-back.webp']; // C.71: 고화질 WebP(q92, 투명 그대로)로 바꿈, 원본 PNG 는 docs/art-samples/device-ref

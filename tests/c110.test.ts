@@ -9,6 +9,9 @@ import { pickFormLook, pickLook } from '../src/engine/evolution/tierLook';
 import { parseFactionConfig } from '../src/engine/faction';
 import { setForm } from '../src/engine/testMode';
 import { artSkinOf, migrateSave, newSaveData, performEvolution, SAVE_FORMAT_VERSION } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 const shin = FACTIONS.find((f) => f.id !== 'hollow')!;

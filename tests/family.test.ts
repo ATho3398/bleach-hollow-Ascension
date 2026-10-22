@@ -18,6 +18,9 @@ import { battleLabels, familyAbbr, familySkillName } from '../src/ui/labels';
 import { blockAbbr, blockName } from '../src/ui/battleView';
 import { helpVars } from '../src/data/help';
 import { getFaction } from '../src/data/factions';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 describe('계열 데이터 (GDD 17-3)', () => {
   it('모든 종족 설정에 계열 목록이 있고 단계 기술은 체인 단계 수와 같다', () => {
