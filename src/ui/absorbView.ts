@@ -293,7 +293,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       side.push(line);
     }
     nodes.push(backBtn('choose'));
-    return { title: '특성 후보 (1개 고르기)', main: nodes, side };
+    return { title: `특성 후보 ${offer!.candidates.length}개 (1개 고르기)`, main: nodes, side };
   }
 
   function replaceStep(): StepParts {

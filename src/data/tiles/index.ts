@@ -5,8 +5,8 @@ import raw from './tiles.json';
 import synergyRaw from './synergies.json';
 import mutationRaw from './mutations.json';
 
-const KINDS = ['prey-nest', 'elite-den', 'environment', 'rest', 'combo', 'event'];
-const PRESETS: EnvironmentPreset[] = ['reshuffle', 'power', 'shield', 'void'];
+const KINDS = ['prey-nest', 'elite-den', 'environment', 'rest', 'combo', 'event', 'special'];
+const PRESETS: EnvironmentPreset[] = ['reshuffle', 'power', 'shield', 'void', 'training'];
 /** 상위 타일을 만들 수 있는 종류 (GDD 25-5 ⑤: 이벤트 타일은 합성 불가) */
 export const UPGRADABLE_KINDS: readonly TerrainTileDef['kind'][] = ['prey-nest', 'elite-den', 'environment', 'rest'];
 /** 상위 타일 id = 바탕 id + 이 꼬리, 이름 = 바탕 이름 + "+" */
@@ -26,6 +26,8 @@ export function parseTile(r: unknown): TerrainTileDef {
   } else if (e.type === 'event') {
     if (!(TILE_EVENTS as readonly string[]).includes(e.event as string)) errors.push('effect.event');
     if (t.kind !== 'event') errors.push('kind(event)');
+  } else if (e.type === 'echo') {
+    if (t.kind !== 'special') errors.push('kind(special)');
   } else if (e.type !== 'rest') errors.push('effect.type');
   if (errors.length > 0) throw new Error(`지형 타일 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return r as TerrainTileDef;
@@ -106,7 +108,7 @@ export interface SynergyDef {
 
 function parseMatcher(m: unknown, where: string): TileMatcher {
   const o = (m ?? {}) as Record<string, unknown>;
-  if (!KINDS.includes(o.kind as string) || o.kind === 'event') throw new Error(`시너지 표 오류 (${where}): kind`);
+  if (!KINDS.includes(o.kind as string) || o.kind === 'event' || o.kind === 'special') throw new Error(`시너지 표 오류 (${where}): kind`);
   if (o.preset !== undefined && !PRESETS.includes(o.preset as EnvironmentPreset)) throw new Error(`시너지 표 오류 (${where}): preset`);
   return o as unknown as TileMatcher;
 }

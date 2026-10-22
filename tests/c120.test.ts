@@ -119,28 +119,27 @@ describe('64장 2번: 상점 타일 뽑기', () => {
     expect(s.tiles.deck).toEqual(deck);
   });
 
-  it('확률 = 기본 50 · 환경 35 · B형 15 (호로), 사신은 B형이 없어 남은 비율로', () => {
-    expect(tileDrawOdds('hollow', false)).toEqual({ basic: 0.5, env: 0.35, b: 0.15 });
+  it('확률 = 기본 44 · 환경 30 · B형 12 · 샘 6 · 희귀 8 (호로, C.124), 사신은 B형이 없어 남은 비율로', () => {
+    expect(tileDrawOdds('hollow', false)).toEqual({ basic: 0.44, env: 0.3, b: 0.12, spring: 0.06, rare: 0.08 });
     expect(tileDrawOdds('hollow', true)).toEqual({ env: 1 });
     const sh = tileDrawOdds('shinigami', false);
-    expect(Object.keys(sh)).toEqual(['basic', 'env']);
-    expect(sh.basic! + sh.env!).toBeCloseTo(1);
-    expect(sh.basic! / sh.env!).toBeCloseTo(50 / 35);
-    expect(tileDrawGroup('env', 'hollow').sort()).toEqual(['env-fog', 'env-wasteland']);
-    expect(tileDrawGroup('env', 'shinigami').sort()).toEqual(['env-barrier', 'env-ruin']);
+    expect(Object.keys(sh)).toEqual(['basic', 'env', 'spring', 'rare']);
+    expect(Object.values(sh).reduce((a, b) => a + b, 0)).toBeCloseTo(1);
+    expect(sh.basic! / sh.env!).toBeCloseTo(44 / 30);
+    expect(tileDrawGroup('env', 'hollow').sort()).toEqual(['env-fog', 'env-training', 'env-wasteland']);
+    expect(tileDrawGroup('env', 'shinigami').sort()).toEqual(['env-barrier', 'env-ruin', 'env-training']);
     expect(tileDrawGroup('b', 'hollow')).toEqual(['prey-nest-b', 'elite-den-b']);
+    expect(tileDrawGroup('rare', 'shinigami')).toEqual(['hunter-den', 'echo']);
   });
 
   it('많이 뽑으면 묶음 비율이 확률에 가깝다 (2만 회)', () => {
     let x = 12345;
     const rand = () => ((x = (Math.imul(x, 1103515245) + 12345) >>> 0) / 2 ** 32);
     const n = 20000;
-    const by: Record<string, number> = { basic: 0, env: 0, b: 0 };
-    const group = (id: string) => (TD.groups.basic!.includes(id) ? 'basic' : TD.groups.b!.includes(id) ? 'b' : 'env');
+    const by: Record<string, number> = { basic: 0, env: 0, b: 0, spring: 0, rare: 0 };
+    const group = (id: string) => Object.keys(TD.groups).find((g) => TD.groups[g]!.includes(id)) ?? 'env';
     for (let i = 0; i < n; i++) by[group(rollTileDraw('hollow', false, rand))]!++;
-    expect(by.basic! / n).toBeCloseTo(0.5, 1);
-    expect(by.env! / n).toBeCloseTo(0.35, 1);
-    expect(by.b! / n).toBeCloseTo(0.15, 1);
+    for (const [g, w] of Object.entries(TD.weights)) expect(Math.abs(by[g]! / n - w / 100)).toBeLessThan(0.02);
     for (let i = 0; i < 50; i++) expect(getTile(rollTileDraw('shinigami', i === 0, rand)).name.shinigami).toBeTruthy();
   });
 });

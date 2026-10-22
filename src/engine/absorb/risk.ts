@@ -3,6 +3,7 @@
 
 import { BALANCE } from '../../config/balance';
 import type { NestAction } from '../faction';
+import type { StatId } from '../../data/schema';
 
 const RX = BALANCE.provisional.risk;
 const AX = BALANCE.provisional.absorb;
@@ -21,7 +22,9 @@ export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest
 export type EngineEvent =
   | { kind: 'breakthrough'; lap: number; cell: number; risk: number }
   /** 진화 임박 알림 (GDD 20-5 v4.1): level 1 = 남은 걸음 20%, 2 = 10%. 수치는 화면에 보이지 않는다 */
-  | { kind: 'evolution-near'; level: number };
+  | { kind: 'evolution-near'; level: number }
+  /** 뼈 표식/수련 말뚝 승리 노력치 (C.124, GDD 65장): amount 0 = 상한이라 못 올림 */
+  | { kind: 'tile-ev'; stat: StatId; amount: number };
 
 /** 리스크를 들고 있는 상태(원정 상태가 이를 확장한다) */
 export interface RiskState {

@@ -1,0 +1,11 @@
+{
+  "patch": "C.124",
+  "viewport": "390x844, deviceScaleFactor 1, 다마고치 모드(기기 가로 회전 출력), 배포 빌드(vite preview). 세이브는 엔진으로 만들어 localStorage 에 주입(호로 2단계, 새 4종 1장씩 보유·덱)",
+  "shots": {
+    "1-shop-draw-hunter-den": "상점 [타일 뽑기] 골드 300 → 희귀 묶음(Math.random 고정) 포식자 둥지 카드 뒤집기 + 설명 한 줄",
+    "2-tile-guide-4-hints": "뽑기 뒤 안내 2/2 '뽑기에서만 나오는 타일' — 뼈 표식·포식자 둥지·영혼 샘·메아리 동굴 한 줄씩",
+    "3-road-4-new-tiles": "원정 바퀴 끝 배치 화면 길: 2 뼈 표식 · 4 떠도는 영혼 · 5 메아리 동굴 · 7 포식자 둥지 · 9 영혼 샘",
+    "4-hunter-win-absorb-4-candidates": "3번 칸 포식자 둥지 사냥꾼(독 강적) 승리 → [둘 다 포식] → '특성 후보 4개 (1개 고르기)' (강적 기본 2 × 2)"
+  },
+  "consoleErrors": 0
+}

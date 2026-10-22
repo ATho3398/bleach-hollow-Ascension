@@ -27,6 +27,7 @@ import { isWalking, walkScene } from './bha/walk';
 import { groundSceneBg } from './bha/sceneBg';
 import { storyGoalLine } from './storyView';
 import { bossName } from '../data/bosses';
+import { statName } from '../data/elements';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -123,9 +124,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   function endRest(): void {
     if (exp.phase !== 'rest') return;
+    const spring = exp.restSpring === true;
     finishRest(exp);
     h.onSave();
-    msg = `${faction.fullnessName}·컨디션이 회복됐다`;
+    msg = spring ? `${faction.riskGaugeName}이(가) 가라앉았다` : `${faction.fullnessName}·컨디션이 회복됐다`;
     render();
     nextStep();
   }
@@ -139,7 +141,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (!ev) return resumeClock();
     const got = exp.hand.length - before;
     const events = drainEvents(exp);
-    for (const e of events) if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
+    for (const e of events) {
+      if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
+      // 뼈 표식/수련 말뚝 승리 노력치 (C.124): 다음 걷는 칸 말풍선
+      else if (e.kind === 'tile-ev') nearMsg = e.amount > 0 ? `${statName(e.stat, faction.id)} 노력치 +${e.amount}` : `${statName(e.stat, faction.id)} 노력치가 상한이다`;
+    }
     if (events.some((e) => e.kind === 'breakthrough')) {
       // 한계 돌파 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
       away = true;

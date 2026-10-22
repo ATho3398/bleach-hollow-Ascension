@@ -42,7 +42,7 @@ export const TUTORIAL_HOLE_PAD = 6;
 const SCENE_ICON: Record<string, string> = {
   auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', stored: 'i-stored', after: 'i-evolve',
   // 첫 원정·타일 안내 (C.120)
-  walk: 'i-loop', encounter: 'i-practice', absorb: 'i-absorb', modes: 'i-absorb', practice: 'i-evolve', next: 'i-nest', tiles: 'i-deck', deck: 'i-deck', place: 'i-tile-prey', combo: 'i-tile-combo', draw: 'i-rare',
+  walk: 'i-loop', encounter: 'i-practice', absorb: 'i-absorb', modes: 'i-absorb', practice: 'i-evolve', next: 'i-nest', tiles: 'i-deck', deck: 'i-deck', place: 'i-tile-prey', combo: 'i-tile-combo', draw: 'i-rare', special: 'i-tile-combo',
 };
 
 /** 대상 영역을 오버레이 자리(host: LCD 창 또는 화면 전체) 기준 좌표로 돌려준다 */

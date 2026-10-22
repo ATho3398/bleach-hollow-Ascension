@@ -66,7 +66,7 @@ describe('데이터 (GDD 25-5)', () => {
     expect(upgradeIdOf('event-merchant')).toBeNull();
     expect(canSynthesize('env-fog')).toBe(true);
     const plus = TERRAIN_TILES.filter((t) => t.upgradeOf);
-    expect(plus.length).toBe(TERRAIN_TILES.filter((t) => !t.upgradeOf && t.kind !== 'event').length);
+    expect(plus.length).toBe(TERRAIN_TILES.filter((t) => !t.upgradeOf && t.kind !== 'event' && t.kind !== 'special').length);
   });
   it('시너지 8종·변이 5종, 이름은 종족별', () => {
     expect(SYNERGIES.map((s) => s.id)).toEqual(['ambush', 'oasis', 'battlefield', 'rift', 'sanctuary', 'hideout', 'pack', 'predator']);

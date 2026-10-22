@@ -170,21 +170,26 @@ export interface TraitDef {
 }
 
 /** 환경 타일이 바꾸는 전투 조건 종류 (효과 수치는 BALANCE.provisional.tiles). 이름만 종족 스킨 (GDD 6장) */
-export type EnvironmentPreset = 'reshuffle' | 'power' | 'shield' | 'void';
+/** training (C.124, GDD 65장): 전투 조건은 그대로, 이 칸 전투에 이기면 노력치 +1 (BALANCE.provisional.tiles.training) */
+export type EnvironmentPreset = 'reshuffle' | 'power' | 'shield' | 'void' | 'training';
 
 /** 이벤트 타일 종류 (GDD 25-5 ③, 드래프트로만 얻고 한 번 밟으면 사라진다). 수치는 BALANCE.provisional.tileVariants.events */
 export const TILE_EVENTS = ['merchant', 'altar', 'treasure', 'trap', 'crossroads'] as const;
 export type TileEvent = (typeof TILE_EVENTS)[number];
 
 export type TileEffect =
-  | { type: 'spawn'; enemyClass: 'normal' | 'elite' }
+  /** hunter (C.124, GDD 65장): 강적보다 센 사냥꾼 — 강적 바퀴 상한에 밀리지 않고, 이기면 흡수 후보 수 배율 (BALANCE.provisional.tiles.hunter) */
+  | { type: 'spawn'; enemyClass: 'normal' | 'elite'; hunter?: boolean }
   | { type: 'environment'; preset: EnvironmentPreset }
-  | { type: 'rest' }
-  | { type: 'event'; event: TileEvent };
+  /** spring (C.124, GDD 65장): 회복 없이 리스크만 크게 깎는 휴식 (BALANCE.provisional.tiles.spring) */
+  | { type: 'rest'; spring?: boolean }
+  | { type: 'event'; event: TileEvent }
+  /** 메아리 (C.124, GDD 65장): 바로 앞 칸 타일의 효과를 한 번 더. 메아리끼리는 이어지지 않는다 */
+  | { type: 'echo' };
 
 export interface TerrainTileDef {
   id: string;
-  kind: 'prey-nest' | 'elite-den' | 'environment' | 'rest' | 'combo' | 'event';
+  kind: 'prey-nest' | 'elite-den' | 'environment' | 'rest' | 'combo' | 'event' | 'special';
   /** 종족별 스킨 이름. 해당 종족 키(또는 '*')가 없으면 그 종족은 이 타일을 쓰지 않는다 */
   name: PerFaction<string>;
   effect: TileEffect;

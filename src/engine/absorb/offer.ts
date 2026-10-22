@@ -106,8 +106,9 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
  *  후보가 2개 이상이면 둘째부터는 다른 속성 특성에서 나온다(otherElementCandidate) — 원소 상성 순환(물 → 불 → 흙 → 뇌 → 물)에서 처음 원소를 얻는 길이 막히지 않게 */
 /** extraCandidates: 원정 시너지·바퀴 변이의 흡수 후보 +n (GDD 25-5). bossTrait: 보스를 이긴 흡수 화면의 보스 특성 (GDD 25-3, 아직 없으면 첫 후보로 확정).
  *  보스 특성(boss: true)은 그 밖의 후보에는 나오지 않는다 */
+/** candidateMult: 기본 후보 수 배율 (포식자 둥지 사냥꾼 승리, C.124 GDD 65장) */
 /** special: 특수 속성 특성 숨김 (GDD 49-7 ①) — chance 로 이번 풀에 넣을지 굴린다(0 이면 숨김, 1 이면 늘. 그 사이만 rng 를 쓴다). 없으면 숨김 */
-export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, special: { chance: number; gates: SpecialGate[] } = { chance: 0, gates: [] }): AbsorbOffer {
+export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, special: { chance: number; gates: SpecialGate[] } = { chance: 0, gates: [] }, candidateMult = 1): AbsorbOffer {
   const elite = enemy.class === 'elite';
   const rare = enemy.rare === true;
   const specialOpen = special.chance >= 1 || (special.chance > 0 && nextFloat(rng) < special.chance);
@@ -122,7 +123,7 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
   }
   const own = pool.filter((t) => !t.rare && !candidates.includes(t.id));
   const other = free.filter((t) => !t.rare && t.element !== enemy.element);
-  const want = (elite ? AX.candidatesElite : 1 + nextInt(rng, AX.candidatesNormalMax)) + extraCandidates + (bossAdded ? 1 : 0);
+  const want = (elite ? AX.candidatesElite : 1 + nextInt(rng, AX.candidatesNormalMax)) * candidateMult + extraCandidates + (bossAdded ? 1 : 0);
   while (candidates.length < want) {
     const list = (AX.otherElementCandidate && candidates.length > 0 && other.length > 0) || own.length === 0 ? other : own;
     if (list.length === 0) break;

@@ -46,6 +46,8 @@ export function guideVars(f: FactionConfig): Record<string, string> {
   const [prey, elite, rest] = BALANCE.provisional.expedition.starterTiles;
   return {
     'tile.prey': tileName(prey!, f.id), 'tile.elite': tileName(elite!, f.id), 'tile.rest': tileName(rest!, f.id),
+    // C.124 (GDD 65장): 뽑기 전용 새 타일 4종
+    'tile.training': tileName('env-training', f.id), 'tile.hunter': tileName('hunter-den', f.id), 'tile.spring': tileName('rest-spring', f.id), 'tile.echo': tileName('echo', f.id),
     comboExample: synergyName('oasis', f.id),
     starterCount: String(BALANCE.provisional.expedition.starterTiles.length),
     statEv: String(BALANCE.provisional.tutorialRun.statEv),

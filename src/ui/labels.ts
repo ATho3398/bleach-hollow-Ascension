@@ -97,15 +97,20 @@ export function comboBlockLabel(labels: Pick<BattleLabels, 'families'>, family: 
 export function tileHint(t: TerrainTileDef): string {
   const e = t.effect;
   let base: string;
-  if (e.type === 'spawn') base = e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
+  const T = BALANCE.provisional.tiles;
+  if (e.type === 'spawn' && e.hunter) base = `강적보다 센 사냥꾼 1마리 (체력 ×${T.hunter.hpMult}·공격 ×${T.hunter.attackMult}) · 이기면 흡수 후보 ×${T.hunter.absorbCandidateMult}`;
+  else if (e.type === 'spawn') base = e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
+  else if (e.type === 'rest' && e.spring) base = `회복 없음 · 리스크를 휴식의 ${T.spring.riskReliefMult}배 깎는다 (시간 소모)`;
   else if (e.type === 'rest') base = '배부름·컨디션 회복 (시간 소모)';
   else if (e.type === 'event') return eventHint(e.event);
+  else if (e.type === 'echo') return '바로 앞 칸 타일의 효과를 한 번 더 (앞 칸이 빈 칸·메아리면 없음)';
   else {
     base = {
       reshuffle: '전투 중 블록 바의 순서가 주기적으로 섞인다',
       power: '전투 공격 위력 ×1.3',
       shield: '전투에서 받는 피해 ↓',
       void: '전투 공허 블록 ↑',
+      training: `약한 적 · 이기면 노력치 +${T.training.ev} (그 적의 능력치 하나, 상한 안)`,
     }[e.preset];
   }
   return t.upgradeOf ? `${base} · 상위: ${variantModsText(TV.upgrade[t.kind] as VariantMods).join(' · ')}` : base;

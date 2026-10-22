@@ -101,7 +101,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로 안 감), 지금 캐릭터에 바로`;
     case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로 안 감), 지금 캐릭터에 바로`;
     case 'trainingTicket': return `지금 트랙 수련권 +1 (최대 ${BALANCE.provisional.training.ticketsMax})`;
-    case 'tileDraw': return `원정 타일 1장 → 보관함 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}%, 첫 뽑기는 환경 타일`;
+    case 'tileDraw': return `원정 타일 1장 → 보관함 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}% · ${TD.groups.spring!.map((id) => tileName(id, faction.id)).join('·')} ${TD.weights.spring}% · 희귀(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) ${TD.weights.rare}%, 첫 뽑기는 환경 타일`;
     case 'rareTile': return '덱 밖 타일 무작위 1장 → 보관함 (이벤트 타일 제외)';
     case 'reroll': return `흡수 화면 특성 후보를 한 번 다시 뽑는다 (흡수 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `원정 타일 덱 칸 +1 (영구, 두 트랙 공유, 최대 +${SX.deckSlotPrices.length})`;

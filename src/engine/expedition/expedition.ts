@@ -46,6 +46,7 @@ const FREE_BOSS_SEED_SALT = 0x1b873593;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 const TUT = BALANCE.provisional.tutorialRun;
+const TT = BALANCE.provisional.tiles;
 
 export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'event' | 'ended';
 /** story-clear = 스토리 화 목표를 이뤄 바로 귀환 (GDD 25-4, C.58) */
@@ -84,6 +85,10 @@ export interface BattleMods {
   absorbBonus: number;
   extraBattle: number;
   eliteSoulBonus: number;
+  /** 흡수 후보 수 배율 (포식자 둥지, C.124 — 없으면 1) */
+  absorbMult?: number;
+  /** 이기면 오르는 노력치 (뼈 표식/수련 말뚝, C.124 — 없으면 0) */
+  trainingEv?: number;
 }
 
 const NO_MODS: BattleMods = { rewardMult: 1, goldMult: 1, foodMult: 1, foodChanceBonus: 0, absorbBonus: 0, extraBattle: 0, eliteSoulBonus: 0 };
@@ -265,6 +270,10 @@ export interface ExpeditionState extends RiskState {
   queuedBattle: { cell: number; synergy: string | null } | null;
   /** 지금 휴식의 회복 배율 (상위 타일·시너지, phase 'rest') */
   restMult: number;
+  /** 지금 휴식이 영혼 샘/정화의 샘인가 (C.124, phase 'rest' — 회복 대신 리스크만 크게) */
+  restSpring?: boolean;
+  /** 바로 앞 칸에서 효과가 난 타일 (메아리, C.124): 이벤트 타일은 밟으면 사라지므로 밟은 순간의 id 를 둔다. 메아리 칸·보스 칸·빈 칸이면 null */
+  lastTile?: { cell: number; tileId: string } | null;
   /** 바퀴 변이(폭풍)로 더 받는 영혼 결정 */
   bonusSoul: number;
   variantLog: VariantLog;
@@ -448,11 +457,11 @@ function randomSeed(rng: Rng): number {
   return Math.floor(nextFloat(rng) * 2 ** 32);
 }
 
-/** 전투를 일으키는 타일인가 (휴식·이벤트는 아님) */
+/** 전투를 일으키는 타일인가 (휴식·이벤트는 아님. 메아리는 앞 칸에 따라 다르므로 계획에서는 전투로 세지 않는다 — 앞 칸이 전투면 한 번 더) */
 function causesBattle(id: string | null): boolean {
   if (id === null) return false;
   const t = getTile(id).effect.type;
-  return t !== 'rest' && t !== 'event';
+  return t !== 'rest' && t !== 'event' && t !== 'echo';
 }
 
 /** 새 바퀴 시작: 야생 전투 칸을 뽑는다. 놓은 전투 타일이 기본 전투 횟수를 대신하고, 기본 횟수보다 많이 놓으면 그만큼 전투가 는다 */
@@ -585,6 +594,9 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   exp.pos = (exp.pos + 1) % EX.loopTiles;
   exp.elapsedSeconds += EX.secondsPerTile;
+  // 메아리 (C.124): 바로 앞 칸에서 효과가 난 타일만 기억한다 (이번 칸 처리 전에 비운다)
+  const prevTile = exp.lastTile ?? null;
+  exp.lastTile = null;
   // 진화 타이밍 = 걸음 수 (GDD 20-5 v4.1). 남은 걸음 20%·10% 순간 임박 알림
   const near = recordEvolutionStep(exp.evolution);
   if (near !== null) exp.events.push({ kind: 'evolution-near', level: near });
@@ -623,8 +635,14 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     exp.elitesThisLap++;
     return startBattleAt(exp, cell, 'elite', false, null, null, false, fa.bossId);
   }
-  const id = exp.slots[cell];
-  const tile = id ? getTile(id) : null;
+  let id = exp.slots[cell];
+  let tile = id ? getTile(id) : null;
+  // 메아리 (C.124, GDD 65장): 바로 앞 칸 타일의 효과를 이 칸에서 한 번 더. 앞 칸이 빈 칸·메아리·보스 칸이면 아무 일 없음
+  if (tile?.effect.type === 'echo') {
+    if (!prevTile || prevTile.cell !== cell - 1) return { kind: 'move', cell, lap: exp.lap };
+    id = prevTile.tileId;
+    tile = getTile(id);
+  } else if (id && tile) exp.lastTile = { cell, tileId: id };
   // 인접 시너지 (GDD 25-5 ②): 왼쪽 칸에 들어설 때 기록·보호막, 오른쪽 칸에서 한 번 쓰는 리스크
   const syn = exp.tileVariants ? synergyAt(exp.slots, cell) : null;
   if (syn) {
@@ -642,6 +660,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   if (tile?.effect.type === 'rest') {
     exp.restMult = combineMods(upgradeMods(id), syn ? synergyMods(syn.id) : null).restMult ?? 1;
+    exp.restSpring = tile.effect.spring === true;
     exp.phase = 'rest';
     return { kind: 'rest', cell };
   }
@@ -659,7 +678,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     combo = true;
   }
   if (cls === null) return { kind: 'move', cell, lap: exp.lap };
-  // 강적은 바퀴당 최대 1마리: 넘치면 일반 적으로 낮춘다 (GDD 2-1)
+  // 강적은 바퀴당 최대 1마리: 넘치면 일반 적으로 낮춘다 (GDD 2-1). 사냥꾼(포식자 둥지, C.124)도 강적이라 같은 상한 — 낮아지면 사냥꾼이 아니다
   if (cls === 'elite' && exp.elitesThisLap >= BALANCE.battle.maxElitesPerLap) {
     cls = 'normal';
     combo = false;
@@ -706,7 +725,13 @@ function startBattleAt(
   let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1) * (exp.tutorial ? TUT.enemyHpMult : 1);
   const atkK = (m.enemyAttackMult ?? 1) * (exp.tutorial ? TUT.enemyAttackMult : 1);
-  if (hpK !== 1 || atkK !== 1) enemy = scaleEnemy(enemy, { hp: hpK, attack: atkK });
+  // 사냥꾼 (포식자 둥지, C.124): 강적 수치 × 배율, 이기면 흡수 후보 × 배율
+  const hunter = !bossId && !combo && cls === 'elite' && tile?.effect.type === 'spawn' && tile.effect.hunter === true;
+  const hpK2 = hpK * (hunter ? TT.hunter.hpMult : 1);
+  const atkK2 = atkK * (hunter ? TT.hunter.attackMult : 1);
+  if (hpK2 !== 1 || atkK2 !== 1) enemy = scaleEnemy(enemy, { hp: hpK2, attack: atkK2 });
+  // 뼈 표식/수련 말뚝 (C.124): 이기면 노력치 (상위 타일은 envMult 배)
+  const trainingEv = !bossId && tile?.effect.type === 'environment' && tile.effect.preset === 'training' ? Math.round(TT.training.ev * (m.envMult ?? 1)) : 0;
   const pending: PendingBattle = {
     enemy,
     seed: randomSeed(exp.rng),
@@ -719,6 +744,7 @@ function startBattleAt(
     mods: {
       rewardMult, goldMult, foodMult: m.foodMult ?? 1, foodChanceBonus: m.foodChanceBonus ?? 0, absorbBonus: m.absorbBonus ?? 0,
       extraBattle: !second && syn?.role === 'right' ? sm?.extraBattle ?? 0 : 0, eliteSoulBonus: m.eliteSoulBonus ?? 0,
+      ...(hunter ? { absorbMult: TT.hunter.absorbCandidateMult } : {}), ...(trainingEv > 0 ? { trainingEv } : {}),
     },
     synergy: syn?.id ?? null,
     trap,
@@ -825,6 +851,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   const gold = Math.round((elite ? GX.elite : GX.normal) * mods.rewardMult * mods.goldMult);
   if (gold > 0) (exp.goldLoot ??= []).push({ amount: gold, lap: exp.lap });
   if (elite && mods.eliteSoulBonus > 0) exp.bonusSoul = (exp.bonusSoul ?? 0) + mods.eliteSoulBonus;
+  if ((mods.trainingEv ?? 0) > 0) trainingTileEv(exp, pending.enemy, mods.trainingEv!);
   exp.victoriesThisLap++;
   // 사냥 무리 2연전: 흡수 화면을 마친 뒤 다음 advance 에서
   if (mods.extraBattle > 0) exp.queuedBattle = { cell: pending.cell, synergy: pending.synergy ?? null };
@@ -834,7 +861,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   const storyAbsorb = ob?.type === 'absorb' && pending.enemy.class === ob.enemyClass;
   // 첫 원정 튜토리얼 (GDD 67장): 이기면 늘 흡수 화면 (시스템상 흡수가 아니라 tutorialAbsorb 로 끝난다)
   if (canAbsorb(battle) || storyAbsorb || exp.tutorial) {
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, specialGateOf(exp, elite, false));
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, specialGateOf(exp, elite, false), mods.absorbMult ?? 1);
     if (exp.absorbOffer.reasons.length === 0) exp.absorbOffer.reasons.push(exp.tutorial ? 'tutorial' : 'story-objective');
     exp.phase = 'absorb';
   } else {
@@ -845,6 +872,24 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
 }
 
 export type AbsorbResult = { ok: true } | { ok: false; reason: string };
+
+/** 뼈 표식/수련 말뚝 (C.124, GDD 65장): 그 적의 노력치(ev)가 가장 큰 능력치 하나에 n (단계 상한 안 — 넘으면 0). 오른 양을 엔진 이벤트로 */
+function trainingTileEv(exp: ExpeditionState, enemy: EnemyDef, n: number): void {
+  const stat = trainingStatOf(enemy);
+  if (!stat) return;
+  const got = addEv(exp.evolution, { [stat]: n })[stat] ?? 0;
+  exp.events.push({ kind: 'tile-ev', stat, amount: got });
+}
+
+/** 수련 타일이 올릴 능력치: 적 ev 가 가장 큰 것 (같으면 STAT_IDS 순서 앞). ev 가 없으면 null */
+export function trainingStatOf(enemy: Pick<EnemyDef, 'ev'>): StatId | null {
+  let best: StatId | null = null;
+  for (const s of STAT_IDS) {
+    const v = enemy.ev?.[s] ?? 0;
+    if (v > 0 && (best === null || v > (enemy.ev?.[best] ?? 0))) best = s;
+  }
+  return best;
+}
 
 /** 특수 속성 특성 숨김이 풀릴 확률 (GDD 49-7 ①): 강적·보스 / 바퀴 변이 / 원정 난이도 */
 function specialGateOf(exp: ExpeditionState, elite: boolean, boss: boolean): ReturnType<typeof specialTraitChance> {
@@ -947,10 +992,13 @@ export function finishRest(exp: ExpeditionState): void {
   if (exp.phase !== 'rest') throw new Error('휴식 중이 아니다');
   // 회복 배율: 상위 타일(휴식+)·시너지(오아시스) (GDD 25-5)
   const k = exp.restMult ?? 1;
-  exp.hunger = Math.max(0, exp.hunger - PX.restHunger * k);
-  changeRisk(exp, -RX.restRelief * k, 'rest');
-  exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition * k);
+  // 영혼 샘/정화의 샘 (C.124): 회복 대신 리스크만 크게
+  const sp = exp.restSpring ? TT.spring : { hungerMult: 1, conditionMult: 1, riskReliefMult: 1 };
+  exp.hunger = Math.max(0, exp.hunger - PX.restHunger * k * sp.hungerMult);
+  changeRisk(exp, -RX.restRelief * k * sp.riskReliefMult, 'rest');
+  exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition * k * sp.conditionMult);
   exp.restMult = 1;
+  exp.restSpring = false;
   exp.elapsedSeconds += PX.restTimeTiles * EX.secondsPerTile;
   // 휴식 타일을 지나면 간식 +1 (GDD 23-1)
   for (let i = 0; i < FX.restSnack; i++) exp.foodLoot.push({ food: 'snack', lap: exp.lap });
@@ -1066,7 +1114,7 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
     } else return { ok: false, reason: '길을 골라야 한다' };
   }
   exp.variantLog.events.push({ event: ev.event, choice: log, lap: exp.lap });
-  exp.slots[ev.cell] = null; // 한 번 밟으면 사라진다
+  if (exp.slots[ev.cell] === ev.tileId) exp.slots[ev.cell] = null; // 한 번 밟으면 사라진다 (메아리 칸에서 한 번 더 난 이벤트면 메아리는 남는다)
   exp.eventPending = null;
   exp.phase = 'moving';
   return { ok: true, text };

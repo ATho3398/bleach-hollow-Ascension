@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 60;
+export const BALANCE_VERSION = 61;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -468,8 +468,9 @@ export const BALANCE = {
      *  묶음 확률(%): 기본 3종(둥지 A·소굴 A·휴식) · 환경(그 종족 스킨이 있는 것) · B형 2종(둥지 B·소굴 B). 그 종족이 못 쓰는 묶음은 빼고 나머지 비율로. 첫 뽑기는 firstGroup 확정 */
     tileDraw: {
       price: 300, // C.120 측정: 4바퀴 원정 전투 골드 2단계 133·3단계 136·4단계 155·5단계 166 → 뽑기 1회 = 원정 2.3·2.2·1.9·1.8회 (먹이 넘침 골드 빼고, dev-log C.120). 마스터 추천 '약 30' 은 원정 0.2회분이라 목표(2~3회)에 못 맞춤
-      weights: { basic: 50, env: 35, b: 15 } as Record<string, number>,
-      groups: { basic: ['prey-nest-a', 'elite-den-a', 'rest-a'], b: ['prey-nest-b', 'elite-den-b'] } as Record<string, string[]>,
+      // C.124 (GDD 65장): 영혼 샘 묶음 spring 6 · 드문 묶음 rare(포식자 둥지·메아리) 8 을 더하고 나머지를 줄임. 뼈 표식/수련 말뚝은 환경 묶음에 들어간다
+      weights: { basic: 44, env: 30, b: 12, spring: 6, rare: 8 } as Record<string, number>,
+      groups: { basic: ['prey-nest-a', 'elite-den-a', 'rest-a'], b: ['prey-nest-b', 'elite-den-b'], spring: ['rest-spring'], rare: ['hunter-den', 'echo'] } as Record<string, string[]>,
       firstGroup: 'env',
     },
     /** 첫 원정 튜토리얼 (GDD 67장, C.120, provisional): 고정 길 cell 번 칸에서 약한 적 1마리(체력·공격 배율), 첫 흡수 대신 모든 능력치 노력치 +statEv (1단계 상한 합 24·능력치당 12 안) */
@@ -484,6 +485,13 @@ export const BALANCE = {
       shield: { damageTakenMultiplier: 0.8 },
       /** 폐가: 공허 블록 생성 확률 +0.1 */
       void: { voidChanceBonus: 0.1 },
+      /** 뼈 표식 / 수련 말뚝 (C.124, GDD 65장): 이 칸 전투에 이기면 노력치 +ev — 능력치는 그 적의 노력치(ev, 52장 스탯 가중치)가 가장 큰 것 하나, 단계 상한 안(넘으면 0). 상위 타일은 × envMult 반올림 */
+      training: { ev: 1 },
+      /** 포식자 둥지 / 사냥꾼 출몰지 (C.124, GDD 65장): 강적 풀의 적 × 체력·공격 배율. 강적이라 바퀴 상한(maxElitesPerLap)을 같이 쓴다(넘치면 일반 적 = 사냥꾼 아님). 이기면 흡수 후보 수 × absorbCandidateMult.
+       *  기획서 '약 ×1.3' → 체력 1.3·공격 1.15: 둘 다 1.3 이면 덱에 한 장 넣은 봇의 4바퀴 원정 패배가 호로 7.3→18.3%·사신 3.0→15.7%, 공격 1.15 면 14.3%·12.3% (dev-log C.124) */
+      hunter: { hpMult: 1.3, attackMult: 1.15, absorbCandidateMult: 2 },
+      /** 영혼 샘 / 정화의 샘 (C.124, GDD 65장): 휴식(rest-a) 대비 배율 — 배부름·컨디션 회복 0, 리스크 감소 ×2. 간식 +1 은 휴식과 같다 */
+      spring: { hungerMult: 0, conditionMult: 0, riskReliefMult: 2 },
     },
     /** 원정 전투 승리 골드 (GDD 25-5 의 골드 보상 배율이 기대는 바탕값, C.57 정한 것 — 23-4 얻는 곳 중 '원정' 자리). 강적 = 소굴·조합으로 나온 강적 */
     gold: { normal: 6, elite: 20 },
