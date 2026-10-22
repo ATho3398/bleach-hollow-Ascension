@@ -51,6 +51,63 @@ def make_palette(pixels: np.ndarray, n: int) -> np.ndarray:
     return np.array(pal)
 
 
+def material_palette(pixels: np.ndarray, outline_l: float = 10, family_dist: float = 14, l_weight: float = 0.6,
+                     min_share: float = 0.02, max_colors: int = 16) -> tuple[np.ndarray, list]:
+    """재질별 2톤 팔레트: 외곽선 1색 + 재질(피부·옷·머리카락…)마다 기본색 1 + 그림자 1.
+    재질 = 색상·채도가 비슷한 색 무리(밝기 차이는 덜 따짐). 아주 작은 재질(눈 등, 칸 비율 < min_share)은 1색."""
+    uniq, cnt = np.unique(pixels, axis=0, return_counts=True)
+    lab = _lab(uniq.astype(float))
+    pal, info = [], []
+    dark = lab[:, 0] < outline_l
+    if dark.any():
+        pal.append(uniq[dark][cnt[dark].argmax()])
+        info.append(('외곽선', 1))
+    idx = np.nonzero(~dark)[0]
+    # 무리 짓기: 밝기는 0.4배로 덜 따져 같은 재질의 밝은 면·그림자가 한 무리가 되게(평균 연결 병합)
+    feat = lab[idx] * np.array([l_weight, 1.0, 1.0])
+    groups = [[i] for i in range(len(idx))]
+    cen = [feat[i].copy() for i in range(len(idx))]
+    w = [float(cnt[idx[i]]) for i in range(len(idx))]
+    while len(groups) > 1:
+        C = np.array(cen)
+        d = ((C[:, None] - C[None]) ** 2).sum(2) ** 0.5
+        np.fill_diagonal(d, np.inf)
+        i, j = np.unravel_index(d.argmin(), d.shape)
+        if d[i, j] > family_dist:
+            break
+        cen[i] = (cen[i] * w[i] + cen[j] * w[j]) / (w[i] + w[j])
+        w[i] += w[j]
+        groups[i] += groups[j]
+        del groups[j], cen[j], w[j]
+    total = cnt.sum()
+    order = sorted(range(len(groups)), key=lambda g: -w[g])
+    for g in order:
+        mem = idx[groups[g]]
+        share = cnt[mem].sum() / total
+        if share < 0.002:
+            continue  # 몇 칸뿐인 잡색은 가까운 재질로
+        tones = 1 if share < min_share or len(mem) < 2 else 2
+        if len(pal) + tones > max_colors:
+            tones = max_colors - len(pal)
+            if tones <= 0:
+                break
+        L = lab[mem, 0]
+        if tones == 1:
+            pal.append(uniq[mem][cnt[mem].argmax()])
+        else:
+            # 밝기 기준 둘로: 무게 중간값으로 나눠 밝은 쪽 = 기본색, 어두운 쪽 = 그림자
+            o = np.argsort(L)
+            cw = np.cumsum(cnt[mem][o])
+            cut = np.searchsorted(cw, cw[-1] * 0.45)
+            lo, hi = mem[o[:cut + 1]], mem[o[cut + 1:]]
+            for part in (hi, lo):
+                if len(part):
+                    pal.append(uniq[part][cnt[part].argmax()])
+        hexes = '#%02x%02x%02x' % tuple(uniq[mem][cnt[mem].argmax()])
+        info.append((hexes, tones))
+    return np.array(pal), info
+
+
 def apply(a: np.ndarray, pal: np.ndarray) -> np.ndarray:
     out = a.copy()
     op = a[..., 3] > 0
@@ -69,6 +126,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('images', nargs='+')
     ap.add_argument('--colors', type=int, default=16)
+    ap.add_argument('--material', action='store_true', help='재질별 기본색 + 그림자 1톤(외곽선 1색) 방식')
     ap.add_argument('--shared', action='store_true', help='모든 입력 그림이 한 팔레트를 같이 쓴다')
     ap.add_argument('--out', default='scripts/depixel/out/palette')
     args = ap.parse_args()
@@ -78,7 +136,11 @@ def main():
     if args.shared:
         shared = make_palette(np.concatenate([a[a[..., 3] > 0][:, :3] for _, a in imgs]), args.colors)
     for p, a in imgs:
-        pal = shared if shared is not None else make_palette(a[a[..., 3] > 0][:, :3], args.colors)
+        if args.material:
+            pal, info = material_palette(a[a[..., 3] > 0][:, :3], max_colors=args.colors)
+            print('  재질:', ', '.join(f'{h}×{t}' for h, t in info))
+        else:
+            pal = shared if shared is not None else make_palette(a[a[..., 3] > 0][:, :3], args.colors)
         out = apply(a, pal)
         Image.fromarray(out).save(os.path.join(args.out, os.path.basename(p)))
         print(f'{os.path.basename(p)}: {colors(a)}색 → {colors(out)}색')
