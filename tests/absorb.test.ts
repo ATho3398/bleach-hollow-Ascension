@@ -360,7 +360,7 @@ describe('희귀 개체', () => {
     for (const element of ['fire', 'water', 'kyo']) {
       for (let seed = 1; seed <= 30; seed++) {
         // 특수 속성(허)은 숨김이 풀린 화면에서만 (C.106, 49-7 ①)
-        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare: true }, newBuild(), NO, 0, null, { chance: 1, gates: ['elite'] });
+        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare: true }, newBuild(), NO, 0, null);
         expect(offer.rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).element).toBe(element);
@@ -825,7 +825,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
     for (const l of ELEMENTS) {
       for (let seed = 1; seed <= 30; seed++) {
         // C.125 (70장): 후보는 그 적 속성 안에서만 — 특수 속성(혈·독·허)은 숨김이 열렸을 때로 본다
-        const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO, 0, null, { chance: 1, gates: ['elite'] });
+        const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO, 0, null);
         const f = fams(offer.candidates);
         expect(f.length, `${l.id}/${seed}`).toBeGreaterThanOrEqual(2);
         expect(new Set(f).size, `${l.id}/${seed}`).toBeGreaterThanOrEqual(2);
@@ -838,7 +838,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
     gainTrait(b, 't-fire-a'); // 계열 a 장착
     for (const l of ELEMENTS) {
       for (let seed = 1; seed <= 30; seed++) {
-        const offer = buildOffer(createRng(seed), normal(l.id), b, NO, 0, null, { chance: 1, gates: ['elite'] });
+        const offer = buildOffer(createRng(seed), normal(l.id), b, NO, 0, null);
         expect(fams(offer.candidates).some((f) => !equippedAttackFamilies(b).has(f)), `${l.id}/${seed}`).toBe(true);
       }
     }

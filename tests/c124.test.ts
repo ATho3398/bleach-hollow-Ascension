@@ -4,7 +4,7 @@ import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import { baseTilesFor, getTile, tileName, upgradeIdOf } from '../src/data/tiles';
 import { getEnemy } from '../src/data/enemies';
 import { createRng } from '../src/engine/rng';
-import { buildOffer, isSpecialTrait } from '../src/engine/absorb';
+import { buildOffer } from '../src/engine/absorb';
 import { evCaps } from '../src/engine/evolution';
 import {
   advance, createExpedition, drainEvents, finishBattle, finishRest, resolveEvent, startBattle, trainingStatOf, type ExpeditionState,
@@ -131,15 +131,14 @@ describe('포식자 둥지 / 사냥꾼 출몰지', () => {
     advance(e);
     winBattle(e);
     expect(e.phase).toBe('absorb');
-    // C.125 (70장): 후보는 그 적 속성 안에서만 — 특수 속성(혈·독·허) 적은 숨김이 닫히면 0개
-    const closed = isSpecialTrait({ element: e.absorbOffer!.element }) && !e.absorbOffer!.specialOpen;
-    expect(e.absorbOffer!.candidates.length).toBe(closed ? 0 : BALANCE.provisional.absorb.candidatesElite * T.hunter.absorbCandidateMult);
+    // C.125 (70장): 후보는 그 적 속성 안에서만. C.127 (75장): 특수 속성 특성 숨김이 없어져 늘 배율만큼
+    expect(e.absorbOffer!.candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite * T.hunter.absorbCandidateMult);
     // buildOffer 단위: 배율 1 이면 예전과 같다
-    const enemy = { ...getEnemy('fire-heavy-seal'), class: 'elite' as const }; // C.125: 숨김 없는 속성 적으로 (특수 속성 적은 숨김이 닫히면 후보 0)
+    const enemy = { ...getEnemy('fire-heavy-seal'), class: 'elite' as const }; // C.125: 원소 속성 적으로
     const input = { status: 'won' as const, finisher: null, chain3Count: 0, weakChain3Count: 0, params: { skills: [] } };
     const build = { owned: [], slots: [null, null, null, null] };
     expect(buildOffer(createRng(1), enemy, build, input).candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite);
-    expect(buildOffer(createRng(1), enemy, build, input, 0, null, undefined, 2).candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite * 2);
+    expect(buildOffer(createRng(1), enemy, build, input, 0, null, 2).candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite * 2);
   });
 });
 

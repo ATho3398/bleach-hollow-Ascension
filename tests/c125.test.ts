@@ -9,15 +9,14 @@ import { createRng } from '../src/engine/rng';
 import { advance, createExpedition, finishBattle, offerElementsOf, rerollAbsorb, startBattle } from '../src/engine/expedition';
 
 const WON = { status: 'won' as const, finisher: null, chain3Count: 0, weakChain3Count: 0 };
-const OPEN = { chance: 1, gates: ['elite' as const] };
 const elementsOf = (ids: string[]) => new Set(ids.map((id) => getTrait(id).element));
 
 describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', () => {
-  it('독 일반·독 강적(특수 속성 숨김이 열림) → 후보는 독 특성만, 여러 시드·후보 +n 에서도', () => {
+  it('독 일반·독 강적 → 후보는 독 특성만, 여러 시드·후보 +n 에서도', () => {
     for (let seed = 1; seed <= 60; seed++) {
       for (const id of ['poison-basic', 'poison-heavy-chain', 'water-basic', 'thunder-stance', 'normal-basic']) {
         const enemy = getEnemy(id);
-        const o = buildOffer(createRng(seed), enemy, newBuild(), WON, seed % 3, null, OPEN);
+        const o = buildOffer(createRng(seed), enemy, newBuild(), WON, seed % 3, null);
         expect(o.candidates.length).toBeGreaterThan(0);
         expect([...elementsOf(o.candidates)]).toEqual([enemy.element]);
       }
@@ -34,7 +33,7 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
   it('다시 뽑기도 그 적 속성 안에서만 (확정 희귀 후보는 그대로)', () => {
     for (let seed = 1; seed <= 40; seed++) {
       const enemy = { ...getEnemy('poison-heavy-seal'), rare: true };
-      const o = buildOffer(createRng(seed), enemy, newBuild(), WON, 1, null, OPEN);
+      const o = buildOffer(createRng(seed), enemy, newBuild(), WON, 1, null);
       const again = rerollCandidates(createRng(seed + 1000), o, newBuild());
       expect([...elementsOf(again)]).toEqual(['poison']);
       expect(again[0]).toBe(o.candidates[0]); // 희귀 특성 확정 후보
@@ -56,16 +55,17 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
     }
   });
 
-  it('특수 속성 숨김(49-7 ①)이 닫히면 독 적은 특성 후보 0개 (다른 속성으로 채우지 않음)', () => {
+  it('C.127 (75장): 특성 숨김이 없어져 독 일반도 늘 독 특성 후보가 있다 (옛: 숨김이 닫히면 0개)', () => {
     const o = buildOffer(createRng(1), getEnemy('poison-basic'), newBuild(), WON);
-    expect(o.candidates).toEqual([]);
+    expect(o.candidates.length).toBeGreaterThan(0);
+    expect([...elementsOf(o.candidates)]).toEqual(['poison']);
   });
 
   it('속성이 바뀌는 보스(숲의 군주)는 그 속성들 안에서, 보스 특성은 확정 후보', () => {
     const els = offerElementsOf('forest-lord', getBoss('forest-lord').enemy.element);
     expect(els.sort()).toEqual(['kyo', 'thunder', 'water']);
     for (let seed = 1; seed <= 20; seed++) {
-      const o = buildOffer(createRng(seed), getBoss('forest-lord').enemy, newBuild(), WON, 0, getBoss('forest-lord').trait, OPEN, 1, els);
+      const o = buildOffer(createRng(seed), getBoss('forest-lord').enemy, newBuild(), WON, 0, getBoss('forest-lord').trait, 1, els);
       expect(o.candidates[0]).toBe(getBoss('forest-lord').trait);
       for (const id of o.candidates) expect(els).toContain(getTrait(id).element);
     }

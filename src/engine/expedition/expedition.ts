@@ -5,14 +5,14 @@ import { BALANCE } from '../../config/balance';
 import { scaleEnemy } from '../../data/enemies';
 import { applyDifficultyToParams, clampDifficulty, clampStreak, difficultyEnemyScale, difficultyGoldMultiplier, difficultyRewardMultiplier, recommendedDifficulty, scaleEv, streakEnemyFactor } from '../difficulty';
 import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
-import { enemyPool, pickFromPool } from '../enemyPool';
+import { enemyPool, gateSpecialEnemies, pickFromPool, specialEnemyGate } from '../enemyPool';
 import { STAT_IDS, type EnemyDef, type EnvironmentPreset, type StatId } from '../../data/schema';
 import { deckTilesFor, getTile } from '../../data/tiles';
 import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
-  absorbModeRule, absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, specialTraitChance, cloneBuild, gainTrait, lateLapRisk,
+  absorbModeRule, absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, lateLapRisk,
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import {
@@ -557,7 +557,8 @@ function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string
   const g = getGround(exp.groundId);
   // 바퀴 변이(피의 달): 그 속성 적이 사냥터 주 속성처럼 자주 나온다
   const ground = elementBias && !g.elements.includes(elementBias) ? { ...g, elements: [...g.elements, elementBias] } : g;
-  const pool = enemyPool(cls, exp.lap, source, ground);
+  // 특수 속성(혈·독·허) 적 등장 숨김 (GDD 75장, C.127): 강적·공허의 밤·★3 이상에서만 가중치 × 배율, 그 밖은 풀에서 빠진다. 피의 달이 부르는 속성은 그대로
+  const pool = gateSpecialEnemies(enemyPool(cls, exp.lap, source, ground), specialGateOf(exp, cls === 'elite').chance, elementBias);
   if (pool.length === 0) throw new Error(`적 출현 풀이 비었다: ${cls} ${exp.lap}바퀴 ${source}`);
   const base = pickFromPool(exp.rng, pool);
   const rare = nextFloat(exp.rng) < base.rareChance;
@@ -841,7 +842,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     exp.goldLoot.push({ amount: bossGold, lap: exp.lap });
     exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
     exp.victoriesThisLap++;
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, specialGateOf(exp, elite, true), 1, offerElementsOf(pending.boss, pending.enemy.element));
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, 1, offerElementsOf(pending.boss, pending.enemy.element));
+    markSpecialGates(exp, exp.absorbOffer, elite, true);
     exp.phase = 'absorb';
     return record;
   }
@@ -856,7 +858,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 사냥 무리 2연전: 흡수 화면을 마친 뒤 다음 advance 에서
   if (mods.extraBattle > 0) exp.queuedBattle = { cell: pending.cell, synergy: pending.synergy ?? null };
   // 이기면 언제나 흡수 화면 (C.125, GDD 71장: 흡수 조건 삭제 — 흡수 / 놓아줌 네 갈래). 첫 원정 튜토리얼(67장)은 tutorialAbsorb 로 끝난다
-  exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, specialGateOf(exp, elite, false), mods.absorbMult ?? 1);
+  exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, mods.absorbMult ?? 1);
+  markSpecialGates(exp, exp.absorbOffer, elite);
   if (exp.tutorial) exp.absorbOffer.reasons = ['tutorial'];
   exp.phase = 'absorb';
   return record;
@@ -889,13 +892,22 @@ export function offerElementsOf(bossId: string | null, element: string): string[
   return [...new Set([element, ...shifts])];
 }
 
-function specialGateOf(exp: ExpeditionState, elite: boolean, boss: boolean): ReturnType<typeof specialTraitChance> {
-  return specialTraitChance({ elite, boss, difficulty: exp.difficulty, mutationChance: mutationMods(exp.mutation).specialTraitChance });
+/** 특수 속성(혈·독·허) 적 등장 숨김의 출현 배율·까닭 (GDD 75장, C.127): 강적·보스 / 바퀴 변이(공허의 밤) / 원정 난이도 ★ */
+function specialGateOf(exp: Pick<ExpeditionState, 'difficulty' | 'mutation'>, elite: boolean, boss = false): ReturnType<typeof specialEnemyGate> {
+  return specialEnemyGate({ elite, boss, difficulty: exp.difficulty, mutationChance: mutationMods(exp.mutation).specialEnemyChance });
+}
+
+/** 특수 속성 적의 흡수 화면이면 그 적이 나온 까닭을 붙인다 (런 로그 specialGates, GDD 9장 — 히든 조건 대비) */
+function markSpecialGates(exp: ExpeditionState, offer: AbsorbOffer, elite: boolean, boss = false): void {
+  if (!isSpecialTrait({ element: offer.element })) return;
+  const gates = specialGateOf(exp, elite, boss).gates;
+  if (exp.mutation && mutationMods(exp.mutation).elementBias === offer.element && !gates.includes('mutation')) gates.push('mutation');
+  offer.specialGates = gates;
 }
 
 function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null, mode?: AbsorbMode): void {
-  // 숨김 특성 (GDD 49-7 ①, 9장): 풀이 열린 까닭과, 고른 특성이 특수 속성이었는지
-  const hidden = offer.specialOpen ? { specialGates: [...(offer.specialGates ?? [])], ...(absorbed && traitId && isSpecialTrait(getTrait(traitId)) ? { hiddenTrait: true } : {}) } : {};
+  // 특수 속성 적 (GDD 75장, 9장): 그 적이 나온 까닭(등장 숨김이 풀린 까닭)과, 고른 특성이 특수 속성이었는지
+  const hidden = offer.specialGates ? { specialGates: [...offer.specialGates], ...(absorbed && traitId && isSpecialTrait(getTrait(traitId)) ? { hiddenTrait: true } : {}) } : {};
   // 흡수 갈래 (GDD 52, 9장): 흡수했을 때만, 기본 갈래(둘 다)는 적지 않는다(없음 = both, absorbModeOf) — 저장 크기
   exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden, ...(absorbed && mode && mode !== 'both' ? { mode } : {}) });
 }

@@ -13,18 +13,18 @@ describe('C.123 C.118 뒤 밸런스 목표 맞추기', () => {
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(60);
   });
 
-  it('★2 보스 sand-maw 공격 0.37 (체력 150 그대로)', () => {
+  it('★2 보스 sand-maw 공격 0.37 → C.127 0.35 (체력 150 그대로)', () => {
     const e = getBoss('sand-maw').enemy;
-    expect(e.attackInAttacks).toBe(0.37);
+    expect(e.attackInAttacks).toBe(0.35);
     expect(e.hpInAttacks).toBe(150);
   });
 
-  it('★2 강적만 입문 보정 ×0.9, 일반 적과 ★3 강적은 1', () => {
-    expect(DX.eliteEase[2]).toEqual({ hp: 0.9, attack: 0.9 });
+  it('★2 강적 입문 보정 ×0.9 → C.127 ×1 (혈·독·허 적이 ★1~2 길에서 빠져 되돌림), ★3 강적은 1', () => {
+    expect(DX.eliteEase[2]).toEqual({ hp: 1, attack: 1 });
     const elite = difficultyEnemyScale(2, 'elite');
     const normal = difficultyEnemyScale(2, 'normal');
-    expect(elite.hp).toBeCloseTo(normal.hp * 0.9);
-    expect(elite.attack).toBeCloseTo(normal.attack * 0.9);
+    expect(elite.hp).toBeCloseTo(normal.hp);
+    expect(elite.attack).toBeCloseTo(normal.attack);
     expect(DX.eliteEase[3]).toBeUndefined();
   });
 

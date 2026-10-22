@@ -19,9 +19,10 @@ export interface AbsorbRecord {
   lap: number;
   /** C.60 (세이브 형식 24, GDD 25-9): 이 흡수에서 다시 뽑기권으로 후보를 다시 뽑았나 (옛 기록은 없음 = false) */
   rerolled?: boolean;
-  /** C.106 (GDD 49-7 ①): 특수 속성 특성 숨김이 풀린 흡수 화면이면 그 까닭(elite·boss·mutation·difficulty). 옵션 필드 */
+  /** C.106 (GDD 49-7 ①): 특수 속성 특성 숨김이 풀린 흡수 화면이면 그 까닭(elite·boss·mutation·difficulty). 옵션 필드.
+   *  C.127 (GDD 75장): 숨김이 적 등장으로 옮겨 = 특수 속성(혈·독·허) 적의 흡수 화면이면 그 적이 나온 까닭(같은 낱말, 보스·스토리 고정 적은 비어 있을 수 있음) */
   specialGates?: string[];
-  /** C.106: 흡수한 특성이 특수 속성(혈·독·허, 숨김) 특성이었나 */
+  /** C.106: 흡수한 특성이 특수 속성(혈·독·허) 특성이었나 */
   hiddenTrait?: boolean;
   /** C.108 (GDD 52, 세이브 형식 34): 흡수 갈래 trait(속성만)·stat(스탯만). 둘 다(both)·옛 기록은 적지 않는다(absorbModeOf 가 both 로 읽음). 놓아줌(absorbed false)은 없음 */
   mode?: 'both' | 'trait' | 'stat';

@@ -5,7 +5,8 @@ import { TRAITS, getTrait } from '../../data/traits';
 import { SPECIAL_ELEMENT_IDS } from '../../data/elements';
 import type { EnemyDef, StatId, TraitDef } from '../../data/schema';
 import type { CombatState } from '../combat/combat';
-import { nextFloat, nextInt, type Rng } from '../rng';
+import type { SpecialGate } from '../enemyPool';
+import { nextInt, type Rng } from '../rng';
 import type { BuildState } from './build';
 
 const AX = BALANCE.provisional.absorb;
@@ -47,24 +48,8 @@ export interface AbsorbOffer {
   finisherElement: string | null;
   /** 다시 뽑기권으로 후보를 다시 뽑았나 (GDD 25-9, 흡수 1번에 1장) */
   rerolled?: boolean;
-  /** 특수 속성(혈·독·허) 특성이 이번 후보 풀에 들었나 (GDD 49-7 ①, C.106). 없으면 숨김 */
-  specialOpen?: boolean;
-  /** 숨김이 풀린 까닭 (런 로그용, GDD 9장) */
+  /** 특수 속성(혈·독·허) 적이었다면 그 적의 등장 숨김이 풀린 까닭 (런 로그용, GDD 75장·9장). 부르는 쪽(원정)이 채운다 */
   specialGates?: SpecialGate[];
-}
-
-/** 특수 속성 특성 숨김이 풀리는 까닭 (GDD 49-7 ①): 강적 / 보스 / 바퀴 변이(공허의 밤) / 원정 난이도 ★minDifficulty 이상 */
-export type SpecialGate = 'elite' | 'boss' | 'mutation' | 'difficulty';
-
-/** 숨김이 풀릴 확률 (여럿이면 가장 큰 값)과 까닭. mutationChance = 지금 바퀴 변이의 specialTraitChance */
-export function specialTraitChance(o: { elite: boolean; boss: boolean; difficulty: number; mutationChance?: number }): { chance: number; gates: SpecialGate[] } {
-  const S = AX.specialTraits;
-  const rows: [SpecialGate, number][] = [];
-  if (o.elite) rows.push(['elite', S.elite]);
-  if (o.boss) rows.push(['boss', S.boss]);
-  if ((o.mutationChance ?? 0) > 0) rows.push(['mutation', o.mutationChance!]);
-  if (o.difficulty >= S.minDifficulty) rows.push(['difficulty', S.difficulty]);
-  return { chance: Math.max(0, ...rows.map((r) => r[1])), gates: rows.map((r) => r[0]) };
 }
 
 /** 특수 속성(혈·독·허) 특성인가 */
@@ -97,13 +82,11 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
 /** extraCandidates: 원정 시너지·바퀴 변이의 흡수 후보 +n (GDD 25-5). bossTrait: 보스를 이긴 흡수 화면의 보스 특성 (GDD 25-3, 아직 없고 elements 안 속성이면 첫 후보로 확정).
  *  보스 특성(boss: true)은 그 밖의 후보에는 나오지 않는다 */
 /** candidateMult: 기본 후보 수 배율 (포식자 둥지 사냥꾼 승리, C.124 GDD 65장) */
-/** special: 특수 속성 특성 숨김 (GDD 49-7 ①) — chance 로 이번 풀에 넣을지 굴린다(0 이면 숨김, 1 이면 늘. 그 사이만 rng 를 쓴다). 없으면 숨김.
- *  C.125: 숨김이 닫히면 혈·독·허 적은 특성 후보가 0개(다른 속성으로 채우지 않는다 — 70장) */
-export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, special: { chance: number; gates: SpecialGate[] } = { chance: 0, gates: [] }, candidateMult = 1, elements: readonly string[] = [enemy.element]): AbsorbOffer {
+/** C.127 (GDD 75장): 특수 속성(혈·독·허) 특성 숨김(옛 49-7 ①)은 없앴다 — 숨김은 적 등장 쪽(enemyPool gateSpecialEnemies). 혈·독·허 적을 잡으면 그 속성 특성이 늘 후보 */
+export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, candidateMult = 1, elements: readonly string[] = [enemy.element]): AbsorbOffer {
   const elite = enemy.class === 'elite';
   const rare = enemy.rare === true;
-  const specialOpen = special.chance >= 1 || (special.chance > 0 && nextFloat(rng) < special.chance);
-  const pool = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && (specialOpen || !isSpecialTrait(t)) && elements.includes(t.element));
+  const pool = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && elements.includes(t.element));
   const candidates: string[] = [];
   const bossAdded = bossTrait !== null && !build.owned.includes(bossTrait) && elements.includes(getTrait(bossTrait).element);
   if (bossAdded) candidates.push(bossTrait);
@@ -131,7 +114,6 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     chain3Count: combat.chain3Count,
     weakChain3Count: combat.weakChain3Count,
     finisherElement: combat.finisher?.element ?? null,
-    ...(specialOpen ? { specialOpen: true, specialGates: [...special.gates] } : {}),
   };
 }
 
@@ -139,11 +121,10 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
  * 다시 뽑기 (GDD 25-9 다시 뽑기권, C.60): 확정 후보(보스 특성·희귀 개체의 희귀 특성)는 그대로 두고 나머지 후보를 같은 수만큼 새로 뽑는다.
  * 지금 후보와 겹치지 않게 뽑고(모자라면 겹침 허용), buildOffer 와 같이 그 적의 속성(elements) 특성에서만(C.125 GDD 70장 — 모자라면 줄인다)·공격 계열 섞임
  */
-export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates' | 'element' | 'specialOpen'>, build: BuildState, bossTrait: string | null = null, elements: readonly string[] = [offer.element]): string[] {
+export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates' | 'element'>, build: BuildState, bossTrait: string | null = null, elements: readonly string[] = [offer.element]): string[] {
   const fixed = offer.candidates.filter((id) => id === bossTrait || getTrait(id).rare === true);
   const want = offer.candidates.length - fixed.length;
-  const hide = (t: TraitDef) => offer.specialOpen !== true && isSpecialTrait(t);
-  const usable = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && !hide(t) && elements.includes(t.element));
+  const usable = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && elements.includes(t.element));
   const free = usable.filter((t) => !t.rare && !fixed.includes(t.id));
   const fresh = free.filter((t) => !offer.candidates.includes(t.id));
   const enough = fresh.length >= want;

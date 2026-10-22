@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 62;
+export const BALANCE_VERSION = 63;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -81,10 +81,11 @@ export const BALANCE = {
         trait: { ev: 0, risk: 0.7 },
         stat: { ev: 2, risk: 0.5 },
       },
-      /** 특수 속성(혈·독·허) 특성 숨김 (GDD 49-7 ①, C.106, provisional): 아래 경우에만 그 확률로 흡수 후보 풀에 들어간다(여럿이면 가장 큰 값). 그 밖에는 후보에 안 나온다.
-       *  강적·보스 처치 / 바퀴 변이 효과 specialTraitChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 */
-      specialTraits: { elite: 0.5, boss: 1, minDifficulty: 3, difficulty: 0.3 },
     },
+    /** 특수 속성(혈·독·허) 적 등장 숨김 (GDD 75장, C.127, provisional — 옛 49-7 ① 특성 숨김 absorb.specialTraits 를 옮김): 원정 출현 풀에서 혈·독·허 적의 가중치 × 이 값(여럿이면 가장 큰 값).
+     *  강적 elite / 바퀴 변이 효과 specialEnemyChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 difficulty. 그 밖(★1~2 일반 적 칸·먹잇감 둥지 등)은 0 = 안 나오고 다른 속성 적으로.
+     *  보스는 보스 데이터의 고정 적이라 늘 그대로(옛 boss 1). 나온 혈·독·허 적을 잡으면 그 속성 특성이 늘 후보(70장) */
+    specialEnemies: { elite: 0.5, minDifficulty: 3, difficulty: 0.3 },
     risk: {
       /** 한계값: 이상이 되면 돌파 (GDD 4-1) */
       limit: 100,
@@ -263,8 +264,9 @@ export const BALANCE = {
       /** 기획 +15% → C.75 측정 ★5·10연속 골드 187 = ★1(새 몸) 86 의 2.18배 > 목표 2배 → +10% (조정 1회) */
       goldPerStar: 0.1,
       /** ★1 입문 보정 (C.76, GDD 32-3): 새 몸(특성 없음)이 ★1 에서 강적 소굴 2칸을 놓고 4바퀴 돌면 패배 37~46% 라(패배는 전부 강적) ★1 강적만 체력·공격을 이 배율로. ★2 부터는 1 */
-      /** C.123: ★2 도 강적 입문 보정 ×0.9 — C.118(전투 절반) 뒤 2단계 몸 ★2 4바퀴 원정 패배 17~21%(전 10%, 패배는 강적)를 되돌림. 조정 3회: 0.9 → 8% · 공격만 0.85 → 14% · 0.93 → 3%(표본 잡음) → 0.9 확정 */
-      eliteEase: { 1: { hp: 0.78, attack: 0.78 }, 2: { hp: 0.9, attack: 0.9 } } as Record<number, { hp: number; attack: number }>,
+      /** C.123: ★2 도 강적 입문 보정 ×0.9 — C.118(전투 절반) 뒤 2단계 몸 ★2 4바퀴 원정 패배 17~21%(전 10%, 패배는 강적)를 되돌림. 조정 3회: 0.9 → 8% · 공격만 0.85 → 14% · 0.93 → 3%(표본 잡음) → 0.9 확정
+       *  C.127: ★1~2 길에서 혈·독·허 적이 빠져(GDD 75장) 2단계 몸 ★2 원정 패배 8 → 2% → ×0.95 6% · ×1 9% (조정 2회) → 1(★2 보정 사실상 끔). 탑 ★2 강적 층 상쇄도 1 */
+      eliteEase: { 1: { hp: 0.78, attack: 0.78 }, 2: { hp: 1, attack: 1 } } as Record<number, { hp: number; attack: number }>,
       /** 연속 클리어 (GDD 32-1 10번): 같은 ★ 자유 원정을 귀환(클리어)할 때마다 다음 원정 적 체력·공격 +enemyPerClear(최대 maxClears 연속), 지거나 ★를 바꾸면 0 */
       streak: { enemyPerClear: 0.05, maxClears: 10, foodPerClear: 0.05, goldPerClear: 0.02, goldMaxBonus: 0.2 },
     },
@@ -287,7 +289,7 @@ export const BALANCE = {
       eliteScale: 1.4,
       /** 구간별 강적 층 배율 (C.123): eliteScale 에 더 곱한다(없으면 1). 탑 강적은 원정의 ★2 강적 입문 보정(difficulty.eliteEase[2] 0.9)을 같이 받으므로 ★2 구간은 1 ÷ 0.9 로 상쇄 —
        *  안 하면 15층 강적 85 → 97~98%(가드 40~97%) */
-      eliteScaleByBand: { 2: 1 / 0.9 } as Record<number, number>,
+      eliteScaleByBand: { 2: 1 } as Record<number, number>, // C.127: ★2 강적 입문 보정이 1 이 되어 상쇄도 1
       eliteEvery: 5,
       bossEvery: 10,
       bossFloors: { 10: 'sand-maw', 20: 'canyon-king', 30: 'forest-lord', 40: 'sand-maw', 50: 'forest-lord' } as Record<number, string>,
@@ -535,7 +537,7 @@ export const BALANCE = {
       } as Record<string, Record<string, number | boolean | string>>,
       /** ④ 바퀴 변이 효과 (voidMult = 공허 블록 기본 확률 배율, foodMult = 먹이 드롭 횟수 배율, elementBias = 그 속성 적 가중치를 사냥터 주 속성처럼) */
       mutations: {
-        'void-night': { voidMult: 2, rewardMult: 1.25, specialTraitChance: 0.5 }, // specialTraitChance: GDD 49-7 ① 특수 속성 특성이 흡수 후보에 들 확률 (C.106, provisional)
+        'void-night': { voidMult: 2, rewardMult: 1.25, specialEnemyChance: 0.5 }, // specialEnemyChance: GDD 75장 특수 속성(혈·독·허) 적 출현 가중치 배율 (C.127, provisional — 옛 49-7 ① specialTraitChance)
         famine: { hungerMult: 2, foodMult: 1.8 }, // C.125: 2 → 1.8 — 흡수 화면이 늘 열려 원정 난수 흐름이 바뀌며 타일 변수 먹이 가드(+25%)가 +25.5% 로 넘어 (전·후 모두 다른 시드 구간에선 26% 안팎의 경계값) 되돌림 → +24.8%
         'blood-moon': { elementBias: 'blood', absorbBonus: 1 },
         calm: { enemyHpMult: 0.85, goldMult: 0.7 },
