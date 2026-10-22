@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 59;
+export const BALANCE_VERSION = 60;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -264,7 +264,8 @@ export const BALANCE = {
       /** 기획 +15% → C.75 측정 ★5·10연속 골드 187 = ★1(새 몸) 86 의 2.18배 > 목표 2배 → +10% (조정 1회) */
       goldPerStar: 0.1,
       /** ★1 입문 보정 (C.76, GDD 32-3): 새 몸(특성 없음)이 ★1 에서 강적 소굴 2칸을 놓고 4바퀴 돌면 패배 37~46% 라(패배는 전부 강적) ★1 강적만 체력·공격을 이 배율로. ★2 부터는 1 */
-      eliteEase: { 1: { hp: 0.78, attack: 0.78 } } as Record<number, { hp: number; attack: number }>,
+      /** C.123: ★2 도 강적 입문 보정 ×0.9 — C.118(전투 절반) 뒤 2단계 몸 ★2 4바퀴 원정 패배 17~21%(전 10%, 패배는 강적)를 되돌림. 조정 3회: 0.9 → 8% · 공격만 0.85 → 14% · 0.93 → 3%(표본 잡음) → 0.9 확정 */
+      eliteEase: { 1: { hp: 0.78, attack: 0.78 }, 2: { hp: 0.9, attack: 0.9 } } as Record<number, { hp: number; attack: number }>,
       /** 연속 클리어 (GDD 32-1 10번): 같은 ★ 자유 원정을 귀환(클리어)할 때마다 다음 원정 적 체력·공격 +enemyPerClear(최대 maxClears 연속), 지거나 ★를 바꾸면 0 */
       streak: { enemyPerClear: 0.05, maxClears: 10, foodPerClear: 0.05, goldPerClear: 0.02, goldMaxBonus: 0.2 },
     },
@@ -285,6 +286,9 @@ export const BALANCE = {
       finalFloorBonus: 0.9,
       /** 강적 층(5의 배수, 보스 층 제외)만 체력·공격에 더 곱한다 (C.85 추가): 체력 가득으로 시작해 권장 단계 진화 몸의 강적 승률이 84~100%(목표 약 70%) — 조정 2회 ×1.4 */
       eliteScale: 1.4,
+      /** 구간별 강적 층 배율 (C.123): eliteScale 에 더 곱한다(없으면 1). 탑 강적은 원정의 ★2 강적 입문 보정(difficulty.eliteEase[2] 0.9)을 같이 받으므로 ★2 구간은 1 ÷ 0.9 로 상쇄 —
+       *  안 하면 15층 강적 85 → 97~98%(가드 40~97%) */
+      eliteScaleByBand: { 2: 1 / 0.9 } as Record<number, number>,
       eliteEvery: 5,
       bossEvery: 10,
       bossFloors: { 10: 'sand-maw', 20: 'canyon-king', 30: 'forest-lord', 40: 'sand-maw', 50: 'forest-lord' } as Record<number, string>,

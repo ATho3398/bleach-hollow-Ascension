@@ -8,7 +8,7 @@
         "shinigami": "들개 대허"
       },
       "hpInAttacks": 150,
-      "attackInAttacks": 0.325,
+      "attackInAttacks": 0.37,
       "element": "earth",
       "category": "physical",
       "statBias": {
