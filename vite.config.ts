@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 
 // 버전 표시: 빌드 시점의 git 짧은 커밋 해시와 빌드 날짜(UTC). git 이 없으면 dev
@@ -58,9 +59,48 @@ function bgmFiles(): string[] {
   }
 }
 
+// 오프라인 플레이 (GDD 60장): 빌드 산출물 전체를 미리 캐시하는 서비스 워커 dist/sw.js 를 쓴다.
+// 캐시 버전은 파일 목록과 내용의 해시라 파일이 하나라도 바뀌면 새 워커로 인식된다. dev 서버에서는 쓰지 않는다
+function walkDist(dir: string, base = ''): string[] {
+  const out: string[] = [];
+  for (const f of readdirSync(`${dir}/${base}`.replace(/\/$/, ''))) {
+    const rel = base ? `${base}/${f}` : f;
+    if (statSync(`${dir}/${rel}`).isDirectory()) out.push(...walkDist(dir, rel));
+    else if (rel !== 'sw.js' && !rel.endsWith('.map')) out.push(rel);
+  }
+  return out.sort();
+}
+function pwaPlugin() {
+  return {
+    name: 'bha-pwa',
+    apply: 'build' as const,
+    enforce: 'post' as const,
+    closeBundle() {
+      const dir = 'dist';
+      if (!existsSync(dir)) return;
+      const files = walkDist(dir);
+      const hash = createHash('sha1');
+      let bytes = 0;
+      for (const f of files) {
+        const buf = readFileSync(`${dir}/${f}`);
+        bytes += buf.length;
+        hash.update(f).update(buf);
+      }
+      const precache = ['./', ...files.filter((f) => f !== 'index.html')];
+      const version = hash.digest('hex').slice(0, 12);
+      const src = readFileSync('scripts/sw-template.js', 'utf8')
+        .replace('__VERSION__', version)
+        .replace('__PRECACHE__', JSON.stringify(precache, null, 1));
+      writeFileSync(`${dir}/sw.js`, src);
+      writeFileSync(`${dir}/pwa-info.json`, JSON.stringify({ version, files: precache.length, bytes }) + '\n');
+    },
+  };
+}
+
 // 상대 경로로 빌드해 GitHub Pages(/bleach-hollow-ascension/) 등 어느 경로에 올려도 동작하게 한다
 export default defineConfig({
   base: './',
+  plugins: [pwaPlugin()],
   define: {
     __BUILD_COMMIT__: JSON.stringify(gitCommit()),
     __ART_FILES__: JSON.stringify(artFiles()),

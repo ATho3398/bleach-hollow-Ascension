@@ -3,6 +3,7 @@
 import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
 import { versionLabel } from '../version';
+import { onUpdateReady } from '../pwa';
 import { button, el, mountApp, notice } from './bha/dom';
 import { logoMark } from './bha/logo';
 
@@ -73,7 +74,12 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   );
   const nodes: Node[] = [hero, menu];
   if (note) nodes.push(notice('warn', note));
-  nodes.push(el('p', 'bha-start__ver', versionLabel()));
+  const ver = el('p', 'bha-start__ver', versionLabel());
+  nodes.push(ver);
+  // 오프라인 플레이(GDD 60장): 새 버전을 받아 뒀으면 한 줄 안내 (적용은 앱을 다시 열 때)
+  onUpdateReady(() => {
+    if (ver.isConnected) ver.after(el('p', 'bha-start__ver', '새 버전을 받았습니다 — 앱을 닫았다 다시 열면 적용됩니다'));
+  });
   mountApp(root, { cls: 'bha-start bha-start--title' }, ...nodes);
 }
 

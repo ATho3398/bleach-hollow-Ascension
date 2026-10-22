@@ -22,8 +22,10 @@ import './ui/bha/testMode.css';
 import { startApp } from './ui/app';
 import { applyCalmMode } from './ui/fxSettings';
 import { mountSprite } from './ui/bha/sprite';
+import { registerServiceWorker } from './pwa';
 
 mountSprite();
 applyCalmMode();
 const app = document.querySelector<HTMLDivElement>('#app');
 if (app) startApp(app);
+registerServiceWorker();
