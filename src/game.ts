@@ -40,8 +40,21 @@ import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
-/** 세이브 구조를 바꾸면 올리고 마이그레이션을 추가한다 */
+/** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
 export const SAVE_FORMAT_VERSION = 36;
+
+/** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다").
+ *  지금은 이미 있는 마이그레이션(형식 1~36)을 그대로 두므로 1(전부 열림). **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
+ *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
+export const MIN_LOADABLE_SAVE_FORMAT = 1;
+
+/** 세이브 형식 번호가 이 버전에서 열리는가: ok / old(문턱보다 옛것) / newer(이 버전보다 새것) / invalid(번호가 이상함) */
+export type SaveFormatStatus = 'ok' | 'old' | 'newer' | 'invalid';
+export function saveFormatStatus(format: unknown, min: number = MIN_LOADABLE_SAVE_FORMAT, current: number = SAVE_FORMAT_VERSION): SaveFormatStatus {
+  if (typeof format !== 'number' || !Number.isInteger(format) || format < 1) return 'invalid';
+  if (format > current) return 'newer';
+  return format < min ? 'old' : 'ok';
+}
 
 /** 이어하기가 바로 열 화면 키 (GDD 19-3, 형식 13). 원정 중이면 'expedition'(전투 중이었으면 14-1 대로 전투 직전), 아니면 'room' */
 export type ScreenKey = 'room' | 'expedition';
@@ -1113,6 +1126,7 @@ export function migrateSave(raw: unknown): SaveData | null {
   if (save.meta.format > SAVE_FORMAT_VERSION) return null;
   // 형식 번호가 정수가 아니면(NaN 등) 어느 단계도 타지 않고 다음 저장 때 null 로 써져 세이브를 잃는다 → 읽지 않는다 (C.70)
   if (!Number.isInteger(save.meta.format) || save.meta.format < 1) return null;
+  if (save.meta.format < MIN_LOADABLE_SAVE_FORMAT) return null; // 문턱보다 옛 세이브는 열지 않는다 (GDD 61장)
   repairRunLog(save.runLog);
   if (save.meta.format < 2) {
     // 형식 1 → 2: BattleRecord 에 enemyId, factionId, seed, riskGained, absorbGained, lossReason 추가

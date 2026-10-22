@@ -45,7 +45,7 @@ import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rota
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
 import { allSlotSummaries, collectSlotChunks, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
-import { needsMigration, recoverFromBackup } from '../saveBackup';
+import { backupFileName, exportRawSlot, needsMigration, recoverFromBackup } from '../saveBackup';
 import { setBgm } from './bgm';
 import type { BgmTrack } from '../data/audio/bgm';
 import { BALANCE } from '../config/balance';
@@ -257,7 +257,28 @@ export function startApp(host: HTMLElement): void {
         enterFullscreenOnStart(store);
         open('slot-load', () => renderSlotPick('load'));
       },
+      // 열 수 없는 형식 슬롯의 옛 세이브 내보내기 (GDD 61장): 원문 그대로 파일로 내려받는다(막히면 알림)
+      onExportOld: (n) => exportOldSlot(n),
     }, note);
+  }
+
+  function exportOldSlot(n: number): void {
+    const r = exportRawSlot(store, n);
+    if (!r) return void showToast({ eyebrow: '내보내기', title: `슬롯 ${n}을 내보낼 수 없다`, meta: '세이브가 비었거나 읽을 수 없다.' }, 0, 4200);
+    const name = backupFileName({ meta: { format: r.format } as SaveData['meta'] });
+    try {
+      const url = URL.createObjectURL(new Blob([r.text], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+      showToast({ eyebrow: '내보내기', title: `슬롯 ${n} 옛 세이브를 저장했다`, meta: name }, 0, 4200);
+    } catch {
+      showToast({ eyebrow: '내보내기', title: '파일 저장이 막혀 있다', meta: '브라우저 설정을 확인한다.' }, 0, 4200);
+    }
   }
 
   function renderSlotPick(mode: SlotPickMode): void {

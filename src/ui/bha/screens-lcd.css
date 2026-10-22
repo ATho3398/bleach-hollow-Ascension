@@ -259,6 +259,8 @@ button.bha-slot { cursor: pointer; }
 .bha-start--title .bha-start__menu { display: flex; flex-direction: column; gap: var(--bha-sp-3); width: min(280px, 100%); }
 .bha-start--title .bha-start__ver { text-align: center; margin-top: auto; }
 .bha-start--title .bha-notice { max-width: 420px; }
+.bha-start--title .bha-start__stale { display: flex; flex-direction: column; gap: var(--bha-sp-2); align-items: center; max-width: 420px; }
+.bha-start--title .bha-start__stale-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--bha-sp-2); }
 
 /* ═════ 종족 고르기 (GDD 19-4, C.46): 종족 수만큼 등분한 칸에 아이콘 + 이름만, 설정·도움말은 위 구석 작은 아이콘 ═════ */
 .bha-lcd .bha-app.bha-start.bha-start--species { display: block; padding: var(--bha-sp-4); }
