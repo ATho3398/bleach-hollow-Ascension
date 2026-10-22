@@ -19,13 +19,18 @@ import './ui/bha/shop.css';
 import './ui/bha/cosmetics.css';
 import './ui/bha/tamago.css';
 import './ui/bha/testMode.css';
+import './ui/bha/install.css';
 import { startApp } from './ui/app';
 import { applyCalmMode } from './ui/fxSettings';
 import { mountSprite } from './ui/bha/sprite';
 import { registerServiceWorker } from './pwa';
+import { captureInstallPrompt } from './pwaInstall';
+import { maybeShowInstall } from './ui/installView';
 
+captureInstallPrompt(); // 브라우저의 작은 설치 띠를 막고 요청을 잡아 둔다 (GDD 68장) — 이벤트가 앱 시작보다 먼저 올 수 있어 맨 앞에서
 mountSprite();
 applyCalmMode();
 const app = document.querySelector<HTMLDivElement>('#app');
 if (app) startApp(app);
 registerServiceWorker();
+maybeShowInstall();

@@ -1,0 +1,26 @@
+/* 앱 설치 큰 안내창 (GDD 68장, C.121): 문서 맨 위(기기 틀 밖)에 화면 가득. bha 토큰만 쓴다 */
+.bha-install {
+  position: fixed; inset: 0; z-index: var(--bha-z-tutorial);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--bha-sp-8) var(--bha-sp-6);
+  background: var(--bha-bg-0);
+  overflow-y: auto;
+}
+.bha-install__card {
+  display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-6);
+  width: min(420px, 100%); text-align: center;
+}
+.bha-install__icon { width: 96px; height: 96px; border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg); box-shadow: var(--bha-shadow-2); image-rendering: pixelated; }
+.bha-install__title { margin: 0; font-size: var(--bha-fs-3xl); color: var(--bha-text-1); }
+.bha-install__lead { margin: 0; font-size: var(--bha-fs-xl); line-height: 1.5; color: var(--bha-text-1); }
+.bha-install__body { width: 100%; }
+.bha-install__note { margin: 0; font-size: var(--bha-fs-md); color: var(--bha-text-2); }
+.bha-install__actions { display: flex; flex-direction: column; gap: var(--bha-sp-4); width: 100%; }
+.bha-install__go { min-height: calc(var(--bha-touch) * 1.5); font-size: var(--bha-fs-xl); }
+.bha-install__steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--bha-sp-4); text-align: left; }
+.bha-install__step {
+  display: flex; align-items: center; gap: var(--bha-sp-5);
+  padding: var(--bha-sp-5); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1);
+  font-size: var(--bha-fs-lg); color: var(--bha-text-1);
+}
+.bha-install__glyph { flex: none; width: 36px; height: 36px; color: var(--bha-accent); }

@@ -11,6 +11,8 @@ import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
 import { bgm, BGM_SETTINGS_KEY, BGM_VOLUMES, loadBgmSettings, saveBgmSettings } from './bgm';
 import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogic';
 import { setTiltPref } from './bha/tamago';
+import { openInstall } from './installView';
+import { detectPlatform, installMode, installPrompt, isStandalone, loadInstallPrefs } from '../pwaInstall';
 import { FULLSCREEN_EVENT, fullscreenSupported, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 
@@ -125,6 +127,19 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   window.addEventListener(VIEW_SCALE_EVENT, onScaleEvent);
 
   // 단축키 표시 (GDD 18-5): 버튼 구석의 키 글자 배지. 컴퓨터에서만 보이고, 켜고 끄는 값은 이 기기에만 저장
+  // 앱 설치 (GDD 68장): 큰 안내창을 다시 연다. 이미 앱으로 열렸거나 설치했으면 알려 준다
+  const installPanel = el('section', 'bha-panel');
+  installPanel.append(el('h2', 'bha-panel__title', '앱 설치'));
+  const standalone = isStandalone();
+  const installedNote = standalone || loadInstallPrefs(storage).installed;
+  if (installedNote) installPanel.append(el('p', 'bha-faint', standalone ? '지금 홈 화면 앱으로 실행 중이다. 인터넷 없이도 열린다.' : '이미 설치했다. 홈 화면의 아이콘으로 열면 인터넷 없이도 플레이할 수 있다.'));
+  if (!standalone) {
+    const canInstall = installMode(detectPlatform(navigator.userAgent), installPrompt() !== null) !== 'none';
+    const b = button({ label: '앱 설치', icon: 'i-play', onClick: () => openInstall({ auto: false }) });
+    b.disabled = !canInstall;
+    installPanel.append(b, el('p', 'bha-faint', canInstall ? '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다.' : '이 브라우저에서는 설치 창을 열 수 없다. 주소창의 설치 아이콘이나 브라우저 메뉴를 확인한다.'));
+  }
+
   const keyPanel = el('section', 'bha-panel');
   keyPanel.append(el('h2', 'bha-panel__title', '단축키'));
   const keyBtn = button({ label: '' });
@@ -245,5 +260,5 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, ...fsPanels, tamaPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes())]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, ...fsPanels, tamaPanel, sizePanel, installPanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes())]);
 }
