@@ -362,7 +362,7 @@ if (want('expedition')) {
 }
 
 // ── 흡수·리스크(P3, C.6 조건): 흡수 가능 비율, 흡수 자동 플레이(계통 모으기) ──
-console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 같은 속성을 모음 / 비교: 항상 놓아줌) — 흡수 조건(임시): 마무리 일격이 상성 우위 스킬(약점 없는 적은 아무 스킬) 또는 그 체인3 ${BALANCE.provisional.absorb.weakChain3ForAbsorb}회 이상, 장착 skill 없으면 첫 흡수 보장`);
+console.log(`\n흡수 원정 (자동 플레이 ${M}회: 흡수 가능하면 흡수하고 같은 속성을 모음 / 비교: 항상 놓아줌) — 흡수 조건 없음(C.125 GDD 71장: 이기면 언제나)`);
 const absorbStats: Record<string, { breakthrough: number; defeated: number; absorbableRate: number; endRisk: number }> = {};
 // 섞음 봇 (GDD 23-2 "평범한 원정"): 흡수 화면마다 흡수와 놓아주기를 번갈아 한다
 const mixedWanted = (e: ExpeditionState) => e.absorbRecords.filter((a) => a.absorbed).length <= e.absorbRecords.filter((a) => !a.absorbed).length;
@@ -530,12 +530,10 @@ if (want('boss1')) {
     if (dInc > 0.05) failures.push(`보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 37장 7번)`);
   }
 }
-// 흡수 가능 비율: 거의 안 되면 빌드가 자라지 않고(가드 25% 이상), 거의 항상이면 조건이 의미 없다(가드 85% 이하).
-// C.7: 측정은 "흡수하는 봇" 기준. 항상 놓아주는 봇은 skill 이 하나도 없어 첫 흡수 보장으로 늘 100% 라 의미가 없다 (참고 출력만)
+// 흡수 가능 비율: C.125 (GDD 71장) 흡수 조건 삭제 — 이긴 전투는 늘 흡수 가능이어야 한다 (옛 가드 25~85% 대신)
 if (want('absorb')) for (const lap of [4, 6]) {
   const ar = absorbStats[`${lap}-absorb`]?.absorbableRate ?? 0;
-  if (ar < 0.25) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% < 25%`);
-  if (ar > 0.85) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% > 85% (조건이 거의 항상 열린다)`);
+  if (ar < 1) failures.push(`${lap}바퀴 흡수 플레이: 승리 중 흡수 가능 비율 ${(ar * 100).toFixed(0)}% < 100% (GDD 71장: 이기면 언제나 흡수)`);
 }
 
 // ── 진화 (C.47, GDD 20-5): 걸음 수 진화. 흡수 봇이 4바퀴 원정을 반복하고, 둥지에 돌아올 때 걸음이 차 있으면 자동 진화한다 ──

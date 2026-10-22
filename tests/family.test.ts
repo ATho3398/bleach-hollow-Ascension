@@ -205,7 +205,7 @@ describe('계열 체인 판정 (GDD 17-3 → 66장 C.118: 완전히 같은 블�
     expect(s.events.find((e) => e.kind === 'block')).toMatchObject({ weak: true, matchup: 'neutral' });
   });
 
-  it('약점 계열 체인3 은 흡수 조건 (weakChain3Count), 약점 계열 마무리도 조건', () => {
+  it('약점 계열 체인3 은 weakChain3Count 로 세고(런 로그), 약점 계열 마무리는 weak — 흡수는 C.125 부터 조건 없이 승리면 가능', () => {
     const s = quiet(mk(build('t-water-rare', 't-water-b')));
     s.enemy.hp = 1e9;
     s.tray = [blk('t-water-rare', 'family-b'), blk('t-water-rare', 'family-b'), blk('t-water-rare', 'family-b')];
@@ -217,7 +217,7 @@ describe('계열 체인 판정 (GDD 17-3 → 66장 C.118: 완전히 같은 블�
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.status).toBe('won');
     expect(s.finisher).toMatchObject({ kind: 'skill', family: 'family-b', weak: true });
-    expect(absorbReasons(s)).toEqual(s.weakChain3Count >= BALANCE.provisional.absorb.weakChain3ForAbsorb ? ['weakness-finisher', 'weakness-chain3'] : ['weakness-finisher']);
+    expect(absorbReasons(s)).toEqual(['victory']);
   });
 
   it('흡수 블록은 장착한 특성의 계열대로, 기본 공격 블록은 종족 계열 표의 계열로 나온다', () => {

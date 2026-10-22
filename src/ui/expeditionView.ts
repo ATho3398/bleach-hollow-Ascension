@@ -87,7 +87,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (want && clock.pending() !== want) {
       if (exp.phase === 'moving') clock.set('step', stepMs, tick);
       else if (exp.phase === 'battle') clock.set('phase', 0, enterBattle);
-      else clock.set('phase', stepMs * PX.restTimeTiles, endRest);
+      else clock.set('phase', PX.restTimeTiles * EX.restSecondsPerTile * 1000, endRest);
     } else clock.rearm();
   }
 
@@ -187,7 +187,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       case 'rest':
         msg = `${tn(exp.slots[ev.cell]!)}에서 쉰다…`;
         render();
-        clock.set('phase', stepMs * PX.restTimeTiles, endRest);
+        clock.set('phase', PX.restTimeTiles * EX.restSecondsPerTile * 1000, endRest);
         return;
       case 'lap-complete':
         planner.reset();

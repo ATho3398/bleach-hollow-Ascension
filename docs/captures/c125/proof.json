@@ -1,0 +1,9 @@
+{
+  "patch": "C.125",
+  "viewport": "390x844, deviceScaleFactor 1, 다마고치 모드(기기 가로 회전 출력), 배포 빌드(vite preview). 세이브는 엔진으로 만들어 localStorage 에 주입(호로 1단계, 장착 없음, 원정 중 독 강적 2(poison-heavy-chain)를 기본 공격으로 마무리 — 상성 우위 아님·우위 체인3 0회, 특수 속성 숨김 열림)",
+  "shots": {
+    "1-poison-elite-both-candidates-poison-only": "[둘 다 포식] → '특성 후보 2개' = 독 탄 · 독 조 (독 속성만, GDD 70장)",
+    "2-basic-attack-finish-still-absorb": "상성 아닌 기본 공격 마무리인데도 포식 화면(네 갈래) + 안내 '이기면 언제나 포식 가능. 특성 후보는 이 적의 속성(독) 특성에서만 나온다.' — '포식 조건' 줄 없음 (GDD 71장)"
+  },
+  "consoleErrors": 0
+}

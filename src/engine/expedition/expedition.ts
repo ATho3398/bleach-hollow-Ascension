@@ -12,7 +12,7 @@ import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams,
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
-  absorbModeRule, absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, canAbsorb, changeRisk, isSpecialTrait, specialTraitChance, cloneBuild, gainTrait, lateLapRisk,
+  absorbModeRule, absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, specialTraitChance, cloneBuild, gainTrait, lateLapRisk,
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import {
@@ -841,7 +841,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     exp.goldLoot.push({ amount: bossGold, lap: exp.lap });
     exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
     exp.victoriesThisLap++;
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, specialGateOf(exp, elite, true));
+    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, specialGateOf(exp, elite, true), 1, offerElementsOf(pending.boss, pending.enemy.element));
     exp.phase = 'absorb';
     return record;
   }
@@ -855,19 +855,10 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   exp.victoriesThisLap++;
   // 사냥 무리 2연전: 흡수 화면을 마친 뒤 다음 advance 에서
   if (mods.extraBattle > 0) exp.queuedBattle = { cell: pending.cell, synergy: pending.synergy ?? null };
-  // 흡수 조건(마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장)을 채웠으면 흡수 화면으로 (흡수 / 놓아줌). 아니면 그대로 이동
-  // 스토리 흡수 목표 화 (GDD 42장 1번): 목표 등급 적을 이기면 흡수 조건과 상관없이 흡수 화면을 연다 (그 화에서만)
-  const ob = st ? storyEpisodeOf(exp)!.objective : null;
-  const storyAbsorb = ob?.type === 'absorb' && pending.enemy.class === ob.enemyClass;
-  // 첫 원정 튜토리얼 (GDD 67장): 이기면 늘 흡수 화면 (시스템상 흡수가 아니라 tutorialAbsorb 로 끝난다)
-  if (canAbsorb(battle) || storyAbsorb || exp.tutorial) {
-    exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, specialGateOf(exp, elite, false), mods.absorbMult ?? 1);
-    if (exp.absorbOffer.reasons.length === 0) exp.absorbOffer.reasons.push(exp.tutorial ? 'tutorial' : 'story-objective');
-    exp.phase = 'absorb';
-  } else {
-    exp.phase = 'moving';
-    checkStoryClear(exp);
-  }
+  // 이기면 언제나 흡수 화면 (C.125, GDD 71장: 흡수 조건 삭제 — 흡수 / 놓아줌 네 갈래). 첫 원정 튜토리얼(67장)은 tutorialAbsorb 로 끝난다
+  exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, specialGateOf(exp, elite, false), mods.absorbMult ?? 1);
+  if (exp.tutorial) exp.absorbOffer.reasons = ['tutorial'];
+  exp.phase = 'absorb';
   return record;
 }
 
@@ -892,6 +883,12 @@ export function trainingStatOf(enemy: Pick<EnemyDef, 'ev'>): StatId | null {
 }
 
 /** 특수 속성 특성 숨김이 풀릴 확률 (GDD 49-7 ①): 강적·보스 / 바퀴 변이 / 원정 난이도 */
+/** 흡수 특성 후보를 뽑는 속성 (C.125, GDD 70장): 적 속성, 보스는 속성 바뀜 기믹(elementShifts)의 속성까지 — "적이 속성을 여러 개 가지면 그 속성들 안에서" */
+export function offerElementsOf(bossId: string | null, element: string): string[] {
+  const shifts = bossId ? getBoss(bossId).elementShifts ?? [] : [];
+  return [...new Set([element, ...shifts])];
+}
+
 function specialGateOf(exp: ExpeditionState, elite: boolean, boss: boolean): ReturnType<typeof specialTraitChance> {
   return specialTraitChance({ elite, boss, difficulty: exp.difficulty, mutationChance: mutationMods(exp.mutation).specialTraitChance });
 }
@@ -911,8 +908,8 @@ export function rerollAbsorb(exp: ExpeditionState): AbsorbResult {
   if (offer.rerolled) return { ok: false, reason: '이 흡수에서는 이미 다시 뽑았다' };
   if (offer.candidates.length === 0) return { ok: false, reason: '다시 뽑을 후보가 없다' };
   const rng = createRng((exp.seed ^ REROLL_SEED_SALT ^ Math.imul(exp.absorbRecords.length + 1, 2654435761)) >>> 0);
-  const boss = isBossId(offer.enemyId) ? getBoss(offer.enemyId).trait : null;
-  offer.candidates = rerollCandidates(rng, offer, exp.build, boss);
+  const boss = isBossId(offer.enemyId) ? offer.enemyId : null;
+  offer.candidates = rerollCandidates(rng, offer, exp.build, boss ? getBoss(boss).trait : null, offerElementsOf(boss, offer.element));
   offer.rerolled = true;
   return { ok: true };
 }
@@ -999,7 +996,7 @@ export function finishRest(exp: ExpeditionState): void {
   exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition * k * sp.conditionMult);
   exp.restMult = 1;
   exp.restSpring = false;
-  exp.elapsedSeconds += PX.restTimeTiles * EX.secondsPerTile;
+  exp.elapsedSeconds += PX.restTimeTiles * EX.restSecondsPerTile;
   // 휴식 타일을 지나면 간식 +1 (GDD 23-1)
   for (let i = 0; i < FX.restSnack; i++) exp.foodLoot.push({ food: 'snack', lap: exp.lap });
   exp.phase = 'moving';

@@ -113,7 +113,7 @@ export interface BattleRecord {
   finisherElement: string | null;
   /** 옛 필드(형식 13 까지): 마무리 일격의 계통 */
   finisherLineageId?: string | null;
-  /** 이 전투로 흡수 조건을 채웠는가 (마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장) */
+  /** 이 전투로 흡수할 수 있었는가. C.125 (GDD 71장) 부터 흡수 조건이 없어 이기면 늘 true (필드는 히든 조건 대비로 남긴다). 그 전 기록은 옛 조건(우위 마무리 / 우위 체인3 / 첫 흡수 보장) */
   absorbable: boolean;
   /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0 */
   storedUsed: number;

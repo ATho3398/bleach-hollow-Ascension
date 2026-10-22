@@ -6,7 +6,7 @@ import { traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import { BASIC_SKILL_ID, comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
-import { absorbConditionText, weaknessText } from './absorbView';
+import { absorbRuleText, weaknessText } from './absorbView';
 import { button, el, icon, panel, tag } from './bha/dom';
 import { splitApp } from './bha/split';
 import { lcdHead, lcdPage } from './bha/lcdpage';
@@ -171,5 +171,5 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     button({ label: '연습 메뉴로', size: 'lg', onClick: h.onMenu }),
   );
   dock.append(two);
-  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbConditionText(faction, enemy))]);
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbRuleText(faction, enemy))]);
 }

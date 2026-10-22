@@ -205,7 +205,7 @@ describe('영옥 탭: 꾸밈 보유(공유)·착용(트랙별, 분류당 1개)',
 
 describe('다시 뽑기 (흡수 화면)', () => {
   const offerFor = (cands: string[], el: string, enemyId: string): AbsorbOffer => ({
-    enemyId, element: el, ev: {}, rare: false, elite: false, strength: 30, candidates: cands, reasons: ['first-absorb'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
+    enemyId, element: el, ev: {}, rare: false, elite: false, strength: 30, candidates: cands, reasons: ['victory'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
   });
   it('후보를 같은 수로 다시 뽑고(겹치지 않게), 흡수 1번에 1번만. 흡수 기록에 rerolled', () => {
     const s = newSaveData('hollow', 1);

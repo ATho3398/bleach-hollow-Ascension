@@ -24,20 +24,9 @@ export function weaknessText(enemy: Pick<EnemyDef, 'element'>, factionId: string
   return w.length ? w.map((x) => elementName(x, factionId)).join('·') : null;
 }
 
-/** 흡수 조건 안내 (GDD 20-2, 임시 수치): 마무리 일격이 상성 우위 기술 / 상성 우위 체인3 N회 이상. 약점이 없는 적은 아무 기술 */
-export function absorbConditionText(faction: FactionConfig, enemy: Pick<EnemyDef, 'element'>): string {
-  const w = weaknessText(enemy, faction.id);
-  const what = w ? `상성 우위(${w}) ${faction.skillBlockName}` : `${faction.skillBlockName}(이 적은 약점 속성이 없다)`;
-  return `${faction.absorbActionName} 조건: 마무리 일격이 ${what}이거나, 그 전투에서 그 ${faction.skillBlockName}의 ${faction.chainName}3 을 ${AX.weakChain3ForAbsorb}회 이상. 장착한 ${faction.skillBlockName} 특성이 없으면 조건 없이 가능 (첫 ${faction.absorbActionName}, 임시)`;
-}
-
-export function reasonText(faction: FactionConfig, offer: AbsorbOffer): string {
-  const out: string[] = [];
-  if (offer.reasons.includes('weakness-finisher')) out.push(offer.finisherElement ? `${elementName(offer.finisherElement, faction.id)} 속성으로 마무리` : `${faction.skillBlockName}으로 마무리`);
-  if (offer.reasons.includes('weakness-chain3')) out.push(`우위 ${faction.chainName}3 ${offer.weakChain3Count}회 (필요 ${AX.weakChain3ForAbsorb})`);
-  if (offer.reasons.includes('first-absorb')) out.push(`첫 ${faction.absorbActionName} 보장 (장착한 ${faction.skillBlockName} 특성 없음)`);
-  if (offer.reasons.includes('story-objective')) out.push(`스토리 목표 (이 화에서는 조건 없이 ${faction.absorbActionName})`);
-  return out.join(' · ');
+/** 흡수 안내 (C.125, GDD 70·71장): 조건 없이 이기면 언제나, 특성 후보는 그 적의 속성 특성에서만 */
+export function absorbRuleText(faction: FactionConfig, enemy: Pick<EnemyDef, 'element'>): string {
+  return `이기면 언제나 ${faction.absorbActionName} 가능. 특성 후보는 이 적의 속성(${elementName(enemy.element, faction.id)}) 특성에서만 나온다.`;
 }
 
 /** 한 단계의 두 열 내용: 왼쪽(설명·선택 상대 정보) / 오른쪽(고를 것·조작) — 가로 LCD (T-2) */
@@ -203,7 +192,6 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         info([
           { label: '상대', value: val(foeName, offer!.elite ? '강적' : '일반') },
           { label: '속성', value: lin },
-          { label: `${act} 조건`, mod: 'stack', value: reasonText(faction, offer!) },
           // 흡수 갈래 4줄 (GDD 52): 셋은 허기 리셋·타일 +1 공통, 리스크·노력치·특성이 다르다
           { label: MODE_LABELS.both.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), evTextOf('both') ? ` · 노력치 ${evTextOf('both')}` : ' · 노력치 없음') },
           { label: MODE_LABELS.trait.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(riskOf('trait'))}`, false), ' · 노력치 없음') },
@@ -212,7 +200,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         ]),
       ),
       el('p', 'bha-faint', `${act}하는 세 갈래 모두 ${faction.fullnessName} 가득 · 타일 +1. 놓아주면 그대로.`),
-      el('p', 'bha-faint bha-absorb__rule', absorbConditionText(faction, enemy)),
+      el('p', 'bha-faint bha-absorb__rule', absorbRuleText(faction, enemy)),
     );
     const side: HTMLElement[] = [
       meter({
