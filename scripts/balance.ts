@@ -6,10 +6,10 @@ import { ENEMIES, enemyPatternKind, POOL_CONFIG, scaleEnemy } from '../src/data/
 import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
 import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, storedStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
-import { createExpedition, enemyScale, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
+import { createExpedition, enemyScale, mutationMods, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
-import { ELEMENT_IDS } from '../src/data/elements';
+import { ELEMENT_IDS, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, newEvolution, worldRefStat, zeroStats } from '../src/engine/evolution';
 import { deckSizeOf, newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
@@ -340,25 +340,59 @@ if (want('expedition')) {
     }
   }
   // 실제 원정에서 만난 적 (전투 승리 처리, 6바퀴까지): 속성·패턴 종류 분포
+  // C.129 (GDD 75장): 혈·독·허(특수 속성) 적은 강적·보스·공허의 밤·★3 이상에서만 나온다 → 특수 속성은 '전체 비율 하한' 대신 그 규칙을 검사한다.
+  //  ① ★1 원정(바퀴 변이 없음·있음 각 200회): 규칙 밖(★1~2 일반 적, 그 바퀴 변이가 부르지 않음) 혈·독·허 등장 = 0  ② ★1 강적 · ★1 공허의 밤 일반 · ★3 일반 에서는 나온다(하한 SPECIAL_MIN)
+  //  일반 속성(특수 제외)은 예전처럼 각 WEAK_MIN 이상 (분포는 변이 없는 ★1 원정 기준)
+  const SPECIAL_MIN = { elite: 0.12, voidNight: 0.1, difficulty3: 0.08 }; // 측정(C.129, 혈·독·허 합): ★1 강적 19% · ★1 공허의 밤 일반 19%(247마리) · ★3 일반 14%
+  const isSpecial = (el: string) => SPECIAL_ELEMENT_IDS.includes(el);
   const seenWeak: Record<string, number> = {};
   const seenKind: Record<string, number> = {};
   let seen = 0;
   const kindOf = new Map(ENEMIES.map((e) => [e.id, enemyPatternKind(e)]));
   const weakOf = new Map(ENEMIES.map((e) => [e.id, e.element]));
-  for (let seed = 1; seed <= 200; seed++) {
-    const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 0, condition: 100, deck: sanitizeDeck(referenceTileStock(), 'hollow') }), { returnAfterLap: 6, playBattle: autoWin });
-    for (const b of e.battles) {
-      seen++;
-      const w = weakOf.get(b.enemyId)!;
-      const k = kindOf.get(b.enemyId)!;
-      seenWeak[w] = (seenWeak[w] ?? 0) + 1;
-      seenKind[k] = (seenKind[k] ?? 0) + 1;
+  // 특수 속성 등장 집계: [만난 수, 그중 혈·독·허]
+  type Tally = [number, number];
+  const sp = { offRule: 0, offRuleIds: new Set<string>(), elite: [0, 0] as Tally, voidNight: [0, 0] as Tally, normal: [0, 0] as Tally, d3normal: [0, 0] as Tally, d3elite: [0, 0] as Tally };
+  for (const [difficulty, tileVariants] of [[1, false], [1, true], [3, false]] as const) {
+    for (let seed = 1; seed <= 200; seed++) {
+      const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 0, condition: 100, difficulty, tileVariants, deck: sanitizeDeck(referenceTileStock(), 'hollow') }), { returnAfterLap: 6, playBattle: autoWin });
+      for (const b of e.battles) {
+        const w = weakOf.get(b.enemyId)!;
+        const special = isSpecial(w) ? 1 : 0;
+        if (difficulty === 3) {
+          if (b.enemyClass === 'normal') { sp.d3normal[0]++; sp.d3normal[1] += special; }
+          if (b.enemyClass === 'elite') { sp.d3elite[0]++; sp.d3elite[1] += special; }
+          continue;
+        }
+        if (!tileVariants) {
+          seen++;
+          seenWeak[w] = (seenWeak[w] ?? 0) + 1;
+          const k = kindOf.get(b.enemyId)!;
+          seenKind[k] = (seenKind[k] ?? 0) + 1;
+        }
+        if (b.enemyClass === 'elite') { sp.elite[0]++; sp.elite[1] += special; continue; }
+        if (b.enemyClass !== 'normal') continue; // 보스는 보스 데이터 고정 적
+        const mut = mutationMods(e.variantLog.mutations.find((m) => m.lap === b.lap)?.id);
+        if ((mut.specialEnemyChance ?? 0) > 0) { sp.voidNight[0]++; sp.voidNight[1] += special; continue; }
+        sp.normal[0]++; sp.normal[1] += special;
+        if (special && mut.elementBias !== w) { sp.offRule++; sp.offRuleIds.add(b.enemyId); } // 피의 달은 혈 적을 일부러 부른다 (75장 판단)
+      }
     }
   }
-  console.log(`  실제 원정 200회(6바퀴까지, 전투 승리 처리)에서 만난 적 ${seen}마리: 속성 ${LIDS.map((l) => `${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}%`).join('/')} · 종류 ${Object.entries(seenKind).map(([k, n]) => `${k} ${((n / seen) * 100).toFixed(0)}%`).join(' · ')}`);
+  const pct = (a: Tally) => (a[0] ? (a[1] / a[0]) * 100 : 0).toFixed(0);
+  console.log(`  실제 원정 200회(★1, 6바퀴까지, 전투 승리 처리)에서 만난 적 ${seen}마리: 속성 ${LIDS.map((l) => `${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}%`).join('/')} · 종류 ${Object.entries(seenKind).map(([k, n]) => `${k} ${((n / seen) * 100).toFixed(0)}%`).join(' · ')}`);
+  console.log(`  혈·독·허 적(GDD 75장): ★1 일반(공허의 밤 밖) ${pct(sp.normal)}%(규칙 밖 ${sp.offRule}마리) · ★1 강적 ${pct(sp.elite)}%(${sp.elite[0]}마리) · ★1 공허의 밤 일반 ${pct(sp.voidNight)}%(${sp.voidNight[0]}마리) · ★3 일반 ${pct(sp.d3normal)}%(${sp.d3normal[0]}마리) · ★3 강적 ${pct(sp.d3elite)}%`);
   for (const l of LIDS) {
+    if (isSpecial(l)) continue;
     if ((seenWeak[l] ?? 0) / seen < WEAK_MIN) failures.push(`원정에서 만난 적: ${l} 속성 적 비율 ${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}% < ${WEAK_MIN * 100}%`);
   }
+  if (sp.offRule > 0) failures.push(`원정에서 만난 적: ★1~2 일반 칸에 혈·독·허 적 ${sp.offRule}마리 (${[...sp.offRuleIds].join(', ')}) — GDD 75장 위반`);
+  const spMin = (label: string, a: Tally, min: number) => {
+    if (!a[0] || a[1] / a[0] < min) failures.push(`원정에서 만난 적: ${label} 혈·독·허 비율 ${pct(a)}%(${a[0]}마리 중) < ${min * 100}% — GDD 75장 강적·★3·공허의 밤에서는 나와야 한다`);
+  };
+  spMin('★1 강적', sp.elite, SPECIAL_MIN.elite);
+  spMin('★1 공허의 밤 일반', sp.voidNight, SPECIAL_MIN.voidNight);
+  spMin('★3 일반', sp.d3normal, SPECIAL_MIN.difficulty3);
 }
 
 // ── 흡수·리스크(P3, C.6 조건): 흡수 가능 비율, 흡수 자동 플레이(계통 모으기) ──

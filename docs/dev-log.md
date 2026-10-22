@@ -457,6 +457,12 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 세이브 31: 형식 30 → 31 에서 기본 제공 꾸밈을 보유로 더함(착용은 그대로). 기존 테스트의 보유 목록 기대값에 device-zaraki 추가, c65 에 십일번대 테스트 3개.
 **테스트** 1125 → 1128(merge 후 전체 1140). **캡처** `docs/captures/c91/`(다마고치 앞·뒤, 평소 화면).
 
+### C.129 balance:check 특수 속성 가드를 75장 규칙으로 (STAGE S-23, 코딩92, GDD 75장, v5.160)
+사용 모델: Opus 5.5. `PATCH_LABEL` C.129. 가드 스크립트만 — 게임 수치·세이브 변경 없음(BALANCE 63 그대로).
+- **원인**: C.127(c95b7b4)부터 GitHub Actions 배포 실패. `npm run balance:check` 워커 #4(expedition)의 회귀 가드 "원정에서 만난 적: blood/poison/kyo 속성 적 비율 1% < 6%" — C.127 이 75장대로 ★1~2 일반 칸에서 혈·독·허 적을 뺀 결과(11% → 1%)라 게임이 맞고 가드가 옛 규칙. 로컬에서 pages.yml 순서(`npm ci` → `balance:check`)로 같은 실패 재현(로컬·CI 차이 없음, C.128 도 같은 이유).
+- **고침** `scripts/balance.ts` 적 출현 풀 구간: 일반 속성 5종은 예전처럼 각 6% 이상. 혈·독·허는 비율 하한 대신 ① ★1 원정(바퀴 변이 없음·있음 각 200회)에서 **규칙 밖 등장 0마리**(일반 적이고 그 바퀴 변이가 공허의 밤·피의 달(혈) 아님) ② **나와야 하는 곳**: ★1 강적 ≥12% · ★1 공허의 밤 일반 ≥10% · ★3 일반 ≥8%(혈·독·허 합, 측정 19% · 19%(247마리) · 14%). 확인: `specialEnemies.minDifficulty` 를 1 로 임시로 바꾸면 ① 이 1075마리로 실패.
+- 다른 가드 실패 없음(후반 보류 경고 2건 canyon-king·forest-lord 승률은 기존대로 경고).
+
 ## 그림 반영
 - 2026-10-20: 홈 물건 7종(prop-altar·book·chest·door·dummy·shop·window, 투명 여백 잘라 정사각 무손실 WebP)과 방 배경 scene-room(사신)·scene-cave(호로, 1774×887 WebP q92) 반영. 캡처 `docs/captures/art-apply/`.
 - 2026-10-20: 홈 방 배경 교체(scene-cave 호로·scene-room 사신, 도트풍 새 그림, 66·41KB)와 책장 그림(prop-book, 320×320 WebP 15KB). 캡처 `docs/captures/art-apply/*-v2.png`.
