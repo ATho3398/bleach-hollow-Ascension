@@ -71,12 +71,16 @@ function walkDist(dir: string, base = ''): string[] {
   return out.sort();
 }
 function pwaPlugin() {
+  let outDir = 'dist';
   return {
     name: 'bha-pwa',
     apply: 'build' as const,
     enforce: 'post' as const,
+    configResolved(c: { build: { outDir: string } }) {
+      outDir = c.build.outDir;
+    },
     closeBundle() {
-      const dir = 'dist';
+      const dir = outDir;
       if (!existsSync(dir)) return;
       const files = walkDist(dir);
       const hash = createHash('sha1');

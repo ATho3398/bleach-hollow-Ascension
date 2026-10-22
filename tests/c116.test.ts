@@ -19,11 +19,13 @@ describe('C.116 오프라인 플레이(PWA)', () => {
     expect(read('src/ui/bha/design-system/theme-hollow.css')).toContain('--bha-bg-0: #0b0909');
   });
 
-  it('서비스 워커 템플릿: 자리표시자 2개, 새 버전은 바로 가로채지 않는다(skipWaiting 없음)', () => {
+  it('서비스 워커 템플릿: 자리표시자 2개, 캐시 조회는 쿼리·Vary 무시, 설치 끝나면 바로 적용(C.116b)', () => {
     const sw = read('scripts/sw-template.js');
     expect(sw.match(/__VERSION__/g)).toHaveLength(1);
     expect(sw.match(/__PRECACHE__/g)).toHaveLength(1);
-    expect(sw).not.toMatch(/skipWaiting\(/);
+    expect(sw).toMatch(/skipWaiting\(/);
+    expect(sw).toContain('ignoreSearch: true, ignoreVary: true');
+    expect(sw).toContain('caches.match(req, LOOKUP)');
     expect(sw).toContain("req.method !== 'GET'");
   });
 
@@ -31,6 +33,7 @@ describe('C.116 오프라인 플레이(PWA)', () => {
     const cfg = read('vite.config.ts');
     expect(cfg).toContain('plugins: [pwaPlugin()]');
     expect(cfg).toContain('/sw.js');
+    expect(cfg).toContain('c.build.outDir'); // --outDir 로 빌드해도 워커가 그 폴더에 써진다
     const html = read('index.html');
     expect(html).toContain('rel="manifest"');
     expect(html).toContain('name="theme-color"');
