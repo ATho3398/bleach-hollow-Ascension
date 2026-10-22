@@ -8,20 +8,21 @@ const rule = (css: string, sel: string) => css.slice(css.indexOf(`${sel} {`), cs
 const css = read('src/ui/bha/tamago.css');
 const ts = read('src/ui/bha/tamago.ts');
 
-describe('조작 줄 버튼 3배 (GDD 47장 1번)', () => {
-  it('버튼 한 변 = 작은 버튼 36px × 3, 아이콘·글자도 키운다', () => {
-    expect(css).toContain('--tama-btn: calc(36px * 3)');
+describe('조작 줄 버튼 (GDD 47장 1번 → 69장 C.122: 64px, 화면 아래 한 줄)', () => {
+  it('버튼 한 변 = 64px(C.122 에서 108px → 64px), 아이콘·글자 크기는 토큰 안', () => {
+    expect(css).toContain('--tama-btn: 64px');
     const btn = rule(css, '.bha-tama__bar .bha-btn');
     expect(btn).toContain('width: var(--tama-btn)');
     expect(btn).toContain('height: var(--tama-btn)');
-    expect(btn).toContain('font-size: var(--bha-fs-xl)');
-    expect(css).toMatch(/\.bha-tama__bar \.bha-btn \.bha-icon \{ width: 48px; height: 48px; \}/);
+    expect(btn).toContain('font-size: var(--bha-fs-md)');
+    expect(css).toMatch(/\.bha-tama__bar \.bha-btn \.bha-icon \{ width: 28px; height: 28px; \}/);
   });
-  it('기기 바깥 화면 가장자리: 가로 = 오른쪽 세로 줄, 세로 회전 출력 = 아래 가로 줄', () => {
+  it('기기 바깥 화면 아래 가장자리 한 줄: 가로도 세로 회전 출력도 (오른쪽 세로 줄은 없앴다)', () => {
     expect(rule(css, '.bha-tama__bar')).toContain('position: fixed');
-    expect(css).toContain('.bha-tama__bar[data-pos="right"]');
-    expect(css).toContain('.bha-tama__bar[data-pos="bottom"]');
-    expect(ts).toContain("ctrl.dataset.pos = f.rotated ? 'bottom' : 'right'");
+    expect(rule(css, '.bha-tama__bar')).toContain('bottom: max(');
+    expect(css).not.toContain('.bha-tama__bar[data-pos="right"]');
+    expect(css).toContain('.bha-tama__bar[data-pos="rotated"]');
+    expect(ts).toContain("ctrl.dataset.pos = f.rotated ? 'rotated' : 'bottom'");
     expect(ts).toContain('document.body.append(ctrl)');
   });
   it('세 버튼 모두 작은 버튼(size small)을 더 쓰지 않는다', () => {

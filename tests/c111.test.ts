@@ -18,10 +18,10 @@ describe('C.111 다마고치 모드 가로 기준 (GDD 16-6)', () => {
     expect(designsLayerPlace({ rotated: false, vw: 844, vh: 390 })).toBeNull();
     expect(designsLayerPlace({ rotated: true, vw: 390, vh: 844 })).toEqual({ width: 844, height: 390, padX: 42, padY: 20, transform: 'translate(390px, 0) rotate(90deg)' });
   });
-  it('조작 줄: 세로 폰은 칸을 제자리에서 90도 돌리고 기기 위쪽 = 화면 오른쪽 순서', () => {
+  it('조작 줄: 세로 폰(data-pos=rotated, C.122 에서 이름 변경)은 칸을 제자리에서 90도 돌리고 기기 위쪽 = 화면 오른쪽 순서', () => {
     const css = readFileSync('src/ui/bha/tamago.css', 'utf8');
-    expect(css).toMatch(/\.bha-tama__bar\[data-pos="bottom"\]\s*\{\s*flex-direction:\s*row-reverse/);
-    expect(css).toMatch(/\.bha-tama__bar\[data-pos="bottom"\] \.bha-btn\s*\{\s*rotate:\s*90deg/);
+    expect(css).toMatch(/\.bha-tama__bar\[data-pos="rotated"\]\s*\{\s*flex-direction:\s*row-reverse/);
+    expect(css).toMatch(/\.bha-tama__bar\[data-pos="rotated"\] \.bha-btn\s*\{\s*rotate:\s*90deg/);
     expect(css).toMatch(/\.bha-designs\.is-rotated/);
   });
 });
