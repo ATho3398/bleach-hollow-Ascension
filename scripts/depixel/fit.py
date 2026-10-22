@@ -17,12 +17,12 @@ import numpy as np
 from PIL import Image
 
 
-def fit(a: np.ndarray, size: int) -> np.ndarray:
+def fit(a: np.ndarray, size: int, cell_px: float | None = None) -> np.ndarray:
     op = a[..., 3] > 128
     ys, xs = np.nonzero(op)
     a = a[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
     h, w = a.shape[:2]
-    cell = max(h, w) / size
+    cell = cell_px or max(h, w) / size  # cell_px: 여러 그림을 같은 배율로(키 맞추기)
     nx, ny = max(1, round(w / cell)), max(1, round(h / cell))
     cw, ch = w / nx, h / ny  # 짧은 쪽은 반올림 때문에 칸이 아주 조금 다를 수 있다
     out = np.zeros((ny, nx, 4), dtype=np.uint8)
@@ -47,13 +47,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('images', nargs='+')
     ap.add_argument('--size', type=int, default=32, help='긴 쪽 칸 수 (기본 32)')
+    ap.add_argument('--cell', type=float, help='한 칸 = 원본 몇 픽셀 (주면 --size 대신 모든 그림을 같은 배율로)')
     ap.add_argument('--out', default='scripts/depixel/out/fit')
     ap.add_argument('--ext', default='png', choices=['png', 'webp'])
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     for path in args.images:
         name = os.path.splitext(os.path.basename(path))[0]
-        dot = fit(np.array(Image.open(path).convert('RGBA')), args.size)
+        dot = fit(np.array(Image.open(path).convert('RGBA')), args.size, args.cell)
         im = Image.fromarray(dot)
         dst = os.path.join(args.out, f'{name}.{args.ext}')
         im.save(dst, lossless=True) if args.ext == 'webp' else im.save(dst)
