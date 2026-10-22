@@ -99,14 +99,16 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   const nodes: Node[] = [hero, menu];
   if (note) nodes.push(notice('warn', note));
   const stale = summaries.filter((x): x is Extract<SlotSummary, { state: 'incompatible' }> => x.state === 'incompatible');
-  if (stale.length > 0) nodes.push(incompatibleNotice(stale, h));
+  const hasStale = stale.length > 0;
+  if (hasStale) nodes.push(incompatibleNotice(stale, h));
   const ver = el('p', 'bha-start__ver', versionLabel());
   nodes.push(ver);
   // 오프라인 플레이(GDD 60장): 새 버전을 받아 뒀으면 한 줄 안내 (적용은 앱을 다시 열 때)
   onUpdateReady(() => {
     if (ver.isConnected) ver.after(el('p', 'bha-start__ver', '새 버전을 받았습니다 — 앱을 닫았다 다시 열면 적용됩니다'));
   });
-  mountApp(root, { cls: 'bha-start bha-start--title' }, ...nodes);
+  // 열 수 없는 세이브 알림이 있으면 낮은 화면(가로 390)에서도 버전 줄까지 들어가게 메뉴 3개를 한 줄로 (C.119)
+  mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}` }, ...nodes);
 }
 
 export interface SpeciesHandlers {

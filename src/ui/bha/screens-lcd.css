@@ -258,6 +258,10 @@ button.bha-slot { cursor: pointer; }
 .bha-start--title .bha-start__hero { align-items: center; text-align: center; padding-top: 0; }
 .bha-start--title .bha-start__menu { display: flex; flex-direction: column; gap: var(--bha-sp-3); width: min(280px, 100%); }
 .bha-start--title .bha-start__ver { text-align: center; margin-top: auto; }
+/* 열 수 없는 세이브 알림이 있을 때(C.119): 메뉴 3개를 한 줄로 줄여 낮은 화면에서도 알림·버전 줄이 다 보인다. 그래도 넘치면 스크롤 */
+.bha-lcd .bha-app.bha-start.bha-start--stale { gap: var(--bha-sp-3); overflow-y: auto; }
+.bha-start--stale .bha-start__menu { flex-direction: row; width: min(560px, 100%); }
+.bha-start--stale .bha-start__menu > * { flex: 1 1 0; min-width: 0; }
 .bha-start--title .bha-notice { max-width: 420px; }
 .bha-start--title .bha-start__stale { display: flex; flex-direction: column; gap: var(--bha-sp-2); align-items: center; max-width: 420px; }
 .bha-start--title .bha-start__stale-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--bha-sp-2); }

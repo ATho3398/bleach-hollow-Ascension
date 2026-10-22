@@ -125,6 +125,8 @@ export function createDock(o: DockOpts): Dock {
         tray.append(b);
       }
     }
+    // 펼친 줄은 장면 위에 떠 있으니 기기 버튼 선택에서 먼저 (보이는 위치 순서 안에서도 맨 앞 묶음, GDD 63장)
+    for (const b of trayBtns) b.setAttribute('data-dev-order', '-1');
   }
 
   function setPanel(next: DockPanel): void {

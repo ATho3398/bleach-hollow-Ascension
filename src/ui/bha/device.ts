@@ -4,7 +4,7 @@
 // 위/아래는 하이라이트(.bha-sel)를 순서대로 옮기고(끝에서 순환), 확정은 실행(click), 취소는 열린 레이어 → 화면 스택 한 단계 뒤로.
 // 전투 화면(.bha-battle)은 터치 위주라 위/아래는 쉬고 확정만 [data-dev-confirm](일시정지)에 쓴다 (dev-log C.25 결정).
 import { el, icon } from './dom';
-import { keepSelection, orderByRank, stepIndex } from './select';
+import { keepSelection, orderByRank, stepIndex, uiBox, visualOrder, type VisualBox } from './select';
 import { setOverlayHost } from './overlayHost';
 import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewScale, saveViewScale, setViewState, shortcutScale, VIEW_SCALE_EVENT } from '../viewScale';
 import { actionFor, isNavAction } from '../shortcutMap';
@@ -65,13 +65,30 @@ function visible(e: HTMLElement): boolean {
   return e.getClientRects().length > 0;
 }
 
+/** 선택 순서 묶음: data-dev-order (기본 0, 작은 것부터) */
+const devRank = (e: HTMLElement): number => Number(e.getAttribute('data-dev-order') ?? 0);
+
 /**
  * 자동으로 찾는 항목의 순서는 화면(DOM) 순서다. 단, 위/아래로 고르지 않는 요소(보조 슬라이더 입력 등)에는 data-dev-skip 을 붙이고,
  * 나중에 고르게 하고 싶은 요소(탭·머리 버튼)에는 data-dev-order="1" 을 붙이면 같은 화면의 나머지 뒤로 간다 (손가락으로는 그대로 만진다).
+ * 자유 배치 화면(`data-dev-layout="visual"` 가 있는 홈)은 DOM 순서 대신 보이는 위치 순서(GDD 63장, orderVisually). 다른 화면은 이미 DOM 순서 = 보이는 순서임을 확인했다(C.119).
  */
-export function scanItems(scope: ParentNode): SelectItem[] {
+export function scanItems(scope: ParentNode, lcd?: HTMLElement): SelectItem[] {
   const found = [...scope.querySelectorAll<HTMLElement>(AUTO_SELECTOR)].filter((e) => visible(e) && !e.hasAttribute('data-dev-skip'));
-  return orderByRank(found, (e) => Number(e.getAttribute('data-dev-order') ?? 0)).map((e) => ({ el: e }));
+  const rank = devRank;
+  // 자유 배치 화면(홈: 물건을 자리에 놓음)은 DOM 순서가 화면 순서와 달라 보이는 위치 순서로 센다 (GDD 63장). 그 안에서도 rank 가 큰 것은 뒤로
+  const free = !!lcd && (!!scope.querySelector('[data-dev-layout="visual"]') || (scope instanceof Element && !!scope.closest('[data-dev-layout="visual"]')));
+  if (!free || !lcd) return orderByRank(found, rank).map((e) => ({ el: e }));
+  return orderVisually(found, lcd, rank).map((e) => ({ el: e }));
+}
+
+/** 보이는 위치 순서 (GDD 63장): rank 가 작은 묶음부터, 묶음 안은 위→아래·같은 줄 왼→오. 세로 폰 회전 출력이면 회전된 화면 기준 */
+export function orderVisually(els: readonly HTMLElement[], lcd: HTMLElement, rank: (e: HTMLElement) => number = () => 0): HTMLElement[] {
+  const lr = lcd.getBoundingClientRect();
+  const rotated = lcd.offsetWidth >= lcd.offsetHeight !== lr.width >= lr.height;
+  const boxOf = (e: HTMLElement): VisualBox => uiBox(e.getBoundingClientRect(), lr, rotated);
+  const ranks = [...new Set(els.map(rank))].sort((a, b) => a - b);
+  return ranks.flatMap((k) => visualOrder(els.filter((e) => rank(e) === k), boxOf));
 }
 
 function devButton(cls: string, label: string, glyph: HTMLElement | SVGElement): HTMLButtonElement {
@@ -248,11 +265,15 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     touchOnly = !layer && !ov && !!view.querySelector('.bha-battle');
     if (explicit && !explicit.scope.isConnected) explicit = null;
     let next: SelectItem[];
-    if (layer) next = scanItems(layer.el);
-    else if (ov) next = scanItems(ov);
+    if (layer) next = scanItems(layer.el, lcd);
+    else if (ov) next = scanItems(ov, lcd);
     else if (touchOnly) next = [];
-    else if (explicit) next = explicit.items.filter((i) => i.el.isConnected && !i.el.hasAttribute('hidden'));
-    else next = scanItems(view);
+    else if (explicit) {
+      next = explicit.items.filter((i) => i.el.isConnected && !i.el.hasAttribute('hidden'));
+      // 자유 배치 화면(홈)은 등록 순서 대신 보이는 위치 순서로 (GDD 63장)
+      if (explicit.scope.dataset.devLayout === 'visual') next = orderVisually(next.map((i) => i.el), lcd, devRank).map((e) => next.find((i) => i.el === e)!);
+    }
+    else next = scanItems(view, lcd);
     items = next;
     if (next.length > 0 && !prev.some((i) => i.el.isConnected && next.some((n) => n.el === i.el))) {
       // 새 화면(이전 항목이 하나도 안 남음): 키보드 초점이 이미 있는 항목이 있으면 그것, 없으면 첫 항목

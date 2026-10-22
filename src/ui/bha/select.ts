@@ -78,3 +78,35 @@ export class ScreenStack {
 export function orderByRank<T>(items: readonly T[], rank: (t: T) => number): T[] {
   return items.map((t, i) => ({ t, i })).sort((a, b) => rank(a.t) - rank(b.t) || a.i - b.i).map(({ t }) => t);
 }
+
+/** 화면 속 한 항목의 자리 (게임 화면 기준 좌표: 세로 폰 회전 출력이어도 회전된 화면 기준). u = 왼→오, v = 위→아래 */
+export interface VisualBox {
+  u: number;
+  v: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * 보이는 위치 순서 (GDD 63장): 위→아래 줄로, 같은 줄은 왼→오. 가운데 높이가 두 항목 중 작은 높이의 절반 안이면 같은 줄이다(홈의 물건처럼 크기가 달라도 한 줄로 묶인다).
+ * 같은 자리면 원래(DOM) 순서. 돌려주는 값은 items 의 새 순서(원본은 건드리지 않는다)
+ */
+export function visualOrder<T>(items: readonly T[], box: (t: T) => VisualBox): T[] {
+  const rows: Array<{ ref: VisualBox; list: Array<{ t: T; b: VisualBox; i: number }> }> = [];
+  const sorted = items.map((t, i) => ({ t, b: box(t), i })).sort((a, b) => a.b.v - b.b.v || a.i - b.i);
+  for (const it of sorted) {
+    const row = rows.find((r) => Math.abs(it.b.v - r.ref.v) <= Math.min(it.b.h, r.ref.h) / 2);
+    if (row) row.list.push(it);
+    else rows.push({ ref: it.b, list: [it] });
+  }
+  rows.sort((a, b) => a.ref.v - b.ref.v);
+  return rows.flatMap((r) => r.list.sort((a, b) => a.b.u - b.b.u || a.i - b.i).map((x) => x.t));
+}
+
+/** 화면 좌표의 사각형을 게임 화면 기준 자리로: 세로 폰 회전 출력(시계 방향 90도, viewport.ts)이면 화면 y 가 왼→오, 화면 x 가 아래→위다 */
+export function uiBox(r: { left: number; top: number; width: number; height: number }, lcd: { left: number; top: number; width: number; height: number }, rotated: boolean): VisualBox {
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  if (!rotated) return { u: cx - lcd.left, v: cy - lcd.top, w: r.width, h: r.height };
+  return { u: cy - lcd.top, v: lcd.left + lcd.width - cx, w: r.height, h: r.width };
+}
