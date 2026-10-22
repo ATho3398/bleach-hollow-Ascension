@@ -3,28 +3,28 @@
   "note": "C.120 (GDD 64·67장) 한 번만 뜨는 안내 장면. 튜토리얼 오버레이(tutorialOverlay)와 같은 틀, 자리표시자는 종족 설정 + guideVars. 다시 보기는 도움말",
   "guides": {
     "first-run": [
-      { "id": "walk", "targets": [], "title": "첫 원정: 길을 걷는다", "body": "원정은 {nestName}에서 출발해 길을 한 칸씩 저절로 걸어요. 이번 첫 원정은 정해진 짧은 길이에요 — {tutorialCell}칸쯤 걸으면 약한 적이 하나 나타나요." },
-      { "id": "encounter", "targets": [], "title": "적을 만나면 자동 전투", "body": "적이 나타나면 전투 화면으로 바뀌고 나와 적이 알아서 싸워요. 여러분은 블록을 눌러 거들면 돼요. 블록·체인·필살기 설명은 전투가 시작될 때 나와요." }
+      { "id": "walk", "targets": [], "title": "첫 원정: 길을 걷는다", "body": "원정은 {nestName}에서 출발해 길을 한 칸씩 저절로 걸어요.\n이번 첫 원정은 정해진 짧은 길이에요 — {tutorialCell}칸쯤 걸으면 약한 적이 하나 나타나요." },
+      { "id": "encounter", "targets": [], "title": "적을 만나면 자동 전투", "body": "적이 나타나면 전투 화면으로 바뀌고 나와 적이 알아서 싸워요.\n여러분은 블록을 눌러 거들면 돼요.\n블록·체인·필살기 설명은 전투가 시작될 때 나와요." }
     ],
     "first-absorb": [
-      { "id": "absorb", "targets": [], "title": "이기면 {absorbActionName}", "body": "쓰러뜨린 적을 {absorbActionName}하면 그 힘이 내 것이 돼요: 특성(블록 기술)·속성·능력치(노력치). 고르는 길은 네 갈래예요." },
-      { "id": "modes", "targets": [], "title": "{absorbActionName} 네 갈래", "body": "둘 다 = 특성 + 노력치 · 속성만 = 특성만(그 속성 쪽으로 자란다) · 스탯만 = 노력치 ×2, 특성 없음 · 안 함 = 놓아주고 {stabilityName} ↑. {absorbActionName}할수록 {riskGaugeName}이(가) 올라요." },
-      { "id": "practice", "targets": [], "title": "첫 {absorbActionName}은(는) 연습", "body": "이번 한 번은 연습이라 특성·속성·{riskGaugeName}에 들어가지 않아요. 대신 모든 능력치가 똑같이 노력치 +{statEv} 올라요." }
+      { "id": "absorb", "targets": [], "title": "이기면 {absorbActionName}", "body": "쓰러뜨린 적을 {absorbActionName}하면 그 힘이 내 것이 돼요: 특성(블록 기술)·속성·능력치(노력치).\n고르는 길은 네 갈래예요." },
+      { "id": "modes", "targets": [], "title": "{absorbActionName} 네 갈래", "body": "**둘 다 {absorbActionName}** 특성 + 노력치\n**속성만** 특성만(그 속성 쪽으로 자란다)\n**스탯만** 노력치 ×2, 특성 없음\n**안 함** 놓아주고 {stabilityName} ↑\n{absorbActionName}할수록 {riskGaugeName}이(가) 올라요." },
+      { "id": "practice", "targets": [], "title": "첫 {absorbActionName}은(는) 연습", "body": "이번 한 번은 연습이라 특성·속성·{riskGaugeName}에 들어가지 않아요.\n대신 모든 능력치가 똑같이 노력치 +{statEv} 올라요." }
     ],
     "first-run-room": [
-      { "id": "next", "targets": [], "title": "다음 할 일", "body": "첫 원정 끝! 이제 {nestName}에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠나요. 원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받아요." }
+      { "id": "next", "targets": [], "title": "다음 할 일", "body": "첫 원정 끝! 이제 {nestName}에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠나요.\n원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받아요." }
     ],
     "tile-intro": [
-      { "id": "tiles", "targets": [], "title": "원정 타일 {starterCount}장을 받았다", "body": "첫 진화 기념으로 {tile.prey} · {tile.elite} · {tile.rest}을(를) 1장씩 받았어요. 원정에 가져가는 타일 묶음이 '덱'이고, 받은 타일은 덱에 넣어 뒀어요. 덱은 [보관함 → 덱]에서 고쳐요." }
+      { "id": "tiles", "targets": [], "title": "원정 타일 {starterCount}장을 받았다", "body": "첫 진화 기념으로 {tile.prey} · {tile.elite} · {tile.rest}을(를) 1장씩 받았어요.\n원정에 가져가는 타일 묶음이 '덱'이고, 받은 타일은 덱에 넣어 뒀어요.\n덱은 [보관함 → 덱]에서 고쳐요." }
     ],
     "tile-plan": [
-      { "id": "deck", "targets": ["plan.hand"], "title": "덱 = 가져갈 타일", "body": "출발 전 이 아래 손패가 덱의 타일이에요. 덱에 넣은 타일만 길에 놓을 수 있어요. 새 타일은 상점 [타일 뽑기]로 얻어요." },
-      { "id": "place", "targets": ["plan.road"], "title": "길에 놓으면 그 칸에서 일이 생긴다", "body": "{tile.prey} = 약한 적 · {tile.elite} = 강적(보상 ↑) · {tile.rest} = 회복 · 환경 타일 = 그 칸 전투 조건이 바뀐다. 안 놓은 칸에는 떠돌이 적이 나와요." },
-      { "id": "combo", "targets": ["plan.road"], "title": "붙여 놓으면 조합", "body": "두 타일을 바로 옆에 붙이면 시너지가 생겨요. 예: {tile.rest} 옆에 {tile.prey} = 「{comboExample}」 (휴식 회복 ↑ · 먹이 ↑)." }
+      { "id": "deck", "targets": ["plan.hand"], "title": "덱 = 가져갈 타일", "body": "출발 전 이 아래 손패가 덱의 타일이에요.\n덱에 넣은 타일만 길에 놓을 수 있어요.\n새 타일은 상점 [타일 뽑기]로 얻어요." },
+      { "id": "place", "targets": ["plan.road"], "title": "길에 놓으면 그 칸에서 일이 생긴다", "body": "**{tile.prey}** 약한 적\n**{tile.elite}** 강적(보상 ↑)\n**{tile.rest}** 회복\n**환경 타일** 그 칸 전투 조건이 바뀐다\n안 놓은 칸에는 떠돌이 적이 나와요." },
+      { "id": "combo", "targets": ["plan.road"], "title": "붙여 놓으면 조합", "body": "두 타일을 바로 옆에 붙이면 시너지가 생겨요.\n예: {tile.rest} 옆에 {tile.prey} = 「{comboExample}」 (휴식 회복 ↑ · 먹이 ↑)." }
     ],
     "tile-draw": [
-      { "id": "draw", "targets": [], "title": "새 타일은 덱에 넣어야 쓴다", "body": "뽑은 타일은 보관함에 들어가요. [보관함 → 덱]에서 덱에 넣어야 원정에서 쓸 수 있어요 (덱은 {deckSize}칸까지)." },
-      { "id": "special", "targets": [], "title": "뽑기에서만 나오는 타일", "body": "{tile.training} = 이기면 노력치 +1 · {tile.hunter} = 센 사냥꾼, 이기면 흡수 후보 2배 · {tile.spring} = 회복 대신 {riskGaugeName} 크게 ↓ · {tile.echo} = 바로 앞 칸 효과 한 번 더." }
+      { "id": "draw", "targets": [], "title": "새 타일은 덱에 넣어야 쓴다", "body": "뽑은 타일은 보관함에 들어가요.\n[보관함 → 덱]에서 덱에 넣어야 원정에서 쓸 수 있어요 (덱은 {deckSize}칸까지)." },
+      { "id": "special", "targets": [], "title": "뽑기에서만 나오는 타일", "body": "**{tile.training}** 이기면 노력치 +1\n**{tile.hunter}** 센 사냥꾼, 이기면 흡수 후보 2배\n**{tile.spring}** 회복 대신 {riskGaugeName} 크게 ↓\n**{tile.echo}** 바로 앞 칸 효과 한 번 더" }
     ]
   }
 }

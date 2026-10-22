@@ -10,9 +10,11 @@ export interface HelpState {
 
 export type GuideMark = 'pending' | 'done';
 
-/** 한 번만 뜨는 안내 id (GDD 64·67장). 화면 문구는 src/data/help/guides.json */
-export const GUIDE_IDS = ['first-run', 'first-run-room', 'tile-intro', 'tile-plan', 'tile-draw'] as const;
+/** 한 번만 뜨는 안내 id (GDD 64·67장, 74장 'birth'). 화면 문구는 src/data/help/guides.json */
+export const GUIDE_IDS = ['first-run', 'first-run-room', 'tile-intro', 'tile-plan', 'tile-draw', 'birth'] as const;
 export type GuideId = (typeof GUIDE_IDS)[number];
+/** 문구가 있는 안내 (birth 는 첫 시작 탄생 연출 — 상태만 저장, 문구 없음. GDD 74장 C.126) */
+export type TextGuideId = Exclude<GuideId, 'birth'>;
 
 export function newHelpState(): HelpState {
   return { tutorialSeen: false, guides: {} };

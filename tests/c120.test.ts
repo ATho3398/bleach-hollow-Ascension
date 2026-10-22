@@ -280,6 +280,6 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     markGuideDone(s.help, 'tile-intro');
     expect(guidePending(s.help, 'tile-intro')).toBe(false);
     expect(sanitizeHelpState(JSON.parse(JSON.stringify(s.help)))).toEqual(s.help);
-    expect([...GUIDE_IDS].sort()).toEqual(['first-run', 'first-run-room', 'tile-draw', 'tile-intro', 'tile-plan']);
+    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'tile-draw', 'tile-intro', 'tile-plan']); // C.126: 'birth'(탄생 연출, GDD 74장) 추가
   });
 });

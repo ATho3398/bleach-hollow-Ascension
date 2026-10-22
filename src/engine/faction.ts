@@ -139,6 +139,24 @@ export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConf
   };
 }
 
+/** 첫 시작 탄생 연출 단계 (GDD 74장): 공통 단계 재생기가 아는 효과 낱말. 종족은 이 낱말을 순서대로 나열할 뿐이다 */
+export const BIRTH_FX_KINDS = ['orb', 'flicker', 'chain', 'burn', 'flash', 'flames', 'reveal'] as const;
+export type BirthFxKind = (typeof BIRTH_FX_KINDS)[number];
+/** 연출에 쓰는 색 역할 → 디자인 토큰 이름(--bha-…) */
+export const BIRTH_FX_COLORS = ['orb', 'glow', 'chain', 'ember', 'flame', 'flameEdge', 'flash'] as const;
+export type BirthFxColor = (typeof BIRTH_FX_COLORS)[number];
+export interface BirthFxStep {
+  fx: BirthFxKind;
+  /** 이 단계 길이(ms) */
+  ms: number;
+  /** flicker = 깜빡임 횟수, chain/burn = 고리 수 (없으면 기본값) */
+  count?: number;
+}
+export interface BirthFx {
+  steps: BirthFxStep[];
+  colors: Partial<Record<BirthFxColor, string>>;
+}
+
 export interface FactionConfig {
   id: string;
   /** 화면 표시 이름 */
@@ -149,6 +167,8 @@ export interface FactionConfig {
   emblem?: string;
   /** 종족 로고 그림 키 (GDD 50): public/art/<키>.png|webp, 단색 투명 그림 — 알파만 쓰고 테마 글자색으로 칠한다. 없으면 로고 자리를 비운다 */
   logo?: string;
+  /** 첫 시작 탄생 연출 (GDD 74장, C.126): 단계 목록 + 색 토큰. 없으면 연출 없음 */
+  birthFx?: BirthFx;
   /** 새 세이브 시작 외형 후보 (GDD 51): 스킨 id 목록. 기본 외형과 함께 균등 추첨한다. 없거나 비면 기본 외형만 */
   startLooks?: string[];
   /** 시작 외형 스탯 편향 (GDD 52 연동, C.108): 스킨 id('base' = 기본 외형) → +편향 능력치. 그 능력치 +up·나머지 −down(balance stats.startBias). 없으면 편향 없음 */
@@ -344,6 +364,21 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.logo !== undefined && !isString(r.logo)) errors.push('logo: 비어 있지 않은 문자열이어야 한다');
+  if (r.birthFx !== undefined) {
+    const b = r.birthFx;
+    const steps = isRec(b) ? b.steps : null;
+    if (!isRec(b) || !Array.isArray(steps) || steps.length === 0) errors.push('birthFx: { steps: [...], colors } 단계가 하나 이상');
+    else {
+      for (const st of steps) {
+        if (!isRec(st) || !(BIRTH_FX_KINDS as readonly string[]).includes(st.fx as string) || !(typeof st.ms === 'number' && st.ms >= 100 && st.ms <= 2500)) errors.push(`birthFx.steps: fx ${BIRTH_FX_KINDS.join('|')} · ms 100~2500`);
+        else if (st.count !== undefined && !(Number.isInteger(st.count) && (st.count as number) >= 1 && (st.count as number) <= 20)) errors.push('birthFx.steps: count 1~20 정수');
+      }
+      const total = steps.reduce((a: number, st) => a + (isRec(st) && typeof st.ms === 'number' ? st.ms : 0), 0);
+      if (total > 5000) errors.push('birthFx: 전체 5000ms 이하');
+      const cols = b.colors;
+      if (!isRec(cols) || !Object.entries(cols).every(([k, v]) => (BIRTH_FX_COLORS as readonly string[]).includes(k) && isString(v) && /^--bha-[a-z0-9-]+$/.test(v))) errors.push('birthFx.colors: 색 역할 → --bha-… 토큰 이름');
+    }
+  }
   if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
   if (r.startLookBias !== undefined) {
     const sb = r.startLookBias;

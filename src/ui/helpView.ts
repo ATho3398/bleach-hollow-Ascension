@@ -3,6 +3,7 @@
 import { GLOSSARY, helpVars, renderHelpText, SCREEN_HELPS } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { button, el, icon, notice } from './bha/dom';
+import { linesBody } from './bha/lines';
 import { lcdHead, lcdPageParts, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { SHORTCUT_HELP } from './shortcutMap';
@@ -52,7 +53,7 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
     label: t(it.title),
     caption,
     content: [icon(iconId), el('span', 'bha-mdrow__name', t(it.title))],
-    detail: () => [el('h2', 'bha-mddetail__title', t(it.title)), el('p', 'bha-mddetail__body', t(it.body))],
+    detail: () => [el('h2', 'bha-mddetail__title', t(it.title)), linesBody(t(it.body), 'bha-mddetail__body')],
   });
   const rows: ListRow[] = [
     ...SCREEN_HELPS.map((it, k) => rowOf(it, SCREEN_ICON[it.id] ?? 'i-info', k === 0 ? '화면별 요약' : undefined)),

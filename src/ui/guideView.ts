@@ -9,7 +9,7 @@ import { getTile, tileName } from '../data/tiles';
 import { absorbModeRule } from '../engine/absorb';
 import { tutorialAbsorb, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
-import type { GuideId } from '../engine/tutorial';
+import type { TextGuideId } from '../engine/tutorial';
 import { button, el, icon } from './bha/dom';
 import { tileCss, tileIconId } from './bha/expedition';
 import { lcdPage } from './bha/lcdpage';
@@ -29,7 +29,7 @@ export interface GuideOptions {
 }
 
 /** 안내 하나를 띄운다 (LCD 위 오버레이) */
-export function showGuide(faction: FactionConfig, id: GuideId | 'first-absorb', o: GuideOptions = {}): TutorialHandle {
+export function showGuide(faction: FactionConfig, id: TextGuideId | 'first-absorb', o: GuideOptions = {}): TutorialHandle {
   return tutorialOverlay(faction, {
     scenes: GUIDES[id], vars: guideVars(faction), name: id, pauseLabel: o.pauseLabel ?? null, finishLabel: o.finishLabel ?? '알겠어요',
     onFinish: () => o.onDone?.(),

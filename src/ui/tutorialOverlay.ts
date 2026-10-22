@@ -5,6 +5,7 @@ import { helpVars, renderHelpText, TUTORIAL_SCENES, type TutorialScene } from '.
 import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
+import { linesBody } from './bha/lines';
 import { requestTitle } from './bha/hold';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
@@ -199,7 +200,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     const steps = el('div', 'bha-tut__steps');
     steps.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
     top.append(steps, actions);
-    const body = el('p', 'bha-tut__body', t(scene.practice && practiced && scene.done ? scene.done : scene.body));
+    const body = linesBody(t(scene.practice && practiced && scene.done ? scene.done : scene.body), 'bha-tut__body');
     card.replaceChildren(top, title, body);
     if (scene.sample?.length) card.append(sampleRow(scene.sample));
     card.style.visibility = 'hidden';

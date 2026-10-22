@@ -67,7 +67,8 @@ import { openGrounds } from '../data/grounds';
 import { settingsView } from './settingsView';
 import { backupView } from './backupView';
 import { helpOverlay, type HelpScreenId } from './helpView';
-import { guidePending, markGuideDone, markTutorialSeen, shouldAutoShowTutorial, type GuideId } from '../engine/tutorial';
+import { guidePending, markGuideDone, markTutorialSeen, queueGuide, shouldAutoShowTutorial, type GuideId, type TextGuideId } from '../engine/tutorial';
+import { playBirth } from './birthFx';
 import { showGuide, tutorialAbsorbView } from './guideView';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
@@ -169,7 +170,7 @@ export function startApp(host: HTMLElement): void {
   let guideOpen = false;
 
   /** 한 번만 뜨는 안내 (C.120): 띄울 차례면 띄우고 본 것으로 저장. 띄웠으면 true */
-  function runGuide(id: GuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
+  function runGuide(id: TextGuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
     if (!save || guideOpen || !guidePending(save.help, id)) return false;
     guideOpen = true;
     showGuide(faction, id, { ...o, onDone: () => {
@@ -179,6 +180,35 @@ export function startApp(host: HTMLElement): void {
       o.onDone?.();
     } });
     return true;
+  }
+
+  /** 첫 시작 탄생 연출이 재생 중이다 (GDD 74장, C.126) */
+  let birthOpen = false;
+  /** 새 세이브가 방에 처음 들어올 때 한 번: help.guides['birth'] 가 pending 이면 재생하고 본 것으로 저장. 연출이 없는 종족은 바로 본 것으로 */
+  function runBirth(faction: FactionConfig): void {
+    if (!save || birthOpen || !guidePending(save.help, 'birth')) return;
+    const room = () => root.querySelector<HTMLElement>('.bha-room');
+    const h = playBirth(faction, {
+      onReveal: () => {
+        const r = room();
+        r?.classList.remove('is-birthing');
+        r?.classList.add('is-born');
+        window.setTimeout(() => room()?.classList.remove('is-born'), 800);
+      },
+      onDone: () => {
+        birthOpen = false;
+        if (!save) return;
+        markGuideDone(save.help, 'birth');
+        persist();
+      },
+    });
+    if (!h) {
+      markGuideDone(save.help, 'birth');
+      persist();
+      return;
+    }
+    birthOpen = true;
+    room()?.classList.add('is-birthing');
   }
 
   /** 원정 중간 저장 (GDD 14-1). 끝난 원정은 저장하지 않는다 (recordExpedition 이 영역을 비운다) */
@@ -206,13 +236,14 @@ export function startApp(host: HTMLElement): void {
 
   /** 안내 다시 보기 (GDD 64장 3번·67장 4번): 첫 원정 안내(걷기·조우 → 흡수 4갈래 → 다음 할 일), 타일 안내(받은 타일 → 덱·배치·조합 → 뽑기)는 타일이 열린 뒤에만 */
   function guideReplays(faction: FactionConfig): { label: string; run: () => void }[] {
-    const chain = (ids: (GuideId | 'first-absorb')[]) => () => {
+    const chain = (ids: (TextGuideId | 'first-absorb')[]) => () => {
       const next = (i: number): void => {
         if (i < ids.length) showGuide(faction, ids[i]!, { finishLabel: i === ids.length - 1 ? '닫기' : '다음 안내', onDone: () => next(i + 1) });
       };
       next(0);
     };
     const out = [{ label: '첫 원정 안내', run: chain(['first-run', 'first-absorb', 'first-run-room']) }];
+    if (faction.birthFx) out.push({ label: '탄생 연출', run: () => void playBirth(faction) });
     if (save && tilesUnlocked(save)) out.push({ label: '타일 안내', run: chain(['tile-intro', 'tile-plan', 'tile-draw']) });
     return out;
   }
@@ -340,7 +371,10 @@ export function startApp(host: HTMLElement): void {
         stashSlot(store, newSlot);
         slot = newSlot;
         save = testOn ? newTestSave(f.id) : newSaveData(f.id);
-        if (!testOn) applyStartLook(save, f, Math.random());
+        if (!testOn) {
+          applyStartLook(save, f, Math.random());
+          queueGuide(save.help, 'birth'); // 새 세이브의 첫 방에서 탄생 연출 한 번 (GDD 74장)
+        }
         persist();
         nestScreen();
       },
@@ -500,6 +534,8 @@ export function startApp(host: HTMLElement): void {
     }
     const props = roomOf(faction).props;
     setBgm('nest');
+    // 새 세이브의 첫 방: 탄생 연출 (GDD 74장). 방이 그려진 직후에 덮는다
+    if (guidePending(s.help, 'birth')) window.setTimeout(() => { if (nav.top?.id === 'room') runBirth(faction); }, 30);
     // 첫 원정 뒤 "다음 할 일", 첫 진화 뒤 "타일 3장" 안내 (GDD 67장 4번·64장 3번): 방을 그린 다음, 진화 연출이 남아 있으면 그 뒤에
     if (!holdRoomGuides) window.setTimeout(() => {
       if (nav.top?.id !== 'room' || holdRoomGuides) return;
