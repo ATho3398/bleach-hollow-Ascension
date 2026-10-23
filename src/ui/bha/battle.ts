@@ -351,6 +351,8 @@ export interface BlockSpec {
   familyId?: string;
   /** 속성 색 (CSS 값, GDD 20-2: 블록 = 계열 글자 + 속성 색). 있으면 계열 배지·띠를 이 색으로 칠한다 */
   elementColor?: string;
+  /** 계열 연출 종류 (종족 설정 families[].fx): 공격 블록의 아이콘 모양을 계열마다 다르게 (C.131, GDD 79장). 색은 속성, 모양은 계열 */
+  fx?: string;
 }
 
 /** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림 같은 상태 클래스는 화면이 붙인다 */
@@ -367,7 +369,8 @@ export function blockEl(spec: BlockSpec): HTMLElement {
     node.append(pips);
   }
   const ico = el('span', 'bha-block__icon');
-  ico.append(icon(BLOCK_ICON[spec.visual]));
+  ico.append(icon(spec.visual === 'attack' && spec.fx ? `i-fx-${spec.fx}` : BLOCK_ICON[spec.visual]));
+  if (spec.fx) node.dataset.fx = spec.fx;
   const weak = el('span', 'bha-block__weak');
   weak.append(icon('i-weak'));
   node.append(ico, el('b', 'bha-block__abbr', spec.abbr), weak);

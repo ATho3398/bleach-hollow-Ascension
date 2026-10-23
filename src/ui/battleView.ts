@@ -24,7 +24,7 @@ import {
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
-import { elementName, weaknessesOf } from '../data/elements';
+import { elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
@@ -49,6 +49,8 @@ export interface BattleViewOptions {
   notice?: string;
   /** 폭주 중이면 그 이름 (GDD 23-2, 종족 설정 frenzyName): 위 막대에 상태 칩, 화면 테두리 */
   frenzy?: string;
+  /** 이 원정의 현재 공허(리스크 게이지) 수치 (C.131, GDD 77장 ⑥). 있으면 위 막대에 `이름 값` 칩: 원정 수치 + 이번 전투에서 오른 만큼 (실시간). 원정 밖 전투는 없음 */
+  risk?: number;
   /** 있으면 '그만두기' 버튼을 보인다 (원정 중에는 없다) */
   onQuit?: () => void;
   /** 있으면 전투 시작 직전에 첫 플레이 튜토리얼을 보여 준다 (GDD 14-2). 끝나거나 건너뛰면 한 번 불린다. 튜토리얼 동안 전투 시간은 멈춘다 */
@@ -446,6 +448,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     bar.prepend(fc);
   }
 
+  // 공허 수치 칩 (C.131, GDD 77장 ⑥): 원정 중 전투만. 값 = 원정 수치 + 이번 전투 공허 블록으로 오른 만큼 (실시간)
+  let riskChipValue: HTMLElement | null = null;
+  if (opts.risk !== undefined) {
+    const rc = chip('', 'danger');
+    rc.classList.add('bha-riskchip');
+    riskChipValue = el('b', 'bha-num', String(Math.round(opts.risk)));
+    rc.prepend(icon('i-risk', 'sm'));
+    rc.append(labels.riskGauge, ' ', riskChipValue);
+    rc.setAttribute('aria-label', labels.riskGauge);
+    bar.prepend(rc);
+  }
+
   const flashVoid = el('div', 'bha-edgeflash bha-edgeflash--void');
   const flashHit = el('div', 'bha-edgeflash bha-edgeflash--hit');
 
@@ -753,10 +767,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       uid: b.uid,
       family: familyAbbr(labels, b.family),
       familyId: b.family ?? undefined,
+      // 블록 색 = 그 블록의 실제 속성 (C.131, GDD 77장 ⑦·79장): 기본 블록은 내 속성이 아니라 노말
       elementColor: (() => {
-        const elId = blockElementOf(s.params, b);
+        const elId = isBasic ? NORMAL_ELEMENT : (b.element ?? blockElementOf(s.params, b));
         return elId ? elementColor(elId) : undefined;
       })(),
+      fx: faction.families.find((f) => f.id === b.family)?.fx,
     };
     return blockEl(spec);
   };
@@ -875,6 +891,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       meterCache.enemy = eRatio;
       setMeter(enemyMeter, s.enemy.hp, s.enemy.maxHp, s.enemy.hp);
       setMeterValue(enemyMeter, hpNumbers(s.enemy.hp, s.enemy.maxHp).now);
+      if (riskChipValue) {
+        const rv = String(Math.round((opts.risk ?? 0) + s.riskGained));
+        if (riskChipValue.textContent !== rv) riskChipValue.textContent = rv;
+      }
     }
     const pRatio = `${Math.round(s.player.hp * 10)}/${Math.round(s.player.maxHp)}`;
     if (meterCache.player !== pRatio) {

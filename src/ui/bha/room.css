@@ -73,7 +73,7 @@
 
 /* ── 방 안 물건 (= 선택 항목) ── */
 .bha-prop {
-  position: absolute; transform: translate(-50%, -100%) scale(var(--prop-s, 1)); transform-origin: 50% 100%; /* top = 이름표 아래 끝 */
+  position: absolute; transform: translate(-50%, -100%) scale(calc(var(--prop-s, 1) * 1.5)); transform-origin: 50% 100%; /* top = 이름표 아래 끝 */
   display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1);
   min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-1);
   color: var(--bha-text-1); background: none; border: 0; border-radius: var(--bha-r-md);

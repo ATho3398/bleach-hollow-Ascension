@@ -997,6 +997,7 @@ export function startApp(host: HTMLElement): void {
       // 배경 (GDD 34-1): 보스전은 무대(없으면 사냥터), 그 밖은 사냥터
       bg: (p.boss ? arenaSceneBg(faction) : null) ?? groundSceneBg(faction, exp.groundId),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
+      risk: exp.risk,
       liberation: save ? liberationButton(faction, { ...liberationAccess(save), usable: p.params.liberationEnabled === true }) : undefined,
       tutorial: tutorialFor(),
       onEnd: (done) => {

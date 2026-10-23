@@ -28,3 +28,5 @@
   border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: var(--bha-shadow-2);
 }
 .bha-update__actions { display: flex; justify-content: flex-end; gap: var(--bha-sp-3); }
+
+.bha-riskchip { display: inline-flex; align-items: center; gap: var(--bha-sp-1); border-color: var(--bha-risk); color: var(--bha-risk); }

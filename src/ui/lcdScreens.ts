@@ -19,7 +19,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { viewTitle } from './bha/viewtitle';
-import { deckRow, showToast, statsBlock, statusBlock, tileKindOf } from './bha/nest';
+import { deckRow, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
@@ -68,11 +68,14 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry));
   // 속성 피해 5종 (C.101, GDD 48장 4번): 0 이어도 보인다
   stats.append(elementDamageLine(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id));
-  // 치명타 (C.63, GDD 28장 5번): 기본 + 장착 특성 critChance (물리·마법 합친 하나, 상한 있음)
-  const critLine = h('p', 'bha-small');
-  critLine.dataset.crit = '';
-  critLine.append('치명 ', h('b', 'bha-num', critPercentText(save.build, save.evolution)), ` · 치명 피해 ×${BALANCE.provisional.combat.critMultiplier}`);
-  stats.append(critLine);
+  // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
+  const CXM = BALANCE.provisional.combat;
+  const critRows = statRow('치명타 확률', critPercentText(save.build, save.evolution), `최대 ${Math.round(CXM.critChanceMax * 100)}%`);
+  critRows.dataset.crit = '';
+  const critDmg = statRow('치명타 피해', `×${CXM.critMultiplier}`);
+  const speedRow = stats.querySelector('.bha-stats')?.lastElementChild;
+  if (speedRow) speedRow.after(critRows, critDmg);
+  else stats.append(critRows, critDmg);
   // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
   const bonus = bonusLine(save);
   if (bonus) {
