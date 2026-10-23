@@ -24,7 +24,7 @@ export interface HelpOptions {
 /** 아코디언 아이콘 (id → 스프라이트 아이콘). 모르는 id 는 info */
 const SCREEN_ICON: Record<string, string> = { nest: 'i-nest', expedition: 'i-loop', battle: 'i-practice', evolution: 'i-evolve' };
 const TERM_ICON: Record<string, string> = {
-  lineage: 'i-lin-a', chain: 'i-chain-3', 'stored-skill': 'i-stored', 'void-block': 'i-void', weakness: 'i-weak',
+  lineage: 'i-lin-a', chain: 'i-chain-3', liberation: 'i-special', 'void-block': 'i-void', weakness: 'i-weak',
   stability: 'i-stab', 'risk-gauge': 'i-risk', 'evolution-condition': 'i-evolve', 'form-dex': 'i-dex', 'title-dex': 'i-title', 'resume-expedition': 'i-return',
 };
 

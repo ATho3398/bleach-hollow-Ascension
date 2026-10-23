@@ -147,16 +147,6 @@ export interface CombatParams {
   voidPowerInAttacks: number;
   /** 켜져 있는 콤보 규칙 (진화 단계마다 열림, applyEvolutionToParams 가 채운다). 비면 콤보 없음 */
   combos: ComboRule[];
-  /** 저장형 필살기 (C.17, GDD 14-6) */
-  storedGaugePerBlock: number;
-  storedChainBonus: readonly number[];
-  storedGaugeMax: number;
-  storedChargesMax: number;
-  storedPowerInAttacks: number;
-  storedGuardSeconds: number;
-  storedStartGaugeMax: number;
-  /** 전투 시작 저장 게이지 (둥지 애착: 안정 수치에 비례, storedStartGaugeOf). 0 = 없음 */
-  storedStartGauge: number;
   /** 공허 블록 1개 사용 → 리스크 게이지 상승량 (BALANCE.provisional.risk.perVoidBlock) */
   riskPerVoidBlock: number;
   /** 장착 흡수 skill 특성 블록 생성원(슬롯 순서). 기본 블록 5종은 이것과 상관없이 늘 풀에 있다 (GDD 44장) */
@@ -174,17 +164,26 @@ export interface CombatParams {
   trayShuffleSeconds: number;
   /** 컨디션·환경(폐가)·5바퀴 이후·한계 돌파: 공허 블록 생성 확률 가산 */
   voidChanceBonus: number;
-  /** 해방 (GDD 22-2·22-5): 이 전투에서 해방할 수 있는가 — 수련 완료·등급 이력·5단계 이상은 부르는 쪽(game.liberationAccess)이 정한다. false 면 게이지만 차고 쓸 수 없다 */
+  /** 해방 (GDD 83장, C.134 — 옛 저장형 필살기 자리): 이 전투에서 해방할 수 있는가. false 면 게이지도 차지 않는다 (튜토리얼·연습 등 부르는 쪽이 정한다) */
   liberationEnabled: boolean;
-  /** 해방 블록의 공격 분류 (진화체 분류, 없으면 혼합). 속성은 내 캐릭터 속성 */
+  /** 해방 게이지: 블록 1개 사용당, 체인 단계별 보너스(사용 한 번), 전투 시작 게이지(둥지 애착: 안정 수치 비례, liberationStartGaugeOf) */
+  liberationGaugePerBlock: number;
+  liberationChainBonus: readonly number[];
+  liberationStartGauge: number;
+  /** 해방 슬롯 블록 생성원 (방에서 끼운 특성, 칸 수는 단계가 정한다 — applyEvolutionToParams). 비면 기본 블록 풀에서 나온다 */
+  liberationSkills: CombatSkill[];
+  /** 해방 블록(옛 22-5 kind 'liberation', C.134 부터는 생기지 않는다 — 옛 상태 호환)의 공격 분류. 속성은 내 캐릭터 속성 */
   liberationCategory: AttackCategory;
-  /** 해방 수치 (BALANCE.provisional.liberation): 게이지 = 준 피해 ÷ (적 최대 체력 × 비율), 지속·능력치 배율, 블록 수·위력(기본 공격 N회분), 끝날 때 리스크 */
-  liberationGaugeFraction: number;
+  /** 해방 수치 (BALANCE.provisional.liberation): 지속, 해방 중 블록 생성 속도 배율(모든 생성 타이머가 이만큼 빨리 돈다), 해방 블록 위력(기본 공격 N회분), 끝날 때 리스크 */
   liberationSeconds: number;
-  liberationStatMultiplier: number;
-  liberationBlocks: number;
+  liberationSpawnSpeed: number;
   liberationPowerInAttacks: number;
   liberationRisk: number;
+  /** 고유 효과 (레수렉시온/만해, 5단계~): 켜졌는가, 공격 속도·해방 블록 생성 배율, 전 능력치 배율 (수련 완료면 더 큼 — 부르는 쪽이 정한다) */
+  liberationUnique: boolean;
+  liberationAttackSpeed: number;
+  liberationChainSpeed: number;
+  liberationStatMultiplier: number;
   /** 원정 이벤트·시너지 (GDD 25-5, C.57): 전투 시작 체력 비율(함정), 시작 보호막 = 최대 체력 × 비율(성역·갈림길 — 받는 피해를 먼저 막는다), 적이 먼저 공격(매복) */
   playerStartHpFraction: number;
   startShieldFraction: number;
@@ -306,7 +305,6 @@ export function defaultCombatParams(): CombatParams {
     families: {},
     combos: [],
     riskPerVoidBlock: BALANCE.provisional.risk.perVoidBlock,
-    storedStartGauge: 0,
     skills: [],
     attackPowerMultiplier: 1,
     attackSpeedMultiplier: 1,
@@ -318,14 +316,20 @@ export function defaultCombatParams(): CombatParams {
     playerStartHpFraction: 1,
     startShieldFraction: 0,
     enemyFirstStrike: false,
-    liberationEnabled: false,
+    liberationEnabled: true,
+    liberationGaugePerBlock: LB.gaugePerBlock,
+    liberationChainBonus: LB.chainBonus,
+    liberationStartGauge: 0,
+    liberationSkills: [],
     liberationCategory: 'mixed',
-    liberationGaugeFraction: LB.gaugeEnemyHpFraction,
     liberationSeconds: LB.seconds,
-    liberationStatMultiplier: LB.statMultiplier,
-    liberationBlocks: LB.blocks,
+    liberationSpawnSpeed: LB.spawnSpeed,
     liberationPowerInAttacks: CX.basicBlockPowerInAttacks * LB.blockPowerMultiplier,
     liberationRisk: LB.riskOnEnd,
+    liberationUnique: false,
+    liberationAttackSpeed: 1,
+    liberationChainSpeed: 1,
+    liberationStatMultiplier: 1,
     abilityEffects: {},
     elementDamage: zeroElementDamage(),
     physBlock: null,
@@ -335,11 +339,9 @@ export function defaultCombatParams(): CombatParams {
 
 /** 엔진이 받는 입력 (GDD 3-5, 17-2: 블록 순서는 바꿀 수 없다 — 나온 순서대로 쓴다).
  *  use: 바의 cell 번째 블록 클릭 — 붙어 있는 같은 계열 공격 블록(막기·회복·기본 블록은 같은 특성)이 함께 발동해 체인이 된다 (GDD 17-3).
- *  stored: 저장형 필살기 사용 (충전 1개 소모, GDD 14-6).
- *  liberate: 해방 (GDD 22-5, 전투당 1회 · 게이지가 차고 자격이 있을 때만). */
+ *  liberate: 해방 (GDD 83장: 게이지 100 이면, 한 전투 여러 번). 저장형 필살기('stored')는 C.134 에 삭제 (GDD 83장). */
 export type CombatInput =
   | { type: 'use'; cell: number }
-  | { type: 'stored' }
   | { type: 'liberate' };
 
 export type CombatStatus = 'playing' | 'won' | 'lost';
@@ -372,14 +374,14 @@ export type CombatEvent =
   | { kind: 'stance'; seconds: number }
   | { kind: 'stance-end' }
   | { kind: 'counter'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean }
-  | { kind: 'stored-use'; damage: number; guardSeconds: number; charges: number; crit?: boolean; elem?: ElemHit }
-  | { kind: 'stored-ready'; charges: number }
+  /** 해방 게이지가 찼다 (GDD 83장) */
+  | { kind: 'liberation-ready' }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
   /** 콤보 발동: 콤보 블록이 바 맨 오른쪽에 생겼다 (GDD 17-3) */
   | { kind: 'combo'; comboId: string }
   | { kind: 'shuffle' }
-  /** 해방 시작 (GDD 22-5): 지속 초, 바에 넣은 해방 블록 수 */
-  | { kind: 'liberate'; seconds: number; blocks: number }
+  /** 해방 시작 (GDD 83장): 지속 초, 고유 효과(레수렉시온/만해) 여부, 해방 슬롯 블록 생성원 수(0 = 기본 블록이 빠르게) */
+  | { kind: 'liberate'; seconds: number; unique: boolean; slots: number }
   /** 해방이 풀렸다: 리스크 게이지 상승량 */
   | { kind: 'liberation-end'; risk: number }
   /** 보스 페이즈가 바뀌었다 (GDD 25-3): 새 페이즈 번호(2부터) */
@@ -467,12 +469,6 @@ export interface CombatState {
   damageTaken?: number;
   voidTimer: number;
   shuffleTimer: number;
-  /** 저장 게이지(0~storedGaugeMax 미만)와 충전 개수 (전투 안에서만 유효, GDD 14-6) */
-  storedGauge: number;
-  storedCharges: number;
-  storedUsed: number;
-  /** 충전이 상한이라 버려진 게이지 합계 */
-  storedWasted: number;
   /** 봉인: 남은 틱 동안 스킬 블록 생성 정지 */
   sealTicks: number;
   /** 막기 상태: 남은 틱, 그 막기에 붙은 반사 배율 */
@@ -496,7 +492,7 @@ export interface CombatState {
   /** 공허 블록 사용으로 오른 리스크 게이지 값 */
   riskGained: number;
   finisher: Finisher | null;
-  /** 해방 (GDD 22-5): 게이지(0~100), 쓴 틱(전투당 1회), 남은 지속 틱, 쓰기 전 능력치·최대 체력(풀릴 때 되돌린다), 끝날 때 오른 리스크 */
+  /** 해방 (GDD 83장): 게이지(0~100), 처음 쓴 틱, 쓴 횟수, 남은 지속 틱, 쓰기 전 능력치·최대 체력(풀릴 때 되돌린다), 끝날 때 오른 리스크 합 */
   liberation: LiberationState;
   /** 보스전이면 페이즈·기믹 상태 (GDD 25-3), 일반 전투는 없음 */
   boss?: BossState;
@@ -507,10 +503,17 @@ export interface CombatState {
 
 export interface LiberationState {
   gauge: number;
+  /** 처음 쓴 틱 (안 썼으면 null, 런 로그 liberationAt) */
   usedAtTick: number | null;
+  /** 이 전투에서 쓴 횟수, 해방 중 발동한 블록(체인) 수 (런 로그) */
+  uses: number;
+  chains: number;
   ticksLeft: number;
+  /** 해방 중 생성 타이머를 더 돌릴 몫(소수 누적, 1 이 되면 한 틱 더)과 다음에 낼 슬롯 순번 */
+  spawnAcc: number;
+  nextSlot: number;
   base: { stats: Stats; maxHp: number } | null;
-  /** 해방이 끝나며 오른 리스크 게이지 (안 썼으면 0). 원정·둥지가 전투 뒤에 반영한다 */
+  /** 해방이 끝나며 오른 리스크 게이지 합 (안 썼으면 0). 원정·둥지가 전투 뒤에 반영한다 */
   risk: number;
 }
 
@@ -587,9 +590,11 @@ export function basicSources(p: CombatParams): CombatSkill[] {
   ];
 }
 
-/** 블록 생성원: 장착 흡수 skill 특성들 + 기본 블록 5종(공격·막기·회복 생성원 3개) */
+/** 블록 생성원: 장착 흡수 skill 특성들 + 기본 블록 5종(공격·막기·회복 생성원 3개) + 해방 슬롯 특성(장착과 겹치면 장착 쪽) */
 export function blockSources(p: CombatParams): CombatSkill[] {
-  return [...p.skills, ...basicSources(p)];
+  const out = [...p.skills, ...basicSources(p)];
+  for (const x of p.liberationSkills ?? []) if (!out.some((y) => y.id === x.id)) out.push(x);
+  return out;
 }
 
 /** 성향 특성 보정 곱 (GDD 44장 4번, 44-1): 기본 블록 가중 배율과 흡수 타이머 속도 배율 */
@@ -766,7 +771,7 @@ export function playerAttackSecondsOf(p: CombatParams): number {
   return (p.playerAttackSeconds / p.attackSpeedMultiplier) * (p.playerRefStat / playerStatsOf(p).spd);
 }
 
-// ── 해방 (GDD 22-2·22-5) ──
+// ── 해방 (GDD 83장: 영력 해방 · 레수렉시온/만해, 옛 저장형 필살기 게이지) ──
 
 /** 해방 게이지 상한 */
 export const LIBERATION_GAUGE_MAX = LB.gaugeMax;
@@ -776,20 +781,30 @@ export function liberationActive(s: CombatState): boolean {
   return s.liberation.ticksLeft > 0;
 }
 
-/** 지금 해방할 수 있는가: 자격 + 게이지 가득 + 이 전투에서 아직 안 씀 */
+/** 지금 해방할 수 있는가: 켜짐 + 게이지 가득 + 해방 중이 아님 (한 전투에 여러 번) */
 export function canLiberate(s: CombatState): boolean {
-  return s.status === 'playing' && s.params.liberationEnabled && s.liberation.usedAtTick === null && s.liberation.gauge >= LIBERATION_GAUGE_MAX;
+  return s.status === 'playing' && s.params.liberationEnabled && !liberationActive(s) && s.liberation.gauge >= LIBERATION_GAUGE_MAX;
 }
 
-/** 해방을 쓴 시각(초), 안 썼으면 null (런 로그) */
+/** 해방을 처음 쓴 시각(초), 안 썼으면 null (런 로그) */
 export function liberationUsedAt(s: CombatState): number | null {
   return s.liberation.usedAtTick === null ? null : Math.round(s.liberation.usedAtTick * s.params.tickSeconds * 10) / 10;
 }
 
-/** 지금 내 평타 간격: 해방 중이면 속도가 오른 만큼 짧다 */
+/** 고유 효과(레수렉시온/만해)가 지금 켜져 있는가 */
+function uniqueActive(s: CombatState): boolean {
+  return s.params.liberationUnique && liberationActive(s);
+}
+
+/** 지금 내 평타 간격: 고유 효과 중이면 공격 속도 배율만큼 짧다 */
 function currentAttackSeconds(s: CombatState): number {
   const haste = s.basicHaste && s.basicHaste.ticks > 0 ? 1 - s.basicHaste.haste : 1;
-  return (playerAttackSecondsOf(s.params) / (liberationActive(s) ? s.params.liberationStatMultiplier : 1)) * haste;
+  return (playerAttackSecondsOf(s.params) / (uniqueActive(s) ? s.params.liberationAttackSpeed : 1)) * haste;
+}
+
+/** 해방 중 블록 생성 속도 배율: 생성 타이머(흡수·기본·물공)가 이 배율로 빨리 돈다. 고유 효과면 × 체인 속도 배율 */
+export function liberationSpawnSpeedOf(p: CombatParams): number {
+  return p.liberationSpawnSpeed * (p.liberationUnique ? p.liberationChainSpeed : 1);
 }
 
 export function comboOf(p: CombatParams, id: string | null): ComboRule | undefined {
@@ -840,9 +855,6 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     spawnTimers: timerSecondsOf(params).map((sec, i, all) => Math.max(1, Math.round((t(sec) * (i + 0.5)) / all.length))),
     voidTimer: t(params.voidCheckSeconds),
     shuffleTimer: params.trayShuffleSeconds > 0 ? t(params.trayShuffleSeconds) : 0,
-    ...startStored(params),
-    storedUsed: 0,
-    storedWasted: 0,
     sealTicks: 0,
     guard: { ticks: 0, reflect: 0 },
     skillsUsed: [],
@@ -858,24 +870,17 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     voidUsed: 0,
     riskGained: 0,
     finisher: null,
-    liberation: { gauge: 0, usedAtTick: null, ticksLeft: 0, base: null, risk: 0 },
+    liberation: { gauge: params.liberationEnabled ? Math.min(LIBERATION_GAUGE_MAX, Math.max(0, params.liberationStartGauge)) : 0, usedAtTick: null, uses: 0, chains: 0, ticksLeft: 0, spawnAcc: 0, nextSlot: 0, base: null, risk: 0 },
     ...(setup.boss ? { boss: { setup: { ...setup.boss, phases: setup.boss.phases.map((x) => ({ ...x })) }, phase: 1, attackMult: 1, gimmickTimer: t(gimmickEverySeconds(setup.boss)), seals: 0, ...(setup.boss.gimmick === 'summon' ? { minion: null, summons: 0, minionKills: 0 } : {}) } } : {}),
     inputs: [],
     events: [],
   };
 }
 
-/** 안정 수치(0~stabilityMax) → 전투 시작 저장 게이지 (0~storedStartGaugeMax, 비례) */
-export function storedStartGaugeOf(stability: number): number {
+/** 안정 수치(0~stabilityMax) → 전투 시작 해방 게이지 (0~startGaugeMax, 비례 — 옛 저장 필살 시작 게이지) */
+export function liberationStartGaugeOf(stability: number): number {
   const max = BALANCE.provisional.risk.stabilityMax;
-  return (Math.min(max, Math.max(0, stability)) / max) * CX.storedStartGaugeMax;
-}
-
-/** 시작 게이지를 게이지·충전으로 나눈다 (시작 게이지가 100 이상이어도 되게 충전 환산) */
-function startStored(p: CombatParams): { storedGauge: number; storedCharges: number } {
-  const total = Math.max(0, p.storedStartGauge);
-  const charges = Math.min(p.storedChargesMax, Math.floor(total / p.storedGaugeMax));
-  return { storedGauge: charges >= p.storedChargesMax ? 0 : total - charges * p.storedGaugeMax, storedCharges: charges };
+  return (Math.min(max, Math.max(0, stability)) / max) * LB.startGaugeMax;
 }
 
 export function elapsedSeconds(s: CombatState): number {
@@ -1185,12 +1190,6 @@ function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
     }
     if (amount <= 0) return;
   }
-  // 해방 게이지 (GDD 22-5): 내가 준 피해로 찬다. 적 최대 체력 × liberationGaugeFraction 을 깎으면 가득. 쓴 뒤에는 차지 않는다
-  const lb = s.liberation;
-  if (lb.usedAtTick === null && lb.gauge < LIBERATION_GAUGE_MAX) {
-    const dealt = Math.min(amount, s.enemy.hp);
-    lb.gauge = Math.min(LIBERATION_GAUGE_MAX, lb.gauge + (dealt / Math.max(1e-6, s.enemy.maxHp * s.params.liberationGaugeFraction)) * LIBERATION_GAUGE_MAX);
-  }
   s.enemy.hp = Math.max(0, s.enemy.hp - amount);
   if (s.enemy.hp <= 0) {
     s.status = 'won';
@@ -1347,40 +1346,12 @@ function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, fami
   return true;
 }
 
-/** 저장 게이지 적립: 100 이 차면 충전 +1 (최대 storedChargesMax), 상한이면 버려진 양을 기록 */
-function addStored(s: CombatState, v: number): void {
-  const p = s.params;
-  s.storedGauge += v;
-  while (s.storedGauge >= p.storedGaugeMax) {
-    s.storedGauge -= p.storedGaugeMax;
-    if (s.storedCharges < p.storedChargesMax) {
-      s.storedCharges++;
-      emit(s, { kind: 'stored-ready', charges: s.storedCharges });
-    } else {
-      s.storedWasted += p.storedGaugeMax;
-    }
-  }
-  if (s.storedCharges >= p.storedChargesMax && s.storedGauge > 0) {
-    s.storedWasted += s.storedGauge;
-    s.storedGauge = 0;
-  }
-}
-
-/** 저장형 필살기 사용: 충전 1개 소모, 기본 공격 N회 분량 피해(약점·체인·방어 자세 무시) + 직후 막기 상태 */
-export function storedDamage(s: CombatState): number {
-  return s.params.storedPowerInAttacks * unitDamage(s.params) * plainHitMultiplier(s);
-}
-
-function useStored(s: CombatState): boolean {
-  if (s.storedCharges <= 0) return false;
-  const p = s.params;
-  s.storedCharges--;
-  s.storedUsed++;
-  s.guard.ticks = Math.max(s.guard.ticks, ticksOf(p, p.storedGuardSeconds));
-  const { damage, crit, elem } = playerHit(s, storedDamage(s), true, []);
-  emit(s, { kind: 'stored-use', damage, guardSeconds: p.storedGuardSeconds, charges: s.storedCharges, crit, elem });
-  dealDamage(s, damage, { kind: 'stored', traitId: null, element: null });
-  return true;
+/** 해방 게이지 적립 (GDD 83장, 옛 저장 게이지): 블록을 쓸 때 찬다. 해방 중에는 차지 않고(끝나면 0 부터), 100 에서 멈춘다 */
+function addGauge(s: CombatState, v: number): void {
+  const lb = s.liberation;
+  if (!s.params.liberationEnabled || liberationActive(s) || lb.gauge >= LIBERATION_GAUGE_MAX) return;
+  lb.gauge = Math.min(LIBERATION_GAUGE_MAX, lb.gauge + v);
+  if (lb.gauge >= LIBERATION_GAUGE_MAX) emit(s, { kind: 'liberation-ready' });
 }
 
 function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
@@ -1394,9 +1365,9 @@ function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
   } else if (bonus.kind === 'reflect') {
     s.guard.reflect = Math.max(s.guard.reflect, bonus.value);
   } else {
-    // 정화: 봉인 해제 + 저장 게이지 +value (C.118: SP 필살 블록이 없어져 SP 대신 저장형 필살기 게이지로, GDD 66장)
+    // 정화: 봉인 해제 + 해방 게이지 +value (C.118: SP → 저장 게이지, C.134: 저장 게이지 → 해방 게이지, GDD 83장)
     s.sealTicks = 0;
-    addStored(s, bonus.value);
+    addGauge(s, bonus.value);
   }
 }
 
@@ -1415,7 +1386,7 @@ function updateCombos(s: CombatState, family: string | null, chain: number): voi
   }
 }
 
-/** 블록 사용 (클릭). 스킬 블록 = 붙어 있는 완전히 같은 블록이 함께 발동(체인) → 역할 효과 + 피해, 공허 = 큰 피해 + 리스크 상승 (SP 필살 블록은 C.118 에 삭제 — 필살기는 저장형만, GDD 66장) */
+/** 블록 사용 (클릭). 스킬 블록 = 붙어 있는 완전히 같은 블록이 함께 발동(체인) → 역할 효과 + 피해, 공허 = 큰 피해 + 리스크 상승 (SP 필살 블록은 C.118, 저장형 필살기는 C.134 에 삭제 — GDD 66·83장) */
 function useBlock(s: CombatState, index: number): boolean {
   const b = s.tray[index];
   if (!b) return false;
@@ -1424,7 +1395,7 @@ function useBlock(s: CombatState, index: number): boolean {
     s.tray.splice(index, 1);
     s.voidUsed++;
     s.riskGained += p.riskPerVoidBlock;
-    addStored(s, p.storedGaugePerBlock);
+    addGauge(s, p.liberationGaugePerBlock);
     const damage = blockDamage(s, b) * abilityPowerOf(s, true);
     emit(s, { kind: 'block', block: 'void', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'void', traitId: null, element: null });
@@ -1435,7 +1406,7 @@ function useBlock(s: CombatState, index: number): boolean {
   if (b.kind === 'combo') {
     s.tray.splice(index, 1);
     s.comboBlocksUsed++;
-    addStored(s, p.storedGaugePerBlock);
+    addGauge(s, p.liberationGaugePerBlock);
     const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, []);
     emit(s, { kind: 'block', block: 'combo', traitId: b.traitId, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
     dealDamage(s, damage, { kind: 'combo', traitId: b.traitId, element: null });
@@ -1445,9 +1416,10 @@ function useBlock(s: CombatState, index: number): boolean {
   }
   if (b.kind === 'liberation') {
     s.tray.splice(index, 1);
-    addStored(s, p.storedGaugePerBlock);
+    addGauge(s, p.liberationGaugePerBlock);
     const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, p.playerElements);
     const hit = liberationHit(s);
+    if (liberationActive(s)) s.liberation.chains++;
     emit(s, { kind: 'block', block: 'liberation', traitId: null, family: null, element: hit.element, matchup: hit.matchup, role: null, chain: 1, damage, weak: hit.weak, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
     dealDamage(s, damage, { kind: 'liberation', traitId: null, element: hit.element, weak: hit.weak, matchup: hit.matchup });
     onHit(s, 'enemy', p.playerElements, damage);
@@ -1475,7 +1447,8 @@ function useBlock(s: CombatState, index: number): boolean {
     s.chain3Count++;
     if (weak) s.weakChain3Count++;
   }
-  addStored(s, p.storedGaugePerBlock * chain + (p.storedChainBonus[chain - 1] ?? 0));
+  addGauge(s, p.liberationGaugePerBlock * chain + (p.liberationChainBonus[chain - 1] ?? 0));
+  if (liberationActive(s)) s.liberation.chains++;
   let heal = 0;
   let guardSeconds = 0;
   if (skill.role === 'guard') {
@@ -1506,9 +1479,7 @@ function useBlock(s: CombatState, index: number): boolean {
 export function applyInput(s: CombatState, input: CombatInput): boolean {
   if (s.status !== 'playing') return false;
   let ok = false;
-  if (input.type === 'stored') {
-    ok = useStored(s);
-  } else if (input.type === 'liberate') {
+  if (input.type === 'liberate') {
     ok = liberate(s);
   } else if (input.type === 'use') {
     ok = inTray(s.tray, input.cell) && !blockSealed(s.tray[input.cell]) && useBlock(s, input.cell);
@@ -1517,37 +1488,59 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
   return ok;
 }
 
-/** 해방 시작 (GDD 22-5): 지속 동안 전 능력치 ×배율(체력은 최대 체력과 함께 늘어난 만큼 채운다), 해방 블록을 바 오른쪽 끝에 넣는다.
- *  바가 가득 차 있으면 오른쪽 끝(가장 최근에 생긴) 블록이 밀려난다 */
+/** 해방 시작 (GDD 83장): 지속 동안 생성 타이머가 빨리 돌고, 나오는 블록이 전부 해방 슬롯 블록이 된다(기본 블록 없음). 고유 효과(레수렉시온/만해)면
+ *  전 능력치 ×배율(체력은 최대 체력과 함께 늘어난 만큼 채운다) + 공격 속도·블록 생성 배율. 게이지는 0 이 된다 */
 function liberate(s: CombatState): boolean {
   if (!canLiberate(s)) return false;
   const p = s.params;
   const lb = s.liberation;
-  lb.usedAtTick = s.tick;
+  if (lb.usedAtTick === null) lb.usedAtTick = s.tick;
+  lb.uses++;
+  lb.gauge = 0;
   lb.ticksLeft = ticksOf(p, p.liberationSeconds);
-  lb.base = { stats: { ...s.player.stats }, maxHp: s.player.maxHp };
-  for (const k of STAT_IDS) s.player.stats[k] *= p.liberationStatMultiplier;
-  const grownHp = s.player.maxHp * (p.liberationStatMultiplier - 1);
-  s.player.maxHp += grownHp;
-  s.player.hp += grownHp;
-  const n = Math.min(p.liberationBlocks, p.trayCapacity);
-  while (s.tray.length > p.trayCapacity - n) s.tray.pop();
-  for (let i = 0; i < n; i++) spawn(s, 'liberation', null);
-  emit(s, { kind: 'liberate', seconds: p.liberationSeconds, blocks: n });
+  lb.spawnAcc = 0;
+  lb.nextSlot = 0;
+  if (p.liberationUnique) {
+    lb.base = { stats: { ...s.player.stats }, maxHp: s.player.maxHp };
+    for (const k of STAT_IDS) s.player.stats[k] *= p.liberationStatMultiplier;
+    const grownHp = s.player.maxHp * (p.liberationStatMultiplier - 1);
+    s.player.maxHp += grownHp;
+    s.player.hp += grownHp;
+    // 지금 기다리는 평타 간격도 공격 속도만큼 줄인다
+    s.player.attackTimer = Math.max(1, Math.round(s.player.attackTimer / p.liberationAttackSpeed));
+  }
+  emit(s, { kind: 'liberate', seconds: p.liberationSeconds, unique: p.liberationUnique, slots: p.liberationSkills.length });
   return true;
 }
 
-/** 해방이 풀린다 (지속이 다 됐거나 전투가 끝났다): 능력치·최대 체력을 되돌리고 리스크 게이지가 오른다 (한 번만) */
+/** 해방 중 블록 하나: 해방 슬롯 특성을 차례로. 슬롯이 비었으면 기본 블록 풀에서 (빠르게 나오는 것만 같다 — C.134 코드 판단) */
+function spawnLiberationBlock(s: CombatState): void {
+  const lb = s.liberation;
+  const list = s.params.liberationSkills;
+  if (list.length === 0) {
+    const e = drawBasic(s);
+    if (e) spawn(s, 'skill', e.source.id, e.family);
+    return;
+  }
+  const src = list[lb.nextSlot % list.length]!;
+  lb.nextSlot = (lb.nextSlot + 1) % list.length;
+  spawn(s, 'skill', src.id, src.family ?? null);
+}
+
+/** 해방이 풀린다 (지속이 다 됐거나 전투가 끝났다): 능력치·최대 체력을 되돌리고 리스크 게이지가 오른다 (해방마다 한 번) */
 function endLiberation(s: CombatState): void {
   const lb = s.liberation;
-  if (lb.usedAtTick === null || lb.base === null) return;
-  s.player.stats = lb.base.stats;
-  s.player.maxHp = lb.base.maxHp;
-  s.player.hp = Math.min(s.player.hp, s.player.maxHp);
-  lb.base = null;
+  if (!liberationActive(s) && lb.base === null) return;
+  if (lb.base) {
+    s.player.stats = lb.base.stats;
+    s.player.maxHp = lb.base.maxHp;
+    s.player.hp = Math.min(s.player.hp, s.player.maxHp);
+    lb.base = null;
+  }
   lb.ticksLeft = 0;
-  lb.risk = s.params.liberationRisk;
-  s.events.push({ kind: 'liberation-end', risk: lb.risk });
+  lb.gauge = 0;
+  lb.risk += s.params.liberationRisk;
+  s.events.push({ kind: 'liberation-end', risk: s.params.liberationRisk });
 }
 
 function shuffleTray(s: CombatState): void {
@@ -1642,7 +1635,8 @@ function advanceTick(s: CombatState): void {
   const t = (sec: number) => ticksOf(p, sec);
   s.tick++;
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
-  if (s.liberation.ticksLeft > 0 && --s.liberation.ticksLeft === 0) endLiberation(s);
+  if (s.liberation.ticksLeft === 1) endLiberation(s);
+  else if (s.liberation.ticksLeft > 1) s.liberation.ticksLeft--;
   if (s.sealTicks > 0) s.sealTicks--;
   for (const b of s.tray) if (b.sealTicks && b.sealTicks > 0) b.sealTicks--;
   // 물공 블록 지속 효과 (GDD 49장): 바위 자세 · 평타 가속
@@ -1667,14 +1661,28 @@ function advanceTick(s: CombatState): void {
     s.shuffleTimer = t(p.trayShuffleSeconds);
     shuffleTray(s);
   }
-  // 블록 생성 (GDD 44-1 B안): 흡수 특성마다 타이머 + 기본 블록 타이머(나올 때마다 기본 풀에서 가중 추첨). 바가 가득 차거나 봉인 중이면 타이머가 멈춘다
+  // 블록 생성 (GDD 44-1 B안): 흡수 특성마다 타이머 + 기본 블록 타이머(나올 때마다 기본 풀에서 가중 추첨). 바가 가득 차거나 봉인 중이면 타이머가 멈춘다.
+  // 해방 중(GDD 83장)에는 타이머가 liberationSpawnSpeedOf 배로 빨리 돌고, 나오는 블록은 전부 해방 슬롯 블록이 된다(기본 블록 없음)
   if (s.sealTicks === 0) {
     const secs = timerSecondsOf(p);
-    for (let i = 0; i < secs.length; i++) {
+    const lib = liberationActive(s);
+    let turns = 1;
+    if (lib) {
+      s.liberation.spawnAcc += liberationSpawnSpeedOf(p) - 1;
+      while (s.liberation.spawnAcc >= 1) {
+        s.liberation.spawnAcc -= 1;
+        turns++;
+      }
+    }
+    for (let k = 0; k < turns; k++) for (let i = 0; i < secs.length; i++) {
       if (s.tray.length >= p.trayCapacity) break;
       s.spawnTimers[i] = (s.spawnTimers[i] ?? 1) - 1;
       if (s.spawnTimers[i]! > 0) continue;
       s.spawnTimers[i] = t(secs[i]!);
+      if (lib) {
+        spawnLiberationBlock(s);
+        continue;
+      }
       const src = p.skills[i];
       if (src) spawn(s, 'skill', src.id, src.family ?? null);
       else if (i === p.skills.length) {
@@ -1686,7 +1694,8 @@ function advanceTick(s: CombatState): void {
       }
     }
   }
-  if (--s.voidTimer <= 0) {
+  // 공허 블록: 해방 중에는 트레이에 해방 블록만 나오게 공허 시계도 멈춘다 (GDD 83장, C.134 코드 판단)
+  if (!liberationActive(s) && --s.voidTimer <= 0) {
     s.voidTimer = t(p.voidCheckSeconds);
     if (nextFloat(s.rng) < voidChanceOf(p)) spawn(s, 'void', null);
   }

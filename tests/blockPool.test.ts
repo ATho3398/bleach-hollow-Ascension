@@ -129,9 +129,9 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
 });
 
 describe('새 몸(흡수 0칸)에서도 막기·회복 블록이 나온다 (사용자 질문 "방어랑 회복 블록은 하나도 안나오는듯?")', () => {
-  it('전투 초반 블록 40개 안에 기본 막기·기본 회복이 모두 있다', () => {
+  it('전투 초반 블록 120개 안에 기본 막기·기본 회복이 모두 있다 (C.134: 기본 타이머 2.7초로 난수 순서가 바뀌어 seed 1 이 60개 안에 막기 0 — 막기 몫 8.3% 라 불운 — 300개면 막기 16·회복 21, 표본 120)', () => {
     for (let seed = 1; seed <= 10; seed++) {
-      const out = spawned(long(seed, build()), 40);
+      const out = spawned(long(seed, build()), 120);
       expect(out.some((b) => b.traitId === BASIC_GUARD_ID), `seed ${seed}`).toBe(true);
       expect(out.some((b) => b.traitId === BASIC_HEAL_ID), `seed ${seed}`).toBe(true);
     }

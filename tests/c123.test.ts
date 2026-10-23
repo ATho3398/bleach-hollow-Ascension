@@ -13,9 +13,9 @@ describe('C.123 C.118 뒤 밸런스 목표 맞추기', () => {
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(60);
   });
 
-  it('★2 보스 sand-maw 공격 0.37 → C.127 0.35 → C.132 0.37 (체력 150 그대로)', () => {
+  it('★2 보스 sand-maw 공격 0.37 → C.127 0.35 → C.132 0.37 → C.134 0.35 (체력 150 그대로)', () => {
     const e = getBoss('sand-maw').enemy;
-    expect(e.attackInAttacks).toBe(0.37); // C.132: 기본 몫 ×0.75 로 보스전 ★2 65 → 72% → 0.37 66%
+    expect(e.attackInAttacks).toBe(0.35); // C.132: 기본 몫 ×0.75 로 보스전 ★2 65 → 72% → 0.37 66%. C.134: 저장 필살기(25회분) 삭제로 보스전 ★2 61 → 51% → 0.35
     expect(e.hpInAttacks).toBe(150);
   });
 

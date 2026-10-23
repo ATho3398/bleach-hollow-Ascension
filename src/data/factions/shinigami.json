@@ -33,7 +33,6 @@
   "rankWinText": "{rank} 자리에 올랐다!",
   "rankLoseText": "패배… 석차가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
-  "storedSkillName": "응축 비기",
   "voidBlockName": "공허 블록",
   "chainName": "체인",
   "roleNames": {
@@ -346,6 +345,9 @@
     }
   },
   "liberation": {
+    "baseName": "영력 해방",
+    "baseCutin": "영압을 끌어올린다 — 영력 해방!",
+    "baseEndText": "해방이 풀렸다. 내면의 호로가 꿈틀거린다…",
     "name": "만해",
     "cutin": "참백도의 진명을 부른다 — 만해!",
     "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…"
@@ -358,7 +360,7 @@
   "training": {
     "title": "참백도 수련",
     "foe": "참백도의 정령",
-    "completeText": "정령을 굴복시켰다. 이제 전투에서 만해를 쓸 수 있다.",
+    "completeText": "정령을 굴복시켰다. 만해의 힘이 더 강해진다.",
     "games": {
       "duel": {
         "name": "정령 대결",

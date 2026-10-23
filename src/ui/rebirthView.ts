@@ -49,7 +49,7 @@ export function rebirthLists(faction: FactionConfig): { resets: string[]; keeps:
     ],
     keeps: [
       '진화체 도감·칭호',
-      `등급 이력 (${faction.liberation.name} 자격)`,
+      '등급 이력',
       '수련 완료·수련치·수련권',
       `먹이·${TRADE_CURRENCY_NAME}·${JADE_NAME}·${SOUL_CRYSTAL_NAME}·타일 덱`,
       '입은 스킨',

@@ -41,7 +41,7 @@ export const TUTORIAL_HOLE_PAD = 6;
 
 /** 장면 제목 앞 아이콘 (장면 id → 스프라이트). 모르는 장면은 info */
 const SCENE_ICON: Record<string, string> = {
-  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', stored: 'i-stored', after: 'i-evolve',
+  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', liberation: 'i-special', after: 'i-evolve',
   // 첫 원정·타일 안내 (C.120)
   walk: 'i-loop', encounter: 'i-practice', absorb: 'i-absorb', modes: 'i-absorb', practice: 'i-evolve', next: 'i-nest', tiles: 'i-deck', deck: 'i-deck', place: 'i-tile-prey', combo: 'i-tile-combo', draw: 'i-rare', special: 'i-tile-combo',
 };
@@ -103,7 +103,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   };
 
   /** 블록 바와 저장 필살기 버튼: 설명 카드가 가리지 않게 보호할 영역 */
-  const protectedRects = () => ['battle.tray', 'battle.stored'].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+  const protectedRects = () => ['battle.tray', 'battle.liberation'].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
 
   /** 가로 화면(LCD)에서 카드가 후보로 삼는 너비: 넓게(위·아래에 걸쳐) / 좁게(옆·모서리) */
   const WIDE_W = 456;

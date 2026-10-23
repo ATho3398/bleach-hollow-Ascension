@@ -173,9 +173,9 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
     const rendered = FACTIONS.map((f) => renderHelpText(TUTORIAL_SCENES.map((x) => x.body).join(' '), helpVars(f)));
     for (const [i, f] of FACTIONS.entries()) {
       // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4): 옛 '응축 일격'·'포효' 등은 나오지 않는다
-      expect(rendered[i]).toContain(helpVars(f).storedSkillName);
+      expect(rendered[i]).toContain(f.liberation.baseName);
+      expect(rendered[i]).toContain(f.liberation.name);
       expect(rendered[i]).toContain(helpVars(f).voidBlockName);
-      for (const old of [f.storedSkillName]) expect(rendered[i]).not.toContain(old);
     }
     if (FACTIONS.length > 1) expect(new Set(rendered).size).toBe(FACTIONS.length);
   });
@@ -184,7 +184,7 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
 describe('튜토리얼 일시정지는 전투 결과에 영향이 없다', () => {
   const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly)!;
   /** 틱 번호 → 입력 (같은 입력 기록) */
-  const script = new Map<number, CombatInput>([[30, { type: 'use', cell: 0 }], [60, { type: 'use', cell: 0 }], [90, { type: 'stored' }], [120, { type: 'use', cell: 1 }]]);
+  const script = new Map<number, CombatInput>([[30, { type: 'use', cell: 0 }], [60, { type: 'use', cell: 0 }], [90, { type: 'liberate' }], [120, { type: 'use', cell: 1 }]]);
 
   function play(seed: number, haltAt: (frame: number) => boolean): string {
     const s = createCombat(seed, { enemy });
@@ -198,7 +198,7 @@ describe('튜토리얼 일시정지는 전투 결과에 영향이 없다', () =>
         step(s, input ? [input] : []);
       }
     }
-    return JSON.stringify({ status: s.status, hp: s.enemy.hp, php: s.player.hp, stored: s.storedGauge, tray: s.tray.map((b) => b.kind), tick: s.tick });
+    return JSON.stringify({ status: s.status, hp: s.enemy.hp, php: s.player.hp, gauge: s.liberation.gauge, tray: s.tray.map((b) => b.kind), tick: s.tick });
   }
 
   it('중간에 몇 번이든 멈췄다 풀어도 같은 시드면 결과가 같다', () => {

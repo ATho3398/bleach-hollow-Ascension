@@ -2,7 +2,7 @@
 
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
-import { completedElements, gainTrait, newBuild, type BuildState } from './engine/absorb';
+import { completedElements, gainTrait, LIBERATION_SLOT_MAX, liberationEligible, newBuild, setLiberationSlot, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, CARE_ACTIONS, doNestAction, newNest, respondCare, tickCareRequest, type CareAction, type CareOutcome, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
@@ -41,12 +41,12 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 38; // C.133: 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 39; // C.134: 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다").
  *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
  *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 38; // C.133: 형식 38 과 같이 올림 (GDD 61장, 마이그레이션 없음)
+export const MIN_LOADABLE_SAVE_FORMAT = 39; // C.134: 형식 39 와 같이 올림 (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -906,7 +906,7 @@ export function resumeTarget(save: Pick<SaveData, 'lastScreen' | 'activeExpediti
 }
 
 function cloneBuildOf(b: BuildState): BuildState {
-  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])] };
+  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])], liberation: [...(b.liberation ?? [])] };
 }
 
 /** 둥지에서 진화를 확정한다 (원정 중에는 부르지 않는다, 귀환 때 recordExpedition 이 부른다). 그 순간 장착 특성·허기·컨디션으로 판정.
@@ -1092,14 +1092,15 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
   return out;
 }
 
-/** 해방 자격 (GDD 22-2·22-5): 수련 완료 그리고 등급 이력, 그리고 지금 단계 5 이상.
- *  visible = 버튼을 보이는가(5단계 이상), usable = 쓸 수 있는가, missing = 부족한 것(잠긴 버튼 한 줄) */
-export function liberationAccess(save: Pick<SaveData, 'training' | 'rank' | 'evolution'>): { visible: boolean; usable: boolean; missing: ('training' | 'rank')[] } {
-  const visible = save.evolution.tierIndex >= BALANCE.provisional.liberation.minTierIndex;
-  const missing: ('training' | 'rank')[] = [];
-  if (!save.training.completed) missing.push('training');
-  if (!save.rank.history.everRanked) missing.push('rank');
-  return { visible, usable: visible && missing.length === 0, missing };
+/** 해방 (GDD 83장, C.134): 22-2 의 해금 조건(수련 완료·등급 이력)은 폐기 — 1단계부터 영력 해방, 5단계부터 레수렉시온/만해(고유 효과).
+ *  trained = 수련 완료(22-4) → 고유 효과 강화 (applyEvolutionToParams 의 trained) */
+export function liberationAccess(save: Pick<SaveData, 'training'>): { usable: true; trained: boolean } {
+  return { usable: true, trained: save.training.completed };
+}
+
+/** 방에서 해방 블록 슬롯을 정한다 (GDD 83장 3번): 칸 수는 지금 단계, 가진 블록 특성만 */
+export function setLiberationBlock(save: SaveData, slot: number, traitId: string | null): boolean {
+  return setLiberationSlot(save.build, slot, traitId, save.evolution.tierIndex).ok;
 }
 
 /** 원정 밖 전투(등급전·연습)에서 해방이 끝나며 오른 리스크를 둥지 게이지에 더한다 (원정 전투는 finishBattle 이 원정 게이지에) */
@@ -1506,7 +1507,15 @@ function repairCore(save: SaveData): boolean {
   save.nest = nest as unknown as NestState;
   const b = save.build as Partial<BuildState> | undefined;
   if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots)) save.build = newBuild();
-  else if (!Array.isArray(b.equipOrder)) b.equipOrder = [];
+  else {
+    if (!Array.isArray(b.equipOrder)) b.equipOrder = [];
+    // 해방 블록 슬롯 (C.134, GDD 83장): 가진 블록 특성만, 최대 칸 수로 맞춘다 (깨진 값은 비움)
+    const lib = Array.isArray(b.liberation) ? b.liberation : [];
+    b.liberation = Array.from({ length: LIBERATION_SLOT_MAX }, (_, i) => {
+      const id = lib[i];
+      return typeof id === 'string' && liberationEligible(b as BuildState, id) && lib.indexOf(id) === i ? id : null;
+    });
+  }
   const t = save.tiles as Partial<TileStock> | undefined;
   save.tiles = isRec(t)
     ? { collection: isRec(t.collection) ? t.collection as Record<string, number> : newTileStock().collection, deck: Array.isArray(t.deck) ? t.deck.filter((x): x is string => typeof x === 'string') : [], unlocked: t.unlocked === true, draws: nonNegInt(t.draws) }

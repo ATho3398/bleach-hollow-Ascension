@@ -116,12 +116,16 @@ export interface BattleRecord {
   finisherLineageId?: string | null;
   /** 이 전투로 흡수할 수 있었는가. C.125 (GDD 71장) 부터 흡수 조건이 없어 이기면 늘 true (필드는 히든 조건 대비로 남긴다). 그 전 기록은 옛 조건(우위 마무리 / 우위 체인3 / 첫 흡수 보장) */
   absorbable: boolean;
-  /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0 */
+  /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0.
+   *  C.134 (GDD 83장): 저장형 필살기 삭제 — 필드 구조는 남기고 새 기록은 늘 0 */
   storedUsed: number;
   storedWasted: number;
   /** C.54 에서 더한 필드 (세이브 형식 18, 해방 GDD 22-5): 해방을 썼는가, 쓴 시각(전투 시작부터 초, 안 썼으면 null). 옛 기록은 false/null */
   liberationUsed: boolean;
   liberationAt: number | null;
+  /** C.134 에서 더한 필드 (세이브 형식 39, GDD 83장 해방): 해방 사용 횟수(한 전투 여러 번), 해방 중 발동한 블록(체인) 수. 그 전 기록은 없음 */
+  liberationUses?: number;
+  liberationChains?: number;
   /** 치명타 횟수: 내 공격 / 적 공격 (C.63, GDD 28장 5번). 옛 기록은 없음 */
   crits?: number;
   enemyCrits?: number;

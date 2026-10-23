@@ -57,9 +57,10 @@ export function guideVars(f: FactionConfig): Record<string, string> {
 }
 
 /** 튜토리얼 장면 targets 가 가리킬 수 있는 전투 화면 요소 id (battleView 가 data-help 로 단다) */
-export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.stored'] as const; // battle.sp(영력 바)는 C.118 에 삭제
+export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.liberation'] as const; // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
 
 const COMBAT = BALANCE.provisional.combat;
+const LIB = BALANCE.provisional.liberation;
 
 /** 본문에서 쓸 수 있는 자리표시자 값: 종족 설정의 문자열 필드(중첩은 a.b)와 밸런스 수치 */
 export function helpVars(f: FactionConfig): Record<string, string> {
@@ -72,15 +73,15 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   };
   walk('', f);
   // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4: 옛 '포효'·'응축 일격' 등 금지)
-  vars.storedSkillName = BLOCK_WORDS.stored;
   vars.voidBlockName = `${BLOCK_WORDS.void} 블록`;
   delete vars.basicSkillName;
   vars.trayCapacity = String(COMBAT.trayCapacity);
   vars.chainMax = String(COMBAT.chainMultipliers.length);
   vars.familyList = f.families.map((x) => x.abbr).join('·');
-  vars.storedChargesMax = String(COMBAT.storedChargesMax);
-  vars.storedPower = String(COMBAT.storedPowerInAttacks);
-  vars.storedGuardSeconds = String(COMBAT.storedGuardSeconds);
+  // 해방 (GDD 83장, 옛 저장형 필살기 자리): {liberation.baseName}·{liberation.name} 은 종족 설정에서 그대로, 수치는 BALANCE
+  vars.liberationSeconds = String(LIB.seconds);
+  vars.liberationRisk = String(LIB.riskOnEnd);
+  vars.liberationSlots = (LIB.slotsByTier as readonly number[]).filter((n, i, a) => i === 0 || n !== a[i - 1]).join('·');
   // 진화 단계 이름 (GDD 20-5 설명용): {tier4} = 바스트로데/평대원, {tier5} = 아란칼/수석 대원
   vars.tier4 = f.tierNames[3];
   vars.tier5 = f.tierNames[4];

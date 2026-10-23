@@ -183,7 +183,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
         persist();
         fill();
-      });
+      }, save.evolution.tierIndex);
       page.left.replaceChildren(slotsPanel!);
       page.right.replaceChildren(ownedPanel!);
       return;
