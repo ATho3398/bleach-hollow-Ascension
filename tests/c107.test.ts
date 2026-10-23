@@ -27,17 +27,15 @@ describe('C.107 호로 시작 외형 5종 랜덤 (GDD 51)', () => {
   it('사신은 목록이 비어 항상 기본', () => {
     for (const r of [0, 0.5, 0.99]) expect(pickStartLook(shin, r)).toBeNull();
   });
-  it('뽑힌 스킨은 보유·장착되고 스탯 편향(C.108) 말고 나머지는 같다', () => {
+  it('뽑힌 스킨은 보유·장착되고 나머지는 같다 (편향 없음, C.132)', () => {
     const base = newSaveData('hollow', 1000);
     const s = newSaveData('hollow', 1000);
     expect(applyStartLook(s, hollow, 0.5)).toBe('brute');
     expect(s.skin).toBe('brute');
     expect(s.shared.cosmetics).toContain('skin-brute');
-    const { bias, ...evo } = s.evolution;
-    expect(bias).toBeDefined();
-    expect({ ...s, skin: null, shared: base.shared, evolution: evo }).toEqual({ ...base });
+    expect({ ...s, skin: null, shared: base.shared }).toEqual({ ...base });
   });
-  it('기본이 뽑히면 스킨은 그대로(편향만 기본 외형 몫)', () => {
+  it('기본이 뽑히면 스킨은 그대로', () => {
     const s = newSaveData('hollow', 1000);
     expect(applyStartLook(s, hollow, 0)).toBeNull();
     expect(s.skin).toBeNull();

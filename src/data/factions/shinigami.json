@@ -6,7 +6,6 @@
   "birthFx": {"steps": [{"fx": "orb", "ms": 600}, {"fx": "flicker", "ms": 1400, "count": 7}, {"fx": "flash", "ms": 300}, {"fx": "reveal", "ms": 700}], "colors": {"orb": "--bha-accent-hi", "glow": "--bha-accent", "flash": "--bha-text-1"}},
   "logo": "logo-shinigami",
   "startLooks": [],
-  "startLookBias": {},
   "tierLooks": {},
   "formLooks": {},
   "tierNames": [

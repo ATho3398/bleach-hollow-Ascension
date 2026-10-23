@@ -77,7 +77,7 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
     expect(basicSpawnSecondsOf(paramsOf(build()))).toBeCloseTo(BP.basicSpawnSeconds);
     for (let n = 1; n <= 3; n++) {
       const p = paramsOf(build(...['t-fire-a', 't-earth-guard', 't-thunder-heal'].slice(0, n)));
-      const share = BP.basicShareBySlots[n]!;
+      const share = BP.basicShareDecayPerSlot ** n;
       const absorbedTotal = (CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot * (n - 1))) / n;
       expect(basicSpawnSecondsOf(p)).toBeCloseTo((absorbedTotal * (1 - share)) / share);
     }
@@ -92,12 +92,11 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
     for (let n = 1; n <= 3; n++) expect(shares[n]!).toBeGreaterThan(shares[n - 1]!);
   });
 
-  // C.98 (GDD 44-2): 기본 블록 몫 목표 0칸 100% · 1칸 약 60% · 2칸 약 45% · 3칸 약 35% (±5%p) — "모든 블록 나오는데, 거기에 독 탄도 같이 나오는거야"
-  it('기본 블록 몫(초당 생성 기대치) = 0칸 100% · 1칸 60% · 2칸 45% · 3칸 35% (±5%p, 표 basicShareBySlots)', () => {
+  // C.132 (GDD 80장): 기본 블록 몫 = 0칸 100% · 1칸 75% · 2칸 56% · 3칸 42% (슬롯 하나마다 ×0.75, 옛 44-2 표 60·45·35% 대체)
+  it('기본 블록 몫(초당 생성 기대치) = 0칸 100% · 1칸 75% · 2칸 56% · 3칸 42% (±5%p, basicShareDecayPerSlot 0.75)', () => {
     const ids = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
-    const target = [1, 0.6, 0.45, 0.35];
-    expect(BP.basicShareBySlots.slice(0, 4)).toEqual(target);
-    for (let i = 1; i < BP.basicShareBySlots.length; i++) expect(BP.basicShareBySlots[i]!).toBeLessThan(BP.basicShareBySlots[i - 1]!);
+    const target = [1, 0.75, 0.5625, 0.421875];
+    expect(BP.basicShareDecayPerSlot).toBe(0.75);
     for (let n = 0; n <= 3; n++) {
       const basicShare = 1 - spawnRatesOf(paramsOf(build(...ids.slice(0, n)))).absorbedShare;
       expect(Math.abs(basicShare - target[n]!), `${n}칸 기본 몫 ${(basicShare * 100).toFixed(0)}%`).toBeLessThanOrEqual(0.05);

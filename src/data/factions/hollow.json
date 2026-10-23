@@ -6,7 +6,6 @@
   "birthFx": {"steps": [{"fx": "orb", "ms": 500}, {"fx": "chain", "ms": 500, "count": 7}, {"fx": "burn", "ms": 1000, "count": 7}, {"fx": "flames", "ms": 800}, {"fx": "reveal", "ms": 600}], "colors": {"orb": "--bha-accent-hi", "glow": "--bha-accent", "chain": "--bha-text-2", "ember": "--bha-chain3", "flame": "--bha-bg-0", "flameEdge": "--bha-accent", "flash": "--bha-text-1"}},
   "logo": "logo-hollow",
   "startLooks": ["stalker", "brute", "ghoul", "shackled"],
-  "startLookBias": { "base": "hp", "stalker": "spd", "brute": "atk", "ghoul": "spr", "shackled": "def" },
   "formLooks": {
     "t5:normal:physical": [
       "arrnormala",

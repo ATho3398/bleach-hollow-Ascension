@@ -6,7 +6,7 @@ import { completedElements, gainTrait, newBuild, type BuildState } from './engin
 import { applyExpeditionEnd, doNestAction, newNest, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, startBiasStats, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
@@ -516,12 +516,12 @@ export function streakFor(save: Pick<SaveData, 'difficulty'>, star: number): num
   return s.star === star ? s.count : 0;
 }
 
-/** 자유 원정이 끝났을 때 연속 클리어 갱신: 귀환이면 같은 ★ +1(상한), 패배면 0, 다른 ★였으면 그 ★부터 다시. 스토리 화는 건드리지 않는다 */
-export function settleStreak(save: Pick<SaveData, 'difficulty'>, exp: Pick<ExpeditionState, 'difficulty' | 'outcome' | 'story'>): void {
+/** 자유 원정이 끝났을 때 연속 클리어 갱신: 귀환이면 같은 ★ +1(상한), 패배·도중 귀환(abort, GDD 81장)이면 0, 다른 ★였으면 그 ★부터 다시. 스토리 화는 건드리지 않는다 */
+export function settleStreak(save: Pick<SaveData, 'difficulty'>, exp: Pick<ExpeditionState, 'difficulty' | 'outcome' | 'story'> & Partial<Pick<ExpeditionState, 'endReason'>>): void {
   if (exp.story) return;
   const s = save.difficulty.streak;
   const same = s.star === exp.difficulty;
-  save.difficulty.streak = exp.outcome === 'returned' ? { star: exp.difficulty, count: clampStreak((same ? s.count : 0) + 1) } : { star: exp.difficulty, count: 0 };
+  save.difficulty.streak = exp.outcome === 'returned' && exp.endReason !== 'abort' ? { star: exp.difficulty, count: clampStreak((same ? s.count : 0) + 1) } : { star: exp.difficulty, count: 0 };
 }
 
 /** 단계에 닿으면 그 ★ 를 연다 (진화·로드 때). 새로 열렸으면 true */
@@ -1119,8 +1119,6 @@ export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs
   save.rebirth = { count, carry };
   const evolution = newEvolution(nextStageSeed(prev.stageSeed, 100 + count));
   evolution.carry = startingCarry(carry);
-  // 시작 외형 편향은 외형(스킨)처럼 환생을 지나도 그대로 (GDD 51·52)
-  if (prev.bias) evolution.bias = { ...prev.bias };
   save.evolution = evolution;
   const build = newBuild();
   if (keepTraitId !== null) gainTrait(build, keepTraitId);
@@ -1461,6 +1459,8 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   const mc = (isRec(save.machine) ? save.machine.createdAt : undefined) as unknown;
   save.machine = sanitizeMachine(save.machine, typeof mc === 'number' && Number.isFinite(mc) && mc >= 0 ? mc : earliestStamp(save) ?? Date.now());
   forEachTrack(save, (t) => sanitizeTrackFields(t, save.shared.cosmetics));
+  // 시작 외형 스탯 편향 삭제 (GDD 78, C.132): C.108~C.131 세이브의 진화 상태 bias 는 형식 그대로 두고 불러올 때 버린다
+  forEachTrack(save, (t) => { delete (t.evolution as { bias?: unknown }).bias; });
   save.story = sanitizeStory(save.story);
   save.bossDex = sanitizeBossDex(save.bossDex);
   if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
@@ -1585,19 +1585,10 @@ export function pickStartLook(faction: Pick<FactionConfig, 'id' | 'startLooks'>,
   return i === 0 ? null : looks[i - 1]!;
 }
 
-/** 시작 외형의 스탯 편향 (GDD 52 연동, C.108): 종족 설정 startLookBias 에서 그 외형(기본 외형은 'base')의 능력치를 읽어 ±표(한 능력치 +10·나머지 −2, provisional)를 만든다. 표가 없으면 null */
-export function startBiasOf(faction: Pick<FactionConfig, 'startLookBias'>, look: string | null): Stats | null {
-  const stat = faction.startLookBias?.[look ?? 'base'];
-  return stat ? startBiasStats(stat) : null;
-}
-
-/** 뽑은 외형을 새 세이브에 입힌다: 스킨을 보유 목록에 넣고 장착(기본 외형 null 이면 스킨은 그대로), 외형의 스탯 편향(startBiasOf)을 진화 상태 bias 에 둔다.
- *  환생·트랙 만들기는 부르지 않는다(외형·편향 유지). 돌려주는 값 = 뽑힌 스킨 id(기본이면 null) */
-export function applyStartLook(save: SaveData, faction: Pick<FactionConfig, 'id' | 'startLooks' | 'startLookBias'>, rnd: number): string | null {
+/** 뽑은 외형을 새 세이브에 입힌다: 스킨을 보유 목록에 넣고 장착(기본 외형 null 이면 스킨은 그대로). 외형은 그림만 — 능력치 편향 없음 (GDD 78, C.132).
+ *  환생·트랙 만들기는 부르지 않는다(외형 유지). 돌려주는 값 = 뽑힌 스킨 id(기본이면 null) */
+export function applyStartLook(save: SaveData, faction: Pick<FactionConfig, 'id' | 'startLooks'>, rnd: number): string | null {
   const look = pickStartLook(faction, rnd);
-  const bias = startBiasOf(faction, look);
-  if (bias) save.evolution.bias = bias;
-  else delete save.evolution.bias;
   if (look === null) return null;
   if (!save.shared.cosmetics.includes(skinItemId(look))) save.shared.cosmetics.push(skinItemId(look));
   return equipSkin(save, look) ? look : null;

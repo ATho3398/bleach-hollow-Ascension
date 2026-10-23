@@ -116,9 +116,9 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
     expect(rest(outP)).toBeGreaterThan(restExpected * 0.9);
     expect(rest(outP)).toBeLessThan(restExpected * 1.1);
     expect(outA2.some((x) => x.traitId === BASIC_SKILL_ID)).toBe(true);
-    // 흡수 특성 블록 수는 같다 (타이머 그대로)
+    // 흡수 특성 블록 수는 같다 (타이머 그대로, 6000초 창 끝 ±1 — C.132 흡수 간격 5.4초)
     const absorbed = (out: typeof outA) => out.filter((x) => x.traitId && !x.traitId.startsWith('basic-')).length;
-    expect(absorbed(outA2)).toBe(absorbed(outP));
+    expect(Math.abs(absorbed(outA2) - absorbed(outP))).toBeLessThanOrEqual(1);
   });
 
   it('보통 몸은 옛 규칙 그대로: 기본 타이머에서 공격 3계열·막기·회복이 다 나온다', () => {

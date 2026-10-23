@@ -61,7 +61,7 @@ describe('62장 ② 전투 시간 절반 — hpScale', () => {
     expect(ratio).toBeLessThan(0.65);
     expect(CX.tickSeconds).toBe(0.1);
     // 블록 타이머는 ÷1.7 (6.5 → 3.8 · 3.2 → 1.9 · 물공 6 → 3.5 · 혈 3 → 1.8): 체력만 반으로 줄이면 블록·체인이 적어 강적 승률이 무너져서
-    expect(CX.blockSpawnSeconds).toBe(3.8);
+    expect(CX.blockSpawnSeconds).toBe(5.4); // C.132: 3.8 → 5.4 (GDD 80장 기본 몫 ×0.75 와 함께 칸별 블록 총량 맞춤)
     expect(BP.basicSpawnSeconds).toBe(1.9);
     expect(BALANCE.provisional.physBlocks.spawnSeconds).toBe(3.5);
     expect(BALANCE.provisional.physBlocks.spawnSecondsByElement.blood).toBe(1.8);

@@ -50,7 +50,8 @@ const TT = BALANCE.provisional.tiles;
 
 export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'event' | 'ended';
 /** story-clear = 스토리 화 목표를 이뤄 바로 귀환 (GDD 25-4, C.58) */
-export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear';
+/** abort = 원정 도중 [귀환하기] (GDD 81장, C.132): 모은 것은 지키고 이번 바퀴 완주 보상·연속 클리어는 없다 */
+export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort';
 
 /** 지금 치를 전투 (전투 엔진에 넘길 재료) */
 export interface PendingBattle {
@@ -1019,6 +1020,20 @@ export function chooseReturn(exp: ExpeditionState): void {
   if (exp.phase !== 'nest-choice') throw new Error('귀환을 고를 수 없는 때');
   discardDraft(exp);
   endExpedition(exp, 'returned', 'returned');
+}
+
+/** 원정 도중 귀환할 수 있나 (GDD 81장): 걷기·휴식 중만(전투·이벤트·둥지 칸 선택 중은 아님), 첫 원정 튜토리얼은 숨김 */
+export function canAbort(exp: Pick<ExpeditionState, 'phase' | 'tutorial'>): boolean {
+  return !exp.tutorial && (exp.phase === 'moving' || exp.phase === 'rest');
+}
+
+/** 원정 도중 [귀환하기] (GDD 81장, C.132): 지금까지 모은 것은 바퀴 끝 귀환처럼 지킨다. 바퀴 완주 보상(둥지 칸 타일)은 둥지 칸에 닿지 않았으니 없다.
+ *  쉬던 중이면 휴식 효과도 없다. 연속 클리어는 settleStreak 가 끊는다 */
+export function abortExpedition(exp: ExpeditionState): void {
+  if (!canAbort(exp)) throw new Error('지금은 귀환할 수 없다');
+  exp.restMult = 1;
+  exp.restSpring = false;
+  endExpedition(exp, 'returned', 'abort');
 }
 
 /** 둥지 칸에서: 한 바퀴 더 */

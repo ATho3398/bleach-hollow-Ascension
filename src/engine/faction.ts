@@ -171,8 +171,6 @@ export interface FactionConfig {
   birthFx?: BirthFx;
   /** 새 세이브 시작 외형 후보 (GDD 51): 스킨 id 목록. 기본 외형과 함께 균등 추첨한다. 없거나 비면 기본 외형만 */
   startLooks?: string[];
-  /** 시작 외형 스탯 편향 (GDD 52 연동, C.108): 스킨 id('base' = 기본 외형) → +편향 능력치. 그 능력치 +up·나머지 −down(balance stats.startBias). 없으면 편향 없음 */
-  startLookBias?: Record<string, StatId>;
   /** 단계 외형 표 (GDD 53): 단계 번호(문자열) → 진화 순간 노력치 순위로 고르는 스킨 id. stat = 1위 능력치별, pairs = 1·2위 쌍(순서 무관, 먼저 판정). 없으면 기존 단계 그림 */
   /** 진화체 외형 표 (GDD 54): 진화체 id → 스킨 id 목록(둘 이상이면 진화 때 하나를 뽑아 look 에 고정). tierLooks 보다 먼저 본다. 없으면 tierLooks → 기존 단계 그림 */
   formLooks?: Record<string, string[]>;
@@ -380,11 +378,6 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     }
   }
   if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
-  if (r.startLookBias !== undefined) {
-    const sb = r.startLookBias;
-    if (!isRec(sb) || !Object.values(sb).every((v) => isString(v) && (STAT_IDS as readonly string[]).includes(v))) errors.push('startLookBias: 스킨 id → 능력치 id');
-    else if (Object.keys(sb).some((k) => k !== 'base' && !(Array.isArray(r.startLooks) && r.startLooks.includes(k)))) errors.push('startLookBias: 키는 base 또는 startLooks 의 스킨 id');
-  }
   if (r.formLooks !== undefined && !(isRec(r.formLooks) && Object.values(r.formLooks).every((v) => Array.isArray(v) && v.length > 0 && v.every((x) => isString(x))))) errors.push('formLooks: { 진화체 id: [스킨 id, …](비어 있지 않게) }');
   if (r.tierLooks !== undefined) {
     const tl = r.tierLooks;

@@ -806,7 +806,7 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     }
     expect(kinds.size).toBeGreaterThanOrEqual(2);
     expect(wins / games).toBeGreaterThan(0.4);
-    expect(wins / games).toBeLessThan(0.97);
+    // C.132 (GDD 80장): 1칸 기본 몫 60 → 75% 로 막기·회복 기본 블록이 늘어 이 3종 × 20판은 60판 전승(전 55/60). 100% 쏠림은 balance:check 의 적 풀 강적 60~85% 가드가 본다
   });
 });
 

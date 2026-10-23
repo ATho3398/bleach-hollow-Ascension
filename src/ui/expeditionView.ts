@@ -8,7 +8,7 @@ import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
-  advance, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
+  abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
@@ -16,6 +16,7 @@ import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
+import { confirmDialog } from './confirmDialog';
 import { onHold } from './bha/hold';
 import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
 import { createExpClock } from './bha/expClock';
@@ -275,11 +276,40 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     resumeClock();
     render();
   };
+  // 원정 도중 [귀환하기] (GDD 81장, C.132): 걷기·휴식 중만, 첫 원정 튜토리얼은 숨김. 확인창이 열린 동안 시간은 멈춘다
+  const abortBtn = button({ label: '귀환하기', icon: 'i-return', variant: 'ghost', size: 'small' });
+  abortBtn.classList.add('bha-exp__abort');
+  abortBtn.onclick = () => {
+    if (!canAbort(exp)) return;
+    const wasPaused = paused;
+    paused = true;
+    resumeClock();
+    render();
+    confirmDialog({
+      title: '지금 귀환할까요?',
+      body: '이번 바퀴 완주 보상은 없어요',
+      yes: '귀환하기',
+      no: '계속 가기',
+      onYes: () => {
+        if (dead || !canAbort(exp)) return;
+        abortExpedition(exp);
+        dead = true;
+        clock.cancel();
+        clearInterval(watch);
+        h.onEnded();
+      },
+      onNo: () => {
+        paused = wasPaused;
+        resumeClock();
+        render();
+      },
+    });
+  };
   const handCount = el('span', 'bha-exp__hand-count');
-  // 오른쪽 위 모서리: 일시정지·도움말을 작게 (+ 손에 든 타일 수)
+  // 오른쪽 위 모서리: 귀환하기·일시정지·도움말을 작게 (+ 손에 든 타일 수)
   const corner = el('div', 'bha-exp__corner');
   const cornerRow = el('div', 'bha-exp__cornerrow');
-  cornerRow.append(pauseBtn);
+  cornerRow.append(abortBtn, pauseBtn);
   corner.append(cornerRow, handCount);
 
   // 둥지 칸 도착 선택은 장면 위 말풍선 오버레이 (타일 배치판은 안에 있다)
@@ -353,6 +383,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     pauseBtn.replaceChildren(icon(paused ? 'i-play' : 'i-pause'));
     pauseBtn.classList.toggle('is-on', paused);
     pauseBtn.setAttribute('aria-label', paused ? '재개' : '일시정지');
+    abortBtn.hidden = !canAbort(exp);
     handCount.textContent = exp.hand.length > 0 ? `손에 든 타일 ${exp.hand.length}장` : '';
     handCount.hidden = exp.hand.length === 0;
     main.classList.toggle('is-paused', paused);

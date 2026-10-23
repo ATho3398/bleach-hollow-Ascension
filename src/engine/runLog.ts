@@ -234,7 +234,7 @@ export interface RunRecord {
   gained: string[];
   lost: string[];
   /** P2 에서 더한 필드 (세이브 형식 3): 끝난 이유, 시드, 종족 */
-  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear';
+  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort';
   seed: number;
   factionId: string;
   /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 한계 돌파 여부 */

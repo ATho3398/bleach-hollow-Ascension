@@ -6,10 +6,10 @@ import { FACTIONS } from '../src/data/factions';
 import { STAT_IDS, type StatId } from '../src/data/schema';
 import { TRAITS } from '../src/data/traits';
 import { ABSORB_MODES, absorbRisk, type AbsorbMode, type AbsorbOffer } from '../src/engine/absorb';
-import { addEv, currentStats, evCaps, newEvolution, startBiasStats } from '../src/engine/evolution';
+import { addEv, currentStats, evCaps, newEvolution } from '../src/engine/evolution';
 import { absorbEvOf, chooseAbsorb, chooseRelease, createExpedition } from '../src/engine/expedition';
 import { parseFactionConfig } from '../src/engine/faction';
-import { applyStartLook, migrateSave, newSaveData, performRebirth, sanitizeDeck, startBiasOf, SAVE_FORMAT_VERSION } from '../src/game';
+import { applyStartLook, migrateSave, newSaveData, performRebirth, sanitizeDeck, SAVE_FORMAT_VERSION } from '../src/game';
 import { absorbModeOf } from '../src/engine/runLog';
 import { useLegacyMigrations } from './helpers/legacyGate';
 
@@ -137,63 +137,4 @@ describe('C.108 노력치 상한·수련 보상', () => {
   });
 });
 
-describe('C.108 시작 외형 스탯 편향 (GDD 52 연동)', () => {
-  it('호로 표: 기본 체력 · 추적자 속도 · 거구 힘 · 망령 정신력 · 속박자 방어. 사신은 없음', () => {
-    expect(hollow.startLookBias).toEqual({ base: 'hp', stalker: 'spd', brute: 'atk', ghoul: 'spr', shackled: 'def' });
-    expect(shin.startLookBias).toEqual({});
-    expect(startBiasOf(shin, null)).toBeNull();
-    expect(startBiasOf(shin, 'stalker')).toBeNull();
-  });
-  it('편향 = 한 능력치 +10, 나머지 −2 (합계 0)', () => {
-    expect(SX.startBias).toEqual({ up: 10, down: 2 });
-    const b = startBiasStats('spd');
-    expect(b).toEqual({ hp: -2, atk: -2, int: -2, def: -2, spr: -2, spd: 10 });
-    expect(startBiasOf(hollow, 'stalker')).toEqual(b);
-    expect(startBiasOf(hollow, null)!.hp).toBe(10);
-    expect(startBiasOf(hollow, 'zzz')).toBeNull();
-  });
-  it('새 세이브 추첨이 편향을 두고 능력치에 더해진다 (합계 그대로)', () => {
-    const plain = newSaveData('hollow', 1000);
-    const s = newSaveData('hollow', 1000);
-    expect(applyStartLook(s, hollow, 0.3)).toBe('stalker');
-    expect(s.evolution.bias).toEqual(startBiasStats('spd'));
-    const before = currentStats(plain.evolution, 'hollow');
-    const after = currentStats(s.evolution, 'hollow');
-    expect(after.spd).toBe(before.spd + 10);
-    expect(after.hp).toBe(before.hp - 2);
-    expect(STAT_IDS.reduce((a, k) => a + after[k], 0)).toBe(STAT_IDS.reduce((a, k) => a + before[k], 0));
-    // 기본 외형(사마귀)도 편향(체력)을 받는다
-    const d = newSaveData('hollow', 1000);
-    expect(applyStartLook(d, hollow, 0)).toBeNull();
-    expect(d.evolution.bias!.hp).toBe(10);
-    // 사신은 편향 없음
-    const sh = newSaveData(shin.id, 1000);
-    applyStartLook(sh, shin, 0.5);
-    expect(sh.evolution.bias).toBeUndefined();
-  });
-  it('환생해도 편향은 그대로, 옛 세이브(형식 33)는 편향 없음, 형식 34', () => {
-    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(34);
-    const s = newSaveData('hollow', 1000);
-    applyStartLook(s, hollow, 0.9);
-    s.evolution.tierIndex = 4;
-    const r = performRebirth(s, null, 5000);
-    expect(r.ok).toBe(true);
-    expect(s.evolution.bias).toEqual(startBiasStats('def'));
-    expect(s.evolution.tierIndex).toBe(0);
-    const old = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
-    old.meta.format = 33;
-    const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(m.evolution.bias).toBeUndefined();
-    expect(currentStats(m.evolution, 'hollow')).toEqual(currentStats(newSaveData('hollow', 0).evolution, 'hollow'));
-    // 편향 있는 세이브는 저장·불러오기 뒤에도 그대로
-    const back = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(back.evolution.bias).toEqual(startBiasStats('def'));
-  });
-  it('설정 검증: 모르는 능력치·startLooks 에 없는 스킨 키는 거부', () => {
-    const base = JSON.parse(JSON.stringify(hollow));
-    expect(() => parseFactionConfig({ ...base, startLookBias: { base: 'zzz' } })).toThrow(/startLookBias/);
-    expect(() => parseFactionConfig({ ...base, startLookBias: { nope: 'hp' } })).toThrow(/startLookBias/);
-    expect(() => parseFactionConfig({ ...base, startLookBias: { base: 'hp', brute: 'atk' } })).not.toThrow();
-  });
-});
+// C.108 시작 외형 스탯 편향 시험은 삭제 — 규칙 폐기 (GDD 78, C.132, tests/c132.test.ts)

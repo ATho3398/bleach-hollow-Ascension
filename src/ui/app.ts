@@ -1099,6 +1099,14 @@ export function startApp(host: HTMLElement): void {
       }, growth);
       if (save) showTitleToasts(save, faction, persist);
     };
+    // 원정 도중 [귀환하기] (GDD 81장): 결과 화면 없이 바로 방으로 (진화가 걸렸으면 그 연출은 그대로)
+    if (exp.endReason === 'abort') {
+      if (afterResult) holdRoomGuides = true;
+      nestScreen();
+      afterResult?.();
+      if (save) showTitleToasts(save, faction, persist);
+      return;
+    }
     // 스토리 화를 깼으면 끝 대사 다음에 결과 (GDD 25-7)
     const ep = storyEpisodeOf(exp);
     if (ep && exp.story?.cleared) {
