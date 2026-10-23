@@ -128,5 +128,10 @@ describe('74장 첫 시작 탄생 연출', () => {
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(css).not.toMatch(/rgb\(/);
     expect(css).toContain('prefers-reduced-motion');
+    // 등장 모션은 .bha-char 의 translate 자리 잡기를 덮어쓰면 안 된다 (transform 대신 scale)
+    const pop = css.slice(css.indexOf('@keyframes bha-birth-pop'), css.indexOf('}', css.indexOf('to {', css.indexOf('@keyframes bha-birth-pop'))) + 1);
+    expect(pop).not.toContain('transform');
+    expect(pop).toContain('scale:');
+    expect(css).toContain('.bha-room.is-born .bha-char > *'); // 상자가 아니라 안쪽 요소에
   });
 });

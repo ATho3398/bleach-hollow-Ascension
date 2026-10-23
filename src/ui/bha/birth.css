@@ -42,6 +42,8 @@
 .bha-birth__skip:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: -4px; }
 /* 방의 캐릭터 등장: 연출 동안 숨겼다가 드러나는 순간 톡 튀어나온다 */
 .bha-room.is-birthing .bha-char { opacity: 0; }
-.bha-room.is-born .bha-char { animation: bha-birth-pop 620ms cubic-bezier(.2, 1.4, .4, 1) both; }
-@keyframes bha-birth-pop { from { opacity: 0; transform: scale(0.55); filter: brightness(2.2); } to { opacity: 1; transform: scale(1); filter: none; } }
-@media (prefers-reduced-motion: reduce) { .bha-room.is-born .bha-char { animation: none; } }
+/* 캐릭터 상자(.bha-char)는 translate 로 자리를 잡으므로 상자가 아니라 안쪽 요소(그림·그림자)에 모션을 준다 — 상자에 scale 을 주면 자리 잡기 이동량까지 줄어 가운데에서 어긋난다 */
+.bha-room.is-born .bha-char > * { transform-origin: 50% 100%; animation: bha-birth-pop 620ms cubic-bezier(.2, 1.4, .4, 1) both; }
+/* transform 을 쓰면 .bha-char 의 자리 잡기(translate(-50%, -50%))를 덮어써 캐릭터가 오른쪽 아래에 갔다가 순간이동한다 → 개별 속성 scale 만 쓴다 */
+@keyframes bha-birth-pop { from { opacity: 0; scale: 0.55; filter: brightness(2.2); } to { opacity: 1; scale: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .bha-room.is-born .bha-char > * { animation: none; } }
