@@ -29,6 +29,7 @@ import { mountSprite } from './ui/bha/sprite';
 import { registerServiceWorker } from './pwa';
 import { captureInstallPrompt } from './pwaInstall';
 import { maybeShowInstall } from './ui/installView';
+import { mountUpdateBanner } from './ui/updateBanner';
 
 captureInstallPrompt(); // 브라우저의 작은 설치 띠를 막고 요청을 잡아 둔다 (GDD 68장) — 이벤트가 앱 시작보다 먼저 올 수 있어 맨 앞에서
 mountSprite();
@@ -36,4 +37,5 @@ applyCalmMode();
 const app = document.querySelector<HTMLDivElement>('#app');
 if (app) startApp(app);
 registerServiceWorker();
+mountUpdateBanner();
 maybeShowInstall();
