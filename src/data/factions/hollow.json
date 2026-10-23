@@ -131,7 +131,6 @@
   "rankWinText": "{rank}의 번호를 빼앗았다!",
   "rankLoseText": "패배… 번호가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
-  "storedSkillName": "응축 일격",
   "voidBlockName": "공허 블록",
   "chainName": "체인",
   "roleNames": {
@@ -446,6 +445,9 @@
     }
   },
   "liberation": {
+    "baseName": "영력 해방",
+    "baseCutin": "영력을 끌어올린다 — 영력 해방!",
+    "baseEndText": "해방이 풀렸다. 광기가 스며든다…",
     "name": "레수렉시온",
     "cutin": "본능을 해방한다 — 레수렉시온!",
     "endText": "해방이 풀렸다. 광기가 스며든다…"
@@ -458,7 +460,7 @@
   "training": {
     "title": "본능 수련",
     "foe": "내 안의 본능",
-    "completeText": "본능을 지배했다. 이제 전투에서 레수렉시온을 쓸 수 있다.",
+    "completeText": "본능을 지배했다. 레수렉시온의 힘이 더 강해진다.",
     "games": {
       "duel": {
         "name": "본능 대결",

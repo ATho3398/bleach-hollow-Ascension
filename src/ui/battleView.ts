@@ -61,8 +61,6 @@ export interface BattleViewOptions {
   skinId?: string | null;
   /** 현재 진화체 id (이동 방식 GDD 18-11). 1단계는 null */
   formId?: string | null;
-  /** 해방 버튼 (GDD 22-5): 있으면(5단계 이상) 저장 필살기 옆에 보인다. 쓸 수 있는지는 엔진 params.liberationEnabled, 못 쓰면 note(무엇이 부족한지 한 줄)와 함께 잠긴 버튼 */
-  liberation?: { note: string | null };
   /** 보스전 (GDD 25-3·25-7): 등장 이름 띠 위 줄 문구 ("보스"). 있으면 강적 표시 대신 보스 표시·페이즈 칩을 보인다 */
   boss?: { eyebrow: string };
   /** 등급전처럼 내 등장 연출(상점 꾸밈, GDD 25-11)을 보이는 전투. 보스전(boss)도 보인다 */
@@ -135,10 +133,8 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     }
     case 'combo':
       return { role: 'chain', icon: 'i-special', text: `콤보! ${comboBlockLabel(labels, comboOf(s.params, e.comboId)?.family)} 블록이 생겼다 (${comboName(e.comboId, factionId)})` };
-    case 'stored-use':
-      return { role: 'chain', icon: 'i-stored', text: `${labels.storedSkill}! ${n(e.damage)} 피해${elemText(e.elem, factionId)} · ${labels.role.guard} ${e.guardSeconds}초 (남은 충전 ${e.charges})` };
-    case 'stored-ready':
-      return { role: 'chain', icon: 'i-stored', text: `${labels.storedSkill} 충전! (${e.charges}/${s.params.storedChargesMax})` };
+    case 'liberation-ready':
+      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.name} 게이지가 가득 찼다! [${labels.liberation.name}]을(를) 눌러라` };
     case 'heavy-cast':
       return { role: 'cast', icon: 'i-cast', text: `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 블록으로 막아라` };
     case 'heavy-hit':
@@ -171,9 +167,9 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       // 진화체 특성 발동 (C.89, GDD 39장 5번)
       return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
-      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 능력치 상승 · ${liberationBlockLabel(factionId, s.params.playerElements[0])} ${e.blocks}칸` };
+      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 ${e.slots > 0 ? '해방 블록' : '기본 블록'}이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
     case 'liberation-end':
-      return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk)}` };
+      return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` };
     case 'end':
       return e.status === 'won' ? { role: 'chain', icon: 'i-flag-win', text: `${pickFaction(s.enemy.def.name, factionId)}을(를) 쓰러뜨렸다!` } : null;
     default:
@@ -212,7 +208,7 @@ function setMeterValue(root: HTMLElement, value: number, max?: number): void {
 }
 
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
-  const labels = battleLabels(faction);
+  const labels = battleLabels(faction, opts.tierIndex ?? 0);
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = pickFaction(enemy.name, faction.id);
@@ -349,31 +345,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     ...(p.combos.length > 0 ? [legendItem('special', 'i-special', '콤보 블록')] : []),
   );
 
-  // 저장 필살기 버튼 (GDD 14-6): 블록과 같은 클릭 판정. 충전 칸 3개 + 게이지
-  const storedBtn = el('button', 'bha-stored is-disabled');
-  storedBtn.type = 'button';
-  storedBtn.dataset.help = 'battle.stored';
-  const storedMeta = el('span', 'bha-stored__meta');
-  const storedGaugeFill = el('i');
-  const storedGauge = el('span', 'bha-stored__gauge');
-  storedGauge.append(storedGaugeFill);
-  const storedName = el('span', 'bha-stored__name');
-  storedName.append(el('span', '', labels.storedSkill), provisionalTag());
-  const storedBody = el('span', 'bha-stored__body');
-  storedBody.append(storedName, storedMeta, storedGauge);
-  const storedIcon = el('span', 'bha-stored__icon');
-  storedIcon.append(icon('i-stored'));
-  const storedPipRow = el('span', 'bha-stored__pips');
-  const storedPips = Array.from({ length: p.storedChargesMax }, () => el('i'));
-  storedPipRow.append(...storedPips);
-  storedBtn.append(storedIcon, storedBody, storedPipRow);
-
-  // 해방 버튼 (GDD 22-5): 5단계 이상이면 저장 필살기 옆. 게이지가 차면 누를 수 있고(전투당 1회), 자격이 없으면 잠겨 있다
-  const libOn = !!opts.liberation;
-  const libBtn = el('button', 'bha-stored bha-stored--liberation is-disabled');
+  // 해방 버튼 (GDD 83장, 옛 저장 필살기 자리): 블록과 같은 클릭 판정. 게이지가 차면 누를 수 있고(한 전투 여러 번), 해방 중에는 남은 시간
+  const libOn = p.liberationEnabled;
+  // 오오라 색 = 내 속성 색 토큰 (GDD 83장 4번: 진화체 속성에 따라)
+  const auraEl = p.playerElements[0];
+  const libBtn = el('button', `bha-stored bha-stored--liberation is-disabled${labels.liberation.unique ? ' is-unique' : ''}`);
   libBtn.type = 'button';
+  libBtn.dataset.help = 'battle.liberation';
   const libIcon = el('span', 'bha-stored__icon');
-  libIcon.append(icon(p.liberationEnabled ? 'i-special' : 'i-lock'));
+  libIcon.append(icon('i-special'));
   const libName = el('span', 'bha-stored__name');
   libName.append(el('span', '', labels.liberation.name), provisionalTag());
   const libMeta = el('span', 'bha-stored__meta');
@@ -384,7 +364,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   libBody.append(libName, libMeta, libGauge);
   libBtn.append(libIcon, libBody);
   libBtn.hidden = !libOn;
-  if (!p.liberationEnabled) libBtn.classList.add('is-locked');
   const libChip = statusChip(undefined, 'i-special', labels.liberation.name);
   libChip.root.classList.add('bha-chip--liberation');
   libChip.root.hidden = true;
@@ -400,7 +379,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   spRow.append(meStatus);
   midInfo.append(spRow, legend);
   const mid = el('div', 'bha-battle__mid');
-  mid.append(midInfo, ...(libOn ? [libBtn] : []), storedBtn);
+  mid.append(midInfo, ...(libOn ? [libBtn] : []));
   const controls = el('section', 'bha-battle__controls');
   controls.setAttribute('aria-label', '블록 조작');
   controls.append(mid, tray.root, trayNote);
@@ -472,6 +451,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   }
   arena.append(units, topRow, fxLayer, floats, fxFlash, libCut, log);
   const app = mountApp(root, { fixed: true, cls: 'bha-battle' }, ...(opts.notice ? [notice('info', opts.notice)] : []), arena, controls, flashVoid, flashHit);
+  if (auraEl) app.style.setProperty('--bha-aura', elementColor(auraEl));
   app.classList.toggle('is-frenzy', !!opts.frenzy);
   if (opts.boss || opts.enter) window.setTimeout(() => playCosmeticFx('enter', hero.root), 0); // 등장 연출 (GDD 25-11): 보스·등급전 입장
 
@@ -542,7 +522,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   helpBtn.onclick = openHelp;
   pauseBtn.dataset.sc = 'pause';
   helpBtn.dataset.sc = 'help';
-  storedBtn.dataset.sc = 'stored';
   libBtn.dataset.sc = 'liberate';
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
 
@@ -631,7 +610,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null };
     },
     nameOf: (e) => {
-      if (e.kind === 'stored-use') return { name: labels.storedSkill, ult: true };
       if (e.kind !== 'block' || e.damage <= 0) return null;
       if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };
       if (e.block !== 'skill' || e.role !== 'attack') return null;
@@ -649,7 +627,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const cue = cueOf(e, top);
     if (cue) cues.push(cue);
     attack.react(e);
-    if (e.kind === 'block' || e.kind === 'stored-use') tutorial?.blockUsed();
+    if (e.kind === 'block' || e.kind === 'liberate') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':
         // 기본 공격 숫자는 평소 띄우지 않는다(화면이 붐빈다). 치명타만 크게
@@ -695,11 +673,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         break;
       case 'liberation-end':
         replayOnce(flashVoid, 'is-on', 900);
-        break;
-      case 'stored-use':
-        spawnFloat('attack', `−${n0(e.damage)}`, { size: 'big', critical: !!e.crit });
-        spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
-        flash('is-special', 600);
         break;
       case 'enemy-attack':
         if (e.guarded) {
@@ -934,7 +907,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     guardGauge.set({ on: guardSec > 0, fill: gaugeFill(guardSec, totals.guard), label: `${labels.role.guard} ${secondsText(guardSec)}`, slot: meSlots[1]! });
     foe.classList.toggle('is-casting', cast !== null);
     foe.classList.toggle('is-guard', s.enemy.stance !== null);
-    storedBtn.classList.toggle('is-alert', cast !== null && s.storedCharges > 0);
 
     // 상태 칩
     voidChip.root.hidden = s.voidUsed <= 0;
@@ -943,39 +915,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (s.chain3Count > 0) setText(chain3Chip.value, `${s.chain3Count}회`);
     setText(tray.veilText, `봉인 — ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)}`);
 
-    // 저장 필살기
-    storedPips.forEach((pip, i) => pip.classList.toggle('is-on', i < s.storedCharges));
-    storedBtn.style.setProperty('--fill', (Math.min(1, (s.storedCharges >= p.storedChargesMax ? p.storedGaugeMax : s.storedGauge) / p.storedGaugeMax)).toFixed(3));
-    const ready = s.storedCharges > 0;
-    storedBtn.classList.toggle('is-ready', ready);
-    storedBtn.classList.toggle('is-full', s.storedCharges >= p.storedChargesMax);
-    storedBtn.classList.toggle('is-disabled', !ready);
-    storedBtn.setAttribute('aria-disabled', String(!ready));
-    storedBtn.setAttribute('aria-label', `${labels.storedSkill}, 충전 ${s.storedCharges}칸`);
-    // 칸 안에는 충전 수만(짧게). 자세한 설명은 이름표·도움말
-    const metaText = `충전 ${s.storedCharges}/${p.storedChargesMax}`;
-    storedBtn.title = ready
-      ? `${Math.round(p.storedPowerInAttacks)}회분 피해 · ${p.storedGuardSeconds}초 ${labels.role.guard}`
-      : `${Math.floor(s.storedGauge)} / ${p.storedGaugeMax} — 블록을 쓸수록 충전`;
-    setText(storedMeta, metaText);
-
-    // 해방 (GDD 22-5)
+    // 해방 (GDD 83장): 버튼 = 게이지(해방 중에는 남은 시간), 장면 = 오오라
     const libActive = liberationActive(s);
     app.classList.toggle('is-liberated', libActive);
+    app.classList.toggle('is-unique', libActive && labels.liberation.unique);
     libChip.root.hidden = !libActive;
     if (libActive) setText(libChip.value, secondsText(s.liberation.ticksLeft * p.tickSeconds));
     if (libOn) {
       const lb = s.liberation;
-      const used = lb.usedAtTick !== null;
       const ready = canLiberate(s);
-      libBtn.style.setProperty('--fill', (used ? (libActive ? lb.ticksLeft / Math.max(1, Math.round(p.liberationSeconds / p.tickSeconds)) : 0) : lb.gauge / LIBERATION_GAUGE_MAX).toFixed(3));
+      libBtn.style.setProperty('--fill', (libActive ? lb.ticksLeft / Math.max(1, Math.round(p.liberationSeconds / p.tickSeconds)) : lb.gauge / LIBERATION_GAUGE_MAX).toFixed(3));
       libBtn.classList.toggle('is-ready', ready);
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-active', libActive);
       libBtn.setAttribute('aria-disabled', String(!ready));
-      const libText = !p.liberationEnabled
-        ? opts.liberation?.note ?? '잠김'
-        : libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : used ? '이 전투에서 사용함' : ready ? '준비됨 — 눌러 해방' : `게이지 ${Math.floor(lb.gauge)}%`;
+      const libText = libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : ready ? '준비됨 — 눌러 해방' : `게이지 ${Math.floor(lb.gauge)}%`;
       setText(libMeta, libText);
       libBtn.title = libText;
       libBtn.setAttribute('aria-label', `${labels.liberation.name}, ${libText}`);
@@ -989,30 +943,27 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const r = elementLocalRect(tray.grid);
     return slotAt(pointerLocal(e).x, r.left, r.width, cap);
   };
-  // 저장 필살기 버튼: 블록과 같은 판정 (버튼 위에서 누르고 버튼 위에서 떼면 사용)
-  let storedDown: number | null = null;
-  const overStored = (e: PointerEvent) => {
-    const r = storedBtn.getBoundingClientRect();
+  // 해방 버튼: 블록과 같은 판정 (버튼 위에서 누르고 버튼 위에서 떼면 사용 — 옛 저장 필살기 버튼 판정)
+  let libDown: number | null = null;
+  const overLib = (e: PointerEvent) => {
+    const r = libBtn.getBoundingClientRect();
     return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
   };
-  storedBtn.addEventListener('pointerdown', (e) => {
-    if (storedDown !== null || s.status !== 'playing') return;
-    storedBtn.setPointerCapture(e.pointerId);
-    storedDown = e.pointerId;
-    storedBtn.classList.add('is-pressed');
+  libBtn.addEventListener('pointerdown', (e) => {
+    if (libDown !== null || s.status !== 'playing') return;
+    libBtn.setPointerCapture(e.pointerId);
+    libDown = e.pointerId;
+    libBtn.classList.add('is-pressed');
   });
-  storedBtn.addEventListener('pointercancel', () => {
-    storedDown = null;
-    storedBtn.classList.remove('is-pressed');
+  libBtn.addEventListener('pointercancel', () => {
+    libDown = null;
+    libBtn.classList.remove('is-pressed');
   });
-  storedBtn.addEventListener('pointerup', (e) => {
-    if (storedDown !== e.pointerId) return;
-    storedDown = null;
-    storedBtn.classList.remove('is-pressed');
-    if (overStored(e) && s.status === 'playing' && !halted()) queue.push({ type: 'stored' });
-  });
-  libBtn.addEventListener('click', () => {
-    if (canLiberate(s) && !halted()) queue.push({ type: 'liberate' });
+  libBtn.addEventListener('pointerup', (e) => {
+    if (libDown !== e.pointerId) return;
+    libDown = null;
+    libBtn.classList.remove('is-pressed');
+    if (overLib(e) && canLiberate(s) && !halted()) queue.push({ type: 'liberate' });
   });
   const endPress = () => {
     down = null;
@@ -1033,7 +984,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (input && s.status === 'playing' && !halted()) queue.push(input);
     endPress();
   });
-  // PC 단축키 (GDD 18-5): 숫자 N = N번 칸 블록, Q = 저장 필살기. 클릭과 같은 판정(releaseUse)을 쓴다
+  // PC 단축키 (GDD 18-5): 숫자 N = N번 칸 블록, R = 해방 (저장 필살기 Q 는 C.134 에 삭제). 클릭과 같은 판정(releaseUse)을 쓴다
   const offKeys = registerShortcutHandlers({
     ...Object.fromEntries(Array.from({ length: p.trayCapacity }, (_, i) => [`block.${i + 1}`, () => {
       const blk = s.tray[i];
@@ -1042,11 +993,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (input) queue.push(input);
       return !!input;
     }])),
-    stored: () => {
-      if (!app.isConnected || stopped || s.status !== 'playing' || halted()) return false;
-      queue.push({ type: 'stored' });
-      return true;
-    },
     liberate: () => {
       if (!app.isConnected || stopped || !canLiberate(s) || halted()) return false;
       queue.push({ type: 'liberate' });

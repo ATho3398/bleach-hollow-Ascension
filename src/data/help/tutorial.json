@@ -46,12 +46,12 @@
       "body": "{voidBlockName}은(는) 큰 피해를 주지만 쓰면 {riskGaugeName}이(가) 올라가요.\n너무 높아지면 원정이 위험해져요.\n쓸지 말지는 여러분 선택이에요.\n블록의 모양은 이 범례에서 확인해요."
     },
     {
-      "id": "stored",
+      "id": "liberation",
       "targets": [
-        "battle.stored"
+        "battle.liberation"
       ],
-      "title": "{storedSkillName}: 기를 모아 쓰는 필살기",
-      "body": "블록 바 아래의 [{storedSkillName}]은(는) 블록을 쓸수록 충전돼요 (최대 {storedChargesMax}개).\n충전이 있을 때 누르면 기본 공격 {storedPower}회분의 큰 피해를 주고, 직후 {storedGuardSeconds}초 동안 {roleNames.guard} 상태가 돼요.\n강공격 예고 중에도 쓸 수 있어 막기 대신으로 좋아요.\n누르는 법은 블록과 같아요."
+      "title": "{liberation.baseName}: 게이지를 모아 해방",
+      "body": "블록 바 위의 [{liberation.baseName}] 게이지는 블록을 쓸수록 차요.\n가득 차면 눌러 {liberationSeconds}초 동안 해방해요.\n그동안 방에서 끼운 해방 블록이 빠르게 나와요.\n끝나면 {riskGaugeName}이(가) 조금 오르고, 게이지가 다시 차면 또 쓸 수 있어요.\n{tier5}부터는 {liberation.name}(으)로 바뀌어 공격 속도와 체인 속도도 올라가요.\n누르는 법은 블록과 같아요."
     },
     {
       "id": "try",

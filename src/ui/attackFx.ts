@@ -67,8 +67,6 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       }
       return cue;
     }
-    case 'stored-use':
-      return e.damage > 0 ? { side: 'player', tier: 'special', guarded: false } : null;
     case 'enemy-attack':
       return e.damage > 0 || e.guarded ? { side: 'enemy', tier: 'basic', guarded: e.guarded } : null;
     case 'counter':

@@ -20,10 +20,11 @@ describe('단축키 매핑', () => {
     }
   });
 
-  it('전투: 숫자 1~8 = 블록, Q 저장 필살기, Space 일시정지 (E 배속은 C.118 에 삭제)', () => {
+  it('전투: 숫자 1~8 = 블록, R 해방, Space 일시정지 (E 배속은 C.118, Q 저장 필살기는 C.134 에 삭제)', () => {
     for (let i = 1; i <= 8; i++) expect(actionFor('battle', `Digit${i}`)).toBe(`block.${i}`);
     expect(actionFor('battle', 'Digit9')).toBeNull();
-    expect(actionFor('battle', 'KeyQ')).toBe('stored');
+    expect(actionFor('battle', 'KeyQ')).toBeNull();
+    expect(actionFor('battle', 'KeyR')).toBe('liberate');
     expect(actionFor('battle', 'Space')).toBe('pause');
     expect(actionFor('battle', 'KeyE')).toBeNull();
     expect(actionFor('battle', 'KeyH')).toBe('help');

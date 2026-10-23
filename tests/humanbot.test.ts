@@ -89,7 +89,7 @@ describe('사람형 봇', () => {
         // C.133 (GDD 80장 v5.166): 2칸(공격·막기) 몸은 기본 블록 몫이 25% 로 줄어 끼어 있는 블록이 드물어 차이가 표본 잡음(±1) 안이 됐다 → 끼어 있는 기본 블록이 많은 1칸 몸으로 본다
         const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('fire-sturdy'), params: one }), { joinChance });
         n += s.chain3Count;
-        expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'stored')).toBe(true);
+        expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'liberate')).toBe(true);
       }
       return n;
     };

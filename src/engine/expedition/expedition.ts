@@ -8,7 +8,7 @@ import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, gateSpecialEnemies, pickFromPool, specialEnemyGate } from '../enemyPool';
 import { STAT_IDS, type EnemyDef, type EnvironmentPreset, type StatId } from '../../data/schema';
 import { deckTilesFor, getTile } from '../../data/tiles';
-import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatParams, type CombatState } from '../combat';
+import { buildBattleRecord, createCombat, liberationStartGaugeOf, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
@@ -246,8 +246,9 @@ export interface ExpeditionState extends RiskState {
   foodSettled?: FoodSettlement;
   /** 귀환 처리 때 스토리 화·보스 보상 정산 결과 (game.ts settleStory). 결과 화면 표시용 */
   storySettled?: StorySettlement;
-  /** 해방 자격 (GDD 22-5, 출발 때 game.liberationAccess 로 정함): 이 원정 전투에서 해방 버튼을 쓸 수 있는가. 없으면 못 씀 */
+  /** 해방 (GDD 83장): 이 원정 전투에서 해방 버튼을 쓸 수 있는가 (C.134 부터 늘 켬 — false 는 테스트용), 수련 완료(고유 효과 강화) */
   liberationEnabled?: boolean;
+  liberationTrained?: boolean;
   // ── 타일 변수 (GDD 25-5, C.57, 원정 형식 5) ──
   /** 드래프트·인접 시너지·이벤트·바퀴 변이를 켠다 (게임은 켬, 옛 점검 봇·테스트는 끔). 상위 타일 효과와 골드는 늘 켜짐 */
   tileVariants: boolean;
@@ -319,8 +320,9 @@ export interface ExpeditionSetup {
   build?: BuildState;
   /** 둥지에서 가져온 진화 상태 (없으면 1단계 새 상태) */
   evolution?: EvolutionState;
-  /** 해방 자격 (수련 완료·등급 이력·5단계 이상). 없으면 false */
+  /** 해방 (GDD 83장): false 면 끈다(테스트용, 없으면 켬). liberationTrained = 수련 완료(22-4, 고유 효과 강화) */
   liberationEnabled?: boolean;
+  liberationTrained?: boolean;
   /** 타일 변수(드래프트·시너지·이벤트·변이)를 켠다 (GDD 25-5). 없으면 false */
   tileVariants?: boolean;
   /** 가진 골드 (상인 구매용). 없으면 0 */
@@ -384,7 +386,8 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     lapsCompleted: 0,
     outcome: null,
     endReason: null,
-    liberationEnabled: setup.liberationEnabled === true,
+    liberationEnabled: setup.liberationEnabled !== false,
+    liberationTrained: setup.liberationTrained === true,
     statBonus: setup.statBonus ?? 0,
     tileVariants: setup.tileVariants === true,
     varRng: createRng((setup.seed ^ VARIANT_SEED_SALT) >>> 0),
@@ -697,8 +700,8 @@ function startBattleAt(
   const sm = syn ? synergyMods(syn.id) : null;
   const m: VariantMods = combineMods(sm, mutationMods(exp.mutation), upgradeMods(id));
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
-  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), storedStartGauge: storedStartGaugeOf(exp.stability), liberationEnabled: exp.liberationEnabled === true };
-  applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0);
+  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), liberationStartGauge: liberationStartGaugeOf(exp.stability), liberationEnabled: exp.liberationEnabled !== false };
+  applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0, exp.liberationTrained === true);
   // 적 기준 능력치 = 원정 난이도 ★ (GDD 32-1). 내 쪽은 위에서 세계 기준으로 실렸다
   applyDifficultyToParams(params, exp.difficulty);
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});

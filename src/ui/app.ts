@@ -4,7 +4,7 @@ import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
-import { buildBattleRecord, createCombat, storedStartGaugeOf, type CombatState } from '../engine/combat';
+import { buildBattleRecord, createCombat, liberationStartGaugeOf, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
@@ -25,7 +25,6 @@ import {
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
-import { liberationButton } from './labels';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
@@ -262,9 +261,9 @@ export function startApp(host: HTMLElement): void {
     const enemy = enemyAtDifficulty(ENEMIES.find((e) => e.class === 'normal' && !e.testOnly) ?? ENEMIES[0]!, star);
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
-      applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total);
+      applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total, save.training.completed);
       applyDifficultyToParams(params, star);
-      params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
+      params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
     setBgm('battle');
@@ -725,7 +724,7 @@ export function startApp(host: HTMLElement): void {
       // 원정 난이도 ★ (GDD 32-1): 기본 = 내 단계(권장), 배치 단계에서 연 ★ 안에서 바꾼다
       difficulty: defaultDifficulty(save),
       streak: streakFor(save, defaultDifficulty(save)),
-      liberationEnabled: liberationAccess(save).usable,
+      liberationTrained: liberationAccess(save).trained,
       // 타일 변수 5종 (GDD 25-5): 드래프트·인접 시너지·이벤트 타일·바퀴 변이. 상인은 가진 골드로 산다
       tileVariants: true,
       gold: save.shared.tradeCoins,
@@ -817,9 +816,8 @@ export function startApp(host: HTMLElement): void {
     if (!save) return;
     const s0 = save;
     const params = buildCombatParams(s0.build, faction.id);
-    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total);
-    params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);
-    params.liberationEnabled = liberationAccess(s0).usable;
+    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
+    params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
     // 꼭대기 보스 이름은 종족 설정 (적 정의의 이름을 그 문구로 바꿔 끼운다)
     const floor = f.final ? { ...f, enemy: { ...f.enemy, name: { '*': towerLabels(faction).finalBossName } } } : f;
     const s = createTowerCombat(floor, params, Math.floor(Math.random() * 2 ** 32));
@@ -831,7 +829,6 @@ export function startApp(host: HTMLElement): void {
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
       bg: towerSceneBg(faction, f),
-      liberation: liberationButton(faction, liberationAccess(s0)),
       onQuit: () => nav.pop(),
       onEnd: (done) => {
         const res = recordTowerBattle(s0, f, done);
@@ -910,7 +907,7 @@ export function startApp(host: HTMLElement): void {
       stability: save.nest.stability,
       build: save.build,
       evolution: save.evolution,
-      liberationEnabled: liberationAccess(save).usable,
+      liberationTrained: liberationAccess(save).trained,
       tileVariants: true,
       gold: save.shared.tradeCoins,
       statBonus: statBonusOf(save).total,
@@ -998,7 +995,6 @@ export function startApp(host: HTMLElement): void {
       bg: (p.boss ? arenaSceneBg(faction) : null) ?? groundSceneBg(faction, exp.groundId),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       risk: exp.risk,
-      liberation: save ? liberationButton(faction, { ...liberationAccess(save), usable: p.params.liberationEnabled === true }) : undefined,
       tutorial: tutorialFor(),
       onEnd: (done) => {
         finishBattle(exp, done);
@@ -1172,10 +1168,9 @@ export function startApp(host: HTMLElement): void {
     const star = fixedStar ?? recommendedDifficulty(save?.evolution.tierIndex ?? 0);
     const params = save ? buildCombatParams(save.build, faction.id) : undefined;
     if (save && params) {
-      applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total);
+      applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total, save.training.completed);
       applyDifficultyToParams(params, star);
-      params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
-      params.liberationEnabled = liberationAccess(save).usable;
+      params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
@@ -1185,7 +1180,6 @@ export function startApp(host: HTMLElement): void {
       formId: save?.evolution.formId,
       notice,
       tutorial: tutorialFor(),
-      liberation: save ? liberationButton(faction, liberationAccess(save)) : undefined,
       onQuit: () => nav.pop(),
       onEnd: (done) => {
         if (save) {
@@ -1219,11 +1213,10 @@ export function startApp(host: HTMLElement): void {
     stashSlot(store, slot, 'rank');
     setBgm('rank');
     const params = buildCombatParams(s0.build, faction.id);
-    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total);
+    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
     // 보유자마다 정해진 난이도 ★ (GDD 32-1 7번: 아래 번호일수록 낮고 No.1 = ★5)
     applyDifficultyToParams(params, holder.difficulty);
-    params.storedStartGauge = storedStartGaugeOf(s0.nest.stability);
-    params.liberationEnabled = liberationAccess(s0).usable;
+    params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,
@@ -1232,7 +1225,6 @@ export function startApp(host: HTMLElement): void {
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
       bg: arenaSceneBg(faction),
-      liberation: liberationButton(faction, liberationAccess(s0)),
       onEnd: (done) => {
         const res = recordRankBattle(s0, done);
         settleLiberationRisk(s0, done);

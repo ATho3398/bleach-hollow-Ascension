@@ -9,7 +9,7 @@ import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
-import type { BuildState } from '../absorb/build';
+import { liberationSlotCount, type BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, formAbilitiesOf, physBlockOf, physSpawnSecondsFor } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
@@ -311,7 +311,7 @@ function applyAbility(params: Partial<CombatParams>, ability: StatId | null): vo
  * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월체 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
  * 전투 엔진은 종족을 모르고 이 값만 쓴다. buildCombatParams(빌드) 뒤에 부른다
  */
-export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0): void {
+export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0, trained = false): void {
   params.combos = comboRulesOf(e);
   // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
   const form = e.formId ? tryGetForm(e.formId) : undefined;
@@ -323,6 +323,14 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.stabMultiplier = stabOf(e);
   // 해방 블록 분류 (GDD 22-5): 진화체 분류(아란칼 일반형), 없으면 혼합
   params.liberationCategory = form?.label.category ?? 'mixed';
+  // 해방 (GDD 83장): 슬롯 칸 수는 단계로 자르고, 5단계부터 고유 효과(레수렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
+  const LB = BALANCE.provisional.liberation;
+  const unique = e.tierIndex >= LB.minTierIndex;
+  params.liberationSkills = (params.liberationSkills ?? []).slice(0, liberationSlotCount(e.tierIndex));
+  params.liberationUnique = unique;
+  params.liberationAttackSpeed = unique ? LB.uniqueAttackSpeed : 1;
+  params.liberationChainSpeed = unique ? LB.uniqueChainSpeed : 1;
+  params.liberationStatMultiplier = unique ? (trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier) : 1;
   // 특성 칸 2개 (GDD 39장): 성향(실패형 2개) + 속성·전용 효과
   const fa = formAbilitiesOf(form ?? null, e.ev, e.ability);
   for (const d of fa.dispositions) applyAbility(params, d);

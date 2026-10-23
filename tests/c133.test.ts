@@ -104,9 +104,9 @@ describe('82장 런 로그·세이브', () => {
     tickCare(s, t + CR.holdMinutes * MIN);
     expect(s.runLog.care).toEqual({ answered: { pet: 1, sleep: 0 }, refused: { pet: 1, sleep: 1 }, missed: 1 });
   });
-  it('세이브 형식 38 · 최소 형식 같이 올림 (61장, 마이그레이션 없음)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(38);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(38);
+  it('세이브 형식 38(이후 C.134 에 39) · 최소 형식 같이 올림 (61장, 마이그레이션 없음)', () => {
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(38);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
   });
   it('요청 상태가 저장·불러오기로 남고, 깨진 값은 버린다', () => {
     const s = newSaveData('hollow', T0);

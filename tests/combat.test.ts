@@ -283,14 +283,13 @@ describe('체인 배율과 SP·필살', () => {
     useAt(s, 0);
     expect(s.guard.reflect).toBe(1);
     s.sealTicks = 30;
-    s.storedGauge = 0;
-    s.storedCharges = 0;
+    s.liberation.gauge = 0;
     put(s, ...many('t-thunder-heal', 3));
     useAt(s, 0);
     expect(s.sealTicks).toBe(0);
-    // cleanse +40 은 저장 게이지로 (C.118, GDD 66장): 블록 3개 36 + 체인3 보너스 10 + 정화 40 = 86 (< 100, 충전 없음)
-    expect(s.storedGauge).toBe(3 * CX.storedGaugePerBlock + CX.storedChainBonus[2]! + 40);
-    expect(s.storedCharges).toBe(0);
+    // cleanse +40 은 해방 게이지로 (C.118 저장 게이지 → C.134 해방 게이지, GDD 66·83장): 블록 3개 36 + 체인3 보너스 10 + 정화 40 = 86 (< 100)
+    const LIB = BALANCE.provisional.liberation;
+    expect(s.liberation.gauge).toBe(3 * LIB.gaugePerBlock + LIB.chainBonus[2]! + 40);
     expect(s.chain3Count).toBe(3);
     expect(s.blocksByChain).toEqual([0, 1, 3]);
   });

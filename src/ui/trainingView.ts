@@ -63,7 +63,7 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     }, { prefix: title })),
     sub: (() => {
       const s = el('span');
-      s.append(provisionalTag(), ' 수련을 마치고 등급을 한 번 따면 전투에서 ', el('b', '', faction.liberation.name), '을(를) 쓸 수 있다');
+      s.append(provisionalTag(), ' 수련을 마치면 전투의 ', el('b', '', faction.liberation.name), ' 고유 효과(능력치 상승)가 강해진다');
       return s;
     })(),
   });
@@ -86,7 +86,6 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   if (gate.ok || gate.reason !== 'tier') {
     if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). 리스크가 오르는 종목은 조심.`));
     if (t.completed) notes.push(notice('good', faction.training.completeText, { title: '수련 완료' }));
-    else if (!save.rank.history.everRanked) notes.push(notice('info', `${faction.liberation.name}은(는) ${faction.rankBattleName}에서 등급을 한 번 따야 쓸 수 있다.`));
   }
   prog.append(...notes);
   const left = [prog];
@@ -334,7 +333,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   if (out.completedNow) {
     const done = panel({ title: '수련 완료', mod: 'accent' });
     done.dataset.training = 'complete';
-    done.append(el('p', 'bha-train__complete', faction.training.completeText), el('p', 'bha-faint', `칭호 해금 · 튜토리얼 목표 달성. ${save.rank.history.everRanked ? '' : `${faction.rankBattleName}에서 등급을 한 번 따면 ${faction.liberation.name}을(를) 쓸 수 있다.`}`));
+    done.append(el('p', 'bha-train__complete', faction.training.completeText), el('p', 'bha-faint', `칭호 해금 · 튜토리얼 목표 달성. ${faction.liberation.name} 능력치 ×${LB.uniqueStatMultiplier} → ×${LB.trainedStatMultiplier}.`));
     right.push(done);
   }
   const actions = el('div', 'bha-grid2');

@@ -14,6 +14,7 @@ import { actionFor } from '../src/ui/shortcutMap';
 
 const CX = BALANCE.provisional.combat;
 const BP = BALANCE.provisional.blockPool;
+const LIB = BALANCE.provisional.liberation;
 const normal = getEnemy('test-a');
 let uid = 7000;
 const blk = (traitId: string | null, family: string | null = null, element: string | null = null, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId, family, element });
@@ -61,8 +62,8 @@ describe('62장 ② 전투 시간 절반 — hpScale', () => {
     expect(ratio).toBeLessThan(0.65);
     expect(CX.tickSeconds).toBe(0.1);
     // 블록 타이머는 ÷1.7 (6.5 → 3.8 · 3.2 → 1.9 · 물공 6 → 3.5 · 혈 3 → 1.8): 체력만 반으로 줄이면 블록·체인이 적어 강적 승률이 무너져서
-    expect(CX.blockSpawnSeconds).toBe(4.0); // C.132: 3.8 → 5.4 → C.133: 4.0 (GDD 80장 v5.166 기본 몫 45·25·15% 와 함께 칸별 블록 총량 맞춤)
-    expect(BP.basicSpawnSeconds).toBe(2.1); // C.133: 1.9 → 2.1 (1칸 몸보다 빈 몸이 블록을 더 많이 내지 않게, GDD 80장 v5.166)
+    expect(CX.blockSpawnSeconds).toBe(4.6); // C.132: 3.8 → 5.4 → C.133: 4.0 (GDD 80장 v5.166 기본 몫 45·25·15% 와 함께 칸별 블록 총량 맞춤) → C.134: 4.6 (GDD 83장 해방)
+    expect(BP.basicSpawnSeconds).toBe(2.7); // C.133: 1.9 → 2.1 (1칸 몸보다 빈 몸이 블록을 더 많이 내지 않게, GDD 80장 v5.166) → C.134: 2.7 (흡수 타이머 4.7 에 맞춤)
     expect(BALANCE.provisional.physBlocks.spawnSeconds).toBe(3.5);
     expect(BALANCE.provisional.physBlocks.spawnSecondsByElement.blood).toBe(1.8);
   });
@@ -98,20 +99,20 @@ describe('66장 1번 SP 필살 블록 삭제 — 필살기는 저장형만', () 
       const l = battleLabels(f);
       expect('sp' in l).toBe(false);
       expect('specialBlock' in l).toBe(false);
-      expect(l.storedSkill).toBe('저장 필살');
+      expect('storedSkill' in l).toBe(false); // 저장 필살도 C.134 에 삭제 (GDD 83장)
       const vars = helpVars(f);
       expect('specialBlockName' in vars).toBe(false);
       expect('spName' in vars).toBe(false);
     }
     expect(GLOSSARY.map((g) => g.id)).not.toEqual(expect.arrayContaining(['sp']));
     expect(GLOSSARY.map((g) => g.id)).not.toEqual(expect.arrayContaining(['special-block']));
-    expect(GLOSSARY.map((g) => g.id)).toEqual(expect.arrayContaining(['stored-skill']));
+    expect(GLOSSARY.map((g) => g.id)).toEqual(expect.arrayContaining(['liberation']));
     expect(TUTORIAL_SCENES.map((t) => t.id)).not.toContain('sp');
-    expect(TUTORIAL_SCENES.map((t) => t.id)).toContain('stored');
+    expect(TUTORIAL_SCENES.map((t) => t.id)).toContain('liberation');
     expect(BATTLE_HELP_TARGETS as readonly string[]).not.toContain('battle.sp');
   });
 
-  it('블록을 100개 써도 바에 필살 블록이 생기지 않고 저장 게이지만 찬다', () => {
+  it('블록을 100개 써도 바에 필살 블록이 생기지 않고 해방 게이지만 찬다 (C.134: 저장 게이지 → 해방 게이지, 100 에서 멈춤)', () => {
     const s = quiet(createCombat(2, { enemy: normal }));
     s.enemy.hp = s.enemy.maxHp = 1e12;
     for (let i = 0; i < 100; i++) {
@@ -120,18 +121,17 @@ describe('66장 1번 SP 필살 블록 삭제 — 필살기는 저장형만', () 
       step(s);
     }
     expect(s.tray.every((b) => b.kind === 'skill' || b.kind === 'void')).toBe(true);
-    expect(s.storedCharges).toBe(CX.storedChargesMax);
+    expect(s.liberation.gauge).toBe(BALANCE.provisional.liberation.gaugeMax);
   });
 
-  it('정화(cleanse) 체인 효과는 SP 대신 저장 게이지 +value', () => {
+  it('정화(cleanse) 체인 효과는 SP 대신 해방 게이지 +value (C.118 저장 게이지 → C.134 해방 게이지)', () => {
     const s = quiet(createCombat(1, { enemy: normal, params: build('t-thunder-heal') }));
     s.sealTicks = 30;
-    s.storedGauge = 0;
-    s.storedCharges = 0;
+    s.liberation.gauge = 0;
     s.tray = [blk('t-thunder-heal'), blk('t-thunder-heal'), blk('t-thunder-heal')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.sealTicks).toBe(0);
-    expect(s.storedGauge).toBe(3 * CX.storedGaugePerBlock + CX.storedChainBonus[2]! + BP.basicRoleBlocks.heal.chainBonus.value);
+    expect(s.liberation.gauge).toBe(3 * LIB.gaugePerBlock + LIB.chainBonus[2]! + BP.basicRoleBlocks.heal.chainBonus.value);
   });
 });
 
@@ -169,7 +169,7 @@ describe('66장 2번 완전히 같은 블록끼리만 체인 (보상 수치는 �
   it('체인 보상 수치는 바꾸지 않았다 (사용자 11:22)', () => {
     expect(CX.chainMultipliers).toEqual([1, 2.2, 3.6]);
     expect(CX.chainBonusFromChain).toBe(3);
-    expect(CX.storedChainBonus).toEqual([0, 4, 10]);
+    expect(BALANCE.provisional.liberation.chainBonus).toEqual([0, 4, 10]); // 옛 storedChainBonus (C.134 에 해방 게이지로)
     const p: CombatParams = createCombat(1, { enemy: normal }).params;
     expect(p.chainMultipliers).toEqual([1, 2.2, 3.6]);
   });

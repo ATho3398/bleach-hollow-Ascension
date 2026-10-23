@@ -15,7 +15,7 @@ export function cueOf(e: CombatEvent, top: number): FxCue | null {
       if (e.block === 'combo') return 'special';
       if (e.chain >= top && top > 2) return 'chain3';
       return e.chain > 1 ? 'chain2' : 'block';
-    case 'stored-use':
+    case 'liberate':
       return 'special';
     case 'combo':
       return 'chain3';

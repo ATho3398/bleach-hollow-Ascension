@@ -69,9 +69,13 @@ export type RoomTalk = (typeof ROOM_TALK)[number];
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
 export const TRAINING_GAME_IDS = ['duel', 'dodge', 'clash', 'chain'] as const;
 
-/** 해방 (GDD 22-2·22-5): 버튼·블록·연출 문구. 호로 "레수렉시온" / 사신 "만해" */
+/** 해방 (GDD 83장): 버튼·블록·연출 문구. 5단계 전 = base*(양 종족 "영력 해방"), 5단계(BALANCE liberation.minTierIndex)부터 = 호로 "레수렉시온" / 사신 "만해" */
 export interface LiberationConfig {
-  /** 버튼·상태 이름 */
+  /** 5단계 전 이름·컷인·풀릴 때 문구 */
+  baseName: string;
+  baseCutin: string;
+  baseEndText: string;
+  /** 5단계부터 버튼·상태 이름 */
   name: string;
   /** 해방하는 순간 짧은 컷인 한 줄 */
   cutin: string;
@@ -191,8 +195,6 @@ export interface FactionConfig {
   rankLoseText: string;
   /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 공허 블록. SP 필살 블록 이름(specialBlockName)·SP 게이지 이름(spName)은 C.118 에 삭제 (GDD 66장) */
   skillBlockName: string;
-  /** 저장형 필살기 표시 이름 (GDD 14-6, 임시 자리 표시 이름) */
-  storedSkillName: string;
   voidBlockName: string;
   /** 체인 표기 (예: "체인") */
   chainName: string;
@@ -282,7 +284,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
@@ -409,7 +411,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     }
   }
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
-  for (const k of ['name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
+  for (const k of ['baseName', 'baseCutin', 'baseEndText', 'name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
   const rb = (r.rebirth ?? {}) as Record<string, unknown>;
   for (const k of ['name', 'cutin', 'rebornText']) if (!isString(rb[k])) errors.push(`rebirth.${k}: 비어 있지 않은 문자열이어야 한다`);
   const tr = (r.training ?? {}) as Record<string, unknown>;
@@ -437,8 +439,8 @@ export function resolveMaxChain(f: Pick<FactionConfig, 'maxChain'>, formMaxChain
   return formMaxChain ?? f.maxChain ?? DEFAULT_MAX_CHAIN;
 }
 
-/** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다. `special`(필살 블록)은 C.118 에 삭제 */
-export const BLOCK_WORDS = { stored: '저장 필살', void: '공허', combo: '콤보', guard: '막기', heal: '회복', liberation: '해방' } as const;
+/** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다. `special`(필살 블록)은 C.118, `stored`(저장 필살)은 C.134 에 삭제 */
+export const BLOCK_WORDS = { void: '공허', combo: '콤보', guard: '막기', heal: '회복', liberation: '해방' } as const;
 
 /** 계열 설정 한 개 (없으면 undefined) */
 export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {

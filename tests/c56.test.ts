@@ -254,7 +254,7 @@ describe('종족 설정 (분기 없음)', () => {
       expect(() => parseFactionConfig({ ...f, rebirth: undefined })).toThrow(/rebirth/);
       const lists = rebirthLists(f);
       expect(lists.resets.join()).toContain(f.tierNames[0]);
-      expect(lists.keeps.join()).toContain(f.liberation.name);
+      expect(lists.keeps.join()).toContain('등급 이력'); // 해방 자격은 C.134 에 폐기 (GDD 83장)
       expect(rebirthFinalText(f, null).body).toContain('되돌릴 수 없다');
     }
   });

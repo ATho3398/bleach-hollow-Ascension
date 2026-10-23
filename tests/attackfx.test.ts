@@ -18,10 +18,9 @@ describe('사건 → 연출 단계', () => {
     expect(attackCueOf(block({ chain: 3 }), 3)?.tier).toBe('chain3');
     expect(chainTier(7, 3)).toBe('chain3');
   });
-  it('약점·콤보·저장 필살기는 더 크게', () => {
+  it('약점·콤보는 더 크게 (저장 필살기는 C.134 에 삭제)', () => {
     expect(attackCueOf(block({ chain: 3, matchup: 'strong' }), 3)?.tier).toBe('weak');
     expect(attackCueOf(block({ block: 'combo' }), 3)?.tier).toBe('special');
-    expect(attackCueOf({ kind: 'stored-use', damage: 50, guardSeconds: 1, charges: 0 }, 3)?.tier).toBe('special');
   });
   it('피해 없는 블록(막기·회복)·공허·그 밖의 사건은 연출이 없다', () => {
     expect(attackCueOf(block({ role: 'guard', damage: 0 }), 3)).toBeNull();
@@ -173,10 +172,11 @@ describe('연출 큐: 최대 1개 대기', () => {
 });
 
 describe('종족 설정', () => {
-  it('SP 필살 블록 이름(포효·귀도)은 C.118 에 삭제 — 종족 설정에 없고, 저장 필살 이름은 단계 기술 이름과 겹치지 않는다', () => {
+  it('SP 필살 블록 이름(포효·귀도)은 C.118, 저장 필살 이름은 C.134 에 삭제 — 종족 설정에 없고, 해방 이름은 단계 기술 이름과 겹치지 않는다', () => {
     expect('specialBlockName' in hollow).toBe(false);
     expect('specialBlockName' in shinigami).toBe(false);
     const names = hollow.families.flatMap((f) => f.tiers.map((t) => t.name));
-    expect(names).not.toContain(hollow.storedSkillName);
+    expect('storedSkillName' in hollow).toBe(false);
+    for (const n of [hollow.liberation.baseName, hollow.liberation.name]) expect(names).not.toContain(n);
   });
 });

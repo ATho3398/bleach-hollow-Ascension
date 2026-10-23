@@ -65,12 +65,11 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
       // 기본 블록: 내 캐릭터 속성 + 블록 계열
       const pb = createCombat(1, { enemy, params: { ...buildCombatParams(newBuild(), f.id), playerElements: ['water'] } }).params;
       expect(blockName({ uid: 7, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-c' }, labels, f.id, pb)).toBe(`물_${c}`);
-      const old = [f.basicSkillName, f.storedSkillName, f.voidBlockName];
+      const old = [f.basicSkillName, f.voidBlockName];
       for (const blk of [{ uid: 8, kind: 'skill' as const, traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 9, kind: 'void' as const, traitId: null }]) {
         expect(old).not.toContain(blockName(blk, labels, f.id, pb));
       }
-      expect(old).not.toContain(labels.storedSkill);
-      expect(labels.storedSkill).toBe('저장 필살');
+      expect('storedSkill' in labels).toBe(false); // 저장 필살은 C.134 에 삭제 (GDD 83장)
     }
   });
 

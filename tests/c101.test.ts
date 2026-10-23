@@ -90,35 +90,33 @@ describe('속성 피해 배율 (GDD 48장 2번)', () => {
     expect(both.crit).toBe(true);
     expect(both.damage / base.damage).toBeCloseTo(1.5 * 1.5, 9);
   });
-  it('무속성 칸 적용 범위: 저장 필살·속성 없는 기본 블록은 무속성, 공허 블록은 제외 (SP 필살 블록은 C.118 에 삭제)', () => {
+  it('무속성 칸 적용 범위: 속성 없는 기본 블록은 무속성, 공허 블록은 제외 (SP 필살 블록은 C.118, 저장 필살은 C.134 에 삭제)', () => {
     const s = createCombat(3, {
       enemy: getEnemy('test-a'),
-      params: { ...NO_CRIT, voidCheckSeconds: 1, voidChance: 0.5, voidChanceMax: 0.5, storedGaugePerBlock: 100, elementDamage: { ...all(0), [NORMAL_ELEMENT]: 40 } },
+      params: { ...NO_CRIT, voidCheckSeconds: 1, voidChance: 0.5, voidChanceMax: 0.5, liberationEnabled: false, elementDamage: { ...all(0), [NORMAL_ELEMENT]: 40 } },
     });
-    const ev = playOut(s, (st) => (st.storedCharges > 0 ? { type: 'stored' } : st.tray.length > 0 ? { type: 'use', cell: 0 } : null));
+    const ev = playOut(s, (st) => (st.tray.length > 0 ? { type: 'use', cell: 0 } : null));
     const blocks = ev.filter((e): e is Extract<CombatEvent, { kind: 'block' }> => e.kind === 'block');
     const voids = blocks.filter((e) => e.block === 'void');
     const plainSkill = blocks.filter((e) => e.block === 'skill' && e.element === null && e.damage > 0);
-    const stored = ev.filter((e): e is Extract<CombatEvent, { kind: 'stored-use' }> => e.kind === 'stored-use');
     expect(voids.length).toBeGreaterThan(0);
     expect(plainSkill.length).toBeGreaterThan(0);
-    expect(stored.length).toBeGreaterThan(0);
-    for (const e of [...plainSkill, ...stored]) expect(e.elem).toEqual({ ids: [NORMAL_ELEMENT], pct: 40 });
+    for (const e of plainSkill) expect(e.elem).toEqual({ ids: [NORMAL_ELEMENT], pct: 40 });
     for (const e of voids) expect(e.elem).toBeUndefined();
   });
-  it('해방 블록은 내 캐릭터 속성 칸', () => {
+  it('해방 블록(옛 kind liberation — C.134 부터 생기지 않지만 옛 상태 호환)은 내 캐릭터 속성 칸', () => {
     const fire = ELEMENTAL_IDS.find((x) => x === 'fire') ?? ELEMENTAL_IDS[0]!;
     const s = createCombat(5, {
       enemy: getEnemy('test-a'),
-      params: { ...NO_CRIT, playerElements: [fire], liberationEnabled: true, liberationGaugeFraction: 0.01, elementDamage: { ...all(0), [fire]: 50 } },
+      params: { ...NO_CRIT, playerElements: [fire], liberationEnabled: false, elementDamage: { ...all(0), [fire]: 50 } },
     });
+    s.tray = [{ uid: 999, kind: 'liberation', traitId: null, family: null }];
     const ev = playOut(s, (st) => {
       const li = st.tray.findIndex((b) => b.kind === 'liberation');
-      if (li >= 0) return { type: 'use', cell: li };
-      return { type: 'liberate' };
+      return li >= 0 ? { type: 'use', cell: li } : null;
     });
     const lib = ev.filter((e): e is Extract<CombatEvent, { kind: 'block' }> => e.kind === 'block' && e.block === 'liberation');
-    expect(lib.length).toBeGreaterThan(0);
+    expect(lib.length).toBe(1);
     for (const e of lib) expect(e.elem).toEqual({ ids: [fire], pct: 50 });
   });
   it('반사(되갚기)·독 지속 피해는 속성 피해를 받지 않는다', () => {

@@ -4,7 +4,7 @@
 import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import { ENEMIES, enemyPatternKind, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
 import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
-import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, storedStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
+import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, liberationStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
 import { createExpedition, enemyScale, mutationMods, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
 import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } from '../src/engine/absorb';
@@ -123,7 +123,7 @@ const buildOf = (ids: string[]): Partial<CombatParams> => {
   return { ...buildCombatParams(b, BALANCE_FACTION), combos: comboRulesOf(newEvolution()), ...START };
 };
 /** C.17: 점검 봇의 시작 저장 게이지 = 새 세이브 안정 수치(stabilityStart)에 비례한 값 */
-const START = { storedStartGauge: storedStartGaugeOf(BALANCE.provisional.risk.stabilityStart) };
+const START = { liberationStartGauge: liberationStartGaugeOf(BALANCE.provisional.risk.stabilityStart) };
 type BuildDef = { name: string; params: Partial<CombatParams>; ref: boolean; /** 사람형 봇 강적 승률 목표 [하한, 상한]. 없으면 참고 출력만 */ elite?: [number, number] };
 const builds: BuildDef[] = [
   { name: '빈 슬롯(기본 블록)', params: { ...START }, ref: false },
@@ -173,13 +173,13 @@ function measureKind(play: (s: CombatState) => CombatState, build: BuildDef, kin
       st.chain3 += s.chain3Count;
       st.guards += s.guardSuccesses;
       st.voids += s.voidUsed;
-      st.stored += s.storedUsed;
-      st.wasted += s.storedWasted;
+      st.stored += s.liberation.uses;
+      st.wasted += s.liberation.chains;
       if (canAbsorb(s)) st.absorbable++;
     }
   }
   const g = st.games;
-  const line = `    ${kind.padEnd(11)} (${group[0]!.class}, 체력 ${group[0]!.hpInAttacks}회분, 적 ${group.length}종): 승률 ${((st.wins / g) * 100).toFixed(0)}% · 평균 ${(st.secs / g).toFixed(1)}초(승리 ${(st.wins ? st.winSecs / st.wins : 0).toFixed(1)}초) · 남은 체력 ${st.wins ? ((st.hpLeft / st.wins) * 100).toFixed(0) : '-'}% · 체인3 ${(st.chain3 / g).toFixed(1)}회 · 막기 성공 ${(st.guards / g).toFixed(1)} · 공허 ${(st.voids / g).toFixed(1)} · 저장필살 ${(st.stored / g).toFixed(1)}회(낭비 ${(st.wasted / g).toFixed(0)}) · 흡수 가능 ${((st.absorbable / g) * 100).toFixed(0)}% · 시간 초과 ${st.timeouts}`;
+  const line = `    ${kind.padEnd(11)} (${group[0]!.class}, 체력 ${group[0]!.hpInAttacks}회분, 적 ${group.length}종): 승률 ${((st.wins / g) * 100).toFixed(0)}% · 평균 ${(st.secs / g).toFixed(1)}초(승리 ${(st.wins ? st.winSecs / st.wins : 0).toFixed(1)}초) · 남은 체력 ${st.wins ? ((st.hpLeft / st.wins) * 100).toFixed(0) : '-'}% · 체인3 ${(st.chain3 / g).toFixed(1)}회 · 막기 성공 ${(st.guards / g).toFixed(1)} · 공허 ${(st.voids / g).toFixed(1)} · 해방 ${(st.stored / g).toFixed(1)}회(해방 중 체인 ${(st.wasted / g).toFixed(1)}) · 흡수 가능 ${((st.absorbable / g) * 100).toFixed(0)}% · 시간 초과 ${st.timeouts}`;
   return { kind, cls: group[0]!.class, games: g, wins: st.wins, secs: st.secs, winSecs: st.winSecs, timeouts: st.timeouts, line };
 }
 /** 풀 가중치(POOL_CONFIG)로 종류별 결과를 합친 승률·승리 평균 시간 */
@@ -939,7 +939,7 @@ if (want('phys')) {
         for (const k of PHYS_ABILITY_EFFECTS) delete fx[k];
         params.abilityEffects = fx as CombatParams['abilityEffects'];
       }
-      params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+      params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
       return params;
     };
     let ng = 0, nw = 0, ns = 0, eg = 0, ew = 0, es = 0, n = 0, taken = 0, secs = 0, phys = 0;
@@ -1158,19 +1158,21 @@ if (want('liberation')) {
     let games = 0;
     let used = 0;
     let usedAt = 0;
+    let uses = 0;
     bodies.forEach((body, bi) => {
       for (const base of elites) {
         for (let lap = 1; lap <= BALANCE.expedition.maxLaps; lap++) {
           for (let k = 0; k < LR; k++) {
             const params = buildCombatParams(body.build, 'hollow');
             applyEvolutionToParams(params, body.evolution, 'hollow');
-            params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+            params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
             params.liberationEnabled = liberation;
             applyDifficultyToParams(params, recommendedDifficulty(tier));
             // C.76: 기준 = 권장 ★ · 연속 LIB_STREAK(적 +25%) — 사냥터 강도 일원화 뒤 "해방이 필요한 싸움"
             const end = playCombatHuman(createCombat(70000 + bi * 1009 + lap * 101 + k * 7 + base.hpInAttacks, { enemy: scaleEnemy(base, enemyScale(lap, ground.id, recommendedDifficulty(tier), LIB_STREAK, 'elite')), params }));
             games++;
             if (end.status === 'won') wins++;
+            uses += end.liberation.uses;
             if (end.liberation.usedAtTick !== null) {
               used++;
               usedAt += end.liberation.usedAtTick * end.params.tickSeconds;
@@ -1179,14 +1181,14 @@ if (want('liberation')) {
         }
       }
     });
-    return { win: games ? wins / games : 0, games, used, usedAt: used ? usedAt / used : 0 };
+    return { win: games ? wins / games : 0, games, used, uses, usedAt: used ? usedAt / used : 0 };
   };
   const off = rate(false);
   const on = rate(true);
   const gain = on.win - off.win;
   const LB = BALANCE.provisional.liberation;
   console.log(`\n해방 (사람형 봇, ${tier + 1}단계 몸 ${bodies.length}명 × 강적 ${elites.length}종 × 1~${BALANCE.expedition.maxLaps}바퀴 × ${LR}판, 사냥터 ${ground.id}, ★${recommendedDifficulty(tier)} 연속 ${LIB_STREAK}) — 목표(임시): 해방 사용 시 강적 승률 +10~15%p`);
-  console.log(`  해방 수치: 게이지 = 적 최대 체력 ${LB.gaugeEnemyHpFraction * 100}%, ${LB.seconds}초 능력치 ×${LB.statMultiplier}, 해방 블록 ${LB.blocks}칸 × 기본 블록 ${LB.blockPowerMultiplier}배, 끝나면 리스크 +${LB.riskOnEnd}`);
+  console.log(`  해방 수치(GDD 83장): 게이지 블록당 +${LB.gaugePerBlock}, ${LB.seconds}초 동안 블록 생성 ×${LB.spawnSpeed}(전부 해방 블록), 고유 효과 공속 ×${LB.uniqueAttackSpeed}·체인 속도 ×${LB.uniqueChainSpeed}·능력치 ×${LB.uniqueStatMultiplier}, 끝날 때마다 리스크 +${LB.riskOnEnd} · 평균 사용 ${on.games ? (on.uses / on.games).toFixed(1) : 0}회/전투`);
   console.log(`  해방 없음 ${(off.win * 100).toFixed(1)}% → 해방 사용 ${(on.win * 100).toFixed(1)}% (${gain >= 0 ? '+' : ''}${(gain * 100).toFixed(1)}%p) · 해방 쓴 전투 ${on.used}/${on.games} · 평균 ${on.usedAt.toFixed(1)}초에 사용`);
   if (bodies.length < CAMPAIGNS * 0.8) lateFail(`해방: ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
   // 회귀 가드는 목표보다 넓게(+5~25%p): 다른 수치를 고칠 때 해방이 무의미해지거나 압도적이 되는 것만 막는다
@@ -1225,7 +1227,7 @@ if (want('bosses')) {
         const params = buildCombatParams(body.build, 'hollow');
         applyEvolutionToParams(params, body.evolution, 'hollow');
         applyDifficultyToParams(params, boss.difficulty);
-        params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+        params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
         const end = playCombatHuman(createCombat(80000 + bi * 131 + k * 17, { enemy: scaleEnemy(boss.enemy, enemyScale(1, ground, boss.difficulty)), params, boss: bossSetupOf(boss.id) }));
         games++;
         if (end.status === 'won') {
@@ -1268,7 +1270,7 @@ if (want('rank')) {
         const params = buildCombatParams(save.build, 'hollow');
         applyEvolutionToParams(params, save.evolution, 'hollow');
         applyDifficultyToParams(params, h.difficulty);
-        params.storedStartGauge = storedStartGaugeOf(save.nest.stability);
+        params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
         const end = playCombatHuman(createCombat(9000 + h.rank * 100 + k * 7 + games, { enemy: enemyAtDifficulty(h, h.difficulty), params }));
         games++;
         if (end.status === 'won') {
@@ -1302,7 +1304,7 @@ if (want('tower')) {
       for (let k = 0; k < TR; k++) {
         const params = buildCombatParams(body.build, 'hollow');
         applyEvolutionToParams(params, body.evolution, 'hollow');
-        params.storedStartGauge = storedStartGaugeOf(body.nest.stability);
+        params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
         const end = playCombatHuman(createTowerCombat(f, params, seedBase + floor * 1009 + bi * 131 + k * 17));
         games++;
         if (end.status === 'won') {
