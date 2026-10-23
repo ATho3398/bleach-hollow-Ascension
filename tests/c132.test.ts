@@ -42,15 +42,16 @@ describe('78장 시작 외형 = 그림만, 능력치 편향 없음', () => {
   });
 });
 
-describe('80장 기본 블록 몫 — 본체 슬롯 하나마다 ×0.75', () => {
+// C.133 (GDD 80장 v5.166 수정): 0.75^칸(75·56·42%)은 옛 몫보다 올라 "줄여"와 반대 → 옛 몫 60·45·35% × 0.75^칸 = 45·25·15%
+describe('80장 기본 블록 몫 — 옛 몫 × 0.75^칸 (v5.166)', () => {
   const IDS = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
   const paramsOf = (n: number): CombatParams => {
     const b = newBuild();
     for (const id of IDS.slice(0, n)) gainTrait(b, id);
     return createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b, 'hollow') }).params;
   };
-  it('0칸 100% · 1칸 75% · 2칸 56% · 3칸 42% (초당 생성 기대치)', () => {
-    const want = [1, 0.75, 0.5625, 0.421875];
+  it('0칸 100% · 1칸 45% · 2칸 25% · 3칸 15% (초당 생성 기대치)', () => {
+    const want = [1, 0.45, 0.25, 0.15];
     for (let n = 0; n <= 3; n++) {
       const p = paramsOf(n);
       expect(p.skills).toHaveLength(n);
@@ -59,11 +60,11 @@ describe('80장 기본 블록 몫 — 본체 슬롯 하나마다 ×0.75', () => 
     }
   });
   it('줄어든 몫은 장착 특성 블록 쪽으로 (특성 몫 = 1 − 기본 몫)', () => {
-    for (let n = 1; n <= 3; n++) expect(spawnRatesOf(paramsOf(n)).absorbedShare).toBeCloseTo(1 - 0.75 ** n, 2);
+    for (let n = 1; n <= 3; n++) expect(spawnRatesOf(paramsOf(n)).absorbedShare).toBeCloseTo(1 - [1, 0.45, 0.25, 0.15][n]!, 2);
   });
   it('체인 보상 수치는 그대로 (66장)', () => {
     expect(BALANCE.provisional.combat.basicBlockChainBonus).toBeDefined();
-    expect(readFileSync('src/config/balance.ts', 'utf8')).toContain('basicShareDecayPerSlot: 0.75');
+    expect(readFileSync('src/config/balance.ts', 'utf8')).toContain('basicShareBySlots: [1, 0.45, 0.25, 0.15]');
   });
 });
 

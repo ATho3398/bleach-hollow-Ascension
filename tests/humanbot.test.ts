@@ -12,6 +12,7 @@ const build = (...ids: string[]) => {
 const heavy = getEnemy('fire-heavy-seal');
 const stance = getEnemy('fire-stance');
 const two = build('t-thunder-c', 't-fire-guard');
+const one = build('t-thunder-c');
 
 describe('사람형 봇', () => {
   it('임시 설정값: 반응 0.5~1.2초, 막기 성공 70%, 체인 정리 50%', () => {
@@ -85,7 +86,8 @@ describe('사람형 봇', () => {
     const chain3 = (joinChance: number) => {
       let n = 0;
       for (let seed = 1; seed <= 10; seed++) {
-        const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('fire-sturdy'), params: two }), { joinChance });
+        // C.133 (GDD 80장 v5.166): 2칸(공격·막기) 몸은 기본 블록 몫이 25% 로 줄어 끼어 있는 블록이 드물어 차이가 표본 잡음(±1) 안이 됐다 → 끼어 있는 기본 블록이 많은 1칸 몸으로 본다
+        const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('fire-sturdy'), params: one }), { joinChance });
         n += s.chain3Count;
         expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'stored')).toBe(true);
       }

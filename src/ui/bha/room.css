@@ -26,6 +26,9 @@
 .bha-homedock__carebtn--feed { --c: var(--bha-hunger); }
 .bha-homedock__carebtn--sleep { --c: var(--bha-cond); }
 .bha-homedock__carebtn--pet { --c: var(--bha-stab); }
+/* 돌봄 요청 (GDD 82장): 캐릭터가 청한 버튼만 그 색으로 채우고 테두리가 숨쉬듯 빛난다 */
+.bha-homedock__carebtn.is-requested { background: color-mix(in srgb, var(--c) 24%, var(--bha-bg-2)); box-shadow: 0 0 0 2px var(--c); animation: bha-care-ask 1.2s ease-in-out infinite; }
+@keyframes bha-care-ask { 50% { box-shadow: 0 0 0 2px var(--c), 0 0 12px var(--c); } }
 .bha-homedock__sep { flex: none; width: 1px; align-self: stretch; margin: var(--bha-sp-2) 0; background: var(--bha-line-2); }
 .bha-homedock__menu { flex: none; display: flex; gap: var(--bha-sp-1); }
 .bha-homedock__menu .bha-btn { min-width: var(--bha-touch); min-height: var(--bha-touch); }
@@ -173,7 +176,7 @@
 
 /* 모션 줄이기: 숨쉬기·폴짝·말풍선 팝을 끈다. 두 프레임 그림은 첫 프레임만 보인다 (전역 규칙은 반복 횟수만 1 로 줄여 두 프레임이 겹쳐 보인다) */
 @media (prefers-reduced-motion: reduce) {
-  .bha-char__body, .bha-char.is-react .bha-char__body, .bha-room__bubble.is-pop { animation: none; }
+  .bha-char__body, .bha-char.is-react .bha-char__body, .bha-room__bubble.is-pop, .bha-homedock__carebtn.is-requested { animation: none; }
   .bha-char__frame--1 { animation: none; visibility: visible; }
   .bha-char__frame--2 { display: none; }
 }

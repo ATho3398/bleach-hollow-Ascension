@@ -77,7 +77,7 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
     expect(basicSpawnSecondsOf(paramsOf(build()))).toBeCloseTo(BP.basicSpawnSeconds);
     for (let n = 1; n <= 3; n++) {
       const p = paramsOf(build(...['t-fire-a', 't-earth-guard', 't-thunder-heal'].slice(0, n)));
-      const share = BP.basicShareDecayPerSlot ** n;
+      const share = BP.basicShareBySlots[n]!;
       const absorbedTotal = (CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot * (n - 1))) / n;
       expect(basicSpawnSecondsOf(p)).toBeCloseTo((absorbedTotal * (1 - share)) / share);
     }
@@ -92,11 +92,11 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
     for (let n = 1; n <= 3; n++) expect(shares[n]!).toBeGreaterThan(shares[n - 1]!);
   });
 
-  // C.132 (GDD 80장): 기본 블록 몫 = 0칸 100% · 1칸 75% · 2칸 56% · 3칸 42% (슬롯 하나마다 ×0.75, 옛 44-2 표 60·45·35% 대체)
-  it('기본 블록 몫(초당 생성 기대치) = 0칸 100% · 1칸 75% · 2칸 56% · 3칸 42% (±5%p, basicShareDecayPerSlot 0.75)', () => {
+  // C.133 (GDD 80장 v5.166): 기본 블록 몫 = 0칸 100% · 1칸 45% · 2칸 25% · 3칸 15% (옛 44-2 표 60·45·35% × 0.75^칸)
+  it('기본 블록 몫(초당 생성 기대치) = 0칸 100% · 1칸 45% · 2칸 25% · 3칸 15% (±5%p, basicShareBySlots)', () => {
     const ids = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
-    const target = [1, 0.75, 0.5625, 0.421875];
-    expect(BP.basicShareDecayPerSlot).toBe(0.75);
+    const target = [1, 0.45, 0.25, 0.15];
+    expect(BP.basicShareBySlots).toEqual([1, 0.45, 0.25, 0.15]);
     for (let n = 0; n <= 3; n++) {
       const basicShare = 1 - spawnRatesOf(paramsOf(build(...ids.slice(0, n)))).absorbedShare;
       expect(Math.abs(basicShare - target[n]!), `${n}칸 기본 몫 ${(basicShare * 100).toFixed(0)}%`).toBeLessThanOrEqual(0.05);
@@ -118,10 +118,11 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
     expect(spawnSecondsOf(fast, fast.skills[0]!)).toBeCloseTo((CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot)) / 2);
   });
 
-  it('독 탄 1칸 몸에서 실제로 나온 블록 중 기본 블록이 절반을 넘고 막기·회복이 섞여 있다 (C.97 캡처 02 문제의 회귀 가드)', () => {
+  // C.133 (GDD 80장 v5.166): 1칸 기본 몫 45% — "절반을 넘고"(C.97) 대신 몫 표 ±8%p 와 막기·회복 섞임을 지킨다
+  it('독 탄 1칸 몸에서 실제로 나온 블록 중 기본 블록이 약 45% 이고 막기·회복이 섞여 있다 (C.97 캡처 02 문제의 회귀 가드)', () => {
     const out = spawned(long(5, build('t-poison-c')), 400);
     const basic = out.filter((b) => isBasicBlockId(b.traitId)).length / out.length;
-    expect(basic).toBeGreaterThan(0.5);
+    expect(Math.abs(basic - 0.45)).toBeLessThanOrEqual(0.08);
     expect(out.some((b) => b.traitId === BASIC_GUARD_ID)).toBe(true);
     expect(out.some((b) => b.traitId === BASIC_HEAL_ID)).toBe(true);
   });

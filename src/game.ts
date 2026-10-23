@@ -3,7 +3,7 @@
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { completedElements, gainTrait, newBuild, type BuildState } from './engine/absorb';
-import { applyExpeditionEnd, doNestAction, newNest, type NestState } from './engine/nest';
+import { applyExpeditionEnd, CARE_ACTIONS, doNestAction, newNest, respondCare, tickCareRequest, type CareAction, type CareOutcome, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
 import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
@@ -41,12 +41,12 @@ import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 37; // C.120: 타일 보관(unlocked·draws)·도움말 안내(guides)·런 로그 tutorialRewards·구매 기록 result (GDD 64·67장)
+export const SAVE_FORMAT_VERSION = 38; // C.133: 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다").
  *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
  *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 37;
+export const MIN_LOADABLE_SAVE_FORMAT = 38; // C.133: 형식 38 과 같이 올림 (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -396,6 +396,21 @@ export function claimDexRewards(save: SaveData, nowMs: number = Date.now(), defs
     save.shared.jade += jade;
     return { milestone, food, jade };
   });
+}
+
+/** 돌봄 요청 시계 (GDD 82장): 방을 열 때·방에 있는 동안 부른다. 놓친 요청은 런 로그 care.missed 에 센다. 새 요청이 막 생겼으면 true */
+export function tickCare(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): boolean {
+  const r = tickCareRequest(save.nest, nowMs, rand);
+  if (r.missed) save.runLog.care.missed++;
+  return r.created;
+}
+
+/** 쓰다듬기·재우기 버튼 (GDD 82장): 요청에 응답하면 효과, 아니면 거절(효과 없음). 응답·거절을 런 로그 care 에 센다 */
+export function careNest(save: SaveData, action: CareAction, nowMs: number = Date.now(), rand: () => number = Math.random): CareOutcome {
+  tickCare(save, nowMs, rand);
+  const out = respondCare(save.nest, action, nowMs, rand);
+  save.runLog.care[out][action]++;
+  return out;
 }
 
 /** 다시 열 때 꺼 둔 동안의 허기 (GDD 24-1): 마지막 접속 시각부터. 원정 중간 저장이 있으면 오르지 않는다. 오른 양을 돌려주고 접속 시각을 지금으로(되돌린 시계면 그대로) */
@@ -1501,8 +1516,19 @@ function repairCore(save: SaveData): boolean {
   return isTrackShape(save);
 }
 
+/** 돌봄 요청·기록 보정 (GDD 82장, C.133): 모양이 틀린 요청은 버리고, 횟수는 0 이상 정수로 */
+function sanitizeCare(t: Pick<SaveData, 'nest' | 'runLog'>): void {
+  const r = t.nest.careRequest as unknown;
+  t.nest.careRequest = isRec(r) && CARE_ACTIONS.includes(r.action as CareAction) && typeof r.until === 'number' && Number.isFinite(r.until) ? { action: r.action as CareAction, until: r.until } : null;
+  if (typeof t.nest.nextCareAt !== 'number' || !Number.isFinite(t.nest.nextCareAt)) t.nest.nextCareAt = Date.now();
+  const c = (isRec(t.runLog.care) ? t.runLog.care : {}) as Partial<Record<string, unknown>>;
+  const pair = (v: unknown) => { const o = isRec(v) ? v : {}; return { pet: nonNegInt(o.pet), sleep: nonNegInt(o.sleep) }; };
+  t.runLog.care = { answered: pair(c.answered), refused: pair(c.refused), missed: nonNegInt(c.missed) };
+}
+
 /** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
 function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string[]): void {
+  sanitizeCare(t);
   t.runLog.shopPurchases = Array.isArray(t.runLog.shopPurchases) ? t.runLog.shopPurchases : [];
   t.runLog.tutorialRewards = Array.isArray(t.runLog.tutorialRewards) ? t.runLog.tutorialRewards : [];
   t.difficulty = sanitizeDifficulty(t);

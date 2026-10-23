@@ -37,8 +37,8 @@ export interface BlockPoolParams {
   basicRoleBlocks: { guard: { powerInAttacks: number; chainBonus: ChainBonus }; heal: { powerInAttacks: number; chainBonus: ChainBonus } };
   /** 기본 블록 타이머 간격(초, 흡수 0칸) */
   basicSpawnSeconds: number;
-  /** 장착 칸 하나마다 기본 블록 몫(초당 생성 기대치 비율)에 곱하는 값 — 몫 = 이 값 ^ 칸 (GDD 80장, C.132). 기본 타이머 간격 = 흡수 블록 총 간격 × (1 − 몫) / 몫 (GDD 44-3, C.98) */
-  basicShareDecayPerSlot: number;
+  /** 장착 칸 수별 기본 블록 몫(초당 생성 기대치 비율), 칸이 더 많으면 마지막 값 (GDD 80장 v5.166, C.133). 기본 타이머 간격 = 흡수 블록 총 간격 × (1 − 몫) / 몫 (GDD 44-3, C.98) */
+  basicShareBySlots: readonly number[];
   /** 장착 흡수 칸이 2칸부터 1칸 늘 때마다 흡수 특성 타이머 간격 +비율 (간격 = combat.blockSpawnSeconds × (1 + 이 값 × (칸 − 1))) — 후반(4칸 이상) 블록 총량을 누를 때 쓰는 지렛대 (GDD 44-2) */
   absorbedSlowdownPerSlot: number;
   temperament: Record<string, { attack?: number; guard?: number; heal?: number; absorbedSpawn?: number }>;
@@ -615,9 +615,10 @@ export function spawnSecondsOf(p: CombatParams, src: CombatSkill): number {
   return base * (1 + p.familySpawnSlowdown * (same - 1));
 }
 
-/** 칸 수별 기본 블록 몫 = basicShareDecayPerSlot ^ 칸 (GDD 80장: 1칸 75% · 2칸 56% · 3칸 42%) */
+/** 칸 수별 기본 블록 몫 (GDD 80장 v5.166: 0칸 100% · 1칸 45% · 2칸 25% · 3칸 15%) */
 export function basicShareOf(p: CombatParams, slots: number = p.skills.length): number {
-  return p.blockPool.basicShareDecayPerSlot ** slots;
+  const t = p.blockPool.basicShareBySlots;
+  return t[Math.min(Math.max(0, slots), t.length - 1)] ?? 1;
 }
 
 /**

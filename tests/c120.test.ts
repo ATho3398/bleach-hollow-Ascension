@@ -43,11 +43,11 @@ const walkToBattle = (exp: ExpeditionState): number => {
 };
 
 describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
-  it('새 세이브는 타일 0장·덱 비어 있음·잠김, 세이브 형식 37 · 문턱 37', () => {
+  it('새 세이브는 타일 0장·덱 비어 있음·잠김, 세이브 형식 38(C.133) · 문턱 같이', () => {
     const s = newSaveData('hollow', 1);
     expect(s.tiles).toEqual({ collection: {}, deck: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(37);
+    expect(SAVE_FORMAT_VERSION).toBe(38);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
   });
 

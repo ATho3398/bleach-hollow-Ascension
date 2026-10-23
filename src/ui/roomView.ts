@@ -2,16 +2,15 @@
 //   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면).
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
-import { doNestAction } from '../engine/nest';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { artSkinOf, deckSizeOf, feedNest, sanitizeDeck, type SaveData } from '../game';
+import { artSkinOf, careNest, deckSizeOf, feedNest, sanitizeDeck, tickCare, type SaveData } from '../game';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
 import { characterButton, charTopOffset, propButton, roomCharArt, sceneBox } from './bha/room';
-import { moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
+import { careTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
 import { toward } from './bha/nestLogic';
@@ -62,6 +61,7 @@ let idleTimer = 0;
 
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
   save.tiles.deck = sanitizeDeck(save.tiles, faction.id, deckSizeOf(save));
+  tickCare(save); // 돌봄 요청 (GDD 82장): 꺼 두었다 와도 최대 1개
   hd.persist();
   const room = roomOf(faction, save.wear.talk); // 말풍선 팩 (GDD 25-11): 입은 팩이 혼잣말 문구를 덮는다
   const n = save.nest;
@@ -165,7 +165,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }
     say(line ?? pickLine(room.talk, mood === 'idle' && Math.random() < 0.4 ? 'happy' : mood), ms);
   };
-  char.onclick = () => react();
+  /** 지금 살아 있는 돌봄 요청의 말풍선 (GDD 82장) */
+  const askLine = (): string | null => (n.careRequest ? pickLine(room.talk, careTalkKey('ask', n.careRequest.action)) : null);
+  char.onclick = () => react(askLine() ?? undefined);
   // 머리 위 상태 칩 (허기·컨디션·리스크 게이지, 쇠약이면 그 이름). 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
   const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
@@ -199,7 +201,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (action === 'feed') {
         if (!food || !feedNest(save, food)) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.', 3200);
-      } else doNestAction(n, action);
+      } else if (careNest(save, action) === 'refused') {
+        // 요청이 없거나 다른 것을 청했을 때: 거절 말풍선, 효과 없음 (GDD 82장)
+        hd.persist();
+        dock.setRequest(n.careRequest?.action ?? null);
+        return say(pickLine(room.talk, careTalkKey('refuse', action)), 3200);
+      }
+      dock.setRequest(n.careRequest?.action ?? null);
       hd.persist();
       paintGauges();
       say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }), 3200);
@@ -237,18 +245,27 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     dev.setItems([...dock.items().filter((b) => b.closest('.bha-homedock__tray')).map((b) => ({ el: b })), ...list, ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
   }
   registerItems();
+  dock.setRequest(n.careRequest?.action ?? null);
   // 독 밖(장면)을 누르면 펼친 줄을 닫는다
   scene.addEventListener('pointerdown', () => dock.close());
 
   // ── 반응: 상태가 바뀌어 돌아왔을 때, 가끔 혼잣말 ──
   const greet = hd.greet;
+  const ask = askLine();
   if (greet) window.setTimeout(() => main.isConnected && react(pickLine(room.talk, greet), 5200), 500);
-  else if (lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);
+  // 돌봄 요청이 있으면 (인사 뒤에) 요청 말풍선, 없으면 기분이 바뀌었을 때 한마디
+  if (ask) window.setTimeout(() => main.isConnected && react(askLine() ?? ask, 4200), greet ? 5900 : 500);
+  else if (!greet && lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);
   lastMood = mood;
   // 방을 다시 그릴 때 이전 방의 혼잣말 타이머를 바로 끈다 (C.70: 화면을 빠르게 오가면 떨어진 방 DOM 이 최대 14초씩 쌓였다)
   window.clearInterval(idleTimer);
   const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
-    if (Math.random() < 0.5) say(pickLine(room.talk, mood));
+    // 돌봄 요청 시계 (GDD 82장): 방에 있는 동안 요청이 생기거나 사라진다
+    const had = n.careRequest;
+    const created = tickCare(save);
+    if (created || had !== n.careRequest) { hd.persist(); dock.setRequest(n.careRequest?.action ?? null); }
+    if (created) return react(askLine()!, 4200);
+    if (Math.random() < 0.5) say(askLine() ?? pickLine(room.talk, mood));
   }, IDLE_TALK_MS);
 }

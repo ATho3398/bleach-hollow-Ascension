@@ -30,6 +30,8 @@ export interface Dock {
   items: () => HTMLElement[];
   panel: () => DockPanel;
   close: () => void;
+  /** 돌봄 요청 강조 (GDD 82장): 캐릭터가 청한 돌보기 버튼만 강조, null 이면 모두 해제 */
+  setRequest: (action: NestAction | null) => void;
 }
 
 const CARE_META: Record<NestAction, { icon: string; cls: string }> = {
@@ -146,5 +148,13 @@ export function createDock(o: DockOpts): Dock {
     items: () => [...trayBtns.filter((b) => !(b as HTMLButtonElement).disabled), ...careBtns.values(), ...menuBtns],
     panel: () => panel,
     close: () => { if (panel !== CLOSED) setPanel(CLOSED); },
+    setRequest: (action) => {
+      for (const [a, b] of careBtns) {
+        const on = a === action;
+        b.classList.toggle('is-requested', on);
+        if (on) b.dataset.requested = ''; else delete b.dataset.requested;
+        b.setAttribute('aria-label', on ? `${faction.nestActions[a]} (요청 중)` : faction.nestActions[a]);
+      }
+    },
   };
 }

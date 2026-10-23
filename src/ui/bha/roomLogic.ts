@@ -43,3 +43,9 @@ export function statusChips(
   if (s.weakened) chips.push({ kind: 'weak', label: names.defeatStateName, icon: 'i-broken', value: null, danger: true });
   return chips;
 }
+
+/** 돌봄 요청·거절 말풍선 키 (GDD 82장): 문구는 종족 설정 room.talk 의 이 키에서 */
+export function careTalkKey(kind: 'ask' | 'refuse', action: 'pet' | 'sleep'): keyof RoomConfig['talk'] {
+  const keys = { ask: { pet: 'askPet', sleep: 'askSleep' }, refuse: { pet: 'refusePet', sleep: 'refuseSleep' } } as const;
+  return keys[kind][action];
+}

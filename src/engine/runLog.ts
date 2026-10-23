@@ -367,10 +367,19 @@ export interface RunLog {
   towerBattles: TowerBattleRecord[];
   /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장): 첫 원정 튜토리얼의 흡수(시스템상 흡수 아님) */
   tutorialRewards: TutorialRewardRecord[];
+  /** 돌봄 요청 기록 (C.133, 세이브 형식 38, GDD 82장): 쓰다듬기·재우기 요청에 응답·거절(요청 없이 누름)·놓침 횟수 */
+  care: CareRecord;
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
   fusions?: FusionRecord[];
+}
+
+/** 돌봄 요청 누계 (GDD 82장·9장): answered = 요청에 응답, refused = 요청이 없거나 다른 요청일 때 눌러 거절당함, missed = 유지 시간 안에 응답하지 못해 사라진 요청 */
+export interface CareRecord {
+  answered: { pet: number; sleep: number };
+  refused: { pet: number; sleep: number };
+  missed: number;
 }
 
 /** 상점 구매 1건 (GDD 25-9·9장, 세이브 형식 24): 시각·트랙 종족·품목 id·화폐·가격. 꾸밈 착용 변화는 남기지 않는다 */
@@ -450,5 +459,6 @@ export function emptyRunLog(): RunLog {
     storyRuns: [],
     towerBattles: [],
     tutorialRewards: [],
+    care: { answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 },
   };
 }
