@@ -167,7 +167,7 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
       for (const [k, v] of Object.entries(helpVars(f))) if (!k.startsWith('traitKindNames.') && v.length >= 2 && !/^[a-z]+$/i.test(v) && differs(k, v)) names.add(v);
     }
     // 원작·세계관 고유 이름
-    ['웨코문도', '아쥬커스', '길리안', '바스트로데', '아란칼', '세군도 에타파', '레수렉시온', '에스파다', '참백도', '영압'].forEach((n) => names.add(n));
+    ['웨코문도', '아쥬커스', '길리안', '바스트로데', '아란칼', '세군도 에타파', '레스렉시온', '에스파다', '참백도', '영압'].forEach((n) => names.add(n));
     for (const n of names) expect(raw.includes(n), `원문에 "${n}" 하드코딩`).toBe(false);
     // 종족마다 다른 표시 이름이 실제로 본문에 들어간다
     const rendered = FACTIONS.map((f) => renderHelpText(TUTORIAL_SCENES.map((x) => x.body).join(' '), helpVars(f)));

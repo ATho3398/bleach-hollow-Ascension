@@ -1190,3 +1190,6 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 
 - **테스트** 1503 → 1484 (`stored.test.ts` 삭제 −27·`c54` 해방 옛 규칙 −10·`c68` 잠김 문구 −1 = 폐기 규칙, +18 `tests/c134.test.ts`). 갱신: c101·c118·c123·combat·tutorial·humanbot·shortcut-map·attackfx·fx·bha-battle·c56·c117·c120·c133·blockPool(빈 몸 막기 표본 40 → 120).
 - **캡처** `docs/captures/c134/`(844×390, 1배): 1-gauge-ready(영력 해방 준비됨) · 2-spirit-release(영력 해방 중, 불_조 해방 블록) · 3-resurreccion(5단계 레수렉시온, 불 오오라) · 4-room-liberation-slots(보관함 해방 블록 칸·고르기) · 5-bankai-ready(사신 만해).
+
+### C.135 레수렉시온 → 레스렉시온 표기 (STAGE S-23, UI담당자B, GDD v5.169)
+- 화면·데이터·주석·테스트의 한국어 표기만 교체(src 8파일·tests 3파일). 영문 식별자·엔진 로직·수치·세이브 변경 없음.

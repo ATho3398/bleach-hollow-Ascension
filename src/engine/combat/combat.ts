@@ -179,7 +179,7 @@ export interface CombatParams {
   liberationSpawnSpeed: number;
   liberationPowerInAttacks: number;
   liberationRisk: number;
-  /** 고유 효과 (레수렉시온/만해, 5단계~): 켜졌는가, 공격 속도·해방 블록 생성 배율, 전 능력치 배율 (수련 완료면 더 큼 — 부르는 쪽이 정한다) */
+  /** 고유 효과 (레스렉시온/만해, 5단계~): 켜졌는가, 공격 속도·해방 블록 생성 배율, 전 능력치 배율 (수련 완료면 더 큼 — 부르는 쪽이 정한다) */
   liberationUnique: boolean;
   liberationAttackSpeed: number;
   liberationChainSpeed: number;
@@ -380,7 +380,7 @@ export type CombatEvent =
   /** 콤보 발동: 콤보 블록이 바 맨 오른쪽에 생겼다 (GDD 17-3) */
   | { kind: 'combo'; comboId: string }
   | { kind: 'shuffle' }
-  /** 해방 시작 (GDD 83장): 지속 초, 고유 효과(레수렉시온/만해) 여부, 해방 슬롯 블록 생성원 수(0 = 기본 블록이 빠르게) */
+  /** 해방 시작 (GDD 83장): 지속 초, 고유 효과(레스렉시온/만해) 여부, 해방 슬롯 블록 생성원 수(0 = 기본 블록이 빠르게) */
   | { kind: 'liberate'; seconds: number; unique: boolean; slots: number }
   /** 해방이 풀렸다: 리스크 게이지 상승량 */
   | { kind: 'liberation-end'; risk: number }
@@ -771,7 +771,7 @@ export function playerAttackSecondsOf(p: CombatParams): number {
   return (p.playerAttackSeconds / p.attackSpeedMultiplier) * (p.playerRefStat / playerStatsOf(p).spd);
 }
 
-// ── 해방 (GDD 83장: 영력 해방 · 레수렉시온/만해, 옛 저장형 필살기 게이지) ──
+// ── 해방 (GDD 83장: 영력 해방 · 레스렉시온/만해, 옛 저장형 필살기 게이지) ──
 
 /** 해방 게이지 상한 */
 export const LIBERATION_GAUGE_MAX = LB.gaugeMax;
@@ -791,7 +791,7 @@ export function liberationUsedAt(s: CombatState): number | null {
   return s.liberation.usedAtTick === null ? null : Math.round(s.liberation.usedAtTick * s.params.tickSeconds * 10) / 10;
 }
 
-/** 고유 효과(레수렉시온/만해)가 지금 켜져 있는가 */
+/** 고유 효과(레스렉시온/만해)가 지금 켜져 있는가 */
 function uniqueActive(s: CombatState): boolean {
   return s.params.liberationUnique && liberationActive(s);
 }
@@ -1488,7 +1488,7 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
   return ok;
 }
 
-/** 해방 시작 (GDD 83장): 지속 동안 생성 타이머가 빨리 돌고, 나오는 블록이 전부 해방 슬롯 블록이 된다(기본 블록 없음). 고유 효과(레수렉시온/만해)면
+/** 해방 시작 (GDD 83장): 지속 동안 생성 타이머가 빨리 돌고, 나오는 블록이 전부 해방 슬롯 블록이 된다(기본 블록 없음). 고유 효과(레스렉시온/만해)면
  *  전 능력치 ×배율(체력은 최대 체력과 함께 늘어난 만큼 채운다) + 공격 속도·블록 생성 배율. 게이지는 0 이 된다 */
 function liberate(s: CombatState): boolean {
   if (!canLiberate(s)) return false;

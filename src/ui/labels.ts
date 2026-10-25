@@ -29,7 +29,7 @@ export interface BattleLabels {
   matchupText: FactionConfig['matchupText'];
 }
 
-/** 해방 표시 (GDD 83장): unique = 고유 효과가 있는 단계(레수렉시온/만해) */
+/** 해방 표시 (GDD 83장): unique = 고유 효과가 있는 단계(레스렉시온/만해) */
 export interface LiberationLabels {
   name: string;
   cutin: string;
@@ -37,7 +37,7 @@ export interface LiberationLabels {
   unique: boolean;
 }
 
-/** 지금 단계의 해방 이름·문구: 5단계(BALANCE liberation.minTierIndex) 전은 영력 해방, 그 뒤는 종족 이름(레수렉시온/만해) */
+/** 지금 단계의 해방 이름·문구: 5단계(BALANCE liberation.minTierIndex) 전은 영력 해방, 그 뒤는 종족 이름(레스렉시온/만해) */
 export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, tierIndex: number): LiberationLabels {
   const lb = f.liberation;
   return tierIndex >= BALANCE.provisional.liberation.minTierIndex

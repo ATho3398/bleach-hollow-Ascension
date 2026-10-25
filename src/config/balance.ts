@@ -154,7 +154,7 @@ export const BALANCE = {
     },
     // ── 해방 (GDD 22-2·22-5 v5.13, 수치 provisional): 전투 중 변신. 이름은 종족 설정 liberation ──
     liberation: {
-      /** C.134(GDD 83장): 저장형 필살기(14-6)를 없애고 그 게이지를 해방 게이지로. 5단계 전 = 영력 해방, 이 단계(tierIndex, 4 = 5단계 아란칼/수석 대원)부터 = 레수렉시온/만해(고유 효과).
+      /** C.134(GDD 83장): 저장형 필살기(14-6)를 없애고 그 게이지를 해방 게이지로. 5단계 전 = 영력 해방, 이 단계(tierIndex, 4 = 5단계 아란칼/수석 대원)부터 = 레스렉시온/만해(고유 효과).
        *  수련 진입 단계(GDD 22-4)도 이 값. 22-2 의 해금 조건(수련 완료·등급 이력)은 폐기 — 1단계부터 쓸 수 있다 */
       minTierIndex: 4,
       /** 게이지 (옛 저장 게이지 그대로): 블록 1개 사용당 +12, 체인 2·3 이면 사용 한 번에 보너스 +4 / +10, 정화 +40(블록 데이터). 100 이면 [해방]. 해방 중에는 차지 않는다 */
@@ -172,7 +172,7 @@ export const BALANCE = {
       spawnSpeed: 1.3,
       /** 옛 해방 블록(22-5, kind 'liberation') 위력 = 일반 블록 × 이 배수. C.134 부터 해방 중에는 슬롯 블록(비면 기본 블록)이 나와 이 블록은 생기지 않는다(옛 상태 호환) */
       blockPowerMultiplier: 3,
-      /** 레수렉시온/만해 고유 효과 (minTierIndex 부터): 공격 속도 ×, 해방 블록 생성(체인 속도) ×, 전 능력치 × (수련 완료면 trainedStatMultiplier — 22-4 수련은 고유 효과 강화로 남김) */
+      /** 레스렉시온/만해 고유 효과 (minTierIndex 부터): 공격 속도 ×, 해방 블록 생성(체인 속도) ×, 전 능력치 × (수련 완료면 trainedStatMultiplier — 22-4 수련은 고유 효과 강화로 남김) */
       uniqueAttackSpeed: 1.3,
       uniqueChainSpeed: 1.3,
       uniqueStatMultiplier: 1.1,

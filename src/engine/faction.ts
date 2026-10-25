@@ -69,7 +69,7 @@ export type RoomTalk = (typeof ROOM_TALK)[number];
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
 export const TRAINING_GAME_IDS = ['duel', 'dodge', 'clash', 'chain'] as const;
 
-/** 해방 (GDD 83장): 버튼·블록·연출 문구. 5단계 전 = base*(양 종족 "영력 해방"), 5단계(BALANCE liberation.minTierIndex)부터 = 호로 "레수렉시온" / 사신 "만해" */
+/** 해방 (GDD 83장): 버튼·블록·연출 문구. 5단계 전 = base*(양 종족 "영력 해방"), 5단계(BALANCE liberation.minTierIndex)부터 = 호로 "레스렉시온" / 사신 "만해" */
 export interface LiberationConfig {
   /** 5단계 전 이름·컷인·풀릴 때 문구 */
   baseName: string;

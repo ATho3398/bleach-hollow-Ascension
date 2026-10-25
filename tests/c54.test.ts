@@ -226,9 +226,9 @@ describe('세이브 형식 18 (C.54)', () => {
 });
 
 describe('종족 설정·표시 (규칙 2: 종족 분기 없음)', () => {
-  it('두 종족 모두 해방·수련 문구가 있고 이름이 다르다 (레수렉시온 / 만해, 먹이사슬 / 영자 모으기)', () => {
+  it('두 종족 모두 해방·수련 문구가 있고 이름이 다르다 (레스렉시온 / 만해, 먹이사슬 / 영자 모으기)', () => {
     const [h, s] = [getFaction('hollow'), getFaction('shinigami')];
-    expect(h.liberation.name).toBe('레수렉시온');
+    expect(h.liberation.name).toBe('레스렉시온');
     expect(s.liberation.name).toBe('만해');
     expect(h.training.games.chain.name).toBe('먹이사슬');
     expect(s.training.games.chain.name).toBe('영자 모으기');

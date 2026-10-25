@@ -173,7 +173,7 @@
 .bha-lcd .bha-battle__controls .bha-stored--liberation .bha-stored__meta { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; line-height: 1.2; }
 .bha-chip--liberation { border-color: var(--bha-risk); color: var(--bha-risk); }
 .bha-chip--liberation[hidden] { display: none; }
-/* 해방 오오라 (GDD 83장 5번): 몸 주변 빛 = 내 속성 색(--bha-aura, battleView 가 속성 토큰으로 칠함). 영력 해방 = 옅게, 레수렉시온/만해(.is-unique) = 진하게·빠르게 */
+/* 해방 오오라 (GDD 83장 5번): 몸 주변 빛 = 내 속성 색(--bha-aura, battleView 가 속성 토큰으로 칠함). 영력 해방 = 옅게, 레스렉시온/만해(.is-unique) = 진하게·빠르게 */
 .bha-battle.is-liberated .bha-unit--me .bha-unit__fig { position: relative; filter: drop-shadow(0 0 8px var(--bha-aura, var(--bha-accent-hi))); }
 .bha-battle.is-liberated .bha-unit--me .bha-unit__fig::before { content: ""; position: absolute; inset: 4% 14% 0; border-radius: 50% 50% 40% 40%; background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--bha-aura, var(--bha-accent-hi)) 55%, transparent), transparent 70%); pointer-events: none; z-index: -1; animation: bha-aura 1.6s ease-in-out infinite alternate; }
 .bha-battle.is-unique .bha-unit--me .bha-unit__fig { filter: drop-shadow(0 0 14px var(--bha-aura, var(--bha-accent-hi))) saturate(1.5); }

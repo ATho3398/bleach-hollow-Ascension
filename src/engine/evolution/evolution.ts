@@ -323,7 +323,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.stabMultiplier = stabOf(e);
   // 해방 블록 분류 (GDD 22-5): 진화체 분류(아란칼 일반형), 없으면 혼합
   params.liberationCategory = form?.label.category ?? 'mixed';
-  // 해방 (GDD 83장): 슬롯 칸 수는 단계로 자르고, 5단계부터 고유 효과(레수렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
+  // 해방 (GDD 83장): 슬롯 칸 수는 단계로 자르고, 5단계부터 고유 효과(레스렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
   const LB = BALANCE.provisional.liberation;
   const unique = e.tierIndex >= LB.minTierIndex;
   params.liberationSkills = (params.liberationSkills ?? []).slice(0, liberationSlotCount(e.tierIndex));

@@ -1092,7 +1092,7 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
   return out;
 }
 
-/** 해방 (GDD 83장, C.134): 22-2 의 해금 조건(수련 완료·등급 이력)은 폐기 — 1단계부터 영력 해방, 5단계부터 레수렉시온/만해(고유 효과).
+/** 해방 (GDD 83장, C.134): 22-2 의 해금 조건(수련 완료·등급 이력)은 폐기 — 1단계부터 영력 해방, 5단계부터 레스렉시온/만해(고유 효과).
  *  trained = 수련 완료(22-4) → 고유 효과 강화 (applyEvolutionToParams 의 trained) */
 export function liberationAccess(save: Pick<SaveData, 'training'>): { usable: true; trained: boolean } {
   return { usable: true, trained: save.training.completed };

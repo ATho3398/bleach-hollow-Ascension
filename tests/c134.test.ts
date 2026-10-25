@@ -1,4 +1,4 @@
-// C.134 (S-23, GDD 83장): 저장형 필살기 삭제 → 해방(영력 해방 · 레수렉시온/만해). 해방 게이지 = 옛 저장 게이지, 해방 블록 슬롯, 5단계 고유 효과
+// C.134 (S-23, GDD 83장): 저장형 필살기 삭제 → 해방(영력 해방 · 레스렉시온/만해). 해방 게이지 = 옛 저장 게이지, 해방 블록 슬롯, 5단계 고유 효과
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
@@ -212,13 +212,13 @@ describe('83장 3번 해방 블록 슬롯', () => {
   });
 });
 
-describe('83장 2·4번 이름과 레수렉시온/만해 고유 효과', () => {
-  it('이름은 종족 설정: 5단계 전 = 영력 해방(양 종족), 5단계부터 = 호로 레수렉시온 / 사신 만해', () => {
+describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
+  it('이름은 종족 설정: 5단계 전 = 영력 해방(양 종족), 5단계부터 = 호로 레스렉시온 / 사신 만해', () => {
     for (const f of FACTIONS) {
       expect(liberationLabels(f, 0).name).toBe('영력 해방');
       expect(liberationLabels(f, LB.minTierIndex - 1)).toMatchObject({ name: '영력 해방', unique: false });
     }
-    expect(liberationLabels(getFaction('hollow'), LB.minTierIndex)).toMatchObject({ name: '레수렉시온', unique: true });
+    expect(liberationLabels(getFaction('hollow'), LB.minTierIndex)).toMatchObject({ name: '레스렉시온', unique: true });
     expect(liberationLabels(getFaction('shinigami'), LB.minTierIndex)).toMatchObject({ name: '만해', unique: true });
     const h = getFaction('hollow');
     expect(() => parseFactionConfig({ ...h, liberation: { ...h.liberation, baseName: '' } })).toThrow(/liberation.baseName/);
