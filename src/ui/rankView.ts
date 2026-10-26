@@ -31,6 +31,8 @@ function holderMeta(h: RankHolderDef, faction: FactionConfig): string {
 
 export interface RankHandlers {
   onChallenge: (holder: RankHolderDef) => void;
+  /** 머리 제목 (수련장 토글, GDD 99장 2). 없으면 글자 제목 */
+  title?: Node;
 }
 
 /** 도전 전 안내 (C.68): 무번호에서 지면 내려갈 칸이 없어 그대로다 (엔진 rank.ts 규칙과 같게) */
@@ -96,7 +98,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   }
   if (r.history.everRanked) right.push(el('p', 'bha-faint', `최고 기록 ${rankLabel(faction, r.history.best)}`));
 
-  lcdPage(root, { cls: 'bha-rankpage', cols: 'minmax(0, 1.1fr) minmax(0, 0.9fr)' }, lcdHead({ title: faction.rankBattleName, sub }), [list], right);
+  lcdPage(root, { cls: 'bha-rankpage', cols: 'minmax(0, 1.1fr) minmax(0, 0.9fr)' }, lcdHead({ title: h.title ?? faction.rankBattleName, sub }), [list], right);
 }
 
 export interface RankResultHandlers {

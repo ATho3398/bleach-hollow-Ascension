@@ -25,6 +25,8 @@ const RANKS: readonly { id: string; label: string }[] = [{ id: ALL, label: '전�
 
 export interface PracticeListHandlers {
   onPick: (enemy: EnemyDef) => void;
+  /** 머리 제목 (수련장 토글, GDD 99장 2). 없으면 글자 제목 */
+  title?: Node;
 }
 
 /** 필터는 화면 상태만 (저장하지 않는다). 연습 메뉴로 돌아와도 처음부터 */
@@ -111,7 +113,7 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
   }
   refresh();
   // 가로 LCD (T-3): 머리 = 제목, 왼쪽 = 필터, 오른쪽 = 상대 목록 (목록만 그 열 안에서 스크롤). 돌아가기는 취소 버튼
-  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 0.8fr) minmax(0, 1.2fr)' }, lcdHead({ title: `${labels.factionName} · 전투 연습`, sub }), [filters], [listEl]);
+  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 0.8fr) minmax(0, 1.2fr)' }, lcdHead({ title: h.title ?? `${labels.factionName} · 전투 연습`, sub }), [filters], [listEl]);
 }
 
 export interface PracticeResultHandlers {

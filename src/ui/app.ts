@@ -26,7 +26,7 @@ import {
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
-import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
+import { trainingPlayView, trainingResultView, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
 import { rankLabel, rankResultView, rankView } from './rankView';
 import { armEnterFx } from './bha/cosmeticFx';
@@ -692,10 +692,17 @@ export function startApp(host: HTMLElement): void {
   function renderTraining(faction: FactionConfig, s: SaveData): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
-      onPractice: () => open('practice', () => practiceScreen(faction)),
-      onRank: () => open('rank', () => rankScreen(faction)),
+      onSwitch: (id) => switchTraining(faction, s, id),
     });
   }
+
+  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 방으로 (GDD 99장 2, C.163) */
+  function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
+    const render = id === 'practice' ? () => practiceScreen(faction) : id === 'rank' ? () => rankScreen(faction) : () => renderTraining(faction, s);
+    nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });
+  }
+  const trainingHead = (faction: FactionConfig, id: TrainingScreenId): HTMLElement | undefined =>
+    save ? trainingTitle(faction, roomOf(faction).props.altar, id, (to) => switchTraining(faction, save!, to)) : undefined;
 
   /** 한 판: 수련권을 먼저 쓰고(저장) 미니게임 → 결과. 흐름은 잠겨 있어 취소로 빠지지 않는다. again = 결과 화면의 [한 판 더](자리를 바꿔 끼운다) */
   function playTraining(faction: FactionConfig, s: SaveData, game: TrainingGameId, again: boolean): void {
@@ -1249,7 +1256,7 @@ export function startApp(host: HTMLElement): void {
 
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
-    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy) });
+    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy), title: trainingHead(faction, 'practice') });
   }
 
   /** 연습 전투: 결과 화면에서 [다시]로 올 때는 같은 자리를 바꿔 끼운다 */
@@ -1299,7 +1306,7 @@ export function startApp(host: HTMLElement): void {
   // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──
   function rankScreen(faction: FactionConfig): void {
     if (!save) return;
-    rankView(root, faction, save, { onChallenge: (holder) => open('rank-battle', () => runRankBattle(faction, holder), true) });
+    rankView(root, faction, save, { onChallenge: (holder) => open('rank-battle', () => runRankBattle(faction, holder), true), title: trainingHead(faction, 'rank') });
   }
 
   function runRankBattle(faction: FactionConfig, holder: RankHolderDef): void {

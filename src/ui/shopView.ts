@@ -3,7 +3,7 @@
 // 떠돌이 상인(GDD 85장 5번)이 와 있으면 제목 토글에 [떠돌이 상인] — 같은 줄 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { petNoticeOf } from '../inventory';
-import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory } from '../data/shop';
+import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
@@ -14,6 +14,7 @@ import { provisionalTag } from './bha/dom';
 import { h } from './bha/dom';
 import { charArt } from '../data/art/manifest';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
+import { deviceCards, deviceEntries } from './bha/deviceCards';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { showToast } from './bha/nest';
@@ -194,17 +195,19 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       render();
     }, '상품 분류');
     // 스킨 탭 하위 탭 (C.153, GDD 95장 A3): 캐릭터 · 공격 이펙트 · 이동 이펙트 · 키링 · 기기 · 연출·꾸밈
-    const skinRows = shopUi.tab === 'skin' ? rows : [];
+    // 옛 기기 껍데기 색·견본·시험 기기는 빼고(GDD 99장 3), '기기' 하위 탭은 기본 + 가진 정식 기기 카드(누르면 장착)
+    const skinRows = shopUi.tab === 'skin' ? rows.filter((r) => { const c = getCosmetic(r.id); return !c || skinListed(c); }) : [];
+    const devices = shopUi.tab === 'skin' && shopUi.skinSub === 'device' ? deviceCards(save, faction, () => { hd.persist(); hd.onWear?.(); render(); }) : null;
     const subTabs = shopUi.tab === 'skin'
-      ? categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: skinRows.filter((r) => skinSubOf(r.category) === id).length })), shopUi.skinSub, (id) => {
+      ? categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skinRows.filter((r) => skinSubOf(r.category) === id).length })), shopUi.skinSub, (id) => {
         shopUi.skinSub = id as SkinSubTab;
         lastScroll = 0;
         render();
       }, '스킨 종류', true)
       : null;
-    const shown = shopUi.tab === 'skin' ? rows.filter((r) => skinSubOf(r.category) === shopUi.skinSub) : rows;
+    const shown = shopUi.tab === 'skin' ? skinRows.filter((r) => skinSubOf(r.category) === shopUi.skinSub) : rows;
     const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? '오늘은 더 살 것이 없다.' : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : '지금 파는 물건이 없다.';
-    const grid = itemGrid(shown.map(cardOf), empty);
+    const grid = itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 칸마다 하나씩, 다음 원정에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]
       : [];

@@ -15,8 +15,9 @@ import { enhanceCost, equippedSlotOf, findGear, gearCarry, sellGold } from '../e
 import { confirmDialog } from './confirmDialog';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
-import { categoryName, cosmeticToken, getCosmetic, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
+import { categoryName, cosmeticToken, getCosmetic, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
+import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
 import { skinItemId } from '../data/shop';
 import { TILES_LOCKED_TEXT } from '../shop';
@@ -376,10 +377,12 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly);
   if (!cats.includes(itemsUi.cat)) itemsUi.cat = cats[0]!;
   const all = inventoryOf(save, faction);
+  // 스킨: 옛 기기 껍데기 색·견본·시험 기기는 빼고(GDD 99장 3, C.163), '기기' 하위 탭은 기본 + 가진 정식 기기 카드(누르면 장착)
+  const listed = (e: InventoryEntry) => e.category !== 'skin' || skinListed(getCosmetic(e.id));
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
   // 탭 숫자 = 그 탭의 카드(종류) 수 (C.146, 사용자 "i5": 이전에는 음식은 개수 합·스킨은 종류 수라 기준이 달랐다). 개수는 카드의 ×n
   const tabs = categoryTabs(cats.map((c) => ({
-    id: c, label: ITEM_CATEGORY_NAMES[c], count: all.filter((e) => e.category === c).length,
+    id: c, label: ITEM_CATEGORY_NAMES[c], count: all.filter((e) => e.category === c && listed(e)).length,
   })), itemsUi.cat, (id) => { itemsUi.cat = id as ItemCategory; changed(); }, '보관함 분류');
   const artOf = (e: InventoryEntry): HTMLElement => {
     // 장비 (GDD 91장 8번): 그림이 없으니 종류 아이콘 + 등급 색
@@ -401,8 +404,9 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     return iconArt(e.category === 'food' ? 'i-hunger' : e.category === 'consumable' ? (e.id.includes('calm') || e.id === 'elixir' ? 'i-risk' : e.id === 'reroll' ? 'i-swap' : 'i-cond') : 'i-practice');
   };
   const inGroup = (e: InventoryEntry) => itemsUi.cat !== 'skin' || skinSubOf(e.cosmeticCategory) === itemsUi.skinSub;
-  const rows = all.filter((e) => e.category === itemsUi.cat && inGroup(e));
-  const cards = rows.map((e) => itemCard({
+  const rows = all.filter((e) => e.category === itemsUi.cat && listed(e) && inGroup(e));
+  const devices = itemsUi.cat === 'skin' && itemsUi.skinSub === 'device' ? deviceCards(save, faction, changed) : null;
+  const cards = devices ?? rows.map((e) => itemCard({
     id: e.id, name: e.name, detail: cardDetailOf(e), art: artOf(e),
     grade: e.gear?.grade,
     badge: e.gear ? (e.gear.slot ? (slotsForKind(e.gear.kind).length > 1 ? `장착 · ${gearSlotName(e.gear.slot, faction)}` : '장착') : undefined) : e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
@@ -414,8 +418,8 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   if (!petOnly) box.append(tabs);
   if (itemsUi.cat === 'skin') {
     // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
-    const skins = all.filter((e) => e.category === 'skin');
-    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
+    const skins = all.filter((e) => e.category === 'skin' && listed(e));
+    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
   }
   box.append(itemGrid(cards, empty));
   return [box, h('div')];

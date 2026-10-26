@@ -32,8 +32,12 @@ const SKIN_SUB_OF: Partial<Record<CosmeticCategory, SkinSubTab>> = {
   fx: 'attackFx', cut: 'attackFx', absorb: 'attackFx', bar: 'attackFx',
   trail: 'moveFx',
   keyring: 'keyring',
-  device: 'device', shell: 'device',
+  device: 'device',
 };
+/** 스킨 목록(상점·보관함)에 보이는 꾸밈인가 (GDD 99장 3, C.163): 옛 기기 껍데기 색(shell: 뼈·먹물·금박)과 견본·시험 기기(test)는 목록에서 뺀다 — 데이터·세이브는 그대로 */
+export function skinListed(c: Pick<CosmeticItemDef, 'category' | 'test'> | undefined | null): boolean {
+  return !!c && c.category !== 'shell' && !c.test;
+}
 /** 꾸밈 분류 → 스킨 하위 탭 (표에 없는 분류·분류 없음은 '연출·꾸밈') */
 export function skinSubOf(category: string | undefined | null): SkinSubTab {
   return SKIN_SUB_OF[category as CosmeticCategory] ?? 'etc';
@@ -58,6 +62,8 @@ export interface CosmeticItemDef {
   id: string;
   category: CosmeticCategory;
   name: string;
+  /** 견본·시험 기기 (목록에 안 보인다, GDD 99장 3) */
+  test?: boolean;
   /** 모양 키: 색 토큰 --bha-cos-<분류>-<look>. 스킨은 스킨 id */
   look: string;
   /** 얻는 곳 (기기 디자인, GDD 27장): shop = 상점 영옥 탭, reward = 보상으로만(상점에 안 나옴). 없으면 shop */
@@ -162,7 +168,7 @@ function parseDevice(r: unknown): CosmeticItemDef {
   if (errors.length) throw new Error(`기기 디자인 데이터 오류 (${String(c.id ?? '?')}): ${errors.join(', ')}`);
   const pr = (v: unknown): PctRect => { const r = v as PctRect; return { x: r.x, y: r.y, w: r.w, h: r.h }; };
   const buttons = Object.fromEntries(DEVICE_BUTTONS.map((b) => [b, pr(bt[b])])) as Record<DeviceButton, PctRect>;
-  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, ...(c.source === 'default' ? { free: true } : {}), device: { ...(v2 ? { frame: 'v2' as const, hole: [(c.hole as number[])[0]!, (c.hole as number[])[1]!] as [number, number] } : {}), screen: pr(c.screen), buttons, ring: c.ring as Pt } };
+  return { id: c.id as string, category: 'device', name: c.name as string, look: c.look as string, source: c.source as CosmeticSource, ...(c.source === 'default' ? { free: true } : {}), ...(c.test === true ? { test: true } : {}), device: { ...(v2 ? { frame: 'v2' as const, hole: [(c.hole as number[])[0]!, (c.hole as number[])[1]!] as [number, number] } : {}), screen: pr(c.screen), buttons, ring: c.ring as Pt } };
 }
 
 export const SHOP_PROVISIONAL: boolean = raw.provisional;

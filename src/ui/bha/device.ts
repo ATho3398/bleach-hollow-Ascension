@@ -293,11 +293,11 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     for (const p of prev) if (!next.includes(p)) unmark(p.el);
     markSel();
     const cur = items[index] ?? null;
-    if (cur && cur !== prev[prevIdx]) {
-      cur.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      if (cur.el instanceof HTMLInputElement) cur.el.focus({ preventScroll: true });
-    }
-    if (!layer && explicit?.onChange && cur !== prev[prevIdx]) explicit.onChange(cur);
+    // C.163 (GDD 99장 1): 다시 세기(화면 글자·hidden 이 바뀔 때마다 돈다)에서는 스크롤하지 않는다 — 손가락·휠로 내려도 선택 항목 쪽으로 되돌아가던 문제.
+    // 선택 위치로 스크롤은 ▲▼(방향키)로 선택을 바꿨을 때(move)만. 항목 객체는 다시 셀 때마다 새로 만들어지므로 요소로 비교한다
+    const changed = (cur?.el ?? null) !== (prev[prevIdx]?.el ?? null);
+    if (cur && changed && cur.el instanceof HTMLInputElement) cur.el.focus({ preventScroll: true });
+    if (!layer && explicit?.onChange && changed) explicit.onChange(cur);
     const canMove = items.length > 0;
     up.classList.toggle('is-off', !canMove);
     down.classList.toggle('is-off', !canMove);
