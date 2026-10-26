@@ -4,7 +4,10 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, tileName, upgradeIdOf } from '../data/tiles';
-import { canSynthesize, deckSizeOf, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { deleteTilePreset, ownedTileList, placementLimitOf, tilePresetsFor } from '../tilePresets';
+import { equipInventoryItem, inventoryOf, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { ITEM_CATEGORIES, ITEM_CATEGORY_NAMES } from '../data/shop';
 import { skinItemId } from '../data/shop';
 import { TILES_LOCKED_TEXT } from '../shop';
 import { bonusLine } from './hogyokuView';
@@ -19,7 +22,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { viewTitle } from './bha/viewtitle';
-import { deckRow, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
+import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
@@ -183,24 +186,23 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   return p;
 }
 
-type ChestTab = 'slots' | 'deck';
+type ChestTab = 'slots' | 'tiles' | 'items';
 const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'slots', traits: { swapTrait: null }, synth: false };
 
-/** 상자: 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일 덱(왼쪽 설명 / 오른쪽 타일 행) */
-export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
-  const deckSize = deckSizeOf(save);
-  const countOfDeck = () => save.tiles.deck.length;
+/** 상자(보관함): 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일(왼쪽 설명·배치 프리셋 / 오른쪽 가진 타일 — 덱 없음, GDD 85장 11번) · 물건(카테고리별 보관품, 쓰기·끼기 — GDD 86장 4·5번).
+ *  C.140 최소 화면 — 카드형 UI 는 C.141 */
+export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void): void {
+  const tileCount = () => ownedTileList(save.tiles, faction.id).length;
 
-  // 머리의 [슬롯][덱] 탭 줄 대신 제목 토글 "보관함 · 슬롯 ▾" (C.114). 덱 항목에는 타일 수를 같이 보인다
-  const viewTitleEl = (): HTMLElement => viewTitle([{ id: 'slots', label: '슬롯' }, { id: 'deck', label: `덱 ${countText(countOfDeck(), deckSize)}` }], chestUi.tab, (id) => {
+  // 머리의 탭 줄 대신 제목 토글 "보관함 · 슬롯 ▾" (C.114). 타일 항목에는 가진 타일 수를 같이 보인다
+  const viewTitleEl = (): HTMLElement => viewTitle([{ id: 'slots', label: '슬롯' }, { id: 'tiles', label: `타일 ${tileCount()}` }, { id: 'items', label: '물건' }], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
   }, { prefix: title });
   const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title: selectLast(viewTitleEl()) }), [], []);
 
   function fill(): void {
-    const deckCount = countOfDeck();
-    // 제목 토글의 덱 항목에 보이는 타일 수를 새로 맞춘다 (제목 요소만 다시 만든다)
+    // 제목 토글의 타일 항목에 보이는 타일 수를 새로 맞춘다 (제목 요소만 다시 만든다)
     dev.view.querySelector('.bha-chest-page .bha-lcdpage__title')?.replaceChildren(selectLast(viewTitleEl()));
     if (chestUi.tab === 'slots') {
       const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
@@ -211,9 +213,19 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       page.right.replaceChildren(ownedPanel!);
       return;
     }
+    if (chestUi.tab === 'items') {
+      const [l, r] = itemsTab(faction, save, () => {
+        persist();
+        onWear?.();
+        fill();
+      });
+      page.left.replaceChildren(l);
+      page.right.replaceChildren(r);
+      return;
+    }
     // 첫 진화 전에는 타일이 잠겨 있다 (GDD 64장 1번): 덱 대신 잠금 안내
     if (!save.tiles.unlocked) {
-      const lock = panel({ title: '타일 덱', aside: h('span', 'bha-chip', TILES_LOCKED_TEXT) });
+      const lock = panel({ title: '타일', aside: h('span', 'bha-chip', TILES_LOCKED_TEXT) });
       lock.dataset.tilesLocked = '';
       lock.querySelector('.bha-panel__title')?.prepend(icon('i-lock'));
       lock.append(h('p', 'bha-dim', `원정 타일은 첫 진화 후 열린다. 첫 진화 때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 상점 [타일 뽑기]로 모은다.`));
@@ -221,13 +233,13 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       page.right.replaceChildren(h('p', 'bha-faint', '지금 원정은 타일 없이 기본 길을 걷는다.'));
       return;
     }
-    const info = panel({ title: '타일 덱', aside: h('span', deckCount === 0 ? 'bha-chip bha-chip--danger' : 'bha-chip', countText(deckCount, deckSize)) });
+    const info = panel({ title: '가진 타일', aside: h('span', 'bha-chip', `${tileCount()}장`) });
     info.querySelector('.bha-panel__title')?.prepend(icon('i-deck'));
-    info.append(h('p', 'bha-dim', '원정 중 보상으로 이 덱에서 타일이 뽑힌다. 뽑힌 타일만 길 옆에 놓을 수 있다.'));
+    info.append(h('p', 'bha-dim', `원정 출발 때 가진 타일을 전부 보고 길에 최대 ${placementLimitOf(save)}칸 놓는다. 놓은 타일이 원정 보상으로 뽑힌다.`));
     // 타일 합성 (GDD 25-5 ⑤): 같은 타일 3장 → 상위 타일("+") 1장. 오른쪽 목록을 합성 목록으로 바꾼다
     const cost = BALANCE.provisional.tileVariants.synthCost;
     const synthBtn = button({
-      label: chestUi.synth ? '덱 고르기로' : '합성', icon: chestUi.synth ? 'i-deck' : 'i-plus', block: true,
+      label: chestUi.synth ? '가진 타일 보기로' : '합성', icon: chestUi.synth ? 'i-deck' : 'i-plus', block: true,
       onClick: () => {
         chestUi.synth = !chestUi.synth;
         fill();
@@ -270,30 +282,95 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       page.right.replaceChildren(list);
       return;
     }
-    const deckList = h('div', 'bha-stack');
-    const count = (id: string) => save.tiles.deck.filter((x) => x === id).length;
+    // 배치 프리셋 (GDD 85장 11번): 원정 배치 화면에서 저장, 여기서는 보기·지우기 (편집 카드 UI 는 C.141)
+    const presets = tilePresetsFor(save.tiles, faction.id);
+    const pre = h('div', 'bha-stack');
+    pre.dataset.presets = String(presets.length);
+    pre.append(h('p', 'bha-small', `배치 프리셋 ${presets.length}/${BALANCE.provisional.tilePresets.max}`));
+    if (presets.length === 0) pre.append(h('p', 'bha-faint', '원정 배치 화면의 [프리셋 저장]으로 만든다.'));
+    for (const { index, preset } of presets) {
+      const row = h('div', 'bha-deckrow');
+      const main = h('span', 'bha-deckrow__main');
+      const ids = preset.cells.filter((x): x is string => x !== null);
+      main.append(h('span', 'bha-deckrow__name', preset.name), h('span', 'bha-deckrow__desc', `${ids.length}칸 · ${ids.map((id) => tileName(id, faction.id)).join(' · ')}`));
+      const del = button({ label: '지우기', size: 'small', variant: 'ghost', onClick: () => { if (deleteTilePreset(save, index)) { persist(); fill(); } } });
+      del.dataset.presetDelete = String(index);
+      row.append(main, del);
+      pre.append(row);
+    }
+    info.append(pre);
+    // 가진 타일 보기 (덱에 넣고 빼는 +/− 없음)
+    const deckList = h('div', 'bha-stack bha-tilelist');
     for (const t of deckTilesFor(faction.id)) {
       const owned = save.tiles.collection[t.id] ?? 0;
-      if (t.upgradeOf && owned === 0 && count(t.id) === 0) continue; // 상위 타일은 가진 것만
-      deckList.append(deckRow({
-        name: tileName(t.id, faction.id), hint: tileHint(t), owned, count: count(t.id), tile: t, provisional: true,
-        canAdd: count(t.id) < owned && deckCount < deckSize,
-        onMinus: () => {
-          save.tiles.deck.splice(save.tiles.deck.indexOf(t.id), 1);
-          persist();
-          fill();
-        },
-        onPlus: () => {
-          save.tiles.deck.push(t.id);
-          persist();
-          fill();
-        },
-      }));
+      if (owned === 0) continue;
+      const kind = tileKindOf(t);
+      const row = h('div', 'bha-deckrow');
+      row.dataset.tile = t.id;
+      row.style.setProperty('--tile', `var(--bha-tile-${kind.cls})`);
+      const ic = h('span', 'bha-deckrow__icon');
+      ic.append(icon(kind.icon));
+      const main = h('span', 'bha-deckrow__main');
+      const name = h('span', 'bha-deckrow__name', tileName(t.id, faction.id));
+      name.append(' ', provisionalTag());
+      main.append(name, h('span', 'bha-deckrow__desc', tileHint(t)));
+      row.append(ic, main, h('span', 'bha-deckrow__count', `×${owned}`));
+      deckList.append(row);
     }
+    if (deckList.childElementCount === 0) deckList.append(h('p', 'bha-faint', '가진 타일이 없다. 상점 [타일 뽑기]로 모은다.'));
     page.left.replaceChildren(info);
     page.right.replaceChildren(deckList);
   }
   fill();
+}
+
+/** 보관함 물건 탭 (GDD 86장 4·5번, C.140 최소): 왼쪽 = 카테고리별 개수(장비는 준비 중), 오른쪽 = 보관품 줄(쓰기·끼기·빼기). 카드형 격자는 C.141 */
+const itemsUi: { cat: (typeof ITEM_CATEGORIES)[number] } = { cat: 'food' };
+function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void): [HTMLElement, HTMLElement] {
+  const all = inventoryOf(save, faction);
+  const left = panel({ title: '보관함' });
+  const cats = h('div', 'bha-stack');
+  for (const c of ITEM_CATEGORIES) {
+    const n = all.filter((e) => e.category === c).reduce((a, e) => a + e.count, 0);
+    const b = button({ label: `${ITEM_CATEGORY_NAMES[c]} ${c === 'equipment' ? '준비 중' : n}`, size: 'small', variant: itemsUi.cat === c ? 'primary' : 'ghost', block: true, onClick: () => { itemsUi.cat = c; changed(); } });
+    b.dataset.itemCat = c;
+    cats.append(b);
+  }
+  left.append(cats);
+  const list = h('div', 'bha-stack');
+  list.dataset.items = itemsUi.cat;
+  const rows = all.filter((e) => e.category === itemsUi.cat);
+  if (itemsUi.cat === 'equipment') list.append(h('p', 'bha-faint', '장비는 준비 중이다.'));
+  else if (rows.length === 0) list.append(h('p', 'bha-faint', '비어 있다. 상점에서 사면 여기에 들어온다.'));
+  for (const e of rows) list.append(itemRow(faction, save, e, changed));
+  return [left, list];
+}
+
+function itemRow(faction: FactionConfig, save: SaveData, e: InventoryEntry, changed: () => void): HTMLElement {
+  const box = h('div', `bha-shoprow${e.action === 'unequip' ? ' is-worn' : ''}`);
+  box.dataset.item = e.id;
+  const main = h('div', 'bha-shoprow__main');
+  main.append(h('b', 'bha-shoprow__name', e.count > 1 ? `${e.name} ×${e.count}` : e.name), h('small', 'bha-shoprow__effect', e.detail));
+  const act = h('div', 'bha-shoprow__act');
+  if (e.action === 'use') {
+    const b = button({ label: '쓰기', size: 'small', variant: e.lock ? undefined : 'primary', disabled: e.lock !== null, onClick: () => {
+      const r = useInventoryItem(save, faction, e.id);
+      showToast({ eyebrow: '보관함', title: r.ok ? `${e.name} 사용` : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400);
+      if (r.ok) changed();
+    } });
+    b.dataset.use = e.id;
+    act.append(b);
+    if (e.lock) act.append(h('small', 'bha-shoprow__lock', e.lock));
+  } else if (e.action === 'equip' || e.action === 'unequip') {
+    const on = e.action === 'equip';
+    const b = button({ label: on ? '착용' : '해제', size: 'small', variant: on ? 'primary' : 'ghost', onClick: () => {
+      if (on ? equipInventoryItem(save, e.id) : unequipInventoryItem(save, e.id)) changed();
+    } });
+    b.dataset.equip = e.id;
+    act.append(b);
+  }
+  box.append(main, act);
+  return box;
 }
 
 /** 상태 화면 특성 줄: 진화체가 있으면 성향(비었으면 생략) + 속성·전용, 1단계면 null (C.93) */

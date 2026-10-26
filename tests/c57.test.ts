@@ -358,21 +358,18 @@ describe('⑤ 상위 타일·합성', () => {
     stepTo(d, 5);
     expect(d.restMult).toBe(2);
   });
-  it('합성: 같은 타일 3장 → 상위 1장, 덱은 보유에 맞춰 줄인다, 3장 미만·상위·이벤트는 안 된다', () => {
+  it('합성: 같은 타일 3장 → 상위 1장, 3장 미만·상위·이벤트는 안 된다 (C.140: 덱 없음)', () => {
     const s = newSaveData('hollow', 1);
     s.tiles.collection['prey-nest-a'] = 4;
-    s.tiles.deck = ['prey-nest-a', 'prey-nest-a', 'prey-nest-a', 'rest-a'];
     expect(synthesizeTile(s, 'prey-nest-a')).toEqual({ ok: true, upgradedId: 'prey-nest-a-plus' });
     expect(s.tiles.collection['prey-nest-a']).toBe(1);
     expect(s.tiles.collection['prey-nest-a-plus']).toBe(1);
-    expect(s.tiles.deck.filter((x) => x === 'prey-nest-a').length).toBe(1);
     expect(synthesizeTile(s, 'prey-nest-a').ok).toBe(false);
     s.tiles.collection['prey-nest-a-plus'] = 5;
     expect(synthesizeTile(s, 'prey-nest-a-plus').ok).toBe(false);
     expect(synthesizeTile(s, 'event-merchant').ok).toBe(false);
     expect(synthesizeTile(s, 'env-barrier').ok).toBe(false); // 호로가 쓰지 않는 타일
-    s.tiles.deck = ['prey-nest-a-plus'];
-    expect(sanitizeDeck(s.tiles, 'hollow')).toEqual(['prey-nest-a-plus']);
+    expect(sanitizeDeck({ ...s.tiles, deck: ['prey-nest-a-plus'] }, 'hollow')).toEqual(['prey-nest-a-plus']);
   });
 });
 

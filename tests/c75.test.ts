@@ -366,7 +366,7 @@ describe('32-1 10번: 연속 클리어 (같은 ★ 클리어마다 다음 원정
     expect(s.difficulty.streak).toEqual({ star: 2, count: 10 });
     // recordExpedition 이 실제로 부른다
     const t = newSaveData('hollow', 10);
-    const exp = mk({ difficulty: 1, deck: t.tiles.deck });
+    const exp = mk({ difficulty: 1, deck: [] });
     exp.phase = 'ended';
     exp.outcome = 'returned';
     exp.endReason = 'returned';

@@ -10,6 +10,8 @@ export interface ConfirmOptions {
   no?: string;
   /** 위험한 선택(덮어쓰기 등)이면 예 버튼을 danger 로 */
   danger?: boolean;
+  /** 알림 창: 확인 버튼 하나만 (C.140 대기 모드 결과 요약) */
+  single?: boolean;
   onYes: () => void;
   onNo?: () => void;
 }
@@ -42,10 +44,8 @@ export function confirmDialog(o: ConfirmOptions): () => void {
     o.onYes();
   };
   const actions = el('div', 'bha-modal__actions');
-  actions.append(
-    button({ label: o.no ?? '아니오', variant: 'ghost', onClick: no }),
-    button({ label: o.yes ?? '예', variant: o.danger ? 'danger' : 'primary', onClick: yes }),
-  );
+  if (!o.single) actions.append(button({ label: o.no ?? '아니오', variant: 'ghost', onClick: no }));
+  actions.append(button({ label: o.yes ?? '예', variant: o.danger ? 'danger' : 'primary', onClick: yes }));
   modal.append(actions);
   layer.append(modal);
   getOverlayHost().append(layer);

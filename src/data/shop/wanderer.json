@@ -1,0 +1,13 @@
+{
+  "provisional": true,
+  "items": [
+    { "id": "w-snack-crate", "name": "작은 먹이 상자", "grade": "normal", "kind": "food", "food": "snack", "category": "food" },
+    { "id": "w-reroll-pair", "name": "다시 뽑기권 묶음", "grade": "normal", "kind": "reroll", "category": "consumable" },
+    { "id": "w-calm-deep", "name": "깊은 정화제", "grade": "rare", "kind": "calm", "category": "consumable" },
+    { "id": "w-wake-deep", "name": "깊은 각성제", "grade": "rare", "kind": "wake", "category": "consumable" },
+    { "id": "w-training-pair", "name": "수련권 묶음", "grade": "rare", "kind": "trainingTicket", "category": "etc" },
+    { "id": "w-rare-tile", "name": "봉인된 희귀 타일", "grade": "epic", "kind": "rareTile", "category": "tile" },
+    { "id": "w-feast-crate", "name": "큰 먹이 상자", "grade": "epic", "kind": "food", "food": "feast", "category": "food" },
+    { "id": "w-soul-elixir", "name": "영혼 정수", "grade": "legendary", "kind": "elixir", "category": "consumable" }
+  ]
+}

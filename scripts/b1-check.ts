@@ -9,6 +9,10 @@ import { createExpedition, playExpedition, type ExpeditionState } from '../src/e
 import { chapterContent } from '../src/data/story';
 import { newSaveData, nextRunId, recordExpedition, sanitizeDeck, type SaveData } from '../src/game';
 
+/** 봇의 보상 타일 목록 (C.140: 게임은 덱이 없어졌다 — GDD 85장 11번. 점검 기준을 바꾸지 않으려고 봇만 옛 '덱' 규칙(8장, 뽑은 타일 추가)을 들고 다닌다) */
+const botDecks = new WeakMap<object, string[]>();
+const botDeck = (tiles: SaveData['tiles'], fid: string): string[] => sanitizeDeck({ collection: tiles.collection, deck: botDecks.get(tiles) ?? [] }, fid);
+
 const quick = process.argv.includes('--quick');
 const SEEDS = quick ? 20 : 60;
 const FACTIONS = ['hollow', 'shinigami'] as const;
@@ -29,7 +33,7 @@ function freeRun(save: SaveData, seed: number): ExpeditionState {
   const e = playExpedition(
     createExpedition({
       factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-      deck: sanitizeDeck(save.tiles, save.factionId), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+      deck: botDeck(save.tiles, save.factionId), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
       tileVariants: true, gold: save.shared.tradeCoins,
     }),
     { returnAfterLap: 4, absorb: 'absorb', playBattle: human },
@@ -43,7 +47,7 @@ function storyRun(save: SaveData, seed: number, episodeId: string): ExpeditionSt
   const e = playExpedition(
     createExpedition({
       factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-      deck: sanitizeDeck(save.tiles, save.factionId), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+      deck: botDeck(save.tiles, save.factionId), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
       tileVariants: true, gold: save.shared.tradeCoins, story: { chapterId: 'ch1', episodeId },
     }),
     { returnAfterLap: 99, absorb: 'absorb', place: false, playBattle: human },
@@ -68,7 +72,7 @@ for (const profile of ['권장 단계대로(3화 전 2단계까지 자유 원정
     let jadeEnd = 0;
     for (let seed = 1; seed <= SEEDS; seed++) {
       const save = newSaveData(fid, seed * 7919);
-      save.tiles.deck = sanitizeDeck(save.tiles, fid);
+      botDecks.set(save.tiles, botDeck(save.tiles, fid));
       let ok = true;
       for (const ep of eps) {
         // 권장 단계 프로필: 권장 단계에 못 미치면 자유 원정(4바퀴 흡수)으로 키운다
@@ -130,7 +134,7 @@ for (const profile of ['권장 단계대로(3화 전 2단계까지 자유 원정
     let food = 0;
     for (let seed = 1; seed <= N; seed++) {
       const save = newSaveData(fid, seed * 7919);
-      save.tiles.deck = sanitizeDeck(save.tiles, fid);
+      botDecks.set(save.tiles, botDeck(save.tiles, fid));
       const before = save.shared.tradeCoins;
       const e = freeRun(save, seed * 977);
       earned += e.goldLoot.filter((g) => g.amount > 0).reduce((a, g) => a + g.amount, 0);
@@ -166,11 +170,11 @@ for (const profile of ['권장 단계대로(3화 전 2단계까지 자유 원정
         let def = 0;
         for (let seed = 1; seed <= N; seed++) {
           const save = newSaveData(fid, seed * 7919);
-          save.tiles.deck = sanitizeDeck(save.tiles, fid);
+          botDecks.set(save.tiles, botDeck(save.tiles, fid));
           const e = playExpedition(
             createExpedition({
               factionId: fid, seed: seed * 613 + laps, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-              deck: sanitizeDeck(save.tiles, fid), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tileVariants: true, gold: save.shared.tradeCoins,
+              deck: botDeck(save.tiles, fid), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tileVariants: true, gold: save.shared.tradeCoins,
             }),
             { returnAfterLap: laps, absorb: 'absorb', place, playBattle: human },
           );
@@ -191,7 +195,7 @@ for (const profile of ['권장 단계대로(3화 전 2단계까지 자유 원정
     const steps: number[] = [];
     for (let seed = 1; seed <= N; seed++) {
       const save = newSaveData(fid, seed * 7919);
-      save.tiles.deck = sanitizeDeck(save.tiles, fid);
+      botDecks.set(save.tiles, botDeck(save.tiles, fid));
       const e = freeRun(save, seed * 4241);
       steps.push(e.evolution.steps);
     }

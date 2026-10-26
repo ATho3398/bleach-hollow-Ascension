@@ -206,8 +206,10 @@ export interface ExpeditionState extends RiskState {
   condition: number;
   /** 출발 때 컨디션 (GDD 42장 3번: 바퀴당 감소 하한의 기준). 옛 중간 저장에는 없다 → 하한 없음 */
   startCondition?: number;
-  /** 가져온 덱: 보상으로 뽑힐 타일 id (중복 가능) */
+  /** 보상으로 뽑힐 타일 id (중복 가능). C.140 (GDD 85장 11번, 덱 개념 삭제): 출발 때 = 가진 타일 전부, 배치 단계가 끝나면 놓은 타일(놓은 게 없으면 그대로) */
   deck: string[];
+  /** 배치 단계 동안만: 길에 놓을 수 있는 최대 칸 수 (GDD 85장 11번 '8칸'). finishPlanning 이 지운다 */
+  planLimit?: number;
   /** 원정 중 획득했지만 아직 놓지 않은 타일 */
   hand: string[];
   /** 길 칸 옆 슬롯: 칸 번호 → 놓은 타일 id (0번 둥지 칸은 슬롯 없음). 한 번 놓으면 원정 동안 유지 */
@@ -1169,6 +1171,7 @@ export function placeTile(exp: ExpeditionState, tileId: string, cell: number): P
   if (exp.slots[cell] !== null) return { ok: false, reason: '이미 타일이 있다' };
   const i = exp.hand.indexOf(tileId);
   if (i < 0) return { ok: false, reason: '손에 없는 타일이다' };
+  if (exp.planLimit !== undefined && placedCount(exp) >= exp.planLimit) return { ok: false, reason: `배치는 최대 ${exp.planLimit}칸이다` };
   exp.hand.splice(i, 1);
   exp.slots[cell] = tileId;
   // 전투 타일은 이번 바퀴의 야생 전투 하나를 대신한다 (그 칸이 야생 칸이면 그 칸, 아니면 남은 것 중 하나)
@@ -1271,15 +1274,27 @@ export function chooseDifficulty(exp: ExpeditionState, star: number, unlockedMax
   exp.difficulty = s;
 }
 
-export function beginPlanning(exp: ExpeditionState): void {
-  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 배치 단계를 열 수 있다');
-  exp.hand = [...exp.deck];
+/** 길에 놓인 타일 수 (0번 둥지 칸 제외) */
+export function placedCount(exp: Pick<ExpeditionState, 'slots'>): number {
+  return exp.slots.filter((s, c) => c >= 1 && s !== null).length;
 }
 
-/** 배치 단계 끝: 놓지 않은 타일은 버린다(어차피 보유 타일이라 잃지 않는다). 손은 원정 중 획득한 타일 전용이 된다. 놓은 칸 수를 돌려준다 */
+/** 배치 단계 시작: 손 = 가져온 타일 전부(C.140 부터 가진 타일 전부). limit 를 주면 그 칸 수까지만 놓을 수 있다 (GDD 85장 11번 8칸) */
+export function beginPlanning(exp: ExpeditionState, limit?: number): void {
+  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 배치 단계를 열 수 있다');
+  exp.hand = [...exp.deck];
+  if (limit !== undefined) exp.planLimit = Math.max(0, Math.floor(limit));
+  else delete exp.planLimit;
+}
+
+/** 배치 단계 끝: 놓지 않은 타일은 버린다(어차피 보유 타일이라 잃지 않는다). 손은 원정 중 획득한 타일 전용이 된다.
+ *  C.140: 보상으로 뽑힐 타일(deck) = 놓은 타일 (옛 '8장 덱'과 같은 역할 — 하나도 안 놓았으면 가진 타일 전부 그대로). 놓은 칸 수를 돌려준다 */
 export function finishPlanning(exp: ExpeditionState): number {
   exp.hand = [];
-  return exp.slots.filter((s) => s !== null).length;
+  delete exp.planLimit;
+  const placed = exp.slots.filter((s, c): s is string => c >= 1 && s !== null);
+  if (placed.length > 0) exp.deck = placed;
+  return placed.length;
 }
 
 /**

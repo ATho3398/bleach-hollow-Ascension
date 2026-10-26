@@ -375,6 +375,10 @@ export interface RunLog {
   tutorialRewards: TutorialRewardRecord[];
   /** 돌봄 요청 기록 (C.133, 세이브 형식 38, GDD 82장): 쓰다듬기·재우기 요청에 응답·거절(요청 없이 누름)·놓침 횟수 */
   care: CareRecord;
+  /** 떠돌이 상인 기록 (C.140, 세이브 형식 41, GDD 85장 5번): 옴(숨은 티어·기다린 바퀴)·삼·떠남 */
+  wanderer: WandererRecord[];
+  /** 대기 모드 기록 (C.140, 세이브 형식 41, GDD 85장 6번·88장 7번): 돌아올 때마다 요약 1건 — 바퀴·전투를 낱낱이 남기지 않는다 */
+  idle: IdleRecord[];
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
@@ -386,6 +390,39 @@ export interface CareRecord {
   answered: { pet: number; sleep: number };
   refused: { pet: number; sleep: number };
   missed: number;
+}
+
+/** 떠돌이 상인 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
+export interface WandererRecord {
+  at: number;
+  factionId: string;
+  kind: 'arrive' | 'buy' | 'leave';
+  /** 숨은 티어 1~4 */
+  tier: number;
+  runId?: number;
+  waited?: number;
+  itemId?: string;
+  price?: number;
+  unsold?: number;
+}
+
+/** 대기 모드 요약 1건 (GDD 85장 6번): 꺼 둔 구간·실제로 돈 시간·지급량. 시간은 시간 단위(소수 둘째 자리) */
+export interface IdleRecord {
+  at: number;
+  factionId: string;
+  /** 마지막 접속 시각 (구간 시작) */
+  from: number;
+  /** 꺼 둔 시간 (최대 24) · 자동 모험이 돈 시간(허기·쇠약 반영) */
+  hours: number;
+  activeHours: number;
+  share: number;
+  laps: number;
+  steps: number;
+  gold: number;
+  /** 실제로 오른 노력치 합 (상한에 막힌 만큼 빠짐) */
+  ev: number;
+  tiles: string[];
+  food: number;
 }
 
 /** 상점 구매 1건 (GDD 25-9·9장, 세이브 형식 24): 시각·트랙 종족·품목 id·화폐·가격. 꾸밈 착용 변화는 남기지 않는다 */
@@ -466,5 +503,7 @@ export function emptyRunLog(): RunLog {
     towerBattles: [],
     tutorialRewards: [],
     care: { answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 },
+    wanderer: [],
+    idle: [],
   };
 }

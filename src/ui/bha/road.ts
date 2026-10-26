@@ -18,6 +18,8 @@ export interface RoadPlanner {
   canEdit(): boolean;
   /** 고른 것(손 타일 또는 놓은 칸)을 푼다. 풀 것이 있었으면 true (키보드 Q·Esc) */
   cancelSelection(): boolean;
+  /** 바깥(프리셋 불러오기)에서 바꾼 길을 받아들인다 (C.140) */
+  adopt(): void;
 }
 
 export interface RoadPlannerOpts {
@@ -109,6 +111,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   const hand = el('div', 'bha-exp__hand bha-road__hand');
   hand.dataset.scList = '';
   hand.dataset.help = 'plan.hand';
+  dragScroll(hand);
   // 시너지 목록 한 줄 (칸 사이 이름표 + 효과 요약)
   const synLine = el('p', 'bha-road__synline');
   const root = el('div', 'bha-road__wrap');
@@ -254,6 +257,49 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       refresh();
     },
     canEdit: () => placedHere.size > 0,
+    /** 바깥(프리셋 불러오기 등)에서 바꾼 길을 받아들인다: 지금 놓인 앞쪽 칸을 모두 '이번에 놓은 칸'(옮기기·되돌리기 가능)으로 */
+    adopt: () => {
+      placedHere.clear();
+      for (let i = Math.max(1, exp.pos + 1); i < L; i++) if (exp.slots[i]) placedHere.add(i);
+      selected = null;
+      selectedCell = null;
+      refresh();
+    },
     cancelSelection,
   };
+}
+
+/** 가로로 넘치는 목록을 끌어서·휠로 옆으로 넘긴다 (GDD 85장 11번 버그: 손 타일이 많으면 오른쪽 타일을 못 골랐다). 5px 넘게 끌면 그 뒤 클릭은 먹는다 */
+export function dragScroll(box: HTMLElement): void {
+  let startX = 0;
+  let startLeft = 0;
+  let dragging = false;
+  let moved = false;
+  box.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse' || box.scrollWidth <= box.clientWidth) return; // 터치는 브라우저 가로 스크롤 그대로
+    dragging = true;
+    moved = false;
+    startX = e.clientX;
+    startLeft = box.scrollLeft;
+  });
+  box.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 5) moved = true;
+    if (moved) box.scrollLeft = startLeft - dx;
+  });
+  const end = () => { dragging = false; };
+  box.addEventListener('pointerup', end);
+  box.addEventListener('pointerleave', end);
+  box.addEventListener('click', (e) => {
+    if (!moved) return;
+    moved = false;
+    e.stopPropagation();
+    e.preventDefault();
+  }, true);
+  box.addEventListener('wheel', (e) => {
+    if (box.scrollWidth <= box.clientWidth || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    box.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
 }

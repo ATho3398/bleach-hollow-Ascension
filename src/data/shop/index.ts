@@ -7,6 +7,7 @@ import { FOOD_IDS, type FactionConfig, type FoodId } from '../../engine/faction'
 import { SKINS, getSkin, skinLabel } from '../skins';
 import { ART_FILES, findArtFile } from '../art/files';
 import raw from './items.json';
+import wandererRaw from './wanderer.json';
 
 export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
@@ -17,9 +18,16 @@ export type CosmeticCategory = (typeof COSMETIC_CATEGORIES)[number];
 export type WearCategory = Exclude<CosmeticCategory, 'skin'>;
 export const WEAR_CATEGORIES = COSMETIC_CATEGORIES.filter((c): c is WearCategory => c !== 'skin');
 
+/** 아이템 카테고리 (GDD 86장 5번, C.140): 상점 탭·보관함 탭이 같은 구분을 쓴다. 장비는 아직 품목 없음(준비 중) */
+export const ITEM_CATEGORIES = ['food', 'consumable', 'equipment', 'skin', 'tile', 'etc'] as const;
+export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
+export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = { food: '음식', consumable: '소모품', equipment: '장비', skin: '스킨', tile: '타일', etc: '기타' };
+
 export interface GoldItemDef {
   id: string;
   kind: GoldKind;
+  /** 아이템 카테고리 (GDD 86장) */
+  category: ItemCategory;
   /** kind 'food' 의 먹이 종류 (이름은 종족 설정 foodNames) */
   food?: FoodId;
   /** 표시 이름 (먹이는 없음 — 종족 설정) */
@@ -85,8 +93,9 @@ function parseGold(r: unknown): GoldItemDef {
   if (!(GOLD_KINDS as readonly unknown[]).includes(g.kind)) errors.push(`kind: ${GOLD_KINDS.join(' | ')}`);
   if (g.kind === 'food' && !(FOOD_IDS as readonly unknown[]).includes(g.food)) errors.push('food');
   if (g.kind !== 'food' && (typeof g.name !== 'string' || !g.name)) errors.push('name');
+  if (!(ITEM_CATEGORIES as readonly unknown[]).includes(g.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
   if (errors.length) throw new Error(`상점 골드 품목 데이터 오류 (${String(g.id ?? '?')}): ${errors.join(', ')}`);
-  return { id: g.id as string, kind: g.kind as GoldKind, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}) };
+  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}) };
 }
 
 function parseCosmetic(r: unknown): CosmeticItemDef {
@@ -212,4 +221,46 @@ export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files:
   if (c.category !== 'device') return c.source !== 'reward' || owned.includes(c.id);
   if (c.source === 'default') return false;
   return deviceArt(c, files) !== null && (c.source === 'shop' || owned.includes(c.id));
+}
+
+// ── 떠돌이 상인 특별 품목 (GDD 85장 5번, C.140 provisional): 상인만 판다. 가격·효과량은 balance.ts provisional.wanderer.items ──
+export const WANDERER_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
+export type WandererGrade = (typeof WANDERER_GRADES)[number];
+export const WANDERER_GRADE_NAMES: Record<WandererGrade, string> = { normal: '보통', rare: '희귀', epic: '영웅', legendary: '전설' };
+export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir'] as const;
+export type WandererKind = (typeof WANDERER_KINDS)[number];
+
+export interface WandererItemDef {
+  id: string;
+  name: string;
+  grade: WandererGrade;
+  kind: WandererKind;
+  /** kind 'food' 의 먹이 종류 */
+  food?: FoodId;
+  category: ItemCategory;
+}
+
+function parseWanderer(r: unknown): WandererItemDef {
+  const w = (r ?? {}) as Record<string, unknown>;
+  const errors: string[] = [];
+  if (typeof w.id !== 'string' || !w.id.startsWith('w-')) errors.push('id: w-…');
+  if (typeof w.name !== 'string' || !w.name) errors.push('name');
+  if (!(WANDERER_GRADES as readonly unknown[]).includes(w.grade)) errors.push(`grade: ${WANDERER_GRADES.join(' | ')}`);
+  if (!(WANDERER_KINDS as readonly unknown[]).includes(w.kind)) errors.push(`kind: ${WANDERER_KINDS.join(' | ')}`);
+  if (w.kind === 'food' && !(FOOD_IDS as readonly unknown[]).includes(w.food)) errors.push('food');
+  if (!(ITEM_CATEGORIES as readonly unknown[]).includes(w.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
+  if (errors.length) throw new Error(`떠돌이 상인 품목 데이터 오류 (${String(w.id ?? '?')}): ${errors.join(', ')}`);
+  return { id: w.id as string, name: w.name as string, grade: w.grade as WandererGrade, kind: w.kind as WandererKind, ...(w.food ? { food: w.food as FoodId } : {}), category: w.category as ItemCategory };
+}
+
+export const WANDERER_PROVISIONAL: boolean = wandererRaw.provisional;
+export const WANDERER_ITEMS: readonly WandererItemDef[] = wandererRaw.items.map(parseWanderer);
+
+export function getWandererItem(id: string): WandererItemDef | undefined {
+  return WANDERER_ITEMS.find((x) => x.id === id);
+}
+
+/** 품목 id → 아이템 카테고리 (골드 품목·상인 품목은 데이터 필드, 꾸밈은 전부 '스킨' — 외형 꾸밈). 모르는 id 는 null */
+export function itemCategoryOf(id: string): ItemCategory | null {
+  return getGoldItem(id)?.category ?? getWandererItem(id)?.category ?? (getCosmetic(id) ? 'skin' : null);
 }

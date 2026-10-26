@@ -4,7 +4,7 @@ import {
   advance, beginPlanning, chooseContinue, chooseReturn, createExpedition, finishBattle, finishPlanning, moveTile, placeTile, startBattle, swapTiles, swapWithHand, unplaceTile, unplacedKept,
   type ExpeditionState,
 } from '../src/engine/expedition';
-import { loadSave, newSaveData, recordExpedition, storeUnplacedTiles, writeSave } from '../src/game';
+import { loadSave, newSaveData, recordExpedition, writeSave } from '../src/game';
 import { cellAction, handCounts, roadCellMode, type RoadSelection } from '../src/ui/bha/road';
 import { isWalking, walkAnimClass, walkState } from '../src/ui/bha/walk';
 
@@ -25,7 +25,7 @@ function walkToNest(exp: ExpeditionState): void {
 }
 
 describe('카드 배치 단계 (GDD 17-1)', () => {
-  it('배치 단계는 덱 사본을 손에 쥐고, 끝나면 손을 비운다 (덱은 그대로 보상 후보)', () => {
+  it('배치 단계는 가져온 타일 사본을 손에 쥐고, 끝나면 손을 비운다 (C.140: 놓은 타일이 보상 후보)', () => {
     const exp = mk();
     beginPlanning(exp);
     expect(exp.hand).toEqual(DECK);
@@ -34,7 +34,7 @@ describe('카드 배치 단계 (GDD 17-1)', () => {
     expect(exp.hand).toEqual(['prey-nest-a', 'elite-den-a']);
     expect(finishPlanning(exp)).toBe(2);
     expect(exp.hand).toEqual([]);
-    expect(exp.deck).toEqual(DECK);
+    expect(exp.deck).toEqual(['prey-nest-a', 'rest-a']);
     expect(exp.slots[3]).toBe('prey-nest-a');
     expect(exp.slots[5]).toBe('rest-a');
   });
@@ -57,9 +57,8 @@ describe('카드 배치 단계 (GDD 17-1)', () => {
 });
 
 describe('획득 타일 보관 규칙 (GDD 17-1)', () => {
-  it('바퀴 끝에 놓지 않은 획득 타일은 귀환 때 다음 원정 덱으로 보관된다', () => {
+  it('바퀴 끝에 놓지 않은 획득 타일은 귀환 때 보관함(보유)에 남는다 (C.140: 덱 없음)', () => {
     const save = newSaveData('hollow');
-    save.tiles.deck = [];
     const exp = createExpedition({ factionId: 'hollow', seed: 11, hunger: 10, condition: 100, deck: DECK });
     walkToNest(exp);
     expect(exp.phase).toBe('nest-choice');
@@ -67,8 +66,7 @@ describe('획득 타일 보관 규칙 (GDD 17-1)', () => {
     const got = [...exp.hand];
     chooseReturn(exp);
     recordExpedition(save, exp);
-    for (const id of got) expect(save.tiles.deck).toContain(id);
-    expect(save.tiles.deck.length).toBeLessThanOrEqual(8);
+    for (const id of got) expect(save.tiles.collection[id] ?? 0).toBeGreaterThanOrEqual(got.filter((x) => x === id).length);
   });
 
   it('놓은 타일은 손에서 빠지므로 보관되지 않는다', () => {
@@ -94,13 +92,16 @@ describe('획득 타일 보관 규칙 (GDD 17-1)', () => {
     expect(kept.filter((x) => x === 'rest-a').length).toBe(exp.hand.filter((x) => x === 'rest-a').length - 1);
   });
 
-  it('덱 상한과 보유 수량을 넘기면 덱에 넣지 않는다', () => {
-    const stock = { collection: { 'rest-a': 1, 'prey-nest-a': 2 }, deck: ['rest-a'] };
-    storeUnplacedTiles(stock, ['rest-a', 'prey-nest-a', 'prey-nest-a', 'prey-nest-a'], 8);
-    expect(stock.deck).toEqual(['rest-a', 'prey-nest-a', 'prey-nest-a']);
-    const full = { collection: { 'prey-nest-a': 9 }, deck: Array(8).fill('prey-nest-a') as string[] };
-    storeUnplacedTiles(full, ['prey-nest-a'], 8);
-    expect(full.deck.length).toBe(8);
+  it('배치 단계 칸 수 제한: limit 칸까지만 놓이고, 끝나면 놓은 타일이 보상 목록이 된다 (C.140, GDD 85장 11번)', () => {
+    const exp = createExpedition({ factionId: 'hollow', seed: 11, hunger: 10, condition: 100, deck: DECK });
+    beginPlanning(exp, 2);
+    expect(placeTile(exp, exp.hand[0]!, 1).ok).toBe(true);
+    expect(placeTile(exp, exp.hand[0]!, 2).ok).toBe(true);
+    expect(placeTile(exp, exp.hand[0]!, 3)).toEqual({ ok: false, reason: '배치는 최대 2칸이다' });
+    const placed = [exp.slots[1], exp.slots[2]];
+    expect(finishPlanning(exp)).toBe(2);
+    expect(exp.planLimit).toBeUndefined();
+    expect(exp.deck).toEqual(placed);
   });
 
   it('중간 저장 왕복: 손에 든 타일이 그대로 돌아오고 세이브 형식은 바뀌지 않는다', () => {

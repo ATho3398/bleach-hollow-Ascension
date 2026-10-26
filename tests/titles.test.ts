@@ -173,8 +173,8 @@ describe('임시 조건 칭호의 해금 흐름 (런 로그 합성)', () => {
     const rb = (won: boolean, rankAfter: number | null) => ({ at: 0, runsCompleted: 0, opponentId: 'x', won, rankBefore: null, rankAfter, firstRanked: false, seed: 0, durationSeconds: 1, tierIndex: 4, formId: null });
     expect(unlockedIds(logWith({ rankBattles: [rb(false, null)] }))).toEqual([]);
     expect(unlockedIds(logWith({ rankBattles: [rb(true, 10)] }))).toEqual(['rank-1']);
-    expect(unlockedIds(logWith({ rankBattles: [rb(true, 7)] }))).toEqual(['rank-1', 'rank-2']);
-    expect(unlockedIds(logWith({ rankBattles: [rb(true, 1)] }))).toEqual(['rank-1', 'rank-2', 'rank-3', 'rank-4']);
+    expect(unlockedIds(logWith({ rankBattles: [rb(true, 7)] }))).toEqual(['rank-1', 'rank-2', 'rank-no8', 'rank-no9']);
+    expect(unlockedIds(logWith({ rankBattles: [rb(true, 1)] }))).toEqual(['rank-1', 'rank-2', 'rank-3', 'rank-4', 'rank-no2', 'rank-no3', 'rank-no5', 'rank-no6', 'rank-no8', 'rank-no9']);
     const risk = emptyRunLog();
     risk.risk.survivedBreakthroughs = 1;
     // C.106: 은밀기동대장은 사신 전용(옛 조건 그대로), 호로 트랙에서는 이 기록으로 아무것도 안 열린다

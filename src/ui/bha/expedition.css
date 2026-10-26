@@ -119,6 +119,9 @@
 .bha-plan__difficulty .bha-tag { margin-left: var(--bha-sp-1); }
 .bha-lcd .bha-app.bha-plan { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow-y: auto; padding: var(--bha-sp-3) var(--bha-sp-4); }
 .bha-lcd .bha-plan .bha-btn--lg { flex: none; min-height: var(--bha-touch); }
+/* C.140 (GDD 85장 11번): 배치 단계 손 = 가진 타일 전부 — 한 줄 가로 넘침 대신 여러 줄로 감싸 오른쪽 타일도 보이게(화면은 세로 스크롤) */
+.bha-lcd .bha-plan .bha-road__hand { flex-wrap: wrap; overflow-x: visible; }
+.bha-plan__presets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
 
 @media (prefers-reduced-motion: reduce) {
   .bha-walk__layer, .bha-walker__body, .bha-walker__foot { animation: none; }

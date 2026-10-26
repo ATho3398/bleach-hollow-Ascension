@@ -1257,3 +1257,14 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 
 - **테스트** 1495 → 1512 (+17 `tests/c136.test.ts`). 갱신(삭제 특성·타이머 하나·형식 40): absorb·bha-battle·blockPool·c105·c105b·c117·c118·c120·c125·c132·c134·c54·c89·c94·c95·combat·economy·enemies·evolution·family·humanbot.
 - **캡처** `docs/captures/c136/`(844×390, 1배): 1-tray-mixed(조·탄·교 섞임) · 2-guard-pause · 3-heal-weaken · 4-absorb-enhance(흙 37/100 → 38/100) · 5-walk.
+
+### C.140 에스파다 1~10 · 떠돌이 상인 · 대기 모드 · 배치 프리셋(덱 삭제) · 보관함 데이터 (STAGE S-23, 코딩102, GDD 85장 4·5·6·11 + 86장 + 88장 7, v5.181)
+사용 모델: Opus. 사용자 원문 = GDD 85장 "사용자 원문(전문)"(칭호·상인·대기모드·타일덱 단락)과 86장 원문 그대로. 수치는 사용자 지시 "숫자 관련은 너가 맞추고"로 코드 판단(provisional). BALANCE 67 → **68**, 세이브 형식 40 → **41**(문턱 41, 마이그레이션 없음 — 61장).
+- **4 칭호**: `rank-no9·no8·no6·no5·no3·no2` 추가 → No.10~No.1 열 개, 조건 = 등급전 그 번호 도달(provisional), 사신 이름 = 21-1 표·종족 rankNames 와 같음.
+- **5 떠돌이 상인** `engine/wanderer.ts`·`data/shop/wanderer.json`: 귀환 때 마친 바퀴마다 p = min(1, 0.001k)(k = 지난 방문 뒤 바퀴) → 평균 39.3바퀴(30바퀴 안 37%·50바퀴 안 73%). 숨은 티어 55·30·12·3%, 티어별 등급표, 품목 4칸(8종: 먹이 상자 2·뽑기권 묶음·깊은 정화/각성제·수련권 묶음·희귀 타일·영혼 정수). 방에 머물다 다음 귀환 때 떠남. 런 로그 `wanderer`(arrive·buy·leave). 상점 제목 토글 [떠돌이 상인], 방 상점 알림 점·도착 토스트.
+- **6 대기 모드** `engine/idle.ts`·`settleIdle`: 저장된 마지막 접속 시각(벽시계) 기준 최대 24h, 10분 미만·원정 중간 저장·첫 원정 전 제외. 1시간 기준량(40바퀴·걸음 480·골드 880·노력치 16·타일 1.6·먹이 2) × 시간 × **10%**. 걸음은 다음 진화 필요량까지, 노력치는 지금 비율대로 상한 안, 타일은 뽑기 표. 82장: 허기가 100 에 닿을 수 있으면 그때 멈춤·쇠약 ×0.5. 되돌린 시계 = 0(lastSeenAt 은 앞으로만, monoNow 와 별개). **런 로그 `idle` 요약 1건만(88장 7)**. 돌아오면 확인 창 요약(`ui/idleView.ts`, confirmDialog `single`).
+- **11 덱 삭제·프리셋** `tilePresets.ts`: `tiles.deck` → `tiles.presets`. 출발 손 = 가진 타일 전부(`ownedTileList`), `beginPlanning(exp, limit)` 배치 최대 8칸 + 상점 배치 칸(옛 덱 칸 품목·가격 그대로), `finishPlanning` 후 놓은 타일 = 보상 목록. API: save/delete/rename/apply/cellsOfPlan/tilePresetsFor(종족마다 5개). 배치 화면 [프리셋 저장]·[불러오기](`planner.adopt`). 손 버그: 배치 화면 손은 여러 줄 감싸기, 원정 중 가로 목록은 `dragScroll`(마우스 끌기·휠).
+- **86 보관함** `inventory.ts`: 카테고리 6종(골드 품목 `category` 필드), 정화제·각성제는 `shared.items` 로(종류별 9) 보관함에서 사용, 스킨·꾸밈은 보유만 → 보관함 [물건] 탭에서 착용·해제(상점 착용 버튼 삭제). 상점 품목·가격 그대로.
+- **기획서 값 / 실제 값 / 이유**: ① 상인 등장 위치 "원정 바퀴마다" / 귀환한 방에 머묾(굴림은 그 원정 바퀴마다) / 원정 엔진·중간 저장 형식을 건드리지 않음 ② 덱 = 보상 목록 / 놓은 타일 / 옛 8장 덱과 같은 역할 ③ 꾸밈(오라 등) 카테고리 / '스킨' / 외형 꾸밈이라 ④ 점검 봇 덱 / 스크립트 안 WeakMap 으로 옛 규칙 유지 / 회귀 가드 기준 그대로(가드 통과).
+- 테스트: c140 신설 21개, 기대값 갱신 c117·c120·c134·c136·c57·c60·c75·economy·expedition-plan·faction·save-robust·titles. 전체 1540 → **1561**. typecheck·balance:check(회귀 가드 통과)·build.
+- 캡처 `docs/captures/c140/`(844×390, 1배): 1-title-dex(No.10→) · 2-wanderer · 3-idle-summary · 4-plan-preset(손 여러 줄·프리셋 저장) · 5-inventory(소모품 탭).

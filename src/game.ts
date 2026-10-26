@@ -4,13 +4,13 @@ import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { completedElements, gainTrait, LIBERATION_SLOT_MAX, liberationEligible, newBuild, setLiberationSlot, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, CARE_ACTIONS, doNestAction, newNest, respondCare, tickCareRequest, type CareAction, type CareOutcome, type NestState } from './engine/nest';
-import { buildRunRecord, restoreExpedition, summarize, unplacedKept, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
+import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { canEvolve, cloneEvolution, currentStats, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, stepsNeeded, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type RebirthRecord, type RunLog, type SlotLog } from './engine/runLog';
+import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
@@ -40,14 +40,20 @@ import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
+import { advanceWanderer, newWandererState, sanitizeWanderer, type WandererState } from './engine/wanderer';
+import { idleActiveHours, idleCounts, idleYield, offlineHours } from './engine/idle';
+import { createRng, nextFloat } from './engine/rng';
+import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
+import { CONSUMABLE_IDS } from './inventory';
+import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 40; // C.136: 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 41; // C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다").
  *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
  *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 40; // C.136: 형식 40 과 같이 올림 (GDD 61장, 마이그레이션 없음)
+export const MIN_LOADABLE_SAVE_FORMAT = 41; // C.140: 형식 41 과 같이 올림 (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -290,6 +296,10 @@ export interface SharedState {
   deckSlots: number;
   /** 보유한 꾸밈 품목 id (형식 24, 스킨 = skin-<id>). 두 트랙이 같이 쓴다 — 착용은 트랙마다(wear·skin) */
   cosmetics: string[];
+  /** 보관함 소모품 (GDD 86장 4번, 형식 41): 품목 id → 개수. 상점 정화제·각성제와 상인 소모품은 사면 여기 쌓이고 보관함에서 쓴다(inventory.ts) */
+  items: Record<string, number>;
+  /** 떠돌이 상인 (GDD 85장 5번, 형식 41): 지난 방문 뒤 바퀴 수·지금 와 있는 상인(숨은 티어·품목). 슬롯 공유 */
+  wanderer: WandererState;
 }
 
 /** 기본으로 주는 꾸밈 id (GDD 29장: 영옥 구슬) */
@@ -303,7 +313,7 @@ export function defaultWear(): WearState {
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds() };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState() };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -324,7 +334,14 @@ export function sanitizeShared(raw: unknown): SharedState {
   return {
     soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards,
     rerollTickets: Math.min(SX.rerollMax, nonNegInt(r.rerollTickets)), deckSlots: Math.min(SX.deckSlotPrices.length, nonNegInt(r.deckSlots)), cosmetics,
+    items: sanitizeItems(r.items), wanderer: sanitizeWanderer(r.wanderer),
   };
+}
+
+/** 보관함 소모품 정리: 아는 소모품 id 의 1 이상 정수만 */
+function sanitizeItems(raw: unknown): Record<string, number> {
+  const r = isRec(raw) ? raw : {};
+  return Object.fromEntries(CONSUMABLE_IDS.map((id) => [id, nonNegInt(r[id])] as const).filter(([, n]) => n > 0));
 }
 
 /** 수령 기록 목록 정리: 깨진 항목·중복 id 를 버린다 */
@@ -428,8 +445,8 @@ export function markSeen(save: SaveData, nowMs: number = Date.now()): void {
 
 export interface TileStock {
   collection: Record<string, number>;
-  /** 가져갈 덱: 타일 id 목록(중복 가능, 보유 수량 이내) */
-  deck: string[];
+  /** 배치 프리셋 (GDD 85장 11번, 형식 41 — 옛 '가져갈 덱' 대신): 종족 id·이름·칸별 타일. tilePresets.ts */
+  presets: TilePreset[];
   /** 타일이 열렸나 (C.120, 형식 37, GDD 64장): 첫 진화 때 시작 타일을 받으면 true. 그 전에는 덱·배치·뽑기가 잠기고 원정은 빈 길 */
   unlocked: boolean;
   /** 상점 타일 뽑기 횟수 (GDD 64장 2번: 첫 뽑기는 환경 확정) */
@@ -437,12 +454,12 @@ export interface TileStock {
 }
 
 export function newTileStock(): TileStock {
-  return { collection: { ...BALANCE.provisional.expedition.startingCollection }, deck: [], unlocked: false, draws: 0 };
+  return { collection: { ...BALANCE.provisional.expedition.startingCollection }, presets: [], unlocked: false, draws: 0 };
 }
 
 /** 점검 도구·고정 덱 시험용 보유량 (C.119 까지의 시작 21장, 열린 상태). 게임 세이브에는 쓰지 않는다 */
 export function referenceTileStock(): TileStock {
-  return { collection: { ...BALANCE.provisional.expedition.referenceCollection }, deck: [], unlocked: true, draws: 0 };
+  return { collection: { ...BALANCE.provisional.expedition.referenceCollection }, presets: [], unlocked: true, draws: 0 };
 }
 
 /** 타일이 열렸나 (GDD 64장): 첫 진화 전이면 false */
@@ -450,14 +467,13 @@ export function tilesUnlocked(save: Pick<SaveData, 'tiles'>): boolean {
   return save.tiles.unlocked === true;
 }
 
-/** 첫 진화 시작 타일 (GDD 64장 1번): 아직 안 받았으면 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 보관함과 덱에 넣고 타일 안내를 띄울 차례로. 준 타일 id (이미 받았으면 []) */
+/** 첫 진화 시작 타일 (GDD 64장 1번): 아직 안 받았으면 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 보관함에 넣고 타일 안내를 띄울 차례로. 준 타일 id (이미 받았으면 []) */
 export function grantStarterTiles(save: Pick<SaveData, 'tiles' | 'help' | 'factionId'>): string[] {
   if (save.tiles.unlocked) return [];
   save.tiles.unlocked = true;
   const ids = BALANCE.provisional.expedition.starterTiles.filter((id) => deckTilesFor(save.factionId).some((t) => t.id === id));
   for (const id of ids) {
     save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
-    save.tiles.deck.push(id);
   }
   queueGuide(save.help, 'tile-intro');
   queueGuide(save.help, 'tile-plan');
@@ -772,7 +788,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   save.evolution = cloneEvolution(exp.evolution);
   if (exp.breakthrough) recordEvolutionBreakthrough(save.evolution);
   for (const id of sum.kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
-  storeUnplacedTiles(save.tiles, unplacedKept(exp), deckSizeOf(save));
+  // 놓지 않고 남은 획득 타일은 이미 보유에 들어 있다 — 덱이 없어져(C.140) 따로 넣을 곳이 없다
+  settleWanderer(save, exp, nowMs);
   applyExpeditionEnd(save.nest, exp, nowMs);
   // 수련권 (GDD 22-5): 원정에서 돌아올 때마다(승패 무관) +1, 최대 3
   addTrainingTicket(save.training);
@@ -787,6 +804,70 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   checkTitles(save, 'expedition', nowMs);
   // 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것)
   return canEvolve(save.evolution) ? performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition }) : null;
+}
+
+/** 떠돌이 상인 (GDD 85장 5번): 원정 귀환 때 — 와 있던 상인은 떠나고(런 로그 leave), 이번 원정에서 마친 바퀴마다 가중 확률로 굴린다(오면 arrive).
+ *  굴림은 원정 시드로(같은 원정 = 같은 결과). 첫 원정 튜토리얼은 세지 않는다 */
+function settleWanderer(save: SaveData, exp: ExpeditionState, nowMs: number): void {
+  const w = save.shared.wanderer;
+  const log = save.runLog.wanderer;
+  if (w.visit) {
+    log.push({ at: nowMs, factionId: save.factionId, kind: 'leave', tier: w.visit.tier, unsold: w.visit.stock.filter((x) => !x.sold).length });
+    w.visit = null;
+  }
+  if (exp.tutorial) return;
+  const rng = createRng((exp.seed ^ 0x5eed77a1) >>> 0);
+  const got = advanceWanderer(w, exp.lapsCompleted, { at: nowMs, runId: exp.runId }, () => nextFloat(rng));
+  const visit = save.shared.wanderer.visit;
+  if (got && visit) log.push({ at: nowMs, factionId: save.factionId, kind: 'arrive', tier: visit.tier, runId: exp.runId, waited: got.waited });
+}
+
+/** 노력치 n 을 지금 노력치 비율대로 나눈다 (노력치가 없으면 고르게). 소수는 큰 몫부터 1씩 */
+function splitEv(ev: Stats, n: number): Partial<Record<(typeof STAT_IDS)[number], number>> {
+  const total = evTotal(ev);
+  const w = STAT_IDS.map((k) => (total > 0 ? ev[k] : 1));
+  const sum = w.reduce((a, b) => a + b, 0);
+  const raw = w.map((x) => (n * x) / sum);
+  const out = raw.map(Math.floor);
+  let left = n - out.reduce((a, b) => a + b, 0);
+  for (const i of raw.map((r, i) => [r - Math.floor(r), i] as const).sort((a, b) => b[0] - a[0]).map(([, i]) => i)) {
+    if (left <= 0) break;
+    out[i]!++;
+    left--;
+  }
+  return Object.fromEntries(STAT_IDS.map((k, i) => [k, out[i]!]));
+}
+
+/** 대기 모드 정산 (GDD 85장 6번): 다시 열 때 꺼 둔 시간(마지막 접속 시각 기준, 최대 24시간)을 자동 모험으로 셈해 기준량 × share 를 준다.
+ *  applyAbsence(허기·접속 시각 갱신) 보다 먼저 부른다 — 이 함수는 접속 시각을 바꾸지 않는다. 원정 중간 저장이 있거나 첫 원정 전이면 돌지 않는다.
+ *  지급: 골드 · 걸음(다음 진화에 필요한 만큼까지 — 진화는 다음 원정 귀환 때 평소처럼) · 노력치(지금 비율대로, 상한까지) · 타일(열렸을 때, 뽑기 표) · 먹이(보관 상한까지).
+ *  런 로그에는 요약 1건만 (88장 7번). 셀 게 없으면 null */
+export function settleIdle(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): IdleRecord | null {
+  if (save.activeExpedition != null || save.runLog.runs.length === 0) return null;
+  const hours = offlineHours(save.lastSeenAt, nowMs);
+  if (!idleCounts(hours)) return null;
+  const activeHours = idleActiveHours(hours, save.nest);
+  const y = idleYield(activeHours);
+  const IX = BALANCE.provisional.idle;
+  save.shared.tradeCoins += y.gold;
+  const need = stepsNeeded(save.evolution);
+  const steps = need === null ? 0 : Math.max(0, Math.min(y.steps, need - save.evolution.steps));
+  save.evolution.steps += steps;
+  const got = addEv(save.evolution, splitEv(save.evolution.ev, y.ev));
+  const ev = Object.values(got).reduce((a, b) => a + (b ?? 0), 0);
+  const tiles: string[] = [];
+  if (save.tiles.unlocked) {
+    for (let i = 0; i < y.tiles; i++) {
+      const id = rollTileDraw(save.factionId, false, rand);
+      save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
+      tiles.push(id);
+    }
+  }
+  const food = addFood(save.shared.food, IX.foodId as FoodId, y.food);
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const rec: IdleRecord = { at: nowMs, factionId: save.factionId, from: save.lastSeenAt, hours: r2(hours), activeHours: r2(activeHours), share: IX.share, laps: y.laps, steps, gold: y.gold, ev, tiles, food };
+  save.runLog.idle.push(rec);
+  return rec;
 }
 
 /** 스토리 화가 끝났을 때 (GDD 25-4·25-7): 런 로그(보스전·화), 보스 도감, 보상 — 화 클리어 골드·먹이(매번), 첫 클리어 영옥, 장 첫 완주 영옥, 보스 첫 처치 영옥.
@@ -853,7 +934,7 @@ export function settleFreeBoss(save: SaveData, exp: ExpeditionState, nowMs: numb
 
 export type SynthResult = { ok: true; upgradedId: string } | { ok: false; reason: string };
 
-/** 타일 합성 (GDD 25-5 ⑤): 같은 바탕 타일 synthCost(3)장 → 상위 타일("+") 1장. 상위·이벤트 타일은 합성하지 않는다. 덱은 보유 수량에 맞춰 줄인다 */
+/** 타일 합성 (GDD 25-5 ⑤): 같은 바탕 타일 synthCost(3)장 → 상위 타일("+") 1장. 상위·이벤트 타일은 합성하지 않는다. 프리셋은 그대로(불러올 때 모자라는 장수는 건너뛴다) */
 export function synthesizeTile(save: SaveData, tileId: string): SynthResult {
   const cost = BALANCE.provisional.tileVariants.synthCost;
   let up: string | null;
@@ -867,8 +948,6 @@ export function synthesizeTile(save: SaveData, tileId: string): SynthResult {
   if (have < cost) return { ok: false, reason: `같은 타일 ${cost}장이 필요하다` };
   save.tiles.collection[tileId] = have - cost;
   save.tiles.collection[up] = (save.tiles.collection[up] ?? 0) + 1;
-  // 덱에 넣어 둔 장수가 보유보다 많아지면 뒤에서부터 뺀다
-  while (save.tiles.deck.filter((x) => x === tileId).length > save.tiles.collection[tileId]!) save.tiles.deck.splice(save.tiles.deck.lastIndexOf(tileId), 1);
   return { ok: true, upgradedId: up };
 }
 
@@ -878,19 +957,6 @@ export function canSynthesize(tileId: string): boolean {
   return !t.upgradeOf && upgradeIdOf(tileId) !== null;
 }
 
-/** 원정에 가져가는 덱 크기 (GDD 25-9): 기본 8 + 상점에서 산 덱 칸(최대 +2, 슬롯 공유) */
-export function deckSizeOf(save: Pick<SaveData, 'shared'>): number {
-  return BALANCE.provisional.expedition.deckSize + (save.shared.deckSlots ?? 0);
-}
-
-/** 놓지 않고 남은 획득 타일을 다음 원정 덱에 넣는다 (GDD 17-1): 덱 상한과 보유 수량을 넘기면 덱에는 못 넣는다(보유에는 이미 들어 있다) */
-export function storeUnplacedTiles(stock: Pick<TileStock, 'collection' | 'deck'>, ids: string[], size: number = BALANCE.provisional.expedition.deckSize): void {
-  for (const id of ids) {
-    const inDeck = stock.deck.filter((x) => x === id).length;
-    if (stock.deck.length >= size || inDeck >= (stock.collection[id] ?? 0)) continue;
-    stock.deck.push(id);
-  }
-}
 
 /** 이어할 원정이 있는가. 저장된 값이 손상·구버전이면 영역을 비우고 이유를 알려 준다 (이어하기를 숨긴다) */
 export function readActiveExpedition(save: SaveData): (RestoreResult & { ok: true }) | { ok: false; reason: 'none' | 'corrupt' | 'version' } {
@@ -1522,7 +1588,7 @@ function repairCore(save: SaveData): boolean {
   }
   const t = save.tiles as Partial<TileStock> | undefined;
   save.tiles = isRec(t)
-    ? { collection: isRec(t.collection) ? t.collection as Record<string, number> : newTileStock().collection, deck: Array.isArray(t.deck) ? t.deck.filter((x): x is string => typeof x === 'string') : [], unlocked: t.unlocked === true, draws: nonNegInt(t.draws) }
+    ? { collection: isRec(t.collection) ? t.collection as Record<string, number> : newTileStock().collection, presets: sanitizeTilePresets(t.presets, FACTIONS.map((f) => f.id)), unlocked: t.unlocked === true, draws: nonNegInt(t.draws) }
     : newTileStock();
   save.titles = Array.isArray(save.titles) ? save.titles : [];
   if (!Array.isArray(save.formDex)) save.formDex = [...(Array.isArray(save.evolution?.formHistory) ? save.evolution.formHistory : [])];
@@ -1673,12 +1739,13 @@ export function writeSave(storage: StorageLike, save: SaveData, key: string = SA
   }
 }
 
-/** 가져갈 덱을 정리한다: 이 종족이 쓰는 타일만, 보유 수량 이내로. 비면 보유량이 많은 순으로 채운다 */
-export function sanitizeDeck(stock: Pick<TileStock, 'collection' | 'deck'>, factionId: string, size: number = BALANCE.provisional.expedition.deckSize): string[] {
+/** 점검 도구·봇·시험이 쓰는 고정 '보상 타일 목록' (C.140 전 덱 규칙 그대로): 이 종족이 쓰는 타일만, 보유 수량 이내로, size 장. 고른 목록(deck)이 비면 보유량 순으로 채운다.
+ *  게임은 덱이 없다(GDD 85장 11번) — 출발 때 가진 타일 전부(ownedTileList)를 손에 쥐고 놓은 타일이 보상 목록이 된다 */
+export function sanitizeDeck(stock: Pick<TileStock, 'collection'> & { deck?: readonly string[] }, factionId: string, size: number = BALANCE.provisional.expedition.deckSize): string[] {
   const options = deckTilesFor(factionId).map((t) => t.id);
   const used: Record<string, number> = {};
   const deck: string[] = [];
-  for (const id of stock.deck) {
+  for (const id of stock.deck ?? []) {
     if (deck.length >= size || !options.includes(id)) continue;
     if ((used[id] ?? 0) >= (stock.collection[id] ?? 0)) continue;
     used[id] = (used[id] ?? 0) + 1;

@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 67;
+export const BALANCE_VERSION = 68;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -722,5 +722,50 @@ export const BALANCE = {
       enemyCritChance: 0.03,
       critChanceMax: 0.5,
     },
+    /** 떠돌이 상인 (GDD 85장 5번, C.140 provisional — 사용자 "1바퀴 돌 떄마다 떠돌이 상인 뜰 확률 가중 … 한 3~50바퀴 돌아야 뜨게", 수치는 코드 판단).
+     *  원정 바퀴를 마칠 때마다 '지난 방문 뒤 바퀴 수 k' 가 1 오르고 그 바퀴에 올 확률 = min(1, perLap × k) (선형 가중 — 앞 바퀴는 거의 0).
+     *  perLap 0.001 → 평균 39.3바퀴(30바퀴 안 37%·50바퀴 안 73%, tests/c140). 오면 원정에서 돌아온 방에 머물고 다음 원정 귀환 때 떠난다.
+     *  티어(화면에 안 보임) = tierWeights 로 뽑고, 품목 stockSize 개를 그 티어의 등급표(gradeWeights)로 뽑는다(같은 품목 중복 없음) */
+    wanderer: {
+      perLap: 0.001,
+      stockSize: 4,
+      tierWeights: [55, 30, 12, 3] as number[],
+      /** 티어(1~4)별 품목 등급 확률(%): normal · rare · epic · legendary */
+      gradeWeights: [
+        { normal: 70, rare: 30, epic: 0, legendary: 0 },
+        { normal: 40, rare: 45, epic: 15, legendary: 0 },
+        { normal: 15, rare: 40, epic: 37, legendary: 8 },
+        { normal: 0, rare: 25, epic: 45, legendary: 30 },
+      ] as Record<string, number>[],
+      /** 특별 품목 (상인 전용, 목록·이름·등급은 src/data/shop/wanderer.json): 골드 가격 · 효과량 */
+      items: {
+        'w-snack-crate': { price: 90, amount: 3 },
+        'w-reroll-pair': { price: 200, amount: 2 },
+        'w-calm-deep': { price: 140, amount: 60 },
+        'w-wake-deep': { price: 110, amount: 60 },
+        'w-training-pair': { price: 160, amount: 2 },
+        'w-rare-tile': { price: 260, amount: 1 },
+        'w-feast-crate': { price: 380, amount: 2 },
+        'w-soul-elixir': { price: 700, amount: 100 },
+      } as Record<string, { price: number; amount: number }>,
+    },
+    /** 대기 모드 = 방치 자동 모험 (GDD 85장 6번, C.140 provisional — 사용자 "24시간 내내 모험 돌릴 때 뜨는 템과 xp 스텟 등등의 n%만큼만", n·기준량은 코드 판단).
+     *  접속하지 않은 실제 시간(저장된 마지막 접속 시각 기준, 최대 maxHours)을 '자동 모험'으로 셈. 지급 = fullHour(1시간 내내 직접 원정했을 때의 기준량) × 시간 × share.
+     *  fullHour 근거: 바퀴 약 90초(걷기 15초 + 전투) → 40바퀴/시, 걸음 12/바퀴, 골드 ≈ 22/바퀴(4바퀴 원정 골드 133~166, C.120 측정),
+     *  노력치 ≈ 흡수 0.4회/바퀴 × 1, 타일 ≈ 0.04장/바퀴, 먹이 ≈ 0.05개/바퀴. share 0.1 → 24시간 = 직접 2.4시간분.
+     *  82장: 꺼 둔 동안 허기가 오르는 그 시간에만 돈다(허기가 100 에 닿으면 멈춤), 쇠약이면 weakenedRate 배. minMinutes 보다 짧으면 셈하지 않는다 */
+    idle: {
+      maxHours: 24,
+      minMinutes: 10,
+      share: 0.1,
+      weakenedRate: 0.5,
+      fullHour: { laps: 40, steps: 480, gold: 880, ev: 16, tiles: 1.6, food: 2 },
+      /** 먹이 지급 종류 (보관 상한까지) */
+      foodId: 'basic',
+    },
+    /** 타일 배치 프리셋 (GDD 85장 11번, C.140 provisional): 종족마다 저장 칸 수. 배치 칸 수 = expedition.deckSize(8) + 상점 배치 칸(shared.deckSlots) */
+    tilePresets: { max: 5, nameMax: 12 },
+    /** 보관함 (GDD 86장 4번, C.140 provisional): 소모품(정화제·각성제·상인 소모품) 종류별 보관 상한 — 먹이 상한과 같은 9 */
+    inventory: { consumableCap: 9 },
   },
 } as const;

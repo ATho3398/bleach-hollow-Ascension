@@ -43,11 +43,11 @@ const walkToBattle = (exp: ExpeditionState): number => {
 };
 
 describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
-  it('새 세이브는 타일 0장·덱 비어 있음·잠김, 세이브 형식 40(C.136) · 문턱 같이', () => {
+  it('새 세이브는 타일 0장·프리셋 없음·잠김, 세이브 형식 41(C.140) · 문턱 같이', () => {
     const s = newSaveData('hollow', 1);
-    expect(s.tiles).toEqual({ collection: {}, deck: [], unlocked: false, draws: 0 });
+    expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(40);
+    expect(SAVE_FORMAT_VERSION).toBe(41);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
   });
 
@@ -58,7 +58,7 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     expect(r.ok).toBe(true);
     expect(s.evolution.tierIndex).toBe(1);
     expect(s.tiles.collection).toEqual({ 'prey-nest-a': 1, 'elite-den-a': 1, 'rest-a': 1 });
-    expect(s.tiles.deck).toEqual(PX.starterTiles);
+    expect(PX.starterTiles.every((id) => s.tiles.collection[id] === 1)).toBe(true); // C.140: 덱 없음 — 보관함에만
     expect(s.tiles.unlocked).toBe(true);
     expect(guidePending(s.help, 'tile-intro')).toBe(true);
     expect(guidePending(s.help, 'tile-plan')).toBe(true);
@@ -112,11 +112,9 @@ describe('64장 2번: 상점 타일 뽑기', () => {
     expect(s.shared.tradeCoins).toBe(100000 - TD.price);
     expect(s.runLog.shopPurchases.at(-1)).toMatchObject({ itemId: 'tile-draw', price: TD.price, result: r.tile });
     // 같은 굴림 = 같은 타일 → 장수 +1 (덱에는 안 들어간다)
-    const deck = [...s.tiles.deck];
     const again = buyShopItem(s, H, 'tile-draw', 6, () => 0); // 기본 묶음 첫 타일
     expect(again.ok && again.tile).toBe('prey-nest-a');
     expect(s.tiles.collection['prey-nest-a']).toBe(2);
-    expect(s.tiles.deck).toEqual(deck);
   });
 
   it('확률 = 기본 44 · 환경 30 · B형 12 · 샘 6 · 희귀 8 (호로, C.124), 사신은 B형이 없어 남은 비율로', () => {

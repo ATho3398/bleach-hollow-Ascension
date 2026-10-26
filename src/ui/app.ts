@@ -19,8 +19,8 @@ import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, sanitizeDeck,
-  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, deckSizeOf, type SaveData,
+  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, settleIdle,
+  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
@@ -78,6 +78,9 @@ import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorial
 import { showToast } from './bha/nest';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
+import { showIdleSummary } from './idleView';
+import { ownedTileList, placementLimitOf, saveTilePreset, tilePresetsFor } from '../tilePresets';
+import type { IdleRecord } from '../engine/runLog';
 import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
@@ -172,6 +175,10 @@ export function startApp(host: HTMLElement): void {
   let resumeNote = '';
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
   let hungryGreet = false;
+  /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
+  let idleReport: IdleRecord | null = null;
+  /** 떠돌이 상인 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
+  let wandererAnnounced = -1;
   /** 방 안내(GDD 64·67장)를 잠시 미룬다: 귀환 결과 다음에 진화 연출이 뜰 차례면 연출이 끝나고 방으로 돌아올 때 띄운다 */
   let holdRoomGuides = false;
   /** 안내 오버레이가 떠 있다 (방을 다시 그려도 겹쳐 띄우지 않는다) */
@@ -418,6 +425,8 @@ export function startApp(host: HTMLElement): void {
     dress(loaded.wear);
     playTick = Date.now();
     resumeNote = '';
+    // 대기 모드 (GDD 85장 6번): 꺼 둔 실제 시간(최대 24시간)을 자동 모험으로 정산 — 허기·접속 시각 갱신(applyAbsence)보다 먼저
+    idleReport = slot !== 0 ? settleIdle(loaded) : null;
     // 꺼 둔 동안 허기 (GDD 24-1): 원정 중간 저장이 있으면 오르지 않는다
     hungryGreet = applyAbsence(loaded) >= BALANCE.provisional.nest.idleHungerNotice;
     armBackTrap();
@@ -562,10 +571,20 @@ export function startApp(host: HTMLElement): void {
       notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 5단계에 닿았다. 더보기 ⋯ → [붕옥]' });
       s.hogyoku.tabNotice = false;
     }
+    // 떠돌이 상인 (GDD 85장 5번): 이번 방문을 처음 보는 방이면 한 번 알린다
+    const visit = s.shared.wanderer.visit;
+    if (visit && visit.at !== wandererAnnounced) {
+      wandererAnnounced = visit.at;
+      notes.push({ eyebrow: '떠돌이 상인', title: '떠돌이 상인이 둥지에 왔다', meta: '상점 → [떠돌이 상인]. 다음 원정에서 돌아오면 떠난다.' });
+    }
     if (notes.length > 0) {
       persist();
       window.setTimeout(() => notes.forEach((n, i) => showToast(n, i, 5200)), 2600);
     }
+    // 대기 모드 결과 요약 (GDD 85장 6번): 방이 그려진 뒤 한 번
+    const idle = idleReport;
+    idleReport = null;
+    if (idle) window.setTimeout(() => showIdleSummary(idle, faction), 500);
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,
       resume: active.ok
@@ -578,7 +597,7 @@ export function startApp(host: HTMLElement): void {
       // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]
       onAltar: () => open('training', () => renderTraining(faction, s)),
       onBook: () => open('dex', () => bookView(root, faction, s)),
-      onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist)),
+      onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear))),
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)) })),
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
@@ -711,7 +730,7 @@ export function startApp(host: HTMLElement): void {
       runId: nextRunId(save),
       hunger: save.nest.hunger,
       condition: save.nest.condition,
-      deck: sanitizeDeck(save.tiles, faction.id, deckSizeOf(save)),
+      deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
       stability: save.nest.stability,
       build: save.build,
@@ -740,6 +759,16 @@ export function startApp(host: HTMLElement): void {
           unlockedDifficulty: save!.difficulty.unlocked,
           streak: save!.difficulty.streak,
           tilesLocked: !tilesUnlocked(save!),
+          // 덱 없음 (GDD 85장 11번): 가진 타일 전부에서 최대 n칸 + 배치 프리셋
+          placeLimit: placementLimitOf(save!),
+          presets: {
+            list: () => tilePresetsFor(save!.tiles, faction.id),
+            save: (cells) => {
+              const r = saveTilePreset(save!, '', cells);
+              if (r.ok) persist();
+              return r;
+            },
+          },
           onStart: () => {
             save!.difficulty.last = exp.difficulty;
             activeExp = exp;
@@ -898,7 +927,7 @@ export function startApp(host: HTMLElement): void {
       runId: nextRunId(save),
       hunger: save.nest.hunger,
       condition: save.nest.condition,
-      deck: sanitizeDeck(save.tiles, faction.id, deckSizeOf(save)),
+      deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
       stability: save.nest.stability,
       build: save.build,

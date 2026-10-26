@@ -3,7 +3,8 @@
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { artSkinOf, careNest, deckSizeOf, feedNest, sanitizeDeck, tickCare, type SaveData } from '../game';
+import { artSkinOf, careNest, feedNest, tickCare, type SaveData } from '../game';
+import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
@@ -57,16 +58,13 @@ const IDLE_TALK_MS = 14000;
 let idleTimer = 0;
 
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
-  save.tiles.deck = sanitizeDeck(save.tiles, faction.id, deckSizeOf(save));
   tickCare(save); // 돌봄 요청 (GDD 82장): 꺼 두었다 와도 최대 1개
   hd.persist();
   const room = roomOf(faction, save.wear.talk); // 말풍선 팩 (GDD 25-11): 입은 팩이 혼잣말 문구를 덮는다
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
-  const deckSize = deckSizeOf(save);
-  const deckCount = save.tiles.deck.length;
-  // 첫 진화 전(타일 잠김, GDD 64장)에는 덱 없이 빈 길로 떠난다
-  const deckEmpty = deckCount === 0 && save.tiles.unlocked;
+  // 덱 없음 (GDD 85장 11번, C.140): 출발 때 가진 타일 전부에서 놓는다. 타일이 없어도 빈 길로 떠날 수 있다
+  const tileCount = ownedTileList(save.tiles, faction.id).length;
   const mood = moodOf({ weakened: n.weakened, condition: n.condition, risk: n.risk, riskLimit: RX.limit });
 
   // ── 위 한 줄 ── (원정 이어하기만. 상태는 캐릭터 머리 위 칩)
@@ -118,7 +116,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
 
   const act: Record<RoomProp, () => void> = {
-    door: () => (deckEmpty ? say('덱이 비어 있다. 상자에서 타일을 넣어야 출발할 수 있다.', 3600) : hd.onDepart()),
+    door: () => hd.onDepart(),
     altar: hd.onAltar,
     book: hd.onBook,
     chest: hd.onChest,
@@ -128,7 +126,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   for (const p of ROOM_PROPS) {
-    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckEmpty });
+    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'shop' && save.shared.wanderer.visit !== null });
     b.onclick = act[p];
     if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(훈련 인형 모양) = 단축키 T
     props.set(p, b);
@@ -230,7 +228,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
   const main = mountApp(dev.view, { cls: 'bha-room' }, hud, ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
-  main.dataset.deck = `${deckCount}/${deckSize}`;
+  main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
+  if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번) — 상점 물건에 알림 점
 
   // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
   function registerItems(): void {

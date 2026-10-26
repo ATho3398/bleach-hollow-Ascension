@@ -1,11 +1,13 @@
 // 상점 (GDD 25-9, S-16 C.60): 방 물건 상점(C.63, 이름은 종족 설정 room.props.shop). 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
-// (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 덱 칸만 확인 창 1번, 나머지는 바로 산다. 꾸밈은 산 뒤 그 줄에서 [착용]/[해제].
+// (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 배치 칸만 확인 창 1번, 나머지는 바로 산다. C.140 (GDD 86장 4번): 산 꾸밈·스킨은 보관함에서 착용(여기선 "보유").
+// 떠돌이 상인(GDD 85장 5번)이 와 있으면 제목 토글에 [떠돌이 상인] — 같은 줄 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { CATEGORIES, cosmeticName, getCosmetic, cosmeticToken, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
-import { buyShopItem, goldRows, jadeRows, unwearCategory, wearCosmetic, type BuyResult, type ShopRow } from '../shop';
+import { buyShopItem, buyWandererItem, goldRows, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
+import { WANDERER_PROVISIONAL } from '../data/shop';
 import { button, h, provisionalTag, seg } from './bha/dom';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
@@ -15,7 +17,7 @@ import { confirmDialog } from './confirmDialog';
 import { showGuide, tileDrawCard } from './guideView';
 import { markGuideDone } from '../engine/tutorial';
 
-export type ShopTab = 'gold' | 'jade';
+export type ShopTab = 'gold' | 'jade' | 'wanderer';
 /** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
 const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', shell: 'body', cut: 'line', room: 'line' };
 /** 영옥 탭 왼쪽 열 = 캐릭터·연출, 오른쪽 열 = 화면·방·말풍선·액자 (GDD 25-11) */
@@ -26,8 +28,8 @@ const shopUi: { tab: ShopTab } = { tab: 'gold' };
 export interface ShopHandlers {
   /** 구매·착용을 저장한다 */
   persist: () => void;
-  /** 착용이 바뀌었을 때 (기기 껍데기 등 화면 전체 꾸밈을 바로 다시 건다) */
-  onWear: () => void;
+  /** 착용이 바뀌었을 때 (옛 호출 호환 — C.140 부터 착용은 보관함) */
+  onWear?: () => void;
 }
 
 /** 확인 창 문구 (영옥 품목·덱 칸) */
@@ -52,7 +54,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
 
   const buy = (row: ShopRow) => {
     const go = () => {
-      const r = buyShopItem(save, faction, row.id);
+      const r = shopUi.tab === 'wanderer' ? buyWandererItem(save, faction, row.id) : buyShopItem(save, faction, row.id);
       if (!r.ok) {
         showToast({ eyebrow: '상점', title: '살 수 없다', meta: r.reason }, 0, 2600);
         return render();
@@ -75,14 +77,6 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     } else go();
   };
 
-  const wear = (row: ShopRow, on: boolean) => {
-    if (on) wearCosmetic(save, row.id);
-    else unwearCategory(save, row.category!);
-    hd.persist();
-    hd.onWear();
-    render();
-  };
-
   const rowEl = (row: ShopRow): HTMLElement => {
     const box = h('div', `bha-shoprow${row.canBuy ? '' : row.owned ? ' is-owned' : ' is-locked'}${row.worn ? ' is-worn' : ''}`);
     box.dataset.item = row.id;
@@ -102,9 +96,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (row.have) main.append(h('small', 'bha-shoprow__have', row.worn ? `${row.have} · 착용 중` : row.have));
     const act = h('div', 'bha-shoprow__act');
     if (row.owned) {
-      act.append(row.worn
-        ? button({ label: '해제', size: 'small', variant: 'ghost', onClick: () => wear(row, false) })
-        : button({ label: '착용', size: 'small', variant: 'primary', onClick: () => wear(row, true) }));
+      // 산 것은 보관함에서 끼고 뺀다 (GDD 86장 4번)
+      act.append(h('small', 'bha-shoprow__have', '보관함에서 착용'));
     } else {
       const cur = row.currency === 'gold' ? TRADE_CURRENCY_NAME : JADE_NAME;
       act.append(h('span', 'bha-shoprow__price', row.price === null ? '—' : `${cur} ${row.price}`));
@@ -126,14 +119,25 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     sub.dataset.jade = String(save.shared.jade);
     if (SHOP_PROVISIONAL) sub.append(' ', provisionalTag('임시 가격'));
     // 머리의 [골드][영옥] 탭 줄 대신 제목 토글 "상점 · 골드 ▾" (C.114)
-    const title = selectLast(viewTitle([{ id: 'gold', label: TRADE_CURRENCY_NAME }, { id: 'jade', label: JADE_NAME }], shopUi.tab, (id) => {
+    const hasWanderer = save.shared.wanderer.visit !== null;
+    if (shopUi.tab === 'wanderer' && !hasWanderer) shopUi.tab = 'gold';
+    const tabs = [{ id: 'gold', label: TRADE_CURRENCY_NAME }, { id: 'jade', label: JADE_NAME }, ...(hasWanderer ? [{ id: 'wanderer', label: '떠돌이 상인' }] : [])];
+    const title = selectLast(viewTitle(tabs, shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;
       lastScroll = [0, 0];
       render();
     }, { prefix: '상점' }));
     let left: HTMLElement[] = [];
     let right: HTMLElement[] = [];
-    if (shopUi.tab === 'gold') {
+    if (shopUi.tab === 'wanderer') {
+      const rows = wandererRows(save, faction).map((r) => {
+        const e = rowEl(r);
+        e.dataset.grade = r.grade;
+        return e;
+      });
+      left = [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 칸마다 하나씩, 다음 원정에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : []), ...rows.slice(0, 2)];
+      right = rows.slice(2);
+    } else if (shopUi.tab === 'gold') {
       const rows = goldRows(save, faction).map(rowEl);
       // 먹이 5종은 왼쪽, 나머지(소모품·편의)는 오른쪽
       left = rows.slice(0, 5);

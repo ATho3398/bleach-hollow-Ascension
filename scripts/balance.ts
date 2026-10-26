@@ -12,7 +12,7 @@ import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_I
 import { ELEMENT_IDS, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, newEvolution, worldRefStat, zeroStats } from '../src/engine/evolution';
-import { deckSizeOf, newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
+import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
 import { buyShopItem } from '../src/shop';
 import { getFaction } from '../src/data/factions';
 import { createRng, nextFloat } from '../src/engine/rng';
@@ -27,6 +27,10 @@ import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recom
 import { spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+
+/** 봇의 보상 타일 목록 (C.140: 게임은 덱이 없어졌다 — GDD 85장 11번. 점검 기준을 바꾸지 않으려고 봇만 옛 '덱' 규칙(8장, 뽑은 타일 추가)을 들고 다닌다) */
+const botDecks = new WeakMap<object, string[]>();
+const botDeck = (tiles: SaveData['tiles'], fid: string): string[] => sanitizeDeck({ collection: tiles.collection, deck: botDecks.get(tiles) ?? [] }, fid);
 
 const check = process.argv.includes('--check');
 // ── 구간 선택·병렬 실행 (C.108): 구간은 서로 독립(시드 고정, 공유 상태 없음)이라 --only=이름,… 으로 일부만 돌릴 수 있고,
@@ -595,7 +599,8 @@ function botBuyTiles(save: SaveData, seed: number): number {
     const r = buyShopItem(save, f, 'tile-draw', 0, () => nextFloat(rng));
     if (!r.ok || !r.tile) break;
     n++;
-    if (save.tiles.deck.length < deckSizeOf(save)) save.tiles.deck.push(r.tile);
+    const dk = botDecks.get(save.tiles) ?? [];
+    if (dk.length < BALANCE.provisional.expedition.deckSize + save.shared.deckSlots) botDecks.set(save.tiles, [...dk, r.tile]);
   }
   botDraws.count += n;
   return n;
@@ -605,7 +610,7 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
   for (let seed = 1; seed <= CAMPAIGNS; seed++) {
     const save = newSaveData('hollow', seed * 7919);
     botTutorialRun(save, seed * 1000);
-    save.tiles.deck = sanitizeDeck(save.tiles, 'hollow');
+    botDecks.set(save.tiles, botDeck(save.tiles, 'hollow'));
     let stageStart = 0;
     let defeats = 0;
     // 정책은 노리는 단계(stage, tierIndex)에서만 쓴다: 그 전에는 다 흡수해 특성을 모은다 (사람이 노리는 방식)
@@ -621,7 +626,7 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
       const e = playExpedition(
         createExpedition({
           factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-          deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tilesLocked: !save.tiles.unlocked,
+          deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tilesLocked: !save.tiles.unlocked,
         }),
         { returnAfterLap: 4, absorb: 'absorb', ...(wanted ? { absorbWanted: wanted } : {}) },
       );
@@ -716,7 +721,7 @@ if (want('boss23')) {
       for (let k = 1; k <= K; k++) {
         const seed = 90000 + bi * 101 + k;
         const mk = (beaten: string[]) => createExpedition({
-          factionId: 'hollow', seed, hunger: 20, condition: 80, deck: sanitizeDeck(body.tiles, 'hollow'), stability: body.nest.stability,
+          factionId: 'hollow', seed, hunger: 20, condition: 80, deck: botDeck(body.tiles, 'hollow'), stability: body.nest.stability,
           build: body.build, evolution: body.evolution, tileVariants: true, groundId: g.id, difficulty: star, bossesBeaten: beaten,
         });
         const off = playExpedition(mk([]), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
@@ -757,7 +762,7 @@ if (want('rebirth')) {
         const e = playExpedition(
           createExpedition({
             factionId: 'hollow', seed: (i + 1) * 100003 + life * 1009 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
           }),
           { returnAfterLap: 4, absorb: 'absorb' },
         );
@@ -776,7 +781,7 @@ if (want('rebirth')) {
         const e = playExpedition(
           createExpedition({
             factionId: 'hollow', seed: (i + 1) * 7777 + life * 31 + run, runId: nextRunId(save), hunger: 20, condition: 80,
-            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
           }),
           { returnAfterLap: 4, absorb: 'absorb' },
         );
@@ -1037,7 +1042,7 @@ if (want('difficulty')) {
         const e = playExpedition(
           createExpedition({
             factionId: 'hollow', difficulty: star, streak, seed: 50000 + bi * 97 + k * 13 + tier * 7 + star * 1000, runId: nextRunId(save), hunger: 20, condition: 80,
-            deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
           }),
           { returnAfterLap: 4, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
         );
@@ -1057,7 +1062,7 @@ if (want('difficulty')) {
     return { win: battles ? wins / battles : 0, nWin: nG ? nW / nG : 0, eWin: eG ? eW / eG : 0, nSecs: nW ? nS / nW : 0, eSecs: eW ? eS / eW : 0, defeat: runs ? defeated / runs : 0, n: nG, e: eG, gold: runs ? gold / runs : 0, food: runs ? food / runs : 0 };
   };
   // 새 몸 = 첫 원정 튜토리얼을 마친 1단계 (C.120: 타일 0장·노력치 6종 +3)
-  const freshBodies: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => { const sv = newSaveData('hollow', 777 + i * 31); botTutorialRun(sv, 4242 + i); sv.tiles.deck = sanitizeDeck(sv.tiles, 'hollow'); return sv; });
+  const freshBodies: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => { const sv = newSaveData('hollow', 777 + i * 31); botTutorialRun(sv, 4242 + i); botDecks.set(sv.tiles, botDeck(sv.tiles, 'hollow')); return sv; });
   const recNormalSecs: number[] = [];
   for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
     const bodies = tier === 0 ? freshBodies : campaignFirstAt[tier] ?? [];
@@ -1123,7 +1128,7 @@ if (want('grounds')) {
           const e = playExpedition(
             createExpedition({
               factionId: 'hollow', groundId: g.id, seed: 50000 + bi * 97 + k * 13 + tier, runId: nextRunId(save), hunger: 20, condition: 80,
-              deck: sanitizeDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+              deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
             }),
             { returnAfterLap: 4, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
           );
