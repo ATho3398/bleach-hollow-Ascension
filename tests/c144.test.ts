@@ -223,8 +223,8 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
     expect(inventoryOf(s, H).find((e) => e.id === 'pet-gold')!.lock).toBe('원정 중에는 바꿀 수 없다');
   });
 
-  it('세이브 형식 42(C.147 에 43): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([43, 43]);
+  it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([44, 44]);
     const s = newSaveData('hollow', 1);
     grantPet(s.shared.pets, 'pet-guard', 1);
     choosePet(s, 'pet-guard', 1);

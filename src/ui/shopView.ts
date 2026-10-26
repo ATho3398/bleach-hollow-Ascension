@@ -8,7 +8,8 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
 import { buyShopItem, buyWandererItem, goldRows, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
-import { WANDERER_PROVISIONAL } from '../data/shop';
+import { getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
+import { GEAR_KIND_ICONS } from '../data/gear';
 import { provisionalTag } from './bha/dom';
 import { h } from './bha/dom';
 import { charArt } from '../data/art/manifest';
@@ -121,6 +122,10 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       return swatchArt(cos.category, color, cos.category === 'tint' ? `var(${cosmeticToken(cos)})` : undefined);
     }
     const gold = getGoldItem(row.id);
+    // 장비 (GDD 91장): 기본 상점 = 그 종류 아이콘(노말), 떠돌이 상인 = 종류 무작위라 물음표 + 등급 색
+    if (gold?.kind === 'gear') return gradeArt(iconArt(GEAR_KIND_ICONS[gold.gearKind!]), 'normal');
+    const wi = getWandererItem(row.id);
+    if (wi?.kind === 'gear') return gradeArt(iconArt('i-unknown'), wi.grade);
     const ic = !gold ? 'i-rare' : gold.kind === 'food' ? 'i-hunger' : gold.kind === 'calm' ? 'i-risk' : gold.kind === 'wake' ? 'i-cond' : gold.kind === 'tileDraw' || gold.kind === 'rareTile' ? 'i-tile-combo' : gold.kind === 'deckSlot' ? 'i-deck' : gold.kind === 'reroll' ? 'i-swap' : 'i-practice';
     void big;
     return iconArt(ic);
@@ -146,6 +151,12 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     });
   };
 
+  /** 장비 그림에 등급 색 클래스 */
+  const gradeArt = (a: HTMLElement, grade: string): HTMLElement => {
+    a.classList.add(`is-grade-${grade}`);
+    return a;
+  };
+
   const cardOf = (row: ShopRow & { grade?: string }): HTMLElement => {
     const owned = Boolean(row.owned);
     const c = itemCard({
@@ -156,6 +167,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       onClick: () => openDetail(row),
     });
     if (row.grade) c.dataset.grade = row.grade;
+    if (getGoldItem(row.id)?.kind === 'gear') c.classList.add('is-grade-normal');
+    else if (getWandererItem(row.id)?.kind === 'gear') c.classList.add(`is-grade-${row.grade}`);
     return c;
   };
 
@@ -180,7 +193,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       lastScroll = 0;
       render();
     }, '상품 분류');
-    const empty = shopUi.tab === 'equipment' ? '장비는 준비 중이다.' : shopUi.tab === 'wanderer' ? '오늘은 더 살 것이 없다.' : shopUi.tab === 'skin' && rows.length === 0 ? `${faction.name}이(가) 입을 수 있는 스킨은 아직 없다.` : '지금 파는 물건이 없다.';
+    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? '오늘은 더 살 것이 없다.' : shopUi.tab === 'skin' && rows.length === 0 ? `${faction.name}이(가) 입을 수 있는 스킨은 아직 없다.` : '지금 파는 물건이 없다.';
     const grid = itemGrid(rows.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 칸마다 하나씩, 다음 원정에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]

@@ -82,3 +82,20 @@
 .bha-itemchip.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 18%, var(--bha-bg-1)); color: var(--bha-text-1); }
 .bha-itemchip.is-zero { opacity: .55; }
 .bha-itemchip__count { font-variant-numeric: tabular-nums; color: var(--bha-text-3); }
+
+/* C.150 장비 등급 (GDD 91장 3번): 노말·레어·영웅·전설 — 이미 있는 토큰만 (노말 = 선, 레어 = 회복 파랑, 영웅 = 봉인 보라, 전설 = 희귀 금색) */
+.bha-itemcard.is-grade-rare, .bha-gearslot.is-grade-rare { border-color: var(--bha-heal); }
+.bha-itemcard.is-grade-epic, .bha-gearslot.is-grade-epic { border-color: var(--bha-seal); }
+.bha-itemcard.is-grade-legendary, .bha-gearslot.is-grade-legendary { border-color: var(--bha-rare); }
+.bha-itemcard.is-grade-rare.is-worn, .bha-itemcard.is-grade-epic.is-worn, .bha-itemcard.is-grade-legendary.is-worn { box-shadow: inset 0 0 0 1px var(--bha-rare); }
+.is-grade-normal .bha-icon { color: var(--bha-text-2); }
+.is-grade-rare .bha-icon { color: var(--bha-heal); }
+.is-grade-epic .bha-icon { color: var(--bha-seal); }
+.is-grade-legendary .bha-icon { color: var(--bha-rare); }
+/* 상태 화면 장착 5칸 */
+.bha-gearslots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-gearslot { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); min-width: 0; padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); color: var(--bha-text-1); text-align: center; }
+.bha-gearslot.is-empty { border-style: dashed; color: var(--bha-text-3); }
+.bha-gearslot .bha-icon { width: 24px; height: 24px; }
+.bha-gearslot__slot { font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bha-gearslot__name { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.15; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

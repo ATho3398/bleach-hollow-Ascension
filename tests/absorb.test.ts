@@ -6,7 +6,7 @@ import { getFaction } from '../src/data/factions';
 import { ELEMENTS, NORMAL_ELEMENT } from '../src/data/elements';
 import { TRAITS, getTrait, traitDescription } from '../src/data/traits';
 import {
-  absorbReasons, absorbRisk, attackFamilyOf, buildCombatParams, buildOffer, canAbsorb, changeRisk, completedElements, equippedAttackFamilies, equippedSkills, gainTrait, lateLapRisk, newBuild,
+  absorbReasons, absorbRisk, attackFamilyOf, buildCombatParams, buildOffer, canAbsorb, changeRisk, equippedAttackFamilies, equippedSkills, gainTrait, lateLapRisk, newBuild,
   passiveMultipliers, setSlot, settleRiskToNest, type BuildState,
 } from '../src/engine/absorb';
 import { BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, isBasicBlockId, applyInput, blockSources, createCombat, type Block, type CombatState } from '../src/engine/combat';
@@ -263,21 +263,13 @@ describe('속성 보너스와 특성 효과', () => {
     return b;
   };
 
-  it('슬롯 안 같은 속성 3개면 그 속성 스킬 블록 위력이 +50%', () => {
-    const two = build(A.slice(0, 2));
-    expect(completedElements(two)).toEqual([]);
+  it('같은 속성 3개 보너스는 없다 (C.150, GDD 94장 B 후속): 셋 장착해도 블록 위력은 강화 배율뿐', () => {
     const three = build(A.slice(0, 3));
-    expect(completedElements(three)).toEqual(['fire']);
     const skillId = A.find((id) => getTrait(id).kind === 'skill')!;
-    const one = equippedSkills(two).find((s) => s.id === skillId)!;
-    expect(one.powerInAttacks).toBe(getTrait(skillId).powerInAttacks);
-    expect(one.powerMultiplier).toBe(1);
-    expect(equippedSkills(three).find((s) => s.id === skillId)!.powerMultiplier).toBeCloseTo(1 + AX.elementSkillBonus);
-  });
-
-  it('다른 속성이 섞이면 보너스가 없다', () => {
-    const mix = build([A[0]!, A[1]!, B[0]!]);
-    expect(completedElements(mix)).toEqual([]);
+    const s = equippedSkills(three).find((x) => x.id === skillId)!;
+    expect(s.powerInAttacks).toBe(getTrait(skillId).powerInAttacks);
+    expect(s.powerMultiplier).toBe(1);
+    expect('elementBonusCount' in AX).toBe(false);
   });
 
   it('블록 생성원은 특성의 속성과, 종족 설정 계열의 공격 분류를 가진다 (종족을 모르면 혼합)', () => {
@@ -331,11 +323,11 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
     expect(params.skills!.every((x) => ['attack', 'guard', 'heal'].includes(x.role) && x.chainBonus.value > 0)).toBe(true);
     const { s, damage } = fire(params, skills[0]!);
     expect(s.skillsUsed).toEqual([skills[0]]);
-    // 같은 속성 3개라 속성 보너스(위력 배율)가 곱해진다
+    // 위력 배율 = 속성 강화뿐 (같은 속성 3개 보너스는 C.150 에 삭제)
     expect(damage).toBeCloseTo(getTrait(skills[0]!).powerInAttacks! * params.skills![0]!.powerMultiplier * s.params.playerAttackDamage);
   });
 
-  it('속성 보너스가 켜지면 블록 위력이 1.5배', () => {
+  it('같은 속성 3개를 껴도 블록 위력은 하나 낄 때와 같다 (C.150, 속성 보너스 삭제)', () => {
     const skillId = A.find((id) => getTrait(id).kind === 'skill')!;
     const one = newBuild();
     gainTrait(one, skillId);
@@ -343,7 +335,7 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
     for (const id of A.slice(0, 3)) gainTrait(full, id);
     const d1 = fire({ ...buildCombatParams(one), attackPowerMultiplier: 1 }, skillId).damage;
     const d3 = fire({ ...buildCombatParams(full), attackPowerMultiplier: 1 }, skillId).damage;
-    expect(d3).toBeCloseTo(d1 * 1.5);
+    expect(d3).toBeCloseTo(d1);
   });
 
   it('원정 전투는 장착한 특성을 전투 파라미터로 받는다', () => {
@@ -661,44 +653,19 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
     expect(save.runLog.runs[0]!.lostTraits).toEqual([]);
   });
 
-  it('패배로 잃은 속성 진행도는 속성 보너스 완성 기록에 남지 않는다', () => {
+  it('같은 속성 셋을 낀 채 귀환해도 속성 보너스 완성 기록(lineages)은 더 쌓이지 않는다 (C.150)', () => {
     const save = newSaveData('hollow', 0);
-    save.build = newBuild();
-    for (const id of A.slice(0, 2)) gainTrait(save.build, id);
-    const exp = mk({ seed: 31, runId: nextRunId(save), build: save.build });
-    toAbsorb(exp, { element: 'fire', rare: false });
-    // C.147 (94장 B): 가진 속성은 흡수로 새 특성이 안 나온다 — 셋째 fire 특성은 바퀴 안에서 직접 얻은 것으로(옛 규칙 세이브와 같은 상태)
-    expect(exp.absorbOffer!.candidates).toEqual([]);
-    chooseAbsorb(exp, null);
-    const third = A[2]!;
-    gainTrait(exp.build, third);
-    expect(completedElements(exp.build)).toEqual(['fire']);
-    fightNext(exp);
-    const b = startBattle(exp);
-    b.status = 'lost';
-    b.lossReason = 'hp';
-    finishBattle(exp, b);
-    recordExpedition(save, exp, 100);
-    expect(completedElements(save.build)).toEqual([]);
-    expect(save.runLog.lineages).toEqual([]);
-  });
-
-  it('속성 보너스를 완성한 채 귀환하면 LineageRecord(값은 속성 id)가 남는다', () => {
-    const save = newSaveData('hollow', 0);
-    for (const id of A.slice(0, 2)) gainTrait(save.build, id);
+    for (const id of A.slice(0, 3)) gainTrait(save.build, id);
     const exp = mk({ seed: 32, runId: nextRunId(save), build: save.build });
-    toAbsorb(exp, { element: 'fire', rare: false });
-    chooseAbsorb(exp, null); // C.147 (94장 B): 가진 속성 = 강화만 → 셋째는 직접
-    gainTrait(exp.build, A[2]!);
     while (exp.phase !== 'nest-choice') {
       if (exp.phase === 'moving') advance(exp);
       else if (exp.phase === 'battle') winWith(exp);
       else if (exp.phase === 'rest') finishRest(exp);
-      else if (exp.phase === 'absorb') chooseRelease(exp); // C.125: 이기면 늘 흡수 화면 — 옛 '조건 미달 → 이동' 대신 놓아줌
+      else if (exp.phase === 'absorb') chooseRelease(exp);
     }
     chooseReturn(exp);
     recordExpedition(save, exp, 5);
-    expect(save.runLog.lineages).toEqual([{ lineageId: 'fire', completed: true, conflictingTried: false, firstCompletedRunId: exp.runId }]);
+    expect(save.runLog.lineages).toEqual([]);
   });
 });
 

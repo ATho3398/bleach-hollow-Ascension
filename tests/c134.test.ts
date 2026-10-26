@@ -194,9 +194,9 @@ describe('83장 3번 해방 블록 슬롯', () => {
     expect([at(0), at(2), at(4)]).toEqual([1, 2, 3]);
   });
 
-  it('세이브: 해방 칸이 저장·불러오기로 남고, 깨진 값(안 가진 특성·중복·패시브)은 비운다. 형식 43(C.147) · 문턱 같이', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(43);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(43);
+  it('세이브: 해방 칸이 저장·불러오기로 남고, 깨진 값(안 가진 특성·중복·패시브)은 비운다. 형식 44(C.150) · 문턱 같이', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(44);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(44);
     const s = newSaveData('hollow', 1);
     expect(s.build.liberation).toEqual([null, null, null]);
     gainTrait(s.build, 't-fire-a');

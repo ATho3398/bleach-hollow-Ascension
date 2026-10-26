@@ -11,6 +11,9 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
 import type { FactionConfig } from './engine/faction';
 import { addFood } from './engine/food';
 import { grantPet, pickNewPet } from './engine/pet';
+import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
+import { recommendedDifficulty } from './engine/difficulty';
+import { GEAR_GRADE_NAMES, type GearGrade } from './data/gear';
 import type { SaveData } from './game';
 
 const SX = BALANCE.shop;
@@ -109,6 +112,7 @@ export function rollTileDraw(factionId: string, first: boolean, rand: () => numb
 }
 
 function goldName(item: GoldItemDef, faction: FactionConfig): string {
+  if (item.kind === 'gear') return `${GEAR_GRADE_NAMES.normal} ${gearKindLabel(item, faction)}`;
   return item.kind === 'food' ? faction.foodNames[item.food!] : item.name!;
 }
 
@@ -122,12 +126,14 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 보관함 (이벤트 타일 제외)';
     case 'reroll': return `흡수 화면 특성 후보를 한 번 다시 뽑는다 (흡수 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `원정 길에 놓을 수 있는 타일 칸 +1 (영구, 두 트랙 공유, 최대 +${SX.deckSlotPrices.length})`;
+    case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노말 · ★ = 지금 단계 권장 · 능력치 무작위 → 보관함 장비 탭에서 장착`;
   }
 }
 
 function goldPrice(save: SaveData, item: GoldItemDef): number | null {
   if (item.kind === 'deckSlot') return SX.deckSlotPrices[save.shared.deckSlots] ?? null;
   if (item.kind === 'tileDraw') return TD.price;
+  if (item.kind === 'gear') return BALANCE.provisional.gear.shopPrice;
   return SX.goldPrices[item.id] ?? null;
 }
 
@@ -142,6 +148,7 @@ function goldBlock(save: SaveData, item: GoldItemDef): string | null {
     case 'rareTile': return save.tiles.unlocked ? null : TILES_LOCKED_TEXT;
     case 'reroll': return save.shared.rerollTickets >= SX.rerollMax ? `보유 가득 (${SX.rerollMax}/${SX.rerollMax})` : null;
     case 'deckSlot': return save.shared.deckSlots >= SX.deckSlotPrices.length ? `최대 (+${SX.deckSlotPrices.length})` : null;
+    case 'gear': return gearFullText(save);
   }
 }
 
@@ -155,6 +162,7 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
     case 'wake': return `보관 ${save.shared.items[item.id] ?? 0}/${CONSUMABLE_CAP}`;
     case 'tileDraw': return save.tiles.unlocked ? `뽑은 횟수 ${save.tiles.draws}` : null;
     case 'rareTile': return null;
+    case 'gear': return `장비 ${save.shared.gear.items.length}/${BALANCE.provisional.gear.cap}`;
   }
 }
 
@@ -239,6 +247,9 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
         save.shared.deckSlots++;
         detail = `타일 배치 ${BALANCE.provisional.expedition.deckSize + save.shared.deckSlots}칸`;
         break;
+      case 'gear':
+        detail = giveGear(save, faction, rollGear({ kind: gold.gearKind!, grade: 'normal', star: gearStarOf(save) }, rand), 'shop', nowMs);
+        break;
     }
     save.shared.tradeCoins -= price;
     record(save, id, 'gold', price, nowMs, tile);
@@ -314,6 +325,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 보관함`;
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 보관함에서 쓴다`;
     case 'pet': return '아직 없는 펫 무작위 1마리 → 보관함 펫 탭 (가칭)';
+    case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 보관함 장비 탭 (가칭)`;
   }
 }
 
@@ -327,6 +339,7 @@ function wandererBlock(save: SaveData, itemId: string): string | null {
     case 'trainingTicket': return save.training.tickets >= BALANCE.provisional.training.ticketsMax ? '수련권 가득' : null;
     case 'rareTile': return save.tiles.unlocked && tileDrawGroup('rare', save.factionId).length > 0 ? null : TILES_LOCKED_TEXT;
     case 'pet': return pickNewPet(save.shared.pets, () => 0) === null ? '펫을 다 가졌다' : null;
+    case 'gear': return gearFullText(save);
     default: return canStoreConsumable(save, itemId) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
   }
 }
@@ -381,6 +394,9 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       detail = `${faction.petNames[id] ?? id} → 보관함 펫 탭`;
       break;
     }
+    case 'gear':
+      detail = giveGear(save, faction, rollGear({ grade: w.grade as GearGrade, star: gearStarOf(save) }, rand), 'wanderer', nowMs);
+      break;
     default:
       storeConsumable(save, itemId);
       detail = `${w.name} → 보관함 (${save.shared.items[itemId]}개)`;
@@ -389,4 +405,32 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   st.sold = true;
   save.runLog.wanderer.push({ at: nowMs, factionId: save.factionId, kind: 'buy', tier: v.tier, itemId, price: st.price });
   return { ok: true, id: itemId, price: st.price, currency: 'gold', detail, ...(tile ? { tile } : {}) };
+}
+
+// ── 장비 (GDD 91장 2번, C.150): 기본 상점 '장비' 탭 = 노말 종류별 1개씩, 떠돌이 상인 = 레어·영웅·전설 (품목 등급 = 장비 등급) ──
+
+/** 종류별 주 능력치 안내 (GDD 91장 4번) */
+const GEAR_STAT_HINT: Record<string, string> = { weapon: '힘 또는 지능 1줄', armor: '체력·방어 2줄', shoes: '속도 1줄', accessory: '치명·정신력 등 1~2줄' };
+
+/** 상점 장비 종류 이름 (종족 설정 gearSlotNames: 그 종류의 첫 칸 이름) */
+function gearKindLabel(item: GoldItemDef, faction: FactionConfig): string {
+  const slot = item.gearKind === 'accessory' ? 'acc1' : item.gearKind!;
+  return faction.gearSlotNames[slot];
+}
+
+/** 상점·상인 장비의 ★ = 지금 단계의 권장 난이도 */
+function gearStarOf(save: Pick<SaveData, 'evolution'>): number {
+  return recommendedDifficulty(save.evolution.tierIndex);
+}
+
+function gearFullText(save: Pick<SaveData, 'shared'>): string | null {
+  return gearFull(save.shared.gear) ? `장비 보관 가득 (${BALANCE.provisional.gear.cap}/${BALANCE.provisional.gear.cap})` : null;
+}
+
+/** 산 장비를 보관함에 (런 로그 gear get). 가득은 줄 단계에서 막는다 */
+function giveGear(save: SaveData, faction: FactionConfig, roll: GearRoll, source: 'shop' | 'wanderer', nowMs: number): string {
+  const it = grantGear(save.shared.gear, roll, nowMs)!;
+  save.runLog.gear.push({ at: nowMs, factionId: save.factionId, kind: 'get', uid: it.uid, gearKind: it.kind, grade: it.grade, star: it.star, source });
+  const slot = it.kind === 'accessory' ? 'acc1' : it.kind;
+  return `${GEAR_GRADE_NAMES[it.grade]} ${faction.gearSlotNames[slot]} → 보관함 장비 탭`;
 }

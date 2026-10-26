@@ -279,6 +279,13 @@
     "tonic": "영압 응축물",
     "feast": "영혼 덩어리"
   },
+  "gearSlotNames": {
+    "weapon": "송곳니",
+    "armor": "껍질",
+    "shoes": "발톱 싸개",
+    "acc1": "부적",
+    "acc2": "부적"
+  },
   "petNames": {
     "pet-gold": "뼈 까마귀",
     "pet-belly": "모래 벌레",

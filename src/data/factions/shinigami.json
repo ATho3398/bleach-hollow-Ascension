@@ -179,6 +179,13 @@
     "tonic": "영력 차",
     "feast": "잔칫상"
   },
+  "gearSlotNames": {
+    "weapon": "칼자루 장식",
+    "armor": "사패장",
+    "shoes": "짚신",
+    "acc1": "부적",
+    "acc2": "부적"
+  },
   "petNames": {
     "pet-gold": "지옥나비",
     "pet-belly": "꼬마 쥐",

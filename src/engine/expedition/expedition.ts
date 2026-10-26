@@ -29,6 +29,7 @@ import { getBoss, isBossId } from '../../data/bosses';
 import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
 import { petBonus, rollAnyPet, type PetCarry } from '../pet';
+import { applyGearToParams, rollGear, rollGrade, type GearCarry, type GearRoll } from '../gear';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
@@ -46,6 +47,8 @@ const REROLL_SEED_SALT = 0x6c8e9cf5;
 const FREE_BOSS_SEED_SALT = 0x1b873593;
 /** 펫 굴림 (GDD 90장): 바퀴마다 (시드 ^ 이 값 ^ 바퀴) — 원정 난수(rng·lootRng·varRng)를 건드리지 않는다. 펫이 없으면 굴리지 않는다 */
 const PET_SEED_SALT = 0x7f4a7c15;
+/** 장비 드롭 굴림 (GDD 91장 2번): 이긴 전투마다 (시드 ^ 이 값 ^ 전투 번호) — 원정 난수를 건드리지 않는다. gearDrops 가 아니면 굴리지 않는다 */
+const GEAR_SEED_SALT = 0x2f6b9d43;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 const TUT = BALANCE.provisional.tutorialRun;
@@ -300,6 +303,12 @@ export interface ExpeditionState extends RiskState {
   petDrops?: boolean;
   /** 이 원정 바퀴 끝 보상으로 나온 펫 (귀환 때 game.ts 가 보관함에 넣거나, 이미 가졌으면 골드로) */
   petFinds?: { petId: string; lap: number }[];
+  /** 낀 장비 합계 (GDD 91장, C.150): 출발 때 복사. 없으면 장비 효과 없음 */
+  gear?: GearCarry | null;
+  /** 이긴 전투에서 장비가 나올 수 있나 (게임만 켬 — 점검 봇·테스트는 끔) */
+  gearDrops?: boolean;
+  /** 이 원정에서 나온 장비 (귀환 때 game.ts 가 보관함에 — 가득이면 골드로) */
+  gearFinds?: { roll: GearRoll; lap: number; from: 'normal' | 'elite' | 'boss' }[];
 }
 
 /** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수로 치지 않고 능력치 6종을 같은 양 올린다 */
@@ -352,6 +361,10 @@ export interface ExpeditionSetup {
   pet?: PetCarry | null;
   /** 바퀴 끝 보상에서 펫이 나올 수 있나 (게임만 true) */
   petDrops?: boolean;
+  /** 낀 장비 합계 (GDD 91장 7번): 없으면 효과 없음 (balance:check 기준 봇은 장비 없음) */
+  gear?: GearCarry | null;
+  /** 이긴 전투에서 장비가 나올 수 있나 (게임만 true) */
+  gearDrops?: boolean;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -424,6 +437,8 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     ...(setup.tilesLocked ? { tilesLocked: true } : {}),
     ...(setup.pet && !setup.tutorial ? { pet: { id: setup.pet.id, level: setup.pet.level } } : {}),
     ...(setup.petDrops && !setup.tutorial ? { petDrops: true, petFinds: [] } : {}),
+    ...(setup.gear ? { gear: structuredClone(setup.gear) } : {}),
+    ...(setup.gearDrops && !setup.tutorial ? { gearDrops: true, gearFinds: [] } : {}),
   };
   // 스토리 화의 고정 길 (GDD 25-4): 정해진 칸에 정해진 타일
   if (episode) for (const [cell, id] of Object.entries(episode.road)) exp.slots[Number(cell)] = id;
@@ -747,6 +762,8 @@ function startBattleAt(
   // 펫 보호막 (GDD 90장): 전투 시작 보호막(최대 체력 비율)에 더한다
   const petShield = petBonus(exp.pet, 'guard');
   if (petShield > 0) params.startShieldFraction = (params.startShieldFraction ?? 0) + petShield;
+  // 장비 (GDD 91장 4번): 능력치·치명·계열 블록 피해·치명 피해·시작 보호막, 강적·보스면 강적 피해
+  applyGearToParams(params, exp.gear, cls === 'elite' || bossId !== null);
   // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서
   let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1) * (exp.tutorial ? TUT.enemyHpMult : 1);
@@ -843,6 +860,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     endExpedition(exp, 'defeated', 'battle-lost');
     return record;
   }
+  // 장비 드롭 (GDD 91장 2번): 강적·보스 높게, 일반 낮게. 따로 만든 난수라 다른 굴림을 밀지 않는다
+  rollGearDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
   // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지
   if (exp.victoriesThisLap === 0) drawTile(exp);
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
@@ -1178,6 +1197,17 @@ function petHungerMult(exp: Pick<ExpeditionState, 'pet'>): number {
 /** 펫 골드 배율 (GDD 90장 pet-gold): 1 + 증가율. 펫이 없으면 1 */
 function petGoldMult(exp: Pick<ExpeditionState, 'pet'>): number {
   return 1 + petBonus(exp.pet, 'gold');
+}
+
+/** 장비 드롭 굴림 (GDD 91장 2번): gearDrops 일 때만. ★ = 원정 난이도, 등급 = dropGrades[상대 등급], 종류 무작위 */
+function rollGearDrop(exp: ExpeditionState, from: 'normal' | 'elite' | 'boss'): void {
+  if (!exp.gearDrops || exp.tutorial) return;
+  const G = BALANCE.provisional.gear;
+  const rng = createRng((exp.seed ^ GEAR_SEED_SALT ^ Math.imul(exp.battles.length, 2246822519)) >>> 0);
+  const rand = () => nextFloat(rng);
+  if (rand() >= G.dropChance[from]) return;
+  const roll = rollGear({ grade: rollGrade(G.dropGrades[from]!, rand), star: exp.difficulty }, rand);
+  (exp.gearFinds ??= []).push({ roll, lap: exp.lap, from });
 }
 
 /** 바퀴 끝 펫 굴림 (GDD 90장): 바퀴 끝 보상 펫(petDrops, 2%) · pet-seek 타일 +1장(10%). 바퀴마다 따로 만든 난수라 다른 굴림을 밀지 않는다 */

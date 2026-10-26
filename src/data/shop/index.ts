@@ -6,10 +6,11 @@
 import { FOOD_IDS, type FactionConfig, type FoodId } from '../../engine/faction';
 import { SKINS, getSkin, skinLabel } from '../skins';
 import { ART_FILES, findArtFile } from '../art/files';
+import { isGearKind, type GearKind } from '../gear';
 import raw from './items.json';
 import wandererRaw from './wanderer.json';
 
-export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot'] as const;
+export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
 
 export const COSMETIC_CATEGORIES = ['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate', 'enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame', 'keyring', 'device'] as const;
@@ -30,8 +31,10 @@ export interface GoldItemDef {
   category: ItemCategory;
   /** kind 'food' 의 먹이 종류 (이름은 종족 설정 foodNames) */
   food?: FoodId;
-  /** 표시 이름 (먹이는 없음 — 종족 설정) */
+  /** 표시 이름 (먹이·장비는 없음 — 종족 설정) */
   name?: string;
+  /** kind 'gear' 의 장비 종류 (GDD 91장 2번: 기본 상점 = 노말) */
+  gearKind?: GearKind;
 }
 
 export interface CosmeticItemDef {
@@ -92,10 +95,11 @@ function parseGold(r: unknown): GoldItemDef {
   if (typeof g.id !== 'string' || !g.id) errors.push('id');
   if (!(GOLD_KINDS as readonly unknown[]).includes(g.kind)) errors.push(`kind: ${GOLD_KINDS.join(' | ')}`);
   if (g.kind === 'food' && !(FOOD_IDS as readonly unknown[]).includes(g.food)) errors.push('food');
-  if (g.kind !== 'food' && (typeof g.name !== 'string' || !g.name)) errors.push('name');
+  if (g.kind === 'gear' && !isGearKind(g.gearKind)) errors.push('gearKind');
+  if (g.kind !== 'food' && g.kind !== 'gear' && (typeof g.name !== 'string' || !g.name)) errors.push('name');
   if (!(ITEM_CATEGORIES as readonly unknown[]).includes(g.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
   if (errors.length) throw new Error(`상점 골드 품목 데이터 오류 (${String(g.id ?? '?')}): ${errors.join(', ')}`);
-  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}) };
+  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}), ...(g.kind === 'gear' ? { gearKind: g.gearKind as GearKind } : {}) };
 }
 
 function parseCosmetic(r: unknown): CosmeticItemDef {
@@ -227,7 +231,7 @@ export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files:
 export const WANDERER_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
 export type WandererGrade = (typeof WANDERER_GRADES)[number];
 export const WANDERER_GRADE_NAMES: Record<WandererGrade, string> = { normal: '보통', rare: '희귀', epic: '영웅', legendary: '전설' };
-export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir', 'pet'] as const;
+export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir', 'pet', 'gear'] as const;
 export type WandererKind = (typeof WANDERER_KINDS)[number];
 
 export interface WandererItemDef {

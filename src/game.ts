@@ -2,7 +2,7 @@
 
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
-import { completedElements, gainTrait, LIBERATION_SLOT_MAX, liberationEligible, newBuild, setLiberationSlot, type BuildState } from './engine/absorb';
+import { gainTrait, LIBERATION_SLOT_MAX, liberationEligible, newBuild, setLiberationSlot, type BuildState } from './engine/absorb';
 import { applyExpeditionEnd, CARE_ACTIONS, doNestAction, newNest, respondCare, tickCareRequest, type CareAction, type CareOutcome, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
@@ -43,18 +43,19 @@ import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCate
 import { advanceWanderer, newWandererState, sanitizeWanderer, type WandererState } from './engine/wanderer';
 import { idleActiveHours, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
 import { createRng, nextFloat } from './engine/rng';
+import { grantGear, newGearState, sanitizeGear, sellGold, type GearState } from './engine/gear';
 import { addPetLaps, carriedPet, grantPet, newPetState, pickNewPet, petBonus, sanitizePets, type PetState } from './engine/pet';
 import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
 import { CONSUMABLE_IDS } from './inventory';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 43; // C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 44; // C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다").
  *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
  *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 43; // C.147: 형식 43 과 같이 올림 (C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
+export const MIN_LOADABLE_SAVE_FORMAT = 44; // C.150: 형식 44 와 같이 올림 (C.147: 43, C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -305,6 +306,8 @@ export interface SharedState {
   wanderer: WandererState;
   /** 펫 (GDD 90장, 형식 42): 가진 펫·친밀도 바퀴·데리고 다니는 펫·첫 진화 선물. 슬롯 공유(진화·환생·트랙 바꿈에도 그대로) */
   pets: PetState;
+  /** 장비 (GDD 91장, 형식 44): 가진 장비·강화·장착 5칸. 슬롯 공유(진화·환생·트랙 바꿈에도 그대로) */
+  gear: GearState;
 }
 
 /** 기본으로 주는 꾸밈 id (GDD 29장: 영옥 구슬) */
@@ -318,7 +321,7 @@ export function defaultWear(): WearState {
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState() };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState(), gear: newGearState() };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -339,7 +342,7 @@ export function sanitizeShared(raw: unknown): SharedState {
   return {
     soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards,
     rerollTickets: Math.min(SX.rerollMax, nonNegInt(r.rerollTickets)), deckSlots: Math.min(SX.deckSlotPrices.length, nonNegInt(r.deckSlots)), cosmetics,
-    items: sanitizeItems(r.items), wanderer: sanitizeWanderer(r.wanderer), pets: sanitizePets(r.pets),
+    items: sanitizeItems(r.items), wanderer: sanitizeWanderer(r.wanderer), pets: sanitizePets(r.pets), gear: sanitizeGear(r.gear),
   };
 }
 
@@ -770,15 +773,7 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
     log.risk.breakthroughs++;
     if (exp.outcome === 'returned') log.risk.survivedBreakthroughs++;
   }
-  // 이 원정이 끝난 뒤의 슬롯으로 속성 보너스 완성 기록 (패배로 잃은 진행도는 세지 않는다). 기록 이름은 옛 구조(lineageId) 그대로, 값은 속성 id
-  for (const lineageId of completedElements(exp.build)) {
-    let rec = log.lineages.find((l) => l.lineageId === lineageId);
-    if (!rec) log.lineages.push((rec = { lineageId, completed: false, conflictingTried: false }));
-    if (!rec.completed) {
-      rec.completed = true;
-      rec.firstCompletedRunId = exp.runId;
-    }
-  }
+  // 속성 보너스 완성 기록(runLog.lineages)은 C.150 에 멈춤 — 같은 속성 3개 보너스 삭제 (GDD 94장 B 후속). 옛 기록 자리는 그대로 둔다
   // 영혼 결정 (GDD 22-3): 이 원정에서 이긴 강적 수만큼 (+ 바퀴 변이 폭풍의 추가분, GDD 25-5)
   save.shared.soulCrystals += exp.battles.filter((b) => b.won && b.enemyClass === 'elite').length * BALANCE.provisional.soulCrystals.perElite + (exp.bonusSoul ?? 0);
   // 먹이 전리품 (GDD 23-1): 지킨 먹이를 보유에 넣고(상한 9), 그래도 하나도 없으면 간식 2개 (막힘 방지). 결과 화면이 exp.foodSettled 를 읽는다
@@ -795,6 +790,7 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   for (const id of sum.kept) save.tiles.collection[id] = (save.tiles.collection[id] ?? 0) + 1;
   // 놓지 않고 남은 획득 타일은 이미 보유에 들어 있다 — 덱이 없어져(C.140) 따로 넣을 곳이 없다
   settlePets(save, exp, nowMs);
+  settleGear(save, exp, nowMs);
   settleWanderer(save, exp, nowMs);
   applyExpeditionEnd(save.nest, exp, nowMs);
   // 수련권 (GDD 22-5): 원정에서 돌아올 때마다(승패 무관) +1, 최대 3
@@ -841,6 +837,20 @@ function settlePets(save: SaveData, exp: ExpeditionState, nowMs: number): void {
     }
   }
   if (exp.pet) petLaps(save, exp.pet.id, exp.lapsCompleted, nowMs, exp.runId);
+}
+
+/** 장비 정산 (GDD 91장 2번): 원정에서 나온 장비를 보관함에(지고 와도 받음 — 펫과 같이). 가득이면 바로 판 골드. 런 로그 gear */
+function settleGear(save: SaveData, exp: ExpeditionState, nowMs: number): void {
+  for (const f of exp.gearFinds ?? []) {
+    const base = { at: nowMs, factionId: save.factionId, gearKind: f.roll.kind, grade: f.roll.grade, star: f.roll.star, source: 'drop' as const, from: f.from, runId: exp.runId, lap: f.lap };
+    const it = grantGear(save.shared.gear, f.roll, nowMs);
+    if (it) save.runLog.gear.push({ ...base, kind: 'get', uid: it.uid });
+    else {
+      const gold = sellGold(f.roll);
+      save.shared.tradeCoins += gold;
+      save.runLog.gear.push({ ...base, kind: 'autoSell', gold });
+    }
+  }
 }
 
 /** 펫에 바퀴를 더하고 친밀도가 오르면 런 로그 level */

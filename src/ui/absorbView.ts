@@ -5,10 +5,11 @@ import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
 import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbModeRule, absorbRisk, completedElements, elementCounts, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
+import { absorbModeRule, absorbRisk, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
 import { absorbEvOf, chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
+import { isTestMode } from './testMode';
 import { button, chip, el, icon, info, meter, notice, panel, tag } from './bha/dom';
 import { lcdPage } from './bha/lcdpage';
 import { val } from './bha/expedition';
@@ -142,14 +143,9 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       grid.append(s);
     });
     box.append(grid);
-    const counts = elementCounts(b);
-    const done = completedElements(b);
-    const progress = Object.entries(counts).map(([l, n]) => `${elementName(l, faction.id)} ${n}/${AX.elementBonusCount}`);
-    if (done.length > 0) {
-      box.append(notice('good', `${faction.lineageBonusName}: ${done.map((l) => elementName(l, faction.id)).join(', ')} 블록 위력(피해·막기·회복) +${Math.round(AX.elementSkillBonus * 100)}% (임시)`));
-    } else if (progress.length > 0) {
-      box.append(el('p', 'bha-faint', `${faction.lineageBonusName} 진행: ${progress.join(' · ')} (같은 속성 ${AX.elementBonusCount}개)`));
-    }
+    // 속성 강화 진행 (GDD 84장 8번). 같은 속성 3개 보너스(n/3)는 C.150 에 삭제 (GDD 94장 B 후속)
+    const enh = Object.keys(b.enhance ?? {}).filter((l) => enhanceLevel(b, l) > 0).map((l) => `${elementName(l, faction.id)} ${enhanceLevel(b, l)}/${AX.enhance.max}`);
+    if (enh.length > 0) box.append(el('p', 'bha-faint', `속성 강화: ${enh.join(' · ')}`));
     const parts = b.slots.filter((id): id is string => id !== null && getTrait(id).kind === 'part');
     if (parts.length > 0) {
       const how = faction.appearanceChange ? '본체 외형이 변한다' : `본체는 그대로, ${faction.slotName} 외형이 변한다`;
@@ -194,6 +190,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const breaks = (m: AbsorbMode) => exp.risk + riskOf(m) >= RX.limit;
     const risk = riskOf('both');
     const willBreak = breaks('both');
+    /** 갈래 설명 앞머리: 가진 속성 = '강화', 처음 먹는 속성 = '특성·속성 O' (GDD 94장 B 후속, C.150) */
+    const gain = owned() ? '강화' : '특성·속성 O';
     const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
     const rareNote = offer!.rare ? notice('rare', '이 개체의 희귀 특성이 후보에 확정으로 나온다.', { title: '희귀 개체!' }) : null;
     const lin = el('span');
@@ -217,8 +215,9 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
           // 속성 강화 (GDD 84장 8번): 이미 가진 계열이어도 그 속성 적을 흡수하면 +1, 효과는 100 까지 (뒤에도 횟수는 센다)
           { label: '흡수하면', mod: 'stack', value: enhanceRow() },
           // 흡수 갈래 4줄 (GDD 52): 셋은 허기 리셋·타일 +1 공통, 리스크·노력치·특성이 다르다
-          { label: MODE_LABELS.both.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), evTextOf('both') ? ` · 노력치 ${evTextOf('both')}` : ' · 노력치 없음') },
-          { label: MODE_LABELS.trait.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(riskOf('trait'))}`, false), ' · 노력치 없음') },
+          // 가진 속성이면 새 특성 없이 강화만 (GDD 94장 B 후속, C.150) — 갈래 설명도 '강화'
+          { label: MODE_LABELS.both.label, mod: 'stack', value: withNum(`${gain} · ${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), evTextOf('both') ? ` · 노력치 ${evTextOf('both')}` : ' · 노력치 없음') },
+          { label: MODE_LABELS.trait.label, mod: 'stack', value: withNum(`${gain} · ${faction.riskGaugeName} `, risky(`+${Math.round(riskOf('trait'))}`, false), ' · 노력치 없음') },
           { label: MODE_LABELS.stat.label, mod: 'stack', value: withNum(`특성·속성 X · ${faction.riskGaugeName} `, risky(`+${Math.round(riskOf('stat'))}`, false), evTextOf('stat') ? ` · 노력치 ${evTextOf('stat')}` : ' · 노력치 없음') },
           { label: '놓아주면', mod: 'stack', value: withNum(`${faction.riskGaugeName} `, risky(`−${RX.releaseRelief}`, true), ` · ${faction.stabilityName} `, risky(`+${RX.releaseStability}`, true)) },
         ]),
@@ -240,7 +239,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       return b;
     };
     const modeBtn = (m: AbsorbMode, icon: string, go: () => void): HTMLButtonElement => {
-      const b = sub(button({ label: MODE_LABELS[m].label, icon, variant: breaks(m) ? 'danger' : m === 'both' ? 'primary' : undefined, size: 'lg', onClick: go }), breaks(m) ? '한계 돌파한다' : MODE_LABELS[m].sub);
+      const b = sub(button({ label: MODE_LABELS[m].label, icon, variant: breaks(m) ? 'danger' : m === 'both' ? 'primary' : undefined, size: 'lg', onClick: go }), breaks(m) ? '한계 돌파한다' : owned() && m !== 'stat' ? MODE_LABELS[m].sub.replace('특성', '강화') : MODE_LABELS[m].sub); // 가진 속성은 특성 대신 강화 (C.150)
       b.dataset.mode = m;
       return b;
     };
@@ -269,18 +268,14 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       const list = el('div', 'bha-stack');
       for (const id of offer!.candidates) {
         const t = getTrait(id);
-        const n = (elementCounts(exp.build)[t.element] ?? 0) + 1;
-        const shown = Math.min(n, AX.elementBonusCount);
         const c = paintElement(el('button', 'bha-cand'), t.element);
         c.type = 'button';
         const mark = el('span', 'bha-cand__mark');
         mark.append(elementDot(t.element, faction.id));
         const top = el('span', 'bha-cand__top');
         top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), chip('새 블록'), ...traitTags(id));
-        const pips = el('span', 'bha-pips');
-        for (let i = 0; i < AX.elementBonusCount; i++) pips.append(el('i', i < shown - 1 ? 'is-on' : i === shown - 1 ? 'is-next' : ''));
-        const foot = el('span', 'bha-cand__foot');
-        foot.append(pips, `장착하면 ${elementName(t.element, faction.id)} ${shown}/${AX.elementBonusCount}${n >= AX.elementBonusCount && !isFull(exp.build) ? ` → ${faction.lineageBonusName}!` : ''}`);
+        // 후보는 처음 먹는 속성만 나온다 (GDD 94장 B) — 같은 속성 n/3 표시는 C.150 에 삭제, 강화 단계로
+        const foot = el('span', 'bha-cand__foot', `${elementName(t.element, faction.id)} 블록을 처음 얻는다 · 강화 ${enhanceLevel(exp.build, t.element)}/${AX.enhance.max}`);
         const body = el('span', 'bha-cand__body');
         body.append(top, el('span', 'bha-cand__desc', traitDescription(id, faction.id)), foot);
         c.append(mark, body);
@@ -341,8 +336,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const parts = step === 'choose' ? chooseStep() : step === 'pick' ? pickStep() : replaceStep();
     const side = [...parts.side];
     if (error && step !== 'choose') side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
-    // 임시 데이터 안내는 왼쪽 열 맨 아래에 둔다: 오른쪽 열은 행동 버튼까지 스크롤 없이 한 화면에 보이게 (T-4)
-    const main = [...parts.main, el('p', 'bha-faint', PROVISIONAL_NOTE)];
+    // 임시 데이터 안내는 테스트 모드에서만, 왼쪽 열 맨 아래 (T-4, 플레이어 화면에서는 뺀다 — GDD 94장 A 2번과 같이, C.150)
+    const main = isTestMode() ? [...parts.main, el('p', 'bha-faint', PROVISIONAL_NOTE)] : parts.main;
     // 가로 LCD (T-3): 머리 = 단계 표시, 왼쪽·오른쪽 열이 각자 그 안에서 스크롤 (행동 버튼이 있는 오른쪽은 대부분 한 화면)
     const head = el('header', 'bha-absorb__head');
     head.append(steps(stepNo), el('h1', 'bha-h1', parts.title));

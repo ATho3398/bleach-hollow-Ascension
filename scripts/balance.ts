@@ -7,7 +7,8 @@ import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
 import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, liberationStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
 import { createExpedition, enemyScale, mutationMods, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
-import { buildCombatParams, canAbsorb, completedElements, gainTrait, newBuild } from '../src/engine/absorb';
+import { referenceLoadout, type GearCarry } from '../src/engine/gear';
+import { buildCombatParams, canAbsorb, gainTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
 import { ELEMENT_IDS, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
@@ -413,7 +414,6 @@ if (want('absorb')) for (const stopLap of [4, 6]) {
     let bt = 0;
     let defeated = 0;
     let traits = 0;
-    let lineage = 0;
     let risk = 0;
     let secs = 0;
     let battles = 0;
@@ -428,7 +428,6 @@ if (want('absorb')) for (const stopLap of [4, 6]) {
       if (e.breakthrough) bt++;
       if (e.outcome === 'defeated') defeated++;
       traits += e.build.owned.length;
-      if (completedElements(e.build).length > 0) lineage++;
       risk += e.risk;
       food += e.foodLoot.length;
       for (const b of e.battles) {
@@ -441,7 +440,7 @@ if (want('absorb')) for (const stopLap of [4, 6]) {
     }
     absorbStats[`${stopLap}-${policy}`] = { breakthrough: bt, defeated, absorbableRate: wins ? absorbable / wins : 0, endRisk: risk / M };
     console.log(
-      `  ${stopLap}바퀴 ${POLICY_NAME[policy]}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 속성 보너스 ${lineage}/${M} · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투 · 먹이 전리품 ${(food / M).toFixed(1)}개`,
+      `  ${stopLap}바퀴 ${POLICY_NAME[policy]}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투 · 먹이 전리품 ${(food / M).toFixed(1)}개`,
     );
   }
 }
@@ -1044,7 +1043,7 @@ if (want('difficulty')) {
   console.log(`\n원정 난이도 ★ (GDD 32-1, 사람형 봇, 그 단계에 갓 닿은 몸 × ${DR}원정, 4바퀴 귀환·흡수) — 종족값 합계 ${BALANCE.provisional.stats.tierTotals.join('/')}, ★ 체력 배율 ${Array.from({ length: MAX_DIFFICULTY }, (_, i) => difficultyEnemyScale(i + 1).hp.toFixed(2)).join('/')}`);
   type Row = { win: number; nWin: number; eWin: number; nSecs: number; eSecs: number; defeat: number; n: number; e: number; gold: number; food: number };
   const rows: Record<string, Row> = {};
-  const measure = (bodies: SaveData[], star: number, tier: number, streak = 0): Row => {
+  const measure = (bodies: SaveData[], star: number, tier: number, streak = 0, gear: GearCarry | null = null): Row => {
     let battles = 0, wins = 0, nW = 0, nG = 0, eW = 0, eG = 0, nS = 0, eS = 0, defeated = 0, runs = 0, gold = 0, food = 0;
     bodies.forEach((body, bi) => {
       for (let k = 0; k < DR; k++) {
@@ -1052,7 +1051,7 @@ if (want('difficulty')) {
         const e = playExpedition(
           createExpedition({
             factionId: 'hollow', difficulty: star, streak, seed: 50000 + bi * 97 + k * 13 + tier * 7 + star * 1000, runId: nextRunId(save), hunger: 20, condition: 80,
-            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, gear,
           }),
           { returnAfterLap: 4, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
         );
@@ -1098,6 +1097,19 @@ if (want('difficulty')) {
   }
   // 1단계 몸은 특성이 없는 새 세이브, 2단계부터는 흡수 특성 2~4개·노력치가 있는 진화 봇 몸이라 처치 시간은 참고로만 (단계 간 등가는 위 '권장 단계 등가' 표가 가드)
   console.log(`  권장 ★ 일반 처치 시간 단계별: ${recNormalSecs.map((x) => x.toFixed(1)).join(' / ')}초 (참고 — 1단계는 특성 없는 새 몸)`);
+  // ── 장비 참고 줄 (GDD 91장 7번, C.150): 기준 봇은 장비 없음(위 가드 그대로) — 같은 몸·같은 시드에 '그 단계 평균 장비'(5칸 레어 +2, ★ = 권장)를 끼우면 얼마나 쉬워지나. 가드 아님 ──
+  const RL = BALANCE.provisional.gear.refLoadout;
+  console.log(`  참고 — 그 단계 평균 장비 (5칸 ${RL.grade} +${RL.plus}, ★ = 권장, 기준 봇과 같은 몸·시드):`);
+  for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
+    const bodies = tier === 0 ? freshBodies : campaignFirstAt[tier] ?? [];
+    const rec = recommendedDifficulty(tier);
+    const base = rows[`${tier}/${rec}`];
+    if (!base || bodies.length === 0) continue;
+    const load = referenceLoadout(tier);
+    const g = measure(bodies, rec, tier, 0, load);
+    const st = Object.entries(load.stats).map(([k, v]) => `${k}+${v}`).join(' ');
+    console.log(`    ${tier + 1}단계 ★${rec} 장비 [${st} 치명+${(load.crit * 100).toFixed(1)}%] 일반 ${(g.nWin * 100).toFixed(0).padStart(3)}% ${g.nSecs.toFixed(1).padStart(5)}초 (없음 ${base.nSecs.toFixed(1)}초) · 강적 ${(g.eWin * 100).toFixed(0).padStart(3)}% ${g.eSecs.toFixed(1).padStart(5)}초 (없음 ${(base.eWin * 100).toFixed(0)}% ${base.eSecs.toFixed(1)}초) · 원정 패배 ${(g.defeat * 100).toFixed(0)}% (없음 ${(base.defeat * 100).toFixed(0)}%)`);
+  }
 
   // ── 재화 경제 (GDD 32-1 10·11번): 권장 ★ × 연속 0/5/10 의 원정 1판 지킨 골드·먹이. 목표: ★5·10연속 골드 ≤ ★1(새 몸, 연속 0)의 2배 ──
   const DX = BALANCE.provisional.difficulty;

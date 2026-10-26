@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 71; // C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
+export const BALANCE_VERSION = 72; // C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -65,10 +65,7 @@ export const BALANCE = {
       candidatesNormalMax: 2,
       /** 공격 계열 섞임 (GDD 18-8 ③, C.41, 임시): 장착한 공격 특성이 이 수보다 적은 계열이면, 흡수 후보에 아직 없는 계열의 공격 특성을 1개 끼워 넣는다(그 계통에 있을 때). 첫 흡수(장착 skill 없음)는 서로 다른 계열 공격 후보 2개 */
       attackFamilyGuarantee: 2,
-      /** 슬롯 안 같은 속성 N개 → 속성 보너스 (GDD 4-1 계통 보너스를 속성으로, C.47) */
-      elementBonusCount: 3,
-      /** 속성 보너스: 그 속성 skill 특성 블록의 위력(피해·막기 지속·회복량)에 가산하는 비율 (GDD 4-1 +50%) */
-      elementSkillBonus: 0.5,
+      /* 슬롯 안 같은 속성 3개 → 속성 보너스(elementBonusCount·elementSkillBonus, C.47)는 C.150 에 삭제 (GDD 94장 B 후속 v5.194: 가진 속성은 강화만이라 닿을 수 없다 — 강화 곡선이 대신함) */
       /* 흡수 후보 섞기(otherElementCandidate, C.47)는 C.125 에 삭제 (GDD 70장: 후보는 그 적 속성 특성에서만) */
       /** 흡수하면 허기가 이 값으로 리셋 (GDD 4장 "허기 리셋") */
       hungerAfterAbsorb: 0,
@@ -754,6 +751,10 @@ export const BALANCE = {
         'w-feast-crate': { price: 380, amount: 2 },
         'w-soul-elixir': { price: 700, amount: 100 },
         'w-pet-egg': { price: 600, amount: 1 },
+        // 장비 (GDD 91장 2번, C.150): 품목 등급 = 장비 등급, 안 가진 종류 우선 없이 종류 무작위 1개 → 보관함 장비 탭
+        'w-gear-rare': { price: 300, amount: 1 },
+        'w-gear-epic': { price: 700, amount: 1 },
+        'w-gear-legend': { price: 1500, amount: 1 },
       } as Record<string, { price: number; amount: number }>,
     },
     /** 대기 모드 = 방치 자동 모험 (GDD 85장 6번, C.140 provisional — 사용자 "24시간 내내 모험 돌릴 때 뜨는 템과 xp 스텟 등등의 n%만큼만", n·기준량은 코드 판단).
@@ -782,6 +783,36 @@ export const BALANCE = {
       affinityStep: 0.25,
       lapDropChance: 0.02,
       dupGold: 40,
+    },
+    /** 장비 (GDD 91장 v5.187 확정, C.150 provisional — 이름·수치 모두 가칭, 마스터 위임으로 코드가 정함). 칸 5개(무기·방어구·신발·장신구 1·2).
+     *  능력치 한 줄 값 = round(★ 기준 능력치(refStatOf(★−1)) × lineFrac[등급] × kinds[종류].weight) — 얻은 원정 ★ 가 높을수록 세다. 치명 줄은 critLine[등급](확률 절대값).
+     *  무기 = 힘·지능 중 1줄 · 방어구 = 체력·방어 2줄 · 신발 = 속도 1줄 · 장신구 = pool 에서 1~2줄 무작위(서로 다름). 영웅·전설은 특수 효과 1줄(special[효과][0 영웅, 1 전설]).
+     *  강화 +1~+maxPlus(골드, 실패 없음): 능력치 줄 × (1 + plusStep × 단계), 정수 능력치는 단계마다 최소 +1 — 특수 효과는 그대로. 비용 = enhanceCost[등급] × (지금 단계 + 1).
+     *  드롭: 이긴 전투마다 dropChance(일반·강적·보스) → 등급 dropGrades(%). 기본 상점 = 노말 shopPrice(★ = 지금 단계 권장). 보관 상한 cap — 넘치면 sellGold 로 바로 판다.
+     *  balance:check 기준 봇은 장비 없음(가드 그대로). 참고 줄 '그 단계 평균 장비' = refLoadout(등급·강화, 5칸, 무기 힘·장신구 정신력+치명) */
+    gear: {
+      lineFrac: { normal: 0.06, rare: 0.09, epic: 0.12, legendary: 0.16 } as Record<string, number>,
+      kinds: {
+        weapon: { weight: 1, pool: ['atk', 'int'], lines: [1, 1] },
+        armor: { weight: 0.8, pool: ['hp', 'def'], lines: [2, 2] },
+        shoes: { weight: 0.8, pool: ['spd'], lines: [1, 1] },
+        accessory: { weight: 0.6, pool: ['crit', 'spr', 'hp', 'atk', 'int', 'def'], lines: [1, 2] },
+      } as Record<string, { weight: number; pool: string[]; lines: [number, number] }>,
+      critLine: { normal: 0.01, rare: 0.015, epic: 0.02, legendary: 0.03 } as Record<string, number>,
+      special: { family: [0.1, 0.15], elite: [0.08, 0.12], critDamage: [0.15, 0.25], shield: [0.03, 0.05] } as Record<string, [number, number]>,
+      maxPlus: 5,
+      plusStep: 0.1,
+      enhanceCost: { normal: 30, rare: 60, epic: 120, legendary: 240 } as Record<string, number>,
+      dropChance: { normal: 0.03, elite: 0.25, boss: 0.6 },
+      dropGrades: {
+        normal: { normal: 80, rare: 17, epic: 3, legendary: 0 },
+        elite: { normal: 55, rare: 32, epic: 11, legendary: 2 },
+        boss: { normal: 25, rare: 40, epic: 27, legendary: 8 },
+      } as Record<string, Record<string, number>>,
+      shopPrice: 120,
+      sellGold: { normal: 15, rare: 40, epic: 100, legendary: 250 } as Record<string, number>,
+      cap: 40,
+      refLoadout: { grade: 'rare', plus: 2 },
     },
     /** 보관함 (GDD 86장 4번, C.140 provisional): 소모품(정화제·각성제·상인 소모품) 종류별 보관 상한 — 먹이 상한과 같은 9 */
     inventory: { consumableCap: 9 },

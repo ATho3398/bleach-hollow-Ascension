@@ -43,12 +43,14 @@ export interface ItemCardSpec {
   foot?: string;
   /** 카드 상태 */
   state?: 'worn' | 'locked' | 'owned';
+  /** 등급 (장비, GDD 91장 3번): 테두리 색 = 등급 색 (normal · rare · epic · legendary) */
+  grade?: string;
   onClick: () => void;
 }
 
 /** 카드 한 장 (카드 전체가 버튼): 큰 그림이 위, 이름·설명, 아래 줄 */
 export function itemCard(s: ItemCardSpec): HTMLElement {
-  const card = el('button', `bha-itemcard${s.state ? ` is-${s.state}` : ''}`);
+  const card = el('button', `bha-itemcard${s.state ? ` is-${s.state}` : ''}${s.grade ? ` is-grade-${s.grade}` : ''}`);
   card.type = 'button';
   card.dataset.item = s.id;
   card.setAttribute('aria-label', `${s.name}${s.badge ? ` ${s.badge}` : ''}`);

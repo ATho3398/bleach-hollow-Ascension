@@ -72,6 +72,30 @@
       "kind": "deckSlot",
       "category": "etc",
       "name": "타일 배치 칸 +1"
+    },
+    {
+      "id": "gear-weapon",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "weapon"
+    },
+    {
+      "id": "gear-armor",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "armor"
+    },
+    {
+      "id": "gear-shoes",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "shoes"
+    },
+    {
+      "id": "gear-accessory",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "accessory"
     }
   ],
   "categories": [

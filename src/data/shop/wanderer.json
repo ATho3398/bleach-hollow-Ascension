@@ -9,6 +9,9 @@
     { "id": "w-rare-tile", "name": "봉인된 희귀 타일", "grade": "epic", "kind": "rareTile", "category": "tile" },
     { "id": "w-feast-crate", "name": "큰 먹이 상자", "grade": "epic", "kind": "food", "food": "feast", "category": "food" },
     { "id": "w-soul-elixir", "name": "영혼 정수", "grade": "legendary", "kind": "elixir", "category": "consumable" },
-    { "id": "w-pet-egg", "name": "길 잃은 동반자", "grade": "legendary", "kind": "pet", "category": "pet" }
+    { "id": "w-pet-egg", "name": "길 잃은 동반자", "grade": "legendary", "kind": "pet", "category": "pet" },
+    { "id": "w-gear-rare", "name": "떠돌이 장비 (레어)", "grade": "rare", "kind": "gear", "category": "equipment" },
+    { "id": "w-gear-epic", "name": "떠돌이 장비 (영웅)", "grade": "epic", "kind": "gear", "category": "equipment" },
+    { "id": "w-gear-legend", "name": "떠돌이 장비 (전설)", "grade": "legendary", "kind": "gear", "category": "equipment" }
   ]
 }

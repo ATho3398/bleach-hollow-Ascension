@@ -1,0 +1,24 @@
+{
+  "provisional": true,
+  "kinds": [
+    { "id": "weapon", "icon": "i-attack" },
+    { "id": "armor", "icon": "i-guard" },
+    { "id": "shoes", "icon": "i-speed" },
+    { "id": "accessory", "icon": "i-rare" }
+  ],
+  "slots": [
+    { "id": "weapon", "kind": "weapon" },
+    { "id": "armor", "kind": "armor" },
+    { "id": "shoes", "kind": "shoes" },
+    { "id": "acc1", "kind": "accessory" },
+    { "id": "acc2", "kind": "accessory" }
+  ],
+  "specials": [
+    { "id": "sp-family-a", "effect": "family", "family": "family-a" },
+    { "id": "sp-family-b", "effect": "family", "family": "family-b" },
+    { "id": "sp-family-c", "effect": "family", "family": "family-c" },
+    { "id": "sp-elite", "effect": "elite" },
+    { "id": "sp-crit-damage", "effect": "critDamage" },
+    { "id": "sp-shield", "effect": "shield" }
+  ]
+}

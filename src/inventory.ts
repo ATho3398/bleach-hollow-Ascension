@@ -13,7 +13,10 @@ import { CONSUMABLE_CAP, isWorn, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
 import { getPet, PET_IDS } from './data/pets';
 import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet } from './engine/pet';
-import type { PetRecord } from './engine/runLog';
+import type { GearRecord, PetRecord } from './engine/runLog';
+import { GEAR_GRADE_NAMES, GEAR_SLOTS, getGearSpecial, slotsForKind, type GearGrade, type GearKind, type GearSlot } from './data/gear';
+import { enhanceCost, enhanceGear, equipGear, equippedSlotOf, findGear, gearStatsOf, sellGearItem, unequipGear, type GearItem, type GearRoll, type GearStat } from './engine/gear';
+import { statName } from './data/elements';
 
 const SX = BALANCE.shop;
 const COND_MAX = BALANCE.provisional.expedition.conditionMax;
@@ -65,6 +68,8 @@ export interface InventoryEntry {
   lock: string | null;
   /** 꾸밈: 분류 id (스킨·오라 …) */
   cosmeticCategory?: string;
+  /** 장비 (GDD 91장): 등급 · 종류 · 낀 칸 (안 꼈으면 null) */
+  gear?: { grade: GearGrade; kind: GearKind; slot: GearSlot | null };
 }
 
 /** 소모품을 지금 못 쓰는 이유 */
@@ -79,7 +84,7 @@ function consumableLock(save: SaveData, id: string, faction: Pick<FactionConfig,
   return e.risk > 0 && e.condition === 0 ? `${faction.riskGaugeName} 이미 0` : e.condition > 0 && e.risk === 0 ? '컨디션 이미 가득' : '쓸 필요가 없다';
 }
 
-/** 보관함 목록 (카테고리 순서 = ITEM_CATEGORIES). 장비는 아직 품목이 없어 비어 있다(화면은 "준비 중") */
+/** 보관함 목록 (카테고리 순서 = ITEM_CATEGORIES). 장비는 C.150 부터 (GDD 91장) */
 export function inventoryOf(save: SaveData, faction: FactionConfig, files?: readonly string[]): InventoryEntry[] {
   const out: InventoryEntry[] = [];
   // 음식: 먹이 종류별 (먹이 주기 = 둥지 행동과 같은 효과)
@@ -95,6 +100,14 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     if (n > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, detail: consumableText(id, faction), action: 'use', lock: consumableLock(save, id, faction) });
   }
   if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, detail: '흡수 화면에서 특성 후보를 한 번 다시 뽑는다', action: null, lock: null });
+  // 장비 (GDD 91장): 낀 것 먼저(칸 순서), 그다음 등급 높은 것·최근 것. 장착·해제·강화·판매는 상세 창
+  for (const it of sortedGear(save)) {
+    const slot = equippedSlotOf(save.shared.gear, it.uid);
+    out.push({
+      id: it.uid, category: 'equipment', name: gearName(it, faction), count: 1, detail: gearLineText(it, faction),
+      action: slot ? 'unequip' : 'equip', lock: save.activeExpedition != null ? '원정 중에는 바꿀 수 없다' : null, gear: { grade: it.grade, kind: it.kind, slot },
+    });
+  }
   // 펫 (GDD 90장): 가진 펫, 1마리만 데리고 다닌다
   for (const id of PET_IDS) {
     const o = save.shared.pets.owned[id];
@@ -205,4 +218,127 @@ export function petNoticeOf(rec: PetRecord, faction: Pick<FactionConfig, 'petNam
     case 'dupGold': return { eyebrow: '펫', title: `이미 있는 ${name} → 골드 +${rec.gold ?? 0}` };
     default: return null;
   }
+}
+
+// ── 장비 (GDD 91장, C.150 가칭) ──
+
+const GRADE_ORDER: Record<GearGrade, number> = { legendary: 0, epic: 1, rare: 2, normal: 3 };
+
+/** 보관함 장비 순서: 낀 것(칸 순서) → 등급 높은 것 → 최근 것 */
+export function sortedGear(save: Pick<SaveData, 'shared'>): GearItem[] {
+  const g = save.shared.gear;
+  const worn = GEAR_SLOTS.map((s) => g.equipped[s]).filter((u): u is string => u !== null).map((u) => findGear(g, u)).filter((i): i is GearItem => !!i);
+  const rest = g.items.filter((i) => !worn.includes(i)).sort((a, b) => GRADE_ORDER[a.grade] - GRADE_ORDER[b.grade] || b.star - a.star || b.gotAt - a.gotAt);
+  return [...worn, ...rest];
+}
+
+/** 칸 이름 (종족 설정 gearSlotNames). 같은 이름 칸이 둘이면(장신구 1·2) 뒤에 번호 */
+export function gearSlotName(slot: GearSlot, faction: Pick<FactionConfig, 'gearSlotNames'>): string {
+  const name = faction.gearSlotNames[slot];
+  const same = GEAR_SLOTS.filter((s) => faction.gearSlotNames[s] === name);
+  return same.length > 1 ? `${name} ${same.indexOf(slot) + 1}` : name;
+}
+
+/** 장비 종류 이름 = 그 종류 첫 칸 이름 (종족 설정) */
+export function gearKindName(kind: GearKind, faction: Pick<FactionConfig, 'gearSlotNames'>): string {
+  return faction.gearSlotNames[slotsForKind(kind)[0]!];
+}
+
+/** 장비 이름: "레어 송곳니 +2" */
+export function gearName(it: Pick<GearItem, 'grade' | 'kind'> & { plus?: number }, faction: Pick<FactionConfig, 'gearSlotNames'>): string {
+  return `${GEAR_GRADE_NAMES[it.grade]} ${gearKindName(it.kind, faction)}${it.plus ? ` +${it.plus}` : ''}`;
+}
+
+const statLabel = (s: GearStat, factionId: string): string => (s === 'crit' ? '치명' : statName(s, factionId));
+
+/** 능력치 줄 문구: "힘 +5 · 치명 +1.5%" (plus 를 주면 그 단계로) */
+export function gearStatText(it: Pick<GearItem, 'stats' | 'plus'>, faction: Pick<FactionConfig, 'id'>, plus?: number): string {
+  const st = gearStatsOf(it, plus);
+  return (Object.keys(st) as GearStat[]).map((k) => `${statLabel(k, faction.id)} +${k === 'crit' ? pct(st[k]!) : st[k]}`).join(' · ');
+}
+
+/** 특수 효과 문구 (없으면 ''): "조(爪) 블록 피해 +10%" · "강적·보스에게 피해 +8%" · "치명 피해 +0.15배" · "전투 시작 보호막 (최대 체력 3%)" */
+export function gearSpecialText(it: Pick<GearItem, 'special'>, faction: Pick<FactionConfig, 'families'>): string {
+  const def = it.special ? getGearSpecial(it.special.id) : undefined;
+  if (!def || !it.special) return '';
+  const v = it.special.value;
+  switch (def.effect) {
+    case 'family': return `${faction.families.find((f) => f.id === def.family)?.name ?? def.family} 블록 피해 +${pct(v)}`;
+    case 'elite': return `강적·보스에게 피해 +${pct(v)}`;
+    case 'critDamage': return `치명 피해 +${Math.round(v * 100) / 100}배`;
+    case 'shield': return `전투 시작 보호막 (최대 체력 ${pct(v)})`;
+  }
+}
+
+/** 카드·상세 한 줄: 능력치 + 특수 효과 */
+export function gearLineText(it: Pick<GearItem, 'stats' | 'plus' | 'special'>, faction: Pick<FactionConfig, 'id' | 'families'>): string {
+  return [gearStatText(it, faction), gearSpecialText(it, faction)].filter(Boolean).join(' · ');
+}
+
+function gearLog(save: SaveData, it: Pick<GearItem, 'kind' | 'grade' | 'star'> & { uid?: string }, rec: Omit<GearRecord, 'at' | 'factionId' | 'gearKind' | 'grade' | 'star' | 'uid'>, nowMs: number): void {
+  save.runLog.gear.push({ at: nowMs, factionId: save.factionId, gearKind: it.kind, grade: it.grade, star: it.star, ...(it.uid ? { uid: it.uid } : {}), ...rec });
+}
+
+/** 장비 끼기 (slot 없으면 빈 칸 → 첫 칸). 원정 중에는 못 바꾼다. 원래 그 칸에 있던 장비는 빠진다. 런 로그 gear equip(빠진 것은 unequip) */
+export function equipGearItem(save: SaveData, uid: string, slot?: GearSlot, nowMs: number = Date.now()): GearSlot | null {
+  if (save.activeExpedition != null) return null;
+  const g = save.shared.gear;
+  const it = findGear(g, uid);
+  if (!it) return null;
+  const target = slot ?? slotsForKind(it.kind).find((s) => g.equipped[s] === null) ?? slotsForKind(it.kind)[0]!;
+  const prev = g.equipped[target] ? findGear(g, g.equipped[target]!) : undefined;
+  const to = equipGear(g, uid, slot);
+  if (!to) return null;
+  if (prev && prev.uid !== uid) gearLog(save, prev, { kind: 'unequip', slot: to }, nowMs);
+  gearLog(save, it, { kind: 'equip', slot: to }, nowMs);
+  return to;
+}
+
+/** 장비 빼기 */
+export function unequipGearItem(save: SaveData, uid: string, nowMs: number = Date.now()): boolean {
+  if (save.activeExpedition != null) return false;
+  const g = save.shared.gear;
+  const it = findGear(g, uid);
+  const slot = equippedSlotOf(g, uid);
+  if (!it || !slot || !unequipGear(g, slot)) return false;
+  gearLog(save, it, { kind: 'unequip', slot }, nowMs);
+  return true;
+}
+
+/** 강화 (골드, 실패 없음, GDD 91장 5번). 막히면 이유 */
+export function enhanceGearItem(save: SaveData, uid: string, nowMs: number = Date.now()): { ok: true; plus: number; gold: number } | { ok: false; reason: string } {
+  const it = findGear(save.shared.gear, uid);
+  if (!it) return { ok: false, reason: '없는 장비다' };
+  const cost = enhanceCost(it);
+  if (cost === null) return { ok: false, reason: `최대 강화 (+${BALANCE.provisional.gear.maxPlus})` };
+  if (save.shared.tradeCoins < cost) return { ok: false, reason: `골드가 ${cost - save.shared.tradeCoins} 모자라다` };
+  const plus = enhanceGear(save.shared.gear, uid)!;
+  save.shared.tradeCoins -= cost;
+  gearLog(save, it, { kind: 'enhance', plus, gold: cost }, nowMs);
+  return { ok: true, plus, gold: cost };
+}
+
+/** 팔기 (낀 장비는 못 판다) */
+export function sellGearEntry(save: SaveData, uid: string, nowMs: number = Date.now()): number | null {
+  const it = findGear(save.shared.gear, uid);
+  if (!it) return null;
+  const gold = sellGearItem(save.shared.gear, uid);
+  if (gold === null) return null;
+  save.shared.tradeCoins += gold;
+  gearLog(save, it, { kind: 'sell', gold, plus: it.plus }, nowMs);
+  return gold;
+}
+
+/** 장비 런 로그 → 알림 문구 (얻음·자동 판매만) */
+export function gearNoticeOf(rec: GearRecord, faction: Pick<FactionConfig, 'gearSlotNames'>): { eyebrow: string; title: string; meta?: string } | null {
+  const name = gearName({ grade: rec.grade as GearGrade, kind: rec.gearKind as GearKind }, faction);
+  const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '떠돌이 상인' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '원정 드롭';
+  if (rec.kind === 'get') return { eyebrow: '장비', title: `새 장비: ${name}`, meta: `${where} · ★${rec.star ?? 1} · 보관함 장비 탭에서 장착` };
+  if (rec.kind === 'autoSell') return { eyebrow: '장비', title: `보관함 가득 → ${name} 판매`, meta: `골드 +${rec.gold ?? 0}` };
+  return null;
+}
+
+/** 원정 중 드롭 알림 문구 (귀환 전, 런 로그 없이 굴린 값으로) */
+export function gearDropText(roll: GearRoll, faction: Pick<FactionConfig, 'gearSlotNames' | 'id' | 'families'>): string {
+  return `${gearName(roll, faction)} · ${gearLineText({ ...roll, plus: 0 }, faction)}`;
 }

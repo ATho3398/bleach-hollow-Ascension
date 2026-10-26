@@ -352,6 +352,7 @@ export interface TitleUnlockRecord {
 
 export interface RunLog {
   absorbs: AbsorbRecord[];
+  /** 속성 보너스 완성 기록 — 같은 속성 3개 보너스가 C.150 에 삭제돼 더 쌓이지 않는다 (GDD 94장 B 후속). 자리만 남김 */
   lineages: LineageRecord[];
   risk: RiskRecord;
   battles: BattleRecord[];
@@ -381,6 +382,8 @@ export interface RunLog {
   idle: IdleRecord[];
   /** 펫 기록 (C.144, 세이브 형식 42, GDD 90장 7번): 얻음·데리고 감·두고 감·친밀도 오름 */
   pets: PetRecord[];
+  /** 장비 기록 (C.150, 세이브 형식 44, GDD 91장 8번): 얻음·장착·해제·강화·판매 */
+  gear: GearRecord[];
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
@@ -419,6 +422,25 @@ export interface PetRecord {
   level?: number;
   runId?: number;
   gold?: number;
+}
+
+/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 떠돌이 상인, from = 드롭한 상대 등급),
+ *  equip/unequip = 장착·해제(slot), enhance = 강화(plus = 오른 뒤 단계, gold = 쓴 골드), sell = 판매, autoSell = 보관함이 가득 차 얻자마자 골드로 */
+export interface GearRecord {
+  at: number;
+  factionId: string;
+  kind: 'get' | 'equip' | 'unequip' | 'enhance' | 'sell' | 'autoSell';
+  uid?: string;
+  gearKind: string;
+  grade: string;
+  star?: number;
+  source?: 'drop' | 'shop' | 'wanderer';
+  from?: 'normal' | 'elite' | 'boss';
+  slot?: string;
+  plus?: number;
+  gold?: number;
+  runId?: number;
+  lap?: number;
 }
 
 /** 대기 모드 요약 1건 (GDD 85장 6번): 꺼 둔 구간·실제로 돈 시간·지급량. 시간은 시간 단위(소수 둘째 자리) */
@@ -521,5 +543,6 @@ export function emptyRunLog(): RunLog {
     wanderer: [],
     idle: [],
     pets: [],
+    gear: [],
   };
 }

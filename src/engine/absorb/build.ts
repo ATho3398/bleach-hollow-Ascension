@@ -177,13 +177,6 @@ export function elementCounts(b: BuildState): Record<string, number> {
   return out;
 }
 
-/** 속성 보너스가 켜진 속성들: 슬롯 안 같은 속성이 elementBonusCount 개 이상 (GDD 4-1, C.47 계통 → 속성) */
-export function completedElements(b: BuildState): string[] {
-  return Object.entries(elementCounts(b))
-    .filter(([, n]) => n >= AX.elementBonusCount)
-    .map(([id]) => id);
-}
-
 /** 계열의 공격 분류 (종족 설정 families[].category, GDD 20-1). 종족을 모르거나 계열이 없으면 혼합 */
 export function familyCategory(factionId: string | undefined, family: string | null | undefined): AttackCategory {
   if (!factionId || !family) return 'mixed';
@@ -206,13 +199,12 @@ export function equippedSkills(b: BuildState, factionId?: string): CombatSkill[]
   return skillsOf(b, b.slots, factionId);
 }
 
-/** 해방 블록 슬롯 특성 → 해방 중 블록 생성원 (슬롯 순서, 쓰는 칸 수는 applyEvolutionToParams 가 단계로 자른다). 속성 보너스는 장착 슬롯 기준 */
+/** 해방 블록 슬롯 특성 → 해방 중 블록 생성원 (슬롯 순서, 쓰는 칸 수는 applyEvolutionToParams 가 단계로 자른다) */
 export function liberationSkills(b: BuildState, factionId?: string): CombatSkill[] {
   return skillsOf(b, (b.liberation ?? []).filter((id) => id !== null && b.owned.includes(id)), factionId);
 }
 
 function skillsOf(b: BuildState, ids: readonly (string | null)[], factionId?: string): CombatSkill[] {
-  const bonus = new Set(completedElements(b));
   const out: CombatSkill[] = [];
   for (const id of ids) {
     if (!id) continue;
@@ -229,8 +221,8 @@ function skillsOf(b: BuildState, ids: readonly (string | null)[], factionId?: st
       family: t.family ?? null,
       powerInAttacks: t.powerInAttacks,
       chainBonus: { ...chainBonus },
-      // 속성 보너스(3개 완성) × 속성 강화(GDD 84장 8번 — 공격 특성만, 막기·회복 특성은 C.136 에 삭제)
-      powerMultiplier: (bonus.has(t.element) ? 1 + AX.elementSkillBonus : 1) * (t.role === 'attack' ? enhanceAttackMultiplier(b, t.element) : 1),
+      // 속성 강화 (GDD 84장 8번 — 공격 특성만, 막기·회복 특성은 C.136 에 삭제). 같은 속성 3개 보너스는 C.150 에 삭제 (GDD 94장 B 후속)
+      powerMultiplier: t.role === 'attack' ? enhanceAttackMultiplier(b, t.element) : 1,
     });
   }
   return out;

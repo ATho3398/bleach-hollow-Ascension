@@ -77,7 +77,8 @@ import { showGuide, tutorialAbsorbView } from './guideView';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { carriedPet } from '../engine/pet';
-import { petNoticeOf } from '../inventory';
+import { applyGearToParams, gearCarry } from '../engine/gear';
+import { gearDropText, gearNoticeOf, petNoticeOf } from '../inventory';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
 import { idleBadge, showIdlePanel, showIdleReturn } from './idleView';
@@ -773,6 +774,8 @@ export function startApp(host: HTMLElement): void {
       // 펫 (GDD 90장): 데리고 다니는 펫(친밀도까지) · 바퀴 끝 보상 펫
       pet: carriedPet(save.shared.pets),
       petDrops: true,
+      gear: gearCarry(save.shared.gear),
+      gearDrops: true,
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
@@ -878,6 +881,8 @@ export function startApp(host: HTMLElement): void {
     const params = buildCombatParams(s0.build, faction.id);
     applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
     params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
+    // 장비 (GDD 91장): 강적·보스 층이면 강적 피해도
+    applyGearToParams(params, gearCarry(s0.shared.gear), f.kind === 'elite' || !!f.bossId);
     // 꼭대기 보스 이름은 종족 설정 (적 정의의 이름을 그 문구로 바꿔 끼운다)
     const floor = f.final ? { ...f, enemy: { ...f.enemy, name: { '*': towerLabels(faction).finalBossName } } } : f;
     const s = createTowerCombat(floor, params, Math.floor(Math.random() * 2 ** 32));
@@ -975,6 +980,8 @@ export function startApp(host: HTMLElement): void {
       tilesLocked: !tilesUnlocked(save),
       pet: carriedPet(save.shared.pets),
       petDrops: true,
+      gear: gearCarry(save.shared.gear),
+      gearDrops: true,
     });
     resumeNote = '';
     activeExp = exp;
@@ -1059,7 +1066,10 @@ export function startApp(host: HTMLElement): void {
       risk: exp.risk,
       tutorial: tutorialFor(),
       onEnd: (done) => {
+        const finds = exp.gearFinds?.length ?? 0;
         finishBattle(exp, done);
+        // 장비 드롭 알림 (GDD 91장 2번): 이 전투에서 나온 장비 — 보관함에는 귀환 때 들어간다
+        for (const f of exp.gearFinds?.slice(finds) ?? []) showToast({ eyebrow: f.from === 'boss' ? '보스 드롭' : f.from === 'elite' ? '강적 드롭' : '장비 드롭', title: `장비 발견: ${gearDropText(f.roll, faction)}`, meta: `★${f.roll.star} · 귀환하면 보관함 장비 탭으로` }, 0, 3600);
         saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
         afterBattle(faction, exp);
       },
@@ -1139,10 +1149,14 @@ export function startApp(host: HTMLElement): void {
       const fromTier = save.evolution.tierIndex;
       // 걸음 수가 진화 타이밍에 닿았으면 귀환한 그 순간 자동 진화 (GDD 20-5 v4.1). 결과 화면 다음에 진화 연출을 보여 준다
       const petLog0 = save.runLog.pets.length;
+      const gearLog0 = save.runLog.gear.length;
       const evo = recordExpedition(save, exp);
       persist();
       // 펫 알림 (GDD 90장): 이번 귀환에서 얻은 펫·친밀도 오름·골드로 바뀐 펫 (첫 진화 선물 포함)
       petNotes = save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
+      // 장비 알림 (GDD 91장): 귀환 때 보관함에 들어간 드롭 장비(넷 넘으면 한 줄로)·가득 차서 판 장비
+      const gearNotes = save.runLog.gear.slice(gearLog0).map((r) => gearNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
+      petNotes.push(...(gearNotes.length > 4 ? [{ eyebrow: '장비', title: `장비 ${gearNotes.length}개를 가지고 돌아왔다`, meta: '보관함 장비 탭에서 장착' }] : gearNotes));
       growth = {
         newTraits: summarize(exp).keptTraits.length,
         evolvedTo: evo?.ok ? formDisplayName(save.evolution, faction.id) : null,
@@ -1246,6 +1260,8 @@ export function startApp(host: HTMLElement): void {
       applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total, save.training.completed);
       applyDifficultyToParams(params, star);
       params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
+      // 장비 (GDD 91장): 연습도 낀 장비 그대로 (훈련 인형 DPS 측정)
+      applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
@@ -1292,6 +1308,8 @@ export function startApp(host: HTMLElement): void {
     // 보유자마다 정해진 난이도 ★ (GDD 32-1 7번: 아래 번호일수록 낮고 No.1 = ★5)
     applyDifficultyToParams(params, holder.difficulty);
     params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
+    // 장비 (GDD 91장): 등급전 상대는 강적으로 본다
+    applyGearToParams(params, gearCarry(s0.shared.gear), true);
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,
