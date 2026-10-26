@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>컴포넌트 시트</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-sheet bha-{{theme}}" style="width:1280px;min-height:1180px;padding:32px;display:grid;gap:18px;align-content:start">
+  <div style="display:flex;align-items:baseline;gap:12px"><span class="bha-display" style="font-size:28px">컴포넌트 시트</span><span class="bha-sm bha-t2">{{themeName}} 테마 · 모든 값은 bha.css 토큰</span></div>
+
+  <!-- 블록 카드 -->
+  <div class="bha-panel" style="padding:14px 16px;display:grid;gap:12px">
+    <span class="bha-md bha-b">블록 카드 (확정: 각인 컷) · 64px 높이 · 아이콘 30px · 체인 점 왼쪽 위 · 계열 글자 오른쪽 위 컷 · 약점 오른쪽 아래</span>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+      <div style="display:grid;gap:4px"><span class="bha-xs bha-t3">공격 3계열 (노멀)</span>
+        <div style="display:flex;gap:5px">
+          <sc-for list="{{fams}}" as="f" hint-placeholder-count="3">
+            <button class="bha-block bha-block--normal" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{f.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{f.n}}</span><span class="bha-block__name">{{f.n}}</span></button>
+          </sc-for>
+        </div></div>
+      <div style="display:grid;gap:4px"><span class="bha-xs bha-t3">속성 색 ({{fA.n}})</span>
+        <div style="display:flex;gap:5px">
+          <sc-for list="{{attrs}}" as="a" hint-placeholder-count="7">
+            <div style="display:grid;gap:2px;justify-items:center"><button class="bha-block {{a.cls}}" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fA.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fA.n}}</span><span class="bha-block__name">{{fA.n}}</span></button><span class="bha-cap">{{a.n}}</span></div>
+          </sc-for>
+        </div></div>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end">
+      <div style="display:grid;gap:4px"><span class="bha-xs bha-t3">고정 색 블록</span>
+        <div style="display:flex;gap:5px">
+          <button class="bha-block bha-block--guard" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">방</span><span class="bha-block__name">막기</span></button>
+          <button class="bha-block bha-block--heal" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">회</span><span class="bha-block__name">회복</span></button>
+          <button class="bha-block bha-block--void" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a2 2 0 1 1 2-2 4 4 0 1 1-4-4 6 6 0 1 1-6 6"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">허</span><span class="bha-block__name">공허</span></button>
+          <button class="bha-block bha-block--combo" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">콤</span><span class="bha-block__name">콤보_{{fA.n}}</span></button>
+          <button class="bha-block bha-block--release" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">해</span><span class="bha-block__name">해방</span></button>
+        </div></div>
+      <div style="display:grid;gap:4px"><span class="bha-xs bha-t3">상태: 약점 · 잠김 · 선택 · 눌림 · 빈 칸</span>
+        <div style="display:flex;gap:8px">
+          <button class="bha-block bha-block--thunder is-weak" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fB.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fB.n}}</span><span class="bha-block__name">{{fB.n}}</span></button>
+          <button class="bha-block bha-block--fire is-locked" style="width:72px" aria-disabled="true"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">봉</span><span class="bha-block__name">봉인됨</span></button>
+          <button class="bha-block bha-block--normal is-selected" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fC.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fC.n}}</span><span class="bha-block__name">{{fC.n}}</span></button>
+          <button class="bha-block bha-block--normal is-pressed" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fA.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fA.n}}</span><span class="bha-block__name">{{fA.n}}</span></button>
+          <span class="bha-block bha-block--empty" style="width:72px"></span>
+        </div></div>
+    </div>
+    <div style="display:flex;gap:26px;align-items:flex-end;padding-top:14px">
+      <div style="display:grid;gap:4px;justify-items:start"><span class="bha-xs bha-t3">체인1 (혼자)</span>
+        <button class="bha-block bha-block--water" style="width:72px"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fA.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fA.n}}</span><span class="bha-block__name">{{fA.n}}</span></button></div>
+      <div style="display:grid;gap:20px;justify-items:start"><span class="bha-xs bha-t3">체인2 — 금색 탭 + 묶음 테두리</span>
+        <div class="bha-chain" style="grid-template-columns:repeat(2,72px)"><span class="bha-chain__tab">체인2</span>
+          <button class="bha-block bha-block--water"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i class="on"></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fA.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fA.n}}</span><span class="bha-block__name">{{fA.n}}</span></button>
+          <button class="bha-block bha-block--water"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i class="on"></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fA.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fA.n}}</span><span class="bha-block__name">{{fA.n}}</span></button>
+        </div></div>
+      <div style="display:grid;gap:20px;justify-items:start"><span class="bha-xs bha-t3">체인3 — 주황 탭</span>
+        <div class="bha-chain bha-chain--3" style="grid-template-columns:repeat(3,72px)"><span class="bha-chain__tab">체인3</span>
+          <button class="bha-block bha-block--blood"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fC.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fC.n}}</span><span class="bha-block__name">{{fC.n}}</span></button>
+          <button class="bha-block bha-block--blood"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fC.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fC.n}}</span><span class="bha-block__name">{{fC.n}}</span></button>
+          <button class="bha-block bha-block--blood"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fC.d}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fC.n}}</span><span class="bha-block__name">{{fC.n}}</span></button>
+        </div></div>
+      <div style="display:grid;gap:4px;justify-items:start"><span class="bha-xs bha-t3">영력 해방 카드: 기본 · 준비됨</span>
+        <div style="display:flex;gap:8px">
+          <div class="bha-release bha-panel" style="position:relative">
+            <span class="bha-release__seal"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span>
+            <span class="bha-display bha-md">영력 해방</span>
+            <span style="display:grid;gap:3px"><span class="bha-xs bha-t2">게이지 35%</span><span class="bha-gauge bha-gauge--release"><span class="bha-gauge__fill" style="width:35%"></span></span></span>
+          </div>
+          <button class="bha-release is-ready" style="position:relative;height:54px;color:#fff8f0;font-family:inherit;text-align:left">
+            <span class="bha-release__seal" style="background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.5);color:#fff8f0"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span>
+            <span class="bha-display" style="font-size:18px;line-height:1">해방</span><span class="bha-xs" style="font-weight:600">{{rel5}}</span></button>
+        </div></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <!-- 타일 카드 -->
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+      <span class="bha-md bha-b">타일 카드 · 길 칸</span>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <div style="display:grid;gap:3px;width:110px"><button class="bha-tilecard bha-tile--hollow" style="height:88px;font-family:inherit;color:inherit"><span class="bha-badge">×2</span><span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span><span class="bha-sm bha-b">하급 호로</span><span class="bha-xs bha-t2">약한 적 출현</span></button><span class="bha-cap">기본</span></div>
+        <div style="display:grid;gap:3px;width:110px"><button class="bha-tilecard bha-tile--elite is-selected" style="height:88px;font-family:inherit;color:inherit"><span class="bha-badge">×3</span><span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"></path></svg></span><span class="bha-sm bha-b">상급 호로</span><span class="bha-xs bha-t2">강적 출현</span></button><span class="bha-cap">선택</span></div>
+        <div style="display:grid;gap:3px;width:110px;position:relative"><button class="bha-tilecard bha-tile--wander is-dragging" style="height:88px;font-family:inherit;color:inherit"><span class="bha-badge">×1</span><span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"></path></svg></span><span class="bha-sm bha-b">떠도는 영혼</span><span class="bha-xs bha-t2">약한 적 출현</span></button>
+          <span class="bha-drag bha-tile--wander" style="left:74px;top:50px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"></path></svg></span><span class="bha-cap">끌기 중 (아이콘 원이 따라옴)</span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <div style="display:grid;gap:3px;width:56px"><span class="bha-slot bha-slot--nest" style="height:48px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10"></path></svg></span><span class="bha-cap">둥지</span></div>
+        <div style="display:grid;gap:3px;width:56px"><span class="bha-slot" style="height:48px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">4</span></span><span class="bha-cap">빈 칸</span></div>
+        <div style="display:grid;gap:3px;width:56px"><span class="bha-slot is-droppable" style="height:48px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">5</span></span><span class="bha-cap">놓을 수 있음</span></div>
+        <div style="display:grid;gap:3px;width:56px"><span class="bha-slot bha-slot--filled bha-tile--hollow" style="height:48px;display:flex;flex-direction:column;gap:1px;padding-bottom:6px"><span class="bha-tileico" style="width:22px;height:22px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span><span style="font-size:12px;font-weight:700;letter-spacing:-.04em;white-space:nowrap">하급 호로</span><span class="bha-slot__no" style="bottom:0">2</span></span><span class="bha-cap">놓인 칸</span></div>
+        <div style="display:grid;gap:3px;width:120px;justify-items:center;padding-top:14px"><span class="bha-synergy" style="position:relative">시너지 [이름]</span><span class="bha-cap">붙은 두 칸 이름표</span></div>
+      </div>
+    </div>
+
+    <!-- 아이템 카드 -->
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+      <span class="bha-md bha-b">아이템 카드 · 118px</span>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+        <div style="display:grid;gap:3px"><button class="bha-item bha-panel" style="font-family:inherit;color:inherit"><span class="bha-badge">보유 3/9</span><span class="bha-item__pic"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0zM9 4v4M13 4v4"></path></svg></span><span class="bha-item__name">영혼 조각</span><span class="bha-item__desc">먹이 +1 (종류별 보관 9개까지)</span><span class="bha-price"><em>골드</em>20</span></button><span class="bha-cap">기본</span></div>
+        <div style="display:grid;gap:3px"><button class="bha-item bha-panel is-locked" style="font-family:inherit;color:inherit" aria-disabled="true"><span class="bha-badge">잠김</span><span class="bha-item__pic"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span class="bha-item__name">[물건 이름]</span><span class="bha-item__desc">[해금 조건]</span><span class="bha-price"><em>영옥</em>[가격]</span></button><span class="bha-cap">잠김</span></div>
+        <div style="display:grid;gap:3px"><button class="bha-item bha-panel is-owned" style="font-family:inherit;color:inherit"><span class="bha-grade bha-grade--rare">희귀</span><span class="bha-badge">보유</span><span class="bha-item__pic"><span class="bha-art" style="position:relative;width:40px;height:34px">썸네일</span></span><span class="bha-item__name">십일번대</span><span class="bha-item__desc">꾸밈 · [설명]</span><span class="bha-price">보관함에서 착용</span></button><span class="bha-cap">보유 (산 것)</span></div>
+        <div style="display:grid;gap:3px"><button class="bha-item bha-panel is-equipped" style="font-family:inherit;color:inherit"><span class="bha-badge" style="background:var(--bha-guard);color:var(--bha-ink-on-color)">착용 중</span><span class="bha-item__pic"><span class="bha-swatch" style="background:var(--bha-guard)"></span></span><span class="bha-item__name">영옥 구슬</span><span class="bha-item__desc">꾸밈 · 몸 색</span><span class="bha-price">눌러서 해제</span></button><span class="bha-cap">착용</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px;align-items:start">
+    <!-- 버튼 -->
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+      <span class="bha-md bha-b">버튼 4종</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="bha-btn">기본</button><button class="bha-btn bha-btn--accent">강조</button><button class="bha-btn bha-btn--danger">위험</button><button class="bha-btn bha-btn--ghost">고스트</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="bha-btn bha-btn--sm">작은 36</button><button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="일시정지"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"></path></svg></button><button class="bha-btn bha-btn--light">구매 · 밝은</button><button class="bha-btn is-disabled" aria-disabled="true">비활성</button><button class="bha-btn is-focus">포커스</button>
+      </div>
+      <span class="bha-xs bha-t3">포커스(기기 버튼 커서)는 밝은 테두리, 선택은 강조 면 — 서로 다른 모양.</span>
+    </div>
+    <!-- 게이지 -->
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:8px">
+      <span class="bha-md bha-b">게이지 3종</span>
+      <span class="bha-xs bha-t3">① 돌보기 (허기·컨디션·광기)</span>
+      <div class="bha-statchip" style="position:relative;width:150px"><span>허기</span><span class="bha-gauge bha-gauge--hunger"><span class="bha-gauge__fill" style="width:22%"></span></span><span>컨디션</span><span class="bha-gauge bha-gauge--cond"><span class="bha-gauge__fill" style="width:70%"></span></span><span>광기</span><span class="bha-gauge bha-gauge--mad"><span class="bha-gauge__fill" style="width:8%"></span></span></div>
+      <span class="bha-xs bha-t3">② 체력 (나 · 적)</span>
+      <div style="display:flex;gap:8px;align-items:center"><span class="bha-gauge bha-gauge--hp" style="width:120px"><span class="bha-gauge__fill" style="width:72%"></span></span><span class="bha-sm bha-b bha-num">78 / 108</span></div>
+      <div style="display:flex;gap:8px;align-items:center"><span class="bha-gauge bha-gauge--foe" style="width:120px"><span class="bha-gauge__fill" style="width:92%"></span></span><span class="bha-sm bha-b bha-num">606 / 656</span></div>
+      <span class="bha-xs bha-t3">③ 해방 · 예상 증가 빗금</span>
+      <span class="bha-gauge bha-gauge--release" style="width:180px"><span class="bha-gauge__fill" style="width:35%"></span></span>
+      <span class="bha-gauge bha-gauge--mad" style="width:180px;height:10px"><span class="bha-gauge__fill" style="width:10%"></span><span class="bha-gauge__ghost" style="left:10%;width:21%"></span></span>
+    </div>
+    <!-- 탭·칩·알림 -->
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:8px">
+      <span class="bha-md bha-b">탭 · 칩 · 알림</span>
+      <div class="bha-tabs" role="tablist"><button class="bha-tab is-active" role="tab" aria-selected="true">음식<span class="bha-count">17</span></button><button class="bha-tab" role="tab" aria-selected="false">소모품<span class="bha-count">0</span></button><button class="bha-tab" role="tab" aria-selected="false">스킨<span class="bha-count">4</span></button></div>
+      <button class="bha-titletoggle bha-display bha-lg">보관함 · 타일<svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="bha-chip bha-chip--temp">○ 임시</span><span class="bha-chip bha-chip--danger">강적</span><span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px"></span>노멀</span><span class="bha-chip bha-chip--seal">봉인</span><span class="bha-chip bha-chip--rare">희귀</span></div>
+      <div class="bha-notice" style="position:relative;left:auto;transform:none;top:auto"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"></circle><path d="M9 13l-1 8 4-2 4 2-1-8"></path></svg><span><b>떠돌이 상인</b> 떠돌이 상인이 둥지에 왔다</span></div>
+      <div class="bha-toast" style="position:relative;left:auto;transform:none;top:auto">설정을 저장했다</div>
+    </div>
+  </div>
+
+  <!-- 모달 -->
+  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:18px;align-items:start">
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+      <span class="bha-md bha-b">모달 · 확인 창</span>
+      <div class="bha-modal" style="position:relative;display:grid;gap:8px;width:320px">
+        <span class="bha-display bha-lg">원정을 그만둘까?</span>
+        <span class="bha-sm bha-t2">[그만둘 때 잃는 것 한 줄]</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="bha-btn bha-btn--ghost">아니오</button><button class="bha-btn bha-btn--danger">예</button></div>
+      </div>
+    </div>
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+      <span class="bha-md bha-b">상세 창 (보관함 물건) — 상품 구매 창과 같은 규격</span>
+      <div class="bha-modal" style="position:relative;width:500px;height:180px;display:grid;grid-template-columns:170px 1fr;gap:12px">
+        <div class="bha-panel--sunk" style="border:1px solid var(--bha-line-1);border-radius:var(--bha-r-lg);display:grid;place-items:center"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:56px;height:56px;stroke-width:1.6"><path d="M4 12h16a8 8 0 0 1-16 0zM9 4v4M13 4v4"></path></svg></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span class="bha-display bha-lg">영혼 조각</span><span class="bha-sm bha-t2">먹이 +1 · 보유 3/9</span>
+          <div style="margin-top:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button class="bha-btn bha-btn--accent">사용</button><button class="bha-btn is-disabled" aria-disabled="true">장착</button><button class="bha-btn bha-btn--ghost is-disabled" aria-disabled="true">해제</button></div></div>
+        <button class="bha-btn bha-btn--sm bha-btn--ghost bha-iconbtn bha-modal__close" aria-label="닫기"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const soul = theme === 'soul';
+    const I = {
+      claw: 'M6 4c3 4 4 9 3 16M11 4c3 4 4 9 3 16M16 4c3 4 4 9 3 16',
+      fang: 'M3 6h18M5 6l2 7 2-7M10 6l2 9 2-9M15 6l2 7 2-7',
+      shot: 'M14 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0M3 9h9M5 12h8M3 15h9',
+      slash: 'M5 19L19 5M10 21L21 10M3 14L14 3',
+      impact: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3',
+      beam: 'M3 8h11M3 12h15M3 16h11M18 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0'
+    };
+    const fA = soul ? { n: '참', d: I.slash } : { n: '조', d: I.claw };
+    const fB = soul ? { n: '귀', d: I.beam } : { n: '탄', d: I.shot };
+    const fC = soul ? { n: '권', d: I.impact } : { n: '교', d: I.fang };
+    const attrs = [['노멀', 'normal'], ['불', 'fire'], ['뇌', 'thunder'], ['물', 'water'], ['흙', 'earth'], ['독', 'poison'], ['혈', 'blood']].map(([n, k]) => ({ n, cls: 'bha-block--' + k }));
+    return { theme, themeName: soul ? '사신' : '호로', fA, fB, fC, fams: [fA, fB, fC], attrs, rel5: soul ? '만해' : '레스렉시온' };
+  }
+}
+</script>
+</body>
+</html>

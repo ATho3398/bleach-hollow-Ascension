@@ -1,0 +1,312 @@
+/* ═════════════════════════════════════════════════════════════════
+   LCD 인게임 UI v2 (C.151) — docs/bha-ui-handoff/design/bha.css 를 그대로 옮기되,
+   ① 모든 선택자 앞에 `.bha-root` 를 붙였다(클래스·토큰 이름은 그대로, 옛 화면의 같은 이름 클래스 30개·토큰 29개와 섞이지 않게 `.bha-root` 안에서만 적용)
+   ② 테마 클래스는 루트와 같은 요소: `.bha-root.bha-hollow` / `.bha-root.bha-soul`
+   ③ 시트용(.bha-sheet·.bha-table·.bha-sw·.bha-cap·.bha-code) 규칙은 게임에 필요 없어 뺐다
+   ④ 글꼴 토큰만 프로젝트에 들어 있는 글꼴 목록으로 바꿨다(오프라인)
+   아래 "프로젝트 어댑터"만 핸드오프에 없는 우리 쪽 추가분이다.
+   ═════════════════════════════════════════════════════════════════ */
+/* 블리치 할로우 어센션 — LCD 인게임 UI 공용 스타일 (bha-) */
+
+/* ───────── 공통 토큰 (테마 무관) ───────── */
+.bha-root{
+  /* 역할 색 — 같은 명도·채도대로 눌러 한 팔레트 */
+  --bha-atk:#d9726a;      /* 공격  (현재 #e5484d) */
+  --bha-guard:#6fb487;    /* 막기  (현재 #2fb36b) */
+  --bha-heal:#6f9fd8;     /* 회복  (현재 #3e8bff) */
+  --bha-void:#b483c9;     /* 공허 */
+  --bha-mad:#cf78bf;      /* 광기  (현재 #ff4fd8) */
+  --bha-weak:#d8b866;     /* 약점  (현재 #e8c15a) */
+  --bha-chain:#dd9a5e;    /* 체인3 (현재 #ff8a3d) */
+  --bha-rare:#e0c46e;     /* 희귀·콤보 (현재 #ffd24d) */
+  --bha-danger:#e07a70;   /* 위험  (현재 #ff6b6b) */
+  --bha-insert:#74b3d8;   /* 삽입·놓을 수 있음 (현재 #6cc4ff) */
+  --bha-seal:#9f8ad6;     /* 봉인  (현재 #a371f7) */
+  /* 속성 색 — 블록 면 */
+  --bha-attr-normal:#b3a793;
+  --bha-attr-fire:#dc8a5c;
+  --bha-attr-thunder:#d9c063;
+  --bha-attr-water:#62adc0;
+  --bha-attr-earth:#b48d62;
+  --bha-attr-poison:#9db45e;
+  --bha-attr-blood:#d4747f;
+  --bha-ink-on-color:#1f1916; /* 색 면 위 글자 */
+  /* 간격 */
+  --bha-s-1:2px; --bha-s-2:4px; --bha-s-3:6px; --bha-s-4:8px; --bha-s-5:12px; --bha-s-6:16px; --bha-s-7:20px;
+  /* 모서리 */
+  --bha-r-sm:6px; --bha-r-lg:10px; --bha-r-pill:999px;
+  /* 글자 */
+  --bha-fs-xs:12px; --bha-fs-sm:13px; --bha-fs-md:14px; --bha-fs-lg:16px; --bha-fs-xl:18px;
+  --bha-font-display:"BHA Display","Hahmlet","Noto Serif KR","Apple SD Gothic Neo",serif; /* 핸드오프 값 'Noto Serif KR' → 프로젝트에 들어 있는 글꼴(오프라인, tokens.css 와 같은 목록)을 앞에 둔다 */
+  --bha-font-body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  /* 모션 */
+  --bha-t-fast:120ms; --bha-t-base:180ms; --bha-t-slow:280ms; --bha-t-gauge:600ms; --bha-t-spawn:240ms; --bha-t-pulse:1200ms;
+  --bha-ease:cubic-bezier(.2,.7,.2,1);
+}
+
+/* ───────── 테마: 호로 (뼈·모래·붉은 영압) ───────── */
+.bha-root.bha-hollow{
+  --bha-bg-0:#120e0d; --bha-bg-1:#1a1513; --bha-bg-2:#231d1a; --bha-bg-3:#2e2622; --bha-bg-4:#3a312c;
+  --bha-line-1:#3f3530; --bha-line-2:#5a4c44; --bha-edge:rgba(255,236,214,.10);
+  --bha-text-1:#f1e9dc; --bha-text-2:#c6baa9; --bha-text-3:#a09382;
+  --bha-accent:#a63d45; --bha-accent-hi:#e2858a; --bha-accent-glow:rgba(226,133,138,.35);
+  --bha-world-sky:#5a5048; --bha-world-sky2:#3b332e; --bha-world-ground:#8a7a62; --bha-world-ground2:#6b5d4a;
+}
+/* ───────── 테마: 사신 (먹물·흰 하오리·푸른 영압) ───────── */
+.bha-root.bha-soul,
+.bha-root.bha-shinigami{ /* 종족 설정 theme 값(shinigami)을 그대로 쓰도록 별칭 — 종족 id 분기 없이 `bha-${faction.theme}` */
+  --bha-bg-0:#0f1013; --bha-bg-1:#15171b; --bha-bg-2:#1d2025; --bha-bg-3:#262a30; --bha-bg-4:#31363d;
+  --bha-line-1:#363b43; --bha-line-2:#4e5560; --bha-edge:rgba(230,238,255,.10);
+  --bha-text-1:#eeede8; --bha-text-2:#c0beb6; --bha-text-3:#9a9a96;
+  --bha-accent:#43689f; --bha-accent-hi:#8eb0e2; --bha-accent-glow:rgba(142,176,226,.35);
+  --bha-world-sky:#4a5566; --bha-world-sky2:#2c333d; --bha-world-ground:#6f6a60; --bha-world-ground2:#545049;
+}
+
+/* ───────── LCD 화면 ───────── */
+.bha-root{
+  position:relative; width:640px; height:330px; overflow:hidden; box-sizing:border-box;
+  background:var(--bha-bg-1); color:var(--bha-text-1);
+  font-family:var(--bha-font-body); font-size:var(--bha-fs-sm); line-height:1.35;
+  -webkit-font-smoothing:antialiased;
+}
+.bha-root *{box-sizing:border-box}
+.bha-root::after{ /* 도트 LCD 결 */
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:50;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 1px, transparent 1px 3px);
+}
+.bha-root .bha-display{font-family:var(--bha-font-display); font-weight:700; letter-spacing:-.01em}
+.bha-root .bha-t2{color:var(--bha-text-2)} .bha-root .bha-t3{color:var(--bha-text-3)}
+.bha-root .bha-xs{font-size:var(--bha-fs-xs)} .bha-root .bha-sm{font-size:var(--bha-fs-sm)} .bha-root .bha-md{font-size:var(--bha-fs-md)} .bha-root .bha-lg{font-size:var(--bha-fs-lg)} .bha-root .bha-xl{font-size:var(--bha-fs-xl)}
+.bha-root .bha-b{font-weight:700}
+.bha-root .bha-num{font-variant-numeric:tabular-nums}
+.bha-root .bha-svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ───────── 면(패널) ───────── */
+.bha-root .bha-panel{
+  background:linear-gradient(180deg,var(--bha-bg-3),var(--bha-bg-2));
+  border:1px solid var(--bha-line-2); border-radius:var(--bha-r-lg);
+  box-shadow:inset 0 1px 0 var(--bha-edge), inset 0 -2px 0 rgba(0,0,0,.22);
+}
+.bha-root .bha-panel--sunk{background:var(--bha-bg-1); border-color:var(--bha-line-1); box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}
+.bha-root .bha-panel--flat{background:var(--bha-bg-2); border-color:var(--bha-line-1); box-shadow:inset 0 1px 0 var(--bha-edge)}
+.bha-root .bha-divider{height:1px;background:var(--bha-line-1)}
+
+/* ───────── 버튼 4종 ───────── */
+.bha-root .bha-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  min-height:44px; padding:0 14px; border-radius:var(--bha-r-lg);
+  font:600 var(--bha-fs-md)/1 var(--bha-font-body); color:var(--bha-text-1);
+  background:linear-gradient(180deg,var(--bha-bg-4),var(--bha-bg-3));
+  border:1px solid var(--bha-line-2); box-shadow:inset 0 1px 0 var(--bha-edge), 0 2px 0 rgba(0,0,0,.35);
+  cursor:pointer; transition:transform var(--bha-t-fast) var(--bha-ease), filter var(--bha-t-fast);
+}
+.bha-root .bha-btn:active{transform:translateY(1px)}
+.bha-root .bha-btn--sm{min-height:36px; padding:0 10px; font-size:var(--bha-fs-sm); border-radius:var(--bha-r-sm)}
+.bha-root .bha-btn--accent{background:linear-gradient(180deg,color-mix(in srgb,var(--bha-accent) 85%,#fff 15%),var(--bha-accent)); border-color:var(--bha-accent-hi); color:#fff8f0}
+.bha-root .bha-btn--light{background:linear-gradient(180deg,#f3ece0,#ddd3c3); border-color:#fffaf1; color:var(--bha-ink-on-color)}
+.bha-root .bha-btn--danger{background:linear-gradient(180deg,#3a2422,#2c1b1a); border-color:var(--bha-danger); color:var(--bha-danger)}
+.bha-root .bha-btn--ghost{background:transparent; border-color:var(--bha-line-2); box-shadow:none; color:var(--bha-text-2)}
+.bha-root .bha-btn.is-disabled{opacity:.45; cursor:default}
+.bha-root .bha-btn.is-focus{outline:2px solid var(--bha-accent-hi); outline-offset:1px}
+.bha-root .bha-iconbtn{width:36px;height:36px;padding:0;min-height:36px;border-radius:var(--bha-r-sm)}
+.bha-root .bha-iconbtn--44{width:44px;height:44px}
+
+/* ───────── 칩·배지 ───────── */
+.bha-root .bha-chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:var(--bha-r-pill);
+  font-size:var(--bha-fs-xs);font-weight:600;color:var(--bha-text-2);background:var(--bha-bg-2);border:1px solid var(--bha-line-2);white-space:nowrap}
+.bha-root .bha-chip--temp{border-style:dashed;color:var(--bha-text-3);background:transparent;border-radius:var(--bha-r-sm)}
+.bha-root .bha-chip--attr{color:var(--bha-text-1);border-color:var(--bha-rare)}
+.bha-root .bha-chip--danger{color:var(--bha-danger);border-color:var(--bha-danger);border-radius:var(--bha-r-sm)}
+.bha-root .bha-chip--seal{color:var(--bha-seal);border-color:var(--bha-seal)}
+.bha-root .bha-chip--rare{color:var(--bha-rare);border-color:var(--bha-rare)}
+.bha-root .bha-dot{width:14px;height:14px;border-radius:50%;display:inline-grid;place-items:center;font-size:9px;font-weight:800;color:var(--bha-ink-on-color);background:var(--bha-attr-normal);flex:none}
+.bha-root .bha-badge{position:absolute;top:5px;right:5px;height:20px;padding:0 6px;border-radius:var(--bha-r-sm);font-size:var(--bha-fs-xs);font-weight:700;
+  background:rgba(0,0,0,.45);color:var(--bha-text-1);display:inline-flex;align-items:center}
+
+/* ───────── 알림 띠·토스트 ───────── */
+.bha-root .bha-notice{position:absolute;left:50%;transform:translateX(-50%);top:6px;z-index:30;max-width:440px;
+  display:flex;align-items:flex-start;gap:6px;padding:4px 12px;border-radius:var(--bha-r-lg);
+  background:color-mix(in srgb,var(--bha-bg-1) 88%,transparent);border:1px solid var(--bha-rare);
+  font-size:var(--bha-fs-xs);font-weight:600;color:var(--bha-text-1);line-height:1.35}
+.bha-root .bha-notice b{color:var(--bha-rare)}
+.bha-root .bha-notice .bha-svg{width:14px;height:14px;color:var(--bha-rare);margin-top:1px}
+.bha-root .bha-toast{position:absolute;left:50%;transform:translateX(-50%);top:6px;z-index:40;min-width:220px;text-align:center;
+  padding:4px 14px;border-radius:var(--bha-r-pill);font-size:var(--bha-fs-xs);font-weight:700;
+  background:var(--bha-bg-4);border:1px solid var(--bha-line-2);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+
+/* ───────── 게이지 3종 ───────── */
+.bha-root .bha-gauge{position:relative;height:8px;border-radius:var(--bha-r-pill);background:var(--bha-bg-0);border:1px solid var(--bha-line-1);overflow:hidden}
+.bha-root .bha-gauge__fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:var(--g,var(--bha-text-2));transition:width var(--bha-t-gauge) var(--bha-ease)}
+.bha-root .bha-gauge__ghost{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(135deg,var(--g) 0 3px,transparent 3px 6px);opacity:.55}
+.bha-root .bha-gauge--hp{--g:var(--bha-guard);height:10px}
+.bha-root .bha-gauge--foe{--g:var(--bha-atk);height:10px}
+.bha-root .bha-gauge--hunger{--g:var(--bha-chain)}
+.bha-root .bha-gauge--cond{--g:var(--bha-heal)}
+.bha-root .bha-gauge--mad{--g:var(--bha-mad)}
+.bha-root .bha-gauge--release{--g:var(--bha-accent-hi);height:6px}
+.bha-root .bha-gauge--thin{height:5px}
+
+/* ───────── 탭 ───────── */
+.bha-root .bha-tabs{display:flex;gap:4px}
+.bha-root .bha-tab{height:36px;min-width:44px;padding:0 10px;border-radius:var(--bha-r-sm);font:600 var(--bha-fs-sm)/1 var(--bha-font-body);
+  color:var(--bha-text-2);background:var(--bha-bg-2);border:1px solid var(--bha-line-1);display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.bha-root .bha-tab.is-active{color:var(--bha-text-1);background:linear-gradient(180deg,color-mix(in srgb,var(--bha-accent) 55%,var(--bha-bg-3)),var(--bha-bg-3));border-color:var(--bha-accent-hi);box-shadow:inset 0 1px 0 var(--bha-edge)}
+.bha-root .bha-tab .bha-count{font-size:var(--bha-fs-xs);color:var(--bha-text-3)}
+.bha-root .bha-titletoggle{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:0;min-height:36px;color:var(--bha-text-1);cursor:pointer}
+.bha-root .bha-titletoggle .bha-svg{width:14px;height:14px;color:var(--bha-text-2)}
+
+/* ───────── 그림 자리(도트 그림이 들어옴) ───────── */
+.bha-root .bha-art{position:absolute;display:grid;place-items:center;border:1px dashed color-mix(in srgb,var(--bha-text-3) 55%,transparent);border-radius:var(--bha-r-sm);
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.025) 0 6px,transparent 6px 12px);color:var(--bha-text-3);font-size:var(--bha-fs-xs);text-align:center;line-height:1.3}
+.bha-root .bha-art--char::before{content:"◀ 시선";position:absolute;top:4px;left:6px;font-size:12px;color:var(--bha-text-3)}
+.bha-root .bha-foe{position:absolute;display:grid;place-items:center}
+.bha-root .bha-foe svg{width:100%;height:100%;filter:drop-shadow(0 0 10px rgba(0,0,0,.6))}
+.bha-root .bha-nametag{position:absolute;left:50%;transform:translateX(-50%);bottom:-11px;padding:2px 8px;border-radius:var(--bha-r-sm);
+  background:rgba(18,14,13,.82);border:1px solid var(--bha-line-2);font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-1);white-space:nowrap}
+.bha-root .bha-scene{position:absolute;inset:0;background:
+  radial-gradient(120% 70% at 50% 0%,var(--bha-world-sky) 0%,var(--bha-world-sky2) 55%,var(--bha-bg-1) 100%)}
+.bha-root .bha-scene::before{content:"방 배경 그림 자리";position:absolute;right:10px;bottom:8px;font-size:12px;color:var(--bha-text-3);opacity:.8}
+
+/* ───────── 독(아래 버튼 줄) ───────── */
+.bha-root .bha-dock{position:absolute;left:0;right:0;bottom:0;height:56px;padding:6px 8px;display:flex;gap:6px;align-items:center;
+  background:linear-gradient(180deg,var(--bha-bg-2),var(--bha-bg-1));border-top:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-edge);z-index:20}
+.bha-root .bha-dock .bha-btn{flex:1;min-height:44px}
+.bha-root .bha-dock .bha-btn--feed{border-color:var(--bha-chain);color:var(--bha-text-1)} .bha-root .bha-dock .bha-btn--feed .bha-svg{color:var(--bha-chain)}
+.bha-root .bha-dock .bha-btn--sleep{border-color:var(--bha-heal)} .bha-root .bha-dock .bha-btn--sleep .bha-svg{color:var(--bha-heal)}
+.bha-root .bha-dock .bha-btn--bond{border-color:var(--bha-guard)} .bha-root .bha-dock .bha-btn--bond .bha-svg{color:var(--bha-guard)}
+.bha-root .bha-dock .bha-more{flex:none;width:44px}
+
+/* ───────── 상태 칩 ───────── */
+.bha-root .bha-statchip{position:absolute;width:96px;padding:5px 7px;border-radius:var(--bha-r-sm);background:rgba(18,14,13,.86);border:1px solid var(--bha-accent-hi);
+  display:grid;grid-template-columns:auto 1fr;gap:3px 5px;align-items:center;font-size:12px;cursor:pointer;z-index:12}
+.bha-root .bha-statchip .bha-gauge{height:6px}
+.bha-root .bha-bubble{position:absolute;padding:4px 10px;border-radius:var(--bha-r-lg);background:var(--bha-bg-0);border:1px solid var(--bha-line-2);font-size:var(--bha-fs-xs);white-space:nowrap;z-index:12}
+
+/* ───────── 블록 카드 ───────── */
+.bha-root .bha-blockbar{position:absolute;left:6px;right:6px;bottom:6px;height:72px;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;padding:4px;
+  border-radius:var(--bha-r-lg);background:var(--bha-bg-0);border:1px solid var(--bha-line-1);box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
+/* 확정: A 각인 컷 — 어두운 칸 + 속성 색 이중 테두리, 안쪽 판 오른쪽 위 22px 사선 컷에 계열 글자.
+   배치(56×64 기준): 체인 점 = 판 왼쪽 위(10,10) / 계열 글자 = 컷 자리(오른쪽 위) / 아이콘 30px = 판 아래쪽 가운데,
+   사선(x−y=24)보다 항상 아래 / 약점 = 오른쪽 아래 금색 삼각형. 이름은 화면에 안 쓰고 aria-label로만. */
+.bha-root .bha-block{position:relative;height:64px;border-radius:var(--bha-r-sm);display:flex;align-items:center;justify-content:center;padding:0;
+  background:var(--bha-bg-0);border:1.5px solid color-mix(in srgb,var(--blk) 80%,#fff 20%);color:var(--blk);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),0 2px 0 rgba(0,0,0,.4);cursor:pointer;transition:transform var(--bha-t-fast) var(--bha-ease)}
+.bha-root .bha-block__face{position:absolute;inset:5px;background:color-mix(in srgb,var(--blk) 85%,#fff 15%);clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,0 100%)}
+.bha-root .bha-block__face::before{content:"";position:absolute;inset:1.5px;background:color-mix(in srgb,var(--blk) 20%,var(--bha-bg-1));clip-path:polygon(0 0,calc(100% - 21px) 0,100% 21px,100% 100%,0 100%)}
+.bha-root .bha-block__pips{position:absolute;top:10px;left:10px;display:flex;gap:2px;z-index:2}
+.bha-root .bha-block__pips i{width:5px;height:5px;border-radius:50%;border:1px solid currentColor}
+.bha-root .bha-block__pips i.on{background:currentColor}
+.bha-root .bha-block__icon{position:relative;z-index:1;width:30px;height:30px;margin:10px 6px 0 0;color:color-mix(in srgb,var(--blk) 70%,#fff 30%)}
+.bha-root .bha-block__icon .bha-svg{width:30px;height:30px;stroke-width:2.2}
+.bha-root .bha-block__glyph{position:absolute;top:3px;right:4px;z-index:2;font:800 13px/1 var(--bha-font-display);color:var(--bha-text-1)}
+.bha-root .bha-block__name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bha-root .bha-block--empty{background:transparent;border:1.5px dashed var(--bha-line-2);box-shadow:none;cursor:default}
+.bha-root .bha-block--normal{--blk:var(--bha-attr-normal)} .bha-root .bha-block--fire{--blk:var(--bha-attr-fire)} .bha-root .bha-block--thunder{--blk:var(--bha-attr-thunder)}
+.bha-root .bha-block--water{--blk:var(--bha-attr-water)} .bha-root .bha-block--earth{--blk:var(--bha-attr-earth)} .bha-root .bha-block--poison{--blk:var(--bha-attr-poison)} .bha-root .bha-block--blood{--blk:var(--bha-attr-blood)}
+.bha-root .bha-block--guard{--blk:var(--bha-guard)} .bha-root .bha-block--heal{--blk:var(--bha-heal)} .bha-root .bha-block--void{--blk:var(--bha-void)}
+.bha-root .bha-block--combo{--blk:var(--bha-rare)}
+.bha-root .bha-block--combo .bha-block__face::before{background:linear-gradient(115deg,color-mix(in srgb,var(--bha-rare) 18%,var(--bha-bg-1)) 0%,color-mix(in srgb,var(--bha-rare) 42%,var(--bha-bg-1)) 45%,color-mix(in srgb,var(--bha-rare) 18%,var(--bha-bg-1)) 62%)}
+.bha-root .bha-block--release{--blk:var(--bha-accent-hi);box-shadow:0 0 0 2px var(--bha-accent-glow),0 0 10px var(--bha-accent-glow)}
+.bha-root .bha-block.is-weak::after{content:"";position:absolute;bottom:-1px;right:-1px;z-index:3;width:0;height:0;border-style:solid;border-width:0 0 14px 14px;border-color:transparent transparent var(--bha-weak) transparent;
+  border-bottom-right-radius:var(--bha-r-sm)}
+.bha-root .bha-block.is-locked{filter:grayscale(.8) brightness(.55);cursor:not-allowed}
+.bha-root .bha-block.is-selected{outline:2px solid var(--bha-text-1);outline-offset:2px}
+.bha-root .bha-block.is-pressed{transform:translateY(2px) scale(.96);box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}
+.bha-root .bha-chain{position:relative;display:grid;gap:5px;padding:2px;margin:-3px;border:2px solid var(--bha-rare);border-radius:8px;box-shadow:0 0 8px rgba(224,196,110,.35)}
+.bha-root .bha-chain__tab{position:absolute;top:-17px;left:50%;transform:translateX(-50%);height:16px;padding:0 6px;border-radius:5px 5px 0 0;background:var(--bha-rare);color:var(--bha-ink-on-color);
+  font-size:12px;font-weight:800;line-height:16px;white-space:nowrap}
+.bha-root .bha-chain--3{border-color:var(--bha-chain);box-shadow:0 0 8px rgba(221,154,94,.4)} .bha-root .bha-chain--3 .bha-chain__tab{background:var(--bha-chain)}
+.bha-root .bha-legend{display:flex;gap:10px;font-size:12px;font-weight:600}
+.bha-root .bha-legend span{display:inline-flex;align-items:center;gap:4px}
+.bha-root .bha-legend i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+/* ───────── 전투: 필드 / 스킬창 분리 ───────── */
+.bha-root .bha-field{position:absolute;left:0;right:0;top:0;height:200px;overflow:hidden;background:
+  linear-gradient(180deg,transparent 0 78%,color-mix(in srgb,var(--bha-world-ground2) 40%,var(--bha-bg-1)) 78% 100%),
+  radial-gradient(90% 90% at 50% 30%,var(--bha-bg-3),var(--bha-bg-1) 75%)}
+.bha-root .bha-field::after{content:"필드 배경 그림 자리";position:absolute;right:10px;bottom:4px;font-size:12px;color:var(--bha-text-3)}
+.bha-root .bha-skillpanel{position:absolute;left:0;right:0;top:200px;bottom:0;background:linear-gradient(180deg,var(--bha-bg-2),var(--bha-bg-0));
+  border-top:2px solid var(--bha-line-2);box-shadow:0 -8px 14px rgba(0,0,0,.5),inset 0 1px 0 var(--bha-edge)}
+
+/* ───────── 해방 카드 ───────── */
+.bha-root .bha-release{position:absolute;width:176px;padding:6px 8px;border-radius:var(--bha-r-lg);display:grid;grid-template-columns:30px 1fr;gap:2px 8px;align-items:center}
+.bha-root .bha-release__seal{grid-row:span 2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--bha-line-2);background:var(--bha-bg-1);color:var(--bha-text-2)}
+.bha-root .bha-release.is-ready{border-color:var(--bha-accent-hi);background:linear-gradient(180deg,color-mix(in srgb,var(--bha-accent) 70%,var(--bha-bg-3)),var(--bha-accent));
+  box-shadow:0 0 0 2px var(--bha-accent-glow),0 0 18px var(--bha-accent-glow),inset 0 1px 0 rgba(255,255,255,.2);cursor:pointer}
+.bha-root .bha-release.is-on{border-color:var(--bha-accent-hi);box-shadow:0 0 0 1px var(--bha-accent-glow),0 0 14px var(--bha-accent-glow)}
+
+/* ───────── 타일 카드·칸 ───────── */
+.bha-root .bha-slot{position:relative;border-radius:var(--bha-r-sm);border:1.5px dashed var(--bha-line-2);display:grid;place-items:center;color:var(--bha-text-3);min-height:44px;background:rgba(0,0,0,.18)}
+.bha-root .bha-slot__no{position:absolute;right:4px;bottom:2px;font-size:12px;color:var(--bha-text-3)}
+.bha-root .bha-slot--nest{border:1.5px solid var(--bha-text-2);background:var(--bha-bg-3)}
+.bha-root .bha-slot--filled{border:1px solid color-mix(in srgb,var(--tile) 70%,#fff 30%);background:linear-gradient(180deg,color-mix(in srgb,var(--tile) 55%,var(--bha-bg-2)),color-mix(in srgb,var(--tile) 30%,var(--bha-bg-1)));color:var(--bha-text-1)}
+.bha-root .bha-slot--filled .bha-slot__no{color:var(--bha-text-1)}
+.bha-root .bha-slot.is-droppable{border:1.5px solid var(--bha-insert);box-shadow:0 0 0 2px rgba(116,179,216,.25),inset 0 0 10px rgba(116,179,216,.25);color:var(--bha-insert)}
+.bha-root .bha-slot.is-selected{outline:2px solid var(--bha-insert);outline-offset:1px}
+.bha-root .bha-tileico{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--tile) 85%,#fff 15%);color:var(--bha-ink-on-color);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
+.bha-root .bha-tileico .bha-svg{width:15px;height:15px}
+.bha-root .bha-tilecard{position:relative;border-radius:var(--bha-r-lg);padding:6px 6px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--tile) 42%,var(--bha-bg-3)),color-mix(in srgb,var(--tile) 18%,var(--bha-bg-2)));
+  border:1px solid color-mix(in srgb,var(--tile) 55%,var(--bha-line-2));box-shadow:inset 0 1px 0 var(--bha-edge);cursor:pointer}
+.bha-root .bha-tilecard .bha-tileico{width:32px;height:32px}
+.bha-root .bha-tilecard .bha-tileico .bha-svg{width:18px;height:18px}
+.bha-root .bha-tilecard.is-selected{outline:2px solid var(--bha-insert);outline-offset:1px}
+.bha-root .bha-tilecard.is-dragging{opacity:.4}
+.bha-root .bha-tilecard.is-empty{opacity:.45}
+.bha-root .bha-drag{position:absolute;z-index:25;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--tile) 85%,#fff 15%);color:var(--bha-ink-on-color);
+  box-shadow:0 6px 14px rgba(0,0,0,.5),0 0 0 2px var(--bha-insert)}
+.bha-root .bha-synergy{position:absolute;z-index:3;height:18px;padding:0 6px;border-radius:var(--bha-r-sm);background:var(--bha-rare);color:var(--bha-ink-on-color);font-size:12px;font-weight:800;line-height:18px;white-space:nowrap}
+.bha-root .bha-tile--wander{--tile:#b48d62} .bha-root .bha-tile--hollow{--tile:#dc8a5c} .bha-root .bha-tile--elite{--tile:#cf78bf} .bha-root .bha-tile--merchant{--tile:#d8b866} .bha-root .bha-tile--altar{--tile:#9f8ad6}
+.bha-root .bha-tile--spring{--tile:#62adc0} .bha-root .bha-tile--trap{--tile:#d4747f} .bha-root .bha-tile--grass{--tile:#9db45e}
+
+/* ───────── 아이템 카드 ───────── */
+.bha-root .bha-item{position:relative;height:118px;border-radius:var(--bha-r-lg);padding:6px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;cursor:pointer}
+.bha-root .bha-item__pic{width:40px;height:34px;display:grid;place-items:center;color:var(--bha-text-1)}
+.bha-root .bha-item__pic .bha-svg{width:30px;height:30px}
+.bha-root .bha-item__name{font-size:var(--bha-fs-sm);font-weight:700}
+.bha-root .bha-item__desc{font-size:12px;color:var(--bha-text-2);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
+.bha-root .bha-price{margin-top:auto;height:20px;padding:0 8px;border-radius:var(--bha-r-sm);background:var(--bha-bg-0);border:1px solid var(--bha-line-1);font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+.bha-root .bha-price em{font-style:normal;color:var(--bha-text-3);font-weight:600}
+.bha-root .bha-item.is-locked{opacity:.5}
+.bha-root .bha-item.is-owned .bha-price{color:var(--bha-text-3)}
+.bha-root .bha-item.is-equipped{border-color:var(--bha-guard);box-shadow:inset 0 0 0 1px var(--bha-guard)}
+.bha-root .bha-item.is-selected{outline:2px solid var(--bha-text-1);outline-offset:1px}
+.bha-root .bha-swatch{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.4)}
+.bha-root .bha-grade{position:absolute;top:5px;left:5px;height:20px;padding:0 6px;border-radius:var(--bha-r-sm);font-size:12px;font-weight:700;display:inline-flex;align-items:center;border:1px solid var(--bha-line-2);color:var(--bha-text-2);background:var(--bha-bg-1)}
+.bha-root .bha-grade--rare{color:var(--bha-rare);border-color:var(--bha-rare)}
+
+/* ───────── 모달 ───────── */
+.bha-root .bha-scrim{position:absolute;inset:0;z-index:30;background:rgba(8,6,5,.68);backdrop-filter:blur(2px)}
+.bha-root .bha-modal{position:absolute;z-index:31;border-radius:var(--bha-r-lg);padding:10px 12px;
+  background:linear-gradient(180deg,var(--bha-bg-3),var(--bha-bg-2));border:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-edge),0 12px 30px rgba(0,0,0,.55)}
+.bha-root .bha-modal__close{position:absolute;top:8px;right:8px}
+.bha-root .bha-stepper{display:flex;gap:6px;align-items:center}
+
+/* ───────── 목록·표 ───────── */
+.bha-root .bha-scroll{overflow:auto;scrollbar-width:thin;scrollbar-color:var(--bha-line-2) transparent}
+.bha-root .bha-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bha-root .bha-kv{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.bha-root .bha-head{position:absolute;left:12px;right:12px;top:8px;height:40px;display:flex;align-items:center;gap:8px}
+.bha-root .bha-sec{font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-2);letter-spacing:.02em}
+
+/* ───────── 원정 걷기 장면 ───────── */
+.bha-root .bha-walk-sky{position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,var(--bha-world-sky2),var(--bha-world-sky))}
+.bha-root .bha-walk-sky::after{content:"하늘 층 (먼 시차)";position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--bha-text-2);opacity:.8}
+.bha-root .bha-walk-ground{position:absolute;inset:50% 0 0 0;background:
+  repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 18px,transparent 18px 36px),linear-gradient(180deg,var(--bha-world-ground),var(--bha-world-ground2))}
+.bha-root .bha-walk-ground::after{content:"땅 층 (가까운 시차)";position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--bha-bg-0);font-weight:700}
+.bha-root .bha-statusbar{position:absolute;left:8px;right:8px;top:6px;height:40px;padding:0 6px 0 10px;display:flex;align-items:center;gap:12px;border-radius:var(--bha-r-lg);
+  background:rgba(18,14,13,.82);border:1px solid var(--bha-line-2);z-index:15}
+.bha-root .bha-mini{display:grid;grid-template-columns:auto 56px;gap:5px;align-items:center;font-size:12px;font-weight:600}
+
+
+/* ───────── 프로젝트 어댑터 (핸드오프에 없음) ─────────
+   .bha-root 는 640×330 고정 좌표계다. 실제 LCD(약 646×360)에 맞춰 v2/root.ts 가 --v2-scale 을 정해 가운데로 놓는다.
+   LCD 창(.bha-lcd__view) 안에서 화면 틀(.bha-v2host)이 창을 가득 채우고 .bha-root 가 그 안에서 크기에 맞게 줄어든다. */
+.bha-v2host{position:absolute;inset:0;overflow:hidden;background:#000;display:grid;place-items:center}
+.bha-v2host>.bha-root{position:absolute;left:50%;top:50%;flex:none;transform-origin:0 0;
+  transform:translate(calc(var(--v2-w,640) * -0.5px * var(--v2-scale,1)),calc(var(--v2-h,330) * -0.5px * var(--v2-scale,1))) scale(var(--v2-scale,1))}
+.bha-root button{font-family:inherit}
+.bha-root :focus-visible{outline:2px solid var(--bha-text-1);outline-offset:2px}

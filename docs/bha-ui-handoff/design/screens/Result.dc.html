@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>결과</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}" style="background:radial-gradient(70% 90% at 50% 40%,var(--bha-bg-3),var(--bha-bg-1) 70%,var(--bha-bg-0))">
+  <div class="bha-modal" role="dialog" aria-label="{{title}}" style="left:56px;top:22px;width:528px;height:286px;padding:0;overflow:hidden;border-color:{{tone}}">
+    <div style="height:4px;background:{{tone}}"></div>
+    <div style="padding:10px 14px 0;display:flex;align-items:baseline;gap:10px">
+      <span class="bha-display" style="font-size:18px;color:{{tone}}">{{title}}</span>
+      <span class="bha-xs bha-t2">{{sub}}</span>
+    </div>
+    <div style="padding:10px 14px;display:grid;grid-template-columns:132px 1fr;gap:14px">
+      <div class="bha-art bha-art--char" style="position:relative;height:150px">{{artLabel}}</div>
+      <div style="display:grid;gap:6px;align-content:start">
+        <span class="bha-sec">{{listTitle}}</span>
+        <div class="bha-kv bha-sm" style="gap:6px 12px">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+            <span class="bha-t2">{{r.k}}</span><b class="bha-num" style="color:{{r.c}}">{{r.v}}</b>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="position:absolute;left:14px;right:14px;bottom:12px;display:grid;grid-template-columns:1fr 1.4fr;gap:8px">
+      <button class="bha-btn bha-btn--ghost">{{btn2}}</button>
+      <button class="bha-btn bha-btn--accent">{{btn1}}</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"variant":{"editor":"enum","options":["return","defeat","story"],"default":"return"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const v = this.props.variant ?? 'return';
+    const T1 = 'var(--bha-text-1)';
+    const map = {
+      return: { tone: 'var(--bha-guard)', title: '귀환', sub: '원정을 마치고 둥지로 돌아왔다', artLabel: '캐릭터 (귀환 포즈)', listTitle: '얻은 것',
+        rows: [{ k: '바퀴 수', v: '[n]', c: T1 }, { k: '골드', v: '+[n]', c: 'var(--bha-rare)' }, { k: '먹이', v: '+[n]', c: T1 }, { k: '타일', v: '+[n]', c: T1 }, { k: '광기', v: '+[n]', c: 'var(--bha-mad)' }],
+        btn1: '둥지로', btn2: '로그 보기' },
+      defeat: { tone: 'var(--bha-danger)', title: '패배', sub: '쓰러져 둥지로 실려 왔다', artLabel: '캐릭터 (쓰러진 포즈)', listTitle: '잃은 것 · 남은 것',
+        rows: [{ k: '이번 원정 보상', v: '[잃음 규칙]', c: 'var(--bha-danger)' }, { k: '컨디션', v: '−[n]', c: 'var(--bha-danger)' }, { k: '남긴 골드', v: '[n]', c: T1 }, { k: '패배 횟수', v: '[n]', c: T1 }],
+        btn1: '둥지로', btn2: '로그 보기' },
+      story: { tone: 'var(--bha-rare)', title: '스토리 클리어', sub: '[장 제목]', artLabel: '장면 그림', listTitle: '보상',
+        rows: [{ k: '영옥', v: '+[n]', c: 'var(--bha-rare)' }, { k: '새 트랙', v: '[이름]', c: T1 }, { k: '칭호', v: '[이름]', c: T1 }],
+        btn1: '다음 장', btn2: '둥지로' }
+    };
+    const m = map[v] || map.return;
+    return { theme, ...m };
+  }
+}
+</script>
+</body>
+</html>

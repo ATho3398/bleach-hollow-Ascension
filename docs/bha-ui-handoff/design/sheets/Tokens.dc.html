@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>토큰 표</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-sheet bha-hollow" style="width:1280px;min-height:1180px;padding:32px;display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:start">
+  <div style="display:grid;gap:16px">
+    <div style="display:grid;gap:4px">
+      <span class="bha-display" style="font-size:28px">토큰 표</span>
+      <span class="bha-sm bha-t2">현재 게임 값 → 톤 조정안. 대비는 바탕 bg-3 위 기준(글자 4.5:1 이상). 역할 색은 같은 명도·채도대로 눌러 한 팔레트로 맞췄다.</span>
+    </div>
+
+    <div class="bha-panel" style="padding:12px 14px">
+      <span class="bha-md bha-b">면 · 선 · 글자 · 강조 (테마별)</span>
+      <table class="bha-table" style="margin-top:6px">
+        <thead><tr><th>토큰</th><th>쓰임</th><th>현재</th><th>호로 조정안</th><th>사신 조정안</th><th>대비</th></tr></thead>
+        <tbody>
+          <sc-for list="{{base}}" as="r" hint-placeholder-count="12">
+            <tr>
+              <td class="bha-code">{{r.k}}</td><td class="bha-t2">{{r.use}}</td>
+              <td><span class="bha-sw" style="background:{{r.cur}}"></span><span class="bha-code">{{r.cur}}</span></td>
+              <td><span class="bha-sw" style="background:{{r.h}}"></span><span class="bha-code" style="color:var(--bha-text-1)">{{r.h}}</span></td>
+              <td><span class="bha-sw" style="background:{{r.s}}"></span><span class="bha-code" style="color:var(--bha-text-1)">{{r.s}}</span></td>
+              <td class="bha-code">{{r.c}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bha-panel" style="padding:12px 14px">
+      <span class="bha-md bha-b">역할 색 (두 테마 공용)</span>
+      <table class="bha-table" style="margin-top:6px">
+        <thead><tr><th>토큰</th><th>역할</th><th>현재</th><th>조정안</th><th>bg-3 위</th><th>색 면 위 먹색 글자</th></tr></thead>
+        <tbody>
+          <sc-for list="{{roles}}" as="r" hint-placeholder-count="11">
+            <tr>
+              <td class="bha-code">{{r.k}}</td><td style="color:{{r.p}};font-weight:700">{{r.use}}</td>
+              <td><span class="bha-sw" style="background:{{r.cur}}"></span><span class="bha-code">{{r.cur}}</span></td>
+              <td><span class="bha-sw" style="background:{{r.p}}"></span><span class="bha-code" style="color:var(--bha-text-1)">{{r.p}}</span></td>
+              <td class="bha-code">{{r.c1}}</td><td class="bha-code">{{r.c2}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;gap:16px">
+    <div class="bha-panel" style="padding:12px 14px">
+      <span class="bha-md bha-b">속성 색 (블록 면, 신규 정의)</span>
+      <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:8px">
+        <sc-for list="{{attrs}}" as="a" hint-placeholder-count="7">
+          <div style="display:grid;gap:3px;text-align:center">
+            <span style="height:44px;border-radius:6px;background:{{a.v}};display:grid;place-items:center;color:var(--bha-ink-on-color);font-weight:800">{{a.n}}</span>
+            <span class="bha-code">{{a.v}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p class="bha-xs bha-t3" style="margin:8px 0 0">색 면 위 글자는 먹색 #1f1916 (대비 5.4:1 이상). 노멀은 회색 베이지.</p>
+    </div>
+
+    <div class="bha-panel" style="padding:12px 14px">
+      <span class="bha-md bha-b">글자</span>
+      <table class="bha-table" style="margin-top:6px">
+        <thead><tr><th>토큰</th><th>크기</th><th>쓰임</th></tr></thead>
+        <tbody>
+          <tr><td class="bha-code">--bha-fs-xs</td><td>12px</td><td style="font-size:12px">이름표·범례·칩·보조 (최소 크기)</td></tr>
+          <tr><td class="bha-code">--bha-fs-sm</td><td>13px</td><td style="font-size:13px">본문 기본·카드 이름</td></tr>
+          <tr><td class="bha-code">--bha-fs-md</td><td>14px</td><td style="font-size:14px">버튼·패널 제목</td></tr>
+          <tr><td class="bha-code">--bha-fs-lg</td><td>16px</td><td><span class="bha-display" style="font-size:16px">화면 제목·적 이름</span></td></tr>
+          <tr><td class="bha-code">--bha-fs-xl</td><td>18px</td><td><span class="bha-display" style="font-size:18px">큰 제목·조우·결과</span></td></tr>
+        </tbody>
+      </table>
+      <p class="bha-xs bha-t3" style="margin:8px 0 0">제목: 세리프 표시체 (Noto Serif KR 700) · 본문: Pretendard (글꼴 파일 업로드 전에는 Noto Sans KR로 대체)</p>
+    </div>
+
+    <div class="bha-panel" style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <span class="bha-md bha-b">간격</span>
+        <table class="bha-table" style="margin-top:6px"><tbody>
+          <sc-for list="{{space}}" as="s" hint-placeholder-count="7">
+            <tr><td class="bha-code">{{s.k}}</td><td>{{s.v}}</td><td><span style="display:inline-block;height:10px;width:{{s.v}};background:var(--bha-accent-hi);border-radius:2px"></span></td></tr>
+          </sc-for>
+        </tbody></table>
+      </div>
+      <div>
+        <span class="bha-md bha-b">모서리</span>
+        <table class="bha-table" style="margin-top:6px"><tbody>
+          <tr><td class="bha-code">--bha-r-sm</td><td>6px</td><td>칩·작은 버튼·블록</td></tr>
+          <tr><td class="bha-code">--bha-r-lg</td><td>10px</td><td>패널·카드·모달</td></tr>
+          <tr><td class="bha-code">--bha-r-pill</td><td>999px</td><td>게이지·토스트</td></tr>
+        </tbody></table>
+        <span class="bha-md bha-b" style="display:block;margin-top:10px">터치</span>
+        <table class="bha-table" style="margin-top:6px"><tbody>
+          <tr><td>기본 버튼</td><td>44px 이상</td></tr>
+          <tr><td>작은 버튼·탭</td><td>36px 이상</td></tr>
+          <tr><td>블록 칸 높이</td><td>64px</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <div class="bha-panel" style="padding:12px 14px">
+      <span class="bha-md bha-b">모션 시간</span>
+      <table class="bha-table" style="margin-top:6px">
+        <thead><tr><th>토큰</th><th>값</th><th>쓰임</th></tr></thead>
+        <tbody>
+          <tr><td class="bha-code">--bha-t-fast</td><td>120ms</td><td>버튼·블록 눌림</td></tr>
+          <tr><td class="bha-code">--bha-t-base</td><td>180ms</td><td>탭 전환·선택 테두리</td></tr>
+          <tr><td class="bha-code">--bha-t-spawn</td><td>240ms</td><td>블록이 한 칸 생길 때 (아래→위 + 페이드)</td></tr>
+          <tr><td class="bha-code">--bha-t-slow</td><td>280ms</td><td>모달·드래프트 카드 등장</td></tr>
+          <tr><td class="bha-code">--bha-t-gauge</td><td>600ms</td><td>게이지 차오름·줄어듦</td></tr>
+          <tr><td class="bha-code">--bha-t-pulse</td><td>1200ms</td><td>[해방] 준비 빛 맥동 (반복)</td></tr>
+          <tr><td class="bha-code">--bha-ease</td><td colspan="2">cubic-bezier(.2,.7,.2,1)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const b = (k, use, cur, h, s, c) => ({ k, use, cur, h, s, c });
+    const base = [
+      b('--bha-bg-0', '가장 깊은 바탕·트랙', '#0b0909', '#120e0d', '#0f1013', '—'),
+      b('--bha-bg-1', 'LCD 바탕', '#141010', '#1a1513', '#15171b', '—'),
+      b('--bha-bg-2', '낮은 면', '#1c1716', '#231d1a', '#1d2025', '—'),
+      b('--bha-bg-3', '패널 면', '#26201e', '#2e2622', '#262a30', '—'),
+      b('--bha-bg-4', '들린 면·버튼 (신규)', '—', '#3a312c', '#31363d', '—'),
+      b('--bha-line-1', '얇은 구분선', '#2f2725', '#3f3530', '#363b43', '—'),
+      b('--bha-line-2', '면 테두리', '#4a3d39', '#5a4c44', '#4e5560', '—'),
+      b('--bha-text-1', '주 글자', '#efe7da', '#f1e9dc', '#eeede8', '12.3 / 12.3'),
+      b('--bha-text-2', '보조 글자', '#bdb1a2', '#c6baa9', '#c0beb6', '7.8 / 7.8'),
+      b('--bha-text-3', '흐린 글자 (신규, bg-3까지만)', '—', '#a09382', '#9a9a96', '4.9 / 5.1'),
+      b('--bha-accent', '강조 면 (흰 글자 위)', '#c8303f', '#a63d45', '#43689f', '5.2 / 4.8'),
+      b('--bha-accent-hi', '강조 선·글자', '#ff5a6a', '#e2858a', '#8eb0e2', '5.6 / 6.5')
+    ];
+    const r = (k, use, cur, p, c1, c2) => ({ k, use, cur, p, c1, c2 });
+    const roles = [
+      r('--bha-atk', '공격', '#e5484d', '#d9726a', '4.6', '5.4'),
+      r('--bha-guard', '막기', '#2fb36b', '#6fb487', '6.0', '7.1'),
+      r('--bha-heal', '회복', '#3e8bff', '#6f9fd8', '5.4', '6.3'),
+      r('--bha-void', '공허', '—', '#b483c9', '5.0', '5.8'),
+      r('--bha-mad', '광기', '#ff4fd8', '#cf78bf', '5.0', '5.9'),
+      r('--bha-weak', '약점', '#e8c15a', '#d8b866', '7.7', '9.1'),
+      r('--bha-chain', '체인3', '#ff8a3d', '#dd9a5e', '6.3', '7.3'),
+      r('--bha-rare', '희귀·콤보·체인2', '#ffd24d', '#e0c46e', '8.7', '10.2'),
+      r('--bha-danger', '위험', '#ff6b6b', '#e07a70', '5.1', '6.0'),
+      r('--bha-insert', '삽입·놓을 수 있음', '#6cc4ff', '#74b3d8', '6.5', '7.6'),
+      r('--bha-seal', '봉인', '#a371f7', '#9f8ad6', '5.0', '5.9')
+    ];
+    const attrs = [['노멀', '#b3a793'], ['불', '#dc8a5c'], ['뇌', '#d9c063'], ['물', '#62adc0'], ['흙', '#b48d62'], ['독', '#9db45e'], ['혈', '#d4747f']].map(([n, v]) => ({ n, v }));
+    const space = [['--bha-s-1', '2px'], ['--bha-s-2', '4px'], ['--bha-s-3', '6px'], ['--bha-s-4', '8px'], ['--bha-s-5', '12px'], ['--bha-s-6', '16px'], ['--bha-s-7', '20px']].map(([k, v]) => ({ k, v }));
+    return { base, roles, attrs, space };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>원정 걷기</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <div class="bha-walk-sky"></div>
+  <div class="bha-walk-ground"></div>
+  <div class="bha-art bha-art--char" style="left:262px;top:112px;width:110px;height:116px;background-color:rgba(0,0,0,.18)">캐릭터 (걷기)<br>← 왼쪽으로</div>
+
+  <!-- 상태 줄 -->
+  <div class="bha-statusbar">
+    <span class="bha-mini"><span>배고픔</span><span class="bha-gauge bha-gauge--hunger"><span class="bha-gauge__fill" style="width:64%"></span></span></span>
+    <span class="bha-mini"><span>컨디션</span><span class="bha-gauge bha-gauge--cond"><span class="bha-gauge__fill" style="width:80%"></span></span></span>
+    <span class="bha-mini"><span>광기</span><span class="bha-gauge bha-gauge--mad"><span class="bha-gauge__fill" style="width:12%"></span></span></span>
+    <span class="bha-chip" style="margin-left:auto;color:var(--bha-text-1)">1바퀴</span>
+    <button class="bha-btn bha-btn--sm bha-btn--ghost"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:15px;height:15px"><path d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg>그만두기</button>
+  </div>
+
+  <!-- 조우 -->
+  <sc-if value="{{isEnc}}" hint-placeholder-val="{{ true }}">
+    <div class="bha-foe" style="left:470px;top:104px;width:110px;height:112px" role="img" aria-label="적 실루엣">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M20 30 L30 6 L38 26 Q50 20 62 26 L70 6 L80 30 Q94 52 84 80 L74 94 L64 84 L50 96 L36 84 L26 94 L16 80 Q6 52 20 30z" fill="#070505" stroke="var(--bha-line-2)" stroke-width="1.5"></path></svg>
+    </div>
+    <div class="bha-notice" style="top:52px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"></circle><path d="M9 13l-1 8 4-2 4 2-1-8"></path></svg><span><b>새 트랙</b> {{trackMsg}}</span></div>
+    <div role="alert" style="position:absolute;left:0;right:0;top:236px;height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+      background:linear-gradient(90deg,transparent,rgba(18,14,13,.88) 20%,rgba(18,14,13,.88) 80%,transparent);border-top:1px solid var(--bha-accent-hi);border-bottom:1px solid var(--bha-accent-hi)">
+      <span class="bha-xs bha-t2 bha-b">1바퀴 · 1번 칸</span>
+      <span class="bha-display bha-xl">혈 일반 1과 조우!</span>
+      <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-blood)"></span>혈</span>
+    </div>
+  </sc-if>
+
+  <!-- 바퀴 끝 선택 -->
+  <sc-if value="{{isLap}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-scrim"></div>
+    <div class="bha-modal" role="dialog" aria-label="바퀴 끝" style="left:110px;top:54px;width:420px;height:244px;display:flex;flex-direction:column;gap:8px">
+      <div class="bha-row"><span class="bha-display bha-xl">1바퀴 끝</span><span class="bha-xs bha-t2">계속 갈까, 둥지로 돌아갈까?</span></div>
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:10px;flex:1">
+        <div class="bha-tilecard bha-tile--elite" style="justify-content:center">
+          <span class="bha-badge">×1</span>
+          <span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"></path></svg></span>
+          <span class="bha-sm bha-b">상급 호로</span><span class="bha-xs bha-t2">강적 출현 + 좋은 보상</span>
+          <span class="bha-chip bha-chip--rare" style="margin-top:2px">얻은 타일</span>
+        </div>
+        <div class="bha-panel--sunk" style="border-radius:var(--bha-r-lg);border:1px solid var(--bha-line-1);padding:8px 10px;display:grid;align-content:start;gap:6px">
+          <span class="bha-sec">이번 바퀴</span>
+          <div class="bha-kv bha-sm"><span class="bha-t2">골드</span><span class="bha-b bha-num">+[n]</span><span class="bha-t2">먹이</span><span class="bha-b bha-num">+[n]</span><span class="bha-t2">광기</span><span class="bha-b bha-num" style="color:var(--bha-mad)">+[n]</span></div>
+          <button class="bha-btn bha-btn--sm" style="margin-top:auto;border-color:var(--bha-insert);color:var(--bha-insert)"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:15px;height:15px"><path d="M12 5v14M5 12h14"></path></svg>얻은 타일 길에 놓기</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="bha-btn bha-btn--ghost">귀환</button>
+        <button class="bha-btn bha-btn--accent">한 바퀴 더</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 드래프트 3장 중 1장 -->
+  <sc-if value="{{isDraft}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-scrim"></div>
+    <div style="position:absolute;z-index:31;left:0;right:0;top:54px;text-align:center"><span class="bha-display bha-xl">3장 중 1장 고르기</span></div>
+    <div style="position:absolute;z-index:31;left:68px;right:68px;top:88px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+      <button class="bha-tilecard bha-tile--wander" style="height:170px;justify-content:center;gap:6px;font-family:inherit;color:inherit">
+        <span class="bha-tileico" style="width:52px;height:52px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:26px;height:26px"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"></path></svg></span>
+        <span class="bha-md bha-b">떠도는 영혼</span><span class="bha-xs bha-t2">약한 적 출현</span></button>
+      <button class="bha-tilecard bha-tile--hollow is-selected" style="height:170px;justify-content:center;gap:6px;font-family:inherit;color:inherit">
+        <span class="bha-tileico" style="width:52px;height:52px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:26px;height:26px"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+        <span class="bha-md bha-b">하급 호로</span><span class="bha-xs bha-t2">약한 적 출현</span></button>
+      <button class="bha-tilecard bha-tile--elite" style="height:170px;justify-content:center;gap:6px;font-family:inherit;color:inherit">
+        <span class="bha-tileico" style="width:52px;height:52px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:26px;height:26px"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"></path></svg></span>
+        <span class="bha-md bha-b">상급 호로</span><span class="bha-xs bha-t2">강적 출현 + 좋은 보상</span></button>
+    </div>
+    <div style="position:absolute;z-index:31;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:8px">
+      <button class="bha-btn bha-btn--sm bha-btn--ghost">건너뛰기</button>
+      <button class="bha-btn bha-btn--sm bha-btn--accent" style="min-width:120px">하급 호로 받기</button>
+    </div>
+  </sc-if>
+
+  <!-- 이벤트 창 (상인·제단·보물·함정 공용) -->
+  <sc-if value="{{isEvent}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-scrim"></div>
+    <div class="bha-modal" role="dialog" aria-label="제단" style="left:70px;top:54px;width:500px;height:250px;display:grid;grid-template-columns:150px 1fr;gap:12px">
+      <div class="bha-art" style="position:relative;height:100%">이벤트 그림<br>(제단)</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px"><span class="bha-display bha-xl">제단</span><span class="bha-chip bha-chip--seal">이벤트</span></div>
+        <p class="bha-sm bha-t2" style="margin:0;line-height:1.5">[제단 이벤트 설명 — 최대 3줄. 상인·보물·함정도 같은 창을 쓴다.]</p>
+        <div style="margin-top:auto;display:grid;gap:6px">
+          <button class="bha-btn" style="justify-content:space-between"><span>[선택지 1]</span><span class="bha-xs bha-t2">[얻는 것 · 잃는 것]</span></button>
+          <button class="bha-btn bha-btn--ghost" style="justify-content:space-between"><span>지나간다</span><span class="bha-xs bha-t3">변화 없음</span></button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"variant":{"editor":"enum","options":["encounter","lap","draft","event"],"default":"encounter"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const v = this.props.variant ?? 'encounter';
+    return {
+      theme,
+      isEnc: v === 'encounter', isLap: v === 'lap', isDraft: v === 'draft', isEvent: v === 'event',
+      trackMsg: theme === 'soul' ? '호로 트랙이 열렸다' : '사신 트랙이 열렸다'
+    };
+  }
+}
+</script>
+</body>
+</html>

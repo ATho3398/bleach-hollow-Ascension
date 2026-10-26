@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>상태</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <div style="position:absolute;left:12px;top:6px;display:flex;align-items:center;gap:8px">
+    <span style="width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--bha-bg-3);border:1px solid var(--bha-line-2);color:var(--bha-accent-hi)"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span>
+    <span style="display:grid"><span class="bha-display bha-xl" style="line-height:1.15">상태</span>
+      <span class="bha-xs bha-t2">사냥터 <b style="color:var(--bha-text-1)">{{place}}</b> · 원정 <b>0</b>회 · 귀환 <b>0</b> · 패배 <b>0</b></span></span>
+  </div>
+
+  <!-- 왼쪽 열 -->
+  <div class="bha-panel bha-scroll" style="position:absolute;left:12px;top:50px;width:300px;bottom:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+    <span class="bha-md bha-b">광기 · 자아</span>
+    <div style="display:flex;align-items:center;gap:8px"><span class="bha-sm bha-b" style="color:var(--bha-mad)">광기</span><span class="bha-gauge bha-gauge--mad" style="flex:1"><span class="bha-gauge__fill" style="width:8%"></span></span><span class="bha-xs bha-num bha-t2">8 / 100</span></div>
+    <span class="bha-xs bha-b" style="color:var(--bha-danger)">손해</span>
+    <ul class="bha-xs bha-t2" style="margin:0;padding-left:16px;display:grid;gap:3px;line-height:1.45">
+      <li>광기 0~99: 직접적인 손해는 없다. 게이지만 쌓인다.</li>
+      <li>광기 100 = 한계 돌파(폭주, 원정당 1번): 그 원정 남은 동안 내가 주는 피해 +30%, 받는 피해 +30%, 공허 블록 확률 +20%p</li>
+      <li>돌파한 원정에서 둥지로 돌아오면 컨디션 −30 · 자아 −25, 광기는 60으로 가라앉는다</li>
+    </ul>
+    <span class="bha-xs bha-b" style="color:var(--bha-mad)">오르는 길</span>
+    <ul class="bha-xs bha-t2" style="margin:0;padding-left:16px;display:grid;gap:3px;line-height:1.45">
+      <li>공허 블록 1개 쓸 때마다 +2.5</li>
+      <li>강한 적을 {{eat}}할 때 +(적 체력[기본 공격 횟수]×0.095) — 특성·속성만이면 ×0.7, 능력치만이면 ×0.5</li>
+      <li>5바퀴째부터 칸을 지날 때마다 +(바퀴−4)×0.5</li>
+      <li>해방이 끝날 때 +0.1</li>
+    </ul>
+    <span class="bha-xs bha-b" style="color:var(--bha-guard)">내리는 길</span>
+    <ul class="bha-xs bha-t2" style="margin:0;padding-left:16px;line-height:1.45"><li>[내리는 길 목록 — 숫자로]</li></ul>
+    <div class="bha-divider" style="margin:4px 0"></div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="bha-sm bha-b" style="color:var(--bha-heal)">자아</span><span class="bha-gauge bha-gauge--cond" style="flex:1"><span class="bha-gauge__fill" style="width:60%"></span></span><span class="bha-xs bha-num bha-t2">[n] / 100</span></div>
+    <span class="bha-xs bha-b" style="color:var(--bha-danger)">손해</span>
+    <ul class="bha-xs bha-t2" style="margin:0;padding-left:16px;line-height:1.45"><li>[자아 손해 — 숫자로]</li></ul>
+    <span class="bha-xs bha-b" style="color:var(--bha-text-1)">오르내림</span>
+    <ul class="bha-xs bha-t2" style="margin:0;padding-left:16px;line-height:1.45"><li>놓아주면 광기 −5 · 자아 +6</li><li>[그 밖 오르내림]</li></ul>
+    <div class="bha-divider" style="margin:4px 0"></div>
+    <span class="bha-md bha-b">가진 것</span>
+    <div class="bha-kv bha-sm"><span class="bha-t2">먹이</span><b class="bha-num">[n]</b><span class="bha-t2">영혼 결정</span><b class="bha-num">[n]</b><span class="bha-t2">골드</span><b class="bha-num">5200</b><span class="bha-t2">영옥</span><b class="bha-num">121</b></div>
+    <div class="bha-divider" style="margin:4px 0"></div>
+    <span class="bha-md bha-b">스킨 고르기</span>
+    <div style="display:flex;gap:6px;flex:none">
+      <button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="기본 스킨" style="outline:2px solid var(--bha-text-1);outline-offset:1px"><span class="bha-swatch" style="width:20px;height:20px;background:var(--bha-text-2)"></span></button>
+      <button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="영옥 구슬"><span class="bha-swatch" style="width:20px;height:20px;background:var(--bha-guard)"></span></button>
+      <button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="잠긴 스킨" style="opacity:.5"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></button>
+    </div>
+  </div>
+
+  <!-- 오른쪽 열 -->
+  <div class="bha-scroll" style="position:absolute;left:322px;right:8px;top:50px;bottom:8px;display:grid;gap:8px;align-content:start;padding-right:4px">
+    <div class="bha-panel" style="padding:10px 12px;display:grid;gap:6px">
+      <div class="bha-row"><span class="bha-md bha-b">능력치</span><span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px"></span>노멀</span></div>
+      <div class="bha-kv bha-sm" style="gap:5px 10px">
+        <span class="bha-t2">체력</span><b class="bha-num">50</b>
+        <span class="bha-t2">힘</span><b class="bha-num">50</b>
+        <span class="bha-t2">지능</span><b class="bha-num">50</b>
+        <span class="bha-t2">방어</span><b class="bha-num">50</b>
+        <span class="bha-t2">정신력</span><b class="bha-num">50</b>
+        <span class="bha-t2">속도</span><b class="bha-num">50</b>
+      </div>
+      <div class="bha-divider"></div>
+      <div class="bha-kv bha-sm" style="gap:5px 10px">
+        <span class="bha-t2">치명타 확률</span><b class="bha-num">5%</b>
+        <span class="bha-t2">치명타 피해</span><b class="bha-num">×1.5</b>
+        <span class="bha-t2">속성 피해</span><b class="bha-num">[n]</b>
+      </div>
+    </div>
+    <div class="bha-panel" style="padding:10px 12px;display:grid;gap:8px">
+      <div class="bha-row"><span class="bha-md bha-b">진화 정보</span><span class="bha-xs bha-t2">[현재 진화체]</span></div>
+      <span class="bha-xs bha-t2" style="line-height:1.45">다음: {{nextForm}} · [진화 조건]</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <button class="bha-btn bha-btn--sm">진화체 도감</button>
+        <button class="bha-btn bha-btn--sm bha-btn--danger">환생</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const soul = theme === 'soul';
+    return { theme, place: soul ? '소울 소사이어티' : '웨코문도', eat: soul ? '흡수' : '포식', nextForm: soul ? '[다음 진화체]' : '아쥬커스' };
+  }
+}
+</script>
+</body>
+</html>

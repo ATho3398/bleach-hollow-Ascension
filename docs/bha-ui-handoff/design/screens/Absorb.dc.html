@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>흡수(포식)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <!-- 머리: 단계 + 제목 -->
+  <div style="position:absolute;left:12px;right:12px;top:6px;height:32px;display:flex;align-items:center;gap:6px">
+    <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:{{s.color}}">
+        <span style="width:20px;height:20px;border-radius:50%;display:grid;place-items:center;border:1px solid currentColor;background:{{s.bg}};color:{{s.numColor}}">{{s.n}}</span>{{s.label}}</span>
+      <span style="width:14px;height:1px;background:var(--bha-line-2)"></span>
+    </sc-for>
+    <span class="bha-display bha-xl" style="margin-left:auto">{{eat}} 가능</span>
+  </div>
+
+  <!-- 왼쪽: 적 카드 -->
+  <div class="bha-panel" style="position:absolute;left:12px;top:44px;width:290px;height:60px;padding:8px;display:flex;align-items:center;gap:10px">
+    <span class="bha-foe" style="position:relative;width:44px;height:44px;border-radius:8px;background:var(--bha-bg-1);border:1px solid var(--bha-line-2)"><svg viewBox="0 0 100 100" aria-hidden="true" style="width:36px;height:36px"><path d="M20 30 L30 6 L38 26 Q50 20 62 26 L70 6 L80 30 Q94 52 84 80 L74 94 L64 84 L50 96 L36 84 L26 94 L16 80 Q6 52 20 30z" fill="#070505" stroke="var(--bha-line-2)" stroke-width="3"></path></svg></span>
+    <span style="display:grid;gap:3px">
+      <span class="bha-display bha-lg">독 강적 2</span>
+      <span style="display:flex;gap:4px"><span class="bha-chip bha-chip--danger" style="height:20px">강적</span><span class="bha-chip bha-chip--attr" style="height:20px"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-poison)"></span>독</span><span class="bha-chip" style="height:20px;color:var(--bha-weak);border-color:var(--bha-weak)">약점 [속성]</span></span>
+    </span>
+  </div>
+
+  <!-- 광기 게이지 (+예상) -->
+  <div style="position:absolute;left:312px;right:12px;top:44px;display:grid;gap:4px">
+    <div class="bha-row"><span class="bha-xs bha-b" style="color:var(--bha-mad)">지금 광기</span><span class="bha-sm bha-num bha-b">0 <span class="bha-t2" style="font-weight:500">/ 100</span> <span style="color:var(--bha-mad)">→ +{{madPlus}}</span></span></div>
+    <span class="bha-gauge bha-gauge--mad" style="height:10px"><span class="bha-gauge__fill" style="width:2px"></span><span class="bha-gauge__ghost" style="width:{{madPlus}}%"></span></span>
+  </div>
+
+  <!-- ① 선택 -->
+  <sc-if value="{{isPick}}" hint-placeholder-val="{{ true }}">
+    <div class="bha-panel--flat bha-scroll" style="position:absolute;left:12px;top:110px;width:290px;bottom:8px;border-radius:var(--bha-r-lg);border:1px solid var(--bha-line-1);padding:8px 10px;display:grid;gap:6px;align-content:start">
+      <div style="display:grid;gap:1px"><span class="bha-xs bha-t2">둘 다 {{eat}}</span><span class="bha-xs bha-b">특성·속성 O · 광기 <span style="color:var(--bha-mad)">+21</span> · 노력치 체력 +2 · 지능 +2</span></div>
+      <div style="display:grid;gap:1px"><span class="bha-xs bha-t2">속성만</span><span class="bha-xs bha-b">특성·속성 O · 광기 <span style="color:var(--bha-mad)">+15</span> · 노력치 없음</span></div>
+      <div style="display:grid;gap:1px"><span class="bha-xs bha-t2">스탯만</span><span class="bha-xs bha-b">특성·속성 X · 광기 <span style="color:var(--bha-mad)">+10</span> · 노력치 체력 +4 · 지능 +4</span></div>
+      <div style="display:grid;gap:1px"><span class="bha-xs bha-t2">놓아주면</span><span class="bha-xs bha-b">광기 <span style="color:var(--bha-guard)">−5</span> · 자아 <span style="color:var(--bha-guard)">+6</span></span></div>
+      <div class="bha-divider"></div>
+      <span class="bha-xs bha-t3" style="line-height:1.45">{{eat}}하는 세 갈래 모두 배부름 가득 · 타일 +1. 놓아주면 그대로. 이기면 언제나 {{eat}} 가능. 특성 후보는 이 적의 속성(독) 특성에서만 나온다.</span>
+    </div>
+    <div style="position:absolute;left:312px;right:12px;top:84px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="bha-btn bha-btn--light" style="height:58px;flex-direction:column;gap:3px;outline:2px solid var(--bha-text-1);outline-offset:2px"><span class="bha-lg" style="font-weight:800">둘 다 {{eat}}</span><span class="bha-xs" style="font-weight:500">특성 + 노력치</span></button>
+      <button class="bha-btn" style="height:58px;flex-direction:column;gap:3px"><span class="bha-lg">속성만</span><span class="bha-xs bha-t2" style="font-weight:500">특성만 · 노력치 없음</span></button>
+      <button class="bha-btn" style="height:58px;flex-direction:column;gap:3px"><span class="bha-lg">스탯만</span><span class="bha-xs bha-t2" style="font-weight:500">노력치 ×2 · 특성 없음</span></button>
+      <button class="bha-btn bha-btn--ghost" style="height:58px;flex-direction:column;gap:3px;color:var(--bha-text-1)"><span class="bha-lg">{{eat}} 안 함</span><span class="bha-xs bha-t2" style="font-weight:500">놓아준다 · 안정 쪽으로</span></button>
+    </div>
+    <div style="position:absolute;left:312px;right:12px;top:216px;display:grid;gap:4px">
+      <div class="bha-row"><span class="bha-xs bha-t2 bha-b">본체 슬롯</span><span class="bha-xs bha-b">0 / 3</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px">
+        <span class="bha-slot" style="min-height:36px;font-size:12px">1번 비어 있음</span><span class="bha-slot" style="min-height:36px;font-size:12px">2번 비어 있음</span><span class="bha-slot" style="min-height:36px;font-size:12px">3번 비어 있음</span>
+      </div>
+      <span class="bha-xs bha-t3">속성·특성 풀과 리스크 수치는 임시 데이터.</span>
+    </div>
+  </sc-if>
+
+  <!-- ② 특성 후보 -->
+  <sc-if value="{{isCand}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-panel--flat" style="position:absolute;left:12px;top:110px;width:290px;bottom:8px;border-radius:var(--bha-r-lg);border:1px solid var(--bha-line-1);padding:10px;display:grid;gap:6px;align-content:start">
+      <span class="bha-xs bha-t2">고른 갈래</span><span class="bha-md bha-b">둘 다 {{eat}}</span>
+      <span class="bha-xs bha-t2" style="line-height:1.45">특성·속성 O · 광기 +21 · 노력치 체력 +2 · 지능 +2</span>
+      <div class="bha-divider"></div>
+      <span class="bha-xs bha-t3" style="line-height:1.45">후보 3장 중 1장을 고른다. 다시 뽑기는 1번.</span>
+    </div>
+    <div style="position:absolute;left:312px;right:12px;top:82px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+      <button class="bha-panel" style="height:178px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:inherit;font-family:inherit;cursor:pointer">
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-poison)"></span>독</span>
+        <span class="bha-sm bha-b" style="text-align:center">[특성 이름]</span><span class="bha-xs bha-t2" style="text-align:center;line-height:1.4">[효과 2줄]</span></button>
+      <button class="bha-panel" style="height:178px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:inherit;font-family:inherit;cursor:pointer;outline:2px solid var(--bha-text-1);outline-offset:2px;border-color:var(--bha-rare)">
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-poison)"></span>독</span>
+        <span class="bha-chip bha-chip--rare" style="height:20px">희귀</span>
+        <span class="bha-sm bha-b" style="text-align:center">[특성 이름]</span><span class="bha-xs bha-t2" style="text-align:center;line-height:1.4">[효과 2줄]</span></button>
+      <button class="bha-panel" style="height:178px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:inherit;font-family:inherit;cursor:pointer">
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-poison)"></span>독</span>
+        <span class="bha-sm bha-b" style="text-align:center">[특성 이름]</span><span class="bha-xs bha-t2" style="text-align:center;line-height:1.4">[효과 2줄]</span></button>
+    </div>
+    <div style="position:absolute;left:312px;right:12px;bottom:8px;display:grid;grid-template-columns:1fr 1.4fr;gap:6px">
+      <button class="bha-btn bha-btn--ghost"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"></path></svg>다시 뽑기 1</button>
+      <button class="bha-btn bha-btn--accent">이 특성 받기</button>
+    </div>
+  </sc-if>
+
+  <!-- ③ 슬롯 가득 → 교체/포기 -->
+  <sc-if value="{{isSwap}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-panel" style="position:absolute;left:12px;top:110px;width:290px;bottom:8px;padding:10px;display:flex;flex-direction:column;gap:8px;border-color:var(--bha-rare)">
+      <span class="bha-xs bha-b" style="color:var(--bha-rare)">새 특성</span>
+      <div style="display:flex;align-items:center;gap:6px"><span class="bha-md bha-b">[특성 이름]</span><span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-poison)"></span>독</span></div>
+      <span class="bha-xs bha-t2" style="line-height:1.45">[효과 2줄]</span>
+      <span class="bha-xs bha-t3" style="margin-top:auto;line-height:1.45">본체 슬롯이 가득 찼다. 바꿀 슬롯을 고르거나 포기한다.</span>
+    </div>
+    <div style="position:absolute;left:312px;right:12px;top:82px;display:grid;gap:6px">
+      <div class="bha-row"><span class="bha-xs bha-t2 bha-b">본체 슬롯</span><span class="bha-xs bha-b" style="color:var(--bha-danger)">3 / 3 가득</span></div>
+      <div class="bha-panel--flat" style="border-radius:8px;border:1px solid var(--bha-line-2);padding:4px 6px 4px 10px;display:flex;align-items:center;gap:8px"><span class="bha-xs bha-t3">1번</span><span style="flex:1;display:grid"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span><button class="bha-btn bha-btn--sm">교체</button></div>
+      <div class="bha-panel--flat" style="border-radius:8px;border:1px solid var(--bha-text-1);padding:4px 6px 4px 10px;display:flex;align-items:center;gap:8px"><span class="bha-xs bha-t3">2번</span><span style="flex:1;display:grid"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span><button class="bha-btn bha-btn--sm bha-btn--accent">교체</button></div>
+      <div class="bha-panel--flat" style="border-radius:8px;border:1px solid var(--bha-line-2);padding:4px 6px 4px 10px;display:flex;align-items:center;gap:8px"><span class="bha-xs bha-t3">3번</span><span style="flex:1;display:grid"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span><button class="bha-btn bha-btn--sm">교체</button></div>
+    </div>
+    <button class="bha-btn bha-btn--danger" style="position:absolute;left:312px;right:12px;bottom:8px">포기 — 새 특성 버리기</button>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"variant":{"editor":"enum","options":["pick","candidates","swap"],"default":"pick"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const v = this.props.variant ?? 'pick';
+    const idx = v === 'swap' ? 2 : v === 'candidates' ? 1 : 0;
+    const steps = ['선택', '특성', '슬롯'].map((label, i) => ({
+      n: String(i + 1), label,
+      color: i === idx ? 'var(--bha-text-1)' : i < idx ? 'var(--bha-text-2)' : 'var(--bha-text-3)',
+      bg: i === idx ? 'var(--bha-text-1)' : 'transparent',
+      numColor: i === idx ? 'var(--bha-ink-on-color)' : 'inherit'
+    }));
+    return {
+      theme, steps,
+      eat: theme === 'soul' ? '흡수' : '포식',
+      madPlus: '21',
+      isPick: idx === 0, isCand: idx === 1, isSwap: idx === 2
+    };
+  }
+}
+</script>
+</body>
+</html>

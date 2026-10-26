@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>스킬 블록 확정</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-sheet bha-hollow" style="width:1040px;min-height:880px;padding:28px 32px;display:grid;gap:16px;align-content:start">
+  <div style="display:grid;gap:4px">
+    <span class="bha-display" style="font-size:28px">스킬 블록 · 확정 (각인 컷)</span>
+    <span class="bha-sm bha-t2">어두운 칸 + 속성 색 이중 테두리. 안쪽 판 오른쪽 위를 22px 사선으로 잘라 그 자리에 계열 글자 하나. 이름은 화면에 쓰지 않고 읽기 도구용으로만 둔다.</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start">
+    <!-- 구조 (3배) -->
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+      <span class="bha-md bha-b">구조 (56×64 · 3배 확대)</span>
+      <div style="position:relative;height:200px">
+        <div style="position:absolute;left:0;top:4px;width:56px;transform:scale(3);transform-origin:0 0">
+          <span class="bha-block bha-block--normal is-weak" style="width:56px" role="img" aria-label="조 구조 예시">
+            <span class="bha-block__face"></span>
+            <span class="bha-block__pips"><i class="on"></i><i class="on"></i><i></i></span>
+            <span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4c3 4 4 9 3 16M11 4c3 4 4 9 3 16M16 4c3 4 4 9 3 16"></path></svg></span>
+            <span class="bha-block__glyph" aria-hidden="true">조</span>
+          </span>
+        </div>
+        <ol class="bha-xs bha-t2" style="position:absolute;left:184px;top:0;margin:0;padding-left:16px;display:grid;gap:10px;line-height:1.4">
+          <li><b style="color:var(--bha-text-1)">체인 점</b> 판 왼쪽 위 (10,10)</li>
+          <li><b style="color:var(--bha-text-1)">계열 글자</b> 사선 컷 자리, 13px 세리프</li>
+          <li><b style="color:var(--bha-text-1)">아이콘</b> 30px, 사선 아래로 내려 배치</li>
+          <li><b style="color:var(--bha-text-1)">약점</b> 오른쪽 아래 금색 삼각형</li>
+          <li><b style="color:var(--bha-text-1)">속성 색</b> 바깥 테두리 + 판 선 + 아이콘</li>
+        </ol>
+      </div>
+      <span class="bha-xs bha-t3" style="line-height:1.45">점·글자·아이콘·약점이 네 구석을 하나씩 맡아 서로 겹치지 않는다. 칸 폭이 48~72px로 바뀌어도 사선 컷 크기(22px)는 고정.</span>
+    </div>
+
+    <!-- 계열 글자 표 -->
+    <div class="bha-panel" style="padding:14px 16px;display:grid;gap:8px">
+      <span class="bha-md bha-b">계열 글자</span>
+      <table class="bha-table">
+        <thead><tr><th>블록</th><th>호로</th><th>사신</th><th>아이콘</th><th>색</th></tr></thead>
+        <tbody>
+          <tr><td>공격 1</td><td class="bha-display">조</td><td class="bha-display">참</td><td>발톱 3줄 / 베기</td><td>속성 색</td></tr>
+          <tr><td>공격 2</td><td class="bha-display">탄</td><td class="bha-display">귀</td><td>탄환 궤적 / 빔</td><td>속성 색</td></tr>
+          <tr><td>공격 3</td><td class="bha-display">교</td><td class="bha-display">권</td><td>이빨 / 충격</td><td>속성 색</td></tr>
+          <tr><td>막기</td><td class="bha-display" colspan="2">방</td><td>방패</td><td style="color:var(--bha-guard)">막기 녹색</td></tr>
+          <tr><td>회복</td><td class="bha-display" colspan="2">회</td><td>십자</td><td style="color:var(--bha-heal)">회복 청색</td></tr>
+          <tr><td>공허</td><td class="bha-display" colspan="2">허</td><td>소용돌이</td><td style="color:var(--bha-void)">공허 보라</td></tr>
+          <tr><td>콤보_계열</td><td class="bha-display" colspan="2">콤</td><td>반짝임</td><td style="color:var(--bha-rare)">금빛 + 판 광택</td></tr>
+          <tr><td>해방</td><td class="bha-display" colspan="2">해</td><td>육망성</td><td style="color:var(--bha-accent-hi)">강조 색 + 빛</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 실제 크기 바 -->
+  <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+    <span class="bha-md bha-b">실제 크기 블록 바 (전투 스킬창 폭 488px)</span>
+    <sc-for list="{{bars}}" as="bar" hint-placeholder-count="2">
+      <div class="{{bar.cls}}" style="display:grid;grid-template-columns:60px 488px;gap:12px;align-items:end;padding:6px 0 0;background:transparent">
+        <span class="bha-xs bha-b bha-t2" style="padding-bottom:30px">{{bar.label}}</span>
+        <div class="bha-blockbar" style="position:relative;left:auto;right:auto;bottom:auto;margin-top:16px">
+          <sc-for list="{{bar.slots}}" as="s" hint-placeholder-count="7">
+            <sc-if value="{{s.isSingle}}" hint-placeholder-val="{{ true }}">
+              <button class="bha-block {{s.b.cls}}" aria-label="{{s.b.name}}">
+                <span class="bha-block__face"></span>
+                <span class="bha-block__pips"><i class="on"></i><i></i><i></i></span>
+                <span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{s.b.d}}"></path></svg></span>
+                <span class="bha-block__glyph" aria-hidden="true">{{s.b.glyph}}</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{s.isChain}}" hint-placeholder-val="{{ false }}">
+              <div class="bha-chain" style="grid-column:span 2;grid-template-columns:repeat(2,minmax(0,1fr))"><span class="bha-chain__tab">체인2</span>
+                <sc-for list="{{s.blocks}}" as="b" hint-placeholder-count="2">
+                  <button class="bha-block {{b.cls}}" aria-label="{{b.name}} 체인2">
+                    <span class="bha-block__face"></span>
+                    <span class="bha-block__pips"><i class="on"></i><i class="on"></i><i></i></span>
+                    <span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{b.d}}"></path></svg></span>
+                    <span class="bha-block__glyph" aria-hidden="true">{{b.glyph}}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- 상태 -->
+  <div class="bha-panel" style="padding:14px 16px;display:grid;gap:10px">
+    <span class="bha-md bha-b">상태</span>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+      <sc-for list="{{states}}" as="st" hint-placeholder-count="7">
+        <div style="display:grid;gap:4px;justify-items:center;width:64px">
+          <span class="bha-block {{st.cls}}" style="width:56px" role="img" aria-label="{{st.label}}">
+            <span class="bha-block__face"></span>
+            <span class="bha-block__pips"><i class="on"></i><i></i><i></i></span>
+            <span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{st.d}}"></path></svg></span>
+            <span class="bha-block__glyph" aria-hidden="true">{{st.g}}</span>
+          </span>
+          <span class="bha-cap">{{st.label}}</span>
+        </div>
+      </sc-for>
+      <div style="display:grid;gap:4px;justify-items:center;width:64px"><span class="bha-block bha-block--empty" style="width:56px"></span><span class="bha-cap">빈 칸</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const I = {
+      claw: 'M6 4c3 4 4 9 3 16M11 4c3 4 4 9 3 16M16 4c3 4 4 9 3 16',
+      fang: 'M3 6h18M5 6l2 7 2-7M10 6l2 9 2-9M15 6l2 7 2-7',
+      shot: 'M14 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0M3 9h9M5 12h8M3 15h9',
+      slash: 'M5 19L19 5M10 21L21 10M3 14L14 3',
+      impact: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3',
+      beam: 'M3 8h11M3 12h15M3 16h11M18 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
+      shield: 'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z',
+      cross: 'M12 5v14M5 12h14',
+      swirl: 'M12 12a2 2 0 1 1 2-2 4 4 0 1 1-4-4 6 6 0 1 1-6 6',
+      spark: 'M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z',
+      seal: 'M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z'
+    };
+    const b = (cls, d, glyph, name) => ({ cls, d, glyph, name });
+    const mk = (A, B, C) => [
+      { isSingle: true, isChain: false, b: b('bha-block--normal', A.d, A.n, A.n) },
+      { isSingle: false, isChain: true, b: {}, blocks: [b('bha-block--fire', B.d, B.n, B.n), b('bha-block--fire', B.d, B.n, B.n)] },
+      { isSingle: true, isChain: false, b: b('bha-block--thunder is-weak', C.d, C.n, C.n) },
+      { isSingle: true, isChain: false, b: b('bha-block--guard', I.shield, '방', '막기') },
+      { isSingle: true, isChain: false, b: b('bha-block--heal', I.cross, '회', '회복') },
+      { isSingle: true, isChain: false, b: b('bha-block--void', I.swirl, '허', '공허') },
+      { isSingle: true, isChain: false, b: b('bha-block--combo', I.spark, '콤', '콤보_' + A.n) }
+    ];
+    const bars = [
+      { label: '호로', cls: 'bha-hollow', slots: mk({ n: '조', d: I.claw }, { n: '탄', d: I.shot }, { n: '교', d: I.fang }) },
+      { label: '사신', cls: 'bha-soul', slots: mk({ n: '참', d: I.slash }, { n: '귀', d: I.beam }, { n: '권', d: I.impact }) }
+    ];
+    const states = [
+      { cls: 'bha-block--water', d: I.claw, g: '조', label: '기본' },
+      { cls: 'bha-block--earth is-weak', d: I.fang, g: '교', label: '약점' },
+      { cls: 'bha-block--blood is-selected', d: I.shot, g: '탄', label: '선택' },
+      { cls: 'bha-block--poison is-pressed', d: I.claw, g: '조', label: '눌림' },
+      { cls: 'bha-block--fire is-locked', d: I.claw, g: '봉', label: '봉인' },
+      { cls: 'bha-block--release', d: I.seal, g: '해', label: '해방' },
+      { cls: 'bha-block--combo', d: I.spark, g: '콤', label: '콤보' }
+    ];
+    return { bars, states };
+  }
+}
+</script>
+</body>
+</html>

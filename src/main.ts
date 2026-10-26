@@ -22,6 +22,7 @@ import './ui/bha/install.css';
 import './ui/bha/birth.css';
 import './ui/bha/warning.css';
 import './ui/bha/guide.css';
+import './ui/bha/v2/bha.css'; // LCD 인게임 UI v2 (C.151): .bha-root 안에서만 적용
 import { startApp } from './ui/app';
 import { acquirePlayLock } from './tabLock';
 import { tabBlockedView } from './ui/tabBlockedView';
@@ -37,7 +38,10 @@ mountSprite();
 applyCalmMode();
 const app = document.querySelector<HTMLDivElement>('#app');
 // C.139: 한 번에 한 창만 플레이 — 다른 창이 쥐고 있으면 세이브를 열지 않고 안내만
-if (app) void acquirePlayLock().then((ok) => (ok ? startApp(app) : tabBlockedView(app, () => location.reload())));
+// 개발 전용: v2 컴포넌트 갤러리 (`?v2gallery=<종족 theme 값>`). 배포 빌드에서는 이 분기가 통째로 빠진다
+if (app && import.meta.env.DEV && new URLSearchParams(location.search).has('v2gallery')) {
+  void import('./ui/bha/v2/gallery').then((m) => m.mountGallery(app, new URLSearchParams(location.search).get('v2gallery') ?? ''));
+} else if (app) void acquirePlayLock().then((ok) => (ok ? startApp(app) : tabBlockedView(app, () => location.reload())));
 registerServiceWorker();
 mountUpdateBanner();
 maybeShowInstall();

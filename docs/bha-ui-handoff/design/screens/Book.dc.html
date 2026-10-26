@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>책장</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <div style="position:absolute;left:12px;top:4px;height:40px;display:flex;align-items:center;gap:8px">
+    <button class="bha-titletoggle bha-display bha-lg" aria-label="도감 바꾸기 (진화체·칭호)">진화체 도감<svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="bha-chip">[n] / [n]</span>
+  </div>
+  <div class="bha-scroll" style="position:absolute;left:12px;top:48px;width:352px;bottom:8px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-content:start;padding:2px 4px 2px 2px">
+    <sc-for list="{{cells}}" as="c" hint-placeholder-count="12">
+      <button class="bha-panel" style="height:84px;padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;color:inherit;font-family:inherit;cursor:pointer;{{c.style}}">
+        <span style="width:40px;height:40px;border-radius:8px;display:grid;place-items:center;background:var(--bha-bg-1);border:1px dashed var(--bha-line-2);font-size:12px;color:var(--bha-text-3)">{{c.pic}}</span>
+        <span class="bha-xs bha-b" style="color:{{c.color}}">{{c.name}}</span>
+      </button>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="position:absolute;left:374px;right:12px;top:48px;bottom:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+    <div class="bha-art" style="position:relative;height:110px">진화체 도트</div>
+    <span class="bha-display bha-lg">{{selName}}</span>
+    <span class="bha-xs bha-t2" style="line-height:1.45">[도감 설명 2~3줄]</span>
+    <div class="bha-kv bha-xs" style="margin-top:auto"><span class="bha-t2">처음 만난 날</span><b>[날짜]</b><span class="bha-t2">진화 조건</span><b>[조건]</b></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const soul = theme === 'soul';
+    const known = soul ? ['[진화체 1]', '[진화체 2]', '[진화체 3]'] : ['[진화체 1]', '아쥬커스', '세군도 에타파'];
+    const cells = [];
+    for (let i = 0; i < 12; i++) {
+      const k = known[i];
+      cells.push(k
+        ? { name: k, pic: '도트', color: 'var(--bha-text-1)', style: i === 1 ? 'outline:2px solid var(--bha-text-1);outline-offset:1px' : '' }
+        : { name: '???', pic: '?', color: 'var(--bha-text-3)', style: 'opacity:.7' });
+    }
+    return { theme, cells, selName: known[1] };
+  }
+}
+</script>
+</body>
+</html>
