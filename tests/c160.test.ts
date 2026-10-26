@@ -21,12 +21,12 @@ describe('C.160 위 한 줄은 적 이름·등급 칩·약점·시간·버튼만
     expect(css).toContain('.bha-root .bha-v2foename__text{flex:0 1 auto;min-width:4em}');
     expect(battle).toContain('foeTitle.title = enemyName');
   });
-  it('가운데 칩 줄은 나(~240)와 적 머리 게이지(378~) 사이, 로그 창이 열리면 숨김', () => {
-    expect(css).toMatch(/\.bha-v2fieldtags\{position:absolute;left:242px;width:134px;top:48px/);
+  it('가운데 칩 줄은 나와 적 머리 게이지 사이(필드 가운데 기준), 로그 창이 열리면 숨김', () => {
+    expect(css).toMatch(/\.bha-v2fieldtags\{position:absolute;left:calc\(50% - 72px\);width:132px;top:48px;z-index:3/);
     expect(css).toContain('.bha-root .bha-field:has(>.bha-battle__logpanel:not([hidden])) .bha-v2fieldtags{visibility:hidden}');
   });
   it('로그 창은 강공격 예고 띠 아래·적 체력 줄 위, 키 배지는 버튼 위 끝', () => {
-    expect(css).toContain('.bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:90px}');
+    expect(css).toContain('.bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:calc(100% - 112px)}');
     expect(css).toContain('.bha-root .bha-v2bar .bha-keycap{top:-7px;right:-4px}');
   });
   it('보스 기믹이 있으면 보스 칩', () => {

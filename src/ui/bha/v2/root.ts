@@ -1,5 +1,5 @@
 // LCD 인게임 UI v2 루트 (C.151, docs/bha-ui-handoff README 0·5): `.bha-root` = 640×330 고정 좌표계.
-// 실제 LCD 창(약 646×360)에 맞게 --v2-scale 로 줄이고 가운데에 놓는다. 테마는 루트 클래스 하나(`bha-${종족 설정 theme}`)로만 바뀐다 — 종족 id 분기 없음.
+// 실제 LCD 창(약 646×360)에 맞게 --v2-scale 로 줄이고, 남는 쪽은 논리 크기(--v2-w/h)를 늘려 창을 가득 채운다(C.162, 레터박스 없음). 테마는 루트 클래스 하나(`bha-${종족 설정 theme}`)로만 바뀐다 — 종족 id 분기 없음.
 import type { FactionConfig } from '../../../engine/faction';
 import { endScreen } from '../screenScope';
 
@@ -11,6 +11,13 @@ export const V2_H = 330;
 export function v2Scale(w: number, h: number): number {
   if (!(w > 0) || !(h > 0)) return 1;
   return Math.min(1, w / V2_W, h / V2_H);
+}
+
+/** 루트 논리 크기 (순수, C.162 GDD 99장 5): 배율로 640×330 이상을 보장하고, 남는 쪽(가로·세로)은 논리 크기를 늘려 창을 가득 채운다 — 위아래·좌우 빈 띠(레터박스) 없음 */
+export function v2Size(w: number, h: number): { scale: number; w: number; h: number } {
+  const scale = v2Scale(w, h);
+  if (!(w > 0) || !(h > 0)) return { scale, w: V2_W, h: V2_H };
+  return { scale, w: Math.max(V2_W, w / scale), h: Math.max(V2_H, h / scale) };
 }
 
 /** 루트 클래스: 기본 + 종족 테마 (예 `bha-root bha-hollow`) */
@@ -38,9 +45,10 @@ export function mountV2Root(view: HTMLElement, faction: Pick<FactionConfig, 'the
   endScreen(view); // 앞 화면이 screenSignal 로 건 리스너를 푼다 (C.139)
   view.replaceChildren(host);
   const fit = (): void => {
-    root.style.setProperty('--v2-scale', String(v2Scale(host.clientWidth, host.clientHeight)));
-    root.style.setProperty('--v2-w', String(V2_W));
-    root.style.setProperty('--v2-h', String(V2_H));
+    const z = v2Size(host.clientWidth, host.clientHeight);
+    root.style.setProperty('--v2-scale', String(z.scale));
+    root.style.setProperty('--v2-w', String(z.w));
+    root.style.setProperty('--v2-h', String(z.h));
   };
   fit();
   const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);

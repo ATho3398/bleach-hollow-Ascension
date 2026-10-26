@@ -234,6 +234,18 @@ export function reachOf(gapPx: number): number {
   return Math.max(0, gapPx) * REACH_RATIO;
 }
 
+/** el 의 offsetLeft 를 other 와 같이 쓰는 가장 가까운 offsetParent 까지 더한 값 (변형(transform) 영향 없는 레이아웃 좌표) */
+export function leftInCommon(el: HTMLElement, other: HTMLElement): number {
+  const chain = new Set<Element>();
+  for (let e: Element | null = other.offsetParent; e; e = (e as HTMLElement).offsetParent) chain.add(e);
+  let x = 0;
+  for (let e: HTMLElement | null = el; e; e = e.offsetParent as HTMLElement | null) {
+    x += e.offsetLeft;
+    if (e.offsetParent && chain.has(e.offsetParent)) break;
+  }
+  return x;
+}
+
 export interface HitPlan {
   /** 뒤로 튕김 (transform) */
   keyframes: Keyframe[];
@@ -322,6 +334,8 @@ export interface AttackFxOptions {
   mode: FxMode;
   /** 길이 단위 배율 (화면 배율). 기본 1 */
   unit?: () => number;
+  /** 돌진 거리 상한(px, 레이아웃 기준). 없으면 간격 × REACH_RATIO 그대로 (적에게 붙는다) */
+  maxReach?: () => number;
   /** 계열 효과(자국·투사체·광선)와 기술 이름을 그리는 레이어 (장면 위, 조작을 막지 않는다). 없으면 효과 없이 움직임만 */
   layer?: HTMLElement;
   /** 계열 id → 연출 종류 (종족 설정 families[].fx) */
@@ -382,11 +396,12 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     return a;
   };
 
-  /** 서로 사이 간격(px, 레이아웃 기준 = 화면 배율의 영향을 받지 않는 좌표) */
+  /** 서로 사이 간격(px, 레이아웃 기준 = 화면 배율의 영향을 받지 않는 좌표).
+   *  나·적이 서로 다른 틀(유닛 칸) 안에 있어도 맞게, 둘의 공통 offsetParent 까지 offsetLeft 를 더해 잰다 (C.162 — v2 화면에서 간격이 0 으로 재져 돌진이 사라졌다) */
   const gapOf = (from: AttackActor, to: AttackActor): number => {
     const a = from.root;
     const b = to.root;
-    const dx = Math.abs((b.offsetLeft + b.offsetWidth / 2) - (a.offsetLeft + a.offsetWidth / 2));
+    const dx = Math.abs((leftInCommon(b, a) + b.offsetWidth / 2) - (leftInCommon(a, b) + a.offsetWidth / 2));
     return Math.max(0, dx - (a.offsetWidth + b.offsetWidth) / 2 + Math.min(a.offsetWidth, b.offsetWidth) * 0.5);
   };
 
@@ -597,7 +612,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       ? { keyframes: [], durationMs: clipPlay.durationMs, hitAtMs: clipPlay.hitAtMs, ghosts: 0 }
       : motion?.move === 'cast'
         ? castPlan(lv, from.dir, motion.travelMs)
-        : lungePlan(lv, from.dir, reachOf(gapOf(from, to)) * (motion?.reach ?? 1), from.loco, from.root.offsetHeight * LOCO_LIFT[from.loco ?? 'walk']);
+        : lungePlan(lv, from.dir, Math.min(reachOf(gapOf(from, to)), opts.maxReach?.() ?? Infinity) * (motion?.reach ?? 1), from.loco, from.root.offsetHeight * LOCO_LIFT[from.loco ?? 'walk']);
     const timing: KeyframeAnimationOptions = { duration: plan.durationMs, easing: 'linear', fill: 'none' };
     from.root.style.zIndex = '4';
     const main = track(from.root.animate(clipPlay ? [{}, {}] : plan.keyframes, timing)); // 애니는 길이만 재는 빈 애니메이션(배속·일시정지를 따른다)

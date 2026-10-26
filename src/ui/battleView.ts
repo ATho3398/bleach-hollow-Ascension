@@ -39,6 +39,7 @@ import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from '
 import { locoOf, setLoco } from './bha/loco';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf } from './attackFx';
+import { FX_REACH_FIELD } from './attackFxConfig';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
 import type { SceneBg } from '../data/art/backgrounds';
@@ -633,6 +634,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
+    maxReach: () => arena.offsetWidth * FX_REACH_FIELD, // 몸통박치기는 필드 폭의 18% 만 앞으로 (적까지 가지 않는다, GDD 99장 4)
     // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
     layer: fxLayer,
     // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
