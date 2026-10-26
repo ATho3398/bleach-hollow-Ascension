@@ -313,7 +313,7 @@ export interface SharedState {
 /** 기본으로 주는 꾸밈 id (GDD 29장: 영옥 구슬) */
 export const freeCosmeticIds = (): string[] => FREE_COSMETICS.map((c) => c.id);
 
-/** 새 트랙의 기본 착용: 기본으로 주는 꾸밈 (분류마다 하나). 기기 디자인은 입히지 않는다 — 기본은 [기본형](CSS 기기)이고, 기본 제공 디자인(사신대행증·십일번대)은 보유만 시켜 [디자인]에서 고른다 (GDD 56, C.112) */
+/** 새 트랙의 기본 착용: 기본으로 주는 꾸밈 (분류마다 하나). 기기 디자인은 입히지 않는다 — 기본은 [기본형](CSS 기기)이고, 기본 제공 디자인(사신대행증·11번대)은 보유만 시켜 [디자인]에서 고른다 (GDD 56, C.112) */
 export function defaultWear(): WearState {
   const w: WearState = {};
   for (const c of FREE_COSMETICS) if (c.category !== 'device') w[c.category as WearCategory] ??= c.id;
@@ -1614,7 +1614,7 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
     save.meta.format = 30;
   }
   if (save.meta.format < 31) {
-    // 형식 30 → 31 (UI담당자A, 기본 제공 기기 디자인 십일번대 추가): 새 기본 제공 꾸밈을 보유로 더한다. 착용은 건드리지 않는다(입던 기기 그대로)
+    // 형식 30 → 31 (UI담당자A, 기본 제공 기기 디자인 11번대 추가): 새 기본 제공 꾸밈을 보유로 더한다. 착용은 건드리지 않는다(입던 기기 그대로)
     save.shared = { ...(save.shared ?? newSharedState()), cosmetics: [...new Set([...freeCosmeticIds(), ...(Array.isArray(save.shared?.cosmetics) ? save.shared.cosmetics : [])])] };
     save.meta.format = 31;
   }

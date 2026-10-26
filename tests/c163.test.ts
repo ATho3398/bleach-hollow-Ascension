@@ -58,3 +58,9 @@ describe('C.163 6 새 버전 알림', () => {
     expect(read('src/ui/installView.ts')).toContain('브라우저 안내도 뜨지 않아요');
   });
 });
+
+describe('C.165 기기 이름 = 사용자 표기', () => {
+  it("device-zaraki 이름은 '11번대' (사용자 원문 표기, 십일번대로 되돌리지 않는다)", () => {
+    expect(getCosmetic('device-zaraki')?.name).toBe('11번대');
+  });
+});

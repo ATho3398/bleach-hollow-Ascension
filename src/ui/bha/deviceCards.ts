@@ -1,4 +1,4 @@
-// 상점·보관함 스킨 '기기' 하위 탭 (GDD 99장 3, C.163): 실제 기기 디자인만 — 기본(그림 없는 기본형) + 가진 정식 기기(사신대행증·십일번대 …).
+// 상점·보관함 스킨 '기기' 하위 탭 (GDD 99장 3, C.163): 실제 기기 디자인만 — 기본(그림 없는 기본형) + 가진 정식 기기(사신대행증·11번대 …).
 // 옛 기기 껍데기 색(shell)·견본·시험 기기는 skinListed 로 뺀다. 카드 = 기기 앞면 미리보기, 누르면 바로 장착(✓ 착용 중). 종족 무관 — 이름은 데이터에서.
 import { cosmeticName, deviceArt, skinListed, sourceNote } from '../../data/shop';
 import type { FactionConfig } from '../../engine/faction';
