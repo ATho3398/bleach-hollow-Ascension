@@ -4,6 +4,7 @@
 import { isLocomotion, type Locomotion } from './locomotion';
 import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Stats } from '../data/schema';
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
+import { PET_IDS } from '../data/pets';
 
 /** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
 export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
@@ -255,6 +256,8 @@ export interface FactionConfig {
   nestActions: Record<NestAction, string>;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;
+  /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 */
+  petNames: Record<string, string>;
   /** 해방 (GDD 22-5): 이름·컷인·풀릴 때 문구 */
   liberation: LiberationConfig;
   /** 해방 수련 (GDD 22-5): 제단 화면·4종목 문구 */
@@ -304,6 +307,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const fn = (r.foodNames ?? {}) as Record<string, unknown>;
   for (const f of FOOD_IDS) {
     if (!isString(fn[f])) errors.push(`foodNames.${f}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  const pn = (r.petNames ?? {}) as Record<string, unknown>;
+  for (const id of PET_IDS) {
+    if (!isString(pn[id])) errors.push(`petNames.${id}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (r.difficulty !== undefined) {
     const d = r.difficulty as Record<string, unknown>;

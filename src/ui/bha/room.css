@@ -179,3 +179,15 @@
   .bha-char__frame--1 { animation: none; visibility: visible; }
   .bha-char__frame--2 { display: none; }
 }
+
+/* ── 펫 (GDD 90장, C.144 임시): 그림이 없으면 효과 아이콘이 든 원. 방 캐릭터·원정 걷는 캐릭터 오른쪽 발치에 작게 ── */
+.bha-pet {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 28px; height: 28px; border-radius: var(--bha-r-pill);
+  background: var(--bha-bg-3); border: 2px solid var(--bha-line-2); color: var(--bha-text-1);
+  box-shadow: var(--bha-shadow-1); pointer-events: none;
+}
+.bha-pet.has-art { background: none; border: 0; box-shadow: none; }
+.bha-pet__img { width: 100%; height: 100%; object-fit: contain; }
+.bha-pet--buddy { position: absolute; right: calc(-1 * var(--bha-sp-6)); bottom: var(--bha-sp-5); }
+.bha-walker > .bha-pet--buddy { right: calc(-1 * var(--bha-sp-9)); bottom: 0; }

@@ -103,13 +103,13 @@ export function rollWandererStock(tier: number, rand: () => number): WandererSto
 }
 
 /** 원정에서 laps 바퀴를 마쳤다: 바퀴마다 가중 확률로 굴린다. 이미 와 있으면 굴리지 않고 바퀴만 센다.
- *  오면 visit 을 채우고 '기다린 바퀴 수'를 돌려준다(안 오면 null) */
-export function advanceWanderer(state: WandererState, laps: number, o: { at: number; runId: number }, rand: () => number): { waited: number } | null {
+ *  chanceMult = 펫 pet-seek 배율(GDD 90장, 없으면 1). 오면 visit 을 채우고 '기다린 바퀴 수'를 돌려준다(안 오면 null) */
+export function advanceWanderer(state: WandererState, laps: number, o: { at: number; runId: number }, rand: () => number, chanceMult = 1): { waited: number } | null {
   let arrived: { waited: number } | null = null;
   for (let i = 0; i < Math.max(0, Math.floor(laps)); i++) {
     state.lapsSince++;
     if (state.visit) continue;
-    if (rand() < wandererChance(state.lapsSince)) {
+    if (rand() < Math.min(1, wandererChance(state.lapsSince) * chanceMult)) {
       const tier = rollWandererTier(rand);
       state.visit = { at: o.at, runId: o.runId, tier, stock: rollWandererStock(tier, rand) };
       arrived = { waited: state.lapsSince };

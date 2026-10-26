@@ -2,6 +2,7 @@
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 배치 칸만 확인 창 1번, 나머지는 바로 산다. C.140 (GDD 86장 4번): 산 꾸밈·스킨은 보관함에서 착용(여기선 "보유").
 // 떠돌이 상인(GDD 85장 5번)이 와 있으면 제목 토글에 [떠돌이 상인] — 같은 줄 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
+import { petNoticeOf } from '../inventory';
 import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
@@ -67,6 +68,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       let spent = 0;
       let last: (BuyResult & { ok: true }) | null = null;
       let fail = '';
+      const petLog0 = save.runLog.pets.length;
       for (let i = 0; i < qty; i++) {
         const r = one();
         if (!r.ok) { fail = r.reason; break; }
@@ -89,6 +91,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
           showGuide(faction, 'tile-draw');
         });
       } else showToast(bought > 1 ? { eyebrow: `상점 — ${cur(last.currency)} −${spent}`, title: `${row.name} ×${bought}`, meta: fail ? `${bought}개만 샀다: ${fail}` : last.detail } : boughtText(row, last), 0, 2600);
+      // 펫 (GDD 90장): 상인 품목으로 얻은 펫은 이름이 보이게 한 줄 더
+      save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).forEach((n, i) => n && showToast(n, i + 1, 4200));
     };
     if (row.confirm) {
       const t = shopConfirmText(row);

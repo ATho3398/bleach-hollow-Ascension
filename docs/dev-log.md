@@ -1305,3 +1305,14 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 데이터: 스킨 `stalker` 삭제 → `mantis`(사마귀, 가칭, startOnly). `hollow.json` startLooks = mantis·brute·ghoul·shackled. 시작 뽑기 규칙(51장) 그대로.
 - 옛 세이브: `stalker` 장착/보유는 로드 때 걸러져 기본 그림. 세이브 구조·SAVE_FORMAT·BALANCE 변경 없음.
 - 테스트: `tests/c143.test.ts` +3, 기존 c107·c109·c110·c137 의 id/경로 갱신.
+
+## C.144 — 펫 시스템 (가칭, GDD 90장, S-23, 코딩105)
+- 사용자 원문(2026-10-26 22:4x): "장비랑 펫도 추가할건데, 시스템 구현해봐. 일단 가칭으로 지어놓고. / 장비는 나랑 의논하자" → **펫만** 구현(90장 마스터 초안 그대로). 장비(91장)는 손대지 않음.
+- 데이터: `src/data/pets/`(4종 pet-gold·belly·guard·seek, 그림 키 `pet.<id>`), 종족 이름 `hollow.json`·`shinigami.json` `petNames`(hollow.json 은 이 키만 추가), 수치 `balance.ts provisional.pets`.
+- 엔진: `src/engine/pet.ts`(상태·친밀도·효과·얻기). 원정 `ExpeditionSetup.pet/petDrops` → 골드 ×(1+8%)·허기 ×(1−15%)·시작 보호막 +4%·바퀴 끝 타일 +1장 10%·바퀴 끝 펫 2%(따로 만든 난수). 떠돌이 상인 확률 ×1.25(`advanceWanderer` chanceMult). 효과 = 1단계 × (1+0.25×(친밀도−1)).
+- 세이브: `shared.pets`(owned·active·gifted, 슬롯 공용 → 진화·환생·트랙 바꿈 유지), 런 로그 `pets`. **SAVE_FORMAT 41→42, MIN_LOADABLE 같이(61장, 마이그레이션 없음)**. BALANCE 69→70.
+- 얻기: 귀환 정산(`recordExpedition` → settlePets, 중복은 골드 40) · 상인 전설 품목 '길 잃은 동반자'(600골드) · 첫 진화 선물(`performEvolution`). 대기 모드 바퀴도 친밀도(`settleIdle`).
+- UI(최소, bha- 클래스·토큰만): 보관함 '펫' 탭(카드·상세 창 재사용, [데리고 가기]/[두고 가기], 친밀도 줄), 방·원정 캐릭터 옆 `.bha-pet`(그림 없으면 효과 아이콘 원), 원정 바퀴 끝 문구, 귀환·상인 구매 알림.
+- 판단(90장 끝 구현 메모): 골드는 전투·보스만 · 지고 와도 마친 바퀴만큼 친밀도·바퀴 끝 펫 유지 · 원정 중 펫 바꾸기 잠금 · 상인 품목 전설 등급(티어 3·4).
+- 검증: typecheck · 테스트 1591개(새 `tests/c144.test.ts` 14개, 형식 번호 테스트 6개 갱신) · balance:check 회귀 가드 통과(기준 봇 펫 없음) · build.
+- 캡처 `docs/captures/c144/`: 1 보관함 펫 상세 · 2 방 캐릭터 옆 펫 · 3 원정 중 펫 · 4 상인에게서 펫 얻음 알림.

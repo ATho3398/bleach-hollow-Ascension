@@ -1,6 +1,8 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
 //   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면).
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
+import { petBuddy } from './bha/pet';
+import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
 import { artSkinOf, careNest, feedNest, tickCare, type SaveData } from '../game';
@@ -135,6 +137,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
   const char = characterButton(charArtUrls, '캐릭터', loco);
+  // 데리고 다니는 펫 (GDD 90장): 캐릭터 옆 발치에 작게 (그림이 없으면 아이콘 원)
+  const buddy = petBuddy(save.shared.pets.active, petName(save.shared.pets.active ?? '', faction));
+  if (buddy) char.append(buddy);
   const charAnim = animOf(char);
   /** 프레임 애니가 있는 동작이면 재생하고 true (GDD 26-3). 끝나면(hold·반복은 잠시 뒤) 대기로 돌아간다. 없으면 false = 기존 뛰는 반응 */
   let animTimer = 0;

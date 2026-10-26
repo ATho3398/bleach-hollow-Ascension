@@ -379,6 +379,8 @@ export interface RunLog {
   wanderer: WandererRecord[];
   /** 대기 모드 기록 (C.140, 세이브 형식 41, GDD 85장 6번·88장 7번): 돌아올 때마다 요약 1건 — 바퀴·전투를 낱낱이 남기지 않는다 */
   idle: IdleRecord[];
+  /** 펫 기록 (C.144, 세이브 형식 42, GDD 90장 7번): 얻음·데리고 감·두고 감·친밀도 오름 */
+  pets: PetRecord[];
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
@@ -404,6 +406,19 @@ export interface WandererRecord {
   itemId?: string;
   price?: number;
   unsold?: number;
+}
+
+/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 떠돌이 상인 · evolution 첫 진화 선물),
+ *  take = 데리고 감, leave = 두고 감, level = 친밀도 오름(level = 오른 뒤 값), dupGold = 바퀴 끝 보상이 이미 가진 펫이라 골드로 바뀜 */
+export interface PetRecord {
+  at: number;
+  factionId: string;
+  kind: 'get' | 'take' | 'leave' | 'level' | 'dupGold';
+  petId: string;
+  source?: 'lap' | 'wanderer' | 'evolution';
+  level?: number;
+  runId?: number;
+  gold?: number;
 }
 
 /** 대기 모드 요약 1건 (GDD 85장 6번): 꺼 둔 구간·실제로 돈 시간·지급량. 시간은 시간 단위(소수 둘째 자리) */
@@ -505,5 +520,6 @@ export function emptyRunLog(): RunLog {
     care: { answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 },
     wanderer: [],
     idle: [],
+    pets: [],
   };
 }

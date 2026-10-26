@@ -10,6 +10,7 @@ import { baseTilesFor, tileName } from './data/tiles';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
 import type { FactionConfig } from './engine/faction';
 import { addFood } from './engine/food';
+import { grantPet, pickNewPet } from './engine/pet';
 import type { SaveData } from './game';
 
 const SX = BALANCE.shop;
@@ -312,6 +313,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'trainingTicket': return `지금 트랙 수련권 +${n} (최대 ${BALANCE.provisional.training.ticketsMax})`;
     case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 보관함`;
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 보관함에서 쓴다`;
+    case 'pet': return '아직 없는 펫 무작위 1마리 → 보관함 펫 탭 (가칭)';
   }
 }
 
@@ -324,6 +326,7 @@ function wandererBlock(save: SaveData, itemId: string): string | null {
     case 'reroll': return save.shared.rerollTickets >= SX.rerollMax ? `보유 가득 (${SX.rerollMax}/${SX.rerollMax})` : null;
     case 'trainingTicket': return save.training.tickets >= BALANCE.provisional.training.ticketsMax ? '수련권 가득' : null;
     case 'rareTile': return save.tiles.unlocked && tileDrawGroup('rare', save.factionId).length > 0 ? null : TILES_LOCKED_TEXT;
+    case 'pet': return pickNewPet(save.shared.pets, () => 0) === null ? '펫을 다 가졌다' : null;
     default: return canStoreConsumable(save, itemId) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
   }
 }
@@ -369,6 +372,13 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       tile = pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]!;
       save.tiles.collection[tile] = (save.tiles.collection[tile] ?? 0) + 1;
       detail = `${tileName(tile, save.factionId)} → 보관함 (${save.tiles.collection[tile]}장)`;
+      break;
+    }
+    case 'pet': {
+      const id = pickNewPet(save.shared.pets, rand)!;
+      grantPet(save.shared.pets, id, nowMs);
+      save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'get', petId: id, source: 'wanderer' });
+      detail = `${faction.petNames[id] ?? id} → 보관함 펫 탭`;
       break;
     }
     default:

@@ -9,7 +9,9 @@ import { applyTilePreset, cellsOfPlan, deleteTilePreset, ownedTileList, placemen
 import { beginPlanning, createExpedition } from '../engine/expedition';
 import { roadPlanner } from './bha/road';
 import { presetPanel } from './bha/tilePresets';
-import { equipInventoryItem, inventoryOf, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { choosePet, equipInventoryItem, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { petArtSrc, petIconId } from './bha/pet';
+import { fixParticles } from '../engine/josa';
 import { cosmeticToken, getCosmetic, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, type ItemCategory } from '../data/shop';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
 import { tileCss, tileIconId } from './bha/expedition';
@@ -362,6 +364,10 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void): 
   })), itemsUi.cat, (id) => { itemsUi.cat = id as ItemCategory; changed(); }, '보관함 분류');
   const artOf = (e: InventoryEntry): HTMLElement => {
     if (e.category === 'tile') return iconArt(tileIconId(tileCss(getTile(e.id).kind)));
+    if (e.category === 'pet') {
+      const src = petArtSrc(e.id);
+      return src ? imageArt(src) : iconArt(petIconId(e.id));
+    }
     if (e.category === 'skin') {
       const c = getCosmetic(e.id);
       if (c?.category === 'skin') {
@@ -376,11 +382,11 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void): 
   const rows = all.filter((e) => e.category === itemsUi.cat);
   const cards = rows.map((e) => itemCard({
     id: e.id, name: e.name, detail: e.detail, art: artOf(e),
-    badge: e.action === 'unequip' ? '착용 중' : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
-    state: e.action === 'unequip' ? 'worn' : e.lock ? 'locked' : undefined,
+    badge: e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
+    state: e.action === 'unequip' || e.action === 'leave' ? 'worn' : e.lock ? 'locked' : undefined,
     onClick: () => openItem(faction, save, e, artOf(e), changed),
   }));
-  const empty = itemsUi.cat === 'equipment' ? '장비는 준비 중이다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  const empty = itemsUi.cat === 'equipment' ? '장비는 준비 중이다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   box.append(tabs, itemGrid(cards, empty));
   return [box, h('div')];
@@ -400,6 +406,18 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
         if (r.ok) changed();
       },
     });
+  } else if (e.action === 'take' || e.action === 'leave') {
+    const on = e.action === 'take';
+    actions.push({
+      key: on ? 'take' : 'leave', label: () => (on ? '데리고 가기' : '두고 가기'), variant: on ? 'primary' : 'ghost', disabled: e.lock !== null,
+      onClick: () => {
+        close();
+        if (choosePet(save, on ? e.id : null)) {
+          showToast({ eyebrow: '펫', title: fixParticles(on ? `${e.name}을(를) 데리고 다닌다` : `${e.name}을(를) 두고 간다`), meta: on ? '원정 바퀴마다 친밀도가 오른다' : undefined }, 0, 2400);
+          changed();
+        }
+      },
+    });
   } else if (e.action === 'equip' || e.action === 'unequip') {
     const on = e.action === 'equip';
     actions.push({
@@ -411,7 +429,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
     });
   }
   close = itemDialog({
-    heading: ITEM_CATEGORY_NAMES[e.category], name: e.name, desc: e.detail, art, have: `보유: ${e.count}`,
+    heading: ITEM_CATEGORY_NAMES[e.category], name: e.name, desc: e.detail, art, have: e.category === 'pet' ? petAffinityText(save, e.id) : `보유: ${e.count}`,
     tag: getCosmetic(e.id)?.category === 'skin' ? '미리보기' : undefined, lock: e.lock, actions,
   });
 }

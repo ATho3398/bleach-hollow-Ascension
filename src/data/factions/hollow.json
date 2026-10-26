@@ -279,6 +279,12 @@
     "tonic": "영압 응축물",
     "feast": "영혼 덩어리"
   },
+  "petNames": {
+    "pet-gold": "뼈 까마귀",
+    "pet-belly": "모래 벌레",
+    "pet-guard": "껍질 게",
+    "pet-seek": "그림자 박쥐"
+  },
   "stabilityName": "자아",
   "fullnessName": "배부름",
   "slotName": "본체 슬롯",

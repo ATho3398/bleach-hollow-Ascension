@@ -11,6 +11,9 @@ import { doNestAction } from './engine/nest';
 import { wandererAmount } from './engine/wanderer';
 import { CONSUMABLE_CAP, isWorn, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
+import { getPet, PET_IDS } from './data/pets';
+import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet } from './engine/pet';
+import type { PetRecord } from './engine/runLog';
 
 const SX = BALANCE.shop;
 const COND_MAX = BALANCE.provisional.expedition.conditionMax;
@@ -56,8 +59,8 @@ export interface InventoryEntry {
   count: number;
   /** 효과·설명 한 줄 */
   detail: string;
-  /** 누르면 할 수 있는 일: use = 쓰기(먹이·소모품), equip/unequip = 끼기·빼기(스킨·꾸밈), null = 보기만 */
-  action: 'use' | 'equip' | 'unequip' | null;
+  /** 누르면 할 수 있는 일: use = 쓰기(먹이·소모품), equip/unequip = 끼기·빼기(스킨·꾸밈), take/leave = 펫 데리고 가기·두고 가기, null = 보기만 */
+  action: 'use' | 'equip' | 'unequip' | 'take' | 'leave' | null;
   /** 지금 못 쓰는 이유 (쓸 수 있으면 null) */
   lock: string | null;
   /** 꾸밈: 분류 id (스킨·오라 …) */
@@ -92,6 +95,13 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     if (n > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, detail: consumableText(id, faction), action: 'use', lock: consumableLock(save, id, faction) });
   }
   if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, detail: '흡수 화면에서 특성 후보를 한 번 다시 뽑는다', action: null, lock: null });
+  // 펫 (GDD 90장): 가진 펫, 1마리만 데리고 다닌다
+  for (const id of PET_IDS) {
+    const o = save.shared.pets.owned[id];
+    if (!o) continue;
+    const on = save.shared.pets.active === id;
+    out.push({ id, category: 'pet', name: petName(id, faction), count: 1, detail: `${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, action: on ? 'leave' : 'take', lock: save.activeExpedition != null ? '원정 중에는 바꿀 수 없다' : null });
+  }
   // 스킨·꾸밈: 가진 것 (이 종족이 입을 수 있는 스킨만), 끼기·빼기
   for (const c of COSMETIC_ITEMS) {
     if (!save.shared.cosmetics.includes(c.id) || (c.category === 'skin' && !canWear(save.factionId, c.look))) continue;
@@ -144,4 +154,55 @@ export function unequipInventoryItem(save: SaveData, id: string): boolean {
   if (!c || !isWorn(save, c)) return false;
   unwearCategory(save, c.category);
   return true;
+}
+
+// ── 펫 (GDD 90장, C.144 가칭) ──
+
+/** 펫 이름 (종족 설정 petNames, 없으면 id) */
+export function petName(id: string, faction: Pick<FactionConfig, 'petNames'>): string {
+  return faction.petNames?.[id] ?? id;
+}
+
+const pct = (v: number): string => `${Math.round(v * 1000) / 10}%`;
+
+/** 펫 효과 한 줄 (그 친밀도 기준) */
+export function petEffectText(id: string, level: number): string {
+  const carry = { id, level };
+  switch (getPet(id)?.effect) {
+    case 'gold': return `원정 골드 +${pct(petBonus(carry, 'gold'))}`;
+    case 'belly': return `원정 허기 오름 −${pct(petBonus(carry, 'belly'))}`;
+    case 'guard': return `전투 시작 보호막 (최대 체력 ${pct(petBonus(carry, 'guard'))})`;
+    case 'seek': return `떠돌이 상인 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
+    default: return '';
+  }
+}
+
+/** 친밀도 한 줄: "친밀도 2/5 · 다음까지 12바퀴 (18/30)" */
+export function petAffinityText(save: Pick<SaveData, 'shared'>, id: string): string {
+  const o = save.shared.pets.owned[id];
+  if (!o) return '';
+  const lv = affinityOf(o.laps);
+  const next = nextAffinityLaps(o.laps);
+  return `친밀도 ${lv}/${PET_MAX_LEVEL}${next === null ? ' · 최대' : ` · 다음까지 ${next - o.laps}바퀴 (${o.laps}/${next})`}`;
+}
+
+/** 데리고 가기(id) / 두고 가기(null). 원정 중에는 못 바꾼다. 런 로그 pets take/leave */
+export function choosePet(save: SaveData, id: string | null, nowMs: number = Date.now()): boolean {
+  if (save.activeExpedition != null) return false;
+  const prev = save.shared.pets.active;
+  if (!setActivePet(save.shared.pets, id)) return false;
+  if (prev) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'leave', petId: prev });
+  if (id) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'take', petId: id });
+  return true;
+}
+
+/** 펫 런 로그 한 건 → 알림 문구 (얻음·친밀도 오름·골드로 바뀜만, 데리고 감·두고 감은 null) */
+export function petNoticeOf(rec: PetRecord, faction: Pick<FactionConfig, 'petNames'>): { eyebrow: string; title: string; meta?: string } | null {
+  const name = petName(rec.petId, faction);
+  switch (rec.kind) {
+    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'wanderer' ? '떠돌이 상인' : '원정 바퀴 끝 보상'} · 보관함 펫 탭에서 데리고 간다` };
+    case 'level': return { eyebrow: '펫', title: `${name} 친밀도 ${rec.level}/${PET_MAX_LEVEL}`, meta: petEffectText(rec.petId, rec.level ?? 1) };
+    case 'dupGold': return { eyebrow: '펫', title: `이미 있는 ${name} → 골드 +${rec.gold ?? 0}` };
+    default: return null;
+  }
 }

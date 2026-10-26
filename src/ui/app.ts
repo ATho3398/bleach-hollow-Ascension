@@ -76,6 +76,8 @@ import { warningKind } from './warningLogic';
 import { showGuide, tutorialAbsorbView } from './guideView';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
+import { carriedPet } from '../engine/pet';
+import { petNoticeOf } from '../inventory';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
 import { showIdleSummary } from './idleView';
@@ -748,6 +750,9 @@ export function startApp(host: HTMLElement): void {
       bossesBeaten: bossesBeaten(save),
       // 첫 진화 전에는 타일 잠김 (GDD 64장): 드래프트·이벤트 타일 없음
       tilesLocked: !tilesUnlocked(save),
+      // 펫 (GDD 90장): 데리고 다니는 펫(친밀도까지) · 바퀴 끝 보상 펫
+      pet: carriedPet(save.shared.pets),
+      petDrops: true,
     });
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
@@ -948,6 +953,8 @@ export function startApp(host: HTMLElement): void {
       statBonus: statBonusOf(save).total,
       story: { chapterId, episodeId },
       tilesLocked: !tilesUnlocked(save),
+      pet: carriedPet(save.shared.pets),
+      petDrops: true,
     });
     resumeNote = '';
     activeExp = exp;
@@ -1095,6 +1102,14 @@ export function startApp(host: HTMLElement): void {
     breakthroughView(root, faction, exp.risk, resume);
   }
 
+  /** 귀환 펫 알림 (GDD 90장): 칭호 알림 뒤에 차례로 */
+  let petNotes: { eyebrow: string; title: string; meta?: string }[] = [];
+  function showPetNotes(): void {
+    const notes = petNotes;
+    petNotes = [];
+    notes.forEach((n, i) => window.setTimeout(() => showToast(n, i, 4200), 900 + i * 300));
+  }
+
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
     activeExp = null;
     let growth: GrowthInput | undefined;
@@ -1103,8 +1118,11 @@ export function startApp(host: HTMLElement): void {
       const had = new Set(save.titles.map((t) => t.titleId));
       const fromTier = save.evolution.tierIndex;
       // 걸음 수가 진화 타이밍에 닿았으면 귀환한 그 순간 자동 진화 (GDD 20-5 v4.1). 결과 화면 다음에 진화 연출을 보여 준다
+      const petLog0 = save.runLog.pets.length;
       const evo = recordExpedition(save, exp);
       persist();
+      // 펫 알림 (GDD 90장): 이번 귀환에서 얻은 펫·친밀도 오름·골드로 바뀐 펫 (첫 진화 선물 포함)
+      petNotes = save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
       growth = {
         newTraits: summarize(exp).keptTraits.length,
         evolvedTo: evo?.ok ? formDisplayName(save.evolution, faction.id) : null,
@@ -1129,6 +1147,7 @@ export function startApp(host: HTMLElement): void {
         next?.();
       }, growth);
       if (save) showTitleToasts(save, faction, persist);
+      showPetNotes();
     };
     // 원정 도중 [귀환하기] (GDD 81장): 결과 화면 없이 바로 방으로 (진화가 걸렸으면 그 연출은 그대로)
     if (exp.endReason === 'abort') {
@@ -1136,6 +1155,7 @@ export function startApp(host: HTMLElement): void {
       nestScreen();
       afterResult?.();
       if (save) showTitleToasts(save, faction, persist);
+      showPetNotes();
       return;
     }
     // 스토리 화를 깼으면 끝 대사 다음에 결과 (GDD 25-7)

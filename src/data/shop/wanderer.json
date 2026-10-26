@@ -8,6 +8,7 @@
     { "id": "w-training-pair", "name": "수련권 묶음", "grade": "rare", "kind": "trainingTicket", "category": "etc" },
     { "id": "w-rare-tile", "name": "봉인된 희귀 타일", "grade": "epic", "kind": "rareTile", "category": "tile" },
     { "id": "w-feast-crate", "name": "큰 먹이 상자", "grade": "epic", "kind": "food", "food": "feast", "category": "food" },
-    { "id": "w-soul-elixir", "name": "영혼 정수", "grade": "legendary", "kind": "elixir", "category": "consumable" }
+    { "id": "w-soul-elixir", "name": "영혼 정수", "grade": "legendary", "kind": "elixir", "category": "consumable" },
+    { "id": "w-pet-egg", "name": "길 잃은 동반자", "grade": "legendary", "kind": "pet", "category": "pet" }
   ]
 }

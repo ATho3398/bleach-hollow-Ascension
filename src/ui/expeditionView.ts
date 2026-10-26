@@ -1,6 +1,8 @@
 // 원정 화면 (GDD 1장, 2-1, 6장, 17-1): 캐릭터가 왼쪽을 향해 걷는 화면 + 위에 얹는 상태 줄·조우 알림, 둥지 칸에서 귀환 선택·타일 배치 팝업. (U-4 → R-1)
 // 시간(칸당 5초, 1x/2x/4x)은 여기서 돌리고, 규칙은 engine/expedition 이 정한다. 12칸 길·칸 번호·바퀴는 엔진 안에만 있고 걷는 화면에는 보이지 않는다.
 // 화면 DOM 은 한 번 만들고 상태가 바뀔 때마다 제자리에서 고친다.
+import { petBuddy } from './bha/pet';
+import { petName } from '../inventory';
 import { fullnessOf } from './bha/fullness';
 import { BALANCE } from '../config/balance';
 import { charArt } from '../data/art/manifest';
@@ -197,6 +199,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       case 'lap-complete':
         planner.reset();
         msg = `${got > 0 ? `타일 획득: ${tn(ev.rewardTile!)} · ` : ''}${faction.nestName}에 도착했다`;
+        // 펫 (GDD 90장): 바퀴 끝 보상 펫 · pet-seek 타일 +1장
+        if (ev.petFound) msg = `펫 발견: ${petName(ev.petFound, faction)}! · ${msg}`;
+        if (ev.petTile) msg = `${msg} · 펫이 타일을 물어 왔다: ${tn(ev.petTile)}`;
         h.onSave();
         break;
       case 'ended':
@@ -257,6 +262,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선
+  // 데리고 간 펫 (GDD 90장): 걷는 캐릭터 뒤에 작게
+  const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction));
+  if (buddy) walk.walker.append(buddy);
   if (takeEnterFx()) window.setTimeout(() => playCosmeticFx('enter', walk.walker), 0); // 등장 연출 (GDD 25-11): 출발 직후 한 번
   const sceneWrap = el('section', 'bha-exp__scene');
   sceneWrap.append(walk.el);

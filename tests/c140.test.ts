@@ -250,8 +250,8 @@ describe('85장 11번 배치 프리셋 (덱 삭제)', () => {
 });
 
 describe('86장 보관함', () => {
-  it('카테고리 6개(음식·소모품·장비·스킨·타일·기타), 품목마다 카테고리 필드', () => {
-    expect(ITEM_CATEGORIES).toEqual(['food', 'consumable', 'equipment', 'skin', 'tile', 'etc']);
+  it('카테고리 7개(음식·소모품·장비·펫·스킨·타일·기타 — 펫은 C.144), 품목마다 카테고리 필드', () => {
+    expect(ITEM_CATEGORIES).toEqual(['food', 'consumable', 'equipment', 'pet', 'skin', 'tile', 'etc']);
     expect(itemCategoryOf('food-basic')).toBe('food');
     expect(itemCategoryOf('calm')).toBe('consumable');
     expect(itemCategoryOf('tile-draw')).toBe('tile');
@@ -296,9 +296,9 @@ describe('86장 보관함', () => {
   });
 });
 
-describe('세이브 형식 41 (61장: 마이그레이션 없음)', () => {
-  it('형식·문턱 41, 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([41, 41]);
+describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
+  it('형식·문턱 42(C.144 펫으로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([42, 42]);
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);

@@ -1,0 +1,9 @@
+{
+  "provisional": true,
+  "pets": [
+    { "id": "pet-gold", "effect": "gold", "art": "pet.pet-gold" },
+    { "id": "pet-belly", "effect": "belly", "art": "pet.pet-belly" },
+    { "id": "pet-guard", "effect": "guard", "art": "pet.pet-guard" },
+    { "id": "pet-seek", "effect": "seek", "art": "pet.pet-seek" }
+  ]
+}

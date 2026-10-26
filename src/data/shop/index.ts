@@ -19,9 +19,9 @@ export type WearCategory = Exclude<CosmeticCategory, 'skin'>;
 export const WEAR_CATEGORIES = COSMETIC_CATEGORIES.filter((c): c is WearCategory => c !== 'skin');
 
 /** 아이템 카테고리 (GDD 86장 5번, C.140): 상점 탭·보관함 탭이 같은 구분을 쓴다. 장비는 아직 품목 없음(준비 중) */
-export const ITEM_CATEGORIES = ['food', 'consumable', 'equipment', 'skin', 'tile', 'etc'] as const;
+export const ITEM_CATEGORIES = ['food', 'consumable', 'equipment', 'pet', 'skin', 'tile', 'etc'] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
-export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = { food: '음식', consumable: '소모품', equipment: '장비', skin: '스킨', tile: '타일', etc: '기타' };
+export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = { food: '음식', consumable: '소모품', equipment: '장비', pet: '펫', skin: '스킨', tile: '타일', etc: '기타' };
 
 export interface GoldItemDef {
   id: string;
@@ -227,7 +227,7 @@ export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files:
 export const WANDERER_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
 export type WandererGrade = (typeof WANDERER_GRADES)[number];
 export const WANDERER_GRADE_NAMES: Record<WandererGrade, string> = { normal: '보통', rare: '희귀', epic: '영웅', legendary: '전설' };
-export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir'] as const;
+export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir', 'pet'] as const;
 export type WandererKind = (typeof WANDERER_KINDS)[number];
 
 export interface WandererItemDef {

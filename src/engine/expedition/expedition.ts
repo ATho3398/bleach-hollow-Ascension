@@ -28,6 +28,7 @@ import type { FoodId } from '../faction';
 import { getBoss, isBossId } from '../../data/bosses';
 import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
+import { petBonus, rollAnyPet, type PetCarry } from '../pet';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
@@ -43,6 +44,8 @@ const VARIANT_SEED_SALT = 0x2545f491;
 const REROLL_SEED_SALT = 0x6c8e9cf5;
 /** 자유 원정 보스 등장 굴림(GDD 37장) 전용 난수 소금: 바퀴마다 시드에서 새로 만든다 (적·타일·흡수 난수를 바꾸지 않는다) */
 const FREE_BOSS_SEED_SALT = 0x1b873593;
+/** 펫 굴림 (GDD 90장): 바퀴마다 (시드 ^ 이 값 ^ 바퀴) — 원정 난수(rng·lootRng·varRng)를 건드리지 않는다. 펫이 없으면 굴리지 않는다 */
+const PET_SEED_SALT = 0x7f4a7c15;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 const TUT = BALANCE.provisional.tutorialRun;
@@ -291,6 +294,12 @@ export interface ExpeditionState extends RiskState {
   tilesLocked?: boolean;
   /** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수 기록 대신 모든 능력치 노력치. 귀환 때 런 로그 tutorialRewards 로 */
   tutorialReward?: TutorialReward | null;
+  /** 데리고 간 펫 (GDD 90장, C.144): 출발 때 친밀도까지 복사. 없으면 펫 효과 없음 */
+  pet?: PetCarry | null;
+  /** 바퀴 끝 펫 굴림을 하나 (게임만 켬 — 점검 봇·테스트는 끔) */
+  petDrops?: boolean;
+  /** 이 원정 바퀴 끝 보상으로 나온 펫 (귀환 때 game.ts 가 보관함에 넣거나, 이미 가졌으면 골드로) */
+  petFinds?: { petId: string; lap: number }[];
 }
 
 /** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수로 치지 않고 능력치 6종을 같은 양 올린다 */
@@ -339,6 +348,10 @@ export interface ExpeditionSetup {
   tutorial?: boolean;
   /** 첫 진화 전 타일 잠금 (GDD 64장): 드래프트·이벤트 타일 없음 */
   tilesLocked?: boolean;
+  /** 데리고 가는 펫 (GDD 90장): 없으면 효과 없음 (balance:check 기준 봇은 펫 없음) */
+  pet?: PetCarry | null;
+  /** 바퀴 끝 보상에서 펫이 나올 수 있나 (게임만 true) */
+  petDrops?: boolean;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -409,6 +422,8 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     freeBoss: setup.story || setup.tutorial ? null : { beaten: [...(setup.bossesBeaten ?? [])], appear: null, result: null },
     ...(setup.tutorial ? { tutorial: true, tutorialReward: null } : {}),
     ...(setup.tilesLocked ? { tilesLocked: true } : {}),
+    ...(setup.pet && !setup.tutorial ? { pet: { id: setup.pet.id, level: setup.pet.level } } : {}),
+    ...(setup.petDrops && !setup.tutorial ? { petDrops: true, petFinds: [] } : {}),
   };
   // 스토리 화의 고정 길 (GDD 25-4): 정해진 칸에 정해진 타일
   if (episode) for (const [cell, id] of Object.entries(episode.road)) exp.slots[Number(cell)] = id;
@@ -586,7 +601,7 @@ export type StepEvent =
   | { kind: 'battle'; cell: number; battle: PendingBattle }
   | { kind: 'rest'; cell: number }
   | { kind: 'event'; cell: number; event: string }
-  | { kind: 'lap-complete'; lap: number; rewardTile: string | null }
+  | { kind: 'lap-complete'; lap: number; rewardTile: string | null; petTile?: string | null; petFound?: string | null }
   | { kind: 'ended'; outcome: 'returned' | 'defeated'; reason: EndReason };
 
 /** 한 칸 이동. phase 가 moving 일 때만 */
@@ -607,7 +622,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   // 진화 타이밍 = 걸음 수 (GDD 20-5 v4.1). 남은 걸음 20%·10% 순간 임박 알림
   const near = recordEvolutionStep(exp.evolution);
   if (near !== null) exp.events.push({ kind: 'evolution-near', level: near });
-  exp.hunger += (exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile) * (mutationMods(exp.mutation).hungerMult ?? 1);
+  exp.hunger += (exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile) * (mutationMods(exp.mutation).hungerMult ?? 1) * petHungerMult(exp);
   const late = lateLapRisk(exp.lap, PX.lateLapStart);
   if (late > 0) changeRisk(exp, late, 'late-lap');
   if (exp.hunger >= PX.hungerMax) {
@@ -617,6 +632,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   if (exp.pos === 0) {
     exp.lapsCompleted = exp.lap;
     const reward = drawTile(exp);
+    const petLap = lapPetRolls(exp);
     // 스토리 버티기 목표 (GDD 25-4): 마친 바퀴 수
     const st = exp.story;
     if (st && storyEpisodeOf(exp)!.objective.type === 'survive') {
@@ -627,7 +643,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     exp.phase = 'nest-choice';
     // 드래프트 (GDD 25-5 ①): 바퀴 끝 배치 팝업에서 3장 중 1장 (스토리는 끔)
     if (exp.tileVariants && !exp.story && !exp.tilesLocked) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
-    return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward };
+    return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward, ...petLap };
   }
   const cell = exp.pos;
   // 스토리 보스 화 (GDD 25-7): 정해진 칸에 보스 (1바퀴, 이기기 전까지)
@@ -728,6 +744,9 @@ function startBattleAt(
     params.startShieldFraction = exp.nextShield;
     exp.nextShield = 0;
   }
+  // 펫 보호막 (GDD 90장): 전투 시작 보호막(최대 체력 비율)에 더한다
+  const petShield = petBonus(exp.pet, 'guard');
+  if (petShield > 0) params.startShieldFraction = (params.startShieldFraction ?? 0) + petShield;
   // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서
   let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1) * (exp.tutorial ? TUT.enemyHpMult : 1);
@@ -814,7 +833,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   exp.battles.push(record);
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
   exp.pending = null;
-  exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle * (mutationMods(exp.mutation).hungerMult ?? 1));
+  exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle * (mutationMods(exp.mutation).hungerMult ?? 1) * petHungerMult(exp));
   exp.condition = Math.max(conditionFloor(exp), exp.condition - PX.conditionPerBattle);
   // 공허 블록 사용 → 리스크 게이지 상승 (GDD 3-5)
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
@@ -844,7 +863,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   }
   if (pending.boss) {
     // 보스 보상 (GDD 25-3): 골드·희귀 먹이 (일반 전리품 대신), 흡수 화면은 늘 열리고 보스 특성이 확정 후보. 자유 원정은 골드 × 원정 골드 배율 (GDD 37장 4번)
-    const bossGold = exp.story ? BX.reward.gold : Math.round(BX.reward.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak));
+    const bossGold = Math.round((exp.story ? BX.reward.gold : Math.round(BX.reward.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak))) * petGoldMult(exp));
     exp.goldLoot.push({ amount: bossGold, lap: exp.lap });
     exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
     exp.victoriesThisLap++;
@@ -856,7 +875,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더. 시너지·변이·상위 타일·함정 배율은 굴림 횟수로 (GDD 25-5)
   for (const food of rollBattleFoodMult(exp.lootRng, elite, getGround(exp.groundId).food, mods.rewardMult * mods.foodMult, mods.foodChanceBonus)) exp.foodLoot.push({ food, lap: exp.lap });
   // 골드 (C.57): 일반·강적 바탕값 × 보상·골드 배율
-  const gold = Math.round((elite ? GX.elite : GX.normal) * mods.rewardMult * mods.goldMult);
+  const gold = Math.round((elite ? GX.elite : GX.normal) * mods.rewardMult * mods.goldMult * petGoldMult(exp));
   if (gold > 0) (exp.goldLoot ??= []).push({ amount: gold, lap: exp.lap });
   if (elite && mods.eliteSoulBonus > 0) exp.bonusSoul = (exp.bonusSoul ?? 0) + mods.eliteSoulBonus;
   if ((mods.trainingEv ?? 0) > 0) trainingTileEv(exp, pending.enemy, mods.trainingEv!);
@@ -1149,6 +1168,34 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
   exp.eventPending = null;
   exp.phase = 'moving';
   return { ok: true, text };
+}
+
+/** 펫 허기 배율 (GDD 90장 pet-belly): 1 − 감소율. 펫이 없으면 1 */
+function petHungerMult(exp: Pick<ExpeditionState, 'pet'>): number {
+  return 1 - petBonus(exp.pet, 'belly');
+}
+
+/** 펫 골드 배율 (GDD 90장 pet-gold): 1 + 증가율. 펫이 없으면 1 */
+function petGoldMult(exp: Pick<ExpeditionState, 'pet'>): number {
+  return 1 + petBonus(exp.pet, 'gold');
+}
+
+/** 바퀴 끝 펫 굴림 (GDD 90장): 바퀴 끝 보상 펫(petDrops, 2%) · pet-seek 타일 +1장(10%). 바퀴마다 따로 만든 난수라 다른 굴림을 밀지 않는다 */
+function lapPetRolls(exp: ExpeditionState): { petTile?: string | null; petFound?: string | null } {
+  if (exp.tutorial || (!exp.pet && !exp.petDrops)) return {};
+  const rng = createRng((exp.seed ^ PET_SEED_SALT ^ Math.imul(exp.lap, 2654435761)) >>> 0);
+  const out: { petTile?: string | null; petFound?: string | null } = {};
+  if (exp.petDrops) {
+    const hit = nextFloat(rng) < BALANCE.provisional.pets.lapDropChance;
+    const id = rollAnyPet(() => nextFloat(rng));
+    if (hit) {
+      (exp.petFinds ??= []).push({ petId: id, lap: exp.lap });
+      out.petFound = id;
+    }
+  }
+  const tileChance = petBonus(exp.pet, 'seekTile');
+  if (tileChance > 0 && nextFloat(rng) < tileChance) out.petTile = drawTile(exp);
+  return out;
 }
 
 /** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다. reserve 만큼은 남겨 둔다(흡수 보상이 바퀴 완주 보상을 밀어내지 않게) */

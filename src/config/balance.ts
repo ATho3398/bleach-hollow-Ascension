@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 69;
+export const BALANCE_VERSION = 70;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -751,6 +751,7 @@ export const BALANCE = {
         'w-rare-tile': { price: 260, amount: 1 },
         'w-feast-crate': { price: 380, amount: 2 },
         'w-soul-elixir': { price: 700, amount: 100 },
+        'w-pet-egg': { price: 600, amount: 1 },
       } as Record<string, { price: number; amount: number }>,
     },
     /** 대기 모드 = 방치 자동 모험 (GDD 85장 6번, C.140 provisional — 사용자 "24시간 내내 모험 돌릴 때 뜨는 템과 xp 스텟 등등의 n%만큼만", n·기준량은 코드 판단).
@@ -769,6 +770,17 @@ export const BALANCE = {
     },
     /** 타일 배치 프리셋 (GDD 85장 11번, C.140 provisional): 종족마다 저장 칸 수. 배치 칸 수 = expedition.deckSize(8) + 상점 배치 칸(shared.deckSlots) */
     tilePresets: { max: 5, nameMax: 12 },
+    /** 펫 (GDD 90장, C.144 마스터 초안 provisional — 이름·수치 모두 가칭). 1마리만 데리고 다닌다.
+     *  효과 = 1단계 값 × (1 + affinityStep × (친밀도 − 1)) → 5단계 2배. 친밀도 = 데리고 다닌 원정 바퀴(대기 모드 바퀴 포함) 누계가 affinityLaps 에 닿을 때마다 +1.
+     *  gold = 원정 전투·보스 골드 +8% · belly = 원정 허기 오름 −15% · guard = 전투 시작 보호막(최대 체력 4%) · seekWanderer = 떠돌이 상인 바퀴 확률 +25% · seekTile = 바퀴 끝 타일 보상 +1장 확률 10%.
+     *  얻기: 원정 바퀴 끝 lapDropChance(2%, 이미 가진 펫이면 dupGold 골드) · 떠돌이 상인 전설 품목(w-pet-egg) · 첫 진화 때 무작위 1마리 선물 */
+    pets: {
+      effects: { gold: 0.08, belly: 0.15, guard: 0.04, seekWanderer: 0.25, seekTile: 0.1 },
+      affinityLaps: [10, 30, 60, 100] as number[],
+      affinityStep: 0.25,
+      lapDropChance: 0.02,
+      dupGold: 40,
+    },
     /** 보관함 (GDD 86장 4번, C.140 provisional): 소모품(정화제·각성제·상인 소모품) 종류별 보관 상한 — 먹이 상한과 같은 9 */
     inventory: { consumableCap: 9 },
   },

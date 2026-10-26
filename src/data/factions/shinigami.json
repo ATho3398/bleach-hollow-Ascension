@@ -179,6 +179,12 @@
     "tonic": "영력 차",
     "feast": "잔칫상"
   },
+  "petNames": {
+    "pet-gold": "지옥나비",
+    "pet-belly": "꼬마 쥐",
+    "pet-guard": "수호 거북",
+    "pet-seek": "길잡이 까마귀"
+  },
   "stabilityName": "영압 안정도",
   "fullnessName": "배부름",
   "slotName": "참백도 슬롯",
