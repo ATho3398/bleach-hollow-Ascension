@@ -117,9 +117,12 @@ def main():
               {'id': 'foot_R', 'parent': 'leg_R', 'pivot': ankles['R']},
               {'id': 'weapon', 'parent': 'arm_L', 'pivot': list(HAND), 'restRot': REST_ROT}]
     rig['bones'] = bones
-    order = ['foot_R', 'leg_R', 'foot_L', 'leg_L', 'torso', 'weapon', 'arm_L', 'arm_R', 'head', 'hair']
-    bone_of = {'foot_R': 'foot_R', 'foot_L': 'foot_L', 'weapon': 'weapon'}
-    rig['slots'] = [{'id': s, 'bone': bone_of.get(s, 'head' if s == 'hair' else s)} for s in order]
+    # 슬롯: 있던 순서(뒷머리·겉옷 등)는 그대로 두고, 발·무기 슬롯이 없을 때만 다리·앞팔 바로 앞에 넣는다
+    ids = [x['id'] for x in rig['slots']]
+    for slot, before in (('foot_R', 'leg_R'), ('foot_L', 'leg_L'), ('weapon', 'arm_L')):
+        if slot not in ids:
+            rig['slots'].insert(ids.index(before), {'id': slot, 'bone': slot})
+            ids = [x['id'] for x in rig['slots']]
     dump(rig)
     print('칼', sw.shape[1], '×', sw.shape[0], '손 자리', HAND, '발목', ankles)
 

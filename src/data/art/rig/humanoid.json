@@ -43,8 +43,8 @@
       "foot_R": { "art": "shinigami/foot_R", "at": [18, 75], "size": [11, 6] }
     },
     "arrancar": {
-      "torso": { "art": "arrancar/torso", "at": [8, 27], "size": [21, 26] },
-      "arm_L": { "art": "arrancar/arm_L", "at": [0, 36], "size": [19, 24] },
+      "torso": { "art": "arrancar/torso", "at": [9, 27], "size": [19, 26] },
+      "arm_L": { "art": "arrancar/arm_L", "at": [0, 34], "size": [21, 26] },
       "arm_R": { "art": "arrancar/arm_R", "at": [21, 29], "size": [14, 26] },
       "leg_L": { "art": "arrancar/leg_L_top", "at": [4, 51], "size": [17, 24] },
       "leg_R": { "art": "arrancar/leg_R_top", "at": [13, 49], "size": [19, 26] },
