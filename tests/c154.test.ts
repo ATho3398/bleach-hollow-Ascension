@@ -126,3 +126,44 @@ describe('95장 B2 해방 개선', () => {
     expect(liberationHint(f, { skills: [], liberationSkills: [] })).toContain('기본 블록');
   });
 });
+
+describe('95장 B2 C.166 후속: 해방 순간 블록 2개·빠른 생성', () => {
+  const LB = BALANCE.provisional.liberation;
+  const mk = () => {
+    const b = newBuild();
+    gainTrait(b, 't-thunder-c');
+    return createCombat(5, { enemy: elite, params: { ...buildCombatParams(b, 'hollow'), liberationSkills: [] } });
+  };
+  it('빈 바: 누르는 순간 장착 블록 2개가 바로 들어온다', () => {
+    const s = mk();
+    s.tray = [];
+    s.liberation.gauge = 100;
+    step(s, { type: 'liberate' });
+    expect(LB.instantBlocks).toBe(2);
+    expect(s.tray.length).toBeGreaterThanOrEqual(2);
+    expect(s.tray.slice(0, 2).every((x) => x.traitId === 't-thunder-c')).toBe(true);
+  });
+  it('가득 찬 바: 오른쪽 끝 기본 막기·회복부터 밀어낸다', () => {
+    const s = mk();
+    const blk = (traitId: string) => ({ uid: s.nextUid++, kind: 'skill' as const, traitId, family: null, element: null });
+    s.tray = [blk('basic-heal'), blk('basic-skill'), blk('basic-skill'), blk('basic-guard'), blk('basic-skill'), blk('basic-skill'), blk('basic-skill'), blk('basic-skill')];
+    s.liberation.gauge = 100;
+    step(s, { type: 'liberate' });
+    expect(s.tray).toHaveLength(s.params.trayCapacity);
+    expect(s.tray.some((x) => x.traitId === 'basic-heal' || x.traitId === 'basic-guard')).toBe(false);
+    expect(s.tray.slice(-2).every((x) => x.traitId === 't-thunder-c')).toBe(true);
+  });
+  it("해방 4초 동안 블록 약 5개 (특성 1, 안 누름 — 순간 2개 + 생성 ×1.8)", () => {
+    let tot = 0;
+    for (let seed = 1; seed <= 10; seed++) {
+      const s = createCombat(seed, { enemy: elite, params: buildCombatParams((() => { const b = newBuild(); gainTrait(b, 't-thunder-c'); return b; })(), 'hollow') });
+      s.tray = [];
+      s.liberation.gauge = 100;
+      step(s, { type: 'liberate' });
+      let n = s.tray.length;
+      while (s.liberation.ticksLeft > 0 && s.status === 'playing') { s.events.length = 0; step(s, null); n += s.events.filter((e) => e.kind === 'spawn').length; }
+      tot += n;
+    }
+    expect(tot / 10).toBeGreaterThanOrEqual(4.5);
+  });
+});

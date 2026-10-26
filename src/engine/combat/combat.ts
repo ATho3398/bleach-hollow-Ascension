@@ -1627,7 +1627,28 @@ function liberate(s: CombatState): boolean {
     s.player.attackTimer = Math.max(1, Math.round(s.player.attackTimer / p.liberationAttackSpeed));
   }
   emit(s, { kind: 'liberate', seconds: p.liberationSeconds, unique: p.liberationUnique, slots: p.liberationSkills.length, source: liberationBlocksOf(p).source });
+  grantLiberationBlocks(s, LB.instantBlocks);
   return true;
+}
+
+/** 해방 순간 지급 (GDD 95장 B2 C.166 후속): 해방 표에서 n개를 바로 넣어 첫 블록까지 공백을 없앤다. 바가 차 있으면 오른쪽 끝의 옛 블록을 밀어낸다 —
+ *  기본 막기·회복 → 해방 표에 없는 블록 → 그래도 없으면 맨 오른쪽 순. 다음 생성은 해방 간격 한 번 뒤 */
+function grantLiberationBlocks(s: CombatState, n: number): void {
+  const entries = spawnTableOf(s.params, true).entries.filter((e) => e.source);
+  if (entries.length === 0) return;
+  const libIds = new Set(entries.map((e) => e.source!.id));
+  for (let k = 0; k < n; k++) {
+    if (s.tray.length >= s.params.trayCapacity) {
+      const pick = (ok: (b: Block) => boolean) => { for (let i = s.tray.length - 1; i >= 0; i--) if (ok(s.tray[i]!)) return i; return -1; };
+      let i = pick((b) => b.kind === 'skill' && (b.traitId === BASIC_GUARD_ID || b.traitId === BASIC_HEAL_ID));
+      if (i < 0) i = pick((b) => !(b.kind === 'skill' && b.traitId !== null && libIds.has(b.traitId)));
+      if (i < 0) i = s.tray.length - 1;
+      s.tray.splice(i, 1);
+    }
+    const e = drawSpawn(s, entries.map((x) => ({ ...x, chance: x.chance / entries.reduce((a, y) => a + y.chance, 0) })));
+    if (e?.source) spawn(s, 'skill', e.source.id, e.family);
+  }
+  s.spawnTimer = ticksOf(s.params, spawnIntervalOf(s));
 }
 
 /** 해방이 풀린다 (지속이 다 됐거나 전투가 끝났다): 능력치·최대 체력을 되돌리고 리스크 게이지가 오른다 (해방마다 한 번) */
