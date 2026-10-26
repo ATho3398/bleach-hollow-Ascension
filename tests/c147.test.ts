@@ -117,10 +117,10 @@ describe('92장 대기 모드 받을 보상', () => {
     expect(newSaveData('hollow', 1).idlePending).toBeNull();
   });
 
-  it('방 위 줄 대기 보상 아이콘 · 복귀 창 [받기]/[나중에]', () => {
-    const room = readFileSync('src/ui/roomView.ts', 'utf8');
-    expect(room).toContain("label: '대기 보상'");
-    expect(room).toContain('bha-room__idlebadge');
+  it('독 ⋯ 옆 대기 보상 시계 버튼(C.159) · 복귀 창 [받기]/[나중에]', () => {
+    const dock = readFileSync('src/ui/bha/dock.ts', 'utf8');
+    expect(dock).toContain("label: '대기 보상'");
+    expect(dock).toContain('bha-room__idlebadge');
     const view = readFileSync('src/ui/idleView.ts', 'utf8');
     expect(view).toContain('만에 돌아왔다');
     expect(view).toContain("yes: '받기'");

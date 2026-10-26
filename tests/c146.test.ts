@@ -28,7 +28,7 @@ describe.each(['hollow', 'shinigami'])('C.146 방 물건 (%s)', (fid) => {
     const sc = (i: string) => L[i]!.scale ?? 1;
     expect(sc('door')).toBeGreaterThan(sc('altar'));
     expect(sc('altar')).toBe(sc('chest'));
-    expect(sc('book')).toBeLessThan(sc('altar') * 0.7);
+    expect(sc('book')).toBe(sc('altar')); // C.159 A4: 보관함·책장·상점·수련장 4개 같은 크기
     expect(sc('shop')).toBe(sc('book'));
   });
   it('R1: 물건끼리·물건과 캐릭터가 겹치지 않는다 (펫 자리 오른쪽 발치 40px 포함)', () => {

@@ -94,16 +94,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }
     hud.append(name);
   }
-  if (hd.idle) {
-    const ib = button({ label: '대기 보상', icon: 'i-timer', size: 'small', variant: 'ghost', onClick: hd.idle.onOpen });
-    ib.dataset.sc = 'idle-reward';
-    if (hd.idle.badge) {
-      ib.append(el('small', 'bha-room__idlebadge', hd.idle.badge));
-      ib.title = `대기 보상 ${hd.idle.badge} 쌓임`;
-    }
-    hud.append(ib);
-    items.push({ el: ib });
-  }
   if (hd.resume) {
     resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
     resumeBtn.title = hd.resume.info;
@@ -244,13 +234,14 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       ...(hd.onBackup ? [{ label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup }] : []),
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
     ],
+    idle: hd.idle,
     onItemsChange: () => registerItems(),
   });
 
   const body = el('div', 'bha-room__body');
   body.append(scene);
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
-  const main = mountApp(dev.view, { cls: 'bha-room' }, hud, ...(warn ? [warn] : []), body, dock.root);
+  const main = mountApp(dev.view, { cls: 'bha-room' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
   if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번) — 상점 물건에 알림 점

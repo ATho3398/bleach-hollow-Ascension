@@ -90,11 +90,11 @@ describe('C.153 A3 스킨 하위 탭', () => {
   });
 });
 
-describe('C.153 A2 수련장 드롭다운', () => {
-  it('훈련 인형·번호쟁탈전은 수련장 드롭다운 안에 있다', () => {
+describe('C.153 A2 → C.159 A1 수련장 머리 제목 토글', () => {
+  it('훈련 인형·번호쟁탈전은 책장과 같은 머리 제목 토글 안에 있다', () => {
     const t = read('src/ui/trainingView.ts');
-    expect(t).toContain('dropdown(');
-    expect(read("src/ui/bha/dropdown.ts")).toContain("dataset.door");
+    expect(t).toContain('viewTitle(');
+    expect(t).not.toContain('dropdown');
   });
 });
 

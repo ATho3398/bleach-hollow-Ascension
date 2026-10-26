@@ -498,3 +498,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 사용 모델: Sonnet 5.5. `PATCH_LABEL` C.158. 기능·세이브·밸런스 변경 없음.
 - 곡 목록 한 곡 = 한 줄 고정(`.bha-bgmlist__row`: 이름 말줄임·▶·제외 토글), 지금 곡 줄 강조+'재생 중', 제외 곡 이름 흐리게. [현재 곡만 반복][다음 곡] 한 줄(`.bha-bgmlist__ctl`). CSS 는 `screens-lcd.css`, 토큰만.
 - 캡처(844×390 LCD) `docs/captures/c158/`.
+
+### C.159 수련장 제목 토글 · 보관함 슬롯 창 버그 · 대기 보상 시계 버튼 · 방 물건 크기 (STAGE S-23, 코딩113 Sonnet, GDD 98장 A1~A4, v5.207)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.159. 엔진·세이브·밸런스 변경 없음. A5(전투 화면 점검)는 C.160 로 넘김.
+- A1: 수련장 머리 제목이 책장과 같은 `viewTitle` 토글 — 훈련 인형·번호 쟁탈전. 드롭다운(C.153)·`dropdown.ts`·css 삭제.
+- A2: 원인 = 물건·펫 탭이 오른쪽 열을 `hidden` 으로 두고, 슬롯 탭 분기는 되돌리지 않고 return → 장착 칸만 보임. 열 전환을 분기 앞으로. tests/c159.
+- A3: 방 위 '대기 보상' 줄 삭제(내용 없으면 머리 줄도 없음), 독에 ··· 옆 시계 아이콘 버튼+배지(`refreshIdleBadge` 그대로 동작), 돌보기 3버튼 패딩·간격 축소.
+- A4: 방 물건 4개 0.68(호로·사신), 모험 1.0. c146·c147 테스트 갱신.
+- 캡처(844×390 1배) `docs/captures/c159/`: room · training · training-toggle-open · chest-slots-after-items-tab.

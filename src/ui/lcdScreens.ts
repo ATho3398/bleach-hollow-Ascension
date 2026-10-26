@@ -239,6 +239,11 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
   function fill(): void {
     // 탭의 타일·펫 수와 눌린 탭을 새로 맞춘다 (탭 줄만 다시 만든다)
     dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(headTabs());
+    // 두 열/한 열 전환은 탭마다 먼저 맞춘다 (C.159 A2: 물건·펫 탭에서 숨긴 오른쪽 열이 슬롯 탭으로 돌아와도 숨은 채여서 장착 칸만 보였다)
+    const body = page.left.parentElement!;
+    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
+    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : '1fr 1fr';
+    page.right.hidden = oneCol;
     if (chestUi.tab === 'slots') {
       const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
         persist();
@@ -249,10 +254,6 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       return;
     }
     // 물건 탭은 한 열 (카드 격자가 폭을 다 쓴다), 나머지는 두 열
-    const body = page.left.parentElement!;
-    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
-    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : '1fr 1fr';
-    page.right.hidden = oneCol;
     if (oneCol) {
       const [l, r] = itemsTab(faction, save, () => {
         persist();

@@ -220,10 +220,10 @@
     },
     "layout": {
       "door": { "x": 9, "y": 78, "scale": 1 },
-      "book": { "x": 76, "y": 60, "scale": 0.54 },
-      "altar": { "x": 90, "y": 70, "scale": 0.81 },
-      "chest": { "x": 26, "y": 90, "scale": 0.81 },
-      "shop": { "x": 74, "y": 90, "scale": 0.54 }
+      "book": { "x": 76, "y": 60, "scale": 0.68 },
+      "altar": { "x": 90, "y": 70, "scale": 0.68 },
+      "chest": { "x": 26, "y": 90, "scale": 0.68 },
+      "shop": { "x": 74, "y": 90, "scale": 0.68 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {
