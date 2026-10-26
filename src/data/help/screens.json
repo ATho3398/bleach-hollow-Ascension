@@ -1,8 +1,8 @@
 {
   "provisional": true,
   "screens": [
-    {"id": "nest", "title": "{nestName}", "body": "허기·컨디션·{stabilityName}을(를) 돌보는 곳이에요. {nestActions.feed} · {nestActions.sleep} · {nestActions.pet}(으)로 상태를 가꾸고, {slotName}에 {skillBlockName} 특성을 장착하고, 원정에 가져갈 타일 덱을 고른 뒤 출발해요. 진화도 여기서만 할 수 있어요."},
-    {"id": "expedition", "title": "원정", "body": "출발하기 전에 덱의 타일을 길 위의 칸에 놓아 적이나 휴식, 환경 효과를 만들어요. 놓은 타일은 출발 전까지 고쳐요: 한 번 누르면 선택, 빈 칸을 누르면 이동, 다른 놓은 타일을 누르면 서로 교체, 같은 칸을 다시 누르면 손으로 돌아와요. 손에서 고른 타일로 놓은 타일을 누르면 맞바꿔요. 출발하면 {huntingGroundName}을(를) 자동으로 걸어요. 길을 한 바퀴 돌아 {nestName}에 서면 귀환할지 한 바퀴 더 갈지 고르고, 그동안 얻은 타일은 이때 다음 바퀴 길에 놓을 수 있어요. 안 놓은 타일은 다음 원정 덱으로 보관돼요. 전투에서 지면 마지막 바퀴에서 얻은 것을 잃어요."},
+    {"id": "nest", "title": "{nestName}", "body": "허기·컨디션·{stabilityName}을(를) 돌보는 곳이에요. {nestActions.feed} · {nestActions.sleep} · {nestActions.pet}(으)로 상태를 가꾸고, {slotName}에 {skillBlockName} 특성을 장착하고, 출발 화면에서 가진 타일을 길에 놓은 뒤 출발해요. 진화도 여기서만 할 수 있어요."},
+    {"id": "expedition", "title": "원정", "body": "출발하기 전에 가진 타일을 길 위의 칸에 놓아 적이나 휴식, 환경 효과를 만들어요. 놓은 타일은 출발 전까지 고쳐요: 한 번 누르면 선택, 빈 칸을 누르면 이동, 다른 놓은 타일을 누르면 서로 교체, 같은 칸을 다시 누르면 손으로 돌아와요. 손에서 고른 타일로 놓은 타일을 누르면 맞바꿔요. 출발하면 {huntingGroundName}을(를) 자동으로 걸어요. 길을 한 바퀴 돌아 {nestName}에 서면 귀환할지 한 바퀴 더 갈지 고르고, 그동안 얻은 타일은 이때 다음 바퀴 길에 놓을 수 있어요. 안 놓은 타일은 보관함에 그대로 남아요. 전투에서 지면 마지막 바퀴에서 얻은 것을 잃어요."},
     {"id": "battle", "title": "전투", "body": "전투는 자동으로 진행되고, 블록 바의 블록을 눌러 쓰는 것이 여러분의 일이에요. 같은 계열 블록이 붙으면 {chainName}(사이 블록을 먼저 쓰면 붙어요, 연달아 쓰면 콤보), 강공격 예고에는 {roleNames.guard}, 게이지가 차면 {liberation.baseName}. 이기면 {absorbActionName}과(와) 놓아주기 중에서 골라요. 전투 화면의 [?]를 누르면 전투가 멈춘 채 도움말이 열려요."},
     {"id": "evolution", "title": "진화", "body": "원정을 다니다 보면 진화할 때가 와요. 언제인지는 비밀이고, 때가 가까우면 몸에 신호가 와요. 진화는 {nestName}에 돌아오면 저절로 일어나요. 그 순간 장착한 특성의 속성({tier4})·공격 분류({tier5})와 그 단계에 {absorbActionName}한 적이 모습을 정해요. 진화하면 {slotName}이(가) 한 칸 늘고 능력치(종족값)가 바뀌어요."}
   ]

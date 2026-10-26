@@ -79,7 +79,7 @@ import { showToast } from './bha/nest';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
 import { showIdleSummary } from './idleView';
-import { ownedTileList, placementLimitOf, saveTilePreset, tilePresetsFor } from '../tilePresets';
+import { deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
 import type { IdleRecord } from '../engine/runLog';
 import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
@@ -763,10 +763,20 @@ export function startApp(host: HTMLElement): void {
           placeLimit: placementLimitOf(save!),
           presets: {
             list: () => tilePresetsFor(save!.tiles, faction.id),
-            save: (cells) => {
-              const r = saveTilePreset(save!, '', cells);
+            save: (cells, name, index) => {
+              const r = saveTilePreset(save!, name, cells, index);
               if (r.ok) persist();
               return r;
+            },
+            rename: (index, name) => {
+              const ok = renameTilePreset(save!, index, name);
+              if (ok) persist();
+              return ok;
+            },
+            remove: (index) => {
+              const ok = deleteTilePreset(save!, index);
+              if (ok) persist();
+              return ok;
             },
           },
           onStart: () => {

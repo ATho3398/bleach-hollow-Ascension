@@ -70,7 +70,7 @@
 .bha-lcd .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-xs); line-height: 1.3; }
 .bha-lcd .bha-exp .bha-sheet .bha-btn--lg { min-height: var(--bha-touch); font-size: var(--bha-fs-md); }
 .bha-lcd .bha-exp__hand { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-height: 0; }
-.bha-lcd .bha-exp__hand .bha-tilechip { flex: none; }
+.bha-lcd .bha-exp__hand .bha-tilechip, .bha-lcd .bha-exp__hand .bha-tilecard { flex: none; }
 
 /* 그림 캐릭터: 발바닥이 상자 아래에서 8% 위(art-guide 규격)이므로 그림자도 그 높이에 둔다(발이 떠 보이지 않게) */
 .bha-walker.has-art .bha-walker__shadow { bottom: 3%; }

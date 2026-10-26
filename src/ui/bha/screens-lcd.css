@@ -321,3 +321,10 @@ button.bha-slot { cursor: pointer; }
 }
 .bha-viewtitle__item.is-on { background: var(--bha-bg-3); border-color: var(--bha-accent); }
 .bha-viewtitle__item:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
+
+/* 광기·자아 설명 (C.141, GDD 84장 9번): 수치마다 손해·오르는 길·내리는 길을 숫자로 */
+.bha-riskexplain { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-riskexplain + .bha-riskexplain { margin-top: var(--bha-sp-4); padding-top: var(--bha-sp-4); border-top: 1px solid var(--bha-line-1); }
+.bha-riskexplain__title { font-size: var(--bha-fs-sm); color: var(--bha-text-1); }
+.bha-riskexplain__label { font-size: var(--bha-fs-xs); color: var(--bha-accent); font-weight: var(--bha-fw-heavy); }
+.bha-riskexplain__list { margin: 0; padding-left: var(--bha-sp-5); display: flex; flex-direction: column; gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.35; }

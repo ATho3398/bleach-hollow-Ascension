@@ -100,6 +100,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     }
     const b = el('button', 'bha-road__cell');
     b.type = 'button';
+    b.dataset.cell = String(i);
     b.onclick = () => onCell(i);
     cells.push(b);
     road.append(b);
@@ -184,7 +185,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   // 판 바깥 빈 곳(안내 줄·칸 사이)을 누르면 선택만 풀린다. 타일은 그대로
   root.addEventListener('click', (e) => {
     // 눌린 칸·칩은 눌린 직후 다시 그려져 target 이 떨어져 나갈 수 있어, 눌린 순간의 경로로 판정한다
-    const onTile = e.composedPath().some((n) => n instanceof Element && n.matches('.bha-road__cell, .bha-tilechip'));
+    const onTile = e.composedPath().some((n) => n instanceof Element && n.matches('.bha-road__cell, .bha-tilecard'));
     if (!onTile) cancelSelection();
   });
   // 키보드 Q·Esc: 이 배치판이 화면에 있고 고른 것이 있을 때만 선택 취소로 쓴다 (없으면 평소처럼 뒤로)
@@ -206,7 +207,9 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       const b = cells[i]!;
       const canMove = mode === 'empty' && selectedCell !== null && canPlaceAt({ slot: null, index: i, pos: exp.pos, phase: 'moving', hasSelected: true });
       b.className = `bha-road__cell${css ? ` is-has bha-road__cell--${css}` : ''}${mode === 'can' || canMove ? ' is-can' : ''}${selectedCell === i ? ' is-selected' : ''}${id && placedHere.has(i) ? ' is-editable' : ''}`;
-      b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), el('span', 'bha-road__num', String(i)));
+      b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), ...(id ? [el('span', 'bha-road__name', o.tileName(id))] : []), el('span', 'bha-road__num', String(i)));
+      if (id && placedHere.has(i)) b.dataset.drag = 'cell';
+      else delete b.dataset.drag;
       b.title = id ? `${o.tileName(id)} — ${tileHint(getTile(id))}` : '빈 칸';
       b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 확정된 타일'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
     }
@@ -230,21 +233,135 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     if (exp.hand.length === 0) hand.append(el('span', 'bha-faint', '손에 든 타일 없음'));
     for (const { id, count } of handCounts(exp.hand)) {
       const css = tileCss(getTile(id).kind);
-      const chip = el('button', `bha-tilechip bha-tilechip--${css}${selected === id ? ' is-selected' : ''}`);
+      // 타일 카드 (C.141, GDD 85장 11번): 큰 아이콘 · 이름 · 장수 · 한 줄 효과. 눌러서 고르거나 끌어서 칸에 놓는다
+      const chip = el('button', `bha-tilecard bha-tilecard--${css}${selected === id ? ' is-selected' : ''}`);
       chip.type = 'button';
+      chip.dataset.drag = 'hand';
+      chip.dataset.tile = id;
       chip.setAttribute('aria-pressed', String(selected === id));
-      const ic = el('span', 'bha-tilechip__icon');
+      const ic = el('span', 'bha-tilecard__icon');
       ic.append(icon(tileIconId(css)));
-      chip.append(ic, o.tileName(id), el('span', 'bha-tilechip__count', String(count)));
+      chip.append(ic, el('b', 'bha-tilecard__name', o.tileName(id)), el('small', 'bha-tilecard__hint', tileHint(getTile(id))), el('span', 'bha-tilecard__count', `×${count}`));
       chip.onclick = () => {
         selected = selected === id ? null : id;
         selectedCell = null;
-        note = selected ? `${o.tileName(id)}: ${tileHint(getTile(id))}. 빈 칸(＋)을 눌러 놓는다` : '';
+        note = selected ? `${o.tileName(id)}: ${tileHint(getTile(id))}. 빈 칸(＋)을 누르거나 끌어서 놓는다` : '';
         refresh();
       };
       hand.append(chip);
     }
   }
+
+  // 끌어서 놓기 (C.141, GDD 85장 11번): 손 카드 → 칸 / 놓은 칸 → 다른 칸(이동·교체) / 놓은 칸 → 손(되돌리기). 터치는 잠깐 눌러야 끌리고(그 전에는 화면 스크롤), 마우스는 5px 끌면 시작한다.
+  // 놓는 동작은 눌러서 고르기와 같은 규칙(onCell)을 그대로 쓴다 — 선택을 흉내 낸 뒤 칸을 누른 것으로 처리한다
+  type Src = { kind: 'hand'; id: string } | { kind: 'cell'; cell: number };
+  let pending: { src: Src; el: HTMLElement; x: number; y: number; pointerId: number; touch: boolean; timer: number } | null = null;
+  let dragging: { src: Src; ghost: HTMLElement; over: HTMLElement | null } | null = null;
+  let suppressClick = false;
+  const DRAG_HOLD_MS = 200;
+  const targetAt = (x: number, y: number): HTMLElement | null => {
+    const t = document.elementFromPoint(x, y)?.closest<HTMLElement>('.bha-road__cell[data-cell], .bha-road__hand');
+    return t && root.contains(t) ? t : null;
+  };
+  const startDrag = () => {
+    if (!pending) return;
+    const { src, el: from, x, y } = pending;
+    pending = null;
+    selected = null;
+    selectedCell = null;
+    // 끌고 가는 표시는 아이콘 원 하나 (기기 화면이 가로로 돌려 보이므로, 글자가 든 카드를 복사하면 옆으로 누워 보인다)
+    const ghost = el('span', 'bha-drag-ghost');
+    ghost.style.setProperty('--tile', getComputedStyle(from).getPropertyValue('--tile') || 'var(--bha-bg-3)');
+    const srcIcon = from.querySelector('svg');
+    if (srcIcon) ghost.append(srcIcon.cloneNode(true));
+    ghost.style.left = `${x}px`;
+    ghost.style.top = `${y}px`;
+    document.body.append(ghost);
+    from.classList.add('is-dragging');
+    dragging = { src, ghost, over: null };
+    root.classList.add('is-dragging-tile');
+  };
+  const endDrag = (drop: boolean, x: number, y: number) => {
+    window.clearTimeout(pending?.timer);
+    pending = null;
+    const d = dragging;
+    if (!d) return;
+    dragging = null;
+    d.ghost.remove();
+    d.over?.classList.remove('is-drop');
+    root.classList.remove('is-dragging-tile');
+    root.querySelectorAll('.is-dragging').forEach((n) => n.classList.remove('is-dragging'));
+    suppressClick = true;
+    window.setTimeout(() => { suppressClick = false; }, 0);
+    const t = drop ? targetAt(x, y) : null;
+    if (!t) return refresh();
+    if (t.classList.contains('bha-road__hand')) {
+      if (d.src.kind === 'cell') {
+        selectedCell = d.src.cell;
+        onCell(d.src.cell); // 같은 칸을 다시 누른 것 = 손으로 되돌리기
+      } else refresh();
+      return;
+    }
+    const i = Number(t.dataset.cell);
+    if (d.src.kind === 'cell') {
+      if (d.src.cell === i) return refresh();
+      selectedCell = d.src.cell;
+      selected = null;
+    } else {
+      selected = d.src.id;
+      selectedCell = null;
+    }
+    onCell(i);
+  };
+  const srcOf = (t: HTMLElement): Src | null => {
+    if (t.dataset.drag === 'hand' && t.dataset.tile) return { kind: 'hand', id: t.dataset.tile };
+    if (t.dataset.drag === 'cell' && t.dataset.cell) return { kind: 'cell', cell: Number(t.dataset.cell) };
+    return null;
+  };
+  root.addEventListener('pointerdown', (e) => {
+    const t = (e.target as Element).closest<HTMLElement>('[data-drag]');
+    const src = t ? srcOf(t) : null;
+    if (!t || !src || pending || dragging) return;
+    const touch = e.pointerType !== 'mouse';
+    pending = { src, el: t, x: e.clientX, y: e.clientY, pointerId: e.pointerId, touch, timer: touch ? window.setTimeout(startDrag, DRAG_HOLD_MS) : 0 };
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (pending && e.pointerId === pending.pointerId) {
+      const dx = e.clientX - pending.x;
+      const dy = e.clientY - pending.y;
+      if (pending.touch) {
+        if (Math.hypot(dx, dy) > 10) { window.clearTimeout(pending.timer); pending = null; } // 먼저 움직이면 스크롤
+      } else if (Math.hypot(dx, dy) > 5) {
+        // 손 목록이 옆으로 넘칠 때 가로로 끌면 목록 스크롤(dragScroll), 세로·대각선이면 카드 끌기
+        if (pending.src.kind === 'hand' && Math.abs(dx) > Math.abs(dy) && hand.scrollWidth > hand.clientWidth) pending = null;
+        else startDrag();
+      }
+    }
+    if (!dragging) return;
+    dragging.ghost.style.left = `${e.clientX}px`;
+    dragging.ghost.style.top = `${e.clientY}px`;
+    const over = targetAt(e.clientX, e.clientY);
+    if (over !== dragging.over) {
+      dragging.over?.classList.remove('is-drop');
+      over?.classList.add('is-drop');
+      dragging.over = over;
+    }
+  });
+  window.addEventListener('pointerup', (e) => {
+    if (dragging) endDrag(true, e.clientX, e.clientY);
+    else if (pending) { window.clearTimeout(pending.timer); pending = null; }
+  });
+  window.addEventListener('pointercancel', () => {
+    if (dragging) endDrag(false, 0, 0);
+    else if (pending) { window.clearTimeout(pending.timer); pending = null; }
+  });
+  // 터치로 끌기가 시작된 뒤에는 화면이 같이 스크롤되지 않게
+  root.addEventListener('touchmove', (e) => { if (dragging && e.cancelable) e.preventDefault(); }, { passive: false });
+  root.addEventListener('click', (e) => {
+    if (!suppressClick) return;
+    e.stopPropagation();
+    e.preventDefault();
+  }, true);
   refresh();
   return {
     el: root,

@@ -9,6 +9,7 @@ import { synergyName, tileName } from '../data/tiles';
 import { button, el, icon, mountApp } from './bha/dom';
 import { applyTilePreset, cellsOfPlan, type PresetResult, type TilePreset } from '../tilePresets';
 import { roadPlanner } from './bha/road';
+import { presetPanel } from './bha/tilePresets';
 import { departTabs, type DepartTab } from './storyView';
 
 export interface PlanViewHandlers {
@@ -26,7 +27,13 @@ export interface PlanViewHandlers {
   /** 길에 놓을 수 있는 최대 칸 수 (GDD 85장 11번 8칸 + 상점 배치 칸). 없으면 제한 없음 */
   placeLimit?: number;
   /** 배치 프리셋 (GDD 85장 11번): 이 종족 프리셋 목록·저장. 없으면 프리셋 줄을 숨긴다 */
-  presets?: { list: () => { index: number; preset: TilePreset }[]; save: (cells: (string | null)[]) => PresetResult };
+  presets?: {
+    list: () => { index: number; preset: TilePreset }[];
+    /** index 를 주면 덮어쓴다 */
+    save: (cells: (string | null)[], name: string, index?: number) => PresetResult;
+    rename: (index: number, name: string) => boolean;
+    remove: (index: number) => boolean;
+  };
 }
 
 /** 난이도 한 줄 설명: "★3 · 연속 4 · 권장: 적은 3단계(아쥬커스) 기준 +20% · 먹이·노력치 +70% · 골드 +38%" (데이터에서 조합, GDD 32-1 5·10·11번) */
@@ -131,30 +138,20 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     sub.prepend(icon('i-lock'), ' ');
     sub.dataset.tilesLocked = '';
   }
-  // 배치 프리셋 줄 (GDD 85장 11번, C.140 최소 UI — 카드형·드래그는 C.141): [저장] + 프리셋마다 [불러오기]
-  const presetRow = el('div', 'bha-plan__presets');
-  presetRow.dataset.presets = '';
-  const presetNote = el('span', 'bha-plan__sub');
-  const drawPresets = () => {
-    const P = h.presets!;
-    const save = button({ label: '프리셋 저장', icon: 'i-plus', size: 'small', onClick: () => {
-      const r = P.save(cellsOfPlan(exp));
-      presetNote.textContent = r.ok ? '지금 배치를 프리셋으로 저장했다' : r.reason;
-      drawPresets();
-    } });
-    save.dataset.presetSave = '';
-    const loads = P.list().map(({ preset }, i) => {
-      const b = button({ label: preset.name, size: 'small', variant: 'ghost', onClick: () => {
+  // 배치 프리셋 (GDD 85장 11번, C.141): 이름 붙여 저장·불러오기·덮어쓰기·이름 바꾸기·삭제 (카드형)
+  const presetEl = h.presets && !h.tilesLocked
+    ? presetPanel({
+      list: h.presets.list,
+      save: (name, index) => h.presets!.save(cellsOfPlan(exp), name, index),
+      rename: h.presets.rename,
+      remove: h.presets.remove,
+      load: (preset) => {
         const r = applyTilePreset(exp, preset);
         planner.adopt();
-        presetNote.textContent = `${preset.name} 불러옴: ${r.placed}칸${r.missing.length > 0 ? ` · 없는 타일 ${r.missing.length}장은 건너뜀` : ''}`;
-      } });
-      b.dataset.presetLoad = String(i);
-      return b;
-    });
-    presetRow.replaceChildren(el('span', 'bha-plan__label', `배치 ${h.placeLimit ?? '∞'}칸`), save, ...loads, presetNote);
-  };
-  if (h.presets && !h.tilesLocked) drawPresets();
-  const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, gInfo, diff, dInfo, sub, ...(h.presets && !h.tilesLocked ? [presetRow] : []), planner.el, start);
+        return `${preset.name} 불러옴: ${r.placed}칸${r.missing.length > 0 ? ` · 없는 타일 ${r.missing.length}장은 건너뜀` : ''}`;
+      },
+    }, (id) => tileName(id, faction.id), `최대 ${h.placeLimit ?? '∞'}칸`)
+    : null;
+  const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, gInfo, diff, dInfo, sub, planner.el, ...(presetEl ? [presetEl] : []), start);
   main.dataset.screen = 'expedition-plan';
 }

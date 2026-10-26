@@ -1,5 +1,6 @@
 // 도움말·튜토리얼 텍스트 데이터 (GDD 14-2, C.19). 본문은 템플릿이고 {자리표시자}는 종족 설정(FactionConfig)·밸런스 값으로 치환한다.
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
+import { riskText } from './riskText';
 import { BALANCE } from '../../config/balance';
 import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
 import { fixParticles } from '../../engine/josa';
@@ -95,6 +96,13 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.critChancePct = String(Math.round(COMBAT.critChance * 100));
   vars.critChanceMaxPct = String(Math.round(COMBAT.critChanceMax * 100));
   vars.critMultiplier = String(COMBAT.critMultiplier);
+  // 광기·자아 설명 (C.141, GDD 84장 9): 손해를 숫자로 — 수치는 BALANCE, 이름은 종족 설정 (ui/riskText.ts)
+  const rt = riskText(f);
+  vars.riskUpText = rt.riskUp.join(' · ');
+  vars.riskDownText = rt.riskDown.join(' · ');
+  vars.riskLossText = rt.riskLoss.join(' ');
+  vars.stabilityLossText = rt.stabilityLoss.join(' ');
+  vars.stabilityMoveText = rt.stabilityMove.join(' · ');
   vars.tier4 = f.tierNames[3];
   vars.tier5 = f.tierNames[4];
   return vars;
