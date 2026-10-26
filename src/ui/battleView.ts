@@ -48,7 +48,7 @@ import { abilityProcText } from './evolutionPanel';
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
   banner?: string;
-  /** 있으면 화면 맨 위에 안내 한 줄(.bha-notice)을 보인다 (체험 전투 "기록되지 않음" 등) */
+  /** 있으면 필드 가운데 칩 줄 맨 위에 안내(.bha-notice)를 보인다 (체험 전투 "기록되지 않음" 등, C.160) */
   notice?: string;
   /** 폭주 중이면 그 이름 (GDD 23-2, 종족 설정 frenzyName): 위 막대에 상태 칩, 화면 테두리 */
   frenzy?: string;
@@ -235,24 +235,30 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // ── 1. 적 이름·약점 (필드 위 한 줄 왼쪽, v2 칩) ──
   const foeName = el('div', 'bha-v2foename');
-  foeName.append(el('h1', 'bha-display bha-lg bha-v2foename__text', enemyName));
-  if (opts.boss) foeName.append(v2Chip('보스', 'danger'));
+  const foeTitle = el('h1', 'bha-display bha-lg bha-v2foename__text', enemyName);
+  foeTitle.title = enemyName; // 칩에 밀려 말줄임이 되어도 전체 이름 (C.160)
+  foeName.append(foeTitle);
+  if (opts.boss || s.boss) foeName.append(v2Chip('보스', 'danger')); // 보스 기믹이 있으면 보스 (테스트 바로 전투는 opts.boss 없이 들어온다, C.160)
   else if (enemy.class === 'elite') foeName.append(v2Chip('강적', 'danger'));
-  if (enemy.provisional) foeName.append(v2TempChip());
   const weakChip = elementChip();
   const foeHead = el('header', 'bha-v2foehead');
   foeHead.append(foeName);
+  // 필드 가운데 칩 줄 (C.160, 핸드오프 Battle.dc.html 의 '강공격·봉인' 칩 자리 left 290·top 45): 알림·임시·패턴·페이즈·졸개 칩을 나·적 그림 사이에 세로로 쌓는다.
+  // 위 한 줄에 다 넣으면 적 이름이 말줄임으로 사라지고 칩끼리 겹쳤다 (GDD 98장 A5)
+  const fieldTags = el('div', 'bha-v2fieldtags');
+  if (opts.notice) fieldTags.append(v2Notice('', opts.notice, 'i-info'));
+  if (enemy.provisional) fieldTags.append(v2TempChip()); // 임시 데이터 표시도 여기 (위 한 줄에서는 원정 광기·폭주 칩과 함께면 반쯤 잘렸다)
 
   const patternView = PATTERN_VIEW[enemyPatternKind(enemy)];
   const patternChipEl = (): HTMLElement => v2Chip(patternView!.label, 'default', { icon: patternView!.icon });
-  if (patternView) foeHead.append(patternChipEl());
+  if (patternView) fieldTags.append(patternChipEl());
   // 보스 페이즈 칩 (GDD 25-3): 지금 페이즈 / 전체 페이즈
   const phaseChip = v2Chip('', 'danger', { icon: 'i-warn' });
   phaseChip.classList.add('bha-battle__phase');
   const phaseText = () => `페이즈 ${s.boss?.phase ?? 1}/${(s.boss?.setup.phases.length ?? 0) + 1}`;
   if (s.boss) {
     phaseChip.append(el('span', '', phaseText()));
-    foeHead.append(phaseChip);
+    fieldTags.append(phaseChip);
   }
   // 졸개 칩 (보스 기믹 summon, GDD 35장): 졸개가 서 있는 동안 체력 표시
   const minionText = el('span');
@@ -260,7 +266,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   minionChip.classList.add('bha-battle__minion');
   minionChip.append(minionText);
   minionChip.hidden = true;
-  if (s.boss?.setup.gimmick === 'summon') foeHead.append(minionChip);
+  if (s.boss?.setup.gimmick === 'summon') fieldTags.append(minionChip);
 
   // ── 2. 유닛 두 칸: 머리 위 게이지 / 그림 / 체력 바 (GDD 18-6, 핸드오프 필드 200px) ──
   // 머리 위 게이지: 적 = 강공격 예고(시전 바, 항상 한 칸 자리를 지킨다) + 방어 자세, 나 = 봉인 + 막기. 엔진 이벤트·상태에서 읽기만 한다
@@ -475,8 +481,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     arena.classList.add('has-bg');
     arena.append(sceneBgEl(opts.bg, false));
   }
-  arena.append(units, topRow, fxLayer, floats, fxFlash, libCut, log);
-  const v2 = mountV2Root(root, faction, ...(opts.notice ? [v2Notice('', opts.notice, 'i-info')] : []), arena, controls, flashVoid, flashHit);
+  arena.append(units, fieldTags, topRow, fxLayer, floats, fxFlash, libCut, log);
+  const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다
   if (auraEl) app.style.setProperty('--bha-aura', elementColor(auraEl));

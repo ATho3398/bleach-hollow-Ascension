@@ -372,3 +372,20 @@
 .bha-root .bha-field::after,.bha-root .bha-scene::before,.bha-root .bha-walk-sky::after,.bha-root .bha-walk-ground::after,.bha-root .bha-art--char::before{content:none}
 /* PC 키 글자 배지는 계열 글자가 있는 오른쪽 위 대신 오른쪽 아래로 */
 .bha-root .bha-v2cell>.bha-keycap{top:auto;bottom:2px;right:2px;z-index:5}
+
+/* ───────── 전투 화면 점검 (C.160, GDD 98장 A5) ─────────
+   ① 위 한 줄: 칩·버튼은 줄지 않고(flex:none — 줄면 글자가 칩 밖으로 넘쳐 옆 칩과 겹쳤다) 적 이름만 줄어 말줄임. 이름은 최소 4글자 폭은 지킨다
+   ② 필드 가운데 칩 줄: 나(left 70~240)와 적 머리 게이지(left 378~) 사이 세로 칸. 알림(.bha-notice)·임시·패턴·페이즈·졸개 칩을 쌓는다 (핸드오프 '강공격·봉인' 칩 자리)
+   ③ PC 키 글자 배지(Spc·H)가 아이콘을 덮지 않게 버튼 위 끝으로 올린다
+   ④ 로그 창은 강공격 예고 띠(top 46~66) 아래에서 시작해 적 체력 줄(top 166) 위에서 끝난다 — 열어도 예고·체력 숫자가 보인다. 열려 있는 동안 가운데 칩 줄은 숨긴다(겹쳐 비침)
+   ⑤ 원정 배경 그림(밝은 모래·하늘) 위에서도 체력 숫자·남은 초가 읽히게 핸드오프 피해 숫자와 같은 글자 그림자 */
+.bha-root .bha-v2toprow .bha-chip,.bha-root .bha-v2toprow .bha-btn,.bha-root .bha-v2toprow .bha-v2time{flex:none}
+.bha-root .bha-v2foename__text{flex:0 1 auto;min-width:4em}
+.bha-root .bha-v2fieldtags{position:absolute;left:242px;width:134px;top:48px;z-index:5;display:flex;flex-direction:column;align-items:center;gap:var(--bha-s-2);pointer-events:none}
+.bha-root .bha-v2fieldtags:empty{display:none}
+.bha-root .bha-v2fieldtags>.bha-chip{max-width:100%;flex:none}
+.bha-root .bha-v2fieldtags>.bha-notice{position:static;transform:none;max-width:100%;padding:4px 8px}
+.bha-root .bha-v2bar .bha-keycap{top:-7px;right:-4px}
+.bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:90px}
+.bha-root .bha-field:has(>.bha-battle__logpanel:not([hidden])) .bha-v2fieldtags{visibility:hidden}
+.bha-root .bha-v2units .bha-unit__hp .bha-num,.bha-root .bha-field.has-bg .bha-v2time{text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.8)}

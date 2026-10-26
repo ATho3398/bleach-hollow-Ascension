@@ -111,6 +111,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   let bubbleTimer = 0;
   const say = (text: string, ms = 2600) => {
     bubble.textContent = text;
+    // 말풍선은 머리 위 상태 칩 옆에 선다 (C.160): 캐릭터가 오른쪽 절반이면 칩 왼쪽, 아니면 오른쪽 — 칩(게이지)을 가리지 않는다
+    bubble.classList.toggle('is-left', parseFloat(scene.style.getPropertyValue('--char-x')) > 55);
     bubble.hidden = false;
     bubble.classList.remove('is-pop');
     void bubble.offsetWidth;
@@ -175,7 +177,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
   statusBtn.dataset.sc = 'status';
-  statusBtn.style.setProperty('--head-y', `${charTopOffset(charArtUrls, loco)}px`);
+  scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls, loco)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
   statusBtn.onclick = hd.onStatus;
   const paintGauges = () => {
     const chips = statusChips(n, faction);
@@ -192,7 +194,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }));
   };
   paintGauges();
-  requestAnimationFrame(() => statusBtn.style.setProperty('--chip-h', `${statusBtn.offsetHeight}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
+  requestAnimationFrame(() => scene.style.setProperty('--chip-h', `${statusBtn.offsetHeight}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
   scene.append(char, statusBtn, bubble);
   floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
   const place = () => layoutOnFloor(scene, room.floor, floorEntries);

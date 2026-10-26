@@ -70,6 +70,7 @@
   content: ""; position: absolute; left: 12px; bottom: -8px; width: 12px; height: 10px; background: var(--bha-bg-0);
   clip-path: polygon(0 0, 100% 0, 0 100%); border: 0;
 }
+:root[data-cos-talk="a"] .bha-room__bubble.is-left::after { left: auto; right: 12px; clip-path: polygon(0 0, 100% 0, 100% 100%); } /* 칩 왼쪽 말풍선은 꼬리도 오른쪽 (C.160) */
 :root[data-cos-talk="b"] .bha-room__bubble { border-width: 2px; border-style: solid; }
 
 /* ── 방 꾸미기: 벽·바닥·틀 (물건 좌표는 그대로) ── */
