@@ -1,0 +1,689 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Absorb-Pick-Soul.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "흡수 ② 특성 후보 · 사신",
+      "w": 640,
+      "x": 1440,
+      "y": 450
+    },
+    "Absorb-Pick.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "포식 ② 특성 후보 · 호로",
+      "w": 640,
+      "x": 1440,
+      "y": 0
+    },
+    "Absorb-Soul.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "흡수 ① 선택 · 사신",
+      "w": 640,
+      "x": 720,
+      "y": 450
+    },
+    "Absorb-Swap-Soul.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "흡수 ③ 슬롯 교체 · 사신",
+      "w": 640,
+      "x": 2160,
+      "y": 450
+    },
+    "Absorb-Swap.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "포식 ③ 슬롯 교체 · 호로",
+      "w": 640,
+      "x": 2160,
+      "y": 0
+    },
+    "Absorb.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "포식 ① 선택 · 호로",
+      "w": 640,
+      "x": 720,
+      "y": 0
+    },
+    "Battle-Ready-Soul.dc.html": {
+      "h": 330,
+      "page": "battle",
+      "title": "전투 · 해방 준비됨 · 사신",
+      "w": 640,
+      "x": 720,
+      "y": 450
+    },
+    "Battle-Ready.dc.html": {
+      "h": 330,
+      "page": "battle",
+      "title": "전투 · 해방 준비됨 · 호로",
+      "w": 640,
+      "x": 720,
+      "y": 0
+    },
+    "Battle-Release-Soul.dc.html": {
+      "h": 330,
+      "page": "battle",
+      "title": "전투 · 해방 중 · 사신",
+      "w": 640,
+      "x": 1440,
+      "y": 450
+    },
+    "Battle-Release.dc.html": {
+      "h": 330,
+      "page": "battle",
+      "title": "전투 · 해방 중 · 호로",
+      "w": 640,
+      "x": 1440,
+      "y": 0
+    },
+    "Battle-Soul.dc.html": {
+      "h": 330,
+      "page": "battle",
+      "title": "전투 · 사신",
+      "w": 640,
+      "x": 0,
+      "y": 450
+    },
+    "Battle.dc.html": {
+      "h": 330,
+      "page": "battle",
+      "title": "전투 · 호로",
+      "w": 640,
+      "x": 0,
+      "y": 0
+    },
+    "BlockStyles.dc.html": {
+      "h": 1009,
+      "page": "battle",
+      "title": "스킬 블록 · 확정 (각인 컷)",
+      "w": 1056,
+      "x": 0,
+      "y": 900
+    },
+    "Book-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "책장 · 사신",
+      "w": 640,
+      "x": 4320,
+      "y": 450
+    },
+    "Book.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "책장 · 호로",
+      "w": 640,
+      "x": 4320,
+      "y": 0
+    },
+    "Chest-Item-Soul.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "보관함 · 물건 · 사신",
+      "w": 640,
+      "x": 1440,
+      "y": 450
+    },
+    "Chest-Item.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "보관함 · 물건 · 호로",
+      "w": 640,
+      "x": 1440,
+      "y": 0
+    },
+    "Chest-Slot-Soul.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "보관함 · 슬롯 · 사신",
+      "w": 640,
+      "x": 720,
+      "y": 450
+    },
+    "Chest-Slot.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "보관함 · 슬롯 · 호로",
+      "w": 640,
+      "x": 720,
+      "y": 0
+    },
+    "Chest-Soul.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "보관함 · 타일 · 사신",
+      "w": 640,
+      "x": 0,
+      "y": 450
+    },
+    "Chest.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "보관함 · 타일 · 호로",
+      "w": 640,
+      "x": 0,
+      "y": 0
+    },
+    "Components-Soul.dc.html": {
+      "h": 1180,
+      "page": "system",
+      "title": "컴포넌트 시트 · 사신",
+      "w": 1280,
+      "x": 2720,
+      "y": 0
+    },
+    "Components.dc.html": {
+      "h": 1180,
+      "page": "system",
+      "title": "컴포넌트 시트 · 호로",
+      "w": 1280,
+      "x": 1360,
+      "y": 0
+    },
+    "Evolve-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "진화 연출 · 사신",
+      "w": 640,
+      "x": 3600,
+      "y": 450
+    },
+    "Evolve.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "진화 연출 · 호로",
+      "w": 640,
+      "x": 3600,
+      "y": 0
+    },
+    "Plan-Soul.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 출발(배치) · 사신",
+      "w": 640,
+      "x": 2880,
+      "y": 450
+    },
+    "Plan.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 출발(배치) · 호로",
+      "w": 640,
+      "x": 2880,
+      "y": 0
+    },
+    "Result-Defeat-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "결과 · 패배 · 사신",
+      "w": 640,
+      "x": 720,
+      "y": 450
+    },
+    "Result-Defeat.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "결과 · 패배 · 호로",
+      "w": 640,
+      "x": 720,
+      "y": 0
+    },
+    "Result-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "결과 · 귀환 · 사신",
+      "w": 640,
+      "x": 0,
+      "y": 450
+    },
+    "Result-Story-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "결과 · 스토리 클리어 · 사신",
+      "w": 640,
+      "x": 1440,
+      "y": 450
+    },
+    "Result-Story.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "결과 · 스토리 클리어 · 호로",
+      "w": 640,
+      "x": 1440,
+      "y": 0
+    },
+    "Result.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "결과 · 귀환 · 호로",
+      "w": 640,
+      "x": 0,
+      "y": 0
+    },
+    "Room-More-Soul.dc.html": {
+      "h": 330,
+      "page": "room",
+      "title": "방 · 더보기 열림 · 사신",
+      "w": 640,
+      "x": 720,
+      "y": 450
+    },
+    "Room-More.dc.html": {
+      "h": 330,
+      "page": "room",
+      "title": "방 · 더보기 열림 · 호로",
+      "w": 640,
+      "x": 720,
+      "y": 0
+    },
+    "Room-Soul.dc.html": {
+      "h": 330,
+      "page": "room",
+      "title": "방 · 사신",
+      "w": 640,
+      "x": 0,
+      "y": 450
+    },
+    "Room.dc.html": {
+      "h": 330,
+      "page": "room",
+      "title": "방 · 호로",
+      "w": 640,
+      "x": 0,
+      "y": 0
+    },
+    "Settings-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "설정 + 확인 창 + 토스트 · 사신",
+      "w": 640,
+      "x": 5760,
+      "y": 450
+    },
+    "Settings.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "설정 + 확인 창 + 토스트 · 호로",
+      "w": 640,
+      "x": 5760,
+      "y": 0
+    },
+    "Shop-Buy-Soul.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "상품 구매 창 · 사신",
+      "w": 640,
+      "x": 2880,
+      "y": 450
+    },
+    "Shop-Buy.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "상품 구매 창 · 호로",
+      "w": 640,
+      "x": 2880,
+      "y": 0
+    },
+    "Shop-Merchant-Soul.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "떠돌이 상인 · 사신",
+      "w": 640,
+      "x": 4320,
+      "y": 450
+    },
+    "Shop-Merchant.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "떠돌이 상인 · 호로",
+      "w": 640,
+      "x": 4320,
+      "y": 0
+    },
+    "Shop-Skin-Soul.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "상품 구매 창 · 스킨 · 사신",
+      "w": 640,
+      "x": 3600,
+      "y": 450
+    },
+    "Shop-Skin.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "상품 구매 창 · 스킨 · 호로",
+      "w": 640,
+      "x": 3600,
+      "y": 0
+    },
+    "Shop-Soul.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "상점 · 사신",
+      "w": 640,
+      "x": 2160,
+      "y": 450
+    },
+    "Shop.dc.html": {
+      "h": 330,
+      "page": "storage",
+      "title": "상점 · 호로",
+      "w": 640,
+      "x": 2160,
+      "y": 0
+    },
+    "Status-Soul.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "상태 · 사신",
+      "w": 640,
+      "x": 0,
+      "y": 450
+    },
+    "Status.dc.html": {
+      "h": 330,
+      "page": "status",
+      "title": "상태 · 호로",
+      "w": 640,
+      "x": 0,
+      "y": 0
+    },
+    "Story-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "스토리 대화창 · 사신",
+      "w": 640,
+      "x": 2160,
+      "y": 450
+    },
+    "Story-Tutorial-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "도움말·튜토리얼 카드 · 사신",
+      "w": 640,
+      "x": 2880,
+      "y": 450
+    },
+    "Story-Tutorial.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "도움말·튜토리얼 카드 · 호로",
+      "w": 640,
+      "x": 2880,
+      "y": 0
+    },
+    "Story.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "스토리 대화창 · 호로",
+      "w": 640,
+      "x": 2160,
+      "y": 0
+    },
+    "Tokens.dc.html": {
+      "h": 1180,
+      "page": "system",
+      "title": "토큰 표 (현재 → 톤 조정안)",
+      "w": 1280,
+      "x": 0,
+      "y": 0
+    },
+    "Train-Soul.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "수련장 · 사신",
+      "w": 640,
+      "x": 5040,
+      "y": 450
+    },
+    "Train.dc.html": {
+      "h": 330,
+      "page": "misc",
+      "title": "수련장 · 호로",
+      "w": 640,
+      "x": 5040,
+      "y": 0
+    },
+    "Walk-Draft-Soul.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 드래프트 · 사신",
+      "w": 640,
+      "x": 1440,
+      "y": 450
+    },
+    "Walk-Draft.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 드래프트 · 호로",
+      "w": 640,
+      "x": 1440,
+      "y": 0
+    },
+    "Walk-Event-Soul.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 이벤트 · 사신",
+      "w": 640,
+      "x": 2160,
+      "y": 450
+    },
+    "Walk-Event.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 이벤트 · 호로",
+      "w": 640,
+      "x": 2160,
+      "y": 0
+    },
+    "Walk-Lap-Soul.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 바퀴 끝 · 사신",
+      "w": 640,
+      "x": 720,
+      "y": 450
+    },
+    "Walk-Lap.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 바퀴 끝 · 호로",
+      "w": 640,
+      "x": 720,
+      "y": 0
+    },
+    "Walk-Soul.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 조우 · 사신",
+      "w": 640,
+      "x": 0,
+      "y": 450
+    },
+    "Walk.dc.html": {
+      "h": 330,
+      "page": "expedition",
+      "title": "원정 걷기 · 조우 · 호로",
+      "w": 640,
+      "x": 0,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-26T09:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "room",
+    "view": "canvas"
+  },
+  "notes": {
+    "t_battle": {
+      "kind": "title1",
+      "maxW": 2080,
+      "page": "battle",
+      "text": "2 전투 — 위: 호로 / 아래: 사신",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_exp": {
+      "kind": "title1",
+      "maxW": 3520,
+      "page": "expedition",
+      "text": "3 원정 걷기 · 4 원정 출발 — 위: 호로 / 아래: 사신",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_misc": {
+      "kind": "title1",
+      "maxW": 6400,
+      "page": "misc",
+      "text": "9 그 밖 화면 — 위: 호로 / 아래: 사신",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_room": {
+      "kind": "title1",
+      "maxW": 1360,
+      "page": "room",
+      "text": "1 방(둥지) — 위: 호로 / 아래: 사신",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_sta": {
+      "kind": "title1",
+      "maxW": 2800,
+      "page": "status",
+      "text": "7 상태 · 8 흡수(포식) — 위: 호로 / 아래: 사신",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_sto": {
+      "kind": "title1",
+      "maxW": 4960,
+      "page": "storage",
+      "text": "5 보관함 · 6 상점 — 위: 호로 / 아래: 사신",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_sys": {
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "system",
+      "text": "토큰 표 · 컴포넌트 시트",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Room.dc.html",
+    "Room-More.dc.html",
+    "Room-Soul.dc.html",
+    "Room-More-Soul.dc.html",
+    "Walk.dc.html",
+    "Walk-Lap.dc.html",
+    "Walk-Draft.dc.html",
+    "Walk-Event.dc.html",
+    "Plan.dc.html",
+    "Walk-Soul.dc.html",
+    "Walk-Lap-Soul.dc.html",
+    "Walk-Draft-Soul.dc.html",
+    "Walk-Event-Soul.dc.html",
+    "Plan-Soul.dc.html",
+    "Chest.dc.html",
+    "Chest-Slot.dc.html",
+    "Chest-Item.dc.html",
+    "Shop.dc.html",
+    "Shop-Buy.dc.html",
+    "Shop-Skin.dc.html",
+    "Shop-Merchant.dc.html",
+    "Chest-Soul.dc.html",
+    "Chest-Slot-Soul.dc.html",
+    "Chest-Item-Soul.dc.html",
+    "Shop-Soul.dc.html",
+    "Shop-Buy-Soul.dc.html",
+    "Shop-Skin-Soul.dc.html",
+    "Shop-Merchant-Soul.dc.html",
+    "Status.dc.html",
+    "Absorb.dc.html",
+    "Absorb-Pick.dc.html",
+    "Absorb-Swap.dc.html",
+    "Status-Soul.dc.html",
+    "Absorb-Soul.dc.html",
+    "Absorb-Pick-Soul.dc.html",
+    "Absorb-Swap-Soul.dc.html",
+    "Result.dc.html",
+    "Result-Defeat.dc.html",
+    "Result-Story.dc.html",
+    "Story.dc.html",
+    "Story-Tutorial.dc.html",
+    "Evolve.dc.html",
+    "Book.dc.html",
+    "Train.dc.html",
+    "Settings.dc.html",
+    "Result-Soul.dc.html",
+    "Result-Defeat-Soul.dc.html",
+    "Result-Story-Soul.dc.html",
+    "Story-Soul.dc.html",
+    "Story-Tutorial-Soul.dc.html",
+    "Evolve-Soul.dc.html",
+    "Book-Soul.dc.html",
+    "Train-Soul.dc.html",
+    "Settings-Soul.dc.html",
+    "Tokens.dc.html",
+    "Components.dc.html",
+    "Components-Soul.dc.html",
+    "Battle.dc.html",
+    "Battle-Ready.dc.html",
+    "Battle-Release.dc.html",
+    "Battle-Soul.dc.html",
+    "Battle-Ready-Soul.dc.html",
+    "Battle-Release-Soul.dc.html",
+    "BlockStyles.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "room",
+      "name": "1 방"
+    },
+    {
+      "id": "battle",
+      "name": "2 전투"
+    },
+    {
+      "id": "expedition",
+      "name": "3·4 원정"
+    },
+    {
+      "id": "storage",
+      "name": "5·6 보관함·상점"
+    },
+    {
+      "id": "status",
+      "name": "7·8 상태·흡수"
+    },
+    {
+      "id": "misc",
+      "name": "9 그 밖"
+    },
+    {
+      "id": "system",
+      "name": "토큰·컴포넌트"
+    }
+  ],
+  "title": "블리치 할로우 어센션 · LCD 인게임 UI"
+}

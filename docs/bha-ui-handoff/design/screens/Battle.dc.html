@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>전투</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}" style="background:var(--bha-bg-0)">
+
+  <!-- ═════ 필드 (위 200px) ═════ -->
+  <section class="bha-field" aria-label="전투 필드">
+    <!-- 위 한 줄 -->
+    <div style="position:absolute;left:10px;right:8px;top:6px;height:38px;display:flex;align-items:center;justify-content:space-between;gap:6px">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0">
+        <sc-if value="{{isRelease}}" hint-placeholder-val="{{ false }}">
+          <span class="bha-display bha-lg">테스트 강적</span><span class="bha-chip bha-chip--danger">강적</span>
+        </sc-if>
+        <sc-if value="{{notRelease}}" hint-placeholder-val="{{ true }}">
+          <span class="bha-display bha-lg">노멀 일반 1</span>
+        </sc-if>
+        <span class="bha-chip bha-chip--temp">○ 임시</span>
+      </div>
+      <sc-if value="{{isRelease}}" hint-placeholder-val="{{ false }}">
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-thunder)"></span>뇌 · 약점<span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-earth)"></span>흙</span>
+      </sc-if>
+      <sc-if value="{{notRelease}}" hint-placeholder-val="{{ true }}">
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px"></span>노멀</span>
+      </sc-if>
+      <div style="display:flex;align-items:center;gap:4px">
+        <span class="bha-num" style="display:inline-flex;align-items:center;gap:3px;margin-right:4px;font-size:16px;font-weight:800">
+          <svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:15px;height:15px;color:var(--bha-text-2)"><circle cx="12" cy="13" r="7"></circle><path d="M12 13V9M10 3h4"></path></svg>{{sec}}<span class="bha-sm bha-t2" style="font-weight:600">초</span>
+        </span>
+        <button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="그만두기"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg></button>
+        <button class="bha-btn bha-btn--sm" style="min-width:44px;padding:0 8px">로그</button>
+        <button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="일시정지"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"></path></svg></button>
+        <button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="도움말"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17.5v.01"></path></svg></button>
+      </div>
+    </div>
+
+    <!-- 나 -->
+    <div class="bha-art bha-art--char" style="left:84px;top:56px;width:140px;height:102px;background-color:rgba(0,0,0,.15)">내 캐릭터<br>도트 그림</div>
+    <div style="position:absolute;left:84px;top:166px;display:flex;align-items:center;gap:8px">
+      <span class="bha-gauge bha-gauge--hp" style="width:130px"><span class="bha-gauge__fill" style="width:{{hpPct}}"></span></span>
+      <span class="bha-num bha-sm bha-b">{{hp}}<span class="bha-t2" style="font-weight:500"> / 108</span></span>
+    </div>
+    <sc-if value="{{notRelease}}" hint-placeholder-val="{{ true }}">
+      <span class="bha-num" style="position:absolute;left:204px;top:66px;font-size:18px;font-weight:800;color:var(--bha-danger);text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.8)">−7</span>
+    </sc-if>
+
+    <!-- 적 -->
+    <sc-if value="{{notRelease}}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;left:378px;top:46px;width:184px;height:20px;border:1px dashed var(--bha-danger);border-radius:6px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:700;color:var(--bha-danger);background:rgba(0,0,0,.35)">
+        <svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.01"></path></svg>강공격 예고
+      </div>
+    </sc-if>
+    <sc-if value="{{isRelease}}" hint-placeholder-val="{{ false }}">
+      <span class="bha-chip bha-chip--seal" style="position:absolute;left:290px;top:45px">강공격·봉인</span>
+      <div style="position:absolute;left:378px;top:46px;width:184px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--bha-ink-on-color);background:var(--bha-guard)">막았다! 피해 2</div>
+      <span class="bha-num" style="position:absolute;left:520px;top:84px;font-size:18px;font-weight:800;color:var(--bha-rare);text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.8)">−24</span>
+    </sc-if>
+    <div class="bha-foe" style="left:410px;top:70px;width:120px;height:90px;{{foeGlow}}" role="img" aria-label="적 실루엣 (도트 그림 자리)">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M20 30 L30 6 L38 26 Q50 20 62 26 L70 6 L80 30 Q94 52 84 80 L74 94 L64 84 L50 96 L36 84 L26 94 L16 80 Q6 52 20 30z" fill="#070505" stroke="var(--bha-line-2)" stroke-width="1.5"></path><path d="M36 46l10 4M64 46l-10 4" stroke="var(--bha-line-2)" stroke-width="3"></path></svg>
+    </div>
+    <div style="position:absolute;left:404px;top:166px;display:flex;align-items:center;gap:8px">
+      <span class="bha-gauge bha-gauge--foe" style="width:130px"><span class="bha-gauge__fill" style="width:{{foePct}}"></span></span>
+      <span class="bha-num bha-sm bha-b">{{foeHp}}<span class="bha-t2" style="font-weight:500"> / {{foeMax}}</span></span>
+    </div>
+  </section>
+
+  <!-- ═════ 스킬창 (아래 130px) ═════ -->
+  <section class="bha-skillpanel" aria-label="스킬창">
+    <div style="position:absolute;left:10px;top:7px;height:22px;display:flex;align-items:center;gap:10px">
+      <sc-if value="{{isRelease}}" hint-placeholder-val="{{ false }}">
+        <span class="bha-chip" style="color:var(--bha-accent-hi);border-color:var(--bha-accent-hi);background:color-mix(in srgb,var(--bha-accent) 30%,var(--bha-bg-1))">
+          <svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg>영력 해방 4.8초</span>
+      </sc-if>
+      <div class="bha-legend">
+        <span style="--c:var(--bha-atk);color:var(--bha-atk)"><i></i>공격</span>
+        <span style="--c:var(--bha-guard);color:var(--bha-guard)"><i></i>막기</span>
+        <span style="--c:var(--bha-heal);color:var(--bha-heal)"><i></i>회복</span>
+        <span style="--c:var(--bha-void);color:var(--bha-void)"><i></i>공허</span>
+        <span style="--c:var(--bha-rare);color:var(--bha-rare)"><i></i>콤보 블록</span>
+      </div>
+    </div>
+
+    <!-- 블록 바 -->
+    <div class="bha-blockbar" role="list" aria-label="블록 바" style="left:8px;right:144px;top:46px;bottom:auto">
+      <sc-for list="{{slots}}" as="s" hint-placeholder-count="8">
+        <sc-if value="{{s.isEmpty}}" hint-placeholder-val="{{ false }}"><span class="bha-block bha-block--empty"></span></sc-if>
+        <sc-if value="{{s.isSingle}}" hint-placeholder-val="{{ true }}">
+          <button class="bha-block {{s.b.cls}}" aria-label="{{s.b.aria}}">
+            <span class="bha-block__face"></span>
+            <span class="bha-block__pips"><i class="{{s.b.p1}}"></i><i class="{{s.b.p2}}"></i><i class="{{s.b.p3}}"></i></span>
+            <span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{s.b.d}}"></path></svg></span>
+            <span class="bha-block__glyph" aria-hidden="true">{{s.b.glyph}}</span>
+            <span class="bha-block__name">{{s.b.name}}</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{s.isChain}}" hint-placeholder-val="{{ false }}">
+          <div class="bha-chain {{s.chainCls}}" style="grid-column:span {{s.n}};grid-template-columns:repeat({{s.n}},minmax(0,1fr))"><span class="bha-chain__tab">{{s.label}}</span>
+            <sc-for list="{{s.blocks}}" as="b" hint-placeholder-count="2">
+              <button class="bha-block {{b.cls}}" aria-label="{{b.aria}}">
+                <span class="bha-block__face"></span>
+                <span class="bha-block__pips"><i class="{{b.p1}}"></i><i class="{{b.p2}}"></i><i class="{{b.p3}}"></i></span>
+                <span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{b.d}}"></path></svg></span>
+                <span class="bha-block__glyph" aria-hidden="true">{{b.glyph}}</span>
+                <span class="bha-block__name">{{b.name}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <!-- 영력 해방 카드 -->
+    <sc-if value="{{isBase}}" hint-placeholder-val="{{ true }}">
+      <div class="bha-panel" style="position:absolute;right:8px;top:8px;bottom:8px;width:128px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span class="bha-release__seal" style="grid-row:auto"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span>
+        <span class="bha-display bha-md">영력 해방</span>
+        <span class="bha-chip bha-chip--temp" style="height:18px">○ 임시</span>
+        <span class="bha-xs bha-t2" style="margin-top:auto">게이지 35%</span>
+        <span class="bha-gauge bha-gauge--release" style="width:100%"><span class="bha-gauge__fill" style="width:35%"></span></span>
+      </div>
+    </sc-if>
+    <sc-if value="{{isReady}}" hint-placeholder-val="{{ false }}">
+      <button class="bha-release is-ready" aria-label="해방 — {{rel5}}" style="right:8px;top:8px;bottom:8px;width:128px;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#fff8f0;font-family:inherit">
+        <span class="bha-release__seal" style="grid-row:auto;width:36px;height:36px;background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.5);color:#fff8f0"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span>
+        <span class="bha-display" style="font-size:18px;line-height:1">해방</span>
+        <span class="bha-xs" style="font-weight:700;line-height:1.3;text-align:center">{{rel5}}<br>게이지 100%</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{isRelease}}" hint-placeholder-val="{{ false }}">
+      <div class="bha-panel is-on" style="position:absolute;right:8px;top:8px;bottom:8px;width:128px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;border-color:var(--bha-accent-hi);box-shadow:0 0 0 1px var(--bha-accent-glow),0 0 14px var(--bha-accent-glow)">
+        <span class="bha-release__seal" style="grid-row:auto;color:var(--bha-accent-hi);border-color:var(--bha-accent-hi)"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span>
+        <span class="bha-display bha-md">영력 해방</span>
+        <span class="bha-chip bha-chip--temp" style="height:18px">○ 임시</span>
+        <span class="bha-xs bha-t2" style="margin-top:auto">해방 중 4.8초</span>
+        <span class="bha-gauge bha-gauge--release" style="width:100%"><span class="bha-gauge__fill" style="width:62%"></span></span>
+      </div>
+    </sc-if>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"variant":{"editor":"enum","options":["base","ready","release"],"default":"base"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const soul = theme === 'soul';
+    const v = this.props.variant ?? 'base';
+    const I = {
+      claw: 'M6 4c3 4 4 9 3 16M11 4c3 4 4 9 3 16M16 4c3 4 4 9 3 16',
+      fang: 'M3 6h18M5 6l2 7 2-7M10 6l2 9 2-9M15 6l2 7 2-7',
+      shot: 'M14 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0M3 9h9M5 12h8M3 15h9',
+      slash: 'M5 19L19 5M10 21L21 10M3 14L14 3',
+      impact: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3',
+      beam: 'M3 8h11M3 12h15M3 16h11M18 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
+      shield: 'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z',
+      cross: 'M12 5v14M5 12h14',
+      swirl: 'M12 12a2 2 0 1 1 2-2 4 4 0 1 1-4-4 6 6 0 1 1-6 6',
+      spark: 'M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z',
+      seal: 'M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z'
+    };
+    const fA = soul ? { n: '참', d: I.slash } : { n: '조', d: I.claw };
+    const fB = soul ? { n: '귀', d: I.beam } : { n: '탄', d: I.shot };
+    const fC = soul ? { n: '권', d: I.impact } : { n: '교', d: I.fang };
+    const attrName = { normal: '노멀', fire: '불', thunder: '뇌', blood: '혈' };
+    const blk = (kind, d, glyph, name, chain, extra) => ({
+      cls: 'bha-block--' + kind + (extra ? ' ' + extra : ''), d, glyph, name,
+      aria: (attrName[kind] ? attrName[kind] + ' ' : '') + name + (extra && extra.indexOf('is-weak') >= 0 ? ' · 약점' : '') + (chain > 1 ? ' · 체인' + chain : ''),
+      p1: 'on', p2: chain > 1 ? 'on' : '', p3: chain > 2 ? 'on' : ''
+    });
+    const atk = (kind, f, chain, extra) => blk(kind, f.d, f.n, f.n, chain || 1, extra);
+    const S = (b) => ({ isSingle: true, isEmpty: false, isChain: false, b });
+    const E = () => ({ isSingle: false, isEmpty: true, isChain: false, b: {} });
+    const C = (blocks) => ({ isSingle: false, isEmpty: false, isChain: true, n: blocks.length, label: '체인' + blocks.length, chainCls: blocks.length > 2 ? 'bha-chain--3' : '', blocks, b: {} });
+    const guard = blk('guard', I.shield, '방', '막기', 1);
+    const heal = blk('heal', I.cross, '회', '회복', 1);
+    const voidB = blk('void', I.swirl, '허', '공허', 1);
+    const combo = blk('combo', I.spark, '콤', '콤보_' + fA.n, 1);
+    const rel = blk('release', I.seal, '해', '해방', 1);
+    let slots;
+    if (v === 'ready') {
+      slots = [S(heal), C([atk('fire', fA, 2), atk('fire', fA, 2)]), S(voidB), S(atk('thunder', fB, 1, 'is-weak')), S(combo), E(), E()];
+    } else if (v === 'release') {
+      slots = [S(heal), S(atk('normal', fA)), C([atk('fire', fA, 2), atk('fire', fA, 2)]), S(rel), S(atk('blood', fB, 1, 'is-weak')), S(rel), E()];
+    } else {
+      slots = [S(guard), S(atk('normal', fC)), S(atk('normal', fA)), E(), E(), E(), E(), E()];
+    }
+    const isRelease = v === 'release';
+    return {
+      theme, slots,
+      isBase: v === 'base', isReady: v === 'ready', isRelease, notRelease: !isRelease,
+      rel5: soul ? '만해' : '레스렉시온',
+      sec: isRelease ? '139' : '143',
+      hp: isRelease ? '104' : '78', hpPct: isRelease ? '96%' : '72%',
+      foeHp: isRelease ? '841' : '606', foeMax: isRelease ? '1086' : '656', foePct: isRelease ? '77%' : '92%',
+      foeGlow: isRelease ? 'filter:drop-shadow(0 0 10px rgba(224,196,110,.55))' : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

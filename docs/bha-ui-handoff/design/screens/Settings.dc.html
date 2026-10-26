@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>설정</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <div style="position:absolute;left:12px;top:6px;height:36px;display:flex;align-items:center"><span class="bha-display bha-xl">설정</span></div>
+  <div class="bha-panel" style="position:absolute;left:12px;right:12px;top:48px;bottom:8px;padding:4px 12px;display:grid;align-content:start">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+      <div class="bha-row" style="height:46px;border-bottom:1px solid var(--bha-line-1)">
+        <span class="bha-md">{{r.label}}</span>
+        <button role="switch" aria-checked="{{r.on}}" aria-label="{{r.label}}" style="width:52px;height:36px;padding:0;border:0;background:none;display:grid;place-items:center;cursor:pointer">
+          <span style="width:44px;height:24px;border-radius:12px;position:relative;background:{{r.track}};border:1px solid var(--bha-line-2)"><span style="position:absolute;top:2px;left:{{r.knob}};width:18px;height:18px;border-radius:50%;background:var(--bha-text-1)"></span></span>
+        </button>
+      </div>
+    </sc-for>
+    <div style="display:flex;gap:6px;padding:8px 0">
+      <button class="bha-btn bha-btn--sm">백업·불러오기</button>
+      <button class="bha-btn bha-btn--sm bha-btn--danger">처음 화면</button>
+    </div>
+  </div>
+
+  <!-- 토스트 -->
+  <div class="bha-toast" role="status">설정을 저장했다</div>
+  <!-- 확인 창 -->
+  <div class="bha-scrim"></div>
+  <div class="bha-modal" role="alertdialog" aria-label="처음 화면으로" style="left:150px;top:86px;width:340px;padding:14px;display:grid;gap:8px">
+    <span class="bha-display bha-lg">처음 화면으로 갈까?</span>
+    <span class="bha-sm bha-t2" style="line-height:1.5">진행은 저장돼 있다. 원정 중이면 이번 원정은 그만두기로 처리된다.</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+      <button class="bha-btn bha-btn--ghost">아니오</button>
+      <button class="bha-btn bha-btn--accent">예</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const row = (label, on) => ({ label, on: on ? 'true' : 'false', track: on ? 'var(--bha-accent)' : 'var(--bha-bg-0)', knob: on ? '22px' : '2px' });
+    return { theme, rows: [row('효과음', true), row('배경음', true), row('진동', false), row('화면 흔들림', true), row('키 안내 표시', false)] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>스토리 대화창</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <div class="bha-scene" style="opacity:.9"></div>
+
+  <sc-if value="{{isDialog}}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;right:8px;top:6px;display:flex;gap:4px;z-index:5">
+      <button class="bha-btn bha-btn--sm">로그</button>
+      <button class="bha-btn bha-btn--sm bha-btn--ghost">건너뛰기</button>
+    </div>
+    <div class="bha-art bha-art--char" style="left:60px;top:44px;width:120px;height:150px">화자 도트<br>(왼쪽)</div>
+    <div class="bha-art" style="left:460px;top:44px;width:120px;height:150px;opacity:.6">상대 도트<br>(어둡게)</div>
+    <div class="bha-modal" style="left:10px;right:10px;bottom:10px;top:auto;height:112px;padding:14px 16px 10px">
+      <span class="bha-chip" style="position:absolute;top:-12px;left:14px;height:24px;color:var(--bha-text-1);border-color:var(--bha-accent-hi);background:var(--bha-bg-2);font-size:13px">[화자 이름]</span>
+      <p class="bha-md" style="margin:6px 0 0;line-height:1.6">[대사 — 한 번에 최대 2줄. 글자가 한 자씩 나오고, 누르면 끝까지 보인 뒤 다음으로 넘어간다.]</p>
+      <span style="position:absolute;right:14px;bottom:8px;display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--bha-text-2)">다음<svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M6 9l6 6 6-6"></path></svg></span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isTut}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-scrim"></div>
+    <div class="bha-modal" role="dialog" aria-label="도움말" style="left:80px;top:24px;width:480px;height:282px;display:flex;flex-direction:column;gap:8px">
+      <div class="bha-row" style="padding-right:40px"><span class="bha-display bha-lg">전투 · 블록 쓰기</span><span class="bha-xs bha-t2">2 / 5</span></div>
+      <div class="bha-panel--sunk" style="height:104px;border-radius:var(--bha-r-lg);border:1px solid var(--bha-line-1);display:flex;align-items:center;justify-content:center;gap:5px;padding:0 20px">
+        <span class="bha-block bha-block--guard" style="width:56px" role="img" aria-label="막기"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">방</span></span>
+        <span class="bha-block bha-block--normal is-pressed" style="width:56px" role="img" aria-label="{{fAn}} (누름)"><span class="bha-block__face"></span><span class="bha-block__pips"><i class="on"></i><i></i><i></i></span><span class="bha-block__icon"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{fA}}"></path></svg></span><span class="bha-block__glyph" aria-hidden="true">{{fAn}}</span></span>
+        <span class="bha-block bha-block--empty" style="width:56px"></span>
+        <span class="bha-block bha-block--empty" style="width:56px"></span>
+      </div>
+      <ul class="bha-sm bha-t2" style="margin:0;padding-left:18px;display:grid;gap:3px;line-height:1.45">
+        <li>블록은 시간이 지나면 한 칸씩 생긴다. 순서는 바꿀 수 없다.</li>
+        <li>짧게 눌렀다 떼면(0.3초) 그 블록을 쓴다.</li>
+        <li>같은 속성·같은 계열이 붙으면 <b style="color:var(--bha-rare)">체인</b>이 된다.</li>
+      </ul>
+      <div style="margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="bha-btn bha-btn--ghost">이전</button><button class="bha-btn bha-btn--accent">다음</button>
+      </div>
+      <button class="bha-btn bha-btn--sm bha-btn--ghost bha-iconbtn bha-modal__close" aria-label="닫기"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"variant":{"editor":"enum","options":["dialog","tutorial"],"default":"dialog"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const soul = theme === 'soul';
+    const v = this.props.variant ?? 'dialog';
+    return {
+      theme, isDialog: v !== 'tutorial', isTut: v === 'tutorial',
+      fA: soul ? 'M5 19L19 5M10 21L21 10M3 14L14 3' : 'M6 4c3 4 4 9 3 16M11 4c3 4 4 9 3 16M16 4c3 4 4 9 3 16',
+      fAn: soul ? '참' : '조'
+    };
+  }
+}
+</script>
+</body>
+</html>

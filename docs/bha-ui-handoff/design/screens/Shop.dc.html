@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>상점</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <!-- 머리 -->
+  <sc-if value="{{isChest}}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:12px;top:4px;height:40px;display:flex;align-items:center">
+      <button class="bha-titletoggle bha-display bha-lg" aria-label="보관함 보기 바꾸기 (슬롯·타일·물건)">보관함 · 물건<svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    </div>
+  </sc-if>
+  <sc-if value="{{isShopHead}}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;left:12px;top:6px;display:grid;gap:0">
+      <span class="bha-display bha-xl" style="line-height:1.2">상점</span>
+      <span class="bha-xs bha-t2">골드 <b class="bha-num" style="color:var(--bha-text-1)">5200</b> · 영옥 <b class="bha-num" style="color:var(--bha-text-1)">121</b></span>
+    </div>
+  </sc-if>
+
+  <!-- 카테고리 탭 -->
+  <div class="bha-tabs" role="tablist" style="position:absolute;left:12px;right:12px;top:48px">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="7">
+      <button class="bha-tab {{t.cls}}" role="tab" aria-selected="{{t.sel}}">{{t.label}}<span class="bha-count">{{t.count}}</span></button>
+    </sc-for>
+  </div>
+
+  <!-- 카드 격자 -->
+  <div class="bha-scroll" style="position:absolute;left:12px;right:8px;top:90px;bottom:6px;padding:2px 4px 4px 2px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-content:start">
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="5">
+      <button class="bha-item bha-panel {{it.cls}}" style="font-family:inherit;color:inherit">
+        <sc-if value="{{it.grade}}" hint-placeholder-val="{{ false }}"><span class="bha-grade {{it.gradeCls}}">{{it.grade}}</span></sc-if>
+        <span class="bha-badge" style="{{it.badgeStyle}}">{{it.badge}}</span>
+        <span class="bha-item__pic">
+          <sc-if value="{{it.icon}}" hint-placeholder-val="{{ true }}"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{it.icon}}"></path></svg></sc-if>
+          <sc-if value="{{it.swatch}}" hint-placeholder-val="{{ false }}"><span class="bha-swatch" style="background:{{it.swatch}}"></span></sc-if>
+          <sc-if value="{{it.thumb}}" hint-placeholder-val="{{ false }}"><span class="bha-art" style="position:relative;width:40px;height:34px;font-size:12px">썸네일</span></sc-if>
+        </span>
+        <span class="bha-item__name">{{it.name}}</span>
+        <span class="bha-item__desc">{{it.desc}}</span>
+        <span class="bha-price"><em>{{it.cur}}</em>{{it.price}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <!-- 상품 구매 창 -->
+  <sc-if value="{{showModal}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-scrim"></div>
+    <div class="bha-modal" role="dialog" aria-label="상품 구매" style="left:36px;top:50px;width:568px;height:226px;display:grid;grid-template-columns:214px 1fr;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span class="bha-sm bha-b">상품 구매</span>
+        <div class="bha-panel--sunk" style="position:relative;flex:1;border:1px solid var(--bha-line-1);border-radius:var(--bha-r-lg);display:grid;place-items:center">
+          <sc-if value="{{isSkin}}" hint-placeholder-val="{{ false }}">
+            <span class="bha-chip" style="position:absolute;top:6px;left:6px;color:var(--bha-insert);border-color:var(--bha-insert)">미리보기</span>
+            <span class="bha-art bha-art--char" style="position:relative;width:110px;height:118px">캐릭터가<br>스킨을 입은 그림</span>
+          </sc-if>
+          <sc-if value="{{notSkin}}" hint-placeholder-val="{{ true }}">
+            <svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:64px;height:64px;stroke-width:1.6"><path d="M4 12h16a8 8 0 0 1-16 0zM9 4v4M13 4v4"></path></svg>
+          </sc-if>
+        </div>
+        <span class="bha-sm bha-b" style="text-align:center">보유: {{m.own}}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:2px">
+        <span class="bha-display bha-lg" style="padding-right:44px">{{m.name}}</span>
+        <span class="bha-sm bha-t2">{{m.desc}}</span>
+        <sc-if value="{{notSkin}}" hint-placeholder-val="{{ true }}">
+          <div class="bha-row" style="margin-top:6px">
+            <span class="bha-sm bha-b">수량: 1</span>
+            <span class="bha-stepper">
+              <button class="bha-btn bha-btn--sm bha-iconbtn is-disabled" aria-label="하나 빼기" aria-disabled="true"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+              <button class="bha-btn bha-btn--sm bha-iconbtn" aria-label="하나 더"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+              <button class="bha-btn bha-btn--sm">최대</button>
+            </span>
+          </div>
+        </sc-if>
+        <button class="bha-btn bha-btn--light" style="margin-top:auto;height:52px;font-size:16px;font-weight:800">{{m.price}}</button>
+      </div>
+      <button class="bha-btn bha-btn--sm bha-btn--ghost bha-iconbtn bha-modal__close" aria-label="닫기"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"variant":{"editor":"enum","options":["shop","buy","skin","merchant","chest"],"default":"shop"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const v = this.props.variant ?? 'shop';
+    const bowl = 'M4 12h16a8 8 0 0 1-16 0zM9 4v4M13 4v4';
+    const crown = 'M3 8l4 4 5-7 5 7 4-4-2 11H5z';
+    const isChest = v === 'chest';
+    const activeKey = (v === 'skin' || isChest) ? '스킨' : v === 'merchant' ? '떠돌이 상인' : '음식';
+    const tabDefs = isChest
+      ? [['음식', '17'], ['소모품', '0'], ['장비', '준비 중'], ['스킨', '4'], ['타일', '0'], ['기타', '2']]
+      : [['음식', ''], ['소모품', ''], ['장비', ''], ['스킨', ''], ['타일', ''], ['기타', ''], ['떠돌이 상인', '']];
+    const tabs = tabDefs.map(([label, count]) => ({ label, count, sel: label === activeKey ? 'true' : 'false', cls: label === activeKey ? 'is-active' : '' }));
+    const food = (name, price, own) => ({ name, desc: '먹이 +1 (종류별 보관 9개까지)', cur: '골드', price, badge: '보유 ' + own, icon: bowl, cls: '' });
+    let items;
+    if (v === 'merchant') {
+      items = [
+        { ...food('큰 사냥감', '60', '5/9'), grade: '보통', gradeCls: '' },
+        { ...food('영압 응축물', '100', '3/9'), grade: '보통', gradeCls: '' },
+        { name: '상급 호로', desc: '타일 · 강적 출현 + 좋은 보상', cur: '골드', price: '[가격]', badge: '보유 3', icon: crown, cls: '', grade: '희귀', gradeCls: 'bha-grade--rare' },
+        { name: '[물건 이름]', desc: '[효과 2줄]', cur: '영옥', price: '[가격]', badge: '보유 0', icon: 'M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z', cls: '', grade: '희귀', gradeCls: 'bha-grade--rare' }
+      ];
+    } else if (v === 'skin' || isChest) {
+      items = [
+        { name: '영옥 구슬', desc: '꾸밈 · 몸 색', cur: isChest ? '' : '', price: isChest ? '눌러서 해제' : '보관함에서 착용', badge: isChest ? '착용 중' : '보유', swatch: 'var(--bha-guard)', cls: isChest ? 'is-equipped is-owned' : 'is-owned', badgeStyle: isChest ? 'background:var(--bha-guard);color:var(--bha-ink-on-color)' : '' },
+        { name: '사신대행증', desc: '꾸밈 · [설명]', cur: isChest ? '' : '영옥', price: isChest ? '장착 가능' : '[가격]', badge: isChest ? '보유' : '보유 0', thumb: true, cls: '' },
+        { name: '십일번대', desc: '꾸밈 · [설명]', cur: isChest ? '' : '영옥', price: isChest ? '장착 가능' : '[가격]', badge: isChest ? '보유' : '보유 0', thumb: true, cls: v === 'skin' ? 'is-selected' : '' },
+        { name: '[스킨 이름]', desc: '꾸밈 · [설명]', cur: isChest ? '' : '영옥', price: isChest ? '장착 가능' : '[가격]', badge: isChest ? '보유' : '보유 0', thumb: true, cls: '' }
+      ];
+    } else {
+      items = [food('영혼 조각', '20', '3/9'), food('짐승 고기', '35', '3/9'), food('큰 사냥감', '60', '5/9'), food('영압 응축물', '100', '3/9'), food('영혼 덩어리', '140', '3/9')];
+      if (v === 'buy') items[0].cls = 'is-selected';
+    }
+    items = items.map((it) => ({ grade: '', gradeCls: '', swatch: '', thumb: false, icon: '', badgeStyle: '', ...it }));
+    const isSkin = v === 'skin';
+    return {
+      theme, tabs, items, isChest, isShopHead: !isChest,
+      showModal: v === 'buy' || isSkin, isSkin, notSkin: !isSkin,
+      m: isSkin
+        ? { own: '0', name: '십일번대', desc: '꾸밈 · [설명 한 줄]', price: '영옥 [가격]' }
+        : { own: '3/9', name: '영혼 조각', desc: '먹이 +1 (종류별 보관 9개까지)', price: '골드 20' }
+    };
+  }
+}
+</script>
+</body>
+</html>

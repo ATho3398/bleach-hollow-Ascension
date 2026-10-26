@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>보관함</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <div style="position:absolute;left:12px;right:12px;top:4px;height:40px;display:flex;align-items:center;gap:8px">
+    <button class="bha-titletoggle bha-display bha-lg" aria-label="보관함 보기 바꾸기 (슬롯·타일·물건)">보관함 · {{tabName}}<svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <span class="bha-chip">{{tabCount}}</span>
+  </div>
+
+  <!-- 타일 보기 -->
+  <sc-if value="{{isTile}}" hint-placeholder-val="{{ true }}">
+    <div class="bha-panel bha-scroll" style="position:absolute;left:12px;top:48px;width:290px;bottom:8px;padding:10px;display:flex;flex-direction:column;gap:8px">
+      <div class="bha-row"><span class="bha-md bha-b">가진 타일</span><span class="bha-chip">13장</span></div>
+      <p class="bha-xs bha-t2" style="margin:0;line-height:1.45">원정 출발 때 가진 타일을 전부 보고 길에 최대 8칸 놓는다. 놓은 타일이 원정 보상으로 뽑힌다.</p>
+      <button class="bha-btn" style="flex:none"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>합성</button>
+      <p class="bha-xs bha-t3" style="margin:0;line-height:1.45">합성: 같은 타일 3장 → 이름 뒤 "+" 상위 타일 1장 (상위 타일은 다시 합성하지 않는다)</p>
+      <div class="bha-divider"></div>
+      <span class="bha-sm bha-b">배치 프리셋 1/5</span>
+      <div style="display:flex;gap:6px;flex:none">
+        <label style="flex:1;display:flex"><span style="position:absolute;width:1px;height:1px;overflow:hidden">프리셋 이름</span><input placeholder="프리셋 이름" style="flex:1;min-width:0;height:36px;border-radius:6px;border:1px solid var(--bha-line-2);background:var(--bha-bg-0);color:var(--bha-text-1);padding:0 8px;font:13px var(--bha-font-body)"></label>
+        <button class="bha-btn bha-btn--sm">현재 배치 저장</button>
+      </div>
+      <div class="bha-panel--flat" style="flex:none;border-radius:8px;border:1px solid var(--bha-line-1);padding:6px;display:grid;gap:5px">
+        <span class="bha-sm bha-b">사냥 위주</span>
+        <div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px;height:10px">
+          <i style="background:var(--bha-text-2);border-radius:2px"></i><i style="background:#dc8a5c;border-radius:2px"></i><i style="background:#dc8a5c;border-radius:2px"></i><i style="background:#cf78bf;border-radius:2px"></i><i style="background:#b48d62;border-radius:2px"></i><i style="background:var(--bha-bg-4);border-radius:2px"></i><i style="background:var(--bha-bg-4);border-radius:2px"></i><i style="background:var(--bha-bg-4);border-radius:2px"></i><i style="background:var(--bha-bg-4);border-radius:2px"></i><i style="background:var(--bha-bg-4);border-radius:2px"></i><i style="background:var(--bha-bg-4);border-radius:2px"></i><i style="background:var(--bha-bg-4);border-radius:2px"></i>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px">
+          <button class="bha-btn bha-btn--sm" style="padding:0 4px">불러오기</button><button class="bha-btn bha-btn--sm" style="padding:0 4px">덮어쓰기</button><button class="bha-btn bha-btn--sm bha-btn--ghost" style="padding:0 4px">이름</button><button class="bha-btn bha-btn--sm bha-btn--danger" style="padding:0 4px">삭제</button>
+        </div>
+      </div>
+    </div>
+    <div style="position:absolute;left:312px;right:10px;top:48px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px">
+      <div class="bha-slot bha-slot--nest" style="height:44px" aria-label="둥지 칸"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--bha-text-1)"><path d="M3 11l9-7 9 7M5 10v10h14V10"></path></svg></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">1</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">2</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">3</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">4</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">5</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">6</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">7</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">8</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">9</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">10</span></div>
+      <div class="bha-slot" style="height:44px"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-slot__no">11</span></div>
+    </div>
+    <div class="bha-xs bha-t3" style="position:absolute;left:312px;top:146px">타일을 고른 뒤 빈 칸을 누르면 놓인다</div>
+    <div class="bha-scroll" style="position:absolute;left:312px;right:8px;top:166px;bottom:8px;padding:2px 4px 2px 2px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-content:start">
+      <button class="bha-tilecard bha-tile--wander" style="height:88px;font-family:inherit;color:inherit"><span class="bha-badge">×1</span>
+        <span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"></path></svg></span><span class="bha-sm bha-b">떠도는 영혼</span><span class="bha-xs bha-t2">약한 적 출현</span></button>
+      <button class="bha-tilecard bha-tile--hollow" style="height:88px;font-family:inherit;color:inherit"><span class="bha-badge">×2</span>
+        <span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span><span class="bha-sm bha-b">하급 호로</span><span class="bha-xs bha-t2">약한 적 출현</span></button>
+      <button class="bha-tilecard bha-tile--elite" style="height:88px;font-family:inherit;color:inherit"><span class="bha-badge">×3</span>
+        <span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"></path></svg></span><span class="bha-sm bha-b">상급 호로</span><span class="bha-xs bha-t2" style="line-height:1.2">강적 출현 + 좋은 보상</span></button>
+      <button class="bha-tilecard bha-tile--altar" style="height:88px;font-family:inherit;color:inherit"><span class="bha-badge">×1</span>
+        <span class="bha-tileico"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 5h6l-3 5 3 5h-6l-3 5-3-5H3l3-5-3-5h6z"></path></svg></span><span class="bha-sm bha-b">제단</span><span class="bha-xs bha-t2">[한 줄 효과]</span></button>
+    </div>
+  </sc-if>
+
+  <!-- 슬롯 보기 -->
+  <sc-if value="{{isSlot}}" hint-placeholder-val="{{ false }}">
+    <div class="bha-panel" style="position:absolute;left:12px;top:48px;width:290px;bottom:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+      <div class="bha-row"><span class="bha-md bha-b">장착 슬롯</span><span class="bha-chip">본체 2 / 3</span></div>
+      <div class="bha-panel--flat" style="border-radius:8px;border:1px solid var(--bha-line-2);padding:6px 8px;display:flex;align-items:center;gap:8px">
+        <span class="bha-xs bha-t3" style="width:24px">1번</span>
+        <span style="flex:1;display:grid;gap:1px"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span>
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-poison)"></span>독</span>
+        <button class="bha-btn bha-btn--sm bha-btn--ghost">해제</button>
+      </div>
+      <div class="bha-panel--flat" style="border-radius:8px;border:1px solid var(--bha-line-2);padding:6px 8px;display:flex;align-items:center;gap:8px">
+        <span class="bha-xs bha-t3" style="width:24px">2번</span>
+        <span style="flex:1;display:grid;gap:1px"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span>
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-fire)"></span>불</span>
+        <button class="bha-btn bha-btn--sm bha-btn--ghost">해제</button>
+      </div>
+      <div class="bha-slot" style="height:50px;justify-content:start;display:flex;gap:8px;padding:0 8px">
+        <span class="bha-xs bha-t3" style="width:24px">3번</span><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"></path></svg><span class="bha-sm">비어 있음</span>
+      </div>
+      <p class="bha-xs bha-t3" style="margin:auto 0 0;line-height:1.45">오른쪽에서 특성을 눌러 빈 슬롯에 장착한다.</p>
+    </div>
+    <div style="position:absolute;left:312px;right:10px;top:48px;display:flex;align-items:center;justify-content:space-between"><span class="bha-sec">보유 특성</span><span class="bha-xs bha-t3">5개</span></div>
+    <div class="bha-scroll" style="position:absolute;left:312px;right:8px;top:68px;bottom:8px;display:grid;gap:6px;align-content:start;padding-right:4px">
+      <div class="bha-panel" style="padding:6px 8px;display:flex;align-items:center;gap:8px;border-color:var(--bha-text-2)">
+        <span style="flex:1;display:grid;gap:1px"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span>
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-thunder)"></span>뇌</span>
+        <button class="bha-btn bha-btn--sm bha-btn--accent">장착</button>
+      </div>
+      <div class="bha-panel" style="padding:6px 8px;display:flex;align-items:center;gap:8px">
+        <span style="flex:1;display:grid;gap:1px"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span>
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-water)"></span>물</span>
+        <button class="bha-btn bha-btn--sm">장착</button>
+      </div>
+      <div class="bha-panel" style="padding:6px 8px;display:flex;align-items:center;gap:8px">
+        <span style="flex:1;display:grid;gap:1px"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">[효과 한 줄]</span></span>
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-blood)"></span>혈</span>
+        <button class="bha-btn bha-btn--sm">장착</button>
+      </div>
+      <div class="bha-panel" style="padding:6px 8px;display:flex;align-items:center;gap:8px;opacity:.6">
+        <span style="flex:1;display:grid;gap:1px"><span class="bha-sm bha-b">[특성 이름]</span><span class="bha-xs bha-t2">장착 중 · 1번</span></span>
+        <span class="bha-chip bha-chip--attr"><span class="bha-dot" style="width:10px;height:10px;background:var(--bha-attr-poison)"></span>독</span>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"variant":{"editor":"enum","options":["tile","slot"],"default":"tile"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const v = this.props.variant ?? 'tile';
+    const isTile = v !== 'slot';
+    return { theme, isTile, isSlot: !isTile, tabName: isTile ? '타일' : '슬롯', tabCount: isTile ? '13' : '2/3' };
+  }
+}
+</script>
+</body>
+</html>

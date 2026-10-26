@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>수련장</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}">
+  <div style="position:absolute;left:12px;right:12px;top:6px;height:36px;display:flex;align-items:center;gap:8px">
+    <span class="bha-display bha-xl">수련장</span>
+    <span class="bha-chip" style="margin-left:auto;color:var(--bha-text-1)">수련치 <b class="bha-num">[n]</b></span>
+    <span class="bha-chip" style="color:var(--bha-text-1)">수련권 <b class="bha-num">[n]</b></span>
+  </div>
+  <span class="bha-sec" style="position:absolute;left:12px;top:48px">본능 대결</span>
+  <div style="position:absolute;left:12px;right:12px;top:66px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
+    <sc-for list="{{duels}}" as="d" hint-placeholder-count="4">
+      <button class="bha-panel" style="height:110px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:inherit;font-family:inherit;cursor:pointer">
+        <span style="width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--bha-bg-1);border:1px solid {{d.c}};color:{{d.c}}"><svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="{{d.icon}}"></path></svg></span>
+        <span class="bha-sm bha-b">{{d.name}}</span>
+        <span class="bha-xs bha-t2">[보상 한 줄]</span>
+        <span class="bha-price" style="margin-top:auto"><em>수련권</em>1</span>
+      </button>
+    </sc-for>
+  </div>
+  <span class="bha-sec" style="position:absolute;left:12px;top:186px">그 밖</span>
+  <div style="position:absolute;left:12px;right:12px;top:204px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <button class="bha-panel" style="height:56px;padding:8px 10px;display:flex;align-items:center;gap:10px;color:inherit;font-family:inherit;text-align:left;cursor:pointer">
+      <span class="bha-art" style="position:relative;width:40px;height:40px">인형</span>
+      <span style="display:grid;gap:1px"><span class="bha-sm bha-b">훈련 인형</span><span class="bha-xs bha-t2">블록 연습 · 보상 없음</span></span></button>
+    <button class="bha-panel" style="height:56px;padding:8px 10px;display:flex;align-items:center;gap:10px;color:inherit;font-family:inherit;text-align:left;cursor:pointer">
+      <span style="width:40px;height:40px;border-radius:8px;display:grid;place-items:center;background:var(--bha-bg-1);border:1px solid var(--bha-rare);color:var(--bha-rare)" class="bha-display bha-md">#</span>
+      <span style="display:grid;gap:1px"><span class="bha-sm bha-b">{{rank}}</span><span class="bha-xs bha-t2">[현재 순위 · 보상]</span></span></button>
+  </div>
+  <p class="bha-xs bha-t3" style="position:absolute;left:12px;right:12px;bottom:8px;margin:0">수련권은 [얻는 곳]에서 얻는다. 대결 한 번에 1장.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const soul = theme === 'soul';
+    const duels = [
+      { name: '[대결 1]', c: 'var(--bha-atk)', icon: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3' },
+      { name: '[대결 2]', c: 'var(--bha-guard)', icon: 'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z' },
+      { name: '[대결 3]', c: 'var(--bha-heal)', icon: 'M12 5v14M5 12h14' },
+      { name: '[대결 4]', c: 'var(--bha-void)', icon: 'M12 12a2 2 0 1 1 2-2 4 4 0 1 1-4-4 6 6 0 1 1-6 6' }
+    ];
+    return { theme, duels, rank: soul ? '석차 도전' : '번호 쟁탈전' };
+  }
+}
+</script>
+</body>
+</html>

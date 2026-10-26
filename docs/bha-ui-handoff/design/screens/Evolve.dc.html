@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>진화 연출</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="bha-root bha-{{theme}}" style="background:radial-gradient(50% 70% at 50% 46%,var(--bha-accent-glow),var(--bha-bg-1) 60%,var(--bha-bg-0))">
+  <div style="position:absolute;left:0;right:0;top:16px;text-align:center;display:grid;gap:2px">
+    <span class="bha-xs bha-b" style="color:var(--bha-accent-hi);letter-spacing:.2em">진화</span>
+    <span class="bha-display" style="font-size:18px">{{toName}}</span>
+  </div>
+  <div class="bha-art bha-art--char" style="left:84px;top:82px;width:130px;height:150px;opacity:.55">이전 진화체<br>도트</div>
+  <svg class="bha-svg" viewBox="0 0 24 24" aria-hidden="true" style="position:absolute;left:256px;top:142px;width:32px;height:32px;color:var(--bha-accent-hi)"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+  <div class="bha-art bha-art--char" style="left:330px;top:66px;width:170px;height:180px;border-color:var(--bha-accent-hi);box-shadow:0 0 30px var(--bha-accent-glow)">새 진화체<br>도트 (빛나며 등장)</div>
+  <div style="position:absolute;left:0;right:0;bottom:12px;display:flex;flex-direction:column;align-items:center;gap:8px">
+    <span class="bha-sm bha-t2">{{fromName}} → <b style="color:var(--bha-text-1)">{{toName}}</b> · 능력치 [변화 요약]</span>
+    <button class="bha-btn bha-btn--accent" style="min-width:180px">확인</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["hollow","soul"],"default":"hollow"},"$preview":{"width":640,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'hollow';
+    const soul = theme === 'soul';
+    return { theme, fromName: '[이전 진화체]', toName: soul ? '[사신 진화체]' : '아쥬커스' };
+  }
+}
+</script>
+</body>
+</html>
