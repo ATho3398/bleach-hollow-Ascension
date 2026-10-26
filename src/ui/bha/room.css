@@ -76,7 +76,7 @@
 
 /* ── 방 안 물건 (= 선택 항목) ── */
 .bha-prop {
-  position: absolute; transform: translate(-50%, -100%) scale(calc(var(--prop-s, 1) * 1.5)); transform-origin: 50% 100%; /* top = 이름표 아래 끝 */
+  position: absolute; transform: translate(-50%, -100%) scale(calc(var(--prop-s, 1) * 1.25)); transform-origin: 50% 100%; /* top = 이름표 아래 끝 */
   display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1);
   min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-1);
   color: var(--bha-text-1); background: none; border: 0; border-radius: var(--bha-r-md);
@@ -101,7 +101,6 @@
 .bha-prop--altar .bha-prop__shape { width: 60px; height: 34px; border-radius: var(--bha-r-xs); }
 .bha-prop--book .bha-prop__shape { width: 40px; height: 34px; border-left-width: 6px; }
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
-.bha-prop--dummy .bha-prop__shape { width: 34px; height: 54px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }  /* 상점 (C.63): 좌판·매대 */
 .bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
 

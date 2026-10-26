@@ -36,8 +36,8 @@ export const SHORTCUTS: Record<ShortcutCtx, Record<string, ShortcutAction>> = {
   menu: { ...NAV, ...digits(9, (i) => `pick.${i}`), KeyE: 'corner.settings', KeyH: 'corner.help', KeyR: 'slots.import' },
   // 전투(진행 중): 블록 1~8, 해방 R (GDD 83장 — 저장 필살기 Q 는 C.134 에 삭제), 일시정지 Space(또는 F), 배속 E, 도움말 H
   battle: { ...digits(8, (i) => `block.${i}`), KeyR: 'liberate', Space: 'pause', KeyF: 'confirm', KeyH: 'help' }, // KeyE(배속)는 C.118 에 삭제 (GDD 62장)
-  // 홈: 돌보기 Z X C, 더보기 V(펼친 격자는 숫자), 훈련 인형 T, 상태 칩 G, 펼친 먹이/더보기 줄은 숫자
-  room: { ...NAV, KeyZ: 'care.feed', KeyX: 'care.sleep', KeyC: 'care.pet', KeyV: 'dock.more', KeyT: 'dummy', KeyG: 'status', ...digits(9, (i) => `pick.${i}`) },
+  // 홈: 돌보기 Z X C, 더보기 V(펼친 격자는 숫자), 수련장 T, 상태 칩 G, 펼친 먹이/더보기 줄은 숫자
+  room: { ...NAV, KeyZ: 'care.feed', KeyX: 'care.sleep', KeyC: 'care.pet', KeyV: 'dock.more', KeyT: 'altar', KeyG: 'status', ...digits(9, (i) => `pick.${i}`) },
   // 원정 배치판: 이동 W/S/A/D, 그 칸 누르기 F, 선택 취소 Q·Esc, 출발 Space, 숫자 = 손에 든 타일 N번째 (되돌리기 R 키는 18-8 에서 삭제 — 놓은 타일을 선택한 뒤 같은 칸을 다시 누른다)
   plan: { ...NAV, Space: 'go', ...digits(9, (i) => `pick.${i}`) },
 };
@@ -102,9 +102,9 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
   {
     title: '홈',
     rows: [
-      { keys: 'Z / X / C', does: '먹이 / 재우기 / 쓰다듬기 (먹이는 펼친 줄에서 1~5로 고른다)' },
-      { keys: 'V', does: '더보기 열기/닫기 (등급전·설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면)' },
-      { keys: 'T', does: '훈련 인형(전투 연습)' },
+      { keys: 'Z / X / C', does: '먹이 / 재우기 / 교감 (먹이는 펼친 줄에서 1~5로 고른다)' },
+      { keys: 'V', does: '더보기 열기/닫기 (설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면)' },
+      { keys: 'T', does: '수련장(훈련 인형 전투 연습·번호 쟁탈전 포함)' },
       { keys: 'G', does: '캐릭터 머리 위 상태 칩(상태 화면)' },
       { keys: '1 ~ 9', does: '펼친 먹이 줄·더보기 격자의 N번째' },
     ],

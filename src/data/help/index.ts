@@ -8,6 +8,8 @@ import screensJson from './screens.json';
 import tutorialJson from './tutorial.json';
 import guidesJson from './guides.json';
 import { synergyName, tileName } from '../tiles';
+import { statName } from '../elements';
+import { STAT_IDS } from '../schema';
 import type { TextGuideId } from '../../engine/tutorial';
 
 /** 튜토리얼 장면: targets = 전투 화면의 data-help 요소 id (비면 하이라이트 없이 가운데 카드) */
@@ -83,6 +85,16 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.liberationRisk = String(LIB.riskOnEnd);
   vars.liberationSlots = (LIB.slotsByTier as readonly number[]).filter((n, i, a) => i === 0 || n !== a[i - 1]).join('·');
   // 진화 단계 이름 (GDD 20-5 설명용): {tier4} = 바스트로데/평대원, {tier5} = 아란칼/수석 대원
+  // 능력치 자세한 설명 (C.137, GDD 85장 9): 이름은 종족 설정 표기, 수치는 BALANCE 에서 읽는다 (숫자 하드코딩 없음)
+  for (const id of STAT_IDS) vars[`stat.${id}`] = statName(id, f.id);
+  vars.statRef = String(BALANCE.provisional.stats.tierTotals[0]! / STAT_IDS.length);
+  vars.statMax = String(BALANCE.provisional.stats.statMax);
+  vars.playerMaxHp = String(COMBAT.playerMaxHp);
+  vars.playerHpScale = String(COMBAT.playerHpScale);
+  vars.playerAttackSeconds = String(COMBAT.playerAttackSeconds);
+  vars.critChancePct = String(Math.round(COMBAT.critChance * 100));
+  vars.critChanceMaxPct = String(Math.round(COMBAT.critChanceMax * 100));
+  vars.critMultiplier = String(COMBAT.critMultiplier);
   vars.tier4 = f.tierNames[3];
   vars.tier5 = f.tierNames[4];
   return vars;

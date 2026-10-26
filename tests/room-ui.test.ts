@@ -70,22 +70,20 @@ describe('종족 설정 room', () => {
   });
 });
 
-describe('훈련 인형 (GDD 18-3, C.38)', () => {
-  it('이름·위치는 종족 설정에서 오고 다른 물건과 겹치지 않는다', () => {
-    expect(roomOf(getFaction('hollow')).props.dummy).toBe('훈련 인형');
-    expect(roomOf(getFaction('shinigami')).props.dummy).toBe('훈련 인형');
+describe('수련장 = 훈련 인형 통합 (GDD 85장 3, C.137)', () => {
+  it('방에 훈련 인형 물건이 없고 수련장 그림이 인형 모양(prop-altar)이다', () => {
+    expect((ROOM_PROPS as readonly string[]).includes('dummy')).toBe(false);
+    for (const f of FACTIONS) expect(Object.keys(roomOf(f).props).sort()).toEqual([...ROOM_PROPS].sort());
+    expect(artUrls('prop.altar', '/', {}, ['prop-altar.webp']).src).toBe('/art/prop-altar.webp');
+  });
+  it('물건들이 서로 겹치지 않는다', () => {
     for (const f of FACTIONS) {
       const r = roomOf(f);
-      const d = r.layout.dummy;
-      for (const p of ROOM_PROPS) {
-        if (p === 'dummy') continue;
-        const o = r.layout[p];
-        expect(Math.hypot(o.x - d.x, o.y - d.y), `${f.id}: dummy–${p}`).toBeGreaterThan(14);
+      for (const p of ROOM_PROPS) for (const q of ROOM_PROPS) {
+        if (p >= q) continue;
+        expect(Math.hypot(r.layout[p].x - r.layout[q].x, r.layout[p].y - r.layout[q].y), `${f.id}: ${p}–${q}`).toBeGreaterThan(14);
       }
     }
-  });
-  it('그림 키 prop.dummy 가 매니페스트에 있다(파일 prop-dummy.png)', () => {
-    expect(artUrls('prop.dummy', '/', {}, ['prop-dummy.png']).src).toBe('/art/prop-dummy.png');
   });
 });
 

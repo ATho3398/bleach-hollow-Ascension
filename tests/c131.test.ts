@@ -21,8 +21,8 @@ describe('C.131 상태 화면·방·블록', () => {
     expect(L.door!.x).toBeLessThanOrEqual(12);
     expect(L.altar!.x).toBeGreaterThan(75);
   });
-  it('방 물건 ×1.5', () => {
-    expect(read('src/ui/bha/room.css')).toContain('* 1.5');
+  it('방 물건 ×1.25 (C.137 85장 2: C.131 ×1.5 와 그 이전의 중간)', () => {
+    expect(read('src/ui/bha/room.css')).toContain('* 1.25');
   });
   it('블록: 기본은 노말색, 계열 아이콘, 공허 칩', () => {
     const bv = read('src/ui/battleView.ts');

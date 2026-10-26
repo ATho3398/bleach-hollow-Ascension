@@ -47,8 +47,9 @@ export function gameRuleLines(f: Pick<FactionConfig, 'riskGaugeName' | 'fullness
 
 export interface TrainingHandlers {
   onPlay: (game: TrainingGameId) => void;
-  /** 옛 제단 화면(진화 정보) */
-  onEvolution: () => void;
+  /** 훈련 인형(전투 연습) · 번호 쟁탈전 입구 — 수련장 안으로 옮김 (C.137, GDD 85장 3) */
+  onPractice: () => void;
+  onRank: () => void;
 }
 
 /** 제단 = 수련 화면: 왼쪽 수련치·수련권·안내, 오른쪽 4종목 카드 */
@@ -57,10 +58,8 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   const n = save.nest;
   const gate = trainingGate(t, save.evolution.tierIndex, n.condition);
   const head = lcdHead({
-    // 머리의 [진화 정보] 버튼 대신 제목 토글 "<수련장> · 수련 ▾" — 목록에서 [진화 정보]로 바꾼다 (C.114)
-    title: selectLast(viewTitle([{ id: 'training', label: faction.training.title }, { id: 'evolution', label: '진화 정보' }], 'training', (id) => {
-      if (id === 'evolution') hd.onEvolution();
-    }, { prefix: title })),
+    // 진화 정보는 상태 화면 능력치 아래로 옮겼다 (C.137, GDD 85장 7)
+    title: `${title} · ${faction.training.title}`,
     sub: (() => {
       const s = el('span');
       s.append(provisionalTag(), ' 수련을 마치면 전투의 ', el('b', '', faction.liberation.name), ' 고유 효과(능력치 상승)가 강해진다');
@@ -111,7 +110,22 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     } else card.onclick = () => hd.onPlay(g);
     cards.append(card);
   }
-  const right = [cards, el('p', 'bha-faint', `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로. 종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`)];
+  // 수련장 안 입구 둘: 훈련 인형(전투 연습) · 등급전(번호 쟁탈전). 수련권·컨디션 게이트와 무관
+  const doors = el('div', 'bha-train__cards bha-train__doors');
+  for (const [id, name, desc, ico, go] of [
+    ['practice', '훈련 인형', '전투 연습. 쓰러뜨려도 아무것도 잃지 않는다', 'i-practice', hd.onPractice],
+    ['rank', faction.rankBattleName, `${faction.tierNames[4]}부터 도전할 수 있다`, 'i-title', hd.onRank],
+  ] as const) {
+    const d = el('button', 'bha-train__card');
+    d.type = 'button';
+    d.dataset.door = id;
+    const top = el('span', 'bha-train__cardtop');
+    top.append(icon(ico, 'sm'), el('b', 'bha-train__cardname', name));
+    d.append(top, el('span', 'bha-train__line', desc));
+    d.onclick = go;
+    doors.append(d);
+  }
+  const right = [cards, doors, el('p', 'bha-faint', `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로. 종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`)];
   lcdPage(dev.view, { cls: 'bha-train-page', cols: '0.9fr 1.1fr' }, head, left, right);
 }
 

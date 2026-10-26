@@ -58,7 +58,7 @@ import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
 import { evolutionView } from './evolutionPanel';
 import { roomView } from './roomView';
-import { altarView, careView, chestView } from './lcdScreens';
+import { careView, chestView } from './lcdScreens';
 import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { roomOf } from '../engine/faction';
@@ -573,9 +573,7 @@ export function startApp(host: HTMLElement): void {
       onAltar: () => open('training', () => renderTraining(faction, s)),
       onBook: () => open('dex', () => bookView(root, faction, s)),
       onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist)),
-      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist)),
-      onPractice: () => open('practice', () => practiceScreen(faction)),
-      onRank: () => open('rank', () => rankScreen(faction)),
+      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)) })),
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
         persist();
@@ -638,7 +636,8 @@ export function startApp(host: HTMLElement): void {
   function renderTraining(faction: FactionConfig, s: SaveData): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
-      onEvolution: () => nav.replace({ id: 'altar', locked: false, render: () => { setBgm('nest'); renderAltar(faction, s); root.scrollTop = 0; } }),
+      onPractice: () => open('practice', () => practiceScreen(faction)),
+      onRank: () => open('rank', () => rankScreen(faction)),
     });
   }
 
@@ -675,15 +674,6 @@ export function startApp(host: HTMLElement): void {
     };
     if (again) nav.replace(e);
     else nav.push(e);
-  }
-
-  function renderAltar(faction: FactionConfig, s: SaveData): void {
-    altarView(dev, faction, s, roomOf(faction).props.altar, {
-      onDex: () => open('dex', () => bookView(root, faction, s)),
-      onHelp: () => openHelp('evolution', true),
-      onRebirth: () => open('rebirth', () => renderRebirth(faction, s)),
-      onTraining: () => nav.replace({ id: 'training', locked: false, render: () => { setBgm('nest'); renderTraining(faction, s); root.scrollTop = 0; } }),
-    });
   }
 
   // ── 환생 (GDD 22-1·22-7, C.56): 확인 1(목록·계승 특성) → 확인 2(최종) → 자동 백업 → 환생 → 연출 → 1단계 방 ──

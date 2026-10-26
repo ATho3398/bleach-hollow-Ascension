@@ -25,9 +25,6 @@ export interface RoomHandlers {
   onBook: () => void;
   onChest: () => void;
   onStatus: () => void;
-  onPractice: () => void;
-  /** 등급전 (GDD 21장): 독 더보기 항목 */
-  onRank: () => void;
   /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 다른 트랙이 아직 안 열렸으면(5단계 전) null — 다른 종족으로 가는 유일한 길 (C.63) */
   onSwitchTrack: ((factionId: string) => void) | null;
   /** 붕옥 탭 (GDD 22-3): 열렸을 때만 독 더보기에 */
@@ -125,16 +122,15 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     altar: hd.onAltar,
     book: hd.onBook,
     chest: hd.onChest,
-    dummy: hd.onPractice, // 훈련 인형 = 전투 연습 (GDD 18-3)
     shop: hd.onShop, // 상점 (C.63, GDD 28장 9번: 더보기 → 방 물건)
   };
   // 위/아래 순서: 위쪽 줄(책장·수련장) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop', 'dummy'];
+  const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckEmpty });
     b.onclick = act[p];
-    if (p === 'dummy') b.dataset.sc = 'dummy';
+    if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(훈련 인형 모양) = 단축키 T
     props.set(p, b);
     scene.append(b);
   }
@@ -216,7 +212,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       if (!(clip && playAnim(clip))) hopChar();
     },
     more: [
-      { label: faction.rankBattleName, icon: 'i-title', onClick: hd.onRank },
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
       { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },

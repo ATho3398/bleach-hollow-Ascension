@@ -195,17 +195,16 @@
     "sceneArt": "scene.room",
     "characterArt": "char.shinigami",
     "props": {
-      "door": "출발 문",
+      "door": "모험",
       "altar": "수련장",
       "book": "책장",
       "chest": "보관함",
-      "dummy": "훈련 인형",
       "shop": "상점"
     },
     "layout": {
       "door": {
-        "x": 11,
-        "y": 56,
+        "x": 10,
+        "y": 80,
         "scale": 1
       },
       "book": {
@@ -219,15 +218,11 @@
         "scale": 0.85
       },
       "chest": {
-        "x": 10,
+        "x": 25,
         "y": 99
       },
       "shop": {
         "x": 67,
-        "y": 99
-      },
-      "dummy": {
-        "x": 92,
         "y": 99
       }
     },

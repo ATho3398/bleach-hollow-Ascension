@@ -50,8 +50,8 @@ describe('종족 설정의 배경 연결 (34-1)', () => {
 });
 
 describe('홈 물건 이름 두 종족 통일 (34-2)', () => {
-  it('6종 이름이 두 종족 같다', () => {
-    const want = { door: '출발 문', altar: '수련장', book: '책장', chest: '보관함', dummy: '훈련 인형', shop: '상점' };
+  it('5종 이름이 두 종족 같다', () => {
+    const want = { door: '모험', altar: '수련장', book: '책장', chest: '보관함', shop: '상점' };
     for (const f of FACTIONS) expect(roomOf(f).props).toEqual(want);
   });
 });

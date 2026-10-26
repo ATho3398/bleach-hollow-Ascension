@@ -59,7 +59,7 @@ export type SlotLocation = 'body' | 'zanpakuto';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'dummy', 'shop'] as const;
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'shop'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
@@ -121,14 +121,14 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', dummy: '훈련 인형', shop: '상점' },
+  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', shop: '상점' },
   layout: {
     book: { x: 19, y: 66, scale: 0.85 }, door: { x: 81, y: 66, scale: 0.85 },
-    chest: { x: 10, y: 99 }, altar: { x: 27, y: 99 }, shop: { x: 73, y: 99 }, dummy: { x: 90, y: 99 },
+    chest: { x: 10, y: 99 }, altar: { x: 27, y: 99 }, shop: { x: 73, y: 99 },
   },
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],
-    askPet: ['쓰다듬어 줘.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
+    askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
   },
 };
 
@@ -251,7 +251,7 @@ export interface FactionConfig {
   evolutionNearText: [string, string];
   /** 둥지 / 대원실 (GDD 7장) */
   nestName: string;
-  /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
+  /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 교감(참백도 손질) */
   nestActions: Record<NestAction, string>;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;

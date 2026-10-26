@@ -430,7 +430,7 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (타일·둥지)', () =
   });
 
   it('둥지 행동 이름은 종족 설정에서 나온다', () => {
-    expect(getFaction('hollow').nestActions).toEqual({ feed: '먹이 주기', sleep: '재우기', pet: '쓰다듬기' });
+    expect(getFaction('hollow').nestActions).toEqual({ feed: '먹이 주기', sleep: '재우기', pet: '교감' });
     expect(getFaction('shinigami').nestActions.pet).toBe('참백도 손질');
     expect(getFaction('hollow').nestName).toBe('둥지');
     expect(getFaction('shinigami').nestName).toBe('대원실');

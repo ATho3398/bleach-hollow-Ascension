@@ -26,7 +26,7 @@ import { STAT_IDS } from '../data/schema';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
-import { elementDamageLine, elementsMark } from './bha/element';
+import { elementDamageRows, elementsMark } from './bha/element';
 import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
@@ -43,7 +43,14 @@ export function critPercentText(build: SaveData['build'], evo?: SaveData['evolut
 }
 
 /** 상태 자리: 왼쪽 상태 4바(배부름·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
-export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void): void {
+export interface CareHandlers {
+  /** 진화 정보 패널(C.137, GDD 85장 7): 진화체 도감·진화 도움말·환생 */
+  onDex: () => void;
+  onHelp: () => void;
+  onRebirth: () => void;
+}
+
+export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, hd: CareHandlers): void {
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
   const runs = save.runLog.runs;
@@ -66,16 +73,16 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.setAttribute('aria-label', '능력치');
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry));
-  // 속성 피해 5종 (C.101, GDD 48장 4번): 0 이어도 보인다
-  stats.append(elementDamageLine(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id));
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
   const CXM = BALANCE.provisional.combat;
   const critRows = statRow('치명타 확률', critPercentText(save.build, save.evolution), `최대 ${Math.round(CXM.critChanceMax * 100)}%`);
   critRows.dataset.crit = '';
   const critDmg = statRow('치명타 피해', `×${CXM.critMultiplier}`);
+  // 속성 피해 5종 (C.101, GDD 48장 4번 · C.137 85장 8): 치명타 밑에 속성마다 한 줄씩, 0 이어도 보인다
+  const rows = [critRows, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
   const speedRow = stats.querySelector('.bha-stats')?.lastElementChild;
-  if (speedRow) speedRow.after(critRows, critDmg);
-  else stats.append(critRows, critDmg);
+  if (speedRow) speedRow.after(...rows);
+  else stats.append(...rows);
   // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
   const bonus = bonusLine(save);
   if (bonus) {
@@ -93,7 +100,23 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
   const abil = statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
+  const evoPanel = panel({ title: '진화 정보' });
+  evoPanel.setAttribute('aria-label', '진화 정보');
+  evoPanel.dataset.evolution = '';
+  const cols = evolutionColumns(faction, evo);
+  const evoMark = rebirthMark(save.rebirth.count);
+  if (evoMark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', evoMark);
+  evoPanel.append(...cols.left.slice(0, 1), ...cols.right);
+  if (canRebirth(evo)) {
+    const rb = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', block: true, onClick: hd.onRebirth });
+    rb.dataset.sc = 'rebirth';
+    evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 특성 1개는 남는다.`), rb);
+  }
+  evoPanel.append(h('div', 'bha-row', ''));
+  const evoBtns = evoPanel.lastElementChild!;
+  evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
@@ -271,30 +294,6 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     page.right.replaceChildren(deckList);
   }
   fill();
-}
-
-/** 제단: 진화 (왼쪽 지금 진화체·속성·고유 특성 / 오른쪽 진화 안내 — 타이밍은 비밀, 귀환하면 저절로 진화, GDD 20-5).
- *  5단계 이상이면 오른쪽 아래 [환생] (GDD 22-7, 이름은 종족 설정 rebirth.name). 그 아래 단계에서는 버튼이 없다 */
-export function altarView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: { onDex: () => void; onHelp: () => void; onRebirth: () => void; onTraining: () => void }): void {
-  const cols = evolutionColumns(faction, save.evolution);
-  const mark = rebirthMark(save.rebirth.count);
-  if (mark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', mark);
-  if (canRebirth(save.evolution)) {
-    const b = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', block: true, onClick: hd.onRebirth });
-    b.dataset.sc = 'rebirth';
-    cols.right.push(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 특성 1개는 남는다.`), b);
-  }
-  const head = lcdHead({
-    // 제목 토글 "<수련장> · 진화 정보 ▾" — 목록에서 [수련]으로 바꾼다 (C.114)
-    title: selectLast(viewTitle([{ id: 'training', label: faction.training.title }, { id: 'evolution', label: '진화 정보' }], 'evolution', (id) => {
-      if (id === 'training') hd.onTraining();
-    }, { prefix: title })),
-    aside: [
-      selectLast(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex })),
-      selectLast(button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp })),
-    ],
-  });
-  lcdPage(dev.view, { cls: 'bha-altar-page' }, head, cols.left, cols.right);
 }
 
 /** 상태 화면 특성 줄: 진화체가 있으면 성향(비었으면 생략) + 속성·전용, 1단계면 null (C.93) */
