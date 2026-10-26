@@ -19,8 +19,7 @@
     { "id": "arm_L", "bone": "arm_L" },
     { "id": "arm_R", "bone": "arm_R" },
     { "id": "head", "bone": "head" },
-    { "id": "hair", "bone": "head" },
-    { "id": "mask", "bone": "head" }
+    { "id": "hair", "bone": "head" }
   ],
   "bodies": {
     "shinigami": {
@@ -47,8 +46,12 @@
     },
     "arrancar-base": {
       "body": "arrancar",
-      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [34, 31] },
-      "mask": { "art": "arrancar/mask", "at": [18, 4], "size": [14, 27] }
+      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [34, 31] }
     }
+  },
+  "hairFrame": {
+    "note": "머리카락 틀 (GDD 96장 7): 머리카락 그림은 rect(x, y, 가로, 세로) 안에만 둔다. keepOut 은 얼굴(눈·뺨) — 가리지 않기를 권장(경고만)",
+    "rect": [0, 0, 36, 32],
+    "keepOut": [11, 22, 6, 6]
   }
 }

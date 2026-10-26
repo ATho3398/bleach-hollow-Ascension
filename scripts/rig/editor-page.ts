@@ -1,10 +1,10 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓴다
-import { HUMANOID, MOTIONS, boneMatrices, lookLayers, partMatrix, samplePose, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, boneMatrices, insideFrame, lookLayers, partMatrix, samplePose, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 
 declare const ART_MAP: Record<string, string>;
 const K = 6;
-const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '머리카락', mask: '가면' };
-const STORE = 'bha-rig-editor-v1';
+const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '머리카락' };
+const STORE = 'bha-rig-editor-v2';
 
 const rig: Rig = JSON.parse(JSON.stringify(HUMANOID));
 try {
@@ -14,6 +14,7 @@ try {
     if (s.bones) rig.bones = s.bones;
     if (s.slots) rig.slots = s.slots;
     if (s.bodies) rig.bodies = s.bodies;
+    if (s.looks) rig.looks = s.looks;
   }
 } catch { /* 저장 못 쓰는 환경 */ }
 
@@ -32,13 +33,15 @@ stage.style.width = `${W * K}px`;
 stage.style.height = `${H * K}px`;
 
 function save() {
-  try { localStorage.setItem(STORE, JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies })); } catch { /* 무시 */ }
+  try { localStorage.setItem(STORE, JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks })); } catch { /* 무시 */ }
   const body = rig.looks[look]!.body;
   out.value = JSON.stringify({
     bones: rig.bones.map((b) => ({ id: b.id, parent: b.parent, pivot: b.pivot })),
     slots: rig.slots.map((s) => s.id),
     body,
     parts: Object.fromEntries(Object.entries(rig.bodies[body]!).map(([k, v]) => [k, v.at])),
+    look,
+    hair: (rig.looks[look]!.hair as PartArt | undefined)?.at,
   });
 }
 
@@ -61,6 +64,19 @@ function draw() {
     img.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * K},${m[5] * K})`;
     stage.append(img);
   }
+  if (sel === 'hair' && !motion) {
+    const [fx, fy, fw, fh] = rig.hairFrame.rect;
+    const [kx, ky, kw, kh] = rig.hairFrame.keepOut;
+    const m = mats.head!;
+    for (const [x, y, w, h, cls] of [[fx, fy, fw, fh, 'frame'], [kx, ky, kw, kh, 'keep']] as const) {
+      const f = document.createElement('div');
+      f.className = `dot ${cls}`;
+      f.style.width = `${w * K}px`;
+      f.style.height = `${h * K}px`;
+      f.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${(m[0] * x + m[2] * y + m[4]) * K},${(m[1] * x + m[3] * y + m[5]) * K})`;
+      stage.append(f);
+    }
+  }
   if (!motion) {
     for (const b of rig.bones) {
       const d = document.createElement('div');
@@ -76,7 +92,8 @@ function draw() {
   }
   const b = bone(boneOfSel());
   const body = rig.bodies[rig.looks[look]!.body]!;
-  const part = body[sel];
+  const lk = rig.looks[look]!;
+  const part = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
   $('info').textContent = `${NAMES[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}`;
 }
 
@@ -100,9 +117,12 @@ function nudge(dx: number, dy: number) {
     b.pivot = [b.pivot[0] + dx, b.pivot[1] + dy];
   } else {
     const body = rig.bodies[rig.looks[look]!.body]!;
-    const p = body[sel];
+    const lk = rig.looks[look]!;
+    const p = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
     if (!p) return;
-    p.at = [p.at[0] + dx, p.at[1] + dy];
+    const next: PartArt = { ...p, at: [p.at[0] + dx, p.at[1] + dy] };
+    if (sel === 'hair' && !insideFrame(rig, next)) return; // 머리카락은 틀 밖으로 못 나간다
+    p.at = next.at;
   }
   save(); draw();
 }
@@ -132,7 +152,7 @@ $('front').onclick = () => { const i = rig.slots.findIndex((s) => s.id === sel);
 $('back').onclick = () => { const i = rig.slots.findIndex((s) => s.id === sel); if (i > 0) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i - 1, 0, s!); save(); draw(); } };
 $('reset').onclick = () => {
   const fresh: Rig = JSON.parse(JSON.stringify(HUMANOID));
-  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies;
+  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks;
   try { localStorage.removeItem(STORE); } catch { /* 무시 */ }
   save(); buildChips(); draw();
 };

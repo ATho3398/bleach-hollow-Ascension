@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-import { HUMANOID, MOTIONS, apply, boneMatrices, lookLayers, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, apply, boneMatrices, insideFrame, lookLayers, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -20,13 +20,13 @@ describe('종이인형 데이터', () => {
       }
     }
   });
-  it('사신·아란칼은 같은 머리(공통 대머리)를 쓰고, 아란칼만 가면 층이 있다', () => {
+  it('사신·아란칼은 같은 머리(공통 대머리)를 쓰고, 가면은 따로 떼지 않는다(머리카락 층에 붙음)', () => {
     const sh = lookLayers(HUMANOID, 'shinigami-base');
     const ar = lookLayers(HUMANOID, 'arrancar-base');
     expect(sh.find((l) => l.slot === 'head')!.art).toBe(ar.find((l) => l.slot === 'head')!.art);
     expect(sh.find((l) => l.slot === 'head')!.at).toEqual(ar.find((l) => l.slot === 'head')!.at);
-    expect(sh.some((l) => l.slot === 'mask')).toBe(false);
-    expect(ar.some((l) => l.slot === 'mask')).toBe(true);
+    expect([...sh, ...ar].some((l) => l.slot === 'mask')).toBe(false);
+    expect(HUMANOID.slots.some((s) => s.id === 'mask')).toBe(false);
   });
 });
 
@@ -59,6 +59,19 @@ describe('자세·행렬', () => {
     expect(samplePose(HUMANOID, idle, 350).torso).toEqual(samplePose(HUMANOID, idle, 350 + idle.duration).torso);
     const atk = MOTIONS.attack!;
     expect(samplePose(HUMANOID, atk, atk.duration + 500).arm_L).toEqual(samplePose(HUMANOID, atk, atk.duration).arm_L);
+  });
+  it('머리카락은 모두 머리카락 틀 안에 있다', () => {
+    for (const look of Object.keys(HUMANOID.looks)) {
+      const hair = lookLayers(HUMANOID, look).find((l) => l.slot === 'hair');
+      if (hair) expect(insideFrame(HUMANOID, hair), look).toBe(true);
+    }
+    expect(insideFrame(HUMANOID, { art: 'x', at: [30, 0], size: [10, 5] })).toBe(false);
+  });
+  it('공격: 팔을 머리 위로 들었다가(90° 넘게) 타격 순간엔 아래로 내려찍는다', () => {
+    const atk = MOTIONS.attack!;
+    const up = Math.max(...atk.tracks.arm_L!.map((k) => k[1]));
+    expect(up).toBeGreaterThan(90);
+    expect(samplePose(HUMANOID, atk, atk.hit!).arm_L!.rot).toBeLessThan(90);
   });
   it('걷기: 양 다리는 반대로 흔든다', () => {
     const p = samplePose(HUMANOID, MOTIONS.move!, 0);

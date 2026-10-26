@@ -25,8 +25,10 @@ export interface Rig {
   slots: Slot[];
   /** 몸 id → 슬롯 id → 부위 그림 */
   bodies: Record<string, Record<string, PartArt>>;
-  /** 외형 id → 몸 + 머리 위에 얹는 층(머리카락·가면 등) */
+  /** 외형 id → 몸 + 머리 위에 얹는 층(머리카락 — 아란칼 가면도 머리카락 층에 붙어 있다) */
   looks: Record<string, Look>;
+  /** 머리카락 틀: 머리카락 그림은 rect(x, y, 가로, 세로) 안에만. keepOut = 가리지 않기를 권장하는 얼굴 칸 */
+  hairFrame: { rect: [number, number, number, number]; keepOut: [number, number, number, number] };
 }
 
 /** 부위 그림 하나: `public/art/rig/<rig id>/<art>.png`(꼭 맞게 자른 그림), at = 캔버스에서 왼쪽 위 자리, size = 그림 크기 */
@@ -157,13 +159,23 @@ export function partMatrix(bone: Mat, at: Vec2): Mat {
   return mul(bone, [1, 0, 0, 1, at[0], at[1]]);
 }
 
+/** 머리카락 그림 상자가 머리카락 틀 안에 있는가 */
+export function insideFrame(rig: Rig, p: PartArt): boolean {
+  const [fx, fy, fw, fh] = rig.hairFrame.rect;
+  return p.at[0] >= fx && p.at[1] >= fy && p.at[0] + p.size[0] <= fx + fw && p.at[1] + p.size[1] <= fy + fh;
+}
+
 /** 데이터 점검: 부모·슬롯 뼈가 있는지, 동작 키가 시간순이고 길이 안인지. 문제 목록(빈 배열 = 정상) */
 export function validateRig(rig: Rig, motions: Record<string, Motion>): string[] {
   const errs: string[] = [];
   const ids = new Set(rig.bones.map((b) => b.id));
   for (const b of rig.bones) if (b.parent && !ids.has(b.parent)) errs.push(`${b.id}: 부모 ${b.parent} 없음`);
   for (const s of rig.slots) if (!ids.has(s.bone)) errs.push(`슬롯 ${s.id}: 뼈 ${s.bone} 없음`);
-  for (const [lid, look] of Object.entries(rig.looks)) if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);
+  for (const [lid, look] of Object.entries(rig.looks)) {
+    if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);
+    const hair = look.hair;
+    if (typeof hair === 'object' && !insideFrame(rig, hair)) errs.push(`외형 ${lid}: 머리카락이 틀 밖`);
+  }
   for (const [mid, m] of Object.entries(motions)) {
     if (!(m.duration > 0)) errs.push(`${mid}: 길이 0`);
     if (m.hit !== undefined && (m.hit < 0 || m.hit > m.duration)) errs.push(`${mid}: 타격 시각이 길이 밖`);

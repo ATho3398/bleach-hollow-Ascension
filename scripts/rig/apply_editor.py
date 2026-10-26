@@ -2,7 +2,7 @@
 """관절 편집기(시험 페이지)에서 '값 복사'한 내용을 게임 뼈대 데이터에 넣는다 (GDD 96장).
 
 사용: python3 scripts/rig/apply_editor.py '<복사한 JSON>'   (또는 파일 경로)
-바뀌는 것: src/data/art/rig/humanoid.json 의 bones[].pivot, slots 순서, bodies.<몸>.<부위>.at
+바뀌는 것: src/data/art/rig/humanoid.json 의 bones[].pivot, slots 순서, bodies.<몸>.<부위>.at, looks.<외형>.hair.at
 """
 import json
 import os
@@ -25,6 +25,8 @@ if order:
     rig['slots'] = [by[i] for i in order if i in by] + [s for s in rig['slots'] if s['id'] not in order]
 for part, at in data.get('parts', {}).items():
     rig['bodies'][data['body']][part]['at'] = at
+if data.get('look') and data.get('hair'):
+    rig['looks'][data['look']]['hair']['at'] = data['hair']
 s = json.dumps(rig, ensure_ascii=False, indent=2)
 s = re.sub(r'\[\s+(-?\d+),\s+(-?\d+)\s+\]', r'[\1, \2]', s)
 s = re.sub(r'\{\s+"id": "([^"]+)",\s+"bone": "([^"]+)"\s+\}', r'{ "id": "\1", "bone": "\2" }', s)
