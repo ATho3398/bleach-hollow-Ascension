@@ -146,7 +146,7 @@ function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabS
     b.classList.add('bha-sgcell--filled');
     b.dataset.drag = 'cell';
     b.setAttribute('aria-label', `${areaName} ${cell.index + 1}번 칸 ${traitBlockName(faction, id, tierIndex)}`);
-    b.append(num, icon(traitIconId(faction, id)), h('span', 'bha-sgcell__name', traitBlockName(faction, id, tierIndex)), elementDot(getTrait(id).element, faction.id));
+    b.append(num, icon(traitIconId(faction, id)), h('span', 'bha-sgcell__name', traitBlockName(faction, id, tierIndex)), h('small', 'bha-sgcell__enh', `강화 ${enhanceLevel(build, getTrait(id).element)}/${BALANCE.provisional.absorb.enhance.max}`), elementDot(getTrait(id).element, faction.id));
   }
   b.onclick = () => {
     if (held) {
@@ -193,7 +193,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
     const t = getTrait(id);
     const card = itemCard({
       id, name: traitBlockName(faction, id, tierIndex), detail: traitBrief(faction, id), art: traitArt(faction, id),
-      badge: build.liberation?.includes(id) ? '해방' : undefined, state: heldId === id ? 'worn' : undefined,
+      foot: `강화 ${enhanceLevel(build, t.element)}/${BALANCE.provisional.absorb.enhance.max}`, badge: build.liberation?.includes(id) ? '해방' : undefined, state: heldId === id ? 'worn' : undefined,
       onClick: () => openTraitDetail(faction, build, state, tierIndex, id, null, onChange),
     });
     paintElement(card, t.element);

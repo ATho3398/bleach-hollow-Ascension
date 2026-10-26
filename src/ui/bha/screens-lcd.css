@@ -118,10 +118,11 @@
 /* 슬롯 화면 바둑판 (C.149, GDD 94장 A): 왼쪽 장착 칸 · 오른쪽 가진 특성 카드 */
 .bha-chest-page .bha-sgrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
 .bha-chest-page .bha-sgrow__title { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); font-weight: var(--bha-fw-bold); }
-.bha-sgcell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1); min-width: 0; height: 76px; padding: var(--bha-sp-2); border: 2px solid var(--bha-lin-color, var(--bha-line-2)); border-radius: var(--bha-r-md); background: linear-gradient(180deg, var(--bha-bg-3), var(--bha-bg-2)); color: var(--bha-text-1); font: inherit; touch-action: manipulation; }
+.bha-sgcell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1); min-width: 0; height: 80px; padding: var(--bha-sp-2); border: 2px solid var(--bha-lin-color, var(--bha-line-2)); border-radius: var(--bha-r-md); background: linear-gradient(180deg, var(--bha-bg-3), var(--bha-bg-2)); color: var(--bha-text-1); font: inherit; touch-action: manipulation; }
 .bha-sgcell .bha-icon { width: 30px; height: 30px; color: var(--bha-lin-color, var(--bha-text-2)); }
 .bha-sgcell__num { position: absolute; top: 4px; left: 6px; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
 .bha-sgcell__name { max-width: 100%; font-size: var(--bha-fs-xs); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-sgcell__enh { font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-2); }
 .bha-sgcell .bha-eldot { position: absolute; top: 4px; right: 5px; }
 .bha-sgcell--empty { border: 2px dashed var(--bha-line-2); background: rgb(0 0 0 / .2); color: var(--bha-text-3); }
 .bha-sgcell--empty .bha-icon { width: 22px; height: 22px; color: var(--bha-text-3); }
@@ -131,7 +132,7 @@
 .bha-sgcell.is-drop, .bha-sgown.is-drop { outline: 2px solid var(--bha-insert); outline-offset: 1px; background-color: rgb(108 196 255 / .2); }
 .bha-sgcell.is-dragging, .bha-sggrid .bha-itemcard.is-dragging { opacity: .4; }
 .bha-sgbar { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-3); padding: var(--bha-sp-2) var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-accent-soft); font-size: var(--bha-fs-xs); }
-.bha-chest-page .bha-sggrid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 112px; }
+.bha-chest-page .bha-sggrid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 120px; }
 .bha-sggrid .bha-itemcard { border-color: var(--bha-lin-color, var(--bha-line-2)); touch-action: manipulation; }
 .bha-sggrid .bha-itemcard__art { position: relative; }
 .bha-sgart { position: relative; color: var(--bha-lin-color, var(--bha-text-2)); }

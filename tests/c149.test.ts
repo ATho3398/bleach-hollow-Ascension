@@ -59,6 +59,11 @@ describe('C.149 블록 이름·아이콘·문구', () => {
     expect(src).toMatch(/isTestMode\(\)\) right\.append[\s\S]*PROVISIONAL_NOTE/);
     expect(src).toMatch(/if \(isTestMode\(\)\) left\.querySelector/);
   });
+  it('칸·카드에 속성 강화 n/100 (n/3 속성 칩 없음)', () => {
+    const src = read('src/ui/buildPanel.ts');
+    expect(src.match(/강화 \$\{enhanceLevel/g)!.length).toBeGreaterThanOrEqual(2);
+    expect(src).not.toContain('elementBonusCount');
+  });
   it('위쪽 탭 [슬롯 · 타일 · 물건 · 펫] (드롭다운 대신), 물건 탭 분류에서 펫 제외', () => {
     const src = read('src/ui/lcdScreens.ts');
     for (const k of ["id: 'slots', label: '슬롯'", "id: 'tiles', label: '타일'", "id: 'items', label: '물건'", "id: 'pet', label: '펫'"]) expect(src).toContain(k);
