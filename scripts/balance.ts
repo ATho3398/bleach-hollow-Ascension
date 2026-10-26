@@ -929,7 +929,9 @@ if (want('abilities')) {
 // 물공 생성원 간격은 속성별(physBlocks.spawnSecondsByElement, 없으면 spawnSeconds — C.105b 혈만 짧게).
 // '전' = 같은 몸에서 물공 블록·물공 특성만 뗀 옛 규칙, 특수(탄)·혼합(교)은 옛 규칙 그대로(비교표). 받은 피해 = 판당 최대 체력 대비 %, 버티는 초 = 판 시간 ÷ 받은 피해(체력 전부를 잃기까지).
 // 목표(49-9): 흙 = 버티기(버티는 초가 다른 5속성 최대의 1.2배 이상 · 강적 패배율이 가장 낮음, 처치 속도 목표 없음) · 혈 = 일반·강적 처치 시간 6속성 중 가장 빠름(승률 ±10%p 예외) ·
-//  불·물·뇌·노멀 = 일반 처치 시간 전 대비 −10~−25% · 혈 뺀 5속성 ★5 강적 승률 서로 ±10%p. 5단계라 후반 보류(45-6) 경고로 ──
+//  혈 뺀 5속성 ★5 강적 승률 서로 ±10%p — 5단계라 후반 보류(45-6) 경고로. 49-1 5번 ②(전 대비 −10~−25%)는 v5.180 에 폐기.
+// 84장 3번 (C.142, 가드): 블록형(같은 속성 특수·혼합 평균, 블록 다 쓰는 사람형 봇)이 평타형(물공)보다 일반 처치가 조금 빠르다 — 혈 뺀 5속성 각각 블록형/평타형 시간 비 < 1,
+//  5속성 합 비 0.8~0.97 (너무 벌어지지 않게). 혈은 49-11 "물공 중 가장 빠름"이 우선이라 예외(출력만) ──
 if (want('phys')) {
   const bodies = campaignFirstAt[4] ?? [];
   const PR = 1;
@@ -989,7 +991,7 @@ if (want('phys')) {
   };
   const pct = (x: number) => `${(x * 100).toFixed(0).padStart(3)}%`;
   const line = (label: string, r: PhysRow, full = true) => console.log(`  ${label.padEnd(16)} 일반 ${pct(r.nWin)} ${r.nSecs.toFixed(1).padStart(5)}초 · 강적 ${pct(r.eWin)} ${r.eSecs.toFixed(1).padStart(5)}초 · 받은 피해 ${pct(r.taken)} · 버티는 ${r.survive.toFixed(0).padStart(3)}초${full ? ` · 물공 ${r.physPer.toFixed(1)}개/판 · 보스 ${pct(r.boss)} · 탑 41층 ${pct(r.t41)} · 45층 ${pct(r.t45)} · 50층 ${pct(r.t50)}` : ''}`);
-  console.log(`\n물공 6속성 (C.105, GDD 49-9·49-11, 사람형 봇, 5단계에 갓 닿은 몸 ${bodies.length}명 × ★${MAX_DIFFICULTY} 적 풀 ${POOL_ENEMIES.length}종 × ${PR}판 · forest-lord·탑 41/45/50층 × ${BR}판, 물공 생성원 ${BALANCE.provisional.physBlocks.spawnSeconds}초${Object.entries(BALANCE.provisional.physBlocks.spawnSecondsByElement).map(([k, v]) => ` · ${k} ${v}초`).join('')}) — 목표 흙 버티기(버티는 초 ≥ 남 최대 ×1.2·강적 패배율 최저) · 혈 처치 시간 최단 · 불·물·뇌·노멀 일반 −10~−25% · 혈 뺀 5속성 강적 승률 ±10%p (후반 보류)`);
+  console.log(`\n물공 6속성 (C.105, GDD 49-9·49-11, 사람형 봇, 5단계에 갓 닿은 몸 ${bodies.length}명 × ★${MAX_DIFFICULTY} 적 풀 ${POOL_ENEMIES.length}종 × ${PR}판 · forest-lord·탑 41/45/50층 × ${BR}판, 물공 생성원 ${BALANCE.provisional.physBlocks.spawnSeconds}초${Object.entries(BALANCE.provisional.physBlocks.spawnSecondsByElement).map(([k, v]) => ` · ${k} ${v}초`).join('')}) — 목표 흙 버티기(버티는 초 ≥ 남 최대 ×1.2·강적 패배율 최저) · 혈 처치 시간 최단 · 혈 뺀 5속성 강적 승률 ±10%p (후반 보류) · 블록형 > 평타형(84장 3번, 가드)`);
   if (bodies.length < CAMPAIGNS * 0.8) failAt(4, `물공 6속성: 5단계 몸 ${bodies.length}/${CAMPAIGNS}`);
   else {
     const rows = PHYS_ELEMENT_IDS.map((el) => ({ el, on: measure(`t5:${el}:physical`, true, true), off: measure(`t5:${el}:physical`, false, true), special: measure(`t5:${el}:special`, false, false), mixed: measure(`t5:${el}:mixed`, false, false) }));
@@ -997,16 +999,19 @@ if (want('phys')) {
     const five = rows.filter((r) => r.el !== FAST);
     const mean = five.reduce((a, r) => a + r.on.eWin, 0) / five.length;
     const others = (el: string) => rows.filter((r) => r.el !== el);
+    const blockSecsOf = (r: (typeof rows)[number]) => (r.special.nSecs + r.mixed.nSecs) / 2;
     for (const r of rows) {
       line(`${r.el} 물공 후`, r.on);
       line(`${r.el} 물공 전`, r.off);
       line(`${r.el} 특수(옛)`, r.special, false);
       line(`${r.el} 혼합(옛)`, r.mixed, false);
       const ratio = r.off.nSecs ? r.on.nSecs / r.off.nSecs : 1;
-      // C.136 (GDD 84장 3번): 블록형 몸(특수·혼합, 블록을 다 쓰는 사람형 봇)이 평타형 몸(물공)보다 조금 빨리 잡는다 — 참고 출력
-      const blockSecs = (r.special.nSecs + r.mixed.nSecs) / 2;
-      console.log(`    → 블록형(특수·혼합 평균) 일반 ${blockSecs.toFixed(1)}초 vs 평타형(물공) ${r.on.nSecs.toFixed(1)}초 (×${(blockSecs / Math.max(0.1, r.on.nSecs)).toFixed(2)}, 84장 3번 목표 ×1 미만)`);
-      console.log(`    → 일반 처치 시간 ×${ratio.toFixed(2)} (${((ratio - 1) * 100).toFixed(1)}%) · 강적 승률 ${((r.on.eWin - r.off.eWin) * 100).toFixed(0)}%p · 5속성 평균과 차 ${((r.on.eWin - mean) * 100).toFixed(0)}%p · 버티는 초 ${r.off.survive.toFixed(0)} → ${r.on.survive.toFixed(0)}`);
+      // C.142 (GDD 84장 3번): 블록형 몸(특수·혼합, 블록을 다 쓰는 사람형 봇)이 평타형 몸(물공)보다 조금 빨리 잡는다
+      const blockSecs = blockSecsOf(r);
+      const bvp = blockSecs / Math.max(0.1, r.on.nSecs);
+      console.log(`    → 블록형(특수·혼합 평균) 일반 ${blockSecs.toFixed(1)}초 vs 평타형(물공) ${r.on.nSecs.toFixed(1)}초 (×${bvp.toFixed(2)}, 84장 3번 목표 ×1 미만${r.el === FAST ? ' — 혈은 49-11 속도 우선, 예외' : ''})`);
+      if (r.el !== FAST && bvp >= 1) failures.push(`물공 6속성: ${r.el} 블록형 일반 ${blockSecs.toFixed(1)}초 가 평타형(물공) ${r.on.nSecs.toFixed(1)}초 보다 빠르지 않다 (×${bvp.toFixed(2)}, GDD 84장 3번)`);
+      console.log(`    → 물공 전 대비 일반 처치 시간 ×${ratio.toFixed(2)} (${((ratio - 1) * 100).toFixed(1)}%, 참고 — 49-1 5번 ② 폐기) · 강적 승률 ${((r.on.eWin - r.off.eWin) * 100).toFixed(0)}%p · 5속성 평균과 차 ${((r.on.eWin - mean) * 100).toFixed(0)}%p · 버티는 초 ${r.off.survive.toFixed(0)} → ${r.on.survive.toFixed(0)}`);
       if (r.el === TANK) {
         const bestOther = Math.max(...others(TANK).map((o) => o.on.survive));
         const lowestLoss = Math.min(...others(TANK).map((o) => 1 - o.on.eWin));
@@ -1019,9 +1024,14 @@ if (want('phys')) {
         if (r.on.eSecs > fastestE) failAt(4, `물공 6속성: 혈 강적 처치 ${r.on.eSecs.toFixed(1)}초 가 가장 빠르지 않다 (다른 속성 최단 ${fastestE.toFixed(1)}초, GDD 49-9 혈 속도)`);
       } else {
         if (Math.abs(r.on.eWin - mean) > 0.1) failAt(4, `물공 6속성: ${r.el} ★${MAX_DIFFICULTY} 강적 승률 ${pct(r.on.eWin)} 이 혈 뺀 5속성 평균 ${pct(mean)} 과 10%p 넘게 다르다 (GDD 49-1 5번 ①·49-9)`);
-        if (ratio > 0.9 || ratio < 0.75) failAt(4, `물공 6속성: ${r.el} 일반 처치 시간 ×${ratio.toFixed(2)} (전 대비 −10~−25% 밖, GDD 49-1 5번 ②)`);
       }
     }
+    const sumBlock = five.reduce((a, r) => a + blockSecsOf(r), 0);
+    const sumPhys = five.reduce((a, r) => a + r.on.nSecs, 0);
+    const total = sumBlock / Math.max(0.1, sumPhys);
+    console.log(`  블록형 vs 평타형 (84장 3번, 혈 뺀 5속성 합): 일반 ${sumBlock.toFixed(1)}초 / ${sumPhys.toFixed(1)}초 = ×${total.toFixed(2)} (가드 0.8~0.97) · 치명 블록형 +${(CX.blockPlayCrit * 100).toFixed(0)}%p · 물공 몸 피해 ×${BALANCE.provisional.physBlocks.damage}${Object.entries(BALANCE.provisional.physBlocks.damageByElement).map(([k, v]) => ` · ${k} ×${v}`).join('')}`);
+    if (total < 0.8 || total > 0.97) failures.push(`물공 6속성: 블록형/평타형 일반 처치 시간 비 ×${total.toFixed(2)} 가 0.8~0.97 밖 (혈 뺀 5속성 합, GDD 84장 3번)`);
+    if (!(CX.blockPlayCrit > 0)) failures.push(`블록형 치명 가산 blockPlayCrit ${CX.blockPlayCrit} 이 0 이하 (GDD 84장 3번 "클률 살짝 더 높게")`);
   }
 }
 

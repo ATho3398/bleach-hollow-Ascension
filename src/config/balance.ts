@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 68;
+export const BALANCE_VERSION = 69;
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -354,6 +354,10 @@ export const BALANCE = {
       spawnSecondsByElement: { blood: 1.8 } as Record<string, number>, // C.118: 3 ÷ 1.7
       /** 블록 피해 배율 (일반 기본 공격 블록 ×1 대비) — 표: 흙·혈·불·물 0.7, 뇌 0.6, 노멀 0.8 */
       power: { earth: 0.7, blood: 0.7, fire: 0.7, water: 0.7, thunder: 0.6, normal: 0.8 } as Record<string, number>,
+      /** 평타형 대가 (GDD 84장 3번, C.142 provisional — 사용자 "블록 캐는 평타캐보다(블록 다 쓴다고 할 시), 좀 더 쎄고 클률 살짝 더 높게"): 물공 몸이 주는 피해(평타·블록) 배율. 속성별 값이 없으면 damage.
+       *  블록 보정(combat.blockPlayDamage·blockPlayCrit = 치명 +4%p)은 물공 몸에 안 붙는다(C.136). 물리 분류 몸 자체가 빨라(물공 블록을 떼도 블록형보다 빠름) 보정만으로는 못 맞춰 물공 몸 피해를 깎는다 */
+      damage: 0.78,
+      damageByElement: { fire: 0.68, earth: 0.85, blood: 0.85 } as Record<string, number>,
       /** 흙 블록 '바위 자세': 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 피해 +perHit(최대 +max, 평타 한 번에 다 씀) */
       stoneStance: { seconds: 12, takenReduction: 0.55, perHit: 0.1, max: 0.5 },
       /** 흙 특성 '굳은 주먹': 되갚기(39장)가 터지면 다음 평타 hits 회 피해 +bonus */

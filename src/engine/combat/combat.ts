@@ -214,7 +214,8 @@ export interface CombatParams {
 }
 
 /** 물공 특수 블록 (GDD 49장·49-1 2번): 계열은 블록마다 그대로, 이름·속성·효과만 바뀐다. 수치는 BALANCE.provisional.physBlocks 에서 formAbilities 가 채운다 */
-export type PhysBlock = { element: string; power: number } & (
+/** damage = 평타형 대가 (GDD 84장 3번, C.142): 물공 몸이 주는 피해 배율(없으면 1) — 블록을 다 쓰는 블록형 몸이 조금 더 세게 */
+export type PhysBlock = { element: string; power: number; damage?: number } & (
   /** 흙: 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 +perHit(최대 max, 평타 한 번에 다 씀) */
   | { effect: 'stoneStance'; seconds: number; takenReduction: number; perHit: number; max: number }
   /** 혈: 다음 평타 hits 회 +bonus, 적이 seconds 동안 공격·행동 못 함 */
@@ -1120,14 +1121,15 @@ export function healWeakenOf(s: CombatState): number {
   return (s.healWeakTicks ?? 0) > 0 ? s.params.healWeakenMultiplier : 1;
 }
 
-/** 내 공격 피해: 특성 배율 → 블록 플레이 보정(GDD 84장 3번, 물공 몸 아님) → 회복 뒤 감소(84장 2번) → 속성 피해(GDD 48장, elements = 공격 속성, 비면 무속성) → 치명타(블록은 치명 가산). 반사·독·공허 블록은 이 길을 지나지 않는다 */
+/** 내 공격 피해: 특성 배율 → 블록 플레이 보정(GDD 84장 3번, 물공 몸 아님)·평타형 대가(물공 몸, C.142) → 회복 뒤 감소(84장 2번) → 속성 피해(GDD 48장, elements = 공격 속성, 비면 무속성) → 치명타(블록은 치명 가산). 반사·독·공허 블록은 이 길을 지나지 않는다 */
 function playerHit(s: CombatState, damage: number, block: boolean, elements: readonly string[]): { damage: number; crit: boolean; elem?: ElemHit } {
   const p = s.params;
   const elem = elementDamageBonus(p, elements);
-  // 블록 플레이 보정은 블록형 몸만 (평타형 = 물공 몸은 블록이 평타를 돕는 몸이라 없음 — 84장 3번 "평타캐보다")
+  // 블록 플레이 보정은 블록형 몸만 (평타형 = 물공 몸은 블록이 평타를 돕는 몸이라 없음 — 84장 3번 "평타캐보다"), 물공 몸은 대신 평타형 대가(C.142)
   const blockPlay = block && !p.physBlock;
   const blockMult = block ? (p.blockDamageMultiplier ?? 1) * (blockPlay ? (p.blockPlayDamage ?? 1) : 1) : 1;
-  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * healWeakenOf(s) * (elem ? 1 + elem.pct / 100 : 1), blockPlay ? (p.blockPlayCrit ?? 0) : 0);
+  const physMult = p.physBlock?.damage ?? 1;
+  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * healWeakenOf(s) * (elem ? 1 + elem.pct / 100 : 1), blockPlay ? (p.blockPlayCrit ?? 0) : 0);
   return elem ? { ...hit, elem } : hit;
 }
 
