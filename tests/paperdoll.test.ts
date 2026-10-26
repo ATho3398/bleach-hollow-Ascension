@@ -112,14 +112,27 @@ describe('자세·행렬', () => {
       expect(l.art).not.toBe(lookLayers(HUMANOID, look).find((x) => x.slot === 'weapon')!.art);
     }
   });
-  it('특수1: 타격 순간 뒷팔이 수평(약 90°), 특수2: 칼 든 팔이 수평이고 칼날도 팔 방향', () => {
+  it('특수1: 타격 순간 뒷팔이 수평(약 90°), 특수2: 팔은 수평보다 낮고 칼날은 수평, 쏜 뒤 몸이 뒤로 밀린다(반동)', () => {
     const s1 = MOTIONS.skill!;
     expect(Math.abs(samplePose(HUMANOID, s1, s1.hit!).arm_R!.rot - 90)).toBeLessThan(10);
     const s2 = MOTIONS.skill2!;
     const p = samplePose(HUMANOID, s2, s2.hit!);
     const rest = HUMANOID.bones.find((b) => b.id === 'weapon')!.restRot ?? 0;
-    expect(Math.abs(p.arm_L!.rot - 90)).toBeLessThan(10);
-    expect(Math.abs(p.weapon!.rot + rest)).toBeLessThan(5);
+    expect(p.arm_L!.rot).toBeLessThan(80);
+    expect(p.arm_L!.rot).toBeGreaterThan(55);
+    // 칼날 화면 각도 = 몸통 + 앞팔 + 쉬는 각도 + 칼, 90 = 앞으로 수평
+    expect(Math.abs(p.torso!.rot + p.arm_L!.rot + rest + p.weapon!.rot - 90)).toBeLessThan(3);
+    // 반동: 타격 뒤 몸 전체가 뒤(오른쪽, +x)로, 앞으로는 안 나간다
+    const xs = s2.tracks.root!.map((k) => k[2]);
+    expect(Math.max(...xs)).toBeGreaterThan(0);
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
+  });
+  it('공격: 칼은 팔보다 크게 꺾인다(손목 스냅) — 들어올린 순간 → 타격 순간 칼날 회전이 팔 회전보다 크다', () => {
+    const atk = MOTIONS.attack!;
+    const top = atk.tracks.arm_L!.reduce((m, k) => (k[1] > m[1] ? k : m))[0];
+    const [p0, p1] = [samplePose(HUMANOID, atk, top), samplePose(HUMANOID, atk, atk.hit!)];
+    const blade = (p: typeof p0) => p.torso!.rot + p.arm_L!.rot + p.weapon!.rot;
+    expect(blade(p0) - blade(p1)).toBeGreaterThan(p0.arm_L!.rot - p1.arm_L!.rot + 30);
   });
   it('대기: 내쉰 자세(몸 1칸 아래)에서 잠깐 머문다', () => {
     const idle = MOTIONS.idle!;
