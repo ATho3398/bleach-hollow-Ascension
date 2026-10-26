@@ -318,8 +318,8 @@ describe('83장 5번 화면·문구', () => {
     const v = src('src/ui/buildPanel.ts');
     expect(v).toContain('해방 블록 — ${libName}');
     expect(v).toMatch(/liberationSlotCount\(tierIndex\)/);
-    expect(v).toContain('bha-slot--locked');
-    expect(v).toMatch(/setLiberationSlot\(build, slot, id, tierIndex\)/);
+    expect(v).toContain('bha-sgcell--locked');
+    expect(v).toMatch(/setLiberationSlot\(b, to\.index, id, tierIndex\)/);
     expect(v).toMatch(/liberationLabels\(faction, tierIndex\)/);
     expect(src('src/ui/lcdScreens.ts')).toMatch(/traitsTab\([^)]*\) => \{[\s\S]*?\}, save\.evolution\.tierIndex\)/);
   });

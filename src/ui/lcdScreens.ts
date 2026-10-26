@@ -28,7 +28,6 @@ import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
-import { viewTitle } from './bha/viewtitle';
 import { riskText } from '../data/help/riskText';
 import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
@@ -214,24 +213,27 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   return p;
 }
 
-type ChestTab = 'slots' | 'tiles' | 'items';
-const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'slots', traits: { swapTrait: null }, synth: false };
+type ChestTab = 'slots' | 'tiles' | 'items' | 'pet';
+const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'slots', traits: {}, synth: false };
 
 /** 상자(보관함): 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일(왼쪽 설명·배치 프리셋 / 오른쪽 가진 타일 — 덱 없음, GDD 85장 11번) · 물건(카테고리별 보관품, 쓰기·끼기 — GDD 86장 4·5번).
  *  C.140 최소 화면 — 카드형 UI 는 C.141 */
 export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
 
-  // 머리의 탭 줄 대신 제목 토글 "보관함 · 슬롯 ▾" (C.114). 타일 항목에는 가진 타일 수를 같이 보인다
-  const viewTitleEl = (): HTMLElement => viewTitle([{ id: 'slots', label: '슬롯' }, { id: 'tiles', label: `타일 ${tileCount()}` }, { id: 'items', label: '물건' }], chestUi.tab, (id) => {
+  // 위쪽 탭 [슬롯 · 타일 · 물건 · 펫] (C.149, 94장 A-6): 물건 탭의 분류 탭과 같은 방식. 타일·펫에는 가진 수를 같이 보인다
+  const petCount = () => inventoryOf(save, faction).filter((e) => e.category === 'pet').length;
+  const headTabs = (): HTMLElement => selectLast(categoryTabs([
+    { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: '물건' }, { id: 'pet', label: '펫', count: petCount() },
+  ], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
-  }, { prefix: title });
-  const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title: selectLast(viewTitleEl()) }), [], []);
+  }, '보관함 보기'));
+  const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title, aside: [headTabs()] }), [], []);
 
   function fill(): void {
-    // 제목 토글의 타일 항목에 보이는 타일 수를 새로 맞춘다 (제목 요소만 다시 만든다)
-    dev.view.querySelector('.bha-chest-page .bha-lcdpage__title')?.replaceChildren(selectLast(viewTitleEl()));
+    // 탭의 타일·펫 수와 눌린 탭을 새로 맞춘다 (탭 줄만 다시 만든다)
+    dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(headTabs());
     if (chestUi.tab === 'slots') {
       const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
         persist();
@@ -243,14 +245,15 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     }
     // 물건 탭은 한 열 (카드 격자가 폭을 다 쓴다), 나머지는 두 열
     const body = page.left.parentElement!;
-    body.style.gridTemplateColumns = chestUi.tab === 'items' ? 'minmax(0, 1fr)' : '1fr 1fr';
-    page.right.hidden = chestUi.tab === 'items';
-    if (chestUi.tab === 'items') {
+    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
+    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : '1fr 1fr';
+    page.right.hidden = oneCol;
+    if (oneCol) {
       const [l, r] = itemsTab(faction, save, () => {
         persist();
         onWear?.();
         fill();
-      });
+      }, chestUi.tab === 'pet');
       page.left.replaceChildren(l);
       page.right.replaceChildren(r);
       return;
@@ -369,11 +372,14 @@ export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'co
   if (e.category === 'skin' && (e.detail === '착용 중' || e.detail === '보유')) return e.cosmeticCategory ? categoryName(e.cosmeticCategory as CosmeticCategory) : '';
   return e.detail.replace(/^데리고 다니는 중 · /, '');
 }
-function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void): [HTMLElement, HTMLElement] {
+function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, petOnly = false): [HTMLElement, HTMLElement] {
+  // 펫은 위쪽 '펫' 탭이 따로 보인다 (C.149): 물건 탭의 분류에는 없다
+  const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly);
+  if (!cats.includes(itemsUi.cat)) itemsUi.cat = cats[0]!;
   const all = inventoryOf(save, faction);
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
   // 탭 숫자 = 그 탭의 카드(종류) 수 (C.146, 사용자 "i5": 이전에는 음식은 개수 합·스킨은 종류 수라 기준이 달랐다). 개수는 카드의 ×n
-  const tabs = categoryTabs(ITEM_CATEGORIES.map((c) => ({
+  const tabs = categoryTabs(cats.map((c) => ({
     id: c, label: ITEM_CATEGORY_NAMES[c], count: c === 'equipment' ? undefined : all.filter((e) => e.category === c).length,
   })), itemsUi.cat, (id) => { itemsUi.cat = id as ItemCategory; changed(); }, '보관함 분류');
   const artOf = (e: InventoryEntry): HTMLElement => {
@@ -403,7 +409,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void): 
   }));
   const empty = itemsUi.cat === 'equipment' ? '장비는 준비 중이다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
-  box.append(tabs);
+  if (!petOnly) box.append(tabs);
   if (itemsUi.cat === 'skin') {
     // 스킨 탭 칩 필터: 묶음마다 개수, 없는 묶음은 흐리게
     const chips = h('div', 'bha-itemchips');
