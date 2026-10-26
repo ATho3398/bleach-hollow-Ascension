@@ -33,7 +33,7 @@
   ],
   "bodies": {
     "shinigami": {
-      "torso": { "art": "shinigami/torso", "at": [0, 26], "size": [35, 36] },
+      "torso": { "art": "shinigami/torso", "at": [8, 26], "size": [27, 31] },
       "arm_L": { "art": "shinigami/arm_L", "at": [0, 34], "size": [12, 28] },
       "arm_R": { "art": "shinigami/arm_R", "at": [19, 34], "size": [16, 21] },
       "leg_L": { "art": "shinigami/leg_L_top", "at": [3, 52], "size": [15, 23] },
