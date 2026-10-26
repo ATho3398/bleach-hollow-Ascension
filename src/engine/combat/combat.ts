@@ -183,6 +183,9 @@ export interface CombatParams {
   liberationGaugePerBlock: number;
   liberationChainBonus: readonly number[];
   liberationStartGauge: number;
+  /** C.154 (GDD 95장 B2): 피해로도 찬다 — 적 최대 체력만큼 주면 +liberationGaugePerDealt, 내 최대 체력만큼 받으면 +liberationGaugePerTaken (평타형·블록 안 쓰는 자동전투도 해방) */
+  liberationGaugePerDealt: number;
+  liberationGaugePerTaken: number;
   /** 해방 슬롯 블록 생성원 (방에서 끼운 특성, 칸 수는 단계가 정한다 — applyEvolutionToParams). 비면 기본 블록 풀에서 나온다 */
   liberationSkills: CombatSkill[];
   /** 해방 블록(옛 22-5 kind 'liberation', C.134 부터는 생기지 않는다 — 옛 상태 호환)의 공격 분류. 속성은 내 캐릭터 속성 */
@@ -335,6 +338,8 @@ export function defaultCombatParams(): CombatParams {
     liberationGaugePerBlock: LB.gaugePerBlock,
     liberationChainBonus: LB.chainBonus,
     liberationStartGauge: 0,
+    liberationGaugePerDealt: LB.gaugePerDealt,
+    liberationGaugePerTaken: LB.gaugePerTaken,
     liberationSkills: [],
     liberationCategory: 'mixed',
     liberationSeconds: LB.seconds,
@@ -396,7 +401,7 @@ export type CombatEvent =
   | { kind: 'combo'; comboId: string }
   | { kind: 'shuffle' }
   /** 해방 시작 (GDD 83장): 지속 초, 고유 효과(레스렉시온/만해) 여부, 해방 슬롯 블록 생성원 수(0 = 기본 블록이 빠르게) */
-  | { kind: 'liberate'; seconds: number; unique: boolean; slots: number }
+  | { kind: 'liberate'; seconds: number; unique: boolean; slots: number; source: LiberationBlockSource }
   /** 해방이 풀렸다: 리스크 게이지 상승량 */
   | { kind: 'liberation-end'; risk: number }
   /** 보스 페이즈가 바뀌었다 (GDD 25-3): 새 페이즈 번호(2부터) */
@@ -770,9 +775,9 @@ export function spawnTableOf(p: CombatParams, liberation = false): { seconds: nu
   if (g > 0) rates.push({ kind: 'skill', source: guard!, family: null, rate: g * skillTotal });
   if (h > 0) rates.push({ kind: 'skill', source: heal!, family: null, rate: h * skillTotal });
   if (liberation) {
-    const list = p.liberationSkills ?? [];
-    const entries: SpawnEntry[] = list.length > 0
-      ? list.map((src) => ({ kind: 'skill' as const, source: src, family: src.family ?? null, chance: 1 / list.length }))
+    const lib = liberationBlocksOf(p);
+    const entries: SpawnEntry[] = lib.skills.length > 0
+      ? lib.skills.map((src) => ({ kind: 'skill' as const, source: src, family: src.family ?? null, chance: 1 / lib.skills.length }))
       : blockPoolOf(p).map((e) => ({ kind: 'skill' as const, source: e.source, family: e.family, chance: e.chance }));
     return { seconds: 1 / Math.max(1e-6, skillTotal), entries };
   }
@@ -780,6 +785,16 @@ export function spawnTableOf(p: CombatParams, liberation = false): { seconds: nu
   if (voidRate > 0) rates.push({ kind: 'void', source: null, family: null, rate: voidRate });
   const total = Math.max(1e-6, rates.reduce((a, x) => a + x.rate, 0));
   return { seconds: 1 / total, entries: rates.map((x) => ({ kind: x.kind, source: x.source, family: x.family, chance: x.rate / total, ...(x.phys ? { phys: true } : {}) })) };
+}
+
+/** 해방 중에 나오는 블록 (GDD 83장 3번 · 95장 B2): 해방 칸에 끼운 블록 → 칸이 비면 장착 본체 블록(흡수 특성) → 그것도 없으면 기본 블록 풀(빈 skills).
+ *  C.154 전에는 칸이 비면 바로 기본 블록(막기·회복 포함)이 나와 '해방했는데 평소보다 약한 블록'이 쏟아졌다 */
+export type LiberationBlockSource = 'slots' | 'body' | 'basic';
+export function liberationBlocksOf(p: Pick<CombatParams, 'liberationSkills' | 'skills'>): { source: LiberationBlockSource; skills: CombatSkill[] } {
+  const slots = p.liberationSkills ?? [];
+  if (slots.length > 0) return { source: 'slots', skills: slots };
+  if (p.skills.length > 0) return { source: 'body', skills: p.skills };
+  return { source: 'basic', skills: [] };
 }
 
 /** 출현표에서 하나를 뽑는다 (전투 난수) */
@@ -1273,6 +1288,8 @@ export function drainCombatEvents(s: CombatState): CombatEvent[] {
 
 function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
   if (s.status !== 'playing') return;
+  // 해방 게이지 (95장 B2): 실제로 깎은 체력(졸개 몫 포함, 넘친 피해 제외) ÷ 적 최대 체력
+  if (amount > 0 && s.enemy.maxHp > 0) addGauge(s, (Math.min(amount, s.enemy.hp + (s.boss?.minion?.hp ?? 0)) / s.enemy.maxHp) * s.params.liberationGaugePerDealt);
   // 졸개 (보스 기믹 summon): 내 피해를 먼저 받는 방패. 넘친 피해는 보스에게 간다
   const minion = s.boss?.minion;
   if (minion) {
@@ -1404,6 +1421,8 @@ function takeDamage(s: CombatState, amount: number): void {
     // 물살: 내가 맞으면 연속 평타 수가 0 으로
     if (s.params.abilityEffects.current) s.currentHits = 0;
     s.damageTaken = (s.damageTaken ?? 0) + amount;
+    // 해방 게이지 (95장 B2): 받은 피해(보호막에 막힌 몫 포함) ÷ 내 최대 체력
+    if (s.player.maxHp > 0) addGauge(s, (amount / s.player.maxHp) * s.params.liberationGaugePerTaken);
   }
   if (s.player.shield && s.player.shield > 0) {
     const absorbed = Math.min(s.player.shield, amount);
@@ -1442,7 +1461,7 @@ function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, fami
   return true;
 }
 
-/** 해방 게이지 적립 (GDD 83장, 옛 저장 게이지): 블록을 쓸 때 찬다. 해방 중에는 차지 않고(끝나면 0 부터), 100 에서 멈춘다 */
+/** 해방 게이지 적립 (GDD 83장, 옛 저장 게이지): 블록을 쓸 때 + 피해를 주고받을 때(95장 B2) 찬다. 해방 중에는 차지 않고(끝나면 0 부터), 100 에서 멈춘다 */
 function addGauge(s: CombatState, v: number): void {
   const lb = s.liberation;
   if (!s.params.liberationEnabled || liberationActive(s) || lb.gauge >= LIBERATION_GAUGE_MAX) return;
@@ -1607,7 +1626,7 @@ function liberate(s: CombatState): boolean {
     // 지금 기다리는 평타 간격도 공격 속도만큼 줄인다
     s.player.attackTimer = Math.max(1, Math.round(s.player.attackTimer / p.liberationAttackSpeed));
   }
-  emit(s, { kind: 'liberate', seconds: p.liberationSeconds, unique: p.liberationUnique, slots: p.liberationSkills.length });
+  emit(s, { kind: 'liberate', seconds: p.liberationSeconds, unique: p.liberationUnique, slots: p.liberationSkills.length, source: liberationBlocksOf(p).source });
   return true;
 }
 

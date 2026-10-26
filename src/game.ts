@@ -903,21 +903,37 @@ export interface IdleAccrual {
   pending: IdlePending;
 }
 
-/** 대기 모드 쌓기 (GDD 85장 6번·92장 3번): 다시 열 때 꺼 둔 시간(마지막 접속 시각 기준)을 받을 보상(idlePending)에 더한다 — 지급은 claimIdle([받기]).
- *  applyAbsence(허기·접속 시각 갱신) 보다 먼저 부른다 — 자동 모험 시간은 쌓을 때의 허기로 정하고(허기는 받기와 무관하게 applyAbsence 가 바로 올린다), 접속 시각은 바꾸지 않는다.
- *  원정 중간 저장이 있거나 첫 원정 전이면, 또는 minMinutes 미만이면 쌓지 않는다(null). 합계는 maxHours 까지 — 넘친 시간은 버린다 */
-export function accrueIdle(save: SaveData, nowMs: number = Date.now()): IdleAccrual | null {
-  if (save.activeExpedition != null || save.runLog.runs.length === 0) return null;
+/** 대기 모드 쌓기 (GDD 85장 6번·92장 3번·95장 B1): 마지막 정산 시각(lastSeenAt) 뒤로 흐른 실제 시간을 받을 보상(idlePending)에 더한다 — 지급은 claimIdle([받기]).
+ *  정산 시각은 하나(lastSeenAt)뿐이다: 다시 열 때(꺼 둔 시간) · 켜 둔 동안 1분마다와 저장할 때(tickIdle) 모두 여기서 쌓고, 쌓은 뒤에는 늘 markSeen 으로 시각을 지금으로 옮긴다 → 같은 시간을 두 번 세지 않는다.
+ *  다시 열 때는 applyAbsence(허기·접속 시각 갱신) 보다 먼저 부른다 — 자동 모험 시간은 쌓을 때의 허기로 정하고, 이 함수는 접속 시각을 바꾸지 않는다.
+ *  첫 원정 전이면 쌓지 않는다(null). 꺼 둔 시간(online false)은 원정 중간 저장이 있으면 쌓지 않는다(허기도 안 오르는 C.140 규칙) — 켜 둔 동안은 원정·전투 중에도 쌓인다.
+ *  10분 미만 버림(minMinutes)은 쌓인 합계 기준(95장 B1): 조각도 더해 두고, 합계가 minMinutes 이상일 때만 배지·[받기](idleClaimable). 합계는 maxHours 까지 — 넘친 시간은 버린다 */
+export function accrueIdle(save: SaveData, nowMs: number = Date.now(), online = false): IdleAccrual | null {
+  if (save.runLog.runs.length === 0) return null;
+  if (!online && save.activeExpedition != null) return null;
   const hours = offlineHours(save.lastSeenAt, nowMs);
-  if (!idleCounts(hours)) return null;
+  if (!(hours > 0)) return null;
   const IX = BALANCE.provisional.idle;
   const prev = save.idlePending;
   const room = Math.max(0, IX.maxHours - (prev?.hours ?? 0));
   const added = Math.min(hours, room);
-  const active = idleActiveHours(hours, save.nest) * (hours > 0 ? added / hours : 0);
+  const active = idleActiveHours(hours, save.nest) * (added / hours);
   const pending: IdlePending = { from: prev?.from ?? save.lastSeenAt, hours: (prev?.hours ?? 0) + added, activeHours: (prev?.activeHours ?? 0) + active };
   if (pending.hours > 0) save.idlePending = pending;
   return { awayHours: Math.max(0, (nowMs - save.lastSeenAt) / 3_600_000), added, pending };
+}
+
+/** 켜 둔 동안 쌓기 (95장 B1): 방·원정·전투 어디서든 1분마다·저장할 때 부른다 — 흐른 시간을 쌓고 정산 시각을 지금으로. 쌓였으면 true */
+export function tickIdle(save: SaveData, nowMs: number = Date.now()): boolean {
+  const r = accrueIdle(save, nowMs, true);
+  markSeen(save, nowMs);
+  return r !== null && r.added > 0;
+}
+
+/** 받을 수 있나 (95장 B1): 쌓인 합계가 minMinutes 이상 — 배지·[받기]·복귀 창의 기준 */
+export function idleClaimable(save: Pick<SaveData, 'idlePending'>): boolean {
+  const p = save.idlePending;
+  return p !== null && idleCounts(p.hours);
 }
 
 /** 받을 보상 미리 보기 (아이콘 창·복귀 창): 지금 받으면 들어올 기준량 (타일은 장 수만 — 무엇이 나올지는 받을 때 뽑는다). 진화 걸음·노력치·먹이는 받을 때 상한에서 잘릴 수 있다 */
@@ -928,11 +944,11 @@ export function idlePendingYield(save: Pick<SaveData, 'idlePending' | 'tiles'>):
   return save.tiles.unlocked ? y : { ...y, tiles: 0 };
 }
 
-/** [받기] (GDD 92장 3번): 쌓인 받을 보상을 한 번에 지급하고 비운다. 런 로그에는 요약 1건만 (88장 7번). 받을 것이 없으면 null.
+/** [받기] (GDD 92장 3번): 쌓인 받을 보상을 한 번에 지급하고 비운다. 런 로그에는 요약 1건만 (88장 7번). 받을 것이 없거나 합계가 minMinutes 미만이면 null.
  *  지급: 골드 · 걸음(다음 진화에 필요한 만큼까지 — 진화는 다음 원정 귀환 때 평소처럼) · 노력치(지금 비율대로, 상한까지) · 타일(열렸을 때, 뽑기 표) · 먹이(보관 상한까지) · 데리고 다니는 펫 친밀도(90장 5번) */
 export function claimIdle(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): IdleRecord | null {
   const p = save.idlePending;
-  if (!p) return null;
+  if (!p || !idleClaimable(save)) return null;
   save.idlePending = null;
   const y = idleYield(p.activeHours);
   const IX = BALANCE.provisional.idle;
@@ -962,7 +978,7 @@ export function claimIdle(save: SaveData, nowMs: number = Date.now(), rand: () =
 
 /** 쌓고 바로 받기 (C.140 의 자동 정산과 같은 결과 — 시험·도구용). 이번에 셀 만큼 꺼 두지 않았으면 null */
 export function settleIdle(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): IdleRecord | null {
-  return accrueIdle(save, nowMs) ? claimIdle(save, nowMs, rand) : null;
+  return accrueIdle(save, nowMs) && idleClaimable(save) ? claimIdle(save, nowMs, rand) : null;
 }
 
 /** 스토리 화가 끝났을 때 (GDD 25-4·25-7): 런 로그(보스전·화), 보스 도감, 보상 — 화 클리어 골드·먹이(매번), 첫 클리어 영옥, 장 첫 완주 영옥, 보스 첫 처치 영옥.

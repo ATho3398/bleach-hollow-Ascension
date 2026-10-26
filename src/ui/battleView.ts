@@ -29,7 +29,7 @@ import {
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
 import { elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
-import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, skillBlockLabel, type BattleLabels } from './labels';
+import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -169,7 +169,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       // 진화체 특성 발동 (C.89, GDD 39장 5번)
       return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
-      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 ${e.slots > 0 ? '해방 블록' : '기본 블록'}이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
+      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 ${e.source === 'slots' ? '해방 칸 블록' : e.source === 'body' ? '장착 블록' : '기본 블록'}이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
     case 'liberation-end':
       return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` };
     case 'end':
@@ -379,6 +379,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libMeta = el('span', 'bha-xs bha-t2 bha-v2rel__meta');
   const libGauge = v2Gauge('release', 0, { width: '100%', label: labels.liberation.name });
   libBtn.append(libSeal, libName, libTemp, libMeta, libGauge);
+  // 무엇으로 차는지·해방 중 나오는 블록 한 줄 (GDD 95장 B2 ③, C.154): 해방 카드는 높이가 꽉 차서 바로 옆 범례 줄 끝에 (넘치면 말줄임, 전체는 title)
+  const hintFull = liberationHint(labels, p);
+  const hintDuring = hintFull.slice(hintFull.lastIndexOf(' · ') + 3); // 해방 중에는 나오는 블록만 ('해방 중 장착 탄·조')
+  const libHint = el('span', 'bha-xs bha-t2 bha-v2foename__text', hintFull);
+  libHint.style.flex = '1 1 0'; // 남는 폭만 쓴다 — 범례·해방 칩을 밀지 않게
+  libHint.style.minWidth = '0';
+  libHint.title = libHint.textContent ?? '';
+  libHint.dataset.sc = 'liberation-hint';
+  libHint.hidden = !libOn;
   libBtn.hidden = !libOn;
   const libChip = v2Chip('', 'default', { icon: 'i-special' });
   libChip.classList.add('bha-v2libchip');
@@ -393,7 +402,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
-  legendRow.append(libChip, legend, meStatus);
+  legendRow.append(libChip, legend, meStatus, libHint);
   const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
   controls.append(legendRow, tray.root, ...(libOn ? [libBtn] : []));
@@ -933,6 +942,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     app.classList.toggle('is-liberated', libActive);
     app.classList.toggle('is-unique', libActive && labels.liberation.unique);
     setHidden(libChipRoot.root, !libActive);
+    setText(libHint, libActive ? hintDuring : hintFull);
     if (libActive) setText(libChipRoot.value, secondsText(s.liberation.ticksLeft * p.tickSeconds));
     if (libOn) {
       const lb = s.liberation;

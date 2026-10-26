@@ -45,7 +45,7 @@ describe('효과 신호', () => {
     expect(cueOf(block(2), 3)).toBe('chain2');
     expect(cueOf(block(3), 3)).toBe('chain3');
     expect(cueOf(block(1, { block: 'combo' }), 3)).toBe('special');
-    expect(cueOf({ kind: 'liberate', seconds: 10, unique: false, slots: 1 }, 3)).toBe('special'); // 저장 필살기 자리 → 해방 (C.134)
+    expect(cueOf({ kind: 'liberate', seconds: 10, unique: false, slots: 1, source: 'slots' }, 3)).toBe('special'); // 저장 필살기 자리 → 해방 (C.134)
     expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: true, reflected: 0, matchup: 'neutral' }, 3)).toBe('guard');
     expect(cueOf({ kind: 'heavy-hit', damage: 9, guarded: false, reflected: 0, matchup: 'neutral' }, 3)).toBe('heavyhit');
     expect(cueOf({ kind: 'enemy-attack', damage: 2, guarded: false, matchup: 'neutral' }, 3)).toBe('hurt');

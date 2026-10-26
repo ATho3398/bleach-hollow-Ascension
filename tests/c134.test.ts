@@ -51,17 +51,17 @@ describe('83장 1번 저장형 필살기 삭제 → 해방 게이지', () => {
     for (const f of FACTIONS) expect('storedSkillName' in f).toBe(false);
   });
 
-  it('게이지는 옛 저장 게이지 그대로: 블록당 +12, 체인 보너스 +4/+10, 100 에서 멈춘다', () => {
-    expect(LB.gaugePerBlock).toBe(12);
+  it('게이지: 블록당 +8(C.154: 12 → 8, 피해로도 참 — 95장 B2), 체인 보너스 +4/+10, 100 에서 멈춘다', () => {
+    expect(LB.gaugePerBlock).toBe(8);
     expect(LB.chainBonus).toEqual([0, 4, 10]);
     expect(LB.gaugeMax).toBe(100);
-    const s = quiet(mk({ liberationStartGauge: 0 }));
+    const s = quiet(mk({ liberationStartGauge: 0, liberationGaugePerDealt: 0, liberationGaugePerTaken: 0 }));
     s.tray = [blk('basic-skill', 'family-a')];
     applyInput(s, { type: 'use', cell: 0 });
-    expect(s.liberation.gauge).toBe(12);
+    expect(s.liberation.gauge).toBe(8);
     s.tray = [blk('basic-skill', 'family-a'), blk('basic-skill', 'family-a'), blk('basic-skill', 'family-a')];
     applyInput(s, { type: 'use', cell: 0 });
-    expect(s.liberation.gauge).toBe(12 + 36 + 10);
+    expect(s.liberation.gauge).toBe(8 + 24 + 10);
     for (let i = 0; i < 10; i++) {
       s.tray = [blk('basic-skill', 'family-a')];
       applyInput(s, { type: 'use', cell: 0 });
