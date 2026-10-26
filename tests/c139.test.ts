@@ -276,7 +276,7 @@ describe('11 수련 미니게임 수치는 balance.ts 로 (값 그대로)', () =
 describe('12 전투 HUD hidden 은 바뀔 때만', () => {
   it('프레임 갱신의 칩 hidden 대입이 setHidden 으로', () => {
     const b = read('src/ui/battleView.ts');
-    for (const n of ['minionChip', 'voidChip.root', 'chain3Chip.root', 'libChip.root']) expect(b).toContain(`setHidden(${n}, `);
+    for (const n of ['minionChip', 'voidChip.root', 'chain3Chip.root', 'libChipRoot.root']) expect(b).toContain(`setHidden(${n}, `);
     expect(read('src/ui/bha/battle.ts')).toContain('if (node.hidden !== hidden) node.hidden = hidden;');
   });
 });

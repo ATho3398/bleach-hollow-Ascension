@@ -1,6 +1,7 @@
 // v2 공통 컴포넌트 갤러리 (C.151, 개발 전용 — `npm run dev` 에서 `?v2gallery=<종족 theme 값>`). 배포 빌드에는 들어가지 않는다 (main.ts 의 import.meta.env.DEV 가드).
 // 컴포넌트 시트(docs/bha-ui-handoff/design/sheets/Components.dc.html)와 같은 항목을 한 화면씩 보여 준다.
 import { FACTIONS } from '../../../data/factions';
+import { V2_GLYPH, V2_PATH, setV2Locked, setV2Pips, v2AttackKind, v2BlockEl, v2ChainEl, v2FamilyPath, v2TrayEl } from './battle';
 import { mountV2Root } from './root';
 import { v2Badge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Modal, v2Notice, v2Panel, v2Tabs, v2TempChip, v2TitleToggle, v2Toast } from './components';
 
@@ -20,11 +21,70 @@ function section(title: string, ...nodes: (Node | string)[]): HTMLElement {
   return s;
 }
 
+/** 스킬 블록 시트 (각인 컷): 종류·상태·체인 묶음을 실제 크기 블록 바로 — 핸드오프 BlockStyles 시트와 같은 구성 */
+function mountBlockSheet(root: HTMLElement, faction: (typeof FACTIONS)[number]): void {
+  const fx = faction.families.map((f) => ({ abbr: f.abbr, path: v2FamilyPath(f.fx), id: f.id }));
+  const a = fx[0]!;
+  const b = fx[1] ?? a;
+  const c = fx[2] ?? a;
+  const make = (kind: Parameters<typeof v2BlockEl>[0]['kind'], path: string, glyph: string, label: string, o: { weak?: boolean; pips?: number; locked?: boolean } = {}): HTMLElement => {
+    const n = v2BlockEl({ kind, path, glyph, label, uid: 0, weak: !!o.weak });
+    setV2Pips(n, o.pips ?? 1);
+    if (o.locked) setV2Locked(n, true);
+    return n;
+  };
+  const bar = (label: string, items: ({ block: HTMLElement } | { chain: HTMLElement[]; level: number })[]): HTMLElement => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:grid;grid-template-columns:50px 488px;gap:8px;align-items:end';
+    const t = document.createElement('span');
+    t.className = 'bha-xs bha-b bha-t2';
+    t.textContent = label;
+    const tray = v2TrayEl(8);
+    tray.root.style.cssText = 'position:relative;left:auto;right:auto;top:auto;margin-top:14px';
+    let col = 1;
+    const cellFor = (i: number): HTMLElement => tray.cells[i]!;
+    for (const it of items) {
+      if ('block' in it) cellFor(col++ - 1).append(it.block);
+      else {
+        const start = col;
+        for (const blk of it.chain) cellFor(col++ - 1).append(blk);
+        tray.grid.append(v2ChainEl({ start, len: it.chain.length, level: it.level, max: it.level >= 3, over: false }, '체인'));
+      }
+    }
+    wrap.append(t, tray.root);
+    return wrap;
+  };
+  const body = document.createElement('div');
+  body.style.cssText = 'position:absolute;inset:8px 12px;display:flex;flex-direction:column;gap:6px;overflow:auto';
+  body.dataset.gallery = '';
+  body.append(
+    bar('종류', [
+      { block: make('guard', V2_PATH.guard, V2_GLYPH.guard, '막기') },
+      { block: make(v2AttackKind('normal'), a.path, a.abbr, a.abbr) },
+      { chain: [make(v2AttackKind('fire'), b.path, b.abbr, b.abbr, { pips: 2 }), make(v2AttackKind('fire'), b.path, b.abbr, b.abbr, { pips: 2 })], level: 2 },
+      { block: make(v2AttackKind('thunder'), c.path, c.abbr, c.abbr, { weak: true }) },
+      { block: make('heal', V2_PATH.heal, V2_GLYPH.heal, '회복') },
+      { block: make('void', V2_PATH.void, V2_GLYPH.void, '공허') },
+    ]),
+    bar('속성', [
+      ...(['normal', 'fire', 'thunder', 'water', 'earth', 'poison', 'blood', 'kyo'] as const).slice(0, 8).map((e) => ({ block: make(v2AttackKind(e), a.path, a.abbr, e) })),
+    ]),
+    bar('콤보·해방·잠김', [
+      { block: make('combo', V2_PATH.combo, V2_GLYPH.combo, '콤보') },
+      { chain: [make('fire', a.path, a.abbr, a.abbr, { pips: 3 }), make('fire', a.path, a.abbr, a.abbr, { pips: 3 }), make('fire', a.path, a.abbr, a.abbr, { pips: 3 })], level: 3 },
+      { block: make('release', V2_PATH.release, V2_GLYPH.release, '해방') },
+      { block: make('normal', a.path, a.abbr, '봉인', { locked: true }) },
+    ]),
+  );
+  root.append(body);
+}
+
 export function mountGallery(host: HTMLElement, themeParam: string): void {
   host.style.cssText = 'position:fixed;inset:0';
   // 테마 = 종족 설정의 theme 값 (비우면 첫 종족)
   const theme = FACTIONS.find((f) => f.theme === themeParam)?.theme ?? FACTIONS[0]!.theme;
   const { root } = mountV2Root(host, { theme });
+  if (new URLSearchParams(location.search).get('page') === 'blocks') return mountBlockSheet(root, FACTIONS.find((f) => f.theme === theme) ?? FACTIONS[0]!);
   const body = document.createElement('div');
   body.dataset.gallery = '';
   body.style.cssText = 'position:absolute;inset:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;align-content:start;overflow:auto';

@@ -131,7 +131,7 @@ describe('피해 숫자 크기 단계 (28장 4번)', () => {
 describe('전투 안내·로그 (28장 3번)', () => {
   it('가운데 실시간 안내 대신 [로그] 버튼 + 닫힌 목록', () => {
     const v = src('src/ui/battleView.ts');
-    expect(v).toContain("button({ label: '로그'");
+    expect(v).toContain("v2Button({ label: '로그'"); // C.152: 핸드오프 v2 버튼
     expect(v).toMatch(/log\.hidden = true/);
     expect(src('src/ui/bha/battle-scene.css')).toContain('.bha-battle__logpanel[hidden] { display: none; }');
   });
