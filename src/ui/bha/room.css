@@ -195,3 +195,7 @@
 .bha-room__idlebadge { margin-left: var(--bha-sp-2); padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: var(--bha-accent); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
 .bha-modal__list { margin: var(--bha-sp-3) 0 0; padding: 0; list-style: none; display: grid; gap: var(--bha-sp-1); font-size: var(--bha-fs-sm); color: var(--bha-text-1); text-align: center; }
 .bha-modal__list .bha-small { color: var(--bha-text-2); }
+
+/* ── 종이인형 (GDD 96장): 부위 그림을 같은 캔버스에 겹치고 뼈 행렬을 transform 으로 건다 ── */
+.bha-doll { position: relative; flex: none; }
+.bha-doll__part { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; image-rendering: pixelated; pointer-events: none; }
