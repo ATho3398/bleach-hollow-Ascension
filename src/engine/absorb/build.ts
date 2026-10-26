@@ -3,6 +3,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { getTrait } from '../../data/traits';
+import { NORMAL_ELEMENT } from '../../data/elements';
 import type { AttackCategory, PassiveStat } from '../../data/schema';
 import { getFaction } from '../../data/factions';
 import type { CombatParams, CombatSkill, FamilyCombat } from '../combat/combat';
@@ -38,9 +39,16 @@ export function addEnhance(b: BuildState, element: string): number {
   return m[element]!;
 }
 
-/** 그 속성 공격 특성 블록 위력 배율: 1 + attackPerLevel × 단계 */
+/** 강화 단계 → 공격 블록 위력 가산 (C.147): 앞 earlyLevels 단계는 earlyPerLevel, 그 뒤는 attackPerLevel */
+export function enhanceAttackBonus(level: number): number {
+  const lv = Math.min(EH.max, Math.max(0, Math.floor(level)));
+  const early = Math.min(lv, EH.earlyLevels);
+  return EH.earlyPerLevel * early + EH.attackPerLevel * (lv - early);
+}
+
+/** 그 속성 공격 특성 블록 위력 배율: 1 + enhanceAttackBonus(단계). 노멀은 기본 공격 블록에도 (buildCombatParams basicAttackEnhance) */
 export function enhanceAttackMultiplier(b: Pick<BuildState, 'enhance'>, element: string): number {
-  return 1 + EH.attackPerLevel * enhanceLevel(b, element);
+  return 1 + enhanceAttackBonus(enhanceLevel(b, element));
 }
 
 /** 기본 막기·회복 블록 위력 배율: 1 + min(guardHealMax, guardHealPerLevel × 모든 속성 단계 합) */
@@ -266,5 +274,6 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
     blockSpawnMultiplier: pm.blockSpawn,
     critChance: BALANCE.provisional.combat.critChance + critChanceBonus(b),
     guardHealEnhance: enhanceGuardHealMultiplier(b),
+    basicAttackEnhance: enhanceAttackMultiplier(b, NORMAL_ELEMENT),
   };
 }

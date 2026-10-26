@@ -19,7 +19,7 @@ import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, settleIdle,
+  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -80,9 +80,8 @@ import { carriedPet } from '../engine/pet';
 import { petNoticeOf } from '../inventory';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
-import { showIdleSummary } from './idleView';
+import { idleBadge, showIdlePanel, showIdleReturn } from './idleView';
 import { deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
-import type { IdleRecord } from '../engine/runLog';
 import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
@@ -178,7 +177,7 @@ export function startApp(host: HTMLElement): void {
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
   let hungryGreet = false;
   /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
-  let idleReport: IdleRecord | null = null;
+  let idleReport: IdleAccrual | null = null;
   /** 떠돌이 상인 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
   let wandererAnnounced = -1;
   /** 방 안내(GDD 64·67장)를 잠시 미룬다: 귀환 결과 다음에 진화 연출이 뜰 차례면 연출이 끝나고 방으로 돌아올 때 띄운다 */
@@ -439,8 +438,8 @@ export function startApp(host: HTMLElement): void {
     dress(loaded.wear);
     playTick = Date.now();
     resumeNote = '';
-    // 대기 모드 (GDD 85장 6번): 꺼 둔 실제 시간(최대 24시간)을 자동 모험으로 정산 — 허기·접속 시각 갱신(applyAbsence)보다 먼저
-    idleReport = slot !== 0 ? settleIdle(loaded) : null;
+    // 대기 모드 (GDD 85장 6번·92장): 꺼 둔 실제 시간을 받을 보상에 쌓는다(합계 최대 24시간, 지급은 [받기]) — 허기·접속 시각 갱신(applyAbsence)보다 먼저
+    idleReport = slot !== 0 ? accrueIdle(loaded) : null;
     // 꺼 둔 동안 허기 (GDD 24-1): 원정 중간 저장이 있으면 오르지 않는다
     hungryGreet = applyAbsence(loaded) >= BALANCE.provisional.nest.idleHungerNotice;
     armBackTrap();
@@ -595,16 +594,25 @@ export function startApp(host: HTMLElement): void {
       persist();
       window.setTimeout(() => notes.forEach((n, i) => showToast(n, i, 5200)), 2600);
     }
-    // 대기 모드 결과 요약 (GDD 85장 6번): 방이 그려진 뒤 한 번
+    // 대기 모드 복귀 창 (GDD 92장 2번): 방이 그려진 뒤 한 번 — [나중에]로 닫으면 보상은 방 '대기 보상' 아이콘에 남는다
+    const claim = () => {
+      const r = claimIdle(s);
+      if (r) {
+        persist();
+        nav.top?.render();
+      }
+      return r;
+    };
     const idle = idleReport;
     idleReport = null;
-    if (idle) window.setTimeout(() => showIdleSummary(idle, faction), 500);
+    if (idle && s.idlePending) window.setTimeout(() => showIdleReturn(idle, s, faction, claim), 500);
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,
       resume: active.ok
         ? { info: `${active.exp.lap}바퀴 · ${active.exp.pos}번 칸`, onResume: () => open('expedition', () => resumeExpedition(active.exp), true) }
         : null,
       resumeNote,
+      idle: { badge: idleBadge(s), onOpen: () => showIdlePanel(s, faction, claim) },
       persist,
       // 새 세이브의 첫 원정은 고정 길 튜토리얼 (GDD 67장)
       onDepart: () => (firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)),

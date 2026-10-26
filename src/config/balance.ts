@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 70;
+export const BALANCE_VERSION = 71; // C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -84,7 +84,9 @@ export const BALANCE = {
       /** 속성 강화 (GDD 84장 8번, C.136 provisional — 사용자 "이미 흙-교를 먹어도 흙 잡으면 계속 먹을 수 있게 … 각 속성별로 100번까지 강화"): 특성·속성 카운트가 있는 갈래(둘 다·속성만)로 흡수할 때마다
        *  그 적 속성의 강화 횟수 +1 (빌드에 저장, 상한 없이 센다). 효과 단계 = min(횟수, max). 그 속성 공격 특성 블록 위력 + attackPerLevel × 단계 (100 = +40%).
        *  막기·회복은 속성이 없어(84장 7번) 기본 막기·회복 블록 위력 + guardHealPerLevel × (모든 속성 단계 합), 최대 +guardHealMax (코드 판단: 막기·회복을 세지게 할 '강화'의 출처) */
-      enhance: { max: 100, attackPerLevel: 0.004, guardHealPerLevel: 0.0005, guardHealMax: 0.3 },
+      /*  C.147 (GDD 94장 B — 가진 속성 흡수 = 강화만, 노멀 = 기본 블록): 같은 속성 특성 3개(속성 보너스 +50%)를 더는 모을 수 없어 강화가 주된 성장 →
+       *  앞 earlyLevels 단계는 earlyPerLevel(단계당 +5%, 10단계 +50% = 옛 속성 보너스만큼), 그 뒤는 attackPerLevel(+0.4%) — 100 = +86%. 노멀 강화는 기본 공격 블록에 (물공 블록 제외) */
+      enhance: { max: 100, earlyLevels: 10, earlyPerLevel: 0.05, attackPerLevel: 0.004, guardHealPerLevel: 0.0005, guardHealMax: 0.3 },
     },
     /** 특수 속성(혈·독·허) 적 등장 숨김 (GDD 75장, C.127, provisional — 옛 49-7 ① 특성 숨김 absorb.specialTraits 를 옮김): 원정 출현 풀에서 혈·독·허 적의 가중치 × 이 값(여럿이면 가장 큰 값).
      *  강적 elite / 바퀴 변이 효과 specialEnemyChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 difficulty. 그 밖(★1~2 일반 적 칸·먹잇감 둥지 등)은 0 = 안 나오고 다른 속성 적으로.
@@ -356,8 +358,8 @@ export const BALANCE = {
       power: { earth: 0.7, blood: 0.7, fire: 0.7, water: 0.7, thunder: 0.6, normal: 0.8 } as Record<string, number>,
       /** 평타형 대가 (GDD 84장 3번, C.142 provisional — 사용자 "블록 캐는 평타캐보다(블록 다 쓴다고 할 시), 좀 더 쎄고 클률 살짝 더 높게"): 물공 몸이 주는 피해(평타·블록) 배율. 속성별 값이 없으면 damage.
        *  블록 보정(combat.blockPlayDamage·blockPlayCrit = 치명 +4%p)은 물공 몸에 안 붙는다(C.136). 물리 분류 몸 자체가 빨라(물공 블록을 떼도 블록형보다 빠름) 보정만으로는 못 맞춰 물공 몸 피해를 깎는다 */
-      damage: 0.78,
-      damageByElement: { fire: 0.68, earth: 0.85, blood: 0.85 } as Record<string, number>,
+      damage: 0.76, // C.147: 0.78 → 0.76 (94장 B 로 블록형이 속성 보너스를 잃어 84장 3번 가드 ×0.98 — 블록형이 조금 빠르게)
+      damageByElement: { fire: 0.65, earth: 0.85, blood: 0.85 } as Record<string, number>,
       /** 흙 블록 '바위 자세': 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 피해 +perHit(최대 +max, 평타 한 번에 다 씀) */
       stoneStance: { seconds: 12, takenReduction: 0.55, perHit: 0.1, max: 0.5 },
       /** 흙 특성 '굳은 주먹': 되갚기(39장)가 터지면 다음 평타 hits 회 피해 +bonus */

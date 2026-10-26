@@ -6,6 +6,8 @@ import { getOverlayHost, registerLayer } from './bha/overlayHost';
 export interface ConfirmOptions {
   title: string;
   body?: string;
+  /** 본문 아래 덧붙일 내용 (C.147 대기 보상 목록) */
+  content?: HTMLElement;
   yes?: string;
   no?: string;
   /** 위험한 선택(덮어쓰기 등)이면 예 버튼을 danger 로 */
@@ -25,6 +27,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   const modal = el('div', 'bha-modal');
   modal.append(el('h2', 'bha-modal__title', o.title));
   if (o.body) modal.append(el('p', 'bha-modal__body', o.body));
+  if (o.content) modal.append(o.content);
   let closed = false;
   let unregister: () => void = () => {};
   let untrap: () => void = () => {};

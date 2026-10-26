@@ -14,7 +14,9 @@ const elementsOf = (ids: string[]) => new Set(ids.map((id) => getTrait(id).eleme
 describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', () => {
   it('독 일반·독 강적 → 후보는 독 특성만, 여러 시드·후보 +n 에서도', () => {
     for (let seed = 1; seed <= 60; seed++) {
-      for (const id of ['poison-basic', 'poison-heavy-chain', 'water-basic', 'thunder-stance', 'normal-basic']) {
+      // C.147 (94장 B): 노멀은 기본 블록을 가진 것으로 봐 후보 없음(강화만)
+      expect(buildOffer(createRng(seed), getEnemy('normal-basic'), newBuild(), WON, seed % 3, null).candidates).toEqual([]);
+      for (const id of ['poison-basic', 'poison-heavy-chain', 'water-basic', 'thunder-stance']) {
         const enemy = getEnemy(id);
         const o = buildOffer(createRng(seed), enemy, newBuild(), WON, seed % 3, null);
         expect(o.candidates.length).toBeGreaterThan(0);
@@ -91,7 +93,9 @@ describe('C.125 71장: 포식 조건 삭제', () => {
     expect(exp.phase).toBe('absorb');
     expect(exp.absorbOffer!.reasons).toEqual(['victory']);
     // 다시 뽑기도 적 속성 안에서
-    expect(rerollAbsorb(exp)).toEqual({ ok: true });
+    // (C.147: 노멀·가진 속성 적이면 후보가 없어 다시 뽑기도 없다 — 94장 B)
+    if (exp.absorbOffer!.candidates.length > 0) expect(rerollAbsorb(exp)).toEqual({ ok: true });
+    else expect(rerollAbsorb(exp).ok).toBe(false);
     for (const id of exp.absorbOffer!.candidates) expect(getTrait(id).element).toBe(exp.absorbOffer!.element);
   });
 

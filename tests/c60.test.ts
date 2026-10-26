@@ -219,7 +219,7 @@ describe('다시 뽑기 (흡수 화면)', () => {
   it('후보를 같은 수로 다시 뽑고(겹치지 않게), 흡수 1번에 1번만. 흡수 기록에 rerolled', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 99, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
-    const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly)!;
+    const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly && x.element !== 'normal')!; // C.147: 노멀은 강화만(후보 없음)
     const own = TRAITS.filter((t) => t.element === enemy.element && !t.rare && !t.boss).map((t) => t.id);
     e.phase = 'absorb';
     e.absorbOffer = offerFor(own.slice(0, 2), enemy.element, enemy.id);
@@ -236,7 +236,7 @@ describe('다시 뽑기 (흡수 화면)', () => {
   it('확정 후보(희귀 특성)는 그대로 남는다', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 5, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
-    const rare = TRAITS.find((t) => t.rare && !t.boss)!;
+    const rare = TRAITS.find((t) => t.rare && !t.boss && t.element !== 'normal')!;
     const plain = TRAITS.find((t) => t.element === rare.element && !t.rare && !t.boss)!;
     const enemy = ENEMIES.find((x) => x.element === rare.element) ?? ENEMIES[0]!;
     e.phase = 'absorb';

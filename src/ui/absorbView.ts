@@ -2,10 +2,10 @@
 // 문구는 FactionConfig(absorbActionName, chainName, riskGaugeName, stabilityName …)에서 읽는다.
 import { BALANCE } from '../config/balance';
 import { findEnemyDef } from '../data/bosses';
-import { elementName, statName, weaknessesOf } from '../data/elements';
+import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
 import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbModeRule, absorbRisk, completedElements, elementCounts, enhanceLevel, isFull, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
+import { absorbModeRule, absorbRisk, completedElements, elementCounts, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
 import { absorbEvOf, chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
@@ -26,7 +26,7 @@ export function weaknessText(enemy: Pick<EnemyDef, 'element'>, factionId: string
 
 /** 흡수 안내 (C.125, GDD 70·71장): 조건 없이 이기면 언제나, 특성 후보는 그 적의 속성 특성에서만 */
 export function absorbRuleText(faction: FactionConfig, enemy: Pick<EnemyDef, 'element'>): string {
-  return `이기면 언제나 ${faction.absorbActionName} 가능. 특성 후보는 이 적의 속성(${elementName(enemy.element, faction.id)}) 특성에서만 나온다.`;
+  return `이기면 언제나 ${faction.absorbActionName} 가능. 새 블록은 그 속성(${elementName(enemy.element, faction.id)})을 처음 ${faction.absorbActionName}할 때만 — 이미 가진 속성(${elementName(NORMAL_ELEMENT, faction.id)}은 기본 블록)은 강화만 오른다.`;
 }
 
 /** 한 단계의 두 열 내용: 왼쪽(설명·선택 상대 정보) / 오른쪽(고를 것·조작) — 가로 LCD (T-2) */
@@ -167,17 +167,26 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return b;
   };
 
-  /** 속성 강화 줄: 지금 단계/상한 → 흡수(특성·속성 갈래)하면 +1. 상한 뒤에는 횟수만 */
-  function enhanceRow(): HTMLElement {
+  /** 이미 가진 속성인가 (GDD 94장 B, C.147): 그러면 흡수는 새 블록 없이 강화만. 노멀은 기본 블록을 늘 가진 것으로 본다 */
+  const owned = (): boolean => ownsElement(exp.build, offer!.element);
+  /** 강화 문구: "강화 n→n+1" (상한 뒤에는 횟수만). 노멀 강화는 기본 공격 블록에 붙는다 */
+  function enhanceText(): string {
     const elId = offer!.element;
     const count = exp.build.enhance?.[elId] ?? 0;
     const max = AX.enhance.max;
     const lv = enhanceLevel(exp.build, elId);
-    const pct = (n: number) => (AX.enhance.attackPerLevel * n * 100).toFixed(1).replace(/\.0$/, '');
-    const text = lv >= max
-      ? `${elementName(elId, faction.id)} ${max}/${max} 최대 · 공격 블록 +${pct(max)}% · 흡수 ${count}회 → ${count + 1}회`
-      : `${elementName(elId, faction.id)} ${lv}/${max} → ${lv + 1}/${max} · 공격 블록 +${pct(lv)}% → +${pct(lv + 1)}%`;
-    return el('span', '', text);
+    const pct = (n: number) => (enhanceAttackBonus(n) * 100).toFixed(1).replace(/\.0$/, '');
+    const target = elId === NORMAL_ELEMENT ? '기본 공격 블록' : '공격 블록';
+    return lv >= max
+      ? `${elementName(elId, faction.id)} 강화 ${max}/${max} 최대 · ${target} +${pct(max)}% · 흡수 ${count}회 → ${count + 1}회`
+      : `${elementName(elId, faction.id)} 강화 ${lv}→${lv + 1} (/${max}) · ${target} +${pct(lv)}% → +${pct(lv + 1)}%`;
+  }
+  /** 속성 강화 줄 (흡수 첫 단계): 가진 속성 = "강화 n→n+1" / 처음 먹는 속성 = "새 블록" + 강화 */
+  function enhanceRow(): HTMLElement {
+    const sp = el('span');
+    if (owned()) sp.append(chip('강화'), ' ', enhanceText());
+    else sp.append(chip('새 블록'), ' ', `${elementName(offer!.element, faction.id)} 블록을 처음 얻는다 · ${enhanceText()}`);
+    return sp;
   }
 
   function chooseStep(): StepParts {
@@ -206,7 +215,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
           { label: '상대', value: val(foeName, offer!.elite ? '강적' : '일반') },
           { label: '속성', value: lin },
           // 속성 강화 (GDD 84장 8번): 이미 가진 계열이어도 그 속성 적을 흡수하면 +1, 효과는 100 까지 (뒤에도 횟수는 센다)
-          { label: '속성 강화', mod: 'stack', value: enhanceRow() },
+          { label: '흡수하면', mod: 'stack', value: enhanceRow() },
           // 흡수 갈래 4줄 (GDD 52): 셋은 허기 리셋·타일 +1 공통, 리스크·노력치·특성이 다르다
           { label: MODE_LABELS.both.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), evTextOf('both') ? ` · 노력치 ${evTextOf('both')}` : ' · 노력치 없음') },
           { label: MODE_LABELS.trait.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(riskOf('trait'))}`, false), ' · 노력치 없음') },
@@ -251,9 +260,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const nodes: HTMLElement[] = [foeCard(), el('p', 'bha-dim', `${MODE_LABELS[mode].label}: ${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
     const side: HTMLElement[] = [];
     if (offer!.candidates.length === 0) {
+      // 94장 B: 가진 속성(노멀은 늘)은 새 블록 없이 강화만
       const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
-      none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '새로 얻을 특성이 없다. 효과만 얻는다.'));
-      side.push(none, button({ label: `특성 없이 ${act}`, variant: 'primary', size: 'lg', block: true, onClick: () => finish(chooseAbsorb(exp, null, undefined, mode), true) }));
+      if (owned()) none.append(icon('i-evolve', 'lg'), el('b', '', '이미 가진 속성 — 강화만'), el('p', '', enhanceText()), el('p', 'bha-dim', '새 블록은 그 속성을 처음 먹을 때만 생긴다.'));
+      else none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '새로 얻을 특성이 없다. 효과만 얻는다.'));
+      side.push(none, button({ label: owned() ? `강화하고 ${act}` : `특성 없이 ${act}`, variant: 'primary', size: 'lg', block: true, onClick: () => finish(chooseAbsorb(exp, null, undefined, mode), true) }));
     } else {
       const list = el('div', 'bha-stack');
       for (const id of offer!.candidates) {
@@ -265,7 +276,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         const mark = el('span', 'bha-cand__mark');
         mark.append(elementDot(t.element, faction.id));
         const top = el('span', 'bha-cand__top');
-        top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), ...traitTags(id));
+        top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), chip('새 블록'), ...traitTags(id));
         const pips = el('span', 'bha-pips');
         for (let i = 0; i < AX.elementBonusCount; i++) pips.append(el('i', i < shown - 1 ? 'is-on' : i === shown - 1 ? 'is-next' : ''));
         const foot = el('span', 'bha-cand__foot');

@@ -41,7 +41,7 @@ import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { FREE_COSMETICS, getCosmetic, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 import { advanceWanderer, newWandererState, sanitizeWanderer, type WandererState } from './engine/wanderer';
-import { idleActiveHours, idleCounts, idleYield, offlineHours } from './engine/idle';
+import { idleActiveHours, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
 import { createRng, nextFloat } from './engine/rng';
 import { addPetLaps, carriedPet, grantPet, newPetState, pickNewPet, petBonus, sanitizePets, type PetState } from './engine/pet';
 import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
@@ -49,12 +49,12 @@ import { CONSUMABLE_IDS } from './inventory';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 42; // C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 43; // C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다").
  *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
  *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 42; // C.144: 형식 42 와 같이 올림 (C.140: 41) (GDD 61장, 마이그레이션 없음)
+export const MIN_LOADABLE_SAVE_FORMAT = 43; // C.147: 형식 43 과 같이 올림 (C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -112,6 +112,8 @@ export interface SaveData {
   shared: SharedState;
   /** 마지막 접속 시각(ms, GDD 24-1, 형식 17): 저장할 때마다 갱신. 다시 열 때 이 시각부터 꺼 둔 시간만큼 허기가 오른다. 시계를 되돌려도 줄지 않는다 */
   lastSeenAt: number;
+  /** 대기 모드 받을 보상 (GDD 92장 3번, C.147, 형식 43): 꺼 둔 시간을 쌓아 두었다가 [받기] 때 한 번에 지급. 받기 전에 또 꺼 두면 시간을 더하고 합계 최대 maxHours. null = 쌓인 것 없음 */
+  idlePending: IdlePending | null;
   /** 해방 수련 (GDD 22-4·22-5, 형식 18): 수련치·수련권(이 트랙의 원정 귀환으로만)·종목별 승리 수·완료 여부. 완료는 등급 이력처럼 환생해도 유지할 자리 */
   training: TrainingState;
   /** 입고 있는 스킨 id (GDD 25-1·26-5, 형식 19). null = 진화체 그림 그대로. 이 종족이 입을 수 있는 스킨이 아니면 null 로 고친다 */
@@ -490,7 +492,7 @@ export function firstRunPending(save: Pick<SaveData, 'help' | 'runLog'>): boolea
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
   return {
-    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending' } }, shared: newSharedState(), lastSeenAt: nowMs, story: {}, bossDex: {},
+    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending' } }, shared: newSharedState(), lastSeenAt: nowMs, idlePending: null, story: {}, bossDex: {},
     otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
   };
 }
@@ -863,16 +865,66 @@ function splitEv(ev: Stats, n: number): Partial<Record<(typeof STAT_IDS)[number]
   return Object.fromEntries(STAT_IDS.map((k, i) => [k, out[i]!]));
 }
 
-/** 대기 모드 정산 (GDD 85장 6번): 다시 열 때 꺼 둔 시간(마지막 접속 시각 기준, 최대 24시간)을 자동 모험으로 셈해 기준량 × share 를 준다.
- *  applyAbsence(허기·접속 시각 갱신) 보다 먼저 부른다 — 이 함수는 접속 시각을 바꾸지 않는다. 원정 중간 저장이 있거나 첫 원정 전이면 돌지 않는다.
- *  지급: 골드 · 걸음(다음 진화에 필요한 만큼까지 — 진화는 다음 원정 귀환 때 평소처럼) · 노력치(지금 비율대로, 상한까지) · 타일(열렸을 때, 뽑기 표) · 먹이(보관 상한까지).
- *  런 로그에는 요약 1건만 (88장 7번). 셀 게 없으면 null */
-export function settleIdle(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): IdleRecord | null {
+/** 대기 모드 받을 보상 (GDD 92장 3번): 쌓인 시간만 둔다 — 지급량은 받을 때 activeHours 로 셈(idleYield). from = 처음 쌓기 시작한 시각(마지막 접속) */
+export interface IdlePending {
+  from: number;
+  /** 쌓인 꺼 둔 시간 (합계 최대 maxHours) · 그중 자동 모험이 돈 시간(허기·쇠약 반영, 쌓을 때의 둥지 상태로) */
+  hours: number;
+  activeHours: number;
+}
+
+/** 깨진 받을 보상은 버린다(null), 시간은 0~maxHours 로 자른다 */
+export function sanitizeIdlePending(raw: unknown): IdlePending | null {
+  if (!isRec(raw)) return null;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+  const from = num(raw.from);
+  const hours = num(raw.hours);
+  const active = num(raw.activeHours);
+  if (from === null || hours === null || active === null || hours <= 0) return null;
+  const max = BALANCE.provisional.idle.maxHours;
+  const h = Math.min(max, hours);
+  return { from, hours: h, activeHours: Math.min(h, active) };
+}
+
+/** 다시 열었을 때 쌓은 결과: awayHours = 이번에 꺼 둔 실제 시간(자르지 않음, 복귀 창 "○시간 ○분 만에"), added = 이번에 받을 보상에 더한 시간(24시간 상한에 막히면 줄어듦) */
+export interface IdleAccrual {
+  awayHours: number;
+  added: number;
+  pending: IdlePending;
+}
+
+/** 대기 모드 쌓기 (GDD 85장 6번·92장 3번): 다시 열 때 꺼 둔 시간(마지막 접속 시각 기준)을 받을 보상(idlePending)에 더한다 — 지급은 claimIdle([받기]).
+ *  applyAbsence(허기·접속 시각 갱신) 보다 먼저 부른다 — 자동 모험 시간은 쌓을 때의 허기로 정하고(허기는 받기와 무관하게 applyAbsence 가 바로 올린다), 접속 시각은 바꾸지 않는다.
+ *  원정 중간 저장이 있거나 첫 원정 전이면, 또는 minMinutes 미만이면 쌓지 않는다(null). 합계는 maxHours 까지 — 넘친 시간은 버린다 */
+export function accrueIdle(save: SaveData, nowMs: number = Date.now()): IdleAccrual | null {
   if (save.activeExpedition != null || save.runLog.runs.length === 0) return null;
   const hours = offlineHours(save.lastSeenAt, nowMs);
   if (!idleCounts(hours)) return null;
-  const activeHours = idleActiveHours(hours, save.nest);
-  const y = idleYield(activeHours);
+  const IX = BALANCE.provisional.idle;
+  const prev = save.idlePending;
+  const room = Math.max(0, IX.maxHours - (prev?.hours ?? 0));
+  const added = Math.min(hours, room);
+  const active = idleActiveHours(hours, save.nest) * (hours > 0 ? added / hours : 0);
+  const pending: IdlePending = { from: prev?.from ?? save.lastSeenAt, hours: (prev?.hours ?? 0) + added, activeHours: (prev?.activeHours ?? 0) + active };
+  if (pending.hours > 0) save.idlePending = pending;
+  return { awayHours: Math.max(0, (nowMs - save.lastSeenAt) / 3_600_000), added, pending };
+}
+
+/** 받을 보상 미리 보기 (아이콘 창·복귀 창): 지금 받으면 들어올 기준량 (타일은 장 수만 — 무엇이 나올지는 받을 때 뽑는다). 진화 걸음·노력치·먹이는 받을 때 상한에서 잘릴 수 있다 */
+export function idlePendingYield(save: Pick<SaveData, 'idlePending' | 'tiles'>): IdleYield | null {
+  const p = save.idlePending;
+  if (!p) return null;
+  const y = idleYield(p.activeHours);
+  return save.tiles.unlocked ? y : { ...y, tiles: 0 };
+}
+
+/** [받기] (GDD 92장 3번): 쌓인 받을 보상을 한 번에 지급하고 비운다. 런 로그에는 요약 1건만 (88장 7번). 받을 것이 없으면 null.
+ *  지급: 골드 · 걸음(다음 진화에 필요한 만큼까지 — 진화는 다음 원정 귀환 때 평소처럼) · 노력치(지금 비율대로, 상한까지) · 타일(열렸을 때, 뽑기 표) · 먹이(보관 상한까지) · 데리고 다니는 펫 친밀도(90장 5번) */
+export function claimIdle(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): IdleRecord | null {
+  const p = save.idlePending;
+  if (!p) return null;
+  save.idlePending = null;
+  const y = idleYield(p.activeHours);
   const IX = BALANCE.provisional.idle;
   save.shared.tradeCoins += y.gold;
   const need = stepsNeeded(save.evolution);
@@ -890,12 +942,17 @@ export function settleIdle(save: SaveData, nowMs: number = Date.now(), rand: () 
   }
   const food = addFood(save.shared.food, IX.foodId as FoodId, y.food);
   const r2 = (v: number) => Math.round(v * 100) / 100;
-  // 대기 모드 바퀴도 데리고 다니는 펫의 친밀도에 센다 (GDD 90장 5번, 바퀴는 이미 × share)
+  // 대기 모드 바퀴도 데리고 다니는 펫의 친밀도에 센다 (GDD 90장 5번, 바퀴는 이미 × share) — 받을 때 반영
   const pet = carriedPet(save.shared.pets);
   if (pet) petLaps(save, pet.id, y.laps, nowMs);
-  const rec: IdleRecord = { at: nowMs, factionId: save.factionId, from: save.lastSeenAt, hours: r2(hours), activeHours: r2(activeHours), share: IX.share, laps: y.laps, steps, gold: y.gold, ev, tiles, food };
+  const rec: IdleRecord = { at: nowMs, factionId: save.factionId, from: p.from, hours: r2(p.hours), activeHours: r2(p.activeHours), share: IX.share, laps: y.laps, steps, gold: y.gold, ev, tiles, food };
   save.runLog.idle.push(rec);
   return rec;
+}
+
+/** 쌓고 바로 받기 (C.140 의 자동 정산과 같은 결과 — 시험·도구용). 이번에 셀 만큼 꺼 두지 않았으면 null */
+export function settleIdle(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): IdleRecord | null {
+  return accrueIdle(save, nowMs) ? claimIdle(save, nowMs, rand) : null;
 }
 
 /** 스토리 화가 끝났을 때 (GDD 25-4·25-7): 런 로그(보스전·화), 보스 도감, 보상 — 화 클리어 골드·먹이(매번), 첫 클리어 영옥, 장 첫 완주 영옥, 보스 첫 처치 영옥.
@@ -1583,6 +1640,7 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   save.story = sanitizeStory(save.story);
   save.bossDex = sanitizeBossDex(save.bossDex);
   if (typeof save.lastSeenAt !== 'number' || !Number.isFinite(save.lastSeenAt)) save.lastSeenAt = Date.now();
+  save.idlePending = sanitizeIdlePending(save.idlePending);
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
   return save;

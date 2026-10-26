@@ -191,3 +191,7 @@
 .bha-pet__img { width: 100%; height: 100%; object-fit: contain; }
 .bha-pet--buddy { position: absolute; right: calc(-1 * var(--bha-sp-6)); bottom: var(--bha-sp-5); }
 .bha-walker > .bha-pet--buddy { right: calc(-1 * var(--bha-sp-9)); bottom: 0; }
+/* 대기 보상 (GDD 92장, C.147): 방 위 줄 아이콘의 쌓인 시간 배지 · 창의 보상 목록 */
+.bha-room__idlebadge { margin-left: var(--bha-sp-2); padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: var(--bha-accent); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
+.bha-modal__list { margin: var(--bha-sp-3) 0 0; padding: 0; list-style: none; display: grid; gap: var(--bha-sp-1); font-size: var(--bha-fs-sm); color: var(--bha-text-1); text-align: center; }
+.bha-modal__list .bha-small { color: var(--bha-text-2); }

@@ -50,6 +50,8 @@ export interface RoomHandlers {
   persist: () => void;
   resume: { info: string; onResume: () => void } | null;
   resumeNote: string;
+  /** 대기 보상 아이콘 (GDD 92장 1번): 쌓인 시간 배지(없으면 null) · 누르면 대기 모드 창 */
+  idle?: { badge: string | null; onOpen: () => void };
   /** 들어오자마자 한 번 할 말 (GDD 24-1: 꺼 둔 동안 배고파졌으면 'hungry' — 문구는 종족 설정 room.talk) */
   greet?: RoomTalk | null;
 }
@@ -91,6 +93,16 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       items.push({ el: sw });
     }
     hud.append(name);
+  }
+  if (hd.idle) {
+    const ib = button({ label: '대기 보상', icon: 'i-timer', size: 'small', variant: 'ghost', onClick: hd.idle.onOpen });
+    ib.dataset.sc = 'idle-reward';
+    if (hd.idle.badge) {
+      ib.append(el('small', 'bha-room__idlebadge', hd.idle.badge));
+      ib.title = `대기 보상 ${hd.idle.badge} 쌓임`;
+    }
+    hud.append(ib);
+    items.push({ el: ib });
   }
   if (hd.resume) {
     resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });

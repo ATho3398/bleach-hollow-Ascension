@@ -164,6 +164,9 @@ export interface CombatParams {
   blockDamageMultiplier: number;
   /** 기본 막기·회복 블록 위력 배율 (GDD 84장 7·8번, C.136): 속성 강화 단계 합에서 (buildCombatParams). 1 = 없음 */
   guardHealEnhance: number;
+  /** 기본 공격 블록 위력 배율 (GDD 94장 B, C.147): 노멀 속성 강화 — 노멀은 기본 블록을 가진 것으로 보므로 노멀 흡수의 강화가 (속성 없는) 기본 공격 블록에 붙는다 (buildCombatParams).
+   *  물공 특수 블록(그 속성 블록이 된 기본 공격)에는 붙지 않는다(코드 판단 — 물공 표 배율이 따로 있다). 1 = 없음 */
+  basicAttackEnhance?: number;
   /** 블록 플레이 보정 (GDD 84장 3번, C.136): 블록 공격 피해 배율·치명 확률 가산 — 블록을 다 쓰는 플레이가 평타 자동전투보다 조금 세게 */
   blockPlayDamage: number;
   blockPlayCrit: number;
@@ -595,7 +598,7 @@ export function basicSources(p: CombatParams): CombatSkill[] {
   const pb = p.physBlock;
   const attack: CombatSkill = pb
     ? { id: BASIC_SKILL_ID, element: pb.element, category: 'physical', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: pb.power }
-    : { id: BASIC_SKILL_ID, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: 1 };
+    : { id: BASIC_SKILL_ID, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: p.basicBlockPowerInAttacks, chainBonus: p.basicBlockChainBonus, powerMultiplier: p.basicAttackEnhance ?? 1 };
   return [
     attack,
     { id: BASIC_GUARD_ID, element: null, category: 'mixed', family: null, role: 'guard', powerInAttacks: bp.basicRoleBlocks.guard.powerInAttacks, chainBonus: { ...bp.basicRoleBlocks.guard.chainBonus }, powerMultiplier: bp.basicGuardRatio * (p.guardHealEnhance ?? 1) },

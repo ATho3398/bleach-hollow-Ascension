@@ -200,11 +200,11 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
     expect(b.enhance!.earth).toBe(120);
     expect(enhanceLevel(b, 'earth')).toBe(EH.max);
     expect(EH.max).toBe(100);
-    expect(enhanceAttackMultiplier(b, 'earth')).toBeCloseTo(1 + EH.attackPerLevel * 100);
+    expect(enhanceAttackMultiplier(b, 'earth')).toBeCloseTo(1 + EH.earlyPerLevel * EH.earlyLevels + EH.attackPerLevel * (100 - EH.earlyLevels)); // C.147 앞 10단계 +4%
     gainTrait(b, 't-earth-b');
     gainTrait(b, 't-fire-a');
     const sk = buildCombatParams(b, 'hollow').skills!;
-    expect(sk.find((x) => x.id === 't-earth-b')!.powerMultiplier).toBeCloseTo(1 + EH.attackPerLevel * 100);
+    expect(sk.find((x) => x.id === 't-earth-b')!.powerMultiplier).toBeCloseTo(1 + EH.earlyPerLevel * EH.earlyLevels + EH.attackPerLevel * (100 - EH.earlyLevels));
     expect(sk.find((x) => x.id === 't-fire-a')!.powerMultiplier).toBe(1);
   });
 
@@ -239,8 +239,8 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
     expect(exp.absorbRecords.at(-1)!.enhance).toBeUndefined();
   });
 
-  it('세이브: 강화 횟수가 저장·불러오기로 남고 깨진 값은 버린다. 형식 42(C.144)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(42);
+  it('세이브: 강화 횟수가 저장·불러오기로 남고 깨진 값은 버린다. 형식 43(C.147)', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(43);
     const s = newSaveData('hollow', 1);
     expect(s.build.enhance).toEqual({});
     s.build.enhance = { earth: 120, fire: 3 };
@@ -252,7 +252,7 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
 
   it('흡수 화면에 "강화 n/100" 줄이 있다', () => {
     const src = readFileSync('src/ui/absorbView.ts', 'utf8');
-    expect(src).toContain("label: '속성 강화'");
+    expect(src).toContain("label: '흡수하면'"); // C.147 (94장 B): '속성 강화' 줄 → '흡수하면' 새 블록 / 강화 n→n+1
     expect(src).toContain('enhanceLevel');
   });
 });

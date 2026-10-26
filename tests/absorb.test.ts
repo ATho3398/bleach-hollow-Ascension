@@ -3,7 +3,7 @@ import { BALANCE } from '../src/config/balance';
 import { ENEMIES, enemyPatternKind, getEnemy } from '../src/data/enemies';
 import type { EnemyDef } from '../src/data/schema';
 import { getFaction } from '../src/data/factions';
-import { ELEMENTS } from '../src/data/elements';
+import { ELEMENTS, NORMAL_ELEMENT } from '../src/data/elements';
 import { TRAITS, getTrait, traitDescription } from '../src/data/traits';
 import {
   absorbReasons, absorbRisk, attackFamilyOf, buildCombatParams, buildOffer, canAbsorb, changeRisk, completedElements, equippedAttackFamilies, equippedSkills, gainTrait, lateLapRisk, newBuild,
@@ -372,7 +372,9 @@ describe('희귀 개체', () => {
     const build = newBuild();
     gainTrait(build, A[0]!);
     for (let seed = 1; seed <= 30; seed++) {
-      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire', rare: false }, build, NO);
+      // C.147 (94장 B): 이미 가진 속성(fire)은 강화만 — 후보는 처음 먹는 속성에서
+      expect(buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire', rare: false }, build, NO).candidates).toEqual([]);
+      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'water', rare: false }, build, NO);
       expect(offer.rare).toBe(false);
       expect(offer.candidates.length).toBeGreaterThanOrEqual(1);
       expect(offer.candidates.length).toBeLessThanOrEqual(2);
@@ -616,7 +618,7 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
       else if (exp.phase === 'absorb') chooseRelease(exp); // C.125: 이기면 늘 흡수 화면 — 옛 '조건 미달 → 이동' 대신 놓아줌
     }
     chooseContinue(exp);
-    toAbsorb(exp, { element: 'fire', rare: false });
+    toAbsorb(exp, { element: 'water', rare: false }); // C.147 (94장 B): fire 는 이미 가져 강화만 — 처음 먹는 속성
     chooseAbsorb(exp, exp.absorbOffer!.candidates[0]!);
     const second = exp.build.owned.find((id) => id !== first)!;
     expect(exp.build.slots.filter(Boolean)).toHaveLength(2);
@@ -665,8 +667,11 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
     for (const id of A.slice(0, 2)) gainTrait(save.build, id);
     const exp = mk({ seed: 31, runId: nextRunId(save), build: save.build });
     toAbsorb(exp, { element: 'fire', rare: false });
-    const third = exp.absorbOffer!.candidates[0]!;
-    chooseAbsorb(exp, third);
+    // C.147 (94장 B): 가진 속성은 흡수로 새 특성이 안 나온다 — 셋째 fire 특성은 바퀴 안에서 직접 얻은 것으로(옛 규칙 세이브와 같은 상태)
+    expect(exp.absorbOffer!.candidates).toEqual([]);
+    chooseAbsorb(exp, null);
+    const third = A[2]!;
+    gainTrait(exp.build, third);
     expect(completedElements(exp.build)).toEqual(['fire']);
     fightNext(exp);
     const b = startBattle(exp);
@@ -683,7 +688,8 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
     for (const id of A.slice(0, 2)) gainTrait(save.build, id);
     const exp = mk({ seed: 32, runId: nextRunId(save), build: save.build });
     toAbsorb(exp, { element: 'fire', rare: false });
-    chooseAbsorb(exp, exp.absorbOffer!.candidates[0]!);
+    chooseAbsorb(exp, null); // C.147 (94장 B): 가진 속성 = 강화만 → 셋째는 직접
+    gainTrait(exp.build, A[2]!);
     while (exp.phase !== 'nest-choice') {
       if (exp.phase === 'moving') advance(exp);
       else if (exp.phase === 'battle') winWith(exp);
@@ -776,7 +782,8 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     const hollow = getFaction('hollow');
     const rule = absorbRuleText(hollow, { element: 'poison' });
     expect(rule).toContain(`이기면 언제나 ${hollow.absorbActionName} 가능`);
-    expect(rule).toContain('속성(독) 특성에서만');
+    expect(rule).toContain('속성(독)을 처음'); // C.147 (94장 B): 새 블록은 처음 먹는 속성만, 가진 속성은 강화만
+    expect(rule).toContain('강화만');
     expect(rule).not.toContain('조건');
     expect(weaknessText({ element: 'thunder' }, 'hollow')).toBe('흙');
     expect(weaknessText({ element: 'normal' }, 'hollow')).toBeNull();
@@ -821,8 +828,8 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
     }
   });
 
-  it('첫 흡수(장착 없음)는 어느 속성이든 서로 다른 계열의 공격 후보 2개를 낸다', () => {
-    for (const l of ELEMENTS) {
+  it('첫 흡수(장착 없음)는 어느 속성이든 서로 다른 계열의 공격 후보 2개를 낸다 (노멀은 기본 블록을 가진 것으로 봐 후보 없음, C.147)', () => {
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT)) {
       for (let seed = 1; seed <= 30; seed++) {
         // C.125 (70장): 후보는 그 적 속성 안에서만 — 특수 속성(혈·독·허)은 숨김이 열렸을 때로 본다
         const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO, 0, null);
@@ -836,7 +843,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
   it('이미 장착한 계열만 있으면 다른 계열 공격 후보를 끼워 넣는다 (장착 계열이 보장 수에 차면 손대지 않는다)', () => {
     const b: BuildState = newBuild();
     gainTrait(b, 't-fire-a'); // 계열 a 장착
-    for (const l of ELEMENTS) {
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.id !== 'fire')) {
       for (let seed = 1; seed <= 30; seed++) {
         const offer = buildOffer(createRng(seed), normal(l.id), b, NO, 0, null);
         expect(fams(offer.candidates).some((f) => !equippedAttackFamilies(b).has(f)), `${l.id}/${seed}`).toBe(true);
@@ -847,7 +854,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
     gainTrait(full, 't-water-b'); // 계열 b
     gainTrait(full, 't-thunder-c'); // 계열 c = 보장 수(3)
     expect(equippedAttackFamilies(full).size).toBeGreaterThanOrEqual(AX.attackFamilyGuarantee);
-    const offer = buildOffer(createRng(3), normal('water'), full, NO);
+    const offer = buildOffer(createRng(3), normal('earth'), full, NO);
     expect(offer.candidates.length).toBeGreaterThan(0);
   });
 
