@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""종이인형 임시 발목 + 기본 칼 (GDD 96장 8).
+"""종이인형 임시 발목 + 기본 칼 + 빈 칼집 (GDD 96장 8·10).
 
 발목(임시): 다리 그림의 아래쪽 짚신 줄(하카마 색이 없는 줄부터 끝까지)을 잘라 발(foot_L·foot_R)로 따로 둔다.
   원본 다리 그림(<몸>/leg_X.png)은 그대로 두고 <몸>/leg_X_top.png · <몸>/foot_X.png 를 새로 만든다 — 시트에선 안 나눈다.
@@ -57,6 +57,33 @@ PAL = {
     'K': (0x0E, 0x0A, 0x10), 'H': (0x33, 0x2D, 0x39), 'h': (0xA3, 0x99, 0xA3), 'G': (0xC9, 0xA2, 0x4A), 'g': (0x8E, 0x6B, 0x2A),
     'B': (0xE6, 0xE9, 0xEF), 'b': (0x9A, 0xA4, 0xB2), 'W': (0xFF, 0xFF, 0xFF),
 }
+# 칼집(빈 칼집, 허리춤에 참). 세로로 그리고 위가 칼집 입구. S 옻칠, s 옻칠 그림자, C 끈(사게오), G·g 금속 테
+SCABBARD = [
+    'KGGgK',
+    'KGGgK',
+    'KSSsK',
+    'KCCCK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KSSsK',
+    'KGGgK',
+    '.KKK.',
+]
+SC_PAL = {'K': (0x0E, 0x0A, 0x10), 'S': (0x33, 0x2D, 0x39), 's': (0x20, 0x1B, 0x24), 'C': (0xA3, 0x99, 0xA3),
+          'G': (0xC9, 0xA2, 0x4A), 'g': (0x8E, 0x6B, 0x2A)}
+SC_MOUTH = (2, 0)    # 칼집 그림 안 입구 가운데
+WAIST = (18, 50)     # 캔버스에서 허리춤(띠) 자리 — 칼집 입구가 여기
+SC_REST = -55        # 쉬는 자세: 입구에서 뒤아래(오른쪽 아래)로 비스듬히
 GRIP = (3, 3)        # 칼 그림 안 손잡이 가운데
 HAND = (4, 56)       # 캔버스에서 앞팔 손 가운데(사신·아란칼 같음)
 REST_ROT = 60        # 쉬는 자세: 칼날이 앞아래로(사용자 2026-10-27 지정 각도)
@@ -80,6 +107,13 @@ def main():
         for side in ('L', 'R'):
             leg = parts.get(f'leg_{side}')
             src_key = f'{body}/leg_{side}'
+            foot = parts.get(f'foot_{side}')
+            if foot and leg['art'] == src_key:
+                # 시트에서 발을 따로 나눠 준 몸: 자르지 않고 발목만 발 윗줄 가운데로
+                if body == 'arrancar':
+                    ankles[side] = [foot['at'][0] + foot['size'][0] // 2, foot['at'][1]]
+                print(f'{body} foot_{side}: 시트에서 나눈 발 사용')
+                continue
             a = np.array(Image.open(os.path.join(ART, src_key + '.png')).convert('RGBA'))
             h = a.shape[0]
             top = h
@@ -108,18 +142,27 @@ def main():
                 sw[y, x] = (*PAL[ch], 255)
     os.makedirs(os.path.join(ART, 'weapon'), exist_ok=True)
     Image.fromarray(sw).save(os.path.join(ART, 'weapon', 'sword.png'))
+    sc = np.zeros((len(SCABBARD), len(SCABBARD[0]), 4), np.uint8)
+    for y, row in enumerate(SCABBARD):
+        for x, ch in enumerate(row):
+            if ch in SC_PAL:
+                sc[y, x] = (*SC_PAL[ch], 255)
+    Image.fromarray(sc).save(os.path.join(ART, 'weapon', 'scabbard.png'))
+    scab = {'art': 'weapon/scabbard', 'at': [WAIST[0] - SC_MOUTH[0], WAIST[1] - SC_MOUTH[1]], 'size': [sc.shape[1], sc.shape[0]]}
     sword = {'art': 'weapon/sword', 'at': [HAND[0] - GRIP[0], HAND[1] - GRIP[1]], 'size': [sw.shape[1], sw.shape[0]]}
     for look in rig['looks'].values():
         look['weapon'] = sword
+        look['scabbard'] = scab
     # 뼈·슬롯
-    bones = [b for b in rig['bones'] if b['id'] not in ('foot_L', 'foot_R', 'weapon')]
+    bones = [b for b in rig['bones'] if b['id'] not in ('foot_L', 'foot_R', 'weapon', 'scabbard')]
     bones += [{'id': 'foot_L', 'parent': 'leg_L', 'pivot': ankles['L']},
               {'id': 'foot_R', 'parent': 'leg_R', 'pivot': ankles['R']},
-              {'id': 'weapon', 'parent': 'arm_L', 'pivot': list(HAND), 'restRot': REST_ROT}]
+              {'id': 'weapon', 'parent': 'arm_L', 'pivot': list(HAND), 'restRot': REST_ROT},
+              {'id': 'scabbard', 'parent': 'torso', 'pivot': list(WAIST), 'restRot': SC_REST}]
     rig['bones'] = bones
     # 슬롯: 있던 순서(뒷머리·겉옷 등)는 그대로 두고, 발·무기 슬롯이 없을 때만 다리·앞팔 바로 앞에 넣는다
     ids = [x['id'] for x in rig['slots']]
-    for slot, before in (('foot_R', 'leg_R'), ('foot_L', 'leg_L'), ('weapon', 'arm_L')):
+    for slot, before in (('foot_R', 'leg_R'), ('foot_L', 'leg_L'), ('weapon', 'arm_L'), ('scabbard', 'arm_R')):
         if slot not in ids:
             rig['slots'].insert(ids.index(before), {'id': slot, 'bone': slot})
             ids = [x['id'] for x in rig['slots']]

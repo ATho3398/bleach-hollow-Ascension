@@ -104,6 +104,14 @@ describe('자세·행렬', () => {
     }
     for (const look of Object.keys(HUMANOID.looks)) expect(lookLayers(HUMANOID, look).some((l) => l.slot === 'hair_back'), look).toBe(true);
   });
+  it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
+    const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;
+    expect(sc.parent).toBe('torso');
+    for (const look of Object.keys(HUMANOID.looks)) {
+      const l = lookLayers(HUMANOID, look).find((x) => x.slot === 'scabbard')!;
+      expect(l.art).not.toBe(lookLayers(HUMANOID, look).find((x) => x.slot === 'weapon')!.art);
+    }
+  });
   it('특수1: 타격 순간 뒷팔이 수평(약 90°), 특수2: 칼 든 팔이 수평이고 칼날도 팔 방향', () => {
     const s1 = MOTIONS.skill!;
     expect(Math.abs(samplePose(HUMANOID, s1, s1.hit!).arm_R!.rot - 90)).toBeLessThan(10);
