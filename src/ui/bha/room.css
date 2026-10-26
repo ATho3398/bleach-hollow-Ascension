@@ -76,7 +76,8 @@
 
 /* ── 방 안 물건 (= 선택 항목) ── */
 .bha-prop {
-  position: absolute; transform: translate(-50%, -100%) scale(calc(var(--prop-s, 1) * 1.25)); transform-origin: 50% 100%; /* top = 이름표 아래 끝 */
+  position: absolute; transform: translate(-50%, -100%); /* top = 이름표 아래 끝 (발 기준점은 layoutOnFloor 가 그림 아래로 맞춘다). 크기는 --prop-s × 1.25 를 그림 칸에만 곱한다(이름표 글자는 그대로) */
+  --ps: calc(var(--prop-s, 1) * 1.25);
   display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1);
   min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-1);
   color: var(--bha-text-1); background: none; border: 0; border-radius: var(--bha-r-md);
@@ -90,8 +91,8 @@
 .bha-prop__shape .bha-icon { width: 20px; height: 20px; }
 .bha-prop__img { max-width: none; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; } /* 160×160(16×16 도트 ×10) 그림도 흐림 없이, 비율 유지로 칸 안에 (GDD 34-2) */
 /* 그림이 들어온 물건: 자리표시 틀(배경·테두리)을 걷고 그림 자체를 보인다. 상자 크기는 모두 같고 그림은 비율을 지켜 그 안에 맞춘다 */
-.bha-prop .bha-prop__shape.has-art { width: 86px; height: 76px; background: none; border: 0; border-radius: var(--bha-r-sm); }
-.bha-prop--door .bha-prop__shape.has-art { width: 74px; height: 100px; }
+.bha-prop .bha-prop__shape.has-art { width: calc(86px * var(--ps)); height: calc(76px * var(--ps)); background: none; border: 0; border-radius: var(--bha-r-sm); }
+.bha-prop--door .bha-prop__shape.has-art { width: calc(74px * var(--ps)); height: calc(100px * var(--ps)); }
 .bha-prop__tag {
   font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; white-space: nowrap;
   padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill);
@@ -134,7 +135,7 @@
 /* ── 머리 위 상태 칩 (GDD 18-8): 캐릭터 몸 위, 한 줄. 누르면 상태 화면 ── */
 .bha-room__status {
   /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px). 나는 진화체(머리가 높다)는 칩 윗변이 방 위 끝에 붙어 틀에 가려지므로 방 안으로 내린다(--chip-h = 칩 높이, roomView 가 잰다, C.93) */
-  position: absolute; left: 50%; top: max(calc(54% + var(--head-y, -50px) - var(--bha-sp-2)), calc(var(--chip-h, 0px) + var(--bha-sp-6))); transform: translate(-50%, -100%); z-index: 1;
+  position: absolute; left: var(--char-x, 50%); top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-2)), calc(var(--chip-h, 0px) + var(--bha-sp-6))); transform: translate(-50%, -100%); z-index: 1;
   display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 52px; box-sizing: content-box; /* 총 폭 74px < 그림 130px */
   padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3); /* 오른쪽은 키 글자 배지 자리 */
   background: rgb(0 0 0 / 0.55); border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;

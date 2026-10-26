@@ -24,6 +24,23 @@ export const ITEM_CATEGORIES = ['food', 'consumable', 'equipment', 'pet', 'skin'
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = { food: '음식', consumable: '소모품', equipment: '장비', pet: '펫', skin: '스킨', tile: '타일', etc: '기타' };
 
+/** '스킨' 탭 안의 하위 탭 (C.153, GDD 95장 A3): 상점·보관함이 같은 구분을 쓴다. 꾸밈 분류(skin·fx·trail·keyring·device …) → 하위 탭 */
+export const SKIN_SUBTABS = [['character', '캐릭터'], ['attackFx', '공격 이펙트'], ['moveFx', '이동 이펙트'], ['keyring', '키링'], ['device', '기기'], ['etc', '연출·꾸밈']] as const;
+export type SkinSubTab = (typeof SKIN_SUBTABS)[number][0];
+const SKIN_SUB_OF: Partial<Record<CosmeticCategory, SkinSubTab>> = {
+  skin: 'character', tint: 'character', aura: 'character',
+  fx: 'attackFx', cut: 'attackFx', absorb: 'attackFx', bar: 'attackFx',
+  trail: 'moveFx',
+  keyring: 'keyring',
+  device: 'device', shell: 'device',
+};
+/** 꾸밈 분류 → 스킨 하위 탭 (표에 없는 분류·분류 없음은 '연출·꾸밈') */
+export function skinSubOf(category: string | undefined | null): SkinSubTab {
+  return SKIN_SUB_OF[category as CosmeticCategory] ?? 'etc';
+}
+/** 하위 탭이 비었을 때 문구 */
+export const SKIN_SUB_EMPTY = '아직 없음';
+
 export interface GoldItemDef {
   id: string;
   kind: GoldKind;

@@ -15,6 +15,7 @@ import { button, el, icon, meter, mountApp, notice, panel, provisionalTag, tag }
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
+import { dropdown } from './bha/dropdown';
 
 const TX = BALANCE.provisional.training;
 const LB = BALANCE.provisional.liberation;
@@ -110,22 +111,16 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     } else card.onclick = () => hd.onPlay(g);
     cards.append(card);
   }
-  // 수련장 안 입구 둘: 훈련 인형(전투 연습) · 등급전(번호 쟁탈전). 수련권·컨디션 게이트와 무관
-  const doors = el('div', 'bha-train__cards bha-train__doors');
-  for (const [id, name, desc, ico, go] of [
-    ['practice', '훈련 인형', '전투 연습. 쓰러뜨려도 아무것도 잃지 않는다', 'i-practice', hd.onPractice],
-    ['rank', faction.rankBattleName, `${faction.tierNames[4]}부터 도전할 수 있다`, 'i-title', hd.onRank],
-  ] as const) {
-    const d = el('button', 'bha-train__card');
-    d.type = 'button';
-    d.dataset.door = id;
-    const top = el('span', 'bha-train__cardtop');
-    top.append(icon(ico, 'sm'), el('b', 'bha-train__cardname', name));
-    d.append(top, el('span', 'bha-train__line', desc));
-    d.onclick = go;
-    doors.append(d);
-  }
-  const right = [cards, doors, el('p', 'bha-faint', `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로. 종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`)];
+  // 수련장 드롭다운 (GDD 95장 A2): 훈련 인형(전투 연습) · 등급전(번호 쟁탈전). 수련권·컨디션 게이트와 무관
+  const doors = dropdown({
+    label: '수련장', icon: 'i-practice', desc: '훈련 인형 · ' + faction.rankBattleName,
+    items: [
+      { id: 'practice', label: '훈련 인형', desc: '전투 연습. 쓰러뜨려도 아무것도 잃지 않는다', icon: 'i-practice', onPick: hd.onPractice },
+      { id: 'rank', label: faction.rankBattleName, desc: `${faction.tierNames[4]}부터 도전할 수 있다`, icon: 'i-title', onPick: hd.onRank },
+    ],
+  });
+  doors.classList.add('bha-train__doors');
+  const right = [doors, cards, el('p', 'bha-faint', `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로. 종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`)];
   lcdPage(dev.view, { cls: 'bha-train-page', cols: '0.9fr 1.1fr' }, head, left, right);
 }
 

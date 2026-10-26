@@ -12,7 +12,7 @@ import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
-import { characterButton, charTopOffset, propButton, roomCharArt, sceneBox } from './bha/room';
+import { characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
@@ -139,12 +139,14 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 위/아래 순서: 위쪽 줄(책장·수련장) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
   const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop'];
   const props = new Map<RoomProp, HTMLButtonElement>();
+  const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'shop' && save.shared.wanderer.visit !== null });
     b.onclick = act[p];
     if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(훈련 인형 모양) = 단축키 T
     props.set(p, b);
     scene.append(b);
+    floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
   }
   const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
@@ -202,6 +204,11 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   paintGauges();
   requestAnimationFrame(() => statusBtn.style.setProperty('--chip-h', `${statusBtn.offsetHeight}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
   scene.append(char, statusBtn, bubble);
+  floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
+  const place = () => layoutOnFloor(scene, room.floor, floorEntries);
+  place(); // 붙기 전이라 크기를 못 재면 기준 크기로, 붙은 뒤 다시 잰 값으로 놓는다
+  requestAnimationFrame(place);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(place).observe(scene);
 
   // ── 하단 독 (GDD 18-2): 돌보기 3개 + 메뉴 아이콘 + 더보기 ──
   const dock = createDock({

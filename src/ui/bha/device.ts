@@ -233,8 +233,14 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let touchOnly = false;
 
   let lastSel: HTMLElement | null = null;
-  /** 탭(.bha-seg__item)의 이름표: 탭을 눌러 화면이 새로 그려져도 같은 탭에 선택을 돌려주려고 기억한다 */
-  const tabSig = (e: HTMLElement | undefined | null): string | null => (e && e.matches('.bha-seg__item') && e.dataset.id ? `${e.closest('.bha-seg')?.getAttribute('aria-label') ?? ''}|${e.dataset.id}` : null);
+  /** 탭의 이름표: 탭을 눌러 화면이 새로 그려져도 같은 탭에 선택을 돌려주려고 기억한다 (공용 탭: 세그먼트·카테고리 탭·하위 탭·제목 토글 — role=tab 이거나 .bha-viewtitle__btn) */
+  const tabSig = (e: HTMLElement | undefined | null): string | null => {
+    if (!e) return null;
+    if (e.matches('.bha-viewtitle__btn')) return 'viewtitle';
+    if (!e.matches('[role="tab"]')) return null;
+    const id = e.dataset.id ?? e.dataset.tab;
+    return id ? `${e.closest('[role="tablist"]')?.getAttribute('aria-label') ?? ''}|${id}` : null;
+  };
   let lastTabSig: string | null = null;
   const unmark = (e: HTMLElement) => {
     e.classList.remove('bha-sel');
@@ -300,6 +306,13 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     for (const b of [up, down, ok, back]) b.setAttribute('aria-disabled', String(b.classList.contains('is-off')));
   }
 
+  // 손가락으로 탭을 눌러도 키로 고른 것처럼 기억한다 (화면이 다시 그려진 뒤 선택이 첫 항목으로 돌아가 확정이 탭을 되돌리던 문제)
+  view.addEventListener('click', (e) => {
+    const t = e.target instanceof Element ? e.target.closest<HTMLElement>('[role="tab"], .bha-viewtitle__item') : null;
+    if (t && t.matches('[role="tab"]')) lastTabSig = tabSig(t);
+    else if (t) lastTabSig = 'viewtitle';
+  }, true);
+
   let raf = 0;
   const schedule = () => {
     if (raf) return;
@@ -352,7 +365,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   function cancel(): void {
     const layer = layers[layers.length - 1];
     if (layer) layer.onCancel();
-    else opts.onCancel();
+    else if (!runCancelHooks(null, true)) opts.onCancel(); // 펼침 목록 같은 것이 열려 있으면 그것만 닫는다 (C.153)
     schedule();
   }
 

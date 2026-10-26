@@ -21,6 +21,22 @@
 .bha-train__line--reward { color: var(--bha-good); }
 .bha-train__complete { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-lg); color: var(--bha-accent-hi); }
 
+/* 펼침 목록 (C.153, 수련장): 접힌 버튼 = 카드 한 장 폭, 펼치면 아래로 항목이 이어진다 */
+.bha-dropdown { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-dropdown__btn, .bha-dropdown__item {
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--bha-sp-1); min-height: var(--bha-touch); text-align: left;
+  padding: var(--bha-sp-3) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-line-2); background: var(--bha-bg-1); color: var(--bha-text-2); font: inherit; cursor: pointer;
+}
+.bha-dropdown__btn:hover, .bha-dropdown__item:hover, .bha-dropdown__btn.bha-sel, .bha-dropdown__item.bha-sel { border-color: var(--bha-accent-hi); }
+.bha-dropdown.is-open > .bha-dropdown__btn { border-color: var(--bha-accent); }
+.bha-dropdown__top { display: flex; align-items: center; gap: var(--bha-sp-3); }
+.bha-dropdown__name { font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-md); color: var(--bha-text-1); }
+.bha-dropdown__caret { margin-left: auto; width: 18px; height: 18px; color: var(--bha-text-2); transition: transform var(--bha-dur-2); }
+.bha-dropdown__btn[aria-expanded="true"] .bha-dropdown__caret { transform: rotate(180deg); }
+.bha-dropdown__desc { font-size: var(--bha-fs-xs); line-height: 1.3; }
+.bha-dropdown__list { display: flex; flex-direction: column; gap: var(--bha-sp-2); padding-left: var(--bha-sp-4); border-left: 2px solid var(--bha-line-2); }
+.bha-dropdown__list[hidden] { display: none; }
+
 /* ── 한 판 ── */
 .bha-lcd .bha-app.bha-train-play {
   position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none;

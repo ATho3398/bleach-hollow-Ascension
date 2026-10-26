@@ -37,6 +37,10 @@
 .bha-itemtabs { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
 .bha-itemtab { display: inline-flex; align-items: center; gap: var(--bha-sp-2); min-height: 32px; padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); color: var(--bha-text-2); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
 .bha-itemtab.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 22%, var(--bha-bg-2)); color: var(--bha-text-1); }
+/* 스킨 하위 탭 (C.153): 위 탭 아래 한 줄, 한 단 작게 */
+.bha-itemtabs--sub { flex-wrap: nowrap; overflow-x: auto; }
+.bha-itemtabs--sub .bha-itemtab { flex: none; min-height: 28px; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: var(--bha-bg-1); font-size: var(--bha-fs-xs); white-space: nowrap; }
+.bha-itemtabs--sub .bha-itemtab.is-on { background: color-mix(in srgb, var(--bha-accent) 18%, var(--bha-bg-1)); }
 .bha-itemtab__count { padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .4); font-size: var(--bha-fs-xs); font-variant-numeric: tabular-nums; }
 .bha-itemgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); grid-auto-rows: 118px; gap: var(--bha-sp-3); overflow-y: auto; min-height: 0; flex: 1 1 auto; align-content: start; padding-bottom: var(--bha-sp-3); }
 .bha-itemgrid__empty { grid-column: 1 / -1; }

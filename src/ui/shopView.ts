@@ -3,7 +3,7 @@
 // 떠돌이 상인(GDD 85장 5번)이 와 있으면 제목 토글에 [떠돌이 상인] — 같은 줄 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { petNoticeOf } from '../inventory';
-import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory } from '../data/shop';
+import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
@@ -25,7 +25,7 @@ export type ShopTab = ItemCategory | 'wanderer';
 /** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
 const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', shell: 'body', cut: 'line', room: 'line' };
 /** 마지막으로 본 탭 (다시 열면 그 탭) */
-const shopUi: { tab: ShopTab } = { tab: 'food' };
+const shopUi: { tab: ShopTab; skinSub: SkinSubTab } = { tab: 'food', skinSub: 'character' };
 /** 쌓아 사는 골드 품목 (수량 고르기): 나머지는 한 번에 하나 */
 const STACKABLE = new Set(['food', 'calm', 'wake', 'reroll', 'trainingTicket']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
@@ -193,12 +193,22 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       lastScroll = 0;
       render();
     }, '상품 분류');
-    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? '오늘은 더 살 것이 없다.' : shopUi.tab === 'skin' && rows.length === 0 ? `${faction.name}이(가) 입을 수 있는 스킨은 아직 없다.` : '지금 파는 물건이 없다.';
-    const grid = itemGrid(rows.map(cardOf), empty);
+    // 스킨 탭 하위 탭 (C.153, GDD 95장 A3): 캐릭터 · 공격 이펙트 · 이동 이펙트 · 키링 · 기기 · 연출·꾸밈
+    const skinRows = shopUi.tab === 'skin' ? rows : [];
+    const subTabs = shopUi.tab === 'skin'
+      ? categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: skinRows.filter((r) => skinSubOf(r.category) === id).length })), shopUi.skinSub, (id) => {
+        shopUi.skinSub = id as SkinSubTab;
+        lastScroll = 0;
+        render();
+      }, '스킨 종류', true)
+      : null;
+    const shown = shopUi.tab === 'skin' ? rows.filter((r) => skinSubOf(r.category) === shopUi.skinSub) : rows;
+    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? '오늘은 더 살 것이 없다.' : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : '지금 파는 물건이 없다.';
+    const grid = itemGrid(shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 칸마다 하나씩, 다음 원정에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]
       : [];
-    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: '상점', sub }), [tabs, ...note, grid], []);
+    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: '상점', sub }), [tabs, ...(subTabs ? [subTabs] : []), ...note, grid], []);
     page.app.dataset.tab = shopUi.tab;
     grid.scrollTop = lastScroll;
   }

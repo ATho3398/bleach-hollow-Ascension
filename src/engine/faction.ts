@@ -104,6 +104,12 @@ export interface TrainingConfig {
   games: Record<(typeof TRAINING_GAME_IDS)[number], { name: string; desc: string; shot?: string; prey?: string; predator?: string }>;
 }
 
+/** 바닥 다각형: 좌표는 배경 그림 크기 대비 0~1(왼쪽 위 = 0,0), aspect = 그림 가로÷세로 (장면은 cover 로 깔려 그림 일부가 잘린다) */
+export interface RoomFloorConfig {
+  aspect: number;
+  poly: [number, number][];
+}
+
 /** 메인 방 화면 설정 (GDD 16장). 모두 선택 항목이라 비워도 기본값(DEFAULT_ROOM)이 쓰인다 */
 export interface RoomConfig {
   /** 방 모양: bha-room--<shape> 클래스 (CSS 가 모양을 정한다. 예 cave / room) */
@@ -113,8 +119,12 @@ export interface RoomConfig {
   characterArt: string;
   /** 소품 표시 이름 */
   props: Record<RoomProp, string>;
-  /** 소품 위치: 장면 가로 %(중심)·세로 %(이름표 아래 끝 = 바닥 쪽), scale = 뒷줄을 조금 작게 (기본 1, GDD 34-6) */
+  /** 바닥(걷는 면) 범위 (GDD 95장 A1): 방 배경 그림 안의 다각형. 모든 물건·캐릭터·펫의 발 기준점은 이 안으로만 놓인다 */
+  floor: RoomFloorConfig;
+  /** 소품 위치 = 발 기준점(물건 그림 아래 가운데): 장면 가로 %·세로 %, scale = 크기 배율 (기본 1, GDD 34-6·95장). 이름표는 발 아래에 붙는다. 바닥 밖이면 바닥 안으로 끌어 놓는다 */
   layout: Record<RoomProp, { x: number; y: number; scale?: number }>;
+  /** 캐릭터 발 기준점 (장면 %, 기본 가운데 아래) */
+  characterFoot: { x: number; y: number };
   /** 캐릭터 반응 말풍선 문구 (상태별 여러 개 중 무작위) */
   talk: Record<RoomTalk, string[]>;
 }
@@ -124,10 +134,12 @@ export const DEFAULT_ROOM: RoomConfig = {
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
   props: { door: '문', altar: '수련장', book: '책장', chest: '상자', shop: '상점' },
+  floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
-    book: { x: 19, y: 66, scale: 0.85 }, door: { x: 81, y: 66, scale: 0.85 },
-    chest: { x: 10, y: 99 }, altar: { x: 27, y: 99 }, shop: { x: 73, y: 99 },
+    door: { x: 9, y: 78, scale: 1 }, book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
+    chest: { x: 26, y: 90, scale: 0.81 }, shop: { x: 74, y: 90, scale: 0.54 },
   },
+  characterFoot: { x: 50, y: 80 },
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],
     askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
@@ -142,7 +154,9 @@ export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConf
     ...DEFAULT_ROOM,
     ...r,
     props: { ...DEFAULT_ROOM.props, ...r.props },
+    floor: r.floor ?? DEFAULT_ROOM.floor,
     layout: { ...DEFAULT_ROOM.layout, ...r.layout },
+    characterFoot: r.characterFoot ?? DEFAULT_ROOM.characterFoot,
     talk: { ...DEFAULT_ROOM.talk, ...r.talk, ...pack },
   };
 }
@@ -414,6 +428,13 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const rm = r.room as Record<string, unknown>;
     for (const k of ['shape', 'sceneArt', 'characterArt']) if (rm[k] !== undefined && !isString(rm[k])) errors.push(`room.${k}: 비어 있지 않은 문자열이어야 한다`);
     for (const k of Object.keys((rm.props ?? {}) as object)) if (!(ROOM_PROPS as readonly string[]).includes(k) || !isString((rm.props as Record<string, unknown>)[k])) errors.push(`room.props.${k}: 알 수 없는 물건이거나 문자열이 아니다`);
+    if (rm.floor !== undefined) {
+      const fl = rm.floor as Record<string, unknown>;
+      const okPt = (p: unknown) => Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === 'number' && n >= 0 && n <= 1);
+      if (!isRec(fl) || typeof fl.aspect !== 'number' || !(fl.aspect > 0) || !Array.isArray(fl.poly) || fl.poly.length < 3 || !fl.poly.every(okPt)) errors.push('room.floor: { aspect: 가로÷세로, poly: [[x, y] ×3 이상, 0~1] } 이어야 한다');
+    }
+    const okPct = (p: unknown) => isRec(p) && typeof p.x === 'number' && typeof p.y === 'number' && p.x >= 0 && p.x <= 100 && p.y >= 0 && p.y <= 100;
+    if (rm.characterFoot !== undefined && !okPct(rm.characterFoot)) errors.push('room.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
     for (const [k, v] of Object.entries((rm.talk ?? {}) as Record<string, unknown>)) if (!(ROOM_TALK as readonly string[]).includes(k) || !Array.isArray(v) || v.length === 0 || !v.every(isString)) errors.push(`room.talk.${k}: 비어 있지 않은 문자열 목록이어야 한다`);
   }
   if (r.cosmetics !== undefined) {
