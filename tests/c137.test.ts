@@ -49,6 +49,6 @@ describe('C.137', () => {
   });
   it('85장 10: 쓰다듬기 → 교감 (호로 종족 설정)', () => {
     expect(getFaction('hollow').nestActions.pet).toBe('교감');
-    expect(JSON.stringify(getFaction('hollow').room.talk)).not.toContain('쓰다듬');
+    expect(JSON.stringify(getFaction('hollow').room!.talk)).not.toContain('쓰다듬');
   });
 });
