@@ -125,21 +125,21 @@ describe('95장 B2 해방 개선', () => {
   });
 });
 
-describe('95장 B2 C.166 후속: 해방 순간 블록 2개·빠른 생성', () => {
+describe('95장 B2 C.166·C.168 후속: 해방 순간 블록 1개(C.166 2개 → C.168 1개)·빠른 생성', () => {
   const LB = BALANCE.provisional.liberation;
   const mk = () => {
     const b = newBuild();
     gainTrait(b, 't-thunder-c');
     return createCombat(5, { enemy: elite, params: buildCombatParams(b, 'hollow') });
   };
-  it('빈 바: 누르는 순간 장착 블록 2개가 바로 들어온다', () => {
+  it('빈 바: 누르는 순간 장착 블록이 바로 들어온다', () => {
     const s = mk();
     s.tray = [];
     s.liberation.gauge = 100;
     step(s, { type: 'liberate' });
-    expect(LB.instantBlocks).toBe(2);
-    expect(s.tray.length).toBeGreaterThanOrEqual(2);
-    expect(s.tray.slice(0, 2).every((x) => x.traitId === 't-thunder-c')).toBe(true);
+    expect(LB.instantBlocks).toBe(1);
+    expect(s.tray.length).toBeGreaterThanOrEqual(1);
+    expect(s.tray[0]!.traitId).toBe('t-thunder-c');
   });
   it('가득 찬 바: 오른쪽 끝 기본 막기·회복부터 밀어낸다', () => {
     const s = mk();
@@ -148,10 +148,11 @@ describe('95장 B2 C.166 후속: 해방 순간 블록 2개·빠른 생성', () =
     s.liberation.gauge = 100;
     step(s, { type: 'liberate' });
     expect(s.tray).toHaveLength(s.params.trayCapacity);
-    expect(s.tray.some((x) => x.traitId === 'basic-heal' || x.traitId === 'basic-guard')).toBe(false);
-    expect(s.tray.slice(-2).every((x) => x.traitId === 't-thunder-c')).toBe(true);
+    expect(s.tray.some((x) => x.traitId === 'basic-guard')).toBe(false); // 오른쪽에 가까운 기본 막기·회복부터
+    expect(s.tray.some((x) => x.traitId === 'basic-heal')).toBe(true);
+    expect(s.tray[s.tray.length - 1]!.traitId).toBe('t-thunder-c');
   });
-  it("해방 4초 동안 블록 약 5개 (특성 1, 안 누름 — 순간 2개 + 생성 ×1.8)", () => {
+  it("해방 6초 동안 블록 약 6개 (특성 1, 안 누름 — 순간 1개 + 생성 ×1.8)", () => {
     let tot = 0;
     for (let seed = 1; seed <= 10; seed++) {
       const s = createCombat(seed, { enemy: elite, params: buildCombatParams((() => { const b = newBuild(); gainTrait(b, 't-thunder-c'); return b; })(), 'hollow') });
@@ -162,6 +163,6 @@ describe('95장 B2 C.166 후속: 해방 순간 블록 2개·빠른 생성', () =
       while (s.liberation.ticksLeft > 0 && s.status === 'playing') { s.events.length = 0; step(s, null); n += s.events.filter((e) => e.kind === 'spawn').length; }
       tot += n;
     }
-    expect(tot / 10).toBeGreaterThanOrEqual(4.5);
+    expect(tot / 10).toBeGreaterThanOrEqual(5.5);
   });
 });
