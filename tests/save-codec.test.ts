@@ -7,6 +7,9 @@ import { parseImport, serializeSave } from '../src/saveBackup';
 import { CHUNK_PREFIX, chunkRefsOf, encodeSave, lzCompress, lzDecompress, PACK_BLOCK, PACK_KEY, parseSaveText } from '../src/saveCodec';
 import { collectSlotChunks, slotBackupKey, slotKey, slotSummary, stashSlot, writeSlotSave } from '../src/saveSlots';
 import { recoverFromBackup } from '../src/saveBackup';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 /** 저장소 흉내 (키 세기 가능). cap(글자 수)을 넘기는 쓰기는 QuotaExceededError 처럼 던진다 */
@@ -38,12 +41,13 @@ function drive(exp: ExpeditionState): ExpeditionState {
   return exp;
 }
 /** 실제 원정 n판을 다녀온 세이브 */
-function played(n: number): SaveData {
+function played(n: number, minBattles = 0): SaveData {
   const save = newSaveData('hollow', 1_000);
-  for (let i = 0; i < n; i++) recordExpedition(save, drive(createExpedition({ factionId: 'hollow', seed: i + 1, hunger: 10, condition: 100, deck: DECK })), 2_000 + i);
+  // C.118: 전투가 절반으로 짧아져 봇이 원정에서 더 자주 지므로(전투 수가 줄어) 덩어리 2개(PACK_BLOCK × 2) 이상이 될 때까지 판을 더 다녀온다
+  for (let i = 0; i < n || (save.runLog.battles.length < minBattles && i < n * 4); i++) recordExpedition(save, drive(createExpedition({ factionId: 'hollow', seed: i + 1, hunger: 10, condition: 100, deck: DECK })), 2_000 + i);
   return save;
 }
-const BASE = played(12);
+const BASE = played(12, PACK_BLOCK * 2 + 1);
 /** 1000판 세이브: 실제 12판의 기록을 runId·시드·시간을 바꿔 가며 복제 (기록 모양·값 분포는 실제와 같다) */
 function bigSave(runs = 1000): SaveData {
   const s = structuredClone(BASE);
@@ -162,7 +166,8 @@ describe('1000판 큰 세이브', () => {
   it('압축하면 1/4 이하, 슬롯 1개 + 백업이 저장 한도(약 500만 자의 절반 가정) 안', () => {
     expect(big.runLog.runs).toHaveLength(1000);
     expect(text.length).toBeLessThan(plain.length / 4);
-    expect(2 * text.length).toBeLessThan(2_500_000);
+    // C.125 (GDD 71장): 이기면 늘 흡수 화면이라 흡수 기록이 늘어 1000판 슬롯+백업 2.5M → 3.2M 자 — 실제 한도(약 5M 자) 안, 가드를 3.5M(70%)으로. 실제 저장은 덩어리 키(아래 테스트)
+    expect(2 * text.length).toBeLessThan(3_500_000);
   });
 
   it('읽으면 원래 세이브와 같고, 런 로그를 하나도 잃지 않는다', () => {
@@ -263,7 +268,9 @@ describe('덩어리 키 저장 (저장소에 따로, 본문엔 해시)', () => {
     writeSave(st, big);
     stashSlot(st, 1, 'rank');
     writeSave(st, big);
-    expect(st.used()).toBeLessThan(1_250_000);
+    // C.118: 전투가 절반으로 짧아져 한 원정의 흡수 기록이 늘었다(12판 35 → 54개). 1000판 복제본이 1.25M → 1.42M 자 — 한도(5M 자 ≈ 2.5M×2)의 절반(2.5M) 안이면 되므로 가드를 1.6M 으로
+    // C.125 (GDD 71장): 이기면 늘 흡수 화면 → 흡수 기록 증가로 1.83M 자 — 한도 절반(2.5M) 안, 가드 1.6M → 2.0M
+    expect(st.used()).toBeLessThan(2_000_000);
     expect(st.m.get(SAVE_KEY)!.length).toBeLessThan(250_000);
     expect(loadSave(st)!.runLog.runs).toHaveLength(1000);
   });

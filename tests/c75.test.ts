@@ -22,6 +22,9 @@ import { getFaction } from '../src/data/factions';
 import { defaultDifficulty, maxTierReached, migrateSave, newSaveData, performEvolution, performRebirth, recordExpedition, sanitizeDifficulty, SAVE_FORMAT_VERSION, settleStreak, streakFor, TRACK_KEYS, unlockDifficultyFor, type SaveData } from '../src/game';
 import { difficultyInfo } from '../src/ui/planView';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const SX = BALANCE.provisional.stats;
@@ -76,7 +79,7 @@ describe('32-1 1번: 내 능력치는 절대값 (세계 기준 = 1단계 기준 
     expect(p.refStat).toBeUndefined();
   });
   it('5단계 몸의 최대 체력 = 기본 체력 × (체력 ÷ 50), 평타 간격 = 기본 ÷ (속도 ÷ 50) — 1단계보다 실제로 크고 빠르다', () => {
-    const base = BALANCE.provisional.combat.playerMaxHp;
+    const base = BALANCE.provisional.combat.playerMaxHp * BALANCE.provisional.combat.playerHpScale; // C.118: 내 최대 체력 배율
     const enemy = getEnemy('fire-basic');
     const hpAt = (tier: number) => {
       const params = buildCombatParams(newBuild(), 'hollow');
@@ -363,7 +366,7 @@ describe('32-1 10번: 연속 클리어 (같은 ★ 클리어마다 다음 원정
     expect(s.difficulty.streak).toEqual({ star: 2, count: 10 });
     // recordExpedition 이 실제로 부른다
     const t = newSaveData('hollow', 10);
-    const exp = mk({ difficulty: 1, deck: t.tiles.deck });
+    const exp = mk({ difficulty: 1, deck: [] });
     exp.phase = 'ended';
     exp.outcome = 'returned';
     exp.endReason = 'returned';

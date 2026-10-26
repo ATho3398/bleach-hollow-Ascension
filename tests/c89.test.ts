@@ -6,7 +6,7 @@ import { getEnemy } from '../src/data/enemies';
 import { FORM_TABLE, getForm, validateAbilities } from '../src/data/evolution';
 import { FACTIONS } from '../src/data/factions';
 import {
-  BASIC_SKILL_ID, applyInput, basicSpawnSecondsOf, blockSources, buildBattleRecord, createCombat, drainCombatEvents, step, ticksOf,
+  BASIC_SKILL_ID, applyInput, basicSpawnSecondsOf, blockSources, spawnTableOf, buildBattleRecord, createCombat, drainCombatEvents, step, ticksOf,
   type Block, type CombatEvent, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { abilityEffectsOf, abilityLines, applyEvolutionToParams, formAbilitiesOf, newEvolution, zeroStats } from '../src/engine/evolution';
@@ -106,20 +106,20 @@ describe('C.89 사용자 지정 효과 4종 (39장 2번)', () => {
     const b = mk({ chainHaste: 0.15 }, base);
     for (const s of [a, b]) {
       s.tray = [blk(BASIC_SKILL_ID), blk(BASIC_SKILL_ID), blk(BASIC_SKILL_ID)];
-      s.spawnTimers = blockSources(s.params).map(() => 50);
+      s.spawnTimer = 50;
       applyInput(s, { type: 'use', cell: 0 });
     }
-    // 흡수 0칸: 기본 블록 타이머 하나 (GDD 44-1 B안)
-    const full = ticksOf(b.params, basicSpawnSecondsOf(b.params));
-    expect(a.spawnTimers[0]).toBe(50);
-    expect(b.spawnTimers[0]).toBe(50 - Math.round(full * 0.15 * 2)); // 체인3 = 2단계
+    // 생성 타이머 하나 (GDD 84장 6번, C.136)
+    const full = ticksOf(b.params, spawnTableOf(b.params).seconds);
+    expect(a.spawnTimer).toBe(50);
+    expect(b.spawnTimer).toBe(50 - Math.round(full * 0.15 * 2)); // 체인3 = 2단계
     expect(b.abilityProcs?.chainHaste).toBe(1);
     // 체인 1 은 효과 없음
     const c = mk({ chainHaste: 0.15 }, base);
     c.tray = [blk(BASIC_SKILL_ID)];
-    c.spawnTimers = blockSources(c.params).map(() => 50);
+    c.spawnTimer = 50;
     applyInput(c, { type: 'use', cell: 0 });
-    expect(c.spawnTimers[0]).toBe(50);
+    expect(c.spawnTimer).toBe(50);
   });
   it('흙 = 받은 피해를 쌓아 최대 체력 20% 에 닿으면 그 60% 를 되돌린다 (쌓인 값 0)', () => {
     const s = mk({ thorns: { threshold: 0.2, ret: 0.6 } }, { blockSpawnSeconds: 999, voidChance: 0, playerAttackSeconds: 999, timeLimitSeconds: 999 });

@@ -46,19 +46,16 @@ export function elementDamagePct(pct: number): string {
   return v < 0 ? `−${-v}%` : `+${v}%`;
 }
 
-/** 상태 화면 속성 피해 한 줄 (GDD 48장 4번): "속성 피해 [무] +0% · [물] +0% · …" — 0 이어도 보인다. 동그라미 = 속성 색 + 칸 글자 */
-export function elementDamageLine(values: Record<string, number>, ids: readonly string[], factionId: string): HTMLElement {
-  const line = el('p', 'bha-small');
-  line.dataset.elemDmg = ids.map((id) => `${id}:${values[id] ?? 0}`).join(',');
-  line.append('속성 피해 ');
-  ids.forEach((id, i) => {
-    if (i > 0) line.append(' · ');
-    const dot = paintElement(el('i', 'bha-eldot', elementDamageAbbr(id, factionId)), id);
-    dot.setAttribute('aria-hidden', 'true');
-    const m = paintElement(el('span', 'bha-lin'), id);
-    m.setAttribute('aria-label', `${id === NORMAL_ELEMENT ? '무속성' : elementName(id, factionId)} 피해 ${elementDamagePct(values[id] ?? 0)}`);
-    m.append(dot, el('b', 'bha-num', elementDamagePct(values[id] ?? 0)));
-    line.append(m);
+/** 상태 화면 속성 피해 (GDD 48장 4번, C.137 85장 8): 속성마다 능력치 행과 같은 형식으로 **한 줄에 하나** — [동그라미] 무속성 피해 · +0%. 0 이어도 보인다 */
+export function elementDamageRows(values: Record<string, number>, ids: readonly string[], factionId: string): HTMLElement[] {
+  return ids.map((id) => {
+    const row = el('div', 'bha-statrow');
+    row.dataset.elemDmg = `${id}:${values[id] ?? 0}`;
+    const label = `${id === NORMAL_ELEMENT ? '무속성' : elementName(id, factionId)} 피해`;
+    const name = el('span', 'bha-statrow__name');
+    name.append(elementDot(id, factionId), ' ', label);
+    row.append(name, el('b', 'bha-statrow__value bha-num', elementDamagePct(values[id] ?? 0)));
+    row.setAttribute('aria-label', `${label} ${elementDamagePct(values[id] ?? 0)}`);
+    return row;
   });
-  return line;
 }

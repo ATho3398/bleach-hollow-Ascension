@@ -8,7 +8,6 @@ import { expeditionEndVitals } from '../src/engine/nest';
 import { fillDefaultTraits, newTestSave } from '../src/engine/testMode';
 import { newSaveData, sanitizeDeck, settleStory } from '../src/game';
 import { getFaction } from '../src/data/factions';
-import { reasonText } from '../src/ui/absorbView';
 
 const PX = BALANCE.provisional.expedition;
 const SKILL = { id: 't-fire-a', element: 'fire', category: 'physical', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 } as const;
@@ -42,8 +41,7 @@ describe('C.95 ① 스토리 흡수 목표 화 (GDD 42장 1번)', () => {
       const exp = mk(fid, { chapterId: 'ch1', episodeId: 'ep3' });
       winPlain(exp, 'elite');
       expect(exp.phase).toBe('absorb');
-      expect(exp.absorbOffer!.reasons).toEqual(['story-objective']);
-      expect(reasonText(getFaction(fid), exp.absorbOffer!)).toContain('스토리 목표');
+      expect(exp.absorbOffer!.reasons).toEqual(['victory']); // C.125 (71장): 흡수 조건 삭제 — 스토리 목표 화도 그냥 승리
       chooseAbsorb(exp, exp.absorbOffer!.candidates[0] ?? null, 0);
       expect(exp.story!.progress).toBe(1);
     });
@@ -53,26 +51,26 @@ describe('C.95 ① 스토리 흡수 목표 화 (GDD 42장 1번)', () => {
     winPlain(exp, 'elite');
     expect(exp.phase).toBe('absorb');
   });
-  it('그 화의 일반 적·다른 목표 화·자유 원정은 예전처럼 조건을 본다', () => {
+  it('C.125 (71장): 그 화의 일반 적·다른 목표 화·자유 원정도 이기면 언제나 흡수 화면', () => {
     const a = mk('hollow', { chapterId: 'ch1', episodeId: 'ep3' });
     winPlain(a, 'normal');
-    expect(a.phase).not.toBe('absorb');
+    expect(a.phase).toBe('absorb');
     const b = mk('hollow', { chapterId: 'ch1', episodeId: 'ep1' });
     winPlain(b, 'elite');
-    expect(b.phase).not.toBe('absorb');
+    expect(b.phase).toBe('absorb');
     const c = mk('hollow', null);
     winPlain(c, 'elite');
-    expect(c.phase).not.toBe('absorb');
+    expect(c.phase).toBe('absorb');
   });
 });
 
 describe('C.95 ② 테스트 모드 기본 특성 (GDD 42장 2번)', () => {
   for (const fid of ['hollow', 'shinigami']) {
-    it(`${fid}: 전체 해금 새 세이브는 공격·막기·회복 특성을 각 1 이상 장착`, () => {
+    it(`${fid}: 전체 해금 새 세이브는 칸을 공격 특성으로 채운다 (C.136: 막기·회복 속성 특성 삭제 — GDD 84장 7번)`, () => {
       const save = newTestSave(fid, 1);
       const roles = save.build.slots.filter((x): x is string => x !== null).map((id) => getTrait(id).role);
       expect(save.build.slots.every((x) => x !== null)).toBe(true);
-      for (const r of ['attack', 'guard', 'heal']) expect(roles).toContain(r);
+      expect(roles.every((r) => r === 'attack')).toBe(true);
       for (const id of save.build.slots) expect(save.build.owned).toContain(id);
     });
   }

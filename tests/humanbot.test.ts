@@ -1,8 +1,9 @@
 // 사람형 봇 (GDD 14-4, C.16): 반응 지연·막기 성공률·체인 정리 확률·방어 자세 인지. 같은 시드 = 같은 플레이.
 import { describe, expect, it } from 'vitest';
+import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
-import { botInput, createCombat, elapsedSeconds, HUMAN_BOT_DEFAULTS, playCombatBot, playCombatHuman, replayCombat, type CombatState } from '../src/engine/combat';
+import { botInput, createCombat, elapsedSeconds, HUMAN_BOT_DEFAULTS, playCombatBot, playCombatHuman, replayCombat, type CombatParams, type CombatState } from '../src/engine/combat';
 
 const build = (...ids: string[]) => {
   const b = newBuild();
@@ -11,7 +12,8 @@ const build = (...ids: string[]) => {
 };
 const heavy = getEnemy('fire-heavy-seal');
 const stance = getEnemy('fire-stance');
-const two = build('t-thunder-c', 't-fire-guard');
+const two = build('t-thunder-c', 't-fire-b'); // C.136: 속성 막기 특성 삭제(GDD 84장 7번) — 막기는 기본 막기 블록
+const one = build('t-thunder-c');
 
 describe('사람형 봇', () => {
   it('임시 설정값: 반응 0.5~1.2초, 막기 성공 70%, 체인 정리 50%', () => {
@@ -41,12 +43,13 @@ describe('사람형 봇', () => {
   });
 
   it('입력 간격이 0.5~1.2초 사이에서 무작위다 (완벽형은 0.5초 고정)', () => {
-    const s = playCombatHuman(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: two }));
+    // C.118 로 전투가 절반이라 입력 수가 적다 — 입력 간격만 보는 시험이라 옛 길이(hpScale 1)로 돌린다
+    const s = playCombatHuman(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: { ...two, hpScale: 1 } }));
     const gaps = s.inputs.slice(1).map((x, i) => (x.tick - s.inputs[i]!.tick) / 10).filter((g) => g > 0);
     expect(gaps.length).toBeGreaterThan(10);
     expect(Math.min(...gaps)).toBeGreaterThanOrEqual(0.1 - 1e-9); // 같은 틱 안의 연속 입력은 없다
     expect(gaps.some((g) => g > 0.5)).toBe(true);
-    const p = playCombatBot(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: two }));
+    const p = playCombatBot(createCombat(5, { enemy: getEnemy('fire-sturdy'), params: { ...two, hpScale: 1 } }));
     const pg = p.inputs.slice(1).map((x, i) => x.tick - p.inputs[i]!.tick);
     expect(pg.every((g) => g % 5 === 0)).toBe(true);
   });
@@ -58,7 +61,9 @@ describe('사람형 봇', () => {
     let pguarded = 0;
     for (let seed = 1; seed <= 60; seed++) {
       const mkS = () => {
-        const s = createCombat(seed, { enemy: { ...heavy, hpInAttacks: 40 }, params: two });
+        // C.136 (GDD 84장 7번): 막기 속성 특성이 없어져 막기는 기본 막기 고정 몫뿐 — 봇의 막기 판단만 보려고 이 시험은 막기 몫을 키운다
+        const guardy = { ...two, blockPool: { ...BALANCE.provisional.blockPool, roleShare: { guard: 0.35, heal: 0.05 } } } as Partial<CombatParams>;
+        const s = createCombat(seed, { enemy: { ...heavy, hpInAttacks: 80 }, params: guardy }); // C.118: 적 체력 배율 0.5 라 강공격 착탄 수(100 이상)를 유지하려고 40 → 80
         s.player.hp = s.player.maxHp = 1e9;
         return s;
       };
@@ -75,7 +80,8 @@ describe('사람형 봇', () => {
     expect(hits).toBeGreaterThan(100);
     const hr = guarded / hits;
     const pr = pguarded / phits;
-    expect(pr).toBeGreaterThan(0.9);
+    expect(pr).toBeGreaterThan(0.75); // C.136 (GDD 84장 2번): 막기 동안 블록 생성이 멈춰 연속 강공격 사이에 새 막기 블록이 덜 생긴다 — 0.9 → 0.75
+    expect(hr).toBeLessThan(pr - 0.05);
     expect(hr).toBeGreaterThan(0.55);
     expect(hr).toBeLessThan(0.85);
   });
@@ -84,9 +90,10 @@ describe('사람형 봇', () => {
     const chain3 = (joinChance: number) => {
       let n = 0;
       for (let seed = 1; seed <= 10; seed++) {
-        const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('fire-sturdy'), params: two }), { joinChance });
+        // C.133 (GDD 80장 v5.166): 2칸(공격·막기) 몸은 기본 블록 몫이 25% 로 줄어 끼어 있는 블록이 드물어 차이가 표본 잡음(±1) 안이 됐다 → 끼어 있는 기본 블록이 많은 1칸 몸으로 본다
+        const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('fire-sturdy'), params: one }), { joinChance });
         n += s.chain3Count;
-        expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'stored')).toBe(true);
+        expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'liberate')).toBe(true);
       }
       return n;
     };
@@ -107,6 +114,8 @@ describe('사람형 봇', () => {
       let n = 0;
       for (let seed = 1; seed <= 20; seed++) {
         const s = createCombat(seed, { enemy: stance, params: two });
+        // C.118: 반격 피해로 먼저 쓰러지면 반격 수가 잘려 비교가 안 되므로(짧아진 전투·막기 블록 감소) 내 체력을 무한으로 두고 '쓴 블록만큼 반격을 받는다'만 본다
+        s.player.hp = s.player.maxHp = 1e9;
         const push = s.events.push.bind(s.events);
         s.events.push = (...e) => {
           for (const x of e) if (x.kind === 'counter') n++;
@@ -121,7 +130,7 @@ describe('사람형 봇', () => {
 
   it('botInput: allowGuard=false 면 강공격 예고 중에도 막기 블록을 쓰지 않는다', () => {
     const s = createCombat(1, { enemy: heavy, params: two });
-    s.tray = [{ uid: 1, kind: 'skill', traitId: 't-fire-guard' }];
+    s.tray = [{ uid: 1, kind: 'skill', traitId: 'basic-guard' }];
     s.enemy.cast = { ticks: 10, total: 20, hitsLeft: 0 };
     expect(botInput(s)).toEqual({ type: 'use', cell: 0 });
     expect(botInput(s, { allowGuard: false })).toBeNull();

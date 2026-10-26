@@ -16,6 +16,9 @@ import { emptyRunLog } from '../src/engine/runLog';
 import { migrateSave, newSaveData, performRebirth, recordTowerBattle, sanitizeTower, SAVE_FORMAT_VERSION, TRACK_KEYS, type SaveData } from '../src/game';
 import { TITLE_TABS } from '../src/ui/titleDexView';
 import { towerRewardText } from '../src/ui/towerView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const TX = BALANCE.provisional.tower;
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');

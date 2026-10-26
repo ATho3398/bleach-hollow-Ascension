@@ -23,6 +23,9 @@ import { needsMigration, swapWithBackup } from '../src/saveBackup';
 import { readBackupMeta, slotBackupKey, slotKey, stashSlot } from '../src/saveSlots';
 import { groundInfo } from '../src/ui/planView';
 import { dexMilestoneText, rewardText } from '../src/ui/tutorialGoalsView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const NX = BALANCE.provisional.nest;
 const H = 3_600_000;

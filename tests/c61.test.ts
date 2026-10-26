@@ -67,15 +67,18 @@ describe('종족 설정: 방 테마·말풍선 팩 이름과 문구', () => {
     expect(jadeRows(rich('shinigami'), S).find((r) => r.id === 'room-bloom')!.name).toBe('벚꽃 마당');
     expect(jadeRows(rich(), H).find((r) => r.id === 'room-bloom')!.name).toBe('뼈 정원');
   });
+  const CARE_TALK: readonly (typeof ROOM_TALK)[number][] = ['askPet', 'askSleep', 'refusePet', 'refuseSleep'];
   it('말풍선 팩은 기존 혼잣말 키를 같은 수로 덮고, 팩이 없으면 기본 문구', () => {
     for (const f of [H, S]) {
       const base = roomOf(f);
       for (const pack of ['talk-a', 'talk-b']) {
         const r = roomOf(f, pack);
-        for (const k of ROOM_TALK) {
+        // 기존 혼잣말 키만 (C.133 GDD 82장 돌봄 요청·거절 키는 팩이 덮지 않고 기본 문구)
+        for (const k of ROOM_TALK.filter((x) => !CARE_TALK.includes(x))) {
           expect(r.talk[k].length, `${f.id} ${pack} ${k}`).toBe(base.talk[k].length);
           expect(r.talk[k]).not.toEqual(base.talk[k]);
         }
+        for (const k of CARE_TALK) expect(r.talk[k]).toEqual(base.talk[k]);
       }
       expect(roomOf(f, null).talk).toEqual(base.talk);
       expect(roomOf(f, 'talk-z').talk).toEqual(base.talk);

@@ -14,18 +14,13 @@ export interface BattleLabels {
   /** 블록 역할 이름 (공격/막기/회복) */
   role: Record<BlockRole, string>;
   skillBlock: string;
-  /** 필살 블록 표시 이름 (GDD 20장 v5.4 `필살`) */
-  specialBlock: string;
-  /** 저장형 필살기 (GDD 14-6, v5.4 표시 `저장 필살`) */
-  storedSkill: string;
-  /** 해방 (GDD 22-5): 종족 설정 liberation (이름·컷인·풀릴 때 문구) */
-  liberation: { name: string; cutin: string; endText: string };
+  /** 해방 (GDD 83장): 종족 설정 liberation 중 지금 단계의 이름·컷인·풀릴 때 문구 (저장형 필살기는 C.134 에 삭제) */
+  liberation: LiberationLabels;
   /** 공허 블록 표시 이름 (v5.4 `공허`) */
   voidBlock: string;
   chain: string;
   /** 공격 계열 이름·약어·단계 기술 이름 (GDD 17-3, 종족 설정 families) */
   families: FactionConfig['families'];
-  sp: string;
   riskGauge: string;
   defeatState: string;
   huntingGround: string;
@@ -34,17 +29,30 @@ export interface BattleLabels {
   matchupText: FactionConfig['matchupText'];
 }
 
-export function battleLabels(f: FactionConfig): BattleLabels {
+/** 해방 표시 (GDD 83장): unique = 고유 효과가 있는 단계(레스렉시온/만해) */
+export interface LiberationLabels {
+  name: string;
+  cutin: string;
+  endText: string;
+  unique: boolean;
+}
+
+/** 지금 단계의 해방 이름·문구: 5단계(BALANCE liberation.minTierIndex) 전은 영력 해방, 그 뒤는 종족 이름(레스렉시온/만해) */
+export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, tierIndex: number): LiberationLabels {
+  const lb = f.liberation;
+  return tierIndex >= BALANCE.provisional.liberation.minTierIndex
+    ? { name: lb.name, cutin: lb.cutin, endText: lb.endText, unique: true }
+    : { name: lb.baseName, cutin: lb.baseCutin, endText: lb.baseEndText, unique: false };
+}
+
+export function battleLabels(f: FactionConfig, tierIndex = 0): BattleLabels {
   return {
     role: { ...f.roleNames },
     skillBlock: f.skillBlockName,
-    specialBlock: BLOCK_WORDS.special,
-    storedSkill: BLOCK_WORDS.stored,
-    liberation: { ...f.liberation },
+    liberation: liberationLabels(f, tierIndex),
     voidBlock: BLOCK_WORDS.void,
     chain: f.chainName,
     families: f.families,
-    sp: f.spName,
     riskGauge: f.riskGaugeName,
     defeatState: f.defeatStateName,
     huntingGround: f.huntingGroundName,
@@ -70,26 +78,16 @@ export function blockElementName(elementId: string, factionId: string): string {
 }
 
 /**
- * 스킬 블록 표시 이름 (GDD 20장 v5.4): 공격 = `속성_계열`(예 불_조), 막기·회복 = `속성_막기`·`속성_회복`.
- * 속성은 데이터(elements), 계열 약어는 종족 설정 families 에서 읽는다. 속성이 없거나 공격인데 계열이 없으면 null
+ * 스킬 블록 표시 이름 (GDD 84장 4번, C.138): 공격 = 계열 약어만(조·탄·교 / 참·권·귀), 막기·회복 = `막기`·`회복`.
+ * 속성은 이름에 넣지 않고 색으로만 보인다(79장). 계열 약어는 종족 설정 families 에서 읽는다. 공격인데 계열이 없으면 null
  */
-export function skillBlockLabel(labels: Pick<BattleLabels, 'families'>, factionId: string, element: string | null, family: string | null | undefined, role: SkillRole | null): string | null {
-  if (!element) return null;
-  const tail = role === 'guard' ? BLOCK_WORDS.guard : role === 'heal' ? BLOCK_WORDS.heal : familyAbbr(labels, family);
-  return tail ? `${blockElementName(element, factionId)}_${tail}` : null;
+export function skillBlockLabel(labels: Pick<BattleLabels, 'families'>, family: string | null | undefined, role: SkillRole | null): string | null {
+  return role === 'guard' ? BLOCK_WORDS.guard : role === 'heal' ? BLOCK_WORDS.heal : familyAbbr(labels, family) ?? null;
 }
 
-/** 해방 블록 표시 이름 (GDD 22-5 `속성_해방`): 내 캐릭터 속성. 속성을 모르면 `해방` */
+/** 해방 블록 표시 이름 (GDD 22-5 `속성_해방`, 83장: 해방 슬롯이 비었을 때 해방 중에 나온다): 내 캐릭터 속성. 속성을 모르면 `해방` */
 export function liberationBlockLabel(factionId: string, element: string | null | undefined): string {
   return element ? `${blockElementName(element, factionId)}_${BLOCK_WORDS.liberation}` : BLOCK_WORDS.liberation;
-}
-
-/** 해방 버튼 설정 (GDD 22-5): 5단계 미만이면 없음(버튼 숨김), 자격이 모자라면 무엇이 부족한지 한 줄. 등급은 종족 공통 낱말 "등급" (C.68: "석차 도전 번호" 로 사신에 호로 낱말이 섞였다) */
-export function liberationButton(f: Pick<FactionConfig, 'training' | 'rankBattleName'>, access: { visible: boolean; usable: boolean; missing: ('training' | 'rank')[] }): { note: string | null } | undefined {
-  if (!access.visible) return undefined;
-  if (access.usable) return { note: null };
-  const parts = access.missing.map((m) => (m === 'training' ? `${f.training.title} 완료` : `${f.rankBattleName} 등급`));
-  return { note: `잠김 — ${parts.join(' · ')} 필요` };
 }
 
 /** 콤보 블록 표시 이름 (v5.4 `콤보_계열`). 계열을 모르면 `콤보` */
@@ -102,15 +100,20 @@ export function comboBlockLabel(labels: Pick<BattleLabels, 'families'>, family: 
 export function tileHint(t: TerrainTileDef): string {
   const e = t.effect;
   let base: string;
-  if (e.type === 'spawn') base = e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
+  const T = BALANCE.provisional.tiles;
+  if (e.type === 'spawn' && e.hunter) base = `강적보다 센 사냥꾼 1마리 (체력 ×${T.hunter.hpMult}·공격 ×${T.hunter.attackMult}) · 이기면 흡수 후보 ×${T.hunter.absorbCandidateMult}`;
+  else if (e.type === 'spawn') base = e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
+  else if (e.type === 'rest' && e.spring) base = `회복 없음 · 리스크를 휴식의 ${T.spring.riskReliefMult}배 깎는다 (시간 소모)`;
   else if (e.type === 'rest') base = '배부름·컨디션 회복 (시간 소모)';
   else if (e.type === 'event') return eventHint(e.event);
+  else if (e.type === 'echo') return '바로 앞 칸 타일의 효과를 한 번 더 (앞 칸이 빈 칸·메아리면 없음)';
   else {
     base = {
       reshuffle: '전투 중 블록 바의 순서가 주기적으로 섞인다',
       power: '전투 공격 위력 ×1.3',
       shield: '전투에서 받는 피해 ↓',
       void: '전투 공허 블록 ↑',
+      training: `약한 적 · 이기면 노력치 +${T.training.ev} (그 적의 능력치 하나, 상한 안)`,
     }[e.preset];
   }
   return t.upgradeOf ? `${base} · 상위: ${variantModsText(TV.upgrade[t.kind] as VariantMods).join(' · ')}` : base;
@@ -163,5 +166,7 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
     'battle-lost': `전투에서 졌다. ${f.defeatStateName} 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
     exhausted: `허기로 쓰러졌다. ${f.defeatStateName} 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
+    'tutorial-clear': `첫 원정을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
+    abort: `원정 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,
   }[reason];
 }

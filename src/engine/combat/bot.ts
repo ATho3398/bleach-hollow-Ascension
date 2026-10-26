@@ -1,5 +1,5 @@
 // 자동 점검 봇 (밸런스 점검·테스트용). 사람처럼 일정 간격(임시 0.5초)마다 입력 하나만 한다.
-// 순서: 강공격 예고엔 막기 → 필살 → 위험하면 회복 → 약점 계통으로 마무리 → 체인3 사용 → 다른 블록을 먼저 써서 같은 블록 붙이기 → 가득 차면 하나 쓰기
+// 순서: 해방(게이지 가득) → 강공격 예고엔 막기 → 위험하면 회복 → 약점 계통으로 마무리 → 체인3 사용 → 다른 블록을 먼저 써서 같은 블록 붙이기 → 가득 차면 하나 쓰기
 // 블록 순서는 바꿀 수 없다(GDD 17-2): 체인은 '붙은 블록 하나를 클릭'하거나 '끼어 있는 다른 블록을 먼저 써서 같은 블록을 붙이는' 것으로만 만든다.
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
 import { hasSpecialActions } from '../../data/enemies';
@@ -18,15 +18,11 @@ export interface BotOptions {
   allowJoin?: boolean;
   /** false 면 이번 입력에서 막기 블록을 쓰지 않는다 (사람형 봇의 막기 실패·반응 전). 기본 true */
   allowGuard?: boolean;
-  /** false 면 이번 입력에서 저장형 필살기(C.17)를 쓰지 않는다. 강공격 예고 중 막기 블록을 못 쓸 때 대안으로 쓴다. 기본 true */
-  allowStored?: boolean;
-  /** true 면 충전이 상한일 때도 낭비를 막으려고 쓴다 (완벽형). 기본 true */
-  storedWhenFull?: boolean;
   /** false 면 콤보 연속을 이어 가는 중에도 기다리지 않고 다른 블록을 쓴다 (콤보를 모르는 플레이). 기본 true */
   comboHold?: boolean;
   /** true 면 상대의 방어 자세를 알아채지 못한 것처럼 플레이한다 (블록을 아끼지 않고 평소대로 쓴다). 기본 false */
   ignoreStance?: boolean;
-  /** false 면 해방(GDD 22-5)을 쓰지 않는다. 기본 true — 자격이 있고 게이지가 차면 바로 쓴다 */
+  /** false 면 해방(GDD 83장)을 쓰지 않는다. 기본 true — 게이지가 차면 바로 쓴다 (저장형 필살기는 C.134 에 삭제) */
   liberate?: boolean;
 }
 
@@ -73,7 +69,7 @@ function joinUse(s: CombatState, top: number): CombatInput | null {
   const hasPattern = hasSpecialActions(s.enemy.def.pattern);
   let best: { i: number; run: number } | null = null;
   for (const c of cells(s)) {
-    if (c.b.kind === 'special' || c.b.kind === 'combo' || c.b.kind === 'liberation') continue;
+    if (c.b.kind === 'combo' || c.b.kind === 'liberation') continue;
     // 낭비가 큰 블록은 붙이려고 쓰지 않는다: 막기는 강적(강공격)이 없을 때만, 회복은 다쳤을 때만
     const role = c.b.kind === 'skill' ? roleOf(s, c.b) : null;
     if (role === 'guard' && hasPattern) continue;
@@ -97,7 +93,7 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   const hasPattern = hasSpecialActions(s.enemy.def.pattern);
   const top = maxChain(p);
 
-  // 0. 해방: 자격이 있고 게이지가 차면 바로 (GDD 22-5)
+  // 0. 해방: 게이지가 차면 바로 (GDD 83장)
   if (opt.liberate !== false && canLiberate(s)) return { type: 'liberate' };
   // 1. 강공격 예고 중이고 막기 상태가 착탄까지 못 버티면 막기 블록
   const cast = s.enemy.cast;
@@ -105,9 +101,6 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     const g = ofRole('guard')[0];
     if (g) return use(g);
   }
-  // 1.2 막기 블록을 못 쓰는데 강공격이 곧 온다면 저장형 필살기(쓰면 2초간 막기 상태)
-  const storedOk = opt.allowStored !== false && s.storedCharges > 0;
-  if (cast && storedOk && s.guard.ticks <= cast.ticks) return { type: 'stored' };
   // 1.5 상대가 방어 자세면(블록 피해 감소 + 쓸 때마다 반격) 자세가 풀릴 때까지 블록을 아낀다: 마무리 가능하면 쓰고, 같은 블록만 붙이고, 바가 가득 차면 하나 쓴다
   if (s.enemy.stance && !opt.ignoreStance) {
     const kill = skills.find((c) => blockDamage(s, c.b, groupSize(s, c)) >= s.enemy.hp);
@@ -120,8 +113,8 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     }
     return null;
   }
-  // 2. 필살 블록·콤보 블록·해방 블록은 바로
-  const special = all.find((c) => c.b.kind === 'special' || c.b.kind === 'combo' || c.b.kind === 'liberation');
+  // 2. 콤보 블록·해방 블록은 바로
+  const special = all.find((c) => c.b.kind === 'combo' || c.b.kind === 'liberation');
   if (special) return use(special);
   // 3. 체력이 절반 아래면 회복
   if (s.player.hp < s.player.maxHp * 0.5) {
@@ -162,8 +155,6 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
     const c = qualifying(r);
     if (c) return use(c);
   }
-  // 6.5 충전이 상한이면 낭비를 막으려고 쓴다
-  if (storedOk && opt.storedWhenFull !== false && s.storedCharges >= p.storedChargesMax) return { type: 'stored' };
   // 7. 가득 찼으면 하나 쓴다: 공허(허용 시) → 체인 높은 공격 → 회복 → 막기
   if (s.tray.length >= p.trayCapacity) {
     const v = all.find((c) => c.b.kind === 'void');
@@ -194,11 +185,9 @@ export interface HumanBotOptions extends BotOptions {
   joinChance?: number;
   /** 전투마다 한 번 굴려, 방어 자세의 의미(블록 피해 감소·반격)를 알아채고 블록을 아끼는 확률. 못 알아채면 평소대로 쓴다 */
   stanceAware?: number;
-  /** 강공격 예고를 봤는데 막기를 못 썼을 때(막기 실패 또는 막기 블록 없음) 저장형 필살기를 쓰는 확률 (C.17, GDD 14-6 임시 40%). 시전마다 한 번 굴린다 */
-  storedUse?: number;
 }
 
-export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, number], guardSuccess: 0.7, joinChance: 0.5, stanceAware: 0.5, storedUse: 0.4 };
+export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, number], guardSuccess: 0.7, joinChance: 0.5, stanceAware: 0.5 };
 
 /** 사람형 봇으로 전투를 끝까지 돌린다: 반응 지연(무작위), 막기 성공률, 체인 정리 확률. 무작위는 전투 시드에서 따로 뽑아 전투 rng 를 건드리지 않는다 */
 export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): CombatState {
@@ -206,17 +195,15 @@ export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): Comb
   const guardSuccess = opt.guardSuccess ?? HUMAN_BOT_DEFAULTS.guardSuccess;
   const joinChance = opt.joinChance ?? HUMAN_BOT_DEFAULTS.joinChance;
   const stanceAware = opt.stanceAware ?? HUMAN_BOT_DEFAULTS.stanceAware;
-  const storedUse = opt.storedUse ?? HUMAN_BOT_DEFAULTS.storedUse;
   const rng = createRng((s.seed ^ 0x5bd1e995) >>> 0);
   const ignoreStance = nextFloat(rng) >= stanceAware;
   const delay = () => ticksOf(s.params, lo + nextFloat(rng) * (hi - lo));
   let nextAct = delay();
   /** 지금 시전(강공격 예고)에 대한 반응: 볼 수 있게 되는 틱과 막기 시도 성공 여부 */
-  let react: { at: number; ok: boolean; stored: boolean } | null = null;
+  let react: { at: number; ok: boolean } | null = null;
   while (s.status === 'playing') {
     if (s.events.some((e) => e.kind === 'heavy-cast')) {
-      react = { at: s.tick + delay(), ok: nextFloat(rng) < guardSuccess, stored: false };
-      react.stored = nextFloat(rng) < storedUse;
+      react = { at: s.tick + delay(), ok: nextFloat(rng) < guardSuccess };
       nextAct = Math.min(nextAct, react.at);
     }
     if (!s.enemy.cast) react = null;
@@ -225,8 +212,6 @@ export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): Comb
       input = botInput(s, {
         ...opt,
         allowGuard: react !== null && react.ok && s.tick >= react.at,
-        allowStored: react !== null && react.stored && s.tick >= react.at,
-        storedWhenFull: false,
         allowJoin: nextFloat(rng) < joinChance,
         ignoreStance,
       });

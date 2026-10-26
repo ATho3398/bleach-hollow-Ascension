@@ -13,16 +13,17 @@ describe('C.94 탑 구간별 배율', () => {
     expect(towerStar(15)).toBe(2);
     expect(towerFloorMultiplier(11)).toBeCloseTo(1);
     expect(towerFloorMultiplier(13)).toBeCloseTo(1 + 2 * 0.02);
-    expect(towerFloorMultiplier(15)).toBeCloseTo((1 + 4 * 0.02) * TX.eliteScale);
+    expect(towerFloorMultiplier(15)).toBeCloseTo((1 + 4 * 0.02) * TX.eliteScale * TX.eliteScaleByBand[2]!); // C.123: ★2 강적 층 배율
     // ★3 구간은 기본 +4%
     expect(towerFloorMultiplier(23)).toBeCloseTo(1 + 2 * TX.perFloorInBand);
     expect(towerFloorMultiplier(25)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale);
   });
 
-  it('★2 구간 보스 층(20층)만 보스 층 배율을 곱하고 30·40층은 1', () => {
+  it('★2·★3 구간 보스 층(20·30층)만 보스 층 배율을 곱하고 40층은 1 (C.136: ★3 0.65)', () => {
     expect(TX.bossScaleByBand[2]).toBe(0.72);
+    expect(TX.bossScaleByBand[3]).toBe(0.65);
     expect(towerFloorMultiplier(20)).toBeCloseTo((1 + 9 * 0.02) * 0.72);
-    expect(towerFloorMultiplier(30)).toBeCloseTo(1 + 9 * TX.perFloorInBand);
+    expect(towerFloorMultiplier(30)).toBeCloseTo((1 + 9 * TX.perFloorInBand) * 0.65);
     expect(towerFloorMultiplier(40)).toBeCloseTo(1 + 9 * TX.perFloorInBand);
     // 보스 층 배율은 보통·강적 층에는 붙지 않는다
     expect(towerFloorMultiplier(19)).toBeCloseTo(1 + 8 * 0.02);
@@ -44,7 +45,7 @@ describe('C.94 탑 구간별 배율', () => {
     delete TX.perFloorByBand[2];
     delete TX.bossScaleByBand[2];
     try {
-      expect(towerFloorMultiplier(15)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale);
+      expect(towerFloorMultiplier(15)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale * TX.eliteScaleByBand[2]!);
       expect(towerFloorMultiplier(20)).toBeCloseTo(1 + 9 * TX.perFloorInBand);
     } finally {
       TX.perFloorByBand[2] = savedP!;

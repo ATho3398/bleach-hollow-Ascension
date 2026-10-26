@@ -42,8 +42,8 @@ export function pickAbbr(abbr: string | undefined, name: string): string {
 }
 
 /** 블록 외형: 필살·공허는 그대로, 콤보·해방은 필살 모양, 기본 블록(traitId 가 기본 기술이거나 없음)은 basic, 스킬은 역할(모르면 attack) */
-export function blockVisual(kind: 'skill' | 'special' | 'void' | 'combo' | 'liberation', isBasic: boolean, role: 'attack' | 'guard' | 'heal' | null): BlockVisual {
-  if (kind === 'special' || kind === 'combo' || kind === 'liberation') return 'special';
+export function blockVisual(kind: 'skill' | 'void' | 'combo' | 'liberation', isBasic: boolean, role: 'attack' | 'guard' | 'heal' | null): BlockVisual {
+  if (kind === 'combo' || kind === 'liberation') return 'special';
   if (kind === 'void') return 'void';
   if (isBasic) return 'basic';
   return role ?? 'attack';
@@ -143,8 +143,8 @@ export function gaugeFill(remaining: number, total: number): number {
   return total > 0 ? Math.min(1, Math.max(0, remaining / total)) : 0;
 }
 
-/** 머리 위 게이지 종류: 시전(강공격 예고)·봉인·막기·방어 자세 (GDD 18-6) */
-export type HeadGaugeKind = 'cast' | 'seal' | 'guard' | 'stance';
+/** 머리 위 게이지 종류: 시전(강공격 예고)·봉인·막기·방어 자세 (GDD 18-6), 회복 대가 공격력 감소 (GDD 84장 2번, C.136) */
+export type HeadGaugeKind = 'cast' | 'seal' | 'guard' | 'stance' | 'weaken';
 
 /** 켜져 있는 게이지에 쌓는 자리(0이 머리 위 첫 줄, 1부터 그 아래)를 준다. 꺼진 것은 -1 */
 export function gaugeSlots(visible: readonly boolean[]): number[] {
@@ -159,6 +159,11 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 /** 텍스트가 달라졌을 때만 쓴다 (프레임마다 부르는 갱신에서 DOM 쓰기를 줄인다) */
 export function setText(node: HTMLElement, text: string): void {
   if (node.textContent !== text) node.textContent = text;
+}
+
+/** hidden 이 달라졌을 때만 쓴다 (C.139, GDD 88장 12: 같은 값 대입도 기기의 MutationObserver 가 속성 변경으로 받아 선택 항목을 매 프레임 다시 셌다) */
+export function setHidden(node: HTMLElement, hidden: boolean): void {
+  if (node.hidden !== hidden) node.hidden = hidden;
 }
 
 /** 1회성 클래스: 붙이고, animationend(또는 안전 타이머)에서 뗀다 */
@@ -351,6 +356,8 @@ export interface BlockSpec {
   familyId?: string;
   /** 속성 색 (CSS 값, GDD 20-2: 블록 = 계열 글자 + 속성 색). 있으면 계열 배지·띠를 이 색으로 칠한다 */
   elementColor?: string;
+  /** 계열 연출 종류 (종족 설정 families[].fx): 공격 블록의 아이콘 모양을 계열마다 다르게 (C.131, GDD 79장). 색은 속성, 모양은 계열 */
+  fx?: string;
 }
 
 /** 블록 한 개 (HANDOFF 5-1). 체인 단계·눌림 같은 상태 클래스는 화면이 붙인다 */
@@ -367,14 +374,14 @@ export function blockEl(spec: BlockSpec): HTMLElement {
     node.append(pips);
   }
   const ico = el('span', 'bha-block__icon');
-  ico.append(icon(BLOCK_ICON[spec.visual]));
+  // 아이콘 = 계열 모양 (C.138, 84장 5번): 공격 블록과 기본(노말) 블록 모두 계열마다 다르게
+  ico.append(icon((spec.visual === 'attack' || spec.visual === 'basic') && spec.fx ? `i-fx-${spec.fx}` : BLOCK_ICON[spec.visual]));
+  if (spec.fx) node.dataset.fx = spec.fx;
   const weak = el('span', 'bha-block__weak');
   weak.append(icon('i-weak'));
   node.append(ico, el('b', 'bha-block__abbr', spec.abbr), weak);
-  if (spec.family) {
-    node.append(el('span', 'bha-block__fam', spec.family));
-    if (spec.familyId) node.dataset.fam = spec.familyId;
-  }
+  // 계열 글자는 이름(약어)이 이미 계열이라 모서리 배지는 달지 않는다 (C.138)
+  if (spec.family && spec.familyId) node.dataset.fam = spec.familyId;
   if (spec.elementColor) {
     node.dataset.el = '';
     node.style.setProperty('--fam', spec.elementColor);
@@ -520,27 +527,8 @@ export function floatPool(container: HTMLElement, max = 6, showMs = 1100): {
   };
 }
 
-/** 전투 배속 기억 (C.63, GDD 28장 6번): 고른 배속을 다음 전투에도 쓴다. 브라우저 저장(세이브 아님), 원정·연습·등급전·보스 공통 */
-export const BATTLE_SPEED_KEY = 'bha-battle-speed';
-export const BATTLE_SPEEDS = [1, 2] as const;
-export type BattleSpeed = (typeof BATTLE_SPEEDS)[number];
-
-export function loadBattleSpeed(st: Pick<Storage, 'getItem'> | null): BattleSpeed {
-  try {
-    const v = Number(st?.getItem(BATTLE_SPEED_KEY));
-    return (BATTLE_SPEEDS as readonly number[]).includes(v) ? (v as BattleSpeed) : 1;
-  } catch {
-    return 1;
-  }
-}
-
-export function saveBattleSpeed(st: Pick<Storage, 'setItem'> | null, v: BattleSpeed): void {
-  try {
-    st?.setItem(BATTLE_SPEED_KEY, String(v));
-  } catch {
-    /* 저장 못 해도 이번 전투는 그 배속 */
-  }
-}
+/** 전투 배속 기억(C.63 `bha-battle-speed`)은 C.118 에 삭제 — 전투는 1배 고정 (GDD 62장). 브라우저에 남은 옛 값은 읽지 않는다 */
+export const BATTLE_SPEED_KEY_REMOVED = 'bha-battle-speed';
 
 /** 전투 로그 패널에 남기는 최근 줄 수 (C.63: 가운데 실시간 안내 대신 [로그] 버튼) */
 export const BATTLE_LOG_MAX = 40;

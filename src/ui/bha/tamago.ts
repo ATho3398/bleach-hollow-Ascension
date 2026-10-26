@@ -210,7 +210,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   seg1.append(chain, seg2);
   key.append(seg1);
   key.hidden = true;
-  // 조작 줄 (GDD 47장 1번, C.100): 기기 바깥 화면 가장자리에 둔다(가로 = 오른쪽 세로 줄, 세로 회전 출력 = 아래 가로 줄). 버튼은 평소 작은 버튼의 약 3배
+  // 조작 줄 (GDD 47장 1번 → 69장, C.122): 기기 바깥 화면 아래 가장자리에 한 줄로(가로·세로 회전 출력 모두). 줌·배율과 상관없이 화면상 같은 크기(64px)
   const ctrl = el('div', 'bha-tama__bar');
   ctrl.hidden = true;
   const designBtn = button({ label: '디자인', icon: 'i-rare', variant: 'ghost', onClick: () => openDesigns() });
@@ -375,14 +375,17 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     e.style.width = `${r.w}px`;
     e.style.height = `${r.h}px`;
   };
-  /** 조작 줄이 차지하는 폭을 기기 안 좌표로(기기의 +x 쪽: 가로 = 화면 오른쪽, 세로 회전 = 화면 아래) */
+  /** 조작 줄이 차지하는 두께를 기기 안 좌표로: 가로 = 화면 아래(기기 +y), 세로 회전 출력 = 화면 아래(기기 +x). 화면 px 가 늘 같도록 배율로 나눈다 */
   const ctrlReserve = (f: Fit): number => (on ? Math.round(BODY.barPx / Math.max(0.1, f.scale)) : 0);
+  /** 조작 줄을 뺀 기기 쓸 수 있는 칸 (기기 안 좌표) */
+  const usable = (f: Fit): { w: number; h: number } => ({ w: f.w - (f.rotated ? ctrlReserve(f) : 0), h: f.h - (f.rotated ? 0 : ctrlReserve(f)) });
   const stageOf = (f: Fit): string => {
     fit = f;
     artBox = artSpec && artNat ? (artSpec.frame === 'v2' && artSpec.hole ? deviceArtPlacementV2<DeviceButton>(lcdRect(), artNat, { hole: artSpec.hole, ring: artSpec.ring }) : deviceArtPlacement(lcdRect(), artNat, artSpec)) : null;
-    ctrl.dataset.pos = f.rotated ? 'bottom' : 'right';
-    layout = tamaLayout(f.w, f.h, artBox, flipDeg, view, ctrlReserve(f));
-    view = clampView(view, layout.zoom, layout.box, f.w - ctrlReserve(f), f.h);
+    ctrl.dataset.pos = f.rotated ? 'rotated' : 'bottom';
+    const u = usable(f);
+    layout = tamaLayout(f.w, f.h, artBox, flipDeg, view, f.w - u.w, f.h - u.h);
+    view = clampView(view, layout.zoom, layout.box, u.w, u.h);
     gravityLocal = tiltOn() ? gravityLocal : defaultGravity(f.rotated);
     return on ? layout.stage : '';
   };
@@ -502,11 +505,12 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   const atScreen = (x: number, y: number) => {
     if (!fit) return { x: 0, y: 0 };
     const l = toLocal(fit, x, y);
-    return { x: l.x - fit.w / 2, y: l.y - fit.h / 2 };
+    const u = usable(fit);
+    return { x: l.x - u.w / 2, y: l.y - u.h / 2 };
   };
   const setView = (v: TamaView, smooth = false) => {
     if (!layout || !fit) return;
-    const next = clampView(v, layout.zoom, layout.box, fit.w, fit.h);
+    const next = clampView(v, layout.zoom, layout.box, usable(fit).w, usable(fit).h);
     if (next.uz === view.uz && next.px === view.px && next.py === view.py) return;
     view = next;
     if (smooth) animate(240);
@@ -539,7 +543,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && pts.size >= 2 && layout && fit) {
       const m = mid();
-      setView(zoomAt(pinch.v0, dist() / pinch.d0, atScreen(m.x, m.y), layout.zoom, layout.box, fit.w, fit.h));
+      setView(zoomAt(pinch.v0, dist() / pinch.d0, atScreen(m.x, m.y), layout.zoom, layout.box, usable(fit).w, usable(fit).h));
       e.preventDefault();
     } else if (pan && view.uz > 1.001) {
       const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
@@ -579,7 +583,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   }, true);
   document.addEventListener('wheel', (e) => {
     if (!on || e.ctrlKey || !layout || !fit) return;
-    setView(zoomAt(view, wheelFactor(e.deltaY), atScreen(e.clientX, e.clientY), layout.zoom, layout.box, fit.w, fit.h));
+    setView(zoomAt(view, wheelFactor(e.deltaY), atScreen(e.clientX, e.clientY), layout.zoom, layout.box, usable(fit).w, usable(fit).h));
     e.preventDefault();
   }, { passive: false });
 

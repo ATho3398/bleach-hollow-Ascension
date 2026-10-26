@@ -1,23 +1,21 @@
 // C.106 (GDD 49-7·49-8): 특수 속성(혈·독·허) 숨기기 · 4단계 일반 5종 · 실패형 줄기 낮춤·이름 · 종족별 특별 태그 '최초의 호로'
 import { describe, expect, it } from 'vitest';
-import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
-import { getEnemy } from '../src/data/enemies';
+import { BALANCE } from '../src/config/balance';
 import { ELEMENTAL_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
 import { FORM_TABLE, formsOfTier, getForm } from '../src/data/evolution';
 import { failLineTotal } from '../src/data/evolution/generate';
 import { getFaction } from '../src/data/factions';
 import { STAT_IDS } from '../src/data/schema';
 import { TITLES, titleName, titlesForFaction } from '../src/data/titles';
-import { getTrait } from '../src/data/traits';
-import { buildOffer, gainTrait, isSpecialTrait, newBuild, rerollCandidates, specialTraitChance } from '../src/engine/absorb';
+import { gainTrait, newBuild } from '../src/engine/absorb';
 import {
   applyEvolutionToParams, baseStatsOf, currentStats, evolutionCandidates, formDisplayName, isFailLine, newEvolution, tierDisplayName, type EvolutionState,
 } from '../src/engine/evolution';
-import { mutationMods } from '../src/engine/expedition/variants';
-import { createRng } from '../src/engine/rng';
 import { checkTitles, migrateSave, newSaveData, remapSpecialVastoId, SAVE_FORMAT_VERSION, statBonusOf } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
 
-const NO = { status: 'won' as const, chain3Count: 0, weakChain3Count: 0, params: { skills: [1] as unknown[] }, finisher: null };
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
+
 const SX = BALANCE.provisional.stats;
 const FL = BALANCE.provisional.evolution.failLine;
 const sum = (s: Record<string, number>) => STAT_IDS.reduce((a, k) => a + s[k]!, 0);
@@ -26,49 +24,7 @@ function evo(path: string[], tierIndex = path.length): EvolutionState {
   return { ...newEvolution(7), tierIndex, formHistory: [...path], formId: path[path.length - 1] ?? null, ability: 'atk' };
 }
 
-describe('49-7 ① 특수 속성 특성 흡수 숨김', () => {
-  it('숨김(기본): 어떤 적·시드에서도 혈·독·허 특성이 후보에 안 나온다 (특수 속성 적·희귀 개체 포함)', () => {
-    for (const element of [NORMAL_ELEMENT, ...ELEMENTAL_IDS, ...SPECIAL_ELEMENT_IDS]) {
-      for (const rare of [false, true]) {
-        for (let seed = 1; seed <= 40; seed++) {
-          const o = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare }, newBuild(), NO, 1);
-          expect(o.candidates.some((id) => isSpecialTrait(getTrait(id))), `${element} ${seed}`).toBe(false);
-          expect(o.specialOpen).toBeUndefined();
-          expect(rerollCandidates(createRng(seed + 99), o, newBuild()).some((id) => isSpecialTrait(getTrait(id)))).toBe(false);
-        }
-      }
-    }
-  });
-  it('숨김이 풀리면(확률 1) 특수 속성 적에게서 그 속성 특성이 나오고, 까닭이 기록된다', () => {
-    let seen = 0;
-    for (let seed = 1; seed <= 30; seed++) {
-      const o = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'blood', rare: false }, newBuild(), NO, 0, null, { chance: 1, gates: ['elite'] });
-      expect(o.specialOpen).toBe(true);
-      expect(o.specialGates).toEqual(['elite']);
-      if (o.candidates.some((id) => getTrait(id).element === 'blood')) seen++;
-    }
-    expect(seen).toBeGreaterThan(20);
-  });
-  it('풀리는 때: 강적·보스·공허의 밤·★3 이상만 (확률 = 그중 최대, provisional)', () => {
-    const S = BALANCE.provisional.absorb.specialTraits;
-    expect(specialTraitChance({ elite: false, boss: false, difficulty: 1 })).toEqual({ chance: 0, gates: [] });
-    expect(specialTraitChance({ elite: false, boss: false, difficulty: S.minDifficulty - 1 }).chance).toBe(0);
-    expect(specialTraitChance({ elite: true, boss: false, difficulty: 1 })).toEqual({ chance: S.elite, gates: ['elite'] });
-    expect(specialTraitChance({ elite: false, boss: true, difficulty: 1 }).chance).toBe(S.boss);
-    expect(specialTraitChance({ elite: false, boss: false, difficulty: S.minDifficulty })).toEqual({ chance: S.difficulty, gates: ['difficulty'] });
-    const night = mutationMods('void-night').specialTraitChance!;
-    expect(night).toBeGreaterThan(0);
-    expect(specialTraitChance({ elite: false, boss: false, difficulty: 1, mutationChance: night }).gates).toEqual(['mutation']);
-    expect(mutationMods('calm').specialTraitChance).toBeUndefined();
-    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(55);
-  });
-  it('확률 0.5 면 대략 반은 열린다 (시드 고정)', () => {
-    let open = 0;
-    for (let seed = 1; seed <= 400; seed++) if (buildOffer(createRng(seed), getEnemy('test-a'), newBuild(), NO, 0, null, { chance: 0.5, gates: ['elite'] }).specialOpen) open++;
-    expect(open).toBeGreaterThan(150);
-    expect(open).toBeLessThan(250);
-  });
-});
+// 49-7 ① 특성 숨김은 C.127 (GDD 75장)에서 적 등장 숨김으로 옮김 — tests/c127.test.ts
 
 describe('49-7 ② 4단계 일반 진화 = 노멀 + 원소 4종', () => {
   it('일반 바스트로데 5종, 특수 속성은 히든 특수형만', () => {

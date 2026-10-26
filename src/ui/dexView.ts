@@ -53,7 +53,7 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
   };
 }
 
-export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveData, tier = 2, lead?: HTMLElement): void {
+export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveData, tier = 2, title: string | Node = '진화체 도감'): void {
   const unlocked = new Set(save.formDex);
   const found = FORM_TABLE.filter((f) => unlocked.has(f.id)).length;
   const rowsOf = (t: number) => sortFormsForDex(formsOfTier(t)).map((f) => formRow(faction, f, unlocked, save.evolution.formId));
@@ -72,5 +72,5 @@ export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   tabs.setAttribute('aria-label', '단계');
   const sub = h('span');
   sub.append('발견 ', h('b', '', String(found)), ` / ${FORM_TABLE.length}`);
-  lcdPage(root, { cls: 'bha-dex-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '진화체 도감', sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined, aside: [...(lead ? [lead] : []), selectLast(tabs)] }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-dex-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined, aside: [selectLast(tabs)] }), [md.list], [md.detail]);
 }

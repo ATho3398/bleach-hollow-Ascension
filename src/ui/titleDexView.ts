@@ -57,7 +57,7 @@ function titleRow(def: TitleDef, factionId: string, unlockedAt: number | null): 
   };
 }
 
-export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, kind: TitleKind = 'rank', lead?: HTMLElement): void {
+export function titleDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, kind: TitleKind = 'rank', title: string | Node = '칭호 도감'): void {
   const at = new Map(save.titles.map((t) => [t.titleId, t.at]));
   // 종족 전용 칭호(특별 태그 등, GDD 49-8)는 그 종족 트랙에서만 보인다
   const defsAll = titlesForFaction(faction.id);
@@ -75,7 +75,7 @@ export function titleDexView(root: HTMLElement, faction: FactionConfig, save: Sa
   tabs.setAttribute('aria-label', '칭호 종류');
   const sub = h('span');
   sub.append('해금 ', h('b', '', String(defsAll.filter((d) => at.has(d.id)).length)), ` / ${defsAll.length}`);
-  lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title: '칭호 도감', sub, aside: [...(lead ? [lead] : []), selectLast(tabs)] }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title, sub, aside: [selectLast(tabs)] }), [md.list], [md.detail]);
 }
 
 /** 아직 알리지 않은 해금을 토스트(.bha-toast)로 보여 주고 seen 처리한다. 2.5초 뒤 올라가며(is-out) animationend 에서 제거한다 */

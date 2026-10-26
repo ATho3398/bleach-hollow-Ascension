@@ -11,7 +11,7 @@ import { buildBattleRecord } from '../src/engine/combat/record';
 import { parseFactionConfig, roomOf, ROOM_PROPS } from '../src/engine/faction';
 import { canSwitchFaction, newSaveData, newTrack, SAVE_FORMAT_VERSION, switchTrack } from '../src/game';
 import { attackCueOf } from '../src/ui/attackFx';
-import { BATTLE_SPEED_KEY, CRIT_LABEL, damageTier, loadBattleSpeed, saveBattleSpeed } from '../src/ui/bha/battle';
+import { BATTLE_SPEED_KEY_REMOVED, CRIT_LABEL, damageTier } from '../src/ui/bha/battle';
 import { careFeedback } from '../src/ui/bha/dockLogic';
 import { fullnessDeltaText, fullnessOf } from '../src/ui/bha/fullness';
 import { statusChips } from '../src/ui/bha/roomLogic';
@@ -137,17 +137,15 @@ describe('전투 안내·로그 (28장 3번)', () => {
   });
 });
 
-describe('배속 유지 (28장 6번)', () => {
-  it('고른 배속을 브라우저 저장에 남겨 다음 전투에 쓴다, 깨진 값·저장 불가는 1x', () => {
+describe('배속 유지 (28장 6번) → C.118 삭제 (GDD 62장: 1배 고정)', () => {
+  it('배속 기억 함수는 없고, 옛 저장 키 이름만 기록으로 남는다', async () => {
+    const mod: Record<string, unknown> = await import('../src/ui/bha/battle');
+    expect(mod.loadBattleSpeed).toBeUndefined();
+    expect(mod.saveBattleSpeed).toBeUndefined();
+    expect(BATTLE_SPEED_KEY_REMOVED).toBe('bha-battle-speed');
     const st = memStore();
-    expect(loadBattleSpeed(st)).toBe(1);
-    saveBattleSpeed(st, 2);
-    expect(st.getItem(BATTLE_SPEED_KEY)).toBe('2');
-    expect(loadBattleSpeed(st)).toBe(2);
-    st.setItem(BATTLE_SPEED_KEY, '7');
-    expect(loadBattleSpeed(st)).toBe(1);
-    expect(loadBattleSpeed(null)).toBe(1);
-    expect(loadBattleSpeed({ getItem: () => { throw new Error('막힘'); } })).toBe(1);
+    st.setItem(BATTLE_SPEED_KEY_REMOVED, '2'); // 옛 값이 남아 있어도 전투는 1배 (읽는 코드가 없다)
+    expect(st.getItem(BATTLE_SPEED_KEY_REMOVED)).toBe('2');
   });
 });
 

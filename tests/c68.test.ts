@@ -11,7 +11,6 @@ import { toward } from '../src/ui/bha/nestLogic';
 import { hpNumbers } from '../src/ui/bha/battle';
 import { rankLoseLine, rankStakeText } from '../src/ui/rankView';
 import { gameRuleLines, signedText } from '../src/ui/trainingView';
-import { liberationButton } from '../src/ui/labels';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -146,12 +145,9 @@ describe('등급전 도전 버튼 이름 겹침 (석차 도전 도전)', () => {
   });
 });
 
-describe('해방 잠김 문구에 호로 낱말 "번호" 가 사신에 섞이지 않는다', () => {
-  it('사신 = "석차 도전 등급 필요", 호로 = "번호 쟁탈전 등급 필요"', () => {
-    const s = liberationButton(getFaction('shinigami'), { visible: true, usable: false, missing: ['rank'] })!.note!;
-    expect(s).toBe('잠김 — 석차 도전 등급 필요');
-    expect(s).not.toContain('번호');
-    expect(liberationButton(getFaction('hollow'), { visible: true, usable: false, missing: ['rank'] })!.note).toBe('잠김 — 번호 쟁탈전 등급 필요');
+// 해방 잠김 문구(liberationButton)는 C.134 에 삭제 — 해금 조건 폐기 (GDD 83장)
+describe('수련 화면에 호로 낱말 "번호" 가 섞이지 않는다', () => {
+  it('수련 안내', () => {
     expect(src('src/ui/trainingView.ts')).not.toMatch(/번호를 한 번/);
   });
 });

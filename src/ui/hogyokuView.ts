@@ -173,7 +173,7 @@ export function fusionLists(): { gone: string[]; keeps: string[] } {
     keeps: [
       '도감·칭호 기록, 초월체 도감',
       `붕옥 해방 (+${pct(HX.liberatedBonus)}는 새 캐릭터에도)`,
-      `먹이·타일 덱·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 ${SOUL_CRYSTAL_NAME}`,
+      `먹이·가진 타일·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 ${SOUL_CRYSTAL_NAME}`,
       '스토리 진행·보스 도감·입은 스킨',
     ],
   };

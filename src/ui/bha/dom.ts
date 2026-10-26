@@ -14,6 +14,7 @@
 //   h(tag, cls, text)                   → 옛 el 과 같은 헬퍼 (el 도 다시 내보냄)
 import { fixParticles } from '../../engine/josa';
 import { el } from '../dom';
+import { endScreen } from './screenScope';
 import { cssRatio, sliderPct } from './util';
 
 export { el };
@@ -28,6 +29,7 @@ export function mountApp(root: HTMLElement, opts: { fixed?: boolean; cls?: strin
   const app = el('main', ['bha-app', opts.fixed ? 'bha-app--fixed' : '', opts.cls ?? ''].filter(Boolean).join(' '));
   app.append(...nodes);
   stage.append(app);
+  endScreen(root); // 앞 화면이 screenSignal 로 건 리스너를 푼다 (C.139)
   root.replaceChildren(stage);
   return app;
 }

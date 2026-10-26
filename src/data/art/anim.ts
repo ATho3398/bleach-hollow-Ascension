@@ -31,7 +31,7 @@ export const ANIM_ACTIONS: readonly AnimActionDef[] = [
   { key: 'attack', label: '공격', mode: 'once', ms: 150, where: '평타·블록 공격', fallback: '몸통박치기' },
   { key: 'skill', label: '특수 공격', mode: 'once', ms: 150, where: '필살기·계열 특수 공격', fallback: '지금 계열 연출' },
   { key: 'hit', label: '맞음', mode: 'once', ms: 140, where: '피격', fallback: '흰 실루엣 깜빡임 2번 + 뒤로 튕김' },
-  { key: 'win', label: '기뻐하기', mode: 'hold', ms: 180, where: '전투 승리, 쓰다듬기', fallback: '지금 연출' },
+  { key: 'win', label: '기뻐하기', mode: 'hold', ms: 180, where: '전투 승리, 교감', fallback: '지금 연출' },
   { key: 'lose', label: '패배', mode: 'hold', ms: 180, where: '전투 패배(적은 쓰러짐)', fallback: '지금 연출' },
   { key: 'eat', label: '먹기', mode: 'once', ms: 180, where: '먹이 주기', fallback: '지금 연출' },
   { key: 'sleep', label: '잠', mode: 'loop', ms: 450, where: '재우기', fallback: '지금 연출' },

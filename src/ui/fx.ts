@@ -12,10 +12,10 @@ export const CUE_PRIORITY: readonly FxCue[] = ['block', 'chain2', 'hurt', 'cast'
 export function cueOf(e: CombatEvent, top: number): FxCue | null {
   switch (e.kind) {
     case 'block':
-      if (e.block === 'special' || e.block === 'combo') return 'special';
+      if (e.block === 'combo') return 'special';
       if (e.chain >= top && top > 2) return 'chain3';
       return e.chain > 1 ? 'chain2' : 'block';
-    case 'stored-use':
+    case 'liberate':
       return 'special';
     case 'combo':
       return 'chain3';

@@ -9,6 +9,9 @@ import { canWear, getSkin, skinLabel, SKINS, skinsFor } from '../src/data/skins'
 import { equipSkin, migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
 import { animActionOf } from '../src/ui/attackFx';
 import { createAnimPlayer } from '../src/ui/bha/animPlayer';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const f = (dir: string, action: string, n: number, ext = 'png') => Array.from({ length: n }, (_, i) => `${dir}/${action}-${i + 1}.${ext}`);
 

@@ -11,6 +11,9 @@ import { parseFactionConfig } from '../src/engine/faction';
 import { canRebirth, inheritableTraits, nextCarry, rebirthStars, sanitizeRebirth, startingCarry } from '../src/engine/rebirth';
 import { claimTutorialGoals, migrateSave, newSaveData, performRebirth, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
 import { rebirthFinalText, rebirthLists } from '../src/ui/rebirthView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const RB = BALANCE.provisional.rebirth;
 const traitIds = TRAITS.filter((t) => !t.rare).slice(0, 3).map((t) => t.id);
@@ -251,7 +254,7 @@ describe('종족 설정 (분기 없음)', () => {
       expect(() => parseFactionConfig({ ...f, rebirth: undefined })).toThrow(/rebirth/);
       const lists = rebirthLists(f);
       expect(lists.resets.join()).toContain(f.tierNames[0]);
-      expect(lists.keeps.join()).toContain(f.liberation.name);
+      expect(lists.keeps.join()).toContain('등급 이력'); // 해방 자격은 C.134 에 폐기 (GDD 83장)
       expect(rebirthFinalText(f, null).body).toContain('되돌릴 수 없다');
     }
   });

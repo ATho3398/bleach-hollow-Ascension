@@ -1,0 +1,10 @@
+{
+ "patch": "C.116",
+ "server": "하위 경로 /bleach-hollow-ascension/ 정적 서버(배포 빌드 dist)",
+ "worker_scope": "http://127.0.0.1:4180/bleach-hollow-ascension/",
+ "cache_version": "a5e53933e486",
+ "cached_files": 115,
+ "cached_bytes": 7842253,
+ "offline": "context.setOffline(true) 후 새로고침 → 시작 화면, 새 게임(호로) → 방 → 출발 → 전투 진입",
+ "console_and_request_errors": 0
+}

@@ -4,6 +4,8 @@
 import { isLocomotion, type Locomotion } from './locomotion';
 import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Stats } from '../data/schema';
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
+import { PET_IDS } from '../data/pets';
+import { GEAR_SLOTS, type GearSlot } from '../data/gear';
 
 /** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
 export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
@@ -59,18 +61,23 @@ export type SlotLocation = 'body' | 'zanpakuto';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'dummy', 'shop'] as const;
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'shop'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
-export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy', 'hungry'] as const;
+/** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
+export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy', 'hungry', 'askPet', 'askSleep', 'refusePet', 'refuseSleep'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
 export const TRAINING_GAME_IDS = ['duel', 'dodge', 'clash', 'chain'] as const;
 
-/** 해방 (GDD 22-2·22-5): 버튼·블록·연출 문구. 호로 "레수렉시온" / 사신 "만해" */
+/** 해방 (GDD 83장): 버튼·블록·연출 문구. 5단계 전 = base*(양 종족 "영력 해방"), 5단계(BALANCE liberation.minTierIndex)부터 = 호로 "레스렉시온" / 사신 "만해" */
 export interface LiberationConfig {
-  /** 버튼·상태 이름 */
+  /** 5단계 전 이름·컷인·풀릴 때 문구 */
+  baseName: string;
+  baseCutin: string;
+  baseEndText: string;
+  /** 5단계부터 버튼·상태 이름 */
   name: string;
   /** 해방하는 순간 짧은 컷인 한 줄 */
   cutin: string;
@@ -116,13 +123,14 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', dummy: '훈련 인형', shop: '상점' },
+  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', shop: '상점' },
   layout: {
     book: { x: 19, y: 66, scale: 0.85 }, door: { x: 81, y: 66, scale: 0.85 },
-    chest: { x: 10, y: 99 }, altar: { x: 27, y: 99 }, shop: { x: 73, y: 99 }, dummy: { x: 90, y: 99 },
+    chest: { x: 10, y: 99 }, altar: { x: 27, y: 99 }, shop: { x: 73, y: 99 },
   },
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],
+    askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
   },
 };
 
@@ -139,6 +147,24 @@ export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConf
   };
 }
 
+/** 첫 시작 탄생 연출 단계 (GDD 74장): 공통 단계 재생기가 아는 효과 낱말. 종족은 이 낱말을 순서대로 나열할 뿐이다 */
+export const BIRTH_FX_KINDS = ['orb', 'flicker', 'chain', 'burn', 'flash', 'flames', 'reveal'] as const;
+export type BirthFxKind = (typeof BIRTH_FX_KINDS)[number];
+/** 연출에 쓰는 색 역할 → 디자인 토큰 이름(--bha-…) */
+export const BIRTH_FX_COLORS = ['orb', 'glow', 'chain', 'ember', 'flame', 'flameEdge', 'flash'] as const;
+export type BirthFxColor = (typeof BIRTH_FX_COLORS)[number];
+export interface BirthFxStep {
+  fx: BirthFxKind;
+  /** 이 단계 길이(ms) */
+  ms: number;
+  /** flicker = 깜빡임 횟수, chain/burn = 고리 수 (없으면 기본값) */
+  count?: number;
+}
+export interface BirthFx {
+  steps: BirthFxStep[];
+  colors: Partial<Record<BirthFxColor, string>>;
+}
+
 export interface FactionConfig {
   id: string;
   /** 화면 표시 이름 */
@@ -149,10 +175,10 @@ export interface FactionConfig {
   emblem?: string;
   /** 종족 로고 그림 키 (GDD 50): public/art/<키>.png|webp, 단색 투명 그림 — 알파만 쓰고 테마 글자색으로 칠한다. 없으면 로고 자리를 비운다 */
   logo?: string;
+  /** 첫 시작 탄생 연출 (GDD 74장, C.126): 단계 목록 + 색 토큰. 없으면 연출 없음 */
+  birthFx?: BirthFx;
   /** 새 세이브 시작 외형 후보 (GDD 51): 스킨 id 목록. 기본 외형과 함께 균등 추첨한다. 없거나 비면 기본 외형만 */
   startLooks?: string[];
-  /** 시작 외형 스탯 편향 (GDD 52 연동, C.108): 스킨 id('base' = 기본 외형) → +편향 능력치. 그 능력치 +up·나머지 −down(balance stats.startBias). 없으면 편향 없음 */
-  startLookBias?: Record<string, StatId>;
   /** 단계 외형 표 (GDD 53): 단계 번호(문자열) → 진화 순간 노력치 순위로 고르는 스킨 id. stat = 1위 능력치별, pairs = 1·2위 쌍(순서 무관, 먼저 판정). 없으면 기존 단계 그림 */
   /** 진화체 외형 표 (GDD 54): 진화체 id → 스킨 id 목록(둘 이상이면 진화 때 하나를 뽑아 look 에 고정). tierLooks 보다 먼저 본다. 없으면 tierLooks → 기존 단계 그림 */
   formLooks?: Record<string, string[]>;
@@ -169,16 +195,11 @@ export interface FactionConfig {
   rankBattleName: string;
   rankWinText: string;
   rankLoseText: string;
-  /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 필살 블록 / 공허 블록 */
+  /** 전투 v2 블록 표시 이름 (GDD 3-5, v0.6 에서 tileNames 를 대체): 스킬 블록 / 공허 블록. SP 필살 블록 이름(specialBlockName)·SP 게이지 이름(spName)은 C.118 에 삭제 (GDD 66장) */
   skillBlockName: string;
-  specialBlockName: string;
-  /** 저장형 필살기 표시 이름 (GDD 14-6, 임시 자리 표시 이름). SP 필살 블록(specialBlockName)과 별개 */
-  storedSkillName: string;
   voidBlockName: string;
   /** 체인 표기 (예: "체인") */
   chainName: string;
-  /** 필살 블록을 채우는 SP 게이지 이름 */
-  spName: string;
   /** 스킬 블록 역할 → 종족별 표시 이름 (공격 / 막기 / 회복) */
   roleNames: Record<BlockRole, string>;
   /** 리스크 게이지 이름 (GDD 5장) */
@@ -232,10 +253,14 @@ export interface FactionConfig {
   evolutionNearText: [string, string];
   /** 둥지 / 대원실 (GDD 7장) */
   nestName: string;
-  /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 쓰다듬기(참백도 손질) */
+  /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 교감(참백도 손질) */
   nestActions: Record<NestAction, string>;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;
+  /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 */
+  petNames: Record<string, string>;
+  /** 장비 칸 이름 (GDD 91장 1번, 가칭): 무기·방어구·신발·장신구 1·2 → 이름. 장비 종류 이름은 그 종류의 첫 칸 이름 */
+  gearSlotNames: Record<GearSlot, string>;
   /** 해방 (GDD 22-5): 이름·컷인·풀릴 때 문구 */
   liberation: LiberationConfig;
   /** 해방 수련 (GDD 22-5): 제단 화면·4종목 문구 */
@@ -265,7 +290,7 @@ function isStringTuple(v: unknown, n: number): boolean {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'specialBlockName', 'storedSkillName', 'voidBlockName', 'chainName', 'spName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
@@ -285,6 +310,14 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const fn = (r.foodNames ?? {}) as Record<string, unknown>;
   for (const f of FOOD_IDS) {
     if (!isString(fn[f])) errors.push(`foodNames.${f}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  const gn = (r.gearSlotNames ?? {}) as Record<string, unknown>;
+  for (const id of GEAR_SLOTS) {
+    if (!isString(gn[id])) errors.push(`gearSlotNames.${id}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  const pn = (r.petNames ?? {}) as Record<string, unknown>;
+  for (const id of PET_IDS) {
+    if (!isString(pn[id])) errors.push(`petNames.${id}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (r.difficulty !== undefined) {
     const d = r.difficulty as Record<string, unknown>;
@@ -347,12 +380,22 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.logo !== undefined && !isString(r.logo)) errors.push('logo: 비어 있지 않은 문자열이어야 한다');
-  if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
-  if (r.startLookBias !== undefined) {
-    const sb = r.startLookBias;
-    if (!isRec(sb) || !Object.values(sb).every((v) => isString(v) && (STAT_IDS as readonly string[]).includes(v))) errors.push('startLookBias: 스킨 id → 능력치 id');
-    else if (Object.keys(sb).some((k) => k !== 'base' && !(Array.isArray(r.startLooks) && r.startLooks.includes(k)))) errors.push('startLookBias: 키는 base 또는 startLooks 의 스킨 id');
+  if (r.birthFx !== undefined) {
+    const b = r.birthFx;
+    const steps = isRec(b) ? b.steps : null;
+    if (!isRec(b) || !Array.isArray(steps) || steps.length === 0) errors.push('birthFx: { steps: [...], colors } 단계가 하나 이상');
+    else {
+      for (const st of steps) {
+        if (!isRec(st) || !(BIRTH_FX_KINDS as readonly string[]).includes(st.fx as string) || !(typeof st.ms === 'number' && st.ms >= 100 && st.ms <= 2500)) errors.push(`birthFx.steps: fx ${BIRTH_FX_KINDS.join('|')} · ms 100~2500`);
+        else if (st.count !== undefined && !(Number.isInteger(st.count) && (st.count as number) >= 1 && (st.count as number) <= 20)) errors.push('birthFx.steps: count 1~20 정수');
+      }
+      const total = steps.reduce((a: number, st) => a + (isRec(st) && typeof st.ms === 'number' ? st.ms : 0), 0);
+      if (total > 5000) errors.push('birthFx: 전체 5000ms 이하');
+      const cols = b.colors;
+      if (!isRec(cols) || !Object.entries(cols).every(([k, v]) => (BIRTH_FX_COLORS as readonly string[]).includes(k) && isString(v) && /^--bha-[a-z0-9-]+$/.test(v))) errors.push('birthFx.colors: 색 역할 → --bha-… 토큰 이름');
+    }
   }
+  if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
   if (r.formLooks !== undefined && !(isRec(r.formLooks) && Object.values(r.formLooks).every((v) => Array.isArray(v) && v.length > 0 && v.every((x) => isString(x))))) errors.push('formLooks: { 진화체 id: [스킨 id, …](비어 있지 않게) }');
   if (r.tierLooks !== undefined) {
     const tl = r.tierLooks;
@@ -382,7 +425,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     }
   }
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
-  for (const k of ['name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
+  for (const k of ['baseName', 'baseCutin', 'baseEndText', 'name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
   const rb = (r.rebirth ?? {}) as Record<string, unknown>;
   for (const k of ['name', 'cutin', 'rebornText']) if (!isString(rb[k])) errors.push(`rebirth.${k}: 비어 있지 않은 문자열이어야 한다`);
   const tr = (r.training ?? {}) as Record<string, unknown>;
@@ -410,8 +453,8 @@ export function resolveMaxChain(f: Pick<FactionConfig, 'maxChain'>, formMaxChain
   return formMaxChain ?? f.maxChain ?? DEFAULT_MAX_CHAIN;
 }
 
-/** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName·specialBlockName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다 */
-export const BLOCK_WORDS = { special: '필살', stored: '저장 필살', void: '공허', combo: '콤보', guard: '막기', heal: '회복', liberation: '해방' } as const;
+/** 블록 표시 이름의 고정 낱말 (GDD 20장 v5.4: 종족 무관). 종족 설정의 옛 블록 이름(basicSkillName 등)은 블록 바·전투 로그·연습 결과·도움말에 쓰지 않는다. `special`(필살 블록)은 C.118, `stored`(저장 필살)은 C.134 에 삭제 */
+export const BLOCK_WORDS = { void: '공허', combo: '콤보', guard: '막기', heal: '회복', liberation: '해방' } as const;
 
 /** 계열 설정 한 개 (없으면 undefined) */
 export function familyOf(f: Pick<FactionConfig, 'families'>, familyId: string): FamilyConfig | undefined {

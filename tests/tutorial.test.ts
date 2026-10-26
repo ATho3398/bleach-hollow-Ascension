@@ -13,6 +13,9 @@ import {
 } from '../src/engine/tutorial';
 import { loadSave, migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_KEY, writeSave } from '../src/game';
 import { placeCard, unionRect } from '../src/ui/helpLayout';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 describe('튜토리얼 상태 머신', () => {
   it('장면을 순서대로 지나 마지막에서 끝난다', () => {
@@ -78,13 +81,15 @@ describe('튜토리얼 플래그 저장·마이그레이션', () => {
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(11);
-    expect(m.help).toEqual({ tutorialSeen: false });
+    expect(m.help).toEqual({ tutorialSeen: false, guides: {} });
   });
 
   it('깨진 플래그는 안 본 것으로 되돌린다', () => {
-    expect(sanitizeHelpState(undefined)).toEqual({ tutorialSeen: false });
-    expect(sanitizeHelpState({ tutorialSeen: 'yes' })).toEqual({ tutorialSeen: false });
-    expect(sanitizeHelpState({ tutorialSeen: true })).toEqual({ tutorialSeen: true });
+    expect(sanitizeHelpState(undefined)).toEqual({ tutorialSeen: false, guides: {} });
+    expect(sanitizeHelpState({ tutorialSeen: 'yes' })).toEqual({ tutorialSeen: false, guides: {} });
+    expect(sanitizeHelpState({ tutorialSeen: true })).toEqual({ tutorialSeen: true, guides: {} });
+    // C.120 안내 상태: 모르는 id·값은 버린다
+    expect(sanitizeHelpState({ tutorialSeen: true, guides: { 'first-run': 'done', x: 'done', 'tile-draw': 1 } })).toEqual({ tutorialSeen: true, guides: { 'first-run': 'done' } });
   });
 });
 
@@ -120,10 +125,12 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
     for (const t of BATTLE_HELP_TARGETS) expect(src).toContain(`'${t}'`);
   });
 
-  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록·등급전)를 모두 갖고 id 중복이 없다', () => {
+  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록·등급전 − SP·필살 블록 2개, C.118)를 모두 갖고 id 중복이 없다', () => {
     const ids = GLOSSARY.map((x) => x.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids.length).toBe(16);
+    expect(ids.length).toBe(15);
+    expect(ids).not.toContain('sp');
+    expect(ids).not.toContain('special-block');
     expect(ids).toEqual(expect.arrayContaining(['family', 'combo', 'rank']));
     for (const t of GLOSSARY) {
       expect(t.title.length).toBeGreaterThan(0);
@@ -160,15 +167,15 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
       for (const [k, v] of Object.entries(helpVars(f))) if (!k.startsWith('traitKindNames.') && v.length >= 2 && !/^[a-z]+$/i.test(v) && differs(k, v)) names.add(v);
     }
     // 원작·세계관 고유 이름
-    ['웨코문도', '아쥬커스', '길리안', '바스트로데', '아란칼', '세군도 에타파', '레수렉시온', '에스파다', '참백도', '영압'].forEach((n) => names.add(n));
+    ['웨코문도', '아쥬커스', '길리안', '바스트로데', '아란칼', '세군도 에타파', '레스렉시온', '에스파다', '참백도', '영압'].forEach((n) => names.add(n));
     for (const n of names) expect(raw.includes(n), `원문에 "${n}" 하드코딩`).toBe(false);
     // 종족마다 다른 표시 이름이 실제로 본문에 들어간다
     const rendered = FACTIONS.map((f) => renderHelpText(TUTORIAL_SCENES.map((x) => x.body).join(' '), helpVars(f)));
     for (const [i, f] of FACTIONS.entries()) {
       // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4): 옛 '응축 일격'·'포효' 등은 나오지 않는다
-      expect(rendered[i]).toContain(helpVars(f).storedSkillName);
+      expect(rendered[i]).toContain(f.liberation.baseName);
+      expect(rendered[i]).toContain(f.liberation.name);
       expect(rendered[i]).toContain(helpVars(f).voidBlockName);
-      for (const old of [f.storedSkillName, f.specialBlockName]) expect(rendered[i]).not.toContain(old);
     }
     if (FACTIONS.length > 1) expect(new Set(rendered).size).toBe(FACTIONS.length);
   });
@@ -177,7 +184,7 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
 describe('튜토리얼 일시정지는 전투 결과에 영향이 없다', () => {
   const enemy = ENEMIES.find((e) => e.class === 'normal' && !e.testOnly)!;
   /** 틱 번호 → 입력 (같은 입력 기록) */
-  const script = new Map<number, CombatInput>([[30, { type: 'use', cell: 0 }], [60, { type: 'use', cell: 0 }], [90, { type: 'stored' }], [120, { type: 'use', cell: 1 }]]);
+  const script = new Map<number, CombatInput>([[30, { type: 'use', cell: 0 }], [60, { type: 'use', cell: 0 }], [90, { type: 'liberate' }], [120, { type: 'use', cell: 1 }]]);
 
   function play(seed: number, haltAt: (frame: number) => boolean): string {
     const s = createCombat(seed, { enemy });
@@ -191,7 +198,7 @@ describe('튜토리얼 일시정지는 전투 결과에 영향이 없다', () =>
         step(s, input ? [input] : []);
       }
     }
-    return JSON.stringify({ status: s.status, hp: s.enemy.hp, php: s.player.hp, sp: s.sp, tray: s.tray.map((b) => b.kind), tick: s.tick });
+    return JSON.stringify({ status: s.status, hp: s.enemy.hp, php: s.player.hp, gauge: s.liberation.gauge, tray: s.tray.map((b) => b.kind), tick: s.tick });
   }
 
   it('중간에 몇 번이든 멈췄다 풀어도 같은 시드면 결과가 같다', () => {

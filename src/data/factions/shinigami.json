@@ -3,9 +3,9 @@
   "name": "사신",
   "theme": "shinigami",
   "emblem": "⚔️",
+  "birthFx": {"steps": [{"fx": "orb", "ms": 600}, {"fx": "flicker", "ms": 1400, "count": 7}, {"fx": "flash", "ms": 300}, {"fx": "reveal", "ms": 700}], "colors": {"orb": "--bha-accent-hi", "glow": "--bha-accent", "flash": "--bha-text-1"}},
   "logo": "logo-shinigami",
   "startLooks": [],
-  "startLookBias": {},
   "tierLooks": {},
   "formLooks": {},
   "tierNames": [
@@ -33,11 +33,8 @@
   "rankWinText": "{rank} 자리에 올랐다!",
   "rankLoseText": "패배… 석차가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
-  "specialBlockName": "귀도",
-  "storedSkillName": "응축 비기",
   "voidBlockName": "공허 블록",
   "chainName": "체인",
-  "spName": "영력",
   "roleNames": {
     "attack": "공격",
     "guard": "막기",
@@ -182,6 +179,19 @@
     "tonic": "영력 차",
     "feast": "잔칫상"
   },
+  "gearSlotNames": {
+    "weapon": "칼자루 장식",
+    "armor": "사패장",
+    "shoes": "짚신",
+    "acc1": "부적",
+    "acc2": "부적"
+  },
+  "petNames": {
+    "pet-gold": "지옥나비",
+    "pet-belly": "꼬마 쥐",
+    "pet-guard": "수호 거북",
+    "pet-seek": "길잡이 까마귀"
+  },
   "stabilityName": "영압 안정도",
   "fullnessName": "배부름",
   "slotName": "참백도 슬롯",
@@ -198,39 +208,37 @@
     "sceneArt": "scene.room",
     "characterArt": "char.shinigami",
     "props": {
-      "door": "출발 문",
+      "door": "모험",
       "altar": "수련장",
       "book": "책장",
       "chest": "보관함",
-      "dummy": "훈련 인형",
       "shop": "상점"
     },
     "layout": {
-      "book": {
-        "x": 19,
-        "y": 66,
-        "scale": 0.85
-      },
       "door": {
-        "x": 81,
-        "y": 66,
-        "scale": 0.85
-      },
-      "chest": {
         "x": 10,
-        "y": 99
+        "y": 80,
+        "scale": 0.9
+      },
+      "book": {
+        "x": 30,
+        "y": 52,
+        "scale": 0.9
       },
       "altar": {
+        "x": 90,
+        "y": 60,
+        "scale": 0.9
+      },
+      "chest": {
         "x": 27,
-        "y": 99
+        "y": 99,
+        "scale": 0.9
       },
       "shop": {
-        "x": 73,
-        "y": 99
-      },
-      "dummy": {
-        "x": 90,
-        "y": 99
+        "x": 75,
+        "y": 99,
+        "scale": 0.9
       }
     },
     "talk": {
@@ -257,6 +265,22 @@
       "hungry": [
         "배고파하고 있었다. 밥은 아직인가요?",
         "오래 자리를 비우셨네요… 배가 고픕니다."
+      ],
+      "askPet": [
+        "참백도가 무뎌진 것 같다… 손질해 줄 수 있나?",
+        "칼날을 좀 봐 주겠나?"
+      ],
+      "askSleep": [
+        "졸리다… 잠깐 눈을 붙여도 될까.",
+        "오늘은 일찍 쉬고 싶다…"
+      ],
+      "refusePet": [
+        "지금은 참백도를 맡길 때가 아니다.",
+        "손질은 됐다. 칼은 멀쩡하다."
+      ],
+      "refuseSleep": [
+        "자고 싶지 않다. 아직 할 일이 있다.",
+        "잠이 오지 않는다."
       ]
     }
   },
@@ -331,6 +355,9 @@
     }
   },
   "liberation": {
+    "baseName": "영력 해방",
+    "baseCutin": "영압을 끌어올린다 — 영력 해방!",
+    "baseEndText": "해방이 풀렸다. 내면의 호로가 꿈틀거린다…",
     "name": "만해",
     "cutin": "참백도의 진명을 부른다 — 만해!",
     "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…"
@@ -343,7 +370,7 @@
   "training": {
     "title": "참백도 수련",
     "foe": "참백도의 정령",
-    "completeText": "정령을 굴복시켰다. 이제 전투에서 만해를 쓸 수 있다.",
+    "completeText": "정령을 굴복시켰다. 만해의 힘이 더 강해진다.",
     "games": {
       "duel": {
         "name": "정령 대결",

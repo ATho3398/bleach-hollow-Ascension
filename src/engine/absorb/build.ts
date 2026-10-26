@@ -3,6 +3,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { getTrait } from '../../data/traits';
+import { NORMAL_ELEMENT } from '../../data/elements';
 import type { AttackCategory, PassiveStat } from '../../data/schema';
 import { getFaction } from '../../data/factions';
 import type { CombatParams, CombatSkill, FamilyCombat } from '../combat/combat';
@@ -18,14 +19,83 @@ export interface BuildState {
   slots: (string | null)[];
   /** 장착한 순서 (C.47, 세이브 형식 14): 마지막이 가장 최근. 진화 속성·분류가 동률이면 최근 장착을 따른다 (GDD 20-5). 옛 세이브는 슬롯 순서로 채운다 */
   equipOrder?: string[];
+  /** 해방 블록 슬롯 (C.134, GDD 83장 3번, 세이브 형식 39): 해방 중에 나올 특성 id 또는 null. 길이 = 최대 칸 수, 쓰는 칸 수는 단계(liberationSlotCount) */
+  liberation?: (string | null)[];
+  /** 속성 강화 횟수 (C.136, GDD 84장 8번, 세이브 형식 40): 속성 id → 그 속성 적을 흡수한 횟수(상한 없이 센다). 효과는 enhanceLevel 이 상한(100)에서 자른다 */
+  enhance?: Record<string, number>;
+}
+
+const EH = AX.enhance;
+
+/** 속성 강화 효과 단계: min(흡수 횟수, 상한 100) */
+export function enhanceLevel(b: Pick<BuildState, 'enhance'>, element: string): number {
+  return Math.min(EH.max, Math.max(0, Math.floor(b.enhance?.[element] ?? 0)));
+}
+
+/** 속성 강화 +1 (흡수할 때): 상한 뒤에도 횟수는 센다. 새 횟수를 돌려준다 */
+export function addEnhance(b: BuildState, element: string): number {
+  const m = (b.enhance ??= {});
+  m[element] = (m[element] ?? 0) + 1;
+  return m[element]!;
+}
+
+/** 강화 단계 → 공격 블록 위력 가산 (C.147): 앞 earlyLevels 단계는 earlyPerLevel, 그 뒤는 attackPerLevel */
+export function enhanceAttackBonus(level: number): number {
+  const lv = Math.min(EH.max, Math.max(0, Math.floor(level)));
+  const early = Math.min(lv, EH.earlyLevels);
+  return EH.earlyPerLevel * early + EH.attackPerLevel * (lv - early);
+}
+
+/** 그 속성 공격 특성 블록 위력 배율: 1 + enhanceAttackBonus(단계). 노멀은 기본 공격 블록에도 (buildCombatParams basicAttackEnhance) */
+export function enhanceAttackMultiplier(b: Pick<BuildState, 'enhance'>, element: string): number {
+  return 1 + enhanceAttackBonus(enhanceLevel(b, element));
+}
+
+/** 기본 막기·회복 블록 위력 배율: 1 + min(guardHealMax, guardHealPerLevel × 모든 속성 단계 합) */
+export function enhanceGuardHealMultiplier(b: Pick<BuildState, 'enhance'>): number {
+  const sum = Object.keys(b.enhance ?? {}).reduce((a, el) => a + enhanceLevel(b, el), 0);
+  return 1 + Math.min(EH.guardHealMax, EH.guardHealPerLevel * sum);
+}
+
+/** 해방 블록 슬롯 최대 칸 수 (BALANCE liberation.slotsByTier 의 최댓값) */
+export const LIBERATION_SLOT_MAX = Math.max(...BALANCE.provisional.liberation.slotsByTier);
+
+/** 지금 단계(tierIndex)에서 쓰는 해방 블록 슬롯 칸 수 (GDD 83장 3번): 1단계 1칸 · 3단계 2칸 · 5단계 3칸 */
+export function liberationSlotCount(tierIndex: number): number {
+  const t = BALANCE.provisional.liberation.slotsByTier;
+  return t[Math.min(Math.max(0, Math.floor(tierIndex)), t.length - 1)] ?? 1;
 }
 
 export function newBuild(): BuildState {
-  return { owned: [], slots: Array.from({ length: BALANCE.absorb.slotCount }, () => null), equipOrder: [] };
+  return { owned: [], slots: Array.from({ length: BALANCE.absorb.slotCount }, () => null), equipOrder: [], liberation: Array.from({ length: LIBERATION_SLOT_MAX }, () => null), enhance: {} };
 }
 
 export function cloneBuild(b: BuildState): BuildState {
-  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])] };
+  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])], liberation: [...(b.liberation ?? [])], enhance: { ...(b.enhance ?? {}) } };
+}
+
+/** 해방 블록 슬롯에 끼울 수 있는 특성인가: 가진 특성 중 블록이 되는 것(skill) */
+export function liberationEligible(b: BuildState, traitId: string): boolean {
+  if (!b.owned.includes(traitId)) return false;
+  const t = getTrait(traitId);
+  return t.kind === 'skill' && !!t.role && t.powerInAttacks !== undefined;
+}
+
+/** 방에서 해방 블록 슬롯을 정한다 (GDD 83장 3번). 칸 수는 지금 단계, 같은 특성은 한 칸에만(다른 칸에 있으면 그 칸은 비운다). traitId null = 비움 */
+export function setLiberationSlot(b: BuildState, slot: number, traitId: string | null, tierIndex: number): BuildResult {
+  const n = liberationSlotCount(tierIndex);
+  if (!Number.isInteger(slot) || slot < 0 || slot >= n) return { ok: false, reason: '아직 열리지 않은 칸이다' };
+  const lib = (b.liberation ??= []);
+  while (lib.length < LIBERATION_SLOT_MAX) lib.push(null);
+  if (traitId === null) {
+    lib[slot] = null;
+    return { ok: true };
+  }
+  if (!liberationEligible(b, traitId)) return { ok: false, reason: '가진 블록 특성만 끼울 수 있다' };
+  const at = lib.indexOf(traitId);
+  if (at >= 0) lib[at] = null;
+  lib[slot] = traitId;
+  return { ok: true };
 }
 
 /** 장착 순서 기록 갱신: 이 특성을 가장 최근으로 */
@@ -51,7 +121,16 @@ export function isFull(b: BuildState): boolean {
   return emptySlot(b) < 0;
 }
 
-/** 새 특성을 얻는다: 보유 목록에 더하고, 빈 슬롯이 있으면 장착, 가득 차 있으면 replaceSlot 의 특성과 교체(옛 특성은 보유에 남음). 교체 슬롯이 없으면 포기(얻지 않음) */
+/** 새로 얻은 블록 특성으로 빈 해방 블록 슬롯 하나를 채운다 (C.134 코드 판단: 장착 슬롯처럼 빈 칸은 자동 — 방에서 바꿀 수 있다) */
+function fillLiberation(b: BuildState, traitId: string): void {
+  const lib = b.liberation;
+  if (!lib || lib.includes(traitId) || !liberationEligible(b, traitId)) return;
+  const i = lib.indexOf(null);
+  if (i >= 0) lib[i] = traitId;
+}
+
+/** 새 특성을 얻는다: 보유 목록에 더하고, 빈 슬롯이 있으면 장착, 가득 차 있으면 replaceSlot 의 특성과 교체(옛 특성은 보유에 남음). 교체 슬롯이 없으면 포기(얻지 않음).
+ *  얻으면 빈 해방 블록 슬롯도 채운다 (fillLiberation) */
 export function gainTrait(b: BuildState, traitId: string, replaceSlot?: number | null): BuildResult {
   getTrait(traitId);
   if (b.owned.includes(traitId)) return { ok: false, reason: '이미 가진 특성이다' };
@@ -60,6 +139,7 @@ export function gainTrait(b: BuildState, traitId: string, replaceSlot?: number |
     b.owned.push(traitId);
     b.slots[free] = traitId;
     noteEquip(b, traitId);
+    fillLiberation(b, traitId);
     return { ok: true };
   }
   if (replaceSlot === undefined || replaceSlot === null) return { ok: false, reason: '슬롯이 가득 찼다 (교체할 슬롯을 고르거나 포기)' };
@@ -67,6 +147,7 @@ export function gainTrait(b: BuildState, traitId: string, replaceSlot?: number |
   b.owned.push(traitId);
   b.slots[replaceSlot] = traitId;
   noteEquip(b, traitId);
+  fillLiberation(b, traitId);
   return { ok: true };
 }
 
@@ -96,13 +177,6 @@ export function elementCounts(b: BuildState): Record<string, number> {
   return out;
 }
 
-/** 속성 보너스가 켜진 속성들: 슬롯 안 같은 속성이 elementBonusCount 개 이상 (GDD 4-1, C.47 계통 → 속성) */
-export function completedElements(b: BuildState): string[] {
-  return Object.entries(elementCounts(b))
-    .filter(([, n]) => n >= AX.elementBonusCount)
-    .map(([id]) => id);
-}
-
 /** 계열의 공격 분류 (종족 설정 families[].category, GDD 20-1). 종족을 모르거나 계열이 없으면 혼합 */
 export function familyCategory(factionId: string | undefined, family: string | null | undefined): AttackCategory {
   if (!factionId || !family) return 'mixed';
@@ -122,9 +196,17 @@ export function categoryCounts(b: BuildState, factionId: string): Record<AttackC
 
 /** 장착한 skill 특성 → 블록 생성원 목록 (슬롯 순서). 속성 보너스: 완성된 속성의 블록 위력 +50% (피해·막기 지속·회복량 모두). 분류는 종족 설정 계열에서 */
 export function equippedSkills(b: BuildState, factionId?: string): CombatSkill[] {
-  const bonus = new Set(completedElements(b));
+  return skillsOf(b, b.slots, factionId);
+}
+
+/** 해방 블록 슬롯 특성 → 해방 중 블록 생성원 (슬롯 순서, 쓰는 칸 수는 applyEvolutionToParams 가 단계로 자른다) */
+export function liberationSkills(b: BuildState, factionId?: string): CombatSkill[] {
+  return skillsOf(b, (b.liberation ?? []).filter((id) => id !== null && b.owned.includes(id)), factionId);
+}
+
+function skillsOf(b: BuildState, ids: readonly (string | null)[], factionId?: string): CombatSkill[] {
   const out: CombatSkill[] = [];
-  for (const id of b.slots) {
+  for (const id of ids) {
     if (!id) continue;
     const t = getTrait(id);
     if (t.kind !== 'skill' || !t.role || t.powerInAttacks === undefined) continue;
@@ -139,7 +221,8 @@ export function equippedSkills(b: BuildState, factionId?: string): CombatSkill[]
       family: t.family ?? null,
       powerInAttacks: t.powerInAttacks,
       chainBonus: { ...chainBonus },
-      powerMultiplier: bonus.has(t.element) ? 1 + AX.elementSkillBonus : 1,
+      // 속성 강화 (GDD 84장 8번 — 공격 특성만, 막기·회복 특성은 C.136 에 삭제). 같은 속성 3개 보너스는 C.150 에 삭제 (GDD 94장 B 후속)
+      powerMultiplier: t.role === 'attack' ? enhanceAttackMultiplier(b, t.element) : 1,
     });
   }
   return out;
@@ -176,10 +259,13 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
   return {
     ...(factionId ? { families: familyTable(factionId), maxChain: resolveMaxChain(getFaction(factionId)) } : {}),
     skills: equippedSkills(b, factionId),
+    liberationSkills: liberationSkills(b, factionId),
     attackPowerMultiplier: pm.attackPower,
     attackSpeedMultiplier: pm.attackSpeed,
     damageTakenMultiplier: pm.damageTaken,
     blockSpawnMultiplier: pm.blockSpawn,
     critChance: BALANCE.provisional.combat.critChance + critChanceBonus(b),
+    guardHealEnhance: enhanceGuardHealMultiplier(b),
+    basicAttackEnhance: enhanceAttackMultiplier(b, NORMAL_ELEMENT),
   };
 }

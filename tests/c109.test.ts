@@ -11,6 +11,9 @@ import { pickTierLook, tierLookIds } from '../src/engine/evolution/tierLook';
 import { parseFactionConfig } from '../src/engine/faction';
 import { setCustomStats, setForm } from '../src/engine/testMode';
 import { artSkinOf, equipSkin, migrateSave, newSaveData, performEvolution, SAVE_FORMAT_VERSION } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 const shin = FACTIONS.find((f) => f.id !== 'hollow')!;
@@ -80,11 +83,11 @@ describe('C.109 진화 때 고정 · 시작 외형 덮어쓰기 · 스킨 선택
     expect(artSkinOf(s)).toBe('scorpion');
   });
   it('시작 외형 스킨은 덮어쓰이고(해제), 스킨 패널에서 다시 입으면 그 스킨이 이긴다. 기본(null)으로 돌리면 단계 외형', () => {
-    const s = evolveTo3({ atk: 6 }, 'stalker');
+    const s = evolveTo3({ atk: 6 }, 'mantis');
     expect(s.skin).toBeNull();
     expect(artSkinOf(s)).toBe('carapace');
-    expect(equipSkin(s, 'stalker')).toBe(true); // 보유 중이라 다시 고를 수 있다
-    expect(artSkinOf(s)).toBe('stalker');
+    expect(equipSkin(s, 'mantis')).toBe(true); // 보유 중이라 다시 고를 수 있다
+    expect(artSkinOf(s)).toBe('mantis');
     expect(equipSkin(s, null)).toBe(true);
     expect(artSkinOf(s)).toBe('carapace');
   });

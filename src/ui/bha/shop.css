@@ -30,3 +30,72 @@
 
 /* 흡수 화면 [다시 뽑기 (n)] */
 .bha-absorb__reroll { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-2); }
+
+/* ═════ C.141 (GDD 86장): 상점·보관함 카드 UI — 카테고리 탭 · 큰 카드 격자(2줄) · 상세 창 ═════ */
+.bha-shop--cards .bha-lcdpage__col--right, .bha-chest-page .bha-lcdpage__col--right[hidden] { display: none; }
+.bha-itembox { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-height: 0; flex: 1 1 auto; }
+.bha-itemtabs { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
+.bha-itemtab { display: inline-flex; align-items: center; gap: var(--bha-sp-2); min-height: 32px; padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); color: var(--bha-text-2); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
+.bha-itemtab.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 22%, var(--bha-bg-2)); color: var(--bha-text-1); }
+.bha-itemtab__count { padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .4); font-size: var(--bha-fs-xs); font-variant-numeric: tabular-nums; }
+.bha-itemgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); grid-auto-rows: 118px; gap: var(--bha-sp-3); overflow-y: auto; min-height: 0; flex: 1 1 auto; align-content: start; padding-bottom: var(--bha-sp-3); }
+.bha-itemgrid__empty { grid-column: 1 / -1; }
+.bha-itemcard { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); padding: var(--bha-sp-2) var(--bha-sp-2); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: linear-gradient(180deg, var(--bha-bg-3), var(--bha-bg-2)); color: var(--bha-text-1); text-align: center; min-width: 0; overflow: hidden; }
+.bha-itemcard.is-locked { opacity: .7; }
+.bha-itemcard.is-worn, .bha-itemcard.is-owned { border-color: var(--bha-rare); }
+.bha-itemcard__art { flex: 1 1 auto; display: grid; place-items: center; width: 100%; min-height: 0; }
+.bha-itemcard__name { font-size: var(--bha-fs-sm); line-height: 1.15; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-itemcard__detail { font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; max-width: 100%; }
+.bha-itemcard__badge { position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-2); padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .55); font-size: var(--bha-fs-xs); line-height: 20px; }
+.bha-itemcard__foot { margin-top: auto; padding: var(--bha-sp-1) var(--bha-sp-3); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / .4); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); font-variant-numeric: tabular-nums; }
+/* 카드 그림: 아이콘 · 스킨 그림 · 색 견본 */
+.bha-itemart { display: grid; place-items: center; }
+.bha-itemart .bha-icon { width: 36px; height: 36px; }
+.bha-itemart--img { max-width: 100%; max-height: 52px; width: auto; height: auto; image-rendering: pixelated; object-fit: contain; }
+.bha-itemart--swatch { width: 36px; height: 36px; border-radius: 50%; background: var(--sw); box-shadow: 0 0 0 2px var(--bha-line-2); }
+.bha-itemart--aura { background: radial-gradient(closest-side, var(--sw), transparent); box-shadow: none; }
+.bha-itemart--tint { background: linear-gradient(135deg, var(--bha-accent-hi), var(--bha-heal), var(--bha-guard)); filter: var(--sw-filter); }
+.bha-itemart--trail { height: 18px; border-radius: var(--bha-r-xs); background: radial-gradient(closest-side, var(--sw) 70%, transparent) 0 50% / 12px 100% repeat-x; box-shadow: none; }
+.bha-itemart--bar, .bha-itemart--shell, .bha-itemart--plate, .bha-itemart--frame, .bha-itemart--cut, .bha-itemart--room { border-radius: var(--bha-r-sm); }
+/* 상세 창: 왼쪽 그림·보유 수 / 오른쪽 이름·설명·수량·행동 */
+.bha-itemmodal { display: grid; grid-template-columns: minmax(150px, 38%) minmax(0, 1fr); gap: var(--bha-sp-5); width: min(640px, 96%); max-height: 94%; padding: var(--bha-sp-5); text-align: left; }
+.bha-itemmodal__left { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-3); }
+.bha-itemmodal__heading { margin: 0; align-self: stretch; font-size: var(--bha-fs-md); border-bottom: 1px solid var(--bha-line-1); padding-bottom: var(--bha-sp-2); }
+.bha-itemmodal__art { position: relative; display: grid; place-items: center; width: 100%; min-height: 110px; border-radius: var(--bha-r-md); background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); padding: var(--bha-sp-3); }
+.bha-itemmodal__art .bha-icon { width: 64px; height: 64px; }
+.bha-itemmodal__art .bha-itemart--img { max-height: 120px; }
+.bha-itemmodal__art .bha-itemart--swatch { width: 64px; height: 64px; }
+.bha-itemmodal__tag { position: absolute; top: var(--bha-sp-2); left: var(--bha-sp-2); padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: var(--bha-accent); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-heavy); line-height: 20px; }
+.bha-itemmodal__have { font-size: var(--bha-fs-sm); }
+.bha-itemmodal__right { position: relative; display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
+.bha-itemmodal__close { position: absolute; top: 0; right: 0; }
+.bha-itemmodal__name { margin: 0; padding-right: 40px; font-size: var(--bha-fs-lg); }
+.bha-itemmodal__desc { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); line-height: 1.4; }
+.bha-itemmodal__lock { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-warn); }
+.bha-itemmodal__qtyrow { display: flex; align-items: center; gap: var(--bha-sp-2); }
+.bha-itemmodal__qty { margin-right: auto; font-size: var(--bha-fs-sm); }
+.bha-itemmodal__acts { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin-top: auto; }
+
+/* C.146 (사용자 "i4"): 보관함 '스킨' 탭 안 꾸밈 종류 칩 */
+.bha-itemchips { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
+.bha-itemchip { display: inline-flex; align-items: center; gap: var(--bha-sp-2); min-height: 30px; padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-pill); background: var(--bha-bg-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
+.bha-itemchip.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 18%, var(--bha-bg-1)); color: var(--bha-text-1); }
+.bha-itemchip.is-zero { opacity: .55; }
+.bha-itemchip__count { font-variant-numeric: tabular-nums; color: var(--bha-text-3); }
+
+/* C.150 장비 등급 (GDD 91장 3번): 노말·레어·영웅·전설 — 이미 있는 토큰만 (노말 = 선, 레어 = 회복 파랑, 영웅 = 봉인 보라, 전설 = 희귀 금색) */
+.bha-itemcard.is-grade-rare, .bha-gearslot.is-grade-rare { border-color: var(--bha-heal); }
+.bha-itemcard.is-grade-epic, .bha-gearslot.is-grade-epic { border-color: var(--bha-seal); }
+.bha-itemcard.is-grade-legendary, .bha-gearslot.is-grade-legendary { border-color: var(--bha-rare); }
+.bha-itemcard.is-grade-rare.is-worn, .bha-itemcard.is-grade-epic.is-worn, .bha-itemcard.is-grade-legendary.is-worn { box-shadow: inset 0 0 0 1px var(--bha-rare); }
+.is-grade-normal .bha-icon { color: var(--bha-text-2); }
+.is-grade-rare .bha-icon { color: var(--bha-heal); }
+.is-grade-epic .bha-icon { color: var(--bha-seal); }
+.is-grade-legendary .bha-icon { color: var(--bha-rare); }
+/* 상태 화면 장착 5칸 */
+.bha-gearslots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-gearslot { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); min-width: 0; padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); color: var(--bha-text-1); text-align: center; }
+.bha-gearslot.is-empty { border-style: dashed; color: var(--bha-text-3); }
+.bha-gearslot .bha-icon { width: 24px; height: 24px; }
+.bha-gearslot__slot { font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bha-gearslot__name { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.15; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

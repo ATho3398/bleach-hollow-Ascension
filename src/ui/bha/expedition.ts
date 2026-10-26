@@ -7,9 +7,9 @@ import { el, icon, type InfoRow } from './dom';
 
 export type TileCss = 'prey' | 'elite' | 'env' | 'rest' | 'event';
 
-/** 타일 종류 → 디자인 클래스/아이콘 키. 조합(combo) 타일은 환경 모양으로 보인다 (슬롯에 직접 놓는 타일은 4종뿐) */
+/** 타일 종류 → 디자인 클래스/아이콘 키. 조합(combo) 타일은 환경 모양, 특수(메아리, C.124) 타일은 이벤트 모양으로 보인다 */
 export function tileCss(kind: TerrainTileDef['kind']): TileCss {
-  return { 'prey-nest': 'prey', 'elite-den': 'elite', environment: 'env', rest: 'rest', combo: 'env', event: 'event' }[kind] as TileCss;
+  return { 'prey-nest': 'prey', 'elite-den': 'elite', environment: 'env', rest: 'rest', combo: 'env', event: 'event', special: 'event' }[kind] as TileCss;
 }
 /** 이벤트 타일(GDD 25-5 ③)은 전용 아이콘이 없어 조합 아이콘을 쓴다 */
 export const tileIconId = (css: TileCss): string => (css === 'event' ? 'i-tile-combo' : `i-tile-${css}`);
@@ -71,7 +71,7 @@ export const MSG_ICON: Record<MsgKind, string> = { '': 'i-play', warn: 'i-hunger
 
 /** 원정이 끝난 이유 → 결과 화면 톤. 귀환 계열 = win, 패배 계열 = lose */
 export function endTone(reason: EndReason): 'win' | 'lose' {
-  return reason === 'returned' || reason === 'forced-max-laps' || reason === 'story-clear' ? 'win' : 'lose';
+  return reason === 'returned' || reason === 'forced-max-laps' || reason === 'story-clear' || reason === 'tutorial-clear' || reason === 'abort' ? 'win' : 'lose';
 }
 
 export interface PracticeFilter {

@@ -4,57 +4,98 @@
     {
       "id": "food-snack",
       "kind": "food",
+      "category": "food",
       "food": "snack"
     },
     {
       "id": "food-basic",
       "kind": "food",
+      "category": "food",
       "food": "basic"
     },
     {
       "id": "food-hearty",
       "kind": "food",
+      "category": "food",
       "food": "hearty"
     },
     {
       "id": "food-tonic",
       "kind": "food",
+      "category": "food",
       "food": "tonic"
     },
     {
       "id": "food-feast",
       "kind": "food",
+      "category": "food",
       "food": "feast"
     },
     {
       "id": "calm",
       "kind": "calm",
+      "category": "consumable",
       "name": "정화제"
     },
     {
       "id": "wake",
       "kind": "wake",
+      "category": "consumable",
       "name": "각성제"
     },
     {
       "id": "training-ticket",
       "kind": "trainingTicket",
+      "category": "etc",
       "name": "수련권"
+    },
+    {
+      "id": "tile-draw",
+      "kind": "tileDraw",
+      "category": "tile",
+      "name": "타일 뽑기"
     },
     {
       "id": "rare-tile",
       "kind": "rareTile",
+      "category": "tile",
       "name": "희귀 타일 꾸러미"
     },
     {
       "id": "reroll",
       "kind": "reroll",
+      "category": "consumable",
       "name": "다시 뽑기권"
     },
     {
       "id": "deck-slot",
       "kind": "deckSlot",
-      "name": "타일 덱 칸 +1"
+      "category": "etc",
+      "name": "타일 배치 칸 +1"
+    },
+    {
+      "id": "gear-weapon",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "weapon"
+    },
+    {
+      "id": "gear-armor",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "armor"
+    },
+    {
+      "id": "gear-shoes",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "shoes"
+    },
+    {
+      "id": "gear-accessory",
+      "kind": "gear",
+      "category": "equipment",
+      "gearKind": "accessory"
     }
   ],
   "categories": [

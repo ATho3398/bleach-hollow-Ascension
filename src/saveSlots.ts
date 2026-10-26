@@ -1,7 +1,7 @@
 // 세이브 슬롯 (Q-3, C.31): 슬롯 3개, 슬롯별 localStorage 키. 슬롯 1 = 기존 키 그대로라 옛 세이브는 마이그레이션 없이 슬롯 1이 된다.
 // 슬롯 밖 정보(마지막 플레이 시각)는 별도 키 하나에 둔다 → SaveData 구조와 SAVE_FORMAT_VERSION 은 그대로.
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
-import { migrateSave, SAVE_KEY, writeSave, type SaveData, type StorageLike } from './game';
+import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
 import { collectChunks, parseSaveText } from './saveCodec';
 
 export const SLOT_COUNT = 3;
@@ -19,6 +19,8 @@ export type SlotSummary =
   | { slot: number; state: 'empty' }
   /** recoverable: 본 세이브는 손상됐지만 슬롯 백업이 읽힌다 → 열면 백업으로 복구한다 (C.70) */
   | { slot: number; state: 'broken'; recoverable: boolean }
+  /** 세이브 형식이 이 버전에서 열리지 않는다 (GDD 61장): old = 이전 버전 세이브, newer = 더 새로운 버전 세이브. 원문은 그대로 두고 내보내기·새로 시작만 된다 */
+  | { slot: number; state: 'incompatible'; reason: 'old' | 'newer'; format: number }
   | {
       slot: number;
       state: 'ok';
@@ -61,8 +63,19 @@ export function touchSlot(storage: StorageLike, slot: number, nowMs: number = Da
   }
 }
 
-/** 슬롯 하나의 요약. 비어 있음 / 손상 / 정상. 로드 부작용(칭호 평가)은 일으키지 않는다 */
-export function slotSummary(storage: StorageLike, slot: number): SlotSummary {
+/** 세이브 원문의 형식 번호 (JSON 맨 위 meta.format 만 본다 — 압축 덩어리는 풀지 않는다). 읽을 수 없으면 null */
+export function rawSaveFormat(text: string | null): number | null {
+  if (!text) return null;
+  try {
+    const f = (JSON.parse(text) as { meta?: { format?: unknown } })?.meta?.format;
+    return typeof f === 'number' ? f : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 슬롯 하나의 요약. 비어 있음 / 손상 / 열 수 없는 형식 / 정상. 로드 부작용(칭호 평가)은 일으키지 않는다. min·current 는 테스트용(기본 = 지금 문턱·형식) */
+export function slotSummary(storage: StorageLike, slot: number, min: number = saveFormatGate.min, current: number = SAVE_FORMAT_VERSION): SlotSummary {
   let text: string | null;
   try {
     text = storage.getItem(slotKey(slot));
@@ -70,9 +83,12 @@ export function slotSummary(storage: StorageLike, slot: number): SlotSummary {
     return { slot, state: 'empty' };
   }
   if (!text) return { slot, state: 'empty' };
+  const format = rawSaveFormat(text);
+  const status = saveFormatStatus(format, min, current);
+  if ((status === 'old' || status === 'newer') && format !== null) return { slot, state: 'incompatible', reason: status, format };
   let save: SaveData | null = null;
   try {
-    save = migrateSave(parseSaveText(text, true)); // 요약만: 압축 덩어리는 풀지 않고 개수만 (C.72)
+    save = migrateSave(parseSaveText(text, true), min); // 요약만: 압축 덩어리는 풀지 않고 개수만 (C.72)
   } catch {
     save = null;
   }
@@ -110,9 +126,24 @@ export function lastPlayedSlot(summaries: readonly SlotSummary[]): number | null
   return best ? best.slot : null;
 }
 
+/** 슬롯 지우기 (GDD 93장): 지우기 전 내용을 슬롯 백업에 한 번 보관하고(stashSlot) 세이브 키와 마지막 플레이 시각을 지운다. 세이브 구조는 건드리지 않는다. 지웠으면 true, 저장소가 막혔으면 false */
+export function deleteSlot(storage: StorageLike, slot: number): boolean {
+  if (!storage.removeItem) return false;
+  if (!stashSlot(storage, slot, 'delete')) return false;
+  try {
+    storage.removeItem(slotKey(slot));
+    const meta = readMeta(storage);
+    delete meta.played[String(slot)];
+    storage.setItem(SLOTS_META_KEY, JSON.stringify(meta));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** 백업을 남긴 까닭 (GDD 24-5): 되돌리기 화면에 "○○ 직전" 으로 보인다 */
-export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'fusion' | 'revert';
-export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'fusion', 'revert'];
+export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'fusion' | 'revert' | 'delete';
+export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'fusion', 'revert', 'delete'];
 /** 슬롯 백업의 까닭·시각 기록 키 (세이브 밖 — SaveData 구조와 무관) */
 export const slotBackupMetaKey = (slot: number): string => `${slotBackupKey(slot)}.meta`;
 

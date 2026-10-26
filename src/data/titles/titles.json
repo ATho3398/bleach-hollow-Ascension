@@ -14,6 +14,34 @@
     "provisional": true
   },
   {
+    "id": "rank-no9",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.9",
+      "shinigami": "8석"
+    },
+    "condition": {
+      "type": "rankReached",
+      "rank": 9
+    },
+    "provisional": true
+  },
+  {
+    "id": "rank-no8",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.8",
+      "shinigami": "7석"
+    },
+    "condition": {
+      "type": "rankReached",
+      "rank": 8
+    },
+    "provisional": true
+  },
+  {
     "id": "rank-2",
     "kind": "rank",
     "hidden": false,
@@ -28,6 +56,34 @@
     "provisional": true
   },
   {
+    "id": "rank-no6",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.6",
+      "shinigami": "5석"
+    },
+    "condition": {
+      "type": "rankReached",
+      "rank": 6
+    },
+    "provisional": true
+  },
+  {
+    "id": "rank-no5",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.5",
+      "shinigami": "4석"
+    },
+    "condition": {
+      "type": "rankReached",
+      "rank": 5
+    },
+    "provisional": true
+  },
+  {
     "id": "rank-3",
     "kind": "rank",
     "hidden": false,
@@ -38,6 +94,34 @@
     "condition": {
       "type": "rankReached",
       "rank": 4
+    },
+    "provisional": true
+  },
+  {
+    "id": "rank-no3",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.3",
+      "shinigami": "부대장"
+    },
+    "condition": {
+      "type": "rankReached",
+      "rank": 3
+    },
+    "provisional": true
+  },
+  {
+    "id": "rank-no2",
+    "kind": "rank",
+    "hidden": false,
+    "name": {
+      "hollow": "에스파다 No.2",
+      "shinigami": "대장 대행"
+    },
+    "condition": {
+      "type": "rankReached",
+      "rank": 2
     },
     "provisional": true
   },
@@ -102,18 +186,33 @@
     "id": "tag-1",
     "kind": "tag",
     "hidden": true,
-    "factions": ["hollow"],
-    "name": { "hollow": "최초의 호로" },
-    "condition": { "type": "lineageStatTotal", "lineageKind": "fail", "minTier": 5, "totalOfTier": 5 },
+    "factions": [
+      "hollow"
+    ],
+    "name": {
+      "hollow": "최초의 호로"
+    },
+    "condition": {
+      "type": "lineageStatTotal",
+      "lineageKind": "fail",
+      "minTier": 5,
+      "totalOfTier": 5
+    },
     "provisional": true
   },
   {
     "id": "tag-1-shinigami",
     "kind": "tag",
     "hidden": true,
-    "factions": ["shinigami"],
-    "splitFrom": ["tag-1"],
-    "name": { "shinigami": "은밀기동대장" },
+    "factions": [
+      "shinigami"
+    ],
+    "splitFrom": [
+      "tag-1"
+    ],
+    "name": {
+      "shinigami": "은밀기동대장"
+    },
     "condition": {
       "type": "or",
       "any": [
@@ -263,40 +362,70 @@
     "id": "tower-10",
     "kind": "tower",
     "hidden": false,
-    "name": { "hollow": "탑 10층 돌파", "shinigami": "탑 10층 돌파" },
-    "condition": { "type": "towerFloorCleared", "floor": 10 },
+    "name": {
+      "hollow": "탑 10층 돌파",
+      "shinigami": "탑 10층 돌파"
+    },
+    "condition": {
+      "type": "towerFloorCleared",
+      "floor": 10
+    },
     "provisional": true
   },
   {
     "id": "tower-20",
     "kind": "tower",
     "hidden": false,
-    "name": { "hollow": "탑 20층 돌파", "shinigami": "탑 20층 돌파" },
-    "condition": { "type": "towerFloorCleared", "floor": 20 },
+    "name": {
+      "hollow": "탑 20층 돌파",
+      "shinigami": "탑 20층 돌파"
+    },
+    "condition": {
+      "type": "towerFloorCleared",
+      "floor": 20
+    },
     "provisional": true
   },
   {
     "id": "tower-30",
     "kind": "tower",
     "hidden": false,
-    "name": { "hollow": "탑 30층 돌파", "shinigami": "탑 30층 돌파" },
-    "condition": { "type": "towerFloorCleared", "floor": 30 },
+    "name": {
+      "hollow": "탑 30층 돌파",
+      "shinigami": "탑 30층 돌파"
+    },
+    "condition": {
+      "type": "towerFloorCleared",
+      "floor": 30
+    },
     "provisional": true
   },
   {
     "id": "tower-40",
     "kind": "tower",
     "hidden": false,
-    "name": { "hollow": "탑 40층 돌파", "shinigami": "탑 40층 돌파" },
-    "condition": { "type": "towerFloorCleared", "floor": 40 },
+    "name": {
+      "hollow": "탑 40층 돌파",
+      "shinigami": "탑 40층 돌파"
+    },
+    "condition": {
+      "type": "towerFloorCleared",
+      "floor": 40
+    },
     "provisional": true
   },
   {
     "id": "tower-50",
     "kind": "tower",
     "hidden": false,
-    "name": { "hollow": "탑의 정상", "shinigami": "탑의 정상" },
-    "condition": { "type": "towerFloorCleared", "floor": 50 },
+    "name": {
+      "hollow": "탑의 정상",
+      "shinigami": "탑의 정상"
+    },
+    "condition": {
+      "type": "towerFloorCleared",
+      "floor": 50
+    },
     "provisional": true
   }
 ]

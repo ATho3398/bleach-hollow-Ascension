@@ -73,7 +73,7 @@ export function checkCondition(c: TitleCondition, log: RunLog, live?: TitleLive)
     case 'elitesDefeated':
       return log.battles.filter((b) => b.won && b.enemyClass === 'elite').length >= c.min;
     case 'runsReturned':
-      return log.runs.filter((r) => r.outcome === 'returned').length >= c.min;
+      return log.runs.filter((r) => r.outcome === 'returned' && r.endReason !== 'abort').length >= c.min; // 도중 귀환(GDD 81장)은 세지 않는다
     case 'runsDefeated':
       return log.runs.filter((r) => r.outcome === 'defeated').length >= c.min;
     case 'maxLap':
@@ -105,7 +105,7 @@ export function evaluateTitles(runLog: RunLog, state: Pick<TitleEvalState, 'titl
 export function snapshotOf(runLog: RunLog, state: TitleEvalState): TitleSnapshot {
   return {
     runs: runLog.runs.length,
-    returned: runLog.runs.filter((r) => r.outcome === 'returned').length,
+    returned: runLog.runs.filter((r) => r.outcome === 'returned' && r.endReason !== 'abort').length,
     defeated: runLog.runs.filter((r) => r.outcome === 'defeated').length,
     absorbs: runLog.absorbs.filter((a) => a.absorbed).length,
     maxLap: runLog.runs.reduce((m, r) => Math.max(m, r.laps), 0),

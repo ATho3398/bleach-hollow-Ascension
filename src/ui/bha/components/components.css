@@ -186,7 +186,9 @@
 .bha-seg__count { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-medium); color: var(--bha-text-3); font-variant-numeric: tabular-nums; }
 .bha-seg__item[aria-selected="true"] .bha-seg__count { color: var(--bha-text-2); }
 .bha-seg--sm .bha-seg__item { min-height: 36px; }
-.bha-seg--stack .bha-seg__item { flex-direction: column; gap: 0; min-height: 50px; line-height: 1.2; white-space: normal; }
+/* 단계 탭 같은 쌓은 탭: 이름이 한 어절 가운데서 끊기지 않게 한 줄 유지(nowrap)하고 칸 폭은 이름 폭 아래로 줄지 않게, 대신 안쪽 여백을 줄인다 (C.113) */
+.bha-seg--stack { grid-auto-columns: minmax(max-content, 1fr); }
+.bha-seg--stack .bha-seg__item { flex-direction: column; gap: 0; min-height: 50px; line-height: 1.2; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; padding: 0 var(--bha-sp-2); }
 .bha-seg--sm .bha-seg__item::after { content: ""; position: absolute; inset: -4px 0; }
 
 /* =========================================================
@@ -440,7 +442,7 @@ button.bha-slot:active { transform: scale(0.98); }
   position: relative;
   width: 100%; height: 100%;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  padding: 9px 2px 3px;
+  padding: 10px 2px 3px;
   border-radius: var(--bha-r-sm);
   background:
     linear-gradient(180deg, rgb(255 255 255 / 0.26), rgb(255 255 255 / 0) 42%, rgb(0 0 0 / 0.22)),
@@ -454,9 +456,10 @@ button.bha-slot:active { transform: scale(0.98); }
   transition: transform var(--bha-dur-2) var(--bha-ease-out), filter var(--bha-dur-2), opacity var(--bha-dur-2);
   overflow: hidden;
 }
-.bha-block__icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgb(0 0 0 / 0.32); flex: none; }
-.bha-block__icon .bha-icon { width: 16px; height: 16px; stroke-width: 2.2; }
-.bha-block__abbr { font-size: var(--bha-fs-xs); line-height: 1.08; font-weight: var(--bha-fw-heavy); letter-spacing: -0.03em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; max-width: 100%; text-shadow: 0 1px 1px rgb(0 0 0 / 0.35); }
+/* 아이콘이 카드 중심을 크게 차지하고 이름은 아래 작게 (C.138, 84장 5번) */
+.bha-block__icon { display: grid; place-items: center; flex: 1 1 auto; min-height: 0; width: 100%; }
+.bha-block__icon .bha-icon { width: 34px; height: 34px; stroke-width: 2; filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.25)); }
+.bha-block__abbr { flex: none; font-size: var(--bha-fs-xs); line-height: 1.08; font-weight: var(--bha-fw-heavy); letter-spacing: -0.03em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; max-width: 100%; text-shadow: 0 1px 1px rgb(0 0 0 / 0.35); }
 /* 체인 단계 표식 ●○○ / ●●○ / ●●● */
 /* 계열 표시(GDD 17-3): 왼쪽 위 한 글자 (조·교·탄 / 참·권·귀). 임시 스타일 — 디자인 시안 대기 */
 .bha-block__fam { position: absolute; top: 2px; left: 3px; z-index: 1; min-width: 15px; padding: 1px 3px; border-radius: var(--bha-r-pill); background: var(--fam, rgb(0 0 0 / 0.4)); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); line-height: 1; font-weight: var(--bha-fw-heavy); text-align: center; }
@@ -471,6 +474,10 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-block__pips i:nth-child(-n + 1) { background: currentColor; }
 .bha-block.is-chain2 .bha-block__pips i:nth-child(-n + 2) { background: currentColor; }
 .bha-block.is-chain3 .bha-block__pips i { background: currentColor; }
+/* 블록 색 = 속성 (C.131, GDD 79장): 몸통을 속성 색으로. 모양(아이콘)은 계열·역할, 계열 글자 배지는 어두운 바탕 */
+.bha-block[data-el]:not(.bha-block--special):not(.bha-block--void) { --blk: var(--fam); --ink: var(--bha-bg-0); }
+.bha-block[data-el] .bha-block__fam { background: rgb(0 0 0 / 0.45); color: var(--bha-text-1); }
+.bha-block[data-el]:not(.bha-block--special):not(.bha-block--void) .bha-block__abbr { text-shadow: 0 1px 0 rgb(255 255 255 / 0.25); }
 /* 약점 계통 표식: 오른쪽 위 금색 모서리 */
 .bha-block__weak { position: absolute; top: 0; right: 0; width: 18px; height: 18px; display: none; place-items: start end; padding: 1px; background: linear-gradient(225deg, var(--bha-weak) 0 50%, transparent 50%); color: #2a1d05; border-top-right-radius: var(--bha-r-sm); }
 .bha-block__weak .bha-icon { width: 10px; height: 10px; stroke-width: 3; }
@@ -889,3 +896,11 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-keytable__title { margin: 0 0 var(--bha-sp-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
 .bha-keytable__row { display: flex; gap: var(--bha-sp-3); align-items: baseline; padding: var(--bha-sp-1) 0; border-top: 1px solid var(--bha-line-1); font-size: var(--bha-fs-sm); }
 .bha-keytable__keys { flex: 0 0 8.5em; font-family: var(--bha-font-num); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }
+
+/* 능력치 한 줄 (C.131, GDD 77장 ①): 막대 없이 이름 + 값. tip 이 있는 줄은 올리거나 누르면 값 옆에 안내 */
+.bha-statrow { display: flex; align-items: baseline; gap: var(--bha-sp-3); width: 100%; padding: var(--bha-sp-1) 0; font: inherit; color: var(--bha-text-1); background: none; border: 0; text-align: left; }
+.bha-statrow__name { flex: none; min-width: 5.5em; color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+.bha-statrow__value { font-size: var(--bha-fs-md); }
+.bha-statrow__tip { display: none; margin-left: auto; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: var(--bha-bg-3); color: var(--bha-text-1); font-size: var(--bha-fs-xs); }
+button.bha-statrow { cursor: help; }
+.bha-statrow:hover .bha-statrow__tip, .bha-statrow.is-tip .bha-statrow__tip, .bha-statrow:focus-visible .bha-statrow__tip { display: inline-block; }

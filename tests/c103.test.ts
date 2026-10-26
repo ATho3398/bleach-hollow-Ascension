@@ -20,6 +20,8 @@ let uid = 9000;
 const blk = (traitId: string, family: string | null = 'family-a'): Block => ({ uid: uid++, kind: 'skill', traitId, family });
 /** 흔들림 없는 전투: 치명·적 피해 흔들림 0 */
 const STILL: Partial<CombatParams> = { critChance: 0, enemyCritChance: 0, enemyDamageVariance: 0 };
+/** 평타형 대가 (C.142, GDD 84장 3번) */
+const D = (el: string) => PB.damageByElement[el] ?? PB.damage;
 const physOf = (id: string): PhysBlock | null => physBlockOf(formAbilitiesOf(getForm(id), zeroStats(), 'atk'));
 const fxOf = (id: string) => abilityEffectsOf(formAbilitiesOf(getForm(id), zeroStats(), 'atk')).effects;
 const mk = (extra: Partial<CombatParams>, seed = 1, enemy = normal) => createCombat(seed, { enemy, params: { ...STILL, ...extra } });
@@ -67,12 +69,12 @@ describe('C.103 데이터·매핑 (GDD 49-1 1~3번)', () => {
     expect(physOf('t4:fire')).toBeNull();
   });
   it('블록 파라미터: 속성·효과·피해 배율(표)', () => {
-    expect(physOf('t5:earth:physical')).toEqual({ element: 'earth', effect: 'stoneStance', power: PB.power.earth!, ...PB.stoneStance });
-    expect(physOf('t5:blood:physical')).toEqual({ element: 'blood', effect: 'knockback', power: PB.power.blood!, ...PB.knockback });
-    expect(physOf('t5:fire:physical')).toEqual({ element: 'fire', effect: 'ember', power: PB.power.fire! });
-    expect(physOf('t5:water:physical')).toEqual({ element: 'water', effect: 'wave', power: PB.power.water!, ...PB.wave });
-    expect(physOf('t5:thunder:physical')).toEqual({ element: 'thunder', effect: 'flash', power: PB.power.thunder!, ...PB.flash });
-    expect(physOf('t5:normal:physical')).toEqual({ element: 'normal', effect: 'shout', power: PB.power.normal! });
+    expect(physOf('t5:earth:physical')).toEqual({ element: 'earth', effect: 'stoneStance', power: PB.power.earth!, ...PB.stoneStance, damage: D('earth') });
+    expect(physOf('t5:blood:physical')).toEqual({ element: 'blood', effect: 'knockback', power: PB.power.blood!, ...PB.knockback, damage: D('blood') });
+    expect(physOf('t5:fire:physical')).toEqual({ element: 'fire', effect: 'ember', power: PB.power.fire!, damage: D('fire') });
+    expect(physOf('t5:water:physical')).toEqual({ element: 'water', effect: 'wave', power: PB.power.water!, ...PB.wave, damage: D('water') });
+    expect(physOf('t5:thunder:physical')).toEqual({ element: 'thunder', effect: 'flash', power: PB.power.thunder!, ...PB.flash, damage: D('thunder') });
+    expect(physOf('t5:normal:physical')).toEqual({ element: 'normal', effect: 'shout', power: PB.power.normal!, damage: D('normal') });
     // 표(GDD 49장 3판)의 블록 피해 배율: 흙·혈·불·물 0.7, 뇌 0.6, 노멀 0.8
     expect([PB.power.earth, PB.power.blood, PB.power.fire, PB.power.water, PB.power.thunder, PB.power.normal]).toEqual([0.7, 0.7, 0.7, 0.7, 0.6, 0.8]);
   });
@@ -129,9 +131,9 @@ describe('C.103 기본 공격 블록 3계열 → 물공 블록 (49-1 2번)', () 
     const s = mk({ playerElements: ['earth'], physBlock: physOf('t5:earth:physical')! });
     expect(blockName(blk(BASIC_SKILL_ID), battleLabels(hollow), 'hollow', s.params)).toBe('바위 자세');
     expect(blockName(blk(BASIC_SKILL_ID), battleLabels(getFaction('shinigami')), 'shinigami', s.params)).toBe('암반 베기');
-    expect(blockName(blk(BASIC_GUARD_ID, null), battleLabels(hollow), 'hollow', s.params)).toBe('흙_막기');
+    expect(blockName(blk(BASIC_GUARD_ID, null), battleLabels(hollow), 'hollow', s.params)).toBe('막기');
     const plain = mk({ playerElements: ['earth'] });
-    expect(blockName(blk(BASIC_SKILL_ID), battleLabels(hollow), 'hollow', plain.params)).toBe('흙_조');
+    expect(blockName(blk(BASIC_SKILL_ID), battleLabels(hollow), 'hollow', plain.params)).toBe('조');
   });
 });
 
@@ -207,15 +209,16 @@ describe('C.103 혈 — 피 튀기기(넉백) · 피 냄새', () => {
   it('버프는 평타 n회 뒤 사라진다 (피의 갈증 없이 비교)', () => {
     const a = mk({ playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: { bloodScent: 2 } });
     const b = mk({ playerElements: ['blood'] });
+    a.enemy.hp = a.enemy.maxHp = 1e12; // C.118: 적 체력이 절반이라 40회 평타 전에 죽는다 — 버프 지속만 본다
     const plainHit = nextBasic(b)[0]!.damage;
     a.tray.push(blk(BASIC_SKILL_ID));
     use(a);
     for (let k = 0; k < KB.hits; k++) {
       const h = nextBasic(a);
-      expect(h[0]!.damage).toBeCloseTo(plainHit * (1 + KB.bonus), 3);
+      expect(h[0]!.damage).toBeCloseTo(plainHit * D('blood') * (1 + KB.bonus), 3);
     }
     expect(a.basicBuffs).toEqual([]);
-    expect(nextBasic(a)[0]!.damage).toBeCloseTo(plainHit, 3);
+    expect(nextBasic(a)[0]!.damage).toBeCloseTo(plainHit * D('blood'), 3);
   });
   it('피 냄새: 넉백 중인 적에게 평타 흡혈 ×배율 (넉백이 아니면 ×1)', () => {
     const a = blood();
@@ -296,12 +299,12 @@ describe('C.103 뇌 — 전광(두 번 때림) · 충전', () => {
     for (let k = 0; k < FL.hits; k++) {
       const hits = nextBasic(a);
       expect(hits).toHaveLength(2);
-      for (const h of hits) expect(h.damage).toBeCloseTo(plainHit * FL.each, 3);
+      for (const h of hits) expect(h.damage).toBeCloseTo(plainHit * D('thunder') * FL.each, 3);
     }
     expect(a.flashHits).toBe(0);
     const after = nextBasic(a);
     expect(after).toHaveLength(1);
-    expect(after[0]!.damage).toBeCloseTo(plainHit, 3);
+    expect(after[0]!.damage).toBeCloseTo(plainHit * D('thunder'), 3);
   });
   it('충전: 평타 n회마다 블록 1개가 바로 생긴다 (기본 풀에서)', () => {
     const a = thunder();

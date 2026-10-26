@@ -4,7 +4,8 @@
 import { el, mountApp } from './dom';
 
 export interface PageHead {
-  title: string;
+  /** 제목 글자, 또는 제목 자리에 들어갈 요소(책장의 제목 토글) */
+  title: string | Node;
   /** 제목 아래 작은 줄 (Node 도 가능) */
   sub?: Node | string;
   /** 머리 오른쪽에 둘 것 (탭·버튼) */
@@ -23,7 +24,9 @@ export function selectLast<T extends Element>(root: T): T {
 export function lcdHead(h: PageHead): HTMLElement {
   const head = el('header', 'bha-lcdpage__head');
   const main = el('div', 'bha-lcdpage__titles');
-  main.append(el('h1', 'bha-lcdpage__title', h.title));
+  const title = el('h1', 'bha-lcdpage__title');
+  title.append(h.title);
+  main.append(title);
   if (h.sub !== undefined) {
     const sub = el('p', 'bha-lcdpage__sub');
     sub.append(h.sub);

@@ -22,8 +22,11 @@ import {
   claimTutorialGoals, liberationAccess, migrateSave, newSaveData, recordExpedition, recordTraining, SAVE_FORMAT_VERSION, settleLiberationRisk,
 } from '../src/game';
 import { findProblems, SHORTCUTS } from '../src/ui/shortcutMap';
-import { liberationBlockLabel, liberationButton } from '../src/ui/labels';
+import { liberationBlockLabel } from '../src/ui/labels';
 import { gameRuleLines, trainingLockedText } from '../src/ui/trainingView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const LB = BALANCE.provisional.liberation;
 const TX = BALANCE.provisional.training;
@@ -32,8 +35,8 @@ const normal = getEnemy('test-a');
 const mk = (params: Partial<CombatParams> = {}, seed = 1) => createCombat(seed, { enemy: normal, params: { liberationEnabled: true, ...params } });
 /** 블록 생성·공허·양쪽 공격이 끼어들지 않게 멈춘 상태 */
 const quiet = (s: CombatState) => {
-  s.spawnTimers = s.spawnTimers.map(() => 1e9);
-  s.voidTimer = 1e9;
+  s.spawnTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   s.enemy.attackTimer = 1e9;
   s.player.attackTimer = 1e9;
   s.enemy.actionTimer = 1e9;
@@ -49,182 +52,12 @@ const wait = (s: CombatState, seconds: number) => {
   for (let i = 0; i < ticksOf(s.params, seconds) && s.status === 'playing'; i++) step(s);
 };
 
-describe('해방 게이지 (GDD 22-5)', () => {
-  it('내가 준 피해로 찬다: 적 최대 체력 40% 를 깎으면 가득', () => {
-    const s = mk();
-    s.spawnTimers = s.spawnTimers.map(() => 1e9);
-    s.voidTimer = 1e9;
-    s.enemy.attackTimer = 1e9;
-    while (s.enemy.hp > s.enemy.maxHp * 0.8) step(s);
-    const dealt = s.enemy.maxHp - s.enemy.hp;
-    expect(s.liberation.gauge).toBeCloseTo((dealt / (s.enemy.maxHp * LB.gaugeEnemyHpFraction)) * LIBERATION_GAUGE_MAX, 5);
-    expect(canLiberate(s)).toBe(false);
-    while (s.enemy.hp > s.enemy.maxHp * (1 - LB.gaugeEnemyHpFraction)) step(s);
-    expect(s.liberation.gauge).toBe(LIBERATION_GAUGE_MAX);
-    expect(canLiberate(s)).toBe(true);
-  });
-
-  it('자격이 없으면(liberationEnabled false) 게이지가 차도 쓸 수 없다', () => {
-    const s = charged({ liberationEnabled: false });
-    expect(canLiberate(s)).toBe(false);
-    expect(applyInput(s, { type: 'liberate' })).toBe(false);
-    expect(s.liberation.usedAtTick).toBeNull();
-  });
-});
-
-describe('해방 효과 (GDD 22-5)', () => {
-  it('15초 동안 전 능력치 ×1.3 (체력은 최대 체력과 같이), 끝나면 되돌리고 리스크 +15. 전투당 1회', () => {
-    const s = charged();
-    const before = { ...s.player.stats };
-    const maxHp = s.player.maxHp;
-    const hp = s.player.hp;
-    expect(applyInput(s, { type: 'liberate' })).toBe(true);
-    expect(liberationActive(s)).toBe(true);
-    for (const k of Object.keys(before) as (keyof typeof before)[]) expect(s.player.stats[k]).toBeCloseTo(before[k] * LB.statMultiplier, 6);
-    expect(s.player.maxHp).toBeCloseTo(maxHp * LB.statMultiplier, 6);
-    expect(s.player.hp).toBeCloseTo(hp + maxHp * (LB.statMultiplier - 1), 6);
-    expect(s.liberation.risk).toBe(0);
-    // 두 번째는 안 된다
-    s.liberation.gauge = LIBERATION_GAUGE_MAX;
-    expect(applyInput(s, { type: 'liberate' })).toBe(false);
-    wait(s, LB.seconds - 0.2);
-    expect(liberationActive(s)).toBe(true);
-    wait(s, 0.3);
-    expect(liberationActive(s)).toBe(false);
-    expect(s.player.stats).toEqual(before);
-    expect(s.player.maxHp).toBeCloseTo(maxHp, 6);
-    expect(s.player.hp).toBeLessThanOrEqual(s.player.maxHp);
-    expect(s.liberation.risk).toBe(LB.riskOnEnd);
-    expect(drainCombatEvents(s).map((e) => e.kind)).toEqual(expect.arrayContaining(['liberate', 'liberation-end']));
-  });
-
-  it('해방하는 순간 블록 바 오른쪽 끝에 해방 블록 2칸, 위력은 기본 블록의 3배(기본 공격 9회분 × 배율)', () => {
-    const s = charged();
-    applyInput(s, { type: 'liberate' });
-    expect(s.tray.map((b) => b.kind)).toEqual(['liberation', 'liberation']);
-    expect(s.params.liberationPowerInAttacks).toBe(CX.basicBlockPowerInAttacks * LB.blockPowerMultiplier);
-    const hp0 = s.enemy.hp;
-    expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
-    expect(s.enemy.hp).toBeLessThan(hp0);
-    const ev = drainCombatEvents(s).find((e) => e.kind === 'block');
-    expect(ev && ev.kind === 'block' && ev.block).toBe('liberation');
-    expect(s.tray).toHaveLength(1);
-  });
-
-  it('바가 가득 차 있으면 오른쪽 끝(가장 최근) 블록이 밀려난다', () => {
-    const s = charged();
-    s.tray = Array.from({ length: CX.trayCapacity }, (_, i) => ({ uid: 100 + i, kind: 'skill' as const, traitId: 'basic-skill', family: null }));
-    applyInput(s, { type: 'liberate' });
-    expect(s.tray).toHaveLength(CX.trayCapacity);
-    expect(s.tray.slice(-2).map((b) => b.kind)).toEqual(['liberation', 'liberation']);
-    expect(s.tray.slice(0, CX.trayCapacity - 2).map((b) => b.uid)).toEqual(Array.from({ length: CX.trayCapacity - 2 }, (_, i) => 100 + i));
-  });
-
-  it('해방 중에 전투가 끝나도 풀리며 리스크 +15, 전투 기록에 사용 여부·시각', () => {
-    const s = charged();
-    wait(s, 2);
-    applyInput(s, { type: 'liberate' });
-    s.enemy.hp = 1;
-    step(s, { type: 'use', cell: 0 });
-    expect(s.status).toBe('won');
-    expect(s.finisher?.kind).toBe('liberation');
-    expect(s.liberation.risk).toBe(LB.riskOnEnd);
-    const rec = buildBattleRecord(s, { factionId: 'hollow' });
-    expect(rec.liberationUsed).toBe(true);
-    expect(rec.liberationAt).toBe(2);
-    const plain = buildBattleRecord(mk(), { factionId: 'hollow' });
-    expect(plain.liberationUsed).toBe(false);
-    expect(plain.liberationAt).toBeNull();
-  });
-
-  it('해방 블록 마무리는 우위면 흡수 조건을 채운다 (스킬 블록과 같은 규칙)', () => {
-    // test-a = 불 속성 적, 물 캐릭터면 우위
-    const s = charged({ playerElements: ['water'], skills: [{ id: 'x', element: 'fire', category: 'mixed', role: 'attack', family: null, powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 }] });
-    applyInput(s, { type: 'liberate' });
-    s.enemy.hp = 1;
-    applyInput(s, { type: 'use', cell: 0 });
-    expect(s.finisher?.weak).toBe(true);
-    expect(canAbsorb(s)).toBe(true);
-  });
-
-  it('같은 시드 + 같은 입력 기록 = 같은 결과 (해방 입력 포함)', () => {
-    const play = () => {
-      const s = mk({}, 7);
-      return playCombatBot(s);
-    };
-    const a = play();
-    expect(a.liberation.usedAtTick).not.toBeNull(); // 봇은 게이지가 차면 바로 쓴다
-    const b = replayCombat(7, { enemy: normal, params: { liberationEnabled: true } }, a.inputs);
-    expect(b.status).toBe(a.status);
-    expect(b.tick).toBe(a.tick);
-    expect(b.liberation.usedAtTick).toBe(a.liberation.usedAtTick);
-  });
-
-  it('봇: liberate false 면 쓰지 않는다', () => {
-    const s = playCombatBot(mk({}, 7), { liberate: false });
-    expect(s.liberation.usedAtTick).toBeNull();
-  });
-});
-
-describe('해방 자격·원정·둥지 (GDD 22-2·22-5)', () => {
-  it('자격 = 수련 완료 + 등급 이력 + 지금 5단계 이상. 5단계 미만이면 버튼을 숨긴다', () => {
-    const s = newSaveData('hollow', 1);
-    expect(liberationAccess(s)).toEqual({ visible: false, usable: false, missing: ['training', 'rank'] });
-    s.evolution.tierIndex = 4;
-    expect(liberationAccess(s)).toEqual({ visible: true, usable: false, missing: ['training', 'rank'] });
-    s.training.completed = true;
-    expect(liberationAccess(s).missing).toEqual(['rank']);
-    s.rank.history.everRanked = true;
-    expect(liberationAccess(s)).toEqual({ visible: true, usable: true, missing: [] });
-    s.evolution.tierIndex = 3;
-    expect(liberationAccess(s).usable).toBe(false);
-  });
-
-  it('잠긴 버튼 한 줄은 무엇이 부족한지 (종족 설정 문구), 5단계 미만이면 버튼 없음', () => {
-    const f = getFaction('shinigami');
-    expect(liberationButton(f, { visible: false, usable: false, missing: ['training', 'rank'] })).toBeUndefined();
-    expect(liberationButton(f, { visible: true, usable: true, missing: [] })).toEqual({ note: null });
-    const note = liberationButton(f, { visible: true, usable: false, missing: ['training', 'rank'] })!.note!;
-    expect(note).toContain(f.training.title);
-    expect(note).toContain(f.rankBattleName);
-  });
-
-  it('원정: 자격을 가지고 출발하면 전투에서 쓸 수 있고, 끝나며 오른 리스크가 원정 게이지에 들어간다', () => {
-    let used = 0;
-    const exp = createExpedition({ factionId: 'hollow', seed: 3, hunger: 20, condition: 80, deck: ['prey-nest-a', 'prey-nest-a', 'prey-nest-b'], liberationEnabled: true });
-    playExpedition(exp, {
-      returnAfterLap: 1,
-      playBattle: (b) => {
-        expect(b.params.liberationEnabled).toBe(true);
-        playCombatBot(b);
-        if (b.liberation.usedAtTick !== null) used++;
-      },
-    });
-    expect(used).toBeGreaterThan(0);
-    expect(exp.battles.some((b) => b.liberationUsed)).toBe(true);
-    // 자격 없이 출발하면 못 쓴다
-    const exp2 = createExpedition({ factionId: 'hollow', seed: 3, hunger: 20, condition: 80, deck: ['prey-nest-a'] });
-    let battle: CombatState | null = null;
-    while (exp2.phase !== 'battle') {
-      advance(exp2);
-      if (exp2.phase === 'nest-choice' || exp2.phase === 'ended') break;
-    }
-    if (exp2.phase === 'battle') {
-      battle = startBattle(exp2);
-      expect(battle.params.liberationEnabled).toBe(false);
-      const risk0 = exp2.risk;
-      battle.liberation.risk = LB.riskOnEnd; // 끝난 해방이 있었다고 치고 반영 경로만 본다
-      battle.status = 'won';
-      battle.finisher = { kind: 'basic-attack', traitId: null, element: null };
-      finishBattle(exp2, battle);
-      expect(exp2.risk).toBeCloseTo(risk0 + LB.riskOnEnd, 6);
-    }
-  });
-
+// 해방 게이지·효과·자격(GDD 22-2·22-5)은 C.134(GDD 83장)에서 바뀌었다 — 새 규칙 시험은 tests/c134.test.ts
+describe('해방 리스크 (GDD 22-5 → 83장)', () => {
   it('등급전·연습: 끝난 해방의 리스크는 둥지 게이지에 (상한 100)', () => {
     const s = newSaveData('hollow', 1);
     s.nest.risk = 90;
-    settleLiberationRisk(s, { liberation: { gauge: 0, usedAtTick: 3, ticksLeft: 0, base: null, risk: 15 } });
+    settleLiberationRisk(s, { liberation: { gauge: 0, usedAtTick: 3, uses: 1, chains: 0, ticksLeft: 0, spawnAcc: 0, nextSlot: 0, base: null, risk: 15 } });
     expect(s.nest.risk).toBe(BALANCE.provisional.risk.limit);
   });
 });
@@ -393,9 +226,9 @@ describe('세이브 형식 18 (C.54)', () => {
 });
 
 describe('종족 설정·표시 (규칙 2: 종족 분기 없음)', () => {
-  it('두 종족 모두 해방·수련 문구가 있고 이름이 다르다 (레수렉시온 / 만해, 먹이사슬 / 영자 모으기)', () => {
+  it('두 종족 모두 해방·수련 문구가 있고 이름이 다르다 (레스렉시온 / 만해, 먹이사슬 / 영자 모으기)', () => {
     const [h, s] = [getFaction('hollow'), getFaction('shinigami')];
-    expect(h.liberation.name).toBe('레수렉시온');
+    expect(h.liberation.name).toBe('레스렉시온');
     expect(s.liberation.name).toBe('만해');
     expect(h.training.games.chain.name).toBe('먹이사슬');
     expect(s.training.games.chain.name).toBe('영자 모으기');

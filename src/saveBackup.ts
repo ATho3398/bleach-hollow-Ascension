@@ -1,20 +1,21 @@
 // 세이브 백업: 내보내기·불러오기의 순수 로직 (Q-1, C.29). 세이브 구조는 건드리지 않고 기존 SaveData 를 그대로 직렬화한다.
 // 입력 설정(bha-input-settings)은 기기마다 다른 값이라 담지 않는다 (dev-log C.29).
 import { FACTIONS } from './data/factions';
-import { migrateSave, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
+import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
 import { slotBackupKey, slotKey, writeBackupMeta, type BackupReason } from './saveSlots';
 import { encodeSave, expandSave, parseSaveText } from './saveCodec';
 
 /** 가져오기 직전 현재 세이브를 한 번 보관하는 키 (슬롯 1). 슬롯별 키는 saveSlots 의 slotBackupKey */
 export const BACKUP_KEY = slotBackupKey(1);
 
-export type ImportFailure = 'empty' | 'not-json' | 'not-save' | 'newer' | 'corrupt' | 'faction';
+export type ImportFailure = 'empty' | 'not-json' | 'not-save' | 'newer' | 'old' | 'corrupt' | 'faction';
 
 export const IMPORT_FAILURE_TEXT: Record<ImportFailure, string> = {
   empty: '붙여넣은 내용이 비어 있다.',
   'not-json': '세이브 파일이 아니다 (JSON 형식이 아님).',
   'not-save': '세이브 파일이 아니다 (필요한 항목이 없음).',
   newer: '더 새로운 버전의 세이브라 이 버전에서는 열 수 없다.',
+  old: '이전 버전의 세이브라 이 버전에서는 열 수 없다.',
   corrupt: '세이브가 손상되어 열 수 없다.',
   faction: '알 수 없는 종족의 세이브라 열 수 없다.',
 };
@@ -26,6 +27,21 @@ export type ImportResult =
 /** 내보낼 문자열: 저장되는 것과 같은 JSON (SAVE_FORMAT_VERSION 은 meta.format 에 들어 있다). 긴 런 로그는 압축 덩어리($z)로 (C.72) */
 export function serializeSave(save: SaveData): string {
   return encodeSave(save);
+}
+
+/** 열 수 없는 슬롯의 세이브 원문을 내보낸다 (GDD 61장 [옛 세이브 내보내기]): 형식을 올리지 않고 압축 덩어리만 풀어 그대로 직렬화한다.
+ *  읽을 수 없으면 null. 돌려주는 형식 번호는 파일 이름용 */
+export function exportRawSlot(storage: StorageLike, slot: number): { text: string; format: number } | null {
+  try {
+    const stored = storage.getItem(slotKey(slot));
+    if (!stored) return null;
+    const raw = expandSave(JSON.parse(stored), false, storage) as { meta?: { format?: unknown } };
+    const format = raw?.meta?.format;
+    if (typeof format !== 'number') return null;
+    return { text: JSON.stringify(raw), format };
+  } catch {
+    return null;
+  }
 }
 
 /** 내려받을 파일 이름. 예: bha-save-f11-20261018-2245.json */
@@ -42,7 +58,7 @@ function looksComplete(s: SaveData): boolean {
   return (
     isObj(s.nest) && isObj(s.build) && isArr(s.build.owned) && isArr(s.build.slots) &&
     isObj(s.evolution) && isObj(s.evolution.elementAbsorbs) && isObj(s.evolution.ev) && isArr(s.evolution.formHistory) && typeof s.evolution.tierIndex === 'number' &&
-    isArr(s.formDex) && isObj(s.tiles) && isObj(s.tiles.collection) && isArr(s.tiles.deck) &&
+    isArr(s.formDex) && isObj(s.tiles) && isObj(s.tiles.collection) && isArr(s.tiles.presets) &&
     isObj(s.runLog) && isArr(s.runLog.battles) && isArr(s.runLog.runs) && isArr(s.runLog.absorbs) &&
     isArr(s.titles) && isObj(s.help)
   );
@@ -77,6 +93,7 @@ export function parseImport(text: string): ImportResult {
   const fromFormat = raw.meta.format;
   if (fromFormat > SAVE_FORMAT_VERSION) return { ok: false, reason: 'newer' };
   if (!Number.isInteger(fromFormat) || fromFormat < 1) return { ok: false, reason: 'corrupt' };
+  if (fromFormat < saveFormatGate.min) return { ok: false, reason: 'old' };
   if (!FACTIONS.some((f) => f.id === raw.factionId)) return { ok: false, reason: 'faction' };
   if (wrongTyped(raw)) return { ok: false, reason: 'corrupt' };
   let save: SaveData | null;
@@ -154,6 +171,7 @@ export const BACKUP_REASON_TEXT: Record<BackupReason, string> = {
   rebirth: '환생 직전',
   fusion: '합체 직전',
   revert: '되돌리기 직전',
+  delete: '슬롯 지우기 직전',
 };
 
 /** 세이브 원문이 지금 형식보다 옛 형식인가 (마이그레이션 직전 자동 백업 판단, GDD 24-5). 읽을 수 없으면 false */

@@ -3,6 +3,7 @@
 import { GLOSSARY, helpVars, renderHelpText, SCREEN_HELPS } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { button, el, icon, notice } from './bha/dom';
+import { linesBody } from './bha/lines';
 import { lcdHead, lcdPageParts, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { SHORTCUT_HELP } from './shortcutMap';
@@ -16,12 +17,14 @@ export interface HelpOptions {
   onClose: () => void;
   /** 있으면 [튜토리얼 다시 보기] 를 보인다. 도움말은 이미 닫힌 뒤 불린다 */
   onReplayTutorial?: () => void;
+  /** 한 번만 뜨는 안내 다시 보기 (C.120, GDD 64·67장): 버튼 이름 → 여는 함수. 도움말은 이미 닫힌 뒤 불린다 */
+  replays?: { label: string; run: () => void }[];
 }
 
 /** 아코디언 아이콘 (id → 스프라이트 아이콘). 모르는 id 는 info */
 const SCREEN_ICON: Record<string, string> = { nest: 'i-nest', expedition: 'i-loop', battle: 'i-practice', evolution: 'i-evolve' };
 const TERM_ICON: Record<string, string> = {
-  lineage: 'i-lin-a', chain: 'i-chain-3', sp: 'i-sp', 'special-block': 'i-special', 'stored-skill': 'i-stored', 'void-block': 'i-void', weakness: 'i-weak',
+  lineage: 'i-lin-a', chain: 'i-chain-3', liberation: 'i-special', 'void-block': 'i-void', weakness: 'i-weak',
   stability: 'i-stab', 'risk-gauge': 'i-risk', 'evolution-condition': 'i-evolve', 'form-dex': 'i-dex', 'title-dex': 'i-title', 'resume-expedition': 'i-return',
 };
 
@@ -50,7 +53,7 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
     label: t(it.title),
     caption,
     content: [icon(iconId), el('span', 'bha-mdrow__name', t(it.title))],
-    detail: () => [el('h2', 'bha-mddetail__title', t(it.title)), el('p', 'bha-mddetail__body', t(it.body))],
+    detail: () => [el('h2', 'bha-mddetail__title', t(it.title)), linesBody(t(it.body), 'bha-mddetail__body')],
   });
   const rows: ListRow[] = [
     ...SCREEN_HELPS.map((it, k) => rowOf(it, SCREEN_ICON[it.id] ?? 'i-info', k === 0 ? '화면별 요약' : undefined)),
@@ -91,6 +94,14 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
         opts.onReplayTutorial!();
       },
     }));
+  }
+  for (const r of opts.replays ?? []) {
+    const b = button({ label: r.label, icon: 'i-info', onClick: () => {
+      close();
+      r.run();
+    } });
+    b.dataset.replay = r.label;
+    aside.push(b);
   }
   aside.push(closeBtn);
   const warn = fromBattle ? notice('warn', '닫으면 전투로 돌아가 이어서 진행된다.', { title: '전투가 멈춰 있다', icon: 'i-pause' }) : null;

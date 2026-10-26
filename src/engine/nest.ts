@@ -23,10 +23,65 @@ export interface NestState {
   stability: number;
   /** 마지막으로 방치 허기를 계산한 시각(ms) */
   lastTickMs: number;
+  /** 돌봄 요청 (GDD 82장): 캐릭터가 지금 원하는 돌봄(쓰다듬기·재우기)과 유지 끝 시각. 없으면 null */
+  careRequest: CareRequest | null;
+  /** 다음 돌봄 요청이 나올 시각(ms). 지난 뒤 방에 오면(오프라인 복귀 포함) 요청이 하나 생긴다 — 쌓이지 않고 최대 1개 */
+  nextCareAt: number;
 }
 
+/** 요청 대상 돌봄 (GDD 82장): 먹이는 요청제가 아니다 */
+export type CareAction = Exclude<NestAction, 'feed'>;
+export const CARE_ACTIONS: readonly CareAction[] = ['pet', 'sleep'];
+export interface CareRequest {
+  action: CareAction;
+  /** 요청이 사라지는 시각(ms). 놓쳐도 벌칙 없음 */
+  until: number;
+}
+/** 돌봄 버튼을 눌렀을 때 결과: answered = 요청에 응답(효과 있음) / refused = 요청이 없거나 다른 요청(거절, 효과 없음) */
+export type CareOutcome = 'answered' | 'refused';
+
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000 };
+}
+
+const CR = NX.careRequest;
+/** 다음 요청까지 간격(ms): intervalMinutes 범위에서 무작위 */
+function careInterval(rand: () => number): number {
+  const [lo, hi] = CR.intervalMinutes;
+  return (lo + (hi - lo) * rand()) * 60_000;
+}
+
+/**
+ * 돌봄 요청 시계 (GDD 82장). 방에 있을 때 주기적으로, 그리고 방을 열 때 부른다.
+ *  - 요청이 유지 시간을 넘겼으면 사라진다(놓침, 벌칙 없음). 다음 시각 = 사라진 시각 + 간격.
+ *  - 요청이 없고 다음 시각이 지났으면 새 요청 하나(지금부터 holdMinutes 유지). 오래 꺼 두었다 와도 하나만 생긴다.
+ *  - 쇠약(패배 후)이거나 컨디션이 sleepBelowCondition 미만이면 재우기를 청한다(쇠약·낮은 컨디션은 재우기로 푸는 것이라, 코드 판단). 아니면 sleepWeight 확률로 재우기, 나머지 쓰다듬기.
+ * 돌려주는 값: created = 새 요청이 생김, missed = 응답 못 한 요청이 사라짐 (오래 꺼 두었다 오면 둘 다 true 일 수 있다)
+ */
+export function tickCareRequest(nest: NestState, nowMs: number, rand: () => number = Math.random): { created: boolean; missed: boolean } {
+  let missed = false;
+  if (nest.careRequest && nowMs >= nest.careRequest.until) {
+    nest.nextCareAt = Math.max(nest.nextCareAt, nest.careRequest.until + careInterval(rand));
+    nest.careRequest = null;
+    missed = true;
+  }
+  if (!nest.careRequest && nowMs >= nest.nextCareAt) {
+    const action: CareAction = nest.weakened || nest.condition < CR.sleepBelowCondition || rand() < CR.sleepWeight ? 'sleep' : 'pet';
+    nest.careRequest = { action, until: nowMs + CR.holdMinutes * 60_000 };
+    return { created: true, missed };
+  }
+  return { created: false, missed };
+}
+
+/** 쓰다듬기·재우기 버튼 (GDD 82장): 같은 요청이 살아 있으면 응답 — 지금 수치 그대로 효과, 요청은 풀리고 다음 시각을 새로 잡는다.
+ *  요청이 없거나 다른 요청이면 거절 — 효과 없음, 요청은 그대로 남는다 */
+export function respondCare(nest: NestState, action: CareAction, nowMs: number, rand: () => number = Math.random): CareOutcome {
+  const r = nest.careRequest;
+  if (!r || r.action !== action || nowMs >= r.until) return 'refused';
+  doNestAction(nest, action);
+  nest.careRequest = null;
+  nest.nextCareAt = nowMs + careInterval(rand);
+  return 'answered';
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));

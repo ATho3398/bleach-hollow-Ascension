@@ -16,6 +16,9 @@ import { applyExpeditionEnd, doNestAction, newNest } from '../src/engine/nest';
 import { goalAchieved } from '../src/engine/tutorialGoals';
 import { claimTutorialGoals, feedNest, loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { emptyRunLog } from '../src/engine/runLog';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const FX = BALANCE.provisional.food;
 const RX = BALANCE.provisional.risk;
@@ -152,13 +155,13 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
 });
 
 describe('리스크 수치·폭주 (GDD 23-2)', () => {
-  it('재우기·쓰다듬기는 리스크를 한 번에 −20 안팎 내린다', () => {
+  it('재우기·쓰다듬기는 리스크를 한 번에 −10 안팎 내린다 (C.136 GDD 84장 10번: −20 → −10)', () => {
     for (const a of ['sleep', 'pet'] as const) {
       const n = newNest(0);
       n.risk = 50;
       doNestAction(n, a);
-      expect(50 - n.risk).toBeGreaterThanOrEqual(15);
-      expect(50 - n.risk).toBeLessThanOrEqual(25);
+      expect(50 - n.risk).toBeGreaterThanOrEqual(8);
+      expect(50 - n.risk).toBeLessThanOrEqual(12);
     }
   });
 
@@ -278,7 +281,7 @@ describe('세이브 형식 16 (먹이·영전·튜토리얼 기록)', () => {
     old.shared = { soulCrystals: 4 };
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(m.shared).toEqual({ soulCrystals: 4, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: ['keyring-orb', 'device-badge', 'device-zaraki'] }); // 기본 키링 (C.64)·기본 기기 (C.65)
+    expect(m.shared).toEqual({ soulCrystals: 4, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: ['keyring-orb', 'device-badge', 'device-zaraki'], items: {}, wanderer: { lapsSince: 0, visit: null }, pets: { owned: {}, active: null, gifted: false }, gear: { items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null }, nextId: 1 } }); // 기본 키링 (C.64)·기본 기기 (C.65)
   });
 
   it('새 세이브: 영전 0 자리, 저장·불러오기 왕복', () => {

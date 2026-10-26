@@ -6,7 +6,7 @@ import { traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import { BASIC_SKILL_ID, comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
-import { absorbConditionText, weaknessText } from './absorbView';
+import { absorbRuleText, weaknessText } from './absorbView';
 import { button, el, icon, panel, tag } from './bha/dom';
 import { splitApp } from './bha/split';
 import { lcdHead, lcdPage } from './bha/lcdpage';
@@ -124,17 +124,16 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
   const won = s.status === 'won';
   const reasons = absorbReasons(s);
   const fin = s.finisher;
-  // 마무리 일격 이름 (GDD 20장 v5.4): 스킬 = `속성_계열`(기본 블록은 내 캐릭터 속성), 콤보 = `콤보_계열`
+  // 마무리 일격 이름 (GDD 20장 v5.4): 스킬 = 계열 약어·막기·회복(84장 4번), 콤보 = `콤보_계열`
   const finSkill = () => {
     const src = sourceOf(s.params, fin!.traitId);
-    const element = fin!.element ?? (isBasicBlockId(fin!.traitId) ? s.params.playerElements[0] ?? null : null);
-    return skillBlockLabel(labels, faction.id, element, fin!.family ?? src?.family, src?.role ?? 'attack') ?? (fin!.traitId && !isBasicBlockId(fin!.traitId) ? traitName(fin!.traitId, faction.id) : labels.skillBlock);
+    return skillBlockLabel(labels, fin!.family ?? src?.family, src?.role ?? 'attack') ?? (fin!.traitId && !isBasicBlockId(fin!.traitId) ? traitName(fin!.traitId, faction.id) : labels.skillBlock);
   };
   const finText = !fin
     ? '-'
     : fin.kind === 'skill'
       ? finSkill()
-      : { 'basic-attack': '기본 공격', special: labels.specialBlock, void: labels.voidBlock, reflect: '반사', stored: labels.storedSkill, combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', liberation: liberationBlockLabel(faction.id, fin.element), skill: '' }[fin.kind];
+      : { 'basic-attack': '기본 공격', special: '필살(옛 기록)', void: labels.voidBlock, reflect: '반사', stored: '저장 필살(옛 기록)', combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', liberation: liberationBlockLabel(faction.id, fin.element), skill: '' }[fin.kind];
   const name = pickFaction(enemy.name, faction.id);
 
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
@@ -156,8 +155,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
       : []),
     ...(s.params.combos.length > 0 ? [{ label: '콤보 (발동 / 사용)', icon: 'i-special', value: `${s.combosTriggered}회 / ${s.comboBlocksUsed}회` }] : []),
     { label: '강공격 막기', icon: 'i-guard', value: `${s.guardSuccesses}회` },
-    { label: labels.storedSkill, icon: 'i-stored', mod: 'em', value: `${s.storedUsed}회 사용 (낭비 ${Math.round(s.storedWasted)})` },
-    { label: labels.specialBlock, icon: 'i-special', value: s.specialUsed ? '사용' : '안 씀' },
+    { label: labels.liberation.name, icon: 'i-special', mod: 'em', value: `${s.liberation.uses}회 사용 (해방 중 ${labels.chain} ${s.liberation.chains}회)` },
     { label: `${labels.voidBlock} (${labels.riskGauge} 상승)`, icon: 'i-void', value: val(`${s.voidUsed}회`, `(+${s.riskGained})`) },
     { label: '마무리 일격', icon: 'i-attack', value: finText },
     { label: faction.absorbActionName, icon: 'i-absorb', mod: reasons.length > 0 ? 'good' : undefined, value: `${reasons.length > 0 ? '가능' : '불가'} (연습에서는 쓰지 않음)` },
@@ -172,5 +170,5 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     button({ label: '연습 메뉴로', size: 'lg', onClick: h.onMenu }),
   );
   dock.append(two);
-  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbConditionText(faction, enemy))]);
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbRuleText(faction, enemy))]);
 }

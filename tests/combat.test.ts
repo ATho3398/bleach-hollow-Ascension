@@ -9,13 +9,18 @@ import { pickFaction, type EnemyDef } from '../src/data/schema';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import {
   BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, isBasicBlockId, applyInput, blockSources, buildBattleRecord, chainGroup, createCombat, drainCombatEvents, elapsedSeconds,
-  playCombatBot, replayCombat, step, ticksOf, type Block, type CombatParams, type CombatState,
+  playCombatBot, replayCombat, spawnTableOf, step, ticksOf, type Block, type CombatParams, type CombatState,
 } from '../src/engine/combat';
+/** C.136 블록 플레이 보정(GDD 84장 3번)을 끈다 — 이 파일은 옛 피해 공식(체인·상성·환경 배율)만 본다. 보정 자체는 tests/c136.test.ts */
+const NO_BLOCK_PLAY = { blockPlayDamage: 1, blockPlayCrit: 0 };
 import { createExpedition, playExpedition } from '../src/engine/expedition';
 import { parseFactionConfig } from '../src/engine/faction';
 import { emptyRunLog, LEGACY_TILE_ROLES } from '../src/engine/runLog';
 import { loadSave, migrateSave, newSaveData, recordBattle, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { battleLabels } from '../src/ui/labels';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const CX = BALANCE.provisional.combat;
 const BP = BALANCE.provisional.blockPool;
@@ -23,7 +28,7 @@ const normal = getEnemy('test-a'); // 일반, 불 속성
 const elite = getEnemy('test-elite');
 const sealPat = elite.pattern as Extract<NonNullable<EnemyDef['pattern']>, { kind: 'heavy-seal' }>; // 기존 강적 = 강공격↔봉인
 const mk = (opt: { seed?: number; enemy?: EnemyDef; params?: Partial<CombatParams> } = {}) =>
-  createCombat(opt.seed ?? 1, { enemy: opt.enemy ?? normal, params: opt.params });
+  createCombat(opt.seed ?? 1, { enemy: opt.enemy ?? normal, params: { ...NO_BLOCK_PLAY, ...opt.params } });
 let uid = 1000;
 const blk = (traitId: string | null, kind: Block['kind'] = 'skill'): Block => ({ uid: uid++, kind, traitId });
 /** 바를 이 블록들로 채운다 (왼쪽부터) */
@@ -39,8 +44,8 @@ const wait = (s: CombatState, seconds: number) => {
 };
 /** 블록 생성·공허·적 공격이 끼어들지 않게 멈춘 상태 */
 const quiet = (s: CombatState) => {
-  s.spawnTimers = s.spawnTimers.map(() => 1e9);
-  s.voidTimer = 1e9;
+  s.spawnTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   s.enemy.attackTimer = 1e9;
   s.player.attackTimer = 1e9;
   s.enemy.actionTimer = 1e9;
@@ -64,9 +69,9 @@ describe('고정 틱 시뮬레이션', () => {
 
   it('같은 시드 + 같은 입력 기록 = 같은 결과 (봇 플레이를 기록에서 다시 돌려도 같다)', () => {
     for (const enemy of ENEMIES) {
-      const a = playCombatBot(mk({ seed: 5, enemy, params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }));
-      expect(a.inputs.length).toBeGreaterThan(5);
-      const again = replayCombat(5, { enemy, params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }, a.inputs);
+      const a = playCombatBot(mk({ seed: 5, enemy, params: build('t-fire-a', 't-earth-c', 't-thunder-b') }));
+      expect(a.inputs.length).toBeGreaterThan(0); // C.136: 공격 3칸 몸(속성 막기·회복 특성 삭제)이라 빠르게 끝나는 판이 있다
+      const again = replayCombat(5, { enemy, params: { ...NO_BLOCK_PLAY, ...build('t-fire-a', 't-earth-c', 't-thunder-b') } }, a.inputs);
       expect(again.tick).toBe(a.tick);
       expect(again.status).toBe(a.status);
       expect(again.enemy.hp).toBe(a.enemy.hp);
@@ -88,7 +93,7 @@ describe('고정 틱 시뮬레이션', () => {
 
   it('입력이 없어도 자동 기본 공격(내 1.0초, 적 1.5초)이 오간다', () => {
     const s = mk();
-    s.voidTimer = 1e9;
+    s.params.voidChance = s.params.voidChanceBonus = 0;
     wait(s, 3);
     const unit = CX.playerAttackDamage;
     expect(s.enemy.maxHp - s.enemy.hp).toBeCloseTo(3 * unit);
@@ -99,7 +104,8 @@ describe('고정 틱 시뮬레이션', () => {
 
   it('적 체력은 "플레이어 기본 공격 N회 분량" (CLAUDE.md 규칙 3)', () => {
     const s = mk();
-    expect(s.enemy.maxHp).toBeCloseTo(normal.hpInAttacks * CX.hpAttackScale * CX.playerAttackDamage);
+    // C.118 (GDD 62장): 전투 시간 배율 hpScale(0.5)이 양쪽 최대 체력에 곱해진다
+    expect(s.enemy.maxHp).toBeCloseTo(normal.hpInAttacks * CX.hpAttackScale * CX.playerAttackDamage * CX.hpScale);
     const grown = mk({ params: { growthMultiplier: 2 } });
     expect(grown.enemy.maxHp / s.enemy.maxHp).toBeCloseTo(2);
   });
@@ -108,7 +114,7 @@ describe('고정 틱 시뮬레이션', () => {
     for (let seed = 1; seed <= 10; seed++) {
       const s = playCombatBot(mk({ seed, enemy: elite }));
       expect(['won', 'lost']).toContain(s.status);
-      expect(mk({ seed }).player.hp).toBe(CX.playerMaxHp);
+      expect(mk({ seed }).player.hp).toBe(CX.playerMaxHp * CX.playerHpScale);
     }
   });
 });
@@ -119,32 +125,35 @@ describe('블록 생성과 블록 바 (일자 8칸)', () => {
     expect(s.params.trayCapacity).toBe(8);
     expect(s.tray).toHaveLength(0);
     expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID]);
-    s.voidTimer = 1e9;
-    wait(s, BP.basicSpawnSeconds * 1.5);
+    s.params.voidChance = s.params.voidChanceBonus = 0;
+    wait(s, BP.basicSpawnSeconds * 1.6); // 첫 블록은 간격의 절반 뒤, 둘째는 1.5배 뒤 (C.118 간격 1.9초 = 19틱이라 반올림 여유로 1.6배)
     expect(s.tray).toHaveLength(2);
     expect(s.tray.every((b) => isBasicBlockId(b.traitId))).toBe(true);
     const spawns = drainCombatEvents(s).filter((e) => e.kind === 'spawn');
     expect(spawns.map((e) => e.kind === 'spawn' && e.index)).toEqual([0, 1]);
   });
 
-  it('흡수 skill 특성마다 일정 간격(임시 4초)으로 블록이 생기고, 기본 블록 타이머는 따로 돈다 (GDD 44-1 B안)', () => {
-    const s = mk({ params: build('t-fire-a', 't-earth-guard') });
-    s.voidTimer = 1e9;
-    wait(s, CX.blockSpawnSeconds);
-    const ids = s.tray.map((b) => b.traitId).filter((id) => !isBasicBlockId(id)).sort();
-    expect(ids).toEqual(['t-earth-guard', 't-fire-a']);
-    expect(s.spawnTimers).toHaveLength(3);
+  it('블록은 타이머 하나 + 출현표 한 장에서 나온다 (GDD 84장 6번, C.136): 흡수 특성·기본 블록이 모두 표에 있고 합 1', () => {
+    const s = mk({ params: build('t-fire-a', 't-earth-c') });
+    const table = spawnTableOf(s.params);
+    const ids = table.entries.map((e) => e.source?.id ?? 'void');
+    expect(ids).toContain('t-fire-a');
+    expect(ids).toContain('t-earth-c');
+    expect(ids).toContain(BASIC_SKILL_ID);
+    expect(table.entries.reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1);
+    expect(typeof s.spawnTimer).toBe('number');
   });
 
   it('8개가 되면 생성이 멈추고(타이머도 멈춤), 하나를 쓰면 오른쪽 블록이 당겨지고 새 블록은 맨 오른쪽에 생긴다', () => {
-    const s = mk({ params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') });
-    s.voidTimer = 1e9;
+    const s = mk({ params: build('t-fire-a', 't-earth-c', 't-thunder-b') });
+    s.params.voidChance = s.params.voidChanceBonus = 0;
     s.player.hp = 1e9;
+    s.enemy.hp = 1e9; // C.118: 적 체력이 절반이라 56초 안에 평타만으로 죽는다 — 생성 규칙만 본다
     wait(s, 40);
     expect(s.tray).toHaveLength(8);
-    const timers = [...s.spawnTimers];
+    const timer = s.spawnTimer;
     wait(s, 10);
-    expect(s.spawnTimers).toEqual(timers);
+    expect(s.spawnTimer).toBe(timer);
     expect(s.tray).toHaveLength(8);
     const ids = s.tray.map((b) => b.uid);
     useAt(s, 2);
@@ -229,13 +238,13 @@ describe('붙어 있는 같은 블록 = 클릭 시 함께 발동 (체인)', () =
     expect(s.tray.map((b) => b.kind)).toEqual(['void', 'skill']);
   });
 
-  it('공허 블록은 다른 공허 블록과 붙어 있어도 체인이 되지 않고 개별 사용, 필살도 단독', () => {
-    const s = put(quiet(mk()), blk(null, 'void'), blk(null, 'void'), blk(null, 'special'), blk(null, 'special'));
+  it('공허 블록은 다른 공허 블록과 붙어 있어도 체인이 되지 않고 개별 사용, 콤보도 단독', () => {
+    const s = put(quiet(mk()), blk(null, 'void'), blk(null, 'void'), blk('combo-x', 'combo'), blk('combo-x', 'combo'));
     expect(chainGroup(s.tray, 0, 3)).toEqual([0]);
     expect(chainGroup(s.tray, 3, 3)).toEqual([3]);
     useAt(s, 0);
     expect(s.voidUsed).toBe(1);
-    expect(s.tray.map((b) => b.kind)).toEqual(['void', 'special', 'special']);
+    expect(s.tray.map((b) => b.kind)).toEqual(['void', 'combo', 'combo']);
     useAt(s, 1);
     expect(s.tray).toHaveLength(2);
     expect(s.blocksByChain).toEqual([0, 0, 0]); // 스킬 체인 기록은 오르지 않는다
@@ -266,7 +275,7 @@ describe('체인 배율과 SP·필살', () => {
   });
 
   it('체인3 은 특성별 추가 효과가 붙는다: stagger(적 행동 지연), reflect(막기 반사), cleanse(봉인 해제 + SP). 체인2 는 없음', () => {
-    const s = quiet(mk({ params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }));
+    const s = quiet(mk({ params: build('t-fire-a', 't-earth-c', 't-thunder-b') }));
     s.enemy.attackTimer = 10;
     put(s, ...many('t-fire-a', 2));
     useAt(s, 0);
@@ -274,58 +283,42 @@ describe('체인 배율과 SP·필살', () => {
     put(s, ...many('t-fire-a', 3));
     useAt(s, 0);
     expect(s.enemy.attackTimer).toBe(10 + ticksOf(s.params, 1.5));
-    put(s, ...many('t-earth-guard', 3));
+    put(s, ...many('basic-guard', 3));
     useAt(s, 0);
     expect(s.guard.reflect).toBe(1);
     s.sealTicks = 30;
-    s.sp = 0;
-    put(s, ...many('t-thunder-heal', 3));
+    s.liberation.gauge = 0;
+    put(s, ...many('basic-heal', 3));
     useAt(s, 0);
     expect(s.sealTicks).toBe(0);
-    expect(s.sp).toBe(Math.min(CX.spMax, 3 * CX.spPerBlock + 40)); // 블록 3개 +60, cleanse +40
+    // cleanse +40 은 해방 게이지로 (C.118 저장 게이지 → C.134 해방 게이지, GDD 66·83장): 블록 3개 36 + 체인3 보너스 10 + 정화 40 = 86 (< 100)
+    const LIB = BALANCE.provisional.liberation;
+    expect(s.liberation.gauge).toBe(3 * LIB.gaugePerBlock + LIB.chainBonus[2]! + 40);
     expect(s.chain3Count).toBe(3);
     expect(s.blocksByChain).toEqual([0, 1, 3]);
   });
 
-  it('함께 쓰인 블록 하나마다 SP +20, SP 100 이면 필살 블록이 맨 오른쪽에 생기고 큰 피해를 준다', () => {
+  it('SP 게이지·필살 블록은 없다 (C.118, GDD 66장): 블록을 아무리 써도 상태에 sp 가 없고 바에 특수 블록이 생기지 않는다', () => {
     const s = quiet(mk());
-    put(s, ...many(BASIC_SKILL_ID, 3));
-    useAt(s, 0);
-    expect(s.sp).toBe(3 * CX.spPerBlock);
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 6; i++) {
       put(s, blk(BASIC_SKILL_ID));
       useAt(s, 0);
+      step(s);
     }
-    expect(s.sp).toBe(CX.spMax);
-    put(s, blk('z'));
-    step(s);
-    const cell = s.tray.findIndex((b) => b.kind === 'special');
-    expect(cell).toBe(1); // 맨 오른쪽
-    expect(s.sp).toBe(0);
-    const before = s.enemy.hp;
-    useAt(s, cell);
-    expect(before - s.enemy.hp).toBeCloseTo(CX.specialPowerInAttacks * CX.playerAttackDamage);
-    expect(s.specialUsed).toBe(true);
-    expect(s.sp).toBe(0); // 필살은 SP 를 주지 않는다
-  });
-
-  it('가득 찬 바에서는 SP 100 이어도 필살 블록이 대기하고, 칸이 비면 생긴다', () => {
-    const s = quiet(mk());
-    put(s, ...Array.from({ length: 8 }, (_, i) => blk(`t${i}`)));
-    s.sp = CX.spMax;
-    step(s);
-    expect(s.tray.some((b) => b.kind === 'special')).toBe(false);
-    useAt(s, 3);
-    step(s);
-    expect(s.tray[s.tray.length - 1]!.kind).toBe('special');
+    expect('sp' in s).toBe(false);
+    expect('specialUsed' in s).toBe(false);
+    expect(s.tray.every((b) => b.kind === 'skill' || b.kind === 'void' || b.kind === 'combo' || b.kind === 'liberation')).toBe(true);
+    expect('spMax' in CX).toBe(false);
+    expect('spPerBlock' in CX).toBe(false);
+    expect('specialPowerInAttacks' in CX).toBe(false);
   });
 });
 
 describe('적 패턴: 강공격 예고·막기, 봉인', () => {
   const eliteQuiet = () => {
-    const s = mk({ enemy: elite, params: build('t-earth-guard') });
-    s.spawnTimers = [1e9];
-    s.voidTimer = 1e9;
+    const s = mk({ enemy: elite, params: build() });
+    s.spawnTimer = 1e9;
+    s.params.voidChance = s.params.voidChanceBonus = 0;
     s.player.attackTimer = 1e9;
     return s;
   };
@@ -365,7 +358,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
       const s = eliteQuiet();
       castNow(s);
       if (guard) {
-        put(s, blk('t-earth-guard'));
+        put(s, blk('basic-guard'));
         useAt(s, 0);
       }
       const before = s.player.hp;
@@ -387,7 +380,7 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
   it('reflect 추가 효과가 붙은 막기는 막은 피해를 적에게 돌려준다', () => {
     const s = eliteQuiet();
     castNow(s);
-    put(s, ...many('t-earth-guard', 3));
+    put(s, ...many('basic-guard', 3));
     useAt(s, 0);
     const before = s.enemy.hp;
     wait(s, sealPat.castSeconds);
@@ -398,10 +391,10 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
 
   it('봉인: 정해진 시간 동안 스킬 블록 생성이 멈춘다', () => {
     const s = mk({ enemy: elite });
-    s.voidTimer = 1e9;
+    s.params.voidChance = s.params.voidChanceBonus = 0;
     s.enemy.actionIndex = 1; // 다음 행동 = 봉인
     s.enemy.actionTimer = 1;
-    s.spawnTimers = [5];
+    s.spawnTimer = 5;
     step(s);
     expect(s.sealTicks).toBe(ticksOf(s.params, sealPat.sealSeconds) - 0);
     wait(s, sealPat.sealSeconds - 0.2);
@@ -464,8 +457,8 @@ describe('약점·공허·시간 제한', () => {
   it('적의 공격도 상성·능력치를 따른다: 내 방어가 두 배면 받는 피해가 절반, 적 속성이 나를 이기면 ×1.2', () => {
     const taken = (extra: Partial<CombatParams>) => {
       const s = mk({ seed: 3, params: { enemyDamageVariance: 0, ...extra } });
-      s.spawnTimers = s.spawnTimers.map(() => 1e9);
-      s.voidTimer = 1e9;
+      s.spawnTimer = 1e9;
+      s.params.voidChance = s.params.voidChanceBonus = 0;
       s.player.attackTimer = 1e9;
       const before = s.player.hp;
       wait(s, CX.enemyAttackSeconds + 0.05);
@@ -481,12 +474,14 @@ describe('약점·공허·시간 제한', () => {
   });
 
   it('공허 블록: 자연 생성되고, 쓰면 큰 피해 + 리스크 상승, 합칠 수 없고 두면 칸을 차지한다', () => {
+    // C.136 (GDD 84장 6번): 공허도 출현표의 한 칸 — 확률 = 공허 시계의 초당 기대치 ÷ 총량
     const s = mk({ params: { voidChance: 1, voidChanceMax: 1 } });
-    s.spawnTimers = [1e9];
-    wait(s, CX.voidCheckSeconds);
+    s.player.hp = s.enemy.hp = 1e9;
+    const voidEntry = spawnTableOf(s.params).entries.find((e) => e.kind === 'void');
+    expect(voidEntry!.chance).toBeGreaterThan(0.3);
+    for (let i = 0; i < 400 && s.tray.filter((b) => b.kind === 'void').length < 2; i++) step(s);
     const cell = s.tray.findIndex((b) => b.kind === 'void');
     expect(cell).toBeGreaterThanOrEqual(0);
-    wait(s, CX.voidCheckSeconds);
     expect(s.tray.filter((b) => b.kind === 'void')).toHaveLength(2); // 쓰지 않으면 남는다
     quiet(s);
     const before = s.enemy.hp;
@@ -576,7 +571,7 @@ describe('환경 지형 타일 (전투 v2 효과)', () => {
 
 describe('런 로그 BattleRecord (형식 5)', () => {
   it('전투 시간·블록 사용(특성별·체인별)·체인3·막기·공허·필살·마무리 일격이 기록되고, 매치3 필드는 0', () => {
-    const s = playCombatBot(mk({ seed: 9, enemy: elite, params: build('t-fire-a', 't-earth-guard', 't-thunder-heal') }));
+    const s = playCombatBot(mk({ seed: 9, enemy: elite, params: build('t-fire-a', 't-earth-c', 't-thunder-b') }));
     const save = newSaveData('hollow');
     recordBattle(save, buildBattleRecord(s, { factionId: save.factionId }));
     const rec = save.runLog.battles[0]!;
@@ -588,7 +583,7 @@ describe('런 로그 BattleRecord (형식 5)', () => {
     expect(rec.chain3Count).toBe(s.chain3Count);
     expect(rec.guardSuccesses).toBe(s.guardSuccesses);
     expect(rec.voidUsed).toBe(s.voidUsed);
-    expect(rec.specialUsed).toBe(s.specialUsed);
+    expect(rec.specialUsed).toBe(false); // SP 필살 블록은 C.118 에 삭제 — 런 로그 필드는 옛 기록 호환으로 늘 false
     expect(rec.finisherKind).toBe(s.finisher?.kind ?? null);
     expect(rec.turns).toBe(0);
     expect(rec.absorbGained).toBe(0);
@@ -660,9 +655,9 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
     expect([h.role.attack, h.role.guard, h.role.heal]).toEqual(['공격', '막기', '회복']);
     expect(sh.role).toEqual(h.role);
     expect(sh.skillBlock).toBe('기술 블록');
-    // 블록 표시 이름은 종족 무관 고정 낱말 (GDD 20장 v5.4: 옛 basicSkillName·specialBlockName 은 쓰지 않음)
-    expect(h.specialBlock).toBe('필살');
-    expect(sh.specialBlock).toBe('필살');
+    // 블록 표시 이름은 종족 무관 고정 낱말 (GDD 20장 v5.4). SP 필살 블록 이름은 C.118 에 삭제
+    expect('specialBlock' in h).toBe(false);
+    expect('sp' in h).toBe(false);
     expect(h.riskGauge).toBe('광기');
     expect(sh.riskGauge).toBe('호로화');
     expect(h.defeatState).toBe('가면이 깨져 쇠약');
@@ -676,19 +671,15 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
       id: 'quincy',
       name: '퀸시',
       skillBlockName: '성문 블록',
-      specialBlockName: '레이시',
       voidBlockName: '균열 블록',
       chainName: '연결',
-      spName: '영자',
       roleNames: { attack: '광시', guard: '블루트', heal: '흡수' },
       riskGaugeName: '균열',
       basicSkillName: '성문',
     });
     const l = battleLabels(quincy);
     expect(l.role.guard).toBe('블루트');
-    expect(l.specialBlock).toBe('필살');
     expect(l.chain).toBe('연결');
-    expect(l.sp).toBe('영자');
     expect(l.voidBlock).toBe('공허');
     expect(pickFaction(getEnemy('test-a').name, 'quincy')).toBe('테스트 적 A');
     expect(FACTIONS.length).toBe(2);

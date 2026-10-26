@@ -26,6 +26,9 @@
 .bha-homedock__carebtn--feed { --c: var(--bha-hunger); }
 .bha-homedock__carebtn--sleep { --c: var(--bha-cond); }
 .bha-homedock__carebtn--pet { --c: var(--bha-stab); }
+/* 돌봄 요청 (GDD 82장): 캐릭터가 청한 버튼만 그 색으로 채우고 테두리가 숨쉬듯 빛난다 */
+.bha-homedock__carebtn.is-requested { background: color-mix(in srgb, var(--c) 24%, var(--bha-bg-2)); box-shadow: 0 0 0 2px var(--c); animation: bha-care-ask 1.2s ease-in-out infinite; }
+@keyframes bha-care-ask { 50% { box-shadow: 0 0 0 2px var(--c), 0 0 12px var(--c); } }
 .bha-homedock__sep { flex: none; width: 1px; align-self: stretch; margin: var(--bha-sp-2) 0; background: var(--bha-line-2); }
 .bha-homedock__menu { flex: none; display: flex; gap: var(--bha-sp-1); }
 .bha-homedock__menu .bha-btn { min-width: var(--bha-touch); min-height: var(--bha-touch); }
@@ -73,7 +76,7 @@
 
 /* ── 방 안 물건 (= 선택 항목) ── */
 .bha-prop {
-  position: absolute; transform: translate(-50%, -100%) scale(var(--prop-s, 1)); transform-origin: 50% 100%; /* top = 이름표 아래 끝 */
+  position: absolute; transform: translate(-50%, -100%) scale(calc(var(--prop-s, 1) * 1.25)); transform-origin: 50% 100%; /* top = 이름표 아래 끝 */
   display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1);
   min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-1);
   color: var(--bha-text-1); background: none; border: 0; border-radius: var(--bha-r-md);
@@ -87,7 +90,7 @@
 .bha-prop__shape .bha-icon { width: 20px; height: 20px; }
 .bha-prop__img { max-width: none; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; } /* 160×160(16×16 도트 ×10) 그림도 흐림 없이, 비율 유지로 칸 안에 (GDD 34-2) */
 /* 그림이 들어온 물건: 자리표시 틀(배경·테두리)을 걷고 그림 자체를 보인다. 상자 크기는 모두 같고 그림은 비율을 지켜 그 안에 맞춘다 */
-.bha-prop .bha-prop__shape.has-art { display: block; width: 86px; height: 76px; background: none; border: 0; border-radius: var(--bha-r-sm); } /* block: 정사각이 아닌 작은 그림(32칸 도트, GDD 57)도 height 100% 가 칸 높이로 잡혀 넘치지 않게 */
+.bha-prop .bha-prop__shape.has-art { width: 86px; height: 76px; background: none; border: 0; border-radius: var(--bha-r-sm); }
 .bha-prop--door .bha-prop__shape.has-art { width: 74px; height: 100px; }
 .bha-prop__tag {
   font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; white-space: nowrap;
@@ -98,7 +101,6 @@
 .bha-prop--altar .bha-prop__shape { width: 60px; height: 34px; border-radius: var(--bha-r-xs); }
 .bha-prop--book .bha-prop__shape { width: 40px; height: 34px; border-left-width: 6px; }
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
-.bha-prop--dummy .bha-prop__shape { width: 34px; height: 54px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }  /* 상점 (C.63): 좌판·매대 */
 .bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
 
@@ -173,7 +175,23 @@
 
 /* 모션 줄이기: 숨쉬기·폴짝·말풍선 팝을 끈다. 두 프레임 그림은 첫 프레임만 보인다 (전역 규칙은 반복 횟수만 1 로 줄여 두 프레임이 겹쳐 보인다) */
 @media (prefers-reduced-motion: reduce) {
-  .bha-char__body, .bha-char.is-react .bha-char__body, .bha-room__bubble.is-pop { animation: none; }
+  .bha-char__body, .bha-char.is-react .bha-char__body, .bha-room__bubble.is-pop, .bha-homedock__carebtn.is-requested { animation: none; }
   .bha-char__frame--1 { animation: none; visibility: visible; }
   .bha-char__frame--2 { display: none; }
 }
+
+/* ── 펫 (GDD 90장, C.144 임시): 그림이 없으면 효과 아이콘이 든 원. 방 캐릭터·원정 걷는 캐릭터 오른쪽 발치에 작게 ── */
+.bha-pet {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 28px; height: 28px; border-radius: var(--bha-r-pill);
+  background: var(--bha-bg-3); border: 2px solid var(--bha-line-2); color: var(--bha-text-1);
+  box-shadow: var(--bha-shadow-1); pointer-events: none;
+}
+.bha-pet.has-art { background: none; border: 0; box-shadow: none; }
+.bha-pet__img { width: 100%; height: 100%; object-fit: contain; }
+.bha-pet--buddy { position: absolute; right: calc(-1 * var(--bha-sp-6)); bottom: var(--bha-sp-5); }
+.bha-walker > .bha-pet--buddy { right: calc(-1 * var(--bha-sp-9)); bottom: 0; }
+/* 대기 보상 (GDD 92장, C.147): 방 위 줄 아이콘의 쌓인 시간 배지 · 창의 보상 목록 */
+.bha-room__idlebadge { margin-left: var(--bha-sp-2); padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: var(--bha-accent); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
+.bha-modal__list { margin: var(--bha-sp-3) 0 0; padding: 0; list-style: none; display: grid; gap: var(--bha-sp-1); font-size: var(--bha-fs-sm); color: var(--bha-text-1); text-align: center; }
+.bha-modal__list .bha-small { color: var(--bha-text-2); }

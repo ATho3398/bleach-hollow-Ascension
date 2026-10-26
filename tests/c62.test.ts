@@ -13,6 +13,9 @@ import {
   screenGravity, stepPendulum, tamaLayout, tapKick, toDeviceVec, type Pendulum,
 } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const H = getFaction('hollow');
 const S = getFaction('shinigami');
@@ -202,12 +205,12 @@ describe('다마고치 모드 확대·축소 (핀치·휠·끌기)', () => {
   });
   it('핀치: 손가락 사이 점은 제자리 (두 배로 벌리면 배율 두 배)', () => {
     const at = { x: 100, y: 40 };
-    const v = zoomAt(VIEW_HOME, 1.3, at, L.zoom, L.box, 844, 390);
-    expect(v.uz).toBeCloseTo(1.3);
+    const v = zoomAt(VIEW_HOME, 1.2, at, L.zoom, L.box, 844, 390); // C.122: 조작 줄이 상자에서 빠져 줌이 커져 확대 상한(1/줌)이 낮아졌다 — 상한 안의 1.2배로
+    expect(v.uz).toBeCloseTo(1.2);
     // 그 점의 기기 좌표가 전후로 같다: (at - pan) / (zoom·uz)
     expect((at.x - v.px) / v.uz).toBeCloseTo((at.x - 0) / 1, 1);
     expect((at.y - v.py) / v.uz).toBeCloseTo(at.y, 1);
-    expect(zoomAt(v, 1 / 1.3, at, L.zoom, L.box, 844, 390)).toEqual(VIEW_HOME);
+    expect(zoomAt(v, 1 / 1.2, at, L.zoom, L.box, 844, 390)).toEqual(VIEW_HOME);
   });
   it('휠: 위로 굴리면 확대, 아래로 축소, 한 번에 너무 크게는 안 바뀐다', () => {
     expect(wheelFactor(-100)).toBeGreaterThan(1);

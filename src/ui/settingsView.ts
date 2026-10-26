@@ -1,6 +1,7 @@
 // 설정 화면 (GDD 14-3, C.18 / U-1 새 디자인, R-2): 전투 효과 켬/끔. 블록 클릭 판정 시간·드래그 임계치 설정은 순서 바꾸기 삭제(17-2)와 함께 없앴다.
 // localStorage 별도 키에 저장하고 세이브 구조는 건드리지 않는다.
 import { button, el } from './bha/dom';
+import { screenSignal } from './bha/screenScope';
 import { BG_CREDIT } from '../data/art/backgrounds';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { testInfoNodes } from './testMode';
@@ -11,6 +12,8 @@ import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
 import { bgm, BGM_SETTINGS_KEY, BGM_VOLUMES, loadBgmSettings, saveBgmSettings } from './bgm';
 import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogic';
 import { setTiltPref } from './bha/tamago';
+import { openInstall } from './installView';
+import { detectPlatform, installMode, installPrompt, isStandalone, loadInstallPrefs } from '../pwaInstall';
 import { FULLSCREEN_EVENT, fullscreenSupported, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 
@@ -117,14 +120,21 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   }
   sizePanel.append(sizeNote);
   paintSize();
-  // 키보드 단축키로 바뀌어도 문구가 따라가도록 한 번 더 그린다
-  const onScaleEvent = () => {
-    if (!sizePanel.isConnected) window.removeEventListener(VIEW_SCALE_EVENT, onScaleEvent);
-    else paintSize();
-  };
-  window.addEventListener(VIEW_SCALE_EVENT, onScaleEvent);
 
   // 단축키 표시 (GDD 18-5): 버튼 구석의 키 글자 배지. 컴퓨터에서만 보이고, 켜고 끄는 값은 이 기기에만 저장
+  // 앱 설치 (GDD 68장): 큰 안내창을 다시 연다. 이미 앱으로 열렸거나 설치했으면 알려 준다
+  const installPanel = el('section', 'bha-panel');
+  installPanel.append(el('h2', 'bha-panel__title', '앱 설치'));
+  const standalone = isStandalone();
+  const installedNote = standalone || loadInstallPrefs(storage).installed;
+  if (installedNote) installPanel.append(el('p', 'bha-faint', standalone ? '지금 홈 화면 앱으로 실행 중이다. 인터넷 없이도 열린다.' : '이미 설치했다. 홈 화면의 아이콘으로 열면 인터넷 없이도 플레이할 수 있다.'));
+  if (!standalone) {
+    const canInstall = installMode(detectPlatform(navigator.userAgent), installPrompt() !== null) !== 'none';
+    const b = button({ label: '앱 설치', icon: 'i-play', onClick: () => openInstall({ auto: false }) });
+    b.disabled = !canInstall;
+    installPanel.append(b, el('p', 'bha-faint', canInstall ? '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다.' : '이 브라우저에서는 설치 창을 열 수 없다. 주소창의 설치 아이콘이나 브라우저 메뉴를 확인한다.'));
+  }
+
   const keyPanel = el('section', 'bha-panel');
   keyPanel.append(el('h2', 'bha-panel__title', '단축키'));
   const keyBtn = button({ label: '' });
@@ -176,11 +186,6 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     tiltBtn, el('p', 'bha-faint', '키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 켤 때 움직임 허용을 묻는다. 꺼도 키링은 탭·끌기로 흔들린다.'),
   );
   paintTama();
-  const onTamaEvent = () => {
-    if (!tamaPanel.isConnected) window.removeEventListener(TAMAGO_EVENT, onTamaEvent);
-    else paintTama();
-  };
-  window.addEventListener(TAMAGO_EVENT, onTamaEvent);
 
   // 전체 화면 (GDD 46장): 지원하지 않는 브라우저(아이폰 사파리 등)에서는 패널 자체를 만들지 않는다. 표시는 실제 상태(fullscreenchange)를 따라간다
   const fsPanel = el('section', 'bha-panel');
@@ -209,11 +214,6 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   };
   fsPanel.append(fsBtn, el('p', 'bha-faint', '주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다. 뒤로 가기나 제스처로 풀리면 그대로 둔다.'), fsStartBtn, el('p', 'bha-faint', '켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
   paintFs();
-  const onFsEvent = () => {
-    if (!fsPanel.isConnected) window.removeEventListener(FULLSCREEN_EVENT, onFsEvent);
-    else paintFs();
-  };
-  window.addEventListener(FULLSCREEN_EVENT, onFsEvent);
   const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];
 
   const panelOf = (...n: Node[]) => {
@@ -245,5 +245,12 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
   if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
   if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, ...fsPanels, tamaPanel, sizePanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes())]);
+  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, ...fsPanels, tamaPanel, sizePanel, installPanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes())]);
+  // 화면 크기(키보드 단축키)·다마고치 모드·전체 화면이 밖에서 바뀌어도 문구가 따라간다. C.139 (GDD 88장 6): 이 화면이 끝나면(다음 화면이 그려지면) 한 번에 풀린다.
+  // 전체 화면 미지원이면 패널도 구독도 없다
+  const signal = screenSignal(root);
+  const listen = (type: string, paint: () => void) => window.addEventListener(type, paint, { signal });
+  listen(VIEW_SCALE_EVENT, paintSize);
+  listen(TAMAGO_EVENT, paintTama);
+  if (fsPanels.length > 0) listen(FULLSCREEN_EVENT, paintFs);
 }

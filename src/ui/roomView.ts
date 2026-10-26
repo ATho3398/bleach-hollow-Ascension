@@ -1,17 +1,19 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
 //   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면).
 // 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
+import { petBuddy } from './bha/pet';
+import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
-import { doNestAction } from '../engine/nest';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { artSkinOf, deckSizeOf, feedNest, sanitizeDeck, type SaveData } from '../game';
+import { artSkinOf, careNest, feedNest, tickCare, type SaveData } from '../game';
+import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
 import { characterButton, charTopOffset, propButton, roomCharArt, sceneBox } from './bha/room';
-import { moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
+import { careTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
 import { toward } from './bha/nestLogic';
@@ -26,9 +28,6 @@ export interface RoomHandlers {
   onBook: () => void;
   onChest: () => void;
   onStatus: () => void;
-  onPractice: () => void;
-  /** 등급전 (GDD 21장): 독 더보기 항목 */
-  onRank: () => void;
   /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 다른 트랙이 아직 안 열렸으면(5단계 전) null — 다른 종족으로 가는 유일한 길 (C.63) */
   onSwitchTrack: ((factionId: string) => void) | null;
   /** 붕옥 탭 (GDD 22-3): 열렸을 때만 독 더보기에 */
@@ -51,6 +50,8 @@ export interface RoomHandlers {
   persist: () => void;
   resume: { info: string; onResume: () => void } | null;
   resumeNote: string;
+  /** 대기 보상 아이콘 (GDD 92장 1번): 쌓인 시간 배지(없으면 null) · 누르면 대기 모드 창 */
+  idle?: { badge: string | null; onOpen: () => void };
   /** 들어오자마자 한 번 할 말 (GDD 24-1: 꺼 둔 동안 배고파졌으면 'hungry' — 문구는 종족 설정 room.talk) */
   greet?: RoomTalk | null;
 }
@@ -61,13 +62,13 @@ const IDLE_TALK_MS = 14000;
 let idleTimer = 0;
 
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
-  save.tiles.deck = sanitizeDeck(save.tiles, faction.id, deckSizeOf(save));
+  tickCare(save); // 돌봄 요청 (GDD 82장): 꺼 두었다 와도 최대 1개
   hd.persist();
   const room = roomOf(faction, save.wear.talk); // 말풍선 팩 (GDD 25-11): 입은 팩이 혼잣말 문구를 덮는다
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
-  const deckSize = deckSizeOf(save);
-  const deckCount = save.tiles.deck.length;
+  // 덱 없음 (GDD 85장 11번, C.140): 출발 때 가진 타일 전부에서 놓는다. 타일이 없어도 빈 길로 떠날 수 있다
+  const tileCount = ownedTileList(save.tiles, faction.id).length;
   const mood = moodOf({ weakened: n.weakened, condition: n.condition, risk: n.risk, riskLimit: RX.limit });
 
   // ── 위 한 줄 ── (원정 이어하기만. 상태는 캐릭터 머리 위 칩)
@@ -92,6 +93,16 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       items.push({ el: sw });
     }
     hud.append(name);
+  }
+  if (hd.idle) {
+    const ib = button({ label: '대기 보상', icon: 'i-timer', size: 'small', variant: 'ghost', onClick: hd.idle.onOpen });
+    ib.dataset.sc = 'idle-reward';
+    if (hd.idle.badge) {
+      ib.append(el('small', 'bha-room__idlebadge', hd.idle.badge));
+      ib.title = `대기 보상 ${hd.idle.badge} 쌓임`;
+    }
+    hud.append(ib);
+    items.push({ el: ib });
   }
   if (hd.resume) {
     resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
@@ -119,26 +130,28 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
 
   const act: Record<RoomProp, () => void> = {
-    door: () => (deckCount === 0 ? say('덱이 비어 있다. 상자에서 타일을 넣어야 출발할 수 있다.', 3600) : hd.onDepart()),
+    door: () => hd.onDepart(),
     altar: hd.onAltar,
     book: hd.onBook,
     chest: hd.onChest,
-    dummy: hd.onPractice, // 훈련 인형 = 전투 연습 (GDD 18-3)
     shop: hd.onShop, // 상점 (C.63, GDD 28장 9번: 더보기 → 방 물건)
   };
   // 위/아래 순서: 위쪽 줄(책장·수련장) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop', 'dummy'];
+  const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   for (const p of ROOM_PROPS) {
-    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'door' && deckCount === 0 });
+    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'shop' && save.shared.wanderer.visit !== null });
     b.onclick = act[p];
-    if (p === 'dummy') b.dataset.sc = 'dummy';
+    if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(훈련 인형 모양) = 단축키 T
     props.set(p, b);
     scene.append(b);
   }
   const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
   const char = characterButton(charArtUrls, '캐릭터', loco);
+  // 데리고 다니는 펫 (GDD 90장): 캐릭터 옆 발치에 작게 (그림이 없으면 아이콘 원)
+  const buddy = petBuddy(save.shared.pets.active, petName(save.shared.pets.active ?? '', faction));
+  if (buddy) char.append(buddy);
   const charAnim = animOf(char);
   /** 프레임 애니가 있는 동작이면 재생하고 true (GDD 26-3). 끝나면(hold·반복은 잠시 뒤) 대기로 돌아간다. 없으면 false = 기존 뛰는 반응 */
   let animTimer = 0;
@@ -163,7 +176,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }
     say(line ?? pickLine(room.talk, mood === 'idle' && Math.random() < 0.4 ? 'happy' : mood), ms);
   };
-  char.onclick = () => react();
+  /** 지금 살아 있는 돌봄 요청의 말풍선 (GDD 82장) */
+  const askLine = (): string | null => (n.careRequest ? pickLine(room.talk, careTalkKey('ask', n.careRequest.action)) : null);
+  char.onclick = () => react(askLine() ?? undefined);
   // 머리 위 상태 칩 (허기·컨디션·리스크 게이지, 쇠약이면 그 이름). 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
   const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
@@ -197,7 +212,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (action === 'feed') {
         if (!food || !feedNest(save, food)) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.', 3200);
-      } else doNestAction(n, action);
+      } else if (careNest(save, action) === 'refused') {
+        // 요청이 없거나 다른 것을 청했을 때: 거절 말풍선, 효과 없음 (GDD 82장)
+        hd.persist();
+        dock.setRequest(n.careRequest?.action ?? null);
+        return say(pickLine(room.talk, careTalkKey('refuse', action)), 3200);
+      }
+      dock.setRequest(n.careRequest?.action ?? null);
       hd.persist();
       paintGauges();
       say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }), 3200);
@@ -206,7 +227,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       if (!(clip && playAnim(clip))) hopChar();
     },
     more: [
-      { label: faction.rankBattleName, icon: 'i-title', onClick: hd.onRank },
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
       { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },
@@ -224,7 +244,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   body.append(scene);
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
   const main = mountApp(dev.view, { cls: 'bha-room' }, hud, ...(warn ? [warn] : []), body, dock.root);
-  main.dataset.deck = `${deckCount}/${deckSize}`;
+  main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
+  main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
+  if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번) — 상점 물건에 알림 점
 
   // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
   function registerItems(): void {
@@ -234,18 +256,27 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     dev.setItems([...dock.items().filter((b) => b.closest('.bha-homedock__tray')).map((b) => ({ el: b })), ...list, ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
   }
   registerItems();
+  dock.setRequest(n.careRequest?.action ?? null);
   // 독 밖(장면)을 누르면 펼친 줄을 닫는다
   scene.addEventListener('pointerdown', () => dock.close());
 
   // ── 반응: 상태가 바뀌어 돌아왔을 때, 가끔 혼잣말 ──
   const greet = hd.greet;
+  const ask = askLine();
   if (greet) window.setTimeout(() => main.isConnected && react(pickLine(room.talk, greet), 5200), 500);
-  else if (lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);
+  // 돌봄 요청이 있으면 (인사 뒤에) 요청 말풍선, 없으면 기분이 바뀌었을 때 한마디
+  if (ask) window.setTimeout(() => main.isConnected && react(askLine() ?? ask, 4200), greet ? 5900 : 500);
+  else if (!greet && lastMood !== null && lastMood !== mood && mood !== 'idle') window.setTimeout(() => main.isConnected && react(pickLine(room.talk, mood)), 500);
   lastMood = mood;
   // 방을 다시 그릴 때 이전 방의 혼잣말 타이머를 바로 끈다 (C.70: 화면을 빠르게 오가면 떨어진 방 DOM 이 최대 14초씩 쌓였다)
   window.clearInterval(idleTimer);
   const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
-    if (Math.random() < 0.5) say(pickLine(room.talk, mood));
+    // 돌봄 요청 시계 (GDD 82장): 방에 있는 동안 요청이 생기거나 사라진다
+    const had = n.careRequest;
+    const created = tickCare(save);
+    if (created || had !== n.careRequest) { hd.persist(); dock.setRequest(n.careRequest?.action ?? null); }
+    if (created) return react(askLine()!, 4200);
+    if (Math.random() < 0.5) say(askLine() ?? pickLine(room.talk, mood));
   }, IDLE_TALK_MS);
 }

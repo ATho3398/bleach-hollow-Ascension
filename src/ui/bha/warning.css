@@ -1,0 +1,38 @@
+/* 강적 조우 WARNING 경고 (GDD 76장, C.128): 디자인 토큰만. 띠 색 = --warn-color (기본 --bha-attack, 히든 속성이면 그 속성 색 토큰) */
+.bha-warn {
+  position: absolute; inset: 0; z-index: var(--bha-z-modal); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bha-bg-0) 80%, transparent);
+  --warn-color: var(--bha-attack);
+}
+/* 가장자리 붉은 펄스 */
+.bha-warn::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 70px 6px var(--warn-color); opacity: 0.2; animation: bha-warn-pulse 500ms ease-in-out infinite alternate;
+}
+.bha-warn__band {
+  position: absolute; left: 0; right: 0; height: 16%; min-height: 28px;
+  background: repeating-linear-gradient(-45deg, var(--warn-color) 0 14px, var(--bha-bg-0) 14px 28px);
+  background-size: 40px 100%; opacity: 0.92;
+}
+.bha-warn__band--top { top: 0; border-bottom: 2px solid var(--warn-color); animation: bha-warn-flow-l 500ms linear infinite; }
+.bha-warn__band--bottom { bottom: 0; border-top: 2px solid var(--warn-color); animation: bha-warn-flow-r 500ms linear infinite; }
+.bha-warn__center { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-4); padding: 0 var(--bha-sp-6); text-align: center; }
+.bha-warn__word {
+  margin: 0; font-size: var(--bha-fs-3xl); letter-spacing: 0.28em; padding-left: 0.28em; font-weight: 800; color: var(--warn-color);
+  text-shadow: 0 0 14px var(--warn-color); animation: bha-warn-blink 1500ms steps(1, end) both;
+}
+.bha-warn__line, .bha-warn__hidden { margin: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--bha-sp-3); font-size: var(--bha-fs-lg); color: var(--bha-text-1); }
+.bha-warn__hidden { font-size: var(--bha-fs-md); color: var(--warn-color); font-weight: 700; }
+.bha-warn__skip { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.bha-warn__skip:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: -4px; }
+/* 동작 줄이기: 움직임 없이 0.4초 정지 표시 */
+.bha-warn.is-still::before, .bha-warn.is-still .bha-warn__band, .bha-warn.is-still .bha-warn__word { animation: none; }
+@keyframes bha-warn-flow-l { from { background-position-x: 0; } to { background-position-x: -40px; } }
+@keyframes bha-warn-flow-r { from { background-position-x: 0; } to { background-position-x: 40px; } }
+@keyframes bha-warn-pulse { from { opacity: 0.12; } to { opacity: 0.5; } }
+/* WARNING 깜빡임 3번 (켜짐·꺼짐 번갈아) */
+@keyframes bha-warn-blink { 0%, 33.4%, 66.8%, 100% { opacity: 1; } 16.7%, 50.1%, 83.5% { opacity: 0.08; } }
+@media (prefers-reduced-motion: reduce) { .bha-warn::before, .bha-warn__band, .bha-warn__word { animation: none; } }
+/* 걷기: 다음 칸이 강적 칸이면 작은 ⚠ 칩 (깜빡임 없이) */
+.bha-exp__ahead { white-space: nowrap; }

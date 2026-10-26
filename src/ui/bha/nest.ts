@@ -69,24 +69,34 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
   return root;
 }
 
-/** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. 막대 끝 = ref × 1.6 — C.75(32-1)부터 ref 는 내 단계가 아니라 마지막 단계 기준 능력치(고정)라 진화하면 막대가 실제로 자란다 */
-export function statsBlock(factionId: string, stats: Stats, ev: Stats, ref: number, carry?: Stats): HTMLElement {
+/** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. C.131(GDD 77장 ①)부터 막대 없이 이름 + 값만 (ref 는 옛 호출 호환용) */
+export function statsBlock(factionId: string, stats: Stats, ev: Stats, _ref: number, carry?: Stats): HTMLElement {
   const root = el('div', 'bha-stack bha-stats');
-  const max = Math.round(ref * 1.6);
   for (const k of STAT_IDS) {
     const v = Math.round(stats[k]);
     const c = carry?.[k] ?? 0;
     const extra = [ev[k] > 0 ? `+${ev[k]}` : '', c > 0 ? `계승 +${c}` : ''].filter(Boolean).join(' · ');
     // 능력치 절대 상한 (GDD 22-1): 닿으면 '상한' 표시
     const capped = v >= STAT_MAX ? ' 상한' : '';
-    const m = meter({
-      kind: 'stored', label: statName(k, factionId), value: v, max, compact: true, thin: true,
-      valueText: `${v}${capped}${extra ? ` (${extra})` : ''}`,
-    });
-    if (capped) m.dataset.capped = 'true';
-    root.append(m);
+    const row = statRow(statName(k, factionId), `${v}${capped}${extra ? ` (${extra})` : ''}`);
+    if (capped) row.dataset.capped = 'true';
+    root.append(row);
   }
   return root;
+}
+
+/** 능력치 한 줄: 이름 · 값 (막대 없음). tip 이 있으면 마우스를 올리거나 (폰은) 눌렀을 때 값 옆에 짧은 안내가 뜬다 */
+export function statRow(name: string, value: string, tip?: string): HTMLElement {
+  const row = el(tip ? 'button' : 'div', 'bha-statrow');
+  if (tip) {
+    (row as HTMLButtonElement).type = 'button';
+    row.title = tip;
+    row.dataset.tip = tip;
+    row.append(el('span', 'bha-statrow__name', name), el('b', 'bha-statrow__value bha-num', value), el('span', 'bha-statrow__tip', tip));
+    row.addEventListener('click', () => row.classList.toggle('is-tip'));
+    row.addEventListener('blur', () => row.classList.remove('is-tip'));
+  } else row.append(el('span', 'bha-statrow__name', name), el('b', 'bha-statrow__value bha-num', value));
+  return row;
 }
 
 export interface DeckRowOpts {

@@ -3,10 +3,10 @@ import { BALANCE } from '../src/config/balance';
 import { ENEMIES, enemyPatternKind, getEnemy } from '../src/data/enemies';
 import type { EnemyDef } from '../src/data/schema';
 import { getFaction } from '../src/data/factions';
-import { ELEMENTS } from '../src/data/elements';
+import { ELEMENTS, NORMAL_ELEMENT } from '../src/data/elements';
 import { TRAITS, getTrait, traitDescription } from '../src/data/traits';
 import {
-  absorbReasons, absorbRisk, attackFamilyOf, buildCombatParams, buildOffer, canAbsorb, changeRisk, completedElements, equippedAttackFamilies, equippedSkills, gainTrait, lateLapRisk, newBuild,
+  absorbReasons, absorbRisk, attackFamilyOf, buildCombatParams, buildOffer, canAbsorb, changeRisk, equippedAttackFamilies, equippedSkills, gainTrait, lateLapRisk, newBuild,
   passiveMultipliers, setSlot, settleRiskToNest, type BuildState,
 } from '../src/engine/absorb';
 import { BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, isBasicBlockId, applyInput, blockSources, createCombat, type Block, type CombatState } from '../src/engine/combat';
@@ -17,6 +17,9 @@ import {
 } from '../src/engine/expedition';
 import { doNestAction, newNest } from '../src/engine/nest';
 import { loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;
@@ -29,13 +32,13 @@ const ofEl = (id: string) => TRAITS.filter((t) => t.element === id).map((t) => t
 const A = ofEl('fire');
 const B = ofEl('water');
 
-/** 다음 전투를 이긴 것으로 치고 끝낸다. absorbable: 흡수 조건을 채움(체인3 횟수), risk: 공허 블록 리스크 값 */
+/** 다음 전투를 이긴 것으로 치고 끝낸다. absorbable: 우위 체인3 3회(C.125 부터 흡수 조건은 없다 — 런 로그 값만), risk: 공허 블록 리스크 값 */
 function winWith(exp: ExpeditionState, opt: { absorbable?: boolean; risk?: number; firstAbsorb?: boolean } = {}): void {
   const b = startBattle(exp);
   b.enemy.hp = 0;
   b.status = 'won';
   b.finisher = { kind: 'basic-attack', traitId: null, element: null };
-  b.weakChain3Count = opt.absorbable ? AX.weakChain3ForAbsorb : 0;
+  b.weakChain3Count = opt.absorbable ? 3 : 0;
   // 첫 흡수 보장(장착 skill 없음)을 피하려고 기본은 skill 이 장착된 전투로 친다
   if (!opt.firstAbsorb) b.params = { ...b.params, skills: [{ id: 't-fire-a', element: 'fire', category: 'physical', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 }] };
   b.riskGained = opt.risk ?? 0;
@@ -50,6 +53,8 @@ const result = (o: { won?: boolean; chain3?: number; weakChain3?: number; skills
   finisher: o.finisher ?? null,
 });
 const NO = result({});
+/** 우위 체인3 세기 확인용 횟수 (흡수 조건은 C.125 에 삭제, 런 로그·히든용 카운트만 남음) */
+const AX_WEAK3 = 3;
 function fightNext(exp: ExpeditionState): void {
   exp.wildCells = [exp.pos + 1];
   advance(exp);
@@ -63,15 +68,15 @@ function toAbsorb(exp: ExpeditionState, enemy?: Partial<EnemyDef>): void {
 }
 
 describe('임시 데이터', () => {
-  it('속성 8종, 속성마다 특성 8개(공격 3계열·막기·회복·패시브·파츠·희귀), 전부 provisional (C.47)', () => {
+  it('속성 8종, 속성마다 특성 6개(공격 3계열·패시브·파츠·희귀 — C.136 막기·회복 속성 특성 삭제, GDD 84장 7번), 전부 provisional (C.47)', () => {
     expect(ELEMENTS).toHaveLength(8);
     expect(ELEMENTS.map((e) => e.name['*'])).toEqual(['노멀', '물', '불', '흙', '뇌', '혈', '독', '허(虛)']);
     for (const e of ELEMENTS) {
       const ts = TRAITS.filter((t) => t.element === e.id && !t.boss); // 보스 특성(C.58)은 따로
-      expect(ts, e.id).toHaveLength(8);
+      expect(ts, e.id).toHaveLength(6);
       expect(new Set(ts.map((t) => t.kind))).toEqual(new Set(['skill', 'passive', 'part']));
       expect(new Set(ts.filter((t) => t.role === 'attack' && !t.rare).map((t) => t.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
-      expect(ts.some((t) => t.role === 'guard') && ts.some((t) => t.role === 'heal')).toBe(true);
+      expect(ts.some((t) => t.role === 'guard' || t.role === 'heal')).toBe(false);
       expect(ts.filter((t) => t.rare)).toHaveLength(1);
     }
     expect(TRAITS.every((t) => t.provisional === true)).toBe(true);
@@ -95,54 +100,38 @@ describe('임시 데이터', () => {
 });
 
 describe('흡수 가능 조건', () => {
-  it('마무리 일격이 우위(상성 우위) 스킬이거나, 우위 체인3 을 N회(임시) 이상 발동했을 때만 가능하다 (GDD 20-2)', () => {
-    const weakSkill = { kind: 'skill' as const, traitId: 't-water-guard', element: 'water', weak: true };
-    expect(canAbsorb(NO)).toBe(false);
-    expect(absorbReasons(result({ finisher: weakSkill }))).toEqual(['weakness-finisher']);
-    // 우위가 아닌 스킬, 기본 블록(속성 없음), 기본 공격·필살·공허로 마무리하면 조건이 아니다
-    expect(canAbsorb(result({ finisher: { kind: 'skill', traitId: 't-fire-a', element: 'fire', weak: false } }))).toBe(false);
-    expect(canAbsorb(result({ finisher: { kind: 'skill', traitId: BASIC_SKILL_ID, element: null } }))).toBe(false);
+  it('C.125 (GDD 71장): 이기기만 하면 마무리·체인3·장착과 상관없이 언제나 흡수 가능, 지면 불가', () => {
+    const weakSkill = { kind: 'skill' as const, traitId: 't-water-b', element: 'water', weak: true };
+    expect(canAbsorb(NO)).toBe(true);
+    expect(absorbReasons(NO)).toEqual(['victory']);
     for (const kind of ['basic-attack', 'special', 'void', 'reflect', 'dot'] as const) {
-      expect(canAbsorb(result({ finisher: { kind, traitId: null, element: null } }))).toBe(false);
+      expect(canAbsorb(result({ finisher: { kind, traitId: null, element: null } }))).toBe(true);
     }
-    // 우위가 아닌 체인3 은 몇 번이든 불충분
-    expect(canAbsorb(result({ chain3: 9 }))).toBe(false);
-    // 우위 스킬 블록의 체인3 N회 이상
-    expect(canAbsorb(result({ weakChain3: AX.weakChain3ForAbsorb - 1 }))).toBe(false);
-    expect(absorbReasons(result({ weakChain3: AX.weakChain3ForAbsorb }))).toEqual(['weakness-chain3']);
-    expect(absorbReasons(result({ weakChain3: 5, finisher: weakSkill }))).toEqual(['weakness-finisher', 'weakness-chain3']);
+    expect(canAbsorb(result({ finisher: { kind: 'skill', traitId: 't-fire-a', element: 'fire', weak: false } }))).toBe(true);
+    expect(canAbsorb(result({ skills: 0 }))).toBe(true);
     expect(canAbsorb(result({ won: false, weakChain3: 5, finisher: weakSkill }))).toBe(false);
-  });
-
-  it('첫 흡수 보장: 장착한 skill 특성이 하나도 없으면 조건 없이 가능, 하나라도 있으면 보장 없음 (GDD 3-5 v0.7)', () => {
-    expect(absorbReasons(result({ skills: 0 }))).toEqual(['first-absorb']);
-    expect(canAbsorb(result({ skills: 0, chain3: 0 }))).toBe(true);
-    expect(canAbsorb(result({ skills: 1 }))).toBe(false);
-    expect(absorbReasons(result({ skills: 0, finisher: { kind: 'skill', traitId: 't-water-guard', element: 'water', weak: true } }))).toEqual(['weakness-finisher', 'first-absorb']);
-    // 졌으면 보장도 없다
-    expect(canAbsorb(result({ won: false, skills: 0 }))).toBe(false);
+    expect(absorbReasons(result({ won: false }))).toEqual([]);
   });
 
   it('실제 전투: 상성 우위 블록 체인3 을 쓰면 weakChain3Count 가 오르고, 같은 속성(보통) 체인3 은 오르지 않는다', () => {
     const b = newBuild();
-    gainTrait(b, 't-water-guard'); // test-a(불) 를 이기는 물
+    gainTrait(b, 't-water-b'); // test-a(불) 를 이기는 물
     gainTrait(b, 't-fire-a');
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
     s.enemy.hp = s.enemy.maxHp * 100;
     const three = (traitId: string, uid: number): Block[] => [0, 1, 2].map((k) => ({ uid: uid + k, kind: 'skill', traitId }));
-    s.tray = [...three('t-fire-a', 90), ...Array.from({ length: AX.weakChain3ForAbsorb }, (_, k) => three('t-water-guard', 100 + k * 10)).flat()];
+    s.tray = [...three('t-fire-a', 90), ...Array.from({ length: AX_WEAK3 }, (_, k) => three('t-water-b', 100 + k * 10)).flat()];
     applyInput(s, { type: 'use', cell: 0 });
     expect([s.chain3Count, s.weakChain3Count]).toEqual([1, 0]);
     applyInput(s, { type: 'use', cell: 0 });
     expect([s.chain3Count, s.weakChain3Count]).toEqual([2, 1]);
-    for (let k = 1; k < AX.weakChain3ForAbsorb; k++) applyInput(s, { type: 'use', cell: 0 });
-    expect(s.weakChain3Count).toBe(AX.weakChain3ForAbsorb);
-    expect(absorbReasons({ ...s, status: 'won' })).toEqual(['weakness-chain3']);
+    for (let k = 1; k < AX_WEAK3; k++) applyInput(s, { type: 'use', cell: 0 });
+    expect(s.weakChain3Count).toBe(AX_WEAK3);
   });
 
   it('실제 전투: 상성 우위 블록으로 마무리하면 흡수 조건이 되고, 같은 속성 블록 마무리는 아니다', () => {
     const b = newBuild();
-    gainTrait(b, 't-water-guard'); // test-a(불) 의 약점 = 물
+    gainTrait(b, 't-water-b'); // test-a(불) 의 약점 = 물
     gainTrait(b, 't-fire-a');
     const finish = (traitId: string) => {
       const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
@@ -152,12 +141,12 @@ describe('흡수 가능 조건', () => {
       expect(s.status).toBe('won');
       return s;
     };
-    const w = finish('t-water-guard');
-    expect(w.finisher).toEqual({ kind: 'skill', traitId: 't-water-guard', element: 'water', family: null, weak: true, matchup: 'strong' });
-    expect(absorbReasons(w)).toEqual(['weakness-finisher']);
+    const w = finish('t-water-b');
+    expect(w.finisher).toEqual({ kind: 'skill', traitId: 't-water-b', element: 'water', family: 'family-b', weak: true, matchup: 'strong' });
+    expect(absorbReasons(w)).toEqual(['victory']);
     const f = finish('t-fire-a');
     expect(f.finisher).toMatchObject({ element: 'fire', weak: false, matchup: 'neutral' });
-    expect(absorbReasons(f)).toEqual([]);
+    expect(absorbReasons(f)).toEqual(['victory']); // C.125: 상성 아닌 마무리도 흡수 가능
   });
 
   it('약점 속성이 없는 적(노멀·특수)은 아무 스킬 블록 마무리나 우위로 친다 (기본 블록은 아님)', () => {
@@ -175,17 +164,16 @@ describe('흡수 가능 조건', () => {
     expect(basic.finisher).toMatchObject({ weak: false });
   });
 
-  it('원정 전투 승리 후 조건 미달이면 흡수 화면 없이 이동, 채우면 흡수 화면', () => {
+  it('C.125 (GDD 71장): 원정 전투에 이기면 우위 마무리·체인3 없이도 언제나 흡수 화면', () => {
     const a = mk({ seed: 3 });
     fightNext(a);
     winWith(a, { absorbable: false });
-    expect(a.phase).toBe('moving');
-    expect(a.absorbOffer).toBeNull();
+    expect(a.phase).toBe('absorb');
+    expect(a.absorbOffer!.reasons).toEqual(['victory']);
     const b = mk({ seed: 3 });
     fightNext(b);
     winWith(b, { absorbable: true });
     expect(b.phase).toBe('absorb');
-    expect(b.absorbOffer!.reasons).toEqual(['weakness-chain3']);
     expect(b.absorbOffer).not.toBeNull();
     expect(advance(b)).toBeNull(); // 흡수를 고르기 전에는 이동하지 않는다
   });
@@ -275,25 +263,17 @@ describe('속성 보너스와 특성 효과', () => {
     return b;
   };
 
-  it('슬롯 안 같은 속성 3개면 그 속성 스킬 블록 위력이 +50%', () => {
-    const two = build(A.slice(0, 2));
-    expect(completedElements(two)).toEqual([]);
+  it('같은 속성 3개 보너스는 없다 (C.150, GDD 94장 B 후속): 셋 장착해도 블록 위력은 강화 배율뿐', () => {
     const three = build(A.slice(0, 3));
-    expect(completedElements(three)).toEqual(['fire']);
     const skillId = A.find((id) => getTrait(id).kind === 'skill')!;
-    const one = equippedSkills(two).find((s) => s.id === skillId)!;
-    expect(one.powerInAttacks).toBe(getTrait(skillId).powerInAttacks);
-    expect(one.powerMultiplier).toBe(1);
-    expect(equippedSkills(three).find((s) => s.id === skillId)!.powerMultiplier).toBeCloseTo(1 + AX.elementSkillBonus);
-  });
-
-  it('다른 속성이 섞이면 보너스가 없다', () => {
-    const mix = build([A[0]!, A[1]!, B[0]!]);
-    expect(completedElements(mix)).toEqual([]);
+    const s = equippedSkills(three).find((x) => x.id === skillId)!;
+    expect(s.powerInAttacks).toBe(getTrait(skillId).powerInAttacks);
+    expect(s.powerMultiplier).toBe(1);
+    expect('elementBonusCount' in AX).toBe(false);
   });
 
   it('블록 생성원은 특성의 속성과, 종족 설정 계열의 공격 분류를 가진다 (종족을 모르면 혼합)', () => {
-    const b = build(['t-fire-a', 't-fire-c', 't-fire-guard']);
+    const b = build(['t-fire-a', 't-fire-c', 't-fire-b']);
     expect(equippedSkills(b, 'hollow').map((x) => [x.element, x.category])).toEqual([['fire', 'physical'], ['fire', 'special'], ['fire', 'mixed']]);
     expect(equippedSkills(b).every((x) => x.category === 'mixed')).toBe(true);
   });
@@ -318,7 +298,7 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
   const enemy = getEnemy('test-a'); // 불 속성 (A = 불 특성이라 상성 보통)
   /** 트레이 0번 칸에 블록을 놓고 써서 피해를 잰다 */
   const fire = (params: Parameters<typeof createCombat>[1]['params'], traitId: string, chain = 1): { s: CombatState; damage: number } => {
-    const s = createCombat(1, { enemy, params });
+    const s = createCombat(1, { enemy, params: { blockPlayDamage: 1, blockPlayCrit: 0, ...params } }); // C.136 블록 플레이 보정 끔 (옛 피해 공식만 본다)
     s.tray = Array.from({ length: chain }, (_, k) => ({ uid: 99 + k, kind: 'skill' as const, traitId }));
     const before = s.enemy.hp;
     applyInput(s, { type: 'use', cell: 0 });
@@ -343,11 +323,11 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
     expect(params.skills!.every((x) => ['attack', 'guard', 'heal'].includes(x.role) && x.chainBonus.value > 0)).toBe(true);
     const { s, damage } = fire(params, skills[0]!);
     expect(s.skillsUsed).toEqual([skills[0]]);
-    // 같은 속성 3개라 속성 보너스(위력 배율)가 곱해진다
+    // 위력 배율 = 속성 강화뿐 (같은 속성 3개 보너스는 C.150 에 삭제)
     expect(damage).toBeCloseTo(getTrait(skills[0]!).powerInAttacks! * params.skills![0]!.powerMultiplier * s.params.playerAttackDamage);
   });
 
-  it('속성 보너스가 켜지면 블록 위력이 1.5배', () => {
+  it('같은 속성 3개를 껴도 블록 위력은 하나 낄 때와 같다 (C.150, 속성 보너스 삭제)', () => {
     const skillId = A.find((id) => getTrait(id).kind === 'skill')!;
     const one = newBuild();
     gainTrait(one, skillId);
@@ -355,7 +335,7 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
     for (const id of A.slice(0, 3)) gainTrait(full, id);
     const d1 = fire({ ...buildCombatParams(one), attackPowerMultiplier: 1 }, skillId).damage;
     const d3 = fire({ ...buildCombatParams(full), attackPowerMultiplier: 1 }, skillId).damage;
-    expect(d3).toBeCloseTo(d1 * 1.5);
+    expect(d3).toBeCloseTo(d1);
   });
 
   it('원정 전투는 장착한 특성을 전투 파라미터로 받는다', () => {
@@ -372,7 +352,7 @@ describe('희귀 개체', () => {
     for (const element of ['fire', 'water', 'kyo']) {
       for (let seed = 1; seed <= 30; seed++) {
         // 특수 속성(허)은 숨김이 풀린 화면에서만 (C.106, 49-7 ①)
-        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare: true }, newBuild(), NO, 0, null, { chance: 1, gates: ['elite'] });
+        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare: true }, newBuild(), NO, 0, null);
         expect(offer.rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).rare).toBe(true);
         expect(getTrait(offer.candidates[0]!).element).toBe(element);
@@ -384,7 +364,9 @@ describe('희귀 개체', () => {
     const build = newBuild();
     gainTrait(build, A[0]!);
     for (let seed = 1; seed <= 30; seed++) {
-      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire', rare: false }, build, NO);
+      // C.147 (94장 B): 이미 가진 속성(fire)은 강화만 — 후보는 처음 먹는 속성에서
+      expect(buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire', rare: false }, build, NO).candidates).toEqual([]);
+      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'water', rare: false }, build, NO);
       expect(offer.rare).toBe(false);
       expect(offer.candidates.length).toBeGreaterThanOrEqual(1);
       expect(offer.candidates.length).toBeLessThanOrEqual(2);
@@ -522,8 +504,7 @@ describe('리스크 게이지', () => {
     const exp = mk({ seed: 14, runId: nextRunId(save), risk: save.nest.risk, stability: save.nest.stability });
     expect(exp.risk).toBe(25);
     fightNext(exp);
-    winWith(exp, { risk: 40 });
-    toAbsorb(exp);
+    winWith(exp, { risk: 40 }); // C.125: 이기면 바로 흡수 화면
     chooseRelease(exp);
     const expected = exp.risk;
     const stab = exp.stability;
@@ -531,6 +512,7 @@ describe('리스크 게이지', () => {
       if (exp.phase === 'moving') advance(exp);
       else if (exp.phase === 'battle') winWith(exp);
       else if (exp.phase === 'rest') finishRest(exp);
+      else if (exp.phase === 'absorb') chooseRelease(exp); // C.125: 이기면 늘 흡수 화면 — 옛 '조건 미달 → 이동' 대신 놓아줌
     }
     chooseReturn(exp);
     recordExpedition(save, exp, 10);
@@ -564,6 +546,7 @@ describe('한계 돌파', () => {
       if (exp.phase === 'moving') advance(exp);
       else if (exp.phase === 'battle') winWith(exp);
       else if (exp.phase === 'rest') finishRest(exp);
+      else if (exp.phase === 'absorb') chooseRelease(exp); // C.125: 이기면 늘 흡수 화면 — 옛 '조건 미달 → 이동' 대신 놓아줌
     }
     chooseReturn(exp);
     recordExpedition(save, exp, 5);
@@ -624,9 +607,10 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
       if (exp.phase === 'moving') advance(exp);
       else if (exp.phase === 'battle') winWith(exp);
       else if (exp.phase === 'rest') finishRest(exp);
+      else if (exp.phase === 'absorb') chooseRelease(exp); // C.125: 이기면 늘 흡수 화면 — 옛 '조건 미달 → 이동' 대신 놓아줌
     }
     chooseContinue(exp);
-    toAbsorb(exp, { element: 'fire', rare: false });
+    toAbsorb(exp, { element: 'water', rare: false }); // C.147 (94장 B): fire 는 이미 가져 강화만 — 처음 먹는 속성
     chooseAbsorb(exp, exp.absorbOffer!.candidates[0]!);
     const second = exp.build.owned.find((id) => id !== first)!;
     expect(exp.build.slots.filter(Boolean)).toHaveLength(2);
@@ -641,6 +625,8 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
         if (exp.phase === 'moving') advance(exp);
         else if (exp.phase === 'battle') winWith(exp);
         else if (exp.phase === 'rest') finishRest(exp);
+        else if (exp.phase === 'absorb') chooseRelease(exp);
+      else if (exp.phase === 'absorb') chooseRelease(exp); // C.125: 이기면 늘 흡수 화면 — 옛 '조건 미달 → 이동' 대신 놓아줌
       }
       chooseReturn(exp);
     }
@@ -667,39 +653,19 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
     expect(save.runLog.runs[0]!.lostTraits).toEqual([]);
   });
 
-  it('패배로 잃은 속성 진행도는 속성 보너스 완성 기록에 남지 않는다', () => {
+  it('같은 속성 셋을 낀 채 귀환해도 속성 보너스 완성 기록(lineages)은 더 쌓이지 않는다 (C.150)', () => {
     const save = newSaveData('hollow', 0);
-    save.build = newBuild();
-    for (const id of A.slice(0, 2)) gainTrait(save.build, id);
-    const exp = mk({ seed: 31, runId: nextRunId(save), build: save.build });
-    toAbsorb(exp, { element: 'fire', rare: false });
-    const third = exp.absorbOffer!.candidates[0]!;
-    chooseAbsorb(exp, third);
-    expect(completedElements(exp.build)).toEqual(['fire']);
-    fightNext(exp);
-    const b = startBattle(exp);
-    b.status = 'lost';
-    b.lossReason = 'hp';
-    finishBattle(exp, b);
-    recordExpedition(save, exp, 100);
-    expect(completedElements(save.build)).toEqual([]);
-    expect(save.runLog.lineages).toEqual([]);
-  });
-
-  it('속성 보너스를 완성한 채 귀환하면 LineageRecord(값은 속성 id)가 남는다', () => {
-    const save = newSaveData('hollow', 0);
-    for (const id of A.slice(0, 2)) gainTrait(save.build, id);
+    for (const id of A.slice(0, 3)) gainTrait(save.build, id);
     const exp = mk({ seed: 32, runId: nextRunId(save), build: save.build });
-    toAbsorb(exp, { element: 'fire', rare: false });
-    chooseAbsorb(exp, exp.absorbOffer!.candidates[0]!);
     while (exp.phase !== 'nest-choice') {
       if (exp.phase === 'moving') advance(exp);
       else if (exp.phase === 'battle') winWith(exp);
       else if (exp.phase === 'rest') finishRest(exp);
+      else if (exp.phase === 'absorb') chooseRelease(exp);
     }
     chooseReturn(exp);
     recordExpedition(save, exp, 5);
-    expect(save.runLog.lineages).toEqual([{ lineageId: 'fire', completed: true, conflictingTried: false, firstCompletedRunId: exp.runId }]);
+    expect(save.runLog.lineages).toEqual([]);
   });
 });
 
@@ -778,21 +744,16 @@ describe('종족 설정만 바꿔도 표기가 바뀐다', () => {
 });
 
 describe('C.7 흡수 문구와 기준 빌드 봇', () => {
-  it('흡수 조건 안내·이유 문구가 새 조건(상성 우위 마무리 / 우위 체인3 / 첫 흡수 보장)을 말한다', async () => {
-    const { absorbConditionText, reasonText, weaknessText } = await import('../src/ui/absorbView');
+  it('흡수 안내 문구 (C.125): 조건 없이 이기면 언제나, 후보는 그 적 속성 특성에서만', async () => {
+    const { absorbRuleText, weaknessText } = await import('../src/ui/absorbView');
     const hollow = getFaction('hollow');
-    const cond = absorbConditionText(hollow, { element: 'fire' });
-    expect(cond).toContain('마무리 일격이 상성 우위(물)');
-    expect(cond).toContain(`${hollow.chainName}3 을 ${AX.weakChain3ForAbsorb}회 이상`);
-    expect(cond).toContain('특성이 없으면 조건 없이 가능');
-    expect(absorbConditionText(hollow, { element: 'blood' })).toContain('약점 속성이 없다');
+    const rule = absorbRuleText(hollow, { element: 'poison' });
+    expect(rule).toContain(`이기면 언제나 ${hollow.absorbActionName} 가능`);
+    expect(rule).toContain('속성(독)을 처음'); // C.147 (94장 B): 새 블록은 처음 먹는 속성만, 가진 속성은 강화만
+    expect(rule).toContain('강화만');
+    expect(rule).not.toContain('조건');
     expect(weaknessText({ element: 'thunder' }, 'hollow')).toBe('흙');
     expect(weaknessText({ element: 'normal' }, 'hollow')).toBeNull();
-    const offer = (reasons: string[]) =>
-      ({ reasons, finisherElement: 'water', chain3Count: 3, weakChain3Count: 1 }) as unknown as Parameters<typeof reasonText>[1];
-    expect(reasonText(hollow, offer(['weakness-finisher']))).toContain('물 속성으로 마무리');
-    expect(reasonText(hollow, offer(['weakness-chain3']))).toContain(`${hollow.chainName}3 1회`);
-    expect(reasonText(hollow, offer(['first-absorb']))).toContain(`첫 ${hollow.absorbActionName} 보장`);
   });
 
   it('기준 빌드(skill 1개 공격)를 쓴 봇: 일반 적은 90%↑, 강적은 승률이 0/100% 로 쏠리지 않는다 (사람형 봇, 참고 점검 40~97%. 완벽형 봇은 저장 필살기로 100% 허용 — C.17)', async () => {
@@ -819,7 +780,7 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     }
     expect(kinds.size).toBeGreaterThanOrEqual(2);
     expect(wins / games).toBeGreaterThan(0.4);
-    expect(wins / games).toBeLessThan(0.97);
+    // C.132 (GDD 80장): 1칸 기본 몫 60 → 75% 로 막기·회복 기본 블록이 늘어 이 3종 × 20판은 60판 전승(전 55/60). 100% 쏠림은 balance:check 의 적 풀 강적 60~85% 가드가 본다
   });
 });
 
@@ -834,10 +795,11 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
     }
   });
 
-  it('첫 흡수(장착 없음)는 어느 속성이든 서로 다른 계열의 공격 후보 2개를 낸다', () => {
-    for (const l of ELEMENTS) {
+  it('첫 흡수(장착 없음)는 어느 속성이든 서로 다른 계열의 공격 후보 2개를 낸다 (노멀은 기본 블록을 가진 것으로 봐 후보 없음, C.147)', () => {
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT)) {
       for (let seed = 1; seed <= 30; seed++) {
-        const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO);
+        // C.125 (70장): 후보는 그 적 속성 안에서만 — 특수 속성(혈·독·허)은 숨김이 열렸을 때로 본다
+        const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO, 0, null);
         const f = fams(offer.candidates);
         expect(f.length, `${l.id}/${seed}`).toBeGreaterThanOrEqual(2);
         expect(new Set(f).size, `${l.id}/${seed}`).toBeGreaterThanOrEqual(2);
@@ -848,9 +810,9 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
   it('이미 장착한 계열만 있으면 다른 계열 공격 후보를 끼워 넣는다 (장착 계열이 보장 수에 차면 손대지 않는다)', () => {
     const b: BuildState = newBuild();
     gainTrait(b, 't-fire-a'); // 계열 a 장착
-    for (const l of ELEMENTS) {
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.id !== 'fire')) {
       for (let seed = 1; seed <= 30; seed++) {
-        const offer = buildOffer(createRng(seed), normal(l.id), b, NO);
+        const offer = buildOffer(createRng(seed), normal(l.id), b, NO, 0, null);
         expect(fams(offer.candidates).some((f) => !equippedAttackFamilies(b).has(f)), `${l.id}/${seed}`).toBe(true);
       }
     }
@@ -859,11 +821,11 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
     gainTrait(full, 't-water-b'); // 계열 b
     gainTrait(full, 't-thunder-c'); // 계열 c = 보장 수(3)
     expect(equippedAttackFamilies(full).size).toBeGreaterThanOrEqual(AX.attackFamilyGuarantee);
-    const offer = buildOffer(createRng(3), normal('water'), full, NO);
+    const offer = buildOffer(createRng(3), normal('earth'), full, NO);
     expect(offer.candidates.length).toBeGreaterThan(0);
   });
 
-  it('첫 후보는 그 적 속성의 특성, 둘째 후보는 다른 속성(C.47 원소 순환의 입구), 이미 가진 특성은 나오지 않는다', () => {
+  it('후보는 모두 그 적 속성의 특성 (C.125 GDD 70장 — C.47 의 둘째 후보 다른 속성은 폐기), 이미 가진 특성은 나오지 않는다', () => {
     const b: BuildState = newBuild();
     gainTrait(b, 't-fire-a');
     gainTrait(b, 't-fire-c'); // 장착 계열 2가지 = 계열 섞기 보장 수 → 섞기가 후보를 바꾸지 않는다
@@ -874,7 +836,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
       expect(getTrait(offer.candidates[0]!).element).toBe('earth');
       if (offer.candidates[1]) {
         seenSecond++;
-        expect(getTrait(offer.candidates[1]).element).not.toBe('earth');
+        expect(getTrait(offer.candidates[1]).element).toBe('earth');
       }
       for (const id of offer.candidates) expect(b.owned).not.toContain(id);
       expect(new Set(offer.candidates).size).toBe(offer.candidates.length);

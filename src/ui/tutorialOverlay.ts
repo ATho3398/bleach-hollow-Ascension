@@ -1,10 +1,11 @@
 // 첫 플레이 튜토리얼 오버레이 (GDD 14-2, C.19 / U-2 새 디자인): 전투 화면의 해당 요소를 컷아웃(구멍)으로 하이라이트하고 설명 카드를 보여 준다.
 // 장면 순서·상태는 engine/tutorial 의 순수 상태 머신이 정하고, 텍스트는 src/data/help 에서 종족 설정으로 치환해 읽는다.
 // 실제로 손을 써 보는 단계는 넣지 않았다: 전투 시간이 멈춘 상태에서 블록을 쓰게 하려면 엔진 입력 경로를 열어야 해서 결정성 규칙(멈춤은 결과에 영향 없음)과 부딪힌다.
-import { helpVars, renderHelpText, TUTORIAL_SCENES } from '../data/help';
+import { helpVars, renderHelpText, TUTORIAL_SCENES, type TutorialScene } from '../data/help';
 import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
+import { linesBody } from './bha/lines';
 import { requestTitle } from './bha/hold';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
@@ -23,6 +24,16 @@ export interface TutorialOverlayOptions {
   onFinish: (status: Exclude<TutorialStatus, 'active'>) => void;
   /** 직접 해 보기 장면에 들어가면 true(전투가 다시 흐른다), 나가면 false(다시 멈춘다) */
   onPractice?: (on: boolean) => void;
+  /** 장면 목록 (없으면 첫 전투 튜토리얼). 첫 원정·타일 안내(GDD 64·67장, C.120)가 같은 틀을 쓴다 */
+  scenes?: readonly TutorialScene[];
+  /** 위쪽 띠 문구 (없으면 "튜토리얼 중 — 전투 멈춤", null 이면 띠 없음) */
+  pauseLabel?: string | null;
+  /** 마지막 장면 버튼 (없으면 "전투 시작") */
+  finishLabel?: string;
+  /** 본문 자리표시자에 더할 값 (예: 조합 예시 이름) */
+  vars?: Record<string, string>;
+  /** 오버레이 이름 (data-tutorial 값, 없으면 'true') */
+  name?: string;
 }
 
 /** 구멍을 대상보다 이만큼(px) 넓게 판다 (HANDOFF 5-4) */
@@ -30,7 +41,9 @@ export const TUTORIAL_HOLE_PAD = 6;
 
 /** 장면 제목 앞 아이콘 (장면 id → 스프라이트). 모르는 장면은 info */
 const SCENE_ICON: Record<string, string> = {
-  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', sp: 'i-sp', stored: 'i-stored', after: 'i-evolve',
+  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', liberation: 'i-special', after: 'i-evolve',
+  // 첫 원정·타일 안내 (C.120)
+  walk: 'i-loop', encounter: 'i-practice', absorb: 'i-absorb', modes: 'i-absorb', practice: 'i-evolve', next: 'i-nest', tiles: 'i-deck', deck: 'i-deck', place: 'i-tile-prey', combo: 'i-tile-combo', draw: 'i-rare', special: 'i-tile-combo',
 };
 
 /** 대상 영역을 오버레이 자리(host: LCD 창 또는 화면 전체) 기준 좌표로 돌려준다 */
@@ -48,20 +61,24 @@ function targetRect(ids: string[], host: HTMLElement): Rect | null {
 }
 
 export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOptions): TutorialHandle {
-  const vars = helpVars(faction);
+  const vars = { ...helpVars(faction), ...(opts.vars ?? {}) };
   const t = (s: string) => renderHelpText(s, vars);
-  let state: TutorialState = startTutorial(TUTORIAL_SCENES.length);
+  const SCENES = opts.scenes ?? TUTORIAL_SCENES;
+  let state: TutorialState = startTutorial(SCENES.length);
 
   const layer = el('div', 'bha-tut');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', '튜토리얼');
-  layer.dataset.tutorial = 'true';
-  const pauseTag = el('span', 'bha-chip bha-battle__pausetag');
-  pauseTag.append(icon('i-pause'), '튜토리얼 중 — 전투 멈춤');
+  layer.dataset.tutorial = opts.name ?? 'true';
   const hole = el('div', 'bha-tut__hole');
   const card = el('div', 'bha-tut__card');
-  layer.append(pauseTag, hole, card);
+  if (opts.pauseLabel !== null) {
+    const pauseTag = el('span', 'bha-chip bha-battle__pausetag');
+    pauseTag.append(icon('i-pause'), opts.pauseLabel ?? '튜토리얼 중 — 전투 멈춤');
+    layer.append(pauseTag);
+  }
+  layer.append(hole, card);
   const host = getOverlayHost();
   host.append(layer);
   const unregister = registerLayer(layer, requestTitle); // 취소 = 처음 화면으로 돌아갈지 확인 (Q-3)
@@ -86,14 +103,14 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   };
 
   /** 블록 바와 저장 필살기 버튼: 설명 카드가 가리지 않게 보호할 영역 */
-  const protectedRects = () => ['battle.tray', 'battle.stored'].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+  const protectedRects = () => ['battle.tray', 'battle.liberation'].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
 
   /** 가로 화면(LCD)에서 카드가 후보로 삼는 너비: 넓게(위·아래에 걸쳐) / 좁게(옆·모서리) */
   const WIDE_W = 456;
   const NARROW_W = 280;
 
   function layout(): void {
-    const scene = TUTORIAL_SCENES[state.index]!;
+    const scene = SCENES[state.index]!;
     const vp = host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight };
     const rect = targetRect(scene.targets, host);
     const landscape = vp.width > vp.height;
@@ -151,7 +168,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   }
 
   function render(): void {
-    const scene = TUTORIAL_SCENES[state.index]!;
+    const scene = SCENES[state.index]!;
     const last = state.index === state.count - 1;
     const skip = button({ label: '건너뛰기', variant: 'ghost', size: 'small', onClick: () => {
       state = tutorialSkip(state);
@@ -163,7 +180,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     } });
     prev.disabled = state.index === 0;
     const mustTry = !!scene.practice && !practiced;
-    const next = button({ label: last ? '전투 시작' : '다음', variant: 'primary', size: 'small', onClick: () => {
+    const next = button({ label: last ? opts.finishLabel ?? '전투 시작' : '다음', variant: 'primary', size: 'small', onClick: () => {
       state = tutorialNext(state);
       if (isTutorialActive(state)) render();
       else finish('completed');
@@ -183,7 +200,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     const steps = el('div', 'bha-tut__steps');
     steps.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
     top.append(steps, actions);
-    const body = el('p', 'bha-tut__body', t(scene.practice && practiced && scene.done ? scene.done : scene.body));
+    const body = linesBody(t(scene.practice && practiced && scene.done ? scene.done : scene.body), 'bha-tut__body');
     card.replaceChildren(top, title, body);
     if (scene.sample?.length) card.append(sampleRow(scene.sample));
     card.style.visibility = 'hidden';

@@ -15,6 +15,9 @@ import type { CombatParams } from '../src/engine/combat';
 import { emptyRunLog } from '../src/engine/runLog';
 import { loadSave, migrateSave, newSaveData, performEvolution, recordExpedition, SAVE_FORMAT_VERSION } from '../src/game';
 import { LEGACY_TRAIT_MAP, migrateTraitId } from '../src/saveLegacy';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const EV = BALANCE.provisional.evolution;
 const H = EV.hidden;
@@ -118,7 +121,7 @@ describe('트리 판정', () => {
 
   it('바스트로데 = 진화 순간 장착 특성 중 가장 많은 속성, 동률이면 가장 최근에 장착한 특성의 속성', () => {
     const e = atTier(2);
-    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a', 't-water-guard', 't-fire-c'))).form.id).toBe('t4:water');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a', 't-water-b', 't-fire-c'))).form.id).toBe('t4:water');
     const tie = buildWith('t-water-a', 't-fire-c');
     expect(dominantElement(tie)).toBe('fire');
     setSlot(tie, 0, 't-water-a'); // 다시 장착하면 가장 최근이 된다
@@ -148,7 +151,7 @@ describe('트리 판정', () => {
     // 특수끼리면 흡수 수 많은 쪽 하나
     expect(ids(absorbs(atTier(2), { poison: 6, kyo: 5 }))).toEqual(['h4:special:poison']);
     // 순수형: 장착 최다 노멀 + 노멀 흡수 40%↑ + 컨디션 양호
-    const nb = buildWith('t-normal-a', 't-normal-guard');
+    const nb = buildWith('t-normal-a', 't-normal-b');
     expect(ids(absorbs(atTier(2), { normal: 6 }), nb)).toEqual(['h4:pure']);
     expect(ids(absorbs(atTier(2), { normal: 6 }), nb, { condition: H.pureCondition - 1 })).toEqual([]);
     expect(ids(absorbs(atTier(2), { normal: 6 }), b)).toEqual([]);
@@ -160,7 +163,7 @@ describe('트리 판정', () => {
     const e = atTier(3, 't4:thunder');
     expect(judgeEvolution(e, ctxOf(buildWith('t-fire-a', 't-water-a', 't-fire-c'))).form.id).toBe('t5:thunder:physical');
     expect(judgeEvolution(e, ctxOf(buildWith('t-fire-c'))).form.id).toBe('t5:thunder:special');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-guard'))).form.id).toBe('t5:thunder:mixed');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-passive'))).form.id).toBe('t5:thunder:mixed'); // C.136: 막기 속성 특성 삭제 — 공격 아닌 특성은 패시브로
     expect(dominantCategory(buildWith('t-fire-b'), 'hollow')).toBe('mixed');
   });
 
@@ -351,10 +354,12 @@ describe('세이브 마이그레이션 (형식 13 → 14)', () => {
     const m = migrateSave(oldSave13())!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(14);
-    expect(m.build.owned).toEqual(['t-fire-a', 't-earth-guard', 't-thunder-c']);
-    expect(m.build.slots).toEqual(['t-fire-a', 't-thunder-c', 't-earth-guard', null]);
-    expect(m.build.equipOrder).toEqual(['t-fire-a', 't-thunder-c', 't-earth-guard']);
-    for (const id of Object.values(LEGACY_TRAIT_MAP)) expect(migrateTraitId(id)).toBe(id);
+    // C.136 (GDD 84장 7번): 막기·회복 속성 특성(옛 trait-b1 → t-earth-guard)은 삭제되어 버린다
+    expect(m.build.owned).toEqual(['t-fire-a', 't-thunder-c']);
+    expect(m.build.slots).toEqual(['t-fire-a', 't-thunder-c', null, null]);
+    expect(m.build.equipOrder).toEqual(['t-fire-a', 't-thunder-c']);
+    for (const id of Object.values(LEGACY_TRAIT_MAP)) expect([id, null]).toContain(migrateTraitId(id));
+    expect(migrateTraitId('t-earth-guard')).toBeNull();
     expect(migrateTraitId('trait-zzz')).toBeNull();
   });
 

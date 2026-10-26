@@ -3,9 +3,9 @@
   "name": "호로",
   "theme": "hollow",
   "emblem": "💀",
+  "birthFx": {"steps": [{"fx": "orb", "ms": 500}, {"fx": "chain", "ms": 500, "count": 7}, {"fx": "burn", "ms": 1000, "count": 7}, {"fx": "flames", "ms": 800}, {"fx": "reveal", "ms": 600}], "colors": {"orb": "--bha-accent-hi", "glow": "--bha-accent", "chain": "--bha-text-2", "ember": "--bha-chain3", "flame": "--bha-bg-0", "flameEdge": "--bha-accent", "flash": "--bha-text-1"}},
   "logo": "logo-hollow",
-  "startLooks": ["stalker", "brute", "ghoul", "shackled"],
-  "startLookBias": { "base": "hp", "stalker": "spd", "brute": "atk", "ghoul": "spr", "shackled": "def" },
+  "startLooks": ["mantis", "brute", "ghoul", "shackled"],
   "formLooks": {
     "t5:normal:physical": [
       "arrnormala",
@@ -131,11 +131,8 @@
   "rankWinText": "{rank}의 번호를 빼앗았다!",
   "rankLoseText": "패배… 번호가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
-  "specialBlockName": "포효",
-  "storedSkillName": "응축 일격",
   "voidBlockName": "공허 블록",
   "chainName": "체인",
-  "spName": "영력",
   "roleNames": {
     "attack": "공격",
     "guard": "막기",
@@ -273,7 +270,7 @@
   "nestActions": {
     "feed": "먹이 주기",
     "sleep": "재우기",
-    "pet": "쓰다듬기"
+    "pet": "교감"
   },
   "foodNames": {
     "snack": "영혼 조각",
@@ -281,6 +278,19 @@
     "hearty": "큰 사냥감",
     "tonic": "영압 응축물",
     "feast": "영혼 덩어리"
+  },
+  "gearSlotNames": {
+    "weapon": "송곳니",
+    "armor": "껍질",
+    "shoes": "발톱 싸개",
+    "acc1": "부적",
+    "acc2": "부적"
+  },
+  "petNames": {
+    "pet-gold": "뼈 까마귀",
+    "pet-belly": "모래 벌레",
+    "pet-guard": "껍질 게",
+    "pet-seek": "그림자 박쥐"
   },
   "stabilityName": "자아",
   "fullnessName": "배부름",
@@ -298,39 +308,37 @@
     "sceneArt": "scene.cave",
     "characterArt": "char.hollow",
     "props": {
-      "door": "출발 문",
+      "door": "모험",
       "altar": "수련장",
       "book": "책장",
       "chest": "보관함",
-      "dummy": "훈련 인형",
       "shop": "상점"
     },
     "layout": {
-      "book": {
-        "x": 19,
-        "y": 66,
-        "scale": 0.85
-      },
       "door": {
-        "x": 81,
-        "y": 66,
-        "scale": 0.85
-      },
-      "chest": {
         "x": 10,
-        "y": 99
+        "y": 80,
+        "scale": 0.9
+      },
+      "book": {
+        "x": 30,
+        "y": 52,
+        "scale": 0.9
       },
       "altar": {
+        "x": 90,
+        "y": 60,
+        "scale": 0.9
+      },
+      "chest": {
         "x": 27,
-        "y": 99
+        "y": 99,
+        "scale": 0.9
       },
       "shop": {
-        "x": 73,
-        "y": 99
-      },
-      "dummy": {
-        "x": 90,
-        "y": 99
+        "x": 75,
+        "y": 99,
+        "scale": 0.9
       }
     },
     "talk": {
@@ -357,6 +365,22 @@
       "hungry": [
         "오래도 비웠군. 배가 텅 비었다.",
         "날 굶기다니, 배짱 좋군."
+      ],
+      "askPet": [
+        "…가면 안이 웅웅거린다. 교감해라.",
+        "특별히 허락하지. 영혼을 맞대 봐라."
+      ],
+      "askSleep": [
+        "…졸리군. 재워라.",
+        "눈꺼풀이 무겁다… 잠깐 자야겠다."
+      ],
+      "refusePet": [
+        "건드리지 마라.",
+        "손 치워라. 지금은 싫다."
+      ],
+      "refuseSleep": [
+        "자고 싶지 않다.",
+        "잠이 안 온다. 귀찮게 하지 마라."
       ]
     }
   },
@@ -431,8 +455,11 @@
     }
   },
   "liberation": {
-    "name": "레수렉시온",
-    "cutin": "본능을 해방한다 — 레수렉시온!",
+    "baseName": "영력 해방",
+    "baseCutin": "영력을 끌어올린다 — 영력 해방!",
+    "baseEndText": "해방이 풀렸다. 광기가 스며든다…",
+    "name": "레스렉시온",
+    "cutin": "본능을 해방한다 — 레스렉시온!",
     "endText": "해방이 풀렸다. 광기가 스며든다…"
   },
   "rebirth": {
@@ -443,7 +470,7 @@
   "training": {
     "title": "본능 수련",
     "foe": "내 안의 본능",
-    "completeText": "본능을 지배했다. 이제 전투에서 레수렉시온을 쓸 수 있다.",
+    "completeText": "본능을 지배했다. 레스렉시온의 힘이 더 강해진다.",
     "games": {
       "duel": {
         "name": "본능 대결",

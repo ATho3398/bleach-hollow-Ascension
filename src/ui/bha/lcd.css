@@ -49,3 +49,8 @@
 
 /* ═════ 토스트(알림 띠): LCD 도 같은 한 줄 띠 — 위 가장자리, 높이 화면의 약 15% 이하(2개 쌓아도) ═════ */
 .bha-lcd .bha-toast { top: var(--bha-sp-1); }
+
+/* 안내 문구 줄바꿈 (GDD 73장, C.126): 항목마다 한 줄, 항목 이름은 굵게 */
+.bha-lines { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+.bha-lines__row { margin: 0; }
+.bha-lines__name { margin-right: var(--bha-sp-3); color: var(--bha-text-1); }

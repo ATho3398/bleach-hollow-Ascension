@@ -89,7 +89,13 @@ export function physBlockOf(fa: Pick<FormAbilities, 'phys'>): PhysBlock | null {
   if (!fa.phys) return null;
   const element = fa.phys.element;
   const power = PB.power[element] ?? 1;
-  switch (fa.phys.def.block.effect) {
+  const damage = PB.damageByElement[element] ?? PB.damage;
+  const pb = physBlockEffectOf(fa.phys.def.block.effect, element, power);
+  return damage === 1 ? pb : { ...pb, damage };
+}
+
+function physBlockEffectOf(effect: NonNullable<FormAbilities['phys']>['def']['block']['effect'], element: string, power: number): PhysBlock {
+  switch (effect) {
     case 'stoneStance': return { element, power, effect: 'stoneStance', ...PB.stoneStance };
     case 'knockback': return { element, power, effect: 'knockback', ...PB.knockback };
     case 'ember': return { element, power, effect: 'ember' };

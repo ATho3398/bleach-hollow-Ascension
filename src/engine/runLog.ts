@@ -19,12 +19,15 @@ export interface AbsorbRecord {
   lap: number;
   /** C.60 (세이브 형식 24, GDD 25-9): 이 흡수에서 다시 뽑기권으로 후보를 다시 뽑았나 (옛 기록은 없음 = false) */
   rerolled?: boolean;
-  /** C.106 (GDD 49-7 ①): 특수 속성 특성 숨김이 풀린 흡수 화면이면 그 까닭(elite·boss·mutation·difficulty). 옵션 필드 */
+  /** C.106 (GDD 49-7 ①): 특수 속성 특성 숨김이 풀린 흡수 화면이면 그 까닭(elite·boss·mutation·difficulty). 옵션 필드.
+   *  C.127 (GDD 75장): 숨김이 적 등장으로 옮겨 = 특수 속성(혈·독·허) 적의 흡수 화면이면 그 적이 나온 까닭(같은 낱말, 보스·스토리 고정 적은 비어 있을 수 있음) */
   specialGates?: string[];
-  /** C.106: 흡수한 특성이 특수 속성(혈·독·허, 숨김) 특성이었나 */
+  /** C.106: 흡수한 특성이 특수 속성(혈·독·허) 특성이었나 */
   hiddenTrait?: boolean;
   /** C.108 (GDD 52, 세이브 형식 34): 흡수 갈래 trait(속성만)·stat(스탯만). 둘 다(both)·옛 기록은 적지 않는다(absorbModeOf 가 both 로 읽음). 놓아줌(absorbed false)은 없음 */
   mode?: 'both' | 'trait' | 'stat';
+  /** C.136 (GDD 84장 8번, 세이브 형식 40): 이 흡수로 오른 뒤의 그 속성 강화 횟수(상한 100 을 넘어도 센다). 스탯만·놓아줌·옛 기록은 없음 */
+  enhance?: number;
 }
 
 /** 흡수 기록의 갈래 (GDD 52): 흡수했으면 mode(없으면 both), 놓아줬으면 null */
@@ -113,14 +116,18 @@ export interface BattleRecord {
   finisherElement: string | null;
   /** 옛 필드(형식 13 까지): 마무리 일격의 계통 */
   finisherLineageId?: string | null;
-  /** 이 전투로 흡수 조건을 채웠는가 (마무리 일격이 약점 계통 스킬 / 약점 계통 체인3 1회 이상 / 첫 흡수 보장) */
+  /** 이 전투로 흡수할 수 있었는가. C.125 (GDD 71장) 부터 흡수 조건이 없어 이기면 늘 true (필드는 히든 조건 대비로 남긴다). 그 전 기록은 옛 조건(우위 마무리 / 우위 체인3 / 첫 흡수 보장) */
   absorbable: boolean;
-  /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0 */
+  /** C.17 에서 더한 필드 (세이브 형식 10, 저장형 필살기): 사용 횟수, 충전 낭비(상한에서 버려진 게이지). 옛 기록은 0.
+   *  C.134 (GDD 83장): 저장형 필살기 삭제 — 필드 구조는 남기고 새 기록은 늘 0 */
   storedUsed: number;
   storedWasted: number;
   /** C.54 에서 더한 필드 (세이브 형식 18, 해방 GDD 22-5): 해방을 썼는가, 쓴 시각(전투 시작부터 초, 안 썼으면 null). 옛 기록은 false/null */
   liberationUsed: boolean;
   liberationAt: number | null;
+  /** C.134 에서 더한 필드 (세이브 형식 39, GDD 83장 해방): 해방 사용 횟수(한 전투 여러 번), 해방 중 발동한 블록(체인) 수. 그 전 기록은 없음 */
+  liberationUses?: number;
+  liberationChains?: number;
   /** 치명타 횟수: 내 공격 / 적 공격 (C.63, GDD 28장 5번). 옛 기록은 없음 */
   crits?: number;
   enemyCrits?: number;
@@ -233,7 +240,7 @@ export interface RunRecord {
   gained: string[];
   lost: string[];
   /** P2 에서 더한 필드 (세이브 형식 3): 끝난 이유, 시드, 종족 */
-  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear';
+  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort';
   seed: number;
   factionId: string;
   /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 한계 돌파 여부 */
@@ -256,6 +263,22 @@ export interface RunRecord {
   difficulty?: number;
   /** C.75 (GDD 32-1 10번): 출발 때 적용된 같은 ★ 연속 클리어 수 (0~10). 스토리 화는 0 */
   streak?: number;
+  /** C.120 (세이브 형식 37, GDD 67장): 첫 원정 튜토리얼이면 true. 없으면 일반 원정 */
+  tutorial?: boolean;
+}
+
+/** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장 3번·9장): 첫 원정의 '첫 흡수'는 흡수 기록(absorbs)에 넣지 않고 여기에 따로 남긴다 — 히든 조건이 흡수와 구분해 읽게 */
+export interface TutorialRewardRecord {
+  at: number;
+  runId: number;
+  factionId: string;
+  /** 'first-absorb' = 첫 원정 튜토리얼의 흡수 화면 */
+  kind: 'first-absorb';
+  enemyId: string;
+  element: string;
+  /** 실제로 오른 노력치 */
+  ev: Partial<Record<string, number>>;
+  tierIndex: number;
 }
 
 /** 보스전 1회 기록 (GDD 25-3, 세이브 형식 22): 이기든 지든 남긴다. 보스 칭호·히든 조건이 읽는다 */
@@ -329,6 +352,7 @@ export interface TitleUnlockRecord {
 
 export interface RunLog {
   absorbs: AbsorbRecord[];
+  /** 속성 보너스 완성 기록 — 같은 속성 3개 보너스가 C.150 에 삭제돼 더 쌓이지 않는다 (GDD 94장 B 후속). 자리만 남김 */
   lineages: LineageRecord[];
   risk: RiskRecord;
   battles: BattleRecord[];
@@ -348,10 +372,94 @@ export interface RunLog {
   shopPurchases: ShopPurchaseRecord[];
   /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
   towerBattles: TowerBattleRecord[];
+  /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장): 첫 원정 튜토리얼의 흡수(시스템상 흡수 아님) */
+  tutorialRewards: TutorialRewardRecord[];
+  /** 돌봄 요청 기록 (C.133, 세이브 형식 38, GDD 82장): 쓰다듬기·재우기 요청에 응답·거절(요청 없이 누름)·놓침 횟수 */
+  care: CareRecord;
+  /** 떠돌이 상인 기록 (C.140, 세이브 형식 41, GDD 85장 5번): 옴(숨은 티어·기다린 바퀴)·삼·떠남 */
+  wanderer: WandererRecord[];
+  /** 대기 모드 기록 (C.140, 세이브 형식 41, GDD 85장 6번·88장 7번): 돌아올 때마다 요약 1건 — 바퀴·전투를 낱낱이 남기지 않는다 */
+  idle: IdleRecord[];
+  /** 펫 기록 (C.144, 세이브 형식 42, GDD 90장 7번): 얻음·데리고 감·두고 감·친밀도 오름 */
+  pets: PetRecord[];
+  /** 장비 기록 (C.150, 세이브 형식 44, GDD 91장 8번): 얻음·장착·해제·강화·판매 */
+  gear: GearRecord[];
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
   fusions?: FusionRecord[];
+}
+
+/** 돌봄 요청 누계 (GDD 82장·9장): answered = 요청에 응답, refused = 요청이 없거나 다른 요청일 때 눌러 거절당함, missed = 유지 시간 안에 응답하지 못해 사라진 요청 */
+export interface CareRecord {
+  answered: { pet: number; sleep: number };
+  refused: { pet: number; sleep: number };
+  missed: number;
+}
+
+/** 떠돌이 상인 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
+export interface WandererRecord {
+  at: number;
+  factionId: string;
+  kind: 'arrive' | 'buy' | 'leave';
+  /** 숨은 티어 1~4 */
+  tier: number;
+  runId?: number;
+  waited?: number;
+  itemId?: string;
+  price?: number;
+  unsold?: number;
+}
+
+/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 떠돌이 상인 · evolution 첫 진화 선물),
+ *  take = 데리고 감, leave = 두고 감, level = 친밀도 오름(level = 오른 뒤 값), dupGold = 바퀴 끝 보상이 이미 가진 펫이라 골드로 바뀜 */
+export interface PetRecord {
+  at: number;
+  factionId: string;
+  kind: 'get' | 'take' | 'leave' | 'level' | 'dupGold';
+  petId: string;
+  source?: 'lap' | 'wanderer' | 'evolution';
+  level?: number;
+  runId?: number;
+  gold?: number;
+}
+
+/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 떠돌이 상인, from = 드롭한 상대 등급),
+ *  equip/unequip = 장착·해제(slot), enhance = 강화(plus = 오른 뒤 단계, gold = 쓴 골드), sell = 판매, autoSell = 보관함이 가득 차 얻자마자 골드로 */
+export interface GearRecord {
+  at: number;
+  factionId: string;
+  kind: 'get' | 'equip' | 'unequip' | 'enhance' | 'sell' | 'autoSell';
+  uid?: string;
+  gearKind: string;
+  grade: string;
+  star?: number;
+  source?: 'drop' | 'shop' | 'wanderer';
+  from?: 'normal' | 'elite' | 'boss';
+  slot?: string;
+  plus?: number;
+  gold?: number;
+  runId?: number;
+  lap?: number;
+}
+
+/** 대기 모드 요약 1건 (GDD 85장 6번): 꺼 둔 구간·실제로 돈 시간·지급량. 시간은 시간 단위(소수 둘째 자리) */
+export interface IdleRecord {
+  at: number;
+  factionId: string;
+  /** 마지막 접속 시각 (구간 시작) */
+  from: number;
+  /** 꺼 둔 시간 (최대 24) · 자동 모험이 돈 시간(허기·쇠약 반영) */
+  hours: number;
+  activeHours: number;
+  share: number;
+  laps: number;
+  steps: number;
+  gold: number;
+  /** 실제로 오른 노력치 합 (상한에 막힌 만큼 빠짐) */
+  ev: number;
+  tiles: string[];
+  food: number;
 }
 
 /** 상점 구매 1건 (GDD 25-9·9장, 세이브 형식 24): 시각·트랙 종족·품목 id·화폐·가격. 꾸밈 착용 변화는 남기지 않는다 */
@@ -361,6 +469,8 @@ export interface ShopPurchaseRecord {
   itemId: string;
   currency: 'gold' | 'jade';
   price: number;
+  /** 뽑기 결과 (C.120, 형식 37): 타일 뽑기·희귀 타일이면 나온 타일 id */
+  result?: string;
 }
 
 /** 합체 기록의 캐릭터 한 명 요약 (GDD 22-3, C.59): 합체로 사라진 캐릭터가 어떤 몸이었나 */
@@ -428,5 +538,11 @@ export function emptyRunLog(): RunLog {
     shopPurchases: [],
     storyRuns: [],
     towerBattles: [],
+    tutorialRewards: [],
+    care: { answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 },
+    wanderer: [],
+    idle: [],
+    pets: [],
+    gear: [],
   };
 }

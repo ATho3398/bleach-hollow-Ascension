@@ -1,0 +1,29 @@
+{
+ "patch": "C.116b",
+ "server": "/bleach-hollow-Ascension/ (실제 배포와 같은 대문자 경로) 배포 빌드",
+ "cache": {
+  "version": "4e7b32e302bd",
+  "files": 115,
+  "bytes": 7844943
+ },
+ "scenarios": {
+  "start": {
+   "offline_failed_requests": 0,
+   "broken_images": 0
+  },
+  "tier3": {
+   "offline_failed_requests": 0,
+   "broken_images": 0
+  },
+  "tier5": {
+   "offline_failed_requests": 0,
+   "broken_images": 0
+  },
+  "shop": {
+   "offline_failed_requests": 0,
+   "broken_images": 0
+  }
+ },
+ "scenario_notes": "start=시작 외형(stalker) 1단계, tier3=아쥬커스 외형(panther) 3단계, tier5=아란칼 5단계(skin arrwaterb), shop=상점 스킨(grandfisher). 각각 온라인 1회 열기→setOffline→새로고침→방·책장·원정 걷기·전투",
+ "update_path": "C.116 워커가 깔린 상태에서 C.116b 로: 새 워커 즉시 적용(skipWaiting), 옛 캐시 삭제, 오프라인 새로고침 정상, 실패 요청 0"
+}

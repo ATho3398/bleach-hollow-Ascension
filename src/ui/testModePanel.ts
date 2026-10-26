@@ -18,6 +18,7 @@ import {
 import { statBonusOf, type SaveData } from '../game';
 import { button, el, info, panel, seg } from './bha/dom';
 import { lcdHead, lcdPage } from './bha/lcdpage';
+import { viewTitle } from './bha/viewtitle';
 import { showToast } from './bha/nest';
 import { disableTestMode, setTestSpeed, testSpeed } from './testMode';
 import { setSpeed as setExpSpeed } from './expeditionView';
@@ -122,8 +123,9 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   else if (tab === 'battle') body = battleTab();
   else body = nestTab();
 
-  const tabs = seg(TABS, tab, (id) => redraw(id as TestTab), { small: true });
-  lcdPage(root, { cls: 'bha-test-page', cols: '3fr 2fr' }, lcdHead({ title: '테스트', sub: '전체 해금된 테스트 칸 — 진짜 세이브는 읽지도 쓰지도 않는다', aside: [tabs] }), body, [summary]);
+  // 머리의 탭 5개 줄 대신 제목 토글 "테스트 · 진화체 ▾" (C.114)
+  const title = viewTitle(TABS.map((t) => ({ id: t.id, label: t.label })), tab, (id) => redraw(id as TestTab), { prefix: '테스트' });
+  lcdPage(root, { cls: 'bha-test-page', cols: '3fr 2fr' }, lcdHead({ title, sub: '전체 해금된 테스트 칸 — 진짜 세이브는 읽지도 쓰지도 않는다' }), body, [summary]);
 
   function formTab(): Node[] {
     const fSel = select(FACTIONS.map((f) => ({ value: f.id, label: f.name })), fid, '종족');

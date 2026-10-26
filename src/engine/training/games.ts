@@ -51,7 +51,7 @@ export function createDuel(level: number, seed: number): DuelState {
 function scheduleDuel(s: DuelState, gap?: number): void {
   const [lo, hi] = TX.duel.gapSeconds;
   s.phase = 'wait';
-  s.until = s.t + (gap ?? (s.double ? 0.35 : lo! + nextFloat(s.rng) * (hi! - lo!)));
+  s.until = s.t + (gap ?? (s.double ? TX.duel.doubleGapSeconds : lo! + nextFloat(s.rng) * (hi! - lo!)));
   s.double = false;
 }
 
@@ -89,7 +89,7 @@ export function stepDuel(s: DuelState, dt: number, press?: DuelDir | null): void
     s.fake = null;
     if (nextFloat(s.rng) < byLevel(TX.duel.fakeChance, s.level)) {
       const others = DUEL_DIRS.filter((d) => d !== s.dir);
-      s.fake = { at: s.t + tele * 0.55, to: others[nextInt(s.rng, others.length)]! };
+      s.fake = { at: s.t + tele * TX.duel.fakeAtShare, to: others[nextInt(s.rng, others.length)]! };
     }
   } else if (s.phase === 'tele') {
     s.phase = 'window';
@@ -152,7 +152,7 @@ export function stepDodge(s: DodgeState, dt: number, move?: 'up' | 'down' | 'tog
   if (s.t >= s.nextShotAt) {
     s.shots.push({ id: s.nextId++, lane: nextInt(s.rng, 2) as Lane, x: 1, hit: false });
     const gap = byLevel(TX.dodge.spawnSeconds, s.level);
-    s.nextShotAt = s.t + gap * (0.8 + nextFloat(s.rng) * 0.4);
+    s.nextShotAt = s.t + gap * (TX.dodge.spawnJitter.base + nextFloat(s.rng) * TX.dodge.spawnJitter.range);
   }
 }
 
@@ -243,7 +243,7 @@ export interface ChainState {
 }
 
 export function createChain(level: number, seed: number): ChainState {
-  return { kind: 'chain', level, rng: createRng(seed), t: 0, status: 'playing', cells: Array.from({ length: TX.chain.cells }, () => null), nextSpawnAt: 0.5, nextId: 1, score: 0, last: null };
+  return { kind: 'chain', level, rng: createRng(seed), t: 0, status: 'playing', cells: Array.from({ length: TX.chain.cells }, () => null), nextSpawnAt: TX.chain.firstSpawnSeconds, nextId: 1, score: 0, last: null };
 }
 
 export function stepChain(s: ChainState, dt: number, tap?: number | null): void {
@@ -274,7 +274,7 @@ export function stepChain(s: ChainState, dt: number, tap?: number | null): void 
       const kind = nextFloat(s.rng) < byLevel(TX.chain.predatorShare, s.level) ? 'predator' : 'prey';
       s.cells[cell] = { kind, until: s.t + byLevel(TX.chain.showSeconds, s.level), id: s.nextId++ };
     }
-    s.nextSpawnAt = s.t + byLevel(TX.chain.spawnSeconds, s.level) * (0.8 + nextFloat(s.rng) * 0.4);
+    s.nextSpawnAt = s.t + byLevel(TX.chain.spawnSeconds, s.level) * (TX.chain.spawnJitter.base + nextFloat(s.rng) * TX.chain.spawnJitter.range);
   }
 }
 

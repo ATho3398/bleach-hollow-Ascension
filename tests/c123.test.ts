@@ -1,0 +1,46 @@
+// C.123 (GDD 62장 후속): C.118 뒤 목표 미달 맞추기 — 보스 sand-maw 공격 ↑ · ★2 강적 입문 보정 · 탑 ★2 강적 층 상쇄. 체인 보상 수치는 그대로(66장)
+import { describe, expect, it } from 'vitest';
+import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
+import { getBoss } from '../src/data/bosses';
+import { difficultyEnemyScale } from '../src/engine/difficulty';
+import { towerFloor, towerFloorMultiplier } from '../src/engine/tower';
+
+const DX = BALANCE.provisional.difficulty;
+const TX = BALANCE.provisional.tower;
+
+describe('C.123 C.118 뒤 밸런스 목표 맞추기', () => {
+  it('BALANCE_VERSION 60 이상', () => {
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(60);
+  });
+
+  it('★2 보스 sand-maw 공격 0.37 → C.127 0.35 → C.132 0.37 → C.134 0.35 (체력 150 그대로)', () => {
+    const e = getBoss('sand-maw').enemy;
+    expect(e.attackInAttacks).toBe(0.35); // C.132: 기본 몫 ×0.75 로 보스전 ★2 65 → 72% → 0.37 66%. C.134: 저장 필살기(25회분) 삭제로 보스전 ★2 61 → 51% → 0.35
+    expect(e.hpInAttacks).toBe(150);
+  });
+
+  it('★2 강적 입문 보정 ×0.9 → C.127 ×1 (혈·독·허 적이 ★1~2 길에서 빠져 되돌림), ★3 강적은 1', () => {
+    expect(DX.eliteEase[2]).toEqual({ hp: 1, attack: 1 });
+    const elite = difficultyEnemyScale(2, 'elite');
+    const normal = difficultyEnemyScale(2, 'normal');
+    expect(elite.hp).toBeCloseTo(normal.hp);
+    expect(elite.attack).toBeCloseTo(normal.attack);
+    expect(DX.eliteEase[3]).toBeUndefined();
+  });
+
+  it('탑 ★2 강적 층(15층)은 입문 보정을 상쇄한 배율에 C.136 A안 ×0.92 를 곱한다', () => {
+    // C.136 A안: 원정 강적 공격 ×1.42 를 탑 15층에서 조금 덜어냄 (상쇄 1 → 0.92)
+    expect(TX.eliteScaleByBand[2]! * DX.eliteEase[2]!.hp).toBeCloseTo(0.92);
+    const f = towerFloor(15);
+    expect(f.floorMult).toBeCloseTo(towerFloorMultiplier(15));
+    const net = f.floorMult * difficultyEnemyScale(2, 'elite').hp;
+    expect(net).toBeCloseTo((1 + 4 * TX.perFloorByBand[2]!) * TX.eliteScale * 0.92 * difficultyEnemyScale(2, 'normal').hp);
+    // 다른 구간 강적 층은 그대로
+    expect(towerFloorMultiplier(25)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale);
+  });
+
+  it('체인 보상 수치는 C.118 그대로 (66장 사용자: 수정하지 말 것)', () => {
+    expect(BALANCE.provisional.combat.chainMultipliers).toEqual([1, 2.2, 3.6]);
+    expect(BALANCE.provisional.combat.chainBonusFromChain).toBe(3);
+  });
+});

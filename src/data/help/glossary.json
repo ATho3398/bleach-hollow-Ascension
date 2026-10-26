@@ -1,20 +1,19 @@
 {
   "provisional": true,
   "terms": [
+    {"id": "stats", "title": "능력치", "body": "**{stat.hp}**: 최대 체력. 내 최대 체력 = 기준 체력 {playerMaxHp} × ({stat.hp} ÷ {statRef}) × {playerHpScale}. 능력치가 기준 {statRef}의 두 배면 최대 체력도 두 배예요.\n**{stat.atk}**: 물리 공격의 세기. 물리 피해는 내 {stat.atk} ÷ 상대 {stat.def} 비율로 정해져요.\n**{stat.int}**: 특수 공격의 세기. 특수 피해는 내 {stat.int} ÷ 상대 {stat.spr} 비율로 정해져요. 혼합 공격은 두 능력치의 평균을 써요.\n**{stat.def}**: 물리 공격을 막는 힘. 높을수록 물리 피해가 줄어요.\n**{stat.spr}**: 특수 공격을 막는 힘. 높을수록 특수 피해가 줄어요.\n**{stat.spd}**: 평타가 나가는 빠르기만 정해요. 평타 간격(초) = {playerAttackSeconds} × ({statRef} ÷ {stat.spd}). 두 배면 간격이 절반이에요.\n**치명타**: 확률 기본 {critChancePct}%(특성으로 더하고 최대 {critChanceMaxPct}%), 맞으면 피해 ×{critMultiplier}.\n**속성 피해**: 무·물·불·흙·뇌 각각 그 속성 공격의 피해가 몇 % 더 센지예요. 특성과 진화체가 올려 줘요.\n**오르는 법**: 능력치 = (진화체 종족값 + 노력치 + 계승) × (1 + 보너스), 최대 {statMax}. 노력치는 {absorbActionName}과 수련으로 쌓이고 단계마다 상한이 있어요. 괄호 안 숫자가 노력치예요."},
     {"id": "lineage", "title": "속성", "body": "적과 특성, 내 캐릭터는 속성을 하나씩 가져요: 노멀·불·물·흙·뇌·혈·독·허. 원소는 물 → 불 → 흙 → 뇌 → 물 순으로 앞이 뒤에 강해요(×1.2, 반대면 ×0.85). 혈은 흡혈, 독은 지속 피해를 더해요(허는 공격 효과 없이 진화체 특성 '연쇄'가 개성이에요). 내 속성과 같은 블록은 ×1.1이에요. 블록 색이 속성이에요."},
-    {"id": "rank", "title": "{rankBattleName}", "body": "{tier5}이(가) 되면 {nestName} [더보기]에서 열려요. {unrankedName}에서 시작해 바로 위 한 칸에게만 도전해요. 이기면 그 {rankUnitName}을(를) 빼앗고 상대는 한 칸 내려가요. 지면 한 칸 내려가고, 진 상대에게는 원정을 한 번 다녀온 뒤 다시 도전할 수 있어요. 전투는 평소 블록 전투 그대로예요."},
+    {"id": "rank", "title": "{rankBattleName}", "body": "{tier5}이(가) 되면 {nestName}의 수련장 안에서 열려요. {unrankedName}에서 시작해 바로 위 한 칸에게만 도전해요. 이기면 그 {rankUnitName}을(를) 빼앗고 상대는 한 칸 내려가요. 지면 한 칸 내려가고, 진 상대에게는 원정을 한 번 다녀온 뒤 다시 도전할 수 있어요. 전투는 평소 블록 전투 그대로예요."},
     {"id": "family", "title": "계열", "body": "공격 {skillBlockName}이(가) 속한 갈래({familyList})예요. 블록 위 왼쪽 위의 한 글자가 계열이에요. 같은 계열 블록이 붙으면 특성이 달라도 {chainName}이(가) 돼요. 계열마다 1~{chainMax}단계 기술이 있어요."},
-    {"id": "chain", "title": "{chainName}", "body": "같은 계열({familyList}) 공격 블록이 블록 바에 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해요. 특성이 달라도 계열만 같으면 돼요. 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 최대 {chainMax}단계이고 단계가 오를수록 더 강한 기술이 나가요(1단계 → 3단계). {roleNames.guard}·{roleNames.heal} 블록은 계열이 없어서 같은 블록끼리만 붙어요."},
-    {"id": "sp", "title": "{spName}", "body": "블록을 쓸 때마다 차는 게이지예요. 가득 차면 {specialBlockName}이(가) 블록 바에 나타나요."},
-    {"id": "special-block", "title": "{specialBlockName}", "body": "{spName}이(가) 가득 차면 블록 바의 빈 칸에 생기는 큰 피해 블록이에요. 빈 칸이 없으면 나오지 못하니 한 칸은 비워 두세요."},
+    {"id": "chain", "title": "{chainName}", "body": "완전히 같은 블록(같은 속성 + 같은 계열, 예: 불 조와 불 조)이 블록 바에 나란히 붙어 있을 때 누르면 붙은 블록이 함께 발동해요. 속성이나 계열이 다르면(조와 불 조) 붙어 있어도 따로 나가요. 사이에 낀 블록을 먼저 쓰면 뒤 블록이 당겨져 붙어요. 최대 {chainMax}단계이고 단계가 오를수록 더 강한 기술이 나가요(1단계 → 3단계). {roleNames.guard}·{roleNames.heal} 블록도 같은 블록끼리만 붙어요."},
     {"id": "combo", "title": "콤보 블록", "body": "같은 계열의 {chainName}을(를) 다른 블록을 쓰지 않고 연달아 두 번 쓰면 블록 바 맨 오른쪽에 큰 피해를 주는 콤보 블록이 생겨요. 콤보는 진화할 때마다 하나씩 열려요(임시)."},
-    {"id": "stored-skill", "title": "{storedSkillName}", "body": "블록 바 아래 버튼이에요. 블록을 쓸수록 충전이 모이고(최대 {storedChargesMax}개) 하나를 써서 기본 공격 {storedPower}회분의 큰 피해를 줘요. 쓴 직후 {storedGuardSeconds}초 동안 {roleNames.guard} 상태가 되어 강공격 예고에도 쓸 수 있어요. 전투가 끝나면 충전은 이월되지 않아요."},
+    {"id": "liberation", "title": "{liberation.baseName} · {liberation.name}", "body": "블록 바 위의 해방 버튼이에요. 블록을 쓸수록 게이지가 차고, 가득 차면 눌러 {liberationSeconds}초 동안 해방해요. 해방 중에는 기본 블록 대신 방에서 끼운 해방 블록(칸 수 {liberationSlots}칸, 단계가 오르면 늘어요)이 빠르게 나와요. 끝나면 {riskGaugeName}이(가) {liberationRisk} 오르고 게이지는 0부터 다시 차서, 한 전투에 여러 번 쓸 수 있어요. {tier5}부터는 이름이 {liberation.name}(으)로 바뀌고 몸에 오오라가 생기며 공격 속도·체인 속도·능력치가 올라가요."},
     {"id": "void-block", "title": "{voidBlockName}", "body": "큰 피해를 주는 대신 쓰면 {riskGaugeName}이(가) 올라가는 블록이에요. 컨디션이 나쁘거나 위험한 상황에서 더 자주 생겨요."},
     {"id": "weakness", "title": "약점", "body": "원소 속성 적은 그 속성을 이기는 속성이 약점이에요(예: 불 적은 물). 약점 속성 {skillBlockName}은(는) 효과가 굉장해요(×1.2). 상성이 좋은 {skillBlockName}으로 마무리하면 {absorbActionName}할 수 있어요. 약점이 없는 적(노멀·혈·독·허)은 아무 {skillBlockName}으로 마무리해도 돼요. 공격 분류도 봐요: 물리는 힘 대 방어, 특수는 지능 대 정신력이에요."},
-    {"id": "stability", "title": "{stabilityName}", "body": "적을 놓아주거나 {nestName}에서 돌보면 오르는 안정 수치예요. 높을수록 전투 시작 때 {storedSkillName} 충전이 더 채워져 있어요. 한계 돌파를 겪고 돌아오면 떨어져요."},
-    {"id": "risk-gauge", "title": "{riskGaugeName}", "body": "{voidBlockName}을(를) 쓰거나 강한 적을 {absorbActionName}하면 오르는 게이지예요. 한계를 넘으면 한계 돌파가 일어나 원정이 위험해져요. 적을 놓아주거나 휴식, {nestName}에서 돌보면 내려가요. (수치는 임시)"},
+    {"id": "stability", "title": "{stabilityName}", "body": "손해: {stabilityLossText} 오르내림: {stabilityMoveText}."},
+    {"id": "risk-gauge", "title": "{riskGaugeName}", "body": "손해: {riskLossText} 오르는 길: {riskUpText}. 내리는 길: {riskDownText}."},
     {"id": "evolution-condition", "title": "진화 조건", "body": "진화는 원정에서 걸은 거리로 와요(숫자는 비밀). 때가 되면 {nestName}에 돌아올 때 저절로 진화해요. {tier4}은(는) 장착 특성 중 가장 많은 속성, {tier5}은(는) 그 속성 × 가장 많은 공격 분류(물리·특수·혼합)로 정해져요. 특별한 조건을 채우면 히든 진화체가 나올 수도 있어요. 특성 없이 진화하거나 몸 상태가 나쁘면 실패해요. (수치는 임시)"},
-    {"id": "form-dex", "title": "진화체 도감", "body": "{nestName}의 진화 칸에 있는 [진화체 도감]에서 열어요. 한 번 진화해 본 진화체가 기록돼요."},
+    {"id": "form-dex", "title": "진화체 도감", "body": "{nestName}의 상태 화면 [진화 정보] 안 [진화체 도감]에서 열어요. 한 번 진화해 본 진화체가 기록돼요."},
     {"id": "title-dex", "title": "칭호 도감", "body": "{nestName}의 [칭호 도감]에서 열어요. 조건을 채우면 칭호가 해금되고, 숨겨진 칭호는 ?로 보여요. (조건은 임시)"},
     {"id": "resume-expedition", "title": "원정 이어하기", "body": "원정은 전투가 끝날 때마다 자동 저장돼요. 도중에 앱을 닫아도 {nestName}에서 [원정 이어하기]로 돌아올 수 있어요. 전투 도중에 닫으면 그 전투가 시작되기 직전부터 다시 해요. 새 원정을 시작하면 이어하던 원정은 패배 처리 없이 사라져요."}
   ]

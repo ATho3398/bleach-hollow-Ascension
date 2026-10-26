@@ -1,5 +1,7 @@
 // C.60 (S-16, GDD 25-9): 상점 1차 — 골드 탭 11종(산 즉시 쓰기·상한), 영옥 탭 꾸밈 8분류(보유 공유·착용 트랙별·분류당 1개),
 // 다시 뽑기권(흡수 1번에 1장), 덱 칸, 튜토리얼 영옥 +1, 세이브 형식 24 마이그레이션, 런 로그 shopPurchases·흡수 rerolled
+import { placementLimitOf } from '../src/tilePresets';
+import { useInventoryItem } from '../src/inventory';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
@@ -12,11 +14,14 @@ import { CATEGORIES, COSMETIC_ITEMS, GOLD_ITEMS, WEAR_CATEGORIES, cosmeticToken,
 import { chooseAbsorb, createExpedition, rerollAbsorb } from '../src/engine/expedition';
 import type { AbsorbOffer } from '../src/engine/absorb';
 import {
-  claimTutorialGoals, deckSizeOf, equipSkin, migrateSave, newSaveData, SAVE_FORMAT_VERSION, sanitizeDeck, switchTrack, checkTrackOpen, type SaveData,
+  claimTutorialGoals, equipSkin, migrateSave, newSaveData, SAVE_FORMAT_VERSION, sanitizeDeck, switchTrack, checkTrackOpen, type SaveData,
 } from '../src/game';
 import { buyShopItem, goldRows, jadeRows, rareTilePool, shortText, unwearCategory, useRerollTicket, wearCosmetic, wornCosmetics } from '../src/shop';
 import { COSMETIC_PARTS } from '../src/ui/bha/cosmetics';
 import { boughtText, shopConfirmText } from '../src/ui/shopView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const SX = BALANCE.shop;
 const H = getFaction('hollow');
@@ -30,7 +35,7 @@ const row = (s: SaveData, id: string) => [...goldRows(s, getFaction(s.factionId)
 
 describe('상점 데이터 (25-9 표)', () => {
   it('골드 11종·영옥 꾸밈 8분류, 가격은 balance.ts', () => {
-    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'training-ticket', 'rare-tile', 'reroll', 'deck-slot']);
+    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
     expect(CATEGORIES.map((c) => c.id).slice(0, 8)).toEqual(['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate']); // 2차 분류는 c61
     const count = (c: string) => COSMETIC_ITEMS.filter((x) => x.category === c).length;
     expect([count('aura'), count('tint'), count('trail'), count('fx'), count('bar'), count('shell'), count('plate')]).toEqual([4, 4, 3, 3, 3, 3, 3]);
@@ -77,18 +82,25 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     expect(buyShopItem(s, H, 'food-hearty').ok).toBe(false);
     expect(s.shared.tradeCoins).toBe(15);
   });
-  it('정화제 리스크 −30(0 아래로 안 감)·각성제 컨디션 +30(100 위로 안 감), 이미 0/가득이면 잠김, 원정 중간 저장이 있으면 잠김', () => {
+  it('정화제·각성제 (C.140, GDD 86장 4번): 사면 보관함에 쌓이고(상한 9) 보관함에서 쓴다 — 리스크 −30(0 아래로 안 감)·컨디션 +30(100 위로 안 감), 이미 0/가득·원정 중이면 못 쓴다', () => {
     const s = rich();
     s.nest.risk = 20;
     s.nest.condition = 90;
     expect(buyShopItem(s, H, 'calm').ok).toBe(true);
     expect(buyShopItem(s, H, 'wake').ok).toBe(true);
+    expect([s.nest.risk, s.nest.condition]).toEqual([20, 90]);
+    expect(s.shared.items).toEqual({ calm: 1, wake: 1 });
+    expect(useInventoryItem(s, H, 'calm').ok).toBe(true);
+    expect(useInventoryItem(s, H, 'wake').ok).toBe(true);
     expect([s.nest.risk, s.nest.condition]).toEqual([0, 100]);
-    expect(row(s, 'calm')!.canBuy).toBe(false);
-    expect(row(s, 'wake')!.canBuy).toBe(false);
+    expect(s.shared.items).toEqual({});
+    buyShopItem(s, H, 'calm');
+    expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: `${H.riskGaugeName} 이미 0` });
     s.nest.risk = 50;
     s.activeExpedition = {} as SaveData['activeExpedition'];
-    expect(row(s, 'calm')!.lock).toContain('원정 중');
+    expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: '원정 중인 캐릭터에는 못 쓴다' });
+    s.shared.items.calm = BALANCE.provisional.inventory.consumableCap;
+    expect(row(s, 'calm')!.lock).toBe('보관 가득 (9/9)');
   });
   it('수련권: 5단계 이상 트랙에서만 보이고, 지금 트랙 +1 (상한 3)', () => {
     const s = rich();
@@ -99,19 +111,20 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     expect(s.training.tickets).toBe(3);
     expect(row(s, 'training-ticket')!.canBuy).toBe(false);
   });
-  it('희귀 타일 꾸러미: 덱 밖 바탕 타일 1장 → 보관함', () => {
+  it('희귀 타일 꾸러미: 안 가진 바탕 타일 1장 → 보관함 (C.140: 덱 밖 → 안 가진)', () => {
     const s = rich();
-    s.tiles.deck = ['prey-nest-a', 'prey-nest-a', 'elite-den-a'];
+    s.tiles.unlocked = true; // C.120: 첫 진화 전에는 타일 품목이 잠긴다
+    s.tiles.collection = { 'prey-nest-a': 2, 'elite-den-a': 1 };
     const pool = rareTilePool(s);
     expect(pool.length).toBeGreaterThan(0);
-    expect(pool.every((id) => !s.tiles.deck.includes(id))).toBe(true);
+    expect(pool.every((id) => !(id in s.tiles.collection))).toBe(true);
     expect(pool.every((id) => baseTilesFor('hollow').some((t) => t.id === id))).toBe(true);
     const before = { ...s.tiles.collection };
     const r = buyShopItem(s, H, 'rare-tile', 1, () => 0);
     expect(r.ok).toBe(true);
     expect(s.tiles.collection[pool[0]!]).toBe((before[pool[0]!] ?? 0) + 1);
-    // 덱에 바탕 타일이 다 있으면 바탕 타일 전체에서
-    s.tiles.deck = baseTilesFor('hollow').map((t) => t.id);
+    // 바탕 타일을 다 가졌으면 바탕 타일 전체에서
+    for (const t of baseTilesFor('hollow')) s.tiles.collection[t.id] = 1;
     expect(rareTilePool(s).length).toBe(baseTilesFor('hollow').length);
   });
   it('다시 뽑기권: 보유 상한 3, 쓰면 1장 줄어든다', () => {
@@ -122,18 +135,18 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     expect(useRerollTicket(s)).toBe(true);
     expect(s.shared.rerollTickets).toBe(2);
   });
-  it('덱 칸: 400 → 800, 최대 +2, 원정 덱 8 → 9 → 10 (확인 창 품목)', () => {
+  it('배치 칸: 400 → 800, 최대 +2, 원정 배치 8 → 9 → 10 (확인 창 품목)', () => {
     const s = rich();
     expect(row(s, 'deck-slot')).toMatchObject({ price: 400, confirm: true });
     expect(row(s, 'food-basic')!.confirm).toBe(false);
     buyShopItem(s, H, 'deck-slot');
-    expect([deckSizeOf(s), row(s, 'deck-slot')!.price]).toEqual([9, 800]);
+    expect([placementLimitOf(s), row(s, 'deck-slot')!.price]).toEqual([9, 800]);
     buyShopItem(s, H, 'deck-slot');
-    expect(deckSizeOf(s)).toBe(10);
+    expect(placementLimitOf(s)).toBe(10);
     expect(row(s, 'deck-slot')).toMatchObject({ price: null, canBuy: false });
     expect(s.shared.tradeCoins).toBe(5000 - 1200);
-    for (const id of Object.keys(s.tiles.collection)) s.tiles.collection[id] = 3;
-    expect(sanitizeDeck({ ...s.tiles, deck: [] }, 'hollow', deckSizeOf(s)).length).toBe(10);
+    for (const id of Object.keys(BALANCE.provisional.expedition.referenceCollection)) s.tiles.collection[id] = 3; // C.120: 새 세이브는 0장이라 기준 21장 종류로
+    expect(sanitizeDeck({ ...s.tiles, deck: [] }, 'hollow', placementLimitOf(s)).length).toBe(10);
   });
 });
 
@@ -201,12 +214,12 @@ describe('영옥 탭: 꾸밈 보유(공유)·착용(트랙별, 분류당 1개)',
 
 describe('다시 뽑기 (흡수 화면)', () => {
   const offerFor = (cands: string[], el: string, enemyId: string): AbsorbOffer => ({
-    enemyId, element: el, ev: {}, rare: false, elite: false, strength: 30, candidates: cands, reasons: ['first-absorb'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
+    enemyId, element: el, ev: {}, rare: false, elite: false, strength: 30, candidates: cands, reasons: ['victory'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
   });
   it('후보를 같은 수로 다시 뽑고(겹치지 않게), 흡수 1번에 1번만. 흡수 기록에 rerolled', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 99, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
-    const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly)!;
+    const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly && x.element !== 'normal')!; // C.147: 노멀은 강화만(후보 없음)
     const own = TRAITS.filter((t) => t.element === enemy.element && !t.rare && !t.boss).map((t) => t.id);
     e.phase = 'absorb';
     e.absorbOffer = offerFor(own.slice(0, 2), enemy.element, enemy.id);
@@ -223,7 +236,7 @@ describe('다시 뽑기 (흡수 화면)', () => {
   it('확정 후보(희귀 특성)는 그대로 남는다', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 5, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
-    const rare = TRAITS.find((t) => t.rare && !t.boss)!;
+    const rare = TRAITS.find((t) => t.rare && !t.boss && t.element !== 'normal')!;
     const plain = TRAITS.find((t) => t.element === rare.element && !t.rare && !t.boss)!;
     const enemy = ENEMIES.find((x) => x.element === rare.element) ?? ENEMIES[0]!;
     e.phase = 'absorb';

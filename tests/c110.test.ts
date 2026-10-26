@@ -9,6 +9,9 @@ import { pickFormLook, pickLook } from '../src/engine/evolution/tierLook';
 import { parseFactionConfig } from '../src/engine/faction';
 import { setForm } from '../src/engine/testMode';
 import { artSkinOf, migrateSave, newSaveData, performEvolution, SAVE_FORMAT_VERSION } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 const shin = FACTIONS.find((f) => f.id !== 'hollow')!;
@@ -89,12 +92,12 @@ describe('C.110 진화 때 고정 · 마이그레이션 · 테스트 칸', () =>
   it('시작 전용 스킨을 입고 있어도 5단계 진입 때 벗겨지고, 스킨 패널로 다시 입을 수 있다', () => {
     const save = newSaveData('hollow', 1);
     const need = BALANCE.provisional.evolution.stepsNeeded;
-    save.shared.cosmetics.push('skin-stalker');
+    save.shared.cosmetics.push('skin-mantis');
     for (let t = 0; t < 3; t++) {
       save.evolution.steps = need[t]!;
       performEvolution(save, t + 2);
     }
-    save.skin = 'stalker';
+    save.skin = 'mantis';
     save.evolution.steps = need[3]!;
     performEvolution(save, 6);
     expect(save.skin).toBeNull();

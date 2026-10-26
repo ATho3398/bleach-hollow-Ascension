@@ -41,37 +41,35 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     expect(() => parseTrait({ ...base, abbr: { '*': '가'.repeat(TRAIT_ABBR_MAX_LENGTH + 1) } })).toThrow(/abbr/);
     expect(() => parseTrait({ ...base, abbr: 'A1' })).toThrow(/abbr/);
   });
-  it('블록 이름 = 속성_계열 (GDD 20장 v5.4): 옛 종족 블록 이름(본체 능력·포효 등)은 쓰지 않는다', () => {
+  it('블록 이름 = 계열 약어·막기·회복 (GDD 84장 4번, C.138): 옛 종족 블록 이름(본체 능력·포효 등)은 쓰지 않는다', () => {
     const enemy = getEnemy('test-a');
     for (const f of FACTIONS) {
       const labels = battleLabels(f);
       const [a, b, c] = f.families.map((x) => x.abbr);
       const b0 = newBuild();
-      for (const id of ['t-fire-a', 't-kyo-b', 't-fire-guard']) gainTrait(b0, id);
+      for (const id of ['t-fire-a', 't-kyo-b', 't-fire-b']) gainTrait(b0, id);
       const p0 = createCombat(1, { enemy, params: buildCombatParams(b0, f.id) }).params;
       const b1 = newBuild();
-      gainTrait(b1, 't-normal-heal');
+      gainTrait(b1, 't-normal-c'); // C.136: 막기·회복 속성 특성 삭제(GDD 84장 7번) — 막기·회복은 기본 블록(내 캐릭터 속성 표시)
       // 생성원 두 묶음을 합친 전투 값 (이름만 본다)
       const p = { ...p0, skills: [...p0.skills, ...createCombat(1, { enemy, params: buildCombatParams(b1, f.id) }).params.skills] };
       const name = (blk: Block) => blockName(blk, labels, f.id, p);
-      expect(name({ uid: 1, kind: 'special', traitId: null })).toBe('필살');
       expect(name({ uid: 2, kind: 'void', traitId: null })).toBe('공허');
-      expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(`불_${a}`);
-      expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(`허_${b}`);
-      expect(name({ uid: 5, kind: 'skill', traitId: 't-fire-guard', family: null })).toBe('불_막기');
-      expect(name({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null })).toBe('노멀_회복');
-      // 4자를 넘으면 _ 뒤에서 두 줄로
-      expect(blockAbbr({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null }, labels, f.id, p)).toBe('노멀_ 회복');
-      expect(blockAbbr({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' }, labels, f.id, p)).toBe(`불_${a}`);
-      // 기본 블록: 내 캐릭터 속성 + 블록 계열
+      expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(a);
+      expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(b);
+      expect(name({ uid: 5, kind: 'skill', traitId: 'basic-guard', family: null })).toBe('막기');
+      expect(name({ uid: 6, kind: 'skill', traitId: 'basic-heal', family: null })).toBe('회복');
+      // 약어도 이름 그대로
+      expect(blockAbbr({ uid: 6, kind: 'skill', traitId: 'basic-heal', family: null }, labels, f.id, p)).toBe('회복');
+      expect(blockAbbr({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' }, labels, f.id, p)).toBe(a);
+      // 기본 블록: 속성이 아니라 블록 계열만
       const pb = createCombat(1, { enemy, params: { ...buildCombatParams(newBuild(), f.id), playerElements: ['water'] } }).params;
-      expect(blockName({ uid: 7, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-c' }, labels, f.id, pb)).toBe(`물_${c}`);
-      const old = [f.basicSkillName, f.specialBlockName, f.storedSkillName, f.voidBlockName];
-      for (const blk of [{ uid: 8, kind: 'skill' as const, traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 9, kind: 'special' as const, traitId: null }]) {
+      expect(blockName({ uid: 7, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-c' }, labels, f.id, pb)).toBe(c);
+      const old = [f.basicSkillName, f.voidBlockName];
+      for (const blk of [{ uid: 8, kind: 'skill' as const, traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 9, kind: 'void' as const, traitId: null }]) {
         expect(old).not.toContain(blockName(blk, labels, f.id, pb));
       }
-      expect(old).not.toContain(labels.storedSkill);
-      expect(labels.storedSkill).toBe('저장 필살');
+      expect('storedSkill' in labels).toBe(false); // 저장 필살은 C.134 에 삭제 (GDD 83장)
     }
   });
 
@@ -87,9 +85,10 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     const total = Object.values(seen).reduce((x, y) => x + y, 0);
     expect(total).toBeGreaterThan(60);
     for (const n of Object.values(seen)) expect(n / total).toBeGreaterThan(0.2);
-    // 같은 계열 = 체인, 다른 계열 = 끊김
+    // 같은 계열 + 같은 속성 = 체인, 다른 계열 = 끊김, 같은 계열이라도 속성이 다르면 끊김 (C.118, GDD 66장)
     expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' })).toBe(true);
     expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-b' })).toBe(false);
+    expect(sameChainKind({ uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a', element: 'normal' }, { uid: 2, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a', element: 'fire' })).toBe(false);
     // 위력: 계열이 달라도 기본 블록 값 그대로
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(newBuild(), f.id) });
     const dmg = f.families.map((x) => blockDamage(s, { uid: 1, kind: 'skill', traitId: BASIC_SKILL_ID, family: x.id }, 2));
@@ -105,8 +104,8 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
 });
 
 describe('블록 외형', () => {
-  it('필살·공허·기본·스킬 역할', () => {
-    expect(blockVisual('special', false, null)).toBe('special');
+  it('콤보·공허·기본·스킬 역할', () => {
+    expect(blockVisual('combo', false, null)).toBe('special');
     expect(blockVisual('void', false, null)).toBe('void');
     expect(blockVisual('skill', true, 'attack')).toBe('basic');
     expect(blockVisual('skill', false, 'heal')).toBe('heal');

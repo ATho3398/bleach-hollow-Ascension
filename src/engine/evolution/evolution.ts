@@ -9,7 +9,7 @@ import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
-import type { BuildState } from '../absorb/build';
+import { liberationSlotCount, type BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, formAbilitiesOf, physBlockOf, physSpawnSecondsFor } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
@@ -50,8 +50,6 @@ export interface EvolutionState {
   look?: string | null;
   /** 환생 계승 노력치 (GDD 22-7, 형식 20): 이 생을 시작할 때 받은 값(정수). 단계 상한과 따로 더해진다. 없으면 0 */
   carry?: Stats;
-  /** 시작 외형 스탯 편향 (GDD 52 연동, C.108, 형식 34): 새 세이브 추첨 때 종족 설정 startLookBias 로 정한 ±값(합계 0). 진화·환생을 지나도 그대로. 없으면 0 */
-  bias?: Stats;
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
   testElementDamage?: Record<string, number>;
 }
@@ -68,7 +66,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.bias ? { bias: { ...e.bias } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
 }
 
 export function isMaxTier(e: EvolutionState): boolean {
@@ -107,13 +105,6 @@ export function recordEvolutionAbsorb(e: EvolutionState, element: string, ev: Pa
   e.absorbs++;
   if (countElement) e.elementAbsorbs[element] = (e.elementAbsorbs[element] ?? 0) + 1;
   return addEv(e, ev);
-}
-
-/** 시작 외형 스탯 편향 (GDD 52 연동, C.108): 한 능력치 +up, 나머지 −down (합계 0 이 되게 balance 의 startBias 가 up = 5 × down) */
-export function startBiasStats(stat: StatId): Stats {
-  const out = zeroStats();
-  for (const s of STAT_IDS) out[s] = s === stat ? SX.startBias.up : -SX.startBias.down;
-  return out;
 }
 
 export function recordEvolutionRelease(e: EvolutionState): void {
@@ -211,12 +202,12 @@ export function tierDisplayName(e: Pick<EvolutionState, 'formHistory' | 'tierInd
 /** 능력치 절대 상한 (GDD 22-1 v4.7, 6개 모두) */
 export const STAT_MAX: number = SX.statMax;
 
-/** 지금 능력치 = (종족값 + 노력치 + 환생 계승 + 시작 외형 편향) × (1 + 슬롯 보너스) (GDD 20-4·22-7·22-3·52), 능력치마다 STAT_MAX 에서 멈춘다.
+/** 지금 능력치 = (종족값 + 노력치 + 환생 계승) × (1 + 슬롯 보너스) (GDD 20-4·22-7·22-3·52), 능력치마다 STAT_MAX 에서 멈춘다.
  *  statBonus = 붕옥 해방·초월체 보유 패시브 (0.05 = +5%, 반올림). 0 이면 예전과 같은 값 */
 export function currentStats(e: EvolutionState, factionId: string, statBonus = 0): Stats {
   const base = baseStatsOf(e, factionId);
   for (const s of STAT_IDS) {
-    const raw = base[s] + e.ev[s] + (e.carry?.[s] ?? 0) + (e.bias?.[s] ?? 0);
+    const raw = base[s] + e.ev[s] + (e.carry?.[s] ?? 0);
     base[s] = Math.min(STAT_MAX, statBonus > 0 ? Math.round(raw * (1 + statBonus)) : raw);
   }
   return base;
@@ -320,7 +311,7 @@ function applyAbility(params: Partial<CombatParams>, ability: StatId | null): vo
  * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월체 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
  * 전투 엔진은 종족을 모르고 이 값만 쓴다. buildCombatParams(빌드) 뒤에 부른다
  */
-export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0): void {
+export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0, trained = false): void {
   params.combos = comboRulesOf(e);
   // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
   const form = e.formId ? tryGetForm(e.formId) : undefined;
@@ -332,6 +323,14 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.stabMultiplier = stabOf(e);
   // 해방 블록 분류 (GDD 22-5): 진화체 분류(아란칼 일반형), 없으면 혼합
   params.liberationCategory = form?.label.category ?? 'mixed';
+  // 해방 (GDD 83장): 슬롯 칸 수는 단계로 자르고, 5단계부터 고유 효과(레스렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
+  const LB = BALANCE.provisional.liberation;
+  const unique = e.tierIndex >= LB.minTierIndex;
+  params.liberationSkills = (params.liberationSkills ?? []).slice(0, liberationSlotCount(e.tierIndex));
+  params.liberationUnique = unique;
+  params.liberationAttackSpeed = unique ? LB.uniqueAttackSpeed : 1;
+  params.liberationChainSpeed = unique ? LB.uniqueChainSpeed : 1;
+  params.liberationStatMultiplier = unique ? (trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier) : 1;
   // 특성 칸 2개 (GDD 39장): 성향(실패형 2개) + 속성·전용 효과
   const fa = formAbilitiesOf(form ?? null, e.ev, e.ability);
   for (const d of fa.dispositions) applyAbility(params, d);

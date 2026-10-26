@@ -1,6 +1,8 @@
 // 원정 화면 (GDD 1장, 2-1, 6장, 17-1): 캐릭터가 왼쪽을 향해 걷는 화면 + 위에 얹는 상태 줄·조우 알림, 둥지 칸에서 귀환 선택·타일 배치 팝업. (U-4 → R-1)
 // 시간(칸당 5초, 1x/2x/4x)은 여기서 돌리고, 규칙은 engine/expedition 이 정한다. 12칸 길·칸 번호·바퀴는 엔진 안에만 있고 걷는 화면에는 보이지 않는다.
 // 화면 DOM 은 한 번 만들고 상태가 바뀔 때마다 제자리에서 고친다.
+import { petBuddy } from './bha/pet';
+import { petName } from '../inventory';
 import { fullnessOf } from './bha/fullness';
 import { BALANCE } from '../config/balance';
 import { charArt } from '../data/art/manifest';
@@ -8,7 +10,7 @@ import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
-  advance, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
+  abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
@@ -16,17 +18,20 @@ import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
+import { confirmDialog } from './confirmDialog';
 import { onHold } from './bha/hold';
 import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
-import { createExpClock } from './bha/expClock';
+import { createExpClock, monoNow } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
 import { locoOf } from './bha/loco';
 import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
 import { groundSceneBg } from './bha/sceneBg';
+import { nextCellIsElite } from './warningLogic';
 import { storyGoalLine } from './storyView';
 import { bossName } from '../data/bosses';
+import { statName } from '../data/elements';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -42,25 +47,22 @@ export interface ExpeditionViewHandlers {
   onEnded: () => void;
   /** 한계 돌파가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
   onBreakthrough: (resume: () => void) => void;
-  /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더, 배속 변경 */
+  /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더 */
   onSave: () => void;
   /** [?] 도움말 (C.19): 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다 */
   openHelp: (onClose: () => void) => void;
 }
 
-const SPEEDS = [1, 2, 4] as const;
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
 const RX = BALANCE.provisional.risk;
 
-let speed: (typeof SPEEDS)[number] = 1;
+/** 원정 걷기 속도 배율. 배속 버튼(1x·2x·4x)은 C.118 에 삭제 — 1배 고정 (GDD 62장). 세이브의 옛 배속 값은 무시한다. 테스트 모드(GDD 38-4)만 setSpeed 로 바꾼다 */
+let speed = 1;
 
-/** 배속 설정은 원정 중간 저장에 같이 들어간다 (이어하기에서 유지) */
-export function getSpeed(): number {
-  return speed;
-}
+/** 테스트 모드 전용 (GDD 38-4). 일반 플레이는 늘 1 */
 export function setSpeed(v: number): void {
-  speed = (SPEEDS as readonly number[]).includes(v) ? (v as (typeof SPEEDS)[number]) : 1;
+  speed = Number.isFinite(v) && v > 0 ? v : 1;
 }
 
 export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, h: ExpeditionViewHandlers, startMsg = ''): void {
@@ -72,7 +74,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let held = false;
   let dead = false;
   let away = false;
-  // 다음 할 일(한 칸 이동·전투 진입·휴식 끝)은 시계가 들고 있다: 배속·일시정지·도움말은 남은 시간만 다시 셈하고 할 일을 지우지 않는다 (19-1)
+  // 다음 할 일(한 칸 이동·전투 진입·휴식 끝)은 시계가 들고 있다: 일시정지·도움말은 남은 시간만 다시 셈하고 할 일을 지우지 않는다 (19-1)
   const clock = createExpClock({ speed: () => speed, blocked: () => paused || held || dead || away });
   const stepMs = EX.secondsPerTile * 1000;
 
@@ -89,25 +91,21 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (want && clock.pending() !== want) {
       if (exp.phase === 'moving') clock.set('step', stepMs, tick);
       else if (exp.phase === 'battle') clock.set('phase', 0, enterBattle);
-      else clock.set('phase', stepMs * PX.restTimeTiles, endRest);
+      else clock.set('phase', PX.restTimeTiles * EX.restSecondsPerTile * 1000, endRest);
     } else clock.rearm();
   }
 
   // ── 감시 타이머 (19-1 안전장치): 조우 뒤 멈추지 않은 시간이 ENCOUNTER_WATCHDOG_MS 를 넘도록 전투가 안 열리면 바로 진입,
   //    할 일이 사라졌거나 타이머가 안 걸려 있으면 다시 건다 ──
   let encounterWait = 0;
-  let lastWatch = Date.now();
+  let lastWatch = monoNow();
   const watch = setInterval(() => {
-    const t = Date.now();
-    const dt = t - lastWatch;
+    const t = monoNow();
+    const dt = Math.max(0, t - lastWatch); // C.139: 단조 시계 + 음수 방어
     lastWatch = t;
     if (dead) return clearInterval(watch);
     if (away) return;
-    if (!main.isConnected) {
-      dead = true;
-      clock.cancel();
-      return clearInterval(watch);
-    }
+    if (!main.isConnected) return dispose();
     const blocked = paused || held;
     if (exp.phase === 'battle' && !blocked) encounterWait += dt;
     const act = watchdogAction({ phase: exp.phase, blocked, pending: clock.pending(), armed: clock.armed(), encounterWaitMs: encounterWait });
@@ -115,20 +113,28 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     else if (act === 'resume') resumeClock();
   }, WATCHDOG_POLL_MS);
 
-  let battleRef: PendingBattle | null = exp.phase === 'battle' ? exp.pending ?? null : null;
-  function enterBattle(): void {
-    if (dead || exp.phase !== 'battle') return;
+  /** C.139 (GDD 88장 4): 화면 종료(전투로·끝·취소·귀환·떠남) 때 한 곳에서 시계·감시·hold 구독을 모두 푼다 */
+  let unhold = (): void => undefined;
+  function dispose(): void {
     dead = true;
     clock.cancel();
     clearInterval(watch);
+    unhold();
+  }
+
+  let battleRef: PendingBattle | null = exp.phase === 'battle' ? exp.pending ?? null : null;
+  function enterBattle(): void {
+    if (dead || exp.phase !== 'battle') return;
+    dispose();
     h.onBattle(battleRef ?? exp.pending!);
   }
 
   function endRest(): void {
     if (exp.phase !== 'rest') return;
+    const spring = exp.restSpring === true;
     finishRest(exp);
     h.onSave();
-    msg = `${faction.fullnessName}·컨디션이 회복됐다`;
+    msg = spring ? `${faction.riskGaugeName}이(가) 가라앉았다` : `${faction.fullnessName}·컨디션이 회복됐다`;
     render();
     nextStep();
   }
@@ -142,7 +148,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     if (!ev) return resumeClock();
     const got = exp.hand.length - before;
     const events = drainEvents(exp);
-    for (const e of events) if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
+    for (const e of events) {
+      if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
+      // 뼈 표식/수련 말뚝 승리 노력치 (C.124): 다음 걷는 칸 말풍선
+      else if (e.kind === 'tile-ev') nearMsg = e.amount > 0 ? `${statName(e.stat, faction.id)} 노력치 +${e.amount}` : `${statName(e.stat, faction.id)} 노력치가 상한이다`;
+    }
     if (events.some((e) => e.kind === 'breakthrough')) {
       // 한계 돌파 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
       away = true;
@@ -152,7 +162,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         if (dead) return;
         root.replaceChildren(stage);
         away = false;
-        lastWatch = Date.now();
+        lastWatch = monoNow();
         handle(ev, got);
       });
       return;
@@ -184,17 +194,18 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       case 'rest':
         msg = `${tn(exp.slots[ev.cell]!)}에서 쉰다…`;
         render();
-        clock.set('phase', stepMs * PX.restTimeTiles, endRest);
+        clock.set('phase', PX.restTimeTiles * EX.restSecondsPerTile * 1000, endRest);
         return;
       case 'lap-complete':
         planner.reset();
         msg = `${got > 0 ? `타일 획득: ${tn(ev.rewardTile!)} · ` : ''}${faction.nestName}에 도착했다`;
+        // 펫 (GDD 90장): 바퀴 끝 보상 펫 · pet-seek 타일 +1장
+        if (ev.petFound) msg = `펫 발견: ${petName(ev.petFound, faction)}! · ${msg}`;
+        if (ev.petTile) msg = `${msg} · 펫이 타일을 물어 왔다: ${tn(ev.petTile)}`;
         h.onSave();
         break;
       case 'ended':
-        dead = true;
-        clock.cancel();
-        clearInterval(watch);
+        dispose();
         h.onEnded();
         return;
     }
@@ -217,6 +228,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   frenzyChip.classList.add('bha-frenzychip');
   frenzyChip.prepend(icon('i-risk', 'sm'));
   where.append(frenzyChip);
+  // 다음 칸이 강적 칸이면 작은 ⚠ (GDD 76장 3번): 걷는 화면에는 길이 안 보여 칸 위가 아니라 이 칩으로 미리 알린다
+  const aheadChip = chip('다음 칸 강적', 'danger');
+  aheadChip.classList.add('bha-exp__ahead');
+  aheadChip.prepend(icon('i-warn', 'sm'));
+  aheadChip.hidden = true;
+  where.append(aheadChip);
 
   const meters = el('div', 'bha-stack bha-stack--tight');
 
@@ -245,6 +262,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선
+  // 데리고 간 펫 (GDD 90장): 걷는 캐릭터 뒤에 작게
+  const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction));
+  if (buddy) walk.walker.append(buddy);
   if (takeEnterFx()) window.setTimeout(() => playCosmeticFx('enter', walk.walker), 0); // 등장 연출 (GDD 25-11): 출발 직후 한 번
   const sceneWrap = el('section', 'bha-exp__scene');
   sceneWrap.append(walk.el);
@@ -257,22 +277,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   /** 이벤트 창 안내 한 줄 (골드 부족 등) */
   let eventNote = '';
 
-  const speedSeg = el('div', 'bha-seg bha-seg--sm');
-  speedSeg.setAttribute('role', 'radiogroup');
-  speedSeg.setAttribute('aria-label', '배속');
-  const speedBtns = SPEEDS.map((sp) => {
-    const b = el('button', 'bha-seg__item', `${sp}x`);
-    b.type = 'button';
-    b.setAttribute('role', 'radio');
-    b.onclick = () => {
-      speed = sp;
-      h.onSave();
-      resumeClock();
-      render();
-    };
-    return b;
-  });
-  speedSeg.append(...speedBtns);
+  // 배속 묶음(1x·2x·4x)은 C.118 에 삭제 (GDD 62장: 1배 고정)
   const pauseBtn = el('button', 'bha-btn bha-btn--icon bha-btn--small');
   pauseBtn.type = 'button';
   pauseBtn.onclick = () => {
@@ -280,11 +285,38 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     resumeClock();
     render();
   };
+  // 원정 도중 [귀환하기] (GDD 81장, C.132): 걷기·휴식 중만, 첫 원정 튜토리얼은 숨김. 확인창이 열린 동안 시간은 멈춘다
+  const abortBtn = button({ label: '귀환하기', icon: 'i-return', variant: 'ghost', size: 'small' });
+  abortBtn.classList.add('bha-exp__abort');
+  abortBtn.onclick = () => {
+    if (!canAbort(exp)) return;
+    const wasPaused = paused;
+    paused = true;
+    resumeClock();
+    render();
+    confirmDialog({
+      title: '지금 귀환할까요?',
+      body: '이번 바퀴 완주 보상은 없어요',
+      yes: '귀환하기',
+      no: '계속 가기',
+      onYes: () => {
+        if (dead || !canAbort(exp)) return;
+        abortExpedition(exp);
+        dispose();
+        h.onEnded();
+      },
+      onNo: () => {
+        paused = wasPaused;
+        resumeClock();
+        render();
+      },
+    });
+  };
   const handCount = el('span', 'bha-exp__hand-count');
-  // 오른쪽 위 모서리: 일시정지·배속·도움말을 작게 (+ 손에 든 타일 수)
+  // 오른쪽 위 모서리: 귀환하기·일시정지·도움말을 작게 (+ 손에 든 타일 수)
   const corner = el('div', 'bha-exp__corner');
   const cornerRow = el('div', 'bha-exp__cornerrow');
-  cornerRow.append(speedSeg, pauseBtn);
+  cornerRow.append(abortBtn, pauseBtn);
   corner.append(cornerRow, handCount);
 
   // 둥지 칸 도착 선택은 장면 위 말풍선 오버레이 (타일 배치판은 안에 있다)
@@ -322,6 +354,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       }),
     );
     frenzyChip.hidden = !inFrenzy(exp);
+    aheadChip.hidden = !(exp.phase === 'moving' && nextCellIsElite(exp));
     const goalText = storyGoalLine(exp);
     goal.hidden = goalText === null;
     if (goalText !== null) goal.replaceChildren(icon('i-flag-win'), goalText);
@@ -353,14 +386,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     msgEl.className = `bha-exp__msg${kind ? ` bha-exp__msg--${kind}` : ''}`;
     msgEl.replaceChildren(icon(paused && exp.phase === 'moving' && !msg ? 'i-pause' : MSG_ICON[kind]), el('span', '', text));
 
-    // 배속·일시정지
-    SPEEDS.forEach((sp, i) => {
-      speedBtns[i]!.classList.toggle('is-active', speed === sp);
-      speedBtns[i]!.setAttribute('aria-checked', String(speed === sp));
-    });
+    // 일시정지
     pauseBtn.replaceChildren(icon(paused ? 'i-play' : 'i-pause'));
     pauseBtn.classList.toggle('is-on', paused);
     pauseBtn.setAttribute('aria-label', paused ? '재개' : '일시정지');
+    abortBtn.hidden = !canAbort(exp);
     handCount.textContent = exp.hand.length > 0 ? `손에 든 타일 ${exp.hand.length}장` : '';
     handCount.hidden = exp.hand.length === 0;
     main.classList.toggle('is-paused', paused);
@@ -383,9 +413,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
         chooseReturn(exp);
-        dead = true;
-        clock.cancel();
-        clearInterval(watch);
+        dispose();
         h.onEnded();
       },
     });
@@ -411,13 +439,13 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const info = el('div', 'bha-sheet__scroll');
     info.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
     if (over) info.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
-    // 드래프트 (GDD 25-5 ①): 3장 중 1장 → 이번 바퀴 길에 바로 놓는다(덱에는 안 들어감, 안 놓고 계속하면 사라진다)
+    // 드래프트 (GDD 25-5 ①): 3장 중 1장 → 이번 바퀴 길에 바로 놓는다(보관함에는 안 들어감, 안 놓고 계속하면 사라진다)
     const d = exp.draft;
     if (d) {
       const box = el('div', 'bha-draft');
       box.dataset.draft = d.picked === null ? 'open' : 'picked';
       const head = el('p', 'bha-sheet__body bha-draft__head');
-      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 바퀴 길에 바로 놓는다 (덱에는 안 들어간다)' : ` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓는다 (안 놓고 계속하면 사라진다)`);
+      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 바퀴 길에 바로 놓는다 (보관함에는 안 들어간다)' : ` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓는다 (안 놓고 계속하면 사라진다)`);
       const row = el('div', 'bha-draft__row');
       d.options.forEach((id, i) => {
         const t = getTile(id);
@@ -431,7 +459,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         const txt = el('span', 'bha-draft__text');
         txt.append(el('b', '', tn(id)), el('small', '', tileHint(t)));
         card.append(ic, txt);
-        if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '덱 밖'));
+        if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '새 타일'));
         card.onclick = () => {
           const r = chooseDraft(exp, i);
           if (!r.ok) return;
@@ -445,7 +473,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     }
     if (exp.hand.length > 0 || planner.canEdit() || d) {
       // 획득한 타일은 지금 다음 바퀴 칸에 놓는다 (GDD 17-1). 안 놓으면 다음 원정 덱으로 보관된다. 이 팝업이 길 순서가 보이는 유일한 곳
-      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 덱 보관). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
+      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 보관함에 남는다). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
       planner.refresh();
     }
     sheet.append(info, grid);
@@ -523,8 +551,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   resumeClock();
 
   let wasPaused = false;
-  const offHold = onHold((sig) => {
-    if (dead || (!main.isConnected && !away)) return offHold();
+  if (!dead) unhold = onHold((sig) => {
+    if (dead || (!main.isConnected && !away)) return dispose();
     if (sig === 'hold') {
       if (held) return;
       held = true;
@@ -539,10 +567,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       resumeClock();
       render();
     } else {
-      dead = true;
-      clock.cancel();
-      clearInterval(watch);
-      offHold();
+      dispose();
     }
   });
 }

@@ -1,4 +1,4 @@
-// 흡수 특성 테이블 (GDD 4장, C.47 속성 8종 × 8개). 11-3 이 미정이라 전부 임시("불 조" 자리 표시). 표현 텍스트만 종족별.
+// 흡수 특성 테이블 (GDD 4장, C.47 속성 8종 × 8개 → C.136 속성마다 6개: 막기·회복 속성 특성 삭제, GDD 84장 7번). 11-3 이 미정이라 전부 임시("불 조" 자리 표시). 표현 텍스트만 종족별.
 import { CHAIN_BONUS_KINDS, PASSIVE_STATS, SKILL_ROLES, TRAIT_KINDS, pickFaction, type TraitDef } from '../schema';
 import { isElement } from '../elements';
 import raw from './traits.json';

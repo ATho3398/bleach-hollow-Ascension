@@ -45,11 +45,12 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'scene.room': {},
   'char.hollow': {},
   'char.shinigami': {},
+  // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다
+  'char.hollow.2': { scale: 2, locomotion: 'walk' },
   'prop.door': {},
   'prop.altar': {},
   'prop.book': {},
   'prop.chest': {},
-  'prop.dummy': {},
   'prop.shop': {},
 };
 

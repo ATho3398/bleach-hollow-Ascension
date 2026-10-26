@@ -1,0 +1,25 @@
+/* C.120 (GDD 64·67장): 타일 뽑기 카드 뒤집기 · 튜토리얼 흡수 화면 · 타일 잠금 안내. bha 토큰만 쓴다 */
+.bha-draw__stage { perspective: 600px; display: flex; justify-content: center; margin: var(--bha-sp-4) 0; }
+.bha-draw__card {
+  position: relative; width: 168px; height: 120px;
+  transform-style: preserve-3d; transition: transform var(--bha-dur-5) var(--bha-ease-out);
+}
+.bha-draw__card.is-flipped { transform: rotateY(180deg); }
+.bha-draw__face {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-2);
+  backface-visibility: hidden; border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); box-shadow: var(--bha-shadow-2);
+  background: var(--bha-bg-2); color: var(--bha-text-1); padding: var(--bha-sp-3); text-align: center;
+}
+.bha-draw__face--back { color: var(--bha-accent); font-size: var(--bha-fs-3xl); }
+.bha-draw__face--front { transform: rotateY(180deg); border-color: var(--tile, var(--bha-line-2)); }
+.bha-draw__face--front .bha-icon { width: 28px; height: 28px; color: var(--tile, var(--bha-accent)); }
+.bha-draw__name { font-size: var(--bha-fs-lg); }
+.bha-draw__hint { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+@media (prefers-reduced-motion: reduce) { .bha-draw__card { transition: none; } }
+
+.bha-tutabsorb__modes { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin: 0; padding: 0; list-style: none; }
+.bha-tutabsorb__mode { display: flex; gap: var(--bha-sp-3); align-items: baseline; font-size: var(--bha-fs-sm); color: var(--bha-text-2); }
+.bha-tutabsorb__mode b { color: var(--bha-text-1); min-width: 4.5em; }
+.bha-tutabsorb__gain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-tutabsorb__stat { display: flex; justify-content: space-between; padding: var(--bha-sp-2) var(--bha-sp-3); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); font-size: var(--bha-fs-sm); }
+.bha-tutabsorb__stat b { color: var(--bha-accent); }

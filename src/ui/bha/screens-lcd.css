@@ -115,6 +115,31 @@
 .bha-chest-page .bha-owned { gap: var(--bha-sp-3); }
 .bha-chest-page .bha-deckrow { padding: var(--bha-sp-3) var(--bha-sp-4); }
 
+/* 슬롯 화면 바둑판 (C.149, GDD 94장 A): 왼쪽 장착 칸 · 오른쪽 가진 특성 카드 */
+.bha-chest-page .bha-sgrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-chest-page .bha-sgrow__title { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); font-weight: var(--bha-fw-bold); }
+.bha-sgcell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1); min-width: 0; height: 80px; padding: var(--bha-sp-2); border: 2px solid var(--bha-lin-color, var(--bha-line-2)); border-radius: var(--bha-r-md); background: linear-gradient(180deg, var(--bha-bg-3), var(--bha-bg-2)); color: var(--bha-text-1); font: inherit; touch-action: manipulation; }
+.bha-sgcell .bha-icon { width: 30px; height: 30px; color: var(--bha-lin-color, var(--bha-text-2)); }
+.bha-sgcell__num { position: absolute; top: 4px; left: 6px; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+.bha-sgcell__name { max-width: 100%; font-size: var(--bha-fs-xs); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-sgcell__enh { font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-2); }
+.bha-sgcell .bha-eldot { position: absolute; top: 4px; right: 5px; }
+.bha-sgcell--empty { border: 2px dashed var(--bha-line-2); background: rgb(0 0 0 / .2); color: var(--bha-text-3); }
+.bha-sgcell--empty .bha-icon { width: 22px; height: 22px; color: var(--bha-text-3); }
+.bha-sgcell--locked { border: 2px dashed var(--bha-line-1, var(--bha-line-2)); opacity: .5; }
+.bha-sgcell.is-target { border-color: var(--bha-accent-hi); box-shadow: 0 0 0 3px var(--bha-accent-soft); }
+.bha-sgcell.is-blocked { opacity: .35; }
+.bha-sgcell.is-drop, .bha-sgown.is-drop { outline: 2px solid var(--bha-insert); outline-offset: 1px; background-color: rgb(108 196 255 / .2); }
+.bha-sgcell.is-dragging, .bha-sggrid .bha-itemcard.is-dragging { opacity: .4; }
+.bha-sgbar { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-3); padding: var(--bha-sp-2) var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-accent-soft); font-size: var(--bha-fs-xs); }
+.bha-chest-page .bha-sggrid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 120px; }
+.bha-sggrid .bha-itemcard { border-color: var(--bha-lin-color, var(--bha-line-2)); touch-action: manipulation; }
+.bha-sggrid .bha-itemcard__art { position: relative; }
+.bha-sgart { position: relative; color: var(--bha-lin-color, var(--bha-text-2)); }
+.bha-sgart .bha-icon { width: 30px; height: 30px; }
+.bha-sgart .bha-eldot { position: absolute; right: -8px; bottom: -2px; }
+.bha-itemmodal__desc { white-space: pre-line; }
+
 /* ═════ 설정 ═════ */
 .bha-settings-page .bha-lcdpage__col > .bha-panel { flex: 1 0 auto; }
 .bha-slider__row { display: grid; grid-template-columns: var(--bha-touch) minmax(0, 1fr) var(--bha-touch); align-items: center; gap: var(--bha-sp-3); }
@@ -238,6 +263,9 @@ button.bha-slot { cursor: pointer; }
 .bha-slot__main { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); overflow-wrap: anywhere; }
 .bha-slot__sub { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-slotpage .bha-slots { gap: var(--bha-sp-3); }
+.bha-slotpage__sel { display: flex; flex-direction: column; gap: var(--bha-sp-1); margin-top: var(--bha-sp-3); }
+.bha-slotpage__actions { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin-top: var(--bha-sp-3); }
+.bha-slot.is-last { background: var(--bha-bg-3); }
 .bha-lcd .bha-confirm .bha-modal { gap: var(--bha-sp-3); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); width: min(380px, 100%); }
 .bha-lcd .bha-confirm .bha-modal__title { font-size: var(--bha-fs-xl); }
 .bha-lcd .bha-confirm .bha-modal__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
@@ -258,7 +286,13 @@ button.bha-slot { cursor: pointer; }
 .bha-start--title .bha-start__hero { align-items: center; text-align: center; padding-top: 0; }
 .bha-start--title .bha-start__menu { display: flex; flex-direction: column; gap: var(--bha-sp-3); width: min(280px, 100%); }
 .bha-start--title .bha-start__ver { text-align: center; margin-top: auto; }
+/* 열 수 없는 세이브 알림이 있을 때(C.119): 메뉴 3개를 한 줄로 줄여 낮은 화면에서도 알림·버전 줄이 다 보인다. 그래도 넘치면 스크롤 */
+.bha-lcd .bha-app.bha-start.bha-start--stale { gap: var(--bha-sp-3); overflow-y: auto; }
+.bha-start--stale .bha-start__menu { flex-direction: row; width: min(560px, 100%); }
+.bha-start--stale .bha-start__menu > * { flex: 1 1 0; min-width: 0; }
 .bha-start--title .bha-notice { max-width: 420px; }
+.bha-start--title .bha-start__stale { display: flex; flex-direction: column; gap: var(--bha-sp-2); align-items: center; max-width: 420px; }
+.bha-start--title .bha-start__stale-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--bha-sp-2); }
 
 /* ═════ 종족 고르기 (GDD 19-4, C.46): 종족 수만큼 등분한 칸에 아이콘 + 이름만, 설정·도움말은 위 구석 작은 아이콘 ═════ */
 .bha-lcd .bha-app.bha-start.bha-start--species { display: block; padding: var(--bha-sp-4); }
@@ -293,3 +327,32 @@ button.bha-slot { cursor: pointer; }
 /* 스킨 고르기 (상태 화면, GDD 26-5): 작은 그림 + 이름 한 줄씩. 입은 스킨은 is-on */
 .bha-care-page .bha-skinthumb { width: 32px; height: 32px; object-fit: contain; object-position: 50% 100%; flex: none; pointer-events: none; }
 .bha-care-page [data-skin] { justify-content: flex-start; gap: var(--bha-sp-3); }
+
+/* 책장 머리 제목 토글 (GDD 58, C.114): "진화체 도감 ▾" 버튼 + 아래로 열리는 도감 목록. 제목 글자 모양은 그대로(.bha-lcdpage__title 안) */
+.bha-viewtitle { position: relative; display: inline-block; min-width: 0; }
+.bha-viewtitle__btn {
+  display: inline-flex; align-items: center; gap: var(--bha-sp-1); min-height: var(--bha-touch); max-width: 100%; padding: 0 var(--bha-sp-1);
+  border: 0; border-radius: var(--bha-r-sm); background: transparent; color: inherit; font: inherit; line-height: inherit; white-space: nowrap; cursor: pointer; touch-action: manipulation;
+}
+.bha-viewtitle__btn:active { background: var(--bha-bg-2); }
+.bha-viewtitle__btn:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
+.bha-viewtitle__caret { flex: none; width: 18px; height: 18px; color: var(--bha-text-2); transition: transform var(--bha-dur-2); }
+.bha-viewtitle__btn[aria-expanded="true"] .bha-viewtitle__caret { transform: rotate(180deg); }
+.bha-viewtitle__list {
+  position: absolute; left: 0; top: calc(100% + var(--bha-sp-1)); z-index: 5; min-width: 100%; display: flex; flex-direction: column; gap: var(--bha-sp-1);
+  padding: var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: var(--bha-shadow-3);
+}
+.bha-viewtitle__list[hidden] { display: none; }
+.bha-viewtitle__item {
+  min-height: var(--bha-touch); padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-sm); background: var(--bha-bg-2);
+  color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); text-align: left; white-space: nowrap; touch-action: manipulation;
+}
+.bha-viewtitle__item.is-on { background: var(--bha-bg-3); border-color: var(--bha-accent); }
+.bha-viewtitle__item:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
+
+/* 광기·자아 설명 (C.141, GDD 84장 9번): 수치마다 손해·오르는 길·내리는 길을 숫자로 */
+.bha-riskexplain { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-riskexplain + .bha-riskexplain { margin-top: var(--bha-sp-4); padding-top: var(--bha-sp-4); border-top: 1px solid var(--bha-line-1); }
+.bha-riskexplain__title { font-size: var(--bha-fs-sm); color: var(--bha-text-1); }
+.bha-riskexplain__label { font-size: var(--bha-fs-xs); color: var(--bha-accent); font-weight: var(--bha-fw-heavy); }
+.bha-riskexplain__list { margin: 0; padding-left: var(--bha-sp-5); display: flex; flex-direction: column; gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.35; }

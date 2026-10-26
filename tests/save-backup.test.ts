@@ -4,6 +4,9 @@ import { newSaveData, SAVE_FORMAT_VERSION, SAVE_KEY } from '../src/game';
 import { applyImport, BACKUP_KEY, backupFileName, hasBackup, parseImport, serializeSave, swapWithBackup } from '../src/saveBackup';
 import { canEvolve, newEvolution, recordEvolutionStep } from '../src/engine/evolution';
 import { growthLines } from '../src/ui/bha/growthLogic';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 function memStore(init: Record<string, string> = {}) {
   const m = new Map(Object.entries(init));

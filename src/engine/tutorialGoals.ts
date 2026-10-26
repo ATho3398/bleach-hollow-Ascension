@@ -27,7 +27,7 @@ const runIdsOf = (v: TutorialGoalView): Set<number> => new Set(v.runLog.runs.fil
 
 const CHECKS: Record<TutorialCheck, (v: TutorialGoalView) => boolean> = {
   tutorialSeen: (v) => v.tutorialSeen,
-  returned: (v) => v.runLog.runs.some((r) => r.factionId === v.factionId && r.outcome === 'returned'),
+  returned: (v) => v.runLog.runs.some((r) => r.factionId === v.factionId && r.outcome === 'returned' && r.endReason !== 'abort'),
   absorbed: (v) => {
     const ids = runIdsOf(v);
     return v.runLog.absorbs.some((a) => a.absorbed && ids.has(a.runId));

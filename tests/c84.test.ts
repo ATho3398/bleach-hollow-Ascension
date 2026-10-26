@@ -170,7 +170,7 @@ describe('새 보스 2종 (GDD 35장)', () => {
     secs(s, 0.2);
     const m = s.boss!.minion!;
     expect(m).toBeTruthy();
-    const unit = s.params.hpAttackScale * s.params.playerAttackDamage * s.params.growthMultiplier;
+    const unit = s.params.hpAttackScale * s.params.playerAttackDamage * s.params.growthMultiplier * s.params.hpScale; // C.118 hpScale
     expect(m.maxHp).toBeCloseTo(6 * unit, 6);
     expect(s.boss!.summons).toBe(1);
     // 20초 뒤에도 살아 있으면 두 번째 졸개는 오지 않는다

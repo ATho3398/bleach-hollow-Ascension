@@ -14,7 +14,7 @@
 /* 둥지 칸 도착 시트: 뒤의 걷는 장면은 가리지 않고 살짝만 어둡게 */
 .bha-exp .bha-sheet__scrim { pointer-events: none; background: rgb(0 0 0 / .3); }
 .bha-exp .bha-sheet .bha-exp__hand { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-.bha-exp .bha-sheet .bha-tilechip { flex: none; }
+.bha-exp .bha-sheet .bha-tilechip, .bha-exp .bha-sheet .bha-tilecard { flex: none; }
 
 /* 시드·기록 저장 줄: 체크 아이콘을 글자 줄 안에 */
 .bha-seedline .bha-icon { display: inline-block; vertical-align: -3px; }
@@ -119,8 +119,73 @@
 .bha-plan__difficulty .bha-tag { margin-left: var(--bha-sp-1); }
 .bha-lcd .bha-app.bha-plan { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow-y: auto; padding: var(--bha-sp-3) var(--bha-sp-4); }
 .bha-lcd .bha-plan .bha-btn--lg { flex: none; min-height: var(--bha-touch); }
+/* C.140 (GDD 85장 11번): 배치 단계 손 = 가진 타일 전부 — 한 줄 가로 넘침 대신 여러 줄로 감싸 오른쪽 타일도 보이게(화면은 세로 스크롤) */
+.bha-lcd .bha-plan .bha-road__hand { flex-wrap: wrap; overflow-x: visible; }
+.bha-plan__presets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
 
 @media (prefers-reduced-motion: reduce) {
   .bha-walk__layer, .bha-walker__body, .bha-walker__foot { animation: none; }
 }
 
+
+/* ═════ C.141 (GDD 85장 11번): 타일 카드·배치판 카드·끌어놓기·배치 프리셋 ═════ */
+/* 손 타일 카드: 큰 아이콘 · 이름 · 효과 한 줄 · 장수 */
+.bha-tilecard {
+  --tile: var(--bha-bg-3);
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: var(--bha-sp-1);
+  width: 96px; min-height: 104px; padding: var(--bha-sp-3) var(--bha-sp-2);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tile) 28%, var(--bha-bg-2)), var(--bha-bg-2) 70%);
+  color: var(--bha-text-1); text-align: center; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  transition: transform var(--bha-dur-1), border-color var(--bha-dur-2), box-shadow var(--bha-dur-2);
+}
+.bha-tilecard__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--tile); color: #fff; box-shadow: 0 2px 4px rgb(0 0 0 / .45); }
+.bha-tilecard__icon .bha-icon { width: 24px; height: 24px; }
+.bha-tilecard__name { font-size: var(--bha-fs-sm); line-height: 1.15; word-break: keep-all; }
+.bha-tilecard__hint { font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
+.bha-tilecard__count { position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-2); min-width: 22px; padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .5); font-size: var(--bha-fs-xs); line-height: 20px; font-variant-numeric: tabular-nums; }
+.bha-tilecard--prey  { --tile: var(--bha-tile-prey); }
+.bha-tilecard--elite { --tile: var(--bha-tile-elite); }
+.bha-tilecard--env   { --tile: var(--bha-tile-env); }
+.bha-tilecard--rest  { --tile: var(--bha-tile-rest); }
+.bha-tilecard--event { --tile: var(--bha-seal); }
+.bha-tilecard:active { transform: scale(0.97); }
+.bha-tilecard.is-selected { border: 2px solid var(--tile); box-shadow: 0 0 12px color-mix(in srgb, var(--tile) 45%, transparent); }
+.bha-tilecard.is-dragging { opacity: .35; }
+.bha-road__hand { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
+/* 배치판 칸: 카드꼴 — 놓은 타일은 아이콘 + 이름 */
+.bha-road__cell { min-height: 64px; flex-direction: column; gap: var(--bha-sp-1); align-content: center; }
+.bha-road__cell.is-has { display: flex; align-items: center; justify-content: center; }
+.bha-road__name { max-width: 100%; padding: 0 var(--bha-sp-1); font-size: var(--bha-fs-xs); line-height: 1.1; text-align: center; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: keep-all; }
+.bha-road__cell.is-editable { cursor: grab; touch-action: pan-y; }
+.bha-road__cell.is-dragging { opacity: .35; }
+.bha-road__cell.is-drop, .bha-road__hand.is-drop { outline: 2px solid var(--bha-insert); outline-offset: 1px; background-color: rgb(108 196 255 / .2); }
+.bha-drag-ghost { position: fixed; z-index: 9999; pointer-events: none; transform: translate(-50%, -50%); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--tile, var(--bha-bg-3)); color: #fff; box-shadow: 0 8px 20px rgb(0 0 0 / .6); }
+.bha-drag-ghost .bha-icon { width: 26px; height: 26px; }
+.bha-road.is-dragging-tile, .is-dragging-tile { user-select: none; -webkit-user-select: none; }
+/* 배치 프리셋 패널 */
+.bha-presets { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+.bha-presets__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2) var(--bha-sp-3); }
+.bha-presets__title { font-size: var(--bha-fs-sm); }
+.bha-presets__note { flex: 1 1 100%; font-size: var(--bha-fs-xs); color: var(--bha-text-2); min-height: 1.2em; }
+.bha-presets__input { flex: 1 1 120px; min-width: 0; min-height: 36px; padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-sm); }
+.bha-presets__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--bha-sp-3); }
+.bha-presetcard { display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
+.bha-presetcard__top { display: flex; align-items: center; gap: var(--bha-sp-2); min-height: 36px; }
+.bha-presetcard__name { font-size: var(--bha-fs-sm); }
+.bha-presetcard__strip { display: flex; gap: 2px; }
+.bha-presetcard__cell { flex: 1 1 0; min-width: 0; height: 14px; border-radius: 2px; border: 1px dashed var(--bha-line-2); background: rgb(0 0 0 / .3); }
+.bha-presetcard__cell--prey { border: 0; background: var(--bha-tile-prey); }
+.bha-presetcard__cell--elite { border: 0; background: var(--bha-tile-elite); }
+.bha-presetcard__cell--env { border: 0; background: var(--bha-tile-env); }
+.bha-presetcard__cell--rest { border: 0; background: var(--bha-tile-rest); }
+.bha-presetcard__cell--event { border: 0; background: var(--bha-seal); }
+.bha-presetcard__meta { color: var(--bha-text-3); font-size: var(--bha-fs-xs); }
+.bha-presetcard__acts { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
+/* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
+.bha-road__wrap { user-select: none; -webkit-user-select: none; }
+.bha-lcd .bha-plan .bha-road__wrap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-2); align-items: start; }
+.bha-lcd .bha-plan .bha-road__wrap > .bha-road, .bha-lcd .bha-plan .bha-road__wrap > .bha-road__synline, .bha-lcd .bha-plan .bha-road__wrap > .bha-road__noterow { grid-column: 1; }
+.bha-lcd .bha-plan .bha-road__wrap > .bha-road__hand { grid-column: 2; grid-row: 1 / span 3; max-height: 232px; overflow-y: auto; overflow-x: hidden; align-content: flex-start; padding: var(--bha-sp-1); }
+.bha-lcd .bha-plan .bha-road__cell { min-height: 52px; }
+.bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }

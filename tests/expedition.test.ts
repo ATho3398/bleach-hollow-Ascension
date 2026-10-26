@@ -5,12 +5,16 @@ import { TERRAIN_TILES, tileName, tilesFor } from '../src/data/tiles';
 import {
   advance, chooseContinue, chooseReturn, createExpedition, finishBattle, finishRest, placeTile, plannedBattles,
   playExpedition, startBattle, summarize, buildRunRecord, type ExpeditionState,
+  chooseRelease,
 } from '../src/engine/expedition';
 import { applyAbsenceHunger, doNestAction, newNest } from '../src/engine/nest';
 import { createCombat } from '../src/engine/combat';
 import { getEnemy } from '../src/data/enemies';
-import { loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
+import { loadSave, migrateSave, newSaveData, newTileStock, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { emptyRunLog } from '../src/engine/runLog';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 const mk = (over: Partial<Parameters<typeof createExpedition>[0]> = {}) =>
@@ -21,9 +25,10 @@ function winBattle(exp: ExpeditionState): void {
   const b = startBattle(exp);
   b.enemy.hp = 0;
   b.status = 'won';
-  // 흡수 조건 미달로 친다: 첫 흡수 보장(장착 skill 없음)이 적용되지 않게 skill 이 장착된 전투로 만든다 (C.7)
   b.params = { ...b.params, skills: [{ id: 't-fire-a', element: 'fire', category: 'physical', role: 'attack', powerInAttacks: 1, chainBonus: { kind: 'stagger', value: 1 }, powerMultiplier: 1 }] };
   finishBattle(exp, b);
+  // C.125 (GDD 71장): 이기면 늘 흡수 화면 — 옛 '조건 미달 → 그대로 이동' 대신 놓아준다
+  if (exp.phase === 'absorb') chooseRelease(exp);
 }
 function loseBattle(exp: ExpeditionState): void {
   const b = startBattle(exp);
@@ -390,7 +395,7 @@ describe('시드 결정성', () => {
   });
 
   it('전투 기록의 lap 이 실제 바퀴 수로 채워진다', () => {
-    const e = playExpedition(mk({ seed: 82 }), { returnAfterLap: 3 });
+    const e = playExpedition(mk({ seed: 81 }), { returnAfterLap: 3 }); // C.147: 94장 B 로 흡수 결과가 바뀌어 3바퀴까지 사는 시드로 (82 → 81)
     expect(new Set(e.battles.map((b) => b.lap))).toEqual(new Set([1, 2, 3]));
     expect(e.battles.length).toBe(e.battlesByLap.reduce((x, y) => x + y, 0));
     expect(buildRunRecord(e).laps).toBe(3);
@@ -425,7 +430,7 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (타일·둥지)', () =
   });
 
   it('둥지 행동 이름은 종족 설정에서 나온다', () => {
-    expect(getFaction('hollow').nestActions).toEqual({ feed: '먹이 주기', sleep: '재우기', pet: '쓰다듬기' });
+    expect(getFaction('hollow').nestActions).toEqual({ feed: '먹이 주기', sleep: '재우기', pet: '교감' });
     expect(getFaction('shinigami').nestActions.pet).toBe('참백도 손질');
     expect(getFaction('hollow').nestName).toBe('둥지');
     expect(getFaction('shinigami').nestName).toBe('대원실');
@@ -447,6 +452,6 @@ describe('저장', () => {
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.nest.hunger).toBe(BALANCE.provisional.nest.startHunger);
-    expect(m.tiles.collection['prey-nest-a']).toBeGreaterThan(0);
+    expect(m.tiles).toEqual(newTileStock()); // C.120 (GDD 64장): 새 타일 보유는 0장·잠김
   });
 });

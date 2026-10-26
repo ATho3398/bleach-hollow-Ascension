@@ -6,7 +6,7 @@ import { BALANCE_VERSION } from '../src/config/balance';
 import { getTrait } from '../src/data/traits';
 import { chooseAbsorb, chooseContinue, chooseRelease, chooseReturn, createExpedition, advance, finishBattle, finishRest, placeAll, startBattle, type ExpeditionState } from '../src/engine/expedition';
 import { playCombatBot } from '../src/engine/combat';
-import { newSaveData, sanitizeDeck } from '../src/game';
+import { referenceTileStock, sanitizeDeck } from '../src/game';
 
 const check = process.argv.includes('--check');
 const M = 300;
@@ -17,7 +17,7 @@ function attackFamily(id: string): string | null {
 }
 
 function run(factionId: string, seed: number, laps: number): { offered: Set<string>; owned: Set<string>; firstOffer: Set<string>; absorbs: number } {
-  const exp: ExpeditionState = createExpedition({ factionId, seed, hunger: 20, condition: 80, deck: sanitizeDeck(newSaveData(factionId).tiles, factionId) });
+  const exp: ExpeditionState = createExpedition({ factionId, seed, hunger: 20, condition: 80, deck: sanitizeDeck(referenceTileStock(), factionId) });
   const offered = new Set<string>();
   const firstOffer = new Set<string>();
   let absorbs = 0;

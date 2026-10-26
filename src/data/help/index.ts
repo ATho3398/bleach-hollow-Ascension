@@ -1,11 +1,17 @@
 // 도움말·튜토리얼 텍스트 데이터 (GDD 14-2, C.19). 본문은 템플릿이고 {자리표시자}는 종족 설정(FactionConfig)·밸런스 값으로 치환한다.
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
+import { riskText } from './riskText';
 import { BALANCE } from '../../config/balance';
 import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
 import { fixParticles } from '../../engine/josa';
 import glossaryJson from './glossary.json';
 import screensJson from './screens.json';
 import tutorialJson from './tutorial.json';
+import guidesJson from './guides.json';
+import { synergyName, tileName } from '../tiles';
+import { statName } from '../elements';
+import { STAT_IDS } from '../schema';
+import type { TextGuideId } from '../../engine/tutorial';
 
 /** 튜토리얼 장면: targets = 전투 화면의 data-help 요소 id (비면 하이라이트 없이 가운데 카드) */
 export interface TutorialScene {
@@ -35,11 +41,29 @@ export interface ScreenHelp {
 export const TUTORIAL_SCENES: readonly TutorialScene[] = tutorialJson.scenes;
 export const GLOSSARY: readonly GlossaryTerm[] = glossaryJson.terms;
 export const SCREEN_HELPS: readonly ScreenHelp[] = screensJson.screens;
+/** 한 번만 뜨는 안내 (C.120, GDD 64·67장): 안내 id → 장면 ('first-absorb' 는 튜토리얼 흡수 화면 위 장면, 저장 상태 없음) */
+export const GUIDES: Readonly<Record<TextGuideId | 'first-absorb', readonly TutorialScene[]>> = guidesJson.guides;
+
+/** 안내 본문 자리표시자 (종족 설정 helpVars 에 더함): 시작 타일 이름·조합 예시·튜토리얼 수치 */
+export function guideVars(f: FactionConfig): Record<string, string> {
+  const [prey, elite, rest] = BALANCE.provisional.expedition.starterTiles;
+  return {
+    'tile.prey': tileName(prey!, f.id), 'tile.elite': tileName(elite!, f.id), 'tile.rest': tileName(rest!, f.id),
+    // C.124 (GDD 65장): 뽑기 전용 새 타일 4종
+    'tile.training': tileName('env-training', f.id), 'tile.hunter': tileName('hunter-den', f.id), 'tile.spring': tileName('rest-spring', f.id), 'tile.echo': tileName('echo', f.id),
+    comboExample: synergyName('oasis', f.id),
+    starterCount: String(BALANCE.provisional.expedition.starterTiles.length),
+    statEv: String(BALANCE.provisional.tutorialRun.statEv),
+    tutorialCell: String(BALANCE.provisional.tutorialRun.cell),
+    deckSize: String(BALANCE.provisional.expedition.deckSize),
+  };
+}
 
 /** 튜토리얼 장면 targets 가 가리킬 수 있는 전투 화면 요소 id (battleView 가 data-help 로 단다) */
-export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.sp', 'battle.stored'] as const;
+export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.liberation'] as const; // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
 
 const COMBAT = BALANCE.provisional.combat;
+const LIB = BALANCE.provisional.liberation;
 
 /** 본문에서 쓸 수 있는 자리표시자 값: 종족 설정의 문자열 필드(중첩은 a.b)와 밸런스 수치 */
 export function helpVars(f: FactionConfig): Record<string, string> {
@@ -52,18 +76,33 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   };
   walk('', f);
   // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4: 옛 '포효'·'응축 일격' 등 금지)
-  vars.specialBlockName = `${BLOCK_WORDS.special} 블록`;
-  vars.storedSkillName = BLOCK_WORDS.stored;
   vars.voidBlockName = `${BLOCK_WORDS.void} 블록`;
   delete vars.basicSkillName;
   vars.trayCapacity = String(COMBAT.trayCapacity);
   vars.chainMax = String(COMBAT.chainMultipliers.length);
   vars.familyList = f.families.map((x) => x.abbr).join('·');
-  vars.storedChargesMax = String(COMBAT.storedChargesMax);
-  vars.storedPower = String(COMBAT.storedPowerInAttacks);
-  vars.storedGuardSeconds = String(COMBAT.storedGuardSeconds);
-  vars.weakChain3 = String(BALANCE.provisional.absorb.weakChain3ForAbsorb);
+  // 해방 (GDD 83장, 옛 저장형 필살기 자리): {liberation.baseName}·{liberation.name} 은 종족 설정에서 그대로, 수치는 BALANCE
+  vars.liberationSeconds = String(LIB.seconds);
+  vars.liberationRisk = String(LIB.riskOnEnd);
+  vars.liberationSlots = (LIB.slotsByTier as readonly number[]).filter((n, i, a) => i === 0 || n !== a[i - 1]).join('·');
   // 진화 단계 이름 (GDD 20-5 설명용): {tier4} = 바스트로데/평대원, {tier5} = 아란칼/수석 대원
+  // 능력치 자세한 설명 (C.137, GDD 85장 9): 이름은 종족 설정 표기, 수치는 BALANCE 에서 읽는다 (숫자 하드코딩 없음)
+  for (const id of STAT_IDS) vars[`stat.${id}`] = statName(id, f.id);
+  vars.statRef = String(BALANCE.provisional.stats.tierTotals[0]! / STAT_IDS.length);
+  vars.statMax = String(BALANCE.provisional.stats.statMax);
+  vars.playerMaxHp = String(COMBAT.playerMaxHp);
+  vars.playerHpScale = String(COMBAT.playerHpScale);
+  vars.playerAttackSeconds = String(COMBAT.playerAttackSeconds);
+  vars.critChancePct = String(Math.round(COMBAT.critChance * 100));
+  vars.critChanceMaxPct = String(Math.round(COMBAT.critChanceMax * 100));
+  vars.critMultiplier = String(COMBAT.critMultiplier);
+  // 광기·자아 설명 (C.141, GDD 84장 9): 손해를 숫자로 — 수치는 BALANCE, 이름은 종족 설정 (ui/riskText.ts)
+  const rt = riskText(f);
+  vars.riskUpText = rt.riskUp.join(' · ');
+  vars.riskDownText = rt.riskDown.join(' · ');
+  vars.riskLossText = rt.riskLoss.join(' ');
+  vars.stabilityLossText = rt.stabilityLoss.join(' ');
+  vars.stabilityMoveText = rt.stabilityMove.join(' · ');
   vars.tier4 = f.tierNames[3];
   vars.tier5 = f.tierNames[4];
   return vars;

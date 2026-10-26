@@ -72,30 +72,25 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
 /* 뒷면을 보는 동안 앞면(버튼·LCD)은 숨긴다 */
 .bha-dev.is-tama-back > .bha-dev__side, .bha-dev.is-tama-back > .bha-dev__bezel { visibility: hidden; }
 
-/* 조작 줄 (GDD 47장 1번): 기기 바깥, 화면 가장자리에 고정. 가로 = 오른쪽 세로 줄 / 세로 회전 출력 = 아래 가로 줄.
-   버튼 한 변 = 작은 버튼(36px) × 3 = 108px — 아이콘 위·글자 아래 (tamagoLogic BODY.barPx 와 같이 바꾼다) */
+/* 조작 줄 (GDD 47장 1번 → 69장, C.122): 기기 바깥, 화면 아래 가장자리에 한 줄로 고정 — 가로도 세로 회전 출력도 같다.
+   버튼은 줌·배율과 상관없이 화면상 한 변 64px(작은 버튼 36px 의 약 1.8배, 눌리는 영역 전체) — 아이콘 위·글자 아래 (tamagoLogic BODY.barPx 와 같이 바꾼다) */
 .bha-tama__bar {
-  --tama-btn: calc(36px * 3);
+  --tama-btn: 64px;
   position: fixed; z-index: calc(var(--bha-z-overlay) - 10); display: flex; gap: var(--bha-sp-3);
   padding: var(--bha-sp-2);
-}
-.bha-tama__bar[hidden] { display: none; }
-.bha-tama__bar[data-pos="right"] {
-  right: max(var(--bha-sp-2), env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); flex-direction: column;
-}
-.bha-tama__bar[data-pos="bottom"] {
   bottom: max(var(--bha-sp-2), env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); flex-direction: row;
 }
-/* 세로 폰(GDD 16-6): 기기를 시계 방향 90도 돌려 놓으니 조작 줄도 같은 쪽으로 돌린다 — 버튼이 정사각형이라 제자리에서 돌려도 줄 자리는 그대로, 순서는 기기 위쪽 = 화면 오른쪽이라 오른쪽부터 (C.111) */
-.bha-tama__bar[data-pos="bottom"] { flex-direction: row-reverse; }
-.bha-tama__bar[data-pos="bottom"] .bha-btn { rotate: 90deg; }
+.bha-tama__bar[hidden] { display: none; }
+/* 세로 폰(GDD 16-6): 기기를 시계 방향 90도 돌려 놓으니 조작 줄 버튼도 같은 쪽으로 돌린다 — 버튼이 정사각형이라 제자리에서 돌려도 줄 자리는 그대로, 순서는 기기 위쪽 = 화면 오른쪽이라 오른쪽부터 (C.111) */
+.bha-tama__bar[data-pos="rotated"] { flex-direction: row-reverse; }
+.bha-tama__bar[data-pos="rotated"] .bha-btn { rotate: 90deg; }
 .bha-tama__bar .bha-btn {
-  flex-direction: column; justify-content: center; gap: var(--bha-sp-2);
-  width: var(--tama-btn); height: var(--tama-btn); min-height: var(--tama-btn); padding: var(--bha-sp-2);
-  font-size: var(--bha-fs-xl); line-height: 1.1; border-radius: var(--bha-r-lg);
+  flex-direction: column; justify-content: center; gap: var(--bha-sp-1);
+  width: var(--tama-btn); height: var(--tama-btn); min-height: var(--tama-btn); padding: var(--bha-sp-1);
+  font-size: var(--bha-fs-md); line-height: 1.1; border-radius: var(--bha-r-lg); white-space: nowrap;
   background: var(--bha-bg-1); border: 1px solid var(--bha-line-2);
 }
-.bha-tama__bar .bha-btn .bha-icon { width: 48px; height: 48px; }
+.bha-tama__bar .bha-btn .bha-icon { width: 28px; height: 28px; }
 
 /* 화면 덮개: 줌아웃 중 LCD 를 탭하면 줌인 (화면은 밑에서 그대로 움직인다) */
 .bha-tama__shield {

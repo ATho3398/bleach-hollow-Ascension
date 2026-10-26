@@ -8,6 +8,9 @@ import { loadSave, migrateSave, newSaveData, readActiveExpedition, recordExpedit
 import { parseImport, recoverFromBackup } from '../src/saveBackup';
 import { slotBackupKey, slotKey, slotSummary, writeSlotSave } from '../src/saveSlots';
 import { continueChoices } from '../src/ui/slotView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 
@@ -141,11 +144,11 @@ describe('깨진·빈·일부 빠진 세이브', () => {
   it('둥지·타일 안의 값이 깨져도 처음 값으로 채운다', () => {
     const s = JSON.parse(PLAYED);
     s.nest = { hunger: 'a', condition: null };
-    s.tiles = { collection: 3, deck: [1, 'prey-nest-a'] };
+    s.tiles = { collection: 3, presets: [1, { factionId: 'hollow', cells: ['x'] }] };
     const r = load(s)!;
     expect(Number.isFinite(r.nest.hunger) && Number.isFinite(r.nest.condition) && Number.isFinite(r.nest.lastTickMs)).toBe(true);
     expect(typeof r.tiles.collection).toBe('object');
-    expect(r.tiles.deck).toEqual(['prey-nest-a']);
+    expect(r.tiles.presets).toEqual([]);
   });
 });
 

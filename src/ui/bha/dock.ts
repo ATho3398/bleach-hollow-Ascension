@@ -1,4 +1,4 @@
-// 홈 하단 독 (GDD 18-2, 18-9): 돌보기 3개(먹이·재우기·쓰다듬기, 효과 있는 버튼) + [더보기 ⋯] 하나. 메뉴는 전부 더보기 안 아이콘+이름 격자.
+// 홈 하단 독 (GDD 18-2, 18-9): 돌보기 3개(먹이·재우기·교감, 효과 있는 버튼) + [더보기 ⋯] 하나. 메뉴는 전부 더보기 안 아이콘+이름 격자.
 // 먹이·더보기를 누르면 독 바로 위에 칸이 펼쳐진다(장면 위에 겹침, 장면 크기는 그대로). 먹이 종류를 하나 고르면 바로 먹는다.
 // 먹이는 개수제(GDD 23-1): 칸마다 보유 개수, 0개는 비활성.
 import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestAction } from '../../engine/faction';
@@ -30,6 +30,8 @@ export interface Dock {
   items: () => HTMLElement[];
   panel: () => DockPanel;
   close: () => void;
+  /** 돌봄 요청 강조 (GDD 82장): 캐릭터가 청한 돌보기 버튼만 강조, null 이면 모두 해제 */
+  setRequest: (action: NestAction | null) => void;
 }
 
 const CARE_META: Record<NestAction, { icon: string; cls: string }> = {
@@ -125,6 +127,8 @@ export function createDock(o: DockOpts): Dock {
         tray.append(b);
       }
     }
+    // 펼친 줄은 장면 위에 떠 있으니 기기 버튼 선택에서 먼저 (보이는 위치 순서 안에서도 맨 앞 묶음, GDD 63장)
+    for (const b of trayBtns) b.setAttribute('data-dev-order', '-1');
   }
 
   function setPanel(next: DockPanel): void {
@@ -144,5 +148,13 @@ export function createDock(o: DockOpts): Dock {
     items: () => [...trayBtns.filter((b) => !(b as HTMLButtonElement).disabled), ...careBtns.values(), ...menuBtns],
     panel: () => panel,
     close: () => { if (panel !== CLOSED) setPanel(CLOSED); },
+    setRequest: (action) => {
+      for (const [a, b] of careBtns) {
+        const on = a === action;
+        b.classList.toggle('is-requested', on);
+        if (on) b.dataset.requested = ''; else delete b.dataset.requested;
+        b.setAttribute('aria-label', on ? `${faction.nestActions[a]} (요청 중)` : faction.nestActions[a]);
+      }
+    },
   };
 }

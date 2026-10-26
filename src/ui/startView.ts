@@ -3,6 +3,7 @@
 import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
 import { versionLabel } from '../version';
+import { onUpdateReady } from '../pwa';
 import { button, el, mountApp, notice } from './bha/dom';
 import { logoMark } from './bha/logo';
 
@@ -10,11 +11,20 @@ export interface StartHandlers {
   onNew: () => void;
   onContinue: () => void;
   onImport: () => void;
+  /** 열 수 없는 형식 슬롯의 [옛 세이브 내보내기] (GDD 61장) */
+  onExportOld?: (slot: number) => void;
 }
+
+/** 열 수 없는 형식(이전·더 새로운 버전) 세이브 알림 문구 (GDD 61장) */
+export const INCOMPATIBLE_TEXT = {
+  old: '이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다',
+  newer: '더 새로운 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다',
+} as const;
 
 /** 슬롯 한 줄의 글: "호로 · 2단계 바이저드 · 원정 5회" / "비어 있음" / "손상됨" 과 마지막 플레이 시각 */
 export function slotLine(sum: SlotSummary, factions: readonly FactionConfig[]): { main: string; sub: string } {
   if (sum.state === 'empty') return { main: '비어 있음', sub: '' };
+  if (sum.state === 'incompatible') return { main: sum.reason === 'old' ? '이전 버전 세이브' : '더 새로운 버전 세이브', sub: '이어서 할 수 없다 · 내보내거나 새로 시작' };
   if (sum.state === 'broken') return sum.recoverable ? { main: '손상된 세이브', sub: '열면 슬롯 백업으로 복구한다' } : { main: '읽을 수 없는 세이브', sub: '손상되었거나 알 수 없는 형식' };
   const f = factions.find((x) => x.id === sum.factionId);
   const tier = f ? `${sum.tierIndex + 1}단계 ${f.tierNames[sum.tierIndex] ?? ''}`.trim() : `${sum.tierIndex + 1}단계`;
@@ -56,6 +66,21 @@ export function slotRows(
   return list;
 }
 
+/** 열 수 없는 형식 슬롯 알림: 한 줄 문구 + 슬롯별 [옛 세이브 내보내기] + [새로 시작] (GDD 61장). 슬롯 원문은 새로 시작해 덮어쓸 때까지 지우지 않는다 */
+function incompatibleNotice(stale: readonly Extract<SlotSummary, { state: 'incompatible' }>[], h: StartHandlers): HTMLElement {
+  const box = el('div', 'bha-start__stale');
+  box.dataset.sc = 'start.stale';
+  const text = stale.some((x) => x.reason === 'old') ? INCOMPATIBLE_TEXT.old : INCOMPATIBLE_TEXT.newer;
+  box.append(notice('warn', text));
+  const row = el('div', 'bha-start__stale-actions');
+  for (const x of stale) {
+    if (h.onExportOld) row.append(button({ label: `슬롯 ${x.slot} 옛 세이브 내보내기`, icon: 'i-deck', size: 'small', variant: 'ghost', onClick: () => h.onExportOld?.(x.slot) }));
+  }
+  row.append(button({ label: '새로 시작', icon: 'i-play', size: 'small', onClick: h.onNew }));
+  box.append(row);
+  return box;
+}
+
 /** 시작 화면 (GDD 18-1): 타이틀 중앙 상단 + [이어하기][새로 시작][불러오기] 세로 3개. 슬롯 고르기는 이어하기·새로 시작을 누르면 뜬다 */
 export function startView(root: HTMLElement, summaries: readonly SlotSummary[], h: StartHandlers, note = ''): void {
   const hero = el('header', 'bha-start__hero');
@@ -73,8 +98,17 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   );
   const nodes: Node[] = [hero, menu];
   if (note) nodes.push(notice('warn', note));
-  nodes.push(el('p', 'bha-start__ver', versionLabel()));
-  mountApp(root, { cls: 'bha-start bha-start--title' }, ...nodes);
+  const stale = summaries.filter((x): x is Extract<SlotSummary, { state: 'incompatible' }> => x.state === 'incompatible');
+  const hasStale = stale.length > 0;
+  if (hasStale) nodes.push(incompatibleNotice(stale, h));
+  const ver = el('p', 'bha-start__ver', versionLabel());
+  nodes.push(ver);
+  // 오프라인 플레이(GDD 60장): 새 버전을 받아 뒀으면 한 줄 안내 (적용은 앱을 다시 열 때)
+  onUpdateReady(() => {
+    if (ver.isConnected) ver.after(el('p', 'bha-start__ver', '새 버전을 받았습니다 — 앱을 닫았다 다시 열면 적용됩니다'));
+  });
+  // 열 수 없는 세이브 알림이 있으면 낮은 화면(가로 390)에서도 버전 줄까지 들어가게 메뉴 3개를 한 줄로 (C.119)
+  mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}` }, ...nodes);
 }
 
 export interface SpeciesHandlers {

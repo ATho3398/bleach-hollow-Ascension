@@ -54,7 +54,7 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false } : null;
     case 'block': {
       if (e.damage <= 0 || e.block === 'void') return null;
-      if (e.block === 'special' || e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true };
+      if (e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true };
       const cue: AttackCue = { side: 'player', tier: e.matchup === 'strong' ? 'weak' : chainTier(e.chain, top), guarded: false };
       const stage = familyStage(e.chain);
       const spec = e.family && e.role === 'attack' ? familyFx?.(e.family, stage) : null;
@@ -67,8 +67,6 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       }
       return cue;
     }
-    case 'stored-use':
-      return e.damage > 0 ? { side: 'player', tier: 'special', guarded: false } : null;
     case 'enemy-attack':
       return e.damage > 0 || e.guarded ? { side: 'enemy', tier: 'basic', guarded: e.guarded } : null;
     case 'counter':

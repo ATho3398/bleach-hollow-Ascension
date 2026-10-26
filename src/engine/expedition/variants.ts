@@ -46,8 +46,8 @@ export interface VariantMods {
   eliteSoulBonus?: number;
   /** 환경 타일 효과 크기 배율 (상위 타일) */
   envMult?: number;
-  /** 특수 속성(혈·독·허) 특성이 흡수 후보에 들 확률 (바퀴 변이 공허의 밤, GDD 49-7 ①) */
-  specialTraitChance?: number;
+  /** 특수 속성(혈·독·허) 적 출현 가중치 배율 (바퀴 변이 공허의 밤, GDD 75장 — 옛 49-7 ① 특성 숨김) */
+  specialEnemyChance?: number;
 }
 
 const MULT_KEYS = ['rewardMult', 'goldMult', 'foodMult', 'enemyAttackMult', 'enemyHpMult', 'eliteHpMult', 'voidMult', 'restMult', 'hungerMult', 'envMult'] as const;

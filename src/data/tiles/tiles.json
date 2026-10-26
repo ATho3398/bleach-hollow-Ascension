@@ -112,6 +112,58 @@
     "provisional": true
   },
   {
+    "id": "env-training",
+    "kind": "environment",
+    "name": {
+      "hollow": "뼈 표식",
+      "shinigami": "수련 말뚝"
+    },
+    "effect": {
+      "type": "environment",
+      "preset": "training"
+    },
+    "provisional": true
+  },
+  {
+    "id": "hunter-den",
+    "kind": "elite-den",
+    "name": {
+      "hollow": "포식자 둥지",
+      "shinigami": "사냥꾼 출몰지"
+    },
+    "effect": {
+      "type": "spawn",
+      "enemyClass": "elite",
+      "hunter": true
+    },
+    "provisional": true
+  },
+  {
+    "id": "rest-spring",
+    "kind": "rest",
+    "name": {
+      "hollow": "영혼 샘",
+      "shinigami": "정화의 샘"
+    },
+    "effect": {
+      "type": "rest",
+      "spring": true
+    },
+    "provisional": true
+  },
+  {
+    "id": "echo",
+    "kind": "special",
+    "name": {
+      "hollow": "메아리 동굴",
+      "shinigami": "메아리 비석"
+    },
+    "effect": {
+      "type": "echo"
+    },
+    "provisional": true
+  },
+  {
     "id": "event-merchant",
     "kind": "event",
     "name": {

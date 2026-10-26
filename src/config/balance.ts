@@ -3,15 +3,17 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 56;
+export const BALANCE_VERSION = 72; // C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
   expedition: {
     /** 루프 길이 (둥지 칸 1 포함) */
     loopTiles: 12,
-    /** 전투 없는 칸 이동 시간(초) */
-    secondsPerTile: 5,
+    /** 전투 없는 칸 이동 시간(초). C.125 (GDD 72장 "한 칸 넘어갈 때 시간 1/2"): 5 → 2.5. C.136 (GDD 84장 1번 "던전 한 칸 돌 때 드는 시간 1/2"): 2.5 → 1.25. 걸음 수·조우 판정·전투 시간과 무관 */
+    secondsPerTile: 1.25,
+    /** 휴식 타일 시간 단위(초): 휴식 = restTimeTiles × 이 값. 칸 시간 1/2(72장)과 따로 옛 칸 시간 그대로(휴식 10초) */
+    restSecondsPerTile: 5,
     defaultLaps: 4,
     maxLaps: 6,
     /** 바퀴별 전투 횟수: 1바퀴 2회, 2바퀴 3회, 3바퀴 이후 4회 (플레이어 타일 배치에 따라 변동) */
@@ -57,20 +59,14 @@ export const BALANCE = {
   provisional: {
     // ── 흡수·리스크(P3) 임시값. 기획서 4-1: 11-3(계통·특성 풀), 11-4(리스크 수치)가 미정 ──
     absorb: {
-      /** 흡수 가능 조건 (GDD 3-5 v0.7 → 20-2 C.47): 마무리 일격이 상성 우위(효과가 굉장한) 스킬 블록이거나, 그 전투에서 상성 우위 체인3 을 이 횟수 이상 발동.
-       *  약점이 없는 적(노멀·특수 속성)은 아무 스킬 블록이나 우위로 친다. 장착 skill 특성이 없으면 조건 없이 가능(첫 흡수 보장) */
-      weakChain3ForAbsorb: 3,
+      /* 흡수 가능 조건(weakChain3ForAbsorb 우위 체인3 횟수·우위 마무리·첫 흡수 보장)은 C.125 에 삭제 (GDD 71장: 이기면 언제나 흡수) */
       /** 특성 후보 수: 일반 적은 1~2개 중 무작위, 강적은 항상 2개 (GDD 4장 "후보 1~2개") */
       candidatesElite: 2,
       candidatesNormalMax: 2,
       /** 공격 계열 섞임 (GDD 18-8 ③, C.41, 임시): 장착한 공격 특성이 이 수보다 적은 계열이면, 흡수 후보에 아직 없는 계열의 공격 특성을 1개 끼워 넣는다(그 계통에 있을 때). 첫 흡수(장착 skill 없음)는 서로 다른 계열 공격 후보 2개 */
       attackFamilyGuarantee: 2,
-      /** 슬롯 안 같은 속성 N개 → 속성 보너스 (GDD 4-1 계통 보너스를 속성으로, C.47) */
-      elementBonusCount: 3,
-      /** 속성 보너스: 그 속성 skill 특성 블록의 위력(피해·막기 지속·회복량)에 가산하는 비율 (GDD 4-1 +50%) */
-      elementSkillBonus: 0.5,
-      /** 흡수 후보 섞기 (C.47): 후보가 2개면 하나는 적의 속성, 하나는 다른 속성에서 나온다 (원소 상성 순환에서 처음 원소를 얻는 길) */
-      otherElementCandidate: true,
+      /* 슬롯 안 같은 속성 3개 → 속성 보너스(elementBonusCount·elementSkillBonus, C.47)는 C.150 에 삭제 (GDD 94장 B 후속 v5.194: 가진 속성은 강화만이라 닿을 수 없다 — 강화 곡선이 대신함) */
+      /* 흡수 후보 섞기(otherElementCandidate, C.47)는 C.125 에 삭제 (GDD 70장: 후보는 그 적 속성 특성에서만) */
       /** 흡수하면 허기가 이 값으로 리셋 (GDD 4장 "허기 리셋") */
       hungerAfterAbsorb: 0,
       /** 흡수 시 보상 타일 (GDD 2-1 "흡수 시 1"). 바퀴 합계는 tilesPerLap.max 안, 바퀴 완주 보상 1장은 남겨 둔다 */
@@ -82,10 +78,17 @@ export const BALANCE = {
         trait: { ev: 0, risk: 0.7 },
         stat: { ev: 2, risk: 0.5 },
       },
-      /** 특수 속성(혈·독·허) 특성 숨김 (GDD 49-7 ①, C.106, provisional): 아래 경우에만 그 확률로 흡수 후보 풀에 들어간다(여럿이면 가장 큰 값). 그 밖에는 후보에 안 나온다.
-       *  강적·보스 처치 / 바퀴 변이 효과 specialTraitChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 */
-      specialTraits: { elite: 0.5, boss: 1, minDifficulty: 3, difficulty: 0.3 },
+      /** 속성 강화 (GDD 84장 8번, C.136 provisional — 사용자 "이미 흙-교를 먹어도 흙 잡으면 계속 먹을 수 있게 … 각 속성별로 100번까지 강화"): 특성·속성 카운트가 있는 갈래(둘 다·속성만)로 흡수할 때마다
+       *  그 적 속성의 강화 횟수 +1 (빌드에 저장, 상한 없이 센다). 효과 단계 = min(횟수, max). 그 속성 공격 특성 블록 위력 + attackPerLevel × 단계 (100 = +40%).
+       *  막기·회복은 속성이 없어(84장 7번) 기본 막기·회복 블록 위력 + guardHealPerLevel × (모든 속성 단계 합), 최대 +guardHealMax (코드 판단: 막기·회복을 세지게 할 '강화'의 출처) */
+      /*  C.147 (GDD 94장 B — 가진 속성 흡수 = 강화만, 노멀 = 기본 블록): 같은 속성 특성 3개(속성 보너스 +50%)를 더는 모을 수 없어 강화가 주된 성장 →
+       *  앞 earlyLevels 단계는 earlyPerLevel(단계당 +5%, 10단계 +50% = 옛 속성 보너스만큼), 그 뒤는 attackPerLevel(+0.4%) — 100 = +86%. 노멀 강화는 기본 공격 블록에 (물공 블록 제외) */
+      enhance: { max: 100, earlyLevels: 10, earlyPerLevel: 0.05, attackPerLevel: 0.004, guardHealPerLevel: 0.0005, guardHealMax: 0.3 },
     },
+    /** 특수 속성(혈·독·허) 적 등장 숨김 (GDD 75장, C.127, provisional — 옛 49-7 ① 특성 숨김 absorb.specialTraits 를 옮김): 원정 출현 풀에서 혈·독·허 적의 가중치 × 이 값(여럿이면 가장 큰 값).
+     *  강적 elite / 바퀴 변이 효과 specialEnemyChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 difficulty. 그 밖(★1~2 일반 적 칸·먹잇감 둥지 등)은 0 = 안 나오고 다른 속성 적으로.
+     *  보스는 보스 데이터의 고정 적이라 늘 그대로(옛 boss 1). 나온 혈·독·허 적을 잡으면 그 속성 특성이 늘 후보(70장) */
+    specialEnemies: { elite: 0.5, minDifficulty: 3, difficulty: 0.3 },
     risk: {
       /** 한계값: 이상이 되면 돌파 (GDD 4-1) */
       limit: 100,
@@ -93,11 +96,11 @@ export const BALANCE = {
       perVoidBlock: 2.5,
       /** 강한 적 흡수 시 리스크 상승 = 적 hpInAttacks(바퀴 강화 포함) × 이 값. 옛 0.55/매칭 회분 × (6회분 → 30회분 환산) ≈ 0.11. 강적(70)이 일반(30)의 약 2.3배 */
       /* C.7: 0.12→0.22 (첫 흡수 보장·새 조건으로 흡수 횟수가 줄어 6바퀴 돌파 가드 유지) */
-      absorbPerHpAttack: 0.26, // C.98: 기본 블록 몫 재조정으로 4바퀴 흡수 봇 흡수 3.9→6.0회·돌파 31/60(>50%) → 0.28→0.26 (돌파 27/60, 섞음 끝 리스크 47.5). C.97: 기본 블록이 섞여 흡수 조건(우위 마무리·체인3)이 덜 채워져 4바퀴 섞음 흡수 5회대→3.9회, 허 리스크 삭제(45장 5번)까지 겹쳐 끝 리스크 34 → 0.2→0.28 (약 44). C.47: 약점 없는 적(노멀·특수)은 아무 기술로 마무리해도 흡수돼 흡수가 잦아진 만큼(4바퀴 5.3→6.7회) 0.3→0.25→0.2 (조정 2회)
+      absorbPerHpAttack: 0.095, // C.136: 0.12 → 0.095 (광기 감소를 줄여(84장 10번) 4바퀴 흡수 봇 돌파가 34~39/60 > 50% — 오르는 쪽을 조금 낮춤, 6바퀴 흡수 돌파 ≥50% 는 유지). C.125: 흡수 조건 삭제(GDD 71장)로 흡수가 약 1.8배(4바퀴 섞음 4.2→7.4회, 흡수 봇 8.3→14.7회) → 0.26→0.16→0.14→0.12 (조정 3회, 놓아주기 5→2 와 함께: 섞음 끝 43.8·돌파 0/60, 흡수 봇 돌파 26/60). C.98: 기본 블록 몫 재조정으로 4바퀴 흡수 봇 흡수 3.9→6.0회·돌파 31/60(>50%) → 0.28→0.26 (돌파 27/60, 섞음 끝 리스크 47.5). C.97: 기본 블록이 섞여 흡수 조건(우위 마무리·체인3)이 덜 채워져 4바퀴 섞음 흡수 5회대→3.9회, 허 리스크 삭제(45장 5번)까지 겹쳐 끝 리스크 34 → 0.2→0.28 (약 44). C.47: 약점 없는 적(노멀·특수)은 아무 기술로 마무리해도 흡수돼 흡수가 잦아진 만큼(4바퀴 5.3→6.7회) 0.3→0.25→0.2 (조정 2회)
       /** 놓아주면 하락. C.52: 8 → 6 (GDD 23-2 목표 — 흡수·놓아주기 섞은 4바퀴 원정 끝 40~60, 조정 1회). C.69(B-1): 4바퀴 섞음 300판 끝 39.4 로 목표 바로 아래 → 6 → 5 (41.3, 조정 1회) */
-      releaseRelief: 5,
-      /** 휴식 타일에서 하락 */
-      restRelief: 15,
+      releaseRelief: 1, // C.136 (GDD 84장 10번 "광기 수치 너무 잘 줄어드는듯"): 2 → 1. C.125: 놓아주기도 약 1.9배(4바퀴 섞음 3.6→6.8회)라 5 → 3 → 2 (섞음 끝 리스크가 40 밑으로 빠지지 않게, absorbPerHpAttack 과 같이 조정)
+      /** 휴식 타일에서 하락. C.136 (GDD 84장 10번): 15 → 10 (8 은 4바퀴 섞음 끝 광기가 가드 60 을 넘음) */
+      restRelief: 10,
       /** 5바퀴째부터 칸을 지날 때마다 상승: (바퀴 − 5 + 1) × 이 값 (GDD 5장 "5바퀴 이후") */
       lateLapPerTile: 0.5,
       /** 돌파 페널티: 그 원정 남은 동안 공허 생성률 가산, 둥지 복귀 시 안정 수치 하락 */
@@ -114,10 +117,11 @@ export const BALANCE = {
       stabilityMax: 100,
       releaseStability: 6,
       /** 둥지 행동의 리스크 하락·안정 수치 상승 (GDD 5장 "둥지 쓰다듬기" 등). C.52: 재우기·쓰다듬기 −10 → −20 (GDD 23-2 "한 번에 크게") */
+      /*  C.136 (GDD 84장 10번 "광기 수치 너무 잘 줄어드는듯"): 먹이 −5 → −3 · 재우기·쓰다듬기 −20 → −10 */
       nestActions: {
-        feed: { risk: -5, stability: 2 },
-        sleep: { risk: -20, stability: 3 },
-        pet: { risk: -20, stability: 8 },
+        feed: { risk: -3, stability: 2 },
+        sleep: { risk: -10, stability: 3 },
+        pet: { risk: -10, stability: 8 },
       },
     },
     // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 ──
@@ -154,21 +158,31 @@ export const BALANCE = {
     },
     // ── 해방 (GDD 22-2·22-5 v5.13, 수치 provisional): 전투 중 변신. 이름은 종족 설정 liberation ──
     liberation: {
-      /** 자격: 지금 단계가 이 값 이상(tierIndex, 4 = 5단계 아란칼/수석 대원) + 수련 완료 + 등급 이력 */
+      /** C.134(GDD 83장): 저장형 필살기(14-6)를 없애고 그 게이지를 해방 게이지로. 5단계 전 = 영력 해방, 이 단계(tierIndex, 4 = 5단계 아란칼/수석 대원)부터 = 레스렉시온/만해(고유 효과).
+       *  수련 진입 단계(GDD 22-4)도 이 값. 22-2 의 해금 조건(수련 완료·등급 이력)은 폐기 — 1단계부터 쓸 수 있다 */
       minTierIndex: 4,
-      /** 게이지: 내 공격(평타·블록·필살 등)이 준 피해 합이 적 최대 체력의 이 비율이면 가득(100). C.54 봇 조정 2회: 기획 40% → 30% (승률 목표 +10~15%p) */
-      gaugeEnemyHpFraction: 0.3,
+      /** 게이지 (옛 저장 게이지 그대로): 블록 1개 사용당 +12, 체인 2·3 이면 사용 한 번에 보너스 +4 / +10, 정화 +40(블록 데이터). 100 이면 [해방]. 해방 중에는 차지 않는다 */
       gaugeMax: 100,
-      /** 지속(초)과 그동안 전 능력치 배율 (체력은 최대 체력이 같이 오르고 끝나면 원래 최대 체력까지로). C.54 봇 조정 2회: 기획 ×1.3 → ×1.5.
-       *  C.69(B-1): 해방 없는 승률이 84.6% → 68.2% 로 내려와(치명타·적 변화) 해방 효과가 +21.5%p(목표 +10~15%p) → ×1.4 +18.9 → ×1.3 +15.6 → 블록 2.5배 +15.4(효과 없어 3 유지). 조정 3회, ×1.3 채택(목표 +0.6%p 초과, 가드 +5~25 안) */
-      /*  C.76(GDD 32-3): 사냥터 강도가 ×1 로 일원화돼 5단계 몸 ★5 강적 승률이 해방 없이 92% 라 +10%p 를 올릴 자리가 없다 → 측정 기준을 "권장 ★ · 연속 5(적 +25%)" 로 바꾸고(해방이 필요한 싸움) ×1.3 +7.6 → ×1.5 **+10.7%p**(조정 1회, ×1.7 은 +12.5 이나 연속 0 에서 99.9% 라 과함) */
-      seconds: 15,
-      statMultiplier: 1.5,
-      /** 쓰는 순간 블록 바에 넣는 해방 블록 수와 위력 배율 (일반 블록 = basicBlockPowerInAttacks 의 이 배수) */
-      blocks: 2,
+      gaugePerBlock: 12,
+      chainBonus: [0, 4, 10],
+      /** 전투 시작 게이지 = 안정 수치(0~stabilityMax) 비례로 0~이 값 (둥지 애착 반영, 옛 저장 필살 시작 게이지) */
+      startGaugeMax: 50,
+      /** 지속(초, 기획 "약 10초"). 끝나면 게이지 0 부터 다시 — 한 전투에 여러 번. C.134 조정: 10 → 8 (해방 한 번이 1칸 몸 강적 승률 +8%p 안팎이라 — 회귀 가드, 흡수 타이머 4.6 과 같이) */
+      seconds: 8,
+      /** 해방 블록 슬롯 칸 수 (단계 tierIndex 순서, 끝 값이 이후 전부): 1단계 1칸 · 3단계 2칸 · 5단계 3칸 */
+      slotsByTier: [1, 1, 2, 2, 3],
+      /** 해방 중 블록 생성 속도 배율: 생성 타이머(흡수·기본·물공)가 이 배로 빨리 돌고, 나오는 블록은 전부 해방 슬롯 블록(기본 블록 없음).
+       *  C.134 조정: 처음엔 고정 간격 0.9초(타이머 멈춤) → 1칸 몸 강적 98%(목표 ≤85) → 1.5·1.8·2.0초로 늦춰도 90% → 빌드에 비례하게 배율 방식 ×1.3 (+ 흡수 타이머 4.0 → 4.6초) */
+      spawnSpeed: 1.3,
+      /** 옛 해방 블록(22-5, kind 'liberation') 위력 = 일반 블록 × 이 배수. C.134 부터 해방 중에는 슬롯 블록(비면 기본 블록)이 나와 이 블록은 생기지 않는다(옛 상태 호환) */
       blockPowerMultiplier: 3,
-      /** 해방이 끝날 때(전투가 먼저 끝나도) 리스크 게이지 상승 */
-      riskOnEnd: 15,
+      /** 레스렉시온/만해 고유 효과 (minTierIndex 부터): 공격 속도 ×, 해방 블록 생성(체인 속도) ×, 전 능력치 × (수련 완료면 trainedStatMultiplier — 22-4 수련은 고유 효과 강화로 남김) */
+      uniqueAttackSpeed: 1.3,
+      uniqueChainSpeed: 1.3,
+      uniqueStatMultiplier: 1.1,
+      trainedStatMultiplier: 1.2,
+      /** 해방이 끝날 때마다(전투가 먼저 끝나도) 리스크 게이지 상승 — 소폭. C.134 조정: 5 → 1 → 0.5 → 0.3 → 0.2 → 0.1 (전투마다 1번 안팎 쓰여 원정 4바퀴에 +5 → 4바퀴 섞음 끝 리스크 77.6(목표 40~60)·흡수 플레이 돌파 가드 — 옛 22-5 는 전투당 1회 +15) */
+      riskOnEnd: 0.1,
     },
     // ── 수련 (GDD 22-4·22-5 v5.13, 수치 provisional): 둥지 제단 → 4종목 미니게임 ──
     training: {
@@ -192,13 +206,19 @@ export const BALANCE = {
         chain: { points: 3, ev: { hp: 5 }, condition: 0, hunger: 0, risk: 10, winHunger: -20 },
       } as Record<string, { points: number; ev: Record<string, number>; condition: number; hunger: number; risk: number; winHunger?: number }>,
       /** 본능 대결: 상대 게이지 hits 번 깎으면 승, misses 번 놓치면 패. 예고 간격(초), 받아치는 창(초, 단계별), 3단계부터 페이크 확률, 4단계 연속 공격 확률 */
-      duel: { hits: 8, misses: 4, gapSeconds: [0.8, 2.0], windowSeconds: [1.0, 0.85, 0.72, 0.6], telegraphSeconds: [0.9, 0.75, 0.6, 0.5], fakeChance: [0, 0, 0.3, 0.35], doubleChance: [0, 0, 0, 0.35] },
+      duel: { hits: 8, misses: 4, gapSeconds: [0.8, 2.0], windowSeconds: [1.0, 0.85, 0.72, 0.6], telegraphSeconds: [0.9, 0.75, 0.6, 0.5], fakeChance: [0, 0, 0.3, 0.35], doubleChance: [0, 0, 0, 0.35],
+        /** 연속 공격 두 번째 예고까지 간격(초), 페이크가 바뀌는 시점(예고 시간 대비 비율) — C.139 엔진에서 옮김(값 그대로) */
+        doubleGapSeconds: 0.35, fakeAtShare: 0.55 },
       /** 탄막 피하기: 버틸 시간(초), 맞으면 패배하는 횟수, 탄 간격(초, 단계별), 탄이 화면을 건너는 시간(초, 단계별) */
-      dodge: { seconds: 30, hitsToLose: 3, spawnSeconds: [1.1, 0.95, 0.8, 0.65], travelSeconds: [2.2, 1.9, 1.6, 1.35] },
+      dodge: { seconds: 30, hitsToLose: 3, spawnSeconds: [1.1, 0.95, 0.8, 0.65], travelSeconds: [2.2, 1.9, 1.6, 1.35],
+        /** 탄 간격 흔들림: 간격 × (base + 난수 × range) — C.139 엔진에서 옮김(값 그대로) */
+        spawnJitter: { base: 0.8, range: 0.4 } },
       /** 칼날 맞대기: 판 수, 이길 성공 수, 표시 왕복 시간(초, 단계별 범위 — 매번 다름), 가운데 성공 구간 폭(막대 비율) */
       clash: { rounds: 5, toWin: 4, sweepSeconds: [[1.4, 2.0], [1.1, 1.7], [0.9, 1.4], [0.7, 1.2]], zoneWidth: [0.24, 0.2, 0.17, 0.14] },
       /** 먹이사슬: 제한 시간(초), 목표 점수, 칸 수, 먹잇감 +1 / 포식자 −3, 나타나 있는 시간(초, 단계별), 새로 나타나는 간격(초, 단계별), 포식자 비율 */
-      chain: { seconds: 30, target: 12, cells: 9, preyScore: 1, predatorScore: -3, showSeconds: [1.3, 1.1, 0.95, 0.8], spawnSeconds: [1.0, 0.9, 0.8, 0.7], predatorShare: [0.3, 0.33, 0.36, 0.4] },
+      chain: { seconds: 30, target: 12, cells: 9, preyScore: 1, predatorScore: -3, showSeconds: [1.3, 1.1, 0.95, 0.8], spawnSeconds: [1.0, 0.9, 0.8, 0.7], predatorShare: [0.3, 0.33, 0.36, 0.4],
+        /** 첫 등장 시각(초), 등장 간격 흔들림 간격 × (base + 난수 × range) — C.139 엔진에서 옮김(값 그대로) */
+        firstSpawnSeconds: 0.5, spawnJitter: { base: 0.8, range: 0.4 } },
     },
     // ── 먹이 = 전리품 (GDD 23-1, 수치 provisional): 먹이 5종 개수제, 슬롯 공유 자원 ──
     food: {
@@ -221,7 +241,7 @@ export const BALANCE = {
     },
     /** 테스트 모드 전체 해금 때 장착 특성이 비어 있으면 채우는 역할 순서 (GDD 42장 2번). 그 몸 속성(없으면 노멀)의 희귀 아닌 skill 특성. 칸이 더 있으면 공격으로 채운다 */
     testMode: {
-      defaultTraitRoles: ['attack', 'guard', 'heal'] as string[],
+      defaultTraitRoles: ['attack'] as string[], // C.136 (GDD 84장 7번): 막기·회복 속성 특성 삭제 — 공격만 (막기·회복은 기본 블록)
       fallbackElement: 'normal',
     },
     // ── 속성 특수 효과 (GDD 20-2, 수치 provisional) ──
@@ -241,10 +261,8 @@ export const BALANCE = {
        *  단계 간격을 +10% 에서 +25% 로 벌려 한 단계 위·아래가 체감되게 (옛 300/330/360/390/420; C.75 1차 +20% 300/360/430/520/620 은 한 단계 위 일반 처치 시간이 권장의 0.77배라 0.70배가 되는 +25% 로) */
       tierTotals: [300, 375, 470, 585, 730],
       /** 노력치 단계 상한: 합계(index = 단계)와 능력치 하나의 상한(합계 상한 × 비율). 진화해도 유지되고 상한만 오른다 */
-      evCapTotal: [45, 56, 70, 88, 110], // C.108 (GDD 52): 단계 종족값 합계의 약 15% (옛 8/16/24/32/40 = 3~5% 는 체감이 없었다)
+      evCapTotal: [24, 32, 70, 88, 110], // C.108 (GDD 52): 단계 종족값 합계의 약 15% (옛 8/16/24/32/40 = 3~5% 는 체감이 없었다) → C.115 (GDD 59, A안 10% 를 3회 조정): 1·2단계만 약 8%(45·56 → 24·32, 2단계 보스전 83% → 68%), 3단계부터 15% 유지. 10%(30·37)는 76%, 20·28 은 63% 지만 ★4 보스·탑 30층이 크게 흔들렸다 (dev-log C.115)
       evCapPerStatRatio: 0.5,
-      /** 시작 외형 스탯 편향 (GDD 52 연동, C.108, provisional): 종족 설정 startLookBias 의 능력치 +up, 나머지 5개 −down (합계 유지). 새 세이브에만 */
-      startBias: { up: 10, down: 2 },
       /** 능력치 절대 상한 (GDD 22-1 v4.7): 종족값 + 노력치 + 환생 계승이 이 값에서 멈춘다 (6개 모두) */
       statMax: 999,
     },
@@ -264,7 +282,9 @@ export const BALANCE = {
       /** 기획 +15% → C.75 측정 ★5·10연속 골드 187 = ★1(새 몸) 86 의 2.18배 > 목표 2배 → +10% (조정 1회) */
       goldPerStar: 0.1,
       /** ★1 입문 보정 (C.76, GDD 32-3): 새 몸(특성 없음)이 ★1 에서 강적 소굴 2칸을 놓고 4바퀴 돌면 패배 37~46% 라(패배는 전부 강적) ★1 강적만 체력·공격을 이 배율로. ★2 부터는 1 */
-      eliteEase: { 1: { hp: 0.78, attack: 0.78 } } as Record<number, { hp: number; attack: number }>,
+      /** C.123: ★2 도 강적 입문 보정 ×0.9 — C.118(전투 절반) 뒤 2단계 몸 ★2 4바퀴 원정 패배 17~21%(전 10%, 패배는 강적)를 되돌림. 조정 3회: 0.9 → 8% · 공격만 0.85 → 14% · 0.93 → 3%(표본 잡음) → 0.9 확정
+       *  C.127: ★1~2 길에서 혈·독·허 적이 빠져(GDD 75장) 2단계 몸 ★2 원정 패배 8 → 2% → ×0.95 6% · ×1 9% (조정 2회) → 1(★2 보정 사실상 끔). 탑 ★2 강적 층 상쇄도 1 */
+      eliteEase: { 1: { hp: 0.78, attack: 0.78 }, 2: { hp: 1, attack: 1 } } as Record<number, { hp: number; attack: number }>,
       /** 연속 클리어 (GDD 32-1 10번): 같은 ★ 자유 원정을 귀환(클리어)할 때마다 다음 원정 적 체력·공격 +enemyPerClear(최대 maxClears 연속), 지거나 ★를 바꾸면 0 */
       streak: { enemyPerClear: 0.05, maxClears: 10, foodPerClear: 0.05, goldPerClear: 0.02, goldMaxBonus: 0.2 },
     },
@@ -280,11 +300,14 @@ export const BALANCE = {
       perFloorByBand: { 2: 0.02 } as Record<number, number>,
       /** 구간별 보스 층 배율 (C.94): 그 ★ 구간의 10의 배수 층 체력·공격에 더 곱한다(없으면 1). 20층 canyon-king(★4 설계 보스, 졸개 기믹)은 2단계 몸에 층 배율 ×1.0 으로도 20%
        *  (C.85·C.84 기록 미달 16~17%) → 스윕 ×0.75 41% · ×0.73 48% · ×0.72 54% · ×0.7 63%(다른 시드 세트) → balance:check 시드로 ×0.73 41% · ×0.72 42% (조정 3회, 목표 40~60%). 20층 최종 배율 = 1.18 × 0.72 ≈ ×0.85 */
-      bossScaleByBand: { 2: 0.72 } as Record<number, number>,
+      bossScaleByBand: { 2: 0.72, 3: 0.65 } as Record<number, number>, // C.136: ★3 0.65 (막기·회복 속성 특성이 없어진 몸이 30층 forest-lord(연속 강공격) 0~2% → 0.55 89~95% · 0.7 19% · 0.65 43%)
       /** 기획 +20% → C.85 측정: 키운 5단계 몸 50층 승률 87%(목표 30~50%) → +60% 72% → +120% 15% → 조정 3회 +90% (지금은 sand-maw 임시 연결 기준) */
       finalFloorBonus: 0.9,
       /** 강적 층(5의 배수, 보스 층 제외)만 체력·공격에 더 곱한다 (C.85 추가): 체력 가득으로 시작해 권장 단계 진화 몸의 강적 승률이 84~100%(목표 약 70%) — 조정 2회 ×1.4 */
       eliteScale: 1.4,
+      /** 구간별 강적 층 배율 (C.123): eliteScale 에 더 곱한다(없으면 1). 탑 강적은 원정의 ★2 강적 입문 보정(difficulty.eliteEase[2] 0.9)을 같이 받으므로 ★2 구간은 1 ÷ 0.9 로 상쇄 —
+       *  안 하면 15층 강적 85 → 97~98%(가드 40~97%) */
+      eliteScaleByBand: { 2: 0.92, 5: 0.9 } as Record<number, number>, // C.136 A안: 원정 강적 공격 ×1.42 를 탑 ★2·★5 강적 층에서 조금 덜어냄(15층 44 → 50%대·45층 29% → 40%대, 가드 40~97). C.127: ★2 강적 입문 보정이 1 이 되어 상쇄도 1
       eliteEvery: 5,
       bossEvery: 10,
       bossFloors: { 10: 'sand-maw', 20: 'canyon-king', 30: 'forest-lord', 40: 'sand-maw', 50: 'forest-lord' } as Record<number, string>,
@@ -325,11 +348,15 @@ export const BALANCE = {
     // C.105 (GDD 49-11): 물공 블록은 기본 블록 몫(44-3)에서 빠져 자기 타이머 하나(spawnSeconds)로 나오는 보장된 생성원. 발동형 수치는 49-2 '3판 표'로 되돌린 뒤 49-9 목표(흙 버티기·혈 속도)에 맞춰 조정
     physBlocks: {
       /** 물공 블록 생성원 타이머 간격(초): 흡수 칸처럼 타이머 하나, 바가 가득 차거나 봉인 중이면 멈춘다. 블록 가속 배율은 나눈다. 기본 블록 타이머는 막기·회복만 내고 그 몫은 그대로(간격을 공격 가중만큼 늘림) */
-      spawnSeconds: 6,
+      spawnSeconds: 3.5, // C.118: 6 ÷ 1.7 (blockPool.basicSpawnSeconds 주석)
       /** 속성별 생성원 간격(초, 없는 속성은 spawnSeconds) — C.105b: 혈만 짧게(49-9 "혈은 속도") — 첫 블록 시점도 이 간격을 따른다 */
-      spawnSecondsByElement: { blood: 3 } as Record<string, number>,
+      spawnSecondsByElement: { blood: 1.8 } as Record<string, number>, // C.118: 3 ÷ 1.7
       /** 블록 피해 배율 (일반 기본 공격 블록 ×1 대비) — 표: 흙·혈·불·물 0.7, 뇌 0.6, 노멀 0.8 */
       power: { earth: 0.7, blood: 0.7, fire: 0.7, water: 0.7, thunder: 0.6, normal: 0.8 } as Record<string, number>,
+      /** 평타형 대가 (GDD 84장 3번, C.142 provisional — 사용자 "블록 캐는 평타캐보다(블록 다 쓴다고 할 시), 좀 더 쎄고 클률 살짝 더 높게"): 물공 몸이 주는 피해(평타·블록) 배율. 속성별 값이 없으면 damage.
+       *  블록 보정(combat.blockPlayDamage·blockPlayCrit = 치명 +4%p)은 물공 몸에 안 붙는다(C.136). 물리 분류 몸 자체가 빨라(물공 블록을 떼도 블록형보다 빠름) 보정만으로는 못 맞춰 물공 몸 피해를 깎는다 */
+      damage: 0.76, // C.147: 0.78 → 0.76 (94장 B 로 블록형이 속성 보너스를 잃어 84장 3번 가드 ×0.98 — 블록형이 조금 빠르게)
+      damageByElement: { fire: 0.65, earth: 0.85, blood: 0.85 } as Record<string, number>,
       /** 흙 블록 '바위 자세': 사용 후 seconds 동안 받는 피해 −takenReduction, 그동안 맞을 때마다 다음 평타 피해 +perHit(최대 +max, 평타 한 번에 다 씀) */
       stoneStance: { seconds: 12, takenReduction: 0.55, perHit: 0.1, max: 0.5 },
       /** 흙 특성 '굳은 주먹': 되갚기(39장)가 터지면 다음 평타 hits 회 피해 +bonus */
@@ -420,7 +447,7 @@ export const BALANCE = {
        *  blockDamage = 블록 관련 피해(블록·체인·필살·저장·콤보·해방) 배율 */
       failLine: { gainRatio: 0.3, blockDamage: 0.5 },
       /** 점검 도구(analysis.ts, npm run balance)의 무작위 분포 샘플 */
-      analysis: { samples: 4000, seed: 20261020 },
+      analysis: { samples: 6000, seed: 20261020 }, // C.136: 4000 → 6000 (막기·회복 속성 특성 삭제로 무작위 장착 표본이 바뀌어 드문 h4:fusion:fire+thunder 가 4000 표본에 안 뽑힘 — 점검 도구 표본 수)
     },
     // ── 원정 루프(P2) 임시값. 기획서 2-1·6·7장에 수치가 없는 것 ──
     expedition: {
@@ -449,13 +476,28 @@ export const BALANCE = {
       restHunger: 25,
       restCondition: 20,
       restTimeTiles: 2,
-      /** 원정에 가져가는 덱 크기와 새 세이브의 타일 보유량 (시작 덱 임시 구성) */
+      /** 원정에 가져가는 덱 크기와 새 세이브의 타일 보유량. C.120 (GDD 64장 v5.141): 새 세이브는 0장 — 첫 진화 때 starterTiles 3장, 그 뒤는 상점 타일 뽑기 */
       deckSize: 8,
-      startingCollection: {
+      startingCollection: {} as Record<string, number>,
+      /** 첫 진화(1→2단계) 때 주는 타일 (GDD 64장 1번, 덱에 자동): 먹잇감 둥지 A · 강적 소굴 A · 휴식 */
+      starterTiles: ['prey-nest-a', 'elite-den-a', 'rest-a'] as string[],
+      /** 점검 도구(scripts/balance.ts)·고정 덱 시험이 쓰는 기준 보유량 = C.119 까지의 시작 21장. 게임 세이브에는 쓰지 않는다 */
+      referenceCollection: {
         'prey-nest-a': 4, 'prey-nest-b': 3, 'elite-den-a': 2, 'elite-den-b': 2,
         'env-fog': 2, 'env-wasteland': 2, 'env-barrier': 2, 'env-ruin': 2, 'rest-a': 2,
       } as Record<string, number>,
     },
+    /** 상점 타일 뽑기 (GDD 64장 2번, C.120 — 사용자 "숫자 관련은 너가 맞추고", provisional). 1회 = 타일 1장 → 보관함(중복 = 장수 +1).
+     *  묶음 확률(%): 기본 3종(둥지 A·소굴 A·휴식) · 환경(그 종족 스킨이 있는 것) · B형 2종(둥지 B·소굴 B). 그 종족이 못 쓰는 묶음은 빼고 나머지 비율로. 첫 뽑기는 firstGroup 확정 */
+    tileDraw: {
+      price: 300, // C.120 측정: 4바퀴 원정 전투 골드 2단계 133·3단계 136·4단계 155·5단계 166 → 뽑기 1회 = 원정 2.3·2.2·1.9·1.8회 (먹이 넘침 골드 빼고, dev-log C.120). 마스터 추천 '약 30' 은 원정 0.2회분이라 목표(2~3회)에 못 맞춤
+      // C.124 (GDD 65장): 영혼 샘 묶음 spring 6 · 드문 묶음 rare(포식자 둥지·메아리) 8 을 더하고 나머지를 줄임. 뼈 표식/수련 말뚝은 환경 묶음에 들어간다
+      weights: { basic: 44, env: 30, b: 12, spring: 6, rare: 8 } as Record<string, number>,
+      groups: { basic: ['prey-nest-a', 'elite-den-a', 'rest-a'], b: ['prey-nest-b', 'elite-den-b'], spring: ['rest-spring'], rare: ['hunter-den', 'echo'] } as Record<string, string[]>,
+      firstGroup: 'env',
+    },
+    /** 첫 원정 튜토리얼 (GDD 67장, C.120, provisional): 고정 길 cell 번 칸에서 약한 적 1마리(체력·공격 배율), 첫 흡수 대신 모든 능력치 노력치 +statEv (1단계 상한 합 24·능력치당 12 안) */
+    tutorialRun: { cell: 3, enemyHpMult: 0.6, enemyAttackMult: 0.5, statEv: 3 },
     /** 환경 타일 프리셋: 전투 조건 변경. 이름은 종족 스킨, 효과 종류는 엔진 (GDD 6장) */
     tiles: {
       /** 안개(호로 스킨): 트레이 블록이 이 간격(초)마다 섞인다 */
@@ -466,6 +508,13 @@ export const BALANCE = {
       shield: { damageTakenMultiplier: 0.8 },
       /** 폐가: 공허 블록 생성 확률 +0.1 */
       void: { voidChanceBonus: 0.1 },
+      /** 뼈 표식 / 수련 말뚝 (C.124, GDD 65장): 이 칸 전투에 이기면 노력치 +ev — 능력치는 그 적의 노력치(ev, 52장 스탯 가중치)가 가장 큰 것 하나, 단계 상한 안(넘으면 0). 상위 타일은 × envMult 반올림 */
+      training: { ev: 1 },
+      /** 포식자 둥지 / 사냥꾼 출몰지 (C.124, GDD 65장): 강적 풀의 적 × 체력·공격 배율. 강적이라 바퀴 상한(maxElitesPerLap)을 같이 쓴다(넘치면 일반 적 = 사냥꾼 아님). 이기면 흡수 후보 수 × absorbCandidateMult.
+       *  기획서 '약 ×1.3' → 체력 1.3·공격 1.15: 둘 다 1.3 이면 덱에 한 장 넣은 봇의 4바퀴 원정 패배가 호로 7.3→18.3%·사신 3.0→15.7%, 공격 1.15 면 14.3%·12.3% (dev-log C.124) */
+      hunter: { hpMult: 1.3, attackMult: 1.15, absorbCandidateMult: 2 },
+      /** 영혼 샘 / 정화의 샘 (C.124, GDD 65장): 휴식(rest-a) 대비 배율 — 배부름·컨디션 회복 0, 리스크 감소 ×2. 간식 +1 은 휴식과 같다 */
+      spring: { hungerMult: 0, conditionMult: 0, riskReliefMult: 2 },
     },
     /** 원정 전투 승리 골드 (GDD 25-5 의 골드 보상 배율이 기대는 바탕값, C.57 정한 것 — 23-4 얻는 곳 중 '원정' 자리). 강적 = 소굴·조합으로 나온 강적 */
     gold: { normal: 6, elite: 20 },
@@ -510,8 +559,8 @@ export const BALANCE = {
       } as Record<string, Record<string, number | boolean | string>>,
       /** ④ 바퀴 변이 효과 (voidMult = 공허 블록 기본 확률 배율, foodMult = 먹이 드롭 횟수 배율, elementBias = 그 속성 적 가중치를 사냥터 주 속성처럼) */
       mutations: {
-        'void-night': { voidMult: 2, rewardMult: 1.25, specialTraitChance: 0.5 }, // specialTraitChance: GDD 49-7 ① 특수 속성 특성이 흡수 후보에 들 확률 (C.106, provisional)
-        famine: { hungerMult: 2, foodMult: 2 },
+        'void-night': { voidMult: 2, rewardMult: 1.25, specialEnemyChance: 0.5 }, // specialEnemyChance: GDD 75장 특수 속성(혈·독·허) 적 출현 가중치 배율 (C.127, provisional — 옛 49-7 ① specialTraitChance)
+        famine: { hungerMult: 2, foodMult: 1.8 }, // C.125: 2 → 1.8 — 흡수 화면이 늘 열려 원정 난수 흐름이 바뀌며 타일 변수 먹이 가드(+25%)가 +25.5% 로 넘어 (전·후 모두 다른 시드 구간에선 26% 안팎의 경계값) 되돌림 → +24.8%
         'blood-moon': { elementBias: 'blood', absorbBonus: 1 },
         calm: { enemyHpMult: 0.85, goldMult: 0.7 },
         storm: { enemyAttackMult: 1.1, eliteSoulBonus: 1 },
@@ -559,28 +608,38 @@ export const BALANCE = {
       },
       sleepCondition: 30,
       petCondition: 8,
+      /** 돌봄 요청제 (GDD 82장, C.133 provisional): 쓰다듬기·재우기는 캐릭터가 청했을 때만 효과. 요청 간격(분, 실제 시간 무작위 범위)·유지 시간(분)·첫 요청까지(분, 새 시작)·
+       *  재우기를 청할 확률(쇠약이거나 컨디션이 sleepBelowCondition 미만이면 늘 재우기 — 방 기분 '피곤' 기준 40 과 같음) */
+      careRequest: { intervalMinutes: [20, 40], holdMinutes: 10, firstDelayMinutes: 3, sleepWeight: 0.4, sleepBelowCondition: 40 },
       /** 패배(가면이 깨져 쇠약 / 영력 고갈) 후 컨디션과 허기 가산 */
       defeatCondition: 15,
       defeatHunger: 10,
     },
     // ── 블록 풀 (GDD 44장 → 44-1 B안 → 44-2 재조정 C.98, provisional): 흡수 특성 블록은 특성마다 타이머(combat.blockSpawnSeconds), 기본 블록 5종은 별도 타이머 하나에서 가중 추첨 ──
-    // 기본 블록 몫(초당 생성 기대치 비율) = basicShareBySlots 표대로: 0칸 100% · 1칸 60% · 2칸 45% · 3칸 35% (GDD 44-2 목표, 4칸부터는 코드 세션 외삽 provisional)
+    // 기본 블록 몫(초당 생성 기대치 비율) = basicShareBySlots[장착 칸]: 0칸 100% · 1칸 45% · 2칸 25% · 3칸 15% (GDD 80장 v5.166, C.133 — 옛 44-2 표 60·45·35% × 0.75^칸)
     blockPool: {
       /** 기본 블록 타이머 간격(초, 흡수 0칸). 블록 가속 배율은 나눈다. 바가 가득 차거나 봉인 중이면 멈춘다 (C.98 2.8 → 3.2: 빈 몸 강적 88% 를 낮춰 2칸 빌드와 차를 줄임) */
-      basicSpawnSeconds: 3.2,
-      /** 장착 흡수 칸 수별 기본 블록 몫 [0칸, 1칸, 2칸, 3칸, 4칸, 5칸, 6칸, 7칸]. 기본 타이머 간격 = 흡수 블록 총 간격 × (1 − 몫) / 몫 (C.98: 칸당 느려짐 k 3 대신 몫 표 — 칸이 늘어도 블록 총량이 C.97 처럼 늘면서 기본 블록이 '같이' 나온다) */
-      basicShareBySlots: [1, 0.6, 0.45, 0.35, 0.28, 0.24, 0.21, 0.19],
+      /*  C.118 (GDD 62장): 전투가 절반으로 짧아져 블록 타이머를 모두 ÷1.7 (3.2 → 1.9, 흡수 6.5 → 3.8, 물공 6 → 3.5·혈 3 → 1.8) — 체력만 반으로 줄이면 짧은 판에 블록·체인이 적어 강적 승률이 60~70% → 15~30% 로 무너진다 (dev-log 표) */
+      basicSpawnSeconds: 3.24, // C.136: 2.7 → 3.24 (막기·회복이 고정 몫 16.6% 로 기본 공격 위에 따로 붙어(84장 7번) 빈 몸 블록 총량을 0.37/초 그대로 — 2.7 ÷ (1 − 0.166)). C.134: 2.1 → 2.7 (흡수 타이머 4.0 → 4.7 로 1칸 몸 총량이 0.39/초가 되어 C.97 을 지키려고 빈 몸은 0.37/초로). C.133: 1.9 → 2.1 (GDD 80장 v5.166 로 1칸 몸 블록 총량이 0.45/초가 되어 빈 몸 0.53/초보다 적어 "특성을 끼우면 일반 적을 더 빨리 잡는다"(C.97, humanbot 시험)가 깨짐 → 빈 몸만 0.48/초로)
+      /** 장착 칸 수별 기본 블록 몫 (GDD 80장 v5.166, 사용자 "슬롯 하나 채울 때 마다 … 25%씩 줄여. 총 60%겠지?", C.133): 옛 몫 60·45·35% × 0.75^칸 = 45·25·15%.
+       *  C.132 의 0.75^칸(75·56·42%)은 옛 몫보다 올라 "줄여"와 반대였다. 칸이 표보다 많으면 마지막 값. 기본 타이머 간격 = 흡수 블록 총 간격 × (1 − 몫) / 몫 (C.98 공식 그대로)
+       *  나중에 추가할 거리(80장): 남은 기본 몫을 아이템·육성으로 더 줄이기 */
+      basicShareBySlots: [1, 0.45, 0.25, 0.15],
       /** 장착 흡수 칸이 2칸부터 1칸 늘 때마다 흡수 특성 타이머 간격 +비율: 간격 = combat.blockSpawnSeconds × (1 + 이 값 × (칸 − 1)). 칸이 많은 몸의 블록 총량을 누르는 지렛대 (C.98: 0.4 는 2~4칸 몸의 블록을 반으로 줄여 탑 30층 보스 2%·★1 원정 패배 20% 로 무너짐 → 0.1) */
-      absorbedSlowdownPerSlot: 0.1,
-      /** 기본 블록 가중: 공격은 종족 계열 표의 계열 각각, 막기 1, 회복 1 (합 44) */
-      basicWeights: { attack: 10, guard: 7, heal: 7 },
+      absorbedSlowdownPerSlot: 0.1, // C.136: 0 → 0.1 (막기·회복 속성 특성이 없어져 칸이 모두 공격 특성이 된 2칸 몸이 강해짐 — 2칸부터 흡수 몫 조금 느리게). C.132: 0.1 → 0 → C.133: 0 그대로 (기본 몫이 45·25·15% 로 줄어 흡수 블록 몫이 커짐 — blockSpawnSeconds 4.0 으로만 조정, dev-log C.133 표)
+      /** 기본 블록 가중: 공격은 종족 계열 표의 계열 각각(3종), 막기 1, 회복 1 (합 36) */
+      /*  C.118 (GDD 66장 3번): 막기·회복 7 → 3 — 방어+회복 몫 14/44 = 32% → 6/36 = 17%(약 절반), 그만큼 공격 쪽으로 */
+      basicWeights: { attack: 10, guard: 3, heal: 3 },
+      /** 출현표의 기본 막기·회복 고정 몫 (GDD 84장 6·7번, C.136 provisional, 코드 판단): 속성 막기·회복 특성이 없어져 막기·회복은 기본 블록뿐인데, 80장 기본 몫(칸이 늘수록 45·25·15%)에 묶이면 3칸 몸에서 막기가 1% 남짓이 된다
+       *  → 막기·회복은 칸 수와 무관하게 이 몫(빈 몸의 옛 가중 3/36 = 8.3%), 80장 기본 몫은 기본 공격 블록 몫. 성향(방어·체력·정신력)은 × 그 배율 ÷ 공격 배율 */
+      roleShare: { guard: 0.08, heal: 0.06 }, // 조정 6회 (dev-log C.136): 0.083·0.083 → 0.12·0.06 → 0.06·0.05 → 0.08·0.06
       /** 막기·회복 기본 블록 세기 = 같은 역할 흡수 특성 블록 기본값(basicRoleBlocks) × 이 비율 (피해·막기 지속·회복량 모두) */
       basicGuardRatio: 0.7,
       basicHealRatio: 0.7,
-      /** 같은 역할 흡수 특성 블록 기본값 (traits.json 의 *-guard·*-heal 과 같은 값, 테스트가 맞는지 본다) */
+      /** 막기·회복 블록 기본값 (옛 traits.json 의 *-guard·*-heal 값. C.136 GDD 84장 7번: 속성 막기·회복 특성은 삭제 — 막기·회복은 이 기본 블록뿐, 세기는 absorb.enhance 로) */
       basicRoleBlocks: {
         guard: { powerInAttacks: 1.5, chainBonus: { kind: 'reflect', value: 1 } },
-        heal: { powerInAttacks: 1, chainBonus: { kind: 'cleanse', value: 40 } },
+        heal: { powerInAttacks: 1, chainBonus: { kind: 'cleanse', value: 40 } }, // cleanse value = 저장 게이지 (C.118: 옛 SP +40 → 저장 게이지 +40, 100 = 충전 1개라 비율 같음)
       },
       /** 성향 특성(GDD 39장 ①) 보정: 기본 블록 가중 배율 (attack = 기본 공격 3종), absorbedSpawn = 흡수 특성 타이머 속도 배율(속도 성향 — 44장 '흡수 몫 +10%p' 의 B안 판). 종족 무관 엔진 수치 */
       temperament: {
@@ -606,6 +665,12 @@ export const BALANCE = {
        *  블록·필살이 시간을 줄이므로, 봇(빈 슬롯 = 기본 블록만) 기준 일반 약 45초·강적 약 90초가 되게 맞춘다 (npm run balance, C.6 조정 1.5→2.8, C.8 일자 8칸 바에서 봇이 더 잘 붙여 일반 36초로 짧아져 2.8→3.4,
        *  C.63 내 치명타 평균 피해 +2.5%(5%·×1.5)만큼 3.4→3.48 — 치명타 전후 처치 시간이 같게) */
       hpAttackScale: 3.48,
+      /** 전투 시간 배율 (GDD 62장, C.118 — 사용자 "한 전투 시간 자체를 반정도로 줄이고 속도는 고정"): 적·내·졸개 최대 체력에 곱한다. 0.5 = 처치 시간 약 절반.
+       *  내 공격·적 공격·지속 피해·회복(최대 체력 비율)·보호막(최대 체력 비율)이 모두 체력 대비 2배가 되는 것과 같아 승률 구조는 유지된다. 화면 틱 속도(1배)는 그대로 */
+      hpScale: 0.5,
+      /** 내 최대 체력 배율 (C.118): 적과 같은 0.5 로 하면 강공격 한 방이 체력 대비 2배가 되어(피해 기대치는 같아도 한 방 변동이 커져) 강적·원정 패배가 2~4배로 뛴다(dev-log 표 A·B).
+       *  0.7 이면 권장 ★ 강적 승률·원정 패배가 C.115 와 ±5%p(3단계 패배 +7%p), 새 몸 ★1 패배 11%, 보스전 ★2 76%(목표 50~70 보다 +6, D 0.6 은 48%·★1 패배 24% 로 가드 실패) */
+      playerHpScale: 0.7,
       /** 적 데이터 hpInAttacks 기준값 (GDD 3-5 임시: 일반 약 30회, 강적 약 70회 분량). 밸런스 점검이 데이터가 이 근처인지 본다 */
       enemyHpInAttacks: { normal: 30, elite: 70 },
       /** 패턴 종류별 hpInAttacks 기준값 (C.15, GDD 14-5 임시): 속공은 약간 적게, 단단은 많게. 밸런스 점검이 데이터가 ±15% 안인지 본다 */
@@ -622,18 +687,14 @@ export const BALANCE = {
       /** 블록 바 일자 8칸 (GDD 3-5 v0.8, 크퀘식). 6칸 트레이(C.6) → 8칸: 한 줄에 같은 블록을 붙여 놓을 여유를 준다 */
       trayCapacity: 8,
       /** 흡수 skill 특성 하나당 블록 생성 간격(초, 특성마다 타이머 — GDD 44-1 B안, 2칸부터 blockPool.absorbedSlowdownPerSlot 만큼 늘어남). 기본 블록은 blockPool 의 별도 타이머. 바가 가득 차거나 봉인 중이면 멈춘다 (C.98 4 → 6.5: 기본 블록이 같이 나오게) */
-      blockSpawnSeconds: 6.5,
+      blockSpawnSeconds: 4.6, // C.134: 4.0 → 4.6 (GDD 83장 해방이 해방 슬롯 특성 블록을 몰아서 주므로 평소 흡수 블록을 조금 덜 — 1칸 몸 강적 가드 ≤85%, familySpawnSlowdown 과 같이). C.118: 6.5 ÷ 1.7 = 3.8 → C.132: 5.4 → C.133: 4.0 (GDD 80장 v5.166 기본 몫 45·25·15% — 흡수 블록이 몫의 대부분이 되고 기본 블록보다 세서, 총량(초당)은 C.132 보다 적게: 1칸 0.45 · 2칸 0.67 · 3칸 0.88. 조정 4회(3회 + balance:check 관문): 2.4·칸당 0.27 → 1칸 강적 98% · 3.2·0.12 → 93% · 3.8·0.03 → 87% · 4.0·0)
       /** 같은 계열 공격 특성이 슬롯에 둘 이상이면 서로 체인이 쉬워지므로(GDD 17-3), 그 계열 블록의 생성 간격을 (같은 계열 특성 수 − 1)당 이 비율만큼 늘린다 (C.34). 계열이 하나뿐이면 영향 없음 */
-      familySpawnSlowdown: 1,
+      familySpawnSlowdown: 0.5, // C.136 A안: 0.7 → 0.5 (강적 공격 ×1.42 로 같은 계열 2칸 강적이 65% 근처 — 가드 하한 60 여유). C.136: 0.2 → 0.7 (GDD 84장 6번 확률표: 같은 블록이 연달아 나와 같은 계열 2칸 몸 강적이 77 → 94% — 이 몫을 줄임). C.134: 1 → 0.2 (저장 필살기가 빠지고 해방 슬롯 1칸이 한 특성만 내서 같은 계열 2칸 몸 강적이 48% 로 — 가드 60~85%)
       /** 체인 배율: 체인1 ×1.0, 체인2 ×2.2, 체인3 ×3.6 (GDD 3-5) */
       chainMultipliers: [1, 2.2, 3.6],
       /** 특성별 추가 효과가 붙는 최소 체인 (GDD 3-5 "체인3 … + 추가 효과") */
       chainBonusFromChain: 3,
-      /** 블록 하나 사용 → SP +20, SP 100 → 필살 블록 (GDD 3-5) */
-      spPerBlock: 20,
-      spMax: 100,
-      /** 필살 블록 피해: 기본 공격 N회 분량 ("큰 피해") */
-      specialPowerInAttacks: 15,
+      // SP 게이지·필살 블록(spPerBlock·spMax·specialPowerInAttacks)은 C.118 에 삭제 (GDD 66장: 필살기는 저장형 필살기만)
       /** 기본 공격 블록 (GDD 44장: 기본 블록 5종 중 공격 3종 — 종족 계열 표의 계열마다 하나): 기본 공격 N회 분량 */
       basicBlockPowerInAttacks: 3,
       basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
@@ -643,22 +704,19 @@ export const BALANCE = {
       heavyGuardReduction: 0.8,
       /** heal 블록: 최대 체력 × 이 비율 × 위력 배율 회복 */
       healFraction: 0.12,
+      /** 회복 대가 (GDD 84장 2번, C.136 — 사용자 "힐하면 3초동안 전체 공격력 50% 다운"): 회복 블록을 쓰면 이 시간(초) 동안 내 모든 피해(평타·블록·공허) × 배율.
+       *  막기 대가(막기 지속 동안 내 자동 공격·블록 생성 멈춤)는 수치 없이 엔진 규칙 */
+      healWeakenSeconds: 3,
+      healWeakenMultiplier: 0.5,
+      /** 블록 플레이 보정 (GDD 84장 3번, C.136 provisional — 사용자 "블록 캐는 평타캐보다(블록 다 쓴다고 할 시), 좀 더 쎄고 클률 살짝 더 높게"): 블록 공격 피해 배율·치명 확률 가산
+       *  C.136 A안(마스터): ×1.1·+3%p → ×1.15·+4%p (상한). 올린 만큼 강적 attackInAttacks ×1.42 로 상쇄 (dev-log C.136) */
+      blockPlayDamage: 1.15,
+      blockPlayCrit: 0.04,
       /** 공허 블록: 이 간격(초)마다 확률로 트레이에 생성 (컨디션·환경·5바퀴 이후·한계 돌파가 확률을 더한다), 사용 피해 = 기본 공격 N회 분량 */
-      voidCheckSeconds: 5,
-      voidChance: 0.15,
+      voidCheckSeconds: 3, // C.118: 5 → 3 (블록 타이머 ÷1.7 과 같은 비율 — 짧아진 전투에서 공허 블록이 덜 나와 4바퀴 끝 리스크가 34.5 로 가드 40 아래로 떨어져서)
+      voidChance: 0.15, // C.136 (GDD 84장 10번 "필요하면 광기 블록 소폭 ↑"): 그대로 — 감소를 줄인 것만으로 4바퀴 섞음 끝 광기가 54 → 60 근처(가드 상한)라 올리지 않음. 출현표의 공허 몫 = 이 값 ÷ voidCheckSeconds
       voidChanceMax: 0.8,
       voidPowerInAttacks: 8,
-      /** 저장형 필살기 (C.17, GDD 14-6, 모두 임시): 블록 1개 사용당 게이지 +12, 체인 2·3 이면 사용 한 번에 보너스 +4 / +10.
-       *  게이지 100 = 충전 1개 (최대 3개, 가득 차면 넘친 게이지는 낭비로 기록). 전투 간 이월 없음 */
-      storedGaugePerBlock: 12,
-      storedChainBonus: [0, 4, 10],
-      storedGaugeMax: 100,
-      storedChargesMax: 3,
-      /** 사용 피해: 기본 공격 N회 분량 (약점·체인·방어 자세 무시), 사용 직후 막기 상태 지속(초) */
-      storedPowerInAttacks: 25,
-      storedGuardSeconds: 2,
-      /** 시작 게이지 = 안정 수치(0~stabilityMax) 비례로 0~이 값 (둥지 애착 반영) */
-      storedStartGaugeMax: 50,
       /** 치명타 (C.63, GDD 28장 5번, 마스터 추천 provisional): 물리·마법 합친 하나. 내 기본 확률 5%, 치명 피해 ×1.5,
        *  기본 공격·스킬 블록·체인·필살·콤보·해방·저장형 필살 모두 대상(공허 블록·반사·독 지속 피해 제외). 적도 같은 규칙(기본 확률 3%).
        *  특성 critChance 가 확률을 더하고(합), 상한 critChanceMax */
@@ -667,5 +725,96 @@ export const BALANCE = {
       enemyCritChance: 0.03,
       critChanceMax: 0.5,
     },
+    /** 떠돌이 상인 (GDD 85장 5번, C.140 provisional — 사용자 "1바퀴 돌 떄마다 떠돌이 상인 뜰 확률 가중 … 한 3~50바퀴 돌아야 뜨게", 수치는 코드 판단).
+     *  원정 바퀴를 마칠 때마다 '지난 방문 뒤 바퀴 수 k' 가 1 오르고 그 바퀴에 올 확률 = min(1, perLap × k) (선형 가중 — 앞 바퀴는 거의 0).
+     *  perLap 0.001 → 평균 39.3바퀴(30바퀴 안 37%·50바퀴 안 73%, tests/c140). 오면 원정에서 돌아온 방에 머물고 다음 원정 귀환 때 떠난다.
+     *  티어(화면에 안 보임) = tierWeights 로 뽑고, 품목 stockSize 개를 그 티어의 등급표(gradeWeights)로 뽑는다(같은 품목 중복 없음) */
+    wanderer: {
+      perLap: 0.001,
+      stockSize: 4,
+      tierWeights: [55, 30, 12, 3] as number[],
+      /** 티어(1~4)별 품목 등급 확률(%): normal · rare · epic · legendary */
+      gradeWeights: [
+        { normal: 70, rare: 30, epic: 0, legendary: 0 },
+        { normal: 40, rare: 45, epic: 15, legendary: 0 },
+        { normal: 15, rare: 40, epic: 37, legendary: 8 },
+        { normal: 0, rare: 25, epic: 45, legendary: 30 },
+      ] as Record<string, number>[],
+      /** 특별 품목 (상인 전용, 목록·이름·등급은 src/data/shop/wanderer.json): 골드 가격 · 효과량 */
+      items: {
+        'w-snack-crate': { price: 90, amount: 3 },
+        'w-reroll-pair': { price: 200, amount: 2 },
+        'w-calm-deep': { price: 140, amount: 60 },
+        'w-wake-deep': { price: 110, amount: 60 },
+        'w-training-pair': { price: 160, amount: 2 },
+        'w-rare-tile': { price: 260, amount: 1 },
+        'w-feast-crate': { price: 380, amount: 2 },
+        'w-soul-elixir': { price: 700, amount: 100 },
+        'w-pet-egg': { price: 600, amount: 1 },
+        // 장비 (GDD 91장 2번, C.150): 품목 등급 = 장비 등급, 안 가진 종류 우선 없이 종류 무작위 1개 → 보관함 장비 탭
+        'w-gear-rare': { price: 300, amount: 1 },
+        'w-gear-epic': { price: 700, amount: 1 },
+        'w-gear-legend': { price: 1500, amount: 1 },
+      } as Record<string, { price: number; amount: number }>,
+    },
+    /** 대기 모드 = 방치 자동 모험 (GDD 85장 6번, C.140 provisional — 사용자 "24시간 내내 모험 돌릴 때 뜨는 템과 xp 스텟 등등의 n%만큼만", n·기준량은 코드 판단).
+     *  접속하지 않은 실제 시간(저장된 마지막 접속 시각 기준, 최대 maxHours)을 '자동 모험'으로 셈. 지급 = fullHour(1시간 내내 직접 원정했을 때의 기준량) × 시간 × share.
+     *  fullHour 근거: 바퀴 약 90초(걷기 15초 + 전투) → 40바퀴/시, 걸음 12/바퀴, 골드 ≈ 22/바퀴(4바퀴 원정 골드 133~166, C.120 측정),
+     *  노력치 ≈ 흡수 0.4회/바퀴 × 1, 타일 ≈ 0.04장/바퀴, 먹이 ≈ 0.05개/바퀴. share 0.1 → 24시간 = 직접 2.4시간분.
+     *  82장: 꺼 둔 동안 허기가 오르는 그 시간에만 돈다(허기가 100 에 닿으면 멈춤), 쇠약이면 weakenedRate 배. minMinutes 보다 짧으면 셈하지 않는다 */
+    idle: {
+      maxHours: 24,
+      minMinutes: 10,
+      share: 0.1,
+      weakenedRate: 0.5,
+      fullHour: { laps: 40, steps: 480, gold: 880, ev: 16, tiles: 1.6, food: 2 },
+      /** 먹이 지급 종류 (보관 상한까지) */
+      foodId: 'basic',
+    },
+    /** 타일 배치 프리셋 (GDD 85장 11번, C.140 provisional): 종족마다 저장 칸 수. 배치 칸 수 = expedition.deckSize(8) + 상점 배치 칸(shared.deckSlots) */
+    tilePresets: { max: 5, nameMax: 12 },
+    /** 펫 (GDD 90장, C.144 마스터 초안 provisional — 이름·수치 모두 가칭). 1마리만 데리고 다닌다.
+     *  효과 = 1단계 값 × (1 + affinityStep × (친밀도 − 1)) → 5단계 2배. 친밀도 = 데리고 다닌 원정 바퀴(대기 모드 바퀴 포함) 누계가 affinityLaps 에 닿을 때마다 +1.
+     *  gold = 원정 전투·보스 골드 +8% · belly = 원정 허기 오름 −15% · guard = 전투 시작 보호막(최대 체력 4%) · seekWanderer = 떠돌이 상인 바퀴 확률 +25% · seekTile = 바퀴 끝 타일 보상 +1장 확률 10%.
+     *  얻기: 원정 바퀴 끝 lapDropChance(2%, 이미 가진 펫이면 dupGold 골드) · 떠돌이 상인 전설 품목(w-pet-egg) · 첫 진화 때 무작위 1마리 선물 */
+    pets: {
+      effects: { gold: 0.08, belly: 0.15, guard: 0.04, seekWanderer: 0.25, seekTile: 0.1 },
+      affinityLaps: [10, 30, 60, 100] as number[],
+      affinityStep: 0.25,
+      lapDropChance: 0.02,
+      dupGold: 40,
+    },
+    /** 장비 (GDD 91장 v5.187 확정, C.150 provisional — 이름·수치 모두 가칭, 마스터 위임으로 코드가 정함). 칸 5개(무기·방어구·신발·장신구 1·2).
+     *  능력치 한 줄 값 = round(★ 기준 능력치(refStatOf(★−1)) × lineFrac[등급] × kinds[종류].weight) — 얻은 원정 ★ 가 높을수록 세다. 치명 줄은 critLine[등급](확률 절대값).
+     *  무기 = 힘·지능 중 1줄 · 방어구 = 체력·방어 2줄 · 신발 = 속도 1줄 · 장신구 = pool 에서 1~2줄 무작위(서로 다름). 영웅·전설은 특수 효과 1줄(special[효과][0 영웅, 1 전설]).
+     *  강화 +1~+maxPlus(골드, 실패 없음): 능력치 줄 × (1 + plusStep × 단계), 정수 능력치는 단계마다 최소 +1 — 특수 효과는 그대로. 비용 = enhanceCost[등급] × (지금 단계 + 1).
+     *  드롭: 이긴 전투마다 dropChance(일반·강적·보스) → 등급 dropGrades(%). 기본 상점 = 노말 shopPrice(★ = 지금 단계 권장). 보관 상한 cap — 넘치면 sellGold 로 바로 판다.
+     *  balance:check 기준 봇은 장비 없음(가드 그대로). 참고 줄 '그 단계 평균 장비' = refLoadout(등급·강화, 5칸, 무기 힘·장신구 정신력+치명) */
+    gear: {
+      lineFrac: { normal: 0.06, rare: 0.09, epic: 0.12, legendary: 0.16 } as Record<string, number>,
+      kinds: {
+        weapon: { weight: 1, pool: ['atk', 'int'], lines: [1, 1] },
+        armor: { weight: 0.8, pool: ['hp', 'def'], lines: [2, 2] },
+        shoes: { weight: 0.8, pool: ['spd'], lines: [1, 1] },
+        accessory: { weight: 0.6, pool: ['crit', 'spr', 'hp', 'atk', 'int', 'def'], lines: [1, 2] },
+      } as Record<string, { weight: number; pool: string[]; lines: [number, number] }>,
+      critLine: { normal: 0.01, rare: 0.015, epic: 0.02, legendary: 0.03 } as Record<string, number>,
+      special: { family: [0.1, 0.15], elite: [0.08, 0.12], critDamage: [0.15, 0.25], shield: [0.03, 0.05] } as Record<string, [number, number]>,
+      maxPlus: 5,
+      plusStep: 0.1,
+      enhanceCost: { normal: 30, rare: 60, epic: 120, legendary: 240 } as Record<string, number>,
+      dropChance: { normal: 0.03, elite: 0.25, boss: 0.6 },
+      dropGrades: {
+        normal: { normal: 80, rare: 17, epic: 3, legendary: 0 },
+        elite: { normal: 55, rare: 32, epic: 11, legendary: 2 },
+        boss: { normal: 25, rare: 40, epic: 27, legendary: 8 },
+      } as Record<string, Record<string, number>>,
+      shopPrice: 120,
+      sellGold: { normal: 15, rare: 40, epic: 100, legendary: 250 } as Record<string, number>,
+      cap: 40,
+      refLoadout: { grade: 'rare', plus: 2 },
+    },
+    /** 보관함 (GDD 86장 4번, C.140 provisional): 소모품(정화제·각성제·상인 소모품) 종류별 보관 상한 — 먹이 상한과 같은 9 */
+    inventory: { consumableCap: 9 },
   },
 } as const;

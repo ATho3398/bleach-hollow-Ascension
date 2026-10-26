@@ -1,0 +1,15 @@
+{
+  "patch": "C.120",
+  "viewport": "360x780 갤럭시 세로, deviceScaleFactor 1, 다마고치 모드(기기 가로 회전 출력), 배포 빌드(vite preview)",
+  "shots": {
+    "1-first-run-walk-guide": "새 세이브(호로) → 출발 문 → 튜토리얼 원정 + '첫 원정: 길을 걷는다' 안내(원정 시간 멈춤)",
+    "2-first-battle-chain-guide": "3번 칸 약한 적 조우 → 첫 전투 튜토리얼 3/8 '같은 블록을 붙여서 체인'",
+    "3-first-absorb-modes-guide": "승리 → 튜토리얼 흡수 화면 + 안내 2/3 '포식 네 갈래'",
+    "4-first-absorb-all-stats-plus3": "[포식하기] → 모든 능력치 노력치 +3 (체력·힘·지능·방어·정신력·속도)",
+    "5-before-evolution-plan-locked": "첫 진화 전 출발 화면: '타일 배치는 첫 진화 후 열림' (손패 0장)",
+    "6-first-evolution-tiles3-guide": "1바퀴 원정 귀환 → 첫 진화 연출 → 방: '원정 타일 3장을 받았다' (떠도는 영혼·상급 호로·영혼 웅덩이)",
+    "7-shop-tile-draw-flip": "상점 [타일 뽑기] 골드 300 → 첫 뽑기 환경 타일(안개) 카드 뒤집기",
+    "8-tile-plan-guide-place": "진화 후 첫 출발 배치 화면 안내 2/3 '길에 놓으면 그 칸에서 일이 생긴다' (길 하이라이트)"
+  },
+  "consoleErrors": 0
+}

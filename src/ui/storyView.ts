@@ -7,8 +7,9 @@ import { bossName } from '../data/bosses';
 import { chapterOpen, episodeOpen, storyProgressOf, type SaveData } from '../game';
 import type { ExpeditionState } from '../engine/expedition';
 import { storyEpisodeOf } from '../engine/expedition';
-import { button, el, icon, seg } from './bha/dom';
+import { button, el, icon } from './bha/dom';
 import { lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
+import { viewTitle } from './bha/viewtitle';
 
 export interface StoryViewHandlers {
   /** [자유 원정]·[탑] 탭 */
@@ -20,13 +21,12 @@ export interface StoryViewHandlers {
 
 export type DepartTab = 'free' | 'story' | 'tower';
 
-/** 원정 출발 화면 머리의 [자유 원정] / [스토리] / [탑] 탭 (GDD 25-7, 36장 3번) */
+/** 원정 출발 화면 머리의 제목 토글 "자유 원정 ▾" — 누르면 [자유 원정] / [스토리] / [탑] 목록이 열린다 (GDD 25-7, 36장 3번, 예전 탭 줄을 대신함 C.114) */
 export function departTabs(current: DepartTab, onSelect: (id: DepartTab) => void): HTMLElement {
-  const t = seg([{ id: 'free', label: '자유 원정' }, { id: 'story', label: '스토리' }, { id: 'tower', label: '탑' }], current, (id) => {
+  const t = viewTitle([{ id: 'free', label: '자유 원정' }, { id: 'story', label: '스토리' }, { id: 'tower', label: '탑' }], current, (id) => {
     if (id !== current) onSelect(id as DepartTab);
-  }, { small: true });
+  });
   t.classList.add('bha-depart-tabs');
-  t.setAttribute('aria-label', '원정 종류');
   return t;
 }
 
