@@ -1,0 +1,49 @@
+{
+ "canvas": [
+  37,
+  81
+ ],
+ "ground_y": 80,
+ "pivots": {
+  "head": [
+   17,
+   29
+  ],
+  "arm_L": [
+   8,
+   38
+  ],
+  "arm_R": [
+   28,
+   39
+  ],
+  "leg_L": [
+   10,
+   57
+  ],
+  "leg_R": [
+   24,
+   57
+  ],
+  "torso": [
+   17,
+   56
+  ]
+ },
+ "z_back_to_front": [
+  "leg_R",
+  "leg_L",
+  "torso",
+  "arm_L",
+  "arm_R",
+  "head"
+ ],
+ "parts": {
+  "head": "full-canvas PNG, 원본 좌표 그대로",
+  "arm_R": "full-canvas PNG, 원본 좌표 그대로",
+  "arm_L": "full-canvas PNG, 원본 좌표 그대로",
+  "leg_L": "full-canvas PNG, 원본 좌표 그대로",
+  "leg_R": "full-canvas PNG, 원본 좌표 그대로",
+  "torso": "full-canvas PNG, 원본 좌표 그대로"
+ }
+}
