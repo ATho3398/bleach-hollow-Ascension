@@ -1,6 +1,3 @@
 node_modules
 dist
 .claude/worktrees/
-scripts/sprite-rig/out/
-scripts/depixel/out/
-__pycache__/
