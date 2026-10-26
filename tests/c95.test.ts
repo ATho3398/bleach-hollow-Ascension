@@ -66,11 +66,11 @@ describe('C.95 ① 스토리 흡수 목표 화 (GDD 42장 1번)', () => {
 
 describe('C.95 ② 테스트 모드 기본 특성 (GDD 42장 2번)', () => {
   for (const fid of ['hollow', 'shinigami']) {
-    it(`${fid}: 전체 해금 새 세이브는 공격·막기·회복 특성을 각 1 이상 장착`, () => {
+    it(`${fid}: 전체 해금 새 세이브는 칸을 공격 특성으로 채운다 (C.136: 막기·회복 속성 특성 삭제 — GDD 84장 7번)`, () => {
       const save = newTestSave(fid, 1);
       const roles = save.build.slots.filter((x): x is string => x !== null).map((id) => getTrait(id).role);
       expect(save.build.slots.every((x) => x !== null)).toBe(true);
-      for (const r of ['attack', 'guard', 'heal']) expect(roles).toContain(r);
+      expect(roles.every((r) => r === 'attack')).toBe(true);
       for (const id of save.build.slots) expect(save.build.owned).toContain(id);
     });
   }

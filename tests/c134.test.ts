@@ -21,8 +21,8 @@ const src = (p: string) => readFileSync(p, 'utf8');
 const mk = (params: Partial<CombatParams> = {}, seed = 1) => createCombat(seed, { enemy: normal, params });
 /** 블록 생성·공허·양쪽 공격이 끼어들지 않게 멈춘 상태 */
 const quiet = (s: CombatState) => {
-  s.spawnTimers = s.spawnTimers.map(() => 1e9);
-  s.voidTimer = 1e9;
+  s.spawnTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   s.enemy.attackTimer = 1e9;
   s.player.attackTimer = 1e9;
   s.enemy.actionTimer = 1e9;
@@ -132,8 +132,8 @@ describe('83장 3번 해방 블록 슬롯', () => {
     const b = newBuild();
     gainTrait(b, 't-fire-a');
     gainTrait(b, 't-normal-passive');
-    gainTrait(b, 't-earth-guard');
-    expect(b.liberation).toEqual(['t-fire-a', 't-earth-guard', null]); // 새로 얻은 블록 특성이 빈 칸을 채운다(코드 판단)
+    gainTrait(b, 't-earth-c');
+    expect(b.liberation).toEqual(['t-fire-a', 't-earth-c', null]); // 새로 얻은 블록 특성이 빈 칸을 채운다(코드 판단)
     expect(setLiberationSlot(b, 0, 't-normal-passive', 4).ok).toBe(false);
     expect(setLiberationSlot(b, 0, 't-water-a', 4).ok).toBe(false);
     expect(setLiberationSlot(b, 1, 't-fire-a', 0).ok).toBe(false); // 1단계는 1칸
@@ -147,11 +147,11 @@ describe('83장 3번 해방 블록 슬롯', () => {
     const b = newBuild();
     gainTrait(b, 't-fire-a');
     setLiberationSlot(b, 0, null, 0);
-    gainTrait(b, 't-earth-guard');
-    expect(b.liberation![0]).toBe('t-earth-guard');
+    gainTrait(b, 't-earth-c');
+    expect(b.liberation![0]).toBe('t-earth-c');
     const params = buildCombatParams(b, 'hollow');
     applyEvolutionToParams(params, newEvolution(1), 'hollow');
-    expect(params.liberationSkills!.map((x) => x.id)).toEqual(['t-earth-guard']);
+    expect(params.liberationSkills!.map((x) => x.id)).toEqual(['t-earth-c']);
     expect(LB.spawnSpeed).toBeGreaterThan(1);
     const s = mk({ ...params, voidCheckSeconds: 1e6 });
     s.enemy.attackTimer = s.enemy.actionTimer = 1e9;
@@ -166,8 +166,8 @@ describe('83장 3번 해방 블록 슬롯', () => {
     wait(s, 6);
     wait(plain, 6);
     expect(s.tray.length).toBeGreaterThan(plain.tray.length);
-    expect(s.tray.every((x) => x.traitId === 't-earth-guard')).toBe(true);
-    expect(plain.tray.some((x) => x.traitId !== 't-earth-guard')).toBe(true);
+    expect(s.tray.every((x) => x.traitId === 't-earth-c')).toBe(true);
+    expect(plain.tray.some((x) => x.traitId !== 't-earth-c')).toBe(true);
     // 빈 슬롯: 기본 블록 풀
     const e = mk({ liberationSkills: [], voidCheckSeconds: 1e6 });
     e.enemy.attackTimer = e.enemy.actionTimer = 1e9;
@@ -182,8 +182,8 @@ describe('83장 3번 해방 블록 슬롯', () => {
 
   it('쓰는 칸 수는 단계로 자른다 (1단계 몸에 3칸을 끼워 둬도 1칸만)', () => {
     const b = newBuild();
-    for (const id of ['t-fire-a', 't-earth-guard', 't-thunder-heal']) gainTrait(b, id);
-    expect(b.liberation).toEqual(['t-fire-a', 't-earth-guard', 't-thunder-heal']);
+    for (const id of ['t-fire-a', 't-earth-c', 't-thunder-b']) gainTrait(b, id);
+    expect(b.liberation).toEqual(['t-fire-a', 't-earth-c', 't-thunder-b']);
     const at = (tier: number) => {
       const p = buildCombatParams(b, 'hollow');
       const e = newEvolution(1);
@@ -194,9 +194,9 @@ describe('83장 3번 해방 블록 슬롯', () => {
     expect([at(0), at(2), at(4)]).toEqual([1, 2, 3]);
   });
 
-  it('세이브: 해방 칸이 저장·불러오기로 남고, 깨진 값(안 가진 특성·중복·패시브)은 비운다. 형식 39 · 문턱 같이', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(39);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(39);
+  it('세이브: 해방 칸이 저장·불러오기로 남고, 깨진 값(안 가진 특성·중복·패시브)은 비운다. 형식 40(C.136) · 문턱 같이', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(40);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(40);
     const s = newSaveData('hollow', 1);
     expect(s.build.liberation).toEqual([null, null, null]);
     gainTrait(s.build, 't-fire-a');

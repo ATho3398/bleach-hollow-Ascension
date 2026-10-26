@@ -7,7 +7,7 @@ import { getForm } from '../src/data/evolution';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import {
   BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, applyInput, basicPowerOf, basicSpawnSecondsOf, basicTimerPoolOf, blockPoolOf, createCombat, drainCombatEvents, elapsedSeconds,
-  physSpawnSecondsOf, playCombatHuman, spawnRatesOf, step, ticksOf, type Block, type CombatEvent, type CombatParams, type CombatState, type PhysBlock,
+  physSpawnSecondsOf, playCombatHuman, spawnRatesOf, spawnTableOf, step, ticksOf, type Block, type CombatEvent, type CombatParams, type CombatState, type PhysBlock,
 } from '../src/engine/combat';
 import { abilityEffectsOf, formAbilitiesOf, physBlockOf, zeroStats } from '../src/engine/evolution';
 
@@ -21,7 +21,7 @@ const fxOf = (id: string) => abilityEffectsOf(formAbilitiesOf(getForm(id), zeroS
 /** 흡수 6칸 몸 (5단계에 갓 닿은 몸과 같은 칸 수) */
 const build6 = (): Partial<CombatParams> => {
   const b = newBuild();
-  for (const id of ['t-normal-a', 't-water-a', 't-earth-a', 't-normal-guard', 't-water-guard', 't-normal-heal']) gainTrait(b, id);
+  for (const id of ['t-normal-a', 't-water-a', 't-earth-a', 't-normal-b', 't-water-b', 't-normal-c']) gainTrait(b, id);
   return buildCombatParams(b, 'hollow');
 };
 const mk = (extra: Partial<CombatParams>, seed = 1, enemy = normal) => createCombat(seed, { enemy, params: { ...STILL, ...extra } });
@@ -38,7 +38,7 @@ function spawnedIn(s: CombatState, seconds: number): { traitId: string | null; f
   const out: { traitId: string | null; family: string | null }[] = [];
   s.player.hp = s.player.maxHp = 1e12;
   s.enemy.hp = s.enemy.maxHp = 1e12;
-  s.voidTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   for (let i = 0; i < ticksOf(s.params, seconds) && s.status === 'playing'; i++) {
     step(s);
     for (const b of s.tray) if (b.kind === 'skill') out.push({ traitId: b.traitId, family: b.family ?? null });
@@ -57,11 +57,11 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
   const earthBody = () => mk({ ...build6(), timeLimitSeconds: 1e9, physBlock: physOf('t5:earth:physical')! }, 3);
   const plainBody = () => mk({ ...build6(), timeLimitSeconds: 1e9 }, 3);
 
-  it('물공 몸은 타이머가 하나 더: [흡수 6칸…, 기본, 물공], 간격 = physBlocks.spawnSeconds ÷ 블록 가속', () => {
+  it('물공 몸은 출현표에 물공 몫이 하나 더 (C.136 타이머 하나 + 확률표), 몫 = 1 ÷ (physBlocks.spawnSeconds ÷ 블록 가속)', () => {
     const a = earthBody();
     const b = plainBody();
-    expect(a.spawnTimers).toHaveLength(a.params.skills.length + 2);
-    expect(b.spawnTimers).toHaveLength(b.params.skills.length + 1);
+    expect(spawnTableOf(a.params).entries.filter((e) => e.phys)).toHaveLength(1);
+    expect(spawnTableOf(b.params).entries.filter((e) => e.phys)).toHaveLength(0);
     expect(physSpawnSecondsOf(a.params)).toBe(PB.spawnSeconds);
     expect(physSpawnSecondsOf(b.params)).toBeNull();
     expect(physSpawnSecondsOf({ ...a.params, blockSpawnMultiplier: 2 })).toBeCloseTo(PB.spawnSeconds / 2);
@@ -86,39 +86,35 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
     const restShare = (W.guard + W.heal) / (W.attack * 3 + W.guard + W.heal);
     expect(basicSpawnSecondsOf(a.params)).toBeCloseTo(basicSpawnSecondsOf(b.params) / restShare);
     expect(spawnRatesOf(a.params).absorbed).toBeCloseTo(spawnRatesOf(b.params).absorbed);
-    expect(a.spawnTimers.slice(0, a.params.skills.length).length).toBe(b.spawnTimers.slice(0, b.params.skills.length).length);
   });
 
-  it('판마다 일정 개수: 60초에 물공 블록 ≈ 60 ÷ spawnSeconds 개 (±1), 기본 타이머에서는 공격이 안 나오고 막기·회복 수는 보통 몸과 비슷', () => {
+  it('물공 블록 개수 기대치 ≈ 시간 ÷ spawnSeconds (C.136: 출현표 확률이라 ±12%), 기본 몫에서는 공격이 안 나오고 막기·회복 수는 보통 몸과 비슷', () => {
     const SEC = 600;
     const a = earthBody();
     const outA = spawnedIn(a, SEC);
     const physA = outA.filter((x) => x.traitId === BASIC_SKILL_ID);
     const expected = SEC / PB.spawnSeconds;
-    expect(physA.length).toBeGreaterThanOrEqual(expected - 2);
-    expect(physA.length).toBeLessThanOrEqual(expected + 1);
+    expect(physA.length).toBeGreaterThanOrEqual(expected * 0.85);
+    expect(physA.length).toBeLessThanOrEqual(expected * 1.15);
     expect(a.physSpawned).toBe(physA.length);
     // 계열은 종족 계열 표 3종에서 고르게
     expect(new Set(physA.map((x) => x.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
-    // 60초 창마다 개수가 거의 같다
+    // C.136 (GDD 84장 6번): 옛 "60초 창마다 거의 같은 개수(보장된 타이머)"는 확률표로 바뀌어 없앴다
     const b = earthBody();
-    const per60 = [1, 2, 3].map(() => spawnedIn(b, 60).filter((x) => x.traitId === BASIC_SKILL_ID).length);
-    for (const n of per60) expect(Math.abs(n - 60 / PB.spawnSeconds)).toBeLessThanOrEqual(1);
-    // 막기·회복: 보통 몸의 기본 타이머가 내는 막기·회복 기대치(가중 14/44)와 ±10% (긴 창으로 추첨 흔들림을 누른다)
+    // 막기·회복 (C.136, GDD 84장 7번): 출현표의 고정 몫 — 기대치(spawnRatesOf.role)와 ±12% (긴 창으로 추첨 흔들림을 누른다)
     const LONG = 6000;
     const outA2 = spawnedIn(earthBody(), LONG);
     const outP = spawnedIn(plainBody(), LONG);
     const rest = (out: typeof outA) => out.filter((x) => x.traitId === BASIC_GUARD_ID || x.traitId === BASIC_HEAL_ID).length;
-    const W = BALANCE.provisional.blockPool.basicWeights;
-    const restExpected = (LONG / basicSpawnSecondsOf(plainBody().params)) * ((W.guard + W.heal) / (W.attack * 3 + W.guard + W.heal));
-    expect(rest(outA2)).toBeGreaterThan(restExpected * 0.9);
-    expect(rest(outA2)).toBeLessThan(restExpected * 1.1);
-    expect(rest(outP)).toBeGreaterThan(restExpected * 0.9);
-    expect(rest(outP)).toBeLessThan(restExpected * 1.1);
+    for (const [out, body] of [[outA2, earthBody()], [outP, plainBody()]] as const) {
+      const want = spawnRatesOf(body.params).role * LONG;
+      expect(rest(out)).toBeGreaterThan(want * 0.88);
+      expect(rest(out)).toBeLessThan(want * 1.12);
+    }
     expect(outA2.some((x) => x.traitId === BASIC_SKILL_ID)).toBe(true);
-    // 흡수 특성 블록 수는 같다 (타이머 그대로, 6000초 창 끝 ±1 — C.132 흡수 간격 5.4초)
+    // 흡수 특성 블록 수는 두 몸 모두 흡수 몫 기대치 ±12% (물공 몫이 붙어도 흡수 몫은 그대로)
     const absorbed = (out: typeof outA) => out.filter((x) => x.traitId && !x.traitId.startsWith('basic-')).length;
-    expect(Math.abs(absorbed(outA2) - absorbed(outP))).toBeLessThanOrEqual(1);
+    for (const out of [outA2, outP]) expect(Math.abs(absorbed(out) / (spawnRatesOf(plainBody().params).absorbed * LONG) - 1)).toBeLessThanOrEqual(0.12);
   });
 
   it('보통 몸은 옛 규칙 그대로: 기본 타이머에서 공격 3계열·막기·회복이 다 나온다', () => {

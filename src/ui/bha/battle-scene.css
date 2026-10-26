@@ -49,6 +49,7 @@
 .bha-hgauge--cast { --c: color-mix(in srgb, var(--bha-cast), var(--bha-attack) calc(var(--fill, 0) * 100%)); animation: bha-cast-pulse 500ms ease-in-out infinite alternate; }
 .bha-hgauge--seal { --c: var(--bha-seal); }
 .bha-hgauge--guard, .bha-hgauge--stance { --c: var(--bha-guard); }
+.bha-hgauge--weaken { --c: var(--bha-attack); }
 .bha-hgauge.is-idle { opacity: 0.4; box-shadow: inset 0 0 0 1px var(--bha-line-2); animation: none; }
 .bha-hgauge.is-done { animation: none; --c: var(--bha-guard); }
 

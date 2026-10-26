@@ -9,6 +9,8 @@ const LINEAGES = ELEMENTS; // C.47: 계통 A~E → 속성 8종
 import { ENEMY_PATTERN_KINDS, type EnemyDef, type EnemyPatternKind } from '../src/data/schema';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import { applyInput, blockDamage, createCombat, drainCombatEvents, enemyAttackSecondsOf, step, ticksOf, type Block, type CombatParams, type CombatState } from '../src/engine/combat';
+/** C.136 블록 플레이 보정(GDD 84장 3번)을 끈다 — 이 파일은 옛 피해 공식(체인·상성·환경 배율)만 본다. 보정 자체는 tests/c136.test.ts */
+const NO_BLOCK_PLAY = { blockPlayDamage: 1, blockPlayCrit: 0 };
 import { enemyPool, pickFromPool } from '../src/engine/enemyPool';
 import { createExpedition, playExpedition } from '../src/engine/expedition';
 import { createRng } from '../src/engine/rng';
@@ -31,9 +33,9 @@ const wait = (s: CombatState, seconds: number) => {
 };
 /** 블록 생성·공허·내 자동 공격이 끼어들지 않게 멈춘다 (적 행동만 본다) */
 const enemyOnly = (enemy: EnemyDef, params?: Partial<CombatParams>) => {
-  const s = createCombat(1, { enemy, params });
-  s.spawnTimers = s.spawnTimers.map(() => 1e9);
-  s.voidTimer = 1e9;
+  const s = createCombat(1, { enemy, params: { ...NO_BLOCK_PLAY, ...params } });
+  s.spawnTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   s.player.attackTimer = 1e9;
   s.player.hp = s.player.maxHp = 1e9;
   return s;
@@ -192,11 +194,11 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
     const e = ofKind('elite', 'heavy-chain');
     const p = pat(e, 'heavy-chain');
     const run = (guard: boolean) => {
-      const s = enemyOnly(e, build('t-earth-guard'));
+      const s = enemyOnly(e, build());
       s.enemy.attackTimer = 1e9;
       wait(s, p.everySeconds + 0.2);
       if (guard) {
-        s.tray = [blk('t-earth-guard')];
+        s.tray = [blk('basic-guard')];
         expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
       }
       const before = s.player.hp;
@@ -247,15 +249,15 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
     const e = ofKind('elite', 'stance');
     const p = pat(e, 'stance');
     const counterTaken = (guardFirst: boolean) => {
-      const s = enemyOnly(e, build('t-fire-guard', 't-thunder-c'));
+      const s = enemyOnly(e, build('t-thunder-c'));
       s.enemy.attackTimer = 1e9;
       wait(s, p.everySeconds + 0.2);
-      s.tray = [blk(guardFirst ? 't-fire-guard' : 't-thunder-c')];
+      s.tray = [blk(guardFirst ? 'basic-guard' : 't-thunder-c')];
       const before = s.player.hp;
       applyInput(s, { type: 'use', cell: 0 });
       return before - s.player.hp;
     };
-    // t-fire-guard = 막기 블록: 쓰는 순간 막기 상태가 되어 그 블록이 부른 반격이 경감된다
+    // basic-guard = 막기 블록: 쓰는 순간 막기 상태가 되어 그 블록이 부른 반격이 경감된다
     expect(counterTaken(true)).toBeLessThan(counterTaken(false) * 0.75);
   });
 

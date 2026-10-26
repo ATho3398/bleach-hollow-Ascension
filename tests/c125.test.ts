@@ -102,13 +102,13 @@ describe('C.125 71장: 포식 조건 삭제', () => {
 });
 
 describe('C.125 72장: 원정 한 칸 이동 시간 1/2', () => {
-  it('칸 시간 5초 → 2.5초, 휴식 시간(2칸 × 5초 = 10초)은 그대로', () => {
-    expect(BALANCE.expedition.secondsPerTile).toBe(2.5);
+  it('칸 시간 5초 → 2.5초 → C.136 1.25초 (GDD 84장 1번), 휴식 시간(2칸 × 5초 = 10초)은 그대로', () => {
+    expect(BALANCE.expedition.secondsPerTile).toBe(1.25);
     expect(BALANCE.provisional.expedition.restTimeTiles * BALANCE.expedition.restSecondsPerTile).toBe(10);
     const exp = createExpedition({ factionId: 'hollow', seed: 1, hunger: 10, condition: 100, deck: [] });
     exp.wildCells = [];
     exp.slots = exp.slots.map(() => null);
     advance(exp);
-    expect(exp.elapsedSeconds).toBe(2.5);
+    expect(exp.elapsedSeconds).toBe(1.25);
   });
 });

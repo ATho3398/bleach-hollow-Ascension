@@ -129,12 +129,13 @@ const builds: BuildDef[] = [
   { name: '빈 슬롯(기본 블록)', params: { ...START }, ref: false },
   // C.47: 특성은 속성 8종 × 8개. 기준 빌드는 원소 공격 특성(적 속성에 따라 강·약·보통이 섞인다)
   { name: 'skill 1개(공격)', params: buildOf(['t-thunder-c']), ref: true, elite: [0.6, 0.85] },
-  { name: 'skill 2개(공격·막기)', params: buildOf(['t-thunder-c', 't-fire-guard']), ref: true, elite: [0.6, 0.85] },
+  // C.136 (GDD 84장 7번): 속성 막기 특성이 없어져 공격·막기 빌드 → 다른 계열 공격 2개 (막기는 기본 막기 블록 고정 몫)
+  { name: 'skill 2개(다른 계열 공격 2)', params: buildOf(['t-thunder-c', 't-fire-a']), ref: true, elite: [0.6, 0.85] },
   // C.34 (GDD 17-3): 같은 계열 공격 특성 둘은 서로 체인이 된다 — 체인이 쉬워진 빌드
   { name: 'skill 2개(같은 계열 공격 2)', params: buildOf(['t-thunder-c', 't-water-c']), ref: true, elite: [0.6, 0.85] },
   // C.34 ③ (GDD 17-3): 2단계 콤보(탄 계열 체인2 연속 2번 → 콤보 블록)가 켜진 같은 빌드 — 참고 출력만
   { name: 'skill 1개(공격)+콤보(2단계 규칙)', params: { ...buildOf(['t-thunder-c']), combos: comboRulesOf({ ...newEvolution(), tierIndex: 1 }) }, ref: false },
-  { name: 'skill 3개(공격·막기·회복)', params: buildOf(['t-fire-a', 't-earth-guard', 't-thunder-heal']), ref: false },
+  { name: 'skill 3개(공격 3)', params: buildOf(['t-fire-a', 't-earth-c', 't-thunder-b']), ref: false },
 ];
 // C.16 (GDD 14-4): 완벽형 봇(참고)과 사람형 봇(목표 기준) 둘 다 돌린다.
 //  - 완벽형: 0.5초 간격, 반응 지연·실수 없음. 강공격을 다 막고 체인을 다 붙여서 기술 2개부터 100% 로 절벽이 생긴다 → 참고 출력, 일반 적 승률·길이만 가드
@@ -465,7 +466,8 @@ if (want('absorb')) {
   if (m4.breakthrough > M * 0.1) failures.push(`4바퀴 섞음 원정 돌파 ${m4.breakthrough}/${M} > 10% (GDD 23-2 "무리해야 돌파")`);
   for (const a of ['sleep', 'pet'] as const) {
     const r = BALANCE.provisional.risk.nestActions[a].risk;
-    if (r > -15 || r < -25) failures.push(`둥지 ${a} 리스크 ${r} — 목표 −20 안팎 (GDD 23-2)`);
+    // C.136 (GDD 84장 10번 "광기 수치 너무 잘 줄어드는듯"): 23-2 의 "한 번에 크게(−20)" → −10 안팎으로 기획 변경 (가드 목표값을 새 기획에 맞춤)
+    if (r > -8 || r < -12) failures.push(`둥지 ${a} 리스크 ${r} — 목표 −10 안팎 (GDD 23-2 → 84장 10번)`);
   }
 }
 // ── 타일 변수 5종 (C.57, GDD 25-5): 4바퀴 섞음 봇으로 타일 변수 끔/켬 비교 (켬 = 드래프트 카드를 시너지 우선으로 골라 바로 놓음, 이벤트는 봇 선택, 바퀴 변이·시너지 발동) ──
@@ -996,6 +998,9 @@ if (want('phys')) {
       line(`${r.el} 특수(옛)`, r.special, false);
       line(`${r.el} 혼합(옛)`, r.mixed, false);
       const ratio = r.off.nSecs ? r.on.nSecs / r.off.nSecs : 1;
+      // C.136 (GDD 84장 3번): 블록형 몸(특수·혼합, 블록을 다 쓰는 사람형 봇)이 평타형 몸(물공)보다 조금 빨리 잡는다 — 참고 출력
+      const blockSecs = (r.special.nSecs + r.mixed.nSecs) / 2;
+      console.log(`    → 블록형(특수·혼합 평균) 일반 ${blockSecs.toFixed(1)}초 vs 평타형(물공) ${r.on.nSecs.toFixed(1)}초 (×${(blockSecs / Math.max(0.1, r.on.nSecs)).toFixed(2)}, 84장 3번 목표 ×1 미만)`);
       console.log(`    → 일반 처치 시간 ×${ratio.toFixed(2)} (${((ratio - 1) * 100).toFixed(1)}%) · 강적 승률 ${((r.on.eWin - r.off.eWin) * 100).toFixed(0)}%p · 5속성 평균과 차 ${((r.on.eWin - mean) * 100).toFixed(0)}%p · 버티는 초 ${r.off.survive.toFixed(0)} → ${r.on.survive.toFixed(0)}`);
       if (r.el === TANK) {
         const bestOther = Math.max(...others(TANK).map((o) => o.on.survive));

@@ -143,8 +143,8 @@ export function gaugeFill(remaining: number, total: number): number {
   return total > 0 ? Math.min(1, Math.max(0, remaining / total)) : 0;
 }
 
-/** 머리 위 게이지 종류: 시전(강공격 예고)·봉인·막기·방어 자세 (GDD 18-6) */
-export type HeadGaugeKind = 'cast' | 'seal' | 'guard' | 'stance';
+/** 머리 위 게이지 종류: 시전(강공격 예고)·봉인·막기·방어 자세 (GDD 18-6), 회복 대가 공격력 감소 (GDD 84장 2번, C.136) */
+export type HeadGaugeKind = 'cast' | 'seal' | 'guard' | 'stance' | 'weaken';
 
 /** 켜져 있는 게이지에 쌓는 자리(0이 머리 위 첫 줄, 1부터 그 아래)를 준다. 꺼진 것은 -1 */
 export function gaugeSlots(visible: readonly boolean[]): number[] {

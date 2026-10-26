@@ -31,7 +31,7 @@ function spawned(s: CombatState, n: number): { traitId: string | null; family: s
   const out: { traitId: string | null; family: string | null }[] = [];
   s.player.hp = s.player.maxHp = 1e12;
   s.enemy.hp = s.enemy.maxHp = 1e12;
-  s.voidTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   while (out.length < n && s.status === 'playing') {
     step(s);
     for (const b of s.tray) if (b.kind === 'skill') out.push({ traitId: b.traitId, family: b.family ?? null });
@@ -61,7 +61,8 @@ describe('기본 블록 풀 (GDD 44장 2번)', () => {
     const p = build('t-poison-c');
     const r = spawnRatesOf(paramsOf(p));
     const out = spawned(long(4, p), 2000);
-    const rate = (pred: (b: { traitId: string | null }) => boolean) => out.filter(pred).length / out.length;
+    const atk = out.filter((b) => b.traitId !== BASIC_GUARD_ID && b.traitId !== BASIC_HEAL_ID); // C.136: absorbedShare = 공격 블록 중 몫
+    const rate = (pred: (b: { traitId: string | null }) => boolean) => atk.filter(pred).length / atk.length;
     expect(rate((b) => b.traitId === 't-poison-c')).toBeGreaterThan(r.absorbedShare - 0.05);
     expect(rate((b) => b.traitId === 't-poison-c')).toBeLessThan(r.absorbedShare + 0.05);
     for (const id of [BASIC_GUARD_ID, BASIC_HEAL_ID]) expect(out.some((b) => b.traitId === id)).toBe(true);
@@ -76,7 +77,7 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
     expect(spawnSecondsOf(one, one.skills[0]!)).toBeCloseTo(CX.blockSpawnSeconds);
     expect(basicSpawnSecondsOf(paramsOf(build()))).toBeCloseTo(BP.basicSpawnSeconds);
     for (let n = 1; n <= 3; n++) {
-      const p = paramsOf(build(...['t-fire-a', 't-earth-guard', 't-thunder-heal'].slice(0, n)));
+      const p = paramsOf(build(...['t-fire-a', 't-earth-c', 't-thunder-b'].slice(0, n)));
       const share = BP.basicShareBySlots[n]!;
       const absorbedTotal = (CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot * (n - 1))) / n;
       expect(basicSpawnSecondsOf(p)).toBeCloseTo((absorbedTotal * (1 - share)) / share);
@@ -86,7 +87,7 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
   });
 
   it('흡수 칸이 늘수록 흡수 블록 비율이 오르고 기본 블록 비율이 줄어든다', () => {
-    const ids = ['t-fire-a', 't-earth-guard', 't-thunder-heal'];
+    const ids = ['t-fire-a', 't-earth-c', 't-thunder-b'];
     const shares = [0, 1, 2, 3].map((n) => spawnRatesOf(paramsOf(build(...ids.slice(0, n)))).absorbedShare);
     expect(shares[0]).toBe(0);
     for (let n = 1; n <= 3; n++) expect(shares[n]!).toBeGreaterThan(shares[n - 1]!);
@@ -94,7 +95,7 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
 
   // C.133 (GDD 80장 v5.166): 기본 블록 몫 = 0칸 100% · 1칸 45% · 2칸 25% · 3칸 15% (옛 44-2 표 60·45·35% × 0.75^칸)
   it('기본 블록 몫(초당 생성 기대치) = 0칸 100% · 1칸 45% · 2칸 25% · 3칸 15% (±5%p, basicShareBySlots)', () => {
-    const ids = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
+    const ids = ['t-poison-c', 't-earth-a', 't-thunder-b'];
     const target = [1, 0.45, 0.25, 0.15];
     expect(BP.basicShareBySlots).toEqual([1, 0.45, 0.25, 0.15]);
     for (let n = 0; n <= 3; n++) {
@@ -108,20 +109,21 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
 
   it('흡수 특성 타이머는 2칸부터 칸당 absorbedSlowdownPerSlot 만큼 늘어난다 (흡수 블록 총량이 완만하게)', () => {
     const CX = BALANCE.provisional.combat;
-    const ids = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
+    const ids = ['t-poison-c', 't-earth-a', 't-thunder-b'];
     for (let n = 1; n <= 3; n++) {
       const p = paramsOf(build(...ids.slice(0, n)));
       for (const sk of p.skills) expect(spawnSecondsOf(p, sk)).toBeCloseTo(CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot * (n - 1)));
     }
     // 블록 가속 배율은 흡수·기본 타이머를 모두 나눈다
-    const fast = paramsOf({ ...build('t-poison-c', 't-earth-guard'), blockSpawnMultiplier: 2 });
+    const fast = paramsOf({ ...build('t-poison-c', 't-earth-a'), blockSpawnMultiplier: 2 });
     expect(spawnSecondsOf(fast, fast.skills[0]!)).toBeCloseTo((CX.blockSpawnSeconds * (1 + BP.absorbedSlowdownPerSlot)) / 2);
   });
 
   // C.133 (GDD 80장 v5.166): 1칸 기본 몫 45% — "절반을 넘고"(C.97) 대신 몫 표 ±8%p 와 막기·회복 섞임을 지킨다
-  it('독 탄 1칸 몸에서 실제로 나온 블록 중 기본 블록이 약 45% 이고 막기·회복이 섞여 있다 (C.97 캡처 02 문제의 회귀 가드)', () => {
+  it('독 탄 1칸 몸에서 실제로 나온 공격 블록 중 기본 공격이 약 45% 이고 막기·회복이 섞여 있다 (C.97 캡처 02 문제의 회귀 가드, C.136: 막기·회복은 고정 몫이라 공격 블록 안에서 센다)', () => {
     const out = spawned(long(5, build('t-poison-c')), 400);
-    const basic = out.filter((b) => isBasicBlockId(b.traitId)).length / out.length;
+    const atk = out.filter((b) => b.traitId !== BASIC_GUARD_ID && b.traitId !== BASIC_HEAL_ID);
+    const basic = atk.filter((b) => isBasicBlockId(b.traitId)).length / atk.length;
     expect(Math.abs(basic - 0.45)).toBeLessThanOrEqual(0.08);
     expect(out.some((b) => b.traitId === BASIC_GUARD_ID)).toBe(true);
     expect(out.some((b) => b.traitId === BASIC_HEAL_ID)).toBe(true);
@@ -131,17 +133,14 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
 describe('새 몸(흡수 0칸)에서도 막기·회복 블록이 나온다 (사용자 질문 "방어랑 회복 블록은 하나도 안나오는듯?")', () => {
   it('전투 초반 블록 120개 안에 기본 막기·기본 회복이 모두 있다 (C.134: 기본 타이머 2.7초로 난수 순서가 바뀌어 seed 1 이 60개 안에 막기 0 — 막기 몫 8.3% 라 불운 — 300개면 막기 16·회복 21, 표본 120)', () => {
     for (let seed = 1; seed <= 10; seed++) {
-      const out = spawned(long(seed, build()), 120);
+      const out = spawned(long(seed, build()), 200); // C.136: 막기 8%·회복 6% 고정 몫(GDD 84장 7번) — 표본 120 → 200
       expect(out.some((b) => b.traitId === BASIC_GUARD_ID), `seed ${seed}`).toBe(true);
       expect(out.some((b) => b.traitId === BASIC_HEAL_ID), `seed ${seed}`).toBe(true);
     }
   });
 
-  it('기본 막기·회복 세기 = 같은 역할 흡수 특성 기본값 × 70% (특성 데이터와 같은 기본값)', () => {
-    for (const role of ['guard', 'heal'] as const) {
-      const vals = new Set(TRAITS.filter((t) => t.kind === 'skill' && t.role === role && !t.rare).map((t) => t.powerInAttacks));
-      expect([...vals]).toEqual([BP.basicRoleBlocks[role].powerInAttacks]);
-    }
+  it('기본 막기·회복 세기 = basicRoleBlocks × 70% (C.136: 속성 막기·회복 특성은 삭제 — GDD 84장 7번)', () => {
+    for (const role of ['guard', 'heal'] as const) expect(TRAITS.some((t) => t.kind === 'skill' && t.role === role)).toBe(false);
     const p = paramsOf(build());
     const g = blockPoolOf(p).find((e) => e.source.id === BASIC_GUARD_ID)!.source;
     const h = blockPoolOf(p).find((e) => e.source.id === BASIC_HEAL_ID)!.source;
@@ -153,7 +152,7 @@ describe('새 몸(흡수 0칸)에서도 막기·회복 블록이 나온다 (사�
 
   it('기본 막기 블록을 쓰면 막기 상태가 되고, 기본 회복 블록은 체력을 채운다', () => {
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: build() });
-    s.spawnTimers = [1e9];
+    s.spawnTimer = 1e9;
     s.tray = [{ uid: 1, kind: 'skill', traitId: BASIC_GUARD_ID }, { uid: 2, kind: 'skill', traitId: BASIC_HEAL_ID }];
     s.player.hp = s.player.maxHp * 0.5;
     const hp = s.player.hp;

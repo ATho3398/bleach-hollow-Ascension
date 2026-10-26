@@ -68,15 +68,15 @@ function toAbsorb(exp: ExpeditionState, enemy?: Partial<EnemyDef>): void {
 }
 
 describe('임시 데이터', () => {
-  it('속성 8종, 속성마다 특성 8개(공격 3계열·막기·회복·패시브·파츠·희귀), 전부 provisional (C.47)', () => {
+  it('속성 8종, 속성마다 특성 6개(공격 3계열·패시브·파츠·희귀 — C.136 막기·회복 속성 특성 삭제, GDD 84장 7번), 전부 provisional (C.47)', () => {
     expect(ELEMENTS).toHaveLength(8);
     expect(ELEMENTS.map((e) => e.name['*'])).toEqual(['노멀', '물', '불', '흙', '뇌', '혈', '독', '허(虛)']);
     for (const e of ELEMENTS) {
       const ts = TRAITS.filter((t) => t.element === e.id && !t.boss); // 보스 특성(C.58)은 따로
-      expect(ts, e.id).toHaveLength(8);
+      expect(ts, e.id).toHaveLength(6);
       expect(new Set(ts.map((t) => t.kind))).toEqual(new Set(['skill', 'passive', 'part']));
       expect(new Set(ts.filter((t) => t.role === 'attack' && !t.rare).map((t) => t.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
-      expect(ts.some((t) => t.role === 'guard') && ts.some((t) => t.role === 'heal')).toBe(true);
+      expect(ts.some((t) => t.role === 'guard' || t.role === 'heal')).toBe(false);
       expect(ts.filter((t) => t.rare)).toHaveLength(1);
     }
     expect(TRAITS.every((t) => t.provisional === true)).toBe(true);
@@ -101,7 +101,7 @@ describe('임시 데이터', () => {
 
 describe('흡수 가능 조건', () => {
   it('C.125 (GDD 71장): 이기기만 하면 마무리·체인3·장착과 상관없이 언제나 흡수 가능, 지면 불가', () => {
-    const weakSkill = { kind: 'skill' as const, traitId: 't-water-guard', element: 'water', weak: true };
+    const weakSkill = { kind: 'skill' as const, traitId: 't-water-b', element: 'water', weak: true };
     expect(canAbsorb(NO)).toBe(true);
     expect(absorbReasons(NO)).toEqual(['victory']);
     for (const kind of ['basic-attack', 'special', 'void', 'reflect', 'dot'] as const) {
@@ -115,12 +115,12 @@ describe('흡수 가능 조건', () => {
 
   it('실제 전투: 상성 우위 블록 체인3 을 쓰면 weakChain3Count 가 오르고, 같은 속성(보통) 체인3 은 오르지 않는다', () => {
     const b = newBuild();
-    gainTrait(b, 't-water-guard'); // test-a(불) 를 이기는 물
+    gainTrait(b, 't-water-b'); // test-a(불) 를 이기는 물
     gainTrait(b, 't-fire-a');
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
     s.enemy.hp = s.enemy.maxHp * 100;
     const three = (traitId: string, uid: number): Block[] => [0, 1, 2].map((k) => ({ uid: uid + k, kind: 'skill', traitId }));
-    s.tray = [...three('t-fire-a', 90), ...Array.from({ length: AX_WEAK3 }, (_, k) => three('t-water-guard', 100 + k * 10)).flat()];
+    s.tray = [...three('t-fire-a', 90), ...Array.from({ length: AX_WEAK3 }, (_, k) => three('t-water-b', 100 + k * 10)).flat()];
     applyInput(s, { type: 'use', cell: 0 });
     expect([s.chain3Count, s.weakChain3Count]).toEqual([1, 0]);
     applyInput(s, { type: 'use', cell: 0 });
@@ -131,7 +131,7 @@ describe('흡수 가능 조건', () => {
 
   it('실제 전투: 상성 우위 블록으로 마무리하면 흡수 조건이 되고, 같은 속성 블록 마무리는 아니다', () => {
     const b = newBuild();
-    gainTrait(b, 't-water-guard'); // test-a(불) 의 약점 = 물
+    gainTrait(b, 't-water-b'); // test-a(불) 의 약점 = 물
     gainTrait(b, 't-fire-a');
     const finish = (traitId: string) => {
       const s = createCombat(1, { enemy: getEnemy('test-a'), params: buildCombatParams(b) });
@@ -141,8 +141,8 @@ describe('흡수 가능 조건', () => {
       expect(s.status).toBe('won');
       return s;
     };
-    const w = finish('t-water-guard');
-    expect(w.finisher).toEqual({ kind: 'skill', traitId: 't-water-guard', element: 'water', family: null, weak: true, matchup: 'strong' });
+    const w = finish('t-water-b');
+    expect(w.finisher).toEqual({ kind: 'skill', traitId: 't-water-b', element: 'water', family: 'family-b', weak: true, matchup: 'strong' });
     expect(absorbReasons(w)).toEqual(['victory']);
     const f = finish('t-fire-a');
     expect(f.finisher).toMatchObject({ element: 'fire', weak: false, matchup: 'neutral' });
@@ -281,7 +281,7 @@ describe('속성 보너스와 특성 효과', () => {
   });
 
   it('블록 생성원은 특성의 속성과, 종족 설정 계열의 공격 분류를 가진다 (종족을 모르면 혼합)', () => {
-    const b = build(['t-fire-a', 't-fire-c', 't-fire-guard']);
+    const b = build(['t-fire-a', 't-fire-c', 't-fire-b']);
     expect(equippedSkills(b, 'hollow').map((x) => [x.element, x.category])).toEqual([['fire', 'physical'], ['fire', 'special'], ['fire', 'mixed']]);
     expect(equippedSkills(b).every((x) => x.category === 'mixed')).toBe(true);
   });
@@ -306,7 +306,7 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
   const enemy = getEnemy('test-a'); // 불 속성 (A = 불 특성이라 상성 보통)
   /** 트레이 0번 칸에 블록을 놓고 써서 피해를 잰다 */
   const fire = (params: Parameters<typeof createCombat>[1]['params'], traitId: string, chain = 1): { s: CombatState; damage: number } => {
-    const s = createCombat(1, { enemy, params });
+    const s = createCombat(1, { enemy, params: { blockPlayDamage: 1, blockPlayCrit: 0, ...params } }); // C.136 블록 플레이 보정 끔 (옛 피해 공식만 본다)
     s.tray = Array.from({ length: chain }, (_, k) => ({ uid: 99 + k, kind: 'skill' as const, traitId }));
     const before = s.enemy.hp;
     applyInput(s, { type: 'use', cell: 0 });

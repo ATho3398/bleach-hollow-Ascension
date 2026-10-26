@@ -47,20 +47,20 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
       const labels = battleLabels(f);
       const [a, b, c] = f.families.map((x) => x.abbr);
       const b0 = newBuild();
-      for (const id of ['t-fire-a', 't-kyo-b', 't-fire-guard']) gainTrait(b0, id);
+      for (const id of ['t-fire-a', 't-kyo-b', 't-fire-b']) gainTrait(b0, id);
       const p0 = createCombat(1, { enemy, params: buildCombatParams(b0, f.id) }).params;
       const b1 = newBuild();
-      gainTrait(b1, 't-normal-heal');
+      gainTrait(b1, 't-normal-c'); // C.136: 막기·회복 속성 특성 삭제(GDD 84장 7번) — 막기·회복은 기본 블록(내 캐릭터 속성 표시)
       // 생성원 두 묶음을 합친 전투 값 (이름만 본다)
       const p = { ...p0, skills: [...p0.skills, ...createCombat(1, { enemy, params: buildCombatParams(b1, f.id) }).params.skills] };
       const name = (blk: Block) => blockName(blk, labels, f.id, p);
       expect(name({ uid: 2, kind: 'void', traitId: null })).toBe('공허');
       expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(a);
       expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(b);
-      expect(name({ uid: 5, kind: 'skill', traitId: 't-fire-guard', family: null })).toBe('막기');
-      expect(name({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null })).toBe('회복');
+      expect(name({ uid: 5, kind: 'skill', traitId: 'basic-guard', family: null })).toBe('막기');
+      expect(name({ uid: 6, kind: 'skill', traitId: 'basic-heal', family: null })).toBe('회복');
       // 약어도 이름 그대로
-      expect(blockAbbr({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null }, labels, f.id, p)).toBe('회복');
+      expect(blockAbbr({ uid: 6, kind: 'skill', traitId: 'basic-heal', family: null }, labels, f.id, p)).toBe('회복');
       expect(blockAbbr({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' }, labels, f.id, p)).toBe(a);
       // 기본 블록: 속성이 아니라 블록 계열만
       const pb = createCombat(1, { enemy, params: { ...buildCombatParams(newBuild(), f.id), playerElements: ['water'] } }).params;

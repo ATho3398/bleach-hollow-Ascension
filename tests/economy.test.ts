@@ -155,13 +155,13 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
 });
 
 describe('리스크 수치·폭주 (GDD 23-2)', () => {
-  it('재우기·쓰다듬기는 리스크를 한 번에 −20 안팎 내린다', () => {
+  it('재우기·쓰다듬기는 리스크를 한 번에 −10 안팎 내린다 (C.136 GDD 84장 10번: −20 → −10)', () => {
     for (const a of ['sleep', 'pet'] as const) {
       const n = newNest(0);
       n.risk = 50;
       doNestAction(n, a);
-      expect(50 - n.risk).toBeGreaterThanOrEqual(15);
-      expect(50 - n.risk).toBeLessThanOrEqual(25);
+      expect(50 - n.risk).toBeGreaterThanOrEqual(8);
+      expect(50 - n.risk).toBeLessThanOrEqual(12);
     }
   });
 
