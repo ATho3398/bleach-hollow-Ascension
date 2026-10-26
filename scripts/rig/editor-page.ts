@@ -8,7 +8,9 @@ const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '
 const STORE = 'bha-rig-editor';
 const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장할 때의 기본 자리(데이터 값). 새 시트로 기본 자리가 바뀌면 '사용자가 옮긴 만큼'만 옮겨 적용한다 */
-type Saved = Partial<Rig> & { baseAt?: Record<string, Record<string, [number, number]>> };
+type Saved = Partial<Rig> & { baseAt?: Record<string, Record<string, [number, number]>>; slotsEdited?: boolean };
+/** 사용자가 앞뒤 순서를 직접 바꿨는가(바꾼 적 없으면 데이터 순서를 따른다 — 새 부위·순서 고침이 들어오게) */
+let slotsEdited = false;
 /** 옛 저장(baseAt 없음)이 기준으로 삼던 기본 자리 — C.151 앞부분의 값 */
 const LEGACY_BASE: Record<string, Record<string, [number, number]>> = {
   arrancar: { torso: [8, 27], arm_L: [0, 36], arm_R: [17, 29], leg_L: [4, 51], leg_R: [13, 49], head: [8, 11], hair: [0, 0] },
@@ -36,7 +38,8 @@ function merge(s: Saved) {
     if (v) b.pivot = v.pivot; // 쉬는 각도(restRot)는 편집기에서 안 바꾸므로 데이터 값을 쓴다
   }
   // 앞뒤 순서: 저장 순서 + 새 슬롯은 데이터에서의 바로 앞 슬롯 뒤에
-  if (s.slots) {
+  if (s.slots && s.slotsEdited) {
+    slotsEdited = true;
     const order = s.slots.map((x) => x.id).filter((id) => rig.slots.some((y) => y.id === id));
     rig.slots.forEach((sl, i) => {
       if (order.includes(sl.id)) return;
@@ -83,7 +86,7 @@ stage.style.width = `${W * K}px`;
 stage.style.height = `${H * K}px`;
 
 function save() {
-  try { localStorage.setItem(STORE, JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, baseAt: baseAt() })); } catch { /* 무시 */ }
+  try { localStorage.setItem(STORE, JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, baseAt: baseAt(), slotsEdited })); } catch { /* 무시 */ }
   const body = rig.looks[look]!.body;
   out.value = JSON.stringify({
     bones: rig.bones.map((b) => ({ id: b.id, parent: b.parent, pivot: b.pivot })),
@@ -199,11 +202,11 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
   document.querySelectorAll('[data-m]').forEach((x) => x.classList.toggle('on', x === b && m !== 'stop'));
   draw();
 });
-$('front').onclick = () => { const i = rig.slots.findIndex((s) => s.id === sel); if (i >= 0 && i < rig.slots.length - 1) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i + 1, 0, s!); save(); draw(); } };
-$('back').onclick = () => { const i = rig.slots.findIndex((s) => s.id === sel); if (i > 0) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i - 1, 0, s!); save(); draw(); } };
+$('front').onclick = () => { slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i >= 0 && i < rig.slots.length - 1) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i + 1, 0, s!); save(); draw(); } };
+$('back').onclick = () => { slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i > 0) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i - 1, 0, s!); save(); draw(); } };
 $('reset').onclick = () => {
   const fresh: Rig = JSON.parse(JSON.stringify(HUMANOID));
-  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks;
+  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks; slotsEdited = false;
   try { for (const k of [STORE, ...LEGACY]) localStorage.removeItem(k); } catch { /* 무시 */ }
   save(); buildChips(); draw();
 };
