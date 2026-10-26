@@ -8,8 +8,8 @@ describe('종이인형 데이터', () => {
   it('뼈·슬롯·외형·동작에 문제가 없다', () => {
     expect(validateRig(HUMANOID, MOTIONS)).toEqual([]);
   });
-  it('기본 동작 4개(대기·걷기·공격·맞음)가 있다', () => {
-    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'hit', 'idle', 'move']);
+  it('기본 동작 5개(대기·걷기·공격·공격2·맞음)가 있다', () => {
+    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'hit', 'idle', 'move']);
     expect(MOTIONS.idle!.loop && MOTIONS.move!.loop).toBe(true);
     expect(MOTIONS.attack!.hit).toBeGreaterThan(0);
   });
@@ -33,7 +33,7 @@ describe('종이인형 데이터', () => {
 describe('자세·행렬', () => {
   it('동작 없이(빈 자세) 모든 뼈는 제자리 = 원본 그림 그대로', () => {
     const m = boneMatrices(HUMANOID, {});
-    for (const b of HUMANOID.bones) expect(apply(m[b.id]!, [5, 7])).toEqual([5, 7]);
+    for (const b of HUMANOID.bones) if (!b.restRot) expect(apply(m[b.id]!, [5, 7])).toEqual([5, 7]);
   });
   it('부위 그림 크기(size)가 실제 파일 크기와 같다', async () => {
     const { imageSize } = await import('./helpers/pngSize');
@@ -72,6 +72,24 @@ describe('자세·행렬', () => {
     const up = Math.max(...atk.tracks.arm_L!.map((k) => k[1]));
     expect(up).toBeGreaterThan(90);
     expect(samplePose(HUMANOID, atk, atk.hit!).arm_L!.rot).toBeLessThan(90);
+  });
+  it('발목: 공격 중 발은 다리를 거꾸로 돌려 바닥과 평행(다리+발 각도 = 0)', () => {
+    for (const id of ['attack', 'attack2']) {
+      const m = MOTIONS[id]!;
+      const p = samplePose(HUMANOID, m, m.hit!);
+      expect(p.leg_L!.rot + p.foot_L!.rot).toBeCloseTo(0);
+    }
+  });
+  it('칼: 앞팔에 붙어 있고 쉬는 자세에서 손잡이가 손 자리에 있다', () => {
+    const w = HUMANOID.bones.find((b) => b.id === 'weapon')!;
+    expect(w.parent).toBe('arm_L');
+    const m = boneMatrices(HUMANOID, {});
+    const p = apply(m.weapon!, w.pivot);
+    expect(p[0]).toBeCloseTo(w.pivot[0]);
+    expect(p[1]).toBeCloseTo(w.pivot[1]);
+    // 앞팔이 돌면 칼도 같이 돈다
+    const m2 = boneMatrices(HUMANOID, { arm_L: { rot: 90, x: 0, y: 0 } });
+    expect(apply(m2.weapon!, w.pivot)).toEqual(apply(m2.arm_L!, w.pivot));
   });
   it('걷기: 양 다리는 반대로 흔든다', () => {
     const p = samplePose(HUMANOID, MOTIONS.move!, 0);

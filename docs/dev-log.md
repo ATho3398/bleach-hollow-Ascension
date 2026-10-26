@@ -1387,6 +1387,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - **사용자 자른 부위로 다시(아란칼)**: `arrancar-cut-user.png`(사용자 시트) → `scripts/rig/import_cut.py` 로 부위 6개 꼭 맞게 저장 + 자리 자동(겹친 칸 기준). 데이터를 '꼭 맞게 자른 그림 + at·size' 로 바꿈(`partMatrix`). 공통 머리 = 사용자 대머리(16×19). 사신 몸은 아직 자동 분해 부위(잘라서 at 만 붙임).
 - **관절 편집기**(시험 페이지, `scripts/rig/editor-page.ts`): 부위 고르기, 관절/부위 그림 1도트 이동, 무대 눌러 관절 찍기, 앞뒤 순서, 시험 회전, 동작 재생, 값 복사 → `scripts/rig/apply_editor.py`.
 - **가면 합치기·동작 조정·머리카락 틀**(사용자 2026-10-27): 아란칼 가면 → 머리카락 층에 합침(가면 슬롯 삭제). 걷기 폭 절반. 공격 = 팔 머리 위 → 내리찍기(0.6초, 타격 0.3초), 앞다리 덜 내밈. `hairFrame`(틀 36×32·얼굴 칸) + `insideFrame` 점검, 편집기에서 머리카락은 틀 밖으로 못 옮김·틀 표시, `scripts/rig/hair.py`(틀 그림 / 그린 머리카락 넣기).
-- **테스트** `tests/paperdoll.test.ts` 15개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
+- **임시 발목·기본 칼·공격2**(사용자 2026-10-27): `scripts/rig/feet_weapon.py` — 다리 그림 아래 짚신 줄을 발로 잘라(`leg_X_top`·`foot_X`, 원본 다리 그림 유지) 발목 뼈 추가, 기본 칼 7×27 직접 찍기, weapon 뼈(앞팔 자식, 손 관절, `restRot` 30°). 뼈에 `restRot` 지원. 동작: 걷기 발 들기·칼 흔들림, 공격(내리찍기) 손목 꺾기·발 평행, `attack2` 수평 베기. 편집기·시험판에 공격2·왼발·오른발·칼.
+- **테스트** `tests/paperdoll.test.ts` 17개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 

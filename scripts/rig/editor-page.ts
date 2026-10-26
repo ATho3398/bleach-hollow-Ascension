@@ -3,8 +3,8 @@ import { HUMANOID, MOTIONS, boneMatrices, insideFrame, lookLayers, partMatrix, s
 
 declare const ART_MAP: Record<string, string>;
 const K = 6;
-const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '머리카락' };
-const STORE = 'bha-rig-editor-v2';
+const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '머리카락', foot_L: '왼발', foot_R: '오른발', weapon: '칼' };
+const STORE = 'bha-rig-editor-v3';
 
 const rig: Rig = JSON.parse(JSON.stringify(HUMANOID));
 try {

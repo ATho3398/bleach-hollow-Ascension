@@ -12,6 +12,8 @@ export interface Bone {
   id: string;
   parent: string | null;
   pivot: Vec2;
+  /** 쉬는 자세 각도(도). 무기처럼 그림은 곧게 그리고 들고 있는 각도만 주고 싶을 때. 동작 각도에 더해진다 */
+  restRot?: number;
 }
 export interface Slot {
   id: string;
@@ -113,7 +115,7 @@ export function apply(m: Mat, p: Vec2): Vec2 {
 
 /** 뼈 하나의 자기 변환: 관절(pivot) 둘레로 돌리고 x·y 만큼 옮긴다 */
 function local(b: Bone, p: BonePose): Mat {
-  const r = (p.rot * Math.PI) / 180;
+  const r = ((p.rot + (b.restRot ?? 0)) * Math.PI) / 180;
   const c = Math.cos(r);
   const s = Math.sin(r);
   const [px, py] = b.pivot;
