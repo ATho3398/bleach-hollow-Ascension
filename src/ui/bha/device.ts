@@ -313,6 +313,20 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled'] });
   // 창 크기·방향이 바뀌면 화면 속 선택 항목을 다시 센다 (T-2, 세로 회전 출력은 T-3)
   window.addEventListener('resize', schedule);
+  // C.139 (GDD 88장 9): 키보드 Tab 으로 초점이 옮겨 가면(모달 초점 순환) 선택도 따라간다 — 하이라이트가 둘로 갈라지지 않게.
+  // 마우스·터치로 생긴 초점(:focus-visible 아님)은 보지 않는다. 방향키 선택은 그대로
+  lcd.addEventListener('focusin', (e) => {
+    const t = e.target as HTMLElement;
+    const i = items.findIndex((it) => it.el === t);
+    if (i < 0 || i === index) return;
+    try {
+      if (!t.matches(':focus-visible')) return;
+    } catch {
+      return;
+    }
+    index = i;
+    markSel();
+  });
 
   function move(dir: 1 | -1): void {
     if (items.length === 0) return;

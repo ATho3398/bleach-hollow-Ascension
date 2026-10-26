@@ -1207,3 +1207,16 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 기획서 값/실제 값/이유: 물공 몸의 기본 블록 이름("바위 자세" 등, 49장 표)은 84장 4번 범위 밖이라 그대로 → 마스터가 정할 일. 해방·콤보 이름(`불_해방`·`콤보_조`)도 그대로.
 - 테스트: c138 신설 3개, bha-battle·c103 이름 기대값 갱신. 캡처 `docs/captures/c138/` 2장(호로·사신 트레이, 노말·막기·회복 모두 한 화면).
 
+### C.139 외부 분석 보고서 안정성 묶음 (STAGE S-23, 코딩100, GDD 88장, v5.178)
+- 사용자 원문 "보완사항 체크, 수긍 및 반박" → 마스터 검토 뒤 "ㅇㅇ 반박 외에 ㄱㄱ". 범위 88장 1·2·3·4·5·6·8·9·11·12·14(10·13 반박, 7 은 대기 모드 세션). 게임 규칙·수치·SAVE_FORMAT 변화 없음.
+- 1 한 창만: `src/tabLock.ts`(navigator.locks ifAvailable, 없으면 BroadcastChannel 'bha-play' 300ms 물음, 둘 다 없으면 막지 않음), 못 쥔 창 = `ui/tabBlockedView.ts`(세이브 접근 없음, [다시 확인]=새로고침). 보조: storage 이벤트(덩어리 키) → `forgetConfirmedChunks` 로 다음 저장이 덩어리 존재를 다시 확인.
+- 2 SW: 화면 응답은 HTML 의 `./assets/…` 가 이 캐시에 다 있을 때만 셸로 `promoteShell`(확인 → put), 화면·자산 캐시 쓰기 모두 `event.waitUntil`. 네트워크 먼저·새 버전 띠 그대로. c130 테스트 가짜 타이머 수정(예전엔 시간 초과가 즉시 나도 셸이 먼저 새것이 돼 우연히 통과).
+- 3 세이브 값: `coreValuesValid`(game.ts, isTrackShape 안) — ev 6키 유한수·tierIndex 정수 0~(단계 수−1)·owned 전부 아는 특성·slots ⊂ owned·slots 길이 ≥ slotCount. 지금 트랙 실패 = loadSave null → 기존 백업 복구, 쉬는 트랙 실패 = 그 트랙 버림. 기획서 값(슬롯 길이) / 실제 값(최소 칸 수) / 이유: 옛 형식 4칸 마이그레이션 테스트가 있어 남는 칸은 허용.
+- 4 hold: 전투 `stop()`, 원정 `dispose()` 한 곳에서 해제(완료·포기·전투 진입·귀환·떠남·화면 이탈). 공통 dispose 를 mountApp 에 두지 않은 이유: 한계 돌파 연출이 같은 root 를 잠시 덮었다 원정 화면을 되붙이는 흐름이 있어 일괄 해제가 원정 구독을 끊는다.
+- 5 프리로드 `Map<url, Image>`, 6 설정 리스너 3종 = `screenSignal(root)`(bha/screenScope.ts, mountApp 이 다음 화면 그릴 때 abort) + 전체 화면 미지원이면 구독 생략.
+- 8 `monoNow`(performance.now): 원정 시계 기본값·감시 타이머·놀던 시간. 경과가 음수면 0. 저장 타임스탬프는 Date.now 그대로.
+- 9 `bha/modalFocus.ts` trapModalFocus — confirmDialog 에 적용(첫 버튼 초점·Tab 순환·같은 부모 배경 inert·닫으면 복귀). 기기 몸체 버튼은 LCD 밖이라 그대로. 기기 선택이 키보드 Tab 초점(:focus-visible)을 따라가게 device.ts focusin 한 줄(방향키 동작 불변, 하이라이트가 둘로 갈라지던 것 방지). 다른 레이어(도움말·튜토리얼·일시정지)는 다음에.
+- 11 수련: duel.doubleGapSeconds 0.35·fakeAtShare 0.55, dodge.spawnJitter·chain.spawnJitter {base 0.8, range 0.4}, chain.firstSpawnSeconds 0.5 → balance.ts provisional.training. 값·식 그대로라 BALANCE_VERSION 66 유지(동작 불변).
+- 12 `setHidden`(바뀔 때만) — 전투 프레임의 졸개·공허·체인3·해방 칩. 14 `import.meta.glob('./*.json')` 자동 수집(파일 이름 순, id 중복·필수 필드 누락은 파일 이름과 함께 오류), 테마 CSS 는 `design-system/themes.ts` 가 theme-*.css 수집(빌드 CSS 순서 전과 같음 확인).
+- 테스트: c139 신설 27개(탭 잠금 locks/채널/없음·덩어리 재확인, SW 승격 순서·미승격, 세이브 값 6종·백업 복구, 프리로드 중복, 시계 뒤로 점프, Tab 순환, 수련 값, 종족 수집·오류), c130 가짜 타이머 수정. 전체 1494 → 1521 통과. typecheck·balance:check·build 통과.
+- 캡처 `docs/captures/c139/` 2장: 1 두 번째 탭 안내, 2 확인창 Tab 초점(배경 inert, 선택=초점 하나).

@@ -28,8 +28,11 @@ export interface ExpClock {
   armed(): boolean;
 }
 
+/** 실행 중 경과 시간용 단조 시계 (C.139, GDD 88장 8): 시스템 시계를 되돌려도 뒤로 가지 않는다. 저장 타임스탬프는 벽시계(Date.now) 그대로 */
+export const monoNow = (): number => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
+
 export function createExpClock(d: ClockDeps): ExpClock {
-  const now = d.now ?? (() => Date.now());
+  const now = d.now ?? monoNow;
   const setTimer = d.setTimer ?? ((fn: () => void, ms: number) => setTimeout(fn, ms));
   const clearTimer = d.clearTimer ?? ((id: unknown) => clearTimeout(id as ReturnType<typeof setTimeout>));
   let task: { kind: ClockTaskKind; left: number; fn: () => void } | null = null;
@@ -42,7 +45,7 @@ export function createExpClock(d: ClockDeps): ExpClock {
     if (timer === undefined) return;
     clearTimer(timer);
     timer = undefined;
-    if (task) task.left = Math.max(0, task.left - (now() - armedAt) * armedSpeed);
+    if (task) task.left = Math.max(0, task.left - Math.max(0, now() - armedAt) * armedSpeed); // 시각이 뒤로 가도 남은 시간이 늘지 않는다
   }
 
   function arm(): void {

@@ -19,7 +19,7 @@ import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 import { onHold } from './bha/hold';
 import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
-import { createExpClock } from './bha/expClock';
+import { createExpClock, monoNow } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
 import { locoOf } from './bha/loco';
@@ -96,18 +96,14 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // ── 감시 타이머 (19-1 안전장치): 조우 뒤 멈추지 않은 시간이 ENCOUNTER_WATCHDOG_MS 를 넘도록 전투가 안 열리면 바로 진입,
   //    할 일이 사라졌거나 타이머가 안 걸려 있으면 다시 건다 ──
   let encounterWait = 0;
-  let lastWatch = Date.now();
+  let lastWatch = monoNow();
   const watch = setInterval(() => {
-    const t = Date.now();
-    const dt = t - lastWatch;
+    const t = monoNow();
+    const dt = Math.max(0, t - lastWatch); // C.139: 단조 시계 + 음수 방어
     lastWatch = t;
     if (dead) return clearInterval(watch);
     if (away) return;
-    if (!main.isConnected) {
-      dead = true;
-      clock.cancel();
-      return clearInterval(watch);
-    }
+    if (!main.isConnected) return dispose();
     const blocked = paused || held;
     if (exp.phase === 'battle' && !blocked) encounterWait += dt;
     const act = watchdogAction({ phase: exp.phase, blocked, pending: clock.pending(), armed: clock.armed(), encounterWaitMs: encounterWait });
@@ -115,12 +111,19 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     else if (act === 'resume') resumeClock();
   }, WATCHDOG_POLL_MS);
 
-  let battleRef: PendingBattle | null = exp.phase === 'battle' ? exp.pending ?? null : null;
-  function enterBattle(): void {
-    if (dead || exp.phase !== 'battle') return;
+  /** C.139 (GDD 88장 4): 화면 종료(전투로·끝·취소·귀환·떠남) 때 한 곳에서 시계·감시·hold 구독을 모두 푼다 */
+  let unhold = (): void => undefined;
+  function dispose(): void {
     dead = true;
     clock.cancel();
     clearInterval(watch);
+    unhold();
+  }
+
+  let battleRef: PendingBattle | null = exp.phase === 'battle' ? exp.pending ?? null : null;
+  function enterBattle(): void {
+    if (dead || exp.phase !== 'battle') return;
+    dispose();
     h.onBattle(battleRef ?? exp.pending!);
   }
 
@@ -157,7 +160,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         if (dead) return;
         root.replaceChildren(stage);
         away = false;
-        lastWatch = Date.now();
+        lastWatch = monoNow();
         handle(ev, got);
       });
       return;
@@ -197,9 +200,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         h.onSave();
         break;
       case 'ended':
-        dead = true;
-        clock.cancel();
-        clearInterval(watch);
+        dispose();
         h.onEnded();
         return;
     }
@@ -293,9 +294,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       onYes: () => {
         if (dead || !canAbort(exp)) return;
         abortExpedition(exp);
-        dead = true;
-        clock.cancel();
-        clearInterval(watch);
+        dispose();
         h.onEnded();
       },
       onNo: () => {
@@ -406,9 +405,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
         chooseReturn(exp);
-        dead = true;
-        clock.cancel();
-        clearInterval(watch);
+        dispose();
         h.onEnded();
       },
     });
@@ -546,8 +543,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   resumeClock();
 
   let wasPaused = false;
-  const offHold = onHold((sig) => {
-    if (dead || (!main.isConnected && !away)) return offHold();
+  if (!dead) unhold = onHold((sig) => {
+    if (dead || (!main.isConnected && !away)) return dispose();
     if (sig === 'hold') {
       if (held) return;
       held = true;
@@ -562,10 +559,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       resumeClock();
       render();
     } else {
-      dead = true;
-      clock.cancel();
-      clearInterval(watch);
-      offHold();
+      dispose();
     }
   });
 }

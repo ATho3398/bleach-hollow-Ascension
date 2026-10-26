@@ -1,5 +1,6 @@
 // 예/아니오 확인창 (Q-3, C.31): LCD 창 위에 레이어로 뜬다. 기기의 위/아래/확정으로 고르고, 취소 버튼·Esc 는 "아니오".
 import { button, el } from './bha/dom';
+import { trapModalFocus } from './bha/modalFocus';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 
 export interface ConfirmOptions {
@@ -24,11 +25,13 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   if (o.body) modal.append(el('p', 'bha-modal__body', o.body));
   let closed = false;
   let unregister: () => void = () => {};
+  let untrap: () => void = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
     unregister();
     layer.remove();
+    untrap(); // 배경을 되살리고 열기 전 초점으로 (C.139)
   };
   const no = () => {
     close();
@@ -46,6 +49,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   modal.append(actions);
   layer.append(modal);
   getOverlayHost().append(layer);
+  untrap = trapModalFocus(layer); // 초기 초점(첫 버튼)·Tab 순환·배경 inert (C.139, GDD 88장 9) — 기기 선택은 초점 있는 항목에서 시작
   unregister = registerLayer(layer, no);
   return close;
 }

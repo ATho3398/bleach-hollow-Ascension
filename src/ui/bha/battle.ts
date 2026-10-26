@@ -161,6 +161,11 @@ export function setText(node: HTMLElement, text: string): void {
   if (node.textContent !== text) node.textContent = text;
 }
 
+/** hidden 이 달라졌을 때만 쓴다 (C.139, GDD 88장 12: 같은 값 대입도 기기의 MutationObserver 가 속성 변경으로 받아 선택 항목을 매 프레임 다시 셌다) */
+export function setHidden(node: HTMLElement, hidden: boolean): void {
+  if (node.hidden !== hidden) node.hidden = hidden;
+}
+
 /** 1회성 클래스: 붙이고, animationend(또는 안전 타이머)에서 뗀다 */
 export function playOnce(node: HTMLElement, cls: string, fallbackMs = 1200): void {
   node.classList.add(cls);

@@ -44,6 +44,8 @@ import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rota
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
 import { allSlotSummaries, collectSlotChunks, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
+import { monoNow } from './bha/expClock';
+import { forgetConfirmedChunks, isChunkStorageKey } from '../saveCodec';
 import { backupFileName, exportRawSlot, needsMigration, recoverFromBackup } from '../saveBackup';
 import { setBgm } from './bgm';
 import type { BgmTrack } from '../data/audio/bgm';
@@ -105,6 +107,10 @@ export function startApp(host: HTMLElement): void {
   } catch {
     /* 저장소 없음 */
   }
+  // C.139: 다른 창이 저장소를 바꾸면(잠금 이전 버전 창 등) 확인해 둔 덩어리 해시를 잊는다 — 다음 저장이 덩어리 존재를 다시 본다
+  window.addEventListener('storage', (e) => {
+    if (isChunkStorageKey(e.key)) forgetConfirmedChunks(store);
+  });
   /** 지금 진행 중인 원정 (처음 화면으로 돌아갈 때 중간 저장하려고 들고 있는다) */
   let activeExp: ExpeditionState | null = null;
   let confirmingTitle = false;
@@ -129,9 +135,9 @@ export function startApp(host: HTMLElement): void {
     tama.setContext(wear && save ? getFaction(save.factionId) : null, wear ? save : null);
   };
   // 놀던 시간 (세이브 machine 기록, 화면에는 안 나옴): 슬롯을 열고 화면이 보이는 동안만 센다. 저장은 평소 저장 때 같이 된다
-  let playTick = Date.now();
+  let playTick = monoNow(); // C.139: 경과 시간은 단조 시계
   const tickPlay = () => {
-    const now = Date.now();
+    const now = monoNow();
     if (save && slot !== 0 && !document.hidden) save.machine.playMs = accruePlay(save.machine.playMs, playTick, now);
     playTick = now;
   };

@@ -139,17 +139,21 @@ export function animOf(node: Element | null | undefined): AnimPlayer | null {
   return (node && registry.get(node)) ?? null;
 }
 
-const preloaded: HTMLImageElement[] = []; // 참조를 쥐어 둬 브라우저 캐시에서 빠지지 않게 한다
+/** 참조를 쥐어 둬 브라우저 캐시에서 빠지지 않게 한다. C.139 (GDD 88장 5): 주소마다 한 장만 — 같은 애니를 여러 번 바인딩해도 늘지 않는다 */
+const preloaded = new Map<string, HTMLImageElement>();
+/** 미리 불러 둔 프레임 그림 수 (테스트용) */
+export const preloadedCount = (): number => preloaded.size;
 
 /** 프레임 그림을 미리 불러와 처음 재생할 때 깜빡이지 않게 한다 */
 export function preloadFrames(anims: AnimSet): void {
   if (typeof Image === 'undefined') return;
   for (const c of Object.values(anims)) {
     for (const url of c.frames) {
+      if (preloaded.has(url)) continue;
       const img = new Image();
       img.src = url;
       void img.decode?.().catch(() => {});
-      preloaded.push(img);
+      preloaded.set(url, img);
     }
   }
 }

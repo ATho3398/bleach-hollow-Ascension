@@ -52,6 +52,26 @@ function refreshIfOld(client) {
   });
 }
 
+// C.139: 화면(HTML)이 부르는 자기 자산(./assets/…, 상대 경로) 목록
+function shellAssets(html) {
+  const out = [];
+  const re = /(?:src|href)=["'](\.\/assets\/[^"']+)["']/g;
+  let m;
+  while ((m = re.exec(html))) out.push(m[1]);
+  return out;
+}
+// 그 자산이 이 버전 캐시에 모두 있으면 셸로 넣고 true, 하나라도 없으면 셸을 건드리지 않고 false
+function promoteShell(shell, res) {
+  return res.text().then((html) =>
+    caches.open(CACHE).then((cache) =>
+      Promise.all(shellAssets(html).map((a) => cache.match(new URL(a, self.registration.scope).href, LOOKUP))).then((hits) => {
+        if (hits.some((h) => !h)) return false;
+        return cache.put(shell, new Response(html, { headers: res.headers })).then(() => true);
+      }),
+    ),
+  );
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -64,8 +84,9 @@ self.addEventListener('fetch', (event) => {
     const cached = () => caches.match(shell, LOOKUP).then((hit) => hit || fetch(req));
     const network = fetch(req).then((res) => {
       if (!res.ok) throw new Error('nav ' + res.status);
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(shell, copy));
+      // C.139: 받은 화면은 그 화면이 부르는 자산이 이 캐시에 다 있을 때만 셸로 승격한다(새 배포 HTML 이 옛 캐시 셸을 먼저 덮어써
+      // 오프라인에서 없는 스크립트를 부르던 문제, GDD 88장 2). 새 버전 셸은 새 워커 설치(addAll)가 자산과 한 벌로 넣는다
+      event.waitUntil(promoteShell(shell, res.clone()).catch(() => undefined));
       return res;
     });
     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('nav timeout')), NAV_TIMEOUT_MS));
@@ -79,7 +100,8 @@ self.addEventListener('fetch', (event) => {
         fetch(req).then((res) => {
           if (res.ok) {
             const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
+            // C.139: 캐시 쓰기 수명은 waitUntil 로 보장(응답을 돌려준 뒤 워커가 멈춰도 쓰기가 끝난다)
+            event.waitUntil(caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => undefined));
           }
           return res;
         }),

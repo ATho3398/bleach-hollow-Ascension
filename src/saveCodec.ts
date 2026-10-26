@@ -200,6 +200,12 @@ const confirmedOf = (st: object) => {
   if (!set) confirmed.set(st, (set = new Set()));
   return set;
 };
+/** C.139: 다른 창이 저장소의 덩어리를 바꿨다(storage 이벤트) — 이 저장소에 대해 확인해 둔 해시를 잊는다. 다음 저장은 덩어리가 실제로 있는지 다시 본다(GDD 88장 1) */
+export function forgetConfirmedChunks(st: object): void {
+  confirmed.delete(st);
+}
+/** storage 이벤트의 키가 압축 덩어리(또는 전체 비우기 null)인가 */
+export const isChunkStorageKey = (key: string | null): boolean => key === null || key.startsWith(CHUNK_PREFIX);
 
 /** 덩어리 → 열 모양 JSON: 키 이름을 한 번만 쓰고 같은 키 값끼리 모은다(압축이 훨씬 잘 된다). 객체가 아닌 기록이 섞이면 배열 그대로.
  *  { k: 키 목록, c: 키별 값 목록, m: 키별 그 키가 없던 기록 번호 } */

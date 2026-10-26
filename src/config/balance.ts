@@ -202,13 +202,19 @@ export const BALANCE = {
         chain: { points: 3, ev: { hp: 5 }, condition: 0, hunger: 0, risk: 10, winHunger: -20 },
       } as Record<string, { points: number; ev: Record<string, number>; condition: number; hunger: number; risk: number; winHunger?: number }>,
       /** 본능 대결: 상대 게이지 hits 번 깎으면 승, misses 번 놓치면 패. 예고 간격(초), 받아치는 창(초, 단계별), 3단계부터 페이크 확률, 4단계 연속 공격 확률 */
-      duel: { hits: 8, misses: 4, gapSeconds: [0.8, 2.0], windowSeconds: [1.0, 0.85, 0.72, 0.6], telegraphSeconds: [0.9, 0.75, 0.6, 0.5], fakeChance: [0, 0, 0.3, 0.35], doubleChance: [0, 0, 0, 0.35] },
+      duel: { hits: 8, misses: 4, gapSeconds: [0.8, 2.0], windowSeconds: [1.0, 0.85, 0.72, 0.6], telegraphSeconds: [0.9, 0.75, 0.6, 0.5], fakeChance: [0, 0, 0.3, 0.35], doubleChance: [0, 0, 0, 0.35],
+        /** 연속 공격 두 번째 예고까지 간격(초), 페이크가 바뀌는 시점(예고 시간 대비 비율) — C.139 엔진에서 옮김(값 그대로) */
+        doubleGapSeconds: 0.35, fakeAtShare: 0.55 },
       /** 탄막 피하기: 버틸 시간(초), 맞으면 패배하는 횟수, 탄 간격(초, 단계별), 탄이 화면을 건너는 시간(초, 단계별) */
-      dodge: { seconds: 30, hitsToLose: 3, spawnSeconds: [1.1, 0.95, 0.8, 0.65], travelSeconds: [2.2, 1.9, 1.6, 1.35] },
+      dodge: { seconds: 30, hitsToLose: 3, spawnSeconds: [1.1, 0.95, 0.8, 0.65], travelSeconds: [2.2, 1.9, 1.6, 1.35],
+        /** 탄 간격 흔들림: 간격 × (base + 난수 × range) — C.139 엔진에서 옮김(값 그대로) */
+        spawnJitter: { base: 0.8, range: 0.4 } },
       /** 칼날 맞대기: 판 수, 이길 성공 수, 표시 왕복 시간(초, 단계별 범위 — 매번 다름), 가운데 성공 구간 폭(막대 비율) */
       clash: { rounds: 5, toWin: 4, sweepSeconds: [[1.4, 2.0], [1.1, 1.7], [0.9, 1.4], [0.7, 1.2]], zoneWidth: [0.24, 0.2, 0.17, 0.14] },
       /** 먹이사슬: 제한 시간(초), 목표 점수, 칸 수, 먹잇감 +1 / 포식자 −3, 나타나 있는 시간(초, 단계별), 새로 나타나는 간격(초, 단계별), 포식자 비율 */
-      chain: { seconds: 30, target: 12, cells: 9, preyScore: 1, predatorScore: -3, showSeconds: [1.3, 1.1, 0.95, 0.8], spawnSeconds: [1.0, 0.9, 0.8, 0.7], predatorShare: [0.3, 0.33, 0.36, 0.4] },
+      chain: { seconds: 30, target: 12, cells: 9, preyScore: 1, predatorScore: -3, showSeconds: [1.3, 1.1, 0.95, 0.8], spawnSeconds: [1.0, 0.9, 0.8, 0.7], predatorShare: [0.3, 0.33, 0.36, 0.4],
+        /** 첫 등장 시각(초), 등장 간격 흔들림 간격 × (base + 난수 × range) — C.139 엔진에서 옮김(값 그대로) */
+        firstSpawnSeconds: 0.5, spawnJitter: { base: 0.8, range: 0.4 } },
     },
     // ── 먹이 = 전리품 (GDD 23-1, 수치 provisional): 먹이 5종 개수제, 슬롯 공유 자원 ──
     food: {

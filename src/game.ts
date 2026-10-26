@@ -22,6 +22,7 @@ import { TITLES, titleForFaction } from './data/titles';
 import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import { STAT_IDS, type Stats, type TitleDef } from './data/schema';
+import { TRAITS } from './data/traits';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
 import { addFood, foodOverflowGold, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
@@ -1566,7 +1567,22 @@ function isTrackShape(t: unknown): boolean {
   if (!isRec(t) || typeof t.factionId !== 'string' || !FACTIONS.some((f) => f.id === t.factionId)) return false;
   const evo = t.evolution, b = t.build, log = t.runLog;
   return isRec(t.nest) && isRec(b) && Array.isArray(b.owned) && Array.isArray(b.slots) && isRec(evo) && typeof evo.tierIndex === 'number' && isRec(evo.ev) && isRec(evo.elementAbsorbs) && Array.isArray(evo.formHistory)
-    && isRec(log) && Array.isArray(log.battles) && Array.isArray(log.runs) && Array.isArray(log.absorbs) && isRec(log.tiers) && Array.isArray((log.tiers as Record<string, unknown>).evolutions) && isRec(log.risk);
+    && isRec(log) && Array.isArray(log.battles) && Array.isArray(log.runs) && Array.isArray(log.absorbs) && isRec(log.tiers) && Array.isArray((log.tiers as Record<string, unknown>).evolutions) && isRec(log.risk)
+    && coreValuesValid(t.factionId, evo, b);
+}
+
+/** 세이브 내부 값 최소 검증 (C.139, GDD 88장 3): 능력치 6키 유한수·단계 정수 범위·보유/장착 특성 id 존재·슬롯 길이(최소 칸 수).
+ *  틀리면 그 트랙은 못 쓴다(지금 트랙이면 로드 실패 → 백업 복구). 손으로 고친 세이브가 화면·전투에서 NaN·예외로 터지는 걸 막는다 */
+function coreValuesValid(factionId: string, evo: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  const ev = evo.ev as Record<string, unknown>;
+  if (!STAT_IDS.every((k) => typeof ev[k] === 'number' && Number.isFinite(ev[k]))) return false;
+  const tier = evo.tierIndex as number;
+  if (!Number.isInteger(tier) || tier < 0 || tier >= getFaction(factionId).tierNames.length) return false;
+  const owned = b.owned as unknown[];
+  if (!owned.every((id) => typeof id === 'string' && TRAITS.some((x) => x.id === id))) return false;
+  const slots = b.slots as unknown[];
+  // 슬롯은 최소 slotCount 칸(옛 형식의 남는 칸은 허용 — 옛 세이브 마이그레이션 테스트가 4칸)
+  return slots.length >= BALANCE.absorb.slotCount && slots.every((id) => id === null || (typeof id === 'string' && owned.includes(id)));
 }
 
 export function sanitizeHogyoku(raw: unknown): HogyokuState {

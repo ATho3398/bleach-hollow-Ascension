@@ -20,7 +20,7 @@ import { animOf } from './bha/animPlayer';
 import { onHold } from './bha/hold';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
-  playOnce, replayOnce, runEl, runSpecs, secondsText, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
+  playOnce, replayOnce, runEl, runSpecs, secondsText, setHidden, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
@@ -390,6 +390,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let overlayOpen = false;
   let tutorialOpen = false;
   let stopped = false;
+  /** C.139 (GDD 88장 4): 전투가 끝나거나(승패·포기·떠남) 화면을 떠날 때 hold 구독을 바로 푼다 */
+  let unhold = (): void => undefined;
+  const stop = (): void => {
+    stopped = true;
+    unhold();
+  };
   const halted = () => paused || overlayOpen;
 
   const pauseBtn = button({ iconOnly: true, size: 'small', label: '일시정지', icon: 'i-pause' });
@@ -455,7 +461,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   if (opts.boss || opts.enter) window.setTimeout(() => playCosmeticFx('enter', hero.root), 0); // 등장 연출 (GDD 25-11): 보스·등급전 입장
 
   const quit = () => {
-    stopped = true;
+    stop();
     opts.onQuit?.();
   };
 
@@ -547,8 +553,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   pauseBtn.onclick = () => setPaused(!paused);
   // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니오로 닫히면 우리가 멈춘 것만 풀어 준다
   let heldByApp = false;
-  const offHold = onHold((sig) => {
-    if (!app.isConnected || stopped) return offHold();
+  unhold = onHold((sig) => {
+    if (!app.isConnected || stopped) return stop();
     if (sig === 'hold') {
       if (!paused && !overlayOpen && s.status === 'playing') {
         setPaused(true);
@@ -558,10 +564,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (heldByApp && paused) setPaused(false);
       heldByApp = false;
     } else {
-      stopped = true;
+      stop();
       tutorial?.dismiss(); // 튜토리얼은 본 것으로 치지 않는다 (다음 첫 전투에서 다시)
       tutorial = null;
-      offHold();
     }
   });
   // ── 사건 로그 · 플로팅 숫자 · 번쩍임 ──
@@ -878,7 +883,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     }
 
     const mn = s.boss?.minion;
-    minionChip.hidden = !mn;
+    setHidden(minionChip, !mn);
     if (mn) setText(minionText, `졸개 ${hpNumbers(mn.hp, mn.maxHp).now}/${hpNumbers(mn.hp, mn.maxHp).max}`);
     setText(timeNum, String(Math.ceil(timeLeftSeconds(s))));
     timeEl.classList.toggle('is-urgent', timeLeftSeconds(s) <= 10);
@@ -908,9 +913,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     foe.classList.toggle('is-guard', s.enemy.stance !== null);
 
     // 상태 칩
-    voidChip.root.hidden = s.voidUsed <= 0;
+    setHidden(voidChip.root, s.voidUsed <= 0);
     if (s.voidUsed > 0) setText(voidChip.value, `${s.voidUsed}회`);
-    chain3Chip.root.hidden = s.chain3Count <= 0;
+    setHidden(chain3Chip.root, s.chain3Count <= 0);
     if (s.chain3Count > 0) setText(chain3Chip.value, `${s.chain3Count}회`);
     setText(tray.veilText, `봉인 — ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)}`);
 
@@ -918,7 +923,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const libActive = liberationActive(s);
     app.classList.toggle('is-liberated', libActive);
     app.classList.toggle('is-unique', libActive && labels.liberation.unique);
-    libChip.root.hidden = !libActive;
+    setHidden(libChip.root, !libActive);
     if (libActive) setText(libChip.value, secondsText(s.liberation.ticksLeft * p.tickSeconds));
     if (libOn) {
       const lb = s.liberation;
@@ -1090,7 +1095,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     drawHud();
     drawTray();
     if (s.status !== 'playing') {
-      stopped = true;
+      stop();
       if (s.status === 'lost') say({ role: 'cast', icon: 'i-broken', text: s.lossReason === 'timeout' ? '시간 제한을 넘겼다…' : `${labels.defeatState}…` });
       endPress();
       if (tutorialOpen) tutorial?.close(); // 직접 해 보기 중에 끝나면 튜토리얼도 마무리

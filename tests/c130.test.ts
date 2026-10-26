@@ -68,18 +68,19 @@ function runSw(network: 'new' | 'offline' | 'slow') {
   const store = new Map<string, string>([['https://x/app/', 'old-index']]);
   const handlers: Record<string, (e: unknown) => void> = {};
   const self = { addEventListener: (k: string, h: (e: unknown) => void) => (handlers[k] = h), registration: { scope: 'https://x/app/' }, location: { origin: 'https://x' }, skipWaiting: () => undefined, clients: { claim: () => undefined } };
-  const res = (body: string) => ({ ok: true, body, clone: () => res(body) });
+  const res = (body: string): { ok: boolean; body: string; headers: undefined; clone: () => unknown; text: () => Promise<string> } => ({ ok: true, body, headers: undefined, clone: () => res(body), text: async () => body });
   const caches = {
     match: async (u: string) => (store.has(u) ? res(store.get(u)!) : undefined),
-    open: async () => ({ put: async (u: string, r: { body: string }) => void store.set(u, r.body), addAll: async () => undefined }),
+    open: async () => ({ match: async (u: string) => (store.has(u) ? res(store.get(u)!) : undefined), put: async (u: string, r: { text: () => Promise<string> }) => void store.set(u, await r.text()), addAll: async () => undefined }),
     keys: async () => [],
   };
   const fetchFn = (): Promise<unknown> =>
     network === 'new' ? Promise.resolve(res('new-index')) : network === 'offline' ? Promise.reject(new Error('offline')) : new Promise(() => undefined);
   const src = read('scripts/sw-template.js').replace('__VERSION__', 't').replace('__PRECACHE__', '[]');
-  new Function('self', 'caches', 'fetch', 'setTimeout', src)(self, caches, fetchFn, (f: () => void) => f());
+  // 'new' 는 네트워크가 바로 답하므로 시간 초과가 일어나지 않는다(C.139: 예전엔 초과가 즉시 나도 캐시 셸이 먼저 새것으로 바뀌어 우연히 통과)
+  new Function('self', 'caches', 'fetch', 'setTimeout', src)(self, caches, fetchFn, (f: () => void) => (network === 'new' ? undefined : f()));
   let reply: Promise<{ body: string }> | null = null;
-  handlers.fetch!({ request: { method: 'GET', url: 'https://x/app/?a=1', mode: 'navigate' }, respondWith: (p: Promise<{ body: string }>) => (reply = p) });
+  handlers.fetch!({ request: { method: 'GET', url: 'https://x/app/?a=1', mode: 'navigate' }, respondWith: (p: Promise<{ body: string }>) => (reply = p), waitUntil: () => undefined });
   return { reply: reply!, store };
 }
 
