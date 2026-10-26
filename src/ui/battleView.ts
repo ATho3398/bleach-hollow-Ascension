@@ -71,7 +71,7 @@ export interface BattleViewOptions {
   onEnd: (s: CombatState) => void;
 }
 
-/** 블록 이름 (GDD 20장 v5.4): 스킬 = `속성_계열`·`속성_막기`·`속성_회복`(기본 블록 = 내 캐릭터 속성 + 블록 계열), 공허 = `공허`, 콤보 = `콤보_계열` */
+/** 블록 이름 (GDD 84장 4번, C.138): 스킬 = 계열 약어(조·탄·교)·`막기`·`회복`(속성은 색으로만), 공허 = `공허`, 콤보 = `콤보_계열` */
 export function blockName(b: Block, labels: BattleLabels, factionId: string, p: CombatParams): string {
   if (b.kind === 'void') return labels.voidBlock;
   if (b.kind === 'combo') return comboBlockLabel(labels, comboOf(p, b.traitId)?.family);
@@ -79,7 +79,7 @@ export function blockName(b: Block, labels: BattleLabels, factionId: string, p: 
   const src = sourceOf(p, b.traitId);
   // 물공 특수 블록 (GDD 49장): 기본 공격 블록이 물공 블록인 몸은 표의 이름(종족별 데이터)
   if (p.physBlock && isBasicBlockId(src?.id) && src?.role === 'attack') return physBlockName(p.physBlock.element, factionId) ?? labels.skillBlock;
-  const name = skillBlockLabel(labels, factionId, blockElementOf(p, b), b.family ?? src?.family, src?.role ?? 'attack');
+  const name = skillBlockLabel(labels, b.family ?? src?.family, src?.role ?? 'attack');
   return name ?? (b.traitId && !isBasicBlockId(b.traitId) ? traitName(b.traitId, factionId) : labels.skillBlock);
 }
 
@@ -89,11 +89,10 @@ export function blockAbbr(b: Block, labels: BattleLabels, factionId: string, p: 
   return pickAbbr(undefined, Array.from(name).length > ABBR_LINE_CHARS ? name.replace('_', '_ ') : name);
 }
 
-/** 사건의 스킬 블록 표시 이름 (기본 블록은 속성이 없으므로 내 캐릭터 속성) */
+/** 사건의 스킬 블록 표시 이름 (계열 약어·막기·회복, 84장 4번) */
 function eventBlockLabel(e: Extract<CombatEvent, { kind: 'block' }>, s: CombatState, labels: BattleLabels, factionId: string): string {
   if (s.params.physBlock && isBasicBlockId(e.traitId) && e.role === 'attack') return physBlockName(s.params.physBlock.element, factionId) ?? labels.skillBlock;
-  const element = e.element ?? (isBasicBlockId(e.traitId) ? s.params.playerElements[0] ?? null : null);
-  return skillBlockLabel(labels, factionId, element, e.family, e.role) ?? (e.traitId && !isBasicBlockId(e.traitId) ? traitName(e.traitId, factionId) : labels.skillBlock);
+  return skillBlockLabel(labels, e.family, e.role) ?? (e.traitId && !isBasicBlockId(e.traitId) ? traitName(e.traitId, factionId) : labels.skillBlock);
 }
 
 /** 피해 줄의 속성 피해 표시 (GDD 48장 4·7번): 0 이 아닐 때만 " (불 +50%)", 융합은 " (물·흙 +15%)" */

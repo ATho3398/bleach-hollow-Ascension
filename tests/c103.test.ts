@@ -129,9 +129,9 @@ describe('C.103 기본 공격 블록 3계열 → 물공 블록 (49-1 2번)', () 
     const s = mk({ playerElements: ['earth'], physBlock: physOf('t5:earth:physical')! });
     expect(blockName(blk(BASIC_SKILL_ID), battleLabels(hollow), 'hollow', s.params)).toBe('바위 자세');
     expect(blockName(blk(BASIC_SKILL_ID), battleLabels(getFaction('shinigami')), 'shinigami', s.params)).toBe('암반 베기');
-    expect(blockName(blk(BASIC_GUARD_ID, null), battleLabels(hollow), 'hollow', s.params)).toBe('흙_막기');
+    expect(blockName(blk(BASIC_GUARD_ID, null), battleLabels(hollow), 'hollow', s.params)).toBe('막기');
     const plain = mk({ playerElements: ['earth'] });
-    expect(blockName(blk(BASIC_SKILL_ID), battleLabels(hollow), 'hollow', plain.params)).toBe('흙_조');
+    expect(blockName(blk(BASIC_SKILL_ID), battleLabels(hollow), 'hollow', plain.params)).toBe('조');
   });
 });
 

@@ -78,13 +78,11 @@ export function blockElementName(elementId: string, factionId: string): string {
 }
 
 /**
- * 스킬 블록 표시 이름 (GDD 20장 v5.4): 공격 = `속성_계열`(예 불_조), 막기·회복 = `속성_막기`·`속성_회복`.
- * 속성은 데이터(elements), 계열 약어는 종족 설정 families 에서 읽는다. 속성이 없거나 공격인데 계열이 없으면 null
+ * 스킬 블록 표시 이름 (GDD 84장 4번, C.138): 공격 = 계열 약어만(조·탄·교 / 참·권·귀), 막기·회복 = `막기`·`회복`.
+ * 속성은 이름에 넣지 않고 색으로만 보인다(79장). 계열 약어는 종족 설정 families 에서 읽는다. 공격인데 계열이 없으면 null
  */
-export function skillBlockLabel(labels: Pick<BattleLabels, 'families'>, factionId: string, element: string | null, family: string | null | undefined, role: SkillRole | null): string | null {
-  if (!element) return null;
-  const tail = role === 'guard' ? BLOCK_WORDS.guard : role === 'heal' ? BLOCK_WORDS.heal : familyAbbr(labels, family);
-  return tail ? `${blockElementName(element, factionId)}_${tail}` : null;
+export function skillBlockLabel(labels: Pick<BattleLabels, 'families'>, family: string | null | undefined, role: SkillRole | null): string | null {
+  return role === 'guard' ? BLOCK_WORDS.guard : role === 'heal' ? BLOCK_WORDS.heal : familyAbbr(labels, family) ?? null;
 }
 
 /** 해방 블록 표시 이름 (GDD 22-5 `속성_해방`, 83장: 해방 슬롯이 비었을 때 해방 중에 나온다): 내 캐릭터 속성. 속성을 모르면 `해방` */

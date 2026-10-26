@@ -369,15 +369,14 @@ export function blockEl(spec: BlockSpec): HTMLElement {
     node.append(pips);
   }
   const ico = el('span', 'bha-block__icon');
-  ico.append(icon(spec.visual === 'attack' && spec.fx ? `i-fx-${spec.fx}` : BLOCK_ICON[spec.visual]));
+  // 아이콘 = 계열 모양 (C.138, 84장 5번): 공격 블록과 기본(노말) 블록 모두 계열마다 다르게
+  ico.append(icon((spec.visual === 'attack' || spec.visual === 'basic') && spec.fx ? `i-fx-${spec.fx}` : BLOCK_ICON[spec.visual]));
   if (spec.fx) node.dataset.fx = spec.fx;
   const weak = el('span', 'bha-block__weak');
   weak.append(icon('i-weak'));
   node.append(ico, el('b', 'bha-block__abbr', spec.abbr), weak);
-  if (spec.family) {
-    node.append(el('span', 'bha-block__fam', spec.family));
-    if (spec.familyId) node.dataset.fam = spec.familyId;
-  }
+  // 계열 글자는 이름(약어)이 이미 계열이라 모서리 배지는 달지 않는다 (C.138)
+  if (spec.family && spec.familyId) node.dataset.fam = spec.familyId;
   if (spec.elementColor) {
     node.dataset.el = '';
     node.style.setProperty('--fam', spec.elementColor);

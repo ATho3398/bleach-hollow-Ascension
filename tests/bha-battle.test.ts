@@ -41,7 +41,7 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
     expect(() => parseTrait({ ...base, abbr: { '*': '가'.repeat(TRAIT_ABBR_MAX_LENGTH + 1) } })).toThrow(/abbr/);
     expect(() => parseTrait({ ...base, abbr: 'A1' })).toThrow(/abbr/);
   });
-  it('블록 이름 = 속성_계열 (GDD 20장 v5.4): 옛 종족 블록 이름(본체 능력·포효 등)은 쓰지 않는다', () => {
+  it('블록 이름 = 계열 약어·막기·회복 (GDD 84장 4번, C.138): 옛 종족 블록 이름(본체 능력·포효 등)은 쓰지 않는다', () => {
     const enemy = getEnemy('test-a');
     for (const f of FACTIONS) {
       const labels = battleLabels(f);
@@ -55,16 +55,16 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
       const p = { ...p0, skills: [...p0.skills, ...createCombat(1, { enemy, params: buildCombatParams(b1, f.id) }).params.skills] };
       const name = (blk: Block) => blockName(blk, labels, f.id, p);
       expect(name({ uid: 2, kind: 'void', traitId: null })).toBe('공허');
-      expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(`불_${a}`);
-      expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(`허_${b}`);
-      expect(name({ uid: 5, kind: 'skill', traitId: 't-fire-guard', family: null })).toBe('불_막기');
-      expect(name({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null })).toBe('노멀_회복');
-      // 4자를 넘으면 _ 뒤에서 두 줄로
-      expect(blockAbbr({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null }, labels, f.id, p)).toBe('노멀_ 회복');
-      expect(blockAbbr({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' }, labels, f.id, p)).toBe(`불_${a}`);
-      // 기본 블록: 내 캐릭터 속성 + 블록 계열
+      expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(a);
+      expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(b);
+      expect(name({ uid: 5, kind: 'skill', traitId: 't-fire-guard', family: null })).toBe('막기');
+      expect(name({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null })).toBe('회복');
+      // 약어도 이름 그대로
+      expect(blockAbbr({ uid: 6, kind: 'skill', traitId: 't-normal-heal', family: null }, labels, f.id, p)).toBe('회복');
+      expect(blockAbbr({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' }, labels, f.id, p)).toBe(a);
+      // 기본 블록: 속성이 아니라 블록 계열만
       const pb = createCombat(1, { enemy, params: { ...buildCombatParams(newBuild(), f.id), playerElements: ['water'] } }).params;
-      expect(blockName({ uid: 7, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-c' }, labels, f.id, pb)).toBe(`물_${c}`);
+      expect(blockName({ uid: 7, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-c' }, labels, f.id, pb)).toBe(c);
       const old = [f.basicSkillName, f.voidBlockName];
       for (const blk of [{ uid: 8, kind: 'skill' as const, traitId: BASIC_SKILL_ID, family: 'family-a' }, { uid: 9, kind: 'void' as const, traitId: null }]) {
         expect(old).not.toContain(blockName(blk, labels, f.id, pb));
