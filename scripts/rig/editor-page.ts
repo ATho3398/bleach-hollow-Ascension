@@ -3,19 +3,69 @@ import { HUMANOID, MOTIONS, boneMatrices, insideFrame, lookLayers, partMatrix, s
 
 declare const ART_MAP: Record<string, string>;
 const K = 6;
-const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '머리카락', foot_L: '왼발', foot_R: '오른발', weapon: '칼' };
-const STORE = 'bha-rig-editor-v3';
+const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '일반머리', hair_back: '뒷머리', outer_torso: '겉옷(몸)', outer_arm_L: '겉옷(왼팔)', outer_arm_R: '겉옷(오른팔)', foot_L: '왼발', foot_R: '오른발', weapon: '칼' };
+// 저장 칸 이름은 바꾸지 않는다(바꾸면 사용자가 맞춘 값이 사라진다). 옛 이름(v1~v3)에 남은 값도 읽어 온다
+const STORE = 'bha-rig-editor';
+const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
+/** 저장할 때의 기본 자리(데이터 값). 새 시트로 기본 자리가 바뀌면 '사용자가 옮긴 만큼'만 옮겨 적용한다 */
+type Saved = Partial<Rig> & { baseAt?: Record<string, Record<string, [number, number]>> };
+/** 옛 저장(baseAt 없음)이 기준으로 삼던 기본 자리 — C.151 앞부분의 값 */
+const LEGACY_BASE: Record<string, Record<string, [number, number]>> = {
+  arrancar: { torso: [8, 27], arm_L: [0, 36], arm_R: [17, 29], leg_L: [4, 51], leg_R: [13, 49], head: [8, 11], hair: [0, 0] },
+  shinigami: { torso: [0, 26], arm_L: [0, 34], arm_R: [19, 34], leg_L: [3, 52], leg_R: [18, 52], head: [8, 11], hair: [0, 1] },
+};
 
 const rig: Rig = JSON.parse(JSON.stringify(HUMANOID));
-try {
-  const saved = localStorage.getItem(STORE);
-  if (saved) {
-    const s = JSON.parse(saved) as Partial<Rig>;
-    if (s.bones) rig.bones = s.bones;
-    if (s.slots) rig.slots = s.slots;
-    if (s.bodies) rig.bodies = s.bodies;
-    if (s.looks) rig.looks = s.looks;
+const baseAt = (): Record<string, Record<string, [number, number]>> => {
+  const o: Record<string, Record<string, [number, number]>> = {};
+  for (const [b, parts] of Object.entries(HUMANOID.bodies)) {
+    o[b] = Object.fromEntries(Object.entries(parts).map(([k, v]) => [k, [v.at[0], v.at[1]]]));
+    const look = Object.values(HUMANOID.looks).find((l) => l.body === b);
+    const hair = look?.hair;
+    if (typeof hair === 'object') o[b]!.hair = [hair.at[0], hair.at[1]];
+    const hb = look?.hair_back;
+    if (typeof hb === 'object') o[b]!.hair_back = [hb.at[0], hb.at[1]];
   }
+  return o;
+};
+function merge(s: Saved) {
+  const prevBase = s.baseAt ?? LEGACY_BASE;
+  // 관절: 저장된 뼈는 저장값, 새로 생긴 뼈(발목·칼 등)는 데이터 기본값
+  if (s.bones) for (const b of rig.bones) {
+    const v = s.bones.find((x) => x.id === b.id);
+    if (v) { b.pivot = v.pivot; if (v.restRot !== undefined) b.restRot = v.restRot; }
+  }
+  // 앞뒤 순서: 저장 순서 + 새 슬롯은 데이터에서의 바로 앞 슬롯 뒤에
+  if (s.slots) {
+    const order = s.slots.map((x) => x.id).filter((id) => rig.slots.some((y) => y.id === id));
+    rig.slots.forEach((sl, i) => {
+      if (order.includes(sl.id)) return;
+      const prev = rig.slots[i - 1]?.id;
+      const at = prev ? order.indexOf(prev) + 1 : 0;
+      order.splice(at, 0, sl.id);
+    });
+    rig.slots = order.map((id) => rig.slots.find((y) => y.id === id)!);
+  }
+  // 부위 자리: 사용자가 기본 자리에서 옮긴 만큼(저장값 - 그때 기본값)을 지금 기본값에 더한다
+  const shift = (body: string, part: string, savedAt: [number, number] | undefined, cur: PartArt) => {
+    const pb = prevBase[body]?.[part];
+    if (!savedAt || !pb) return;
+    cur.at = [cur.at[0] + savedAt[0] - pb[0], cur.at[1] + savedAt[1] - pb[1]];
+  };
+  if (s.bodies) for (const [b, parts] of Object.entries(rig.bodies)) {
+    for (const [k, cur] of Object.entries(parts)) shift(b, k, s.bodies[b]?.[k]?.at as [number, number] | undefined, cur);
+  }
+  if (s.looks) for (const [lid, lk] of Object.entries(rig.looks)) {
+    for (const k of ['hair', 'hair_back'] as const) {
+      const sv = s.looks[lid]?.[k];
+      const cur = lk[k];
+      if (typeof cur === 'object' && typeof sv === 'object') shift(lk.body, k, sv.at as [number, number], cur);
+    }
+  }
+}
+try {
+  const raw = [STORE, ...LEGACY].map((k) => localStorage.getItem(k)).find((v) => v);
+  if (raw) merge(JSON.parse(raw) as Saved);
 } catch { /* 저장 못 쓰는 환경 */ }
 
 let look = 'arrancar-base';
@@ -33,7 +83,7 @@ stage.style.width = `${W * K}px`;
 stage.style.height = `${H * K}px`;
 
 function save() {
-  try { localStorage.setItem(STORE, JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks })); } catch { /* 무시 */ }
+  try { localStorage.setItem(STORE, JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, baseAt: baseAt() })); } catch { /* 무시 */ }
   const body = rig.looks[look]!.body;
   out.value = JSON.stringify({
     bones: rig.bones.map((b) => ({ id: b.id, parent: b.parent, pivot: b.pivot })),
@@ -42,6 +92,7 @@ function save() {
     parts: Object.fromEntries(Object.entries(rig.bodies[body]!).map(([k, v]) => [k, v.at])),
     look,
     hair: (rig.looks[look]!.hair as PartArt | undefined)?.at,
+    hair_back: (rig.looks[look]!.hair_back as PartArt | undefined)?.at,
   });
 }
 
@@ -64,7 +115,7 @@ function draw() {
     img.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * K},${m[5] * K})`;
     stage.append(img);
   }
-  if (sel === 'hair' && !motion) {
+  if ((sel === 'hair' || sel === 'hair_back') && !motion) {
     const [fx, fy, fw, fh] = rig.hairFrame.rect;
     const [kx, ky, kw, kh] = rig.hairFrame.keepOut;
     const m = mats.head!;
@@ -121,7 +172,7 @@ function nudge(dx: number, dy: number) {
     const p = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
     if (!p) return;
     const next: PartArt = { ...p, at: [p.at[0] + dx, p.at[1] + dy] };
-    if (sel === 'hair' && !insideFrame(rig, next)) return; // 머리카락은 틀 밖으로 못 나간다
+    if ((sel === 'hair' || sel === 'hair_back') && !insideFrame(rig, next)) return; // 머리카락은 틀 밖으로 못 나간다
     p.at = next.at;
   }
   save(); draw();
@@ -153,7 +204,7 @@ $('back').onclick = () => { const i = rig.slots.findIndex((s) => s.id === sel); 
 $('reset').onclick = () => {
   const fresh: Rig = JSON.parse(JSON.stringify(HUMANOID));
   rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks;
-  try { localStorage.removeItem(STORE); } catch { /* 무시 */ }
+  try { for (const k of [STORE, ...LEGACY]) localStorage.removeItem(k); } catch { /* 무시 */ }
   save(); buildChips(); draw();
 };
 $('copy').onclick = async () => {

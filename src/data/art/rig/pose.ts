@@ -27,7 +27,7 @@ export interface Rig {
   slots: Slot[];
   /** 몸 id → 슬롯 id → 부위 그림 */
   bodies: Record<string, Record<string, PartArt>>;
-  /** 외형 id → 몸 + 머리 위에 얹는 층(머리카락 — 아란칼 가면도 머리카락 층에 붙어 있다) */
+  /** 외형 id → 몸 + 얹는 층(hair 일반머리·hair_back 뒷머리 — 아란칼 가면은 hair 에 붙어 있다, outer_* 겉옷, weapon 무기) */
   looks: Record<string, Look>;
   /** 머리카락 틀: 머리카락 그림은 rect(x, y, 가로, 세로) 안에만. keepOut = 가리지 않기를 권장하는 얼굴 칸 */
   hairFrame: { rect: [number, number, number, number]; keepOut: [number, number, number, number] };
@@ -161,6 +161,11 @@ export function partMatrix(bone: Mat, at: Vec2): Mat {
   return mul(bone, [1, 0, 0, 1, at[0], at[1]]);
 }
 
+/** 머리카락 층(앞머리·일반머리 = hair, 몸 뒤로 늘어지는 뒷머리 = hair_back) — 둘 다 머리카락 틀 안 */
+export const HAIR_SLOTS = ['hair', 'hair_back'] as const;
+/** 겉옷 층: 부위 바로 위에 얹혀 그 뼈를 따라 움직인다(그림이 있는 외형만) */
+export const OUTER_SLOTS = ['outer_torso', 'outer_arm_L', 'outer_arm_R'] as const;
+
 /** 머리카락 그림 상자가 머리카락 틀 안에 있는가 */
 export function insideFrame(rig: Rig, p: PartArt): boolean {
   const [fx, fy, fw, fh] = rig.hairFrame.rect;
@@ -175,8 +180,10 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>): string[]
   for (const s of rig.slots) if (!ids.has(s.bone)) errs.push(`슬롯 ${s.id}: 뼈 ${s.bone} 없음`);
   for (const [lid, look] of Object.entries(rig.looks)) {
     if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);
-    const hair = look.hair;
-    if (typeof hair === 'object' && !insideFrame(rig, hair)) errs.push(`외형 ${lid}: 머리카락이 틀 밖`);
+    for (const k of HAIR_SLOTS) {
+      const hair = look[k];
+      if (typeof hair === 'object' && !insideFrame(rig, hair)) errs.push(`외형 ${lid}: ${k} 가 머리카락 틀 밖`);
+    }
   }
   for (const [mid, m] of Object.entries(motions)) {
     if (!(m.duration > 0)) errs.push(`${mid}: 길이 0`);

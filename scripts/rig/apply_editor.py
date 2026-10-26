@@ -25,8 +25,9 @@ if order:
     rig['slots'] = [by[i] for i in order if i in by] + [s for s in rig['slots'] if s['id'] not in order]
 for part, at in data.get('parts', {}).items():
     rig['bodies'][data['body']][part]['at'] = at
-if data.get('look') and data.get('hair'):
-    rig['looks'][data['look']]['hair']['at'] = data['hair']
+for k in ('hair', 'hair_back'):
+    if data.get('look') and data.get(k) and k in rig['looks'][data['look']]:
+        rig['looks'][data['look']][k]['at'] = data[k]
 s = json.dumps(rig, ensure_ascii=False, indent=2)
 s = re.sub(r'\[\s+(-?\d+),\s+(-?\d+)\s+\]', r'[\1, \2]', s)
 s = re.sub(r'\{\s+"id": "([^"]+)",\s+"bone": "([^"]+)"\s+\}', r'{ "id": "\1", "bone": "\2" }', s)

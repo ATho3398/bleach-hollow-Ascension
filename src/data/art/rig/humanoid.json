@@ -16,14 +16,18 @@
     { "id": "weapon", "parent": "arm_L", "pivot": [4, 56], "restRot": 30 }
   ],
   "slots": [
+    { "id": "hair_back", "bone": "head" },
     { "id": "foot_R", "bone": "foot_R" },
     { "id": "leg_R", "bone": "leg_R" },
     { "id": "foot_L", "bone": "foot_L" },
     { "id": "leg_L", "bone": "leg_L" },
     { "id": "torso", "bone": "torso" },
+    { "id": "outer_torso", "bone": "torso" },
     { "id": "weapon", "bone": "weapon" },
     { "id": "arm_L", "bone": "arm_L" },
+    { "id": "outer_arm_L", "bone": "arm_L" },
     { "id": "arm_R", "bone": "arm_R" },
+    { "id": "outer_arm_R", "bone": "arm_R" },
     { "id": "head", "bone": "head" },
     { "id": "hair", "bone": "head" }
   ],
@@ -40,8 +44,8 @@
     },
     "arrancar": {
       "torso": { "art": "arrancar/torso", "at": [8, 27], "size": [21, 26] },
-      "arm_L": { "art": "arrancar/arm_L", "at": [0, 36], "size": [13, 24] },
-      "arm_R": { "art": "arrancar/arm_R", "at": [17, 29], "size": [18, 26] },
+      "arm_L": { "art": "arrancar/arm_L", "at": [0, 36], "size": [19, 24] },
+      "arm_R": { "art": "arrancar/arm_R", "at": [21, 29], "size": [14, 26] },
       "leg_L": { "art": "arrancar/leg_L_top", "at": [4, 51], "size": [17, 24] },
       "leg_R": { "art": "arrancar/leg_R_top", "at": [13, 49], "size": [19, 26] },
       "head": { "art": "head_bald", "at": [8, 11], "size": [16, 19] },
@@ -52,18 +56,21 @@
   "looks": {
     "shinigami-base": {
       "body": "shinigami",
-      "hair": { "art": "shinigami/hair", "at": [0, 1], "size": [33, 30] },
-      "weapon": { "art": "weapon/sword", "at": [1, 53], "size": [7, 27] }
+      "hair": { "art": "shinigami/hair", "at": [0, 1], "size": [32, 30] },
+      "weapon": { "art": "weapon/sword", "at": [1, 53], "size": [7, 27] },
+      "hair_back": { "art": "shinigami/hair_back", "at": [16, 15], "size": [17, 16] }
     },
     "arrancar-base": {
       "body": "arrancar",
-      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [34, 31] },
-      "weapon": { "art": "weapon/sword", "at": [1, 53], "size": [7, 27] }
+      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [33, 31] },
+      "weapon": { "art": "weapon/sword", "at": [1, 53], "size": [7, 27] },
+      "hair_back": { "art": "arrancar/hair_back", "at": [16, 15], "size": [18, 16] }
     }
   },
   "hairFrame": {
     "note": "머리카락 틀 (GDD 96장 7): 머리카락 그림은 rect(x, y, 가로, 세로) 안에만 둔다. keepOut 은 얼굴(눈·뺨) — 가리지 않기를 권장(경고만)",
     "rect": [0, 0, 36, 32],
     "keepOut": [11, 22, 6, 6]
-  }
+  },
+  "outerNote": "겉옷 슬롯(outer_torso·outer_arm_L·outer_arm_R)은 외형에 그림이 있을 때만 그려진다. 지금은 비어 있음"
 }

@@ -8,8 +8,8 @@ describe('종이인형 데이터', () => {
   it('뼈·슬롯·외형·동작에 문제가 없다', () => {
     expect(validateRig(HUMANOID, MOTIONS)).toEqual([]);
   });
-  it('기본 동작 5개(대기·걷기·공격·공격2·맞음)가 있다', () => {
-    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'hit', 'idle', 'move']);
+  it('동작 7개(대기·걷기·공격·공격2·특수1·특수2·맞음)가 있다', () => {
+    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'hit', 'idle', 'move', 'skill', 'skill2']);
     expect(MOTIONS.idle!.loop && MOTIONS.move!.loop).toBe(true);
     expect(MOTIONS.attack!.hit).toBeGreaterThan(0);
   });
@@ -62,8 +62,9 @@ describe('자세·행렬', () => {
   });
   it('머리카락은 모두 머리카락 틀 안에 있다', () => {
     for (const look of Object.keys(HUMANOID.looks)) {
-      const hair = lookLayers(HUMANOID, look).find((l) => l.slot === 'hair');
-      if (hair) expect(insideFrame(HUMANOID, hair), look).toBe(true);
+      for (const hair of lookLayers(HUMANOID, look).filter((l) => l.slot === 'hair' || l.slot === 'hair_back')) {
+        expect(insideFrame(HUMANOID, hair), `${look} ${hair.slot}`).toBe(true);
+      }
     }
     expect(insideFrame(HUMANOID, { art: 'x', at: [30, 0], size: [10, 5] })).toBe(false);
   });
@@ -74,7 +75,7 @@ describe('자세·행렬', () => {
     expect(samplePose(HUMANOID, atk, atk.hit!).arm_L!.rot).toBeLessThan(90);
   });
   it('발목: 공격 중 발은 다리를 거꾸로 돌려 바닥과 평행(다리+발 각도 = 0)', () => {
-    for (const id of ['attack', 'attack2']) {
+    for (const id of ['attack', 'attack2', 'skill', 'skill2']) {
       const m = MOTIONS[id]!;
       const p = samplePose(HUMANOID, m, m.hit!);
       expect(p.leg_L!.rot + p.foot_L!.rot).toBeCloseTo(0);
@@ -90,6 +91,31 @@ describe('자세·행렬', () => {
     // 앞팔이 돌면 칼도 같이 돈다
     const m2 = boneMatrices(HUMANOID, { arm_L: { rot: 90, x: 0, y: 0 } });
     expect(apply(m2.weapon!, w.pivot)).toEqual(apply(m2.arm_L!, w.pivot));
+  });
+  it('뒷머리는 몸통 뒤, 일반머리는 머리 앞, 겉옷은 각 부위 바로 위에 그려진다', () => {
+    const ids = HUMANOID.slots.map((s) => s.id);
+    expect(ids.indexOf('hair_back')).toBeLessThan(ids.indexOf('torso'));
+    expect(ids.indexOf('hair')).toBeGreaterThan(ids.indexOf('head'));
+    for (const [o, p] of [['outer_torso', 'torso'], ['outer_arm_L', 'arm_L'], ['outer_arm_R', 'arm_R']] as const) {
+      expect(ids.indexOf(o)).toBe(ids.indexOf(p) + 1);
+      expect(HUMANOID.slots.find((s) => s.id === o)!.bone).toBe(p);
+    }
+    for (const look of Object.keys(HUMANOID.looks)) expect(lookLayers(HUMANOID, look).some((l) => l.slot === 'hair_back'), look).toBe(true);
+  });
+  it('특수1: 타격 순간 뒷팔이 수평(약 90°), 특수2: 칼 든 팔이 수평이고 칼날도 팔 방향', () => {
+    const s1 = MOTIONS.skill!;
+    expect(Math.abs(samplePose(HUMANOID, s1, s1.hit!).arm_R!.rot - 90)).toBeLessThan(10);
+    const s2 = MOTIONS.skill2!;
+    const p = samplePose(HUMANOID, s2, s2.hit!);
+    const rest = HUMANOID.bones.find((b) => b.id === 'weapon')!.restRot ?? 0;
+    expect(Math.abs(p.arm_L!.rot - 90)).toBeLessThan(10);
+    expect(Math.abs(p.weapon!.rot + rest)).toBeLessThan(5);
+  });
+  it('대기: 내쉰 자세(몸 1칸 아래)에서 잠깐 머문다', () => {
+    const idle = MOTIONS.idle!;
+    const keys = idle.tracks.torso!.filter((k) => k[3] === 1);
+    expect(keys.length).toBeGreaterThanOrEqual(2);
+    expect(keys[keys.length - 1]![0] - keys[0]![0]).toBeGreaterThanOrEqual(400);
   });
   it('걷기: 양 다리는 반대로 흔든다', () => {
     const p = samplePose(HUMANOID, MOTIONS.move!, 0);
