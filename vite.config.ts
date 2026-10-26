@@ -90,7 +90,8 @@ function pwaPlugin() {
         bytes += buf.length;
         hash.update(f).update(buf);
       }
-      const precache = ['./', ...files.filter((f) => f !== 'index.html')];
+      // 플레이리스트 음원(GDD 97장)은 약 27MB 라 미리 받지 않는다 — 재생할 곡만 그때 불러온다
+      const precache = ['./', ...files.filter((f) => f !== 'index.html' && !f.startsWith('audio/playlist/'))];
       const version = hash.digest('hex').slice(0, 12);
       const src = readFileSync('scripts/sw-template.js', 'utf8')
         .replace('__VERSION__', version)

@@ -18,6 +18,7 @@ import {
   type ExpeditionState,
 } from '../src/engine/expedition';
 import { applyAbsence, claimDexRewards, dexCounts, markSeen, migrateSave, newSaveData, recordExpedition, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
+import { PLAYLIST } from '../src/data/audio/bgm';
 import { createBgmPlayer, parseBgmSettings, saveBgmSettings, loadBgmSettings, type AudioLike } from '../src/ui/bgm';
 import { needsMigration, swapWithBackup } from '../src/saveBackup';
 import { readBackupMeta, slotBackupKey, slotKey, stashSlot } from '../src/saveSlots';
@@ -272,7 +273,7 @@ describe('24-4 배경 음악', () => {
 
   it('첫 터치 뒤에 재생, 같은 트랙은 이어 재생, 다른 트랙은 페이드로 바꾼다', () => {
     const f = fake();
-    const p = createBgmPlayer({ files: ['nest.ogg', 'battle.mp3'], makeAudio: f.makeAudio, autoTick: false, settings: { on: true, volume: 0.5 } });
+    const p = createBgmPlayer({ files: ['nest.ogg', 'battle.mp3'], makeAudio: f.makeAudio, autoTick: false, settings: { ...parseBgmSettings(null), on: true, volume: 0.5 } });
     p.play('nest');
     expect(f.made.length).toBe(1);
     expect(f.made[0]!.playing).toBe(false); // 자동재생 제한: 아직 안 난다
@@ -308,19 +309,19 @@ describe('24-4 배경 음악', () => {
     p.unlock();
     p.play('nest');
     p.step(10_000);
-    p.setSettings({ on: true, volume: 0.25 });
+    p.setSettings({ ...p.settings, on: true, volume: 0.25 });
     expect(f.made[0]!.volume).toBeCloseTo(0.25);
-    p.setSettings({ on: false, volume: 0.25 });
+    p.setSettings({ ...p.settings, on: false, volume: 0.25 });
     p.step(10_000);
     expect(p.current).toBeNull();
     expect(p.voices).toBe(0);
-    p.setSettings({ on: true, volume: 1 });
+    p.setSettings({ ...p.settings, on: true, volume: 1 });
     expect(p.current).toBe('nest'); // 다시 켜면 그 화면 트랙
     const st = memStorage();
-    saveBgmSettings(st, { on: false, volume: 0.75 });
-    expect(loadBgmSettings(st)).toEqual({ on: false, volume: 0.75 });
+    saveBgmSettings(st, { on: false, volume: 0.75, track: null, repeat: false, excluded: [] });
+    expect(loadBgmSettings(st)).toEqual({ on: false, volume: 0.75, track: null, repeat: false, excluded: [] });
     expect(Object.keys(st.mem)).toEqual(['bha-bgm-settings']);
-    expect(parseBgmSettings('{bad')).toEqual({ on: true, volume: 0.5 });
+    expect(parseBgmSettings('{bad')).toEqual({ on: true, volume: 0.5, track: null, repeat: false, excluded: [] });
     expect(parseBgmSettings('{"volume": 9}').volume).toBe(1);
   });
 
@@ -337,6 +338,92 @@ describe('24-4 배경 음악', () => {
     expect(p.unlocked).toBe(false);
     p.unlock();
     expect(tries).toBe(2);
+  });
+});
+
+describe('97장 브금 플레이리스트', () => {
+  const mk = (settings = parseBgmSettings(null)) => {
+    const made: (AudioLike & { playing: boolean })[] = [];
+    const saved: unknown[] = [];
+    const toasts: string[] = [];
+    const p = createBgmPlayer({
+      playlist: PLAYLIST, autoTick: false, settings,
+      makeAudio: (src) => { const a = { src, loop: false, volume: 1, playing: false, play() { this.playing = true; }, pause() { this.playing = false; } }; made.push(a); return a; },
+      persist: (s) => saved.push(s), onTrack: (t) => toasts.push(t.name),
+    });
+    p.unlock();
+    return { p, made, saved, toasts };
+  };
+  const ids = PLAYLIST.map((t) => t.id);
+
+  it('곡 이름·순서·파일', () => {
+    expect(PLAYLIST.map((t) => t.name)).toEqual(['난무의 멜로디', 'chAngE', '나선', '소녀S', '혜성']);
+    expect(PLAYLIST.map((t) => t.file)).toEqual(['ranbu-no-melody', 'change', 'rasen-acoustic', 'shoujo-s', 'track-5'].map((n) => `audio/playlist/${n}.mp3`));
+  });
+
+  it('화면 트랙 키와 상관없이 첫 곡부터, 끝나면 다음 곡, 마지막 뒤 처음', () => {
+    const { p, made, toasts } = mk();
+    p.play('nest');
+    expect(made.length).toBe(1);
+    expect(made[0]!.src).toContain('ranbu-no-melody.mp3');
+    p.play('battle'); // 화면이 바뀌어도 끊기지 않는다
+    expect(made.length).toBe(1);
+    expect(made[0]!.loop).toBe(false);
+    for (let i = 1; i < 5; i++) { made[made.length - 1]!.onended?.(); expect(p.currentTrack?.id).toBe(ids[i]); }
+    made[made.length - 1]!.onended?.();
+    expect(p.currentTrack?.id).toBe(ids[0]);
+    expect(toasts).toEqual(['chAngE', '나선', '소녀S', '혜성', '난무의 멜로디']);
+  });
+
+  it('제외 곡은 자동 넘김에서 건너뛰고, 직접 ▶ 는 재생한다', () => {
+    const { p, made } = mk();
+    p.toggleExcluded('change');
+    made[0]!.onended?.();
+    expect(p.currentTrack?.id).toBe('rasen-acoustic');
+    p.playTrack('change');
+    expect(p.currentTrack?.id).toBe('change');
+    expect(made[made.length - 1]!.src).toContain('change.mp3');
+  });
+
+  it('듣던 곡을 제외하면 다음 곡으로, 전부 제외면 무음', () => {
+    const { p } = mk();
+    p.toggleExcluded('ranbu-no-melody');
+    expect(p.currentTrack?.id).toBe('change');
+    for (const id of ids) if (!p.settings.excluded.includes(id)) p.toggleExcluded(id);
+    expect(p.currentTrack).toBeNull();
+    p.step(10_000);
+    expect(p.voices).toBe(0);
+    p.toggleExcluded('shoujo-s'); // 하나 풀면 다시 재생
+    expect(p.currentTrack?.id).toBe('shoujo-s');
+  });
+
+  it('현재 곡만 반복이면 loop, 다음 곡 버튼, 한 곡만 남으면 그 곡을 다시', () => {
+    const { p, made, saved } = mk();
+    p.toggleRepeat();
+    expect(made[0]!.loop).toBe(true);
+    expect(p.settings.repeat).toBe(true);
+    p.toggleRepeat();
+    p.next();
+    expect(p.currentTrack?.id).toBe('change');
+    for (const id of ids) if (id !== 'change') p.toggleExcluded(id);
+    const n = made.length;
+    made[made.length - 1]!.onended?.();
+    expect(p.currentTrack?.id).toBe('change');
+    expect(made.length).toBe(n + 1);
+    expect(saved.length).toBeGreaterThan(3);
+  });
+
+  it('저장값 복원: 지금 곡·반복·제외 목록, 제외된 곡이 저장돼 있으면 다음 곡', () => {
+    const st = memStorage();
+    saveBgmSettings(st, { on: true, volume: 0.5, track: 'rasen-acoustic', repeat: true, excluded: ['shoujo-s', 'change'] });
+    const s = loadBgmSettings(st);
+    expect(s).toMatchObject({ track: 'rasen-acoustic', repeat: true, excluded: ['shoujo-s', 'change'] });
+    const a = mk(s);
+    expect(a.p.currentTrack?.id).toBe('rasen-acoustic');
+    expect(a.made[0]!.loop).toBe(true);
+    const b = mk({ ...s, track: 'change' });
+    expect(b.p.currentTrack?.id).toBe('rasen-acoustic');
+    expect(Object.keys(st.mem)).toEqual(['bha-bgm-settings']);
   });
 });
 

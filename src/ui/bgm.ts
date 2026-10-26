@@ -1,7 +1,8 @@
 // 배경 음악 재생 (GDD 24-4): 화면이 트랙 키만 알려 주면(setBgm) 파일이 있을 때만 틀고, 없으면 조용히 무음.
 // 같은 트랙이면 끊지 않고 이어 재생, 다른 트랙이면 짧게 페이드 아웃 → 페이드 인. 브라우저 자동재생 제한 때문에 첫 터치(키 입력) 뒤에 소리가 난다.
 // 설정(켬/끔·음량)은 효과음(fxSettings)과 별도 키 bha-bgm-settings 에 이 기기만 저장한다 — 세이브 구조와 무관.
-import { BGM_FILES, findBgmFile, type BgmTrack } from '../data/audio/bgm';
+import { BGM_FILES, PLAYLIST, findBgmFile, type BgmTrack, type PlaylistTrack } from '../data/audio/bgm';
+import { showToast } from './bha/nest';
 import type { SettingsStorage } from './fxSettings';
 
 export const BGM_SETTINGS_KEY = 'bha-bgm-settings';
@@ -15,11 +16,17 @@ export interface BgmSettings {
   on: boolean;
   /** 0~1 */
   volume: number;
+  /** 플레이리스트 지금 곡 id (GDD 97장, 없으면 첫 곡부터) */
+  track: string | null;
+  /** 현재 곡만 반복 */
+  repeat: boolean;
+  /** 자동 넘김에서 건너뛸 곡 id */
+  excluded: string[];
 }
 
 /** 기본: 켬, 음량 50% (첫 터치 뒤 재생) */
 export function defaultBgmSettings(): BgmSettings {
-  return { on: true, volume: 0.5 };
+  return { on: true, volume: 0.5, track: null, repeat: false, excluded: [] };
 }
 
 export function parseBgmSettings(text: string | null | undefined): BgmSettings {
@@ -29,6 +36,9 @@ export function parseBgmSettings(text: string | null | undefined): BgmSettings {
     const r = JSON.parse(text) as Record<string, unknown>;
     if (typeof r?.on === 'boolean') base.on = r.on;
     if (typeof r?.volume === 'number' && Number.isFinite(r.volume)) base.volume = Math.max(0, Math.min(1, r.volume));
+    if (typeof r?.track === 'string') base.track = r.track;
+    if (typeof r?.repeat === 'boolean') base.repeat = r.repeat;
+    if (Array.isArray(r?.excluded)) base.excluded = [...new Set(r.excluded.filter((x): x is string => typeof x === 'string'))];
   } catch {
     /* 깨진 값은 기본값 */
   }
@@ -60,10 +70,13 @@ export interface AudioLike {
   volume: number;
   play(): Promise<void> | void;
   pause(): void;
+  /** 곡이 끝났을 때 (loop 가 꺼진 곡만 울린다) — 플레이리스트가 다음 곡으로 넘길 때 쓴다 */
+  onended?: (() => void) | null;
 }
 
 interface Voice {
-  track: BgmTrack;
+  /** 화면 트랙 키 또는 플레이리스트 곡 id */
+  track: string;
   audio: AudioLike;
   /** 지금 음량 비율 0~1 (설정 음량에 곱한다)과 목표 */
   level: number;
@@ -78,6 +91,12 @@ export interface BgmPlayerOptions {
   settings?: BgmSettings;
   /** 페이드 타이머를 직접 돌릴지 (테스트는 false 로 두고 step 을 부른다) */
   autoTick?: boolean;
+  /** 플레이리스트 (기본 없음 = 화면별 트랙 방식. 앱은 PLAYLIST 를 넣는다, GDD 97장) */
+  playlist?: readonly PlaylistTrack[];
+  /** 설정이 바뀔 때(곡 자동 넘김 포함) 저장하라고 알린다 */
+  persist?: (s: BgmSettings) => void;
+  /** 소리 낼 곡이 바뀔 때 (알림 띠용) */
+  onTrack?: (t: PlaylistTrack) => void;
 }
 
 export interface BgmPlayer {
@@ -86,7 +105,7 @@ export interface BgmPlayer {
   /** 원하는 트랙 (파일이 없어 무음이어도 기억한다) */
   readonly wanted: BgmTrack | null;
   /** 실제로 소리를 내는 트랙 (파일이 있고 켜져 있을 때) */
-  readonly current: BgmTrack | null;
+  readonly current: string | null;
   setSettings(s: BgmSettings): void;
   readonly settings: BgmSettings;
   /** 첫 터치 뒤 재생을 허용한다 (자동재생 제한) */
@@ -94,6 +113,18 @@ export interface BgmPlayer {
   readonly unlocked: boolean;
   /** 페이드 진행 (ms) */
   step(ms: number): void;
+  /** 플레이리스트 (비어 있으면 화면별 트랙 방식) */
+  readonly playlist: readonly PlaylistTrack[];
+  /** 지금 곡 (플레이리스트 방식, 재생할 곡이 없으면 null) */
+  readonly currentTrack: PlaylistTrack | null;
+  /** 이 곡으로 바로 바꿈 (제외 곡도 재생) */
+  playTrack(id: string): void;
+  /** 다음 곡 (제외 곡은 건너뜀) */
+  next(): void;
+  /** 제외 켬/끔. 지금 곡을 제외하면 다음 곡으로 넘어간다 */
+  toggleExcluded(id: string): void;
+  /** 현재 곡만 반복 켬/끔 */
+  toggleRepeat(): void;
   /** 지금 소리를 내는 요소 수 (페이드 중이면 2) */
   readonly voices: number;
 }
@@ -102,11 +133,50 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
   const files = opt.files ?? BGM_FILES;
   const base = opt.base ?? './';
   const make = opt.makeAudio ?? ((src: string) => new Audio(src) as AudioLike);
+  const playlist = opt.playlist ?? [];
   let settings = opt.settings ?? defaultBgmSettings();
   let unlocked = false;
   let wanted: BgmTrack | null = null;
   let voices: Voice[] = [];
   let timer: ReturnType<typeof setInterval> | undefined;
+
+  // ── 플레이리스트 (GDD 97장) ──
+  const entry = (id: string | null) => playlist.find((t) => t.id === id) ?? null;
+  /** from 다음부터 한 바퀴 돌며 제외 아닌 첫 곡 (자기 자신이 마지막 후보). 없으면 null = 전부 제외 */
+  const nextAfter = (from: string | null): string | null => {
+    if (playlist.length === 0) return null;
+    const at = playlist.findIndex((t) => t.id === from);
+    for (let k = 1; k <= playlist.length; k++) {
+      const t = playlist[(at + k + playlist.length) % playlist.length]!;
+      if (!settings.excluded.includes(t.id)) return t.id;
+    }
+    return null;
+  };
+  /** 저장된 지금 곡이 목록에 없거나 제외돼 있으면 다음 후보로 (처음 실행은 첫 곡) */
+  const normalize = () => {
+    if (playlist.length === 0) return;
+    const cur = entry(settings.track);
+    if (cur && !settings.excluded.includes(cur.id)) return;
+    settings = { ...settings, track: nextAfter(cur ? cur.id : playlist[playlist.length - 1]!.id) };
+  };
+  normalize();
+  const change = (patch: Partial<BgmSettings>, announce = false) => {
+    const before = settings.track;
+    settings = { ...settings, ...patch };
+    opt.persist?.(settings);
+    sync();
+    const t = entry(settings.track);
+    if (announce && t && (t.id !== before || patch.track !== undefined)) opt.onTrack?.(t);
+  };
+  /** 곡이 끝났다 → 다음 곡 (한 곡뿐이면 그 곡을 처음부터 다시) */
+  const advance = () => {
+    const id = nextAfter(settings.track);
+    if (id === settings.track) {
+      for (const v of voices) if (v.track === id) v.target = 0, v.level = 0;
+      step(0); // 끝난 요소를 버리고 새로 만든다
+    }
+    change({ track: id }, true);
+  };
 
   const start = (a: AudioLike) => {
     if (!unlocked) return;
@@ -140,37 +210,51 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
     voices = voices.filter((v) => {
       if (v.target === 0 && v.level === 0) {
         try { v.audio.pause(); } catch { /* 무시 */ }
+        v.audio.onended = null;
         return false;
       }
       return true;
     });
   }
-  const sync = () => {
-    const track = settings.on ? wanted : null;
-    const file = track ? findBgmFile(track, files) : null;
+  function sync(): void {
+    let key: string | null;
+    let file: string | null;
+    if (playlist.length > 0) {
+      // 플레이리스트가 있으면 화면별 트랙 키는 쓰지 않는다 — 화면이 바뀌어도 곡이 이어진다
+      const t = settings.on ? entry(settings.track) : null;
+      key = t ? t.id : null;
+      file = t ? t.file : null;
+    } else {
+      key = settings.on ? wanted : null;
+      file = key ? findBgmFile(key as BgmTrack, files) : null;
+    }
     // 같은 트랙이 울리고 있거나 막 꺼지는 중이면 끊지 않고 그대로 살린다 (음량만 새로)
-    const same = file ? voices.find((v) => v.track === track) : undefined;
+    const same = file ? voices.find((v) => v.track === key) : undefined;
     for (const v of voices) v.target = v === same ? 1 : 0;
     if (same) {
+      if (playlist.length > 0) same.audio.loop = settings.repeat;
       apply(same);
       ensureTimer();
       return;
     }
-    if (track && file) {
+    if (key && file) {
       let audio: AudioLike;
       try {
         audio = make(`${base}${file}`);
       } catch {
         return; // 오디오를 못 만드는 환경은 무음
       }
-      audio.loop = true;
-      const v: Voice = { track, audio, level: 0, target: 1 };
+      audio.loop = playlist.length > 0 ? settings.repeat : true;
+      const v: Voice = { track: key, audio, level: 0, target: 1 };
+      if (playlist.length > 0) audio.onended = () => { if (v.target > 0 && !audio.loop) advance(); };
       apply(v);
       voices.push(v);
       start(audio);
     }
     ensureTimer();
-  };
+  }
+
+  if (playlist.length > 0) sync(); // 플레이리스트는 화면이 알리지 않아도 바로 곡을 고른다 (소리는 첫 터치 뒤)
 
   return {
     play(track) {
@@ -181,9 +265,37 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
     get current() { return voices.find((v) => v.target > 0)?.track ?? null; },
     setSettings(s) {
       settings = parseBgmSettings(JSON.stringify(s));
+      normalize();
       sync();
     },
     get settings() { return settings; },
+    get playlist() { return playlist; },
+    get currentTrack() { return entry(settings.track); },
+    playTrack(id) {
+      if (!entry(id)) return;
+      const again = id === settings.track && voices.every((v) => v.track !== id || v.target === 0);
+      change({ track: id }, again || id !== settings.track);
+    },
+    next() {
+      const id = nextAfter(settings.track);
+      if (id === settings.track) return; // 돌아갈 다른 곡이 없다
+      change({ track: id }, true);
+    },
+    toggleExcluded(id) {
+      if (!entry(id)) return;
+      const excluded = settings.excluded.includes(id) ? settings.excluded.filter((x) => x !== id) : [...settings.excluded, id];
+      const was = settings.track;
+      settings = { ...settings, excluded };
+      if (id === was && excluded.includes(id)) {
+        change({ excluded, track: nextAfter(was) === was ? null : nextAfter(was) }, true); // 듣던 곡을 제외하면 다음 곡으로 (전부 제외면 무음)
+      } else {
+        // 전부 제외였다가 풀면 그 곡을 재생
+        change({ excluded, track: settings.track ?? (excluded.includes(id) ? null : id) }, settings.track === null);
+      }
+    },
+    toggleRepeat() {
+      change({ repeat: !settings.repeat });
+    },
     unlock() {
       if (unlocked) return;
       unlocked = true;
@@ -209,7 +321,13 @@ function storageOrNull(): SettingsStorage | null {
 /** 앱 재생기 (처음 부를 때 만들고 첫 터치 훅을 건다) */
 export function bgm(): BgmPlayer {
   if (shared) return shared;
-  const p = createBgmPlayer({ settings: loadBgmSettings(storageOrNull()) });
+  const store = storageOrNull();
+  const p = createBgmPlayer({
+    settings: loadBgmSettings(store),
+    playlist: PLAYLIST,
+    persist: (s) => { saveBgmSettings(store, s); },
+    onTrack: (t) => { try { showToast({ eyebrow: '브금', title: t.name }); } catch { /* 알림은 부가 */ } },
+  });
   shared = p;
   if (typeof window !== 'undefined') {
     const open = () => {
