@@ -203,7 +203,7 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   return save;
 }
 
-/** 기본 특성 (GDD 42장 2번): 장착 특성 칸이 모두 비어 있으면 그 몸 속성(없으면 노멀)의 공격·막기·회복을 채운다. 남는 칸은 같은 속성 공격 → 노멀 공격.
+/** 기본 특성 (GDD 42장 2번): 장착 특성 칸이 모두 비어 있으면 그 몸 속성(없으면 노멀)의 공격 특성을 채운다(C.136: 막기·회복 속성 특성 삭제). 남는 칸은 같은 속성 공격 → 노멀 공격.
  *  이미 하나라도 장착했으면 그대로 둔다. 채운 칸 수를 돌려준다 */
 export function fillDefaultTraits(save: SaveData): number {
   const b = save.build;

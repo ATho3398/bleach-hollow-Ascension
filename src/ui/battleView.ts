@@ -266,6 +266,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const stanceGauge = headGaugeEl('stance', 'i-guard');
   const sealGauge = headGaugeEl('seal', 'i-seal');
   const guardGauge = headGaugeEl('guard', 'i-guard');
+  const weakenGauge = headGaugeEl('weaken', 'i-heal');
   let blockedUntil = 0;
   let blockedDamage = 0;
   const heads = (...gauges: HeadGauge[]): HTMLElement => {
@@ -275,8 +276,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   const foeHeads = heads(castGauge, stanceGauge);
   foeHeads.dataset.help = 'battle.cast';
-  const meHeads = heads(sealGauge, guardGauge);
-  const totals = { seal: 0, guard: 0, stance: 0 };
+  const meHeads = heads(sealGauge, guardGauge, weakenGauge);
+  const totals = { seal: 0, guard: 0, stance: 0, weaken: 0 };
 
   const foe = foeEl(enemy.class === 'elite' ? 'foe-b' : 'foe-a', elementColor(enemy.element), foeArtOf(enemy.id));
   // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
@@ -897,8 +898,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     totals.stance = trackTotal(totals.stance, stanceSec);
     totals.seal = trackTotal(totals.seal, sealSec);
     totals.guard = trackTotal(totals.guard, guardSec);
+    const weakenSec = (s.healWeakTicks ?? 0) * p.tickSeconds;
+    totals.weaken = trackTotal(totals.weaken, weakenSec);
     const foeSlots = gaugeSlots([true, stanceSec > 0]);
-    const meSlots = gaugeSlots([sealSec > 0, guardSec > 0]);
+    const meSlots = gaugeSlots([sealSec > 0, guardSec > 0, weakenSec > 0]);
     castGauge.set(
       cast
         ? { on: true, fill: (cast.total - cast.ticks) / cast.total, label: `강공격 예고! ${secondsText(cast.ticks * p.tickSeconds)}`, slot: foeSlots[0]! }
@@ -908,7 +911,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     );
     stanceGauge.set({ on: stanceSec > 0, fill: gaugeFill(stanceSec, totals.stance), label: `방어 자세 ${secondsText(stanceSec)}`, slot: foeSlots[1]! });
     sealGauge.set({ on: sealSec > 0, fill: gaugeFill(sealSec, totals.seal), label: `봉인 ${secondsText(sealSec)}`, slot: meSlots[0]! });
-    guardGauge.set({ on: guardSec > 0, fill: gaugeFill(guardSec, totals.guard), label: `${labels.role.guard} ${secondsText(guardSec)}`, slot: meSlots[1]! });
+    // 막기 대가 (GDD 84장 2번): 막기 동안 내 자동 공격·블록 생성이 멈춘다 / 회복 대가: 공격력 감소
+    guardGauge.set({ on: guardSec > 0, fill: gaugeFill(guardSec, totals.guard), label: `${labels.role.guard} ${secondsText(guardSec)} · 공격·생성 멈춤`, slot: meSlots[1]! });
+    weakenGauge.set({ on: weakenSec > 0, fill: gaugeFill(weakenSec, totals.weaken), label: `공격력 −${Math.round((1 - p.healWeakenMultiplier) * 100)}% ${secondsText(weakenSec)}`, slot: meSlots[2]! });
     foe.classList.toggle('is-casting', cast !== null);
     foe.classList.toggle('is-guard', s.enemy.stance !== null);
 

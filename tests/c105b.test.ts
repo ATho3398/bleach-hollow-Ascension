@@ -10,7 +10,7 @@ import { applyEvolutionToParams, newEvolution, physSpawnSecondsFor } from '../sr
 const PB = BALANCE.provisional.physBlocks;
 const build6 = (): Partial<CombatParams> => {
   const b = newBuild();
-  for (const id of ['t-normal-a', 't-water-a', 't-earth-a', 't-normal-guard', 't-water-guard', 't-normal-heal']) gainTrait(b, id);
+  for (const id of ['t-normal-a', 't-water-a', 't-earth-a', 't-normal-b', 't-water-b', 't-normal-c']) gainTrait(b, id);
   return buildCombatParams(b, 'hollow');
 };
 const bodyOf = (formId: string): CombatParams => {
@@ -37,25 +37,17 @@ describe('C.105b 속성별 물공 생성원 간격', () => {
     expect(physSpawnSecondsOf(special)).toBeNull();
   });
 
-  it('첫 물공 블록도 그 간격을 따른다: 혈의 첫 블록이 흙보다 빨리 나오고, 60초 개수는 60 ÷ 3 ± 1', () => {
-    const firstAt = (formId: string): number => {
+  it('혈 물공 블록이 흙보다 자주 나온다 (C.136: 출현표 몫 = 1 ÷ 간격), 600초 개수 ≈ 600 ÷ 1.8 (±12%)', () => {
+    const countIn = (formId: string, sec: number): number => {
       const s = createCombat(5, { enemy: getEnemy('test-a'), params: { ...bodyOf(formId), timeLimitSeconds: 1e9 } });
-      s.player.hp = s.player.maxHp = 1e12; s.enemy.hp = s.enemy.maxHp = 1e12; s.voidTimer = 1e9;
-      for (let i = 1; i <= ticksOf(s.params, 60); i++) {
-        step(s);
-        if (s.tray.some((b) => b.traitId === BASIC_SKILL_ID)) return i * s.params.tickSeconds;
-        s.tray = [];
-      }
-      return Infinity;
+      s.player.hp = s.player.maxHp = 1e12; s.enemy.hp = s.enemy.maxHp = 1e12; s.params.voidChance = s.params.voidChanceBonus = 0;
+      for (let i = 0; i < ticksOf(s.params, sec); i++) { step(s); s.tray = []; }
+      return s.physSpawned ?? 0;
     };
-    const blood = firstAt('t5:blood:physical');
-    const earth = firstAt('t5:earth:physical');
-    expect(blood).toBeLessThanOrEqual(1.8);
-    expect(blood).toBeLessThan(earth);
-    expect(earth).toBeLessThanOrEqual(PB.spawnSeconds);
-    const s = createCombat(6, { enemy: getEnemy('test-a'), params: { ...bodyOf('t5:blood:physical'), timeLimitSeconds: 1e9 } });
-    s.player.hp = s.player.maxHp = 1e12; s.enemy.hp = s.enemy.maxHp = 1e12; s.voidTimer = 1e9;
-    for (let i = 0; i < ticksOf(s.params, 60); i++) { step(s); s.tray = []; }
-    expect(Math.abs((s.physSpawned ?? 0) - 60 / 1.8)).toBeLessThanOrEqual(1);
+    const blood = countIn('t5:blood:physical', 600);
+    const earth = countIn('t5:earth:physical', 600);
+    expect(blood).toBeGreaterThan(earth);
+    expect(Math.abs(blood - 600 / 1.8)).toBeLessThanOrEqual((600 / 1.8) * 0.12);
+    expect(Math.abs(earth - 600 / PB.spawnSeconds)).toBeLessThanOrEqual((600 / PB.spawnSeconds) * 0.12);
   });
 });

@@ -175,7 +175,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "normal",
     "category": "physical",
     "statBias": {
@@ -208,7 +208,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "normal",
     "category": "special",
     "statBias": {
@@ -238,7 +238,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "normal",
     "category": "mixed",
     "statBias": {
@@ -338,7 +338,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "water",
     "category": "special",
     "statBias": {
@@ -371,7 +371,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "water",
     "category": "mixed",
     "statBias": {
@@ -402,7 +402,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "water",
     "category": "physical",
     "statBias": {
@@ -503,7 +503,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "fire",
     "category": "mixed",
     "statBias": {
@@ -536,7 +536,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "fire",
     "category": "physical",
     "statBias": {
@@ -566,7 +566,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "fire",
     "category": "special",
     "statBias": {
@@ -666,7 +666,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "earth",
     "category": "physical",
     "statBias": {
@@ -699,7 +699,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "earth",
     "category": "special",
     "statBias": {
@@ -729,7 +729,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "earth",
     "category": "mixed",
     "statBias": {
@@ -829,7 +829,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "thunder",
     "category": "special",
     "statBias": {
@@ -862,7 +862,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "thunder",
     "category": "mixed",
     "statBias": {
@@ -893,7 +893,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "thunder",
     "category": "physical",
     "statBias": {
@@ -994,7 +994,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "blood",
     "category": "mixed",
     "statBias": {
@@ -1027,7 +1027,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "blood",
     "category": "physical",
     "statBias": {
@@ -1057,7 +1057,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "blood",
     "category": "special",
     "statBias": {
@@ -1157,7 +1157,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "poison",
     "category": "physical",
     "statBias": {
@@ -1190,7 +1190,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "poison",
     "category": "special",
     "statBias": {
@@ -1220,7 +1220,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "poison",
     "category": "mixed",
     "statBias": {
@@ -1320,7 +1320,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "kyo",
     "category": "special",
     "statBias": {
@@ -1353,7 +1353,7 @@
     },
     "class": "elite",
     "hpInAttacks": 80,
-    "attackInAttacks": 0.16,
+    "attackInAttacks": 0.227,
     "element": "kyo",
     "category": "mixed",
     "statBias": {
@@ -1384,7 +1384,7 @@
     },
     "class": "elite",
     "hpInAttacks": 70,
-    "attackInAttacks": 0.29,
+    "attackInAttacks": 0.412,
     "element": "kyo",
     "category": "physical",
     "statBias": {

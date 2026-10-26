@@ -24,10 +24,11 @@ const withFormat = (f: number): SaveData => {
 };
 
 describe('C.117 옛 형식 세이브는 열지 않는다 (GDD 61장)', () => {
-  it('C.120 부터 문턱 = 현재 형식(39) — 현재 형식만 열리고 38 이하는 이전 버전', () => {
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(39); // C.117 은 1, C.120(형식 37)·C.133(38)·C.134(39)에 같이 올렸다 (GDD 61장)
+  it('C.120 부터 문턱 = 현재 형식(40) — 현재 형식만 열리고 39 이하는 이전 버전', () => {
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(40); // C.117 은 1, C.120(형식 37)·C.133(38)·C.134(39)·C.136(40)에 같이 올렸다 (GDD 61장)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
     expect(saveFormatStatus(SAVE_FORMAT_VERSION)).toBe('ok');
+    expect(saveFormatStatus(39)).toBe('old');
     expect(saveFormatStatus(38)).toBe('old');
     expect(saveFormatStatus(37)).toBe('old');
     expect(saveFormatStatus(36)).toBe('old');

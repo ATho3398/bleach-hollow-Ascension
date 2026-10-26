@@ -26,6 +26,8 @@ export interface AbsorbRecord {
   hiddenTrait?: boolean;
   /** C.108 (GDD 52, 세이브 형식 34): 흡수 갈래 trait(속성만)·stat(스탯만). 둘 다(both)·옛 기록은 적지 않는다(absorbModeOf 가 both 로 읽음). 놓아줌(absorbed false)은 없음 */
   mode?: 'both' | 'trait' | 'stat';
+  /** C.136 (GDD 84장 8번, 세이브 형식 40): 이 흡수로 오른 뒤의 그 속성 강화 횟수(상한 100 을 넘어도 센다). 스탯만·놓아줌·옛 기록은 없음 */
+  enhance?: number;
 }
 
 /** 흡수 기록의 갈래 (GDD 52): 흡수했으면 mode(없으면 both), 놓아줬으면 null */

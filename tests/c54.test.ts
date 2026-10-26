@@ -35,8 +35,8 @@ const normal = getEnemy('test-a');
 const mk = (params: Partial<CombatParams> = {}, seed = 1) => createCombat(seed, { enemy: normal, params: { liberationEnabled: true, ...params } });
 /** 블록 생성·공허·양쪽 공격이 끼어들지 않게 멈춘 상태 */
 const quiet = (s: CombatState) => {
-  s.spawnTimers = s.spawnTimers.map(() => 1e9);
-  s.voidTimer = 1e9;
+  s.spawnTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   s.enemy.attackTimer = 1e9;
   s.player.attackTimer = 1e9;
   s.enemy.actionTimer = 1e9;

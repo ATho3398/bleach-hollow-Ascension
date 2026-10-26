@@ -44,7 +44,7 @@ describe('78장 시작 외형 = 그림만, 능력치 편향 없음', () => {
 
 // C.133 (GDD 80장 v5.166 수정): 0.75^칸(75·56·42%)은 옛 몫보다 올라 "줄여"와 반대 → 옛 몫 60·45·35% × 0.75^칸 = 45·25·15%
 describe('80장 기본 블록 몫 — 옛 몫 × 0.75^칸 (v5.166)', () => {
-  const IDS = ['t-poison-c', 't-earth-guard', 't-thunder-heal'];
+  const IDS = ['t-poison-c', 't-earth-a', 't-thunder-b']; // C.136: 막기·회복 속성 특성 삭제
   const paramsOf = (n: number): CombatParams => {
     const b = newBuild();
     for (const id of IDS.slice(0, n)) gainTrait(b, id);

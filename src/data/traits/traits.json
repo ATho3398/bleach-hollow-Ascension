@@ -63,54 +63,6 @@
     "provisional": true
   },
   {
-    "id": "t-normal-guard",
-    "element": "normal",
-    "kind": "skill",
-    "name": {
-      "hollow": "노멀 가면",
-      "shinigami": "노멀 결계"
-    },
-    "abbr": {
-      "hollow": "노멀 가면",
-      "shinigami": "노멀 결계"
-    },
-    "description": {
-      "hollow": "[임시] 노멀 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 노멀 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-normal-heal",
-    "element": "normal",
-    "kind": "skill",
-    "name": {
-      "hollow": "노멀 재생",
-      "shinigami": "노멀 회도"
-    },
-    "abbr": {
-      "hollow": "노멀 재생",
-      "shinigami": "노멀 회도"
-    },
-    "description": {
-      "hollow": "[임시] 노멀 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 노멀 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
-    "provisional": true
-  },
-  {
     "id": "t-normal-passive",
     "element": "normal",
     "kind": "passive",
@@ -233,54 +185,6 @@
     "role": "attack",
     "powerInAttacks": 4.2,
     "family": "family-b",
-    "provisional": true
-  },
-  {
-    "id": "t-water-guard",
-    "element": "water",
-    "kind": "skill",
-    "name": {
-      "hollow": "물 가면",
-      "shinigami": "물 결계"
-    },
-    "abbr": {
-      "hollow": "물 가면",
-      "shinigami": "물 결계"
-    },
-    "description": {
-      "hollow": "[임시] 물 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 물 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-water-heal",
-    "element": "water",
-    "kind": "skill",
-    "name": {
-      "hollow": "물 재생",
-      "shinigami": "물 회도"
-    },
-    "abbr": {
-      "hollow": "물 재생",
-      "shinigami": "물 회도"
-    },
-    "description": {
-      "hollow": "[임시] 물 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 물 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
     "provisional": true
   },
   {
@@ -409,54 +313,6 @@
     "provisional": true
   },
   {
-    "id": "t-fire-guard",
-    "element": "fire",
-    "kind": "skill",
-    "name": {
-      "hollow": "불 가면",
-      "shinigami": "불 결계"
-    },
-    "abbr": {
-      "hollow": "불 가면",
-      "shinigami": "불 결계"
-    },
-    "description": {
-      "hollow": "[임시] 불 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 불 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-fire-heal",
-    "element": "fire",
-    "kind": "skill",
-    "name": {
-      "hollow": "불 재생",
-      "shinigami": "불 회도"
-    },
-    "abbr": {
-      "hollow": "불 재생",
-      "shinigami": "불 회도"
-    },
-    "description": {
-      "hollow": "[임시] 불 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 불 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
-    "provisional": true
-  },
-  {
     "id": "t-fire-passive",
     "element": "fire",
     "kind": "passive",
@@ -582,54 +438,6 @@
     "provisional": true
   },
   {
-    "id": "t-earth-guard",
-    "element": "earth",
-    "kind": "skill",
-    "name": {
-      "hollow": "흙 가면",
-      "shinigami": "흙 결계"
-    },
-    "abbr": {
-      "hollow": "흙 가면",
-      "shinigami": "흙 결계"
-    },
-    "description": {
-      "hollow": "[임시] 흙 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 흙 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-earth-heal",
-    "element": "earth",
-    "kind": "skill",
-    "name": {
-      "hollow": "흙 재생",
-      "shinigami": "흙 회도"
-    },
-    "abbr": {
-      "hollow": "흙 재생",
-      "shinigami": "흙 회도"
-    },
-    "description": {
-      "hollow": "[임시] 흙 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 흙 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
-    "provisional": true
-  },
-  {
     "id": "t-earth-passive",
     "element": "earth",
     "kind": "passive",
@@ -752,54 +560,6 @@
     "role": "attack",
     "powerInAttacks": 4.2,
     "family": "family-b",
-    "provisional": true
-  },
-  {
-    "id": "t-thunder-guard",
-    "element": "thunder",
-    "kind": "skill",
-    "name": {
-      "hollow": "뇌 가면",
-      "shinigami": "뇌 결계"
-    },
-    "abbr": {
-      "hollow": "뇌 가면",
-      "shinigami": "뇌 결계"
-    },
-    "description": {
-      "hollow": "[임시] 뇌 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 뇌 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-thunder-heal",
-    "element": "thunder",
-    "kind": "skill",
-    "name": {
-      "hollow": "뇌 재생",
-      "shinigami": "뇌 회도"
-    },
-    "abbr": {
-      "hollow": "뇌 재생",
-      "shinigami": "뇌 회도"
-    },
-    "description": {
-      "hollow": "[임시] 뇌 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 뇌 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
     "provisional": true
   },
   {
@@ -929,54 +689,6 @@
     "provisional": true
   },
   {
-    "id": "t-blood-guard",
-    "element": "blood",
-    "kind": "skill",
-    "name": {
-      "hollow": "혈 가면",
-      "shinigami": "혈 결계"
-    },
-    "abbr": {
-      "hollow": "혈 가면",
-      "shinigami": "혈 결계"
-    },
-    "description": {
-      "hollow": "[임시] 혈 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 혈 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-blood-heal",
-    "element": "blood",
-    "kind": "skill",
-    "name": {
-      "hollow": "혈 재생",
-      "shinigami": "혈 회도"
-    },
-    "abbr": {
-      "hollow": "혈 재생",
-      "shinigami": "혈 회도"
-    },
-    "description": {
-      "hollow": "[임시] 혈 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 혈 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
-    "provisional": true
-  },
-  {
     "id": "t-blood-passive",
     "element": "blood",
     "kind": "passive",
@@ -1102,54 +814,6 @@
     "provisional": true
   },
   {
-    "id": "t-poison-guard",
-    "element": "poison",
-    "kind": "skill",
-    "name": {
-      "hollow": "독 가면",
-      "shinigami": "독 결계"
-    },
-    "abbr": {
-      "hollow": "독 가면",
-      "shinigami": "독 결계"
-    },
-    "description": {
-      "hollow": "[임시] 독 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 독 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-poison-heal",
-    "element": "poison",
-    "kind": "skill",
-    "name": {
-      "hollow": "독 재생",
-      "shinigami": "독 회도"
-    },
-    "abbr": {
-      "hollow": "독 재생",
-      "shinigami": "독 회도"
-    },
-    "description": {
-      "hollow": "[임시] 독 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 독 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
-    "provisional": true
-  },
-  {
     "id": "t-poison-passive",
     "element": "poison",
     "kind": "passive",
@@ -1272,54 +936,6 @@
     "role": "attack",
     "powerInAttacks": 4.2,
     "family": "family-b",
-    "provisional": true
-  },
-  {
-    "id": "t-kyo-guard",
-    "element": "kyo",
-    "kind": "skill",
-    "name": {
-      "hollow": "허 가면",
-      "shinigami": "허 결계"
-    },
-    "abbr": {
-      "hollow": "허 가면",
-      "shinigami": "허 결계"
-    },
-    "description": {
-      "hollow": "[임시] 허 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다.",
-      "shinigami": "[임시] 허 속성 막기 블록. 쓰면 잠시 받는 피해가 줄고 강공격을 막는다. 체인3 이면 막은 피해를 돌려준다."
-    },
-    "role": "guard",
-    "powerInAttacks": 1.5,
-    "chainBonus": {
-      "kind": "reflect",
-      "value": 1
-    },
-    "provisional": true
-  },
-  {
-    "id": "t-kyo-heal",
-    "element": "kyo",
-    "kind": "skill",
-    "name": {
-      "hollow": "허 재생",
-      "shinigami": "허 회도"
-    },
-    "abbr": {
-      "hollow": "허 재생",
-      "shinigami": "허 회도"
-    },
-    "description": {
-      "hollow": "[임시] 허 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다.",
-      "shinigami": "[임시] 허 속성 회복 블록. 체력을 조금 회복한다. 체인3 이면 봉인을 풀고 해방 게이지를 채운다."
-    },
-    "role": "heal",
-    "powerInAttacks": 1,
-    "chainBonus": {
-      "kind": "cleanse",
-      "value": 40
-    },
     "provisional": true
   },
   {

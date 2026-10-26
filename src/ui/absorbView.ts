@@ -5,7 +5,7 @@ import { findEnemyDef } from '../data/bosses';
 import { elementName, statName, weaknessesOf } from '../data/elements';
 import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbModeRule, absorbRisk, completedElements, elementCounts, isFull, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
+import { absorbModeRule, absorbRisk, completedElements, elementCounts, enhanceLevel, isFull, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
 import { absorbEvOf, chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
@@ -167,6 +167,19 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return b;
   };
 
+  /** 속성 강화 줄: 지금 단계/상한 → 흡수(특성·속성 갈래)하면 +1. 상한 뒤에는 횟수만 */
+  function enhanceRow(): HTMLElement {
+    const elId = offer!.element;
+    const count = exp.build.enhance?.[elId] ?? 0;
+    const max = AX.enhance.max;
+    const lv = enhanceLevel(exp.build, elId);
+    const pct = (n: number) => (AX.enhance.attackPerLevel * n * 100).toFixed(1).replace(/\.0$/, '');
+    const text = lv >= max
+      ? `${elementName(elId, faction.id)} ${max}/${max} 최대 · 공격 블록 +${pct(max)}% · 흡수 ${count}회 → ${count + 1}회`
+      : `${elementName(elId, faction.id)} ${lv}/${max} → ${lv + 1}/${max} · 공격 블록 +${pct(lv)}% → +${pct(lv + 1)}%`;
+    return el('span', '', text);
+  }
+
   function chooseStep(): StepParts {
     const riskOf = (m: AbsorbMode) => absorbRisk(offer!.strength, m);
     const breaks = (m: AbsorbMode) => exp.risk + riskOf(m) >= RX.limit;
@@ -192,6 +205,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         info([
           { label: '상대', value: val(foeName, offer!.elite ? '강적' : '일반') },
           { label: '속성', value: lin },
+          // 속성 강화 (GDD 84장 8번): 이미 가진 계열이어도 그 속성 적을 흡수하면 +1, 효과는 100 까지 (뒤에도 횟수는 센다)
+          { label: '속성 강화', mod: 'stack', value: enhanceRow() },
           // 흡수 갈래 4줄 (GDD 52): 셋은 허기 리셋·타일 +1 공통, 리스크·노력치·특성이 다르다
           { label: MODE_LABELS.both.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(risk)}`, false), evTextOf('both') ? ` · 노력치 ${evTextOf('both')}` : ' · 노력치 없음') },
           { label: MODE_LABELS.trait.label, mod: 'stack', value: withNum(`특성·속성 O · ${faction.riskGaugeName} `, risky(`+${Math.round(riskOf('trait'))}`, false), ' · 노력치 없음') },

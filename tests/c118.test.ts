@@ -24,8 +24,8 @@ const build = (...ids: string[]) => {
   return buildCombatParams(b, 'hollow');
 };
 const quiet = (s: CombatState) => {
-  s.spawnTimers = s.spawnTimers.map(() => 1e9);
-  s.voidTimer = 1e9;
+  s.spawnTimer = 1e9;
+  s.params.voidChance = s.params.voidChanceBonus = 0;
   s.enemy.attackTimer = 1e9;
   s.player.attackTimer = 1e9;
   return s;
@@ -63,7 +63,7 @@ describe('62장 ② 전투 시간 절반 — hpScale', () => {
     expect(CX.tickSeconds).toBe(0.1);
     // 블록 타이머는 ÷1.7 (6.5 → 3.8 · 3.2 → 1.9 · 물공 6 → 3.5 · 혈 3 → 1.8): 체력만 반으로 줄이면 블록·체인이 적어 강적 승률이 무너져서
     expect(CX.blockSpawnSeconds).toBe(4.6); // C.132: 3.8 → 5.4 → C.133: 4.0 (GDD 80장 v5.166 기본 몫 45·25·15% 와 함께 칸별 블록 총량 맞춤) → C.134: 4.6 (GDD 83장 해방)
-    expect(BP.basicSpawnSeconds).toBe(2.7); // C.133: 1.9 → 2.1 (1칸 몸보다 빈 몸이 블록을 더 많이 내지 않게, GDD 80장 v5.166) → C.134: 2.7 (흡수 타이머 4.7 에 맞춤)
+    expect(BP.basicSpawnSeconds).toBe(3.24); // C.136: 3.24 (막기·회복 고정 몫이 따로 붙어 빈 몸 총량 유지, GDD 84장 7번). C.133: 1.9 → 2.1 (1칸 몸보다 빈 몸이 블록을 더 많이 내지 않게, GDD 80장 v5.166) → C.134: 2.7 (흡수 타이머 4.7 에 맞춤)
     expect(BALANCE.provisional.physBlocks.spawnSeconds).toBe(3.5);
     expect(BALANCE.provisional.physBlocks.spawnSecondsByElement.blood).toBe(1.8);
   });
@@ -125,10 +125,10 @@ describe('66장 1번 SP 필살 블록 삭제 — 필살기는 저장형만', () 
   });
 
   it('정화(cleanse) 체인 효과는 SP 대신 해방 게이지 +value (C.118 저장 게이지 → C.134 해방 게이지)', () => {
-    const s = quiet(createCombat(1, { enemy: normal, params: build('t-thunder-heal') }));
+    const s = quiet(createCombat(1, { enemy: normal, params: build() })); // C.136: 회복 속성 특성 삭제 — 기본 회복 블록
     s.sealTicks = 30;
     s.liberation.gauge = 0;
-    s.tray = [blk('t-thunder-heal'), blk('t-thunder-heal'), blk('t-thunder-heal')];
+    s.tray = [blk('basic-heal'), blk('basic-heal'), blk('basic-heal')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.sealTicks).toBe(0);
     expect(s.liberation.gauge).toBe(3 * LIB.gaugePerBlock + LIB.chainBonus[2]! + BP.basicRoleBlocks.heal.chainBonus.value);
@@ -145,7 +145,7 @@ describe('66장 2번 완전히 같은 블록끼리만 체인 (보상 수치는 �
     expect(sameChainKind(blk(BASIC_SKILL_ID, 'family-a', null), blk(BASIC_SKILL_ID, 'family-a', null))).toBe(true);
     expect(sameChainKind(blk(BASIC_SKILL_ID, 'family-a'), blk(BASIC_SKILL_ID, 'family-b'))).toBe(false);
     expect(sameChainKind(blk(BASIC_GUARD_ID), blk(BASIC_GUARD_ID))).toBe(true);
-    expect(sameChainKind(blk(BASIC_GUARD_ID), blk('t-fire-guard'))).toBe(false);
+    expect(sameChainKind(blk(BASIC_GUARD_ID), blk(BASIC_HEAL_ID))).toBe(false); // C.136: 막기·회복 속성 특성 삭제 — 막기 ≠ 회복
     // 사슬 표시(runAt)도 같은 판정
     const t = [blk('t-thunder-c', 'family-c', 'thunder'), blk('t-blood-rare', 'family-c', 'blood'), blk('t-thunder-c', 'family-c', 'thunder'), blk('t-thunder-c', 'family-c', 'thunder')];
     expect(runAt(t, 0)).toEqual([0, 0]);

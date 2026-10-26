@@ -12,7 +12,7 @@ import { buildBattleRecord, createCombat, liberationStartGaugeOf, type CombatPar
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
-  absorbModeRule, absorbRisk, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, lateLapRisk,
+  absorbModeRule, absorbRisk, addEnhance, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, lateLapRisk,
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
 } from '../absorb';
 import {
@@ -909,11 +909,11 @@ function markSpecialGates(exp: ExpeditionState, offer: AbsorbOffer, elite: boole
   offer.specialGates = gates;
 }
 
-function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null, mode?: AbsorbMode): void {
+function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, traitId: string | null, mode?: AbsorbMode, enhance?: number): void {
   // 특수 속성 적 (GDD 75장, 9장): 그 적이 나온 까닭(등장 숨김이 풀린 까닭)과, 고른 특성이 특수 속성이었는지
   const hidden = offer.specialGates ? { specialGates: [...offer.specialGates], ...(absorbed && traitId && isSpecialTrait(getTrait(traitId)) ? { hiddenTrait: true } : {}) } : {};
   // 흡수 갈래 (GDD 52, 9장): 흡수했을 때만, 기본 갈래(둘 다)는 적지 않는다(없음 = both, absorbModeOf) — 저장 크기
-  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden, ...(absorbed && mode && mode !== 'both' ? { mode } : {}) });
+  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden, ...(absorbed && mode && mode !== 'both' ? { mode } : {}), ...(enhance !== undefined ? { enhance } : {}) });
 }
 
 /** 다시 뽑기 (GDD 25-9): 흡수 화면에서 특성 후보를 한 번 다시 뽑는다(흡수 1번에 1장 — 이미 다시 뽑았으면 거절). 다시 뽑기권은 부르는 쪽(세이브)이 쓴다.
@@ -967,7 +967,9 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
     if (!r.ok) return r;
     exp.acquiredTraits.push({ traitId, lap: exp.lap });
   }
-  logAbsorb(exp, offer, true, traitId, mode);
+  // 속성 강화 (GDD 84장 8번): 특성·속성 카운트가 있는 갈래면 그 적 속성 강화 +1 — 이미 가진 계열이어도, 100 뒤에도 센다(효과는 100 에서 멈춤)
+  const enhance = mode !== 'stat' ? addEnhance(exp.build, offer.element) : undefined;
+  logAbsorb(exp, offer, true, traitId, mode, enhance);
   recordEvolutionAbsorb(exp.evolution, offer.element, absorbEvOf(offer, mode, exp.difficulty, exp.streak), mode !== 'stat');
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);

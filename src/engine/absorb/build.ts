@@ -20,6 +20,33 @@ export interface BuildState {
   equipOrder?: string[];
   /** 해방 블록 슬롯 (C.134, GDD 83장 3번, 세이브 형식 39): 해방 중에 나올 특성 id 또는 null. 길이 = 최대 칸 수, 쓰는 칸 수는 단계(liberationSlotCount) */
   liberation?: (string | null)[];
+  /** 속성 강화 횟수 (C.136, GDD 84장 8번, 세이브 형식 40): 속성 id → 그 속성 적을 흡수한 횟수(상한 없이 센다). 효과는 enhanceLevel 이 상한(100)에서 자른다 */
+  enhance?: Record<string, number>;
+}
+
+const EH = AX.enhance;
+
+/** 속성 강화 효과 단계: min(흡수 횟수, 상한 100) */
+export function enhanceLevel(b: Pick<BuildState, 'enhance'>, element: string): number {
+  return Math.min(EH.max, Math.max(0, Math.floor(b.enhance?.[element] ?? 0)));
+}
+
+/** 속성 강화 +1 (흡수할 때): 상한 뒤에도 횟수는 센다. 새 횟수를 돌려준다 */
+export function addEnhance(b: BuildState, element: string): number {
+  const m = (b.enhance ??= {});
+  m[element] = (m[element] ?? 0) + 1;
+  return m[element]!;
+}
+
+/** 그 속성 공격 특성 블록 위력 배율: 1 + attackPerLevel × 단계 */
+export function enhanceAttackMultiplier(b: Pick<BuildState, 'enhance'>, element: string): number {
+  return 1 + EH.attackPerLevel * enhanceLevel(b, element);
+}
+
+/** 기본 막기·회복 블록 위력 배율: 1 + min(guardHealMax, guardHealPerLevel × 모든 속성 단계 합) */
+export function enhanceGuardHealMultiplier(b: Pick<BuildState, 'enhance'>): number {
+  const sum = Object.keys(b.enhance ?? {}).reduce((a, el) => a + enhanceLevel(b, el), 0);
+  return 1 + Math.min(EH.guardHealMax, EH.guardHealPerLevel * sum);
 }
 
 /** 해방 블록 슬롯 최대 칸 수 (BALANCE liberation.slotsByTier 의 최댓값) */
@@ -32,11 +59,11 @@ export function liberationSlotCount(tierIndex: number): number {
 }
 
 export function newBuild(): BuildState {
-  return { owned: [], slots: Array.from({ length: BALANCE.absorb.slotCount }, () => null), equipOrder: [], liberation: Array.from({ length: LIBERATION_SLOT_MAX }, () => null) };
+  return { owned: [], slots: Array.from({ length: BALANCE.absorb.slotCount }, () => null), equipOrder: [], liberation: Array.from({ length: LIBERATION_SLOT_MAX }, () => null), enhance: {} };
 }
 
 export function cloneBuild(b: BuildState): BuildState {
-  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])], liberation: [...(b.liberation ?? [])] };
+  return { owned: [...b.owned], slots: [...b.slots], equipOrder: [...(b.equipOrder ?? [])], liberation: [...(b.liberation ?? [])], enhance: { ...(b.enhance ?? {}) } };
 }
 
 /** 해방 블록 슬롯에 끼울 수 있는 특성인가: 가진 특성 중 블록이 되는 것(skill) */
@@ -194,7 +221,8 @@ function skillsOf(b: BuildState, ids: readonly (string | null)[], factionId?: st
       family: t.family ?? null,
       powerInAttacks: t.powerInAttacks,
       chainBonus: { ...chainBonus },
-      powerMultiplier: bonus.has(t.element) ? 1 + AX.elementSkillBonus : 1,
+      // 속성 보너스(3개 완성) × 속성 강화(GDD 84장 8번 — 공격 특성만, 막기·회복 특성은 C.136 에 삭제)
+      powerMultiplier: (bonus.has(t.element) ? 1 + AX.elementSkillBonus : 1) * (t.role === 'attack' ? enhanceAttackMultiplier(b, t.element) : 1),
     });
   }
   return out;
@@ -237,5 +265,6 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
     damageTakenMultiplier: pm.damageTaken,
     blockSpawnMultiplier: pm.blockSpawn,
     critChance: BALANCE.provisional.combat.critChance + critChanceBonus(b),
+    guardHealEnhance: enhanceGuardHealMultiplier(b),
   };
 }
