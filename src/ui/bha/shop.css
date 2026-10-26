@@ -75,3 +75,10 @@
 .bha-itemmodal__qtyrow { display: flex; align-items: center; gap: var(--bha-sp-2); }
 .bha-itemmodal__qty { margin-right: auto; font-size: var(--bha-fs-sm); }
 .bha-itemmodal__acts { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin-top: auto; }
+
+/* C.146 (사용자 "i4"): 보관함 '스킨' 탭 안 꾸밈 종류 칩 */
+.bha-itemchips { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
+.bha-itemchip { display: inline-flex; align-items: center; gap: var(--bha-sp-2); min-height: 30px; padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-pill); background: var(--bha-bg-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
+.bha-itemchip.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 18%, var(--bha-bg-1)); color: var(--bha-text-1); }
+.bha-itemchip.is-zero { opacity: .55; }
+.bha-itemchip__count { font-variant-numeric: tabular-nums; color: var(--bha-text-3); }
