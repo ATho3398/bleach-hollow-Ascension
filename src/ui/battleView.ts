@@ -170,7 +170,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       // 진화체 특성 발동 (C.89, GDD 39장 5번)
       return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
-      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 ${e.source === 'slots' ? '해방 칸 블록' : e.source === 'body' ? '장착 블록' : '기본 블록'}이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
+      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 ${e.source === 'body' ? '장착 블록' : '기본 블록'}이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
     case 'liberation-end':
       return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` };
     case 'end':
@@ -410,6 +410,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
   legendRow.append(libChip, legend, meStatus, libHint);
+  // 해방 설명(C.154·C.167)은 남는 폭만 — 범례·칩은 줄어들지 않게
+  for (const n of [libChip, legend, meStatus]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
   controls.append(legendRow, tray.root, ...(libOn ? [libBtn] : []));

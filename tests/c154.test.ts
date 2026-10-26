@@ -100,30 +100,28 @@ describe('95장 B2 해방 개선', () => {
     expect(s.liberation.uses).toBe(0);
   });
 
-  it('해방 칸이 비면 장착 본체 블록 → 그것도 없으면 기본 블록', () => {
+  it('해방 중 블록 = 장착 본체 블록 → 장착이 없으면 기본 블록 (98장 B: 해방 칸 폐지)', () => {
     const b = newBuild();
     gainTrait(b, 't-thunder-c');
     gainTrait(b, 't-fire-a');
-    const p: CombatParams = { ...defaultCombatParams(), ...buildCombatParams(b, 'hollow'), liberationSkills: [] };
+    const p: CombatParams = { ...defaultCombatParams(), ...buildCombatParams(b, 'hollow') };
     const lib = liberationBlocksOf(p);
     expect(lib.source).toBe('body');
     expect(lib.skills.map((x) => x.id).sort()).toEqual(['t-fire-a', 't-thunder-c']);
     const ids = spawnTableOf(p, true).entries.map((e) => e.source?.id).sort();
     expect(ids).toEqual(['t-fire-a', 't-thunder-c']);
-    expect(liberationBlocksOf({ skills: [], liberationSkills: [] }).source).toBe('basic');
-    const slotted = { ...p, liberationSkills: [p.skills[0]!] };
-    expect(liberationBlocksOf(slotted).source).toBe('slots');
+    expect(liberationBlocksOf({ skills: [] }).source).toBe('basic');
   });
 
   it('설명 한 줄: 무엇으로 차는지 + 해방 중 나오는 블록', () => {
     const f = getFaction('hollow');
     const b = newBuild();
     gainTrait(b, 't-thunder-c');
-    const p: CombatParams = { ...defaultCombatParams(), ...buildCombatParams(b, 'hollow'), liberationSkills: [] };
+    const p: CombatParams = { ...defaultCombatParams(), ...buildCombatParams(b, 'hollow') };
     const t = liberationHint(f, p);
     expect(t).toContain('주고받은 피해');
-    expect(t).toContain('해방 중 장착 탄');
-    expect(liberationHint(f, { skills: [], liberationSkills: [] })).toContain('기본 블록');
+    expect(t).toContain('해방 중 장착 블록(탄)이 빠르게');
+    expect(liberationHint(f, { skills: [] })).toContain('기본 블록');
   });
 });
 
@@ -132,7 +130,7 @@ describe('95장 B2 C.166 후속: 해방 순간 블록 2개·빠른 생성', () =
   const mk = () => {
     const b = newBuild();
     gainTrait(b, 't-thunder-c');
-    return createCombat(5, { enemy: elite, params: { ...buildCombatParams(b, 'hollow'), liberationSkills: [] } });
+    return createCombat(5, { enemy: elite, params: buildCombatParams(b, 'hollow') });
   };
   it('빈 바: 누르는 순간 장착 블록 2개가 바로 들어온다', () => {
     const s = mk();

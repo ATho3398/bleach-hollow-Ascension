@@ -51,7 +51,7 @@
         "battle.liberation"
       ],
       "title": "{liberation.baseName}: 게이지를 모아 해방",
-      "body": "블록 바 위의 [{liberation.baseName}] 게이지는 블록을 쓰거나 피해를 주고받을수록 차요.\n가득 차면 눌러 {liberationSeconds}초 동안 해방해요.\n그동안 방에서 끼운 해방 블록(비어 있으면 장착한 블록)이 빠르게 나와요.\n끝나면 {riskGaugeName}이(가) 조금 오르고, 게이지가 다시 차면 또 쓸 수 있어요.\n{tier5}부터는 {liberation.name}(으)로 바뀌어 공격 속도와 체인 속도도 올라가요.\n누르는 법은 블록과 같아요."
+      "body": "블록 바 위의 [{liberation.baseName}] 게이지는 블록을 쓰거나 피해를 주고받을수록 차요.\n가득 차면 눌러 {liberationSeconds}초 동안 해방해요.\n누르는 순간 블록 2개가 바로 들어오고, 그동안 장착한 블록이 빠르게 나와요.\n끝나면 {riskGaugeName}이(가) 조금 오르고, 게이지가 다시 차면 또 쓸 수 있어요.\n{tier5}부터는 {liberation.name}(으)로 바뀌어 공격 속도와 체인 속도도 올라가요.\n누르는 법은 블록과 같아요."
     },
     {
       "id": "try",

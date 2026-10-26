@@ -84,7 +84,6 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   // 해방 (GDD 83장, 옛 저장형 필살기 자리): {liberation.baseName}·{liberation.name} 은 종족 설정에서 그대로, 수치는 BALANCE
   vars.liberationSeconds = String(LIB.seconds);
   vars.liberationRisk = String(LIB.riskOnEnd);
-  vars.liberationSlots = (LIB.slotsByTier as readonly number[]).filter((n, i, a) => i === 0 || n !== a[i - 1]).join('·');
   // 진화 단계 이름 (GDD 20-5 설명용): {tier4} = 바스트로데/평대원, {tier5} = 아란칼/수석 대원
   // 능력치 자세한 설명 (C.137, GDD 85장 9): 이름은 종족 설정 표기, 수치는 BALANCE 에서 읽는다 (숫자 하드코딩 없음)
   for (const id of STAT_IDS) vars[`stat.${id}`] = statName(id, f.id);

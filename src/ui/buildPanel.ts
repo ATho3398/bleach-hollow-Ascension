@@ -1,22 +1,22 @@
-// 흡수 빌드 표시 — 보관함 '슬롯' 화면 (GDD 94장 A, C.149): 왼쪽 = 장착 칸(본체 슬롯 + 해방 블록 칸) 큰 아이콘 바둑판, 오른쪽 = 내가 가진 특성 카드 바둑판.
+// 흡수 빌드 표시 — 보관함 '슬롯' 화면 (GDD 94장 A, C.149): 왼쪽 = 장착 칸(본체 슬롯 — 해방 칸은 C.167 에 폐지, 98장 B) 큰 아이콘 바둑판, 오른쪽 = 내가 가진 특성 카드 바둑판.
 // 배치 = ① 카드·칸을 끌어다 놓기 ② 카드(✓)를 열어 [칸 고르기] → 칸을 눌러(✓) 놓기. 칸·카드를 누르면 상세 창. 문구는 종족 설정(slotName 등)에서 읽는다.
 import { BALANCE } from '../config/balance';
 import { elementName } from '../data/elements';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { emptySlot, enhanceLevel, LIBERATION_SLOT_MAX, liberationEligible, liberationSlotCount, setLiberationSlot, setSlot, type BuildResult, type BuildState } from '../engine/absorb';
+import { emptySlot, enhanceLevel, setSlot, type BuildResult, type BuildState } from '../engine/absorb';
 import type { FactionConfig } from '../engine/faction';
 import { button, h, icon, panel, provisionalTag } from './bha/dom';
 import { enableDrag } from './bha/dragdrop';
 import { elementDot, paintElement } from './bha/element';
 import { iconArt, itemCard, itemDialog } from './bha/itemUi';
-import { battleLabels, liberationLabels, skillBlockLabel } from './labels';
+import { battleLabels, skillBlockLabel } from './labels';
 import { isTestMode } from './testMode';
 
 export const PROVISIONAL_NOTE = '속성·특성 풀과 리스크 수치는 임시 데이터입니다 (기획 11-3, 11-4 미정)';
 
-/** 장착 칸 하나: 본체 슬롯(body) 또는 해방 블록 칸(lib) */
+/** 장착 칸 하나: 본체 슬롯 (해방 블록 칸 'lib' 은 C.167 에 폐지 — GDD 98장 B: 해방 중에는 장착 블록이 나온다) */
 export interface SlotCell {
-  area: 'body' | 'lib';
+  area: 'body';
   index: number;
 }
 
@@ -25,28 +25,25 @@ export interface TraitsTabState {
   held?: { id: string; from: SlotCell | null } | null;
 }
 
-const idAt = (b: BuildState, c: SlotCell): string | null => (c.area === 'body' ? b.slots[c.index] : b.liberation?.[c.index]) ?? null;
+const idAt = (b: BuildState, c: SlotCell): string | null => b.slots[c.index] ?? null;
 
-/** 특성을 칸에 놓는다 (끌어놓기·고르기 공용). from 이 있으면 그 칸에서 옮기는 것: 같은 영역이면 자리를 바꾸고, 본체 ↔ 해방은 복사(두 목록은 따로 고른다, 83장 3번) */
-export function placeTrait(b: BuildState, tierIndex: number, to: SlotCell, id: string, from: SlotCell | null = null): BuildResult {
+/** 특성을 칸에 놓는다 (끌어놓기·고르기 공용). from 이 있으면 그 칸에서 옮기는 것: 자리를 바꾼다 */
+export function placeTrait(b: BuildState, to: SlotCell, id: string, from: SlotCell | null = null): BuildResult {
   const prev = idAt(b, to);
-  const r = to.area === 'body' ? setSlot(b, to.index, id) : setLiberationSlot(b, to.index, id, tierIndex);
+  const r = setSlot(b, to.index, id);
   if (!r.ok) return r;
-  if (from && from.area === to.area && prev && prev !== id) {
-    if (to.area === 'body') setSlot(b, from.index, prev);
-    else setLiberationSlot(b, from.index, prev, tierIndex);
-  }
+  if (from && prev && prev !== id) setSlot(b, from.index, prev);
   return { ok: true };
 }
 
 /** 칸을 비운다 (빼기). 빠진 특성은 보유 목록에 그대로 남는다 */
-export function clearCell(b: BuildState, tierIndex: number, c: SlotCell): BuildResult {
-  return c.area === 'body' ? setSlot(b, c.index, null) : setLiberationSlot(b, c.index, null, tierIndex);
+export function clearCell(b: BuildState, c: SlotCell): BuildResult {
+  return setSlot(b, c.index, null);
 }
 
-/** 이 특성을 이 칸에 놓을 수 있나: 해방 칸은 열린 칸 + 블록 특성만 */
-export function canPlace(b: BuildState, tierIndex: number, to: SlotCell, id: string): boolean {
-  return to.area === 'body' ? to.index < b.slots.length : to.index < liberationSlotCount(tierIndex) && liberationEligible(b, id);
+/** 이 칸에 놓을 수 있나 */
+export function canPlace(b: BuildState, to: SlotCell): boolean {
+  return to.index >= 0 && to.index < b.slots.length;
 }
 
 /** 계열 아이콘 id (84장 5번): 공격 = 계열의 연출 종류, 막기·회복 = 방패·잎, 그 밖의 특성(외형·패시브) = 특성 아이콘 */
@@ -94,7 +91,7 @@ function openTraitDetail(faction: FactionConfig, build: BuildState, state: Trait
   const pick = () => { close(); state.held = { id, from }; onChange(); };
   if (from) {
     actions.push({ key: 'move', label: () => '다른 칸으로', variant: 'primary', onClick: pick });
-    actions.push({ key: 'remove', label: () => '빼기', variant: 'ghost', onClick: () => { close(); clearCell(build, tierIndex, from); onChange(); } });
+    actions.push({ key: 'remove', label: () => '빼기', variant: 'ghost', onClick: () => { close(); clearCell(build, from); onChange(); } });
   } else {
     const free = emptySlot(build);
     actions.push({
@@ -109,7 +106,7 @@ function openTraitDetail(faction: FactionConfig, build: BuildState, state: Trait
     if (free >= 0) actions.push({ key: 'pick', label: () => '칸 고르기', variant: 'ghost', onClick: pick });
   }
   close = itemDialog({
-    heading: from ? `${from.area === 'body' ? faction.slotName : '해방 블록'} ${from.index + 1}번 칸` : '특성',
+    heading: from ? `${faction.slotName} ${from.index + 1}번 칸` : '특성',
     name, desc: `${kind} · ${elementName(t.element, faction.id)} 속성\n${plainDesc(traitDescription(id, faction.id))}`,
     art: traitArt(faction, id), have: `속성 강화 ${lv}/${BALANCE.provisional.absorb.enhance.max}`, actions,
   });
@@ -118,22 +115,15 @@ function openTraitDetail(faction: FactionConfig, build: BuildState, state: Trait
 /** 장착 칸 한 칸 */
 function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabState, tierIndex: number, cell: SlotCell, onChange: () => void): HTMLElement {
   const id = idAt(build, cell);
-  const open = cell.area === 'body' || cell.index < liberationSlotCount(tierIndex);
   const num = h('span', 'bha-sgcell__num', `${cell.index + 1}`);
-  if (!open) {
-    const at = BALANCE.provisional.liberation.slotsByTier.findIndex((n) => n > cell.index);
-    const e = h('div', 'bha-sgcell bha-sgcell--locked');
-    e.append(num, icon('i-lock'), h('span', 'bha-sgcell__name', at >= 0 ? `${faction.tierNames[at] ?? `${at + 1}단계`}에 열림` : '잠김'));
-    return e;
-  }
   const b = h('button', 'bha-sgcell');
   b.type = 'button';
   b.dataset.area = cell.area;
   b.dataset.index = String(cell.index);
-  const areaName = cell.area === 'body' ? faction.slotName : '해방 블록';
+  const areaName = faction.slotName;
   const held = state.held ?? null;
   if (held) {
-    const ok = canPlace(build, tierIndex, cell, held.id);
+    const ok = canPlace(build, cell);
     b.classList.add(ok ? 'is-target' : 'is-blocked');
     b.disabled = !ok;
   }
@@ -150,8 +140,8 @@ function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabS
   }
   b.onclick = () => {
     if (held) {
-      if (!canPlace(build, tierIndex, cell, held.id)) return;
-      placeTrait(build, tierIndex, cell, held.id, held.from);
+      if (!canPlace(build, cell)) return;
+      placeTrait(build, cell, held.id, held.from);
       state.held = null;
       return onChange();
     }
@@ -175,11 +165,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   const body = h('div', 'bha-sgrow');
   body.dataset.area = 'body';
   build.slots.forEach((_, i) => body.append(cellButton(faction, build, state, tierIndex, { area: 'body', index: i }, onChange)));
-  const lib = h('div', 'bha-sgrow');
-  lib.dataset.area = 'lib';
-  for (let i = 0; i < LIBERATION_SLOT_MAX; i++) lib.append(cellButton(faction, build, state, tierIndex, { area: 'lib', index: i }, onChange));
-  const libName = liberationLabels(faction, tierIndex).name;
-  left.append(h('h3', 'bha-sgrow__title', `${faction.slotName}`), body, h('h3', 'bha-sgrow__title', `해방 블록 — ${libName}`), lib);
+  left.append(h('h3', 'bha-sgrow__title', `${faction.slotName}`), body);
   if (!state.held) left.append(h('p', 'bha-faint', '카드를 칸으로 끌어다 놓는다. 칸을 오른쪽 목록으로 끌면 뺀다.'));
 
   const heldId = state.held?.id ?? null;
@@ -193,7 +179,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
     const t = getTrait(id);
     const card = itemCard({
       id, name: traitBlockName(faction, id, tierIndex), detail: traitBrief(faction, id), art: traitArt(faction, id),
-      foot: `강화 ${enhanceLevel(build, t.element)}/${BALANCE.provisional.absorb.enhance.max}`, badge: build.liberation?.includes(id) ? '해방' : undefined, state: heldId === id ? 'worn' : undefined,
+      foot: `강화 ${enhanceLevel(build, t.element)}/${BALANCE.provisional.absorb.enhance.max}`, state: heldId === id ? 'worn' : undefined,
       onClick: () => openTraitDetail(faction, build, state, tierIndex, id, null, onChange),
     });
     paintElement(card, t.element);
@@ -223,8 +209,8 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
       state.held = null;
       if (target?.classList.contains('bha-sgcell')) {
         const to: SlotCell = { area: target.dataset.area as SlotCell['area'], index: Number(target.dataset.index) };
-        if (canPlace(build, tierIndex, to, src.id)) placeTrait(build, tierIndex, to, src.id, src.from);
-      } else if (src.from && target?.classList.contains('bha-sgown')) clearCell(build, tierIndex, src.from);
+        if (canPlace(build, to)) placeTrait(build, to, src.id, src.from);
+      } else if (src.from && target?.classList.contains('bha-sgown')) clearCell(build, src.from);
       onChange();
     },
   });
