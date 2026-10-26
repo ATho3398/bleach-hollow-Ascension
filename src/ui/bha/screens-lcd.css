@@ -145,6 +145,15 @@
 .bha-slider__row { display: grid; grid-template-columns: var(--bha-touch) minmax(0, 1fr) var(--bha-touch); align-items: center; gap: var(--bha-sp-3); }
 .bha-slider__row .bha-btn--icon { padding: 0; }
 .bha-settings-page .bha-slider__scale { display: none; }
+/* 음악 칸 (GDD 97장): 곡 하나 = 한 줄 [이름(말줄임)] [▶] [제외] · 조작 [반복][다음 곡] 한 줄 */
+.bha-bgmlist { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-bgmlist__ctl { display: flex; gap: var(--bha-sp-2); }
+.bha-bgmlist__ctl .bha-btn { flex: 1 1 0; min-width: 0; }
+.bha-bgmlist__row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--bha-sp-2); padding: var(--bha-sp-1) var(--bha-sp-2); border-radius: var(--bha-r-md); }
+.bha-bgmlist__row.is-on { background: var(--bha-accent-soft); }
+.bha-bgmlist__row.is-off .bha-bgmlist__name { opacity: 0.45; }
+.bha-bgmlist__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bha-text-1); font-size: var(--bha-fs-sm); }
+.bha-bgmlist__mark { color: var(--bha-accent-hi); font-size: var(--bha-fs-xs); }
 
 /* ═════ 도움말: 왼쪽 항목 목록 / 오른쪽 설명 ═════ */
 .bha-lcd .bha-layer .bha-app.bha-help-page { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; }

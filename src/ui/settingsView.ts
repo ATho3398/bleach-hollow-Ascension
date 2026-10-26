@@ -69,16 +69,20 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   const nowLine = el('p', 'bha-faint');
   const repeatBtn = button({ label: '' });
   const nextBtn = button({ label: '다음 곡', size: 'small' });
-  const listBox = el('div', 'bha-plan__grounds');
+  const listBox = el('div', 'bha-bgmlist');
   const rows = bgm().playlist.map((t) => {
-    const row = el('div', 'bha-plan__grounds');
-    const playBtn = button({ label: '▶ 재생', size: 'small' });
+    const row = el('div', 'bha-bgmlist__row');
+    const playBtn = button({ label: '▶', size: 'small' });
     const exBtn = button({ label: '', size: 'small' });
+    playBtn.setAttribute('aria-label', `${t.name} 재생`);
     playBtn.onclick = () => { bgm().playTrack(t.id); paintMusic(); };
     exBtn.onclick = () => { bgm().toggleExcluded(t.id); paintMusic(); };
-    row.append(el('span', 'bha-faint', t.name), playBtn, exBtn);
+    const name = el('span', 'bha-bgmlist__name', t.name);
+    const mark = el('span', 'bha-bgmlist__mark');
+    name.append(mark);
+    row.append(name, playBtn, exBtn);
     listBox.append(row);
-    return { t, row, playBtn, exBtn };
+    return { t, row, mark, playBtn, exBtn };
   });
   const paintMusic = () => {
     const p = bgm();
@@ -100,6 +104,8 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
       const ex = m.excluded.includes(r.t.id);
       const now = cur?.id === r.t.id;
       r.row.classList.toggle('is-on', now);
+      r.row.classList.toggle('is-off', ex);
+      r.mark.textContent = now ? ' · 재생 중' : '';
       r.playBtn.classList.toggle('is-on', now);
       r.playBtn.setAttribute('aria-pressed', String(now));
       r.exBtn.textContent = `제외 ${ex ? '켬' : '끔'}`;
@@ -119,7 +125,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   const hasList = rows.length > 0;
   musicPanel.append(musicBtn, volRow);
   if (hasList) {
-    const ctl = el('div', 'bha-plan__grounds');
+    const ctl = el('div', 'bha-bgmlist__ctl');
     ctl.append(repeatBtn, nextBtn);
     musicPanel.append(nowLine, ctl, listBox);
   }

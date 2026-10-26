@@ -493,3 +493,8 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 기기 설정 `bha-bgm-settings` 에 track·repeat·excluded 추가. 곡이 바뀌면 토스트 '브금 <곡 이름>'.
 - 음원은 서비스 워커 precache 에서 제외(`vite.config.ts`), 재생할 곡만 로드.
 - 테스트 `tests/c53.test.ts` 6건 추가·기존 갱신. 캡처 `docs/captures/c155/01-settings-bgm.png`.
+
+### C.158 설정 음악 칸 줄 배치 정리 (STAGE S-23, 코딩112 Sonnet, GDD 97장, v5.205)
+사용 모델: Sonnet 5.5. `PATCH_LABEL` C.158. 기능·세이브·밸런스 변경 없음.
+- 곡 목록 한 곡 = 한 줄 고정(`.bha-bgmlist__row`: 이름 말줄임·▶·제외 토글), 지금 곡 줄 강조+'재생 중', 제외 곡 이름 흐리게. [현재 곡만 반복][다음 곡] 한 줄(`.bha-bgmlist__ctl`). CSS 는 `screens-lcd.css`, 토큰만.
+- 캡처(844×390 LCD) `docs/captures/c158/`.
