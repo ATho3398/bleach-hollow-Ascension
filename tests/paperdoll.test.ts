@@ -24,6 +24,7 @@ describe('종이인형 데이터', () => {
     const sh = lookLayers(HUMANOID, 'shinigami-base');
     const ar = lookLayers(HUMANOID, 'arrancar-base');
     expect(sh.find((l) => l.slot === 'head')!.art).toBe(ar.find((l) => l.slot === 'head')!.art);
+    expect(sh.find((l) => l.slot === 'head')!.at).toEqual(ar.find((l) => l.slot === 'head')!.at);
     expect(sh.some((l) => l.slot === 'mask')).toBe(false);
     expect(ar.some((l) => l.slot === 'mask')).toBe(true);
   });
@@ -34,11 +35,18 @@ describe('자세·행렬', () => {
     const m = boneMatrices(HUMANOID, {});
     for (const b of HUMANOID.bones) expect(apply(m[b.id]!, [5, 7])).toEqual([5, 7]);
   });
+  it('부위 그림 크기(size)가 실제 파일 크기와 같다', async () => {
+    const { imageSize } = await import('./helpers/pngSize');
+    for (const look of Object.keys(HUMANOID.looks)) {
+      for (const l of lookLayers(HUMANOID, look)) expect(imageSize(`public/art/rig/${HUMANOID.id}/${l.art}.png`), l.art).toEqual(l.size);
+    }
+  });
   it('관절점은 자기 회전으로 움직이지 않는다', () => {
+    const pv = HUMANOID.bones.find((b) => b.id === 'arm_L')!.pivot;
     const m = boneMatrices(HUMANOID, { arm_L: { rot: 90, x: 0, y: 0 } });
-    const p = apply(m.arm_L!, [8, 38]);
-    expect(p[0]).toBeCloseTo(8);
-    expect(p[1]).toBeCloseTo(38);
+    const p = apply(m.arm_L!, pv);
+    expect(p[0]).toBeCloseTo(pv[0]);
+    expect(p[1]).toBeCloseTo(pv[1]);
   });
   it('몸통이 움직이면 머리·팔이 따라가고 다리는 안 따라간다', () => {
     const m = boneMatrices(HUMANOID, { torso: { rot: 0, x: 3, y: 1 } });

@@ -1,16 +1,16 @@
 {
   "id": "humanoid",
-  "note": "사람형 종이인형 뼈대 (GDD 96장). 좌표 = 기본형 그림 칸(37×81, 1칸=1도트), 바닥 줄 y=80. 부위 그림은 모두 같은 37×81 캔버스에 원래 자리 그대로 있다",
+  "note": "사람형 종이인형 뼈대 (GDD 96장). 좌표 = 기본형 그림 칸(37×81, 1칸=1도트), 바닥 줄 y=80. 부위 그림은 꼭 맞게 자른 것이고 at = 캔버스에서 그 그림의 왼쪽 위 자리, size = 그림 크기",
   "canvas": [37, 81],
   "ground": 80,
   "bones": [
     { "id": "root", "parent": null, "pivot": [17, 57] },
-    { "id": "torso", "parent": "root", "pivot": [17, 56] },
+    { "id": "torso", "parent": "root", "pivot": [18, 52] },
     { "id": "head", "parent": "torso", "pivot": [17, 29] },
-    { "id": "arm_L", "parent": "torso", "pivot": [8, 38] },
-    { "id": "arm_R", "parent": "torso", "pivot": [28, 39] },
-    { "id": "leg_L", "parent": "root", "pivot": [10, 57] },
-    { "id": "leg_R", "parent": "root", "pivot": [24, 57] }
+    { "id": "arm_L", "parent": "torso", "pivot": [9, 39] },
+    { "id": "arm_R", "parent": "torso", "pivot": [25, 33] },
+    { "id": "leg_L", "parent": "root", "pivot": [12, 53] },
+    { "id": "leg_R", "parent": "root", "pivot": [22, 52] }
   ],
   "slots": [
     { "id": "leg_R", "bone": "leg_R" },
@@ -23,11 +23,32 @@
     { "id": "mask", "bone": "head" }
   ],
   "bodies": {
-    "shinigami": { "torso": "shinigami/torso", "arm_L": "shinigami/arm_L", "arm_R": "shinigami/arm_R", "leg_L": "shinigami/leg_L", "leg_R": "shinigami/leg_R", "head": "head_bald" },
-    "arrancar": { "torso": "arrancar/torso", "arm_L": "arrancar/arm_L", "arm_R": "arrancar/arm_R", "leg_L": "arrancar/leg_L", "leg_R": "arrancar/leg_R", "head": "head_bald" }
+    "shinigami": {
+      "torso": { "art": "shinigami/torso", "at": [0, 26], "size": [35, 36] },
+      "arm_L": { "art": "shinigami/arm_L", "at": [0, 34], "size": [12, 28] },
+      "arm_R": { "art": "shinigami/arm_R", "at": [19, 34], "size": [16, 21] },
+      "leg_L": { "art": "shinigami/leg_L", "at": [3, 52], "size": [15, 29] },
+      "leg_R": { "art": "shinigami/leg_R", "at": [18, 52], "size": [14, 29] },
+      "head": { "art": "head_bald", "at": [8, 11], "size": [16, 19] }
+    },
+    "arrancar": {
+      "torso": { "art": "arrancar/torso", "at": [8, 27], "size": [21, 26] },
+      "arm_L": { "art": "arrancar/arm_L", "at": [0, 36], "size": [13, 24] },
+      "arm_R": { "art": "arrancar/arm_R", "at": [17, 29], "size": [18, 26] },
+      "leg_L": { "art": "arrancar/leg_L", "at": [4, 51], "size": [17, 30] },
+      "leg_R": { "art": "arrancar/leg_R", "at": [13, 49], "size": [19, 32] },
+      "head": { "art": "head_bald", "at": [8, 11], "size": [16, 19] }
+    }
   },
   "looks": {
-    "shinigami-base": { "body": "shinigami", "hair": "shinigami/hair" },
-    "arrancar-base": { "body": "arrancar", "hair": "arrancar/hair", "mask": "arrancar/mask" }
+    "shinigami-base": {
+      "body": "shinigami",
+      "hair": { "art": "shinigami/hair", "at": [0, 1], "size": [33, 30] }
+    },
+    "arrancar-base": {
+      "body": "arrancar",
+      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [34, 31] },
+      "mask": { "art": "arrancar/mask", "at": [18, 4], "size": [14, 27] }
+    }
   }
 }

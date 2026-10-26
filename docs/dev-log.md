@@ -1384,6 +1384,8 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - **엔진** `src/data/art/rig/pose.ts`: 키 사이 부드럽게 잇기, 반복/한 번 동작, 뼈 행렬(부모 따라가기, 관절점 둘레 회전), 외형 → 층 목록, 데이터 점검. **그리기** `src/ui/bha/paperdoll.ts`: `<img>` 겹치기 + `matrix()` transform, rAF 루프, 동작 시계(타격 콜백·끝나면 쉬는 동작으로).
 - **동작** `motions.json`: 대기 1.4초(숨쉬기), 걷기 0.64초(다리 ±20°·팔 반대로·들썩), 공격 0.56초(젖힘 → 휘두름, 타격 0.26초), 맞음 0.32초.
 - **알려진 점**: 부위 그림이 손질 전이라 팔·다리를 크게 돌리면 관절 뒤 임시 칠(흰 덩어리)·틈이 보인다 → 사용자 손질 후 교체.
-- **테스트** `tests/paperdoll.test.ts` 12개.
+- **사용자 자른 부위로 다시(아란칼)**: `arrancar-cut-user.png`(사용자 시트) → `scripts/rig/import_cut.py` 로 부위 6개 꼭 맞게 저장 + 자리 자동(겹친 칸 기준). 데이터를 '꼭 맞게 자른 그림 + at·size' 로 바꿈(`partMatrix`). 공통 머리 = 사용자 대머리(16×19). 사신 몸은 아직 자동 분해 부위(잘라서 at 만 붙임).
+- **관절 편집기**(시험 페이지, `scripts/rig/editor-page.ts`): 부위 고르기, 관절/부위 그림 1도트 이동, 무대 눌러 관절 찍기, 앞뒤 순서, 시험 회전, 동작 재생, 값 복사 → `scripts/rig/apply_editor.py`.
+- **테스트** `tests/paperdoll.test.ts` 13개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 

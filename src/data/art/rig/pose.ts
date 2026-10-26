@@ -23,10 +23,22 @@ export interface Rig {
   ground: number;
   bones: Bone[];
   slots: Slot[];
-  /** 몸 id → 슬롯 id → 그림 키(`public/art/rig/<rig id>/<키>.png`) */
-  bodies: Record<string, Record<string, string>>;
-  /** 외형 id → 몸 + 머리 위에 얹는 층(머리카락·가면 등, 슬롯 id → 그림 키) */
-  looks: Record<string, { body: string } & Record<string, string>>;
+  /** 몸 id → 슬롯 id → 부위 그림 */
+  bodies: Record<string, Record<string, PartArt>>;
+  /** 외형 id → 몸 + 머리 위에 얹는 층(머리카락·가면 등) */
+  looks: Record<string, Look>;
+}
+
+/** 부위 그림 하나: `public/art/rig/<rig id>/<art>.png`(꼭 맞게 자른 그림), at = 캔버스에서 왼쪽 위 자리, size = 그림 크기 */
+export interface PartArt {
+  art: string;
+  at: Vec2;
+  size: Vec2;
+}
+export type Look = { body: string; [slot: string]: PartArt | string };
+export interface Layer extends PartArt {
+  slot: string;
+  bone: string;
 }
 
 /** 키 하나: [시각 ms, 각도(도, +=시계), x(도트), y(도트)] */
@@ -125,18 +137,24 @@ export function boneMatrices(rig: Rig, pose: Pose): Record<string, Mat> {
   return out;
 }
 
-/** 외형 → 슬롯별 그림 키(앞뒤 순서대로). 그림 없는 슬롯은 빠진다 */
-export function lookLayers(rig: Rig, lookId: string): { slot: string; bone: string; art: string }[] {
+/** 외형 → 슬롯별 부위 그림(앞뒤 순서대로). 그림 없는 슬롯은 빠진다 */
+export function lookLayers(rig: Rig, lookId: string): Layer[] {
   const look = rig.looks[lookId];
   if (!look) throw new Error(`외형 없음: ${lookId}`);
   const body = rig.bodies[look.body];
   if (!body) throw new Error(`몸 없음: ${look.body}`);
-  const layers: { slot: string; bone: string; art: string }[] = [];
+  const layers: Layer[] = [];
   for (const s of rig.slots) {
-    const art = body[s.id] ?? look[s.id];
-    if (art) layers.push({ slot: s.id, bone: s.bone, art });
+    const extra = look[s.id];
+    const part = body[s.id] ?? (typeof extra === 'object' ? extra : undefined);
+    if (part) layers.push({ slot: s.id, bone: s.bone, ...part });
   }
   return layers;
+}
+
+/** 부위 그림 행렬 = 뼈 행렬 · (그림을 at 자리로 옮기기). 그림 왼쪽 위(0,0)가 at 에 온다 */
+export function partMatrix(bone: Mat, at: Vec2): Mat {
+  return mul(bone, [1, 0, 0, 1, at[0], at[1]]);
 }
 
 /** 데이터 점검: 부모·슬롯 뼈가 있는지, 동작 키가 시간순이고 길이 안인지. 문제 목록(빈 배열 = 정상) */
