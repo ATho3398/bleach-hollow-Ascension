@@ -479,6 +479,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 2026-10-20: 사신대행증 새 그림(앞 3000×2508·뒤 3000×2508, 앞면 246KB·뒷면 1.2MB WebP q92) — frame-v2 검사 전부 통과(구멍 (531, 624) 1938×1080·버튼 4개·구멍 둘레), 고리 둘레 어두운 원판을 투명으로 뚫음. items.json device-badge 를 v1 → v2(hole [531,624], ring 50.03/5.9)로, c65·c71·c78 테스트를 새 데이터에 맞춤. 캡처 `docs/captures/c84/`.
 - 2026-10-20(2판): 사신대행증 새 그림 2판(앞면 화면 둘레 테두리·위쪽 사다리꼴 투명 구멍) 교체, frame-v2 검사 통과(고리 점은 테두리에 걸어 '투명' 항목만 ✗ — 의도). 사용자 지시로 키링 = 뒷면 기준 사다리꼴 구멍 왼쪽 테두리(앞면 좌표 (1928, 186), ring 64.27/7.42). 이전 판의 고리 원판 구멍 처리는 불필요해 제거. 캡처 `docs/captures/c84/`.
 - 2026-10-22: 앱 아이콘 교체(`public/icons/icon-192·512.png`, 사용자가 준 해골 불꽃 로고를 체크무늬 가짜 투명에서 오려 흰 테두리를 다시 두르고 어두운 바탕(#0b0909) 위 72% 크기로 — 홈 화면 앱·설치 안내창·apple-touch-icon 이 이 파일을 쓴다). 원본·오린 그림 `docs/design/user-art/app-icon/`. PATCH_LABEL 안 올림.
+- 2026-10-26(UI담당자C): 사신·아란칼 기본형 도트(사용자 새 시트, 정리본 37×81) → `public/art/char-shinigami.png`(사신 공통 키 `char.shinigami`)·`public/art/char-hollow-5.png`(호로 5단계 = 아란칼 기본, 속성 외형 스킨이 없을 때). 격자 그대로 ×3 최근접, 256×256 투명·발 y=246(가이드 92%보다 4%p 낮음 — 80도트 ×3 = 240이라 머리가 잘리지 않게). 원본 `docs/design/user-art/base-forms/`, 캡처 `docs/captures/art-base-forms/`. PATCH_LABEL 그대로(그림만).
 
 ### C.93 전체 플레이 QA 2차 · 버그 수정 (STAGE S-23, 코딩72, GDD 41장 1번 → 41-2 v5.87)
 사용 모델: Opus 5.5. `PATCH_LABEL` C.94 그대로(main 값이 더 큼), `STAGE_LABEL` S-23. **`BALANCE_VERSION`·`SAVE_FORMAT_VERSION`(31) 그대로**(수치·세이브 구조 변경 없음).
