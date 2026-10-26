@@ -43,7 +43,7 @@ import { setTitleRequest, signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
-import { allSlotSummaries, collectSlotChunks, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
+import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
 import { forgetConfirmedChunks, isChunkStorageKey } from '../saveCodec';
 import { backupFileName, exportRawSlot, needsMigration, recoverFromBackup } from '../saveBackup';
@@ -360,7 +360,7 @@ export function startApp(host: HTMLElement): void {
     }
   }
 
-  function renderSlotPick(mode: SlotPickMode): void {
+  function renderSlotPick(mode: SlotPickMode, selected?: number | null): void {
     const sums = allSlotSummaries(store);
     slotPickView(root, mode, sums, FACTIONS, (sum) => {
       if (mode === 'load') {
@@ -377,7 +377,19 @@ export function startApp(host: HTMLElement): void {
       } else {
         open('backup-import', () => backupView(root, null, () => {}, { slot: sum.slot, importOnly: true, onApplied: () => enterSlot(sum.slot) }));
       }
-    }, { onImport: () => open('slot-import', () => renderSlotPick('import')) });
+    }, {
+      onImport: () => open('slot-import', () => renderSlotPick('import')),
+      selected,
+      onDelete: (sum) => confirmDialog({
+        title: `슬롯 ${sum.slot}을 지울까요?`,
+        body: `슬롯 ${sum.slot}을 지운다. 되돌릴 수 없다. 지우기 전의 세이브는 슬롯 백업에 한 번 보관된다.`,
+        yes: '지우기', no: '아니오', danger: true,
+        onYes: () => {
+          if (!deleteSlot(store, sum.slot)) showToast({ eyebrow: '슬롯', title: '지우지 못했다', meta: '저장소가 막혀 있다.' }, 0, 4200);
+          renderSlotPick(mode, sum.slot);
+        },
+      }),
+    });
   }
 
   /** 종족 고르기: 새 슬롯에 새 세이브를 만든다. (C.63: 방에서 지금 세이브의 종족을 바로 바꾸던 옛 길은 지웠다 — 다른 종족은 5단계 도달 뒤 트랙 전환으로만, GDD 22-3·28장 7번) */

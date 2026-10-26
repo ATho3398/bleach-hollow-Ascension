@@ -238,6 +238,9 @@ button.bha-slot { cursor: pointer; }
 .bha-slot__main { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); overflow-wrap: anywhere; }
 .bha-slot__sub { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-slotpage .bha-slots { gap: var(--bha-sp-3); }
+.bha-slotpage__sel { display: flex; flex-direction: column; gap: var(--bha-sp-1); margin-top: var(--bha-sp-3); }
+.bha-slotpage__actions { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin-top: var(--bha-sp-3); }
+.bha-slot.is-last { background: var(--bha-bg-3); }
 .bha-lcd .bha-confirm .bha-modal { gap: var(--bha-sp-3); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); width: min(380px, 100%); }
 .bha-lcd .bha-confirm .bha-modal__title { font-size: var(--bha-fs-xl); }
 .bha-lcd .bha-confirm .bha-modal__body { font-size: var(--bha-fs-sm); line-height: 1.4; }

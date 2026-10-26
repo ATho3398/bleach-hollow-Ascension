@@ -126,9 +126,24 @@ export function lastPlayedSlot(summaries: readonly SlotSummary[]): number | null
   return best ? best.slot : null;
 }
 
+/** 슬롯 지우기 (GDD 93장): 지우기 전 내용을 슬롯 백업에 한 번 보관하고(stashSlot) 세이브 키와 마지막 플레이 시각을 지운다. 세이브 구조는 건드리지 않는다. 지웠으면 true, 저장소가 막혔으면 false */
+export function deleteSlot(storage: StorageLike, slot: number): boolean {
+  if (!storage.removeItem) return false;
+  if (!stashSlot(storage, slot, 'delete')) return false;
+  try {
+    storage.removeItem(slotKey(slot));
+    const meta = readMeta(storage);
+    delete meta.played[String(slot)];
+    storage.setItem(SLOTS_META_KEY, JSON.stringify(meta));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** 백업을 남긴 까닭 (GDD 24-5): 되돌리기 화면에 "○○ 직전" 으로 보인다 */
-export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'fusion' | 'revert';
-export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'fusion', 'revert'];
+export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'fusion' | 'revert' | 'delete';
+export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'fusion', 'revert', 'delete'];
 /** 슬롯 백업의 까닭·시각 기록 키 (세이브 밖 — SaveData 구조와 무관) */
 export const slotBackupMetaKey = (slot: number): string => `${slotBackupKey(slot)}.meta`;
 

@@ -171,6 +171,7 @@ export const BACKUP_REASON_TEXT: Record<BackupReason, string> = {
   rebirth: '환생 직전',
   fusion: '합체 직전',
   revert: '되돌리기 직전',
+  delete: '슬롯 지우기 직전',
 };
 
 /** 세이브 원문이 지금 형식보다 옛 형식인가 (마이그레이션 직전 자동 백업 판단, GDD 24-5). 읽을 수 없으면 false */
