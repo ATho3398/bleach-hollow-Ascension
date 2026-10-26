@@ -33,7 +33,7 @@ function merge(s: Saved) {
   // 관절: 저장된 뼈는 저장값, 새로 생긴 뼈(발목·칼 등)는 데이터 기본값
   if (s.bones) for (const b of rig.bones) {
     const v = s.bones.find((x) => x.id === b.id);
-    if (v) { b.pivot = v.pivot; if (v.restRot !== undefined) b.restRot = v.restRot; }
+    if (v) b.pivot = v.pivot; // 쉬는 각도(restRot)는 편집기에서 안 바꾸므로 데이터 값을 쓴다
   }
   // 앞뒤 순서: 저장 순서 + 새 슬롯은 데이터에서의 바로 앞 슬롯 뒤에
   if (s.slots) {

@@ -13,7 +13,7 @@
     { "id": "leg_R", "parent": "root", "pivot": [22, 52] },
     { "id": "foot_L", "parent": "leg_L", "pivot": [10, 75] },
     { "id": "foot_R", "parent": "leg_R", "pivot": [24, 75] },
-    { "id": "weapon", "parent": "arm_L", "pivot": [4, 56], "restRot": 30 }
+    { "id": "weapon", "parent": "arm_L", "pivot": [4, 56], "restRot": 60 }
   ],
   "slots": [
     { "id": "hair_back", "bone": "head" },

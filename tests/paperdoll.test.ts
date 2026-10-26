@@ -90,7 +90,9 @@ describe('자세·행렬', () => {
     expect(p[1]).toBeCloseTo(w.pivot[1]);
     // 앞팔이 돌면 칼도 같이 돈다
     const m2 = boneMatrices(HUMANOID, { arm_L: { rot: 90, x: 0, y: 0 } });
-    expect(apply(m2.weapon!, w.pivot)).toEqual(apply(m2.arm_L!, w.pivot));
+    const [a, b] = [apply(m2.weapon!, w.pivot), apply(m2.arm_L!, w.pivot)];
+    expect(a[0]).toBeCloseTo(b[0]);
+    expect(a[1]).toBeCloseTo(b[1]);
   });
   it('뒷머리는 몸통 뒤, 일반머리는 머리 앞, 겉옷은 각 부위 바로 위에 그려진다', () => {
     const ids = HUMANOID.slots.map((s) => s.id);
