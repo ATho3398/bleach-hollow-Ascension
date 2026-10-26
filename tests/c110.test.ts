@@ -92,12 +92,12 @@ describe('C.110 진화 때 고정 · 마이그레이션 · 테스트 칸', () =>
   it('시작 전용 스킨을 입고 있어도 5단계 진입 때 벗겨지고, 스킨 패널로 다시 입을 수 있다', () => {
     const save = newSaveData('hollow', 1);
     const need = BALANCE.provisional.evolution.stepsNeeded;
-    save.shared.cosmetics.push('skin-stalker');
+    save.shared.cosmetics.push('skin-mantis');
     for (let t = 0; t < 3; t++) {
       save.evolution.steps = need[t]!;
       performEvolution(save, t + 2);
     }
-    save.skin = 'stalker';
+    save.skin = 'mantis';
     save.evolution.steps = need[3]!;
     performEvolution(save, 6);
     expect(save.skin).toBeNull();

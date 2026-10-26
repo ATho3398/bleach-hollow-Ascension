@@ -20,7 +20,7 @@ export interface SkinDef {
 
 const BASE_SKINS: readonly SkinDef[] = [
   { id: 'grandfisher', name: '그랜드피셔', factionId: 'hollow', tentativeName: true, provisional: true },
-  { id: 'stalker', name: '추적자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
+  { id: 'mantis', name: '사마귀', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'brute', name: '거구', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'ghoul', name: '망령', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'shackled', name: '속박자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },

@@ -10,12 +10,12 @@ import { BALANCE } from '../src/config/balance';
 const read = (p: string) => readFileSync(p, 'utf8');
 
 describe('C.137', () => {
-  it('87장: 스토커 걷기 프레임 6장이 skin-stalker 폴더에 있고 move 로 잡힌다', () => {
-    for (let i = 1; i <= 6; i++) expect(existsSync(`public/art/skin-stalker/move-${i}.png`)).toBe(true);
-    const files = [...Array.from({ length: 6 }, (_, i) => `skin-stalker/move-${i + 1}.png`), 'skin-stalker.png'];
-    const a = charArt('hollow', 0, 'char.hollow', '/', undefined, files, 'stalker');
+  it('87장(89장으로 이관): 스토커 걷기 프레임 6장이 기본 그림 char-hollow 폴더에 있고 move 로 잡힌다', () => {
+    for (let i = 1; i <= 6; i++) expect(existsSync(`public/art/char-hollow/move-${i}.png`)).toBe(true);
+    const files = [...Array.from({ length: 6 }, (_, i) => `char-hollow/move-${i + 1}.png`), 'char-hollow.png'];
+    const a = charArt('hollow', 0, 'char.hollow', '/', undefined, files);
     expect(a.anims?.move?.frames.length).toBe(6);
-    expect(a.src).toContain('skin-stalker.png');
+    expect(a.src).toContain('char-hollow.png');
   });
   it('85장 1: 메노스 그랑데(2단계)는 땅에 붙어 걷고 2배 크기', () => {
     const a = charArt('hollow', 1, 'char.hollow', '/', undefined, ['char-hollow-2.png']);

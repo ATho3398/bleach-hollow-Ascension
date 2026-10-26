@@ -1299,3 +1299,9 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 판단 보류: 물공 몸 기본 블록 이름은 C.138 때 마스터 판단대로 그대로. 장비 탭은 품목이 없어 '준비 중'.
 - 테스트 +9(`tests/c141.test.ts`). 캡처 `docs/captures/c141/` 8장(1-status · 2-chest-tiles · 3-chest-detail · 4-shop · 5-shop-detail · 6-shop-skin · 7-wanderer · 8-plan-drag).
 
+
+## C.143 — 호로 기본형 = 스토커, 사마귀형 = 시작 특수 외형 (GDD 89장, S-23)
+- 그림: `skin-stalker.png`·`skin-stalker/`(move 6장·anim.json 130ms) → `char-hollow.png`·`char-hollow/`(기본 그림 키 `char.hollow`, 1단계·공통). 옛 `char-hollow.png`(사마귀형) → `skin-mantis.png`. char-hollow-2 는 그대로.
+- 데이터: 스킨 `stalker` 삭제 → `mantis`(사마귀, 가칭, startOnly). `hollow.json` startLooks = mantis·brute·ghoul·shackled. 시작 뽑기 규칙(51장) 그대로.
+- 옛 세이브: `stalker` 장착/보유는 로드 때 걸러져 기본 그림. 세이브 구조·SAVE_FORMAT·BALANCE 변경 없음.
+- 테스트: `tests/c143.test.ts` +3, 기존 c107·c109·c110·c137 의 id/경로 갱신.

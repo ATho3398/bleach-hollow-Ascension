@@ -10,7 +10,7 @@ const shin = FACTIONS.find((f) => f.id !== 'hollow')!;
 
 describe('C.107 호로 시작 외형 5종 랜덤 (GDD 51)', () => {
   it('startLooks 는 호로 설정에만 있고 모두 입을 수 있는 시작 전용 스킨이며 그림이 있다', () => {
-    expect(hollow.startLooks).toEqual(['stalker', 'brute', 'ghoul', 'shackled']);
+    expect(hollow.startLooks).toEqual(['mantis', 'brute', 'ghoul', 'shackled']);
     for (const id of hollow.startLooks!) {
       const s = SKINS.find((x) => x.id === id)!;
       expect(s.factionId).toBe('hollow');
@@ -21,7 +21,7 @@ describe('C.107 호로 시작 외형 5종 랜덤 (GDD 51)', () => {
   });
   it('추첨은 기본 + 4종을 균등 5구간으로 나눈다', () => {
     const got = [0, 0.19, 0.2, 0.39, 0.4, 0.59, 0.6, 0.79, 0.8, 0.999].map((r) => pickStartLook(hollow, r));
-    expect(got).toEqual([null, null, 'stalker', 'stalker', 'brute', 'brute', 'ghoul', 'ghoul', 'shackled', 'shackled']);
+    expect(got).toEqual([null, null, 'mantis', 'mantis', 'brute', 'brute', 'ghoul', 'ghoul', 'shackled', 'shackled']);
     expect(pickStartLook(hollow, 1)).toBe('shackled');
   });
   it('사신은 목록이 비어 항상 기본', () => {

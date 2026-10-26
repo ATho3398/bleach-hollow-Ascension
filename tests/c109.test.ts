@@ -83,11 +83,11 @@ describe('C.109 진화 때 고정 · 시작 외형 덮어쓰기 · 스킨 선택
     expect(artSkinOf(s)).toBe('scorpion');
   });
   it('시작 외형 스킨은 덮어쓰이고(해제), 스킨 패널에서 다시 입으면 그 스킨이 이긴다. 기본(null)으로 돌리면 단계 외형', () => {
-    const s = evolveTo3({ atk: 6 }, 'stalker');
+    const s = evolveTo3({ atk: 6 }, 'mantis');
     expect(s.skin).toBeNull();
     expect(artSkinOf(s)).toBe('carapace');
-    expect(equipSkin(s, 'stalker')).toBe(true); // 보유 중이라 다시 고를 수 있다
-    expect(artSkinOf(s)).toBe('stalker');
+    expect(equipSkin(s, 'mantis')).toBe(true); // 보유 중이라 다시 고를 수 있다
+    expect(artSkinOf(s)).toBe('mantis');
     expect(equipSkin(s, null)).toBe(true);
     expect(artSkinOf(s)).toBe('carapace');
   });
