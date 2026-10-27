@@ -1,4 +1,4 @@
-// 시작 화면 (GDD 18-1·19-3): 타이틀 + [이어하기][새로 시작][불러오기] 3개만. 이어하기는 슬롯 선택 없이 가장 최근 슬롯을 바로 열고, 새로 시작·불러오기는 슬롯 선택 화면(slotView)을 연다.
+// 시작 화면 (GDD 18-1·19-3·103장 1): 타이틀 + [이어하기][새로 시작][불러오기][설정]. 이어하기는 슬롯 선택 없이 가장 최근 슬롯을 바로 열고, 새로 시작·불러오기는 슬롯 선택 화면(slotView)을 연다.
 // 종족 고르기(GDD 19-4)는 새로 시작 다음 화면(speciesView): 종족 수만큼 화면을 등분해 아이콘(이모티콘)과 이름만 크게. 칸마다 data-bha-theme 로 그 종족 테마를 입힌다.
 import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
@@ -11,6 +11,8 @@ export interface StartHandlers {
   onNew: () => void;
   onContinue: () => void;
   onImport: () => void;
+  /** [설정] (GDD 103장 1, C.178): 시작 화면에서 연 설정은 공통 설정만 */
+  onSettings?: () => void;
   /** 열 수 없는 형식 슬롯의 [옛 세이브 내보내기] (GDD 61장) */
   onExportOld?: (slot: number) => void;
 }
@@ -97,6 +99,11 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
     button({ label: '새로 시작', icon: 'i-play', variant: last === null ? 'primary' : undefined, onClick: h.onNew }),
     button({ label: '불러오기', icon: 'i-deck', onClick: h.onImport }),
   );
+  if (h.onSettings) {
+    const set = button({ label: '설정', icon: 'i-settings', onClick: h.onSettings });
+    set.dataset.sc = 'start.settings';
+    menu.append(set);
+  }
   const nodes: Node[] = [hero, menu];
   if (note) nodes.push(notice('warn', note));
   const stale = summaries.filter((x): x is Extract<SlotSummary, { state: 'incompatible' }> => x.state === 'incompatible');

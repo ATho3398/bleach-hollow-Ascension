@@ -16,6 +16,8 @@ export interface ConfirmOptions {
   single?: boolean;
   /** 예 버튼을 비활성으로 둔다 (자리는 그대로, C.170 대기 보상 — 받을 게 없을 때) */
   yesDisabled?: boolean;
+  /** 가운데 세 번째 버튼 (C.178 설정 '저장 안 함'): [아니오][alt][예] 순서 */
+  alt?: { label: string; onClick: () => void };
   onYes: () => void;
   onNo?: () => void;
 }
@@ -48,8 +50,12 @@ export function confirmDialog(o: ConfirmOptions): () => void {
     close();
     o.onYes();
   };
-  const actions = el('div', 'bha-modal__actions');
+  const actions = el('div', o.alt ? 'bha-modal__actions bha-modal__actions--three' : 'bha-modal__actions');
   if (!o.single) actions.append(button({ label: o.no ?? '아니오', variant: 'ghost', onClick: no }));
+  if (o.alt) {
+    const alt = o.alt;
+    actions.append(button({ label: alt.label, onClick: () => { close(); alt.onClick(); } }));
+  }
   const yesBtn = button({ label: o.yes ?? '예', variant: o.danger ? 'danger' : 'primary', disabled: o.yesDisabled, onClick: yes });
   actions.append(yesBtn);
   modal.append(actions);

@@ -291,6 +291,7 @@
 .bha-modal__title { font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-2xl); line-height: 1.2; text-align: center; text-wrap: balance; }
 .bha-modal__body { font-size: var(--bha-fs-md); color: var(--bha-text-2); text-align: center; line-height: 1.55; }
 .bha-modal__actions { display: grid; gap: var(--bha-sp-4); grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.bha-modal__actions--three { grid-template-columns: repeat(3, minmax(0, 1fr)); } /* 세 버튼 확인 창 (C.178 설정 저장) — 한 줄 */
 
 /* =========================================================
    9. 정보 표  .bha-info (dl)   (현재 table / td)

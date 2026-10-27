@@ -68,7 +68,8 @@ import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { roomOf } from '../engine/faction';
 import { openGrounds } from '../data/grounds';
-import { settingsView } from './settingsView';
+import { applySettingsNow, settingsView } from './settingsView';
+import { parseSlotSettings, setSlotSettingsHost } from './settingsScope';
 import { backupView } from './backupView';
 import { helpOverlay, type HelpScreenId } from './helpView';
 import { guidePending, markGuideDone, markTutorialSeen, queueGuide, shouldAutoShowTutorial, type GuideId, type TextGuideId } from '../engine/tutorial';
@@ -315,8 +316,29 @@ export function startApp(host: HTMLElement): void {
   }
 
   // ── 시작 화면·슬롯 (Q-3) ──
-  const settingsOpener = (withBackup: boolean) => () =>
-    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined));
+  // C.178 (GDD 103장): 시작 화면·종족 고르기에서 연 설정은 공통만, 게임 안(방)에서 연 설정은 [공통]/[이 슬롯]. 저장 안 하고 뒤로면 설정 화면이 먼저 묻고 onBack
+  const settingsOpener = (inGame: boolean) => () =>
+    open('settings', () => void settingsView(root, {
+      onHelp: () => openHelp(undefined, true),
+      onBackup: inGame && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined,
+      onBack: () => nav.pop(),
+      commonOnly: !inGame,
+    }));
+
+  /** 슬롯 설정 (GDD 103장 5): 이 슬롯 세이브의 settings 를 설정 화면·실제 값에 건다. 슬롯을 열 때마다, 시작 화면이면 푼다 */
+  function bindSlotSettings(): void {
+    const n = slot;
+    setSlotSettingsHost(save && n !== 0 ? {
+      label: `슬롯 ${n}`,
+      read: () => parseSlotSettings(save?.settings),
+      write: (s) => {
+        if (!save) return;
+        save.settings = s as Record<string, boolean | number> | null;
+        persist();
+      },
+    } : null);
+    applySettingsNow();
+  }
 
   /** 가져오기·되돌리기가 끝난 뒤: 그 슬롯을 저장소에서 다시 읽어 방으로 */
   function reloadSlot(): void {
@@ -329,6 +351,7 @@ export function startApp(host: HTMLElement): void {
     save = null;
     dress(null);
     slot = 0;
+    bindSlotSettings();
     activeExp = null;
     rotate = IDLE;
     renderRotateCard();
@@ -353,6 +376,7 @@ export function startApp(host: HTMLElement): void {
         const n = lastPlayedSlot(allSlotSummaries(store));
         if (n !== null) enterSlot(n);
       },
+      onSettings: settingsOpener(false),
       onImport: () => {
         enterFullscreenOnStart(store);
         open('slot-load', () => renderSlotPick('load'));
@@ -426,6 +450,7 @@ export function startApp(host: HTMLElement): void {
           queueGuide(save.help, 'birth'); // 새 세이브의 첫 방에서 탄생 연출 한 번 (GDD 74장)
         }
         persist();
+        bindSlotSettings();
         nestScreen();
       },
       onSettings: settingsOpener(false),
@@ -456,6 +481,7 @@ export function startApp(host: HTMLElement): void {
     else if (needsMigration(raw)) stashSlot(store, n, 'migration');
     save = loaded;
     slot = n;
+    bindSlotSettings();
     activeExp = null;
     dress(loaded.wear);
     playTick = Date.now();

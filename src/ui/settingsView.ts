@@ -1,39 +1,150 @@
-// 설정 화면 (GDD 14-3, C.18 / U-1 새 디자인, R-2): 전투 효과 켬/끔. 블록 클릭 판정 시간·드래그 임계치 설정은 순서 바꾸기 삭제(17-2)와 함께 없앴다.
-// localStorage 별도 키에 저장하고 세이브 구조는 건드리지 않는다.
+// 설정 화면 (GDD 14-3·103장, C.178): 탭 4개 화면 / 소리 / 전투 / 기타. 바꾼 값은 임시이고 [저장]을 눌러야 반영된다(소리 크기는 움직이는 동안 미리 듣기).
+// [저장] 없이 뒤로(◀·Esc·폰 뒤로가기·닫기)면 "바꾼 설정을 저장할까요?" [저장][저장 안 함][취소].
+// 공통 설정(기기 전체, 항목마다 localStorage 키) + 게임 안에서는 [공통]/[이 슬롯] 토글 — 슬롯 설정(세이브 settings)은 항목별로 공통보다 우선(settingsScope.ts).
 import { button, el, icon } from './bha/dom';
 import { endScreen, screenSignal } from './bha/screenScope';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { registerCancelHook } from './bha/shortcuts';
+import { categoryTabs } from './bha/itemUi';
 import { BG_CREDIT } from '../data/art/backgrounds';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { testInfoNodes } from './testMode';
 import { LEGACY_POINTER_SETTINGS_KEY } from './pointer';
-import { applyCalmMode, loadFxSettings, prefersReducedMotion, resetFxSettings, saveFxSettings, type FxSettings } from './fxSettings';
+import { applyCalmMode, defaultFxSettings, loadCommonFxSettings, prefersReducedMotion, saveFxSettings, type SettingsStorage } from './fxSettings';
 import { emitFeedback, hookAudioUnlock } from './fx';
-import { KEY_HINTS_EVENT, loadKeyHints, saveKeyHints } from './keyHints';
-import { bgm, BGM_SETTINGS_KEY, BGM_VOLUMES, loadBgmSettings, saveBgmSettings } from './bgm';
+import { KEY_HINTS_EVENT, loadCommonKeyHints, saveKeyHints } from './keyHints';
+import { bgm, bgmBarOf, defaultBgmSettings, loadBgmSettings, saveBgmSettings, withBgmBar, withSlotBgm } from './bgm';
 import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogic';
 import { setTiltPref } from './bha/tamago';
 import { openInstall } from './installView';
 import { detectPlatform, installMode, installPrompt, isStandalone, loadInstallPrefs } from '../pwaInstall';
 import { FULLSCREEN_EVENT, fullscreenSupported, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
+import { confirmDialog } from './confirmDialog';
+import { parseSlotSettings, setActiveSlotSettings, slotSettingsHost, SLOT_SETTING_KEYS, type SlotSettings } from './settingsScope';
 import { versionLabel } from '../version';
 
-/** 켬/끔 줄 (C.170, GDD 100장 #76): 왼쪽 이름 + 오른쪽 작은 스위치(켬 = 초록, 끔 = 회색). 선택 표시는 줄 테두리(.bha-sel)만 — 켬 색과 섞이지 않는다 */
-function switchRow(label: string): { b: HTMLButtonElement; paint: (on: boolean) => void } {
+/** 설정 탭 (GDD 103장 2) */
+export const SETTINGS_TABS = [
+  { id: 'screen', label: '화면' },
+  { id: 'sound', label: '소리' },
+  { id: 'battle', label: '전투' },
+  { id: 'etc', label: '기타' },
+] as const;
+export type SettingsTab = (typeof SETTINGS_TABS)[number]['id'];
+
+/** 막대 키보드 ◀▶ 한 번에 움직이는 양 */
+export const VOLUME_KEY_STEP = 5;
+
+/** 설정 화면이 다루는 공통 값 전부 (슬롯 설정이 되는 것은 SLOT_SETTING_KEYS) */
+export interface CommonValues {
+  damageNumbers: boolean;
+  vibration: boolean;
+  shake: boolean;
+  sfxVolume: number;
+  bgmVolume: number;
+  keyHints: boolean;
+  repeat: boolean;
+  excluded: string[];
+  tamago: boolean;
+  tilt: boolean;
+  viewScale: ViewScalePref;
+  fsStart: boolean;
+}
+type BoolKey = { [K in keyof CommonValues]: CommonValues[K] extends boolean ? K : never }[keyof CommonValues];
+type VolumeKey = 'sfxVolume' | 'bgmVolume';
+
+const storageOrNull = (): SettingsStorage | null => {
+  try {
+    return localStorage;
+  } catch {
+    return null;
+  }
+};
+
+export function readCommonValues(storage: SettingsStorage | null): CommonValues {
+  const fx = loadCommonFxSettings(storage);
+  const m = loadBgmSettings(storage);
+  const t = loadTamagoPrefs(storage);
+  return {
+    damageNumbers: fx.damageNumbers, vibration: fx.vibration, shake: fx.shake, sfxVolume: fx.sfxVolume,
+    bgmVolume: bgmBarOf(m), keyHints: loadCommonKeyHints(storage), repeat: m.repeat, excluded: [...m.excluded],
+    tamago: t.on, tilt: t.tilt, viewScale: loadViewScale(storage), fsStart: loadFullscreenStart(storage),
+  };
+}
+
+/** [기본값 복원]이 되돌리는 항목 (전투 효과·소리·음악 목록) */
+function defaultsOf(cur: CommonValues): CommonValues {
+  const fx = defaultFxSettings(prefersReducedMotion());
+  const m = defaultBgmSettings();
+  return { ...cur, damageNumbers: fx.damageNumbers, vibration: fx.vibration, shake: fx.shake, sfxVolume: fx.sfxVolume, bgmVolume: bgmBarOf(m), repeat: m.repeat, excluded: [...m.excluded] };
+}
+
+const sameValue = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
+
+/** 저장된 값(공통 + 지금 슬롯 설정)을 화면·소리에 다시 건다: 배경음 크기, 흔들림(움직임 줄이기), 단축키 배지 */
+export function applySettingsNow(storage: SettingsStorage | null = storageOrNull()): void {
+  try {
+    const p = bgm();
+    p.setSettings({ ...withSlotBgm(loadBgmSettings(storage)), track: p.settings.track });
+  } catch {
+    /* 음악은 부가 기능 */
+  }
+  applyCalmMode(storage);
+  try {
+    window.dispatchEvent(new CustomEvent(KEY_HINTS_EVENT));
+  } catch {
+    /* 표시 전용 */
+  }
+}
+
+/** 바뀐 공통 값만 각 저장 키에 쓴다 */
+function writeCommon(storage: SettingsStorage | null, before: CommonValues, after: CommonValues): void {
+  const fx = loadCommonFxSettings(storage);
+  saveFxSettings(storage, { ...fx, damageNumbers: after.damageNumbers, vibration: after.vibration, shake: after.shake, sfxVolume: after.sfxVolume, sound: after.sfxVolume > 0 });
+  if (before.bgmVolume !== after.bgmVolume) saveBgmSettings(storage, withBgmBar(loadBgmSettings(storage), after.bgmVolume));
+  // 반복·목록 제외는 재생기를 거쳐야 지금 곡이 맞게 넘어간다 (재생기가 공통 저장에 쓴다)
+  const p = bgm();
+  if (p.settings.repeat !== after.repeat) p.toggleRepeat();
+  for (const id of new Set([...before.excluded, ...after.excluded])) {
+    if (p.settings.excluded.includes(id) !== after.excluded.includes(id)) p.toggleExcluded(id);
+  }
+  if (before.keyHints !== after.keyHints) saveKeyHints(storage, after.keyHints);
+  if (before.tamago !== after.tamago) {
+    saveTamagoPrefs(storage, { ...loadTamagoPrefs(storage), on: after.tamago });
+    window.dispatchEvent(new CustomEvent(TAMAGO_EVENT));
+  }
+  if (before.viewScale !== after.viewScale) {
+    saveViewScale(storage, after.viewScale);
+    window.dispatchEvent(new CustomEvent(VIEW_SCALE_EVENT));
+  }
+  if (before.fsStart !== after.fsStart) saveFullscreenStart(storage, after.fsStart);
+}
+
+/** 켬/끔 줄 (C.170, GDD 100장 #76): 왼쪽 이름 + (슬롯 표시) + 오른쪽 작은 스위치(켬 = 초록, 끔 = 회색). 선택 표시는 줄 테두리(.bha-sel)만 */
+function switchRow(label: string): { b: HTMLButtonElement; tag: HTMLElement; paint: (on: boolean) => void } {
   const b = el('button', 'bha-switch');
   b.type = 'button';
   b.setAttribute('role', 'switch');
   const track = el('span', 'bha-switch__track');
   track.append(el('i', 'bha-switch__knob'));
-  b.append(el('span', 'bha-switch__label', label), track);
+  const tag = scopeTag();
+  b.append(el('span', 'bha-switch__label', label), tag, track);
   return {
     b,
+    tag,
     paint: (on) => {
       b.classList.toggle('is-checked', on);
       b.setAttribute('aria-checked', String(on));
     },
   };
+}
+
+/** 줄마다 '지금 어느 쪽 값인지' 작은 표시 (GDD 103장 5): 슬롯 / 슬롯 우선 / 공통만 */
+function scopeTag(): HTMLElement {
+  const t = el('span', 'bha-tag bha-tag--kind bha-settings__scope');
+  t.hidden = true;
+  return t;
 }
 
 /** 레이어로 열린 설정의 닫기 X (도움말과 같은 모양) */
@@ -46,7 +157,26 @@ const hintLine = (text: string): HTMLElement => {
   return p;
 };
 
-/** 설정을 화면 위 레이어로 연다 (C.170, GDD 100장 #41: 전투 일시정지의 [설정] — 전투 화면을 지우지 않는다). 뒤로·Esc·X 로 닫는다. 돌려주는 함수로 닫는다 */
+const panel = (title: string, ...n: Node[]): HTMLElement => {
+  const p = el('section', 'bha-panel');
+  p.append(el('h2', 'bha-panel__title', title), ...n);
+  return p;
+};
+
+export interface SettingsViewOpts {
+  onHelp?: () => void;
+  onBackup?: () => void;
+  /** 레이어로 열렸을 때 닫기 (X·뒤로) */
+  onClose?: () => void;
+  /** 화면으로 열렸을 때 한 칸 뒤로 (저장 확인 창 뒤에 부른다) */
+  onBack?: () => void;
+  /** 시작 화면에서 연 설정: 공통만 (슬롯 토글 없음, GDD 103장 1) */
+  commonOnly?: boolean;
+  /** 처음 열 탭 */
+  tab?: SettingsTab;
+}
+
+/** 설정을 화면 위 레이어로 연다 (C.170, GDD 100장 #41: 전투 일시정지의 [설정] — 전투 화면을 지우지 않는다). 뒤로·Esc·X 로 닫는다(바꾼 게 있으면 저장 확인). 돌려주는 함수로 바로 닫는다 */
 export function settingsOverlay(onClose: () => void): () => void {
   const layer = el('div', 'bha-layer bha-settings-layer');
   layer.setAttribute('role', 'dialog');
@@ -62,93 +192,232 @@ export function settingsOverlay(onClose: () => void): () => void {
     layer.remove();
     onClose();
   };
-  settingsView(layer, undefined, false, undefined, close);
+  const ctl = settingsView(layer, { onClose: () => ctl.requestClose(close) });
   getOverlayHost().append(layer);
-  unregister = registerLayer(layer, close);
+  unregister = registerLayer(layer, () => ctl.requestClose(close));
   return close;
 }
 
-export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onClose?: () => void): void {
-  const storage = (() => {
-    try {
-      return localStorage;
-    } catch {
-      return null;
-    }
-  })();
-  // 전투 효과 (Q-2): 켬/끔 스위치 줄 4개. 버튼이라 위/아래/확정으로도 조작된다
-  let fx: FxSettings = loadFxSettings(storage);
-  const FX_ROWS: { key: keyof FxSettings; label: string; hint: string }[] = [
-    { key: 'damageNumbers', label: '피해 숫자', hint: '적과 내가 받은 피해가 짧게 떠오른다.' },
-    { key: 'vibration', label: '진동', hint: '블록·체인·막기·피격에 짧게 울린다. 지원하지 않는 기기(아이폰 등)는 저절로 안 울린다.' },
-    { key: 'sound', label: '효과음', hint: '파일 없이 만든 짧은 소리. 화면을 한 번 만진 뒤부터 난다.' },
-    { key: 'shake', label: '화면 흔들림', hint: '강공격에 맞을 때와 저장 필살기 때만 짧게.' },
-  ];
-  const fxPanel = el('section', 'bha-panel');
-  fxPanel.append(el('h2', 'bha-panel__title', '전투 효과'));
-  if (prefersReducedMotion()) fxPanel.append(hintLine('기기의 "동작 줄이기" 설정을 따라 화면 흔들림이 기본으로 꺼져 있다.'));
-  for (const row of FX_ROWS) {
-    const sw = switchRow(row.label);
-    const b = sw.b;
-    const paint = () => sw.paint(fx[row.key]);
-    paint();
-    b.onclick = () => {
-      fx = saveFxSettings(storage, { ...fx, [row.key]: !fx[row.key] });
-      if (row.key === 'shake') applyCalmMode(storage);
-      if (row.key === 'sound' && fx.sound) {
-        hookAudioUnlock();
-        emitFeedback('guard', { vibration: false, sound: true });
-      }
-      if (row.key === 'vibration' && fx.vibration) emitFeedback('chain2', { vibration: true, sound: false });
-      paint();
-    };
-    fxPanel.append(b, hintLine(row.hint));
-  }
+export interface SettingsControl {
+  /** 바꾼 게 있으면 저장 확인 창을 띄우고, 고른 뒤(취소 제외) then 을 부른다 */
+  requestClose(then: () => void): void;
+  readonly dirty: boolean;
+}
 
-  // 배경 음악 (GDD 24-4·97장): 켬/끔·음량 + 플레이리스트(곡 목록·▶ 재생·제외·현재 곡만 반복·다음 곡). 이 기기에만 저장(키 bha-bgm-settings)
-  const musicPanel = el('section', 'bha-panel');
-  musicPanel.append(el('h2', 'bha-panel__title', '음악'));
-  const musicSw = switchRow('배경 음악');
-  const musicBtn = musicSw.b;
-  const volBtns = BGM_VOLUMES.map((v) => {
-    const b = button({ label: `${Math.round(v * 100)}%`, size: 'small' });
-    b.onclick = () => setMusic({ ...bgm().settings, volume: v });
-    return b;
-  });
+export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): SettingsControl {
+  const storage = storageOrNull();
+  const host = o.commonOnly ? null : slotSettingsHost();
+  let commonSaved = readCommonValues(storage);
+  let common: CommonValues = structuredClone(commonSaved);
+  let slotSaved: SlotSettings = host?.read() ?? {};
+  let slot: SlotSettings = { ...slotSaved };
+  let scope: 'common' | 'slot' = 'common';
+  let tab: SettingsTab = o.tab ?? 'screen';
+  let note = '';
+  const slotable = (k: keyof CommonValues): k is keyof SlotSettings => (SLOT_SETTING_KEYS as readonly string[]).includes(k);
+  const editable = (k: keyof CommonValues) => scope === 'common' || slotable(k);
+  /** 화면에 보이는 값: 슬롯 탭이면 슬롯 값 → 없으면 공통 */
+  const val = <K extends keyof CommonValues>(k: K): CommonValues[K] => {
+    if (scope === 'slot' && slotable(k)) {
+      const v = slot[k as keyof SlotSettings];
+      if (v !== undefined) return v as CommonValues[K];
+    }
+    return common[k];
+  };
+  const setVal = <K extends keyof CommonValues>(k: K, v: CommonValues[K]) => {
+    if (scope === 'slot' && slotable(k)) (slot as Record<string, unknown>)[k] = v;
+    else common[k] = v;
+  };
+  const commonDirty = () => !sameValue(common, commonSaved);
+  const slotDirty = () => !sameValue(parseSlotSettings(slot), parseSlotSettings(slotSaved));
+  const isDirty = () => commonDirty() || (host !== null && slotDirty());
+
+  const paints: (() => void)[] = [];
+  const tagPaint = (tag: HTMLElement, k: keyof CommonValues) => {
+    let text = '';
+    if (host) {
+      const inSlot = slotable(k) && slot[k as keyof SlotSettings] !== undefined;
+      if (scope === 'slot') text = !slotable(k) ? '공통만' : inSlot ? '슬롯' : '';
+      else text = inSlot ? '슬롯 우선' : '';
+    }
+    tag.textContent = text;
+    tag.hidden = text === '';
+  };
+
+  // ── 줄 만들기 ──
+  const boolRow = (k: BoolKey, label: string, after?: (on: boolean) => void): HTMLButtonElement => {
+    const sw = switchRow(label);
+    sw.b.dataset.set = k;
+    sw.b.onclick = () => {
+      if (!editable(k)) return;
+      setVal(k, !val(k));
+      after?.(val(k));
+      paintAll();
+    };
+    paints.push(() => {
+      sw.paint(val(k));
+      sw.b.disabled = !editable(k);
+      tagPaint(sw.tag, k);
+    });
+    return sw.b;
+  };
+
+  /** 소리 막대 (GDD 103장 3): 0~100, 끌기·누르기·키보드 ◀▶ 5씩, 0 = 끔. 움직이는 동안 미리 듣기(배경음 = 그 크기로, 효과음 = 놓을 때 한 번) */
+  const volumeRow = (k: VolumeKey, label: string, preview: (v: number) => void): HTMLElement => {
+    const box = el('div', 'bha-slider bha-settings__bar');
+    box.dataset.set = k;
+    const id = `bha-set-${k}`;
+    const input = el('input', 'bha-slider__input');
+    input.id = id;
+    input.type = 'range';
+    input.min = '0';
+    input.max = '100';
+    input.step = '1';
+    input.setAttribute('aria-label', label);
+    const out = el('output', 'bha-slider__value');
+    out.htmlFor.add(id);
+    const tag = scopeTag();
+    const head = el('div', 'bha-slider__head');
+    const name = el('label', 'bha-slider__label', label);
+    name.htmlFor = id;
+    const right = el('span', 'bha-settings__barval');
+    right.append(tag, out);
+    head.append(name, right);
+    box.append(head, input);
+    const show = (v: number) => {
+      input.value = String(v);
+      out.textContent = v === 0 ? '끔' : String(v);
+      input.style.setProperty('--pct', String(v / 100));
+      input.setAttribute('aria-valuetext', v === 0 ? '끔' : `${v}`);
+    };
+    const set = (v: number, done: boolean) => {
+      if (!editable(k)) return;
+      const c = Math.max(0, Math.min(100, Math.round(v)));
+      setVal(k, c);
+      show(c);
+      preview(c);
+      if (done) previewDone(k, c);
+      paintMeta();
+    };
+    input.oninput = () => set(Number(input.value), false);
+    input.onchange = () => set(Number(input.value), true);
+    input.addEventListener('keydown', (e) => {
+      const d = e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -1 : e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 1 : 0;
+      if (d === 0 || e.key === 'ArrowUp' || e.key === 'ArrowDown') return; // 위/아래는 기기 선택 이동
+      e.preventDefault();
+      set(val(k) + d * VOLUME_KEY_STEP, true);
+    });
+    paints.push(() => {
+      show(val(k));
+      input.disabled = !editable(k);
+      tagPaint(tag, k);
+    });
+    return box;
+  };
+  const previewBgm = (v: number) => {
+    try {
+      const p = bgm();
+      p.setSettings(withBgmBar(p.settings, v));
+    } catch {
+      /* 음악은 부가 */
+    }
+  };
+  const previewDone = (k: VolumeKey, v: number) => {
+    if (k !== 'sfxVolume' || v === 0) return;
+    hookAudioUnlock();
+    emitFeedback('guard', { vibration: false, sound: true, sfxVolume: v });
+  };
+
+  /** 고르는 줄: 고른 칸에 ✓ */
+  const choiceRow = <K extends 'viewScale'>(k: K, options: readonly CommonValues[K][], label: (v: CommonValues[K]) => string): HTMLElement => {
+    const row = el('div', 'bha-settings__choices');
+    const btns = options.map((v) => {
+      const b = button({ label: label(v), size: 'small' });
+      b.onclick = () => {
+        if (!editable(k)) return;
+        setVal(k, v);
+        paintAll();
+      };
+      return { v, b };
+    });
+    const tag = scopeTag();
+    row.append(...btns.map((x) => x.b), tag);
+    paints.push(() => {
+      for (const { v, b } of btns) {
+        const on = val(k) === v;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+        b.replaceChildren(...(on ? [icon('i-check')] : []), label(v));
+        b.disabled = !editable(k);
+      }
+      tagPaint(tag, k);
+    });
+    return row;
+  };
+
+  // ── 화면 탭 ──
+  const tamaPanel = panel('다마고치 모드',
+    boolRow('tamago', '다마고치 모드'), hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대. 컴퓨터는 B 키.'),
+    boolRow('tilt', '기울기로 흔들기'), hintLine('키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 저장할 때 움직임 허용을 묻는다.'),
+  );
+  tamaPanel.dataset.panel = 'tamago';
+  // 전체 화면 (GDD 46장): 지원하지 않는 브라우저(아이폰 사파리 등)에서는 패널 자체를 만들지 않는다. [전체 화면]은 설정이 아니라 바로 하는 동작
+  const fsBtn = button({ label: '전체 화면', icon: 'i-frame', onClick: () => void toggleFullscreen().then(paintFs) });
+  fsBtn.dataset.set = 'fullscreen';
+  const paintFs = () => {
+    fsBtn.classList.toggle('is-on', isFullscreen());
+    fsBtn.setAttribute('aria-pressed', String(isFullscreen()));
+  };
+  const fsPanel = panel('전체 화면', fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다(누르면 바로 바뀐다).'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
+  fsPanel.dataset.panel = 'fullscreen';
+  paintFs();
+  const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];
+  // 화면 크기 (GDD 17-5): PC 에서만 적용
+  const sizeNote = el('p', 'bha-faint');
+  const paintSize = () => {
+    const st = currentViewState();
+    sizeNote.textContent = !st.pc
+      ? '컴퓨터(마우스·넓은 창)에서만 바뀐다. 폰·태블릿은 화면에 맞춰 보인다.'
+      : shrunkNote({ ...st.view }, common.viewScale) ?? `기기 틀을 ${st.view.scale}배(${Math.round(844 * st.view.scale)}×${Math.round(390 * st.view.scale)})로 표시 중. 키보드 + / − 로도 바꾼다.`;
+  };
+  const sizePanel = panel('화면 크기', choiceRow('viewScale', VIEW_SCALES, (v) => `${v}배`), sizeNote);
+  // 단축키 표시 (GDD 18-5): 버튼 구석의 키 글자 배지. 컴퓨터에서만 보인다
+  const keyPanel = panel('단축키', boolRow('keyHints', '단축키 표시'), hintLine(currentViewState().pc
+    ? '버튼 구석에 키 글자를 보인다. 꺼도 단축키는 그대로 쓸 수 있다. 전체 표는 도움말의 [단축키].'
+    : '컴퓨터(마우스·넓은 창)에서만 보인다. 폰·태블릿에서는 나타나지 않는다.'));
+
+  // ── 소리 탭 (GDD 24-4·97장·103장 3) ──
+  const soundPanel = panel('소리',
+    volumeRow('bgmVolume', '배경음', previewBgm),
+    volumeRow('sfxVolume', '효과음', () => {}),
+    hintLine('0 이면 끈다. 화면을 한 번 만진 뒤부터 난다. 효과음은 파일 없이 만든 짧은 소리.'),
+  );
+  const musicNodes: HTMLElement[] = [];
   const nowLine = el('p', 'bha-faint');
-  const repeatSw = switchRow('현재 곡만 반복');
-  const repeatBtn = repeatSw.b;
-  const nextBtn = button({ label: '다음 곡', size: 'small' });
-  const listBox = el('div', 'bha-bgmlist');
-  const rows = bgm().playlist.map((t) => {
+  const listRows = bgm().playlist.map((t) => {
     const row = el('div', 'bha-bgmlist__row');
     const playBtn = button({ label: '▶', size: 'small' });
     const exBtn = button({ label: '', size: 'small', variant: 'ghost' });
     exBtn.title = '목록에 포함';
     playBtn.setAttribute('aria-label', `${t.name} 재생`);
     playBtn.onclick = () => { bgm().playTrack(t.id); paintMusic(); };
-    exBtn.onclick = () => { bgm().toggleExcluded(t.id); paintMusic(); };
+    exBtn.onclick = () => {
+      if (!editable('excluded')) return;
+      common.excluded = common.excluded.includes(t.id) ? common.excluded.filter((x) => x !== t.id) : [...common.excluded, t.id];
+      paintAll();
+    };
     const name = el('span', 'bha-bgmlist__name', t.name);
     const mark = el('span', 'bha-bgmlist__mark');
     name.append(mark);
     row.append(name, playBtn, exBtn);
-    listBox.append(row);
     return { t, row, mark, playBtn, exBtn };
   });
   const paintMusic = () => {
     const p = bgm();
-    const m = p.settings;
-    musicSw.paint(m.on);
-    volBtns.forEach((b, i) => {
-      const on = Math.abs(BGM_VOLUMES[i]! - m.volume) < 0.01;
-      b.classList.toggle('is-on', on);
-      b.setAttribute('aria-pressed', String(on));
-    });
     const cur = p.currentTrack;
     nowLine.textContent = p.playlist.length === 0 ? '' : cur ? `지금 곡: ${cur.name}` : '재생할 곡 없음';
-    repeatSw.paint(m.repeat);
-    for (const r of rows) {
-      const ex = m.excluded.includes(r.t.id);
+    for (const r of listRows) {
+      const ex = common.excluded.includes(r.t.id);
       const now = cur?.id === r.t.id;
       r.row.classList.toggle('is-on', now);
       r.row.classList.toggle('is-off', ex);
@@ -159,191 +428,253 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
       r.exBtn.replaceChildren(...(ex ? [] : [icon('i-check')]), ex ? '빠짐' : '포함');
       r.exBtn.setAttribute('aria-pressed', String(!ex));
       r.exBtn.setAttribute('aria-label', `${r.t.name} 목록에 포함${ex ? ' 안 함' : ''}`);
+      r.exBtn.disabled = !editable('excluded');
     }
   };
-  const setMusic = (m: ReturnType<typeof loadBgmSettings>) => {
-    bgm().setSettings(saveBgmSettings(storage, m));
-    paintMusic();
-  };
-  musicBtn.onclick = () => setMusic({ ...bgm().settings, on: !bgm().settings.on });
-  repeatBtn.onclick = () => { bgm().toggleRepeat(); paintMusic(); };
-  nextBtn.onclick = () => { bgm().next(); paintMusic(); };
-  const volRow = el('div', 'bha-plan__grounds');
-  volRow.append(el('span', 'bha-faint', '음량'), ...volBtns);
-  const hasList = rows.length > 0;
-  musicPanel.append(musicBtn, volRow);
-  if (hasList) {
+  paints.push(paintMusic);
+  if (listRows.length > 0) {
+    const listBox = el('div', 'bha-bgmlist');
+    listBox.append(...listRows.map((r) => r.row));
     const ctl = el('div', 'bha-bgmlist__ctl');
-    ctl.append(repeatBtn, nextBtn);
-    musicPanel.append(nowLine, ctl, listBox);
-  }
-  musicPanel.append(hintLine(hasList ? '한 곡이 끝나면 다음 곡으로, 목록에서 뺀 곡은 건너뛴다(▶ 로 직접 고르면 재생). 화면을 한 번 만진 뒤부터 난다.' : '효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다. 음악 파일이 없는 장면은 조용하다.'));
-  paintMusic();
-  if (hasList && typeof setInterval === 'function') {
-    // 곡이 저절로 넘어가면 이름·표시를 따라간다 (화면이 닫히면 멈춘다)
-    const poll = setInterval(() => { if (musicPanel.isConnected) paintMusic(); else clearInterval(poll); }, 1000);
+    ctl.append(boolRow('repeat', '현재 곡만 반복'), button({ label: '다음 곡', size: 'small', onClick: () => { bgm().next(); paintMusic(); } }));
+    musicNodes.push(panel('음악 목록', nowLine, ctl, listBox, hintLine('한 곡이 끝나면 다음 곡으로, 목록에서 뺀 곡은 건너뛴다(▶ 로 직접 고르면 바로 재생).')));
   }
 
-  // 화면 크기 (GDD 17-5): PC 에서만 적용. 선택은 이 기기에만 저장(키 bha-view-scale)
-  const sizePanel = el('section', 'bha-panel');
-  sizePanel.append(el('h2', 'bha-panel__title', '화면 크기'));
-  const sizeNote = el('p', 'bha-faint');
-  const sizeBtns = new Map<ViewScalePref, HTMLButtonElement>();
-  const paintSize = () => {
-    const st = currentViewState();
-    const pref = loadViewScale(storage);
-    for (const [v, b] of sizeBtns) {
-      b.classList.toggle('is-on', v === pref);
-      b.setAttribute('aria-pressed', String(v === pref));
-    }
-    sizeNote.textContent = !st.pc
-      ? '컴퓨터(마우스·넓은 창)에서만 바뀐다. 폰·태블릿은 화면에 맞춰 보인다.'
-      : shrunkNote({ ...st.view }, pref) ?? `기기 틀을 ${st.view.scale}배(${Math.round(844 * st.view.scale)}×${Math.round(390 * st.view.scale)})로 표시 중. 키보드 + / − 로도 바꾼다.`;
-  };
-  for (const v of VIEW_SCALES) {
-    const b = button({
-      label: `${v}배`,
-      onClick: () => {
-        saveViewScale(storage, v);
-        window.dispatchEvent(new CustomEvent(VIEW_SCALE_EVENT));
-        paintSize();
-      },
-    });
-    sizeBtns.set(v, b);
-    sizePanel.append(b);
-  }
-  sizePanel.append(sizeNote);
-  paintSize();
+  // ── 전투 탭 (전투 연출 — 소리와 분리, GDD 103장 2) ──
+  const fxPanel = panel('전투 효과',
+    ...(prefersReducedMotion() ? [hintLine('기기의 "동작 줄이기" 설정을 따라 화면 흔들림이 기본으로 꺼져 있다.')] : []),
+    boolRow('damageNumbers', '피해 숫자'), hintLine('적과 내가 받은 피해가 짧게 떠오른다.'),
+    boolRow('vibration', '진동', (on) => { if (on) emitFeedback('chain2', { vibration: true, sound: false }); }), hintLine('블록·체인·막기·피격에 짧게 울린다. 지원하지 않는 기기(아이폰 등)는 저절로 안 울린다.'),
+    boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때와 저장 필살기 때만 짧게.'),
+  );
+  const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'));
 
-  // 단축키 표시 (GDD 18-5): 버튼 구석의 키 글자 배지. 컴퓨터에서만 보이고, 켜고 끄는 값은 이 기기에만 저장
+  // ── 기타 탭 ──
+  const info = panel('정보', el('p', 'bha-faint', versionLabel()), el('p', 'bha-faint', '임시 수치 있음 — 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes());
   // 앱 설치 (GDD 68장): 큰 안내창을 다시 연다. 이미 앱으로 열렸거나 설치했으면 알려 준다
-  const installPanel = el('section', 'bha-panel');
-  installPanel.append(el('h2', 'bha-panel__title', '앱 설치'));
+  const installPanel = panel('앱 설치');
   const standalone = isStandalone();
-  const installedNote = standalone || loadInstallPrefs(storage).installed;
-  if (installedNote) installPanel.append(el('p', 'bha-faint', standalone ? '지금 홈 화면 앱으로 실행 중이다. 인터넷 없이도 열린다.' : '이미 설치했다. 홈 화면의 아이콘으로 열면 인터넷 없이도 플레이할 수 있다.'));
+  if (standalone || loadInstallPrefs(storage).installed) installPanel.append(el('p', 'bha-faint', standalone ? '지금 홈 화면 앱으로 실행 중이다. 인터넷 없이도 열린다.' : '이미 설치했다. 홈 화면의 아이콘으로 열면 인터넷 없이도 플레이할 수 있다.'));
   if (!standalone) {
     const canInstall = installMode(detectPlatform(navigator.userAgent), installPrompt() !== null) !== 'none';
     const b = button({ label: '앱 설치', icon: 'i-play', onClick: () => openInstall({ auto: false }) });
     b.disabled = !canInstall;
     installPanel.append(b, el('p', 'bha-faint', canInstall ? '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다.' : '이 브라우저에서는 설치 창을 열 수 없다. 주소창의 설치 아이콘이나 브라우저 메뉴를 확인한다.'));
   }
-
-  const keyPanel = el('section', 'bha-panel');
-  keyPanel.append(el('h2', 'bha-panel__title', '단축키'));
-  const keySw = switchRow('단축키 표시');
-  const keyBtn = keySw.b;
-  const keyNote = hintLine('');
-  const paintKeys = () => {
-    const on = loadKeyHints(storage);
-    keySw.paint(on);
-    keyNote.textContent = keyNote.title = currentViewState().pc
-      ? '버튼 구석에 키 글자를 보인다. 꺼도 단축키는 그대로 쓸 수 있다. 전체 표는 도움말의 [단축키].'
-      : '컴퓨터(마우스·넓은 창)에서만 보인다. 폰·태블릿에서는 나타나지 않는다.';
-  };
-  keyBtn.onclick = () => {
-    saveKeyHints(storage, !loadKeyHints(storage));
-    window.dispatchEvent(new CustomEvent(KEY_HINTS_EVENT));
-    paintKeys();
-  };
-  keyPanel.append(keyBtn, keyNote);
-  paintKeys();
-
-  // 다마고치 모드 (GDD 27장): 켜면 기기 전체가 보이게 물러난다(화면을 누르면 다시 확대). 기울기로 흔들기 = 키링이 폰 기울기를 따라 흔들림(기본 꺼짐)
-  const tamaPanel = el('section', 'bha-panel');
-  tamaPanel.dataset.panel = 'tamago';
-  tamaPanel.append(el('h2', 'bha-panel__title', '다마고치 모드'));
-  const tamaSw = switchRow('다마고치 모드');
-  const tamaBtn = tamaSw.b;
-  tamaBtn.dataset.set = 'tamago';
-  const tiltSw = switchRow('기울기로 흔들기');
-  const tiltBtn = tiltSw.b;
-  tiltBtn.dataset.set = 'tilt';
-  const paintTama = () => {
-    const p = loadTamagoPrefs(storage);
-    tamaSw.paint(p.on);
-    tiltSw.paint(p.tilt);
-  };
-  tamaBtn.onclick = () => {
-    const p = loadTamagoPrefs(storage);
-    saveTamagoPrefs(storage, { ...p, on: !p.on });
-    window.dispatchEvent(new CustomEvent(TAMAGO_EVENT));
-    paintTama();
-  };
-  tiltBtn.onclick = () => {
-    void setTiltPref(!loadTamagoPrefs(storage).tilt).then(paintTama);
-  };
-  tamaPanel.append(
-    tamaBtn, hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대. 컴퓨터는 B 키.'),
-    tiltBtn, hintLine('키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 켤 때 움직임 허용을 묻는다.'),
-  );
-  paintTama();
-
-  // 전체 화면 (GDD 46장): 지원하지 않는 브라우저(아이폰 사파리 등)에서는 패널 자체를 만들지 않는다. 표시는 실제 상태(fullscreenchange)를 따라간다
-  const fsPanel = el('section', 'bha-panel');
-  fsPanel.dataset.panel = 'fullscreen';
-  fsPanel.append(el('h2', 'bha-panel__title', '전체 화면'));
-  const fsSw = switchRow('전체 화면');
-  const fsBtn = fsSw.b;
-  fsBtn.dataset.set = 'fullscreen';
-  const fsStartSw = switchRow('시작할 때 전체 화면');
-  const fsStartBtn = fsStartSw.b;
-  fsStartBtn.dataset.set = 'fullscreen-start';
-  const paintFs = () => {
-    fsSw.paint(isFullscreen());
-    fsStartSw.paint(loadFullscreenStart(storage));
-  };
-  fsBtn.onclick = () => {
-    void toggleFullscreen().then(paintFs);
-  };
-  fsStartBtn.onclick = () => {
-    saveFullscreenStart(storage, !loadFullscreenStart(storage));
-    paintFs();
-  };
-  fsPanel.append(fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다.'), fsStartBtn, hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
-  paintFs();
-  const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];
-
-  const panelOf = (...n: Node[]) => {
-    const p = el('section', 'bha-panel');
-    p.append(...n);
-    return p;
-  };
-
   const reset = button({
     label: '기본값 복원', icon: 'i-loop',
     onClick: () => {
       try {
-        storage?.removeItem(LEGACY_POINTER_SETTINGS_KEY);
+        storage?.removeItem?.(LEGACY_POINTER_SETTINGS_KEY);
       } catch {
         /* 저장소를 못 쓰면 지울 것도 없다 */
       }
-      resetFxSettings(storage);
-      try {
-        storage?.removeItem(BGM_SETTINGS_KEY);
-      } catch {
-        /* 무시 */
-      }
-      bgm().setSettings(loadBgmSettings(storage));
-      applyCalmMode(storage);
-      settingsView(root, onHelp, true, onBackup, onClose);
+      common = defaultsOf(common);
+      previewBgm(common.bgmVolume);
+      note = '기본값으로 바꿨다 — [저장]하면 반영된다.';
+      paintAll();
     },
   });
-  // 아래 고정 버튼 줄은 없앴다 (#77: 왼쪽 열 내용을 가렸다) — 기본값 복원·도움말·세이브 백업은 오른쪽 열 맨 아래 '기타' 칸
+  paints.push(() => { reset.disabled = scope !== 'common'; });
   const etc: Node[] = [reset];
-  if (onHelp) etc.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
-  if (onBackup) etc.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
+  if (o.onHelp) etc.push(button({ label: '도움말', icon: 'i-help', onClick: o.onHelp }));
+  if (o.onBackup) etc.push(button({ label: '세이브 백업', icon: 'i-check', onClick: o.onBackup }));
   const etcRow = el('div', 'bha-settings__etc');
   etcRow.append(...etc);
-  // 정보 (#2·#10): 자세한 버전 줄은 시작 화면 대신 여기. 임시 수치가 있다는 한 줄 (개발용 문구 대신)
-  const info = panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint', versionLabel()), el('p', 'bha-faint', '임시 수치 있음 — 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes());
-  // 열 균형 (#77): 왼쪽 = 전투 효과·음악, 오른쪽 = 화면·기기·조작·정보
-  lcdPage(root, { cls: 'bha-settings-page' }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '이 기기에만 저장(게임 세이브 제외)', aside: onClose ? [closeX(onClose)] : undefined }), [fxPanel, musicPanel], [...fsPanels, tamaPanel, sizePanel, installPanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), info, panelOf(el('h2', 'bha-panel__title', '기타'), etcRow)]);
+  const etcPanel = panel('기타', etcRow, hintLine('기본값 복원 = 전투 효과·소리·음악 목록(공통). 도움말에서 안내를 다시 볼 수 있다.'));
+  const slotPanels: HTMLElement[] = [];
+  if (host) {
+    const clearBtn = button({ label: '이 슬롯 설정 지우기', icon: 'i-close', variant: 'danger', onClick: () => askClearSlot() });
+    clearBtn.dataset.set = 'slot-clear';
+    const slotNote = el('p', 'bha-faint');
+    paints.push(() => {
+      const has = parseSlotSettings(slotSaved) !== null || parseSlotSettings(slot) !== null;
+      clearBtn.disabled = !has;
+      slotNote.textContent = has ? `${host.label}에만 쓰는 설정이 있다. 지우면 다시 공통 설정을 따른다.` : `${host.label}은 공통 설정을 따른다. 머리의 [이 슬롯]에서 바꾸고 저장하면 이 슬롯에서만 우선한다.`;
+    });
+    slotPanels.push(panel('슬롯 설정', clearBtn, slotNote));
+  }
+
+  const TAB_BODY: Record<SettingsTab, HTMLElement[]> = {
+    screen: [...fsPanels, tamaPanel, sizePanel, keyPanel],
+    sound: [soundPanel, ...musicNodes],
+    battle: [fxPanel, ctlPanel],
+    etc: [info, installPanel, etcPanel, ...slotPanels],
+  };
+
+  // ── 머리: [공통]/[이 슬롯] 토글 · [저장] · (레이어면) X ──
+  const saveBtn = button({ label: '저장', icon: 'i-check', onClick: () => { doSave(); } });
+  saveBtn.classList.add('bha-settings__save');
+  saveBtn.dataset.set = 'save';
+  const aside: HTMLElement[] = [];
+  let scopeBtns: { id: 'common' | 'slot'; b: HTMLButtonElement }[] = [];
+  if (host) {
+    const seg = el('div', 'bha-seg bha-seg--sm bha-settings__scopes');
+    seg.setAttribute('role', 'tablist');
+    seg.setAttribute('aria-label', '설정 범위');
+    scopeBtns = (['common', 'slot'] as const).map((id) => {
+      const b = el('button', 'bha-seg__item');
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.dataset.scope = id;
+      b.onclick = () => {
+        scope = id;
+        note = '';
+        paintAll();
+      };
+      seg.append(b);
+      return { id, b };
+    });
+    aside.push(seg);
+  }
+  aside.push(saveBtn);
+  if (o.onClose) aside.push(closeX(o.onClose));
+  const sub = el('span', '');
+  const head = lcdHead({ title: '설정', sub, aside });
+
+  const tabsBox = el('div', 'bha-settings__tabs');
+  const grid = el('div', 'bha-settings__grid');
+  const pickTab = (id: SettingsTab) => {
+    tab = id;
+    renderTab();
+  };
+  const renderTab = () => {
+    tabsBox.replaceChildren(categoryTabs(SETTINGS_TABS.map((t) => ({ ...t })), tab, (id) => pickTab(id as SettingsTab), '설정 분류'));
+    grid.replaceChildren(...TAB_BODY[tab]);
+    grid.dataset.tab = tab;
+    grid.scrollTop = 0;
+  };
+
+  function paintMeta(): void {
+    const dirty = isDirty();
+    saveBtn.disabled = !dirty;
+    saveBtn.classList.toggle('bha-btn--primary', dirty);
+    saveBtn.classList.toggle('is-dirty', dirty);
+    for (const { id, b } of scopeBtns) {
+      const on = id === scope;
+      b.setAttribute('aria-selected', String(on));
+      b.replaceChildren(...(on ? [icon('i-check')] : []), id === 'common' ? '공통' : '이 슬롯');
+    }
+    const where = scope === 'slot' && host ? `${host.label} 설정 — 이 슬롯에서만 우선` : host ? '공통 설정 — 슬롯 설정이 없는 항목에 쓴다' : '공통 설정 — 모든 슬롯에 쓴다';
+    sub.textContent = note || (dirty ? `${where} · 저장 안 됨` : where);
+  }
+  function paintAll(): void {
+    for (const p of paints) p();
+    paintSize();
+    paintMeta();
+  }
+
+  function doSave(): void {
+    if (!isDirty()) return;
+    const tiltChanged = commonSaved.tilt !== common.tilt;
+    if (commonDirty()) writeCommon(storage, commonSaved, common);
+    if (host && slotDirty()) {
+      const s = parseSlotSettings(slot);
+      host.write(s);
+      setActiveSlotSettings(s);
+    }
+    commonSaved = structuredClone(common);
+    slotSaved = { ...slot };
+    applySettingsNow(storage);
+    if (tiltChanged) {
+      // 기울기는 켤 때 움직임 허용을 묻는다(아이폰). 못 받으면 꺼진 채로
+      void setTiltPref(common.tilt).then((ok) => {
+        if (common.tilt && !ok) {
+          common.tilt = commonSaved.tilt = false;
+          paintAll();
+        }
+      });
+    }
+    note = '저장했다.';
+    paintAll();
+  }
+  function discard(): void {
+    common = structuredClone(commonSaved);
+    slot = { ...slotSaved };
+    applySettingsNow(storage);
+    paintAll();
+  }
+  let asking = false;
+  function requestClose(then: () => void): void {
+    if (asking) return;
+    if (!isDirty()) return then();
+    asking = true;
+    confirmDialog({
+      title: '바꾼 설정을 저장할까요?',
+      body: '저장하지 않으면 설정을 연 때 값으로 돌아간다.',
+      yes: '저장', no: '취소',
+      alt: { label: '저장 안 함', onClick: () => { asking = false; discard(); then(); } },
+      onYes: () => { asking = false; doSave(); then(); },
+      onNo: () => { asking = false; },
+    });
+  }
+  function askClearSlot(): void {
+    if (!host) return;
+    confirmDialog({
+      title: `${host.label} 설정을 지울까요?`,
+      body: '이 슬롯에만 쓰던 값을 지우고 다시 공통 설정을 따른다.',
+      yes: '지우기', no: '아니오', danger: true,
+      onYes: () => {
+        host.write(null);
+        setActiveSlotSettings(null);
+        slot = {};
+        slotSaved = {};
+        applySettingsNow(storage);
+        note = '슬롯 설정을 지웠다 — 공통 설정을 따른다.';
+        paintAll();
+      },
+    });
+  }
+
+  const page = lcdPage(root, { cls: 'bha-settings-page', cols: 'minmax(0, 1fr)' }, head, [tabsBox, grid], []);
+  page.app.dataset.screen = 'settings';
+  renderTab();
+  paintAll();
+
   // 화면 크기(키보드 단축키)·다마고치 모드·전체 화면이 밖에서 바뀌어도 문구가 따라간다. C.139 (GDD 88장 6): 이 화면이 끝나면(다음 화면이 그려지면) 한 번에 풀린다.
   // 전체 화면 미지원이면 패널도 구독도 없다
   const signal = screenSignal(root);
   const listen = (type: string, paint: () => void) => window.addEventListener(type, paint, { signal });
-  listen(VIEW_SCALE_EVENT, paintSize);
-  listen(TAMAGO_EVENT, paintTama);
+  /** 밖(단축키 B·+/−)에서 바뀐 값은 아직 고치지 않은 줄이면 따라간다 */
+  const syncOutside = () => {
+    const now = readCommonValues(storage);
+    for (const k of ['tamago', 'tilt', 'viewScale'] as const) {
+      if (common[k] === commonSaved[k]) (common as unknown as Record<string, unknown>)[k] = now[k];
+      (commonSaved as unknown as Record<string, unknown>)[k] = now[k];
+    }
+    paintAll();
+  };
+  listen(VIEW_SCALE_EVENT, syncOutside);
+  listen(TAMAGO_EVENT, syncOutside);
   if (fsPanels.length > 0) listen(FULLSCREEN_EVENT, paintFs);
+  if (listRows.length > 0 && typeof setInterval === 'function') {
+    // 곡이 저절로 넘어가면 이름·표시를 따라간다 (화면이 끝나면 멈춘다)
+    const poll = setInterval(() => { if (nowLine.isConnected) paintMusic(); }, 1000);
+    signal.addEventListener('abort', () => clearInterval(poll));
+  }
+  // 탭 좌우 오가기: ◀▶ (막대에 있을 때는 막대가 먼저 받는다). 확인 창이 떠 있으면 무시
+  window.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented || asking || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (!page.app.isConnected || getOverlayHost().querySelector('.bha-confirm')) return;
+    const at = SETTINGS_TABS.findIndex((t) => t.id === tab);
+    const next = SETTINGS_TABS[(at + (e.key === 'ArrowRight' ? 1 : -1) + SETTINGS_TABS.length) % SETTINGS_TABS.length]!;
+    e.preventDefault();
+    pickTab(next.id);
+  }, { signal });
+  // 화면으로 열렸을 때 뒤로(◀ 버튼·Esc·폰 뒤로가기): 바꾼 게 있으면 저장 확인 창이 먼저 (설정 화면 안에서 가로챈다 — 앱 뒤로 처리는 그대로)
+  if (!o.onClose) {
+    const unhook = registerCancelHook((top) => {
+      if (!page.app.isConnected) return 'gone';
+      if (top || asking || !isDirty()) return false;
+      requestClose(() => o.onBack?.());
+      return true;
+    }, { button: true });
+    signal.addEventListener('abort', unhook);
+  }
+
+  return {
+    requestClose,
+    get dirty() { return isDirty(); },
+  };
 }

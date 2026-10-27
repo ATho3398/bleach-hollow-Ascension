@@ -11,7 +11,7 @@ const mem = () => {
 
 describe('전투 효과 설정', () => {
   it('기본: 피해 숫자·진동·흔들림 켬, 효과음 끔', () => {
-    expect(defaultFxSettings()).toEqual({ damageNumbers: true, vibration: true, sound: false, shake: true });
+    expect(defaultFxSettings()).toEqual({ damageNumbers: true, vibration: true, sound: false, sfxVolume: 0, shake: true }); // C.178: 효과음 = 막대 0~100 (0 = 끔)
     expect(parseFxSettings(null)).toEqual(defaultFxSettings());
   });
   it('모션 줄이기면 흔들림 기본 꺼짐, 저장값이 있으면 그것을 따른다', () => {

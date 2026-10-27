@@ -4,10 +4,9 @@
 import { BGM_FILES, PLAYLIST, findBgmFile, type BgmTrack, type PlaylistTrack } from '../data/audio/bgm';
 import { showToast } from './bha/nest';
 import type { SettingsStorage } from './fxSettings';
+import { activeSlotSettings, clampVolume, type SlotSettings } from './settingsScope';
 
 export const BGM_SETTINGS_KEY = 'bha-bgm-settings';
-/** 음량 선택지 (설정 화면 버튼) */
-export const BGM_VOLUMES = [0.25, 0.5, 0.75, 1] as const;
 /** 페이드 길이(ms) */
 export const BGM_FADE_MS = 600;
 const STEP_MS = 50;
@@ -51,6 +50,22 @@ export function loadBgmSettings(storage?: SettingsStorage | null): BgmSettings {
   } catch {
     return defaultBgmSettings();
   }
+}
+
+/** 설정 화면 막대 값 0~100 (GDD 103장 3, C.178): 끔이면 0 */
+export function bgmBarOf(s: Pick<BgmSettings, 'on' | 'volume'>): number {
+  return s.on ? Math.round(s.volume * 100) : 0;
+}
+
+/** 막대 값을 켬/음량으로 (0 = 끔 — 음량은 그대로 둬서 다시 올릴 때 예전 값 근처에서 시작하지 않아도 된다) */
+export function withBgmBar(s: BgmSettings, bar: number): BgmSettings {
+  const v = clampVolume(bar) ?? 0;
+  return v === 0 ? { ...s, on: false } : { ...s, on: true, volume: v / 100 };
+}
+
+/** 공통 값 위에 슬롯 설정(배경음 막대)을 덮은 실제 값 */
+export function withSlotBgm(common: BgmSettings, slot: Readonly<SlotSettings> = activeSlotSettings()): BgmSettings {
+  return slot.bgmVolume === undefined ? common : withBgmBar(common, slot.bgmVolume);
 }
 
 export function saveBgmSettings(storage: SettingsStorage | null | undefined, s: BgmSettings): BgmSettings {
@@ -323,9 +338,10 @@ export function bgm(): BgmPlayer {
   if (shared) return shared;
   const store = storageOrNull();
   const p = createBgmPlayer({
-    settings: loadBgmSettings(store),
+    settings: withSlotBgm(loadBgmSettings(store)),
     playlist: PLAYLIST,
-    persist: (s) => { saveBgmSettings(store, s); },
+    // 곡 넘김·반복·제외만 공통 저장에 쓴다 — 켬/음량은 설정 화면 [저장]만 (슬롯 설정·미리 듣기 값이 공통에 새지 않게, C.178)
+    persist: (s) => { const c = loadBgmSettings(store); saveBgmSettings(store, { ...c, track: s.track, repeat: s.repeat, excluded: s.excluded }); },
     onTrack: (t) => { try { showToast({ eyebrow: '브금', title: t.name }); } catch { /* 알림은 부가 */ } },
   });
   shared = p;

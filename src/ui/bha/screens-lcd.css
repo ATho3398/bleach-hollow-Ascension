@@ -158,6 +158,19 @@
 .bha-switch.is-checked .bha-switch__knob { transform: translateX(16px); background: var(--bha-bg-0); }
 .bha-switch:active { background: var(--bha-bg-3); }
 .bha-settings__hint { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* C.178 (GDD 103장): 탭 4개 + 패널 두 칸 격자 · 줄마다 '슬롯' 표시 · 머리 [공통]/[이 슬롯] · [저장](바뀐 게 있으면 강조 + 점) */
+.bha-settings-page .bha-lcdpage__col { gap: var(--bha-sp-3); }
+.bha-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-3); align-items: start; min-height: 0; overflow-y: auto; }
+.bha-settings__grid > .bha-panel { min-width: 0; }
+.bha-settings__scope { flex: none; margin-left: auto; }
+.bha-settings__barval { display: inline-flex; align-items: baseline; gap: var(--bha-sp-2); }
+.bha-settings__bar .bha-slider__value { min-width: 3ch; text-align: right; }
+.bha-settings__bar .bha-slider__input:disabled { opacity: 0.5; }
+.bha-settings__choices { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
+.bha-settings__scopes .bha-seg__item { display: inline-flex; align-items: center; gap: var(--bha-sp-1); }
+.bha-settings__save { position: relative; }
+.bha-settings__save.is-dirty::after { content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: var(--bha-r-pill); background: var(--bha-danger); }
+.bha-switch:disabled { opacity: 0.55; }
 .bha-settings__etc { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
 .bha-slider__row { display: grid; grid-template-columns: var(--bha-touch) minmax(0, 1fr) var(--bha-touch); align-items: center; gap: var(--bha-sp-3); }
 .bha-slider__row .bha-btn--icon { padding: 0; }
@@ -166,6 +179,8 @@
 .bha-bgmlist { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
 .bha-bgmlist__ctl { display: flex; gap: var(--bha-sp-2); }
 .bha-bgmlist__ctl .bha-btn { flex: 1 1 0; min-width: 0; }
+.bha-bgmlist__ctl .bha-switch { flex: 1 1 auto; min-width: 0; }
+.bha-bgmlist__ctl .bha-btn--small { flex: none; white-space: nowrap; } /* C.178: 반복 줄이 스위치라 [다음 곡]은 글자 폭만 */
 .bha-bgmlist__row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--bha-sp-2); padding: var(--bha-sp-1) var(--bha-sp-2); border-radius: var(--bha-r-md); }
 .bha-bgmlist__row.is-on { background: var(--bha-accent-soft); }
 .bha-bgmlist__row.is-off .bha-bgmlist__name { opacity: 0.45; }

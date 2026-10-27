@@ -1,7 +1,7 @@
 // 전투 효과 (Q-2, C.30): 사건 → 신호(cue) → 진동·효과음. 엔진·수치와 무관한 화면 효과다.
 // 한 프레임에 신호가 여러 개 나와도 가장 센 것 하나만 낸다(진동은 새 패턴이 앞 패턴을 끊고, 효과음이 겹치면 시끄럽다).
 import type { CombatEvent } from '../engine/combat';
-import type { FxSettings } from './fxSettings';
+import { SFX_LEGACY_VOLUME, type FxSettings } from './fxSettings';
 
 export type FxCue = 'block' | 'chain2' | 'chain3' | 'guard' | 'hurt' | 'cast' | 'heavyhit' | 'special' | 'win' | 'lose';
 
@@ -126,7 +126,7 @@ export function hookAudioUnlock(): void {
   for (const t of ['pointerdown', 'touchend', 'keydown', 'click'] as const) window.addEventListener(t, open, true);
 }
 
-function playTones(cue: FxCue): void {
+function playTones(cue: FxCue, volume: number): void {
   if (!unlocked || !ctx) return;
   try {
     if (ctx.state === 'suspended') void ctx.resume();
@@ -138,7 +138,7 @@ function playTones(cue: FxCue): void {
       const start = t0 + tn.at;
       osc.frequency.setValueAtTime(tn.f, start);
       if (tn.to) osc.frequency.exponentialRampToValueAtTime(tn.to, start + tn.dur);
-      const peak = MASTER_VOLUME * tn.vol;
+      const peak = MASTER_VOLUME * tn.vol * (volume / SFX_LEGACY_VOLUME);
       gain.gain.setValueAtTime(0.0001, start);
       gain.gain.linearRampToValueAtTime(peak, start + 0.006);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + tn.dur);
@@ -159,8 +159,9 @@ function vibrate(cue: FxCue): void {
   }
 }
 
-/** 설정에 따라 진동·효과음을 낸다 */
-export function emitFeedback(cue: FxCue, s: Pick<FxSettings, 'vibration' | 'sound'>): void {
+/** 설정에 따라 진동·효과음을 낸다. 효과음 크기 = sfxVolume(0~100, 50 = 예전 크기, C.178) */
+export function emitFeedback(cue: FxCue, s: Pick<FxSettings, 'vibration' | 'sound'> & { sfxVolume?: number }): void {
   if (s.vibration) vibrate(cue);
-  if (s.sound) playTones(cue);
+  const vol = s.sfxVolume ?? SFX_LEGACY_VOLUME;
+  if (s.sound && vol > 0) playTones(cue, vol);
 }
