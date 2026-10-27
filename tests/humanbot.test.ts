@@ -16,9 +16,9 @@ const two = build('t-thunder-c', 't-fire-b'); // C.136: 속성 막기 특성 삭
 const one = build('t-thunder-c');
 
 describe('사람형 봇', () => {
-  it('임시 설정값: 반응 0.5~1.2초, 막기 성공 70%, 체인 정리 50%', () => {
+  it('임시 설정값: 반응 0.5~1.2초, 막기 성공 100%(C.174, GDD 101장 추가 결정 3 — 옛 70%), 체인 정리 50%', () => {
     expect(HUMAN_BOT_DEFAULTS.reactionSeconds).toEqual([0.5, 1.2]);
-    expect(HUMAN_BOT_DEFAULTS.guardSuccess).toBe(0.7);
+    expect(HUMAN_BOT_DEFAULTS.guardSuccess).toBe(1);
     expect(HUMAN_BOT_DEFAULTS.joinChance).toBe(0.5);
   });
 
@@ -54,36 +54,38 @@ describe('사람형 봇', () => {
     expect(pg.every((g) => g % 5 === 0)).toBe(true);
   });
 
-  it('막기 성공률은 약 70%다: 강공격 착탄 중 막은 비율이 완벽형(거의 100%)보다 확실히 낮다', () => {
-    let hits = 0;
-    let guarded = 0;
-    let phits = 0;
-    let pguarded = 0;
-    for (let seed = 1; seed <= 60; seed++) {
-      const mkS = () => {
+  it('막기 블록이 있으면 강공격은 다 막는다(C.174, GDD 101장 추가 결정 3): 막은 비율이 완벽형과 비슷하고, guardSuccess 0.7 이면 확실히 낮다', () => {
+    /** 사람형 봇(guardSuccess 기본·0.7)·완벽형 봇: 강공격 착탄 수·막은 수·막기 블록이 바에 있었는데 맞은 수 */
+    const run = (kind: 'h' | 'h07' | 'p') => {
+      let hits = 0, guarded = 0, missedWithGuard = 0;
+      for (let seed = 1; seed <= 60; seed++) {
         // C.136 (GDD 84장 7번): 막기 속성 특성이 없어져 막기는 기본 막기 고정 몫뿐 — 봇의 막기 판단만 보려고 이 시험은 막기 몫을 키운다
         const guardy = { ...two, blockPool: { ...BALANCE.provisional.blockPool, roleShare: { guard: 0.35, heal: 0.05 } } } as Partial<CombatParams>;
         const s = createCombat(seed, { enemy: { ...heavy, hpInAttacks: 80 }, params: guardy }); // C.118: 적 체력 배율 0.5 라 강공격 착탄 수(100 이상)를 유지하려고 40 → 80
         s.player.hp = s.player.maxHp = 1e9;
-        return s;
-      };
-      for (const [play, add] of [[playCombatHuman, 'h'], [playCombatBot, 'p']] as const) {
-        const s = mkS();
         const push = s.events.push.bind(s.events);
         s.events.push = (...e) => {
-          for (const x of e) if (x.kind === 'heavy-hit') (add === 'h' ? (hits++, x.guarded && guarded++) : (phits++, x.guarded && pguarded++));
+          for (const x of e) {
+            if (x.kind !== 'heavy-hit') continue;
+            hits++;
+            if (x.guarded) guarded++;
+            else if (s.tray.some((b) => b.kind === 'skill' && b.traitId === 'basic-guard')) missedWithGuard++;
+          }
           return push(...e);
         };
-        play(s);
+        if (kind === 'p') playCombatBot(s);
+        else playCombatHuman(s, kind === 'h07' ? { guardSuccess: 0.7 } : {});
       }
-    }
-    expect(hits).toBeGreaterThan(100);
-    const hr = guarded / hits;
-    const pr = pguarded / phits;
-    expect(pr).toBeGreaterThan(0.75); // C.136 (GDD 84장 2번): 막기 동안 블록 생성이 멈춰 연속 강공격 사이에 새 막기 블록이 덜 생긴다 — 0.9 → 0.75
-    expect(hr).toBeLessThan(pr - 0.05);
-    expect(hr).toBeGreaterThan(0.55);
-    expect(hr).toBeLessThan(0.85);
+      return { hits, rate: guarded / hits, missedWithGuard };
+    };
+    const h = run('h');
+    const h07 = run('h07');
+    const p = run('p');
+    expect(h.hits).toBeGreaterThan(100);
+    expect(p.rate).toBeGreaterThan(0.75); // C.136 (GDD 84장 2번): 막기 동안 블록 생성이 멈춰 연속 강공격 사이에 새 막기 블록이 덜 생긴다 — 0.9 → 0.75
+    expect(h.missedWithGuard).toBe(0); // 맞은 강공격은 모두 막기 블록이 없을 때
+    expect(h.rate).toBeGreaterThan(p.rate - 0.1);
+    expect(h07.rate).toBeLessThan(h.rate - 0.1);
   });
 
   it('체인 정리 확률이 높을수록 같은 블록을 붙여 체인3이 더 자주 나온다 (순서를 바꾸지 않고 끼어 있는 블록을 먼저 쓴다)', () => {

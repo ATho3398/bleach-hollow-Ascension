@@ -262,13 +262,13 @@ describe('84장 1·10번 원정 칸 시간 ½ · 광기 자연 감소 느리게'
     expect(BALANCE.expedition.secondsPerTile).toBe(1.25);
   });
 
-  it('광기 하락: 휴식 15 → 10 · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 몫은 C.173 101장에서 0.03)', () => {
+  it('광기 하락: 휴식 15 → 10 · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 몫은 C.173 101장에서 0.03, C.174 에서 0.02)', () => {
     expect(RX.restRelief).toBe(10);
     expect(RX.releaseRelief).toBe(1);
     expect(RX.nestActions.feed.risk).toBe(-3);
     expect(RX.nestActions.sleep.risk).toBe(-10);
     expect(RX.nestActions.pet.risk).toBe(-10);
-    expect(CX.voidChance).toBe(0.03);
+    expect(CX.voidChance).toBe(0.02);
   });
 
   it('전투 화면: 막기 게이지에 "공격·생성 멈춤", 회복 뒤 공격력 감소 게이지', () => {

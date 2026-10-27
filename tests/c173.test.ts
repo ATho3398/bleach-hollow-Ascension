@@ -20,8 +20,8 @@ function playOut(s: CombatState): CombatEvent[] {
 }
 
 describe('C.173 공허 블록 (GDD 101장)', () => {
-  it('수치: 기본 몫 3%(101장 10% → balance 가드) · 상한 50% · 피해 1회분 · 히든 8회분 · 별도 공허 시계 없음', () => {
-    expect(CX.voidChance).toBe(0.03);
+  it('수치: 기본 몫 2%(101장 10% → balance 가드, C.173 3% · C.174 2%) · 상한 50% · 피해 1회분 · 히든 8회분 · 별도 공허 시계 없음', () => {
+    expect(CX.voidChance).toBe(0.02);
     expect(CX.voidChanceMax).toBe(0.5);
     expect(CX.voidPowerInAttacks).toBe(1);
     expect(CX.voidPowerHiddenInAttacks).toBe(8);

@@ -179,7 +179,7 @@ export function playCombatBot(s: CombatState, opt: BotOptions = {}): CombatState
 export interface HumanBotOptions extends BotOptions {
   /** 입력 사이 간격(초): 매번 이 범위에서 무작위. 강공격 예고를 본 뒤 막기까지의 반응 지연도 같은 범위 */
   reactionSeconds?: [number, number];
-  /** 강공격(시전 하나)을 막으려는 시도가 성공할 확률. 실패하면 그 시전은 막기를 쓰지 않는다 */
+  /** 강공격(시전 하나)을 막으려는 시도가 성공할 확률. 실패하면 그 시전은 막기를 쓰지 않는다. 기본 1 = 막기 블록이 바에 있으면 다 막음 (GDD 101장 추가 결정 3, C.174 — 옛 0.7) */
   guardSuccess?: number;
   /** 붙일 수 있을 때 실제로 같은 블록을 붙이는(체인 정리) 확률. 입력 한 번마다 굴린다 */
   joinChance?: number;
@@ -192,7 +192,7 @@ function guardWindowTicks(s: CombatState): number {
   return ticksOf(s.params, s.params.guardSecondsByChain[0] ?? 0);
 }
 
-export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, number], guardSuccess: 0.7, joinChance: 0.5, stanceAware: 0.5 };
+export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, number], guardSuccess: 1, joinChance: 0.5, stanceAware: 0.5 };
 
 /** 사람형 봇으로 전투를 끝까지 돌린다: 반응 지연(무작위), 막기 성공률, 체인 정리 확률. 무작위는 전투 시드에서 따로 뽑아 전투 rng 를 건드리지 않는다 */
 export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): CombatState {
@@ -208,7 +208,9 @@ export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): Comb
   let react: { at: number; ok: boolean } | null = null;
   while (s.status === 'playing') {
     if (s.events.some((e) => e.kind === 'heavy-cast')) {
-      react = { at: s.tick + delay(), ok: nextFloat(rng) < guardSuccess };
+      // 반응 지연은 그대로, 단 착탄 전에는 누른다 (GDD 101장 추가 결정 3: 막기 블록이 바에 있으면 강공격은 막는 기준)
+      const impact = s.enemy.cast ? s.tick + s.enemy.cast.ticks - 1 : Infinity;
+      react = { at: Math.min(s.tick + delay(), impact), ok: nextFloat(rng) < guardSuccess };
       nextAct = Math.min(nextAct, react.at);
     }
     // 막기 창 (GDD 101장): 예고를 본 뒤 착탄이 막기 지속 안에 들어오는 틱에 한 번 더 손을 쓴다
