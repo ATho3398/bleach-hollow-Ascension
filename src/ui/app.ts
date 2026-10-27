@@ -41,7 +41,7 @@ import { speciesView, startView } from './startView';
 import { enterFullscreenOnStart, watchFullscreen } from './fullscreen';
 import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
-import { setTitleRequest, signalHold } from './bha/hold';
+import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
@@ -126,16 +126,12 @@ export function startApp(host: HTMLElement): void {
   let activeExp: ExpeditionState | null = null;
   let confirmingTitle = false;
 
-  // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 취소 버튼 = 화면 스택 한 단계 뒤로, 더 갈 곳이 없으면 처음 화면 복귀 확인 (Q-3)
+  // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 뒤로 = 열린 창·레이어 닫기(device) → 화면 스택 한 단계 뒤로 → 더 갈 곳이 없으면(방·잠긴 화면) 아무것도 안 함.
+  // 시작 화면 복귀 확인은 더보기 [처음 화면]으로만 (GDD 104장 7, C.176 — 예전엔 갈 곳이 없으면 처음 화면 확인을 띄웠다)
   const nav = new ScreenStack();
   const dev = createDevice(host, {
-    onCancel: () => {
-      if (nav.back()) return true;
-      if (nav.top?.id === 'title') return false;
-      askReturnToTitle();
-      return true;
-    },
-    canCancel: () => nav.top !== undefined && nav.top.id !== 'title',
+    onCancel: () => nav.back(),
+    canCancel: () => nav.canBack,
     onRotate: (rotated) => rotateEvent(rotated ? 'portrait' : 'landscape'),
   });
   const root = dev.view;
@@ -554,7 +550,7 @@ export function startApp(host: HTMLElement): void {
     }
   }
 
-  // ── 처음 화면으로 돌아가기 (Q-3): 뒤로가기 → 방에서 확인 → 저장 → 시작 화면 ──
+  // ── 처음 화면으로 돌아가기 (Q-3): 더보기 [처음 화면] → 확인 → 저장 → 시작 화면 (C.176: 뒤로는 여기로 오지 않는다) ──
   function askReturnToTitle(): void {
     if (confirmingTitle || nav.top?.id === 'title') return;
     confirmingTitle = true;
@@ -586,7 +582,6 @@ export function startApp(host: HTMLElement): void {
       // history 를 못 쓰는 환경은 버튼·Esc 로만 돌아간다
     }
   }
-  setTitleRequest(askReturnToTitle);
   window.addEventListener('popstate', () => {
     if (nav.top === undefined || nav.top.id === 'title') return;
     dev.cancel();

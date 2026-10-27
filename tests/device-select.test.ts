@@ -65,6 +65,29 @@ describe('ScreenStack', () => {
     st.reset(mk('room', log));
     expect(st.size).toBe(1);
   });
+  it('canBack: 홈 하나뿐이거나 맨 위가 locked 면 false (C.176 — 그때 뒤로는 아무것도 안 한다)', () => {
+    const log: string[] = [];
+    const st = new ScreenStack();
+    expect(st.canBack).toBe(false);
+    st.reset(mk('room', log));
+    expect(st.canBack).toBe(false);
+    st.push(mk('dex', log));
+    expect(st.canBack).toBe(true);
+    st.replace(mk('walk', log, true));
+    expect(st.canBack).toBe(false);
+  });
+});
+
+// C.176 (GDD 104장 7): 뒤로(◀·Esc·폰 뒤로)는 처음 화면 확인을 띄우지 않는다 — 시작 화면은 더보기 [처음 화면]으로만
+describe('뒤로 = 처음 화면 회귀 방지', () => {
+  it('기기 onCancel 은 화면 스택 뒤로만 부르고, 튜토리얼 레이어도 처음 화면을 요청하지 않는다', async () => {
+    const { readFileSync } = await import('node:fs');
+    const app = readFileSync('src/ui/app.ts', 'utf8');
+    expect(app).toMatch(/onCancel: \(\) => nav\.back\(\),/);
+    const askCalls = app.match(/askReturnToTitle\b/g) ?? [];
+    expect(askCalls.length).toBe(2); // 정의 1 + 더보기 [처음 화면] onTitle 1
+    expect(readFileSync('src/ui/tutorialOverlay.ts', 'utf8')).not.toMatch(/requestTitle/);
+  });
 });
 
 describe('orderByRank (T-3: 머리 탭·버튼은 나머지 뒤로)', () => {

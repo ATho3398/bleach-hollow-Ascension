@@ -13,10 +13,3 @@ export function onHold(fn: (s: HoldSignal) => void): () => void {
 export function signalHold(s: HoldSignal): void {
   for (const fn of [...listeners]) fn(s);
 }
-
-// 취소를 삼키는 레이어(튜토리얼)가 "처음 화면으로" 확인을 요청할 수 있게 하는 창구. 앱이 한 번 등록한다.
-let titleRequest: (() => void) | null = null;
-export const setTitleRequest = (fn: (() => void) | null): void => {
-  titleRequest = fn;
-};
-export const requestTitle = (): void => titleRequest?.();

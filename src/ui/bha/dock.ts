@@ -5,6 +5,7 @@ import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestActio
 import { foodEffect } from '../../engine/nest';
 import { button, el, icon, provisionalTag } from './dom';
 import { CLOSED, togglePanel, type DockPanel } from './dockLogic';
+import { registerCancelHook } from './shortcuts';
 
 export interface DockMenuItem {
   label: string;
@@ -166,6 +167,16 @@ export function createDock(o: DockOpts): Dock {
     fillTray();
     o.onItemsChange();
   }
+
+  // 뒤로(◀·Esc·폰 뒤로): 펼친 먹이·더보기 칸이 있으면 그것만 닫는다 (C.176, GDD 104장 7). 독이 화면에서 사라지면 등록을 지운다
+  let shown = false;
+  registerCancelHook((top) => {
+    if (root.isConnected) shown = true;
+    else return shown ? 'gone' : false;
+    if (top || panel === CLOSED) return false;
+    setPanel(CLOSED);
+    return true;
+  }, { button: true });
 
   return {
     root,

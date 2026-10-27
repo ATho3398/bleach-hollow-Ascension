@@ -37,7 +37,7 @@ import { confirmDialog } from './confirmDialog';
 import { registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
-import { registerShortcutHandlers } from './bha/shortcuts';
+import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
 import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { locoOf, setLoco } from './bha/loco';
@@ -621,6 +621,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     };
   };
   pauseBtn.onclick = () => setPaused(!paused);
+  // 뒤로(◀·Esc·폰 뒤로) = 일시정지 (C.176, GDD 104장 7: 잠긴 화면에서 처음 화면 확인 대신). 일시정지 창이 열리면 그 창의 뒤로 = 계속
+  registerCancelHook((top) => {
+    if (stopped) return 'gone';
+    if (top || paused || overlayOpen || s.status !== 'playing') return false;
+    setPaused(true);
+    return true;
+  }, { button: true });
   // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니오로 닫히면 우리가 멈춘 것만 풀어 준다
   let heldByApp = false;
   unhold = onHold((sig) => {

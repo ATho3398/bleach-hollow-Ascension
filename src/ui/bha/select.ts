@@ -64,6 +64,12 @@ export class ScreenStack {
     return true;
   }
 
+  /** 뒤로 갈 수 있는가: 홈 위에 쌓인 화면이 있고 맨 위가 locked 가 아니다 */
+  get canBack(): boolean {
+    const t = this.top;
+    return !!t && !t.locked && this.entries.length > 1;
+  }
+
   /** 한 단계 뒤로. 홈뿐이거나 맨 위가 locked 면 false */
   back(): boolean {
     const t = this.top;

@@ -6,7 +6,6 @@ import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
 import { linesBody } from './bha/lines';
-import { requestTitle } from './bha/hold';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
 import { placeCard, placeCardBox, unionRect, type Rect } from './helpLayout';
@@ -83,7 +82,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   layer.append(hole, card);
   const host = getOverlayHost();
   host.append(layer);
-  const unregister = registerLayer(layer, requestTitle); // 취소 = 처음 화면으로 돌아갈지 확인 (Q-3)
+  const unregister = registerLayer(layer, () => {}); // 뒤로 = 아무것도 안 함 — 튜토리얼은 [다음]·[건너뛰기]로만 닫는다 (C.176, GDD 104장 7)
 
   let practiceOn = false;
   let practiced = false;
