@@ -65,8 +65,8 @@ describe('C.170 대기 보상 진행 막대', () => {
 describe('C.170 원정 출발·걷기·일시정지·설정', () => {
   it('출발 화면: 페이지 스크롤 없음, [출발] 아래 고정 띠, 잠김이면 바둑판 없이 한 줄', () => {
     const css = read('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-lcd \.bha-app\.bha-plan \{[^}]*overflow: hidden;/);
-    expect(css).toContain('.bha-lcd .bha-plan > .bha-plan__go { grid-column: 1 / -1; grid-row: 10; }');
+    expect(css).toMatch(/\.bha-lcd \.bha-app\.bha-plan \{[^}]*overflow: hidden auto;/); // C.176: 세로 스크롤 (GDD 104장 9)
+    expect(css).toContain('.bha-lcd .bha-plan > .bha-plan__go { grid-column: 1 / -1; grid-row: 10; position: sticky; bottom: 0;');
     const pv = read('src/ui/planView.ts');
     expect(pv).toContain('const planner = h.tilesLocked ? null : roadPlanner(');
     expect(pv).toContain("'타일 고르기 → 빈 칸 누르기 · 놓은 칸 '");

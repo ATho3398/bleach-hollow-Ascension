@@ -120,7 +120,9 @@
 /* C.170 (GDD 100장 #3·#22~#24): 페이지 스크롤 없음 — 왼쪽 = 사냥터 설명·난이도·안내·길, 오른쪽 = 손패(또는 프리셋, 이것만 스크롤), 아래 = [출발] 고정 띠.
    배치판(.bha-road__wrap)은 display: contents 로 풀어 그 안의 길·손패가 이 격자의 칸이 된다 (끌어 놓기 범위는 DOM 그대로) */
 .bha-lcd .bha-app.bha-plan {
-  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow: hidden; padding: var(--bha-sp-3) var(--bha-sp-4);
+  /* C.176 (GDD 104장 9): overflow hidden 이라 LCD 가 낮으면(폰 주소창·작은 화면) 아래 [출발] 이 잘리고 손가락·휠 스크롤이 안 됐다 →
+     세로 스크롤 + [출발] 띠는 아래에 붙어(sticky) 늘 보인다. 기기 ▲▼ 이동은 device.move 의 scrollIntoView 가 그 칸을 보이게 한다 */
+  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow: hidden auto; overscroll-behavior: contain; padding: var(--bha-sp-3) var(--bha-sp-4) 0;
   display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto auto auto auto auto auto minmax(0, 1fr) auto;
   column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-2); align-content: stretch;
 }
@@ -139,7 +141,7 @@
 .bha-lcd .bha-plan .bha-road__hand:has(~ .bha-plan__sidetabs) { grid-row: 3 / 10; }
 .bha-lcd .bha-plan .bha-plan__side { overflow-y: auto; min-height: 0; }
 .bha-lcd .bha-plan .bha-road__hand[hidden], .bha-lcd .bha-plan .bha-plan__side[hidden] { display: none; }
-.bha-lcd .bha-plan > .bha-plan__go { grid-column: 1 / -1; grid-row: 10; }
+.bha-lcd .bha-plan > .bha-plan__go { grid-column: 1 / -1; grid-row: 10; position: sticky; bottom: 0; z-index: var(--bha-z-raised); padding: var(--bha-sp-2) 0 var(--bha-sp-3); background: var(--bha-bg-1); }
 .bha-plan__go .bha-btn { min-height: var(--bha-touch); }
 .bha-plan__presets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
 
@@ -190,7 +192,22 @@
 .bha-presets__title { font-size: var(--bha-fs-sm); }
 .bha-presets__note { flex: 1 1 100%; font-size: var(--bha-fs-xs); color: var(--bha-text-2); min-height: 1.2em; }
 .bha-presets__input { flex: 1 1 120px; min-width: 0; min-height: 36px; padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-sm); }
-.bha-presets__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--bha-sp-3); }
+/* C.176 (GDD 104장 8): 프리셋 칸 가로 칩 · 미리보기 한 줄 · 버튼 4개 한 줄 */
+.bha-presets__chips { display: flex; gap: var(--bha-sp-2); overflow-x: auto; scrollbar-width: none; padding: var(--bha-sp-1); }
+.bha-presets__chip {
+  flex: 1 1 0; min-width: 56px; max-width: 120px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: var(--bha-sp-1);
+  padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-pill); background: var(--bha-bg-2);
+  color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-xs); cursor: pointer; touch-action: manipulation;
+}
+.bha-presets__chip.is-empty { border-style: dashed; color: var(--bha-text-2); background: transparent; }
+.bha-presets__chip .bha-icon { width: 14px; height: 14px; }
+.bha-presets__chip.is-on { border: 2px solid var(--bha-focus); background: var(--bha-bg-3); }
+.bha-presets__chipname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-presets__view { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 36px; justify-content: center; }
+.bha-presets__view:has(.bha-presets__input) { flex-direction: row; align-items: center; }
+.bha-presets__sum { font-size: var(--bha-fs-xs); color: var(--bha-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-presets__acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-presets__acts > .bha-btn { min-width: 0; padding-inline: var(--bha-sp-2); white-space: nowrap; }
 .bha-presetcard { display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
 .bha-presetcard__top { display: flex; align-items: center; gap: var(--bha-sp-2); min-height: 36px; }
 .bha-presetcard__name { font-size: var(--bha-fs-sm); }
