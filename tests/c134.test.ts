@@ -166,8 +166,8 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
   });
 
   it('세이브: 형식 46(C.175) · 문턱 같이, 옛 해방 칸 필드는 지운다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(47);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(47);
+    expect(SAVE_FORMAT_VERSION).toBe(48);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(48);
     const s = newSaveData('hollow', 1);
     expect('liberation' in s.build).toBe(false);
     const raw = JSON.parse(JSON.stringify(s));

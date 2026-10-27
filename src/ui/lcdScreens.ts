@@ -6,10 +6,10 @@ import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
 import { canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
-import { choosePet, enhanceGearItem, equipGearItem, equipInventoryItem, gearLineText, gearName, gearSlotName, gearSpecialText, gearStatText, inventoryOf, petAffinityText, sellGearEntry, unequipGearItem, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
-import { GEAR_GRADE_NAMES, GEAR_KIND_ICONS, GEAR_SLOT_KIND, GEAR_SLOTS, slotsForKind } from '../data/gear';
-import { enhanceCost, equippedSlotOf, findGear, gearCarry, sellGold } from '../engine/gear';
-import { confirmDialog } from './confirmDialog';
+import { choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { slotsForKind } from '../data/gear';
+import { gearCarry } from '../engine/gear';
+import { equipTitle, gearArt, openGear } from './equipView';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
 import { categoryName, cosmeticToken, getCosmetic, getGoldItem, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
@@ -62,6 +62,8 @@ export interface CareHandlers {
   onDex: () => void;
   onHelp: () => void;
   onRebirth: () => void;
+  /** 장비 화면 (GDD 108장 1번): 장착 칸 대신 바로가기 한 줄 */
+  onGear: () => void;
 }
 
 export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, hd: CareHandlers): void {
@@ -162,8 +164,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   evoPanel.append(h('div', 'bha-row', ''));
   const evoBtns = evoPanel.lastElementChild!;
   evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
-  // GDD 100장 #83·84: 장비 칸을 왼쪽 상태 바로 아래로 올린다(첫 선택 = 왼쪽 위 장비 칸), 오른쪽 능력치는 2열(CSS)이라 진화 정보까지 짧다
-  const gear = gearPanel(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
+  // GDD 108장 1번 (C.179): 장착 5칸은 장비 화면으로 옮기고, 그 자리(상태 바로 아래)에 바로가기 한 줄 + 장비 합산 숫자만
+  const gear = gearShortcut(faction, save, hd.onGear);
   lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, explain, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
@@ -236,7 +238,7 @@ const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab
 
 /** 상자(보관함): 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일(왼쪽 설명·배치 프리셋 / 오른쪽 가진 타일 — 덱 없음, GDD 85장 11번) · 물건(카테고리별 보관품, 쓰기·끼기 — GDD 86장 4·5번).
  *  C.140 최소 화면 — 카드형 UI 는 C.141 */
-export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void): void {
+export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void, onGear?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
 
   // 위쪽 탭 [슬롯 · 타일 · 물건 · 펫] (C.149, 94장 A-6): 물건 탭의 분류 탭과 같은 방식. 타일·펫에는 가진 수를 같이 보인다
@@ -272,7 +274,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
         persist();
         onWear?.();
         fill();
-      }, chestUi.tab === 'pet');
+      }, chestUi.tab === 'pet', onGear);
       page.left.replaceChildren(l);
       page.right.replaceChildren(r);
       return;
@@ -382,11 +384,12 @@ export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'>): string
   }
 }
 
-function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, petOnly = false): [HTMLElement, HTMLElement] {
+function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, petOnly = false, onGear?: () => void): [HTMLElement, HTMLElement] {
   // 펫은 위쪽 '펫' 탭이 따로 보인다 (C.149): 물건 탭의 분류에는 없다
   // 물건 분류에서 '타일'은 뺀다 — 위쪽 '타일' 탭과 같은 것이 두 곳에 있었다 (GDD 100장 #56)
   const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly && c !== 'tile');
-  if (!cats.includes(itemsUi.cat)) itemsUi.cat = cats[0]!;
+  // 장비 탭은 장비 화면으로 옮겼다 (GDD 108장 1번, C.179): 탭은 남기고 누르면 장비 화면으로 간다
+  if (!cats.includes(itemsUi.cat) || itemsUi.cat === 'equipment') itemsUi.cat = cats[0]!;
   const all = inventoryOf(save, faction);
   // 스킨: 옛 기기 껍데기 색·견본·시험 기기는 빼고(GDD 99장 3, C.163), '기기' 하위 탭은 기본 + 가진 정식 기기 카드(누르면 장착)
   const listed = (e: InventoryEntry) => e.category !== 'skin' || skinListed(getCosmetic(e.id));
@@ -394,7 +397,11 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   // 탭 숫자 = 그 탭의 카드(종류) 수 (C.146, 사용자 "i5": 이전에는 음식은 개수 합·스킨은 종류 수라 기준이 달랐다). 개수는 카드의 ×n
   const tabs = categoryTabs(cats.map((c) => ({
     id: c, label: ITEM_CATEGORY_NAMES[c], count: all.filter((e) => e.category === c && listed(e)).length,
-  })), itemsUi.cat, (id) => { itemsUi.cat = id as ItemCategory; changed(); }, '보관함 분류');
+  })), itemsUi.cat, (id) => {
+    if (id === 'equipment' && onGear) return onGear();
+    itemsUi.cat = id as ItemCategory;
+    changed();
+  }, '보관함 분류');
   const artOf = (e: InventoryEntry): HTMLElement => {
     // 장비 (GDD 91장 8번): 그림이 없으니 종류 아이콘 + 등급 색
     if (e.gear) return gearArt(e.gear.kind, e.gear.grade);
@@ -439,103 +446,19 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   return [box, h('div')];
 }
 
-/** 장비 그림: 종류 아이콘 + 등급 색 (그림 파일은 나중 — GDD 91장 8번) */
-function gearArt(kind: keyof typeof GEAR_KIND_ICONS, grade: string): HTMLElement {
-  const a = iconArt(GEAR_KIND_ICONS[kind]);
-  a.classList.add(`is-grade-${grade}`);
-  return a;
-}
-
-/** 장비 상세 창 (GDD 91장 5·6번): 능력치·특수 효과·다음 강화 미리보기 + [장착](장신구는 칸 둘)/[해제] · [강화 골드 n] · [판매]. 강화하면 창을 다시 연다 */
-function openGear(faction: FactionConfig, save: SaveData, uid: string, changed: () => void): void {
-  const g = save.shared.gear;
-  const it = findGear(g, uid);
-  if (!it) return;
-  const slot = equippedSlotOf(g, uid);
-  const locked = save.activeExpedition != null ? '원정 중에는 바꿀 수 없다' : null;
-  const cost = enhanceCost(it);
-  const GX = BALANCE.provisional.gear;
-  const lines = [
-    `${GEAR_GRADE_NAMES[it.grade]} · ★${it.star} · 강화 +${it.plus}/${GX.maxPlus}${slot ? ` · ${gearSlotName(slot, faction)}에 장착 중` : ''}`,
-    `능력치: ${gearStatText(it, faction)}`,
-    ...(it.special ? [`특수: ${gearSpecialText(it, faction)}`] : []),
-    cost === null ? '최대 강화' : `강화 +${it.plus + 1}: ${gearStatText(it, faction, it.plus + 1)} (실패 없음, 능력치 +${Math.round(GX.plusStep * 100)}%p)`,
-  ];
-  let close: () => void = () => {};
-  const actions: Parameters<typeof itemDialog>[0]['actions'] = [];
-  if (slot) {
-    actions.push({ key: 'unequip', label: () => '해제', variant: 'ghost', disabled: locked !== null, onClick: () => { close(); if (unequipGearItem(save, uid)) changed(); } });
-  } else {
-    for (const s of slotsForKind(it.kind)) {
-      const cur = g.equipped[s] ? findGear(g, g.equipped[s]!) : undefined;
-      const many = slotsForKind(it.kind).length > 1;
-      actions.push({
-        key: `equip-${s}`, label: () => (many ? `${gearSlotName(s, faction)}에 장착${cur ? ' (교체)' : ''}` : `장착${cur ? ' (교체)' : ''}`), variant: 'primary', disabled: locked !== null,
-        onClick: () => {
-          close();
-          if (equipGearItem(save, uid, s)) {
-            showToast({ eyebrow: '장비', title: `${gearName(it, faction)} 장착`, meta: cur ? `${gearName(cur, faction)}은(는) 보관함으로` : gearSlotName(s, faction) }, 0, 2400);
-            changed();
-          }
-        },
-      });
-    }
-  }
-  actions.push({
-    key: 'enhance', label: () => (cost === null ? '최대 강화' : `강화 +${it.plus + 1} · 골드 ${cost}`), variant: 'primary', disabled: cost === null || save.shared.tradeCoins < cost,
-    note: cost !== null && save.shared.tradeCoins < cost ? `골드 ${cost - save.shared.tradeCoins} 모자람` : undefined,
-    onClick: () => {
-      const r = enhanceGearItem(save, uid);
-      close();
-      showToast({ eyebrow: '장비 강화', title: r.ok ? `${gearName(it, faction)} 강화 성공` : '강화할 수 없다', meta: r.ok ? `골드 −${r.gold} · ${gearStatText(it, faction)}` : r.reason }, 0, 2400);
-      if (r.ok) {
-        changed();
-        openGear(faction, save, uid, changed);
-      }
-    },
-  });
-  if (!slot) {
-    actions.push({
-      key: 'sell', label: () => `판매 · 골드 +${sellGold(it)}`, variant: 'danger', disabled: locked !== null,
-      onClick: () => {
-        confirmDialog({
-          title: `${gearName(it, faction)}을(를) 판다`, body: `골드 +${sellGold(it)}. 되돌릴 수 없다.`, danger: true, yes: '판매',
-          onYes: () => { close(); if (sellGearEntry(save, uid) !== null) changed(); },
-        });
-      },
-    });
-  }
-  close = itemDialog({
-    heading: '장비', name: gearName(it, faction), desc: lines.join('\n'), art: gearArt(it.kind, it.grade),
-    have: `골드 ${save.shared.tradeCoins} · 장비 ${g.items.length}/${GX.cap}`, lock: locked, actions,
-  });
-}
-
-/** 상태 화면 장착 5칸 (GDD 91장 6번): 칸 이름·낀 장비·장비 합계 한 줄. 누르면 그 장비 상세 창 (빈 칸은 보관함 장비 탭 안내) */
-function gearPanel(faction: FactionConfig, save: SaveData, changed: () => void): HTMLElement {
-  const g = save.shared.gear;
-  const box = panel({ title: '장비' });
-  box.setAttribute('aria-label', '장비');
-  box.dataset.gear = '';
-  const grid = h('div', 'bha-gearslots');
-  for (const s of GEAR_SLOTS) {
-    const it = g.equipped[s] ? findGear(g, g.equipped[s]!) : undefined;
-    const b = h('button', `bha-gearslot${it ? ` is-grade-${it.grade}` : ' is-empty'}`);
-    b.type = 'button';
-    b.dataset.gearSlot = s;
-    b.append(icon(GEAR_KIND_ICONS[GEAR_SLOT_KIND[s]]), h('span', 'bha-gearslot__slot', gearSlotName(s, faction)), h('b', 'bha-gearslot__name', it ? `${GEAR_GRADE_NAMES[it.grade]}${it.plus ? ` +${it.plus}` : ''}` : '비어 있음'));
-    b.title = it ? `${gearName(it, faction)} · ${gearLineText(it, faction)}` : '보관함 장비 탭에서 장착';
-    b.onclick = () => (it ? openGear(faction, save, it.uid, changed) : showToast({ eyebrow: '장비', title: `${gearSlotName(s, faction)} 비어 있음`, meta: '보관함 → 물건 → 장비 탭에서 장착' }, 0, 2400));
-    grid.append(b);
-  }
-  box.append(grid);
-  const c = gearCarry(g);
+/** 상태 화면의 장비 바로가기 한 줄 (GDD 108장 1번): [장비 화면] 버튼 + 장비 합산 능력치 숫자 */
+function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void): HTMLElement {
+  const c = gearCarry(save.shared.gear);
   const sum = c ? [
     ...STAT_IDS.filter((k) => c.stats[k]).map((k) => `${statName(k, faction.id)} +${c.stats[k]}`),
     ...(c.crit > 0 ? [`치명 +${Math.round(c.crit * 1000) / 10}%`] : []),
   ].join(' · ') : '';
-  box.append(h('p', 'bha-faint', sum ? `장비 합계: ${sum} (위 능력치에 더해 전투에 실린다)` : '낀 장비가 없다. 원정 드롭·상점·떠돌이 상인에게서 얻는다.'));
-  return box;
+  const row = h('div', 'bha-row bha-gearshortcut');
+  row.dataset.gear = '';
+  const btn = button({ label: `${equipTitle(faction)} 화면`, icon: 'i-attack', size: 'small', onClick: onGear });
+  btn.dataset.act = 'gear-screen';
+  row.append(btn, h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '낀 장비가 없다.'));
+  return row;
 }
 
 /** 보관함 카드 상세 창: 쓰기·장착·해제 (GDD 86장 5번) */

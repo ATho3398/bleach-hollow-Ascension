@@ -103,3 +103,47 @@
 .bha-gearslot .bha-icon { width: 24px; height: 24px; }
 .bha-gearslot__slot { font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .bha-gearslot__name { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.15; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 장비 화면 (GDD 108장, C.179): 왼쪽 착용 칸·외형·능력치 / 오른쪽 탭·바둑판·아래 줄 */
+.bha-equip-page .bha-lcdpage__col { display: flex; flex-direction: column; min-height: 0; }
+.bha-eqleft { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 0; }
+.bha-eqdoll { display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; gap: var(--bha-sp-2); align-items: stretch; }
+.bha-eqcol { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-eqslot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 62px; padding: var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); color: var(--bha-text-1); min-width: 0; }
+.bha-eqslot.is-empty { border-style: dashed; color: var(--bha-text-3); }
+.bha-eqslot.is-empty .bha-icon { opacity: .45; }
+.bha-eqslot.is-dim { opacity: .5; }
+.bha-eqslot .bha-icon { width: 26px; height: 26px; }
+.bha-eqslot__name { font-size: var(--bha-fs-xs); color: var(--bha-text-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-eqslot__plus { position: absolute; top: 2px; right: 4px; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }
+.bha-eqslot.is-grade-rare { border-color: var(--bha-heal); }
+.bha-eqslot.is-grade-epic { border-color: var(--bha-seal); }
+.bha-eqslot.is-grade-legendary { border-color: var(--bha-rare); }
+.bha-eqslot--battle:not(.is-empty) { border-color: var(--bha-heal); }
+.bha-eqfigure { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 0; border-radius: var(--bha-r-md); background: radial-gradient(ellipse at 50% 70%, var(--bha-bg-3), transparent 70%); }
+.bha-eqfigure__img { flex: 1 1 0; min-height: 0; width: 100%; max-height: 150px; object-fit: contain; image-rendering: pixelated; }
+.bha-eqfigure > .bha-icon { width: 64px; height: 64px; margin: auto; color: var(--bha-text-3); }
+.bha-eqfigure__who { display: flex; flex-direction: column; align-items: center; text-align: center; line-height: 1.2; }
+.bha-eqfigure__who small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-eqstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-1) var(--bha-sp-2); padding: var(--bha-sp-2); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
+.bha-eqstat { display: flex; align-items: baseline; gap: var(--bha-sp-1); min-width: 0; white-space: nowrap; }
+.bha-eqstat small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-eqstat b { font-size: var(--bha-fs-sm); }
+.bha-eqstat em { font-style: normal; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
+.bha-eqstat__up { color: var(--bha-good); }
+.bha-eqstat__down { color: var(--bha-danger); }
+.bha-eqright { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 0; flex: 1 1 auto; }
+.bha-itemgrid--equip { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); grid-auto-rows: 84px; gap: var(--bha-sp-2); }
+.bha-itemgrid--equip .bha-itemcard { padding: var(--bha-sp-1); gap: 2px; }
+.bha-itemgrid--equip .bha-itemcard__name { font-size: var(--bha-fs-xs); line-height: 1.15; }
+.bha-itemgrid--equip .bha-itemcard__badge { font-size: var(--bha-fs-xs); }
+.bha-eqfoot { display: flex; align-items: center; gap: var(--bha-sp-2); flex-wrap: wrap; }
+.bha-eqfoot__count { margin-right: auto; }
+.bha-gearshortcut { align-items: center; gap: var(--bha-sp-2); flex-wrap: wrap; }
+/* 방 [장비] 버튼 (GDD 108장 1번): 장면 오른쪽 위 구석 */
+.bha-room__gearbtn { position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-2); z-index: 3; }
+/* 장비 화면 탭: 이름 위 · 개수 아래, 한 줄에 6개 (GDD 108장 4번 '탭 이름 아래 개수') */
+.bha-equip-page .bha-itemtabs { flex-wrap: nowrap; gap: var(--bha-sp-1); }
+.bha-equip-page .bha-itemtab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 0; min-height: 36px; padding: 2px var(--bha-sp-1); font-size: var(--bha-fs-xs); line-height: 1.15; white-space: nowrap; overflow: hidden; }
+.bha-equip-page .bha-eqfoot { flex-wrap: nowrap; }
+.bha-equip-page .bha-eqfoot .bha-btn { white-space: nowrap; }

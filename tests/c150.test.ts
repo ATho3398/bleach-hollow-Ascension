@@ -219,7 +219,7 @@ describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', ()
     const rows = goldRows(s, H).filter((r) => getGoldItem(r.id)?.kind === 'gear');
     expect(rows.map((r) => [r.name, r.price])).toEqual([['노말 송곳니', GX.shopPrice], ['노말 껍질', GX.shopPrice], ['노말 발톱 싸개', GX.shopPrice], ['노말 부적', GX.shopPrice]]);
     s.shared.tradeCoins = 500;
-    expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노말 발톱 싸개 → 보관함 장비 탭' });
+    expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노말 발톱 싸개 → 장비 화면' });
     expect(s.shared.gear.items[0]).toMatchObject({ kind: 'shoes', grade: 'normal', star: 1 });
     expect(s.runLog.gear[0]).toMatchObject({ kind: 'get', source: 'shop' });
     expect(['w-gear-rare', 'w-gear-epic', 'w-gear-legend'].map((id) => getWandererItem(id)!.grade)).toEqual(['rare', 'epic', 'legendary']);

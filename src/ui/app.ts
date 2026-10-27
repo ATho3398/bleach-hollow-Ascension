@@ -64,6 +64,7 @@ import { formName } from '../data/evolution';
 import { evolutionView } from './evolutionPanel';
 import { roomView } from './roomView';
 import { careView, chestView } from './lcdScreens';
+import { equipView } from './equipView';
 import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { roomOf } from '../engine/faction';
@@ -663,6 +664,8 @@ export function startApp(host: HTMLElement): void {
     };
     const idle = idleReport;
     idleReport = null;
+    // 장비 화면 (GDD 108장): 방 [장비] 버튼 · 상태 화면 바로가기 · 보관함 장비 탭이 여기로
+    const openEquip = () => open('equip', () => equipView(dev, faction, s, { persist }));
     // 복귀 창은 이번에 minMinutes 이상 꺼 두었고 받을 만큼 쌓였을 때만 — 켜 둔 동안 쌓인 것은 아이콘으로 (95장 B1)
     if (idle && idleCounts(idle.awayHours) && idleClaimable(s)) window.setTimeout(() => showIdleReturn(idle, s, faction, claim), 500);
     roomView(dev, faction, s, {
@@ -688,8 +691,9 @@ export function startApp(host: HTMLElement): void {
         showToast({ eyebrow: '부활', title: `${faction.tierNames[0]}(으)로 다시 시작한다`, meta: `노력치 −${Math.round(r.evLoss * 100)}% · 진화 초기화` }, 0, 4200);
       },
       onBook: () => open('dex', () => bookView(root, faction, s)),
-      onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear))),
-      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)) })),
+      onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear), openEquip)),
+      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
+      onGear: openEquip,
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
         persist();
@@ -1173,7 +1177,7 @@ export function startApp(host: HTMLElement): void {
         const finds = exp.gearFinds?.length ?? 0;
         finishBattle(exp, done);
         // 장비 드롭 알림 (GDD 91장 2번): 이 전투에서 나온 장비 — 보관함에는 귀환 때 들어간다
-        for (const f of exp.gearFinds?.slice(finds) ?? []) showToast({ eyebrow: f.from === 'boss' ? '보스 드롭' : f.from === 'elite' ? '강적 드롭' : '장비 드롭', title: `장비 발견: ${gearDropText(f.roll, faction)}`, meta: `★${f.roll.star} · 귀환하면 보관함 장비 탭으로` }, 0, 3600);
+        for (const f of exp.gearFinds?.slice(finds) ?? []) showToast({ eyebrow: f.from === 'boss' ? '보스 드롭' : f.from === 'elite' ? '강적 드롭' : '장비 드롭', title: `장비 발견: ${gearDropText(f.roll, faction)}`, meta: `★${f.roll.star} · 귀환하면 장비 화면으로` }, 0, 3600);
         saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
         afterBattle(faction, exp);
       },
@@ -1260,7 +1264,7 @@ export function startApp(host: HTMLElement): void {
       petNotes = save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
       // 장비 알림 (GDD 91장): 귀환 때 보관함에 들어간 드롭 장비(넷 넘으면 한 줄로)·가득 차서 판 장비
       const gearNotes = save.runLog.gear.slice(gearLog0).map((r) => gearNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
-      petNotes.push(...(gearNotes.length > 4 ? [{ eyebrow: '장비', title: `장비 ${gearNotes.length}개를 가지고 돌아왔다`, meta: '보관함 장비 탭에서 장착' }] : gearNotes));
+      petNotes.push(...(gearNotes.length > 4 ? [{ eyebrow: '장비', title: `장비 ${gearNotes.length}개를 가지고 돌아왔다`, meta: '장비 화면에서 착용' }] : gearNotes));
       growth = {
         newTraits: summarize(exp).keptTraits.length,
         evolvedTo: evo?.ok ? shownName(formDisplayName(save.evolution, faction.id)) : null,

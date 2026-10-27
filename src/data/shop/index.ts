@@ -58,6 +58,8 @@ export interface GoldItemDef {
   gearKind?: GearKind;
   /** kind 'medicine' 이 푸는 상태 (GDD 102-4): collapsed 쓰러짐 · weak 쇠약 · tired 피곤 */
   cures?: MedicineCure;
+  /** 전투용 소모품 (GDD 108장 3번): 장비 화면 소모품 칸에 넣을 수 있고, 넣은 것을 전투 [소모품 사용]이 쓴다 */
+  battle?: true;
 }
 
 /** 약이 푸는 상태 (GDD 102-4) */
@@ -129,7 +131,7 @@ function parseGold(r: unknown): GoldItemDef {
   if (g.kind !== 'food' && g.kind !== 'gear' && (typeof g.name !== 'string' || !g.name)) errors.push('name');
   if (!(ITEM_CATEGORIES as readonly unknown[]).includes(g.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
   if (errors.length) throw new Error(`상점 골드 품목 데이터 오류 (${String(g.id ?? '?')}): ${errors.join(', ')}`);
-  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}), ...(g.kind === 'gear' ? { gearKind: g.gearKind as GearKind } : {}), ...(g.kind === 'medicine' ? { cures: g.cures as MedicineCure } : {}) };
+  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}), ...(g.kind === 'gear' ? { gearKind: g.gearKind as GearKind } : {}), ...(g.kind === 'medicine' ? { cures: g.cures as MedicineCure } : {}), ...(g.battle === true ? { battle: true as const } : {}) };
 }
 
 function parseCosmetic(r: unknown): CosmeticItemDef {

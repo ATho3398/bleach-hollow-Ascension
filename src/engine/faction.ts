@@ -280,6 +280,8 @@ export interface FactionConfig {
   petNames: Record<string, string>;
   /** 장비 칸 이름 (GDD 91장 1번, 가칭): 무기·방어구·신발·장신구 1·2 → 이름. 장비 종류 이름은 그 종류의 첫 칸 이름 */
   gearSlotNames: Record<GearSlot, string>;
+  /** 장비 화면 문구 (GDD 108장 6번): 화면·방 버튼 이름(title), 소모품 칸 이름(battleSlot). 없으면 '장비'·'소모품' */
+  gearScreen?: { title?: string; battleSlot?: string };
   /** 해방 (GDD 22-5): 이름·컷인·풀릴 때 문구 */
   liberation: LiberationConfig;
   /** 해방 수련 (GDD 22-5): 제단 화면·4종목 문구 */
@@ -333,6 +335,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const gn = (r.gearSlotNames ?? {}) as Record<string, unknown>;
   for (const id of GEAR_SLOTS) {
     if (!isString(gn[id])) errors.push(`gearSlotNames.${id}: 비어 있지 않은 문자열이어야 한다`);
+  }
+  if (r.gearScreen !== undefined) {
+    const gs = r.gearScreen as Record<string, unknown>;
+    if (typeof gs !== 'object' || gs === null || Array.isArray(gs)) errors.push('gearScreen: { title?, battleSlot? }');
+    else for (const k of ['title', 'battleSlot']) if (gs[k] !== undefined && !isString(gs[k])) errors.push(`gearScreen.${k}: 비어 있지 않은 문자열`);
   }
   const pn = (r.petNames ?? {}) as Record<string, unknown>;
   for (const id of PET_IDS) {

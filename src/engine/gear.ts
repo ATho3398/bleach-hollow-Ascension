@@ -289,3 +289,29 @@ export function referenceLoadout(tierIndex: number): GearCarry {
   const mk = (kind: GearKind, stats: GearStat[]) => ({ stats: Object.fromEntries(stats.map((s) => [s, gearLineValue(kind, grade, star, s)])), plus: GX.refLoadout.plus, special: null });
   return carryOfItems([mk('weapon', ['atk']), mk('armor', ['hp', 'def']), mk('shoes', ['spd']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit'])]);
 }
+
+/** 장비 세기 점수 (GDD 108장 4번 자동 착용 비교, C.179 provisional): 능력치 줄을 '그 줄의 노말 ★1 값' 몇 배인지로 더한다(종류가 달라도 같은 눈금).
+ *  특수 효과는 줄 하나로 친다. 같은 종류끼리만 비교한다 */
+export function gearScore(it: Pick<GearItem, 'kind' | 'stats' | 'plus' | 'special'>): number {
+  const st = gearStatsOf(it);
+  let s = 0;
+  for (const k of GEAR_STATS) {
+    const v = st[k];
+    if (v) s += v / gearLineValue(it.kind, 'normal', 1, k);
+  }
+  return s + (it.special ? 1 : 0);
+}
+
+/** 자동 착용 계획 (GDD 108장 4번): 빈 칸은 가장 센 것, 찬 칸은 더 센 것이 있을 때만 바꾼다. 같은 장비를 두 칸에 쓰지 않는다. [칸, uid] 목록 */
+export function autoEquipPlan(state: GearState): [GearSlot, string][] {
+  const out: [GearSlot, string][] = [];
+  const used = new Set(GEAR_SLOTS.map((s) => state.equipped[s]).filter((u): u is string => u !== null));
+  for (const s of GEAR_SLOTS) {
+    const cur = state.equipped[s] ? findGear(state, state.equipped[s]!) : undefined;
+    const best = state.items.filter((i) => i.kind === GEAR_SLOT_KIND[s] && !used.has(i.uid)).sort((a, b) => gearScore(b) - gearScore(a))[0];
+    if (!best || (cur && gearScore(best) <= gearScore(cur))) continue;
+    used.add(best.uid);
+    out.push([s, best.uid]);
+  }
+  return out;
+}

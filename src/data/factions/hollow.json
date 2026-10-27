@@ -288,6 +288,7 @@
     "acc1": "부적",
     "acc2": "부적"
   },
+  "gearScreen": { "title": "장비", "battleSlot": "전투 소모품" },
   "petNames": {
     "pet-gold": "뼈 까마귀",
     "pet-belly": "모래 벌레",

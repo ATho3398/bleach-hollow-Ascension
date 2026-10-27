@@ -16,7 +16,7 @@ import { getPet, PET_IDS } from './data/pets';
 import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet } from './engine/pet';
 import type { GearRecord, PetRecord } from './engine/runLog';
 import { GEAR_GRADE_NAMES, GEAR_SLOTS, getGearSpecial, slotsForKind, type GearGrade, type GearKind, type GearSlot } from './data/gear';
-import { enhanceCost, enhanceGear, equipGear, equippedSlotOf, findGear, gearStatsOf, sellGearItem, unequipGear, type GearItem, type GearRoll, type GearStat } from './engine/gear';
+import { autoEquipPlan, enhanceCost, enhanceGear, equipGear, equippedSlotOf, findGear, gearStatsOf, sellGearItem, unequipGear, type GearItem, type GearRoll, type GearStat } from './engine/gear';
 import { statName } from './data/elements';
 
 const SX = BALANCE.shop;
@@ -359,7 +359,7 @@ export function sellGearEntry(save: SaveData, uid: string, nowMs: number = Date.
 export function gearNoticeOf(rec: GearRecord, faction: Pick<FactionConfig, 'gearSlotNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = gearName({ grade: rec.grade as GearGrade, kind: rec.gearKind as GearKind }, faction);
   const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '떠돌이 상인' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '원정 드롭';
-  if (rec.kind === 'get') return { eyebrow: '장비', title: `새 장비: ${name}`, meta: `${where} · ★${rec.star ?? 1} · 보관함 장비 탭에서 장착` };
+  if (rec.kind === 'get') return { eyebrow: '장비', title: `새 장비: ${name}`, meta: `${where} · ★${rec.star ?? 1} · 장비 화면에서 착용` };
   if (rec.kind === 'autoSell') return { eyebrow: '장비', title: `보관함 가득 → ${name} 판매`, meta: `골드 +${rec.gold ?? 0}` };
   return null;
 }
@@ -367,4 +367,44 @@ export function gearNoticeOf(rec: GearRecord, faction: Pick<FactionConfig, 'gear
 /** 원정 중 드롭 알림 문구 (귀환 전, 런 로그 없이 굴린 값으로) */
 export function gearDropText(roll: GearRoll, faction: Pick<FactionConfig, 'gearSlotNames' | 'id' | 'families'>): string {
   return `${gearName(roll, faction)} · ${gearLineText({ ...roll, plus: 0 }, faction)}`;
+}
+
+/** 전투용 소모품 품목 id (GDD 108장 3번): 상점 품목 데이터 battle 표시가 있는 것 */
+export const BATTLE_ITEM_IDS: readonly string[] = GOLD_ITEMS.filter((g) => g.battle).map((g) => g.id);
+
+/** 장비 화면 소모품 칸에 넣기·빼기 (GDD 108장 3번): null = 빼기. 전투용이 아니면 false. 원정 중에는 못 바꾼다(장비와 같이). 0개여도 넣어 둘 수 있다(칸은 흐리게) */
+export function setBattleItem(save: SaveData, id: string | null): boolean {
+  if (save.activeExpedition != null) return false;
+  if (id !== null && !BATTLE_ITEM_IDS.includes(id)) return false;
+  if (save.shared.battleItem === id) return false;
+  save.shared.battleItem = id;
+  return true;
+}
+
+/** 자동 착용 (GDD 108장 4번): 빈 칸과 더 센 것만 바꾼다. 바꾼 칸 수 (원정 중이면 0) */
+export function autoEquipGear(save: SaveData, nowMs: number = Date.now()): number {
+  if (save.activeExpedition != null) return 0;
+  let n = 0;
+  for (const [slot, uid] of autoEquipPlan(save.shared.gear)) if (equipGearItem(save, uid, slot, nowMs)) n++;
+  return n;
+}
+
+/** 일괄 판매 대상 (GDD 108장 4번): 노말 등급 · 안 낀 것 */
+export function bulkSellTargets(save: Pick<SaveData, 'shared'>): GearItem[] {
+  const g = save.shared.gear;
+  return g.items.filter((i) => i.grade === 'normal' && !equippedSlotOf(g, i.uid));
+}
+
+/** 일괄 판매: 대상 전부 판다. { count, gold } */
+export function bulkSellGear(save: SaveData, nowMs: number = Date.now()): { count: number; gold: number } {
+  if (save.activeExpedition != null) return { count: 0, gold: 0 };
+  let count = 0;
+  let gold = 0;
+  for (const it of bulkSellTargets(save)) {
+    const g = sellGearEntry(save, it.uid, nowMs);
+    if (g === null) continue;
+    count++;
+    gold += g;
+  }
+  return { count, gold };
 }

@@ -138,7 +138,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 보관함 (이벤트 타일 제외)';
     case 'reroll': return `${faction.absorbActionName} 화면 특성 후보를 한 번 다시 뽑는다 (${faction.absorbActionName} 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `원정 길에 놓을 수 있는 타일 칸 +1 (영구, 두 트랙 공유, 최대 +${SX.deckSlotPrices.length})`;
-    case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노말 · ★ = 지금 단계 권장 · 능력치 무작위 → 보관함 장비 탭에서 장착`;
+    case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노말 · ★ = 지금 단계 권장 · 능력치 무작위 → 장비 화면에서 착용`;
   }
 }
 
@@ -341,7 +341,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 보관함`;
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 보관함에서 쓴다`;
     case 'pet': return '아직 없는 펫 무작위 1마리 → 보관함 펫 탭';
-    case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 보관함 장비 탭`;
+    case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 장비 화면`;
   }
 }
 
@@ -448,5 +448,5 @@ function giveGear(save: SaveData, faction: FactionConfig, roll: GearRoll, source
   const it = grantGear(save.shared.gear, roll, nowMs)!;
   save.runLog.gear.push({ at: nowMs, factionId: save.factionId, kind: 'get', uid: it.uid, gearKind: it.kind, grade: it.grade, star: it.star, source });
   const slot = it.kind === 'accessory' ? 'acc1' : it.kind;
-  return `${GEAR_GRADE_NAMES[it.grade]} ${faction.gearSlotNames[slot]} → 보관함 장비 탭`;
+  return `${GEAR_GRADE_NAMES[it.grade]} ${faction.gearSlotNames[slot]} → 장비 화면`;
 }
