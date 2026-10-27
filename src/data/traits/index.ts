@@ -1,6 +1,6 @@
 // 흡수 특성 테이블 (GDD 4장, C.47 속성 8종 × 8개 → C.136 속성마다 6개: 막기·회복 속성 특성 삭제, GDD 84장 7번). 11-3 이 미정이라 전부 임시("불 조" 자리 표시). 표현 텍스트만 종족별.
 import { CHAIN_BONUS_KINDS, PASSIVE_STATS, SKILL_ROLES, TRAIT_KINDS, pickFaction, type TraitDef } from '../schema';
-import { isElement } from '../elements';
+import { elementName, isElement } from '../elements';
 import raw from './traits.json';
 
 /** 블록 약어 최대 글자 수: 2줄 × 4자 (공백 포함) */
@@ -54,8 +54,15 @@ export function getTrait(id: string): TraitDef {
   return t;
 }
 
+/** 표시 이름 앞의 속성 글자('물 조' 의 '물 ')를 뺀다 — 속성은 아이콘·색이 이미 보여 준다 (C.176, GDD 104장 6). 데이터 이름·id 는 그대로 */
+function withoutElement(name: string, element: string, factionId: string): string {
+  const prefix = `${elementName(element, factionId)} `;
+  return name.startsWith(prefix) && name.length > prefix.length ? name.slice(prefix.length) : name;
+}
+
 export function traitName(id: string, factionId: string): string {
-  return pickFaction(getTrait(id).name, factionId);
+  const t = getTrait(id);
+  return withoutElement(pickFaction(t.name, factionId), t.element, factionId);
 }
 
 export function traitDescription(id: string, factionId: string): string {
@@ -64,10 +71,11 @@ export function traitDescription(id: string, factionId: string): string {
 
 /** 블록 약어 원문: 데이터에 abbr 가 있으면 그것, 없으면 undefined (대체 규칙은 UI 의 fitAbbr) */
 export function traitAbbr(id: string, factionId: string): string | undefined {
-  const a = getTrait(id).abbr;
+  const t = getTrait(id);
+  const a = t.abbr;
   if (!a) return undefined;
   const v = a[factionId] ?? a['*'];
-  return v && v.trim() ? v.trim() : undefined;
+  return v && v.trim() ? withoutElement(v.trim(), t.element, factionId) : undefined;
 }
 
 /** 특성의 계열 id (공격 skill 만, 그 밖은 null) */

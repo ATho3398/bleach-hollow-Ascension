@@ -100,17 +100,6 @@
 .bha-event__foot { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
 .bha-event__loot { font-size: var(--bha-fs-lg); font-weight: 700; color: var(--bha-rare); }
 /* 바퀴 변이 배너 (GDD 25-5 ④): 걷는 장면 위 가운데 */
-/* 길 칸 줄 (C.170, GDD 100장 #30): 위 가운데, 누름 통과 */
-.bha-exp__strip { position: absolute; top: var(--bha-sp-3); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; gap: var(--bha-sp-1); padding: var(--bha-sp-1); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / .55); pointer-events: none; }
-.bha-exp__stripcell { --tile: var(--bha-bg-3); width: 10px; height: 10px; border-radius: 2px; background: var(--tile); border: 1px solid var(--bha-line-2); box-sizing: border-box; }
-.bha-exp__stripcell.is-nest { border-color: var(--bha-primary-line); }
-.bha-exp__stripcell--prey { --tile: var(--bha-tile-prey); border-color: transparent; }
-.bha-exp__stripcell--elite { --tile: var(--bha-tile-elite); border-color: transparent; }
-.bha-exp__stripcell--env { --tile: var(--bha-tile-env); border-color: transparent; }
-.bha-exp__stripcell--rest { --tile: var(--bha-tile-rest); border-color: transparent; }
-.bha-exp__stripcell--event { --tile: var(--bha-seal); border-color: transparent; }
-.bha-exp__stripcell.is-past { opacity: .35; }
-.bha-exp__stripcell.is-now { outline: 2px solid var(--bha-focus); outline-offset: 1px; }
 .bha-exp__banner { position: absolute; top: var(--bha-sp-8); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); max-width: 46%; padding: var(--bha-sp-2) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-rare); background: rgb(0 0 0 / .62); text-align: center; pointer-events: none; }
 .bha-exp__bannersub { font-size: var(--bha-fs-xs); color: var(--bha-text-1); }
 .bha-exp__banner[hidden] { display: none; }

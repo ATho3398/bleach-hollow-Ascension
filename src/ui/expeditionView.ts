@@ -271,19 +271,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   // 타일 배치판: 바퀴 끝 팝업에서만 쓴다 (원정 시작 전 배치는 placementView)
   const planner = roadPlanner({ exp, tileName: tn, onPlaced: () => h.onSave(), synergyName: (id) => synergyName(id, faction.id) });
-  // 길 칸 줄 (C.170, GDD 100장 #30): 위 가운데 작은 칸 줄 — 놓은 타일 색, 지나온 칸 흐림, 지금 칸 강조 (어느 칸에 무엇이 나오는지)
-  const strip = el('div', 'bha-exp__strip');
-  strip.setAttribute('role', 'img');
-  const stripCells = Array.from({ length: EX.loopTiles }, () => strip.appendChild(el('span', 'bha-exp__stripcell')));
-  const paintStrip = () => {
-    stripCells.forEach((c, i) => {
-      const id = i === 0 ? null : exp.slots[i] ?? null;
-      const css = id ? tileCss(getTile(id).kind) : null;
-      c.className = `bha-exp__stripcell${i === 0 ? ' is-nest' : ''}${css ? ` bha-exp__stripcell--${css}` : ''}${i < exp.pos ? ' is-past' : ''}${i === exp.pos ? ' is-now' : ''}`;
-    });
-    strip.setAttribute('aria-label', `길 ${exp.pos}번 칸 · 놓은 타일 ${exp.slots.slice(1).filter(Boolean).length}칸`);
-  };
-  // 바퀴 변이 배너 (GDD 25-5 ④): 걷는 장면 위 가운데 (칸 줄 아래)
+  // 바퀴 변이 배너 (GDD 25-5 ④): 걷는 장면 위 가운데. C.170 의 위 가운데 길 칸 줄은 C.176 에 삭제(GDD 104장 3: 왼쪽 위 진행 막대와 겹침)
   const banner = el('div', 'bha-exp__banner');
   banner.setAttribute('role', 'status');
   /** 이벤트 창 안내 한 줄 (골드 부족 등) */
@@ -333,7 +321,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   // 둥지 칸 도착 선택은 장면 위 말풍선 오버레이 (타일 배치판은 안에 있다)
   const sheetBox = el('div', 'bha-exp__sheetbox');
-  sceneWrap.append(chips, corner, strip, banner, sheetBox);
+  sceneWrap.append(chips, corner, banner, sheetBox);
   const main = mountApp(root, { fixed: true, cls: 'bha-exp' }, sceneWrap);
 
   helpBtn.onclick = () => {
@@ -366,7 +354,6 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       }),
     );
     frenzyChip.hidden = !inFrenzy(exp);
-    paintStrip();
     aheadChip.hidden = !(exp.phase === 'moving' && nextCellIsElite(exp));
     const goalText = storyGoalLine(exp);
     goal.hidden = goalText === null;

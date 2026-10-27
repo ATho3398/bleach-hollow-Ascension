@@ -170,21 +170,21 @@
 .bha-room__status:active { filter: brightness(1.2); }
 .bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
 
-/* ── 말풍선 (C.170, GDD 100장 #13): 캐릭터 옆 허리 높이(캐릭터 중심 줄). 머리 위 상태 칩·알림 띠와 한 줄에 몰리지 않게 위쪽에서 내렸다.
-   가로 = 그림 바깥 (65px = 그림 폭 130px 의 절반). is-left = 캐릭터가 오른쪽이면 왼쪽으로 ── */
+/* ── 말풍선 (C.176, GDD 104장 1): 캐릭터 머리 위 가운데. 아래 끝 = 상태 칩 아래 끝(칩과 같은 top 식), 대사 동안 칩은 숨긴다(.is-saying).
+   가로는 캐릭터 중심, 방 끝에서 잘리지 않게 25~75% 로 묶는다 ── */
 .bha-room__bubble {
   position: absolute; z-index: var(--bha-z-raised);
-  left: calc(var(--char-x, 50%) + 65px + var(--bha-sp-3));
-  top: var(--char-y, 54%);
-  transform: translateY(-50%);
-  width: max-content; max-width: 34%; padding: var(--bha-sp-3) var(--bha-sp-5);
+  left: clamp(25%, var(--char-x, 50%), 75%);
+  top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-6)));
+  transform: translate(-50%, -100%);
+  width: max-content; max-width: 48%; padding: var(--bha-sp-3) var(--bha-sp-5);
   font-size: var(--bha-fs-sm); line-height: 1.35; text-align: center; color: var(--bha-text-1);
   background: var(--bha-bg-0); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
   pointer-events: none;
 }
 .bha-room__bubble.is-pop { animation: bha-bubble-pop 0.18s ease-out; }
-.bha-room__bubble.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + 65px + var(--bha-sp-3)); }
-@keyframes bha-bubble-pop { from { opacity: 0; transform: translateY(-50%) scale(0.9); } }
+.is-saying > .bha-room__status { visibility: hidden; }
+@keyframes bha-bubble-pop { from { opacity: 0; transform: translate(-50%, -100%) scale(0.9); } }
 
 /* 선택·포커스·누름 표시 (GDD 18-10): 그림 요소(.bha-art)는 사각 테두리·배경 없이 그림 윤곽을 따라 빛난다.
    그림 파일이든 임시 도형이든 .bha-art-img(그림 자리: 물건 모양·캐릭터 몸) 의 투명하지 않은 부분만 강조된다 */

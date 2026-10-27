@@ -150,14 +150,17 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   let bubbleTimer = 0;
   const say = (text: string, ms = 3000) => {
     bubble.textContent = text;
-    // 말풍선은 캐릭터 옆 허리 높이 (GDD 100장 #13, 머리 위 상태 칩과 떨어뜨림): 캐릭터가 오른쪽 절반이면 왼쪽, 아니면 오른쪽
-    bubble.classList.toggle('is-left', parseFloat(scene.style.getPropertyValue('--char-x')) > 55);
+    // 말풍선은 캐릭터 머리 위 가운데 (C.176, GDD 104장 1 — C.170 의 '옆 허리 높이'는 캐릭터 오른쪽에 떠 보였다). 대사 동안 상태 칩은 잠깐 숨긴다
+    scene.classList.add('is-saying');
     bubble.hidden = false;
     bubble.classList.remove('is-pop');
     void bubble.offsetWidth;
     bubble.classList.add('is-pop');
     window.clearTimeout(bubbleTimer);
-    bubbleTimer = window.setTimeout(() => (bubble.hidden = true), ms);
+    bubbleTimer = window.setTimeout(() => {
+      bubble.hidden = true;
+      scene.classList.remove('is-saying');
+    }, ms);
   };
 
   const act: Record<RoomProp, () => void> = {

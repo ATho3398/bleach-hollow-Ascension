@@ -35,14 +35,14 @@ describe('C.160 위 한 줄은 적 이름·등급 칩·약점·시간·버튼만
 });
 
 describe('C.160 덤: 방 말풍선', () => {
-  it('캐릭터 옆 허리 높이에 선다 (C.170 GDD 100장 #13 — 칩·알림 띠와 한 줄에 몰리지 않게, 장면 변수 공유)', () => {
+  it('캐릭터 머리 위 가운데에 서고 대사 동안 상태 칩을 숨긴다 (C.176 GDD 104장 1 — C.170 옆 허리 높이 되돌림, 장면 변수 공유)', () => {
     const room = read('src/ui/roomView.ts');
     expect(room).toContain("scene.style.setProperty('--head-y'");
     expect(room).toContain("scene.style.setProperty('--chip-h'");
-    expect(room).toContain("bubble.classList.toggle('is-left'");
+    expect(room).toContain("scene.classList.add('is-saying')");
     const rc = read('src/ui/bha/room.css');
-    expect(rc).toContain('left: calc(var(--char-x, 50%) + 65px + var(--bha-sp-3));');
-    expect(rc).toContain('top: var(--char-y, 54%);');
+    expect(rc).toContain('left: clamp(25%, var(--char-x, 50%), 75%);');
+    expect(rc).toContain('.is-saying > .bha-room__status { visibility: hidden; }');
     expect(rc).not.toContain('left: 50%; top: 14%;');
   });
 });

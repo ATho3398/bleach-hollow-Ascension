@@ -71,8 +71,9 @@ describe('C.170 원정 출발·걷기·일시정지·설정', () => {
     expect(pv).toContain('const planner = h.tilesLocked ? null : roadPlanner(');
     expect(pv).toContain("'타일 고르기 → 빈 칸 누르기 · 놓은 칸 '");
   });
-  it('걷기 화면 위 가운데 길 칸 줄', () => {
-    expect(read('src/ui/expeditionView.ts')).toContain("const strip = el('div', 'bha-exp__strip');");
+  it('걷기 화면 위 가운데 길 칸 줄은 C.176 에 삭제 (GDD 104장 3)', () => {
+    expect(read('src/ui/expeditionView.ts')).not.toContain('bha-exp__strip');
+    expect(read('src/ui/bha/expedition.css')).not.toContain('bha-exp__strip');
   });
   it('전투 일시정지: 기기 레이어로 등록(뒤로·Esc = 계속), [설정]은 전투를 지우지 않는 레이어', () => {
     const b = read('src/ui/battleView.ts');
