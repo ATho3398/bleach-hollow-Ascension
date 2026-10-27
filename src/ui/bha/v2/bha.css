@@ -441,3 +441,23 @@
 .bha-root .bha-v2rel.is-on .bha-v2rel__name{display:none}
 .bha-root .bha-v2rel.is-on .bha-v2rel__meta{flex:none;color:var(--bha-accent-hi);font-weight:700}
 .bha-root .bha-v2rel.is-ready .bha-gauge{display:none!important}
+
+/* ───────── 막기·회복 버튼 (C.174, GDD 105장 "방어랑 힐은 영력해방처럼 다른 기능으로"): 해방 알약 버튼(C.169) 모양, 범례 줄 오른쪽 해방 버튼 왼쪽 ─────────
+   칸 점 = 가진 칸(최대 3), 충전 중인 다음 칸은 흐리게. 누를 수 있으면 역할 색 테두리·글자 */
+.bha-root .bha-v2roles{position:absolute;top:3px;right:200px;height:28px;display:flex;gap:6px;z-index:2}
+.bha-root .bha-v2roles.is-alone{right:8px}
+.bha-root.bha-battle .bha-v2legendrow{right:392px}
+.bha-root.bha-battle .bha-skillpanel:has(.bha-v2roles.is-alone) .bha-v2legendrow{right:200px}
+.bha-root .bha-v2role{position:relative;display:flex;flex-direction:row;flex:none;width:auto;align-items:center;gap:5px;height:28px;padding:0 10px 0 6px;border-radius:14px;
+  font-family:inherit;font-size:var(--bha-fs-sm);color:var(--bha-text-2);cursor:default;white-space:nowrap}
+.bha-root .bha-v2role .bha-icon{width:16px;height:16px;flex:none}
+.bha-root .bha-v2role--guard{--role:var(--bha-guard)}
+.bha-root .bha-v2role--heal{--role:var(--bha-heal)}
+.bha-root .bha-v2role .bha-icon{color:var(--role)}
+.bha-root .bha-v2role__pips{display:flex;gap:3px}
+.bha-root .bha-v2role__pips i{width:7px;height:7px;border-radius:var(--bha-r-pill);border:1px solid var(--role);opacity:.45}
+.bha-root .bha-v2role__pips i.is-on{background:var(--role);opacity:1}
+.bha-root .bha-v2role__pips i.is-charging{opacity:.8}
+.bha-root .bha-v2role.is-ready{color:var(--bha-text-1);border-color:var(--role);cursor:pointer;box-shadow:0 0 0 1px var(--role)}
+.bha-root .bha-v2role.is-disabled{opacity:.6}
+.bha-root .bha-v2role .bha-keycap{top:-7px;right:-4px}

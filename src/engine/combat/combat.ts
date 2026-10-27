@@ -43,7 +43,8 @@ export interface BlockPoolParams {
   absorbedSlowdownPerSlot: number;
   temperament: Record<string, { attack?: number; guard?: number; heal?: number; absorbedSpawn?: number }>;
   /** 출현표의 기본 막기·회복 고정 몫 (GDD 84장 6·7번, C.136): 장착 칸 수와 무관. 성향 보정 = × 막기/회복 배율 ÷ 공격 배율 */
-  roleShare: { guard: number; heal: number };
+  /** 막기·회복이 블록에서 빠지며(GDD 105장) 공격 블록에 돌려준 몫: 공격 블록 생성 속도 × 1 / (1 − 이 값) */
+  freedRoleShare: number;
 }
 
 /** 기본 블록 풀의 한 칸: 기본 타이머가 블록을 낼 때 이 생성원·계열이 뽑힐 확률 (합 1) */
@@ -143,14 +144,14 @@ export interface CombatParams {
   guardSecondsByChain: readonly number[];
   guardReductionByChain: readonly number[];
   heavyGuardReductionByChain: readonly number[];
-  /** 막기·회복 블록이 바에 이 수만큼 있으면 더 안 나온다 (101장 추가 결정 3번) */
-  guardHealTrayCap: number;
+  /** 막기·회복 버튼 충전 (GDD 105장): 최대 칸·한 칸 충전 시간(초)·전투 시작 칸 */
+  roleCharges: { max: number; guardSeconds: number; healSeconds: number; guardStart: number; healStart: number };
   /** 강공격 배율: heavyInAttacks × 이 값 (101장 추가 결정 5번). 연속 강공격은 한 타마다 heavyChainHitMultiplier */
   heavyHitMultiplier: number;
   heavyChainHitMultiplier: number;
   /** 공허 블록을 쓰면 이 시간(초) 동안 기본 공격·블록 생성 멈춤 (101장 추가 결정 2번, 히든 진화체 0) */
   voidStunSeconds: number;
-  /** 회복 블록이 나오지 않는다 (101장 추가 결정 2 2번 — 폭주 중). 몫은 공격 블록들에 */
+  /** 회복 버튼 잠김 (101장 추가 결정 2 2번 → 105장 — 폭주 중) */
   noHealSpawn?: boolean;
   healFraction: number;
   voidChance: number;
@@ -371,7 +372,10 @@ export function defaultCombatParams(): CombatParams {
  *  liberate: 해방 (GDD 83장: 게이지 100 이면, 한 전투 여러 번). 저장형 필살기('stored')는 C.134 에 삭제 (GDD 83장). */
 export type CombatInput =
   | { type: 'use'; cell: number }
-  | { type: 'liberate' };
+  | { type: 'liberate' }
+  /** 막기·회복 버튼 (GDD 105장): 가진 칸 전부를 써서 칸 수 = 체인 단계 */
+  | { type: 'guard' }
+  | { type: 'heal' };
 
 export type CombatStatus = 'playing' | 'won' | 'lost';
 
@@ -507,6 +511,8 @@ export interface CombatState {
   guard: { ticks: number; reflect: number; chain?: number };
   /** 공허 블록 경직 남은 틱 (101장 추가 결정 2번): 막기처럼 기본 공격·블록 생성이 멈춘다 */
   stunTicks?: number;
+  /** 막기·회복 버튼 칸 (GDD 105장): 가진 칸 수와 다음 칸까지 쌓인 틱 */
+  charges: { guard: number; heal: number; guardAcc: number; healAcc: number };
   // ── 기록 (BattleRecord) ──
   skillsUsed: string[];
   blocksByTrait: Record<string, number>;
@@ -675,24 +681,13 @@ export function basicSpawnSecondsOf(p: CombatParams): number {
         const absorbedTotalSeconds = (p.blockSpawnSeconds * (1 + bp.absorbedSlowdownPerSlot * (n - 1))) / n;
         return (absorbedTotalSeconds * (1 - share)) / share;
       })();
-  // 물공 몸 (GDD 49-11): 공격은 자기 타이머로 빠지고 기본 타이머는 막기·회복만 낸다 — 막기·회복이 나오는 속도는 그대로가 되게 간격을 (1 / 막기·회복 가중 몫)만큼 늘린다
-  return base / p.blockSpawnMultiplier / basicTimerPoolShareOf(p);
+  return base / p.blockSpawnMultiplier;
 }
 
-/** 기본 타이머가 실제로 내는 블록의 가중 몫: 물공 몸이면 막기·회복 가중 / 전체(공격 빼기), 아니면 1 */
-function basicTimerPoolShareOf(p: CombatParams): number {
-  if (!p.physBlock) return 1;
-  const share = blockPoolOf(p).filter((e) => e.source.role !== 'attack').reduce((a, e) => a + e.chance, 0);
-  return Math.max(0.001, share);
-}
-
-/** 기본 타이머가 뽑는 풀 (GDD 49-11): 물공 몸이면 공격 칸을 빼고 다시 합 1, 아니면 blockPoolOf 그대로. 충전(뇌 특성)은 blockPoolOf(공격 포함)에서 뽑는다 */
+/** 기본 타이머가 뽑는 풀 (GDD 49-11·105장): 물공 몸이면 없음, 아니면 blockPoolOf 그대로. 충전(뇌 특성)은 blockPoolOf(공격 포함)에서 뽑는다 */
 export function basicTimerPoolOf(p: CombatParams): PoolEntry[] {
-  const pool = blockPoolOf(p);
-  if (!p.physBlock) return pool;
-  const rest = pool.filter((e) => e.source.role !== 'attack');
-  const total = rest.reduce((a, e) => a + e.chance, 0);
-  return rest.map((e) => ({ ...e, chance: total > 0 ? e.chance / total : 0 }));
+  // 물공 몸은 기본 공격 자리를 물공 블록이 차지하고, 막기·회복은 버튼이라(GDD 105장) 기본 타이머가 낼 블록이 없다
+  return p.physBlock ? [] : blockPoolOf(p);
 }
 
 /** 물공 블록 생성원 타이머 간격(초) (GDD 49-11, C.105): 물공 몸만. 블록 가속 배율로 나눈다 */
@@ -707,16 +702,13 @@ export function physSpawnSecondsOf(p: CombatParams): number | null {
 export function blockPoolOf(p: CombatParams): PoolEntry[] {
   const bp = p.blockPool;
   const mult = temperamentOf(p);
-  const [atk, guard, heal] = basicSources(p);
+  const [atk] = basicSources(p);
   const fams = Object.keys(p.families);
   const BASIC_FAMILY_COUNT = 3;
-  const basic: { source: CombatSkill; family: string | null; w: number }[] = [
-    ...(fams.length > 0
-      ? fams.map((f) => ({ source: atk!, family: f, w: bp.basicWeights.attack * mult.attack }))
-      : [{ source: atk!, family: null, w: bp.basicWeights.attack * BASIC_FAMILY_COUNT * mult.attack }]),
-    { source: guard!, family: null, w: bp.basicWeights.guard * mult.guard },
-    { source: heal!, family: null, w: bp.basicWeights.heal * mult.heal },
-  ];
+  // 막기·회복은 블록이 아니라 버튼 (GDD 105장): 기본 블록 풀은 공격 계열만
+  const basic: { source: CombatSkill; family: string | null; w: number }[] = fams.length > 0
+    ? fams.map((f) => ({ source: atk!, family: f, w: bp.basicWeights.attack * mult.attack }))
+    : [{ source: atk!, family: null, w: bp.basicWeights.attack * BASIC_FAMILY_COUNT * mult.attack }];
   const total = basic.reduce((a, x) => a + x.w, 0);
   return basic.map((x) => ({ source: x.source, family: x.family, chance: total > 0 ? x.w / total : 0 }));
 }
@@ -771,7 +763,7 @@ export function spawnTableOf(p: CombatParams, liberation = false): { seconds: nu
   // 공격 몫: 흡수 특성마다(옛 타이머 간격의 역수) + 기본 공격(80장 칸 수별 기본 몫) 또는 물공 몸의 물공 블록(49-11)
   for (const src of p.skills) rates.push({ kind: 'skill', source: src, family: src.family ?? null, rate: 1 / spawnSecondsOf(p, src) });
   const phys = physSpawnSecondsOf(p);
-  const [atk, guard, heal] = basicSources(p);
+  const [atk] = basicSources(p);
   if (phys !== null) rates.push({ kind: 'skill', source: atk!, family: null, rate: 1 / phys, phys: true });
   else {
     const basicRate = 1 / basicSpawnSecondsOf(p);
@@ -779,14 +771,10 @@ export function spawnTableOf(p: CombatParams, liberation = false): { seconds: nu
     const sum = attackPool.reduce((a, e) => a + e.chance, 0);
     for (const e of attackPool) rates.push({ kind: 'skill', source: e.source, family: e.family, rate: sum > 0 ? (basicRate * e.chance) / sum : 0 });
   }
-  // 막기·회복 몫 (84장 7번 — 속성 막기·회복 특성이 없어져 기본 막기·회복만): 칸 수와 무관한 고정 몫, 성향 보정
-  const attackTotal = rates.reduce((a, x) => a + x.rate, 0);
-  const m = temperamentOf(p);
-  const g = Math.min(0.45, (p.blockPool.roleShare?.guard ?? 0) * (m.guard / m.attack));
-  const h = Math.min(0.45, (p.blockPool.roleShare?.heal ?? 0) * (m.heal / m.attack));
-  const skillTotal = attackTotal / Math.max(0.1, 1 - g - h);
-  if (g > 0) rates.push({ kind: 'skill', source: guard!, family: null, rate: g * skillTotal });
-  if (h > 0) rates.push({ kind: 'skill', source: heal!, family: null, rate: h * skillTotal });
+  // 막기·회복은 블록에서 빠졌다 (GDD 105장, 옛 84장 7번 고정 몫): 그 몫(freedRoleShare)을 공격 블록 생성 속도로 돌려준다
+  const boost = 1 / Math.max(0.1, 1 - (p.blockPool.freedRoleShare ?? 0));
+  for (const r of rates) r.rate *= boost;
+  const skillTotal = rates.reduce((a, x) => a + x.rate, 0);
   if (liberation) {
     const lib = liberationBlocksOf(p);
     const entries: SpawnEntry[] = lib.skills.length > 0
@@ -805,25 +793,6 @@ export function spawnTableOf(p: CombatParams, liberation = false): { seconds: nu
 export type LiberationBlockSource = 'body' | 'basic';
 export function liberationBlocksOf(p: Pick<CombatParams, 'skills'>): { source: LiberationBlockSource; skills: CombatSkill[] } {
   return p.skills.length > 0 ? { source: 'body', skills: p.skills } : { source: 'basic', skills: [] };
-}
-
-/**
- * 막기·회복 상한·폭주 중 회복 없음 (GDD 101장 추가 결정 3번·추가 결정 2 2번): 바에 막기(회복) 블록이 guardHealTrayCap 개 있거나 noHealSpawn 이면
- * 그 블록 칸을 빼고, 뺀 몫을 그때 나올 수 있는 공격 블록 칸들(기본 공격·특성 공격·물공)에 똑같이 나눈다. 공격 칸이 없으면 그대로
- */
-export function capSpawnEntries(entries: readonly SpawnEntry[], tray: readonly Block[], p: Pick<CombatParams, 'guardHealTrayCap' | 'noHealSpawn' | 'skills'>): readonly SpawnEntry[] {
-  const roleOf = (e: SpawnEntry): SkillRole | null => (e.kind === 'skill' ? e.source?.role ?? null : null);
-  const count = (role: SkillRole, id: string) => tray.filter((b) => b.kind === 'skill' && (b.traitId === id || p.skills.some((x) => x.id === b.traitId && x.role === role))).length;
-  const blocked = new Set<SkillRole>();
-  if (count('guard', BASIC_GUARD_ID) >= p.guardHealTrayCap) blocked.add('guard');
-  if (p.noHealSpawn || count('heal', BASIC_HEAL_ID) >= p.guardHealTrayCap) blocked.add('heal');
-  if (blocked.size === 0) return entries;
-  const isBlocked = (e: SpawnEntry) => { const r = roleOf(e); return r !== null && blocked.has(r); };
-  const isAttack = (e: SpawnEntry) => e.kind === 'skill' && (e.phys === true || roleOf(e) === 'attack');
-  const n = entries.filter(isAttack).length;
-  const freed = entries.filter(isBlocked).reduce((a, e) => a + e.chance, 0);
-  if (n === 0 || freed <= 0) return entries;
-  return entries.filter((e) => !isBlocked(e)).map((e) => (isAttack(e) ? { ...e, chance: e.chance + freed / n } : e));
 }
 
 /** 출현표에서 하나를 뽑는다 (전투 난수) */
@@ -988,6 +957,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     shuffleTimer: params.trayShuffleSeconds > 0 ? t(params.trayShuffleSeconds) : 0,
     sealTicks: 0,
     guard: { ticks: 0, reflect: 0 },
+    charges: { guard: params.roleCharges.guardStart, heal: params.roleCharges.healStart, guardAcc: 0, healAcc: 0 },
     skillsUsed: [],
     blocksByTrait: {},
     blocksByChain: [0, 0, 0],
@@ -1536,6 +1506,8 @@ function updateCombos(s: CombatState, family: string | null, chain: number): voi
 function useBlock(s: CombatState, index: number): boolean {
   const b = s.tray[index];
   if (!b) return false;
+  // 공격 불가(막기·공허 경직) 동안에는 블록을 쓸 수 없다 (GDD 105장 1번)
+  if (halted(s)) return false;
   const p = s.params;
   if (b.kind === 'void') {
     s.tray.splice(index, 1);
@@ -1627,6 +1599,54 @@ function useBlock(s: CombatState, index: number): boolean {
   return true;
 }
 
+/** 막기·회복 버튼을 지금 누를 수 있는가 (GDD 105장): 칸이 있어야 하고, 막기는 막기 중이 아니면(공허 경직 중에도) 되고,
+ *  회복은 공격 불가(막기·경직) 중이 아니고 폭주 잠김(noHealSpawn)이 아닐 때 */
+export function canUseRole(s: CombatState, role: 'guard' | 'heal'): boolean {
+  if (s.status !== 'playing' || s.charges[role] <= 0) return false;
+  if (role === 'guard') return s.guard.ticks <= 0;
+  return !halted(s) && !s.params.noHealSpawn;
+}
+
+/** 막기·회복 버튼 (GDD 105장): 가진 칸 전부 = 체인 단계(1~3). 효과는 옛 기본 막기·회복 블록 체인 효과 그대로(피해는 없음), 세기 보정(guardHealEnhance)도 그대로 */
+function useRoleButton(s: CombatState, role: 'guard' | 'heal'): boolean {
+  if (!canUseRole(s, role)) return false;
+  const p = s.params;
+  const chain = Math.min(maxChain(p), s.charges[role]);
+  s.charges[role] = 0;
+  const id = role === 'guard' ? BASIC_GUARD_ID : BASIC_HEAL_ID;
+  const eff = blockEffect(s, { uid: 0, kind: 'skill', traitId: id, family: null, element: null }, chain);
+  if (!eff) return false;
+  let heal = 0;
+  let guardSeconds = 0;
+  if (role === 'guard') {
+    guardSeconds = byChain(p.guardSecondsByChain, chain);
+    s.guard.chain = chain;
+    s.guard.ticks = ticksOf(p, guardSeconds);
+  } else {
+    heal = Math.min(s.player.maxHp - s.player.hp, s.player.maxHp * p.healFraction * eff.mult);
+    s.player.hp += heal;
+    // 회복 대가 (GDD 84장 2번): 지속 동안 내 모든 피해 감소
+    s.healWeakTicks = ticksOf(p, p.healWeakenSeconds);
+  }
+  const bonus = tierEffect(p, eff.skill, chain).bonus;
+  if (bonus) applyChainBonus(s, bonus);
+  emit(s, { kind: 'block', block: 'skill', traitId: id, family: null, element: null, matchup: 'neutral', role, chain, damage: 0, weak: false, heal, guardSeconds, bonus: bonus?.kind ?? null });
+  return true;
+}
+
+/** 막기·회복 버튼 충전 (GDD 105장): 시간으로 한 칸씩, 최대 roleCharges.max. 성향(방어·체력·정신력)은 충전 속도 × 그 배율 (옛 출현 몫 보정) */
+function chargeRoles(s: CombatState): void {
+  const rc = s.params.roleCharges;
+  const m = temperamentOf(s.params);
+  const c = s.charges;
+  for (const role of ['guard', 'heal'] as const) {
+    const acc = role === 'guard' ? 'guardAcc' : 'healAcc';
+    if (c[role] >= rc.max) { c[acc] = 0; continue; }
+    const need = ticksOf(s.params, (role === 'guard' ? rc.guardSeconds : rc.healSeconds) / ((role === 'guard' ? m.guard : m.heal) / m.attack));
+    if (++c[acc] >= need) { c[acc] = 0; c[role]++; }
+  }
+}
+
 /** 입력 하나 적용. 규칙에 맞지 않으면 false (상태 그대로) */
 export function applyInput(s: CombatState, input: CombatInput): boolean {
   if (s.status !== 'playing') return false;
@@ -1635,6 +1655,8 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
     ok = liberate(s);
   } else if (input.type === 'use') {
     ok = inTray(s.tray, input.cell) && !blockSealed(s.tray[input.cell]) && useBlock(s, input.cell);
+  } else if (input.type === 'guard' || input.type === 'heal') {
+    ok = useRoleButton(s, input.type);
   }
   if (ok) s.inputs.push({ tick: s.tick, input });
   return ok;
@@ -1744,8 +1766,8 @@ export function guardCutOf(p: Pick<CombatParams, 'guardReductionByChain' | 'heav
   return { normal: byChain(p.guardReductionByChain, chain), heavy: byChain(p.heavyGuardReductionByChain, chain) };
 }
 
-/** 막기·경직 중인가: 내 자동 공격·블록 생성이 멈춘다 (GDD 84장 2번·101장 추가 결정 2번) */
-function halted(s: CombatState): boolean {
+/** 막기·경직 중인가: 내 자동 공격·블록 생성·블록 사용이 멈춘다 (GDD 84장 2번·101장 추가 결정 2번·105장 1번) */
+export function halted(s: CombatState): boolean {
   return s.guard.ticks > 0 || (s.stunTicks ?? 0) > 0;
 }
 
@@ -1826,6 +1848,7 @@ function advanceTick(s: CombatState): void {
   s.tick++;
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
   if (s.stunTicks && s.stunTicks > 0) s.stunTicks--;
+  chargeRoles(s);
   if (s.liberation.ticksLeft === 1) endLiberation(s);
   else if (s.liberation.ticksLeft > 1) s.liberation.ticksLeft--;
   if (s.sealTicks > 0) s.sealTicks--;
@@ -1857,7 +1880,7 @@ function advanceTick(s: CombatState): void {
   if (s.sealTicks === 0 && !halted(s) && s.tray.length < p.trayCapacity && --s.spawnTimer <= 0) {
     const lib = liberationActive(s);
     s.spawnTimer = t(spawnIntervalOf(s));
-    const e = drawSpawn(s, capSpawnEntries(spawnTableOf(p, lib).entries, s.tray, p));
+    const e = drawSpawn(s, spawnTableOf(p, lib).entries);
     if (e?.kind === 'void') spawn(s, 'void', null);
     else if (e?.phys) {
       // 물공 생성원 (GDD 49-11): 그 속성 물공 블록(기본 공격 블록) 1개, 계열은 종족 계열 표에서 고르게

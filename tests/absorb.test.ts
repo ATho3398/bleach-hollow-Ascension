@@ -455,6 +455,7 @@ describe('리스크 게이지', () => {
     const s = createCombat(1, { enemy: getEnemy('test-a') });
     s.tray = [{ uid: 98, kind: 'void', traitId: null }, { uid: 99, kind: 'void', traitId: null }];
     applyInput(s, { type: 'use', cell: 0 });
+    s.stunTicks = 0; // 공허 경직 중에는 블록을 못 쓴다 (GDD 105장 1번) — 사용 횟수만 보려고 경직을 푼다
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.voidUsed).toBe(2);
     expect(s.riskGained).toBeCloseTo(2 * RX.perVoidBlock);

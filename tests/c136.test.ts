@@ -9,7 +9,7 @@ import {
   addEnhance, buildCombatParams, buildOffer, enhanceAttackMultiplier, enhanceGuardHealMultiplier, enhanceLevel, gainTrait, newBuild,
 } from '../src/engine/absorb';
 import {
-  BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, applyInput, createCombat, drainCombatEvents, healWeakenOf, spawnRatesOf, spawnTableOf, step,
+  BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, applyInput, basicSources, createCombat, drainCombatEvents, healWeakenOf, spawnRatesOf, spawnTableOf, step,
   type Block, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { createRng } from '../src/engine/rng';
@@ -40,11 +40,12 @@ const quiet = (s: CombatState) => {
 describe('84장 6번 블록 출현 = 타이머 하나 + 확률표', () => {
   const THREE = ['t-fire-a', 't-water-c', 't-earth-b']; // 조·탄·교
 
-  it('출현표: 흡수 특성·기본 공격·기본 막기·회복·공허가 한 장에 있고 합 1, 타이머는 하나', () => {
+  it('출현표: 흡수 특성·기본 공격·공허가 한 장에 있고 합 1, 타이머는 하나 (C.174 GDD 105장: 막기·회복은 버튼이라 표에 없다)', () => {
     const p = mk(build(...THREE)).params;
     const t = spawnTableOf(p);
     const ids = t.entries.map((e) => (e.kind === 'void' ? 'void' : e.source!.id));
-    for (const id of [...THREE, BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID, 'void']) expect(ids).toContain(id);
+    for (const id of [...THREE, BASIC_SKILL_ID, 'void']) expect(ids).toContain(id);
+    for (const id of [BASIC_GUARD_ID, BASIC_HEAL_ID]) expect(ids).not.toContain(id);
     expect(t.entries.reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1);
     expect(typeof mk(build(...THREE)).spawnTimer).toBe('number');
   });
@@ -79,13 +80,12 @@ describe('84장 6번 블록 출현 = 타이머 하나 + 확률표', () => {
     [[], ['t-fire-a'], ['t-fire-a', 't-water-c'], THREE].forEach((ids, n) => expect(1 - spawnRatesOf(mk(build(...ids)).params).absorbedShare).toBeCloseTo(want[n]!, 2));
   });
 
-  it('막기·회복은 칸 수와 무관한 고정 몫 (속성 막기·회복 특성이 없어져 3칸 몸에서도 막기가 나온다)', () => {
+  it('막기·회복이 빠진 몫(freedRoleShare)은 공격 블록 생성 속도로 돌려준다 (C.174 GDD 105장, 옛 고정 몫 roleShare 대체)', () => {
     for (const ids of [[], THREE]) {
-      const t = spawnTableOf(mk(build(...ids)).params);
-      const skill = t.entries.filter((e) => e.kind === 'skill');
-      const tot = skill.reduce((a, e) => a + e.chance, 0);
-      const g = skill.filter((e) => e.source!.id === BASIC_GUARD_ID).reduce((a, e) => a + e.chance, 0) / tot;
-      expect(g).toBeCloseTo(BALANCE.provisional.blockPool.roleShare.guard, 3);
+      const p = mk(build(...ids)).params;
+      const a = spawnTableOf({ ...p, blockPool: { ...p.blockPool, freedRoleShare: 0 } });
+      const b = spawnTableOf(p);
+      expect(a.seconds / b.seconds).toBeCloseTo(1 / (1 - BALANCE.provisional.blockPool.freedRoleShare), 6);
     }
   });
 
@@ -187,7 +187,7 @@ describe('84장 7번 막기·회복 속성 특성 삭제', () => {
     for (const el of ['water', 'earth', 'thunder', 'blood', 'poison', 'kyo', 'normal']) for (let i = 0; i < 100; i++) addEnhance(b, el);
     expect(enhanceGuardHealMultiplier(b)).toBeCloseTo(1 + EH.guardHealMax);
     const p = mk(buildCombatParams(b, 'hollow')).params;
-    const g = spawnTableOf(p).entries.find((e) => e.source?.id === BASIC_GUARD_ID)!.source!;
+    const g = basicSources(p)[1]!; // C.174: 막기 버튼 세기 (블록 출현표에는 없다)
     expect(g.element).toBeNull();
     expect(g.powerMultiplier).toBeCloseTo(BALANCE.provisional.blockPool.basicGuardRatio * (1 + EH.guardHealMax));
   });

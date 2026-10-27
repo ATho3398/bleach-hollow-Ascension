@@ -828,7 +828,7 @@ export function applyFrenzy(params: Partial<CombatParams>): void {
   params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * RX.frenzyDamageDealt;
   params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * RX.frenzyDamageTaken;
   params.evadeChance = Math.max(params.evadeChance ?? 0, RX.frenzyEvadeChance);
-  // 폭주 중에는 회복 블록이 안 나온다 (101장 추가 결정 2 2번) — 몫은 공격 블록들에
+  // 폭주 중에는 회복 버튼이 잠긴다 (101장 추가 결정 2 2번 → 105장)
   params.noHealSpawn = true;
 }
 

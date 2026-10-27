@@ -12,7 +12,7 @@ import { absorbReasons } from '../engine/absorb';
 import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
-  guardCutOf,
+  guardCutOf, canUseRole, halted as combatHalted,
 } from '../engine/combat';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
@@ -150,7 +150,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'liberation-ready':
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.name} 게이지가 가득 찼다! [${labels.liberation.name}]을(를) 눌러라` };
     case 'heavy-cast':
-      return { role: 'cast', icon: 'i-cast', text: `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 블록으로 막아라` };
+      return { role: 'cast', icon: 'i-cast', text: `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 버튼으로 막아라` };
     case 'heavy-hit':
       return e.guarded
         ? { role: 'guard', icon: 'i-guard', text: `강공격을 막았다! ${n(e.damage)} 피해${e.reflected > 0 ? ` · ${n(e.reflected)} 반사` : ''}` }
@@ -377,10 +377,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     it.append(el('i'), text);
     return it;
   };
+  // 막기·회복은 블록이 아니라 버튼 (GDD 105장): 범례는 블록 바에 나오는 것만
   legend.append(
     legendItem('var(--bha-atk)', labels.role.attack),
-    legendItem('var(--bha-guard)', labels.role.guard),
-    legendItem('var(--bha-heal)', labels.role.heal),
     legendItem('var(--bha-void)', labels.voidBlock),
     ...(p.combos.length > 0 ? [legendItem('var(--bha-rare)', '콤보 블록')] : []),
   );
@@ -416,6 +415,23 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   libCut.setAttribute('aria-hidden', 'true');
   libCut.append(el('span', 'bha-libcut__text', labels.liberation.cutin));
 
+  // 막기·회복 버튼 (GDD 105장, C.174): 해방 알약 버튼 모양. 시간으로 칸이 차고(최대 roleCharges.max), 누르면 가진 칸 전부 = 체인 단계
+  const roleBtn = (role: 'guard' | 'heal') => {
+    const b = el('button', `bha-panel bha-v2role bha-v2role--${role} is-disabled`);
+    b.type = 'button';
+    const name = el('span', 'bha-v2role__name', labels.role[role]);
+    const pips = el('span', 'bha-v2role__pips');
+    const pipEls = Array.from({ length: p.roleCharges.max }, () => el('i'));
+    pips.append(...pipEls);
+    b.append(icon(role === 'guard' ? 'i-guard' : 'i-heal'), name, pips);
+    b.dataset.sc = role;
+    return { root: b, pips: pipEls };
+  };
+  const guardBtn = roleBtn('guard');
+  const healBtn = roleBtn('heal');
+  const roles = el('div', `bha-v2roles${libOn ? '' : ' is-alone'}`);
+  roles.append(guardBtn.root, healBtn.root);
+
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
   legendRow.append(libChip, legend, meStatus);
@@ -423,7 +439,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   for (const n of [libChip, legend, meStatus]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
-  controls.append(legendRow, tray.root, ...(libOn ? [libBtn] : []));
+  controls.append(legendRow, roles, tray.root, ...(libOn ? [libBtn] : []));
 
   // ── 7. 하단 컨트롤 ──
   // 배속 버튼은 C.118 에 삭제 — 1배 고정 (GDD 62장). 테스트 모드 속도 배율(GDD 38-4)만 남는다
@@ -909,7 +925,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       setV2Pips(node, level);
       node.classList.toggle('is-cue', casting && node.dataset.kind === 'guard');
       // 보스 기믹 칸 봉인 (GDD 25-3): 글자가 '봉'으로 바뀌고 회색, 누를 수 없다
-      const locked = (b.sealTicks ?? 0) > 0;
+      // 막기·공허 경직 중(공격 불가)에는 블록을 쓸 수 없다 (GDD 105장 1번): 같은 잠금 표시
+      const locked = (b.sealTicks ?? 0) > 0 || combatHalted(s);
       setV2Locked(node, locked);
       node.setAttribute('aria-disabled', String(locked));
       node.classList.toggle('is-pressed', !!down && down.uid === b.uid);
@@ -1003,6 +1020,26 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (s.chain3Count > 0) setText(chain3Chip.value, `${s.chain3Count}회`);
     setText(tray.veilText, `봉인 — ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)}`);
 
+    // 막기·회복 버튼 (GDD 105장): 칸 수 = 켜진 점, 누를 수 있으면 강조 (다음 칸 충전 중이면 그 점이 반쯤 찬다)
+    for (const [role, btn] of [['guard', guardBtn], ['heal', healBtn]] as const) {
+      const n = s.charges[role];
+      const need = role === 'guard' ? p.roleCharges.guardSeconds : p.roleCharges.healSeconds;
+      const acc = (role === 'guard' ? s.charges.guardAcc : s.charges.healAcc) * p.tickSeconds;
+      btn.pips.forEach((pip, i) => {
+        pip.classList.toggle('is-on', i < n);
+        pip.classList.toggle('is-charging', i === n && n < p.roleCharges.max && acc > need / 2);
+      });
+      const ready = canUseRole(s, role);
+      btn.root.classList.toggle('is-ready', ready);
+      btn.root.classList.toggle('is-disabled', !ready);
+      btn.root.setAttribute('aria-disabled', String(!ready));
+      const label = role === 'heal' && p.noHealSpawn ? `${labels.role.heal} 잠김(한계 돌파)` : `${labels.role[role]} ${n}/${p.roleCharges.max}칸`;
+      if (btn.root.getAttribute('aria-label') !== label) {
+        btn.root.setAttribute('aria-label', label);
+        btn.root.title = label;
+      }
+    }
+
     // 해방 (GDD 83장): 버튼 = 게이지(해방 중에는 남은 시간), 장면 = 오오라
     const libActive = liberationActive(s);
     app.classList.toggle('is-liberated', libActive);
@@ -1055,12 +1092,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     libBtn.classList.remove('is-pressed');
     if (overLib(e) && canLiberate(s) && !halted()) queue.push({ type: 'liberate' });
   });
+  // 막기·회복 버튼: 누르면 바로 (엔진이 칸·잠김을 판정)
+  for (const [role, btn] of [['guard', guardBtn], ['heal', healBtn]] as const) {
+    btn.root.addEventListener('click', () => {
+      if (s.status !== 'playing' || halted() || !canUseRole(s, role)) return;
+      queue.push({ type: role });
+    });
+  }
   const endPress = () => {
     down = null;
     drawTray();
   };
   tray.root.addEventListener('pointerdown', (e) => {
-    if (down || s.status !== 'playing' || halted()) return;
+    if (down || s.status !== 'playing' || halted() || combatHalted(s)) return;
     const b = s.tray[slotOf(e)];
     if (!b) return;
     tray.root.setPointerCapture(e.pointerId);
@@ -1088,6 +1132,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       queue.push({ type: 'liberate' });
       return true;
     },
+    ...Object.fromEntries((['guard', 'heal'] as const).map((role) => [role, () => {
+      if (!app.isConnected || stopped || s.status !== 'playing' || halted() || !canUseRole(s, role)) return false;
+      queue.push({ type: role });
+      return true;
+    }])),
   });
   void offKeys;
   // 키보드: 블록에 초점을 두고 Enter/Space = 사용 (PC 모드의 Space 는 일시정지 단축키라 Enter 만)

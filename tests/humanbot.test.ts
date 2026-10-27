@@ -54,37 +54,35 @@ describe('사람형 봇', () => {
     expect(pg.every((g) => g % 5 === 0)).toBe(true);
   });
 
-  it('막기 블록이 있으면 강공격은 다 막는다(C.174, GDD 101장 추가 결정 3): 막은 비율이 완벽형과 비슷하고, guardSuccess 0.7 이면 확실히 낮다', () => {
-    /** 사람형 봇(guardSuccess 기본·0.7)·완벽형 봇: 강공격 착탄 수·막은 수·막기 블록이 바에 있었는데 맞은 수 */
-    const run = (kind: 'h' | 'h07' | 'p') => {
-      let hits = 0, guarded = 0, missedWithGuard = 0;
+  it('막기 칸이 있으면 강공격은 다 막는다(C.174, GDD 101장 추가 결정 3·105장): 맞은 강공격은 막기 칸이 없을 때뿐이고, guardSuccess 0.7 이면 확실히 덜 막는다', () => {
+    /** 사람형 봇(guardSuccess 기본·0.7): 강공격 착탄 수·막은 비율·막기 칸이 있었는데 맞은 수 */
+    const run = (kind: 'h' | 'h07') => {
+      let hits = 0, guarded = 0, missedWithCharge = 0;
       for (let seed = 1; seed <= 60; seed++) {
-        // C.136 (GDD 84장 7번): 막기 속성 특성이 없어져 막기는 기본 막기 고정 몫뿐 — 봇의 막기 판단만 보려고 이 시험은 막기 몫을 키운다
-        const guardy = { ...two, blockPool: { ...BALANCE.provisional.blockPool, roleShare: { guard: 0.35, heal: 0.05 } } } as Partial<CombatParams>;
-        const s = createCombat(seed, { enemy: { ...heavy, hpInAttacks: 80 }, params: guardy }); // C.118: 적 체력 배율 0.5 라 강공격 착탄 수(100 이상)를 유지하려고 40 → 80
+        const s = createCombat(seed, { enemy: { ...heavy, hpInAttacks: 80 }, params: two }); // C.118: 적 체력 배율 0.5 라 강공격 착탄 수(100 이상)를 유지하려고 40 → 80
         s.player.hp = s.player.maxHp = 1e9;
+        let chargeAtCast = 0;
         const push = s.events.push.bind(s.events);
         s.events.push = (...e) => {
           for (const x of e) {
+            // 예고 동안 쌓인 칸까지: 예고가 시작될 때 칸이 있었으면 착탄 전에 막을 수 있다
+            if (x.kind === 'heavy-cast') chargeAtCast = s.charges.guard;
             if (x.kind !== 'heavy-hit') continue;
             hits++;
             if (x.guarded) guarded++;
-            else if (s.tray.some((b) => b.kind === 'skill' && b.traitId === 'basic-guard')) missedWithGuard++;
+            else if (chargeAtCast > 0) missedWithCharge++;
           }
           return push(...e);
         };
-        if (kind === 'p') playCombatBot(s);
-        else playCombatHuman(s, kind === 'h07' ? { guardSuccess: 0.7 } : {});
+        playCombatHuman(s, kind === 'h07' ? { guardSuccess: 0.7 } : {});
       }
-      return { hits, rate: guarded / hits, missedWithGuard };
+      return { hits, rate: guarded / hits, missedWithCharge };
     };
     const h = run('h');
     const h07 = run('h07');
-    const p = run('p');
     expect(h.hits).toBeGreaterThan(100);
-    expect(p.rate).toBeGreaterThan(0.75); // C.136 (GDD 84장 2번): 막기 동안 블록 생성이 멈춰 연속 강공격 사이에 새 막기 블록이 덜 생긴다 — 0.9 → 0.75
-    expect(h.missedWithGuard).toBe(0); // 맞은 강공격은 모두 막기 블록이 없을 때
-    expect(h.rate).toBeGreaterThan(p.rate - 0.1);
+    expect(h.missedWithCharge).toBe(0);
+    expect(h.rate).toBeGreaterThan(0.5);
     expect(h07.rate).toBeLessThan(h.rate - 0.1);
   });
 
@@ -95,7 +93,7 @@ describe('사람형 봇', () => {
         // C.133 (GDD 80장 v5.166): 2칸(공격·막기) 몸은 기본 블록 몫이 25% 로 줄어 끼어 있는 블록이 드물어 차이가 표본 잡음(±1) 안이 됐다 → 끼어 있는 기본 블록이 많은 1칸 몸으로 본다
         const s = playCombatHuman(createCombat(seed, { enemy: getEnemy('fire-sturdy'), params: one }), { joinChance });
         n += s.chain3Count;
-        expect(s.inputs.every((x) => x.input.type === 'use' || x.input.type === 'liberate')).toBe(true);
+        expect(s.inputs.every((x) => ['use', 'liberate', 'guard', 'heal'].includes(x.input.type))).toBe(true);
       }
       return n;
     };
@@ -130,11 +128,12 @@ describe('사람형 봇', () => {
     expect(counters(0)).toBeGreaterThan(counters(1));
   });
 
-  it('botInput: allowGuard=false 면 강공격 예고 중에도 막기 블록을 쓰지 않는다', () => {
+  it('botInput: allowGuard=false 면 강공격 예고 중에도 막기 버튼을 누르지 않는다', () => {
     const s = createCombat(1, { enemy: heavy, params: two });
-    s.tray = [{ uid: 1, kind: 'skill', traitId: 'basic-guard' }];
+    s.tray = [];
+    s.charges.guard = 1;
     s.enemy.cast = { ticks: 5, total: 20, hitsLeft: 0 }; // 착탄이 막기 지속(체인1 0.7초) 안
-    expect(botInput(s)).toEqual({ type: 'use', cell: 0 });
+    expect(botInput(s)).toEqual({ type: 'guard' });
     expect(botInput(s, { allowGuard: false })).toBeNull();
   });
 });

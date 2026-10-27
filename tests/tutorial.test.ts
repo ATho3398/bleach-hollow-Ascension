@@ -127,10 +127,11 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
     for (const t of BATTLE_HELP_TARGETS) expect(src).toContain(`'${t}'`);
   });
 
-  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록·등급전 − SP·필살 블록 2개, C.118)를 모두 갖고 id 중복이 없다', () => {
+  it('용어 사전은 요구된 용어(13개 + 계열·콤보 블록·등급전 − SP·필살 블록 2개, C.118 + 막기·회복 버튼 C.174)를 모두 갖고 id 중복이 없다', () => {
     const ids = GLOSSARY.map((x) => x.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids.length).toBe(15);
+    expect(ids.length).toBe(16);
+    expect(ids).toContain('guard-heal');
     expect(ids).not.toContain('sp');
     expect(ids).not.toContain('special-block');
     expect(ids).toEqual(expect.arrayContaining(['family', 'combo', 'rank']));

@@ -16,7 +16,7 @@ describe('C.94 탑 구간별 배율', () => {
     expect(towerFloorMultiplier(15)).toBeCloseTo((1 + 4 * 0.02) * TX.eliteScale * TX.eliteScaleByBand[2]!); // C.123: ★2 강적 층 배율
     // ★3 구간은 기본 +4%
     expect(towerFloorMultiplier(23)).toBeCloseTo(1 + 2 * TX.perFloorInBand);
-    expect(towerFloorMultiplier(25)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale);
+    expect(towerFloorMultiplier(25)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale * TX.eliteScaleByBand[3]!); // C.174: ★3 강적 층 ×0.9
   });
 
   it('★2·★3 구간 보스 층(20·30층)만 보스 층 배율을 곱하고 40층은 1 (C.136: ★3 0.65 → C.176 0.72)', () => {

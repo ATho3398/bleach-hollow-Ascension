@@ -152,7 +152,7 @@ describe('95장 B2 C.166·C.168 후속: 해방 순간 블록 1개(C.166 2개 →
     expect(s.tray.some((x) => x.traitId === 'basic-heal')).toBe(true);
     expect(s.tray[s.tray.length - 1]!.traitId).toBe('t-thunder-c');
   });
-  it("해방 6초 동안 블록 약 6개 (특성 1, 안 누름 — 순간 1개 + 생성 ×1.8)", () => {
+  it("해방 6초 동안 블록 약 5개 (특성 1, 안 누름 — 순간 1개 + 생성 ×1.8. C.174: 막기·회복 블록 몫이 빠져 평소 생성 간격이 길어져 약 6 → 5)", () => {
     let tot = 0;
     for (let seed = 1; seed <= 10; seed++) {
       const s = createCombat(seed, { enemy: elite, params: buildCombatParams((() => { const b = newBuild(); gainTrait(b, 't-thunder-c'); return b; })(), 'hollow') });
@@ -163,6 +163,6 @@ describe('95장 B2 C.166·C.168 후속: 해방 순간 블록 1개(C.166 2개 →
       while (s.liberation.ticksLeft > 0 && s.status === 'playing') { s.events.length = 0; step(s, null); n += s.events.filter((e) => e.kind === 'spawn').length; }
       tot += n;
     }
-    expect(tot / 10).toBeGreaterThanOrEqual(5.5);
+    expect(tot / 10).toBeGreaterThanOrEqual(4.5);
   });
 });

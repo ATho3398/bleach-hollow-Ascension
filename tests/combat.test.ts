@@ -245,6 +245,7 @@ describe('붙어 있는 같은 블록 = 클릭 시 함께 발동 (체인)', () =
     useAt(s, 0);
     expect(s.voidUsed).toBe(1);
     expect(s.tray.map((b) => b.kind)).toEqual(['void', 'combo', 'combo']);
+    s.stunTicks = 0; // 공허 경직 중에는 블록을 못 쓴다 (C.174 GDD 105장 1번)
     useAt(s, 1);
     expect(s.tray).toHaveLength(2);
     expect(s.blocksByChain).toEqual([0, 0, 0]); // 스킬 체인 기록은 오르지 않는다
@@ -274,7 +275,7 @@ describe('체인 배율과 SP·필살', () => {
     expect(dmg(3) / d1).toBeCloseTo(3.6);
   });
 
-  it('체인3 은 특성별 추가 효과가 붙는다: stagger(적 행동 지연), reflect(막기 반사), cleanse(봉인 해제 + SP). 체인2 는 없음', () => {
+  it('체인3 은 특성별 추가 효과가 붙는다: stagger(적 행동 지연), reflect(막기 반사 — 막기 버튼 3칸), cleanse(봉인 해제 + 게이지 — 회복 버튼 3칸). 체인2 는 없음', () => {
     const s = quiet(mk({ params: build('t-fire-a', 't-earth-c', 't-thunder-b') }));
     s.enemy.attackTimer = 10;
     put(s, ...many('t-fire-a', 2));
@@ -283,20 +284,22 @@ describe('체인 배율과 SP·필살', () => {
     put(s, ...many('t-fire-a', 3));
     useAt(s, 0);
     expect(s.enemy.attackTimer).toBe(10 + ticksOf(s.params, 1.5));
-    put(s, ...many('basic-guard', 3));
-    useAt(s, 0);
+    // 막기·회복은 버튼 (C.174 GDD 105장): 가진 칸 3개 = 체인3
+    s.charges.guard = 3;
+    expect(applyInput(s, { type: 'guard' })).toBe(true);
     expect(s.guard.reflect).toBe(1);
+    while (s.guard.ticks > 0) step(s);
     s.sealTicks = 30;
     s.liberation.gauge = 0;
-    s.params.liberationGaugePerDealt = 0; // 블록 몫만 본다 (C.154: 피해로도 참)
-    put(s, ...many('basic-heal', 3));
-    useAt(s, 0);
+    s.params.liberationGaugePerDealt = 0; // 버튼 몫만 본다 (C.154: 피해로도 참)
+    s.params.liberationGaugePerTaken = 0;
+    s.charges.heal = 3;
+    expect(applyInput(s, { type: 'heal' })).toBe(true);
     expect(s.sealTicks).toBe(0);
-    // cleanse +40 은 해방 게이지로 (C.118 저장 게이지 → C.134 해방 게이지, GDD 66·83장): 블록 3개 36 + 체인3 보너스 10 + 정화 40 = 86 (< 100)
-    const LIB = BALANCE.provisional.liberation;
-    expect(s.liberation.gauge).toBe(3 * LIB.gaugePerBlock + LIB.chainBonus[2]! + 40);
-    expect(s.chain3Count).toBe(3);
-    expect(s.blocksByChain).toEqual([0, 1, 3]);
+    // cleanse +40 은 해방 게이지로 (C.118 저장 게이지 → C.134 해방 게이지, GDD 66·83장). 버튼은 블록이 아니라 블록 몫 게이지·체인 기록이 없다
+    expect(s.liberation.gauge).toBe(40);
+    expect(s.chain3Count).toBe(1);
+    expect(s.blocksByChain).toEqual([0, 1, 1]);
   });
 
   it('SP 게이지·필살 블록은 없다 (C.118, GDD 66장): 블록을 아무리 써도 상태에 sp 가 없고 바에 특수 블록이 생기지 않는다', () => {

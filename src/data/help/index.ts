@@ -84,11 +84,13 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.voidChanceMaxPct = String(Math.round(COMBAT.voidChanceMax * 100));
   vars.voidHiddenAttacks = String(COMBAT.voidPowerHiddenInAttacks);
   vars.voidStunSeconds = String(COMBAT.voidStunSeconds);
-  // 막기 (GDD 101장 추가 결정): 체인 단계별 지속·경감, 막기·회복 개수 상한
+  // 막기 (GDD 101장 추가 결정): 체인 단계별 지속·경감 / 막기·회복 버튼 충전 (105장)
   vars.guardSecondsList = COMBAT.guardSecondsByChain.join('·');
   vars.guardCutList = COMBAT.guardReductionByChain.map((x) => Math.round(x * 100)).join('·');
   vars.heavyGuardCutList = COMBAT.heavyGuardReductionByChain.map((x) => Math.round(x * 100)).join('·');
-  vars.guardHealCap = String(COMBAT.guardHealTrayCap);
+  vars.roleChargeMax = String(COMBAT.roleCharges.max);
+  vars.guardChargeSeconds = String(COMBAT.roleCharges.guardSeconds);
+  vars.healChargeSeconds = String(COMBAT.roleCharges.healSeconds);
   delete vars.basicSkillName;
   vars.trayCapacity = String(COMBAT.trayCapacity);
   vars.chainMax = String(COMBAT.chainMultipliers.length);

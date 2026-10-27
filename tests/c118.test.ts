@@ -177,15 +177,14 @@ describe('66장 2번 완전히 같은 블록끼리만 체인 (보상 수치는 �
 });
 
 describe('66장 3번 방어·회복 블록 출현 약 절반', () => {
-  it('기본 가중 공격 10 × 3 · 막기 3 · 회복 3 — 막기+회복 몫 16.7% (전 31.8% 의 약 절반), 그만큼 공격으로', () => {
+  it('기본 가중 공격 10 × 3 (막기·회복 가중은 C.174 GDD 105장 뒤 쓰지 않음 — 버튼)', () => {
     expect(BP.basicWeights).toEqual({ attack: 10, guard: 3, heal: 3 });
     const p = createCombat(1, { enemy: normal }).params;
     const pool = blockPoolOf(p);
     const share = (id: string) => pool.filter((e) => e.source.id === id).reduce((a, e) => a + e.chance, 0);
+    // C.174 (GDD 105장): 막기·회복은 블록에서 빠져 버튼 — 기본 블록 풀은 공격뿐
     const gh = share(BASIC_GUARD_ID) + share(BASIC_HEAL_ID);
-    expect(gh).toBeCloseTo(6 / 36, 6);
-    expect(gh / (14 / 44)).toBeGreaterThan(0.45);
-    expect(gh / (14 / 44)).toBeLessThan(0.6);
-    expect(share(BASIC_SKILL_ID)).toBeCloseTo(30 / 36, 6);
+    expect(gh).toBe(0);
+    expect(share(BASIC_SKILL_ID)).toBeCloseTo(1, 6);
   });
 });

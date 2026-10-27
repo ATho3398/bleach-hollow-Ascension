@@ -6,7 +6,7 @@ import { getFaction } from '../src/data/factions';
 import { TRAITS } from '../src/data/traits';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import {
-  basicSpawnSecondsOf, BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, blockPoolOf, createCombat, isBasicBlockId, spawnRatesOf, spawnSecondsOf, step, type CombatParams, type CombatState,
+  basicSources, basicSpawnSecondsOf, BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, blockPoolOf, createCombat, isBasicBlockId, spawnRatesOf, spawnSecondsOf, step, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { applyEvolutionToParams, newEvolution } from '../src/engine/evolution';
 
@@ -24,7 +24,7 @@ const chance = (p: CombatParams, pred: (id: string, family: string | null) => bo
   blockPoolOf(p).filter((e) => pred(e.source.id, e.family)).reduce((a, e) => a + e.chance, 0);
 const sum = (p: CombatParams) => chance(p, () => true);
 const W = BP.basicWeights;
-const BASIC_TOTAL = W.attack * 3 + W.guard + W.heal;
+const BASIC_TOTAL = W.attack * 3; // C.174 (GDD 105장): 막기·회복은 블록이 아니라 버튼 — 기본 블록 풀은 공격 3계열만
 
 /** 블록 n 개가 나올 때까지 돌린다 (쓰지 않으니 바가 차면 비우고 센다) */
 function spawned(s: CombatState, n: number): { traitId: string | null; family: string | null }[] {
@@ -41,13 +41,12 @@ function spawned(s: CombatState, n: number): { traitId: string | null; family: s
 }
 
 describe('기본 블록 풀 (GDD 44장 2번)', () => {
-  it('기본 5종 가중: 공격 3계열 각 10 · 막기 7 · 회복 7 (흡수 칸과 상관없다)', () => {
+  it('기본 블록 풀 = 공격 3계열 각 1/3 (C.174 GDD 105장: 막기·회복은 버튼, 흡수 칸과 상관없다)', () => {
     for (const p of [paramsOf(build()), paramsOf(build('t-poison-c'))]) {
       const fams = getFaction(FACTION).families.map((f) => f.id);
-      expect(blockPoolOf(p)).toHaveLength(5);
+      expect(blockPoolOf(p)).toHaveLength(3);
       for (const f of fams) expect(chance(p, (id, fam) => id === BASIC_SKILL_ID && fam === f)).toBeCloseTo(W.attack / BASIC_TOTAL);
-      expect(chance(p, (id) => id === BASIC_GUARD_ID)).toBeCloseTo(W.guard / BASIC_TOTAL);
-      expect(chance(p, (id) => id === BASIC_HEAL_ID)).toBeCloseTo(W.heal / BASIC_TOTAL);
+      expect(chance(p, (id) => id === BASIC_GUARD_ID || id === BASIC_HEAL_ID)).toBe(0);
       expect(sum(p)).toBeCloseTo(1);
     }
   });
@@ -57,7 +56,7 @@ describe('기본 블록 풀 (GDD 44장 2번)', () => {
     expect(out.every((b) => isBasicBlockId(b.traitId))).toBe(true);
   });
 
-  it('독 탄 1칸: 독 탄이 특성 타이머로 나오고 기본 5종도 함께 나온다 (모든 블록 + 독 탄)', () => {
+  it('독 탄 1칸: 독 탄이 특성 타이머로 나오고 기본 공격 3계열도 함께 나온다 (막기·회복 블록은 없다, C.174)', () => {
     const p = build('t-poison-c');
     const r = spawnRatesOf(paramsOf(p));
     const out = spawned(long(4, p), 2000);
@@ -65,7 +64,7 @@ describe('기본 블록 풀 (GDD 44장 2번)', () => {
     const rate = (pred: (b: { traitId: string | null }) => boolean) => atk.filter(pred).length / atk.length;
     expect(rate((b) => b.traitId === 't-poison-c')).toBeGreaterThan(r.absorbedShare - 0.05);
     expect(rate((b) => b.traitId === 't-poison-c')).toBeLessThan(r.absorbedShare + 0.05);
-    for (const id of [BASIC_GUARD_ID, BASIC_HEAL_ID]) expect(out.some((b) => b.traitId === id)).toBe(true);
+    for (const id of [BASIC_GUARD_ID, BASIC_HEAL_ID]) expect(out.some((b) => b.traitId === id)).toBe(false);
     expect(new Set(out.filter((b) => b.traitId === BASIC_SKILL_ID).map((b) => b.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
   });
 });
@@ -120,45 +119,43 @@ describe('생성 간격과 흡수 칸 (GDD 44-1 B안)', () => {
   });
 
   // C.133 (GDD 80장 v5.166): 1칸 기본 몫 45% — "절반을 넘고"(C.97) 대신 몫 표 ±8%p 와 막기·회복 섞임을 지킨다
-  it('독 탄 1칸 몸에서 실제로 나온 공격 블록 중 기본 공격이 약 45% 이고 막기·회복이 섞여 있다 (C.97 캡처 02 문제의 회귀 가드, C.136: 막기·회복은 고정 몫이라 공격 블록 안에서 센다)', () => {
+  it('독 탄 1칸 몸에서 실제로 나온 공격 블록 중 기본 공격이 약 45% (C.97 캡처 02 문제의 회귀 가드, C.174: 막기·회복 블록은 없다)', () => {
     const out = spawned(long(5, build('t-poison-c')), 400);
     const atk = out.filter((b) => b.traitId !== BASIC_GUARD_ID && b.traitId !== BASIC_HEAL_ID);
     const basic = atk.filter((b) => isBasicBlockId(b.traitId)).length / atk.length;
     expect(Math.abs(basic - 0.45)).toBeLessThanOrEqual(0.08);
-    expect(out.some((b) => b.traitId === BASIC_GUARD_ID)).toBe(true);
-    expect(out.some((b) => b.traitId === BASIC_HEAL_ID)).toBe(true);
+    expect(out.length).toBe(atk.length);
   });
 });
 
-describe('새 몸(흡수 0칸)에서도 막기·회복 블록이 나온다 (사용자 질문 "방어랑 회복 블록은 하나도 안나오는듯?")', () => {
-  it('전투 초반 블록 120개 안에 기본 막기·기본 회복이 모두 있다 (C.134: 기본 타이머 2.7초로 난수 순서가 바뀌어 seed 1 이 60개 안에 막기 0 — 막기 몫 8.3% 라 불운 — 300개면 막기 16·회복 21, 표본 120)', () => {
-    for (let seed = 1; seed <= 10; seed++) {
-      const out = spawned(long(seed, build()), 200); // C.136: 막기 8%·회복 6% 고정 몫(GDD 84장 7번) — 표본 120 → 200
-      expect(out.some((b) => b.traitId === BASIC_GUARD_ID), `seed ${seed}`).toBe(true);
-      expect(out.some((b) => b.traitId === BASIC_HEAL_ID), `seed ${seed}`).toBe(true);
+describe('막기·회복 = 블록 밖 버튼 (GDD 105장, C.174 — 옛 "새 몸에서도 막기·회복 블록이 나온다")', () => {
+  it('블록 바에는 막기·회복 블록이 나오지 않는다', () => {
+    for (let seed = 1; seed <= 5; seed++) {
+      const out = spawned(long(seed, build()), 200);
+      expect(out.some((b) => b.traitId === BASIC_GUARD_ID || b.traitId === BASIC_HEAL_ID), `seed ${seed}`).toBe(false);
     }
   });
 
-  it('기본 막기·회복 세기 = basicRoleBlocks × 70% (C.136: 속성 막기·회복 특성은 삭제 — GDD 84장 7번)', () => {
+  it('버튼 세기 = basicRoleBlocks × 70% (C.136: 속성 막기·회복 특성은 삭제 — GDD 84장 7번)', () => {
     for (const role of ['guard', 'heal'] as const) expect(TRAITS.some((t) => t.kind === 'skill' && t.role === role)).toBe(false);
-    const p = paramsOf(build());
-    const g = blockPoolOf(p).find((e) => e.source.id === BASIC_GUARD_ID)!.source;
-    const h = blockPoolOf(p).find((e) => e.source.id === BASIC_HEAL_ID)!.source;
-    expect(g.role).toBe('guard');
-    expect(g.powerMultiplier).toBe(BP.basicGuardRatio);
-    expect(h.role).toBe('heal');
-    expect(h.powerMultiplier).toBe(BP.basicHealRatio);
+    const [, g, h] = basicSources(paramsOf(build()));
+    expect(g!.role).toBe('guard');
+    expect(g!.powerMultiplier).toBe(BP.basicGuardRatio);
+    expect(h!.role).toBe('heal');
+    expect(h!.powerMultiplier).toBe(BP.basicHealRatio);
   });
 
-  it('기본 막기 블록을 쓰면 막기 상태가 되고, 기본 회복 블록은 체력을 채운다', () => {
+  it('막기 버튼을 누르면 막기 상태가 되고, 회복 버튼은 체력을 채운다', () => {
     const s = createCombat(1, { enemy: getEnemy('test-a'), params: build() });
     s.spawnTimer = 1e9;
-    s.tray = [{ uid: 1, kind: 'skill', traitId: BASIC_GUARD_ID }, { uid: 2, kind: 'skill', traitId: BASIC_HEAL_ID }];
+    s.charges.guard = 1;
+    s.charges.heal = 1;
     s.player.hp = s.player.maxHp * 0.5;
     const hp = s.player.hp;
-    step(s, { type: 'use', cell: 0 });
+    step(s, { type: 'guard' });
     expect(s.guard.ticks).toBeGreaterThan(0);
-    step(s, { type: 'use', cell: 0 });
+    while (s.guard.ticks > 0) step(s);
+    step(s, { type: 'heal' });
     expect(s.player.hp).toBeGreaterThan(hp);
   });
 });
@@ -169,16 +166,22 @@ describe('성향 특성 보정 (GDD 44장 4번, 44-1)', () => {
   const guard = (p: CombatParams) => chance(p, (id) => id === BASIC_GUARD_ID);
   const heal = (p: CombatParams) => chance(p, (id) => id === BASIC_HEAL_ID);
 
-  it('힘·지능 → 기본 공격 ×1.4, 방어 → 막기 ×1.8, 체력 → 회복 ×1.8, 영력 → 막기·회복 ×1.4 (기본 블록 안에서 가중)', () => {
-    const ratio = (p: CombatParams) => ({ a: basicAtk(p) / guard(p), g: guard(p) / heal(p) });
-    const base = ratio(withDisp([]));
-    for (const d of ['atk', 'int'] as const) expect(ratio(withDisp([d])).a).toBeCloseTo(base.a * 1.4);
-    expect(ratio(withDisp(['def'])).g).toBeCloseTo(base.g * 1.8);
-    expect(ratio(withDisp(['hp'])).g).toBeCloseTo(base.g / 1.8);
-    const spr = withDisp(['spr']);
-    expect(guard(spr) / heal(spr)).toBeCloseTo(W.guard / W.heal);
-    expect(ratio(spr).a).toBeCloseTo(base.a / 1.4);
-    for (const d of ['atk', 'def', 'hp', 'spr'] as const) expect(sum(withDisp([d]))).toBeCloseTo(1);
+  it('방어 → 막기 충전 ×1.8, 체력 → 회복 충전 ×1.8, 영력 → 둘 다 ×1.4 (힘·지능은 공격 배율이라 그만큼 상대적으로 느리다, C.174 GDD 105장: 옛 출현 몫 보정을 충전 속도로)', () => {
+    /** 20초 동안 쌓인 칸 (상한 없이 세려고 max 를 크게) */
+    const charged = (d: CombatParams['dispositions']) => {
+      const s = createCombat(1, { enemy: getEnemy('test-a'), params: { ...build(), dispositions: d, roleCharges: { ...BALANCE.provisional.combat.roleCharges, max: 99, guardStart: 0, healStart: 0 }, timeLimitSeconds: 1e9 } });
+      s.player.hp = s.player.maxHp = 1e12;
+      s.enemy.hp = s.enemy.maxHp = 1e12;
+      for (let i = 0; i < 200; i++) step(s);
+      return { g: s.charges.guard, h: s.charges.heal };
+    };
+    const base = charged([]);
+    expect(charged(['def']).g).toBeGreaterThan(base.g);
+    expect(charged(['def']).h).toBe(base.h);
+    expect(charged(['hp']).h).toBeGreaterThan(base.h);
+    expect(charged(['spr']).g).toBeGreaterThan(base.g);
+    expect(charged(['spr']).h).toBeGreaterThan(base.h);
+    expect(charged(['atk']).g).toBeLessThan(base.g);
   });
 
   it('속도 → 흡수 특성 타이머가 빨라져 흡수 블록 비율이 오른다 (0칸이면 변화 없음)', () => {
