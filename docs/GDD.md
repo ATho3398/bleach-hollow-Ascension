@@ -622,6 +622,7 @@ data/
 
 프로토타입(P3) 뒤 후보 시스템(순서는 마스터 추천, 사용자에게 보고함): ① 진화 엔진 프레임 ② 둥지 돌보기 심화·컨디션→전투 연결 ③ 도감과 히든 조건 평가기 ④ 해방(레스렉시온/만해) 보드 변주 프레임 ⑤ 등급 시스템 프레임.
 
+**06:3x C.182 (UI 전수 검수 1차) 배포 확인**(main 6a2bac0, Pages run 226 success, 배포 JS index-CVmTec3Q.js 에 "C.182", 캡처 c182/01·02·05 확인). 14건 찾아 14건 수리, scripts/ui-audit(npm run ui-audit). 코딩128 컨텍스트 41만으로 DONE_. **2차 = C.183 코딩129**(session_01YVaigHyAdcWS5e4v4gxKs8, Opus — 전투 버튼 줄이 상태 칩 따라 밀리는 것·결과 화면·세로·긴 이름·소모품/장비 낀 전투). 점검 trig_01MKhkzm4N3RHyVcCgip161o(07:28). 다음 코딩 130, 다음 패치 C.184.
 **03:2x C.177 배포 확인**(main af1f769, Pages run 225 success, 배포 JS index-zfOavFha.js 에 battle-buttons·"C.181"(PATCH_LABEL 큰 값 유지), 캡처 c177/01·03·04·06 확인). 코딩127 DONE_. 테스트 1851, SAVE 50, BALANCE 82, GDD v5.249. 막기 게이지 8초, 원정 회복 승리 +35%·웅덩이 +50%, 107장 가드 +8%p. 캡처에서 전투 버튼 줄이 소모품 ×n 폭·상태 칩에 따라 밀림 → 코딩128(C.182)에 전투 화면 포함 지시. c177-wip 원격 브랜치는 남아 있음(정리만 남음).
 **02:1x C.180·C.181 배포 확인**(main 565d429 — e7cc8ee 소리 막대 포함, Pages run 224 success(222·223 은 다음 푸시로 cancelled), 배포 JS index-COs5WtIL.js 에 "C.181", 캡처 c180/01·02·04·06·07, c181/02·05 확인). 코딩125·126 DONE_. 테스트 1839, SAVE 49, BALANCE 81. 배부름 감소 7.5 → 5/시간(provisional). 8번 가로 키보드 한계: iOS 는 방향 고정 API 없음(안드로이드 크롬만 가로 강제).
 **02:1x 코딩120 컨텍스트 인계 → C.177 코딩127**(session_01YVaigK2dWuvo6GvpkqDfmd, Opus, c177-wip 0c3dba8 에서 이어 v5.233 기준). 코딩120 DONE_. **110장 2 UI 전수 검수 = C.182 코딩128**(session_01YVaigFtnudXuCWLbRJc44k, Opus, 전투 화면은 C.177 뒤 따로). 점검 trig_01GAGEZLmd6NeAca8sUe2fq7(03:06). 다음 코딩 129, 다음 패치 C.183.
