@@ -933,3 +933,4 @@ button.bha-statrow { cursor: help; }
 .bha-pop__text { margin: 0; }
 .bha-pop__list { margin: 0; padding-left: var(--bha-sp-6); }
 .bha-pop__list li + li { margin-top: var(--bha-sp-1); }
+.bha-pop__list li.is-now { color: var(--bha-warn); font-weight: var(--bha-fw-bold); }

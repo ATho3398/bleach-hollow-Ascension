@@ -5,7 +5,8 @@ import { el, icon } from './dom';
 import { getOverlayHost, registerLayer } from './overlayHost';
 
 /** 설명 내용: 한 줄 글, 여러 줄(목록), 또는 [소제목, 줄들] 묶음 */
-export type InfoBody = string | string[] | { title: string; lines: string[] }[];
+/** mark = 그 묶음에서 강조할 줄(지금 내 수치 구간, C.176 GDD 109장 2) */
+export type InfoBody = string | string[] | { title: string; lines: string[]; mark?: number }[];
 
 let openPop: { close: () => void } | null = null;
 
@@ -17,9 +18,9 @@ function bodyNodes(body: InfoBody): HTMLElement[] {
     for (const t of body as string[]) ul.append(el('li', '', t));
     return [ul];
   }
-  return (body as { title: string; lines: string[] }[]).flatMap((g) => {
+  return (body as { title: string; lines: string[]; mark?: number }[]).flatMap((g) => {
     const ul = el('ul', 'bha-pop__list');
-    for (const t of g.lines) ul.append(el('li', '', t));
+    g.lines.forEach((t, i) => ul.append(el('li', i === g.mark ? 'is-now' : '', i === g.mark ? `◀ 지금 · ${t}` : t)));
     return [el('b', 'bha-pop__sub', g.title), ul];
   });
 }

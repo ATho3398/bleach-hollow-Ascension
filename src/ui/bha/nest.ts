@@ -56,8 +56,8 @@ export interface StatusOpts {
 /** 상태 4바: 배부름(허기를 뒤집어 표시, C.63)·컨디션·안정 수치·리스크. 경고 문구는 기존 규칙 그대로 */
 export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement {
   const root = el('div', 'bha-nest__status');
-  const withTip = (m: HTMLElement, kind: StatusInfoKind, label: string): HTMLElement => {
-    m.querySelector('.bha-meter__label')?.append(infoTip(label, () => statusInfo(kind, faction)));
+  const withTip = (m: HTMLElement, kind: StatusInfoKind, label: string, value?: number): HTMLElement => {
+    m.querySelector('.bha-meter__label')?.append(infoTip(label, () => statusInfo(kind, faction, value)));
     return m;
   };
   // 이름 옆 ⓘ (C.176, GDD 104장 2): 누르면(폰)·올리면(PC) 설명 창. 옛 '광기·자아 설명' 패널은 이 창으로 옮겼다
@@ -67,11 +67,11 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
       kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), max: 100,
       danger: s.condition < s.condWarn, note: s.condition < s.condWarn ? '나쁨: 전투에 공허 블록 ↑' : undefined,
     }), 'cond', '컨디션'),
-    withTip(meter({ kind: 'stab', label: faction.stabilityName, icon: 'i-stab', value: Math.round(s.stability), max: s.stabilityMax }), 'stab', faction.stabilityName),
+    withTip(meter({ kind: 'stab', label: faction.stabilityName, icon: 'i-stab', value: Math.round(s.stability), max: s.stabilityMax }), 'stab', faction.stabilityName, s.stability),
     withTip(meter({
       kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), max: s.riskLimit,
       zone: s.riskWarn / s.riskLimit, danger: s.risk >= s.riskWarn, note: s.risk >= s.riskWarn ? '높음: 원정 시작부터 위험' : undefined,
-    }), 'risk', faction.riskGaugeName),
+    }), 'risk', faction.riskGaugeName, s.risk),
   );
   return root;
 }

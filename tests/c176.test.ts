@@ -56,8 +56,16 @@ describe('104장 5·6: 포식 설명·이름', () => {
 describe('104장 2: 상태 ⓘ', () => {
   it('상태마다 설명 문구가 있고(광기·자아 = 옛 설명 패널 내용), 방 칩 ⓘ 는 칩마다 한 묶음', () => {
     for (const k of ['hunger', 'cond', 'bond', 'risk', 'stab', 'weak', 'tired', 'collapsed'] as const) expect(statusInfo(k, hollow)).toBeTruthy();
-    const risk = statusInfo('risk', hollow) as { title: string; lines: string[] }[];
-    expect(risk.map((g) => g.title)).toEqual(['손해', '오르는 길', '내리는 길']);
+    const risk = statusInfo('risk', hollow, 85) as { title: string; lines: string[]; mark?: number }[];
+    expect(risk.map((g) => g.title)).toEqual(['구간별 손해', '오르는 길', '내리는 길']);
+    // 109장 2: 구간마다 숫자, 지금 구간(85 = 80~99) 강조
+    expect(risk[0]!.lines[0]).toMatch(/^0~79: /);
+    expect(risk[0]!.mark).toBe(1);
+    expect(risk[0]!.lines[2]).toContain(`+${Math.round((BALANCE.provisional.risk.frenzyDamageTaken - 1) * 100)}%`);
+    const stab = statusInfo('stab', hollow, 10) as { title: string; lines: string[]; mark?: number }[];
+    expect(stab[0]!.mark).toBe(0);
+    expect(stab[0]!.lines).toHaveLength(4);
+    expect(stab[0]!.lines.every((l) => /해방 게이지 [\d.]+~[\d.]+\//.test(l))).toBe(true);
     const chips = statusChips({ hunger: 50, condition: 50, risk: 10, weakened: true, tired: false, bond: 3 }, hollow);
     const groups = roomStatusInfo(chips, hollow) as { title: string; lines: string[] }[];
     expect(groups).toHaveLength(chips.length);

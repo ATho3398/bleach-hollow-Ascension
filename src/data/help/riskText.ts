@@ -66,3 +66,35 @@ export function riskText(f: Names): RiskText {
     ],
   };
 }
+
+/** 수치 구간 하나: from~to 일 때 정확히 무엇을 잃는가 (GDD 109장 2, C.176) */
+export interface RiskZone {
+  from: number;
+  to: number;
+  text: string;
+}
+
+/** 광기 구간별 손해 (109장 2): 값은 BALANCE 에서. 한계 미만은 직접 손해가 없고(수련장 경고 구간만 따로), 한계 = 폭주 */
+export function riskZones(f: Names): RiskZone[] {
+  const g = f.riskGaugeName;
+  const warn = BALANCE.provisional.training.riskWarn;
+  return [
+    { from: 0, to: warn - 1, text: `직접 손해 없음 — 게이지만 쌓인다` },
+    { from: warn, to: RX.limit - 1, text: `직접 손해 없음 · 수련장에 '${g} 높음' 경고가 뜬다 · ${RX.limit}이 되는 순간 아래 ${f.frenzyName}` },
+    {
+      from: RX.limit, to: RX.limit,
+      text: `${f.frenzyName}(원정당 1번): 그 원정 남은 동안 주는 피해 ${plus(RX.frenzyDamageDealt)} · 받는 피해 ${plus(RX.frenzyDamageTaken)} · 적 공격 ${Math.round(RX.frenzyEvadeChance * 100)}% 회피 · 회복 블록 없음 · 공허 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p — ${f.nestName}에 돌아오면 컨디션 −${RX.frenzyConditionLoss} · ${f.stabilityName} −${RX.breakthroughStabilityLoss} · ${g} ${RX.riskAfterBreakthrough}으로`,
+    },
+  ];
+}
+
+/** 영압 안정도 구간별 손해 (109장 2): 전투 시작 해방 게이지 = 값 ÷ 상한 × 시작 최대(선형) — 4구간으로 끊어 그 구간의 시작 게이지를 숫자로 */
+export function stabilityZones(f: Names): RiskZone[] {
+  const max = RX.stabilityMax;
+  const gauge = (v: number) => num((v / max) * LIB.startGaugeMax);
+  const cuts = [0, max * 0.25, max * 0.5, max * 0.75, max + 1].map(Math.round);
+  return cuts.slice(0, -1).map((from, i) => {
+    const to = cuts[i + 1]! - 1;
+    return { from, to, text: `전투 시작 해방 게이지 ${gauge(from)}~${gauge(to)}/${LIB.gaugeMax}로 시작 (${f.stabilityName} ${max}이면 ${LIB.startGaugeMax})` };
+  });
+}
