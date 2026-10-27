@@ -66,7 +66,7 @@ export type RoomProp = (typeof ROOM_PROPS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
 /** 방 말풍선 키. collapsed = 쓰러짐, bondShy·bondClose·bondBest = 교감 단계 대사 (GDD 102-6 ④, C.175) */
-export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep'] as const;
+export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep', 'spit'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
@@ -144,6 +144,7 @@ export const DEFAULT_ROOM: RoomConfig = {
   talk: {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], collapsed: ['…일어설 수가 없다.'], happy: ['좋아!'], bondShy: ['…'], bondClose: ['또 와 줬구나.'], bondBest: ['기다리고 있었어.'], hungry: ['배고파하고 있었다.'],
     askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
+    spit: ['더는 못 먹어…', '퉤! …더는 못 먹어.'], // 먹이 뱉음 (GDD 109장 6, C.181)
   },
 };
 

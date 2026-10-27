@@ -5,6 +5,7 @@ import { FACTIONS } from '../src/data/factions';
 import { FOOD_IDS } from '../src/engine/faction';
 import { doNestAction, newNest } from '../src/engine/nest';
 import { careFeedback, CLOSED, togglePanel, type DockPanel } from '../src/ui/bha/dockLogic';
+const NX_FOODS = BALANCE.provisional.nest.foods;
 
 describe('독 펼침 상태', () => {
   it('먹이를 누르면 열리고 다시 누르면 닫힌다', () => {
@@ -38,8 +39,9 @@ describe('먹이 5종', () => {
     n.hunger = 90;
     n.condition = 50;
     doNestAction(n, 'feed', 'feast');
-    expect(n.hunger).toBe(10);
+    expect(n.hunger).toBe(90 - NX_FOODS.feast.hunger);
     expect(n.condition).toBe(45);
+    n.hunger = 3;
     doNestAction(n, 'feed', 'feast');
     expect(n.hunger).toBe(0);
     n.condition = 98;

@@ -133,11 +133,11 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
   it('둥지 먹이 주기는 하나를 쓰고, 0개면 먹이지 못한다', () => {
     const save = newSaveData('hollow', 0);
     save.nest.hunger = 80;
-    expect(feedNest(save, 'snack')).toBe(true);
+    expect(feedNest(save, 'snack')).toBe('ate');
     expect(save.shared.food.snack).toBe(4);
     expect(save.nest.hunger).toBe(80 - BALANCE.provisional.nest.foods.snack.hunger);
     const h = save.nest.hunger;
-    expect(feedNest(save, 'feast')).toBe(false);
+    expect(feedNest(save, 'feast')).toBe(null);
     expect(save.nest.hunger).toBe(h);
     expect(save.shared.food.feast).toBe(0);
   });

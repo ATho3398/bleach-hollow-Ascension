@@ -6,9 +6,8 @@ import { cosmeticName, COSMETIC_ITEMS, GOLD_ITEMS, getCosmetic, getGoldItem, get
 import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
-import { takeFood } from './engine/food';
-import { CARE_STATUS_NAMES, doNestAction } from './engine/nest';
-import { cureNest } from './game';
+import { CARE_STATUS_NAMES } from './engine/nest';
+import { cureNest, feedNest } from './game';
 import { wandererAmount } from './engine/wanderer';
 import { CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
@@ -137,7 +136,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   return out.sort((a, b) => ITEM_CATEGORIES.indexOf(a.category) - ITEM_CATEGORIES.indexOf(b.category));
 }
 
-export type InventoryResult = { ok: true; detail: string } | { ok: false; reason: string };
+export type InventoryResult = { ok: true; detail: string; /** 먹이를 뱉음 (GDD 109장 6) */ spat?: boolean } | { ok: false; reason: string };
 
 /** 보관함에서 쓴다: 먹이(`food-<종류>`) = 먹이 주기, 소모품 = 효과를 지금 캐릭터에 바로. 실패하면 아무것도 바뀌지 않는다 */
 export function useInventoryItem(save: SaveData, faction: FactionConfig, id: string): InventoryResult {
@@ -146,8 +145,9 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     if (!(FOOD_IDS as readonly string[]).includes(f)) return { ok: false, reason: '모르는 먹이다' };
     if (save.activeExpedition != null) return { ok: false, reason: '원정 중인 캐릭터에는 못 쓴다' };
     if (save.nest.dead) return { ok: false, reason: `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` };
-    if (!takeFood(save.shared.food, f)) return { ok: false, reason: '먹이가 없다' };
-    doNestAction(save.nest, 'feed', f);
+    const fed = feedNest(save, f);
+    if (!fed) return { ok: false, reason: '먹이가 없다' };
+    if (fed === 'spat') return { ok: true, detail: '더는 못 먹어 — 뱉었다', spat: true };
     return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}` }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
   }
   const e = consumableEffect(id);

@@ -16,7 +16,7 @@ import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
 import { characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
-import { CARE_STATUS_NAMES, dyingLeftMs, reviveEvLossOf } from '../engine/nest';
+import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, reviveEvLossOf } from '../engine/nest';
 import { notice } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
@@ -253,12 +253,25 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const dock = createDock({
     faction,
     foodCount: (food) => save.shared.food[food],
+    feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
-        if (!food || !feedNest(save, food)) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.');
+        const fed = food ? feedNest(save, food) : null;
+        if (!fed) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.');
+        if (fed === 'spat') {
+          // 10분에 3개를 넘김 (GDD 109장 6): 먹이는 없어지고 효과 없음 — 뱉는 모션 + 말풍선
+          hd.persist();
+          dock.refreshFeeds();
+          char.classList.remove('is-spit', 'is-react');
+          void char.offsetWidth;
+          char.classList.add('is-spit');
+          window.setTimeout(() => char.classList.remove('is-spit'), 700);
+          return say(pickLine(room.talk, 'spit'));
+        }
+        dock.refreshFeeds();
       } else if (careNest(save, action) === 'refused') {
         // 요청이 없거나 다른 것을 청했을 때: 거절 말풍선, 효과 없음 (GDD 82장)
         hd.persist();
@@ -325,6 +338,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   window.clearInterval(idleTimer);
   const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
+    dock.refreshFeeds(); // 먹이 한도가 10분 뒤 다시 열린다 (GDD 109장 6)
     if (dyingClockEl) dyingClockEl.textContent = dyingClock(dyingLeftMs(n, Date.now()) ?? 0); // 빈사 남은 시간
     // 돌봄 요청 시계 (GDD 82장): 방에 있는 동안 요청이 생기거나 사라진다
     const had = n.careRequest;

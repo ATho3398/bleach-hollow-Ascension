@@ -55,11 +55,11 @@ describe('102-1 시간 흐름', () => {
     passNestTime(low, 1, true);
     expect(low.stability).toBeCloseTo(50 - CP.stabilityPerHour * 2, 5);
   });
-  it('+60 상한이 없어 약 13시간이면 배부름 0, 리스크는 그대로', () => {
+  it('+60 상한이 없어 100/시간당 흐름(C.181: 5 → 20시간)이면 배부름 0, 리스크는 그대로', () => {
     const n = newNest(0);
     n.hunger = 0;
     n.risk = 33;
-    applyAbsenceTime(n, 0, 14 * H);
+    applyAbsenceTime(n, 0, (100 / BALANCE.provisional.nest.idleHungerPerHour + 1) * H);
     expect(n.hunger).toBe(100);
     expect(n.risk).toBe(33);
   });
@@ -69,7 +69,7 @@ describe('102-1 시간 흐름', () => {
     n.condition = 80;
     n.stability = 50;
     tickNestOnline(n, 2 * H);
-    expect(n.hunger).toBeCloseTo(85);
+    expect(n.hunger).toBeCloseTo(70 + 2 * BALANCE.provisional.nest.idleHungerPerHour);
     expect(n.condition).toBeLessThan(80);
     expect(n.stability).toBe(50);
     const before = n.hunger;

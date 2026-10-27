@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 80; // C.176: 휴식 칸 시간 10 → 약 3.3초(restSecondsPerTile 5 → 5/3, 회복량 그대로)·같은 속성 포식 후보 다시 뜸(가진 블록 = 강화만)·탑 ★3 보스 층 ×0.65 → 0.72 (GDD 106장 1·2). C.175: 돌봄 패널티 provisional.nest.care·bond·medicinePrices, 꺼 둔 허기 +60 상한 삭제 (GDD 102장). C.174: 강공격 ×2.5 → ×3(최대 체력 약 45%)·연속 강공격 한 타 ×1.4 → ×2.25·사람형 봇 강공격 다 막음 → 적 공격 배율 0.55 → 0.45·공허 몫 3 → 2% (GDD 101장 추가 결정 3). C.173: 공허 블록 = 출현표 안 몫 10%(상한 50%, 별도 시계 삭제)·피해 8 → 1(히든 진화체 8)·폭주 받는 피해 1.3 → 1.6 + 회피 20% (GDD 101장). C.168: 해방 순간 블록 2 → 1·지속 4 → 6초 (GDD 95장 B2 후속, 마스터 결정). C.167: C.167: 해방 칸 폐지(slotsByTier 삭제)·고유 능력치 ×1.05 → ×1.1·수련 ×1.1 → ×1.2 (GDD 98장 B). C.166: 해방 순간 블록 2개·생성 ×1.3 → ×1.8·지속 8 → 4초·게이지 블록 8 → 2·준 피해 40 → 15·받은 피해 70 → 90·고유 능력치 ×1.1 → ×1.05(수련 ×1.2 → ×1.1) (GDD 95장 B2 후속). C.154: C.154: 해방 게이지 블록당 12 → 8 + 준 피해 40·받은 피해 70(적·내 최대 체력 1개분당) (GDD 95장 B2). C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
+export const BALANCE_VERSION = 81; // C.181: 먹이 배부름 약 0.09배(고기 35 → 3·사냥감 55 → 5, 다른 먹이 같은 비율)·10분에 3개(넘으면 뱉음)·배부름 시간당 −7.5 → −5 (GDD 109장 6). C.176: 휴식 칸 시간 10 → 약 3.3초(restSecondsPerTile 5 → 5/3, 회복량 그대로)·같은 속성 포식 후보 다시 뜸(가진 블록 = 강화만)·탑 ★3 보스 층 ×0.65 → 0.72 (GDD 106장 1·2). C.175: 돌봄 패널티 provisional.nest.care·bond·medicinePrices, 꺼 둔 허기 +60 상한 삭제 (GDD 102장). C.174: 강공격 ×2.5 → ×3(최대 체력 약 45%)·연속 강공격 한 타 ×1.4 → ×2.25·사람형 봇 강공격 다 막음 → 적 공격 배율 0.55 → 0.45·공허 몫 3 → 2% (GDD 101장 추가 결정 3). C.173: 공허 블록 = 출현표 안 몫 10%(상한 50%, 별도 시계 삭제)·피해 8 → 1(히든 진화체 8)·폭주 받는 피해 1.3 → 1.6 + 회피 20% (GDD 101장). C.168: 해방 순간 블록 2 → 1·지속 4 → 6초 (GDD 95장 B2 후속, 마스터 결정). C.167: C.167: 해방 칸 폐지(slotsByTier 삭제)·고유 능력치 ×1.05 → ×1.1·수련 ×1.1 → ×1.2 (GDD 98장 B). C.166: 해방 순간 블록 2개·생성 ×1.3 → ×1.8·지속 8 → 4초·게이지 블록 8 → 2·준 피해 40 → 15·받은 피해 70 → 90·고유 능력치 ×1.1 → ×1.05(수련 ×1.2 → ×1.1) (GDD 95장 B2 후속). C.154: C.154: 해방 게이지 블록당 12 → 8 + 준 피해 40·받은 피해 70(적·내 최대 체력 1개분당) (GDD 95장 B2). C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -599,7 +599,9 @@ export const BALANCE = {
       startCondition: 80,
       /** 시간 흐름 허기 (GDD 24-1 → 102-1, provisional): 시간당 상승(켜 있든 꺼 있든), 복귀 말풍선을 띄우는 최소 상승량.
        *  원정 중간 저장이 있으면 멈춘다. C.175: 한 번 비운 사이 +60 상한(idleHungerMaxGain) 삭제 — 약 13시간이면 배부름 0 */
-      idleHungerPerHour: 7.5,
+      /*  C.181 (GDD 109장 6): 7.5 → 5 — 먹이가 약 0.09배(고기 +3·사냥감 +5)라 한 번 와서 3개(+9~15) = 약 1.8~3시간, 하루 약 −120.
+       *  100 → 쇠약(20 이하) 16시간, 밤 8시간 비우면 −40 이라 배부름 61 이상이면 아침에 쇠약 없음(7.5 면 −60 → 81 이상 필요) */
+      idleHungerPerHour: 5,
       idleHungerNotice: 5,
       /** 돌봄 패널티 (GDD 102장, C.175 마스터 결정 provisional). 배부름 = 100 − 허기.
        *  conditionPerHour: 배부름 conditionBelowFullness 이하일 때만 컨디션 시간당 감소, 배부름 0 이면 ×2 (켜 있든 꺼 있든).
@@ -639,15 +641,19 @@ export const BALANCE = {
       },
       /** 약 3종 값 (GDD 102-4, provisional): 보통 먹이(shop.goldPrices food-basic 35) 기준 치료제 약 6배, 링거·에너지 드링크 약 3배 */
       medicinePrices: { 'med-cure': 210, 'med-iv': 105, 'med-energy': 105 } as Record<string, number>,
-      feedHunger: 35,
-      /** 먹이 5종 (GDD 18-2, 임시 provisional): 허기 감소·컨디션 변화. basic 은 예전 단일 먹이(feedHunger)와 같다. 가진 개수·비용 없음(먹이 자원은 미정) */
+      feedHunger: 3,
+      /** 먹이 5종 (GDD 18-2, 임시 provisional): 허기 감소·컨디션 변화. basic 은 예전 단일 먹이(feedHunger)와 같다.
+       *  C.181 (GDD 109장 6, 사용자 "고기 3, 사냥감 5"): 고기(basic) 35 → 3·사냥감(hearty) 55 → 5, 나머지도 같은 비율(약 ×0.09, 반올림·최소 1). 컨디션 변화는 그대로 */
       foods: {
-        snack: { hunger: 15, condition: 4 },
-        basic: { hunger: 35, condition: 0 },
-        hearty: { hunger: 55, condition: 0 },
-        tonic: { hunger: 20, condition: 10 },
-        feast: { hunger: 80, condition: -5 },
+        snack: { hunger: 1, condition: 4 },
+        basic: { hunger: 3, condition: 0 },
+        hearty: { hunger: 5, condition: 0 },
+        tonic: { hunger: 2, condition: 10 },
+        feast: { hunger: 7, condition: -5 },
       },
+      /** 한 번에 많이 먹이면 뱉는다 (GDD 109장 6, provisional): 마지막으로 먹인 뒤 windowMinutes 안에 max 개까지. 그다음은 뱉음(먹이는 없어지고 효과·교감 없음).
+       *  마지막으로 먹인 뒤 windowMinutes 가 지나면 다시 max 개. 약은 세지 않는다 */
+      feedLimit: { max: 3, windowMinutes: 10 },
       sleepCondition: 30,
       petCondition: 8,
       /** 돌봄 요청제 (GDD 82장, C.133 provisional): 쓰다듬기·재우기는 캐릭터가 청했을 때만 효과. 요청 간격(분, 실제 시간 무작위 범위)·유지 시간(분)·첫 요청까지(분, 새 시작)·

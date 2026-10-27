@@ -43,6 +43,9 @@ export interface NestState {
   careRequest: CareRequest | null;
   /** 다음 돌봄 요청이 나올 시각(ms). 지난 뒤 방에 오면(오프라인 복귀 포함) 요청이 하나 생긴다 — 쌓이지 않고 최대 1개 */
   nextCareAt: number;
+  /** 먹이 한도 (GDD 109장 6, C.181): 지금 묶음에서 먹은 개수와 마지막으로 먹은 시각(ms, 0 = 없음). 마지막으로 먹은 뒤 feedLimit.windowMinutes 가 지나면 묶음이 새로 시작 */
+  feedCount: number;
+  lastFedAt: number;
 }
 
 /** 요청 대상 돌봄 (GDD 82장): 먹이는 요청제가 아니다 */
@@ -57,7 +60,7 @@ export interface CareRequest {
 export type CareOutcome = 'answered' | 'refused';
 
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000 };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0 };
 }
 
 const CR = NX.careRequest;
@@ -287,6 +290,29 @@ export function departCare(nest: NestState): { weak: boolean; tired: boolean; dy
 /** 먹이 한 종류의 효과 (허기 감소, 컨디션 변화). 임시 수치 (BALANCE.provisional.nest.foods) */
 export function foodEffect(food: FoodId): { hunger: number; condition: number } {
   return NX.foods[food];
+}
+
+const FL = NX.feedLimit;
+/** 지금 먹일 수 있는 남은 개수 (GDD 109장 6): 마지막으로 먹은 뒤 windowMinutes 가 지났으면(또는 시계를 되돌렸으면) max */
+export function feedsLeft(nest: Pick<NestState, 'feedCount' | 'lastFedAt'>, nowMs: number): number {
+  if (!nest.lastFedAt || nowMs - nest.lastFedAt >= FL.windowMinutes * 60_000 || nowMs < nest.lastFedAt) return FL.max;
+  return Math.max(0, FL.max - nest.feedCount);
+}
+
+/** 묶음이 다시 열릴 때까지 남은 시간(ms). 지금 먹일 수 있으면 0 */
+export function feedResetMs(nest: Pick<NestState, 'feedCount' | 'lastFedAt'>, nowMs: number): number {
+  return feedsLeft(nest, nowMs) > 0 ? 0 : Math.max(0, nest.lastFedAt + FL.windowMinutes * 60_000 - nowMs);
+}
+
+/** 먹이 하나를 먹인다 (GDD 109장 6): 남은 개수가 있으면 먹음(doNestAction feed, 묶음 +1, 마지막 시각 = 지금).
+ *  없으면 뱉음 — 효과·교감 없음, 마지막 시각도 그대로(뱉은 건 '먹인 것'이 아니다). 먹이 개수 차감은 부르는 쪽 */
+export function feedFood(nest: NestState, food: FoodId, nowMs: number): 'ate' | 'spat' {
+  if (feedsLeft(nest, nowMs) <= 0) return 'spat';
+  if (feedsLeft(nest, nowMs) >= FL.max) nest.feedCount = 0;
+  doNestAction(nest, 'feed', food, nowMs);
+  nest.feedCount++;
+  nest.lastFedAt = nowMs;
+  return 'ate';
 }
 
 /** 둥지 행동: 먹이(허기↓, 종류별 컨디션 변화) / 재우기(컨디션↑) / 쓰다듬기(컨디션 소량↑). food 는 먹이일 때만 쓰고 기본은 basic(예전 단일 먹이).

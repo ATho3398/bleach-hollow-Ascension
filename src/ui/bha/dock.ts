@@ -19,6 +19,8 @@ export interface DockOpts {
   onCare: (action: NestAction, food?: FoodId) => void;
   /** 먹이 종류별 보유 개수 (GDD 23-1): 먹이 칸에 개수를 보이고 0개는 비활성 */
   foodCount: (food: FoodId) => number;
+  /** 먹이 한도 (GDD 109장 6): 지금 더 먹일 수 있는 개수와 한도. 먹이 버튼 옆에 작게 '2/3' */
+  feedsLeft?: () => { left: number; max: number };
   /** 더보기 격자에 펼치는 항목 (아이콘 + 짧은 이름, 이 순서대로) */
   more: DockMenuItem[];
   /** 대기 보상 시계 버튼 (GDD 98장 A3): ⋯ 옆, 글자 없음, 쌓인 시간은 작은 배지. 누르면 대기 보상 창 */
@@ -35,6 +37,8 @@ export interface Dock {
   close: () => void;
   /** 돌봄 요청 강조 (GDD 82장): 캐릭터가 청한 돌보기 버튼만 강조, null 이면 모두 해제 */
   setRequest: (action: NestAction | null) => void;
+  /** 먹이 남은 개수 표시를 다시 그린다 (먹인 뒤·1분마다) */
+  refreshFeeds: () => void;
 }
 
 const CARE_META: Record<NestAction, { icon: string; cls: string }> = {
@@ -74,6 +78,17 @@ export function createDock(o: DockOpts): Dock {
     careBtns.set(a, b);
     care.append(b);
   }
+  // 먹이 남은 개수 (GDD 109장 6): 버튼 글 옆 작은 숫자, 0 이면 흐리게
+  const feedLeft = el('small', 'bha-homedock__feedleft bha-num');
+  if (o.feedsLeft) careBtns.get('feed')!.append(feedLeft);
+  const refreshFeeds = () => {
+    if (!o.feedsLeft) return;
+    const { left, max } = o.feedsLeft();
+    feedLeft.textContent = `${left}/${max}`;
+    feedLeft.classList.toggle('is-empty', left <= 0);
+    careBtns.get('feed')!.title = `${faction.nestActions.feed} (10분에 ${max}개까지 — 지금 ${left}개 더)`;
+  };
+  refreshFeeds();
 
   // ── 더보기: 메뉴 전부가 들어 있는 버튼 하나 (⋯) ──
   const menu = el('div', 'bha-homedock__menu');
@@ -183,6 +198,7 @@ export function createDock(o: DockOpts): Dock {
     items: () => [...trayBtns.filter((b) => !(b as HTMLButtonElement).disabled), ...careBtns.values(), ...menuBtns],
     panel: () => panel,
     close: () => { if (panel !== CLOSED) setPanel(CLOSED); },
+    refreshFeeds,
     setRequest: (action) => {
       for (const [a, b] of careBtns) {
         const on = a === action;

@@ -50,15 +50,15 @@ function toBattle(exp: ExpeditionState): void {
 }
 
 describe('24-1 꺼 둔 동안 허기', () => {
-  it('시간당 +7.5, 허기 100 이하 (C.175: 한 번 비운 사이 +60 상한 삭제, GDD 102-1)', () => {
+  it('시간당 +idleHungerPerHour(C.181: 5), 허기 100 이하 (C.175: 한 번 비운 사이 +60 상한 삭제, GDD 102-1)', () => {
     const n = newNest(0);
     n.hunger = 10;
     expect(applyAbsenceHunger(n, 0, 2 * H)).toBeCloseTo(2 * NX.idleHungerPerHour);
-    expect(n.hunger).toBeCloseTo(10 + 15);
+    expect(n.hunger).toBeCloseTo(10 + 2 * NX.idleHungerPerHour);
     const m = newNest(0);
     m.hunger = 0;
-    expect(applyAbsenceHunger(m, 0, 10 * H)).toBeCloseTo(75);
-    expect(m.hunger).toBeCloseTo(75);
+    expect(applyAbsenceHunger(m, 0, 10 * H)).toBeCloseTo(10 * NX.idleHungerPerHour);
+    expect(m.hunger).toBeCloseTo(10 * NX.idleHungerPerHour);
     const full = newNest(0);
     full.hunger = 80;
     applyAbsenceHunger(full, 0, 100 * H);

@@ -491,7 +491,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       onClick: () => {
         close();
         const r = useInventoryItem(save, faction, e.id);
-        showToast({ eyebrow: '가방', title: r.ok ? `${e.name} 사용` : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400);
+        showToast({ eyebrow: '가방', title: r.ok ? (r.spat ? fixParticles(`${e.name}을(를) 뱉었다`) : `${e.name} 사용`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
         if (r.ok) changed();
       },
     });
