@@ -39,7 +39,8 @@ export function breakthroughView(root: HTMLElement, faction: FactionConfig, risk
   const pct = (m: number) => Math.round((m - 1) * 100);
   for (const t of [
     `· 주는 피해 +${pct(RX.frenzyDamageDealt)}% · 받는 피해 +${pct(RX.frenzyDamageTaken)}%`,
-    '· 공허 블록이 크게 늘어난다',
+    `· 대신 적 공격의 ${Math.round(RX.frenzyEvadeChance * 100)}%를 통째로 회피한다`,
+    '· 블록이 공허 블록으로 바뀌는 일이 크게 늘어난다',
     `· ${faction.nestName}에 돌아오면 컨디션 −${RX.frenzyConditionLoss}, ${faction.stabilityName}이(가) 떨어진다`,
     `· ${faction.riskGaugeName}은(는) ${RX.riskAfterBreakthrough}에서 다시 시작한다`,
   ]) list.append(el('li', '', t));

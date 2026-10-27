@@ -358,12 +358,14 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     const hit = (guard: boolean) => {
       const s = eliteQuiet();
       castNow(s);
+      const before = s.player.hp;
+      // 막기 지속이 짧다(GDD 101장, 체인1 0.7초): 착탄 0.5초 전에 막는다
+      wait(s, sealPat.castSeconds - 0.5);
       if (guard) {
         put(s, blk('basic-guard'));
         useAt(s, 0);
       }
-      const before = s.player.hp;
-      wait(s, sealPat.castSeconds);
+      wait(s, 0.6);
       const ev = drainCombatEvents(s).find((e) => e.kind === 'heavy-hit');
       return { s, taken: before - s.player.hp, ev };
     };
@@ -373,18 +375,19 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     expect(guarded.ev).toMatchObject({ guarded: true });
     expect(guarded.s.guardSuccesses).toBe(1);
     expect(open.s.guardSuccesses).toBe(0);
-    const heavy = sealPat.heavyInAttacks * CX.playerAttackDamage;
+    const heavy = sealPat.heavyInAttacks * CX.heavyHitMultiplier * CX.playerAttackDamage;
     expect(open.taken).toBeGreaterThan(heavy * (1 - CX.enemyDamageVariance) - 1e-9);
-    expect(guarded.taken).toBeLessThan(heavy * (1 + CX.enemyDamageVariance) * (1 - CX.heavyGuardReduction) + 1e-9);
+    expect(guarded.taken).toBeLessThan(heavy * (1 + CX.enemyDamageVariance) * (1 - CX.heavyGuardReductionByChain[0]!) + 1e-9);
   });
 
   it('reflect 추가 효과가 붙은 막기는 막은 피해를 적에게 돌려준다', () => {
     const s = eliteQuiet();
     castNow(s);
+    wait(s, sealPat.castSeconds - 0.5);
     put(s, ...many('basic-guard', 3));
     useAt(s, 0);
     const before = s.enemy.hp;
-    wait(s, sealPat.castSeconds);
+    wait(s, 0.6);
     const ev = drainCombatEvents(s).find((e) => e.kind === 'heavy-hit');
     expect(ev && ev.kind === 'heavy-hit' && ev.reflected).toBeGreaterThan(0);
     expect(s.enemy.hp).toBeLessThan(before);

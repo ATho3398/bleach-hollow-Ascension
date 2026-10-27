@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 76; // C.168: 해방 순간 블록 2 → 1·지속 4 → 6초 (GDD 95장 B2 후속, 마스터 결정). C.167: C.167: 해방 칸 폐지(slotsByTier 삭제)·고유 능력치 ×1.05 → ×1.1·수련 ×1.1 → ×1.2 (GDD 98장 B). C.166: 해방 순간 블록 2개·생성 ×1.3 → ×1.8·지속 8 → 4초·게이지 블록 8 → 2·준 피해 40 → 15·받은 피해 70 → 90·고유 능력치 ×1.1 → ×1.05(수련 ×1.2 → ×1.1) (GDD 95장 B2 후속). C.154: C.154: 해방 게이지 블록당 12 → 8 + 준 피해 40·받은 피해 70(적·내 최대 체력 1개분당) (GDD 95장 B2). C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
+export const BALANCE_VERSION = 77; // C.173: 공허 블록 = 출현표 안 몫 10%(상한 50%, 별도 시계 삭제)·피해 8 → 1(히든 진화체 8)·폭주 받는 피해 1.3 → 1.6 + 회피 20% (GDD 101장). C.168: 해방 순간 블록 2 → 1·지속 4 → 6초 (GDD 95장 B2 후속, 마스터 결정). C.167: C.167: 해방 칸 폐지(slotsByTier 삭제)·고유 능력치 ×1.05 → ×1.1·수련 ×1.1 → ×1.2 (GDD 98장 B). C.166: 해방 순간 블록 2개·생성 ×1.3 → ×1.8·지속 8 → 4초·게이지 블록 8 → 2·준 피해 40 → 15·받은 피해 70 → 90·고유 능력치 ×1.1 → ×1.05(수련 ×1.2 → ×1.1) (GDD 95장 B2 후속). C.154: C.154: 해방 게이지 블록당 12 → 8 + 준 피해 40·받은 피해 70(적·내 최대 체력 1개분당) (GDD 95장 B2). C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -108,7 +108,9 @@ export const BALANCE = {
       breakthroughStabilityLoss: 25,
       /** 한계 돌파 = 폭주 (GDD 23-2): 그 원정 남은 동안 주는 피해·받는 피해 배율, 둥지로 돌아오면 컨디션 하락 */
       frenzyDamageDealt: 1.3,
-      frenzyDamageTaken: 1.3,
+      frenzyDamageTaken: 1.6, // C.173 (GDD 101장 4번): 1.3 → 1.6, 대신 회피 frenzyEvadeChance
+      /** 폭주 중 회피 확률 (GDD 101장 4번, C.173 provisional): 적 공격 한 번(평타·강공격·반격·졸개)을 통째로 피한다 */
+      frenzyEvadeChance: 0.1, // 101장 추가 결정 1번: 20% → 10%
       frenzyConditionLoss: 30,
       /** 돌파한 원정에서 귀환하면 게이지가 이 값으로 가라앉는다(바로 또 돌파하지 않게) */
       riskAfterBreakthrough: 60,
@@ -635,7 +637,7 @@ export const BALANCE = {
       basicWeights: { attack: 10, guard: 3, heal: 3 },
       /** 출현표의 기본 막기·회복 고정 몫 (GDD 84장 6·7번, C.136 provisional, 코드 판단): 속성 막기·회복 특성이 없어져 막기·회복은 기본 블록뿐인데, 80장 기본 몫(칸이 늘수록 45·25·15%)에 묶이면 3칸 몸에서 막기가 1% 남짓이 된다
        *  → 막기·회복은 칸 수와 무관하게 이 몫(빈 몸의 옛 가중 3/36 = 8.3%), 80장 기본 몫은 기본 공격 블록 몫. 성향(방어·체력·정신력)은 × 그 배율 ÷ 공격 배율 */
-      roleShare: { guard: 0.08, heal: 0.06 }, // 조정 6회 (dev-log C.136): 0.083·0.083 → 0.12·0.06 → 0.06·0.05 → 0.08·0.06
+      roleShare: { guard: 0.45, heal: 0.06 }, // C.173 (GDD 101장 강공격 85%·막기 0.7~1초): 막기 0.08 → 0.45(엔진 상한) — 강공격 때 막기 블록이 손에 있어야 해서. 조정 6회 (dev-log C.136): 0.083·0.083 → 0.12·0.06 → 0.06·0.05 → 0.08·0.06
       /** 막기·회복 기본 블록 세기 = 같은 역할 흡수 특성 블록 기본값(basicRoleBlocks) × 이 비율 (피해·막기 지속·회복량 모두) */
       basicGuardRatio: 0.7,
       basicHealRatio: 0.7,
@@ -701,10 +703,17 @@ export const BALANCE = {
       /** 기본 공격 블록 (GDD 44장: 기본 블록 5종 중 공격 3종 — 종족 계열 표의 계열마다 하나): 기본 공격 N회 분량 */
       basicBlockPowerInAttacks: 3,
       basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
-      /** guard 블록: 막기 상태 지속(초, 위력 배율만큼 늘어남), 그동안 기본 공격 피해 경감, 강공격 경감(= 막기 성공) */
-      guardSeconds: 3,
-      guardReduction: 0.5,
-      heavyGuardReduction: 0.8,
+      /** guard 블록 (GDD 101장 추가 결정 4번·추가 결정 2 1번, C.173 provisional): 막기 상태 지속(초)·그동안 일반 공격 경감·강공격 경감(= 막기 성공) — 체인 1·2·3 단계 값(고정, 위력 배율로 늘지 않음).
+       *  옛 guardSeconds 3(× 위력 배율)·guardReduction 0.5·heavyGuardReduction 0.8 */
+      guardSecondsByChain: [0.7, 0.75, 1],
+      guardReductionByChain: [0.2, 0.3, 0.5],
+      heavyGuardReductionByChain: [0.5, 0.8, 1],
+      /** 막기·회복 블록 개수 상한 (101장 추가 결정 3번): 바에 이 수만큼 떠 있으면 그 블록은 안 나오고, 몫은 그때 나올 수 있는 공격 블록들에 똑같이 나눈다 */
+      guardHealTrayCap: 3,
+      /** 강공격 배율 (101장 추가 결정 5번): 적 데이터 heavyInAttacks(기본 공격 N회 분량) × 이 값. 5.7 = heavy-seal(1.6회분) 한 방이 권장 단계 몸 최대 체력의 약 85% (C.173 측정: ×1 에서 약 15%) */
+      heavyHitMultiplier: 5.7,
+      /** 연속 강공격(heavy-chain) 한 타 배율: 예고 한 번 = 강공격 한 방이라 여러 타의 합이 heavy-seal 한 방과 비슷하게 (5.7 × 1.6 ÷ (0.7 × 3) ≈ 4.3) */
+      heavyChainHitMultiplier: 4.3, // = 5.7 × 0.755
       /** heal 블록: 최대 체력 × 이 비율 × 위력 배율 회복 */
       healFraction: 0.12,
       /** 회복 대가 (GDD 84장 2번, C.136 — 사용자 "힐하면 3초동안 전체 공격력 50% 다운"): 회복 블록을 쓰면 이 시간(초) 동안 내 모든 피해(평타·블록·공허) × 배율.
@@ -715,11 +724,15 @@ export const BALANCE = {
        *  C.136 A안(마스터): ×1.1·+3%p → ×1.15·+4%p (상한). 올린 만큼 강적 attackInAttacks ×1.42 로 상쇄 (dev-log C.136) */
       blockPlayDamage: 1.15,
       blockPlayCrit: 0.04,
-      /** 공허 블록: 이 간격(초)마다 확률로 트레이에 생성 (컨디션·환경·5바퀴 이후·한계 돌파가 확률을 더한다), 사용 피해 = 기본 공격 N회 분량 */
-      voidCheckSeconds: 3, // C.118: 5 → 3 (블록 타이머 ÷1.7 과 같은 비율 — 짧아진 전투에서 공허 블록이 덜 나와 4바퀴 끝 리스크가 34.5 로 가드 40 아래로 떨어져서)
-      voidChance: 0.15, // C.136 (GDD 84장 10번 "필요하면 광기 블록 소폭 ↑"): 그대로 — 감소를 줄인 것만으로 4바퀴 섞음 끝 광기가 54 → 60 근처(가드 상한)라 올리지 않음. 출현표의 공허 몫 = 이 값 ÷ voidCheckSeconds
-      voidChanceMax: 0.8,
-      voidPowerInAttacks: 8,
+      /** 공허 블록 (GDD 101장, C.173 provisional): 따로 도는 공허 타이머 없음 — 블록이 하나 생길 때마다(기본·특성 블록 모두) 그 자리가 이 확률로 공허 블록으로 바뀐다.
+       *  확률 = voidChance(기본 몫) + 컨디션·환경·5바퀴 이후·한계 돌파 가산(voidChanceBonus), 상한 voidChanceMax. 사용 피해 = 기본 공격 N회 분량,
+       *  히든 진화체(진화체 데이터 hidden) 몸이면 voidPowerHiddenInAttacks */
+      voidChance: 0.1, // C.173: 옛 0.15/3초 별도 시계 → 출현표 안 몫 10% (101장 1번)
+      voidChanceMax: 0.5, // C.173: 0.8 → 0.5 (101장 1번 상한)
+      voidPowerInAttacks: 1, // C.173: 8 → 1 (101장 2번, 진짜 패널티)
+      voidPowerHiddenInAttacks: 8, // C.173: 히든 진화체는 옛 값 그대로 (101장 3번)
+      /** 공허 블록 경직 (101장 추가 결정 2번): 쓰면 이 시간(초) 동안 기본 공격·블록 생성 멈춤(막기 상태와 같은 멈춤). 히든 진화체는 0 */
+      voidStunSeconds: 2,
       /** 치명타 (C.63, GDD 28장 5번, 마스터 추천 provisional): 물리·마법 합친 하나. 내 기본 확률 5%, 치명 피해 ×1.5,
        *  기본 공격·스킬 블록·체인·필살·콤보·해방·저장형 필살 모두 대상(공허 블록·반사·독 지속 피해 제외). 적도 같은 규칙(기본 확률 3%).
        *  특성 critChance 가 확률을 더하고(합), 상한 critChanceMax */

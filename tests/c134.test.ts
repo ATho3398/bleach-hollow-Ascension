@@ -138,7 +138,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
     const params = buildCombatParams(b, 'hollow');
     applyEvolutionToParams(params, newEvolution(1), 'hollow');
     expect(LB.spawnSpeed).toBeGreaterThan(1);
-    const s = mk({ ...params, voidCheckSeconds: 1e6 });
+    const s = mk({ ...params, voidChance: 0 });
     s.enemy.attackTimer = s.enemy.actionTimer = 1e9;
     s.player.attackTimer = 1e9;
     s.enemy.hp = s.enemy.maxHp = 1e12;
@@ -154,7 +154,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
     expect(s.tray.every((x) => x.traitId === 't-earth-c')).toBe(true);
     expect(plain.tray.some((x) => x.traitId !== 't-earth-c')).toBe(true);
     // 장착 없음: 기본 블록 풀
-    const e = mk({ skills: [], voidCheckSeconds: 1e6 });
+    const e = mk({ skills: [], voidChance: 0 });
     e.enemy.attackTimer = e.enemy.actionTimer = 1e9;
     e.enemy.hp = e.enemy.maxHp = 1e12;
     e.tray = [];

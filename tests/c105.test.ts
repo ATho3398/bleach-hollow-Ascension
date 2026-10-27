@@ -65,7 +65,8 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
     expect(physSpawnSecondsOf(a.params)).toBe(PB.spawnSeconds);
     expect(physSpawnSecondsOf(b.params)).toBeNull();
     expect(physSpawnSecondsOf({ ...a.params, blockSpawnMultiplier: 2 })).toBeCloseTo(PB.spawnSeconds / 2);
-    expect(spawnRatesOf(a.params).phys).toBeCloseTo(1 / PB.spawnSeconds);
+    // C.173 (101장): 블록 하나가 공허 확률로 공허가 되므로 실제 몫은 × (1 − 공허 확률)
+    expect(spawnRatesOf({ ...a.params, voidChance: 0, voidChanceBonus: 0 }).phys).toBeCloseTo(1 / PB.spawnSeconds);
     expect(spawnRatesOf(b.params).phys).toBe(0);
   });
 
@@ -107,14 +108,14 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
     const outP = spawnedIn(plainBody(), LONG);
     const rest = (out: typeof outA) => out.filter((x) => x.traitId === BASIC_GUARD_ID || x.traitId === BASIC_HEAL_ID).length;
     for (const [out, body] of [[outA2, earthBody()], [outP, plainBody()]] as const) {
-      const want = spawnRatesOf(body.params).role * LONG;
+      const want = spawnRatesOf({ ...body.params, voidChance: 0, voidChanceBonus: 0 }).role * LONG; // spawnedIn 은 공허 0
       expect(rest(out)).toBeGreaterThan(want * 0.88);
       expect(rest(out)).toBeLessThan(want * 1.12);
     }
     expect(outA2.some((x) => x.traitId === BASIC_SKILL_ID)).toBe(true);
     // 흡수 특성 블록 수는 두 몸 모두 흡수 몫 기대치 ±12% (물공 몫이 붙어도 흡수 몫은 그대로)
     const absorbed = (out: typeof outA) => out.filter((x) => x.traitId && !x.traitId.startsWith('basic-')).length;
-    for (const out of [outA2, outP]) expect(Math.abs(absorbed(out) / (spawnRatesOf(plainBody().params).absorbed * LONG) - 1)).toBeLessThanOrEqual(0.12);
+    for (const out of [outA2, outP]) expect(Math.abs(absorbed(out) / (spawnRatesOf({ ...plainBody().params, voidChance: 0, voidChanceBonus: 0 }).absorbed * LONG) - 1)).toBeLessThanOrEqual(0.12);
   });
 
   it('보통 몸은 옛 규칙 그대로: 기본 타이머에서 공격 3계열·막기·회복이 다 나온다', () => {

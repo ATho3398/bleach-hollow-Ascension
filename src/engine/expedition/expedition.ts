@@ -809,10 +809,13 @@ export function applyEnvironment(params: Partial<CombatParams>, preset: Environm
   else params.voidChanceBonus = (params.voidChanceBonus ?? 0) + T.void.voidChanceBonus * strength;
 }
 
-/** 폭주 (GDD 23-2): 한계 돌파한 원정의 남은 전투는 주는 피해·받는 피해가 함께 오른다 (공허 생성 증가는 riskBonus 가 따로 더한다) */
+/** 폭주 (GDD 23-2·101장 4번): 한계 돌파한 원정의 남은 전투는 주는 피해·받는 피해가 함께 오르고, 적 공격을 확률로 통째로 피한다 (공허 생성 증가는 riskBonus 가 따로 더한다) */
 export function applyFrenzy(params: Partial<CombatParams>): void {
   params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * RX.frenzyDamageDealt;
   params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * RX.frenzyDamageTaken;
+  params.evadeChance = Math.max(params.evadeChance ?? 0, RX.frenzyEvadeChance);
+  // 폭주 중에는 회복 블록이 안 나온다 (101장 추가 결정 2 2번) — 몫은 공격 블록들에
+  params.noHealSpawn = true;
 }
 
 /** 폭주 중인가: 이번 원정에서 한계 돌파가 일어났다 (원정당 1회) */

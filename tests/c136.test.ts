@@ -89,11 +89,11 @@ describe('84장 6번 블록 출현 = 타이머 하나 + 확률표', () => {
     }
   });
 
-  it('공허 블록도 출현표의 한 칸 (몫 = 공허 확률 ÷ 확인 간격), 해방 중 표에는 공허가 없다', () => {
+  it('공허 블록도 출현표의 한 칸 (C.173, 101장: 블록 하나가 공허 확률로 공허가 된다 — 간격은 그대로), 해방 중 표에는 공허가 없다', () => {
     const p = mk(build('t-fire-a')).params;
     const v = spawnTableOf(p).entries.find((e) => e.kind === 'void')!;
-    const total = 1 / spawnTableOf(p).seconds;
-    expect(v.chance * total).toBeCloseTo(CX.voidChance / CX.voidCheckSeconds);
+    expect(v.chance).toBeCloseTo(CX.voidChance);
+    expect(spawnTableOf({ ...p, voidChance: 0 }).seconds).toBeCloseTo(spawnTableOf(p).seconds);
     expect(spawnTableOf(p, true).entries.some((e) => e.kind === 'void')).toBe(false);
   });
 });
@@ -262,13 +262,13 @@ describe('84장 1·10번 원정 칸 시간 ½ · 광기 자연 감소 느리게'
     expect(BALANCE.expedition.secondsPerTile).toBe(1.25);
   });
 
-  it('광기 하락: 휴식 15 → 10 · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 0.15 그대로 — 끝 광기가 가드 상한 근처)', () => {
+  it('광기 하락: 휴식 15 → 10 · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 몫은 C.173 101장에서 0.1)', () => {
     expect(RX.restRelief).toBe(10);
     expect(RX.releaseRelief).toBe(1);
     expect(RX.nestActions.feed.risk).toBe(-3);
     expect(RX.nestActions.sleep.risk).toBe(-10);
     expect(RX.nestActions.pet.risk).toBe(-10);
-    expect(CX.voidChance).toBe(0.15);
+    expect(CX.voidChance).toBe(0.1);
   });
 
   it('전투 화면: 막기 게이지에 "공격·생성 멈춤", 회복 뒤 공격력 감소 게이지', () => {

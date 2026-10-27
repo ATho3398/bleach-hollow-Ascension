@@ -93,7 +93,7 @@ describe('속성 피해 배율 (GDD 48장 2번)', () => {
   it('무속성 칸 적용 범위: 속성 없는 기본 블록은 무속성, 공허 블록은 제외 (SP 필살 블록은 C.118, 저장 필살은 C.134 에 삭제)', () => {
     const s = createCombat(3, {
       enemy: getEnemy('test-a'),
-      params: { ...NO_CRIT, voidCheckSeconds: 1, voidChance: 0.5, voidChanceMax: 0.5, liberationEnabled: false, elementDamage: { ...all(0), [NORMAL_ELEMENT]: 40 } },
+      params: { ...NO_CRIT, voidChance: 0.5, voidChanceMax: 0.5, liberationEnabled: false, elementDamage: { ...all(0), [NORMAL_ELEMENT]: 40 } },
     });
     const ev = playOut(s, (st) => (st.tray.length > 0 ? { type: 'use', cell: 0 } : null));
     const blocks = ev.filter((e): e is Extract<CombatEvent, { kind: 'block' }> => e.kind === 'block');
