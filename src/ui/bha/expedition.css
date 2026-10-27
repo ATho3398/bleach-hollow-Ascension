@@ -123,7 +123,7 @@
   /* C.176 (GDD 104장 9): overflow hidden 이라 LCD 가 낮으면(폰 주소창·작은 화면) 아래 [출발] 이 잘리고 손가락·휠 스크롤이 안 됐다 →
      세로 스크롤 + [출발] 띠는 아래에 붙어(sticky) 늘 보인다. 기기 ▲▼ 이동은 device.move 의 scrollIntoView 가 그 칸을 보이게 한다 */
   position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow: hidden auto; overscroll-behavior: contain; padding: var(--bha-sp-3) var(--bha-sp-4) 0;
-  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto auto auto auto auto auto minmax(0, 1fr) auto;
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: repeat(8, max-content) minmax(0, 1fr) max-content; /* C.176: auto 행은 칸이 모자라면 내용보다 줄어 겹쳤다 → max-content(넘치면 스크롤). 오른쪽 목록은 1fr 행에 걸쳐 크기 계산에서 빠진다 */
   column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-2); align-content: stretch;
 }
 .bha-lcd .bha-app.bha-plan.is-locked { grid-template-columns: minmax(0, 1fr); }
@@ -207,7 +207,9 @@
 .bha-presets__view:has(.bha-presets__input) { flex-direction: row; align-items: center; }
 .bha-presets__sum { font-size: var(--bha-fs-xs); color: var(--bha-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bha-presets__acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }
-.bha-presets__acts > .bha-btn { min-width: 0; padding-inline: var(--bha-sp-2); white-space: nowrap; }
+.bha-presets__acts > .bha-btn { min-width: 0; padding-inline: var(--bha-sp-1); gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); white-space: nowrap; }
+.bha-presets__acts > .bha-btn .bha-icon { width: 14px; height: 14px; }
+.bha-presets__note:empty { display: none; }
 .bha-presetcard { display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
 .bha-presetcard__top { display: flex; align-items: center; gap: var(--bha-sp-2); min-height: 36px; }
 .bha-presetcard__name { font-size: var(--bha-fs-sm); }
@@ -236,7 +238,7 @@
 }
 .bha-walker__heal::after {
   content: "+ + +"; position: absolute; left: 50%; bottom: 60%; z-index: 2; transform: translateX(-50%); pointer-events: none;
-  color: var(--bha-good); font-weight: 800; font-size: var(--bha-fs-sm); letter-spacing: 0.4em; text-shadow: 0 1px 2px rgb(0 0 0 / 0.8);
+  color: var(--bha-good); font-weight: 800; font-size: var(--bha-fs-lg); letter-spacing: 0.4em; text-shadow: 0 1px 2px rgb(0 0 0 / 0.8);
   animation: bha-heal-plus 1.1s var(--bha-ease-out) infinite;
 }
 .bha-walker__healnum { transform: translateX(-50%); font-size: var(--bha-fs-md); z-index: 3; }

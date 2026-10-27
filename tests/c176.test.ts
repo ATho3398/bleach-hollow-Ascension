@@ -46,6 +46,7 @@ describe('104장 5·6: 포식 설명·이름', () => {
     expect(traitName('t-water-a', 'hollow')).toBe('조');
     expect(traitName('t-normal-c', 'shinigami')).toBe('귀');
     expect(traitName('t-fire-rare', 'hollow')).toBe('탄·극');
+    expect(traitName('t-kyo-b', 'hollow')).toBe('교'); // 속성 이름 '허(虛)' 이 아니라 약어 '허' 로 시작
     expect(traitAbbr('t-water-a', 'hollow')).toBe('조');
     expect(getTrait('t-water-a').name).toEqual({ hollow: '물 조', shinigami: '물 참' });
     expect(traitName('boss-sand-maw', 'hollow')).toBe('모래 아귀의 턱'); // 속성 글자로 시작하지 않으면 그대로

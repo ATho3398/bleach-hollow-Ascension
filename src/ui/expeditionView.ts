@@ -140,7 +140,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const gain = spring
       ? `${faction.riskGaugeName} −${Math.round(before.risk - exp.risk)}`
       : [`${faction.fullnessName} ${Math.round(fullnessOf(exp.hunger, PX.hungerMax) - before.full)}`, `컨디션 ${Math.round(exp.condition - before.cond)}`].join(' · ');
-    const fx = floatEl('heal', gain, { left: 50, top: -18 });
+    const fx = floatEl('heal', gain, { left: 50, top: 8 });
     fx.classList.add('bha-walker__healnum');
     if (spring) fx.classList.add('is-spring');
     fx.addEventListener('animationend', () => fx.remove());

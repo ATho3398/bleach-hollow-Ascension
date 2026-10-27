@@ -926,7 +926,7 @@ button.bha-statrow { cursor: help; }
   position: absolute; z-index: var(--bha-z-modal); box-sizing: border-box; width: max-content; max-width: min(320px, calc(100% - var(--bha-sp-4)));
   padding: var(--bha-sp-4) var(--bha-sp-5); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
   background: var(--bha-bg-1); box-shadow: var(--bha-shadow-2); color: var(--bha-text-1);
-  font-size: var(--bha-fs-xs); line-height: 1.45; text-align: left; pointer-events: auto;
+  font-size: var(--bha-fs-xs); line-height: 1.45; text-align: left; pointer-events: auto; overflow-y: auto; overscroll-behavior: contain;
 }
 .bha-pop__title { display: block; margin-bottom: var(--bha-sp-2); font-size: var(--bha-fs-sm); }
 .bha-pop__sub { display: block; margin-top: var(--bha-sp-3); color: var(--bha-text-2); }
