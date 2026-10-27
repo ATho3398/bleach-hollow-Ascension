@@ -470,6 +470,9 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     paintPend();
   };
 
+  /** 키링을 누른 자리·시각 (GDD 109장 7): 누르면 키링이 흔들려 비켜 나므로, 1초 안에 그 자리 가까이(KEY_TAP_SLOP px)를 다시 눌러도 키링을 누른 것으로 센다 */
+  let keyTapAt: { x: number; y: number; t: number } | null = null;
+  const KEY_TAP_SLOP = 48;
   // 탭·끌기: 화면 좌표의 움직임을 기기 안 방향으로 바꿔(세로 회전 출력이면 90도) 충격으로 준다
   let drag: { x: number; y: number } | null = null;
   const localDelta = (dx: number, dy: number) => toDeviceVec({ x: dx, y: dy }, fit?.rotated ?? false);
@@ -478,6 +481,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     const d = localDelta(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
     pend = kick(pend, tapKick(d.x), reduced());
     drag = { x: e.clientX, y: e.clientY };
+    keyTapAt = { x: e.clientX, y: e.clientY, t: performance.now() };
     hooks.onKeyringTap?.();
     try {
       key.setPointerCapture(e.pointerId);
@@ -533,6 +537,11 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   };
   document.addEventListener('pointerdown', (e) => {
     if (!on) return;
+    // 흔들려 비켜 난 키링 자리를 다시 누름 (키링 위면 키링이 직접 센다)
+    if (keyTapAt && !key.contains(e.target as Node) && performance.now() - keyTapAt.t < 1000 && Math.hypot(e.clientX - keyTapAt.x, e.clientY - keyTapAt.y) <= KEY_TAP_SLOP) {
+      keyTapAt = { ...keyTapAt, t: performance.now() };
+      hooks.onKeyringTap?.();
+    }
     if (pts.size === 0) eatClick = false;
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pts.size === 2) {
