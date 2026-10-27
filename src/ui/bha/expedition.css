@@ -209,7 +209,8 @@
 .bha-presets__acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }
 .bha-presets__acts > .bha-btn { min-width: 0; padding-inline: var(--bha-sp-1); gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); white-space: nowrap; }
 .bha-presets__acts > .bha-btn .bha-icon { width: 14px; height: 14px; }
-.bha-presets__note:empty { display: none; }
+/* C.183 UI 검수: 안내 줄은 비어도 자리 유지·한 줄 고정 — 비면 줄이 접혀 아래 버튼 4개가 22px 오르내렸고, 긴 이름이 든 안내는 두 줄이 됐다 */
+.bha-presets__note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; min-height: 1.5em; }
 .bha-presetcard { display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
 .bha-presetcard__top { display: flex; align-items: center; gap: var(--bha-sp-2); min-height: 36px; }
 .bha-presetcard__name { font-size: var(--bha-fs-sm); }

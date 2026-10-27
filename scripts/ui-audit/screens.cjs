@@ -459,6 +459,34 @@ const SCREENS = [
     },
   },
   {
+    // C.183 (2차): 긴 이름 — 배치 프리셋을 다 채우고(5개) 이름을 최대 길이(12자)로 바꾼 뒤 칩 줄·버튼 줄·삭제 확인 창 점검.
+    // 칩은 이름 길이만큼 폭이 바뀌는 게 맞다(칩끼리는 비교에서 뺌) — 아래 버튼 줄·안내 줄이 움직이면 에러
+    name: '프리셋 긴 이름',
+    async run(h, n) {
+      await h.click('.bha-prop--door', { ms: 900 });
+      await h.btn('★1', { exact: true });
+      await h.click('.bha-lcd .bha-tilecard >> nth=0');
+      await h.click('.bha-lcd .bha-road__cell >> nth=2');
+      await h.btn('프리셋', { within: '.bha-plan__sidetabs' });
+      const LONG = ['가나다라마바사아자차카타', 'WWWWWWWWWWWW', '웨코문도외곽최강배치세트', 'ＭＭＭＭＭＭＭＭＭＭＭＭ', '레스렉시온연습용긴이름이'];
+      for (let i = 0; i < LONG.length; i++) {
+        const empty = h.page.locator('.bha-lcd .bha-presets__chip.is-empty');
+        if (await empty.count()) await h.click(empty);
+        await h.click('.bha-lcd [data-preset-save]');
+        await h.stable(n, `프리셋 ${i + 1} 이름 열기`, () => h.click('.bha-lcd [data-preset-rename]'), /presets__chip/);
+        await h.page.locator('.bha-lcd [data-preset-rename-input]').fill(LONG[i]);
+        await h.stable(n, `프리셋 ${i + 1} 긴 이름 확인`, () => h.click('.bha-lcd [data-preset-rename-ok]'), /presets__chip/);
+      }
+      await h.check(`${n}/다섯 개`);
+      await h.stable(n, '첫 칩 고르기', () => h.click('.bha-lcd .bha-presets__chip >> nth=0'), /presets__chip/);
+      await h.stable(n, '마지막 칩 고르기', () => h.click('.bha-lcd .bha-presets__chip >> nth=4'), /presets__chip/, h.page.locator('.bha-lcd .bha-presets__chip').nth(4));
+      await h.btn('삭제', { within: '.bha-presets__acts' });
+      await h.check(`${n}/삭제 확인 창`);
+      await h.stable(n, '긴 이름 프리셋 삭제', () => h.btn('삭제', { within: '.bha-lcd [data-dev-layer]' }), /presets__chip/);
+      await h.check(`${n}/지운 뒤`);
+    },
+  },
+  {
     name: '슬롯 지우기',
     fresh: true,
     async run(h, n) {
