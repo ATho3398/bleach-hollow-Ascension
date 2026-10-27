@@ -19,14 +19,14 @@ import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, markSeen, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, type IdleAccrual,
+  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
-import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
+import { trainingPlayView, trainingResultView, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
 import { rankLabel, rankResultView, rankView } from './rankView';
 import { armEnterFx } from './bha/cosmeticFx';
@@ -50,6 +50,7 @@ import { backupFileName, exportRawSlot, needsMigration, recoverFromBackup } from
 import { setBgm } from './bgm';
 import type { BgmTrack } from '../data/audio/bgm';
 import { BALANCE } from '../config/balance';
+import { idleCounts } from '../engine/idle';
 import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { resultView } from './resultView';
@@ -81,7 +82,7 @@ import { applyGearToParams, gearCarry } from '../engine/gear';
 import { gearDropText, gearNoticeOf, petNoticeOf } from '../inventory';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
-import { idleBadge, showIdlePanel, showIdleReturn } from './idleView';
+import { idleBadge, refreshIdleBadge, showIdlePanel, showIdleReturn } from './idleView';
 import { deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
 import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
@@ -147,6 +148,12 @@ export function startApp(host: HTMLElement): void {
     playTick = now;
   };
   window.setInterval(tickPlay, 15_000);
+  // 대기 보상 상시 (GDD 95장 B1): 켜 둔 동안(방·원정·전투) 1분마다 흐른 시간을 받을 보상에 쌓고, 방이면 아이콘 배지를 고친다. 저장은 평소 저장 때 같이 된다
+  window.setInterval(() => {
+    if (!save || slot === 0) return;
+    tickIdle(save);
+    refreshIdleBadge(root, save);
+  }, 60_000);
   watchFullscreen();
   document.addEventListener('visibilitychange', tickPlay);
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
@@ -159,7 +166,7 @@ export function startApp(host: HTMLElement): void {
     showTutorialToasts(claimTutorialGoals(save), getFaction(save.factionId));
     // 도감 보상 (GDD 24-3): 같은 틀·같은 토스트. 기존 세이브는 처음 저장 때 이미 닿은 이정표를 한꺼번에
     showDexToasts(claimDexRewards(save), getFaction(save.factionId));
-    markSeen(save); // 마지막 접속 시각 (GDD 24-1)
+    tickIdle(save); // 켜 둔 동안 대기 보상(95장 B1)을 쌓고 마지막 접속(정산) 시각을 지금으로 (GDD 24-1)
     // 마지막 화면 키 (GDD 19-3): 원정 흐름(배치 후 출발 ~ 결과 전) 안이면 원정, 아니면 방
     save.lastScreen = activeExp !== null && activeExp.phase !== 'ended' ? 'expedition' : 'room';
     // 저장 공간 부족 (C.70): 백업을 지워 썼거나 그래도 못 썼으면 한 번씩 알린다 (예전에는 말없이 진행이 사라졌다)
@@ -606,7 +613,8 @@ export function startApp(host: HTMLElement): void {
     };
     const idle = idleReport;
     idleReport = null;
-    if (idle && s.idlePending) window.setTimeout(() => showIdleReturn(idle, s, faction, claim), 500);
+    // 복귀 창은 이번에 minMinutes 이상 꺼 두었고 받을 만큼 쌓였을 때만 — 켜 둔 동안 쌓인 것은 아이콘으로 (95장 B1)
+    if (idle && idleCounts(idle.awayHours) && idleClaimable(s)) window.setTimeout(() => showIdleReturn(idle, s, faction, claim), 500);
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,
       resume: active.ok
@@ -684,10 +692,17 @@ export function startApp(host: HTMLElement): void {
   function renderTraining(faction: FactionConfig, s: SaveData): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
-      onPractice: () => open('practice', () => practiceScreen(faction)),
-      onRank: () => open('rank', () => rankScreen(faction)),
+      onSwitch: (id) => switchTraining(faction, s, id),
     });
   }
+
+  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 방으로 (GDD 99장 2, C.163) */
+  function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
+    const render = id === 'practice' ? () => practiceScreen(faction) : id === 'rank' ? () => rankScreen(faction) : () => renderTraining(faction, s);
+    nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });
+  }
+  const trainingHead = (faction: FactionConfig, id: TrainingScreenId): HTMLElement | undefined =>
+    save ? trainingTitle(faction, roomOf(faction).props.altar, id, (to) => switchTraining(faction, save!, to)) : undefined;
 
   /** 한 판: 수련권을 먼저 쓰고(저장) 미니게임 → 결과. 흐름은 잠겨 있어 취소로 빠지지 않는다. again = 결과 화면의 [한 판 더](자리를 바꿔 끼운다) */
   function playTraining(faction: FactionConfig, s: SaveData, game: TrainingGameId, again: boolean): void {
@@ -1241,7 +1256,7 @@ export function startApp(host: HTMLElement): void {
 
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
-    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy) });
+    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy), title: trainingHead(faction, 'practice') });
   }
 
   /** 연습 전투: 결과 화면에서 [다시]로 올 때는 같은 자리를 바꿔 끼운다 */
@@ -1291,7 +1306,7 @@ export function startApp(host: HTMLElement): void {
   // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──
   function rankScreen(faction: FactionConfig): void {
     if (!save) return;
-    rankView(root, faction, save, { onChallenge: (holder) => open('rank-battle', () => runRankBattle(faction, holder), true) });
+    rankView(root, faction, save, { onChallenge: (holder) => open('rank-battle', () => runRankBattle(faction, holder), true), title: trainingHead(faction, 'rank') });
   }
 
   function runRankBattle(faction: FactionConfig, holder: RankHolderDef): void {

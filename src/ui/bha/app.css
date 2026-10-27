@@ -20,13 +20,9 @@
 .bha-frenzychip { display: inline-flex; align-items: center; gap: var(--bha-sp-1); border-color: var(--bha-risk); color: var(--bha-risk); }
 .bha-frenzychip[hidden] { display: none; }
 
-/* 새 버전 띠 (C.130, updateBanner.ts): 화면 아래 가장자리, 기기 틀 밖 문서 위. bha 토큰만 쓴다 */
-.bha-update {
-  position: fixed; left: var(--bha-sp-4); right: var(--bha-sp-4); bottom: var(--bha-sp-4); z-index: var(--bha-z-tutorial);
-  display: flex; flex-direction: column; gap: var(--bha-sp-3);
-  max-width: 420px; margin: 0 auto; padding: var(--bha-sp-4);
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: var(--bha-shadow-2);
-}
-.bha-update__actions { display: flex; justify-content: flex-end; gap: var(--bha-sp-3); }
+/* 새 버전 알림 (C.163, updateBanner.ts, GDD 99장 6): LCD 안 가운데 창(.bha-overlay 막이 뒤 버튼을 막는다). 큰 가로 [다시 시작] + 작은 [나중에]. bha 토큰만 */
+.bha-update { z-index: var(--bha-z-tutorial); }
+.bha-update__card { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-3); text-align: center; }
+.bha-update__card .bha-btn--lg { justify-content: center; }
 
 .bha-riskchip { display: inline-flex; align-items: center; gap: var(--bha-sp-1); border-color: var(--bha-risk); color: var(--bha-risk); }

@@ -29,7 +29,7 @@ describe('C.137', () => {
   it('85장 3: 훈련 인형은 방 물건이 아니고 수련장 안에 훈련 인형·번호 쟁탈전 입구가 있다', () => {
     expect((ROOM_PROPS as readonly string[]).includes('dummy')).toBe(false);
     const tv = read('src/ui/trainingView.ts');
-    expect(tv).toContain('onPractice');
+    expect(tv).toContain("id: 'practice'"); // C.163: 입구는 머리 제목 토글(trainingTitle)
     expect(tv).toContain('rankBattleName');
     expect(read('src/ui/roomView.ts')).not.toContain('hd.onRank');
     expect(existsSync('public/art/prop-dummy.webp')).toBe(false);

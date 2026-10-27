@@ -372,3 +372,42 @@
 .bha-root .bha-field::after,.bha-root .bha-scene::before,.bha-root .bha-walk-sky::after,.bha-root .bha-walk-ground::after,.bha-root .bha-art--char::before{content:none}
 /* PC 키 글자 배지는 계열 글자가 있는 오른쪽 위 대신 오른쪽 아래로 */
 .bha-root .bha-v2cell>.bha-keycap{top:auto;bottom:2px;right:2px;z-index:5}
+
+/* ───────── 전투 화면 점검 (C.160, GDD 98장 A5) ─────────
+   ① 위 한 줄: 칩·버튼은 줄지 않고(flex:none — 줄면 글자가 칩 밖으로 넘쳐 옆 칩과 겹쳤다) 적 이름만 줄어 말줄임. 이름은 최소 4글자 폭은 지킨다
+   ② 필드 가운데 칩 줄: 나와 적 머리 게이지 사이 세로 칸(필드 가운데 기준). 알림(.bha-notice)·임시·패턴·페이즈·졸개 칩을 쌓는다 (핸드오프 '강공격·봉인' 칩 자리)
+   ③ PC 키 글자 배지(Spc·H)가 아이콘을 덮지 않게 버튼 위 끝으로 올린다
+   ④ 로그 창은 강공격 예고 띠(top 46~66) 아래에서 시작해 적 체력 줄 위에서 끝난다 — 열어도 예고·체력 숫자가 보인다. 열려 있는 동안 가운데 칩 줄은 숨긴다(겹쳐 비침)
+   ⑤ 원정 배경 그림(밝은 모래·하늘) 위에서도 체력 숫자·남은 초가 읽히게 핸드오프 피해 숫자와 같은 글자 그림자 */
+.bha-root .bha-v2toprow .bha-chip,.bha-root .bha-v2toprow .bha-btn,.bha-root .bha-v2toprow .bha-v2time{flex:none}
+.bha-root .bha-v2foename__text{flex:0 1 auto;min-width:4em}
+.bha-root .bha-v2fieldtags{position:absolute;left:calc(50% - 72px);width:132px;top:48px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:var(--bha-s-2);pointer-events:none}
+.bha-root .bha-v2fieldtags:empty{display:none}
+.bha-root .bha-v2fieldtags>.bha-chip{max-width:100%;flex:none}
+.bha-root .bha-v2fieldtags>.bha-notice{position:static;transform:none;max-width:100%;padding:4px 8px}
+.bha-root .bha-v2bar .bha-keycap{top:-7px;right:-4px}
+.bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:calc(100% - 112px)}
+.bha-root .bha-field:has(>.bha-battle__logpanel:not([hidden])) .bha-v2fieldtags{visibility:hidden}
+.bha-root .bha-v2units .bha-unit__hp .bha-num,.bha-root .bha-field.has-bg .bha-v2time{text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.8)}
+
+/* ───────── 전투 화면 비율 (C.162, GDD 99장 5 — 사용자 지시가 핸드오프 200/130 보다 우선) ─────────
+   ① 레터박스 없음: 루트 논리 크기 = 창 크기 / 배율(v2/root.ts v2Size). 640×330 은 최소 크기
+   ② 필드 = 스킬창 위 전부(330 이면 220, LCD 360 이면 250 — C.152 이전처럼 크게), 스킬창 = 아래 110px 고정
+   ③ 블록 칸 높이 58, 영력 해방 카드 폭 96(옛 128) — 블록 바가 차지하는 범위를 줄인다
+   ④ 나·적 자리는 필드 가운데 기준(폭이 늘어도 가운데로), 세로는 필드 높이를 따라 그림이 커진다 */
+.bha-v2host>.bha-root{width:calc(var(--v2-w,640) * 1px);height:calc(var(--v2-h,330) * 1px)}
+.bha-root.bha-battle .bha-field{height:auto;bottom:110px}
+.bha-root.bha-battle .bha-skillpanel{top:auto;height:110px}
+.bha-root .bha-v2units>.bha-unit{top:46px;bottom:4px;height:auto;width:180px}
+.bha-root .bha-v2units>.bha-unit--me{left:calc(50% - 255px)}
+.bha-root .bha-v2units>.bha-unit--foe{left:calc(50% + 75px)}
+.bha-root .bha-v2legendrow{top:5px;right:112px}
+.bha-root .bha-blockbar.bha-v2tray{top:30px;right:112px;height:66px}
+.bha-root .bha-v2tray__grid,.bha-root .bha-v2cell,.bha-root .bha-v2cell>.bha-block{height:58px}
+.bha-root .bha-v2cell>.bha-block .bha-block__icon{margin-top:8px}
+.bha-root .bha-v2rel{top:6px;bottom:8px;width:96px;padding:4px;gap:2px}
+.bha-root .bha-v2rel .bha-release__seal{width:24px;height:24px}
+.bha-root .bha-v2rel .bha-release__seal .bha-svg{width:14px;height:14px}
+.bha-root .bha-v2rel__name{line-height:1.1}
+.bha-root .bha-v2rel.is-ready .bha-release__seal{width:28px;height:28px}
+.bha-root .bha-v2rel.is-ready .bha-v2rel__name{font-size:var(--bha-fs-lg)}

@@ -15,8 +15,9 @@ import { enhanceCost, equippedSlotOf, findGear, gearCarry, sellGold } from '../e
 import { confirmDialog } from './confirmDialog';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
-import { categoryName, cosmeticToken, getCosmetic, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, type CosmeticCategory, type ItemCategory } from '../data/shop';
+import { categoryName, cosmeticToken, getCosmetic, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
+import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
 import { skinItemId } from '../data/shop';
 import { TILES_LOCKED_TEXT } from '../shop';
@@ -239,6 +240,11 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
   function fill(): void {
     // 탭의 타일·펫 수와 눌린 탭을 새로 맞춘다 (탭 줄만 다시 만든다)
     dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(headTabs());
+    // 두 열/한 열 전환은 탭마다 먼저 맞춘다 (C.159 A2: 물건·펫 탭에서 숨긴 오른쪽 열이 슬롯 탭으로 돌아와도 숨은 채여서 장착 칸만 보였다)
+    const body = page.left.parentElement!;
+    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
+    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : '1fr 1fr';
+    page.right.hidden = oneCol;
     if (chestUi.tab === 'slots') {
       const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
         persist();
@@ -249,10 +255,6 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       return;
     }
     // 물건 탭은 한 열 (카드 격자가 폭을 다 쓴다), 나머지는 두 열
-    const body = page.left.parentElement!;
-    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
-    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : '1fr 1fr';
-    page.right.hidden = oneCol;
     if (oneCol) {
       const [l, r] = itemsTab(faction, save, () => {
         persist();
@@ -363,15 +365,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
 
 /** 보관함 물건 탭 (GDD 86장 4·5번, C.141): 카테고리 탭(음식·소모품·장비·스킨·타일·기타) + 카드 격자. 카드를 누르면 상세 창([사용]/[장착]/[해제]).
  *  장비는 품목이 생기기 전까지 "준비 중". 타일 카드는 가진 타일 보기 */
-const itemsUi: { cat: ItemCategory; skinGroup: SkinGroup } = { cat: 'food', skinGroup: 'all' };
+const itemsUi: { cat: ItemCategory; skinSub: SkinSubTab } = { cat: 'food', skinSub: 'character' };
 
-/** '스킨' 탭 안의 꾸밈 묶음 (C.146, 사용자 "i4"): 캐릭터 스킨·기기 디자인·키링·나머지 효과를 칩으로 나눈다 */
-export const SKIN_GROUPS = [['all', '전체'], ['character', '캐릭터'], ['device', '기기'], ['keyring', '키링'], ['effect', '효과·꾸밈']] as const;
-export type SkinGroup = (typeof SKIN_GROUPS)[number][0];
-/** 꾸밈 분류(skin·device·keyring·aura …) → 묶음 */
-export function skinGroupOf(cosmeticCategory: string | undefined): Exclude<SkinGroup, 'all'> {
-  return cosmeticCategory === 'skin' ? 'character' : cosmeticCategory === 'device' ? 'device' : cosmeticCategory === 'keyring' ? 'keyring' : 'effect';
-}
 /** 카드 설명 한 줄 (C.146, 사용자 "i6"): 배지가 이미 말하는 "착용 중"·"보유"·"데리고 다니는 중"은 빼고, 스킨 카드는 꾸밈 분류 이름을 보인다 */
 export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'cosmeticCategory'>): string {
   if (e.category === 'skin' && (e.detail === '착용 중' || e.detail === '보유')) return e.cosmeticCategory ? categoryName(e.cosmeticCategory as CosmeticCategory) : '';
@@ -382,10 +377,12 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly);
   if (!cats.includes(itemsUi.cat)) itemsUi.cat = cats[0]!;
   const all = inventoryOf(save, faction);
+  // 스킨: 옛 기기 껍데기 색·견본·시험 기기는 빼고(GDD 99장 3, C.163), '기기' 하위 탭은 기본 + 가진 정식 기기 카드(누르면 장착)
+  const listed = (e: InventoryEntry) => e.category !== 'skin' || skinListed(getCosmetic(e.id));
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
   // 탭 숫자 = 그 탭의 카드(종류) 수 (C.146, 사용자 "i5": 이전에는 음식은 개수 합·스킨은 종류 수라 기준이 달랐다). 개수는 카드의 ×n
   const tabs = categoryTabs(cats.map((c) => ({
-    id: c, label: ITEM_CATEGORY_NAMES[c], count: all.filter((e) => e.category === c).length,
+    id: c, label: ITEM_CATEGORY_NAMES[c], count: all.filter((e) => e.category === c && listed(e)).length,
   })), itemsUi.cat, (id) => { itemsUi.cat = id as ItemCategory; changed(); }, '보관함 분류');
   const artOf = (e: InventoryEntry): HTMLElement => {
     // 장비 (GDD 91장 8번): 그림이 없으니 종류 아이콘 + 등급 색
@@ -406,35 +403,23 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     }
     return iconArt(e.category === 'food' ? 'i-hunger' : e.category === 'consumable' ? (e.id.includes('calm') || e.id === 'elixir' ? 'i-risk' : e.id === 'reroll' ? 'i-swap' : 'i-cond') : 'i-practice');
   };
-  const inGroup = (e: InventoryEntry) => itemsUi.cat !== 'skin' || itemsUi.skinGroup === 'all' || skinGroupOf(e.cosmeticCategory) === itemsUi.skinGroup;
-  const rows = all.filter((e) => e.category === itemsUi.cat && inGroup(e));
-  const cards = rows.map((e) => itemCard({
+  const inGroup = (e: InventoryEntry) => itemsUi.cat !== 'skin' || skinSubOf(e.cosmeticCategory) === itemsUi.skinSub;
+  const rows = all.filter((e) => e.category === itemsUi.cat && listed(e) && inGroup(e));
+  const devices = itemsUi.cat === 'skin' && itemsUi.skinSub === 'device' ? deviceCards(save, faction, changed) : null;
+  const cards = devices ?? rows.map((e) => itemCard({
     id: e.id, name: e.name, detail: cardDetailOf(e), art: artOf(e),
     grade: e.gear?.grade,
     badge: e.gear ? (e.gear.slot ? (slotsForKind(e.gear.kind).length > 1 ? `장착 · ${gearSlotName(e.gear.slot, faction)}` : '장착') : undefined) : e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
     state: e.action === 'unequip' || e.action === 'leave' ? 'worn' : e.lock ? 'locked' : undefined,
     onClick: () => openItem(faction, save, e, artOf(e), changed),
   }));
-  const empty = itemsUi.cat === 'equipment' ? '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·상점 장비 탭·떠돌이 상인에게서 얻는다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  const empty = itemsUi.cat === 'skin' ? SKIN_SUB_EMPTY : itemsUi.cat === 'equipment' ? '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·상점 장비 탭·떠돌이 상인에게서 얻는다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   if (!petOnly) box.append(tabs);
   if (itemsUi.cat === 'skin') {
-    // 스킨 탭 칩 필터: 묶음마다 개수, 없는 묶음은 흐리게
-    const chips = h('div', 'bha-itemchips');
-    chips.setAttribute('role', 'group');
-    chips.setAttribute('aria-label', '꾸밈 종류');
-    const skins = all.filter((e) => e.category === 'skin');
-    for (const [id, label] of SKIN_GROUPS) {
-      const n = id === 'all' ? skins.length : skins.filter((e) => skinGroupOf(e.cosmeticCategory) === id).length;
-      const b = h('button', `bha-itemchip${itemsUi.skinGroup === id ? ' is-on' : ''}${n === 0 && id !== 'all' ? ' is-zero' : ''}`);
-      b.type = 'button';
-      b.dataset.skinGroup = id;
-      b.setAttribute('aria-pressed', String(itemsUi.skinGroup === id));
-      b.append(label, h('small', 'bha-itemchip__count', String(n)));
-      b.onclick = () => { itemsUi.skinGroup = id; changed(); };
-      chips.append(b);
-    }
-    box.append(chips);
+    // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
+    const skins = all.filter((e) => e.category === 'skin' && listed(e));
+    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
   }
   box.append(itemGrid(cards, empty));
   return [box, h('div')];

@@ -83,6 +83,8 @@ export function openInstall(opts: { auto: boolean; ua?: string } = { auto: false
   mark.alt = '';
   const title = el('h2', 'bha-install__title', '홈 화면에 설치하세요');
   const lead = el('p', 'bha-install__lead', '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있어요');
+  // 크롬 '전체 화면을 종료하려면…' 안내는 브라우저가 띄워 페이지에서 끌 수 없다 — 설치한 앱으로 열면 안 뜬다 (GDD 99장 6, C.163)
+  lead.append(el('br'), el('small', 'bha-faint', '설치해서 홈 화면 아이콘으로 열면 "전체 화면을 종료하려면…" 브라우저 안내도 뜨지 않아요'));
   const body = el('div', 'bha-install__body');
   const actions = el('div', 'bha-install__actions');
   card.append(mark, title, lead, body, actions);

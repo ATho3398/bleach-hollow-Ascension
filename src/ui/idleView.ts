@@ -6,7 +6,7 @@ import { tileName } from '../data/tiles';
 import type { FactionConfig, FoodId } from '../engine/faction';
 import type { IdleYield } from '../engine/idle';
 import type { IdleRecord } from '../engine/runLog';
-import { idlePendingYield, type IdleAccrual, type SaveData } from '../game';
+import { idleClaimable, idlePendingYield, type IdleAccrual, type SaveData } from '../game';
 import { el } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 
@@ -18,10 +18,10 @@ export const hm = (h: number): string => {
   return m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? ` ${m % 60}분` : ''}` : `${m}분`;
 };
 
-/** 방 아이콘 배지: 쌓인 시간(시간 단위로 내림, 1시간 미만이면 분). 쌓인 것이 없으면 null */
+/** 방 아이콘 배지: 쌓인 시간(시간 단위로 내림, 1시간 미만이면 분). 받을 만큼(합계 minMinutes 이상, 95장 B1) 안 쌓였으면 null */
 export function idleBadge(save: Pick<SaveData, 'idlePending'>): string | null {
   const p = save.idlePending;
-  if (!p || p.hours <= 0) return null;
+  if (!p || !idleClaimable(save)) return null;
   return p.hours >= 1 ? `${Math.floor(p.hours)}시간` : `${Math.round(p.hours * 60)}분`;
 }
 
@@ -55,7 +55,23 @@ export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foo
 
 /** 규칙 한 줄 (아이콘 창) */
 export function idleRuleText(): string {
-  return `게임을 꺼 두면 그동안 자동 모험을 돈다 — 최대 ${IX.maxHours}시간, 직접 돌았을 때의 ${Math.round(IX.share * 100)}%. ${IX.minMinutes}분 미만은 쌓이지 않고, 받기 전에 또 꺼 두면 시간이 더해진다(합계 최대 ${IX.maxHours}시간).`;
+  return `게임을 켜 두든 꺼 두든 흐른 시간만큼 자동 모험을 돈다(플레이 중에도 쌓인다) — 직접 돌았을 때의 ${Math.round(IX.share * 100)}%, 합계 최대 ${IX.maxHours}시간. 쌓인 합계가 ${IX.minMinutes}분 이상이면 받을 수 있다.`;
+}
+
+/** 켜 둔 동안 방 '대기 보상' 아이콘 배지 갱신 (95장 B1, 1분마다): 방 화면이 그린 버튼(data-sc="idle-reward")의 배지만 바꾼다 — 방이 아니면 아무것도 안 함 */
+export function refreshIdleBadge(scope: ParentNode, save: Pick<SaveData, 'idlePending'>): void {
+  const btn = scope.querySelector<HTMLElement>('[data-sc="idle-reward"]');
+  if (!btn) return;
+  const text = idleBadge(save);
+  let badge = btn.querySelector<HTMLElement>('.bha-room__idlebadge');
+  if (!text) {
+    badge?.remove();
+    btn.removeAttribute('title');
+    return;
+  }
+  if (!badge) btn.append((badge = el('small', 'bha-room__idlebadge')));
+  if (badge.textContent !== text) badge.textContent = text;
+  btn.title = `대기 보상 ${text} 쌓임`;
 }
 
 function listOf(save: SaveData, faction: FactionConfig): HTMLElement {
@@ -96,7 +112,7 @@ export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: Factio
 
 /** 방 '대기 보상' 아이콘 창 (92장 1번): 규칙 + 지금 쌓인 것 + [받기] (없으면 닫기만) */
 export function showIdlePanel(save: SaveData, faction: FactionConfig, onClaim: () => IdleRecord | null): void {
-  const has = save.idlePending !== null;
+  const has = idleClaimable(save);
   confirmDialog({
     title: '대기 보상',
     body: idleRuleText(),

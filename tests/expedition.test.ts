@@ -395,7 +395,7 @@ describe('시드 결정성', () => {
   });
 
   it('전투 기록의 lap 이 실제 바퀴 수로 채워진다', () => {
-    const e = playExpedition(mk({ seed: 81 }), { returnAfterLap: 3 }); // C.147: 94장 B 로 흡수 결과가 바뀌어 3바퀴까지 사는 시드로 (82 → 81)
+    const e = playExpedition(mk({ seed: 83 }), { returnAfterLap: 3 }); // 3바퀴까지 사는 시드 (C.147: 82 → 81, C.154: 해방 게이지가 피해로도 차서 81 → 83)
     expect(new Set(e.battles.map((b) => b.lap))).toEqual(new Set([1, 2, 3]));
     expect(e.battles.length).toBe(e.battlesByLap.reduce((x, y) => x + y, 0));
     expect(buildRunRecord(e).laps).toBe(3);

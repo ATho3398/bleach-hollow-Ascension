@@ -12,7 +12,7 @@ import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
-import { characterButton, charTopOffset, propButton, roomCharArt, sceneBox } from './bha/room';
+import { characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
@@ -94,16 +94,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }
     hud.append(name);
   }
-  if (hd.idle) {
-    const ib = button({ label: '대기 보상', icon: 'i-timer', size: 'small', variant: 'ghost', onClick: hd.idle.onOpen });
-    ib.dataset.sc = 'idle-reward';
-    if (hd.idle.badge) {
-      ib.append(el('small', 'bha-room__idlebadge', hd.idle.badge));
-      ib.title = `대기 보상 ${hd.idle.badge} 쌓임`;
-    }
-    hud.append(ib);
-    items.push({ el: ib });
-  }
   if (hd.resume) {
     resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
     resumeBtn.title = hd.resume.info;
@@ -121,6 +111,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   let bubbleTimer = 0;
   const say = (text: string, ms = 2600) => {
     bubble.textContent = text;
+    // 말풍선은 머리 위 상태 칩 옆에 선다 (C.160): 캐릭터가 오른쪽 절반이면 칩 왼쪽, 아니면 오른쪽 — 칩(게이지)을 가리지 않는다
+    bubble.classList.toggle('is-left', parseFloat(scene.style.getPropertyValue('--char-x')) > 55);
     bubble.hidden = false;
     bubble.classList.remove('is-pop');
     void bubble.offsetWidth;
@@ -139,12 +131,14 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 위/아래 순서: 위쪽 줄(책장·수련장) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
   const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop'];
   const props = new Map<RoomProp, HTMLButtonElement>();
+  const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'shop' && save.shared.wanderer.visit !== null });
     b.onclick = act[p];
     if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(훈련 인형 모양) = 단축키 T
     props.set(p, b);
     scene.append(b);
+    floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
   }
   const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
@@ -183,7 +177,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
   statusBtn.dataset.sc = 'status';
-  statusBtn.style.setProperty('--head-y', `${charTopOffset(charArtUrls, loco)}px`);
+  scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls, loco)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
   statusBtn.onclick = hd.onStatus;
   const paintGauges = () => {
     const chips = statusChips(n, faction);
@@ -200,8 +194,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }));
   };
   paintGauges();
-  requestAnimationFrame(() => statusBtn.style.setProperty('--chip-h', `${statusBtn.offsetHeight}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
+  requestAnimationFrame(() => scene.style.setProperty('--chip-h', `${statusBtn.offsetHeight}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
   scene.append(char, statusBtn, bubble);
+  floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
+  const place = () => layoutOnFloor(scene, room.floor, floorEntries);
+  place(); // 붙기 전이라 크기를 못 재면 기준 크기로, 붙은 뒤 다시 잰 값으로 놓는다
+  requestAnimationFrame(place);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(place).observe(scene);
 
   // ── 하단 독 (GDD 18-2): 돌보기 3개 + 메뉴 아이콘 + 더보기 ──
   const dock = createDock({
@@ -237,13 +236,14 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       ...(hd.onBackup ? [{ label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup }] : []),
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
     ],
+    idle: hd.idle,
     onItemsChange: () => registerItems(),
   });
 
   const body = el('div', 'bha-room__body');
   body.append(scene);
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
-  const main = mountApp(dev.view, { cls: 'bha-room' }, hud, ...(warn ? [warn] : []), body, dock.root);
+  const main = mountApp(dev.view, { cls: 'bha-room' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
   if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번) — 상점 물건에 알림 점

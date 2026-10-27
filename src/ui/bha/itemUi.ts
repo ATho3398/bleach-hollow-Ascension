@@ -12,8 +12,8 @@ export interface TabSpec {
 }
 
 /** 카테고리 탭 줄 (보관함·상점 공용): 눌린 탭은 aria-selected */
-export function categoryTabs(tabs: TabSpec[], current: string, onPick: (id: string) => void, label = '카테고리'): HTMLElement {
-  const root = el('div', 'bha-itemtabs');
+export function categoryTabs(tabs: TabSpec[], current: string, onPick: (id: string) => void, label = '카테고리', sub = false): HTMLElement {
+  const root = el('div', sub ? 'bha-itemtabs bha-itemtabs--sub' : 'bha-itemtabs');
   root.setAttribute('role', 'tablist');
   root.setAttribute('aria-label', label);
   for (const t of tabs) {

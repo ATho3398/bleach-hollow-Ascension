@@ -128,6 +128,7 @@ describe('66장 1번 SP 필살 블록 삭제 — 필살기는 저장형만', () 
     const s = quiet(createCombat(1, { enemy: normal, params: build() })); // C.136: 회복 속성 특성 삭제 — 기본 회복 블록
     s.sealTicks = 30;
     s.liberation.gauge = 0;
+    s.params.liberationGaugePerDealt = 0; // 블록 몫만 본다 (C.154: 피해로도 참)
     s.tray = [blk('basic-heal'), blk('basic-heal'), blk('basic-heal')];
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.sealTicks).toBe(0);

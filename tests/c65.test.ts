@@ -174,7 +174,7 @@ describe('옆면 두께 (30장 4번 → C.71 31장 1: 겹 대신 실루엣 띠)'
   });
 });
 
-describe('기본 제공 기기 십일번대 (UI담당자A)', () => {
+describe('기본 제공 기기 11번대 (UI담당자A)', () => {
   it('데이터: frame-v2, 기본 제공, 기본 착용은 첫 번째(사신대행증)', async () => {
     const z = getCosmetic('device-zaraki')!;
     expect(z.device!.frame).toBe('v2');

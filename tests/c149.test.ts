@@ -18,28 +18,23 @@ describe('C.149 칸 배치', () => {
     const b = newBuild();
     for (const id of ['t-normal-a', 't-fire-a']) gainTrait(b, id, 0);
     b.slots = ['t-normal-a', 't-fire-a', null];
-    expect(placeTrait(b, 2, { area: 'body', index: 2 }, 't-normal-a', { area: 'body', index: 0 }).ok).toBe(true);
+    expect(placeTrait(b, { area: 'body', index: 2 }, 't-normal-a', { area: 'body', index: 0 }).ok).toBe(true);
     expect(b.slots).toEqual([null, 't-fire-a', 't-normal-a']);
-    placeTrait(b, 2, { area: 'body', index: 1 }, 't-normal-a', { area: 'body', index: 2 });
+    placeTrait(b, { area: 'body', index: 1 }, 't-normal-a', { area: 'body', index: 2 });
     expect(b.slots).toEqual([null, 't-normal-a', 't-fire-a']);
   });
   it('칸 → 목록(빼기): 특성은 보유에 남고 칸만 빈다', () => {
     const b = make();
     const id = b.slots.find(Boolean)!;
-    clearCell(b, 2, { area: 'body', index: b.slots.indexOf(id) });
+    clearCell(b, { area: 'body', index: b.slots.indexOf(id) });
     expect(b.slots.includes(id)).toBe(false);
     expect(b.owned).toContain(id);
   });
-  it('해방 칸: 열린 칸 + 블록 특성만, 본체 ↔ 해방은 복사', () => {
+  it('해방 칸은 없다 (C.167, GDD 98장 B): 놓을 수 있는 곳은 본체 칸뿐', () => {
     const b = make();
-    expect(canPlace(b, 0, { area: 'lib', index: 1 }, 't-fire-a')).toBe(false); // 1단계는 1칸
-    expect(canPlace(b, 2, { area: 'lib', index: 1 }, 't-fire-a')).toBe(true);
-    gainTrait(b, 't-normal-part', 0);
-    expect(canPlace(b, 2, { area: 'lib', index: 0 }, 't-normal-part')).toBe(false); // 외형 파츠는 블록이 아니다
-    const inBody = b.slots.indexOf('t-fire-a');
-    placeTrait(b, 2, { area: 'lib', index: 1 }, 't-fire-a', inBody >= 0 ? { area: 'body', index: inBody } : null);
-    expect(b.liberation![1]).toBe('t-fire-a');
-    if (inBody >= 0) expect(b.slots[inBody]).toBe('t-fire-a');
+    expect(canPlace(b, { area: 'body', index: 0 })).toBe(true);
+    expect(canPlace(b, { area: 'body', index: b.slots.length })).toBe(false);
+    expect('liberation' in b).toBe(false);
   });
 });
 

@@ -49,6 +49,8 @@ export const GHOST_LAG_MS = 28;
 
 /** 돌진이 닿는 거리 = 두 그림 사이 간격 × 이 비율 (그림이 서로 겹치지 않을 만큼) */
 export const REACH_RATIO = 0.82;
+/** 전투 화면의 돌진 상한 = 필드 폭 × 이 비율 (GDD 99장 4: 적까지 가지 않고 앞으로 튀어나갔다 돌아온다, 15~20%) */
+export const FX_REACH_FIELD = 0.18;
 /** 막힌(guard) 공격을 맞을 때 피격 밀림·번쩍임을 줄이는 비율 */
 export const GUARDED_HIT_RATIO = 0.4;
 /** 기본 피격 연출(흰 깜빡임 2번 + 튕김, GDD 26-4c)의 최소 길이(ms): 깜빡임 두 번이 보이게 */

@@ -57,17 +57,36 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     fxPanel.append(b, el('p', 'bha-faint', row.hint));
   }
 
-  // 배경 음악 (GDD 24-4): 효과음과 별도로 켬/끔·음량. 이 기기에만 저장(키 bha-bgm-settings). 음원 파일이 없는 트랙은 무음
+  // 배경 음악 (GDD 24-4·97장): 켬/끔·음량 + 플레이리스트(곡 목록·▶ 재생·제외·현재 곡만 반복·다음 곡). 이 기기에만 저장(키 bha-bgm-settings)
   const musicPanel = el('section', 'bha-panel');
   musicPanel.append(el('h2', 'bha-panel__title', '음악'));
   const musicBtn = button({ label: '' });
   const volBtns = BGM_VOLUMES.map((v) => {
     const b = button({ label: `${Math.round(v * 100)}%`, size: 'small' });
-    b.onclick = () => setMusic({ ...loadBgmSettings(storage), volume: v });
+    b.onclick = () => setMusic({ ...bgm().settings, volume: v });
     return b;
   });
+  const nowLine = el('p', 'bha-faint');
+  const repeatBtn = button({ label: '' });
+  const nextBtn = button({ label: '다음 곡', size: 'small' });
+  const listBox = el('div', 'bha-bgmlist');
+  const rows = bgm().playlist.map((t) => {
+    const row = el('div', 'bha-bgmlist__row');
+    const playBtn = button({ label: '▶', size: 'small' });
+    const exBtn = button({ label: '', size: 'small' });
+    playBtn.setAttribute('aria-label', `${t.name} 재생`);
+    playBtn.onclick = () => { bgm().playTrack(t.id); paintMusic(); };
+    exBtn.onclick = () => { bgm().toggleExcluded(t.id); paintMusic(); };
+    const name = el('span', 'bha-bgmlist__name', t.name);
+    const mark = el('span', 'bha-bgmlist__mark');
+    name.append(mark);
+    row.append(name, playBtn, exBtn);
+    listBox.append(row);
+    return { t, row, mark, playBtn, exBtn };
+  });
   const paintMusic = () => {
-    const m = loadBgmSettings(storage);
+    const p = bgm();
+    const m = p.settings;
     musicBtn.textContent = `배경 음악 ${m.on ? '켬' : '끔'}`;
     musicBtn.classList.toggle('is-on', m.on);
     musicBtn.setAttribute('aria-pressed', String(m.on));
@@ -76,19 +95,46 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
       b.classList.toggle('is-on', on);
       b.setAttribute('aria-pressed', String(on));
     });
+    const cur = p.currentTrack;
+    nowLine.textContent = p.playlist.length === 0 ? '' : cur ? `지금 곡: ${cur.name}` : '재생할 곡 없음';
+    repeatBtn.textContent = `현재 곡만 반복 ${m.repeat ? '켬' : '끔'}`;
+    repeatBtn.classList.toggle('is-on', m.repeat);
+    repeatBtn.setAttribute('aria-pressed', String(m.repeat));
+    for (const r of rows) {
+      const ex = m.excluded.includes(r.t.id);
+      const now = cur?.id === r.t.id;
+      r.row.classList.toggle('is-on', now);
+      r.row.classList.toggle('is-off', ex);
+      r.mark.textContent = now ? ' · 재생 중' : '';
+      r.playBtn.classList.toggle('is-on', now);
+      r.playBtn.setAttribute('aria-pressed', String(now));
+      r.exBtn.textContent = `제외 ${ex ? '켬' : '끔'}`;
+      r.exBtn.classList.toggle('is-on', ex);
+      r.exBtn.setAttribute('aria-pressed', String(ex));
+    }
   };
   const setMusic = (m: ReturnType<typeof loadBgmSettings>) => {
     bgm().setSettings(saveBgmSettings(storage, m));
     paintMusic();
   };
-  musicBtn.onclick = () => {
-    const m = loadBgmSettings(storage);
-    setMusic({ ...m, on: !m.on });
-  };
+  musicBtn.onclick = () => setMusic({ ...bgm().settings, on: !bgm().settings.on });
+  repeatBtn.onclick = () => { bgm().toggleRepeat(); paintMusic(); };
+  nextBtn.onclick = () => { bgm().next(); paintMusic(); };
   const volRow = el('div', 'bha-plan__grounds');
   volRow.append(el('span', 'bha-faint', '음량'), ...volBtns);
-  musicPanel.append(musicBtn, volRow, el('p', 'bha-faint', '효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다. 음악 파일이 없는 장면은 조용하다.'));
+  const hasList = rows.length > 0;
+  musicPanel.append(musicBtn, volRow);
+  if (hasList) {
+    const ctl = el('div', 'bha-bgmlist__ctl');
+    ctl.append(repeatBtn, nextBtn);
+    musicPanel.append(nowLine, ctl, listBox);
+  }
+  musicPanel.append(el('p', 'bha-faint', hasList ? '한 곡이 끝나면 다음 곡으로 넘어가고, 제외한 곡은 건너뛴다(▶ 로 직접 고르면 재생). 효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다.' : '효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다. 음악 파일이 없는 장면은 조용하다.'));
   paintMusic();
+  if (hasList && typeof setInterval === 'function') {
+    // 곡이 저절로 넘어가면 이름·표시를 따라간다 (화면이 닫히면 멈춘다)
+    const poll = setInterval(() => { if (musicPanel.isConnected) paintMusic(); else clearInterval(poll); }, 1000);
+  }
 
   // 화면 크기 (GDD 17-5): PC 에서만 적용. 선택은 이 기기에만 저장(키 bha-view-scale)
   const sizePanel = el('section', 'bha-panel');

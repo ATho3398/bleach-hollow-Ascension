@@ -20,6 +20,8 @@ export interface DockOpts {
   foodCount: (food: FoodId) => number;
   /** 더보기 격자에 펼치는 항목 (아이콘 + 짧은 이름, 이 순서대로) */
   more: DockMenuItem[];
+  /** 대기 보상 시계 버튼 (GDD 98장 A3): ⋯ 옆, 글자 없음, 쌓인 시간은 작은 배지. 누르면 대기 보상 창 */
+  idle?: { badge: string | null; onOpen: () => void };
   /** 펼침 상태가 바뀌어 선택 가능 항목이 달라졌을 때 */
   onItemsChange: () => void;
 }
@@ -78,6 +80,17 @@ export function createDock(o: DockOpts): Dock {
   moreBtn.setAttribute('aria-expanded', 'false');
   const menuBtns: HTMLButtonElement[] = [moreBtn];
   menu.append(moreBtn);
+  if (o.idle) {
+    const idleBtn = button({ label: '대기 보상', icon: 'i-timer', iconOnly: true, variant: 'ghost', onClick: () => { setPanel(CLOSED); o.idle!.onOpen(); } });
+    idleBtn.dataset.sc = 'idle-reward'; // 1분마다 refreshIdleBadge 가 이 버튼의 배지를 고친다
+    idleBtn.classList.add('bha-homedock__idle');
+    if (o.idle.badge) {
+      idleBtn.append(el('small', 'bha-room__idlebadge', o.idle.badge));
+      idleBtn.title = `대기 보상 ${o.idle.badge} 쌓임`;
+    }
+    menuBtns.push(idleBtn);
+    menu.prepend(idleBtn);
+  }
 
   bar.append(care, el('span', 'bha-homedock__sep'), menu);
   root.append(tray, bar);

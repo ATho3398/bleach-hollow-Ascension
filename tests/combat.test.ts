@@ -288,6 +288,7 @@ describe('체인 배율과 SP·필살', () => {
     expect(s.guard.reflect).toBe(1);
     s.sealTicks = 30;
     s.liberation.gauge = 0;
+    s.params.liberationGaugePerDealt = 0; // 블록 몫만 본다 (C.154: 피해로도 참)
     put(s, ...many('basic-heal', 3));
     useAt(s, 0);
     expect(s.sealTicks).toBe(0);

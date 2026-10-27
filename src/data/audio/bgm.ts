@@ -23,3 +23,20 @@ export function findBgmFile(track: BgmTrack, files: readonly string[] = BGM_FILE
   }
   return null;
 }
+
+/** 플레이리스트 곡 (GDD 97장): 게임 전체 브금. 이 순서대로 한 곡 끝나면 다음 곡, 마지막 다음은 처음. 파일은 `public/audio/playlist/` */
+export interface PlaylistTrack {
+  id: string;
+  /** 표시 이름 (사용자 확정) */
+  name: string;
+  /** public 기준 경로 */
+  file: string;
+}
+
+export const PLAYLIST: readonly PlaylistTrack[] = [
+  { id: 'ranbu-no-melody', name: '난무의 멜로디', file: 'audio/playlist/ranbu-no-melody.mp3' },
+  { id: 'change', name: 'chAngE', file: 'audio/playlist/change.mp3' },
+  { id: 'rasen-acoustic', name: '나선', file: 'audio/playlist/rasen-acoustic.mp3' },
+  { id: 'shoujo-s', name: '소녀S', file: 'audio/playlist/shoujo-s.mp3' },
+  { id: 'track-5', name: '혜성', file: 'audio/playlist/track-5.mp3' },
+];

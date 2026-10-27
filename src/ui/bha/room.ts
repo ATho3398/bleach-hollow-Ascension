@@ -1,11 +1,12 @@
 // 메인 방 화면의 장면 부품 (GDD 16장, T-1): 방 배경·물건·캐릭터. 그림은 src/data/art 매니페스트의 키로 참조하고,
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
-import type { RoomConfig, RoomProp } from '../../engine/faction';
+import type { RoomConfig, RoomFloorConfig, RoomProp } from '../../engine/faction';
 import type { Locomotion } from '../../engine/locomotion';
 import { bindAnim } from './animPlayer';
 import { el, icon } from './dom';
 import { LOCO_LIFT, setLoco } from './loco';
+import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -34,7 +35,7 @@ export interface PropOpts {
   name: string;
   x: number;
   y: number;
-  /** 뒷줄 축소 배율 (기본 1) */
+  /** 크기 배율 (기본 1) */
   scale?: number;
   art: boolean;
   /** 수치·상태 표시 (덱 비어 있음 등) */
@@ -46,6 +47,7 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   const b = el('button', `bha-art bha-prop bha-prop--${o.prop}${o.alert ? ' is-alert' : ''}`);
   b.type = 'button';
   b.dataset.prop = o.prop;
+  // 발 기준점 (x, y = 장면 %): 첫 그림용 값. 실제 위치는 layoutOnFloor 가 바닥 안으로 끌어 다시 놓는다
   b.style.left = `${o.x}%`;
   b.style.top = `${o.y}%`;
   if (o.scale !== undefined && o.scale !== 1) b.style.setProperty('--prop-s', String(o.scale));
@@ -122,4 +124,38 @@ export function charTopOffset(art: ArtUrls, loco: Locomotion = 'walk'): number {
   const pivot = bodyH * 0.92; // transform-origin 세로
   const top = pivot + (bodyH - drawn - pivot) * art.scale + (art.offsetY / 100) * bodyH;
   return boxTop + Math.min(top, bodyH) - lift;
+}
+
+export interface FloorEntry {
+  el: HTMLElement;
+  /** 발 기준점 (장면 %) */
+  foot: { x: number; y: number };
+  kind: 'prop' | 'char';
+}
+
+/** 방 안 모든 것을 바닥 안에 놓는다 (GDD 95장 A1): 발 기준점 → 바닥 다각형 안으로 끌어 놓고, 그림 높이·이름표를 잰 만큼 위치를 맞춘다.
+ *  새 물건·캐릭터는 이 함수에 항목만 더하면 늘 바닥 안에 놓인다. 장면 크기가 바뀌면 다시 놓는다 */
+export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entries: readonly FloorEntry[]): void {
+  const sw = scene.clientWidth;
+  const sh = scene.clientHeight;
+  const size = sw > 0 && sh > 0 ? { w: sw, h: sh } : REF_SCENE;
+  for (const e of entries) {
+    const measured = e.el.offsetHeight > 0;
+    if (e.kind === 'prop') {
+      const shape = e.el.querySelector<HTMLElement>('.bha-prop__shape');
+      const lift = measured && shape ? e.el.offsetHeight - (shape.offsetTop + shape.offsetHeight) : REF_LIFT; // 그림 아래 → 이름표 아래 끝
+      const p = footOnFloor(e.foot, floor, size, { below: lift, padX: measured ? e.el.offsetWidth / 2 : 0 });
+      e.el.style.left = `${p.x}%`;
+      e.el.style.top = `${(p.y / 100) * size.h + lift}px`;
+    } else {
+      const shadow = e.el.querySelector<HTMLElement>('.bha-char__shadow');
+      const fromCenter = measured && shadow ? shadow.offsetTop + shadow.offsetHeight / 2 - e.el.offsetHeight / 2 : 62; // 상자 가운데 → 발
+      const p = footOnFloor(e.foot, floor, size, { below: e.el.offsetHeight / 2 - fromCenter, padX: measured ? e.el.offsetWidth / 2 : 0 });
+      const top = (p.y / 100) * size.h - fromCenter;
+      e.el.style.left = `${p.x}%`;
+      e.el.style.top = `${top}px`;
+      scene.style.setProperty('--char-y', `${top}px`);
+      scene.style.setProperty('--char-x', `${p.x}%`);
+    }
+  }
 }

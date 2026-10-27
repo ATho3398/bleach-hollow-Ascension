@@ -29,7 +29,7 @@ import {
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
 import { elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
-import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, skillBlockLabel, type BattleLabels } from './labels';
+import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -39,6 +39,7 @@ import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from '
 import { locoOf, setLoco } from './bha/loco';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf } from './attackFx';
+import { FX_REACH_FIELD } from './attackFxConfig';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
 import type { SceneBg } from '../data/art/backgrounds';
@@ -48,7 +49,7 @@ import { abilityProcText } from './evolutionPanel';
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
   banner?: string;
-  /** 있으면 화면 맨 위에 안내 한 줄(.bha-notice)을 보인다 (체험 전투 "기록되지 않음" 등) */
+  /** 있으면 필드 가운데 칩 줄 맨 위에 안내(.bha-notice)를 보인다 (체험 전투 "기록되지 않음" 등, C.160) */
   notice?: string;
   /** 폭주 중이면 그 이름 (GDD 23-2, 종족 설정 frenzyName): 위 막대에 상태 칩, 화면 테두리 */
   frenzy?: string;
@@ -169,7 +170,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       // 진화체 특성 발동 (C.89, GDD 39장 5번)
       return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
-      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 ${e.slots > 0 ? '해방 블록' : '기본 블록'}이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
+      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 ${e.source === 'body' ? '장착 블록' : '기본 블록'}이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
     case 'liberation-end':
       return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` };
     case 'end':
@@ -235,24 +236,30 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // ── 1. 적 이름·약점 (필드 위 한 줄 왼쪽, v2 칩) ──
   const foeName = el('div', 'bha-v2foename');
-  foeName.append(el('h1', 'bha-display bha-lg bha-v2foename__text', enemyName));
-  if (opts.boss) foeName.append(v2Chip('보스', 'danger'));
+  const foeTitle = el('h1', 'bha-display bha-lg bha-v2foename__text', enemyName);
+  foeTitle.title = enemyName; // 칩에 밀려 말줄임이 되어도 전체 이름 (C.160)
+  foeName.append(foeTitle);
+  if (opts.boss || s.boss) foeName.append(v2Chip('보스', 'danger')); // 보스 기믹이 있으면 보스 (테스트 바로 전투는 opts.boss 없이 들어온다, C.160)
   else if (enemy.class === 'elite') foeName.append(v2Chip('강적', 'danger'));
-  if (enemy.provisional) foeName.append(v2TempChip());
   const weakChip = elementChip();
   const foeHead = el('header', 'bha-v2foehead');
   foeHead.append(foeName);
+  // 필드 가운데 칩 줄 (C.160, 핸드오프 Battle.dc.html 의 '강공격·봉인' 칩 자리 left 290·top 45): 알림·임시·패턴·페이즈·졸개 칩을 나·적 그림 사이에 세로로 쌓는다.
+  // 위 한 줄에 다 넣으면 적 이름이 말줄임으로 사라지고 칩끼리 겹쳤다 (GDD 98장 A5)
+  const fieldTags = el('div', 'bha-v2fieldtags');
+  if (opts.notice) fieldTags.append(v2Notice('', opts.notice, 'i-info'));
+  if (enemy.provisional) fieldTags.append(v2TempChip()); // 임시 데이터 표시도 여기 (위 한 줄에서는 원정 광기·폭주 칩과 함께면 반쯤 잘렸다)
 
   const patternView = PATTERN_VIEW[enemyPatternKind(enemy)];
   const patternChipEl = (): HTMLElement => v2Chip(patternView!.label, 'default', { icon: patternView!.icon });
-  if (patternView) foeHead.append(patternChipEl());
+  if (patternView) fieldTags.append(patternChipEl());
   // 보스 페이즈 칩 (GDD 25-3): 지금 페이즈 / 전체 페이즈
   const phaseChip = v2Chip('', 'danger', { icon: 'i-warn' });
   phaseChip.classList.add('bha-battle__phase');
   const phaseText = () => `페이즈 ${s.boss?.phase ?? 1}/${(s.boss?.setup.phases.length ?? 0) + 1}`;
   if (s.boss) {
     phaseChip.append(el('span', '', phaseText()));
-    foeHead.append(phaseChip);
+    fieldTags.append(phaseChip);
   }
   // 졸개 칩 (보스 기믹 summon, GDD 35장): 졸개가 서 있는 동안 체력 표시
   const minionText = el('span');
@@ -260,7 +267,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   minionChip.classList.add('bha-battle__minion');
   minionChip.append(minionText);
   minionChip.hidden = true;
-  if (s.boss?.setup.gimmick === 'summon') foeHead.append(minionChip);
+  if (s.boss?.setup.gimmick === 'summon') fieldTags.append(minionChip);
 
   // ── 2. 유닛 두 칸: 머리 위 게이지 / 그림 / 체력 바 (GDD 18-6, 핸드오프 필드 200px) ──
   // 머리 위 게이지: 적 = 강공격 예고(시전 바, 항상 한 칸 자리를 지킨다) + 방어 자세, 나 = 봉인 + 막기. 엔진 이벤트·상태에서 읽기만 한다
@@ -379,6 +386,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libMeta = el('span', 'bha-xs bha-t2 bha-v2rel__meta');
   const libGauge = v2Gauge('release', 0, { width: '100%', label: labels.liberation.name });
   libBtn.append(libSeal, libName, libTemp, libMeta, libGauge);
+  // 무엇으로 차는지·해방 중 나오는 블록 한 줄 (GDD 95장 B2 ③, C.154): 해방 카드는 높이가 꽉 차서 바로 옆 범례 줄 끝에 (넘치면 말줄임, 전체는 title)
+  const hintFull = liberationHint(labels, p);
+  const hintDuring = hintFull.slice(hintFull.lastIndexOf(' · ') + 3); // 해방 중에는 나오는 블록만 ('해방 중 장착 탄·조')
+  const libHint = el('span', 'bha-xs bha-t2 bha-v2foename__text', hintFull);
+  libHint.style.flex = '1 1 0'; // 남는 폭만 쓴다 — 범례·해방 칩을 밀지 않게
+  libHint.style.minWidth = '0';
+  libHint.title = libHint.textContent ?? '';
+  libHint.dataset.sc = 'liberation-hint';
+  libHint.hidden = !libOn;
   libBtn.hidden = !libOn;
   const libChip = v2Chip('', 'default', { icon: 'i-special' });
   libChip.classList.add('bha-v2libchip');
@@ -393,7 +409,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
-  legendRow.append(libChip, legend, meStatus);
+  legendRow.append(libChip, legend, meStatus, libHint);
+  // 해방 설명(C.154·C.167)은 남는 폭만 — 범례·칩은 줄어들지 않게
+  for (const n of [libChip, legend, meStatus]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
   controls.append(legendRow, tray.root, ...(libOn ? [libBtn] : []));
@@ -466,8 +484,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     arena.classList.add('has-bg');
     arena.append(sceneBgEl(opts.bg, false));
   }
-  arena.append(units, topRow, fxLayer, floats, fxFlash, libCut, log);
-  const v2 = mountV2Root(root, faction, ...(opts.notice ? [v2Notice('', opts.notice, 'i-info')] : []), arena, controls, flashVoid, flashHit);
+  arena.append(units, fieldTags, topRow, fxLayer, floats, fxFlash, libCut, log);
+  const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다
   if (auraEl) app.style.setProperty('--bha-aura', elementColor(auraEl));
@@ -618,6 +636,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
+    maxReach: () => arena.offsetWidth * FX_REACH_FIELD, // 몸통박치기는 필드 폭의 18% 만 앞으로 (적까지 가지 않는다, GDD 99장 4)
     // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
     layer: fxLayer,
     // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
@@ -933,6 +952,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     app.classList.toggle('is-liberated', libActive);
     app.classList.toggle('is-unique', libActive && labels.liberation.unique);
     setHidden(libChipRoot.root, !libActive);
+    setText(libHint, libActive ? hintDuring : hintFull);
     if (libActive) setText(libChipRoot.value, secondsText(s.liberation.ticksLeft * p.tickSeconds));
     if (libOn) {
       const lb = s.liberation;

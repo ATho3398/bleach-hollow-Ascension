@@ -10,7 +10,7 @@ import { createExpedition } from '../src/engine/expedition';
 import { addPetLaps, grantPet } from '../src/engine/pet';
 import { idleYield } from '../src/engine/idle';
 import { createRng } from '../src/engine/rng';
-import { accrueIdle, applyAbsence, claimIdle, idlePendingYield, migrateSave, newSaveData, recordExpedition, sanitizeIdlePending, type SaveData } from '../src/game';
+import { accrueIdle, applyAbsence, claimIdle, idleClaimable, idlePendingYield, migrateSave, newSaveData, recordExpedition, sanitizeIdlePending, type SaveData } from '../src/game';
 import { choosePet } from '../src/inventory';
 import { idleBadge } from '../src/ui/idleView';
 
@@ -75,15 +75,23 @@ describe('92장 대기 모드 받을 보상', () => {
     expect(r.gold).toBe(idleYield(24).gold);
   });
 
-  it('10분 미만은 쌓이지 않고, 이미 쌓인 것은 그대로 남는다 · 허기는 받기와 무관하게 바로 오른다', () => {
+  it('10분 미만 버림은 쌓인 합계 기준 (95장 B1): 5분은 더해 두되 배지·받기 없음, 합계 10분이면 받음 · 허기는 받기와 무관하게 바로 오른다', () => {
     const s = played();
-    expect(accrueIdle(s, s.lastSeenAt + 5 * 60_000)).toBeNull();
-    expect(s.idlePending).toBeNull();
+    accrueIdle(s, s.lastSeenAt + 5 * 60_000);
+    applyAbsence(s, s.lastSeenAt + 5 * 60_000);
+    expect(s.idlePending!.hours).toBeCloseTo(5 / 60);
+    expect(idleClaimable(s)).toBe(false);
+    expect(idleBadge(s)).toBeNull();
+    expect(claimIdle(s)).toBeNull();
+    accrueIdle(s, s.lastSeenAt + 5 * 60_000);
+    applyAbsence(s, s.lastSeenAt + 5 * 60_000);
+    expect(idleClaimable(s)).toBe(true);
+    expect(idleBadge(s)).toBe('10분');
+    s.nest.hunger = 0;
     accrueIdle(s, s.lastSeenAt + 3 * HOUR);
     const hunger = applyAbsence(s, s.lastSeenAt + 3 * HOUR);
     expect(hunger).toBeGreaterThan(0); // 불리한 변화는 지금처럼 바로
-    expect(accrueIdle(s, s.lastSeenAt + 5 * 60_000)).toBeNull();
-    expect(s.idlePending!.hours).toBe(3);
+    expect(s.idlePending!.hours).toBeCloseTo(3 + 10 / 60);
   });
 
   it('펫 친밀도는 받을 때 반영 (쌓을 때는 아님)', () => {
@@ -109,10 +117,10 @@ describe('92장 대기 모드 받을 보상', () => {
     expect(newSaveData('hollow', 1).idlePending).toBeNull();
   });
 
-  it('방 위 줄 대기 보상 아이콘 · 복귀 창 [받기]/[나중에]', () => {
-    const room = readFileSync('src/ui/roomView.ts', 'utf8');
-    expect(room).toContain("label: '대기 보상'");
-    expect(room).toContain('bha-room__idlebadge');
+  it('독 ⋯ 옆 대기 보상 시계 버튼(C.159) · 복귀 창 [받기]/[나중에]', () => {
+    const dock = readFileSync('src/ui/bha/dock.ts', 'utf8');
+    expect(dock).toContain("label: '대기 보상'");
+    expect(dock).toContain('bha-room__idlebadge');
     const view = readFileSync('src/ui/idleView.ts', 'utf8');
     expect(view).toContain('만에 돌아왔다');
     expect(view).toContain("yes: '받기'");

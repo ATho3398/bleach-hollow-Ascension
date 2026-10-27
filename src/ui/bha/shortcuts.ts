@@ -34,14 +34,16 @@ export function detectCtx(view: ParentNode, layerOpen: boolean): ShortcutCtx {
 
 // ── 취소 키(Q·Esc) 가로채기: 화면이 '고른 것'을 먼저 풀어야 할 때(배치판) 쓴다. 풀었으면 true → 뒤로 가지 않는다. 'gone' 이면 화면이 사라진 것이라 등록을 지운다 ──
 type CancelHook = (topLayer: Element | null) => boolean | 'gone';
-const cancelHooks = new Set<CancelHook>();
-export function registerCancelHook(h: CancelHook): () => void {
-  cancelHooks.add(h);
+/** 화면의 취소 처리기. 기본은 키보드(Q·Esc)만, button 이 true 면 화면의 [뒤로] 버튼에도 먼저 불린다 (예 펼침 목록 닫기, C.153) */
+const cancelHooks = new Map<CancelHook, { button: boolean }>();
+export function registerCancelHook(h: CancelHook, o: { button?: boolean } = {}): () => void {
+  cancelHooks.set(h, { button: !!o.button });
   return () => cancelHooks.delete(h);
 }
-export function runCancelHooks(topLayer: Element | null): boolean {
+export function runCancelHooks(topLayer: Element | null, fromButton = false): boolean {
   let used = false;
-  for (const h of [...cancelHooks]) {
+  for (const [h, o] of [...cancelHooks]) {
+    if (fromButton && !o.button) continue;
     const r = h(topLayer);
     if (r === 'gone') cancelHooks.delete(h);
     else if (r) used = true;
