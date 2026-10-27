@@ -97,7 +97,7 @@ export function mountGallery(host: HTMLElement, themeParam: string): void {
     section('버튼 4종 + 강조·밝은', row(v2Button({ label: '기본' }), v2Button({ label: '강조', kind: 'accent' }), v2Button({ label: '밝은', kind: 'light' }), v2Button({ label: '위험', kind: 'danger' }), v2Button({ label: '고스트', kind: 'ghost' }))),
     section('작은·비활성·포커스·아이콘', row(v2Button({ label: '작은', small: true }), v2Button({ label: '비활성', disabled: true }), v2Button({ label: '포커스', focus: true }), v2IconButton({ label: '닫기', icon: 'i-close' }), v2IconButton({ label: '도움말', icon: 'i-help', size: 44 }))),
     section('칩·배지', row(v2Chip('기본'), v2TempChip(), v2Chip('노멀', 'attr', { dot: 'var(--bha-attr-normal)' }), v2Chip('강적', 'danger'), v2Chip('봉인', 'seal'), v2Chip('희귀', 'rare'))),
-    section('탭', v2Tabs([{ id: 'a', label: '음식', count: 5 }, { id: 'b', label: '소모품', count: 2 }, { id: 'c', label: '장비' }], 'b', () => {}), row(v2TitleToggle('보관함 · 타일', () => {}))),
+    section('탭', v2Tabs([{ id: 'a', label: '음식', count: 5 }, { id: 'b', label: '소모품', count: 2 }, { id: 'c', label: '장비' }], 'b', () => {}), row(v2TitleToggle('가방 · 타일', () => {}))),
     section('게이지', ...(['hp', 'foe', 'hunger', 'cond', 'mad', 'release'] as const).map((k, i) => row(v2Gauge(k, 25 + i * 14, { label: k, width: '140px' }), `${k}`))),
   );
   const panel = v2Panel('default', 'default');

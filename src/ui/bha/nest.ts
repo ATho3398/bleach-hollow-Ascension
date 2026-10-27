@@ -51,6 +51,8 @@ export interface StatusOpts {
   /** 컨디션 경고 기준 (미만이면 위험) / 리스크 경고 기준 (이상이면 높음) */
   condWarn: number;
   riskWarn: number;
+  /** 교감 (GDD 102-6 · 109장 3번): 상태 수치 목록 안 같은 모양 한 줄. stage = 단계 이름 */
+  bond?: { value: number; max: number; stage: string; info?: string[] };
 }
 
 /** 상태 4바: 배부름(허기를 뒤집어 표시, C.63)·컨디션·안정 수치·리스크. 경고 문구는 기존 규칙 그대로 */
@@ -73,6 +75,12 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
       zone: s.riskWarn / s.riskLimit, danger: s.risk >= s.riskWarn, note: s.risk >= s.riskWarn ? '높음: 원정 시작부터 위험' : undefined,
     }), 'risk', faction.riskGaugeName, s.risk),
   );
+  if (s.bond) {
+    const v = Math.round(s.bond.value);
+    const m = meter({ kind: 'bond', label: '교감', icon: 'i-care-pet', value: v, max: s.bond.max, valueText: `${v} / ${s.bond.max} · ${s.bond.stage}` });
+    m.querySelector('.bha-meter__label')?.append(infoTip('교감', s.bond.info ?? (() => statusInfo('bond', faction, v))));
+    root.append(m);
+  }
   return root;
 }
 
@@ -145,8 +153,9 @@ const toastState = new WeakMap<HTMLElement, { slots: (HTMLElement | null)[]; que
 
 /** 알림 띠(.bha-toast): 화면 위 가장자리 얇은 한 줄. 위에서 내려와(is-in) holdMs 뒤 올라가고(is-out) animationend 에서 제거한다.
  *  한 번에 1개만 보이고(GDD 100장 #4) 나머지는 앞 띠가 사라지면 차례로 뜬다. index 는 옛 호출 호환용(등장 간격만) */
-export function showToast(o: { eyebrow: string; title: string; meta?: string }, index = 0, holdMs = 2500, host: HTMLElement = getOverlayHost()): HTMLElement {
-  const toast = el('div', 'bha-toast is-in');
+export function showToast(o: { eyebrow: string; title: string; meta?: string; center?: boolean }, index = 0, holdMs = 2500, host: HTMLElement = getOverlayHost()): HTMLElement {
+  // center = 화면 가운데 (GDD 109장 5번 튜토리얼 달성): 같은 모양, 잠깐 뜨고 사라지며 누르면 바로 닫힌다
+  const toast = el('div', `bha-toast${o.center ? ' bha-toast--center' : ''} is-in`);
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
   if (o.meta) toast.title = o.meta; // 한 줄 띠라 보조 설명은 숨기고 툴팁으로만
@@ -173,6 +182,7 @@ export function showToast(o: { eyebrow: string; title: string; meta?: string }, 
     toast.addEventListener('animationend', (e) => {
       if ((e as AnimationEvent).animationName.includes('toast-out')) remove();
     });
+    if (o.center) toast.addEventListener('click', remove);
     setTimeout(() => {
       toast.classList.remove('is-in');
       toast.classList.add('is-out');

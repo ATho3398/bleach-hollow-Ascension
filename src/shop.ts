@@ -115,7 +115,7 @@ export function rollTileDraw(factionId: string, first: boolean, rand: () => numb
 /** 약 효과 한 줄 (GDD 102-4): 그 상태만 푼다, 수치는 안 오른다 */
 export function medicineText(cures: MedicineCure): string {
   const name = cures === 'collapsed' ? CARE_STATUS_NAMES.collapsed : cures === 'weak' ? CARE_STATUS_NAMES.weak : CARE_STATUS_NAMES.tired;
-  return `${name} 상태를 바로 푼다 (수치는 안 오른다) · 보관함에 쌓이고 보관함에서 쓴다`;
+  return `${name} 상태를 바로 푼다 (수치는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;
 }
 
 function goldName(item: GoldItemDef, faction: FactionConfig): string {
@@ -130,15 +130,15 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
       const fx = BALANCE.provisional.nest.foods[item.food!];
       return `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`;
     }
-    case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로 안 감) · 보관함에 쌓이고 보관함에서 쓴다`;
-    case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로 안 감) · 보관함에 쌓이고 보관함에서 쓴다`;
+    case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로 안 감) · 가방에 쌓이고 가방에서 쓴다`;
+    case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로 안 감) · 가방에 쌓이고 가방에서 쓴다`;
     case 'medicine': return medicineText(item.cures!);
     case 'trainingTicket': return `지금 트랙 수련권 +1 (최대 ${BALANCE.provisional.training.ticketsMax})`;
-    case 'tileDraw': return `원정 타일 1장 → 보관함 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}% · ${TD.groups.spring!.map((id) => tileName(id, faction.id)).join('·')} ${TD.weights.spring}% · 희귀(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) ${TD.weights.rare}%, 첫 뽑기는 환경 타일`;
-    case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 보관함 (이벤트 타일 제외)';
+    case 'tileDraw': return `원정 타일 1장 → 가방 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}% · ${TD.groups.spring!.map((id) => tileName(id, faction.id)).join('·')} ${TD.weights.spring}% · 희귀(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) ${TD.weights.rare}%, 첫 뽑기는 환경 타일`;
+    case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 가방 (이벤트 타일 제외)';
     case 'reroll': return `${faction.absorbActionName} 화면 특성 후보를 한 번 다시 뽑는다 (${faction.absorbActionName} 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `원정 길에 놓을 수 있는 타일 칸 +1 (영구, 두 트랙 공유, 최대 +${SX.deckSlotPrices.length})`;
-    case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노말 · ★ = 지금 단계 권장 · 능력치 무작위 → 장비 화면에서 착용`;
+    case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노말 · ★ = 지금 단계 권장 · 능력치 무작위 → 가방 장비 탭에서 착용`;
   }
 }
 
@@ -234,7 +234,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
       case 'wake':
       case 'medicine':
         storeConsumable(save, gold.id);
-        detail = `${gold.name} → 보관함 (${save.shared.items[gold.id]}개)`;
+        detail = `${gold.name} → 가방 (${save.shared.items[gold.id]}개)`;
         break;
       case 'trainingTicket':
         save.training.tickets = Math.min(BALANCE.provisional.training.ticketsMax, save.training.tickets + 1);
@@ -245,14 +245,14 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
         tile = rollTileDraw(save.factionId, firstDraw, rand);
         save.tiles.draws++;
         save.tiles.collection[tile] = (save.tiles.collection[tile] ?? 0) + 1;
-        detail = `${tileName(tile, save.factionId)} → 보관함 (${save.tiles.collection[tile]}장)`;
+        detail = `${tileName(tile, save.factionId)} → 가방 (${save.tiles.collection[tile]}장)`;
         break;
       }
       case 'rareTile': {
         const pool = rareTilePool(save);
         tile = pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]!;
         save.tiles.collection[tile] = (save.tiles.collection[tile] ?? 0) + 1;
-        detail = `${tileName(tile, save.factionId)} → 보관함`;
+        detail = `${tileName(tile, save.factionId)} → 가방`;
         break;
       }
       case 'reroll':
@@ -279,7 +279,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
   save.shared.jade -= price;
   save.shared.cosmetics.push(id);
   record(save, id, 'jade', price, nowMs);
-  return { ok: true, id, price, currency: 'jade', detail: `${cosmeticName(c, faction)} → 보관함 (보관함에서 착용)` };
+  return { ok: true, id, price, currency: 'jade', detail: `${cosmeticName(c, faction)} → 가방 (가방에서 착용)` };
 }
 
 /** 보상으로 꾸밈을 준다 (GDD 27장 기기 디자인 source 'reward' 등). 돈·상점 노출과 무관, 이미 있으면 false. 구매 기록은 남기지 않는다 */
@@ -335,13 +335,13 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
   switch (w.kind) {
     case 'food': return `${faction.foodNames[w.food!]} +${n} (종류별 보관 ${FOOD_MAX}개까지)`;
     case 'reroll': return `다시 뽑기권 +${n} (보유 ${SX.rerollMax}장까지)`;
-    case 'calm': return `${faction.riskGaugeName} −${n} · 보관함에 쌓이고 보관함에서 쓴다`;
-    case 'wake': return `컨디션 +${n} · 보관함에 쌓이고 보관함에서 쓴다`;
+    case 'calm': return `${faction.riskGaugeName} −${n} · 가방에 쌓이고 가방에서 쓴다`;
+    case 'wake': return `컨디션 +${n} · 가방에 쌓이고 가방에서 쓴다`;
     case 'trainingTicket': return `지금 트랙 수련권 +${n} (최대 ${BALANCE.provisional.training.ticketsMax})`;
-    case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 보관함`;
-    case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 보관함에서 쓴다`;
-    case 'pet': return '아직 없는 펫 무작위 1마리 → 보관함 펫 탭';
-    case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 장비 화면`;
+    case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 가방`;
+    case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 가방에서 쓴다`;
+    case 'pet': return '아직 없는 펫 무작위 1마리 → 가방 펫 탭';
+    case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 가방 장비 탭`;
   }
 }
 
@@ -400,14 +400,14 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       const pool = tileDrawGroup('rare', save.factionId);
       tile = pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]!;
       save.tiles.collection[tile] = (save.tiles.collection[tile] ?? 0) + 1;
-      detail = `${tileName(tile, save.factionId)} → 보관함 (${save.tiles.collection[tile]}장)`;
+      detail = `${tileName(tile, save.factionId)} → 가방 (${save.tiles.collection[tile]}장)`;
       break;
     }
     case 'pet': {
       const id = pickNewPet(save.shared.pets, rand)!;
       grantPet(save.shared.pets, id, nowMs);
       save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'get', petId: id, source: 'wanderer' });
-      detail = `${faction.petNames[id] ?? id} → 보관함 펫 탭`;
+      detail = `${faction.petNames[id] ?? id} → 가방 펫 탭`;
       break;
     }
     case 'gear':
@@ -415,7 +415,7 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       break;
     default:
       storeConsumable(save, itemId);
-      detail = `${w.name} → 보관함 (${save.shared.items[itemId]}개)`;
+      detail = `${w.name} → 가방 (${save.shared.items[itemId]}개)`;
   }
   save.shared.tradeCoins -= st.price;
   st.sold = true;
@@ -448,5 +448,5 @@ function giveGear(save: SaveData, faction: FactionConfig, roll: GearRoll, source
   const it = grantGear(save.shared.gear, roll, nowMs)!;
   save.runLog.gear.push({ at: nowMs, factionId: save.factionId, kind: 'get', uid: it.uid, gearKind: it.kind, grade: it.grade, star: it.star, source });
   const slot = it.kind === 'accessory' ? 'acc1' : it.kind;
-  return `${GEAR_GRADE_NAMES[it.grade]} ${faction.gearSlotNames[slot]} → 장비 화면`;
+  return `${GEAR_GRADE_NAMES[it.grade]} ${faction.gearSlotNames[slot]} → 가방 장비 탭`;
 }

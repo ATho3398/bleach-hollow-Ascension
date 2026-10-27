@@ -15,7 +15,7 @@
       { "id": "next", "targets": [], "title": "다음 할 일", "body": "첫 원정 끝! 이제 {nestName}에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠나요.\n원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받아요." }
     ],
     "tile-intro": [
-      { "id": "tiles", "targets": [], "title": "원정 타일 {starterCount}장을 받았다", "body": "첫 진화 기념으로 {tile.prey} · {tile.elite} · {tile.rest}을(를) 1장씩 받았어요.\n받은 타일은 보관함에 있어요.\n원정 출발 때 가진 타일을 전부 보고 길에 놓아요.\n자주 쓰는 배치는 프리셋으로 저장해 두세요." }
+      { "id": "tiles", "targets": [], "title": "원정 타일 {starterCount}장을 받았다", "body": "첫 진화 기념으로 {tile.prey} · {tile.elite} · {tile.rest}을(를) 1장씩 받았어요.\n받은 타일은 가방에 있어요.\n원정 출발 때 가진 타일을 전부 보고 길에 놓아요.\n자주 쓰는 배치는 프리셋으로 저장해 두세요." }
     ],
     "tile-plan": [
       { "id": "deck", "targets": ["plan.hand"], "title": "가진 타일 = 놓을 타일", "body": "출발 전 이 카드들이 가진 타일이에요.\n눌러서 고르거나 끌어서 길에 놓아요 (길에는 {deckSize}칸까지).\n새 타일은 상점 [타일 뽑기]로 얻어요." },
@@ -23,7 +23,7 @@
       { "id": "combo", "targets": ["plan.road"], "title": "붙여 놓으면 조합", "body": "두 타일을 바로 옆에 붙이면 시너지가 생겨요.\n예: {tile.rest} 옆에 {tile.prey} = 「{comboExample}」 (휴식 회복 ↑ · 먹이 ↑)." }
     ],
     "tile-draw": [
-      { "id": "draw", "targets": [], "title": "새 타일은 보관함에 들어온다", "body": "뽑은 타일은 보관함에 들어가요.\n다음 원정 출발 화면에서 가진 타일 전부를 보고 길에 놓아요 (길에는 {deckSize}칸까지)." },
+      { "id": "draw", "targets": [], "title": "새 타일은 가방에 들어온다", "body": "뽑은 타일은 가방에 들어가요.\n다음 원정 출발 화면에서 가진 타일 전부를 보고 길에 놓아요 (길에는 {deckSize}칸까지)." },
       { "id": "special", "targets": [], "title": "뽑기에서만 나오는 타일", "body": "**{tile.training}** 이기면 노력치 +1\n**{tile.hunter}** 센 사냥꾼, 이기면 흡수 후보 2배\n**{tile.spring}** 회복 대신 {riskGaugeName} 크게 ↓\n**{tile.echo}** 바로 앞 칸 효과 한 번 더" }
     ]
   }

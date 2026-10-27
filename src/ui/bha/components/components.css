@@ -149,6 +149,7 @@
 .bha-meter--cond   { --c: var(--bha-cond); }
 .bha-meter--stab   { --c: var(--bha-stab); }
 .bha-meter--risk   { --c: var(--bha-risk); }
+.bha-meter--bond   { --c: var(--bha-good); } /* 교감 (GDD 109장 3번): 방 교감 칩과 같은 색 */
 .bha-meter--enemy  { --c: var(--bha-enemy-hp); }
 .bha-meter--player { --c: var(--bha-player-hp); }
 .bha-meter--sp     { --c: var(--bha-sp); }

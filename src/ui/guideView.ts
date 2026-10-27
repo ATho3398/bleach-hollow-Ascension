@@ -126,7 +126,7 @@ export function tileDrawCard(faction: FactionConfig, tileId: string, count: numb
   const ok = button({ label: '확인', variant: 'primary', onClick: close });
   const actions = el('div', 'bha-modal__actions');
   actions.append(ok);
-  modal.append(el('h2', 'bha-modal__title', '타일 뽑기'), stage, el('p', 'bha-modal__body', `${tileName(tileId, faction.id)} → 보관함 (보유 ${count}장)`), actions);
+  modal.append(el('h2', 'bha-modal__title', '타일 뽑기'), stage, el('p', 'bha-modal__body', `${tileName(tileId, faction.id)} → 가방 (보유 ${count}장)`), actions);
   layer.append(modal);
   getOverlayHost().append(layer);
   unregister = registerLayer(layer, close);

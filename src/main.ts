@@ -32,9 +32,11 @@ import { registerServiceWorker } from './pwa';
 import { captureInstallPrompt } from './pwaInstall';
 import { maybeShowInstall } from './ui/installView';
 import { mountUpdateBanner } from './ui/updateBanner';
+import { installLandscapeKeyboard } from './ui/bha/orientation';
 
 captureInstallPrompt(); // 브라우저의 작은 설치 띠를 막고 요청을 잡아 둔다 (GDD 68장) — 이벤트가 앱 시작보다 먼저 올 수 있어 맨 앞에서
 mountSprite();
+installLandscapeKeyboard(); // 글자 입력칸 = 가로 키보드 시도 (GDD 109장 8번)
 applyCalmMode();
 const app = document.querySelector<HTMLDivElement>('#app');
 // C.139: 한 번에 한 창만 플레이 — 다른 창이 쥐고 있으면 세이브를 열지 않고 안내만

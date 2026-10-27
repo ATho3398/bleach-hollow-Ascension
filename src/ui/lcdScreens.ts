@@ -10,7 +10,8 @@ import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
 import { gearCarry } from '../engine/gear';
-import { equipTitle, gearArt, openGear } from './equipView';
+import { equipTab, equipTitle, gearArt, openGear } from './equipView';
+import { screenSignal } from './bha/screenScope';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
 import { categoryName, cosmeticToken, getCosmetic, getGoldItem, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
@@ -62,7 +63,7 @@ export interface CareHandlers {
   onDex: () => void;
   onHelp: () => void;
   onRebirth: () => void;
-  /** 장비 화면 (GDD 108장 1번): 장착 칸 대신 바로가기 한 줄 */
+  /** 가방 장비 탭 바로가기 (GDD 108장 1번 · 109장 4번): 장착 칸 대신 바로가기 한 줄 */
   onGear: () => void;
 }
 
@@ -80,13 +81,13 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     status.querySelector('.bha-nest__status')?.remove();
     status.append(statusBlock(faction, {
       hunger: n.hunger, condition: n.condition, stability: n.stability, stabilityMax: RX.stabilityMax, risk: n.risk, riskLimit: RX.limit, condWarn: 40, riskWarn: 60,
+      // 교감 (GDD 102-6 · 109장 3번): 따로 떨어진 줄 대신 상태 수치 목록 안 같은 막대 한 줄
+      // 설명 글은 이름 옆 ⓘ 창 (C.176, GDD 104장 2)
+      bond: {
+        value: n.bond, max: BALANCE.provisional.nest.bond.max, stage: BOND_STAGE_NAMES[bondStage(n.bond)],
+        info: [`먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax})`, `높을수록 빈사에서 버티는 시간 ${Math.round(deathHoursOf(n.bond) * 10) / 10}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`],
+      },
     }));
-    // 교감 (GDD 102-6): 하트(쓰다듬기) 아이콘 + 숫자 · 단계 · 쓰임새 한 줄 / 돌봄 상태(GDD 102-2·102-3): 쓰러짐·사망·쇠약·피곤 + 풀리는 법
-    const bond = h('p', 'bha-small bha-nest__bond');
-    bond.dataset.bond = String(Math.round(n.bond));
-    bond.append(icon('i-care-pet'), ' 교감 ', h('b', 'bha-num', `${Math.round(n.bond)}/${BALANCE.provisional.nest.bond.max}`), ` · ${BOND_STAGE_NAMES[bondStage(n.bond)]}`);
-    // 설명 글은 이름 옆 ⓘ 창으로 (C.176, GDD 104장 2)
-    bond.append(infoTip('교감', [`먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax})`, `높을수록 빈사에서 버티는 시간 ${Math.round(deathHoursOf(n.bond) * 10) / 10}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`]));
     /** 돌봄 상태 한 줄: 아이콘 · 이름(· 남은 시간) · ⓘ(풀리는 법·효과) */
     const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, lines: string[]) => {
       const row = h('p', `bha-small bha-nest__state bha-nest__state--${kind}`);
@@ -99,7 +100,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
       ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, [`풀리는 법: ${CARE_STATUS_HINTS.weak}`, `원정 전투 최대 체력 −${Math.round(BALANCE.provisional.nest.care.weakMaxHpCut * 100)}% · 대기 보상 ×${BALANCE.provisional.idle.weakenedRate}`])] : []),
       ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, [`풀리는 법: ${CARE_STATUS_HINTS.tired}`, `블록 생성 간격 +${Math.round(BALANCE.provisional.nest.care.tiredSpawnSlow * 100)}%`])] : []),
     ];
-    weakSlot.replaceChildren(bond, ...states);
+    weakSlot.replaceChildren(...states);
   };
   paint();
   // 광기·자아 설명 패널(C.141)은 C.176 에 상태 막대 이름 옆 ⓘ 창으로 옮겼다 (GDD 104장 2, bha/statusInfo.ts)
@@ -152,7 +153,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   evoPanel.append(h('div', 'bha-row', ''));
   const evoBtns = evoPanel.lastElementChild!;
   evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
-  // GDD 108장 1번 (C.179): 장착 5칸은 장비 화면으로 옮기고, 그 자리(상태 바로 아래)에 바로가기 한 줄 + 장비 합산 숫자만
+  // GDD 108장 1번 (C.179): 장착 5칸 대신 바로가기 한 줄 + 장비 합산 숫자만. 바로가기 = 가방 장비 탭 (109장 4번)
   const gear = gearShortcut(faction, save, hd.onGear);
   lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
@@ -221,32 +222,63 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   return p;
 }
 
-type ChestTab = 'slots' | 'tiles' | 'items' | 'pet';
-const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'slots', traits: {}, synth: false };
+type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'pet';
+const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'gear', traits: {}, synth: false };
+
+/** 가방을 장비 탭으로 연다 (상태 화면 장비 바로가기, GDD 109장 4번) */
+export function openChestAtGear(): void {
+  chestUi.tab = 'gear';
+}
 
 /** 상자(보관함): 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일(왼쪽 설명·배치 프리셋 / 오른쪽 가진 타일 — 덱 없음, GDD 85장 11번) · 물건(카테고리별 보관품, 쓰기·끼기 — GDD 86장 4·5번).
  *  C.140 최소 화면 — 카드형 UI 는 C.141 */
-export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void, onGear?: () => void): void {
+export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
 
-  // 위쪽 탭 [슬롯 · 타일 · 물건 · 펫] (C.149, 94장 A-6): 물건 탭의 분류 탭과 같은 방식. 타일·펫에는 가진 수를 같이 보인다
+  // 위쪽 탭 [장비 · 슬롯 · 타일 · 물건 · 펫] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭): 물건 탭의 분류 탭과 같은 방식. 장비·타일·펫에는 가진 수를 같이 보인다
   const petCount = () => inventoryOf(save, faction).filter((e) => e.category === 'pet').length;
   const headTabs = (): HTMLElement => selectLast(categoryTabs([
-    { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: '물건' }, { id: 'pet', label: '펫', count: petCount() },
+    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: '물건' }, { id: 'pet', label: '펫', count: petCount() },
   ], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
-  }, '보관함 보기'));
+  }, `${title} 보기`));
   const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title, aside: [headTabs()] }), [], []);
+  const signal = screenSignal(dev.view);
+  /** 탭 그림마다 새로 받는 신호 (장비 탭 좌우 키 리스너가 다시 그릴 때마다 쌓이지 않게) */
+  let tabCtl = new AbortController();
+  signal.addEventListener('abort', () => tabCtl.abort());
+
+  // 가방 탭 줄 좌우 키 (GDD 109장 4번 '탭 좌우 키'): 하이라이트가 탭 줄에 있을 때 옆 탭으로
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (document.querySelector('.bha-itemdialog, .bha-confirm')) return;
+    const cur = page.app.querySelector<HTMLElement>('.bha-lcdpage__aside .bha-sel[role="tab"]');
+    if (!cur) return;
+    const all = [...cur.parentElement!.querySelectorAll<HTMLElement>('[role="tab"]')];
+    all[(all.indexOf(cur) + (e.key === 'ArrowRight' ? 1 : -1) + all.length) % all.length]?.click();
+    e.preventDefault();
+  }, { signal });
 
   function fill(): void {
+    tabCtl.abort();
+    tabCtl = new AbortController();
     // 탭의 타일·펫 수와 눌린 탭을 새로 맞춘다 (탭 줄만 다시 만든다)
     dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(headTabs());
     // 두 열/한 열 전환은 탭마다 먼저 맞춘다 (C.159 A2: 물건·펫 탭에서 숨긴 오른쪽 열이 슬롯 탭으로 돌아와도 숨은 채여서 장착 칸만 보였다)
     const body = page.left.parentElement!;
     const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
-    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : '1fr 1fr';
+    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : chestUi.tab === 'gear' ? 'minmax(0, 5fr) minmax(0, 6fr)' : '1fr 1fr';
     page.right.hidden = oneCol;
+    page.app.classList.toggle('bha-equip-page', chestUi.tab === 'gear');
+    if (chestUi.tab === 'gear') {
+      // 장비 탭 (GDD 109장 4번): C.179 장비 화면 그대로
+      const t = equipTab(dev, faction, save, { persist, rerender: fill, scope: () => page.app, signal: tabCtl.signal });
+      page.left.replaceChildren(t.left);
+      page.right.replaceChildren(t.right);
+      t.restore();
+      return;
+    }
     if (chestUi.tab === 'slots') {
       const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
         persist();
@@ -262,7 +294,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
         persist();
         onWear?.();
         fill();
-      }, chestUi.tab === 'pet', onGear);
+      }, chestUi.tab === 'pet');
       page.left.replaceChildren(l);
       page.right.replaceChildren(r);
       return;
@@ -372,12 +404,12 @@ export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'>): string
   }
 }
 
-function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, petOnly = false, onGear?: () => void): [HTMLElement, HTMLElement] {
+function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, petOnly = false): [HTMLElement, HTMLElement] {
   // 펫은 위쪽 '펫' 탭이 따로 보인다 (C.149): 물건 탭의 분류에는 없다
   // 물건 분류에서 '타일'은 뺀다 — 위쪽 '타일' 탭과 같은 것이 두 곳에 있었다 (GDD 100장 #56)
-  const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly && c !== 'tile');
-  // 장비 탭은 장비 화면으로 옮겼다 (GDD 108장 1번, C.179): 탭은 남기고 누르면 장비 화면으로 간다
-  if (!cats.includes(itemsUi.cat) || itemsUi.cat === 'equipment') itemsUi.cat = cats[0]!;
+  // 장비는 가방 위쪽 '장비' 탭이 맡는다 (GDD 109장 4번, C.180): 물건 분류에는 없다
+  const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly && c !== 'tile' && c !== 'equipment');
+  if (!cats.includes(itemsUi.cat)) itemsUi.cat = cats[0]!;
   const all = inventoryOf(save, faction);
   // 스킨: 옛 기기 껍데기 색·견본·시험 기기는 빼고(GDD 99장 3, C.163), '기기' 하위 탭은 기본 + 가진 정식 기기 카드(누르면 장착)
   const listed = (e: InventoryEntry) => e.category !== 'skin' || skinListed(getCosmetic(e.id));
@@ -386,10 +418,9 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   const tabs = categoryTabs(cats.map((c) => ({
     id: c, label: ITEM_CATEGORY_NAMES[c], count: all.filter((e) => e.category === c && listed(e)).length,
   })), itemsUi.cat, (id) => {
-    if (id === 'equipment' && onGear) return onGear();
     itemsUi.cat = id as ItemCategory;
     changed();
-  }, '보관함 분류');
+  }, '가방 분류');
   const artOf = (e: InventoryEntry): HTMLElement => {
     // 장비 (GDD 91장 8번): 그림이 없으니 종류 아이콘 + 등급 색
     if (e.gear) return gearArt(e.gear.kind, e.gear.grade);
@@ -434,7 +465,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   return [box, h('div')];
 }
 
-/** 상태 화면의 장비 바로가기 한 줄 (GDD 108장 1번): [장비 화면] 버튼 + 장비 합산 능력치 숫자 */
+/** 상태 화면의 장비 바로가기 한 줄 (GDD 108장 1번 · 109장 4번): [가방 · 장비] 버튼(가방 장비 탭) + 장비 합산 능력치 숫자 */
 function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void): HTMLElement {
   const c = gearCarry(save.shared.gear);
   const sum = c ? [
@@ -443,7 +474,7 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
   ].join(' · ') : '';
   const row = h('div', 'bha-row bha-gearshortcut');
   row.dataset.gear = '';
-  const btn = button({ label: `${equipTitle(faction)} 화면`, icon: 'i-attack', size: 'small', onClick: onGear });
+  const btn = button({ label: `${roomOf(faction).props.chest} · ${equipTitle(faction)}`, icon: 'i-attack', size: 'small', onClick: onGear });
   btn.dataset.act = 'gear-screen';
   row.append(btn, h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '낀 장비가 없다.'));
   return row;
@@ -460,7 +491,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       onClick: () => {
         close();
         const r = useInventoryItem(save, faction, e.id);
-        showToast({ eyebrow: '보관함', title: r.ok ? `${e.name} 사용` : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400);
+        showToast({ eyebrow: '가방', title: r.ok ? `${e.name} 사용` : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400);
         if (r.ok) changed();
       },
     });

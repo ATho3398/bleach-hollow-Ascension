@@ -124,17 +124,18 @@ describe('소모품 칸 세이브 (108장 3·6번)', () => {
 });
 
 describe('화면 연결 (108장 1·5·6번)', () => {
-  it('방 [장비] 버튼 · 상태 화면 바로가기 · 보관함 장비 탭 → 장비 화면', () => {
+  it('장비 → 가방 첫 탭 (109장 4번, C.180): 방 [장비] 버튼 없음 · 상태 화면 바로가기 = 가방 장비 탭', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toMatch(/const openEquip = \(\) => open\('equip'/);
+    expect(app).not.toMatch(/open\('equip'/);
+    expect(app).toMatch(/openChestAtGear\(\);\s*openChest\(\)/);
     expect(app).toMatch(/onGear: openEquip/);
-    expect(app).toMatch(/dress\(s\.wear\), openEquip\)/);
     const room = read('src/ui/roomView.ts');
-    expect(room).toMatch(/bha-room__gearbtn/);
+    expect(room).not.toMatch(/bha-room__gearbtn|onGear/);
     const lcd = read('src/ui/lcdScreens.ts');
     expect(lcd).not.toMatch(/function gearPanel/);
     expect(lcd).toMatch(/gearShortcut\(faction, save, hd\.onGear\)/);
-    expect(lcd).toMatch(/id === 'equipment' && onGear/);
+    expect(lcd).toMatch(/\{ id: 'gear', label: equipTitle\(faction\)/);
+    expect(lcd).toMatch(/equipTab\(dev, faction, save/);
   });
   it('조작: 좌우 키·끌어다 놓기·확인 창 기본값(자동 착용 = 예, 일괄 판매 = 아니오 = danger)', () => {
     const v = read('src/ui/equipView.ts');

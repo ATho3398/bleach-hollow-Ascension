@@ -40,8 +40,6 @@ export interface RoomHandlers {
   onHelp: () => void;
   /** 상점 (GDD 25-9): 방 물건 shop (C.63, 더보기에서 옮김) */
   onShop: () => void;
-  /** 장비 화면 (GDD 108장 1번): 방 오른쪽 위 [장비] 버튼. 없으면 버튼 없음 */
-  onGear?: () => void;
   /** 사진 (GDD 25-11): 독 더보기 항목 */
   onPhoto: () => void;
   /** 다마고치 모드 켜기 (GDD 27장): 줌아웃해 기기 전체를 본다 */
@@ -101,14 +99,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     items.push({ el: reviveBtn });
   } else if (n.collapsed) {
     const shopBtn = button({ label: room.props.shop, icon: 'i-rare', size: 'small', variant: 'primary', onClick: hd.onShop });
-    const chestBtn = button({ label: '보관함', icon: 'i-deck', size: 'small', onClick: hd.onChest });
-    const gearBtn = hd.onGear ? gearButton(hd.onGear) : null;
+    const chestBtn = button({ label: room.props.chest, icon: 'i-deck', size: 'small', onClick: hd.onChest });
     const box = notice('danger', CARE_STATUS_HINTS.collapsed, { title: `${CARE_STATUS_NAMES.collapsed} — 치료제가 필요하다 · 남은 시간 `, icon: 'i-broken' });
     dyingClockEl = el('b', 'bha-num', dyingClock(dyingLeftMs(n, Date.now()) ?? 0));
     box.querySelector('.bha-notice__title')?.append(dyingClockEl);
-    hud.append(box, shopBtn, chestBtn, ...(gearBtn ? [gearBtn] : []));
+    hud.append(box, shopBtn, chestBtn);
     hud.classList.add('is-care');
-    items.push({ el: shopBtn }, { el: chestBtn }, ...(gearBtn ? [{ el: gearBtn }] : []));
+    items.push({ el: shopBtn }, { el: chestBtn });
   }
   /** 부활 확인 창 (GDD 102-3·102-7): 잃는 것 목록, 되돌릴 수 없어 기본 선택 = 아니오(danger) */
   function askRevive(): void {
@@ -133,17 +130,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
 
   // ── 장면 ──
   const scene = sceneBox(room);
-  // 장비 화면 버튼 (GDD 108장 1번, C.179): 평소에는 장면 오른쪽 위 구석에 작게 (빈사 때는 위 줄 [상점][보관함] 옆)
-  if (hd.onGear && !n.collapsed && !n.dead) {
-    const gearBtn = gearButton(hd.onGear);
-    gearBtn.classList.add('bha-room__gearbtn');
-    scene.append(gearBtn);
-    items.push({ el: gearBtn });
-  }
-  function gearButton(onClick: () => void): HTMLButtonElement {
-    const b = button({ label: faction.gearScreen?.title ?? '장비', icon: 'i-attack', size: 'small', onClick });
-    return b;
-  }
+  // 장비는 가방 첫 탭 (GDD 109장 4번, C.180): 방의 따로 된 [장비] 버튼은 없앴다
   if (n.dead) scene.classList.add('is-dead'); // 사망 = 어두운 방 (GDD 102-7)
   const bubble = el('div', 'bha-room__bubble');
   bubble.setAttribute('role', 'status');

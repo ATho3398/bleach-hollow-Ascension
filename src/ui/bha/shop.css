@@ -140,10 +140,8 @@
 .bha-eqfoot { display: flex; align-items: center; gap: var(--bha-sp-2); flex-wrap: wrap; }
 .bha-eqfoot__count { margin-right: auto; }
 .bha-gearshortcut { align-items: center; gap: var(--bha-sp-2); flex-wrap: wrap; }
-/* 방 [장비] 버튼 (GDD 108장 1번): 장면 오른쪽 위 구석 */
-.bha-room__gearbtn { position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-2); z-index: 3; }
 /* 장비 화면 탭: 이름 위 · 개수 아래, 한 줄에 6개 (GDD 108장 4번 '탭 이름 아래 개수') */
-.bha-equip-page .bha-itemtabs { flex-wrap: nowrap; gap: var(--bha-sp-1); }
-.bha-equip-page .bha-itemtab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 0; min-height: 36px; padding: 2px var(--bha-sp-1); font-size: var(--bha-fs-xs); line-height: 1.15; white-space: nowrap; overflow: hidden; }
+.bha-equip-page .bha-eqright .bha-itemtabs { flex-wrap: nowrap; gap: var(--bha-sp-1); }
+.bha-equip-page .bha-eqright .bha-itemtab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 0; min-height: 36px; padding: 2px var(--bha-sp-1); font-size: var(--bha-fs-xs); line-height: 1.15; white-space: nowrap; overflow: hidden; }
 .bha-equip-page .bha-eqfoot { flex-wrap: nowrap; }
 .bha-equip-page .bha-eqfoot .bha-btn { white-space: nowrap; }

@@ -73,13 +73,13 @@ interface RewardToastItem {
 }
 
 /** 보상 토스트 (GDD 23-3 "튜토리얼 달성: ○○ — 보상 ○○", 24-3 도감 보상도 같은 틀). 한꺼번에 3개 이상이면(기존 세이브 일괄 지급) 한 장으로 묶는다 */
-function showRewardToasts(label: string, items: readonly RewardToastItem[], faction: FactionConfig): void {
+function showRewardToasts(label: string, items: readonly RewardToastItem[], faction: FactionConfig, center = false): void {
   if (items.length === 0) return;
   // 칭호 해금·다른 보상 토스트가 이미 떠 있으면 그 아래로 쌓는다
   const base = getOverlayHost().querySelectorAll('.bha-toast').length;
   if (items.length <= 2) {
     // 가로 LCD 는 토스트 meta 줄을 숨기므로 보상은 머리 줄에 붙인다 ("튜토리얼 달성 — 보상 ○○" / 목표 이름)
-    items.forEach((g, i) => showToast({ eyebrow: `${label} — 보상 ${rewardText(g, faction)}`, title: g.name }, base + i, 3200));
+    items.forEach((g, i) => showToast({ eyebrow: `${label} — 보상 ${rewardText(g, faction)}`, title: g.name, center }, base + i, 3200));
     return;
   }
   const food = new Map<FoodId, number>();
@@ -90,12 +90,12 @@ function showRewardToasts(label: string, items: readonly RewardToastItem[], fact
     crystals += g.soulCrystals ?? 0;
     jade += g.jade ?? 0;
   }
-  showToast({ eyebrow: `${label} — 보상 ${rewardText({ food: [...food.entries()], soulCrystals: crystals, jade }, faction)}`, title: `이미 이룬 목표 ${items.length}개` }, base, 3600);
+  showToast({ eyebrow: `${label} — 보상 ${rewardText({ food: [...food.entries()], soulCrystals: crystals, jade }, faction)}`, title: `이미 이룬 목표 ${items.length}개`, center }, base, 3600);
 }
 
-/** 새로 받은 튜토리얼 보상 토스트 (GDD 23-3) */
+/** 새로 받은 튜토리얼 보상 토스트 (GDD 23-3): 화면 가운데 (GDD 109장 5번) */
 export function showTutorialToasts(grants: readonly TutorialGrant[], faction: FactionConfig): void {
-  showRewardToasts('튜토리얼 달성', grants.map((g) => ({ name: tutorialGoalText(g.goal, faction), food: g.food, soulCrystals: g.soulCrystals, jade: g.jade })), faction);
+  showRewardToasts('튜토리얼 달성', grants.map((g) => ({ name: tutorialGoalText(g.goal, faction), food: g.food, soulCrystals: g.soulCrystals, jade: g.jade })), faction, true);
 }
 
 /** 도감 이정표 이름: "진화체 도감 10종 등록" */

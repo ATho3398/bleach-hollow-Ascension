@@ -4,12 +4,12 @@ import { describe, expect, it } from 'vitest';
 const read = (p: string) => readFileSync(p, 'utf8');
 
 describe('C.116 오프라인 플레이(PWA)', () => {
-  it('매니페스트: 이름·독립 창·세로·상대 시작 주소·아이콘 192/512', () => {
+  it('매니페스트: 이름·독립 창·가로·상대 시작 주소·아이콘 192/512', () => {
     const m = JSON.parse(read('public/manifest.webmanifest'));
     expect(m.name).toBe('블리치 할로우 어센션');
     expect(m.short_name).toBeTruthy();
     expect(m.display).toBe('standalone');
-    expect(m.orientation).toBe('portrait');
+    expect(m.orientation).toBe('landscape'); // C.180 (GDD 109장 9번): 앱 아이콘으로 켤 때 시작 화면도 가로
     expect(m.start_url).toBe('./');
     expect(m.scope).toBe('./');
     expect(m.background_color).toBe('#0b0909');

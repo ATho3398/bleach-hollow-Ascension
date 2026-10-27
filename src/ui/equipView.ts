@@ -1,7 +1,7 @@
-// 장비 화면 (GDD 108장, C.179): 상태 화면·보관함에 흩어져 있던 장비를 한 화면으로.
+// 가방 '장비' 탭 (GDD 108장 C.179 장비 화면 → 109장 4번 C.180 가방 첫 탭으로 옮김).
 // 왼쪽 = 캐릭터 외형 + 착용 칸(왼쪽 세로 무기·방어구·신발 / 오른쪽 세로 장신구 1·2·소모품 칸) + 이름·단계 + 능력치 줄(미리 보기 ▲▼),
 // 오른쪽 = 탭(전체·무기·방어구·신발·장신구·소모품) + 바둑판 + 아래 줄(보관 개수·[정렬]·[자동 착용]·[일괄 판매]).
-// 조작: ▲▼ = 차례로 고르기, 좌우 키 = 왼쪽 칸 ↔ 오른쪽 바둑판(탭 위에서는 탭 바꾸기), ✓ = 상세 창(착용·해제·강화·판매), 뒤로 = 창 닫기 → 방. 끌어다 칸에 놓기(C.149 슬롯 화면과 같은 enableDrag).
+// 조작: ▲▼ = 차례로 고르기, 좌우 키 = 왼쪽 칸 ↔ 오른쪽 바둑판(탭 위에서는 탭 바꾸기), ✓ = 상세 창(착용·해제·강화·판매), 뒤로 = 가방 닫기 → 방. 끌어다 칸에 놓기(C.149 슬롯 화면과 같은 enableDrag).
 // 종족 무관 — 칸·화면 이름은 종족 설정 gearSlotNames·gearScreen, 판정·기록은 inventory.ts·engine/gear.ts.
 import { BALANCE } from '../config/balance';
 import { GEAR_GRADE_NAMES, GEAR_KIND_ICONS, GEAR_KINDS, GEAR_SLOT_KIND, GEAR_SLOTS, slotsForKind, type GearKind, type GearSlot } from '../data/gear';
@@ -19,19 +19,17 @@ import { shownName } from './displayName';
 import { confirmDialog } from './confirmDialog';
 import { button, h, icon } from './bha/dom';
 import { categoryTabs, iconArt, itemCard, itemDialog, itemGrid } from './bha/itemUi';
-import { lcdHead, lcdPage } from './bha/lcdpage';
 import { showToast } from './bha/nest';
 import { roomCharArt } from './bha/room';
 import { enableDrag } from './bha/dragdrop';
-import { screenSignal } from './bha/screenScope';
 import { critPercentText } from './lcdScreens';
 import type { Device } from './bha/device';
 
 type EquipTab = 'all' | GearKind | 'battle';
 type SortMode = 'grade' | 'kind' | 'plus';
 const SORT_NAMES: Record<SortMode, string> = { grade: '등급순', kind: '종류순', plus: '강화순' };
-/** 화면 사이에 남는 UI 상태 (탭·정렬) */
-const ui: { tab: EquipTab; sort: SortMode } = { tab: 'all', sort: 'grade' };
+/** 화면 사이에 남는 UI 상태 (탭·정렬). focus = 다시 그린 뒤 하이라이트를 돌려줄 칸·카드 (GDD 109장 1번: 안 그러면 첫 칸 무기로 돌아갔다) */
+const ui: { tab: EquipTab; sort: SortMode; focus: string | null } = { tab: 'all', sort: 'grade', focus: null };
 
 export function equipTitle(faction: Pick<FactionConfig, 'gearScreen'>): string {
   return faction.gearScreen?.title ?? '장비';
@@ -187,17 +185,33 @@ function openBattleItem(faction: FactionConfig, save: SaveData, id: string, chan
   });
 }
 
-export interface EquipHandlers {
+export interface EquipTabHost {
   persist: () => void;
+  /** 가방 화면을 다시 그린다 (장비 탭 그대로) */
+  rerender: () => void;
+  /** 끌어다 놓기 범위 (가방 화면 전체) */
+  scope: () => HTMLElement;
+  /** 이 그림이 바뀌거나 화면이 끝나면 끊기는 신호 (좌우 키 리스너) */
+  signal: AbortSignal;
 }
 
-export function equipView(dev: Device, faction: FactionConfig, save: SaveData, hd: EquipHandlers): void {
+/** 가방 장비 탭 (GDD 109장 4번): 왼쪽(착용 칸·외형·능력치) · 오른쪽(탭·바둑판·아래 줄). restore = 붙인 뒤 부르면 하이라이트를 방금 누른 칸·카드로 돌려준다 */
+export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd: EquipTabHost): { left: HTMLElement; right: HTMLElement; restore: () => void } {
   const g = save.shared.gear;
   const GX = BALANCE.provisional.gear;
   const slotName = battleSlotName(faction);
+  const redraw = (focus: string | null) => {
+    ui.focus = focus;
+    hd.rerender();
+  };
   const changed = () => {
     hd.persist();
-    equipView(dev, faction, save, hd);
+    hd.rerender();
+  };
+  /** 상세 창에서 바꾼 뒤 다시 그릴 때 하이라이트를 그 칸·카드에 둔다 */
+  const changedAt = (focus: string) => () => {
+    ui.focus = focus;
+    changed();
   };
   const isWorn = (uid: string) => equippedSlotOf(g, uid) !== null;
   const battleOwned = BATTLE_ITEM_IDS.filter((id) => (save.shared.items[id] ?? 0) > 0 || save.shared.battleItem === id);
@@ -214,9 +228,9 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
     b.setAttribute('aria-label', `${gearSlotName(s, faction)}: ${it ? gearName(it, faction) : '비어 있음'}`);
     b.title = it ? gearName(it, faction) : '비어 있음 — 오른쪽에서 골라 착용';
     b.onclick = () => {
-      if (it) return openGear(faction, save, it.uid, changed);
+      if (it) return openGear(faction, save, it.uid, changedAt(`slot:${s}`));
       ui.tab = GEAR_SLOT_KIND[s];
-      equipView(dev, faction, save, hd);
+      redraw(`slot:${s}`);
     };
     return b;
   };
@@ -230,9 +244,9 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
   if (bid) battleBtn.append(h('b', 'bha-eqslot__plus', `×${bn}`));
   battleBtn.setAttribute('aria-label', `${slotName}: ${bid ? `${consumableName(bid)} ${bn}개` : '비어 있음'}`);
   battleBtn.onclick = () => {
-    if (bid) return openBattleItem(faction, save, bid, changed);
+    if (bid) return openBattleItem(faction, save, bid, changedAt('slot:battle'));
     ui.tab = 'battle';
-    equipView(dev, faction, save, hd);
+    redraw('slot:battle');
   };
   const colL = h('div', 'bha-eqcol');
   colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn));
@@ -278,7 +292,7 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
   const countOf = (t: EquipTab) => (t === 'all' ? g.items.length + battleOwned.length : t === 'battle' ? battleOwned.length : g.items.filter((i) => i.kind === t).length);
   const tabs = categoryTabs(kindTabs.map((t) => ({ id: t, label: tabName(t), count: countOf(t) })), ui.tab, (id) => {
     ui.tab = id as EquipTab;
-    equipView(dev, faction, save, hd);
+    redraw(null);
   }, '장비 분류');
   const gearCards = (ui.tab === 'battle' ? [] : sortGear(ui.tab === 'all' ? g.items : g.items.filter((i) => i.kind === ui.tab), ui.sort, isWorn)).map((it) => {
     const worn = equippedSlotOf(g, it.uid);
@@ -286,7 +300,7 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
       id: it.uid, name: gearName(it, faction), art: gearArt(it.kind, it.grade), grade: it.grade,
       badge: worn ? (slotsForKind(it.kind).length > 1 ? `착용 · ${gearSlotName(worn, faction)}` : '착용') : undefined,
       state: worn ? 'worn' : undefined,
-      onClick: () => openGear(faction, save, it.uid, changed),
+      onClick: () => openGear(faction, save, it.uid, changedAt(`item:${it.uid}`)),
     });
     card.dataset.drag = 'gear';
     const target = targetSlotOf(save, it);
@@ -301,7 +315,7 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
     const card = itemCard({
       id, name: consumableName(id), art: iconArt('i-heal'), badge: save.shared.battleItem === id ? `넣음 ×${n}` : `×${n}`,
       state: save.shared.battleItem === id ? 'worn' : undefined,
-      onClick: () => openBattleItem(faction, save, id, changed),
+      onClick: () => openBattleItem(faction, save, id, changedAt(`item:${id}`)),
     });
     card.dataset.drag = 'battle';
     return card;
@@ -316,7 +330,7 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
   const sortBtn = button({ label: SORT_NAMES[ui.sort], icon: 'i-swap', size: 'small', onClick: () => {
     const order: SortMode[] = ['grade', 'kind', 'plus'];
     ui.sort = order[(order.indexOf(ui.sort) + 1) % order.length]!;
-    equipView(dev, faction, save, hd);
+    redraw('act:sort');
   } });
   sortBtn.dataset.act = 'sort';
   const autoBtn = button({ label: '자동 착용', icon: 'i-check', size: 'small', variant: 'primary', disabled: locked, onClick: () => {
@@ -325,7 +339,7 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
       onYes: () => {
         const n = autoEquipGear(save);
         showToast({ eyebrow: equipTitle(faction), title: n > 0 ? `${n}칸 바꿨다` : '바꿀 장비가 없다', meta: n > 0 ? '능력치 줄에 반영' : '빈 칸이 없고 더 센 장비도 없다' }, 0, 2400);
-        if (n > 0) changed();
+        if (n > 0) changedAt('act:auto')();
       },
     });
   } });
@@ -338,7 +352,7 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
       onYes: () => {
         const r = bulkSellGear(save);
         showToast({ eyebrow: equipTitle(faction), title: `${r.count}개 판매`, meta: `골드 +${r.gold}` }, 0, 2400);
-        if (r.count > 0) changed();
+        if (r.count > 0) changedAt('act:bulk-sell')();
       },
     });
   } });
@@ -352,13 +366,12 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
   left.append(doll, statsRow);
   if (locked) left.append(h('p', 'bha-faint', '원정 중에는 장비를 바꿀 수 없다.'));
 
-  const page = lcdPage(dev.view, { cls: 'bha-equip-page', cols: 'minmax(0, 5fr) minmax(0, 6fr)' }, lcdHead({ title: equipTitle(faction), sub: `골드 ${save.shared.tradeCoins}` }), [left], [right]);
 
   // 끌어다 놓기 (C.149 슬롯 화면과 같은 방식): 카드 → 같은 종류 칸(착용) · 소모품 카드 → 소모품 칸, 칸 → 오른쪽 바둑판(해제)
   type Src = { kind: 'gear' | 'battle' | 'slot'; id: string };
   const wire = (root: HTMLElement) => enableDrag<Src>({
     root,
-    scope: () => page.app,
+    scope: hd.scope,
     sourceOf: (n) => {
       if (locked) return null;
       if (n.dataset.drag === 'gear' && n.dataset.item) return { kind: 'gear', id: n.dataset.item };
@@ -385,18 +398,18 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
           ok = !!uid && unequipGearItem(save, uid);
         }
       }
-      if (ok) changed();
+      if (ok) changedAt(to ? `slot:${to}` : src.kind === 'slot' ? `slot:${src.id}` : `item:${src.id}`)();
     },
   });
   wire(left);
   wire(right);
 
-  // 좌우 키 (GDD 108장 5번): 왼쪽 칸 ↔ 오른쪽 바둑판, 탭 위에서는 옆 탭. 기기 선택(▲▼)을 그 항목까지 옮긴다
+  // 좌우 키 (GDD 108장 5번): 왼쪽 칸 ↔ 오른쪽 바둑판, 장비 분류 탭 위에서는 옆 탭(가방 탭 줄은 가방 화면이 맡는다). 기기 선택(▲▼)을 그 항목까지 옮긴다
   const onKey = (e: KeyboardEvent) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     if (document.querySelector('.bha-itemdialog, .bha-confirm')) return;
-    const cur = page.app.querySelector<HTMLElement>('.bha-sel');
-    if (!cur) return;
+    const cur = hd.scope().querySelector<HTMLElement>('.bha-sel');
+    if (!cur || !(left.contains(cur) || right.contains(cur))) return;
     const dir = e.key === 'ArrowRight' ? 1 : -1;
     let target: HTMLElement | null = null;
     if (cur.matches('[role="tab"]')) {
@@ -428,5 +441,18 @@ export function equipView(dev: Device, faction: FactionConfig, save: SaveData, h
     const fwd = !!(cur.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING);
     for (let n = 0; n < 300 && !target.classList.contains('bha-sel'); n++) dev.move(fwd ? 1 : -1);
   };
-  window.addEventListener('keydown', onKey, { signal: screenSignal(dev.view) });
+  window.addEventListener('keydown', onKey, { signal: hd.signal });
+
+  const restore = () => {
+    const key = ui.focus;
+    ui.focus = null;
+    if (!key) return;
+    const [kind, id] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
+    const at = kind === 'slot' ? doll.querySelector<HTMLElement>(`.bha-eqslot[data-slot="${id}"]`)
+      : kind === 'act' ? foot.querySelector<HTMLElement>(`[data-act="${id}"]`)
+      : [...grid.querySelectorAll<HTMLElement>('.bha-itemcard')].find((c) => c.dataset.item === id) ?? null;
+    // 기기 선택은 새 화면에서 키보드 초점이 있는 항목을 고른다 (device.ts refresh)
+    at?.focus({ preventScroll: true });
+  };
+  return { left, right, restore };
 }

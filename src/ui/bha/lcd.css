@@ -54,6 +54,12 @@
 .bha-lcd .bha-toast.is-out { animation-name: bha-toast-down-out; }
 @keyframes bha-toast-up-in { from { opacity: 0; transform: translate(-50%, 130%); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes bha-toast-down-out { to { opacity: 0; transform: translate(-50%, 130%); } }
+/* 튜토리얼 달성 (GDD 109장 5번, C.180): 같은 띠를 화면 가운데에. 전투·대사 창 위, 누르면 바로 닫힌다 */
+.bha-toast--center, .bha-lcd .bha-toast--center { top: 50%; bottom: auto; z-index: var(--bha-z-tutorial); transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
+.bha-toast--center.is-in, .bha-lcd .bha-toast--center.is-in { animation-name: bha-toast-center-in; }
+.bha-toast--center.is-out, .bha-lcd .bha-toast--center.is-out { animation-name: bha-toast-center-out; }
+@keyframes bha-toast-center-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes bha-toast-center-out { to { opacity: 0; transform: translate(-50%, -50%) scale(0.92); } }
 
 /* 안내 문구 줄바꿈 (GDD 73장, C.126): 항목마다 한 줄, 항목 이름은 굵게 */
 .bha-lines { display: flex; flex-direction: column; gap: var(--bha-sp-3); }

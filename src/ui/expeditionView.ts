@@ -463,7 +463,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       const box = el('div', 'bha-draft');
       box.dataset.draft = d.picked === null ? 'open' : 'picked';
       const head = el('p', 'bha-sheet__body bha-draft__head');
-      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 바퀴 길에 바로 놓는다 (보관함에는 안 들어간다)' : ` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓는다 (안 놓고 계속하면 사라진다)`);
+      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 바퀴 길에 바로 놓는다 (가방에는 안 들어간다)' : ` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓는다 (안 놓고 계속하면 사라진다)`);
       const row = el('div', 'bha-draft__row');
       d.options.forEach((id, i) => {
         const t = getTile(id);
@@ -491,7 +491,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     }
     if (exp.hand.length > 0 || planner.canEdit() || d) {
       // 획득한 타일은 지금 다음 바퀴 칸에 놓는다 (GDD 17-1). 안 놓으면 다음 원정 덱으로 보관된다. 이 팝업이 길 순서가 보이는 유일한 곳
-      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 보관함에 남는다). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
+      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 가방에 남는다). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
       planner.refresh();
     }
     sheet.append(info, grid);

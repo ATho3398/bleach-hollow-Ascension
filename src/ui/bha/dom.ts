@@ -79,7 +79,7 @@ export function button(o: ButtonOpts): HTMLButtonElement {
   return b;
 }
 
-export type MeterKind = 'hunger' | 'cond' | 'stab' | 'risk' | 'enemy' | 'player' | 'sp' | 'cast' | 'stored';
+export type MeterKind = 'hunger' | 'cond' | 'stab' | 'risk' | 'enemy' | 'player' | 'sp' | 'cast' | 'stored' | 'bond';
 
 export interface MeterOpts {
   kind: MeterKind;
