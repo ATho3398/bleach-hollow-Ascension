@@ -118,7 +118,7 @@ export function v2TrayEl(capacity: number): TrayParts {
   root.setAttribute('aria-label', '블록 바');
   const grid = document.createElement('div');
   grid.className = 'bha-v2tray__grid';
-  grid.style.gridTemplateColumns = `repeat(${capacity}, minmax(0, 1fr))`;
+  grid.style.setProperty('--cap', String(capacity)); // 칸 폭은 CSS(정사각형, 어댑터 C.169)
   const cells = Array.from({ length: capacity }, (_, i) => {
     const c = document.createElement('div');
     c.className = 'bha-v2cell bha-block--empty';

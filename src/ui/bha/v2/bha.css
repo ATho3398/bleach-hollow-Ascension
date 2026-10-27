@@ -411,3 +411,31 @@
 .bha-root .bha-v2rel__name{line-height:1.1}
 .bha-root .bha-v2rel.is-ready .bha-release__seal{width:28px;height:28px}
 .bha-root .bha-v2rel.is-ready .bha-v2rel__name{font-size:var(--bha-fs-lg)}
+
+/* ───────── 해방 버튼 → 범례 줄 · 블록 정사각형 (C.169, 사용자 2026-10-27 "1번으로 가고, 블록 무조건 정사각형으로") ─────────
+   ① 블록 줄에는 블록만: 영력 해방은 범례 줄 오른쪽 끝 알약 버튼(높이 28)으로. 기본 = 표식+이름+게이지, 준비됨 = 강조 면+"준비됨 — 눌러 해방", 해방 중 = 남은 초+줄어드는 게이지
+      해방 중 범례 칩(.bha-v2libchip)은 버튼이 같은 줄에서 남은 초를 보여 주므로 숨긴다. 해방 설명 한 줄은 남는 폭만(말줄임, 전체는 title)
+   ② 블록 칸은 언제나 정사각형: 한 칸 = min(66px, 바 폭 ÷ 칸 수). 칸은 바 폭에 고르게 벌린다(space-between) — 루트 폭이 늘어도 블록은 안 늘어난다
+   ③ 체인 탭이 범례 글자를 덮지 않게 스킬창 110 → 120(필드는 그만큼 10px 낮아짐), 블록 바 top 38. 아이콘은 컷·체인 점 아래로(margin-top 14) */
+.bha-root.bha-battle .bha-field{bottom:120px}
+.bha-root.bha-battle .bha-skillpanel{height:120px}
+.bha-root .bha-v2legendrow{right:200px}
+.bha-root .bha-v2libchip{display:none!important}
+.bha-root .bha-blockbar.bha-v2tray{left:8px;right:8px;top:38px;height:auto;padding:4px}
+.bha-root .bha-v2tray__grid{height:auto;column-gap:4px;justify-content:space-between;
+  grid-template-columns:repeat(var(--cap,8),min(66px,calc((100% - (var(--cap,8) - 1) * 4px) / var(--cap,8))))}
+.bha-root .bha-v2cell>.bha-block .bha-block__icon{flex:none;height:30px;margin-top:14px}
+.bha-root .bha-v2cell{height:auto;aspect-ratio:1/1}
+.bha-root .bha-v2tray__grid>.bha-v2cell>.bha-block{height:100%}
+.bha-root .bha-v2rel{top:3px;bottom:auto;right:8px;width:184px;height:28px;padding:0 10px 0 4px;flex-direction:row;align-items:center;gap:6px;border-radius:14px;text-align:left}
+.bha-root .bha-v2rel .bha-release__seal,.bha-root .bha-v2rel.is-ready .bha-release__seal{width:20px;height:20px;flex:none}
+.bha-root .bha-v2rel .bha-release__seal .bha-svg{width:12px;height:12px}
+.bha-root .bha-v2rel .bha-v2rel__name,.bha-root .bha-v2rel.is-ready .bha-v2rel__name{font-size:var(--bha-fs-sm);line-height:1;white-space:nowrap;flex:none}
+.bha-root .bha-v2rel .bha-chip,.bha-root .bha-v2rel .bha-v2rel__meta{display:none}
+.bha-root .bha-v2rel .bha-gauge{flex:1 1 auto;width:auto!important;min-width:0}
+.bha-root .bha-v2rel .bha-keycap{top:-7px;right:-4px}
+.bha-root .bha-v2rel.is-ready .bha-v2rel__meta,.bha-root .bha-v2rel.is-on .bha-v2rel__meta{display:block;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:var(--bha-fs-xs)}
+.bha-root .bha-v2rel.is-ready .bha-v2rel__name{display:none}
+.bha-root .bha-v2rel.is-on .bha-v2rel__name{display:none}
+.bha-root .bha-v2rel.is-on .bha-v2rel__meta{flex:none;color:var(--bha-accent-hi);font-weight:700}
+.bha-root .bha-v2rel.is-ready .bha-gauge{display:none!important}
