@@ -168,6 +168,7 @@
 .bha-settings__bar .bha-slider__input:disabled { opacity: 0.5; }
 .bha-settings__choices { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
 .bha-settings__scopes .bha-seg__item { display: inline-flex; align-items: center; gap: var(--bha-sp-1); }
+.bha-settings__scopes .bha-seg__item[aria-selected="false"] .bha-icon { visibility: hidden; } /* 자리는 그대로 (C.182) */
 .bha-settings__save { position: relative; }
 .bha-settings__save.is-dirty::after { content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: var(--bha-r-pill); background: var(--bha-danger); }
 .bha-switch:disabled { opacity: 0.55; }
@@ -391,6 +392,8 @@ button.bha-slot { cursor: pointer; }
   padding: var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: var(--bha-shadow-3);
 }
 .bha-viewtitle__list[hidden] { display: none; }
+.bha-viewtitle__list { overflow-y: auto; overscroll-behavior: contain; } /* 남은 높이를 넘으면 목록 안 스크롤 (C.182, max-height 는 viewtitle.ts 가 연 때 잰다) */
+.bha-viewtitle__item { flex: none; }
 /* 목록이 열려 있는 동안 머리 줄을 본문 위 층으로 (C.163: 훈련 인형 화면에서 필터 버튼이 목록을 덮어 못 눌렀다) */
 .bha-lcdpage__head:has(.bha-viewtitle__list:not([hidden])) { position: relative; z-index: var(--bha-z-sticky); }
 .bha-viewtitle__item {

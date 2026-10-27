@@ -343,6 +343,16 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     markSel();
   });
 
+  // 화면이 하이라이트를 특정 항목으로 옮겨 달라고 할 때 (목록에서 고른 행을 ✓ 로 한 번 더 → 오른쪽 상세 첫 버튼, lcdpage.masterDetail, C.182 UI 검수)
+  lcd.addEventListener('bha-goto', (e) => {
+    refresh();
+    const i = items.findIndex((it) => it.el === e.target);
+    if (i < 0) return;
+    index = i;
+    markSel();
+    items[i]!.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
+
   function move(dir: 1 | -1): void {
     if (items.length === 0) return;
     index = stepIndex(index, dir, items.length);
@@ -482,10 +492,12 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   setOverlayHost(lcd, (layerEl, onCancel) => {
     const entry = { el: layerEl, onCancel };
     layers.push(entry);
+    layerEl.dataset.devLayer = ''; // 기기에 등록된 레이어 표시 (UI 검수 scripts/ui-audit 가 맨 위 층을 찾는다, C.182)
     schedule();
     return () => {
       const i = layers.indexOf(entry);
       if (i >= 0) layers.splice(i, 1);
+      delete layerEl.dataset.devLayer;
       schedule();
     };
   });

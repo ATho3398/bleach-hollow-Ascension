@@ -132,7 +132,11 @@ export function masterDetail(rows: ListRow[], at = 0, listLabel = '목록'): Mas
       b.append(...r.content);
       r.paint?.(b);
       b.addEventListener('bha-select', () => select(i));
-      b.onclick = () => select(i);
+      // 이미 상세에 보이는 행을 다시 누르면(✓) 하이라이트를 상세 칸 첫 버튼으로 — ▲▼ 는 행을 지날 때마다 상세가 바뀌어 상세 버튼에 닿을 길이 없었다 (C.182 UI 검수)
+      b.onclick = () => {
+        if (sel !== i) return select(i);
+        detail.querySelector('button:not([disabled]), [role="tab"], input, select')?.dispatchEvent(new CustomEvent('bha-goto', { bubbles: true }));
+      };
       return b;
     });
     list.replaceChildren(...btns.flatMap((b, i) => (next[i]!.caption ? [el('h3', 'bha-mdcap', next[i]!.caption), b] : [b])));

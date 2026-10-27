@@ -556,7 +556,8 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     for (const { id, b } of scopeBtns) {
       const on = id === scope;
       b.setAttribute('aria-selected', String(on));
-      b.replaceChildren(...(on ? [icon('i-check')] : []), id === 'common' ? '공통' : '이 슬롯');
+      // 체크 아이콘은 늘 두고 안 고른 쪽은 숨김 — 고를 때마다 두 버튼 폭·위치가 바뀌던 문제 (C.182 UI 검수)
+      b.replaceChildren(icon('i-check'), id === 'common' ? '공통' : '이 슬롯');
     }
     const where = scope === 'slot' && host ? `${host.label} 설정 — 이 슬롯에서만 우선` : host ? '공통 설정 — 슬롯 설정이 없는 항목에 쓴다' : '공통 설정 — 모든 슬롯에 쓴다';
     sub.textContent = note || (dirty ? `${where} · 저장 안 됨` : where);

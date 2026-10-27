@@ -2,6 +2,7 @@
 // 예전 머리의 보기 전환 탭 줄(도감·상점·보관함·원정 출발·수련장·테스트)을 이 제목이 대신해 머리 폭이 넓어진다. 목록 바깥을 누르면 닫힌다.
 // 대상은 1차 "어느 화면/보기" 전환만 — 2차 필터(도감 단계 탭 등)·켜기/끄기 토글·전투 조작은 아니다. 모양은 screens-lcd.css 의 .bha-viewtitle.
 import { el, icon } from './dom';
+import { getOverlayHost, registerLayer } from './overlayHost';
 
 export interface ViewTitleOption {
   id: string;
@@ -39,7 +40,12 @@ export function viewTitle(options: readonly ViewTitleOption[], current: string, 
     if (!root.isConnected) return stop();
     if (!root.contains(e.target as Node)) close();
   };
-  const stop = () => document.removeEventListener('pointerdown', outside, true);
+  let unreg = (): void => undefined;
+  const stop = () => {
+    document.removeEventListener('pointerdown', outside, true);
+    unreg();
+    unreg = () => undefined;
+  };
   function close(): void {
     list.hidden = true;
     btn.setAttribute('aria-expanded', 'false');
@@ -50,6 +56,15 @@ export function viewTitle(options: readonly ViewTitleOption[], current: string, 
     list.hidden = false;
     btn.setAttribute('aria-expanded', 'true');
     document.addEventListener('pointerdown', outside, true);
+    // C.182 UI 검수: 펼친 목록을 기기 레이어로 — ▲▼·✓ 는 목록 안에서만, 뒤로는 목록 닫기(목록에 덮인 본문 칸에 하이라이트가 가던 문제).
+    // 항목이 많으면(테스트 패널) LCD 아래로 잘리지 않게 남은 높이까지만 펴고 목록 안에서 스크롤
+    list.style.maxHeight = '';
+    const host = getOverlayHost().getBoundingClientRect();
+    const lr = list.getBoundingClientRect();
+    const k = list.offsetHeight > 0 && lr.height > 0 ? list.offsetHeight / lr.height : 1;
+    const room = (host.bottom - lr.top) * k - 4;
+    if (list.offsetHeight > room) list.style.maxHeight = `${Math.max(room, 48)}px`;
+    unreg = registerLayer(list, close);
   };
   root.append(btn, list);
   return root;
