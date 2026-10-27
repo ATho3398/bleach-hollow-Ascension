@@ -592,7 +592,7 @@ data/
 
 프로토타입(P3) 뒤 후보 시스템(순서는 마스터 추천, 사용자에게 보고함): ① 진화 엔진 프레임 ② 둥지 돌보기 심화·컨디션→전투 연결 ③ 도감과 히든 조건 평가기 ④ 해방(레스렉시온/만해) 보드 변주 프레임 ⑤ 등급 시스템 프레임.
 
-**01:2x 마스터Q→R 인수인계** (마스터Q 비용 약 5달러·컨텍스트 약 26만 — 큰 actions_list 결과 탓, 다음부터 actions_list 는 perPage 1~2). 최신 배포 **C.179**(main b93febb, Pages run 219 success, 배포 JS index-CnJq1amI.js 에 "C.179", 캡처 c179/01·04·07 확인, 코딩124 DONE_). SAVE 48, 테스트 1803.
+**01:2x 마스터Q→R 인수인계** (마스터R = session_01YVaigGKWCNn43fBAukhZv8. 마스터Q 비용 약 5달러·컨텍스트 약 26만 — 큰 actions_list 결과 탓, 다음부터 actions_list 는 perPage 1~2). 최신 배포 **C.179**(main b93febb, Pages run 219 success, 배포 JS index-CnJq1amI.js 에 "C.179", 캡처 c179/01·04·07 확인, 코딩124 DONE_). SAVE 48, 테스트 1803.
 - 진행 중: **코딩120**(session_01YVaigGxGXcG9nW2zrnFiV8, Opus) = **C.177** — 105장 수정 v5.233(회복 폐지·막기 게이지 0.5초·[소모품]·[장비] 버튼·강공격 20%·방어·허 줄이기) + 107장 원정 체력 이어 가기 + 106장 4 해방(평소 출현표 + 속도만 ×1.8) + 108장 소모품 칸 연결(코딩124 가 만든 `shared.battleItem`·`setBattleItem`·items.json "battle": true 를 쓰라고 알림). **코딩122**(session_01YVaigKdvK37D3zYik9JtwP, Opus) = **C.176** — 104장 7 뒤로가기 버그(첫 번째) → 104장 1~3·5·6·8·9 → 106장 1~3(같은 속성 포식 후보 n강·웅덩이 1/3·메노스 크기). 둘 다 보고처를 마스터R 로 바꾸라고 알림 필요.
 - 끝난 것(마스터Q): C.175 코딩121·C.178 코딩123·C.179 코딩124 DONE_(배포·캡처 확인·ntfy 완료). 병렬 최대 4개(automation.md 00:3x).
 - 사용자에게 답 대기 없음. 다음 코딩 번호 125, 다음 패치 C.180. UI담당자C = session_01LmFYYdTyBXcbM3dRNuzGuc.
