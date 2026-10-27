@@ -313,10 +313,12 @@ export interface ExpeditionState extends RiskState {
   care?: CareCarry;
 }
 
-/** 출발 때 둥지에서 가져가는 상태 (GDD 102-2) */
+/** 출발 때 둥지에서 가져가는 상태 (GDD 102-2·102장 수정 v5.228 빈사) */
 export interface CareCarry {
   weak: boolean;
   tired: boolean;
+  /** 빈사 모험: 체력 10%·공격·블록 속도 절반·보상 절반 */
+  dying?: boolean;
 }
 
 /** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수로 치지 않고 능력치 6종을 같은 양 올린다 */
@@ -449,7 +451,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     ...(setup.petDrops && !setup.tutorial ? { petDrops: true, petFinds: [] } : {}),
     ...(setup.gear ? { gear: structuredClone(setup.gear) } : {}),
     ...(setup.gearDrops && !setup.tutorial ? { gearDrops: true, gearFinds: [] } : {}),
-    ...(setup.care && (setup.care.weak || setup.care.tired) ? { care: { weak: setup.care.weak, tired: setup.care.tired } } : {}),
+    ...(setup.care && (setup.care.weak || setup.care.tired || setup.care.dying) ? { care: { weak: setup.care.weak, tired: setup.care.tired, ...(setup.care.dying ? { dying: true } : {}) } } : {}),
   };
   // 스토리 화의 고정 길 (GDD 25-4): 정해진 칸에 정해진 타일
   if (episode) for (const [cell, id] of Object.entries(episode.road)) exp.slots[Number(cell)] = id;
@@ -758,7 +760,7 @@ function startBattleAt(
   // 보상 = 난이도 ★·연속 클리어 배율 (GDD 32-1 5·11번, 재화마다 다름): rewardMult 는 먹이 굴림 배율, 골드는 goldMult 에 (골드 ÷ 먹이) 비를 곱해 따로 간다. 리스크는 그대로
   const foodK = difficultyRewardMultiplier(exp.difficulty, exp.streak);
   const goldK = difficultyGoldMultiplier(exp.difficulty, exp.streak);
-  let rewardMult = (m.rewardMult ?? 1) * foodK;
+  let rewardMult = (m.rewardMult ?? 1) * foodK * dyingReward(exp); // 빈사면 보상 절반 (GDD 102장 수정)
   const goldMult = (m.goldMult ?? 1) * (goldK / foodK);
   let trap = false;
   if (exp.trapArmed) {
@@ -830,12 +832,23 @@ export function applyFrenzy(params: Partial<CombatParams>): void {
   params.noHealSpawn = true;
 }
 
-/** 쇠약·피곤 (GDD 102-2): 쇠약 = 내 최대 체력 −weakMaxHpCut, 피곤 = 블록 생성 간격 +tiredSpawnSlow (생성 속도 배율을 나눈다) */
-export function applyCareToParams(params: Partial<CombatParams>, care: CareCarry | null | undefined): void {
+/** 쇠약·피곤·빈사 (GDD 102-2·102장 수정): 쇠약 = 내 최대 체력 −weakMaxHpCut, 피곤 = 블록 생성 간격 +tiredSpawnSlow (생성 속도 배율을 나눈다),
+ *  빈사 = 최대 체력 × hpFraction(최대치 자체를 줄여 그 위로 회복 안 됨) · 공격 속도·블록 생성 속도 × speedMult. 원정·탑·쟁탈전·훈련 인형이 같이 쓴다 */
+export function applyCareToParams(params: Partial<CombatParams>, care: Partial<CareCarry> | null | undefined): void {
   if (!care) return;
   const CP = BALANCE.provisional.nest.care;
   if (care.weak) params.playerHpScale = (params.playerHpScale ?? BALANCE.provisional.combat.playerHpScale) * (1 - CP.weakMaxHpCut);
   if (care.tired) params.blockSpawnMultiplier = (params.blockSpawnMultiplier ?? 1) / (1 + CP.tiredSpawnSlow);
+  if (care.dying) {
+    params.playerHpScale = (params.playerHpScale ?? BALANCE.provisional.combat.playerHpScale) * CP.dying.hpFraction;
+    params.attackSpeedMultiplier = (params.attackSpeedMultiplier ?? 1) * CP.dying.speedMult;
+    params.blockSpawnMultiplier = (params.blockSpawnMultiplier ?? 1) * CP.dying.speedMult;
+  }
+}
+
+/** 빈사 보상 배율 (골드·먹이·노력치) */
+function dyingReward(exp: Pick<ExpeditionState, 'care'>): number {
+  return exp.care?.dying ? BALANCE.provisional.nest.care.dying.rewardMult : 1;
 }
 
 /** 폭주 중인가: 이번 원정에서 한계 돌파가 일어났다 (원정당 1회) */
@@ -1033,7 +1046,9 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   // 속성 강화 (GDD 84장 8번): 특성·속성 카운트가 있는 갈래면 그 적 속성 강화 +1 — 이미 가진 계열이어도, 100 뒤에도 센다(효과는 100 에서 멈춤)
   const enhance = mode !== 'stat' ? addEnhance(exp.build, offer.element) : undefined;
   logAbsorb(exp, offer, true, traitId, mode, enhance);
-  recordEvolutionAbsorb(exp.evolution, offer.element, absorbEvOf(offer, mode, exp.difficulty, exp.streak), mode !== 'stat');
+  const ev = absorbEvOf(offer, mode, exp.difficulty, exp.streak);
+  const evK = dyingReward(exp); // 빈사면 노력치 절반 (GDD 102장 수정)
+  recordEvolutionAbsorb(exp.evolution, offer.element, evK === 1 ? ev : Object.fromEntries(Object.entries(ev).map(([k, v]) => [k, (v ?? 0) * evK])), mode !== 'stat');
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
   changeRisk(exp, absorbRisk(offer.strength, mode), 'absorb');

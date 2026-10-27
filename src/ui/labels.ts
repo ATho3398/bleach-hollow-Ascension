@@ -174,9 +174,9 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
   return {
     returned: '둥지 칸에서 귀환했다. 얻은 것은 모두 지킨다.',
     'forced-max-laps': '최대 바퀴를 채워 귀환했다. 얻은 것은 모두 지킨다.',
-    // C.175 (GDD 102-3): 원정 패배 = 쓰러짐 — 치료제를 먹여야 다시 나간다
-    'battle-lost': `전투에서 졌다(${f.defeatStateName}). 쓰러진 채 ${f.nestName}에 돌아왔다 — 치료제가 필요하다. 마지막 바퀴에서 얻은 것을 잃었다.`,
-    exhausted: fixParticles(`${f.fullnessName}이(가) 바닥나 쓰러졌다. 쓰러진 채 ${f.nestName}에 돌아왔다 — 치료제가 필요하다. 마지막 바퀴에서 얻은 것을 잃었다.`),
+    // C.175 (GDD 102-3·102장 수정): 원정 패배 = 빈사(이미 빈사였으면 사망) — 남은 시간 안에 치료제
+    'battle-lost': `전투에서 졌다(${f.defeatStateName}). 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 치료제를 먹여야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`,
+    exhausted: fixParticles(`${f.fullnessName}이(가) 바닥나 쓰러졌다. 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 치료제를 먹여야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`),
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
     'tutorial-clear': `첫 원정을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
     abort: `원정 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,

@@ -13,8 +13,8 @@ import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
 import { characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
-import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
-import { CARE_STATUS_NAMES, reviveEvLossOf } from '../engine/nest';
+import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
+import { CARE_STATUS_NAMES, dyingLeftMs, reviveEvLossOf } from '../engine/nest';
 import { notice } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
@@ -76,6 +76,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // ── 위 한 줄 ── (원정 이어하기만. 상태는 캐릭터 머리 위 칩)
   const hud = el('header', 'bha-room__hud');
   const items: SelectItem[] = [];
+  /** 빈사 남은 시간 칸 (혼잣말 타이머가 고친다) */
+  let dyingClockEl: HTMLElement | null = null;
   let resumeBtn: HTMLButtonElement | null = null;
   // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★.
   // C.170 (GDD 100장 #8): 방 위 이름+[트랙 전환] 줄은 없앴다 — 이름은 상태 칩 위 작은 이름표, 트랙 전환은 ··· 더보기의 한 칸('호로 트랙'/'사신 트랙', #9)
@@ -87,7 +89,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     nameTag = el('span', 'bha-small bha-room__name', shownName(formDisplayName(save.evolution, faction.id)));
     if (stars) nameTag.append(' ', stars);
   }
-  // 쓰러짐·사망 (GDD 102-3·102-7): 위 줄에 큰 안내 + 할 수 있는 일. 사망이면 [부활](확인 창 기본 = 아니오), 쓰러짐이면 [상점] [보관함]
+  // 빈사·사망 (GDD 102-3·102-7·102장 수정): 위 줄에 큰 안내 + 할 수 있는 일. 사망이면 [부활](확인 창 기본 = 아니오), 빈사면 남은 시간(시:분) + [상점] [보관함]
   if (n.dead) {
     const reviveBtn = button({ label: '부활', icon: 'i-return', size: 'small', variant: 'danger', onClick: () => askRevive() });
     hud.append(notice('danger', '할 수 있는 건 부활뿐이다.', { title: `${CARE_STATUS_NAMES.dead} — 오래 돌보지 않아 숨이 끊어졌다`, icon: 'i-broken' }), reviveBtn);
@@ -96,7 +98,10 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   } else if (n.collapsed) {
     const shopBtn = button({ label: room.props.shop, icon: 'i-rare', size: 'small', variant: 'primary', onClick: hd.onShop });
     const chestBtn = button({ label: '보관함', icon: 'i-deck', size: 'small', onClick: hd.onChest });
-    hud.append(notice('danger', '치료제가 필요하다', { title: `${CARE_STATUS_NAMES.collapsed} — ${CARE_STATUS_HINTS.collapsed}`, icon: 'i-broken' }), shopBtn, chestBtn);
+    const box = notice('danger', CARE_STATUS_HINTS.collapsed, { title: `${CARE_STATUS_NAMES.collapsed} — 치료제가 필요하다 · 남은 시간 `, icon: 'i-broken' });
+    dyingClockEl = el('b', 'bha-num', dyingClock(dyingLeftMs(n, Date.now()) ?? 0));
+    box.querySelector('.bha-notice__title')?.append(dyingClockEl);
+    hud.append(box, shopBtn, chestBtn);
     hud.classList.add('is-care');
     items.push({ el: shopBtn }, { el: chestBtn });
   }
@@ -155,8 +160,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'shop' && save.shared.wanderer.visit !== null });
     b.onclick = act[p];
-    // 쓰러짐·사망이면 모험 문 잠김 표시 (GDD 102-7) — 눌러도 막힘 안내(onDepart 쪽)
-    if (p === 'door' && (n.collapsed || n.dead)) {
+    // 사망이면 모험 문 잠김 표시 (GDD 102-7) — 눌러도 막힘 안내(onDepart 쪽). 빈사는 열려 있고 출발 때 확인 창 (102장 수정)
+    if (p === 'door' && n.dead) {
       b.classList.add('is-locked');
       b.append(icon('i-lock'));
     }
@@ -311,6 +316,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   window.clearInterval(idleTimer);
   const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
+    if (dyingClockEl) dyingClockEl.textContent = dyingClock(dyingLeftMs(n, Date.now()) ?? 0); // 빈사 남은 시간
     // 돌봄 요청 시계 (GDD 82장): 방에 있는 동안 요청이 생기거나 사라진다
     const had = n.careRequest;
     const created = tickCare(save);

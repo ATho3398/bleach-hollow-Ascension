@@ -50,13 +50,13 @@ export interface StatusChip {
 export const CARE_STATUS_HINTS = {
   weak: '배부름을 20 넘게 채우고 원정을 한 번 다녀오거나 링거',
   tired: '컨디션을 30 넘게 올리고 원정을 한 번 다녀오거나 에너지 드링크',
-  collapsed: '상점 약 칸의 치료제를 먹여야 일어난다',
+  collapsed: '상점 약 칸의 치료제를 먹여야 풀린다 — 남은 시간이 다 되거나 모험에서 지면 사망',
 } as const;
 
 /** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지·교감(GDD 102-6) + 쓰러짐·쇠약·피곤 칩(GDD 102-7).
  *  위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
 export function statusChips(
-  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; bond?: number },
+  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; dead?: boolean; bond?: number },
   names: { riskGaugeName: string; fullnessName?: string },
   warn = { hunger: 80, condition: 40, risk: 60 },
 ): StatusChip[] {
@@ -67,17 +67,22 @@ export function statusChips(
     { kind: 'risk', label: names.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), danger: s.risk >= warn.risk },
   ];
   if (s.bond !== undefined) chips.push({ kind: 'bond', label: '교감', icon: 'i-care-pet', value: Math.round(s.bond), danger: false });
-  if (s.collapsed) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.collapsed, icon: 'i-broken', value: null, danger: true, hint: CARE_STATUS_HINTS.collapsed });
+  if (s.dead) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.dead, icon: 'i-broken', value: null, danger: true, hint: '방 위 [부활]로 다시 시작한다' });
+  else if (s.collapsed) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.collapsed, icon: 'i-broken', value: null, danger: true, hint: CARE_STATUS_HINTS.collapsed });
   if (s.weakened) chips.push({ kind: 'weak', label: CARE_STATUS_NAMES.weak, icon: 'i-hunger', value: null, danger: true, hint: CARE_STATUS_HINTS.weak });
   if (s.tired) chips.push({ kind: 'tired', label: CARE_STATUS_NAMES.tired, icon: 'i-cond', value: null, danger: true, hint: CARE_STATUS_HINTS.tired });
   return chips;
 }
 
-/** 쓰러짐·사망으로 막힌 곳 안내 띠 (GDD 102-3) */
-export function careBlockText(b: 'collapsed' | 'dead'): { eyebrow: string; title: string; meta: string } {
-  return b === 'dead'
-    ? { eyebrow: CARE_STATUS_NAMES.dead, title: '죽은 몸으로는 아무 데도 갈 수 없다', meta: '방에서 [부활]을 해야 다시 시작한다.' }
-    : { eyebrow: CARE_STATUS_NAMES.collapsed, title: '쓰러져서 모험을 나갈 수 없다 — 치료제가 필요하다', meta: `원정·훈련·탑·쟁탈전이 막혔다. ${CARE_STATUS_HINTS.collapsed}.` };
+/** 사망으로 막힌 곳 안내 띠 (GDD 102-3). 빈사는 막지 않는다(출발 확인 창, v5.228 수정) */
+export function careBlockText(_b: 'dead'): { eyebrow: string; title: string; meta: string } {
+  return { eyebrow: CARE_STATUS_NAMES.dead, title: '죽은 몸으로는 아무 데도 갈 수 없다 — 방에서 [부활]', meta: '방에서 [부활]을 해야 다시 시작한다.' };
+}
+
+/** 빈사 남은 시간 "5:42" (시:분, 올림 분) */
+export function dyingClock(leftMs: number): string {
+  const m = Math.max(0, Math.ceil(leftMs / 60_000));
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
 }
 
 /** 복귀 알림 띠 (GDD 102-7): "○시간 동안 비웠다 — 배부름 −n · 컨디션 −n · 영압 안정도 −n". 줄어든 것이 없으면 그 칸은 뺀다 */

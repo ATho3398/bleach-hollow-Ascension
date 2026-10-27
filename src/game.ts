@@ -3,7 +3,7 @@
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { gainTrait, newBuild, type BuildState } from './engine/absorb';
-import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, cureStatus, departCare, doNestAction, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
+import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, cureStatus, departCare, dieNest, doNestAction, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
 import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, stepsNeeded, type EvolutionState, type EvolveResult } from './engine/evolution';
@@ -463,14 +463,27 @@ function logVital(save: SaveData, rec: Omit<VitalRecord, 'factionId' | 'bond'>):
   save.runLog.vitals.push({ ...rec, factionId: save.factionId, bond: save.nest.bond });
 }
 
-/** 지금 원정·훈련·탑·쟁탈전을 막는 상태 (GDD 102-3): 쓰러짐·사망. 없으면 null */
-export function careBlock(save: Pick<SaveData, 'nest'>): 'collapsed' | 'dead' | null {
-  return save.nest.dead ? 'dead' : save.nest.collapsed ? 'collapsed' : null;
+/** 지금 원정·훈련·탑·쟁탈전을 막는 상태 (GDD 102장 수정 v5.228): 사망뿐 — 빈사는 모험할 수 있다(출발 확인 창). 없으면 null */
+export function careBlock(save: Pick<SaveData, 'nest'>): 'dead' | null {
+  return save.nest.dead ? 'dead' : null;
 }
 
-/** 출발 (GDD 102-2): 이번 원정에 실을 쇠약·피곤 — 지금 수치가 문턱을 넘었으면 돌아올 때 풀린다. 원정을 만드는 쪽이 createExpedition 의 care 로 넘긴다 */
-export function departCareOf(save: SaveData): { weak: boolean; tired: boolean } {
+/** 출발 (GDD 102-2): 이번 원정에 실을 쇠약·피곤·빈사 — 지금 수치가 문턱을 넘었으면 돌아올 때 풀린다. 원정을 만드는 쪽이 createExpedition 의 care 로 넘긴다 */
+export function departCareOf(save: SaveData): { weak: boolean; tired: boolean; dying: boolean } {
   return departCare(save.nest);
+}
+
+/** 원정 밖 전투(탑·쟁탈전·훈련 인형)에 실을 빈사 (GDD 102장 수정: 체력 10%·속도 절반). 쇠약·피곤은 원정만 */
+export function battleCareOf(save: Pick<SaveData, 'nest'>): { dying: boolean } {
+  return { dying: save.nest.collapsed && !save.nest.dead };
+}
+
+/** 원정 밖 전투(탑·쟁탈전)에서 빈사로 지면 사망 (GDD 102장 수정). 죽었으면 true */
+function dieIfDyingLost(save: SaveData, won: boolean, nowMs: number, cause: string): boolean {
+  if (won || !save.nest.collapsed || save.nest.dead) return false;
+  dieNest(save.nest);
+  logVital(save, { at: nowMs, kind: 'death', cause: 'defeat', where: cause });
+  return true;
 }
 
 /** 약으로 상태 풀기 (GDD 102-4): 런 로그 cure. 풀렸으면 true */
@@ -861,6 +874,7 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   const end = applyExpeditionEnd(save.nest, exp, nowMs);
   // 돌봄 상태 (GDD 102장·9장): 패배 = 쓰러짐, 귀환으로 풀린 쇠약·피곤
   if (end.collapsed) logVital(save, { at: nowMs, kind: 'collapse', cause: 'defeat', runId: exp.runId });
+  if (end.died) logVital(save, { at: nowMs, kind: 'death', ...(summarize(exp).outcome === 'defeated' ? { cause: 'defeat' as const } : {}), runId: exp.runId });
   for (const st of end.recovered) logVital(save, { at: nowMs, kind: 'recover', status: st, runId: exp.runId });
   // 수련권 (GDD 22-5): 원정에서 돌아올 때마다(승패 무관) +1, 최대 3
   addTrainingTicket(save.training);
@@ -995,7 +1009,9 @@ export function accrueIdle(save: SaveData, nowMs: number = Date.now(), online = 
 /** 켜 둔 동안 쌓기 (95장 B1): 방·원정·전투 어디서든 1분마다·저장할 때 부른다 — 흐른 시간을 쌓고 정산 시각을 지금으로. 쌓였으면 true */
 export function tickIdle(save: SaveData, nowMs: number = Date.now()): boolean {
   // 켜 둔 동안 시간 흐름 (GDD 102-1): 허기·컨디션 — 원정 중이면 원정이 자기 수치를 쓴다
+  const alive = !save.nest.dead;
   tickNestOnline(save.nest, nowMs, save.activeExpedition != null);
+  if (alive && save.nest.dead) logVital(save, { at: nowMs, kind: 'death' }); // 빈사 시간이 켜 둔 동안 다 됐다 (GDD 102장 수정)
   const r = accrueIdle(save, nowMs, true);
   markSeen(save, nowMs);
   return r !== null && r.added > 0;
@@ -1301,6 +1317,7 @@ export function recordRankBattle(save: SaveData, s: CombatState, nowMs: number =
   };
   save.runLog.rankBattles.push(rec);
   if (won) save.shared.soulCrystals += BALANCE.provisional.soulCrystals.perRankWin;
+  dieIfDyingLost(save, won, nowMs, 'rank');
   checkTitles(save, 'rank', nowMs);
   return r;
 }
@@ -1329,7 +1346,7 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
   const out: TowerOutcome = { won, firstClear, gold: 0, food: null, jade: 0, next: nextTowerFloor(save.tower.best) };
   if (firstClear) {
     save.tower.best = f.floor;
-    out.gold = f.reward.gold;
+    out.gold = save.nest.collapsed ? Math.floor(f.reward.gold * BALANCE.provisional.nest.care.dying.rewardMult) : f.reward.gold; // 빈사 보상 절반
     save.shared.tradeCoins += out.gold;
     if (f.reward.food) out.food = [f.reward.food, addFood(save.shared.food, f.reward.food, 1)];
     out.jade = f.reward.jade;
@@ -1345,6 +1362,7 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
     at: nowMs, factionId: save.factionId, floor: f.floor, star: f.star, enemyId: f.enemy.id, bossId: f.bossId, won, durationSeconds: battle.durationSeconds,
     tierIndex: save.evolution.tierIndex, formId: save.evolution.formId, firstClear,
   });
+  dieIfDyingLost(save, won, nowMs, 'tower');
   checkTitles(save, 'tower', nowMs);
   return out;
 }

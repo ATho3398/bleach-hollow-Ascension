@@ -10,7 +10,7 @@ import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playe
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { abortExpedition, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { abortExpedition, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
@@ -21,7 +21,7 @@ import type { AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  absenceOf, careBlock, departCareOf, fastForward, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, careBlock, departCareOf, fastForward, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -154,8 +154,14 @@ export function startApp(host: HTMLElement): void {
   // 대기 보상 상시 (GDD 95장 B1): 켜 둔 동안(방·원정·전투) 1분마다 흐른 시간을 받을 보상에 쌓고, 방이면 아이콘 배지를 고친다. 저장은 평소 저장 때 같이 된다
   window.setInterval(() => {
     if (!save || slot === 0) return;
+    const alive = !save.nest.dead;
     tickIdle(save);
     refreshIdleBadge(root, save);
+    // 빈사 시간이 켜 둔 동안 다 됐다 (GDD 102장 수정): 저장하고 방이면 사망 화면으로
+    if (alive && save.nest.dead) {
+      persist();
+      if (nav.top?.id === 'room') nestScreen();
+    }
   }, 60_000);
   watchFullscreen();
   document.addEventListener('visibilitychange', tickPlay);
@@ -596,7 +602,7 @@ export function startApp(host: HTMLElement): void {
     if (away && away.hours * 60 >= BALANCE.provisional.idle.minMinutes) {
       const line = absenceText(away, faction);
       // 알림 띠는 한 줄(머리말 + 제목)이라 비운 시간·줄어든 양을 제목에 (C.170 알림 띠)
-      const head = away.died ? '복귀 · 사망' : away.collapsed ? '복귀 · 쓰러짐' : '복귀';
+      const head = away.died ? '복귀 · 사망' : away.collapsed ? '복귀 · 빈사' : '복귀';
       window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '' }, 0, 5200), 300);
     }
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
@@ -642,9 +648,9 @@ export function startApp(host: HTMLElement): void {
       idle: { badge: idleBadge(s), onOpen: () => showIdlePanel(s, faction, claim) },
       persist,
       // 새 세이브의 첫 원정은 고정 길 튜토리얼 (GDD 67장)
-      onDepart: () => (careBlocked(s) ? undefined : firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)),
-      // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]. 쓰러짐·사망이면 막힘 (GDD 102-3)
-      onAltar: () => (careBlocked(s) ? undefined : open('training', () => renderTraining(faction, s))),
+      onDepart: () => (careBlocked(s) ? undefined : askDying(s, () => (firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)))),
+      // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
+      onAltar: () => (careBlocked(s) ? undefined : askDying(s, () => open('training', () => renderTraining(faction, s)))),
       // 부활 (GDD 102-3): 되돌릴 수 없어 자동 백업 후
       onRevive: () => {
         persist();
@@ -787,7 +793,18 @@ export function startApp(host: HTMLElement): void {
     nav.reset({ id: 'rebirth-scene', locked: true, render: () => { setBgm('nest'); rebirthView(root, faction, r.record, r, nestScreen); root.scrollTop = 0; } });
   }
 
-  /** 쓰러짐·사망이면 원정·훈련·탑·쟁탈전을 막고 안내 띠 (GDD 102-3). 막았으면 true */
+  /** 빈사로 모험 나가기 전 확인 창 (GDD 102장 수정 v5.228 5번): 기본 선택 = 아니오. 빈사가 아니면 바로 go */
+  function askDying(s: SaveData, go: () => void): void {
+    if (!s.nest.collapsed || s.nest.dead) return go();
+    const k = BALANCE.provisional.nest.care.dying;
+    confirmDialog({
+      title: '빈사 상태로 나간다',
+      body: `빈사 — 체력 ${Math.round(k.hpFraction * 100)}% · 공격·블록 속도와 보상 절반, 지면 사망한다.`,
+      yes: '나간다', no: '아니오', danger: true, onYes: go,
+    });
+  }
+
+  /** 사망이면 원정·훈련·탑·쟁탈전을 막고 안내 띠 (GDD 102-3). 막았으면 true */
   function careBlocked(s: SaveData): boolean {
     const b = careBlock(s);
     if (!b) return false;
@@ -936,6 +953,7 @@ export function startApp(host: HTMLElement): void {
     params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
     // 장비 (GDD 91장): 강적·보스 층이면 강적 피해도
     applyGearToParams(params, gearCarry(s0.shared.gear), f.kind === 'elite' || !!f.bossId);
+    applyCareToParams(params, battleCareOf(s0)); // 빈사: 체력 10%·속도 절반 (GDD 102장 수정)
     // 꼭대기 보스 이름은 종족 설정 (적 정의의 이름을 그 문구로 바꿔 끼운다)
     const floor = f.final ? { ...f, enemy: { ...f.enemy, name: { '*': towerLabels(faction).finalBossName } } } : f;
     const s = createTowerCombat(floor, params, Math.floor(Math.random() * 2 ** 32));
@@ -1330,6 +1348,7 @@ export function startApp(host: HTMLElement): void {
       params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
       // 장비 (GDD 91장): 연습도 낀 장비 그대로 (훈련 인형 DPS 측정)
       applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
+      applyCareToParams(params, battleCareOf(save)); // 빈사 (GDD 102장 수정) — 연습은 져도 잃는 것이 없어 사망은 없다
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
@@ -1378,6 +1397,7 @@ export function startApp(host: HTMLElement): void {
     params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
     // 장비 (GDD 91장): 등급전 상대는 강적으로 본다
     applyGearToParams(params, gearCarry(s0.shared.gear), true);
+    applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정): 지면 사망
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
       tierIndex: s0.evolution.tierIndex,

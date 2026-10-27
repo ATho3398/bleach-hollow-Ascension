@@ -2,12 +2,12 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
-import { applyAbsenceTime, applyExpeditionEnd, cureStatus, deathHoursOf, departCare, doNestAction, gainBond, newNest, passNestTime, reviveEvLossOf, tickNestOnline } from '../src/engine/nest';
+import { applyAbsenceTime, applyExpeditionEnd, cureStatus, deathHoursOf, departCare, doNestAction, dyingLeftMs, gainBond, newNest, passNestTime, reviveEvLossOf, tickNestOnline } from '../src/engine/nest';
 import { applyCareToParams, createExpedition, type ExpeditionState } from '../src/engine/expedition';
 import { absenceOf, careBlock, cureNest, fastForward, newSaveData, performRevive, recordExpedition, type SaveData } from '../src/game';
 import { buyShopItem, goldRows } from '../src/shop';
 import { inventoryOf, useInventoryItem } from '../src/inventory';
-import { absenceText, careBlockText, moodOf, statusChips } from '../src/ui/bha/roomLogic';
+import { absenceText, careBlockText, dyingClock, moodOf, statusChips } from '../src/ui/bha/roomLogic';
 import { riskText } from '../src/data/help/riskText';
 
 const H = 3_600_000;
@@ -98,7 +98,7 @@ describe('102-2 쇠약·피곤', () => {
   it('수치를 되돌린 뒤 출발해 귀환하면 풀리고, 되돌리기 전에 출발했으면 안 풀린다', () => {
     const s = newSaveData('hollow', 0);
     Object.assign(s.nest, { weakened: true, tired: true, hunger: 50, condition: 20 });
-    expect(departCare(s.nest)).toEqual({ weak: true, tired: true });
+    expect(departCare(s.nest)).toEqual({ weak: true, tired: true, dying: false });
     s.nest.condition = 60; // 출발 뒤에 올려도 이번 원정은 안 친다
     recordExpedition(s, ended(s, 'returned'), 1000);
     expect(s.nest.weakened).toBe(false);
@@ -115,38 +115,50 @@ describe('102-2 쇠약·피곤', () => {
   });
 });
 
-describe('102-3 쓰러짐·사망·부활', () => {
-  it('48시간 미접속 = 쓰러짐(교감 −5), 72시간 = 사망(교감 절반), 런 로그', () => {
+describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', () => {
+  it('48시간 미접속 = 빈사(그 시각부터, 교감 −5), 빈사 시간이 다 되면 사망(교감 절반), 런 로그', () => {
     const s = newSaveData('hollow', 0);
     s.nest.bond = 20;
     s.lastSeenAt = 0;
     const r = absenceOf(s, 48 * H);
     expect(r.collapsed).toBe(true);
     expect(s.nest.collapsed).toBe(true);
+    expect(s.nest.collapsedAt).toBe(48 * H);
     expect(s.nest.bond).toBe(20 - 4 - NX.bond.collapseLoss); // 12시간마다 −1 × 4
-    expect(careBlock(s)).toBe('collapsed');
+    expect(careBlock(s)).toBeNull(); // 빈사는 모험할 수 있다(출발 확인 창)
     const t = newSaveData('shinigami', 0);
     t.lastSeenAt = 0;
     const d = absenceOf(t, 72 * H);
     expect(d.died).toBe(true);
     expect(t.runLog.vitals.map((v) => v.kind)).toEqual(['collapse', 'death']);
   });
-  it('쓰러진 채 24시간 미접속이면 사망 — 교감 50↑ 36시간, 80↑ 48시간', () => {
-    expect([deathHoursOf(0), deathHoursOf(50), deathHoursOf(80)]).toEqual([24, 36, 48]);
+  it('빈사 시간 = 실제 시간 6 + 교감 × 0.18 (교감 100 = 24시간) — 켜 둔 동안에도 흐른다', () => {
+    expect([deathHoursOf(0), deathHoursOf(50), deathHoursOf(100)]).toEqual([6, 15, 24]);
     const n = newNest(0);
-    n.collapsed = true;
-    n.bond = 50;
-    applyAbsenceTime(n, 0, 30 * H);
+    Object.assign(n, { collapsed: true, collapsedAt: 0, bond: 0, lastTickMs: 0 });
+    expect(dyingClock(dyingLeftMs(n, 0)!)).toBe('6:00');
+    tickNestOnline(n, 5.9 * H);
     expect(n.dead).toBe(false);
-    applyAbsenceTime(n, 30 * H, 66 * H);
+    tickNestOnline(n, 6 * H);
     expect(n.dead).toBe(true);
   });
-  it('원정 패배로 돌아오면 쓰러짐, 쓰러짐이면 원정 막힘 안내', () => {
+  it('원정 패배로 돌아오면 빈사, 빈사에서 또 지면 사망 · 사망이면 막힘 안내', () => {
     const s = newSaveData('hollow', 0);
     recordExpedition(s, ended(s, 'defeated'), 1000);
     expect(s.nest.collapsed).toBe(true);
     expect(s.runLog.vitals.at(-1)).toMatchObject({ kind: 'collapse', cause: 'defeat' });
-    expect(careBlockText('collapsed').title).toContain('모험');
+    expect(departCare(s.nest).dying).toBe(true);
+    recordExpedition(s, ended(s, 'defeated'), 2000);
+    expect(s.nest.dead).toBe(true);
+    expect(s.runLog.vitals.at(-1)).toMatchObject({ kind: 'death', cause: 'defeat' });
+    expect(careBlock(s)).toBe('dead');
+    expect(careBlockText('dead').title).toContain('부활');
+  });
+  it('빈사 모험 = 체력 10%(최대치 자체) · 공격·블록 속도 절반', () => {
+    const p: { playerHpScale?: number; blockSpawnMultiplier?: number; attackSpeedMultiplier?: number } = {};
+    applyCareToParams(p, { dying: true });
+    expect(p.playerHpScale).toBeCloseTo(BALANCE.provisional.combat.playerHpScale * CP.dying.hpFraction);
+    expect([p.attackSpeedMultiplier, p.blockSpawnMultiplier]).toEqual([0.5, 0.5]);
   });
   it('부활: 노력치 × (1 − 손실), 1단계로, 수치 시작값·상태 해제, 물건·골드는 그대로', () => {
     const s = newSaveData('hollow', 0);

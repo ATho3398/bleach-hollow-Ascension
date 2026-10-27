@@ -399,7 +399,7 @@ export interface CareRecord {
   missed: number;
 }
 
-/** 돌봄 상태 1건 (GDD 102장·9장, C.175): collapse = 쓰러짐(cause: absence 미접속 · defeat 원정 패배), death = 사망(쓰러진 채 미접속),
+/** 돌봄 상태 1건 (GDD 102장·9장, C.175): collapse = 빈사(cause: absence 미접속 · defeat 원정 패배), death = 사망(빈사 시간이 다 됨, cause defeat = 빈사로 짐),
  *  revive = 부활(evLoss = 노력치 손실 비율, 그 전 단계·진화체), cure = 약으로 상태 풀림(status), recover = 원정을 마치고 쇠약·피곤 풀림(status).
  *  bond = 그 순간 교감, hours = 비운 시간(미접속 쓰러짐·사망) */
 export interface VitalRecord {
@@ -407,6 +407,8 @@ export interface VitalRecord {
   factionId: string;
   kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover';
   cause?: 'absence' | 'defeat';
+  /** 원정 밖 전투에서 빈사로 져 사망했을 때 그 곳 (tower·rank) */
+  where?: string;
   status?: 'collapsed' | 'weak' | 'tired';
   bond: number;
   hours?: number;

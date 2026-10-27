@@ -42,8 +42,8 @@ import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import { logoMark } from './bha/logo';
-import { bondIdleBonus, bondStage, CARE_STATUS_NAMES, deathHoursOf, reviveEvLossOf } from '../engine/nest';
-import { BOND_STAGE_NAMES, CARE_STATUS_HINTS } from './bha/roomLogic';
+import { bondIdleBonus, bondStage, CARE_STATUS_NAMES, deathHoursOf, dyingLeftMs, reviveEvLossOf } from '../engine/nest';
+import { BOND_STAGE_NAMES, CARE_STATUS_HINTS, dyingClock } from './bha/roomLogic';
 import type { VariantMods } from '../engine/expedition';
 
 /** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax (치명 특성이 있는 몸은 상한 + 그 특성 값, GDD 45장 1번 — 전투와 같은 규칙) */
@@ -83,10 +83,10 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     const bond = h('p', 'bha-small bha-nest__bond');
     bond.dataset.bond = String(Math.round(n.bond));
     bond.append(icon('i-care-pet'), ' 교감 ', h('b', 'bha-num', `${Math.round(n.bond)}/${BALANCE.provisional.nest.bond.max}`), ` · ${BOND_STAGE_NAMES[bondStage(n.bond)]}`);
-    const bondUse = h('p', 'bha-faint', `먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax}). 높을수록 쓰러진 뒤 버티는 시간 ${deathHoursOf(n.bond)}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`);
+    const bondUse = h('p', 'bha-faint', `먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax}). 높을수록 빈사에서 버티는 시간 ${Math.round(deathHoursOf(n.bond) * 10) / 10}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`);
     const states = [
       ...(n.dead ? [notice('danger', '방에서 [부활]을 해야 다시 시작한다.', { title: CARE_STATUS_NAMES.dead, icon: 'i-broken' })] : []),
-      ...(n.collapsed && !n.dead ? [notice('danger', `${CARE_STATUS_HINTS.collapsed}. 원정·훈련·탑·쟁탈전을 못 나간다.`, { title: CARE_STATUS_NAMES.collapsed, icon: 'i-broken' })] : []),
+      ...(n.collapsed && !n.dead ? [notice('danger', `${CARE_STATUS_HINTS.collapsed}. 모험은 체력 ${Math.round(BALANCE.provisional.nest.care.dying.hpFraction * 100)}%·공격·블록 속도와 보상 절반.`, { title: `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, icon: 'i-broken' })] : []),
       ...(n.weakened ? [notice('warn', `${CARE_STATUS_HINTS.weak}. 원정 전투 최대 체력 −${Math.round(BALANCE.provisional.nest.care.weakMaxHpCut * 100)}% · 대기 보상 ×${BALANCE.provisional.idle.weakenedRate}`, { title: CARE_STATUS_NAMES.weak, icon: 'i-hunger' })] : []),
       ...(n.tired ? [notice('warn', `${CARE_STATUS_HINTS.tired}. 블록 생성 간격 +${Math.round(BALANCE.provisional.nest.care.tiredSpawnSlow * 100)}%`, { title: CARE_STATUS_NAMES.tired, icon: 'i-cond' })] : []),
     ];

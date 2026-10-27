@@ -186,13 +186,13 @@ describe('85장 6번 대기 모드', () => {
     const fresh = newSaveData('hollow', 1);
     expect(settleIdle(fresh, fresh.lastSeenAt + 5 * HOUR)).toBeNull();
   });
-  it('82장 허기: 허기가 100 에 닿으면 그때 멈추고(C.175 상한 삭제로 늘), 쇠약이면 효율 절반, 쓰러짐·사망이면 0', () => {
+  it('82장 허기: 허기가 100 에 닿으면 그때 멈추고(C.175 상한 삭제로 늘), 쇠약·빈사면 효율 절반, 사망이면 0', () => {
     const NX = BALANCE.provisional.nest;
     expect(idleActiveHours(10, { hunger: 0, weakened: false })).toBe(10);
     expect(idleActiveHours(24, { hunger: 0, weakened: false })).toBeCloseTo(100 / NX.idleHungerPerHour);
     const h = 60;
     expect(idleActiveHours(24, { hunger: h, weakened: false })).toBeCloseTo((100 - h) / NX.idleHungerPerHour);
-    expect(idleActiveHours(4, { hunger: 0, weakened: false, collapsed: true })).toBe(0);
+    expect(idleActiveHours(4, { hunger: 0, weakened: false, collapsed: true })).toBe(4 * NX.care.dying.rewardMult);
     expect(idleActiveHours(4, { hunger: 0, weakened: false, dead: true })).toBe(0);
     expect(idleActiveHours(4, { hunger: 0, weakened: true })).toBe(4 * IX.weakenedRate);
   });

@@ -606,8 +606,9 @@ export const BALANCE = {
        *  stabilityPerHour: 꺼 둔 동안만 영압 안정도 시간당 감소, 배부름 또는 컨디션이 doubleBelow 이하면 ×2.
        *  weakFullness / tiredCondition: 그 값 이하가 되는 순간 쇠약 / 피곤 — 수치를 넘긴 뒤 원정을 한 번 끝내거나 약으로만 풀린다.
        *  weakMaxHpCut: 쇠약 원정 전투 최대 체력 −20% (대기 보상 ×idle.weakenedRate). tiredSpawnSlow: 피곤 블록 생성 간격 +15%.
-       *  collapseHours: 이만큼 미접속이면 쓰러짐. deathHours: 쓰러진 채 이만큼 미접속이면 사망 — 교감 문턱별(높은 것부터) 늘어남.
-       *  reviveEvLoss: 부활 노력치 손실 비율 — 교감 문턱별 줄어듦 */
+       *  collapseHours: 이만큼 미접속이면 빈사(옛 쓰러짐). 빈사가 된 순간부터 실제 시간 dyingBaseHours + 교감 × dyingHoursPerBond(교감 100 = 24시간) 안에 치료제를 안 먹이면 사망 (GDD 102장 수정 v5.228).
+       *  dying: 빈사 모험 — 최대 체력 × hpFraction(그 위로 회복 안 됨), 공격 속도·블록 생성 속도 × speedMult, 보상(골드·먹이·노력치) × rewardMult, 빈사에서 지면 사망.
+       *  reviveEvLoss: 부활 노력치 손실 비율 — 교감 문턱별(높은 것부터) 줄어듦 */
       care: {
         conditionBelowFullness: 30,
         conditionPerHour: 4,
@@ -618,7 +619,9 @@ export const BALANCE = {
         weakMaxHpCut: 0.2,
         tiredSpawnSlow: 0.15,
         collapseHours: 48,
-        deathHours: [[80, 48], [50, 36], [0, 24]] as [number, number][],
+        dyingBaseHours: 6,
+        dyingHoursPerBond: 0.18,
+        dying: { hpFraction: 0.1, speedMult: 0.5, rewardMult: 0.5 },
         reviveEvLoss: [[80, 0.3], [50, 0.4], [0, 0.5]] as [number, number][],
       },
       /** 교감 (GDD 102-6, C.175 마스터 추천안 provisional): 0~max, 새로 시작 0. 약으로는 안 오른다.
