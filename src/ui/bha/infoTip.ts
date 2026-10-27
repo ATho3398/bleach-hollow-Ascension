@@ -77,20 +77,35 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
     const hr = host.getBoundingClientRect();
     const br = b.getBoundingClientRect();
     const k = hr.width > 0 && host.offsetWidth > 0 ? host.offsetWidth / hr.width : 1;
-    const pw = pop.offsetWidth;
-    const cx = (br.left + br.width / 2 - hr.left) * k;
-    const left = Math.max(4, Math.min(host.offsetWidth - pw - 4, cx - pw / 2));
-    // 아래·위 중 넉넉한 쪽에 두고, 그쪽 남은 높이를 넘으면 창 안에서 스크롤
+    // 아래·위 중 넉넉한 쪽에 둔다
     const below = (br.bottom - hr.top) * k + 6;
     const roomBelow = host.clientHeight - below - 4;
     const roomAbove = (br.top - hr.top) * k - 6 - 4;
-    const ph = pop.offsetHeight;
-    const down = ph <= roomBelow || roomBelow >= roomAbove;
-    const maxH = Math.max(48, down ? roomBelow : roomAbove);
-    pop.style.maxHeight = `${maxH}px`;
-    const h = Math.min(ph, maxH);
-    pop.style.left = `${left}px`;
-    pop.style.top = `${down ? below : (br.top - hr.top) * k - 6 - h}px`;
+    // C.182 UI 검수 (GDD 110장 2): 위·아래 어느 쪽에도 다 안 들어가면(구간표가 긴 영압 안정도·광기) 아이콘 옆(왼쪽·오른쪽 중 넓은 쪽)에
+    // LCD 높이 전체로 넓게 연다 — 예전엔 좁은 쪽 높이만 써서 마지막 구간 줄이 잘려 보였다. 아이콘은 덮지 않는다(PC 마우스 올림·다시 누름)
+    if (pop.offsetHeight > Math.max(roomBelow, roomAbove)) {
+      const sideL = (br.left - hr.left) * k - 6 - 4;
+      const sideR = host.offsetWidth - (br.right - hr.left) * k - 6 - 4;
+      const right = sideR >= sideL;
+      pop.style.maxWidth = `${Math.max(160, right ? sideR : sideL)}px`;
+      const pw = pop.offsetWidth;
+      const maxH = host.clientHeight - 8;
+      pop.style.maxHeight = `${maxH}px`;
+      const h = Math.min(pop.offsetHeight, maxH);
+      pop.style.left = `${right ? (br.right - hr.left) * k + 6 : (br.left - hr.left) * k - 6 - pw}px`;
+      pop.style.top = `${Math.max(4, (host.clientHeight - h) / 2)}px`;
+    } else {
+      const pw = pop.offsetWidth;
+      const ph = pop.offsetHeight;
+      const cx = (br.left + br.width / 2 - hr.left) * k;
+      const left = Math.max(4, Math.min(host.offsetWidth - pw - 4, cx - pw / 2));
+      const down = ph <= roomBelow || roomBelow >= roomAbove;
+      const maxH = Math.max(48, down ? roomBelow : roomAbove);
+      pop.style.maxHeight = `${maxH}px`;
+      const h = Math.min(ph, maxH);
+      pop.style.left = `${left}px`;
+      pop.style.top = `${down ? below : (br.top - hr.top) * k - 6 - h}px`;
+    }
     pinned = pin;
     if (pin) unreg = registerLayer(pop, close);
     document.addEventListener('pointerdown', onDown, true);
