@@ -51,8 +51,8 @@ describe('C.149 블록 이름·아이콘·문구', () => {
     expect(src).not.toContain('공격 분류');
     expect(src).not.toContain('bha-owned__row');
     expect(src).toContain('남는 특성 없음');
-    expect(src).toMatch(/isTestMode\(\)\) right\.append[\s\S]*PROVISIONAL_NOTE/);
-    expect(src).toMatch(/if \(isTestMode\(\)\) left\.querySelector/);
+    expect(src).toMatch(/devText\(\)\) right\.append[\s\S]*PROVISIONAL_NOTE/); // C.171: 개발용 문구 스위치 하나
+    expect(src).toMatch(/if \(devText\(\)\) left\.querySelector/);
   });
   it('칸·카드에 속성 강화 n/100 (n/3 속성 칩 없음)', () => {
     const src = read('src/ui/buildPanel.ts');

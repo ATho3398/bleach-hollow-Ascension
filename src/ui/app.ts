@@ -92,6 +92,7 @@ import { useRerollTicket } from '../shop';
 import { clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
+import { shownName } from './displayName';
 
 /** 칭호 id → 종족별 표기 이름 */
 function titleLabel(id: string, factionId: string): string {
@@ -1058,7 +1059,7 @@ export function startApp(host: HTMLElement): void {
     const kind = warningKind(p, Boolean(exp.tutorial));
     if (kind && !warnOpen) {
       warnOpen = true;
-      playWarning({ kind, name: pickFaction(p.enemy.name, faction.id), elementId: p.enemy.element, factionId: faction.id, onDone: () => { warnOpen = false; beginBattle(faction, exp); } });
+      playWarning({ kind, name: shownName(pickFaction(p.enemy.name, faction.id)), elementId: p.enemy.element, factionId: faction.id, onDone: () => { warnOpen = false; beginBattle(faction, exp); } });
       return;
     }
     beginBattle(faction, exp);
@@ -1176,7 +1177,7 @@ export function startApp(host: HTMLElement): void {
       petNotes.push(...(gearNotes.length > 4 ? [{ eyebrow: '장비', title: `장비 ${gearNotes.length}개를 가지고 돌아왔다`, meta: '보관함 장비 탭에서 장착' }] : gearNotes));
       growth = {
         newTraits: summarize(exp).keptTraits.length,
-        evolvedTo: evo?.ok ? formDisplayName(save.evolution, faction.id) : null,
+        evolvedTo: evo?.ok ? shownName(formDisplayName(save.evolution, faction.id)) : null,
         newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
       };
       if (evo?.ok) {

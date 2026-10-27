@@ -1,15 +1,16 @@
-// 진화체 도감 화면 (GDD 20-5, T-3 가로 배치): 머리에 단계 탭(발견 수) · 왼쪽 진화체 목록 · 오른쪽 고른 진화체의 상세.
-// 해금된 진화체는 이름·속성 마크·종족값, 미해금은 "?" 잠금 행(히든은 "히든 ?"). 히든은 목록 맨 뒤, 지금 진화체는 "지금" 표시. 이름은 자리 표시(임시).
+// 진화체 도감 화면 (GDD 20-5, T-3 가로 배치): 머리에 발견 수 · 왼쪽 진화체 목록 · 오른쪽 고른 진화체의 상세.
+// C.171: 단계 탭 대신 한 목록 + 단계 머리줄. 해금된 진화체는 이름·속성 마크·종족값, 미해금은 "?" 잠금 행(히든은 "히든 ?"). 히든은 목록 맨 뒤, 지금 진화체는 "지금" 표시. 이름은 자리 표시(임시).
 import { FORM_TABLE, formHint, formName, formsOfTier } from '../data/evolution';
 import type { FormDef } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
-import { h, icon, provisionalTag, seg } from './bha/dom';
-import { lcdHead, lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
+import { h, icon, provisionalTag } from './bha/dom';
+import { lcdHead, lcdPage, masterDetail, type ListRow } from './bha/lcdpage';
 import { elementDot, paintElement } from './bha/element';
 import { formCardModel, sortFormsForDex } from './bha/nestLogic';
 import { logoMark } from './bha/logo';
 import { abilityParagraph, dexAbilityLines, evolutionNote, formEffectLines } from './evolutionPanel';
+import { shownName } from './displayName';
 
 /** 속성 마크 줄 (속성을 잇는 진화체는 "속성 잇기") */
 function marksOf(f: FormDef, factionId: string): HTMLElement {
@@ -20,11 +21,11 @@ function marksOf(f: FormDef, factionId: string): HTMLElement {
   return marks;
 }
 
-function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<string>, currentFormId: string | null): ListRow {
+function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<string>, currentFormId: string | null, caption?: string): ListRow {
   const m = formCardModel(f, unlocked, currentFormId);
   if (m.state === 'unknown') {
     return {
-      label: '미발견', cls: 'is-unknown',
+      label: '미발견', cls: 'is-unknown', caption,
       content: [icon('i-unknown'), h('span', 'bha-mdrow__name', '? ? ?'), h('small', 'bha-mdrow__state', m.hidden ? '히든' : '미발견')],
       detail: () => {
         const d = h('div', 'bha-mdhint');
@@ -33,9 +34,9 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
       },
     };
   }
-  const name = formName(f, faction.id);
+  const name = shownName(formName(f, faction.id));
   return {
-    label: name,
+    label: name, caption,
     paint: (node: HTMLElement) => paintElement(node, m.element),
     content: [marksOf(f, faction.id), h('span', 'bha-mdrow__name', name), ...(m.current ? [h('small', 'bha-mdrow__state', '지금')] : m.hidden ? [h('small', 'bha-mdrow__state', '히든')] : [])],
     detail: () => {
@@ -53,24 +54,20 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
   };
 }
 
-export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveData, tier = 2, title: string | Node = '진화체 도감'): void {
+/** 단계 탭 대신 한 목록에 단계 머리줄(GDD 100장 #73): 2단계 → 3단계 → … 을 이어 붙인다. 첫 선택 = 지금 진화체(없으면 맨 위) */
+export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveData, title: string | Node = '진화체 도감'): void {
   const unlocked = new Set(save.formDex);
   const found = FORM_TABLE.filter((f) => unlocked.has(f.id)).length;
-  const rowsOf = (t: number) => sortFormsForDex(formsOfTier(t)).map((f) => formRow(faction, f, unlocked, save.evolution.formId));
-
   const tiers = [2, 3, 4, 5];
-  const md = masterDetail(rowsOf(tier), 0, '진화체');
-  const tabs = seg(
-    tiers.map((t) => {
-      const forms = formsOfTier(t);
-      return { id: String(t), label: faction.tierNames[t - 1]!, count: `${forms.filter((f) => unlocked.has(f.id)).length}/${forms.length}` };
-    }),
-    String(tier),
-    (id) => md.setRows(rowsOf(Number(id))),
-    { stack: true },
-  );
-  tabs.setAttribute('aria-label', '단계');
+  const forms = tiers.flatMap((t) => sortFormsForDex(formsOfTier(t)).map((f, i) => ({ f, t, first: i === 0 })));
+  const rows = forms.map(({ f, t, first }) => {
+    const all = formsOfTier(t);
+    const cap = first ? `${faction.tierNames[t - 1]!} ${all.filter((x) => unlocked.has(x.id)).length}/${all.length}` : undefined;
+    return formRow(faction, f, unlocked, save.evolution.formId, cap);
+  });
+  const at = Math.max(0, forms.findIndex(({ f }) => f.id === save.evolution.formId));
+  const md = masterDetail(rows, at, '진화체');
   const sub = h('span');
   sub.append('발견 ', h('b', '', String(found)), ` / ${FORM_TABLE.length}`);
-  lcdPage(root, { cls: 'bha-dex-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined, aside: [selectLast(tabs)] }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-dex-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [md.list], [md.detail]);
 }

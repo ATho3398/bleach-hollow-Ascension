@@ -261,10 +261,10 @@ describe('91장 세이브·참고 줄', () => {
 describe('94장 B 후속: 같은 속성 3개 보너스 삭제 · 흡수 화면 문구', () => {
   it('흡수 화면: 가진 속성이면 갈래 설명이 "강화", n/3 표시 없음, 임시 데이터 문구는 테스트 모드에서만', () => {
     const src = read('src/ui/absorbView.ts');
-    expect(src).toContain("const gain = owned() ? '강화' : '특성·속성 O';");
+    expect(src).toContain("owned() && m !== 'stat' ? MODE_LABELS[m].sub.replace('특성', '강화')"); // C.171: 표 대신 버튼 아래 글
     expect(src).not.toContain('elementBonusCount');
     expect(src).not.toContain('completedElements');
-    expect(src).toMatch(/isTestMode\(\) \? \[\.\.\.parts\.main, el\('p', 'bha-faint', PROVISIONAL_NOTE\)\] : parts\.main/);
+    expect(src).toMatch(/devText\(\) \? \[\.\.\.parts\.main, el\('p', 'bha-faint', PROVISIONAL_NOTE\)\] : parts\.main/); // C.171: 개발용 문구 스위치 하나(devText = 테스트 모드)
     expect('elementBonusCount' in BALANCE.provisional.absorb).toBe(false);
     expect('elementSkillBonus' in BALANCE.provisional.absorb).toBe(false);
   });

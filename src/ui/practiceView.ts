@@ -13,6 +13,7 @@ import { lcdHead, lcdPage } from './bha/lcdpage';
 import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter } from './bha/expedition';
 import { elementDot, elementMark, paintElement } from './bha/element';
 import { battleLabels, comboBlockLabel, liberationBlockLabel, skillBlockLabel } from './labels';
+import { devText, shownName } from './displayName';
 
 /** 연습 목록용 패턴 이름 (임시 표시) */
 export const PATTERN_LABEL: Record<EnemyPatternKind, string> = {
@@ -90,7 +91,7 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
       x.b.classList.toggle('is-active', x.id === filter.rank);
       x.b.setAttribute('aria-checked', String(x.id === filter.rank));
     }
-    const foes = filterFoes(ENEMIES, filter);
+    const foes = filterFoes(ENEMIES.filter((e) => !e.testOnly || devText()), filter); // 테스트 적은 테스트 모드에서만 (GDD 100장 #70)
     count.textContent = `${foes.length}명`;
     listEl.replaceChildren();
     for (const enemy of foes) {
@@ -99,7 +100,7 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
       row.type = 'button';
       const mark = el('span', 'bha-foerow__mark');
       mark.append(elementDot(enemy.element, faction.id));
-      const name = el('span', 'bha-foerow__name', pickFaction(enemy.name, faction.id));
+      const name = el('span', 'bha-foerow__name', shownName(pickFaction(enemy.name, faction.id)));
       name.append(' ', tag(enemy.class === 'elite' ? '강적' : '일반', enemy.class));
       const meta = el('span', 'bha-foerow__meta');
       const weak = weaknessText(enemy, faction.id);
@@ -112,8 +113,8 @@ export function practiceListView(root: HTMLElement, faction: FactionConfig, reco
     }
   }
   refresh();
-  // 가로 LCD (T-3): 머리 = 제목, 왼쪽 = 필터, 오른쪽 = 상대 목록 (목록만 그 열 안에서 스크롤). 돌아가기는 취소 버튼
-  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 0.8fr) minmax(0, 1.2fr)' }, lcdHead({ title: h.title ?? `${labels.factionName} · 전투 연습`, sub }), [filters], [listEl]);
+  // 가로 LCD (T-3): 머리 = 제목, 왼쪽 = 필터(좁게), 오른쪽 = 상대 목록(넓게, GDD 100장 #70) (목록만 그 열 안에서 스크롤). 돌아가기는 취소 버튼
+  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 0.6fr) minmax(0, 1.4fr)' }, lcdHead({ title: h.title ?? `${labels.factionName} · 전투 연습`, sub }), [filters], [listEl]);
 }
 
 export interface PracticeResultHandlers {
@@ -136,7 +137,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     : fin.kind === 'skill'
       ? finSkill()
       : { 'basic-attack': '기본 공격', special: '필살(옛 기록)', void: labels.voidBlock, reflect: '반사', stored: '저장 필살(옛 기록)', combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', liberation: liberationBlockLabel(faction.id, fin.element), skill: '' }[fin.kind];
-  const name = pickFaction(enemy.name, faction.id);
+  const name = shownName(pickFaction(enemy.name, faction.id));
 
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');

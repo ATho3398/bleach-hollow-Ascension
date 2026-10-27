@@ -3,12 +3,9 @@
 import { critChanceBonus } from '../engine/absorb/build';
 import { roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
-import { baseTilesFor, getTile, synergyName, tileName, upgradeIdOf } from '../data/tiles';
+import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
 import { canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
-import { applyTilePreset, cellsOfPlan, deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
-import { beginPlanning, createExpedition } from '../engine/expedition';
-import { roadPlanner } from './bha/road';
-import { presetPanel } from './bha/tilePresets';
+import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { choosePet, enhanceGearItem, equipGearItem, equipInventoryItem, gearLineText, gearName, gearSlotName, gearSpecialText, gearStatText, inventoryOf, petAffinityText, sellGearEntry, unequipGearItem, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { GEAR_GRADE_NAMES, GEAR_KIND_ICONS, GEAR_SLOT_KIND, GEAR_SLOTS, slotsForKind } from '../data/gear';
 import { enhanceCost, equippedSlotOf, findGear, gearCarry, sellGold } from '../engine/gear';
@@ -152,7 +149,9 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   evoPanel.append(h('div', 'bha-row', ''));
   const evoBtns = evoPanel.lastElementChild!;
   evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, explain, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, gearPanel(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); }), evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  // GDD 100장 #83·84: 장비 칸을 왼쪽 상태 바로 아래로 올린다(첫 선택 = 왼쪽 위 장비 칸), 오른쪽 능력치는 2열(CSS)이라 진화 정보까지 짧다
+  const gear = gearPanel(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, explain, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
@@ -324,41 +323,25 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       page.right.replaceChildren(list);
       return;
     }
-    // 배치 편집기 (GDD 85장 11번, C.141): 가진 타일을 카드로 보고 길 8칸에 놓아 보며 배치 프리셋을 만든다 (원정 출발 화면과 같은 판·같은 프리셋).
-    // 저장하지 않는 임시 원정 상태 위에서 놓을 뿐이라 세이브는 프리셋 저장·삭제·이름 바꾸기만 바꾼다
-    const board = createExpedition({
-      factionId: faction.id, seed: 1, hunger: save.nest.hunger, condition: save.nest.condition, deck: ownedTileList(save.tiles, faction.id),
-      build: save.build, evolution: save.evolution, tileVariants: true,
-    });
-    beginPlanning(board, placementLimitOf(save));
-    const planner = roadPlanner({ exp: board, tileName: (id) => tileName(id, faction.id), synergyName: (id) => synergyName(id, faction.id) });
-    const presets = presetPanel({
-      list: () => tilePresetsFor(save.tiles, faction.id),
-      save: (name, index) => {
-        const r = saveTilePreset(save, name, cellsOfPlan(board), index);
-        if (r.ok) persist();
-        return r;
-      },
-      rename: (index, name) => {
-        const ok = renameTilePreset(save, index, name);
-        if (ok) persist();
-        return ok;
-      },
-      remove: (index) => {
-        const ok = deleteTilePreset(save, index);
-        if (ok) persist();
-        return ok;
-      },
-      load: (preset) => {
-        const r = applyTilePreset(board, preset);
-        planner.adopt();
-        return `${preset.name} 불러옴: ${r.placed}칸${r.missing.length > 0 ? ` · 없는 타일 ${r.missing.length}장은 건너뜀` : ''}`;
-      },
-    }, (id) => tileName(id, faction.id), `최대 ${placementLimitOf(save)}칸`);
-    info.append(presets);
-    if (ownedTileList(save.tiles, faction.id).length === 0) planner.el.append(h('p', 'bha-faint', '가진 타일이 없다. 상점 [타일 뽑기]로 모은다.'));
+    // 가진 타일 목록 (GDD 100장 #57): 배치(길에 놓기·프리셋)는 원정 출발 화면에서만 — 보관함은 보기·합성만
+    const owned = deckTilesFor(faction.id).filter((t) => (save.tiles.collection[t.id] ?? 0) > 0);
+    const list = h('div', 'bha-stack');
+    list.dataset.ownedTiles = '';
+    for (const t of owned) {
+      const row = h('div', 'bha-deckrow');
+      const kind = tileKindOf(t);
+      row.style.setProperty('--tile', `var(--bha-tile-${kind.cls})`);
+      const ic = h('span', 'bha-deckrow__icon');
+      ic.append(icon(kind.icon));
+      const main = h('span', 'bha-deckrow__main');
+      main.append(h('span', 'bha-deckrow__name', tileName(t.id, faction.id)), h('span', 'bha-deckrow__desc', `${tileHint(t)} · 보유 ${save.tiles.collection[t.id]}`));
+      row.append(ic, main);
+      list.append(row);
+    }
+    if (owned.length === 0) list.append(h('p', 'bha-faint', '가진 타일이 없다. 상점 [타일 뽑기]로 모은다.'));
+    info.append(h('p', 'bha-faint', '길에 놓기는 원정 출발 화면에서 한다.'));
     page.left.replaceChildren(info);
-    page.right.replaceChildren(planner.el);
+    page.right.replaceChildren(list);
   }
   fill();
 }
@@ -369,12 +352,27 @@ const itemsUi: { cat: ItemCategory; skinSub: SkinSubTab } = { cat: 'food', skinS
 
 /** 카드 설명 한 줄 (C.146, 사용자 "i6"): 배지가 이미 말하는 "착용 중"·"보유"·"데리고 다니는 중"은 빼고, 스킨 카드는 꾸밈 분류 이름을 보인다 */
 export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'cosmeticCategory'>): string {
-  if (e.category === 'skin' && (e.detail === '착용 중' || e.detail === '보유')) return e.cosmeticCategory ? categoryName(e.cosmeticCategory as CosmeticCategory) : '';
+  // 캐릭터 스킨은 하위 탭이 이미 '캐릭터'라 카드마다 '스킨' 반복 줄을 뺀다 (GDD 100장 #61)
+  if (e.category === 'skin' && (e.detail === '착용 중' || e.detail === '보유')) return e.cosmeticCategory && e.cosmeticCategory !== 'skin' ? categoryName(e.cosmeticCategory as CosmeticCategory) : '';
   return e.detail.replace(/^데리고 다니는 중 · /, '');
 }
+/** 카드 아래 동작 칩: 사용 · 착용/해제 · 데리고 가기/두고 가기 · 장착/강화 (없으면 undefined) */
+export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'>): string | undefined {
+  if (e.gear) return e.gear.slot ? '해제·강화' : '장착·강화';
+  switch (e.action) {
+    case 'use': return '사용';
+    case 'equip': return '착용';
+    case 'unequip': return '해제';
+    case 'take': return '데리고 가기';
+    case 'leave': return '두고 가기';
+    default: return undefined;
+  }
+}
+
 function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, petOnly = false): [HTMLElement, HTMLElement] {
   // 펫은 위쪽 '펫' 탭이 따로 보인다 (C.149): 물건 탭의 분류에는 없다
-  const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly);
+  // 물건 분류에서 '타일'은 뺀다 — 위쪽 '타일' 탭과 같은 것이 두 곳에 있었다 (GDD 100장 #56)
+  const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly && c !== 'tile');
   if (!cats.includes(itemsUi.cat)) itemsUi.cat = cats[0]!;
   const all = inventoryOf(save, faction);
   // 스킨: 옛 기기 껍데기 색·견본·시험 기기는 빼고(GDD 99장 3, C.163), '기기' 하위 탭은 기본 + 가진 정식 기기 카드(누르면 장착)
@@ -411,6 +409,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     grade: e.gear?.grade,
     badge: e.gear ? (e.gear.slot ? (slotsForKind(e.gear.kind).length > 1 ? `장착 · ${gearSlotName(e.gear.slot, faction)}` : '장착') : undefined) : e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
     state: e.action === 'unequip' || e.action === 'leave' ? 'worn' : e.lock ? 'locked' : undefined,
+    foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => openItem(faction, save, e, artOf(e), changed),
   }));
   const empty = itemsUi.cat === 'skin' ? SKIN_SUB_EMPTY : itemsUi.cat === 'equipment' ? '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·상점 장비 탭·떠돌이 상인에게서 얻는다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
@@ -419,7 +418,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   if (itemsUi.cat === 'skin') {
     // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
     const skins = all.filter((e) => e.category === 'skin' && listed(e));
-    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
+    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: `보유 ${id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length}` })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
   }
   box.append(itemGrid(cards, empty));
   return [box, h('div')];

@@ -9,6 +9,8 @@ import { lcdHead, lcdPage, masterDetail, selectLast, type ListRow } from './bha/
 import { showToast } from './bha/nest';
 import { getOverlayHost } from './bha/overlayHost';
 import { titleRowKind } from './bha/nestLogic';
+import { logoMark } from './bha/logo';
+import { devText } from './displayName';
 
 export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
   { kind: 'rank', label: '등급' },
@@ -19,6 +21,8 @@ export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
 ];
 
 export const TITLE_NOTE = '칭호 조건은 모두 임시이거나 아직 없다(기획서 11-7 미정). "임시" 표시가 붙은 칭호만 해금될 수 있다.';
+/** 일반 화면의 조건 문구 (GDD 100장 #75: 조건 자체는 11-7 [미정] 그대로 — 테스트 모드에서만 TITLE_NOTE) */
+export const TITLE_CONDITION_SOON = '조건 공개 예정';
 
 export function formatUnlockTime(ms: number): string {
   const d = new Date(ms + 9 * 3600_000); // KST 표기
@@ -49,10 +53,10 @@ function titleRow(def: TitleDef, factionId: string, unlockedAt: number | null): 
       const body = h('p', 'bha-mddetail__body');
       if (rk === 'hidden') body.append('조건 비공개');
       else {
-        body.append(rk === 'unlocked' ? (v.sub ?? '') : def.condition ? '조건은 임시다' : '조건 미정');
+        body.append(rk === 'unlocked' ? (v.sub ?? '') : !devText() ? TITLE_CONDITION_SOON : def.condition ? '조건은 임시다' : '조건 미정');
         if (def.provisional) body.append(' ', provisionalTag('임시 조건'));
       }
-      return [head, body, h('p', 'bha-faint', TITLE_NOTE)];
+      return devText() ? [head, body, h('p', 'bha-faint', TITLE_NOTE)] : [head, body];
     },
   };
 }
@@ -75,7 +79,7 @@ export function titleDexView(root: HTMLElement, faction: FactionConfig, save: Sa
   tabs.setAttribute('aria-label', '칭호 종류');
   const sub = h('span');
   sub.append('해금 ', h('b', '', String(defsAll.filter((d) => at.has(d.id)).length)), ` / ${defsAll.length}`);
-  lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title, sub, aside: [selectLast(tabs)] }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-titles-page', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined, aside: [selectLast(tabs)] }), [md.list], [md.detail]);
 }
 
 /** 아직 알리지 않은 해금을 토스트(.bha-toast)로 보여 주고 seen 처리한다. 2.5초 뒤 올라가며(is-out) animationend 에서 제거한다 */
@@ -86,7 +90,7 @@ export function showTitleToasts(save: SaveData, faction: FactionConfig, persist:
   fresh.forEach((u, i) => {
     const def = TITLES.find((d) => d.id === u.titleId);
     if (!def) return;
-    showToast({ eyebrow: '칭호 해금', title: titleName(def, faction.id), meta: def.provisional ? '임시 조건 · 책장 > 칭호 도감에서 확인' : '책장 > 칭호 도감에서 확인' }, base + i);
+    showToast({ eyebrow: '칭호 해금', title: titleName(def, faction.id), meta: def.provisional && devText() ? '임시 조건 · 책장 > 칭호 도감에서 확인' : '책장 > 칭호 도감에서 확인' }, base + i);
     u.seen = true;
   });
   persist();

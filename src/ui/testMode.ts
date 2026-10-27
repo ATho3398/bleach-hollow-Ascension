@@ -4,6 +4,7 @@ import { countTap, loadTestConfig, resolveTestMode, saveTestConfig, setTestFlag,
 import { versionLabel } from '../version';
 import { button, el } from './bha/dom';
 import { showToast } from './bha/nest';
+import { setDevText } from './displayName';
 
 let active = false;
 let cfg: TestConfig = { speed: 1 };
@@ -19,6 +20,7 @@ const local = (): Storage | null => {
 /** 앱 시작 때 한 번: 주소(?test=1/0)·기기 표시로 켜졌는지 정하고, 켜졌으면 띠를 단다 */
 export function initTestMode(): boolean {
   active = resolveTestMode(location.search, local());
+  setDevText(active);
   if (active) {
     cfg = loadTestConfig(local());
     mountBand();

@@ -17,6 +17,7 @@ import { splitApp } from './bha/split';
 import { PATTERN_LABEL } from './practiceView';
 import { battleLabels } from './labels';
 import { playCosmeticFx } from './bha/cosmeticFx';
+import { shownName } from './displayName';
 
 /** 번호(1~10, null = 무번호)의 종족별 표시 이름 */
 export function rankLabel(faction: FactionConfig, n: number | null): string {
@@ -64,7 +65,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     if (mine) who.append(tag('나', 'kind'));
     else {
       const holder = getHolder(id);
-      who.append(elementDot(holder.element, faction.id), pickFaction(holder.name, faction.id), ' ', el('span', 'bha-faint', difficultyText(faction, holder.difficulty)));
+      who.append(elementDot(holder.element, faction.id), shownName(pickFaction(holder.name, faction.id)), ' ', el('span', 'bha-faint', difficultyText(faction, holder.difficulty)));
     }
     row.append(num, name, who);
     list.append(row);
@@ -79,7 +80,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     const mark = el('span', 'bha-foerow__mark');
     mark.append(elementDot(holder.element, faction.id));
     const body = el('div');
-    const nm = el('span', 'bha-foerow__name', `${rankLabel(faction, c.targetRank)} · ${pickFaction(holder.name, faction.id)}`);
+    const nm = el('span', 'bha-foerow__name', `${rankLabel(faction, c.targetRank)} · ${shownName(pickFaction(holder.name, faction.id))}`);
     body.append(nm, el('span', 'bha-foerow__meta', holderMeta(holder, faction)));
     card.append(mark, body);
     right.push(
@@ -94,7 +95,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     right.push(notice('good', `${rankLabel(faction, 1)} — 더 오를 곳이 없다.`, { icon: 'i-flag-win', title: '정상' }));
   } else {
     const holder = getHolder(c.opponentId!);
-    right.push(notice('warn', `${pickFaction(holder.name, faction.id)}에게 졌다. 원정을 한 번 다녀온 뒤 다시 도전할 수 있다.`, { icon: 'i-timer', title: '재도전 대기' }));
+    right.push(notice('warn', `${shownName(pickFaction(holder.name, faction.id))}에게 졌다. 원정을 한 번 다녀온 뒤 다시 도전할 수 있다.`, { icon: 'i-timer', title: '재도전 대기' }));
   }
   if (r.history.everRanked) right.push(el('p', 'bha-faint', `최고 기록 ${rankLabel(faction, r.history.best)}`));
 
@@ -108,7 +109,7 @@ export interface RankResultHandlers {
 export function rankResultView(root: HTMLElement, faction: FactionConfig, holder: RankHolderDef, s: CombatState, res: ChallengeResult, h: RankResultHandlers): void {
   const labels = battleLabels(faction);
   const won = res.won;
-  const name = pickFaction(holder.name, faction.id);
+  const name = shownName(pickFaction(holder.name, faction.id));
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(won ? 'i-flag-win' : 'i-broken'));

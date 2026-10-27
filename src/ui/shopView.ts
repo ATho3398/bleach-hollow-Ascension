@@ -2,7 +2,7 @@
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 배치 칸만 확인 창 1번, 나머지는 바로 산다. C.140 (GDD 86장 4번): 산 꾸밈·스킨은 보관함에서 착용(여기선 "보유").
 // 떠돌이 상인(GDD 85장 5번)이 와 있으면 제목 토글에 [떠돌이 상인] — 같은 줄 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
-import { petNoticeOf } from '../inventory';
+import { equipInventoryItem, petNoticeOf, unequipInventoryItem } from '../inventory';
 import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
@@ -21,6 +21,7 @@ import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
 import { showGuide, tileDrawCard } from './guideView';
 import { markGuideDone } from '../engine/tutorial';
+import { shownName } from './displayName';
 
 export type ShopTab = ItemCategory | 'wanderer';
 /** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
@@ -139,12 +140,12 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const close = itemDialog({
       heading: '상품 구매',
       name: row.name,
-      desc: [row.effect, cos && cos.category !== 'skin' ? `${CATEGORIES.find((c) => c.id === cos.category)?.where ?? ''}`.trim() : ''].filter(Boolean).join(' · ') || (cos?.category === 'skin' ? '입히면 모습이 바뀐다. 사면 보관함에서 장착한다.' : ''),
+      desc: [row.effect, cos && cos.category !== 'skin' ? `${CATEGORIES.find((c) => c.id === cos.category)?.where ?? ''}`.trim() : ''].filter(Boolean).join(' · ') || (cos?.category === 'skin' ? '입히면 모습이 바뀐다. 사면 카드를 눌러 바로 착용한다.' : ''),
       art: artOf(row, true),
       tag: cos?.category === 'skin' ? '미리보기' : undefined,
       have: row.have ?? (row.owned ? '보유' : undefined),
       qty: { max },
-      lock: row.owned ? '이미 가지고 있다 — 보관함에서 장착한다' : row.lock,
+      lock: row.owned ? '이미 가지고 있다' : row.lock,
       actions: [{
         key: 'buy', label: (q) => (row.price === null ? '—' : `${cur(row.currency)} ${price * q}`), disabled: !row.canBuy || row.owned,
         onClick: (q) => { close(); buy(row, q); },
@@ -158,14 +159,26 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     return a;
   };
 
+  /** 가진 꾸밈은 상점에서도 바로 착용·해제 (GDD 100장 #64: 기기 탭과 같게 — 보관함까지 갈 필요 없음) */
+  const toggleWear = (row: ShopRow) => {
+    const on = !row.worn;
+    if (!(on ? equipInventoryItem(save, row.id) : unequipInventoryItem(save, row.id))) return;
+    hd.persist();
+    hd.onWear?.();
+    showToast({ eyebrow: '상점', title: `${shownName(row.name)} ${on ? '착용' : '해제'}` }, 0, 1800);
+    render();
+  };
+
   const cardOf = (row: ShopRow & { grade?: string }): HTMLElement => {
     const owned = Boolean(row.owned);
+    // 보관 가득이면 가격 대신 '가득' (GDD 100장 #63: 가격이 살아 있어 살 수 있는 것처럼 보였다)
+    const full = !owned && !row.canBuy && /가득/.test(row.lock ?? '');
     const c = itemCard({
-      id: row.id, name: row.name, detail: row.effect || (owned ? '보관함에서 착용' : undefined),
-      art: artOf(row), badge: owned ? '보유' : row.have ?? undefined,
-      foot: owned ? '보관함에서 착용' : row.price === null ? '—' : `${cur(row.currency)} ${row.price}`,
-      state: owned ? 'owned' : row.canBuy ? undefined : 'locked',
-      onClick: () => openDetail(row),
+      id: row.id, name: row.name, detail: row.effect || undefined,
+      art: artOf(row), badge: owned ? (row.worn ? '착용 중' : '보유') : row.have ?? undefined,
+      foot: owned ? (row.worn ? '해제' : '착용') : full ? '가득' : row.price === null ? '—' : `${cur(row.currency)} ${row.price}`,
+      state: owned ? (row.worn ? 'worn' : 'owned') : row.canBuy ? undefined : 'locked',
+      onClick: () => (owned ? toggleWear(row) : openDetail(row)),
     });
     if (row.grade) c.dataset.grade = row.grade;
     if (getGoldItem(row.id)?.kind === 'gear') c.classList.add('is-grade-normal');
@@ -199,7 +212,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const skinRows = shopUi.tab === 'skin' ? rows.filter((r) => { const c = getCosmetic(r.id); return !c || skinListed(c); }) : [];
     const devices = shopUi.tab === 'skin' && shopUi.skinSub === 'device' ? deviceCards(save, faction, () => { hd.persist(); hd.onWear?.(); render(); }) : null;
     const subTabs = shopUi.tab === 'skin'
-      ? categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skinRows.filter((r) => skinSubOf(r.category) === id).length })), shopUi.skinSub, (id) => {
+      // 숫자 = 지금 살 수 있는 수 '판매 n' (기기 탭은 가진 기기 '보유 n') — 보관함은 '보유 n' (GDD 100장 #65)
+      ? categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? `보유 ${deviceEntries(save, faction).length}` : `판매 ${skinRows.filter((r) => skinSubOf(r.category) === id && !r.owned).length}` })), shopUi.skinSub, (id) => {
         shopUi.skinSub = id as SkinSubTab;
         lastScroll = 0;
         render();

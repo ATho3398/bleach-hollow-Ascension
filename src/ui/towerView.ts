@@ -14,6 +14,7 @@ import { splitApp } from './bha/split';
 import { battleLabels } from './labels';
 import { departTabs, type DepartTab } from './storyView';
 import { playCosmeticFx } from './bha/cosmeticFx';
+import { shownName } from './displayName';
 
 export interface TowerViewHandlers {
   onTab: (id: DepartTab) => void;
@@ -23,9 +24,9 @@ export interface TowerViewHandlers {
 
 /** 층의 적 이름: 꼭대기 = 종족 설정 finalBossName, 보스 = 보스 이름, 아니면 적 이름 */
 export function towerEnemyName(faction: FactionConfig, f: TowerFloor): string {
-  if (f.final) return towerLabels(faction).finalBossName;
-  if (f.bossId) return bossName(f.bossId, faction.id);
-  return pickFaction(f.enemy.name, faction.id);
+  if (f.final) return shownName(towerLabels(faction).finalBossName);
+  if (f.bossId) return shownName(bossName(f.bossId, faction.id));
+  return shownName(pickFaction(f.enemy.name, faction.id));
 }
 
 export const TOWER_KIND_LABEL: Record<TowerFloor['kind'], string> = { normal: '일반', elite: '강적', boss: '보스' };

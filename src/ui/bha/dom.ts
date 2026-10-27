@@ -15,6 +15,7 @@
 //   emptyState(text, { icon?, action? }) → .bha-empty 빈 상태 (가운데 아이콘 + 한 줄 + 할 일 버튼, GDD 100장 #87)
 import { fixParticles } from '../../engine/josa';
 import { el } from '../dom';
+import { devText } from '../displayName';
 import { endScreen } from './screenScope';
 import { cssRatio, sliderPct } from './util';
 
@@ -165,8 +166,12 @@ export function tag(text: string, mod?: 'provisional' | 'kind' | 'elite' | 'norm
   return el('span', mod ? `bha-tag bha-tag--${mod}` : 'bha-tag', text);
 }
 
-/** 임시 데이터 표시 태그 (CLAUDE.md 규칙 1: provisional 은 화면에서도 임시로 보이게) */
-export const provisionalTag = (text = '임시'): HTMLElement => tag(text, 'provisional');
+/** 임시 데이터 표시 태그 (CLAUDE.md 규칙 1). GDD 100장(C.171): 테스트 모드에서만 보이고 일반 화면은 숨김 — 설정 > 정보에 '임시 수치 있음' 한 줄 */
+export function provisionalTag(text = '임시'): HTMLElement {
+  const t = tag(text, 'provisional');
+  t.hidden = !devText();
+  return t;
+}
 
 export type NoticeKind = 'info' | 'warn' | 'good' | 'rare' | 'danger' | 'risk';
 const NOTICE_ICON: Record<NoticeKind, string> = { info: 'i-info', warn: 'i-warn', good: 'i-check', rare: 'i-rare', danger: 'i-warn', risk: 'i-risk' };

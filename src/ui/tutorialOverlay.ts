@@ -17,6 +17,8 @@ export interface TutorialHandle {
   dismiss(): void;
   /** 전투 화면이 "플레이어가 블록을 썼다"를 알린다 (직접 해 보기 장면의 통과 조건) */
   blockUsed(): void;
+  /** 전투 화면이 블록 바의 블록 수를 알린다 (직접 해 보기 장면의 minBlocks 조건) */
+  trayCount(n: number): void;
 }
 
 export interface TutorialOverlayOptions {
@@ -41,7 +43,7 @@ export const TUTORIAL_HOLE_PAD = 6;
 
 /** 장면 제목 앞 아이콘 (장면 id → 스프라이트). 모르는 장면은 info */
 const SCENE_ICON: Record<string, string> = {
-  auto: 'i-play', tray: 'i-attack', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', liberation: 'i-special', after: 'i-evolve',
+  auto: 'i-play', tray: 'i-attack', try: 'i-practice', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', liberation: 'i-special', after: 'i-evolve',
   // 첫 원정·타일 안내 (C.120)
   walk: 'i-loop', encounter: 'i-practice', absorb: 'i-absorb', modes: 'i-absorb', practice: 'i-evolve', next: 'i-nest', tiles: 'i-deck', deck: 'i-deck', place: 'i-tile-prey', combo: 'i-tile-combo', draw: 'i-rare', special: 'i-tile-combo',
 };
@@ -85,6 +87,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
 
   let practiceOn = false;
   let practiced = false;
+  let blocks = 0;
+  /** 직접 해 보기를 아직 못 넘는가: 블록을 하나 쓰고, minBlocks 만큼 모일 때까지 */
+  const mustWait = (scene: TutorialScene) => !!scene.practice && (!practiced || blocks < (scene.minBlocks ?? 0));
+  let nextBtn: HTMLButtonElement | null = null;
   const setPractice = (on: boolean) => {
     if (on === practiceOn) return;
     practiceOn = on;
@@ -179,7 +185,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
       render();
     } });
     prev.disabled = state.index === 0;
-    const mustTry = !!scene.practice && !practiced;
+    const mustTry = mustWait(scene);
     const next = button({ label: last ? opts.finishLabel ?? '전투 시작' : '다음', variant: 'primary', size: 'small', onClick: () => {
       state = tutorialNext(state);
       if (isTutorialActive(state)) render();
@@ -187,6 +193,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     } });
     next.append(icon(last ? 'i-play' : 'i-chevron-right'));
     next.disabled = mustTry; // 직접 해 보기는 블록을 하나 써야 넘어간다 (건너뛰기는 언제나 가능)
+    nextBtn = next;
     setPractice(!!scene.practice);
     const actions = el('div', 'bha-tut__actions');
     actions.append(skip, prev, next);
@@ -231,6 +238,11 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
         practiced = true;
         render();
       }
+    },
+    trayCount: (n) => {
+      if (n === blocks) return;
+      blocks = n;
+      if (practiceOn && nextBtn) nextBtn.disabled = mustWait(SCENES[state.index]!);
     },
   };
 }

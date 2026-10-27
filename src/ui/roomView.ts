@@ -19,6 +19,7 @@ import { careFeedback } from './bha/dockLogic';
 import { rebirthMark } from './rebirthView';
 import { getFaction } from '../data/factions';
 import { formDisplayName, playerElementsOf } from '../engine/evolution';
+import { shownName } from './displayName';
 
 export interface RoomHandlers {
   onDepart: () => void;
@@ -78,7 +79,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 이름표 테 꾸밈(GDD 25-9)을 입었거나 환생·투트랙이면 이름표를 보인다
   let nameTag: HTMLElement | null = null;
   if (stars || others.length > 0 || save.wear.plate) {
-    nameTag = el('span', 'bha-small bha-room__name', formDisplayName(save.evolution, faction.id));
+    nameTag = el('span', 'bha-small bha-room__name', shownName(formDisplayName(save.evolution, faction.id)));
     if (stars) nameTag.append(' ', stars);
   }
   if (hd.resume) {

@@ -4,7 +4,7 @@ import { fullnessOf } from './fullness';
 import { STAT_IDS, type Stats, type TerrainTileDef } from '../../data/schema';
 import { statName } from '../../data/elements';
 import { BALANCE } from '../../config/balance';
-import { button, el, icon, meter } from './dom';
+import { button, el, icon, meter, provisionalTag } from './dom';
 import { getOverlayHost } from './overlayHost';
 import { NEST_ACTIONS, type FactionConfig, type NestAction } from '../../engine/faction';
 
@@ -119,7 +119,7 @@ export function deckRow(o: DeckRowOpts): HTMLElement {
   const ic = el('span', 'bha-deckrow__icon');
   ic.append(icon(kind.icon));
   const name = el('span', 'bha-deckrow__name', o.name);
-  if (o.provisional) name.append(' ', el('span', 'bha-tag bha-tag--provisional', '임시'));
+  if (o.provisional) name.append(' ', provisionalTag());
   const desc = el('span', 'bha-deckrow__desc');
   desc.append(`${o.hint} · `, el('span', 'bha-deckrow__own', `보유 ${o.owned}`));
   const main = el('span', 'bha-deckrow__main');

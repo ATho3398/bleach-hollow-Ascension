@@ -301,6 +301,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     const canMove = items.length > 0;
     up.classList.toggle('is-off', !canMove);
     down.classList.toggle('is-off', !canMove);
+    // 전투 중(블록은 손가락으로만)에는 ▲▼ 를 쓰지 않으니 숨긴다 — 흐린 버튼이 '눌러도 되나' 헷갈렸다 (GDD 100장 #39). 자리는 그대로
+    up.style.visibility = down.style.visibility = touchOnly ? 'hidden' : '';
     ok.classList.toggle('is-off', !(canMove || (touchOnly && !!view.querySelector('[data-dev-confirm]'))));
     back.classList.toggle('is-off', layers.length === 0 && !opts.canCancel());
     for (const b of [up, down, ok, back]) b.setAttribute('aria-disabled', String(b.classList.contains('is-off')));

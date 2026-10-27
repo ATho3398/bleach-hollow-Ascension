@@ -105,6 +105,8 @@
 /* ═════ 돌보기 ═════ */
 .bha-care-page .bha-nest__status { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-4); }
 .bha-care-page .bha-care__btn { min-height: 92px; padding: var(--bha-sp-3); }
+/* 능력치 2열 (GDD 100장 #84): 진화 정보까지 스크롤이 짧게 */
+.bha-care-page .bha-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-5); }
 .bha-care-page .bha-care__btn span { text-align: center; line-height: 1.25; }
 
 /* ═════ 상자 ═════ */
@@ -363,6 +365,8 @@ button.bha-slot { cursor: pointer; }
   border: 0; border-radius: var(--bha-r-sm); background: transparent; color: inherit; font: inherit; line-height: inherit; white-space: nowrap; cursor: pointer; touch-action: manipulation;
 }
 .bha-viewtitle__btn:active { background: var(--bha-bg-2); }
+/* 제목 토글 아래 설명줄: 선택 테두리에 반쯤 가려지지 않게 4px 내림 (GDD 100장 #69·#74 — 수련장 세 화면·책장 두 도감 같은 머리) */
+.bha-lcdpage__title:has(.bha-viewtitle) + .bha-lcdpage__sub { margin-top: var(--bha-sp-2); }
 .bha-viewtitle__btn:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
 .bha-viewtitle__caret { flex: none; width: 18px; height: 18px; color: var(--bha-text-2); transition: transform var(--bha-dur-2); }
 .bha-viewtitle__btn[aria-expanded="true"] .bha-viewtitle__caret { transform: rotate(180deg); }

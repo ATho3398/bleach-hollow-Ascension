@@ -3,7 +3,7 @@
 // 먹이는 개수제(GDD 23-1): 칸마다 보유 개수, 0개는 비활성.
 import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestAction } from '../../engine/faction';
 import { foodEffect } from '../../engine/nest';
-import { button, el, icon } from './dom';
+import { button, el, icon, provisionalTag } from './dom';
 import { CLOSED, togglePanel, type DockPanel } from './dockLogic';
 
 export interface DockMenuItem {
@@ -127,7 +127,7 @@ export function createDock(o: DockOpts): Dock {
         trayBtns.push(b);
         tray.append(b);
       }
-      tray.append(el('span', 'bha-tag bha-tag--provisional', '임시'));
+      tray.append(provisionalTag());
     } else if (panel === 'more') {
       tray.setAttribute('aria-label', '더보기');
       tray.dataset.scList = '';

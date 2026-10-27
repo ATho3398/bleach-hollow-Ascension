@@ -11,6 +11,7 @@ import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/
 import { elementDot, elementsMark } from './bha/element';
 import { toward } from './bha/nestLogic';
 import { playCosmeticFx } from './bha/cosmeticFx';
+import { devText, shownName } from './displayName';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -35,6 +36,7 @@ export function formEffectLines(faction: FactionConfig, form: FormDef): string[]
 export function evolutionNote(): HTMLElement {
   const p = h('p', 'bha-faint', EVOLUTION_NOTE);
   p.append(' ', provisionalTag());
+  p.hidden = !devText(); // GDD 100장: 개발용 문구는 테스트 모드에서만
   return p;
 }
 
@@ -79,7 +81,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   const tierName = tierDisplayName(evo, faction.id);
   const current = evo.formId ? tryGetForm(evo.formId) : undefined;
   const form = h('div', 'bha-evo__form');
-  const formName_ = h('span', 'bha-evo__formname', formDisplayName(evo, faction.id));
+  const formName_ = h('span', 'bha-evo__formname', shownName(formDisplayName(evo, faction.id)));
   if (current?.provisional) formName_.append(' ', provisionalTag());
   const els = h('span', 'bha-dim');
   els.append(`${evo.tierIndex + 1}단계 · ${tierName} · 속성 `, elementsMark(playerElementsOf(evo), faction.id));
@@ -173,8 +175,8 @@ export function evolutionView(
   };
   const skip = button({ label: '건너뛰기', variant: 'ghost', onClick: showResult });
   linesSection.append(crack, lines, skip);
-  if (CUTSCENE_PROVISIONAL) linesSection.append(h('p', 'bha-faint', ''));
-  if (CUTSCENE_PROVISIONAL) linesSection.lastElementChild!.append('연출 문구는 ', provisionalTag('제안 문구'));
+  if (CUTSCENE_PROVISIONAL && devText()) linesSection.append(h('p', 'bha-faint', ''));
+  if (CUTSCENE_PROVISIONAL && devText()) linesSection.lastElementChild!.append('연출 문구는 ', provisionalTag('제안 문구'));
 
   const path = h('p', 'bha-evolve__path');
   const failLine = extra?.failLine === true;
@@ -182,7 +184,7 @@ export function evolutionView(
   path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[failLine && form.label.kind !== 'fail' ? 0 : from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', shownTo));
   const created = h('div', 'bha-evolve__new');
   for (const e of extra?.elements ?? form.elements ?? []) created.append(elementDot(e, faction.id));
-  created.append(` 새 진화체: ${failLine ? shownTo : formName(form, faction.id, extra?.elements ?? [])}`);
+  created.append(` 새 진화체: ${shownName(failLine ? shownTo : formName(form, faction.id, extra?.elements ?? []))}`);
   if (form.hidden) created.append(' ', h('span', 'bha-chip bha-chip--rare', '히든'));
   if (form.provisional) created.append(' ', provisionalTag());
 

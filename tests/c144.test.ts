@@ -67,7 +67,7 @@ describe('90장 펫 데이터 (가칭)', () => {
     expect(petBonus({ id: 'pet-seek', level: 1 }, 'seekTile')).toBeCloseTo(0.1);
     expect(petBonus(null, 'gold')).toBe(0);
     expect(petEffectText('pet-guard', 1)).toBe('전투 시작 보호막 (최대 체력 4%)');
-    expect(petEffectText('pet-belly', 3)).toBe('원정 허기 오름 −22.5%');
+    expect(petEffectText('pet-belly', 3)).toBe('원정 배부름 줄어듦 −22.5%');
   });
 
   it('상태: 여러 마리 보유 · 1마리만 데리고 다님 · 바퀴 누계로 친밀도 오름 · 정리', () => {

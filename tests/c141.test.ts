@@ -66,9 +66,9 @@ describe('C.141', () => {
     const src = read('src/ui/bha/tilePresets.ts');
     for (const k of ['presetSave', 'presetLoad', 'presetOverwrite', 'presetRename', 'presetDelete']) expect(src).toContain(k);
     expect(read('src/ui/planView.ts')).toContain('presetPanel(');
-    expect(read('src/ui/lcdScreens.ts')).toContain('presetPanel(');
-    // 보관함 타일 탭은 같은 배치판(roadPlanner)으로 가진 타일을 카드로 보여 준다
-    expect(read('src/ui/lcdScreens.ts')).toContain('roadPlanner(');
+    // C.171(GDD 100장 #57): 배치·프리셋은 원정 출발 화면에서만, 보관함 타일 탭은 가진 타일 목록·합성만
+    expect(read('src/ui/lcdScreens.ts')).not.toContain('presetPanel(');
+    expect(read('src/ui/lcdScreens.ts')).not.toContain('roadPlanner(');
   });
   it('85장 11: 도움말·화면 문구에 남은 "덱" 칸 안내가 없다 (타일 덱 → 가진 타일)', () => {
     for (const f of ['src/data/help/guides.json', 'src/data/help/screens.json', 'src/data/help/tutorial.json', 'src/data/help/glossary.json']) expect(read(f)).not.toContain('덱');

@@ -123,9 +123,10 @@ export const PATTERN_VIEW: Record<EnemyPatternKind, { label: string; icon: strin
 /** 남은 시간 표기 "3.0초" */
 export const secondsText = (seconds: number): string => `${Math.max(0, seconds).toFixed(1)}초`;
 
-/** 플로팅 숫자 자리 (아레나 안의 %). 같은 자리에 겹치지 않게 돌려 쓴다 */
+/** 플로팅 숫자 자리 (아레나 안의 %): 적 머리 위 (내가 준 피해·체인·상성). 같은 자리에 겹치지 않게 돌려 쓴다.
+ *  C.171(GDD 100장 #38): 나·적 사이 빈 곳 대신 맞은 쪽 머리 위에서 떠오른다 */
 export const FLOAT_SPOTS: readonly { left: number; top: number }[] = [
-  { left: 36, top: 26 }, { left: 52, top: 18 }, { left: 26, top: 38 }, { left: 46, top: 34 }, { left: 58, top: 28 },
+  { left: 68, top: 20 }, { left: 74, top: 13 }, { left: 63, top: 27 }, { left: 72, top: 26 }, { left: 78, top: 19 },
 ];
 
 export function floatSpot(n: number): { left: number; top: number } {
@@ -490,7 +491,8 @@ export function floatEl(kind: FloatKind, text: string, spot: { left: number; top
 }
 
 /** 내가 받는 피해 숫자 자리 (아레나 왼쪽 아래 쪽, 내 체력 막대 방향) */
-export const HURT_SPOTS: readonly { left: number; top: number }[] = [{ left: 16, top: 52 }, { left: 28, top: 60 }, { left: 10, top: 62 }];
+/** 내 머리 위 (받은 피해·공허·막기·회복, GDD 100장 #38) */
+export const HURT_SPOTS: readonly { left: number; top: number }[] = [{ left: 22, top: 20 }, { left: 28, top: 14 }, { left: 17, top: 27 }];
 
 /** 플로팅 숫자 풀: 요소를 최대 max 개만 만들어 돌려 쓴다 (가장 오래된 것부터 재사용 = 동시 표시 개수 제한). 이벤트 때만 쓰이고 틱마다 만들지 않는다 */
 export function floatPool(container: HTMLElement, max = 6, showMs = 1100): {

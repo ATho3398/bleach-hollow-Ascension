@@ -37,8 +37,9 @@ describe('73장 안내 문구 줄바꿈', () => {
     const g = JSON.parse(read('src/data/help/guides.json')).guides;
     expect(parseLines(g['tile-plan'][1].body).filter((l) => l[0]!.b)).toHaveLength(4);
     expect(parseLines(g['tile-draw'][1].body).filter((l) => l[0]!.b)).toHaveLength(4);
-    const tray = (JSON.parse(read('src/data/help/tutorial.json')).scenes as { id: string; body: string }[]).find((s) => s.id === 'tray')!;
-    expect(parseLines(tray.body).filter((l) => l[0]!.b)).toHaveLength(3);
+    // C.171(GDD 100장 #40): 블록 바 역할은 본문 줄 대신 카드 안 샘플 블록 3개로
+    const tray = (JSON.parse(read('src/data/help/tutorial.json')).scenes as { id: string; body: string; sample?: string[] }[]).find((s) => s.id === 'tray')!;
+    expect(tray.sample).toHaveLength(3);
   });
 
   it('렌더는 공용 한 곳: 튜토리얼 카드·도움말 상세가 같은 linesBody 를 쓴다', () => {

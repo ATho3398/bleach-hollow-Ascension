@@ -101,13 +101,15 @@ describe('도움말·튜토리얼 텍스트 데이터', () => {
     expect(tries).toHaveLength(1);
     expect(tries[0]!.targets).toContain('battle.tray');
     expect(tries[0]!.done?.length).toBeGreaterThan(5);
-    // 직접 해 보기는 마지막 안내 바로 앞
-    expect(TUTORIAL_SCENES[TUTORIAL_SCENES.length - 2]!.practice).toBe(true);
+    // 직접 해 보기는 체인 설명 바로 앞 — 블록이 3개 모인 뒤 체인을 본다 (C.171, GDD 100장 #40)
+    const at = TUTORIAL_SCENES.findIndex((x) => x.practice);
+    expect(TUTORIAL_SCENES[at + 1]!.id).toBe('chain');
+    expect(tries[0]!.minBlocks).toBe(3);
   });
 
-  it('장면은 7~9개, 모두 id·제목·본문이 있고 id 가 겹치지 않는다', () => {
-    expect(TUTORIAL_SCENES.length).toBeGreaterThanOrEqual(6);
-    expect(TUTORIAL_SCENES.length).toBeLessThanOrEqual(9);
+  it('장면은 4개(C.171, GDD 100장 #40: 8 → 4), 본문은 2줄 이내, 모두 id·제목·본문이 있고 id 가 겹치지 않는다', () => {
+    expect(TUTORIAL_SCENES.length).toBe(4);
+    for (const sc of TUTORIAL_SCENES) for (const text of [sc.body, sc.done ?? '']) expect(text.split('\n').length).toBeLessThanOrEqual(2);
     for (const sc of TUTORIAL_SCENES) {
       expect(sc.id.length).toBeGreaterThan(0);
       expect(sc.title.length).toBeGreaterThan(0);

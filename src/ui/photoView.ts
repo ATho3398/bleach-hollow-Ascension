@@ -12,6 +12,7 @@ import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { showToast } from './bha/nest';
 import { drawPhoto, frameChoices, photoFileName, savePhoto, PHOTO_SIZE, type PhotoScene } from './bha/photo';
 import { roomCharArt } from './bha/room';
+import { shownName } from './displayName';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -28,7 +29,7 @@ export function photoSceneOf(faction: FactionConfig, save: SaveData, frameId: st
     charOffsetY: art.offsetY,
     sceneSrc: artUrls(room.sceneArt, BASE).src,
     look: { aura: look(save.wear.aura), tint: look(save.wear.tint), room: look(save.wear.room), plate: look(save.wear.plate) },
-    name: formDisplayName(save.evolution, faction.id),
+    name: shownName(formDisplayName(save.evolution, faction.id)),
     stage: `${save.evolution.tierIndex + 1}단계`,
     date,
     frame,

@@ -24,6 +24,8 @@ export interface TutorialScene {
   /** 직접 해 보기 장면: 전투가 다시 흐르고, 블록을 하나 쓰면 done 문구로 바뀐다 */
   practice?: boolean;
   done?: string;
+  /** 직접 해 보기에서 [다음]이 열리려면 블록 바에 이만큼 모여야 한다 (다음 체인 설명에 보여 줄 블록, GDD 100장 #40) */
+  minBlocks?: number;
 }
 
 export interface GlossaryTerm {

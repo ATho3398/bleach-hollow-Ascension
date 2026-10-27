@@ -10,7 +10,7 @@ import { enableDrag } from './bha/dragdrop';
 import { elementDot, paintElement } from './bha/element';
 import { iconArt, itemCard, itemDialog } from './bha/itemUi';
 import { battleLabels, skillBlockLabel } from './labels';
-import { isTestMode } from './testMode';
+import { devText, plainText } from './displayName';
 
 export const PROVISIONAL_NOTE = '속성·특성 풀과 리스크 수치는 임시 데이터입니다 (기획 11-3, 11-4 미정)';
 
@@ -63,7 +63,7 @@ export function traitBlockName(faction: FactionConfig, id: string, tierIndex = 0
 }
 
 /** 데이터 설명 앞의 "[임시]" 표시는 플레이어 화면에서는 뺀다 (94장 A-2, 테스트 모드에서만 보인다) */
-const plainDesc = (text: string): string => (isTestMode() ? text : text.replace(/^\[임시\]\s*/, ''));
+const plainDesc = plainText;
 
 /** 카드의 짧은 효과 줄: 블록 = 계열·위력, 그 밖 = 설명 */
 export function traitBrief(faction: FactionConfig, id: string): string {
@@ -156,7 +156,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   const filled = build.slots.filter(Boolean).length;
   const left = panel({ title: '장착', aside: h('span', '', `${faction.slotName} ${filled} / ${build.slots.length}`) });
   left.querySelector('.bha-panel__title')?.prepend(icon('i-slot'));
-  if (isTestMode()) left.querySelector('.bha-panel__title')?.append(' ', provisionalTag());
+  if (devText()) left.querySelector('.bha-panel__title')?.append(' ', provisionalTag());
   if (state.held) {
     const bar = h('div', 'bha-sgbar');
     bar.append(h('span', '', `‘${traitBlockName(faction, state.held.id, tierIndex)}’을(를) 놓을 칸을 누른다`), button({ label: '취소', size: 'small', onClick: () => { state.held = null; onChange(); } }));
@@ -170,11 +170,12 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
 
   const heldId = state.held?.id ?? null;
   const spare = build.owned.filter((id) => !build.slots.includes(id));
-  const right = panel({ title: '가진 특성', aside: `${build.owned.length}개` });
+  // 머리 숫자 = 남는(장착 안 한) 특성 수 — 내용과 같은 기준 (GDD 100장 #55)
+  const right = panel({ title: '가진 특성', aside: `남는 ${spare.length}개` });
   right.classList.add('bha-sgown');
   right.querySelector('.bha-panel__title')?.prepend(icon('i-absorb'));
   const grid = h('div', 'bha-itemgrid bha-sggrid');
-  if (spare.length === 0) grid.append(h('p', 'bha-faint bha-itemgrid__empty', build.owned.length === 0 ? '남는 특성 없음 — 원정에서 흡수하면 얻는다' : '남는 특성 없음'));
+  const emptyLine = spare.length === 0 ? h('p', 'bha-faint', build.owned.length === 0 ? `남는 특성 없음 — 원정에서 ${faction.absorbActionName}하면 얻는다` : '남는 특성 없음 — 모두 장착 중') : null;
   for (const id of spare) {
     const t = getTrait(id);
     const card = itemCard({
@@ -187,8 +188,14 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
     card.dataset.trait = id;
     grid.append(card);
   }
-  right.append(grid);
-  if (isTestMode()) right.append(h('p', 'bha-faint', PROVISIONAL_NOTE));
+  right.append(emptyLine ?? grid); // 비었으면 큰 빈 격자 대신 한 줄
+  // 남는 특성이 없으면 빈 칸 대신 장착한 특성 설명 (GDD 100장 #55)
+  if (spare.length === 0 && filled > 0) {
+    const worn = h('div', 'bha-stack bha-stack--tight');
+    for (const id of build.slots) if (id) worn.append(h('p', 'bha-small', `${traitBlockName(faction, id, tierIndex)} — ${traitBrief(faction, id)}`));
+    right.append(worn);
+  }
+  if (devText()) right.append(h('p', 'bha-faint', PROVISIONAL_NOTE));
 
   // 끌어다 놓기: 카드·칸 → 칸 (놓기/옮기기), 칸 → 카드 쪽(밖) (빼기)
   type Src = { id: string; from: SlotCell | null };

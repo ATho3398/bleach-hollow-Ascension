@@ -63,6 +63,6 @@ describe('C.146 보관함', () => {
     expect(cardDetailOf({ category: 'skin', detail: '착용 중', cosmeticCategory: 'aura' })).not.toContain('착용');
     expect(cardDetailOf({ category: 'skin', detail: '보유', cosmeticCategory: 'device' })).not.toBe('보유');
     expect(cardDetailOf({ category: 'pet', detail: '데리고 다니는 중 · 골드 +5%', cosmeticCategory: undefined })).toBe('골드 +5%');
-    expect(cardDetailOf({ category: 'food', detail: '허기 −15', cosmeticCategory: undefined })).toBe('허기 −15');
+    expect(cardDetailOf({ category: 'food', detail: '배부름 +15', cosmeticCategory: undefined })).toBe('배부름 +15');
   });
 });

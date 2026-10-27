@@ -92,14 +92,14 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     const n = save.shared.food[f];
     if (n <= 0) continue;
     const fx = BALANCE.provisional.nest.foods[f];
-    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, detail: `허기 −${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`, action: 'use', lock: save.activeExpedition != null ? '원정 중인 캐릭터에는 못 쓴다' : null });
+    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`, action: 'use', lock: save.activeExpedition != null ? '원정 중인 캐릭터에는 못 쓴다' : null });
   }
   // 소모품: 보관한 정화제·각성제·상인 소모품 + 다시 뽑기권(흡수 화면에서 씀)
   for (const id of CONSUMABLE_IDS) {
     const n = save.shared.items[id] ?? 0;
     if (n > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, detail: consumableText(id, faction), action: 'use', lock: consumableLock(save, id, faction) });
   }
-  if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, detail: '흡수 화면에서 특성 후보를 한 번 다시 뽑는다', action: null, lock: null });
+  if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, detail: `${faction.absorbActionName} 화면에서 특성 후보를 한 번 다시 뽑는다`, action: null, lock: null });
   // 장비 (GDD 91장): 낀 것 먼저(칸 순서), 그다음 등급 높은 것·최근 것. 장착·해제·강화·판매는 상세 창
   for (const it of sortedGear(save)) {
     const slot = equippedSlotOf(save.shared.gear, it.uid);
@@ -142,7 +142,7 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     if (save.activeExpedition != null) return { ok: false, reason: '원정 중인 캐릭터에는 못 쓴다' };
     if (!takeFood(save.shared.food, f)) return { ok: false, reason: '먹이가 없다' };
     doNestAction(save.nest, 'feed', f);
-    return { ok: true, detail: `허기 ${Math.round(save.nest.hunger)}` };
+    return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}` }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
   }
   const e = consumableEffect(id);
   if (!e || (save.shared.items[id] ?? 0) <= 0) return { ok: false, reason: '가진 소모품이 아니다' };
@@ -183,7 +183,7 @@ export function petEffectText(id: string, level: number): string {
   const carry = { id, level };
   switch (getPet(id)?.effect) {
     case 'gold': return `원정 골드 +${pct(petBonus(carry, 'gold'))}`;
-    case 'belly': return `원정 허기 오름 −${pct(petBonus(carry, 'belly'))}`;
+    case 'belly': return `원정 배부름 줄어듦 −${pct(petBonus(carry, 'belly'))}`;
     case 'guard': return `전투 시작 보호막 (최대 체력 ${pct(petBonus(carry, 'guard'))})`;
     case 'seek': return `떠돌이 상인 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
     default: return '';

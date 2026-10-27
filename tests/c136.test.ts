@@ -252,7 +252,7 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
 
   it('흡수 화면에 "강화 n/100" 줄이 있다', () => {
     const src = readFileSync('src/ui/absorbView.ts', 'utf8');
-    expect(src).toContain("label: '흡수하면'"); // C.147 (94장 B): '속성 강화' 줄 → '흡수하면' 새 블록 / 강화 n→n+1
+    expect(src).toContain('enh.append(enhanceRow())'); // C.147 '흡수하면' 줄 → C.171(GDD 100장 #45) 표 대신 상대 아래 한 줄
     expect(src).toContain('enhanceLevel');
   });
 });

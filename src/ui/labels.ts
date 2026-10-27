@@ -6,6 +6,7 @@ import { BLOCK_WORDS, familyOf, type BlockRole, type FactionConfig } from '../en
 import { elementName } from '../data/elements';
 import type { SkillRole } from '../data/schema';
 import { liberationBlocksOf, type CombatParams } from '../engine/combat';
+import { fixParticles } from '../engine/josa';
 
 export { BLOCK_WORDS };
 
@@ -174,7 +175,7 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
     returned: '둥지 칸에서 귀환했다. 얻은 것은 모두 지킨다.',
     'forced-max-laps': '최대 바퀴를 채워 귀환했다. 얻은 것은 모두 지킨다.',
     'battle-lost': `전투에서 졌다. ${f.defeatStateName} 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
-    exhausted: `허기로 쓰러졌다. ${f.defeatStateName} 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
+    exhausted: fixParticles(`${f.fullnessName}이(가) 바닥나 쓰러졌다. ${f.defeatStateName} 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`),
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
     'tutorial-clear': `첫 원정을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
     abort: `원정 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,

@@ -18,6 +18,7 @@ import { lcdHead, lcdPage } from './bha/lcdpage';
 import { toward } from './bha/nestLogic';
 import { rebirthMark } from './rebirthView';
 import { rankLabel } from './rankView';
+import { shownName } from './displayName';
 
 const HX = BALANCE.provisional.hogyoku;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -32,7 +33,7 @@ export function subjectParticle(word: string): string {
 /** 트랙 하나의 이름: 진화체 이름(없으면 단계 이름) */
 export function trackName(t: Pick<SaveData, 'factionId' | 'evolution'>): string {
   const f = getFaction(t.factionId);
-  return formDisplayName(t.evolution, f.id);
+  return shownName(formDisplayName(t.evolution, f.id));
 }
 
 /** 합체가 막힌 이유 한 줄 */
@@ -254,7 +255,7 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
   row('하나가 된 두 캐릭터', record.characters.map((c) => {
     const f = getFaction(c.factionId);
     const form = c.formId ? tryGetForm(c.formId) : undefined;
-    return `${f.name} ${form ? formName(form, f.id, c.elements) : f.tierNames[c.tierIndex]}`;
+    return `${f.name} ${shownName(form ? formName(form, f.id, c.elements) : f.tierNames[c.tierIndex]!)}`;
   }).join(' + '));
   row('새로 시작', allTracks(save).map((t) => `${getFaction(t.factionId).name} 1단계 ${getFaction(t.factionId).tierNames[0]}`).join(' · '));
   row('초월체 도감', `${save.transcendentDex.length} / ${TRANSCENDENTS.length}`);

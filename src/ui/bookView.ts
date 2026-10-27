@@ -13,6 +13,6 @@ export const BOOK_TABS: readonly { id: BookTab; label: string }[] = [{ id: 'dex'
 
 export function bookView(root: HTMLElement, faction: FactionConfig, save: SaveData, tab: BookTab = 'dex'): void {
   const title = selectLast(viewTitle(BOOK_TABS, tab, (id) => bookView(root, faction, save, id as BookTab))); // 제목 토글은 목록 뒤로(다른 도감 화면과 같은 순서)
-  if (tab === 'dex') dexView(root, faction, save, 2, title);
+  if (tab === 'dex') dexView(root, faction, save, title);
   else titleDexView(root, faction, save, 'rank', title);
 }

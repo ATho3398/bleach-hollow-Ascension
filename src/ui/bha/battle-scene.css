@@ -50,7 +50,7 @@
 .bha-hgauge--seal { --c: var(--bha-seal); }
 .bha-hgauge--guard, .bha-hgauge--stance { --c: var(--bha-guard); }
 .bha-hgauge--weaken { --c: var(--bha-attack); }
-.bha-hgauge.is-idle { opacity: 0.4; box-shadow: inset 0 0 0 1px var(--bha-line-2); animation: none; }
+.bha-hgauge.is-idle { visibility: hidden; animation: none; } /* 예고가 없을 때는 자리만 지키고 안 보임 (GDD 100장 #36) */
 .bha-hgauge.is-done { animation: none; --c: var(--bha-guard); }
 
 /* 작은 체력바: 유닛 그림 아래. 글자는 바 위에 숫자만 */

@@ -34,7 +34,7 @@
 /* ═════ C.141 (GDD 86장): 상점·보관함 카드 UI — 카테고리 탭 · 큰 카드 격자(2줄) · 상세 창 ═════ */
 .bha-shop--cards .bha-lcdpage__col--right, .bha-chest-page .bha-lcdpage__col--right[hidden] { display: none; }
 .bha-itembox { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-height: 0; flex: 1 1 auto; }
-.bha-itemtabs { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
+.bha-itemtabs { flex: none; display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); } /* flex: none — 하위 탭 줄(overflow-x)이 카드 격자에 눌려 높이 0 이 되던 것 (GDD 100장 #54) */
 .bha-itemtab { display: inline-flex; align-items: center; gap: var(--bha-sp-2); min-height: 32px; padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); color: var(--bha-text-2); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
 .bha-itemtab.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 22%, var(--bha-bg-2)); color: var(--bha-text-1); }
 /* 스킨 하위 탭 (C.153): 위 탭 아래 한 줄, 한 단 작게 */

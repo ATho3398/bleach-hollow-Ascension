@@ -16,6 +16,7 @@ import { elementDot } from './bha/element';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { toward } from './bha/nestLogic';
+import { shownName } from './displayName';
 
 /** 이름 옆 환생 표시 칩 (0회면 null) */
 export function rebirthMark(count: number): HTMLElement | null {
@@ -74,7 +75,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
   const evo = save.evolution;
   const form = evo.formId ? tryGetForm(evo.formId) : undefined;
   const sub = h('span');
-  sub.append(`지금 ${formDisplayName(evo, faction.id)} `);
+  sub.append(`지금 ${shownName(formDisplayName(evo, faction.id))} `);
   const mark = rebirthMark(save.rebirth.count);
   if (mark) sub.append(mark, ' ');
   sub.append(`· 환생 ${save.rebirth.count}회 → ${save.rebirth.count + 1}회`);
@@ -171,7 +172,7 @@ export function rebirthView(root: HTMLElement, faction: FactionConfig, record: R
     dl.append(r);
   };
   const prev = record.prevFormId ? tryGetForm(record.prevFormId) : undefined;
-  row('이전 생', prev ? formName(prev, faction.id, record.prevElements) : faction.tierNames[record.prevTierIndex]!);
+  row('이전 생', shownName(prev ? formName(prev, faction.id, record.prevElements) : faction.tierNames[record.prevTierIndex]!));
   row('특성', record.keptTraitId ? traitName(record.keptTraitId, faction.id) : '없음');
   row('계승 노력치', carryLine(faction.id, record.carry as Stats));
   row('보상', [`${SOUL_CRYSTAL_NAME} +${reward.soulCrystals}`, ...(reward.jade ? [`${JADE_NAME} +${reward.jade}`] : [])].join(' · '));

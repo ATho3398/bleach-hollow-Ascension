@@ -47,6 +47,7 @@ import { sceneBgEl } from './bha/sceneBg';
 import type { SceneBg } from '../data/art/backgrounds';
 import { testSpeedMul } from './testMode';
 import { abilityProcText } from './evolutionPanel';
+import { shownName } from './displayName';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -151,7 +152,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'cell-seal':
       return { role: 'cast', icon: 'i-lock', text: `블록 봉인! ${labels.skillBlock} 1칸을 ${e.seconds}초 동안 쓸 수 없다` };
     case 'boss-phase':
-      return { role: 'cast', icon: 'i-warn', text: `페이즈 ${e.phase}! ${pickFaction(s.enemy.def.name, factionId)}의 공격이 빨라졌다` };
+      return { role: 'cast', icon: 'i-warn', text: `페이즈 ${e.phase}! ${shownName(pickFaction(s.enemy.def.name, factionId))}의 공격이 빨라졌다` };
     case 'boss-summon':
       return { role: 'cast', icon: 'i-warn', text: `졸개가 앞을 막아선다! 내 공격을 먼저 받는다 (체력 ${n(e.hp)})` };
     case 'minion-attack':
@@ -159,7 +160,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'minion-down':
       return { role: 'chain', icon: 'i-chain-3', text: '졸개를 쓰러뜨렸다!' };
     case 'boss-element':
-      return { role: 'cast', icon: 'i-weak', text: `${pickFaction(s.enemy.def.name, factionId)}의 속성이 ${elementName(e.element, factionId)}(으)로 바뀌었다!` };
+      return { role: 'cast', icon: 'i-weak', text: `${shownName(pickFaction(s.enemy.def.name, factionId))}의 속성이 ${elementName(e.element, factionId)}(으)로 바뀌었다!` };
     case 'stance':
       return { role: 'guard', icon: 'i-guard', text: `방어 자세! ${e.seconds}초 동안 내 블록 피해 감소 · 블록을 쓰면 반격` };
     case 'stance-end':
@@ -176,7 +177,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'liberation-end':
       return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` };
     case 'end':
-      return e.status === 'won' ? { role: 'chain', icon: 'i-flag-win', text: `${pickFaction(s.enemy.def.name, factionId)}을(를) 쓰러뜨렸다!` } : null;
+      return e.status === 'won' ? { role: 'chain', icon: 'i-flag-win', text: `${shownName(pickFaction(s.enemy.def.name, factionId))}을(를) 쓰러뜨렸다!` } : null;
     default:
       return null;
   }
@@ -216,7 +217,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const labels = battleLabels(faction, opts.tierIndex ?? 0);
   const p = s.params;
   const enemy = s.enemy.def;
-  const enemyName = pickFaction(enemy.name, faction.id);
+  const enemyName = shownName(pickFaction(enemy.name, faction.id));
   const top = maxChain(p);
   const cap = p.trayCapacity;
   /** 설정 화면 '전투 효과' (피해 숫자·진동·효과음·흔들림). 전투 시작 때 읽는다 */
@@ -388,15 +389,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libMeta = el('span', 'bha-xs bha-t2 bha-v2rel__meta');
   const libGauge = v2Gauge('release', 0, { width: '100%', label: labels.liberation.name });
   libBtn.append(libSeal, libName, libTemp, libMeta, libGauge);
-  // 무엇으로 차는지·해방 중 나오는 블록 한 줄 (GDD 95장 B2 ③, C.154): 해방 카드는 높이가 꽉 차서 바로 옆 범례 줄 끝에 (넘치면 말줄임, 전체는 title)
+  // 무엇으로 차는지·해방 중 나오는 블록 한 줄 (GDD 95장 B2 ③, C.154): C.171(GDD 100장 #37) 범례 줄에서 빼고 해방 버튼 툴팁으로 (자세한 것은 도움말 battle.liberation)
   const hintFull = liberationHint(labels, p);
   const hintDuring = hintFull.slice(hintFull.lastIndexOf(' · ') + 3); // 해방 중에는 나오는 블록만 ('해방 중 장착 탄·조')
-  const libHint = el('span', 'bha-xs bha-t2 bha-v2foename__text', hintFull);
-  libHint.style.flex = '1 1 0'; // 남는 폭만 쓴다 — 범례·해방 칩을 밀지 않게
-  libHint.style.minWidth = '0';
-  libHint.title = libHint.textContent ?? '';
-  libHint.dataset.sc = 'liberation-hint';
-  libHint.hidden = !libOn;
+  libBtn.title = hintFull;
   libBtn.hidden = !libOn;
   const libChip = v2Chip('', 'default', { icon: 'i-special' });
   libChip.classList.add('bha-v2libchip');
@@ -411,8 +407,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
-  legendRow.append(libChip, legend, meStatus, libHint);
-  // 해방 설명(C.154·C.167)은 남는 폭만 — 범례·칩은 줄어들지 않게
+  legendRow.append(libChip, legend, meStatus);
+  // 범례·칩은 줄어들지 않게
   for (const n of [libChip, legend, meStatus]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
@@ -629,7 +625,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 피해 숫자(내가 준 것·받은 것·공허)는 설정에서 끌 수 있다. 막기·회복·체인 표시는 그대로 */
   const spawnFloat = (kind: FloatKind, text: string, opt: FloatOpts = {}) => {
     if (!fx.damageNumbers && (kind === 'attack' || kind === 'hurt' || kind === 'void')) return;
-    pool.show(kind, text, kind === 'hurt' ? HURT_SPOTS[hurtCount++ % HURT_SPOTS.length]! : floatSpot(floatCount++), opt);
+    const onMe = kind === 'hurt' || kind === 'void' || kind === 'guard' || kind === 'heal'; // 맞은 쪽 머리 위 (GDD 100장 #38)
+    pool.show(kind, text, onMe ? HURT_SPOTS[hurtCount++ % HURT_SPOTS.length]! : floatSpot(floatCount++), opt);
   };
   /** 번쩍임: 한 번에 한 종류만 */
   const FLASH_CLASSES = ['is-chain2', 'is-chain3', 'is-guard', 'is-cast', 'is-special', 'is-win', 'is-lose'];
@@ -816,6 +813,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   const drawTray = () => {
     const count = s.tray.length;
+    tutorial?.trayCount(count);
     // 사라진 블록
     const present = new Set(s.tray.map((b) => b.uid));
     const gone: number[] = [];
@@ -965,7 +963,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     app.classList.toggle('is-liberated', libActive);
     app.classList.toggle('is-unique', libActive && labels.liberation.unique);
     setHidden(libChipRoot.root, !libActive);
-    setText(libHint, libActive ? hintDuring : hintFull);
+    const tip = libActive ? hintDuring : hintFull;
+    if (libBtn.title !== tip) libBtn.title = tip;
     if (libActive) setText(libChipRoot.value, secondsText(s.liberation.ticksLeft * p.tickSeconds));
     if (libOn) {
       const lb = s.liberation;
@@ -1068,12 +1067,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const actions = el('div', 'bha-battle-ov__actions');
     if (s.status === 'won') {
       const canAbsorb = absorbReasons(s).length > 0;
-      const go = button({ label: canAbsorb ? `${faction.absorbActionName} 가능` : '계속', variant: 'primary', size: 'lg', icon: canAbsorb ? 'i-absorb' : undefined, onClick: finish });
+      // 버튼 글자는 상태가 아니라 행동으로 (GDD 100장 #42)
+      const go = button({ label: canAbsorb ? `${faction.absorbActionName}하러 가기` : '계속', variant: 'primary', size: 'lg', icon: canAbsorb ? 'i-absorb' : undefined, onClick: finish });
       go.append(icon('i-chevron-right'));
       actions.append(go);
       inner.append(
         ovMark('i-flag-win'),
-        el('span', 'bha-battle-ov__eyebrow', `전투 시간 ${Math.round(elapsedSeconds(s))}초 · ${labels.chain}${top} ${s.chain3Count}회`),
+        el('span', 'bha-battle-ov__eyebrow', `${Math.round(elapsedSeconds(s))}초${s.chain3Count > 0 ? ` · ${labels.chain}${top} ${s.chain3Count}` : ''}`),
         el('h2', 'bha-battle-ov__title', '승리'),
         el('p', 'bha-battle-ov__sub', `${enemyName}을(를) 쓰러뜨렸다.`),
         actions,

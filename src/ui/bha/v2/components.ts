@@ -1,6 +1,7 @@
 // LCD 인게임 UI v2 공통 컴포넌트 (C.151, docs/bha-ui-handoff README 7-2): 버튼 4종·칩·탭·게이지·패널·모달·토스트·알림 띠.
 // 마크업·클래스 이름은 핸드오프(bha.css)와 같다. 색·간격은 전부 `.bha-root` 안의 토큰이 정한다 — 이 파일은 DOM 만 만든다. 종족 분기 없음.
 import { registerLayer } from '../overlayHost';
+import { devText } from '../../displayName';
 import { trapModalFocus } from '../modalFocus';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -77,8 +78,12 @@ export function v2Chip(label: string, kind: V2ChipKind = 'default', o: { icon?: 
   c.append(label);
   return c;
 }
-/** 임시 데이터 칩 ("○ 임시") — 핸드오프 chip--temp */
-export const v2TempChip = (label = '○ 임시'): HTMLSpanElement => v2Chip(label, 'temp');
+/** 임시 데이터 칩 ("○ 임시") — 핸드오프 chip--temp. GDD 100장(C.171): 테스트 모드에서만 보임 */
+export function v2TempChip(label = '○ 임시'): HTMLSpanElement {
+  const c = v2Chip(label, 'temp');
+  c.hidden = !devText();
+  return c;
+}
 /** 카드 모서리 배지 (부모가 position:relative) */
 export function v2Badge(text: string): HTMLSpanElement {
   return node('span', 'bha-badge', text);

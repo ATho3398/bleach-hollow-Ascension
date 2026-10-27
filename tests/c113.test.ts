@@ -16,7 +16,7 @@ describe('C.113 도감 단계 탭: 한 어절이 줄 가운데서 끊기지 않�
     expect(item).toContain('overflow-wrap: normal');
     expect(rule('.bha-seg--stack')).toContain('minmax(max-content, 1fr)');
   });
-  it('도감 단계 탭은 쌓은 탭(stack)을 쓴다', () => {
-    expect(readFileSync('src/ui/dexView.ts', 'utf8')).toMatch(/\{ stack: true \}/);
+  it('도감 단계 탭은 쌓은 탭(stack)을 쓴다 → C.171(GDD 100장 #73) 단계 탭 대신 한 목록의 단계 머리줄(caption)', () => {
+    expect(readFileSync('src/ui/dexView.ts', 'utf8')).toContain('caption');
   });
 });

@@ -11,7 +11,7 @@ import {
 import type { SaveData } from '../game';
 import { STAT_IDS, type StatId } from '../data/schema';
 import { statName } from '../data/elements';
-import { button, el, icon, meter, mountApp, notice, panel, provisionalTag, tag } from './bha/dom';
+import { button, chip, el, icon, meter, mountApp, notice, panel, provisionalTag, tag } from './bha/dom';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
@@ -112,7 +112,11 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     card.dataset.game = g;
     const top = el('span', 'bha-train__cardtop');
     top.append(el('b', 'bha-train__cardname', cfg.name), el('span', 'bha-chip', `${level}단계`));
-    card.append(top, el('span', 'bha-train__line bha-train__line--reward', `승리: ${lines.reward}`), el('span', 'bha-train__line', `비용: ${lines.cost}`));
+    // 보상·비용은 칩으로 — 글 한 줄은 어중간한 곳에서 줄바꿈됐다 (GDD 100장 #67). 광기(리스크) 비용은 위험 칩 (#68: 테두리는 선택 전용)
+    const chips = el('span', 'bha-train__chips');
+    chips.append(...lines.reward.split(' · ').map((x) => chip(x, 'guard')));
+    if (lines.cost !== '없음') chips.append(...lines.cost.split(' · ').map((x) => chip(x, x.startsWith(faction.riskGaugeName) ? 'danger' : undefined)));
+    card.append(top, chips);
     card.setAttribute('aria-label', `${cfg.name} ${level}단계. 승리 ${lines.reward}. 비용 ${lines.cost}`);
     card.title = cfg.desc;
     if (!gate.ok) {

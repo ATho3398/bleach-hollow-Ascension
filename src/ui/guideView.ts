@@ -6,7 +6,6 @@ import { statName } from '../data/elements';
 import { GUIDES, guideVars } from '../data/help';
 import { pickFaction, STAT_IDS } from '../data/schema';
 import { getTile, tileName } from '../data/tiles';
-import { absorbModeRule } from '../engine/absorb';
 import { tutorialAbsorb, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import type { TextGuideId } from '../engine/tutorial';
@@ -16,8 +15,9 @@ import { lcdPage } from './bha/lcdpage';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { tileHint } from './labels';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
+import { shownName } from './displayName';
+import { absorbModeText } from './absorbView';
 
-const RX = BALANCE.provisional.risk;
 
 export interface GuideOptions {
   /** 마지막 장면 버튼 (없으면 "알겠어요") */
@@ -41,7 +41,7 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
   const offer = exp.absorbOffer;
   if (!offer) return onDone();
   const act = faction.absorbActionName;
-  const foe = pickFaction(findEnemyDef(offer.enemyId).name, faction.id);
+  const foe = shownName(pickFaction(findEnemyDef(offer.enemyId).name, faction.id));
   const head = (title: string) => {
     const h = el('header', 'bha-absorb__head');
     h.append(el('h1', 'bha-h1', title));
@@ -53,12 +53,9 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
     li.append(el('b', '', name), el('span', '', text));
     return li;
   };
-  modes.append(
-    line(`둘 다 ${act}`, '특성 + 노력치'),
-    line('속성만', '특성만 — 그 속성 쪽으로 자란다'),
-    line('스탯만', `노력치 ×${absorbModeRule('stat').ev} · 특성 없음`),
-    line(`${act} 안 함`, `놓아준다 · ${faction.riskGaugeName} −${RX.releaseRelief} · ${faction.stabilityName} +${RX.releaseStability}`),
-  );
+  // 갈래 문구는 포식 화면 버튼과 한 곳에서 (GDD 100장 #47)
+  const mt = absorbModeText(faction);
+  modes.append(...(['both', 'trait', 'stat', 'none'] as const).map((m) => line(mt[m].label, mt[m].sub)));
   const go = button({
     label: `${act}하기`, icon: 'i-absorb', variant: 'primary', size: 'lg', block: true,
     onClick: () => {

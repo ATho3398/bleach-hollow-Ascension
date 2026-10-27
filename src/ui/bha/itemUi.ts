@@ -1,14 +1,15 @@
 // 상점·보관함 공용 카드 UI (GDD 86장, C.141): 카테고리 탭 · 큰 카드 격자(2줄이 보이게) · 상세 창(왼쪽 그림·보유 수 / 오른쪽 이름·설명·수량·행동 버튼).
 // 판정·구매·사용은 src/shop.ts·src/inventory.ts, 이 파일은 그리기만 한다. 종족 무관 — 이름·설명은 호출하는 화면이 데이터에서 넘긴다.
-import { button, el, icon } from './dom';
+import { button, el, emptyState, icon } from './dom';
 import { trapModalFocus } from './modalFocus';
 import { getOverlayHost, registerLayer } from './overlayHost';
+import { shownName } from '../displayName';
 
 export interface TabSpec {
   id: string;
   label: string;
-  /** 탭 옆 작은 수 (보유 수 등) */
-  count?: number;
+  /** 탭 옆 작은 수 (보유 수 등). 글자면 그대로 ('판매 9'·'보유 56', GDD 100장 #65) */
+  count?: number | string;
 }
 
 /** 카테고리 탭 줄 (보관함·상점 공용): 눌린 탭은 aria-selected */
@@ -50,6 +51,7 @@ export interface ItemCardSpec {
 
 /** 카드 한 장 (카드 전체가 버튼): 큰 그림이 위, 이름·설명, 아래 줄 */
 export function itemCard(s: ItemCardSpec): HTMLElement {
+  s = { ...s, name: shownName(s.name) }; // 이름 표시 함수 하나 (GDD 100장: 밑줄 → 공백, '(가칭)' 은 테스트 모드만)
   const card = el('button', `bha-itemcard${s.state ? ` is-${s.state}` : ''}${s.grade ? ` is-grade-${s.grade}` : ''}`);
   card.type = 'button';
   card.dataset.item = s.id;
@@ -65,9 +67,14 @@ export function itemCard(s: ItemCardSpec): HTMLElement {
 }
 
 /** 카드 격자: 칸 폭 고정, 세로로 스크롤 (2줄이 한 번에 보이는 높이) */
-export function itemGrid(cards: HTMLElement[], empty: string): HTMLElement {
+export function itemGrid(cards: HTMLElement[], empty: string, emptyIcon = 'i-shelf'): HTMLElement {
   const grid = el('div', 'bha-itemgrid');
-  if (cards.length === 0) grid.append(el('p', 'bha-faint bha-itemgrid__empty', empty));
+  if (cards.length === 0) {
+    // 빈 상태 (GDD 100장 #60·#87): 공용 빈 상태 컴포넌트(C.170 emptyState) — 가운데 아이콘 + 한 줄
+    const e = emptyState(empty, { icon: emptyIcon });
+    e.classList.add('bha-itemgrid__empty');
+    grid.append(e);
+  }
   else grid.append(...cards);
   return grid;
 }
@@ -93,6 +100,7 @@ export interface ItemDialogSpec {
 
 /** 상세 창을 연다. 돌려주는 함수는 창을 닫는다. Esc·바깥 누름은 닫기 */
 export function itemDialog(s: ItemDialogSpec): () => void {
+  s = { ...s, name: shownName(s.name) };
   const layer = el('div', 'bha-overlay bha-overlay--in-app bha-itemdialog');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
