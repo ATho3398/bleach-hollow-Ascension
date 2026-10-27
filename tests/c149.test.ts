@@ -54,9 +54,9 @@ describe('C.149 블록 이름·아이콘·문구', () => {
     expect(src).toMatch(/devText\(\)\) right\.append[\s\S]*PROVISIONAL_NOTE/); // C.171: 개발용 문구 스위치 하나
     expect(src).toMatch(/if \(devText\(\)\) left\.querySelector/);
   });
-  it('칸·카드에 속성 강화 n/100 (n/3 속성 칩 없음)', () => {
+  it('칸·카드에 속성 강화 n강 (C.176 GDD 106장 1, n/3 속성 칩 없음)', () => {
     const src = read('src/ui/buildPanel.ts');
-    expect(src.match(/강화 \$\{enhanceLevel/g)!.length).toBeGreaterThanOrEqual(2);
+    expect(src.match(/\$\{enhanceLevel\(build, [^}]*\}강/g)!.length).toBeGreaterThanOrEqual(2);
     expect(src).not.toContain('elementBonusCount');
   });
   it('위쪽 탭 [슬롯 · 타일 · 물건 · 펫] (드롭다운 대신), 물건 탭 분류에서 펫 제외', () => {

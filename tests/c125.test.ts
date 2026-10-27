@@ -14,8 +14,8 @@ const elementsOf = (ids: string[]) => new Set(ids.map((id) => getTrait(id).eleme
 describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', () => {
   it('독 일반·독 강적 → 후보는 독 특성만, 여러 시드·후보 +n 에서도', () => {
     for (let seed = 1; seed <= 60; seed++) {
-      // C.147 (94장 B): 노멀은 기본 블록을 가진 것으로 봐 후보 없음(강화만)
-      expect(buildOffer(createRng(seed), getEnemy('normal-basic'), newBuild(), WON, seed % 3, null).candidates).toEqual([]);
+      // C.176 (106장 1): 노멀도 노멀 특성 후보(가진 기본 블록은 고르면 강화만)
+      expect([...elementsOf(buildOffer(createRng(seed), getEnemy('normal-basic'), newBuild(), WON, seed % 3, null).candidates)]).toEqual(['normal']);
       for (const id of ['poison-basic', 'poison-heavy-chain', 'water-basic', 'thunder-stance']) {
         const enemy = getEnemy(id);
         const o = buildOffer(createRng(seed), enemy, newBuild(), WON, seed % 3, null);
@@ -52,7 +52,7 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
     const left = (seed: number) => buildOffer(createRng(seed), getEnemy('water-heavy-seal'), build, WON, 5);
     for (let seed = 1; seed <= 20; seed++) {
       const o = left(seed);
-      expect(o.candidates.every((id) => getTrait(id).element === 'water' && !build.owned.includes(id))).toBe(true);
+      expect(o.candidates.every((id) => getTrait(id).element === 'water')).toBe(true); // C.176 (106장 1): 가진 특성도 후보(강화만)
       expect(o.candidates.length).toBeLessThan(BALANCE.provisional.absorb.candidatesElite + 5);
     }
   });
@@ -108,7 +108,7 @@ describe('C.125 71장: 포식 조건 삭제', () => {
 describe('C.125 72장: 원정 한 칸 이동 시간 1/2', () => {
   it('칸 시간 5초 → 2.5초 → C.136 1.25초 (GDD 84장 1번), 휴식 시간(2칸 × 5초 = 10초)은 그대로', () => {
     expect(BALANCE.expedition.secondsPerTile).toBe(1.25);
-    expect(BALANCE.provisional.expedition.restTimeTiles * BALANCE.expedition.restSecondsPerTile).toBe(10);
+    expect(BALANCE.provisional.expedition.restTimeTiles * BALANCE.expedition.restSecondsPerTile).toBeCloseTo(10 / 3); // C.176 (GDD 106장 2): 10초 → 1/3
     const exp = createExpedition({ factionId: 'hollow', seed: 1, hunger: 10, condition: 100, deck: [] });
     exp.wildCells = [];
     exp.slots = exp.slots.map(() => null);

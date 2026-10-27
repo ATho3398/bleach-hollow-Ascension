@@ -53,7 +53,7 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
     img.src = art.src;
     img.alt = '';
     img.draggable = false;
-    img.style.setProperty('--art-scale', String(art.scale));
+    img.style.setProperty('--art-scale', String(art.fieldScale ?? art.scale)); // 필드 배율 (C.176, GDD 106장 3)
     img.style.setProperty('--art-dy', `${art.offsetY}%`);
     body.append(img);
     anim = bindAnim(walker, img, art);

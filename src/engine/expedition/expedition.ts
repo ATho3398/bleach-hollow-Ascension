@@ -1039,9 +1039,12 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   if (exp.tutorial) return tutorialAbsorb(exp);
   if (traitId !== null) {
     if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 특성이다' };
-    const r = gainTrait(exp.build, traitId, replaceSlot);
-    if (!r.ok) return r;
-    exp.acquiredTraits.push({ traitId, lap: exp.lap });
+    // 106장 1: 이미 가진 특성(블록)이면 중복 블록 없이 아래 속성 강화 +1 만
+    if (!exp.build.owned.includes(traitId)) {
+      const r = gainTrait(exp.build, traitId, replaceSlot);
+      if (!r.ok) return r;
+      exp.acquiredTraits.push({ traitId, lap: exp.lap });
+    }
   }
   // 속성 강화 (GDD 84장 8번): 특성·속성 카운트가 있는 갈래면 그 적 속성 강화 +1 — 이미 가진 계열이어도, 100 뒤에도 센다(효과는 100 에서 멈춤)
   const enhance = mode !== 'stat' ? addEnhance(exp.build, offer.element) : undefined;

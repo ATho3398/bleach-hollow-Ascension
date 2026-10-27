@@ -22,6 +22,8 @@ export interface ArtEntry {
   frames?: [string, string];
   /** 그림 크기 보정 배율(기본 1). 큰 몬스터는 1.3 같은 값. 파일 없이 이 값만 적어도 된다 */
   scale?: number;
+  /** 걷기(원정)·전투 필드에서 쓰는 배율 (C.176, GDD 106장 3). 비우면 scale — 방은 scale */
+  fieldScale?: number;
   /** 세로 위치 보정(기본 0): 칸 높이 대비 %, 양수면 아래로 */
   offsetY?: number;
   /** 이 그림의 이동 방식(GDD 18-11): 부유 float / 걷기 walk / 날기 fly. 진화체·종족 기본보다 우선한다. 비우면 그쪽 값 */
@@ -33,6 +35,8 @@ export interface ArtUrls {
   src: string | null;
   frames: [string, string] | null;
   scale: number;
+  /** 걷기·전투 필드 배율 (없으면 scale) */
+  fieldScale?: number;
   offsetY: number;
   /** manifest 에서 정한 이동 방식(없으면 undefined = 진화체·종족 기본을 따른다) */
   locomotion?: Locomotion;
@@ -45,8 +49,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'scene.room': {},
   'char.hollow': {},
   'char.shinigami': {},
-  // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다
-  'char.hollow.2': { scale: 2, locomotion: 'walk' },
+  // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
+  // 걷기·전투 필드는 1.5배 (C.176, GDD 106장 3: 2배면 그림 높이가 1단계의 약 1.26배·폭 1.4배로 필드 위로 넘쳤다 → 높이·폭이 1단계와 비슷하게)
+  'char.hollow.2': { scale: 2, fieldScale: 1.5, locomotion: 'walk' },
   'prop.door': {},
   'prop.altar': {},
   'prop.book': {},
@@ -63,6 +68,7 @@ export function artUrls(key: string, base = '/', manifest: Readonly<Record<strin
     src: e?.src ? join(e.src) : auto ? join(auto) : null,
     frames: e?.frames ? [join(e.frames[0]), join(e.frames[1])] : null,
     scale: e?.scale ?? 1,
+    ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}),
     offsetY: e?.offsetY ?? 0,
     locomotion: e?.locomotion,
   };
@@ -92,7 +98,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
       const still = findArtFile(key, files) ?? frameFiles(key, 'idle', files)[0] ?? null;
       if (!still) continue;
       const e = manifest[key] ?? manifest[fallbackKey];
-      const a: ArtUrls = { src: joinBase(base, still.startsWith('art/') ? still : `art/${still}`), frames: null, scale: e?.scale ?? 1, offsetY: e?.offsetY ?? 0, locomotion: manifest[key]?.locomotion ?? manifest[fallbackKey]?.locomotion };
+      const a: ArtUrls = { src: joinBase(base, still.startsWith('art/') ? still : `art/${still}`), frames: null, scale: e?.scale ?? 1, ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e?.offsetY ?? 0, locomotion: manifest[key]?.locomotion ?? manifest[fallbackKey]?.locomotion };
       return withAnims(a, resolveAnims(keys, base, files, overrides));
     }
     return null;

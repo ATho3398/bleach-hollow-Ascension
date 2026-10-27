@@ -26,7 +26,8 @@ export function weaknessText(enemy: Pick<EnemyDef, 'element'>, factionId: string
 
 /** 흡수 안내 (C.125, GDD 70·71장): 조건 없이 이기면 언제나, 특성 후보는 그 적의 속성 특성에서만 */
 export function absorbRuleText(faction: FactionConfig, enemy: Pick<EnemyDef, 'element'>): string {
-  return `이기면 언제나 ${faction.absorbActionName} 가능. 새 블록은 그 속성(${elementName(enemy.element, faction.id)})을 처음 ${faction.absorbActionName}할 때만 — 이미 가진 속성(${elementName(NORMAL_ELEMENT, faction.id)}은 기본 블록)은 강화만 오른다.`;
+  // C.176 (GDD 106장 1): 가진 속성이어도 그 속성 블록이 후보로 뜬다 — 가진 블록을 고르면 새 블록 없이 강화만
+  return `이기면 언제나 ${faction.absorbActionName} 가능. 후보는 그 속성(${elementName(enemy.element, faction.id)}) 블록 — 안 가진 블록은 새 블록 + 강화, 이미 가진 블록(${elementName(NORMAL_ELEMENT, faction.id)}은 기본 블록)은 강화만 오른다.`;
 }
 
 /** 한 단계의 두 열 내용: 왼쪽(설명·선택 상대 정보) / 오른쪽(고를 것·조작) — 가로 LCD (T-2) */
@@ -152,7 +153,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     });
     box.append(grid);
     // 속성 강화 진행 (GDD 84장 8번). 같은 속성 3개 보너스(n/3)는 C.150 에 삭제 (GDD 94장 B 후속)
-    const enh = Object.keys(b.enhance ?? {}).filter((l) => enhanceLevel(b, l) > 0).map((l) => `${elementName(l, faction.id)} ${enhanceLevel(b, l)}/${AX.enhance.max}`);
+    const enh = Object.keys(b.enhance ?? {}).filter((l) => enhanceLevel(b, l) > 0).map((l) => `${elementName(l, faction.id)} ${enhanceLevel(b, l)}강`);
     if (enh.length > 0) box.append(el('p', 'bha-faint', `속성 강화: ${enh.join(' · ')}`));
     const parts = b.slots.filter((id): id is string => id !== null && getTrait(id).kind === 'part');
     if (parts.length > 0) {
@@ -182,8 +183,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const pct = (n: number) => (enhanceAttackBonus(n) * 100).toFixed(1).replace(/\.0$/, '');
     const target = elId === NORMAL_ELEMENT ? '기본 공격 블록' : '공격 블록';
     return lv >= max
-      ? `${elementName(elId, faction.id)} 강화 ${max}/${max} 최대 · ${target} +${pct(max)}% · ${act} ${count}회 → ${count + 1}회`
-      : `${elementName(elId, faction.id)} 강화 ${lv}→${lv + 1} (/${max}) · ${target} +${pct(lv)}% → +${pct(lv + 1)}%`;
+      ? `${elementName(elId, faction.id)} ${max}강 최대 · ${target} +${pct(max)}% · ${act} ${count}회 → ${count + 1}회`
+      : `${elementName(elId, faction.id)} ${lv}강 → ${lv + 1}강 · ${target} +${pct(lv)}% → +${pct(lv + 1)}%`;
   }
   /** 속성 강화 줄 (흡수 첫 단계): 가진 속성 = "강화 n→n+1" / 처음 먹는 속성 = "새 블록" + 강화 */
   function enhanceRow(): HTMLElement {
@@ -223,8 +224,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     /** 버튼 아래 작은 글: 갈래 설명 + 리스크 (가진 속성은 특성 대신 강화, C.150) */
     const modeSub = (m: AbsorbMode): string => {
       if (breaks(m)) return `${faction.frenzyName} 상태가 된다`;
-      const what = owned() && m !== 'stat' ? MODE_LABELS[m].sub.replace('특성', '강화') : MODE_LABELS[m].sub;
-      return `${what} · ${faction.riskGaugeName} +${Math.round(riskOf(m))}`;
+      return `${MODE_LABELS[m].sub} · ${faction.riskGaugeName} +${Math.round(riskOf(m))}`;
     };
     const modeBtn = (m: AbsorbMode, icon: string, go: () => void): HTMLButtonElement => {
       const b = sub(button({ label: MODE_LABELS[m].label, icon, variant: breaks(m) ? 'danger' : m === 'both' ? 'primary' : undefined, size: 'lg', onClick: go }), modeSub(m));
@@ -250,9 +250,14 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const mark = el('span', 'bha-cand__mark');
     mark.append(elementDot(t.element, faction.id));
     const top = el('span', 'bha-cand__top');
-    top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), chip('새 블록'), ...traitTags(id));
-    // 후보는 처음 먹는 속성만 나온다 (GDD 94장 B) — 같은 속성 n/3 표시는 C.150 에 삭제, 강화 단계로
-    const foot = el('span', 'bha-cand__foot', `${elementName(t.element, faction.id)} 블록을 처음 얻는다 · 강화 ${enhanceLevel(exp.build, t.element)}/${AX.enhance.max}`);
+    // C.176 (GDD 106장 1): 카드마다 지금 몇 강인지 — 안 가진 블록 = '새 블록', 가진 블록 = 'n강 → n+1강'(고르면 강화만). 강화는 속성 단위(84장 8)
+    const lv = enhanceLevel(exp.build, t.element);
+    const step = lv >= AX.enhance.max ? `${AX.enhance.max}강 최대` : `${lv}강 → ${lv + 1}강`;
+    const have = exp.build.owned.includes(id);
+    const badge = chip(have ? step : '새 블록');
+    badge.dataset.candStep = have ? 'owned' : 'new';
+    top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), badge, ...traitTags(id));
+    const foot = el('span', 'bha-cand__foot', have ? `이미 가진 블록 — 고르면 ${elementName(t.element, faction.id)} 강화만 (${step})` : `새 블록을 얻는다 · ${elementName(t.element, faction.id)} ${step}`);
     // 카드 자체가 고르기 버튼이라는 표시 (GDD 100장 #50)
     if (tagName === 'button') foot.append(' · ', el('b', '', '✓ 고르기'));
     const body = el('span', 'bha-cand__body');
@@ -269,9 +274,9 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const nodes: HTMLElement[] = [foeCard(), el('p', 'bha-dim', `${MODE_LABELS[mode].label}: ${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
     const side: HTMLElement[] = [];
     if (offer!.candidates.length === 0) {
-      // 94장 B: 가진 속성(노멀은 늘)은 새 블록 없이 강화만
+      // 후보가 없을 때(그 속성 특성이 없는 적 등): 가진 속성이면 강화만
       const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
-      if (owned()) none.append(icon('i-evolve', 'lg'), el('b', '', '이미 가진 속성 — 강화만'), el('p', '', enhanceText()), el('p', 'bha-dim', '새 블록은 그 속성을 처음 먹을 때만 생긴다.'));
+      if (owned()) none.append(icon('i-evolve', 'lg'), el('b', '', '이미 가진 속성 — 강화만'), el('p', '', enhanceText()), el('p', 'bha-dim', '이번에는 고를 블록 후보가 없다.'));
       else none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '새로 얻을 특성이 없다. 효과만 얻는다.'));
       const go = button({ label: owned() ? `강화하고 ${act}` : `특성 없이 ${act}`, variant: 'primary', size: 'lg', block: true, onClick: () => finish(chooseAbsorb(exp, null, undefined, mode), true) });
       first = go;
@@ -282,7 +287,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         const c = candCard(id, 'button');
         first ??= c;
         c.onclick = () => {
-          if (isFull(exp.build)) {
+          // 가진 블록은 슬롯이 가득이어도 교체 없이 강화만 (106장 1)
+          if (isFull(exp.build) && !exp.build.owned.includes(id)) {
             picked = id;
             step = 'replace';
             render();

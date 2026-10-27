@@ -58,7 +58,7 @@ export function isSpecialTrait(t: Pick<TraitDef, 'element'>): boolean {
 }
 
 /** 그 속성을 이미 가졌나 (GDD 94장 B, C.147): 노멀은 기본 블록(노멀 조·탄·교)을 늘 가진 것으로 보고, 다른 속성은 그 속성 특성(보스 특성 제외)을 하나라도 가졌으면.
- *  가진 속성의 흡수는 새 특성 없이 속성 강화(84장 8번)만 — 새 블록은 그 속성을 처음 먹을 때만 */
+ *  C.176(GDD 106장 1)부터 후보 거르기에는 쓰지 않는다 — 화면 문구(가진 속성 안내)용 */
 export function ownsElement(build: Pick<BuildState, 'owned'>, element: string): boolean {
   return element === NORMAL_ELEMENT || build.owned.some((id) => {
     const t = getTrait(id);
@@ -66,9 +66,10 @@ export function ownsElement(build: Pick<BuildState, 'owned'>, element: string): 
   });
 }
 
-/** 흡수 후보를 뽑을 속성: 아직 안 가진 속성만 (94장 B) */
-function freshElements(build: Pick<BuildState, 'owned'>, elements: readonly string[]): string[] {
-  return elements.filter((el) => !ownsElement(build, el));
+/** 후보 풀 (C.176, GDD 106장 1 — C.147 의 '가진 속성 후보 빼기' 폐기): 그 적 속성(elements)의 보스 아닌 특성 전부. 이미 가진 특성도 나온다 —
+ *  고르면 새 블록 없이 그 속성 강화 +1 만(chooseAbsorb). 화면은 가진 것 = 'n강 → n+1강', 안 가진 것 = '새 블록' */
+function offerPool(elements: readonly string[]): TraitDef[] {
+  return TRAITS.filter((t) => !t.boss && elements.includes(t.element));
 }
 
 function pick<T>(rng: Rng, list: T[]): T {
@@ -100,9 +101,8 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
 export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, candidateMult = 1, elements: readonly string[] = [enemy.element]): AbsorbOffer {
   const elite = enemy.class === 'elite';
   const rare = enemy.rare === true;
-  // 94장 B: 이미 가진 속성(노멀은 늘)은 새 특성 없이 강화만 — 처음 먹는 속성의 특성만 후보. 보스 특성은 보스 보상이라 그대로
-  const fresh = freshElements(build, elements);
-  const pool = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && fresh.includes(t.element));
+  // 106장 1: 가진 속성이어도 그 속성 조·탄·교 등이 평소처럼 후보로 — 가진 특성은 고르면 강화만. 보스 특성은 보스 보상이라 그대로(아직 없을 때만)
+  const pool = offerPool(elements);
   const candidates: string[] = [];
   const bossAdded = bossTrait !== null && !build.owned.includes(bossTrait) && elements.includes(getTrait(bossTrait).element);
   if (bossAdded) candidates.push(bossTrait);
@@ -140,8 +140,7 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
 export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates' | 'element'>, build: BuildState, bossTrait: string | null = null, elements: readonly string[] = [offer.element]): string[] {
   const fixed = offer.candidates.filter((id) => id === bossTrait || getTrait(id).rare === true);
   const want = offer.candidates.length - fixed.length;
-  const fresh = freshElements(build, elements);
-  const usable = TRAITS.filter((t) => !t.boss && !build.owned.includes(t.id) && fresh.includes(t.element));
+  const usable = offerPool(elements);
   const free = usable.filter((t) => !t.rare && !fixed.includes(t.id));
   const unseen = free.filter((t) => !offer.candidates.includes(t.id));
   const enough = unseen.length >= want;

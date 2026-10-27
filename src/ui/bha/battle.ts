@@ -247,6 +247,7 @@ export function heroEl(art: ArtUrls, loco: Locomotion = 'walk'): { root: HTMLEle
   if (url) {
     body.classList.add('has-art');
     const img = artImg(art, url, 'bha-hero__img');
+    img.style.setProperty('--art-scale', String(art.fieldScale ?? art.scale)); // 전투 필드 배율 (C.176, GDD 106장 3: 메노스 그란데)
     body.append(img);
     bindAnim(root, img, art)?.setLoop('idle');
   } else {

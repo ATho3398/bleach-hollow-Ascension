@@ -259,9 +259,9 @@ describe('91장 세이브·참고 줄', () => {
 });
 
 describe('94장 B 후속: 같은 속성 3개 보너스 삭제 · 흡수 화면 문구', () => {
-  it('흡수 화면: 가진 속성이면 갈래 설명이 "강화", n/3 표시 없음, 임시 데이터 문구는 테스트 모드에서만', () => {
+  it('흡수 화면: n/3 표시 없음, 임시 데이터 문구는 테스트 모드에서만 (갈래 설명 "강화" 바꿈은 C.176 GDD 106장 1 에 삭제 — 가진 속성도 후보가 뜬다)', () => {
     const src = read('src/ui/absorbView.ts');
-    expect(src).toContain("owned() && m !== 'stat' ? MODE_LABELS[m].sub.replace('특성', '강화')"); // C.171: 표 대신 버튼 아래 글
+    expect(src).not.toContain("MODE_LABELS[m].sub.replace('특성', '강화')");
     expect(src).not.toContain('elementBonusCount');
     expect(src).not.toContain('completedElements');
     expect(src).toMatch(/devText\(\) \? \[\.\.\.parts\.main, el\('p', 'bha-faint', PROVISIONAL_NOTE\)\] : parts\.main/); // C.171: 개발용 문구 스위치 하나(devText = 테스트 모드)

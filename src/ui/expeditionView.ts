@@ -32,6 +32,7 @@ import { nextCellIsElite } from './warningLogic';
 import { storyGoalLine } from './storyView';
 import { bossName } from '../data/bosses';
 import { statName } from '../data/elements';
+import { floatEl } from './bha/battle';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -132,8 +133,18 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   function endRest(): void {
     if (exp.phase !== 'rest') return;
     const spring = exp.restSpring === true;
+    const before = { full: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, risk: exp.risk };
     finishRest(exp);
     h.onSave();
+    // 회복 숫자 떠오름 (C.176, GDD 106장 2): 전투 회복 숫자(.bha-float--heal)와 같은 모양, 캐릭터 머리 위
+    const gain = spring
+      ? `${faction.riskGaugeName} −${Math.round(before.risk - exp.risk)}`
+      : [`${faction.fullnessName} ${Math.round(fullnessOf(exp.hunger, PX.hungerMax) - before.full)}`, `컨디션 ${Math.round(exp.condition - before.cond)}`].join(' · ');
+    const fx = floatEl('heal', gain, { left: 50, top: -18 });
+    fx.classList.add('bha-walker__healnum');
+    if (spring) fx.classList.add('is-spring');
+    fx.addEventListener('animationend', () => fx.remove());
+    walk.walker.append(fx);
     msg = spring ? `${faction.riskGaugeName}이(가) 가라앉았다` : `${faction.fullnessName}·컨디션이 회복됐다`;
     render();
     nextStep();
@@ -262,6 +273,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선
+  // 휴식 회복 빛 (C.176, GDD 106장 2): 꾸밈 오라(.bha-walker::before)와 겹치지 않게 따로 둔 칸
+  const healFx = el('span', 'bha-walker__heal');
+  healFx.setAttribute('aria-hidden', 'true');
+  healFx.hidden = true;
+  walk.walker.append(healFx);
   // 데리고 간 펫 (GDD 90장): 걷는 캐릭터 뒤에 작게
   const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction));
   if (buddy) walk.walker.append(buddy);
@@ -337,6 +353,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   // ── 상태에 맞춰 제자리 갱신 ──
   function render(): void {
+    // 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오른다
+    healFx.hidden = exp.phase !== 'rest';
     const spike = exp.lap >= PX.hungerSpikeLap;
     const hungerDanger = spike || exp.hunger >= PX.hungerMax * 0.8;
     const bonus = riskBonus(exp);

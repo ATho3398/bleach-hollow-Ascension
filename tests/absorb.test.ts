@@ -360,17 +360,18 @@ describe('희귀 개체', () => {
     }
   });
 
-  it('일반 개체는 희귀 특성이 나오지 않고, 이미 가진 특성은 후보에서 빠진다', () => {
+  it('일반 개체는 희귀 특성이 나오지 않는다 (C.176 GDD 106장 1: 가진 속성·특성도 후보 — 고르면 강화만)', () => {
     const build = newBuild();
     gainTrait(build, A[0]!);
     for (let seed = 1; seed <= 30; seed++) {
-      // C.147 (94장 B): 이미 가진 속성(fire)은 강화만 — 후보는 처음 먹는 속성에서
-      expect(buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire', rare: false }, build, NO).candidates).toEqual([]);
+      const fire = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire', rare: false }, build, NO).candidates;
+      expect(fire.length).toBeGreaterThanOrEqual(1);
+      expect(fire.every((id) => !getTrait(id).rare && getTrait(id).element === 'fire')).toBe(true);
       const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'water', rare: false }, build, NO);
       expect(offer.rare).toBe(false);
       expect(offer.candidates.length).toBeGreaterThanOrEqual(1);
       expect(offer.candidates.length).toBeLessThanOrEqual(2);
-      expect(offer.candidates.every((id) => !getTrait(id).rare && id !== A[0])).toBe(true);
+      expect(offer.candidates.every((id) => !getTrait(id).rare)).toBe(true);
     }
     expect(buildOffer(createRng(1), { ...getEnemy('test-elite'), rare: false }, newBuild(), NO).candidates).toHaveLength(AX.candidatesElite);
   });
@@ -749,7 +750,7 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     const hollow = getFaction('hollow');
     const rule = absorbRuleText(hollow, { element: 'poison' });
     expect(rule).toContain(`이기면 언제나 ${hollow.absorbActionName} 가능`);
-    expect(rule).toContain('속성(독)을 처음'); // C.147 (94장 B): 새 블록은 처음 먹는 속성만, 가진 속성은 강화만
+    expect(rule).toContain('이미 가진 블록'); // C.176 (106장 1): 가진 속성도 후보 — 가진 블록은 강화만
     expect(rule).toContain('강화만');
     expect(rule).not.toContain('조건');
     expect(weaknessText({ element: 'thunder' }, 'hollow')).toBe('흙');

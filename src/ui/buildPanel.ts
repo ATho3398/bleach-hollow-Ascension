@@ -80,7 +80,7 @@ function traitArt(faction: FactionConfig, id: string): HTMLElement {
   return art;
 }
 
-/** 상세 창 (아이템 탭 상세 창과 같은 컴포넌트): 이름 · 계열 · 속성 · 효과 · 속성 강화 n/100 · [장착]/[칸 고르기]/[빼기] */
+/** 상세 창 (아이템 탭 상세 창과 같은 컴포넌트): 이름 · 계열 · 속성 · 효과 · 속성 강화 n강(/100 작게, C.176 GDD 106장 1) · [장착]/[칸 고르기]/[빼기] */
 function openTraitDetail(faction: FactionConfig, build: BuildState, state: TraitsTabState, tierIndex: number, id: string, from: SlotCell | null, onChange: () => void): void {
   const t = getTrait(id);
   const name = traitBlockName(faction, id, tierIndex);
@@ -108,7 +108,7 @@ function openTraitDetail(faction: FactionConfig, build: BuildState, state: Trait
   close = itemDialog({
     heading: from ? `${faction.slotName} ${from.index + 1}번 칸` : '특성',
     name, desc: `${kind} · ${elementName(t.element, faction.id)} 속성\n${plainDesc(traitDescription(id, faction.id))}`,
-    art: traitArt(faction, id), have: `속성 강화 ${lv}/${BALANCE.provisional.absorb.enhance.max}`, actions,
+    art: traitArt(faction, id), have: `속성 강화 ${lv}강 (/${BALANCE.provisional.absorb.enhance.max})`, actions,
   });
 }
 
@@ -136,7 +136,7 @@ function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabS
     b.classList.add('bha-sgcell--filled');
     b.dataset.drag = 'cell';
     b.setAttribute('aria-label', `${areaName} ${cell.index + 1}번 칸 ${traitBlockName(faction, id, tierIndex)}`);
-    b.append(num, icon(traitIconId(faction, id)), h('span', 'bha-sgcell__name', traitBlockName(faction, id, tierIndex)), h('small', 'bha-sgcell__enh', `강화 ${enhanceLevel(build, getTrait(id).element)}/${BALANCE.provisional.absorb.enhance.max}`), elementDot(getTrait(id).element, faction.id));
+    b.append(num, icon(traitIconId(faction, id)), h('span', 'bha-sgcell__name', traitBlockName(faction, id, tierIndex)), h('small', 'bha-sgcell__enh', `${enhanceLevel(build, getTrait(id).element)}강`), elementDot(getTrait(id).element, faction.id));
   }
   b.onclick = () => {
     if (held) {
@@ -180,7 +180,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
     const t = getTrait(id);
     const card = itemCard({
       id, name: traitBlockName(faction, id, tierIndex), detail: traitBrief(faction, id), art: traitArt(faction, id),
-      foot: `강화 ${enhanceLevel(build, t.element)}/${BALANCE.provisional.absorb.enhance.max}`, state: heldId === id ? 'worn' : undefined,
+      foot: `${enhanceLevel(build, t.element)}강`, state: heldId === id ? 'worn' : undefined,
       onClick: () => openTraitDetail(faction, build, state, tierIndex, id, null, onChange),
     });
     paintElement(card, t.element);

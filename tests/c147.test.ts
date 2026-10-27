@@ -132,23 +132,31 @@ describe('92장 대기 모드 받을 보상', () => {
 });
 
 describe('94장 B 같은 속성 흡수 = 강화만', () => {
-  it('노멀은 기본 블록을 가진 것으로 본다 → 노멀 흡수 후보 없음(강화만), 여러 시드·강적·후보 +n 에서도', () => {
+  // C.176 (GDD 106장 1): '가진 속성 후보 빼기' 폐기 — 가진 속성도 그 속성 특성이 평소처럼 후보, 가진 특성은 고르면 강화만(chooseAbsorb)
+  it('노멀은 기본 블록을 가진 것으로 보고(ownsElement), 노멀 흡수에도 노멀 특성 후보가 뜬다 (106장 1)', () => {
     expect(ownsElement(newBuild(), 'normal')).toBe(true);
     for (let seed = 1; seed <= 40; seed++) {
-      expect(buildOffer(createRng(seed), getEnemy('normal-basic'), newBuild(), WON, seed % 3).candidates).toEqual([]);
+      const c = buildOffer(createRng(seed), getEnemy('normal-basic'), newBuild(), WON, seed % 3).candidates;
+      expect(c.length).toBeGreaterThan(0);
+      expect(c.every((id) => getTrait(id).element === 'normal')).toBe(true);
     }
   });
 
-  it('그 속성을 처음 먹을 때만 새 블록 — 하나라도 가지면 그 속성은 강화만', () => {
+  it('그 속성을 가진 뒤에도 같은 속성 후보가 뜨고, 가진 특성도 후보에 나온다 (106장 1)', () => {
     const b = newBuild();
     const first = buildOffer(createRng(3), getEnemy('fire-basic'), b, WON);
     expect(first.candidates.length).toBeGreaterThan(0);
     expect(first.candidates.every((id) => getTrait(id).element === 'fire')).toBe(true);
     gainTrait(b, first.candidates[0]!);
     expect(ownsElement(b, 'fire')).toBe(true);
-    for (let seed = 1; seed <= 40; seed++) expect(buildOffer(createRng(seed), getEnemy('fire-basic'), b, WON, 2).candidates).toEqual([]);
-    // 다른 속성은 여전히 새 블록
-    expect(buildOffer(createRng(3), getEnemy('water-basic'), b, WON).candidates.length).toBeGreaterThan(0);
+    let sawOwned = false;
+    for (let seed = 1; seed <= 40; seed++) {
+      const c = buildOffer(createRng(seed), getEnemy('fire-basic'), b, WON, 2).candidates;
+      expect(c.length).toBeGreaterThan(0);
+      expect(c.every((id) => getTrait(id).element === 'fire')).toBe(true);
+      if (c.includes(first.candidates[0]!)) sawOwned = true;
+    }
+    expect(sawOwned).toBe(true);
   });
 
   it('노멀 강화는 기본 공격 블록 위력에 붙는다 (10단계 = earlyPerLevel × 10)', () => {
@@ -162,10 +170,10 @@ describe('94장 B 같은 속성 흡수 = 강화만', () => {
     expect(basicSources({ ...c.params, basicAttackEnhance: undefined }).find((x) => x.id === BASIC_SKILL_ID)!.powerMultiplier).toBe(1);
   });
 
-  it('흡수 화면 문구: "새 블록" / "강화 n→n+1"', () => {
+  it('흡수 화면 문구: "새 블록" / "n강 → n+1강" (C.176 GDD 106장 1)', () => {
     const src = readFileSync('src/ui/absorbView.ts', 'utf8');
-    expect(src).toContain("chip('새 블록')");
-    expect(src).toContain('강화 ${lv}→${lv + 1}');
+    expect(src).toContain("chip(have ? step : '새 블록')");
+    expect(src).toContain('`${lv}강 → ${lv + 1}강`');
     expect(src).toContain('이미 가진 속성 — 강화만');
   });
 });
