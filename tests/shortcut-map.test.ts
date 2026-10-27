@@ -74,8 +74,11 @@ describe('단축키 표시 설정', () => {
     const m = new Map<string, string>();
     return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), m };
   };
-  it('기본 켬, 끄면 저장되고 다시 읽힌다', () => {
+  it('기본 끔(C.170, GDD 100장 #88), 켜고 끄면 저장되고 다시 읽힌다', () => {
     const s = mem();
+    expect(loadKeyHints(s)).toBe(false);
+    saveKeyHints(s, true);
+    expect(s.m.get(KEY_HINTS_KEY)).toBe('1');
     expect(loadKeyHints(s)).toBe(true);
     saveKeyHints(s, false);
     expect(s.m.get(KEY_HINTS_KEY)).toBe('0');
@@ -83,9 +86,9 @@ describe('단축키 표시 설정', () => {
     saveKeyHints(s, true);
     expect(loadKeyHints(s)).toBe(true);
   });
-  it('저장소가 없거나 막혀 있으면 켬', () => {
-    expect(loadKeyHints(null)).toBe(true);
-    expect(loadKeyHints({ getItem: () => { throw new Error('blocked'); }, setItem: () => {} })).toBe(true);
+  it('저장소가 없거나 막혀 있으면 끔', () => {
+    expect(loadKeyHints(null)).toBe(false);
+    expect(loadKeyHints({ getItem: () => { throw new Error('blocked'); }, setItem: () => {} })).toBe(false);
     expect(() => saveKeyHints({ getItem: () => null, setItem: () => { throw new Error('blocked'); } }, false)).not.toThrow();
   });
 });

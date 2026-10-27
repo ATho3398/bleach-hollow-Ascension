@@ -23,6 +23,9 @@
 }
 .bha-homedock__carebtn .bha-icon { width: 18px; height: 18px; color: var(--c); flex: none; }
 .bha-homedock__carebtn:active, .bha-homedock__carebtn.is-active { background: var(--bha-bg-3); }
+.bha-homedock__carebtn { position: relative; }
+/* 돌봄 요청 느낌표 배지 (GDD 100장 #15): 대기 보상 배지와 같은 모양, 버튼 오른쪽 위 */
+.bha-homedock__carebtn .bha-homedock__askbadge { position: absolute; top: calc(-1 * var(--bha-sp-2)); right: var(--bha-sp-2); margin: 0; padding: 0 var(--bha-sp-2); line-height: 1.3; }
 .bha-homedock__carebtn--feed { --c: var(--bha-hunger); }
 .bha-homedock__carebtn--sleep { --c: var(--bha-cond); }
 .bha-homedock__carebtn--pet { --c: var(--bha-stab); }
@@ -41,7 +44,7 @@
   border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg); background: var(--bha-bg-1); box-sizing: border-box;
 }
 .bha-homedock__tray[hidden] { display: none; }
-.bha-homedock__tray--more { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-homedock__tray--more { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); } /* 4열 (GDD 100장 #17): 마지막 칸 = 닫기 */
 .bha-homedock__moreitem {
   min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1);
   padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2);
@@ -137,8 +140,9 @@
 /* ── 머리 위 상태 칩 (GDD 18-8): 캐릭터 몸 위, 한 줄. 누르면 상태 화면 ── */
 .bha-room__status {
   /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px). 나는 진화체(머리가 높다)는 칩 윗변이 방 위 끝에 붙어 틀에 가려지므로 방 안으로 내린다(--chip-h = 칩 높이, roomView 가 잰다, C.93) */
-  position: absolute; left: var(--char-x, 50%); top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-2)), calc(var(--chip-h, 0px) + var(--bha-sp-6))); transform: translate(-50%, -100%); z-index: 1;
-  display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 52px; box-sizing: content-box; /* 총 폭 74px < 그림 130px */
+  /* C.170 (GDD 100장 #12): 머리 위 8px(--bha-sp-4) 띄우고, 막대 옆 숫자 칸만큼 넓힌다 */
+  position: absolute; left: var(--char-x, 50%); top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-6))); transform: translate(-50%, -100%); z-index: 1;
+  display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 72px; box-sizing: content-box; /* 총 폭 94px < 그림 130px */
   padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3); /* 오른쪽은 키 글자 배지 자리 */
   background: rgb(0 0 0 / 0.55); border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
 }
@@ -146,6 +150,9 @@
 .bha-room__gauge .bha-icon { width: 14px; height: 14px; flex: none; color: var(--c); }
 .bha-room__gaugetrack { flex: 1 1 auto; height: 5px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); overflow: hidden; }
 .bha-room__gaugefill { display: block; height: 100%; border-radius: inherit; background: var(--c); }
+.bha-room__gaugenum { flex: none; min-width: 2ch; font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-1); text-align: right; }
+/* 이름표 (GDD 100장 #8): 칩 위 가운데 작게 (방 위 줄 대신) */
+.bha-room__status > .bha-room__name { position: absolute; left: 50%; bottom: calc(100% + var(--bha-sp-1)); transform: translateX(-50%); margin: 0; white-space: nowrap; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / 0.55); color: var(--bha-text-1); font-size: var(--bha-fs-xs); line-height: 1.5; }
 .bha-room__gauge--hunger { --c: var(--bha-hunger); }
 .bha-room__gauge--cond { --c: var(--bha-cond); }
 .bha-room__gauge--risk { --c: var(--bha-risk, var(--bha-danger)); }
@@ -153,21 +160,21 @@
 .bha-room__status:active { filter: brightness(1.2); }
 .bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
 
-/* ── 말풍선 (C.160): 머리 위 상태 칩 옆. 아래 끝 = 칩 아래 끝(칩과 같은 top 식), 가로 = 칩 바깥 (37px = 칩 폭 74px 의 절반).
-   예전 자리(방 가운데 위 14%)는 상태 칩(게이지)을 덮었다 (docs/captures/c159/room.png). is-left = 캐릭터가 오른쪽이면 칩 왼쪽으로 ── */
+/* ── 말풍선 (C.170, GDD 100장 #13): 캐릭터 옆 허리 높이(캐릭터 중심 줄). 머리 위 상태 칩·알림 띠와 한 줄에 몰리지 않게 위쪽에서 내렸다.
+   가로 = 그림 바깥 (65px = 그림 폭 130px 의 절반). is-left = 캐릭터가 오른쪽이면 왼쪽으로 ── */
 .bha-room__bubble {
   position: absolute; z-index: var(--bha-z-raised);
-  left: calc(var(--char-x, 50%) + 37px + var(--bha-sp-3));
-  top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-2)), calc(var(--chip-h, 0px) + var(--bha-sp-6)));
-  transform: translateY(-100%);
+  left: calc(var(--char-x, 50%) + 65px + var(--bha-sp-3));
+  top: var(--char-y, 54%);
+  transform: translateY(-50%);
   width: max-content; max-width: 34%; padding: var(--bha-sp-3) var(--bha-sp-5);
   font-size: var(--bha-fs-sm); line-height: 1.35; text-align: center; color: var(--bha-text-1);
   background: var(--bha-bg-0); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
   pointer-events: none;
 }
 .bha-room__bubble.is-pop { animation: bha-bubble-pop 0.18s ease-out; }
-.bha-room__bubble.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + 37px + var(--bha-sp-3)); }
-@keyframes bha-bubble-pop { from { opacity: 0; transform: translateY(-100%) scale(0.9); } }
+.bha-room__bubble.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + 65px + var(--bha-sp-3)); }
+@keyframes bha-bubble-pop { from { opacity: 0; transform: translateY(-50%) scale(0.9); } }
 
 /* 선택·포커스·누름 표시 (GDD 18-10): 그림 요소(.bha-art)는 사각 테두리·배경 없이 그림 윤곽을 따라 빛난다.
    그림 파일이든 임시 도형이든 .bha-art-img(그림 자리: 물건 모양·캐릭터 몸) 의 투명하지 않은 부분만 강조된다 */
@@ -203,3 +210,4 @@
 .bha-room__idlebadge { margin-left: var(--bha-sp-2); padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: var(--bha-accent); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
 .bha-modal__list { margin: var(--bha-sp-3) 0 0; padding: 0; list-style: none; display: grid; gap: var(--bha-sp-1); font-size: var(--bha-fs-sm); color: var(--bha-text-1); text-align: center; }
 .bha-modal__list .bha-small { color: var(--bha-text-2); }
+.bha-idlebox { display: grid; gap: var(--bha-sp-3); margin-top: var(--bha-sp-3); text-align: left; }

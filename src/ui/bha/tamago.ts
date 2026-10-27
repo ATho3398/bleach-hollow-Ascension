@@ -4,7 +4,7 @@
 // 그림 기기를 입으면 평소 화면도 그 기기를 화면 구멍 중심으로 확대한 모습(GDD 31장 4, C.71): 그림 + 그림 위 버튼 4개는 다마고치 모드가 아니어도 보이고, LCD 는 게임 기준 844×390 그대로 구멍에(device.setSkin).
 // 키링 = 고리에 매단 감쇠 진자 2마디(tamagoLogic.ts), 탭·끌기 = 충격, 설정 [기울기로 흔들기]를 켜면 기울기를 중력 방향으로. 다마고치 모드일 때만 돌고 멈추면 쉰다.
 // 켜 둔 상태·기울기 설정은 이 브라우저에만(세이브 아님). 색은 꾸밈 토큰(--cos-shell-*, --bha-cos-keyring-*)만. 종족 분기 없음 — 이름·모양은 종족 설정.
-import { cosmeticName, deviceArt, sourceNote, deviceSideArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
+import { cosmeticName, deviceArt, skinListed, sourceNote, deviceSideArt, getCosmetic, keyringArt, keyringShapeOf, DEVICE_BUTTONS, type CosmeticItemDef, type DeviceArtSpec, type DeviceButton, type KeyringShape } from '../../data/shop';
 import type { FactionConfig } from '../../engine/faction';
 import type { SaveData } from '../../game';
 import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../../shop';
@@ -14,6 +14,9 @@ import { motionReduced } from './cosmeticFx';
 import type { Device } from './device';
 import { button, el } from './dom';
 import { showToast } from './nest';
+
+/** 다마고치 모드 첫 진입 안내를 봤는가 (localStorage, 세이브 아님) */
+const TAMA_HINT_KEY = 'bha-tamago-hint';
 import { isTypingTarget } from './shortcuts';
 import { currentFit, toLocal, type Fit } from './viewport';
 import {
@@ -661,6 +664,15 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       settle();
       pend = kick(pend, tapKick(1) * 0.6, reduced()); // 꺼낼 때 한 번 흔들린다
       wake();
+      // 첫 진입 때 한 번만 안내 띠 (GDD 100장 #19): 화면을 누르면 크게(모드 끔)인 것을 미리 알린다. 본 기록은 이 브라우저에만
+      try {
+        if (store()?.getItem(TAMA_HINT_KEY) !== '1') {
+          store()?.setItem(TAMA_HINT_KEY, '1');
+          showToast({ eyebrow: '다마고치 모드', title: '화면을 누르면 크게 · 기기 버튼으로 조작' }, 0, 3600);
+        }
+      } catch {
+        /* 저장소가 막혀 있으면 안내만 건너뛴다 */
+      }
     } else {
       closeDesigns?.();
       if (back) {
@@ -711,8 +723,9 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       list.replaceChildren();
       const cur = s.wear.device ?? null;
       const entries: { id: string | null; name: string; note: string; front: string | null }[] = [
-        { id: null, name: '기본형', note: '기본 제공', front: null },
-        ...ownedDeviceDesigns(s).map((c) => ({ id: c.id, name: cosmeticName(c, faction), note: sourceNote(c), front: deviceArt(c)?.front ?? null })),
+        // C.170 (GDD 100장 #20·#21): 이름 '기본'(상점·보관함과 같게), 시험 기기는 상점·보관함처럼 skinListed 로 뺀다
+        { id: null, name: '기본', note: '기본 제공', front: null },
+        ...ownedDeviceDesigns(s).filter(skinListed).map((c) => ({ id: c.id, name: cosmeticName(c, faction), note: sourceNote(c), front: deviceArt(c)?.front ?? null })),
       ];
       for (const e of entries) {
         const worn = e.id === cur;

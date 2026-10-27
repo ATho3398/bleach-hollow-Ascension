@@ -19,6 +19,8 @@ export interface HelpOptions {
   onReplayTutorial?: () => void;
   /** 한 번만 뜨는 안내 다시 보기 (C.120, GDD 64·67장): 버튼 이름 → 여는 함수. 도움말은 이미 닫힌 뒤 불린다 */
   replays?: { label: string; run: () => void }[];
+  /** 있으면 머리에 [목표] (첫 걸음 목표 목록, GDD 100장 #80). 도움말은 이미 닫힌 뒤 불린다 */
+  onGoals?: () => void;
 }
 
 /** 아코디언 아이콘 (id → 스프라이트 아이콘). 모르는 id 는 info */
@@ -81,26 +83,50 @@ export function helpOverlay(faction: FactionConfig, opts: HelpOptions): () => vo
       ],
     });
   }
+  // 안내 다시 보기 (C.170, GDD 100장 #9·#79·#80): 튜토리얼·첫 원정·탄생·타일 안내를 머리 버튼 4개 대신 목록 맨 아래 한 묶음으로.
+  // 머리의 [다시 보기]는 이 묶음으로 바로 간다
+  const replayBtns: HTMLButtonElement[] = [];
+  const replayBtn = (label: string, run: () => void, iconId: string): HTMLButtonElement => {
+    const b = button({ label, icon: iconId, block: true, onClick: () => {
+      close();
+      run();
+    } });
+    b.dataset.replay = label;
+    return b;
+  };
+  if (opts.onReplayTutorial) replayBtns.push(replayBtn('튜토리얼 다시 보기', opts.onReplayTutorial, 'i-play'));
+  for (const r of opts.replays ?? []) replayBtns.push(replayBtn(r.label, r.run, 'i-info'));
+  const replayAt = replayBtns.length > 0 ? rows.length : -1;
+  if (replayBtns.length > 0) {
+    rows.push({
+      label: '안내 다시 보기',
+      caption: '안내',
+      content: [icon('i-loop'), el('span', 'bha-mdrow__name', '안내 다시 보기')],
+      detail: () => [el('h2', 'bha-mddetail__title', '안내 다시 보기'), el('p', 'bha-mddetail__body', '한 번만 뜨는 안내를 다시 연다. 도움말은 닫힌다.'), ...replayBtns],
+    });
+  }
   const start = Math.max(0, SCREEN_HELPS.findIndex((it) => it.id === opts.screen));
   const md = masterDetail(rows, start, '도움말 항목');
 
-  const closeBtn = button({ label: fromBattle ? '닫고 전투로' : '닫기', variant: 'primary', onClick: close });
+  // 머리 버튼 = 아이콘 + 짧은 글 한 줄, 닫기 = X 아이콘 (#79)
+  const closeBtn = button({ label: fromBattle ? '닫고 전투로' : '닫기', icon: 'i-close', iconOnly: true, variant: 'ghost', onClick: close });
+  closeBtn.dataset.helpClose = '';
   const aside: HTMLElement[] = [];
-  if (opts.onReplayTutorial) {
-    aside.push(button({
-      label: '튜토리얼 다시 보기', icon: 'i-play',
-      onClick: () => {
-        close();
-        opts.onReplayTutorial!();
-      },
-    }));
-  }
-  for (const r of opts.replays ?? []) {
-    const b = button({ label: r.label, icon: 'i-info', onClick: () => {
-      close();
-      r.run();
+  if (replayAt >= 0) {
+    const b = button({ label: '다시 보기', icon: 'i-loop', size: 'small', onClick: () => {
+      md.select(replayAt);
+      md.list.querySelectorAll('.bha-mdrow')[replayAt]?.scrollIntoView({ block: 'nearest' });
     } });
-    b.dataset.replay = r.label;
+    b.dataset.helpReplays = '';
+    aside.push(b);
+  }
+  if (opts.onGoals) {
+    const goals = opts.onGoals;
+    const b = button({ label: '목표', icon: 'i-target', size: 'small', onClick: () => {
+      close();
+      goals();
+    } });
+    b.dataset.helpGoals = '';
     aside.push(b);
   }
   aside.push(closeBtn);

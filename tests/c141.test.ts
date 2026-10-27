@@ -57,7 +57,8 @@ describe('C.141', () => {
     expect(handCounts(['a', 'b', 'a'])).toEqual([{ id: 'a', count: 2 }, { id: 'b', count: 1 }]);
     const css = read('src/ui/bha/expedition.css');
     expect(css).toContain('.bha-road__cell.is-drop');
-    expect(css).toContain('.bha-lcd .bha-plan .bha-road__wrap { display: grid');
+    // C.170 (GDD 100장 #24): 배치판을 display: contents 로 풀어 화면 격자(왼쪽 길 · 오른쪽 손패)에 바로 놓는다
+    expect(css).toContain('.bha-lcd .bha-plan .bha-road__wrap { display: contents; }');
   });
   it('85장 11: 프리셋 패널 — 칸 미리보기와 저장·불러오기·덮어쓰기·이름·삭제 버튼, 두 화면이 같이 쓴다', () => {
     const pv = presetPreview([null, 'prey-nest-a', null, 'rest-a', null]);

@@ -1,4 +1,4 @@
-// 튜토리얼 목록 (GDD 23-3): 독 [더보기] → [튜토리얼]. 왼쪽 목표 목록(달성/미달성/준비 중), 오른쪽 고른 목표의 보상·달성 시각.
+// 첫 걸음 목표 (GDD 23-3, C.170 이름 '튜토리얼' → '첫 걸음 목표' GDD 100장 #80): 도움말 [목표]. 왼쪽 목표 목록(달성/미달성/준비 중), 오른쪽 고른 목표의 보상·달성 시각.
 // 목표 문구는 종족 설정 자리표시자로 채우고, 판정·지급은 자동(game.ts claimTutorialGoals) — 여기서는 보기만 한다. 체험 전투(튜토리얼 다시 보기)도 여기서 연다.
 import { BALANCE } from '../config/balance';
 import { TUTORIAL_GOALS, TUTORIAL_GOALS_PROVISIONAL, type TutorialGoalDef, type TutorialReward } from '../data/tutorials';
@@ -56,12 +56,12 @@ function goalRow(def: TutorialGoalDef, faction: FactionConfig, claimedAt: number
 export function tutorialGoalsView(root: HTMLElement, faction: FactionConfig, save: SaveData, onReplay: () => void): void {
   const claims = new Map((save.shared.tutorials[faction.id] ?? []).map((c) => [c.goalId, c.at]));
   const rows = TUTORIAL_GOALS.map((d) => goalRow(d, faction, claims.get(d.id) ?? null));
-  const md = masterDetail(rows, 0, '튜토리얼 목표');
+  const md = masterDetail(rows, 0, '첫 걸음 목표');
   const sub = h('span');
   sub.append(`${faction.name} 트랙 · 달성 `, h('b', '', String(TUTORIAL_GOALS.filter((d) => claims.has(d.id)).length)), ` / ${TUTORIAL_GOALS.length}`);
   if (TUTORIAL_GOALS_PROVISIONAL) sub.append(' ', provisionalTag('임시 보상'));
   const replay = button({ label: '튜토리얼 다시 보기', icon: 'i-play', size: 'small', onClick: onReplay });
-  lcdPage(root, { cls: 'bha-titles-page bha-tutorials-page', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, lcdHead({ title: '튜토리얼', sub, aside: [selectLast(replay)] }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-titles-page bha-tutorials-page', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, lcdHead({ title: '첫 걸음 목표', sub, aside: [selectLast(replay)] }), [md.list], [md.detail]);
 }
 
 /** 보상 토스트 한 건 (튜토리얼·도감 보상이 같은 토스트를 쓴다) */

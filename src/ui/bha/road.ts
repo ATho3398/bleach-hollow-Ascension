@@ -4,7 +4,7 @@ import { BALANCE } from '../../config/balance';
 import { getTile } from '../../data/tiles';
 import { moveTile, placeTile, swapTiles, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
 import { tileHint, variantModsText } from '../labels';
-import { el, icon } from './dom';
+import { el, emptyState, icon } from './dom';
 import { canPlaceAt, tileCss, tileIconId } from './expedition';
 import { registerCancelHook } from './shortcuts';
 
@@ -230,7 +230,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     }
     noteEl.textContent = note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다');
     hand.replaceChildren();
-    if (exp.hand.length === 0) hand.append(el('span', 'bha-faint', '손에 든 타일 없음'));
+    if (exp.hand.length === 0) hand.append(emptyState('손에 든 타일 없음', { icon: 'i-deck' })); // 빈 상태 (GDD 100장 #87)
     for (const { id, count } of handCounts(exp.hand)) {
       const css = tileCss(getTile(id).kind);
       // 타일 카드 (C.141, GDD 85장 11번): 큰 아이콘 · 이름 · 장수 · 한 줄 효과. 눌러서 고르거나 끌어서 칸에 놓는다

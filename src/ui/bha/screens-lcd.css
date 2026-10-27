@@ -141,7 +141,22 @@
 .bha-itemmodal__desc { white-space: pre-line; }
 
 /* ═════ 설정 ═════ */
-.bha-settings-page .bha-lcdpage__col > .bha-panel { flex: 1 0 auto; }
+.bha-settings-page .bha-lcdpage__col > .bha-panel { flex: none; }
+/* 켬/끔 줄 (C.170, GDD 100장 #76): 이름 왼쪽 + 작은 스위치 오른쪽. 켬 = 초록(--bha-good), 끔 = 회색. 선택은 줄 테두리(.bha-sel)만 */
+.bha-switch {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-4);
+  min-height: var(--bha-touch); padding: 0 var(--bha-sp-5); box-sizing: border-box; width: 100%;
+  border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); background: var(--bha-bg-2);
+  color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-md); text-align: left; touch-action: manipulation;
+}
+.bha-switch__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-switch__track { position: relative; flex: none; width: 36px; height: 20px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); border: 1px solid var(--bha-line-2); box-sizing: border-box; transition: background-color var(--bha-dur-2); }
+.bha-switch__knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: var(--bha-r-pill); background: var(--bha-text-3); transition: transform var(--bha-dur-2), background-color var(--bha-dur-2); }
+.bha-switch.is-checked .bha-switch__track { background: var(--bha-good); border-color: var(--bha-good); }
+.bha-switch.is-checked .bha-switch__knob { transform: translateX(16px); background: var(--bha-bg-0); }
+.bha-switch:active { background: var(--bha-bg-3); }
+.bha-settings__hint { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-settings__etc { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
 .bha-slider__row { display: grid; grid-template-columns: var(--bha-touch) minmax(0, 1fr) var(--bha-touch); align-items: center; gap: var(--bha-sp-3); }
 .bha-slider__row .bha-btn--icon { padding: 0; }
 .bha-settings-page .bha-slider__scale { display: none; }
@@ -157,6 +172,7 @@
 
 /* ═════ 도움말: 왼쪽 항목 목록 / 오른쪽 설명 ═════ */
 .bha-lcd .bha-layer .bha-app.bha-help-page { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; }
+.bha-help-page .bha-lcdpage__aside .bha-btn { flex: none; white-space: nowrap; } /* 머리 버튼 글자가 세로로 쪼개지지 않게 (GDD 100장 #79) */
 
 /* ═════ 시작 / 종족 바꾸기: 왼쪽 제목·소개·설정/도움말 / 오른쪽 종족 카드 ═════ */
 .bha-lcd .bha-app.bha-start {
@@ -306,7 +322,8 @@ button.bha-slot { cursor: pointer; }
 /* ═════ 종족 고르기 (GDD 19-4, C.46): 종족 수만큼 등분한 칸에 아이콘 + 이름만, 설정·도움말은 위 구석 작은 아이콘 ═════ */
 .bha-lcd .bha-app.bha-start.bha-start--species { display: block; padding: var(--bha-sp-4); }
 .bha-lcd .bha-start--species .bha-species--split {
-  position: absolute; inset: var(--bha-sp-4); display: grid; grid-template-rows: minmax(0, 1fr); gap: var(--bha-sp-4);
+  /* 위 머리 줄(터치 높이)은 설정·도움말 아이콘 자리 — 카드와 겹치지 않는다 (GDD 100장 #5) */
+  position: absolute; inset: calc(var(--bha-sp-4) + var(--bha-touch)) var(--bha-sp-4) var(--bha-sp-4); display: grid; grid-template-rows: minmax(0, 1fr); gap: var(--bha-sp-4);
 }
 .bha-lcd .bha-start--species .bha-species__card {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-5);
@@ -319,8 +336,10 @@ button.bha-slot { cursor: pointer; }
 }
 .bha-lcd .bha-start--species .bha-species__name { font-size: var(--bha-fs-4xl); }
 .bha-lcd .bha-start--species .bha-start__corner {
-  position: absolute; top: var(--bha-sp-5); left: var(--bha-sp-5); z-index: 1; display: flex; gap: var(--bha-sp-3);
+  position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-4); z-index: 1; display: flex; gap: var(--bha-sp-3);
 }
+/* 종족 한 줄 소개 (GDD 100장 #6, 종족 설정 tagline) */
+.bha-species__tagline { font-size: var(--bha-fs-md); color: var(--bha-text-2); }
 
 /* ═════ 등급전 (C.49, GDD 21장): 왼쪽 번호 사다리 / 오른쪽 도전 상대 ═════ */
 .bha-rankpage .bha-ranklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--bha-sp-1); }
@@ -367,3 +386,9 @@ button.bha-slot { cursor: pointer; }
 .bha-riskexplain__title { font-size: var(--bha-fs-sm); color: var(--bha-text-1); }
 .bha-riskexplain__label { font-size: var(--bha-fs-xs); color: var(--bha-accent); font-weight: var(--bha-fw-heavy); }
 .bha-riskexplain__list { margin: 0; padding-left: var(--bha-sp-5); display: flex; flex-direction: column; gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.35; }
+
+/* 전투 일시정지 버튼 한 줄 (C.170, GDD 100장 #41): [계속][설정][그만두기] */
+.bha-battle-ov__actions--row { flex-direction: row; }
+.bha-battle-ov__actions--row > .bha-btn { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+/* 전투 위에 레이어로 연 설정: 평소 설정 화면과 같은 틀, 배경은 화면 바탕 */
+.bha-lcd .bha-settings-layer { background: var(--bha-bg-0); }

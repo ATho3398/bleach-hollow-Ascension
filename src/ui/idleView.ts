@@ -7,7 +7,7 @@ import type { FactionConfig, FoodId } from '../engine/faction';
 import type { IdleYield } from '../engine/idle';
 import type { IdleRecord } from '../engine/runLog';
 import { idleClaimable, idlePendingYield, type IdleAccrual, type SaveData } from '../game';
-import { el } from './bha/dom';
+import { el, meter } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 
 const IX = BALANCE.provisional.idle;
@@ -53,9 +53,17 @@ export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foo
   };
 }
 
-/** 규칙 한 줄 (아이콘 창) */
+/** 규칙 한 줄 (아이콘 창, C.170 GDD 100장 #16: 3줄 → 1줄. 받기 기준·최대 시간은 진행 막대가 보인다) */
 export function idleRuleText(): string {
-  return `게임을 켜 두든 꺼 두든 흐른 시간만큼 자동 모험을 돈다(플레이 중에도 쌓인다) — 직접 돌았을 때의 ${Math.round(IX.share * 100)}%, 합계 최대 ${IX.maxHours}시간. 쌓인 합계가 ${IX.minMinutes}분 이상이면 받을 수 있다.`;
+  return `켜 두든 꺼 두든 흐른 시간만큼 자동 모험 — 직접 돌았을 때의 ${Math.round(IX.share * 100)}%`;
+}
+
+/** 진행 막대 한 줄 (#16): "쌓인 시간 3분 / 10분부터 받기 · 최대 24시간". 받을 수 있으면 최대 시간 기준 */
+export function idleProgress(save: Pick<SaveData, 'idlePending'>): { minutes: number; max: number; text: string } {
+  const minutes = Math.round((save.idlePending?.hours ?? 0) * 60);
+  const ready = idleClaimable(save);
+  const max = ready ? IX.maxHours * 60 : IX.minMinutes;
+  return { minutes, max, text: `${hm(minutes / 60)} / ${ready ? '받을 수 있다' : `${IX.minMinutes}분부터 받기`} · 최대 ${IX.maxHours}시간` };
 }
 
 /** 켜 둔 동안 방 '대기 보상' 아이콘 배지 갱신 (95장 B1, 1분마다): 방 화면이 그린 버튼(data-sc="idle-reward")의 배지만 바꾼다 — 방이 아니면 아무것도 안 함 */
@@ -110,16 +118,20 @@ export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: Factio
   });
 }
 
-/** 방 '대기 보상' 아이콘 창 (92장 1번): 규칙 + 지금 쌓인 것 + [받기] (없으면 닫기만) */
+/** 방 '대기 보상' 아이콘 창 (92장 1번): 규칙 한 줄 + 쌓인 시간 진행 막대 + 지금 쌓인 것 + [받기]. 받을 게 없으면 [받기]는 비활성으로 자리만 지킨다 (100장 #16) */
 export function showIdlePanel(save: SaveData, faction: FactionConfig, onClaim: () => IdleRecord | null): void {
   const has = idleClaimable(save);
+  const pr = idleProgress(save);
+  const box = el('div', 'bha-idlebox');
+  box.append(meter({ kind: 'sp', label: '쌓인 시간', icon: 'i-timer', value: Math.min(pr.minutes, pr.max), max: pr.max, valueText: pr.text, compact: true }));
+  if (save.idlePending && idlePendingYield(save)) box.append(listOf(save, faction));
   confirmDialog({
     title: '대기 보상',
     body: idleRuleText(),
-    content: listOf(save, faction),
-    yes: has ? '받기' : '닫기',
+    content: box,
+    yes: '받기',
     no: '닫기',
-    single: !has,
+    yesDisabled: !has,
     onYes: () => {
       if (!has) return;
       const r = onClaim();

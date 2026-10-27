@@ -1,7 +1,8 @@
 /* 스토리 모드·보스전 (GDD 25-4·25-3·25-7, C.58). 새 색·간격 토큰 없음 — 기존 토큰만 쓴다 */
 
 /* 원정 출발 화면 머리의 [자유 원정]/[스토리] 탭 */
-.bha-depart-tabs { flex: none; }
+.bha-depart-tabs { flex: none; min-width: 96px; } /* '탑'처럼 짧은 이름이어도 누르기 작지 않게 (GDD 100장 #29) */
+.bha-depart-tabs > .bha-viewtitle__btn { min-width: 96px; justify-content: space-between; }
 /* 탭 위치 고정 (C.63, GDD 28장 8번): 출발(배치) 화면과 스토리 화면의 머리·바깥 여백을 같게 해 탭이 같은 자리에 있게 한다 */
 .bha-lcd .bha-app.bha-lcdpage.bha-story,
 .bha-lcd .bha-app.bha-lcdpage.bha-tower { padding: var(--bha-sp-3) var(--bha-sp-4); }
@@ -17,7 +18,7 @@
 .bha-story-ep__mark > .bha-icon { width: 18px; height: 18px; }
 .bha-story-ep__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .bha-story-ep__name { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }
-.bha-story-ep__goal { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: var(--bha-lh-tight); }
+.bha-story-ep__goal { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: var(--bha-lh-tight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* 한 줄, 넘치면 말줄임 (GDD 100장 #27) */
 .bha-story-ep__state { flex: none; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-3); white-space: nowrap; }
 .bha-story-ep.is-cleared { border-color: var(--bha-primary-line); }
 .bha-story-ep.is-cleared .bha-story-ep__mark,

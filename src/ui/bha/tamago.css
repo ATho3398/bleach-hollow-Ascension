@@ -173,6 +173,7 @@ html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tam
   border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
   background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-bg-1); box-shadow: var(--bha-shadow-3);
 }
+.bha-designs__win > .bha-modal__actions { flex: none; } /* 카드 줄이 [닫기] 밑에 깔리지 않게 (GDD 100장 #21) */
 .bha-designs__list {
   flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; gap: var(--bha-sp-4); align-content: start;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));

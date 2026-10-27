@@ -1,6 +1,6 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
-//   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·튜토리얼·사진·다마고치 모드·백업·처음 화면).
-// 위 한 줄: 컨디션·리스크 바 + 원정 이어하기. 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
+//   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·사진·다마고치·트랙 전환·백업·처음 화면·닫기, GDD 100장).
+// 위 한 줄: 원정 이어하기만 (이름표는 상태 칩 위, C.170). 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
@@ -16,9 +16,7 @@ import { characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt,
 import { careTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
-import { toward } from './bha/nestLogic';
 import { rebirthMark } from './rebirthView';
-import { formName, tryGetForm } from '../data/evolution';
 import { getFaction } from '../data/factions';
 import { formDisplayName, playerElementsOf } from '../engine/evolution';
 
@@ -34,8 +32,6 @@ export interface RoomHandlers {
   onHogyoku: (() => void) | null;
   onSettings: () => void;
   onHelp: () => void;
-  /** 독 '더보기' 항목: 튜토리얼 목록(GDD 23-3) */
-  onTutorial: () => void;
   /** 상점 (GDD 25-9): 방 물건 shop (C.63, 더보기에서 옮김) */
   onShop: () => void;
   /** 사진 (GDD 25-11): 독 더보기 항목 */
@@ -75,24 +71,15 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const hud = el('header', 'bha-room__hud');
   const items: SelectItem[] = [];
   let resumeBtn: HTMLButtonElement | null = null;
-  // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★. 투트랙이면(GDD 22-3) 이름표 옆에 트랙 전환 버튼
+  // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★.
+  // C.170 (GDD 100장 #8): 방 위 이름+[트랙 전환] 줄은 없앴다 — 이름은 상태 칩 위 작은 이름표, 트랙 전환은 ··· 더보기의 한 칸('호로 트랙'/'사신 트랙', #9)
   const stars = rebirthMark(save.rebirth.count);
   const others = hd.onSwitchTrack ? save.otherTracks : [];
-  // 이름표 테 꾸밈(GDD 25-9)을 입었으면 이름표를 늘 보인다
+  // 이름표 테 꾸밈(GDD 25-9)을 입었거나 환생·투트랙이면 이름표를 보인다
+  let nameTag: HTMLElement | null = null;
   if (stars || others.length > 0 || save.wear.plate) {
-    const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
-    const name = el('span', 'bha-small bha-room__name', formDisplayName(save.evolution, faction.id));
-    if (stars) name.append(' ', stars);
-    for (const t of others) {
-      const to = getFaction(t.factionId);
-      const sw = button({ label: toward(to.name), icon: 'i-swap', size: 'small', variant: 'ghost', onClick: () => hd.onSwitchTrack!(t.factionId) });
-      sw.title = `${to.name} 트랙으로 바꾸기`;
-      sw.dataset.sc = 'track-switch';
-      sw.dataset.track = t.factionId;
-      name.append(' ', sw);
-      items.push({ el: sw });
-    }
-    hud.append(name);
+    nameTag = el('span', 'bha-small bha-room__name', formDisplayName(save.evolution, faction.id));
+    if (stars) nameTag.append(' ', stars);
   }
   if (hd.resume) {
     resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
@@ -109,9 +96,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   bubble.setAttribute('aria-live', 'polite');
   bubble.hidden = true;
   let bubbleTimer = 0;
-  const say = (text: string, ms = 2600) => {
+  const say = (text: string, ms = 3000) => {
     bubble.textContent = text;
-    // 말풍선은 머리 위 상태 칩 옆에 선다 (C.160): 캐릭터가 오른쪽 절반이면 칩 왼쪽, 아니면 오른쪽 — 칩(게이지)을 가리지 않는다
+    // 말풍선은 캐릭터 옆 허리 높이 (GDD 100장 #13, 머리 위 상태 칩과 떨어뜨림): 캐릭터가 오른쪽 절반이면 왼쪽, 아니면 오른쪽
     bubble.classList.toggle('is-left', parseFloat(scene.style.getPropertyValue('--char-x')) > 55);
     bubble.hidden = false;
     bubble.classList.remove('is-pop');
@@ -189,13 +176,16 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
       const track = el('span', 'bha-room__gaugetrack');
       track.append(fill);
-      row.append(icon(c.icon), track);
+      // 숫자 한 칸 (GDD 100장 #12): 아이콘 · 막대 · 값
+      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? '' : String(Math.round(c.value))));
       return row;
     }));
+    if (nameTag) statusBtn.prepend(nameTag);
   };
   paintGauges();
-  requestAnimationFrame(() => scene.style.setProperty('--chip-h', `${statusBtn.offsetHeight}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
+  requestAnimationFrame(() => scene.style.setProperty('--chip-h', `${statusBtn.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
   scene.append(char, statusBtn, bubble);
+  // 이름표는 칩 위에 얹힌다: 칩이 방 위 끝에 붙지 않게 잴 때 이름표 높이도 넣는다
   floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
   const place = () => layoutOnFloor(scene, room.floor, floorEntries);
   place(); // 붙기 전이라 크기를 못 재면 기준 크기로, 붙은 뒤 다시 잰 값으로 놓는다
@@ -210,28 +200,30 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (action === 'feed') {
-        if (!food || !feedNest(save, food)) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.', 3200);
+        if (!food || !feedNest(save, food)) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.');
       } else if (careNest(save, action) === 'refused') {
         // 요청이 없거나 다른 것을 청했을 때: 거절 말풍선, 효과 없음 (GDD 82장)
         hd.persist();
         dock.setRequest(n.careRequest?.action ?? null);
-        return say(pickLine(room.talk, careTalkKey('refuse', action)), 3200);
+        return say(pickLine(room.talk, careTalkKey('refuse', action)));
       }
       dock.setRequest(n.careRequest?.action ?? null);
       hd.persist();
       paintGauges();
-      say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }), 3200);
+      say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }));
       // 먹기·잠 애니가 있으면 그것을, 없으면 기존 뛰는 반응 (다른 동작 애니로 대신하지 않는다)
       const clip = action === 'feed' ? 'eat' : action === 'sleep' ? 'sleep' : null;
       if (!(clip && playAnim(clip))) hopChar();
     },
     more: [
+      // C.170 (GDD 100장 #17·#80): 4열 — 설정·도움말·사진·다마고치 / 백업·처음 화면·닫기. '첫 걸음 목표'는 도움말 안 [목표]로
       { label: '설정', icon: 'i-settings', onClick: hd.onSettings },
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
-      { label: '튜토리얼', icon: 'i-play', onClick: hd.onTutorial },
-      ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', onClick: hd.onHogyoku }] : []),
       { label: '사진', icon: 'i-frame', onClick: hd.onPhoto },
-      { label: '다마고치 모드', icon: 'i-nest', onClick: hd.onTamago },
+      { label: '다마고치', icon: 'i-nest', onClick: hd.onTamago },
+      // 트랙 전환 (GDD 22-3·100장 #8·#9): '사신 트랙'처럼 조사 없이 (종족 이름은 설정 파일)
+      ...others.map((t) => ({ label: `${getFaction(t.factionId).name} 트랙`, icon: 'i-swap', onClick: () => hd.onSwitchTrack!(t.factionId) })),
+      ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', onClick: hd.onHogyoku }] : []),
       ...(hd.onTest ? [{ label: '테스트', icon: 'i-settings', onClick: hd.onTest }] : []),
       ...(hd.onBackup ? [{ label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup }] : []),
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
@@ -255,8 +247,11 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     list.push({ el: statusBtn }, { el: char });
     dev.setItems([...dock.items().filter((b) => b.closest('.bha-homedock__tray')).map((b) => ({ el: b })), ...list, ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
   }
-  registerItems();
   dock.setRequest(n.careRequest?.action ?? null);
+  // 첫 선택 (GDD 100장 #11): 모험(문). 돌봄 요청 중이면 그 돌보기 버튼 — 기기는 새 화면에서 초점 있는 항목부터 고른다
+  const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('door');
+  firstPick?.focus({ preventScroll: true });
+  registerItems();
   // 독 밖(장면)을 누르면 펼친 줄을 닫는다
   scene.addEventListener('pointerdown', () => dock.close());
 

@@ -143,3 +143,15 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [...(storyBox ? [storyBox] : []), ...(growthBox ? [growthBox] : []), sum]);
   if (win) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11)
 }
+
+/** 원정 도중 귀환 결과 카드 한 줄 (C.170, GDD 100장 #32): "전투 3 · 포식 1 · 골드 +40 · 먹이 2 · 타일 1장". 행동 이름은 종족 설정(absorbActionName) */
+export function abortSummaryLine(exp: ExpeditionState, faction: Pick<FactionConfig, 'absorbActionName'>): string {
+  const sum = summarize(exp);
+  return [
+    `전투 ${exp.battles.length}`,
+    `${faction.absorbActionName} ${exp.absorbRecords.filter((a) => a.absorbed).length}`,
+    `${TRADE_CURRENCY_NAME} +${sum.keptGold}`,
+    sum.keptFood.length > 0 ? `먹이 ${sum.keptFood.length}` : '',
+    sum.kept.length > 0 ? `타일 ${sum.kept.length}장` : '',
+  ].filter(Boolean).join(' · ');
+}

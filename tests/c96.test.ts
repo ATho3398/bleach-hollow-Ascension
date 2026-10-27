@@ -31,9 +31,9 @@ describe('알림 띠 (GDD 43장 1·2번)', () => {
     expect(toast).toContain('pointer-events: none');
     expect(rule(css, '.bha-toast__text')).toContain('white-space: nowrap');
   });
-  it('토스트는 최대 2개만 보이고 나머지는 대기열', () => {
+  it('토스트는 한 번에 1개만 보이고 나머지는 대기열 (C.170, GDD 100장 #4)', () => {
     const ts = read('src/ui/bha/nest.ts');
-    expect(ts).toContain('const TOAST_VISIBLE = 2;');
+    expect(ts).toContain('const TOAST_VISIBLE = 1;');
     expect(ts).toContain('st.queue.push(show)');
   });
   it('새 트랙 알림도 같은 showToast 를 쓴다', () => {
@@ -45,7 +45,7 @@ describe('더보기 아이콘 (GDD 43장 4번)', () => {
   const room = read('src/ui/roomView.ts');
   it('사진·다마고치 모드는 이름 글자가 붙고 맞는 아이콘을 쓴다', () => {
     expect(room).toContain("{ label: '사진', icon: 'i-frame'");
-    expect(room).toContain("{ label: '다마고치 모드', icon: 'i-nest'");
+    expect(room).toContain("{ label: '다마고치', icon: 'i-nest'"); // C.170: 4열 칸이라 짧게 (GDD 100장 #17)
   });
   it('더보기 칸은 아이콘 아래 이름 글자(span) 형식', () => {
     expect(read('src/ui/bha/dock.ts')).toContain("b.append(icon(m.icon), el('span', '', m.label))");

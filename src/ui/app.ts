@@ -53,7 +53,7 @@ import { BALANCE } from '../config/balance';
 import { idleCounts } from '../engine/idle';
 import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
-import { resultView } from './resultView';
+import { abortSummaryLine, resultView } from './resultView';
 import { expeditionView, setSpeed } from './expeditionView';
 import { planView } from './planView';
 import { bookView } from './bookView';
@@ -255,7 +255,10 @@ export function startApp(host: HTMLElement): void {
   function openHelp(screen: HelpScreenId | undefined, canReplay: boolean, onClose: () => void = () => {}): void {
     const faction = helpFaction();
     // canReplay 가 false 면(원정 화면: 시간이 흐르는 화면 위에서 체험 전투로 갈아타지 않는다) 다시 보기는 숨긴다
-    helpOverlay(faction, { screen, onClose, onReplayTutorial: canReplay ? () => tutorialDemo(faction) : undefined, replays: canReplay ? guideReplays(faction) : undefined });
+    // 첫 걸음 목표 (GDD 100장 #80): ··· 메뉴의 '튜토리얼' 대신 도움말 머리 [목표] — 세이브가 있고 화면을 바꿔도 되는 곳에서만
+    const s = save;
+    const onGoals = canReplay && s ? () => open('tutorials', () => tutorialGoalsView(root, getFaction(s.factionId), s, () => tutorialDemo(getFaction(s.factionId)))) : undefined;
+    helpOverlay(faction, { screen, onClose, onReplayTutorial: canReplay ? () => tutorialDemo(faction) : undefined, replays: canReplay ? guideReplays(faction) : undefined, onGoals });
   }
 
   /** 안내 다시 보기 (GDD 64장 3번·67장 4번): 첫 원정 안내(걷기·조우 → 흡수 4갈래 → 다음 할 일), 타일 안내(받은 타일 → 덱·배치·조합 → 뽑기)는 타일이 열린 뒤에만 */
@@ -302,7 +305,7 @@ export function startApp(host: HTMLElement): void {
 
   // ── 시작 화면·슬롯 (Q-3) ──
   const settingsOpener = (withBackup: boolean) => () =>
-    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined, () => tutorialDemo(helpFaction())));
+    open('settings', () => settingsView(root, () => openHelp(undefined, true), false, withBackup && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined));
 
   /** 가져오기·되돌리기가 끝난 뒤: 그 슬롯을 저장소에서 다시 읽어 방으로 */
   function reloadSlot(): void {
@@ -639,7 +642,6 @@ export function startApp(host: HTMLElement): void {
       onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
-      onTutorial: () => open('tutorials', () => tutorialGoalsView(root, faction, s, () => tutorialDemo(faction))),
       // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
@@ -1198,10 +1200,11 @@ export function startApp(host: HTMLElement): void {
       if (save) showTitleToasts(save, faction, persist);
       showPetNotes();
     };
-    // 원정 도중 [귀환하기] (GDD 81장): 결과 화면 없이 바로 방으로 (진화가 걸렸으면 그 연출은 그대로)
+    // 원정 도중 [귀환하기] (GDD 81장): 결과 화면 대신 방 위에 짧은 결과 카드 1장 [확인] (C.170, GDD 100장 #32). 진화가 걸렸으면 그 연출은 그대로
     if (exp.endReason === 'abort') {
       if (afterResult) holdRoomGuides = true;
       nestScreen();
+      if (!afterResult) confirmDialog({ title: '귀환했다', body: abortSummaryLine(exp, faction), yes: '확인', single: true, onYes: () => {} });
       afterResult?.();
       if (save) showTitleToasts(save, faction, persist);
       showPetNotes();

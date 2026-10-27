@@ -267,6 +267,8 @@
     }
   ],
   "nestName": "둥지",
+  "tagline": "먹고 진화하는 괴물",
+  "nestActionsShort": {"feed": "먹이"},
   "nestActions": {
     "feed": "먹이 주기",
     "sleep": "재우기",

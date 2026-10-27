@@ -43,6 +43,8 @@
 .bha-btn--primary:active, .bha-btn--primary.is-pressed { background: var(--bha-primary-bg); filter: brightness(0.9); }
 .bha-btn--danger { background: transparent; border-color: color-mix(in srgb, var(--bha-attack) 65%, transparent); color: var(--bha-danger); }
 .bha-btn--danger:active, .bha-btn--danger.is-pressed { background: rgb(229 72 77 / 0.15); }
+/* 비활성 주 버튼·위험 버튼 (GDD 100장 #1·#3): 채움·빨간 테두리를 빼고 회색 테두리 + 흐린 글자 — 누를 수 있는 것처럼 보이지 않게 */
+.bha-btn--primary:disabled, .bha-btn--primary.is-disabled, .bha-btn--danger:disabled, .bha-btn--danger.is-disabled { background: transparent; border-color: var(--bha-line-2); color: var(--bha-text-3); }
 .bha-btn--ghost { background: transparent; border-color: transparent; box-shadow: none; color: var(--bha-text-2); }
 .bha-btn--ghost:active, .bha-btn--ghost.is-pressed { background: var(--bha-bg-2); }
 .bha-btn--lg { min-height: 56px; font-size: 17px; border-radius: var(--bha-r-lg); }
@@ -203,7 +205,6 @@
   min-width: 0;
 }
 /* 장식: 왼쪽 위 모서리 눈금 (가면 이음매/칼집 장식) */
-.bha-panel::before { content: ""; position: absolute; top: -1px; left: 14px; width: 22px; height: 2px; background: var(--bha-line-2); border-radius: 0 0 2px 2px; }
 .bha-panel__head { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-4); min-height: 28px; }
 .bha-panel__title { display: flex; align-items: center; gap: 6px; font-family: var(--bha-font-display); font-weight: 600; font-size: var(--bha-fs-lg); line-height: 1.2; }
 .bha-panel__title .bha-icon { width: 20px; height: 20px; color: var(--bha-text-2); }
@@ -235,9 +236,14 @@
 .bha-notice--rare { --c: var(--bha-rare); box-shadow: 0 0 18px rgb(255 210 77 / 0.15); background: linear-gradient(100deg, rgb(255 210 77 / 0.14), rgb(255 210 77 / 0.04)), var(--bha-bg-1); }
 .bha-notice--risk { --c: var(--bha-risk); }
 
+/* 빈 상태  .bha-empty  (C.170, GDD 100장 #87): 가운데 아이콘 + 한 줄 + 할 일 버튼 — 빈 목록은 모두 이 모양 */
+.bha-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-3); padding: var(--bha-sp-6) var(--bha-sp-4); width: 100%; box-sizing: border-box; text-align: center; color: var(--bha-text-3); }
+.bha-empty > .bha-icon { color: var(--bha-text-3); opacity: 0.8; }
+.bha-empty__text { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); }
+
 /* =========================================================
-   7. 토스트  .bha-toast  (칭호 해금·목표 달성·새 트랙) — 화면 위 가장자리 얇은 한 줄 띠 (GDD 43장)
-   최대 2개가 위 칸 → 아래 칸으로 쌓인다(--toast-i). 상태: .is-in(등장) .is-out(퇴장)
+   7. 토스트  .bha-toast  (칭호 해금·목표 달성·새 트랙) — 얇은 한 줄 띠 (GDD 43장). 기기 화면(LCD)에서는 독 위 가운데 (GDD 100장 #4, lcd.css)
+   한 번에 1개, 나머지는 차례로(--toast-i 는 늘 0). 상태: .is-in(등장) .is-out(퇴장)
    ========================================================= */
 .bha-toast {
   position: fixed; z-index: var(--bha-z-toast);
@@ -890,7 +896,8 @@ button.bha-slot:active { transform: scale(0.98); }
    PC 단축키 글자 배지  .bha-keycap  (GDD 18-5)
    PC 모드에서만 .bha-dev.has-keycaps 아래에 붙는다. 터치 폰에서는 배지를 만들지 않는다.
    ========================================================= */
-.bha-keycap { position: absolute; top: 1px; right: 1px; z-index: var(--bha-z-raised); min-width: var(--bha-sp-4); padding: 0 var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-text-2); font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: var(--bha-lh-tight); text-align: center; pointer-events: none; opacity: 0.9; }
+/* C.170 (GDD 100장 #88): 버튼 바깥 모서리로 6px 띄워 글자·수량 배지를 덮지 않는다 */
+.bha-keycap { position: absolute; top: -6px; right: -6px; z-index: var(--bha-z-raised); min-width: var(--bha-sp-4); padding: 0 var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-text-2); font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: var(--bha-lh-tight); text-align: center; pointer-events: none; opacity: 0.9; }
 .bha-dev:not(.has-keycaps) .bha-keycap { display: none; }
 .bha-keytable { margin-top: var(--bha-sp-3); }
 .bha-keytable__title { margin: 0 0 var(--bha-sp-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }

@@ -100,7 +100,18 @@
 .bha-event__foot { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
 .bha-event__loot { font-size: var(--bha-fs-lg); font-weight: 700; color: var(--bha-rare); }
 /* 바퀴 변이 배너 (GDD 25-5 ④): 걷는 장면 위 가운데 */
-.bha-exp__banner { position: absolute; top: var(--bha-sp-4); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); max-width: 46%; padding: var(--bha-sp-2) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-rare); background: rgb(0 0 0 / .62); text-align: center; pointer-events: none; }
+/* 길 칸 줄 (C.170, GDD 100장 #30): 위 가운데, 누름 통과 */
+.bha-exp__strip { position: absolute; top: var(--bha-sp-3); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; gap: var(--bha-sp-1); padding: var(--bha-sp-1); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / .55); pointer-events: none; }
+.bha-exp__stripcell { --tile: var(--bha-bg-3); width: 10px; height: 10px; border-radius: 2px; background: var(--tile); border: 1px solid var(--bha-line-2); box-sizing: border-box; }
+.bha-exp__stripcell.is-nest { border-color: var(--bha-primary-line); }
+.bha-exp__stripcell--prey { --tile: var(--bha-tile-prey); border-color: transparent; }
+.bha-exp__stripcell--elite { --tile: var(--bha-tile-elite); border-color: transparent; }
+.bha-exp__stripcell--env { --tile: var(--bha-tile-env); border-color: transparent; }
+.bha-exp__stripcell--rest { --tile: var(--bha-tile-rest); border-color: transparent; }
+.bha-exp__stripcell--event { --tile: var(--bha-seal); border-color: transparent; }
+.bha-exp__stripcell.is-past { opacity: .35; }
+.bha-exp__stripcell.is-now { outline: 2px solid var(--bha-focus); outline-offset: 1px; }
+.bha-exp__banner { position: absolute; top: var(--bha-sp-8); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); max-width: 46%; padding: var(--bha-sp-2) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-rare); background: rgb(0 0 0 / .62); text-align: center; pointer-events: none; }
 .bha-exp__bannersub { font-size: var(--bha-fs-xs); color: var(--bha-text-1); }
 .bha-exp__banner[hidden] { display: none; }
 /* 보스 기척 (GDD 37장): 자유 원정 보스가 나온 바퀴 */
@@ -117,10 +128,30 @@
 .bha-plan__difficulty { justify-content: flex-start; }
 .bha-plan__label { color: var(--bha-text-2); font-size: var(--bha-fs-sm); margin-right: var(--bha-sp-1); }
 .bha-plan__difficulty .bha-tag { margin-left: var(--bha-sp-1); }
-.bha-lcd .bha-app.bha-plan { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow-y: auto; padding: var(--bha-sp-3) var(--bha-sp-4); }
-.bha-lcd .bha-plan .bha-btn--lg { flex: none; min-height: var(--bha-touch); }
-/* C.140 (GDD 85장 11번): 배치 단계 손 = 가진 타일 전부 — 한 줄 가로 넘침 대신 여러 줄로 감싸 오른쪽 타일도 보이게(화면은 세로 스크롤) */
-.bha-lcd .bha-plan .bha-road__hand { flex-wrap: wrap; overflow-x: visible; }
+/* C.170 (GDD 100장 #3·#22~#24): 페이지 스크롤 없음 — 왼쪽 = 사냥터 설명·난이도·안내·길, 오른쪽 = 손패(또는 프리셋, 이것만 스크롤), 아래 = [출발] 고정 띠.
+   배치판(.bha-road__wrap)은 display: contents 로 풀어 그 안의 길·손패가 이 격자의 칸이 된다 (끌어 놓기 범위는 DOM 그대로) */
+.bha-lcd .bha-app.bha-plan {
+  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow: hidden; padding: var(--bha-sp-3) var(--bha-sp-4);
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto auto auto auto auto auto minmax(0, 1fr) auto;
+  column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-2); align-content: stretch;
+}
+.bha-lcd .bha-app.bha-plan.is-locked { grid-template-columns: minmax(0, 1fr); }
+.bha-lcd .bha-plan > * { grid-column: 1; min-width: 0; }
+.bha-lcd .bha-plan > .bha-exp__head { grid-column: 1 / -1; grid-row: 1; }
+.bha-lcd .bha-plan > .bha-plan__sub:not(.bha-plan__line) { grid-row: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-lcd .bha-plan .bha-plan__line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-lcd .bha-plan .bha-road__wrap { display: contents; }
+.bha-lcd .bha-plan .bha-road { grid-column: 1; grid-row: 6; }
+.bha-lcd .bha-plan .bha-road__synline { grid-column: 1; grid-row: 7; }
+.bha-lcd .bha-plan .bha-road__noterow { grid-column: 1; grid-row: 8; }
+.bha-lcd .bha-plan .bha-road__hand { grid-column: 2; grid-row: 2 / 10; flex-wrap: wrap; overflow-x: hidden; overflow-y: auto; min-height: 0; align-content: flex-start; padding: var(--bha-sp-1); }
+.bha-lcd .bha-plan .bha-plan__sidetabs { grid-column: 2; grid-row: 2; display: flex; gap: var(--bha-sp-2); }
+.bha-lcd .bha-plan .bha-plan__side { grid-column: 2; grid-row: 3 / 10; }
+.bha-lcd .bha-plan .bha-road__hand:has(~ .bha-plan__sidetabs) { grid-row: 3 / 10; }
+.bha-lcd .bha-plan .bha-plan__side { overflow-y: auto; min-height: 0; }
+.bha-lcd .bha-plan .bha-road__hand[hidden], .bha-lcd .bha-plan .bha-plan__side[hidden] { display: none; }
+.bha-lcd .bha-plan > .bha-plan__go { grid-column: 1 / -1; grid-row: 10; }
+.bha-plan__go .bha-btn { min-height: var(--bha-touch); }
 .bha-plan__presets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
 
 @media (prefers-reduced-motion: reduce) {
@@ -143,7 +174,8 @@
 .bha-tilecard__icon .bha-icon { width: 24px; height: 24px; }
 .bha-tilecard__name { font-size: var(--bha-fs-sm); line-height: 1.15; word-break: keep-all; }
 .bha-tilecard__hint { font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
-.bha-tilecard__count { position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-2); min-width: 22px; padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .5); font-size: var(--bha-fs-xs); line-height: 20px; font-variant-numeric: tabular-nums; }
+/* 수량은 왼쪽 위, 키 배지는 오른쪽 위 (GDD 100장 #26: '×4'+'1' 이 '×41' 로 읽히던 문제) */
+.bha-tilecard__count { position: absolute; top: var(--bha-sp-2); left: var(--bha-sp-2); min-width: 22px; padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .5); font-size: var(--bha-fs-xs); line-height: 20px; font-variant-numeric: tabular-nums; }
 .bha-tilecard--prey  { --tile: var(--bha-tile-prey); }
 .bha-tilecard--elite { --tile: var(--bha-tile-elite); }
 .bha-tilecard--env   { --tile: var(--bha-tile-env); }
@@ -184,8 +216,5 @@
 .bha-presetcard__acts { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
 /* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
 .bha-road__wrap { user-select: none; -webkit-user-select: none; }
-.bha-lcd .bha-plan .bha-road__wrap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-2); align-items: start; }
-.bha-lcd .bha-plan .bha-road__wrap > .bha-road, .bha-lcd .bha-plan .bha-road__wrap > .bha-road__synline, .bha-lcd .bha-plan .bha-road__wrap > .bha-road__noterow { grid-column: 1; }
-.bha-lcd .bha-plan .bha-road__wrap > .bha-road__hand { grid-column: 2; grid-row: 1 / span 3; max-height: 232px; overflow-y: auto; overflow-x: hidden; align-content: flex-start; padding: var(--bha-sp-1); }
-.bha-lcd .bha-plan .bha-road__cell { min-height: 52px; }
+.bha-lcd .bha-plan .bha-road__cell { min-height: 40px; }
 .bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }

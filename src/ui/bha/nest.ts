@@ -132,12 +132,12 @@ export function deckRow(o: DeckRowOpts): HTMLElement {
   return row;
 }
 
-/** 한 번에 보이는 토스트 수. 나머지는 자리가 나는 대로 차례로 (GDD 43장 1번) */
-const TOAST_VISIBLE = 2;
+/** 한 번에 보이는 토스트 수. 나머지는 자리가 나는 대로 차례로 (GDD 43장 1번 → 100장 #4: 1개) */
+const TOAST_VISIBLE = 1;
 const toastState = new WeakMap<HTMLElement, { slots: (HTMLElement | null)[]; queue: ((slot: number) => void)[] }>();
 
 /** 알림 띠(.bha-toast): 화면 위 가장자리 얇은 한 줄. 위에서 내려와(is-in) holdMs 뒤 올라가고(is-out) animationend 에서 제거한다.
- *  최대 2개만 보이고(위 칸 → 아래 칸) 나머지는 앞 띠가 사라지면 차례로 뜬다. index 는 옛 호출 호환용(등장 간격만) */
+ *  한 번에 1개만 보이고(GDD 100장 #4) 나머지는 앞 띠가 사라지면 차례로 뜬다. index 는 옛 호출 호환용(등장 간격만) */
 export function showToast(o: { eyebrow: string; title: string; meta?: string }, index = 0, holdMs = 2500, host: HTMLElement = getOverlayHost()): HTMLElement {
   const toast = el('div', 'bha-toast is-in');
   toast.setAttribute('role', 'status');

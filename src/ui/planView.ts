@@ -61,7 +61,8 @@ export function groundInfo(faction: FactionConfig, g: GroundDef): string {
 
 export function planView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, tierIndex: number, h: PlanViewHandlers): void {
   beginPlanning(exp, h.placeLimit);
-  const planner = roadPlanner({ exp, tileName: (id) => tileName(id, faction.id), synergyName: (id) => synergyName(id, faction.id) });
+  // 첫 진화 전 타일 잠김(GDD 64장 1번)이면 바둑판을 아예 만들지 않는다 (C.170, GDD 100장 #23: 한 줄 안내 + 바로 [출발])
+  const planner = h.tilesLocked ? null : roadPlanner({ exp, tileName: (id) => tileName(id, faction.id), synergyName: (id) => synergyName(id, faction.id), onPlaced: () => paintCount() });
 
   const title = el('h2', 'bha-plan__title');
   title.append(icon('i-deck'), '길에 타일 놓기');
@@ -126,17 +127,27 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   head.append(onTab ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }) : title, grounds, help);
 
   const start = button({
-    label: '출발', icon: 'i-play', variant: 'primary', size: 'lg',
+    label: '출발', icon: 'i-play', variant: 'primary', block: true,
     onClick: () => h.onStart(finishPlanning(exp)),
   });
   start.dataset.sc = 'go';
-  // 한 줄 설명: 고른 사냥터(이름·설명·자주 나오는 속성·강도) + 배치 요령 (화면 높이가 낮아 두 줄 안에 둔다)
-  const sub = h.tilesLocked
-    ? el('p', 'bha-plan__sub', '타일 배치는 첫 진화 후 열림 — 지금은 타일 없이 기본 길을 걷는다. 빈 칸마다 떠돌이 적이 나온다.')
-    : el('p', 'bha-plan__sub', `가진 타일을 길 위 칸에 놓는다(최대 ${h.placeLimit ?? '∞'}칸, 놓은 타일이 보상으로 뽑힌다). 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.`);
+  // [출발] = 화면 아래 고정 띠 (GDD 100장 #3·#22): 스크롤하지 않아도 늘 보인다
+  const go = el('div', 'bha-plan__go');
+  go.append(start);
+  // 한 줄 안내 (GDD 100장 #25): 배치 요령 긴 문단은 ? 도움말(툴팁)로, 화면엔 "타일 고르기 → 빈 칸 누르기 · 놓은 칸 n/최대"
+  const sub = el('p', 'bha-plan__sub bha-plan__line');
+  const countEl = el('b', 'bha-num');
+  const paintCount = () => {
+    const placed = exp.slots.slice(1).filter((x) => x !== null).length;
+    countEl.textContent = `${placed}/${h.placeLimit ?? '∞'}`;
+  };
   if (h.tilesLocked) {
-    sub.prepend(icon('i-lock'), ' ');
+    sub.append(icon('i-lock'), ' 타일 배치는 첫 진화 후 — 지금은 기본 길을 걷는다(빈 칸마다 떠돌이 적)');
     sub.dataset.tilesLocked = '';
+  } else {
+    sub.append('타일 고르기 → 빈 칸 누르기 · 놓은 칸 ', countEl);
+    sub.title = `가진 타일을 길 위 칸에 놓는다(최대 ${h.placeLimit ?? '∞'}칸, 놓은 타일이 보상으로 뽑힌다). 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.`;
+    paintCount();
   }
   // 배치 프리셋 (GDD 85장 11번, C.141): 이름 붙여 저장·불러오기·덮어쓰기·이름 바꾸기·삭제 (카드형)
   const presetEl = h.presets && !h.tilesLocked
@@ -147,11 +158,38 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
       remove: h.presets.remove,
       load: (preset) => {
         const r = applyTilePreset(exp, preset);
-        planner.adopt();
+        planner?.adopt();
+        paintCount();
         return `${preset.name} 불러옴: ${r.placed}칸${r.missing.length > 0 ? ` · 없는 타일 ${r.missing.length}장은 건너뜀` : ''}`;
       },
     }, (id) => tileName(id, faction.id), `최대 ${h.placeLimit ?? '∞'}칸`)
     : null;
-  const main = mountApp(root, { fixed: true, cls: 'bha-plan' }, head, gInfo, diff, dInfo, sub, planner.el, ...(presetEl ? [presetEl] : []), start);
+  // 오른쪽 열 = 손패 / 프리셋 토글 (책장 제목 토글과 같은 seg 버튼, GDD 100장 #24): 스크롤은 오른쪽 목록 하나뿐
+  if (planner && presetEl) {
+    const hand = planner.el.querySelector<HTMLElement>('.bha-road__hand')!;
+    presetEl.classList.add('bha-plan__side');
+    const toggle = el('div', 'bha-plan__sidetabs');
+    toggle.setAttribute('role', 'group');
+    toggle.setAttribute('aria-label', '오른쪽 목록');
+    const tabs = (['hand', 'presets'] as const).map((k) => {
+      const b = button({ label: k === 'hand' ? '손패' : '프리셋', icon: k === 'hand' ? 'i-deck' : 'i-check', size: 'small', onClick: () => show(k) });
+      b.dataset.planSide = k;
+      return b;
+    });
+    const show = (k: 'hand' | 'presets') => {
+      hand.hidden = k !== 'hand';
+      presetEl.hidden = k !== 'presets';
+      tabs.forEach((b) => {
+        const on = b.dataset.planSide === k;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+    };
+    toggle.append(...tabs);
+    // 프리셋 칸·토글도 배치판(planner.el) 안에 둔다: 끌어 놓기·선택 풀기가 배치판 범위를 본다
+    planner.el.append(toggle, presetEl);
+    show('hand');
+  }
+  const main = mountApp(root, { fixed: true, cls: `bha-plan${h.tilesLocked ? ' is-locked' : ''}` }, head, gInfo, diff, dInfo, sub, ...(planner ? [planner.el] : []), ...(presetEl && !planner ? [presetEl] : []), go);
   main.dataset.screen = 'expedition-plan';
 }

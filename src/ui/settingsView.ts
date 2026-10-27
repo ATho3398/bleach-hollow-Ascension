@@ -1,7 +1,8 @@
 // 설정 화면 (GDD 14-3, C.18 / U-1 새 디자인, R-2): 전투 효과 켬/끔. 블록 클릭 판정 시간·드래그 임계치 설정은 순서 바꾸기 삭제(17-2)와 함께 없앴다.
 // localStorage 별도 키에 저장하고 세이브 구조는 건드리지 않는다.
-import { button, el } from './bha/dom';
-import { screenSignal } from './bha/screenScope';
+import { button, el, icon } from './bha/dom';
+import { endScreen, screenSignal } from './bha/screenScope';
+import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { BG_CREDIT } from '../data/art/backgrounds';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { testInfoNodes } from './testMode';
@@ -16,8 +17,58 @@ import { openInstall } from './installView';
 import { detectPlatform, installMode, installPrompt, isStandalone, loadInstallPrefs } from '../pwaInstall';
 import { FULLSCREEN_EVENT, fullscreenSupported, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
+import { versionLabel } from '../version';
 
-export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onTutorial?: () => void): void {
+/** 켬/끔 줄 (C.170, GDD 100장 #76): 왼쪽 이름 + 오른쪽 작은 스위치(켬 = 초록, 끔 = 회색). 선택 표시는 줄 테두리(.bha-sel)만 — 켬 색과 섞이지 않는다 */
+function switchRow(label: string): { b: HTMLButtonElement; paint: (on: boolean) => void } {
+  const b = el('button', 'bha-switch');
+  b.type = 'button';
+  b.setAttribute('role', 'switch');
+  const track = el('span', 'bha-switch__track');
+  track.append(el('i', 'bha-switch__knob'));
+  b.append(el('span', 'bha-switch__label', label), track);
+  return {
+    b,
+    paint: (on) => {
+      b.classList.toggle('is-checked', on);
+      b.setAttribute('aria-checked', String(on));
+    },
+  };
+}
+
+/** 레이어로 열린 설정의 닫기 X (도움말과 같은 모양) */
+const closeX = (onClose: () => void): HTMLButtonElement => button({ label: '닫기', icon: 'i-close', iconOnly: true, variant: 'ghost', onClick: onClose });
+
+/** 설명 한 줄 (#77): 넘치면 말줄임, 전체 글은 툴팁 */
+const hintLine = (text: string): HTMLElement => {
+  const p = el('p', 'bha-faint bha-settings__hint', text);
+  p.title = text;
+  return p;
+};
+
+/** 설정을 화면 위 레이어로 연다 (C.170, GDD 100장 #41: 전투 일시정지의 [설정] — 전투 화면을 지우지 않는다). 뒤로·Esc·X 로 닫는다. 돌려주는 함수로 닫는다 */
+export function settingsOverlay(onClose: () => void): () => void {
+  const layer = el('div', 'bha-layer bha-settings-layer');
+  layer.setAttribute('role', 'dialog');
+  layer.setAttribute('aria-modal', 'true');
+  layer.setAttribute('aria-label', '설정');
+  let closed = false;
+  let unregister = () => {};
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    unregister();
+    endScreen(layer); // 이 레이어 설정 화면이 건 window 리스너를 푼다
+    layer.remove();
+    onClose();
+  };
+  settingsView(layer, undefined, false, undefined, close);
+  getOverlayHost().append(layer);
+  unregister = registerLayer(layer, close);
+  return close;
+}
+
+export function settingsView(root: HTMLElement, onHelp?: () => void, restored = false, onBackup?: () => void, onClose?: () => void): void {
   const storage = (() => {
     try {
       return localStorage;
@@ -25,7 +76,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
       return null;
     }
   })();
-  // 전투 효과 (Q-2): 켬/끔 버튼 4개. 버튼이라 위/아래/확정으로도 조작된다
+  // 전투 효과 (Q-2): 켬/끔 스위치 줄 4개. 버튼이라 위/아래/확정으로도 조작된다
   let fx: FxSettings = loadFxSettings(storage);
   const FX_ROWS: { key: keyof FxSettings; label: string; hint: string }[] = [
     { key: 'damageNumbers', label: '피해 숫자', hint: '적과 내가 받은 피해가 짧게 떠오른다.' },
@@ -35,14 +86,11 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   ];
   const fxPanel = el('section', 'bha-panel');
   fxPanel.append(el('h2', 'bha-panel__title', '전투 효과'));
-  if (prefersReducedMotion()) fxPanel.append(el('p', 'bha-faint', '기기의 "동작 줄이기" 설정을 따라 화면 흔들림이 기본으로 꺼져 있다.'));
+  if (prefersReducedMotion()) fxPanel.append(hintLine('기기의 "동작 줄이기" 설정을 따라 화면 흔들림이 기본으로 꺼져 있다.'));
   for (const row of FX_ROWS) {
-    const b = button({ label: '', on: fx[row.key] });
-    const paint = () => {
-      b.classList.toggle('is-on', fx[row.key]);
-      b.setAttribute('aria-pressed', String(fx[row.key]));
-      b.replaceChildren(`${row.label} ${fx[row.key] ? '켬' : '끔'}`);
-    };
+    const sw = switchRow(row.label);
+    const b = sw.b;
+    const paint = () => sw.paint(fx[row.key]);
     paint();
     b.onclick = () => {
       fx = saveFxSettings(storage, { ...fx, [row.key]: !fx[row.key] });
@@ -54,26 +102,29 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
       if (row.key === 'vibration' && fx.vibration) emitFeedback('chain2', { vibration: true, sound: false });
       paint();
     };
-    fxPanel.append(b, el('p', 'bha-faint', row.hint));
+    fxPanel.append(b, hintLine(row.hint));
   }
 
   // 배경 음악 (GDD 24-4·97장): 켬/끔·음량 + 플레이리스트(곡 목록·▶ 재생·제외·현재 곡만 반복·다음 곡). 이 기기에만 저장(키 bha-bgm-settings)
   const musicPanel = el('section', 'bha-panel');
   musicPanel.append(el('h2', 'bha-panel__title', '음악'));
-  const musicBtn = button({ label: '' });
+  const musicSw = switchRow('배경 음악');
+  const musicBtn = musicSw.b;
   const volBtns = BGM_VOLUMES.map((v) => {
     const b = button({ label: `${Math.round(v * 100)}%`, size: 'small' });
     b.onclick = () => setMusic({ ...bgm().settings, volume: v });
     return b;
   });
   const nowLine = el('p', 'bha-faint');
-  const repeatBtn = button({ label: '' });
+  const repeatSw = switchRow('현재 곡만 반복');
+  const repeatBtn = repeatSw.b;
   const nextBtn = button({ label: '다음 곡', size: 'small' });
   const listBox = el('div', 'bha-bgmlist');
   const rows = bgm().playlist.map((t) => {
     const row = el('div', 'bha-bgmlist__row');
     const playBtn = button({ label: '▶', size: 'small' });
-    const exBtn = button({ label: '', size: 'small' });
+    const exBtn = button({ label: '', size: 'small', variant: 'ghost' });
+    exBtn.title = '목록에 포함';
     playBtn.setAttribute('aria-label', `${t.name} 재생`);
     playBtn.onclick = () => { bgm().playTrack(t.id); paintMusic(); };
     exBtn.onclick = () => { bgm().toggleExcluded(t.id); paintMusic(); };
@@ -87,9 +138,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   const paintMusic = () => {
     const p = bgm();
     const m = p.settings;
-    musicBtn.textContent = `배경 음악 ${m.on ? '켬' : '끔'}`;
-    musicBtn.classList.toggle('is-on', m.on);
-    musicBtn.setAttribute('aria-pressed', String(m.on));
+    musicSw.paint(m.on);
     volBtns.forEach((b, i) => {
       const on = Math.abs(BGM_VOLUMES[i]! - m.volume) < 0.01;
       b.classList.toggle('is-on', on);
@@ -97,9 +146,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     });
     const cur = p.currentTrack;
     nowLine.textContent = p.playlist.length === 0 ? '' : cur ? `지금 곡: ${cur.name}` : '재생할 곡 없음';
-    repeatBtn.textContent = `현재 곡만 반복 ${m.repeat ? '켬' : '끔'}`;
-    repeatBtn.classList.toggle('is-on', m.repeat);
-    repeatBtn.setAttribute('aria-pressed', String(m.repeat));
+    repeatSw.paint(m.repeat);
     for (const r of rows) {
       const ex = m.excluded.includes(r.t.id);
       const now = cur?.id === r.t.id;
@@ -108,9 +155,10 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
       r.mark.textContent = now ? ' · 재생 중' : '';
       r.playBtn.classList.toggle('is-on', now);
       r.playBtn.setAttribute('aria-pressed', String(now));
-      r.exBtn.textContent = `제외 ${ex ? '켬' : '끔'}`;
-      r.exBtn.classList.toggle('is-on', ex);
-      r.exBtn.setAttribute('aria-pressed', String(ex));
+      // '목록에 포함 ✓' 토글 (#78): 포함이면 체크, 빼면 체크 없이 줄이 흐려진다
+      r.exBtn.replaceChildren(...(ex ? [] : [icon('i-check')]), ex ? '빠짐' : '포함');
+      r.exBtn.setAttribute('aria-pressed', String(!ex));
+      r.exBtn.setAttribute('aria-label', `${r.t.name} 목록에 포함${ex ? ' 안 함' : ''}`);
     }
   };
   const setMusic = (m: ReturnType<typeof loadBgmSettings>) => {
@@ -129,7 +177,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     ctl.append(repeatBtn, nextBtn);
     musicPanel.append(nowLine, ctl, listBox);
   }
-  musicPanel.append(el('p', 'bha-faint', hasList ? '한 곡이 끝나면 다음 곡으로 넘어가고, 제외한 곡은 건너뛴다(▶ 로 직접 고르면 재생). 효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다.' : '효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다. 음악 파일이 없는 장면은 조용하다.'));
+  musicPanel.append(hintLine(hasList ? '한 곡이 끝나면 다음 곡으로, 목록에서 뺀 곡은 건너뛴다(▶ 로 직접 고르면 재생). 화면을 한 번 만진 뒤부터 난다.' : '효과음과 따로 켜고 끈다. 화면을 한 번 만진 뒤부터 난다. 음악 파일이 없는 장면은 조용하다.'));
   paintMusic();
   if (hasList && typeof setInterval === 'function') {
     // 곡이 저절로 넘어가면 이름·표시를 따라간다 (화면이 닫히면 멈춘다)
@@ -183,14 +231,13 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
 
   const keyPanel = el('section', 'bha-panel');
   keyPanel.append(el('h2', 'bha-panel__title', '단축키'));
-  const keyBtn = button({ label: '' });
-  const keyNote = el('p', 'bha-faint');
+  const keySw = switchRow('단축키 표시');
+  const keyBtn = keySw.b;
+  const keyNote = hintLine('');
   const paintKeys = () => {
     const on = loadKeyHints(storage);
-    keyBtn.textContent = `단축키 표시 ${on ? '켬' : '끔'}`;
-    keyBtn.classList.toggle('is-on', on);
-    keyBtn.setAttribute('aria-pressed', String(on));
-    keyNote.textContent = currentViewState().pc
+    keySw.paint(on);
+    keyNote.textContent = keyNote.title = currentViewState().pc
       ? '버튼 구석에 키 글자를 보인다. 꺼도 단축키는 그대로 쓸 수 있다. 전체 표는 도움말의 [단축키].'
       : '컴퓨터(마우스·넓은 창)에서만 보인다. 폰·태블릿에서는 나타나지 않는다.';
   };
@@ -206,17 +253,16 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   const tamaPanel = el('section', 'bha-panel');
   tamaPanel.dataset.panel = 'tamago';
   tamaPanel.append(el('h2', 'bha-panel__title', '다마고치 모드'));
-  const tamaBtn = button({ label: '' });
+  const tamaSw = switchRow('다마고치 모드');
+  const tamaBtn = tamaSw.b;
   tamaBtn.dataset.set = 'tamago';
-  const tiltBtn = button({ label: '' });
+  const tiltSw = switchRow('기울기로 흔들기');
+  const tiltBtn = tiltSw.b;
   tiltBtn.dataset.set = 'tilt';
   const paintTama = () => {
     const p = loadTamagoPrefs(storage);
-    for (const [b, on, label] of [[tamaBtn, p.on, '다마고치 모드'], [tiltBtn, p.tilt, '기울기로 흔들기']] as const) {
-      b.textContent = `${label} ${on ? '켬' : '끔'}`;
-      b.classList.toggle('is-on', on);
-      b.setAttribute('aria-pressed', String(on));
-    }
+    tamaSw.paint(p.on);
+    tiltSw.paint(p.tilt);
   };
   tamaBtn.onclick = () => {
     const p = loadTamagoPrefs(storage);
@@ -228,8 +274,8 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     void setTiltPref(!loadTamagoPrefs(storage).tilt).then(paintTama);
   };
   tamaPanel.append(
-    tamaBtn, el('p', 'bha-faint', '기기 전체(몸체·고리·키링)가 보이게 물러난다. 화면은 그대로 움직이고 기기 버튼도 눌린다. 화면을 누르면 다시 확대. 컴퓨터는 B 키.'),
-    tiltBtn, el('p', 'bha-faint', '키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 켤 때 움직임 허용을 묻는다. 꺼도 키링은 탭·끌기로 흔들린다.'),
+    tamaBtn, hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대. 컴퓨터는 B 키.'),
+    tiltBtn, hintLine('키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 켤 때 움직임 허용을 묻는다.'),
   );
   paintTama();
 
@@ -237,19 +283,15 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
   const fsPanel = el('section', 'bha-panel');
   fsPanel.dataset.panel = 'fullscreen';
   fsPanel.append(el('h2', 'bha-panel__title', '전체 화면'));
-  const fsBtn = button({ label: '' });
+  const fsSw = switchRow('전체 화면');
+  const fsBtn = fsSw.b;
   fsBtn.dataset.set = 'fullscreen';
-  const fsStartBtn = button({ label: '' });
+  const fsStartSw = switchRow('시작할 때 전체 화면');
+  const fsStartBtn = fsStartSw.b;
   fsStartBtn.dataset.set = 'fullscreen-start';
   const paintFs = () => {
-    const on = isFullscreen();
-    fsBtn.textContent = `전체 화면 ${on ? '켬' : '끔'}`;
-    fsBtn.classList.toggle('is-on', on);
-    fsBtn.setAttribute('aria-pressed', String(on));
-    const st = loadFullscreenStart(storage);
-    fsStartBtn.textContent = `시작할 때 전체 화면 ${st ? '켬' : '끔'}`;
-    fsStartBtn.classList.toggle('is-on', st);
-    fsStartBtn.setAttribute('aria-pressed', String(st));
+    fsSw.paint(isFullscreen());
+    fsStartSw.paint(loadFullscreenStart(storage));
   };
   fsBtn.onclick = () => {
     void toggleFullscreen().then(paintFs);
@@ -258,7 +300,7 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
     saveFullscreenStart(storage, !loadFullscreenStart(storage));
     paintFs();
   };
-  fsPanel.append(fsBtn, el('p', 'bha-faint', '주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다. 뒤로 가기나 제스처로 풀리면 그대로 둔다.'), fsStartBtn, el('p', 'bha-faint', '켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
+  fsPanel.append(fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다.'), fsStartBtn, hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
   paintFs();
   const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];
 
@@ -284,14 +326,19 @@ export function settingsView(root: HTMLElement, onHelp?: () => void, restored = 
       }
       bgm().setSettings(loadBgmSettings(storage));
       applyCalmMode(storage);
-      settingsView(root, onHelp, true, onBackup, onTutorial);
+      settingsView(root, onHelp, true, onBackup, onClose);
     },
   });
-  const foot: Node[] = [reset];
-  if (onTutorial) foot.push(button({ label: '튜토리얼 다시 보기', icon: 'i-play', onClick: onTutorial }));
-  if (onHelp) foot.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
-  if (onBackup) foot.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
-  lcdPage(root, { cls: 'bha-settings-page', foot }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '전투 효과·음악·화면 크기 — 이 기기에만 저장(게임 세이브 제외)' }), [fxPanel], [musicPanel, ...fsPanels, tamaPanel, sizePanel, installPanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), el('p', 'bha-faint', '블록은 누르면 바로 쓴다(저장 필살기 버튼도 같다). 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes())]);
+  // 아래 고정 버튼 줄은 없앴다 (#77: 왼쪽 열 내용을 가렸다) — 기본값 복원·도움말·세이브 백업은 오른쪽 열 맨 아래 '기타' 칸
+  const etc: Node[] = [reset];
+  if (onHelp) etc.push(button({ label: '도움말', icon: 'i-help', onClick: onHelp }));
+  if (onBackup) etc.push(button({ label: '세이브 백업', icon: 'i-check', onClick: onBackup }));
+  const etcRow = el('div', 'bha-settings__etc');
+  etcRow.append(...etc);
+  // 정보 (#2·#10): 자세한 버전 줄은 시작 화면 대신 여기. 임시 수치가 있다는 한 줄 (개발용 문구 대신)
+  const info = panelOf(el('h2', 'bha-panel__title', '정보'), el('p', 'bha-faint', versionLabel()), el('p', 'bha-faint', '임시 수치 있음 — 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes());
+  // 열 균형 (#77): 왼쪽 = 전투 효과·음악, 오른쪽 = 화면·기기·조작·정보
+  lcdPage(root, { cls: 'bha-settings-page' }, lcdHead({ title: '설정', sub: restored ? '기본값으로 되돌렸다.' : '이 기기에만 저장(게임 세이브 제외)', aside: onClose ? [closeX(onClose)] : undefined }), [fxPanel, musicPanel], [...fsPanels, tamaPanel, sizePanel, installPanel, keyPanel, panelOf(el('h2', 'bha-panel__title', '조작'), hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.')), info, panelOf(el('h2', 'bha-panel__title', '기타'), etcRow)]);
   // 화면 크기(키보드 단축키)·다마고치 모드·전체 화면이 밖에서 바뀌어도 문구가 따라간다. C.139 (GDD 88장 6): 이 화면이 끝나면(다음 화면이 그려지면) 한 번에 풀린다.
   // 전체 화면 미지원이면 패널도 구독도 없다
   const signal = screenSignal(root);

@@ -31,6 +31,8 @@ import { elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
+import { settingsOverlay } from './settingsView';
+import { registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
 import { registerShortcutHandlers } from './bha/shortcuts';
@@ -563,6 +565,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
 
   // ── 일시정지 ──
+  /** 일시정지 창의 기기 레이어 등록을 푼다 (닫힐 때·그만둘 때) */
+  let unregPause = (): void => undefined;
   const setPaused = (on: boolean) => {
     if (s.status !== 'playing' || overlayOpen) return;
     paused = on;
@@ -571,16 +575,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     pauseBtn.setAttribute('aria-label', on ? '계속' : '일시정지');
     tray.root.classList.toggle('is-paused', on);
     syncPausedLook();
+    unregPause();
     if (!on) return hideOverlay();
+    // C.170 (GDD 100장 #7·#41): 버튼 한 줄 [계속][설정][그만두기] — 도움말은 머리 ? 아이콘. 뒤로(◀)·Esc = 계속 (기기 레이어로 등록)
     const inner = el('div', 'bha-battle-ov');
-    const actions = el('div', 'bha-battle-ov__actions');
-    actions.append(button({ label: '계속', variant: 'primary', size: 'lg', icon: 'i-play', onClick: () => setPaused(false) }));
-    const row = el('div', 'bha-grid2');
-    row.append(button({ label: '도움말', icon: 'i-help', onClick: openHelp }));
-    if (opts.onQuit) row.append(button({ label: '그만두기', variant: 'danger', icon: 'i-quit', onClick: () => quit() }));
-    actions.append(row);
+    const actions = el('div', 'bha-battle-ov__actions bha-battle-ov__actions--row');
+    actions.append(button({ label: '계속', variant: 'primary', icon: 'i-play', onClick: () => setPaused(false) }));
+    actions.append(button({ label: '설정', icon: 'i-settings', onClick: () => {
+      if (overlayOpen) return;
+      overlayOpen = true; // 설정 레이어가 열려 있는 동안도 전투는 멈춰 있다
+      settingsOverlay(() => (overlayOpen = false));
+    } }));
+    if (opts.onQuit) actions.append(button({ label: '그만두기', variant: 'danger', icon: 'i-quit', onClick: () => { unregPause(); quit(); } }));
     inner.append(ovMark('i-pause'), el('h2', 'bha-battle-ov__title', '일시정지'), el('p', 'bha-battle-ov__sub', '전투가 멈춰 있다. 블록 바와 시간도 멈춘다.'), actions);
-    showOverlay(inner);
+    const ov = showOverlay(inner);
+    const off = registerLayer(ov, () => setPaused(false));
+    unregPause = () => {
+      unregPause = () => undefined;
+      off();
+    };
   };
   pauseBtn.onclick = () => setPaused(!paused);
   // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니오로 닫히면 우리가 멈춘 것만 풀어 준다

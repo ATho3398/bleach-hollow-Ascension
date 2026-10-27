@@ -167,6 +167,8 @@
     }
   ],
   "nestName": "대원실",
+  "tagline": "수련해 오르는 무사",
+  "nestActionsShort": {"feed": "식사", "pet": "손질"},
   "nestActions": {
     "feed": "식사 / 영력 보급",
     "sleep": "재우기",

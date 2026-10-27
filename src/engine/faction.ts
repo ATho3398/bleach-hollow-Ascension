@@ -269,6 +269,10 @@ export interface FactionConfig {
   nestName: string;
   /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 교감(참백도 손질) */
   nestActions: Record<NestAction, string>;
+  /** 홈 독 버튼에 쓰는 짧은 이름 (GDD 100장 #14, 4글자 안팎). 없는 행동은 nestActions */
+  nestActionsShort?: Partial<Record<NestAction, string>>;
+  /** 종족 선택 카드 아래 한 줄 소개 (GDD 100장 #6). 없으면 생략 */
+  tagline?: string;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;
   /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 */

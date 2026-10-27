@@ -12,6 +12,7 @@
 //   info(rows)                          → dl.bha-info (행: label, value, mod?)
 //   seg(items, onSelect) / dots(n, active) / slider({...})
 //   h(tag, cls, text)                   → 옛 el 과 같은 헬퍼 (el 도 다시 내보냄)
+//   emptyState(text, { icon?, action? }) → .bha-empty 빈 상태 (가운데 아이콘 + 한 줄 + 할 일 버튼, GDD 100장 #87)
 import { fixParticles } from '../../engine/josa';
 import { el } from '../dom';
 import { endScreen } from './screenScope';
@@ -297,4 +298,12 @@ export function slider(o: SliderOpts): HTMLElement {
   root.append(head, input, scale);
   if (o.hint) root.append(el('p', 'bha-slider__hint', o.hint));
   return root;
+}
+
+/** 빈 상태 (C.170, GDD 100장 #87): 화면마다 다르던 빈 목록 표현을 하나로 — 가운데 아이콘 + 한 줄 + (있으면) 할 일 버튼 */
+export function emptyState(text: string, o: { icon?: string; action?: ButtonOpts } = {}): HTMLElement {
+  const box = el('div', 'bha-empty');
+  box.append(icon(o.icon ?? 'i-info', 'lg'), el('p', 'bha-empty__text', text));
+  if (o.action) box.append(button({ size: 'small', ...o.action }));
+  return box;
 }

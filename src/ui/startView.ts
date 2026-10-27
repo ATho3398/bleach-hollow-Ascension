@@ -2,7 +2,7 @@
 // 종족 고르기(GDD 19-4)는 새로 시작 다음 화면(speciesView): 종족 수만큼 화면을 등분해 아이콘(이모티콘)과 이름만 크게. 칸마다 data-bha-theme 로 그 종족 테마를 입힌다.
 import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
-import { versionLabel } from '../version';
+import { PATCH_LABEL } from '../version';
 import { onUpdateReady } from '../pwa';
 import { button, el, mountApp, notice } from './bha/dom';
 import { logoMark } from './bha/logo';
@@ -91,9 +91,10 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   const last = lastPlayedSlot(summaries);
   const menu = el('div', 'bha-start__menu');
   menu.dataset.scList = '';
+  // C.170 (GDD 100장 #1): 세이브가 없으면 [이어하기]를 숨기고 [새로 시작]이 첫 줄 (비활성 밝은 버튼이 가장 눈에 띄던 문제)
+  if (last !== null) menu.append(button({ label: '이어하기', icon: 'i-loop', variant: 'primary', onClick: h.onContinue }));
   menu.append(
-    button({ label: '이어하기', icon: 'i-loop', variant: 'primary', disabled: last === null, onClick: h.onContinue }),
-    button({ label: '새로 시작', icon: 'i-play', onClick: h.onNew }),
+    button({ label: '새로 시작', icon: 'i-play', variant: last === null ? 'primary' : undefined, onClick: h.onNew }),
     button({ label: '불러오기', icon: 'i-deck', onClick: h.onImport }),
   );
   const nodes: Node[] = [hero, menu];
@@ -101,7 +102,8 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   const stale = summaries.filter((x): x is Extract<SlotSummary, { state: 'incompatible' }> => x.state === 'incompatible');
   const hasStale = stale.length > 0;
   if (hasStale) nodes.push(incompatibleNotice(stale, h));
-  const ver = el('p', 'bha-start__ver', versionLabel());
+  // 첫 화면엔 버전 이름만 (#2). 단계·밸런스·커밋까지 든 자세한 줄은 설정 > 정보
+  const ver = el('p', 'bha-start__ver', `v ${PATCH_LABEL}`);
   nodes.push(ver);
   // 오프라인 플레이(GDD 60장): 새 버전을 받아 뒀으면 한 줄 안내 (적용은 앱을 다시 열 때)
   onUpdateReady(() => {
@@ -120,7 +122,7 @@ export interface SpeciesHandlers {
   confirm: (faction: FactionConfig, onYes: () => void, onNo: () => void) => void;
 }
 
-/** 종족 고르기 (GDD 19-4): 설명 없이 종족 수만큼 등분한 칸에 아이콘 + 이름 한 단어. 설정·도움말(튜토리얼)은 위 구석 작은 아이콘 버튼. (C.63: 방의 종족 바꾸기는 지웠다 — 새 슬롯에서만) */
+/** 종족 고르기 (GDD 19-4): 종족 수만큼 등분한 칸에 아이콘 + 이름 + 한 줄 소개(C.170). 설정·도움말은 카드 밖 머리 줄 오른쪽 작은 아이콘 버튼. (C.63: 방의 종족 바꾸기는 지웠다 — 새 슬롯에서만) */
 export function speciesView(root: HTMLElement, factions: readonly FactionConfig[], h: SpeciesHandlers): void {
   const species = el('div', 'bha-species bha-species--split');
   species.setAttribute('role', 'radiogroup');
@@ -139,6 +141,8 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
     card.setAttribute('aria-label', f.name);
     const mark = logoMark(f, 'bha-logo--xl');
     card.append(mark ?? el('span', 'bha-species__emblem', emblemOf(f)), el('span', 'bha-species__name', f.name));
+    // 종족 한 줄 소개 (#6): 문구는 종족 설정 tagline (없으면 생략)
+    if (f.tagline) card.append(el('span', 'bha-species__tagline', f.tagline));
     card.onclick = () => {
       for (const c of cards) {
         const on = c === card;
@@ -157,7 +161,7 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
   const corner = el('div', 'bha-start__corner');
   const settings = button({ label: '설정', icon: 'i-settings', iconOnly: true, size: 'small', variant: 'ghost', onClick: h.onSettings });
   settings.dataset.sc = 'corner.settings';
-  const help = button({ label: '도움말·튜토리얼', icon: 'i-help', iconOnly: true, size: 'small', variant: 'ghost', onClick: h.onHelp });
+  const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, size: 'small', variant: 'ghost', onClick: h.onHelp });
   help.dataset.sc = 'corner.help';
   corner.append(settings, help);
   mountApp(root, { cls: 'bha-start bha-start--species' }, species, corner);

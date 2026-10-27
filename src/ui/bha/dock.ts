@@ -62,7 +62,9 @@ export function createDock(o: DockOpts): Dock {
     b.type = 'button';
     b.dataset.care = a;
     b.dataset.sc = `care.${a}`;
-    b.append(icon(CARE_META[a].icon), el('span', '', faction.nestActions[a]));
+    // 독 버튼 글은 짧은 이름 (GDD 100장 #14, 종족 설정 nestActionsShort). 요청 중이면 작은 느낌표 배지 (#15, 대기 보상 배지와 같은 모양)
+    b.append(icon(CARE_META[a].icon), el('span', '', faction.nestActionsShort?.[a] ?? faction.nestActions[a]));
+    b.title = faction.nestActions[a];
     b.onclick = () => {
       if (a === 'feed') return setPanel(togglePanel(panel, 'food'));
       setPanel(CLOSED);
@@ -139,6 +141,15 @@ export function createDock(o: DockOpts): Dock {
         trayBtns.push(b);
         tray.append(b);
       }
+      // 닫기 칸 (GDD 100장 #17): ··· 다시 누르기·뒤로 말고도 닫을 수 있게
+      const x = el('button', 'bha-homedock__moreitem');
+      x.type = 'button';
+      x.dataset.dock = 'close';
+      x.setAttribute('aria-label', '닫기');
+      x.append(icon('i-close'), el('span', '', '닫기'));
+      x.onclick = () => setPanel(CLOSED);
+      trayBtns.push(x);
+      tray.append(x);
     }
     // 펼친 줄은 장면 위에 떠 있으니 기기 버튼 선택에서 먼저 (보이는 위치 순서 안에서도 맨 앞 묶음, GDD 63장)
     for (const b of trayBtns) b.setAttribute('data-dev-order', '-1');
@@ -166,6 +177,8 @@ export function createDock(o: DockOpts): Dock {
         const on = a === action;
         b.classList.toggle('is-requested', on);
         if (on) b.dataset.requested = ''; else delete b.dataset.requested;
+        b.querySelector('.bha-room__idlebadge')?.remove();
+        if (on) b.append(el('small', 'bha-room__idlebadge bha-homedock__askbadge', '!'));
         b.setAttribute('aria-label', on ? `${faction.nestActions[a]} (요청 중)` : faction.nestActions[a]);
       }
     },

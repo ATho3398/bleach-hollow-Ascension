@@ -72,6 +72,7 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
     const txt = el('div', 'bha-story-ep__text');
     const name = el('b', 'bha-story-ep__name', `${i + 1}화 ${ep.title}`);
     const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective)} · 권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
+    goal.title = goal.textContent ?? '';
     txt.append(name, goal);
     const state = el('span', 'bha-story-ep__state', done ? `클리어${done.clears > 1 ? ` ×${done.clears}` : ''}` : open ? '' : '앞 화를 깨면 열린다');
     row.append(mark, txt, state);
