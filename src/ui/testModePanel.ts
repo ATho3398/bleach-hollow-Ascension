@@ -136,7 +136,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     { label: '속성 피해', value: ELEMENT_DAMAGE_IDS.map((id) => `${elementDamageAbbr(id, fid)} ${elementDamagePct(elemDmg[id] ?? 0)}`).join(' · ') },
     { label: '특성', value: save.build.slots.map((id) => (id ? traitName(id, fid) : '—')).join(' · ') },
     { label: '고유 특성', value: save.evolution.ability ? abilityName(save.evolution.ability, fid) : '없음' },
-    { label: '리스크·허기·컨디션', value: `${save.nest.risk} · ${save.nest.hunger} · ${save.nest.condition}` },
+    { label: '리스크·허기·컨디션', value: [save.nest.risk, save.nest.hunger, save.nest.condition].map((v) => Math.round(v)).join(' · ') }, // 소수 꼬리(20.00001…) 대신 정수 (C.182 UI 검수)
     { label: '속도', value: `×${testSpeed()}` },
   ]));
 

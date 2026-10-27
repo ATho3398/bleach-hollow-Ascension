@@ -85,7 +85,7 @@
 /* ── 방 안 물건 (= 선택 항목) ── */
 .bha-prop {
   position: absolute; transform: translate(-50%, -100%); /* top = 이름표 아래 끝 (발 기준점은 layoutOnFloor 가 그림 아래로 맞춘다). 크기는 --prop-s × 1.25 를 그림 칸에만 곱한다(이름표 글자는 그대로) */
-  --ps: calc(var(--prop-s, 1) * 1.25);
+  --ps: calc(var(--prop-s, 1) * 1.25 * var(--room-fit, 1)); /* --room-fit: 장면이 기준(296px)보다 낮으면(빈사 알림 띠 등) 그만큼 줄인다 — layoutOnFloor (C.182) */
   display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1);
   min-width: var(--bha-touch); min-height: var(--bha-touch); padding: var(--bha-sp-1);
   color: var(--bha-text-1); background: none; border: 0; border-radius: var(--bha-r-md);

@@ -315,8 +315,10 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   function registerItems(): void {
     const list: SelectItem[] = [...items];
     for (const p of order) list.push({ el: props.get(p)! });
-    list.push({ el: statusBtn }, { el: char });
-    dev.setItems([...dock.items().filter((b) => b.closest('.bha-homedock__tray')).map((b) => ({ el: b })), ...list, ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
+    list.push({ el: statusBtn }, { el: statusInfoBtn }, { el: char });
+    const tray = dock.items().filter((b) => b.closest('.bha-homedock__tray'));
+    // 펼친 줄(더보기·먹이)이 방 물건을 덮으므로, 펼친 동안은 물건·캐릭터를 고르지 않는다 — 덮인 칸에 하이라이트가 가던 문제 (C.182 UI 검수)
+    dev.setItems([...tray.map((b) => ({ el: b })), ...(tray.length > 0 ? [] : list), ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
   }
   dock.setRequest(n.careRequest?.action ?? null);
   // 첫 선택 (GDD 100장 #11): 모험(문). 돌봄 요청 중이면 그 돌보기 버튼 — 기기는 새 화면에서 초점 있는 항목부터 고른다

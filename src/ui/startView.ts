@@ -54,7 +54,7 @@ export function slotRows(
     row.dataset.slot = String(sum.slot);
     const body = el('span', 'bha-slot__body');
     body.append(el('span', 'bha-slot__main', t.main));
-    if (t.sub) body.append(el('span', 'bha-slot__sub', t.sub));
+    body.append(el('span', 'bha-slot__sub', t.sub || '\u00a0')); // 빈 슬롯도 둘째 줄 자리 유지 — 슬롯을 지우면 칸이 줄어 아래 칸이 움직였다 (C.182 UI 검수)
     const fac = sum.state === 'ok' ? factions.find((x) => x.id === sum.factionId) : undefined;
     const mark = fac ? logoMark(fac, 'bha-logo--sm') : null;
     row.append(el('span', 'bha-slot__no', `슬롯 ${sum.slot}`), body);

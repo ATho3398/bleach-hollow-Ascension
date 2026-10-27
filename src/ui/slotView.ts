@@ -61,8 +61,9 @@ export function slotPickView(root: HTMLElement, mode: SlotPickMode, summaries: r
     if (sum) {
       const line = slotLine(sum, factions);
       info.append(el('strong', 'bha-slotpage__sel-main', `슬롯 ${sum.slot} · ${line.main}`));
-      if (line.sub) info.append(el('span', 'bha-faint', line.sub));
-    } else info.append(el('span', 'bha-faint', '슬롯을 먼저 고른다'));
+      info.append(el('span', 'bha-faint', line.sub || '\u00a0'));
+    } else info.append(el('span', 'bha-faint', '슬롯을 먼저 고른다'), el('span', 'bha-faint', '\u00a0'));
+    // ↑ 둘째 줄은 늘 둔다 — 빈 슬롯을 고르거나 슬롯을 지우면 줄이 빠져 [확인]·[삭제]가 위로 올라갔다 (C.182 UI 검수)
     const ok = button({ label: '확인', icon: 'i-check', variant: 'primary', disabled: !sum || !canPick(sum), onClick: () => sum && onPick(sum) });
     ok.dataset.sc = 'slots.ok';
     actions.append(ok);
