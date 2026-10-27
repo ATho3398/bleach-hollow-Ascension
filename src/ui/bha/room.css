@@ -163,6 +163,7 @@
 .bha-room__gauge--hunger { --c: var(--bha-hunger); }
 .bha-room__gauge--cond { --c: var(--bha-cond); }
 .bha-room__gauge--risk { --c: var(--bha-risk, var(--bha-danger)); }
+.bha-room__gauge--stab { --c: var(--bha-stab); }
 .bha-room__gauge--bond { --c: var(--bha-good); }
 .bha-room__gauge--weak, .bha-room__gauge--tired, .bha-room__gauge--collapsed, .bha-room__gauge.is-danger { --c: var(--bha-danger); }
 /* 상태 칩(쇠약·피곤·쓰러짐): 숫자 칸 대신 이름 (GDD 102-7) */

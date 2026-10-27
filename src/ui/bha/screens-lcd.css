@@ -186,6 +186,7 @@
 .bha-bgmlist__row.is-off .bha-bgmlist__name { opacity: 0.45; }
 .bha-bgmlist__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bha-text-1); font-size: var(--bha-fs-sm); }
 .bha-bgmlist__mark { color: var(--bha-accent-hi); font-size: var(--bha-fs-xs); }
+.bha-bgmlist__ex[aria-pressed="false"] .bha-icon { opacity: 0.25; } /* 110장 1번: 뺀 곡 = 흐린 체크, 자리 유지 */
 
 /* ═════ 도움말: 왼쪽 항목 목록 / 오른쪽 설명 ═════ */
 .bha-lcd .bha-layer .bha-app.bha-help-page { position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; }

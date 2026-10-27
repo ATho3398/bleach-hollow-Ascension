@@ -399,6 +399,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     const playBtn = button({ label: '▶', size: 'small' });
     const exBtn = button({ label: '', size: 'small', variant: 'ghost' });
     exBtn.title = '목록에 포함';
+    exBtn.classList.add('bha-bgmlist__ex');
     playBtn.setAttribute('aria-label', `${t.name} 재생`);
     playBtn.onclick = () => { bgm().playTrack(t.id); paintMusic(); };
     exBtn.onclick = () => {
@@ -424,8 +425,8 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       r.mark.textContent = now ? ' · 재생 중' : '';
       r.playBtn.classList.toggle('is-on', now);
       r.playBtn.setAttribute('aria-pressed', String(now));
-      // '목록에 포함 ✓' 토글 (#78): 포함이면 체크, 빼면 체크 없이 줄이 흐려진다
-      r.exBtn.replaceChildren(...(ex ? [] : [icon('i-check')]), ex ? '빠짐' : '포함');
+      // '목록에 포함 ✓' 토글 (#78): 빼면 줄이 흐려진다. 체크는 빼도 자리를 그대로 차지(흐린 체크) — 재생 버튼이 움직이지 않게 (GDD 110장 1번)
+      r.exBtn.replaceChildren(icon('i-check'), ex ? '빠짐' : '포함');
       r.exBtn.setAttribute('aria-pressed', String(!ex));
       r.exBtn.setAttribute('aria-label', `${r.t.name} 목록에 포함${ex ? ' 안 함' : ''}`);
       r.exBtn.disabled = !editable('excluded');

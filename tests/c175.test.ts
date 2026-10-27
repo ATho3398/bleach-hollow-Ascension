@@ -234,10 +234,10 @@ describe('102-6 교감', () => {
     expect(n.bond).toBe(NX.bond.dailyMax);
     expect(gainBond(n, 2, new Date(2026, 9, 28, 1).getTime())).toBe(2);
   });
-  it('방 상태 칩: 교감 숫자·쓰러짐·쇠약·피곤 칩(풀리는 법), 기분 = 쓰러짐 먼저', () => {
-    const chips = statusChips({ hunger: 90, condition: 20, risk: 0, weakened: true, tired: true, collapsed: true, bond: 42 }, getFaction('hollow'));
-    expect(chips.map((c) => c.kind)).toEqual(['hunger', 'cond', 'risk', 'bond', 'collapsed', 'weak', 'tired']);
-    expect(chips.find((c) => c.kind === 'bond')!.value).toBe(42);
+  it('방 상태 칩: 영압 안정도(교감은 상태 화면에서만, 109장 수정 v5.243)·쓰러짐·쇠약·피곤 칩(풀리는 법), 기분 = 쓰러짐 먼저', () => {
+    const chips = statusChips({ hunger: 90, condition: 20, risk: 0, weakened: true, tired: true, collapsed: true, stability: 42 }, getFaction('hollow'));
+    expect(chips.map((c) => c.kind)).toEqual(['hunger', 'cond', 'stab', 'risk', 'collapsed', 'weak', 'tired']);
+    expect(chips.find((c) => c.kind === 'stab')).toMatchObject({ value: 42, label: '영압 안정도' });
     expect(chips.filter((c) => c.hint).length).toBe(3);
     expect(moodOf({ weakened: true, collapsed: true, condition: 10, risk: 0, riskLimit: 100 })).toBe('collapsed');
   });

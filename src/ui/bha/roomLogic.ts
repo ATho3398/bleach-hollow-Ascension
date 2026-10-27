@@ -35,7 +35,7 @@ export function idleTalkKey(bond: number, rand: () => number = Math.random): key
 }
 
 export interface StatusChip {
-  kind: 'hunger' | 'cond' | 'risk' | 'bond' | 'weak' | 'tired' | 'collapsed';
+  kind: 'hunger' | 'cond' | 'stab' | 'risk' | 'bond' | 'weak' | 'tired' | 'collapsed';
   /** 표시 이름(종족 설정에서 온 것은 호출한 쪽이 넘긴다) */
   label: string;
   icon: string;
@@ -56,17 +56,18 @@ export const CARE_STATUS_HINTS = {
 /** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지·교감(GDD 102-6) + 쓰러짐·쇠약·피곤 칩(GDD 102-7).
  *  위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
 export function statusChips(
-  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; dead?: boolean; bond?: number },
-  names: { riskGaugeName: string; fullnessName?: string },
+  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; dead?: boolean; stability?: number },
+  names: { riskGaugeName: string; fullnessName?: string; stabilityName?: string },
   warn = { hunger: 80, condition: 40, risk: 60 },
 ): StatusChip[] {
   const chips: StatusChip[] = [
     // 배부름 (C.63): 값은 100 − 허기 (가득 = 100), 위험 구간은 그대로(허기 80↑ = 배부름 20↓)
     { kind: 'hunger', label: names.fullnessName ?? '배부름', icon: 'i-hunger', value: Math.round(fullnessOf(s.hunger)), danger: s.hunger >= warn.hunger },
     { kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), danger: s.condition < warn.condition },
+    // 영압 안정도 (GDD 109장 수정 v5.243): 방 = 배부름·컨디션·영압 안정도·광기 4줄. 교감은 상태 화면에서만
+    ...(s.stability !== undefined ? [{ kind: 'stab' as const, label: names.stabilityName ?? '안정', icon: 'i-stab', value: Math.round(s.stability), danger: false }] : []),
     { kind: 'risk', label: names.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), danger: s.risk >= warn.risk },
   ];
-  if (s.bond !== undefined) chips.push({ kind: 'bond', label: '교감', icon: 'i-care-pet', value: Math.round(s.bond), danger: false });
   if (s.dead) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.dead, icon: 'i-broken', value: null, danger: true, hint: '방 위 [부활]로 다시 시작한다' });
   else if (s.collapsed) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.collapsed, icon: 'i-broken', value: null, danger: true, hint: CARE_STATUS_HINTS.collapsed });
   if (s.weakened) chips.push({ kind: 'weak', label: CARE_STATUS_NAMES.weak, icon: 'i-hunger', value: null, danger: true, hint: CARE_STATUS_HINTS.weak });

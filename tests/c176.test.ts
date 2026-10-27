@@ -66,7 +66,7 @@ describe('104장 2: 상태 ⓘ', () => {
     expect(stab[0]!.mark).toBe(0);
     expect(stab[0]!.lines).toHaveLength(4);
     expect(stab[0]!.lines.every((l) => /해방 게이지 [\d.]+~[\d.]+\//.test(l))).toBe(true);
-    const chips = statusChips({ hunger: 50, condition: 50, risk: 10, weakened: true, tired: false, bond: 3 }, hollow);
+    const chips = statusChips({ hunger: 50, condition: 50, risk: 10, weakened: true, tired: false, stability: 30 }, hollow);
     const groups = roomStatusInfo(chips, hollow) as { title: string; lines: string[] }[];
     expect(groups).toHaveLength(chips.length);
     expect(groups.every((g) => g.lines.length > 0)).toBe(true);

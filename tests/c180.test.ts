@@ -1,7 +1,8 @@
 // C.180 묶음 수정 (GDD 109장 1·3·4·5·8·9번): 장비 칸 선택 유지 · 교감 = 상태 수치 한 줄 · 장비 → 가방 첫 탭 · 튜토리얼 알림 가운데 · 가로 키보드·가로 시작
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FACTIONS } from '../src/data/factions';
+import { FACTIONS, getFaction } from '../src/data/factions';
+import { statusChips } from '../src/ui/bha/roomLogic';
 import { roomOf } from '../src/engine/faction';
 import { wantsLandscapeLock } from '../src/ui/bha/orientation';
 
@@ -27,8 +28,10 @@ describe('3 교감: 상태 수치 목록 안 한 줄', () => {
     expect(read('src/ui/bha/nest.ts')).toMatch(/meter\(\{ kind: 'bond', label: '교감'/);
     expect(read('src/ui/bha/components/components.css')).toMatch(/\.bha-meter--bond/);
   });
-  it('방: 머리 위 상태 칩 목록 안에 교감', () => {
-    expect(read('src/ui/bha/roomLogic.ts')).toMatch(/kind: 'bond', label: '교감'/);
+  it('방 (109장 수정 v5.243): 배부름·컨디션·영압 안정도·광기 4줄, 교감 없음', () => {
+    const chips = statusChips({ hunger: 30, condition: 70, risk: 5, weakened: false, stability: 64, bond: 50 } as Parameters<typeof statusChips>[0], getFaction('shinigami'));
+    expect(chips.map((c) => c.kind)).toEqual(['hunger', 'cond', 'stab', 'risk']);
+    expect(chips[2]).toMatchObject({ label: getFaction('shinigami').stabilityName, value: 64 });
   });
 });
 
