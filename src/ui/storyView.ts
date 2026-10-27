@@ -4,6 +4,7 @@ import { chapterContent, episodeKey, STORY_CHAPTERS, type StoryEpisode, type Sto
 import { difficultyText, groundName, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { bossName } from '../data/bosses';
+import { getFaction } from '../data/factions';
 import { chapterOpen, episodeOpen, storyProgressOf, type SaveData } from '../game';
 import type { ExpeditionState } from '../engine/expedition';
 import { storyEpisodeOf } from '../engine/expedition';
@@ -30,11 +31,11 @@ export function departTabs(current: DepartTab, onSelect: (id: DepartTab) => void
   return t;
 }
 
-/** 목표 문구 (GDD 25-7 표기): "일반 적 3마리 처치" · "2바퀴 버티기" · "강적 1마리 흡수" · "보스 처치" */
-export function objectiveText(o: StoryObjective): string {
+/** 목표 문구 (GDD 25-7 표기): "일반 적 3마리 처치" · "2바퀴 버티기" · "강적 1마리 포식" · "보스 처치". 흡수 행동 이름은 종족 설정 absorbActionName (C.172) */
+export function objectiveText(o: StoryObjective, faction: FactionConfig): string {
   const cls = (c: 'normal' | 'elite') => (c === 'elite' ? '강적' : '일반 적');
   if (o.type === 'defeat') return `${cls(o.enemyClass)} ${o.count}마리 처치`;
-  if (o.type === 'absorb') return `${cls(o.enemyClass)} ${o.count}마리 흡수`;
+  if (o.type === 'absorb') return `${cls(o.enemyClass)} ${o.count}마리 ${faction.absorbActionName}`;
   if (o.type === 'survive') return `${o.laps}바퀴 버티기`;
   return '보스 처치';
 }
@@ -48,7 +49,7 @@ export function objectiveNeed(o: StoryObjective): number {
 export function storyGoalLine(exp: ExpeditionState): string | null {
   const ep = storyEpisodeOf(exp);
   if (!ep || !exp.story) return null;
-  return `목표 · ${objectiveText(ep.objective)} ${Math.min(exp.story.progress, objectiveNeed(ep.objective))}/${objectiveNeed(ep.objective)}`;
+  return `목표 · ${objectiveText(ep.objective, getFaction(exp.factionId))} ${Math.min(exp.story.progress, objectiveNeed(ep.objective))}/${objectiveNeed(ep.objective)}`;
 }
 
 /** 장 이름: "1장 「굶주린 영혼」", 내용이 없으면 "2장 (준비 중)" */
@@ -71,7 +72,7 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
     mark.append(icon(done ? 'i-check' : open ? 'i-flag-win' : 'i-lock'));
     const txt = el('div', 'bha-story-ep__text');
     const name = el('b', 'bha-story-ep__name', `${i + 1}화 ${ep.title}`);
-    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective)} · 권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
+    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective, faction)} · 권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
     goal.title = goal.textContent ?? '';
     txt.append(name, goal);
     const state = el('span', 'bha-story-ep__state', done ? `클리어${done.clears > 1 ? ` ×${done.clears}` : ''}` : open ? '' : '앞 화를 깨면 열린다');

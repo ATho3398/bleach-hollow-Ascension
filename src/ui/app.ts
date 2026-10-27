@@ -10,7 +10,7 @@ import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playe
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { bossSetupOf, createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { abortExpedition, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
@@ -1083,6 +1083,11 @@ export function startApp(host: HTMLElement): void {
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       risk: exp.risk,
       tutorial: tutorialFor(),
+      // 원정 전투 일시정지 [귀환] (GDD 100장 v5.220, C.172): 패배로 치지 않고 걷기 중간 귀환과 같은 처리(짧은 결과 카드 · 방)
+      ...(canAbortBattle(exp) ? { onReturn: () => {
+        abortExpedition(exp);
+        endExpedition(faction, exp);
+      } } : {}),
       onEnd: (done) => {
         const finds = exp.gearFinds?.length ?? 0;
         finishBattle(exp, done);

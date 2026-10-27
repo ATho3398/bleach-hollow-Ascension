@@ -1072,10 +1072,15 @@ export function canAbort(exp: Pick<ExpeditionState, 'phase' | 'tutorial'>): bool
   return !exp.tutorial && (exp.phase === 'moving' || exp.phase === 'rest');
 }
 
+/** 원정 전투 일시정지 [귀환] (GDD 100장 v5.220, C.172): 그 전투는 패배로 치지 않고 끝내고 걷기 중간 귀환과 같은 처리(abortExpedition). 첫 원정 튜토리얼은 안 됨 */
+export function canAbortBattle(exp: Pick<ExpeditionState, 'phase' | 'tutorial'>): boolean {
+  return !exp.tutorial && exp.phase === 'battle';
+}
+
 /** 원정 도중 [귀환하기] (GDD 81장, C.132): 지금까지 모은 것은 바퀴 끝 귀환처럼 지킨다. 바퀴 완주 보상(둥지 칸 타일)은 둥지 칸에 닿지 않았으니 없다.
  *  쉬던 중이면 휴식 효과도 없다. 연속 클리어는 settleStreak 가 끊는다 */
 export function abortExpedition(exp: ExpeditionState): void {
-  if (!canAbort(exp)) throw new Error('지금은 귀환할 수 없다');
+  if (!canAbort(exp) && !canAbortBattle(exp)) throw new Error('지금은 귀환할 수 없다');
   exp.restMult = 1;
   exp.restSpring = false;
   endExpedition(exp, 'returned', 'abort');

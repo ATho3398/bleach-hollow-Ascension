@@ -383,6 +383,8 @@
 .bha-root .bha-v2foename__text{flex:0 1 auto;min-width:4em}
 .bha-root .bha-v2fieldtags{position:absolute;left:calc(50% - 72px);width:132px;top:48px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:var(--bha-s-2);pointer-events:none}
 .bha-root .bha-v2fieldtags:empty{display:none}
+/* C.172 (GDD 100장): 피해 숫자는 위 막대(시간·로그·일시정지) 아래 필드 안에서만 떠오른다 — 막대 위로 겹치지 않게 잘라 낸다 */
+.bha-root .bha-battle__floats{top:46px;overflow:hidden}
 .bha-root .bha-v2fieldtags>.bha-chip{max-width:100%;flex:none}
 .bha-root .bha-v2fieldtags>.bha-notice{position:static;transform:none;max-width:100%;padding:4px 8px}
 .bha-root .bha-v2bar .bha-keycap{top:-7px;right:-4px}

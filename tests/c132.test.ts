@@ -80,7 +80,8 @@ describe('81장 원정 도중 [귀환하기]', () => {
     for (const ph of ['battle', 'nest-choice', 'event', 'ended'] as const) {
       e.phase = ph;
       expect(canAbort(e)).toBe(false);
-      expect(() => abortExpedition(e)).toThrow();
+      // C.172: 전투 중 귀환은 전투 일시정지 [귀환] 쪽(canAbortBattle)에서만 된다
+      if (ph !== 'battle') expect(() => abortExpedition(e)).toThrow();
     }
     expect(canAbort(mk({ tutorial: true }))).toBe(false);
   });

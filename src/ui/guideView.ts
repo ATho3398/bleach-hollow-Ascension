@@ -57,7 +57,7 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
   const mt = absorbModeText(faction);
   modes.append(...(['both', 'trait', 'stat', 'none'] as const).map((m) => line(mt[m].label, mt[m].sub)));
   const go = button({
-    label: `${act}하기`, icon: 'i-absorb', variant: 'primary', size: 'lg', block: true,
+    label: `${act}하기`, icon: 'i-absorb', variant: 'primary', block: true,
     onClick: () => {
       if (!tutorialAbsorb(exp).ok) return onDone();
       result();
@@ -83,7 +83,7 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
       c.append(el('span', '', statName(s, faction.id)), el('b', 'bha-num', `+${ev[s] ?? 0}`));
       grid.append(c);
     }
-    const next = button({ label: '계속', icon: 'i-chevron-right', variant: 'primary', size: 'lg', block: true, onClick: onDone });
+    const next = button({ label: '계속', icon: 'i-chevron-right', variant: 'primary', block: true, onClick: onDone });
     lcdPage(root, { cls: 'bha-absorbpage bha-tutabsorb', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, head('모든 능력치가 올랐다'), [
       el('p', 'bha-dim bha-absorb__lead', `첫 ${act} — 모든 능력치 노력치 +${BALANCE.provisional.tutorialRun.statEv}`),
       grid,

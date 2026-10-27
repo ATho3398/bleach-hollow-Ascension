@@ -1,6 +1,7 @@
 // C.58 (S-14, GDD 25-3·25-4·25-7 v5.25): 보스 프레임(페이즈·기믹 seal·시간 제한·보상)과 스토리 1장(장·화·고정 길·목표·대화). 세이브 형식 22, 원정 중간 저장 형식 6
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
+import { getFaction } from '../src/data/factions';
 import { BOSSES, BOSS_GIMMICKS, bossName, findEnemyDef, getBoss } from '../src/data/bosses';
 import { chapterContent, episodeKey, getEpisode, STORY_CHAPTERS, STORY_CONTENT } from '../src/data/story';
 import { getTrait, TRAITS } from '../src/data/traits';
@@ -200,7 +201,7 @@ describe('스토리 데이터 (GDD 25-4·25-7)', () => {
 
   it('목표 문구', () => {
     const eps = chapterContent('hollow', 'ch1')!.episodes;
-    expect(eps.map((e) => objectiveText(e.objective))).toEqual(['일반 적 3마리 처치', '2바퀴 버티기', '강적 1마리 흡수', '보스 처치']);
+    expect(eps.map((e) => objectiveText(e.objective, getFaction('hollow')))).toEqual(['일반 적 3마리 처치', '2바퀴 버티기', '강적 1마리 포식', '보스 처치']);
   });
 });
 

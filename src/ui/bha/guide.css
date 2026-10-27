@@ -23,3 +23,6 @@
 .bha-tutabsorb__gain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
 .bha-tutabsorb__stat { display: flex; justify-content: space-between; padding: var(--bha-sp-2) var(--bha-sp-3); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); font-size: var(--bha-fs-sm); }
 .bha-tutabsorb__stat b { color: var(--bha-accent); }
+/* C.172 (GDD 100장 #48): 첫 포식 안내 — 위에 몰려 아래 절반이 비던 내용을 세로 가운데로, 버튼은 보통 높이 */
+.bha-tutabsorb .bha-lcdpage__col { justify-content: safe center; }
+.bha-absorbpage.bha-tutabsorb .bha-absorb__lead { display: block; }  /* 첫 포식엔 상대 카드가 없어 "…을(를) 쓰러뜨렸다" 를 보인다 */

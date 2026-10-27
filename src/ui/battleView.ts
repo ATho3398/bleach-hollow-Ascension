@@ -32,6 +32,7 @@ import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { settingsOverlay } from './settingsView';
+import { confirmDialog } from './confirmDialog';
 import { registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -60,6 +61,8 @@ export interface BattleViewOptions {
   risk?: number;
   /** 있으면 '그만두기' 버튼을 보인다 (원정 중에는 없다) */
   onQuit?: () => void;
+  /** 있으면 일시정지 창에 [귀환] (원정 전투, GDD 100장 v5.220): 확인 창(기본 = 귀환하기) 뒤 전투를 패배 없이 끝내고 한 번 불린다 */
+  onReturn?: () => void;
   /** 있으면 전투 시작 직전에 첫 플레이 튜토리얼을 보여 준다 (GDD 14-2). 끝나거나 건너뛰면 한 번 불린다. 튜토리얼 동안 전투 시간은 멈춘다 */
   tutorial?: { onDone: () => void };
   /** 육성 단계(0부터): 단계별 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다. 없으면 1단계 취급 */
@@ -583,6 +586,24 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       settingsOverlay(() => (overlayOpen = false));
     } }));
     if (opts.onQuit) actions.append(button({ label: '그만두기', variant: 'danger', icon: 'i-quit', onClick: () => { unregPause(); quit(); } }));
+    // C.172 (GDD 100장 v5.220): 원정 전투는 [귀환] — 걷기 중간 귀환과 같은 확인 창(기본 선택 = 귀환하기), 아니오면 일시정지 그대로
+    if (opts.onReturn) actions.append(button({ label: '귀환', icon: 'i-return', onClick: () => {
+      if (overlayOpen) return;
+      overlayOpen = true;
+      confirmDialog({
+        title: '지금 귀환할까요?',
+        body: '이 전투는 패배로 치지 않아요 · 이번 바퀴 완주 보상은 없어요',
+        yes: '귀환하기',
+        no: '계속 싸우기',
+        onYes: () => {
+          overlayOpen = false;
+          unregPause();
+          stop();
+          opts.onReturn?.();
+        },
+        onNo: () => (overlayOpen = false),
+      });
+    } }));
     inner.append(ovMark('i-pause'), el('h2', 'bha-battle-ov__title', '일시정지'), el('p', 'bha-battle-ov__sub', '전투가 멈춰 있다. 블록 바와 시간도 멈춘다.'), actions);
     const ov = showOverlay(inner);
     const off = registerLayer(ov, () => setPaused(false));
