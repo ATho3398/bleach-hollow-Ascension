@@ -272,6 +272,52 @@ export interface SliderOpts {
   onInput: (v: number) => void;
 }
 
+/** 막대 끌기 값 (GDD 103장 수정 v5.242): 포인터 좌표 → min~max. 기기를 CSS 로 시계 방향 90도 돌린 화면이면 보이는 막대 방향 = 화면 아래쪽이라 y 로 잰다 */
+export function rangeDragValue(p: { x: number; y: number }, rect: { left: number; top: number; width: number; height: number }, rotated: boolean, min: number, max: number, step = 1): number {
+  const t = rotated ? (p.y - rect.top) / Math.max(1, rect.height) : (p.x - rect.left) / Math.max(1, rect.width);
+  const v = min + Math.max(0, Math.min(1, t)) * (max - min);
+  return Math.max(min, Math.min(max, Math.round(v / step) * step));
+}
+
+/** range 입력칸을 끌기로 직접 다룬다: 누른 곳 값 → 누르고 있는 동안 따라감 → 놓을 때 확정. 브라우저 기본 끌기는 돌린 화면에서 축이 어긋나고
+ *  첫 움직임을 스크롤 판정이 가로챈다(위아래로 한 번 끌어야 좌우가 먹던 문제) — 기본 동작을 막고 포인터를 잡는다. 키보드 ◀▶ 는 그대로 */
+export function enableRangeDrag(input: HTMLInputElement, onMove: (v: number) => void, onDone: (v: number) => void): void {
+  input.style.touchAction = 'none';
+  // 터치에서는 브라우저 기본 range 끌기도 같이 돌아 값이 엇갈린다 — 터치 기본 동작을 막는다 (포인터 이벤트는 그대로 온다)
+  input.addEventListener('touchstart', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+  const valueAt = (e: PointerEvent): number => {
+    const r = input.getBoundingClientRect();
+    // 레이아웃 폭·높이의 길쭉한 방향과 화면상 길쭉한 방향이 다르면 돌린 화면 (device.ts 와 같은 판정)
+    const rotated = input.offsetWidth >= input.offsetHeight !== r.width >= r.height;
+    return rangeDragValue({ x: e.clientX, y: e.clientY }, r, rotated, Number(input.min || 0), Number(input.max || 100), Number(input.step) || 1);
+  };
+  let id: number | null = null;
+  input.addEventListener('pointerdown', (e) => {
+    if (input.disabled || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    e.preventDefault();
+    input.focus({ preventScroll: true });
+    id = e.pointerId;
+    try {
+      input.setPointerCapture(e.pointerId);
+    } catch {
+      /* 잡기 실패해도 window 이벤트 없이 move 는 온다 */
+    }
+    onMove(valueAt(e));
+  });
+  input.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== id) return;
+    e.preventDefault();
+    onMove(valueAt(e));
+  });
+  const end = (e: PointerEvent, done: boolean) => {
+    if (e.pointerId !== id) return;
+    id = null;
+    if (done) onDone(valueAt(e));
+  };
+  input.addEventListener('pointerup', (e) => end(e, true));
+  input.addEventListener('pointercancel', (e) => end(e, false));
+}
+
 /** 슬라이더: 트랙 채움은 --pct(0~1). 값과 표시를 함께 갱신한다. 요소 전체(.bha-slider)를 돌려준다 */
 export function slider(o: SliderOpts): HTMLElement {
   const root = el('div', 'bha-slider');
@@ -294,6 +340,13 @@ export function slider(o: SliderOpts): HTMLElement {
     paint(v);
     o.onInput(v);
   };
+  // 끌기 (GDD 103장 수정 v5.242): 돌린 화면에서도 보이는 막대 방향으로
+  const drag = (v: number) => {
+    input.value = String(v);
+    paint(v);
+    o.onInput(v);
+  };
+  enableRangeDrag(input, drag, drag);
   const head = el('div', 'bha-slider__head');
   const label = el('label', 'bha-slider__label', o.label);
   label.htmlFor = o.id;

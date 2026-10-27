@@ -77,3 +77,24 @@ describe('8·9 가로 키보드 · 가로 시작', () => {
     expect(read('src/main.ts')).toMatch(/installLandscapeKeyboard\(\)/);
   });
 });
+
+describe('103장 수정 v5.242 소리 막대 끌기', () => {
+  it('끌기 값: 가로 = x, 돌린 화면(시계 90도) = y, 밖은 끝값, step 맞춤', async () => {
+    const { rangeDragValue } = await import('../src/ui/bha/dom');
+    const r = { left: 100, top: 50, width: 200, height: 20 };
+    expect(rangeDragValue({ x: 150, y: 0 }, r, false, 0, 100)).toBe(25);
+    expect(rangeDragValue({ x: 999, y: 0 }, r, false, 0, 100)).toBe(100);
+    expect(rangeDragValue({ x: 0, y: 0 }, r, false, 0, 100)).toBe(0);
+    const rr = { left: 10, top: 100, width: 20, height: 400 };
+    expect(rangeDragValue({ x: 0, y: 400 }, rr, true, 0, 100)).toBe(75);
+    expect(rangeDragValue({ x: 0, y: 161 }, rr, true, 0, 100, 5)).toBe(15);
+  });
+  it('설정 소리 막대·공용 slider 가 끌기를 쓴다, 터치 기본 끌기·스크롤 판정을 막는다', () => {
+    expect(read('src/ui/settingsView.ts')).toMatch(/enableRangeDrag\(input, \(v\) => set\(v, false\), \(v\) => set\(v, true\)\)/);
+    const dom = read('src/ui/bha/dom.ts');
+    expect(dom).toMatch(/enableRangeDrag\(input, drag, drag\)/);
+    expect(dom).toMatch(/touchAction = 'none'/);
+    expect(dom).toMatch(/setPointerCapture/);
+    expect(dom).toMatch(/addEventListener\('touchstart'[^\n]*passive: false/);
+  });
+});

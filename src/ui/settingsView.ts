@@ -1,7 +1,7 @@
 // 설정 화면 (GDD 14-3·103장, C.178): 탭 4개 화면 / 소리 / 전투 / 기타. 바꾼 값은 임시이고 [저장]을 눌러야 반영된다(소리 크기는 움직이는 동안 미리 듣기).
 // [저장] 없이 뒤로(◀·Esc·폰 뒤로가기·닫기)면 "바꾼 설정을 저장할까요?" [저장][저장 안 함][취소].
 // 공통 설정(기기 전체, 항목마다 localStorage 키) + 게임 안에서는 [공통]/[이 슬롯] 토글 — 슬롯 설정(세이브 settings)은 항목별로 공통보다 우선(settingsScope.ts).
-import { button, el, icon } from './bha/dom';
+import { button, el, enableRangeDrag, icon } from './bha/dom';
 import { endScreen, screenSignal } from './bha/screenScope';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { registerCancelHook } from './bha/shortcuts';
@@ -301,6 +301,8 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     };
     input.oninput = () => set(Number(input.value), false);
     input.onchange = () => set(Number(input.value), true);
+    // 끌어서 원하는 값에 놓기 (103장 수정 v5.242): 누르는 동안 따라가고 놓을 때 확정·미리 듣기 1회
+    enableRangeDrag(input, (v) => set(v, false), (v) => set(v, true));
     input.addEventListener('keydown', (e) => {
       const d = e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -1 : e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 1 : 0;
       if (d === 0 || e.key === 'ArrowUp' || e.key === 'ArrowDown') return; // 위/아래는 기기 선택 이동
