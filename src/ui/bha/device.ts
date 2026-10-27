@@ -343,16 +343,6 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     markSel();
   });
 
-  // 화면이 하이라이트를 특정 항목으로 옮겨 달라고 할 때 (목록에서 고른 행을 ✓ 로 한 번 더 → 오른쪽 상세 첫 버튼, lcdpage.masterDetail, C.182 UI 검수)
-  lcd.addEventListener('bha-goto', (e) => {
-    refresh();
-    const i = items.findIndex((it) => it.el === e.target);
-    if (i < 0) return;
-    index = i;
-    markSel();
-    items[i]!.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  });
-
   function move(dir: 1 | -1): void {
     if (items.length === 0) return;
     index = stepIndex(index, dir, items.length);
@@ -362,6 +352,16 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     if (cur.el instanceof HTMLInputElement) cur.el.focus({ preventScroll: true });
     if (!layers.length) explicit?.onChange?.(cur);
   }
+
+  // 화면이 하이라이트를 특정 항목으로 옮겨 달라고 할 때 (목록에서 고른 행을 ✓ 로 한 번 더 → 오른쪽 상세 첫 버튼, lcdpage.masterDetail, C.182 UI 검수)
+  lcd.addEventListener('bha-goto', (e) => {
+    refresh();
+    const i = items.findIndex((it) => it.el === e.target);
+    if (i < 0) return;
+    index = i;
+    markSel();
+    items[i]!.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
 
   function confirm(): void {
     if (touchOnly) {

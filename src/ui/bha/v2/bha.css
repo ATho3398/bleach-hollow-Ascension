@@ -323,6 +323,8 @@
 .bha-root .bha-v2time{display:inline-flex;align-items:center;gap:3px;margin-right:4px;font-size:16px;font-weight:800}
 .bha-root .bha-v2time .bha-svg{width:15px;height:15px;color:var(--bha-text-2)}
 .bha-root .bha-v2time.is-urgent{color:var(--bha-danger)}
+/* C.182 UI 검수: 남은 초 자리 고정(148 → 99 → 9) — 줄어들면 왼쪽 공허 칩·ⓘ·가운데 약점 칩이 움직였다 */
+.bha-root .bha-v2time b{min-width:3ch;text-align:right;font-variant-numeric:tabular-nums}
 .bha-root .bha-v2units{position:absolute;inset:0;pointer-events:none}
 .bha-root .bha-v2units>.bha-unit{position:absolute;top:46px;width:170px;height:150px;display:flex;flex-direction:column;align-items:center}
 .bha-root .bha-v2units>.bha-unit--me{left:70px}
@@ -455,6 +457,8 @@
 .bha-root .bha-v2role--gear{--role:var(--bha-accent-hi)}
 .bha-root .bha-v2role__meta{font-size:var(--bha-fs-xs);color:var(--bha-text-3);min-width:0}
 .bha-root .bha-v2role__meta:empty{display:none}
+/* C.182 UI 검수: 소모품 남은 개수(×n → 씀)·장비 쿨다운 초(숫자 → 없음)가 바뀌어도 버튼 폭이 그대로 — 오른쪽 고정 줄이라 폭이 바뀌면 왼쪽 [막기]가 움직였다 */
+.bha-root .bha-v2role--item .bha-v2role__meta,.bha-root .bha-v2role--gear .bha-v2role__meta{min-width:3ch;text-align:center;font-variant-numeric:tabular-nums}
 .bha-root .bha-v2role__bar{position:relative;width:34px;height:6px;border-radius:var(--bha-r-pill);border:1px solid var(--role);overflow:hidden;flex:none}
 .bha-root .bha-v2role__bar i{position:absolute;left:0;top:0;bottom:0;background:var(--role);opacity:.55}
 .bha-root .bha-v2role.is-full .bha-v2role__bar i{opacity:1}
