@@ -1,6 +1,6 @@
-// 테스트 모드 화면 쪽 (GDD 38장, C.88): 켜기·끄기, 화면 위 "테스트" 띠, 설정 [정보]의 버전 줄(7번 누르면 켜짐), 속도 배율.
+// 테스트 모드 화면 쪽 (GDD 38장, C.88): 켜기·끄기, 화면 위 "테스트" 띠, 설정 [정보]의 버전 줄(7번 누르면 켜짐), 다마고치 키링 1초 안 3번(GDD 109장 7, C.181), 속도 배율.
 // 엔진 쪽(세이브 분리·전체 해금·값 넣기)은 src/engine/testMode.ts, 테스트 패널 화면은 testModePanel.ts.
-import { countTap, loadTestConfig, resolveTestMode, saveTestConfig, setTestFlag, TEST_SPEEDS, TEST_TAPS, type TestConfig, type TestSpeed } from '../engine/testMode';
+import { countKeyringTap, countTap, loadTestConfig, resolveTestMode, saveTestConfig, setTestFlag, TEST_SPEEDS, TEST_TAPS, type TestConfig, type TestSpeed } from '../engine/testMode';
 import { versionLabel } from '../version';
 import { button, el } from './bha/dom';
 import { showToast } from './bha/nest';
@@ -63,6 +63,16 @@ export function enableTestMode(): void {
 export function disableTestMode(): void {
   setTestFlag(local(), false);
   reloadWithout();
+}
+
+/** 다마고치 모드 키링을 눌렀다 (GDD 109장 7, 이스터에그): 1초 안에 3번이면 테스트 모드를 켜고 다시 연다(테스트 세이브 칸). 이미 켜져 있으면 알림만 */
+let keyTaps: number[] = [];
+export function keyringTestTap(nowMs: number = Date.now()): void {
+  const r = countKeyringTap(keyTaps, nowMs);
+  keyTaps = r.taps;
+  if (!r.fire) return;
+  if (active) return void showToast({ eyebrow: '테스트 모드', title: '이미 켜져 있다', meta: '독 [더보기] → [테스트]' }, 0, 1400);
+  enableTestMode();
 }
 
 /** 설정 > [정보] 줄: 버전 줄(7번 연속 누르면 테스트 모드), 테스트 모드면 [테스트 모드 끄기] */

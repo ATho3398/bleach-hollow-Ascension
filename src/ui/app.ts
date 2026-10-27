@@ -21,7 +21,7 @@ import type { AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, careBlock, departCareOf, fastForward, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, careBlock, departCareOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -93,7 +93,7 @@ import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
 import { useRerollTicket } from '../shop';
 import { clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
-import { initTestMode, testSpeed } from './testMode';
+import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
 import { shownName } from './displayName';
 
@@ -135,7 +135,7 @@ export function startApp(host: HTMLElement): void {
   });
   const root = dev.view;
   // 다마고치 모드 (GDD 27장): 기기 둘레 몸체·키링·뒷면. 꾸밈을 걸 때마다 지금 캐릭터를 알려 준다
-  const tama = initTamago(dev, { persist: () => persist() });
+  const tama = initTamago(dev, { persist: () => persist(), onKeyringTap: () => keyringTestTap() });
   const dress = (wear: WearState | null) => {
     applyCosmetics(wear);
     tama.setContext(wear && save ? getFaction(save.factionId) : null, wear ? save : null);
@@ -1308,7 +1308,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   // ── 테스트 패널 (GDD 38-4): 테스트 모드에서만. 값은 테스트 칸에만 저장된다 ──
-  function renderTest(faction: FactionConfig, s: SaveData, tab: TestTab = 'form'): void {
+  function renderTest(faction: FactionConfig, s: SaveData, tab?: TestTab): void {
     testPanelView(root, faction, s, {
       persist,
       onBattle: (c) => testBattle(faction, c),
@@ -1335,11 +1335,20 @@ export function startApp(host: HTMLElement): void {
         dress(s.wear);
         nav.top?.render();
       },
-      onFastForward: (hours) => {
-        absence = fastForward(s, hours);
+      // 시간 앞당기기 (GDD 102-7·109장 7): 패널이 셈한 결과로 방 복귀 알림
+      onTimeAdvanced: (rep) => {
+        absence = rep;
         hungryGreet = absence.flow.hunger >= BALANCE.provisional.nest.idleHungerNotice;
         persist();
         nestScreen();
+      },
+      // 다음 진화 (GDD 109장 7): 원정 귀환 때와 같은 진화 연출 → 끝나면 테스트 패널로
+      onEvolved: (fromTier, r) => {
+        dress(s.wear);
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id) };
+        open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
+          nav.pop();
+        }, s.build.slots.length, extra), true);
       },
     }, tab);
   }

@@ -151,6 +151,8 @@ function bakeLite(img: HTMLImageElement): string {
 export interface TamagoHooks {
   /** 기기 디자인을 바꾼 뒤 저장 */
   persist?: () => void;
+  /** 키링을 눌렀다 (GDD 109장 7: 1초 안 3번 = 테스트 모드, 셈은 부르는 쪽) */
+  onKeyringTap?: () => void;
 }
 
 export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
@@ -476,6 +478,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     const d = localDelta(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
     pend = kick(pend, tapKick(d.x), reduced());
     drag = { x: e.clientX, y: e.clientY };
+    hooks.onKeyringTap?.();
     try {
       key.setPointerCapture(e.pointerId);
     } catch {

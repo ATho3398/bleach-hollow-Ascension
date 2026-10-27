@@ -9,15 +9,24 @@ import { ENEMIES, scaleEnemy } from '../data/enemies';
 import { FORM_TABLE, tryGetForm } from '../data/evolution';
 import { FACTIONS, getFaction } from '../data/factions';
 import { STAT_IDS, type EnemyDef, type FormDef, type Stats, type StatId } from '../data/schema';
-import { COSMETIC_ITEMS } from '../data/shop';
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
-import { SAVE_KEY, newSaveData, storyProgressOf, type SaveData, type StorageLike } from '../game';
+import { SAVE_KEY, fastForward, newSaveData, performEvolution, storyProgressOf, type SaveData, type StorageLike } from '../game';
+import { COSMETIC_ITEMS, getCosmetic } from '../data/shop';
+import { canWear, skinsFor, type SkinDef } from '../data/skins';
+import { GEAR_KINDS, isGearGrade, isGearKind, type GearGrade } from '../data/gear';
+import { CONSUMABLE_IDS } from '../inventory';
+import { storeConsumable, wearCosmetic } from '../shop';
+import { grantGear, rollGear } from './gear';
+import { addFood } from './food';
+import { recommendedDifficulty } from './difficulty';
+import { stepsNeeded, type EvolveResult } from './evolution/evolution';
+import type { AbsenceReport } from './nest';
 import { pickLook } from './evolution/tierLook';
 import { clampDifficulty, clampStreak, enemyAtDifficulty, MAX_DIFFICULTY, streakEnemyFactor } from './difficulty';
 import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from './evolution';
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
-import { FOOD_IDS } from './faction';
+import { FOOD_IDS, type FoodId } from './faction';
 
 /** 테스트 칸 저장 키 (38-2). 진짜 세이브 키 `SAVE_KEY…` 는 모두 이 앞부분으로 바뀐다 (슬롯 1 = 이 키 그대로) */
 export const TEST_SAVE_KEY = 'bha-save-test';
@@ -389,4 +398,152 @@ export function testBattleEnemy(c: TestBattleChoice): { enemy: EnemyDef; star: n
   const k = tower ? tower.factor : streakEnemyFactor(clampStreak(c.streak));
   const atStar = enemyAtDifficulty(foe.def, star);
   return { enemy: k === 1 ? atStar : scaleEnemy(atStar, { hp: k, attack: k }), star, bossId: foe.kind === 'boss' ? foe.id : null };
+}
+
+// ── 키링 3번 (GDD 109장 7, C.181): 다마고치 모드 키링을 1초 안에 3번 누르면 테스트 모드 (이스터에그) ──
+
+/** 키링 누르기 횟수·시간 창 */
+export const KEYRING_TAPS = 3;
+export const KEYRING_WINDOW_MS = 1000;
+
+/** 키링 누른 시각 목록에 지금을 더하고, 창(1초) 밖은 버린다. fire = 창 안에 KEYRING_TAPS 번 → 목록은 비운다 */
+export function countKeyringTap(prev: readonly number[], nowMs: number): { taps: number[]; fire: boolean } {
+  const taps = [...prev.filter((t) => nowMs - t < KEYRING_WINDOW_MS && t <= nowMs), nowMs];
+  return taps.length >= KEYRING_TAPS ? { taps: [], fire: true } : { taps, fire: false };
+}
+
+// ── 진화 (GDD 109장 7): 지금 몸에서 다음 진화를 바로 ──
+
+/** 걸음 수를 채우고 진짜 진화(performEvolution — 판정·슬롯 +1·도감·런 로그·칭호·첫 진화 타일·펫 선물 모두 같다)를 한다. 마지막 단계면 ok:false */
+export function testEvolveNext(save: SaveData, nowMs: number = Date.now()): EvolveResult {
+  const need = stepsNeeded(save.evolution);
+  if (need === null) return { ok: false, reason: '이미 마지막 단계다' };
+  save.evolution.steps = Math.max(save.evolution.steps, need);
+  return performEvolution(save, nowMs);
+}
+
+// ── 아이템 생성 (GDD 109장 7): 장비·소모품·먹이·꾸밈·재화 ──
+
+export const TEST_ITEM_KINDS = ['gear', 'consumable', 'food', 'cosmetic', 'currency'] as const;
+export type TestItemKind = (typeof TEST_ITEM_KINDS)[number];
+export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
+/** 재화 id → 세이브 자리 (골드 = tradeCoins) */
+export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'rerollTickets', 'trainingTickets'] as const;
+export type TestCurrency = (typeof TEST_CURRENCIES)[number];
+export const TEST_CURRENCY_NAMES: Record<TestCurrency, string> = { gold: '골드', jade: '영옥', soulCrystals: '영혼 결정', rerollTickets: '다시 뽑기권', trainingTickets: '수련권' };
+/** 한 번에 만들 수 있는 최대 개수 */
+export const TEST_ITEM_MAX = 99999;
+
+/** 그 분류에서 고를 수 있는 id (데이터 순서). 이름은 화면이 종족 설정으로 붙인다 */
+export function testItemIds(kind: TestItemKind): readonly string[] {
+  if (kind === 'gear') return GEAR_KINDS;
+  if (kind === 'consumable') return CONSUMABLE_IDS;
+  if (kind === 'food') return FOOD_IDS;
+  if (kind === 'cosmetic') return COSMETIC_ITEMS.filter((c) => c.category !== 'skin').map((c) => c.id);
+  return TEST_CURRENCIES;
+}
+
+export interface TestItemChoice {
+  kind: TestItemKind;
+  id: string;
+  count: number;
+  /** 장비만: 등급·강화·★(없으면 지금 단계 권장 ★) */
+  grade?: GearGrade;
+  plus?: number;
+  star?: number;
+}
+
+/** 고른 것을 만들어 넣는다. 실제로 들어간 개수 (상한·보관함 가득이면 그만큼 적다) */
+export function createTestItem(save: SaveData, c: TestItemChoice, nowMs: number = Date.now(), rand: () => number = Math.random): number {
+  const n = Math.max(0, Math.min(TEST_ITEM_MAX, Math.floor(Number.isFinite(c.count) ? c.count : 0)));
+  const sh = save.shared;
+  if (c.kind === 'gear') {
+    if (!isGearKind(c.id)) return 0;
+    const grade = c.grade && isGearGrade(c.grade) ? c.grade : 'normal';
+    const plus = Math.max(0, Math.min(BALANCE.provisional.gear.maxPlus, Math.floor(c.plus ?? 0)));
+    let made = 0;
+    for (let i = 0; i < n; i++) {
+      const it = grantGear(sh.gear, rollGear({ kind: c.id, grade, star: c.star ?? recommendedDifficulty(save.evolution.tierIndex) }, rand), nowMs);
+      if (!it) break;
+      it.plus = plus;
+      made++;
+    }
+    return made;
+  }
+  if (c.kind === 'consumable') return CONSUMABLE_IDS.includes(c.id) ? storeConsumable(save, c.id, n) : 0;
+  if (c.kind === 'food') return (FOOD_IDS as readonly string[]).includes(c.id) ? addFood(sh.food, c.id as FoodId, n) : 0;
+  if (c.kind === 'cosmetic') {
+    if (!getCosmetic(c.id) || sh.cosmetics.includes(c.id)) return 0;
+    sh.cosmetics.push(c.id);
+    return 1;
+  }
+  const cur = c.id as TestCurrency;
+  if (cur === 'gold') sh.tradeCoins += n;
+  else if (cur === 'jade') sh.jade += n;
+  else if (cur === 'soulCrystals') sh.soulCrystals += n;
+  else if (cur === 'rerollTickets') return addCapped(sh, 'rerollTickets', n, BALANCE.shop.rerollMax);
+  else if (cur === 'trainingTickets') {
+    const add = Math.max(0, Math.min(n, BALANCE.provisional.training.ticketsMax - save.training.tickets));
+    save.training.tickets += add;
+    return add;
+  } else return 0;
+  return n;
+}
+
+function addCapped(sh: SaveData['shared'], key: 'rerollTickets', n: number, cap: number): number {
+  const add = Math.max(0, Math.min(n, cap - sh[key]));
+  sh[key] += add;
+  return add;
+}
+
+// ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족이 입을 수 있는 스킨·꾸밈 전부 ──
+
+/** 이 종족이 입을 수 있는 스킨 전부 (단계 외형·아란칼 외형 포함 — 상점에 안 나오는 것도) */
+export function testSkins(factionId: string): SkinDef[] {
+  return skinsFor(factionId);
+}
+
+/** 스킨을 입힌다 (null = 벗기). 이 종족이 못 입는 스킨이면 false */
+export function testWearSkin(save: SaveData, skinId: string | null): boolean {
+  if (skinId === null) {
+    save.skin = null;
+    return true;
+  }
+  if (!canWear(save.factionId, skinId)) return false;
+  save.skin = skinId;
+  return true;
+}
+
+/** 꾸밈을 입힌다: 안 가졌으면 갖게 하고 입는다 (스킨은 testWearSkin) */
+export function testWearCosmetic(save: SaveData, id: string): boolean {
+  const c = getCosmetic(id);
+  if (!c || c.category === 'skin') return false;
+  if (!save.shared.cosmetics.includes(id)) save.shared.cosmetics.push(id);
+  return wearCosmetic(save, id);
+}
+
+/** 스킨·꾸밈 전부 벗기 */
+export function testUnwearAll(save: SaveData): void {
+  save.skin = null;
+  save.wear = {};
+}
+
+// ── 시간 앞당기기 (GDD 109장 7): +10분·+1시간·+1일 ──
+
+/** 앞당기기 단추 (분) */
+export const TEST_TIME_STEPS: readonly { minutes: number; label: string }[] = [
+  { minutes: 10, label: '+10분' },
+  { minutes: 60, label: '+1시간' },
+  { minutes: 24 * 60, label: '+1일' },
+];
+
+/** 그만큼 시간이 지난 것처럼: 둥지의 시각 기록(먹이 한도·돌봄 요청·빈사 시각)을 그만큼 앞으로 당기고, 꺼 두었다 다시 연 것처럼 셈한다(fastForward — 시간 흐름·대기 보상·교감·빈사·사망) */
+export function advanceTestTime(save: SaveData, minutes: number, nowMs: number = Date.now()): AbsenceReport {
+  const back = Math.max(0, minutes) * 60_000;
+  const n = save.nest;
+  if (n.lastFedAt) n.lastFedAt -= back;
+  if (n.careRequest) n.careRequest = { ...n.careRequest, until: n.careRequest.until - back };
+  n.nextCareAt -= back;
+  if (n.collapsed && n.collapsedAt) n.collapsedAt -= back;
+  return fastForward(save, minutes / 60, nowMs);
 }
