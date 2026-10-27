@@ -183,7 +183,15 @@
   pointer-events: none;
 }
 .bha-room__bubble.is-pop { animation: bha-bubble-pop 0.18s ease-out; }
-.is-saying > .bha-room__status { visibility: hidden; }
+.is-saying > .bha-room__status, .is-saying > .bha-room__statusinfo { visibility: hidden; }
+/* 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위 바깥 (칩 총 폭 94px 의 절반 = 47px), 칩과 같은 top 식 */
+.bha-room__statusinfo {
+  position: absolute; z-index: 1; margin: 0;
+  left: calc(var(--char-x, 50%) + 47px + var(--bha-sp-1));
+  top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-6)));
+  transform: translateY(-100%);
+  width: 22px; height: 22px; background: rgb(0 0 0 / 0.55);
+}
 @keyframes bha-bubble-pop { from { opacity: 0; transform: translate(-50%, -100%) scale(0.9); } }
 
 /* 선택·포커스·누름 표시 (GDD 18-10): 그림 요소(.bha-art)는 사각 테두리·배경 없이 그림 윤곽을 따라 빛난다.

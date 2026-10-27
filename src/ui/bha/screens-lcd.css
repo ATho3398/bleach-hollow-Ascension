@@ -411,3 +411,8 @@ button.bha-slot { cursor: pointer; }
 .bha-battle-ov__actions--row > .bha-btn { flex: 1 1 0; min-width: 0; white-space: nowrap; }
 /* 전투 위에 레이어로 연 설정: 평소 설정 화면과 같은 틀, 배경은 화면 바탕 */
 .bha-lcd .bha-settings-layer { background: var(--bha-bg-0); }
+/* 돌봄 상태 한 줄 (C.176, GDD 104장 2): 아이콘 · 이름 · ⓘ — 설명은 ⓘ 창 */
+.bha-nest__state { display: flex; align-items: center; gap: var(--bha-sp-1); margin: 0; }
+.bha-nest__state--danger { color: var(--bha-danger); }
+.bha-nest__state--warn { color: var(--bha-warn, var(--bha-text-1)); }
+.bha-nest__bond { display: flex; align-items: center; gap: var(--bha-sp-1); }

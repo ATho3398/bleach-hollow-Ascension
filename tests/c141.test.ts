@@ -39,10 +39,10 @@ describe('C.141', () => {
       }
     }
   });
-  it('84장 9: 상태 화면에 광기·자아 설명 패널이 있다', () => {
-    const src = read('src/ui/lcdScreens.ts');
-    expect(src).toContain('explain.dataset.riskExplain');
-    expect(src).toContain('riskText(faction)');
+  it('84장 9: 광기·자아 설명은 상태 막대 이름 옆 ⓘ 창 (C.176 GDD 104장 2 — 옛 설명 패널 대체)', () => {
+    expect(read('src/ui/lcdScreens.ts')).not.toContain('explain.dataset.riskExplain');
+    expect(read('src/ui/bha/nest.ts')).toContain("withTip(meter({ kind: 'stab'");
+    expect(read('src/ui/bha/statusInfo.ts')).toContain('riskText(f)');
   });
   it('85장 11: 손 타일은 카드, 끌어놓기는 눌러 고르기와 같은 규칙(onCell)으로 처리한다', () => {
     const src = read('src/ui/bha/road.ts');

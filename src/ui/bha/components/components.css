@@ -912,3 +912,24 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-statrow__tip { display: none; margin-left: auto; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: var(--bha-bg-3); color: var(--bha-text-1); font-size: var(--bha-fs-xs); }
 button.bha-statrow { cursor: help; }
 .bha-statrow:hover .bha-statrow__tip, .bha-statrow.is-tip .bha-statrow__tip, .bha-statrow:focus-visible .bha-statrow__tip { display: inline-block; }
+
+/* ── ⓘ 설명 (C.176, GDD 104장 2): 상태 이름 옆 원 안의 i. 누르면(폰)·올리면(PC) 작은 설명 창(.bha-pop, 오버레이 자리에 붙음) ── */
+.bha-info {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; vertical-align: middle;
+  width: 18px; height: 18px; margin: 0 0 0 var(--bha-sp-2); padding: 0; border: 0; border-radius: var(--bha-r-pill);
+  background: transparent; color: var(--bha-text-2); cursor: help; touch-action: manipulation;
+}
+.bha-info .bha-icon { width: 16px; height: 16px; }
+.bha-info:hover, .bha-info.is-open, .bha-info:focus-visible { color: var(--bha-text-1); background: var(--bha-bg-3); outline: 0; }
+.bha-info-wrap { display: inline-flex; align-items: center; }
+.bha-pop {
+  position: absolute; z-index: var(--bha-z-modal); box-sizing: border-box; width: max-content; max-width: min(320px, calc(100% - var(--bha-sp-4)));
+  padding: var(--bha-sp-4) var(--bha-sp-5); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
+  background: var(--bha-bg-1); box-shadow: var(--bha-shadow-2); color: var(--bha-text-1);
+  font-size: var(--bha-fs-xs); line-height: 1.45; text-align: left; pointer-events: auto;
+}
+.bha-pop__title { display: block; margin-bottom: var(--bha-sp-2); font-size: var(--bha-fs-sm); }
+.bha-pop__sub { display: block; margin-top: var(--bha-sp-3); color: var(--bha-text-2); }
+.bha-pop__text { margin: 0; }
+.bha-pop__list { margin: 0; padding-left: var(--bha-sp-6); }
+.bha-pop__list li + li { margin-top: var(--bha-sp-1); }

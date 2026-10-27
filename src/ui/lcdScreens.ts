@@ -1,5 +1,6 @@
 // 방 물건이 여는 기능 화면: 돌보기·상태 / 상자(슬롯·덱) / 제단(진화). LCD 가로 2단 배치 (T-3).
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
+import { infoTip } from './bha/infoTip';
 import { critChanceBonus } from '../engine/absorb/build';
 import { roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
@@ -29,7 +30,6 @@ import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
-import { riskText } from '../data/help/riskText';
 import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
@@ -85,36 +85,24 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     const bond = h('p', 'bha-small bha-nest__bond');
     bond.dataset.bond = String(Math.round(n.bond));
     bond.append(icon('i-care-pet'), ' 교감 ', h('b', 'bha-num', `${Math.round(n.bond)}/${BALANCE.provisional.nest.bond.max}`), ` · ${BOND_STAGE_NAMES[bondStage(n.bond)]}`);
-    const bondUse = h('p', 'bha-faint', `먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax}). 높을수록 빈사에서 버티는 시간 ${Math.round(deathHoursOf(n.bond) * 10) / 10}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`);
+    // 설명 글은 이름 옆 ⓘ 창으로 (C.176, GDD 104장 2)
+    bond.append(infoTip('교감', [`먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax})`, `높을수록 빈사에서 버티는 시간 ${Math.round(deathHoursOf(n.bond) * 10) / 10}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`]));
+    /** 돌봄 상태 한 줄: 아이콘 · 이름(· 남은 시간) · ⓘ(풀리는 법·효과) */
+    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, lines: string[]) => {
+      const row = h('p', `bha-small bha-nest__state bha-nest__state--${kind}`);
+      row.append(icon(iconId), ' ', h('b', '', title), infoTip(title.split(' · ')[0]!, lines));
+      return row;
+    };
     const states = [
-      ...(n.dead ? [notice('danger', '방에서 [부활]을 해야 다시 시작한다.', { title: CARE_STATUS_NAMES.dead, icon: 'i-broken' })] : []),
-      ...(n.collapsed && !n.dead ? [notice('danger', `${CARE_STATUS_HINTS.collapsed}. 모험은 체력 ${Math.round(BALANCE.provisional.nest.care.dying.hpFraction * 100)}%·공격·블록 속도와 보상 절반.`, { title: `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, icon: 'i-broken' })] : []),
-      ...(n.weakened ? [notice('warn', `${CARE_STATUS_HINTS.weak}. 원정 전투 최대 체력 −${Math.round(BALANCE.provisional.nest.care.weakMaxHpCut * 100)}% · 대기 보상 ×${BALANCE.provisional.idle.weakenedRate}`, { title: CARE_STATUS_NAMES.weak, icon: 'i-hunger' })] : []),
-      ...(n.tired ? [notice('warn', `${CARE_STATUS_HINTS.tired}. 블록 생성 간격 +${Math.round(BALANCE.provisional.nest.care.tiredSpawnSlow * 100)}%`, { title: CARE_STATUS_NAMES.tired, icon: 'i-cond' })] : []),
+      ...(n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.dead, ['방에서 [부활]을 해야 다시 시작한다.'])] : []),
+      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, [CARE_STATUS_HINTS.collapsed, `모험은 체력 ${Math.round(BALANCE.provisional.nest.care.dying.hpFraction * 100)}%·공격·블록 속도와 보상 절반`])] : []),
+      ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, [`풀리는 법: ${CARE_STATUS_HINTS.weak}`, `원정 전투 최대 체력 −${Math.round(BALANCE.provisional.nest.care.weakMaxHpCut * 100)}% · 대기 보상 ×${BALANCE.provisional.idle.weakenedRate}`])] : []),
+      ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, [`풀리는 법: ${CARE_STATUS_HINTS.tired}`, `블록 생성 간격 +${Math.round(BALANCE.provisional.nest.care.tiredSpawnSlow * 100)}%`])] : []),
     ];
-    weakSlot.replaceChildren(bond, bondUse, ...states);
+    weakSlot.replaceChildren(bond, ...states);
   };
   paint();
-  // 광기·자아 설명 (C.141, GDD 84장 9번): 수치마다 어떤 손해가 있는지를 balance 값에서 읽은 숫자로 적는다
-  const rt = riskText(faction);
-  const explain = panel({ title: `${faction.riskGaugeName}·${faction.stabilityName}` });
-  explain.setAttribute('aria-label', `${faction.riskGaugeName}·${faction.stabilityName} 설명`);
-  explain.dataset.riskExplain = '';
-  const block = (title: string, ...groups: [string, string[]][]) => {
-    const box = h('div', 'bha-riskexplain');
-    box.append(h('b', 'bha-riskexplain__title', title));
-    for (const [label, lines] of groups) {
-      box.append(h('span', 'bha-riskexplain__label', label));
-      const ul = h('ul', 'bha-riskexplain__list');
-      for (const t of lines) ul.append(h('li', '', t));
-      box.append(ul);
-    }
-    return box;
-  };
-  explain.append(
-    block(faction.riskGaugeName, ['손해', rt.riskLoss], ['오르는 길', rt.riskUp], ['내리는 길', rt.riskDown]),
-    block(faction.stabilityName, ['손해', rt.stabilityLoss], ['오르내림', rt.stabilityMove]),
-  );
+  // 광기·자아 설명 패널(C.141)은 C.176 에 상태 막대 이름 옆 ⓘ 창으로 옮겼다 (GDD 104장 2, bha/statusInfo.ts)
   const evo = save.evolution;
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
@@ -166,7 +154,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
   // GDD 108장 1번 (C.179): 장착 5칸은 장비 화면으로 옮기고, 그 자리(상태 바로 아래)에 바로가기 한 줄 + 장비 합산 숫자만
   const gear = gearShortcut(faction, save, hd.onGear);
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, explain, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
