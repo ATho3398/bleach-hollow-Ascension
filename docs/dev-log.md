@@ -662,5 +662,5 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 교감 0~100: 먹이 +1·재우기 +1·쓰다듬기 +2(요청 응답 때), 하루 +6, 꺼 둔 12시간마다 −1, 빈사 −5, 사망 절반. 쓰임 = 빈사 시간·부활 손실·대기 보상 +교감÷5%(최대 20)·방 대사 3단계(종족 설정 room.talk bondShy·bondClose·bondBest). 방 상태 칩·상태 화면에 숫자.
 - 런 로그 `vitals`(collapse·death·revive·cure·recover), 세이브 형식 45 → 46(마이그레이션 없음), BALANCE 77 → 78. 테스트 모드 둥지 탭 시간 빨리 감기 1·12·48·72시간.
 - 코드 판단 9개는 GDD 102장 C.175 구현 완료 줄(쉬는 트랙은 빈사·사망 없음, 대기 24시간도 배부름 0 에서 멈춤, 훈련 인형은 져도 사망 없음 등).
-- balance: `npm run balance` 통과(exit 0), 경고는 C.173 과 같은 후반 보류 3건(보스 forest-lord 97%·등급전 No.1 6%·탑 50층 0%) — 102장 수치는 기준 봇에 안 걸린다(봇은 쇠약·피곤·빈사 없음).
+- balance: C.174 와 합친 뒤 `npm run balance:check` 회귀 가드 통과(후반 보류 경고 1건 forest-lord 97%), 합치기 전 `npm run balance` exit 0(후반 보류 3건 forest-lord 97%·등급전 No.1 6%·탑 50층 0%) — 102장 수치는 기준 봇에 안 걸린다(봇은 쇠약·피곤·빈사 없음).
 - 테스트 +18(`tests/c175.test.ts`), 옛 기대값 갱신 17개 파일(c53·c60·c61·c68·c117·c120·c133·c134·c136·c140·c144·c147·expedition·absorb·economy·combat·room-ui). 캡처 `docs/captures/c175/` 8장(방 빈사·빈사 출발 확인 창·쇠약/피곤 칩·방 사망+막힘 안내·부활 확인 창·복귀 알림·상점 약 탭·상태 화면 교감).
