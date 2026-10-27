@@ -1,5 +1,5 @@
 // UI 검수 화면 목록 (GDD 110장 2, C.182). 각 항목: name, run(h, name). fresh = 슬롯 없이 시작 화면부터.
-// 전투 화면은 이번 검수에서 뺐다(C.177 이 전투 버튼 줄을 바꾸는 중). h.explore = 정적 점검 + 탭·ⓘ·목록 고르기 전후 비교(audit.cjs).
+// 전투 화면은 C.177 배포 뒤 넣었다(마스터 13장 03:2x 지시). h.explore = 정적 점검 + 탭·ⓘ·목록 고르기 전후 비교(audit.cjs).
 
 /** 방에서 독 [더보기] → 메뉴 항목 */
 async function more(h, label) {
@@ -195,31 +195,99 @@ const SCREENS = [
       await more(h, '테스트');
       await h.click('.bha-lcd .bha-viewtitle__btn');
       await h.btn('둥지·시간', { within: '.bha-viewtitle__list', role: 'option' });
-      await h.btn('×4', { exact: true });
+      await h.click(h.page.locator('.bha-lcd .bha-seg__item').filter({ hasText: '×4' }));
       await h.closeLayers();
       await h.back();
       await h.click('.bha-prop--door', { ms: 900 });
       await h.btn('★1', { exact: true });
       await h.btn('출발', { ms: 1200 });
-      await h.page.getByRole('button', { name: '포식하러 가기' }).waitFor({ timeout: 120_000 });
-      await h.btn('포식하러 가기', { ms: 900 });
+      // 버튼 이름은 종족 설정(absorbActionName)을 따른다 — '포식하러 가기' 등
+      await h.page.getByRole('button', { name: /하러 가기$/ }).waitFor({ timeout: 120_000 });
+      await h.click(h.page.getByRole('button', { name: /하러 가기$/ }), { ms: 900 });
       await h.explore(`${n}/포식`, { tabs: false });
-      await h.stable(`${n}/포식`, '둘 다 포식', () => h.btn('둘 다 포식', { ms: 800 }));
-      await h.explore(`${n}/포식 2`, { tabs: false, pick: '.bha-lcd .bha-absorbpage button.bha-card, .bha-lcd .bha-absorbpage .bha-slot' });
-      // 끝까지 넘기기: 확인 성격의 버튼을 몇 번 누른다
-      for (let i = 0; i < 6; i++) {
-        const go = h.page.locator('.bha-lcd button.bha-btn--primary').filter({ visible: true }).first();
-        if (!(await go.count()) || !(await h.has('.bha-absorbpage'))) break;
-        await go.click({ timeout: 3000 }).catch(() => {});
+      await h.stable(`${n}/포식`, '첫 선택(둘 다)', () => h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 }));
+      await h.explore(`${n}/포식 2`, { tabs: false, pick: '.bha-lcd .bha-cand' });
+      // 끝까지 넘기기: 후보 → (슬롯) → 확인 성격의 버튼. 포식 화면이 닫힐 때까지 몇 번
+      for (let i = 0; i < 8 && (await h.has('.bha-absorbpage')); i++) {
+        const cand = h.page.locator('.bha-lcd .bha-cand').filter({ visible: true });
+        const slot = h.page.locator('.bha-lcd .bha-absorbpage .bha-slot').filter({ visible: true });
+        const go = h.page.locator('.bha-lcd .bha-absorbpage button.bha-btn--primary:not([disabled])').filter({ visible: true });
+        const layerGo = h.page.locator('.bha-lcd [data-dev-layer] button.bha-btn--primary, .bha-lcd [data-dev-layer] button.bha-btn--danger').filter({ visible: true });
+        if (await layerGo.count()) {
+          await h.check(`${n}/포식 확인 창 ${i}`, { keys: false });
+          await layerGo.first().click({ timeout: 3000 }).catch(() => {});
+        } else if (await go.count()) await go.first().click({ timeout: 3000 }).catch(() => {});
+        else if (await slot.count()) await slot.first().click({ timeout: 3000 }).catch(() => {});
+        else if (await cand.count()) await cand.first().click({ timeout: 3000 }).catch(() => {});
         await h.wait(700);
         if (await h.has('.bha-absorbpage')) await h.check(`${n}/포식 ${i + 3}`, { keys: false });
       }
-      await h.page.getByRole('button', { name: '귀환하기' }).waitFor({ timeout: 30_000 });
-      await h.check(`${n}/걷기 다시`, { keys: false });
-      await h.btn('귀환하기', { ms: 900 });
-      for (let i = 0; i < 3 && (await h.has('.bha-lcd [data-dev-layer]')); i++) await h.btn('귀환', { within: '.bha-lcd [data-dev-layer]', ms: 900 }).catch(() => h.back());
-      await h.page.locator('.bha-resultpage').waitFor({ timeout: 60_000 });
-      await h.explore(`${n}/결과`, { tabs: true });
+      // 걷기로 돌아오면 귀환. 그 사이 전투·포식이 또 오면 기다리거나 '포식 안 함'
+      let checkedWalk = false;
+      for (let t = 0; t < 150 && !(await h.has('.bha-resultpage')) && !((await h.has('.bha-lcd .bha-room')) && !(await h.has('.bha-lcd [data-dev-layer]'))); t++) {
+        const home = h.page.getByRole('button', { name: '귀환하기' }).filter({ visible: true });
+        const eat = h.page.getByRole('button', { name: /하러 가기$/ }).filter({ visible: true });
+        const layerGo = h.page.locator('.bha-lcd [data-dev-layer] button.bha-btn--primary, .bha-lcd [data-dev-layer] button.bha-btn--danger').filter({ visible: true });
+        const nestHome = h.page.getByRole('button', { name: '귀환', exact: true }).filter({ visible: true });
+        if (await layerGo.count()) {
+          await h.check(`${n}/확인 창 ${(await layerGo.first().textContent())?.trim()}`, { keys: false });
+          await layerGo.first().click({ timeout: 3000 }).catch(() => {});
+        } else if (await nestHome.count()) {
+          await h.check(`${n}/둥지 도착`, { keys: false });
+          await h.stable(`${n}/둥지 도착`, '드래프트 타일 고르기', () => h.click(h.page.locator('.bha-lcd .bha-draft__card, .bha-lcd [data-draft]').first()).catch(() => {}));
+          await nestHome.first().click({ timeout: 3000 }).catch(() => {});
+        } else if (await home.count()) {
+          if (!checkedWalk) await h.check(`${n}/걷기 다시`, { keys: false });
+          checkedWalk = true;
+          await home.first().click({ timeout: 3000 }).catch(() => {});
+        } else if (await eat.count()) {
+          await eat.first().click({ timeout: 3000 }).catch(() => {});
+          await h.wait(800);
+          await h.click(h.page.locator('.bha-lcd .bha-absorbpage button.bha-btn--lg').last()).catch(() => {}); // 마지막 = '… 안 함'
+        }
+        await h.wait(1000);
+      }
+      // 결과: 원정 결과 화면(.bha-resultpage)이 있으면 그것, 아니면 방 위 귀환 결과 창까지 위에서 점검했다
+      if (await h.has('.bha-resultpage')) await h.explore(`${n}/결과`, { tabs: true });
+    },
+  },
+  {
+    name: '전투',
+    async run(h, n) {
+      await h.click('.bha-prop--door', { ms: 900 });
+      await h.btn('★1', { exact: true });
+      await h.btn('출발', { ms: 600 });
+      await h.page.locator('.bha-battle').waitFor({ timeout: 60_000 });
+      await h.wait(2600); // 조우 연출
+      const inBattle = async () => (await h.page.locator('.bha-battle').count()) > 0 && !(await h.has('.bha-battle .bha-overlay'));
+      await h.check(n, { keys: false });
+      // 숫자 칸 흔들기: 실제로 바뀌는 글자(남은 초 148 → 9, 소모품 ×3 → 씀, 장비 쿨다운 12 → 3)를 직접 넣어 다른 버튼이 움직이는지.
+      // 15초 관찰로는 세 자리 → 한 자리·소모품 사용이 안 오므로 글자만 바꿔 본다 (엔진 상태는 안 건드림 — 다음 프레임에 원래 값으로 돌아온다)
+      // 한 번의 실행 안에서(그 사이 화면 갱신 없이) 글자 넣기 → 재기 → 바꾸기 → 재기. 칸이 비어 있는 상태(소모품·장비 없음)는 그 상태 그대로 둔다
+      const moved = await h.page.evaluate(() => {
+        const t = document.querySelector('.bha-v2time b');
+        const it = document.querySelector('.bha-v2role--item:not(.is-disabled) .bha-v2role__meta, .bha-v2role--item .bha-v2role__meta:not(:empty)');
+        const g = document.querySelector('.bha-v2role--gear .bha-v2role__meta');
+        const btns = [...document.querySelectorAll('.bha-lcd button')];
+        const pos = () => btns.map((e) => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width]; });
+        const set = (a, b, c) => { if (t) t.textContent = a; if (it) it.textContent = b; if (g) g.textContent = c; };
+        const orig = [t?.textContent ?? '', it?.textContent ?? '', g?.textContent ?? ''];
+        set('148', '×3', '12');
+        const p1 = pos();
+        set('9', '씀', '3');
+        const p2 = pos();
+        set(...orig); // 되돌려 두어야 다음 시간 관찰이 이 흔들기를 잡지 않는다
+        return btns.map((e, i) => [e.getAttribute('aria-label') || e.textContent.trim(), p2[i][0] - p1[i][0], p2[i][1] - p1[i][1]]).filter(([, dx, dy]) => Math.abs(dx) > 1.5 || Math.abs(dy) > 1.5).map(([k, dx, dy]) => `${String(k).slice(0, 20)} (${Math.round(dx)}, ${Math.round(dy)})`);
+      });
+      for (const m of moved) h.report({ kind: '상태 바꿈에 버튼 이동', key: m, detail: '숫자 칸 바꿈(남은 초 148→9·장비 쿨다운 12→3)' }, n);
+      await h.watch(n, 15_000, inBattle, /bha-block\b/); // 블록 바의 블록은 생기고 쓰이며 흘러가는 게 규칙(3-5)
+      if (await inBattle()) {
+        await h.stable(n, '로그 열기', () => h.btn('로그'));
+        await h.check(`${n}/로그`, { keys: false });
+        await h.stable(n, '로그 닫기', () => h.btn('로그'));
+        await h.stable(n, '일시정지', () => h.btn('일시정지'));
+        await h.check(`${n}/일시정지`);
+      }
     },
   },
   {

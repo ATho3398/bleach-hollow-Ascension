@@ -15,7 +15,8 @@
     "balance:check:serial": "vite-node scripts/balance.ts -- --check",
     "balance:b1": "vite-node scripts/b1-check.ts",
     "art:list": "vite-node scripts/art-list.ts",
-    "gen:forms": "vite-node scripts/gen-forms.ts"
+    "gen:forms": "vite-node scripts/gen-forms.ts",
+    "ui-audit": "node scripts/ui-audit/audit.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

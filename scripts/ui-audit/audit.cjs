@@ -52,6 +52,7 @@ function makeHelper(page, faction, report) {
       await h.wait(250);
     },
     back: () => h.key('Escape'),
+    report: (r, screen) => report.push({ faction, screen, ...r }),
     /** 열린 레이어(창·확인 창·ⓘ)를 뒤로로 모두 닫는다 */
     async closeLayers() {
       for (let i = 0; i < 4 && (await h.has('.bha-lcd [data-dev-layer]')); i++) await h.back();
@@ -109,6 +110,23 @@ function makeHelper(page, faction, report) {
       }
       return true;
     },
+    /** 시간이 흐르며 상태가 바뀌는 화면(전투): ms 동안 0.25초마다 재서 처음과 다른 자리·폭이 된 버튼 */
+    async watch(screen, ms, until = null, ignore = null) {
+      const first = await h.snap();
+      const moved = new Map();
+      for (let t = 0; t < ms; t += 250) {
+        await page.waitForTimeout(250);
+        if (until && !(await until())) break;
+        const now = await h.snap();
+        for (const [id, a] of Object.entries(first)) {
+          const b = now[id];
+          if (!b || moved.has(a.key) || (ignore && ignore.test(a.key))) continue;
+          const dx = b.x - a.x, dy = b.y - a.y, dw = b.w - a.w;
+          if (Math.abs(dx) > MOVE_TOL || Math.abs(dy) > MOVE_TOL || Math.abs(dw) > MOVE_TOL) moved.set(a.key, `${(t / 1000).toFixed(1)}초: (${Math.round(dx)}, ${Math.round(dy)})px 폭 ${Math.round(dw)}`);
+        }
+      }
+      for (const [key, detail] of moved) report.push({ faction, screen, kind: '시간 흐름에 버튼 이동', key, detail });
+    },
     /** 정적 점검 + ▼ 순환으로 모든 조작 요소에 닿는지 */
     async check(screen, opts = {}) {
       if (process.env.UI_AUDIT_DUMP) {
@@ -116,7 +134,11 @@ function makeHelper(page, faction, report) {
         console.log(`\n## ${faction} ${screen}\n${list.join('\n')}`);
       }
       const reached = opts.keys !== false ? await h.reach(screen, opts) : [];
-      const issues = await page.evaluate(staticInPage, reached);
+      // 잘림은 0.6초 뒤 한 번 더 재서 남아 있는 것만 (들어오는 애니메이션 중인 블록 등은 뺀다)
+      const first = await page.evaluate(staticInPage, reached);
+      const again = first.some((i) => /잘림/.test(i.kind)) ? await page.waitForTimeout(600).then(() => page.evaluate(staticInPage, reached)) : first;
+      const keep = new Set(again.map((i) => `${i.kind}|${i.key}`));
+      const issues = first.filter((i) => !/잘림/.test(i.kind) || keep.has(`${i.kind}|${i.key}`));
       for (const i of issues) {
         if (opts.ignore && opts.ignore.test(`${i.kind}|${i.key}`)) continue;
         report.push({ faction, screen, ...i });

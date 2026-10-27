@@ -114,6 +114,8 @@ function staticInPage(reached) {
   const textEls = [...lcd.querySelectorAll('*')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && shown(e));
   for (const e of textEls) {
     if (e.closest('svg, .bha-marquee, [data-audit-skip]')) continue;
+    const er0 = e.getBoundingClientRect();
+    if (er0.width <= 1 || er0.height <= 1) continue; // 화면 읽기 전용(1px·clip) 글자
     const s = getComputedStyle(e);
     const range = document.createRange();
     range.selectNodeContents(e);
