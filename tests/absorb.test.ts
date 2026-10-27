@@ -733,7 +733,7 @@ describe('종족 설정만 바꿔도 표기가 바뀐다', () => {
   it('안정 수치·슬롯·계통 보너스·특성 종류 이름은 종족 설정에서 나온다', () => {
     const h = getFaction('hollow');
     const s = getFaction('shinigami');
-    expect([h.stabilityName, s.stabilityName]).toEqual(['자아', '영압 안정도']);
+    expect([h.stabilityName, s.stabilityName]).toEqual(['영압 안정도', '영압 안정도']);
     expect([h.lineageBonusName, s.lineageBonusName]).toEqual(['계열 기술 강화', '참백도 속성 확정']);
     expect([h.slotLocation, s.slotLocation]).toEqual(['body', 'zanpakuto']);
     expect(h.appearanceChange).toBe(true);

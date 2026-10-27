@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 78; // C.174: 강공격 ×2.5 → ×3(최대 체력 약 45%)·연속 강공격 한 타 ×1.4 → ×2.25·사람형 봇 강공격 다 막음 → 적 공격 배율 0.55 → 0.45·공허 몫 3 → 2% (GDD 101장 추가 결정 3). C.173: 공허 블록 = 출현표 안 몫 10%(상한 50%, 별도 시계 삭제)·피해 8 → 1(히든 진화체 8)·폭주 받는 피해 1.3 → 1.6 + 회피 20% (GDD 101장). C.168: 해방 순간 블록 2 → 1·지속 4 → 6초 (GDD 95장 B2 후속, 마스터 결정). C.167: C.167: 해방 칸 폐지(slotsByTier 삭제)·고유 능력치 ×1.05 → ×1.1·수련 ×1.1 → ×1.2 (GDD 98장 B). C.166: 해방 순간 블록 2개·생성 ×1.3 → ×1.8·지속 8 → 4초·게이지 블록 8 → 2·준 피해 40 → 15·받은 피해 70 → 90·고유 능력치 ×1.1 → ×1.05(수련 ×1.2 → ×1.1) (GDD 95장 B2 후속). C.154: C.154: 해방 게이지 블록당 12 → 8 + 준 피해 40·받은 피해 70(적·내 최대 체력 1개분당) (GDD 95장 B2). C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
+export const BALANCE_VERSION = 79; // C.175: 돌봄 패널티 provisional.nest.care·bond·medicinePrices, 꺼 둔 허기 +60 상한 삭제 (GDD 102장). C.174: 강공격 ×2.5 → ×3(최대 체력 약 45%)·연속 강공격 한 타 ×1.4 → ×2.25·사람형 봇 강공격 다 막음 → 적 공격 배율 0.55 → 0.45·공허 몫 3 → 2% (GDD 101장 추가 결정 3). C.173: 공허 블록 = 출현표 안 몫 10%(상한 50%, 별도 시계 삭제)·피해 8 → 1(히든 진화체 8)·폭주 받는 피해 1.3 → 1.6 + 회피 20% (GDD 101장). C.168: 해방 순간 블록 2 → 1·지속 4 → 6초 (GDD 95장 B2 후속, 마스터 결정). C.167: C.167: 해방 칸 폐지(slotsByTier 삭제)·고유 능력치 ×1.05 → ×1.1·수련 ×1.1 → ×1.2 (GDD 98장 B). C.166: 해방 순간 블록 2개·생성 ×1.3 → ×1.8·지속 8 → 4초·게이지 블록 8 → 2·준 피해 40 → 15·받은 피해 70 → 90·고유 능력치 ×1.1 → ×1.05(수련 ×1.2 → ×1.1) (GDD 95장 B2 후속). C.154: C.154: 해방 게이지 블록당 12 → 8 + 준 피해 40·받은 피해 70(적·내 최대 체력 1개분당) (GDD 95장 B2). C.150: 장비 provisional.gear·같은 속성 3개 보너스 삭제 (GDD 91장·94장 B 후속). C.147: 속성 강화 앞 10단계 +4%·노멀 강화 = 기본 공격 블록 (GDD 94장 B).
 
 export const BALANCE = {
   // ── 확정 수치: 기획서 2장 템포 ──
@@ -597,11 +597,45 @@ export const BALANCE = {
     nest: {
       startHunger: 20,
       startCondition: 80,
-      /** 꺼 둔 동안 허기 (GDD 24-1 v5.8, provisional): 시간당 상승, 한 번 비운 사이 오르는 양의 상한(+60), 복귀 말풍선을 띄우는 최소 상승량.
-       *  원정 중간 저장이 있으면 오르지 않는다. 허기 자체는 100 을 넘지 않는다(죽지 않음) */
+      /** 시간 흐름 허기 (GDD 24-1 → 102-1, provisional): 시간당 상승(켜 있든 꺼 있든), 복귀 말풍선을 띄우는 최소 상승량.
+       *  원정 중간 저장이 있으면 멈춘다. C.175: 한 번 비운 사이 +60 상한(idleHungerMaxGain) 삭제 — 약 13시간이면 배부름 0 */
       idleHungerPerHour: 7.5,
-      idleHungerMaxGain: 60,
       idleHungerNotice: 5,
+      /** 돌봄 패널티 (GDD 102장, C.175 마스터 결정 provisional). 배부름 = 100 − 허기.
+       *  conditionPerHour: 배부름 conditionBelowFullness 이하일 때만 컨디션 시간당 감소, 배부름 0 이면 ×2 (켜 있든 꺼 있든).
+       *  stabilityPerHour: 꺼 둔 동안만 영압 안정도 시간당 감소, 배부름 또는 컨디션이 doubleBelow 이하면 ×2.
+       *  weakFullness / tiredCondition: 그 값 이하가 되는 순간 쇠약 / 피곤 — 수치를 넘긴 뒤 원정을 한 번 끝내거나 약으로만 풀린다.
+       *  weakMaxHpCut: 쇠약 원정 전투 최대 체력 −20% (대기 보상 ×idle.weakenedRate). tiredSpawnSlow: 피곤 블록 생성 간격 +15%.
+       *  collapseHours: 이만큼 미접속이면 쓰러짐. deathHours: 쓰러진 채 이만큼 미접속이면 사망 — 교감 문턱별(높은 것부터) 늘어남.
+       *  reviveEvLoss: 부활 노력치 손실 비율 — 교감 문턱별 줄어듦 */
+      care: {
+        conditionBelowFullness: 30,
+        conditionPerHour: 4,
+        stabilityPerHour: 2,
+        stabilityDoubleBelow: 30,
+        weakFullness: 20,
+        tiredCondition: 30,
+        weakMaxHpCut: 0.2,
+        tiredSpawnSlow: 0.15,
+        collapseHours: 48,
+        deathHours: [[80, 48], [50, 36], [0, 24]] as [number, number][],
+        reviveEvLoss: [[80, 0.3], [50, 0.4], [0, 0.5]] as [number, number][],
+      },
+      /** 교감 (GDD 102-6, C.175 마스터 추천안 provisional): 0~max, 새로 시작 0. 약으로는 안 오른다.
+       *  gain: 먹이 / 재우기·쓰다듬기(돌봄 요청에 응답했을 때만), 하루(기기 0시 기준) 최대 dailyMax. 꺼 둔 동안 decayHours 마다 −1,
+       *  쓰러지면 −collapseLoss, 사망·부활이면 절반. 대기 보상 +교감 × idleBonusPerPoint (최대 idleBonusMax). 방 대사 단계 문턱 stages(친함·단짝) */
+      bond: {
+        max: 100,
+        gain: { feed: 1, sleep: 1, pet: 2 },
+        dailyMax: 6,
+        decayHours: 12,
+        collapseLoss: 5,
+        idleBonusPerPoint: 0.002,
+        idleBonusMax: 0.2,
+        stages: [30, 70] as [number, number],
+      },
+      /** 약 3종 값 (GDD 102-4, provisional): 보통 먹이(shop.goldPrices food-basic 35) 기준 치료제 약 6배, 링거·에너지 드링크 약 3배 */
+      medicinePrices: { 'med-cure': 210, 'med-iv': 105, 'med-energy': 105 } as Record<string, number>,
       feedHunger: 35,
       /** 먹이 5종 (GDD 18-2, 임시 provisional): 허기 감소·컨디션 변화. basic 은 예전 단일 먹이(feedHunger)와 같다. 가진 개수·비용 없음(먹이 자원은 미정) */
       foods: {
@@ -616,7 +650,7 @@ export const BALANCE = {
       /** 돌봄 요청제 (GDD 82장, C.133 provisional): 쓰다듬기·재우기는 캐릭터가 청했을 때만 효과. 요청 간격(분, 실제 시간 무작위 범위)·유지 시간(분)·첫 요청까지(분, 새 시작)·
        *  재우기를 청할 확률(쇠약이거나 컨디션이 sleepBelowCondition 미만이면 늘 재우기 — 방 기분 '피곤' 기준 40 과 같음) */
       careRequest: { intervalMinutes: [20, 40], holdMinutes: 10, firstDelayMinutes: 3, sleepWeight: 0.4, sleepBelowCondition: 40 },
-      /** 패배(가면이 깨져 쇠약 / 영력 고갈) 후 컨디션과 허기 가산 */
+      /** 패배(C.175 부터 쓰러짐, GDD 102-3) 후 컨디션과 허기 가산 */
       defeatCondition: 15,
       defeatHunger: 10,
     },

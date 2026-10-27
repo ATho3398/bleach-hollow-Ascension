@@ -157,11 +157,13 @@ describe('85장 6번 대기 모드', () => {
     const runs0 = s.runLog.runs.length;
     const r = settleIdle(s, s.lastSeenAt + 30 * HOUR, () => 0)!;
     expect(r.hours).toBe(24);
-    const y = idleYield(24);
-    expect(y.gold).toBe(Math.floor(IX.fullHour.gold * 24 * IX.share));
+    // C.175 (GDD 102-1): 허기 0 에서 100 까지 100/7.5 시간이면 멈춘다 (옛 +60 상한 삭제)
+    const act = 100 / BALANCE.provisional.nest.idleHungerPerHour;
+    const y = idleYield(act);
+    expect(y.gold).toBe(Math.floor(IX.fullHour.gold * act * IX.share));
     expect(r.gold).toBe(y.gold);
     expect(s.shared.tradeCoins - gold0).toBe(y.gold);
-    expect(r.laps).toBe(Math.floor(IX.fullHour.laps * 24 * IX.share));
+    expect(r.laps).toBe(Math.floor(IX.fullHour.laps * act * IX.share));
     expect(s.runLog.idle).toHaveLength(1);
     expect(s.runLog.runs).toHaveLength(runs0); // 원정·전투 기록을 낱낱이 쌓지 않는다 (88장 7번)
     expect(s.lastSeenAt).toBe(1_000_000);
@@ -184,11 +186,14 @@ describe('85장 6번 대기 모드', () => {
     const fresh = newSaveData('hollow', 1);
     expect(settleIdle(fresh, fresh.lastSeenAt + 5 * HOUR)).toBeNull();
   });
-  it('82장 허기: 허기가 100 에 닿을 수 있으면 그때 멈추고, 쇠약이면 효율 절반', () => {
+  it('82장 허기: 허기가 100 에 닿으면 그때 멈추고(C.175 상한 삭제로 늘), 쇠약이면 효율 절반, 쓰러짐·사망이면 0', () => {
     const NX = BALANCE.provisional.nest;
-    expect(idleActiveHours(10, { hunger: 0, weakened: false })).toBe(10); // 상승 한도(60) 안이라 100 에 못 닿음
-    const h = 100 - NX.idleHungerMaxGain + 10; // 남은 칸 50 < 60
+    expect(idleActiveHours(10, { hunger: 0, weakened: false })).toBe(10);
+    expect(idleActiveHours(24, { hunger: 0, weakened: false })).toBeCloseTo(100 / NX.idleHungerPerHour);
+    const h = 60;
     expect(idleActiveHours(24, { hunger: h, weakened: false })).toBeCloseTo((100 - h) / NX.idleHungerPerHour);
+    expect(idleActiveHours(4, { hunger: 0, weakened: false, collapsed: true })).toBe(0);
+    expect(idleActiveHours(4, { hunger: 0, weakened: false, dead: true })).toBe(0);
     expect(idleActiveHours(4, { hunger: 0, weakened: true })).toBe(4 * IX.weakenedRate);
   });
   it('시계를 앞으로 돌려 받은 뒤 되돌리면 다시 쌓이지 않는다 (마지막 접속 시각은 앞으로만)', () => {
@@ -298,7 +303,7 @@ describe('86장 보관함', () => {
 
 describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 44(C.150 장비로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([45, 45]); // C.167: 해방 칸 폐지로 45
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([46, 46]); // C.167: 해방 칸 폐지로 45
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);

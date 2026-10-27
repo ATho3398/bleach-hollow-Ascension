@@ -36,6 +36,8 @@ export interface TestPanelHandlers {
   persist: () => void;
   /** 바로 전투 시작 */
   onBattle: (c: TestBattleChoice) => void;
+  /** 시간 빨리 감기 (GDD 102-7): 그 시간만큼 꺼 두었다 다시 연 것처럼 */
+  onFastForward?: (hours: number) => void;
   /** 종족을 바꿔 테스트 칸을 새로 (전체 해금으로) */
   onNewFaction: (factionId: string) => void;
   /** [테스트 칸 초기화] */
@@ -224,6 +226,9 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     return [
       panel({ title: '속도 (전투·원정)' }, sp, note('전투는 전투 화면 배속에 곱한다. 원정은 시작 배속.')),
       panel({ title: '리스크·허기·컨디션' }, grid([[faction.riskGaugeName, risk], ['허기', hunger], ['컨디션', cond]]), row(apply)),
+      // 시간 빨리 감기 (GDD 102-7): 꺼 둔 동안의 시간 흐름·쓰러짐(48시간)·사망(+24시간)을 바로 본다
+      ...(hd.onFastForward ? [panel({ title: '시간 빨리 감기' }, row(...[1, 12, 48, 72].map((hr) => button({ label: `${hr}시간`, icon: 'i-timer', size: 'small', onClick: () => hd.onFastForward!(hr) }))),
+        note('그 시간만큼 꺼 두었다 다시 연 것처럼 셈한다 (배부름·컨디션·영압 안정도·교감·쓰러짐·사망).'))] : []),
       panel({ title: '테스트 칸' }, row(
         button({ label: '테스트 칸 초기화', icon: 'i-loop', variant: 'danger', onClick: hd.onReset }),
         button({ label: '테스트 모드 끄기', icon: 'i-quit', onClick: disableTestMode }),

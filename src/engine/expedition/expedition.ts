@@ -309,6 +309,14 @@ export interface ExpeditionState extends RiskState {
   gearDrops?: boolean;
   /** 이 원정에서 나온 장비 (귀환 때 game.ts 가 보관함에 — 가득이면 골드로) */
   gearFinds?: { roll: GearRoll; lap: number; from: 'normal' | 'elite' | 'boss' }[];
+  /** 출발 때 돌봄 상태 (GDD 102-2): 쇠약 = 전투 시작 최대 체력 −weakMaxHpCut, 피곤 = 블록 생성 간격 +tiredSpawnSlow. 없으면 효과 없음 */
+  care?: CareCarry;
+}
+
+/** 출발 때 둥지에서 가져가는 상태 (GDD 102-2) */
+export interface CareCarry {
+  weak: boolean;
+  tired: boolean;
 }
 
 /** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수로 치지 않고 능력치 6종을 같은 양 올린다 */
@@ -365,6 +373,8 @@ export interface ExpeditionSetup {
   gear?: GearCarry | null;
   /** 이긴 전투에서 장비가 나올 수 있나 (게임만 true) */
   gearDrops?: boolean;
+  /** 출발 때 쇠약·피곤 (GDD 102-2): 없으면 효과 없음 (balance:check 기준 봇은 없음) */
+  care?: CareCarry | null;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -439,6 +449,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     ...(setup.petDrops && !setup.tutorial ? { petDrops: true, petFinds: [] } : {}),
     ...(setup.gear ? { gear: structuredClone(setup.gear) } : {}),
     ...(setup.gearDrops && !setup.tutorial ? { gearDrops: true, gearFinds: [] } : {}),
+    ...(setup.care && (setup.care.weak || setup.care.tired) ? { care: { weak: setup.care.weak, tired: setup.care.tired } } : {}),
   };
   // 스토리 화의 고정 길 (GDD 25-4): 정해진 칸에 정해진 타일
   if (episode) for (const [cell, id] of Object.entries(episode.road)) exp.slots[Number(cell)] = id;
@@ -740,6 +751,7 @@ function startBattleAt(
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
   if (tile?.effect.type === 'environment') applyEnvironment(params, tile.effect.preset, m.envMult ?? 1);
   if (exp.breakthrough) applyFrenzy(params);
+  applyCareToParams(params, exp.care);
   if (m.voidBonus) params.voidChanceBonus = (params.voidChanceBonus ?? 0) + m.voidBonus;
   if (m.voidMult && m.voidMult !== 1) params.voidChanceBonus = (params.voidChanceBonus ?? 0) + BALANCE.provisional.combat.voidChance * (m.voidMult - 1);
   if (m.enemyFirstStrike) params.enemyFirstStrike = true;
@@ -816,6 +828,14 @@ export function applyFrenzy(params: Partial<CombatParams>): void {
   params.evadeChance = Math.max(params.evadeChance ?? 0, RX.frenzyEvadeChance);
   // 폭주 중에는 회복 블록이 안 나온다 (101장 추가 결정 2 2번) — 몫은 공격 블록들에
   params.noHealSpawn = true;
+}
+
+/** 쇠약·피곤 (GDD 102-2): 쇠약 = 내 최대 체력 −weakMaxHpCut, 피곤 = 블록 생성 간격 +tiredSpawnSlow (생성 속도 배율을 나눈다) */
+export function applyCareToParams(params: Partial<CombatParams>, care: CareCarry | null | undefined): void {
+  if (!care) return;
+  const CP = BALANCE.provisional.nest.care;
+  if (care.weak) params.playerHpScale = (params.playerHpScale ?? BALANCE.provisional.combat.playerHpScale) * (1 - CP.weakMaxHpCut);
+  if (care.tired) params.blockSpawnMultiplier = (params.blockSpawnMultiplier ?? 1) / (1 + CP.tiredSpawnSlow);
 }
 
 /** 폭주 중인가: 이번 원정에서 한계 돌파가 일어났다 (원정당 1회) */

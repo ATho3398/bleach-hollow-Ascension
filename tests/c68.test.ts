@@ -65,7 +65,7 @@ describe('패배 결과 화면의 남은 배부름·컨디션 = 둥지에 돌아
     applyExpeditionEnd(n, e, 1);
     expect(n.condition).toBe(v.condition);
     expect(n.hunger).toBe(v.hunger);
-    expect(n.weakened).toBe(true);
+    expect(n.collapsed).toBe(true); // C.175: 패배 = 쓰러짐 (GDD 102-3)
   });
   it('결과 화면은 원정 끝 값(exp.condition) 대신 expeditionEndVitals 를 표시한다', () => {
     const s = src('src/ui/resultView.ts');

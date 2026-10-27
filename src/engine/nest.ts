@@ -1,5 +1,5 @@
-// 둥지 / 대원실 최소 버전 (GDD 7장, P2): 허기·컨디션 두 수치와 행동 3개. 종족 무관 순수 로직.
-// 행동 이름·문구는 종족 설정(FactionConfig.nestActions)에서 읽는다. 자아/영압 안정도 같은 수치는 아직 없다.
+// 둥지 / 대원실 (GDD 7장, P2 → 102장 돌봄 패널티 C.175): 허기·컨디션·영압 안정도·교감 수치와 돌봄 행동, 시간 흐름, 쇠약·피곤·쓰러짐·사망 상태. 종족 무관 순수 로직.
+// 행동 이름·문구는 종족 설정(FactionConfig.nestActions)에서 읽는다. 수치는 balance.ts provisional.nest(care·bond).
 
 import { BALANCE } from '../config/balance';
 import { nestRiskAction, settleRiskToNest } from './absorb/risk';
@@ -11,12 +11,26 @@ const NX = BALANCE.provisional.nest;
 const MAX = BALANCE.provisional.expedition.conditionMax;
 
 export interface NestState {
-  /** 0(배부름) ~ 100. 방치하면 시간이 지나며 오른다. 죽지 않는다 */
+  /** 0(배부름) ~ 100. 시간이 지나며 오른다 (화면 배부름 = 100 − 허기, GDD 102-1) */
   hunger: number;
   /** 0(최악) ~ 100. 나쁘면 전투 시작 보드의 공허 타일이 늘어난다 */
   condition: number;
-  /** 패배 후 쇠약 상태 (GDD 1장). 재우기로 풀린다 */
+  /** 쇠약 (GDD 102-2, C.175): 배부름이 care.weakFullness 이하가 되는 순간 걸린다. 배부름을 넘긴 뒤 원정을 한 번 마치거나 링거로만 풀린다(먹이·재우기로는 안 풀림).
+   *  C.175 전에는 '패배 후 쇠약'이었다 — 패배는 이제 쓰러짐(collapsed) */
   weakened: boolean;
+  /** 피곤 (GDD 102-2): 컨디션이 care.tiredCondition 이하가 되는 순간. 컨디션을 넘긴 뒤 원정 한 번 또는 에너지 드링크 */
+  tired: boolean;
+  /** 쓰러짐 (GDD 102-3): collapseHours 미접속 또는 원정 패배. 원정·훈련·탑·쟁탈전 못 나감, 치료제로만 풀림 */
+  collapsed: boolean;
+  /** 사망 (GDD 102-3): 쓰러진 채 deathHours 미접속. 할 수 있는 건 부활뿐 */
+  dead: boolean;
+  /** 출발 때 정한 '이번 원정을 마치고 돌아오면 풀릴 상태' (GDD 102-2: 수치를 되돌린 뒤 원정 한 번). 출발 때 수치가 문턱을 넘었으면 true */
+  cureOnReturn: { weak: boolean; tired: boolean };
+  /** 교감 (GDD 102-6): 0~bond.max. 먹이·재우기·쓰다듬기로만 오르고(약 안 됨) 하루 최대 dailyMax */
+  bond: number;
+  /** 교감이 오른 날(기기 시계 0시 기준 'YYYY-MM-DD')과 그날 오른 양 */
+  bondDay: string;
+  bondToday: number;
   /** 리스크 게이지(호로 광기 / 사신 호로화) 둥지 저장값. 원정은 이 값으로 시작하고 귀환하면 합쳐진다 */
   risk: number;
   /** 안정 수치(호로 자아 / 사신 영압 안정도). 컨디션·허기와 별개 */
@@ -41,10 +55,13 @@ export interface CareRequest {
 export type CareOutcome = 'answered' | 'refused';
 
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000 };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000 };
 }
 
 const CR = NX.careRequest;
+const CP = NX.care;
+const BX = NX.bond;
+const HOUR = 3_600_000;
 /** 다음 요청까지 간격(ms): intervalMinutes 범위에서 무작위 */
 function careInterval(rand: () => number): number {
   const [lo, hi] = CR.intervalMinutes;
@@ -55,7 +72,7 @@ function careInterval(rand: () => number): number {
  * 돌봄 요청 시계 (GDD 82장). 방에 있을 때 주기적으로, 그리고 방을 열 때 부른다.
  *  - 요청이 유지 시간을 넘겼으면 사라진다(놓침, 벌칙 없음). 다음 시각 = 사라진 시각 + 간격.
  *  - 요청이 없고 다음 시각이 지났으면 새 요청 하나(지금부터 holdMinutes 유지). 오래 꺼 두었다 와도 하나만 생긴다.
- *  - 쇠약(패배 후)이거나 컨디션이 sleepBelowCondition 미만이면 재우기를 청한다(쇠약·낮은 컨디션은 재우기로 푸는 것이라, 코드 판단). 아니면 sleepWeight 확률로 재우기, 나머지 쓰다듬기.
+ *  - 피곤이거나 컨디션이 sleepBelowCondition 미만이면 재우기를 청한다(쇠약·낮은 컨디션은 재우기로 푸는 것이라, 코드 판단). 아니면 sleepWeight 확률로 재우기, 나머지 쓰다듬기.
  * 돌려주는 값: created = 새 요청이 생김, missed = 응답 못 한 요청이 사라짐 (오래 꺼 두었다 오면 둘 다 true 일 수 있다)
  */
 export function tickCareRequest(nest: NestState, nowMs: number, rand: () => number = Math.random): { created: boolean; missed: boolean } {
@@ -66,7 +83,7 @@ export function tickCareRequest(nest: NestState, nowMs: number, rand: () => numb
     missed = true;
   }
   if (!nest.careRequest && nowMs >= nest.nextCareAt) {
-    const action: CareAction = nest.weakened || nest.condition < CR.sleepBelowCondition || rand() < CR.sleepWeight ? 'sleep' : 'pet';
+    const action: CareAction = nest.tired || nest.condition < CR.sleepBelowCondition || rand() < CR.sleepWeight ? 'sleep' : 'pet';
     nest.careRequest = { action, until: nowMs + CR.holdMinutes * 60_000 };
     return { created: true, missed };
   }
@@ -78,7 +95,7 @@ export function tickCareRequest(nest: NestState, nowMs: number, rand: () => numb
 export function respondCare(nest: NestState, action: CareAction, nowMs: number, rand: () => number = Math.random): CareOutcome {
   const r = nest.careRequest;
   if (!r || r.action !== action || nowMs >= r.until) return 'refused';
-  doNestAction(nest, action);
+  doNestAction(nest, action, 'basic', nowMs);
   nest.careRequest = null;
   nest.nextCareAt = nowMs + careInterval(rand);
   return 'answered';
@@ -86,16 +103,165 @@ export function respondCare(nest: NestState, action: CareAction, nowMs: number, 
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-/** 꺼 둔 동안 허기 (GDD 24-1): 마지막 접속 시각부터 지금까지 시간당 idleHungerPerHour, 한 번에 최대 +idleHungerMaxGain, 허기 100 이하.
- *  paused(원정 중간 저장이 있음)면 오르지 않는다. 기기 시계를 되돌려 지금이 마지막 접속보다 앞이면 오르지 않는다(음수 없음).
- *  올라간 양을 돌려준다 — 접속 시각 갱신은 부르는 쪽(저장할 때)이 한다 */
-export function applyAbsenceHunger(nest: NestState, lastSeenAt: number, nowMs: number, paused = false): number {
-  if (paused || !Number.isFinite(lastSeenAt) || nowMs <= lastSeenAt) return 0;
-  const hours = (nowMs - lastSeenAt) / 3_600_000;
-  const gain = Math.min(NX.idleHungerMaxGain, hours * NX.idleHungerPerHour, Math.max(0, 100 - nest.hunger));
-  nest.hunger += gain;
+/** 배부름 (화면 값) = 100 − 허기 */
+export function fullnessOfNest(nest: Pick<NestState, 'hunger'>): number {
+  return 100 - nest.hunger;
+}
+
+/** 쇠약·피곤이 걸리는 순간 (GDD 102-2): 문턱 이하가 되면 켠다. 끄는 것은 원정 귀환(applyExpeditionEnd)·약(cureStatus)뿐 */
+export function refreshCareStatus(nest: NestState): void {
+  if (fullnessOfNest(nest) <= CP.weakFullness) nest.weakened = true;
+  if (nest.condition <= CP.tiredCondition) nest.tired = true;
+}
+
+/** 시간 흐름 변화량 */
+export interface TimeFlow {
+  hunger: number;
+  condition: number;
+  stability: number;
+}
+
+/** 시간 흐름 (GDD 102-1): hours 동안 허기 +idleHungerPerHour/시, 배부름 conditionBelowFullness 이하면 컨디션 −conditionPerHour/시(배부름 0 이면 ×2),
+ *  offline(꺼 둔 동안)이면 영압 안정도 −stabilityPerHour/시(배부름 또는 컨디션 stabilityDoubleBelow 이하면 ×2). 0.1시간 걸음으로 나눠 그 순간 값으로 배율을 정하고, 걸음마다 쇠약·피곤을 본다.
+ *  리스크·교감은 여기서 안 바뀐다. 변화량(음수 = 줄어듦, 허기는 오른 양)을 돌려준다 */
+export function passNestTime(nest: NestState, hours: number, offline: boolean): TimeFlow {
+  const before = { hunger: nest.hunger, condition: nest.condition, stability: nest.stability };
+  let left = Number.isFinite(hours) ? Math.max(0, hours) : 0;
+  while (left > 1e-9) {
+    const dt = Math.min(0.1, left);
+    left -= dt;
+    const full = fullnessOfNest(nest);
+    const lowFull = full <= CP.conditionBelowFullness;
+    if (lowFull) nest.condition = clamp(nest.condition - CP.conditionPerHour * dt * (full <= 0 ? 2 : 1), 0, MAX);
+    if (offline) nest.stability = clamp(nest.stability - CP.stabilityPerHour * dt * (full <= CP.stabilityDoubleBelow || nest.condition <= CP.stabilityDoubleBelow ? 2 : 1), 0, BALANCE.provisional.risk.stabilityMax);
+    nest.hunger = clamp(nest.hunger + NX.idleHungerPerHour * dt, 0, 100);
+    refreshCareStatus(nest);
+  }
+  return { hunger: nest.hunger - before.hunger, condition: nest.condition - before.condition, stability: nest.stability - before.stability };
+}
+
+/** 교감 문턱 표 [[문턱, 값], …](높은 것부터)에서 지금 교감의 값 */
+export function byBond(table: readonly (readonly [number, number])[], bond: number): number {
+  for (const [at, v] of table) if (bond >= at) return v;
+  return table[table.length - 1]![1];
+}
+
+/** 쓰러진 뒤 사망까지 미접속 시간(시간, GDD 102-6 ①): 교감 50 이상 36, 80 이상 48 */
+export function deathHoursOf(bond: number): number {
+  return byBond(CP.deathHours, bond);
+}
+
+/** 부활 노력치 손실 비율 (GDD 102-6 ②): 50% → 교감 50 이상 40%, 80 이상 30% */
+export function reviveEvLossOf(bond: number): number {
+  return byBond(CP.reviveEvLoss, bond);
+}
+
+/** 교감 단계 (GDD 102-6 ④): 0 서먹 / 1 친함 / 2 단짝 */
+export function bondStage(bond: number): 0 | 1 | 2 {
+  return bond >= BX.stages[1] ? 2 : bond >= BX.stages[0] ? 1 : 0;
+}
+
+/** 대기 보상 교감 보너스 (GDD 102-6 ③): +교감 × idleBonusPerPoint, 최대 idleBonusMax */
+export function bondIdleBonus(bond: number): number {
+  return Math.min(BX.idleBonusMax, Math.max(0, bond) * BX.idleBonusPerPoint);
+}
+
+/** 기기 시계 날짜 키 (0시 기준) */
+export function dayKey(nowMs: number): string {
+  const d = new Date(nowMs);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 교감 오름 (GDD 102-6): 하루 dailyMax 까지. 오른 양 */
+export function gainBond(nest: NestState, amount: number, nowMs: number): number {
+  const day = dayKey(nowMs);
+  if (nest.bondDay !== day) {
+    nest.bondDay = day;
+    nest.bondToday = 0;
+  }
+  const add = Math.max(0, Math.min(amount, BX.dailyMax - nest.bondToday, BX.max - nest.bond));
+  nest.bond += add;
+  nest.bondToday += add;
+  return add;
+}
+
+/** 다시 열었을 때 꺼 둔 동안의 결과 (복귀 알림 띠·런 로그) */
+export interface AbsenceReport {
+  /** 비운 실제 시간 */
+  hours: number;
+  flow: TimeFlow;
+  /** 교감 변화(음수) */
+  bond: number;
+  /** 이번에 새로 쓰러졌나 / 죽었나 */
+  collapsed: boolean;
+  died: boolean;
+}
+
+/** 꺼 둔 동안 (GDD 24-1 → 102-1·102-3): 마지막 접속 시각부터 시간 흐름(offline), 교감 decayHours 마다 −1, 그리고
+ *  collapseHours 이상 비웠으면 쓰러짐(교감 −collapseLoss) · 쓰러진 채 deathHours(교감 문턱별) 이상 비웠으면 사망(교감 절반).
+ *  paused(원정 중간 저장이 있음)·사망 상태면 아무것도 안 바뀐다. 기기 시계를 되돌렸으면(지금이 마지막 접속보다 앞) 0. 접속 시각 갱신은 부르는 쪽이 한다 */
+export function applyAbsenceTime(nest: NestState, lastSeenAt: number, nowMs: number, paused = false): AbsenceReport {
+  const none: AbsenceReport = { hours: 0, flow: { hunger: 0, condition: 0, stability: 0 }, bond: 0, collapsed: false, died: false };
+  if (paused || nest.dead || !Number.isFinite(lastSeenAt) || nowMs <= lastSeenAt) return none;
+  const hours = (nowMs - lastSeenAt) / HOUR;
+  const bond0 = nest.bond;
+  const flow = passNestTime(nest, hours, true);
+  nest.bond = Math.max(0, nest.bond - Math.floor(hours / BX.decayHours));
+  let collapsed = false;
+  let died = false;
+  // 쓰러진 뒤 남은 미접속 시간: 이미 쓰러져 있었으면 전부, 이번에 쓰러졌으면 collapseHours 를 뺀 나머지
+  let afterCollapse = -1;
+  if (nest.collapsed) afterCollapse = hours;
+  else if (hours >= CP.collapseHours) {
+    nest.collapsed = collapsed = true;
+    nest.bond = Math.max(0, nest.bond - BX.collapseLoss);
+    afterCollapse = hours - CP.collapseHours;
+  }
+  if (afterCollapse >= 0 && afterCollapse >= deathHoursOf(bond0)) {
+    nest.dead = died = true;
+    nest.bond = Math.floor(nest.bond / 2);
+  }
   nest.lastTickMs = nowMs;
-  return gain;
+  return { hours, flow, bond: nest.bond - bond0, collapsed, died };
+}
+
+/** 옛 이름 (C.140~C.174): 꺼 둔 동안 허기 오른 양만 돌려준다 */
+export function applyAbsenceHunger(nest: NestState, lastSeenAt: number, nowMs: number, paused = false): number {
+  return applyAbsenceTime(nest, lastSeenAt, nowMs, paused).flow.hunger;
+}
+
+/** 켜 둔 동안 시간 흐름 (GDD 102-1): 마지막으로 셈한 시각(lastTickMs)부터 지금까지. 영압 안정도는 안 줄고(돌봄 요청이 그 역할), 쓰러짐·사망은 없다(접속이 곧 '왔다').
+ *  paused(원정 중 — 원정은 자기 허기·컨디션을 쓴다)·사망이면 시각만 옮긴다. 시계를 되돌렸으면 그대로 */
+export function tickNestOnline(nest: NestState, nowMs: number, paused = false): TimeFlow | null {
+  if (!Number.isFinite(nest.lastTickMs) || nowMs <= nest.lastTickMs) return null;
+  const hours = (nowMs - nest.lastTickMs) / HOUR;
+  nest.lastTickMs = nowMs;
+  if (paused || nest.dead) return null;
+  return passNestTime(nest, hours, false);
+}
+
+/** 돌봄 상태 이름 (GDD 102장): 두 종족 공통 */
+export const CARE_STATUS_NAMES = { collapsed: '쓰러짐', weak: '쇠약', tired: '피곤', dead: '사망' } as const;
+
+/** 약 (GDD 102-4): 그 상태 하나만 푼다. 수치는 안 바뀐다. 풀렸으면 true */
+export type CareStatus = 'collapsed' | 'weak' | 'tired';
+export function cureStatus(nest: NestState, status: CareStatus): boolean {
+  if (nest.dead) return false;
+  if (status === 'collapsed' && nest.collapsed) return !(nest.collapsed = false);
+  if (status === 'weak' && nest.weakened) return !(nest.weakened = false);
+  if (status === 'tired' && nest.tired) return !(nest.tired = false);
+  return false;
+}
+
+/** 원정·훈련·탑·쟁탈전을 막는 상태 (GDD 102-3): 쓰러짐·사망. 없으면 null */
+export function blockedByCare(nest: Pick<NestState, 'collapsed' | 'dead'>): 'collapsed' | 'dead' | null {
+  return nest.dead ? 'dead' : nest.collapsed ? 'collapsed' : null;
+}
+
+/** 출발 (GDD 102-2): 지금 수치가 문턱을 넘었으면 이번 원정을 마치고 돌아올 때 그 상태가 풀린다. 원정에 실을 쇠약·피곤을 돌려준다 */
+export function departCare(nest: NestState): { weak: boolean; tired: boolean } {
+  nest.cureOnReturn = { weak: fullnessOfNest(nest) > CP.weakFullness, tired: nest.condition > CP.tiredCondition };
+  return { weak: nest.weakened, tired: nest.tired };
 }
 
 /** 먹이 한 종류의 효과 (허기 감소, 컨디션 변화). 임시 수치 (BALANCE.provisional.nest.foods) */
@@ -103,17 +269,18 @@ export function foodEffect(food: FoodId): { hunger: number; condition: number } 
   return NX.foods[food];
 }
 
-/** 둥지 행동: 먹이(허기↓, 종류별 컨디션 변화) / 재우기(컨디션↑, 쇠약 해소) / 쓰다듬기(컨디션 소량↑). food 는 먹이일 때만 쓰고 기본은 basic(예전 단일 먹이) */
-export function doNestAction(nest: NestState, action: NestAction, food: FoodId = 'basic'): void {
+/** 둥지 행동: 먹이(허기↓, 종류별 컨디션 변화) / 재우기(컨디션↑) / 쓰다듬기(컨디션 소량↑). food 는 먹이일 때만 쓰고 기본은 basic(예전 단일 먹이).
+ *  C.175 (GDD 102-2·102-6): 수치만 올리고 쇠약·피곤은 안 푼다(옛 '재우기로 쇠약 해소' 삭제). 교감 +bond.gain(하루 상한) */
+export function doNestAction(nest: NestState, action: NestAction, food: FoodId = 'basic', nowMs: number = Date.now()): void {
   if (action === 'feed') {
     const f = foodEffect(food);
     nest.hunger = clamp(nest.hunger - f.hunger, 0, 100);
     nest.condition = clamp(nest.condition + f.condition, 0, MAX);
   } else if (action === 'sleep') {
     nest.condition = clamp(nest.condition + NX.sleepCondition, 0, MAX);
-    nest.weakened = false;
   } else nest.condition = clamp(nest.condition + NX.petCondition, 0, MAX);
   nestRiskAction(nest, action);
+  gainBond(nest, BX.gain[action], nowMs);
 }
 
 /** 원정이 끝나 둥지로 돌아갈 때의 허기·컨디션 (결과 화면 표시와 둥지 갱신이 같은 값을 쓴다, C.68). 패배: 허기 가산 + 컨디션 급락. 폭주했으면 컨디션 추가 하락 */
@@ -127,12 +294,24 @@ export function expeditionEndVitals(exp: ExpeditionState): { hunger: number; con
   return { hunger, condition };
 }
 
-/** 원정이 끝난 뒤 둥지 상태 갱신. 귀환: 원정에서 남은 허기·컨디션 그대로. 패배: 쇠약 + 컨디션 급락. 폭주했으면 컨디션 추가 하락 */
-export function applyExpeditionEnd(nest: NestState, exp: ExpeditionState, nowMs: number): void {
+/** 원정이 끝난 뒤 둥지 상태 갱신. 귀환: 원정에서 남은 허기·컨디션 그대로. 패배: 쓰러짐(GDD 102-3, 교감 −collapseLoss) + 컨디션 급락. 폭주했으면 컨디션 추가 하락.
+ *  귀환이면 출발 때 정한 cureOnReturn 대로 쇠약·피곤이 풀리고(GDD 102-2), 그다음 돌아온 수치로 다시 걸릴 수 있다. 풀린 상태를 돌려준다 */
+export function applyExpeditionEnd(nest: NestState, exp: ExpeditionState, nowMs: number): { collapsed: boolean; recovered: ('weak' | 'tired')[] } {
   const v = expeditionEndVitals(exp);
   nest.hunger = v.hunger;
   nest.condition = v.condition;
-  nest.weakened = summarize(exp).outcome === 'defeated';
+  const defeated = summarize(exp).outcome === 'defeated';
+  const recovered: ('weak' | 'tired')[] = [];
+  if (defeated) {
+    nest.collapsed = true;
+    nest.bond = Math.max(0, nest.bond - BX.collapseLoss);
+  } else {
+    if (nest.cureOnReturn.weak && nest.weakened) { nest.weakened = false; recovered.push('weak'); }
+    if (nest.cureOnReturn.tired && nest.tired) { nest.tired = false; recovered.push('tired'); }
+  }
+  nest.cureOnReturn = { weak: false, tired: false };
+  refreshCareStatus(nest);
   settleRiskToNest(nest, exp);
   nest.lastTickMs = nowMs;
+  return { collapsed: defeated, recovered };
 }

@@ -117,7 +117,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     goldRow(),
     {
       label: `${faction.riskGaugeName} (최고 / 끝)`, icon: 'i-risk', mod: exp.breakthrough ? 'em' : undefined,
-      value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? `한계 돌파 · ${faction.frenzyName}` : undefined),
+      value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? faction.frenzyName : undefined),
     },
     { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
     // 둥지로 가져가는 값 = 패배·폭주 감소를 뺀 뒤 (둥지 상태와 같은 값, C.68)

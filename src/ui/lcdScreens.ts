@@ -12,7 +12,7 @@ import { enhanceCost, equippedSlotOf, findGear, gearCarry, sellGold } from '../e
 import { confirmDialog } from './confirmDialog';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
-import { categoryName, cosmeticToken, getCosmetic, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
+import { categoryName, cosmeticToken, getCosmetic, getGoldItem, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
 import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
@@ -42,6 +42,8 @@ import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import { logoMark } from './bha/logo';
+import { bondIdleBonus, bondStage, CARE_STATUS_NAMES, deathHoursOf, reviveEvLossOf } from '../engine/nest';
+import { BOND_STAGE_NAMES, CARE_STATUS_HINTS } from './bha/roomLogic';
 import type { VariantMods } from '../engine/expedition';
 
 /** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax (치명 특성이 있는 몸은 상한 + 그 특성 값, GDD 45장 1번 — 전투와 같은 규칙) */
@@ -77,7 +79,18 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     status.append(statusBlock(faction, {
       hunger: n.hunger, condition: n.condition, stability: n.stability, stabilityMax: RX.stabilityMax, risk: n.risk, riskLimit: RX.limit, condWarn: 40, riskWarn: 60,
     }));
-    weakSlot.replaceChildren(...(n.weakened ? [notice('danger', `지난 원정에서 패배했다. ${toward(faction.nestActions.sleep)} 회복한다.`, { title: faction.defeatStateName, icon: 'i-broken' })] : []));
+    // 교감 (GDD 102-6): 하트(쓰다듬기) 아이콘 + 숫자 · 단계 · 쓰임새 한 줄 / 돌봄 상태(GDD 102-2·102-3): 쓰러짐·사망·쇠약·피곤 + 풀리는 법
+    const bond = h('p', 'bha-small bha-nest__bond');
+    bond.dataset.bond = String(Math.round(n.bond));
+    bond.append(icon('i-care-pet'), ' 교감 ', h('b', 'bha-num', `${Math.round(n.bond)}/${BALANCE.provisional.nest.bond.max}`), ` · ${BOND_STAGE_NAMES[bondStage(n.bond)]}`);
+    const bondUse = h('p', 'bha-faint', `먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax}). 높을수록 쓰러진 뒤 버티는 시간 ${deathHoursOf(n.bond)}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`);
+    const states = [
+      ...(n.dead ? [notice('danger', '방에서 [부활]을 해야 다시 시작한다.', { title: CARE_STATUS_NAMES.dead, icon: 'i-broken' })] : []),
+      ...(n.collapsed && !n.dead ? [notice('danger', `${CARE_STATUS_HINTS.collapsed}. 원정·훈련·탑·쟁탈전을 못 나간다.`, { title: CARE_STATUS_NAMES.collapsed, icon: 'i-broken' })] : []),
+      ...(n.weakened ? [notice('warn', `${CARE_STATUS_HINTS.weak}. 원정 전투 최대 체력 −${Math.round(BALANCE.provisional.nest.care.weakMaxHpCut * 100)}% · 대기 보상 ×${BALANCE.provisional.idle.weakenedRate}`, { title: CARE_STATUS_NAMES.weak, icon: 'i-hunger' })] : []),
+      ...(n.tired ? [notice('warn', `${CARE_STATUS_HINTS.tired}. 블록 생성 간격 +${Math.round(BALANCE.provisional.nest.care.tiredSpawnSlow * 100)}%`, { title: CARE_STATUS_NAMES.tired, icon: 'i-cond' })] : []),
+    ];
+    weakSlot.replaceChildren(bond, bondUse, ...states);
   };
   paint();
   // 광기·자아 설명 (C.141, GDD 84장 9번): 수치마다 어떤 손해가 있는지를 balance 값에서 읽은 숫자로 적는다
@@ -399,6 +412,8 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
       if (c && c.category !== 'device') return swatchArt(c.category, c.category === 'keyring' ? `var(--bha-cos-keyring-${keyringShapeOf(c, faction)}-body)` : `var(${cosmeticToken(c, ({ bar: 'line', shell: 'body', cut: 'line', room: 'line' } as Record<string, string>)[c.category] ?? '')})`, c.category === 'tint' ? `var(${cosmeticToken(c)})` : undefined);
       return iconArt('i-rare');
     }
+    const med = getGoldItem(e.id)?.cures; // 약 (GDD 102-4): 상점과 같은 아이콘
+    if (med) return iconArt(med === 'collapsed' ? 'i-heal' : med === 'weak' ? 'i-hunger' : 'i-cond');
     return iconArt(e.category === 'food' ? 'i-hunger' : e.category === 'consumable' ? (e.id.includes('calm') || e.id === 'elixir' ? 'i-risk' : e.id === 'reroll' ? 'i-swap' : 'i-cond') : 'i-practice');
   };
   const inGroup = (e: InventoryEntry) => itemsUi.cat !== 'skin' || skinSubOf(e.cosmeticCategory) === itemsUi.skinSub;

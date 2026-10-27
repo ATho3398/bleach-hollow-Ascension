@@ -70,9 +70,12 @@ describe('92장 대기 모드 받을 보상', () => {
     expect(acc.added).toBe(6);
     expect(s.idlePending!.hours).toBe(IX.maxHours);
     expect(s.idlePending!.activeHours).toBeLessThanOrEqual(IX.maxHours);
+    // C.175 (GDD 102-1): 허기 상한이 없어져 허기 0 에서도 100/7.5 시간이면 멈춘다 — 마지막 구간(30시간 중 6시간 몫)은 13.3시간 × 6/24
+    const act = s.idlePending!.activeHours;
+    expect(act).toBeCloseTo(10 + 8 + (100 / BALANCE.provisional.nest.idleHungerPerHour) * 6 / 24);
     const r = claimIdle(s, s.lastSeenAt, () => 0)!;
     expect(r.hours).toBe(24);
-    expect(r.gold).toBe(idleYield(24).gold);
+    expect(r.gold).toBe(idleYield(act).gold);
   });
 
   it('10분 미만 버림은 쌓인 합계 기준 (95장 B1): 5분은 더해 두되 배지·받기 없음, 합계 10분이면 받음 · 허기는 받기와 무관하게 바로 오른다', () => {

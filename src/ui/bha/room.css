@@ -109,6 +109,13 @@
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }  /* 상점 (C.63): 좌판·매대 */
 .bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
+/* 쓰러짐·사망 (GDD 102-7, C.175): 모험 문 잠김 = 흐리게 + 자물쇠, 캐릭터는 눕히고 흐리게, 사망 = 어두운 방, 위 줄 = 큰 안내 + 버튼 */
+.bha-prop.is-locked .bha-prop__shape { opacity: 0.45; border-color: var(--bha-danger); }
+.bha-prop.is-locked > .bha-icon { position: absolute; top: 0; right: 0; width: 16px; height: 16px; color: var(--bha-danger); }
+.bha-char.is-collapsed .bha-char__body { rotate: 90deg; opacity: 0.55; }
+.bha-room__scene.is-dead { filter: brightness(0.35) grayscale(0.7); }
+.bha-room__hud.is-care { justify-content: flex-start; flex-wrap: wrap; gap: var(--bha-sp-3); }
+.bha-room__hud.is-care > .bha-notice { flex: 1 1 60%; min-width: 0; }
 
 /* ── 캐릭터: 제자리 2프레임 숨쉬기 (step-end 로 두 모양만 번갈아) ── */
 .bha-char {
@@ -156,7 +163,10 @@
 .bha-room__gauge--hunger { --c: var(--bha-hunger); }
 .bha-room__gauge--cond { --c: var(--bha-cond); }
 .bha-room__gauge--risk { --c: var(--bha-risk, var(--bha-danger)); }
-.bha-room__gauge--weak, .bha-room__gauge.is-danger { --c: var(--bha-danger); }
+.bha-room__gauge--bond { --c: var(--bha-good); }
+.bha-room__gauge--weak, .bha-room__gauge--tired, .bha-room__gauge--collapsed, .bha-room__gauge.is-danger { --c: var(--bha-danger); }
+/* 상태 칩(쇠약·피곤·쓰러짐): 숫자 칸 대신 이름 (GDD 102-7) */
+.bha-room__gauge--weak .bha-room__gaugenum, .bha-room__gauge--tired .bha-room__gaugenum, .bha-room__gauge--collapsed .bha-room__gaugenum { color: var(--bha-danger); white-space: nowrap; }
 .bha-room__status:active { filter: brightness(1.2); }
 .bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
 

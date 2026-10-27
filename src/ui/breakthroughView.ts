@@ -28,7 +28,7 @@ export function breakthroughView(root: HTMLElement, faction: FactionConfig, risk
     cracks.append(p);
   }
 
-  const badge = chip(`한계 돌파 · ${faction.frenzyName}`, 'danger');
+  const badge = chip(faction.frenzyName, 'danger');
   badge.prepend(icon('i-risk'));
 
   const gauge = el('div', 'bha-break__gauge');

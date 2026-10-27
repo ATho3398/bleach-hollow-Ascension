@@ -3,12 +3,13 @@
 // C.140 (GDD 86장 4번): 산 것은 보관함으로 — 먹이 = 먹이 개수 +1, 정화제·각성제 = 보관함 소모품 +1(보관함에서 씀, inventory.ts), 수련권 = 지금 트랙 +1, 타일 = 보관함 +1,
 // 꾸밈·스킨 = 보유만(끼기는 보관함). 떠돌이 상인(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
 import { BALANCE } from './config/balance';
-import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, getWandererItem, shopVisible, skinIdOfItem, WANDERER_GRADE_NAMES, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type WandererGrade, type WearCategory } from './data/shop';
+import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, getWandererItem, shopVisible, skinIdOfItem, WANDERER_GRADE_NAMES, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type MedicineCure, type WandererGrade, type WearCategory } from './data/shop';
 import { wandererAmount } from './engine/wanderer';
 import { canWear } from './data/skins';
 import { baseTilesFor, tileName } from './data/tiles';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
 import type { FactionConfig } from './engine/faction';
+import { CARE_STATUS_NAMES } from './engine/nest';
 import { addFood } from './engine/food';
 import { grantPet, pickNewPet } from './engine/pet';
 import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
@@ -111,6 +112,12 @@ export function rollTileDraw(factionId: string, first: boolean, rand: () => numb
   return pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]!;
 }
 
+/** 약 효과 한 줄 (GDD 102-4): 그 상태만 푼다, 수치는 안 오른다 */
+export function medicineText(cures: MedicineCure): string {
+  const name = cures === 'collapsed' ? CARE_STATUS_NAMES.collapsed : cures === 'weak' ? CARE_STATUS_NAMES.weak : CARE_STATUS_NAMES.tired;
+  return `${name} 상태를 바로 푼다 (수치는 안 오른다) · 보관함에 쌓이고 보관함에서 쓴다`;
+}
+
 function goldName(item: GoldItemDef, faction: FactionConfig): string {
   if (item.kind === 'gear') return `${GEAR_GRADE_NAMES.normal} ${gearKindLabel(item, faction)}`;
   return item.kind === 'food' ? faction.foodNames[item.food!] : item.name!;
@@ -125,6 +132,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     }
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로 안 감) · 보관함에 쌓이고 보관함에서 쓴다`;
     case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로 안 감) · 보관함에 쌓이고 보관함에서 쓴다`;
+    case 'medicine': return medicineText(item.cures!);
     case 'trainingTicket': return `지금 트랙 수련권 +1 (최대 ${BALANCE.provisional.training.ticketsMax})`;
     case 'tileDraw': return `원정 타일 1장 → 보관함 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}% · ${TD.groups.spring!.map((id) => tileName(id, faction.id)).join('·')} ${TD.weights.spring}% · 희귀(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) ${TD.weights.rare}%, 첫 뽑기는 환경 타일`;
     case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 보관함 (이벤트 타일 제외)';
@@ -138,6 +146,7 @@ function goldPrice(save: SaveData, item: GoldItemDef): number | null {
   if (item.kind === 'deckSlot') return SX.deckSlotPrices[save.shared.deckSlots] ?? null;
   if (item.kind === 'tileDraw') return TD.price;
   if (item.kind === 'gear') return BALANCE.provisional.gear.shopPrice;
+  if (item.kind === 'medicine') return BALANCE.provisional.nest.medicinePrices[item.id] ?? null;
   return SX.goldPrices[item.id] ?? null;
 }
 
@@ -146,7 +155,8 @@ function goldBlock(save: SaveData, item: GoldItemDef): string | null {
   switch (item.kind) {
     case 'food': return save.shared.food[item.food!] >= FOOD_MAX ? `보관 가득 (${FOOD_MAX}/${FOOD_MAX})` : null;
     case 'calm':
-    case 'wake': return canStoreConsumable(save, item.id) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
+    case 'wake':
+    case 'medicine': return canStoreConsumable(save, item.id) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
     case 'trainingTicket': return save.training.tickets >= BALANCE.provisional.training.ticketsMax ? `수련권 가득 (${BALANCE.provisional.training.ticketsMax}/${BALANCE.provisional.training.ticketsMax})` : null;
     case 'tileDraw':
     case 'rareTile': return save.tiles.unlocked ? null : TILES_LOCKED_TEXT;
@@ -163,7 +173,8 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
     case 'reroll': return `보유 ${save.shared.rerollTickets}/${SX.rerollMax}`;
     case 'deckSlot': return `배치 ${BALANCE.provisional.expedition.deckSize + save.shared.deckSlots}칸 (+${save.shared.deckSlots}/${SX.deckSlotPrices.length})`;
     case 'calm':
-    case 'wake': return `보관 ${save.shared.items[item.id] ?? 0}/${CONSUMABLE_CAP}`;
+    case 'wake':
+    case 'medicine': return `보관 ${save.shared.items[item.id] ?? 0}/${CONSUMABLE_CAP}`;
     case 'tileDraw': return save.tiles.unlocked ? `뽑은 횟수 ${save.tiles.draws}` : null;
     case 'rareTile': return null;
     case 'gear': return `장비 ${save.shared.gear.items.length}/${BALANCE.provisional.gear.cap}`;
@@ -221,6 +232,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
         break;
       case 'calm':
       case 'wake':
+      case 'medicine':
         storeConsumable(save, gold.id);
         detail = `${gold.name} → 보관함 (${save.shared.items[gold.id]}개)`;
         break;

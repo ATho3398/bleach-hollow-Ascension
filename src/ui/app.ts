@@ -16,10 +16,12 @@ import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
 import { createTowerCombat, towerFloor, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
+import { absenceText, careBlockText } from './bha/roomLogic';
+import type { AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  applyAbsence, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
+  absenceOf, careBlock, departCareOf, fastForward, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -185,6 +187,8 @@ export function startApp(host: HTMLElement): void {
   let resumeNote = '';
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
   let hungryGreet = false;
+  /** 다시 열 때 꺼 둔 동안 (GDD 102-7): 방이 그려진 뒤 알림 띠 한 번 */
+  let absence: AbsenceReport | null = null;
   /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
   let idleReport: IdleAccrual | null = null;
   /** 떠돌이 상인 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
@@ -453,7 +457,8 @@ export function startApp(host: HTMLElement): void {
     // 대기 모드 (GDD 85장 6번·92장): 꺼 둔 실제 시간을 받을 보상에 쌓는다(합계 최대 24시간, 지급은 [받기]) — 허기·접속 시각 갱신(applyAbsence)보다 먼저
     idleReport = slot !== 0 ? accrueIdle(loaded) : null;
     // 꺼 둔 동안 허기 (GDD 24-1): 원정 중간 저장이 있으면 오르지 않는다
-    hungryGreet = applyAbsence(loaded) >= BALANCE.provisional.nest.idleHungerNotice;
+    absence = absenceOf(loaded);
+    hungryGreet = absence.flow.hunger >= BALANCE.provisional.nest.idleHungerNotice;
     armBackTrap();
     const active = resumeTarget(loaded) === 'expedition' ? readActiveExpedition(loaded) : null;
     if (active?.ok) {
@@ -585,6 +590,15 @@ export function startApp(host: HTMLElement): void {
     }, 400);
     const greet = hungryGreet;
     hungryGreet = false;
+    // 복귀 알림 띠 (GDD 102-7): "○시간 동안 비웠다 — 배부름 −n · …" + 이번에 쓰러졌거나 죽었으면 그 줄
+    const away = absence;
+    absence = null;
+    if (away && away.hours * 60 >= BALANCE.provisional.idle.minMinutes) {
+      const line = absenceText(away, faction);
+      // 알림 띠는 한 줄(머리말 + 제목)이라 비운 시간·줄어든 양을 제목에 (C.170 알림 띠)
+      const head = away.died ? '복귀 · 사망' : away.collapsed ? '복귀 · 쓰러짐' : '복귀';
+      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '' }, 0, 5200), 300);
+    }
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
     const notes: { eyebrow: string; title: string; meta: string }[] = [];
     if (s.trackNotice) {
@@ -628,9 +642,19 @@ export function startApp(host: HTMLElement): void {
       idle: { badge: idleBadge(s), onOpen: () => showIdlePanel(s, faction, claim) },
       persist,
       // 새 세이브의 첫 원정은 고정 길 튜토리얼 (GDD 67장)
-      onDepart: () => (firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)),
-      // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]
-      onAltar: () => open('training', () => renderTraining(faction, s)),
+      onDepart: () => (careBlocked(s) ? undefined : firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)),
+      // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]. 쓰러짐·사망이면 막힘 (GDD 102-3)
+      onAltar: () => (careBlocked(s) ? undefined : open('training', () => renderTraining(faction, s))),
+      // 부활 (GDD 102-3): 되돌릴 수 없어 자동 백업 후
+      onRevive: () => {
+        persist();
+        stashSlot(store, slot, 'revive');
+        const r = performRevive(s);
+        if (!r.ok) return;
+        persist();
+        nestScreen();
+        showToast({ eyebrow: '부활', title: `${faction.tierNames[0]}(으)로 다시 시작한다`, meta: `노력치 −${Math.round(r.evLoss * 100)}% · 진화 초기화` }, 0, 4200);
+      },
       onBook: () => open('dex', () => bookView(root, faction, s)),
       onChest: () => open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear))),
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)) })),
@@ -709,6 +733,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 한 판: 수련권을 먼저 쓰고(저장) 미니게임 → 결과. 흐름은 잠겨 있어 취소로 빠지지 않는다. again = 결과 화면의 [한 판 더](자리를 바꿔 끼운다) */
   function playTraining(faction: FactionConfig, s: SaveData, game: TrainingGameId, again: boolean): void {
+    if (careBlocked(s)) return;
     if (!trainingGate(s.training, s.evolution.tierIndex, s.nest.condition).ok || !beginTraining(s.training)) return;
     persist();
     const level = trainingLevel(s.training, game);
@@ -762,15 +787,24 @@ export function startApp(host: HTMLElement): void {
     nav.reset({ id: 'rebirth-scene', locked: true, render: () => { setBgm('nest'); rebirthView(root, faction, r.record, r, nestScreen); root.scrollTop = 0; } });
   }
 
+  /** 쓰러짐·사망이면 원정·훈련·탑·쟁탈전을 막고 안내 띠 (GDD 102-3). 막았으면 true */
+  function careBlocked(s: SaveData): boolean {
+    const b = careBlock(s);
+    if (!b) return false;
+    showToast(careBlockText(b), 0, 4200);
+    return true;
+  }
+
   // ── 원정 ──
   function departScreen(faction: FactionConfig, replace = false): void {
-    if (!save) return;
+    if (!save || careBlocked(save)) return;
     const exp = createExpedition({
       factionId: faction.id,
       seed: Math.floor(Math.random() * 2 ** 32),
       runId: nextRunId(save),
       hunger: save.nest.hunger,
       condition: save.nest.condition,
+      care: departCareOf(save), // 쇠약·피곤 (GDD 102-2)
       deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
       stability: save.nest.stability,
@@ -888,6 +922,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 탑 전투 화면 (결과에서 [다음 층]·[다시 도전]으로 올 때는 같은 자리를 바꿔 끼운다) */
   function towerBattle(faction: FactionConfig, f: TowerFloor, again = false): void {
+    if (save && careBlocked(save)) return;
     const e = { id: 'tower-battle', locked: true, render: () => { runTower(faction, f); root.scrollTop = 0; } };
     if (again) nav.replace(e);
     else nav.push(e);
@@ -934,13 +969,14 @@ export function startApp(host: HTMLElement): void {
 
   /** 첫 원정 튜토리얼 (GDD 67장): 고정 짧은 길(배치 단계·탭 없음) → 걷기·조우 안내 → 약한 적 1마리 → 튜토리얼 흡수 → 귀환 */
   function startTutorialRun(faction: FactionConfig): void {
-    if (!save) return;
+    if (!save || careBlocked(save)) return;
     const exp = createExpedition({
       factionId: faction.id,
       seed: Math.floor(Math.random() * 2 ** 32),
       runId: nextRunId(save),
       hunger: save.nest.hunger,
       condition: save.nest.condition,
+      care: departCareOf(save), // 쇠약·피곤 (GDD 102-2)
       deck: [],
       risk: save.nest.risk,
       stability: save.nest.stability,
@@ -978,13 +1014,14 @@ export function startApp(host: HTMLElement): void {
 
   /** 스토리 화 시작 (GDD 25-4): 고정 길(배치 단계 없음) → 시작 대사 → 원정. 목표·대화 말고는 자유 원정과 같은 흐름 */
   function startStory(faction: FactionConfig, chapterId: string, episodeId: string): void {
-    if (!save) return;
+    if (!save || careBlocked(save)) return;
     const exp = createExpedition({
       factionId: faction.id,
       seed: Math.floor(Math.random() * 2 ** 32),
       runId: nextRunId(save),
       hunger: save.nest.hunger,
       condition: save.nest.condition,
+      care: departCareOf(save), // 쇠약·피곤 (GDD 102-2)
       deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
       stability: save.nest.stability,
@@ -1253,6 +1290,12 @@ export function startApp(host: HTMLElement): void {
         dress(s.wear);
         nav.top?.render();
       },
+      onFastForward: (hours) => {
+        absence = fastForward(s, hours);
+        hungryGreet = absence.flow.hunger >= BALANCE.provisional.nest.idleHungerNotice;
+        persist();
+        nestScreen();
+      },
     }, tab);
   }
 
@@ -1270,6 +1313,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 연습 전투: 결과 화면에서 [다시]로 올 때는 같은 자리를 바꿔 끼운다 */
   function practiceBattle(faction: FactionConfig, enemy: EnemyDef, again = false): void {
+    if (save && careBlocked(save)) return;
     const e = { id: 'practice-battle', locked: true, render: () => { runPractice(faction, enemy); root.scrollTop = 0; } };
     if (again) nav.replace(e);
     else nav.push(e);
@@ -1315,7 +1359,7 @@ export function startApp(host: HTMLElement): void {
   // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──
   function rankScreen(faction: FactionConfig): void {
     if (!save) return;
-    rankView(root, faction, save, { onChallenge: (holder) => open('rank-battle', () => runRankBattle(faction, holder), true), title: trainingHead(faction, 'rank') });
+    rankView(root, faction, save, { onChallenge: (holder) => !careBlocked(save!) && open('rank-battle', () => runRankBattle(faction, holder), true), title: trainingHead(faction, 'rank') });
   }
 
   function runRankBattle(faction: FactionConfig, holder: RankHolderDef): void {

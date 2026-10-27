@@ -376,6 +376,8 @@ export interface RunLog {
   tutorialRewards: TutorialRewardRecord[];
   /** 돌봄 요청 기록 (C.133, 세이브 형식 38, GDD 82장): 쓰다듬기·재우기 요청에 응답·거절(요청 없이 누름)·놓침 횟수 */
   care: CareRecord;
+  /** 돌봄 상태 기록 (C.175, 세이브 형식 46, GDD 102장·9장 — 히든 조건용): 쓰러짐(미접속·원정 패배)·사망·부활·약 */
+  vitals: VitalRecord[];
   /** 떠돌이 상인 기록 (C.140, 세이브 형식 41, GDD 85장 5번): 옴(숨은 티어·기다린 바퀴)·삼·떠남 */
   wanderer: WandererRecord[];
   /** 대기 모드 기록 (C.140, 세이브 형식 41, GDD 85장 6번·88장 7번): 돌아올 때마다 요약 1건 — 바퀴·전투를 낱낱이 남기지 않는다 */
@@ -395,6 +397,23 @@ export interface CareRecord {
   answered: { pet: number; sleep: number };
   refused: { pet: number; sleep: number };
   missed: number;
+}
+
+/** 돌봄 상태 1건 (GDD 102장·9장, C.175): collapse = 쓰러짐(cause: absence 미접속 · defeat 원정 패배), death = 사망(쓰러진 채 미접속),
+ *  revive = 부활(evLoss = 노력치 손실 비율, 그 전 단계·진화체), cure = 약으로 상태 풀림(status), recover = 원정을 마치고 쇠약·피곤 풀림(status).
+ *  bond = 그 순간 교감, hours = 비운 시간(미접속 쓰러짐·사망) */
+export interface VitalRecord {
+  at: number;
+  factionId: string;
+  kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover';
+  cause?: 'absence' | 'defeat';
+  status?: 'collapsed' | 'weak' | 'tired';
+  bond: number;
+  hours?: number;
+  runId?: number;
+  evLoss?: number;
+  tierIndex?: number;
+  formId?: string | null;
 }
 
 /** 떠돌이 상인 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
@@ -540,6 +559,7 @@ export function emptyRunLog(): RunLog {
     towerBattles: [],
     tutorialRewards: [],
     care: { answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 },
+    vitals: [],
     wanderer: [],
     idle: [],
     pets: [],

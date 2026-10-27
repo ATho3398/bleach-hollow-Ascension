@@ -13,7 +13,10 @@ import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
 import { characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
-import { careTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
+import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
+import { CARE_STATUS_NAMES, reviveEvLossOf } from '../engine/nest';
+import { notice } from './bha/dom';
+import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
 import { rebirthMark } from './rebirthView';
@@ -51,6 +54,8 @@ export interface RoomHandlers {
   idle?: { badge: string | null; onOpen: () => void };
   /** 들어오자마자 한 번 할 말 (GDD 24-1: 꺼 둔 동안 배고파졌으면 'hungry' — 문구는 종족 설정 room.talk) */
   greet?: RoomTalk | null;
+  /** 사망 상태의 [부활] (GDD 102-3): 확인 창에서 [부활]을 고르면 부른다 */
+  onRevive?: () => void;
 }
 
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
@@ -66,7 +71,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const RX = BALANCE.provisional.risk;
   // 덱 없음 (GDD 85장 11번, C.140): 출발 때 가진 타일 전부에서 놓는다. 타일이 없어도 빈 길로 떠날 수 있다
   const tileCount = ownedTileList(save.tiles, faction.id).length;
-  const mood = moodOf({ weakened: n.weakened, condition: n.condition, risk: n.risk, riskLimit: RX.limit });
+  const mood = moodOf({ weakened: n.weakened, tired: n.tired, collapsed: n.collapsed, condition: n.condition, risk: n.risk, riskLimit: RX.limit });
 
   // ── 위 한 줄 ── (원정 이어하기만. 상태는 캐릭터 머리 위 칩)
   const hud = el('header', 'bha-room__hud');
@@ -82,6 +87,32 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     nameTag = el('span', 'bha-small bha-room__name', shownName(formDisplayName(save.evolution, faction.id)));
     if (stars) nameTag.append(' ', stars);
   }
+  // 쓰러짐·사망 (GDD 102-3·102-7): 위 줄에 큰 안내 + 할 수 있는 일. 사망이면 [부활](확인 창 기본 = 아니오), 쓰러짐이면 [상점] [보관함]
+  if (n.dead) {
+    const reviveBtn = button({ label: '부활', icon: 'i-return', size: 'small', variant: 'danger', onClick: () => askRevive() });
+    hud.append(notice('danger', '할 수 있는 건 부활뿐이다.', { title: `${CARE_STATUS_NAMES.dead} — 오래 돌보지 않아 숨이 끊어졌다`, icon: 'i-broken' }), reviveBtn);
+    hud.classList.add('is-care');
+    items.push({ el: reviveBtn });
+  } else if (n.collapsed) {
+    const shopBtn = button({ label: room.props.shop, icon: 'i-rare', size: 'small', variant: 'primary', onClick: hd.onShop });
+    const chestBtn = button({ label: '보관함', icon: 'i-deck', size: 'small', onClick: hd.onChest });
+    hud.append(notice('danger', '치료제가 필요하다', { title: `${CARE_STATUS_NAMES.collapsed} — ${CARE_STATUS_HINTS.collapsed}`, icon: 'i-broken' }), shopBtn, chestBtn);
+    hud.classList.add('is-care');
+    items.push({ el: shopBtn }, { el: chestBtn });
+  }
+  /** 부활 확인 창 (GDD 102-3·102-7): 잃는 것 목록, 되돌릴 수 없어 기본 선택 = 아니오(danger) */
+  function askRevive(): void {
+    const loss = Math.round(reviveEvLossOf(n.bond) * 100);
+    const list = el('ul', 'bha-riskexplain__list');
+    for (const t of [
+      `노력치 전부 −${loss}% (교감 ${Math.round(n.bond)} 기준)`,
+      `진화 초기화 — 1단계 ${faction.tierNames[0]}(으)로 다시 시작`,
+      `${faction.fullnessName}·컨디션·${faction.stabilityName}은 시작값`,
+      '가진 물건·골드·타일·흡수 특성·도감·칭호·스킨은 그대로',
+      `${faction.rebirth.name}과 다르다 — 보상·횟수 없음`,
+    ]) list.append(el('li', '', t));
+    confirmDialog({ title: '부활한다', body: '되돌릴 수 없다.', content: list, yes: '부활', no: '아니오', danger: true, onYes: () => hd.onRevive?.() });
+  }
   if (hd.resume) {
     resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
     resumeBtn.title = hd.resume.info;
@@ -92,6 +123,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
 
   // ── 장면 ──
   const scene = sceneBox(room);
+  if (n.dead) scene.classList.add('is-dead'); // 사망 = 어두운 방 (GDD 102-7)
   const bubble = el('div', 'bha-room__bubble');
   bubble.setAttribute('role', 'status');
   bubble.setAttribute('aria-live', 'polite');
@@ -123,6 +155,11 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   for (const p of ROOM_PROPS) {
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'shop' && save.shared.wanderer.visit !== null });
     b.onclick = act[p];
+    // 쓰러짐·사망이면 모험 문 잠김 표시 (GDD 102-7) — 눌러도 막힘 안내(onDepart 쪽)
+    if (p === 'door' && (n.collapsed || n.dead)) {
+      b.classList.add('is-locked');
+      b.append(icon('i-lock'));
+    }
     if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(훈련 인형 모양) = 단축키 T
     props.set(p, b);
     scene.append(b);
@@ -131,6 +168,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
   const loco = locoOf(faction, save.evolution.formId, charArtUrls);
   const char = characterButton(charArtUrls, '캐릭터', loco);
+  if (n.collapsed || n.dead) char.classList.add('is-collapsed'); // 쓰러진 모습 (그림이 없어 캐릭터를 눕히고 흐리게, GDD 102-7)
   // 데리고 다니는 펫 (GDD 90장): 캐릭터 옆 발치에 작게 (그림이 없으면 아이콘 원)
   const buddy = petBuddy(save.shared.pets.active, petName(save.shared.pets.active ?? '', faction));
   if (buddy) char.append(buddy);
@@ -156,7 +194,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       window.clearTimeout(hop);
       hop = window.setTimeout(() => char.classList.remove('is-react'), 700);
     }
-    say(line ?? pickLine(room.talk, mood === 'idle' && Math.random() < 0.4 ? 'happy' : mood), ms);
+    say(line ?? pickLine(room.talk, mood === 'idle' ? idleTalkKey(n.bond) : mood), ms);
   };
   /** 지금 살아 있는 돌봄 요청의 말풍선 (GDD 82장) */
   const askLine = (): string | null => (n.careRequest ? pickLine(room.talk, careTalkKey('ask', n.careRequest.action)) : null);
@@ -170,6 +208,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const paintGauges = () => {
     const chips = statusChips(n, faction);
     statusBtn.setAttribute('aria-label', `상태 보기: ${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
+    // 상태 칩(쇠약·피곤·쓰러짐) 풀리는 법 한 줄 툴팁 (GDD 102-7)
+    statusBtn.title = chips.filter((c) => c.hint).map((c) => `${c.label}: ${c.hint}`).join('\n');
     // 글자·숫자 없이 아이콘 + 가는 게이지 바 한 줄씩 (GDD 18-10 v3.1). 위험 구간 줄만 danger 색
     statusBtn.replaceChildren(...chips.map((c) => {
       const row = el('span', `bha-room__gauge bha-room__gauge--${c.kind}${c.danger ? ' is-danger' : ''}`);
@@ -178,7 +218,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const track = el('span', 'bha-room__gaugetrack');
       track.append(fill);
       // 숫자 한 칸 (GDD 100장 #12): 아이콘 · 막대 · 값
-      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? '' : String(Math.round(c.value))));
+      // 상태 칩은 숫자 대신 이름 (막대는 가득)
+      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? c.label : String(Math.round(c.value))));
+      if (c.hint) row.title = c.hint;
       return row;
     }));
     if (nameTag) statusBtn.prepend(nameTag);
@@ -200,6 +242,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
+      if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
         if (!food || !feedNest(save, food)) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.');
       } else if (careNest(save, action) === 'refused') {
@@ -273,6 +316,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const created = tickCare(save);
     if (created || had !== n.careRequest) { hd.persist(); dock.setRequest(n.careRequest?.action ?? null); }
     if (created) return react(askLine()!, 4200);
-    if (Math.random() < 0.5) say(askLine() ?? pickLine(room.talk, mood));
+    if (Math.random() < 0.5) say(askLine() ?? pickLine(room.talk, mood === 'idle' ? idleTalkKey(n.bond) : mood));
   }, IDLE_TALK_MS);
 }

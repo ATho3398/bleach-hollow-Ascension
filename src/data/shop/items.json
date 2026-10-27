@@ -44,6 +44,27 @@
       "name": "각성제"
     },
     {
+      "id": "med-cure",
+      "kind": "medicine",
+      "category": "consumable",
+      "name": "치료제",
+      "cures": "collapsed"
+    },
+    {
+      "id": "med-iv",
+      "kind": "medicine",
+      "category": "consumable",
+      "name": "링거",
+      "cures": "weak"
+    },
+    {
+      "id": "med-energy",
+      "kind": "medicine",
+      "category": "consumable",
+      "name": "에너지 드링크",
+      "cures": "tired"
+    },
+    {
       "id": "training-ticket",
       "kind": "trainingTicket",
       "category": "etc",

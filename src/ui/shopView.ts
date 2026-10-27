@@ -3,7 +3,7 @@
 // 떠돌이 상인(GDD 85장 5번)이 와 있으면 제목 토글에 [떠돌이 상인] — 같은 줄 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { equipInventoryItem, petNoticeOf, unequipInventoryItem } from '../inventory';
-import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory } from '../data/shop';
+import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory, type MedicineCure } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
@@ -23,15 +23,20 @@ import { showGuide, tileDrawCard } from './guideView';
 import { markGuideDone } from '../engine/tutorial';
 import { shownName } from './displayName';
 
-export type ShopTab = ItemCategory | 'wanderer';
+/** 상점 탭: 아이템 분류 + 약(GDD 102-4: '음식' 옆 칸, 보관함에서는 소모품) + 떠돌이 상인 */
+export type ShopTab = ItemCategory | 'medicine' | 'wanderer';
 /** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
 const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', shell: 'body', cut: 'line', room: 'line' };
 /** 마지막으로 본 탭 (다시 열면 그 탭) */
 const shopUi: { tab: ShopTab; skinSub: SkinSubTab } = { tab: 'food', skinSub: 'character' };
 /** 쌓아 사는 골드 품목 (수량 고르기): 나머지는 한 번에 하나 */
-const STACKABLE = new Set(['food', 'calm', 'wake', 'reroll', 'trainingTicket']);
+const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'reroll', 'trainingTicket']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
 const QTY_CAP = 99;
+/** 약 아이콘 (GDD 102-4, 있는 아이콘 재사용): 치료제 = 회복 · 링거 = 배부름 · 에너지 드링크 = 컨디션 */
+const MEDICINE_ICONS: Record<MedicineCure, string> = { collapsed: 'i-heal', weak: 'i-hunger', tired: 'i-cond' };
+/** 이 줄이 약인가 */
+const isMedicine = (id: string): boolean => getGoldItem(id)?.kind === 'medicine';
 
 export interface ShopHandlers {
   /** 구매·착용을 저장한다 */
@@ -128,7 +133,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (gold?.kind === 'gear') return gradeArt(iconArt(GEAR_KIND_ICONS[gold.gearKind!]), 'normal');
     const wi = getWandererItem(row.id);
     if (wi?.kind === 'gear') return gradeArt(iconArt('i-unknown'), wi.grade);
-    const ic = !gold ? 'i-rare' : gold.kind === 'food' ? 'i-hunger' : gold.kind === 'calm' ? 'i-risk' : gold.kind === 'wake' ? 'i-cond' : gold.kind === 'tileDraw' || gold.kind === 'rareTile' ? 'i-tile-combo' : gold.kind === 'deckSlot' ? 'i-deck' : gold.kind === 'reroll' ? 'i-swap' : 'i-practice';
+    const ic = !gold ? 'i-rare' : gold.kind === 'food' ? 'i-hunger' : gold.kind === 'calm' ? 'i-risk' : gold.kind === 'wake' ? 'i-cond' : gold.kind === 'medicine' ? MEDICINE_ICONS[gold.cures!] : gold.kind === 'tileDraw' || gold.kind === 'rareTile' ? 'i-tile-combo' : gold.kind === 'deckSlot' ? 'i-deck' : gold.kind === 'reroll' ? 'i-swap' : 'i-practice';
     void big;
     return iconArt(ic);
   };
@@ -198,9 +203,11 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (shopUi.tab === 'wanderer' && !hasWanderer) shopUi.tab = 'food';
     const rows: (ShopRow & { grade?: string })[] = shopUi.tab === 'wanderer'
       ? wandererRows(save, faction)
-      : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => (itemCategoryOf(r.id) ?? 'etc') === shopUi.tab);
-    const cats = (['food', 'consumable', 'equipment', 'skin', 'tile', 'etc'] as const).map((id) => ({
-      id, label: ITEM_CATEGORY_NAMES[id],
+      : shopUi.tab === 'medicine'
+        ? goldRows(save, faction).filter((r) => isMedicine(r.id))
+        : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => (itemCategoryOf(r.id) ?? 'etc') === shopUi.tab && !isMedicine(r.id));
+    const cats = (['food', 'medicine', 'consumable', 'equipment', 'skin', 'tile', 'etc'] as const).map((id) => ({
+      id, label: id === 'medicine' ? '약' : ITEM_CATEGORY_NAMES[id],
     }));
     const tabs = categoryTabs([...cats, ...(hasWanderer ? [{ id: 'wanderer', label: '떠돌이 상인' }] : [])], shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;

@@ -211,7 +211,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const side: HTMLElement[] = [
       meter({
         kind: 'risk', label: `지금 ${faction.riskGaugeName}`, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, zone: 0.6, danger: exp.risk >= 60 || willBreak,
-        note: willBreak ? `${act}하면 한계 돌파! (${Math.round(exp.risk)} + ${Math.round(risk)} = ${Math.round(exp.risk + risk)})` : undefined,
+        note: willBreak ? `${act}하면 ${faction.frenzyName}! (${Math.round(exp.risk)} + ${Math.round(risk)} = ${Math.round(exp.risk + risk)})` : undefined,
       }),
       slotSummary(),
     ];
@@ -222,7 +222,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     };
     /** 버튼 아래 작은 글: 갈래 설명 + 리스크 (가진 속성은 특성 대신 강화, C.150) */
     const modeSub = (m: AbsorbMode): string => {
-      if (breaks(m)) return '한계 돌파한다';
+      if (breaks(m)) return `${faction.frenzyName} 상태가 된다`;
       const what = owned() && m !== 'stat' ? MODE_LABELS[m].sub.replace('특성', '강화') : MODE_LABELS[m].sub;
       return `${what} · ${faction.riskGaugeName} +${Math.round(riskOf(m))}`;
     };

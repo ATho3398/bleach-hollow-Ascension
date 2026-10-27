@@ -65,7 +65,8 @@ export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'shop'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
-export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'happy', 'hungry', 'askPet', 'askSleep', 'refusePet', 'refuseSleep'] as const;
+/** 방 말풍선 키. collapsed = 쓰러짐, bondShy·bondClose·bondBest = 교감 단계 대사 (GDD 102-6 ④, C.175) */
+export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
@@ -141,7 +142,7 @@ export const DEFAULT_ROOM: RoomConfig = {
   },
   characterFoot: { x: 50, y: 80 },
   talk: {
-    idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], happy: ['좋아!'], hungry: ['배고파하고 있었다.'],
+    idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], collapsed: ['…일어설 수가 없다.'], happy: ['좋아!'], bondShy: ['…'], bondClose: ['또 와 줬구나.'], bondBest: ['기다리고 있었어.'], hungry: ['배고파하고 있었다.'],
     askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
   },
 };
@@ -227,7 +228,7 @@ export interface FactionConfig {
   defeatStateName: string;
   /** 육성 1단계부터 쓰는 기본 기술 이름: 호로=본체 능력, 사신=시해 (GDD 4장). 슬롯에 skill 특성이 없을 때 나오는 기본 블록 이름 */
   basicSkillName: string;
-  /** 안정 수치 이름: 호로 자아 / 사신 영압 안정도 (GDD 4장). 컨디션·허기와 별개 */
+  /** 안정 수치 이름: 두 종족 모두 영압 안정도 (GDD 102-5, 옛 호로 자아). 컨디션·허기와 별개 */
   stabilityName: string;
   /** 배부름 게이지 이름 (C.63, GDD 28장 10번): 화면은 허기를 뒤집어 "가득 → 줄어듦"으로 보인다 */
   fullnessName: string;
@@ -239,7 +240,7 @@ export interface FactionConfig {
   traitKindNames: Record<'skill' | 'passive' | 'part', string>;
   /** 리스크 한계 돌파 연출 문구 */
   breakthroughText: string;
-  /** 한계 돌파 = 폭주 상태 이름 (GDD 23-2): 호로 "폭주", 사신 "가면 폭주". 원정·전투 화면 상태 칩과 결과 화면에 쓴다 */
+  /** 한계 돌파 = 폭주 상태 이름 (GDD 23-2): 호로 "폭주", 사신 "호로화" (GDD 102-5). 원정·전투 화면 상태 칩과 결과 화면에 쓴다 */
   frenzyName: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;

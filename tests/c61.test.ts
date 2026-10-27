@@ -67,7 +67,7 @@ describe('종족 설정: 방 테마·말풍선 팩 이름과 문구', () => {
     expect(jadeRows(rich('shinigami'), S).find((r) => r.id === 'room-bloom')!.name).toBe('벚꽃 마당');
     expect(jadeRows(rich(), H).find((r) => r.id === 'room-bloom')!.name).toBe('뼈 정원');
   });
-  const CARE_TALK: readonly (typeof ROOM_TALK)[number][] = ['askPet', 'askSleep', 'refusePet', 'refuseSleep'];
+  const CARE_TALK: readonly (typeof ROOM_TALK)[number][] = ['askPet', 'askSleep', 'refusePet', 'refuseSleep', 'collapsed', 'bondShy', 'bondClose', 'bondBest']; // C.175 쓰러짐·교감 대사도 팩이 덮지 않는다
   it('말풍선 팩은 기존 혼잣말 키를 같은 수로 덮고, 팩이 없으면 기본 문구', () => {
     for (const f of [H, S]) {
       const base = roomOf(f);

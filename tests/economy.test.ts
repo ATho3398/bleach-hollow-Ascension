@@ -208,9 +208,9 @@ describe('리스크 수치·폭주 (GDD 23-2)', () => {
     expect(n.stability).toBe(Math.max(0, e.stability - RX.breakthroughStabilityLoss));
   });
 
-  it('폭주 문구는 종족 설정 (호로 폭주 / 사신 가면 폭주)', () => {
+  it('폭주 문구는 종족 설정 (호로 폭주 / 사신 호로화)', () => {
     expect(getFaction('hollow').frenzyName).toBe('폭주');
-    expect(getFaction('shinigami').frenzyName).toBe('가면 폭주');
+    expect(getFaction('shinigami').frenzyName).toBe('호로화');
   });
 });
 

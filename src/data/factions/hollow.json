@@ -144,7 +144,7 @@
   "locomotion": "walk",
   "slotLocation": "body",
   "appearanceChange": true,
-  "defeatStateName": "가면이 깨져 쇠약",
+  "defeatStateName": "가면이 깨져 쓰러짐",
   "basicSkillName": "본체 능력",
   "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest", "5": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층 = 한 판. 체력 가득으로 시작하고 져도 잃는 것이 없다" },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
@@ -294,7 +294,7 @@
     "pet-guard": "껍질 게",
     "pet-seek": "그림자 박쥐"
   },
-  "stabilityName": "자아",
+  "stabilityName": "영압 안정도",
   "fullnessName": "배부름",
   "slotName": "본체 슬롯",
   "lineageBonusName": "계열 기술 강화",
@@ -303,7 +303,7 @@
     "passive": "패시브",
     "part": "외형 파츠"
   },
-  "breakthroughText": "광기가 한계를 넘었다. 자아가 흔들리고 공허가 몰려든다…",
+  "breakthroughText": "광기가 한계를 넘었다. 영압이 흔들리고 공허가 몰려든다…",
   "frenzyName": "폭주",
   "room": {
     "shape": "cave",
@@ -345,6 +345,10 @@
       "weak": [
         "이 정도 상처쯤… 금방 낫는다."
       ],
+      "collapsed": ["…몸이… 안 움직인다.", "빌어먹을… 일어설 수가 없군."],
+      "bondShy": ["…뭘 보나.", "가까이 오지 마라."],
+      "bondClose": ["…오늘도 왔나.", "너 정도면 곁에 둬도 괜찮겠군."],
+      "bondBest": ["흥, 기다리고 있었다.", "네가 오면 가면 안이 조용해진다."],
       "happy": [
         "이 정도면 쓸 만하다.",
         "흥, 나쁘지 않군."

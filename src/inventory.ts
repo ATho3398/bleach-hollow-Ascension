@@ -2,14 +2,15 @@
 // 장비·스킨은 사면 바로 끼지 않는다 — 여기서 equip. 종족 무관: 이름은 종족 설정(먹이·리스크 게이지)·데이터, 수치는 balance.ts.
 // 화면(C.141 카드형 UI)은 inventoryOf 가 돌려준 목록만 그린다. 상점 품목·가격은 그대로(src/shop.ts).
 import { BALANCE } from './config/balance';
-import { cosmeticName, COSMETIC_ITEMS, GOLD_ITEMS, getCosmetic, getGoldItem, getWandererItem, ITEM_CATEGORIES, WANDERER_ITEMS, shopVisible, type ItemCategory } from './data/shop';
+import { cosmeticName, COSMETIC_ITEMS, GOLD_ITEMS, getCosmetic, getGoldItem, getWandererItem, ITEM_CATEGORIES, WANDERER_ITEMS, shopVisible, type ItemCategory, type MedicineCure } from './data/shop';
 import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
 import { takeFood } from './engine/food';
-import { doNestAction } from './engine/nest';
+import { CARE_STATUS_NAMES, doNestAction } from './engine/nest';
+import { cureNest } from './game';
 import { wandererAmount } from './engine/wanderer';
-import { CONSUMABLE_CAP, isWorn, unwearCategory, wearCosmetic } from './shop';
+import { CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
 import { getPet, PET_IDS } from './data/pets';
 import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet } from './engine/pet';
@@ -21,16 +22,17 @@ import { statName } from './data/elements';
 const SX = BALANCE.shop;
 const COND_MAX = BALANCE.provisional.expedition.conditionMax;
 
-/** 보관함에 쌓이는 소모품 id: 상점 정화제·각성제 + 상인 소모품(정화·각성·정수). 효과는 useInventoryItem */
+/** 보관함에 쌓이는 소모품 id: 상점 정화제·각성제·약(GDD 102-4) + 상인 소모품(정화·각성·정수). 효과는 useInventoryItem */
 export const CONSUMABLE_IDS: readonly string[] = [
-  ...GOLD_ITEMS.filter((g) => g.kind === 'calm' || g.kind === 'wake').map((g) => g.id),
+  ...GOLD_ITEMS.filter((g) => g.kind === 'calm' || g.kind === 'wake' || g.kind === 'medicine').map((g) => g.id),
   ...WANDERER_ITEMS.filter((w) => w.kind === 'calm' || w.kind === 'wake' || w.kind === 'elixir').map((w) => w.id),
 ];
 
-/** 소모품 효과 한 줄 */
-type ConsumableEffect = { risk: number; condition: number; cure: boolean };
+/** 소모품 효과 한 줄: cure = 상인 정수(쇠약 풀기), medicine = 약이 푸는 상태 (GDD 102-4, 수치는 안 바뀜) */
+type ConsumableEffect = { risk: number; condition: number; cure: boolean; medicine?: MedicineCure };
 function consumableEffect(id: string): ConsumableEffect | null {
   const g = getGoldItem(id);
+  if (g?.kind === 'medicine') return { risk: 0, condition: 0, cure: false, medicine: g.cures! };
   if (g?.kind === 'calm') return { risk: SX.calmRisk, condition: 0, cure: false };
   if (g?.kind === 'wake') return { risk: 0, condition: SX.wakeCondition, cure: false };
   const w = getWandererItem(id);
@@ -44,6 +46,7 @@ function consumableEffect(id: string): ConsumableEffect | null {
 export function consumableText(id: string, faction: Pick<FactionConfig, 'riskGaugeName'>): string {
   const e = consumableEffect(id);
   if (!e) return '';
+  if (e.medicine) return medicineText(e.medicine);
   const parts = [e.risk > 0 ? `${faction.riskGaugeName} −${e.risk}` : '', e.condition > 0 ? (e.condition >= COND_MAX ? '컨디션 가득' : `컨디션 +${e.condition}`) : '', e.cure ? '쇠약 해소' : ''].filter(Boolean);
   return `${parts.join(' · ')} (보관함에서 사용, 지금 캐릭터에 바로)`;
 }
@@ -77,6 +80,8 @@ function consumableLock(save: SaveData, id: string, faction: Pick<FactionConfig,
   const e = consumableEffect(id);
   if (!e) return '쓸 수 없다';
   if (save.activeExpedition != null) return '원정 중인 캐릭터에는 못 쓴다';
+  if (save.nest.dead) return `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다`;
+  if (e.medicine) return medicineNeeded(save, e.medicine) ? null : `${medicineStatusName(e.medicine)} 상태가 아니다`;
   const helpsRisk = e.risk > 0 && save.nest.risk > 0;
   const helpsCond = e.condition > 0 && save.nest.condition < COND_MAX;
   const helpsCure = e.cure && save.nest.weakened;
@@ -92,7 +97,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     const n = save.shared.food[f];
     if (n <= 0) continue;
     const fx = BALANCE.provisional.nest.foods[f];
-    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`, action: 'use', lock: save.activeExpedition != null ? '원정 중인 캐릭터에는 못 쓴다' : null });
+    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`, action: 'use', lock: save.activeExpedition != null ? '원정 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
   }
   // 소모품: 보관한 정화제·각성제·상인 소모품 + 다시 뽑기권(흡수 화면에서 씀)
   for (const id of CONSUMABLE_IDS) {
@@ -140,6 +145,7 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     const f = id.slice(5) as FoodId;
     if (!(FOOD_IDS as readonly string[]).includes(f)) return { ok: false, reason: '모르는 먹이다' };
     if (save.activeExpedition != null) return { ok: false, reason: '원정 중인 캐릭터에는 못 쓴다' };
+    if (save.nest.dead) return { ok: false, reason: `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` };
     if (!takeFood(save.shared.food, f)) return { ok: false, reason: '먹이가 없다' };
     doNestAction(save.nest, 'feed', f);
     return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}` }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
@@ -148,12 +154,32 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
   if (!e || (save.shared.items[id] ?? 0) <= 0) return { ok: false, reason: '가진 소모품이 아니다' };
   const lock = consumableLock(save, id, faction);
   if (lock) return { ok: false, reason: lock };
+  if (e.medicine) {
+    cureNest(save, e.medicine);
+    takeItem(save, id);
+    return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림` };
+  }
   save.nest.risk = Math.max(0, save.nest.risk - e.risk);
   save.nest.condition = Math.min(COND_MAX, save.nest.condition + e.condition);
   if (e.cure) save.nest.weakened = false;
+  takeItem(save, id);
+  return { ok: true, detail: `${faction.riskGaugeName} ${Math.round(save.nest.risk)} · 컨디션 ${Math.round(save.nest.condition)}` };
+}
+
+/** 보관함 소모품 하나 쓰기 */
+function takeItem(save: SaveData, id: string): void {
   save.shared.items[id] = (save.shared.items[id] ?? 1) - 1;
   if (save.shared.items[id]! <= 0) delete save.shared.items[id];
-  return { ok: true, detail: `${faction.riskGaugeName} ${Math.round(save.nest.risk)} · 컨디션 ${Math.round(save.nest.condition)}` };
+}
+
+/** 약 상태 이름 (GDD 102장, 두 종족 공통) */
+export function medicineStatusName(c: MedicineCure): string {
+  return c === 'collapsed' ? CARE_STATUS_NAMES.collapsed : c === 'weak' ? CARE_STATUS_NAMES.weak : CARE_STATUS_NAMES.tired;
+}
+
+/** 그 약이 지금 쓸모 있나 (그 상태에 걸려 있다) */
+function medicineNeeded(save: Pick<SaveData, 'nest'>, c: MedicineCure): boolean {
+  return c === 'collapsed' ? save.nest.collapsed : c === 'weak' ? save.nest.weakened : save.nest.tired;
 }
 
 /** 보관함에서 끼기 (스킨·꾸밈, 지금 트랙). 가진 것만 */

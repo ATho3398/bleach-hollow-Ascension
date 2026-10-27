@@ -169,6 +169,7 @@ export const BACKUP_REASON_TEXT: Record<BackupReason, string> = {
   rank: '등급전 도전 직전',
   migration: '새 버전으로 세이브를 올리기 직전',
   rebirth: '환생 직전',
+  revive: '부활 직전',
   fusion: '합체 직전',
   revert: '되돌리기 직전',
   delete: '슬롯 지우기 직전',

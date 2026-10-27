@@ -10,7 +10,7 @@ import { isGearKind, type GearKind } from '../gear';
 import raw from './items.json';
 import wandererRaw from './wanderer.json';
 
-export const GOLD_KINDS = ['food', 'calm', 'wake', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear'] as const;
+export const GOLD_KINDS = ['food', 'calm', 'wake', 'medicine', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
 
 export const COSMETIC_CATEGORIES = ['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate', 'enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame', 'keyring', 'device'] as const;
@@ -56,7 +56,13 @@ export interface GoldItemDef {
   name?: string;
   /** kind 'gear' 의 장비 종류 (GDD 91장 2번: 기본 상점 = 노말) */
   gearKind?: GearKind;
+  /** kind 'medicine' 이 푸는 상태 (GDD 102-4): collapsed 쓰러짐 · weak 쇠약 · tired 피곤 */
+  cures?: MedicineCure;
 }
+
+/** 약이 푸는 상태 (GDD 102-4) */
+export const MEDICINE_CURES = ['collapsed', 'weak', 'tired'] as const;
+export type MedicineCure = (typeof MEDICINE_CURES)[number];
 
 export interface CosmeticItemDef {
   id: string;
@@ -119,10 +125,11 @@ function parseGold(r: unknown): GoldItemDef {
   if (!(GOLD_KINDS as readonly unknown[]).includes(g.kind)) errors.push(`kind: ${GOLD_KINDS.join(' | ')}`);
   if (g.kind === 'food' && !(FOOD_IDS as readonly unknown[]).includes(g.food)) errors.push('food');
   if (g.kind === 'gear' && !isGearKind(g.gearKind)) errors.push('gearKind');
+  if (g.kind === 'medicine' && !(MEDICINE_CURES as readonly unknown[]).includes(g.cures)) errors.push(`cures: ${MEDICINE_CURES.join(' | ')}`);
   if (g.kind !== 'food' && g.kind !== 'gear' && (typeof g.name !== 'string' || !g.name)) errors.push('name');
   if (!(ITEM_CATEGORIES as readonly unknown[]).includes(g.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
   if (errors.length) throw new Error(`상점 골드 품목 데이터 오류 (${String(g.id ?? '?')}): ${errors.join(', ')}`);
-  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}), ...(g.kind === 'gear' ? { gearKind: g.gearKind as GearKind } : {}) };
+  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}), ...(g.kind === 'gear' ? { gearKind: g.gearKind as GearKind } : {}), ...(g.kind === 'medicine' ? { cures: g.cures as MedicineCure } : {}) };
 }
 
 function parseCosmetic(r: unknown): CosmeticItemDef {

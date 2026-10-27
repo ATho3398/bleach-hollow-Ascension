@@ -17,7 +17,7 @@ describe('moodOf', () => {
 });
 
 describe('pickLine', () => {
-  const talk = { idle: ['a', 'b', 'c'], tired: ['t'], risk: ['r'], weak: ['w'], happy: ['h'], hungry: ['g'], askPet: ['ap'], askSleep: ['as'], refusePet: ['rp'], refuseSleep: ['rs'] };
+  const talk = { idle: ['a', 'b', 'c'], tired: ['t'], risk: ['r'], weak: ['w'], happy: ['h'], hungry: ['g'], askPet: ['ap'], askSleep: ['as'], refusePet: ['rp'], refuseSleep: ['rs'], collapsed: ['c'], bondShy: ['b0'], bondClose: ['b1'], bondBest: ['b2'] };
   it('난수로 문구를 고르고 범위를 넘지 않는다', () => {
     expect(pickLine(talk, 'idle', () => 0)).toBe('a');
     expect(pickLine(talk, 'idle', () => 0.99)).toBe('c');

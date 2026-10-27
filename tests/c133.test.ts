@@ -43,8 +43,8 @@ describe('82장 요청 시계', () => {
     expect(n.careRequest!.until).toBe(later + CR.holdMinutes * MIN);
     expect(tickCareRequest(n, later + 1).created).toBe(false);
   });
-  it('쇠약이거나 컨디션이 낮으면 재우기를 청한다, 아니면 sleepWeight 로 고른다', () => {
-    const weak = { ...newNest(T0), weakened: true };
+  it('피곤이거나 컨디션이 낮으면 재우기를 청한다, 아니면 sleepWeight 로 고른다', () => {
+    const weak = { ...newNest(T0), tired: true }; // C.175: 피곤(GDD 102-2)이면 재우기
     tickCareRequest(weak, weak.nextCareAt, () => 0.99);
     expect(weak.careRequest!.action).toBe('sleep');
     const tired = { ...newNest(T0), condition: CR.sleepBelowCondition - 1 };

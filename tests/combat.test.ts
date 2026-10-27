@@ -664,7 +664,7 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
     expect('sp' in h).toBe(false);
     expect(h.riskGauge).toBe('광기');
     expect(sh.riskGauge).toBe('호로화');
-    expect(h.defeatState).toBe('가면이 깨져 쇠약');
+    expect(h.defeatState).toBe('가면이 깨져 쓰러짐');
     expect(sh.defeatState).toBe('영력 고갈');
     expect(h.families.map((f) => f.abbr)).not.toEqual(sh.families.map((f) => f.abbr));
   });

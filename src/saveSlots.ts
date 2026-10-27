@@ -142,8 +142,8 @@ export function deleteSlot(storage: StorageLike, slot: number): boolean {
 }
 
 /** 백업을 남긴 까닭 (GDD 24-5): 되돌리기 화면에 "○○ 직전" 으로 보인다 */
-export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'fusion' | 'revert' | 'delete';
-export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'fusion', 'revert', 'delete'];
+export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'revive' | 'fusion' | 'revert' | 'delete';
+export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'revive', 'fusion', 'revert', 'delete'];
 /** 슬롯 백업의 까닭·시각 기록 키 (세이브 밖 — SaveData 구조와 무관) */
 export const slotBackupMetaKey = (slot: number): string => `${slotBackupKey(slot)}.meta`;
 
