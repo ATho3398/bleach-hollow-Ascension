@@ -131,7 +131,7 @@ describe('사람형 봇', () => {
   it('botInput: allowGuard=false 면 강공격 예고 중에도 막기 블록을 쓰지 않는다', () => {
     const s = createCombat(1, { enemy: heavy, params: two });
     s.tray = [{ uid: 1, kind: 'skill', traitId: 'basic-guard' }];
-    s.enemy.cast = { ticks: 10, total: 20, hitsLeft: 0 };
+    s.enemy.cast = { ticks: 5, total: 20, hitsLeft: 0 }; // 착탄이 막기 지속(체인1 0.7초) 안
     expect(botInput(s)).toEqual({ type: 'use', cell: 0 });
     expect(botInput(s, { allowGuard: false })).toBeNull();
   });

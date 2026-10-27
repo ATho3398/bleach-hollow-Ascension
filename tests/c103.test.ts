@@ -360,7 +360,7 @@ describe('C.103 전투 로그·런 로그', () => {
     a.tray.push(blk(BASIC_SKILL_ID));
     use(a);
     run(a, 1);
-    a.tray.push(blk(BASIC_SKILL_ID));
+    a.tray = [blk(BASIC_SKILL_ID)]; // 그 사이 생긴 블록(C.173 막기 몫 ↑)이 앞 칸에 오지 않게
     use(a);
     expect(buildBattleRecord(a, { factionId: 'hollow' }).abilityProcs?.knockback).toBe(2);
   });

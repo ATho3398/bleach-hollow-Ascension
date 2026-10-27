@@ -165,7 +165,7 @@ describe('리스크 수치·폭주 (GDD 23-2)', () => {
     }
   });
 
-  it('폭주: 돌파한 원정의 다음 전투부터 주는·받는 피해 +30%', () => {
+  it('폭주: 돌파한 원정의 다음 전투부터 주는 피해 +30%·받는 피해 +60%·회피 20% (C.173, 101장 4번)', () => {
     const params: { playerPowerMultiplier?: number; damageTakenMultiplier?: number } = { damageTakenMultiplier: 0.8 };
     applyFrenzy(params);
     expect(params.playerPowerMultiplier).toBeCloseTo(RX.frenzyDamageDealt);
@@ -182,7 +182,9 @@ describe('리스크 수치·폭주 (GDD 23-2)', () => {
     expect(calm.frenzy).toBe(false);
     expect(wild.frenzy).toBe(true);
     expect((wild.params.playerPowerMultiplier ?? 1) / (calm.params.playerPowerMultiplier ?? 1)).toBeCloseTo(1.3);
-    expect((wild.params.damageTakenMultiplier ?? 1) / (calm.params.damageTakenMultiplier ?? 1)).toBeCloseTo(1.3);
+    expect((wild.params.damageTakenMultiplier ?? 1) / (calm.params.damageTakenMultiplier ?? 1)).toBeCloseTo(1.6);
+    expect(wild.params.evadeChance).toBeCloseTo(RX.frenzyEvadeChance);
+    expect(calm.params.evadeChance ?? 0).toBe(0);
   });
 
   it('폭주는 원정당 1회, 귀환하면 컨디션 −30·리스크 60·안정 수치 하락', () => {

@@ -139,11 +139,20 @@ export interface CombatParams {
   blockSpawnMultiplier: number;
   categoryPower: Record<AttackCategory, number>;
   categoryTaken: Record<AttackCategory, number>;
-  guardSeconds: number;
-  guardReduction: number;
-  heavyGuardReduction: number;
+  /** 막기 (GDD 101장): 체인 1·2·3 단계별 지속(초)·일반 공격 경감·강공격 경감 */
+  guardSecondsByChain: readonly number[];
+  guardReductionByChain: readonly number[];
+  heavyGuardReductionByChain: readonly number[];
+  /** 막기·회복 블록이 바에 이 수만큼 있으면 더 안 나온다 (101장 추가 결정 3번) */
+  guardHealTrayCap: number;
+  /** 강공격 배율: heavyInAttacks × 이 값 (101장 추가 결정 5번). 연속 강공격은 한 타마다 heavyChainHitMultiplier */
+  heavyHitMultiplier: number;
+  heavyChainHitMultiplier: number;
+  /** 공허 블록을 쓰면 이 시간(초) 동안 기본 공격·블록 생성 멈춤 (101장 추가 결정 2번, 히든 진화체 0) */
+  voidStunSeconds: number;
+  /** 회복 블록이 나오지 않는다 (101장 추가 결정 2 2번 — 폭주 중). 몫은 공격 블록들에 */
+  noHealSpawn?: boolean;
   healFraction: number;
-  voidCheckSeconds: number;
   voidChance: number;
   voidChanceMax: number;
   voidPowerInAttacks: number;
@@ -177,6 +186,8 @@ export interface CombatParams {
   trayShuffleSeconds: number;
   /** 컨디션·환경(폐가)·5바퀴 이후·한계 돌파: 공허 블록 생성 확률 가산 */
   voidChanceBonus: number;
+  /** 적 공격 한 번을 통째로 피할 확률 (GDD 101장 4번 — 폭주 중 risk.frenzyEvadeChance). 0 = 없음 */
+  evadeChance: number;
   /** 해방 (GDD 83장, C.134 — 옛 저장형 필살기 자리): 이 전투에서 해방할 수 있는가. false 면 게이지도 차지 않는다 (튜토리얼·연습 등 부르는 쪽이 정한다) */
   liberationEnabled: boolean;
   /** 해방 게이지: 블록 1개 사용당, 체인 단계별 보너스(사용 한 번), 전투 시작 게이지(둥지 애착: 안정 수치 비례, liberationStartGaugeOf) */
@@ -329,6 +340,7 @@ export function defaultCombatParams(): CombatParams {
     guardHealEnhance: 1,
     trayShuffleSeconds: 0,
     voidChanceBonus: 0,
+    evadeChance: 0,
     playerStartHpFraction: 1,
     startShieldFraction: 0,
     enemyFirstStrike: false,
@@ -411,6 +423,8 @@ export type CombatEvent =
   | { kind: 'boss-summon'; hp: number }
   | { kind: 'minion-attack'; damage: number; guarded: boolean }
   | { kind: 'minion-down' }
+  /** 회피 (GDD 101장 4번, 폭주): 적 공격 한 번을 통째로 피했다 */
+  | { kind: 'evade' }
   /** 보스 기믹 element (GDD 35장): 페이즈가 바뀌며 보스 속성이 바뀌었다 */
   | { kind: 'boss-element'; element: string }
   | { kind: 'end'; status: CombatStatus };
@@ -490,7 +504,9 @@ export interface CombatState {
   /** 봉인: 남은 틱 동안 스킬 블록 생성 정지 */
   sealTicks: number;
   /** 막기 상태: 남은 틱, 그 막기에 붙은 반사 배율 */
-  guard: { ticks: number; reflect: number };
+  guard: { ticks: number; reflect: number; chain?: number };
+  /** 공허 블록 경직 남은 틱 (101장 추가 결정 2번): 막기처럼 기본 공격·블록 생성이 멈춘다 */
+  stunTicks?: number;
   // ── 기록 (BattleRecord) ──
   skillsUsed: string[];
   blocksByTrait: Record<string, number>;
@@ -507,6 +523,8 @@ export interface CombatState {
   weakChain3Count: number;
   guardSuccesses: number;
   voidUsed: number;
+  /** 회피한 적 공격 수 (GDD 101장 4번, 폭주) */
+  evades?: number;
   /** 공허 블록 사용으로 오른 리스크 게이지 값 */
   riskGained: number;
   finisher: Finisher | null;
@@ -745,7 +763,7 @@ export interface SpawnEntry {
  * 블록 출현표 (GDD 84장 6번, C.136): **타이머 하나 + 확률표 한 장**. 옛 구조(흡수 특성마다 타이머 + 기본 타이머 + 물공 타이머 + 공허 시계)는
  * 조·탄·교를 다 먹으면 조→탄→교 순서로 규칙적으로 나왔다(사용자 "이게 아냐"). 지금은 각 생성원의 초당 몫(옛 타이머 간격의 역수 — 칸 수별 기본 몫 80장,
  * 같은 계열 겹침·성향 보정 그대로)을 더한 것이 총량, 몫 ÷ 총량이 그 블록의 확률이다. 새로 흡수하면 그 블록이 몫을 받고 다른 몫이 줄어든다.
- * 공허 블록도 한 칸(확률 = 옛 공허 시계의 초당 기대치). 해방 중(liberation)에는 장착 블록이 같은 몫(장착이 없으면 기본 블록 풀), 공허 없음 (98장 B).
+ * 공허 블록 (GDD 101장, C.173): 따로 몫을 더하지 않고 블록 하나가 생길 때 그 자리가 voidChanceOf 확률로 공허가 된다(나머지 칸은 × (1 − 공허 확률)) — 간격은 그대로, 쓸 블록만 준다. 해방 중(liberation)에는 장착 블록이 같은 몫(장착이 없으면 기본 블록 풀), 공허 없음 (98장 B).
  * 돌려주는 seconds = 블록 하나가 나오는 평균 간격(초) = 1 ÷ 총량
  */
 export function spawnTableOf(p: CombatParams, liberation = false): { seconds: number; entries: SpawnEntry[] } {
@@ -776,16 +794,36 @@ export function spawnTableOf(p: CombatParams, liberation = false): { seconds: nu
       : blockPoolOf(p).map((e) => ({ kind: 'skill' as const, source: e.source, family: e.family, chance: e.chance }));
     return { seconds: 1 / Math.max(1e-6, skillTotal), entries };
   }
-  const voidRate = voidChanceOf(p) / Math.max(1e-6, p.voidCheckSeconds);
-  if (voidRate > 0) rates.push({ kind: 'void', source: null, family: null, rate: voidRate });
   const total = Math.max(1e-6, rates.reduce((a, x) => a + x.rate, 0));
-  return { seconds: 1 / total, entries: rates.map((x) => ({ kind: x.kind, source: x.source, family: x.family, chance: x.rate / total, ...(x.phys ? { phys: true } : {}) })) };
+  const v = Math.max(0, voidChanceOf(p));
+  const entries: SpawnEntry[] = rates.map((x) => ({ kind: x.kind, source: x.source, family: x.family, chance: (x.rate / total) * (1 - v), ...(x.phys ? { phys: true } : {}) }));
+  if (v > 0) entries.push({ kind: 'void', source: null, family: null, chance: v });
+  return { seconds: 1 / total, entries };
 }
 
 /** 해방 중에 나오는 블록 (GDD 98장 B — 해방 전용 칸은 C.167 에 폐지): 지금 장착한 본체 블록(흡수 특성) → 장착이 없으면 기본 블록 풀(빈 skills) */
 export type LiberationBlockSource = 'body' | 'basic';
 export function liberationBlocksOf(p: Pick<CombatParams, 'skills'>): { source: LiberationBlockSource; skills: CombatSkill[] } {
   return p.skills.length > 0 ? { source: 'body', skills: p.skills } : { source: 'basic', skills: [] };
+}
+
+/**
+ * 막기·회복 상한·폭주 중 회복 없음 (GDD 101장 추가 결정 3번·추가 결정 2 2번): 바에 막기(회복) 블록이 guardHealTrayCap 개 있거나 noHealSpawn 이면
+ * 그 블록 칸을 빼고, 뺀 몫을 그때 나올 수 있는 공격 블록 칸들(기본 공격·특성 공격·물공)에 똑같이 나눈다. 공격 칸이 없으면 그대로
+ */
+export function capSpawnEntries(entries: readonly SpawnEntry[], tray: readonly Block[], p: Pick<CombatParams, 'guardHealTrayCap' | 'noHealSpawn' | 'skills'>): readonly SpawnEntry[] {
+  const roleOf = (e: SpawnEntry): SkillRole | null => (e.kind === 'skill' ? e.source?.role ?? null : null);
+  const count = (role: SkillRole, id: string) => tray.filter((b) => b.kind === 'skill' && (b.traitId === id || p.skills.some((x) => x.id === b.traitId && x.role === role))).length;
+  const blocked = new Set<SkillRole>();
+  if (count('guard', BASIC_GUARD_ID) >= p.guardHealTrayCap) blocked.add('guard');
+  if (p.noHealSpawn || count('heal', BASIC_HEAL_ID) >= p.guardHealTrayCap) blocked.add('heal');
+  if (blocked.size === 0) return entries;
+  const isBlocked = (e: SpawnEntry) => { const r = roleOf(e); return r !== null && blocked.has(r); };
+  const isAttack = (e: SpawnEntry) => e.kind === 'skill' && (e.phys === true || roleOf(e) === 'attack');
+  const n = entries.filter(isAttack).length;
+  const freed = entries.filter(isBlocked).reduce((a, e) => a + e.chance, 0);
+  if (n === 0 || freed <= 0) return entries;
+  return entries.filter((e) => !isBlocked(e)).map((e) => (isAttack(e) ? { ...e, chance: e.chance + freed / n } : e));
 }
 
 /** 출현표에서 하나를 뽑는다 (전투 난수) */
@@ -984,7 +1022,7 @@ export function timeLeftSeconds(s: CombatState): number {
   return Math.max(0, s.params.timeLimitSeconds - elapsedSeconds(s));
 }
 
-/** 공허 블록 생성 확률: 기본 + 컨디션·환경·바퀴·돌파 가산 (상한 있음) */
+/** 블록 하나가 공허 블록으로 바뀔 확률 (GDD 101장): 기본 몫 + 컨디션·환경·바퀴·돌파 가산 (상한 있음) */
 export function voidChanceOf(p: CombatParams): number {
   return Math.min(p.voidChanceMax, p.voidChance + p.voidChanceBonus);
 }
@@ -1351,12 +1389,14 @@ function bossSummon(s: CombatState, b: BossState): void {
   const m = b.minion;
   if (m && --m.attackTimer <= 0) {
     m.attackTimer = ticksOf(s.params, sm.attackSeconds);
-    const raw = enemyDamage(s, sm.attackInAttacks);
-    const guarded = s.guard.ticks > 0;
-    const damage = guarded ? raw * (1 - s.params.guardReduction) : raw;
-    emit(s, { kind: 'minion-attack', damage, guarded });
-    takeDamage(s, damage);
-    if (s.status !== 'playing') return;
+    if (!evaded(s)) {
+      const raw = enemyDamage(s, sm.attackInAttacks);
+      const guarded = s.guard.ticks > 0;
+      const damage = raw * (1 - guardReductionOf(s));
+      emit(s, { kind: 'minion-attack', damage, guarded });
+      takeDamage(s, damage);
+      if (s.status !== 'playing') return;
+    }
   }
   if (--b.gimmickTimer > 0) return;
   b.gimmickTimer = ticksOf(s.params, sm.everySeconds);
@@ -1502,6 +1542,8 @@ function useBlock(s: CombatState, index: number): boolean {
     s.voidUsed++;
     s.riskGained += p.riskPerVoidBlock;
     addGauge(s, p.liberationGaugePerBlock);
+    // 경직 (GDD 101장 추가 결정 2번): 막기처럼 기본 공격·블록 생성이 멈춘다 (히든 진화체는 voidStunSeconds 0)
+    if (p.voidStunSeconds > 0) s.stunTicks = Math.max(s.stunTicks ?? 0, ticksOf(p, p.voidStunSeconds));
     const damage = blockDamage(s, b) * abilityPowerOf(s, true) * healWeakenOf(s);
     emit(s, { kind: 'block', block: 'void', traitId: null, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null });
     dealDamage(s, damage, { kind: 'void', traitId: null, element: null });
@@ -1558,7 +1600,9 @@ function useBlock(s: CombatState, index: number): boolean {
   let heal = 0;
   let guardSeconds = 0;
   if (skill.role === 'guard') {
-    guardSeconds = p.guardSeconds * mult;
+    // 막기 (GDD 101장): 지속·경감은 체인 단계 고정값. 막기 중 다시 쓰면 긴 쪽·높은 단계
+    guardSeconds = byChain(p.guardSecondsByChain, chain);
+    s.guard.chain = s.guard.ticks > 0 ? Math.max(s.guard.chain ?? 1, chain) : chain;
     s.guard.ticks = Math.max(s.guard.ticks, ticksOf(p, guardSeconds));
   } else if (skill.role === 'heal') {
     heal = Math.min(s.player.maxHp - s.player.hp, s.player.maxHp * p.healFraction * mult);
@@ -1684,6 +1728,35 @@ function enemyDamage(s: CombatState, inAttacks: number): number {
   return inAttacks * p.playerAttackDamage * jitter * p.damageTakenMultiplier * ratio * mm * p.categoryTaken[cat];
 }
 
+/** 체인 단계별 값 (1단계부터, 표보다 길면 마지막 값) */
+function byChain(table: readonly number[], chain: number): number {
+  return table[Math.max(0, Math.min(table.length, chain) - 1)] ?? 0;
+}
+
+/** 지금 막기 상태의 일반 공격·강공격 경감 (GDD 101장 추가 결정 4번): 막기가 아니면 0 */
+function guardReductionOf(s: CombatState, heavy = false): number {
+  if (s.guard.ticks <= 0) return 0;
+  return byChain(heavy ? s.params.heavyGuardReductionByChain : s.params.guardReductionByChain, s.guard.chain ?? 1);
+}
+
+/** 체인 단계 막기의 경감 (화면 표시용, GDD 101장): 일반 공격·강공격 */
+export function guardCutOf(p: Pick<CombatParams, 'guardReductionByChain' | 'heavyGuardReductionByChain'>, chain: number): { normal: number; heavy: number } {
+  return { normal: byChain(p.guardReductionByChain, chain), heavy: byChain(p.heavyGuardReductionByChain, chain) };
+}
+
+/** 막기·경직 중인가: 내 자동 공격·블록 생성이 멈춘다 (GDD 84장 2번·101장 추가 결정 2번) */
+function halted(s: CombatState): boolean {
+  return s.guard.ticks > 0 || (s.stunTicks ?? 0) > 0;
+}
+
+/** 회피 (GDD 101장 4번, 폭주): 적 공격 한 번을 통째로 피했는가. 피했으면 'evade' 이벤트 (확률 0 이면 난수를 쓰지 않는다) */
+function evaded(s: CombatState): boolean {
+  if (s.params.evadeChance <= 0 || nextFloat(s.rng) >= s.params.evadeChance) return false;
+  s.evades = (s.evades ?? 0) + 1;
+  emit(s, { kind: 'evade' });
+  return true;
+}
+
 /** 적의 공격이 맞았다: 피해 + 적 속성 효과(혈 흡혈·독) */
 function enemyHits(s: CombatState, damage: number): void {
   takeDamage(s, damage);
@@ -1694,12 +1767,13 @@ function enemyHits(s: CombatState, damage: number): void {
 function resolveHeavy(s: CombatState): void {
   const pattern = s.enemy.def.pattern;
   if (!pattern || !('heavyInAttacks' in pattern)) return;
+  if (evaded(s)) return;
   const crit = rollCrit(s, 'enemy');
-  let damage = enemyDamage(s, pattern.heavyInAttacks) * (crit ? s.params.critMultiplier : 1);
+  let damage = enemyDamage(s, pattern.heavyInAttacks * (pattern.kind === 'heavy-chain' ? s.params.heavyChainHitMultiplier : s.params.heavyHitMultiplier)) * (crit ? s.params.critMultiplier : 1);
   const guarded = s.guard.ticks > 0;
   let reflected = 0;
   if (guarded) {
-    const blocked = damage * s.params.heavyGuardReduction;
+    const blocked = damage * guardReductionOf(s, true);
     damage -= blocked;
     s.guardSuccesses++;
     reflected = blocked * s.guard.reflect;
@@ -1736,10 +1810,11 @@ function startAction(s: CombatState, pattern: Extract<EnemyPattern, { everySecon
 function counterIfStance(s: CombatState): void {
   const pattern = s.enemy.def.pattern;
   if (!s.enemy.stance || pattern?.kind !== 'stance' || s.status !== 'playing') return;
+  if (evaded(s)) return;
   const crit = rollCrit(s, 'enemy');
   const raw = enemyDamage(s, pattern.counterInAttacks) * (crit ? s.params.critMultiplier : 1);
   const guarded = s.guard.ticks > 0;
-  const damage = guarded ? raw * (1 - s.params.guardReduction) : raw;
+  const damage = raw * (1 - guardReductionOf(s));
   emit(s, { kind: 'counter', damage, guarded, matchup: enemyMatchup(s), crit });
   enemyHits(s, damage);
 }
@@ -1750,6 +1825,7 @@ function advanceTick(s: CombatState): void {
   const t = (sec: number) => ticksOf(p, sec);
   s.tick++;
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
+  if (s.stunTicks && s.stunTicks > 0) s.stunTicks--;
   if (s.liberation.ticksLeft === 1) endLiberation(s);
   else if (s.liberation.ticksLeft > 1) s.liberation.ticksLeft--;
   if (s.sealTicks > 0) s.sealTicks--;
@@ -1778,10 +1854,10 @@ function advanceTick(s: CombatState): void {
   }
   // 블록 생성 (GDD 84장 6번, C.136): 타이머 하나가 다 되면 출현표에서 하나를 뽑는다. 바가 가득 차거나 봉인 중이거나 막기 중(84장 2번)이면 타이머가 멈춘다.
   // 해방 중(GDD 83장)에는 해방 표(장착 블록, 공허 없음)를 해방 생성 배율만큼 빠른 간격으로
-  if (s.sealTicks === 0 && s.guard.ticks === 0 && s.tray.length < p.trayCapacity && --s.spawnTimer <= 0) {
+  if (s.sealTicks === 0 && !halted(s) && s.tray.length < p.trayCapacity && --s.spawnTimer <= 0) {
     const lib = liberationActive(s);
     s.spawnTimer = t(spawnIntervalOf(s));
-    const e = drawSpawn(s, spawnTableOf(p, lib).entries);
+    const e = drawSpawn(s, capSpawnEntries(spawnTableOf(p, lib).entries, s.tray, p));
     if (e?.kind === 'void') spawn(s, 'void', null);
     else if (e?.phys) {
       // 물공 생성원 (GDD 49-11): 그 속성 물공 블록(기본 공격 블록) 1개, 계열은 종족 계열 표에서 고르게
@@ -1791,7 +1867,7 @@ function advanceTick(s: CombatState): void {
   if (s.boss) bossGimmick(s, s.boss);
   // 내 자동 기본 공격: 막기 중(GDD 84장 2번)에는 멈춘다
   if (s.healWeakTicks && s.healWeakTicks > 0) s.healWeakTicks--;
-  if (s.guard.ticks === 0 && --s.player.attackTimer <= 0) {
+  if (!halted(s) && --s.player.attackTimer <= 0) {
     s.player.attackTimer = t(currentAttackSeconds(s));
     basicAttack(s);
     if (s.status !== 'playing') return;
@@ -1824,12 +1900,14 @@ function advanceTick(s: CombatState): void {
   } else {
     if (--e.attackTimer <= 0) {
       e.attackTimer = attackTicks;
-      const crit = rollCrit(s, 'enemy');
-      const raw = enemyDamage(s, e.def.attackInAttacks) * (crit ? p.critMultiplier : 1);
-      const guarded = s.guard.ticks > 0;
-      const damage = guarded ? raw * (1 - p.guardReduction) : raw;
-      emit(s, { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit });
-      enemyHits(s, damage);
+      if (!evaded(s)) {
+        const crit = rollCrit(s, 'enemy');
+        const raw = enemyDamage(s, e.def.attackInAttacks) * (crit ? p.critMultiplier : 1);
+        const guarded = s.guard.ticks > 0;
+        const damage = raw * (1 - guardReductionOf(s));
+        emit(s, { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit });
+        enemyHits(s, damage);
+      }
     }
     if (hasSpecialActions(pattern) && s.status === 'playing' && --e.actionTimer <= 0) startAction(s, pattern);
   }

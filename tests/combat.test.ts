@@ -126,7 +126,7 @@ describe('블록 생성과 블록 바 (일자 8칸)', () => {
     expect(s.tray).toHaveLength(0);
     expect(blockSources(s.params).map((x) => x.id)).toEqual([BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID]);
     s.params.voidChance = s.params.voidChanceBonus = 0;
-    wait(s, BP.basicSpawnSeconds * 1.6); // 첫 블록은 간격의 절반 뒤, 둘째는 1.5배 뒤 (C.118 간격 1.9초 = 19틱이라 반올림 여유로 1.6배)
+    wait(s, spawnTableOf(s.params).seconds * 1.6); // C.173: 막기 몫 0.45 로 간격이 출현표 총량에서 나온다. 첫 블록은 간격의 절반 뒤, 둘째는 1.5배 뒤 (C.118 간격 1.9초 = 19틱이라 반올림 여유로 1.6배)
     expect(s.tray).toHaveLength(2);
     expect(s.tray.every((b) => isBasicBlockId(b.traitId))).toBe(true);
     const spawns = drainCombatEvents(s).filter((e) => e.kind === 'spawn');
@@ -358,12 +358,14 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     const hit = (guard: boolean) => {
       const s = eliteQuiet();
       castNow(s);
+      const before = s.player.hp;
+      // 막기 지속이 짧다(GDD 101장, 체인1 0.7초): 착탄 0.5초 전에 막는다
+      wait(s, sealPat.castSeconds - 0.5);
       if (guard) {
         put(s, blk('basic-guard'));
         useAt(s, 0);
       }
-      const before = s.player.hp;
-      wait(s, sealPat.castSeconds);
+      wait(s, 0.6);
       const ev = drainCombatEvents(s).find((e) => e.kind === 'heavy-hit');
       return { s, taken: before - s.player.hp, ev };
     };
@@ -373,18 +375,19 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
     expect(guarded.ev).toMatchObject({ guarded: true });
     expect(guarded.s.guardSuccesses).toBe(1);
     expect(open.s.guardSuccesses).toBe(0);
-    const heavy = sealPat.heavyInAttacks * CX.playerAttackDamage;
+    const heavy = sealPat.heavyInAttacks * CX.heavyHitMultiplier * CX.playerAttackDamage;
     expect(open.taken).toBeGreaterThan(heavy * (1 - CX.enemyDamageVariance) - 1e-9);
-    expect(guarded.taken).toBeLessThan(heavy * (1 + CX.enemyDamageVariance) * (1 - CX.heavyGuardReduction) + 1e-9);
+    expect(guarded.taken).toBeLessThan(heavy * (1 + CX.enemyDamageVariance) * (1 - CX.heavyGuardReductionByChain[0]!) + 1e-9);
   });
 
   it('reflect 추가 효과가 붙은 막기는 막은 피해를 적에게 돌려준다', () => {
     const s = eliteQuiet();
     castNow(s);
+    wait(s, sealPat.castSeconds - 0.5);
     put(s, ...many('basic-guard', 3));
     useAt(s, 0);
     const before = s.enemy.hp;
-    wait(s, sealPat.castSeconds);
+    wait(s, 0.6);
     const ev = drainCombatEvents(s).find((e) => e.kind === 'heavy-hit');
     expect(ev && ev.kind === 'heavy-hit' && ev.reflected).toBeGreaterThan(0);
     expect(s.enemy.hp).toBeLessThan(before);

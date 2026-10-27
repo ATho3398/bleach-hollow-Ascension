@@ -12,6 +12,7 @@ import { absorbReasons } from '../engine/absorb';
 import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
+  guardCutOf,
 } from '../engine/combat';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
@@ -128,7 +129,11 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
         : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
       const parts = [`${name}! ${n(e.damage)} 피해${elemText(e.elem, factionId)}${e.crit ? ' (치명!)' : ''}${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
-      if (e.guardSeconds > 0) parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(1)}초`);
+      if (e.guardSeconds > 0) {
+        // 막기 체인 경감 (GDD 101장 추가 결정 4번)
+        const cut = guardCutOf(s.params, e.chain);
+        parts.push(`${labels.role.guard} ${e.guardSeconds.toFixed(2).replace(/0$/, '')}초 (피해 −${Math.round(cut.normal * 100)}% · 강공격 −${Math.round(cut.heavy * 100)}%)`);
+      }
       if (e.bonus === 'stagger') parts.push('적 행동 지연');
       if (e.bonus === 'reflect') parts.push('반사 준비');
       if (e.bonus === 'cleanse') parts.push('봉인 해제');
@@ -162,6 +167,9 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'cast', icon: 'i-cast', text: `졸개의 공격 ${n(e.damage)} 피해${e.guarded ? ' (막기로 경감)' : ''}` };
     case 'minion-down':
       return { role: 'chain', icon: 'i-chain-3', text: '졸개를 쓰러뜨렸다!' };
+    case 'evade':
+      // 폭주 중 회피 (GDD 101장 4번)
+      return { role: 'guard', icon: 'i-guard', text: '회피! 적의 공격을 통째로 피했다' };
     case 'boss-element':
       return { role: 'cast', icon: 'i-weak', text: `${shownName(pickFaction(s.enemy.def.name, factionId))}의 속성이 ${elementName(e.element, factionId)}(으)로 바뀌었다!` };
     case 'stance':
@@ -766,6 +774,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       case 'heavy-cast':
         flash('is-cast', 600);
         break;
+      case 'evade':
+        spawnFloat('guard', '회피');
+        break;
       case 'counter':
         if (e.guarded) {
           flash('is-guard');
@@ -949,7 +960,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const wantBlocked = !cast && now < blockedUntil;
     const stanceSec = s.enemy.stance ? s.enemy.stance.ticks * p.tickSeconds : 0;
     const sealSec = s.sealTicks * p.tickSeconds;
-    const guardSec = s.guard.ticks * p.tickSeconds;
+    // 공허 경직 (GDD 101장 추가 결정 2번)도 막기처럼 공격·생성이 멈춰 같은 게이지에 보인다
+    const stunSec = s.guard.ticks > 0 ? 0 : (s.stunTicks ?? 0) * p.tickSeconds;
+    const guardSec = s.guard.ticks * p.tickSeconds + stunSec;
     totals.stance = trackTotal(totals.stance, stanceSec);
     totals.seal = trackTotal(totals.seal, sealSec);
     totals.guard = trackTotal(totals.guard, guardSec);
@@ -967,7 +980,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     stanceGauge.set({ on: stanceSec > 0, fill: gaugeFill(stanceSec, totals.stance), label: `방어 자세 ${secondsText(stanceSec)}`, slot: foeSlots[1]! });
     sealGauge.set({ on: sealSec > 0, fill: gaugeFill(sealSec, totals.seal), label: `봉인 ${secondsText(sealSec)}`, slot: meSlots[0]! });
     // 막기 대가 (GDD 84장 2번): 막기 동안 내 자동 공격·블록 생성이 멈춘다 / 회복 대가: 공격력 감소
-    guardGauge.set({ on: guardSec > 0, fill: gaugeFill(guardSec, totals.guard), label: `${labels.role.guard} ${secondsText(guardSec)} · 공격·생성 멈춤`, slot: meSlots[1]! });
+    const cut = guardCutOf(p, s.guard.chain ?? 1);
+    const guardLabel = stunSec > 0
+      ? `경직 ${secondsText(guardSec)} · 공격·생성 멈춤`
+      : `${labels.role.guard} −${Math.round(cut.normal * 100)}% · 강공격 −${Math.round(cut.heavy * 100)}%`; // 막기 체인 경감 (GDD 101장), 시간은 게이지 채움
+    guardGauge.set({ on: guardSec > 0, fill: gaugeFill(guardSec, totals.guard), label: guardLabel, slot: meSlots[1]! });
     weakenGauge.set({ on: weakenSec > 0, fill: gaugeFill(weakenSec, totals.weaken), label: `공격력 −${Math.round((1 - p.healWeakenMultiplier) * 100)}% ${secondsText(weakenSec)}`, slot: meSlots[2]! });
     foe.classList.toggle('is-casting', cast !== null);
     foe.classList.toggle('is-guard', s.enemy.stance !== null);

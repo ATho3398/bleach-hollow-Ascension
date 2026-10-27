@@ -343,6 +343,10 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.elementDamage = elementDamageOf(e);
   // 실패형 줄기 (GDD 49-8 1번): 블록 관련 피해 배율
   params.blockDamageMultiplier = isFailLine(e) ? EV.failLine.blockDamage : 1;
+  // 공허 블록 피해 (GDD 101장 3번): 히든 진화체(진화체 데이터 hidden) 몸이면 큰 피해, 아니면 기본 공격 1회분
+  const CB = BALANCE.provisional.combat;
+  params.voidPowerInAttacks = form?.hidden ? CB.voidPowerHiddenInAttacks : CB.voidPowerInAttacks;
+  params.voidStunSeconds = form?.hidden ? 0 : CB.voidStunSeconds; // 101장 추가 결정 2번: 히든 진화체는 경직 없음
   if (critChance > 0) {
     params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
     // 치명 상한 돌파 (GDD 45장 1번): 치명 특성(물 '날카로운 물결')이 있는 몸만 상한 = 기본 상한 + 그 특성 값

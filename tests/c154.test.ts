@@ -92,7 +92,7 @@ describe('95장 B2 해방 개선', () => {
   it('블록을 안 써도 준 피해·받은 피해로 게이지가 차서 강적전에 해방한다', () => {
     let used = 0;
     for (let seed = 1; seed <= 20; seed++) if (autoOnly(createCombat(seed, { enemy: elite, params: START })).liberation.uses > 0) used++;
-    expect(used).toBeGreaterThanOrEqual(10);
+    expect(used).toBeGreaterThanOrEqual(6); // C.173: 강공격 ×2.5 로 평타만 치는 몸이 먼저 쓰러지는 판이 늘어 10 → 6
   });
 
   it('피해 몫 0 이면 옛 동작(블록만) — 자동전투는 해방 못 함', () => {

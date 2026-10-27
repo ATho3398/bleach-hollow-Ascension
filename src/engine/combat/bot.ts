@@ -95,9 +95,9 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
 
   // 0. 해방: 게이지가 차면 바로 (GDD 83장)
   if (opt.liberate !== false && canLiberate(s)) return { type: 'liberate' };
-  // 1. 강공격 예고 중이고 막기 상태가 착탄까지 못 버티면 막기 블록
+  // 1. 강공격 예고 중이고 막기 상태가 착탄까지 못 버티면 막기 블록 — 막기가 짧아(GDD 101장, 체인1 0.7초) 착탄이 막기 지속 안으로 들어왔을 때
   const cast = s.enemy.cast;
-  if (cast && opt.allowGuard !== false && s.guard.ticks <= cast.ticks) {
+  if (cast && opt.allowGuard !== false && s.guard.ticks <= cast.ticks && cast.ticks <= guardWindowTicks(s)) {
     const g = ofRole('guard')[0];
     if (g) return use(g);
   }
@@ -187,6 +187,11 @@ export interface HumanBotOptions extends BotOptions {
   stanceAware?: number;
 }
 
+/** 체인 1 막기가 버티는 틱: 착탄이 이 안으로 들어오면 막는다 */
+function guardWindowTicks(s: CombatState): number {
+  return ticksOf(s.params, s.params.guardSecondsByChain[0] ?? 0);
+}
+
 export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, number], guardSuccess: 0.7, joinChance: 0.5, stanceAware: 0.5 };
 
 /** 사람형 봇으로 전투를 끝까지 돌린다: 반응 지연(무작위), 막기 성공률, 체인 정리 확률. 무작위는 전투 시드에서 따로 뽑아 전투 rng 를 건드리지 않는다 */
@@ -205,6 +210,10 @@ export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): Comb
     if (s.events.some((e) => e.kind === 'heavy-cast')) {
       react = { at: s.tick + delay(), ok: nextFloat(rng) < guardSuccess };
       nextAct = Math.min(nextAct, react.at);
+    }
+    // 막기 창 (GDD 101장): 예고를 본 뒤 착탄이 막기 지속 안에 들어오는 틱에 한 번 더 손을 쓴다
+    if (react && react.ok && s.enemy.cast && s.tick >= react.at && s.enemy.cast.ticks <= guardWindowTicks(s) && s.guard.ticks <= s.enemy.cast.ticks) {
+      nextAct = Math.min(nextAct, s.tick);
     }
     if (!s.enemy.cast) react = null;
     let input: CombatInput | null = null;

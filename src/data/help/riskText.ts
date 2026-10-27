@@ -34,7 +34,7 @@ export function riskText(f: Names): RiskText {
   const m = BALANCE.provisional.absorb.modes;
   const nest = RX.nestActions;
   return {
-    riskTip: `${g} ${RX.limit}이 되면 한계 돌파(원정당 1번): 주는 피해 ${plus(RX.frenzyDamageDealt)}·받는 피해 ${plus(RX.frenzyDamageTaken)}, 돌아오면 컨디션 −${RX.frenzyConditionLoss}·${s} −${RX.breakthroughStabilityLoss}`,
+    riskTip: `${g} ${RX.limit}이 되면 한계 돌파(원정당 1번): 주는 피해 ${plus(RX.frenzyDamageDealt)}·받는 피해 ${plus(RX.frenzyDamageTaken)}·회피 ${Math.round(RX.frenzyEvadeChance * 100)}%·회복 블록 없음, 돌아오면 컨디션 −${RX.frenzyConditionLoss}·${s} −${RX.breakthroughStabilityLoss}`,
     stabilityTip: `${s}이(가) 낮을수록 전투 시작 때 해방 게이지가 적게 찬 채로 시작한다 (최대 ${LIB.startGaugeMax}/${LIB.gaugeMax})`,
     riskUp: [
       `공허 블록 1개 쓸 때마다 +${num(RX.perVoidBlock)}`,
@@ -50,7 +50,7 @@ export function riskText(f: Names): RiskText {
     ],
     riskLoss: [
       `${g} 0~${RX.limit - 1}: 직접적인 손해는 없다. 게이지만 쌓인다.`,
-      `${g} ${RX.limit} = 한계 돌파(폭주, 원정당 1번): 그 원정 남은 동안 내가 주는 피해 ${plus(RX.frenzyDamageDealt)}, 받는 피해 ${plus(RX.frenzyDamageTaken)}, 공허 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
+      `${g} ${RX.limit} = 한계 돌파(폭주, 원정당 1번): 그 원정 남은 동안 내가 주는 피해 ${plus(RX.frenzyDamageDealt)}, 받는 피해 ${plus(RX.frenzyDamageTaken)}, 대신 적 공격 ${Math.round(RX.frenzyEvadeChance * 100)}%를 통째로 회피, 회복 블록이 나오지 않음, 블록이 공허 블록으로 바뀔 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
       `돌파한 원정에서 ${f.nestName}에 돌아오면 컨디션 −${RX.frenzyConditionLoss} · ${s} −${RX.breakthroughStabilityLoss}, ${g}은(는) ${RX.riskAfterBreakthrough}으로 가라앉는다`,
     ],
     stabilityLoss: [

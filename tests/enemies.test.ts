@@ -197,19 +197,21 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
       const s = enemyOnly(e, build());
       s.enemy.attackTimer = 1e9;
       wait(s, p.everySeconds + 0.2);
+      const before = s.player.hp;
+      // 막기 지속이 짧다(GDD 101장): 첫 착탄 0.5초 전에 체인3 막기(강공격 100% 경감)
+      wait(s, p.castSeconds - 0.7);
       if (guard) {
-        s.tray = [blk('basic-guard')];
+        s.tray = [blk('basic-guard'), blk('basic-guard'), blk('basic-guard')];
         expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
       }
-      const before = s.player.hp;
-      wait(s, p.castSeconds + p.followCastSeconds * (p.hits - 1) + 0.3);
+      wait(s, 0.5 + p.followCastSeconds * (p.hits - 1) + 0.3);
       return { taken: before - s.player.hp, guards: s.guardSuccesses, hits: events(s).filter((x) => x.kind === 'heavy-hit') };
     };
     const open = run(false);
     const guarded = run(true);
     expect(open.hits).toHaveLength(p.hits);
     expect(open.guards).toBe(0);
-    expect(guarded.guards).toBeGreaterThanOrEqual(1); // 막기 3초가 이어지는 시전을 덮는다 (남는 한 방은 다시 막아야 한다)
+    expect(guarded.guards).toBeGreaterThanOrEqual(1); // 막기 1초(체인3)가 첫 착탄을 덮는다 (남는 방은 다시 막아야 한다)
     expect(guarded.guards).toBeLessThan(p.hits);
     expect(guarded.taken).toBeLessThan(open.taken * 0.85);
   });
@@ -258,7 +260,7 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
       return before - s.player.hp;
     };
     // basic-guard = 막기 블록: 쓰는 순간 막기 상태가 되어 그 블록이 부른 반격이 경감된다
-    expect(counterTaken(true)).toBeLessThan(counterTaken(false) * 0.75);
+    expect(counterTaken(true)).toBeLessThan(counterTaken(false) * 0.9); // 체인1 막기 = 일반 공격 −20% (GDD 101장)
   });
 
   it('방어 자세: 마무리 일격으로 적이 쓰러지면 반격은 없다', () => {

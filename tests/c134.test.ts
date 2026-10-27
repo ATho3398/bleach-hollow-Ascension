@@ -138,7 +138,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
     const params = buildCombatParams(b, 'hollow');
     applyEvolutionToParams(params, newEvolution(1), 'hollow');
     expect(LB.spawnSpeed).toBeGreaterThan(1);
-    const s = mk({ ...params, voidCheckSeconds: 1e6 });
+    const s = mk({ ...params, voidChance: 0 });
     s.enemy.attackTimer = s.enemy.actionTimer = 1e9;
     s.player.attackTimer = 1e9;
     s.enemy.hp = s.enemy.maxHp = 1e12;
@@ -154,7 +154,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
     expect(s.tray.every((x) => x.traitId === 't-earth-c')).toBe(true);
     expect(plain.tray.some((x) => x.traitId !== 't-earth-c')).toBe(true);
     // 장착 없음: 기본 블록 풀
-    const e = mk({ skills: [], voidCheckSeconds: 1e6 });
+    const e = mk({ skills: [], voidChance: 0 });
     e.enemy.attackTimer = e.enemy.actionTimer = 1e9;
     e.enemy.hp = e.enemy.maxHp = 1e12;
     e.tray = [];
@@ -257,9 +257,9 @@ describe('83장 6번 런 로그·봇·결정성', () => {
     expect(botInput(s)).toEqual({ type: 'liberate' });
     expect(botInput(s, { liberate: false })).not.toEqual({ type: 'liberate' });
     const { params } = oneTrait();
-    const a = playCombatBot(mk({ ...params, liberationStartGauge: 50 }, 7));
+    const a = playCombatBot(mk({ ...params, liberationStartGauge: 90 }, 7)); // C.173: 50 → 90 (전투가 짧아 게이지가 덜 찬다)
     expect(a.liberation.uses).toBeGreaterThan(0);
-    const b = replayCombat(7, { enemy: normal, params: { ...params, liberationStartGauge: 50 } }, a.inputs);
+    const b = replayCombat(7, { enemy: normal, params: { ...params, liberationStartGauge: 90 } }, a.inputs);
     expect(b.tick).toBe(a.tick);
     expect(b.liberation.uses).toBe(a.liberation.uses);
     expect(b.enemy.hp).toBe(a.enemy.hp);

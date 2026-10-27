@@ -79,6 +79,16 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   walk('', f);
   // 블록 이름은 전투 화면과 같은 종족 무관 표기 (GDD 20장 v5.4: 옛 '포효'·'응축 일격' 등 금지)
   vars.voidBlockName = `${BLOCK_WORDS.void} 블록`;
+  // 공허 블록 (GDD 101장): 블록이 공허로 바뀔 확률·히든 진화체 피해
+  vars.voidChancePct = String(Math.round(COMBAT.voidChance * 100));
+  vars.voidChanceMaxPct = String(Math.round(COMBAT.voidChanceMax * 100));
+  vars.voidHiddenAttacks = String(COMBAT.voidPowerHiddenInAttacks);
+  vars.voidStunSeconds = String(COMBAT.voidStunSeconds);
+  // 막기 (GDD 101장 추가 결정): 체인 단계별 지속·경감, 막기·회복 개수 상한
+  vars.guardSecondsList = COMBAT.guardSecondsByChain.join('·');
+  vars.guardCutList = COMBAT.guardReductionByChain.map((x) => Math.round(x * 100)).join('·');
+  vars.heavyGuardCutList = COMBAT.heavyGuardReductionByChain.map((x) => Math.round(x * 100)).join('·');
+  vars.guardHealCap = String(COMBAT.guardHealTrayCap);
   delete vars.basicSkillName;
   vars.trayCapacity = String(COMBAT.trayCapacity);
   vars.chainMax = String(COMBAT.chainMultipliers.length);
