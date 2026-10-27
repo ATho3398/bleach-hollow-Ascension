@@ -8,7 +8,7 @@
         "shinigami": "들개 대허"
       },
       "hpInAttacks": 150,
-      "attackInAttacks": 0.35,
+      "attackInAttacks": 0.38,
       "element": "earth",
       "category": "physical",
       "statBias": {
@@ -46,7 +46,7 @@
         "shinigami": "현세의 대허"
       },
       "hpInAttacks": 150,
-      "attackInAttacks": 0.4,
+      "attackInAttacks": 0.56,
       "element": "fire",
       "category": "physical",
       "statBias": {
@@ -84,7 +84,7 @@
         "shinigami": "단가이의 문지기"
       },
       "hpInAttacks": 150,
-      "attackInAttacks": 0.55,
+      "attackInAttacks": 0.66,
       "element": "thunder",
       "category": "special",
       "statBias": {

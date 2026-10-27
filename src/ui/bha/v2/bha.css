@@ -441,3 +441,26 @@
 .bha-root .bha-v2rel.is-on .bha-v2rel__name{display:none}
 .bha-root .bha-v2rel.is-on .bha-v2rel__meta{flex:none;color:var(--bha-accent-hi);font-weight:700}
 .bha-root .bha-v2rel.is-ready .bha-gauge{display:none!important}
+
+/* ───────── 막기 게이지·[소모품]·[장비] (C.177, GDD 105장 수정 v5.233 6번 — 옛 C.174 막기·회복 칸 버튼 대체): 해방 알약 버튼(C.169) 모양, 범례 줄 오른쪽 해방 버튼 왼쪽 ─────────
+   막기 = 아이콘·이름·0→100% 막대(다 차면 역할 색으로 채워지고 강조), 소모품 = 남은 개수, 장비 = 쿨다운 초. 못 쓸 때도 자리는 그대로(흐리게).
+   범례 줄 오른쪽 끝 = 버튼 줄 왼쪽 끝(전투 화면이 버튼 폭을 재서 맞춘다, 옛 C.174 고정 right:392 대체). 루트 논리 폭이 좁으면(760 아래, 전투 화면이 .is-compact 를 붙인다) 소모품·장비는 이름을 숨기고 아이콘만 */
+.bha-root .bha-v2roles{position:absolute;top:3px;right:200px;height:28px;display:flex;gap:6px;z-index:2}
+.bha-root .bha-v2roles.is-alone{right:8px}
+.bha-root .bha-v2role{position:relative;display:flex;flex-direction:row;flex:none;width:auto;align-items:center;gap:5px;height:28px;padding:0 10px 0 6px;border-radius:14px;
+  font-family:inherit;font-size:var(--bha-fs-sm);color:var(--bha-text-2);cursor:default;white-space:nowrap}
+.bha-root .bha-v2role .bha-icon{width:16px;height:16px;flex:none;color:var(--role)}
+.bha-root .bha-v2role--guard{--role:var(--bha-guard)}
+.bha-root .bha-v2role--item{--role:var(--bha-heal)}
+.bha-root .bha-v2role--gear{--role:var(--bha-accent-hi)}
+.bha-root .bha-v2role__meta{font-size:var(--bha-fs-xs);color:var(--bha-text-3);min-width:0}
+.bha-root .bha-v2role__meta:empty{display:none}
+.bha-root .bha-v2role__bar{position:relative;width:34px;height:6px;border-radius:var(--bha-r-pill);border:1px solid var(--role);overflow:hidden;flex:none}
+.bha-root .bha-v2role__bar i{position:absolute;left:0;top:0;bottom:0;background:var(--role);opacity:.55}
+.bha-root .bha-v2role.is-full .bha-v2role__bar i{opacity:1}
+.bha-root .bha-v2role.is-ready{color:var(--bha-text-1);border-color:var(--role);cursor:pointer;box-shadow:0 0 0 1px var(--role)}
+.bha-root .bha-v2role.is-ready .bha-v2role__meta{color:var(--bha-text-1)}
+.bha-root .bha-v2role.is-disabled{opacity:.6}
+.bha-root .bha-v2role .bha-keycap{top:-7px;right:-4px}
+.bha-root .bha-v2roles.is-compact .bha-v2role--item .bha-v2role__name,.bha-root .bha-v2roles.is-compact .bha-v2role--gear .bha-v2role__name{display:none}
+.bha-root .bha-v2roles.is-compact .bha-v2role--item,.bha-root .bha-v2roles.is-compact .bha-v2role--gear{padding:0 8px 0 6px}

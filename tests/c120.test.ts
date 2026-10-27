@@ -47,7 +47,7 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     const s = newSaveData('hollow', 1);
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(49); // C.181
+    expect(SAVE_FORMAT_VERSION).toBe(50); // C.177
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
   });
 

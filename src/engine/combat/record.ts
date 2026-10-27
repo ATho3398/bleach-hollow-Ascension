@@ -51,5 +51,8 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     enemyCrits: s.enemyCrits ?? 0,
     abilityProcs: { ...s.abilityProcs },
     elementDamage: { ...zeroElementDamage(), ...s.params.elementDamage },
+    startHp: Math.round(Math.min(1, Math.max(0, s.params.playerStartHpFraction)) * 1000) / 1000,
+    itemUsed: s.itemUsed,
+    gearUses: s.inputs.filter((x) => x.input.type === 'gear').length,
   };
 }

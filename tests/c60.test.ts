@@ -35,7 +35,7 @@ const row = (s: SaveData, id: string) => [...goldRows(s, getFaction(s.factionId)
 
 describe('상점 데이터 (25-9 표)', () => {
   it('골드 11종·영옥 꾸밈 8분류, 가격은 balance.ts', () => {
-    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
+    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'battle-potion', 'battle-haste', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
     expect(CATEGORIES.map((c) => c.id).slice(0, 8)).toEqual(['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate']); // 2차 분류는 c61
     const count = (c: string) => COSMETIC_ITEMS.filter((x) => x.category === c).length;
     expect([count('aura'), count('tint'), count('trail'), count('fx'), count('bar'), count('shell'), count('plate')]).toEqual([4, 4, 3, 3, 3, 3, 3]);

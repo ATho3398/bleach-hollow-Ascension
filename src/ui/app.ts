@@ -34,7 +34,7 @@ import { rankLabel, rankResultView, rankView } from './rankView';
 import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
 import { absorbView } from './absorbView';
-import { battleView } from './battleView';
+import { battleView, type BattleViewOptions } from './battleView';
 import { arenaSceneBg, groundSceneBg, towerSceneBg } from './bha/sceneBg';
 import { applyTheme } from './bha/theme';
 import { speciesView, startView } from './startView';
@@ -82,7 +82,7 @@ import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorial
 import { showToast } from './bha/nest';
 import { carriedPet } from '../engine/pet';
 import { applyGearToParams, gearCarry } from '../engine/gear';
-import { gearDropText, gearNoticeOf, petNoticeOf } from '../inventory';
+import { battleItemEffectOf, gearDropText, gearNoticeOf, petNoticeOf, spendBattleItem } from '../inventory';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
 import { idleBadge, refreshIdleBadge, showIdlePanel, showIdleReturn } from './idleView';
@@ -964,6 +964,14 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
+  /** 전투 [소모품] (GDD 108장 3번·105장 수정 3): 장비 화면 소모품 칸에 든 것을 이 전투에 싣고, 쓰면 보관 개수 −1 후 저장. 칸이 비었거나 0개면 버튼 비활성 */
+  function armBattleItem(sv: SaveData, st: CombatState): BattleViewOptions['battleItem'] {
+    const it = battleItemEffectOf(sv);
+    st.params.battleItem = it;
+    if (!it) return undefined;
+    return { count: sv.shared.items[it.id] ?? 0, onUse: () => { spendBattleItem(sv, it.id); persist(); } };
+  }
+
   /** 탑 전투 화면 (결과에서 [다음 층]·[다시 도전]으로 올 때는 같은 자리를 바꿔 끼운다) */
   function towerBattle(faction: FactionConfig, f: TowerFloor, again = false): void {
     if (save && careBlocked(save)) return;
@@ -986,6 +994,7 @@ export function startApp(host: HTMLElement): void {
     const s = createTowerCombat(floor, params, Math.floor(Math.random() * 2 ** 32));
     setBgm(f.bossId ? 'boss' : f.kind === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
+      battleItem: armBattleItem(s0, s),
       tierIndex: s0.evolution.tierIndex,
       skinId: artSkinOf(s0),
       formId: s0.evolution.formId,
@@ -1155,6 +1164,7 @@ export function startApp(host: HTMLElement): void {
     // 보스전 (GDD 25-3): 음악 boss, 등장 이름 띠
     setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
+      battleItem: save ? armBattleItem(save, s) : undefined,
       tierIndex: save?.evolution.tierIndex,
       skinId: save ? artSkinOf(save) : undefined,
       formId: save?.evolution.formId,
@@ -1389,6 +1399,7 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
+      battleItem: save ? armBattleItem(save, s) : undefined,
       tierIndex: save?.evolution.tierIndex,
       skinId: save ? artSkinOf(save) : undefined,
       formId: save?.evolution.formId,
@@ -1436,6 +1447,7 @@ export function startApp(host: HTMLElement): void {
     applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정): 지면 사망
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
+      battleItem: armBattleItem(s0, s),
       tierIndex: s0.evolution.tierIndex,
       skinId: artSkinOf(s0),
       formId: s0.evolution.formId,

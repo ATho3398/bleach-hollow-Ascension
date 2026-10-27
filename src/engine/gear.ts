@@ -49,6 +49,8 @@ export interface GearCarry {
   elite: number;
   critDamage: number;
   shield: number;
+  /** 전투 [장비] 버튼 발동 효과 (GDD 105장 수정 4): 칸 순서로 첫 발동 장비 하나. 없으면 null */
+  active: { id: string; effect: 'activeShield' | 'activeBurst'; value: number } | null;
 }
 
 /** 새로 굴린 장비 (uid 없음 — 보관함에 넣을 때 붙는다) */
@@ -232,7 +234,7 @@ export function sellGearItem(state: GearState, uid: string): number | null {
 
 /** 빈 합계 */
 export function emptyCarry(): GearCarry {
-  return { stats: {}, crit: 0, family: {}, elite: 0, critDamage: 0, shield: 0 };
+  return { stats: {}, crit: 0, family: {}, elite: 0, critDamage: 0, shield: 0, active: null };
 }
 
 /** 장비 목록 → 전투 합계 */
@@ -248,6 +250,7 @@ export function carryOfItems(items: readonly Pick<GearItem, 'stats' | 'plus' | '
     else if (def.effect === 'elite') c.elite += it.special.value;
     else if (def.effect === 'critDamage') c.critDamage += it.special.value;
     else if (def.effect === 'shield') c.shield += it.special.value;
+    else if ((def.effect === 'activeShield' || def.effect === 'activeBurst') && !c.active) c.active = { id: def.id, effect: def.effect, value: it.special.value };
   }
   return c;
 }
@@ -271,6 +274,8 @@ export function applyGearToParams(params: Partial<CombatParams>, carry: GearCarr
   if (carry.crit > 0) params.critChance = (params.critChance ?? CX.critChance) + carry.crit;
   if (carry.critDamage > 0) params.critMultiplier = (params.critMultiplier ?? CX.critMultiplier) + carry.critDamage;
   if (carry.shield > 0) params.startShieldFraction = (params.startShieldFraction ?? 0) + carry.shield;
+  const a = carry.active;
+  if (a) params.activeGear = a.effect === 'activeShield' ? { id: a.id, effect: 'shield', seconds: GX.activeShieldSeconds, reduction: a.value } : { id: a.id, effect: 'burst', powerInAttacks: a.value };
   if (strong && carry.elite > 0) params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * (1 + carry.elite);
   if (params.families) {
     const fams = { ...params.families };

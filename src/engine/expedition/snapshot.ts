@@ -77,6 +77,8 @@ function validVariants(e: Record<string, unknown>): boolean {
   if (!isInt(e.goldBank) || !Array.isArray(e.goldLoot) || !e.goldLoot.every((g) => isObj(g) && isNum(g.amount) && isInt(g.lap, 1))) return false;
   if (!isObj(e.traitBoosts) || !Object.entries(e.traitBoosts).every(([id, v]) => knows(getTrait, id) && isNum(v))) return false;
   if (!isNum(e.nextShield) || typeof e.trapArmed !== 'boolean' || !isNum(e.restMult) || !isInt(e.bonusSoul)) return false;
+  // 이어 오는 체력 (GDD 107장, 세이브 형식 50): 0~1
+  if (!isNum(e.hpFraction) || (e.hpFraction as number) < 0 || (e.hpFraction as number) > 1) return false;
   const q = e.queuedBattle;
   if (q !== null && !(isObj(q) && isInt(q.cell, 1) && (q.cell as number) < L && (q.synergy === null || typeof q.synergy === 'string'))) return false;
   const d = e.draft;

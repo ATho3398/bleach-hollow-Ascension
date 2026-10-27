@@ -9,7 +9,7 @@ import {
   addEnhance, buildCombatParams, buildOffer, enhanceAttackMultiplier, enhanceGuardHealMultiplier, enhanceLevel, gainTrait, newBuild,
 } from '../src/engine/absorb';
 import {
-  BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, applyInput, createCombat, drainCombatEvents, healWeakenOf, spawnRatesOf, spawnTableOf, step,
+  BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, applyInput, basicSources, createCombat, drainCombatEvents, spawnRatesOf, spawnTableOf, step,
   type Block, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { createRng } from '../src/engine/rng';
@@ -40,11 +40,12 @@ const quiet = (s: CombatState) => {
 describe('84장 6번 블록 출현 = 타이머 하나 + 확률표', () => {
   const THREE = ['t-fire-a', 't-water-c', 't-earth-b']; // 조·탄·교
 
-  it('출현표: 흡수 특성·기본 공격·기본 막기·회복·공허가 한 장에 있고 합 1, 타이머는 하나', () => {
+  it('출현표: 흡수 특성·기본 공격·공허가 한 장에 있고 합 1, 타이머는 하나 (C.174 GDD 105장: 막기·회복은 버튼이라 표에 없다)', () => {
     const p = mk(build(...THREE)).params;
     const t = spawnTableOf(p);
     const ids = t.entries.map((e) => (e.kind === 'void' ? 'void' : e.source!.id));
-    for (const id of [...THREE, BASIC_SKILL_ID, BASIC_GUARD_ID, BASIC_HEAL_ID, 'void']) expect(ids).toContain(id);
+    for (const id of [...THREE, BASIC_SKILL_ID, 'void']) expect(ids).toContain(id);
+    for (const id of [BASIC_GUARD_ID, BASIC_HEAL_ID]) expect(ids).not.toContain(id);
     expect(t.entries.reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1);
     expect(typeof mk(build(...THREE)).spawnTimer).toBe('number');
   });
@@ -79,22 +80,20 @@ describe('84장 6번 블록 출현 = 타이머 하나 + 확률표', () => {
     [[], ['t-fire-a'], ['t-fire-a', 't-water-c'], THREE].forEach((ids, n) => expect(1 - spawnRatesOf(mk(build(...ids)).params).absorbedShare).toBeCloseTo(want[n]!, 2));
   });
 
-  it('막기·회복은 칸 수와 무관한 고정 몫 (속성 막기·회복 특성이 없어져 3칸 몸에서도 막기가 나온다)', () => {
+  it('막기·회복이 빠진 몫(freedRoleShare)은 공격 블록 생성 속도로 돌려준다 (C.174 GDD 105장, 옛 고정 몫 roleShare 대체)', () => {
     for (const ids of [[], THREE]) {
-      const t = spawnTableOf(mk(build(...ids)).params);
-      const skill = t.entries.filter((e) => e.kind === 'skill');
-      const tot = skill.reduce((a, e) => a + e.chance, 0);
-      const g = skill.filter((e) => e.source!.id === BASIC_GUARD_ID).reduce((a, e) => a + e.chance, 0) / tot;
-      expect(g).toBeCloseTo(BALANCE.provisional.blockPool.roleShare.guard, 3);
+      const p = mk(build(...ids)).params;
+      const a = spawnTableOf({ ...p, blockPool: { ...p.blockPool, freedRoleShare: 0 } });
+      const b = spawnTableOf(p);
+      expect(a.seconds / b.seconds).toBeCloseTo(1 / (1 - BALANCE.provisional.blockPool.freedRoleShare), 6);
     }
   });
 
-  it('공허 블록도 출현표의 한 칸 (C.173, 101장: 블록 하나가 공허 확률로 공허가 된다 — 간격은 그대로), 해방 중 표에는 공허가 없다', () => {
+  it('공허 블록도 출현표의 한 칸 (C.173, 101장: 블록 하나가 공허 확률로 공허가 된다 — 간격은 그대로)', () => {
     const p = mk(build('t-fire-a')).params;
     const v = spawnTableOf(p).entries.find((e) => e.kind === 'void')!;
     expect(v.chance).toBeCloseTo(CX.voidChance);
     expect(spawnTableOf({ ...p, voidChance: 0 }).seconds).toBeCloseTo(spawnTableOf(p).seconds);
-    expect(spawnTableOf(p, true).entries.some((e) => e.kind === 'void')).toBe(false);
   });
 });
 
@@ -103,10 +102,10 @@ describe('84장 2번 막기·회복의 대가', () => {
     const s = quiet(mk());
     s.player.attackTimer = 5;
     s.spawnTimer = 5;
-    s.tray = [blk(BASIC_GUARD_ID)];
-    applyInput(s, { type: 'use', cell: 0 });
-    expect(s.guard.ticks).toBeGreaterThan(5);
-    for (let i = 0; i < 5; i++) step(s);
+    s.guardGauge = 1;
+    applyInput(s, { type: 'guard' });
+    expect(s.guard.ticks).toBe(5);
+    for (let i = 0; i < 4; i++) step(s);
     expect(s.player.attackTimer).toBe(5);
     expect(s.spawnTimer).toBe(5);
     expect(drainCombatEvents(s).some((e) => e.kind === 'player-attack')).toBe(false);
@@ -115,30 +114,6 @@ describe('84장 2번 막기·회복의 대가', () => {
     expect(drainCombatEvents(s).some((e) => e.kind === 'player-attack')).toBe(true);
   });
 
-  it('회복 블록을 쓰면 3초 동안 내 모든 피해 −50% (평타·블록)', () => {
-    expect(CX.healWeakenSeconds).toBe(3);
-    expect(CX.healWeakenMultiplier).toBe(0.5);
-    const hit = (heal: boolean) => {
-      const s = quiet(mk({ blockPlayCrit: 0 }));
-      s.player.hp = s.player.maxHp * 0.5;
-      if (heal) {
-        s.tray = [blk(BASIC_HEAL_ID)];
-        applyInput(s, { type: 'use', cell: 0 });
-        expect(healWeakenOf(s)).toBe(0.5);
-      }
-      s.tray = [blk(BASIC_SKILL_ID, 'family-a')];
-      const before = s.enemy.hp;
-      applyInput(s, { type: 'use', cell: 0 });
-      return before - s.enemy.hp;
-    };
-    expect(hit(true)).toBeCloseTo(hit(false) * 0.5);
-    // 3초 뒤 풀린다
-    const s = quiet(mk());
-    s.tray = [blk(BASIC_HEAL_ID)];
-    applyInput(s, { type: 'use', cell: 0 });
-    for (let i = 0; i < 30; i++) step(s);
-    expect(healWeakenOf(s)).toBe(1);
-  });
 });
 
 describe('84장 3번 블록 플레이 보정', () => {
@@ -187,7 +162,7 @@ describe('84장 7번 막기·회복 속성 특성 삭제', () => {
     for (const el of ['water', 'earth', 'thunder', 'blood', 'poison', 'kyo', 'normal']) for (let i = 0; i < 100; i++) addEnhance(b, el);
     expect(enhanceGuardHealMultiplier(b)).toBeCloseTo(1 + EH.guardHealMax);
     const p = mk(buildCombatParams(b, 'hollow')).params;
-    const g = spawnTableOf(p).entries.find((e) => e.source?.id === BASIC_GUARD_ID)!.source!;
+    const g = basicSources(p)[1]!; // C.174: 막기 버튼 세기 (블록 출현표에는 없다)
     expect(g.element).toBeNull();
     expect(g.powerMultiplier).toBeCloseTo(BALANCE.provisional.blockPool.basicGuardRatio * (1 + EH.guardHealMax));
   });
@@ -240,7 +215,7 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
   });
 
   it('세이브: 강화 횟수가 저장·불러오기로 남고 깨진 값은 버린다. 형식 45(C.167)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(49); // C.181
+    expect(SAVE_FORMAT_VERSION).toBe(50); // C.177
     const s = newSaveData('hollow', 1);
     expect(s.build.enhance).toEqual({});
     s.build.enhance = { earth: 120, fire: 3 };

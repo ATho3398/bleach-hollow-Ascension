@@ -274,6 +274,8 @@ export interface ExpeditionState extends RiskState {
   traitBoosts: Record<string, number>;
   /** 다음 전투 시작 보호막 (최대 체력 비율) */
   nextShield: number;
+  /** 이어 오는 체력 (GDD 107장, 원정 형식 — 세이브 형식 50): 최대 체력 대비 비율. 전투가 끝난 체력이 다음 전투 시작 체력, 바퀴를 이어 돌아도 그대로, 둥지로 귀환하면 새 원정 = 1 */
+  hpFraction: number;
   /** 함정: 다음 전투 시작 체력 ↓·이기면 보상 ↑ */
   trapArmed: boolean;
   /** 사냥 무리 2연전: 다음 advance 에서 같은 칸에서 한 번 더 싸운다 */
@@ -438,6 +440,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     goldLoot: [],
     traitBoosts: {},
     nextShield: 0,
+    hpFraction: 1,
     trapArmed: false,
     queuedBattle: null,
     restMult: 1,
@@ -828,7 +831,7 @@ export function applyFrenzy(params: Partial<CombatParams>): void {
   params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * RX.frenzyDamageDealt;
   params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * RX.frenzyDamageTaken;
   params.evadeChance = Math.max(params.evadeChance ?? 0, RX.frenzyEvadeChance);
-  // 폭주 중에는 회복 블록이 안 나온다 (101장 추가 결정 2 2번) — 몫은 공격 블록들에
+  // 폭주 중에는 회복 버튼이 잠긴다 (101장 추가 결정 2 2번 → 105장)
   params.noHealSpawn = true;
 }
 
@@ -867,7 +870,19 @@ export function conditionFloor(exp: Pick<ExpeditionState, 'startCondition' | 'la
 export function startBattle(exp: ExpeditionState): CombatState {
   if (exp.phase !== 'battle' || !exp.pending) throw new Error('치를 전투가 없다');
   const boss = exp.pending.boss;
-  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params: exp.pending.params, ...(boss ? { boss: bossSetupOf(boss) } : {}) });
+  // 이어 온 체력 (GDD 107장 1번): 함정의 시작 체력 감소는 이어 온 체력에 곱한다
+  const params = { ...exp.pending.params, playerStartHpFraction: (exp.pending.params.playerStartHpFraction ?? 1) * hpFractionOf(exp) };
+  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params, ...(boss ? { boss: bossSetupOf(boss) } : {}) });
+}
+
+/** 지금 이어 온 체력 비율 (GDD 107장): 옛 중간 저장에 없으면 1 */
+export function hpFractionOf(exp: Pick<ExpeditionState, 'hpFraction'>): number {
+  return Math.min(1, Math.max(0, exp.hpFraction ?? 1));
+}
+
+/** 체력 비율 회복 (GDD 107장 3번): 최대 체력 대비 amount 만큼, 가득 위로 안 감 */
+function healCarry(exp: ExpeditionState, amount: number): void {
+  exp.hpFraction = Math.min(1, hpFractionOf(exp) + Math.max(0, amount));
 }
 
 /** 끝난 전투를 원정에 반영한다. 승리 → 이동 재개, 패배 → 원정 끝 */
@@ -893,9 +908,13 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 해방이 끝나며 오른 리스크 (GDD 22-5)
   if (battle.liberation.risk > 0) changeRisk(exp, battle.liberation.risk, 'liberation');
   if (battle.status === 'lost') {
+    exp.hpFraction = 0;
     endExpedition(exp, 'defeated', 'battle-lost');
     return record;
   }
+  // 이어 가는 체력 (GDD 107장 1·3번): 끝난 체력(해방이 풀린 뒤) 비율 + 승리 회복
+  exp.hpFraction = battle.player.maxHp > 0 ? Math.min(1, battle.player.hp / battle.player.maxHp) : 1;
+  healCarry(exp, PX.hpCarry.winHeal);
   // 장비 드롭 (GDD 91장 2번): 강적·보스 높게, 일반 낮게. 따로 만든 난수라 다른 굴림을 밀지 않는다
   rollGearDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
   // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지
@@ -1093,6 +1112,8 @@ export function finishRest(exp: ExpeditionState): void {
   exp.hunger = Math.max(0, exp.hunger - PX.restHunger * k * sp.hungerMult);
   changeRisk(exp, -RX.restRelief * k * sp.riskReliefMult, 'rest');
   exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition * k * sp.conditionMult);
+  // 웅덩이 체력 회복 (GDD 107장 3번 ②): 컨디션처럼 회복 배율·샘(회복 없음)을 따른다
+  healCarry(exp, PX.hpCarry.restHeal * k * sp.conditionMult);
   exp.restMult = 1;
   exp.restSpring = false;
   exp.elapsedSeconds += PX.restTimeTiles * EX.restSecondsPerTile;

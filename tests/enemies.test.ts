@@ -198,22 +198,22 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
       s.enemy.attackTimer = 1e9;
       wait(s, p.everySeconds + 0.2);
       const before = s.player.hp;
-      // 막기 지속이 짧다(GDD 101장): 첫 착탄 0.5초 전에 체인3 막기(강공격 100% 경감)
-      wait(s, p.castSeconds - 0.7);
+      // 막기 0.5초(GDD 105장 수정): 첫 착탄 0.4초 전에 막기 버튼(강공격 완전 막기)
+      wait(s, p.castSeconds - 0.4);
       if (guard) {
-        s.tray = [blk('basic-guard'), blk('basic-guard'), blk('basic-guard')];
-        expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
+        s.guardGauge = 1;
+        expect(applyInput(s, { type: 'guard' })).toBe(true);
       }
-      wait(s, 0.5 + p.followCastSeconds * (p.hits - 1) + 0.3);
+      wait(s, 0.4 + p.followCastSeconds * (p.hits - 1) + 0.3);
       return { taken: before - s.player.hp, guards: s.guardSuccesses, hits: events(s).filter((x) => x.kind === 'heavy-hit') };
     };
     const open = run(false);
     const guarded = run(true);
     expect(open.hits).toHaveLength(p.hits);
     expect(open.guards).toBe(0);
-    expect(guarded.guards).toBeGreaterThanOrEqual(1); // 막기 1초(체인3)가 첫 착탄을 덮는다 (남는 방은 다시 막아야 한다)
+    expect(guarded.guards).toBeGreaterThanOrEqual(1); // 막기 0.5초가 첫 착탄을 덮는다 (남는 방은 게이지가 다시 차야 막는다)
     expect(guarded.guards).toBeLessThan(p.hits);
-    expect(guarded.taken).toBeLessThan(open.taken * 0.85);
+    expect(guarded.taken).toBeLessThan(open.taken * 0.9);
   });
 
   it('방어 자세: 자세 중 내 블록 피해가 줄고, 블록을 쓸 때마다 반격을 받으며, 자세가 풀리면 원래대로 돌아온다', () => {
@@ -247,7 +247,7 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
     expect(hp2 - s.player.hp).toBe(0); // 자세가 아니면 반격 없음
   });
 
-  it('방어 자세 반격은 막기 상태에서 경감된다', () => {
+  it('방어 자세 반격은 막기로 줄지 않는다 (C.177 GDD 105장 수정 2: 막기는 강공격 전용)', () => {
     const e = ofKind('elite', 'stance');
     const p = pat(e, 'stance');
     const counterTaken = (guardFirst: boolean) => {
@@ -259,8 +259,8 @@ describe('강적 패턴 3종류: 강공격↔봉인 / 연속 강공격 / 방어 
       applyInput(s, { type: 'use', cell: 0 });
       return before - s.player.hp;
     };
-    // basic-guard = 막기 블록: 쓰는 순간 막기 상태가 되어 그 블록이 부른 반격이 경감된다
-    expect(counterTaken(true)).toBeLessThan(counterTaken(false) * 0.9); // 체인1 막기 = 일반 공격 −20% (GDD 101장)
+    // basic-guard = 옛 막기 블록: 쓰는 순간 막기 상태가 되어도 반격(일반 공격)은 그대로
+    expect(counterTaken(true)).toBeGreaterThan(counterTaken(false) * 0.85);
   });
 
   it('방어 자세: 마무리 일격으로 적이 쓰러지면 반격은 없다', () => {

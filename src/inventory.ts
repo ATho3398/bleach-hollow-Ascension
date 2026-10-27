@@ -17,6 +17,7 @@ import type { GearRecord, PetRecord } from './engine/runLog';
 import { GEAR_GRADE_NAMES, GEAR_SLOTS, getGearSpecial, slotsForKind, type GearGrade, type GearKind, type GearSlot } from './data/gear';
 import { autoEquipPlan, enhanceCost, enhanceGear, equipGear, equippedSlotOf, findGear, gearStatsOf, sellGearItem, unequipGear, type GearItem, type GearRoll, type GearStat } from './engine/gear';
 import { statName } from './data/elements';
+import type { BattleItemEffect } from './engine/combat';
 
 const SX = BALANCE.shop;
 const COND_MAX = BALANCE.provisional.expedition.conditionMax;
@@ -293,6 +294,8 @@ export function gearSpecialText(it: Pick<GearItem, 'special'>, faction: Pick<Fac
     case 'elite': return `강적·보스에게 피해 +${pct(v)}`;
     case 'critDamage': return `치명 피해 +${Math.round(v * 100) / 100}배`;
     case 'shield': return `전투 시작 보호막 (최대 체력 ${pct(v)})`;
+    case 'activeShield': return `발동 ${def.name ?? ''}: ${BALANCE.provisional.gear.activeShieldSeconds}초 받는 피해 −${pct(v)} (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
+    case 'activeBurst': return `발동 ${def.name ?? ''}: 기본 공격 ${v}회분 피해 (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
   }
 }
 
@@ -371,6 +374,21 @@ export function gearDropText(roll: GearRoll, faction: Pick<FactionConfig, 'gearS
 
 /** 전투용 소모품 품목 id (GDD 108장 3번): 상점 품목 데이터 battle 표시가 있는 것 */
 export const BATTLE_ITEM_IDS: readonly string[] = GOLD_ITEMS.filter((g) => g.battle).map((g) => g.id);
+
+/** 전투에 싣는 소모품 칸 효과 (GDD 108장 3번·105장 수정 3): 칸에 든 것이 있고 1개 이상이면 그 효과, 아니면 null (버튼 비활성) */
+export function battleItemEffectOf(save: Pick<SaveData, 'shared'>): BattleItemEffect | null {
+  const id = save.shared.battleItem;
+  const b = id ? BALANCE.provisional.battleItems[id] : undefined;
+  if (!id || !b || (save.shared.items[id] ?? 0) <= 0) return null;
+  return b.effect === 'heal' ? { id, effect: 'heal', fraction: b.fraction } : { id, effect: 'haste', seconds: b.seconds, spawnMult: b.spawnMult };
+}
+
+/** 전투에서 [소모품]을 썼다: 칸의 소모품 1개를 줄인다 (0 이 되어도 칸은 그대로, 흐리게) */
+export function spendBattleItem(save: Pick<SaveData, 'shared'>, id: string): void {
+  const n = save.shared.items[id] ?? 0;
+  if (n <= 1) delete save.shared.items[id];
+  else save.shared.items[id] = n - 1;
+}
 
 /** 장비 화면 소모품 칸에 넣기·빼기 (GDD 108장 3번): null = 빼기. 전투용이 아니면 false. 원정 중에는 못 바꾼다(장비와 같이). 0개여도 넣어 둘 수 있다(칸은 흐리게) */
 export function setBattleItem(save: SaveData, id: string | null): boolean {

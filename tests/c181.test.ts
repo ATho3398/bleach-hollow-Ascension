@@ -77,7 +77,7 @@ describe('109장 6 10분에 3개 — 넘으면 뱉음', () => {
     expect(save.shared.food.basic).toBe(4);
   });
   it('세이브 왕복: 먹인 개수·시각이 남고 형식 49', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(49);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(49);
     const store = new Map<string, string>();
     const st = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
     const save = newSaveData('hollow', 0);

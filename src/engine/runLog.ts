@@ -63,7 +63,7 @@ export function emptyLegacyMatches(): Record<LegacyTileRole, number> {
 }
 
 /** 마무리 일격(적을 쓰러뜨린 공격) 종류 (C.6) */
-export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo' | 'dot' | 'liberation';
+export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo' | 'dot' | 'liberation' | 'gear';
 
 export interface BattleRecord {
   runId: number;
@@ -136,6 +136,10 @@ export interface BattleRecord {
   abilityProcs?: Partial<Record<string, number>>;
   /** 그 판의 속성 피해 % (C.101, GDD 48장 6번): 속성 id(노멀 + 기본 원소) → %. 옛 기록은 없음(= 모두 0) */
   elementDamage?: Record<string, number>;
+  /** C.177 (세이브 형식 50, GDD 107장 7번): 시작 체력 비율(최대 체력 대비, 원정에서 이어 온 체력·함정 반영)·소모품·장비 발동을 썼는가. 옛 기록은 없음 */
+  startHp?: number;
+  itemUsed?: boolean;
+  gearUses?: number;
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */

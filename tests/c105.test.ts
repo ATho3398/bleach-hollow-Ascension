@@ -66,35 +66,25 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
     expect(physSpawnSecondsOf(b.params)).toBeNull();
     expect(physSpawnSecondsOf({ ...a.params, blockSpawnMultiplier: 2 })).toBeCloseTo(PB.spawnSeconds / 2);
     // C.173 (101장): 블록 하나가 공허 확률로 공허가 되므로 실제 몫은 × (1 − 공허 확률)
-    expect(spawnRatesOf({ ...a.params, voidChance: 0, voidChanceBonus: 0 }).phys).toBeCloseTo(1 / PB.spawnSeconds);
+    // C.174 (GDD 105장): 막기·회복이 빠진 몫(freedRoleShare)을 공격 블록(물공 포함) 속도로 돌려준다
+    expect(spawnRatesOf({ ...a.params, voidChance: 0, voidChanceBonus: 0 }).phys).toBeCloseTo(1 / PB.spawnSeconds / (1 - BALANCE.provisional.blockPool.freedRoleShare));
     expect(spawnRatesOf(b.params).phys).toBe(0);
   });
 
-  it('기본 타이머 풀: 물공 몸은 막기·회복만(합 1), 보통 몸은 blockPoolOf 그대로 (충전용 전체 풀에는 공격이 남는다)', () => {
+  it('기본 타이머 풀: 물공 몸은 없음(C.174 GDD 105장: 막기·회복은 버튼), 보통 몸은 blockPoolOf 그대로 (충전용 전체 풀에는 공격이 남는다)', () => {
     const a = earthBody();
-    const pool = basicTimerPoolOf(a.params);
-    expect(pool.map((e) => e.source.id).sort()).toEqual([BASIC_GUARD_ID, BASIC_HEAL_ID]);
-    expect(pool.reduce((s, e) => s + e.chance, 0)).toBeCloseTo(1);
+    expect(basicTimerPoolOf(a.params)).toEqual([]);
     expect(blockPoolOf(a.params).filter((e) => e.source.id === BASIC_SKILL_ID)).toHaveLength(3);
     const b = plainBody();
     expect(basicTimerPoolOf(b.params)).toEqual(blockPoolOf(b.params));
   });
 
-  it('기본 타이머 간격: 물공 몸은 (1 ÷ 막기·회복 가중 몫)만큼 늘어 막기·회복 속도는 그대로, 흡수 타이머(44-3)는 그대로', () => {
-    const a = earthBody();
-    const b = plainBody();
-    const W = BALANCE.provisional.blockPool.basicWeights;
-    const restShare = (W.guard + W.heal) / (W.attack * 3 + W.guard + W.heal);
-    expect(basicSpawnSecondsOf(a.params)).toBeCloseTo(basicSpawnSecondsOf(b.params) / restShare);
-    expect(spawnRatesOf(a.params).absorbed).toBeCloseTo(spawnRatesOf(b.params).absorbed);
-  });
-
-  it('물공 블록 개수 기대치 ≈ 시간 ÷ spawnSeconds (C.136: 출현표 확률이라 ±12%), 기본 몫에서는 공격이 안 나오고 막기·회복 수는 보통 몸과 비슷', () => {
+  it('물공 블록 개수 기대치 ≈ 시간 ÷ spawnSeconds (C.136: 출현표 확률이라 ±12%), 기본 몫에서는 공격이 안 나오고 막기·회복 블록은 없다(C.174)', () => {
     const SEC = 600;
     const a = earthBody();
     const outA = spawnedIn(a, SEC);
     const physA = outA.filter((x) => x.traitId === BASIC_SKILL_ID);
-    const expected = SEC / PB.spawnSeconds;
+    const expected = SEC / PB.spawnSeconds / (1 - BALANCE.provisional.blockPool.freedRoleShare);
     expect(physA.length).toBeGreaterThanOrEqual(expected * 0.85);
     expect(physA.length).toBeLessThanOrEqual(expected * 1.15);
     expect(a.physSpawned).toBe(physA.length);
@@ -102,16 +92,12 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
     expect(new Set(physA.map((x) => x.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
     // C.136 (GDD 84장 6번): 옛 "60초 창마다 거의 같은 개수(보장된 타이머)"는 확률표로 바뀌어 없앴다
     const b = earthBody();
-    // 막기·회복 (C.136, GDD 84장 7번): 출현표의 고정 몫 — 기대치(spawnRatesOf.role)와 ±12% (긴 창으로 추첨 흔들림을 누른다)
+    // 막기·회복은 버튼 (C.174, GDD 105장): 블록으로는 나오지 않는다
     const LONG = 6000;
     const outA2 = spawnedIn(earthBody(), LONG);
     const outP = spawnedIn(plainBody(), LONG);
     const rest = (out: typeof outA) => out.filter((x) => x.traitId === BASIC_GUARD_ID || x.traitId === BASIC_HEAL_ID).length;
-    for (const [out, body] of [[outA2, earthBody()], [outP, plainBody()]] as const) {
-      const want = spawnRatesOf({ ...body.params, voidChance: 0, voidChanceBonus: 0 }).role * LONG; // spawnedIn 은 공허 0
-      expect(rest(out)).toBeGreaterThan(want * 0.88);
-      expect(rest(out)).toBeLessThan(want * 1.12);
-    }
+    for (const out of [outA2, outP]) expect(rest(out)).toBe(0);
     expect(outA2.some((x) => x.traitId === BASIC_SKILL_ID)).toBe(true);
     // 흡수 특성 블록 수는 두 몸 모두 흡수 몫 기대치 ±12% (물공 몫이 붙어도 흡수 몫은 그대로)
     const absorbed = (out: typeof outA) => out.filter((x) => x.traitId && !x.traitId.startsWith('basic-')).length;

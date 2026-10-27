@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { ENEMIES } from '../src/data/enemies';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
-import { canLiberate, createCombat, defaultCombatParams, liberationStartGaugeOf, type CombatParams, liberationBlocksOf, spawnTableOf, step, type CombatState } from '../src/engine/combat';
+import { canLiberate, createCombat, defaultCombatParams, liberationStartGaugeOf, type CombatParams, spawnTableOf, step, type CombatState } from '../src/engine/combat';
 import { createExpedition } from '../src/engine/expedition';
 import { accrueIdle, applyAbsence, claimIdle, idleClaimable, newSaveData, recordExpedition, tickIdle, type SaveData } from '../src/game';
 import { liberationHint } from '../src/ui/labels';
@@ -100,28 +100,20 @@ describe('95장 B2 해방 개선', () => {
     expect(s.liberation.uses).toBe(0);
   });
 
-  it('해방 중 블록 = 장착 본체 블록 → 장착이 없으면 기본 블록 (98장 B: 해방 칸 폐지)', () => {
+  it('해방 중에도 평소 출현표 그대로, 간격만 빨라진다 (106장 4 확정 v5.236)', () => {
     const b = newBuild();
     gainTrait(b, 't-thunder-c');
     gainTrait(b, 't-fire-a');
     const p: CombatParams = { ...defaultCombatParams(), ...buildCombatParams(b, 'hollow') };
-    const lib = liberationBlocksOf(p);
-    expect(lib.source).toBe('body');
-    expect(lib.skills.map((x) => x.id).sort()).toEqual(['t-fire-a', 't-thunder-c']);
-    const ids = spawnTableOf(p, true).entries.map((e) => e.source?.id).sort();
-    expect(ids).toEqual(['t-fire-a', 't-thunder-c']);
-    expect(liberationBlocksOf({ skills: [] }).source).toBe('basic');
+    const ids = spawnTableOf(p).entries.map((e) => e.source?.id ?? 'void');
+    expect(ids).toContain('t-fire-a');
+    expect(ids.some((id) => id !== 't-fire-a' && id !== 't-thunder-c')).toBe(true); // 기본 블록·공허도 그대로
   });
 
-  it('설명 한 줄: 무엇으로 차는지 + 해방 중 나오는 블록', () => {
-    const f = getFaction('hollow');
-    const b = newBuild();
-    gainTrait(b, 't-thunder-c');
-    const p: CombatParams = { ...defaultCombatParams(), ...buildCombatParams(b, 'hollow') };
-    const t = liberationHint(f, p);
+  it('설명 한 줄: 무엇으로 차는지 + 해방 중 블록이 빠르게', () => {
+    const t = liberationHint();
     expect(t).toContain('주고받은 피해');
-    expect(t).toContain('해방 중 장착 블록(탄)이 빠르게');
-    expect(liberationHint(f, { skills: [] })).toContain('기본 블록');
+    expect(t).toContain('해방 중 블록이 빠르게');
   });
 });
 
@@ -132,27 +124,26 @@ describe('95장 B2 C.166·C.168 후속: 해방 순간 블록 1개(C.166 2개 →
     gainTrait(b, 't-thunder-c');
     return createCombat(5, { enemy: elite, params: buildCombatParams(b, 'hollow') });
   };
-  it('빈 바: 누르는 순간 장착 블록이 바로 들어온다', () => {
+  it('빈 바: 누르는 순간 평소 출현표의 블록 하나가 바로 들어온다 (C.177 GDD 106장 4)', () => {
     const s = mk();
     s.tray = [];
     s.liberation.gauge = 100;
     step(s, { type: 'liberate' });
     expect(LB.instantBlocks).toBe(1);
     expect(s.tray.length).toBeGreaterThanOrEqual(1);
-    expect(s.tray[0]!.traitId).toBe('t-thunder-c');
+    expect(s.tray[0]!.kind).toBe('skill');
   });
-  it('가득 찬 바: 오른쪽 끝 기본 막기·회복부터 밀어낸다', () => {
+  it('가득 찬 바: 맨 오른쪽 옛 블록을 밀어낸다', () => {
     const s = mk();
     const blk = (traitId: string) => ({ uid: s.nextUid++, kind: 'skill' as const, traitId, family: null, element: null });
     s.tray = [blk('basic-heal'), blk('basic-skill'), blk('basic-skill'), blk('basic-guard'), blk('basic-skill'), blk('basic-skill'), blk('basic-skill'), blk('basic-skill')];
     s.liberation.gauge = 100;
     step(s, { type: 'liberate' });
     expect(s.tray).toHaveLength(s.params.trayCapacity);
-    expect(s.tray.some((x) => x.traitId === 'basic-guard')).toBe(false); // 오른쪽에 가까운 기본 막기·회복부터
-    expect(s.tray.some((x) => x.traitId === 'basic-heal')).toBe(true);
-    expect(s.tray[s.tray.length - 1]!.traitId).toBe('t-thunder-c');
+    expect(s.tray[0]!.traitId).toBe('basic-heal');
+    expect(s.tray.slice(0, 7).map((x) => x.traitId)).toEqual(['basic-heal', 'basic-skill', 'basic-skill', 'basic-guard', 'basic-skill', 'basic-skill', 'basic-skill']);
   });
-  it("해방 6초 동안 블록 약 6개 (특성 1, 안 누름 — 순간 1개 + 생성 ×1.8)", () => {
+  it("해방 6초 동안 블록 약 5개 (특성 1, 안 누름 — 순간 1개 + 생성 ×1.8. C.174: 막기·회복 블록 몫이 빠져 평소 생성 간격이 길어져 약 6 → 5)", () => {
     let tot = 0;
     for (let seed = 1; seed <= 10; seed++) {
       const s = createCombat(seed, { enemy: elite, params: buildCombatParams((() => { const b = newBuild(); gainTrait(b, 't-thunder-c'); return b; })(), 'hollow') });
@@ -163,6 +154,6 @@ describe('95장 B2 C.166·C.168 후속: 해방 순간 블록 1개(C.166 2개 →
       while (s.liberation.ticksLeft > 0 && s.status === 'playing') { s.events.length = 0; step(s, null); n += s.events.filter((e) => e.kind === 'spawn').length; }
       tot += n;
     }
-    expect(tot / 10).toBeGreaterThanOrEqual(5.5);
+    expect(tot / 10).toBeGreaterThanOrEqual(4.5);
   });
 });

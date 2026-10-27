@@ -1,10 +1,10 @@
 // 자동 점검 봇 (밸런스 점검·테스트용). 사람처럼 일정 간격(임시 0.5초)마다 입력 하나만 한다.
-// 순서: 해방(게이지 가득) → 강공격 예고엔 막기 → 위험하면 회복 → 약점 계통으로 마무리 → 체인3 사용 → 다른 블록을 먼저 써서 같은 블록 붙이기 → 가득 차면 하나 쓰기
+// 순서: 해방(게이지 가득) → 강공격 예고엔 막기(게이지 가득일 때) → 위험하면 소모품 → 장비 발동 → 약점 계통으로 마무리 → 체인3 사용 → 다른 블록을 먼저 써서 같은 블록 붙이기 → 가득 차면 하나 쓰기
 // 블록 순서는 바꿀 수 없다(GDD 17-2): 체인은 '붙은 블록 하나를 클릭'하거나 '끼어 있는 다른 블록을 먼저 써서 같은 블록을 붙이는' 것으로만 만든다.
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
 import { hasSpecialActions } from '../../data/enemies';
 import {
-  blockDamage, blockEffect, canLiberate, maxChain, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
+  blockDamage, blockEffect, canGuard, canLiberate, canUseGear, canUseItem, halted, maxChain, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
 } from './combat';
 import { createRng, nextFloat } from '../rng';
 import { chainGroup, runAt, type Block, type Tray } from './tray';
@@ -16,7 +16,7 @@ export interface BotOptions {
   actEverySeconds?: number;
   /** false 면 이번 입력에서 같은 블록 붙이기(끼어 있는 블록 먼저 쓰기)를 하지 않는다 (사람형 봇의 "체인 정리" 실패). 기본 true */
   allowJoin?: boolean;
-  /** false 면 이번 입력에서 막기 블록을 쓰지 않는다 (사람형 봇의 막기 실패·반응 전). 기본 true */
+  /** false 면 이번 입력에서 막기를 쓰지 않는다 (사람형 봇의 막기 실패·반응 전). 기본 true */
   allowGuard?: boolean;
   /** false 면 콤보 연속을 이어 가는 중에도 기다리지 않고 다른 블록을 쓴다 (콤보를 모르는 플레이). 기본 true */
   comboHold?: boolean;
@@ -95,12 +95,11 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
 
   // 0. 해방: 게이지가 차면 바로 (GDD 83장)
   if (opt.liberate !== false && canLiberate(s)) return { type: 'liberate' };
-  // 1. 강공격 예고 중이고 막기 상태가 착탄까지 못 버티면 막기 블록 — 막기가 짧아(GDD 101장, 체인1 0.7초) 착탄이 막기 지속 안으로 들어왔을 때
+  // 1. 강공격 예고 중이고 착탄이 막기 지속(0.5초, GDD 105장 수정) 안으로 들어왔으면 막기 — 게이지가 다 찼을 때만
   const cast = s.enemy.cast;
-  if (cast && opt.allowGuard !== false && s.guard.ticks <= cast.ticks && cast.ticks <= guardWindowTicks(s)) {
-    const g = ofRole('guard')[0];
-    if (g) return use(g);
-  }
+  if (cast && opt.allowGuard !== false && cast.ticks < guardWindowTicks(s) && canGuard(s)) return { type: 'guard' };
+  // 막기·경직 중에는 블록을 쓸 수 없다 (GDD 105장 1번)
+  if (halted(s)) return null;
   // 1.5 상대가 방어 자세면(블록 피해 감소 + 쓸 때마다 반격) 자세가 풀릴 때까지 블록을 아낀다: 마무리 가능하면 쓰고, 같은 블록만 붙이고, 바가 가득 차면 하나 쓴다
   if (s.enemy.stance && !opt.ignoreStance) {
     const kill = skills.find((c) => blockDamage(s, c.b, groupSize(s, c)) >= s.enemy.hp);
@@ -116,11 +115,10 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   // 2. 콤보 블록·해방 블록은 바로
   const special = all.find((c) => c.b.kind === 'combo' || c.b.kind === 'liberation');
   if (special) return use(special);
-  // 3. 체력이 절반 아래면 회복
-  if (s.player.hp < s.player.maxHp * 0.5) {
-    const h = ofRole('heal')[0];
-    if (h) return use(h);
-  }
+  // 3. 소모품 (GDD 105장 수정 3): 회복약은 체력이 40% 아래면, 각성은 바로. 장비 발동(4): 쿨다운이 끝나면 바로
+  const item = p.battleItem;
+  if (item && canUseItem(s) && (item.effect === 'haste' || s.player.hp < s.player.maxHp * 0.4)) return { type: 'item' };
+  if (canUseGear(s)) return { type: 'gear' };
   // 4. 약점 계통 블록으로 마무리할 수 있으면 (흡수 조건)
   const finisher = skills.find((c) => {
     const g = groupSize(s, c);
@@ -169,7 +167,9 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
 export function playCombatBot(s: CombatState, opt: BotOptions = {}): CombatState {
   const every = ticksOf(s.params, opt.actEverySeconds ?? 0.5);
   while (s.status === 'playing') {
-    step(s, s.tick % every === 0 ? botInput(s, opt) : null);
+    // 막기 창 (GDD 105장 수정: 0.5초)은 입력 간격과 같아 간격 틱에만 보면 늘 놓친다 — 착탄이 막기 지속 안에 들어온 틱에는 바로 본다
+    const urgent = opt.allowGuard !== false && s.enemy.cast !== null && s.enemy.cast.ticks < guardWindowTicks(s) && canGuard(s);
+    step(s, s.tick % every === 0 || urgent ? botInput(s, opt) : null);
     s.events.length = 0;
   }
   return s;
@@ -187,9 +187,9 @@ export interface HumanBotOptions extends BotOptions {
   stanceAware?: number;
 }
 
-/** 체인 1 막기가 버티는 틱: 착탄이 이 안으로 들어오면 막는다 */
+/** 막기가 버티는 틱: 착탄이 이보다 가까우면 막는다 (막기 틱은 착탄 틱 앞에 줄어들어 같으면 착탄 때 이미 풀린다 — 그래서 < ) */
 function guardWindowTicks(s: CombatState): number {
-  return ticksOf(s.params, s.params.guardSecondsByChain[0] ?? 0);
+  return ticksOf(s.params, s.params.guardSeconds);
 }
 
 export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, number], guardSuccess: 1, joinChance: 0.5, stanceAware: 0.5 };
@@ -214,7 +214,7 @@ export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): Comb
       nextAct = Math.min(nextAct, react.at);
     }
     // 막기 창 (GDD 101장): 예고를 본 뒤 착탄이 막기 지속 안에 들어오는 틱에 한 번 더 손을 쓴다
-    if (react && react.ok && s.enemy.cast && s.tick >= react.at && s.enemy.cast.ticks <= guardWindowTicks(s) && s.guard.ticks <= s.enemy.cast.ticks) {
+    if (react && react.ok && s.enemy.cast && s.tick >= react.at && s.enemy.cast.ticks < guardWindowTicks(s) && canGuard(s)) {
       nextAct = Math.min(nextAct, s.tick);
     }
     if (!s.enemy.cast) react = null;

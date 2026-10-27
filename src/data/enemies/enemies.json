@@ -257,7 +257,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   },
@@ -421,7 +421,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   },
@@ -585,7 +585,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   },
@@ -748,7 +748,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   },
@@ -912,7 +912,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   },
@@ -1076,7 +1076,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   },
@@ -1239,7 +1239,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   },
@@ -1403,7 +1403,7 @@
       "everySeconds": 9,
       "stanceSeconds": 5,
       "blockDamageMultiplier": 0.4,
-      "counterInAttacks": 0.42,
+      "counterInAttacks": 0.3,
       "provisional": true
     }
   }

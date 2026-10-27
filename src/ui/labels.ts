@@ -5,7 +5,7 @@ import { BALANCE } from '../config/balance';
 import { BLOCK_WORDS, familyOf, type BlockRole, type FactionConfig } from '../engine/faction';
 import { elementName } from '../data/elements';
 import type { SkillRole } from '../data/schema';
-import { liberationBlocksOf, type CombatParams } from '../engine/combat';
+import type { CombatParams } from '../engine/combat';
 import { fixParticles } from '../engine/josa';
 
 export { BLOCK_WORDS };
@@ -92,13 +92,9 @@ export function liberationBlockLabel(factionId: string, element: string | null |
   return element ? `${blockElementName(element, factionId)}_${BLOCK_WORDS.liberation}` : BLOCK_WORDS.liberation;
 }
 
-/** 해방 설명 한 줄 (GDD 95장 B2 ③·98장 B): 게이지가 무엇으로 차는지 + 해방 중에 나오는 블록(장착 블록 → 없으면 기본 블록, liberationBlocksOf) */
-export function liberationHint(f: Pick<FactionConfig, 'families'>, p: Pick<CombatParams, 'skills'>): string {
-  const lib = liberationBlocksOf(p);
-  const names = [...new Set(lib.skills.map((x) => skillBlockLabel(f, x.family, x.role)).filter((x): x is string => !!x))].join('·');
-  // 범례 줄 끝에 한 줄 — 짧게 (예 '블록·주고받은 피해로 참 · 해방 중 장착 블록(탄·조)이 빠르게')
-  const what = lib.source === 'basic' || !names ? '기본 블록이' : `장착 블록(${names})이`;
-  return `블록·주고받은 피해로 참 · 해방 중 ${what} 빠르게`;
+/** 해방 설명 한 줄 (GDD 95장 B2 ③·106장 4 확정): 게이지가 무엇으로 차는지 + 해방 중 블록이 빠르게 나옴(평소 출현표 그대로) */
+export function liberationHint(): string {
+  return '블록·주고받은 피해로 참 · 해방 중 블록이 빠르게 나옴';
 }
 
 /** 콤보 블록 표시 이름 (v5.4 `콤보_계열`). 계열을 모르면 `콤보` */

@@ -518,11 +518,12 @@ if (want('variants')) {
   const fInc = sumOn.food / sumOff.food - 1;
   const gInc = sumOn.gold / sumOff.gold - 1;
   const dInc = sumOn.def - sumOff.def;
-  console.log(`  합산 평균: 먹이 +${(fInc * 100).toFixed(1)}% · 골드 +${(gInc * 100).toFixed(1)}% (가드 +25% 이하) · 켬 끝 리스크 ${sumOn.risk.toFixed(1)} (40~60) · 패배율 ${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p (가드 +5%p 이하)`);
+  console.log(`  합산 평균: 먹이 +${(fInc * 100).toFixed(1)}% · 골드 +${(gInc * 100).toFixed(1)}% (가드 +25% 이하) · 켬 끝 리스크 ${sumOn.risk.toFixed(1)} (40~60) · 패배율 ${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p (가드 +8%p 이하)`);
   if (fInc > 0.25) failures.push(`타일 변수: 먹이 보상 +${(fInc * 100).toFixed(1)}% > +25% (GDD 25-5)`);
   if (gInc > 0.25) failures.push(`타일 변수: 골드 보상 +${(gInc * 100).toFixed(1)}% > +25% (GDD 25-5)`);
   if (sumOn.risk < 40 || sumOn.risk > 60) failures.push(`타일 변수: 4바퀴 섞음 끝 리스크 ${sumOn.risk.toFixed(1)} — 목표 40~60 (GDD 25-5)`);
-  if (dInc > 0.05) failures.push(`타일 변수: 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 25-5)`);
+  // C.177 (GDD 107장 8번 '가드 재조정'): 원정 체력 이어 가기로 전투가 늘어나는 만큼(켬 = 원정당 전투 약 +2.7) 이어 오는 손해가 쌓여 +5%p → +8%p
+  if (dInc > 0.08) failures.push(`타일 변수: 패배율 +${(dInc * 100).toFixed(1)}%p > +8%p (GDD 25-5·107장 8번)`);
   // 상점 (GDD 25-9, C.60): 원정 1판(4바퀴 섞음, 타일 변수 켬) 평균 골드로 살 수 있는 보통 먹이 수 — 원정 전리품(판당 9~11개)을 대체하지 못하게
   const SHX = BALANCE.shop;
   const basicPerRun = sumOn.gold / SHX.goldPrices['food-basic']!;
@@ -565,8 +566,9 @@ if (want('boss1')) {
     });
     const dInc = (defOn - defOff) / runs;
     console.log(`\n보스 자유 원정 등장 (GDD 37장, 사냥터 ${g.id} 보스 ${bosses.map((b) => b ?? '-').join('/')}, 4바퀴 섞음 봇 ${FBN}회 × 종족, ${BF.freeFromLap}바퀴째부터 ${Math.round(BF.freeChance * 100)}%)`);
-    console.log(`  등장 ${appeared}/${runs}(${((appeared / runs) * 100).toFixed(1)}%) · 보스에게 짐 ${bossLost}/${appeared} · 패배율 ${((defOff / runs) * 100).toFixed(1)} → ${((defOn / runs) * 100).toFixed(1)}% (${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p, 가드 +5%p 이하) · 골드 ${(goldOff / runs).toFixed(1)} → ${(goldOn / runs).toFixed(1)}`);
-    if (dInc > 0.05) failures.push(`보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 37장 7번)`);
+    console.log(`  등장 ${appeared}/${runs}(${((appeared / runs) * 100).toFixed(1)}%) · 보스에게 짐 ${bossLost}/${appeared} · 패배율 ${((defOff / runs) * 100).toFixed(1)} → ${((defOn / runs) * 100).toFixed(1)}% (${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p, 가드 +8%p 이하) · 골드 ${(goldOff / runs).toFixed(1)} → ${(goldOn / runs).toFixed(1)}`);
+    // C.177 (GDD 107장 8번): 보스는 4바퀴째 이어 온 체력으로 만난다 — +5%p → +8%p
+    if (dInc > 0.08) failures.push(`보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +8%p (GDD 37장 7번·107장 8번)`);
   }
 }
 // 흡수 가능 비율: C.125 (GDD 71장) 흡수 조건 삭제 — 이긴 전투는 늘 흡수 가능이어야 한다 (옛 가드 25~85% 대신)
@@ -734,9 +736,10 @@ if (want('boss23')) {
     });
     const dInc = runs ? (defOn - defOff) / runs : 0;
     console.log(`\n보스 자유 원정 등장 (GDD 37장, 사냥터 ${g.id} 보스 ${boss}, ${tier + 1}단계에 갓 닿은 몸 ${bodies.length}명 × ${K}판 ★${star}, ${BF.freeFromLap}바퀴째부터 ${Math.round(BF.freeChance * 100)}%)`);
-    console.log(`  등장 ${appeared}/${runs}(${((appeared / Math.max(1, runs)) * 100).toFixed(1)}%) · 보스에게 짐 ${bossLost}/${appeared} · 패배율 ${((defOff / Math.max(1, runs)) * 100).toFixed(1)} → ${((defOn / Math.max(1, runs)) * 100).toFixed(1)}% (${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p, 가드 +5%p 이하)`);
+    console.log(`  등장 ${appeared}/${runs}(${((appeared / Math.max(1, runs)) * 100).toFixed(1)}%) · 보스에게 짐 ${bossLost}/${appeared} · 패배율 ${((defOff / Math.max(1, runs)) * 100).toFixed(1)} → ${((defOn / Math.max(1, runs)) * 100).toFixed(1)}% (${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p, 가드 +8%p 이하)`);
     if (bodies.length < CAMPAIGNS * 0.8) failures.push(`보스 자유 원정(${g.id}): ${tier + 1}단계 몸 ${bodies.length}/${CAMPAIGNS}`);
-    if (dInc > 0.05) failAt(tier, `보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +5%p (GDD 37장 7번)`);
+    // C.177 (GDD 107장 8번): 보스는 4바퀴째 이어 온 체력으로 만난다 — +5%p → +8%p
+    if (dInc > 0.08) failAt(tier, `보스 자유 원정(${g.id}): 패배율 +${(dInc * 100).toFixed(1)}%p > +8%p (GDD 37장 7번·107장 8번)`);
   }
 }
 

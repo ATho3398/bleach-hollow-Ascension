@@ -136,7 +136,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     ? '-'
     : fin.kind === 'skill'
       ? finSkill()
-      : { 'basic-attack': '기본 공격', special: '필살(옛 기록)', void: labels.voidBlock, reflect: '반사', stored: '저장 필살(옛 기록)', combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', liberation: liberationBlockLabel(faction.id, fin.element), skill: '' }[fin.kind];
+      : { 'basic-attack': '기본 공격', special: '필살(옛 기록)', void: labels.voidBlock, reflect: '반사', stored: '저장 필살(옛 기록)', combo: comboBlockLabel(labels, comboOf(s.params, fin.traitId)?.family), dot: '독', liberation: liberationBlockLabel(faction.id, fin.element), gear: '장비 발동', skill: '' }[fin.kind];
   const name = shownName(pickFaction(enemy.name, faction.id));
 
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);

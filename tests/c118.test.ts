@@ -41,13 +41,11 @@ describe('62장 ② 전투 시간 절반 — hpScale', () => {
     expect(full.enemy.maxHp).toBeCloseTo(half.enemy.maxHp * 2);
     expect(full.player.maxHp).toBeCloseTo(half.player.maxHp / 0.7);
     expect(half.player.maxHp).toBeCloseTo(CX.playerMaxHp * 0.7);
-    // 회복은 최대 체력 비율이라 같이 줄고, 피해는 그대로 → 체력 대비 2배
-    const s = quiet(createCombat(1, { enemy: normal }));
+    // 회복(전투 소모품 회복약, C.177)은 최대 체력 비율이라 같이 준다
+    const s = quiet(createCombat(1, { enemy: normal, params: { battleItem: { id: 'battle-potion', effect: 'heal', fraction: 0.25 } } }));
     s.player.hp = 1;
-    s.tray = [blk(BASIC_HEAL_ID)];
-    applyInput(s, { type: 'use', cell: 0 });
-    const healed = s.player.hp - 1;
-    expect(healed).toBeCloseTo(s.player.maxHp * CX.healFraction * BP.basicHealRatio, 6);
+    applyInput(s, { type: 'item' });
+    expect(s.player.hp - 1).toBeCloseTo(s.player.maxHp * 0.25, 6);
   });
 
   it('사람형 봇 일반 적 처치 시간이 hpScale 1 의 약 절반(0.4~0.65배)이고, 블록 생성 타이머·틱은 그대로', () => {
@@ -71,7 +69,7 @@ describe('62장 ② 전투 시간 절반 — hpScale', () => {
 
 describe('62장 ① 배속 삭제 — 1배 고정', () => {
   it('전투 단축키 E(배속)가 없고, 전투 배속 기억 함수도 없다', async () => {
-    expect(actionFor('battle', 'KeyE')).toBeNull();
+    expect(actionFor('battle', 'KeyE')).toBe('gear'); // C.177: E = 장비 발동 (GDD 105장 수정 6)
     expect(actionFor('battle', 'Space')).toBe('pause');
     const battle: Record<string, unknown> = await import('../src/ui/bha/battle');
     expect(battle.loadBattleSpeed).toBeUndefined();
@@ -177,15 +175,14 @@ describe('66장 2번 완전히 같은 블록끼리만 체인 (보상 수치는 �
 });
 
 describe('66장 3번 방어·회복 블록 출현 약 절반', () => {
-  it('기본 가중 공격 10 × 3 · 막기 3 · 회복 3 — 막기+회복 몫 16.7% (전 31.8% 의 약 절반), 그만큼 공격으로', () => {
+  it('기본 가중 공격 10 × 3 (막기·회복 가중은 C.174 GDD 105장 뒤 쓰지 않음 — 버튼)', () => {
     expect(BP.basicWeights).toEqual({ attack: 10, guard: 3, heal: 3 });
     const p = createCombat(1, { enemy: normal }).params;
     const pool = blockPoolOf(p);
     const share = (id: string) => pool.filter((e) => e.source.id === id).reduce((a, e) => a + e.chance, 0);
+    // C.174 (GDD 105장): 막기·회복은 블록에서 빠져 버튼 — 기본 블록 풀은 공격뿐
     const gh = share(BASIC_GUARD_ID) + share(BASIC_HEAL_ID);
-    expect(gh).toBeCloseTo(6 / 36, 6);
-    expect(gh / (14 / 44)).toBeGreaterThan(0.45);
-    expect(gh / (14 / 44)).toBeLessThan(0.6);
-    expect(share(BASIC_SKILL_ID)).toBeCloseTo(30 / 36, 6);
+    expect(gh).toBe(0);
+    expect(share(BASIC_SKILL_ID)).toBeCloseTo(1, 6);
   });
 });

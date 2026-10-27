@@ -10,7 +10,7 @@ import { isGearKind, type GearKind } from '../gear';
 import raw from './items.json';
 import wandererRaw from './wanderer.json';
 
-export const GOLD_KINDS = ['food', 'calm', 'wake', 'medicine', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear'] as const;
+export const GOLD_KINDS = ['food', 'calm', 'wake', 'medicine', 'battle', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
 
 export const COSMETIC_CATEGORIES = ['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate', 'enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame', 'keyring', 'device'] as const;

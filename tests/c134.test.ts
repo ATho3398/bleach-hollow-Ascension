@@ -132,7 +132,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
     expect('slotsByTier' in LB).toBe(false);
   });
 
-  it('해방 중에는 생성 타이머가 빨리 돌고(×spawnSpeed) 나오는 블록이 전부 장착 블록 — 장착이 없으면 기본 블록', () => {
+  it('해방 중에는 생성 타이머가 빨리 돌고(×spawnSpeed) 나오는 블록은 평소 출현표 그대로 (C.177 GDD 106장 4 — 옛 장착 블록만 폐기)', () => {
     const b = newBuild();
     gainTrait(b, 't-earth-c');
     const params = buildCombatParams(b, 'hollow');
@@ -151,8 +151,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
     wait(s, 4);
     wait(plain, 4);
     expect(s.tray.length).toBeGreaterThan(plain.tray.length);
-    expect(s.tray.every((x) => x.traitId === 't-earth-c')).toBe(true);
-    expect(plain.tray.some((x) => x.traitId !== 't-earth-c')).toBe(true);
+    expect(s.tray.some((x) => x.traitId !== 't-earth-c')).toBe(true);
     // 장착 없음: 기본 블록 풀
     const e = mk({ skills: [], voidChance: 0 });
     e.enemy.attackTimer = e.enemy.actionTimer = 1e9;
@@ -162,12 +161,12 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
     applyInput(e, { type: 'liberate' });
     wait(e, 4);
     expect(e.tray.length).toBeGreaterThan(0);
-    expect(e.tray.every((x) => x.kind === 'skill' && ['basic-skill', 'basic-guard', 'basic-heal'].includes(x.traitId!))).toBe(true);
+    expect(e.tray.every((x) => x.kind === 'skill' && x.traitId === 'basic-skill')).toBe(true);
   });
 
   it('세이브: 형식 46(C.175) · 문턱 같이, 옛 해방 칸 필드는 지운다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(49); // C.181
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(49);
+    expect(SAVE_FORMAT_VERSION).toBe(50); // C.177
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(50);
     const s = newSaveData('hollow', 1);
     expect('liberation' in s.build).toBe(false);
     const raw = JSON.parse(JSON.stringify(s));

@@ -1,0 +1,37 @@
+{
+ "01-buttons-charging": [
+  "bha-v2role--guard is-disabled | 막기 게이지 49%",
+  "bha-v2role--item is-ready | 회복약 — 최대 체력 25% 회복 (전투당 1번, 남은 2개)",
+  "bha-v2role--gear is-disabled | 발동 장비 없음 (발동 효과가 있는 장비를 끼면 쓸 수 있어요)"
+ ],
+ "02-buttons-full-640": [
+  "bha-v2role--guard is-full is-ready | 막기 준비됨 — 눌러 0.5초 강공격 막기",
+  "bha-v2role--item is-disabled | 회복약 — 이번 전투에 씀",
+  "bha-v2role--gear is-ready | 폭발석 — 기본 공격 5회분 피해 · 준비됨"
+ ],
+ "03-heavy-guarded": {
+  "guardSuccesses": 1,
+  "hp": [
+   107.8,
+   107.8
+  ]
+ },
+ "04-stun-locked": [
+  "true:봉",
+  "true:봉",
+  "true:봉",
+  "true:봉"
+ ],
+ "05-liberation": {
+  "lib": 35,
+  "tray": [
+   "t-fire-a",
+   "t-fire-a"
+  ]
+ },
+ "06-carried-hp-start": [
+  48.51,
+  107.8
+ ],
+ "07-status-info": "공허쓸 때마다 광기 +3.8쓰면 2초 경직 — 내 공격·블록 생성·블록 사용 멈춤 (막기만 누를 수 있음)블록이 생길 때 2% 확률로 공허로 바뀐다"
+}

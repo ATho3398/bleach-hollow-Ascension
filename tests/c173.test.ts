@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
-import { applyInput, BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, capSpawnEntries, createCombat, defaultCombatParams, drainCombatEvents, guardCutOf, spawnTableOf, step, ticksOf, type Block, type CombatEvent, type CombatParams, type CombatState } from '../src/engine/combat';
+import { applyInput, BASIC_GUARD_ID, BASIC_HEAL_ID, BASIC_SKILL_ID, createCombat, defaultCombatParams, drainCombatEvents, spawnTableOf, step, ticksOf, type Block, type CombatEvent, type CombatParams, type CombatState } from '../src/engine/combat';
 import { applyEvolutionToParams, newEvolution } from '../src/engine/evolution';
 import { applyFrenzy } from '../src/engine/expedition';
 
@@ -123,41 +123,16 @@ describe('C.173 공허 블록 (GDD 101장)', () => {
     expect(h.voidStunSeconds).toBe(0);
   });
 
-  it('막기·회복이 바에 3개면 안 나오고, 그 몫은 공격 블록들에 똑같이 나눈다 · 폭주(noHealSpawn)면 회복 없음', () => {
-    expect(CX.guardHealTrayCap).toBe(3);
-    const p = defaultCombatParams();
-    const entries = spawnTableOf(p).entries;
-    const atk = entries.filter((e) => e.kind === 'skill' && e.source?.role === 'attack');
-    const g = entries.find((e) => e.source?.id === BASIC_GUARD_ID)!.chance;
-    const tray3 = [blk(BASIC_GUARD_ID, 1), blk(BASIC_GUARD_ID, 2), blk(BASIC_GUARD_ID, 3)];
-    const capped = capSpawnEntries(entries, tray3, p);
-    expect(capped.some((e) => e.source?.id === BASIC_GUARD_ID)).toBe(false);
-    expect(capped.some((e) => e.source?.id === BASIC_HEAL_ID)).toBe(true);
-    expect(capped.reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1);
-    for (const a of atk) expect(capped.find((e) => e === a || (e.source === a.source && e.family === a.family))!.chance).toBeCloseTo(a.chance + g / atk.length);
-    expect(capSpawnEntries(entries, tray3.slice(0, 2), p)).toBe(entries);
-    const noHeal = capSpawnEntries(entries, [], { ...p, noHealSpawn: true });
-    expect(noHeal.some((e) => e.source?.id === BASIC_HEAL_ID)).toBe(false);
-    expect(noHeal.reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1);
-  });
-
-  it('막기: 체인 1·2·3 지속 0.7·0.75·1초(고정), 일반 −20·30·50% · 강공격 −50·80·100%', () => {
-    expect(CX.guardSecondsByChain).toEqual([0.7, 0.75, 1]);
-    expect(guardCutOf(CX, 1)).toEqual({ normal: 0.2, heavy: 0.5 });
-    expect(guardCutOf(CX, 2)).toEqual({ normal: 0.3, heavy: 0.8 });
-    expect(guardCutOf(CX, 3)).toEqual({ normal: 0.5, heavy: 1 });
-    for (const chain of [1, 2, 3]) {
-      const s = quiet({ guardHealEnhance: 3 });
-      s.tray = Array.from({ length: chain }, (_, i) => blk(BASIC_GUARD_ID, i + 1));
-      applyInput(s, { type: 'use', cell: 0 });
-      expect(s.guard.ticks).toBe(ticksOf(s.params, CX.guardSecondsByChain[chain - 1]!)); // 위력 배율로 늘지 않는다
-      expect(s.guard.chain).toBe(chain);
-    }
+  it('막기 (C.177 GDD 105장 수정): 0.5초, 강공격 완전 막기 · 일반 공격 경감 없음 · 위력 배율로 늘지 않는다', () => {
+    expect(CX.guardSeconds).toBe(0.5);
+    const s = quiet({ guardHealEnhance: 3 });
+    s.guardGauge = 1;
+    applyInput(s, { type: 'guard' });
+    expect(s.guard.ticks).toBe(ticksOf(s.params, 0.5));
   });
 
   it('강공격 배율: heavyInAttacks × heavyHitMultiplier (연속 강공격은 heavyChainHitMultiplier)', () => {
     expect(CX.heavyHitMultiplier).toBeGreaterThan(1);
-    expect(CX.heavyChainHitMultiplier).toBeGreaterThan(1);
     expect(CX.heavyChainHitMultiplier).toBeLessThan(CX.heavyHitMultiplier);
   });
 

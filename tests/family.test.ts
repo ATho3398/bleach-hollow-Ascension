@@ -319,14 +319,15 @@ describe('콤보 발동 (GDD 17-3)', () => {
     expect(s.events.some((e) => e.kind === 'combo' && e.comboId === 'combo-x')).toBe(true);
   });
 
-  it('사이에 다른 블록을 쓰면 연속이 끊긴다 (다른 계열·공허·막기·필살·모자란 체인)', () => {
-    for (const mid of ['family-a', 'void', 'guard'] as const) {
+  it('사이에 다른 블록을 쓰면 연속이 끊긴다 (다른 계열·공허·모자란 체인. 막기는 C.174 GDD 105장부터 블록이 아닌 버튼)', () => {
+    for (const mid of ['family-a', 'void'] as const) {
       const s = comboCombat();
       fill(s, 'family-c', 'family-c', mid, 'family-c', 'family-c');
       use(s, 0);
       expect(s.comboStreaks['combo-x']).toBe(1);
       use(s, 0); // 가운데 블록을 쓴다
       expect(s.comboStreaks['combo-x']).toBe(0);
+      s.stunTicks = 0; // 공허 경직 중에는 블록을 못 쓴다 (C.174 GDD 105장 1번)
       use(s, 0); // 체인2 (c c)
       expect(s.comboStreaks['combo-x']).toBe(1);
       expect(s.tray.some((b) => b.kind === 'combo')).toBe(false);

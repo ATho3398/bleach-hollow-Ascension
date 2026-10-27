@@ -9,9 +9,7 @@
       "title": "블록 바: 눌러서 사용",
       "body": "전투는 자동이고, 블록 바 {trayCapacity}칸에 생기는 블록을 톡 눌러 써요.\n색과 아이콘이 역할이에요(아래 예시).",
       "sample": [
-        "attack",
-        "guard",
-        "heal"
+        "attack"
       ]
     },
     {
@@ -32,7 +30,7 @@
         "battle.tray"
       ],
       "title": "같은 블록을 붙여서 {chainName}",
-      "body": "완전히 같은 블록이 나란히 붙어 있을 때 누르면 함께 발동해 {chainName}이(가) 돼요(최대 {chainMax}).\n강공격 예고는 착탄 직전에 {roleNames.guard} 블록으로 막고(안 막으면 아주 아파요), {voidBlockName}은(는) 블록 자리를 빼앗는 손해 블록이에요(피해는 평타 수준, 쓰면 {riskGaugeName} ↑)."
+      "body": "완전히 같은 블록이 나란히 붙어 있을 때 누르면 함께 발동해 {chainName}이(가) 돼요(최대 {chainMax}).\n강공격 예고는 착탄 직전에 {roleNames.guard} 버튼으로 막고({roleNames.guard} 게이지가 다 차야 눌러요, {guardSeconds}초만 막아요), {voidBlockName}은(는) 블록 자리를 빼앗는 손해 블록이에요(피해는 평타 수준, 쓰면 {riskGaugeName} ↑)."
     },
     {
       "id": "liberation",

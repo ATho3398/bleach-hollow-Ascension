@@ -65,6 +65,20 @@
       "cures": "tired"
     },
     {
+      "id": "battle-potion",
+      "kind": "battle",
+      "category": "consumable",
+      "name": "회복약",
+      "battle": true
+    },
+    {
+      "id": "battle-haste",
+      "kind": "battle",
+      "category": "consumable",
+      "name": "전투 각성제",
+      "battle": true
+    },
+    {
       "id": "training-ticket",
       "kind": "trainingTicket",
       "category": "etc",

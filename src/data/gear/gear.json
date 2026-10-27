@@ -19,6 +19,8 @@
     { "id": "sp-family-c", "effect": "family", "family": "family-c" },
     { "id": "sp-elite", "effect": "elite" },
     { "id": "sp-crit-damage", "effect": "critDamage" },
-    { "id": "sp-shield", "effect": "shield" }
+    { "id": "sp-shield", "effect": "shield" },
+    { "id": "sp-active-shield", "effect": "activeShield", "name": "방패 부적" },
+    { "id": "sp-active-burst", "effect": "activeBurst", "name": "폭발석" }
   ]
 }

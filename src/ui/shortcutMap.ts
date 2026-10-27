@@ -34,8 +34,8 @@ export const SHORTCUTS: Record<ShortcutCtx, Record<string, ShortcutAction>> = {
   // 메뉴·목록·시작 화면·결과/흡수/진화/일시정지 오버레이·열린 레이어: 이동 W/S/A/D, 확정 F/Space, 취소 Q, 숫자 = 번호 목록 N번째.
   // 그 화면에 이름 붙은 버튼이 있을 때만: 설정 E·도움말 H(종족 고르기 위 구석), 백업 파일 가져오기 R(불러오기 창) (C.46)
   menu: { ...NAV, ...digits(9, (i) => `pick.${i}`), KeyE: 'corner.settings', KeyH: 'corner.help', KeyR: 'slots.import' },
-  // 전투(진행 중): 블록 1~8, 해방 R (GDD 83장 — 저장 필살기 Q 는 C.134 에 삭제), 일시정지 Space(또는 F), 배속 E, 도움말 H
-  battle: { ...digits(8, (i) => `block.${i}`), KeyR: 'liberate', Space: 'pause', KeyF: 'confirm', KeyH: 'help' }, // KeyE(배속)는 C.118 에 삭제 (GDD 62장)
+  // 전투(진행 중): 블록 1~8, 해방 R (GDD 83장), 막기 Q·회복 W (GDD 105장), 일시정지 Space(또는 F), 도움말 H
+  battle: { ...digits(8, (i) => `block.${i}`), KeyR: 'liberate', KeyQ: 'guard', KeyW: 'item', KeyE: 'gear', Space: 'pause', KeyF: 'confirm', KeyH: 'help' }, // 막기 Q (C.174) · 소모품 W·장비 E (C.177, GDD 105장 수정 6 — 옛 회복 W, 옛 배속 E 는 C.118 에 삭제)
   // 홈: 돌보기 Z X C, 더보기 V(펼친 격자는 숫자), 수련장 T, 상태 칩 G, 펼친 먹이/더보기 줄은 숫자
   room: { ...NAV, KeyZ: 'care.feed', KeyX: 'care.sleep', KeyC: 'care.pet', KeyV: 'dock.more', KeyT: 'altar', KeyG: 'status', ...digits(9, (i) => `pick.${i}`) },
   // 원정 배치판: 이동 W/S/A/D, 그 칸 누르기 F, 선택 취소 Q·Esc, 출발 Space, 숫자 = 손에 든 타일 N번째 (되돌리기 R 키는 18-8 에서 삭제 — 놓은 타일을 선택한 뒤 같은 칸을 다시 누른다)
@@ -94,6 +94,8 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
     rows: [
       { keys: '1 ~ 8', does: '블록 1~8번 칸 사용 (그 칸을 누른 것과 같다)' },
       { keys: 'R', does: '해방 (게이지가 찼을 때)' },
+      { keys: 'Q', does: '막기 (게이지가 다 찼을 때, 0.5초 강공격 막기)' },
+      { keys: 'W / E', does: '소모품 (전투당 1번) / 장비 발동 (쿨다운)' },
       { keys: 'Space', does: '일시정지 / 계속' },
       { keys: 'E', does: '배속 1x ↔ 2x' },
       { keys: 'H', does: '도움말' },
