@@ -45,7 +45,7 @@ import { createRng, nextFloat } from './engine/rng';
 import { grantGear, newGearState, sanitizeGear, sellGold, type GearState } from './engine/gear';
 import { addPetLaps, carriedPet, grantPet, newPetState, pickNewPet, petBonus, sanitizePets, type PetState } from './engine/pet';
 import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
-import { CONSUMABLE_IDS } from './inventory';
+import { BATTLE_ITEM_IDS, CONSUMABLE_IDS } from './inventory';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
@@ -353,10 +353,10 @@ export function sanitizeShared(raw: unknown): SharedState {
   };
 }
 
-/** 보관함 소모품 정리: 아는 소모품 id 의 1 이상 정수만 */
+/** 보관함 소모품 정리: 아는 소모품 id 의 1 이상 정수만. 전투 소모품(C.177)도 — C.183 전에는 빠져 있어 불러올 때마다 지워졌다 */
 function sanitizeItems(raw: unknown): Record<string, number> {
   const r = isRec(raw) ? raw : {};
-  return Object.fromEntries(CONSUMABLE_IDS.map((id) => [id, nonNegInt(r[id])] as const).filter(([, n]) => n > 0));
+  return Object.fromEntries([...CONSUMABLE_IDS, ...BATTLE_ITEM_IDS].map((id) => [id, nonNegInt(r[id])] as const).filter(([, n]) => n > 0));
 }
 
 /** 수령 기록 목록 정리: 깨진 항목·중복 id 를 버린다 */

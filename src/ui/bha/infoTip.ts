@@ -3,6 +3,7 @@
 // 창은 오버레이 자리(LCD 창 안)에 붙어 스크롤 칸·overflow 에 잘리지 않는다. 방 상태 칩·상태 화면·쇠약/피곤/빈사 칩이 같이 쓴다.
 import { el, icon } from './dom';
 import { getOverlayHost, registerLayer } from './overlayHost';
+import { elementLocalRect } from './viewport';
 
 /** 설명 내용: 한 줄 글, 여러 줄(목록), 또는 [소제목, 줄들] 묶음 */
 /** mark = 그 묶음에서 강조할 줄(지금 내 수치 구간, C.176 GDD 109장 2) */
@@ -74,8 +75,10 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
     pop.append(el('b', 'bha-pop__title', label), ...bodyNodes(typeof body === 'function' ? body() : body));
     host.append(pop);
     // 자리: 아이콘 아래(넘치면 위), 가로는 아이콘 가운데 · 오버레이 자리 안으로 묶는다. 기기가 확대돼 있으면 화면 px → 자리 px
-    const hr = host.getBoundingClientRect();
-    const br = b.getBoundingClientRect();
+    // C.183 UI 검수: 기기 안 좌표로 잰다 — 화면 좌표 그대로면 세로 회전 출력(기기 90°)에서 창이 LCD 밖으로 나가 잘렸다
+    const loc = (n: Element) => { const r = elementLocalRect(n); return { ...r, right: r.left + r.width, bottom: r.top + r.height }; };
+    const hr = loc(host);
+    const br = loc(b);
     const k = hr.width > 0 && host.offsetWidth > 0 ? host.offsetWidth / hr.width : 1;
     // 아래·위 중 넉넉한 쪽에 둔다
     const below = (br.bottom - hr.top) * k + 6;

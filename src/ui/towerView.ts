@@ -8,6 +8,7 @@ import { difficultyText, towerFloorText, towerLabels, type FactionConfig } from 
 import { nextTowerFloor, TOWER_FLOORS, towerFloor, towerOpen, type TowerFloor, type TowerReward } from '../engine/tower';
 import type { SaveData, TowerOutcome } from '../game';
 import { button, el, icon, panel, tag } from './bha/dom';
+import { elementLocalRect } from './bha/viewport';
 import { iconInfo, type IconInfoRow } from './bha/expedition';
 import { lcdPage, selectLast } from './bha/lcdpage';
 import { splitApp } from './bha/split';
@@ -111,7 +112,7 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
     if (!row) return;
     for (let box: HTMLElement | null = list; box && box !== app; box = box.parentElement) {
       if (box.scrollHeight > box.clientHeight + 1) {
-        box.scrollTop = Math.max(0, row.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - box.clientHeight / 2);
+        box.scrollTop = Math.max(0, elementLocalRect(row).top - elementLocalRect(box).top + box.scrollTop - box.clientHeight / 2); // 기기 안 좌표 (C.183: 세로 회전 출력)
         break;
       }
     }

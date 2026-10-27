@@ -376,7 +376,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const fxLayer = el('div', 'bha-afx-layer');
   fxLayer.setAttribute('aria-hidden', 'true');
 
-  // ── 3. 내 상태 칩 (스킬창 맨 윗줄 오른쪽). 영력(SP) 바·필살 블록은 C.118 에 삭제 (GDD 66장: 필살기는 저장형만) ──
+  // ── 3. 내 상태 칩 (필드 아래 가운데, 나·적 체력 줄 사이 고정 자리 — C.183 UI 검수: 스킬창 범례 줄 오른쪽에 있을 때는 생기면 [막기]·[소모품] 버튼 위로 넘쳐 겹쳤다).
+  //    영력(SP) 바·필살 블록은 C.118 에 삭제 (GDD 66장: 필살기는 저장형만) ──
   const voidChip = v2StatusChip('i-void', labels.voidBlock);
   const chain3Chip = v2StatusChip('i-chain-3', `${labels.chain}${top}`);
   // 전투 상태 칩 ⓘ (GDD 104장 2 — C.176 이 미룬 전투 칩, 공용 infoTip): 폰 = 누르면, PC = 올리면 설명 창
@@ -466,9 +467,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
-  legendRow.append(libChip, legend, meStatus);
+  legendRow.append(libChip, legend);
   // 범례·칩은 줄어들지 않게
-  for (const n of [libChip, legend, meStatus]) n.style.flexShrink = '0';
+  for (const n of [libChip, legend]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
   controls.append(legendRow, roles, tray.root, ...(libOn ? [libBtn] : []));
@@ -542,7 +543,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     arena.classList.add('has-bg');
     arena.append(sceneBgEl(opts.bg, false));
   }
-  arena.append(units, fieldTags, topRow, fxLayer, floats, fxFlash, libCut, log);
+  arena.append(units, fieldTags, meStatus, topRow, fxLayer, floats, fxFlash, libCut, log);
   const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다

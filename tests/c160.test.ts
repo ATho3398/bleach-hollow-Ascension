@@ -13,7 +13,7 @@ describe('C.160 위 한 줄은 적 이름·등급 칩·약점·시간·버튼만
       expect(battle).not.toContain(`foeHead.append(${n}`);
       expect(battle).not.toContain(`foeName.append(${n}`);
     }
-    expect(battle).toContain('arena.append(units, fieldTags, topRow');
+    expect(battle).toContain('arena.append(units, fieldTags, meStatus, topRow'); // C.183: 내 상태 칩(meStatus)은 필드 아래 가운데 고정 자리
     expect(battle).toContain('mountV2Root(root, faction, arena, controls'); // 알림을 루트에 띄우지 않는다 (위 한 줄과 겹쳤다)
   });
   it('칩·버튼은 줄지 않고 이름만 말줄임(최소 4글자, 전체 이름은 title)', () => {

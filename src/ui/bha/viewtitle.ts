@@ -3,6 +3,7 @@
 // 대상은 1차 "어느 화면/보기" 전환만 — 2차 필터(도감 단계 탭 등)·켜기/끄기 토글·전투 조작은 아니다. 모양은 screens-lcd.css 의 .bha-viewtitle.
 import { el, icon } from './dom';
 import { getOverlayHost, registerLayer } from './overlayHost';
+import { elementLocalRect } from './viewport';
 
 export interface ViewTitleOption {
   id: string;
@@ -59,10 +60,11 @@ export function viewTitle(options: readonly ViewTitleOption[], current: string, 
     // C.182 UI 검수: 펼친 목록을 기기 레이어로 — ▲▼·✓ 는 목록 안에서만, 뒤로는 목록 닫기(목록에 덮인 본문 칸에 하이라이트가 가던 문제).
     // 항목이 많으면(테스트 패널) LCD 아래로 잘리지 않게 남은 높이까지만 펴고 목록 안에서 스크롤
     list.style.maxHeight = '';
-    const host = getOverlayHost().getBoundingClientRect();
-    const lr = list.getBoundingClientRect();
+    // 기기 안 좌표로 (C.183: 화면 좌표면 세로 회전 출력에서 남은 높이를 잘못 쟀다)
+    const host = elementLocalRect(getOverlayHost());
+    const lr = elementLocalRect(list);
     const k = list.offsetHeight > 0 && lr.height > 0 ? list.offsetHeight / lr.height : 1;
-    const room = (host.bottom - lr.top) * k - 4;
+    const room = (host.top + host.height - lr.top) * k - 4;
     if (list.offsetHeight > room) list.style.maxHeight = `${Math.max(room, 48)}px`;
     unreg = registerLayer(list, close);
   };

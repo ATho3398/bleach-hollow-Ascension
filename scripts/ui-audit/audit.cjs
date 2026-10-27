@@ -2,7 +2,8 @@
 // 두 종족 × 화면마다: ① 정적 점검(가로 스크롤·버튼/글자 잘림·겹침·가려짐·키보드로 못 고르는 칸) ② ▼ 를 돌려 모든 버튼에 닿는지
 // ③ 상태 바꾸기(체크·토글·탭·선택·삭제·ⓘ 열기 …) 전후로 다른 버튼이 움직였는지(bounding box 비교).
 // 테스트 모드(?test=1, 따로 된 테스트 세이브 칸)로 돈다. 뷰포트 = 게임 기준 가로 844×390, 1배.
-// 옵션: UI_AUDIT_URL=<이미 떠 있는 주소> (없으면 vite 를 띄운다), UI_AUDIT_ONLY=<화면 이름 일부>, UI_AUDIT_SHOTS=<폴더> (화면마다 캡처)
+// 옵션: UI_AUDIT_URL=<이미 떠 있는 주소> (없으면 vite 를 띄운다), UI_AUDIT_ONLY=<화면 이름 일부>, UI_AUDIT_SHOTS=<폴더> (화면마다 캡처),
+//       UI_AUDIT_PORTRAIT=1 (세로 폰 390×844 터치 — 기기 화면 90° 회전 출력, C.183)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -13,6 +14,7 @@ const { SCREENS } = require('./screens.cjs');
 const ROOT = path.resolve(__dirname, '../..');
 const PORT = 5199;
 const MOVE_TOL = 1.5;
+const PORTRAIT = !!process.env.UI_AUDIT_PORTRAIT;
 
 async function startServer() {
   if (process.env.UI_AUDIT_URL) return { url: process.env.UI_AUDIT_URL, stop: () => {} };
@@ -297,8 +299,9 @@ async function newGame(page, url, factionIndex) {
   try {
     for (const [fi, faction] of (process.env.UI_AUDIT_FACTION === '0' ? [[0, 'hollow']] : [[0, 'hollow'], [1, 'shinigami']])) {
       for (const sc of SCREENS) {
-        if (only && !sc.name.includes(only)) continue;
-        const page = await browser.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
+        if (only && !only.split(',').some((o) => sc.name.includes(o))) continue; // 쉼표로 여럿
+        // 세로 회전 출력 (C.183): 세로 폰(390×844, 터치) — 기기 화면이 90° 돌아간 채로 같은 점검
+        const page = await browser.newPage(PORTRAIT ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true } : { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
         page.on('pageerror', (e) => report.push({ faction, screen: sc.name, kind: '스크립트 오류', key: '', detail: e.message.slice(0, 120) }));
         const h = makeHelper(page, faction, report);
         try {

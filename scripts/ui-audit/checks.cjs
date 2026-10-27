@@ -8,10 +8,28 @@ function snapshotInPage() {
   const seen = new Map();
   const label = (e) => (e.getAttribute('aria-label') || e.textContent || e.getAttribute('title') || '').replace(/\s+/g, ' ').trim().slice(0, 24);
   const cls = (e) => [...e.classList].filter((c) => c.startsWith('bha-') && c !== 'bha-sel').join('.');
+  // 세로 회전 출력(C.183): 기기가 90° 돌아가 있으면 화면 사각형을 기기 안 좌표로 바꿔 잰다(가로와 같은 축 — 스크롤·잘림 판정이 맞게)
+  const DEV = document.querySelector('.bha-dev.is-rotated');
+  const M = DEV ? new DOMMatrix(getComputedStyle(DEV).transform) : null;
+  const MI = M ? M.inverse() : null;
+  const R = (x) => {
+    const r = x.getBoundingClientRect();
+    if (!MI) return r;
+    const a = MI.transformPoint(new DOMPoint(r.left - DEV.offsetLeft, r.top - DEV.offsetTop));
+    const b = MI.transformPoint(new DOMPoint(r.right - DEV.offsetLeft, r.bottom - DEV.offsetTop));
+    const left = Math.min(a.x, b.x), top = Math.min(a.y, b.y), right = Math.max(a.x, b.x), bottom = Math.max(a.y, b.y);
+    return { left, top, right, bottom, x: left, y: top, width: right - left, height: bottom - top };
+  };
+  /** 기기 안 점 → 화면 점 (가려짐 판정의 elementFromPoint 용) */
+  const toScreen = (x, y) => {
+    if (!M) return { x, y };
+    const p = M.transformPoint(new DOMPoint(x, y));
+    return { x: p.x + DEV.offsetLeft, y: p.y + DEV.offsetTop };
+  };
   let n = Number(document.body.dataset.auditSeq || 0);
   for (const e of document.querySelectorAll(SEL)) {
     if (e.closest('.bha-dev__side, .bha-testband, [hidden]')) continue;
-    const r = e.getBoundingClientRect();
+    const r = R(e);
     if (r.width < 1 || r.height < 1) continue;
     if (!e.dataset.audit) e.dataset.audit = String(++n);
     let key = `${e.tagName.toLowerCase()}.${cls(e)}|${label(e)}`;
@@ -27,6 +45,24 @@ function snapshotInPage() {
 /** 페이지 안: 지금 화면의 정적 점검 (가로 스크롤·잘림·넘침·겹침·가려짐·키보드로 못 고르는 칸) */
 function staticInPage(reached) {
   // reached = ▼ 로 닿은 요소 표시(data-reach) 목록. 있으면 겹침·가려짐은 지금 고를 수 있는 칸만 본다(펼친 메뉴 뒤에 깔린 것 제외)
+  // 세로 회전 출력(C.183): 기기가 90° 돌아가 있으면 화면 사각형을 기기 안 좌표로 바꿔 잰다(가로와 같은 축 — 스크롤·잘림 판정이 맞게)
+  const DEV = document.querySelector('.bha-dev.is-rotated');
+  const M = DEV ? new DOMMatrix(getComputedStyle(DEV).transform) : null;
+  const MI = M ? M.inverse() : null;
+  const R = (x) => {
+    const r = x.getBoundingClientRect();
+    if (!MI) return r;
+    const a = MI.transformPoint(new DOMPoint(r.left - DEV.offsetLeft, r.top - DEV.offsetTop));
+    const b = MI.transformPoint(new DOMPoint(r.right - DEV.offsetLeft, r.bottom - DEV.offsetTop));
+    const left = Math.min(a.x, b.x), top = Math.min(a.y, b.y), right = Math.max(a.x, b.x), bottom = Math.max(a.y, b.y);
+    return { left, top, right, bottom, x: left, y: top, width: right - left, height: bottom - top };
+  };
+  /** 기기 안 점 → 화면 점 (가려짐 판정의 elementFromPoint 용) */
+  const toScreen = (x, y) => {
+    if (!M) return { x, y };
+    const p = M.transformPoint(new DOMPoint(x, y));
+    return { x: p.x + DEV.offsetLeft, y: p.y + DEV.offsetTop };
+  };
   const live = (e) => !reached || reached.length === 0 || reached.includes(e.dataset.reach || '');
   const issues = [];
   const push = (kind, el, detail) => {
@@ -36,11 +72,11 @@ function staticInPage(reached) {
   };
   const lcd = document.querySelector('.bha-lcd');
   if (!lcd) return issues;
-  const L = lcd.getBoundingClientRect();
-  const vw = innerWidth;
-  const vh = innerHeight;
+  const L = R(lcd);
+  const vw = DEV ? DEV.offsetWidth : innerWidth;
+  const vh = DEV ? DEV.offsetHeight : innerHeight;
   // 1) 가로 스크롤 (페이지 전체)
-  if (document.documentElement.scrollWidth > vw + 1) push('가로 스크롤', document.body, `문서 폭 ${document.documentElement.scrollWidth} > ${vw}`);
+  if (document.documentElement.scrollWidth > innerWidth + 1) push('가로 스크롤', document.body, `문서 폭 ${document.documentElement.scrollWidth} > ${vw}`);
   const shown = (e) => {
     // 알림 띠(토스트)는 잠깐 떴다 사라지고 누름을 막지 않는다 — 점검에서 뺀다
     if (e.closest('[hidden], .bha-dev__side, .bha-testband, [aria-hidden="true"], .bha-toast, .bha-toasts')) return false;
@@ -66,7 +102,7 @@ function staticInPage(reached) {
       if (mode === 'fixed' && s.transform === 'none' && !s.contain.includes('paint')) continue;
       mode = s.position;
       const ox = s.overflowX, oy = s.overflowY;
-      const pr = p.getBoundingClientRect();
+      const pr = R(p);
       const scrollX = (ox === 'auto' || ox === 'scroll') && p.scrollWidth > p.clientWidth + 1;
       const scrollY = (oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 1;
       // 스크롤되는 상자 안의 것은 스크롤로 그 상자 창에 들어온다고 보고 창 자리로 옮긴다
@@ -80,7 +116,7 @@ function staticInPage(reached) {
   };
   /** 실제로 지금 화면에 보이는 상자 (스크롤 상자도 자른다) */
   const clipRect = (e) => {
-    const r = e.getBoundingClientRect();
+    const r = R(e);
     let x1 = r.left, y1 = r.top, x2 = r.right, y2 = r.bottom;
     let mode = getComputedStyle(e).position;
     for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) {
@@ -90,7 +126,7 @@ function staticInPage(reached) {
       if (mode === 'absolute' && !positioned) continue;
       if (mode === 'fixed' && s.transform === 'none' && !s.contain.includes('paint')) continue;
       mode = s.position;
-      const pr = p.getBoundingClientRect();
+      const pr = R(p);
       if (s.overflowX !== 'visible') { x1 = Math.max(x1, pr.left); x2 = Math.min(x2, pr.right); }
       if (s.overflowY !== 'visible') { y1 = Math.max(y1, pr.top); y2 = Math.min(y2, pr.bottom); }
     }
@@ -98,7 +134,7 @@ function staticInPage(reached) {
   };
   const SEL = 'button, a[href], input, select, summary, [role="tab"], [role="button"]';
   const inter = [...lcd.querySelectorAll(SEL)].filter(shown).filter((e) => {
-    const r = e.getBoundingClientRect();
+    const r = R(e);
     return r.width >= 2 && r.height >= 2;
   });
   // 맨 위 층: 기기에 등록된 레이어(창·ⓘ·확인 창)가 열려 있으면 그것, 아니면 LCD 전체
@@ -106,7 +142,7 @@ function staticInPage(reached) {
   const top = layers[layers.length - 1] || lcd;
   // 2) 조작 요소가 화면·창 밖으로 잘림
   for (const e of inter) {
-    const r = e.getBoundingClientRect();
+    const r = R(e);
     const v = visibleRect(e, r);
     if (v.w * v.h < r.width * r.height * 0.9) push('버튼 잘림', e, `보이는 넓이 ${Math.round((100 * v.w * v.h) / (r.width * r.height))}%`);
   }
@@ -114,12 +150,12 @@ function staticInPage(reached) {
   const textEls = [...lcd.querySelectorAll('*')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && shown(e));
   for (const e of textEls) {
     if (e.closest('svg, .bha-marquee, [data-audit-skip]')) continue;
-    const er0 = e.getBoundingClientRect();
+    const er0 = R(e);
     if (er0.width <= 1 || er0.height <= 1) continue; // 화면 읽기 전용(1px·clip) 글자
     const s = getComputedStyle(e);
     const range = document.createRange();
     range.selectNodeContents(e);
-    const rr = range.getBoundingClientRect();
+    const rr = R(range);
     if (rr.width < 1 || rr.height < 1) continue;
     let ell = false;
     for (let p = e; p && p !== lcd; p = p.parentElement) if (getComputedStyle(p).textOverflow === 'ellipsis' || getComputedStyle(p).webkitLineClamp !== 'none') ell = true;
@@ -128,7 +164,7 @@ function staticInPage(reached) {
     // 자기 자신이 overflow 로 자르는 경우도 포함
     let vis = v.w * v.h;
     if (s.overflow !== 'visible' && !(e.scrollHeight > e.clientHeight + 1 && /auto|scroll/.test(s.overflowY))) {
-      const er = e.getBoundingClientRect();
+      const er = R(e);
       const w = Math.max(0, Math.min(rr.right, er.right) - Math.max(rr.left, er.left));
       const h = Math.max(0, Math.min(rr.bottom, er.bottom) - Math.max(rr.top, er.top));
       vis = Math.min(vis, w * h);
@@ -154,8 +190,8 @@ function staticInPage(reached) {
     if (!top.contains(e) || !live(e)) continue;
     const r = clipRect(e);
     if (r.width < 4 || r.height < 4) continue; // 스크롤 밖이면 지금 안 보이는 게 맞다
-    const cx = Math.min(Math.max(r.left + r.width / 2, 1), vw - 1), cy = Math.min(Math.max(r.top + r.height / 2, 1), vh - 1);
-    const hit = document.elementFromPoint(cx, cy);
+    const c = toScreen(Math.min(Math.max(r.left + r.width / 2, 1), vw - 1), Math.min(Math.max(r.top + r.height / 2, 1), vh - 1));
+    const hit = document.elementFromPoint(c.x, c.y);
     if (!hit || e.contains(hit) || hit.contains(e)) continue;
     if (getComputedStyle(hit).pointerEvents === 'none' || hit.closest('.bha-toast, .bha-toasts')) continue;
     // 스크롤 상자 안에서 붙박이(sticky) 머리 밑으로 지나가는 칸은 스크롤로 비켜 간다
@@ -171,7 +207,7 @@ function staticInPage(reached) {
     const s = getComputedStyle(e);
     if (s.cursor !== 'pointer' && !e.onclick) continue;
     if (e.querySelector(SEL)) continue;
-    const r = e.getBoundingClientRect();
+    const r = R(e);
     if (r.width < 4 || r.height < 4) continue;
     push('키보드로 못 고름', e, '누를 수 있는 칸이 버튼이 아님');
   }

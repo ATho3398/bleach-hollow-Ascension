@@ -81,7 +81,7 @@ describe('전투 (#36~40·42)', () => {
   });
   it('범례 줄에 해방 설명이 없고 해방 버튼 툴팁으로 (#37), 빈 예고 띠는 안 보임 (#36), 승리 버튼은 행동 (#42)', () => {
     const b = read('src/ui/battleView.ts');
-    expect(b).toContain('legendRow.append(libChip, legend, meStatus);');
+    expect(b).toContain('legendRow.append(libChip, legend);'); // C.183: 상태 칩은 범례 줄에서 빼 필드 아래 가운데로
     expect(b).toContain('libBtn.title = hintFull;');
     expect(b).toContain('하러 가기');
     expect(read('src/ui/bha/battle-scene.css')).toContain('.bha-hgauge.is-idle { visibility: hidden;');

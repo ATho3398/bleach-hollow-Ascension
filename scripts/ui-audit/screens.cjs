@@ -30,6 +30,136 @@ async function settings(h, n) {
   } });
 }
 
+/**
+ * 전투 버튼 줄 상태 흔들기 (C.183, 2차): 한 번의 실행 안에서(화면 갱신 없이) 전투가 실제로 오가는 상태를 글자·클래스로 넣어 보고
+ * 기준 상태와 버튼 bounding box 를 비교한다 — 상태 칩 생김·막기 게이지 참/빔·소모품 ×n/씀/×0·장비 쿨/없음·해방 준비/해방 중·경직(블록 잠금).
+ * 칩이 생긴 상태에서는 칩(ⓘ 포함)이 버튼·체력 줄과 겹치는지도 본다. 엔진 상태는 안 건드림(다음 프레임에 원래 값으로 돌아온다)
+ */
+async function battleRowStates(h, n) {
+  const res = await h.page.evaluate(() => {
+    const all = (s) => [...document.querySelectorAll(s)];
+    const btns = all('.bha-lcd .bha-battle button').filter((e) => e.getClientRects().length > 0 && !e.closest('.bha-v2status'));
+    const name = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 20);
+    const pos = () => btns.map((e) => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; });
+    const base = pos();
+    const undo = [];
+    const text = (e, t) => { if (!e) return; const o = e.textContent; undo.push(() => { e.textContent = o; }); e.textContent = t; };
+    const cls = (e, c, on) => { if (!e) return; const o = e.classList.contains(c); undo.push(() => e.classList.toggle(c, o)); e.classList.toggle(c, on); };
+    const hid = (e, v) => { if (!e) return; const o = e.hidden; undo.push(() => { e.hidden = o; }); e.hidden = v; };
+    const sty = (e, k, v) => { if (!e) return; const o = e.style[k]; undo.push(() => { e.style[k] = o; }); e.style[k] = v; };
+    const ready = (e, on) => { cls(e, 'is-ready', on); cls(e, 'is-disabled', !on); };
+    const q = (s) => document.querySelector(s);
+    const guard = q('.bha-v2role--guard'), item = q('.bha-v2role--item'), gear = q('.bha-v2role--gear'), rel = q('.bha-v2rel'), app = q('.bha-battle');
+    const itemMeta = item?.querySelector('.bha-v2role__meta'), gearMeta = gear?.querySelector('.bha-v2role__meta');
+    const hasItem = !!itemMeta?.textContent, hasGear = !!gearMeta?.textContent;
+    const SCEN = [
+      ['상태 칩 생김(공허·체인3 12회)', () => { for (const c of all('.bha-v2status > .bha-chip')) { hid(c, false); text(c.querySelector('b'), '12회'); } }],
+      ['막기 게이지 참', () => { ready(guard, true); cls(guard, 'is-full', true); sty(guard?.querySelector('.bha-v2role__bar i'), 'width', '100%'); }],
+      ['막기 게이지 빔', () => { ready(guard, false); cls(guard, 'is-full', false); sty(guard?.querySelector('.bha-v2role__bar i'), 'width', '0%'); }],
+      ...(hasItem ? [['소모품 ×3', () => { ready(item, true); text(itemMeta, '×3'); }], ['소모품 씀', () => { ready(item, false); text(itemMeta, '씀'); }], ['소모품 ×0', () => { ready(item, false); text(itemMeta, '×0'); }]] : []),
+      ...(hasGear ? [['장비 쿨 12', () => { ready(gear, false); text(gearMeta, '12'); }], ['장비 쿨 끝(준비)', () => { ready(gear, true); text(gearMeta, ' '); }]] : []),
+      ...(rel && !rel.hidden ? [['해방 준비됨', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-ready', true); text(rel.querySelector('.bha-v2rel__meta'), '준비됨 — 눌러 해방'); }],
+        ['해방 중', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-on', true); cls(app, 'is-liberated', true); text(rel.querySelector('.bha-v2rel__meta'), '12.5초'); }]] : []),
+      ['경직(블록 잠금·머리 게이지)', () => { for (const b of all('.bha-v2tray .bha-block')) cls(b, 'is-locked', true); for (const g of all('.bha-unit--me .bha-unit__heads > *')) hid(g, false); }],
+      ['전부 함께', null],
+    ];
+    const out = [];
+    const overlap = [];
+    const hit = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+    for (const [label, fn] of SCEN) {
+      if (fn) fn(); else for (const [, f] of SCEN) if (f) f();
+      const p = pos();
+      btns.forEach((e, i) => {
+        const [x, y, w, hh] = base[i];
+        const [x2, y2, w2, h2] = p[i];
+        const self = e.closest('.bha-v2role, .bha-v2rel') && (label.includes('전부') || /막기|소모품|장비|해방/.test(label)) ? e : null;
+        // 바뀐 버튼 자신은 폭이 바뀌면 안 되고(오른쪽 고정 줄), 다른 버튼은 자리도 폭도 그대로
+        if (Math.abs(x2 - x) > 1.5 || Math.abs(y2 - y) > 1.5 || Math.abs(w2 - w) > 1.5 || Math.abs(h2 - hh) > 1.5) out.push(`${label}: ${name(e)} (${Math.round(x2 - x)}, ${Math.round(y2 - y)}) 폭 ${Math.round(w2 - w)}${self ? ' (자기 칸)' : ''}`);
+      });
+      if (/칩|전부/.test(label)) {
+        const chips = all('.bha-v2status > .bha-chip').filter((c) => !c.hidden);
+        const others = [...all('.bha-lcd .bha-battle button').filter((e) => !e.closest('.bha-v2status') && e.getClientRects().length > 0), ...all('.bha-battle .bha-unit__hp, .bha-battle .bha-v2legendrow > *:not([hidden]):not(.bha-v2status)')];
+        for (const c of chips) for (const o of others) if (hit(c.getBoundingClientRect(), o.getBoundingClientRect())) overlap.push(`${label}: 칩 '${c.textContent.trim().slice(0, 12)}' ↔ ${o.className.split(' ').find((k) => k.startsWith('bha-')) ?? ''} '${name(o)}'`);
+        const lr = q('.bha-v2legendrow');
+        if (lr && lr.scrollWidth > lr.clientWidth + 1) overlap.push(`${label}: 범례 줄 넘침 ${lr.scrollWidth - lr.clientWidth}px`);
+      }
+      while (undo.length) undo.pop()();
+    }
+    return { out, overlap, hasItem, hasGear };
+  });
+  for (const m of res.out) h.report({ kind: '상태 바꿈에 버튼 이동', key: m.split(':')[1].trim().replace(/ \(.*$/, ''), detail: m }, n);
+  for (const m of res.overlap) h.report({ kind: '겹침', key: m.split(': ')[1], detail: m }, n);
+  return res;
+}
+
+/** 소모품(회복약 ×3, 칸에 넣음)·발동 장비(폭발석 무기)를 세이브에 넣고 다시 불러온다 (C.183) */
+async function armItems(h) {
+  await h.page.evaluate(() => {
+    const k = 'bha-save-test';
+    const j = JSON.parse(localStorage.getItem(k));
+    j.shared.items['battle-potion'] = 3;
+    j.shared.battleItem = 'battle-potion';
+    const g = j.shared.gear;
+    const uid = `g${g.nextId++}`;
+    g.items.push({ uid, kind: 'weapon', grade: 'legendary', star: 1, stats: { atk: 5 }, special: { id: 'sp-active-burst', value: 6 }, plus: 0, gotAt: Date.now() });
+    g.equipped.weapon = uid;
+    localStorage.setItem(k, JSON.stringify(j));
+  });
+  await h.page.reload();
+  await h.wait(1500);
+  await h.page.getByRole('button', { name: '이어하기' }).click();
+  await h.wait(1500);
+}
+
+/** 원정 ★1 출발 → 첫 전투 조우 연출 뒤 */
+async function toBattle(h) {
+  await h.click('.bha-prop--door', { ms: 900 });
+  await h.btn('★1', { exact: true });
+  await h.btn('출발', { ms: 600 });
+  await h.page.locator('.bha-battle').waitFor({ timeout: 60_000 });
+  await h.wait(2600);
+}
+
+/** 테스트 패널: 속도 ×4 + 능력치 전부 같은 값(0 = 지는 몸, 'max' = 이기는 몸) (C.183) */
+async function testBody(h, stat) {
+  await more(h, '테스트');
+  await h.click('.bha-lcd .bha-viewtitle__btn');
+  await h.btn('둥지·시간', { within: '.bha-viewtitle__list', role: 'option' });
+  await h.click(h.page.locator('.bha-lcd .bha-seg__item').filter({ hasText: '×4' }));
+  await h.click('.bha-lcd .bha-viewtitle__btn');
+  await h.btn('능력치', { within: '.bha-viewtitle__list', role: 'option' });
+  const inp = h.page.locator('.bha-lcd input[type="number"]');
+  for (let i = 0; i < Math.min(await inp.count(), 6); i++) await inp.nth(i).fill(stat === 'max' ? (await inp.nth(i).getAttribute('max')) ?? '999' : String(stat));
+  await h.btn('적용');
+  await h.closeLayers();
+  await h.back();
+}
+
+/** 원정을 끝까지: 포식은 '… 안 함', 둥지 칸에서 [귀환], 지면 [결과 보기] → 원정 결과 화면(.bha-resultpage) */
+async function runToResult(h) {
+  await h.click('.bha-prop--door', { ms: 900 });
+  await h.btn('★1', { exact: true });
+  await h.btn('출발', { ms: 1200 });
+  const vis = (l) => l.filter({ visible: true });
+  for (let t = 0; t < 200 && !(await h.has('.bha-resultpage')); t++) {
+    const eat = vis(h.page.getByRole('button', { name: /하러 가기$/ }));
+    const nest = vis(h.page.getByRole('button', { name: '귀환', exact: true }));
+    const res = vis(h.page.getByRole('button', { name: '결과 보기' }));
+    const layerGo = vis(h.page.locator('.bha-lcd [data-dev-layer] button.bha-btn--primary'));
+    if (await layerGo.count()) await layerGo.first().click({ timeout: 3000 }).catch(() => {});
+    else if (await res.count()) await res.first().click({ timeout: 3000 }).catch(() => {});
+    else if (await nest.count()) await nest.first().click({ timeout: 3000 }).catch(() => {});
+    else if (await eat.count()) {
+      await eat.first().click({ timeout: 3000 }).catch(() => {});
+      await h.wait(800);
+      await h.click(h.page.locator('.bha-lcd .bha-absorbpage button.bha-btn--lg').last()).catch(() => {}); // 마지막 = '… 안 함'
+    }
+    await h.wait(1000);
+  }
+  if (!(await h.has('.bha-resultpage'))) throw new Error('원정 결과 화면에 못 닿음');
+  await h.wait(4500); // 칭호·튜토리얼 알림 띠가 걷히고 나서
+}
+
 const SCREENS = [
   {
     name: '시작',
@@ -254,11 +384,7 @@ const SCREENS = [
   {
     name: '전투',
     async run(h, n) {
-      await h.click('.bha-prop--door', { ms: 900 });
-      await h.btn('★1', { exact: true });
-      await h.btn('출발', { ms: 600 });
-      await h.page.locator('.bha-battle').waitFor({ timeout: 60_000 });
-      await h.wait(2600); // 조우 연출
+      await toBattle(h);
       const inBattle = async () => (await h.page.locator('.bha-battle').count()) > 0 && !(await h.has('.bha-battle .bha-overlay'));
       await h.check(n, { keys: false });
       // 숫자 칸 흔들기: 실제로 바뀌는 글자(남은 초 148 → 9, 소모품 ×3 → 씀, 장비 쿨다운 12 → 3)를 직접 넣어 다른 버튼이 움직이는지.
@@ -280,6 +406,7 @@ const SCREENS = [
         return btns.map((e, i) => [e.getAttribute('aria-label') || e.textContent.trim(), p2[i][0] - p1[i][0], p2[i][1] - p1[i][1]]).filter(([, dx, dy]) => Math.abs(dx) > 1.5 || Math.abs(dy) > 1.5).map(([k, dx, dy]) => `${String(k).slice(0, 20)} (${Math.round(dx)}, ${Math.round(dy)})`);
       });
       for (const m of moved) h.report({ kind: '상태 바꿈에 버튼 이동', key: m, detail: '숫자 칸 바꿈(남은 초 148→9·장비 쿨다운 12→3)' }, n);
+      await battleRowStates(h, n);
       await h.watch(n, 15_000, inBattle, /bha-block\b/); // 블록 바의 블록은 생기고 쓰이며 흘러가는 게 규칙(3-5)
       if (await inBattle()) {
         await h.stable(n, '로그 열기', () => h.btn('로그'));
@@ -288,6 +415,47 @@ const SCREENS = [
         await h.stable(n, '일시정지', () => h.btn('일시정지'));
         await h.check(`${n}/일시정지`);
       }
+    },
+  },
+  {
+    // C.183 (2차): 소모품·발동 장비를 실제로 낀 전투 — 버튼이 다 차 있는 상태에서 쓰고(소모품 ×3 → 씀, 장비 쿨다운 시작) 전후 비교
+    name: '전투 소모품·장비',
+    async run(h, n) {
+      await armItems(h);
+      await toBattle(h);
+      const inBattle = async () => (await h.page.locator('.bha-battle').count()) > 0 && !(await h.has('.bha-battle .bha-overlay'));
+      await h.check(n, { keys: false });
+      const st = await battleRowStates(h, n);
+      if (!st.hasItem) h.report({ kind: '검수 스크립트 실패', key: '소모품', detail: '소모품이 전투에 안 실림' }, n);
+      if (!st.hasGear) h.report({ kind: '검수 스크립트 실패', key: '장비', detail: '발동 장비가 전투에 안 실림' }, n);
+      // 소모품 쓰기 (전투당 1번) → 씀
+      const item = h.page.locator('.bha-lcd .bha-v2role--item.is-ready');
+      if (await item.count()) await h.stable(n, '소모품 쓰기', () => item.click({ timeout: 3000 }), /bha-block\b/);
+      // 장비: 쿨다운이 끝날 때까지 지켜보다(시간 흐름 점검 겸) 준비되면 쓰기
+      await h.watch(n, 12_000, async () => (await inBattle()) && !(await h.has('.bha-lcd .bha-v2role--gear.is-ready')), /bha-block\b/);
+      const gear = h.page.locator('.bha-lcd .bha-v2role--gear.is-ready');
+      if (await gear.count()) await h.stable(n, '장비 쓰기', () => gear.click({ timeout: 3000 }), /bha-block\b/);
+      if (await inBattle()) await battleRowStates(h, `${n}/쓴 뒤`);
+      if (process.env.UI_AUDIT_SHOTS && (await inBattle())) await h.check(`${n}/쓴 뒤`, { keys: false });
+    },
+  },
+  {
+    // C.183 (2차): 원정 결과 화면 — 완주(둥지 칸 [귀환])·패배(능력치 0, [결과 보기])
+    name: '원정 결과 완주',
+    async run(h, n) {
+      await testBody(h, 'max');
+      await runToResult(h);
+      await h.explore(n, { tabs: false });
+      await h.stable(n, '[둥지로]', () => h.btn(/로$/, { within: '.bha-resultpage .bha-dock', ms: 1200 }));
+      await h.check(`${n}/둥지`, { keys: false });
+    },
+  },
+  {
+    name: '원정 결과 패배',
+    async run(h, n) {
+      await testBody(h, 0);
+      await runToResult(h);
+      await h.explore(n, { tabs: false });
     },
   },
   {
