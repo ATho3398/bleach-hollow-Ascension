@@ -162,6 +162,8 @@ describe('94장 B 같은 속성 흡수 = 강화만', () => {
   it('노멀 강화는 기본 공격 블록 위력에 붙는다 (10단계 = earlyPerLevel × 10)', () => {
     const b = newBuild();
     for (let i = 0; i < 10; i++) addEnhance(b, 'normal');
+    b.slots = ['t-water-a', 't-fire-a', 't-earth-a']; // C.184: 빈 칸 몫(basicPerEmptySlot)은 c184 에서 본다
+    b.owned = [...b.slots] as string[];
     const p = buildCombatParams(b, 'hollow');
     expect(p.basicAttackEnhance).toBeCloseTo(1 + EH.earlyPerLevel * 10);
     const c = createCombat(1, { enemy: getEnemy('normal-basic'), params: p } as Parameters<typeof createCombat>[1]);

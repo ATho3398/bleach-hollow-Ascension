@@ -8,9 +8,10 @@ import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, liberatio
 import { enemyPool } from '../src/engine/enemyPool';
 import { createExpedition, enemyScale, mutationMods, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
 import { referenceLoadout, type GearCarry } from '../src/engine/gear';
-import { buildCombatParams, canAbsorb, gainTrait, newBuild } from '../src/engine/absorb';
+import { addEnhance, buildCombatParams, canAbsorb, gainTrait, isBasicBlockTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
-import { ELEMENT_IDS, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
+import { ELEMENT_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
+import { getTrait } from '../src/data/traits';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, newEvolution, worldRefStat, zeroStats } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
@@ -123,7 +124,7 @@ const N = 200;
 const BALANCE_FACTION = 'hollow';
 const buildOf = (ids: string[]): Partial<CombatParams> => {
   const b = newBuild();
-  for (const id of ids) gainTrait(b, id);
+  for (const id of ids) if (!gainTrait(b, id).ok && isBasicBlockTrait(id)) addEnhance(b, NORMAL_ELEMENT); // 노멀 skill 특성 = 기본 블록 (C.184, GDD 111장 1): 고른 것처럼 노멀 강화 +1
   // 점검 봇은 1단계(진화 전)라 켜진 콤보가 없다. 콤보 효과는 아래 참고 빌드로 따로 본다 (GDD 17-3)
   return { ...buildCombatParams(b, BALANCE_FACTION), combos: comboRulesOf(newEvolution()), ...START };
 };
@@ -606,7 +607,7 @@ function botBuyTiles(save: SaveData, seed: number): number {
   botDraws.count += n;
   return n;
 }
-function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number } = {}): CampaignStats {
+function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number; keepElements?: string[] } = {}): CampaignStats {
   const out: CampaignStats = { stageRuns: [[], [], [], []], finalRuns: [], formCounts: { 2: {}, 3: {}, 4: {}, 5: {} }, stepsPerRun: [], hidden: 0, evolutions: 0, finalDefeats: [], saves: [], firstAt: {} };
   for (let seed = 1; seed <= CAMPAIGNS; seed++) {
     const save = newSaveData('hollow', seed * 7919);
@@ -624,6 +625,9 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
         save.nest.condition = 80;
         save.nest.weakened = false;
       }
+      // 노리는 단계에서 그 속성 아닌 장착을 둥지에서 뺀다 (C.184, GDD 111장 1: 노멀 skill 특성은 칸에 들지 않으니 노멀을 노리면 칸을 비운다 — 사람이 노리는 방식)
+      const keep = policy.keepElements;
+      if (keep && save.evolution.tierIndex === policy.stage) save.build.slots = save.build.slots.map((id) => (id !== null && keep.includes(getTrait(id).element) ? id : null));
       const e = playExpedition(
         createExpedition({
           factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
@@ -804,19 +808,19 @@ if (want('rebirth')) {
 
 // ── 정책 봇 (C.47): 한 속성만 / 마주 보는 두 원소만 / 노멀만 흡수, 돌보지 않음, 놓아주기 위주. 히든 도달률을 본다 ──
 if (want('policy')) {
-  type Policy = { name: string; wanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number; expect?: string };
+  type Policy = { name: string; wanted?: (seed: number) => (exp: ExpeditionState) => boolean; care?: 'good' | 'neglect'; stage?: number; expect?: string; keepElements?: string[] };
   const only = (els: string[]) => () => (exp: ExpeditionState) => els.includes(exp.absorbOffer!.element);
   const policies: Policy[] = [
     { name: '물·흙만 흡수', wanted: only(['water', 'earth']), stage: 2, expect: 'h4:fusion:water+earth' },
     { name: '불·뇌만 흡수', wanted: only(['fire', 'thunder']), stage: 2, expect: 'h4:fusion:fire+thunder' },
     { name: '혈+불만 흡수', wanted: only(['blood', 'fire']), stage: 2, expect: 'h4:special:blood' },
-    { name: '노멀만 흡수', wanted: only(['normal']), stage: 2, expect: 'h4:pure' },
+    { name: '노멀만 흡수', wanted: only(['normal']), stage: 2, expect: 'h4:pure', keepElements: ['normal'] },
     { name: '돌보지 않음', care: 'neglect', expect: 'h4:fail' },
     { name: '대부분 놓아줌', wanted: (seed) => (exp) => (exp.absorbRecords.length * 7 + seed) % 4 === 0, stage: 3, expect: 'h5:restraint' },
   ];
   console.log(`\n정책 봇 진화 (봇 ${CAMPAIGNS}명 × 4바퀴 원정 최대 ${MAX_RUNS}회, 정책은 노리는 단계에서만) — 히든 도달 (그 정책이 노리는 히든 / 전체 히든)`);
   for (const pol of policies) {
-    const st = campaign({ absorbWanted: pol.wanted, care: pol.care, stage: pol.stage });
+    const st = campaign({ absorbWanted: pol.wanted, care: pol.care, stage: pol.stage, keepElements: pol.keepElements });
     const all = Object.values(st.formCounts).flatMap((c) => Object.entries(c));
     const target = all.filter(([id]) => id === pol.expect).reduce((a, [, n]) => a + n, 0);
     const hiddenTop = all.filter(([id]) => FORM_TABLE.find((f) => f.id === id)?.hidden).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${formName(FORM_TABLE.find((f) => f.id === id)!, 'hollow')} ${n}`).join(' · ');

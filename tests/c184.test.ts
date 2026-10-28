@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { TRAITS } from '../src/data/traits';
 import { NORMAL_ELEMENT } from '../src/data/elements';
-import { dropBasicBlockTraits, enhanceLevel, gainTrait, isBasicBlockTrait, newBuild, ownsTraitBlock } from '../src/engine/absorb';
+import { addEnhance, basicAttackMultiplier, buildCombatParams, dropBasicBlockTraits, enhanceLevel, gainTrait, isBasicBlockTrait, newBuild, ownsTraitBlock } from '../src/engine/absorb';
+import { BALANCE } from '../src/config/balance';
 import { advance, chooseAbsorb, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
 import { evolutionCandidates } from '../src/engine/evolution/judge';
 import { newEvolution } from '../src/engine/evolution';
@@ -85,6 +86,19 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
     expect(evolutionCandidates(e, { factionId: 'hollow', build: b, hunger: 20, condition: 80 }).forced).not.toBeNull();
     b.enhance = { [NORMAL_ELEMENT]: 1 };
     expect(evolutionCandidates(e, { factionId: 'hollow', build: b, hunger: 20, condition: 80 }).forced).toBeNull();
+  });
+});
+
+describe('111장 3: 빈 칸 몫', () => {
+  it('노멀 강화 1↑이면 빈 본체 칸마다 기본 공격 블록 +basicPerEmptySlot (노멀 강화 0 이면 없음)', () => {
+    const EH = BALANCE.provisional.absorb.enhance;
+    const b = newBuild();
+    expect(buildCombatParams(b, 'hollow').basicAttackEnhance).toBe(1);
+    addEnhance(b, NORMAL_ELEMENT);
+    expect(basicAttackMultiplier(b)).toBeCloseTo((1 + EH.earlyPerLevel) * (1 + EH.basicPerEmptySlot * 3));
+    gainTrait(b, 't-water-a');
+    expect(buildCombatParams(b, 'hollow').basicAttackEnhance).toBeCloseTo((1 + EH.earlyPerLevel) * (1 + EH.basicPerEmptySlot * 2));
+    expect(read('src/ui/absorbView.ts')).toContain('basicAttackMultiplier({ enhance: { [elId]: n }, slots: exp.build.slots })');
   });
 });
 

@@ -5,7 +5,7 @@ import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
 import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbModeRule, absorbRisk, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
+import { absorbModeRule, absorbRisk, basicAttackMultiplier, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
 import { absorbEvOf, chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
@@ -180,7 +180,9 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const count = exp.build.enhance?.[elId] ?? 0;
     const max = AX.enhance.max;
     const lv = enhanceLevel(exp.build, elId);
-    const pct = (n: number) => (enhanceAttackBonus(n) * 100).toFixed(1).replace(/\.0$/, '');
+    // 노멀 = 기본 공격 블록 배율(빈 칸 몫 포함, C.184 GDD 111장 3)
+    const bonus = (n: number) => (elId === NORMAL_ELEMENT ? basicAttackMultiplier({ enhance: { [elId]: n }, slots: exp.build.slots }) - 1 : enhanceAttackBonus(n));
+    const pct = (n: number) => (bonus(n) * 100).toFixed(1).replace(/\.0$/, '');
     const target = elId === NORMAL_ELEMENT ? '기본 공격 블록' : '공격 블록';
     return lv >= max
       ? `${elementName(elId, faction.id)} ${max}강 최대 · ${target} +${pct(max)}% · ${act} ${count}회 → ${count + 1}회`

@@ -49,6 +49,13 @@ export function enhanceAttackMultiplier(b: Pick<BuildState, 'enhance'>, element:
   return 1 + enhanceAttackBonus(enhanceLevel(b, element));
 }
 
+/** 기본 공격 블록 위력 배율 (C.147 노멀 강화 + C.184 GDD 111장 3): 노멀 강화 배율 × (1 + basicPerEmptySlot × 빈 본체 칸) — 빈 칸 몫은 노멀 강화 1↑일 때만 */
+export function basicAttackMultiplier(b: Pick<BuildState, 'enhance' | 'slots'>): number {
+  const lv = enhanceLevel(b, NORMAL_ELEMENT);
+  const empty = lv > 0 ? b.slots.filter((id) => id === null).length : 0;
+  return enhanceAttackMultiplier(b, NORMAL_ELEMENT) * (1 + EH.basicPerEmptySlot * empty);
+}
+
 /** 기본 막기·회복 블록 위력 배율: 1 + min(guardHealMax, guardHealPerLevel × 모든 속성 단계 합) */
 export function enhanceGuardHealMultiplier(b: Pick<BuildState, 'enhance'>): number {
   const sum = Object.keys(b.enhance ?? {}).reduce((a, el) => a + enhanceLevel(b, el), 0);
@@ -234,6 +241,6 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
     blockSpawnMultiplier: pm.blockSpawn,
     critChance: BALANCE.provisional.combat.critChance + critChanceBonus(b),
     guardHealEnhance: enhanceGuardHealMultiplier(b),
-    basicAttackEnhance: enhanceAttackMultiplier(b, NORMAL_ELEMENT),
+    basicAttackEnhance: basicAttackMultiplier(b),
   };
 }
