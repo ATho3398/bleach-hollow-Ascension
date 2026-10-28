@@ -3,7 +3,7 @@
 import { BALANCE } from '../config/balance';
 import { elementName } from '../data/elements';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { emptySlot, enhanceLevel, setSlot, type BuildResult, type BuildState } from '../engine/absorb';
+import { emptySlot, enhanceLevel, isBasicBlockTrait, setSlot, type BuildResult, type BuildState } from '../engine/absorb';
 import type { FactionConfig } from '../engine/faction';
 import { button, h, icon, panel, provisionalTag } from './bha/dom';
 import { enableDrag } from './bha/dragdrop';
@@ -68,6 +68,8 @@ const plainDesc = plainText;
 /** 카드의 짧은 효과 줄: 블록 = 계열·위력, 그 밖 = 설명 */
 export function traitBrief(faction: FactionConfig, id: string): string {
   const t = getTrait(id);
+  // C.185 (GDD 111장 후속): 노멀 skill 특성 = 기본 블록 — 위력 대신 '고르면 노멀 강화 +1'
+  if (isBasicBlockTrait(id)) return `고르면 ${elementName(t.element, faction.id)} 강화 +1`;
   if (t.kind !== 'skill' || t.powerInAttacks === undefined) return plainDesc(traitDescription(id, faction.id));
   const kind = t.role === 'guard' ? '막기' : t.role === 'heal' ? '회복' : faction.families.find((f) => f.id === t.family)?.name ?? '공격';
   return `${kind} · 위력 ${t.powerInAttacks}회분`;

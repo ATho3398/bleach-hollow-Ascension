@@ -142,3 +142,18 @@ describe('111장 4: 설명 데이터 말투', () => {
     }
   });
 });
+
+describe('111장 후속: 노멀 skill 특성 설명 = 기본 블록 (C.184 반영)', () => {
+  it('노멀 skill 특성 설명은 위력 대신 "고르면 노멀 강화 +1", 다른 특성은 그대로', async () => {
+    const { isBasicBlockTrait } = await import('../src/engine/absorb');
+    const { traitBrief } = await import('../src/ui/buildPanel');
+    for (const t of TRAITS) for (const f of FACTIONS) {
+      const d = traitDescription(t.id, f.id);
+      if (isBasicBlockTrait(t.id)) {
+        expect(d).toContain('효과: 고르면 노멀 강화 +1');
+        expect(d).not.toContain('위력');
+        expect(traitBrief(f, t.id)).toBe('고르면 노멀 강화 +1');
+      } else if (t.kind === 'skill') expect(d).toContain('위력 기본 공격');
+    }
+  });
+});
