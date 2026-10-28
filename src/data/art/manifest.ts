@@ -16,6 +16,10 @@ import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } 
 import { getSkin, skinArtKey } from '../skins';
 import { FACTIONS } from '../factions';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
+import { HUMANOID } from './rig/pose';
+
+/** 종이인형 여성 외형 id 꼬리 (humanoid.json looks: shinigami-base → shinigami-base-f) */
+export const RIG_FEMALE_SUFFIX = '-f';
 
 export interface ArtEntry {
   /** 한 장짜리 그림 경로 (public/ 기준, 예 "art/scene-hollow.png"). 비우면 자리표시 도형 */
@@ -62,6 +66,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
   // 걷기·전투 필드는 1.5배 (C.176, GDD 106장 3: 2배면 그림 높이가 1단계의 약 1.26배·폭 1.4배로 필드 위로 넘쳤다 → 높이·폭이 1단계와 비슷하게)
   'char.hollow.2': { scale: 2, fieldScale: 1.5, locomotion: 'walk' },
+  // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
+  // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
+  'char.hollow.5': { rig: 'arrancar-base', scale: 1.32, offsetY: -5 },
   'prop.door': {},
   'prop.altar': {},
   'prop.book': {},
@@ -122,14 +129,21 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     if (skin) return skin; // 스킨 그림이 아직 하나도 없으면 진화체 그림으로 (빈 화면 방지)
   }
   const keys = charArtKeys(factionId, tierIndex);
-  // 종이인형: 단계별 파일이 없을 때 — 단계별 종이인형(char.<종족>.<n> 의 rig) > 종족 공통 종이인형 > 종족 공통 그림 (정지 그림 = 쉬는 자세 한 장)
-  const rigKey = fallbackKey && manifest[keys[0]!]?.rig ? keys[0]! : fallbackKey;
-  const rigLook = fallbackKey ? manifest[rigKey]?.rig : undefined;
+  // 종이인형 (GDD 115-A 30, 115장): 단계별 종이인형(char.<종족>.<n> 의 rig)은 그 단계 대체 그림 파일보다 먼저 — 진화체 자리 전부가 종이인형.
+  // 종족 공통 종이인형(char.<종족> 의 rig)은 단계별 파일이 없을 때만 (종족 공통 그림보다 먼저). 정지 그림 = 쉬는 자세 한 장
+  // 목록·사진처럼 종족 기본 키를 안 넘기는 곳(fallbackKey '')도 단계별 종이인형은 정지 그림으로 같게 보인다
+  const stagedRig = manifest[keys[0]!]?.rig;
+  const rigKey = stagedRig ? keys[0]! : fallbackKey;
+  const rigLook = stagedRig ?? (fallbackKey ? manifest[fallbackKey]?.rig : undefined);
   if (rigLook) {
-    const staged = tryKeys(keys.slice(0, 1));
-    if (staged) return staged;
+    if (!stagedRig) {
+      const staged = tryKeys(keys.slice(0, 1));
+      if (staged) return staged;
+    }
+    // 여성 외형 = 외형 id 뒤 -f (GDD 114·115장). 없으면 그 외형(남성) 그대로
+    const look = female && HUMANOID.looks[rigLook + RIG_FEMALE_SUFFIX] ? rigLook + RIG_FEMALE_SUFFIX : rigLook;
     const e = manifest[rigKey]!;
-    return { src: joinBase(base, `art/rig/humanoid/still/${rigLook}.png`), frames: null, scale: e.scale ?? 1, offsetY: e.offsetY ?? 0, locomotion: e.locomotion, rig: { look: rigLook, partBase: joinBase(base, 'art/rig/humanoid/') } };
+    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, locomotion: e.locomotion, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') } };
   }
   return tryKeys(keys) ?? artUrls(fallbackKey, base, manifest, files);
 }

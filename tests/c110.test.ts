@@ -19,7 +19,7 @@ const shin = FACTIONS.find((f) => f.id !== 'hollow')!;
 const fl = hollow.formLooks!;
 
 describe('C.110 아란칼(5단계) 외형 표 (GDD 54)', () => {
-  it('5단계 진화체 전부(일반 24 + 히든 4)에 외형이 있고, 모두 시작 전용 단계 외형 스킨 — 그림은 C.187(GDD 113)에 지워져 없으면 5단계 진화체 그림으로 보인다', () => {
+  it('5단계 진화체 전부(일반 24 + 히든 4)에 외형이 있고, 모두 시작 전용 단계 외형 스킨 — 그림은 C.187(GDD 113)에 지워져 없으면 아란칼 기본형 종이인형(C.189, GDD 115)', () => {
     const files = readdirSync('public/art');
     const t5 = FORM_TABLE.filter((f) => f.tier === 5).map((f) => f.id);
     expect(t5.length).toBe(28);
@@ -27,9 +27,10 @@ describe('C.110 아란칼(5단계) 외형 표 (GDD 54)', () => {
       expect(fl[id], id).toBeTruthy();
       for (const l of fl[id]!) {
         expect(getSkin(l), l).toMatchObject({ factionId: 'hollow', startOnly: true, tierLook: true });
-        // 새 그림이 오면 같은 id 파일(skin-<id>.png)만 넣으면 그 그림, 없으면 기존 대체(char-hollow-5) — 깨진 그림·빈칸 없음
-        const src = charArt('hollow', 4, 'char.hollow', '/', undefined, files, l).src;
-        expect(src, l).toBe(existsSync(`public/art/skin-${l}.png`) ? `/art/skin-${l}.png` : '/art/char-hollow-5.png');
+        // 새 그림이 오면 같은 id 파일(skin-<id>.png)만 넣으면 그 그림, 없으면 아란칼 기본형 종이인형(C.189, GDD 115장 2) — 깨진 그림·빈칸 없음
+        const a = charArt('hollow', 4, 'char.hollow', '/', undefined, files, l, undefined, 'male');
+        expect(a.src, l).toBe(existsSync(`public/art/skin-${l}.png`) ? `/art/skin-${l}.png` : '/art/rig/humanoid/still/arrancar-base.png');
+        if (!existsSync(`public/art/skin-${l}.png`)) expect(charArt('hollow', 4, 'char.hollow', '/', undefined, files, l, undefined, 'female').rig?.look, l).toBe('arrancar-base-f');
       }
     }
     expect(Object.keys(fl).sort()).toEqual([...t5].sort());

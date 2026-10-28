@@ -43,9 +43,11 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     expect(a.rig?.look).toBe('shinigami-base');
     expect(a.src).toBe('/art/rig/humanoid/still/shinigami-base.png');
     expect(ART_MANIFEST['char.shinigami']!.rig).toBe(HUMANOID.looks['shinigami-base'] ? 'shinigami-base' : undefined);
-    const staged = charArt('shinigami', 1, 'char.shinigami', '/', undefined, ['char-shinigami-2.png']);
+    // 종족 공통 종이인형 자리(3단계~)는 단계별 파일이 먼저. 단계별 종이인형(2단계 학생)은 파일보다 먼저 (GDD 115장, C.189)
+    const staged = charArt('shinigami', 2, 'char.shinigami', '/', undefined, ['char-shinigami-3.png']);
     expect(staged.rig).toBeUndefined();
-    expect(staged.src).toBe('/art/char-shinigami-2.png');
+    expect(staged.src).toBe('/art/char-shinigami-3.png');
+    expect(charArt('shinigami', 1, 'char.shinigami', '/', undefined, ['char-shinigami-2.png']).rig?.look).toBe('shinigami-student');
     // 2단계 = 진앙영술원 학생 종이인형
     expect(charArt('shinigami', 1, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-student');
     expect(charArt('shinigami', 2, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-base');

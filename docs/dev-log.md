@@ -882,3 +882,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트 `tests/c188.test.ts` 13개, 형식 숫자 기대값 10개 파일 52 로.
 - 확인: 테스트 모드 아란칼 노멀 조 + 여성 저장 → 세이브 gender 'female', 400대 응답 0 · 콘솔 에러 0(그림은 지금 그대로). ui-audit `설정(방)` 두 종족 0건.
 - 캡처 `docs/captures/c188/`(1배 844×390): 01 설정 [이 슬롯] 성별 남성 · 02 여성 고름(저장 전) · 03 테스트 패널 지금 몸 '5단계 · 아란칼 노멀 조'.
+
+## C.189 — 종이인형 외형 게임 연결: 사신·학생·아란칼 남녀 (GDD 115장, v5.263, S-23, 코딩135 Opus)
+- 사용자 원문(2026-10-29 03:1x, 종이인형 세션 경유): "지금까지 만든 사신과 아란칼들 게임에 넣고 마스터세션에 넘겨서 게임에 구현까지 시켜놔. 자러간다"
+- merge: 종이인형 브랜치 `ccr-14d5b05b-vt28rc`(dd1e3c0, merge base 564be70)를 main 에 merge 커밋으로(rebase·force 없음). 충돌 5곳 — `src/version.ts`·`docs/GDD.md`·`docs/dev-log.md` = main 기준, `src/data/art/manifest.ts` = main 값(fieldScale·성별) 그대로 + 사신 종이인형 키 2개, `src/ui/bha/room.css` = 양쪽 줄 합침. 그 밖(종이인형 엔진 `src/data/art/rig/`·`paperdoll.ts`·`rigAnim.ts`·`animPlayer.ts` 연결, `public/art/rig/humanoid/` 외형 8개·정지 그림, 도구 `scripts/rig/`·`scripts/depixel/`·`scripts/sprite-rig/`, 테스트 3개 파일)은 자동 merge. 브랜치 96장 → GDD 115-A(원문 그대로), 브랜치 C.151 → 위 'C.151 종이인형' 소절.
+- 연결: 그림 목록 `char.hollow.5` = arrancar-base (아란칼 진화체 28개 자리 전부 — 스킨 그림 `skin-arr*.png` 이 오면 그쪽 먼저, C.187·C.188 규칙 그대로). `char.shinigami` = shinigami-base, `char.shinigami.2` = shinigami-student(브랜치 그대로). 사신 3~5단계 = 종족 공통 자리(shinigami-base) — 단계별 새 외형 [미정], 안 정함.
+- `charArt`: 단계별 종이인형은 그 단계 대체 그림 파일(char-hollow-5.png)보다 먼저, 종족 공통 종이인형은 단계별 파일이 없을 때만. 여성(114장 `usesFemaleLook`)이면 외형 id 뒤 `-f`(`RIG_FEMALE_SUFFIX`, humanoid.json looks 에 있을 때만). 목록·사진(종족 기본 키 '')도 단계별 종이인형은 정지 그림으로. 종족 분기 없음(데이터·종족 설정만).
+- 세이브 형식 그대로(52), BALANCE 그대로.
+- 테스트: c110(아란칼 자리 = 스킨 파일 또는 arrancar-base, 여성 arrancar-base-f)·c188(여성 외형 = 종이인형 -f, 호로 4단계까지 남녀 같음)·rigAnim(학생 = 단계별 종이인형이 파일보다 먼저) 갱신.
+- 확인(테스트 모드, 1배 844×390): 아란칼 남/여·사신 남/여·학생 남/여 — 방·가방·걷기·전투, 콘솔 에러 0·400대 응답 0·깨진 그림 0. 걷기 화면은 사신 종이인형(브랜치 값 1.32배)과 같은 크기로 크게 보임 — 브랜치 설정 그대로 둠.
+- 캡처 `docs/captures/c189/`: 01 사신 남 방 · 02 사신 여 방 · 03 학생 여 방 · 04 아란칼 남 방 · 05 아란칼 여 방 · 06 아란칼 여 전투.

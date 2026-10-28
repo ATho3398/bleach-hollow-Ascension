@@ -68,11 +68,15 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
     setActiveGender('female');
     expect(charArt('hollow', 4, 'char.hollow', '/', {}, files).src).toBe('/art/char-hollow-5-f.png');
   });
-  it('지금 빌드에는 여성 그림이 없어 화면은 그대로 (깨진 그림 없음)', () => {
+  it('지금 빌드: 한 장 여성 그림(-f 파일)은 없고, 여성 외형은 종이인형 -f (C.189, GDD 115장) — 호로 아란칼 전은 남녀 같다', () => {
     expect(ART_FILES.some((f) => /-f\.(png|webp)$|-f\//.test(f))).toBe(false);
-    for (const [fid, t] of [['hollow', 4], ['hollow', 0], ['shinigami', 0], ['shinigami', 2]] as const) {
-      const fb = getFaction(fid).room?.characterArt ?? '';
-      expect(charArt(fid, t, fb, '/', undefined, ART_FILES, null, undefined, 'female')).toEqual(charArt(fid, t, fb, '/', undefined, ART_FILES, null, undefined, 'male'));
+    const art = (fid: string, t: number, g: 'male' | 'female') => charArt(fid, t, getFaction(fid).room?.characterArt ?? '', '/', undefined, ART_FILES, null, undefined, g);
+    expect(art('hollow', 0, 'female')).toEqual(art('hollow', 0, 'male'));
+    expect(art('hollow', 3, 'female')).toEqual(art('hollow', 3, 'male'));
+    for (const [fid, t, look] of [['hollow', 4, 'arrancar-base'], ['shinigami', 0, 'shinigami-base'], ['shinigami', 1, 'shinigami-student'], ['shinigami', 2, 'shinigami-base']] as const) {
+      expect(art(fid, t, 'male').rig?.look, `${fid}${t}`).toBe(look);
+      expect(art(fid, t, 'female').rig?.look, `${fid}${t}`).toBe(`${look}-f`);
+      expect(art(fid, t, 'female').src).toBe(`/art/rig/humanoid/still/${look}-f.png`);
     }
   });
 });
