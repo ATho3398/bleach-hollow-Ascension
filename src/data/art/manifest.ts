@@ -50,9 +50,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'char.hollow': {},
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)이 칼 휘두를 자리까지 넓어서 옛 한 장 그림(char-shinigami.png)과 같은 키로 보이게 키우고, 발이 칸 아래 끝이라 조금 올린다
-  'char.shinigami': { rig: 'shinigami-base', scale: 1.25, offsetY: -5 },
+  'char.shinigami': { rig: 'shinigami-base', scale: 1.32, offsetY: -5 },
   // 사신 2단계 = 진앙영술원 학생 (사용자 2026-10-29 "얘는 사신쪽에 진앙영술원 학생으로")
-  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.25, offsetY: -5 },
+  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.32, offsetY: -5 },
   // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다
   'char.hollow.2': { scale: 2, locomotion: 'walk' },
   'prop.door': {},
