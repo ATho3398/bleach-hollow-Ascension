@@ -3,6 +3,7 @@
 import { BALANCE } from '../config/balance';
 import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
+import { normalSlotNote } from '../data/help/textFormat';
 import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
 import { absorbModeRule, absorbRisk, basicAttackMultiplier, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
@@ -192,6 +193,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   function enhanceRow(): HTMLElement {
     const sp = el('span');
     if (owned()) sp.append(chip('강화'), ' ', enhanceText());
+    // GDD 111장 후속 결정 2: 노멀 강화 설명에 진화 판정 빈 칸 규칙 한 줄
+    if (offer!.element === NORMAL_ELEMENT) sp.append(el('br'), el('small', 'bha-faint', normalSlotNote(faction.slotName)));
     else sp.append(chip('새 블록'), ' ', `${elementName(offer!.element, faction.id)} 블록을 처음 얻는다 · ${enhanceText()}`);
     return sp;
   }

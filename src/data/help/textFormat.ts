@@ -59,5 +59,8 @@ export function zonesBy(from: number, to: number, textAt: (v: number) => string)
   return out;
 }
 
+/** 진화 판정의 노멀 빈 칸 규칙 한 줄 (GDD 111장 후속 결정 ②·2, C.184 judgeElementCounts) — 진화 안내·도감·노멀 강화 설명이 같이 쓴다 */
+export const normalSlotNote = (slotName: string): string => `노멀 강화가 1 이상이면 빈 ${slotName} 칸 하나를 노멀 1개로 센다`;
+
 /** 구간 → 수치 줄 */
 export const zoneLine = (z: Zone): string => numLine(range(z.from, z.to), z.text);

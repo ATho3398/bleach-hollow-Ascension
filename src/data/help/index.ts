@@ -1,6 +1,7 @@
 // 도움말·튜토리얼 텍스트 데이터 (GDD 14-2, C.19). 본문은 템플릿이고 {자리표시자}는 종족 설정(FactionConfig)·밸런스 값으로 치환한다.
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
 import { riskText, riskZones, stabilityZones, zoneLines } from './riskText';
+import { normalSlotNote } from './textFormat';
 import { BALANCE } from '../../config/balance';
 import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
 import { fixParticles } from '../../engine/josa';
@@ -123,6 +124,7 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.stabilityDoesText = rt.stabilityDoes.join('\n');
   vars.stabilityZoneText = zoneLines(stabilityZones(f)).join('\n');
   vars.stabilityMoveText = rt.stabilityMove.join('\n');
+  vars.normalSlotNote = normalSlotNote(f.slotName);
   vars.tier4 = f.tierNames[3];
   vars.tier5 = f.tierNames[4];
   return vars;

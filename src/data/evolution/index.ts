@@ -1,7 +1,8 @@
 // 진화체 트리 (GDD 20-5 v3.7~v4.2, 22-7): 1·1·1 → 바스트로데 속성 8 → 아란칼 속성 × 분류 24 + 히든 12(환생 전용 1 포함). 데이터는 forms.json (생성기 결과를 커밋한 것 — 손으로 고칠 수 있다).
 // 생성기: generate.ts / `npm run gen:forms`. 이름은 자리 표시이며, 정식 이름은 진화체의 name 에 종족별로 넣으면 그것이 우선한다.
 import { isLocomotion } from '../../engine/locomotion';
-import { categoryName, elementName, isElement } from '../elements';
+import { NORMAL_ELEMENT, categoryName, elementName, isElement } from '../elements';
+import { normalSlotNote } from '../help/textFormat';
 import { getFaction } from '../factions';
 import { FORM_KINDS, STAT_IDS, pickFaction, type FormDef, type FormKind } from '../schema';
 import { generateFormTable } from './build';
@@ -101,7 +102,7 @@ export function formHint(form: FormDef, factionId: string): string {
   const els = form.label.elements.map((e) => elementName(e, factionId));
   const byKind: Record<FormKind, string> = {
     base: '정해진 걸음을 걸으면 진화',
-    element: `${els[0]} 특성을 가장 많이 장착하고 진화`,
+    element: `${els[0]} 특성을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
     arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${form.label.category ? categoryName(form.label.category, factionId) : ''} 공격 특성을 가장 많이 장착하고 진화`,
     fusion: `${els.join('·')} 적을 고루 많이 ${getFaction(factionId).absorbActionName}`,
     complete: '네 원소의 적을 모두 고루',

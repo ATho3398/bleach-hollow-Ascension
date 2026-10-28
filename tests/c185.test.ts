@@ -157,3 +157,22 @@ describe('111장 후속: 노멀 skill 특성 설명 = 기본 블록 (C.184 반�
     }
   });
 });
+
+describe('111장 후속 결정 2: 노멀 빈 칸 규칙 안내 한 줄', () => {
+  it('진화 조건 용어·진화 화면 요약·노멀 바스트로데 도감 힌트에 같은 줄', async () => {
+    const { normalSlotNote } = await import('../src/data/help/textFormat');
+    const { FORM_TABLE: FORMS, formHint } = await import('../src/data/evolution');
+    for (const f of FACTIONS) {
+      const note = normalSlotNote(f.slotName);
+      expect(note).toMatch(/다$/);
+      const vars = helpVars(f);
+      expect(renderHelpText(GLOSSARY.find((g) => g.id === 'evolution-condition')!.body, vars)).toContain(note);
+      expect(renderHelpText(SCREEN_HELPS.find((s) => s.id === 'evolution')!.body, vars)).toContain(note);
+      const normalT4 = FORMS.find((x) => x.label.kind === 'element' && x.label.elements[0] === 'normal');
+      expect(normalT4).toBeDefined();
+      expect(formHint(normalT4!, f.id)).toContain(note);
+    }
+    expect(read('src/ui/absorbView.ts')).toContain('normalSlotNote(faction.slotName)');
+    expect(read('src/ui/evolutionPanel.ts')).toContain('normalSlotNote(faction.slotName)');
+  });
+});

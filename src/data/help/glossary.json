@@ -13,7 +13,7 @@
     {"id": "weakness", "title": "약점", "body": "원소 속성 적은 그 속성을 이기는 속성이 약점이다(예: 불 적은 물). 약점 속성 {skillBlockName}은(는) 효과가 굉장하다(×1.2). 상성이 좋은 {skillBlockName}으로 마무리하면 {absorbActionName}할 수 있다. 약점이 없는 적(노멀·혈·독·허)은 아무 {skillBlockName}으로 마무리해도 된다. 공격 분류도 본다: 물리는 힘 대 방어, 특수는 지능 대 정신력이다."},
     {"id": "stability", "title": "{stabilityName}", "body": "{stabilityLead}\n**하는 일**\n{stabilityDoesText}\n**구간별 손해**\n{stabilityZoneText}\n**오르내림**\n{stabilityMoveText}"},
     {"id": "risk-gauge", "title": "{riskGaugeName}", "body": "{riskLead}\n**하는 일**\n{riskDoesText}\n**구간별 손해**\n{riskZoneText}\n**오르내림**\n{riskMoveText}"},
-    {"id": "evolution-condition", "title": "진화 조건", "body": "진화는 원정에서 걸은 거리로 온다(숫자는 비밀). 때가 되면 {nestName}에 돌아올 때 저절로 진화한다. {tier4}은(는) 장착 특성 중 가장 많은 속성, {tier5}은(는) 그 속성 × 가장 많은 공격 분류(물리·특수·혼합)로 정해진다. 특별한 조건을 채우면 히든 진화체가 나올 수도 있다. 특성 없이 진화하거나 몸 상태가 나쁘면 실패한다. (수치는 임시)"},
+    {"id": "evolution-condition", "title": "진화 조건", "body": "진화는 원정에서 걸은 거리로 온다(숫자는 비밀). 때가 되면 {nestName}에 돌아올 때 저절로 진화한다. {tier4}은(는) 장착 특성 중 가장 많은 속성, {tier5}은(는) 그 속성 × 가장 많은 공격 분류(물리·특수·혼합)로 정해진다. {normalSlotNote}. 특별한 조건을 채우면 히든 진화체가 나올 수도 있다. 특성 없이 진화하거나 몸 상태가 나쁘면 실패한다. (수치는 임시)"},
     {"id": "form-dex", "title": "진화체 도감", "body": "{nestName}의 상태 화면 [진화 정보] 안 [진화체 도감]에서 연다. 한 번 진화해 본 진화체가 기록된다."},
     {"id": "title-dex", "title": "칭호 도감", "body": "{nestName}의 [칭호 도감]에서 연다. 조건을 채우면 칭호가 해금되고, 숨겨진 칭호는 ?로 보인다. (조건은 임시)"},
     {"id": "resume-expedition", "title": "원정 이어하기", "body": "원정은 전투가 끝날 때마다 자동 저장된다. 도중에 앱을 닫아도 {nestName}에서 [원정 이어하기]로 돌아올 수 있다. 전투 도중에 닫으면 그 전투가 시작되기 직전부터 다시 한다. 새 원정을 시작하면 이어하던 원정은 패배 처리 없이 사라진다."}
