@@ -29,9 +29,9 @@ PAD = 3   # 칸 사방 여유(관절 겹침·삐져나온 곳)
 GAP = 2   # 칸 사이
 TOP = 1   # 아래 테두리 자리
 ROWGAP = 4  # 줄 사이(1배 칸 수)
-PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'foot_L', 'foot_R', 'weapon', 'scabbard']
+PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'foot_L', 'foot_R', 'weapon', 'scabbard', 'cape']
 NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼팔(칼)', 'thumb_L': '엄지',
-         'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집'}
+         'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집', 'shin_L': '왼 정강이', 'shin_R': '오른 정강이', 'cape': '망토'}
 GHOST_A = 70
 MARKS: dict = {}  # 사용자가 칸 안에 그은 선(<out>/marks.json, 캔버스 좌표) — main 에서 읽는다
 LINE = (0, 190, 255, 140)
@@ -132,7 +132,7 @@ def main():
     except OSError:
         f = fs = ImageFont.load_default()
     pname = {'head': '목', 'torso': '허리', 'arm_L': '어깨', 'arm_R': '어깨', 'forearm_R': '팔꿈치', 'leg_L': '엉덩이', 'leg_R': '엉덩이',
-             'foot_L': '발목', 'foot_R': '발목', 'weapon': '칼 손잡이', 'scabbard': '칼집', 'thumb_L': '엄지'}
+             'foot_L': '발목', 'foot_R': '발목', 'shin_L': '무릎', 'shin_R': '무릎', 'cape': '목', 'weapon': '칼 손잡이', 'scabbard': '칼집', 'thumb_L': '엄지'}
     for b in boxes:
         sx, sy = b['sheet']
         d.rectangle([sx * K, (sy - ROWGAP) * K + 2, sx * K + b['size'][0] * K, sy * K - 10], fill=(40, 44, 48, 255))

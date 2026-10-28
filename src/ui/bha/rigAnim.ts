@@ -3,7 +3,7 @@
 // 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 번갈아, 특수 skill·skill2 번갈아, 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
 // 코어(createRigPlayer)는 DOM 없이 돌아 테스트한다.
 import type { AnimAction } from '../../data/art/anim';
-import { boneMatrices, layerMatrix, lookLayers, samplePose, type Motion, type Pose, type Rig } from '../../data/art/rig/pose';
+import { boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose, type Motion, type MotionSets, type Pose, type Rig } from '../../data/art/rig/pose';
 import type { AnimPlayer, PlayOptions } from './animPlayer';
 
 /** 게임 동작 → 종이인형 동작(여럿이면 번갈아) */
@@ -102,13 +102,15 @@ const MIN_FRAME_MS = 33;
 /**
  * <img> 를 종이인형으로 움직인다. partBase = 부위 그림 폴더 주소(…/art/rig/<rig id>/). 등록(animOf·has-anim 클래스)은 bindAnim 이 한다.
  */
-export function bindRigAnim(img: HTMLImageElement, rig: Rig, motions: Record<string, Motion>, lookId: string, partBase: string): RigPlayer {
+/** sets = 동작 묶음(몸이 묶음을 쓰면 그 몸 동작으로 덮는다, GDD 96장 40) */
+export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record<string, Motion>, lookId: string, partBase: string, sets?: MotionSets): RigPlayer {
   const [vx, vy, vw, vh] = rig.view?.rect ?? [0, 0, rig.canvas[0], rig.canvas[1]];
   const canvas = document.createElement('canvas');
   canvas.width = vw * K;
   canvas.height = vh * K;
   const ctx = canvas.getContext('2d');
   const body = rig.looks[lookId]?.body;
+  const motions = resolveMotions(rig, baseMotions, sets, body);
   const layers = lookLayers(rig, lookId).map((l) => {
     const im = new Image();
     im.src = `${partBase}${l.art}.png`;

@@ -1,7 +1,7 @@
 // 종이인형 그리기 (GDD 96장): 부위 그림(<img>)을 같은 캔버스에 겹쳐 두고, 뼈 행렬(pose.ts)을 CSS transform 으로 건다.
 // 매 순간 실시간으로 움직인다(크루세이더 퀘스트식). 도트는 image-rendering: pixelated 로 흐림 없이 확대·회전된다.
 // 코어(createDollClock)는 DOM 없이 시간·동작 전환만 다뤄 테스트한다.
-import { boneMatrices, layerMatrix, lookLayers, samplePose, type Mat, type Motion, type Rig } from '../../data/art/rig/pose';
+import { boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose, type Mat, type Motion, type MotionSets, type Rig } from '../../data/art/rig/pose';
 import { el } from '../dom';
 
 export interface DollPlayOptions {
@@ -67,6 +67,8 @@ export interface Paperdoll {
 export interface PaperdollOptions {
   rig: Rig;
   motions: Record<string, Motion>;
+  /** 동작 묶음(몸이 묶음을 쓰면 그 몸 동작으로 덮는다, GDD 96장 40) */
+  motionSets?: MotionSets;
   look: string;
   /** 1도트 = 몇 px */
   scale: number;
@@ -79,7 +81,9 @@ export interface PaperdollOptions {
 const css = (m: Mat, k: number) => `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * k},${m[5] * k})`;
 
 export function createPaperdoll(o: PaperdollOptions): Paperdoll {
-  const { rig, motions, scale: k } = o;
+  const { rig, scale: k } = o;
+  const body = rig.looks[o.look]?.body;
+  const motions = resolveMotions(rig, o.motions, o.motionSets, body);
   const [w, h] = rig.canvas;
   const root = el('div', 'bha-doll');
   root.style.width = `${w * k}px`;
@@ -95,7 +99,6 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
     root.append(img);
     return { img, layer: l };
   });
-  const body = rig.looks[o.look]?.body;
   const clock = createDollClock(motions);
   const draw = () => {
     const cur = clock.current;

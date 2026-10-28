@@ -13,12 +13,16 @@
     { "id": "forearm_R", "parent": "arm_R", "pivot": [32, 41] },
     { "id": "leg_L", "parent": "root", "pivot": [11, 52] },
     { "id": "leg_R", "parent": "root", "pivot": [20, 52] },
-    { "id": "foot_L", "parent": "leg_L", "pivot": [12, 75] },
-    { "id": "foot_R", "parent": "leg_R", "pivot": [24, 75] },
+    { "id": "shin_L", "parent": "leg_L", "pivot": [12, 63] },
+    { "id": "shin_R", "parent": "leg_R", "pivot": [22, 63] },
+    { "id": "foot_L", "parent": "shin_L", "pivot": [12, 75] },
+    { "id": "foot_R", "parent": "shin_R", "pivot": [24, 75] },
     { "id": "weapon", "parent": "arm_L", "pivot": [9, 58], "restRot": 78 },
-    { "id": "scabbard", "parent": "torso", "pivot": [19, 49], "restRot": -32 }
+    { "id": "scabbard", "parent": "torso", "pivot": [19, 49], "restRot": -32 },
+    { "id": "cape", "parent": "torso", "pivot": [17, 29] }
   ],
   "slots": [
+    { "id": "cape", "bone": "cape" },
     { "id": "arm_L", "bone": "arm_L" },
     { "id": "outer_arm_L", "bone": "arm_L" },
     { "id": "weapon", "bone": "weapon" },
@@ -27,7 +31,9 @@
     { "id": "foot_L", "bone": "foot_L" },
     { "id": "foot_R", "bone": "foot_R" },
     { "id": "leg_L", "bone": "leg_L" },
+    { "id": "shin_L", "bone": "shin_L" },
     { "id": "leg_R", "bone": "leg_R" },
+    { "id": "shin_R", "bone": "shin_R" },
     { "id": "torso", "bone": "torso" },
     { "id": "outer_torso", "bone": "torso" },
     { "id": "scabbard", "bone": "scabbard" },
@@ -128,11 +134,25 @@
       "arm_R": { "art": "arrancar_f/arm_R", "at": [21, 29], "size": [11, 11] },
       "leg_L": { "art": "arrancar_f/leg_L", "at": [5, 51], "size": [17, 25] },
       "leg_R": { "art": "arrancar_f/leg_R", "at": [13, 49], "size": [16, 27] },
-      "head": { "art": "head_bald", "at": [6, 10], "size": [16, 19] },
+      "head": { "art": "head_bald", "at": [6, 9], "size": [16, 19] },
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "bare/foot_R", "at": [19, 72], "size": [9, 9] },
       "thumb_L": { "art": "bare/thumb_L", "at": [6, 51], "size": [3, 6] },
       "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38], "size": [13, 16] }
+    },
+    "bare_dg": {
+      "torso": { "art": "bare/torso", "at": [10, 26], "size": [17, 27] },
+      "arm_L": { "art": "bare/arm_L", "at": [5, 30], "size": [12, 29] },
+      "arm_R": { "art": "bare/arm_R", "at": [21, 29], "size": [12, 15] },
+      "leg_L": { "art": "dg/leg_L", "at": [7, 48], "size": [13, 16] },
+      "leg_R": { "art": "dg/leg_R", "at": [16, 48], "size": [13, 16] },
+      "head": { "art": "head_bald", "at": [7, 10], "size": [16, 19] },
+      "foot_L": { "art": "dg/foot_L", "at": [5, 70], "size": [10, 10] },
+      "foot_R": { "art": "dg/foot_R", "at": [14, 70], "size": [10, 10] },
+      "thumb_L": { "art": "bare/thumb_L", "at": [7, 52], "size": [3, 6] },
+      "forearm_R": { "art": "bare/forearm_R", "at": [20, 39], "size": [13, 17] },
+      "shin_L": { "art": "dg/shin_L", "at": [10, 60], "size": [10, 13] },
+      "shin_R": { "art": "dg/shin_R", "at": [19, 60], "size": [10, 13] }
     }
   },
   "looks": {
@@ -182,8 +202,18 @@
       "body": "arrancar_f",
       "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
-      "hair": { "art": "arrancar_f/hair", "at": [1, 2], "size": [28, 29] },
-      "hair_back": { "art": "arrancar_f/hair_back", "at": [13, 0], "size": [16, 29] }
+      "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1], "size": [16, 29] }
+    },
+    "digitigrade-test": {
+      "body": "bare_dg"
+    },
+    "cape-test": {
+      "body": "arrancar",
+      "hair": { "art": "arrancar/hair", "at": [0, -1], "size": [33, 29] },
+      "weapon": { "art": "weapon/sword", "at": [2, 50], "size": [16, 42] },
+      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
+      "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
     }
   },
   "hairFrame": {
@@ -210,7 +240,8 @@
       "pivots": {
         "arm_R": [22, 32],
         "forearm_R": [29, 41],
-        "foot_R": [22, 75]
+        "foot_R": [22, 75],
+        "head": [15, 16]
       },
       "rot": {
         "forearm_R": -15,
@@ -274,6 +305,135 @@
         "leg_R": 2,
         "foot_R": -2
       }
+    },
+    "bare_dg": {
+      "pivots": {
+        "leg_L": [11, 52],
+        "shin_L": [17, 62],
+        "foot_L": [12, 72],
+        "leg_R": [20, 52],
+        "shin_R": [26, 62],
+        "foot_R": [21, 72]
+      }
+    }
+  },
+  "bodyMotions": {
+    "bare_dg": "digitigrade"
+  },
+  "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
+  "edit": {
+    "note": "관절 편집기 전용: 부위 이름·버튼 묶음·같이 옮기기(사용자 2026-10-29 \"머리 이동하면 머리카락이랑 뒷머리도 같이, 왼팔 움직이면 엄지도 같이, 오른팔 움직이면 오른 아래팔도 같이, 다리도 똑같이. 그 뒤에 오는애들 움직이면 걔네만\")",
+    "names": {
+      "root": "전체",
+      "torso": "몸통",
+      "head": "머리",
+      "arm_L": "왼팔",
+      "arm_R": "오른 위팔",
+      "forearm_R": "오른 아래팔",
+      "leg_L": "왼다리",
+      "leg_R": "오른다리",
+      "shin_L": "왼 정강이",
+      "shin_R": "오른 정강이",
+      "hair": "일반머리",
+      "hair_back": "뒷머리",
+      "outer_torso": "겉옷(몸)",
+      "outer_arm_L": "겉옷(왼팔)",
+      "outer_arm_R": "겉옷(오른팔)",
+      "foot_L": "왼발",
+      "foot_R": "오른발",
+      "weapon": "칼",
+      "scabbard": "칼집",
+      "thumb_L": "엄지",
+      "cape": "망토"
+    },
+    "groups": [
+      [
+        "전체",
+        [
+          "root"
+        ]
+      ],
+      [
+        "머리",
+        [
+          "head",
+          "hair",
+          "hair_back"
+        ]
+      ],
+      [
+        "몸통",
+        [
+          "torso",
+          "outer_torso",
+          "cape"
+        ]
+      ],
+      [
+        "왼팔(칼)",
+        [
+          "arm_L",
+          "outer_arm_L",
+          "thumb_L"
+        ]
+      ],
+      [
+        "오른팔",
+        [
+          "arm_R",
+          "outer_arm_R",
+          "forearm_R"
+        ]
+      ],
+      [
+        "다리",
+        [
+          "leg_L",
+          "shin_L",
+          "foot_L",
+          "leg_R",
+          "shin_R",
+          "foot_R"
+        ]
+      ],
+      [
+        "칼",
+        [
+          "weapon",
+          "scabbard"
+        ]
+      ]
+    ],
+    "follow": {
+      "head": [
+        "hair",
+        "hair_back"
+      ],
+      "arm_L": [
+        "outer_arm_L",
+        "thumb_L"
+      ],
+      "arm_R": [
+        "outer_arm_R",
+        "forearm_R"
+      ],
+      "torso": [
+        "outer_torso"
+      ],
+      "leg_L": [
+        "shin_L",
+        "foot_L"
+      ],
+      "shin_L": [
+        "foot_L"
+      ],
+      "leg_R": [
+        "shin_R",
+        "foot_R"
+      ],
+      "shin_R": [
+        "foot_R"
+      ]
     }
   }
 }

@@ -1,6 +1,7 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓰고, 값은 작업본(draft.ts, GDD 96장 36)
-import { DRAFT as HUMANOID, DRAFT_MOTIONS as MOTIONS } from './draft';
-import { bodyBones, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, samplePose, type BodyJoints, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { DRAFT_RIGS, type DraftRig } from './draft';
+import { bodyBones, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, resolveMotions, samplePose, type BodyJoints, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { followMove } from './follow';
 
 declare const ART_MAP: Record<string, string>;
 /** claude.ai 아티팩트 런타임(있을 때만). db = 편집기 값을 서버에 저장 — 다른 기기·Claude 가 읽는다 */
@@ -14,30 +15,35 @@ declare const claude: {
   use(name: 'db'): Promise<{ doc(path: string): DocRef } | null>;
   use(name: 'comments'): Promise<Comments | null>;
 } | undefined;
-/** '고정' 누르면 여기에 그때 값을 남기고 Claude 에게 알린다 → Claude 가 게임 데이터에 넣는다 */
-const FIX_DOC = 'rig/fixed';
-const DB_DOC = 'rig/editor';
 const K = 6;
-const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른 위팔', leg_L: '왼다리', leg_R: '오른다리', hair: '일반머리', hair_back: '뒷머리', outer_torso: '겉옷(몸)', outer_arm_L: '겉옷(왼팔)', outer_arm_R: '겉옷(오른팔)', foot_L: '왼발', foot_R: '오른발', weapon: '칼', scabbard: '칼집', thumb_L: '엄지', forearm_R: '오른 아래팔' };
 // 저장 칸 이름은 바꾸지 않는다(바꾸면 사용자가 맞춘 값이 사라진다). 옛 이름(v1~v3)에 남은 값도 읽어 온다
-const STORE = 'bha-rig-editor';
 const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장 = 절대값(관절·부위 자리·외형 층 자리·앞뒤 순서) + 그때의 게임 데이터 표시(dataStamp).
  * 게임 데이터가 바뀌었으면(Claude 가 사용자 값을 넣었거나 새 시트) 이 기기에 남은 옛 저장은 버리고 데이터 값을 쓴다 —
  * 서버 저장은 Claude 가 데이터를 바꿀 때마다 같이 맞춘다 */
 type Saved = Partial<Rig> & { dataStamp?: string; slotsEdited?: boolean };
-let slotsEdited = false;
-const DATA_STAMP = (() => {
+const stampOf = (r: Rig) => {
   let h = 2166136261;
-  const t = JSON.stringify(HUMANOID);
+  const t = JSON.stringify(r);
   for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 16777619);
   return (h >>> 0).toString(36);
-})();
-const LOOK_PARTS = ['hair', 'hair_back', 'weapon', 'scabbard'] as const;
+};
+/** 뼈대마다(사람형·짐승형 — GDD 96장 41) 따로 고친 값·저장 자리. 사람형 저장 자리 이름은 예전 그대로 */
+interface Ctx { id: string; src: DraftRig; rig: Rig; stamp: string; store: string; db: string; fix: string; slotsEdited: boolean; dbRef: DocRef | null }
+const CTX: Record<string, Ctx> = Object.fromEntries(Object.entries(DRAFT_RIGS).map(([id, src]) => {
+  const tail = id === 'humanoid' ? '' : `-${id}`;
+  return [id, { id, src, rig: JSON.parse(JSON.stringify(src.rig)) as Rig, stamp: stampOf(src.rig), store: `bha-rig-editor${tail}`, db: `rig/editor${tail}`, fix: `rig/fixed${tail}`, slotsEdited: false, dbRef: null }];
+}));
+let C: Ctx = CTX.humanoid!;
+let rig: Rig = C.rig;
+/** 외형 id → 뼈대 */
+const ctxOfLook = (l: string) => Object.values(CTX).find((c) => c.rig.looks[l]) ?? C;
+/** 외형 층(머리카락·칼·칼집·망토 등): 외형에 그림으로 붙은 것 전부 */
+const lookParts = (lk: Rig['looks'][string]) => Object.keys(lk).filter((k) => typeof lk[k] === 'object');
 
-const rig: Rig = JSON.parse(JSON.stringify(HUMANOID));
-function merge(s: Saved): boolean {
-  if (s.dataStamp !== DATA_STAMP) return false;
+function merge(c: Ctx, s: Saved): boolean {
+  const rig = c.rig;
+  if (s.dataStamp !== c.stamp) return false;
   if (s.bones) for (const b of rig.bones) {
     const v = s.bones.find((x) => x.id === b.id);
     if (v) b.pivot = v.pivot; // 쉬는 각도(restRot)는 편집기에서 안 바꾸므로 데이터 값
@@ -53,7 +59,7 @@ function merge(s: Saved): boolean {
     };
   }
   if (s.slots && s.slotsEdited) {
-    slotsEdited = true;
+    c.slotsEdited = true;
     const order = s.slots.map((x) => x.id).filter((id) => rig.slots.some((y) => y.id === id));
     rig.slots = [...order.map((id) => rig.slots.find((y) => y.id === id)!), ...rig.slots.filter((y) => !order.includes(y.id))];
   }
@@ -61,7 +67,7 @@ function merge(s: Saved): boolean {
     for (const [k, cur] of Object.entries(parts)) { const v = s.bodies[b]?.[k]; if (v) cur.at = [v.at[0], v.at[1]]; }
   }
   if (s.looks) for (const [lid, lk] of Object.entries(rig.looks)) {
-    for (const k of LOOK_PARTS) {
+    for (const k of lookParts(lk)) {
       const v = s.looks[lid]?.[k];
       const cur = lk[k];
       if (typeof cur === 'object' && typeof v === 'object') cur.at = [v.at[0], v.at[1]];
@@ -69,14 +75,20 @@ function merge(s: Saved): boolean {
   }
   return true;
 }
-function resetRig() {
-  const fresh: Rig = JSON.parse(JSON.stringify(HUMANOID));
-  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks; rig.bodyJoints = fresh.bodyJoints; slotsEdited = false;
+function resetRig(c: Ctx) {
+  const fresh: Rig = JSON.parse(JSON.stringify(c.src.rig));
+  const r = c.rig;
+  r.bones = fresh.bones; r.slots = fresh.slots; r.bodies = fresh.bodies; r.looks = fresh.looks; r.bodyJoints = fresh.bodyJoints; c.slotsEdited = false;
 }
-try {
-  const raw = localStorage.getItem(STORE);
-  if (raw) merge(JSON.parse(raw) as Saved);
-} catch { /* 저장 못 쓰는 환경 */ }
+for (const c of Object.values(CTX)) {
+  try {
+    const raw = localStorage.getItem(c.store);
+    if (raw) merge(c, JSON.parse(raw) as Saved);
+  } catch { /* 저장 못 쓰는 환경 */ }
+}
+const NAMES = () => rig.edit?.names ?? {};
+/** 지금 몸이 쓰는 동작(역관절 몸은 동작 묶음을 덮은 것) */
+const motionsNow = (): Record<string, Motion> => resolveMotions(rig, C.src.motions, C.src.sets, curBody());
 
 let look = 'arrancar-base';
 let sel = 'arm_L';
@@ -88,33 +100,36 @@ let mt = 0;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $('stage');
 const out = $<HTMLTextAreaElement>('out');
-const [W, H] = rig.canvas;
-stage.style.width = `${W * K}px`;
-stage.style.height = `${H * K}px`;
+let W = 0;
+let H = 0;
+function sizeStage() {
+  [W, H] = rig.canvas;
+  stage.style.width = `${W * K}px`;
+  stage.style.height = `${H * K}px`;
+}
+sizeStage();
 
-let dbRef: DocRef | null = null;
 let dbTimer = 0;
-const state = () => JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, bodyJoints: rig.bodyJoints, dataStamp: DATA_STAMP, slotsEdited });
+const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, dataStamp: c.stamp, slotsEdited: c.slotsEdited });
 function save(user = true) {
   const st = state();
-  try { localStorage.setItem(STORE, st); } catch { /* 무시 */ }
+  try { localStorage.setItem(C.store, st); } catch { /* 무시 */ }
   // 사용자가 바꾼 것만 서버에 (잠깐 모아서 한 번)
-  if (user && dbRef) {
+  if (user && C.dbRef) {
     clearTimeout(dbTimer);
-    const ref = dbRef;
+    const ref = C.dbRef;
     dbTimer = window.setTimeout(() => { ref.set({ json: st, savedAt: Date.now() }).then(() => setSync('서버 저장됨'), () => setSync('서버 저장 실패 — 이 기기에만 저장')); }, 600);
   }
   const body = rig.looks[look]!.body;
+  const lk = rig.looks[look]!;
   out.value = JSON.stringify({
+    rig: rig.id,
     bones: rig.bones.map((b) => ({ id: b.id, parent: b.parent, pivot: b.pivot })),
     slots: rig.slots.map((s) => s.id),
     body,
     parts: Object.fromEntries(Object.entries(rig.bodies[body]!).map(([k, v]) => [k, v.at])),
     look,
-    hair: (rig.looks[look]!.hair as PartArt | undefined)?.at,
-    hair_back: (rig.looks[look]!.hair_back as PartArt | undefined)?.at,
-    weapon: (rig.looks[look]!.weapon as PartArt | undefined)?.at,
-    scabbard: (rig.looks[look]!.scabbard as PartArt | undefined)?.at,
+    ...Object.fromEntries(lookParts(lk).map((k) => [k, (lk[k] as PartArt).at])),
     joints: rig.bodyJoints?.[body],
   });
 }
@@ -164,13 +179,15 @@ function slotAt(x: number, y: number): string | null {
 function draw() {
   stage.querySelectorAll('img, .dot').forEach((n) => n.remove());
   let pose: Pose = {};
+  const MOTIONS = motionsNow();
+  if (motion && !MOTIONS[motion]) motion = null;
   if (motion) pose = samplePose(rig, MOTIONS[motion]!, mt);
   else if (testRot) pose = { [boneOfSel()]: { rot: testRot, x: 0, y: 0 } };
   const mats = boneMatrices(rig, pose, curBody());
   drawn = [];
   for (const l of lookLayers(rig, look)) {
     const img = document.createElement('img');
-    img.src = ART_MAP[`art/rig/humanoid/${l.art}.png`] ?? '';
+    img.src = ART_MAP[`art/rig/${rig.id}/${l.art}.png`] ?? '';
     img.className = 'part' + (l.slot === sel ? ' sel' : '');
     img.style.width = `${l.size[0] * K}px`;
     img.style.height = `${l.size[1] * K}px`;
@@ -201,7 +218,7 @@ function draw() {
       d.className = 'dot' + (b.id === boneOfSel() ? ' on' : '');
       d.style.left = `${(px + 0.5) * K}px`;
       d.style.top = `${(py + 0.5) * K}px`;
-      d.title = NAMES[b.id] ?? b.id;
+      d.title = NAMES()[b.id] ?? b.id;
       stage.append(d);
     }
   }
@@ -209,30 +226,22 @@ function draw() {
   const body = rig.bodies[rig.looks[look]!.body]!;
   const lk = rig.looks[look]!;
   const part = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
-  $('info').textContent = `${NAMES[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}` + ` · 기본 각도 ${baseRot(b.id)}°`;
+  $('info').textContent = `${NAMES()[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}` + ` · 기본 각도 ${baseRot(b.id)}°`;
   const br = document.getElementById('brot') as HTMLInputElement | null;
   if (br && document.activeElement !== br) br.value = String(baseRot(b.id));
   const bv = document.getElementById('brotv');
   if (bv) bv.textContent = `${baseRot(b.id)}°`;
 }
 
-/** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로") — 이 외형에 있는 것만 */
-const CHIP_GROUPS: [string, string[]][] = [
-  ['전체', ['root']],
-  ['머리', ['head', 'hair', 'hair_back']],
-  ['몸통', ['torso', 'outer_torso']],
-  ['왼팔(칼)', ['arm_L', 'outer_arm_L', 'thumb_L']],
-  ['오른팔', ['arm_R', 'outer_arm_R', 'forearm_R']],
-  ['다리', ['leg_L', 'foot_L', 'leg_R', 'foot_R']],
-  ['칼', ['weapon', 'scabbard']],
-];
+/** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
+const CHIP_GROUPS = (): [string, string[]][] => rig.edit?.groups ?? [];
 function pick(id: string) { sel = id; testRot = 0; ($('rot') as HTMLInputElement).value = '0'; buildChips(); draw(); }
 function buildChips() {
   const box = $('parts');
   box.innerHTML = '';
   const has = new Set(['root', ...lookLayers(rig, look).map((l) => l.slot)]);
-  const listed = new Set(CHIP_GROUPS.flatMap(([, ids]) => ids));
-  const groups = [...CHIP_GROUPS, ['그 밖', [...has].filter((id) => !listed.has(id))] as [string, string[]]];
+  const listed = new Set(CHIP_GROUPS().flatMap(([, ids]) => ids));
+  const groups = [...CHIP_GROUPS(), ['그 밖', [...has].filter((id) => !listed.has(id))] as [string, string[]]];
   for (const [label, ids] of groups) {
     const present = ids.filter((id) => has.has(id));
     if (!present.length) continue;
@@ -244,7 +253,7 @@ function buildChips() {
     g.append(t);
     for (const id of present) {
       const b = document.createElement('button');
-      b.textContent = NAMES[id] ?? id;
+      b.textContent = NAMES()[id] ?? id;
       b.className = id === sel ? 'on' : '';
       b.onclick = () => pick(id);
       g.append(b);
@@ -259,19 +268,26 @@ function nudge(dx: number, dy: number) {
     const b = bone(boneOfSel());
     setPivot(b.id, [b.pivot[0] + dx, b.pivot[1] + dy]);
   } else {
-    const body = rig.bodies[rig.looks[look]!.body]!;
-    const lk = rig.looks[look]!;
-    const p = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
-    if (!p) return;
-    const next: PartArt = { ...p, at: [p.at[0] + dx, p.at[1] + dy] };
-    if ((sel === 'hair' || sel === 'hair_back') && !insideFrame(rig, next, sel)) return; // 머리카락은 틀 밖으로 못 나간다
-    p.at = next.at;
+    // 부위를 옮기면 딸린 부위(머리 → 머리카락·뒷머리, 왼팔 → 엄지, 오른 위팔 → 아래팔, 다리 → 정강이·발)와 그 관절도 같이(사용자 2026-10-29)
+    const moves = followMove(rig, look, sel);
+    if (!moves) return;
+    for (const m of moves.parts) {
+      const next: PartArt = { ...m.part, at: [m.part.at[0] + dx, m.part.at[1] + dy] };
+      if ((m.slot === 'hair' || m.slot === 'hair_back') && !insideFrame(rig, next, m.slot)) { $('info').textContent = '머리카락이 틀 밖으로 나가서 못 옮김'; return; }
+    }
+    for (const m of moves.parts) m.part.at = [m.part.at[0] + dx, m.part.at[1] + dy];
+    for (const id of moves.bones) { const b = bone(id); setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]); }
   }
   save(); draw();
 }
 
 document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onclick = () => {
   look = b.dataset.look!;
+  const c = ctxOfLook(look);
+  if (c !== C) {
+    C = c; rig = c.rig; motion = null; sizeStage();
+    if (!rig.slots.some((s) => s.id === sel)) sel = rig.slots[0]!.id;
+  }
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
   buildChips(); save(false); draw();
 });
@@ -304,11 +320,11 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
   document.querySelectorAll('[data-m]').forEach((x) => x.classList.toggle('on', x === b && m !== 'stop'));
   draw();
 });
-$('front').onclick = () => { slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i >= 0 && i < rig.slots.length - 1) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i + 1, 0, s!); save(); draw(); } };
-$('back').onclick = () => { slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i > 0) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i - 1, 0, s!); save(); draw(); } };
+$('front').onclick = () => { C.slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i >= 0 && i < rig.slots.length - 1) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i + 1, 0, s!); save(); draw(); } };
+$('back').onclick = () => { C.slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i > 0) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i - 1, 0, s!); save(); draw(); } };
 $('reset').onclick = () => {
-  resetRig();
-  try { for (const k of [STORE, ...LEGACY]) localStorage.removeItem(k); } catch { /* 무시 */ }
+  resetRig(C);
+  try { for (const k of [C.store, ...(C.id === 'humanoid' ? LEGACY : [])]) localStorage.removeItem(k); } catch { /* 무시 */ }
   save(); buildChips(); draw();
 };
 $('copy').onclick = async () => {
@@ -333,8 +349,9 @@ let last = 0;
 function tick(now: number) {
   if (motion) {
     if (last) mt += Math.min(100, now - last);
-    const m = MOTIONS[motion]!;
-    if (!m.loop && mt > m.duration + 400) mt = 0;
+    const m = motionsNow()[motion];
+    if (!m) motion = null;
+    else if (!m.loop && mt > m.duration + 400) mt = 0;
     draw();
   }
   last = now;
@@ -342,17 +359,17 @@ function tick(now: number) {
 }
 $('fix').onclick = async () => {
   const btn = $<HTMLButtonElement>('fix');
-  if (!dbRef) return setSync('서버에 연결이 안 돼 고정 못 함 — 값 복사로 보내 주세요');
+  if (!C.dbRef) return setSync('서버에 연결이 안 돼 고정 못 함 — 값 복사로 보내 주세요');
   btn.disabled = true;
   try {
     const db = await claude!.use('db');
     const st = state();
-    await db!.doc(FIX_DOC).set({ json: st, savedAt: Date.now() });
-    await dbRef.set({ json: st, savedAt: Date.now() });
+    await db!.doc(C.fix).set({ json: st, savedAt: Date.now() });
+    await C.dbRef.set({ json: st, savedAt: Date.now() });
     const c = await claude!.use('comments').catch(() => null);
     const can = c ? await c.canSendToClaude().catch(() => 'off') : 'off';
     if (c && can === 'available') {
-      await c.sendToClaude({ anchor: await c.anchorFor(btn), text: '고정: 편집기 값(서버 rig/fixed)을 작업본에 넣어 주세요. (게임에는 아직 넣지 않음)' });
+      await c.sendToClaude({ anchor: await c.anchorFor(btn), text: `고정: 편집기 값(서버 ${C.fix})을 작업본에 넣어 주세요. (게임에는 아직 넣지 않음)` });
       setSync('고정 저장 + Claude 에게 보냄 — 반영되면 댓글로 답이 와요');
     } else {
       setSync('고정 저장됨 — Claude 에게 "고정해"라고 말해 주세요(지금은 바로 못 보냄)');
@@ -367,20 +384,23 @@ void (async () => {
   if (typeof claude === 'undefined') return setSync('이 기기에만 저장');
   const db = await claude.use('db').catch(() => null);
   if (!db) return setSync('이 기기에만 저장(서버 연결 안 됨)');
-  const ref = db.doc(DB_DOC);
-  try {
-    const snap = await ref.get();
-    const json = snap.exists ? snap.data()?.json : undefined;
-    resetRig();
-    if (typeof json === 'string' && merge(JSON.parse(json) as Saved)) {
-      dbRef = ref;
-      buildChips(); save(false); draw();
-      setSync('서버 값 불러옴');
-    } else {
-      buildChips(); save(false); draw();
-      dbRef = ref;
-      await ref.set({ json: state(), savedAt: Date.now() });
-      setSync('게임 데이터 값으로 시작(서버에 올림)');
-    }
-  } catch { setSync('서버 읽기 실패 — 이 기기에만 저장'); }
+  const msgs: string[] = [];
+  for (const c of Object.values(CTX)) {
+    const ref = db.doc(c.db);
+    try {
+      const snap = await ref.get();
+      const json = snap.exists ? snap.data()?.json : undefined;
+      resetRig(c);
+      if (typeof json === 'string' && merge(c, JSON.parse(json) as Saved)) {
+        c.dbRef = ref;
+        if (c === C) msgs.push('서버 값 불러옴');
+      } else {
+        c.dbRef = ref;
+        await ref.set({ json: state(c), savedAt: Date.now() });
+        if (c === C) msgs.push('작업본 값으로 시작(서버에 올림)');
+      }
+    } catch { msgs.push(`서버 읽기 실패(${c.id}) — 이 기기에만 저장`); }
+  }
+  buildChips(); save(false); draw();
+  setSync(msgs.join(' · '));
 })();

@@ -13,7 +13,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from paths import DRAFT_RIG_JSON  # noqa: E402
+from paths import DRAFT_DIR, DRAFT_RIG_JSON  # noqa: E402
 RIG_JSON = DRAFT_RIG_JSON  # 고정 = 작업본에만 (게임 넣기는 promote.py)
 
 arg = sys.argv[1]
@@ -22,6 +22,11 @@ rig = json.load(open(RIG_JSON, encoding='utf-8'))
 data = data.get('data', data)
 if isinstance(data.get('json'), str):
     data = json.loads(data['json'])
+# 뼈대마다 따로(GDD 96장 41): 편집기 상태의 id 가 사람형이 아니면 그 뼈대 파일
+RIG_ID = data.get('id') or data.get('rig') or 'humanoid'
+if RIG_ID != 'humanoid':
+    RIG_JSON = os.path.join(DRAFT_DIR, f'{RIG_ID}.json')
+    rig = json.load(open(RIG_JSON, encoding='utf-8'))
 if 'bodies' in data:
     # 전체 상태: 관절·앞뒤 순서·모든 몸 부위 자리·외형 층 자리
     piv = {b['id']: b['pivot'] for b in data['bones']}
@@ -57,10 +62,14 @@ if 'bodies' in data:
         for k, v in lk.items():
             if lid in rig['looks'] and isinstance(v, dict) and isinstance(rig['looks'][lid].get(k), dict):
                 rig['looks'][lid][k]['at'] = v['at']
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from feet_weapon import dump  # noqa: E402
-    dump(rig)
-    print('적용(전체 상태): 관절', len(piv), '몸', len(data['bodies']), '외형', len(data.get('looks', {})))
+    if RIG_ID != 'humanoid':
+        open(RIG_JSON, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '
+')
+    else:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from feet_weapon import dump  # noqa: E402
+        dump(rig)
+    print(RIG_ID, '적용(전체 상태): 관절', len(piv), '몸', len(data['bodies']), '외형', len(data.get('looks', {})))
     sys.exit(0)
 piv = {b['id']: b['pivot'] for b in data['bones']}
 for b in rig['bones']:

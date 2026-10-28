@@ -7,7 +7,7 @@
    "slot": "head",
    "canvas": [
     3,
-    7
+    6
    ],
    "size": [
     22,
@@ -36,7 +36,7 @@
      "art": "head_bald",
      "at": [
       6,
-      10
+      9
      ]
     }
    ],
@@ -44,7 +44,7 @@
     "art": "arrancar_f/hair",
     "at": [
      1,
-     2
+     1
     ]
    },
    "sheet": [
@@ -71,15 +71,15 @@
      "art": "head_bald",
      "at": [
       6,
-      10
+      9
      ]
     }
    ],
    "own": {
     "art": "arrancar_f/hair_back",
     "at": [
-     13,
-     0
+     12,
+     -1
     ]
    },
    "sheet": [
@@ -108,7 +108,8 @@
     "torso",
     "arm_L",
     "arm_R",
-    "scabbard"
+    "scabbard",
+    "cape"
    ]
   },
   {
@@ -201,7 +202,7 @@
    ],
    "pivots": [
     "leg_L",
-    "foot_L"
+    "shin_L"
    ]
   },
   {
@@ -220,7 +221,7 @@
    ],
    "pivots": [
     "leg_R",
-    "foot_R"
+    "shin_R"
    ]
   },
   {

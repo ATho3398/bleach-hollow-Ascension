@@ -37,6 +37,17 @@ export interface Rig {
   bodyJoints?: Record<string, BodyJoints | string>;
   /** 게임 화면에 그릴 그림 칸(x, y, 가로, 세로, 캔버스 좌표) — 칼을 휘둘러도 안 잘리게 넉넉히 */
   view?: { rect: [number, number, number, number] };
+  /** 몸 id → 동작 묶음 이름(motions.json 의 sets). 역관절 다리처럼 몸에 따라 일부 뼈 동작만 바꿔 끼운다(GDD 96장 40) */
+  bodyMotions?: Record<string, string>;
+  /** 관절 편집기 전용(게임은 안 씀): 부위 이름, 부위 버튼 묶음, 부위를 옮기면 같이 옮겨 갈 부위(GDD 96장 42) */
+  edit?: RigEdit;
+}
+
+export interface RigEdit {
+  names?: Record<string, string>;
+  groups?: [string, string[]][];
+  /** 슬롯 → 같이 옮겨 가는 슬롯(뒤에 오는 슬롯을 옮기면 그것만). 따라가는 슬롯의 뼈가 다르면 그 뼈 관절도 같이 옮긴다 */
+  follow?: Record<string, string[]>;
 }
 
 export interface BodyJoints {
@@ -74,10 +85,37 @@ export interface BonePose {
 }
 export type Pose = Record<string, BonePose>;
 
+/** 동작 묶음: 묶음 이름 → 동작 id → 바꿔 끼울 뼈 키(그 밖 뼈와 길이·타격 시각은 기본 동작 그대로) */
+export type MotionOverride = Partial<Omit<Motion, 'tracks'>> & { tracks: Record<string, Key[]> };
+export type MotionSets = Record<string, Record<string, MotionOverride>>;
+
+/** motions.json 모양(note·sets 를 뺀 나머지가 동작) → 기본 동작 + 동작 묶음 */
+export function readMotions(raw: unknown): { motions: Record<string, Motion>; sets: MotionSets } {
+  const o = raw as Record<string, unknown>;
+  const motions = Object.fromEntries(Object.entries(o).filter(([k]) => k !== 'note' && k !== 'sets')) as Record<string, Motion>;
+  const sets = Object.fromEntries(
+    Object.entries((o.sets ?? {}) as Record<string, Record<string, unknown>>).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).filter(([kk]) => kk !== 'note'))]),
+  ) as MotionSets;
+  return { motions, sets };
+}
+
+/** 이 몸이 쓸 동작: 기본 동작에 그 몸의 동작 묶음을 뼈 단위로 덮는다. 묶음이 없으면 기본 그대로 */
+export function resolveMotions(rig: Rig, motions: Record<string, Motion>, sets: MotionSets | undefined, body?: string): Record<string, Motion> {
+  const name = body ? rig.bodyMotions?.[body] : undefined;
+  const set = name ? sets?.[name] : undefined;
+  if (!set) return motions;
+  const out: Record<string, Motion> = { ...motions };
+  for (const [id, ov] of Object.entries(set)) {
+    const base = motions[id];
+    out[id] = base ? { ...base, ...ov, tracks: { ...base.tracks, ...ov.tracks } } : ({ duration: 1000, loop: false, ...ov } as Motion);
+  }
+  return out;
+}
+
 export const HUMANOID: Rig = rigRaw as unknown as Rig;
-export const MOTIONS: Record<string, Motion> = Object.fromEntries(
-  Object.entries(motionsRaw as Record<string, unknown>).filter(([k]) => k !== 'note'),
-) as Record<string, Motion>;
+const humanoidMotions = readMotions(motionsRaw);
+export const MOTIONS: Record<string, Motion> = humanoidMotions.motions;
+export const MOTION_SETS: MotionSets = humanoidMotions.sets;
 
 /** 키 사이를 부드럽게(처음·끝 느리게) 잇는다 */
 function ease(t: number): number {
@@ -215,7 +253,7 @@ export function insideFrame(rig: Rig, p: PartArt, slot = 'hair'): boolean {
 }
 
 /** 데이터 점검: 부모·슬롯 뼈가 있는지, 동작 키가 시간순이고 길이 안인지. 문제 목록(빈 배열 = 정상) */
-export function validateRig(rig: Rig, motions: Record<string, Motion>): string[] {
+export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: MotionSets = {}): string[] {
   const errs: string[] = [];
   const ids = new Set(rig.bones.map((b) => b.id));
   for (const b of rig.bones) if (b.parent && !ids.has(b.parent)) errs.push(`${b.id}: 부모 ${b.parent} 없음`);
@@ -232,7 +270,19 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>): string[]
       if (typeof hair === 'object' && !insideFrame(rig, hair, k)) errs.push(`외형 ${lid}: ${k} 가 머리카락 틀 밖`);
     }
   }
-  for (const [mid, m] of Object.entries(motions)) {
+  for (const [bid, name] of Object.entries(rig.bodyMotions ?? {})) {
+    if (!rig.bodies[bid]) errs.push(`몸 동작 묶음 ${bid}: 몸 없음`);
+    if (!sets[name]) errs.push(`몸 동작 묶음 ${bid}: 묶음 ${name} 없음`);
+  }
+  for (const [lead, fs] of Object.entries(rig.edit?.follow ?? {})) {
+    for (const f of [lead, ...fs]) if (!rig.slots.some((s) => s.id === f)) errs.push(`같이 옮기기 ${lead}: 슬롯 ${f} 없음`);
+  }
+  // 동작 묶음은 덮은 결과를 같은 기준으로 본다
+  const all: [string, Motion][] = [
+    ...Object.entries(motions),
+    ...Object.entries(sets).flatMap(([name, set]) => Object.keys(set).map((id) => [`${name}:${id}`, resolveMotions({ ...rig, bodyMotions: { _: name } }, motions, sets, '_')[id]!] as [string, Motion])),
+  ];
+  for (const [mid, m] of all) {
     if (!(m.duration > 0)) errs.push(`${mid}: 길이 0`);
     if (m.hit !== undefined && (m.hit < 0 || m.hit > m.duration)) errs.push(`${mid}: 타격 시각이 길이 밖`);
     for (const f of m.flip ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 뒤집을 슬롯 ${f} 없음`);
