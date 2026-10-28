@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """알몸 기본형 가이드 시트 (GDD 96장 16).
 
-부위마다 칸(그리는 자리)을 한 줄로 늘어놓고, 칸 안에 기본형 부위를 흐리게(반투명) 깔고 관절점을 찍는다.
-칸 안에서 기본형과 같은 자리에 그리면 몸에 그대로 맞는다 — 가져오기: import_cut.py <시트> --body <몸> --guide <가이드.json>
-가이드 칸 테두리·흐린 부위·관절점은 모두 반투명이라 가져올 때 무시된다(불투명 칸만 그림으로 읽음).
+부위마다 칸(그리는 자리)을 한 줄로 늘어놓고, 칸 안에 기본형 부위를 그대로(불투명) 넣는다 — 그 위에 고쳐 그리면 된다.
+칸 안 그림이 곧 그 부위: 가져오기 import_cut.py <시트> --body <몸> --guide <가이드.json> (안 고친 칸은 그대로 들어가 바뀌지 않음)
+머리카락 칸에는 자리 맞추기용 머리만 반투명으로 깔고, 칸 테두리도 반투명 — 가져올 때 무시된다(불투명 칸만 읽음).
+관절점·이름은 8배 확인용(guide-x8.png)에만 찍는다(1배에 찍으면 그림 칸을 덮으므로).
 
 출력(<out>): guide.png(1배, 그리기용), guide-x8.png(8배, 칸 이름·관절 표시), guide.json(칸 → 슬롯·캔버스 자리)
 사용: python3 scripts/rig/guide.py [--look arrancar-base] [--out docs/design/user-art/arrancar-base-guide]
@@ -46,9 +47,10 @@ def main():
         art = body.get(p)
         if p in ('hair', 'hair_back'):
             # 머리카락은 머리카락 틀 전체가 칸. 흐린 그림 = 머리(머리카락이 있으면 머리카락)
-            boxes.append({'slot': p, 'canvas': [fx, fy], 'size': [fw, fh], 'ghost': [x for x in (body.get('head'), look.get(p)) if isinstance(x, dict)]})
+            boxes.append({'slot': p, 'canvas': [fx, fy], 'size': [fw, fh], 'ghost': [body['head']] if body.get('head') else [],
+                          'solid': [look[p]] if isinstance(look.get(p), dict) else []})
         elif art:
-            boxes.append({'slot': p, 'canvas': [art['at'][0] - PAD, art['at'][1] - PAD], 'size': [art['size'][0] + 2 * PAD, art['size'][1] + 2 * PAD], 'ghost': [art]})
+            boxes.append({'slot': p, 'canvas': [art['at'][0] - PAD, art['at'][1] - PAD], 'size': [art['size'][0] + 2 * PAD, art['size'][1] + 2 * PAD], 'ghost': [], 'solid': [art]})
     H = max(b['size'][1] for b in boxes) + 2 * TOP
     W = sum(b['size'][0] for b in boxes) + GAP * (len(boxes) + 1)
     img = np.zeros((H, W, 4), np.uint8)
@@ -57,13 +59,13 @@ def main():
         b['sheet'] = [x, TOP]
         cx, cy = b['canvas']
         w, h = b['size']
-        for g in b['ghost']:
+        for g, alpha in [(g, GHOST_A) for g in b['ghost']] + [(g, 255) for g in b['solid']]:
             pa = np.array(Image.open(os.path.join(ART, g['art'] + '.png')).convert('RGBA'))
             ox, oy = g['at'][0] - cx + x, g['at'][1] - cy + TOP
             for yy, xx in zip(*np.nonzero(pa[..., 3] > 0)):
                 X, Y = ox + xx, oy + yy
                 if x <= X < x + w and TOP <= Y < TOP + h:
-                    img[Y, X] = (*pa[yy, xx, :3], GHOST_A)
+                    img[Y, X] = (*pa[yy, xx, :3], alpha)
         # 칸 테두리(칸 바로 바깥 1줄 — 위·아래만, 양옆은 칸 사이 GAP 가운데)
         img[TOP - 1, x - 1:x + w + 1] = LINE
         if TOP + h < H:
@@ -77,10 +79,9 @@ def main():
             if bb['id'] == bone or bb['parent'] == bone:
                 px, py = bb['pivot']
                 if cx <= px < cx + w and cy <= py < cy + h:
-                    img[py - cy + TOP, px - cx + x] = PIVOT
                     pts.append(bb['id'])
         b['pivots'] = pts
-        del b['ghost']
+        del b['ghost'], b['solid']
         x += w + GAP
     os.makedirs(a.out, exist_ok=True)
     Image.fromarray(img).save(os.path.join(a.out, 'guide.png'))
@@ -108,8 +109,9 @@ def main():
         for pid in b['pivots']:
             bb = bones[pid]
             px, py = bb['pivot'][0] - b['canvas'][0] + sx, bb['pivot'][1] - b['canvas'][1] + sy
+            d.rectangle([px * K + 2, py * K + top + 2, px * K + K - 3, py * K + top + K - 3], outline=(255, 40, 40, 255), width=2)
             d.text((px * K + 10, py * K + top - 8), pname.get(pid, pid), fill=(255, 60, 60, 255), font=fs)
-    d.text((8, H * K + top + 6), '칸 안 흐린 그림 자리에 맞춰 그리면 몸에 그대로 붙는다 · 빨간 점 = 관절 · 파란 선 = 칸', fill=(220, 220, 220, 255), font=fs)
+    d.text((8, H * K + top + 6), '칸 안 그림 위에 고쳐 그리면 몸에 그대로 붙는다 · 빨간 네모 = 관절(이 확인용에만) · 파란 선 = 칸 · 머리카락 칸의 흐린 머리는 자리 맞추기용', fill=(220, 220, 220, 255), font=fs)
     out.save(os.path.join(a.out, 'guide-x8.png'))
     print(f'가이드 {W}×{H}, 칸 {len(boxes)}개 → {a.out}')
 
