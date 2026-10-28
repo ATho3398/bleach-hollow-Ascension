@@ -8,7 +8,7 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RIG = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
 LOCK = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'arrancar-base.lock.json')
-LOOKS = ['arrancar-base', 'bare-base', 'female-base', 'shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f']
+LOOKS = ['arrancar-base', 'arrancar-base-f', 'bare-base', 'female-base', 'shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f']
 
 rig = json.load(open(RIG, encoding='utf-8'))
 LOOKS = [l for l in LOOKS if l in rig['looks']]  # 게임에 아직 안 넣은 외형은 건너뜀

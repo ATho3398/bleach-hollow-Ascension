@@ -43,8 +43,12 @@ if 'bodies' in data:
     bj = {k: v for k, v in (data.get('bodyJoints') or {}).items() if isinstance(v, dict) and k in rig['bodies']}
     bj = {k: {kk: vv for kk, vv in v.items() if vv} for k, v in bj.items()}
     bj = {k: v for k, v in bj.items() if v}
-    note = (rig.get('bodyJoints') or {}).get('note')
-    rig['bodyJoints'] = ({'note': note} if note else {}) | bj
+    # 편집기 상태에 있는 몸만 바꾼다(편집기보다 나중에 생긴 몸의 관절은 그대로)
+    cur = rig.get('bodyJoints') or {}
+    for k in data['bodies']:
+        if k in rig['bodies']:
+            cur.pop(k, None)
+    rig['bodyJoints'] = cur | bj
     for body, parts in data['bodies'].items():
         for k, v in parts.items():
             if body in rig['bodies'] and k in rig['bodies'][body]:
