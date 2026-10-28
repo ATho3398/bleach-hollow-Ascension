@@ -3973,5 +3973,6 @@ data/
    - 작업본 `docs/design/rig-draft/`(humanoid.json·motions.json·humanoid/ 그림): 고정 버튼 값·새 시트·동작 수정이 먼저 여기 들어간다. 편집기·시험 페이지·가이드는 작업본을 보여 준다(`scripts/rig/draft.ts`, 도구 기본 경로 `scripts/rig/paths.py`).
    - 게임본 `src/data/art/rig/`·`public/art/rig/humanoid/`: 사용자가 "게임 넣어"라고 할 때만 `scripts/rig/promote.py` 가 작업본을 통째로 옮기고 정지 그림·고정 파일을 다시 만든다(`--dry` 로 미리 보기).
    - 테스트: 게임본은 기존대로(고정 파일 대조 포함), 작업본은 데이터 점검·그림 파일 존재(`tests/rigDraft.test.ts`).
+37. **사신 여성형 (사용자 2026-10-29 원문 "사신 여성형이고, 학생 여성형이랑 각도, 관절 ,위치 똑같이 넣으면 된다잉. 그리고 6개 최신화된걸로 시트 쫙 뽑아줘")**: 몸 `shinigami_f`·외형 `shinigami-base-f`(작업본에만 — 게임 넣기 전). 새 그림은 몸통(붉은 띠)·양팔·오른 아래팔·다리, 머리·앞머리·뒷머리·발·엄지는 기존 그림을 같이 씀. 부위 자리·몸별 관절·기본 각도는 여학생과 똑같이. 가이드 7장(사신·사신(여)·영술원 학생·여학생·아란칼·알몸·여성) 작업본 기준으로 다시.
 - **구현 (C.151)**: `src/data/art/rig/pose.ts`(자세 뽑기·뼈 행렬·외형 층·데이터 점검), `src/ui/bha/paperdoll.ts`(그리기 + 동작 시계: 반복 동작, 한 번 동작 후 복귀, 타격 콜백), `room.css` `.bha-doll`. 시험 테스트 `tests/paperdoll.test.ts`. 게임 화면에는 아직 안 붙였다.
 

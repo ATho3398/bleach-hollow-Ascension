@@ -8,9 +8,10 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RIG = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
 LOCK = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'arrancar-base.lock.json')
-LOOKS = ['arrancar-base', 'bare-base', 'female-base', 'shinigami-base', 'shinigami-student', 'shinigami-student-f']
+LOOKS = ['arrancar-base', 'bare-base', 'female-base', 'shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f']
 
 rig = json.load(open(RIG, encoding='utf-8'))
+LOOKS = [l for l in LOOKS if l in rig['looks']]  # 게임에 아직 안 넣은 외형은 건너뜀
 pa = lambda v: {'art': v['art'], 'at': v['at']}
 lock = {
     'note': '고정값 (사용자 2026-10-28 "이대로 고정시키고"). 아란칼 기본형 = 옷 입은 몸, 알몸 기본형 = 옷 입히기 바탕. 관절·부위 자리를 바꾸면 tests/paperdoll.test.ts 가 막는다 — 사용자가 고친 값이면 scripts/rig/lock.py 로 이 파일도 같이 고친다',
