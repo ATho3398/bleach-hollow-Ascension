@@ -23,10 +23,10 @@
   "arm_L",
   "outer_arm_L",
   "weapon",
+  "thumb_L",
   "hair_back",
   "foot_L",
   "foot_R",
-  "thumb_L",
   "leg_L",
   "leg_R",
   "torso",
@@ -57,8 +57,28 @@
     "arm_R": [24, 34]
    },
    "rot": {
-    "forearm_R": -24,
+    "forearm_R": -10,
     "arm_R": 15
+   }
+  },
+  "bare": {
+   "pivots": {
+    "arm_R": [23, 33]
+   }
+  },
+  "arrancar": {
+   "pivots": {
+    "arm_R": [24, 34]
+   }
+  },
+  "student_f": {
+   "pivots": {
+    "hair_back": [24, 9],
+    "head": [13, 15]
+   },
+   "rot": {
+    "arm_R": 6,
+    "forearm_R": -6
    }
   }
  },
@@ -67,19 +87,19 @@
    "body": "arrancar",
    "parts": {
     "torso": { "art": "arrancar/torso", "at": [8, 26] },
-    "arm_L": { "art": "arrancar/arm_L", "at": [2, 29] },
+    "arm_L": { "art": "arrancar/arm_L", "at": [1, 30] },
     "arm_R": { "art": "arrancar/arm_R", "at": [21, 29] },
     "leg_L": { "art": "arrancar/leg_L", "at": [6, 51] },
     "leg_R": { "art": "arrancar/leg_R", "at": [14, 49] },
     "head": { "art": "head_bald", "at": [7, 10] },
     "foot_L": { "art": "arrancar/foot_L", "at": [5, 72] },
     "foot_R": { "art": "arrancar/foot_R", "at": [21, 72] },
-    "thumb_L": { "art": "arrancar/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "arrancar/forearm_R", "at": [20, 38] }
+    "thumb_L": { "art": "arrancar/thumb_L", "at": [7, 53] },
+    "forearm_R": { "art": "arrancar/forearm_R", "at": [19, 37] }
    },
    "layers": {
     "hair": { "art": "arrancar/hair", "at": [0, -1] },
-    "weapon": { "art": "weapon/sword", "at": [0, 48] },
+    "weapon": { "art": "weapon/sword", "at": [2, 50] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
    }
   },
@@ -87,18 +107,18 @@
    "body": "bare",
    "parts": {
     "torso": { "art": "bare/torso", "at": [10, 26] },
-    "arm_L": { "art": "bare/arm_L", "at": [5, 29] },
+    "arm_L": { "art": "bare/arm_L", "at": [5, 30] },
     "arm_R": { "art": "bare/arm_R", "at": [21, 29] },
     "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
     "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
     "head": { "art": "head_bald", "at": [7, 10] },
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
     "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
-    "thumb_L": { "art": "bare/thumb_L", "at": [8, 51] },
+    "thumb_L": { "art": "bare/thumb_L", "at": [7, 52] },
     "forearm_R": { "art": "bare/forearm_R", "at": [20, 39] }
    },
    "layers": {
-    "weapon": { "art": "weapon/sword", "at": [0, 48] },
+    "weapon": { "art": "weapon/sword", "at": [1, 50] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
    }
   },
@@ -146,7 +166,7 @@
    "parts": {
     "torso": { "art": "student/torso", "at": [9, 26] },
     "arm_L": { "art": "student/arm_L", "at": [2, 29] },
-    "arm_R": { "art": "student/arm_R", "at": [22, 28] },
+    "arm_R": { "art": "student/arm_R", "at": [22, 29] },
     "leg_L": { "art": "student/leg_L", "at": [6, 51] },
     "leg_R": { "art": "student/leg_R", "at": [14, 49] },
     "head": { "art": "shinigami/head", "at": [7, 10] },
@@ -157,7 +177,7 @@
    },
    "layers": {
     "hair": { "art": "student/hair", "at": [-1, 0] },
-    "weapon": { "art": "weapon/sword", "at": [0, 51] },
+    "weapon": { "art": "weapon/sword", "at": [0, 49] },
     "scabbard": { "art": "weapon/scabbard", "at": [17, 44] }
    }
   },
@@ -173,13 +193,13 @@
     "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
     "foot_R": { "art": "shinigami/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "student_f/forearm_R", "at": [20, 38] }
+    "forearm_R": { "art": "student_f/forearm_R", "at": [20, 37] }
    },
    "layers": {
     "hair": { "art": "student/hair", "at": [-1, 0] },
-    "weapon": { "art": "weapon/sword", "at": [0, 51] },
+    "weapon": { "art": "weapon/sword", "at": [1, 49] },
     "scabbard": { "art": "weapon/scabbard", "at": [17, 44] },
-    "hair_back": { "art": "student_f/hair_back", "at": [13, 2] }
+    "hair_back": { "art": "student_f/hair_back", "at": [21, 2] }
    }
   }
  }

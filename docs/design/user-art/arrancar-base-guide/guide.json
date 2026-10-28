@@ -52,7 +52,8 @@
     4
    ],
    "pivots": [
-    "head"
+    "head",
+    "hair_back"
    ]
   },
   {
@@ -80,7 +81,7 @@
     4
    ],
    "pivots": [
-    "head"
+    "hair_back"
    ]
   },
   {
@@ -107,8 +108,8 @@
   {
    "slot": "arm_L",
    "canvas": [
-    -1,
-    26
+    -2,
+    27
    ],
    "size": [
     21,
@@ -126,8 +127,8 @@
   {
    "slot": "thumb_L",
    "canvas": [
-    5,
-    48
+    4,
+    50
    ],
    "size": [
     9,
@@ -163,8 +164,8 @@
   {
    "slot": "forearm_R",
    "canvas": [
-    17,
-    35
+    16,
+    34
    ],
    "size": [
     20,
@@ -255,8 +256,8 @@
   {
    "slot": "weapon",
    "canvas": [
-    -3,
-    45
+    -1,
+    47
    ],
    "size": [
     22,

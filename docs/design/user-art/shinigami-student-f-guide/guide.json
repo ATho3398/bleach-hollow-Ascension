@@ -18,7 +18,8 @@
     4
    ],
    "pivots": [
-    "head"
+    "head",
+    "hair_back"
    ]
   },
   {
@@ -78,7 +79,7 @@
    "own": {
     "art": "student_f/hair_back",
     "at": [
-     13,
+     21,
      2
     ]
    },
@@ -171,7 +172,7 @@
    "slot": "forearm_R",
    "canvas": [
     17,
-    35
+    34
    ],
    "size": [
     20,
@@ -262,8 +263,8 @@
   {
    "slot": "weapon",
    "canvas": [
-    -3,
-    48
+    -2,
+    46
    ],
    "size": [
     22,
