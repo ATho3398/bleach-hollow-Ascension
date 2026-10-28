@@ -145,7 +145,9 @@ def main():
         for b in g['boxes']:
             (sx, sy), (w, h), (cx, cy) = b['sheet'], b['size'], b['canvas']
             reg = sheet[sy:sy + h, sx:sx + w]
-            op = reg[..., 3] == 255
+            # 가이드 선 색(파랑, 사용자 그림판에서 불투명이 돼도)은 그림이 아니다
+            line = (reg[..., 0] < 30) & (np.abs(reg[..., 1].astype(int) - 190) < 15) & (reg[..., 2] > 235)
+            op = (reg[..., 3] == 255) & ~line
             if not op.any():
                 continue
             ys, xs = np.nonzero(op)

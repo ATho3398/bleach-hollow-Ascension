@@ -68,7 +68,7 @@
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "bare/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "bare/thumb_L", "at": [8, 51], "size": [3, 6] },
-      "forearm_R": { "art": "bare/forearm_R", "at": [20, 38], "size": [16, 20] }
+      "forearm_R": { "art": "bare/forearm_R", "at": [20, 38], "size": [14, 20] }
     }
   },
   "looks": {

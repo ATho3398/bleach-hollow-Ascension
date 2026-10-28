@@ -28,6 +28,8 @@ PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'for
 NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼팔(칼)', 'thumb_L': '엄지',
          'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집'}
 GHOST_A = 70
+_MARKS_PATH = os.path.join(ROOT, 'docs', 'design', 'user-art', 'arrancar-base-guide', 'marks.json')
+MARKS = json.load(open(_MARKS_PATH, encoding='utf-8'))['marks'] if os.path.exists(_MARKS_PATH) else {}
 LINE = (0, 190, 255, 140)
 PIVOT = (255, 40, 40, 200)
 
@@ -72,6 +74,11 @@ def main():
             img[TOP + h, x - 1:x + w + 1] = LINE
         img[TOP - 1:TOP + h + 1, x - 1] = LINE
         img[TOP - 1:TOP + h + 1, min(W - 1, x + w)] = LINE
+        # 사용자가 칸 안에 그은 선(marks.json, 캔버스 좌표) — 빈 칸에만(그림을 덮지 않게)
+        for mx, my in MARKS.get(b['slot'], []):
+            X, Y = mx - cx + x, my - cy + TOP
+            if x <= X < x + w and TOP <= Y < TOP + h and img[Y, X, 3] == 0:
+                img[Y, X] = LINE
         # 관절점: 이 슬롯의 뼈와 그 자식 뼈 관절 중 칸 안에 있는 것
         bone = slot_bone[b['slot']]
         pts = []
