@@ -634,6 +634,7 @@ data/
 
 프로토타입(P3) 뒤 후보 시스템(순서는 마스터 추천, 사용자에게 보고함): ① 진화 엔진 프레임 ② 둥지 돌보기 심화·컨디션→전투 연결 ③ 도감과 히든 조건 평가기 ④ 해방(레스렉시온/만해) 보드 변주 프레임 ⑤ 등급 시스템 프레임.
 
+**12:5x C.184 배포 확인**(main 41b9134, Pages run 231 success, 배포 JS index-CQlRoOSM.js 에 basicPerEmptySlot·"C.185"(131 이 먼저 올린 큰 값), 캡처 c184/02·03 확인). 테스트 1876, SAVE 51, BALANCE 83. 코드 판단 2건 → 111장 후속 결정(바스트로데 빈 칸 = 노멀) 코딩130 후속, 노멀 카드 설명 문구 코딩131 에 추가. C.185 중간 푸시(c344780) 배포됨, 131 마무리 중.
 **12:1x 사용자 노멀 블록 확인 → 버그 확인·추천 → "ㄱㄱ" + 설명 문구 말투·서식 통일 → 111장(v5.252).** 1~3 = **C.184 코딩130**(session_01YVaigJvUC2g3WqWCbZStBV, Opus), 4 = **C.185 코딩131**(session_01YVaigKLjwYfveCh8DSAhBS, Opus). 점검 trig_01VX6WsZ2vqNbwAV7yz3LQUu(13:13). 다음 코딩 132, 다음 패치 C.186.
 **08:2x C.183 (UI 전수 검수 2차) 배포 확인**(main f19ce67, Pages run 228 success(중간 304d394 run 227 도 success), 배포 JS index-BY1vLmjX.js 에 "C.183", 캡처 c183/01·02·05 확인). 6건 수리(전투 상태 칩 → 필드 아래 고정 자리, 세로 회전 ⓘ·펼침 목록·탑 스크롤, 프리셋 안내 줄, 전투 소모품 불러올 때 지워지던 세이브 버그). 테스트 1854, SAVE 50. 코딩129 DONE_. 진행 중 코딩 세션 없음. 다음 코딩 130, 다음 패치 C.184.
 **06:3x C.182 (UI 전수 검수 1차) 배포 확인**(main 6a2bac0, Pages run 226 success, 배포 JS index-CVmTec3Q.js 에 "C.182", 캡처 c182/01·02·05 확인). 14건 찾아 14건 수리, scripts/ui-audit(npm run ui-audit). 코딩128 컨텍스트 41만으로 DONE_. **2차 = C.183 코딩129**(session_01YVaigHyAdcWS5e4v4gxKs8, Opus — 전투 버튼 줄이 상태 칩 따라 밀리는 것·결과 화면·세로·긴 이름·소모품/장비 낀 전투). 점검 trig_01MKhkzm4N3RHyVcCgip161o(07:28). 다음 코딩 130, 다음 패치 C.184.
