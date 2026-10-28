@@ -15,7 +15,7 @@
     { "id": "foot_L", "parent": "leg_L", "pivot": [12, 75] },
     { "id": "foot_R", "parent": "leg_R", "pivot": [24, 75] },
     { "id": "weapon", "parent": "arm_L", "pivot": [9, 58], "restRot": 78 },
-    { "id": "scabbard", "parent": "torso", "pivot": [18, 50], "restRot": -55 }
+    { "id": "scabbard", "parent": "torso", "pivot": [19, 49], "restRot": -32 }
   ],
   "slots": [
     { "id": "arm_L", "bone": "arm_L" },
@@ -82,7 +82,7 @@
     "arrancar-base": {
       "body": "bare",
       "weapon": { "art": "weapon/sword", "at": [0, 48], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [17, 50], "size": [3, 25] }
+      "scabbard": { "art": "weapon/scabbard", "at": [18, 45], "size": [3, 25] }
     },
     "arrancar-coat": {
       "body": "arrancar",

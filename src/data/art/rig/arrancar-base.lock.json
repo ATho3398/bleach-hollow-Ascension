@@ -12,11 +12,11 @@
   "foot_L": [12, 75],
   "foot_R": [24, 75],
   "weapon": [9, 58],
-  "scabbard": [18, 50]
+  "scabbard": [19, 49]
  },
  "restRot": {
   "weapon": 78,
-  "scabbard": -55
+  "scabbard": -32
  },
  "slots": [
   "arm_L",
@@ -52,6 +52,6 @@
  "look": {
   "body": "bare",
   "weapon": { "art": "weapon/sword", "at": [0, 48] },
-  "scabbard": { "art": "weapon/scabbard", "at": [17, 50] }
+  "scabbard": { "art": "weapon/scabbard", "at": [18, 45] }
  }
 }
