@@ -142,20 +142,28 @@ describe('자세·행렬', () => {
     const s1 = MOTIONS.skill!;
     expect(samplePose(HUMANOID, s1, s1.hit!).forearm_R!.rot).toBeLessThan(-30);
   });
-  it('아란칼 기본형(알몸) 고정값: 관절·부위 자리·앞뒤 순서가 고정 파일과 같다', () => {
+  it('고정값: 관절·앞뒤 순서, 아란칼 기본형(옷)·알몸 기본형의 부위·층 자리가 고정 파일과 같다', () => {
+    type Part = { art: string; at: number[] };
     const lock = JSON.parse(readFileSync('src/data/art/rig/arrancar-base.lock.json', 'utf8')) as {
       pivots: Record<string, number[]>; restRot: Record<string, number>; slots: string[];
-      body: Record<string, { art: string; at: number[] }>; look: Record<string, unknown>;
+      looks: Record<string, { body: string; parts: Record<string, Part>; layers: Record<string, Part> }>;
     };
     for (const b of HUMANOID.bones) {
       expect(b.pivot, b.id).toEqual(lock.pivots[b.id]);
       if (b.restRot !== undefined) expect(b.restRot, b.id).toBe(lock.restRot[b.id]);
     }
     expect(HUMANOID.slots.map((s) => s.id)).toEqual(lock.slots);
-    const look = HUMANOID.looks['arrancar-base']!;
-    expect(look.body).toBe(lock.look.body);
-    for (const [k, v] of Object.entries(HUMANOID.bodies[look.body]!)) expect({ art: v.art, at: v.at }, k).toEqual(lock.body[k]);
-    expect(Object.keys(HUMANOID.bodies[look.body]!).sort()).toEqual(Object.keys(lock.body).sort());
+    for (const [lid, l] of Object.entries(lock.looks)) {
+      const look = HUMANOID.looks[lid]!;
+      expect(look.body, lid).toBe(l.body);
+      const parts = HUMANOID.bodies[look.body]!;
+      expect(Object.keys(parts).sort(), lid).toEqual(Object.keys(l.parts).sort());
+      for (const [k, v] of Object.entries(parts)) expect({ art: v.art, at: v.at }, `${lid} ${k}`).toEqual(l.parts[k]);
+      for (const [k, v] of Object.entries(l.layers)) {
+        const cur = look[k] as Part;
+        expect({ art: cur.art, at: cur.at }, `${lid} ${k}`).toEqual(v);
+      }
+    }
   });
   it('오른 아래팔: 걷기는 팔 흔들기를 따라 늦게 흔들리고, 공격1·2는 젖힐 때 굽혔다 칠 때 뒤로 뻗는다', () => {
     const mv = MOTIONS.move!.tracks.forearm_R!;

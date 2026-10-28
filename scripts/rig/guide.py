@@ -8,6 +8,7 @@
 
 출력(<out>): guide.png(1배, 그리기용), guide-x8.png(8배, 칸 이름·관절 표시), guide.json(칸 → 슬롯·캔버스 자리)
 사용: python3 scripts/rig/guide.py [--look arrancar-base] [--out docs/design/user-art/arrancar-base-guide]
+      알몸: python3 scripts/rig/guide.py --look bare-base --out docs/design/user-art/bare-base-guide
 """
 from __future__ import annotations
 
@@ -28,8 +29,7 @@ PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'for
 NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼팔(칼)', 'thumb_L': '엄지',
          'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집'}
 GHOST_A = 70
-_MARKS_PATH = os.path.join(ROOT, 'docs', 'design', 'user-art', 'arrancar-base-guide', 'marks.json')
-MARKS = json.load(open(_MARKS_PATH, encoding='utf-8'))['marks'] if os.path.exists(_MARKS_PATH) else {}
+MARKS: dict = {}  # 사용자가 칸 안에 그은 선(<out>/marks.json, 캔버스 좌표) — main 에서 읽는다
 LINE = (0, 190, 255, 140)
 PIVOT = (255, 40, 40, 200)
 
@@ -39,6 +39,9 @@ def main():
     ap.add_argument('--look', default='arrancar-base')
     ap.add_argument('--out', default=os.path.join(ROOT, 'docs', 'design', 'user-art', 'arrancar-base-guide'))
     a = ap.parse_args()
+    mp = os.path.join(a.out, 'marks.json')
+    if os.path.exists(mp):
+        MARKS.update(json.load(open(mp, encoding='utf-8'))['marks'])
     look = RIG['looks'][a.look]
     body = RIG['bodies'][look['body']]
     slot_bone = {s['id']: s['bone'] for s in RIG['slots']}

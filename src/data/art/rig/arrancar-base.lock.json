@@ -1,5 +1,5 @@
 {
- "note": "아란칼 기본형(알몸) 고정값 (사용자 2026-10-28 \"이대로 고정시키고, 이걸 아란칼 base로 저장해\"). 관절·부위 자리를 바꾸면 tests/paperdoll.test.ts 가 막는다 — 사용자가 고친 값이면 이 파일도 같이 고친다",
+ "note": "고정값 (사용자 2026-10-28 \"이대로 고정시키고\"). 아란칼 기본형 = 옷 입은 몸, 알몸 기본형 = 옷 입히기 바탕. 관절·부위 자리를 바꾸면 tests/paperdoll.test.ts 가 막는다 — 사용자가 고친 값이면 scripts/rig/lock.py 로 이 파일도 같이 고친다",
  "pivots": {
   "root": [16, 52],
   "torso": [16, 51],
@@ -37,21 +37,45 @@
   "arm_R",
   "outer_arm_R"
  ],
- "body": {
-  "torso": { "art": "bare/torso", "at": [8, 26] },
-  "arm_L": { "art": "bare/arm_L", "at": [3, 29] },
-  "arm_R": { "art": "bare/arm_R", "at": [21, 29] },
-  "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
-  "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
-  "head": { "art": "head_bald", "at": [7, 10] },
-  "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
-  "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
-  "thumb_L": { "art": "bare/thumb_L", "at": [8, 51] },
-  "forearm_R": { "art": "bare/forearm_R", "at": [20, 38] }
- },
- "look": {
-  "body": "bare",
-  "weapon": { "art": "weapon/sword", "at": [0, 48] },
-  "scabbard": { "art": "weapon/scabbard", "at": [18, 45] }
+ "looks": {
+  "arrancar-base": {
+   "body": "arrancar",
+   "parts": {
+    "torso": { "art": "arrancar/torso", "at": [8, 26] },
+    "arm_L": { "art": "arrancar/arm_L", "at": [2, 29] },
+    "arm_R": { "art": "arrancar/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "arrancar/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "arrancar/leg_R", "at": [14, 49] },
+    "head": { "art": "head_bald", "at": [7, 10] },
+    "foot_L": { "art": "arrancar/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "arrancar/foot_R", "at": [21, 72] },
+    "thumb_L": { "art": "arrancar/thumb_L", "at": [8, 51] },
+    "forearm_R": { "art": "arrancar/forearm_R", "at": [20, 38] }
+   },
+   "layers": {
+    "hair": { "art": "arrancar/hair", "at": [0, 0] },
+    "weapon": { "art": "weapon/sword", "at": [0, 48] },
+    "scabbard": { "art": "weapon/scabbard", "at": [18, 45] }
+   }
+  },
+  "bare-base": {
+   "body": "bare",
+   "parts": {
+    "torso": { "art": "bare/torso", "at": [10, 26] },
+    "arm_L": { "art": "bare/arm_L", "at": [5, 29] },
+    "arm_R": { "art": "bare/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
+    "head": { "art": "head_bald", "at": [7, 10] },
+    "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
+    "thumb_L": { "art": "bare/thumb_L", "at": [8, 51] },
+    "forearm_R": { "art": "bare/forearm_R", "at": [20, 38] }
+   },
+   "layers": {
+    "weapon": { "art": "weapon/sword", "at": [0, 48] },
+    "scabbard": { "art": "weapon/scabbard", "at": [18, 45] }
+   }
+  }
  }
 }

@@ -1408,6 +1408,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 아란칼 기본형 몸 = 사용자 옷 입힌 몸(몸통·왼팔·오른 위·아래팔)(GDD 96장 23).
 - 기본형 손질 반영, 가이드 표시선(`marks.json`), 가져오기는 파란 가이드 선 무시(GDD 96장 24).
 - 기본형 손질 반영(왼팔·오른 아래팔), 가이드 표시선 갱신(오른 아래팔 칸 선 모양 바뀜).
+- 알몸 되돌림(`bare-base`), 옷 입은 몸 = 아란칼 기본형(`arrancar-base`, 몸 arrancar), 가이드 두 장, 고정 파일 두 외형(`scripts/rig/lock.py`)(GDD 96장 25).
 - **테스트** `tests/paperdoll.test.ts` 28개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 
