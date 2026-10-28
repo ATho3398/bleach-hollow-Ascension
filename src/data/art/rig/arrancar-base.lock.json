@@ -38,8 +38,8 @@
   "outer_arm_R"
  ],
  "body": {
-  "torso": { "art": "bare/torso", "at": [10, 26] },
-  "arm_L": { "art": "bare/arm_L", "at": [5, 29] },
+  "torso": { "art": "bare/torso", "at": [8, 26] },
+  "arm_L": { "art": "bare/arm_L", "at": [3, 29] },
   "arm_R": { "art": "bare/arm_R", "at": [21, 29] },
   "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
   "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
