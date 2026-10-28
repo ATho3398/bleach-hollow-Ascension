@@ -1399,6 +1399,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 아란칼 기본형 = 알몸(`arrancar-base` → 몸 `bare`, 옛 것 `arrancar-coat`), 고정 파일 `arrancar-base.lock.json`, 알몸 가이드 시트 `scripts/rig/guide.py` + `import_cut.py --guide`(GDD 96장 16).
 - 편집기 서버 저장(아티팩트 db `rig/editor`) + 칼·칼집 자리 복원, `apply_editor.py` 전체 상태 받기, 사용자 편집기 값 데이터 반영·고정 파일·가이드 재생성(GDD 96장 17).
 - 두 번째 편집기 값 고정, 팔꿈치 관절 (30,41), 오른 아래팔 동작(걷기·대기·공격1·2·맞음)(GDD 96장 18).
+- 편집기 저장을 절대값 + 데이터 표시로(옛 저장 이중 적용 버그 수정)(GDD 96장 19).
 - **테스트** `tests/paperdoll.test.ts` 28개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 
