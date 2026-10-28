@@ -285,6 +285,24 @@ const SCREENS = [
     },
   },
   {
+    // C.186 (GDD 112장): 불러오기 탭 버튼마다 눌러 다른 버튼이 안 움직이는지 + [테스트 모드 끄기] 확인 창
+    name: '테스트 불러오기',
+    async run(h, n) {
+      await more(h, '테스트');
+      await h.click('.bha-lcd .bha-viewtitle__btn');
+      await h.btn('불러오기', { within: '.bha-viewtitle__list', role: 'option' });
+      await h.explore(n, { tabs: false, views: false, infos: false }); // 정보 표(dl.bha-info)는 눌러도 창이 안 열려 뒤로가 패널을 닫는다
+      for (const [name, i] of [['지금 부르기', 0], ['물건 다시 뽑기', 0], ['지금 부르기', 1], ['지금 부르기', 2], ['다음 원정에 부르기', 0], ['보내기', 0], ['걷기', 0], ['비우기', 0], ['예약 취소', 0]]) {
+        if (name === '다음 원정에 부르기') await h.page.locator('.bha-lcd select[aria-label="이벤트 타일"]').selectOption({ index: 1 }); // 고른 게 있어야 [예약 취소]가 켜진다
+        const loc = h.page.locator('.bha-lcd').getByRole('button', { name, exact: true }).nth(i);
+        if (await h.stable(n, `${name} ${i + 1}`, () => loc.click({ timeout: 3000 }), null, loc)) await h.check(`${n}/${name} ${i + 1}`, { keys: false });
+      }
+      const quit = h.page.locator('.bha-lcd').getByRole('button', { name: '테스트 모드 끄기', exact: true });
+      if (await h.stable(n, '끄기 확인 창', () => quit.click({ timeout: 3000 }), null, quit)) await h.check(`${n}/끄기 확인 창`, { keys: false });
+      await h.closeLayers();
+    },
+  },
+  {
     name: '도움말',
     async run(h, n) {
       await more(h, '도움말');

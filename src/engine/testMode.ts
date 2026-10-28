@@ -12,12 +12,16 @@ import { STAT_IDS, type EnemyDef, type FormDef, type Stats, type StatId } from '
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
 import { SAVE_KEY, fastForward, newSaveData, performEvolution, storyProgressOf, type SaveData, type StorageLike } from '../game';
-import { COSMETIC_ITEMS, getCosmetic } from '../data/shop';
+import { COSMETIC_ITEMS, getCosmetic, WANDERER_ITEMS } from '../data/shop';
 import { canWear, skinsFor, type SkinDef } from '../data/skins';
-import { GEAR_KINDS, isGearGrade, isGearKind, type GearGrade } from '../data/gear';
+import { GEAR_KINDS, GEAR_SPECIALS, getGearSpecial, isGearGrade, isGearKind, type GearGrade, type GearKind } from '../data/gear';
 import { CONSUMABLE_IDS } from '../inventory';
-import { storeConsumable, wearCosmetic } from '../shop';
-import { grantGear, rollGear } from './gear';
+import { buyWandererItem, storeConsumable, wearCosmetic } from '../shop';
+import { grantGear, rollGear, specialValue } from './gear';
+import { rollWandererStock, type WandererVisit } from './wanderer';
+import { CARE_ACTIONS, type CareAction } from './nest';
+import { eventTilesFor, isMutationId, MUTATIONS, TERRAIN_TILES } from '../data/tiles';
+import type { ExpeditionState } from './expedition';
 import { addFood } from './food';
 import { recommendedDifficulty } from './difficulty';
 import { stepsNeeded, type EvolveResult } from './evolution/evolution';
@@ -427,9 +431,9 @@ export function testEvolveNext(save: SaveData, nowMs: number = Date.now()): Evol
 
 // ── 아이템 생성 (GDD 109장 7): 장비·소모품·먹이·꾸밈·재화 ──
 
-export const TEST_ITEM_KINDS = ['gear', 'consumable', 'food', 'cosmetic', 'currency'] as const;
+export const TEST_ITEM_KINDS = ['gear', 'wanderer', 'consumable', 'food', 'cosmetic', 'currency'] as const;
 export type TestItemKind = (typeof TEST_ITEM_KINDS)[number];
-export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
+export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', wanderer: '떠돌이 상인 물건', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
 /** 재화 id → 세이브 자리 (골드 = tradeCoins) */
 export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'rerollTickets', 'trainingTickets'] as const;
 export type TestCurrency = (typeof TEST_CURRENCIES)[number];
@@ -439,7 +443,8 @@ export const TEST_ITEM_MAX = 99999;
 
 /** 그 분류에서 고를 수 있는 id (데이터 순서). 이름은 화면이 종족 설정으로 붙인다 */
 export function testItemIds(kind: TestItemKind): readonly string[] {
-  if (kind === 'gear') return GEAR_KINDS;
+  if (kind === 'gear') return testGearIds();
+  if (kind === 'wanderer') return WANDERER_ITEMS.map((w) => w.id);
   if (kind === 'consumable') return CONSUMABLE_IDS;
   if (kind === 'food') return FOOD_IDS;
   if (kind === 'cosmetic') return COSMETIC_ITEMS.filter((c) => c.category !== 'skin').map((c) => c.id);
@@ -461,14 +466,19 @@ export function createTestItem(save: SaveData, c: TestItemChoice, nowMs: number 
   const n = Math.max(0, Math.min(TEST_ITEM_MAX, Math.floor(Number.isFinite(c.count) ? c.count : 0)));
   const sh = save.shared;
   if (c.kind === 'gear') {
-    if (!isGearKind(c.id)) return 0;
-    const grade = c.grade && isGearGrade(c.grade) ? c.grade : 'normal';
-    const plus = Math.max(0, Math.min(BALANCE.provisional.gear.maxPlus, Math.floor(c.plus ?? 0)));
+    const g = parseTestGearId(c.id);
+    if (!g) return 0;
     let made = 0;
     for (let i = 0; i < n; i++) {
-      const it = grantGear(sh.gear, rollGear({ kind: c.id, grade, star: c.star ?? recommendedDifficulty(save.evolution.tierIndex) }, rand), nowMs);
-      if (!it) break;
-      it.plus = plus;
+      if (!makeTestGear(save, g, c, nowMs, rand)) break;
+      made++;
+    }
+    return made;
+  }
+  if (c.kind === 'wanderer') {
+    let made = 0;
+    for (let i = 0; i < n; i++) {
+      if (!grantWandererTest(save, c.id, nowMs, rand)) break;
       made++;
     }
     return made;
@@ -497,6 +507,178 @@ function addCapped(sh: SaveData['shared'], key: 'rerollTickets', n: number, cap:
   const add = Math.max(0, Math.min(n, cap - sh[key]));
   sh[key] += add;
   return add;
+}
+
+// ── 장비 전부 (GDD 112장 3): 종류(gear.json kinds) × 특수 효과(specials) — 상점(노말 종류별)·떠돌이 상인(레어~전설 무작위 종류) 장비도 이 조합 안에 든다 ──
+
+/** 장비 품목 id: 종류만 = "weapon"(영웅·전설이면 특수 효과 무작위) · 특수 효과 지정 = "weapon:sp-shield" */
+export function testGearIds(): string[] {
+  return [...GEAR_KINDS, ...GEAR_KINDS.flatMap((k) => GEAR_SPECIALS.map((sp) => `${k}:${sp.id}`))];
+}
+
+export function parseTestGearId(id: string): { kind: GearKind; special: string | null } | null {
+  const [kind, special = null, ...rest] = id.split(':');
+  if (rest.length || !isGearKind(kind) || (special !== null && !getGearSpecial(special))) return null;
+  return { kind, special };
+}
+
+/** [전부 한 개씩 받기] 목록: 종류마다 하나 + 특수 효과마다 하나(종류는 차례로 돌려 붙인다) — 모든 종류·모든 특수 효과가 한 번씩 나온다 */
+export function testGearAllIds(): string[] {
+  return [...GEAR_KINDS, ...GEAR_SPECIALS.map((sp, i) => `${GEAR_KINDS[i % GEAR_KINDS.length]}:${sp.id}`)];
+}
+
+/** 특수 효과 줄은 영웅·전설만(GDD 91장 4번) — 특수 효과를 고르고 노말·레어면 영웅으로 만든다 */
+export function testGearGrade(id: string, grade: GearGrade | undefined): GearGrade {
+  const g = grade && isGearGrade(grade) ? grade : 'normal';
+  return parseTestGearId(id)?.special && (g === 'normal' || g === 'rare') ? 'epic' : g;
+}
+
+function makeTestGear(save: SaveData, g: { kind: GearKind; special: string | null }, c: Pick<TestItemChoice, 'id' | 'grade' | 'plus' | 'star'>, nowMs: number, rand: () => number): boolean {
+  const grade = testGearGrade(c.id, c.grade);
+  const roll = rollGear({ kind: g.kind, grade, star: c.star ?? recommendedDifficulty(save.evolution.tierIndex) }, rand);
+  const def = g.special ? getGearSpecial(g.special) : undefined;
+  if (def) roll.special = { id: def.id, value: specialValue(def.effect, grade) };
+  const it = grantGear(save.shared.gear, roll, nowMs);
+  if (!it) return false;
+  it.plus = Math.max(0, Math.min(BALANCE.provisional.gear.maxPlus, Math.floor(c.plus ?? 0)));
+  return true;
+}
+
+/** 장비 전부 한 개씩: 실제로 들어간 개수 (보관함이 차면 멈춘다) */
+export function createTestGearAll(save: SaveData, o: { grade: GearGrade; plus: number; star?: number }, nowMs: number = Date.now(), rand: () => number = Math.random): number {
+  let made = 0;
+  for (const id of testGearAllIds()) {
+    if (!makeTestGear(save, parseTestGearId(id)!, { id, ...o }, nowMs, rand)) break;
+    made++;
+  }
+  return made;
+}
+
+/** 떠돌이 상인 물건 하나를 공짜로: 그 물건 한 칸짜리 상인을 잠깐 세워 진짜 구매 효과(buyWandererItem)를 그대로 낸 뒤 상인·골드·구매 기록을 되돌린다 */
+function grantWandererTest(save: SaveData, itemId: string, nowMs: number, rand: () => number): boolean {
+  if (!WANDERER_ITEMS.some((w) => w.id === itemId)) return false;
+  const w = save.shared.wanderer;
+  const keep = w.visit;
+  const logLen = save.runLog.wanderer.length;
+  w.visit = { at: nowMs, runId: 0, tier: 1, stock: [{ itemId, price: 0, sold: false }] };
+  const r = buyWandererItem(save, getFaction(save.factionId), itemId, nowMs, rand);
+  w.visit = keep;
+  save.runLog.wanderer.length = logLen;
+  return r.ok;
+}
+
+// ── 불러오기 (GDD 112장 2): 무작위로 뜨는 것을 바로 부른다 — 떠돌이 상인 · 돌봄 요청 · 대기 보상 · 원정 이벤트 타일·바퀴 변이 ──
+
+/** 떠돌이 상인 단계 수 (숨은 티어 1~n) */
+export const TEST_WANDERER_TIERS = BALANCE.provisional.wanderer.tierWeights.length;
+
+/** 떠돌이 상인을 지금 부른다 (와 있으면 바꿔 세운다): 그 단계 물건을 새로 뽑는다. 런 로그 wanderer 에 arrive */
+export function testCallWanderer(save: SaveData, tier: number, nowMs: number = Date.now(), rand: () => number = Math.random): WandererVisit {
+  const w = save.shared.wanderer;
+  const t = Math.max(1, Math.min(TEST_WANDERER_TIERS, Math.floor(tier) || 1));
+  if (w.visit) save.runLog.wanderer.push({ at: nowMs, factionId: save.factionId, kind: 'leave', tier: w.visit.tier, unsold: w.visit.stock.filter((x) => !x.sold).length });
+  w.visit = { at: nowMs, runId: 0, tier: t, stock: rollWandererStock(t, rand) };
+  w.lapsSince = 0;
+  save.runLog.wanderer.push({ at: nowMs, factionId: save.factionId, kind: 'arrive', tier: t, runId: 0, waited: 0 });
+  return w.visit;
+}
+
+/** 와 있는 상인의 물건을 다시 뽑는다 (팔린 칸도 새로). 상인이 없으면 false */
+export function testRerollWanderer(save: SaveData, rand: () => number = Math.random): boolean {
+  const v = save.shared.wanderer.visit;
+  if (!v) return false;
+  v.stock = rollWandererStock(v.tier, rand);
+  return true;
+}
+
+/** 상인을 보낸다 (런 로그 leave). 없으면 false */
+export function testSendWanderer(save: SaveData, nowMs: number = Date.now()): boolean {
+  const w = save.shared.wanderer;
+  if (!w.visit) return false;
+  save.runLog.wanderer.push({ at: nowMs, factionId: save.factionId, kind: 'leave', tier: w.visit.tier, unsold: w.visit.stock.filter((x) => !x.sold).length });
+  w.visit = null;
+  return true;
+}
+
+/** 돌봄 요청을 지금 띄운다 (GDD 82장): 유지 시간은 진짜 요청과 같다 */
+export function testCallCare(save: SaveData, action: CareAction, nowMs: number = Date.now()): boolean {
+  if (!CARE_ACTIONS.includes(action) || save.nest.dead) return false;
+  save.nest.careRequest = { action, until: nowMs + BALANCE.provisional.nest.careRequest.holdMinutes * 60_000 };
+  return true;
+}
+
+/** 돌봄 요청을 걷는다 (다음 요청은 진짜 간격 뒤) */
+export function testClearCare(save: SaveData, nowMs: number = Date.now()): boolean {
+  if (!save.nest.careRequest) return false;
+  save.nest.careRequest = null;
+  save.nest.nextCareAt = nowMs + BALANCE.provisional.nest.careRequest.intervalMinutes[0] * 60_000;
+  return true;
+}
+
+/** 대기 보상 시간 고르기 (시간). 마지막 = 상한 */
+export const TEST_IDLE_HOURS: readonly number[] = [1, 4, 8, BALANCE.provisional.idle.maxHours];
+
+/** 대기 보상을 지금 쌓는다 (GDD 92장): 받을 보상(idlePending)을 그 시간만큼 — 시간은 흐르지 않는다(허기·컨디션 그대로). 자동 모험 시간 = 쌓은 시간 전부 */
+export function testCallIdle(save: SaveData, hours: number, nowMs: number = Date.now()): boolean {
+  const h = Math.max(0, Math.min(BALANCE.provisional.idle.maxHours, hours));
+  if (!(h > 0)) return false;
+  save.idlePending = { from: nowMs - h * 3_600_000, hours: h, activeHours: h };
+  return true;
+}
+
+export function testClearIdle(save: SaveData): boolean {
+  if (!save.idlePending) return false;
+  save.idlePending = null;
+  return true;
+}
+
+/** 다음 자유 원정에 부를 것 (세이브 밖, 이 화면이 열린 동안만): 이벤트 타일(첫 빈 칸에 놓임)·1바퀴 변이 */
+export interface TestExpeditionForce {
+  eventTile: string | null;
+  mutation: string | null;
+}
+let expForce: TestExpeditionForce = { eventTile: null, mutation: null };
+
+/** 이 종족 원정에 나오는 이벤트 타일 id (드래프트로만 나오는 것) */
+export function testEventTiles(factionId: string): string[] {
+  return eventTilesFor(factionId).map((t) => t.id);
+}
+export function testMutations(): string[] {
+  return MUTATIONS.map((m) => m.id);
+}
+export function getTestExpeditionForce(): TestExpeditionForce {
+  return { ...expForce };
+}
+export function setTestExpeditionForce(f: Partial<TestExpeditionForce>): TestExpeditionForce {
+  const next = { ...expForce, ...f };
+  expForce = {
+    eventTile: next.eventTile && TERRAIN_TILES.some((t) => t.id === next.eventTile && t.kind === 'event') ? next.eventTile : null,
+    mutation: next.mutation && isMutationId(next.mutation) ? next.mutation : null,
+  };
+  return getTestExpeditionForce();
+}
+
+/** 원정을 만든 직후(배치 단계 전) 예약을 입힌다: 이벤트 타일은 1번 칸부터 첫 빈 칸(야생 전투 칸이면 그 칸은 야생에서 뺀다), 변이는 1바퀴 변이로.
+ *  스토리·튜토리얼·타일 잠금 원정은 건드리지 않는다. 입힌 뒤 예약은 비운다. 입힌 것 목록을 돌려준다 */
+export function applyTestExpeditionForce(exp: ExpeditionState): { eventTile: string | null; mutation: string | null } {
+  const out = { eventTile: null as string | null, mutation: null as string | null };
+  if (exp.story || exp.tutorial || exp.tilesLocked || !exp.tileVariants) return out;
+  const f = expForce;
+  if (f.eventTile) {
+    const cell = exp.slots.findIndex((s, c) => c >= 1 && s === null);
+    if (cell >= 1) {
+      exp.slots[cell] = f.eventTile;
+      exp.wildCells = exp.wildCells.filter((c) => c !== cell);
+      out.eventTile = f.eventTile;
+    }
+  }
+  if (f.mutation) {
+    exp.mutation = f.mutation;
+    exp.variantLog.mutations.push({ id: f.mutation, lap: exp.lap });
+    out.mutation = f.mutation;
+  }
+  expForce = { eventTile: null, mutation: null };
+  return out;
 }
 
 // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족이 입을 수 있는 스킨·꾸밈 전부 ──

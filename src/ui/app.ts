@@ -92,7 +92,7 @@ import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
 import { useRerollTicket } from '../shop';
-import { clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
+import { applyTestExpeditionForce, clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
 import { shownName } from './displayName';
@@ -873,6 +873,12 @@ export function startApp(host: HTMLElement): void {
       gear: gearCarry(save.shared.gear),
       gearDrops: true,
     });
+    // 테스트 패널 [불러오기] 원정 예약 (GDD 112장 2): 이벤트 타일은 첫 빈 칸, 변이는 1바퀴에
+    if (testOn) {
+      const f = applyTestExpeditionForce(exp);
+      const what = [f.eventTile ? tileName(f.eventTile, faction.id) : null, f.mutation ? mutationName(f.mutation, faction.id) : null].filter(Boolean).join(' · ');
+      if (what) showToast({ eyebrow: '테스트', title: '불러온 것을 놓았다', meta: what }, 0, 2400);
+    }
     resumeNote = '';
     // 카드 배치 단계(GDD 17-1): 타일을 길에 놓고 [출발]을 누르면 원정이 시작된다. 그 전에는 저장하지 않으므로 취소하면 이어하던 원정이 그대로 남는다
     const entry = {
