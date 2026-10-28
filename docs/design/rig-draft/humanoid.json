@@ -183,7 +183,7 @@
       "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "hair": { "art": "arrancar_f/hair", "at": [1, 2], "size": [28, 29] },
-      "hair_back": { "art": "arrancar_f/hair_back", "at": [15, 11], "size": [14, 19] }
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [13, 0], "size": [16, 29] }
     }
   },
   "hairFrame": {
