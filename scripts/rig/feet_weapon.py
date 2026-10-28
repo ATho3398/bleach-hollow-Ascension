@@ -95,7 +95,7 @@ HAND = (4, 56)       # 캔버스에서 앞팔 손 가운데(사신·아란칼 �
 REST_ROT = 60        # 쉬는 자세: 칼날이 앞아래로(사용자 2026-10-27 지정 각도)
 
 
-def dump(rig):
+def dump(rig, path=None):
     s = json.dumps(rig, ensure_ascii=False, indent=2)
     s = re.sub(r'\[\s+(-?\d+),\s+(-?\d+)\s+\]', r'[\1, \2]', s)
     s = re.sub(r'\[\s+(-?\d+),\s+(-?\d+),\s+(-?\d+),\s+(-?\d+)\s+\]', r'[\1, \2, \3, \4]', s)
@@ -103,7 +103,7 @@ def dump(rig):
     s = re.sub(r'\{\s+"id": "([^"]+)",\s+"parent": ([^,]+),\s+"pivot": (\[[^\]]+\])(,\s+"restRot": (-?\d+))?\s+\}',
                lambda m: '{ "id": "%s", "parent": %s, "pivot": %s%s }' % (m.group(1), m.group(2), m.group(3), f', "restRot": {m.group(5)}' if m.group(5) else ''), s)
     s = re.sub(r'\{\s+"art": "([^"]+)",\s+"at": (\[[^\]]+\]),\s+"size": (\[[^\]]+\])\s+\}', r'{ "art": "\1", "at": \2, "size": \3 }', s)
-    open(RIG_JSON, 'w', encoding='utf-8').write(s + '\n')
+    open(path or RIG_JSON, 'w', encoding='utf-8').write(s + '\n')
 
 
 def main():
