@@ -94,7 +94,7 @@ export function liberationBlockLabel(factionId: string, element: string | null |
 
 /** 해방 설명 한 줄 (GDD 95장 B2 ③·106장 4 확정): 게이지가 무엇으로 차는지 + 해방 중 블록이 빠르게 나옴(평소 출현표 그대로) */
 export function liberationHint(): string {
-  return '블록·주고받은 피해로 참 · 해방 중 블록이 빠르게 나옴';
+  return '블록·주고받은 피해로 찬다 · 해방 중 블록이 빠르게 나온다';
 }
 
 /** 콤보 블록 표시 이름 (v5.4 `콤보_계열`). 계열을 모르면 `콤보` */
@@ -110,10 +110,10 @@ export function tileHint(t: TerrainTileDef): string {
   const T = BALANCE.provisional.tiles;
   if (e.type === 'spawn' && e.hunter) base = `강적보다 센 사냥꾼 1마리 (체력 ×${T.hunter.hpMult}·공격 ×${T.hunter.attackMult}) · 이기면 흡수 후보 ×${T.hunter.absorbCandidateMult}`;
   else if (e.type === 'spawn') base = e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
-  else if (e.type === 'rest' && e.spring) base = `회복 없음 · 리스크를 휴식의 ${T.spring.riskReliefMult}배 깎는다 (시간 소모)`;
-  else if (e.type === 'rest') base = '배부름·컨디션 회복 (시간 소모)';
+  else if (e.type === 'rest' && e.spring) base = `회복 없음 · 리스크를 휴식의 ${T.spring.riskReliefMult}배 깎는다 · 시간 소모`;
+  else if (e.type === 'rest') base = '배부름·컨디션 회복 · 시간 소모';
   else if (e.type === 'event') return eventHint(e.event);
-  else if (e.type === 'echo') return '바로 앞 칸 타일의 효과를 한 번 더 (앞 칸이 빈 칸·메아리면 없음)';
+  else if (e.type === 'echo') return '바로 앞 칸 타일의 효과를 한 번 더 · 앞 칸이 빈 칸·메아리면 효과 없음';
   else {
     base = {
       reshuffle: '전투 중 블록 바의 순서가 주기적으로 섞인다',

@@ -129,7 +129,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
 /** 최종 확인(확인 2) 문구 */
 export function rebirthFinalText(faction: FactionConfig, keepTraitId: string | null): { title: string; body: string } {
   const keep = keepTraitId ? `「${traitName(keepTraitId, faction.id)}」 하나만 가지고` : '특성 없이';
-  return { title: `정말 ${faction.rebirth.name}할까?`, body: `되돌릴 수 없다. ${keep} 1단계 ${faction.tierNames[0]}로 돌아간다. (직전 상태는 자동 백업된다)` };
+  return { title: `${faction.rebirth.name} 최종 확인`, body: `되돌릴 수 없다. ${keep} 1단계 ${faction.tierNames[0]}로 돌아간다. (직전 상태는 자동 백업된다)` };
 }
 
 /**

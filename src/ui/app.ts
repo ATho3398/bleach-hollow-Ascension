@@ -180,8 +180,8 @@ export function startApp(host: HTMLElement): void {
     if (w !== 'ok' && !storageWarned.has(w)) {
       storageWarned.add(w);
       showToast(w === 'freed'
-        ? { eyebrow: '저장 공간', title: '공간이 부족해 백업을 지웠다', meta: '진행은 저장됐다. 설정 > 백업에서 내보내기를 해 두자.' }
-        : { eyebrow: '저장 공간', title: '저장 공간이 가득 차 저장하지 못했다', meta: '설정 > 백업에서 내보내기를 하고 쓰지 않는 슬롯을 비우자.' }, 0, 5200);
+        ? { eyebrow: '저장 공간', title: '공간이 부족해 백업을 지웠다', meta: '진행은 저장됐다. 설정 > 백업에서 내보내기를 해 두면 안전하다.' }
+        : { eyebrow: '저장 공간', title: '저장 공간이 가득 차 저장하지 못했다', meta: '설정 > 백업에서 내보내기를 하고 쓰지 않는 슬롯을 비우면 된다.' }, 0, 5200);
     }
     touchSlot(store, slot);
   };
@@ -410,8 +410,8 @@ export function startApp(host: HTMLElement): void {
         const begin = () => open('species', () => renderSpecies(sum.slot));
         if (sum.state === 'empty') begin();
         else confirmDialog({
-          title: `슬롯 ${sum.slot}을 덮어쓸까요?`,
-          body: '이 슬롯의 기록이 새 세이브로 바뀝니다. 덮어쓰기 전의 세이브는 슬롯 백업에 한 번 보관됩니다.',
+          title: `슬롯 ${sum.slot} 덮어쓰기`,
+          body: '이 슬롯의 기록이 새 세이브로 바뀐다. 덮어쓰기 전의 세이브는 슬롯 백업에 한 번 보관된다.',
           yes: '덮어쓰기', no: '아니오', danger: true,
           onYes: begin,
         });
@@ -422,7 +422,7 @@ export function startApp(host: HTMLElement): void {
       onImport: () => open('slot-import', () => renderSlotPick('import')),
       selected,
       onDelete: (sum) => confirmDialog({
-        title: `슬롯 ${sum.slot}을 지울까요?`,
+        title: `슬롯 ${sum.slot} 지우기`,
         body: `슬롯 ${sum.slot}을 지운다. 되돌릴 수 없다. 지우기 전의 세이브는 슬롯 백업에 한 번 보관된다.`,
         yes: '지우기', no: '아니오', danger: true,
         onYes: () => {
@@ -452,7 +452,7 @@ export function startApp(host: HTMLElement): void {
       onSettings: settingsOpener(false),
       onHelp: () => openHelp(undefined, true),
       confirm: (f, onYes, onNo) => confirmDialog({
-        title: `${f.name} — 이 종족으로 시작할까요?`,
+        title: `${f.name} — 이 종족으로 시작`,
         yes: '시작', no: '아니오',
         onYes, onNo,
       }),
@@ -556,8 +556,8 @@ export function startApp(host: HTMLElement): void {
     signalHold('hold'); // 전투·원정은 확인창이 떠 있는 동안 멈춘다
     const inExpedition = activeExp !== null && activeExp.phase !== 'ended';
     confirmDialog({
-      title: '처음 화면으로 돌아갈까요?',
-      body: inExpedition ? '원정은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다 (싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
+      title: '처음 화면으로',
+      body: inExpedition ? '원정은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
       yes: '예', no: '아니오',
       onYes: () => {
         confirmingTitle = false;
@@ -1323,8 +1323,8 @@ export function startApp(host: HTMLElement): void {
       persist,
       onBattle: (c) => testBattle(faction, c),
       onNewFaction: (fid) => confirmDialog({
-        title: `${getFaction(fid).name}(으)로 테스트 칸을 새로 만들까요?`,
-        body: '지금 테스트 칸은 지워지고 전체 해금 상태로 새로 시작한다. 진짜 세이브는 그대로.',
+        title: `새 테스트 칸 — ${getFaction(fid).name}`,
+        body: '지금 테스트 칸은 지워지고 전체 해금 상태로 새로 시작한다. 진짜 세이브는 그대로 남는다.',
         yes: '새로 만들기', no: '아니오',
         onYes: () => {
           save = newTestSave(fid);
@@ -1333,8 +1333,8 @@ export function startApp(host: HTMLElement): void {
         },
       }),
       onReset: () => confirmDialog({
-        title: '테스트 칸을 초기화할까요?',
-        body: '테스트 칸(슬롯·백업 포함)을 모두 지우고 처음 화면으로 간다. 진짜 세이브는 그대로.',
+        title: '테스트 칸 초기화',
+        body: '테스트 칸(슬롯·백업 포함)을 모두 지우고 처음 화면으로 간다. 진짜 세이브는 그대로 남는다.',
         yes: '초기화', no: '아니오', danger: true,
         onYes: () => {
           clearTestSlot(localStorage);

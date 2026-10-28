@@ -106,7 +106,7 @@ describe('C.117 옛 형식 세이브는 열지 않는다 (GDD 61장)', () => {
 
   it('시작 화면: 알림 문구·[옛 세이브 내보내기]·[새로 시작], 슬롯 줄 문구', () => {
     const v = readFileSync('src/ui/startView.ts', 'utf8');
-    expect(v).toContain('이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다');
+    expect(v).toContain('이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.');
     expect(v).toContain('옛 세이브 내보내기');
     expect(v).toContain("sum.state === 'incompatible'");
     const app = readFileSync('src/ui/app.ts', 'utf8');

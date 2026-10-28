@@ -79,7 +79,7 @@ describe('설정 화면 (103장 1·2·4)', () => {
     expect(s).not.toContain("{ key: 'sound', label: '효과음'");
   });
   it('저장해야 반영 · 저장 안 하고 뒤로면 [저장][저장 안 함][취소] (기본 = 저장)', () => {
-    expect(s).toContain("title: '바꾼 설정을 저장할까요?'");
+    expect(s).toContain("title: '바꾼 설정 저장'");
     expect(s).toContain("yes: '저장', no: '취소',");
     expect(s).toContain("alt: { label: '저장 안 함'");
     // 화면으로 열렸을 때는 설정 화면 안의 취소 처리기가 먼저 가로챈다(◀ 버튼·Esc·폰 뒤로가기), 레이어(전투 일시정지)는 레이어 취소가

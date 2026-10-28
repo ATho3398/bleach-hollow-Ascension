@@ -64,7 +64,7 @@ describe('C.121 설치 안내 (GDD 68장)', () => {
     const view = read('src/ui/installView.ts');
     expect(view).toContain('d.prompt()');
     expect(view).toContain('d.userChoice');
-    expect(view).toContain('홈 화면에 설치하면 인터넷 없이도 플레이할 수 있어요');
+    expect(view).toContain('홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다');
     expect(view).toContain('"현재 페이지 추가" → "홈 화면"');
     expect(view).toContain('"홈 화면에 추가"');
     expect(read('src/ui/settingsView.ts')).toContain("label: '앱 설치'");

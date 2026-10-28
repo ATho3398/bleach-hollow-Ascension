@@ -359,7 +359,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
 
   // ── 화면 탭 ──
   const tamaPanel = panel('다마고치 모드',
-    boolRow('tamago', '다마고치 모드'), hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대. 컴퓨터는 B 키.'),
+    boolRow('tamago', '다마고치 모드'), hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대된다. 컴퓨터는 B 키로 바꾼다.'),
     boolRow('tilt', '기울기로 흔들기'), hintLine('키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 저장할 때 움직임 허용을 묻는다.'),
   );
   tamaPanel.dataset.panel = 'tamago';
@@ -385,14 +385,14 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   const sizePanel = panel('화면 크기', choiceRow('viewScale', VIEW_SCALES, (v) => `${v}배`), sizeNote);
   // 단축키 표시 (GDD 18-5): 버튼 구석의 키 글자 배지. 컴퓨터에서만 보인다
   const keyPanel = panel('단축키', boolRow('keyHints', '단축키 표시'), hintLine(currentViewState().pc
-    ? '버튼 구석에 키 글자를 보인다. 꺼도 단축키는 그대로 쓸 수 있다. 전체 표는 도움말의 [단축키].'
+    ? '버튼 구석에 키 글자를 보인다. 꺼도 단축키는 그대로 쓸 수 있다. 전체 표는 도움말의 [단축키]에 있다.'
     : '컴퓨터(마우스·넓은 창)에서만 보인다. 폰·태블릿에서는 나타나지 않는다.'));
 
   // ── 소리 탭 (GDD 24-4·97장·103장 3) ──
   const soundPanel = panel('소리',
     volumeRow('bgmVolume', '배경음', previewBgm),
     volumeRow('sfxVolume', '효과음', () => {}),
-    hintLine('0 이면 끈다. 화면을 한 번 만진 뒤부터 난다. 효과음은 파일 없이 만든 짧은 소리.'),
+    hintLine('0 이면 끈다. 화면을 한 번 만진 뒤부터 난다. 효과음은 파일 없이 만든 짧은 소리다.'),
   );
   const musicNodes: HTMLElement[] = [];
   const nowLine = el('p', 'bha-faint');
@@ -448,12 +448,12 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     ...(prefersReducedMotion() ? [hintLine('기기의 "동작 줄이기" 설정을 따라 화면 흔들림이 기본으로 꺼져 있다.')] : []),
     boolRow('damageNumbers', '피해 숫자'), hintLine('적과 내가 받은 피해가 짧게 떠오른다.'),
     boolRow('vibration', '진동', (on) => { if (on) emitFeedback('chain2', { vibration: true, sound: false }); }), hintLine('블록·체인·막기·피격에 짧게 울린다. 지원하지 않는 기기(아이폰 등)는 저절로 안 울린다.'),
-    boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때와 저장 필살기 때만 짧게.'),
+    boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때와 저장 필살기 때만 짧게 흔들린다.'),
   );
   const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'));
 
   // ── 기타 탭 ──
-  const info = panel('정보', el('p', 'bha-faint', versionLabel()), el('p', 'bha-faint', '임시 수치 있음 — 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes());
+  const info = panel('정보', el('p', 'bha-faint', versionLabel()), el('p', 'bha-faint', '임시 수치가 있다. 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes());
   // 앱 설치 (GDD 68장): 큰 안내창을 다시 연다. 이미 앱으로 열렸거나 설치했으면 알려 준다
   const installPanel = panel('앱 설치');
   const standalone = isStandalone();
@@ -474,7 +474,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       }
       common = defaultsOf(common);
       previewBgm(common.bgmVolume);
-      note = '기본값으로 바꿨다 — [저장]하면 반영된다.';
+      note = '기본값으로 바꿨다. [저장]하면 반영된다.';
       paintAll();
     },
   });
@@ -604,7 +604,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     if (!isDirty()) return then();
     asking = true;
     confirmDialog({
-      title: '바꾼 설정을 저장할까요?',
+      title: '바꾼 설정 저장',
       body: '저장하지 않으면 설정을 연 때 값으로 돌아간다.',
       yes: '저장', no: '취소',
       alt: { label: '저장 안 함', onClick: () => { asking = false; discard(); then(); } },
@@ -615,7 +615,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   function askClearSlot(): void {
     if (!host) return;
     confirmDialog({
-      title: `${host.label} 설정을 지울까요?`,
+      title: `${host.label} 설정 지우기`,
       body: '이 슬롯에만 쓰던 값을 지우고 다시 공통 설정을 따른다.',
       yes: '지우기', no: '아니오', danger: true,
       onYes: () => {
@@ -624,7 +624,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
         slot = {};
         slotSaved = {};
         applySettingsNow(storage);
-        note = '슬롯 설정을 지웠다 — 공통 설정을 따른다.';
+        note = '슬롯 설정을 지웠다. 이제 공통 설정을 따른다.';
         paintAll();
       },
     });

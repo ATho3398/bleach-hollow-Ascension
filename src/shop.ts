@@ -122,7 +122,7 @@ export function battleItemText(id: string): string {
 
 export function medicineText(cures: MedicineCure): string {
   const name = cures === 'collapsed' ? CARE_STATUS_NAMES.collapsed : cures === 'weak' ? CARE_STATUS_NAMES.weak : CARE_STATUS_NAMES.tired;
-  return `${name} 상태를 바로 푼다 (수치는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;
+  return `${name} 상태를 바로 푼다(수치는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;
 }
 
 function goldName(item: GoldItemDef, faction: FactionConfig): string {
@@ -137,8 +137,8 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
       const fx = BALANCE.provisional.nest.foods[item.food!];
       return `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`;
     }
-    case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로 안 감) · 가방에 쌓이고 가방에서 쓴다`;
-    case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로 안 감) · 가방에 쌓이고 가방에서 쓴다`;
+    case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로는 안 내려간다) · 가방에 쌓이고 가방에서 쓴다`;
+    case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;
     case 'medicine': return medicineText(item.cures!);
     case 'battle': return `${battleItemText(item.id)} · 장비 화면 소모품 칸에 넣으면 전투 [소모품]으로 전투당 1번`;
     case 'trainingTicket': return `지금 트랙 수련권 +1 (최대 ${BALANCE.provisional.training.ticketsMax})`;

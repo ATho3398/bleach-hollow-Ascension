@@ -210,7 +210,7 @@ export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (de
 
 /** 최종 확인(확인 2) 문구 */
 export function fusionFinalText(def: TranscendentDef): { title: string; body: string } {
-  return { title: `정말 합체할까?`, body: `되돌릴 수 없다. 두 캐릭터는 「${def.name}」${subjectParticle(def.name)} 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. (직전 상태는 자동 백업된다)` };
+  return { title: '합체 최종 확인', body: `되돌릴 수 없다. 두 캐릭터는 「${def.name}」${subjectParticle(def.name)} 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. (직전 상태는 자동 백업된다)` };
 }
 
 /**

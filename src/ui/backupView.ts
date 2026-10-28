@@ -161,7 +161,7 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
       button({ label: '덮어쓰기', icon: 'i-check', variant: 'danger', onClick: apply }),
       button({ label: '취소', variant: 'ghost', onClick: () => { pending = null; render(); } }),
     );
-    return panel({ title: '이 세이브를 불러올까?' }, info(rows), notice('warn', '현재 세이브를 덮어씁니다. 덮어쓰기 전의 세이브는 한 번 보관되어 설정에서 되돌릴 수 있다.'), act);
+    return panel({ title: '세이브 불러오기' }, info(rows), notice('warn', '현재 세이브를 덮어쓴다. 덮어쓰기 전의 세이브는 한 번 보관되어 설정에서 되돌릴 수 있다.'), act);
   };
 
   const render = () => {

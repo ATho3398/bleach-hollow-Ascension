@@ -69,7 +69,7 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
     el('p', 'bha-small', `${act}하면 쓰러뜨린 적의 힘(특성·속성·능력치)이 내 것이 된다. 고르는 길은 네 갈래:`),
     modes,
   ], [
-    el('p', 'bha-small', `이번 첫 ${act}은(는) 연습이다 — 특성·속성·${faction.riskGaugeName}에 들어가지 않고, 대신 모든 능력치가 똑같이 오른다.`),
+    el('p', 'bha-small', `이번 첫 ${act}은(는) 연습이다. 특성·속성·${faction.riskGaugeName}에 들어가지 않고, 대신 모든 능력치가 똑같이 오른다.`),
     go,
   ]);
   showGuide(faction, 'first-absorb', { finishLabel: '알겠어요', pauseLabel: '안내 중' });

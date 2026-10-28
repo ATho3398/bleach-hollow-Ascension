@@ -1,4 +1,4 @@
-// 앱 설치 큰 안내창 (GDD 68장, C.121): 화면 가득 — "홈 화면에 설치하면 인터넷 없이도 플레이할 수 있어요" + [설치] / [나중에].
+// 앱 설치 큰 안내창 (GDD 68장, C.121): 화면 가득 — "홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다" + [설치] / [나중에].
 // 기기(회전된 LCD) 밖 문서 맨 위에 띄워 세로 폰에서도 바로 서서 읽힌다.
 import {
   clearInstallPrompt, detectPlatform, INSTALL_WAIT_MS, installMode, installPrompt, isStandalone, loadInstallPrefs, onInstallPrompt, safeStorage, saveInstallPrefs, shouldAutoShow,
@@ -81,10 +81,10 @@ export function openInstall(opts: { auto: boolean; ua?: string } = { auto: false
   const mark = el('img', 'bha-install__icon') as HTMLImageElement;
   mark.src = `${BASE}icons/icon-192.png`;
   mark.alt = '';
-  const title = el('h2', 'bha-install__title', '홈 화면에 설치하세요');
-  const lead = el('p', 'bha-install__lead', '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있어요');
+  const title = el('h2', 'bha-install__title', '홈 화면에 설치');
+  const lead = el('p', 'bha-install__lead', '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다');
   // 크롬 '전체 화면을 종료하려면…' 안내는 브라우저가 띄워 페이지에서 끌 수 없다 — 설치한 앱으로 열면 안 뜬다 (GDD 99장 6, C.163)
-  lead.append(el('br'), el('small', 'bha-faint', '설치해서 홈 화면 아이콘으로 열면 "전체 화면을 종료하려면…" 브라우저 안내도 뜨지 않아요'));
+  lead.append(el('br'), el('small', 'bha-faint', '설치해서 홈 화면 아이콘으로 열면 "전체 화면을 종료하려면…" 브라우저 안내도 뜨지 않는다'));
   const body = el('div', 'bha-install__body');
   const actions = el('div', 'bha-install__actions');
   card.append(mark, title, lead, body, actions);
@@ -129,7 +129,7 @@ export function openInstall(opts: { auto: boolean; ua?: string } = { auto: false
     if (mode === 'prompt' || mode === 'wait') {
       installBtn.disabled = mode === 'wait';
       installBtn.replaceChildren(icon('i-play'), mode === 'wait' ? '설치 준비 중…' : '설치');
-      body.append(el('p', 'bha-install__note', mode === 'wait' ? '브라우저가 설치 창을 준비하는 중이에요.' : '누르면 브라우저의 설치 창이 떠요. 거기서 "설치"를 한 번 더 눌러 주세요.'));
+      body.append(el('p', 'bha-install__note', mode === 'wait' ? '브라우저가 설치 창을 준비하는 중이다.' : '누르면 브라우저의 설치 창이 뜬다. 거기서 "설치"를 한 번 더 누른다.'));
       actions.append(installBtn, laterBtn);
       return;
     }

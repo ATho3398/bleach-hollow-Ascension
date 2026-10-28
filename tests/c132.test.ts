@@ -114,8 +114,8 @@ describe('81장 원정 도중 [귀환하기]', () => {
   it('화면: 기존 bha- 버튼·확인창 문구, 걷기 화면에서 canAbort 로 숨김', () => {
     const src = readFileSync('src/ui/expeditionView.ts', 'utf8');
     expect(src).toContain("label: '귀환하기'");
-    expect(src).toContain("title: '지금 귀환할까요?'");
-    expect(src).toContain("body: '이번 바퀴 완주 보상은 없어요'");
+    expect(src).toContain("title: '지금 귀환'");
+    expect(src).toContain("body: '이번 바퀴 완주 보상은 없다'");
     expect(src).toContain('abortBtn.hidden = !canAbort(exp)');
     expect(readFileSync('src/ui/app.ts', 'utf8')).toContain("exp.endReason === 'abort'");
   });

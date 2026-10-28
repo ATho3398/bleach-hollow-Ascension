@@ -55,7 +55,7 @@ describe('C.163 6 새 버전 알림', () => {
     expect(u).toContain("label: '다시 시작', icon: 'i-loop', variant: 'primary', size: 'lg', block: true");
     expect(u).toContain("label: '나중에', variant: 'ghost', size: 'small'");
     expect(u).toContain('getOverlayHost().append(layer)');
-    expect(read('src/ui/installView.ts')).toContain('브라우저 안내도 뜨지 않아요');
+    expect(read('src/ui/installView.ts')).toContain('브라우저 안내도 뜨지 않는다');
   });
 });
 

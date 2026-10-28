@@ -85,7 +85,7 @@ export function testInfoNodes(): Node[] {
     taps = countTap(taps, Date.now());
     const left = TEST_TAPS - taps.count;
     if (left <= 0) return enableTestMode();
-    if (left <= 3) showToast({ eyebrow: '테스트 모드', title: `${left}번 더 누르면 켜진다`, meta: '따로 된 테스트 세이브를 쓴다 — 진짜 세이브는 그대로.' }, 0, 1200);
+    if (left <= 3) showToast({ eyebrow: '테스트 모드', title: `${left}번 더 누르면 켜진다`, meta: '따로 된 테스트 세이브를 쓴다. 진짜 세이브는 그대로 남는다.' }, 0, 1200);
   };
   const nodes: Node[] = [ver];
   if (active) nodes.push(button({ label: '테스트 모드 끄기', icon: 'i-quit', variant: 'danger', size: 'small', onClick: disableTestMode }));

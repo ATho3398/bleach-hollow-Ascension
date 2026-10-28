@@ -122,7 +122,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   const redraw = (t: TestTab = tab) => testPanelView(root, faction, save, hd, t);
   const saved = (msg: string) => {
     hd.persist();
-    showToast({ eyebrow: '테스트', title: msg, meta: '테스트 칸에만 저장 — 진짜 세이브는 그대로.' }, 0, 1600);
+    showToast({ eyebrow: '테스트', title: msg, meta: '테스트 칸에만 저장한다. 진짜 세이브는 그대로 남는다.' }, 0, 1600);
   };
   const stats = currentStats(save.evolution, fid, statBonusOf(save).total);
   const elemDmg = elementDamageOf(save.evolution);
@@ -152,7 +152,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
 
   // 머리의 탭 5개 줄 대신 제목 토글 "테스트 · 진화체 ▾" (C.114)
   const title = viewTitle(TABS.map((t) => ({ id: t.id, label: t.label })), tab, (id) => redraw(id as TestTab), { prefix: '테스트' });
-  lcdPage(root, { cls: 'bha-test-page', cols: '3fr 2fr' }, lcdHead({ title, sub: '전체 해금된 테스트 칸 — 진짜 세이브는 읽지도 쓰지도 않는다' }), body, [summary]);
+  lcdPage(root, { cls: 'bha-test-page', cols: '3fr 2fr' }, lcdHead({ title, sub: '전체 해금된 테스트 칸이다. 진짜 세이브는 읽지도 쓰지도 않는다.' }), body, [summary]);
 
   function formTab(): Node[] {
     const fSel = select(FACTIONS.map((f) => ({ value: f.id, label: f.name })), fid, '종족');
@@ -174,7 +174,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     return [panel({ title: '진화체 고르기', aside: `${FORM_TABLE.length + 1}종` },
       grid([['종족', fSel], ['진화체', formSel]]),
       row(apply),
-      note('종족을 바꾸면 테스트 칸을 그 종족으로 새로 만든다(전체 해금). 능력치는 그 진화체의 종족값 + 지금 노력치·입력값.'))];
+      note('종족을 바꾸면 테스트 칸을 그 종족으로 새로 만든다(전체 해금). 능력치는 그 진화체의 종족값 + 지금 노력치·입력값이다.'))];
   }
 
   function statsTab(): Node[] {
@@ -211,7 +211,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [panel({ title: '특성 고르기', aside: `${TRAITS.length}종` },
       grid([...sels.map((s, i) => [`칸 ${i + 1}`, s] as [string, Node]), ['고유 특성', abil]]), row(apply),
-      note('같은 특성은 한 칸에만. 고유 특성 = 진화 순간 노력치 방향(능력치 6종).'))];
+      note('같은 특성은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 6종).'))];
   }
 
   function battleTab(): Node[] {
@@ -231,7 +231,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [panel({ title: '바로 전투', aside: `${foes.length}종` },
       grid([['상대', foeSel], ['★', starSel], ['연속', streak], ['탑 층', floorSel]]), row(go),
-      note('탑 층을 고르면 ★·배율은 층 규칙(★ = ⌈층/10⌉, 구간 안 층마다 +4%, 50층 +20%). 결과는 테스트 칸 런 로그에만.'))];
+      note('탑 층을 고르면 ★·배율은 층 규칙(★ = ⌈층/10⌉, 구간 안 층마다 +4%, 50층 +20%). 결과는 테스트 칸 런 로그에만 남는다.'))];
   }
 
   function advance(minutes: number): void {
@@ -256,7 +256,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
         { label: '다음', value: last ? '마지막 단계' : faction.tierNames[t + 1]! },
       ]),
       row(go),
-      note(last ? '마지막 단계다. [진화체] 탭에서 1단계(진화 전)로 바꾼 뒤 다시 진화해 본다.' : '걸음 수를 채우고 진짜 진화를 한다 — 진화체 판정·슬롯 +1·도감·칭호·연출 모두 같다. 진화체를 직접 고르려면 [진화체] 탭.'))];
+      note(last ? '마지막 단계다. [진화체] 탭에서 1단계(진화 전)로 바꾼 뒤 다시 진화해 본다.' : '걸음 수를 채우고 진짜 진화를 한다 — 진화체 판정·슬롯 +1·도감·칭호·연출 모두 같다. 진화체를 직접 고르려면 [진화체] 탭에서 고른다.'))];
   }
 
   // ── 아이템 생성 (GDD 109장 7): 장비·소모품·먹이·꾸밈·재화 → 개수·등급·강화 넣고 [생성] ──
@@ -297,11 +297,11 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       lastItem = { kind: k, id: idSel.value, count: Number(count.value) || 1, grade: gradeSel.value as GearGrade, plus: Number(plus.value) || 0 };
       const made = createTestItem(save, { kind: k, id: idSel.value, count: lastItem.count, grade: lastItem.grade, plus: lastItem.plus, star: Number(starSel.value) });
       hd.persist();
-      showToast({ eyebrow: '테스트', title: made > 0 ? `${itemLabel(k, idSel.value).label} ×${made} 생성` : '못 넣었다', meta: made < lastItem.count ? '보관 상한·보관함 가득·이미 보유는 그만큼 빠진다.' : '테스트 칸에만 저장 — 진짜 세이브는 그대로.' }, 0, 1800);
+      showToast({ eyebrow: '테스트', title: made > 0 ? `${itemLabel(k, idSel.value).label} ×${made} 생성` : '못 넣었다', meta: made < lastItem.count ? '보관 상한·보관함 가득·이미 보유는 그만큼 빠진다.' : '테스트 칸에만 저장한다. 진짜 세이브는 그대로 남는다.' }, 0, 1800);
       redraw();
     } });
     return [panel({ title: '아이템 생성', aside: TEST_ITEM_KIND_NAMES[kindSel.value as TestItemKind] }, g, row(make),
-      note('먹이·소모품·뽑기권·수련권은 보관 상한까지, 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유). 골드·영옥·영혼 결정은 상한 없음.'))];
+      note('먹이·소모품·뽑기권·수련권은 보관 상한까지, 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·영혼 결정은 상한이 없다.'))];
   }
 
   // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족 스킨·꾸밈 전부 착용·해제 ──
@@ -346,7 +346,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [
       panel({ title: '스킨', aside: `${skins.length}종` }, grid([['스킨', skinSel]]), row(wearSkin, offSkin),
-        note(skins.length ? '가진 것 상관없이 이 종족이 입을 수 있는 스킨 전부(상점에 안 나오는 단계·아란칼 외형 포함).' : '이 종족은 스킨 데이터가 없다.')),
+        note(skins.length ? '가진 것 상관없이 이 종족이 입을 수 있는 스킨 전부를 보인다(상점에 안 나오는 단계·아란칼 외형 포함).' : '이 종족은 스킨 데이터가 없다.')),
       panel({ title: '꾸밈', aside: `${wearables.length}종` }, grid([['꾸밈', cosSel]]), row(wearCos, offCos), row(offAll),
         note('안 가진 꾸밈은 입힐 때 테스트 칸에 보유로 넣는다.')),
     ];
@@ -367,7 +367,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [
-      panel({ title: '속도 (전투·원정)' }, sp, note('전투는 전투 화면 배속에 곱한다. 원정은 시작 배속.')),
+      panel({ title: '속도 (전투·원정)' }, sp, note('전투는 전투 화면 배속에 곱한다. 원정은 시작 배속에 쓴다.')),
       panel({ title: '리스크·허기·컨디션' }, grid([[faction.riskGaugeName, risk], ['허기', hunger], ['컨디션', cond]]), row(apply)),
       // 시간 앞당기기 (GDD 102-7·109장 7): 배부름·돌봄·대기 보상·먹이 한도(10분)·빈사(48시간)·사망을 바로 본다
       ...(hd.onTimeAdvanced ? [panel({ title: '시간 앞당기기' },
@@ -377,7 +377,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       panel({ title: '테스트 칸' }, row(
         button({ label: '테스트 칸 초기화', icon: 'i-loop', variant: 'danger', onClick: hd.onReset }),
         button({ label: '테스트 모드 끄기', icon: 'i-quit', onClick: disableTestMode }),
-      ), note('초기화 = 테스트 칸을 지우고 처음 화면으로. 끄면 진짜 세이브로 돌아간다.')),
+      ), note('초기화하면 테스트 칸을 지우고 처음 화면으로 간다. 끄면 진짜 세이브로 돌아간다.')),
     ];
   }
 }

@@ -19,8 +19,8 @@ export interface StartHandlers {
 
 /** 열 수 없는 형식(이전·더 새로운 버전) 세이브 알림 문구 (GDD 61장) */
 export const INCOMPATIBLE_TEXT = {
-  old: '이전 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다',
-  newer: '더 새로운 버전 세이브라 이어서 할 수 없습니다 — 새로 시작합니다',
+  old: '이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.',
+  newer: '더 새로운 버전 세이브라 이어서 할 수 없다. 새로 시작한다.',
 } as const;
 
 /** 슬롯 한 줄의 글: "호로 · 2단계 바이저드 · 원정 5회" / "비어 있음" / "손상됨" 과 마지막 플레이 시각 */
@@ -114,7 +114,7 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   nodes.push(ver);
   // 오프라인 플레이(GDD 60장): 새 버전을 받아 뒀으면 한 줄 안내 (적용은 앱을 다시 열 때)
   onUpdateReady(() => {
-    if (ver.isConnected) ver.after(el('p', 'bha-start__ver', '새 버전을 받았습니다 — 앱을 닫았다 다시 열면 적용됩니다'));
+    if (ver.isConnected) ver.after(el('p', 'bha-start__ver', '새 버전을 받았다. 앱을 닫았다 다시 열면 적용된다.'));
   });
   // 열 수 없는 세이브 알림이 있으면 낮은 화면(가로 390)에서도 버전 줄까지 들어가게 메뉴 3개를 한 줄로 (C.119)
   mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}` }, ...nodes);

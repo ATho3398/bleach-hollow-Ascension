@@ -311,8 +311,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     resumeClock();
     render();
     confirmDialog({
-      title: '지금 귀환할까요?',
-      body: '이번 바퀴 완주 보상은 없어요',
+      title: '지금 귀환',
+      body: '이번 바퀴 완주 보상은 없다',
       yes: '귀환하기',
       no: '계속 가기',
       onYes: () => {

@@ -382,11 +382,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const chain3Chip = v2StatusChip('i-chain-3', `${labels.chain}${top}`);
   // 전투 상태 칩 ⓘ (GDD 104장 2 — C.176 이 미룬 전투 칩, 공용 infoTip): 폰 = 누르면, PC = 올리면 설명 창
   voidChip.root.append(infoTip(labels.voidBlock, () => [
-    `쓸 때마다 ${labels.riskGauge} +${p.riskPerVoidBlock}`,
-    `쓰면 ${p.voidStunSeconds}초 경직 — 내 공격·블록 생성·블록 사용 멈춤 (${labels.role.guard}만 누를 수 있음)`,
-    `블록이 생길 때 ${Math.round(voidChanceOf(p) * 100)}% 확률로 ${labels.voidBlock}(으)로 바뀐다`,
+    `사용: ${labels.riskGauge} +${p.riskPerVoidBlock} · ${p.voidStunSeconds}초 경직(내 공격·블록 생성·블록 사용 멈춤, ${labels.role.guard}만 누를 수 있다)`,
+    `블록 생성: ${Math.round(voidChanceOf(p) * 100)}% 확률로 ${labels.voidBlock}(으)로 바뀐다`,
   ]));
-  chain3Chip.root.append(infoTip(`${labels.chain}${top}`, [`같은 블록 ${top}개를 붙여 한 번에 쓴 횟수`, `${labels.chain}${top}은(는) 추가 효과가 붙는다`]));
+  chain3Chip.root.append(infoTip(`${labels.chain}${top}`, [`같은 블록 ${top}개를 붙여 한 번에 쓴 횟수다`, `${labels.chain}${top}은(는) 추가 효과가 붙는다`]));
   const meStatus = el('div', 'bha-v2status');
   meStatus.append(voidChip.root, chain3Chip.root);
 
@@ -649,8 +648,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (overlayOpen) return;
       overlayOpen = true;
       confirmDialog({
-        title: '지금 귀환할까요?',
-        body: '이 전투는 패배로 치지 않아요 · 이번 바퀴 완주 보상은 없어요',
+        title: '지금 귀환',
+        body: '이 전투는 패배로 치지 않는다. 이번 바퀴 완주 보상은 없다.',
         yes: '귀환하기',
         no: '계속 싸우기',
         onYes: () => {
@@ -1076,10 +1075,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const it = p.battleItem;
     const itemLeft = opts.battleItem && it ? opts.battleItem.count - (s.itemUsed ? 1 : 0) : 0;
     setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : '');
-    setAct(itemBtn, canUseItem(s), !it ? '소모품 칸이 비었어요 (장비 화면에서 넣기)' : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 씀` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — 한계 돌파 중 못 씀` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
+    setAct(itemBtn, canUseItem(s), !it ? '소모품 칸이 비었다(장비 화면에서 넣는다)' : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — 한계 돌파 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
     const cdSec = s.gearCooldown * p.tickSeconds;
     setText(gearBtn.meta, p.activeGear ? (cdSec > 0 ? `${Math.ceil(cdSec)}` : '\u00a0') : ''); // 발동 장비가 있으면 쿨다운이 끝나도 글자 칸 자리 유지 (C.182)
-    setAct(gearBtn, canUseGear(s), !p.activeGear ? '발동 장비 없음 (발동 효과가 있는 장비를 끼면 쓸 수 있어요)' : `${gearActiveText(p)}${cdSec > 0 ? ` · ${Math.ceil(cdSec)}초 뒤` : ' · 준비됨'}`);
+    setAct(gearBtn, canUseGear(s), !p.activeGear ? '발동 장비가 없다(발동 효과가 있는 장비를 끼면 쓸 수 있다)' : `${gearActiveText(p)}${cdSec > 0 ? ` · ${Math.ceil(cdSec)}초 뒤` : ' · 준비됨'}`);
 
     // 해방 (GDD 83장): 버튼 = 게이지(해방 중에는 남은 시간), 장면 = 오오라
     const libActive = liberationActive(s);

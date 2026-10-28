@@ -23,7 +23,7 @@ export function mountUpdateBanner(reload: () => void = () => location.reload()):
     };
     const go = button({ label: '다시 시작', icon: 'i-loop', variant: 'primary', size: 'lg', block: true, onClick: reload });
     const skip = button({ label: '나중에', variant: 'ghost', size: 'small', onClick: later });
-    modal.append(el('h2', 'bha-modal__title', '새 버전이 나왔습니다'), el('p', 'bha-modal__body', '다시 시작하면 바로 적용됩니다'), go, skip);
+    modal.append(el('h2', 'bha-modal__title', '새 버전이 나왔다'), el('p', 'bha-modal__body', '다시 시작하면 바로 적용된다.'), go, skip);
     layer.append(modal);
     getOverlayHost().append(layer);
     untrap = trapModalFocus(layer);
