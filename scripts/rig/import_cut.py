@@ -172,7 +172,16 @@ def main():
             part = np.zeros((ys.max() - ys.min() + 1, xs.max() - xs.min() + 1, 4), np.uint8)
             m = op[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
             part[m] = reg[ys.min():ys.max() + 1, xs.min():xs.max() + 1][m]
-            placed.append([b['slot'], part, cx + int(xs.min()), cy + int(ys.min()), -1])
+            px, py = cx + int(xs.min()), cy + int(ys.min())
+            # 칸 그림이 지금 그 부위 그림과 똑같으면(안 고친 칸) 자리도 지금 자리 그대로 — 가이드를 만든 뒤 편집기로 옮긴 자리를 지킨다
+            slot = b['slot']
+            lk = next((l for l in rig['looks'].values() if l['body'] == a.body), {})
+            cur = body.get(slot) or (lk.get(slot) if isinstance(lk.get(slot), dict) else None)
+            if cur and os.path.exists(os.path.join(ART, cur['art'] + '.png')):
+                ca = np.array(Image.open(os.path.join(ART, cur['art'] + '.png')).convert('RGBA'))
+                if ca.shape == part.shape and (ca == part).all():
+                    px, py = cur['at']
+            placed.append([slot, part, px, py, -1])
         names = [p[0] for p in placed]
     else:
         base = np.array(Image.open(a.base).convert('RGBA'))
@@ -200,6 +209,14 @@ def main():
         if a.guide and name in ('weapon', 'scabbard'):
             # 가이드 칸에서 고친 칼·칼집: 그림은 공통 파일, 자리는 칸 안 자리 그대로(이 몸의 외형), 쉬는 각도는 그대로
             key = 'weapon/sword' if name == 'weapon' else 'weapon/scabbard'
+            curf = os.path.join(ART, key + '.png')
+            if os.path.exists(curf):
+                ca = np.array(Image.open(curf).convert('RGBA'))
+                if ca.shape == part.shape and (ca == part).all() and all(isinstance(l.get(name), dict) for l in looks):
+                    for l in looks:
+                        l[name]['at'] = [px, py]
+                    print(f'{name}: 그림 그대로 → 자리만 ({px}, {py})')
+                    continue
             Image.fromarray(part).save(os.path.join(ART, key + '.png'))
             # 다른 외형도 같은 그림이라 크기를 맞추고, 이 외형에서 옮겨진 만큼 같이 옮긴다(위로 늘린 칼집 등)
             mine = next((l[name] for l in looks if isinstance(l.get(name), dict)), None)

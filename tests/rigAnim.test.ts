@@ -46,6 +46,9 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     const staged = charArt('shinigami', 1, 'char.shinigami', '/', undefined, ['char-shinigami-2.png']);
     expect(staged.rig).toBeUndefined();
     expect(staged.src).toBe('/art/char-shinigami-2.png');
+    // 2단계 = 진앙영술원 학생 종이인형
+    expect(charArt('shinigami', 1, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-student');
+    expect(charArt('shinigami', 2, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-base');
     // 목록·사진처럼 종족 기본 키를 안 넘기는 곳은 그대로 한 장 그림
     expect(charArt('shinigami', 0, '', '/', undefined, ['char-shinigami.png']).rig).toBeUndefined();
   });
