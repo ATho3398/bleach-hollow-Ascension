@@ -9,7 +9,7 @@
     { "id": "head", "parent": "torso", "pivot": [27, 20] },
     { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
     { "id": "arm_R", "parent": "torso", "pivot": [24, 33] },
-    { "id": "forearm_R", "parent": "arm_R", "pivot": [30, 41] },
+    { "id": "forearm_R", "parent": "arm_R", "pivot": [32, 41] },
     { "id": "leg_L", "parent": "root", "pivot": [11, 52] },
     { "id": "leg_R", "parent": "root", "pivot": [20, 52] },
     { "id": "foot_L", "parent": "leg_L", "pivot": [12, 75] },
