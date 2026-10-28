@@ -7,6 +7,7 @@
     { "id": "root", "parent": null, "pivot": [16, 52] },
     { "id": "torso", "parent": "root", "pivot": [16, 51] },
     { "id": "head", "parent": "torso", "pivot": [15, 17] },
+    { "id": "hair_back", "parent": "head", "pivot": [26, 11] },
     { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
     { "id": "arm_R", "parent": "torso", "pivot": [24, 33] },
     { "id": "forearm_R", "parent": "arm_R", "pivot": [32, 41] },
@@ -21,7 +22,7 @@
     { "id": "arm_L", "bone": "arm_L" },
     { "id": "outer_arm_L", "bone": "arm_L" },
     { "id": "weapon", "bone": "weapon" },
-    { "id": "hair_back", "bone": "head" },
+    { "id": "hair_back", "bone": "hair_back" },
     { "id": "foot_L", "bone": "foot_L" },
     { "id": "foot_R", "bone": "foot_R" },
     { "id": "thumb_L", "bone": "arm_L" },
@@ -88,14 +89,14 @@
     "student": {
       "torso": { "art": "student/torso", "at": [9, 26], "size": [18, 30] },
       "arm_L": { "art": "student/arm_L", "at": [2, 29], "size": [15, 29] },
-      "arm_R": { "art": "student/arm_R", "at": [21, 29], "size": [13, 15] },
+      "arm_R": { "art": "student/arm_R", "at": [22, 28], "size": [13, 15] },
       "leg_L": { "art": "student/leg_L", "at": [6, 51], "size": [17, 25] },
       "leg_R": { "art": "student/leg_R", "at": [14, 49], "size": [16, 27] },
       "head": { "art": "shinigami/head", "at": [7, 10], "size": [16, 19] },
       "foot_L": { "art": "shinigami/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "shinigami/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51], "size": [3, 6] },
-      "forearm_R": { "art": "student/forearm_R", "at": [20, 38], "size": [14, 18] }
+      "forearm_R": { "art": "student/forearm_R", "at": [21, 38], "size": [14, 18] }
     },
     "student_f": {
       "torso": { "art": "student_f/torso", "at": [9, 25], "size": [18, 31] },
@@ -175,6 +176,15 @@
       "rot": {
         "arm_R": 10,
         "forearm_R": -15
+      }
+    },
+    "student": {
+      "pivots": {
+        "arm_R": [24, 34]
+      },
+      "rot": {
+        "forearm_R": -24,
+        "arm_R": 15
       }
     }
   }

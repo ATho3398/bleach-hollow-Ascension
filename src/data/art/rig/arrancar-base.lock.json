@@ -4,6 +4,7 @@
   "root": [16, 52],
   "torso": [16, 51],
   "head": [15, 17],
+  "hair_back": [26, 11],
   "arm_L": [12, 31],
   "arm_R": [24, 33],
   "forearm_R": [32, 41],
@@ -46,6 +47,15 @@
    "rot": {
     "arm_R": 10,
     "forearm_R": -15
+   }
+  },
+  "student": {
+   "pivots": {
+    "arm_R": [24, 34]
+   },
+   "rot": {
+    "forearm_R": -24,
+    "arm_R": 15
    }
   }
  },
@@ -133,14 +143,14 @@
    "parts": {
     "torso": { "art": "student/torso", "at": [9, 26] },
     "arm_L": { "art": "student/arm_L", "at": [2, 29] },
-    "arm_R": { "art": "student/arm_R", "at": [21, 29] },
+    "arm_R": { "art": "student/arm_R", "at": [22, 28] },
     "leg_L": { "art": "student/leg_L", "at": [6, 51] },
     "leg_R": { "art": "student/leg_R", "at": [14, 49] },
     "head": { "art": "shinigami/head", "at": [7, 10] },
     "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
     "foot_R": { "art": "shinigami/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "student/forearm_R", "at": [20, 38] }
+    "forearm_R": { "art": "student/forearm_R", "at": [21, 38] }
    },
    "layers": {
     "hair": { "art": "student/hair", "at": [-1, 0] },

@@ -191,6 +191,16 @@ describe('자세·행렬', () => {
     const b = boneMatrices(rig, {}, 'bare').forearm_R!;
     expect(a[0]).not.toBeCloseTo(b[0]);
   });
+  it('뒷머리: 머리에 붙은 따로 뼈라 모든 동작에서 찰랑거린다(걷기는 반복 이음매가 맞다)', () => {
+    expect(HUMANOID.bones.find((b) => b.id === 'hair_back')!.parent).toBe('head');
+    expect(HUMANOID.slots.find((s) => s.id === 'hair_back')!.bone).toBe('hair_back');
+    for (const [id, m] of Object.entries(MOTIONS)) {
+      const k = m.tracks.hair_back;
+      expect(k, id).toBeTruthy();
+      expect(Math.max(...k!.map((x) => Math.abs(x[1]))), id).toBeGreaterThan(0);
+      if (m.loop) expect(k![0]![1], id).toBe(k![k!.length - 1]![1]);
+    }
+  });
   it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;
     expect(sc.parent).toBe('torso');

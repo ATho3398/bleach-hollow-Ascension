@@ -52,7 +52,8 @@
     4
    ],
    "pivots": [
-    "head"
+    "head",
+    "hair_back"
    ]
   },
   {
@@ -80,7 +81,7 @@
     4
    ],
    "pivots": [
-    "head"
+    "hair_back"
    ]
   },
   {
@@ -144,8 +145,8 @@
   {
    "slot": "arm_R",
    "canvas": [
-    18,
-    26
+    19,
+    25
    ],
    "size": [
     19,
@@ -163,7 +164,7 @@
   {
    "slot": "forearm_R",
    "canvas": [
-    17,
+    18,
     35
    ],
    "size": [
