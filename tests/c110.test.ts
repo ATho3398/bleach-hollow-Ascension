@@ -1,4 +1,5 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import { charArt } from '../src/data/art/manifest';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FORM_TABLE, tryGetForm } from '../src/data/evolution';
@@ -18,14 +19,17 @@ const shin = FACTIONS.find((f) => f.id !== 'hollow')!;
 const fl = hollow.formLooks!;
 
 describe('C.110 아란칼(5단계) 외형 표 (GDD 54)', () => {
-  it('5단계 진화체 전부(일반 24 + 히든 4)에 외형이 있고, 모두 그림이 있는 시작 전용 단계 외형 스킨', () => {
+  it('5단계 진화체 전부(일반 24 + 히든 4)에 외형이 있고, 모두 시작 전용 단계 외형 스킨 — 그림은 C.187(GDD 113)에 지워져 없으면 5단계 진화체 그림으로 보인다', () => {
+    const files = readdirSync('public/art');
     const t5 = FORM_TABLE.filter((f) => f.tier === 5).map((f) => f.id);
     expect(t5.length).toBe(28);
     for (const id of t5) {
       expect(fl[id], id).toBeTruthy();
       for (const l of fl[id]!) {
         expect(getSkin(l), l).toMatchObject({ factionId: 'hollow', startOnly: true, tierLook: true });
-        expect(existsSync(`public/art/skin-${l}.png`), l).toBe(true);
+        // 새 그림이 오면 같은 id 파일(skin-<id>.png)만 넣으면 그 그림, 없으면 기존 대체(char-hollow-5) — 깨진 그림·빈칸 없음
+        const src = charArt('hollow', 4, 'char.hollow', '/', undefined, files, l).src;
+        expect(src, l).toBe(existsSync(`public/art/skin-${l}.png`) ? `/art/skin-${l}.png` : '/art/char-hollow-5.png');
       }
     }
     expect(Object.keys(fl).sort()).toEqual([...t5].sort());

@@ -33,7 +33,8 @@ const BASE_SKINS: readonly SkinDef[] = [
   { id: 'scorpion', name: '전갈형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
   { id: 'raptor', name: '새형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
 ];
-/** 아란칼(5단계) 외형 (GDD 54, C.110): 속성 8 × 칸 4 + 히든 4. 종족 설정 formLooks 가 진화체 id → 이 id 로 잇는다(그림 `skin-arr<속성><칸 a~d>.png`, 예 `skin-arrwaterb.png` = 물 2번 칸). 상점·스킨 패널·시작 추첨에는 안 나온다 */
+/** 아란칼(5단계) 외형 (GDD 54, C.110): 속성 8 × 칸 4 + 히든 4. 종족 설정 formLooks 가 진화체 id → 이 id 로 잇는다(그림 `skin-arr<속성><칸 a~d>.png`, 예 `skin-arrwaterb.png` = 물 2번 칸). 상점·스킨 패널·시작 추첨에는 안 나온다.
+ *  그림은 C.187(GDD 113)에 전부 지웠다 — 지금은 5단계 진화체 그림(char-hollow-5)으로 보이고, 새 그림은 `public/art/` 에 같은 이름 파일만 넣으면 코드 수정 없이 붙는다 */
 const ARRANCAR_ELEMENTS: readonly (readonly [string, string])[] = [['normal', '노멀'], ['water', '물'], ['fire', '불'], ['earth', '흙'], ['thunder', '뇌'], ['blood', '혈'], ['poison', '독'], ['kyo', '허']];
 const ARRANCAR_SKINS: readonly SkinDef[] = [
   ...ARRANCAR_ELEMENTS.flatMap(([id, name]) => [1, 2, 3, 4].map((n): SkinDef => ({ id: `arr${id}${'abcd'[n - 1]}`, name: `아란칼 ${name} ${n}`, factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true }))),
