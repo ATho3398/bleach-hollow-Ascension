@@ -83,7 +83,7 @@
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "bare/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "bare/thumb_L", "at": [8, 51], "size": [3, 6] },
-      "forearm_R": { "art": "female/forearm_R", "at": [20, 40], "size": [13, 16] }
+      "forearm_R": { "art": "female/forearm_R", "at": [20, 39], "size": [13, 16] }
     },
     "student": {
       "torso": { "art": "student/torso", "at": [9, 26], "size": [18, 30] },
@@ -164,5 +164,14 @@
   "view": {
     "note": "게임 화면에 그릴 때의 그림 칸(x, y, 가로, 세로 — 캔버스 좌표). 모든 동작에서 칼끝까지 안 잘리게 앞(왼쪽)으로 넉넉히, 아래 끝 = 바닥(칼이 바닥 밑으로 내려가는 순간은 땅에 가려진 것처럼 잘린다)",
     "rect": [-58, -16, 107, 98]
+  },
+  "bodyJoints": {
+    "note": "몸마다 따로 맞춘 관절(GDD 96장 33): pivots = 관절 자리, rot = 기본 각도(도, 쉬는 각도에 더함). 없으면 bones 의 값",
+    "female": {
+      "pivots": {
+        "arm_R": [22, 32],
+        "forearm_R": [29, 41]
+      }
+    }
   }
 }

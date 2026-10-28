@@ -17,6 +17,7 @@ lock = {
     'pivots': {b['id']: b['pivot'] for b in rig['bones']},
     'restRot': {b['id']: b['restRot'] for b in rig['bones'] if 'restRot' in b},
     'slots': [s['id'] for s in rig['slots']],
+    'bodyJoints': {k: v for k, v in (rig.get('bodyJoints') or {}).items() if isinstance(v, dict)},
     'looks': {lid: {'body': rig['looks'][lid]['body'],
                     'parts': {k: pa(v) for k, v in rig['bodies'][rig['looks'][lid]['body']].items()},
                     'layers': {k: pa(v) for k, v in rig['looks'][lid].items() if isinstance(v, dict)}} for lid in LOOKS},

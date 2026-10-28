@@ -46,7 +46,10 @@ def main():
     look = RIG['looks'][a.look]
     body = RIG['bodies'][look['body']]
     slot_bone = {s['id']: s['bone'] for s in RIG['slots']}
-    bones = {b['id']: b for b in RIG['bones']}
+    # 이 몸의 관절(몸별로 따로 맞춘 자리가 있으면 그것)
+    bj = (RIG.get('bodyJoints') or {}).get(look['body'])
+    bj = bj if isinstance(bj, dict) else {}
+    bones = {b['id']: dict(b, pivot=(bj.get('pivots') or {}).get(b['id'], b['pivot'])) for b in RIG['bones']}
     hf = RIG['hairFrame']
     boxes = []
     for p in PARTS:
@@ -100,7 +103,7 @@ def main():
         # 관절점: 이 슬롯의 뼈와 그 자식 뼈 관절 중 칸 안에 있는 것
         bone = slot_bone[b['slot']]
         pts = []
-        for bb in RIG['bones']:
+        for bb in bones.values():
             if bb['id'] == bone or bb['parent'] == bone:
                 px, py = bb['pivot']
                 if cx <= px < cx + w and cy <= py < cy + h:

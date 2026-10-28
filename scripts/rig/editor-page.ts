@@ -1,5 +1,5 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓴다
-import { HUMANOID, MOTIONS, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, samplePose, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, bodyBones, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, samplePose, type BodyJoints, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 
 declare const ART_MAP: Record<string, string>;
 /** claude.ai 아티팩트 런타임(있을 때만). db = 편집기 값을 서버에 저장 — 다른 기기·Claude 가 읽는다 */
@@ -41,6 +41,16 @@ function merge(s: Saved): boolean {
     const v = s.bones.find((x) => x.id === b.id);
     if (v) b.pivot = v.pivot; // 쉬는 각도(restRot)는 편집기에서 안 바꾸므로 데이터 값
   }
+  // 몸별 관절(자리·기본 각도): 있는 몸·뼈만
+  if (s.bodyJoints) for (const [bid, j] of Object.entries(s.bodyJoints)) {
+    if (!rig.bodies[bid] || typeof j !== 'object') continue;
+    const ok = (k: string) => rig.bones.some((b) => b.id === k);
+    rig.bodyJoints ??= {};
+    rig.bodyJoints[bid] = {
+      pivots: Object.fromEntries(Object.entries(j.pivots ?? {}).filter(([k]) => ok(k))),
+      rot: Object.fromEntries(Object.entries(j.rot ?? {}).filter(([k]) => ok(k))),
+    };
+  }
   if (s.slots && s.slotsEdited) {
     slotsEdited = true;
     const order = s.slots.map((x) => x.id).filter((id) => rig.slots.some((y) => y.id === id));
@@ -60,7 +70,7 @@ function merge(s: Saved): boolean {
 }
 function resetRig() {
   const fresh: Rig = JSON.parse(JSON.stringify(HUMANOID));
-  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks; slotsEdited = false;
+  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks; rig.bodyJoints = fresh.bodyJoints; slotsEdited = false;
 }
 try {
   const raw = localStorage.getItem(STORE);
@@ -83,7 +93,7 @@ stage.style.height = `${H * K}px`;
 
 let dbRef: DocRef | null = null;
 let dbTimer = 0;
-const state = () => JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, dataStamp: DATA_STAMP, slotsEdited });
+const state = () => JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, bodyJoints: rig.bodyJoints, dataStamp: DATA_STAMP, slotsEdited });
 function save(user = true) {
   const st = state();
   try { localStorage.setItem(STORE, st); } catch { /* 무시 */ }
@@ -104,10 +114,25 @@ function save(user = true) {
     hair_back: (rig.looks[look]!.hair_back as PartArt | undefined)?.at,
     weapon: (rig.looks[look]!.weapon as PartArt | undefined)?.at,
     scabbard: (rig.looks[look]!.scabbard as PartArt | undefined)?.at,
+    joints: rig.bodyJoints?.[body],
   });
 }
 
-function bone(id: string) { return rig.bones.find((b) => b.id === id)!; }
+/** 지금 외형의 몸 */
+const curBody = () => rig.looks[look]!.body;
+/** 이 몸의 관절(따로 맞춘 칸) — 관절을 옮기거나 기본 각도를 바꾸면 이 몸에만 들어간다(사용자 2026-10-29, 남녀 관절이 따로) */
+function joints(): BodyJoints {
+  rig.bodyJoints ??= {};
+  const j = rig.bodyJoints[curBody()];
+  if (typeof j === 'object') return j;
+  const n: BodyJoints = { pivots: {}, rot: {} };
+  rig.bodyJoints[curBody()] = n;
+  return n;
+}
+/** 이 몸에서의 뼈(관절 자리·쉬는 각도) */
+function bone(id: string) { return bodyBones(rig, curBody()).find((b) => b.id === id)!; }
+function setPivot(id: string, p: [number, number]) { (joints().pivots ??= {})[id] = p; }
+function baseRot(id: string) { return (rig.bodyJoints?.[curBody()] as BodyJoints | undefined)?.rot?.[id] ?? 0; }
 function boneOfSel() { return rig.slots.find((s) => s.id === sel)?.bone ?? sel; }
 
 function draw() {
@@ -115,7 +140,7 @@ function draw() {
   let pose: Pose = {};
   if (motion) pose = samplePose(rig, MOTIONS[motion]!, mt);
   else if (testRot) pose = { [boneOfSel()]: { rot: testRot, x: 0, y: 0 } };
-  const mats = boneMatrices(rig, pose);
+  const mats = boneMatrices(rig, pose, curBody());
   for (const l of lookLayers(rig, look)) {
     const img = document.createElement('img');
     img.src = ART_MAP[`art/rig/humanoid/${l.art}.png`] ?? '';
@@ -140,7 +165,7 @@ function draw() {
     }
   }
   if (!motion) {
-    for (const b of rig.bones) {
+    for (const b of bodyBones(rig, curBody())) {
       const d = document.createElement('div');
       const m = mats[b.parent ?? b.id] ?? mats[b.id]!;
       const px = m[0] * b.pivot[0] + m[2] * b.pivot[1] + m[4];
@@ -156,7 +181,11 @@ function draw() {
   const body = rig.bodies[rig.looks[look]!.body]!;
   const lk = rig.looks[look]!;
   const part = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
-  $('info').textContent = `${NAMES[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}`;
+  $('info').textContent = `${NAMES[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}` + ` · 기본 각도 ${baseRot(b.id)}°`;
+  const br = document.getElementById('brot') as HTMLInputElement | null;
+  if (br && document.activeElement !== br) br.value = String(baseRot(b.id));
+  const bv = document.getElementById('brotv');
+  if (bv) bv.textContent = `${baseRot(b.id)}°`;
 }
 
 function buildChips() {
@@ -176,7 +205,7 @@ function nudge(dx: number, dy: number) {
   motion = null;
   if (mode === 'pivot') {
     const b = bone(boneOfSel());
-    b.pivot = [b.pivot[0] + dx, b.pivot[1] + dy];
+    setPivot(b.id, [b.pivot[0] + dx, b.pivot[1] + dy]);
   } else {
     const body = rig.bodies[rig.looks[look]!.body]!;
     const lk = rig.looks[look]!;
@@ -202,6 +231,19 @@ document.querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.onclic
   const [dx, dy] = b.dataset.d!.split(',').map(Number);
   nudge(dx!, dy!);
 });
+// 기본 각도(이 몸에서 쉬는 자세의 관절 각도) — 저장된다. 시험 회전은 저장 안 됨
+const brot = document.getElementById('brot') as HTMLInputElement | null;
+if (brot) brot.oninput = () => {
+  motion = null;
+  const id = boneOfSel();
+  const v = Number(brot.value);
+  const r = (joints().rot ??= {});
+  if (v) r[id] = v; else delete r[id];
+  save(); draw();
+};
+const brotStep = (d: number) => { if (!brot) return; brot.value = String(Number(brot.value) + d); brot.oninput?.(new Event('input')); };
+document.getElementById('brot-m')?.addEventListener('click', () => brotStep(-1));
+document.getElementById('brot-p')?.addEventListener('click', () => brotStep(1));
 $<HTMLInputElement>('rot').oninput = (e) => { motion = null; testRot = Number((e.target as HTMLInputElement).value); $('rotv').textContent = `${testRot}°`; draw(); };
 document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclick = () => {
   const m = b.dataset.m!;
@@ -228,7 +270,7 @@ stage.addEventListener('click', (e) => {
   const r = stage.getBoundingClientRect();
   const x = Math.floor((e.clientX - r.left) / (r.width / W));
   const y = Math.floor((e.clientY - r.top) / (r.height / H));
-  bone(boneOfSel()).pivot = [x, y];
+  setPivot(boneOfSel(), [x, y]);
   save(); draw();
 });
 

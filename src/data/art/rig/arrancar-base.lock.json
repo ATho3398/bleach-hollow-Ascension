@@ -37,6 +37,14 @@
   "arm_R",
   "outer_arm_R"
  ],
+ "bodyJoints": {
+  "female": {
+   "pivots": {
+    "arm_R": [22, 32],
+    "forearm_R": [29, 41]
+   }
+  }
+ },
  "looks": {
   "arrancar-base": {
    "body": "arrancar",
@@ -89,7 +97,7 @@
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
     "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "bare/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "female/forearm_R", "at": [20, 40] }
+    "forearm_R": { "art": "female/forearm_R", "at": [20, 39] }
    },
    "layers": {
     "weapon": { "art": "weapon/sword", "at": [0, 48] },

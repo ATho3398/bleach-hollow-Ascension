@@ -37,6 +37,12 @@ if 'bodies' in data:
                 so = slots.pop(ids.index(o))
                 slots.insert([s['id'] for s in slots].index(part) + 1, so)
         rig['slots'] = slots
+    # 몸별 관절(자리·기본 각도): 빈 칸은 뺀다
+    bj = {k: v for k, v in (data.get('bodyJoints') or {}).items() if isinstance(v, dict) and k in rig['bodies']}
+    bj = {k: {kk: vv for kk, vv in v.items() if vv} for k, v in bj.items()}
+    bj = {k: v for k, v in bj.items() if v}
+    note = (rig.get('bodyJoints') or {}).get('note')
+    rig['bodyJoints'] = ({'note': note} if note else {}) | bj
     for body, parts in data['bodies'].items():
         for k, v in parts.items():
             if body in rig['bodies'] and k in rig['bodies'][body]:

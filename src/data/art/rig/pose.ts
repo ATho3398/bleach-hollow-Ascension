@@ -33,8 +33,15 @@ export interface Rig {
   hairFrame: { rect: [number, number, number, number]; backRect?: [number, number, number, number]; keepOut: [number, number, number, number] };
   /** 칼 그림 안 손잡이 가운데 → 칼끝(그림 좌표). 칼을 비스듬히 그려도 칼날 방향을 알 수 있게 */
   swordAxis?: { grip: Vec2; tip: Vec2 };
+  /** 몸마다 따로 맞춘 관절: pivots = 관절 자리, rot = 기본 각도(도, 쉬는 각도에 더함). 없는 값은 bones 그대로 */
+  bodyJoints?: Record<string, BodyJoints | string>;
   /** 게임 화면에 그릴 그림 칸(x, y, 가로, 세로, 캔버스 좌표) — 칼을 휘둘러도 안 잘리게 넉넉히 */
   view?: { rect: [number, number, number, number] };
+}
+
+export interface BodyJoints {
+  pivots?: Record<string, Vec2>;
+  rot?: Record<string, number>;
 }
 
 /** 부위 그림 하나: `public/art/rig/<rig id>/<art>.png`(꼭 맞게 자른 그림), at = 캔버스에서 왼쪽 위 자리, size = 그림 크기 */
@@ -129,10 +136,17 @@ function local(b: Bone, p: BonePose): Mat {
   return [c, s, -s, c, px - c * px + s * py + p.x, py - s * px - c * py + p.y];
 }
 
-/** 뼈마다 '원래 그림 좌표 → 지금 화면 좌표' 행렬(도트 단위). 부모 뼈를 따라 움직인다 */
-export function boneMatrices(rig: Rig, pose: Pose): Record<string, Mat> {
+/** 이 몸의 관절(따로 맞춘 자리·기본 각도를 얹은 뼈 목록). body 가 없거나 따로 맞춘 게 없으면 bones 그대로 */
+export function bodyBones(rig: Rig, body?: string): Bone[] {
+  const j = body ? rig.bodyJoints?.[body] : undefined;
+  if (!j || typeof j !== 'object') return rig.bones;
+  return rig.bones.map((b) => ({ ...b, pivot: j.pivots?.[b.id] ?? b.pivot, restRot: (b.restRot ?? 0) + (j.rot?.[b.id] ?? 0) }));
+}
+
+/** 뼈마다 '원래 그림 좌표 → 지금 화면 좌표' 행렬(도트 단위). 부모 뼈를 따라 움직인다. body = 그 몸에 따로 맞춘 관절을 쓴다 */
+export function boneMatrices(rig: Rig, pose: Pose, body?: string): Record<string, Mat> {
   const out: Record<string, Mat> = {};
-  const byId = new Map(rig.bones.map((b) => [b.id, b]));
+  const byId = new Map(bodyBones(rig, body).map((b) => [b.id, b]));
   const get = (id: string): Mat => {
     const done = out[id];
     if (done) return done;
@@ -143,7 +157,7 @@ export function boneMatrices(rig: Rig, pose: Pose): Record<string, Mat> {
     out[id] = w;
     return w;
   };
-  for (const b of rig.bones) get(b.id);
+  for (const b of byId.values()) get(b.id);
   return out;
 }
 
@@ -206,6 +220,11 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>): string[]
   const ids = new Set(rig.bones.map((b) => b.id));
   for (const b of rig.bones) if (b.parent && !ids.has(b.parent)) errs.push(`${b.id}: 부모 ${b.parent} 없음`);
   for (const s of rig.slots) if (!ids.has(s.bone)) errs.push(`슬롯 ${s.id}: 뼈 ${s.bone} 없음`);
+  for (const [bid, j] of Object.entries(rig.bodyJoints ?? {})) {
+    if (typeof j !== 'object') continue;
+    if (!rig.bodies[bid]) errs.push(`몸별 관절 ${bid}: 몸 없음`);
+    for (const k of [...Object.keys(j.pivots ?? {}), ...Object.keys(j.rot ?? {})]) if (!ids.has(k)) errs.push(`몸별 관절 ${bid}: 뼈 ${k} 없음`);
+  }
   for (const [lid, look] of Object.entries(rig.looks)) {
     if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);
     for (const k of HAIR_SLOTS) {

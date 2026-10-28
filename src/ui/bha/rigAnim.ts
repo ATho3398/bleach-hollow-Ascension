@@ -108,6 +108,7 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, motions: Record<str
   canvas.width = vw * K;
   canvas.height = vh * K;
   const ctx = canvas.getContext('2d');
+  const body = rig.looks[lookId]?.body;
   const layers = lookLayers(rig, lookId).map((l) => {
     const im = new Image();
     im.src = `${partBase}${l.art}.png`;
@@ -119,7 +120,7 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, motions: Record<str
   const draw = () => {
     if (!ctx || layers.some((l) => !l.im.complete || !l.im.naturalWidth)) return false;
     const { pose, motion } = player.pose();
-    const mats = boneMatrices(rig, pose);
+    const mats = boneMatrices(rig, pose, body);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;

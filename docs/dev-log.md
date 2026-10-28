@@ -1424,6 +1424,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 여성형(오른 위·아래팔)·영술원 남학생(오른 위·아래팔) 손질 반영.
 - 여학생 오른 위·아래팔 손질 반영.
 - 알몸(몸통)·여성형(몸통·오른 위팔) 손질 반영.
-- **테스트** `tests/paperdoll.test.ts` 28개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
+- 몸별 관절·기본 각도(`bodyJoints`, `bodyBones()`), 편집기 기본 각도 조절(GDD 96장 33).
+- **테스트** `tests/paperdoll.test.ts` 29개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 

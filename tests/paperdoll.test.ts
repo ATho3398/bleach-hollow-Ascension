@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { HUMANOID, MOTIONS, apply, boneMatrices, insideFrame, layerMatrix, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, apply, bodyBones, boneMatrices, insideFrame, layerMatrix, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -148,7 +148,7 @@ describe('자세·행렬', () => {
   it('고정값: 관절·앞뒤 순서, 아란칼 기본형(옷)·알몸 기본형의 부위·층 자리가 고정 파일과 같다', () => {
     type Part = { art: string; at: number[] };
     const lock = JSON.parse(readFileSync('src/data/art/rig/arrancar-base.lock.json', 'utf8')) as {
-      pivots: Record<string, number[]>; restRot: Record<string, number>; slots: string[];
+      pivots: Record<string, number[]>; restRot: Record<string, number>; slots: string[]; bodyJoints?: Record<string, unknown>;
       looks: Record<string, { body: string; parts: Record<string, Part>; layers: Record<string, Part> }>;
     };
     for (const b of HUMANOID.bones) {
@@ -156,6 +156,7 @@ describe('자세·행렬', () => {
       if (b.restRot !== undefined) expect(b.restRot, b.id).toBe(lock.restRot[b.id]);
     }
     expect(HUMANOID.slots.map((s) => s.id)).toEqual(lock.slots);
+    expect(Object.fromEntries(Object.entries(HUMANOID.bodyJoints ?? {}).filter(([, v]) => typeof v === 'object'))).toEqual(lock.bodyJoints ?? {});
     for (const [lid, l] of Object.entries(lock.looks)) {
       const look = HUMANOID.looks[lid]!;
       expect(look.body, lid).toBe(l.body);
@@ -177,6 +178,18 @@ describe('자세·행렬', () => {
       expect(Math.max(...ks.map((k) => k[1])), id).toBeGreaterThan(5);
       expect(samplePose(HUMANOID, m, m.hit!).forearm_R!.rot, id).toBeLessThan(-10);
     }
+  });
+  it('몸별 관절: 한 몸에서 옮긴 관절·기본 각도는 그 몸에만 (다른 몸은 그대로)', () => {
+    const rig = JSON.parse(JSON.stringify(HUMANOID)) as typeof HUMANOID;
+    rig.bodyJoints = { female: { pivots: { arm_R: [1, 2] }, rot: { forearm_R: 10 } } };
+    const f = bodyBones(rig, 'female');
+    expect(f.find((b) => b.id === 'arm_R')!.pivot).toEqual([1, 2]);
+    expect(f.find((b) => b.id === 'forearm_R')!.restRot).toBe(10);
+    expect(bodyBones(rig, 'bare').find((b) => b.id === 'arm_R')!.pivot).toEqual(HUMANOID.bones.find((b) => b.id === 'arm_R')!.pivot);
+    // 기본 각도는 그 몸의 행렬에만 들어간다
+    const a = boneMatrices(rig, {}, 'female').forearm_R!;
+    const b = boneMatrices(rig, {}, 'bare').forearm_R!;
+    expect(a[0]).not.toBeCloseTo(b[0]);
   });
   it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;

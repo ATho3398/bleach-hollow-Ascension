@@ -26,9 +26,12 @@ def mul(m, n):
             m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]]
 
 
-def bone_mats():
-    """쉬는 자세 뼈 행렬 (pose.ts boneMatrices 와 같은 식, 동작 각도 0)"""
-    by = {b['id']: b for b in RIG['bones']}
+def bone_mats(body=None):
+    """쉬는 자세 뼈 행렬 (pose.ts boneMatrices 와 같은 식, 동작 각도 0, 몸별 관절 반영)"""
+    j = (RIG.get('bodyJoints') or {}).get(body) if body else None
+    j = j if isinstance(j, dict) else {}
+    by = {b['id']: dict(b, pivot=(j.get('pivots') or {}).get(b['id'], b['pivot']),
+                        restRot=b.get('restRot', 0) + (j.get('rot') or {}).get(b['id'], 0)) for b in RIG['bones']}
     out = {}
 
     def get(i):
@@ -42,8 +45,8 @@ def bone_mats():
         w = mul(get(b['parent']), m) if b['parent'] else m
         out[i] = w
         return w
-    for b in RIG['bones']:
-        get(b['id'])
+    for b in by:
+        get(b)
     return out
 
 
@@ -58,7 +61,7 @@ def layers(look_id):
 
 def render(look_id):
     vx, vy, vw, vh = RIG['view']['rect']
-    mats = bone_mats()
+    mats = bone_mats(RIG['looks'][look_id]['body'])
     out = Image.new('RGBA', (vw * K, vh * K), (0, 0, 0, 0))
     for s, part in layers(look_id):
         m = mul(mats[s['bone']], [1, 0, 0, 1, part['at'][0], part['at'][1]])

@@ -95,12 +95,13 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
     root.append(img);
     return { img, layer: l };
   });
+  const body = rig.looks[o.look]?.body;
   const clock = createDollClock(motions);
   const draw = () => {
     const cur = clock.current;
     const m = cur ? motions[cur.id] : undefined;
     const pose = m && cur ? samplePose(rig, m, cur.t) : {};
-    const mats = boneMatrices(rig, pose);
+    const mats = boneMatrices(rig, pose, body);
     for (const p of parts) p.img.style.transform = css(layerMatrix(rig, mats, p.layer, m), k);
   };
   draw();
