@@ -24,7 +24,7 @@ describe('종이인형 데이터', () => {
     const sh = lookLayers(HUMANOID, 'shinigami-base');
     const ar = lookLayers(HUMANOID, 'arrancar-base');
     expect(sh.find((l) => l.slot === 'head')!.art).toBe(ar.find((l) => l.slot === 'head')!.art);
-    expect(sh.find((l) => l.slot === 'head')!.at).toEqual(ar.find((l) => l.slot === 'head')!.at);
+    // 자리는 몸마다 사용자가 맞춘다(알몸 머리 1칸 옮김, 2026-10-28)
     expect([...sh, ...ar].some((l) => l.slot === 'mask')).toBe(false);
     expect(HUMANOID.slots.some((s) => s.id === 'mask')).toBe(false);
   });
@@ -156,6 +156,16 @@ describe('자세·행렬', () => {
     expect(look.body).toBe(lock.look.body);
     for (const [k, v] of Object.entries(HUMANOID.bodies[look.body]!)) expect({ art: v.art, at: v.at }, k).toEqual(lock.body[k]);
     expect(Object.keys(HUMANOID.bodies[look.body]!).sort()).toEqual(Object.keys(lock.body).sort());
+  });
+  it('오른 아래팔: 걷기는 팔 흔들기를 따라 늦게 흔들리고, 공격1·2는 젖힐 때 굽혔다 칠 때 뒤로 뻗는다', () => {
+    const mv = MOTIONS.move!.tracks.forearm_R!;
+    expect(mv[0]![1]).toBe(mv[mv.length - 1]![1]); // 반복 이음매
+    for (const id of ['attack', 'attack2']) {
+      const m = MOTIONS[id]!;
+      const ks = m.tracks.forearm_R!;
+      expect(Math.max(...ks.map((k) => k[1])), id).toBeGreaterThan(5);
+      expect(samplePose(HUMANOID, m, m.hit!).forearm_R!.rot, id).toBeLessThan(-10);
+    }
   });
   it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;

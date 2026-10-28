@@ -7,14 +7,14 @@
     { "id": "root", "parent": null, "pivot": [16, 52] },
     { "id": "torso", "parent": "root", "pivot": [16, 51] },
     { "id": "head", "parent": "torso", "pivot": [27, 20] },
-    { "id": "arm_L", "parent": "torso", "pivot": [12, 35] },
-    { "id": "arm_R", "parent": "torso", "pivot": [24, 34] },
-    { "id": "forearm_R", "parent": "arm_R", "pivot": [31, 42] },
+    { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
+    { "id": "arm_R", "parent": "torso", "pivot": [24, 33] },
+    { "id": "forearm_R", "parent": "arm_R", "pivot": [30, 41] },
     { "id": "leg_L", "parent": "root", "pivot": [11, 52] },
     { "id": "leg_R", "parent": "root", "pivot": [20, 52] },
     { "id": "foot_L", "parent": "leg_L", "pivot": [12, 75] },
     { "id": "foot_R", "parent": "leg_R", "pivot": [24, 75] },
-    { "id": "weapon", "parent": "arm_L", "pivot": [7, 51], "restRot": 78 },
+    { "id": "weapon", "parent": "arm_L", "pivot": [9, 58], "restRot": 78 },
     { "id": "scabbard", "parent": "torso", "pivot": [18, 50], "restRot": -55 }
   ],
   "slots": [
@@ -24,17 +24,17 @@
     { "id": "hair_back", "bone": "head" },
     { "id": "foot_L", "bone": "foot_L" },
     { "id": "foot_R", "bone": "foot_R" },
+    { "id": "thumb_L", "bone": "arm_L" },
     { "id": "leg_L", "bone": "leg_L" },
     { "id": "leg_R", "bone": "leg_R" },
-    { "id": "thumb_L", "bone": "arm_L" },
     { "id": "torso", "bone": "torso" },
     { "id": "outer_torso", "bone": "torso" },
     { "id": "scabbard", "bone": "scabbard" },
-    { "id": "arm_R", "bone": "arm_R" },
-    { "id": "outer_arm_R", "bone": "arm_R" },
     { "id": "forearm_R", "bone": "forearm_R" },
     { "id": "head", "bone": "head" },
-    { "id": "hair", "bone": "head" }
+    { "id": "hair", "bone": "head" },
+    { "id": "arm_R", "bone": "arm_R" },
+    { "id": "outer_arm_R", "bone": "arm_R" }
   ],
   "bodies": {
     "shinigami": {
@@ -60,15 +60,15 @@
     },
     "bare": {
       "torso": { "art": "bare/torso", "at": [10, 26], "size": [17, 27] },
-      "arm_L": { "art": "bare/arm_L", "at": [2, 31], "size": [12, 29] },
-      "arm_R": { "art": "bare/arm_R", "at": [23, 31], "size": [12, 12] },
-      "leg_L": { "art": "bare/leg_L", "at": [4, 51], "size": [17, 25] },
+      "arm_L": { "art": "bare/arm_L", "at": [5, 29], "size": [12, 29] },
+      "arm_R": { "art": "bare/arm_R", "at": [21, 29], "size": [12, 12] },
+      "leg_L": { "art": "bare/leg_L", "at": [6, 51], "size": [17, 25] },
       "leg_R": { "art": "bare/leg_R", "at": [13, 49], "size": [19, 27] },
-      "head": { "art": "head_bald", "at": [8, 11], "size": [16, 19] },
+      "head": { "art": "head_bald", "at": [7, 10], "size": [16, 19] },
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
-      "foot_R": { "art": "bare/foot_R", "at": [22, 72], "size": [9, 9] },
-      "thumb_L": { "art": "bare/thumb_L", "at": [5, 51], "size": [3, 6] },
-      "forearm_R": { "art": "bare/forearm_R", "at": [21, 41], "size": [14, 14] }
+      "foot_R": { "art": "bare/foot_R", "at": [21, 72], "size": [9, 9] },
+      "thumb_L": { "art": "bare/thumb_L", "at": [8, 51], "size": [3, 6] },
+      "forearm_R": { "art": "bare/forearm_R", "at": [20, 41], "size": [14, 14] }
     }
   },
   "looks": {
@@ -81,7 +81,7 @@
     },
     "arrancar-base": {
       "body": "bare",
-      "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
+      "weapon": { "art": "weapon/sword", "at": [0, 48], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 50], "size": [3, 25] }
     },
     "arrancar-coat": {
