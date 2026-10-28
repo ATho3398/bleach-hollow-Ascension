@@ -16,6 +16,7 @@ import {
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { riskText } from '../data/help/riskText';
+import { numLine, SECTION } from '../data/help/textFormat';
 import { infoTip } from './bha/infoTip';
 import { statusInfo } from './bha/statusInfo';
 import { consumableName } from '../inventory';
@@ -381,11 +382,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const voidChip = v2StatusChip('i-void', labels.voidBlock);
   const chain3Chip = v2StatusChip('i-chain-3', `${labels.chain}${top}`);
   // 전투 상태 칩 ⓘ (GDD 104장 2 — C.176 이 미룬 전투 칩, 공용 infoTip): 폰 = 누르면, PC = 올리면 설명 창
-  voidChip.root.append(infoTip(labels.voidBlock, () => [
-    `사용: ${labels.riskGauge} +${p.riskPerVoidBlock} · ${p.voidStunSeconds}초 경직(내 공격·블록 생성·블록 사용 멈춤, ${labels.role.guard}만 누를 수 있다)`,
-    `블록 생성: ${Math.round(voidChanceOf(p) * 100)}% 확률로 ${labels.voidBlock}(으)로 바뀐다`,
-  ]));
-  chain3Chip.root.append(infoTip(`${labels.chain}${top}`, [`같은 블록 ${top}개를 붙여 한 번에 쓴 횟수다`, `${labels.chain}${top}은(는) 추가 효과가 붙는다`]));
+  // C.185 (GDD 111장 4): 전투 칩 ⓘ 창 = 한 줄 요약 → 하는 일 (수치 줄)
+  voidChip.root.append(infoTip(labels.voidBlock, () => ({
+    lead: '블록 자리를 빼앗는 손해 블록이다',
+    groups: [{ title: SECTION.does, lines: [
+      numLine('블록 생성', `${Math.round(voidChanceOf(p) * 100)}% 확률로 ${labels.voidBlock}(으)로 바뀐다`),
+      numLine('사용', `${labels.riskGauge} +${p.riskPerVoidBlock}`, `${p.voidStunSeconds}초 경직(내 공격·블록 생성·블록 사용 멈춤, ${labels.role.guard}만 누를 수 있다)`),
+    ] }],
+  })));
+  chain3Chip.root.append(infoTip(`${labels.chain}${top}`, { lead: `같은 블록 ${top}개를 붙여 한 번에 쓴 횟수다`, groups: [{ title: SECTION.does, lines: [`${labels.chain}${top}은(는) 추가 효과가 붙는다`] }] }));
   const meStatus = el('div', 'bha-v2status');
   meStatus.append(voidChip.root, chain3Chip.root);
 
@@ -517,7 +522,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   if (opts.frenzy) {
     const fc = v2Chip(opts.frenzy, 'danger', { icon: 'i-risk' });
     fc.classList.add('bha-frenzychip');
-    fc.append(infoTip(opts.frenzy, riskText(faction).riskTip));
+    fc.append(infoTip(opts.frenzy, () => { const rt = riskText(faction); return { lead: rt.frenzyLead, groups: [{ title: SECTION.does, lines: rt.frenzyLines }] }; }));
     bar.prepend(fc);
   }
 

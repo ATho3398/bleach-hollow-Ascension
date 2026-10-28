@@ -13,8 +13,11 @@ const CP = BALANCE.provisional.nest.care;
 type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'>;
 
 export interface RiskText {
-  /** 폭주 칩 ⓘ 한 줄 (수치 줄) */
+  /** 폭주 한 줄 (수치 줄) */
   riskTip: string;
+  /** 폭주 칩 ⓘ: 한 줄 요약 · 효과 줄('하는 일') */
+  frenzyLead: string;
+  frenzyLines: string[];
   /** 한 줄 요약 ('~다') */
   riskLead: string;
   stabilityLead: string;
@@ -27,17 +30,20 @@ export interface RiskText {
   stabilityMove: string[];
 }
 
-/** 폭주 효과 (구간 줄·칩 ⓘ 같이) */
-function frenzyEffects(f: Names): string[] {
+/** 폭주 효과: 그 원정 동안 / 귀환하면 (구간 줄·폭주 칩 ⓘ 같이) */
+function frenzyFight(): string[] {
   return [
     `주는 피해 ${multPct(RX.frenzyDamageDealt)}`,
     `받는 피해 ${multPct(RX.frenzyDamageTaken)}`,
     `적 공격 ${pct(RX.frenzyEvadeChance)} 회피`,
     '회복약 사용 불가',
     `공허 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
-    `귀환하면 컨디션 ${MINUS}${RX.frenzyConditionLoss} · ${f.stabilityName} ${MINUS}${RX.breakthroughStabilityLoss} · ${f.riskGaugeName} ${RX.riskAfterBreakthrough}으로`,
   ];
 }
+function frenzyReturn(f: Names): string[] {
+  return [`컨디션 ${MINUS}${RX.frenzyConditionLoss}`, `${f.stabilityName} ${MINUS}${RX.breakthroughStabilityLoss}`, `${f.riskGaugeName} ${RX.riskAfterBreakthrough}으로`];
+}
+const frenzyEffects = (f: Names): string[] => [...frenzyFight(), `귀환하면 ${frenzyReturn(f).join(' · ')}`];
 
 export function riskText(f: Names): RiskText {
   const g = f.riskGaugeName;
@@ -47,6 +53,8 @@ export function riskText(f: Names): RiskText {
   const a = f.nestActions;
   return {
     riskTip: numLine(`${g} ${RX.limit}`, `${f.frenzyName}(원정당 1번)`, ...frenzyEffects(f)),
+    frenzyLead: `${g} ${RX.limit}이 되면 원정당 1번 걸린다`,
+    frenzyLines: [numLine('그 원정 끝까지', ...frenzyFight()), numLine('귀환하면', ...frenzyReturn(f))],
     riskLead: `원정에서 힘을 쓸수록 쌓이고, ${RX.limit}이 되면 ${f.frenzyName} 상태가 된다`,
     stabilityLead: `낮을수록 전투 시작 때 해방 게이지가 적게 찬다`,
     riskDoes: [
