@@ -11,7 +11,12 @@ head 는 공통 머리라 public/art/rig/humanoid/head_bald.png 로 쓴다(--no-
   sword = 공통 칼(모든 외형). 손잡이 가운데가 손(weapon 관절)에 오게 놓고, 비스듬히 그린 만큼 쉬는 각도를 보정해서 손에 든 칼 각도는 그대로(곧게 세운 칼 = WEAPON_REST).
   scabbard = 공통 빈 칼집(모든 외형). 입구(윗줄 가운데)가 허리춤(scabbard 관절)에 온다.
 
+가이드 시트(scripts/rig/guide.py 로 만든 칸 시트)에 그린 경우: --guide <guide.json>
+  칸마다 불투명 칸만 읽어(가이드 테두리·흐린 그림·관절점은 반투명이라 무시) 꼭 맞게 자르고, 칸 안 자리 그대로 캔버스 자리로 넣는다.
+  빈 칸은 건너뜀(그 부위는 그대로). --parts·--base 필요 없음.
+
 사용:
+  python3 scripts/rig/import_cut.py <시트.png> --body bare --guide docs/design/user-art/arrancar-base-guide/guide.json
   python3 scripts/rig/import_cut.py <시트.png> --body arrancar --base docs/design/user-art/shinigami-base-clean/arrancar-base.png
 """
 from __future__ import annotations
@@ -124,27 +129,43 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('sheet')
     ap.add_argument('--body', required=True)
-    ap.add_argument('--base', required=True)
+    ap.add_argument('--base')
+    ap.add_argument('--guide')
     ap.add_argument('--parts', default='head,torso,arm_L,arm_R,leg_L,leg_R')
     ap.add_argument('--no-head', action='store_true')
     ap.add_argument('--at', action='append', default=[], help='이름=x,y 로 자리 지정(새로 그린 조각)')
     a = ap.parse_args()
     sheet = np.array(Image.open(a.sheet).convert('RGBA'))
-    base = np.array(Image.open(a.base).convert('RGBA'))
-    names = a.parts.split(',')
-    comps = components(sheet[..., 3] > 0)
-    if len(comps) != len(names):
-        raise SystemExit(f'부위 {len(comps)}개를 찾았는데 이름은 {len(names)}개: {[c[:4] for c in comps]}')
     rig = json.load(open(RIG_JSON, encoding='utf-8'))
     body = rig['bodies'].setdefault(a.body, {})
     os.makedirs(os.path.join(ART, a.body), exist_ok=True)
     placed = []
-    for name, (x0, y0, x1, y1, m) in zip(names, comps):
-        part = np.zeros((y1 - y0, x1 - x0, 4), np.uint8)
-        sub = m[y0:y1, x0:x1]
-        part[sub] = sheet[y0:y1, x0:x1][sub]
-        px, py, score = best_place(part, base)
-        placed.append([name, part, px, py, score])
+    if a.guide:
+        g = json.load(open(a.guide, encoding='utf-8'))
+        for b in g['boxes']:
+            (sx, sy), (w, h), (cx, cy) = b['sheet'], b['size'], b['canvas']
+            reg = sheet[sy:sy + h, sx:sx + w]
+            op = reg[..., 3] == 255
+            if not op.any():
+                continue
+            ys, xs = np.nonzero(op)
+            part = np.zeros((ys.max() - ys.min() + 1, xs.max() - xs.min() + 1, 4), np.uint8)
+            m = op[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+            part[m] = reg[ys.min():ys.max() + 1, xs.min():xs.max() + 1][m]
+            placed.append([b['slot'], part, cx + int(xs.min()), cy + int(ys.min()), -1])
+        names = [p[0] for p in placed]
+    else:
+        base = np.array(Image.open(a.base).convert('RGBA'))
+        names = a.parts.split(',')
+        comps = components(sheet[..., 3] > 0)
+        if len(comps) != len(names):
+            raise SystemExit(f'부위 {len(comps)}개를 찾았는데 이름은 {len(names)}개: {[c[:4] for c in comps]}')
+        for name, (x0, y0, x1, y1, m) in zip(names, comps):
+            part = np.zeros((y1 - y0, x1 - x0, 4), np.uint8)
+            sub = m[y0:y1, x0:x1]
+            part[sub] = sheet[y0:y1, x0:x1][sub]
+            px, py, score = best_place(part, base)
+            placed.append([name, part, px, py, score])
     # 왼발·오른발은 놓인 자리로 다시 정한다(화면 왼쪽 = foot_L)
     feet = [p for p in placed if p[0] in ('foot_L', 'foot_R')]
     if len(feet) == 2:

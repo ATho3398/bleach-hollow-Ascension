@@ -1,6 +1,6 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { HUMANOID, MOTIONS, apply, boneMatrices, insideFrame, layerMatrix, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
@@ -141,6 +141,21 @@ describe('자세·행렬', () => {
     expect(HUMANOID.bones.find((b) => b.id === 'forearm_R')!.parent).toBe('arm_R');
     const s1 = MOTIONS.skill!;
     expect(samplePose(HUMANOID, s1, s1.hit!).forearm_R!.rot).toBeLessThan(-30);
+  });
+  it('아란칼 기본형(알몸) 고정값: 관절·부위 자리·앞뒤 순서가 고정 파일과 같다', () => {
+    const lock = JSON.parse(readFileSync('src/data/art/rig/arrancar-base.lock.json', 'utf8')) as {
+      pivots: Record<string, number[]>; restRot: Record<string, number>; slots: string[];
+      body: Record<string, { art: string; at: number[] }>; look: Record<string, unknown>;
+    };
+    for (const b of HUMANOID.bones) {
+      expect(b.pivot, b.id).toEqual(lock.pivots[b.id]);
+      if (b.restRot !== undefined) expect(b.restRot, b.id).toBe(lock.restRot[b.id]);
+    }
+    expect(HUMANOID.slots.map((s) => s.id)).toEqual(lock.slots);
+    const look = HUMANOID.looks['arrancar-base']!;
+    expect(look.body).toBe(lock.look.body);
+    for (const [k, v] of Object.entries(HUMANOID.bodies[look.body]!)) expect({ art: v.art, at: v.at }, k).toEqual(lock.body[k]);
+    expect(Object.keys(HUMANOID.bodies[look.body]!).sort()).toEqual(Object.keys(lock.body).sort());
   });
   it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;

@@ -1,0 +1,57 @@
+{
+ "note": "아란칼 기본형(알몸) 고정값 (사용자 2026-10-28 \"이대로 고정시키고, 이걸 아란칼 base로 저장해\"). 관절·부위 자리를 바꾸면 tests/paperdoll.test.ts 가 막는다 — 사용자가 고친 값이면 이 파일도 같이 고친다",
+ "pivots": {
+  "root": [17, 57],
+  "torso": [18, 52],
+  "head": [17, 29],
+  "arm_L": [9, 39],
+  "arm_R": [25, 33],
+  "forearm_R": [31, 42],
+  "leg_L": [12, 53],
+  "leg_R": [22, 52],
+  "foot_L": [10, 72],
+  "foot_R": [26, 72],
+  "weapon": [4, 56],
+  "scabbard": [18, 50]
+ },
+ "restRot": {
+  "weapon": 78,
+  "scabbard": -55
+ },
+ "slots": [
+  "hair_back",
+  "foot_R",
+  "leg_R",
+  "foot_L",
+  "leg_L",
+  "weapon",
+  "arm_L",
+  "outer_arm_L",
+  "thumb_L",
+  "torso",
+  "outer_torso",
+  "scabbard",
+  "arm_R",
+  "outer_arm_R",
+  "forearm_R",
+  "head",
+  "hair"
+ ],
+ "body": {
+  "torso": { "art": "bare/torso", "at": [10, 26] },
+  "arm_L": { "art": "bare/arm_L", "at": [2, 31] },
+  "arm_R": { "art": "bare/arm_R", "at": [23, 31] },
+  "leg_L": { "art": "bare/leg_L", "at": [4, 51] },
+  "leg_R": { "art": "bare/leg_R", "at": [13, 49] },
+  "head": { "art": "head_bald", "at": [8, 11] },
+  "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
+  "foot_R": { "art": "bare/foot_R", "at": [22, 72] },
+  "thumb_L": { "art": "bare/thumb_L", "at": [5, 51] },
+  "forearm_R": { "art": "bare/forearm_R", "at": [21, 41] }
+ },
+ "look": {
+  "body": "bare",
+  "weapon": { "art": "weapon/sword", "at": [0, 51] },
+  "scabbard": { "art": "weapon/scabbard", "at": [17, 50] }
+ }
+}

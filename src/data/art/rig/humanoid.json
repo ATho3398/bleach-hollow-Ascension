@@ -62,11 +62,11 @@
       "torso": { "art": "bare/torso", "at": [10, 26], "size": [17, 27] },
       "arm_L": { "art": "bare/arm_L", "at": [2, 31], "size": [12, 29] },
       "arm_R": { "art": "bare/arm_R", "at": [23, 31], "size": [12, 12] },
-      "leg_L": { "art": "arrancar/leg_L", "at": [4, 51], "size": [17, 25] },
-      "leg_R": { "art": "arrancar/leg_R", "at": [13, 49], "size": [19, 27] },
+      "leg_L": { "art": "bare/leg_L", "at": [4, 51], "size": [17, 25] },
+      "leg_R": { "art": "bare/leg_R", "at": [13, 49], "size": [19, 27] },
       "head": { "art": "head_bald", "at": [8, 11], "size": [16, 19] },
-      "foot_L": { "art": "arrancar/foot_L", "at": [5, 72], "size": [11, 9] },
-      "foot_R": { "art": "arrancar/foot_R", "at": [22, 72], "size": [9, 9] },
+      "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
+      "foot_R": { "art": "bare/foot_R", "at": [22, 72], "size": [9, 9] },
       "thumb_L": { "art": "bare/thumb_L", "at": [5, 51], "size": [3, 6] },
       "forearm_R": { "art": "bare/forearm_R", "at": [21, 41], "size": [14, 14] }
     }
@@ -80,13 +80,13 @@
       "scabbard": { "art": "weapon/scabbard", "at": [17, 50], "size": [3, 25] }
     },
     "arrancar-base": {
-      "body": "arrancar",
-      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [33, 29] },
+      "body": "bare",
       "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 50], "size": [3, 25] }
     },
-    "bare-base": {
-      "body": "bare",
+    "arrancar-coat": {
+      "body": "arrancar",
+      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [33, 29] },
       "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 50], "size": [3, 25] }
     }
@@ -102,5 +102,6 @@
     "grip": [4, 5],
     "tip": [14, 41]
   },
-  "elbowNote": "오른팔 팔꿈치(forearm_R, 2026-10-28): 오른팔을 위팔(arm_R)·아래팔(forearm_R)로 나눠 찍은 몸만 펴진다. 아래팔 그림이 없는 몸은 arm_R 한 장 그대로"
+  "elbowNote": "오른팔 팔꿈치(forearm_R, 2026-10-28): 오른팔을 위팔(arm_R)·아래팔(forearm_R)로 나눠 찍은 몸만 펴진다. 아래팔 그림이 없는 몸은 arm_R 한 장 그대로",
+  "looksNote": "arrancar-base = 아란칼 기본형(알몸, 몸 bare — 사용자 2026-10-28 고정). arrancar-coat = 옛 아란칼 기본형(옷이 부위 그림에 그려진 몸 arrancar)"
 }

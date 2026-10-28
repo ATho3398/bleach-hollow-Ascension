@@ -1396,6 +1396,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 엄지(앞팔 고정, 칼 앞)·사용자 새 칼·칼집(공통)·아란칼 뒷머리 → 일반머리 합침(사용자 2026-10-28, GDD 96장 12). `import_cut.py` 가 전체 시트(엄지·머리카락·칼·칼집)를 읽는다 — 칼은 손잡이 가운데·기울기를 자동으로 재서 쉬는 각도 보정, `swordAxis` 기록. `feet_weapon.py` 는 이제 칼·칼집을 안 덮어씀(`--redraw-weapon` 때만).
 - 맨몸 기본형 몸 `bare`·외형 `bare-base`(사용자 몸통·엄지·양팔, 머리·다리·발은 아란칼 것 빌림), 시험 페이지·편집기에 맨몸 추가. 뒷머리는 시트에 있을 때만(GDD 96장 13).
 - 공격2 칼날 하늘 방향(동작 `flip` — 칼 그림을 칼날 축으로 뒤집기, `pose.ts` `flipMatrix`·`layerMatrix`), 맨몸 체형 교체 + 오른팔 위팔·아래팔 분리, 오른팔 팔꿈치 뼈 `forearm_R`, 편집기 내보내기·`apply_editor.py` 에 칼·칼집 자리 추가(GDD 96장 14).
-- **테스트** `tests/paperdoll.test.ts` 26개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
+- 아란칼 기본형 = 알몸(`arrancar-base` → 몸 `bare`, 옛 것 `arrancar-coat`), 고정 파일 `arrancar-base.lock.json`, 알몸 가이드 시트 `scripts/rig/guide.py` + `import_cut.py --guide`(GDD 96장 16).
+- **테스트** `tests/paperdoll.test.ts` 27개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 

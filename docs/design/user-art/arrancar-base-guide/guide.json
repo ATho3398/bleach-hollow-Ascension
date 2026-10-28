@@ -1,0 +1,231 @@
+{
+ "note": "알몸 기본형 가이드 칸: sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안의 불투명 칸만 그 슬롯 그림",
+ "look": "arrancar-base",
+ "body": "bare",
+ "boxes": [
+  {
+   "slot": "head",
+   "canvas": [
+    5,
+    8
+   ],
+   "size": [
+    22,
+    25
+   ],
+   "sheet": [
+    2,
+    1
+   ],
+   "pivots": [
+    "head"
+   ]
+  },
+  {
+   "slot": "hair",
+   "canvas": [
+    0,
+    0
+   ],
+   "size": [
+    36,
+    32
+   ],
+   "sheet": [
+    26,
+    1
+   ],
+   "pivots": [
+    "head"
+   ]
+  },
+  {
+   "slot": "hair_back",
+   "canvas": [
+    0,
+    0
+   ],
+   "size": [
+    36,
+    32
+   ],
+   "sheet": [
+    64,
+    1
+   ],
+   "pivots": [
+    "head"
+   ]
+  },
+  {
+   "slot": "torso",
+   "canvas": [
+    7,
+    23
+   ],
+   "size": [
+    23,
+    33
+   ],
+   "sheet": [
+    102,
+    1
+   ],
+   "pivots": [
+    "torso",
+    "head",
+    "arm_L",
+    "arm_R",
+    "scabbard"
+   ]
+  },
+  {
+   "slot": "arm_L",
+   "canvas": [
+    -1,
+    28
+   ],
+   "size": [
+    18,
+    35
+   ],
+   "sheet": [
+    127,
+    1
+   ],
+   "pivots": [
+    "arm_L",
+    "weapon"
+   ]
+  },
+  {
+   "slot": "thumb_L",
+   "canvas": [
+    2,
+    48
+   ],
+   "size": [
+    9,
+    12
+   ],
+   "sheet": [
+    147,
+    1
+   ],
+   "pivots": [
+    "weapon"
+   ]
+  },
+  {
+   "slot": "arm_R",
+   "canvas": [
+    20,
+    28
+   ],
+   "size": [
+    18,
+    18
+   ],
+   "sheet": [
+    158,
+    1
+   ],
+   "pivots": [
+    "arm_R",
+    "forearm_R"
+   ]
+  },
+  {
+   "slot": "forearm_R",
+   "canvas": [
+    18,
+    38
+   ],
+   "size": [
+    20,
+    20
+   ],
+   "sheet": [
+    178,
+    1
+   ],
+   "pivots": [
+    "forearm_R"
+   ]
+  },
+  {
+   "slot": "leg_L",
+   "canvas": [
+    1,
+    48
+   ],
+   "size": [
+    23,
+    31
+   ],
+   "sheet": [
+    200,
+    1
+   ],
+   "pivots": [
+    "leg_L",
+    "foot_L"
+   ]
+  },
+  {
+   "slot": "leg_R",
+   "canvas": [
+    10,
+    46
+   ],
+   "size": [
+    25,
+    33
+   ],
+   "sheet": [
+    225,
+    1
+   ],
+   "pivots": [
+    "leg_R",
+    "foot_R"
+   ]
+  },
+  {
+   "slot": "foot_L",
+   "canvas": [
+    2,
+    69
+   ],
+   "size": [
+    17,
+    15
+   ],
+   "sheet": [
+    252,
+    1
+   ],
+   "pivots": [
+    "foot_L"
+   ]
+  },
+  {
+   "slot": "foot_R",
+   "canvas": [
+    19,
+    69
+   ],
+   "size": [
+    15,
+    15
+   ],
+   "sheet": [
+    271,
+    1
+   ],
+   "pivots": [
+    "foot_R"
+   ]
+  }
+ ]
+}
