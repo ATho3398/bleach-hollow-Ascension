@@ -12,8 +12,8 @@ export type ImportFailure = 'empty' | 'not-json' | 'not-save' | 'newer' | 'old' 
 
 export const IMPORT_FAILURE_TEXT: Record<ImportFailure, string> = {
   empty: '붙여넣은 내용이 비어 있다.',
-  'not-json': '세이브 파일이 아니다 (JSON 형식이 아님).',
-  'not-save': '세이브 파일이 아니다 (필요한 항목이 없음).',
+  'not-json': 'JSON 형식이 아니라 세이브 파일로 읽을 수 없다.',
+  'not-save': '필요한 항목이 없어 세이브 파일로 읽을 수 없다.',
   newer: '더 새로운 버전의 세이브라 이 버전에서는 열 수 없다.',
   old: '이전 버전의 세이브라 이 버전에서는 열 수 없다.',
   corrupt: '세이브가 손상되어 열 수 없다.',

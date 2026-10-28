@@ -1237,7 +1237,7 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
   } else if (ev.event === 'trap') {
     exp.trapArmed = true;
     log = 'armed';
-    text = '다음 전투는 상처를 입은 채 시작한다. 이기면 보상이 크다';
+    text = '다음 전투는 상처를 입은 채 시작한다. 이기면 보상이 크다.';
   } else {
     if (choice === 0) {
       exp.nextShield = Math.max(exp.nextShield, E.crossroads.shield);

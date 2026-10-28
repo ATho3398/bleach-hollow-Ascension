@@ -177,7 +177,7 @@ function openBattleItem(faction: FactionConfig, save: SaveData, id: string, chan
   const slotName = battleSlotName(faction);
   close = itemDialog({
     heading: slotName, name: consumableName(id),
-    desc: [`보관 ${n}개${inSlot ? ` · ${slotName} 칸에 넣음` : ''}`, `${slotName} 칸에 넣으면 전투 [소모품 사용]이 이것을 쓴다 (전투당 1회, 1개 소모).`, ...(n === 0 ? ['개수가 0 이면 칸은 흐리게 남고 버튼은 비활성.'] : [])].join('\n'),
+    desc: [`보관 ${n}개${inSlot ? ` · ${slotName} 칸에 넣음` : ''}`, `${slotName} 칸에 넣으면 전투 [소모품 사용]이 이것을 쓴다 (전투당 1회, 1개 소모).`, ...(n === 0 ? ['개수가 0이면 칸은 흐리게 남고 버튼은 꺼진다.'] : [])].join('\n'),
     art: iconArt('i-heal'), have: `보관 ${n}개`, lock: locked,
     actions: [inSlot
       ? { key: 'unequip', label: () => '빼기', variant: 'ghost', disabled: locked !== null, onClick: () => { close(); if (setBattleItem(save, null)) changed(); } }

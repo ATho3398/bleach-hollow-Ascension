@@ -98,7 +98,7 @@ export function gainTrait(b: BuildState, traitId: string, replaceSlot?: number |
     noteEquip(b, traitId);
     return { ok: true };
   }
-  if (replaceSlot === undefined || replaceSlot === null) return { ok: false, reason: '슬롯이 가득 찼다 (교체할 슬롯을 고르거나 포기)' };
+  if (replaceSlot === undefined || replaceSlot === null) return { ok: false, reason: '슬롯이 가득 찼다(교체할 슬롯을 고르거나 포기한다)' };
   if (!Number.isInteger(replaceSlot) || replaceSlot < 0 || replaceSlot >= b.slots.length) return { ok: false, reason: '없는 슬롯이다' };
   b.owned.push(traitId);
   b.slots[replaceSlot] = traitId;

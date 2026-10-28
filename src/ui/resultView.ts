@@ -127,7 +127,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const sum = panel({ title: '원정 요약' }, iconInfo(rows));
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
-  seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됨');
+  seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');
 
   const dock = el('div', 'bha-dock');
   dock.append(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome }));

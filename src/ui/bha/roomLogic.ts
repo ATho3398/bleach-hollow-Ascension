@@ -1,6 +1,9 @@
 // 메인 방 화면의 순수 계산 (tests/room-ui.test.ts)
 import type { RoomConfig } from '../../engine/faction';
+import { BALANCE } from '../../config/balance';
 import { bondStage, CARE_STATUS_NAMES } from '../../engine/nest';
+
+const CP = BALANCE.provisional.nest.care;
 import { fullnessOf } from './fullness';
 
 export type Mood = 'idle' | 'tired' | 'risk' | 'weak' | 'collapsed';
@@ -46,11 +49,11 @@ export interface StatusChip {
   hint?: string;
 }
 
-/** 상태 칩 풀리는 법 한 줄 (GDD 102-2·102-3) */
+/** 상태 칩 풀리는 법 한 줄 (GDD 102-2·102-3, C.185 '~다' 체 · 문턱은 BALANCE). 자세한 설명은 상태 ⓘ 창(statusInfo) */
 export const CARE_STATUS_HINTS = {
-  weak: '배부름을 20 넘게 채우고 원정을 한 번 다녀오거나 링거',
-  tired: '컨디션을 30 넘게 올리고 원정을 한 번 다녀오거나 에너지 드링크',
-  collapsed: '상점 약 칸의 치료제를 먹여야 풀린다 — 남은 시간이 다 되거나 모험에서 지면 사망',
+  weak: `배부름을 ${CP.weakFullness} 넘게 채우고 원정을 한 번 다녀오거나 링거를 먹이면 풀린다`,
+  tired: `컨디션을 ${CP.tiredCondition} 넘게 올리고 원정을 한 번 다녀오거나 에너지 드링크를 먹이면 풀린다`,
+  collapsed: '상점 약 칸의 치료제를 먹이면 풀린다. 남은 시간이 다 되거나 모험에서 지면 사망한다.',
 } as const;
 
 /** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지·교감(GDD 102-6) + 쓰러짐·쇠약·피곤 칩(GDD 102-7).
@@ -77,7 +80,7 @@ export function statusChips(
 
 /** 사망으로 막힌 곳 안내 띠 (GDD 102-3). 빈사는 막지 않는다(출발 확인 창, v5.228 수정) */
 export function careBlockText(_b: 'dead'): { eyebrow: string; title: string; meta: string } {
-  return { eyebrow: CARE_STATUS_NAMES.dead, title: '죽은 몸으로는 아무 데도 갈 수 없다 — 방에서 [부활]', meta: '방에서 [부활]을 해야 다시 시작한다.' };
+  return { eyebrow: CARE_STATUS_NAMES.dead, title: '방에서 [부활]해야 다시 움직일 수 있다', meta: '죽은 몸으로는 아무 데도 갈 수 없다.' };
 }
 
 /** 빈사 남은 시간 "5:42" (시:분, 올림 분) */

@@ -67,7 +67,7 @@ describe('남은 점검 항목', () => {
     const S = getFaction('shinigami');
     expect(objectiveText({ type: 'absorb', enemyClass: 'elite', count: 1 }, H)).toBe(`강적 1마리 ${H.absorbActionName}`);
     expect(objectiveText({ type: 'absorb', enemyClass: 'normal', count: 2 }, S)).toBe(`일반 적 2마리 ${S.absorbActionName}`);
-    expect(read('src/ui/towerView.ts')).toContain('${faction.absorbActionName} 없음');
+    expect(read('src/ui/towerView.ts')).toContain('${faction.absorbActionName}은(는) 없다');
     expect(read('src/ui/towerView.ts')).not.toContain('흡수 없음');
   });
   it('피해 숫자는 위 막대 아래 필드 안에서만 (잘라 냄) · 맞은 쪽 머리 위', () => {

@@ -55,7 +55,7 @@ export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foo
 
 /** 규칙 한 줄 (아이콘 창, C.170 GDD 100장 #16: 3줄 → 1줄. 받기 기준·최대 시간은 진행 막대가 보인다) */
 export function idleRuleText(): string {
-  return `켜 두든 꺼 두든 흐른 시간만큼 자동 모험 — 직접 돌았을 때의 ${Math.round(IX.share * 100)}%`;
+  return `켜 두든 꺼 두든 흐른 시간만큼 자동으로 모험한다. 보상은 직접 돌았을 때의 ${Math.round(IX.share * 100)}%다.`;
 }
 
 /** 진행 막대 한 줄 (#16): "쌓인 시간 3분 / 10분부터 받기 · 최대 24시간". 받을 수 있으면 최대 시간 기준 */

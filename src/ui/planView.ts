@@ -142,7 +142,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     countEl.textContent = `${placed}/${h.placeLimit ?? '∞'}`;
   };
   if (h.tilesLocked) {
-    sub.append(icon('i-lock'), ' 타일 배치는 첫 진화 후 — 지금은 기본 길을 걷는다(빈 칸마다 떠돌이 적)');
+    sub.append(icon('i-lock'), ' 타일 배치는 첫 진화 후에 열린다. 지금은 기본 길을 걷는다(빈 칸마다 떠돌이 적).');
     sub.dataset.tilesLocked = '';
   } else {
     sub.append('타일 고르기 → 빈 칸 누르기 · 놓은 칸 ', countEl);

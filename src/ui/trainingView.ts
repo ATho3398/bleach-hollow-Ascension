@@ -92,10 +92,10 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   prog.append(tickets);
   const notes: HTMLElement[] = [];
   if (!gate.ok && gate.reason === 'tier') notes.push(notice('info', trainingLockedText(faction), { icon: 'i-lock' }));
-  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 원정에서 돌아오면 1장.', { icon: 'i-lock' }));
+  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 원정에서 돌아오면 1장 생긴다.', { icon: 'i-lock' }));
   else if (!gate.ok && gate.reason === 'condition') notes.push(notice('warn', `컨디션이 ${TX.minCondition} 미만이라 수련할 수 없다. ${faction.nestActions.sleep}(으)로 회복한다.`));
   if (gate.ok || gate.reason !== 'tier') {
-    if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). 리스크가 오르는 종목은 조심.`));
+    if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). ${faction.riskGaugeName}이(가) 오르는 종목은 조심해야 한다.`));
     if (t.completed) notes.push(notice('good', faction.training.completeText, { title: '수련 완료' }));
   }
   prog.append(...notes);

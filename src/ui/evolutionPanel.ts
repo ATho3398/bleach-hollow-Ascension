@@ -15,7 +15,7 @@ import { devText, shownName } from './displayName';
 
 const EV = BALANCE.provisional.evolution;
 
-export const EVOLUTION_NOTE = '진화 트리·수치·진화체 이름은 임시 (기획 20-5, 이름·그림은 사용자 확정 전 자리 표시)';
+export const EVOLUTION_NOTE = '진화 트리·수치·진화체 이름은 임시다(기획 20-5, 이름·그림은 사용자 확정 전 자리 표시)';
 
 /** 외형 변화 문구: 호로 = 본체 파츠, 사신 = 본체 그대로 참백도 외형 (종족 설정 appearanceChange) */
 export function appearanceText(faction: FactionConfig): string {

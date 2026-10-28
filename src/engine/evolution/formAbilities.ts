@@ -117,10 +117,10 @@ export function physBlockSummary(pb: PhysBlock): string {
   const head = `블록 피해 ×${pb.power}`;
   switch (pb.effect) {
     case 'stoneStance': return `${head}, 쓴 뒤 ${pb.seconds}초 동안 받는 피해 −${pct(pb.takenReduction)} · 그동안 맞을 때마다 다음 기본 공격 +${pct(pb.perHit)}(최대 +${pct(pb.max)})`;
-    case 'knockback': return `${head}, 쓴 뒤 다음 기본 공격 ${pb.hits}회 +${pct(pb.bonus)} · 적을 ${pb.seconds}초 동안 멈춤(넉백)`;
+    case 'knockback': return `${head}, 쓴 뒤 다음 기본 공격 ${pb.hits}회 +${pct(pb.bonus)} · 적 ${pb.seconds}초 정지(넉백)`;
     case 'ember': return `${head} (바에 쌓아 두는 용)`;
     case 'wave': return `${head}, 쓴 뒤 ${pb.seconds}초 동안 기본 공격 간격 −${pct(pb.haste)}`;
-    case 'flash': return `${head}, 쓴 뒤 다음 기본 공격 ${pb.hits}회는 두 번 때림(각 ${pct(pb.each)})`;
+    case 'flash': return `${head}, 쓴 뒤 다음 기본 공격 ${pb.hits}회 2연타(각 ${pct(pb.each)})`;
     case 'shout': return `${head}, 쓰는 순간 기본 공격 1회가 바로 나간다`;
   }
 }
@@ -131,16 +131,16 @@ function effectSummary(fx: AbilityEffects, critChance: number): string {
   if (critChance > 0) parts.push(`치명타 확률 +${pct(critChance)}p(상한도 +${pct(critChance)}p)`);
   if (fx.blockPower) parts.push(`블록 위력 +${pct(fx.blockPower)}`);
   if (fx.ignoreDefense) parts.push(`적 방어·정신력 ${pct(fx.ignoreDefense)} 무시`);
-  if (fx.thorns) parts.push(`받은 피해가 최대 체력 ${pct(fx.thorns.threshold)} 쌓이면 ${pct(fx.thorns.ret)} 되돌림`);
+  if (fx.thorns) parts.push(`받은 피해가 최대 체력 ${pct(fx.thorns.threshold)} 쌓이면 ${pct(fx.thorns.ret)} 반사`);
   if (fx.doubleHit) parts.push(`기본 공격 ${pct(fx.doubleHit)} 확률 한 번 더`);
   if (fx.bloodlust) parts.push(`체력 ${pct(fx.bloodlust.fullAt)} 이하에서 공격 최대 +${pct(fx.bloodlust.max)}`);
   if (fx.corrode) parts.push(`${fx.corrode.everySeconds}초마다 적이 받는 피해 +${pct(fx.corrode.per)} (최대 +${pct(fx.corrode.max)})`);
-  if (fx.chainHaste) parts.push(`체인 단계당 다음 블록 ${pct(fx.chainHaste)} 빨리`);
+  if (fx.chainHaste) parts.push(`체인 단계당 다음 블록 생성 ${pct(fx.chainHaste)} 빠르게`);
   if (fx.noWeak) parts.push('상성 불리 없음');
   if (fx.desperate) parts.push(`체력 ${pct(fx.desperate.below)} 아래에서 피해 +${pct(fx.desperate.bonus)}`);
   if (fx.rampUp) parts.push(`${fx.rampUp.everySeconds}초마다 공격 +${pct(fx.rampUp.per)} (최대 +${pct(fx.rampUp.max)})`);
   if (fx.eliteSlayer) parts.push(`강적·보스에게 피해 +${pct(fx.eliteSlayer)}`);
-  if (fx.lastStand) parts.push(`전투마다 1번 체력 ${pct(fx.lastStand)}로 버팀`);
+  if (fx.lastStand) parts.push(`전투마다 1번 체력 ${pct(fx.lastStand)}로 버티기`);
   if (fx.hardFist) parts.push(`되갚기가 터지면 다음 기본 공격 ${fx.hardFist.hits}회 +${pct(fx.hardFist.bonus)}`);
   if (fx.bloodScent) parts.push(`넉백 중인 적에게 기본 공격 흡혈 ×${fx.bloodScent}`);
   if (fx.emberStack) parts.push(`바에 쌓인 공격 블록 1개당 기본 공격 +${pct(fx.emberStack.per)} (최대 +${pct(fx.emberStack.max)})`);

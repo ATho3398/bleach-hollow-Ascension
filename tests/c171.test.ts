@@ -47,7 +47,7 @@ describe('개발용 문구는 테스트 모드에서만 (시급 10)', () => {
     const t = read('src/ui/titleDexView.ts');
     expect(t).toContain("TITLE_CONDITION_SOON = '조건 공개 예정'");
     expect(t).toContain('devText() ? [head, body, h(\'p\', \'bha-faint\', TITLE_NOTE)] : [head, body]');
-    expect(read('src/ui/settingsView.ts')).toContain("'임시 수치 있음");
+    expect(read('src/ui/settingsView.ts')).toContain("'임시 수치가 있다");
   });
   it("상인 품목 효과 글에 '(가칭)' 이 없다", () => {
     expect(read('src/shop.ts')).not.toMatch(/탭 \(가칭\)/);

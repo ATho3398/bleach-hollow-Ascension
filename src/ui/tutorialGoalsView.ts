@@ -24,7 +24,7 @@ export function rewardText(reward: TutorialReward | { food: [FoodId, number][]; 
   if ((reward.soulCrystals ?? 0) > 0) parts.push(`${SOUL_CRYSTAL_NAME} ${reward.soulCrystals}`);
   const jade = 'jade' in reward ? reward.jade ?? 0 : 0;
   if (jade > 0) parts.push(`${JADE_NAME} ${jade}`);
-  return parts.length > 0 ? parts.join(' · ') : '보관 한도가 차서 받지 못함';
+  return parts.length > 0 ? parts.join(' · ') : '보관 한도가 차서 받지 못했다';
 }
 
 export type GoalRowState = 'done' | 'open' | 'locked';

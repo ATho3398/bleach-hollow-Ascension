@@ -83,7 +83,7 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
     reward.append(icon('i-rare'), `첫 클리어 · ${towerRewardText(faction, f.reward)}`);
     const go = button({ label: '도전', icon: 'i-play', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(f) });
     go.dataset.go = 'tower';
-    card.append(title, meta, reward, el('p', 'bha-faint', `체력 가득으로 시작 · 져도 잃는 것 없음 · ${faction.absorbActionName} 없음`), go);
+    card.append(title, meta, reward, el('p', 'bha-faint', `체력 가득으로 시작하고, 져도 잃는 것이 없다. ${faction.absorbActionName}은(는) 없다.`), go);
     left.push(card);
   }
 

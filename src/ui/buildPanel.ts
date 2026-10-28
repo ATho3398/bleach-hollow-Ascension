@@ -12,7 +12,7 @@ import { iconArt, itemCard, itemDialog } from './bha/itemUi';
 import { battleLabels, skillBlockLabel } from './labels';
 import { devText, plainText } from './displayName';
 
-export const PROVISIONAL_NOTE = '속성·특성 풀과 리스크 수치는 임시 데이터입니다 (기획 11-3, 11-4 미정)';
+export const PROVISIONAL_NOTE = '속성·특성 풀과 리스크 수치는 임시 데이터다(기획 11-3, 11-4 미정)';
 
 /** 장착 칸 하나: 본체 슬롯 (해방 블록 칸 'lib' 은 C.167 에 폐지 — GDD 98장 B: 해방 중에는 장착 블록이 나온다) */
 export interface SlotCell {
@@ -175,7 +175,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   right.classList.add('bha-sgown');
   right.querySelector('.bha-panel__title')?.prepend(icon('i-absorb'));
   const grid = h('div', 'bha-itemgrid bha-sggrid');
-  const emptyLine = spare.length === 0 ? h('p', 'bha-faint', build.owned.length === 0 ? `남는 특성 없음 — 원정에서 ${faction.absorbActionName}하면 얻는다` : '남는 특성 없음 — 모두 장착 중') : null;
+  const emptyLine = spare.length === 0 ? h('p', 'bha-faint', build.owned.length === 0 ? `남는 특성이 없다. 원정에서 ${faction.absorbActionName}하면 얻는다.` : '남는 특성이 없다. 모두 장착 중이다.') : null;
   for (const id of spare) {
     const t = getTrait(id);
     const card = itemCard({
