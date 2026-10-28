@@ -24,9 +24,9 @@ RIG = json.load(open(os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.j
 PAD = 3   # 칸 사방 여유(관절 겹침·삐져나온 곳)
 GAP = 2   # 칸 사이
 TOP = 1   # 위 테두리 자리
-PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'foot_L', 'foot_R']
+PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'foot_L', 'foot_R', 'weapon', 'scabbard']
 NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼팔(칼)', 'thumb_L': '엄지',
-         'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발'}
+         'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집'}
 GHOST_A = 70
 LINE = (0, 190, 255, 140)
 PIVOT = (255, 40, 40, 200)
@@ -44,7 +44,7 @@ def main():
     fx, fy, fw, fh = RIG['hairFrame']['rect']
     boxes = []
     for p in PARTS:
-        art = body.get(p)
+        art = body.get(p) or (look[p] if isinstance(look.get(p), dict) else None)  # 칼·칼집은 외형 층
         if p in ('hair', 'hair_back'):
             # 머리카락은 머리카락 틀 전체가 칸. 흐린 그림 = 머리(머리카락이 있으면 머리카락)
             boxes.append({'slot': p, 'canvas': [fx, fy], 'size': [fw, fh], 'ghost': [body['head']] if body.get('head') else [],

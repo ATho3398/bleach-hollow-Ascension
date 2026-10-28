@@ -13,7 +13,7 @@ head 는 공통 머리라 public/art/rig/humanoid/head_bald.png 로 쓴다(--no-
 
 가이드 시트(scripts/rig/guide.py 로 만든 칸 시트)에 그린 경우: --guide <guide.json>
   칸마다 불투명 칸만 읽어(가이드 테두리·흐린 그림·관절점은 반투명이라 무시) 꼭 맞게 자르고, 칸 안 자리 그대로 캔버스 자리로 넣는다.
-  빈 칸은 건너뜀(그 부위는 그대로). --parts·--base 필요 없음.
+  빈 칸은 건너뜀(그 부위는 그대로). --parts·--base 필요 없음. 칼·칼집 칸(weapon·scabbard)은 공통 그림 파일 + 이 몸 외형의 자리.
 
 사용:
   python3 scripts/rig/import_cut.py <시트.png> --body bare --guide docs/design/user-art/arrancar-base-guide/guide.json
@@ -177,6 +177,20 @@ def main():
     for name, part, px, py, score in placed:
         if name in fixed:
             px, py = fixed[name]
+        if a.guide and name in ('weapon', 'scabbard'):
+            # 가이드 칸에서 고친 칼·칼집: 그림은 공통 파일, 자리는 칸 안 자리 그대로(이 몸의 외형), 쉬는 각도는 그대로
+            key = 'weapon/sword' if name == 'weapon' else 'weapon/scabbard'
+            Image.fromarray(part).save(os.path.join(ART, key + '.png'))
+            for l in rig['looks'].values():
+                if isinstance(l.get(name), dict):
+                    l[name]['size'] = [part.shape[1], part.shape[0]]
+            for l in looks:
+                l[name] = {'art': key, 'at': [px, py], 'size': [part.shape[1], part.shape[0]]}
+            if name == 'weapon':
+                (gx, gy), _, tip = sword_fit(part)
+                rig['swordAxis'] = {'note': '칼 그림 안 손잡이 가운데 → 칼끝 (칼날 방향 계산용)', 'grip': [gx, gy], 'tip': list(tip)}
+            print(f'{name}: {part.shape[1]}×{part.shape[0]} → 자리 ({px}, {py})')
+            continue
         if name == 'sword':
             Image.fromarray(part).save(os.path.join(ART, 'weapon', 'sword.png'))
             (gx, gy), tilt, tip = sword_fit(part)
