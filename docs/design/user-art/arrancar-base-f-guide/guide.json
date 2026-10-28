@@ -1,0 +1,300 @@
+{
+ "note": "알몸 기본형 가이드 칸: sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안의 불투명 칸만 그 슬롯 그림",
+ "look": "arrancar-base-f",
+ "body": "arrancar_f",
+ "boxes": [
+  {
+   "slot": "head",
+   "canvas": [
+    3,
+    6
+   ],
+   "size": [
+    22,
+    25
+   ],
+   "sheet": [
+    2,
+    4
+   ],
+   "pivots": [
+    "head"
+   ]
+  },
+  {
+   "slot": "hair",
+   "canvas": [
+    -10,
+    -4
+   ],
+   "size": [
+    56,
+    36
+   ],
+   "ref": [
+    {
+     "art": "head_bald",
+     "at": [
+      6,
+      9
+     ]
+    }
+   ],
+   "own": {
+    "art": "arrancar_f/hair",
+    "at": [
+     1,
+     1
+    ]
+   },
+   "sheet": [
+    26,
+    4
+   ],
+   "pivots": [
+    "head",
+    "hair_back"
+   ]
+  },
+  {
+   "slot": "hair_back",
+   "canvas": [
+    -10,
+    -4
+   ],
+   "size": [
+    56,
+    70
+   ],
+   "ref": [
+    {
+     "art": "head_bald",
+     "at": [
+      6,
+      9
+     ]
+    }
+   ],
+   "own": {
+    "art": "arrancar_f/hair_back",
+    "at": [
+     12,
+     -1
+    ]
+   },
+   "sheet": [
+    84,
+    4
+   ],
+   "pivots": [
+    "hair_back"
+   ]
+  },
+  {
+   "slot": "torso",
+   "canvas": [
+    4,
+    22
+   ],
+   "size": [
+    22,
+    34
+   ],
+   "sheet": [
+    2,
+    78
+   ],
+   "pivots": [
+    "torso",
+    "arm_L",
+    "arm_R",
+    "scabbard",
+    "cape"
+   ]
+  },
+  {
+   "slot": "arm_L",
+   "canvas": [
+    1,
+    26
+   ],
+   "size": [
+    18,
+    35
+   ],
+   "sheet": [
+    26,
+    78
+   ],
+   "pivots": [
+    "arm_L",
+    "weapon"
+   ]
+  },
+  {
+   "slot": "thumb_L",
+   "canvas": [
+    3,
+    48
+   ],
+   "size": [
+    9,
+    12
+   ],
+   "sheet": [
+    46,
+    78
+   ],
+   "pivots": [
+    "weapon"
+   ]
+  },
+  {
+   "slot": "arm_R",
+   "canvas": [
+    18,
+    26
+   ],
+   "size": [
+    17,
+    17
+   ],
+   "sheet": [
+    57,
+    78
+   ],
+   "pivots": [
+    "arm_R",
+    "forearm_R"
+   ]
+  },
+  {
+   "slot": "forearm_R",
+   "canvas": [
+    17,
+    35
+   ],
+   "size": [
+    19,
+    22
+   ],
+   "sheet": [
+    76,
+    78
+   ],
+   "pivots": [
+    "forearm_R"
+   ]
+  },
+  {
+   "slot": "leg_L",
+   "canvas": [
+    2,
+    48
+   ],
+   "size": [
+    23,
+    31
+   ],
+   "sheet": [
+    97,
+    78
+   ],
+   "pivots": [
+    "leg_L",
+    "shin_L"
+   ]
+  },
+  {
+   "slot": "leg_R",
+   "canvas": [
+    10,
+    46
+   ],
+   "size": [
+    22,
+    33
+   ],
+   "sheet": [
+    122,
+    78
+   ],
+   "pivots": [
+    "leg_R",
+    "shin_R"
+   ]
+  },
+  {
+   "slot": "foot_L",
+   "canvas": [
+    2,
+    69
+   ],
+   "size": [
+    17,
+    15
+   ],
+   "sheet": [
+    2,
+    117
+   ],
+   "pivots": [
+    "foot_L"
+   ]
+  },
+  {
+   "slot": "foot_R",
+   "canvas": [
+    16,
+    69
+   ],
+   "size": [
+    15,
+    15
+   ],
+   "sheet": [
+    21,
+    117
+   ],
+   "pivots": [
+    "foot_R"
+   ]
+  },
+  {
+   "slot": "weapon",
+   "canvas": [
+    -3,
+    47
+   ],
+   "size": [
+    22,
+    48
+   ],
+   "sheet": [
+    38,
+    117
+   ],
+   "pivots": [
+    "weapon"
+   ]
+  },
+  {
+   "slot": "scabbard",
+   "canvas": [
+    15,
+    41
+   ],
+   "size": [
+    10,
+    33
+   ],
+   "sheet": [
+    62,
+    117
+   ],
+   "pivots": [
+    "scabbard"
+   ]
+  }
+ ]
+}

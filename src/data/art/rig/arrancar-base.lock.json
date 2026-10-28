@@ -1,0 +1,282 @@
+{
+ "note": "고정값 (사용자 2026-10-28 \"이대로 고정시키고\"). 아란칼 기본형 = 옷 입은 몸, 알몸 기본형 = 옷 입히기 바탕. 관절·부위 자리를 바꾸면 tests/paperdoll.test.ts 가 막는다 — 사용자가 고친 값이면 scripts/rig/lock.py 로 이 파일도 같이 고친다",
+ "pivots": {
+  "root": [16, 52],
+  "torso": [16, 51],
+  "head": [15, 17],
+  "hair_back": [26, 11],
+  "arm_L": [12, 31],
+  "arm_R": [24, 33],
+  "forearm_R": [32, 41],
+  "leg_L": [11, 52],
+  "leg_R": [20, 52],
+  "shin_L": [12, 63],
+  "shin_R": [22, 63],
+  "foot_L": [12, 75],
+  "foot_R": [24, 75],
+  "weapon": [9, 58],
+  "scabbard": [19, 49],
+  "cape": [17, 29]
+ },
+ "restRot": {
+  "weapon": 78,
+  "scabbard": -32
+ },
+ "slots": [
+  "cape",
+  "arm_L",
+  "outer_arm_L",
+  "weapon",
+  "thumb_L",
+  "hair_back",
+  "foot_L",
+  "foot_R",
+  "leg_L",
+  "shin_L",
+  "leg_R",
+  "shin_R",
+  "torso",
+  "outer_torso",
+  "scabbard",
+  "forearm_R",
+  "head",
+  "hair",
+  "arm_R",
+  "outer_arm_R"
+ ],
+ "bodyJoints": {
+  "arrancar_f": {
+   "pivots": {
+    "arm_R": [22, 32],
+    "forearm_R": [29, 41],
+    "foot_R": [22, 75],
+    "head": [15, 16]
+   },
+   "rot": {
+    "forearm_R": -15,
+    "torso": 2,
+    "head": -5,
+    "arm_R": 14
+   }
+  },
+  "female": {
+   "pivots": {
+    "arm_R": [22, 32],
+    "forearm_R": [29, 41],
+    "foot_R": [22, 75]
+   },
+   "rot": {
+    "forearm_R": -15,
+    "torso": 2,
+    "head": -5,
+    "arm_R": 14
+   }
+  },
+  "student": {
+   "pivots": {
+    "arm_R": [24, 34]
+   },
+   "rot": {
+    "forearm_R": -10,
+    "arm_R": 15
+   }
+  },
+  "bare": {
+   "pivots": {
+    "arm_R": [23, 33]
+   }
+  },
+  "arrancar": {
+   "pivots": {
+    "arm_R": [24, 34]
+   }
+  },
+  "student_f": {
+   "pivots": {
+    "hair_back": [24, 9],
+    "head": [13, 15]
+   },
+   "rot": {
+    "arm_R": 6,
+    "forearm_R": -6,
+    "leg_R": 2,
+    "foot_R": -2
+   }
+  },
+  "shinigami_f": {
+   "pivots": {
+    "hair_back": [24, 9],
+    "head": [13, 15]
+   },
+   "rot": {
+    "arm_R": 6,
+    "forearm_R": -6,
+    "leg_R": 2,
+    "foot_R": -2
+   }
+  }
+ },
+ "looks": {
+  "arrancar-base": {
+   "body": "arrancar",
+   "parts": {
+    "torso": { "art": "arrancar/torso", "at": [8, 26] },
+    "arm_L": { "art": "arrancar/arm_L", "at": [1, 30] },
+    "arm_R": { "art": "arrancar/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "arrancar/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "arrancar/leg_R", "at": [14, 49] },
+    "head": { "art": "head_bald", "at": [7, 10] },
+    "foot_L": { "art": "arrancar/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "arrancar/foot_R", "at": [21, 72] },
+    "thumb_L": { "art": "arrancar/thumb_L", "at": [7, 53] },
+    "forearm_R": { "art": "arrancar/forearm_R", "at": [19, 37] }
+   },
+   "layers": {
+    "hair": { "art": "arrancar/hair", "at": [0, -1] },
+    "weapon": { "art": "weapon/sword", "at": [2, 50] },
+    "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
+   }
+  },
+  "arrancar-base-f": {
+   "body": "arrancar_f",
+   "parts": {
+    "torso": { "art": "arrancar_f/torso", "at": [7, 25] },
+    "arm_L": { "art": "arrancar_f/arm_L", "at": [4, 29] },
+    "arm_R": { "art": "arrancar_f/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "arrancar_f/leg_L", "at": [5, 51] },
+    "leg_R": { "art": "arrancar_f/leg_R", "at": [13, 49] },
+    "head": { "art": "head_bald", "at": [6, 9] },
+    "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "bare/foot_R", "at": [19, 72] },
+    "thumb_L": { "art": "bare/thumb_L", "at": [6, 51] },
+    "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38] }
+   },
+   "layers": {
+    "weapon": { "art": "weapon/sword", "at": [0, 50] },
+    "scabbard": { "art": "weapon/scabbard", "at": [18, 44] },
+    "hair": { "art": "arrancar_f/hair", "at": [1, 1] },
+    "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1] }
+   }
+  },
+  "bare-base": {
+   "body": "bare",
+   "parts": {
+    "torso": { "art": "bare/torso", "at": [10, 26] },
+    "arm_L": { "art": "bare/arm_L", "at": [5, 30] },
+    "arm_R": { "art": "bare/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
+    "head": { "art": "head_bald", "at": [7, 10] },
+    "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
+    "thumb_L": { "art": "bare/thumb_L", "at": [7, 52] },
+    "forearm_R": { "art": "bare/forearm_R", "at": [20, 39] }
+   },
+   "layers": {
+    "weapon": { "art": "weapon/sword", "at": [1, 50] },
+    "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
+   }
+  },
+  "female-base": {
+   "body": "female",
+   "parts": {
+    "torso": { "art": "female/torso", "at": [7, 26] },
+    "arm_L": { "art": "female/arm_L", "at": [4, 29] },
+    "arm_R": { "art": "female/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "bare/leg_L", "at": [5, 51] },
+    "leg_R": { "art": "bare/leg_R", "at": [13, 49] },
+    "head": { "art": "head_bald", "at": [6, 10] },
+    "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "bare/foot_R", "at": [19, 72] },
+    "thumb_L": { "art": "bare/thumb_L", "at": [6, 51] },
+    "forearm_R": { "art": "female/forearm_R", "at": [20, 38] }
+   },
+   "layers": {
+    "weapon": { "art": "weapon/sword", "at": [0, 50] },
+    "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
+   }
+  },
+  "shinigami-base": {
+   "body": "shinigami",
+   "parts": {
+    "torso": { "art": "shinigami/torso", "at": [9, 26] },
+    "arm_L": { "art": "shinigami/arm_L", "at": [2, 29] },
+    "arm_R": { "art": "shinigami/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "shinigami/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "shinigami/leg_R", "at": [14, 49] },
+    "head": { "art": "shinigami/head", "at": [7, 10] },
+    "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "shinigami/foot_R", "at": [21, 72] },
+    "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
+    "forearm_R": { "art": "shinigami/forearm_R", "at": [20, 38] }
+   },
+   "layers": {
+    "hair": { "art": "shinigami/hair", "at": [-1, 0] },
+    "weapon": { "art": "weapon/sword", "at": [0, 51] },
+    "scabbard": { "art": "weapon/scabbard", "at": [17, 44] }
+   }
+  },
+  "shinigami-base-f": {
+   "body": "shinigami_f",
+   "parts": {
+    "torso": { "art": "shinigami_f/torso", "at": [9, 25] },
+    "arm_L": { "art": "shinigami_f/arm_L", "at": [2, 29] },
+    "arm_R": { "art": "shinigami_f/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "shinigami_f/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "shinigami_f/leg_R", "at": [15, 49] },
+    "head": { "art": "shinigami/head", "at": [7, 10] },
+    "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "shinigami/foot_R", "at": [20, 72] },
+    "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
+    "forearm_R": { "art": "shinigami_f/forearm_R", "at": [20, 37] }
+   },
+   "layers": {
+    "hair": { "art": "student/hair", "at": [-1, 0] },
+    "weapon": { "art": "weapon/sword", "at": [1, 49] },
+    "scabbard": { "art": "weapon/scabbard", "at": [17, 44] },
+    "hair_back": { "art": "student_f/hair_back", "at": [21, 2] }
+   }
+  },
+  "shinigami-student": {
+   "body": "student",
+   "parts": {
+    "torso": { "art": "student/torso", "at": [9, 26] },
+    "arm_L": { "art": "student/arm_L", "at": [2, 29] },
+    "arm_R": { "art": "student/arm_R", "at": [22, 29] },
+    "leg_L": { "art": "student/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "student/leg_R", "at": [14, 49] },
+    "head": { "art": "shinigami/head", "at": [7, 10] },
+    "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "shinigami/foot_R", "at": [21, 72] },
+    "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
+    "forearm_R": { "art": "student/forearm_R", "at": [21, 38] }
+   },
+   "layers": {
+    "hair": { "art": "student/hair", "at": [-1, 0] },
+    "weapon": { "art": "weapon/sword", "at": [0, 49] },
+    "scabbard": { "art": "weapon/scabbard", "at": [17, 44] }
+   }
+  },
+  "shinigami-student-f": {
+   "body": "student_f",
+   "parts": {
+    "torso": { "art": "student_f/torso", "at": [9, 25] },
+    "arm_L": { "art": "student_f/arm_L", "at": [2, 29] },
+    "arm_R": { "art": "student_f/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "student_f/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "student_f/leg_R", "at": [15, 49] },
+    "head": { "art": "shinigami/head", "at": [7, 10] },
+    "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "shinigami/foot_R", "at": [20, 72] },
+    "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
+    "forearm_R": { "art": "student_f/forearm_R", "at": [20, 37] }
+   },
+   "layers": {
+    "hair": { "art": "student/hair", "at": [-1, 0] },
+    "weapon": { "art": "weapon/sword", "at": [1, 49] },
+    "scabbard": { "art": "weapon/scabbard", "at": [17, 44] },
+    "hair_back": { "art": "student_f/hair_back", "at": [21, 2] }
+   }
+  }
+ }
+}

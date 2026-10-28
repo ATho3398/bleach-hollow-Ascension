@@ -1,0 +1,162 @@
+{
+ "note": "종이인형 부위 시트 (GDD 96장). 여백(pad) 안에 관절 겹침 여분을 그려도 된다. unpack 으로 되돌린다",
+ "canvas": [
+  37,
+  81
+ ],
+ "pad": 4,
+ "parts": [
+  {
+   "name": "head",
+   "art": "head_bald",
+   "bone": "head",
+   "sheet_xywh": [
+    0,
+    0,
+    26,
+    27
+   ],
+   "canvas_xy": [
+    3,
+    7
+   ],
+   "pivot_in_box": [
+    14,
+    22
+   ]
+  },
+  {
+   "name": "hair",
+   "art": "arrancar/hair",
+   "bone": "head",
+   "sheet_xywh": [
+    28,
+    0,
+    42,
+    39
+   ],
+   "canvas_xy": [
+    -4,
+    -4
+   ],
+   "pivot_in_box": [
+    21,
+    33
+   ]
+  },
+  {
+   "name": "mask",
+   "art": "arrancar/mask",
+   "bone": "head",
+   "sheet_xywh": [
+    72,
+    0,
+    22,
+    35
+   ],
+   "canvas_xy": [
+    14,
+    0
+   ],
+   "pivot_in_box": [
+    3,
+    29
+   ]
+  },
+  {
+   "name": "torso",
+   "art": "arrancar/torso",
+   "bone": "torso",
+   "sheet_xywh": [
+    96,
+    0,
+    43,
+    44
+   ],
+   "canvas_xy": [
+    -4,
+    22
+   ],
+   "pivot_in_box": [
+    21,
+    34
+   ]
+  },
+  {
+   "name": "arm_L",
+   "art": "arrancar/arm_L",
+   "bone": "arm_L",
+   "sheet_xywh": [
+    141,
+    0,
+    20,
+    34
+   ],
+   "canvas_xy": [
+    -4,
+    32
+   ],
+   "pivot_in_box": [
+    12,
+    6
+   ]
+  },
+  {
+   "name": "arm_R",
+   "art": "arrancar/arm_R",
+   "bone": "arm_R",
+   "sheet_xywh": [
+    163,
+    0,
+    23,
+    28
+   ],
+   "canvas_xy": [
+    16,
+    32
+   ],
+   "pivot_in_box": [
+    12,
+    7
+   ]
+  },
+  {
+   "name": "leg_L",
+   "art": "arrancar/leg_L",
+   "bone": "leg_L",
+   "sheet_xywh": [
+    188,
+    0,
+    21,
+    37
+   ],
+   "canvas_xy": [
+    0,
+    48
+   ],
+   "pivot_in_box": [
+    10,
+    9
+   ]
+  },
+  {
+   "name": "leg_R",
+   "art": "arrancar/leg_R",
+   "bone": "leg_R",
+   "sheet_xywh": [
+    211,
+    0,
+    23,
+    37
+   ],
+   "canvas_xy": [
+    13,
+    48
+   ],
+   "pivot_in_box": [
+    11,
+    9
+   ]
+  }
+ ]
+}

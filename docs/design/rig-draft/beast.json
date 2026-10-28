@@ -1,0 +1,397 @@
+{
+ "id": "beast",
+ "note": "짐승형(네 발) 종이인형 뼈대 (GDD 96장 41). 앞 = 왼쪽. 좌표 = 그림 칸(64×40, 1칸=1도트), 바닥 줄 y=39. _R = 가까운 쪽(앞에 그림), _L = 먼 쪽(몸 뒤). 앞다리 = 어깨·팔꿈치, 뒷다리 = 엉덩이·뒤로 꺾인 발목(역관절). 몸 test 는 임시 그림(placeholder.py)",
+ "canvas": [
+  64,
+  40
+ ],
+ "ground": 39,
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "pivot": [
+    34,
+    20
+   ]
+  },
+  {
+   "id": "body",
+   "parent": "root",
+   "pivot": [
+    34,
+    20
+   ]
+  },
+  {
+   "id": "head",
+   "parent": "body",
+   "pivot": [
+    19,
+    15
+   ]
+  },
+  {
+   "id": "tail",
+   "parent": "body",
+   "pivot": [
+    49,
+    15
+   ]
+  },
+  {
+   "id": "tail2",
+   "parent": "tail",
+   "pivot": [
+    56,
+    10
+   ]
+  },
+  {
+   "id": "fleg_L",
+   "parent": "body",
+   "pivot": [
+    24,
+    23
+   ]
+  },
+  {
+   "id": "fleg_L2",
+   "parent": "fleg_L",
+   "pivot": [
+    23,
+    31
+   ]
+  },
+  {
+   "id": "hleg_L",
+   "parent": "body",
+   "pivot": [
+    49,
+    21
+   ]
+  },
+  {
+   "id": "hleg_L2",
+   "parent": "hleg_L",
+   "pivot": [
+    51,
+    30
+   ]
+  },
+  {
+   "id": "fleg_R",
+   "parent": "body",
+   "pivot": [
+    21,
+    23
+   ]
+  },
+  {
+   "id": "fleg_R2",
+   "parent": "fleg_R",
+   "pivot": [
+    20,
+    31
+   ]
+  },
+  {
+   "id": "hleg_R",
+   "parent": "body",
+   "pivot": [
+    46,
+    21
+   ]
+  },
+  {
+   "id": "hleg_R2",
+   "parent": "hleg_R",
+   "pivot": [
+    48,
+    30
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "tail2",
+   "bone": "tail2"
+  },
+  {
+   "id": "tail",
+   "bone": "tail"
+  },
+  {
+   "id": "hleg_L",
+   "bone": "hleg_L"
+  },
+  {
+   "id": "hleg_L2",
+   "bone": "hleg_L2"
+  },
+  {
+   "id": "fleg_L",
+   "bone": "fleg_L"
+  },
+  {
+   "id": "fleg_L2",
+   "bone": "fleg_L2"
+  },
+  {
+   "id": "body",
+   "bone": "body"
+  },
+  {
+   "id": "head",
+   "bone": "head"
+  },
+  {
+   "id": "hleg_R",
+   "bone": "hleg_R"
+  },
+  {
+   "id": "hleg_R2",
+   "bone": "hleg_R2"
+  },
+  {
+   "id": "fleg_R",
+   "bone": "fleg_R"
+  },
+  {
+   "id": "fleg_R2",
+   "bone": "fleg_R2"
+  }
+ ],
+ "bodies": {
+  "test": {
+   "body": {
+    "art": "test/body",
+    "at": [
+     16,
+     8
+    ],
+    "size": [
+     37,
+     21
+    ]
+   },
+   "head": {
+    "art": "test/head",
+    "at": [
+     -3,
+     8
+    ],
+    "size": [
+     25,
+     15
+    ]
+   },
+   "tail": {
+    "art": "test/tail",
+    "at": [
+     46,
+     8
+    ],
+    "size": [
+     12,
+     10
+    ]
+   },
+   "tail2": {
+    "art": "test/tail2",
+    "at": [
+     54,
+     3
+    ],
+    "size": [
+     11,
+     9
+    ]
+   },
+   "fleg_R": {
+    "art": "test/fleg_R",
+    "at": [
+     17,
+     20
+    ],
+    "size": [
+     8,
+     12
+    ]
+   },
+   "fleg_R2": {
+    "art": "test/fleg_R2",
+    "at": [
+     14,
+     30
+    ],
+    "size": [
+     9,
+     10
+    ]
+   },
+   "hleg_R": {
+    "art": "test/hleg_R",
+    "at": [
+     40,
+     17
+    ],
+    "size": [
+     11,
+     14
+    ]
+   },
+   "hleg_R2": {
+    "art": "test/hleg_R2",
+    "at": [
+     38,
+     29
+    ],
+    "size": [
+     12,
+     11
+    ]
+   },
+   "fleg_L": {
+    "art": "test/fleg_L",
+    "at": [
+     20,
+     20
+    ],
+    "size": [
+     8,
+     12
+    ]
+   },
+   "fleg_L2": {
+    "art": "test/fleg_L2",
+    "at": [
+     17,
+     30
+    ],
+    "size": [
+     9,
+     10
+    ]
+   },
+   "hleg_L": {
+    "art": "test/hleg_L",
+    "at": [
+     43,
+     17
+    ],
+    "size": [
+     11,
+     14
+    ]
+   },
+   "hleg_L2": {
+    "art": "test/hleg_L2",
+    "at": [
+     41,
+     29
+    ],
+    "size": [
+     12,
+     11
+    ]
+   }
+  }
+ },
+ "looks": {
+  "beast-test": {
+   "body": "test"
+  }
+ },
+ "hairFrame": {
+  "rect": [
+   0,
+   0,
+   64,
+   40
+  ],
+  "keepOut": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "view": {
+  "rect": [
+   -10,
+   -8,
+   84,
+   48
+  ]
+ },
+ "edit": {
+  "names": {
+   "root": "전체",
+   "body": "몸통",
+   "head": "머리",
+   "tail": "꼬리",
+   "tail2": "꼬리 끝",
+   "fleg_L": "먼 앞다리",
+   "fleg_L2": "먼 앞발",
+   "hleg_L": "먼 뒷다리",
+   "hleg_L2": "먼 뒷발",
+   "fleg_R": "앞다리",
+   "fleg_R2": "앞발",
+   "hleg_R": "뒷다리",
+   "hleg_R2": "뒷발"
+  },
+  "groups": [
+   [
+    "전체",
+    [
+     "root"
+    ]
+   ],
+   [
+    "몸",
+    [
+     "head",
+     "body",
+     "tail",
+     "tail2"
+    ]
+   ],
+   [
+    "가까운 다리",
+    [
+     "fleg_R",
+     "fleg_R2",
+     "hleg_R",
+     "hleg_R2"
+    ]
+   ],
+   [
+    "먼 다리",
+    [
+     "fleg_L",
+     "fleg_L2",
+     "hleg_L",
+     "hleg_L2"
+    ]
+   ]
+  ],
+  "follow": {
+   "tail": [
+    "tail2"
+   ],
+   "fleg_L": [
+    "fleg_L2"
+   ],
+   "fleg_R": [
+    "fleg_R2"
+   ],
+   "hleg_L": [
+    "hleg_L2"
+   ],
+   "hleg_R": [
+    "hleg_R2"
+   ]
+  }
+ }
+}

@@ -30,6 +30,8 @@ export interface ArtEntry {
   offsetY?: number;
   /** 이 그림의 이동 방식(GDD 18-11): 부유 float / 걷기 walk / 날기 fly. 진화체·종족 기본보다 우선한다. 비우면 그쪽 값 */
   locomotion?: Locomotion;
+  /** 종이인형 외형 id(GDD 96장 30, src/data/art/rig/humanoid.json 의 looks). 있으면 단계별 파일이 없는 한 종족 공통 그림 대신 종이인형이 움직인다 */
+  rig?: string;
 }
 
 /** 화면이 쓰는 그림 정보 */
@@ -44,13 +46,19 @@ export interface ArtUrls {
   locomotion?: Locomotion;
   /** 프레임 애니 (GDD 26장): 동작별로 있는 것만. 없는 동작은 기존 연출을 쓴다 */
   anims?: AnimSet;
+  /** 종이인형 (GDD 96장 30): 외형 id 와 부위 그림 폴더 주소. src 는 쉬는 자세 정지 그림 */
+  rig?: { look: string; partBase: string };
 }
 
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'scene.cave': {},
   'scene.room': {},
   'char.hollow': {},
-  'char.shinigami': {},
+  // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
+  // 정지 그림 칸(view)이 칼 휘두를 자리까지 넓어서 옛 한 장 그림(char-shinigami.png)과 같은 키로 보이게 키우고, 발이 칸 아래 끝이라 조금 올린다
+  'char.shinigami': { rig: 'shinigami-base', scale: 1.32, offsetY: -5 },
+  // 사신 2단계 = 진앙영술원 학생 (사용자 2026-10-29 "얘는 사신쪽에 진앙영술원 학생으로")
+  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.32, offsetY: -5 },
   // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
   // 걷기·전투 필드는 1.5배 (C.176, GDD 106장 3: 2배면 그림 높이가 1단계의 약 1.26배·폭 1.4배로 필드 위로 넘쳤다 → 높이·폭이 1단계와 비슷하게)
   'char.hollow.2': { scale: 2, fieldScale: 1.5, locomotion: 'walk' },
@@ -113,5 +121,15 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     const skin = tryKeys([skinArtKey(skinId)]);
     if (skin) return skin; // 스킨 그림이 아직 하나도 없으면 진화체 그림으로 (빈 화면 방지)
   }
-  return tryKeys(charArtKeys(factionId, tierIndex)) ?? artUrls(fallbackKey, base, manifest, files);
+  const keys = charArtKeys(factionId, tierIndex);
+  // 종이인형: 단계별 파일이 없을 때 — 단계별 종이인형(char.<종족>.<n> 의 rig) > 종족 공통 종이인형 > 종족 공통 그림 (정지 그림 = 쉬는 자세 한 장)
+  const rigKey = fallbackKey && manifest[keys[0]!]?.rig ? keys[0]! : fallbackKey;
+  const rigLook = fallbackKey ? manifest[rigKey]?.rig : undefined;
+  if (rigLook) {
+    const staged = tryKeys(keys.slice(0, 1));
+    if (staged) return staged;
+    const e = manifest[rigKey]!;
+    return { src: joinBase(base, `art/rig/humanoid/still/${rigLook}.png`), frames: null, scale: e.scale ?? 1, offsetY: e.offsetY ?? 0, locomotion: e.locomotion, rig: { look: rigLook, partBase: joinBase(base, 'art/rig/humanoid/') } };
+  }
+  return tryKeys(keys) ?? artUrls(fallbackKey, base, manifest, files);
 }

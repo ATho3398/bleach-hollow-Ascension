@@ -1,0 +1,143 @@
+{
+ "note": "종이인형 부위 시트 (GDD 96장). 여백(pad) 안에 관절 겹침 여분을 그려도 된다. unpack 으로 되돌린다",
+ "canvas": [
+  37,
+  81
+ ],
+ "pad": 4,
+ "parts": [
+  {
+   "name": "head",
+   "art": "head_bald",
+   "bone": "head",
+   "sheet_xywh": [
+    0,
+    0,
+    26,
+    27
+   ],
+   "canvas_xy": [
+    3,
+    7
+   ],
+   "pivot_in_box": [
+    14,
+    22
+   ]
+  },
+  {
+   "name": "hair",
+   "art": "shinigami/hair",
+   "bone": "head",
+   "sheet_xywh": [
+    28,
+    0,
+    41,
+    38
+   ],
+   "canvas_xy": [
+    -4,
+    -3
+   ],
+   "pivot_in_box": [
+    21,
+    32
+   ]
+  },
+  {
+   "name": "torso",
+   "art": "shinigami/torso",
+   "bone": "torso",
+   "sheet_xywh": [
+    71,
+    0,
+    43,
+    44
+   ],
+   "canvas_xy": [
+    -4,
+    22
+   ],
+   "pivot_in_box": [
+    21,
+    34
+   ]
+  },
+  {
+   "name": "arm_L",
+   "art": "shinigami/arm_L",
+   "bone": "arm_L",
+   "sheet_xywh": [
+    116,
+    0,
+    20,
+    36
+   ],
+   "canvas_xy": [
+    -4,
+    30
+   ],
+   "pivot_in_box": [
+    12,
+    8
+   ]
+  },
+  {
+   "name": "arm_R",
+   "art": "shinigami/arm_R",
+   "bone": "arm_R",
+   "sheet_xywh": [
+    138,
+    0,
+    24,
+    29
+   ],
+   "canvas_xy": [
+    15,
+    30
+   ],
+   "pivot_in_box": [
+    13,
+    9
+   ]
+  },
+  {
+   "name": "leg_L",
+   "art": "shinigami/leg_L",
+   "bone": "leg_L",
+   "sheet_xywh": [
+    164,
+    0,
+    23,
+    37
+   ],
+   "canvas_xy": [
+    -1,
+    48
+   ],
+   "pivot_in_box": [
+    11,
+    9
+   ]
+  },
+  {
+   "name": "leg_R",
+   "art": "shinigami/leg_R",
+   "bone": "leg_R",
+   "sheet_xywh": [
+    189,
+    0,
+    22,
+    37
+   ],
+   "canvas_xy": [
+    14,
+    48
+   ],
+   "pivot_in_box": [
+    10,
+    9
+   ]
+  }
+ ]
+}
