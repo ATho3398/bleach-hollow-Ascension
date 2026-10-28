@@ -8,7 +8,7 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RIG = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
 LOCK = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'arrancar-base.lock.json')
-LOOKS = ['arrancar-base', 'bare-base']
+LOOKS = ['arrancar-base', 'bare-base', 'female-base']
 
 rig = json.load(open(RIG, encoding='utf-8'))
 pa = lambda v: {'art': v['art'], 'at': v['at']}
