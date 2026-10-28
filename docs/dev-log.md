@@ -1411,6 +1411,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 알몸 되돌림(`bare-base`), 옷 입은 몸 = 아란칼 기본형(`arrancar-base`, 몸 arrancar), 가이드 두 장, 고정 파일 두 외형(`scripts/rig/lock.py`)(GDD 96장 25).
 - 사신 기본형 사용자 시트 적용(전용 머리 `--own-head`), 알몸 최신, 칼집 새 그림(다른 외형 같이 옮김), 정사각형 가이드 세 장(GDD 96장 26).
 - 머리카락 틀 56×36, 뒷머리 틀 56×70(`backRect`, `hairRect()`)(GDD 96장 27).
+- 사신 도트 수정안 반영(오른 위팔·아래팔·왼다리), 사신 가이드 재생성.
 - **테스트** `tests/paperdoll.test.ts` 28개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 
