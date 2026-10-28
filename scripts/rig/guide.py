@@ -52,12 +52,13 @@ def main():
     for p in PARTS:
         art = body.get(p) or (look[p] if isinstance(look.get(p), dict) else None)  # 칼·칼집은 외형 층
         if p in ('hair', 'hair_back'):
-            # 머리카락은 머리카락 틀 전체가 칸. 흐린 그림 = 머리(머리카락이 있으면 머리카락)
+            # 머리카락은 머리카락 틀 전체가 칸. 자리 맞추기용 머리를 그대로(불투명) 깔고 그 위에 머리카락
+            # (사용자 2026-10-28 "헤어 칸에 머리 투명화 넣지 말고 걍 박아놔. 머리만"). 머리는 ref 로 남겨 가져올 때 뺀다
             fx, fy, fw, fh = hf.get('backRect', hf['rect']) if p == 'hair_back' else hf['rect']
-            # 흐린 그림 = 자리 맞추기용 머리(뒷머리 칸은 길게 내려가니 몸통·팔까지)
-            ref = ['head'] if p == 'hair' else ['torso', 'arm_R', 'arm_L', 'head']
-            boxes.append({'slot': p, 'canvas': [fx, fy], 'size': [fw, fh], 'ghost': [body[k] for k in ref if body.get(k)],
-                          'solid': [look[p]] if isinstance(look.get(p), dict) else []})
+            head = [{'art': body['head']['art'], 'at': body['head']['at']}] if body.get('head') else []
+            own = {'art': look[p]['art'], 'at': look[p]['at']} if isinstance(look.get(p), dict) else None
+            boxes.append({'slot': p, 'canvas': [fx, fy], 'size': [fw, fh], 'ghost': [], 'ref': head, 'own': own,
+                          'solid': [body['head']] * bool(head) + ([look[p]] if isinstance(look.get(p), dict) else [])})
         elif art:
             boxes.append({'slot': p, 'canvas': [art['at'][0] - PAD, art['at'][1] - PAD], 'size': [art['size'][0] + 2 * PAD, art['size'][1] + 2 * PAD], 'ghost': [], 'solid': [art]})
     # 정사각형에 가깝게 줄 바꿈 배치(사용자 2026-10-28 "시트 길게 말고 정사각형 비슷하게"). 줄 사이 ROWGAP = 8배 확인용 칸 이름 자리
@@ -135,7 +136,7 @@ def main():
             px, py = bb['pivot'][0] - b['canvas'][0] + sx, bb['pivot'][1] - b['canvas'][1] + sy
             d.rectangle([px * K + 2, py * K + top + 2, px * K + K - 3, py * K + top + K - 3], outline=(255, 40, 40, 255), width=2)
             d.text((px * K + 10, py * K + top - 8), pname.get(pid, pid), fill=(255, 60, 60, 255), font=fs)
-    d.text((8, H * K + top + 6), '칸 안 그림 위에 고쳐 그리면 몸에 그대로 붙는다 · 빨간 네모 = 관절(이 확인용에만) · 파란 선 = 칸 · 머리카락 칸의 흐린 머리는 자리 맞추기용', fill=(220, 220, 220, 255), font=fs)
+    d.text((8, H * K + top + 6), '칸 안 그림 위에 고쳐 그리면 몸에 그대로 붙는다 · 빨간 네모 = 관절(이 확인용에만) · 파란 선 = 칸 · 머리카락 칸의 머리는 자리 맞추기용(가져올 때 빠짐)', fill=(220, 220, 220, 255), font=fs)
     out.save(os.path.join(a.out, 'guide-x8.png'))
     print(f'가이드 {W}×{H}, 칸 {len(boxes)}개 → {a.out}')
 

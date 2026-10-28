@@ -149,6 +149,23 @@ def main():
             # 가이드 선 색(파랑, 사용자 그림판에서 불투명이 돼도)은 그림이 아니다
             line = (reg[..., 0] < 30) & (np.abs(reg[..., 1].astype(int) - 190) < 15) & (reg[..., 2] > 235)
             op = (reg[..., 3] == 255) & ~line
+            # 자리 맞추기용으로 깔아 둔 그림(머리카락 칸의 머리)은 같은 자리·같은 색이면 빼고 읽는다
+            # 단, 가이드를 만들 때 그 자리에 원래 그 슬롯 그림(머리카락 외곽선 등)이 같은 색으로 있었으면 그림으로 둔다
+            keep = np.zeros((h, w), bool)
+            cur = b.get('own')
+            if cur and os.path.exists(os.path.join(ART, cur['art'] + '.png')):
+                ca = np.array(Image.open(os.path.join(ART, cur['art'] + '.png')).convert('RGBA'))
+                for yy, xx in zip(*np.nonzero(ca[..., 3] > 0)):
+                    Y, X = cur['at'][1] - cy + yy, cur['at'][0] - cx + xx
+                    if 0 <= Y < h and 0 <= X < w and (reg[Y, X, :3] == ca[yy, xx, :3]).all():
+                        keep[Y, X] = True
+            for r in b.get('ref', []):
+                ra = np.array(Image.open(os.path.join(ART, r['art'] + '.png')).convert('RGBA'))
+                ox, oy = r['at'][0] - cx, r['at'][1] - cy
+                for yy, xx in zip(*np.nonzero(ra[..., 3] > 0)):
+                    Y, X = oy + yy, ox + xx
+                    if 0 <= Y < h and 0 <= X < w and op[Y, X] and not keep[Y, X] and (reg[Y, X, :3] == ra[yy, xx, :3]).all():
+                        op[Y, X] = False
             if not op.any():
                 continue
             ys, xs = np.nonzero(op)

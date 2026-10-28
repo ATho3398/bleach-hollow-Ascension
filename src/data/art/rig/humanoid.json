@@ -6,7 +6,7 @@
   "bones": [
     { "id": "root", "parent": null, "pivot": [16, 52] },
     { "id": "torso", "parent": "root", "pivot": [16, 51] },
-    { "id": "head", "parent": "torso", "pivot": [27, 20] },
+    { "id": "head", "parent": "torso", "pivot": [15, 17] },
     { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
     { "id": "arm_R", "parent": "torso", "pivot": [24, 33] },
     { "id": "forearm_R", "parent": "arm_R", "pivot": [32, 41] },
@@ -77,9 +77,9 @@
   "looks": {
     "shinigami-base": {
       "body": "shinigami",
-      "hair": { "art": "shinigami/hair", "at": [1, 1], "size": [33, 29] },
+      "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] },
       "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [17, 49], "size": [4, 27] }
+      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] }
     },
     "arrancar-base": {
       "body": "arrancar",

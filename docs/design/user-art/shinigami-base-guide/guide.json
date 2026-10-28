@@ -17,7 +17,9 @@
     2,
     4
    ],
-   "pivots": []
+   "pivots": [
+    "head"
+   ]
   },
   {
    "slot": "hair",
@@ -29,6 +31,22 @@
     56,
     36
    ],
+   "ref": [
+    {
+     "art": "shinigami/head",
+     "at": [
+      7,
+      10
+     ]
+    }
+   ],
+   "own": {
+    "art": "shinigami/hair",
+    "at": [
+     -1,
+     0
+    ]
+   },
    "sheet": [
     26,
     4
@@ -47,6 +65,16 @@
     56,
     70
    ],
+   "ref": [
+    {
+     "art": "shinigami/head",
+     "at": [
+      7,
+      10
+     ]
+    }
+   ],
+   "own": null,
    "sheet": [
     84,
     4
@@ -246,7 +274,7 @@
    "slot": "scabbard",
    "canvas": [
     14,
-    46
+    41
    ],
    "size": [
     10,

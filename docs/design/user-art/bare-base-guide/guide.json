@@ -17,7 +17,9 @@
     2,
     4
    ],
-   "pivots": []
+   "pivots": [
+    "head"
+   ]
   },
   {
    "slot": "hair",
@@ -29,6 +31,16 @@
     56,
     36
    ],
+   "ref": [
+    {
+     "art": "head_bald",
+     "at": [
+      7,
+      10
+     ]
+    }
+   ],
+   "own": null,
    "sheet": [
     26,
     4
@@ -47,6 +59,16 @@
     56,
     70
    ],
+   "ref": [
+    {
+     "art": "head_bald",
+     "at": [
+      7,
+      10
+     ]
+    }
+   ],
+   "own": null,
    "sheet": [
     84,
     4
