@@ -1,5 +1,5 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓴다
-import { HUMANOID, MOTIONS, boneMatrices, insideFrame, lookLayers, partMatrix, samplePose, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, boneMatrices, insideFrame, layerMatrix, lookLayers, samplePose, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 
 declare const ART_MAP: Record<string, string>;
 const K = 6;
@@ -116,7 +116,7 @@ function draw() {
     img.className = 'part' + (l.slot === sel ? ' sel' : '');
     img.style.width = `${l.size[0] * K}px`;
     img.style.height = `${l.size[1] * K}px`;
-    const m = partMatrix(mats[l.bone]!, l.at);
+    const m = layerMatrix(rig, mats, l, motion ? MOTIONS[motion] : undefined);
     img.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * K},${m[5] * K})`;
     stage.append(img);
   }

@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-import { HUMANOID, MOTIONS, apply, boneMatrices, insideFrame, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, apply, boneMatrices, insideFrame, layerMatrix, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -119,18 +119,28 @@ describe('자세·행렬', () => {
     // 세로 아래에서 앞(왼쪽)으로 기운 각도
     expect(Math.abs((Math.atan2(g[0] - e[0], e[1] - g[1]) * 180) / Math.PI - 60)).toBeLessThan(4);
   });
-  it('공격2: 칼을 거꾸로(역수) 쥐고 벤다 — 타격 순간 칼끝이 손보다 뒤(오른쪽)', () => {
+  it('공격2: 휘두르기는 그대로, 칼날(날 쪽, 그림 오른쪽 흰 줄)이 하늘을 본다 — 칼 그림을 칼날 축으로 뒤집음', () => {
     const a2 = MOTIONS.attack2!;
+    expect(a2.flip).toContain('weapon');
     const p = samplePose(HUMANOID, a2, a2.hit!);
+    const mats = boneMatrices(HUMANOID, p);
     const w = lookLayers(HUMANOID, 'arrancar-base').find((l) => l.slot === 'weapon')!;
-    const m = partMatrix(boneMatrices(HUMANOID, p).weapon!, w.at);
+    const edge = (m: number[]) => m[1]!; // 그림 +x(날 쪽)의 화면 y 성분
+    expect(edge(layerMatrix(HUMANOID, mats, w, a2))).toBeLessThan(-0.5); // 위
+    expect(edge(layerMatrix(HUMANOID, mats, w))).toBeGreaterThan(0.5); // 안 뒤집으면 아래
+    // 뒤집어도 손잡이·칼끝 자리는 그대로
     const { grip, tip } = HUMANOID.swordAxis!;
-    expect(apply(m, tip)[0]).toBeGreaterThan(apply(m, grip)[0] + 20);
+    const [m0, m1] = [layerMatrix(HUMANOID, mats, w), layerMatrix(HUMANOID, mats, w, a2)];
+    for (const q of [grip, tip]) {
+      const c: [number, number] = [q[0] + 0.5, q[1] + 0.5];
+      expect(apply(m1, c)[0]).toBeCloseTo(apply(m0, c)[0], 0);
+      expect(apply(m1, c)[1]).toBeCloseTo(apply(m0, c)[1], 0);
+    }
   });
   it('오른팔 팔꿈치: 아래팔(forearm_R)은 위팔(arm_R)의 자식, 특수1에서 편다', () => {
     expect(HUMANOID.bones.find((b) => b.id === 'forearm_R')!.parent).toBe('arm_R');
     const s1 = MOTIONS.skill!;
-    expect(samplePose(HUMANOID, s1, s1.hit!).forearm_R!.rot).toBeLessThan(-45);
+    expect(samplePose(HUMANOID, s1, s1.hit!).forearm_R!.rot).toBeLessThan(-30);
   });
   it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;

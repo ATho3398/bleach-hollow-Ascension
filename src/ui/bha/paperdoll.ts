@@ -1,7 +1,7 @@
 // 종이인형 그리기 (GDD 96장): 부위 그림(<img>)을 같은 캔버스에 겹쳐 두고, 뼈 행렬(pose.ts)을 CSS transform 으로 건다.
 // 매 순간 실시간으로 움직인다(크루세이더 퀘스트식). 도트는 image-rendering: pixelated 로 흐림 없이 확대·회전된다.
 // 코어(createDollClock)는 DOM 없이 시간·동작 전환만 다뤄 테스트한다.
-import { boneMatrices, lookLayers, partMatrix, samplePose, type Mat, type Motion, type Rig } from '../../data/art/rig/pose';
+import { boneMatrices, layerMatrix, lookLayers, samplePose, type Mat, type Motion, type Rig } from '../../data/art/rig/pose';
 import { el } from '../dom';
 
 export interface DollPlayOptions {
@@ -93,7 +93,7 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
     img.style.height = `${l.size[1] * k}px`;
     img.dataset.slot = l.slot;
     root.append(img);
-    return { img, bone: l.bone, at: l.at };
+    return { img, layer: l };
   });
   const clock = createDollClock(motions);
   const draw = () => {
@@ -101,7 +101,7 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
     const m = cur ? motions[cur.id] : undefined;
     const pose = m && cur ? samplePose(rig, m, cur.t) : {};
     const mats = boneMatrices(rig, pose);
-    for (const p of parts) p.img.style.transform = css(partMatrix(mats[p.bone]!, p.at), k);
+    for (const p of parts) p.img.style.transform = css(layerMatrix(rig, mats, p.layer, m), k);
   };
   draw();
   let raf = 0;

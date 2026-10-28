@@ -61,13 +61,14 @@
     "bare": {
       "torso": { "art": "bare/torso", "at": [10, 26], "size": [17, 27] },
       "arm_L": { "art": "bare/arm_L", "at": [2, 31], "size": [12, 29] },
-      "arm_R": { "art": "bare/arm_R", "at": [21, 31], "size": [13, 24] },
+      "arm_R": { "art": "bare/arm_R", "at": [23, 31], "size": [12, 12] },
       "leg_L": { "art": "arrancar/leg_L", "at": [4, 51], "size": [17, 25] },
       "leg_R": { "art": "arrancar/leg_R", "at": [13, 49], "size": [19, 27] },
       "head": { "art": "head_bald", "at": [8, 11], "size": [16, 19] },
       "foot_L": { "art": "arrancar/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "arrancar/foot_R", "at": [22, 72], "size": [9, 9] },
-      "thumb_L": { "art": "bare/thumb_L", "at": [5, 52], "size": [3, 5] }
+      "thumb_L": { "art": "bare/thumb_L", "at": [5, 51], "size": [3, 6] },
+      "forearm_R": { "art": "bare/forearm_R", "at": [21, 41], "size": [14, 14] }
     }
   },
   "looks": {

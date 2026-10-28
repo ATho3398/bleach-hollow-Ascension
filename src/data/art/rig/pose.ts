@@ -54,6 +54,8 @@ export interface Motion {
   loop: boolean;
   /** 타격 순간(ms) — 피해 숫자 타이밍 */
   hit?: number;
+  /** 이 동작 동안 그림을 뒤집어 그릴 슬롯(칼 = 칼날 축 기준으로 날·등이 바뀜, 그 밖 = 그림 세로 가운데 기준) */
+  flip?: string[];
   tracks: Record<string, Key[]>;
 }
 export interface BonePose {
@@ -163,6 +165,23 @@ export function partMatrix(bone: Mat, at: Vec2): Mat {
   return mul(bone, [1, 0, 0, 1, at[0], at[1]]);
 }
 
+/** 슬롯 그림 뒤집기 행렬(그림 좌표). 칼은 손잡이 → 칼끝 축으로 뒤집어 칼날 자리는 그대로 두고 날·등만 바꾼다 */
+export function flipMatrix(rig: Rig, layer: PartArt & { slot: string }): Mat {
+  const axis = layer.slot === 'weapon' && rig.swordAxis ? rig.swordAxis : { grip: [layer.size[0] / 2, 0] as Vec2, tip: [layer.size[0] / 2, 1] as Vec2 };
+  const [gx, gy] = [axis.grip[0] + 0.5, axis.grip[1] + 0.5];
+  let [dx, dy] = [axis.tip[0] - axis.grip[0], axis.tip[1] - axis.grip[1]];
+  const n = Math.hypot(dx, dy) || 1;
+  [dx, dy] = [dx / n, dy / n];
+  const [a, b, d] = [2 * dx * dx - 1, 2 * dx * dy, 2 * dy * dy - 1];
+  return [a, b, b, d, gx - a * gx - b * gy, gy - b * gx - d * gy];
+}
+
+/** 층 하나의 화면 행렬: 뼈 · 자리 · (이 동작에서 뒤집는 슬롯이면 뒤집기) */
+export function layerMatrix(rig: Rig, mats: Record<string, Mat>, layer: Layer, motion?: Motion): Mat {
+  const m = partMatrix(mats[layer.bone]!, layer.at);
+  return motion?.flip?.includes(layer.slot) ? mul(m, flipMatrix(rig, layer)) : m;
+}
+
 /** 머리카락 층(앞머리·일반머리 = hair, 몸 뒤로 늘어지는 뒷머리 = hair_back) — 둘 다 머리카락 틀 안 */
 export const HAIR_SLOTS = ['hair', 'hair_back'] as const;
 /** 겉옷 층: 부위 바로 위에 얹혀 그 뼈를 따라 움직인다(그림이 있는 외형만) */
@@ -190,6 +209,7 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>): string[]
   for (const [mid, m] of Object.entries(motions)) {
     if (!(m.duration > 0)) errs.push(`${mid}: 길이 0`);
     if (m.hit !== undefined && (m.hit < 0 || m.hit > m.duration)) errs.push(`${mid}: 타격 시각이 길이 밖`);
+    for (const f of m.flip ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 뒤집을 슬롯 ${f} 없음`);
     for (const [bid, keys] of Object.entries(m.tracks)) {
       if (!ids.has(bid)) errs.push(`${mid}: 뼈 ${bid} 없음`);
       for (let i = 0; i < keys.length; i++) {
