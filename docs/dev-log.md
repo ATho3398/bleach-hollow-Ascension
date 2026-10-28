@@ -1432,6 +1432,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 고정 버튼 값 반영(여러 외형: 팔·엄지·칼 자리, 몸별 어깨 관절, 여학생 뒷머리·머리 관절, 앞뒤 순서 엄지).
 - 고정 ↔ 게임 넣기 분리: 작업본 `docs/design/rig-draft/`, 게임 넣기 `scripts/rig/promote.py`(GDD 96장 36). 테스트 `tests/rigDraft.test.ts` 2개.
 - 사신 여성형 `shinigami-base-f`(작업본, 여학생과 자리·관절·각도 같음), 편집 중이던 여학생 오른다리·오른발 값 반영, 가이드 7장(GDD 96장 37).
+- 사신 여성형 `shinigami-base-f`(작업본, 여학생과 자리·관절·각도 같음), 편집 중이던 여학생 오른다리·오른발 값 반영, 가이드 7장(GDD 96장 37).
 - **테스트** `tests/paperdoll.test.ts` 30개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 
