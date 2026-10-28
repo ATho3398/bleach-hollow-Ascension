@@ -33,6 +33,8 @@ export interface Rig {
   hairFrame: { rect: [number, number, number, number]; backRect?: [number, number, number, number]; keepOut: [number, number, number, number] };
   /** 칼 그림 안 손잡이 가운데 → 칼끝(그림 좌표). 칼을 비스듬히 그려도 칼날 방향을 알 수 있게 */
   swordAxis?: { grip: Vec2; tip: Vec2 };
+  /** 게임 화면에 그릴 그림 칸(x, y, 가로, 세로, 캔버스 좌표) — 칼을 휘둘러도 안 잘리게 넉넉히 */
+  view?: { rect: [number, number, number, number] };
 }
 
 /** 부위 그림 하나: `public/art/rig/<rig id>/<art>.png`(꼭 맞게 자른 그림), at = 캔버스에서 왼쪽 위 자리, size = 그림 크기 */

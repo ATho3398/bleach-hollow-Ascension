@@ -3,6 +3,8 @@
 // 좌우 반전·윤곽·색조는 <img> 의 CSS 가 하므로 그대로 따라온다(src 만 바꾼다). 코어(createAnimPlayer)는 DOM 없이 돌아 테스트한다.
 import { clipDurationMs, clipHitMs, frameAt, hasAnims, type AnimAction, type AnimClip, type AnimSet } from '../../data/art/anim';
 import type { ArtUrls } from '../../data/art/manifest';
+import { HUMANOID, MOTIONS } from '../../data/art/rig/pose';
+import { bindRigAnim, RIG_ACTIONS } from './rigAnim';
 
 export interface AnimHost {
   /** 보일 프레임 주소를 넘긴다 (같은 주소를 또 넘겨도 된다) */
@@ -163,6 +165,14 @@ export function preloadFrames(anims: AnimSet): void {
  * owner 에는 `has-anim` 과 동작별 `has-anim-<동작>` 클래스가 붙어 CSS 가 겹치는 가짜 움직임(부유 출렁임·걸음 흔들림)을 끈다.
  */
 export function bindAnim(owner: HTMLElement, img: HTMLImageElement, art: ArtUrls | null): AnimPlayer | null {
+  // 종이인형 그림(GDD 96장 30): 뼈대 동작으로 움직인다
+  if (art?.rig && typeof document !== 'undefined') {
+    const player = bindRigAnim(img, HUMANOID, MOTIONS, art.rig.look, art.rig.partBase);
+    registry.set(owner, player);
+    owner.classList.add('has-anim');
+    for (const a of Object.keys(RIG_ACTIONS)) owner.classList.add(`has-anim-${a}`);
+    return player;
+  }
   if (!art?.anims || !hasAnims(art.anims) || !art.src) return null;
   preloadFrames(art.anims);
   let raf = 0;
