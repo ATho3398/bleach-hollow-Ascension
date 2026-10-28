@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-import { HUMANOID, MOTIONS, apply, boneMatrices, insideFrame, lookLayers, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, apply, boneMatrices, insideFrame, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -102,7 +102,22 @@ describe('자세·행렬', () => {
       expect(ids.indexOf(o)).toBe(ids.indexOf(p) + 1);
       expect(HUMANOID.slots.find((s) => s.id === o)!.bone).toBe(p);
     }
-    for (const look of Object.keys(HUMANOID.looks)) expect(lookLayers(HUMANOID, look).some((l) => l.slot === 'hair_back'), look).toBe(true);
+    // 아란칼은 뒷머리를 일반머리에 합쳐 그렸다(사용자 시트 2026-10-28) — 사신만 뒷머리 층
+    expect(lookLayers(HUMANOID, 'shinigami-base').some((l) => l.slot === 'hair_back')).toBe(true);
+  });
+  it('엄지: 칼 잡는 앞팔에 고정(관절 없음), 칼 앞에 그려진다', () => {
+    const ids = HUMANOID.slots.map((s) => s.id);
+    expect(HUMANOID.slots.find((s) => s.id === 'thumb_L')!.bone).toBe('arm_L');
+    expect(ids.indexOf('thumb_L')).toBeGreaterThan(ids.indexOf('weapon'));
+    expect(HUMANOID.bones.some((b) => b.id === 'thumb_L')).toBe(false);
+  });
+  it('칼: 쉬는 자세에서 칼날이 앞아래(약 60°)로 — 비스듬히 그린 칼도 같은 각도', () => {
+    const w = lookLayers(HUMANOID, 'arrancar-base').find((l) => l.slot === 'weapon')!;
+    const m = partMatrix(boneMatrices(HUMANOID, {}).weapon!, w.at);
+    const { grip, tip } = HUMANOID.swordAxis!;
+    const [g, e] = [apply(m, grip), apply(m, tip)];
+    // 세로 아래에서 앞(왼쪽)으로 기운 각도
+    expect(Math.abs((Math.atan2(g[0] - e[0], e[1] - g[1]) * 180) / Math.PI - 60)).toBeLessThan(4);
   });
   it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;
@@ -117,11 +132,14 @@ describe('자세·행렬', () => {
     expect(Math.abs(samplePose(HUMANOID, s1, s1.hit!).arm_R!.rot - 90)).toBeLessThan(10);
     const s2 = MOTIONS.skill2!;
     const p = samplePose(HUMANOID, s2, s2.hit!);
-    const rest = HUMANOID.bones.find((b) => b.id === 'weapon')!.restRot ?? 0;
     expect(p.arm_L!.rot).toBeLessThan(80);
     expect(p.arm_L!.rot).toBeGreaterThan(55);
-    // 칼날 화면 각도 = 몸통 + 앞팔 + 쉬는 각도 + 칼, 90 = 앞으로 수평
-    expect(Math.abs(p.torso!.rot + p.arm_L!.rot + rest + p.weapon!.rot - 90)).toBeLessThan(3);
+    // 칼날 화면 방향(손잡이 → 칼끝) = 앞(왼쪽)으로 수평
+    const w = lookLayers(HUMANOID, 'arrancar-base').find((l) => l.slot === 'weapon')!;
+    const m = partMatrix(boneMatrices(HUMANOID, p).weapon!, w.at);
+    const { grip, tip } = HUMANOID.swordAxis!;
+    const [g, e] = [apply(m, grip), apply(m, tip)];
+    expect(Math.abs((Math.atan2(e[1] - g[1], g[0] - e[0]) * 180) / Math.PI)).toBeLessThan(4);
     // 반동: 타격 뒤 몸 전체가 뒤(오른쪽, +x)로, 앞으로는 안 나간다
     const xs = s2.tracks.root!.map((k) => k[2]);
     expect(Math.max(...xs)).toBeGreaterThan(0);

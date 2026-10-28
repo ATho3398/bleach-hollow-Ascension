@@ -31,6 +31,8 @@ export interface Rig {
   looks: Record<string, Look>;
   /** 머리카락 틀: 머리카락 그림은 rect(x, y, 가로, 세로) 안에만. keepOut = 가리지 않기를 권장하는 얼굴 칸 */
   hairFrame: { rect: [number, number, number, number]; keepOut: [number, number, number, number] };
+  /** 칼 그림 안 손잡이 가운데 → 칼끝(그림 좌표). 칼을 비스듬히 그려도 칼날 방향을 알 수 있게 */
+  swordAxis?: { grip: Vec2; tip: Vec2 };
 }
 
 /** 부위 그림 하나: `public/art/rig/<rig id>/<art>.png`(꼭 맞게 자른 그림), at = 캔버스에서 왼쪽 위 자리, size = 그림 크기 */

@@ -7,13 +7,16 @@
 기본 칼: 1칸=1픽셀로 직접 찍는다(외곽선 1색 + 칼날 2톤 + 코등이 + 손잡이 감기). 손잡이 가운데가 손(앞팔 손바닥)에 온다.
   weapon 뼈 = 앞팔(arm_L)의 자식, 쉬는 자세에서 칼날이 앞아래(restRot)로.
 
-사용: python3 scripts/rig/feet_weapon.py
+사용: python3 scripts/rig/feet_weapon.py [--redraw-weapon]
+  칼·칼집은 사용자가 새로 찍은 그림(2026-10-28, import_cut.py 의 sword·scabbard)을 쓰므로 기본은 건드리지 않는다.
+  --redraw-weapon 일 때만 아래 임시 칼·칼집을 다시 찍고 자리·쉬는 각도를 되돌린다.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import sys
 
 import numpy as np
 from PIL import Image
@@ -134,6 +137,16 @@ def main():
             if body == 'arrancar':
                 ankles[side] = [x0 + int(fx.min() + fx.max()) // 2, y0 + top]
             print(f'{body} leg_{side}: 다리 {up.shape[1]}×{up.shape[0]} + 발 {fcrop.shape[1]}×{fcrop.shape[0]} (발목 y={y0 + top})')
+    redraw = '--redraw-weapon' in sys.argv
+    old = {b['id']: b for b in rig['bones']}
+    if not redraw:
+        bones = [b for b in rig['bones'] if b['id'] not in ('foot_L', 'foot_R', 'weapon', 'scabbard')]
+        bones += [{'id': 'foot_L', 'parent': 'leg_L', 'pivot': ankles['L']}, {'id': 'foot_R', 'parent': 'leg_R', 'pivot': ankles['R']},
+                  old['weapon'], old['scabbard']]
+        rig['bones'] = bones
+        dump(rig)
+        print('발목', ankles, '(칼·칼집 유지)')
+        return
     # 칼
     sw = np.zeros((len(SWORD), len(SWORD[0]), 4), np.uint8)
     for y, row in enumerate(SWORD):

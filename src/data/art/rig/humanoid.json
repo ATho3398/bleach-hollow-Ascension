@@ -13,7 +13,7 @@
     { "id": "leg_R", "parent": "root", "pivot": [22, 52] },
     { "id": "foot_L", "parent": "leg_L", "pivot": [10, 72] },
     { "id": "foot_R", "parent": "leg_R", "pivot": [26, 72] },
-    { "id": "weapon", "parent": "arm_L", "pivot": [4, 56], "restRot": 60 },
+    { "id": "weapon", "parent": "arm_L", "pivot": [4, 56], "restRot": 78 },
     { "id": "scabbard", "parent": "torso", "pivot": [18, 50], "restRot": -55 }
   ],
   "slots": [
@@ -25,6 +25,7 @@
     { "id": "weapon", "bone": "weapon" },
     { "id": "arm_L", "bone": "arm_L" },
     { "id": "outer_arm_L", "bone": "arm_L" },
+    { "id": "thumb_L", "bone": "arm_L" },
     { "id": "torso", "bone": "torso" },
     { "id": "outer_torso", "bone": "torso" },
     { "id": "scabbard", "bone": "scabbard" },
@@ -52,23 +53,23 @@
       "leg_R": { "art": "arrancar/leg_R", "at": [13, 49], "size": [19, 27] },
       "head": { "art": "head_bald", "at": [8, 11], "size": [16, 19] },
       "foot_L": { "art": "arrancar/foot_L", "at": [5, 72], "size": [11, 9] },
-      "foot_R": { "art": "arrancar/foot_R", "at": [22, 72], "size": [9, 9] }
+      "foot_R": { "art": "arrancar/foot_R", "at": [22, 72], "size": [9, 9] },
+      "thumb_L": { "art": "arrancar/thumb_L", "at": [5, 52], "size": [3, 5] }
     }
   },
   "looks": {
     "shinigami-base": {
       "body": "shinigami",
       "hair": { "art": "shinigami/hair", "at": [0, 1], "size": [32, 30] },
-      "weapon": { "art": "weapon/sword", "at": [1, 53], "size": [7, 27] },
+      "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
       "hair_back": { "art": "shinigami/hair_back", "at": [16, 15], "size": [17, 16] },
-      "scabbard": { "art": "weapon/scabbard", "at": [16, 50], "size": [5, 19] }
+      "scabbard": { "art": "weapon/scabbard", "at": [17, 50], "size": [3, 25] }
     },
     "arrancar-base": {
       "body": "arrancar",
-      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [33, 31] },
-      "weapon": { "art": "weapon/sword", "at": [1, 53], "size": [7, 27] },
-      "hair_back": { "art": "arrancar/hair_back", "at": [16, 15], "size": [18, 16] },
-      "scabbard": { "art": "weapon/scabbard", "at": [16, 50], "size": [5, 19] }
+      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [33, 29] },
+      "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
+      "scabbard": { "art": "weapon/scabbard", "at": [17, 50], "size": [3, 25] }
     }
   },
   "hairFrame": {
@@ -76,5 +77,10 @@
     "rect": [0, 0, 36, 32],
     "keepOut": [11, 22, 6, 6]
   },
-  "outerNote": "겉옷 슬롯(outer_torso·outer_arm_L·outer_arm_R)은 외형에 그림이 있을 때만 그려진다. 지금은 비어 있음"
+  "outerNote": "겉옷 슬롯(outer_torso·outer_arm_L·outer_arm_R)은 외형에 그림이 있을 때만 그려진다. 지금은 비어 있음",
+  "swordAxis": {
+    "note": "칼 그림 안 손잡이 가운데 → 칼끝 (칼날 방향 계산용)",
+    "grip": [4, 5],
+    "tip": [14, 41]
+  }
 }

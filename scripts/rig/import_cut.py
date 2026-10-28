@@ -5,6 +5,11 @@
 부위마다 기본형 그림(--base)에서 색이 가장 많이 겹치는 자리를 찾아 원래 자리(at = 캔버스 왼쪽 위 좌표)로 삼는다.
 출력: public/art/rig/humanoid/<몸>/<부위>.png (꼭 맞게 자른 그림) + src/data/art/rig/humanoid.json 의 bodies.<몸> 갱신.
 head 는 공통 머리라 public/art/rig/humanoid/head_bald.png 로 쓴다(--no-head 면 건너뜀).
+몸 부위가 아닌 이름(전체 시트):
+  hair·hair_back = 이 몸을 쓰는 외형의 머리카락 층(자리는 기본형과 겹치는 곳). 시트에 hair_back 이 없으면 그 외형의 뒷머리를 뺀다(일반머리에 합침).
+  thumb_L = 칼 잡는 손 엄지(앞팔 뼈에 고정, 칼 앞에 그림). 새로 그린 조각이라 자리는 --at thumb_L=x,y.
+  sword = 공통 칼(모든 외형). 손잡이 가운데가 손(weapon 관절)에 오게 놓고, 비스듬히 그린 만큼 쉬는 각도를 보정해서 손에 든 칼 각도는 그대로(곧게 세운 칼 = WEAPON_REST).
+  scabbard = 공통 빈 칼집(모든 외형). 입구(윗줄 가운데)가 허리춤(scabbard 관절)에 온다.
 
 사용:
   python3 scripts/rig/import_cut.py <시트.png> --body arrancar --base docs/design/user-art/shinigami-base-clean/arrancar-base.png
@@ -19,6 +24,8 @@ import numpy as np
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+WEAPON_REST = 60  # 칼을 곧게(손잡이 위·칼날 아래) 그렸을 때 쉬는 각도(사용자 2026-10-27 지정)
+LOOK_LAYERS = ('hair', 'hair_back', 'sword', 'scabbard')
 ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
 RIG_JSON = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
 
@@ -90,6 +97,29 @@ def best_place(part: np.ndarray, base: np.ndarray) -> tuple[int, int, int]:
     return best[1], best[2], best[0]
 
 
+def sword_fit(part: np.ndarray) -> tuple[tuple[int, int], float, tuple[int, int]]:
+    """칼 그림 → (손잡이 가운데 칸, 세로에서 기운 각도(도, +=칼날 끝이 왼쪽), 칼끝 칸).
+    칼 축 = 칸들의 주축. 코등이 = 축에 수직으로 가장 넓은 줄. 손잡이 가운데 = 위 끝과 코등이 사이 가운데."""
+    ys, xs = np.nonzero(part[..., 3] > 0)
+    pts = np.stack([xs + 0.5, ys + 0.5], 1)
+    c = pts.mean(0)
+    ev, vec = np.linalg.eigh(np.cov((pts - c).T))
+    ax = vec[:, -1]
+    if ax[1] < 0:
+        ax = -ax  # 아래(칼날 쪽)를 향하게
+    nrm = np.array([-ax[1], ax[0]])
+    t, w = (pts - c) @ ax, (pts - c) @ nrm
+    rows = np.round(t).astype(int)
+    spread = {r: w[rows == r].max() - w[rows == r].min() for r in set(rows.tolist())}
+    top = t.min()
+    upper = [r for r in spread if r < 0]  # 코등이는 칼 가운데보다 위
+    guard = max(upper, key=lambda r: spread[r])
+    g = c + ax * ((top + guard) / 2)
+    tilt = float(np.degrees(np.arctan2(-ax[0], ax[1])))
+    tip = pts[np.argmax(t)]
+    return (int(g[0]), int(g[1])), tilt, (int(tip[0]), int(tip[1]))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('sheet')
@@ -97,6 +127,7 @@ def main():
     ap.add_argument('--base', required=True)
     ap.add_argument('--parts', default='head,torso,arm_L,arm_R,leg_L,leg_R')
     ap.add_argument('--no-head', action='store_true')
+    ap.add_argument('--at', action='append', default=[], help='이름=x,y 로 자리 지정(새로 그린 조각)')
     a = ap.parse_args()
     sheet = np.array(Image.open(a.sheet).convert('RGBA'))
     base = np.array(Image.open(a.base).convert('RGBA'))
@@ -119,16 +150,52 @@ def main():
     if len(feet) == 2:
         feet.sort(key=lambda p: p[2])
         feet[0][0], feet[1][0] = 'foot_L', 'foot_R'
+    fixed = {k: [int(v) for v in xy.split(',')] for k, xy in (x.split('=') for x in a.at)}
+    bones = {b['id']: b for b in rig['bones']}
+    looks = [l for l in rig['looks'].values() if l['body'] == a.body]
     for name, part, px, py, score in placed:
+        if name in fixed:
+            px, py = fixed[name]
+        if name == 'sword':
+            Image.fromarray(part).save(os.path.join(ART, 'weapon', 'sword.png'))
+            (gx, gy), tilt, tip = sword_fit(part)
+            rig['swordAxis'] = {'note': '칼 그림 안 손잡이 가운데 → 칼끝 (칼날 방향 계산용)', 'grip': [gx, gy], 'tip': list(tip)}
+            hx, hy = bones['weapon']['pivot']
+            bones['weapon']['restRot'] = round(WEAPON_REST - tilt)
+            for l in rig['looks'].values():
+                l['weapon'] = {'art': 'weapon/sword', 'at': [hx - gx, hy - gy], 'size': [part.shape[1], part.shape[0]]}
+            print(f'칼: {part.shape[1]}×{part.shape[0]}, 손잡이 가운데 ({gx}, {gy}), 기운 각도 {tilt:.1f}° → 쉬는 각도 {bones["weapon"]["restRot"]}')
+            continue
+        if name == 'scabbard':
+            Image.fromarray(part).save(os.path.join(ART, 'weapon', 'scabbard.png'))
+            xs = np.nonzero(part[0, :, 3] > 0)[0]
+            wx, wy = bones['scabbard']['pivot']
+            for l in rig['looks'].values():
+                l['scabbard'] = {'art': 'weapon/scabbard', 'at': [wx - int(xs.min() + xs.max()) // 2, wy], 'size': [part.shape[1], part.shape[0]]}
+            print(f'칼집: {part.shape[1]}×{part.shape[0]}')
+            continue
         key = 'head_bald' if name == 'head' else f'{a.body}/{name}'
         if name == 'head' and a.no_head:
             key = body.get('head', {}).get('art', 'head_bald')
         else:
             Image.fromarray(part).save(os.path.join(ART, key + '.png'))
-        body[name] = {'art': key, 'at': [px, py], 'size': [part.shape[1], part.shape[0]]}
+        entry = {'art': key, 'at': [px, py], 'size': [part.shape[1], part.shape[0]]}
+        if name in ('hair', 'hair_back'):
+            for l in looks:
+                l[name] = entry
+        else:
+            body[name] = entry
         print(f'{name}: {part.shape[1]}×{part.shape[0]} → 자리 ({px}, {py}), 겹친 칸 {score}/{int((part[..., 3] > 0).sum())}')
-    json.dump(rig, open(RIG_JSON, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
-    open(RIG_JSON, 'a', encoding='utf-8').write('\n')
+    if 'hair' in names and 'hair_back' not in names:
+        for l in looks:
+            l.pop('hair_back', None)
+        print('뒷머리 없음 → 일반머리에 합친 것으로 보고 외형에서 뺌')
+    if 'thumb_L' in names:
+        ids = [x['id'] for x in rig['slots']]
+        if 'thumb_L' not in ids:
+            rig['slots'].insert(ids.index('outer_arm_L') + 1, {'id': 'thumb_L', 'bone': 'arm_L'})  # 관절 없이 앞팔 뼈에 고정
+    from feet_weapon import dump
+    dump(rig)
 
 
 if __name__ == '__main__':
