@@ -43,8 +43,9 @@ import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import { logoMark } from './bha/logo';
-import { bondIdleBonus, bondStage, CARE_STATUS_NAMES, deathHoursOf, dyingLeftMs, reviveEvLossOf } from '../engine/nest';
-import { BOND_STAGE_NAMES, CARE_STATUS_HINTS, dyingClock } from './bha/roomLogic';
+import { bondStage, CARE_STATUS_NAMES, dyingLeftMs } from '../engine/nest';
+import { BOND_STAGE_NAMES, dyingClock } from './bha/roomLogic';
+import { statusInfo, type StatusInfoKind } from './bha/statusInfo';
 import type { VariantMods } from '../engine/expedition';
 
 /** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax (치명 특성이 있는 몸은 상한 + 그 특성 값, GDD 45장 1번 — 전투와 같은 규칙) */
@@ -85,20 +86,20 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
       // 설명 글은 이름 옆 ⓘ 창 (C.176, GDD 104장 2)
       bond: {
         value: n.bond, max: BALANCE.provisional.nest.bond.max, stage: BOND_STAGE_NAMES[bondStage(n.bond)],
-        info: [`먹이·재우기·쓰다듬기로만 오른다(하루 최대 +${BALANCE.provisional.nest.bond.dailyMax})`, `높을수록 빈사에서 버티는 시간 ${Math.round(deathHoursOf(n.bond) * 10) / 10}시간 · 부활 노력치 손실 ${Math.round(reviveEvLossOf(n.bond) * 100)}% · 대기 보상 +${Math.round(bondIdleBonus(n.bond) * 100)}%`],
       },
     }));
     /** 돌봄 상태 한 줄: 아이콘 · 이름(· 남은 시간) · ⓘ(풀리는 법·효과) */
-    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, lines: string[]) => {
+    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind) => {
       const row = h('p', `bha-small bha-nest__state bha-nest__state--${kind}`);
-      row.append(icon(iconId), ' ', h('b', '', title), infoTip(title.split(' · ')[0]!, lines));
+      row.append(icon(iconId), ' ', h('b', '', title), infoTip(title.split(' · ')[0]!, () => statusInfo(info, faction)));
       return row;
     };
+    // C.185 (GDD 111장 4): 설명은 상태 ⓘ 창과 같은 문구 (손해 → 풀리는 법)
     const states = [
-      ...(n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.dead, ['방에서 [부활]을 해야 다시 시작한다.'])] : []),
-      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, [CARE_STATUS_HINTS.collapsed, `모험은 체력 ${Math.round(BALANCE.provisional.nest.care.dying.hpFraction * 100)}%·공격·블록 속도와 보상 절반`])] : []),
-      ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, [`풀리는 법: ${CARE_STATUS_HINTS.weak}`, `원정 전투 최대 체력 −${Math.round(BALANCE.provisional.nest.care.weakMaxHpCut * 100)}% · 대기 보상 ×${BALANCE.provisional.idle.weakenedRate}`])] : []),
-      ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, [`풀리는 법: ${CARE_STATUS_HINTS.tired}`, `블록 생성 간격 +${Math.round(BALANCE.provisional.nest.care.tiredSpawnSlow * 100)}%`])] : []),
+      ...(n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.dead, 'dead')] : []),
+      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, 'collapsed')] : []),
+      ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, 'weak')] : []),
+      ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired')] : []),
     ];
     weakSlot.replaceChildren(...states);
   };

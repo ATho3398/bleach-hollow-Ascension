@@ -5,21 +5,32 @@ import { el, icon } from './dom';
 import { getOverlayHost, registerLayer } from './overlayHost';
 import { elementLocalRect } from './viewport';
 
-/** 설명 내용: 한 줄 글, 여러 줄(목록), 또는 [소제목, 줄들] 묶음 */
-/** mark = 그 묶음에서 강조할 줄(지금 내 수치 구간, C.176 GDD 109장 2) */
-export type InfoBody = string | string[] | { title: string; lines: string[]; mark?: number }[];
+/** 소제목 + 줄들. mark = 그 묶음에서 강조할 줄(지금 내 수치 구간, C.176 GDD 109장 2) */
+export interface InfoGroup {
+  title: string;
+  lines: string[];
+  mark?: number;
+}
+/** 설명 창 한 장 (C.185, GDD 111장 4): 한 줄 요약('~다') → 소제목 묶음들 */
+export interface InfoDoc {
+  lead: string;
+  groups: InfoGroup[];
+}
+/** 설명 내용: 한 줄 글, 여러 줄(목록), [소제목, 줄들] 묶음, 또는 요약 + 묶음 */
+export type InfoBody = string | string[] | InfoGroup[] | InfoDoc;
 
 let openPop: { close: () => void } | null = null;
 
 function bodyNodes(body: InfoBody): HTMLElement[] {
   if (typeof body === 'string') return [el('p', 'bha-pop__text', body)];
+  if (!Array.isArray(body)) return [el('p', 'bha-pop__text', body.lead), ...bodyNodes(body.groups)];
   if (body.length === 0) return [];
   if (typeof body[0] === 'string') {
     const ul = el('ul', 'bha-pop__list');
     for (const t of body as string[]) ul.append(el('li', '', t));
     return [ul];
   }
-  return (body as { title: string; lines: string[]; mark?: number }[]).flatMap((g) => {
+  return (body as InfoGroup[]).flatMap((g) => {
     const ul = el('ul', 'bha-pop__list');
     g.lines.forEach((t, i) => ul.append(el('li', i === g.mark ? 'is-now' : '', i === g.mark ? `◀ 지금 · ${t}` : t)));
     return [el('b', 'bha-pop__sub', g.title), ul];

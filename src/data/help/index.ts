@@ -1,6 +1,6 @@
 // 도움말·튜토리얼 텍스트 데이터 (GDD 14-2, C.19). 본문은 템플릿이고 {자리표시자}는 종족 설정(FactionConfig)·밸런스 값으로 치환한다.
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
-import { riskText } from './riskText';
+import { riskText, riskZones, stabilityZones, zoneLines } from './riskText';
 import { BALANCE } from '../../config/balance';
 import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
 import { fixParticles } from '../../engine/josa';
@@ -114,11 +114,15 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.critMultiplier = String(COMBAT.critMultiplier);
   // 광기·자아 설명 (C.141, GDD 84장 9): 손해를 숫자로 — 수치는 BALANCE, 이름은 종족 설정 (ui/riskText.ts)
   const rt = riskText(f);
-  vars.riskUpText = rt.riskUp.join(' · ');
-  vars.riskDownText = rt.riskDown.join(' · ');
-  vars.riskLossText = rt.riskLoss.join(' ');
-  vars.stabilityLossText = rt.stabilityLoss.join(' ');
-  vars.stabilityMoveText = rt.stabilityMove.join(' · ');
+  // C.185 (GDD 111장 4): 상태 ⓘ 창과 같은 구조 — 한 줄 요약 → 하는 일 → 구간별 손해 → 오르내림, 줄마다 줄바꿈
+  vars.riskLead = rt.riskLead;
+  vars.riskDoesText = rt.riskDoes.join('\n');
+  vars.riskZoneText = zoneLines(riskZones(f)).join('\n');
+  vars.riskMoveText = [...rt.riskUp, ...rt.riskDown].join('\n');
+  vars.stabilityLead = rt.stabilityLead;
+  vars.stabilityDoesText = rt.stabilityDoes.join('\n');
+  vars.stabilityZoneText = zoneLines(stabilityZones(f)).join('\n');
+  vars.stabilityMoveText = rt.stabilityMove.join('\n');
   vars.tier4 = f.tierNames[3];
   vars.tier5 = f.tierNames[4];
   return vars;

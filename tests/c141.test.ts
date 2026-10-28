@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { getFaction } from '../src/data/factions';
 import { BALANCE } from '../src/config/balance';
-import { riskText } from '../src/data/help/riskText';
+import { riskText, riskZones, zoneLines } from '../src/data/help/riskText';
 import { GLOSSARY, helpVars, renderHelpText } from '../src/data/help';
 import { cellAction, handCounts } from '../src/ui/bha/road';
 import { presetPreview } from '../src/ui/bha/tilePresets';
@@ -17,11 +17,11 @@ describe('C.141', () => {
     for (const id of ['hollow', 'shinigami']) {
       const f = getFaction(id);
       const t = riskText(f);
-      const all = [...t.riskLoss, ...t.riskUp, ...t.riskDown, ...t.stabilityLoss, ...t.stabilityMove].join('\n');
+      const all = [t.riskTip, ...t.riskDoes, ...zoneLines(riskZones(f)), ...t.riskUp, ...t.riskDown, ...t.stabilityDoes, ...t.stabilityMove].join('\n');
       for (const n of [RX.frenzyDamageDealt * 100 - 100, RX.frenzyDamageTaken * 100 - 100, RX.frenzyConditionLoss, RX.breakthroughStabilityLoss, RX.riskAfterBreakthrough, RX.perVoidBlock, RX.releaseRelief, RX.restRelief, RX.stabilityStart]) expect(all).toContain(String(n));
       expect(all).toContain(`+${Math.round(RX.breakthroughSpawnBonus * 100)}%`);
-      expect(t.riskLoss[0]).toContain('직접적인 손해는 없다');
-      expect(t.stabilityLoss[0]).toContain('해방 게이지');
+      expect(t.riskDoes[0]).toContain('직접 손해가 없고');
+      expect(t.stabilityDoes[0]).toContain('해방 게이지');
       expect(all).toContain(f.riskGaugeName);
       expect(all).toContain(f.stabilityName);
     }
