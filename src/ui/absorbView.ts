@@ -5,7 +5,7 @@ import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
 import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbModeRule, absorbRisk, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
+import { absorbModeRule, absorbRisk, enhanceAttackBonus, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
 import { absorbEvOf, chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
@@ -253,7 +253,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     // C.176 (GDD 106장 1): 카드마다 지금 몇 강인지 — 안 가진 블록 = '새 블록', 가진 블록 = 'n강 → n+1강'(고르면 강화만). 강화는 속성 단위(84장 8)
     const lv = enhanceLevel(exp.build, t.element);
     const step = lv >= AX.enhance.max ? `${AX.enhance.max}강 최대` : `${lv}강 → ${lv + 1}강`;
-    const have = exp.build.owned.includes(id);
+    const have = ownsTraitBlock(exp.build, id);
     const badge = chip(have ? step : '새 블록');
     badge.dataset.candStep = have ? 'owned' : 'new';
     top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), badge, ...traitTags(id));
@@ -288,7 +288,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
         first ??= c;
         c.onclick = () => {
           // 가진 블록은 슬롯이 가득이어도 교체 없이 강화만 (106장 1)
-          if (isFull(exp.build) && !exp.build.owned.includes(id)) {
+          if (isFull(exp.build) && !ownsTraitBlock(exp.build, id)) {
             picked = id;
             step = 'replace';
             render();

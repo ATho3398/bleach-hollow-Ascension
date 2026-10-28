@@ -151,7 +151,8 @@ describe('트리 판정', () => {
     // 특수끼리면 흡수 수 많은 쪽 하나
     expect(ids(absorbs(atTier(2), { poison: 6, kyo: 5 }))).toEqual(['h4:special:poison']);
     // 순수형: 장착 최다 노멀 + 노멀 흡수 40%↑ + 컨디션 양호
-    const nb = buildWith('t-normal-a', 't-normal-b');
+    const nb = buildWith(); // C.184: 노멀 skill 특성은 기본 블록(GDD 111장 1) — 빈 슬롯 + 노멀 강화 = 노멀 장착
+    nb.enhance = { normal: 6 };
     expect(ids(absorbs(atTier(2), { normal: 6 }), nb)).toEqual(['h4:pure']);
     expect(ids(absorbs(atTier(2), { normal: 6 }), nb, { condition: H.pureCondition - 1 })).toEqual([]);
     expect(ids(absorbs(atTier(2), { normal: 6 }), b)).toEqual([]);

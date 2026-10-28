@@ -25,7 +25,7 @@ const RX = BALANCE.provisional.risk;
 function atAbsorb(ev: Partial<Record<StatId, number>> = { atk: 2 }) {
   const s = newSaveData('hollow', 1);
   const e = createExpedition({ factionId: 'hollow', seed: 7, hunger: 60, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
-  const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly)!;
+  const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly && x.element !== 'normal')!; // C.184: 노멀 skill 특성은 기본 블록(GDD 111장 1)이라 장착되지 않는다 — 속성 적으로
   const own = TRAITS.filter((t) => t.element === enemy.element && !t.rare && !t.boss).map((t) => t.id).slice(0, 2);
   const offer: AbsorbOffer = { enemyId: enemy.id, element: enemy.element, ev, rare: false, elite: false, strength: 30, candidates: own, reasons: ['victory'], chain3Count: 0, weakChain3Count: 0, finisherElement: null };
   e.phase = 'absorb';

@@ -21,7 +21,7 @@ const fxOf = (id: string) => abilityEffectsOf(formAbilitiesOf(getForm(id), zeroS
 /** 흡수 6칸 몸 (5단계에 갓 닿은 몸과 같은 칸 수) */
 const build6 = (): Partial<CombatParams> => {
   const b = newBuild();
-  for (const id of ['t-normal-a', 't-water-a', 't-earth-a', 't-normal-b', 't-water-b', 't-normal-c']) gainTrait(b, id);
+  for (const id of ['t-fire-a', 't-water-a', 't-earth-a', 't-fire-b', 't-water-b', 't-fire-c']) gainTrait(b, id); // C.184: 노멀 skill 특성은 기본 블록(GDD 111장 1)
   return buildCombatParams(b, 'hollow');
 };
 const mk = (extra: Partial<CombatParams>, seed = 1, enemy = normal) => createCombat(seed, { enemy, params: { ...STILL, ...extra } });

@@ -2,7 +2,7 @@
 // 모두 임시 데이터(provisional)를 쓴다.
 
 import { BALANCE } from '../../config/balance';
-import { getTrait } from '../../data/traits';
+import { getTrait, TRAITS } from '../../data/traits';
 import { NORMAL_ELEMENT } from '../../data/elements';
 import type { AttackCategory, PassiveStat } from '../../data/schema';
 import { getFaction } from '../../data/factions';
@@ -86,11 +86,30 @@ export function isFull(b: BuildState): boolean {
   return emptySlot(b) < 0;
 }
 
+/** 노멀 skill 특성인가 (GDD 111장 1, C.184): 노멀 조·탄·교(희귀 포함)는 기본 블록 하나가 그 역할이라 슬롯·보유에 들지 않는다 */
+export function isBasicBlockTrait(traitId: string): boolean {
+  const t = TRAITS.find((x) => x.id === traitId);
+  return t !== undefined && t.kind === 'skill' && t.element === NORMAL_ELEMENT;
+}
+
+/** 그 특성 블록을 이미 가졌나 (GDD 111장 1): 보유 목록에 있거나 노멀 skill 특성(기본 블록) — 고르면 새 블록 없이 그 속성 강화만 */
+export function ownsTraitBlock(b: Pick<BuildState, 'owned'>, traitId: string): boolean {
+  return b.owned.includes(traitId) || isBasicBlockTrait(traitId);
+}
+
+/** 보유·슬롯·장착 순서에서 노멀 skill 특성을 뺀다 (GDD 111장 2 — 옛 세이브·테스트 패널 정리). 슬롯 칸은 비운다 */
+export function dropBasicBlockTraits(b: BuildState): void {
+  const keep = (id: unknown): boolean => typeof id !== 'string' || !isBasicBlockTrait(id);
+  b.owned = b.owned.filter(keep);
+  b.slots = b.slots.map((id) => (id !== null && !keep(id) ? null : id));
+  b.equipOrder = (b.equipOrder ?? []).filter(keep);
+}
+
 /** 새 특성을 얻는다: 보유 목록에 더하고, 빈 슬롯이 있으면 장착, 가득 차 있으면 replaceSlot 의 특성과 교체(옛 특성은 보유에 남음). 교체 슬롯이 없으면 포기(얻지 않음).
  *  (해방 블록 슬롯은 C.167 에 폐지 — GDD 98장 B) */
 export function gainTrait(b: BuildState, traitId: string, replaceSlot?: number | null): BuildResult {
   getTrait(traitId);
-  if (b.owned.includes(traitId)) return { ok: false, reason: '이미 가진 특성이다' };
+  if (ownsTraitBlock(b, traitId)) return { ok: false, reason: isBasicBlockTrait(traitId) ? '기본 블록이 그 역할이다' : '이미 가진 특성이다' };
   const free = emptySlot(b);
   if (free >= 0) {
     b.owned.push(traitId);

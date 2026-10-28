@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getTrait } from '../src/data/traits';
+import { FORM_TABLE } from '../src/data/evolution';
 import { advance, chooseAbsorb, conditionFloor, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
 import { foodOverflowGold, newFoodStock, settleFood } from '../src/engine/food';
 import { expeditionEndVitals } from '../src/engine/nest';
@@ -68,6 +69,11 @@ describe('C.95 ② 테스트 모드 기본 특성 (GDD 42장 2번)', () => {
   for (const fid of ['hollow', 'shinigami']) {
     it(`${fid}: 전체 해금 새 세이브는 칸을 공격 특성으로 채운다 (C.136: 막기·회복 속성 특성 삭제 — GDD 84장 7번)`, () => {
       const save = newTestSave(fid, 1);
+      // C.184 (GDD 111장 1): 노멀 몸이면 기본 블록이 그 역할이라 비워 둔다 — 불 몸으로 채운다
+      expect(save.build.slots.every((x) => x === null)).toBe(true);
+      const fire = FORM_TABLE.find((f) => f.elements?.[0] === 'fire')!;
+      save.evolution.formId = fire.id;
+      fillDefaultTraits(save);
       const roles = save.build.slots.filter((x): x is string => x !== null).map((id) => getTrait(id).role);
       expect(save.build.slots.every((x) => x !== null)).toBe(true);
       expect(roles.every((r) => r === 'attack')).toBe(true);

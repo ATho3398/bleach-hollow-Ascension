@@ -412,8 +412,8 @@ describe('약점·공허·시간 제한', () => {
     expect(dmg('t-water-a')).toBeCloseTo(base * BALANCE.elements.strong);
     expect(dmg('t-earth-a')).toBeCloseTo(base * BALANCE.elements.weak);
     expect(dmg('t-fire-a')).toBeCloseTo(base);
-    // 내 캐릭터 속성이 노멀이면 노멀 블록에 자기 속성 보정
-    expect(dmg('t-normal-a')).toBeCloseTo(base * BALANCE.elements.stab);
+    // 내 캐릭터 속성과 같은 속성 블록에 자기 속성 보정 (C.184: 노멀 skill 특성은 기본 블록이라 장착되지 않아 불 몸으로 본다 — GDD 111장 1)
+    expect(dmg('t-fire-a', { playerElements: ['fire'] })).toBeCloseTo(base * BALANCE.elements.stab);
     // 내 힘·지능이 두 배면 (특성 분류가 종족 없이 혼합이라) 피해 두 배
     const ref = 50;
     expect(dmg('t-fire-a', { refStat: ref, playerStats: { hp: ref, atk: ref * 2, int: ref * 2, def: ref, spr: ref, spd: ref } })).toBeCloseTo(base * 2);

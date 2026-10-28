@@ -9,19 +9,19 @@ const read = (p: string) => readFileSync(p, 'utf8');
 const hollow = getFaction('hollow');
 const make = (): BuildState => {
   const b = newBuild();
-  for (const id of ['t-normal-a', 't-fire-a', 't-water-b', 't-earth-c']) gainTrait(b, id, 0);
+  for (const id of ['t-water-a', 't-fire-a', 't-water-b', 't-earth-c']) gainTrait(b, id, 0);
   return b;
 };
 
 describe('C.149 칸 배치', () => {
   it('끌어다 놓기: 보유 카드 → 빈 본체 칸에 장착, 칸 → 칸은 자리를 바꾼다', () => {
     const b = newBuild();
-    for (const id of ['t-normal-a', 't-fire-a']) gainTrait(b, id, 0);
-    b.slots = ['t-normal-a', 't-fire-a', null];
-    expect(placeTrait(b, { area: 'body', index: 2 }, 't-normal-a', { area: 'body', index: 0 }).ok).toBe(true);
-    expect(b.slots).toEqual([null, 't-fire-a', 't-normal-a']);
-    placeTrait(b, { area: 'body', index: 1 }, 't-normal-a', { area: 'body', index: 2 });
-    expect(b.slots).toEqual([null, 't-normal-a', 't-fire-a']);
+    for (const id of ['t-water-a', 't-fire-a']) gainTrait(b, id, 0);
+    b.slots = ['t-water-a', 't-fire-a', null];
+    expect(placeTrait(b, { area: 'body', index: 2 }, 't-water-a', { area: 'body', index: 0 }).ok).toBe(true);
+    expect(b.slots).toEqual([null, 't-fire-a', 't-water-a']);
+    placeTrait(b, { area: 'body', index: 1 }, 't-water-a', { area: 'body', index: 2 });
+    expect(b.slots).toEqual([null, 't-water-a', 't-fire-a']);
   });
   it('칸 → 목록(빼기): 특성은 보유에 남고 칸만 빈다', () => {
     const b = make();
@@ -40,7 +40,7 @@ describe('C.149 칸 배치', () => {
 
 describe('C.149 블록 이름·아이콘·문구', () => {
   it('블록 이름 = 조·탄·교 / 막기·회복 (속성 이름 없음), 계열·역할 아이콘', () => {
-    expect(traitBlockName(hollow, 't-normal-a')).toBe(hollow.families.find((f) => f.id === 'family-a')!.abbr);
+    expect(traitBlockName(hollow, 't-water-a')).toBe(hollow.families.find((f) => f.id === 'family-a')!.abbr);
     expect(traitBlockName(hollow, 't-fire-a')).not.toContain('불');
     expect(traitIconId(hollow, 't-fire-a')).toMatch(/^i-fx-/);
     expect(traitBrief(hollow, 't-fire-a')).toContain('위력');

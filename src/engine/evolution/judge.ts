@@ -9,7 +9,7 @@ import { fusionPairs } from '../../data/evolution/build';
 import { topStat } from '../../data/evolution/generate';
 import { getTrait } from '../../data/traits';
 import { STAT_IDS, type AttackCategory, type FormDef, type StatId } from '../../data/schema';
-import { categoryCounts, elementCounts, equipRecency, familyCategory, type BuildState } from '../absorb/build';
+import { categoryCounts, elementCounts, enhanceLevel, equipRecency, familyCategory, type BuildState } from '../absorb/build';
 import { createRng, nextFloat } from '../rng';
 import type { EvolutionState } from './evolution';
 
@@ -112,7 +112,8 @@ function hidden(formId: string, excess: number): EvolutionCandidate {
 
 /** 장착 특성이 없거나 돌보기 실패(허기·컨디션 나쁨) → 바스트로데 실패형 강제 */
 export function isCareFailure(ctx: JudgeContext): boolean {
-  const any = ctx.build.slots.some((id) => id !== null);
+  // C.184 (GDD 111장 1): 노멀 skill 특성은 기본 블록이라 슬롯에 들지 않는다 — 노멀을 한 번이라도 흡수했으면(노멀 강화 1↑) 기본 블록을 장착한 것으로 본다
+  const any = ctx.build.slots.some((id) => id !== null) || enhanceLevel(ctx.build, NORMAL_ELEMENT) > 0;
   return !any || ctx.hunger >= H.failHunger || ctx.condition <= H.failCondition;
 }
 

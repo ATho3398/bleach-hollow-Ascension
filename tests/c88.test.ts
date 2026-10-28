@@ -189,7 +189,7 @@ describe('테스트 패널 값 넣기 (38-4)', () => {
 
   it('특성 고르기: 없는 특성·중복은 빈칸, 가진 목록·장착 순서 갱신 · 고유 특성', () => {
     const s = newSaveData(fid);
-    const [a, b] = [TRAITS[0]!.id, TRAITS[1]!.id];
+    const [a, b] = TRAITS.filter((t) => t.element !== 'normal').map((t) => t.id) as [string, string]; // C.184: 노멀 skill 특성은 비워 둔다(GDD 111장 1)
     expect(setTraitSlots(s, [a, a, 'nope'])).toEqual([a, null, null]);
     expect(setTraitSlots(s, [b, null, a])).toEqual([b, null, a]);
     expect(s.build.owned).toEqual(expect.arrayContaining([a, b]));

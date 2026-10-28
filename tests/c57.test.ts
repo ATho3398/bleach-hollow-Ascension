@@ -242,7 +242,7 @@ describe('③ 이벤트 타일', () => {
   });
   it('제단: 리스크 +15, 장착 특성 위력 +10% (전투 블록 위력에 반영)', () => {
     const e = exp();
-    const skill = TRAITS.find((t) => t.kind === 'skill' && t.role === 'attack' && !t.rare)!;
+    const skill = TRAITS.find((t) => t.kind === 'skill' && t.role === 'attack' && !t.rare && t.element !== 'normal')!; // C.184: 노멀 = 기본 블록
     gainTrait(e.build, skill.id);
     road(e, { 4: 'event-altar', 5: 'prey-nest-a' });
     stepTo(e, 4);

@@ -26,6 +26,7 @@ import { pickLook } from './evolution/tierLook';
 import { clampDifficulty, clampStreak, enemyAtDifficulty, MAX_DIFFICULTY, streakEnemyFactor } from './difficulty';
 import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from './evolution';
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
+import { dropBasicBlockTraits, isBasicBlockTrait } from './absorb/build';
 import { FOOD_IDS, type FoodId } from './faction';
 
 /** 테스트 칸 저장 키 (38-2). 진짜 세이브 키 `SAVE_KEY…` 는 모두 이 앞부분으로 바뀐다 (슬롯 1 = 이 키 그대로) */
@@ -220,7 +221,8 @@ export function fillDefaultTraits(save: SaveData): number {
   const TM = BALANCE.provisional.testMode;
   const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : null;
   const element = form?.elements?.[0] ?? TM.fallbackElement;
-  const usable = (el: string, role: string) => TRAITS.filter((t) => t.kind === 'skill' && !t.rare && !t.boss && t.element === el && t.role === role);
+  // 노멀 skill 특성은 기본 블록이 그 역할이라 채우지 않는다 (GDD 111장 1) — 노멀 몸이면 비워 둔다
+  const usable = (el: string, role: string) => TRAITS.filter((t) => t.kind === 'skill' && !t.rare && !t.boss && t.element === el && t.role === role && !isBasicBlockTrait(t.id));
   const picks: string[] = [];
   const take = (role: string): void => {
     const t = [...usable(element, role), ...usable(TM.fallbackElement, role)].find((x) => !picks.includes(x.id));
@@ -324,12 +326,13 @@ export function setTraitSlots(save: SaveData, ids: readonly (string | null)[]): 
   const used = new Set<string>();
   b.slots = b.slots.map((_, i) => {
     const id = ids[i] ?? null;
-    if (id === null || !known.has(id) || used.has(id)) return null;
+    if (id === null || !known.has(id) || used.has(id) || isBasicBlockTrait(id)) return null;
     used.add(id);
     return id;
   });
   b.owned = [...new Set([...b.owned, ...used])];
   b.equipOrder = b.slots.filter((x): x is string => x !== null);
+  dropBasicBlockTraits(b);
   return b.slots;
 }
 
