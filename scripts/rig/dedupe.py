@@ -14,7 +14,8 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from feet_weapon import RIG_JSON, dump  # noqa: E402
 
-ART = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'public', 'art', 'rig', 'humanoid')
+from paths import DRAFT_ART  # noqa: E402
+ART = DRAFT_ART
 
 
 def same(p, q):

@@ -12,7 +12,9 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RIG_JSON = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import DRAFT_RIG_JSON  # noqa: E402
+RIG_JSON = DRAFT_RIG_JSON  # 고정 = 작업본에만 (게임 넣기는 promote.py)
 
 arg = sys.argv[1]
 data = json.load(open(arg, encoding='utf-8')) if os.path.exists(arg) else json.loads(arg)

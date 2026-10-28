@@ -31,8 +31,11 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 WEAPON_REST = 60  # 칼을 곧게(손잡이 위·칼날 아래) 그렸을 때 쉬는 각도(사용자 2026-10-27 지정)
 LOOK_LAYERS = ('hair', 'hair_back', 'sword', 'scabbard')
-ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
-RIG_JSON = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import DRAFT_ART, DRAFT_RIG_JSON, GAME_ART, GAME_RIG_JSON  # noqa: E402
+ART = DRAFT_ART
+RIG_JSON = DRAFT_RIG_JSON  # 작업본 (게임본은 promote.py)
 
 
 def segments(op: np.ndarray) -> list[tuple[int, int]]:

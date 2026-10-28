@@ -1,5 +1,6 @@
-// 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓴다
-import { HUMANOID, MOTIONS, bodyBones, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, samplePose, type BodyJoints, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+// 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓰고, 값은 작업본(draft.ts, GDD 96장 36)
+import { DRAFT as HUMANOID, DRAFT_MOTIONS as MOTIONS } from './draft';
+import { bodyBones, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, samplePose, type BodyJoints, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 
 declare const ART_MAP: Record<string, string>;
 /** claude.ai 아티팩트 런타임(있을 때만). db = 편집기 값을 서버에 저장 — 다른 기기·Claude 가 읽는다 */
@@ -351,7 +352,7 @@ $('fix').onclick = async () => {
     const c = await claude!.use('comments').catch(() => null);
     const can = c ? await c.canSendToClaude().catch(() => 'off') : 'off';
     if (c && can === 'available') {
-      await c.sendToClaude({ anchor: await c.anchorFor(btn), text: '고정: 편집기 값(서버 rig/fixed)을 게임 데이터에 넣어 주세요.' });
+      await c.sendToClaude({ anchor: await c.anchorFor(btn), text: '고정: 편집기 값(서버 rig/fixed)을 작업본에 넣어 주세요. (게임에는 아직 넣지 않음)' });
       setSync('고정 저장 + Claude 에게 보냄 — 반영되면 댓글로 답이 와요');
     } else {
       setSync('고정 저장됨 — Claude 에게 "고정해"라고 말해 주세요(지금은 바로 못 보냄)');

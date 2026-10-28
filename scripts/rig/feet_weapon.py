@@ -22,8 +22,11 @@ import numpy as np
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
-RIG_JSON = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import DRAFT_ART, DRAFT_RIG_JSON, GAME_ART, GAME_RIG_JSON  # noqa: E402
+ART = DRAFT_ART
+RIG_JSON = DRAFT_RIG_JSON  # 작업본 (게임본은 promote.py)
 FOOT_COLORS = {(0x0E, 0x0A, 0x10), (0xD5, 0x8C, 0x6F), (0xF9, 0xF1, 0xED)}
 
 # 기본 칼 (세로, 손잡이 위·칼날 아래). K 외곽선, H 손잡이 감기, h 감기 무늬, G 코등이, g 코등이 그림자, B 칼날, b 칼날 그림자(등), W 날 끝 빛

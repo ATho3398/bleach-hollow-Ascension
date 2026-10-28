@@ -20,8 +20,11 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
-RIG = json.load(open(os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json'), encoding='utf-8'))
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import DRAFT_ART, DRAFT_RIG_JSON, GAME_ART, GAME_RIG_JSON  # noqa: E402
+ART = DRAFT_ART
+RIG = json.load(open(DRAFT_RIG_JSON, encoding='utf-8'))  # 가이드 = 작업본
 PAD = 3   # 칸 사방 여유(관절 겹침·삐져나온 곳)
 GAP = 2   # 칸 사이
 TOP = 1   # 아래 테두리 자리
