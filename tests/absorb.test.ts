@@ -750,7 +750,7 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
     const { absorbRuleText, weaknessText } = await import('../src/ui/absorbView');
     const hollow = getFaction('hollow');
     const rule = absorbRuleText(hollow, { element: 'poison' });
-    expect(rule).toContain(`이기면 언제나 ${hollow.absorbActionName} 가능`);
+    expect(rule).toContain(`이기면 언제나 ${hollow.absorbActionName}할 수 있다`);
     expect(rule).toContain('이미 가진 블록'); // C.176 (106장 1): 가진 속성도 후보 — 가진 블록은 강화만
     expect(rule).toContain('강화만');
     expect(rule).not.toContain('조건');

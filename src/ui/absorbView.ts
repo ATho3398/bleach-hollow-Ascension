@@ -27,7 +27,7 @@ export function weaknessText(enemy: Pick<EnemyDef, 'element'>, factionId: string
 /** 흡수 안내 (C.125, GDD 70·71장): 조건 없이 이기면 언제나, 특성 후보는 그 적의 속성 특성에서만 */
 export function absorbRuleText(faction: FactionConfig, enemy: Pick<EnemyDef, 'element'>): string {
   // C.176 (GDD 106장 1): 가진 속성이어도 그 속성 블록이 후보로 뜬다 — 가진 블록을 고르면 새 블록 없이 강화만
-  return `이기면 언제나 ${faction.absorbActionName} 가능. 후보는 그 속성(${elementName(enemy.element, faction.id)}) 블록 — 안 가진 블록은 새 블록 + 강화, 이미 가진 블록(${elementName(NORMAL_ELEMENT, faction.id)}은 기본 블록)은 강화만 오른다.`;
+  return `이기면 언제나 ${faction.absorbActionName}할 수 있다. 후보는 그 속성(${elementName(enemy.element, faction.id)}) 블록이다. 안 가진 블록은 새 블록 + 강화, 이미 가진 블록(${elementName(NORMAL_ELEMENT, faction.id)}은 기본 블록)은 강화만 오른다.`;
 }
 
 /** 한 단계의 두 열 내용: 왼쪽(설명·선택 상대 정보) / 오른쪽(고를 것·조작) — 가로 LCD (T-2) */
