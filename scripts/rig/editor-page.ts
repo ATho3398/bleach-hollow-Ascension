@@ -17,7 +17,7 @@ declare const claude: {
 const FIX_DOC = 'rig/fixed';
 const DB_DOC = 'rig/editor';
 const K = 6;
-const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '일반머리', hair_back: '뒷머리', outer_torso: '겉옷(몸)', outer_arm_L: '겉옷(왼팔)', outer_arm_R: '겉옷(오른팔)', foot_L: '왼발', foot_R: '오른발', weapon: '칼', scabbard: '칼집', thumb_L: '엄지', forearm_R: '오른 아래팔' };
+const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른 위팔', leg_L: '왼다리', leg_R: '오른다리', hair: '일반머리', hair_back: '뒷머리', outer_torso: '겉옷(몸)', outer_arm_L: '겉옷(왼팔)', outer_arm_R: '겉옷(오른팔)', foot_L: '왼발', foot_R: '오른발', weapon: '칼', scabbard: '칼집', thumb_L: '엄지', forearm_R: '오른 아래팔' };
 // 저장 칸 이름은 바꾸지 않는다(바꾸면 사용자가 맞춘 값이 사라진다). 옛 이름(v1~v3)에 남은 값도 읽어 온다
 const STORE = 'bha-rig-editor';
 const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
@@ -135,12 +135,38 @@ function setPivot(id: string, p: [number, number]) { (joints().pivots ??= {})[id
 function baseRot(id: string) { return (rig.bodyJoints?.[curBody()] as BodyJoints | undefined)?.rot?.[id] ?? 0; }
 function boneOfSel() { return rig.slots.find((s) => s.id === sel)?.bone ?? sel; }
 
+/** 지금 그려진 층(앞뒤 순서대로) — 미리보기를 눌러 부위 고르기용 */
+let drawn: { slot: string; m: number[]; img: HTMLImageElement; size: [number, number] }[] = [];
+const alphaCache = new Map<string, ImageData>();
+/** 캔버스 좌표 (x, y) 에서 가장 앞에 보이는 부위(투명 칸은 지나침) */
+function slotAt(x: number, y: number): string | null {
+  for (let i = drawn.length - 1; i >= 0; i--) {
+    const { slot, m, img, size } = drawn[i]!;
+    const det = m[0]! * m[3]! - m[1]! * m[2]!;
+    if (!det) continue;
+    const dx = x - m[4]!, dy = y - m[5]!;
+    const u = (m[3]! * dx - m[2]! * dy) / det;
+    const v = (-m[1]! * dx + m[0]! * dy) / det;
+    if (u < 0 || v < 0 || u >= size[0] || v >= size[1]) continue;
+    let data = alphaCache.get(img.src);
+    if (!data && img.complete && img.naturalWidth) {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const ctx = c.getContext('2d');
+      if (ctx) { ctx.drawImage(img, 0, 0); data = ctx.getImageData(0, 0, c.width, c.height); alphaCache.set(img.src, data); }
+    }
+    if (!data || data.data[(Math.floor(v) * data.width + Math.floor(u)) * 4 + 3]! > 0) return slot;
+  }
+  return null;
+}
+
 function draw() {
   stage.querySelectorAll('img, .dot').forEach((n) => n.remove());
   let pose: Pose = {};
   if (motion) pose = samplePose(rig, MOTIONS[motion]!, mt);
   else if (testRot) pose = { [boneOfSel()]: { rot: testRot, x: 0, y: 0 } };
   const mats = boneMatrices(rig, pose, curBody());
+  drawn = [];
   for (const l of lookLayers(rig, look)) {
     const img = document.createElement('img');
     img.src = ART_MAP[`art/rig/humanoid/${l.art}.png`] ?? '';
@@ -150,6 +176,7 @@ function draw() {
     const m = layerMatrix(rig, mats, l, motion ? MOTIONS[motion] : undefined);
     img.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * K},${m[5] * K})`;
     stage.append(img);
+    drawn.push({ slot: l.slot, m, img, size: l.size });
   }
   if ((sel === 'hair' || sel === 'hair_back') && !motion) {
     const [fx, fy, fw, fh] = hairRect(rig, sel);
@@ -188,16 +215,40 @@ function draw() {
   if (bv) bv.textContent = `${baseRot(b.id)}°`;
 }
 
+/** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로") — 이 외형에 있는 것만 */
+const CHIP_GROUPS: [string, string[]][] = [
+  ['전체', ['root']],
+  ['머리', ['head', 'hair', 'hair_back']],
+  ['몸통', ['torso', 'outer_torso']],
+  ['왼팔(칼)', ['arm_L', 'outer_arm_L', 'thumb_L']],
+  ['오른팔', ['arm_R', 'outer_arm_R', 'forearm_R']],
+  ['다리', ['leg_L', 'foot_L', 'leg_R', 'foot_R']],
+  ['칼', ['weapon', 'scabbard']],
+];
+function pick(id: string) { sel = id; testRot = 0; ($('rot') as HTMLInputElement).value = '0'; buildChips(); draw(); }
 function buildChips() {
   const box = $('parts');
   box.innerHTML = '';
-  const ids = ['root', ...rig.slots.map((s) => s.id).filter((id) => lookLayers(rig, look).some((l) => l.slot === id))];
-  for (const id of ids) {
-    const b = document.createElement('button');
-    b.textContent = NAMES[id] ?? id;
-    b.className = id === sel ? 'on' : '';
-    b.onclick = () => { sel = id; testRot = 0; ($('rot') as HTMLInputElement).value = '0'; buildChips(); draw(); };
-    box.append(b);
+  const has = new Set(['root', ...lookLayers(rig, look).map((l) => l.slot)]);
+  const listed = new Set(CHIP_GROUPS.flatMap(([, ids]) => ids));
+  const groups = [...CHIP_GROUPS, ['그 밖', [...has].filter((id) => !listed.has(id))] as [string, string[]]];
+  for (const [label, ids] of groups) {
+    const present = ids.filter((id) => has.has(id));
+    if (!present.length) continue;
+    const g = document.createElement('div');
+    g.className = 'chipgroup';
+    const t = document.createElement('span');
+    t.className = 'chiplabel';
+    t.textContent = label;
+    g.append(t);
+    for (const id of present) {
+      const b = document.createElement('button');
+      b.textContent = NAMES[id] ?? id;
+      b.className = id === sel ? 'on' : '';
+      b.onclick = () => pick(id);
+      g.append(b);
+    }
+    box.append(g);
   }
 }
 
@@ -265,12 +316,15 @@ $('copy').onclick = async () => {
   setTimeout(() => { $('copy').textContent = '값 복사'; }, 1800);
 };
 // 관절 모드에서 무대를 누르면 그 칸이 선택한 관절이 된다(움직임 멈춘 원래 자세 기준)
+// 미리보기를 누르면 그 부위를 고른다(사용자 2026-10-29). 관절 모드에서 이미 고른 부위(또는 빈 곳)를 누르면 그 칸이 관절이 된다
 stage.addEventListener('click', (e) => {
-  if (mode !== 'pivot' || motion || testRot) return;
   const r = stage.getBoundingClientRect();
-  const x = Math.floor((e.clientX - r.left) / (r.width / W));
-  const y = Math.floor((e.clientY - r.top) / (r.height / H));
-  setPivot(boneOfSel(), [x, y]);
+  const fx = (e.clientX - r.left) / (r.width / W);
+  const fy = (e.clientY - r.top) / (r.height / H);
+  const hit = slotAt(fx, fy);
+  if (hit && hit !== sel) { pick(hit); return; }
+  if (mode !== 'pivot' || motion || testRot) return;
+  setPivot(boneOfSel(), [Math.floor(fx), Math.floor(fy)]);
   save(); draw();
 });
 

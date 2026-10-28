@@ -6,7 +6,7 @@
   {
    "slot": "head",
    "canvas": [
-    4,
+    3,
     7
    ],
    "size": [
@@ -35,7 +35,7 @@
     {
      "art": "head_bald",
      "at": [
-      7,
+      6,
       10
      ]
     }
@@ -46,7 +46,8 @@
     4
    ],
    "pivots": [
-    "head"
+    "head",
+    "hair_back"
    ]
   },
   {
@@ -63,7 +64,7 @@
     {
      "art": "head_bald",
      "at": [
-      7,
+      6,
       10
      ]
     }
@@ -74,13 +75,13 @@
     4
    ],
    "pivots": [
-    "head"
+    "hair_back"
    ]
   },
   {
    "slot": "torso",
    "canvas": [
-    5,
+    4,
     23
    ],
    "size": [
@@ -101,7 +102,7 @@
   {
    "slot": "arm_L",
    "canvas": [
-    2,
+    1,
     26
    ],
    "size": [
@@ -157,7 +158,7 @@
   {
    "slot": "forearm_R",
    "canvas": [
-    16,
+    17,
     35
    ],
    "size": [

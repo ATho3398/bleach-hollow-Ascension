@@ -45,8 +45,10 @@
     "forearm_R": [29, 41]
    },
    "rot": {
-    "arm_R": 10,
-    "forearm_R": -15
+    "forearm_R": -15,
+    "torso": 3,
+    "head": -5,
+    "arm_R": 14
    }
   },
   "student": {
@@ -102,16 +104,16 @@
   "female-base": {
    "body": "female",
    "parts": {
-    "torso": { "art": "female/torso", "at": [8, 26] },
-    "arm_L": { "art": "female/arm_L", "at": [5, 29] },
+    "torso": { "art": "female/torso", "at": [7, 26] },
+    "arm_L": { "art": "female/arm_L", "at": [4, 29] },
     "arm_R": { "art": "female/arm_R", "at": [21, 29] },
     "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
     "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
-    "head": { "art": "head_bald", "at": [7, 10] },
+    "head": { "art": "head_bald", "at": [6, 10] },
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
     "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "bare/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "female/forearm_R", "at": [19, 38] }
+    "forearm_R": { "art": "female/forearm_R", "at": [20, 38] }
    },
    "layers": {
     "weapon": { "art": "weapon/sword", "at": [0, 48] },
