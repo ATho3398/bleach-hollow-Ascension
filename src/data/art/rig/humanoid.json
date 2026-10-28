@@ -98,7 +98,7 @@
       "forearm_R": { "art": "student/forearm_R", "at": [20, 38], "size": [14, 18] }
     },
     "student_f": {
-      "torso": { "art": "student_f/torso", "at": [9, 28], "size": [18, 28] },
+      "torso": { "art": "student_f/torso", "at": [9, 25], "size": [18, 31] },
       "arm_L": { "art": "student_f/arm_L", "at": [2, 29], "size": [15, 29] },
       "arm_R": { "art": "student_f/arm_R", "at": [21, 29], "size": [13, 15] },
       "leg_L": { "art": "student_f/leg_L", "at": [6, 51], "size": [17, 25] },

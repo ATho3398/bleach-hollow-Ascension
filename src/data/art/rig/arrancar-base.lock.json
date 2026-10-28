@@ -139,7 +139,7 @@
   "shinigami-student-f": {
    "body": "student_f",
    "parts": {
-    "torso": { "art": "student_f/torso", "at": [9, 28] },
+    "torso": { "art": "student_f/torso", "at": [9, 25] },
     "arm_L": { "art": "student_f/arm_L", "at": [2, 29] },
     "arm_R": { "art": "student_f/arm_R", "at": [21, 29] },
     "leg_L": { "art": "student_f/leg_L", "at": [6, 51] },
