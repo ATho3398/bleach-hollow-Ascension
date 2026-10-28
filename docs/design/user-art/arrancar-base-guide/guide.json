@@ -17,9 +17,7 @@
     2,
     1
    ],
-   "pivots": [
-    "head"
-   ]
+   "pivots": []
   },
   {
    "slot": "hair",
@@ -73,7 +71,6 @@
    ],
    "pivots": [
     "torso",
-    "head",
     "arm_L",
     "arm_R",
     "scabbard"

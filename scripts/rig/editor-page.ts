@@ -2,13 +2,28 @@
 import { HUMANOID, MOTIONS, boneMatrices, insideFrame, layerMatrix, lookLayers, samplePose, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 
 declare const ART_MAP: Record<string, string>;
+/** claude.ai 아티팩트 런타임(있을 때만). db = 편집기 값을 서버에 저장 — 다른 기기·Claude 가 읽는다 */
+type DocRef = { get(): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>; set(d: Record<string, unknown>): Promise<void> };
+declare const claude: { use(name: 'db'): Promise<{ doc(path: string): DocRef } | null> } | undefined;
+const DB_DOC = 'rig/editor';
 const K = 6;
 const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '일반머리', hair_back: '뒷머리', outer_torso: '겉옷(몸)', outer_arm_L: '겉옷(왼팔)', outer_arm_R: '겉옷(오른팔)', foot_L: '왼발', foot_R: '오른발', weapon: '칼', scabbard: '칼집', thumb_L: '엄지', forearm_R: '오른 아래팔' };
 // 저장 칸 이름은 바꾸지 않는다(바꾸면 사용자가 맞춘 값이 사라진다). 옛 이름(v1~v3)에 남은 값도 읽어 온다
 const STORE = 'bha-rig-editor';
 const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장할 때의 기본 자리(데이터 값). 새 시트로 기본 자리가 바뀌면 '사용자가 옮긴 만큼'만 옮겨 적용한다 */
-type Saved = Partial<Rig> & { baseAt?: Record<string, Record<string, [number, number]>>; slotsEdited?: boolean };
+type Saved = Partial<Rig> & {
+  baseAt?: Record<string, Record<string, [number, number]>>;
+  /** 저장할 때의 외형별 칼·칼집 기본 자리 */
+  baseLooks?: Record<string, Record<string, [number, number]>>;
+  slotsEdited?: boolean;
+};
+const LOOK_PARTS = ['weapon', 'scabbard'] as const;
+const baseLooks = (): Record<string, Record<string, [number, number]>> =>
+  Object.fromEntries(Object.entries(HUMANOID.looks).map(([lid, lk]) => [lid, Object.fromEntries(LOOK_PARTS.flatMap((k) => {
+    const v = lk[k];
+    return typeof v === 'object' ? [[k, [v.at[0], v.at[1]]]] : [];
+  }))]));
 /** 사용자가 앞뒤 순서를 직접 바꿨는가(바꾼 적 없으면 데이터 순서를 따른다 — 새 부위·순서 고침이 들어오게) */
 let slotsEdited = false;
 /** 옛 저장(baseAt 없음)이 기준으로 삼던 기본 자리 — C.151 앞부분의 값 */
@@ -64,7 +79,18 @@ function merge(s: Saved) {
       const cur = lk[k];
       if (typeof cur === 'object' && typeof sv === 'object') shift(lk.body, k, sv.at as [number, number], cur);
     }
+    // 칼·칼집: 외형별로 옮긴 만큼(저장 때 기본 자리가 남아 있는 저장만)
+    for (const k of LOOK_PARTS) {
+      const sv = s.looks[lid]?.[k];
+      const pb = s.baseLooks?.[lid]?.[k];
+      const cur = lk[k];
+      if (typeof cur === 'object' && typeof sv === 'object' && pb) cur.at = [cur.at[0] + sv.at[0] - pb[0], cur.at[1] + sv.at[1] - pb[1]];
+    }
   }
+}
+function resetRig() {
+  const fresh: Rig = JSON.parse(JSON.stringify(HUMANOID));
+  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks; slotsEdited = false;
 }
 try {
   const raw = [STORE, ...LEGACY].map((k) => localStorage.getItem(k)).find((v) => v);
@@ -85,8 +111,18 @@ const [W, H] = rig.canvas;
 stage.style.width = `${W * K}px`;
 stage.style.height = `${H * K}px`;
 
-function save() {
-  try { localStorage.setItem(STORE, JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, baseAt: baseAt(), slotsEdited })); } catch { /* 무시 */ }
+let dbRef: DocRef | null = null;
+let dbTimer = 0;
+const state = () => JSON.stringify({ bones: rig.bones, slots: rig.slots, bodies: rig.bodies, looks: rig.looks, baseAt: baseAt(), baseLooks: baseLooks(), slotsEdited });
+function save(user = true) {
+  const st = state();
+  try { localStorage.setItem(STORE, st); } catch { /* 무시 */ }
+  // 사용자가 바꾼 것만 서버에 (잠깐 모아서 한 번)
+  if (user && dbRef) {
+    clearTimeout(dbTimer);
+    const ref = dbRef;
+    dbTimer = window.setTimeout(() => { ref.set({ json: st, savedAt: Date.now() }).then(() => setSync('서버 저장됨'), () => setSync('서버 저장 실패 — 이 기기에만 저장')); }, 600);
+  }
   const body = rig.looks[look]!.body;
   out.value = JSON.stringify({
     bones: rig.bones.map((b) => ({ id: b.id, parent: b.parent, pivot: b.pivot })),
@@ -186,7 +222,7 @@ function nudge(dx: number, dy: number) {
 document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onclick = () => {
   look = b.dataset.look!;
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
-  buildChips(); save(); draw();
+  buildChips(); save(false); draw();
 });
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) => b.onclick = () => {
   mode = b.dataset.mode as 'pivot' | 'part';
@@ -207,8 +243,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
 $('front').onclick = () => { slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i >= 0 && i < rig.slots.length - 1) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i + 1, 0, s!); save(); draw(); } };
 $('back').onclick = () => { slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i > 0) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i - 1, 0, s!); save(); draw(); } };
 $('reset').onclick = () => {
-  const fresh: Rig = JSON.parse(JSON.stringify(HUMANOID));
-  rig.bones = fresh.bones; rig.slots = fresh.slots; rig.bodies = fresh.bodies; rig.looks = fresh.looks; slotsEdited = false;
+  resetRig();
   try { for (const k of [STORE, ...LEGACY]) localStorage.removeItem(k); } catch { /* 무시 */ }
   save(); buildChips(); draw();
 };
@@ -238,4 +273,27 @@ function tick(now: number) {
   last = now;
   requestAnimationFrame(tick);
 }
-buildChips(); save(); draw(); requestAnimationFrame(tick);
+function setSync(t: string) { const e = document.getElementById('sync'); if (e) e.textContent = t; }
+buildChips(); save(false); draw(); requestAnimationFrame(tick);
+// 서버 값이 있으면 그걸 쓴다(어느 기기에서 열어도 같은 값). 없으면 이 기기 값을 한 번 올린다
+void (async () => {
+  if (typeof claude === 'undefined') return setSync('이 기기에만 저장');
+  const db = await claude.use('db').catch(() => null);
+  if (!db) return setSync('이 기기에만 저장(서버 연결 안 됨)');
+  const ref = db.doc(DB_DOC);
+  try {
+    const snap = await ref.get();
+    const json = snap.exists ? snap.data()?.json : undefined;
+    if (typeof json === 'string') {
+      resetRig();
+      merge(JSON.parse(json) as Saved);
+      dbRef = ref;
+      buildChips(); save(false); draw();
+      setSync('서버 값 불러옴');
+    } else {
+      dbRef = ref;
+      await ref.set({ json: state(), savedAt: Date.now() });
+      setSync('이 기기 값을 서버에 올림');
+    }
+  } catch { setSync('서버 읽기 실패 — 이 기기에만 저장'); }
+})();
