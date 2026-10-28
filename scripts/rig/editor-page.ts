@@ -4,7 +4,17 @@ import { HUMANOID, MOTIONS, boneMatrices, insideFrame, layerMatrix, lookLayers, 
 declare const ART_MAP: Record<string, string>;
 /** claude.ai 아티팩트 런타임(있을 때만). db = 편집기 값을 서버에 저장 — 다른 기기·Claude 가 읽는다 */
 type DocRef = { get(): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>; set(d: Record<string, unknown>): Promise<void> };
-declare const claude: { use(name: 'db'): Promise<{ doc(path: string): DocRef } | null> } | undefined;
+type Comments = {
+  canSendToClaude(): Promise<string>;
+  anchorFor(el: Element): Promise<unknown>;
+  sendToClaude(t: { anchor: unknown; text: string }): Promise<{ threadId: string }>;
+};
+declare const claude: {
+  use(name: 'db'): Promise<{ doc(path: string): DocRef } | null>;
+  use(name: 'comments'): Promise<Comments | null>;
+} | undefined;
+/** '고정' 누르면 여기에 그때 값을 남기고 Claude 에게 알린다 → Claude 가 게임 데이터에 넣는다 */
+const FIX_DOC = 'rig/fixed';
 const DB_DOC = 'rig/editor';
 const K = 6;
 const NAMES: Record<string, string> = { root: '전체', torso: '몸통', head: '머리', arm_L: '왼팔', arm_R: '오른팔', leg_L: '왼다리', leg_R: '오른다리', hair: '일반머리', hair_back: '뒷머리', outer_torso: '겉옷(몸)', outer_arm_L: '겉옷(왼팔)', outer_arm_R: '겉옷(오른팔)', foot_L: '왼발', foot_R: '오른발', weapon: '칼', scabbard: '칼집', thumb_L: '엄지', forearm_R: '오른 아래팔' };
@@ -233,6 +243,26 @@ function tick(now: number) {
   last = now;
   requestAnimationFrame(tick);
 }
+$('fix').onclick = async () => {
+  const btn = $<HTMLButtonElement>('fix');
+  if (!dbRef) return setSync('서버에 연결이 안 돼 고정 못 함 — 값 복사로 보내 주세요');
+  btn.disabled = true;
+  try {
+    const db = await claude!.use('db');
+    const st = state();
+    await db!.doc(FIX_DOC).set({ json: st, savedAt: Date.now() });
+    await dbRef.set({ json: st, savedAt: Date.now() });
+    const c = await claude!.use('comments').catch(() => null);
+    const can = c ? await c.canSendToClaude().catch(() => 'off') : 'off';
+    if (c && can === 'available') {
+      await c.sendToClaude({ anchor: await c.anchorFor(btn), text: '고정: 편집기 값(서버 rig/fixed)을 게임 데이터에 넣어 주세요.' });
+      setSync('고정 저장 + Claude 에게 보냄 — 반영되면 댓글로 답이 와요');
+    } else {
+      setSync('고정 저장됨 — Claude 에게 "고정해"라고 말해 주세요(지금은 바로 못 보냄)');
+    }
+  } catch { setSync('고정 실패 — 다시 눌러 주세요'); }
+  btn.disabled = false;
+};
 function setSync(t: string) { const e = document.getElementById('sync'); if (e) e.textContent = t; }
 buildChips(); save(false); draw(); requestAnimationFrame(tick);
 // 서버 값이 있으면 그걸 쓴다(어느 기기에서 열어도 같은 값). 없으면 이 기기 값을 한 번 올린다
