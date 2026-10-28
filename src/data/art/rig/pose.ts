@@ -30,7 +30,7 @@ export interface Rig {
   /** 외형 id → 몸 + 얹는 층(hair 일반머리·hair_back 뒷머리 — 아란칼 가면은 hair 에 붙어 있다, outer_* 겉옷, weapon 무기) */
   looks: Record<string, Look>;
   /** 머리카락 틀: 머리카락 그림은 rect(x, y, 가로, 세로) 안에만. keepOut = 가리지 않기를 권장하는 얼굴 칸 */
-  hairFrame: { rect: [number, number, number, number]; keepOut: [number, number, number, number] };
+  hairFrame: { rect: [number, number, number, number]; backRect?: [number, number, number, number]; keepOut: [number, number, number, number] };
   /** 칼 그림 안 손잡이 가운데 → 칼끝(그림 좌표). 칼을 비스듬히 그려도 칼날 방향을 알 수 있게 */
   swordAxis?: { grip: Vec2; tip: Vec2 };
 }
@@ -187,9 +187,14 @@ export const HAIR_SLOTS = ['hair', 'hair_back'] as const;
 /** 겉옷 층: 부위 바로 위에 얹혀 그 뼈를 따라 움직인다(그림이 있는 외형만) */
 export const OUTER_SLOTS = ['outer_torso', 'outer_arm_L', 'outer_arm_R'] as const;
 
+/** 머리카락 틀(일반머리 rect, 뒷머리는 길게 backRect) */
+export function hairRect(rig: Rig, slot = 'hair'): [number, number, number, number] {
+  return slot === 'hair_back' ? rig.hairFrame.backRect ?? rig.hairFrame.rect : rig.hairFrame.rect;
+}
+
 /** 머리카락 그림 상자가 머리카락 틀 안에 있는가 */
-export function insideFrame(rig: Rig, p: PartArt): boolean {
-  const [fx, fy, fw, fh] = rig.hairFrame.rect;
+export function insideFrame(rig: Rig, p: PartArt, slot = 'hair'): boolean {
+  const [fx, fy, fw, fh] = hairRect(rig, slot);
   return p.at[0] >= fx && p.at[1] >= fy && p.at[0] + p.size[0] <= fx + fw && p.at[1] + p.size[1] <= fy + fh;
 }
 
@@ -203,7 +208,7 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>): string[]
     if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);
     for (const k of HAIR_SLOTS) {
       const hair = look[k];
-      if (typeof hair === 'object' && !insideFrame(rig, hair)) errs.push(`외형 ${lid}: ${k} 가 머리카락 틀 밖`);
+      if (typeof hair === 'object' && !insideFrame(rig, hair, k)) errs.push(`외형 ${lid}: ${k} 가 머리카락 틀 밖`);
     }
   }
   for (const [mid, m] of Object.entries(motions)) {

@@ -63,10 +63,13 @@ describe('자세·행렬', () => {
   it('머리카락은 모두 머리카락 틀 안에 있다', () => {
     for (const look of Object.keys(HUMANOID.looks)) {
       for (const hair of lookLayers(HUMANOID, look).filter((l) => l.slot === 'hair' || l.slot === 'hair_back')) {
-        expect(insideFrame(HUMANOID, hair), `${look} ${hair.slot}`).toBe(true);
+        expect(insideFrame(HUMANOID, hair, hair.slot), `${look} ${hair.slot}`).toBe(true);
       }
     }
-    expect(insideFrame(HUMANOID, { art: 'x', at: [30, 0], size: [10, 5] })).toBe(false);
+    expect(insideFrame(HUMANOID, { art: 'x', at: [40, 0], size: [10, 5] })).toBe(false);
+    // 뒷머리는 길게(허리까지) 들어간다, 일반머리 틀은 그보다 짧다
+    expect(insideFrame(HUMANOID, { art: 'x', at: [0, 20], size: [20, 40] }, 'hair_back')).toBe(true);
+    expect(insideFrame(HUMANOID, { art: 'x', at: [0, 20], size: [20, 40] }, 'hair')).toBe(false);
   });
   it('공격: 팔을 머리 위로 들었다가(90° 넘게) 타격 순간엔 아래로 내려찍는다', () => {
     const atk = MOTIONS.attack!;

@@ -47,13 +47,16 @@ def main():
     body = RIG['bodies'][look['body']]
     slot_bone = {s['id']: s['bone'] for s in RIG['slots']}
     bones = {b['id']: b for b in RIG['bones']}
-    fx, fy, fw, fh = RIG['hairFrame']['rect']
+    hf = RIG['hairFrame']
     boxes = []
     for p in PARTS:
         art = body.get(p) or (look[p] if isinstance(look.get(p), dict) else None)  # 칼·칼집은 외형 층
         if p in ('hair', 'hair_back'):
             # 머리카락은 머리카락 틀 전체가 칸. 흐린 그림 = 머리(머리카락이 있으면 머리카락)
-            boxes.append({'slot': p, 'canvas': [fx, fy], 'size': [fw, fh], 'ghost': [body['head']] if body.get('head') else [],
+            fx, fy, fw, fh = hf.get('backRect', hf['rect']) if p == 'hair_back' else hf['rect']
+            # 흐린 그림 = 자리 맞추기용 머리(뒷머리 칸은 길게 내려가니 몸통·팔까지)
+            ref = ['head'] if p == 'hair' else ['torso', 'arm_R', 'arm_L', 'head']
+            boxes.append({'slot': p, 'canvas': [fx, fy], 'size': [fw, fh], 'ghost': [body[k] for k in ref if body.get(k)],
                           'solid': [look[p]] if isinstance(look.get(p), dict) else []})
         elif art:
             boxes.append({'slot': p, 'canvas': [art['at'][0] - PAD, art['at'][1] - PAD], 'size': [art['size'][0] + 2 * PAD, art['size'][1] + 2 * PAD], 'ghost': [], 'solid': [art]})

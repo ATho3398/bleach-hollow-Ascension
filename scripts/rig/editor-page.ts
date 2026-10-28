@@ -1,5 +1,5 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓴다
-import { HUMANOID, MOTIONS, boneMatrices, insideFrame, layerMatrix, lookLayers, samplePose, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, samplePose, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 
 declare const ART_MAP: Record<string, string>;
 /** claude.ai 아티팩트 런타임(있을 때만). db = 편집기 값을 서버에 저장 — 다른 기기·Claude 가 읽는다 */
@@ -127,7 +127,7 @@ function draw() {
     stage.append(img);
   }
   if ((sel === 'hair' || sel === 'hair_back') && !motion) {
-    const [fx, fy, fw, fh] = rig.hairFrame.rect;
+    const [fx, fy, fw, fh] = hairRect(rig, sel);
     const [kx, ky, kw, kh] = rig.hairFrame.keepOut;
     const m = mats.head!;
     for (const [x, y, w, h, cls] of [[fx, fy, fw, fh, 'frame'], [kx, ky, kw, kh, 'keep']] as const) {
@@ -183,7 +183,7 @@ function nudge(dx: number, dy: number) {
     const p = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
     if (!p) return;
     const next: PartArt = { ...p, at: [p.at[0] + dx, p.at[1] + dy] };
-    if ((sel === 'hair' || sel === 'hair_back') && !insideFrame(rig, next)) return; // 머리카락은 틀 밖으로 못 나간다
+    if ((sel === 'hair' || sel === 'hair_back') && !insideFrame(rig, next, sel)) return; // 머리카락은 틀 밖으로 못 나간다
     p.at = next.at;
   }
   save(); draw();
