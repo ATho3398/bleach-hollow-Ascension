@@ -76,7 +76,7 @@
     "female": {
       "torso": { "art": "female/torso", "at": [8, 26], "size": [17, 27] },
       "arm_L": { "art": "female/arm_L", "at": [5, 29], "size": [12, 29] },
-      "arm_R": { "art": "female/arm_R", "at": [21, 29], "size": [12, 15] },
+      "arm_R": { "art": "female/arm_R", "at": [21, 29], "size": [10, 14] },
       "leg_L": { "art": "bare/leg_L", "at": [6, 51], "size": [17, 25] },
       "leg_R": { "art": "bare/leg_R", "at": [14, 49], "size": [16, 27] },
       "head": { "art": "head_bald", "at": [7, 10], "size": [16, 19] },
