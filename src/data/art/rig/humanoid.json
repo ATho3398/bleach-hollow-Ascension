@@ -83,7 +83,7 @@
     },
     "arrancar-base": {
       "body": "arrancar",
-      "hair": { "art": "arrancar/hair", "at": [0, 0], "size": [33, 29] },
+      "hair": { "art": "arrancar/hair", "at": [0, -1], "size": [33, 29] },
       "weapon": { "art": "weapon/sword", "at": [0, 48], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] }
     },

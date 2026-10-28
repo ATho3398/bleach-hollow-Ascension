@@ -53,7 +53,7 @@
     "forearm_R": { "art": "arrancar/forearm_R", "at": [20, 38] }
    },
    "layers": {
-    "hair": { "art": "arrancar/hair", "at": [0, 0] },
+    "hair": { "art": "arrancar/hair", "at": [0, -1] },
     "weapon": { "art": "weapon/sword", "at": [0, 48] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
    }
