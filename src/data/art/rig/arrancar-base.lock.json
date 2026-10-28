@@ -135,6 +135,27 @@
     "weapon": { "art": "weapon/sword", "at": [0, 51] },
     "scabbard": { "art": "weapon/scabbard", "at": [17, 44] }
    }
+  },
+  "shinigami-student-f": {
+   "body": "student_f",
+   "parts": {
+    "torso": { "art": "student_f/torso", "at": [9, 28] },
+    "arm_L": { "art": "student_f/arm_L", "at": [2, 29] },
+    "arm_R": { "art": "student_f/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "student_f/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "student_f/leg_R", "at": [14, 49] },
+    "head": { "art": "shinigami/head", "at": [7, 10] },
+    "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "shinigami/foot_R", "at": [21, 72] },
+    "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
+    "forearm_R": { "art": "student_f/forearm_R", "at": [20, 38] }
+   },
+   "layers": {
+    "hair": { "art": "student/hair", "at": [-1, 0] },
+    "weapon": { "art": "weapon/sword", "at": [0, 51] },
+    "scabbard": { "art": "weapon/scabbard", "at": [17, 44] },
+    "hair_back": { "art": "student_f/hair_back", "at": [13, 2] }
+   }
   }
  }
 }

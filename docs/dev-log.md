@@ -1418,6 +1418,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 여성형 몸 `female`·외형 `female-base`(GDD 96장 29).
 - **게임 적용**: 사신 캐릭터가 종이인형으로 움직임(`src/ui/bha/rigAnim.ts`, `animPlayer.bindAnim` 이 `art.rig` 면 종이인형, `manifest` `rig`, 정지 그림 `scripts/rig/still.py`). 방·원정·전투 캡처로 확인(GDD 96장 30). 테스트 `tests/rigAnim.test.ts` 5개.
 - 진앙영술원 학생(`shinigami-student`, 사신 2단계), 가져오기는 안 고친 칸의 자리 유지(GDD 96장 31).
+- 영술원 학생 여성형 `shinigami-student-f`(GDD 96장 32).
 - **테스트** `tests/paperdoll.test.ts` 28개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 
