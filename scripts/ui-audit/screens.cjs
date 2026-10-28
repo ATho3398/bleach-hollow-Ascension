@@ -27,6 +27,15 @@ async function settings(h, n) {
     if (!/화면|소리|전투|기타/.test(lab)) return;
     if (await h.has('.bha-settings__scopes')) await h.click('.bha-settings__scopes [data-scope="common"]');
     await toggles(h, sn);
+    // 성별 줄 (GDD 114장, C.188): [이 슬롯]에서 여성 → 남성 고르기 — 체크 자리 고정·다른 버튼 안 움직임. 남성으로 되돌려 저장 안 한 값이 없게
+    if (/화면/.test(lab) && (await h.has('[data-set="gender"]')) && (await h.has('.bha-settings__scopes'))) {
+      const scopeBtn = (id) => h.page.locator(`.bha-settings__scopes [data-scope="${id}"]`);
+      const pick = (name) => h.page.locator('[data-set="gender"] button').filter({ hasText: name });
+      await h.stable(sn, "범위 '이 슬롯'", () => scopeBtn('slot').click({ timeout: 3000 }), null, scopeBtn('slot'));
+      await h.stable(sn, "성별 '여성' 고르기", () => pick('여성').click({ timeout: 3000 }), null, pick('여성'));
+      await h.stable(sn, "성별 '남성' 되돌리기", () => pick('남성').click({ timeout: 3000 }), null, pick('남성'));
+      await h.stable(sn, "범위 '공통'", () => scopeBtn('common').click({ timeout: 3000 }), null, scopeBtn('common'));
+    }
   } });
 }
 

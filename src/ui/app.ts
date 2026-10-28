@@ -2,6 +2,7 @@
 // 화면 텍스트는 FactionConfig·데이터 스킨에서 읽고, 종족 id 로 분기하지 않는다.
 import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
+import { DEFAULT_GENDER, genderLookNote, setActiveGender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, type CombatState } from '../engine/combat';
@@ -332,7 +333,18 @@ export function startApp(host: HTMLElement): void {
         save.settings = s as Record<string, boolean | number> | null;
         persist();
       },
+      gender: {
+        read: () => save?.gender ?? DEFAULT_GENDER,
+        write: (g) => {
+          if (!save) return;
+          save.gender = g;
+          setActiveGender(g);
+          persist();
+        },
+        note: genderLookNote(getFaction(save.factionId).tierNames, getFaction(save.factionId).genderLookFromTier),
+      },
     } : null);
+    setActiveGender(save?.gender);
     applySettingsNow();
   }
 

@@ -74,7 +74,7 @@ describe('지원 판정 (GDD 46장 1번)', () => {
   it('설정 화면은 미지원이면 전체 화면 패널을 넣지 않는다', () => {
     const src = read('src/ui/settingsView.ts');
     expect(src).toContain('fullscreenSupported() ? [fsPanel] : []');
-    expect(src).toContain('[...fsPanels, tamaPanel,'); // C.170 열 균형: 오른쪽 열 = 화면·기기 (GDD 100장 #77)
+    expect(src).toContain('...fsPanels, tamaPanel,'); // C.170 열 균형: 오른쪽 열 = 화면·기기 (GDD 100장 #77)
   });
 });
 

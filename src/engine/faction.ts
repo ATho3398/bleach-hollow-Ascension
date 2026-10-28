@@ -198,6 +198,8 @@ export interface FactionConfig {
   /** 단계 외형 표 (GDD 53): 단계 번호(문자열) → 진화 순간 노력치 순위로 고르는 스킨 id. stat = 1위 능력치별, pairs = 1·2위 쌍(순서 무관, 먼저 판정). 없으면 기존 단계 그림 */
   /** 진화체 외형 표 (GDD 54): 진화체 id → 스킨 id 목록(둘 이상이면 진화 때 하나를 뽑아 look 에 고정). tierLooks 보다 먼저 본다. 없으면 tierLooks → 기존 단계 그림 */
   formLooks?: Record<string, string[]>;
+  /** 성별 외형이 갈리는 첫 단계 번호 (GDD 114장 2, 1부터): 이 단계부터 여성은 여성 그림(그림 키 + `.f`)을 찾는다. 그 전 단계는 남녀 같은 그림. 없으면 외형이 갈리지 않는다 */
+  genderLookFromTier?: number;
   tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[] }>;
   /** 육성 5단계 이름 (GDD 8-1) */
   tierNames: [string, string, string, string, string];
@@ -422,6 +424,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!isRec(cols) || !Object.entries(cols).every(([k, v]) => (BIRTH_FX_COLORS as readonly string[]).includes(k) && isString(v) && /^--bha-[a-z0-9-]+$/.test(v))) errors.push('birthFx.colors: 색 역할 → --bha-… 토큰 이름');
     }
   }
+  if (r.genderLookFromTier !== undefined && !(typeof r.genderLookFromTier === 'number' && Number.isInteger(r.genderLookFromTier) && r.genderLookFromTier >= 1)) errors.push('genderLookFromTier: 1 이상 정수(단계 번호)');
   if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
   if (r.formLooks !== undefined && !(isRec(r.formLooks) && Object.values(r.formLooks).every((v) => Array.isArray(v) && v.length > 0 && v.every((x) => isString(x))))) errors.push('formLooks: { 진화체 id: [스킨 id, …](비어 있지 않게) }');
   if (r.tierLooks !== undefined) {

@@ -23,6 +23,7 @@ import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_
 import { confirmDialog } from './confirmDialog';
 import { parseSlotSettings, setActiveSlotSettings, slotSettingsHost, SLOT_SETTING_KEYS, type SlotSettings } from './settingsScope';
 import { versionLabel } from '../version';
+import { DEFAULT_GENDER, GENDER_LABEL, GENDERS, type Gender } from '../engine/gender';
 
 /** 설정 탭 (GDD 103장 2) */
 export const SETTINGS_TABS = [
@@ -211,6 +212,10 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   let common: CommonValues = structuredClone(commonSaved);
   let slotSaved: SlotSettings = host?.read() ?? {};
   let slot: SlotSettings = { ...slotSaved };
+  // 성별 (GDD 114장): 슬롯에만 있는 값 — [이 슬롯]에서만 바꾼다. 저장 전까지는 임시
+  const genderHost = host?.gender ?? null;
+  let genderSaved: Gender = genderHost?.read() ?? DEFAULT_GENDER;
+  let gender: Gender = genderSaved;
   let scope: 'common' | 'slot' = 'common';
   let tab: SettingsTab = o.tab ?? 'screen';
   let note = '';
@@ -230,7 +235,8 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   };
   const commonDirty = () => !sameValue(common, commonSaved);
   const slotDirty = () => !sameValue(parseSlotSettings(slot), parseSlotSettings(slotSaved));
-  const isDirty = () => commonDirty() || (host !== null && slotDirty());
+  const genderDirty = () => genderHost !== null && gender !== genderSaved;
+  const isDirty = () => commonDirty() || (host !== null && slotDirty()) || genderDirty();
 
   const paints: (() => void)[] = [];
   const tagPaint = (tag: HTMLElement, k: keyof CommonValues) => {
@@ -330,14 +336,15 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     emitFeedback('guard', { vibration: false, sound: true, sfxVolume: v });
   };
 
-  /** 고르는 줄: 고른 칸에 ✓ */
-  const choiceRow = <K extends 'viewScale'>(k: K, options: readonly CommonValues[K][], label: (v: CommonValues[K]) => string): HTMLElement => {
+  /** 고르는 줄: 고른 칸에 ✓. 체크는 안 고른 칸에도 자리를 차지(숨김) — 고를 때마다 버튼 폭·위치가 바뀌지 않게 (GDD 114장, C.182 머리 토글과 같은 규칙) */
+  const pickRow = <V,>(options: readonly V[], label: (v: V) => string, get: () => V, set: (v: V) => void, enabled: () => boolean, tagOf: (tag: HTMLElement) => void): HTMLElement => {
     const row = el('div', 'bha-settings__choices');
     const btns = options.map((v) => {
       const b = button({ label: label(v), size: 'small' });
+      b.replaceChildren(icon('i-check'), label(v));
       b.onclick = () => {
-        if (!editable(k)) return;
-        setVal(k, v);
+        if (!enabled()) return;
+        set(v);
         paintAll();
       };
       return { v, b };
@@ -346,18 +353,33 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     row.append(...btns.map((x) => x.b), tag);
     paints.push(() => {
       for (const { v, b } of btns) {
-        const on = val(k) === v;
+        const on = get() === v;
         b.classList.toggle('is-on', on);
         b.setAttribute('aria-pressed', String(on));
-        b.replaceChildren(...(on ? [icon('i-check')] : []), label(v));
-        b.disabled = !editable(k);
+        b.disabled = !enabled();
       }
-      tagPaint(tag, k);
+      tagOf(tag);
     });
     return row;
   };
+  const choiceRow = <K extends 'viewScale'>(k: K, options: readonly CommonValues[K][], label: (v: CommonValues[K]) => string): HTMLElement =>
+    pickRow(options, label, () => val(k), (v) => setVal(k, v), () => editable(k), (tag) => tagPaint(tag, k));
 
   // ── 화면 탭 ──
+  // 성별 (GDD 114장): 남성/여성. [공통]에서는 흐리게 두고 '슬롯만' 표시(자리 고정)
+  const charPanels: HTMLElement[] = [];
+  if (genderHost) {
+    const genderRow = pickRow(GENDERS, (g) => GENDER_LABEL[g], () => gender, (g) => { gender = g; }, () => scope === 'slot', (tag) => {
+      tag.textContent = scope === 'slot' ? '슬롯' : '슬롯만';
+      tag.hidden = false;
+    });
+    genderRow.dataset.set = 'gender';
+    genderRow.setAttribute('role', 'group');
+    genderRow.setAttribute('aria-label', '성별');
+    const p = panel('성별', genderRow, hintLine('캐릭터(슬롯)마다 따로 정한다. [이 슬롯]에서 바꾼다.'), hintLine(genderHost.note));
+    p.dataset.panel = 'gender';
+    charPanels.push(p);
+  }
   const tamaPanel = panel('다마고치 모드',
     boolRow('tamago', '다마고치 모드'), hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대된다. 컴퓨터는 B 키로 바꾼다.'),
     boolRow('tilt', '기울기로 흔들기'), hintLine('키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 저장할 때 움직임 허용을 묻는다.'),
@@ -499,7 +521,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   }
 
   const TAB_BODY: Record<SettingsTab, HTMLElement[]> = {
-    screen: [...fsPanels, tamaPanel, sizePanel, keyPanel],
+    screen: [...charPanels, ...fsPanels, tamaPanel, sizePanel, keyPanel],
     sound: [soundPanel, ...musicNodes],
     battle: [fxPanel, ctlPanel],
     etc: [info, installPanel, etcPanel, ...slotPanels],
@@ -577,6 +599,8 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       host.write(s);
       setActiveSlotSettings(s);
     }
+    if (genderHost && genderDirty()) genderHost.write(gender);
+    genderSaved = gender;
     commonSaved = structuredClone(common);
     slotSaved = { ...slot };
     applySettingsNow(storage);
@@ -595,6 +619,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   function discard(): void {
     common = structuredClone(commonSaved);
     slot = { ...slotSaved };
+    gender = genderSaved;
     applySettingsNow(storage);
     paintAll();
   }

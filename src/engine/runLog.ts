@@ -2,6 +2,7 @@
 // 지금은 구조만 있고 기록하는 로직은 없다. 필드를 빼지 말고, 필요하면 더한다.
 
 import type { EvolutionSnapshot } from './evolution/judge';
+import type { Gender } from './gender';
 
 export interface AbsorbRecord {
   runId: number;
@@ -269,6 +270,8 @@ export interface RunRecord {
   streak?: number;
   /** C.120 (세이브 형식 37, GDD 67장): 첫 원정 튜토리얼이면 true. 없으면 일반 원정 */
   tutorial?: boolean;
+  /** C.188 (세이브 형식 52, GDD 114장 4): 떠날 때 슬롯 성별. 형식 52 이전 기록에는 없다 */
+  gender?: Gender;
 }
 
 /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장 3번·9장): 첫 원정의 '첫 흡수'는 흡수 기록(absorbs)에 넣지 않고 여기에 따로 남긴다 — 히든 조건이 흡수와 구분해 읽게 */

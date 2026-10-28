@@ -2,6 +2,8 @@
 // 슬롯 설정은 항목별로 공통보다 우선한다 — 슬롯 설정에 없는 항목은 공통 값. 슬롯에 둘 수 있는 항목은 SLOT_SETTING_KEYS 뿐(기기 화면·설치 같은 것은 공통만).
 // 이 파일은 순수 로직 + 지금 열린 슬롯의 값 보관만. 화면은 settingsView.ts, 세이브 필드는 game.ts SaveData.settings.
 
+import type { Gender } from '../engine/gender';
+
 export interface SlotSettings {
   damageNumbers?: boolean;
   vibration?: boolean;
@@ -54,6 +56,14 @@ export interface SlotSettingsHost {
   read(): SlotSettings | null;
   /** null = 슬롯 설정 지우기. 세이브에 쓰고 저장까지 한다 */
   write(s: SlotSettings | null): void;
+  /** 이 슬롯 캐릭터의 성별 (GDD 114장): 공통 설정이 아니라 슬롯에만 있다. 없으면 설정에 성별 줄이 없다 */
+  gender?: {
+    read(): Gender;
+    /** 세이브에 쓰고 저장, 외형에 바로 건다 */
+    write(g: Gender): void;
+    /** 외형이 갈리는 단계 안내 (종족 설정에서 만든 문구, 예 '아란칼부터 모습이 달라진다') */
+    note: string;
+  };
 }
 
 let host: SlotSettingsHost | null = null;

@@ -167,6 +167,7 @@
 .bha-settings__bar .bha-slider__value { min-width: 3ch; text-align: right; }
 .bha-settings__bar .bha-slider__input:disabled { opacity: 0.5; }
 .bha-settings__choices { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
+.bha-settings__choices .bha-btn[aria-pressed="false"] .bha-icon { visibility: hidden; } /* 114장: 안 고른 칸도 체크 자리 유지 */
 .bha-settings__scopes .bha-seg__item { display: inline-flex; align-items: center; gap: var(--bha-sp-1); }
 .bha-settings__scopes .bha-seg__item[aria-selected="false"] .bha-icon { visibility: hidden; } /* 자리는 그대로 (C.182) */
 .bha-settings__save { position: relative; }

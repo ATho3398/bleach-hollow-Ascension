@@ -31,6 +31,7 @@ import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
 import { newlyAchieved } from './engine/tutorialGoals';
 import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
 import { DEFAULT_GROUND_ID } from './data/grounds';
+import { DEFAULT_GENDER, parseGender, type Gender } from './engine/gender';
 import { clampDifficulty, clampStreak, MAX_DIFFICULTY, recommendedDifficulty, unlockedByTier } from './engine/difficulty';
 import { canWear, getSkin } from './data/skins';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
@@ -49,12 +50,12 @@ import { BATTLE_ITEM_IDS, CONSUMABLE_IDS } from './inventory';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 51; // C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 52; // C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
  *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 51; // C.184: 형식 51 과 같이 올림. C.177: 형식 50 과 같이 올림. C.181: 형식 49 와 같이 올림. C.179: 형식 48 과 같이 올림. C.178: 형식 47 과 같이 올림. C.175: 형식 46 과 같이 올림. C.167: 형식 45 와 같이 올림. C.150: 형식 44 와 같이 올림 (C.147: 43, C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
+export const MIN_LOADABLE_SAVE_FORMAT = 52; // C.188: 형식 52 와 같이 올림. C.184: 형식 51 과 같이 올림. C.177: 형식 50 과 같이 올림. C.181: 형식 49 와 같이 올림. C.179: 형식 48 과 같이 올림. C.178: 형식 47 과 같이 올림. C.175: 형식 46 과 같이 올림. C.167: 형식 45 와 같이 올림. C.150: 형식 44 와 같이 올림 (C.147: 43, C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -109,6 +110,8 @@ export interface SaveData {
   help: HelpState;
   /** 슬롯 설정 (GDD 103장 5, C.178, 형식 46): 이 슬롯에서만 공통 설정보다 우선하는 항목(src/ui/settingsScope.ts SLOT_SETTING_KEYS). null = 공통을 따름. 트랙과 무관(슬롯 하나에 하나) */
   settings: SlotSettingsData | null;
+  /** 성별 (GDD 114장, C.188, 형식 52): 슬롯(캐릭터)마다 하나, 기본 남성. 설정 [이 슬롯]에서 바꾼다. 외형이 갈리는 단계는 종족 설정 genderLookFromTier */
+  gender: Gender;
   /** 마지막으로 보던 화면 키 (GDD 19-3, 형식 13). 화면 키만 저장하고 화면 상태는 저장하지 않는다(원정 지점은 activeExpedition 이 갖고 있다) */
   lastScreen: ScreenKey;
   /** 등급전 상태 (GDD 21장, 형식 15): 번호 사다리·재도전 대기·전적 + 등급 이력(history, 환생해도 유지할 자리 — 22-2 해방 자격) */
@@ -584,7 +587,7 @@ export function newSaveData(factionId: string, nowMs: number = Date.now()): Save
   return {
     meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending' } }, shared: newSharedState(), lastSeenAt: nowMs, idlePending: null, story: {}, bossDex: {},
     otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
-    settings: null,
+    settings: null, gender: DEFAULT_GENDER,
   };
 }
 
@@ -848,7 +851,7 @@ export function performFusion(save: SaveData, nowMs: number = Date.now()): Fusio
 export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): EvolveResult | null {
   const log = save.runLog;
   log.battles.push(...exp.battles);
-  log.runs.push(buildRunRecord(exp));
+  log.runs.push({ ...buildRunRecord(exp), gender: save.gender });
   log.absorbs.push(...exp.absorbRecords);
   // 첫 원정 튜토리얼 (GDD 67장 3·4번): 흡수 기록 대신 '튜토리얼 보상'으로 따로, 방에서 다음 할 일 안내를 띄울 차례로
   if (exp.tutorial) {
@@ -1765,6 +1768,7 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
   save.settings = sanitizeSlotSettings(save.settings);
+  save.gender = parseGender(save.gender);
   return save;
 }
 

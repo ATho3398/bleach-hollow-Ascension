@@ -39,6 +39,7 @@ import { viewTitle } from './bha/viewtitle';
 import { showToast } from './bha/nest';
 import { disableTestMode, setTestSpeed, testSpeed } from './testMode';
 import { setSpeed as setExpSpeed } from './expeditionView';
+import { shownName } from './displayName';
 
 export type TestTab = 'form' | 'evolve' | 'stats' | 'traits' | 'items' | 'skins' | 'battle' | 'nest' | 'call';
 const TABS: { id: TestTab; label: string }[] = [
@@ -164,7 +165,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   const form = save.evolution.formId ? FORM_TABLE.find((f) => f.id === save.evolution.formId) : undefined;
   const summary = panel({ title: '지금 몸' }, info([
     { label: '종족', value: faction.name },
-    { label: '진화체', value: form ? `${form.tier}단계 · ${formName(form, fid)}` : '1단계 (진화 전)' },
+    { label: '진화체', value: form ? `${form.tier}단계 · ${shownName(formName(form, fid))}` : '1단계 (진화 전)' },
     ...STAT_IDS.map((s) => ({ label: statName(s, fid), value: String(stats[s]) })),
     { label: '속성 피해', value: ELEMENT_DAMAGE_IDS.map((id) => `${elementDamageAbbr(id, fid)} ${elementDamagePct(elemDmg[id] ?? 0)}`).join(' · ') },
     { label: '특성', value: save.build.slots.map((id) => (id ? traitName(id, fid) : '—')).join(' · ') },
@@ -208,7 +209,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const tiers = [...new Set(FORM_TABLE.map((f) => f.tier))].sort((a, b) => a - b);
     const opts = [
       { value: '', label: '1단계 (진화 전)', group: '1단계' },
-      ...tiers.flatMap((t) => FORM_TABLE.filter((f) => f.tier === t).map((f) => ({ value: f.id, label: `${formName(f, fid)}${f.hidden ? ' (히든)' : ''}`, group: `${t}단계` }))),
+      ...tiers.flatMap((t) => FORM_TABLE.filter((f) => f.tier === t).map((f) => ({ value: f.id, label: `${shownName(formName(f, fid))}${f.hidden ? ' (히든)' : ''}`, group: `${t}단계` }))),
     ];
     const formSel = select(opts, save.evolution.formId ?? '', '진화체');
     const apply = button({ label: '이 몸으로', icon: 'i-evolve', variant: 'primary', onClick: () => {
@@ -297,7 +298,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [panel({ title: '진화', aside: `${t + 1}단계 → ${last ? '끝' : `${t + 2}단계`}` },
       info([
-        { label: '지금', value: `${faction.tierNames[t]}${form ? ` · ${formName(form, fid)}` : ''}` },
+        { label: '지금', value: `${faction.tierNames[t]}${form ? ` · ${shownName(formName(form, fid))}` : ''}` },
         { label: '다음', value: last ? '마지막 단계' : faction.tierNames[t + 1]! },
       ]),
       row(go),
