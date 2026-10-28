@@ -2,7 +2,8 @@
 """관절 편집기(시험 페이지)에서 '값 복사'한 내용을 게임 뼈대 데이터에 넣는다 (GDD 96장).
 
 사용: python3 scripts/rig/apply_editor.py '<복사한 JSON>'   (또는 파일 경로)
-바뀌는 것: src/data/art/rig/humanoid.json 의 bones[].pivot, slots 순서, bodies.<몸>.<부위>.at, looks.<외형>.hair.at
+바뀌는 것: src/data/art/rig/humanoid.json 의 bones[].pivot, slots 순서, bodies.<몸>.<부위>.at, looks.<외형>.hair·hair_back.at
+칼·칼집 자리(weapon·scabbard)는 모든 외형 공통이라 받은 값을 모든 외형에 넣는다. 쉬는 각도(restRot)는 건드리지 않는다.
 """
 import json
 import os
@@ -28,10 +29,12 @@ for part, at in data.get('parts', {}).items():
 for k in ('hair', 'hair_back'):
     if data.get('look') and data.get(k) and k in rig['looks'][data['look']]:
         rig['looks'][data['look']][k]['at'] = data[k]
-s = json.dumps(rig, ensure_ascii=False, indent=2)
-s = re.sub(r'\[\s+(-?\d+),\s+(-?\d+)\s+\]', r'[\1, \2]', s)
-s = re.sub(r'\{\s+"id": "([^"]+)",\s+"bone": "([^"]+)"\s+\}', r'{ "id": "\1", "bone": "\2" }', s)
-s = re.sub(r'\{\s+"id": "([^"]+)",\s+"parent": ([^,]+),\s+"pivot": (\[[^\]]+\])\s+\}', r'{ "id": "\1", "parent": \2, "pivot": \3 }', s)
-s = re.sub(r'\{\s+"art": "([^"]+)",\s+"at": (\[[^\]]+\]),\s+"size": (\[[^\]]+\])\s+\}', r'{ "art": "\1", "at": \2, "size": \3 }', s)
-open(RIG_JSON, 'w', encoding='utf-8').write(s + '\n')
+for k in ('weapon', 'scabbard'):
+    if data.get(k):
+        for lk in rig['looks'].values():
+            if k in lk:
+                lk[k]['at'] = data[k]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from feet_weapon import dump  # noqa: E402
+dump(rig)
 print('적용:', data['body'], '관절', len(piv), '부위 자리', len(data.get('parts', {})))

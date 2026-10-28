@@ -119,6 +119,19 @@ describe('자세·행렬', () => {
     // 세로 아래에서 앞(왼쪽)으로 기운 각도
     expect(Math.abs((Math.atan2(g[0] - e[0], e[1] - g[1]) * 180) / Math.PI - 60)).toBeLessThan(4);
   });
+  it('공격2: 칼을 거꾸로(역수) 쥐고 벤다 — 타격 순간 칼끝이 손보다 뒤(오른쪽)', () => {
+    const a2 = MOTIONS.attack2!;
+    const p = samplePose(HUMANOID, a2, a2.hit!);
+    const w = lookLayers(HUMANOID, 'arrancar-base').find((l) => l.slot === 'weapon')!;
+    const m = partMatrix(boneMatrices(HUMANOID, p).weapon!, w.at);
+    const { grip, tip } = HUMANOID.swordAxis!;
+    expect(apply(m, tip)[0]).toBeGreaterThan(apply(m, grip)[0] + 20);
+  });
+  it('오른팔 팔꿈치: 아래팔(forearm_R)은 위팔(arm_R)의 자식, 특수1에서 편다', () => {
+    expect(HUMANOID.bones.find((b) => b.id === 'forearm_R')!.parent).toBe('arm_R');
+    const s1 = MOTIONS.skill!;
+    expect(samplePose(HUMANOID, s1, s1.hit!).forearm_R!.rot).toBeLessThan(-45);
+  });
   it('칼집: 허리춤(몸통)에 차고 있고 손(앞팔)에 붙지 않는다, 칼 그림과 다른 빈 칼집', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;
     expect(sc.parent).toBe('torso');

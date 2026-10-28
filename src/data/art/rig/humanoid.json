@@ -9,6 +9,7 @@
     { "id": "head", "parent": "torso", "pivot": [17, 29] },
     { "id": "arm_L", "parent": "torso", "pivot": [9, 39] },
     { "id": "arm_R", "parent": "torso", "pivot": [25, 33] },
+    { "id": "forearm_R", "parent": "arm_R", "pivot": [31, 42] },
     { "id": "leg_L", "parent": "root", "pivot": [12, 53] },
     { "id": "leg_R", "parent": "root", "pivot": [22, 52] },
     { "id": "foot_L", "parent": "leg_L", "pivot": [10, 72] },
@@ -31,6 +32,7 @@
     { "id": "scabbard", "bone": "scabbard" },
     { "id": "arm_R", "bone": "arm_R" },
     { "id": "outer_arm_R", "bone": "arm_R" },
+    { "id": "forearm_R", "bone": "forearm_R" },
     { "id": "head", "bone": "head" },
     { "id": "hair", "bone": "head" }
   ],
@@ -98,5 +100,6 @@
     "note": "칼 그림 안 손잡이 가운데 → 칼끝 (칼날 방향 계산용)",
     "grip": [4, 5],
     "tip": [14, 41]
-  }
+  },
+  "elbowNote": "오른팔 팔꿈치(forearm_R, 2026-10-28): 오른팔을 위팔(arm_R)·아래팔(forearm_R)로 나눠 찍은 몸만 펴진다. 아래팔 그림이 없는 몸은 arm_R 한 장 그대로"
 }
