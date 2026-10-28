@@ -1,0 +1,228 @@
+{
+ "note": "알몸 기본형 가이드 칸: sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안의 불투명 칸만 그 슬롯 그림",
+ "look": "shinigami-base",
+ "body": "shinigami",
+ "boxes": [
+  {
+   "slot": "head",
+   "canvas": [
+    5,
+    8
+   ],
+   "size": [
+    22,
+    25
+   ],
+   "sheet": [
+    2,
+    1
+   ],
+   "pivots": []
+  },
+  {
+   "slot": "hair",
+   "canvas": [
+    0,
+    0
+   ],
+   "size": [
+    36,
+    32
+   ],
+   "sheet": [
+    26,
+    1
+   ],
+   "pivots": [
+    "head"
+   ]
+  },
+  {
+   "slot": "hair_back",
+   "canvas": [
+    0,
+    0
+   ],
+   "size": [
+    36,
+    32
+   ],
+   "sheet": [
+    64,
+    1
+   ],
+   "pivots": [
+    "head"
+   ]
+  },
+  {
+   "slot": "torso",
+   "canvas": [
+    5,
+    23
+   ],
+   "size": [
+    33,
+    37
+   ],
+   "sheet": [
+    102,
+    1
+   ],
+   "pivots": [
+    "torso",
+    "arm_L",
+    "arm_R",
+    "scabbard"
+   ]
+  },
+  {
+   "slot": "arm_L",
+   "canvas": [
+    -3,
+    31
+   ],
+   "size": [
+    18,
+    34
+   ],
+   "sheet": [
+    137,
+    1
+   ],
+   "pivots": [
+    "arm_L",
+    "weapon"
+   ]
+  },
+  {
+   "slot": "arm_R",
+   "canvas": [
+    16,
+    31
+   ],
+   "size": [
+    22,
+    27
+   ],
+   "sheet": [
+    157,
+    1
+   ],
+   "pivots": [
+    "arm_R",
+    "forearm_R"
+   ]
+  },
+  {
+   "slot": "leg_L",
+   "canvas": [
+    0,
+    49
+   ],
+   "size": [
+    21,
+    29
+   ],
+   "sheet": [
+    181,
+    1
+   ],
+   "pivots": [
+    "leg_L",
+    "foot_L"
+   ]
+  },
+  {
+   "slot": "leg_R",
+   "canvas": [
+    15,
+    49
+   ],
+   "size": [
+    20,
+    29
+   ],
+   "sheet": [
+    204,
+    1
+   ],
+   "pivots": [
+    "leg_R",
+    "foot_R"
+   ]
+  },
+  {
+   "slot": "foot_L",
+   "canvas": [
+    0,
+    72
+   ],
+   "size": [
+    21,
+    12
+   ],
+   "sheet": [
+    226,
+    1
+   ],
+   "pivots": [
+    "foot_L"
+   ]
+  },
+  {
+   "slot": "foot_R",
+   "canvas": [
+    15,
+    72
+   ],
+   "size": [
+    17,
+    12
+   ],
+   "sheet": [
+    249,
+    1
+   ],
+   "pivots": [
+    "foot_R"
+   ]
+  },
+  {
+   "slot": "weapon",
+   "canvas": [
+    -3,
+    48
+   ],
+   "size": [
+    22,
+    48
+   ],
+   "sheet": [
+    268,
+    1
+   ],
+   "pivots": [
+    "weapon"
+   ]
+  },
+  {
+   "slot": "scabbard",
+   "canvas": [
+    14,
+    47
+   ],
+   "size": [
+    9,
+    31
+   ],
+   "sheet": [
+    292,
+    1
+   ],
+   "pivots": [
+    "scabbard"
+   ]
+  }
+ ]
+}
