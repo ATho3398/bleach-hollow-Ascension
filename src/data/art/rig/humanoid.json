@@ -83,7 +83,7 @@
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "bare/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "bare/thumb_L", "at": [8, 51], "size": [3, 6] },
-      "forearm_R": { "art": "bare/forearm_R", "at": [20, 39], "size": [13, 17] }
+      "forearm_R": { "art": "female/forearm_R", "at": [20, 40], "size": [13, 16] }
     },
     "student": {
       "torso": { "art": "student/torso", "at": [9, 26], "size": [18, 30] },

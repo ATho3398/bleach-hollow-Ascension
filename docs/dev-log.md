@@ -1421,6 +1421,7 @@ C.0 ~ C.59 는 `docs/dev-log-archive.md` 로 옮겼다(2026-10-20, 사용량 절
 - 영술원 학생 여성형 `shinigami-student-f`(GDD 96장 32).
 - 사신 오른 위·아래팔 색 손질 반영(사용자 2026-10-29 "사신도 얘로 바꿔. 색깔 살짝 다름").
 - 여학생 손질 반영(몸통·양팔·오른 아래팔·뒷머리), 같은 그림 나눠 쓰기 도구 `scripts/rig/dedupe.py`.
+- 여성형(오른 위·아래팔)·영술원 남학생(오른 위·아래팔) 손질 반영.
 - **테스트** `tests/paperdoll.test.ts` 28개(부위 그림 크기 = 파일 크기 확인 추가, `tests/helpers/pngSize.ts`).
 - 이 브랜치에 있던 옛 홈 물건 32칸 작업(C.113 번호, main 에 안 들어감)은 main 쪽으로 되돌렸다. 도구 `scripts/depixel/`(도트 되돌리기·긴 쪽 N칸·색 수 제한·재질 2톤·줄 밀기)·`scripts/sprite-rig/`(옛 시험)는 남김.
 

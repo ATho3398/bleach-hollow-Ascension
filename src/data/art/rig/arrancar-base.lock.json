@@ -89,7 +89,7 @@
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
     "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "bare/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "bare/forearm_R", "at": [20, 39] }
+    "forearm_R": { "art": "female/forearm_R", "at": [20, 40] }
    },
    "layers": {
     "weapon": { "art": "weapon/sword", "at": [0, 48] },
