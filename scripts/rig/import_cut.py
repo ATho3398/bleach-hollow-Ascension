@@ -133,6 +133,7 @@ def main():
     ap.add_argument('--guide')
     ap.add_argument('--parts', default='head,torso,arm_L,arm_R,leg_L,leg_R')
     ap.add_argument('--no-head', action='store_true')
+    ap.add_argument('--own-head', action='store_true', help='머리를 공통 대머리 대신 이 몸 전용(<몸>/head)으로 쓴다')
     ap.add_argument('--at', action='append', default=[], help='이름=x,y 로 자리 지정(새로 그린 조각)')
     a = ap.parse_args()
     sheet = np.array(Image.open(a.sheet).convert('RGBA'))
@@ -183,9 +184,12 @@ def main():
             # 가이드 칸에서 고친 칼·칼집: 그림은 공통 파일, 자리는 칸 안 자리 그대로(이 몸의 외형), 쉬는 각도는 그대로
             key = 'weapon/sword' if name == 'weapon' else 'weapon/scabbard'
             Image.fromarray(part).save(os.path.join(ART, key + '.png'))
+            # 다른 외형도 같은 그림이라 크기를 맞추고, 이 외형에서 옮겨진 만큼 같이 옮긴다(위로 늘린 칼집 등)
+            mine = next((l[name] for l in looks if isinstance(l.get(name), dict)), None)
+            dx, dy = (px - mine['at'][0], py - mine['at'][1]) if mine else (0, 0)
             for l in rig['looks'].values():
-                if isinstance(l.get(name), dict):
-                    l[name]['size'] = [part.shape[1], part.shape[0]]
+                if isinstance(l.get(name), dict) and l not in looks:
+                    l[name] = {'art': key, 'at': [l[name]['at'][0] + dx, l[name]['at'][1] + dy], 'size': [part.shape[1], part.shape[0]]}
             for l in looks:
                 l[name] = {'art': key, 'at': [px, py], 'size': [part.shape[1], part.shape[0]]}
             if name == 'weapon':
@@ -211,7 +215,7 @@ def main():
                 l['scabbard'] = {'art': 'weapon/scabbard', 'at': [wx - int(xs.min() + xs.max()) // 2, wy], 'size': [part.shape[1], part.shape[0]]}
             print(f'칼집: {part.shape[1]}×{part.shape[0]}')
             continue
-        key = 'head_bald' if name == 'head' else f'{a.body}/{name}'
+        key = ('head_bald' if not a.own_head else f'{a.body}/head') if name == 'head' else f'{a.body}/{name}'
         if name == 'head' and a.no_head:
             key = body.get('head', {}).get('art', 'head_bald')
         else:

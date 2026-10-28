@@ -20,10 +20,10 @@ describe('종이인형 데이터', () => {
       }
     }
   });
-  it('사신·아란칼은 같은 머리(공통 대머리)를 쓰고, 가면은 따로 떼지 않는다(머리카락 층에 붙음)', () => {
+  it('사신·아란칼 머리는 같은 꼴(크기 같음 — 사신은 눈 색만 다른 전용 머리, 2026-10-28), 가면은 따로 떼지 않는다(머리카락 층에 붙음)', () => {
     const sh = lookLayers(HUMANOID, 'shinigami-base');
     const ar = lookLayers(HUMANOID, 'arrancar-base');
-    expect(sh.find((l) => l.slot === 'head')!.art).toBe(ar.find((l) => l.slot === 'head')!.art);
+    expect(sh.find((l) => l.slot === 'head')!.size).toEqual(ar.find((l) => l.slot === 'head')!.size);
     // 자리는 몸마다 사용자가 맞춘다(알몸 머리 1칸 옮김, 2026-10-28)
     expect([...sh, ...ar].some((l) => l.slot === 'mask')).toBe(false);
     expect(HUMANOID.slots.some((s) => s.id === 'mask')).toBe(false);
@@ -102,8 +102,8 @@ describe('자세·행렬', () => {
       expect(ids.indexOf(o)).toBe(ids.indexOf(p) + 1);
       expect(HUMANOID.slots.find((s) => s.id === o)!.bone).toBe(p);
     }
-    // 아란칼은 뒷머리를 일반머리에 합쳐 그렸다(사용자 시트 2026-10-28) — 사신만 뒷머리 층
-    expect(lookLayers(HUMANOID, 'shinigami-base').some((l) => l.slot === 'hair_back')).toBe(true);
+    // 뒷머리 층은 시트에 뒷머리가 있는 외형만(사용자 2026-10-28 — 지금은 셋 다 일반머리 하나)
+    for (const look of Object.keys(HUMANOID.looks)) expect(lookLayers(HUMANOID, look).every((l) => l.slot !== 'hair_back' || typeof HUMANOID.looks[look]!.hair_back === 'object')).toBe(true);
   });
   it('엄지: 칼 잡는 앞팔에 고정(관절 없음), 칼 앞에 그려진다', () => {
     const ids = HUMANOID.slots.map((s) => s.id);

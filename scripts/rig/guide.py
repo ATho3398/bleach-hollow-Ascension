@@ -24,7 +24,8 @@ ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
 RIG = json.load(open(os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json'), encoding='utf-8'))
 PAD = 3   # 칸 사방 여유(관절 겹침·삐져나온 곳)
 GAP = 2   # 칸 사이
-TOP = 1   # 위 테두리 자리
+TOP = 1   # 아래 테두리 자리
+ROWGAP = 4  # 줄 사이(1배 칸 수)
 PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'foot_L', 'foot_R', 'weapon', 'scabbard']
 NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼팔(칼)', 'thumb_L': '엄지',
          'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집'}
@@ -56,31 +57,41 @@ def main():
                           'solid': [look[p]] if isinstance(look.get(p), dict) else []})
         elif art:
             boxes.append({'slot': p, 'canvas': [art['at'][0] - PAD, art['at'][1] - PAD], 'size': [art['size'][0] + 2 * PAD, art['size'][1] + 2 * PAD], 'ghost': [], 'solid': [art]})
-    H = max(b['size'][1] for b in boxes) + 2 * TOP
-    W = sum(b['size'][0] for b in boxes) + GAP * (len(boxes) + 1)
-    img = np.zeros((H, W, 4), np.uint8)
-    x = GAP
+    # 정사각형에 가깝게 줄 바꿈 배치(사용자 2026-10-28 "시트 길게 말고 정사각형 비슷하게"). 줄 사이 ROWGAP = 8배 확인용 칸 이름 자리
+    area = sum((b['size'][0] + GAP) * (b['size'][1] + ROWGAP) for b in boxes)
+    wt = max(max(b['size'][0] for b in boxes) + 2 * GAP, int(area ** 0.5 * 1.3))
+    x, y, rowh, W = GAP, ROWGAP, 0, 0
     for b in boxes:
-        b['sheet'] = [x, TOP]
+        w, h = b['size']
+        if x + w + GAP > wt and x > GAP:
+            x, y, rowh = GAP, y + rowh + ROWGAP, 0
+        b['sheet'] = [x, y]
+        x += w + GAP
+        rowh = max(rowh, h)
+        W = max(W, x)
+    H = y + rowh + TOP
+    img = np.zeros((H, W, 4), np.uint8)
+    for b in boxes:
+        x, TOP_ = b['sheet']
         cx, cy = b['canvas']
         w, h = b['size']
         for g, alpha in [(g, GHOST_A) for g in b['ghost']] + [(g, 255) for g in b['solid']]:
             pa = np.array(Image.open(os.path.join(ART, g['art'] + '.png')).convert('RGBA'))
-            ox, oy = g['at'][0] - cx + x, g['at'][1] - cy + TOP
+            ox, oy = g['at'][0] - cx + x, g['at'][1] - cy + TOP_
             for yy, xx in zip(*np.nonzero(pa[..., 3] > 0)):
                 X, Y = ox + xx, oy + yy
-                if x <= X < x + w and TOP <= Y < TOP + h:
+                if x <= X < x + w and TOP_ <= Y < TOP_ + h:
                     img[Y, X] = (*pa[yy, xx, :3], alpha)
         # 칸 테두리(칸 바로 바깥 1줄 — 위·아래만, 양옆은 칸 사이 GAP 가운데)
-        img[TOP - 1, x - 1:x + w + 1] = LINE
-        if TOP + h < H:
-            img[TOP + h, x - 1:x + w + 1] = LINE
-        img[TOP - 1:TOP + h + 1, x - 1] = LINE
-        img[TOP - 1:TOP + h + 1, min(W - 1, x + w)] = LINE
+        img[TOP_ - 1, x - 1:x + w + 1] = LINE
+        if TOP_ + h < H:
+            img[TOP_ + h, x - 1:x + w + 1] = LINE
+        img[TOP_ - 1:TOP_ + h + 1, x - 1] = LINE
+        img[TOP_ - 1:TOP_ + h + 1, min(W - 1, x + w)] = LINE
         # 사용자가 칸 안에 그은 선(marks.json, 캔버스 좌표) — 빈 칸에만(그림을 덮지 않게)
         for mx, my in MARKS.get(b['slot'], []):
-            X, Y = mx - cx + x, my - cy + TOP
-            if x <= X < x + w and TOP <= Y < TOP + h and img[Y, X, 3] == 0:
+            X, Y = mx - cx + x, my - cy + TOP_
+            if x <= X < x + w and TOP_ <= Y < TOP_ + h and img[Y, X, 3] == 0:
                 img[Y, X] = LINE
         # 관절점: 이 슬롯의 뼈와 그 자식 뼈 관절 중 칸 안에 있는 것
         bone = slot_bone[b['slot']]
@@ -92,7 +103,6 @@ def main():
                     pts.append(bb['id'])
         b['pivots'] = pts
         del b['ghost'], b['solid']
-        x += w + GAP
     os.makedirs(a.out, exist_ok=True)
     Image.fromarray(img).save(os.path.join(a.out, 'guide.png'))
     json.dump({'note': '알몸 기본형 가이드 칸: sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안의 불투명 칸만 그 슬롯 그림', 'look': a.look,
@@ -102,7 +112,7 @@ def main():
     bg = Image.new('RGBA', (W, H), (150, 170, 150, 255))
     bg.alpha_composite(Image.fromarray(img))
     big = bg.resize((W * K, H * K), Image.NEAREST)
-    top = 40
+    top = 0
     out = Image.new('RGBA', (W * K, H * K + top + 30), (40, 44, 48, 255))
     out.paste(big, (0, top))
     d = ImageDraw.Draw(out)
@@ -115,7 +125,8 @@ def main():
              'foot_L': '발목', 'foot_R': '발목', 'weapon': '칼 손잡이', 'scabbard': '칼집', 'thumb_L': '엄지'}
     for b in boxes:
         sx, sy = b['sheet']
-        d.text((sx * K + 4, 8), NAMES[b['slot']], fill=(255, 255, 255, 255), font=f)
+        d.rectangle([sx * K, (sy - ROWGAP) * K + 2, sx * K + b['size'][0] * K, sy * K - 10], fill=(40, 44, 48, 255))
+        d.text((sx * K + 4, (sy - ROWGAP) * K + 4), NAMES[b['slot']], fill=(255, 255, 255, 255), font=f)
         for pid in b['pivots']:
             bb = bones[pid]
             px, py = bb['pivot'][0] - b['canvas'][0] + sx, bb['pivot'][1] - b['canvas'][1] + sy
