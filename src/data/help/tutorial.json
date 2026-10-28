@@ -20,7 +20,7 @@
       "practice": true,
       "minBlocks": 3,
       "title": "직접 해 보기: 블록 하나 써 보기",
-      "body": "이 단계부터 전투가 다시 흐른다.\n블록을 하나 눌러 써 본다.\n블록이 3개 모이면 [다음]이 열린다.",
+      "body": "이 단계부터 전투가 다시 흐르니 블록을 하나 눌러 써 본다.\n블록이 3개 모이면 [다음]이 열린다.",
       "done": "블록을 썼다.\n블록이 3개 모이면 [다음]을 누른다."
     },
     {
@@ -30,7 +30,7 @@
         "battle.tray"
       ],
       "title": "같은 블록을 붙여서 {chainName}",
-      "body": "완전히 같은 블록이 나란히 붙어 있을 때 누르면 함께 발동해 {chainName}이(가) 된다(최대 {chainMax}).\n강공격 예고는 착탄 직전에 {roleNames.guard} 버튼으로 막는다({roleNames.guard} 게이지가 다 차야 누를 수 있고, {guardSeconds}초만 막는다).\n{voidBlockName}은(는) 블록 자리를 빼앗는 손해 블록이다(피해는 평타 수준, 쓰면 {riskGaugeName} ↑)."
+      "body": "완전히 같은 블록이 나란히 붙어 있을 때 누르면 함께 발동해 {chainName}이(가) 된다(최대 {chainMax}).\n강공격 예고는 착탄 직전에 {roleNames.guard} 버튼으로 막고({roleNames.guard} 게이지가 다 차야 누를 수 있고 {guardSeconds}초만 막는다), {voidBlockName}은(는) 블록 자리를 빼앗는 손해 블록이다(피해는 평타 수준, 쓰면 {riskGaugeName} ↑)."
     },
     {
       "id": "liberation",
@@ -38,7 +38,7 @@
         "battle.liberation"
       ],
       "title": "{liberation.baseName}, 그리고 {absorbActionName}",
-      "body": "{liberation.baseName} 게이지가 차면 눌러 해방한다.\n{tier5}부터는 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있다.\n나머지는 [?] 도움말에서 다시 볼 수 있다."
+      "body": "{liberation.baseName} 게이지가 차면 눌러 해방하고, {tier5}부터는 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
     }
   ]
 }

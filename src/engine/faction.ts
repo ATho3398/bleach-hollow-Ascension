@@ -520,7 +520,7 @@ export function towerLabels(f: Pick<FactionConfig, 'tower'>): TowerLabels {
   const t = f.tower ?? {};
   return {
     name: t.name ?? '도전의 탑', floor: t.floor ?? '{n}층', finalBossName: t.finalBossName ?? '탑의 주인',
-    locked: t.locked ?? '스토리 1장을 깨면 열린다', desc: t.desc ?? '한 층 = 한 판. 체력 가득으로 시작하고 져도 잃는 것이 없다',
+    locked: t.locked ?? '스토리 1장을 깨면 열린다', desc: t.desc ?? '한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다.',
   };
 }
 

@@ -379,7 +379,7 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-cand__body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .bha-cand__top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .bha-cand__name { font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-bold); }
-.bha-cand__desc { font-size: var(--bha-fs-sm); color: var(--bha-text-2); line-height: 1.5; }
+.bha-cand__desc { font-size: var(--bha-fs-sm); color: var(--bha-text-2); line-height: 1.5; white-space: pre-line; }
 .bha-cand__foot { display: flex; align-items: center; gap: 6px; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-lin-color, var(--bha-text-2)); }
 .bha-pips { display: inline-flex; gap: 3px; }
 .bha-pips i { width: 10px; height: 10px; transform: rotate(45deg) scale(0.8); border: 1.5px solid currentColor; border-radius: 1px; }
