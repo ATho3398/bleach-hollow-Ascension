@@ -56,16 +56,25 @@ export interface EvolutionSnapshot {
   ability: StatId;
 }
 
+/** 진화 판정용 장착 속성 개수 (GDD 111장 후속 결정 ②, C.184 후속): 장착 특성 개수 + 노멀 강화 1↑이면 빈 본체 칸 하나를 노멀 1개로 센다
+ *  (노멀 skill 특성은 기본 블록이라 칸에 안 든다 — basicPerEmptySlot 과 같은 생각). 빈 칸에는 장착 순서가 없어 동률이면 장착한 특성이 이긴다 */
+export function judgeElementCounts(build: BuildState): Record<string, number> {
+  const counts = elementCounts(build);
+  const empty = enhanceLevel(build, NORMAL_ELEMENT) > 0 ? build.slots.filter((id) => id === null).length : 0;
+  if (empty > 0) counts[NORMAL_ELEMENT] = (counts[NORMAL_ELEMENT] ?? 0) + empty;
+  return counts;
+}
+
 /** 장착 특성 중 가장 많은 속성. 동률이면 가장 최근에 장착한 특성의 속성, 장착이 없으면 노멀 (GDD 20-5) */
 export function dominantElement(build: BuildState): string {
-  const counts = elementCounts(build);
+  const counts = judgeElementCounts(build);
   return pickTop(counts, build, (id) => getTrait(id).element) ?? NORMAL_ELEMENT;
 }
 
 /** 4단계 일반 진화의 속성 (GDD 49-7 ②, C.106): 일반 바스트로데(t4:속성)가 표에 있는 속성 중 장착 최다. 없는 속성(혈·독·허 — 히든 특수형으로만)은 세지 않는다.
  *  동률은 최근 장착, 맞는 장착이 없으면 노멀 */
 export function vastoNormalElement(build: BuildState, table: readonly FormDef[] = FORM_TABLE): string {
-  const counts = Object.fromEntries(Object.entries(elementCounts(build)).filter(([el]) => table.some((f) => f.id === `t4:${el}`)));
+  const counts = Object.fromEntries(Object.entries(judgeElementCounts(build)).filter(([el]) => table.some((f) => f.id === `t4:${el}`)));
   return pickTop(counts, build, (id) => getTrait(id).element) ?? NORMAL_ELEMENT;
 }
 

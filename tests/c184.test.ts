@@ -6,7 +6,7 @@ import { NORMAL_ELEMENT } from '../src/data/elements';
 import { addEnhance, basicAttackMultiplier, buildCombatParams, dropBasicBlockTraits, enhanceLevel, gainTrait, isBasicBlockTrait, newBuild, ownsTraitBlock } from '../src/engine/absorb';
 import { BALANCE } from '../src/config/balance';
 import { advance, chooseAbsorb, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
-import { evolutionCandidates } from '../src/engine/evolution/judge';
+import { dominantElement, evolutionCandidates, judgeElementCounts, vastoNormalElement } from '../src/engine/evolution/judge';
 import { newEvolution } from '../src/engine/evolution';
 import { fillDefaultTraits, newTestSave, setTraitSlots } from '../src/engine/testMode';
 import { MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, migrateSave, newSaveData } from '../src/game';
@@ -99,6 +99,33 @@ describe('111장 3: 빈 칸 몫', () => {
     gainTrait(b, 't-water-a');
     expect(buildCombatParams(b, 'hollow').basicAttackEnhance).toBeCloseTo((1 + EH.earlyPerLevel) * (1 + EH.basicPerEmptySlot * 2));
     expect(read('src/ui/absorbView.ts')).toContain('basicAttackMultiplier({ enhance: { [elId]: n }, slots: exp.build.slots })');
+  });
+});
+
+describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1↑이면 빈 본체 칸 하나 = 노멀 1개', () => {
+  it('빈 칸은 노멀 강화가 있을 때만 노멀로 세고, 동률이면 장착한 특성이 이긴다', () => {
+    const b = newBuild();
+    gainTrait(b, 't-fire-a');
+    expect(judgeElementCounts(b)).toEqual({ fire: 1 });
+    expect(dominantElement(b)).toBe('fire');
+    addEnhance(b, NORMAL_ELEMENT);
+    expect(judgeElementCounts(b)).toEqual({ fire: 1, normal: 2 });
+    expect(dominantElement(b)).toBe('normal');
+    expect(vastoNormalElement(b)).toBe('normal');
+    gainTrait(b, 't-water-a');
+    expect(judgeElementCounts(b)).toEqual({ fire: 1, water: 1, normal: 1 });
+    expect(dominantElement(b)).toBe('water'); // 동률: 가장 최근 장착
+    gainTrait(b, 't-water-b');
+    expect(dominantElement(b)).toBe('water');
+    expect(b.slots.includes(null)).toBe(false);
+  });
+  it('노멀 강화 + 칸 1개만 장착한 몸은 바스트로데_노멀 (칸을 일부러 비우지 않아도)', () => {
+    const e = newEvolution(1);
+    e.tierIndex = 2;
+    const b = newBuild();
+    b.enhance = { [NORMAL_ELEMENT]: 2 };
+    gainTrait(b, 't-earth-a');
+    expect(evolutionCandidates(e, { factionId: 'hollow', build: b, hunger: 20, condition: 80 }).normal.id).toBe('t4:normal');
   });
 });
 
