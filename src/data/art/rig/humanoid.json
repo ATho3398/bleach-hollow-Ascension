@@ -76,14 +76,14 @@
     "female": {
       "torso": { "art": "female/torso", "at": [8, 26], "size": [17, 27] },
       "arm_L": { "art": "female/arm_L", "at": [5, 29], "size": [12, 29] },
-      "arm_R": { "art": "female/arm_R", "at": [21, 29], "size": [10, 14] },
+      "arm_R": { "art": "female/arm_R", "at": [21, 29], "size": [11, 12] },
       "leg_L": { "art": "bare/leg_L", "at": [6, 51], "size": [17, 25] },
       "leg_R": { "art": "bare/leg_R", "at": [14, 49], "size": [16, 27] },
       "head": { "art": "head_bald", "at": [7, 10], "size": [16, 19] },
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "bare/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "bare/thumb_L", "at": [8, 51], "size": [3, 6] },
-      "forearm_R": { "art": "female/forearm_R", "at": [20, 39], "size": [13, 16] }
+      "forearm_R": { "art": "female/forearm_R", "at": [19, 38], "size": [13, 16] }
     },
     "student": {
       "torso": { "art": "student/torso", "at": [9, 26], "size": [18, 30] },
@@ -171,6 +171,10 @@
       "pivots": {
         "arm_R": [22, 32],
         "forearm_R": [29, 41]
+      },
+      "rot": {
+        "arm_R": 10,
+        "forearm_R": -15
       }
     }
   }
