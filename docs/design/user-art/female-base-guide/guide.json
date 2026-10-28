@@ -121,7 +121,7 @@
   {
    "slot": "thumb_L",
    "canvas": [
-    5,
+    3,
     48
    ],
    "size": [
@@ -176,7 +176,7 @@
   {
    "slot": "leg_L",
    "canvas": [
-    3,
+    2,
     48
    ],
    "size": [
@@ -195,7 +195,7 @@
   {
    "slot": "leg_R",
    "canvas": [
-    11,
+    10,
     46
    ],
    "size": [
@@ -232,7 +232,7 @@
   {
    "slot": "foot_R",
    "canvas": [
-    18,
+    16,
     69
    ],
    "size": [
@@ -251,7 +251,7 @@
    "slot": "weapon",
    "canvas": [
     -3,
-    45
+    47
    ],
    "size": [
     22,

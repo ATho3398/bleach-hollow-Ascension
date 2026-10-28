@@ -42,11 +42,12 @@
   "female": {
    "pivots": {
     "arm_R": [22, 32],
-    "forearm_R": [29, 41]
+    "forearm_R": [29, 41],
+    "foot_R": [22, 75]
    },
    "rot": {
     "forearm_R": -15,
-    "torso": 3,
+    "torso": 2,
     "head": -5,
     "arm_R": 14
    }
@@ -107,16 +108,16 @@
     "torso": { "art": "female/torso", "at": [7, 26] },
     "arm_L": { "art": "female/arm_L", "at": [4, 29] },
     "arm_R": { "art": "female/arm_R", "at": [21, 29] },
-    "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
-    "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
+    "leg_L": { "art": "bare/leg_L", "at": [5, 51] },
+    "leg_R": { "art": "bare/leg_R", "at": [13, 49] },
     "head": { "art": "head_bald", "at": [6, 10] },
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
-    "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
-    "thumb_L": { "art": "bare/thumb_L", "at": [8, 51] },
+    "foot_R": { "art": "bare/foot_R", "at": [19, 72] },
+    "thumb_L": { "art": "bare/thumb_L", "at": [6, 51] },
     "forearm_R": { "art": "female/forearm_R", "at": [20, 38] }
    },
    "layers": {
-    "weapon": { "art": "weapon/sword", "at": [0, 48] },
+    "weapon": { "art": "weapon/sword", "at": [0, 50] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
    }
   },

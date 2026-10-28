@@ -78,12 +78,12 @@
       "torso": { "art": "female/torso", "at": [7, 26], "size": [17, 27] },
       "arm_L": { "art": "female/arm_L", "at": [4, 29], "size": [12, 29] },
       "arm_R": { "art": "female/arm_R", "at": [21, 29], "size": [11, 12] },
-      "leg_L": { "art": "bare/leg_L", "at": [6, 51], "size": [17, 25] },
-      "leg_R": { "art": "bare/leg_R", "at": [14, 49], "size": [16, 27] },
+      "leg_L": { "art": "bare/leg_L", "at": [5, 51], "size": [17, 25] },
+      "leg_R": { "art": "bare/leg_R", "at": [13, 49], "size": [16, 27] },
       "head": { "art": "head_bald", "at": [6, 10], "size": [16, 19] },
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
-      "foot_R": { "art": "bare/foot_R", "at": [21, 72], "size": [9, 9] },
-      "thumb_L": { "art": "bare/thumb_L", "at": [8, 51], "size": [3, 6] },
+      "foot_R": { "art": "bare/foot_R", "at": [19, 72], "size": [9, 9] },
+      "thumb_L": { "art": "bare/thumb_L", "at": [6, 51], "size": [3, 6] },
       "forearm_R": { "art": "female/forearm_R", "at": [20, 38], "size": [13, 16] }
     },
     "student": {
@@ -131,7 +131,7 @@
     },
     "female-base": {
       "body": "female",
-      "weapon": { "art": "weapon/sword", "at": [0, 48], "size": [16, 42] },
+      "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] }
     },
     "shinigami-student": {
@@ -171,11 +171,12 @@
     "female": {
       "pivots": {
         "arm_R": [22, 32],
-        "forearm_R": [29, 41]
+        "forearm_R": [29, 41],
+        "foot_R": [22, 75]
       },
       "rot": {
         "forearm_R": -15,
-        "torso": 3,
+        "torso": 2,
         "head": -5,
         "arm_R": 14
       }
