@@ -226,7 +226,9 @@ describe('67장: 첫 원정 튜토리얼', () => {
     expect(s.evolution.absorbs).toBe(0);
     expect(firstRunPending(s)).toBe(false);
     expect(s.help.guides['first-run']).toBe('done');
-    expect(guidePending(s.help, 'first-run-room')).toBe(true);
+    // C.199 (GDD 123장 5 수정): 튜토리얼 뒤 먼저 회복 안내(빈사 복귀), '다음 할 일'은 그 안내를 마친 뒤
+    expect(guidePending(s.help, 'recover')).toBe(true);
+    expect(s.nest.collapsed).toBe(true);
     // 첫 진화 전이라 타일은 여전히 0장
     expect(s.tiles.collection).toEqual({});
     const mem = new Map<string, string>();
@@ -278,6 +280,6 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     markGuideDone(s.help, 'tile-intro');
     expect(guidePending(s.help, 'tile-intro')).toBe(false);
     expect(sanitizeHelpState(JSON.parse(JSON.stringify(s.help)))).toEqual(s.help);
-    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'tile-draw', 'tile-intro', 'tile-plan']); // C.126: 'birth'(탄생 연출, GDD 74장) 추가
+    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'recover', 'tile-draw', 'tile-intro', 'tile-plan']); // C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
   });
 });

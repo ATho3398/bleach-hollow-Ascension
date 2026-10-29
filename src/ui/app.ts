@@ -8,6 +8,10 @@ import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
+import { RECOVER_SCENES } from '../data/help';
+import { fixParticles } from '../engine/josa';
+import { recoverCure, recoverFeed, recoverGrantBag, recoverPotion, recoverSpa, recoverStep } from '../recoverTutorial';
+import { tutorialOverlay } from './tutorialOverlay';
 import { spaEndText, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
@@ -68,7 +72,7 @@ import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
 import { evolutionView } from './evolutionPanel';
 import { roomView } from './roomView';
-import { careView, chestView, openChestAtGear } from './lcdScreens';
+import { careView, chestView, openChestAtConsumables, openChestAtGear } from './lcdScreens';
 import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { roomOf } from '../engine/faction';
@@ -215,6 +219,92 @@ export function startApp(host: HTMLElement): void {
   let holdRoomGuides = false;
   /** 안내 오버레이가 떠 있다 (방을 다시 그려도 겹쳐 띄우지 않는다) */
   let guideOpen = false;
+
+  /** 튜토리얼 회복 안내가 진행 중이다 (GDD 123장 5 수정 v5.280, C.199) */
+  let recoverOpen = false;
+
+  /**
+   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199): 카드 9장을 순서대로, 카드 버튼 = 그 행동(기기 ✓ 로도). 건너뛰기 없음.
+   * 빈사 설명 → 가방(치료제·체력 포션 지급) → 치료제 → 포션 50% → 상인 안내 → 방 → 온천 → 쉬기 → 방 → 먹이 → 끝 → '다음 할 일'.
+   * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
+   */
+  function runRecover(faction: FactionConfig): boolean {
+    if (!save || recoverOpen || guideOpen) return false;
+    const s = save;
+    const start = recoverStep(s);
+    if (!start) return false;
+    recoverOpen = true;
+    const props = roomOf(faction).props;
+    const HH = BALANCE.provisional.nest.homeHp;
+    const TR = BALANCE.provisional.tutorialRecover;
+    const pct = (x: number) => String(Math.round(x * 100));
+    const vars = {
+      chestName: props.chest, spaName: props.spa, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
+      spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), idleHpPct: pct(HH.idlePerMinute),
+    };
+    const openBag = () => {
+      openChestAtConsumables();
+      open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear)));
+    };
+    const toRoom = () => {
+      if (nav.top?.id !== 'room') nestScreen();
+      else nav.top.render();
+    };
+    // 카드마다: 버튼 이름 · 누르면 할 일
+    const steps: Record<string, { label: string; act: () => void }> = {
+      dying: { label: '다음', act: () => undefined },
+      'to-bag': { label: `${props.chest} 열기`, act: () => { recoverGrantBag(s); persist(); openBag(); } },
+      cure: { label: '치료제 쓰기', act: () => { recoverCure(s, Date.now()); persist(); nav.top?.render(); } },
+      potion: { label: '체력 포션 마시기', act: () => { recoverPotion(s, Date.now()); persist(); nav.top?.render(); } },
+      merchant: { label: '방으로', act: () => toRoom() },
+      'to-spa': { label: fixParticles(`${props.spa}(으)로`), act: () => {
+        if (!s.nest.spa && spaEnter(s)) return; // 못 들어가면(배고픔 등) 다음 카드에서 바로 쉬기
+        persist();
+        openSpa(faction, s, false);
+      } },
+      'spa-rest': { label: '쉬기', act: () => {
+        recoverSpa(s, Date.now());
+        persist();
+        if (nav.top?.id === 'spa') nav.pop();
+        toRoom();
+      } },
+      feed: { label: '먹이 주기', act: () => { recoverFeed(s, Date.now()); persist(); nav.top?.render(); } },
+      done: { label: '다음', act: () => undefined },
+    };
+    const ids = RECOVER_SCENES.map((x) => x.id);
+    // 이어 가기: 빈사 = 처음, 포션 = 가방 열고 포션 카드, 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
+    const first = start === 'dying' ? 0 : start === 'potion' ? ids.indexOf('potion') : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
+    if (start === 'potion') {
+      recoverGrantBag(s);
+      persist();
+      openBag();
+    }
+    const show = (i: number): void => {
+      const scene = RECOVER_SCENES[i];
+      if (!scene) {
+        recoverOpen = false;
+        persist();
+        runGuide('first-run-room', faction);
+        return;
+      }
+      const st = steps[scene.id]!;
+      tutorialOverlay(faction, {
+        scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: st.label, vars,
+        script: { step: `회복 안내 ${i + 1} / ${RECOVER_SCENES.length}` },
+        onFinish: (status) => {
+          if (status !== 'completed') {
+            recoverOpen = false;
+            return;
+          }
+          st.act();
+          window.setTimeout(() => show(i + 1), 450); // 화면이 바뀐 뒤 대상 위치를 잰다
+        },
+      });
+    };
+    if (start === 'potion') window.setTimeout(() => show(first), 450); // 가방이 그려진 뒤
+    else show(first); // 방은 이미 그려졌다 (renderRoom 400ms 뒤)
+    return true;
+  }
 
   /** 한 번만 뜨는 안내 (C.120): 띄울 차례면 띄우고 본 것으로 저장. 띄웠으면 true */
   function runGuide(id: TextGuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
@@ -673,7 +763,8 @@ export function startApp(host: HTMLElement): void {
     if (guidePending(s.help, 'birth')) window.setTimeout(() => { if (nav.top?.id === 'room') runBirth(faction); }, 30);
     // 첫 원정 뒤 "다음 할 일", 첫 진화 뒤 "타일 3장" 안내 (GDD 67장 4번·64장 3번): 방을 그린 다음, 진화 연출이 남아 있으면 그 뒤에
     if (!holdRoomGuides) window.setTimeout(() => {
-      if (nav.top?.id !== 'room' || holdRoomGuides) return;
+      if (nav.top?.id !== 'room' || holdRoomGuides || recoverOpen) return;
+      if (runRecover(faction)) return; // 튜토리얼 원정 뒤 회복 안내가 먼저 (GDD 123장 5 수정)
       if (!runGuide('first-run-room', faction) && s.tiles.unlocked) runGuide('tile-intro', faction);
     }, 400);
     const greet = hungryGreet;

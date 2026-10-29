@@ -73,7 +73,68 @@
         "win": true,
         "hp": "13 / 108"
       },
-      "errors": []
+      "errors": [],
+      "recover": [
+        {
+          "step": "회복 안내 1 / 9",
+          "title": "빈사로 돌아왔다",
+          "hp": "체력12 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 2 / 9",
+          "title": "빈사부터 치료",
+          "hp": "체력12 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 3 / 9",
+          "title": "치료제",
+          "hp": "",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 4 / 9",
+          "title": "체력 포션",
+          "hp": "",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 5 / 9",
+          "title": "체력 포션은 드물다",
+          "hp": "",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 6 / 9",
+          "title": "온천",
+          "hp": "체력58 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 7 / 9",
+          "title": "쉬기",
+          "hp": "",
+          "spa": true
+        },
+        {
+          "step": "회복 안내 8 / 9",
+          "title": "먹이",
+          "hp": "체력92 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 9 / 9",
+          "title": "회복 끝",
+          "hp": "체력115 / 115",
+          "spa": false
+        }
+      ],
+      "recoverFallback": 0,
+      "home": {
+        "hp": "체력115 / 115",
+        "save": "TypeError: Cannot read properties of null (reading 'tracks')"
+      }
     },
     {
       "faction": "shinigami",
@@ -108,7 +169,7 @@
           "body": "강공격을 그대로 맞아 체력이 바닥 직전이다.이제 블록 바에 블록이 생긴다.",
           "wait": false,
           "only": null,
-          "sel": "guard"
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
         },
         {
           "title": "블록: 눌러서 사용",
@@ -148,7 +209,68 @@
         "win": true,
         "hp": "13 / 108"
       },
-      "errors": []
+      "errors": [],
+      "recover": [
+        {
+          "step": "회복 안내 1 / 9",
+          "title": "빈사로 돌아왔다",
+          "hp": "체력12 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 2 / 9",
+          "title": "빈사부터 치료",
+          "hp": "체력12 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 3 / 9",
+          "title": "치료제",
+          "hp": "",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 4 / 9",
+          "title": "체력 포션",
+          "hp": "",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 5 / 9",
+          "title": "체력 포션은 드물다",
+          "hp": "",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 6 / 9",
+          "title": "온천",
+          "hp": "체력58 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 7 / 9",
+          "title": "쉬기",
+          "hp": "",
+          "spa": true
+        },
+        {
+          "step": "회복 안내 8 / 9",
+          "title": "먹이",
+          "hp": "체력92 / 115",
+          "spa": false
+        },
+        {
+          "step": "회복 안내 9 / 9",
+          "title": "회복 끝",
+          "hp": "체력115 / 115",
+          "spa": false
+        }
+      ],
+      "recoverFallback": 0,
+      "home": {
+        "hp": "체력115 / 115",
+        "save": "TypeError: Cannot read properties of null (reading 'tracks')"
+      }
     }
   ]
 }

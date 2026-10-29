@@ -8,7 +8,9 @@ const { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'docs/captures/c199');
 const PORT = 5299;
-const SHOTS = { hollow: ['intro', 'guard-now', 'hurt', 'block-use', 'chain-use'], shinigami: ['heavy-info'] };
+const SHOTS = { hollow: ['intro', 'guard-now', 'hurt', 'block-use', 'chain-use'], shinigami: [] };
+const RECOVER_SHOTS = { hollow: ['dying', 'potion', 'to-spa', 'spa-rest', 'feed'], shinigami: [] };
+const RECOVER_IDS = ['dying', 'to-bag', 'cure', 'potion', 'merchant', 'to-spa', 'spa-rest', 'feed', 'done'];
 
 async function startServer() {
   if (process.env.C199_URL) return { url: process.env.C199_URL, stop: () => {} };
@@ -91,10 +93,44 @@ async function newGame(page, url, fi) {
       }
       await page.waitForTimeout(800);
       run.end = await page.evaluate(() => ({ win: !!document.querySelector('.bha-battle-ov--win'), hp: document.querySelector('[data-help="battle.hp"]')?.textContent ?? '' }));
-      if (faction === 'hollow') await page.screenshot({ path: path.join(OUT, 'h-8-win.png') });
+      // 전투 뒤 → 방 회복 안내 (GDD 123장 5 수정): 기기 ✓ 만 누른다 (흡수 화면 등 ✓ 로 안 넘어가는 곳은 기록)
+      run.recover = [];
+      run.recoverFallback = 0;
+      let lastR = null;
+      let stuck = 0;
+      for (let t = 0; t < 300; t++) {
+        const r = await page.evaluate(() => {
+          const l = document.querySelector('.bha-tut[data-tutorial="recover"]');
+          const hpEl = document.querySelector('.bha-room__hp');
+          return l ? { step: l.querySelector('.bha-tut__step')?.textContent ?? '', title: l.querySelector('.bha-tut__title')?.textContent ?? '', hp: hpEl?.textContent ?? '', spa: !!document.querySelector('.bha-spa') } : null;
+        });
+        if (r && r.step !== lastR) {
+          lastR = r.step;
+          run.recover.push(r);
+          const id = RECOVER_IDS[run.recover.length - 1];
+          await page.waitForTimeout(500);
+          if ((RECOVER_SHOTS[faction] ?? []).includes(id)) await page.screenshot({ path: path.join(OUT, `${faction === 'hollow' ? 'h' : 's'}-r${run.recover.length}-${id}.png`) });
+          stuck = 0;
+        }
+        if (run.recover.length === RECOVER_IDS.length && !r) break;
+        if (!r && run.recover.length === RECOVER_IDS.length) break;
+        const firstRoom = await page.locator('.bha-tut[data-tutorial="first-run-room"], [data-tutorial="first-run-room"]').count();
+        if (run.recover.length === RECOVER_IDS.length && (firstRoom || !r)) break;
+        stuck++;
+        // 카드가 떠 있을 때만 ✓ (카드 사이 화면 전환 중에 누르면 방 물건을 누른다). 카드 없이 오래 멈추면(전투 결과·흡수 화면) ✓
+        if (r || stuck > 4) await dev('확정').click().catch(() => {});
+        if (stuck > 25) {
+          // ✓ 로 안 넘어가는 화면: 첫 주 버튼 (기록 — 각본 대상 밖)
+          const go = page.locator('.bha-lcd button.bha-btn--primary, .bha-lcd button.bha-btn--lg').filter({ visible: true });
+          if (await go.count()) { await go.first().click({ timeout: 2000 }).catch(() => {}); run.recoverFallback++; }
+          stuck = 0;
+        }
+        await page.waitForTimeout(600);
+      }
+      run.home = await page.evaluate(() => ({ hp: document.querySelector('.bha-room__hp')?.textContent ?? '', save: (() => { try { const k = Object.keys(localStorage).find((x) => x.startsWith('bha-save')); const j = JSON.parse(localStorage.getItem(k)); const t = j.tracks ? j : j; return JSON.stringify({ nest: t.nest ? { hunger: t.nest.hunger, hp: t.nest.hpFraction, collapsed: t.nest.collapsed } : null, guides: t.help?.guides }); } catch (e) { return String(e); } })() }));
       proof.runs.push(run);
       await page.close();
-      console.log(faction, run.cards.map((c) => c.step).join(','), run.end, errors.length ? errors : '');
+      console.log(faction, run.cards.map((c) => c.step).join(','), run.end, 'recover', run.recover.map((c) => c.step + ':' + c.hp).join(' | '), 'fallback', run.recoverFallback, run.home, errors.length ? errors : '');
     }
   } finally {
     await browser.close();

@@ -62,7 +62,9 @@ describe('123장 1 초반 긴장감: ★1 적 공격', () => {
   });
 });
 function BALANCE_VERSION_OK(): boolean {
-  return readFileSync('src/config/balance.ts', 'utf8').includes('export const BALANCE_VERSION = 88;');
+  // C.199 가 89 로 올림 (튜토리얼 회복 안내 수치) — C.198 이상이면 된다
+  const m = /export const BALANCE_VERSION = (\d+);/.exec(readFileSync('src/config/balance.ts', 'utf8'));
+  return !!m && Number(m[1]) >= 88;
 }
 
 describe('123장 2 홈 체력 = 원정 밖에서도 유지', () => {

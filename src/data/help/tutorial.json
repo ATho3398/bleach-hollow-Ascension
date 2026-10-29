@@ -99,5 +99,73 @@
       "title": "{chainName}{chainMax}로 마무리",
       "body": "붙은 블록 하나를 누르면 {chainMax}개가 한꺼번에 나간다.\n블록을 눌러 적을 쓰러뜨린다."
     }
+  ],
+  "recover": [
+    {
+      "id": "dying",
+      "targets": [
+        "@.bha-room__hp"
+      ],
+      "title": "빈사로 돌아왔다",
+      "body": "원래는 전투 중 체력이 0 이 되면 빈사가 된다.\n빈사 중에는 체력이 {dyingPct}% 위로 차지 않고, 오래 두면 사망한다."
+    },
+    {
+      "id": "to-bag",
+      "targets": [],
+      "title": "빈사부터 치료",
+      "body": "빈사는 치료제를 써야 풀린다.\n치료제와 체력 포션을 1개씩 {chestName}에 넣었다."
+    },
+    {
+      "id": "cure",
+      "targets": [
+        "@[data-item=\"med-cure\"]"
+      ],
+      "title": "치료제",
+      "body": "치료제를 쓰면 빈사가 풀린다.\n치료제는 상점에서 산다."
+    },
+    {
+      "id": "potion",
+      "targets": [
+        "@[data-item=\"w-hp-potion\"]"
+      ],
+      "title": "체력 포션",
+      "body": "빈사가 풀렸으니 이제 체력을 채운다.\n튜토리얼의 체력 포션은 체력을 {potionPct}%까지 채운다."
+    },
+    {
+      "id": "merchant",
+      "targets": [],
+      "title": "체력 포션은 드물다",
+      "body": "체력 포션은 떠돌이 상인에게서 드물게 나온다.\n평소의 체력 포션은 체력을 가득 채운다."
+    },
+    {
+      "id": "to-spa",
+      "targets": [
+        "@.bha-prop--spa"
+      ],
+      "title": "{spaName}",
+      "body": "{spaName}에서 쉬면 체력이 1분에 {spaHpPct}% 차고 배부름이 {spaFullness} 준다.\n체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
+    },
+    {
+      "id": "spa-rest",
+      "targets": [],
+      "title": "쉬기",
+      "body": "튜토리얼에서는 기다리지 않고 바로 체력이 {spaToPct}%까지 찬다.\n쉬고 나면 방으로 돌아간다."
+    },
+    {
+      "id": "feed",
+      "targets": [
+        "@.bha-homedock__carebtn--feed"
+      ],
+      "title": "먹이",
+      "body": "먹이를 주면 배부름과 함께 체력도 조금 찬다.\n먹이 1개를 넣었다."
+    },
+    {
+      "id": "done",
+      "targets": [
+        "@.bha-room__hp"
+      ],
+      "title": "회복 끝",
+      "body": "배부름과 체력이 모두 가득 찼다.\n방에 있으면 체력이 1분에 {idleHpPct}%씩 찬다."
+    }
   ]
 }

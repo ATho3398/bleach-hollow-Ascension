@@ -227,6 +227,12 @@ type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'pet';
 const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'gear', traits: {}, synth: false };
 
 /** 가방을 장비 탭으로 연다 (상태 화면 장비 바로가기, GDD 109장 4번) */
+/** 가방을 물건 탭의 소모품 분류로 연다 (튜토리얼 회복 안내 — 치료제·체력 포션, GDD 123장 5 수정) */
+export function openChestAtConsumables(): void {
+  chestUi.tab = 'items';
+  itemsUi.cat = 'consumable';
+}
+
 export function openChestAtGear(): void {
   chestUi.tab = 'gear';
 }

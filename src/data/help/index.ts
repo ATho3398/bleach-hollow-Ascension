@@ -44,6 +44,8 @@ export interface ScreenHelp {
 export const TUTORIAL_SCENES: readonly TutorialScene[] = tutorialJson.scenes;
 /** 첫 원정 첫 전투 각본의 설명 카드 (GDD 123장 5, C.199): 각본 단계 id(engine/combat/script) → 장면 */
 export const SCRIPT_SCENES: Readonly<Record<string, TutorialScene>> = Object.fromEntries(tutorialJson.script.map((x) => [x.id, x as TutorialScene]));
+/** 튜토리얼 원정 뒤 회복 안내 카드 (GDD 123장 5 수정 v5.280, C.199): 순서 그대로. 대상 '@선택자' = CSS 선택자 */
+export const RECOVER_SCENES: readonly TutorialScene[] = tutorialJson.recover;
 export const GLOSSARY: readonly GlossaryTerm[] = glossaryJson.terms;
 export const SCREEN_HELPS: readonly ScreenHelp[] = screensJson.screens;
 /** 한 번만 뜨는 안내 (C.120, GDD 64·67장): 안내 id → 장면 ('first-absorb' 는 튜토리얼 흡수 화면 위 장면, 저장 상태 없음) */

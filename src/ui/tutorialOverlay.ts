@@ -56,7 +56,8 @@ function targetRect(ids: string[], host: HTMLElement): Rect | null {
   // 화면 좌표는 기기를 돌려 놓으면 같이 돌아가므로 기기 안 좌표로 바꿔 쓴다 (GDD 16-6)
   const o = host === document.body ? { left: 0, top: 0 } : elementLocalRect(host);
   for (const id of ids) {
-    document.querySelectorAll<HTMLElement>(`[data-help="${id}"]`).forEach((n) => {
+    // '@' 로 시작하면 CSS 선택자 (전투 밖 회복 안내 카드, C.199)
+    document.querySelectorAll<HTMLElement>(id.startsWith('@') ? id.slice(1) : `[data-help="${id}"]`).forEach((n) => {
       const r = elementLocalRect(n);
       if (r.width > 0 && r.height > 0) rects.push({ top: r.top - o.top, left: r.left - o.left, width: r.width, height: r.height });
     });

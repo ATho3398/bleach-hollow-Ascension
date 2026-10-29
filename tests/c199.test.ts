@@ -5,10 +5,14 @@ import { getFaction } from '../src/data/factions';
 import {
   playScriptedCombat, scriptAck, scriptPrompt, scriptStep, type CombatEvent, type CombatState, type ScriptStage,
 } from '../src/engine/combat';
-import { advance, createExpedition, startBattle, type ExpeditionState } from '../src/engine/expedition';
-import { newSaveData, nextRunId } from '../src/game';
+import { advance, createExpedition, playExpedition, startBattle, type ExpeditionState } from '../src/engine/expedition';
+import { guidePending } from '../src/engine/tutorial';
+import { absenceOf, newSaveData, nextRunId, recordExpedition, tickIdle } from '../src/game';
+import { homeHp, HP_POTION_ID } from '../src/home';
+import { CURE_ITEM_ID, recoverCure, recoverFeed, recoverGrantBag, recoverPotion, recoverSpa, recoverStep } from '../src/recoverTutorial';
 
 const TS = BALANCE.provisional.tutorialScript;
+const TR = BALANCE.provisional.tutorialRecover;
 
 const tutorialBattle = (factionId: string, seed = 7): { exp: ExpeditionState; s: CombatState } => {
   const save = newSaveData(factionId, 1);
@@ -128,5 +132,67 @@ describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
     while (exp.phase !== 'battle' && exp.phase !== 'ended' && n++ < 500) advance(exp);
     if (exp.phase === 'battle') expect(startBattle(exp).script).toBeUndefined();
     expect(getFaction('hollow').id).toBe('hollow');
+  });
+});
+
+describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () => {
+  const afterTutorial = (factionId: string) => {
+    const save = newSaveData(factionId, 1000);
+    const exp = createExpedition({
+      factionId, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+      build: save.build, evolution: save.evolution, tutorial: true,
+    });
+    playExpedition(exp, { returnAfterLap: 1, absorb: 'absorb' });
+    recordExpedition(save, exp, 2000);
+    return save;
+  };
+  for (const f of ['hollow', 'shinigami']) {
+    it(`${f}: 빈사 복귀 → 치료제 → 포션 50% → 온천 → 먹이 = 배부름·체력 100% → '다음 할 일' 차례`, () => {
+      const s = afterTutorial(f);
+      expect(s.nest.collapsed).toBe(true);
+      expect(recoverStep(s)).toBe('dying');
+      expect(guidePending(s.help, 'first-run-room')).toBe(false);
+      expect(s.runLog.vitals?.some((v) => v.kind === 'collapse' && v.cause === 'tutorial')).toBe(true);
+      recoverGrantBag(s);
+      expect(s.shared.items[CURE_ITEM_ID]).toBe(1);
+      expect(s.shared.items[HP_POTION_ID]).toBe(1);
+      expect(recoverCure(s, 3000)).toBe(true);
+      expect(s.nest.collapsed).toBe(false);
+      expect(s.shared.items[CURE_ITEM_ID]).toBeUndefined();
+      expect(recoverStep(s)).toBe('potion');
+      expect(recoverPotion(s, 3100)).toBe(true);
+      expect(homeHp(s).fraction).toBeCloseTo(TR.potionTo, 6);
+      expect(s.shared.items[HP_POTION_ID]).toBeUndefined();
+      expect(recoverStep(s)).toBe('spa');
+      const full0 = 100 - s.nest.hunger;
+      expect(recoverSpa(s, 3200)).toBe(true);
+      expect(s.nest.spa).toBeNull();
+      expect(homeHp(s).fraction).toBeCloseTo(TR.spaTo, 6);
+      expect(100 - s.nest.hunger).toBeLessThan(full0); // 온천 = 배부름 줄어듦
+      expect(recoverStep(s)).toBe('feed');
+      recoverFeed(s, 3300);
+      expect(100 - s.nest.hunger).toBe(100);
+      expect(homeHp(s).fraction).toBe(1);
+      expect(recoverStep(s)).toBeNull();
+      expect(s.help.guides.recover).toBe('done');
+      expect(guidePending(s.help, 'first-run-room')).toBe(true);
+    });
+  }
+
+  it('회복 안내 중에는 빈사 사망 시계가 흐르지 않는다 (꺼 둔 동안·켜 둔 동안)', () => {
+    const s = afterTutorial('hollow');
+    const later = 2000 + 400 * 3_600_000;
+    absenceOf(s, later);
+    expect(s.nest.dead).toBe(false);
+    expect(s.nest.collapsed).toBe(true);
+    tickIdle(s, later + 300 * 3_600_000);
+    expect(s.nest.dead).toBe(false);
+  });
+
+  it('세이브 왕복 뒤에도 같은 단계부터 (진행은 세이브 값에서 읽는다)', () => {
+    const s = afterTutorial('shinigami');
+    recoverCure(s, 3000);
+    const back = JSON.parse(JSON.stringify(s));
+    expect(recoverStep(back)).toBe('potion');
   });
 });

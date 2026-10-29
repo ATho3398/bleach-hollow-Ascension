@@ -421,7 +421,8 @@ export interface VitalRecord {
   kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover' | 'spit';
   /** spit: 뱉은 먹이 종류 */
   food?: string;
-  cause?: 'absence' | 'defeat';
+  /** tutorial = 튜토리얼 원정 뒤 회복 안내의 빈사 복귀 (GDD 123장 5 수정, C.199) */
+  cause?: 'absence' | 'defeat' | 'tutorial';
   /** 원정 밖 전투에서 빈사로 져 사망했을 때 그 곳 (tower·rank) */
   where?: string;
   status?: 'collapsed' | 'weak' | 'tired';

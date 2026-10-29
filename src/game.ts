@@ -3,7 +3,7 @@
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { dropBasicBlockTraits, gainTrait, newBuild, type BuildState } from './engine/absorb';
-import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, cureStatus, departCare, dieNest, doNestAction, feedFood, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, type SpaEnd, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
+import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, type SpaEnd, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
 import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, stepsNeeded, type EvolutionState, type EvolveResult } from './engine/evolution';
@@ -452,9 +452,15 @@ export function careNest(save: SaveData, action: CareAction, nowMs: number = Dat
   return out;
 }
 
+/** 튜토리얼 회복 안내(GDD 123장 5 수정, C.199) 중에는 빈사 사망 시계가 흐르지 않는다: 시간을 반영하기 전에 빈사 시작 시각을 지금으로 */
+function holdTutorialDying(save: SaveData, nowMs: number): void {
+  if (guidePending(save.help, 'recover') && save.nest.collapsed && !save.nest.dead) save.nest.collapsedAt = nowMs;
+}
+
 /** 다시 열 때 꺼 둔 동안 (GDD 24-1 → 102장): 마지막 접속 시각부터 시간 흐름·교감 감소·쓰러짐·사망. 원정 중간 저장이 있으면 멈춤.
  *  쓰러짐·사망은 런 로그 vitals 에 남긴다(9장). 결과를 돌려주고 접속 시각을 지금으로(되돌린 시계면 그대로) */
 export function absenceOf(save: SaveData, nowMs: number = Date.now()): AbsenceReport {
+  holdTutorialDying(save, nowMs);
   const r = applyAbsenceTime(save.nest, save.lastSeenAt, nowMs, save.activeExpedition != null);
   const at = (h: number) => Math.round(save.lastSeenAt + h * 3_600_000);
   if (r.collapsed) logVital(save, { at: at(BALANCE.provisional.nest.care.collapseHours), kind: 'collapse', cause: 'absence', hours: r2(r.hours) });
@@ -876,7 +882,6 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
     const r = exp.tutorialReward;
     if (r) (log.tutorialRewards ??= []).push({ at: nowMs, runId: exp.runId, factionId: exp.factionId, kind: 'first-absorb', enemyId: r.enemyId, element: r.element, ev: { ...r.ev }, tierIndex: exp.evolution.tierIndex });
     markGuideDone(save.help, 'first-run');
-    queueGuide(save.help, 'first-run-room');
   }
   // 리스크 기록: 최고치, 한계 돌파 횟수, 돌파 후 생존(= 돌파하고도 귀환) 횟수 (GDD 9장)
   log.risk.peak = Math.max(log.risk.peak, exp.riskPeak);
@@ -908,6 +913,11 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   if (end.collapsed) logVital(save, { at: nowMs, kind: 'collapse', cause: 'defeat', runId: exp.runId });
   if (end.died) logVital(save, { at: nowMs, kind: 'death', ...(summarize(exp).outcome === 'defeated' ? { cause: 'defeat' as const } : {}), runId: exp.runId });
   for (const st of end.recovered) logVital(save, { at: nowMs, kind: 'recover', status: st, runId: exp.runId });
+  // 튜토리얼 회복 안내 (GDD 123장 5 수정 v5.280, C.199): 첫 원정을 마치면 빈사로 복귀 → 방에서 회복 안내(recover). '다음 할 일'은 그 안내를 마친 뒤 (recoverTutorial.recoverFeed)
+  if (exp.tutorial && !save.nest.dead) {
+    if (collapseNest(save.nest, nowMs)) logVital(save, { at: nowMs, kind: 'collapse', cause: 'tutorial', runId: exp.runId });
+    queueGuide(save.help, 'recover');
+  }
   // 수련권 (GDD 22-5): 원정에서 돌아올 때마다(승패 무관) +1, 최대 3
   addTrainingTicket(save.training);
   save.activeExpedition = null;
@@ -1042,6 +1052,7 @@ export function accrueIdle(save: SaveData, nowMs: number = Date.now(), online = 
 export function tickIdle(save: SaveData, nowMs: number = Date.now()): boolean {
   // 켜 둔 동안 시간 흐름 (GDD 102-1): 허기·컨디션 — 원정 중이면 원정이 자기 수치를 쓴다
   const alive = !save.nest.dead;
+  holdTutorialDying(save, nowMs);
   logSpaEnd(save, tickNestOnline(save.nest, nowMs, save.activeExpedition != null)?.spaEnded);
   if (alive && save.nest.dead) logVital(save, { at: nowMs, kind: 'death' }); // 빈사 시간이 켜 둔 동안 다 됐다 (GDD 102장 수정)
   const r = accrueIdle(save, nowMs, true);
