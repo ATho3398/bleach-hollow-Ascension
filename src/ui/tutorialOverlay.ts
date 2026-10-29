@@ -54,6 +54,8 @@ export interface TutorialAct {
   selector: string;
   /** 해야 할 것을 했는가 */
   done: () => boolean;
+  /** 했으면 [다음] 없이 바로 닫는다 (첫 모험 강제처럼 화면이 다른 흐름으로 넘어갈 때, GDD 131장 2) */
+  autoFinish?: boolean;
 }
 
 /** 실제 조작 카드가 대상 위치·완료를 다시 보는 간격 */
@@ -277,6 +279,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
       layout(); // 화면이 바뀌면 강조 테두리가 지금 보이는 대상으로 옮겨 간다
       if (actDone || !act.done()) return;
       actDone = true;
+      if (act.autoFinish) return finish('completed');
       render(); // [다음] 켜짐 · 뒤 화면 통과 끝 · 초점 = [다음]
     };
     actTimer = window.setInterval(poll, ACT_POLL_MS);

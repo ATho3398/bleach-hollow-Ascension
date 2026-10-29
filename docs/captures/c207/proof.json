@@ -1,0 +1,306 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "cards": [
+        {
+          "step": "홈 안내 1 / 11",
+          "title": "둥지",
+          "body": "여기가 둥지다.\n\n둥지에 있는 버튼이 무엇을 하는지 하나씩 본다.",
+          "hole": false,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 2 / 11",
+          "title": "밖으로",
+          "body": "밖으로 나가면 웨코문도 지도가 나온다.\n\n둥지·시장·모험 가운데 골라 바로 간다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 3 / 11",
+          "title": "수련장",
+          "body": "해방 수련을 하고 진화 정보를 본다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 4 / 11",
+          "title": "책장",
+          "body": "도감이다. 만난 진화체와 칭호를 본다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 5 / 11",
+          "title": "가방",
+          "body": "장비·물건·타일을 보고 쓴다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 6 / 11",
+          "title": "상태",
+          "body": "머리 위 막대는 배부름·컨디션·광기이다.\n\n누르면 상태 화면이 열린다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 7 / 11",
+          "title": "체력",
+          "body": "원정에는 이 체력 그대로 나간다.\n\n둥지에 있으면 조금씩 찬다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 8 / 11",
+          "title": "돌보기",
+          "body": "먹이·재우기·교감으로 캐릭터를 돌본다.\n\n먹이는 원정에서 얻는다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 9 / 11",
+          "title": "대기 보상",
+          "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 10 / 11",
+          "title": "더보기",
+          "body": "설정·도움말·사진·백업 같은 메뉴가 있다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 11 / 11",
+          "title": "첫 모험",
+          "body": "이제 모험을 떠나자.\n\n[밖으로] → [모험]을 누른다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "forced": true,
+          "chestTapStays": "bha-room is-force-out",
+          "backStays": "bha-room is-force-out",
+          "backToast": "튜토리얼 먼저 모험을 떠나자",
+          "roomItems": "밖으로",
+          "presses": "✓(밖으로)✓(모험)",
+          "world": [
+            "home:lock",
+            "market:lock",
+            "adventure:open"
+          ],
+          "marketTapStays": "bha-room bha-worldmap"
+        }
+      ],
+      "errors": [],
+      "end": "bha-app--fixed bha-exp is-paused"
+    },
+    {
+      "faction": "shinigami",
+      "cards": [
+        {
+          "step": "홈 안내 1 / 11",
+          "title": "대원실",
+          "body": "여기가 대원실다.\n\n대원실에 있는 버튼이 무엇을 하는지 하나씩 본다.",
+          "hole": false,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 2 / 11",
+          "title": "밖으로",
+          "body": "밖으로 나가면 소울 소사이어티 지도가 나온다.\n\n대원실·시장·모험 가운데 골라 바로 간다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 3 / 11",
+          "title": "수련장",
+          "body": "해방 수련을 하고 진화 정보를 본다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 4 / 11",
+          "title": "책장",
+          "body": "도감이다. 만난 진화체와 칭호를 본다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 5 / 11",
+          "title": "가방",
+          "body": "장비·물건·타일을 보고 쓴다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 6 / 11",
+          "title": "상태",
+          "body": "머리 위 막대는 배부름·컨디션·호로화이다.\n\n누르면 상태 화면이 열린다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 7 / 11",
+          "title": "체력",
+          "body": "원정에는 이 체력 그대로 나간다.\n\n대원실에 있으면 조금씩 찬다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 8 / 11",
+          "title": "돌보기",
+          "body": "식사·재우기·손질로 캐릭터를 돌본다.\n\n먹이는 원정에서 얻는다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 9 / 11",
+          "title": "대기 보상",
+          "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 10 / 11",
+          "title": "더보기",
+          "body": "설정·도움말·사진·백업 같은 메뉴가 있다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": false
+          }
+        },
+        {
+          "step": "홈 안내 11 / 11",
+          "title": "첫 모험",
+          "body": "이제 모험을 떠나자.\n\n[밖으로] → [모험]을 누른다.",
+          "hole": true,
+          "dim": false,
+          "skip": false,
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "forced": true,
+          "chestTapStays": "bha-room is-force-out",
+          "backStays": "bha-room is-force-out",
+          "backToast": "튜토리얼 먼저 모험을 떠나자",
+          "roomItems": "밖으로",
+          "presses": "✓(밖으로)✓(모험)",
+          "world": [
+            "home:lock",
+            "market:lock",
+            "adventure:open"
+          ],
+          "marketTapStays": "bha-room bha-worldmap"
+        }
+      ],
+      "errors": [],
+      "end": "bha-app--fixed bha-exp is-paused"
+    }
+  ]
+}

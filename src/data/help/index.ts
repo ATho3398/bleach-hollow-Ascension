@@ -50,6 +50,8 @@ export const GLOSSARY: readonly GlossaryTerm[] = glossaryJson.terms;
 export const SCREEN_HELPS: readonly ScreenHelp[] = screensJson.screens;
 /** 한 번만 뜨는 안내 (C.120, GDD 64·67장): 안내 id → 장면 ('first-absorb' 는 튜토리얼 흡수 화면 위 장면, 저장 상태 없음) */
 export const GUIDES: Readonly<Record<TextGuideId | 'first-absorb', readonly TutorialScene[]>> = guidesJson.guides;
+/** 처음 켰을 때 홈 안내 (GDD 131장, C.207): 첫 카드 · 방 물건·독 카드(방에 있는 것만) · 마지막 첫 모험 카드 */
+export const HOME_INTRO: { intro: Omit<TutorialScene, 'id' | 'targets'>; items: readonly TutorialScene[]; last: Omit<TutorialScene, 'targets'> } = guidesJson.homeIntro;
 
 /** 안내 본문 자리표시자 (종족 설정 helpVars 에 더함): 시작 타일 이름·조합 예시·튜토리얼 수치 */
 export function guideVars(f: FactionConfig): Record<string, string> {

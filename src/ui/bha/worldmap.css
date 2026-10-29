@@ -21,3 +21,10 @@
 .bha-worldmap .bha-prop[aria-disabled="true"] .bha-prop__tag { opacity: 0.45; }
 /* 캐릭터: 지도 위라 방보다 작게, 보기만 */
 .bha-worldmap__char { scale: 0.6; pointer-events: none; }
+/* 첫 모험 강제 (GDD 131장 2, C.207): 방에서 밖으로(스위치 끔이면 모험 문)만 켜고 나머지 버튼은 흐린 잠김 — 누를 수 없다 */
+.bha-room.is-force-out .bha-prop:not(.bha-prop--outside):not(.bha-prop--door),
+.bha-room.is-force-out .bha-homedock,
+.bha-room.is-force-out .bha-room__status,
+.bha-room.is-force-out .bha-room__statusinfo,
+.bha-room.is-force-out .bha-char,
+.bha-room.is-force-out .bha-room__hud button { opacity: 0.45; pointer-events: none; }

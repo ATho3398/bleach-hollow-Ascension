@@ -63,6 +63,8 @@ export interface RoomHandlers {
   onMarket: () => void;
   /** 밖으로 (GDD 130장 1, C.204): 월드맵 스위치가 켜졌을 때 방 물건 outside — 월드맵(홈·시장·모험) */
   onOutside: () => void;
+  /** 첫 모험 강제 (GDD 131장 2, C.207): 켜지면 밖으로(끔이면 모험 문)만 누를 수 있고 나머지 방 버튼은 흐린 잠김 */
+  forceOutside?: boolean;
 }
 
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
@@ -343,6 +345,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
   const main = mountApp(dev.view, { cls: 'bha-room' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
+  if (hd.forceOutside) main.classList.add('is-force-out'); // 첫 모험 강제 (GDD 131장 2): 밖으로·모험 문 말고는 흐린 잠김 (room.css)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
   if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번·127장 3) — 장터 물건에 배지 (월드맵 켬이면 지도 위 시장에, 130장 2)
 

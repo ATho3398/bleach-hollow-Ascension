@@ -19,7 +19,8 @@ describe('129-1 1 튜토리얼 안내 카드 회색 덮개 없음', () => {
   it('저절로 뜨는 안내(showGuide)는 replay 없이, 도움말 안내 다시 보기만 replay: true', () => {
     expect(guide).toContain('replay: o.replay,');
     const replays = app.match(/replay: true/g) ?? [];
-    expect(replays.length).toBe(1);
+    expect(replays.length).toBe(2); // C.207: 도움말 '홈 안내' 다시 보기도 replay
+    expect(app).toContain("finishLabel: '닫기', vars, replay: true");
     expect(app).toMatch(/showGuide\(faction, ids\[i\]!, \{ finishLabel: [^}]*replay: true/);
     expect(app).toContain("el('div', 'bha-tut is-script is-nodim')");
   });

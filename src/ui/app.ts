@@ -8,7 +8,7 @@ import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { homeHp, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
-import { RECOVER_SCENES } from '../data/help';
+import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverSpaSoak, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
@@ -357,6 +357,70 @@ export function startApp(host: HTMLElement): void {
     return true;
   }
 
+  /** 처음 켰을 때 홈 안내가 떠 있다 (GDD 131장, C.207) */
+  let homeIntroOpen = false;
+  /** 첫 모험 강제 중 (GDD 131장 2): 방은 밖으로(모험 문)만, 월드맵은 모험만 */
+  let forceAdventure = false;
+  const FORCE_HINT = { eyebrow: '튜토리얼', title: '먼저 모험을 떠나자', meta: '' };
+
+  /** 홈 안내 카드 (GDD 131장 1): 첫 카드 + 방에 실제로 있는 물건·독 버튼(대상이 화면에 없으면 뺀다). 이름은 종족 설정에서 */
+  function homeIntroScenes(faction: FactionConfig): { scenes: TutorialScene[]; vars: Record<string, string> } {
+    const props = roomOf(faction).props;
+    const mk = marketOf(faction);
+    const wm = worldMapOf(faction);
+    const care = (['feed', 'sleep', 'pet'] as const).map((a) => faction.nestActionsShort?.[a] ?? faction.nestActions[a]).join('·');
+    const vars = {
+      outsideName: props.outside, doorName: props.door, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
+      goPath: FEATURES.WORLD_MAP ? `[${props.outside}] → [${props.door}]을(를) 누른다.` : `[${props.door}]을(를) 누른다.`,
+    };
+    const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
+    const scenes: TutorialScene[] = [{ id: 'intro', targets: [], ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)];
+    return { scenes, vars };
+  }
+
+  /**
+   * 처음 켰을 때 홈 안내 → 첫 모험 강제 (GDD 131장, C.207): 새 세이브(첫 원정 전)의 첫 방. 회색 덮개·건너뛰기 없음.
+   * 카드마다 [다음] → 마지막 카드 = 밖으로(끔이면 모험 문)만 켜고 나머지 방 버튼 흐린 잠김, 월드맵은 모험만. 실제 버튼을 눌러 떠나면 끝(본 것으로 저장).
+   * 뒤로 = 짧은 안내. 띄웠으면 true
+   */
+  function runHomeIntro(faction: FactionConfig): boolean {
+    if (!save || homeIntroOpen || guideOpen || birthOpen || recoverOpen) return false;
+    const s = save;
+    if (!guidePending(s.help, 'home-intro') || !firstRunPending(s)) return false;
+    homeIntroOpen = true;
+    const { scenes, vars } = homeIntroScenes(faction);
+    const total = scenes.length + 1;
+    const hint = () => showToast({ eyebrow: '튜토리얼', title: '[다음]을 눌러 진행한다', meta: '' }, 0, 1800);
+    const show = (i: number): void => {
+      const scene = scenes[i];
+      if (scene) {
+        tutorialOverlay(faction, {
+          scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: hint,
+          script: { step: `홈 안내 ${i + 1} / ${total}` },
+          onFinish: (st) => (st === 'completed' ? show(i + 1) : void (homeIntroOpen = false)),
+        });
+        return;
+      }
+      // 마지막: 첫 모험 강제 — 방을 잠금 모습으로 다시 그리고, 실제 버튼(밖으로 → 모험 / 모험 문)을 눌러 떠나야 끝난다
+      forceAdventure = true;
+      if (nav.top?.id === 'room') nav.top.render();
+      const go = FEATURES.WORLD_MAP ? '.bha-prop--outside, .bha-worldmap [data-place="adventure"]' : '.bha-prop--door';
+      const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
+      window.setTimeout(() => tutorialOverlay(faction, {
+        scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
+        script: { step: `홈 안내 ${total} / ${total}`, act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' } },
+        onFinish: () => {
+          forceAdventure = false;
+          homeIntroOpen = false;
+          markGuideDone(s.help, 'home-intro');
+          persist();
+        },
+      }), 300); // 잠금 모습으로 다시 그린 뒤 대상 위치를 잰다
+    };
+    show(0);
+    return true;
+  }
+
   /** 한 번만 뜨는 안내 (C.120): 띄울 차례면 띄우고 본 것으로 저장. 띄웠으면 true */
   function runGuide(id: TextGuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
     if (!save || guideOpen || !guidePending(save.help, id)) return false;
@@ -385,6 +449,7 @@ export function startApp(host: HTMLElement): void {
       },
       onDone: () => {
         birthOpen = false;
+        window.setTimeout(() => { if (nav.top?.id === 'room') runHomeIntro(faction); }, 300); // 탄생 연출 뒤 홈 안내 (GDD 131장)
         if (!save) return;
         markGuideDone(save.help, 'birth');
         persist();
@@ -434,6 +499,11 @@ export function startApp(host: HTMLElement): void {
       next(0);
     };
     const out = [{ label: '첫 원정 안내', run: chain(['first-run', 'first-absorb', 'first-run-room']) }];
+    // 홈 안내 다시 보기 (GDD 131장 3): 방에서 연 도움말일 때만(대상이 방 버튼) — 설명 카드만, 강제 없음
+    if (nav.top?.id === 'room') out.unshift({ label: '홈 안내', run: () => {
+      const { scenes, vars } = homeIntroScenes(faction);
+      tutorialOverlay(faction, { scenes, name: 'home-intro', pauseLabel: null, finishLabel: '닫기', vars, replay: true, onFinish: () => undefined });
+    } });
     if (faction.birthFx) out.push({ label: '탄생 연출', run: () => void playBirth(faction) });
     if (save && tilesUnlocked(save)) out.push({ label: '타일 안내', run: chain(['tile-intro', 'tile-plan', 'tile-draw']) });
     return out;
@@ -821,6 +891,9 @@ export function startApp(host: HTMLElement): void {
       onHome: () => nestScreen(),
       onMarket: () => openMarket(faction, s),
       onAdventure: () => departFromHome(faction, s),
+      // 첫 모험 강제 (GDD 131장 2): 홈·시장 잠김
+      locked: forceAdventure ? ['home', 'market'] : undefined,
+      onLocked: () => showToast(FORCE_HINT, 0, 1800),
     }));
   }
 
@@ -850,6 +923,8 @@ export function startApp(host: HTMLElement): void {
     if (!holdRoomGuides) window.setTimeout(() => {
       if (nav.top?.id !== 'room' || holdRoomGuides || recoverOpen) return;
       if (runRecover(faction)) return; // 튜토리얼 원정 뒤 회복 안내가 먼저 (GDD 123장 5 수정)
+      if (runHomeIntro(faction)) return; // 처음 켰을 때 홈 안내 → 첫 모험 강제 (GDD 131장). 탄생 연출 중이면 연출이 끝난 뒤
+      if (homeIntroOpen) return;
       if (!runGuide('first-run-room', faction) && s.tiles.unlocked) runGuide('tile-intro', faction);
     }, 400);
     const greet = hungryGreet;
@@ -946,6 +1021,7 @@ export function startApp(host: HTMLElement): void {
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
       onMarket: () => openMarket(faction, s),
       onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1): 월드맵 스위치 켬일 때만 방에 놓인다
+      forceOutside: forceAdventure, // 첫 모험 강제 (GDD 131장 2)
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
       onTamago: () => tama.toggle(true),
       // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)
