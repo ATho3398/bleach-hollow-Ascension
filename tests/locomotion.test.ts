@@ -67,3 +67,23 @@ describe('모든 진화체 걷기 (GDD 125장)', () => {
     expect(rule).toContain('bottom: 5%; height: 6%'); // 중심 = 5% + 3% = 8%
   });
 });
+
+describe('빈사(누운 모습)는 바닥 위에 눕고 발밑 체력 막대와 안 겹친다 (C.200, 마스터 추가)', () => {
+  it('lieBox: 몸 가운데 = 그림자, 몸 아래 끝 = 발 높이 위', async () => {
+    const { lieBox } = await import('../src/ui/bha/room');
+    // 정사각 256 그림, 몸이 가운데 세로로 선 모양(x 108~148, y 40~236), 배율 1
+    const r = lieBox({ left: 108, top: 40, right: 148, bottom: 236 }, 256, 256, { scale: 1, offsetY: 0 });
+    // 눕히면 오른쪽 끝(148 → 상자 x 75.2)이 축(65) 아래 약 10px → 그만큼(+2) 올린다
+    expect(r.up).toBe(12);
+    // 머리(위)가 오른쪽으로 가므로 몸 가운데를 그림자 위로 = 왼쪽으로 민다
+    expect(r.dx).toBeLessThan(0);
+    // 배율이 크면 두께·길이도 그만큼
+    const big = lieBox({ left: 108, top: 40, right: 148, bottom: 236 }, 256, 256, { scale: 2, offsetY: 0 });
+    expect(big.up).toBeGreaterThan(r.up);
+    expect(big.dx).toBeLessThan(r.dx);
+  });
+  it('room.css: 누운 그림은 발을 축으로 돌고 --lie-dx·--lie-up 만큼 옮긴다', () => {
+    const css = read('src/ui/bha/room.css');
+    expect(css).toContain('.bha-char.is-collapsed .bha-char__body.has-art { transform-origin: 50% 92.6%; translate: var(--lie-dx, 0px) calc(var(--lie-up, 0px) * -1); }');
+  });
+});

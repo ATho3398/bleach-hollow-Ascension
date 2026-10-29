@@ -105,8 +105,59 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
   const shadow = el('span', 'bha-char__shadow');
   // 그림 캐릭터의 발바닥은 몸 상자 아래에서 8% 위(art-guide 규격, offsetY 만큼 더 위/아래) — 그림자 중심을 그 높이에 둔다(발이 떠 보이지 않게)
   if (body.classList.contains('has-art')) shadow.style.marginTop = `${-(CHAR_BODY_H * (FOOT_GAP - art.offsetY / 100) + 3.5)}px`;
+  // 누운 모습(빈사·사망) 자리: 몸 길이(발 → 머리)·두께 절반 (C.200). room.css .is-collapsed 가 읽는다
+  if (src) void fitLying(b, src, art);
   b.append(lift, shadow);
   return b;
+}
+
+/** 그림의 불투명 픽셀 범위 (원본 px, right·bottom 은 포함 끝 + 1) */
+export interface OpaqueBox { left: number; top: number; right: number; bottom: number }
+
+/** 누운 모습 자리(px, C.200): 몸 상자(130×140)를 발(92.6%)을 축으로 시계 방향 90° 눕힐 때,
+ *  dx = 몸 가운데를 그림자(발) 위로 옮길 가로 이동, up = 몸 아래 끝을 바닥(발 높이)에 올릴 위 이동.
+ *  그림 = 상자 안 contain·아래 맞춤, 확대 기준점 (50%, 92%), offsetY = 상자 높이 % (room.css .bha-char__frame--solo 와 맞출 것) */
+export function lieBox(box: OpaqueBox, natW: number, natH: number, art: Pick<ArtUrls, 'scale' | 'offsetY'>): { dx: number; up: number } {
+  const W = 130, H = CHAR_BODY_H;
+  const k = Math.min(W / natW, H / natH);
+  const ox = (W - natW * k) / 2, oy = H - natH * k;
+  const px = W / 2, py = H * 0.92, dy = (art.offsetY / 100) * H;
+  const toX = (x: number) => px + (ox + x * k - px) * art.scale;
+  const toY = (y: number) => py + (oy + y * k - py) * art.scale + dy;
+  const rx = W / 2, ry = H * 0.926; // 눕히는 축 = 발
+  // 시계 방향 90°: (x, y) → 축 기준 (−(y − ry), x − rx)
+  const below = toX(box.right) - rx; // 눕힌 뒤 발 줄 아래로 내려가는 몸 두께
+  const mid = -((toY(box.top) + toY(box.bottom)) / 2 - ry); // 눕힌 뒤 몸 가로 가운데 (축 기준)
+  return { dx: Math.round(-mid), up: Math.round(Math.max(0, below) + 2) }; // +2 = 발밑 그림자와 살짝 띄움
+}
+
+/** 그림을 읽어 불투명 범위를 재고 누운 모습 자리를 캐릭터 버튼에 붙인다 (못 읽으면 기존 회전 그대로) */
+async function fitLying(owner: HTMLElement, src: string, art: ArtUrls): Promise<void> {
+  try {
+    const im = new Image();
+    im.src = src;
+    await im.decode();
+    const c = document.createElement('canvas');
+    c.width = im.naturalWidth;
+    c.height = im.naturalHeight;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    if (!g || !c.width || !c.height) return;
+    g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    const box: OpaqueBox = { left: c.width, top: c.height, right: 0, bottom: 0 };
+    for (let y = 0; y < c.height; y++)
+      for (let x = 0; x < c.width; x++)
+        if (d[(y * c.width + x) * 4 + 3]! > 40) {
+          box.left = Math.min(box.left, x); box.right = Math.max(box.right, x + 1);
+          box.top = Math.min(box.top, y); box.bottom = Math.max(box.bottom, y + 1);
+        }
+    if (box.right <= box.left) return;
+    const lie = lieBox(box, c.width, c.height, art);
+    owner.style.setProperty('--lie-dx', `${lie.dx}px`);
+    owner.style.setProperty('--lie-up', `${lie.up}px`);
+  } catch {
+    /* 테스트 환경·읽기 실패: 누운 자리 보정 없음 */
+  }
 }
 
 /** 방 발-그림자 차이(px, 양수 = 발이 그림자보다 아래) — 그림의 발 높이(footGap = 그림 아래 끝에서 발바닥까지, 그림 높이 대비)·배율·offsetY 로 (C.194, GDD 120장 3 점검용).

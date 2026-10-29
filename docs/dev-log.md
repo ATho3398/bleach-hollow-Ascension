@@ -1044,4 +1044,5 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 짐승형 뼈대(beast)는 몸 구조라 손대지 않음. 개발 도구 `scripts/foot-check/run.cjs` 는 이동 방식 대신 `FORMS=`·`FACS=` 로 진화체를 고르고, 전투 도움말 카드를 닫고 찍는다.
 - 실제 화면(`docs/captures/c200/proof.json`): 옛 부유·날기 진화체 t2:base(길리안)·t5:water:physical·t5:fire:physical × 호로·사신 × 남녀 × 방·걷기·전투 발-그림자 1.3~3.0px, 말풍선 머리 위(호로 2단계는 방 위 끝이라 옆).
 - 테스트: `tests/locomotion.test.ts` 를 '모든 진화체 걷기' 6개로 교체(값 없음·모듈/data-loco/?loco= 없음·돌진 세로 이동 없음·머리 높이·전투 그림자), `c194` 발 = 그림자 점검을 모든 모습으로 넓힘, `c137`·`evolution-table`·`c190` 걷기 기준으로.
-- 캡처 `docs/captures/c200/`(1배 844×390): 1·2 호로 t2:base 방·전투 · 3·4 호로 t5:water:physical 방·전투 · 5·6 사신 t5:fire:physical 방·전투.
+- **마스터 추가 — 빈사 체력 막대 겹침**(C.198 캡처 5-room-dying-hp): 누운 모습이 몸 상자 가운데를 축으로 돌아 발밑 체력 막대를 덮었다 → 그림 캐릭터는 **발을 축으로 눕혀 바닥 위에** 둔다. 그림의 불투명 범위를 읽어(`room.ts fitLying`·순수 `lieBox`) 몸 가운데 = 그림자, 몸 아래 끝 = 발 높이 + 2px(`--lie-dx`·`--lie-up`, room.css). 체력 막대 자리(그림자 아래)는 그대로라 안 겹친다. 실제 화면: 호로 길리안·아란칼·사신 3단계 모두 몸이 그림자 위, 막대 위 끝 282 > 그림자 아래 끝 280.
+- 캡처 `docs/captures/c200/`(1배 844×390): 1·2 호로 t2:base 방·전투 · 3·4 호로 t5:water:physical 방·전투 · 5·6 사신 t5:fire:physical 방·전투 · 7 빈사 방(호로 아란칼, 누운 몸 아래 체력 막대).

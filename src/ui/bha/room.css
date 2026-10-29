@@ -117,6 +117,8 @@
 .bha-prop.is-locked .bha-prop__shape { opacity: 0.45; border-color: var(--bha-danger); }
 .bha-prop.is-locked > .bha-icon { position: absolute; top: 0; right: 0; width: 16px; height: 16px; color: var(--bha-danger); }
 .bha-char.is-collapsed .bha-char__body { rotate: 90deg; opacity: 0.55; }
+/* 그림 캐릭터는 발(몸 상자 92.6%)을 축으로 눕혀 그림자 위 바닥에 눕힌다: 몸 가운데 = 그림자, 몸 아래 끝 = 바닥(발 높이) — 그림 불투명 범위로 잰다 — 발밑 체력 막대와 안 겹친다 (C.200, room.ts --lie-*) */
+.bha-char.is-collapsed .bha-char__body.has-art { transform-origin: 50% 92.6%; translate: var(--lie-dx, 0px) calc(var(--lie-up, 0px) * -1); }
 .bha-room__scene.is-dead { filter: brightness(0.35) grayscale(0.7); }
 .bha-room__hud.is-care { justify-content: flex-start; flex-wrap: wrap; gap: var(--bha-sp-3); }
 .bha-room__hud.is-care > .bha-notice { flex: 1 1 60%; min-width: 0; }
