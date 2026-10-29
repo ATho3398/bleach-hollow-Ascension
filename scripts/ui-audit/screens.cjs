@@ -19,9 +19,14 @@ async function toMarket(h) {
 
 /** 시장(장터)에서 뒤로 → 방까지 (켬 = 시장 → 월드맵 → 방) */
 async function marketBackToRoom(h) {
+  await h.closeLayers();
   await h.back();
-  if (await h.has('.bha-worldmap')) await h.back();
-  if (!(await h.has('.bha-room:not(.bha-market):not(.bha-worldmap)'))) throw new Error('시장 뒤로 → 방에 못 닿음');
+  await h.page.waitForTimeout(500);
+  if (await h.has('.bha-worldmap')) { await h.back(); await h.page.waitForTimeout(500); }
+  if (!(await h.has('.bha-room:not(.bha-market):not(.bha-worldmap)'))) {
+    const at = await h.page.evaluate(() => [...document.querySelectorAll('.bha-lcd .bha-app')].map((e) => e.className).join('|'));
+    throw new Error(`시장 뒤로 → 방에 못 닿음 (${at})`);
+  }
 }
 
 /** 방에서 독 [더보기] → 메뉴 항목 */
