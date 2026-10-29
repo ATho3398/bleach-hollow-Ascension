@@ -4,10 +4,8 @@
 import { charArt, enemyArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig } from '../../engine/faction';
 import type { EnemyPatternKind } from '../../data/schema';
-import type { Locomotion } from '../../engine/locomotion';
 import { bindAnim } from './animPlayer';
 import { el, icon } from './dom';
-import { setLoco } from './loco';
 import { elementColor } from './element';
 
 // ───────────────────────── 순수 함수 ─────────────────────────
@@ -239,9 +237,8 @@ export function heroArtOf(room: RoomConfig, factionId: string, tierIndex: number
 }
 
 /** 내 그림 한 장 (`.bha-hero`): 몸통박치기의 주인공. 그림이 있으면 첫 프레임 한 장(왼쪽을 보는 그림), 없으면 자리표시 도형 */
-export function heroEl(art: ArtUrls, loco: Locomotion = 'walk'): { root: HTMLElement; body: HTMLElement } {
+export function heroEl(art: ArtUrls): { root: HTMLElement; body: HTMLElement } {
   const root = el('div', 'bha-hero');
-  setLoco(root, loco);
   const body = el('span', 'bha-hero__body');
   const url = art.src ?? art.frames?.[0] ?? null;
   if (url) {
@@ -253,7 +250,7 @@ export function heroEl(art: ArtUrls, loco: Locomotion = 'walk'): { root: HTMLEle
   } else {
     body.append(el('span', 'bha-hero__eye'), el('span', 'bha-hero__eye'));
   }
-  // 부유·날기: 떠올라 움직이는 lift 상자 안에 몸을 두고, 그림자는 땅에 남긴다 (몸통박치기는 root, 피격은 body 가 맡는다)
+  // 몸은 lift 상자 안(꾸미기 기운 자리), 그림자는 그 앞 형제(아래 층). 이동 방식은 걷기 하나라 발 = 그림자 중심 (GDD 125장). 몸통박치기는 root, 피격은 body 가 맡는다
   const lift = el('span', 'bha-hero__lift');
   lift.append(body);
   root.append(el('span', 'bha-hero__shadow'), lift);

@@ -409,7 +409,6 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,
       skinId: save ? artSkinOf(save) : undefined,
-      formId: save?.evolution.formId,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
       onQuit: () => nav.pop(),
@@ -1157,7 +1156,6 @@ export function startApp(host: HTMLElement): void {
       battleItem: armBattleItem(s0, s),
       tierIndex: s0.evolution.tierIndex,
       skinId: artSkinOf(s0),
-      formId: s0.evolution.formId,
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
       bg: towerSceneBg(faction, f),
@@ -1329,7 +1327,6 @@ export function startApp(host: HTMLElement): void {
       battleItem: save ? armBattleItem(save, s) : undefined,
       tierIndex: save?.evolution.tierIndex,
       skinId: save ? artSkinOf(save) : undefined,
-      formId: save?.evolution.formId,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 원정' } } : {}),
       // 배경 (GDD 34-1): 보스전은 무대(없으면 사냥터), 그 밖은 사냥터
@@ -1395,7 +1392,6 @@ export function startApp(host: HTMLElement): void {
     expeditionView(root, faction, exp, {
       tierIndex: save?.evolution.tierIndex,
       skinId: save ? artSkinOf(save) : undefined,
-      formId: save?.evolution.formId,
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
       onEnded: () => endExpedition(faction, exp),
@@ -1564,7 +1560,6 @@ export function startApp(host: HTMLElement): void {
       battleItem: save ? armBattleItem(save, s) : undefined,
       tierIndex: save?.evolution.tierIndex,
       skinId: save ? artSkinOf(save) : undefined,
-      formId: save?.evolution.formId,
       notice,
       tutorial: tutorialFor(),
       onQuit: () => nav.pop(),
@@ -1612,7 +1607,6 @@ export function startApp(host: HTMLElement): void {
       battleItem: armBattleItem(s0, s),
       tierIndex: s0.evolution.tierIndex,
       skinId: artSkinOf(s0),
-      formId: s0.evolution.formId,
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
       bg: arenaSceneBg(faction),

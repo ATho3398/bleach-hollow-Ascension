@@ -106,7 +106,7 @@ export function resetFxSettings(storage?: SettingsStorage | null, reducedMotion 
   return defaultFxSettings(reducedMotion);
 }
 
-/** 움직임 줄이기 표시 (GDD 18-11): 기기의 동작 줄이기 또는 설정의 화면 흔들림 끔이면 html[data-calm] 을 켠다. 캐릭터 둥실·날갯짓 같은 반복 움직임이 멈추고 높이만 남는다 */
+/** 움직임 줄이기 표시: 기기의 동작 줄이기 또는 설정의 화면 흔들림 끔이면 html[data-calm] 을 켠다. 캐릭터 걸음 흔들림 같은 반복 움직임이 멈춘다 */
 export function applyCalmMode(storage?: SettingsStorage | null): void {
   try {
     if (typeof document === 'undefined') return;

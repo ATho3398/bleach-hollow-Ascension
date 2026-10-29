@@ -1032,3 +1032,16 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 밸런스 BALANCE 88(C.199 가 87). 테스트: 새 `tests/c198.test.ts` 34개(묶음 피해·간격, 홈 체력 출발·귀환·빈사, 대기·온천 켜 둠/꺼 둠·자동 퇴장 둘·미리 보기, 먹이·포션·상한, API, 마이그레이션 54 → 55 왕복·쉬는 트랙·문턱), c79·c146 에 온천 물건. 전체 2,070개 통과(C.199 포함).
 - 캡처 `docs/captures/c198/`(1배 844×390, 테스트 세이브, 후속 2장 포함 9장): 1 방 체력 막대 호로·사신 · 2 온천 화면 · 3 온천 저절로 나온 뒤 방 · 4 체력 포션 사용 창 · 5 빈사 방 체력 막대 · 6 원정 출발 체력 45% 이어짐 · 7 결과 화면 '권장 4'. 값은 proof.json.
 - **후속 GDD 124장 (v5.285, 마스터가 C.198 에 추가)** 사용자 원문: "지금 홈에서 뒤로가기 누르면 초기화면으로 돌아가겠냐고 물어보는 기능 또 어느순간 사라졌어. 이거 다시 살리고. / ...누르면 닫기 버튼이 있을 이유가 없어 … 이거 없애". 원인 = C.176(104장 7)이 뒤로에서 처음 화면 확인을 아예 뺐다. 고침 = `ScreenStack.cancel()`(뒤로 → 홈 표시 방 하나뿐이면 'home' → `askReturnToTitle`, 잠긴 화면은 'none'), 방 스택에 `home: true`, 확인 창 기본 선택 = 아니오(`focusNo`). 더보기 [닫기] 칸 삭제(상세 창·설정·도움말 닫기 ✕ 는 창이라 그대로). ui-audit '토글 메뉴 [닫기]'·'홈 뒤로' 검사. 테스트 c198 +3·c176·c170·device-select 고침. 캡처 8 ⋯ 메뉴·9 홈 뒤로 확인 창. ui-audit 두 종족 24화면(온천 포함) 0건(방 빈사 점검은 시간 앞당기기 뒤 이미 방이면 뒤로를 안 누르게 고침).
+- 캡처 `docs/captures/c198/`(1배 844×390, 테스트 세이브): 1 방 체력 막대 호로·사신 · 2 온천 화면 · 3 온천 저절로 나온 뒤 방 · 4 체력 포션 사용 창 · 5 빈사 방 체력 막대 · 6 원정 출발 체력 45% 이어짐 · 7 결과 화면 '권장 4'. 값은 proof.json.
+
+## C.200 — 이동 방식 부유·날기 삭제: 모든 캐릭터 걷기 · 발 = 그림자 (GDD 125장, v5.290, S-23, 코딩146 Opus)
+사용 모델: Opus 5.5. `PATCH_LABEL` C.200. 세이브(SAVE_FORMAT)·밸런스(BALANCE_VERSION) 변경 없음.
+사용자 원문: "일단 이동방식 부유랑 날기는 없애. 이거부터 패치 먼저 ㄱㄱ"
+- **개념 삭제**(코드 판단: 걷기 하나면 우선순위·타입이 필요 없음): `src/engine/locomotion.ts`·`src/ui/bha/loco.ts`·`src/ui/bha/loco.css` 삭제. `forms.json` 의 `locomotion` 43개(부유 15·날기 13·걷기 15)·`generate.ts` LOCO_CYCLE·종족 설정 2개·manifest(`char.hollow.2` 의 walk, `RIG_LOCOMOTION`)·`FormDef`/`FactionConfig`/`ArtEntry`/`ArtUrls` 의 `locomotion`·검증 줄 제거. `npm run gen:forms` 결과 = 손으로 뺀 것과 같음.
+- **화면**: `characterButton`·`charTopOffset`·`heroEl`·`walkScene`·`lungePlan` 의 loco 인자, battleView·expeditionView 의 `formId` 옵션(이동 방식 전용)과 app.ts 전달 6곳 제거. 둥실·날갯짓·그림자 커졌다 작아짐·날기 9° 기울임·부유 미끄러짐·날기 내리꽂기 삭제.
+- **떠 있음 전제 보정 → 걷기 값**: 방 머리 높이(상태 칩·말풍선)의 떠오름 몫 0, 전투 그림 크기 100%, 걷기 그림 60%·말풍선 `100% + sp-4` (모두 옛 walk 값과 같아 걷기였던 캐릭터는 그대로). 남은 규칙은 room.css(`.bha-char__lift` 층)·battle-scene.css(`.bha-hero__lift`)·expedition.css(이동 애니·data-calm 흔들림 끔)로 옮김.
+- **전투 발밑 그림자 표시**: 그동안 걷기 캐릭터는 전투 그림자가 `display: none` 이었다 → 모든 화면 발 = 그림자로 보이게 표시(중심 = 그림 아래 8%, 실제 측정 1.3~2.9px).
+- 짐승형 뼈대(beast)는 몸 구조라 손대지 않음. 개발 도구 `scripts/foot-check/run.cjs` 는 이동 방식 대신 `FORMS=`·`FACS=` 로 진화체를 고르고, 전투 도움말 카드를 닫고 찍는다.
+- 실제 화면(`docs/captures/c200/proof.json`): 옛 부유·날기 진화체 t2:base(길리안)·t5:water:physical·t5:fire:physical × 호로·사신 × 남녀 × 방·걷기·전투 발-그림자 1.3~3.0px, 말풍선 머리 위(호로 2단계는 방 위 끝이라 옆).
+- 테스트: `tests/locomotion.test.ts` 를 '모든 진화체 걷기' 6개로 교체(값 없음·모듈/data-loco/?loco= 없음·돌진 세로 이동 없음·머리 높이·전투 그림자), `c194` 발 = 그림자 점검을 모든 모습으로 넓힘, `c137`·`evolution-table`·`c190` 걷기 기준으로.
+- 캡처 `docs/captures/c200/`(1배 844×390): 1·2 호로 t2:base 방·전투 · 3·4 호로 t5:water:physical 방·전투 · 5·6 사신 t5:fire:physical 방·전투.

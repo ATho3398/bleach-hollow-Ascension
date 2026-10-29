@@ -17,9 +17,8 @@ describe('C.137', () => {
     expect(a.anims?.move?.frames.length).toBe(6);
     expect(a.src).toContain('char-hollow.png');
   });
-  it('85장 1: 메노스 그랑데(2단계)는 땅에 붙어 걷고 2배 크기', () => {
+  it('85장 1: 메노스 그랑데(2단계)는 2배 크기 (이동 방식은 모두 걷기, GDD 125장)', () => {
     const a = charArt('hollow', 1, 'char.hollow', '/', undefined, ['char-hollow-2.png']);
-    expect(a.locomotion).toBe('walk');
     expect(a.scale).toBeGreaterThanOrEqual(2);
   });
   it('85장 2: 문 이름 "모험", 방 물건 크기 ×1.25', () => {

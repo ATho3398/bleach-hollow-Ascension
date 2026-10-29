@@ -17,7 +17,6 @@
       "spr": 59,
       "spd": 56
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -39,7 +38,6 @@
       "spr": 78,
       "spd": 78
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -63,7 +61,6 @@
       "spr": 97,
       "spd": 97
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -87,7 +84,6 @@
       "spr": 112,
       "spd": 83
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -111,7 +107,6 @@
       "spr": 83,
       "spd": 107
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -135,7 +130,6 @@
       "spr": 97,
       "spd": 78
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -159,7 +153,6 @@
       "spr": 97,
       "spd": 117
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -186,7 +179,6 @@
       "spr": 109,
       "spd": 72
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -213,7 +205,6 @@
       "spr": 87,
       "spd": 119
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -236,7 +227,6 @@
       "spr": 105,
       "spd": 105
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -261,7 +251,6 @@
       "spr": 83,
       "spd": 97
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -286,7 +275,6 @@
       "spr": 112,
       "spd": 97
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -311,7 +299,6 @@
       "spr": 76,
       "spd": 97
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -337,7 +324,6 @@
       "spr": 97,
       "spd": 97
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -362,7 +348,6 @@
       "spr": 84,
       "spd": 84
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -387,7 +372,6 @@
       "spr": 122,
       "spd": 121
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -412,7 +396,6 @@
       "spr": 122,
       "spd": 121
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -437,7 +420,6 @@
       "spr": 121,
       "spd": 121
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -462,7 +444,6 @@
       "spr": 140,
       "spd": 103
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -487,7 +468,6 @@
       "spr": 140,
       "spd": 103
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -512,7 +492,6 @@
       "spr": 140,
       "spd": 103
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -537,7 +516,6 @@
       "spr": 103,
       "spd": 134
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -562,7 +540,6 @@
       "spr": 103,
       "spd": 134
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -587,7 +564,6 @@
       "spr": 103,
       "spd": 134
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -612,7 +588,6 @@
       "spr": 122,
       "spd": 97
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -637,7 +612,6 @@
       "spr": 122,
       "spd": 97
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -662,7 +636,6 @@
       "spr": 122,
       "spd": 97
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -687,7 +660,6 @@
       "spr": 122,
       "spd": 146
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -712,7 +684,6 @@
       "spr": 122,
       "spd": 146
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -737,7 +708,6 @@
       "spr": 122,
       "spd": 146
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -762,7 +732,6 @@
       "spr": 109,
       "spd": 122
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -787,7 +756,6 @@
       "spr": 109,
       "spd": 122
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -812,7 +780,6 @@
       "spr": 109,
       "spd": 122
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -837,7 +804,6 @@
       "spr": 134,
       "spd": 122
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -862,7 +828,6 @@
       "spr": 134,
       "spd": 122
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -887,7 +852,6 @@
       "spr": 134,
       "spd": 122
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -912,7 +876,6 @@
       "spr": 103,
       "spd": 122
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -937,7 +900,6 @@
       "spr": 103,
       "spd": 122
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -962,7 +924,6 @@
       "spr": 103,
       "spd": 122
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -982,7 +943,6 @@
       "spr": 97,
       "spd": 122
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   },
@@ -1002,7 +962,6 @@
       "spr": 146,
       "spd": 122
     },
-    "locomotion": "float",
     "maxChain": 3,
     "provisional": true
   },
@@ -1022,7 +981,6 @@
       "spr": 109,
       "spd": 134
     },
-    "locomotion": "fly",
     "maxChain": 3,
     "provisional": true
   },
@@ -1042,7 +1000,6 @@
       "spr": 134,
       "spd": 134
     },
-    "locomotion": "walk",
     "maxChain": 3,
     "provisional": true
   }

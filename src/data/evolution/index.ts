@@ -1,6 +1,5 @@
 // 진화체 트리 (GDD 20-5 v3.7~v4.2, 22-7): 1·1·1 → 바스트로데 속성 8 → 아란칼 속성 × 분류 24 + 히든 12(환생 전용 1 포함). 데이터는 forms.json (생성기 결과를 커밋한 것 — 손으로 고칠 수 있다).
 // 생성기: generate.ts / `npm run gen:forms`. 이름은 자리 표시이며, 정식 이름은 진화체의 name 에 종족별로 넣으면 그것이 우선한다.
-import { isLocomotion } from '../../engine/locomotion';
 import { NORMAL_ELEMENT, categoryName, elementName, isElement } from '../elements';
 import { normalSlotNote } from '../help/textFormat';
 import { getFaction } from '../factions';
@@ -30,7 +29,6 @@ export function validateFormTable(table: readonly FormDef[]): string[] {
     for (const k of STAT_IDS) if (!(typeof f.stats?.[k] === 'number' && f.stats[k] > 0)) errors.push(`${f.id}: stats.${k} 양수`);
     if (f.stab !== undefined && !(f.stab >= 1)) errors.push(`${f.id}: stab 은 1 이상`);
     if (f.maxChain !== undefined && !(Number.isInteger(f.maxChain) && f.maxChain >= 1)) errors.push(`${f.id}: maxChain 은 1 이상 정수`);
-    if (f.locomotion !== undefined && !isLocomotion(f.locomotion)) errors.push(`${f.id}: locomotion '${String(f.locomotion)}' 은 float | walk | fly 가 아니다`);
   }
   for (let tier = FORM_MIN_TIER; tier <= FORM_MAX_TIER; tier++) {
     if (!table.some((f) => f.tier === tier && !f.hidden)) errors.push(`${tier}단계에 일반 진화체가 없다`);

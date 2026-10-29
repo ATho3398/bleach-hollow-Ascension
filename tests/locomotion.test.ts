@@ -1,87 +1,69 @@
+// 이동 방식 = 걷기 하나 (GDD 125장, C.200): 부유·날기 삭제. 진화체 표·종족 설정·그림 manifest 에 이동 방식 값이 없고,
+// 화면에는 떠오름(data-loco·떠 있는 높이)·날기 돌진 연출이 없다 — 모든 진화체가 땅에 서서 걷고 발 = 그림자.
 import { describe, expect, it } from 'vitest';
-import { FORM_TABLE, formsOfTier, validateFormTable } from '../src/data/evolution';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { FORM_TABLE } from '../src/data/evolution';
 import { FACTIONS } from '../src/data/factions';
 import { ART_MANIFEST, charArt } from '../src/data/art/manifest';
-import { isLocomotion, locomotionFromQuery, LOCOMOTIONS, resolveLocomotion } from '../src/engine/locomotion';
+import { roomOf } from '../src/engine/faction';
 import { lungePlan } from '../src/ui/attackFx';
 import { ATTACK_FX } from '../src/ui/attackFxConfig';
-import { LOCO_LIFT, locoOf } from '../src/ui/bha/loco';
+import { charTopOffset } from '../src/ui/bha/room';
 
-describe('이동 방식 해석 (GDD 18-11)', () => {
-  it('우선순위 = 그림 manifest > 진화체 > 종족 기본 > walk', () => {
-    expect(resolveLocomotion({})).toBe('walk');
-    expect(resolveLocomotion({ faction: 'float' })).toBe('float');
-    expect(resolveLocomotion({ faction: 'float', form: 'fly' })).toBe('fly');
-    expect(resolveLocomotion({ faction: 'float', form: 'fly', art: 'walk' })).toBe('walk');
-  });
-  it('모르는 값은 건너뛰고 다음 순위로 간다', () => {
-    expect(resolveLocomotion({ art: 'swim', form: 'fly' })).toBe('fly');
-    expect(resolveLocomotion({ art: 3, form: null, faction: 'float' })).toBe('float');
-    expect(resolveLocomotion({ art: 'x', form: 'y', faction: 'z' })).toBe('walk');
-  });
-  it('개발용 URL 파라미터 ?loco=', () => {
-    expect(locomotionFromQuery('?loco=fly')).toBe('fly');
-    expect(locomotionFromQuery('?a=1&loco=float')).toBe('float');
-    expect(locomotionFromQuery('?loco=swim')).toBeUndefined();
-    expect(locomotionFromQuery('')).toBeUndefined();
-  });
-  it('화면 연결: 진화체 > 종족 기본, manifest(ArtUrls) > 진화체', () => {
-    const fly = FORM_TABLE.find((f) => f.locomotion === 'fly')!;
-    const walkForm = FORM_TABLE.find((f) => f.locomotion === 'walk')!;
-    expect(locoOf({ locomotion: 'float' }, null, null)).toBe('float');
-    expect(locoOf({ locomotion: 'float' }, fly.id, null)).toBe('fly');
-    expect(locoOf({ locomotion: 'float' }, fly.id, { locomotion: 'walk' })).toBe('walk');
-    expect(locoOf({}, walkForm.id, undefined)).toBe('walk');
-    expect(locoOf({}, '없는-id', undefined)).toBe('walk');
-  });
-  it('manifest 에 적은 이동 방식이 그림 정보(ArtUrls)로 나온다 (직접 키·종족 기본 키)', () => {
-    const m = { 'char.hollow': { locomotion: 'float' as const }, 'char.hollow.2': { locomotion: 'fly' as const } };
-    expect(charArt('hollow', 0, 'char.hollow', '/', m, []).locomotion).toBe('float');
-    expect(charArt('hollow', 1, 'char.hollow', '/', m, ['char-hollow-2.png']).locomotion).toBe('fly');
-    expect(charArt('hollow', 0, 'char.hollow', '/', ART_MANIFEST, []).locomotion).toBeUndefined();
-  });
-});
+const read = (p: string) => readFileSync(p, 'utf8');
+function srcFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? srcFiles(join(dir, d.name)) : /\.(ts|css|json)$/.test(d.name) ? [join(dir, d.name)] : []));
+}
 
-describe('이동 방식 데이터', () => {
-  it('진화체마다 유효한 값이 있고 표 검사를 통과한다', () => {
-    for (const f of FORM_TABLE) expect(isLocomotion(f.locomotion), f.id).toBe(true);
-    expect(validateFormTable(FORM_TABLE)).toEqual([]);
+describe('모든 진화체 걷기 (GDD 125장)', () => {
+  it('진화체 표·종족 설정·그림 manifest 에 이동 방식 값이 없다', () => {
+    for (const f of FORM_TABLE) expect('locomotion' in f, f.id).toBe(false);
+    expect(read('src/data/evolution/forms.json')).not.toContain('locomotion');
+    for (const f of FACTIONS) expect('locomotion' in f, f.id).toBe(false);
+    for (const [k, e] of Object.entries(ART_MANIFEST)) expect('locomotion' in e, k).toBe(false);
   });
-  it('잘못된 값은 표 검사가 잡는다', () => {
-    const bad = FORM_TABLE.map((f, i) => (i === 0 ? { ...f, locomotion: 'swim' as never } : f));
-    expect(validateFormTable(bad).some((e) => e.includes('locomotion'))).toBe(true);
-  });
-  it('갈림이 있는 단계(4·5)마다 3종이 모두 나오고, 전체로도 고르게 섞인다 (C.47: 2·3단계는 1종씩)', () => {
-    for (const tier of [4, 5]) expect(new Set(formsOfTier(tier).map((f) => f.locomotion)), `${tier}단계`).toEqual(new Set(LOCOMOTIONS));
-    for (const l of LOCOMOTIONS) expect(FORM_TABLE.filter((f) => f.locomotion === l).length / FORM_TABLE.length, l).toBeGreaterThanOrEqual(0.25);
-  });
-  it('종족 설정의 기본값은 유효하다 (호로 1단계 = walk)', () => {
-    for (const f of FACTIONS) expect(f.locomotion === undefined || isLocomotion(f.locomotion), f.id).toBe(true);
-    expect(FACTIONS.find((f) => f.id === 'hollow')!.locomotion).toBe('walk');
-  });
-});
 
-describe('몸통박치기 이동 방식별 모양', () => {
-  const lv = ATTACK_FX.chain2;
-  const ys = (loco: 'walk' | 'float' | 'fly') => lungePlan(lv, 1, 100, loco, 40).keyframes.map((k) => String(k.transform));
-  it('걷기는 세로 이동·기본 기울임 그대로', () => {
-    expect(lungePlan(lv, 1, 100).keyframes).toEqual(lungePlan(lv, 1, 100, 'walk', 40).keyframes);
-    expect(ys('walk').every((t) => !t.includes('translateY'))).toBe(true);
+  it('모든 종족 × 단계 × 진화체의 캐릭터 그림에 이동 방식이 없다 (어느 진화체여도 땅에 서서 걷는다)', () => {
+    for (const fac of FACTIONS) {
+      const room = roomOf(fac);
+      for (let tier = 0; tier < fac.tierNames.length; tier++) {
+        const art = charArt(fac.id, tier, room.characterArt, '/');
+        expect('locomotion' in art, `${fac.id} ${tier + 1}단계`).toBe(false);
+      }
+    }
+    expect(FORM_TABLE.length).toBeGreaterThan(0);
   });
-  it('부유는 기울임 없이 미끄러진다', () => {
-    expect(ys('float').every((t) => t.includes('rotate(0.0deg)') || t.includes('rotate(-0.0deg)'))).toBe(true);
+
+  it('이동 방식 모듈·부유/날기 연출·?loco= 개발 파라미터가 없다', () => {
+    expect(existsSync('src/engine/locomotion.ts')).toBe(false);
+    expect(existsSync('src/ui/bha/loco.ts')).toBe(false);
+    expect(existsSync('src/ui/bha/loco.css')).toBe(false);
+    for (const p of srcFiles('src')) {
+      const s = read(p);
+      for (const bad of ['data-loco', 'dataset.loco', 'bha-loco-', '--loco-', 'LOCO_LIFT', "get('loco')"]) expect(s.includes(bad), `${p}: ${bad}`).toBe(false);
+    }
   });
-  it('날기는 위로 솟았다가 떠 있던 높이만큼 내리꽂는다', () => {
-    const t = ys('fly');
-    expect(t[1]).toContain('translateY(-28.0px)');
-    expect(t[2]).toContain('translateY(40.0px)');
-    expect(t[4]).not.toContain('translateY');
+
+  it('몸통박치기는 걷기 모양 하나: 세로 이동(떠올랐다 내리꽂기) 없음', () => {
+    for (const lv of [ATTACK_FX.basic, ATTACK_FX.chain2]) {
+      const t = lungePlan(lv, 1, 100).keyframes.map((k) => String(k.transform));
+      expect(t.every((x) => !x.includes('translateY'))).toBe(true);
+      expect(t[1]).toContain(`rotate(${(-lv.tiltDeg).toFixed(1)}deg)`);
+    }
   });
-  it('떠 있는 높이 비율은 부유 10~15%, 날기 25~35%', () => {
-    expect(LOCO_LIFT.walk).toBe(0);
-    expect(LOCO_LIFT.float).toBeGreaterThanOrEqual(0.1);
-    expect(LOCO_LIFT.float).toBeLessThanOrEqual(0.15);
-    expect(LOCO_LIFT.fly).toBeGreaterThanOrEqual(0.25);
-    expect(LOCO_LIFT.fly).toBeLessThanOrEqual(0.35);
+
+  it('방 머리 높이(상태 칩·말풍선 자리)는 떠 있는 높이 없이 그림 윗변 그대로', () => {
+    // 그림 없음: 몸 상자 윗변 = −(8×2 + 75 + 10)/2 + 8
+    expect(charTopOffset({ src: null, frames: null, scale: 1, offsetY: 0 })).toBe(-(16 + 75 + 10) / 2 + 8);
+    // 정사각 그림 배율 1: 상자 윗변 + (140 − 130)
+    expect(charTopOffset({ src: 'a.png', frames: null, scale: 1, offsetY: 0 })).toBeCloseTo(-(16 + 140 + 10) / 2 + 8 + 10, 5);
+  });
+
+  it('전투 내 캐릭터도 발밑 그림자가 보인다 (발 = 그림자 중심, 그림 아래 8%)', () => {
+    const css = read('src/ui/bha/battle-scene.css');
+    const rule = css.slice(css.indexOf('.bha-hero__shadow {'), css.indexOf('}', css.indexOf('.bha-hero__shadow {')));
+    expect(rule).not.toContain('display: none');
+    expect(rule).toContain('bottom: 5%; height: 6%'); // 중심 = 5% + 3% = 8%
   });
 });

@@ -20,6 +20,8 @@
 
 /* 내 그림 한 장 (몸통박치기 연출 대상, 임시 도형). 적과 마주 본다 */
 .bha-hero { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+.bha-hero__lift { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 100%; } /* 몸 상자(꾸미기 기운 자리). 걷기 하나라 떠오르지 않는다 (GDD 125장) */
+.bha-hero__shadow { position: absolute; left: 22%; right: 22%; bottom: 5%; height: 6%; border-radius: 50%; background: #000; opacity: 0.3; } /* 발밑 그림자: 중심 = 그림 아래 8%(발바닥, 확대 기준점 92%) */
 .bha-hero__body { position: relative; display: block; width: 62%; aspect-ratio: 52 / 56; background: var(--bha-text-2); border: 2px solid var(--bha-line-2); border-radius: 50% 50% 42% 42%; margin-bottom: 4%; }
 .bha-hero__body.has-art { width: 100%; height: 100%; aspect-ratio: auto; background: none; border: 0; border-radius: 0; margin-bottom: 0; }
 .bha-hero__img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)) scaleX(-1); pointer-events: none; } /* 그림은 왼쪽을 보는 한 장, 내 쪽은 오른쪽을 본다 */

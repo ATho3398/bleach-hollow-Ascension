@@ -10,7 +10,6 @@
 // enemy-<적id>.png, char-<종족>-<단계번호>.png, char-<종족>.png)으로 넣으면 이 목록을 고치지 않아도 인식한다(`files.ts`).
 // 이 목록의 src·frames 는 파일 규칙에 맞지 않는 이름을 쓰고 싶을 때의 직접 지정이고, scale·offsetY 는 어느 쪽이든 쓴다.
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
-import type { Locomotion } from '../../engine/locomotion';
 import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
 import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
 import { getSkin, skinArtKey } from '../skins';
@@ -32,8 +31,6 @@ export interface ArtEntry {
   fieldScale?: number;
   /** 세로 위치 보정(기본 0): 칸 높이 대비 %, 양수면 아래로 */
   offsetY?: number;
-  /** 이 그림의 이동 방식(GDD 18-11): 부유 float / 걷기 walk / 날기 fly. 진화체·종족 기본보다 우선한다. 비우면 그쪽 값 */
-  locomotion?: Locomotion;
   /** 종이인형 외형 id(GDD 96장 30, src/data/art/rig/humanoid.json 의 looks). 있으면 단계별 파일이 없는 한 종족 공통 그림 대신 종이인형이 움직인다 */
   rig?: string;
 }
@@ -46,8 +43,6 @@ export interface ArtUrls {
   /** 걷기·전투 필드 배율 (없으면 scale) */
   fieldScale?: number;
   offsetY: number;
-  /** manifest 에서 정한 이동 방식(없으면 undefined = 진화체·종족 기본을 따른다) */
-  locomotion?: Locomotion;
   /** 프레임 애니 (GDD 26장): 동작별로 있는 것만. 없는 동작은 기존 연출을 쓴다 */
   anims?: AnimSet;
   /** 종이인형 (GDD 96장 30): 외형 id 와 부위 그림 폴더 주소. src 는 쉬는 자세 정지 그림 */
@@ -68,9 +63,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 사신 1단계(혼백)·2단계(학생) = 진앙영술원 학생복 (사용자 2026-10-29 "기본적으로 혼백, 학생은 진앙영술원 학생복으로 시작", GDD 116장 2). 3단계부터 종족 공통(사신복)
   'char.shinigami.1': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   'char.shinigami.2': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
-  // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
+  // 메노스 그랑데(2단계): 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
   // 걷기·전투 필드는 1.5배 (C.176, GDD 106장 3: 2배면 그림 높이가 1단계의 약 1.26배·폭 1.4배로 필드 위로 넘쳤다 → 높이·폭이 1단계와 비슷하게)
-  'char.hollow.2': { scale: 2, fieldScale: 1.5, locomotion: 'walk' },
+  'char.hollow.2': { scale: 2, fieldScale: 1.5 },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
   'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
@@ -95,7 +90,6 @@ export function artUrls(key: string, base = '/', manifest: Readonly<Record<strin
     scale: e?.scale ?? 1,
     ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}),
     offsetY: e?.offsetY ?? 0,
-    locomotion: e?.locomotion,
   };
 }
 
@@ -111,11 +105,6 @@ export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<
   const src = a.src ?? anims.idle?.frames[0] ?? null;
   return src ? withAnims({ ...a, src }, anims) : null;
 }
-
-/** 종이인형의 이동 방식 = 걷기 (C.194, GDD 120장 1). 진화체 표(forms.json)는 두 종족 공용이라 2단계 t2:base(날기)·4·5단계 부유/날기 진화체가
- *  사신 학생·사신복·아란칼 종이인형에도 걸려 몸이 몸 높이의 12~30% 떠올랐다(발이 그림자보다 위, 말풍선이 머리를 가림). 종이인형은 두 발로 서는 몸이라
- *  manifest 에 따로 적지 않는 한 늘 땅에 붙는다 — 그림 이동 방식은 진화체보다 우선(loco.ts) */
-export const RIG_LOCOMOTION: Locomotion = 'walk';
 
 /** 종이인형 그림 칸(view)에서 머리 윗변(캔버스 y 0)까지의 비율 */
 function rigHeadTop(): number {
@@ -138,7 +127,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
       if (!still) continue;
       const own = manifest[key] ?? (key.endsWith(FEMALE_KEY_SUFFIX) ? manifest[key.slice(0, -FEMALE_KEY_SUFFIX.length)] : undefined); // 여성 키는 같은 키(남성)의 크기·위치를 물려받는다
       const e = own ?? manifest[fallbackKey];
-      const a: ArtUrls = { src: joinBase(base, still.startsWith('art/') ? still : `art/${still}`), frames: null, scale: e?.scale ?? 1, ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e?.offsetY ?? 0, locomotion: own?.locomotion ?? manifest[fallbackKey]?.locomotion };
+      const a: ArtUrls = { src: joinBase(base, still.startsWith('art/') ? still : `art/${still}`), frames: null, scale: e?.scale ?? 1, ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e?.offsetY ?? 0 };
       return withAnims(a, resolveAnims(keys, base, files, overrides));
     }
     return null;
@@ -162,7 +151,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     // 여성 외형 = 외형 id 뒤 -f (GDD 114·115장). 없으면 그 외형(남성) 그대로
     const look = female && HUMANOID.looks[rigLook + RIG_FEMALE_SUFFIX] ? rigLook + RIG_FEMALE_SUFFIX : rigLook;
     const e = manifest[rigKey]!;
-    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, locomotion: e.locomotion ?? RIG_LOCOMOTION, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
+    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
   }
   return tryKeys(keys) ?? artUrls(fallbackKey, base, manifest, files);
 }

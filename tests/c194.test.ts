@@ -6,10 +6,9 @@ import { readFileSync } from 'node:fs';
 import { FACTIONS } from '../src/data/factions';
 import { roomOf } from '../src/engine/faction';
 import { FORM_TABLE } from '../src/data/evolution';
-import { charArt, RIG_LOCOMOTION, type ArtUrls } from '../src/data/art/manifest';
+import { charArt, type ArtUrls } from '../src/data/art/manifest';
 import { skinsFor } from '../src/data/skins';
 import { GENDERS, type Gender } from '../src/engine/gender';
-import { locoOf } from '../src/ui/bha/loco';
 import { bubbleSpot, roomFootShadowPx } from '../src/ui/bha/room';
 import { decodePng } from './helpers/png';
 
@@ -47,7 +46,6 @@ function allLooks(): Look[] {
   return out;
 }
 const LOOKS = allLooks();
-const factionOf = (id: string) => FACTIONS.find((f) => f.id === id)!;
 
 describe('C.194 발 = 그림자 (GDD 120장 1·3·4)', () => {
   it('점검 대상: 종이인형(사신 학생·사신복·아란칼, 남녀)과 옛 한 장 그림(호로)이 모두 들어 있다', () => {
@@ -56,15 +54,10 @@ describe('C.194 발 = 그림자 (GDD 120장 1·3·4)', () => {
     expect(LOOKS.some((l) => !l.art.rig && l.art.src)).toBe(true);
   });
 
-  it('종이인형은 어느 진화체여도 땅에 선다 (진화체 표의 부유·날기가 몸을 띄우지 않는다 — 학생이 그림자 위에 떠 있던 원인)', () => {
-    const bad = LOOKS.filter((l) => l.art.rig && locoOf(factionOf(l.factionId), l.formId, l.art) !== RIG_LOCOMOTION).map((l) => l.name);
-    expect(bad).toEqual([]);
-  });
-
-  it('땅에 서는 모습의 발 높이 = 그림자 중심 (방 4px 안, 걷기·전투 = 확대 기준점 92% ± 그림 높이 2%)', () => {
+  it('모든 모습의 발 높이 = 그림자 중심 (방 4px 안, 걷기·전투 = 확대 기준점 92% ± 그림 높이 2%) — 이동 방식은 걷기 하나 (GDD 125장)', () => {
     const bad: string[] = [];
     for (const l of LOOKS) {
-      if (!l.art.src || locoOf(factionOf(l.factionId), l.formId, l.art) !== 'walk') continue; // 부유·날기는 일부러 떠 있다(그림자는 땅에)
+      if (!l.art.src) continue;
       const g = footGap(l.art.src);
       const room = roomFootShadowPx(g, l.art.scale, l.art.offsetY);
       if (Math.abs(room) > 4) bad.push(`${l.name} 방 ${room.toFixed(1)}px`);

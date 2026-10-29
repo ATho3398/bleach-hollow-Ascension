@@ -15,7 +15,6 @@ import { button, el, icon, meter, mountApp } from './bha/dom';
 import { hpNumbers } from './bha/battle';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { locoOf } from './bha/loco';
 import { bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
 import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
@@ -196,8 +195,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
   }
   const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
-  const loco = locoOf(faction, save.evolution.formId, charArtUrls);
-  const char = characterButton(charArtUrls, '캐릭터', loco);
+  const char = characterButton(charArtUrls, '캐릭터');
   if (n.collapsed || n.dead) char.classList.add('is-collapsed'); // 쓰러진 모습 (그림이 없어 캐릭터를 눕히고 흐리게, GDD 102-7)
   // 데리고 다니는 펫 (GDD 90장): 캐릭터 옆 발치에 작게 (그림이 없으면 아이콘 원)
   const buddy = petBuddy(save.shared.pets.active, petName(save.shared.pets.active ?? '', faction));
@@ -233,7 +231,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
   statusBtn.dataset.sc = 'status';
-  scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls, loco)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
+  scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
   statusBtn.onclick = hd.onStatus;
   const paintGauges = () => {
     const chips = statusChips(n, faction);

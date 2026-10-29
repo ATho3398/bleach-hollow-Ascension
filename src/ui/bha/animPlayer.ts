@@ -169,7 +169,7 @@ export function preloadFrames(anims: AnimSet): void {
 
 /**
  * <img> 에 재생기를 붙이고 owner 요소(캐릭터 버튼·내 그림·적 상자…)에 등록한다. 프레임 애니가 하나도 없으면 아무것도 하지 않고 null.
- * owner 에는 `has-anim` 과 동작별 `has-anim-<동작>` 클래스가 붙어 CSS 가 겹치는 가짜 움직임(부유 출렁임·걸음 흔들림)을 끈다.
+ * owner 에는 `has-anim` 과 동작별 `has-anim-<동작>` 클래스가 붙어 CSS 가 겹치는 가짜 움직임(걸음 흔들림)을 끈다.
  */
 export function bindAnim(owner: HTMLElement, img: HTMLImageElement, art: ArtUrls | null): AnimPlayer | null {
   // 종이인형 그림(GDD 96장 30): 뼈대 동작으로 움직인다

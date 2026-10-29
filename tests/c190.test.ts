@@ -106,7 +106,7 @@ describe('C.190 시작 때 가로 고정 (117장 1)', () => {
 
 describe('C.190 발밑 그림자 = 캐릭터 아래 층 (117장 5)', () => {
   it('방: 몸 상자가 그림자 위 층, 걷기: 그림자를 몸보다 먼저, 전투: 그림자가 몸 상자보다 먼저', () => {
-    expect(read('src/ui/bha/loco.css')).toMatch(/\.bha-char__lift \{ display: block; position: relative; z-index: 1; \}/);
+    expect(read('src/ui/bha/room.css')).toMatch(/\.bha-char__lift \{ display: block; position: relative; z-index: 1; \}/);
     expect(read('src/ui/bha/walk.ts')).toContain("walker.append(el('span', 'bha-walker__trail'), el('span', 'bha-walker__shadow'), body);");
     expect(read('src/ui/bha/battle.ts')).toContain("root.append(el('span', 'bha-hero__shadow'), lift);");
   });

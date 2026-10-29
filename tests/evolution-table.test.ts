@@ -8,7 +8,6 @@ import { distribute } from '../src/data/evolution/generate';
 import { FACTIONS } from '../src/data/factions';
 import { ATTACK_CATEGORIES, STAT_IDS, type FormDef } from '../src/data/schema';
 import { analyzeTree } from '../src/engine/evolution';
-import { isLocomotion } from '../src/engine/locomotion';
 
 const SX = BALANCE.provisional.stats;
 const sum = (f: FormDef) => STAT_IDS.reduce((a, k) => a + f.stats[k], 0);
@@ -89,9 +88,7 @@ describe('속성·이동 방식·체인 상한', () => {
       else expect(f.elements!.length, f.id).toBeGreaterThanOrEqual(1);
     }
   });
-  it('이동 방식은 모두 유효하고 바스트로데·아란칼은 3종이 모두 나온다', () => {
-    for (const f of FORM_TABLE) expect(isLocomotion(f.locomotion), f.id).toBe(true);
-    for (const tier of [4, 5]) expect(new Set(formsOfTier(tier).map((f) => f.locomotion)).size).toBe(3);
+  it('체인 묶음 상한은 모두 3 (이동 방식 값은 없다 = 모두 걷기, GDD 125장)', () => {
     for (const f of FORM_TABLE) expect(f.maxChain).toBe(3);
   });
 });

@@ -1,7 +1,6 @@
 // 종족 설정(faction config) 타입과 검증. 종족 차이는 전부 이 설정에서 읽는다 (CLAUDE.md 규칙 2).
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
-import { isLocomotion, type Locomotion } from './locomotion';
 import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Stats } from '../data/schema';
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
 import { PET_IDS } from '../data/pets';
@@ -263,8 +262,6 @@ export interface FactionConfig {
   tower?: Partial<TowerLabels> & { starGrounds?: Record<string, string> };
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
-  /** 1단계(진화 전) 캐릭터의 이동 방식 기본값 (GDD 18-11). 비우면 walk. 진화체·그림 manifest 가 있으면 그쪽이 우선 */
-  locomotion?: Locomotion;
   /** 공격 계열 목록과 단계별 기술 (GDD 17-3). 특성 family 가 가리키는 계열은 모두 여기 있어야 한다 */
   families: FamilyConfig[];
   /** 1단계(진화 전) 체인 묶음 상한 (GDD 19-2). 비우면 DEFAULT_MAX_CHAIN. 진화체 maxChain 이 있으면 그쪽이 우선 */
@@ -413,7 +410,6 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (!isString(mt.strong) || !isString(mt.weak)) errors.push('matchupText: { strong, weak } 문자열');
   if (!isStringTuple(r.evolutionNearText, 2)) errors.push('evolutionNearText: 문자열 2개');
   if (r.maxChain !== undefined && !(Number.isInteger(r.maxChain) && (r.maxChain as number) >= 1)) errors.push('maxChain: 1 이상 정수');
-  if (r.locomotion !== undefined && !isLocomotion(r.locomotion)) errors.push('locomotion: float | walk | fly');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.logo !== undefined && !isString(r.logo)) errors.push('logo: 비어 있지 않은 문자열이어야 한다');
   if (r.birthFx !== undefined) {

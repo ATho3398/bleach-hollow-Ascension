@@ -1,6 +1,5 @@
 // 데이터 파일(src/data/**) 구조. 내용은 아직 비어 있다. 임시 데이터에는 provisional: true 를 붙인다 (GDD 12장).
 
-import type { Locomotion } from '../engine/locomotion';
 
 /** 종족별로 달라지는 표시 텍스트: 종족 id → 문자열. 엔진 로직은 id 만 쓰고 텍스트는 여기서 읽는다 */
 /** 키 '*' 는 모든 종족 공통 값(해당 종족 키가 없을 때 쓴다) */
@@ -318,8 +317,6 @@ export interface FormDef {
   stats: Stats;
   /** 자기 속성 보정 배율 (없으면 BALANCE.elements.stab). 노멀 순수형이 크게 갖는다 */
   stab?: number;
-  /** 이동 방식 (GDD 18-11, 화면 표시 전용). 없으면 종족 기본 → walk */
-  locomotion?: Locomotion;
   /** 체인 묶음 상한 (GDD 19-2). 없으면 종족 설정 maxChain → 3 */
   maxChain?: number;
   provisional?: boolean;

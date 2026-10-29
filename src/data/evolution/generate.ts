@@ -1,6 +1,5 @@
 // 진화체 자동 생성기 (GDD 20-5, 임시 템플릿). 속성·분류 목록과 BALANCE 템플릿만 받아 트리를 만든다 — 속성 수가 달라져도 동작한다.
 // 결과는 forms.json 에 커밋하고 손으로 고쳐 쓴다 (`npm run gen:forms`). 이름은 자리 표시이고 원작 호로 이름은 쓰지 않는다.
-import type { Locomotion } from '../../engine/locomotion';
 import { STAT_IDS, type AttackCategory, type FormDef, type FormKind, type StatId, type Stats } from '../schema';
 
 export type Tendency = Partial<Record<string, number>>;
@@ -39,8 +38,6 @@ export function failLineTotal(tierTotals: readonly number[], ratio: number, tier
   return Math.round(total);
 }
 
-/** 이동 방식 배정 (GDD 18-11, 임시): 속성 순번 + 분류 순번으로 걷기/부유/날기를 돌려 단계마다 3종이 고르게 나온다 */
-const LOCO_CYCLE: readonly Locomotion[] = ['walk', 'float', 'fly'];
 /** 진화체 체인 묶음 상한 (GDD 19-2, provisional): 지금은 전원 3. 4·5체인 캐릭터는 그 진화체 값만 올린다(단계 기술·배율도 같이 추가) */
 export const FORM_MAX_CHAIN = 3;
 
@@ -71,7 +68,7 @@ export function distribute(total: number, tendency: Tendency): Stats {
   return Object.fromEntries(STAT_IDS.map((s, i) => [s, floors[i]!])) as Stats;
 }
 
-function form(id: string, tier: number, kind: FormKind, stats: Stats, extra: Partial<FormDef> & { elements?: string[] }, labelEls: string[], loco: number, category?: AttackCategory): FormDef {
+function form(id: string, tier: number, kind: FormKind, stats: Stats, extra: Partial<FormDef> & { elements?: string[] }, labelEls: string[], category?: AttackCategory): FormDef {
   const hidden = !['base', 'element', 'arrancar'].includes(kind);
   return {
     id,
@@ -80,7 +77,6 @@ function form(id: string, tier: number, kind: FormKind, stats: Stats, extra: Par
     ...(hidden ? { hidden: true } : {}),
     ...extra,
     stats,
-    locomotion: LOCO_CYCLE[loco % LOCO_CYCLE.length]!,
     maxChain: FORM_MAX_CHAIN,
     provisional: true,
   };
@@ -92,25 +88,25 @@ export function generateForms(input: GenerateInput): FormDef[] {
   const all = [input.normal, ...input.elemental, ...input.special];
   const out: FormDef[] = [];
   // 1~3단계: 분기 없음 (2·3단계 각 1종)
-  for (const tier of [2, 3]) out.push(form(`t${tier}:base`, tier, 'base', distribute(total(tier), T.base[tier] ?? {}), { elements: [input.normal] }, [], tier));
+  for (const tier of [2, 3]) out.push(form(`t${tier}:base`, tier, 'base', distribute(total(tier), T.base[tier] ?? {}), { elements: [input.normal] }, []));
   // 4단계 바스트로데 일반: 노멀 + 원소 (GDD 49-7 ②, C.106 — 특수 속성은 히든 특수형으로만)
-  [input.normal, ...input.elemental].forEach((el, i) => out.push(form(`t4:${el}`, 4, 'element', distribute(total(4), T.element[el] ?? {}), { elements: [el] }, [el], i)));
+  [input.normal, ...input.elemental].forEach((el) => out.push(form(`t4:${el}`, 4, 'element', distribute(total(4), T.element[el] ?? {}), { elements: [el] }, [el])));
   // 4단계 히든 8: 원소 융합 2 · 완전체 · 특수 3 · 노멀 순수 · 노멀 실패
-  input.fusionPairs.forEach(([a, b], i) =>
-    out.push(form(`h4:fusion:${a}+${b}`, 4, 'fusion', distribute(total(4), scaleTendency(addTendency(T.element[a], T.element[b]), T.fusionScale)), { elements: [a, b] }, [a, b], i + 1)),
+  input.fusionPairs.forEach(([a, b]) =>
+    out.push(form(`h4:fusion:${a}+${b}`, 4, 'fusion', distribute(total(4), scaleTendency(addTendency(T.element[a], T.element[b]), T.fusionScale)), { elements: [a, b] }, [a, b])),
   );
-  out.push(form('h4:complete', 4, 'complete', distribute(total(4, 'complete'), T.hidden.complete ?? {}), { elements: [input.normal] }, [], 1));
-  input.special.forEach((el, i) => out.push(form(`h4:special:${el}`, 4, 'special', distribute(total(4), scaleTendency(T.element[el], T.specialScale)), { elements: [el] }, [el], i + 2)));
-  out.push(form('h4:pure', 4, 'pure', distribute(total(4), T.hidden.pure ?? {}), { elements: [input.normal], stab: T.pureStab }, [input.normal], 1));
-  out.push(form('h4:fail', 4, 'fail', distribute(failLineTotal(input.tierTotals, input.failGainRatio, 4, 4), T.hidden.fail ?? {}), { elements: [input.normal] }, [input.normal], 0));
+  out.push(form('h4:complete', 4, 'complete', distribute(total(4, 'complete'), T.hidden.complete ?? {}), { elements: [input.normal] }, []));
+  input.special.forEach((el) => out.push(form(`h4:special:${el}`, 4, 'special', distribute(total(4), scaleTendency(T.element[el], T.specialScale)), { elements: [el] }, [el])));
+  out.push(form('h4:pure', 4, 'pure', distribute(total(4), T.hidden.pure ?? {}), { elements: [input.normal], stab: T.pureStab }, [input.normal]));
+  out.push(form('h4:fail', 4, 'fail', distribute(failLineTotal(input.tierTotals, input.failGainRatio, 4, 4), T.hidden.fail ?? {}), { elements: [input.normal] }, [input.normal]));
   // 5단계 아란칼: 속성 × 분류 24
-  all.forEach((el, i) =>
-    input.categories.forEach((cat, j) =>
-      out.push(form(`t5:${el}:${cat}`, 5, 'arrancar', distribute(total(5), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], i + j, cat)),
+  all.forEach((el) =>
+    input.categories.forEach((cat) =>
+      out.push(form(`t5:${el}:${cat}`, 5, 'arrancar', distribute(total(5), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], cat)),
     ),
   );
   // 5단계 히든 4: 속성은 바스트로데에서 잇는다 (elements 없음). reborn = 환생 N회 이상 전용 (GDD 22-7)
-  (['limit', 'restraint', 'hunter', 'reborn'] as const).forEach((kind, i) => out.push(form(`h5:${kind}`, 5, kind, distribute(total(5, kind), T.hidden[kind] ?? {}), {}, [], i)));
+  (['limit', 'restraint', 'hunter', 'reborn'] as const).forEach((kind) => out.push(form(`h5:${kind}`, 5, kind, distribute(total(5, kind), T.hidden[kind] ?? {}), {}, [])));
   return out;
 }
 

@@ -2,10 +2,8 @@
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig, RoomFloorConfig, RoomProp } from '../../engine/faction';
-import type { Locomotion } from '../../engine/locomotion';
 import { bindAnim } from './animPlayer';
 import { el, icon } from './dom';
-import { LOCO_LIFT, setLoco } from './loco';
 import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -74,11 +72,10 @@ const CHAR_BODY_H = 140; // room.css 의 .bha-char__body.has-art 높이와 맞�
 const FOOT_GAP = 0.07; // 발바닥 = 그림 아래에서 약 8% 위(art-guide 2장). 그림은 몸 상자(130×140) 안에 정사각으로 맞춰져 높이 130 기준 7.4% → 상자 대비 약 7%
 
 /** 캐릭터: 새 규칙의 그림 한 장(왼쪽을 보는 그림, 가만히) 또는 기존 제자리 2프레임 숨쉬기. 그림이 없으면 둥근 몸 + 눈 두 개 도형 */
-export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 'walk'): HTMLButtonElement {
+export function characterButton(art: ArtUrls, label: string): HTMLButtonElement {
   const b = el('button', 'bha-art bha-char');
   b.type = 'button';
   b.setAttribute('aria-label', label);
-  setLoco(b, loco);
   const body = el('span', 'bha-char__body bha-art-img');
   const { frames, src } = art;
   if (src) {
@@ -102,7 +99,7 @@ export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 
   } else {
     body.append(el('span', 'bha-char__eye'), el('span', 'bha-char__eye'));
   }
-  // 몸은 lift 상자 안: 부유·날기는 이 상자가 떠올라 움직이고, 그림자는 땅에 남는다
+  // 몸은 lift 상자 안(그림자보다 위 층). 이동 방식은 걷기 하나라 몸은 늘 땅에 붙고 발 = 그림자 (GDD 125장)
   const lift = el('span', 'bha-char__lift');
   lift.append(body);
   const shadow = el('span', 'bha-char__shadow');
@@ -130,18 +127,17 @@ export function bubbleSpot(bottomY: number, bubbleH: number, charCenterX: number
 }
 
 /** 방 캐릭터 그림의 윗변 높이: 캐릭터 상자 중심에서 위로 몇 px 인지(음수). 머리 위 상태 칩이 이 위에 놓인다. room.css 의 .bha-char 치수와 맞출 것 */
-export function charTopOffset(art: ArtUrls, loco: Locomotion = 'walk'): number {
+export function charTopOffset(art: ArtUrls): number {
   const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)
   const hasArt = !!(art.src || art.frames);
   const bodyH = hasArt ? CHAR_BODY_H : 75;
   const boxTop = -(PAD * 2 + bodyH + SHADOW) / 2 + PAD; // 몸 상자 윗변
-  const lift = bodyH * LOCO_LIFT[loco]; // 떠 있는 만큼 머리가 위로 (움직임 중간 높이)
-  if (!art.src) return boxTop - lift;
+  if (!art.src) return boxTop;
   const drawn = 130; // 정사각 그림이 몸 상자(130×140) 안 아래쪽에 맞춰진 크기
   const pivot = bodyH * 0.92; // transform-origin 세로
   const top = pivot + (bodyH - drawn + drawn * (art.headTop ?? 0) - pivot) * art.scale + (art.offsetY / 100) * bodyH;
   // 종이인형(headTop)은 머리 위가 비어 있어 머리에 맞추면 칩이 캐릭터 버튼 상자 안으로 내려와 겹친다 — 상자 윗변보다 아래로는 안 내린다 (C.190)
-  return boxTop + Math.min(top, art.headTop ? 0 : bodyH) - lift;
+  return boxTop + Math.min(top, art.headTop ? 0 : bodyH);
 }
 
 export interface FloorEntry {

@@ -141,6 +141,7 @@
 .bha-char__frame--solo { object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)); pointer-events: none; } /* 새 규칙의 한 장: 가만히 */
 .bha-char__frame--1 { animation: bha-frame-a 1.6s step-end infinite; }
 .bha-char__frame--2 { animation: bha-frame-b 1.6s step-end infinite; }
+.bha-char__lift { display: block; position: relative; z-index: 1; } /* 발밑 그림자(뒤 형제)보다 위 층 — 그림자가 캐릭터를 덮지 않게 (C.190, GDD 117장 5). 이동 방식은 걷기 하나라 몸은 늘 땅에 (GDD 125장) */
 .bha-char__shadow { width: 52px; height: 7px; margin-top: var(--bha-sp-1); border-radius: 50%; background: rgb(0 0 0 / 0.4); }
 .bha-char.is-react .bha-char__body { animation: bha-char-hop 0.4s ease-out; }
 /* 뱉음 (GDD 109장 6): 고개를 젓듯 좌우로 흔들고 살짝 움츠린다 */

@@ -159,6 +159,8 @@
 @media (prefers-reduced-motion: reduce) {
   .bha-walk__layer, .bha-walker__body, .bha-walker__foot { animation: none; }
 }
+/* 이동 애니(has-anim-move, GDD 26장)가 있으면 그림이 직접 걸으므로 걸음 흔들림을 끈다(좌우 흐름만). 설정의 화면 흔들림 끔(html[data-calm])도 흔들림을 멈춘다 */
+.bha-walker.has-anim-move .bha-walker__body, .bha-walker.has-anim-move .bha-walker__foot, html[data-calm] .bha-walker__body { animation: none; }
 
 
 /* ═════ C.141 (GDD 85장 11번): 타일 카드·배치판 카드·끌어놓기·배치 프리셋 ═════ */

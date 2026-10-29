@@ -1,0 +1,896 @@
+{
+ "note": "C.200 발-그림자(px, 1배 844x390). capture=캡처 장면 실행, all=옛 부유·날기 진화체 방·걷기·전투 전수",
+ "capture": [
+  {
+   "fac": "hollow",
+   "tier": 1,
+   "gender": "male",
+   "form": "t2:base",
+   "room": {
+    "foot": 259.7,
+    "head": 128.7,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 256,
+    "nh": 256,
+    "top": 108,
+    "bot": 236
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 58.546875,
+    "top": 27,
+    "left": 491,
+    "right": 616.71875,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop is-side"
+   },
+   "room2": {
+    "foot": 259.1,
+    "head": 129.1,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 256,
+    "nh": 256,
+    "top": 109,
+    "bot": 236
+   },
+   "battle": {
+    "foot": 217.7,
+    "head": 104.9,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 256,
+    "nh": 256,
+    "top": 109,
+    "bot": 236
+   }
+  },
+  {
+   "fac": "hollow",
+   "tier": 4,
+   "gender": "male",
+   "form": "t5:water:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 364.7578125,
+    "right": 479.2421875,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 258.7,
+    "head": 133.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 236,
+    "bot": 563
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 110,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 236,
+    "bot": 563
+   }
+  },
+  {
+   "fac": "hollow",
+   "tier": 4,
+   "gender": "female",
+   "form": "t5:water:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 136.1,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 239,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 364.7578125,
+    "right": 479.2421875,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 258.7,
+    "head": 133.5,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 235,
+    "bot": 563
+   },
+   "battle": {
+    "foot": 219.3,
+    "head": 109,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 233,
+    "bot": 567
+   }
+  },
+  {
+   "fac": "shinigami",
+   "tier": 4,
+   "gender": "male",
+   "form": "t5:fire:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 136.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 241,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 368.6953125,
+    "right": 475.3046875,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 563
+   },
+   "battle": {
+    "foot": 219.3,
+    "head": 111.3,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 567
+   }
+  },
+  {
+   "fac": "shinigami",
+   "tier": 4,
+   "gender": "female",
+   "form": "t5:fire:physical",
+   "room": {
+    "foot": 260.2,
+    "head": 136.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 241,
+    "bot": 564
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 359.140625,
+    "right": 484.859375,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.5,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 219.3,
+    "head": 111.6,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 241,
+    "bot": 567
+   }
+  }
+ ],
+ "all": [
+  {
+   "fac": "shinigami",
+   "tier": 1,
+   "gender": "male",
+   "form": "t2:base",
+   "room": {
+    "foot": 259.8,
+    "head": 136.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 241,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 359.140625,
+    "right": 484.859375,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 563
+   },
+   "walk": {
+    "foot": 320.5,
+    "head": 171.2,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 239,
+    "bot": 565
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 111.3,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 563
+   }
+  },
+  {
+   "fac": "shinigami",
+   "tier": 1,
+   "gender": "female",
+   "form": "t2:base",
+   "room": {
+    "foot": 260.2,
+    "head": 136.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 241,
+    "bot": 564
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 359.140625,
+    "right": 484.859375,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.5,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 564
+   },
+   "walk": {
+    "foot": 320.1,
+    "head": 170.7,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 218.3,
+    "head": 111.3,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 564
+   }
+  },
+  {
+   "fac": "shinigami",
+   "tier": 4,
+   "gender": "male",
+   "form": "t5:water:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 137.3,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 242,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 367.0546875,
+    "right": 476.9453125,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 563
+   },
+   "walk": {
+    "foot": 320.1,
+    "head": 170.7,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 111.3,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 563
+   }
+  },
+  {
+   "fac": "shinigami",
+   "tier": 4,
+   "gender": "female",
+   "form": "t5:water:physical",
+   "room": {
+    "foot": 260.2,
+    "head": 136.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 241,
+    "bot": 564
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 367.0546875,
+    "right": 476.9453125,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.5,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 564
+   },
+   "walk": {
+    "foot": 320.1,
+    "head": 170.7,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 218.3,
+    "head": 111.3,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 564
+   }
+  },
+  {
+   "fac": "shinigami",
+   "tier": 4,
+   "gender": "male",
+   "form": "t5:fire:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 137.3,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 242,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 357.9921875,
+    "right": 486.0078125,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 563
+   },
+   "walk": {
+    "foot": 320.1,
+    "head": 170.7,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 111.3,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 563
+   }
+  },
+  {
+   "fac": "shinigami",
+   "tier": 4,
+   "gender": "female",
+   "form": "t5:fire:physical",
+   "room": {
+    "foot": 260.2,
+    "head": 137.3,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 242,
+    "bot": 564
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 367.0546875,
+    "right": 476.9453125,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.5,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 564
+   },
+   "walk": {
+    "foot": 320.1,
+    "head": 170.7,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 218.3,
+    "head": 111.3,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 240,
+    "bot": 564
+   }
+  },
+  {
+   "fac": "hollow",
+   "tier": 1,
+   "gender": "male",
+   "form": "t2:base",
+   "room": {
+    "foot": 259.7,
+    "head": 128.7,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 256,
+    "nh": 256,
+    "top": 108,
+    "bot": 236
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 58.546875,
+    "top": 27,
+    "left": 491,
+    "right": 611.671875,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop is-side"
+   },
+   "room2": {
+    "foot": 259.1,
+    "head": 129.1,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 256,
+    "nh": 256,
+    "top": 109,
+    "bot": 236
+   },
+   "walk": {
+    "foot": 319.3,
+    "head": 177.4,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 256,
+    "nh": 256,
+    "top": 121,
+    "bot": 236
+   },
+   "battle": {
+    "foot": 217.7,
+    "head": 104,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 256,
+    "nh": 256,
+    "top": 108,
+    "bot": 236
+   }
+  },
+  {
+   "fac": "hollow",
+   "tier": 4,
+   "gender": "male",
+   "form": "t5:water:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 383.9140625,
+    "right": 460.0859375,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 134.3,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 236,
+    "bot": 563
+   },
+   "walk": {
+    "foot": 320.1,
+    "head": 169.4,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 235,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 110,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 236,
+    "bot": 563
+   }
+  },
+  {
+   "fac": "hollow",
+   "tier": 4,
+   "gender": "female",
+   "form": "t5:water:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 136.1,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 239,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 383.9140625,
+    "right": 460.0859375,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 133.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 235,
+    "bot": 563
+   },
+   "walk": {
+    "foot": 319.6,
+    "head": 168.9,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 234,
+    "bot": 563
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 109.7,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 235,
+    "bot": 563
+   }
+  },
+  {
+   "fac": "hollow",
+   "tier": 4,
+   "gender": "male",
+   "form": "t5:fire:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 135.8,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 238,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 383.9140625,
+    "right": 460.0859375,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 134.3,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 236,
+    "bot": 563
+   },
+   "walk": {
+    "foot": 320.1,
+    "head": 169.4,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 235,
+    "bot": 564
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 110,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 236,
+    "bot": 563
+   }
+  },
+  {
+   "fac": "hollow",
+   "tier": 4,
+   "gender": "female",
+   "form": "t5:fire:physical",
+   "room": {
+    "foot": 259.8,
+    "head": 136.1,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 239,
+    "bot": 563
+   },
+   "bubble": {
+    "hidden": false,
+    "bottom": 111.6875,
+    "top": 80.140625,
+    "left": 364.7578125,
+    "right": 479.2421875,
+    "sceneTop": 22,
+    "side": "bha-room__bubble is-pop"
+   },
+   "room2": {
+    "foot": 259.2,
+    "head": 133.9,
+    "shadow": 258,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 235,
+    "bot": 563
+   },
+   "walk": {
+    "foot": 319.6,
+    "head": 168.9,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 234,
+    "bot": 563
+   },
+   "battle": {
+    "foot": 217.9,
+    "head": 109.7,
+    "shadow": 216.4,
+    "shadowVisible": true,
+    "cx": 257,
+    "nw": 608,
+    "nh": 608,
+    "top": 235,
+    "bot": 563
+   }
+  }
+ ]
+}

@@ -26,7 +26,6 @@ import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDO
 import { createExpClock, monoNow } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
-import { locoOf } from './bha/loco';
 import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
 import { groundSceneBg } from './bha/sceneBg';
@@ -43,8 +42,6 @@ export interface ExpeditionViewHandlers {
   tierIndex?: number;
   /** 입고 있는 스킨 id (GDD 26-5). 없으면 진화체 그림 */
   skinId?: string | null;
-  /** 현재 진화체 id (이동 방식 GDD 18-11 을 고른다). 1단계는 null */
-  formId?: string | null;
   /** 전투가 시작될 때: 전투 화면으로 넘어간다. 끝나면 호출자가 expeditionView 를 다시 부른다 */
   onBattle: (p: PendingBattle) => void;
   onEnded: () => void;
@@ -277,7 +274,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   chips.append(goal, where, meters, slotsLine);
 
   const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
-  const walk = walkScene(faction.walkAnim, groundLabel, walkArt, locoOf(faction, h.formId, walkArt), groundSceneBg(faction, exp.groundId));
+  const walk = walkScene(faction.walkAnim, groundLabel, walkArt, groundSceneBg(faction, exp.groundId));
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선

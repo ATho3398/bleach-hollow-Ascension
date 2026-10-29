@@ -3,10 +3,8 @@
 // 아래쪽 attackFx() 가 Web Animations 로 그림 한 장을 움직인다. 엔진 틱·결과는 건드리지 않고, 사건이 났을 때 연출만 얹는다.
 import type { CombatEvent } from '../engine/combat';
 import type { AttackFxKind, FamilyMotionKind } from '../engine/faction';
-import type { Locomotion } from '../engine/locomotion';
 import type { AnimAction } from '../data/art/anim';
 import type { AnimPlayer } from './bha/animPlayer';
-import { LOCO_LIFT } from './bha/loco';
 import {
   ATTACK_FX, ATTACK_TIER_ORDER, FAMILY_MOTION, FAMILY_STAGE_FX, FX_RATE_MAX, FX_RATE_MIN, FX_SAFETY_MS, GHOST_LAG_MS, GHOST_OPACITY, HIT_FLASH_MIN_MS,
   GUARDED_HIT_RATIO, REACH_RATIO, SKILL_NAME_MS, type AttackFxLevel, type AttackTier, type FamilyMotion,
@@ -219,22 +217,19 @@ export interface LungePlan {
  * 몸통박치기 키프레임. dir = +1(오른쪽으로 돌진) / -1(왼쪽), reach = 돌진 거리(px).
  * 살짝 물러남(예비) → 튀어나가 부딪힘 → 잠깐 머묾 → 제자리 복귀.
  */
-export function lungePlan(level: AttackFxLevel, dir: 1 | -1, reach: number, loco: Locomotion = 'walk', liftPx = 0): LungePlan {
+export function lungePlan(level: AttackFxLevel, dir: 1 | -1, reach: number): LungePlan {
   const total = level.backMs + level.lungeMs + level.holdMs + level.returnMs;
   const o1 = level.backMs / total;
   const o2 = (level.backMs + level.lungeMs) / total;
   const o3 = (level.backMs + level.lungeMs + level.holdMs) / total;
-  // 이동 방식 (GDD 18-11): 부유 = 기울임·뒤로 젖힘 없이 미끄러지듯 돌진 / 날기 = 위로 솟았다가 떠 있던 높이만큼 내리꽂는 호 / 걷기 = 그대로
-  const slide = loco === 'float';
-  const dive = loco === 'fly' ? liftPx : 0;
-  const tilt = slide ? 0 : level.tiltDeg * (loco === 'fly' ? 1.8 : 1);
-  const back = slide ? level.backPx * 0.5 : level.backPx;
-  const at = (x: number, scale: number, deg: number, y = 0): string => `translateX(${(x * dir).toFixed(1)}px)${y === 0 ? '' : ` translateY(${y.toFixed(1)}px)`} rotate(${(deg * dir).toFixed(1)}deg) scale(${scale})`;
+  const tilt = level.tiltDeg;
+  const back = level.backPx;
+  const at = (x: number, scale: number, deg: number): string => `translateX(${(x * dir).toFixed(1)}px) rotate(${(deg * dir).toFixed(1)}deg) scale(${scale})`;
   const keyframes: Keyframe[] = [
     { offset: 0, transform: at(0, 1, 0), easing: 'ease-out' },
-    { offset: o1, transform: at(-back, 1, -tilt * (loco === 'fly' ? 0.5 : 1), -dive * 0.7), easing: 'cubic-bezier(.55,0,1,.45)' },
-    { offset: o2, transform: at(reach, level.scale, tilt, dive), easing: 'linear' },
-    { offset: o3, transform: at(reach, level.scale, tilt, dive), easing: 'ease-out' },
+    { offset: o1, transform: at(-back, 1, -tilt), easing: 'cubic-bezier(.55,0,1,.45)' },
+    { offset: o2, transform: at(reach, level.scale, tilt), easing: 'linear' },
+    { offset: o3, transform: at(reach, level.scale, tilt), easing: 'ease-out' },
     { offset: 1, transform: at(0, 1, 0) },
   ];
   return { keyframes, durationMs: total, hitAtMs: level.backMs + level.lungeMs, ghosts: Math.min(2, Math.max(0, level.ghosts)) };
@@ -313,8 +308,6 @@ export interface AttackActor {
   body: HTMLElement;
   /** 돌진 방향: 상대가 오른쪽이면 +1 */
   dir: 1 | -1;
-  /** 이동 방식 (GDD 18-11): 돌진 모양만 바뀐다. 없으면 걷기 */
-  loco?: Locomotion;
   /** 프레임 애니 재생기 (GDD 26장). 있는 동작만 애니로 돌고, 없는 동작은 아래 기존 연출(몸통박치기·흔들림)을 쓴다 */
   anim?: AnimPlayer | null;
 }
@@ -629,7 +622,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       ? { keyframes: [], durationMs: clipPlay.durationMs, hitAtMs: clipPlay.hitAtMs, ghosts: 0 }
       : motion?.move === 'cast'
         ? castPlan(lv, from.dir, motion.travelMs)
-        : lungePlan(lv, from.dir, Math.min(reachOf(gapOf(from, to)), opts.maxReach?.() ?? Infinity) * (motion?.reach ?? 1), from.loco, from.root.offsetHeight * LOCO_LIFT[from.loco ?? 'walk']);
+        : lungePlan(lv, from.dir, Math.min(reachOf(gapOf(from, to)), opts.maxReach?.() ?? Infinity) * (motion?.reach ?? 1));
     const timing: KeyframeAnimationOptions = { duration: plan.durationMs, easing: 'linear', fill: 'none' };
     from.root.style.zIndex = '4';
     const main = track(from.root.animate(clipPlay ? [{}, {}] : plan.keyframes, timing)); // 애니는 길이만 재는 빈 애니메이션(배속·일시정지를 따른다)
