@@ -9,6 +9,7 @@
     { "id": "head", "parent": "torso", "pivot": [15, 17] },
     { "id": "hair_back", "parent": "head", "pivot": [26, 11] },
     { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
+    { "id": "forearm_L", "parent": "arm_L", "pivot": [11, 44] },
     { "id": "arm_R", "parent": "torso", "pivot": [24, 33] },
     { "id": "forearm_R", "parent": "arm_R", "pivot": [32, 41] },
     { "id": "leg_L", "parent": "root", "pivot": [11, 52] },
@@ -17,7 +18,7 @@
     { "id": "shin_R", "parent": "leg_R", "pivot": [22, 63] },
     { "id": "foot_L", "parent": "shin_L", "pivot": [12, 75] },
     { "id": "foot_R", "parent": "shin_R", "pivot": [24, 75] },
-    { "id": "weapon", "parent": "arm_L", "pivot": [9, 58], "restRot": 78 },
+    { "id": "weapon", "parent": "forearm_L", "pivot": [9, 58], "restRot": 78 },
     { "id": "scabbard", "parent": "torso", "pivot": [19, 49], "restRot": -32 },
     { "id": "cape", "parent": "torso", "pivot": [17, 29] }
   ],
@@ -25,8 +26,9 @@
     { "id": "cape", "bone": "cape" },
     { "id": "arm_L", "bone": "arm_L" },
     { "id": "outer_arm_L", "bone": "arm_L" },
+    { "id": "forearm_L", "bone": "forearm_L" },
     { "id": "weapon", "bone": "weapon" },
-    { "id": "thumb_L", "bone": "arm_L" },
+    { "id": "thumb_L", "bone": "forearm_L" },
     { "id": "hair_back", "bone": "hair_back" },
     { "id": "foot_L", "bone": "foot_L" },
     { "id": "foot_R", "bone": "foot_R" },
@@ -213,6 +215,22 @@
       "weapon": { "art": "weapon/sword", "at": [2, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
+    },
+    "arrancar-f-release-test": {
+      "body": "arrancar_f",
+      "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
+      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
+      "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1], "size": [16, 29] },
+      "release": "arrancar-f-released-test"
+    },
+    "arrancar-f-released-test": {
+      "body": "arrancar_f",
+      "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
+      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
+      "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1], "size": [16, 29] },
+      "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
     }
   },
   "hairFrame": {
@@ -323,7 +341,8 @@
     }
   },
   "bodyMotions": {
-    "dg": "digitigrade"
+    "dg": "digitigrade",
+    "arrancar_f": "arrancarRelease"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -332,7 +351,7 @@
       "root": "전체",
       "torso": "몸통",
       "head": "머리",
-      "arm_L": "왼팔",
+      "arm_L": "왼 위팔",
       "arm_R": "오른 위팔",
       "forearm_R": "오른 아래팔",
       "leg_L": "왼다리",
@@ -349,7 +368,8 @@
       "weapon": "칼",
       "scabbard": "칼집",
       "thumb_L": "엄지",
-      "cape": "망토"
+      "cape": "망토",
+      "forearm_L": "왼 아래팔"
     },
     "groups": [
       [
@@ -379,6 +399,7 @@
         [
           "arm_L",
           "outer_arm_L",
+          "forearm_L",
           "thumb_L"
         ]
       ],
@@ -416,6 +437,7 @@
       ],
       "arm_L": [
         "outer_arm_L",
+        "forearm_L",
         "thumb_L"
       ],
       "arm_R": [
@@ -438,6 +460,9 @@
       ],
       "shin_R": [
         "foot_R"
+      ],
+      "forearm_L": [
+        "thumb_L"
       ]
     }
   },
@@ -559,5 +584,7 @@
         }
       ]
     }
-  }
+  },
+  "forearmLNote": "왼팔 팔꿈치(forearm_L, 사용자 2026-10-29 \"왼팔도 자를거임\"): 왼팔을 위팔(arm_L)·아래팔(forearm_L)로. 칼(weapon 뼈)·엄지(thumb_L)는 아래팔에 붙는다. 아래팔 그림이 없는 몸은 arm_L 한 장 그대로(아래팔 0°라 지금 모습 그대로)",
+  "releaseNote": "해방 1안(GDD 115-A 49): 외형에 release = 해방 외형 id 를 두면 해방 동작(swapAt) 순간 그 외형으로 바꿔 그린다. arrancar-f-release-test → arrancar-f-released-test(임시: 아란칼(여) + 임시 망토)"
 }

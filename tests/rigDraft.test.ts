@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { DRAFT_RIGS } from '../scripts/rig/draft';
 import { followMove } from '../scripts/rig/follow';
-import { boneMatrices, lookLayers, resolveMotions, samplePose, validateRig, apply } from '../src/data/art/rig/pose';
+import { boneMatrices, fxAt, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, validateRig, apply } from '../src/data/art/rig/pose';
 
 describe('종이인형 작업본 (GDD 96장 36): 고정한 값이 먼저 들어가는 곳 — 게임본과 따로', () => {
   for (const [id, d] of Object.entries(DRAFT_RIGS)) {
@@ -83,5 +83,31 @@ describe('편집기 같이 옮기기 (GDD 96장 42)', () => {
   it('뒤에 오는 부위를 옮기면 그것만', () => {
     for (const s of ['hair', 'hair_back', 'thumb_L', 'forearm_R', 'foot_L']) expect(followMove(rig, 'shinigami-base-f', s)!.parts.map((p) => p.slot)).toEqual([s]);
     expect(followMove(rig, 'digitigrade-test', 'shin_L')!.parts.map((p) => p.slot)).toEqual(['shin_L', 'foot_L']);
+  });
+});
+
+describe('필살기·해방 (GDD 115-A 48·49)', () => {
+  const { rig, motions, sets } = DRAFT_RIGS.humanoid!;
+  const ult = motions.ultimate!;
+  it('필살기 동안 칼·칼 든 팔이 몸 위로 그려진다', () => {
+    const order = orderLayers(lookLayers(rig, 'shinigami-base'), ult).map((l) => l.slot);
+    expect(order.indexOf('weapon')).toBeGreaterThan(order.indexOf('torso'));
+    expect(order.indexOf('weapon')).toBeGreaterThan(order.indexOf('arm_R'));
+    expect(orderLayers(lookLayers(rig, 'shinigami-base'), motions.idle).map((l) => l.slot)).toEqual(lookLayers(rig, 'shinigami-base').map((l) => l.slot));
+  });
+  it('필살기 베기 궤적은 휘두르는 순간에만', () => {
+    const mats = boneMatrices(rig, samplePose(rig, ult, 800), 'shinigami');
+    expect(fxAt(ult, 800, mats).some((f) => f.kind === 'slash')).toBe(true);
+    expect(fxAt(ult, 100, mats)).toEqual([]);
+  });
+  it('해방 초안 3개는 아란칼(여) 몸에만 있고, swapAt 이 지나면 해방 외형으로 그린다', () => {
+    const af = resolveMotions(rig, motions, sets, 'arrancar_f');
+    for (const id of ['release1', 'release2', 'release3']) {
+      const m = af[id]!;
+      expect(m.swapAt).toBeGreaterThan(0);
+      expect(motionLook(rig, 'arrancar-f-release-test', m, m.swapAt! - 1)).toBe('arrancar-f-release-test');
+      expect(motionLook(rig, 'arrancar-f-release-test', m, m.swapAt!)).toBe('arrancar-f-released-test');
+      expect(resolveMotions(rig, motions, sets, 'shinigami')[id]).toBeUndefined();
+    }
   });
 });

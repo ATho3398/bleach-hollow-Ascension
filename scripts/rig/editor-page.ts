@@ -1,7 +1,8 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓰고, 값은 작업본(draft.ts, GDD 96장 36)
 import { DRAFT_RIGS, type DraftRig } from './draft';
-import { bodyBones, boneMatrices, hairRect, insideFrame, layerMatrix, lookLayers, resolveMotions, samplePose, type BodyJoints, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { bodyBones, boneMatrices, fxAt, hairRect, insideFrame, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, type BodyJoints, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
+import { fxSvg } from '../../src/ui/bha/rigFx';
 
 declare const ART_MAP: Record<string, string>;
 /** claude.ai 아티팩트 런타임(있을 때만). db = 편집기 값을 서버에 저장 — 다른 기기·Claude 가 읽는다 */
@@ -185,7 +186,9 @@ function draw() {
   else if (testRot) pose = { [boneOfSel()]: { rot: testRot, x: 0, y: 0 } };
   const mats = boneMatrices(rig, pose, curBody());
   drawn = [];
-  for (const l of lookLayers(rig, look)) {
+  // 해방 동작이면 그 순간 외형, 필살기면 칼을 맨 앞으로(GDD 115-A 48·49)
+  const cm = motion ? MOTIONS[motion] : undefined;
+  for (const l of orderLayers(lookLayers(rig, motionLook(rig, look, cm, mt)), cm)) {
     const img = document.createElement('img');
     img.src = ART_MAP[`art/rig/${rig.id}/${l.art}.png`] ?? '';
     img.className = 'part' + (l.slot === sel ? ' sel' : '');
@@ -195,6 +198,15 @@ function draw() {
     img.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * K},${m[5] * K})`;
     stage.append(img);
     drawn.push({ slot: l.slot, m, img, size: l.size });
+  }
+  if (cm?.fx) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'dot fxlayer');
+    svg.setAttribute('width', String(W * K));
+    svg.setAttribute('height', String(H * K));
+    svg.style.cssText = `position:absolute;left:0;top:0;margin:0;overflow:visible;pointer-events:none;opacity:1;background:none;border-radius:0;width:${W * K}px;height:${H * K}px`;
+    svg.innerHTML = fxSvg(fxAt(cm, mt, mats), K);
+    stage.append(svg);
   }
   if ((sel === 'hair' || sel === 'hair_back') && !motion) {
     const [fx, fy, fw, fh] = hairRect(rig, sel);

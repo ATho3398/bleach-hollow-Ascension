@@ -3,7 +3,8 @@
 // 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 번갈아, 특수 skill·skill2 번갈아, 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
 // 코어(createRigPlayer)는 DOM 없이 돌아 테스트한다.
 import type { AnimAction } from '../../data/art/anim';
-import { boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose, type Motion, type MotionSets, type Pose, type Rig } from '../../data/art/rig/pose';
+import { boneMatrices, fxAt, layerMatrix, lookLayers, orderLayers, resolveMotions, samplePose, type Motion, type MotionSets, type Pose, type Rig } from '../../data/art/rig/pose';
+import { drawFxCanvas } from './rigFx';
 import type { AnimPlayer, PlayOptions } from './animPlayer';
 
 /** 게임 동작 → 종이인형 동작(여럿이면 번갈아) */
@@ -17,7 +18,7 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
 
 export interface RigPlayer extends AnimPlayer {
   /** 지금 그릴 자세와 동작(뒤집기 슬롯용) */
-  pose(): { pose: Pose; motion: Motion | undefined };
+  pose(): { pose: Pose; motion: Motion | undefined; t: number };
 }
 
 export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake: () => void = () => {}): RigPlayer {
@@ -82,7 +83,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     pose() {
       const id = curId();
       const m = id ? motions[id] : undefined;
-      return { pose: m ? samplePose(rig, m, t) : {}, motion: m };
+      return { pose: m ? samplePose(rig, m, t) : {}, motion: m, t };
     },
     get playing() {
       return once?.action ?? loopAction;
@@ -121,16 +122,18 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
   let lastDraw = -Infinity;
   const draw = () => {
     if (!ctx || layers.some((l) => !l.im.complete || !l.im.naturalWidth)) return false;
-    const { pose, motion } = player.pose();
+    const { pose, motion, t } = player.pose();
     const mats = boneMatrices(rig, pose, body);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
-    for (const { layer, im } of layers) {
+    for (const { layer, im } of orderLayers(layers.map((l) => ({ ...l, slot: l.layer.slot })), motion)) {
       const m = layerMatrix(rig, mats, layer, motion);
       ctx.setTransform(m[0] * K, m[1] * K, m[2] * K, m[3] * K, (m[4] - vx) * K, (m[5] - vy) * K);
       ctx.drawImage(im, 0, 0);
     }
+    // 이펙트(GDD 115-A 48): 그림 층 위
+    drawFxCanvas(ctx, fxAt(motion, t, mats), (p) => [(p[0] - vx) * K, (p[1] - vy) * K], K);
     img.src = canvas.toDataURL();
     return true;
   };
