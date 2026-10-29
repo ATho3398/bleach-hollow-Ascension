@@ -384,7 +384,7 @@ const SCREENS = [
       await h.closeLayers();
       await h.back();
       await h.click('.bha-prop--market', { ms: 700 }); // C.201 (GDD 127장 2): 온천은 장터 안
-      await h.click('.bha-market [data-spot="spa"]', { ms: 900 });
+      await h.click('.bha-market [data-spot="spa"]', { ms: 3200 }); // C.201 (128장 6): 캐릭터가 걸어 들어와 앉을 때까지(2.2초 + 앉기) 기다린 뒤 잰다
       await h.explore(n, { tabs: false });
       await h.back();
       if (!(await h.has('.bha-market'))) throw new Error('온천 뒤로 → 장터에 못 닿음');

@@ -56,6 +56,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const art = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
   const char = characterButton(art, '캐릭터');
   char.disabled = true; // 보기만 (기기 선택 대상 아님)
+  char.setAttribute('aria-hidden', 'true'); // 걸어 들어오는 장식 — 조작 요소가 아니다 (상태는 머리 위 상태 창이 읽힌다)
   char.classList.add('bha-spa__char');
   if (n.collapsed) char.classList.add('is-collapsed');
   const status = el('div', 'bha-room__status bha-spa__status');
