@@ -10,7 +10,7 @@ import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
-  abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
+  abortExpedition, advance, canAbort, lapRewardMult, lapScale, winHealOf, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
@@ -458,8 +458,14 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const label = el('span', 'bha-btn__label');
     label.append('한 바퀴 더', el('span', 'bha-btn__sub', `(${exp.lap + 1}바퀴)`));
     more.append(label);
+    // 이어하기 배율 (GDD 121장 5): [한 바퀴 더] 아래에 다음 바퀴 보상·적 배율과 사냥 힐
+    const nx = exp.lap + 1;
+    const multLine = el('p', 'bha-sheet__body bha-continue-mult', `다음 바퀴: 보상 ×${fmtMult(lapRewardMult(nx))} · 적 ×${fmtMult(lapScale(nx).hp)} · 사냥 힐 ${Math.round(winHealOf(nx) * 100)}%`);
+    multLine.dataset.continueMult = '';
     const grid = el('div', 'bha-grid2');
     grid.append(ret, more);
+    const actions = el('div', 'bha-continue');
+    actions.append(grid, multLine);
     const sheet = el('div', 'bha-sheet');
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-label', `${faction.nestName}에 도착했다`);
@@ -473,7 +479,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       const box = el('div', 'bha-draft');
       box.dataset.draft = d.picked === null ? 'open' : 'picked';
       const head = el('p', 'bha-sheet__body bha-draft__head');
-      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 바퀴 길에 바로 놓는다 (가방에는 안 들어간다)' : fixParticles(` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓는다 (안 놓고 계속하면 사라진다)`));
+      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 원정 동안 쓰는 임시 타일이다 (가방에는 안 들어간다)' : fixParticles(` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓거나 손에 두고 다음 바퀴에 놓는다`));
       const row = el('div', 'bha-draft__row');
       d.options.forEach((id, i) => {
         const t = getTile(id);
@@ -500,11 +506,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       info.append(box);
     }
     if (exp.hand.length > 0 || planner.canEdit() || d) {
-      // 획득한 타일은 지금 다음 바퀴 칸에 놓는다 (GDD 17-1). 안 놓으면 다음 원정 덱으로 보관된다. 이 팝업이 길 순서가 보이는 유일한 곳
-      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 가방에 남는다). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
+      // 받은 타일(임시, GDD 121장 4 ②)은 지금 다음 바퀴 칸에 놓거나 손에 두고 다음 바퀴에 놓는다. 원정이 끝나면 사라진다. 이 팝업이 길 순서가 보이는 유일한 곳
+      info.append(el('p', 'bha-sheet__body', '받은 타일은 이번 원정만 쓰는 임시 타일(시계 표시)이다 — 바퀴를 이어 돌며 길에 쌓고, 원정이 끝나면 사라진다. 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
       planner.refresh();
     }
-    sheet.append(info, grid);
+    sheet.append(info, actions);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
 
@@ -598,4 +604,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       dispose();
     }
   });
+}
+
+/** 배율 표시: ×1.25 · ×1.5 · ×2 (끝 0 없앰) */
+function fmtMult(k: number): string {
+  return String(Math.round(k * 100) / 100);
 }

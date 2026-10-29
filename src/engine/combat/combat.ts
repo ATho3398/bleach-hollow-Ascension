@@ -528,6 +528,8 @@ export interface CombatState {
   stunTicks?: number;
   /** 막기 게이지 0~1 (GDD 105장 수정 v5.233): 1 이면 누를 수 있고, 쓰면 0 부터 */
   guardGauge: number;
+  /** 막기 게이지가 이 전투에서 한 번이라도 가득 찼는가 (GDD 121장 11: 첫 강공격은 그 뒤에만) */
+  guardFilled?: boolean;
   /** 소모품을 이 전투에서 썼는가 · 각성(블록 생성 가속) 남은 틱 */
   itemUsed: boolean;
   hasteTicks: number;
@@ -1679,6 +1681,7 @@ function chargeButtons(s: CombatState): void {
     const g = s.guardGauge + 1 / ticksOf(p, p.guardGaugeSeconds / roleBoostOf(p, 'guard'));
     s.guardGauge = g >= 1 - 1e-9 ? 1 : g; // 더하기 오차로 99.99…% 에 멈추지 않게
   }
+  if (s.guardGauge >= 1) s.guardFilled = true;
   if (s.gearCooldown > 0) s.gearCooldown--;
   if (s.gearShieldTicks > 0) s.gearShieldTicks--;
   if (s.hasteTicks > 0) s.hasteTicks--;
@@ -1839,6 +1842,11 @@ function startAction(s: CombatState, pattern: Extract<EnemyPattern, { everySecon
     return;
   }
   const action = pattern.kind === 'heavy-seal' ? pattern.sequence[e.actionIndex % pattern.sequence.length]! : 'heavy';
+  // 첫 강공격 (GDD 121장 11): 막기 게이지가 처음 가득 차기 전에는 미룬다 — 다음 틱에 다시 굴림
+  if (action === 'heavy' && !s.guardFilled) {
+    e.actionTimer = 1;
+    return;
+  }
   e.actionIndex++;
   if (action === 'heavy') {
     const total = t(pattern.castSeconds);

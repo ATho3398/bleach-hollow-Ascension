@@ -8,7 +8,9 @@ import { step, type CombatState } from '../src/engine/combat';
 import { difficultyGoldMultiplier } from '../src/engine/difficulty';
 import {
   advance, chooseContinue, enemyScale, chooseRelease, chooseReturn, createExpedition, EXPEDITION_SNAPSHOT_VERSION, finishBattle, finishRest, freeBossCandidate, pendingFreeBoss, restoreExpedition,
-  serializeExpedition, startBattle, type ExpeditionState, carryAttackMult } from '../src/engine/expedition';
+  serializeExpedition, startBattle, type ExpeditionState, carryAttackMult,
+  lapRewardMult,
+} from '../src/engine/expedition';
 import { bossesBeaten, newSaveData, recordExpedition, sanitizeDeck } from '../src/game';
 import { bossOmenSub } from '../src/ui/bha/expedition';
 import { storyResultLines } from '../src/ui/resultView';
@@ -174,7 +176,7 @@ describe('보스전·보상·런 로그 (GDD 37장 3~6번)', () => {
     const gold0 = e.goldLoot.length;
     finishBattle(e, forceBattle(e, true));
     expect(e.freeBoss!.result!.won).toBe(true);
-    expect(e.goldLoot.slice(gold0)).toEqual([{ amount: Math.round(BX.reward.gold * difficultyGoldMultiplier(2, 3)), lap: e.lap }]);
+    expect(e.goldLoot.slice(gold0)).toEqual([{ amount: Math.round(Math.round(BX.reward.gold * difficultyGoldMultiplier(2, 3)) * lapRewardMult(e.lap)), lap: e.lap }]); // 이어하기 보상 배율 (121장 5)
     expect(e.foodLoot.at(-1)).toEqual({ food: BX.reward.food, lap: e.lap });
     expect(e.phase).toBe('absorb');
     expect(e.absorbOffer!.candidates[0]).toBe(getBoss('sand-maw').trait);

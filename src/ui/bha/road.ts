@@ -2,7 +2,7 @@
 // 원정 중 걷는 화면에는 길 구조를 보이지 않는다 — 칸 순서가 보이는 곳은 여기뿐이다.
 import { BALANCE } from '../../config/balance';
 import { getTile } from '../../data/tiles';
-import { moveTile, placeTile, swapTiles, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
+import { isTempCell, moveTile, placeTile, swapTiles, tempHandCount, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
 import { fixParticles } from '../../engine/josa';
 import { tileHint, variantModsText } from '../labels';
 import { el, emptyState, icon } from './dom';
@@ -218,6 +218,14 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     return cancelSelection();
   });
 
+  /** 임시 타일 표시 (GDD 121장 4 ②): 기존 시계 아이콘을 구석에 작게 */
+  function tempMark(): HTMLElement {
+    const m = el('span', 'bha-tempmark');
+    m.setAttribute('aria-label', '임시 타일 — 이번 원정만');
+    m.append(icon('i-timer'));
+    return m;
+  }
+
   function refresh(): void {
     if (selected && !exp.hand.includes(selected)) selected = null;
     if (selectedCell !== null && (!placedHere.has(selectedCell) || !exp.slots[selectedCell])) selectedCell = null;
@@ -231,9 +239,11 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       b.className = `bha-road__cell${css ? ` is-has bha-road__cell--${css}` : ''}${mode === 'can' || canMove ? ' is-can' : ''}${selectedCell === i ? ' is-selected' : ''}${id && placedHere.has(i) ? ' is-editable' : ''}${locked ? ' is-locked' : ''}`;
       // 놓인 타일 = 아이콘 + 칸 번호만 (GDD 121장 2 — 칸이 좁아 이름이 잘렸다). 이름은 안내 줄·title·aria 에서
       b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), ...(locked ? [lockBadge()] : []), el('span', 'bha-road__num', String(i)));
+      // 임시 타일 (GDD 121장 4 ②): 이번 원정만 — 구석에 작은 시계 아이콘
+      if (id && isTempCell(exp, i)) b.append(tempMark());
       if (id && placedHere.has(i)) b.dataset.drag = 'cell';
       else delete b.dataset.drag;
-      b.title = id ? `${o.tileName(id)} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : '빈 칸';
+      b.title = id ? `${o.tileName(id)}${isTempCell(exp, i) ? ' (임시 — 이번 원정만)' : ''} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : '빈 칸';
       b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 고정 칸'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
     }
     // 인접 시너지 (GDD 25-5 ②): 붙은 두 칸을 테두리로 묶고 오른쪽 칸 왼쪽 위(두 칸 사이)에 이름표. 줄이 바뀌는 짝(6열 경계)은 오른쪽 칸 모서리에
@@ -267,6 +277,11 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       const ic = el('span', 'bha-tilecard__icon');
       ic.append(icon(tileIconId(css)));
       chip.append(ic, el('b', 'bha-tilecard__name', o.tileName(id)), el('small', 'bha-tilecard__hint', tileHint(getTile(id))), el('span', 'bha-tilecard__count', `×${count}`));
+      const temp = tempHandCount(exp, id);
+      if (temp > 0) {
+        chip.append(tempMark());
+        chip.title = `임시 타일 ${temp}장 — 이번 원정 동안만 놓을 수 있다`;
+      }
       chip.onclick = () => {
         selected = selected === id ? null : id;
         selectedCell = null;

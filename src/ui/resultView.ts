@@ -67,6 +67,19 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return { label, icon: ic, value: v, mod: ids.length > 0 ? mod : undefined };
   };
 
+  // 영구 타일·임시 타일 (GDD 121장 4): 원정 끝 굴림 결과(꽝이면 '이번엔 없음'), 바퀴 중 받은 임시 타일은 원정과 함께 사라짐
+  function permTileRows(): IconInfoRow[] {
+    const out: IconInfoRow[] = [];
+    if (exp.permTile !== undefined) {
+      out.push(exp.permTile
+        ? { label: '영구 타일', icon: 'i-deck', value: val(tileName(exp.permTile, faction.id), '가방에 들어갔다'), mod: 'good' }
+        : { label: '영구 타일', icon: 'i-deck', value: val('이번엔 없음', '원정 2~3번에 1장 꼴') });
+    }
+    const temp = exp.tempLog?.length ?? 0;
+    if (temp > 0) out.push({ label: '임시 타일', icon: 'i-deck', value: val(`${temp}장`, '이번 원정만 — 끝나며 사라졌다') });
+    return out;
+  }
+
   // 얻은 먹이 (GDD 23-1 전리품): 종류별 개수, 상한(9)으로 못 넣은 것·패배로 잃은 것, 막힘 방지 간식
   function foodRow(): IconInfoRow {
     const fs = exp.foodSettled;
@@ -111,6 +124,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     { label: '치른 전투', icon: 'i-practice', value: val(`${exp.battles.length}회`, `(승 ${wins})`) },
     countRow('지킨 타일', 'i-deck', s.kept, (id) => tileName(id, faction.id), '장', 'good'),
     countRow('잃은 타일', 'i-deck', s.lost, (id) => tileName(id, faction.id), '장', 'bad'),
+    ...permTileRows(),
     countRow('얻은 특성', 'i-slot', s.keptTraits, (id) => traitName(id, faction.id), '개', 'good'),
     countRow('잃은 특성', 'i-slot', s.lostTraits, (id) => traitName(id, faction.id), '개', 'bad'),
     foodRow(),

@@ -57,16 +57,19 @@ describe('카드 배치 단계 (GDD 17-1)', () => {
 });
 
 describe('획득 타일 보관 규칙 (GDD 17-1)', () => {
-  it('바퀴 끝에 놓지 않은 획득 타일은 귀환 때 보관함(보유)에 남는다 (C.140: 덱 없음)', () => {
+  it('바퀴 중 받은 타일은 임시 타일이라 귀환해도 보관함에 안 남고, 영구 타일 굴림만 들어간다 (GDD 121장 4)', () => {
     const save = newSaveData('hollow');
+    const before = structuredClone(save.tiles.collection);
     const exp = createExpedition({ factionId: 'hollow', seed: 11, hunger: 10, condition: 100, deck: DECK });
     walkToNest(exp);
     expect(exp.phase).toBe('nest-choice');
     expect(exp.hand.length).toBeGreaterThan(0);
-    const got = [...exp.hand];
+    expect(exp.tempHand).toEqual(exp.hand);
     chooseReturn(exp);
+    expect(exp.permTile === null || DECK.includes(exp.permTile!)).toBe(true);
     recordExpedition(save, exp);
-    for (const id of got) expect(save.tiles.collection[id] ?? 0).toBeGreaterThanOrEqual(got.filter((x) => x === id).length);
+    const gained = Object.entries(save.tiles.collection).reduce((a, [id, n]) => a + n - (before[id] ?? 0), 0);
+    expect(gained).toBe(exp.permTile ? 1 : 0);
   });
 
   it('놓은 타일은 손에서 빠지므로 보관되지 않는다', () => {
@@ -74,9 +77,9 @@ describe('획득 타일 보관 규칙 (GDD 17-1)', () => {
     walkToNest(exp);
     const first = exp.hand[0]!;
     expect(placeTile(exp, first, 2).ok).toBe(true);
-    const rest = [...exp.hand];
+    expect(exp.tempCells).toEqual([2]); // 121장 4: 받은 타일은 임시 — 놓은 칸에 임시 표시가 따라간다
     chooseReturn(exp);
-    expect(unplacedKept(exp)).toEqual(rest);
+    expect(unplacedKept(exp)).toEqual([]); // 임시 타일은 보관하지 않는다
   });
 
   it('패배로 잃은 마지막 바퀴 타일은 보관하지 않는다', () => {

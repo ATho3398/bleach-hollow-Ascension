@@ -13,6 +13,10 @@ import { synergyPairs } from './variants';
 export interface AutoOptions {
   /** 이 바퀴를 마치면 귀환 */
   returnAfterLap: number;
+  /** 둥지 칸에서 이어 온 체력이 이 비율 아래면 returnAfterLap 전이라도 귀환 (GDD 121장 8 — 사냥 힐이 줄어 사람도 체력을 보고 이어 간다). 없으면 체력을 안 본다 */
+  minContinueHp?: number;
+  /** 전투마다 체력을 가득 채워 시작 (체력 이어 가기 끔): 리스크·흡수 같은 다른 계통만 재는 점검 봇용 — 생존은 이어하기 가드(GDD 121장 8)가 따로 본다 */
+  fullHp?: boolean;
   /** 전투 대신 플레이: 기본은 블록 봇 */
   playBattle?: (s: ReturnType<typeof startBattle>) => void;
   /** 손에 든 타일을 놓는가 (기본 true) */
@@ -106,6 +110,7 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
       if (opt.place !== false) placeAll(exp);
       advance(exp);
     } else if (exp.phase === 'battle') {
+      if (opt.fullHp) exp.hpFraction = 1;
       const b = startBattle(exp);
       (opt.playBattle ?? playCombatBot)(b);
       finishBattle(exp, b);
@@ -118,8 +123,8 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
     else if (exp.phase === 'event') botEvent(exp);
     else if (exp.phase === 'nest-choice') {
       if (opt.place !== false) placeAll(exp);
-      if (opt.place !== false && exp.lap < opt.returnAfterLap) botDraft(exp);
-      if (exp.lap >= opt.returnAfterLap) chooseReturn(exp);
+      if (opt.place !== false && exp.lap < opt.returnAfterLap) botDraft(exp); // 귀환해도 임시 타일은 사라질 뿐이라 먼저 고른다
+      if (exp.lap >= opt.returnAfterLap || (opt.minContinueHp !== undefined && (exp.hpFraction ?? 1) < opt.minContinueHp)) chooseReturn(exp);
       else chooseContinue(exp);
     }
   }

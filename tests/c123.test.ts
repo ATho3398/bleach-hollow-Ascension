@@ -28,13 +28,13 @@ describe('C.123 C.118 뒤 밸런스 목표 맞추기', () => {
     expect(DX.eliteEase[3]).toBeUndefined();
   });
 
-  it('탑 ★2 강적 층(15층)은 입문 보정을 상쇄한 배율에 C.136 A안 ×0.92 를 곱한다', () => {
-    // C.136 A안: 원정 강적 공격 ×1.42 를 탑 15층에서 조금 덜어냄 (상쇄 1 → 0.92)
-    expect(TX.eliteScaleByBand[2]! * DX.eliteEase[2]!.hp).toBeCloseTo(0.92);
+  it('탑 ★2 강적 층(15층)은 입문 보정을 상쇄한 배율에 ×1.08 을 곱한다 (C.195)', () => {
+    // C.136 A안: 원정 강적 공격 ×1.42 를 탑 15층에서 조금 덜어냄 (상쇄 1 → 0.92). C.195 (GDD 121장 11): 첫 강공격이 막기 게이지 뒤로 미뤄져 15층 강적 83 → 100% → ×1.08 (79%)
+    expect(TX.eliteScaleByBand[2]! * DX.eliteEase[2]!.hp).toBeCloseTo(1.08);
     const f = towerFloor(15);
     expect(f.floorMult).toBeCloseTo(towerFloorMultiplier(15));
     const net = f.floorMult * difficultyEnemyScale(2, 'elite').hp;
-    expect(net).toBeCloseTo((1 + 4 * TX.perFloorByBand[2]!) * TX.eliteScale * 0.92 * difficultyEnemyScale(2, 'normal').hp);
+    expect(net).toBeCloseTo((1 + 4 * TX.perFloorByBand[2]!) * TX.eliteScale * 1.08 * difficultyEnemyScale(2, 'normal').hp);
     // 다른 구간 강적 층은 그대로
     // C.174: ★3 구간도 ×0.9 (막기 버튼이 연속 강공격 세 타를 다 못 막아 25층 강적 29~37%)
     expect(towerFloorMultiplier(25)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale * TX.eliteScaleByBand[3]!);

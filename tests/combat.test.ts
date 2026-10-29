@@ -314,10 +314,34 @@ describe('적 패턴: 강공격 예고·막기, 봉인', () => {
   };
   const castNow = (s: CombatState) => {
     s.enemy.actionIndex = 0; // 다음 행동 = 강공격
+    s.guardFilled = true; // 121장 11: 첫 강공격은 막기 게이지가 한 번 가득 찬 뒤
     s.enemy.actionTimer = 1;
     step(s);
     expect(s.enemy.cast).not.toBeNull();
   };
+
+  it('첫 강공격은 막기 게이지가 처음 가득 찬 뒤에만 나온다 (GDD 121장 11)', () => {
+    const s = eliteQuiet();
+    s.player.hp = s.player.maxHp = 1e9;
+    s.enemy.actionIndex = 0; // 다음 행동 = 강공격
+    s.enemy.actionTimer = 1;
+    let castTick = -1;
+    let fullTick = -1;
+    for (let i = 0; i < ticksOf(s.params, 30) && castTick < 0; i++) {
+      step(s);
+      if (fullTick < 0 && s.guardGauge >= 1) fullTick = s.tick;
+      if (s.enemy.cast) castTick = s.tick;
+    }
+    expect(fullTick).toBeGreaterThan(1);
+    expect(castTick).toBeGreaterThanOrEqual(fullTick);
+    // 둘째부터는 지금 규칙: 막기를 써서 게이지가 0 이어도 강공격이 나온다
+    s.enemy.cast = null;
+    s.guardGauge = 0;
+    s.enemy.actionIndex = 0;
+    s.enemy.actionTimer = 1;
+    step(s);
+    expect(s.enemy.cast).not.toBeNull();
+  });
 
   it('일반 적은 기본 공격만 한다', () => {
     const s = mk();

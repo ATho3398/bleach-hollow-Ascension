@@ -272,6 +272,9 @@ export interface RunRecord {
   tutorial?: boolean;
   /** C.188 (세이브 형식 52, GDD 114장 4): 떠날 때 슬롯 성별. 형식 52 이전 기록에는 없다 */
   gender?: Gender;
+  /** C.195 (세이브 형식 53, GDD 121장 4·5): 이어하기 한 칸 — 바퀴 n 배율 = 1 + 단계 × (n − 1) 의 단계(r 보상·e 적), 받은 임시 타일 수(got)·길에 놓인 채 끝난 임시 타일 id(placed),
+   *  원정 끝 영구 타일(perm: 타일 id, 꽝 null, 굴림 없음이면 없음). 세이브 크기 때문에 짧은 키. 형식 53 이전 기록에는 없다 */
+  continueRun?: { r: number; e: number; got: number; placed: string[]; perm?: string | null };
 }
 
 /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장 3번·9장): 첫 원정의 '첫 흡수'는 흡수 기록(absorbs)에 넣지 않고 여기에 따로 남긴다 — 히든 조건이 흡수와 구분해 읽게 */

@@ -49,6 +49,8 @@ const FREE_BOSS_SEED_SALT = 0x1b873593;
 const PET_SEED_SALT = 0x7f4a7c15;
 /** 장비 드롭 굴림 (GDD 91장 2번): 이긴 전투마다 (시드 ^ 이 값 ^ 전투 번호) — 원정 난수를 건드리지 않는다. gearDrops 가 아니면 굴리지 않는다 */
 const GEAR_SEED_SALT = 0x2f6b9d43;
+/** 영구 타일 굴림 전용 난수 (GDD 121장 4 ①): 원정 끝에 한 번 */
+const PERM_TILE_SEED_SALT = 0x3c6ef372;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 const TUT = BALANCE.provisional.tutorialRun;
@@ -218,6 +220,13 @@ export interface ExpeditionState extends RiskState {
   planLimit?: number;
   /** 원정 중 획득했지만 아직 놓지 않은 타일 */
   hand: string[];
+  /** 임시 타일 (GDD 121장 4 ②, 세이브 형식 53): 손(hand) 안의 임시 타일 id(중복 가능, hand 의 부분 집합)·임시 타일이 놓인 칸. 원정이 끝나면 사라진다(가방·acquired 에 안 들어감) */
+  tempHand?: string[];
+  tempCells?: number[];
+  /** 이번 원정에서 받은 임시 타일 기록 (런 로그 continueRun) */
+  tempLog?: { tileId: string; lap: number; from: 'win' | 'elite' | 'absorb' | 'lap' | 'draft' }[];
+  /** 원정 끝 영구 타일 굴림 결과 (GDD 121장 4 ①): 타일 id, 꽝이면 null, 굴림 대상이 아니면 없음 */
+  permTile?: string | null;
   /** 길 칸 옆 슬롯: 칸 번호 → 놓은 타일 id (0번 둥지 칸은 슬롯 없음). 한 번 놓으면 원정 동안 유지 */
   slots: (string | null)[];
   acquired: Acquired[];
@@ -402,6 +411,9 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     startCondition: setup.condition,
     deck: [...setup.deck],
     hand: [],
+    tempHand: [],
+    tempCells: [],
+    tempLog: [],
     slots: Array.from({ length: EX.loopTiles }, () => null),
     acquired: [],
     wildCells: [],
@@ -590,8 +602,21 @@ export function carryAttackMult(difficulty: number): number {
   return m[String(clampDifficulty(difficulty))] ?? m.default ?? 1;
 }
 
+/** 이어하기 적 배율 (GDD 121장 5): 바퀴 n 의 적 체력·공격 × (1 + enemy × (n − 1)). 옛 바퀴 강화를 대신한다(이중 적용 없음) */
 export function lapScale(lap: number): { hp: number; attack: number } {
-  return { hp: 1 + PX.lapHpScale * (lap - 1), attack: 1 + PX.lapAttackScale * (lap - 1) };
+  const k = 1 + PX.continueScale.enemy * (Math.max(1, lap) - 1);
+  return { hp: k, attack: k };
+}
+
+/** 이어하기 보상 배율 (GDD 121장 5): 바퀴 n 의 골드·노력치·먹이·장비 드롭률 × (1 + reward × (n − 1)) */
+export function lapRewardMult(lap: number): number {
+  return 1 + PX.continueScale.reward * (Math.max(1, lap) - 1);
+}
+
+/** 사냥 힐 (GDD 121장 6): 바퀴 n 의 승리 회복(최대 체력 비율). 표 끝을 넘으면 마지막 값 */
+export function winHealOf(lap: number): number {
+  const t = PX.winHealByLap;
+  return t[Math.min(t.length - 1, Math.max(1, lap) - 1)] ?? 0;
 }
 
 /** 공허 블록 생성 확률 가산: 컨디션이 나쁠수록, 5바퀴 이후, 한계 돌파 뒤 (GDD 3-2, 2-1, 4-1) */
@@ -668,7 +693,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   if (exp.pos === 0) {
     exp.lapsCompleted = exp.lap;
-    const reward = drawTile(exp);
+    const reward = drawTile(exp, 0, 'lap');
     const petLap = lapPetRolls(exp);
     // 스토리 버티기 목표 (GDD 25-4): 마친 바퀴 수
     const st = exp.story;
@@ -769,7 +794,7 @@ function startBattleAt(
   // 보상 = 난이도 ★·연속 클리어 배율 (GDD 32-1 5·11번, 재화마다 다름): rewardMult 는 먹이 굴림 배율, 골드는 goldMult 에 (골드 ÷ 먹이) 비를 곱해 따로 간다. 리스크는 그대로
   const foodK = difficultyRewardMultiplier(exp.difficulty, exp.streak);
   const goldK = difficultyGoldMultiplier(exp.difficulty, exp.streak);
-  let rewardMult = (m.rewardMult ?? 1) * foodK * dyingReward(exp); // 빈사면 보상 절반 (GDD 102장 수정)
+  let rewardMult = (m.rewardMult ?? 1) * foodK * dyingReward(exp) * lapRewardMult(exp.lap); // 빈사면 보상 절반 (GDD 102장 수정), 이어하기 배율 (121장 5)
   const goldMult = (m.goldMult ?? 1) * (goldK / foodK);
   let trap = false;
   if (exp.trapArmed) {
@@ -798,7 +823,7 @@ function startBattleAt(
   const atkK2 = atkK * (hunter ? TT.hunter.attackMult : 1);
   if (hpK2 !== 1 || atkK2 !== 1) enemy = scaleEnemy(enemy, { hp: hpK2, attack: atkK2 });
   // 뼈 표식/수련 말뚝 (C.124): 이기면 노력치 (상위 타일은 envMult 배)
-  const trainingEv = !bossId && tile?.effect.type === 'environment' && tile.effect.preset === 'training' ? Math.round(TT.training.ev * (m.envMult ?? 1)) : 0;
+  const trainingEv = !bossId && tile?.effect.type === 'environment' && tile.effect.preset === 'training' ? Math.round(TT.training.ev * (m.envMult ?? 1) * lapRewardMult(exp.lap)) : 0;
   const pending: PendingBattle = {
     enemy,
     seed: randomSeed(exp.rng),
@@ -921,13 +946,13 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   }
   // 이어 가는 체력 (GDD 107장 1·3번): 끝난 체력(해방이 풀린 뒤) 비율 + 승리 회복
   exp.hpFraction = battle.player.maxHp > 0 ? Math.min(1, battle.player.hp / battle.player.maxHp) : 1;
-  healCarry(exp, PX.hpCarry.winHeal);
+  healCarry(exp, winHealOf(exp.lap)); // 사냥 힐 (GDD 121장 6): 바퀴가 갈수록 줄고 4바퀴부터 0
   // 장비 드롭 (GDD 91장 2번): 강적·보스 높게, 일반 낮게. 따로 만든 난수라 다른 굴림을 밀지 않는다
   rollGearDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
-  // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지
-  if (exp.victoriesThisLap === 0) drawTile(exp);
+  // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지 — 임시 타일 (GDD 121장 4 ②)
+  if (exp.victoriesThisLap === 0) drawTile(exp, 0, 'win');
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
-  if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp);
+  if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp, 0, 'elite');
   const mods = pending.mods ?? NO_MODS;
   const elite = pending.enemy.class === 'elite';
   if (st) {
@@ -944,7 +969,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   }
   if (pending.boss) {
     // 보스 보상 (GDD 25-3): 골드·희귀 먹이 (일반 전리품 대신), 흡수 화면은 늘 열리고 보스 특성이 확정 후보. 자유 원정은 골드 × 원정 골드 배율 (GDD 37장 4번)
-    const bossGold = Math.round((exp.story ? BX.reward.gold : Math.round(BX.reward.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak))) * petGoldMult(exp));
+    const bossGold = Math.round((exp.story ? BX.reward.gold : Math.round(BX.reward.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak))) * petGoldMult(exp) * lapRewardMult(exp.lap));
     exp.goldLoot.push({ amount: bossGold, lap: exp.lap });
     exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
     exp.victoriesThisLap++;
@@ -1076,10 +1101,10 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   const enhance = mode !== 'stat' ? addEnhance(exp.build, offer.element) : undefined;
   logAbsorb(exp, offer, true, traitId, mode, enhance);
   const ev = absorbEvOf(offer, mode, exp.difficulty, exp.streak);
-  const evK = dyingReward(exp); // 빈사면 노력치 절반 (GDD 102장 수정)
+  const evK = dyingReward(exp) * lapRewardMult(exp.lap); // 빈사면 노력치 절반 (GDD 102장 수정), 이어하기 배율 (121장 5)
   recordEvolutionAbsorb(exp.evolution, offer.element, evK === 1 ? ev : Object.fromEntries(Object.entries(ev).map(([k, v]) => [k, (v ?? 0) * evK])), mode !== 'stat');
   exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
-  for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1);
+  for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1, 'absorb');
   changeRisk(exp, absorbRisk(offer.strength, mode), 'absorb');
   // 스토리 흡수 목표 (GDD 25-4): 그 등급 적을 흡수
   const ob = storyEpisodeOf(exp)?.objective;
@@ -1165,7 +1190,7 @@ export function chooseContinue(exp: ExpeditionState): void {
   exp.phase = 'moving';
 }
 
-/** 드래프트 고르기 (GDD 25-5 ①): 바퀴 끝 팝업에서 카드 한 장을 손에 쥔다. 이번 바퀴 길에 놓을 수 있고 덱·보유에는 들어가지 않는다 */
+/** 드래프트 고르기 (GDD 25-5 ①·121장 4 ②): 바퀴 끝 팝업에서 카드 한 장을 임시 타일로 손에 쥔다. 이번 원정 동안 길에 놓을 수 있고 덱·보유에는 들어가지 않는다 */
 export function chooseDraft(exp: ExpeditionState, index: number): PlaceResult {
   const d = exp.draft;
   if (exp.phase !== 'nest-choice' || !d) return { ok: false, reason: '지금은 고를 수 없다' };
@@ -1174,17 +1199,14 @@ export function chooseDraft(exp: ExpeditionState, index: number): PlaceResult {
   if (id === undefined) return { ok: false, reason: '없는 카드다' };
   d.picked = index;
   exp.hand.push(id);
+  addTemp(exp, id, 'draft');
   exp.variantLog.drafts.push({ tileId: id, lap: exp.lap });
   return { ok: true };
 }
 
-/** 확정(계속·귀환) 때 놓지 않은 드래프트 타일은 사라진다. 같은 타일이 손에 여럿이면 하나만 뺀다 */
+/** 확정(계속·귀환) 때 드래프트 창을 닫는다. 고른 타일은 임시 타일로 손에 남아 이번 원정 동안 놓을 수 있다 (GDD 121장 4 ② — 옛 '안 놓으면 사라짐' 대체) */
 function discardDraft(exp: ExpeditionState): void {
-  const d = exp.draft;
   exp.draft = null;
-  if (!d || d.picked === null) return;
-  const i = exp.hand.lastIndexOf(d.options[d.picked]!);
-  if (i >= 0) exp.hand.splice(i, 1);
 }
 
 /** 지금 쓸 수 있는 골드: 가진 골드 + 이번 원정에서 번(쓴) 골드 */
@@ -1257,7 +1279,10 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
     } else return { ok: false, reason: '길을 골라야 한다' };
   }
   exp.variantLog.events.push({ event: ev.event, choice: log, lap: exp.lap });
-  if (exp.slots[ev.cell] === ev.tileId) exp.slots[ev.cell] = null; // 한 번 밟으면 사라진다 (메아리 칸에서 한 번 더 난 이벤트면 메아리는 남는다)
+  if (exp.slots[ev.cell] === ev.tileId) {
+    exp.slots[ev.cell] = null;
+    dropTempCell(exp, ev.cell);
+  } // 한 번 밟으면 사라진다 (메아리 칸에서 한 번 더 난 이벤트면 메아리는 남는다)
   exp.eventPending = null;
   exp.phase = 'moving';
   return { ok: true, text };
@@ -1279,7 +1304,7 @@ function rollGearDrop(exp: ExpeditionState, from: 'normal' | 'elite' | 'boss'): 
   const G = BALANCE.provisional.gear;
   const rng = createRng((exp.seed ^ GEAR_SEED_SALT ^ Math.imul(exp.battles.length, 2246822519)) >>> 0);
   const rand = () => nextFloat(rng);
-  if (rand() >= G.dropChance[from]) return;
+  if (rand() >= Math.min(1, G.dropChance[from] * lapRewardMult(exp.lap))) return; // 이어하기 배율 (121장 5)
   const roll = rollGear({ grade: rollGrade(G.dropGrades[from]!, rand), star: exp.difficulty }, rand);
   (exp.gearFinds ??= []).push({ roll, lap: exp.lap, from });
 }
@@ -1302,14 +1327,55 @@ function lapPetRolls(exp: ExpeditionState): { petTile?: string | null; petFound?
   return out;
 }
 
-/** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다. reserve 만큼은 남겨 둔다(흡수 보상이 바퀴 완주 보상을 밀어내지 않게) */
-function drawTile(exp: ExpeditionState, reserve = 0): string | null {
+/** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다. reserve 만큼은 남겨 둔다(흡수 보상이 바퀴 완주 보상을 밀어내지 않게).
+ *  temp 가 있으면 임시 타일 (GDD 121장 4 ②: 손에만, 가방·acquired 에 안 들어감), 없으면 영구 타일(펫 타일 찾기) */
+function drawTile(exp: ExpeditionState, reserve = 0, temp?: TempSource): string | null {
   if (exp.deck.length === 0 || exp.tilesThisLap >= EX.tilesPerLap.max - reserve) return null;
   const id = exp.deck[nextInt(exp.rng, exp.deck.length)]!;
-  exp.acquired.push({ tileId: id, lap: exp.lap });
+  if (temp) addTemp(exp, id, temp);
+  else exp.acquired.push({ tileId: id, lap: exp.lap });
   exp.hand.push(id);
   exp.tilesThisLap++;
   return id;
+}
+
+type TempSource = NonNullable<ExpeditionState['tempLog']>[number]['from'];
+
+/** 임시 타일 하나를 손 기록에 더한다 (hand 에는 부르는 쪽이 넣는다) */
+function addTemp(exp: ExpeditionState, id: string, from: TempSource): void {
+  (exp.tempHand ??= []).push(id);
+  (exp.tempLog ??= []).push({ tileId: id, lap: exp.lap, from });
+}
+
+/** 이 칸에 놓인 타일이 임시 타일인가 (GDD 121장 4 ② — 화면 구석 표시) */
+export function isTempCell(exp: Pick<ExpeditionState, 'tempCells'>, cell: number): boolean {
+  return (exp.tempCells ?? []).includes(cell);
+}
+
+/** 손의 이 타일 중 임시 타일 수 */
+export function tempHandCount(exp: Pick<ExpeditionState, 'tempHand'>, tileId: string): number {
+  return (exp.tempHand ?? []).filter((t) => t === tileId).length;
+}
+
+function dropTempCell(exp: ExpeditionState, cell: number): boolean {
+  const i = (exp.tempCells ?? []).indexOf(cell);
+  if (i < 0) return false;
+  exp.tempCells!.splice(i, 1);
+  return true;
+}
+
+/** 원정 끝 영구 타일 (GDD 121장 4 ①): 귀환으로 끝나고 마친 바퀴가 1 이상이면 확률 굴림 — 원정 2~3번에 1장 꼴. 덱에서 1장 */
+function rollPermTile(exp: ExpeditionState, reason: EndReason): void {
+  if (exp.tutorial || exp.tilesLocked || reason === 'tutorial-clear' || exp.deck.length === 0) return;
+  const laps = reason === 'story-clear' ? exp.lap : exp.lapsCompleted;
+  if (laps < 1) return;
+  const P = PX.permTile;
+  const rng = createRng((exp.seed ^ PERM_TILE_SEED_SALT) >>> 0);
+  const chance = Math.min(P.max, P.chance + P.perExtraLap * (laps - 1));
+  const hit = nextFloat(rng) < chance;
+  const id = exp.deck[Math.min(exp.deck.length - 1, Math.floor(nextFloat(rng) * exp.deck.length))]!;
+  exp.permTile = hit ? id : null;
+  if (hit) exp.acquired.push({ tileId: id, lap: exp.lap });
 }
 
 export type PlaceResult = { ok: true } | { ok: false; reason: string };
@@ -1325,6 +1391,12 @@ export function placeTile(exp: ExpeditionState, tileId: string, cell: number): P
   if (exp.planLimit !== undefined && placedCount(exp) >= exp.planLimit) return { ok: false, reason: `배치는 최대 ${exp.planLimit}칸이다` };
   exp.hand.splice(i, 1);
   exp.slots[cell] = tileId;
+  // 임시 타일 (GDD 121장 4 ②): 손에 같은 타일의 임시 몫이 있으면 그것부터 놓는다
+  const ti = (exp.tempHand ?? []).indexOf(tileId);
+  if (ti >= 0) {
+    exp.tempHand!.splice(ti, 1);
+    (exp.tempCells ??= []).push(cell);
+  }
   // 전투 타일은 이번 바퀴의 야생 전투 하나를 대신한다 (그 칸이 야생 칸이면 그 칸, 아니면 남은 것 중 하나)
   const w = exp.wildCells.indexOf(cell);
   if (w >= 0) exp.wildCells.splice(w, 1);
@@ -1347,6 +1419,7 @@ export function unplaceTile(exp: ExpeditionState, cell: number): PlaceResult {
   if (id === null || id === undefined) return { ok: false, reason: '타일이 없는 칸이다' };
   exp.slots[cell] = null;
   exp.hand.push(id);
+  if (dropTempCell(exp, cell)) (exp.tempHand ??= []).push(id);
   if (exp.phase === 'moving' && causesBattle(id)) {
     const tileBattles = exp.slots.filter((t, c) => c >= 1 && t !== null && causesBattle(t)).length;
     if (exp.wildCells.length < Math.max(0, plannedBattles(exp.lap) - tileBattles)) exp.wildCells.push(cell);
@@ -1360,13 +1433,14 @@ export function moveTile(exp: ExpeditionState, from: number, to: number): PlaceR
   const id = exp.slots[from];
   if (id === null || id === undefined) return { ok: false, reason: '타일이 없는 칸이다' };
   if (exp.slots[to] !== null && exp.slots[to] !== undefined) return { ok: false, reason: '이미 타일이 있다' };
-  const before = { slots: [...exp.slots], hand: [...exp.hand], wild: [...exp.wildCells] };
+  const before = { slots: [...exp.slots], hand: [...exp.hand], wild: [...exp.wildCells], temp: tempSnap(exp) };
   const u = unplaceTile(exp, from);
   const p = u.ok ? placeTile(exp, id, to) : u;
   if (!p.ok) {
     exp.slots = before.slots;
     exp.hand = before.hand;
     exp.wildCells = before.wild;
+    Object.assign(exp, before.temp);
   }
   return p;
 }
@@ -1383,6 +1457,10 @@ export function swapTiles(exp: ExpeditionState, a: number, b: number): PlaceResu
   const t = exp.slots[a]!;
   exp.slots[a] = exp.slots[b]!;
   exp.slots[b] = t;
+  // 임시 표시도 타일을 따라간다
+  const ta = isTempCell(exp, a);
+  const tb = isTempCell(exp, b);
+  if (ta !== tb) exp.tempCells = (exp.tempCells ?? []).map((c) => (c === a ? b : c === b ? a : c));
   return { ok: true };
 }
 
@@ -1392,7 +1470,7 @@ export function swapWithHand(exp: ExpeditionState, tileId: string, cell: number)
   if (old === null || old === undefined) return { ok: false, reason: '타일이 없는 칸이다' };
   if (old === tileId) return { ok: false, reason: '같은 타일이다' };
   if (!exp.hand.includes(tileId)) return { ok: false, reason: '손에 없는 타일이다' };
-  const before = { slots: [...exp.slots], hand: [...exp.hand], wild: [...exp.wildCells], rng: structuredClone(exp.rng) };
+  const before = { slots: [...exp.slots], hand: [...exp.hand], wild: [...exp.wildCells], rng: structuredClone(exp.rng), temp: tempSnap(exp) };
   const u = unplaceTile(exp, cell);
   const p = u.ok ? placeTile(exp, tileId, cell) : u;
   if (!p.ok) {
@@ -1400,8 +1478,13 @@ export function swapWithHand(exp: ExpeditionState, tileId: string, cell: number)
     exp.hand = before.hand;
     exp.wildCells = before.wild;
     exp.rng = before.rng;
+    Object.assign(exp, before.temp);
   }
   return p;
+}
+
+function tempSnap(exp: ExpeditionState): { tempHand: string[]; tempCells: number[] } {
+  return { tempHand: [...(exp.tempHand ?? [])], tempCells: [...(exp.tempCells ?? [])] };
 }
 
 /**
@@ -1455,8 +1538,14 @@ export function finishPlanning(exp: ExpeditionState): number {
 export function unplacedKept(exp: ExpeditionState): string[] {
   if (exp.phase !== 'ended') throw new Error('원정이 끝나지 않았다');
   const lost = [...summarize(exp).lost];
+  const temp = [...(exp.tempHand ?? [])]; // 임시 타일은 보관하지 않는다 (GDD 121장 4 ②)
   const kept: string[] = [];
   for (const id of exp.hand) {
+    const ti = temp.indexOf(id);
+    if (ti >= 0) {
+      temp.splice(ti, 1);
+      continue;
+    }
     const li = lost.indexOf(id);
     if (li >= 0) lost.splice(li, 1);
     else kept.push(id);
@@ -1475,6 +1564,7 @@ function endExpedition(exp: ExpeditionState, outcome: 'returned' | 'defeated', r
   }
   exp.outcome = outcome;
   exp.endReason = reason;
+  if (outcome === 'returned') rollPermTile(exp, reason);
   exp.pending = null;
   exp.eventPending = null;
   exp.queuedBattle = null;
@@ -1554,6 +1644,18 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     gold: s.keptGold,
     ...(exp.story ? { story: { chapterId: exp.story.chapterId, episodeId: exp.story.episodeId, cleared: exp.story.cleared } } : {}),
     ...(exp.tutorial ? { tutorial: true } : {}),
+    continueRun: continueRunOf(exp),
+  };
+}
+
+/** 런 로그 이어하기 기록 (GDD 121장 4·5, 9장): 배율 단계·받은 임시 타일 수·놓인 채 끝난 임시 타일·원정 끝 영구 타일 */
+function continueRunOf(exp: ExpeditionState): NonNullable<RunRecord['continueRun']> {
+  return {
+    r: PX.continueScale.reward,
+    e: PX.continueScale.enemy,
+    got: exp.tempLog?.length ?? 0,
+    placed: (exp.tempCells ?? []).map((c) => exp.slots[c]).filter((t): t is string => !!t),
+    ...(exp.permTile !== undefined ? { perm: exp.permTile } : {}),
   };
 }
 

@@ -6,7 +6,7 @@ import { ENEMIES, enemyPatternKind, POOL_CONFIG, scaleEnemy } from '../src/data/
 import { ENEMY_PATTERN_KINDS } from '../src/data/schema';
 import { createCombat, elapsedSeconds, playCombatBot, playCombatHuman, liberationStartGaugeOf, type CombatParams, type CombatState } from '../src/engine/combat';
 import { enemyPool } from '../src/engine/enemyPool';
-import { createExpedition, enemyScale, mutationMods, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
+import { createExpedition, enemyScale, lapRewardMult, mutationMods, playExpedition, summarize, type ExpeditionState } from '../src/engine/expedition';
 import { referenceLoadout, type GearCarry } from '../src/engine/gear';
 import { addEnhance, buildCombatParams, canAbsorb, gainTrait, isBasicBlockTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
@@ -34,6 +34,9 @@ const botDecks = new WeakMap<object, string[]>();
 const botDeck = (tiles: SaveData['tiles'], fid: string): string[] => sanitizeDeck({ collection: tiles.collection, deck: botDecks.get(tiles) ?? [] }, fid);
 
 const check = process.argv.includes('--check');
+/** 사람형 봇의 이어하기 판단 (GDD 121장 8, C.195): 둥지 칸에서 이어 온 체력이 이 비율 아래면 4바퀴 전이라도 귀환 — 사냥 힐이 줄어(4바퀴부터 0) 사람도 체력을 보고 이어 간다.
+ *  리스크·흡수 점검 봇은 fullHp(체력 이어 가기 끔)로 다른 계통만 재고, 끝까지 이어 도는 위험은 '이어하기' 가드가 본다 */
+const HUMAN_CONTINUE_HP = 0.5;
 // ── 구간 선택·병렬 실행 (C.108): 구간은 서로 독립(시드 고정, 공유 상태 없음)이라 --only=이름,… 으로 일부만 돌릴 수 있고,
 //    --parallel 이면 이 프로세스가 구간(--only 가 있으면 그 구간만)을 워커 수(--workers=N, 기본 min(4, CPU))만큼 자식(--only)으로 나눠 돌린 뒤 출력을 모은다. 가드 판정·수치는 직렬과 같다.
 //    진화 봇 세이브(campaign)가 필요한 구간은 자식마다 캠페인을 다시 만든다(약 60초, 중복 허용). seconds = 로컬 직렬 측정(배분용 추정치) ──
@@ -422,7 +425,7 @@ if (want('absorb')) for (const stopLap of [4, 6]) {
     let voids = 0;
     let food = 0;
     for (let seed = 1; seed <= M; seed++) {
-      const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: stopLap, absorb: policy === 'release' ? 'release' : 'absorb', ...(policy === 'mixed' ? { absorbWanted: mixedWanted } : {}) });
+      const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: stopLap, fullHp: true, absorb: policy === 'release' ? 'release' : 'absorb', ...(policy === 'mixed' ? { absorbWanted: mixedWanted } : {}) });
       absorbs += e.absorbRecords.filter((a) => a.absorbed).length;
       releases += e.absorbRecords.filter((a) => !a.absorbed).length;
       if (e.breakthrough) bt++;
@@ -457,7 +460,7 @@ if (want('absorb')) {
   const RISK_M = 300;
   let riskSum = 0;
   for (let seed = 1; seed <= RISK_M; seed++) {
-    riskSum += playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted }).risk;
+    riskSum += playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: 4, fullHp: true, absorb: 'absorb', absorbWanted: mixedWanted }).risk;
   }
   m4.endRisk = riskSum / RISK_M;
   console.log(`  리스크 판정 표본: 4바퀴 섞음 ${RISK_M}판(시드 1~${RISK_M}) 평균 끝 리스크 ${m4.endRisk.toFixed(1)}`);
@@ -488,7 +491,7 @@ if (want('variants')) {
     let mut = 0;
     let dr = 0;
     for (let seed = 1; seed <= TVN; seed++) {
-      const e = playExpedition(createExpedition({ factionId: fid, seed, hunger: 20, condition: 80, deck: dk, tileVariants: on }), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
+      const e = playExpedition(createExpedition({ factionId: fid, seed, hunger: 20, condition: 80, deck: dk, tileVariants: on }), { returnAfterLap: 4, fullHp: true, absorb: 'absorb', absorbWanted: mixedWanted });
       food += e.foodLoot.length;
       gold += e.goldLoot.filter((g) => g.amount > 0).reduce((x, g) => x + g.amount, 0);
       if (e.outcome === 'defeated') def++;
@@ -518,16 +521,20 @@ if (want('variants')) {
   const fInc = sumOn.food / sumOff.food - 1;
   const gInc = sumOn.gold / sumOff.gold - 1;
   const dInc = sumOn.def - sumOff.def;
-  console.log(`  합산 평균: 먹이 +${(fInc * 100).toFixed(1)}% · 골드 +${(gInc * 100).toFixed(1)}% (가드 +25% 이하) · 켬 끝 리스크 ${sumOn.risk.toFixed(1)} (40~60) · 패배율 ${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p (가드 +8%p 이하)`);
-  if (fInc > 0.25) failures.push(`타일 변수: 먹이 보상 +${(fInc * 100).toFixed(1)}% > +25% (GDD 25-5)`);
-  if (gInc > 0.25) failures.push(`타일 변수: 골드 보상 +${(gInc * 100).toFixed(1)}% > +25% (GDD 25-5)`);
+  console.log(`  합산 평균: 먹이 +${(fInc * 100).toFixed(1)}% · 골드 +${(gInc * 100).toFixed(1)}% (가드 +30% 이하) · 켬 끝 리스크 ${sumOn.risk.toFixed(1)} (40~60) · 패배율 ${dInc >= 0 ? '+' : ''}${(dInc * 100).toFixed(1)}%p (가드 +8%p 이하)`);
+  // C.195 (GDD 121장 5): 이어하기 보상 배율로 뒤 바퀴 전투의 보상이 커져(4바퀴 ×1.75), 켬이 더하는 전투(2연전·이벤트)도 그만큼 더 쳐진다 — +25% → +30%
+  const VAR_REWARD_MAX = 0.3;
+  if (fInc > VAR_REWARD_MAX) failures.push(`타일 변수: 먹이 보상 +${(fInc * 100).toFixed(1)}% > +${VAR_REWARD_MAX * 100}% (GDD 25-5·121장 5)`);
+  if (gInc > VAR_REWARD_MAX) failures.push(`타일 변수: 골드 보상 +${(gInc * 100).toFixed(1)}% > +${VAR_REWARD_MAX * 100}% (GDD 25-5·121장 5)`);
   if (sumOn.risk < 40 || sumOn.risk > 60) failures.push(`타일 변수: 4바퀴 섞음 끝 리스크 ${sumOn.risk.toFixed(1)} — 목표 40~60 (GDD 25-5)`);
   // C.177 (GDD 107장 8번 '가드 재조정'): 원정 체력 이어 가기로 전투가 늘어나는 만큼(켬 = 원정당 전투 약 +2.7) 이어 오는 손해가 쌓여 +5%p → +8%p
   if (dInc > 0.08) failures.push(`타일 변수: 패배율 +${(dInc * 100).toFixed(1)}%p > +8%p (GDD 25-5·107장 8번)`);
   // 상점 (GDD 25-9, C.60): 원정 1판(4바퀴 섞음, 타일 변수 켬) 평균 골드로 살 수 있는 보통 먹이 수 — 원정 전리품(판당 9~11개)을 대체하지 못하게
   const SHX = BALANCE.shop;
   const basicPerRun = sumOn.gold / SHX.goldPrices['food-basic']!;
-  const [bLo, bHi] = SHX.basicFoodPerRunGuard;
+  // C.195 (GDD 121장 5): 4바퀴 원정은 이어하기 보상 배율 평균(×1.375)만큼 골드·전리품 먹이가 같이 는다 — 가드 범위도 같은 배율 (상점 먹이 ÷ 전리품 먹이 비는 그대로)
+  const lapK = [1, 2, 3, 4].reduce((a, l) => a + lapRewardMult(l), 0) / 4;
+  const [bLo, bHi] = SHX.basicFoodPerRunGuard.map((x) => Math.round(x * lapK * 100) / 100);
   console.log(`\n상점 (GDD 25-9): 원정 1판 평균 골드 ${sumOn.gold.toFixed(1)} → 보통 먹이(${SHX.goldPrices['food-basic']}골드) ${basicPerRun.toFixed(2)}개 (가드 ${bLo}~${bHi}) · 원정 전리품 먹이 ${sumOn.food.toFixed(2)}개`);
   if (basicPerRun < bLo! || basicPerRun > bHi!) failures.push(`상점: 판당 골드로 살 수 있는 보통 먹이 ${basicPerRun.toFixed(2)}개 (가드 ${bLo}~${bHi} 밖, GDD 25-9)`);
 }
@@ -629,7 +636,7 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
           factionId: 'hollow', seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
           deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tilesLocked: !save.tiles.unlocked,
         }),
-        { returnAfterLap: 4, absorb: 'absorb', ...(wanted ? { absorbWanted: wanted } : {}) },
+        { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb', ...(wanted ? { absorbWanted: wanted } : {}) },
       );
       const goldBefore = save.shared.tradeCoins;
       if (save.evolution.tierIndex < 4) out.stepsPerRun.push(e.evolution.steps - save.evolution.steps); // 마지막 단계는 걸음을 세지 않는다
@@ -766,7 +773,7 @@ if (want('rebirth')) {
             factionId: 'hollow', seed: (i + 1) * 100003 + life * 1009 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
             deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
           }),
-          { returnAfterLap: 4, absorb: 'absorb' },
+          { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb' },
         );
         if (e.outcome === 'defeated') defeats++;
         const r = recordExpedition(save, e, 0);
@@ -785,7 +792,7 @@ if (want('rebirth')) {
             factionId: 'hollow', seed: (i + 1) * 7777 + life * 31 + run, runId: nextRunId(save), hunger: 20, condition: 80,
             deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
           }),
-          { returnAfterLap: 4, absorb: 'absorb' },
+          { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb' },
         );
         recordExpedition(save, e, 0);
       }
@@ -1046,7 +1053,7 @@ if (want('difficulty')) {
   console.log(`\n원정 난이도 ★ (GDD 32-1, 사람형 봇, 그 단계에 갓 닿은 몸 × ${DR}원정, 4바퀴 귀환·흡수) — 종족값 합계 ${BALANCE.provisional.stats.tierTotals.join('/')}, ★ 체력 배율 ${Array.from({ length: MAX_DIFFICULTY }, (_, i) => difficultyEnemyScale(i + 1).hp.toFixed(2)).join('/')}`);
   type Row = { win: number; nWin: number; eWin: number; nSecs: number; eSecs: number; defeat: number; n: number; e: number; gold: number; food: number };
   const rows: Record<string, Row> = {};
-  const measure = (bodies: SaveData[], star: number, tier: number, streak = 0, gear: GearCarry | null = null): Row => {
+  const measure = (bodies: SaveData[], star: number, tier: number, streak = 0, gear: GearCarry | null = null, minContinueHp?: number): Row => {
     let battles = 0, wins = 0, nW = 0, nG = 0, eW = 0, eG = 0, nS = 0, eS = 0, defeated = 0, runs = 0, gold = 0, food = 0;
     bodies.forEach((body, bi) => {
       for (let k = 0; k < DR; k++) {
@@ -1056,7 +1063,7 @@ if (want('difficulty')) {
             factionId: 'hollow', difficulty: star, streak, seed: 50000 + bi * 97 + k * 13 + tier * 7 + star * 1000, runId: nextRunId(save), hunger: 20, condition: 80,
             deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, gear,
           }),
-          { returnAfterLap: 4, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
+          { returnAfterLap: 4, ...(minContinueHp !== undefined ? { minContinueHp } : {}), absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
         );
         runs++;
         battles += e.battles.length;
@@ -1089,8 +1096,13 @@ if (want('difficulty')) {
     const R = rows[`${tier}/${rec}`]!;
     recNormalSecs.push(R.nSecs);
     if (R.nWin < 0.85) failAt(tier, `난이도: ${tier + 1}단계 몸 권장 ★${rec} 일반 승률 ${(R.nWin * 100).toFixed(0)}% < 85%`);
-    // C.76 (마스터G): 새 몸(1단계·특성 없음) ★1 4바퀴 원정 패배 15% 이하 — 새 플레이어 첫 경험
-    if (tier === 0 && R.defeat > 0.15) failAt(tier, `난이도: 새 몸 ★1 4바퀴 원정 패배 ${(R.defeat * 100).toFixed(0)}% > 15% (C.76 목표)`);
+    // C.76 (마스터G): 새 몸(1단계·특성 없음) ★1 4바퀴 원정 패배 15% 이하 — 새 플레이어 첫 경험.
+    // C.195 (GDD 121장 6·8): 4바퀴째 사냥 힐 0 이라 사람처럼 둥지 칸에서 체력 ${HUMAN_CONTINUE_HP * 100}% 아래면 귀환하는 봇으로 잰다 (끝까지 이어 도는 위험은 아래 '이어하기' 표)
+    if (tier === 0) {
+      const C = measure(bodies, rec, tier, 0, null, HUMAN_CONTINUE_HP);
+      console.log(`    새 몸 ★1 4바퀴(체력 ${HUMAN_CONTINUE_HP * 100}% 아래면 귀환): 원정 패배 ${(C.defeat * 100).toFixed(0)}% (가드 15% 이하) · 끝까지 4바퀴 ${(R.defeat * 100).toFixed(0)}%`);
+      if (C.defeat > 0.15) failAt(tier, `난이도: 새 몸 ★1 4바퀴(체력 ${HUMAN_CONTINUE_HP * 100}% 아래면 귀환) 원정 패배 ${(C.defeat * 100).toFixed(0)}% > 15% (C.76 목표)`);
+    }
     const up = rows[`${tier}/${rec - 1}`];
     const down = rows[`${tier}/${rec + 1}`];
     // C.120: 1단계 몸은 타일이 없어(GDD 64장) 4바퀴 빈 길에 강적이 나오지 않는다 — 강적 표본이 0판인 쪽은 비교하지 않는다
@@ -1100,6 +1112,45 @@ if (want('difficulty')) {
   }
   // 1단계 몸은 특성이 없는 새 세이브, 2단계부터는 흡수 특성 2~4개·노력치가 있는 진화 봇 몸이라 처치 시간은 참고로만 (단계 간 등가는 위 '권장 단계 등가' 표가 가드)
   console.log(`  권장 ★ 일반 처치 시간 단계별: ${recNormalSecs.map((x) => x.toFixed(1)).join(' / ')}초 (참고 — 1단계는 특성 없는 새 몸)`);
+  // ── 이어하기 (GDD 121장 8, C.195): 권장 ★ 몸이 최대 바퀴까지 이어 돌 때 바퀴별 누적 패배(탈진 포함) — 사냥 힐 10/6/3/0%·적 +12%/바퀴.
+  //    가드: 1바퀴 안 패배 약 10% 이하(단계마다 ≤ 13%, 표본 오차), 3바퀴 이상 이어 가면 위험이 눈에 띄게 오른다(2~5단계 합 4바퀴까지 누적 − 1바퀴 ≥ 15%p) ──
+  {
+    const ML = BALANCE.expedition.maxLaps;
+    const agg = { runs: 0, byLap: Array.from({ length: ML }, () => 0) };
+    console.log(`  이어하기 (121장 8, 권장 ★ · 최대 ${ML}바퀴까지 이어 돌기 · 몸마다 ${DR}원정): 바퀴별 누적 패배`);
+    for (let tier = 0; tier < MAX_DIFFICULTY; tier++) {
+      const bodies = tier === 0 ? freshBodies : campaignFirstAt[tier] ?? [];
+      if (bodies.length === 0) continue;
+      const star = recommendedDifficulty(tier);
+      const byLap = Array.from({ length: ML }, () => 0);
+      let runs = 0;
+      bodies.forEach((body, bi) => {
+        for (let k = 0; k < DR; k++) {
+          const save = structuredClone(body);
+          const e = playExpedition(
+            createExpedition({
+              factionId: 'hollow', difficulty: star, seed: 71000 + bi * 97 + k * 13 + tier * 7, runId: nextRunId(save), hunger: 20, condition: 80,
+              deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            }),
+            { returnAfterLap: ML, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
+          );
+          runs++;
+          if (e.outcome === 'defeated') for (let l = e.lap; l <= ML; l++) byLap[l - 1]!++;
+        }
+      });
+      const cum = byLap.map((n) => n / Math.max(1, runs));
+      console.log(`    ${tier + 1}단계 몸 ★${star} ${runs}원정: ${cum.map((x, i) => `${i + 1}바퀴 ${(x * 100).toFixed(0)}%`).join(' · ')}`);
+      if (cum[0]! > 0.13) failAt(tier, `이어하기: ${tier + 1}단계 몸 권장 ★${star} 1바퀴 안 패배 ${(cum[0]! * 100).toFixed(0)}% > 13% (121장 8: 약 10% 이하)`);
+      if (tier > 0) {
+        agg.runs += runs;
+        byLap.forEach((n, i) => (agg.byLap[i]! += n));
+      }
+    }
+    const a1 = agg.byLap[0]! / Math.max(1, agg.runs);
+    const a4 = agg.byLap[Math.min(3, ML - 1)]! / Math.max(1, agg.runs);
+    console.log(`    2~5단계 합: 1바퀴 ${(a1 * 100).toFixed(0)}% → 4바퀴까지 ${(a4 * 100).toFixed(0)}% (가드: 차이 ≥ 15%p)`);
+    if (agg.runs > 0 && a4 - a1 < 0.15) failures.push(`이어하기: 2~5단계 권장 ★ 4바퀴까지 누적 패배 ${(a4 * 100).toFixed(0)}% − 1바퀴 ${(a1 * 100).toFixed(0)}% < 15%p (121장 8: 3바퀴 이상 위험이 눈에 띄게 올라야)`);
+  }
   // ── 장비 참고 줄 (GDD 91장 7번, C.150): 기준 봇은 장비 없음(위 가드 그대로) — 같은 몸·같은 시드에 '그 단계 평균 장비'(5칸 레어 +2, ★ = 권장)를 끼우면 얼마나 쉬워지나. 가드 아님 ──
   const RL = BALANCE.provisional.gear.refLoadout;
   console.log(`  참고 — 그 단계 평균 장비 (5칸 ${RL.grade} +${RL.plus}, ★ = 권장, 기준 봇과 같은 몸·시드):`);
@@ -1155,7 +1206,7 @@ if (want('grounds')) {
               factionId: 'hollow', groundId: g.id, seed: 50000 + bi * 97 + k * 13 + tier, runId: nextRunId(save), hunger: 20, condition: 80,
               deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
             }),
-            { returnAfterLap: 4, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
+            { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
           );
           runs++;
           battles += e.battles.length;

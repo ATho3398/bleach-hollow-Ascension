@@ -134,6 +134,9 @@ function validShape(e: unknown): e is ExpeditionState {
   for (const k of ['elitesThisLap', 'victoriesThisLap', 'tilesThisLap', 'lapsCompleted'] as const) if (!isInt(e[k])) return false;
   if (!isStrArr(e.deck) || !isStrArr(e.hand) || !e.deck.every((id) => knows(getTile, id)) || !e.hand.every((id) => knows(getTile, id))) return false;
   if (!Array.isArray(e.slots) || e.slots.length !== L || !e.slots.every((s) => s === null || knows(getTile, s))) return false;
+  // 임시 타일 (GDD 121장 4 ②): 손의 부분 집합·놓인 칸 (없으면 임시 타일 없음)
+  if (e.tempHand !== undefined && !(isStrArr(e.tempHand) && e.tempHand.every((id) => knows(getTile, id)))) return false;
+  if (e.tempCells !== undefined && !(Array.isArray(e.tempCells) && e.tempCells.every((c) => isInt(c, 1) && (c as number) < L))) return false;
   if (!Array.isArray(e.wildCells) || !e.wildCells.every((c) => isInt(c, 1) && (c as number) < L)) return false;
   if (!Array.isArray(e.battlesByLap) || e.battlesByLap.length < (e.lap as number) || !e.battlesByLap.every((n) => isInt(n))) return false;
   if (!Array.isArray(e.acquired) || !e.acquired.every((a) => isObj(a) && knows(getTile, a.tileId) && isInt(a.lap, 1))) return false;
