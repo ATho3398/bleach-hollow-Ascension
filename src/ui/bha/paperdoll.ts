@@ -23,6 +23,11 @@ export function createDollClock(motions: Record<string, Motion>) {
       return id && motions[id] ? { id, t } : null;
     },
     setLoop(id: string | null) {
+      // 끝 자세로 멈춰 있던 동작(쓰러짐)은 반복 동작을 고르면 풀린다
+      if (onceId && motions[onceId]?.hold && t >= motions[onceId]!.duration) {
+        onceId = null;
+        t = 0;
+      }
       if (loopId === id) return;
       loopId = id;
       if (!onceId) t = 0;
@@ -47,6 +52,13 @@ export function createDollClock(motions: Record<string, Motion>) {
       }
       if (!m.loop && t >= m.duration) {
         const end = opts.onEnd;
+        if (m.hold) {
+          // 마지막 자세로 멈춤(쓰러짐) — 다음 play 가 올 때까지
+          t = m.duration;
+          opts = {};
+          end?.();
+          return;
+        }
         onceId = null;
         t = 0;
         opts = {};

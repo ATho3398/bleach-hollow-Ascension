@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { DRAFT_RIGS } from '../scripts/rig/draft';
 import { followMove } from '../scripts/rig/follow';
+import { createDollClock } from '../src/ui/bha/paperdoll';
 import { boneMatrices, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, validateRig, apply } from '../src/data/art/rig/pose';
 
 describe('종이인형 작업본 (GDD 96장 36): 고정한 값이 먼저 들어가는 곳 — 게임본과 따로', () => {
@@ -101,13 +102,25 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
   it('기본 동작마다 왼 아래팔이 움직인다(나눠만 놓고 똑같이 움직이지 않게)', () => {
     for (const id of ['idle', 'move', 'attack', 'attack2', 'skill', 'skill2', 'hit', 'ultimate']) expect(motions[id]!.tracks.forearm_L, id).toBeDefined();
   });
-  it('잽(오른손)·스트레이트(칼 든 손, 칼 숨김)·옆차기 A·B', () => {
-    for (const id of ['jab', 'straight', 'sidekick', 'sidekick2']) expect(motions[id]!.hit).toBeGreaterThan(0);
-    // 스트레이트 = 칼 든 손으로, 그동안 칼은 숨김(사용자 "칼 잠시 사라져도 돼")
+  it('스트레이트(칼 든 손, 칼 숨김)·옆차기(끊김 없이 바로) — 잽·옆차기 B 는 없앰', () => {
+    expect(motions.jab).toBeUndefined();
+    expect(motions.sidekick2).toBeUndefined();
     expect(orderLayers(lookLayers(rig, 'shinigami-base'), motions.straight).some((l) => l.slot === 'weapon')).toBe(false);
-    expect(motions.straight!.tracks.arm_L).toBeDefined();
-    expect(motions.jab!.tracks.arm_R).toBeDefined();
+    expect(motions.sidekick!.tracks.leg_L!.length).toBe(4); // 0 → 바로 차기 → 잠깐 → 제자리
     expect(Math.max(...motions.sidekick!.tracks.leg_L!.map((k) => k[1]))).toBeGreaterThan(80);
+  });
+  it('쓰러짐은 끝 자세로 멈춰 있고(엎드림), 빈사는 반복 동작(허리 굽힘, 90° 아님)', () => {
+    const c = createDollClock(motions);
+    c.play('down');
+    c.advance(2000);
+    expect(c.current?.id).toBe('down');
+    expect(Math.abs(samplePose(rig, motions.down!, motions.down!.duration).root!.rot)).toBeGreaterThan(80);
+    c.setLoop('idle');
+    expect(c.current?.id).toBe('idle');
+    const bend = motions.dying!.tracks.torso!.map((k) => k[1]);
+    expect(motions.dying!.loop).toBe(true);
+    expect(Math.min(...bend)).toBeLessThan(-20);
+    expect(Math.min(...bend)).toBeGreaterThan(-60);
   });
   it('해방 동작(양손으로 칼 내밀고 변신)은 아란칼(여) 몸에만 하나, swapAt 이 지나면 해방 외형', () => {
     const af = resolveMotions(rig, motions, sets, 'arrancar_f');

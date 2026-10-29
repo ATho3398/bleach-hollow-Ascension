@@ -75,6 +75,13 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       }
       if (t >= m.duration) {
         const end = once.opts.onEnd;
+        if (m.hold) {
+          // 마지막 자세로 멈춤(쓰러짐) — 다음 play 가 올 때까지
+          t = m.duration;
+          once.opts = {};
+          end?.();
+          return;
+        }
         once = null;
         t = 0;
         end?.();
