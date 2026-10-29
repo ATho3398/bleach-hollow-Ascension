@@ -111,8 +111,16 @@ async function newGame(page, url, fi) {
           // 튜토리얼 흡수 안내 (GDD 129장 4): '내 것이 된다' 다음 줄 특성·블록·속성·능력치
           const g = [...document.querySelectorAll('.bha-tut')].find((x) => (x.textContent ?? '').includes('내 것이 된다'));
           if (g && !window.__absorbSeen) { window.__absorbSeen = true; return { absorb: g.querySelector('.bha-tut__body')?.innerText ?? '' }; }
+          if (!l && document.querySelector('.bha-room')) return { room: true };
           return l ? { step: l.querySelector('.bha-tut__step')?.textContent ?? '', title: l.querySelector('.bha-tut__title')?.textContent ?? '', hp: hpEl?.textContent ?? '', spa: !!document.querySelector('.bha-spa') } : null;
         });
+        if (r && r.room) {
+          // 방: 회복 안내 첫 카드를 기다린다 (방에서 ✓ 를 누르면 방 물건을 누른다). 9장을 다 봤으면 끝
+          if (run.recover.length > 0 && lastR && lastR.startsWith(`회복 안내 ${RECOVER_IDS.length} /`)) break;
+          await page.waitForTimeout(400);
+          if (++stuck > 60) break;
+          continue;
+        }
         if (r && r.absorb) {
           run.absorbText = r.absorb;
           await page.waitForTimeout(400);
@@ -120,6 +128,7 @@ async function newGame(page, url, fi) {
           continue;
         }
         if (r && r.step !== lastR) {
+          if (process.env.C199_DEBUG) console.log('card', r.step, Date.now() % 100000);
           lastR = r.step;
           run.recover.push(r);
           const id = RECOVER_IDS[run.recover.length - 1];
@@ -133,7 +142,10 @@ async function newGame(page, url, fi) {
         if (run.recover.length === RECOVER_IDS.length && (firstRoom || !r)) break;
         stuck++;
         // 카드가 떠 있을 때만 ✓ (카드 사이 화면 전환 중에 누르면 방 물건을 누른다). 카드 없이 오래 멈추면(전투 결과·흡수 화면) ✓
-        if (r || stuck > 4) await dev('확정').click().catch(() => {});
+        if (r || stuck > 4) {
+          if (process.env.C199_DEBUG) console.log('press', r ? r.step : 'none', Date.now() % 100000);
+          await dev('확정').click().catch(() => {});
+        }
         if (stuck > 25) {
           // ✓ 로 안 넘어가는 화면: 첫 주 버튼 (기록 — 각본 대상 밖)
           const go = page.locator('.bha-lcd button.bha-btn--primary, .bha-lcd button.bha-btn--lg').filter({ visible: true });
