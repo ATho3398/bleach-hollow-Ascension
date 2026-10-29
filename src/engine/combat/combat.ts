@@ -915,8 +915,13 @@ export function liberationActive(s: CombatState): boolean {
 }
 
 /** 지금 해방할 수 있는가: 켜짐 + 게이지 가득 + 해방 중이 아님 (한 전투에 여러 번) */
+/** 각본 전투 (GDD 123장 5): 지금 단계가 이 입력을 받지 않으면 그 버튼은 잠긴 모습(흐림) — 해방·소모품·장비가 '준비됨'으로 빛나지 않게 */
+function scriptLocked(s: CombatState, type: CombatInput['type']): boolean {
+  return !!s.script && !s.script.allow.includes(type);
+}
+
 export function canLiberate(s: CombatState): boolean {
-  return s.status === 'playing' && s.params.liberationEnabled && !liberationActive(s) && s.liberation.gauge >= LIBERATION_GAUGE_MAX;
+  return s.status === 'playing' && !scriptLocked(s, 'liberate') && s.params.liberationEnabled && !liberationActive(s) && s.liberation.gauge >= LIBERATION_GAUGE_MAX;
 }
 
 /** 해방을 처음 쓴 시각(초), 안 썼으면 null (런 로그) */
@@ -1007,7 +1012,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     voidUsed: 0,
     riskGained: 0,
     finisher: null,
-    liberation: { gauge: params.liberationEnabled ? Math.min(LIBERATION_GAUGE_MAX, Math.max(0, params.liberationStartGauge)) : 0, usedAtTick: null, uses: 0, chains: 0, ticksLeft: 0, spawnAcc: 0, nextSlot: 0, base: null, risk: 0 },
+    liberation: { gauge: params.liberationEnabled && !setup.script ? Math.min(LIBERATION_GAUGE_MAX, Math.max(0, params.liberationStartGauge)) : 0, usedAtTick: null, uses: 0, chains: 0, ticksLeft: 0, spawnAcc: 0, nextSlot: 0, base: null, risk: 0 },
     ...(setup.boss ? { boss: { setup: { ...setup.boss, phases: setup.boss.phases.map((x) => ({ ...x })) }, phase: 1, attackMult: 1, gimmickTimer: t(gimmickEverySeconds(setup.boss)), seals: 0, ...(setup.boss.gimmick === 'summon' ? { minion: null, summons: 0, minionKills: 0 } : {}) } } : {}),
     inputs: [],
     events: [],
@@ -1647,20 +1652,20 @@ function useBlock(s: CombatState, index: number): boolean {
 
 /** 막기를 지금 누를 수 있는가 (GDD 105장 수정 v5.233): 게이지가 다 찼고 막기 중이 아니면(공허 경직 중에도 된다) */
 export function canGuard(s: CombatState): boolean {
-  return s.status === 'playing' && s.guardGauge >= 1 && s.guard.ticks <= 0;
+  return s.status === 'playing' && !scriptLocked(s, 'guard') && s.guardGauge >= 1 && s.guard.ticks <= 0;
 }
 
 /** 소모품을 지금 쓸 수 있는가 (GDD 105장 수정 3·108장 3번): 칸에 든 전투용 소모품이 있고, 이 전투에서 안 썼고, 공격 불가(막기·경직) 중이 아니고,
  *  회복 소모품은 회복 잠김(폭주, noHealSpawn)이 아닐 때. 보관 개수는 부르는 쪽(화면·원정)이 확인해 battleItem 을 비운다 */
 export function canUseItem(s: CombatState): boolean {
   const it = s.params.battleItem;
-  if (s.status !== 'playing' || !it || s.itemUsed || halted(s)) return false;
+  if (s.status !== 'playing' || !it || s.itemUsed || halted(s) || scriptLocked(s, 'item')) return false;
   return !(it.effect === 'heal' && s.params.noHealSpawn);
 }
 
 /** 장비 발동을 지금 쓸 수 있는가 (GDD 105장 수정 4): 발동 장비가 있고 쿨다운이 끝났고 공격 불가 중이 아닐 때 */
 export function canUseGear(s: CombatState): boolean {
-  return s.status === 'playing' && !!s.params.activeGear && s.gearCooldown <= 0 && !halted(s);
+  return s.status === 'playing' && !scriptLocked(s, 'gear') && !!s.params.activeGear && s.gearCooldown <= 0 && !halted(s);
 }
 
 /** 성향·강화 보정 (옛 막기·회복 블록 세기 → GDD 105장 수정: 막기 = 게이지 차는 속도, 회복 = 회복 소모품 회복량) */

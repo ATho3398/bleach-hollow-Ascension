@@ -108,7 +108,7 @@
           "body": "강공격을 그대로 맞아 체력이 바닥 직전이다.이제 블록 바에 블록이 생긴다.",
           "wait": false,
           "only": null,
-          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+          "sel": "guard"
         },
         {
           "title": "블록: 눌러서 사용",
