@@ -6,7 +6,7 @@
   border-radius: var(--bha-r-md);
   background: linear-gradient(var(--bha-bg-2), var(--bha-bg-1));
 }
-.bha-spa__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bha-spa__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; } /* 세로가 넘치면 아래를 자른다 (사용자 2026-10-30 "위아래 자를 땐 아랫부분을 잘라") */
 
 /* 임시 탕: 뒤쪽 물(캐릭터 뒤) + 앞쪽 물(캐릭터 앞 — 앉으면 몸 아래쪽을 가린다) */
 .bha-spa__water, .bha-spa__front { position: absolute; left: 24%; right: 24%; }
