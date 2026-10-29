@@ -75,7 +75,8 @@ import { roomView } from './roomView';
 import { careView, chestView, openChestAtConsumables, openChestAtGear } from './lcdScreens';
 import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
-import { roomOf } from '../engine/faction';
+import { marketOf, roomOf } from '../engine/faction';
+import { marketView } from './marketView';
 import { openGrounds } from '../data/grounds';
 import { applySettingsNow, settingsView } from './settingsView';
 import { parseSlotSettings, setSlotSettingsHost } from './settingsScope';
@@ -215,6 +216,8 @@ export function startApp(host: HTMLElement): void {
   let idleReport: IdleAccrual | null = null;
   /** 떠돌이 상인 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
   let wandererAnnounced = -1;
+  /** 방에 띄운 떠돌이 상인 도착 알림 — 장터에 들어가면 걷는다 (GDD 127장 3: 장터 안에서는 안 뜨게) */
+  let wandererToast: HTMLElement | null = null;
   /** 방 안내(GDD 64·67장)를 잠시 미룬다: 귀환 결과 다음에 진화 연출이 뜰 차례면 연출이 끝나고 방으로 돌아올 때 띄운다 */
   let holdRoomGuides = false;
   /** 안내 오버레이가 떠 있다 (방을 다시 그려도 겹쳐 띄우지 않는다) */
@@ -235,11 +238,12 @@ export function startApp(host: HTMLElement): void {
     if (!start) return false;
     recoverOpen = true;
     const props = roomOf(faction).props;
+    const mk = marketOf(faction); // 온천은 장터 안 (GDD 127장 4, C.201)
     const HH = BALANCE.provisional.nest.homeHp;
     const TR = BALANCE.provisional.tutorialRecover;
     const pct = (x: number) => String(Math.round(x * 100));
     const vars = {
-      chestName: props.chest, spaName: props.spa, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
+      chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), idleHpPct: pct(HH.idlePerMinute),
     };
     const openBag = () => {
@@ -257,16 +261,17 @@ export function startApp(host: HTMLElement): void {
       cure: { label: '치료제 쓰기', act: () => { recoverCure(s, Date.now()); persist(); nav.top?.render(); } },
       potion: { label: '체력 포션 마시기', act: () => { recoverPotion(s, Date.now()); persist(); nav.top?.render(); } },
       merchant: { label: '방으로', act: () => toRoom() },
-      'to-spa': { label: fixParticles(`${props.spa}(으)로`), act: () => {
+      'to-spa': { label: fixParticles(`${mk.name} → ${mk.props.spa}(으)로`), act: () => {
         if (!s.nest.spa && spaEnter(s)) return; // 못 들어가면(배고픔 등) 다음 카드에서 바로 쉬기
         persist();
+        openMarket(faction, s); // 방 → 장터 → 온천 (GDD 127장 4)
         openSpa(faction, s, false);
       } },
       'spa-rest': { label: '쉬기', act: () => {
         recoverSpa(s, Date.now());
         persist();
         if (nav.top?.id === 'spa') nav.pop();
-        toRoom();
+        toRoom(); // 장터를 거쳐 왔어도 방으로 (toRoom = 방이 아니면 nestScreen)
       } },
       feed: { label: '먹이 주기', act: () => { recoverFeed(s, Date.now()); persist(); nav.top?.render(); } },
       done: { label: '다음', act: () => undefined },
@@ -714,7 +719,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 온천 (GDD 123장 4): enter = 방 물건을 눌러 들어감(못 들어가면 이유 알림), false = 이미 온천에 있는 세이브를 다시 염. 뒤로 = 나와서 방 */
   function openSpa(faction: FactionConfig, s: SaveData, enter = true): void {
-    const name = roomOf(faction).props.spa;
+    const name = marketOf(faction).props.spa;
     if (enter) {
       if (careBlocked(s)) return;
       const why = s.nest.spa ? null : spaEnter(s);
@@ -730,7 +735,8 @@ export function startApp(host: HTMLElement): void {
           onAutoLeave: (e) => {
             tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다
             persist();
-            if (nav.top?.id === 'spa') nav.pop();
+            // 저절로 나오면 방으로 (GDD 127장 2: 장터에서 들어갔어도 방 — C.198 그대로)
+            if (nav.top?.id === 'spa') nestScreen();
             showToast({ eyebrow: name, title: spaEndText(e, faction.fullnessName), meta: '' }, 0, 3200);
           },
         });
@@ -742,6 +748,20 @@ export function startApp(host: HTMLElement): void {
         persist();
       },
     });
+  }
+
+  /** 장터 (GDD 127장 2, C.201): 상점·온천·떠돌이 상인이 있는 따로 된 공간. 뒤로 = 방 */
+  function openMarket(faction: FactionConfig, s: SaveData): void {
+    const visit = s.shared.wanderer.visit;
+    if (visit) wandererAnnounced = visit.at; // 장터에서 이미 봤다 — 방 알림을 다시 띄우지 않는다
+    if (wandererToast?.isConnected) wandererToast.classList.replace('is-in', 'is-out'); // 방에서 뜬 알림이 장터까지 남지 않게 (사라지는 연출 뒤 지워진다)
+    wandererToast = null;
+    open('market', () => marketView(dev, faction, s, {
+      onSpa: () => openSpa(faction, s),
+      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
+      onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
+      onBack: () => nav.back(),
+    }));
   }
 
   function renderRoom(): void {
@@ -788,11 +808,15 @@ export function startApp(host: HTMLElement): void {
       notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 5단계에 닿았다. 더보기 ⋯ → [붕옥]' });
       s.hogyoku.tabNotice = false;
     }
-    // 떠돌이 상인 (GDD 85장 5번): 이번 방문을 처음 보는 방이면 한 번 알린다
+    // 떠돌이 상인 (GDD 85장 5번·127장 3): 이번 방문을 처음 보는 방이면 한 번 알린다 — 방에서만(장터 안에서는 안 뜬다). 먼저 장터에 들어갔으면 본 것으로 친다
     const visit = s.shared.wanderer.visit;
     if (visit && visit.at !== wandererAnnounced) {
-      wandererAnnounced = visit.at;
-      notes.push({ eyebrow: '떠돌이 상인', title: '떠돌이 상인이 둥지에 왔다', meta: '상점 → [떠돌이 상인]. 다음 원정에서 돌아오면 떠난다.' });
+      const mk = marketOf(faction);
+      window.setTimeout(() => {
+        if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
+        wandererAnnounced = visit.at;
+        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: `${mk.props.wanderer}이 ${mk.name}에 왔다`, meta: `${mk.name} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
+      }, 2600);
     }
     if (notes.length > 0) {
       persist();
@@ -853,7 +877,7 @@ export function startApp(host: HTMLElement): void {
       onHelp: () => openHelp('nest', true),
       // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
-      onSpa: () => openSpa(faction, s),
+      onMarket: () => openMarket(faction, s),
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
       onTamago: () => tama.toggle(true),
       // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)

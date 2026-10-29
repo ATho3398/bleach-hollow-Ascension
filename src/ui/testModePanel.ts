@@ -454,7 +454,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const callW = button({ label: '지금 부르기', icon: 'i-check', variant: 'primary', onClick: () => {
       lastCall = { ...lastCall, tier: Number(tierSel.value) };
       testCallWanderer(save, lastCall.tier);
-      done('떠돌이 상인을 불렀다', '상점 → [떠돌이 상인]에서 산다. 다음 원정에서 돌아오면 떠난다.');
+      done('떠돌이 상인을 불렀다', '장터 → [떠돌이 상인]에서 산다. 다음 원정에서 돌아오면 떠난다.');
     } });
     const rerollW = button({ label: '물건 다시 뽑기', icon: 'i-loop', disabled: !visit, onClick: () => {
       if (testRerollWanderer(save)) done('물건을 다시 뽑았다', '팔린 칸도 새로 채운다.');

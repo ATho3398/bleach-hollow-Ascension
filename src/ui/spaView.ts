@@ -1,6 +1,6 @@
-// 온천 화면 (GDD 123장 4, C.198): 방 물건 [온천]으로 들어오는 따로 된 공간. 들어와 있는 동안 1분에 체력 +10%·배부름 −10 (앱을 꺼도 유지),
+// 온천 화면 (GDD 123장 4, C.198): 장터(C.201, GDD 127장 2) 안 [온천]으로 들어오는 따로 된 공간. 들어와 있는 동안 1분에 체력 +10%·배부름 −10 (앱을 꺼도 유지),
 // 체력 상한(빈사면 10%)이나 배부름 0 이면 저절로 방으로. 뒤로·[방으로 돌아가기] = 나오기.
-// 배경 그림 키 scene.spa·온천 모션은 사용자 그림 대기 — 없으면 임시 배경(탕 도형)과 앉은 임시 연출(몸 아래쪽을 물이 가림). 이름은 종족 설정 room.props.spa.
+// 배경 그림 키 scene.spa·온천 모션은 사용자 그림 대기 — 없으면 임시 배경(탕 도형)과 앉은 임시 연출(몸 아래쪽을 물이 가림). 이름은 종족 설정 market.props.spa.
 import { BALANCE } from '../config/balance';
 import { artUrls } from '../data/art/manifest';
 import type { FactionConfig } from '../engine/faction';
@@ -11,7 +11,7 @@ import { hpNumbers } from './bha/battle';
 import { button, el, meter, notice } from './bha/dom';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { characterButton, roomCharArt } from './bha/room';
-import { roomOf } from '../engine/faction';
+import { marketOf, roomOf } from '../engine/faction';
 
 const BASE = import.meta.env.BASE_URL;
 /** 막대 다시 그리기·저절로 나오기 확인 간격 */
@@ -34,7 +34,7 @@ export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: str
 
 export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveData, hd: SpaHandlers): void {
   const room = roomOf(faction, save.wear.talk);
-  const name = room.props.spa;
+  const name = marketOf(faction).props.spa;
   const SP = BALANCE.provisional.nest.homeHp.spa;
   const n = save.nest;
   const maxHp = homeMaxHp(save);

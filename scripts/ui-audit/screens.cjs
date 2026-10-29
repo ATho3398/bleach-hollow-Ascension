@@ -251,7 +251,8 @@ const SCREENS = [
   {
     name: '상점',
     async run(h, n) {
-      await h.click('.bha-prop--shop', { ms: 700 });
+      await h.click('.bha-prop--market', { ms: 700 }); // C.201 (GDD 127장 2): 상점은 장터 안
+      await h.click('.bha-market [data-spot="shop"]', { ms: 700 });
       await h.explore(n, { pick: '.bha-lcd .bha-itemcard' });
     },
   },
@@ -379,10 +380,37 @@ const SCREENS = [
       await h.btn('적용');
       await h.closeLayers();
       await h.back();
-      await h.click('.bha-prop--spa', { ms: 900 });
+      await h.click('.bha-prop--market', { ms: 700 }); // C.201 (GDD 127장 2): 온천은 장터 안
+      await h.click('.bha-market [data-spot="spa"]', { ms: 900 });
       await h.explore(n, { tabs: false });
       await h.back();
-      if (!(await h.has('.bha-room'))) throw new Error('온천 뒤로 → 방에 못 닿음');
+      if (!(await h.has('.bha-market'))) throw new Error('온천 뒤로 → 장터에 못 닿음');
+      await h.back();
+      if (!(await h.has('.bha-room'))) throw new Error('장터 뒤로 → 방에 못 닿음');
+    },
+  },
+  {
+    // C.201 (GDD 127장 2·3): 장터 — 떠돌이 상인 없음 / 있음(테스트 불러오기로 부름) · 떠돌이 상인 창 · 뒤로 = 방
+    name: '장터',
+    async run(h, n) {
+      await h.click('.bha-prop--market', { ms: 700 });
+      await h.explore(`${n}/상인 없음`, { tabs: false });
+      await h.back();
+      await more(h, '테스트');
+      await h.click('.bha-lcd .bha-viewtitle__btn');
+      await h.btn('불러오기', { within: '.bha-viewtitle__list', role: 'option' });
+      await h.page.locator('.bha-lcd').getByRole('button', { name: '지금 부르기', exact: true }).nth(0).click({ timeout: 3000 });
+      await h.closeLayers();
+      await h.back();
+      if (!(await h.has('.bha-prop--market.has-visitor'))) throw new Error('떠돌이 상인이 왔는데 방 장터 물건에 배지가 없음');
+      await h.click('.bha-prop--market', { ms: 700 });
+      if (!(await h.has('.bha-market [data-spot="wanderer"]'))) throw new Error('떠돌이 상인이 왔는데 장터에 없음');
+      await h.explore(`${n}/상인 있음`, { tabs: false });
+      await h.click('.bha-market [data-spot="wanderer"]', { ms: 700 });
+      await h.explore(`${n}/떠돌이 상인`, { pick: '.bha-lcd .bha-itemcard' });
+      await h.back();
+      await h.back();
+      if (!(await h.has('.bha-room'))) throw new Error('장터 뒤로 → 방에 못 닿음');
     },
   },
   {

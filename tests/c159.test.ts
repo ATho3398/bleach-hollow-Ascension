@@ -30,7 +30,7 @@ describe('C.159 A4 방 물건 크기', () => {
   it('보관함·책장·상점·수련장은 0.68, 모험(문)은 그대로', () => {
     for (const f of [hollow, shinigami]) {
       const l = (f as any).room.layout;
-      for (const p of ['book', 'altar', 'chest', 'shop']) expect(l[p].scale).toBe(0.68);
+      for (const p of ['book', 'altar', 'chest', 'market']) expect(l[p].scale).toBe(0.68);
       expect(l.door.scale).toBe(1);
     }
   });

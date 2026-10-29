@@ -7,7 +7,7 @@ import { getFaction } from '../src/data/factions';
 import { getWandererItem } from '../src/data/shop';
 import { createCombat, drainCombatEvents, step } from '../src/engine/combat';
 import { carryAttackMult, carryHitPacing, createExpedition } from '../src/engine/expedition';
-import { roomOf, ROOM_PROPS } from '../src/engine/faction';
+import { marketOf, MARKET_SPOTS } from '../src/engine/faction';
 import {
   applyAbsenceTime, applyExpeditionEnd, collapseNest, cureStatus, doNestAction, enterSpa, foodHpHeal, healHomeHp, homeHpCap, homeHpOf, leaveSpa, newNest, passNestTime, previewHomeHp, soakSpa, tickNestOnline,
 } from '../src/engine/nest';
@@ -303,10 +303,10 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
   });
 });
 
-describe('123장 4 온천 = 방 물건 · 따로 된 화면', () => {
-  it('두 종족 방에 온천 물건(이름 = 종족 설정, 둘 다 온천으로 시작)', () => {
-    expect(ROOM_PROPS).toContain('spa');
-    for (const id of ['hollow', 'shinigami']) expect(roomOf(getFaction(id)).props.spa.startsWith('온천')).toBe(true);
+describe('123장 4 온천 = 장터 안 자리(C.201) · 따로 된 화면', () => {
+  it('두 종족 장터에 온천 자리(이름 = 종족 설정, 둘 다 온천으로 시작)', () => {
+    expect(MARKET_SPOTS).toContain('spa');
+    for (const id of ['hollow', 'shinigami']) expect(marketOf(getFaction(id)).props.spa.startsWith('온천')).toBe(true);
   });
   it('온천 화면: 뒤로 = 나오기(beforeBack), 저절로 나오면 방으로, 그림 키 scene.spa·prop.spa 자리', () => {
     const app = readFileSync('src/ui/app.ts', 'utf8');

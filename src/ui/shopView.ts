@@ -1,6 +1,6 @@
-// 상점 (GDD 25-9, S-16 C.60): 방 물건 상점(C.63, 이름은 종족 설정 room.props.shop). 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
+// 상점 (GDD 25-9, S-16 C.60): 장터 안 상점(C.201, 이름은 종족 설정 market.props.shop). 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 배치 칸만 확인 창 1번, 나머지는 바로 산다. C.140 (GDD 86장 4번): 산 꾸밈·스킨은 보관함에서 착용(여기선 "보유").
-// 떠돌이 상인(GDD 85장 5번)이 와 있으면 제목 토글에 [떠돌이 상인] — 같은 줄 모양, 티어는 숨김(품목 등급만).
+// 떠돌이 상인(GDD 85장 5번)은 장터의 따로 된 창(mode 'wanderer', C.201 GDD 127장 2) — 같은 카드 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { equipInventoryItem, petNoticeOf, unequipInventoryItem } from '../inventory';
 import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory, type MedicineCure } from '../data/shop';
@@ -43,6 +43,8 @@ export interface ShopHandlers {
   persist: () => void;
   /** 착용이 바뀌었을 때 (옛 호출 호환 — C.140 부터 착용은 보관함) */
   onWear?: () => void;
+  /** 'wanderer' = 장터의 떠돌이 상인 창 (GDD 127장 2, C.201): 떠돌이 상인 품목만, 탭 없음. 없으면 보통 상점(떠돌이 상인 탭은 장터로 옮겨 없음) */
+  mode?: 'wanderer';
 }
 
 /** 확인 창 문구 (영옥 품목·덱 칸) */
@@ -66,6 +68,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
   let lastScroll = 0;
   const cur = (c: ShopRow['currency']): string => (c === 'gold' ? TRADE_CURRENCY_NAME : JADE_NAME);
+  const only = hd.mode === 'wanderer';
+  if (only) shopUi.tab = 'wanderer';
+  else if (shopUi.tab === 'wanderer') shopUi.tab = 'food';
 
   /** 한 번 산다 (구매 창 [가격] 버튼). 쌓는 품목은 n 번 되풀이해 막히면 거기까지 */
   const buy = (row: ShopRow, qty: number) => {
@@ -199,8 +204,6 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     sub.dataset.gold = String(save.shared.tradeCoins);
     sub.dataset.jade = String(save.shared.jade);
     if (SHOP_PROVISIONAL) sub.append(' ', provisionalTag('임시 가격'));
-    const hasWanderer = save.shared.wanderer.visit !== null;
-    if (shopUi.tab === 'wanderer' && !hasWanderer) shopUi.tab = 'food';
     const rows: (ShopRow & { grade?: string })[] = shopUi.tab === 'wanderer'
       ? wandererRows(save, faction)
       : shopUi.tab === 'medicine'
@@ -209,7 +212,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const cats = (['food', 'medicine', 'consumable', 'equipment', 'skin', 'tile', 'etc'] as const).map((id) => ({
       id, label: id === 'medicine' ? '약' : ITEM_CATEGORY_NAMES[id],
     }));
-    const tabs = categoryTabs([...cats, ...(hasWanderer ? [{ id: 'wanderer', label: '떠돌이 상인' }] : [])], shopUi.tab, (id) => {
+    const tabs = categoryTabs(cats, shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;
       lastScroll = 0;
       render();
@@ -227,12 +230,12 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       }, '스킨 종류', true)
       : null;
     const shown = shopUi.tab === 'skin' ? skinRows.filter((r) => skinSubOf(r.category) === shopUi.skinSub) : rows;
-    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? '오늘은 더 살 것이 없다.' : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : '지금 파는 물건이 없다.';
+    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '떠돌이 상인이 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : '지금 파는 물건이 없다.';
     const grid = itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 칸마다 하나씩, 다음 원정에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]
       : [];
-    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: '상점', sub }), [tabs, ...(subTabs ? [subTabs] : []), ...note, grid], []);
+    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : '상점', sub }), [...(only ? [] : [tabs]), ...(subTabs ? [subTabs] : []), ...note, grid], []);
     page.app.dataset.tab = shopUi.tab;
     grid.scrollTop = lastScroll;
   }

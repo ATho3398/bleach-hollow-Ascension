@@ -1,12 +1,12 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
-//   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 훈련 인형=전투 연습 · 상점=상점(C.63, 이름은 두 종족 공통 GDD 34-2) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·사진·다마고치·트랙 전환·백업·처음 화면·닫기, GDD 100장).
+//   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 장터=장터 화면(상점·온천·떠돌이 상인, C.201 GDD 127장) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·사진·다마고치·트랙 전환·백업·처음 화면·닫기, GDD 100장).
 // 위 한 줄: 원정 이어하기만 (이름표는 상태 칩 위, C.170). 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { infoTip } from './bha/infoTip';
 import { roomStatusInfo } from './bha/statusInfo';
 import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
-import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
+import { marketOf, roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
 import { artSkinOf, careNest, feedNest, tickCare, type SaveData } from '../game';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
@@ -39,7 +39,7 @@ export interface RoomHandlers {
   onHogyoku: (() => void) | null;
   onSettings: () => void;
   onHelp: () => void;
-  /** 상점 (GDD 25-9): 방 물건 shop (C.63, 더보기에서 옮김) */
+  /** 상점 (GDD 25-9): 장터 안 (C.201, GDD 127장 2). 방에서는 빈사 안내 줄의 바로 가기만 */
   onShop: () => void;
   /** 사진 (GDD 25-11): 독 더보기 항목 */
   onPhoto: () => void;
@@ -59,8 +59,8 @@ export interface RoomHandlers {
   greet?: RoomTalk | null;
   /** 사망 상태의 [부활] (GDD 102-3): 확인 창에서 [부활]을 고르면 부른다 */
   onRevive?: () => void;
-  /** 온천 (GDD 123장 4): 방 물건 spa — 따로 된 온천 화면으로 */
-  onSpa: () => void;
+  /** 장터 (GDD 127장 2, C.201): 방 물건 market — 따로 된 장터 화면(안에 온천·상점·떠돌이 상인) */
+  onMarket: () => void;
 }
 
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
@@ -104,7 +104,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     hud.classList.add('is-care');
     items.push({ el: reviveBtn });
   } else if (n.collapsed) {
-    const shopBtn = button({ label: room.props.shop, icon: 'i-rare', size: 'small', variant: 'primary', onClick: hd.onShop });
+    const shopBtn = button({ label: marketOf(faction).props.shop, icon: 'i-rare', size: 'small', variant: 'primary', onClick: hd.onShop });
     const chestBtn = button({ label: room.props.chest, icon: 'i-deck', size: 'small', onClick: hd.onChest });
     const box = notice('danger', CARE_STATUS_HINTS.collapsed, { title: `${CARE_STATUS_NAMES.collapsed} — 치료제가 필요하다 · 남은 시간 `, icon: 'i-broken' });
     dyingClockEl = el('b', 'bha-num', dyingClock(dyingLeftMs(n, Date.now()) ?? 0));
@@ -174,15 +174,19 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     altar: hd.onAltar,
     book: hd.onBook,
     chest: hd.onChest,
-    shop: hd.onShop, // 상점 (C.63, GDD 28장 9번: 더보기 → 방 물건)
-    spa: hd.onSpa, // 온천 (GDD 123장 4)
+    market: hd.onMarket, // 장터 (GDD 127장 2): 상점·온천은 장터 안으로 옮겼다
   };
   // 위/아래 순서: 위쪽 줄(책장·수련장) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['spa', 'book', 'altar', 'door', 'chest', 'shop'];
+  const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'market'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
-    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, alert: p === 'shop' && save.shared.wanderer.visit !== null });
+    const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, fallbackArt: p === 'market' ? 'prop.shop' : undefined });
+    // 떠돌이 상인이 와 있으면 장터 물건에 배지 (GDD 127장 3)
+    if (p === 'market' && save.shared.wanderer.visit !== null) {
+      b.classList.add('has-visitor');
+      b.querySelector('.bha-prop__shape')?.append(el('span', 'bha-room__idlebadge bha-prop__badge', '상인'));
+    }
     b.onclick = act[p];
     // 사망이면 모험 문 잠김 표시 (GDD 102-7) — 눌러도 막힘 안내(onDepart 쪽). 빈사는 열려 있고 출발 때 확인 창 (102장 수정)
     if (p === 'door' && n.dead) {
@@ -336,7 +340,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const main = mountApp(dev.view, { cls: 'bha-room' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
-  if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번) — 상점 물건에 알림 점
+  if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번·127장 3) — 장터 물건에 배지
 
   // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
   function registerItems(): void {

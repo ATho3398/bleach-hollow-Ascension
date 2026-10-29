@@ -140,10 +140,10 @@
     {
       "id": "to-spa",
       "targets": [
-        "@.bha-prop--spa"
+        "@.bha-prop--market"
       ],
       "title": "{spaName}",
-      "body": "{spaName}에서 쉬면 체력이 1분에 {spaHpPct}% 차고 배부름이 {spaFullness} 준다.\n체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
+      "body": "{spaName}은(는) 방의 {marketName} 안에 있다. {marketName}을(를) 지나 {spaName}(으)로 간다.\n{spaName}에서 쉬면 체력이 1분에 {spaHpPct}% 차고 배부름이 {spaFullness} 준다.\n체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
     },
     {
       "id": "spa-rest",

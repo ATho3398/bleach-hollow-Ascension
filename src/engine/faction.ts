@@ -66,8 +66,12 @@ export type SlotLocation = 'body' | 'zanpakuto';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'shop', 'spa'] as const; // spa = 온천 (GDD 123장 4, C.198): 누르면 따로 된 온천 화면
+/** market = 장터 (GDD 127장 2, C.201): 누르면 따로 된 장터 화면. 상점·온천(C.63·C.198 의 방 물건)은 장터 안으로 옮겼다 */
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'market'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
+/** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
+export const MARKET_SPOTS = ['spa', 'shop', 'wanderer'] as const;
+export type MarketSpot = (typeof MARKET_SPOTS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
 /** 방 말풍선 키. collapsed = 쓰러짐, bondShy·bondClose·bondBest = 교감 단계 대사 (GDD 102-6 ④, C.175) */
@@ -139,11 +143,11 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', shop: '상점', spa: '온천' },
+  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', market: '장터' },
   floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
     door: { x: 9, y: 78, scale: 1 }, book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
-    chest: { x: 26, y: 90, scale: 0.81 }, shop: { x: 74, y: 90, scale: 0.54 }, spa: { x: 26, y: 61, scale: 0.54 },
+    chest: { x: 26, y: 90, scale: 0.81 }, market: { x: 74, y: 90, scale: 0.54 },
   },
   characterFoot: { x: 50, y: 80 },
   talk: {
@@ -165,6 +169,41 @@ export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConf
     layout: { ...DEFAULT_ROOM.layout, ...r.layout },
     characterFoot: r.characterFoot ?? DEFAULT_ROOM.characterFoot,
     talk: { ...DEFAULT_ROOM.talk, ...r.talk, ...pack },
+  };
+}
+
+/** 장터 화면 설정 (GDD 127장 2, C.201). 이름은 방 물건 이름(room.props.market)을 그대로 쓴다 — 호로 '웨코문도 장터' / 사신 '루콘가 저잣거리' */
+export interface MarketConfig {
+  /** 장면 모양: bha-room--<shape> 클래스 (CSS 가 임시 배경 모양을 정한다) */
+  shape: string;
+  /** 배경 그림 키 (비어 있으면 임시 배경, 그림은 사용자 대기) */
+  sceneArt: string;
+  /** 자리 표시 이름 */
+  props: Record<MarketSpot, string>;
+  /** 바닥(걷는 면) 범위 — 방과 같은 규칙 */
+  floor: RoomFloorConfig;
+  /** 자리 발 기준점 (장면 %) */
+  layout: Record<MarketSpot, { x: number; y: number; scale?: number }>;
+}
+
+export const DEFAULT_MARKET: MarketConfig = {
+  shape: 'market',
+  sceneArt: 'scene.market',
+  props: { spa: '온천', shop: '상점', wanderer: '떠돌이 상인' },
+  floor: { aspect: 2, poly: [[0, 0.5], [1, 0.5], [1, 1], [0, 1]] },
+  layout: { spa: { x: 20, y: 86, scale: 0.8 }, shop: { x: 52, y: 74, scale: 0.8 }, wanderer: { x: 82, y: 88, scale: 0.8 } },
+};
+
+/** 종족 설정의 market 에 빠진 값을 기본값으로 채운다 + 장터 이름(room.props.market) */
+export function marketOf(f: Pick<FactionConfig, 'room' | 'market'>): MarketConfig & { name: string } {
+  const m = f.market ?? {};
+  return {
+    ...DEFAULT_MARKET,
+    ...m,
+    props: { ...DEFAULT_MARKET.props, ...m.props },
+    floor: m.floor ?? DEFAULT_MARKET.floor,
+    layout: { ...DEFAULT_MARKET.layout, ...m.layout },
+    name: roomOf(f).props.market,
   };
 }
 
@@ -299,6 +338,8 @@ export interface FactionConfig {
   cosmetics?: { names?: Record<string, string>; talkPacks?: Record<string, Partial<Record<RoomTalk, string[]>>>; keyringShapes?: Record<string, string> };
   /** 메인 방 화면: 방 모양·소품 이름·위치·그림 키·반응 문구 (GDD 16장). 없으면 기본값 */
   room?: Partial<Omit<RoomConfig, 'props' | 'layout' | 'talk'>> & { props?: Partial<RoomConfig['props']>; layout?: Partial<RoomConfig['layout']>; talk?: Partial<RoomConfig['talk']> };
+  /** 장터 화면 (GDD 127장 2): 비우면 기본값(DEFAULT_MARKET) */
+  market?: Partial<Omit<MarketConfig, 'props' | 'layout'>> & { props?: Partial<MarketConfig['props']>; layout?: Partial<MarketConfig['layout']> };
 }
 
 function isString(v: unknown): v is string {
@@ -455,6 +496,18 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const okPct = (p: unknown) => isRec(p) && typeof p.x === 'number' && typeof p.y === 'number' && p.x >= 0 && p.x <= 100 && p.y >= 0 && p.y <= 100;
     if (rm.characterFoot !== undefined && !okPct(rm.characterFoot)) errors.push('room.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
     for (const [k, v] of Object.entries((rm.talk ?? {}) as Record<string, unknown>)) if (!(ROOM_TALK as readonly string[]).includes(k) || !Array.isArray(v) || v.length === 0 || !v.every(isString)) errors.push(`room.talk.${k}: 비어 있지 않은 문자열 목록이어야 한다`);
+  }
+  if (r.market !== undefined) {
+    const mk = r.market as Record<string, unknown>;
+    if (!isRec(mk)) errors.push('market: 객체여야 한다');
+    else {
+      for (const k of ['shape', 'sceneArt']) if (mk[k] !== undefined && !isString(mk[k])) errors.push(`market.${k}: 비어 있지 않은 문자열이어야 한다`);
+      for (const k of Object.keys((mk.props ?? {}) as object)) if (!(MARKET_SPOTS as readonly string[]).includes(k) || !isString((mk.props as Record<string, unknown>)[k])) errors.push(`market.props.${k}: 알 수 없는 자리이거나 문자열이 아니다`);
+      for (const [k, v] of Object.entries((mk.layout ?? {}) as Record<string, unknown>)) {
+        const ok = isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;
+        if (!(MARKET_SPOTS as readonly string[]).includes(k) || !ok) errors.push(`market.layout.${k}: 알 수 없는 자리이거나 { x, y } 장면 % 가 아니다`);
+      }
+    }
   }
   if (r.cosmetics !== undefined) {
     const cs = (r.cosmetics ?? {}) as Record<string, unknown>;

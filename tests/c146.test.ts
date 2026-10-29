@@ -23,13 +23,13 @@ const charBox = (f: { x: number; y: number }): Box => ({ l: (f.x / 100) * SCENE.
 
 describe.each(['hollow', 'shinigami'])('C.146 방 물건 (%s)', (fid) => {
   const L = getFaction(fid!).room!.layout as Record<string, { x: number; y: number; scale?: number }>;
-  const ids = ['door', 'book', 'altar', 'chest', 'shop', 'spa']; // C.198: 온천 (GDD 123장 4)
+  const ids = ['door', 'book', 'altar', 'chest', 'market']; // C.201: 상점·온천 → 장터 (GDD 127장 2)
   it('R2 (C.153 A1): 크기 — 모험(문)이 가장 크고 책장·상점이 가장 작다, 수련장·보관함은 같다', () => {
     const sc = (i: string) => L[i]!.scale ?? 1;
     expect(sc('door')).toBeGreaterThan(sc('altar'));
     expect(sc('altar')).toBe(sc('chest'));
     expect(sc('book')).toBe(sc('altar')); // C.159 A4: 보관함·책장·상점·수련장 4개 같은 크기
-    expect(sc('shop')).toBe(sc('book'));
+    expect(sc('market')).toBe(sc('book'));
   });
   it('R1: 물건끼리·물건과 캐릭터가 겹치지 않는다 (펫 자리 오른쪽 발치 40px 포함)', () => {
     const boxes = Object.fromEntries(ids.map((i) => [i, boxOf(i, L[i]!)]));

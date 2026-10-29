@@ -8,7 +8,7 @@ import { parseTrait, TRAITS } from '../src/data/traits';
 import { buildCombatParams, critChanceBonus, newBuild } from '../src/engine/absorb';
 import { createCombat, critChanceOf, defaultCombatParams, drainCombatEvents, step, type CombatEvent, type CombatState } from '../src/engine/combat';
 import { buildBattleRecord } from '../src/engine/combat/record';
-import { parseFactionConfig, roomOf, ROOM_PROPS } from '../src/engine/faction';
+import { marketOf, parseFactionConfig, roomOf, ROOM_PROPS } from '../src/engine/faction';
 import { canSwitchFaction, newSaveData, newTrack, SAVE_FORMAT_VERSION, switchTrack } from '../src/game';
 import { attackCueOf } from '../src/ui/attackFx';
 import { BATTLE_SPEED_KEY_REMOVED, CRIT_LABEL, damageTier } from '../src/ui/bha/battle';
@@ -190,16 +190,16 @@ describe('출발 화면 탭 고정 (28장 8번)', () => {
   });
 });
 
-describe('방 상점 (28장 9번)', () => {
-  it('방 물건 shop, 이름은 두 종족 공통 상점(GDD 34-2), 다른 물건과 겹치지 않는다', () => {
-    expect(ROOM_PROPS).toContain('shop');
-    expect(roomOf(H).props.shop).toBe('상점');
-    expect(roomOf(S).props.shop).toBe('상점');
+describe('방 상점 (28장 9번 → C.201 장터 안)', () => {
+  it('상점은 장터 안 자리(GDD 127장 2), 이름은 두 종족 공통 상점(GDD 34-2). 방의 장터 물건은 다른 물건과 겹치지 않는다', () => {
+    expect(ROOM_PROPS).toContain('market');
+    expect(marketOf(H).props.shop).toBe('상점');
+    expect(marketOf(S).props.shop).toBe('상점');
     for (const f of FACTIONS) {
       const r = roomOf(f);
       for (const p of ROOM_PROPS) {
-        if (p === 'shop') continue;
-        expect(Math.hypot(r.layout[p].x - r.layout.shop.x, r.layout[p].y - r.layout.shop.y), `${f.id}: shop–${p}`).toBeGreaterThan(14);
+        if (p === 'market') continue;
+        expect(Math.hypot(r.layout[p].x - r.layout.market.x, r.layout[p].y - r.layout.market.y), `${f.id}: market–${p}`).toBeGreaterThan(14);
       }
     }
   });

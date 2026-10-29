@@ -1,20 +1,20 @@
 // 메인 방 화면의 장면 부품 (GDD 16장, T-1): 방 배경·물건·캐릭터. 그림은 src/data/art 매니페스트의 키로 참조하고,
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
-import type { RoomConfig, RoomFloorConfig, RoomProp } from '../../engine/faction';
+import type { MarketSpot, RoomConfig, RoomFloorConfig, RoomProp } from '../../engine/faction';
 import { bindAnim } from './animPlayer';
 import { el, icon } from './dom';
 import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
-/** 물건 → 자리표시 아이콘(스프라이트). 그림이 들어오면 쓰이지 않는다 */
-export const PROP_ICON: Record<RoomProp, string> = {
-  door: 'i-loop', altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', shop: 'i-rare', spa: 'i-tile-rest',
+/** 물건 → 자리표시 아이콘(스프라이트). 그림이 들어오면 쓰이지 않는다. 장터 안 자리(GDD 127장 2)도 같은 물건 단추를 쓴다 */
+export const PROP_ICON: Record<RoomProp | MarketSpot, string> = {
+  door: 'i-loop', altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', market: 'i-flag-win', shop: 'i-rare', spa: 'i-tile-rest', wanderer: 'i-special',
 };
 
 /** 방 장면 틀. 배경 그림이 있으면 --room-art 로 깔린다 */
-export function sceneBox(room: RoomConfig): HTMLElement {
+export function sceneBox(room: Pick<RoomConfig, 'shape' | 'sceneArt'>): HTMLElement {
   const box = el('div', `bha-room__scene bha-room--${room.shape}`);
   const { src } = artUrls(room.sceneArt, BASE);
   if (src) {
@@ -29,7 +29,7 @@ export function sceneBox(room: RoomConfig): HTMLElement {
 }
 
 export interface PropOpts {
-  prop: RoomProp;
+  prop: RoomProp | MarketSpot;
   name: string;
   x: number;
   y: number;
@@ -38,6 +38,8 @@ export interface PropOpts {
   art: boolean;
   /** 수치·상태 표시 (덱 비어 있음 등) */
   alert?: boolean;
+  /** 제 그림(prop.<물건>)이 없을 때 대신 쓸 그림 키 — 장터 물건은 상점 그림 (C.201, 장터 그림 대기) */
+  fallbackArt?: string;
 }
 
 /** 방 안 물건 = 선택 항목(button). 이름표는 항상 보인다 */
@@ -51,7 +53,7 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   if (o.scale !== undefined && o.scale !== 1) b.style.setProperty('--prop-s', String(o.scale));
   b.setAttribute('aria-label', o.name);
   const shape = el('span', 'bha-prop__shape bha-art-img');
-  const { src } = artUrls(`prop.${o.prop}`, BASE);
+  const src = artUrls(`prop.${o.prop}`, BASE).src ?? (o.fallbackArt ? artUrls(o.fallbackArt, BASE).src : null);
   if (src) {
     const img = el('img', 'bha-prop__img') as HTMLImageElement;
     img.src = src;

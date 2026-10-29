@@ -1,0 +1,20 @@
+/* 장터 화면 (GDD 127장 2, C.201): 방과 같은 장면 틀 + 임시 배경(천막 줄·좌판 바닥). 그림(scene.market)이 오면 배경이 덮는다. 색·간격은 토큰만 */
+.bha-market__hud { justify-content: space-between; }
+.bha-market__titles { min-width: 0; display: flex; flex-direction: column; gap: var(--bha-sp-1); }
+.bha-market__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
+.bha-market__sub { margin: 0; color: var(--bha-text-2); }
+.bha-room--market .bha-room__wall {
+  height: 50%;
+  background:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--bha-hunger) 22%, var(--bha-bg-1)) 0 24px, var(--bha-bg-1) 24px 48px) top / 100% 22% no-repeat,
+    var(--bha-bg-1);
+}
+.bha-room--market .bha-room__floor { height: 50%; }
+/* 자리 모양 (그림 없을 때): 온천 = 낮은 탕, 상점 = 매대, 떠돌이 상인 = 짐 진 사람 자리 */
+.bha-prop--spa .bha-prop__shape { width: 56px; height: 30px; border-radius: var(--bha-r-lg); }
+.bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--wanderer .bha-prop__shape { width: 34px; height: 52px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); border-color: var(--bha-hunger); }
+.bha-prop--market .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
+/* 방의 장터 물건: 떠돌이 상인이 와 있으면 오른쪽 위 배지 (GDD 127장 3) */
+.bha-prop.has-visitor .bha-prop__shape { position: relative; overflow: visible; }
+.bha-prop.has-visitor .bha-prop__badge { position: absolute; top: 0; right: 0; translate: 20% -40%; margin: 0; line-height: 1.3; }

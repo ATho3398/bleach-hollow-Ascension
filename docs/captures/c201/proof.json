@@ -1,0 +1,103 @@
+{
+  "hollow": {
+    "roomProps": [
+      "door",
+      "altar",
+      "book",
+      "chest",
+      "market"
+    ],
+    "marketNoWanderer": {
+      "title": [
+        "웨코문도 장터"
+      ],
+      "spots": [
+        "spa",
+        "shop"
+      ],
+      "sub": [
+        "떠돌이 상인은 원정을 돌다 보면 가끔 들른다."
+      ]
+    },
+    "spa": {
+      "title": [
+        "온천"
+      ]
+    },
+    "spaBackTo": "market",
+    "shop": {
+      "title": [
+        "상점"
+      ],
+      "tabs": [
+        "음식",
+        "약",
+        "소모품",
+        "장비",
+        "스킨",
+        "타일",
+        "기타"
+      ]
+    },
+    "backToRoom": true,
+    "toast": [
+      "떠돌이 상인 떠돌이 상인이 웨코문도 장터에 왔다"
+    ],
+    "badge": [
+      "상인"
+    ],
+    "marketWithWanderer": {
+      "title": [
+        "웨코문도 장터"
+      ],
+      "spots": [
+        "spa",
+        "shop",
+        "wanderer"
+      ],
+      "toastInMarket": []
+    },
+    "wandererWin": {
+      "title": [
+        "떠돌이 상인"
+      ],
+      "cards": 4,
+      "tabs": 0
+    },
+    "finalRoom": true
+  },
+  "shinigami": {
+    "roomProps": [
+      "door",
+      "altar",
+      "book",
+      "chest",
+      "market"
+    ],
+    "toast": [
+      "떠돌이 상인 떠돌이 상인이 루콘가 저잣거리에 왔다"
+    ],
+    "badge": [
+      "상인"
+    ],
+    "marketWithWanderer": {
+      "title": [
+        "루콘가 저잣거리"
+      ],
+      "spots": [
+        "spa",
+        "shop",
+        "wanderer"
+      ],
+      "toastInMarket": []
+    },
+    "wandererWin": {
+      "title": [
+        "떠돌이 상인"
+      ],
+      "cards": 4,
+      "tabs": 0
+    },
+    "finalRoom": true
+  }
+}

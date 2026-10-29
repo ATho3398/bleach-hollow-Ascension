@@ -50,9 +50,13 @@ describe('종족 설정의 배경 연결 (34-1)', () => {
 });
 
 describe('홈 물건 이름 두 종족 통일 (34-2)', () => {
-  it('6종 이름이 두 종족 같다 (C.198: 온천 추가, GDD 123장 4)', () => {
-    const want = { door: '모험', altar: '수련장', book: '책장', chest: '가방', shop: '상점', spa: '온천' };
-    for (const f of FACTIONS) expect(roomOf(f).props).toEqual(want);
+  it('공통 4종 이름이 두 종족 같다, 장터만 종족 이름 (C.201, GDD 127장 2)', () => {
+    const want = { door: '모험', altar: '수련장', book: '책장', chest: '가방' };
+    for (const f of FACTIONS) {
+      const { market, ...rest } = roomOf(f).props;
+      expect(rest).toEqual(want);
+      expect(market.length).toBeGreaterThan(0);
+    }
   });
 });
 
