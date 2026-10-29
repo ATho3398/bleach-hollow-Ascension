@@ -10,7 +10,8 @@
     "forest": {
       "layers": [
         { "id": "sky", "w": 464, "h": 512, "height": 100, "speed": 0.15 },
-        { "id": "ground", "w": 464, "h": 283, "height": 58, "speed": 1 }
+        { "id": "ground", "w": 464, "h": 283, "height": 58, "speed": 1 },
+        { "id": "trees", "w": 464, "h": 188, "height": 38.53, "bottom": 19.47, "scale": 1.5, "speed": 1 }
       ]
     },
     "karakura": {

@@ -59,8 +59,8 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
     anim = bindAnim(walker, img, art);
     anim?.setLoop('idle');
   } else body.append(el('span', 'bha-walker__eye'), el('span', 'bha-walker__foot bha-walker__foot--back'), el('span', 'bha-walker__foot bha-walker__foot--front'));
-  // 발밑·잔상 꾸밈 자리 (GDD 25-9): 입었을 때만 cosmetics.css 가 보인다
-  walker.append(el('span', 'bha-walker__trail'), body, el('span', 'bha-walker__shadow'));
+  // 발밑·잔상 꾸밈 자리 (GDD 25-9): 입었을 때만 cosmetics.css 가 보인다. 그림자는 몸보다 먼저(아래 층) — 캐릭터를 덮지 않게 (C.190, GDD 117장 5)
+  walker.append(el('span', 'bha-walker__trail'), el('span', 'bha-walker__shadow'), body);
   // 사냥터 배경 그림이 있으면 그 층들이 임시 줄무늬 층을 대신한다 (GDD 34-1)
   if (bg) scene.classList.add('has-bg');
   scene.append(...(bg ? [sceneBgEl(bg, true)] : []), far, near, ground, walker);

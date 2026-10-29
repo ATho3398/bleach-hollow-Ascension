@@ -122,8 +122,9 @@ export function charTopOffset(art: ArtUrls, loco: Locomotion = 'walk'): number {
   if (!art.src) return boxTop - lift;
   const drawn = 130; // 정사각 그림이 몸 상자(130×140) 안 아래쪽에 맞춰진 크기
   const pivot = bodyH * 0.92; // transform-origin 세로
-  const top = pivot + (bodyH - drawn - pivot) * art.scale + (art.offsetY / 100) * bodyH;
-  return boxTop + Math.min(top, bodyH) - lift;
+  const top = pivot + (bodyH - drawn + drawn * (art.headTop ?? 0) - pivot) * art.scale + (art.offsetY / 100) * bodyH;
+  // 종이인형(headTop)은 머리 위가 비어 있어 머리에 맞추면 칩이 캐릭터 버튼 상자 안으로 내려와 겹친다 — 상자 윗변보다 아래로는 안 내린다 (C.190)
+  return boxTop + Math.min(top, art.headTop ? 0 : bodyH) - lift;
 }
 
 export interface FloorEntry {

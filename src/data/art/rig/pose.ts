@@ -36,7 +36,8 @@ export interface Rig {
   /** 몸마다 따로 맞춘 관절: pivots = 관절 자리, rot = 기본 각도(도, 쉬는 각도에 더함). 없는 값은 bones 그대로 */
   bodyJoints?: Record<string, BodyJoints | string>;
   /** 게임 화면에 그릴 그림 칸(x, y, 가로, 세로, 캔버스 좌표) — 칼을 휘둘러도 안 잘리게 넉넉히 */
-  view?: { rect: [number, number, number, number] };
+  /** 게임 그림 칸 (C.190: 옛 한 장 그림 규격 — 정사각·발 가운데·발 아래 8% 위). clipY = 이 캔버스 y 아래는 안 그린다 */
+  view?: { rect: [number, number, number, number]; clipY?: number };
   /** 몸 id → 동작 묶음 이름(motions.json 의 sets). 역관절 다리처럼 몸에 따라 일부 뼈 동작만 바꿔 끼운다(GDD 96장 40) */
   bodyMotions?: Record<string, string>;
   /** 관절 편집기 전용(게임은 안 씀): 부위 이름, 부위 버튼 묶음, 부위를 옮기면 같이 옮겨 갈 부위(GDD 96장 42) */

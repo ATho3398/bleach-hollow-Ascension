@@ -294,6 +294,35 @@ const SCREENS = [
     },
   },
   {
+    // C.190 (GDD 116장 추가 5): 테스트 패널 고르기 칸 = 게임 안 목록. 열기 → ▼·뒤로 닫기 → 다시 열어 고르기, 전후로 다른 버튼이 안 움직이는지·목록이 LCD 안인지
+    name: '테스트 고르기 목록',
+    async run(h, n) {
+      await more(h, '테스트');
+      // 시작 직후 도감 보상 토스트가 고르기 칸을 덮으면 Playwright 가 패널을 스크롤해 버튼이 움직인 것처럼 잡힌다 — 사라질 때까지 기다린다
+      await h.page.locator('.bha-toast').first().waitFor({ state: 'detached', timeout: 20_000 }).catch(() => {});
+      const pick = h.page.locator('.bha-lcd button.bha-pick[aria-label="진화체"]');
+      const list = '.bha-lcd .bha-pick__list';
+      if (await h.stable(n, '진화체 목록 열기', () => pick.click({ timeout: 3000 }), /bha-pick__list/, pick)) {
+        await h.check(`${n}/목록`, { keys: false });
+        const inside = await h.page.evaluate((sel) => {
+          const l = document.querySelector(sel)?.getBoundingClientRect();
+          const lcd = document.querySelector('.bha-lcd')?.getBoundingClientRect();
+          return !!l && !!lcd && l.top >= lcd.top - 1 && l.bottom <= lcd.bottom + 1 && l.left >= lcd.left - 1 && l.right <= lcd.right + 1;
+        }, list);
+        if (!inside) h.report({ kind: '목록이 화면 밖', key: '진화체', detail: '고르기 목록이 LCD 밖으로 나감' }, n);
+        await h.key('ArrowDown', 2);
+        await h.stable(n, '뒤로 닫기', () => h.back());
+        if (await h.has(list)) h.report({ kind: '목록 안 닫힘', key: '진화체', detail: '뒤로로 안 닫힘' }, n);
+      }
+      await h.stable(n, '진화체 고르기', async () => {
+        await pick.click({ timeout: 3000 });
+        await h.click(`${list} .bha-viewtitle__item >> nth=2`);
+      }, null, pick);
+      if (await h.has(list)) h.report({ kind: '목록 안 닫힘', key: '진화체', detail: '고른 뒤 안 닫힘' }, n);
+      await h.closeLayers();
+    },
+  },
+  {
     // C.186 (GDD 112장): 불러오기 탭 버튼마다 눌러 다른 버튼이 안 움직이는지 + [테스트 모드 끄기] 확인 창
     name: '테스트 불러오기',
     async run(h, n) {
@@ -302,7 +331,10 @@ const SCREENS = [
       await h.btn('불러오기', { within: '.bha-viewtitle__list', role: 'option' });
       await h.explore(n, { tabs: false, views: false, infos: false }); // 정보 표(dl.bha-info)는 눌러도 창이 안 열려 뒤로가 패널을 닫는다
       for (const [name, i] of [['지금 부르기', 0], ['물건 다시 뽑기', 0], ['지금 부르기', 1], ['지금 부르기', 2], ['다음 원정에 부르기', 0], ['보내기', 0], ['걷기', 0], ['비우기', 0], ['예약 취소', 0]]) {
-        if (name === '다음 원정에 부르기') await h.page.locator('.bha-lcd select[aria-label="이벤트 타일"]').selectOption({ index: 1 }); // 고른 게 있어야 [예약 취소]가 켜진다
+        if (name === '다음 원정에 부르기') { // 고른 게 있어야 [예약 취소]가 켜진다 (C.190: 게임 안 고르기 목록)
+          await h.click('.bha-lcd button[aria-label="이벤트 타일"]');
+          await h.click('.bha-lcd .bha-pick__list .bha-viewtitle__item >> nth=1');
+        }
         const loc = h.page.locator('.bha-lcd').getByRole('button', { name, exact: true }).nth(i);
         if (await h.stable(n, `${name} ${i + 1}`, () => loc.click({ timeout: 3000 }), null, loc)) await h.check(`${n}/${name} ${i + 1}`, { keys: false });
       }

@@ -12,6 +12,7 @@ import { bossName } from '../data/bosses';
 import { BALANCE } from '../config/balance';
 import { currentStats, elementDamageOf } from '../engine/evolution';
 import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
+import { pickList, type PickList, type PickOption } from './bha/pickList';
 import { elementDamageAbbr, elementDamagePct } from './bha/element';
 import { MAX_DIFFICULTY, recommendedDifficulty } from '../engine/difficulty';
 import type { FactionConfig } from '../engine/faction';
@@ -78,26 +79,9 @@ let lastCos: string | null = null;
 /** 불러오기 탭 마지막 선택 (다음에 열 때 그대로) */
 let lastCall: { tier: number; care: CareAction; idleHours: number } = { tier: 1, care: 'pet', idleHours: 4 };
 
-function select(options: { value: string; label: string; group?: string }[], value: string, aria: string): HTMLSelectElement {
-  const s = el('select', 'bha-test__select');
-  s.setAttribute('aria-label', aria);
-  const groups = new Map<string, HTMLOptGroupElement>();
-  for (const o of options) {
-    const opt = el('option', '', o.label);
-    opt.value = o.value;
-    if (o.group) {
-      let g = groups.get(o.group);
-      if (!g) {
-        g = el('optgroup');
-        g.label = o.group;
-        groups.set(o.group, g);
-        s.append(g);
-      }
-      g.append(opt);
-    } else s.append(opt);
-  }
-  s.value = value;
-  return s;
+/** 고르기 칸: 게임 안 목록 (C.190, GDD 116장 추가 5 — 브라우저 기본 select 는 휴대폰 OS 창이 세로 회전 출력에서 세로로 떴다) */
+function select(options: PickOption[], value: string, aria: string): PickList {
+  return pickList(options, value, aria, 'bha-test__select');
 }
 
 function numInput(value: number, min: number, max: number, aria: string): HTMLInputElement {
@@ -218,7 +202,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       hd.onBodyChanged();
     } });
     return [panel({ title: '진화체 고르기', aside: `${FORM_TABLE.length + 1}종` },
-      grid([['종족', fSel], ['진화체', formSel]]),
+      grid([['종족', fSel.el], ['진화체', formSel.el]]),
       row(apply),
       note('종족을 바꾸면 테스트 칸을 그 종족으로 새로 만든다(전체 해금). 능력치는 그 진화체의 종족값 + 지금 노력치·입력값이다.'))];
   }
@@ -256,7 +240,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [panel({ title: '특성 고르기', aside: `${TRAITS.length}종` },
-      grid([...sels.map((s, i) => [`칸 ${i + 1}`, s] as [string, Node]), ['고유 특성', abil]]), row(apply),
+      grid([...sels.map((s, i) => [`칸 ${i + 1}`, s.el] as [string, Node]), ['고유 특성', abil.el]]), row(apply),
       note('같은 특성은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 6종).'))];
   }
 
@@ -276,7 +260,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       hd.onBattle(lastBattle);
     } });
     return [panel({ title: '바로 전투', aside: `${foes.length}종` },
-      grid([['상대', foeSel], ['★', starSel], ['연속', streak], ['탑 층', floorSel]]), row(go),
+      grid([['상대', foeSel.el], ['★', starSel.el], ['연속', streak], ['탑 층', floorSel.el]]), row(go),
       note('탑 층을 고르면 ★·배율은 층 규칙(★ = ⌈층/10⌉, 구간 안 층마다 +4%, 50층 +20%). 결과는 테스트 칸 런 로그에만 남는다.'))];
   }
 
@@ -344,8 +328,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const fillIds = () => {
       const k = kindSel.value as TestItemKind;
       idSel = select(testItemIds(k).map((id) => ({ value: id, ...itemLabel(k, id) })), k === lastItem.kind ? lastItem.id : '', '품목');
-      if (!idSel.value && idSel.options.length) idSel.selectedIndex = 0;
-      idWrap.replaceChildren(idSel);
+      idWrap.replaceChildren(idSel.el);
       const gear = k === 'gear';
       for (const n of gearRows) n.hidden = !gear;
       all.disabled = !gear; // 자리는 그대로 (버튼 자리 고정)
@@ -354,7 +337,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const gradeSel = select(GEAR_GRADES.map((g) => ({ value: g, label: GEAR_GRADE_NAMES[g] })), lastItem.grade, '등급');
     const plus = numInput(lastItem.plus, 0, BALANCE.provisional.gear.maxPlus, '강화');
     const starSel = select(Array.from({ length: MAX_DIFFICULTY }, (_, i) => ({ value: String(i + 1), label: `★${i + 1}` })), String(recommendedDifficulty(save.evolution.tierIndex)), '★');
-    const g = grid([['분류', kindSel], ['품목', idWrap], ['개수', count], ['등급', gradeSel], ['강화', plus], ['★', starSel]]);
+    const g = grid([['분류', kindSel.el], ['품목', idWrap], ['개수', count], ['등급', gradeSel.el], ['강화', plus], ['★', starSel.el]]);
     // 등급·강화·★ 줄(이름 + 칸)은 장비만
     const cells = [...g.children] as HTMLElement[];
     const gearRows = cells.slice(6);
@@ -422,9 +405,9 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [
-      panel({ title: '스킨', aside: `${skins.length}종` }, grid([['스킨', skinSel]]), row(wearSkin, offSkin),
+      panel({ title: '스킨', aside: `${skins.length}종` }, grid([['스킨', skinSel.el]]), row(wearSkin, offSkin),
         note(skins.length ? '가진 것 상관없이 이 종족이 입을 수 있는 스킨 전부를 보인다(상점에 안 나오는 단계·아란칼 외형 포함).' : '이 종족은 스킨 데이터가 없다.')),
-      panel({ title: '꾸밈', aside: `${wearables.length}종` }, grid([['꾸밈', cosSel]]), row(wearCos, offCos), row(offAll),
+      panel({ title: '꾸밈', aside: `${wearables.length}종` }, grid([['꾸밈', cosSel.el]]), row(wearCos, offCos), row(offAll),
         note('안 가진 꾸밈은 입힐 때 테스트 칸에 보유로 넣는다.')),
     ];
   }
@@ -512,13 +495,13 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     const forced = [force.eventTile ? tileName(force.eventTile, fid) : null, force.mutation ? mutationName(force.mutation, fid) : null].filter(Boolean).join(' · ');
     return [
-      panel({ title: '떠돌이 상인', aside: visit ? `와 있음 · ${visit.tier}단계` : '없음' }, grid([['단계', tierSel]]), row(callW, rerollW, sendW),
+      panel({ title: '떠돌이 상인', aside: visit ? `와 있음 · ${visit.tier}단계` : '없음' }, grid([['단계', tierSel.el]]), row(callW, rerollW, sendW),
         note('단계가 높을수록 영웅·전설 물건이 잘 나온다. 와 있으면 새 상인으로 바꾼다. 물건 목록은 오른쪽 맨 아래에 보인다.')),
-      panel({ title: '돌봄 요청', aside: care ? `${faction.nestActions[care.action]} 요청 중` : '없음' }, grid([['요청', careSel]]), row(callC, clearC),
+      panel({ title: '돌봄 요청', aside: care ? `${faction.nestActions[care.action]} 요청 중` : '없음' }, grid([['요청', careSel.el]]), row(callC, clearC),
         note(save.nest.dead ? '사망 상태에서는 요청이 오지 않는다.' : '방 아래 독 버튼에 요청 표시가 붙는다.')),
-      panel({ title: '대기 보상', aside: save.idlePending ? `${Math.round(save.idlePending.hours * 10) / 10}시간 쌓임` : '없음' }, grid([['시간', idleSel]]), row(callI, clearI),
+      panel({ title: '대기 보상', aside: save.idlePending ? `${Math.round(save.idlePending.hours * 10) / 10}시간 쌓임` : '없음' }, grid([['시간', idleSel.el]]), row(callI, clearI),
         note('그 시간만큼 자동 모험을 한 것으로 쌓는다. 시간까지 흐르게 하려면 [둥지·시간] 탭의 시간 앞당기기를 쓴다.')),
-      panel({ title: '원정 이벤트', aside: forced || '예약 없음' }, grid([['이벤트 타일', evSel], ['바퀴 변이', mutSel]]), row(callE, clearE),
+      panel({ title: '원정 이벤트', aside: forced || '예약 없음' }, grid([['이벤트 타일', evSel.el], ['바퀴 변이', mutSel.el]]), row(callE, clearE),
         note('원정 안에서만 뜨는 것이라 다음 자유 원정 출발 때 놓는다(스토리·첫 진화 전 원정은 제외). 예약은 이 실행 동안만 남는다.')),
     ];
   }

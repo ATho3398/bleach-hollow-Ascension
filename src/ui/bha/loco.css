@@ -28,7 +28,7 @@
 .bha-char[data-loco='fly'] .bha-char__lift, .bha-hero[data-loco='fly'] .bha-hero__lift, .bha-walker[data-loco='fly'] .bha-walker__body { animation-name: bha-loco-fly; }
 
 /* 방 */
-.bha-char__lift { display: block; }
+.bha-char__lift { display: block; position: relative; z-index: 1; } /* 발밑 그림자(뒤 형제)보다 위 층 — 그림자가 캐릭터를 덮지 않게 (C.190, GDD 117장 5) */
 .bha-char[data-loco='float'] .bha-char__shadow { animation: bha-loco-shadow-float var(--loco-t) ease-in-out infinite; }
 .bha-char[data-loco='fly'] .bha-char__shadow { animation: bha-loco-shadow-fly var(--loco-t) ease-in-out infinite; }
 

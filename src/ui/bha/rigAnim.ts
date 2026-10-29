@@ -126,6 +126,7 @@ const MIN_FRAME_MS = 33;
 /** sets = 동작 묶음(몸이 묶음을 쓰면 그 몸 동작으로 덮는다, GDD 96장 40) */
 export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record<string, Motion>, lookId: string, partBase: string, sets?: MotionSets): RigPlayer {
   const [vx, vy, vw, vh] = rig.view?.rect ?? [0, 0, rig.canvas[0], rig.canvas[1]];
+  const clipH = rig.view?.clipY !== undefined ? Math.min(vh, rig.view.clipY - vy) : vh; // 바닥 밑(clipY 아래)은 땅에 가려진 것처럼 안 그린다
   const canvas = document.createElement('canvas');
   canvas.width = vw * K;
   canvas.height = vh * K;
@@ -146,12 +147,17 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     const mats = boneMatrices(rig, pose, body);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, canvas.width, clipH * K);
+    ctx.clip();
     ctx.imageSmoothingEnabled = false;
     for (const { layer, im } of layers) {
       const m = layerMatrix(rig, mats, layer, motion);
       ctx.setTransform(m[0] * K, m[1] * K, m[2] * K, m[3] * K, (m[4] - vx) * K, (m[5] - vy) * K);
       ctx.drawImage(im, 0, 0);
     }
+    ctx.restore();
     img.src = canvas.toDataURL();
     return true;
   };

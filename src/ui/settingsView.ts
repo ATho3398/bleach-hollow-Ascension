@@ -151,12 +151,8 @@ function scopeTag(): HTMLElement {
 /** 레이어로 열린 설정의 닫기 X (도움말과 같은 모양) */
 const closeX = (onClose: () => void): HTMLButtonElement => button({ label: '닫기', icon: 'i-close', iconOnly: true, variant: 'ghost', onClick: onClose });
 
-/** 설명 한 줄 (#77): 넘치면 말줄임, 전체 글은 툴팁 */
-const hintLine = (text: string): HTMLElement => {
-  const p = el('p', 'bha-faint bha-settings__hint', text);
-  p.title = text;
-  return p;
-};
+/** 설명 줄 (#77): 넘치면 줄바꿈으로 다 보인다 — 말줄임 없음 (C.190, GDD 116장 3 사용자 "설명짤리는걸 왜 ...으로 대체해") */
+const hintLine = (text: string): HTMLElement => el('p', 'bha-faint bha-settings__hint', text);
 
 const panel = (title: string, ...n: Node[]): HTMLElement => {
   const p = el('section', 'bha-panel');
@@ -392,7 +388,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     fsBtn.classList.toggle('is-on', isFullscreen());
     fsBtn.setAttribute('aria-pressed', String(isFullscreen()));
   };
-  const fsPanel = panel('전체 화면', fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다(누르면 바로 바뀐다).'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
+  const fsPanel = panel('전체 화면', fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다(누르면 바로 바뀐다).'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 되고 화면이 가로로 고정된다(안드로이드). 꺼져 있어도 세로로 들고 있으면 가로 고정은 시도한다.'));
   fsPanel.dataset.panel = 'fullscreen';
   paintFs();
   const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];

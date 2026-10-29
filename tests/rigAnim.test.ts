@@ -40,7 +40,9 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     expect(end).toBe(1);
   });
   it('사신 그림은 종이인형(정지 그림 = 쉬는 자세 한 장), 단계별 파일이 있으면 그쪽이 먼저', () => {
-    const a = charArt('shinigami', 0, 'char.shinigami', '/', undefined, ['char-shinigami.png']);
+    // 1·2단계(혼백·학생) = 학생복, 3단계부터 사신복 (C.190, GDD 116장 2)
+    expect(charArt('shinigami', 0, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-student');
+    const a = charArt('shinigami', 2, 'char.shinigami', '/', undefined, ['char-shinigami.png']);
     expect(a.rig?.look).toBe('shinigami-base');
     expect(a.src).toBe('/art/rig/humanoid/still/shinigami-base.png');
     expect(ART_MANIFEST['char.shinigami']!.rig).toBe(HUMANOID.looks['shinigami-base'] ? 'shinigami-base' : undefined);
@@ -53,7 +55,7 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     expect(charArt('shinigami', 1, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-student');
     expect(charArt('shinigami', 2, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-base');
     // 목록·사진처럼 종족 기본 키를 안 넘기는 곳은 그대로 한 장 그림
-    expect(charArt('shinigami', 0, '', '/', undefined, ['char-shinigami.png']).rig).toBeUndefined();
+    expect(charArt('shinigami', 2, '', '/', undefined, ['char-shinigami.png']).rig).toBeUndefined();
   });
   it('모든 동작에서 부위가 게임 그림 칸(view) 안에 있다(칼은 칼끝, 바닥 밑은 땅에 가려져 잘려도 된다)', () => {
     const [vx, vy, vw, vh] = HUMANOID.view!.rect;

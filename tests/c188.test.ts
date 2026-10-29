@@ -73,7 +73,7 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
     const art = (fid: string, t: number, g: 'male' | 'female') => charArt(fid, t, getFaction(fid).room?.characterArt ?? '', '/', undefined, ART_FILES, null, undefined, g);
     expect(art('hollow', 0, 'female')).toEqual(art('hollow', 0, 'male'));
     expect(art('hollow', 3, 'female')).toEqual(art('hollow', 3, 'male'));
-    for (const [fid, t, look] of [['hollow', 4, 'arrancar-base'], ['shinigami', 0, 'shinigami-base'], ['shinigami', 1, 'shinigami-student'], ['shinigami', 2, 'shinigami-base']] as const) {
+    for (const [fid, t, look] of [['hollow', 4, 'arrancar-base'], ['shinigami', 0, 'shinigami-student'], ['shinigami', 1, 'shinigami-student'], ['shinigami', 2, 'shinigami-base']] as const) {
       expect(art(fid, t, 'male').rig?.look, `${fid}${t}`).toBe(look);
       expect(art(fid, t, 'female').rig?.look, `${fid}${t}`).toBe(`${look}-f`);
       expect(art(fid, t, 'female').src).toBe(`/art/rig/humanoid/still/${look}-f.png`);

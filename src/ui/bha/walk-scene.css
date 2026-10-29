@@ -82,7 +82,7 @@
 .bha-scenebg { position: absolute; inset: 0; overflow: hidden; container-type: size; pointer-events: none; background: var(--bha-bg-0); }
 .bha-scenebg__layer {
   --tile-w: calc(var(--layer-h) * 1cqh * var(--tile-ratio));
-  position: absolute; left: 0; bottom: 0; height: calc(var(--layer-h) * 1%); width: calc(100% + var(--tile-w));
+  position: absolute; left: 0; bottom: calc(var(--layer-b, 0) * 1%); height: calc(var(--layer-h) * 1%); width: calc(100% + var(--tile-w));
   background-image: var(--bg-url); background-size: auto 100%; background-repeat: repeat-x; background-position: 0 100%;
   image-rendering: pixelated;
 }

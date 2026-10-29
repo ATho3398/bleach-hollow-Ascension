@@ -26,6 +26,7 @@ export function sceneBgEl(bg: SceneBg, moving: boolean): HTMLElement {
     // 사용자 정의 속성 안의 상대 주소는 스타일시트 위치 기준으로 풀리므로 문서 기준 절대 주소로 넣는다
     layer.style.setProperty('--bg-url', `url("${new URL(l.url, document.baseURI).href}")`);
     layer.style.setProperty('--layer-h', String(l.height));
+    if (l.bottom) layer.style.setProperty('--layer-b', String(l.bottom));
     layer.style.setProperty('--tile-ratio', String(l.ratio));
     layer.style.setProperty('--layer-speed', String(l.speed));
     box.append(layer);

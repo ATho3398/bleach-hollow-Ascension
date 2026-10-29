@@ -157,7 +157,7 @@
 .bha-switch.is-checked .bha-switch__track { background: var(--bha-good); border-color: var(--bha-good); }
 .bha-switch.is-checked .bha-switch__knob { transform: translateX(16px); background: var(--bha-bg-0); }
 .bha-switch:active { background: var(--bha-bg-3); }
-.bha-settings__hint { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-settings__hint { margin: 0; white-space: normal; overflow-wrap: anywhere; word-break: keep-all; } /* 설명은 말줄임 없이 줄바꿈으로 다 보인다 (C.190, GDD 116장 3) */
 /* C.178 (GDD 103장): 탭 4개 + 패널 두 칸 격자 · 줄마다 '슬롯' 표시 · 머리 [공통]/[이 슬롯] · [저장](바뀐 게 있으면 강조 + 점) */
 .bha-settings-page .bha-lcdpage__col { gap: var(--bha-sp-3); }
 .bha-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-3); align-items: start; min-height: 0; overflow-y: auto; }
@@ -403,6 +403,13 @@ button.bha-slot { cursor: pointer; }
 }
 .bha-viewtitle__item.is-on { background: var(--bha-bg-3); border-color: var(--bha-accent); }
 .bha-viewtitle__item:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
+/* 게임 안 고르기 칸 (C.190, GDD 116장 추가 5): 브라우저 기본 select 대신 — 버튼 + 오버레이 자리에 뜨는 제목 토글 모양 목록 (pickList.ts) */
+.bha-pick { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-1); text-align: left; cursor: pointer; touch-action: manipulation; }
+.bha-pick__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-pick[aria-expanded="true"] .bha-viewtitle__caret { transform: rotate(180deg); }
+.bha-pick__list { z-index: var(--bha-z-modal); box-sizing: border-box; width: max-content; }
+.bha-pick__list .bha-viewtitle__item { overflow: hidden; text-overflow: ellipsis; }
+.bha-pick__group { flex: none; padding: var(--bha-sp-1) var(--bha-sp-2) 0; color: var(--bha-text-3); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
 
 /* 광기·자아 설명 (C.141, GDD 84장 9번): 수치마다 손해·오르는 길·내리는 길을 숫자로 */
 .bha-riskexplain { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
