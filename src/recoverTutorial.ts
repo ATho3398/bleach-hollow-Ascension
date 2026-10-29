@@ -64,6 +64,28 @@ export function recoverSpa(save: SaveData, nowMs: number): boolean {
   return true;
 }
 
+/** ⑤ 온천에 들어간 순간 (GDD 129-2 2, C.206): spaTo 까지 걸리는 온천 시간을 바로 흘린다 — 온천에서 나오지는 않는다(쉬기 설명 뒤 방으로) */
+export function recoverSpaSoak(save: SaveData, nowMs: number): boolean {
+  const from = homeHp(save).fraction;
+  if (!save.nest.spa || from >= TR.spaTo - EPS) return false;
+  spaSoak(save, (TR.spaTo - from) / SPA.hpPerMinute, nowMs, true);
+  if (homeHp(save).fraction < TR.spaTo - EPS) setHomeHpOf(save, TR.spaTo); // 배부름이 먼저 바닥났어도 각본 값까지
+  return true;
+}
+
+/** ⑥ 먹이 카드가 뜰 때 먹이 1개 지급 (GDD 129-2 2: 먹이는 사용자가 독 [먹이]로 직접 준다) */
+export function grantRecoverFood(save: SaveData): void {
+  grantFood(save, TR.food as FoodId, 1);
+}
+
+/** ⑥ 사용자가 먹이를 준 뒤: 배부름·체력 가득(튜토리얼 각본 값) · 안내를 마친다 → 다음 안내('다음 할 일') 차례 */
+export function recoverFeedDone(save: SaveData): void {
+  save.nest.hunger = 0;
+  setHomeHpOf(save, 1);
+  markGuideDone(save.help, 'recover');
+  queueGuide(save.help, 'first-run-room');
+}
+
 /** ⑥ 먹이 1개 지급 → 먹임 → 배부름·체력 가득 (튜토리얼 각본 값). 안내를 마친다 → 다음 안내('다음 할 일') 차례 */
 export function recoverFeed(save: SaveData, nowMs: number): void {
   const food = TR.food as FoodId;

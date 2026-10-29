@@ -275,15 +275,21 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     const ov = view.querySelector<HTMLElement>('.bha-battle .bha-overlay');
     const battleEl = view.querySelector<HTMLElement>('.bha-battle');
     // 튜토리얼 '직접 해 보기'(data-dev-pass)는 레이어가 열린 채 전투를 만진다: 전투 대상 + 레이어 버튼을 같이 고른다
-    const pass = !!layer && layer.el.hasAttribute('data-dev-pass') && !!battleEl;
+    const passAny = !!layer && layer.el.hasAttribute('data-dev-pass');
+    const pass = passAny && !!battleEl;
     const wasBattle = battle;
     battle = !!battleEl && !ov && (!layer || pass);
     if (explicit && !explicit.scope.isConnected) explicit = null;
     let next: SelectItem[];
     // 각본 전투 카드 (GDD 123장 5, C.199): data-dev-only 가 있으면 그 선택자에 맞는 전투 대상(막기 버튼·블록 칸)만
-    const only = pass ? layer!.el.dataset.devOnly : undefined;
+    const only = passAny ? layer!.el.dataset.devOnly : undefined;
     if (pass && only) next = scanItems(battleEl!, lcd).filter((i) => i.el.matches(only));
     else if (pass) next = [...scanItems(battleEl!, lcd), ...scanItems(layer!.el, lcd)];
+    else if (passAny) {
+      // 전투 밖 튜토리얼 실제 조작 카드 (GDD 129-2 2, C.206): 카드를 연 채 뒤 화면 대상(data-dev-only 에 맞는 것)을 고르고, 카드 버튼([다음])도 같이
+      const base = explicit?.scope.isConnected ? explicit.items.filter((i) => i.el.isConnected && visible(i.el)) : scanItems(view, lcd);
+      next = [...base.filter((i) => !layer!.el.contains(i.el) && (!only || i.el.matches(only))), ...scanItems(layer!.el, lcd)];
+    }
     else if (layer) next = scanItems(layer.el, lcd);
     else if (ov) next = scanItems(ov, lcd);
     else if (battle) next = scanItems(battleEl!, lcd);

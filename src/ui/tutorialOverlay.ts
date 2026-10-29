@@ -37,10 +37,27 @@ export interface TutorialOverlayOptions {
   name?: string;
   /** 각본 전투 카드 (GDD 123장 5, C.199): 건너뛰기·이전 없이 단계 글자(step)만. waitFor 가 있으면 [다음] 없이 전투를 만지게 두고(직접 해 보기와 같음),
    *  기기 ▲▼ 는 그 선택자에 맞는 전투 대상만 고른다 (GDD 122장) */
-  script?: { step: string; waitFor?: string };
+  script?: { step: string; waitFor?: string; act?: TutorialAct };
+  /** 기기 뒤로 (없으면 아무것도 안 함 — 튜토리얼은 [다음]·[건너뛰기]로만 닫는다) */
+  onBack?: () => void;
   /** 도움말에서 직접 연 다시 보기 (GDD 129-1): 이때만 뒤 화면을 회색으로 덮는다. 없으면(저절로 뜨는 안내·각본 카드) 카드·강조 테두리만 */
   replay?: boolean;
 }
+
+/**
+ * 실제 조작 카드 (GDD 129-2 2, C.206): 카드는 눌러야 할 버튼을 가리키기만 하고(강조 테두리), 사용자가 원래 게임 조작으로 그 버튼을 눌러야 진행한다.
+ * 하기 전에는 [다음]이 흐린 잠김, done() 이 참이 되면 [다음]이 켜지고 기기 초점이 [다음]으로 간다. 그동안 기기 ▲▼ 는 뒤 화면의 selector 대상만 고른다.
+ * 화면이 바뀌어도(가방 열기·월드맵·시장) 강조 테두리는 장면 targets 중 지금 보이는 것을 따라간다
+ */
+export interface TutorialAct {
+  /** 기기 ▲▼ 가 고를 뒤 화면 대상 (CSS 선택자, 여러 화면에 걸치면 쉼표로) */
+  selector: string;
+  /** 해야 할 것을 했는가 */
+  done: () => boolean;
+}
+
+/** 실제 조작 카드가 대상 위치·완료를 다시 보는 간격 */
+const ACT_POLL_MS = 250;
 
 /** 구멍을 대상보다 이만큼(px) 넓게 판다 (HANDOFF 5-4) */
 export const TUTORIAL_HOLE_PAD = 6;
@@ -92,7 +109,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   layer.append(hole, card);
   const host = getOverlayHost();
   host.append(layer);
-  const unregister = registerLayer(layer, () => {}); // 뒤로 = 아무것도 안 함 — 튜토리얼은 [다음]·[건너뛰기]로만 닫는다 (C.176, GDD 104장 7)
+  const unregister = registerLayer(layer, opts.onBack ?? (() => {})); // 뒤로 = 아무것도 안 함(또는 부르는 쪽 안내) — 튜토리얼은 [다음]·[건너뛰기]로만 닫는다 (C.176, GDD 104장 7)
 
   let practiceOn = false;
   let practiced = false;
@@ -100,6 +117,9 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   /** 직접 해 보기를 아직 못 넘는가: 블록을 하나 쓰고, minBlocks 만큼 모일 때까지 */
   const mustWait = (scene: TutorialScene) => !!scene.practice && (!practiced || blocks < (scene.minBlocks ?? 0));
   let nextBtn: HTMLButtonElement | null = null;
+  /** 실제 조작 카드: 해야 할 것을 했다 */
+  let actDone = false;
+  let actTimer = 0;
   const setPractice = (on: boolean) => {
     if (on === practiceOn) return;
     practiceOn = on;
@@ -108,6 +128,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     opts.onPractice?.(on);
   };
   const teardown = () => {
+    window.clearInterval(actTimer);
     setPractice(false);
     window.removeEventListener('resize', layout);
     unregister();
@@ -204,9 +225,13 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     } });
     next.append(icon(last ? 'i-play' : 'i-chevron-right'));
     next.disabled = mustTry; // 직접 해 보기는 블록을 하나 써야 넘어간다 (건너뛰기는 언제나 가능)
+    const acting = !!sc?.act && !actDone;
+    if (acting) next.disabled = true; // 실제 조작 카드: 하기 전에는 [다음] 잠김 (GDD 129-2 2)
     nextBtn = next;
-    setPractice(!!scene.practice || !!sc?.waitFor);
+    setPractice(!!scene.practice || !!sc?.waitFor || acting);
     if (sc?.waitFor) layer.dataset.devOnly = sc.waitFor;
+    else if (acting) layer.dataset.devOnly = sc!.act!.selector;
+    else delete layer.dataset.devOnly;
     const actions = el('div', 'bha-tut__actions');
     // 각본 카드: 강제 진행 — 건너뛰기·이전 없음, 기다리는 카드는 [다음]도 없음 (막기·블록을 눌러야 진행)
     if (!sc) actions.append(skip, prev, next);
@@ -228,7 +253,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     card.style.visibility = 'hidden';
     layout();
     card.style.visibility = 'visible';
-    if (!sc?.waitFor) next.focus({ preventScroll: true });
+    if (!sc?.waitFor && !acting) next.focus({ preventScroll: true });
   }
 
   /** 샘플 블록: 블록 바에 생기는 블록의 역할 표시(아이콘 + 색 + 이름)를 카드 안에서 미리 보여 준다 */
@@ -245,6 +270,18 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
 
   window.addEventListener('resize', layout);
   render();
+  const act = opts.script?.act;
+  if (act) {
+    const poll = () => {
+      if (!layer.isConnected) return window.clearInterval(actTimer);
+      layout(); // 화면이 바뀌면 강조 테두리가 지금 보이는 대상으로 옮겨 간다
+      if (actDone || !act.done()) return;
+      actDone = true;
+      render(); // [다음] 켜짐 · 뒤 화면 통과 끝 · 초점 = [다음]
+    };
+    actTimer = window.setInterval(poll, ACT_POLL_MS);
+    poll();
+  }
   return {
     close: () => finish('skipped'),
     dismiss: teardown,

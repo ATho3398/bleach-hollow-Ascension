@@ -111,9 +111,11 @@
     },
     {
       "id": "to-bag",
-      "targets": [],
+      "targets": [
+        "@.bha-prop--chest"
+      ],
       "title": "빈사부터 치료",
-      "body": "빈사는 치료제를 써야 풀린다.\n치료제와 체력 포션을 1개씩 {chestName}에 넣었다."
+      "body": "빈사는 치료제를 써야 풀린다.\n치료제와 체력 포션을 1개씩 {chestName}에 넣었다. {chestName}을(를) 열자."
     },
     {
       "id": "cure",
@@ -121,7 +123,7 @@
         "@[data-item=\"med-cure\"]"
       ],
       "title": "치료제",
-      "body": "치료제를 쓰면 빈사가 풀린다.\n치료제는 상점에서 산다."
+      "body": "치료제를 눌러 [사용]하면 빈사가 풀린다.\n치료제는 상점에서 산다."
     },
     {
       "id": "potion",
@@ -129,7 +131,7 @@
         "@[data-item=\"w-hp-potion\"]"
       ],
       "title": "체력 포션",
-      "body": "빈사가 풀렸으니 이제 체력을 채운다.\n튜토리얼의 체력 포션은 체력을 {potionPct}%까지 채운다."
+      "body": "빈사가 풀렸으니 이제 체력을 채운다. 체력 포션을 눌러 [사용]한다.\n튜토리얼의 체력 포션은 체력을 {potionPct}%까지 채운다."
     },
     {
       "id": "merchant",
@@ -141,16 +143,18 @@
       "id": "to-spa",
       "targets": [
         "@.bha-prop--market",
-        "@.bha-prop--outside"
+        "@.bha-prop--outside",
+        "@.bha-worldmap [data-place=\"market\"]",
+        "@.bha-market [data-spot=\"spa\"]"
       ],
       "title": "{spaName}",
-      "body": "{spaName}은(는) 방의 {marketName} 안에 있다. {marketName}을(를) 지나 {spaName}(으)로 간다.\n{spaName}에서 쉬면 체력이 1분에 {spaHpPct}% 차고 배부름이 {spaFullness} 준다.\n체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
+      "body": "{spaName}에서 쉬면 체력이 1분에 {spaHpPct}% 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.\n체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
     },
     {
       "id": "spa-rest",
       "targets": [],
       "title": "쉬기",
-      "body": "튜토리얼에서는 기다리지 않고 바로 체력이 {spaToPct}%까지 찬다.\n쉬고 나면 방으로 돌아간다."
+      "body": "튜토리얼에서는 기다리지 않고 바로 체력이 {spaToPct}%까지 찼다.\n[다음]을 누르면 방으로 돌아간다."
     },
     {
       "id": "feed",
@@ -158,7 +162,7 @@
         "@.bha-homedock__carebtn--feed"
       ],
       "title": "먹이",
-      "body": "먹이를 주면 배부름과 함께 체력도 조금 찬다.\n먹이 1개를 넣었다."
+      "body": "먹이를 주면 배부름과 함께 체력도 조금 찬다.\n{foodName} 1개를 넣었다. [먹이]를 눌러 {foodName}을(를) 주자."
     },
     {
       "id": "done",

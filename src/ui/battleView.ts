@@ -601,6 +601,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // ── 각본 전투 (첫 원정 첫 전투, GDD 123장 5, C.199): 엔진 각본(engine/combat/script)이 멈춰 기다리면 설명 카드를 띄운다.
   // 설명 카드(ack) = 전투 멈춤 + [다음](✓), 막기·블록 카드 = 전투 시간은 멈춘 채 그 버튼만 누를 수 있다 (기기 ▲▼ 도 그 대상만)
   const scripted = !!s.script;
+  /** 카드 닫힘 → 행동까지 빈 화면 (GDD 129-2 1 "한 0.5초") */
+  const SCRIPT_ACT_DELAY_MS = 500;
   let scriptReady = false;
   let scriptCard: TutorialHandle | null = null;
   let scriptCardStage: string | null = null;
@@ -608,8 +610,38 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 설명 카드가 뜨는 단계 (단계 글자 "튜토리얼 n / 7") */
   const SCRIPT_CARDS = SCRIPT_STAGES.filter((x) => !!SCRIPT_SCENES[x]);
   const scriptHold = (): boolean => !!s.script && scriptPrompt(s) !== null;
+  /** 각본 행동 단계(막기·블록)에서 누른 입력 (GDD 129-2 1): 카드를 먼저 닫고 SCRIPT_ACT_DELAY_MS 빈 화면(전투 멈춘 채) 뒤에 엔진에 넣는다 */
+  let scriptPending: { input: CombatInput; at: number; stage: string } | null = null;
+  /** 누른 입력이 지금 기다리는 행동과 맞는가 (막기 = guard, 블록 = use) — 맞지 않는 누름은 카드를 닫지 않는다 */
+  const scriptWants = (x: CombatInput): boolean => {
+    const pr = scriptPrompt(s);
+    return !!pr && ((pr.wait === 'guard' && x.type === 'guard') || (pr.wait === 'use' && x.type === 'use'));
+  };
+  /** 각본 행동 입력 처리 (프레임마다): 맞는 입력이 오면 카드 닫기 → 0.5초 뒤 엔진. 받아들여지지 않으면 카드를 다시 띄운다 */
+  const pumpScriptInput = (now: number): void => {
+    if (!scriptPending) {
+      const input = queue.find(scriptWants);
+      queue.length = 0;
+      if (!input) return;
+      const pr = scriptPrompt(s)!;
+      scriptPending = { input, at: now + SCRIPT_ACT_DELAY_MS, stage: pr.stage };
+      scriptCardStage = `act:${pr.stage}`; // 닫힘(onFinish)이 다음 카드를 띄우지 않게
+      scriptCard?.dismiss();
+      scriptCard = null;
+      return;
+    }
+    queue.length = 0;
+    if (now < scriptPending.at) return;
+    const { input, stage } = scriptPending;
+    scriptPending = null;
+    const ok = scriptPrompt(s)?.stage === stage && scriptStep(s, input)[0] === true;
+    if (!ok && scriptCardStage === `act:${stage}`) scriptCardStage = null; // 안 됐으면 같은 카드를 다시
+    syncScript();
+    drawHud();
+    drawTray();
+  };
   const syncScript = (): void => {
-    if (!scripted || !scriptReady) return;
+    if (!scripted || !scriptReady || scriptPending) return; // 행동 입력을 기다리는 0.5초 동안은 카드를 다시 띄우지 않는다
     const pr = s.status === 'playing' ? scriptPrompt(s) : null;
     const id = pr?.stage ?? null;
     if (id === scriptCardStage) return;
@@ -1342,7 +1374,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const frozen = halted() || scriptHold(); // 각본 전투가 기다리는 동안도 시간이 흐르지 않는다 (C.199)
       if (frozen !== fxHalted) attack.setPaused((fxHalted = frozen));
       // 각본이 막기·블록을 기다리면 틱 없이 그 입력만 받는다
-      if (scriptHold() && !halted() && queue.length) scriptStep(s, queue.splice(0, queue.length));
+      // 각본 행동 단계 (GDD 129-2 1): 카드 닫힘 → 약 0.5초 빈 화면 → 블록 모션·적 피해 (막기도 같은 순서)
+      if (scriptHold() && !halted()) {
+        if (queue.length || scriptPending) pumpScriptInput(now);
+      }
       const f = frameTicks(acc, dt, testSpeedMul(), tickMs, halted() || scriptHold()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
       acc = f.acc;
       for (let n = 0; n < f.ticks && s.status === 'playing' && !scriptHold(); n++) {

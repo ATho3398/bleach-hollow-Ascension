@@ -10,6 +10,7 @@ import { CARE_STATUS_NAMES, foodHpHeal, homeHpCap, homeHpOf } from './engine/nes
 import { drinkHpPotion } from './home';
 import { cureNest, feedNest } from './game';
 import { wandererAmount } from './engine/wanderer';
+import { guidePending } from './engine/tutorial';
 import { CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
 import { getPet, PET_IDS } from './data/pets';
@@ -165,7 +166,9 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림` };
   }
   if (e.hpFull) {
-    const r = drinkHpPotion(save, id);
+    // 튜토리얼 회복 안내 중(빈사가 풀린 뒤)에는 각본 값까지만 (GDD 123장 5·129-2 2: 사용자가 가방에서 직접 마신다)
+    const tut = guidePending(save.help, 'recover') && !save.nest.collapsed;
+    const r = drinkHpPotion(save, id, Date.now(), tut, tut ? BALANCE.provisional.tutorialRecover.potionTo : 1);
     return r ? { ok: true, detail: `체력 ${Math.round(r.hpTo * 100)}%` } : { ok: false, reason: '쓸 수 없다' };
   }
   save.nest.risk = Math.max(0, save.nest.risk - e.risk);

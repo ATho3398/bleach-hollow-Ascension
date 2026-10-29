@@ -7,11 +7,11 @@ import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
-import { SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
+import { homeHp, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
 import { RECOVER_SCENES } from '../data/help';
 import { fixParticles } from '../engine/josa';
-import { recoverCure, recoverFeed, recoverGrantBag, recoverPotion, recoverSpa, recoverStep } from '../recoverTutorial';
-import { tutorialOverlay } from './tutorialOverlay';
+import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverSpaSoak, recoverStep } from '../recoverTutorial';
+import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
 import { spaEndText, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
@@ -241,8 +241,9 @@ export function startApp(host: HTMLElement): void {
   let recoverOpen = false;
 
   /**
-   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199): 카드 9장을 순서대로, 카드 버튼 = 그 행동(기기 ✓ 로도). 건너뛰기 없음.
-   * 빈사 설명 → 가방(치료제·체력 포션 지급) → 치료제 → 포션 50% → 상인 안내 → 방 → 온천 → 쉬기 → 방 → 먹이 → 끝 → '다음 할 일'.
+   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206): 카드 9장을 순서대로. 건너뛰기 없음.
+   * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
+   * 빈사 설명 → 가방 열기(치료제·체력 포션 지급) → 치료제 [사용] → 포션 [사용](50%) → 상인 안내 → 방 → (밖으로 → 시장 →) 온천 들어가기(80%) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -259,46 +260,56 @@ export function startApp(host: HTMLElement): void {
     const vars = {
       chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), idleHpPct: pct(HH.idlePerMinute),
-    };
-    const openBag = () => {
-      openChestAtConsumables();
-      open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear)));
+      // 온천 가는 길 (GDD 130장 5): 켬 = '밖으로 → 시장 → 온천', 끔 = '장터 → 온천'
+      spaPath: FEATURES.WORLD_MAP ? `${props.outside} → ${mk.name} → ${mk.props.spa}` : `${mk.name} → ${mk.props.spa}`,
+      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food],
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
       else nav.top.render();
     };
-    // 카드마다: 버튼 이름 · 누르면 할 일
-    const steps: Record<string, { label: string; act: () => void }> = {
-      dying: { label: '다음', act: () => undefined },
-      'to-bag': { label: `${props.chest} 열기`, act: () => { recoverGrantBag(s); persist(); openBag(); } },
-      cure: { label: '치료제 쓰기', act: () => { recoverCure(s, Date.now()); persist(); nav.top?.render(); } },
-      potion: { label: '체력 포션 마시기', act: () => { recoverPotion(s, Date.now()); persist(); nav.top?.render(); } },
-      merchant: { label: '방으로', act: () => toRoom() },
-      'to-spa': { label: fixParticles(`${mk.name} → ${mk.props.spa}(으)로`), act: () => {
-        if (!s.nest.spa && spaEnter(s)) return; // 못 들어가면(배고픔 등) 다음 카드에서 바로 쉬기
-        persist();
-        if (FEATURES.WORLD_MAP) openWorldMap(faction, s); // 방 → 밖으로(월드맵) → 시장 → 온천 (GDD 130장 5)
-        openMarket(faction, s); // 방 → 장터 → 온천 (GDD 127장 4)
-        openSpa(faction, s, false);
-      } },
-      'spa-rest': { label: '쉬기', act: () => {
-        recoverSpa(s, Date.now());
-        persist();
-        if (nav.top?.id === 'spa') nav.pop();
-        toRoom(); // 장터를 거쳐 왔어도 방으로 (toRoom = 방이 아니면 nestScreen)
-      } },
-      feed: { label: '먹이 주기', act: () => { recoverFeed(s, Date.now()); persist(); nav.top?.render(); } },
-      done: { label: '다음', act: () => undefined },
+    const onRoomRender = () => { if (nav.top?.id === 'room') nav.top.render(); }; // 지급한 먹이 개수가 독에 보이게
+    const EPS = 1e-6;
+    // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
+    // 실제 조작: 가방 열기 → 치료제·체력 포션 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
+    const spaWay = FEATURES.WORLD_MAP
+      ? '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]' // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
+      : '.bha-prop--market, .bha-market [data-spot="spa"]'; // 스위치 끔: 방 → 장터 → 온천 (127장 4)
+    let fedAt = s.nest.lastFedAt;
+    const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: () => void; skip?: () => boolean }> = {
+      dying: {},
+      'to-bag': {
+        show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
+        act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' },
+      },
+      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => !s.nest.collapsed } },
+      potion: { act: { selector: '[data-item="w-hp-potion"]', done: () => homeHp(s).fraction >= TR.potionTo - EPS } },
+      merchant: { next: () => toRoom() },
+      'to-spa': {
+        // 온천에 들어가면(원래 조작) 튜토리얼 동안만 체력 spaTo 까지 시간을 바로 흘린다 — 나오지는 않는다 (다음 카드 [다음] 뒤 방으로)
+        act: { selector: spaWay, done: () => {
+          if (nav.top?.id !== 'spa' || !s.nest.spa) return false;
+          recoverSpaSoak(s, Date.now());
+          persist();
+          nav.top.render();
+          return true;
+        } },
+      },
+      'spa-rest': { next: () => { spaLeave(s); persist(); nestScreen(); } },
+      feed: {
+        show: () => { grantRecoverFood(s); fedAt = s.nest.lastFedAt; persist(); onRoomRender(); },
+        act: { selector: `.bha-homedock__carebtn--feed, .bha-homedock__food[data-food="${TR.food}"]`, done: () => {
+          if (s.nest.lastFedAt === fedAt) return false;
+          recoverFeedDone(s);
+          persist();
+          return true;
+        } },
+      },
+      done: {},
     };
     const ids = RECOVER_SCENES.map((x) => x.id);
-    // 이어 가기: 빈사 = 처음, 포션 = 가방 열고 포션 카드, 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
-    const first = start === 'dying' ? 0 : start === 'potion' ? ids.indexOf('potion') : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
-    if (start === 'potion') {
-      recoverGrantBag(s);
-      persist();
-      openBag();
-    }
+    // 이어 가기: 빈사 = 처음, 포션 = 가방 카드(치료제는 건너뜀), 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
+    const first = start === 'dying' ? 0 : start === 'potion' ? ids.indexOf('to-bag') : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
     const show = (i: number): void => {
       const scene = RECOVER_SCENES[i];
       if (!scene) {
@@ -307,22 +318,25 @@ export function startApp(host: HTMLElement): void {
         runGuide('first-run-room', faction);
         return;
       }
-      const st = steps[scene.id]!;
+      const st = steps[scene.id] ?? {};
+      if (st.skip?.()) return show(i + 1);
+      st.show?.();
       tutorialOverlay(faction, {
-        scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: st.label, vars,
-        script: { step: `회복 안내 ${i + 1} / ${RECOVER_SCENES.length}` },
+        scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: '다음', vars,
+        script: { step: `회복 안내 ${i + 1} / ${RECOVER_SCENES.length}`, act: st.act },
+        // 기기 뒤로: 건너뛰기 없는 안내라 짧은 안내만 (GDD 131장 2 와 같은 결)
+        onBack: () => showToast({ eyebrow: '튜토리얼', title: st.act ? '강조된 버튼을 눌러 진행한다' : '[다음]을 눌러 진행한다', meta: '' }, 0, 1800),
         onFinish: (status) => {
           if (status !== 'completed') {
             recoverOpen = false;
             return;
           }
-          st.act();
+          st.next?.();
           window.setTimeout(() => show(i + 1), 450); // 화면이 바뀐 뒤 대상 위치를 잰다
         },
       });
     };
-    if (start === 'potion') window.setTimeout(() => show(first), 450); // 가방이 그려진 뒤
-    else {
+    {
       // 방은 이미 그려졌다. 앞선 알림(튜토리얼 달성 등)이 맨 위에서 다 사라진 뒤 첫 카드 (GDD 129장 3 — 알림이 카드를 가리지 않게, 최대 약 10초)
       // 기다리는 동안은 투명한 막이 방을 덮어 누름(터치·기기 ✓)을 받지 않는다 — 다른 화면으로 가 버리지 않게
       const hold = el('div', 'bha-tut is-script is-nodim');

@@ -79,8 +79,8 @@ describe('130장 화면 연결 (app.ts·worldMapView)', () => {
     expect(wm).toContain("if (p === 'market' && here)");
     expect(wm).toContain("if (p === 'adventure' && save.nest.dead)");
   });
-  it('회복 안내 온천: 켬이면 월드맵 → 시장 → 온천, 대상 = 밖으로', () => {
-    expect(app).toContain('if (FEATURES.WORLD_MAP) openWorldMap(faction, s);');
+  it('회복 안내 온천: 켬이면 밖으로 → 시장 → 온천, 대상 = 밖으로 (C.206 부터 사용자가 직접 간다)', () => {
+    expect(app).toContain(`'.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'`);
     expect(read('src/data/help/tutorial.json')).toContain('"@.bha-prop--outside"');
   });
 });
