@@ -5,6 +5,7 @@ import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Sta
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
 import { PET_IDS } from '../data/pets';
 import { GEAR_SLOTS, type GearSlot } from '../data/gear';
+import { FEATURES } from '../config/features';
 
 /** 스킬 블록 역할 (GDD 3-5). 이름(표시)은 종족 설정이, 효과(로직)는 엔진이 정한다 */
 export const BLOCK_ROLES = ['attack', 'guard', 'heal'] as const;
@@ -67,8 +68,16 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
 /** market = 장터 (GDD 127장 2, C.201): 누르면 따로 된 장터 화면. 상점·온천(C.63·C.198 의 방 물건)은 장터 안으로 옮겼다 */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'market'] as const;
+/** outside = 밖으로 (GDD 130장 1, C.204): 월드맵 스위치(FEATURES.WORLD_MAP)가 켜지면 문·장터 대신 이것 하나 — 누르면 월드맵 */
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'market', 'outside'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
+/** 지금 방에 놓이는 물건 (GDD 130장 6): 스위치 켬 = 밖으로(문 자리)·수련장·책장·가방 / 끔 = 옛 방(모험 문·장터) */
+export function roomPropsShown(): RoomProp[] {
+  return ROOM_PROPS.filter((p) => (FEATURES.WORLD_MAP ? p !== 'door' && p !== 'market' : p !== 'outside'));
+}
+/** 월드맵 장소 (GDD 130장 2): 홈(방)·시장·모험(출발 준비 화면). ▲▼ 순서도 이 순서 */
+export const WORLD_PLACES = ['home', 'market', 'adventure'] as const;
+export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
 export const MARKET_SPOTS = ['spa', 'shop', 'wanderer'] as const;
 export type MarketSpot = (typeof MARKET_SPOTS)[number];
@@ -143,11 +152,11 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', market: '장터' },
+  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', market: '장터', outside: '밖으로' },
   floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
     door: { x: 9, y: 78, scale: 1 }, book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
-    chest: { x: 26, y: 90, scale: 0.81 }, market: { x: 74, y: 90, scale: 0.54 },
+    chest: { x: 26, y: 90, scale: 0.81 }, market: { x: 74, y: 90, scale: 0.54 }, outside: { x: 9, y: 78, scale: 1 },
   },
   characterFoot: { x: 50, y: 80 },
   talk: {
@@ -172,8 +181,11 @@ export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConf
   };
 }
 
-/** 장터 화면 설정 (GDD 127장 2, C.201). 이름은 방 물건 이름(room.props.market)을 그대로 쓴다 — 호로 '웨코문도 장터' / 사신 '루콘가 저잣거리' */
+/** 장터 화면 설정 (GDD 127장 2, C.201). 이름은 방 물건 이름(room.props.market)을 그대로 쓴다 — 호로 '웨코문도 장터' / 사신 '루콘가 저잣거리'.
+ *  월드맵 스위치가 켜지면 같은 화면이 '시장'(GDD 130장 3) — 이름 = market.name (두 종족 모두 '시장') */
 export interface MarketConfig {
+  /** 시장 이름 (GDD 130장 3, 월드맵 켬일 때만 쓴다) */
+  name: string;
   /** 장면 모양: bha-room--<shape> 클래스 (CSS 가 임시 배경 모양을 정한다) */
   shape: string;
   /** 배경 그림 키 (비어 있으면 임시 배경, 그림은 사용자 대기) */
@@ -187,6 +199,7 @@ export interface MarketConfig {
 }
 
 export const DEFAULT_MARKET: MarketConfig = {
+  name: '시장',
   shape: 'market',
   sceneArt: 'scene.market',
   props: { spa: '온천', shop: '상점', wanderer: '떠돌이 상인' },
@@ -194,7 +207,7 @@ export const DEFAULT_MARKET: MarketConfig = {
   layout: { spa: { x: 20, y: 86, scale: 0.8 }, shop: { x: 52, y: 74, scale: 0.8 }, wanderer: { x: 82, y: 88, scale: 0.8 } },
 };
 
-/** 종족 설정의 market 에 빠진 값을 기본값으로 채운다 + 장터 이름(room.props.market) */
+/** 종족 설정의 market 에 빠진 값을 기본값으로 채운다 + 이름 (월드맵 켬 = market.name '시장', 끔 = 옛 장터 이름 room.props.market) */
 export function marketOf(f: Pick<FactionConfig, 'room' | 'market'>): MarketConfig & { name: string } {
   const m = f.market ?? {};
   return {
@@ -203,7 +216,43 @@ export function marketOf(f: Pick<FactionConfig, 'room' | 'market'>): MarketConfi
     props: { ...DEFAULT_MARKET.props, ...m.props },
     floor: m.floor ?? DEFAULT_MARKET.floor,
     layout: { ...DEFAULT_MARKET.layout, ...m.layout },
-    name: roomOf(f).props.market,
+    name: FEATURES.WORLD_MAP ? (m.name ?? DEFAULT_MARKET.name) : roomOf(f).props.market,
+  };
+}
+
+/** 월드맵 설정 (GDD 130장 2, C.204): 하이앵글 지도 한 장 + 장소 3개. 이름 = 종족 설정 worldmap.name (호로 '웨코문도' / 사신 '소울 소사이어티') */
+export interface WorldMapConfig {
+  name: string;
+  /** 장면 모양: bha-room--<shape> (그림 없을 때 임시 배경) */
+  shape: string;
+  /** 배경 그림 키 (비어 있으면 임시 배경, 그림은 사용자 대기) */
+  sceneArt: string;
+  floor: RoomFloorConfig;
+  /** 장소 발 기준점 (장면 %) */
+  layout: Record<WorldPlace, { x: number; y: number; scale?: number }>;
+  /** 캐릭터 발 기준점 (처음 = 홈 옆) */
+  characterFoot: { x: number; y: number };
+}
+
+export const DEFAULT_WORLDMAP: WorldMapConfig = {
+  name: '월드맵',
+  shape: 'worldmap',
+  sceneArt: 'scene.worldmap',
+  floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
+  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 58, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 } },
+  characterFoot: { x: 32, y: 90 },
+};
+
+/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 모험 = 옛 문 이름 room.props.door) */
+export function worldMapOf(f: Pick<FactionConfig, 'room' | 'market' | 'worldmap' | 'nestName'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
+  const w = f.worldmap ?? {};
+  return {
+    ...DEFAULT_WORLDMAP,
+    ...w,
+    floor: w.floor ?? DEFAULT_WORLDMAP.floor,
+    layout: { ...DEFAULT_WORLDMAP.layout, ...w.layout },
+    characterFoot: w.characterFoot ?? DEFAULT_WORLDMAP.characterFoot,
+    places: { home: f.nestName, market: marketOf(f).name, adventure: roomOf(f).props.door },
   };
 }
 
@@ -340,6 +389,8 @@ export interface FactionConfig {
   room?: Partial<Omit<RoomConfig, 'props' | 'layout' | 'talk'>> & { props?: Partial<RoomConfig['props']>; layout?: Partial<RoomConfig['layout']>; talk?: Partial<RoomConfig['talk']> };
   /** 장터 화면 (GDD 127장 2): 비우면 기본값(DEFAULT_MARKET) */
   market?: Partial<Omit<MarketConfig, 'props' | 'layout'>> & { props?: Partial<MarketConfig['props']>; layout?: Partial<MarketConfig['layout']> };
+  /** 월드맵 (GDD 130장 2): 비우면 기본값(DEFAULT_WORLDMAP) */
+  worldmap?: Partial<Omit<WorldMapConfig, 'layout'>> & { layout?: Partial<WorldMapConfig['layout']> };
 }
 
 function isString(v: unknown): v is string {
@@ -501,12 +552,22 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const mk = r.market as Record<string, unknown>;
     if (!isRec(mk)) errors.push('market: 객체여야 한다');
     else {
-      for (const k of ['shape', 'sceneArt']) if (mk[k] !== undefined && !isString(mk[k])) errors.push(`market.${k}: 비어 있지 않은 문자열이어야 한다`);
+      for (const k of ['name', 'shape', 'sceneArt']) if (mk[k] !== undefined && !isString(mk[k])) errors.push(`market.${k}: 비어 있지 않은 문자열이어야 한다`);
       for (const k of Object.keys((mk.props ?? {}) as object)) if (!(MARKET_SPOTS as readonly string[]).includes(k) || !isString((mk.props as Record<string, unknown>)[k])) errors.push(`market.props.${k}: 알 수 없는 자리이거나 문자열이 아니다`);
       for (const [k, v] of Object.entries((mk.layout ?? {}) as Record<string, unknown>)) {
         const ok = isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;
         if (!(MARKET_SPOTS as readonly string[]).includes(k) || !ok) errors.push(`market.layout.${k}: 알 수 없는 자리이거나 { x, y } 장면 % 가 아니다`);
       }
+    }
+  }
+  if (r.worldmap !== undefined) {
+    const wm = r.worldmap as Record<string, unknown>;
+    if (!isRec(wm)) errors.push('worldmap: 객체여야 한다');
+    else {
+      for (const k of ['name', 'shape', 'sceneArt']) if (wm[k] !== undefined && !isString(wm[k])) errors.push(`worldmap.${k}: 비어 있지 않은 문자열이어야 한다`);
+      const okPct = (v: unknown) => isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;
+      for (const [k, v] of Object.entries((wm.layout ?? {}) as Record<string, unknown>)) if (!(WORLD_PLACES as readonly string[]).includes(k) || !okPct(v)) errors.push(`worldmap.layout.${k}: 알 수 없는 장소이거나 { x, y } 장면 % 가 아니다`);
+      if (wm.characterFoot !== undefined && !okPct(wm.characterFoot)) errors.push('worldmap.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
     }
   }
   if (r.cosmetics !== undefined) {

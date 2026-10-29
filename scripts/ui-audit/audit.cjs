@@ -289,7 +289,8 @@ function makeHelper(page, faction, report) {
       if (!SPACE_BACK_REF.has(refKey)) SPACE_BACK_REF.set(refKey, { screen, b });
       const ref = SPACE_BACK_REF.get(refKey);
       const a = ref.b;
-      if (Math.abs(a.x - b.x) > MOVE_TOL || Math.abs(a.y - b.y) > MOVE_TOL || Math.abs(a.w - b.w) > MOVE_TOL || Math.abs(a.h - b.h) > MOVE_TOL || a.text !== b.text) {
+      // C.204 (GDD 130장 3): 이름은 가는 곳에 따라 다르다(시장 '월드맵으로' / 온천 '시장으로 돌아가기') — 자리(왼쪽 위 끝)·높이만 같으면 된다
+      if (Math.abs(a.x - b.x) > MOVE_TOL || Math.abs(a.y - b.y) > MOVE_TOL || Math.abs(a.h - b.h) > MOVE_TOL) {
         h.report({ kind: '공간 화면 방으로 자리 다름', key: b.text, detail: `${ref.screen} 기준 (${b.x - a.x}, ${b.y - a.y})px 크기 ${b.w}x${b.h} '${a.text}'→'${b.text}'` }, screen);
       }
     },

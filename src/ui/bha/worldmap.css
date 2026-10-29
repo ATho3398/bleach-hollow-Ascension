@@ -1,0 +1,23 @@
+/* 월드맵 (GDD 130장 2, C.204): 방과 같은 장면 틀 + 임시 하이앵글 지도 배경(위에서 비스듬히 본 땅·길). 그림(scene.worldmap)이 오면 배경이 덮는다. 색·간격은 토큰만 */
+.bha-lcd .bha-app.bha-room.bha-worldmap { padding: var(--bha-sp-3); }
+.bha-worldmap__hud { justify-content: flex-start; align-items: flex-start; }
+.bha-worldmap__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
+/* 하늘(먼 곳) 얇게 + 땅 넓게: 원근으로 줄어드는 격자 = 위에서 내려다보는 느낌 */
+.bha-room--worldmap .bha-room__wall { height: 30%; background: linear-gradient(180deg, var(--bha-bg-0), var(--bha-bg-1)); }
+.bha-room--worldmap .bha-room__floor {
+  height: 70%;
+  border-top: 2px solid var(--bha-line-2);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 39px, var(--bha-line-1) 39px 40px),
+    repeating-linear-gradient(180deg, transparent 0 23px, var(--bha-line-1) 23px 24px),
+    radial-gradient(60% 50% at 50% 60%, var(--bha-bg-3), var(--bha-bg-2));
+}
+/* 장소 모양 (그림 없을 때): 홈 = 둥근 지붕, 시장 = 천막, 모험 = 길 끝 문 */
+.bha-prop--home .bha-prop__shape { width: 46px; height: 40px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--adventure .bha-prop__shape { width: 40px; height: 52px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); border-color: var(--bha-accent); }
+.bha-prop--outside .bha-prop__shape { width: 40px; height: 58px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--outside .bha-prop__shape.has-art { width: calc(74px * var(--ps)); height: calc(100px * var(--ps)); }
+/* 첫 모험 강제 등으로 잠긴 장소 (GDD 131장 2): 흐리게 */
+.bha-worldmap .bha-prop[aria-disabled="true"] .bha-prop__tag { opacity: 0.45; }
+/* 캐릭터: 지도 위라 방보다 작게, 보기만 */
+.bha-worldmap__char { scale: 0.6; pointer-events: none; }

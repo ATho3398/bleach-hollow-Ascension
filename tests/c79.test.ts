@@ -51,7 +51,7 @@ describe('종족 설정의 배경 연결 (34-1)', () => {
 
 describe('홈 물건 이름 두 종족 통일 (34-2)', () => {
   it('공통 4종 이름이 두 종족 같다, 장터만 종족 이름 (C.201, GDD 127장 2)', () => {
-    const want = { door: '모험', altar: '수련장', book: '책장', chest: '가방' };
+    const want = { door: '모험', altar: '수련장', book: '책장', chest: '가방', outside: '밖으로' }; // 밖으로 = 월드맵 스위치 켬 (GDD 130장 1)
     for (const f of FACTIONS) {
       const { market, ...rest } = roomOf(f).props;
       expect(rest).toEqual(want);

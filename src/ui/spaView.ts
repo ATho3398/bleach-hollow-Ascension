@@ -26,6 +26,8 @@ let spaTimer = 0;
 export interface SpaHandlers {
   /** [방으로 돌아가기] — 뒤로와 같다(나오기는 화면 스택 beforeBack 이 한다) */
   onBack: () => void;
+  /** [돌아가기] 이름 (시장에서 들어왔으면 '시장으로 돌아가기', GDD 130장 3). 없으면 '방으로 돌아가기' */
+  backLabel?: string;
   /** 시간이 흘러 저절로 나올 때가 됐다 (체력 상한·배부름 0): 부르는 쪽이 tickIdle 로 실제 반영·기록하고 방으로 */
   onAutoLeave: (e: SpaEnd) => void;
 }
@@ -103,7 +105,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   paint(previewHomeHp(n, Date.now()).fraction, fullnessOfNest(n));
 
   // ── 왼쪽 위: [방으로 돌아가기] 작게 + ⓘ 쉬는 중 설명 ──
-  const backBtn = spaceBackButton(hd.onBack);
+  const backBtn = spaceBackButton(hd.onBack, hd.backLabel);
   const dyingPct = Math.round(BALANCE.provisional.nest.care.dying.hpFraction * 100);
   const infoBtn = infoTip('쉬는 중', () => ({
     lead: `${name}에서 쉬는 중이다.`,

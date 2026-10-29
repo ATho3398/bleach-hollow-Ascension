@@ -10,6 +10,7 @@ import './ui/bha/device.css';
 import './ui/bha/room.css';
 import './ui/bha/spa.css';
 import './ui/bha/market.css';
+import './ui/bha/worldmap.css';
 import './ui/bha/lcd.css';
 import './ui/bha/screens-lcd.css';
 import './ui/bha/battle-scene.css';

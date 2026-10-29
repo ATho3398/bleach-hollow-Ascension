@@ -37,10 +37,11 @@ describe("129-1 2 공간 화면 '방으로 돌아가기' 자리", () => {
   const spa = src('src/ui/spaView.ts');
   const mcss = src('src/ui/bha/market.css');
   it('장터·온천이 같은 버튼(spaceBackButton)을 쓴다', () => {
-    expect(room).toContain("label: '방으로 돌아가기', icon: 'i-return', size: 'small'");
+    expect(room).toContain("label = '방으로 돌아가기'): HTMLButtonElement"); // C.204: 이름은 바꿀 수 있고 기본은 그대로
+    expect(room).toContain("button({ label, icon: 'i-return', size: 'small'");
     expect(room).toContain('b.dataset.spaceBack');
-    expect(market).toContain('spaceBackButton(hd.onBack)');
-    expect(spa).toContain('spaceBackButton(hd.onBack)');
+    expect(market).toContain('spaceBackButton(hd.onBack, hd.backLabel)');
+    expect(spa).toContain('spaceBackButton(hd.onBack, hd.backLabel)');
     expect(market).not.toContain("label: '방으로',");
   });
   it('장터: 버튼이 위 줄 맨 왼쪽, 기기 ▲▼ 순서도 화면 위치 순서(버튼 먼저)', () => {

@@ -1,0 +1,78 @@
+{
+  "hollow": {
+    "errors": [],
+    "roomProps": [
+      "altar:수련장",
+      "book:책장",
+      "chest:가방",
+      "outside:밖으로"
+    ],
+    "roomFirst": "밖으로",
+    "worldmap": {
+      "title": "웨코문도",
+      "places": [
+        "home:둥지",
+        "market:시장",
+        "adventure:모험"
+      ]
+    },
+    "worldFirst": "모험",
+    "worldDownOrder": [
+      "둥지",
+      "시장",
+      "모험"
+    ],
+    "worldBack": "bha-app bha-room",
+    "market": {
+      "title": "시장",
+      "back": "월드맵으로",
+      "spots": [
+        "spa",
+        "shop"
+      ]
+    },
+    "spaBack": "시장으로 돌아가기",
+    "spaBackTo": "bha-app bha-room bha-market",
+    "marketBackTo": "bha-app bha-room bha-worldmap",
+    "adventure": "bha-app bha-app--fixed bha-plan",
+    "adventureBackTo": "bha-app bha-room bha-worldmap"
+  },
+  "shinigami": {
+    "errors": [],
+    "roomProps": [
+      "altar:수련장",
+      "book:책장",
+      "chest:가방",
+      "outside:밖으로"
+    ],
+    "roomFirst": "밖으로",
+    "worldmap": {
+      "title": "소울 소사이어티",
+      "places": [
+        "home:대원실",
+        "market:시장",
+        "adventure:모험"
+      ]
+    },
+    "worldFirst": "모험",
+    "worldDownOrder": [
+      "대원실",
+      "시장",
+      "모험"
+    ],
+    "worldBack": "bha-app bha-room",
+    "market": {
+      "title": "시장",
+      "back": "월드맵으로",
+      "spots": [
+        "spa",
+        "shop"
+      ]
+    },
+    "spaBack": "시장으로 돌아가기",
+    "spaBackTo": "bha-app bha-room bha-market",
+    "marketBackTo": "bha-app bha-room bha-worldmap",
+    "adventure": "bha-app bha-app--fixed bha-plan",
+    "adventureBackTo": "bha-app bha-room bha-worldmap"
+  }
+}

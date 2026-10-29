@@ -75,8 +75,10 @@ import { roomView } from './roomView';
 import { careView, chestView, openChestAtConsumables, openChestAtGear } from './lcdScreens';
 import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
-import { marketOf, roomOf } from '../engine/faction';
+import { marketOf, roomOf, worldMapOf } from '../engine/faction';
 import { marketView } from './marketView';
+import { worldMapView } from './worldMapView';
+import { FEATURES } from '../config/features';
 import { openGrounds } from '../data/grounds';
 import { applySettingsNow, settingsView } from './settingsView';
 import { parseSlotSettings, setSlotSettingsHost } from './settingsScope';
@@ -276,6 +278,7 @@ export function startApp(host: HTMLElement): void {
       'to-spa': { label: fixParticles(`${mk.name} → ${mk.props.spa}(으)로`), act: () => {
         if (!s.nest.spa && spaEnter(s)) return; // 못 들어가면(배고픔 등) 다음 카드에서 바로 쉬기
         persist();
+        if (FEATURES.WORLD_MAP) openWorldMap(faction, s); // 방 → 밖으로(월드맵) → 시장 → 온천 (GDD 130장 5)
         openMarket(faction, s); // 방 → 장터 → 온천 (GDD 127장 4)
         openSpa(faction, s, false);
       } },
@@ -755,11 +758,14 @@ export function startApp(host: HTMLElement): void {
       if (why) return void showToast({ eyebrow: name, title: SPA_BLOCK_TEXT[why], meta: '' }, 0, 2600);
       persist();
     }
+    // 시장에서 들어왔으면 [돌아가기] = 시장 (월드맵 켬, GDD 130장 3). 껐다 켜서 방에서 바로 열린 온천·스위치 끔은 옛 이름 그대로
+    const backLabel = FEATURES.WORLD_MAP && nav.top?.id === 'market' ? `${fixParticles(`${marketOf(faction).name}(으)로`)} 돌아가기` : undefined;
     nav.push({
       id: 'spa',
       render: () => {
         setBgm('nest');
         spaView(root, faction, s, {
+          backLabel,
           onBack: () => nav.back(),
           onAutoLeave: (e) => {
             tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다
@@ -790,7 +796,24 @@ export function startApp(host: HTMLElement): void {
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
       onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
       onBack: () => nav.back(),
+      // 월드맵 켬 (GDD 130장 3): 시장의 왼쪽 위 버튼 = [월드맵으로], 뒤로 = 월드맵(스택 아래). 끔 = 옛 [방으로 돌아가기]
+      backLabel: FEATURES.WORLD_MAP ? '월드맵으로' : undefined,
     }));
+  }
+
+  /** 월드맵 (GDD 130장 2, C.204): 방 [밖으로] → 홈·시장·모험. 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
+  function openWorldMap(faction: FactionConfig, s: SaveData): void {
+    open('worldmap', () => worldMapView(dev, faction, s, {
+      onHome: () => nestScreen(),
+      onMarket: () => openMarket(faction, s),
+      onAdventure: () => departFromHome(faction, s),
+    }));
+  }
+
+  /** 모험 떠나기: 사망이면 막힘, 빈사면 확인 창, 새 세이브의 첫 원정은 고정 길 튜토리얼 (옛 방 문 = 월드맵 모험이 같이 쓴다) */
+  function departFromHome(faction: FactionConfig, s: SaveData): void {
+    if (careBlocked(s)) return;
+    askDying(s, () => (firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)));
   }
 
   function renderRoom(): void {
@@ -844,7 +867,8 @@ export function startApp(host: HTMLElement): void {
       window.setTimeout(() => {
         if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
         wandererAnnounced = visit.at;
-        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: `${mk.props.wanderer}이 ${mk.name}에 왔다`, meta: `${mk.name} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
+        const path = FEATURES.WORLD_MAP ? `${roomOf(faction).props.outside} → ${mk.name}` : mk.name; // 월드맵 켬 (GDD 130장 2): 밖으로 → 시장
+        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: `${mk.props.wanderer}이 ${mk.name}에 왔다`, meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
       }, 2600);
     }
     if (notes.length > 0) {
@@ -879,7 +903,7 @@ export function startApp(host: HTMLElement): void {
       idle: { badge: idleBadge(s), onOpen: () => showIdlePanel(s, faction, claim) },
       persist,
       // 새 세이브의 첫 원정은 고정 길 튜토리얼 (GDD 67장)
-      onDepart: () => (careBlocked(s) ? undefined : askDying(s, () => (firstRunPending(s) ? startTutorialRun(faction) : departScreen(faction)))),
+      onDepart: () => departFromHome(faction, s),
       // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
       onAltar: () => (careBlocked(s) ? undefined : askDying(s, () => open('training', () => renderTraining(faction, s)))),
       // 부활 (GDD 102-3): 되돌릴 수 없어 자동 백업 후
@@ -907,6 +931,7 @@ export function startApp(host: HTMLElement): void {
       // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
       onMarket: () => openMarket(faction, s),
+      onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1): 월드맵 스위치 켬일 때만 방에 놓인다
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
       onTamago: () => tama.toggle(true),
       // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)

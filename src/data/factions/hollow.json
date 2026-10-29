@@ -306,6 +306,8 @@
   },
   "breakthroughText": "광기가 한계를 넘었다. 영압이 흔들리고 공허가 몰려든다…",
   "frenzyName": "폭주",
+  "market": { "name": "시장" },
+  "worldmap": { "name": "웨코문도" },
   "room": {
     "shape": "cave",
     "sceneArt": "scene.cave",
@@ -315,7 +317,8 @@
       "altar": "수련장",
       "book": "책장",
       "chest": "가방",
-      "market": "웨코문도 장터"
+      "market": "웨코문도 장터",
+      "outside": "밖으로"
     },
     "floor": {
       "aspect": 2,
@@ -326,7 +329,8 @@
       "book": { "x": 76, "y": 60, "scale": 0.68 },
       "altar": { "x": 90, "y": 70, "scale": 0.68 },
       "chest": { "x": 26, "y": 90, "scale": 0.68 },
-      "market": { "x": 74, "y": 90, "scale": 0.68 }
+      "market": { "x": 74, "y": 90, "scale": 0.68 },
+      "outside": { "x": 9, "y": 78, "scale": 1 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {

@@ -36,7 +36,7 @@ describe('C.170 방·독', () => {
     expect(room).toContain('statusBtn.prepend(nameTag)');
   });
   it('방 첫 선택 = 모험(돌봄 요청 중이면 그 버튼)', () => {
-    expect(room).toContain("const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('door');");
+    expect(room).toContain("const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('door') ?? props.get('outside');"); // C.204: 월드맵 켬이면 밖으로
   });
   it('더보기 4열, 닫기 칸은 C.198 에 삭제(GDD 124장 2), 튜토리얼 칸은 도움말 [목표]로', () => {
     expect(read('src/ui/bha/room.css')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr))');

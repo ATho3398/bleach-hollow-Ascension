@@ -1,5 +1,6 @@
 // C.201 (GDD 127장 2·3·4): 장터 — 방 물건 [장터] → 장터 화면(온천·상점·떠돌이 상인), 떠돌이 상인 도착 알림(방에서만)·방 장터 물건 배지
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { FEATURES } from '../src/config/features';
 import { readFileSync } from 'node:fs';
 import { FACTIONS, getFaction } from '../src/data/factions';
 import { marketOf, MARKET_SPOTS, parseFactionConfig, roomOf, ROOM_PROPS } from '../src/engine/faction';
@@ -8,6 +9,9 @@ import { marketSpots } from '../src/ui/marketView';
 import { slotLine, slotTitle } from '../src/ui/startView';
 
 describe('127장 2 장터 = 방 물건 하나 + 따로 된 화면', () => {
+  // 옛 방(장터) = 월드맵 스위치 끔 상태 (GDD 130장 6 — 되돌리면 그대로여야 한다)
+  beforeAll(() => { FEATURES.WORLD_MAP = false; });
+  afterAll(() => { FEATURES.WORLD_MAP = true; });
   it('방에는 장터 물건 하나, 상점·온천은 방에서 빠지고 장터 안 자리로', () => {
     expect(ROOM_PROPS).toContain('market');
     expect(ROOM_PROPS as readonly string[]).not.toContain('shop');

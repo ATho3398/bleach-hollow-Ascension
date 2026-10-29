@@ -1,7 +1,7 @@
 // 메인 방 화면의 장면 부품 (GDD 16장, T-1): 방 배경·물건·캐릭터. 그림은 src/data/art 매니페스트의 키로 참조하고,
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
-import type { MarketSpot, RoomConfig, RoomFloorConfig, RoomProp } from '../../engine/faction';
+import type { MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
 import { bindAnim } from './animPlayer';
 import { button, el, icon } from './dom';
 import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
@@ -9,8 +9,9 @@ import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
 /** 물건 → 자리표시 아이콘(스프라이트). 그림이 들어오면 쓰이지 않는다. 장터 안 자리(GDD 127장 2)도 같은 물건 단추를 쓴다 */
-export const PROP_ICON: Record<RoomProp | MarketSpot, string> = {
+export const PROP_ICON: Record<RoomProp | MarketSpot | WorldPlace, string> = {
   door: 'i-loop', altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', market: 'i-flag-win', shop: 'i-rare', spa: 'i-tile-rest', wanderer: 'i-special',
+  outside: 'i-loop', home: 'i-nest', adventure: 'i-loop', // 밖으로·월드맵 장소 (GDD 130장, C.204)
 };
 
 /** 방 장면 틀. 배경 그림이 있으면 --room-art 로 깔린다 */
@@ -29,7 +30,7 @@ export function sceneBox(room: Pick<RoomConfig, 'shape' | 'sceneArt'>): HTMLElem
 }
 
 export interface PropOpts {
-  prop: RoomProp | MarketSpot;
+  prop: RoomProp | MarketSpot | WorldPlace;
   name: string;
   x: number;
   y: number;
@@ -231,8 +232,9 @@ export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entrie
 }
 
 /** 따로 된 공간 화면(장터·온천)의 '방으로 돌아가기' (GDD 128장 6·129-1): 왼쪽 위 작게, 화면마다 같은 모양·자리. 누르면 뒤로와 같다 */
-export function spaceBackButton(onBack: () => void): HTMLButtonElement {
-  const b = button({ label: '방으로 돌아가기', icon: 'i-return', size: 'small', onClick: onBack });
+/** label = 버튼 이름 (월드맵 켬이면 시장은 '월드맵으로', GDD 130장 3) */
+export function spaceBackButton(onBack: () => void, label = '방으로 돌아가기'): HTMLButtonElement {
+  const b = button({ label, icon: 'i-return', size: 'small', onClick: onBack });
   b.dataset.spaceBack = '';
   return b;
 }

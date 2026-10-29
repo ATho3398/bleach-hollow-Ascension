@@ -15,6 +15,8 @@ export interface MarketHandlers {
   onWanderer: () => void;
   /** [방으로 돌아가기] — 뒤로와 같다 */
   onBack: () => void;
+  /** 왼쪽 위 버튼 이름 (월드맵 켬 = '월드맵으로', GDD 130장 3). 없으면 '방으로 돌아가기' */
+  backLabel?: string;
 }
 
 /** 지금 장터에 서 있는 자리: 떠돌이 상인은 와 있을 때만 (GDD 127장 2) */
@@ -30,7 +32,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   const hud = el('header', 'bha-room__hud bha-market__hud');
   const titles = el('div', 'bha-market__titles');
   titles.append(el('h1', 'bha-market__title', mk.name), el('p', 'bha-small bha-market__sub', here ? `${mk.props.wanderer}이 와 있다. 다음 원정에서 돌아오면 떠난다.` : `${mk.props.wanderer}은 원정을 돌다 보면 가끔 들른다.`));
-  const backBtn = spaceBackButton(hd.onBack);
+  const backBtn = spaceBackButton(hd.onBack, hd.backLabel);
   hud.append(backBtn, titles);
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
