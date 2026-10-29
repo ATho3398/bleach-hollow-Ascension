@@ -584,6 +584,12 @@ export function pendingFreeBoss(exp: Pick<ExpeditionState, 'freeBoss' | 'lap' | 
   return { bossId: a.bossId, cell: a.cell };
 }
 
+/** 원정 체력 이어 가기 보정 (GDD 119장 1, provisional): ★별 원정 적 공격 배율 */
+export function carryAttackMult(difficulty: number): number {
+  const m = PX.hpCarry.enemyAttackMult;
+  return m[String(clampDifficulty(difficulty))] ?? m.default ?? 1;
+}
+
 export function lapScale(lap: number): { hp: number; attack: number } {
   return { hp: 1 + PX.lapHpScale * (lap - 1), attack: 1 + PX.lapAttackScale * (lap - 1) };
 }
@@ -784,7 +790,8 @@ function startBattleAt(
   // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서
   let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1) * (exp.tutorial ? TUT.enemyHpMult : 1);
-  const atkK = (m.enemyAttackMult ?? 1) * (exp.tutorial ? TUT.enemyAttackMult : 1);
+  // 원정 체력 이어 가기 보정 (GDD 119장 1): 원정 안 적(보스 포함) 공격 × ★별 배율. 첫 원정 튜토리얼은 자기 배율(tutorialRun)만
+  const atkK = (m.enemyAttackMult ?? 1) * (exp.tutorial ? TUT.enemyAttackMult : carryAttackMult(exp.difficulty));
   // 사냥꾼 (포식자 둥지, C.124): 강적 수치 × 배율, 이기면 흡수 후보 × 배율
   const hunter = !bossId && !combo && cls === 'elite' && tile?.effect.type === 'spawn' && tile.effect.hunter === true;
   const hpK2 = hpK * (hunter ? TT.hunter.hpMult : 1);

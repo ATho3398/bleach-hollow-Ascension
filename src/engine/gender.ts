@@ -36,5 +36,5 @@ export function activeGender(): Gender {
 export function genderLookNote(tierNames: readonly string[], genderLookFromTier: number | undefined): string {
   if (genderLookFromTier === undefined) return '모습은 성별과 상관없이 같다.';
   const from = genderLookFromTier <= 1 ? '처음' : tierNames[genderLookFromTier - 1] ?? `${genderLookFromTier}단계`;
-  return `${from}부터 모습이 달라진다. 여성 그림이 없으면 지금 그림으로 보인다.`;
+  return `${from}부터 모습이 달라진다.`;
 }

@@ -20,6 +20,7 @@ import { GROUNDS } from '../data/grounds';
 import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 import { onHold } from './bha/hold';
+import { isAppAway, onAppAway } from './bha/appAway';
 import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
 import { createExpClock, monoNow } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
@@ -76,7 +77,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let dead = false;
   let away = false;
   // 다음 할 일(한 칸 이동·전투 진입·휴식 끝)은 시계가 들고 있다: 일시정지·도움말은 남은 시간만 다시 셈하고 할 일을 지우지 않는다 (19-1)
-  const clock = createExpClock({ speed: () => speed, blocked: () => paused || held || dead || away });
+  const clock = createExpClock({ speed: () => speed, blocked: () => paused || held || dead || away || isAppAway() }); // 앱 이탈도 멈춤 (GDD 119장 2)
   const stepMs = EX.secondsPerTile * 1000;
 
   /** 한 칸 이동을 새로 예약 */
@@ -105,7 +106,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const dt = Math.max(0, t - lastWatch); // C.139: 단조 시계 + 음수 방어
     lastWatch = t;
     if (dead) return clearInterval(watch);
-    if (away) return;
+    if (away || isAppAway()) return;
     if (!main.isConnected) return dispose();
     const blocked = paused || held;
     if (exp.phase === 'battle' && !blocked) encounterWait += dt;
@@ -116,11 +117,17 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   /** C.139 (GDD 88장 4): 화면 종료(전투로·끝·취소·귀환·떠남) 때 한 곳에서 시계·감시·hold 구독을 모두 푼다 */
   let unhold = (): void => undefined;
+  // 앱 이탈 (GDD 119장 2): 떠나면 남은 시간을 셈해 멈추고, 돌아오면 그 남은 시간부터 그대로 이어 간다 (몰아서 진행하지 않는다)
+  const unaway = onAppAway(() => {
+    if (dead) return;
+    resumeClock();
+  });
   function dispose(): void {
     dead = true;
     clock.cancel();
     clearInterval(watch);
     unhold();
+    unaway();
   }
 
   let battleRef: PendingBattle | null = exp.phase === 'battle' ? exp.pending ?? null : null;

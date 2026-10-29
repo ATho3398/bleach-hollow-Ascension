@@ -303,13 +303,13 @@ describe('86장 보관함', () => {
 
 describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 44(C.150 장비로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([52, 52]); // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([53, 53]); // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);
     s.shared.items = { calm: 3 };
     s.shared.wanderer = { lapsSince: 7, visit: { at: 1, runId: 2, tier: 3, stock: [{ itemId: 'w-calm-deep', price: 140, sold: false }] } };
-    s.runLog.idle.push({ at: 1, factionId: 'hollow', from: 0, hours: 1, activeHours: 1, share: 0.1, laps: 4, steps: 48, gold: 88, ev: 1, tiles: [], food: 0 });
+    s.runLog.idle.push({ at: 1, factionId: 'hollow', from: 0, hours: 1, activeHours: 1, share: 0.1, laps: 4, steps: 48, gold: 88, ev: 1, tiles: [], food: 0, gear: 0 });
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m.tiles.presets).toEqual(s.tiles.presets);
     expect(m.shared.items).toEqual({ calm: 3 });

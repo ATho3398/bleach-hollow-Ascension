@@ -142,6 +142,9 @@ export interface BgmPlayer {
   toggleRepeat(): void;
   /** 지금 소리를 내는 요소 수 (페이드 중이면 2) */
   readonly voices: number;
+  /** 앱 이탈 동안 멈춤 (GDD 119장 2): 켜면 모든 요소를 멈추고, 끄면 울려야 할 요소만 다시 튼다(설정은 안 건드림) */
+  setSuspended(on: boolean): void;
+  readonly suspended: boolean;
 }
 
 export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
@@ -151,6 +154,7 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
   const playlist = opt.playlist ?? [];
   let settings = opt.settings ?? defaultBgmSettings();
   let unlocked = false;
+  let suspended = false;
   let wanted: BgmTrack | null = null;
   let voices: Voice[] = [];
   let timer: ReturnType<typeof setInterval> | undefined;
@@ -194,7 +198,7 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
   };
 
   const start = (a: AudioLike) => {
-    if (!unlocked) return;
+    if (!unlocked || suspended) return;
     try {
       const p = a.play();
       if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => { unlocked = false; }); // 막히면 다음 터치에 다시
@@ -319,6 +323,16 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
     get unlocked() { return unlocked; },
     step,
     get voices() { return voices.length; },
+    setSuspended(on) {
+      if (on === suspended) return;
+      suspended = on;
+      if (on) {
+        for (const v of voices) try { v.audio.pause(); } catch { /* 무시 */ }
+      } else {
+        for (const v of voices) if (v.target > 0) start(v.audio);
+      }
+    },
+    get suspended() { return suspended; },
   };
 }
 

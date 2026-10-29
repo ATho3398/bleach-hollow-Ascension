@@ -465,7 +465,7 @@ export interface GearRecord {
   gearKind: string;
   grade: string;
   star?: number;
-  source?: 'drop' | 'shop' | 'wanderer';
+  source?: 'drop' | 'shop' | 'wanderer' | 'idle';
   from?: 'normal' | 'elite' | 'boss';
   slot?: string;
   plus?: number;
@@ -491,6 +491,8 @@ export interface IdleRecord {
   ev: number;
   tiles: string[];
   food: number;
+  /** 받은 장비 수 (C.193, GDD 119장 5 — 보관함이 차 바로 판 것 포함, 하나하나는 gear 기록 source 'idle') */
+  gear: number;
 }
 
 /** 상점 구매 1건 (GDD 25-9·9장, 세이브 형식 24): 시각·트랙 종족·품목 id·화폐·가격. 꾸밈 착용 변화는 남기지 않는다 */

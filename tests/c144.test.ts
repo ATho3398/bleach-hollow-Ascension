@@ -224,7 +224,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
   });
 
   it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([52, 52]); // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([53, 53]); // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
     const s = newSaveData('hollow', 1);
     grantPet(s.shared.pets, 'pet-guard', 1);
     choosePet(s, 'pet-guard', 1);

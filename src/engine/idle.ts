@@ -39,6 +39,9 @@ export interface IdleYield {
   ev: number;
   tiles: number;
   food: number;
+  /** 장비 (GDD 119장 5): 확정 개수 + 하나 더 나올 확률(0~1, 받을 때 굴림) */
+  gear: number;
+  gearChance: number;
 }
 
 export function idleYield(activeHours: number, bonus = 1): IdleYield {
@@ -47,6 +50,7 @@ export function idleYield(activeHours: number, bonus = 1): IdleYield {
   return {
     laps: Math.floor(f.laps * k), steps: Math.floor(f.steps * k), gold: Math.floor(f.gold * k),
     ev: Math.floor(f.ev * k), tiles: Math.floor(f.tiles * k), food: Math.floor(f.food * k),
+    gear: Math.floor(f.gear * k), gearChance: f.gear * k - Math.floor(f.gear * k),
   };
 }
 

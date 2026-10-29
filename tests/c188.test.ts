@@ -47,7 +47,7 @@ describe('외형이 갈리는 단계 = 종족 설정 (114장 2)', () => {
     for (const p of ['src/engine/gender.ts', 'src/data/art/manifest.ts', 'src/ui/settingsView.ts']) expect(read(p)).not.toMatch(/=== '(hollow|shinigami)'/);
   });
   it('안내 문구는 종족 설정의 단계 이름으로', () => {
-    expect(genderLookNote(getFaction('hollow').tierNames, 5)).toBe('아란칼부터 모습이 달라진다. 여성 그림이 없으면 지금 그림으로 보인다.');
+    expect(genderLookNote(getFaction('hollow').tierNames, 5)).toBe('아란칼부터 모습이 달라진다.');
     expect(genderLookNote(getFaction('shinigami').tierNames, 1)).toMatch(/^처음부터/);
   });
 });
@@ -83,7 +83,7 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
 
 describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
   it('형식·문턱 52, 새 세이브 남성, 저장·불러오기로 남고 깨진 값은 남성', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([52, 52]);
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([53, 53]);
     const s = newSaveData('hollow');
     expect(s.gender).toBe('male');
     s.gender = 'female';

@@ -8,8 +8,7 @@ import { step, type CombatState } from '../src/engine/combat';
 import { difficultyGoldMultiplier } from '../src/engine/difficulty';
 import {
   advance, chooseContinue, enemyScale, chooseRelease, chooseReturn, createExpedition, EXPEDITION_SNAPSHOT_VERSION, finishBattle, finishRest, freeBossCandidate, pendingFreeBoss, restoreExpedition,
-  serializeExpedition, startBattle, type ExpeditionState,
-} from '../src/engine/expedition';
+  serializeExpedition, startBattle, type ExpeditionState, carryAttackMult } from '../src/engine/expedition';
 import { bossesBeaten, newSaveData, recordExpedition, sanitizeDeck } from '../src/game';
 import { bossOmenSub } from '../src/ui/bha/expedition';
 import { storyResultLines } from '../src/ui/resultView';
@@ -166,7 +165,7 @@ describe('보스전·보상·런 로그 (GDD 37장 3~6번)', () => {
     expect(startBattle(e).boss).toBeTruthy();
     const want = scaleEnemy(getBoss('sand-maw').enemy, enemyScale(1, 'outskirts', 3, 2, 'normal'));
     expect(e.pending!.enemy.hpInAttacks).toBeCloseTo(want.hpInAttacks, 9);
-    expect(e.pending!.enemy.attackInAttacks).toBeCloseTo(want.attackInAttacks, 9);
+    expect(e.pending!.enemy.attackInAttacks).toBeCloseTo(want.attackInAttacks * carryAttackMult(3), 9); // C.193 원정 체력 이어 가기 보정 (GDD 119장 1)
   });
 
   it('이기면 골드 100 × 골드 배율 · 잔치 1 · 보스 특성 확정 첫 후보 → 도감 +1 · 런 로그 source free · 영옥 없음', () => {

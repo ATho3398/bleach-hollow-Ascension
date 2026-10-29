@@ -189,7 +189,7 @@ describe('스토리 데이터 (GDD 25-4·25-7)', () => {
     expect(h.episodes[3]!.dialogue.end).toEqual([{ speaker: '나', text: '굶주림 너머에, 무언가가 있다.' }]);
     const s = chapterContent('shinigami', 'ch1')!;
     expect(s.title).toBe('입대');
-    expect(s.episodes.map((e) => e.title)).toEqual(['첫 순찰', '밤의 루콘가이', '큰 기척', '들개 대허']);
+    expect(s.episodes.map((e) => e.title)).toEqual(['첫 순찰', '밤의 루콘가 외곽', '큰 기척', '들개 대허']);
     expect(s.episodes[1]!.dialogue.end).toEqual([{ speaker: '분대장', text: '…버텼군. 제법이다.' }]);
     expect(s.episodes[2]!.dialogue.end).toEqual([{ speaker: '나', text: '내 참백도가… 대답했다.' }]);
     expect(s.episodes[3]!.dialogue.start).toEqual([

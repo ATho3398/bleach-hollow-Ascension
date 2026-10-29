@@ -51,23 +51,23 @@
   "basicSkillName": "시해",
   "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest", "5": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
-  "huntingGroundName": "현세 순찰 구역 / 루콘가이",
+  "huntingGroundName": "카라쿠라 마을 / 루콘가 외곽",
   "arenaBg": "seireitei",
   "huntingGrounds": {
     "outskirts": {
       "bg": "forest",
-      "name": "루콘가이",
-      "desc": "소울 소사이어티 외곽 마을."
+      "name": "루콘가 외곽",
+      "desc": "소울 소사이어티 바깥의 마을."
     },
     "canyon": {
       "bg": "karakura",
-      "name": "현세 순찰 구역",
-      "desc": "현세의 담당 순찰 구역."
+      "name": "카라쿠라 마을",
+      "desc": "현세의 담당 순찰 마을."
     },
     "forest": {
-      "bg": "dangai",
-      "name": "단가이",
-      "desc": "세계 사이의 틈."
+      "bg": "desert",
+      "name": "웨코문도",
+      "desc": "호로들이 사는 끝없는 밤의 사막."
     }
   },
   "maxChain": 3,

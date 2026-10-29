@@ -50,7 +50,9 @@ import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKe
 import { monoNow } from './bha/expClock';
 import { forgetConfirmedChunks, isChunkStorageKey } from '../saveCodec';
 import { backupFileName, exportRawSlot, needsMigration, recoverFromBackup } from '../saveBackup';
-import { setBgm } from './bgm';
+import { bgm, setBgm } from './bgm';
+import { installAppAway, onAppAway } from './bha/appAway';
+import { setSfxSuspended } from './fx';
 import type { BgmTrack } from '../data/audio/bgm';
 import { BALANCE } from '../config/balance';
 import { idleCounts } from '../engine/idle';
@@ -163,6 +165,12 @@ export function startApp(host: HTMLElement): void {
   }, 60_000);
   watchFullscreen();
   document.addEventListener('visibilitychange', tickPlay);
+  // 앱 이탈 (GDD 119장 2): 노래·효과음 멈춤 → 돌아오면 노래 다시(설정에서 끈 소리는 그대로). 전투·원정은 각 화면이 듣는다
+  onAppAway((away) => {
+    setSfxSuspended(away);
+    try { bgm().setSuspended(away); } catch { /* 소리는 부가 */ }
+  });
+  installAppAway();
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
   const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
     nav.push({ id, locked, render: () => { if (track) setBgm(track); render(); root.scrollTop = 0; } });

@@ -29,6 +29,7 @@ import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v
 import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, setV2Pips, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
 import { animOf } from './bha/animPlayer';
 import { onHold } from './bha/hold';
+import { onAppAway } from './bha/appAway';
 import {
   blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setHidden, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
@@ -487,9 +488,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let stopped = false;
   /** C.139 (GDD 88장 4): 전투가 끝나거나(승패·포기·떠남) 화면을 떠날 때 hold 구독을 바로 푼다 */
   let unhold = (): void => undefined;
+  let unaway = (): void => undefined;
   const stop = (): void => {
     stopped = true;
     unhold();
+    unaway();
   };
   const halted = () => paused || overlayOpen;
 
@@ -699,6 +702,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       tutorial?.dismiss(); // 튜토리얼은 본 것으로 치지 않는다 (다음 첫 전투에서 다시)
       tutorial = null;
     }
+  });
+  // 앱 이탈 (GDD 119장 2): 홈키·앱 전환이면 일시정지 창을 띄운다. 돌아와도 자동으로 풀지 않는다(사용자가 [계속]).
+  // 조우 연출·도움말이 덮고 있어 지금 못 멈추면 돌아왔을 때 멈춘다
+  let awayPause = false;
+  unaway = onAppAway((away) => {
+    if (stopped || !app.isConnected) return unaway();
+    if (s.status !== 'playing') return;
+    const canPause = !paused && !overlayOpen;
+    if (away) {
+      if (canPause) setPaused(true);
+      else awayPause = !paused; // 덮개가 닫힌 뒤 돌아오면 멈춘다
+      return;
+    }
+    if (awayPause && canPause) setPaused(true);
+    awayPause = false;
   });
   // ── 사건 로그 · 플로팅 숫자 · 번쩍임 ──
   const lines: HTMLElement[] = [];
