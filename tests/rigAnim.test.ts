@@ -10,8 +10,9 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     for (const a of ['win', 'lose', 'eat', 'sleep', 'release'] as const) expect(p.has(a), a).toBe(false);
     expect(p.play('win')).toBeNull();
   });
-  it('공격은 공격1·2, 특수는 특수1·2 를 번갈아 하고, 타격·끝 콜백이 온다', () => {
-    const p = createRigPlayer(HUMANOID, MOTIONS);
+  it('공격은 공격1·2 중 난수로 고르고(GDD 117장 4, 자세한 규칙은 c191), 타격·끝 콜백이 온다', () => {
+    let k = 0;
+    const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => [0, 0.99][k++ % 2]!);
     p.setLoop('idle');
     const seen: string[] = [];
     let hit = 0;

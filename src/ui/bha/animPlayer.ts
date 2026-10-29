@@ -16,6 +16,8 @@ export interface PlayOptions {
   onHit?: () => void;
   /** 끝났을 때 (hold 동작은 마지막 장을 보인 채로) */
   onEnd?: () => void;
+  /** 타격 순간부터 재생 (GDD 117장 3, 블록 즉발): 휘두른 끝에서 시작해 되돌아온다. onHit 은 바로. 돌려주는 길이는 남은 길이, 타격 시각 0 */
+  fromHit?: boolean;
 }
 
 export interface AnimPlayer {
@@ -85,11 +87,13 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
       cur = c;
       phase = 'once';
       curOpts = o;
-      elapsed = 0;
-      hitFired = false;
-      show(c.frames[0]);
+      const hitAt = clipHitMs(c);
+      elapsed = o.fromHit ? hitAt : 0;
+      hitFired = !!o.fromHit;
+      show(c.frames[o.fromHit ? frameAt(c, elapsed).index : 0]);
+      if (o.fromHit) o.onHit?.();
       wake();
-      return { durationMs: clipDurationMs(c), hitAtMs: clipHitMs(c) };
+      return o.fromHit ? { durationMs: clipDurationMs(c) - hitAt, hitAtMs: 0 } : { durationMs: clipDurationMs(c), hitAtMs: hitAt };
     },
     stop() {
       locked = false;

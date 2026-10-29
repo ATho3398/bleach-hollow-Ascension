@@ -1,12 +1,12 @@
 // 종이인형을 게임 캐릭터 그림으로 (GDD 96장 30): 프레임 애니 재생기(animPlayer)와 같은 모양(AnimPlayer)으로 동작을 받아
 // 뼈대 동작(motions.json)을 돌리고, 매 순간 캔버스에 그려 그 <img> 의 src 로 넣는다 — 좌우 반전·크기·윤곽 같은 기존 CSS 가 그대로 따라온다.
-// 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 번갈아, 특수 skill·skill2 번갈아, 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
+// 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 무작위, 특수 skill·skill2 무작위(같은 것 두 번 연속까지, GDD 117장 4), 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
 // 코어(createRigPlayer)는 DOM 없이 돌아 테스트한다.
 import type { AnimAction } from '../../data/art/anim';
 import { boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose, type Motion, type MotionSets, type Pose, type Rig } from '../../data/art/rig/pose';
 import type { AnimPlayer, PlayOptions } from './animPlayer';
 
-/** 게임 동작 → 종이인형 동작(여럿이면 번갈아) */
+/** 게임 동작 → 종이인형 동작(여럿이면 무작위, pickVariant) */
 export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   idle: ['idle'],
   move: ['move'],
@@ -15,14 +15,29 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   hit: ['hit'],
 };
 
+/** 같은 변형을 연속으로 몇 번까지 허용하나 (GDD 117장 4: 두 번까지, 세 번째는 다른 것) */
+export const VARIANT_REPEAT_MAX = 2;
+
+/**
+ * 변형 고르기 (순수, GDD 117장 4): n 개 중 무작위. 최근 recent(오래된 → 최근)의 끝이 같은 것 VARIANT_REPEAT_MAX 번이면 그것은 뺀다.
+ * rng = 0 이상 1 미만 난수 (테스트에서 주입)
+ */
+export function pickVariant(n: number, recent: readonly number[], rng: () => number): number {
+  if (n <= 1) return 0;
+  const tail = recent.slice(-VARIANT_REPEAT_MAX);
+  const banned = tail.length === VARIANT_REPEAT_MAX && tail.every((v) => v === tail[0]) ? tail[0]! : -1;
+  const pool = Array.from({ length: n }, (_, i) => i).filter((i) => i !== banned);
+  return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]!;
+}
+
 export interface RigPlayer extends AnimPlayer {
   /** 지금 그릴 자세와 동작(뒤집기 슬롯용) */
   pose(): { pose: Pose; motion: Motion | undefined };
 }
 
-export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake: () => void = () => {}): RigPlayer {
+export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake: () => void = () => {}, rng: () => number = Math.random): RigPlayer {
   const ids = (a: AnimAction) => (RIG_ACTIONS[a] ?? []).filter((id) => motions[id]);
-  const turn: Partial<Record<AnimAction, number>> = {};
+  const recent: Partial<Record<AnimAction, number[]>> = {};
   let loopAction: AnimAction | null = null;
   let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean } | null = null;
   let t = 0;
@@ -42,14 +57,20 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     play(a, o = {}) {
       const list = ids(a);
       if (!list.length) return null;
-      const n = turn[a] ?? 0;
-      turn[a] = n + 1;
-      const id = list[n % list.length]!;
+      const hist = (recent[a] ??= []);
+      const k = pickVariant(list.length, hist, rng);
+      hist.push(k);
+      if (hist.length > VARIANT_REPEAT_MAX) hist.shift();
+      const id = list[k]!;
       const m = motions[id]!;
-      once = { action: a, id, opts: o, hitFired: m.hit === undefined };
-      t = 0;
+      const hitAt = m.hit ?? m.duration / 2;
+      // 타격부터 (GDD 117장 3, 블록 즉발): 휘두른 끝 자세에서 시작해 되돌아온다. 타격 콜백은 바로
+      const skip = !!o.fromHit && m.hit !== undefined;
+      once = { action: a, id, opts: o, hitFired: m.hit === undefined || skip };
+      t = skip ? hitAt : 0;
+      if (skip) o.onHit?.();
       wake();
-      return { durationMs: m.duration, hitAtMs: m.hit ?? m.duration / 2 };
+      return skip ? { durationMs: m.duration - hitAt, hitAtMs: 0 } : { durationMs: m.duration, hitAtMs: hitAt };
     },
     stop() {
       once = null;
