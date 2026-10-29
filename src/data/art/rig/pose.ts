@@ -78,6 +78,8 @@ export interface Motion {
   flip?: string[];
   /** 이 동작 동안 맨 앞으로 올려 그릴 슬롯(차례대로) — 필살기에서 칼을 몸 위로 (GDD 115-A 48) */
   front?: string[];
+  /** 이 동작 동안 숨길 슬롯 — 칼 든 손으로 치는 스트레이트에서 칼을 잠시 감춤 (GDD 115-A 52) */
+  hide?: string[];
   /** 이펙트 키(베기 궤적·폭발·바닥 고리·기둥) — 그림 층 위에 그린다 (GDD 115-A 48) */
   fx?: FxKey[];
   /** 이 시각부터 외형을 해방 외형(look.release)으로 바꿔 그린다 — 해방 1안 (GDD 115-A 49) */
@@ -256,11 +258,13 @@ export function flipMatrix(rig: Rig, layer: PartArt & { slot: string }): Mat {
   return [a, b, b, d, gx - a * gx - b * gy, gy - b * gx - d * gy];
 }
 
-/** 그리는 차례: 이 동작의 front 슬롯을 맨 앞으로(나머지는 슬롯 차례 그대로) */
+/** 그리는 차례: 이 동작의 hide 슬롯은 빼고, front 슬롯을 맨 앞으로(나머지는 슬롯 차례 그대로) */
 export function orderLayers<T extends { slot: string }>(layers: T[], motion?: Motion): T[] {
+  const hide = motion?.hide;
+  const shown = hide?.length ? layers.filter((l) => !hide.includes(l.slot)) : layers;
   const front = motion?.front;
-  if (!front?.length) return layers;
-  return [...layers.filter((l) => !front.includes(l.slot)), ...front.flatMap((f) => layers.filter((l) => l.slot === f))];
+  if (!front?.length) return shown;
+  return [...shown.filter((l) => !front.includes(l.slot)), ...front.flatMap((f) => shown.filter((l) => l.slot === f))];
 }
 
 /** 이 순간 그릴 외형: 해방 동작(swapAt)이 그 시각을 지났고 외형에 해방 외형(release)이 있으면 그것 */
@@ -339,6 +343,7 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
     if (m.hit !== undefined && (m.hit < 0 || m.hit > m.duration)) errs.push(`${mid}: 타격 시각이 길이 밖`);
     for (const f of m.flip ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 뒤집을 슬롯 ${f} 없음`);
     for (const f of m.front ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 앞으로 올릴 슬롯 ${f} 없음`);
+    for (const f of m.hide ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 숨길 슬롯 ${f} 없음`);
     for (const f of m.fx ?? []) {
       if (f.bone && !ids.has(f.bone)) errs.push(`${mid}: 이펙트 뼈 ${f.bone} 없음`);
       if (f.t < 0 || f.t > m.duration) errs.push(`${mid}: 이펙트 시각이 길이 밖`);

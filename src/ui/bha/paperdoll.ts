@@ -119,10 +119,9 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
     const mats = boneMatrices(rig, pose, body);
     const showing = motionLook(rig, o.look, m, t);
     for (const [lid, parts] of sets) {
-      const on = lid === showing;
-      orderLayers(parts, m).forEach((p, i) => {
-        p.img.style.display = on ? '' : 'none';
-        if (!on) return;
+      const shown = lid === showing ? orderLayers(parts, m) : [];
+      for (const p of parts) p.img.style.display = shown.includes(p) ? '' : 'none';
+      shown.forEach((p, i) => {
         p.img.style.zIndex = String(i + 1);
         p.img.style.transform = css(layerMatrix(rig, mats, p.layer, m), k);
       });

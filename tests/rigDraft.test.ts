@@ -101,8 +101,12 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
   it('기본 동작마다 왼 아래팔이 움직인다(나눠만 놓고 똑같이 움직이지 않게)', () => {
     for (const id of ['idle', 'move', 'attack', 'attack2', 'skill', 'skill2', 'hit', 'ultimate']) expect(motions[id]!.tracks.forearm_L, id).toBeDefined();
   });
-  it('잽·스트레이트·옆차기', () => {
-    for (const id of ['jab', 'straight', 'sidekick']) expect(motions[id]!.hit).toBeGreaterThan(0);
+  it('잽(오른손)·스트레이트(칼 든 손, 칼 숨김)·옆차기 A·B', () => {
+    for (const id of ['jab', 'straight', 'sidekick', 'sidekick2']) expect(motions[id]!.hit).toBeGreaterThan(0);
+    // 스트레이트 = 칼 든 손으로, 그동안 칼은 숨김(사용자 "칼 잠시 사라져도 돼")
+    expect(orderLayers(lookLayers(rig, 'shinigami-base'), motions.straight).some((l) => l.slot === 'weapon')).toBe(false);
+    expect(motions.straight!.tracks.arm_L).toBeDefined();
+    expect(motions.jab!.tracks.arm_R).toBeDefined();
     expect(Math.max(...motions.sidekick!.tracks.leg_L!.map((k) => k[1]))).toBeGreaterThan(80);
   });
   it('해방 동작(양손으로 칼 내밀고 변신)은 아란칼(여) 몸에만 하나, swapAt 이 지나면 해방 외형', () => {
