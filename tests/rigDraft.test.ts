@@ -73,10 +73,12 @@ describe('편집기 같이 옮기기 (GDD 96장 42)', () => {
     expect(m.parts.map((p) => p.slot)).toEqual(['head', 'hair', 'hair_back']);
     expect(m.bones).toEqual(['hair_back']);
   });
-  it('오른 위팔 → 아래팔(팔꿈치 관절 포함), 왼팔 → 엄지, 다리 → 정강이·발(무릎·발목 관절)', () => {
+  it('오른 위팔 → 아래팔(팔꿈치 관절 포함), 왼 위팔 → 아래팔·엄지, 다리 → 정강이·발(무릎·발목 관절)', () => {
     expect(followMove(rig, 'bare-base', 'arm_R')!.parts.map((p) => p.slot)).toEqual(['arm_R', 'forearm_R']);
     expect(followMove(rig, 'bare-base', 'arm_R')!.bones).toEqual(['forearm_R']);
-    expect(followMove(rig, 'bare-base', 'arm_L')!.parts.map((p) => p.slot)).toEqual(['arm_L', 'thumb_L']);
+    expect(followMove(rig, 'bare-base', 'arm_L')!.parts.map((p) => p.slot)).toEqual(['arm_L', 'forearm_L', 'thumb_L']);
+    expect(followMove(rig, 'bare-base', 'arm_L')!.bones).toEqual(['forearm_L']);
+    expect(followMove(rig, 'bare-base', 'forearm_L')!.parts.map((p) => p.slot)).toEqual(['forearm_L', 'thumb_L']);
     expect(followMove(rig, 'digitigrade-test', 'leg_L')!.parts.map((p) => p.slot)).toEqual(['leg_L', 'shin_L', 'foot_L']);
     expect(followMove(rig, 'digitigrade-test', 'leg_L')!.bones).toEqual(['shin_L', 'foot_L']);
   });
