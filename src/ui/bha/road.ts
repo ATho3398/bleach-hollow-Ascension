@@ -3,6 +3,7 @@
 import { BALANCE } from '../../config/balance';
 import { getTile } from '../../data/tiles';
 import { moveTile, placeTile, swapTiles, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
+import { fixParticles } from '../../engine/josa';
 import { tileHint, variantModsText } from '../labels';
 import { el, emptyState, icon } from './dom';
 import { canPlaceAt, tileCss, tileIconId } from './expedition';
@@ -250,7 +251,8 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       item.append(el('b', '', `${name}(${p.left}·${p.right})`), ` ${variantModsText(synergyMods(p.id)).join(' · ')}`);
       synLine.append(item);
     }
-    noteEl.textContent = note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다');
+    // 조사는 타일 이름 받침에 맞게 ('영혼을(를)' → '영혼을', C.196)
+    noteEl.textContent = fixParticles(note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다'));
     noteEl.title = noteEl.textContent; // 한 줄로 잘려도 전체 안내는 올리면 보인다 (C.182)
     hand.replaceChildren();
     if (exp.hand.length === 0) hand.append(emptyState('손에 든 타일 없음', { icon: 'i-deck' })); // 빈 상태 (GDD 100장 #87)

@@ -134,7 +134,7 @@
      세로 스크롤 + [출발] 띠는 아래에 붙어(sticky) 늘 보인다. 기기 ▲▼ 이동은 device.move 의 scrollIntoView 가 그 칸을 보이게 한다 */
   position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow: hidden auto; overscroll-behavior: contain; padding: var(--bha-sp-3) var(--bha-sp-4) 0;
   display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: repeat(8, max-content) minmax(0, 1fr) max-content; /* C.176: auto 행은 칸이 모자라면 내용보다 줄어 겹쳤다 → max-content(넘치면 스크롤). 오른쪽 목록은 1fr 행에 걸쳐 크기 계산에서 빠진다 */
-  column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-2); align-content: stretch;
+  column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-1); align-content: stretch; /* C.196: 안내 줄 2줄 자리를 위해 행 간격 4 → 2px */
 }
 .bha-lcd .bha-app.bha-plan.is-locked { grid-template-columns: minmax(0, 1fr); }
 .bha-lcd .bha-plan > * { grid-column: 1; min-width: 0; }
@@ -236,8 +236,8 @@
 /* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
 .bha-road__wrap { user-select: none; -webkit-user-select: none; }
 .bha-lcd .bha-plan .bha-road__cell { min-height: 40px; }
-/* 안내 줄 (C.196): 말줄임 없이 줄바꿈, 긴 타일 설명도 다 보인다 — 아래에는 [출발] 고정 띠뿐이라 늘어나도 버튼이 안 움직인다 */
-.bha-lcd .bha-plan .bha-road__note { line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; min-height: calc(1em * var(--bha-lh-tight)); }
+/* 안내 줄 (C.196): 말줄임 없이 줄바꿈, 긴 타일 설명도 다 보인다 — 2줄 자리를 잡아 둬 [출발] 띠에 가리지 않는다 */
+.bha-lcd .bha-plan .bha-road__note { line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; min-height: calc(2em * var(--bha-lh-tight)); }
 .bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }
 
 /* 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오르고, 끝나면 회복 숫자(.bha-float--heal)가 떠오른다. 종족 무관 */
