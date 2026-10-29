@@ -784,7 +784,7 @@ data/
 - 남은 사용자 확인 거리: 119장 판단 거리(타일 뽑기 300·막기 8초·혈 예외·v2 3단계), 100장 #18 기기 높이 90%. 그림 대기: 온천·장터·떠돌이 상인·휴식 칸 장소(place.<타일>.<종족>)·적 그림.
 - 운영 메모: ntfy 가 10-30 02:3x 부터 429 두 번(재시도 금지 규칙대로 둠). 캡처 이미지는 컨텍스트를 크게 먹는다 — 확인은 패치당 3~4장. UI담당자C = session_01LmFYYdTyBXcbM3dRNuzGuc, 종이인형 세션 = session_011W8zFEjKADtTYyQZXReU7r.
 - 다음 코딩 150, 다음 패치 C.204.
-**10-30 05:3x 마스터W→X 인수인계** (마스터W = session_01YVaigGcsDnK2g3vtCgTdA4, 비용 약 8달러·컨텍스트 약 26만 — 캡처로 30만 전에 교체. 마스터X = 아래 줄에 기록). main 최신: 7231075(C.207 추가, Pages run 273 success), PATCH_LABEL C.207, SAVE 55, BALANCE 90, 테스트 2134, GDD v5.304.
+**10-30 05:3x 마스터W→X 인수인계** (마스터W = session_01YVaigGcsDnK2g3vtCgTdA4, 비용 약 8달러·컨텍스트 약 26만 — 캡처로 30만 전에 교체. 마스터X = session_01YVaigJLX25MzeU5CrTVHgc, 마스터W 가 05:32 생성). main 최신: 7231075(C.207 추가, Pages run 273 success), PATCH_LABEL C.207, SAVE 55, BALANCE 90, 테스트 2134, GDD v5.304.
 - 마스터W 기간 끝난 것(전부 배포 확인): C.201(코딩147 DONE_) · 온천 배경 그림(UI담당자C) · C.205 온천 물 잠김(UI담당자C) · C.203 129-1(코딩149 DONE_) · C.204 130장 월드맵·시장(스위치 src/config/features.ts FEATURES.WORLD_MAP) · C.206 129-2 튜토리얼 실제 조작 · C.207 131장 홈 안내 → 첫 모험 강제 + 월드맵 [둥지로].
 - **진행 중**: 코딩150(session_01YVaigHCih9JzBR1TZYggA8, 컨텍스트 54만·11달러) = ui-audit '시장 뒤로 → 방' 1건(검사 대기 문제 추정, 938c177) 재실행 결과 보고만 남음 → 받으면 DONE_(새 일 금지). 고칠 게 나오면 새 세션.
 - **사용자 대기**: 126-1 진화체 특성·고유 블록 초안 2판(엑셀) — 위 02:5x 인수 줄 그대로. 사용자가 스킬 블록 64×64 도트 53장을 그려 올 예정(가이드 UI담당자C 브랜치 docs/design/user-art/block-guide/) → 오면 블록 교체 코딩 세션.
