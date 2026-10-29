@@ -87,6 +87,13 @@ export interface AudioLike {
   pause(): void;
   /** 곡이 끝났을 때 (loop 가 꺼진 곡만 울린다) — 플레이리스트가 다음 곡으로 넘길 때 쓴다 */
   onended?: (() => void) | null;
+  /** 읽기·재생 오류 (망 끊김·서비스 워커 응답 문제 등) — 지금 곡을 다시 잇거나 다음 곡으로 넘긴다 (C.196) */
+  onerror?: (() => void) | null;
+  /** 지금 재생 위치(초) — 오류 뒤 같은 곳부터 다시 잇는다 */
+  currentTime?: number;
+  /** 버린 요소의 파일 연결을 끊어 메모리·재생기 자리를 돌려준다 (HTMLMediaElement) */
+  removeAttribute?(name: string): void;
+  load?(): void;
 }
 
 interface Voice {
@@ -96,7 +103,12 @@ interface Voice {
   /** 지금 음량 비율 0~1 (설정 음량에 곱한다)과 목표 */
   level: number;
   target: number;
+  /** 이 곡에서 연달아 난 오류 수 (다시 잇기 한도) */
+  errors: number;
 }
+
+/** 한 곡에서 오류가 나면 같은 자리부터 다시 잇는 최대 횟수 — 넘으면 다음 곡 (C.196) */
+export const BGM_RETRY_MAX = 2;
 
 export interface BgmPlayerOptions {
   files?: readonly string[];
@@ -201,10 +213,47 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
     if (!unlocked || suspended) return;
     try {
       const p = a.play();
-      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => { unlocked = false; }); // 막히면 다음 터치에 다시
+      // 막히면 다음 터치에 다시. 단 pause() 가 play() 를 끊은 것(AbortError — 페이드로 버린 곡)은 막힌 게 아니다 (C.196)
+      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch((e: unknown) => { if ((e as { name?: string } | null)?.name !== 'AbortError') unlocked = false; });
     } catch {
       unlocked = false;
     }
+  };
+  /** 버린 요소: 멈추고 파일 연결을 끊는다 (C.196 — 다 쓴 요소가 쌓여 몇 곡 뒤 재생기가 모자라 지금 곡이 끊기지 않게) */
+  const release = (a: AudioLike) => {
+    a.onended = null;
+    a.onerror = null;
+    try { a.pause(); } catch { /* 무시 */ }
+    try { a.removeAttribute?.('src'); a.load?.(); } catch { /* 무시 */ }
+  };
+  /** 지금 곡 요소를 새로 만들어 at 초부터 다시 잇는다 (오류 복구) */
+  const respawn = (v: Voice, at: number) => {
+    const t = entry(v.track);
+    if (!t) return;
+    let audio: AudioLike;
+    try {
+      audio = make(`${base}${t.file}`);
+    } catch {
+      return;
+    }
+    release(v.audio);
+    audio.loop = settings.repeat;
+    if (at > 0) try { audio.currentTime = at; } catch { /* 위치를 못 옮기면 처음부터 */ }
+    v.audio = audio;
+    hook(v);
+    apply(v);
+    start(audio);
+  };
+  /** 플레이리스트 요소에 끝·오류 처리를 단다 */
+  const hook = (v: Voice) => {
+    const audio = v.audio;
+    audio.onended = () => { if (v.audio === audio && v.target > 0 && !audio.loop) { v.errors = 0; advance(); } };
+    audio.onerror = () => {
+      if (v.audio !== audio || v.target === 0) return;
+      v.errors++;
+      if (v.errors > BGM_RETRY_MAX) { v.errors = 0; v.target = 0; v.level = 0; step(0); advance(); return; }
+      respawn(v, typeof audio.currentTime === 'number' && Number.isFinite(audio.currentTime) ? audio.currentTime : 0);
+    };
   };
   const apply = (v: Voice) => {
     v.audio.volume = Math.max(0, Math.min(1, v.level * settings.volume));
@@ -228,8 +277,7 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
     // 다 꺼진 요소는 멈추고 버린다
     voices = voices.filter((v) => {
       if (v.target === 0 && v.level === 0) {
-        try { v.audio.pause(); } catch { /* 무시 */ }
-        v.audio.onended = null;
+        release(v.audio);
         return false;
       }
       return true;
@@ -264,8 +312,8 @@ export function createBgmPlayer(opt: BgmPlayerOptions = {}): BgmPlayer {
         return; // 오디오를 못 만드는 환경은 무음
       }
       audio.loop = playlist.length > 0 ? settings.repeat : true;
-      const v: Voice = { track: key, audio, level: 0, target: 1 };
-      if (playlist.length > 0) audio.onended = () => { if (v.target > 0 && !audio.loop) advance(); };
+      const v: Voice = { track: key, audio, level: 0, target: 1, errors: 0 };
+      if (playlist.length > 0) hook(v);
       apply(v);
       voices.push(v);
       start(audio);
@@ -356,14 +404,12 @@ export function bgm(): BgmPlayer {
     playlist: PLAYLIST,
     // 곡 넘김·반복·제외만 공통 저장에 쓴다 — 켬/음량은 설정 화면 [저장]만 (슬롯 설정·미리 듣기 값이 공통에 새지 않게, C.178)
     persist: (s) => { const c = loadBgmSettings(store); saveBgmSettings(store, { ...c, track: s.track, repeat: s.repeat, excluded: s.excluded }); },
-    onTrack: (t) => { try { showToast({ eyebrow: '브금', title: t.name }); } catch { /* 알림은 부가 */ } },
+    onTrack: (t) => { try { showToast({ eyebrow: '배경음', title: t.name }); } catch { /* 알림은 부가 */ } },
   });
   shared = p;
   if (typeof window !== 'undefined') {
-    const open = () => {
-      p.unlock();
-      if (p.unlocked) for (const t of ['pointerdown', 'touchend', 'keydown', 'click'] as const) window.removeEventListener(t, open, true);
-    };
+    // C.196: 훅을 떼지 않는다 — 곡 넘김 때 재생이 한 번 막히면(unlocked = false) 떼어 둔 훅 때문에 다시 켤 길이 없어 그 뒤로 계속 무음이었다
+    const open = () => p.unlock();
     for (const t of ['pointerdown', 'touchend', 'keydown', 'click'] as const) window.addEventListener(t, open, true);
   }
   return p;

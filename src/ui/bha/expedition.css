@@ -85,6 +85,16 @@
 .bha-road__synline { margin: 0; display: flex; flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-road__synline b { color: var(--bha-rare); }
 .bha-road__cell--event.is-has { --tile: var(--bha-seal); }
+/* 고정 칸 (GDD 121장 1, C.196): 처음부터 놓였거나 앞 바퀴에서 확정된 칸 — 흐린 테두리 + 왼쪽 위 작은 자물쇠. 누르면 "고정 칸 — 바꿀 수 없다" */
+.bha-road__cell.is-locked { border-style: dashed; border-color: var(--bha-line-2); box-shadow: none; }
+.bha-road__cell.is-has.is-locked { filter: saturate(.7) brightness(.85); }
+.bha-road__lock { position: absolute; top: var(--bha-sp-1); left: var(--bha-sp-1); display: grid; place-items: center; padding: var(--bha-sp-1); border-radius: var(--bha-r-pill); background: var(--bha-bg-0); color: var(--bha-text-2); line-height: 0; pointer-events: none; }
+.bha-road__cell .bha-road__lock .bha-icon { width: 10px; height: 10px; }
+/* 바퀴 끝 창(드래프트) 길 줄 (GDD 121장 3, C.196): 창 폭에 6칸씩 눌러 담지 않고 출발 화면과 같은 칸 크기로 한 줄, 넘치면 옆으로 민다.
+   창 안 스크롤 칸(.bha-sheet__scroll, 세로 flex)이 배치판 높이를 줄여 칸이 잘리던 것도 막는다 */
+.bha-sheet .bha-road__wrap { flex-shrink: 0; }
+.bha-sheet .bha-road { display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-4) var(--bha-sp-1) var(--bha-sp-2); }
+.bha-sheet .bha-road__cell { flex: 0 0 72px; min-height: 48px; scroll-snap-align: start; }
 
 /* 드래프트 (GDD 25-5 ①, C.57): 바퀴 끝 팝업 안 3장 중 1장 */
 .bha-draft { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
@@ -179,7 +189,6 @@
 /* 배치판 칸: 카드꼴 — 놓은 타일은 아이콘 + 이름 */
 .bha-road__cell { min-height: 64px; flex-direction: column; gap: var(--bha-sp-1); align-content: center; }
 .bha-road__cell.is-has { display: flex; align-items: center; justify-content: center; }
-.bha-road__name { max-width: 100%; padding: 0 var(--bha-sp-1); font-size: var(--bha-fs-xs); line-height: 1.1; text-align: center; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: keep-all; }
 .bha-road__cell.is-editable { cursor: grab; touch-action: pan-y; }
 .bha-road__cell.is-dragging { opacity: .35; }
 .bha-road__cell.is-drop, .bha-road__hand.is-drop { outline: 2px solid var(--bha-insert); outline-offset: 1px; background-color: rgb(108 196 255 / .2); }
@@ -226,8 +235,6 @@
 /* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
 .bha-road__wrap { user-select: none; -webkit-user-select: none; }
 .bha-lcd .bha-plan .bha-road__cell { min-height: 40px; }
-/* C.182 UI 검수: 출발 화면 길 칸은 이름 한 줄 — 타일을 놓으면 이름이 두 줄로 늘어 그 줄 칸이 40 → 48px 로 커지고 아래 칸·안내 줄이 밀렸다(전체 이름은 칸 title) */
-.bha-lcd .bha-plan .bha-road__name { display: block; white-space: nowrap; text-overflow: ellipsis; }
 /* 안내 줄은 한 줄 — 긴 타일 설명을 고르면 두 줄로 늘어 화면이 16px 넘쳐 스크롤이 생겼다(같은 화면 .bha-plan__line 과 같은 방식) */
 .bha-lcd .bha-plan .bha-road__note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }

@@ -75,6 +75,17 @@ export function handCounts(hand: readonly string[]): { id: string; count: number
   return out;
 }
 
+/** 고정 칸(처음부터 놓였거나 앞 바퀴에서 확정된 칸)을 눌렀을 때 안내 (GDD 121장 1) */
+export const LOCKED_NOTE = '고정 칸 — 바꿀 수 없다';
+
+/** 고정 칸 구석의 작은 자물쇠 */
+function lockBadge(): HTMLElement {
+  const b = el('span', 'bha-road__lock');
+  b.setAttribute('aria-hidden', 'true');
+  b.append(icon('i-lock'));
+  return b;
+}
+
 export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   const { exp } = o;
   const L = BALANCE.expedition.loopTiles;
@@ -92,8 +103,17 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   const cells: HTMLElement[] = [];
   for (let i = 0; i < L; i++) {
     if (i === 0) {
-      const nest = el('span', 'bha-road__cell bha-road__cell--nest');
-      nest.append(icon('i-nest'));
+      // 둥지 칸 = 처음부터 놓인 고정 칸 (GDD 121장 1): 자물쇠 표시, 누르면 안내만
+      const nest = el('button', 'bha-road__cell bha-road__cell--nest is-locked');
+      nest.type = 'button';
+      nest.dataset.nest = ''; // data-cell 이 없어 끌어 놓기 대상이 아니다
+      nest.setAttribute('aria-label', '0번 칸 (둥지, 고정 칸)');
+      nest.title = `${LOCKED_NOTE} (둥지)`;
+      nest.append(icon('i-nest'), lockBadge());
+      nest.onclick = () => {
+        note = `${LOCKED_NOTE} (둥지)`;
+        refresh();
+      };
       cells.push(nest);
       road.append(nest);
       continue;
@@ -123,7 +143,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   function onCell(i: number): void {
     const id = exp.slots[i] ?? null;
     const act = cellAction({ slot: id, editable: placedHere.has(i), selection: selection(), index: i });
-    if (act === 'info') note = `${o.tileName(id!)}: ${tileHint(getTile(id!))} (확정된 타일)`;
+    if (act === 'info') note = `${LOCKED_NOTE} · ${o.tileName(id!)}: ${tileHint(getTile(id!))}`;
     else if (act === 'select-placed') {
       selectedCell = i;
       selected = null;
@@ -206,12 +226,14 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       const css = id ? tileCss(getTile(id).kind) : null;
       const b = cells[i]!;
       const canMove = mode === 'empty' && selectedCell !== null && canPlaceAt({ slot: null, index: i, pos: exp.pos, phase: 'moving', hasSelected: true });
-      b.className = `bha-road__cell${css ? ` is-has bha-road__cell--${css}` : ''}${mode === 'can' || canMove ? ' is-can' : ''}${selectedCell === i ? ' is-selected' : ''}${id && placedHere.has(i) ? ' is-editable' : ''}`;
-      b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), ...(id ? [el('span', 'bha-road__name', o.tileName(id))] : []), el('span', 'bha-road__num', String(i)));
+      const locked = Boolean(id) && !placedHere.has(i);
+      b.className = `bha-road__cell${css ? ` is-has bha-road__cell--${css}` : ''}${mode === 'can' || canMove ? ' is-can' : ''}${selectedCell === i ? ' is-selected' : ''}${id && placedHere.has(i) ? ' is-editable' : ''}${locked ? ' is-locked' : ''}`;
+      // 놓인 타일 = 아이콘 + 칸 번호만 (GDD 121장 2 — 칸이 좁아 이름이 잘렸다). 이름은 안내 줄·title·aria 에서
+      b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), ...(locked ? [lockBadge()] : []), el('span', 'bha-road__num', String(i)));
       if (id && placedHere.has(i)) b.dataset.drag = 'cell';
       else delete b.dataset.drag;
-      b.title = id ? `${o.tileName(id)} — ${tileHint(getTile(id))}` : '빈 칸';
-      b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 확정된 타일'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
+      b.title = id ? `${o.tileName(id)} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : '빈 칸';
+      b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 고정 칸'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
     }
     // 인접 시너지 (GDD 25-5 ②): 붙은 두 칸을 테두리로 묶고 오른쪽 칸 왼쪽 위(두 칸 사이)에 이름표. 줄이 바뀌는 짝(6열 경계)은 오른쪽 칸 모서리에
     const pairs = roadSynergies(exp, Boolean(o.synergyName));
