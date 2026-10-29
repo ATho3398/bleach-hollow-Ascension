@@ -97,10 +97,10 @@ describe('체력 막대 = 길고 두껍게, 숫자는 막대 안 (GDD 127장 1, 
     expect(css).toContain('.bha-meter--inside .bha-meter__track > .bha-meter__value {');
     expect(css).toMatch(/\.bha-meter--inside \.bha-meter__track, \.bha-meter--inside\.bha-meter--thin \.bha-meter__track \{ height: calc\(var\(--bha-bar-h-lg\) \+ var\(--bha-sp-2\)\); \}/);
   });
-  it('방 발밑·걷기·온천 체력 막대가 inside, 방 막대는 140px', () => {
+  it('방 발밑·걷기 체력 막대가 inside, 방 막대는 140px (온천은 C.201 128장 6 머리 위 상태 창으로 바뀜)', () => {
     expect(read('src/ui/roomView.ts')).toMatch(/kind: 'player', label: '체력'[^\n]*inside: true/);
     expect(read('src/ui/expeditionView.ts')).toMatch(/kind: 'player', label: '체력'[^\n]*inside: true/);
-    expect(read('src/ui/spaView.ts')).toMatch(/kind: 'player', label: '체력'[^\n]*inside: true/);
+    expect(read('src/ui/spaView.ts')).toContain("gauge('hp', 'i-heal'");
     expect(read('src/ui/bha/room.css')).toContain('width: 140px;');
   });
   it('전투 체력 막대도 숫자를 막대 안에', () => {

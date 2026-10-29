@@ -1,29 +1,61 @@
-/* 온천 화면 (GDD 123장 4, C.198): 임시 배경(탕 도형 + 김) · 캐릭터 앉은 임시 연출(아래쪽을 물이 가림, 천천히 들썩임).
-   그림(scene.spa)·온천 모션이 오면 배경 img 가 도형을 덮는다. 색·간격은 토큰만 */
+/* 온천 화면 (GDD 123장 4 → 128장 6, C.201): 화면 전체가 장면. 임시 배경(탕 도형 + 김) · 캐릭터가 오른쪽에서 걸어 들어와 탕에 들어가 앉음(아래쪽을 물이 가림, 천천히 들썩임).
+   [방으로 돌아가기]·ⓘ = 왼쪽 위 작게, 체력·배부름 = 방 상태 칩과 같은 머리 위 상태 창. 그림(scene.spa)·온천 모션이 오면 배경 img 가 도형을 덮는다. 색·간격은 토큰만 */
+.bha-lcd .bha-app.bha-spa { padding: 0; gap: 0; background: none; }
 .bha-spa__scene {
-  position: relative; min-height: 220px; height: 100%; overflow: hidden;
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
+  position: relative; flex: 1 1 auto; min-height: 0; height: 100%; overflow: hidden;
+  border-radius: var(--bha-r-md);
   background: linear-gradient(var(--bha-bg-2), var(--bha-bg-1));
 }
 .bha-spa__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.bha-spa__char.bha-char { left: 50%; top: 56%; cursor: default; }
-.bha-spa__char .bha-char__body { animation: bha-spa-bob 3.2s var(--bha-ease-linear) infinite alternate; }
-.bha-spa__char.is-collapsed .bha-char__body { rotate: 0deg; }
-.bha-spa__char:disabled { opacity: 1; }
+
+/* 임시 탕: 뒤쪽 물(캐릭터 뒤) + 앞쪽 물(캐릭터 앞 — 앉으면 몸 아래쪽을 가린다) */
+.bha-spa__water, .bha-spa__front { position: absolute; left: 24%; right: 24%; }
 .bha-spa__water {
-  position: absolute; left: 6%; right: 6%; bottom: 6%; height: 44%;
+  bottom: 8%; height: 40%;
   border: 2px solid var(--bha-line-2); border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-pill) var(--bha-r-pill);
-  background: color-mix(in srgb, var(--bha-tile-rest) 85%, transparent);
+  background: color-mix(in srgb, var(--bha-tile-rest) 70%, transparent);
 }
-.bha-spa__scene.has-art .bha-spa__water { display: none; }
+.bha-spa__front {
+  bottom: 8%; height: 26%; z-index: 2; pointer-events: none;
+  border: 2px solid var(--bha-line-2); border-top-width: 3px; border-radius: 0 0 var(--bha-r-pill) var(--bha-r-pill);
+  background: color-mix(in srgb, var(--bha-tile-rest) 88%, transparent);
+}
+.bha-spa__scene.has-art .bha-spa__water, .bha-spa__scene.has-art .bha-spa__front { display: none; }
 .bha-spa__steam {
-  position: absolute; left: 20%; right: 20%; top: 18%; height: 30%; pointer-events: none;
+  position: absolute; left: 24%; right: 24%; top: 22%; height: 30%; z-index: 2; pointer-events: none;
   background: radial-gradient(ellipse at 30% 70%, color-mix(in srgb, var(--bha-text-1) 18%, transparent), transparent 60%),
               radial-gradient(ellipse at 70% 60%, color-mix(in srgb, var(--bha-text-1) 14%, transparent), transparent 55%);
   animation: bha-spa-steam 4s var(--bha-ease-linear) infinite alternate;
 }
-.bha-spa__bars { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
-.bha-spa .bha-lcdpage__col--right { display: flex; flex-direction: column; gap: var(--bha-sp-4); }
+
+/* 캐릭터 + 머리 위 상태 창 한 묶음: 걸어 들어온 뒤(is-seated) 탕 안으로 내려앉는다 */
+.bha-spa__actor {
+  position: absolute; left: 50%; bottom: 22%; z-index: 1; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-2);
+  transition: bottom 0.6s var(--bha-ease-out, ease-out);
+}
+.bha-spa__actor.is-entering { animation: bha-spa-walkin 2.2s var(--bha-ease-linear) both; }
+.bha-spa__actor.is-entering .bha-char__body { animation: bha-spa-step 0.36s steps(2, jump-none) infinite; }
+.bha-spa__actor.is-seated { bottom: 16%; } /* 몸 위쪽 절반 남짓이 앞 물 위로 보인다 */
+.bha-spa__actor.is-seated .bha-char__shadow { visibility: hidden; }
+.bha-spa__actor.is-seated .bha-char__body { animation: bha-spa-bob 3.2s var(--bha-ease-linear) infinite alternate; }
+.bha-spa__actor .bha-char.bha-spa__char { position: relative; left: auto; top: auto; transform: none; cursor: default; }
+.bha-spa__char.is-collapsed .bha-char__body { rotate: 0deg; translate: none; }
+.bha-spa__char:disabled { opacity: 1; }
+.bha-spa__status.bha-room__status { position: static; transform: none; width: auto; min-width: 104px; padding: var(--bha-sp-2) var(--bha-sp-3); }
+.bha-spa__status .bha-room__gaugetrack { min-width: 36px; }
+.bha-room__gauge--hp { --c: var(--bha-player-hp); }
+
+/* 왼쪽 위: [방으로 돌아가기] · ⓘ · 이름 */
+.bha-spa__hud { position: absolute; top: var(--bha-sp-3); left: var(--bha-sp-3); z-index: 3; display: flex; align-items: center; gap: var(--bha-sp-2); }
+.bha-spa__hud > .bha-info { margin: 0; }
+.bha-spa__name { padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / 0.55); color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); line-height: 1.6; }
+
+@keyframes bha-spa-walkin { from { left: 112%; } to { left: 50%; } }
+@keyframes bha-spa-step { 0% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes bha-spa-bob { from { transform: translateY(0); } to { transform: translateY(3px); } }
 @keyframes bha-spa-steam { from { opacity: 0.5; transform: translateY(4px); } to { opacity: 1; transform: translateY(-4px); } }
-@media (prefers-reduced-motion: reduce) { .bha-spa__char .bha-char__body, .bha-spa__steam { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .bha-spa__actor.is-entering { animation: none; }
+  .bha-spa__actor, .bha-spa__actor .bha-char__body, .bha-spa__steam { animation: none !important; transition: none; }
+}
