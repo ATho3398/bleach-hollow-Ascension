@@ -417,6 +417,27 @@ const SCREENS = [
     },
   },
   {
+    // C.203 (GDD 129-1): 저절로 뜨는 튜토리얼 안내(첫 원정 뒤 '다음 할 일')는 회색 덮개 없이 카드·테두리만 — check 가 덮개를 잰다.
+    // 도움말에서 직접 연 다시 보기는 덮개 그대로(data-replay)
+    name: '튜토리얼 안내',
+    async run(h, n) {
+      await h.page.evaluate(() => {
+        const k = 'bha-save-test';
+        const j = JSON.parse(localStorage.getItem(k));
+        j.help.guides['first-run-room'] = 'pending';
+        localStorage.setItem(k, JSON.stringify(j));
+      });
+      await h.page.reload();
+      await h.wait(1500);
+      await h.page.getByRole('button', { name: '이어하기' }).click();
+      await h.page.locator('.bha-tut[data-tutorial="first-run-room"]').waitFor({ timeout: 8000 });
+      await h.wait(600);
+      if (!(await h.has('.bha-tut[data-tutorial="first-run-room"].is-nodim'))) h.report({ kind: '튜토리얼 안내 회색 덮개', key: 'first-run-room', detail: '저절로 뜬 안내에 is-nodim 이 없다' }, n);
+      await h.check(n, { keys: false });
+      await h.click('.bha-tut__card .bha-btn--primary', { ms: 400 });
+    },
+  },
+  {
     name: '방 빈사·사망',
     async run(h, n) {
       await more(h, '테스트');

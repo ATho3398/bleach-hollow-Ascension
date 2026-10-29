@@ -1,5 +1,6 @@
 /* 장터 화면 (GDD 127장 2, C.201): 방과 같은 장면 틀 + 임시 배경(천막 줄·좌판 바닥). 그림(scene.market)이 오면 배경이 덮는다. 색·간격은 토큰만 */
-.bha-market__hud { justify-content: space-between; }
+.bha-lcd .bha-app.bha-room.bha-market { padding: var(--bha-sp-3); }   /* [방으로 돌아가기] 자리 = 온천과 같은 왼쪽 위 (GDD 129-1) */
+.bha-market__hud { justify-content: flex-start; align-items: flex-start; gap: var(--bha-sp-3); }
 .bha-market__titles { min-width: 0; display: flex; flex-direction: column; gap: var(--bha-sp-1); }
 .bha-market__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
 .bha-market__sub { margin: 0; color: var(--bha-text-2); }

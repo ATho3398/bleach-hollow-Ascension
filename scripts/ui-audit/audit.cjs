@@ -17,6 +17,27 @@ const MOVE_TOL = 1.5;
 const PORTRAIT = !!process.env.UI_AUDIT_PORTRAIT;
 /** 기기 버튼 기준 자리 (C.197, GDD 122장 1): 종족마다 처음 잰 ▲▼✓◀ 자리. 모든 화면·상태에서 같아야 한다 */
 const DEV_BTN_REF = new Map();
+/** 공간 화면 '방으로 돌아가기' 기준 자리 (C.203, GDD 129-1): 종족마다 처음 잰 장터·온천 버튼 자리. 공간 화면끼리 같아야 하고 왼쪽 위여야 한다 */
+const SPACE_BACK_REF = new Map();
+
+/** 페이지 안: 튜토리얼 안내 카드(.bha-tut) 중 회색 덮개가 있는 것 — 도움말에서 직접 연 다시 보기(data-replay)만 덮개가 있어도 된다 (GDD 129-1) */
+function tutDimInPage() {
+  return [...document.querySelectorAll('.bha-tut')].filter((t) => !t.hasAttribute('data-replay')).flatMap((t) => {
+    const hole = t.querySelector('.bha-tut__hole');
+    if (!hole) return [];
+    const cs = getComputedStyle(hole);
+    return cs.display !== 'none' && cs.boxShadow && cs.boxShadow !== 'none' ? [t.dataset.tutorial || '?'] : [];
+  });
+}
+
+/** 페이지 안: 공간 화면 '방으로 돌아가기'([data-space-back]) 자리 — LCD 화면 기준 */
+function spaceBackInPage() {
+  const b = document.querySelector('.bha-lcd [data-space-back]');
+  const scr = document.querySelector('.bha-lcd');
+  if (!b || !scr || b.getClientRects().length === 0) return null;
+  const r = b.getBoundingClientRect(), o = scr.getBoundingClientRect();
+  return { x: Math.round(r.left - o.left), y: Math.round(r.top - o.top), w: Math.round(r.width), h: Math.round(r.height), lw: Math.round(o.width), lh: Math.round(o.height), text: b.textContent.trim() };
+}
 
 /** 페이지 안: 기기 버튼 4개(▲▼✓◀)의 자리와 보이는지 */
 function devButtonsInPage() {
@@ -149,6 +170,8 @@ function makeHelper(page, faction, report) {
     /** 정적 점검 + ▼ 순환으로 모든 조작 요소에 닿는지 */
     async check(screen, opts = {}) {
       await h.devButtons(screen);
+      await h.tutDim(screen);
+      await h.spaceBack(screen);
       if (process.env.UI_AUDIT_DUMP) {
         const list = await page.evaluate(() => [...document.querySelectorAll('.bha-lcd button, .bha-lcd [role="tab"], .bha-lcd input')].filter((e) => e.getClientRects().length > 0).map((e) => `${[...e.classList].filter((c) => c.startsWith('bha-')).slice(0, 2).join('.')}|${(e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 18)}`));
         console.log(`\n## ${faction} ${screen}\n${list.join('\n')}`);
@@ -252,6 +275,23 @@ function makeHelper(page, faction, report) {
       if (kind === 'none') h.report({ kind: '뒤로 무반응', key: opts.key ?? '◀', detail: '뒤로를 눌러도 아무것도 안 바뀐다 (GDD 128장 4)' }, screen);
       else if (kind === 'toast' && !opts.toastOk) h.report({ kind: '뒤로 = 안내만', key: opts.key ?? '◀', detail: '창 닫기·일시정지·넘어가기 확인 중 아무것도 안 하고 안내만 뜬다' }, screen);
       return kind;
+    },
+    /** 튜토리얼 안내 카드 회색 덮개 없음 (C.203, GDD 129장 3·129-1): 저절로 뜬 안내·각본 카드는 카드·테두리만 */
+    async tutDim(screen) {
+      for (const name of await page.evaluate(tutDimInPage)) h.report({ kind: '튜토리얼 안내 회색 덮개', key: name, detail: '저절로 뜬 안내 카드가 뒤 화면을 어둡게 덮는다 (다시 보기만 허용)' }, screen);
+    },
+    /** 공간 화면 방으로 자리 같음 (C.203, GDD 129-1): 장터·온천 [방으로 돌아가기] = 왼쪽 위, 화면끼리 같은 자리·크기 */
+    async spaceBack(screen) {
+      const b = await page.evaluate(spaceBackInPage);
+      if (!b) return;
+      if (b.x > b.lw / 4 || b.y > b.lh / 4) h.report({ kind: '공간 화면 방으로 자리', key: b.text, detail: `왼쪽 위가 아님 (${b.x}, ${b.y})` }, screen);
+      const refKey = `${faction}|${PORTRAIT}`;
+      if (!SPACE_BACK_REF.has(refKey)) SPACE_BACK_REF.set(refKey, { screen, b });
+      const ref = SPACE_BACK_REF.get(refKey);
+      const a = ref.b;
+      if (Math.abs(a.x - b.x) > MOVE_TOL || Math.abs(a.y - b.y) > MOVE_TOL || Math.abs(a.w - b.w) > MOVE_TOL || Math.abs(a.h - b.h) > MOVE_TOL || a.text !== b.text) {
+        h.report({ kind: '공간 화면 방으로 자리 다름', key: b.text, detail: `${ref.screen} 기준 (${b.x - a.x}, ${b.y - a.y})px 크기 ${b.w}x${b.h} '${a.text}'→'${b.text}'` }, screen);
+      }
     },
     async devButtons(screen) {
       const btns = await page.evaluate(devButtonsInPage);

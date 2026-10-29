@@ -38,6 +38,8 @@ export interface TutorialOverlayOptions {
   /** 각본 전투 카드 (GDD 123장 5, C.199): 건너뛰기·이전 없이 단계 글자(step)만. waitFor 가 있으면 [다음] 없이 전투를 만지게 두고(직접 해 보기와 같음),
    *  기기 ▲▼ 는 그 선택자에 맞는 전투 대상만 고른다 (GDD 122장) */
   script?: { step: string; waitFor?: string };
+  /** 도움말에서 직접 연 다시 보기 (GDD 129-1): 이때만 뒤 화면을 회색으로 덮는다. 없으면(저절로 뜨는 안내·각본 카드) 카드·강조 테두리만 */
+  replay?: boolean;
 }
 
 /** 구멍을 대상보다 이만큼(px) 넓게 판다 (HANDOFF 5-4) */
@@ -76,8 +78,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', '튜토리얼');
   layer.dataset.tutorial = opts.name ?? 'true';
-  // 각본 전투·회복 안내 카드 (GDD 129장 3): 화면을 회색으로 덮지 않는다 — 카드·강조 테두리만
+  // 각본 전투·회복 안내 카드 (GDD 129장 3)·저절로 뜨는 안내 (129-1): 화면을 회색으로 덮지 않는다 — 카드·강조 테두리만
   if (opts.script) layer.classList.add('is-script');
+  if (opts.replay && !opts.script) layer.dataset.replay = '';
+  else layer.classList.add('is-nodim');
   const hole = el('div', 'bha-tut__hole');
   const card = el('div', 'bha-tut__card');
   if (opts.pauseLabel !== null) {

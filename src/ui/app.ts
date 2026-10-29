@@ -322,7 +322,7 @@ export function startApp(host: HTMLElement): void {
     else {
       // 방은 이미 그려졌다. 앞선 알림(튜토리얼 달성 등)이 맨 위에서 다 사라진 뒤 첫 카드 (GDD 129장 3 — 알림이 카드를 가리지 않게, 최대 약 10초)
       // 기다리는 동안은 투명한 막이 방을 덮어 누름(터치·기기 ✓)을 받지 않는다 — 다른 화면으로 가 버리지 않게
-      const hold = el('div', 'bha-tut is-script');
+      const hold = el('div', 'bha-tut is-script is-nodim');
       hold.dataset.tutorial = 'recover-wait';
       getOverlayHost().append(hold);
       const offHold = registerLayer(hold, () => {});
@@ -412,7 +412,7 @@ export function startApp(host: HTMLElement): void {
   function guideReplays(faction: FactionConfig): { label: string; run: () => void }[] {
     const chain = (ids: (TextGuideId | 'first-absorb')[]) => () => {
       const next = (i: number): void => {
-        if (i < ids.length) showGuide(faction, ids[i]!, { finishLabel: i === ids.length - 1 ? '닫기' : '다음 안내', onDone: () => next(i + 1) });
+        if (i < ids.length) showGuide(faction, ids[i]!, { finishLabel: i === ids.length - 1 ? '닫기' : '다음 안내', replay: true, onDone: () => next(i + 1) });
       };
       next(0);
     };

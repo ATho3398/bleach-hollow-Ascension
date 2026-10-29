@@ -593,8 +593,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // ── 튜토리얼·도움말 ──
   let tutorial: TutorialHandle | null = null;
   let tutorialPractice = false;
+  /** 첫 전투에 저절로 뜬 튜토리얼이면 true — 회색 덮개·멈춘 화면 모습 없이 (GDD 129-1). 도움말 다시 보기는 false */
+  let tutorialAuto = false;
   // 각본 전투 카드는 멈춰 있어도 화면을 흐리게 하지 않는다 (GDD 129장 3)
-  const syncPausedLook = () => app.classList.toggle('is-paused', paused || (tutorialOpen && !tutorialPractice));
+  const syncPausedLook = () => app.classList.toggle('is-paused', paused || (tutorialOpen && !tutorialPractice && !tutorialAuto));
 
   // ── 각본 전투 (첫 원정 첫 전투, GDD 123장 5, C.199): 엔진 각본(engine/combat/script)이 멈춰 기다리면 설명 카드를 띄운다.
   // 설명 카드(ack) = 전투 멈춤 + [다음](✓), 막기·블록 카드 = 전투 시간은 멈춘 채 그 버튼만 누를 수 있다 (기기 ▲▼ 도 그 대상만)
@@ -644,12 +646,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       },
     });
   };
-  const startTutorial = () => {
+  const startTutorial = (auto = false) => {
     if (tutorial) return;
     overlayOpen = true;
     tutorialOpen = true;
+    tutorialAuto = auto;
     syncPausedLook();
     tutorial = tutorialOverlay(faction, {
+      replay: !auto,
       // 직접 해 보기 장면: 전투가 다시 흐르고 블록 바를 만질 수 있다. 장면을 나가면 다시 멈춘다
       onPractice: (on) => {
         tutorialPractice = on;
@@ -669,7 +673,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const openHelp = () => {
     if (overlayOpen) return;
     overlayOpen = true; // 열려 있는 동안 전투를 멈춘다
-    helpOverlay(faction, { screen: 'battle', onClose: () => (overlayOpen = false), onReplayTutorial: () => { overlayOpen = false; startTutorial(); } });
+    helpOverlay(faction, { screen: 'battle', onClose: () => (overlayOpen = false), onReplayTutorial: () => { overlayOpen = false; startTutorial(false); } });
   };
   helpBtn.onclick = openHelp;
   pauseBtn.dataset.sc = 'pause';
@@ -1454,7 +1458,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (scripted) {
       scriptReady = true;
       syncScript();
-    } else if (opts.tutorial) startTutorial();
+    } else if (opts.tutorial) startTutorial(true);
   };
   encounterOverlay.addEventListener('pointerdown', endEncounter);
   window.setTimeout(endEncounter, opts.boss ? 2600 : 1500); // 보스 이름 띠는 조금 더 오래

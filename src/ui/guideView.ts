@@ -26,12 +26,14 @@ export interface GuideOptions {
   pauseLabel?: string;
   /** 끝까지 보거나 건너뛰면 */
   onDone?: () => void;
+  /** 도움말에서 직접 연 다시 보기 = 회색 덮개 그대로. 없으면 저절로 뜨는 안내 = 덮개 없음 (GDD 129-1) */
+  replay?: boolean;
 }
 
 /** 안내 하나를 띄운다 (LCD 위 오버레이) */
 export function showGuide(faction: FactionConfig, id: TextGuideId | 'first-absorb', o: GuideOptions = {}): TutorialHandle {
   return tutorialOverlay(faction, {
-    scenes: GUIDES[id], vars: guideVars(faction), name: id, pauseLabel: o.pauseLabel ?? null, finishLabel: o.finishLabel ?? '알겠어요',
+    scenes: GUIDES[id], vars: guideVars(faction), name: id, pauseLabel: o.pauseLabel ?? null, finishLabel: o.finishLabel ?? '알겠어요', replay: o.replay,
     onFinish: () => o.onDone?.(),
   });
 }

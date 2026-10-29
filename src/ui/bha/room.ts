@@ -3,7 +3,7 @@
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { MarketSpot, RoomConfig, RoomFloorConfig, RoomProp } from '../../engine/faction';
 import { bindAnim } from './animPlayer';
-import { el, icon } from './dom';
+import { button, el, icon } from './dom';
 import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -228,4 +228,11 @@ export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entrie
       scene.style.setProperty('--char-x', `${p.x}%`);
     }
   }
+}
+
+/** 따로 된 공간 화면(장터·온천)의 '방으로 돌아가기' (GDD 128장 6·129-1): 왼쪽 위 작게, 화면마다 같은 모양·자리. 누르면 뒤로와 같다 */
+export function spaceBackButton(onBack: () => void): HTMLButtonElement {
+  const b = button({ label: '방으로 돌아가기', icon: 'i-return', size: 'small', onClick: onBack });
+  b.dataset.spaceBack = '';
+  return b;
 }

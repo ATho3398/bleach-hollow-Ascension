@@ -322,7 +322,8 @@ button.bha-slot { cursor: pointer; }
 .bha-tut.is-practice { pointer-events: none; }                 /* 전투 화면을 직접 만진다 */
 .bha-tut.is-practice .bha-tut__card { pointer-events: auto; }
 .bha-tut.is-practice .bha-tut__hole { box-shadow: none; }       /* 어둡게 덮지 않고 테두리만 */
-.bha-tut.is-script .bha-tut__hole { box-shadow: none; }         /* 각본 전투·회복 안내 (GDD 129장 3): 회색 덮개 없이 테두리만 */
+.bha-tut.is-nodim .bha-tut__hole { box-shadow: none; }          /* 저절로 뜨는 튜토리얼 안내 전부 (GDD 129장 3·129-1): 회색 덮개 없이 카드·테두리만 */
+.bha-tut.is-nodim .bha-tut__hole.is-none { display: none; }    /* 대상 없는 장면: 테두리도 없음 (카드만) */
 
 /* ═════ 시작 화면 (GDD 18-1): 타이틀 중앙 상단 + 버튼 3개 세로 ═════ */
 .bha-lcd .bha-app.bha-start.bha-start--title {

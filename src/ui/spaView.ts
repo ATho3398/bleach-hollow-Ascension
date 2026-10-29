@@ -11,7 +11,7 @@ import { homeMaxHp } from '../home';
 import { hpNumbers } from './bha/battle';
 import { button, el, icon, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
-import { characterButton, roomCharArt } from './bha/room';
+import { characterButton, roomCharArt, spaceBackButton } from './bha/room';
 import { marketOf, roomOf } from '../engine/faction';
 
 const BASE = import.meta.env.BASE_URL;
@@ -103,7 +103,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   paint(previewHomeHp(n, Date.now()).fraction, fullnessOfNest(n));
 
   // ── 왼쪽 위: [방으로 돌아가기] 작게 + ⓘ 쉬는 중 설명 ──
-  const backBtn = button({ label: '방으로 돌아가기', icon: 'i-return', size: 'small', onClick: hd.onBack });
+  const backBtn = spaceBackButton(hd.onBack);
   const dyingPct = Math.round(BALANCE.provisional.nest.care.dying.hpFraction * 100);
   const infoBtn = infoTip('쉬는 중', () => ({
     lead: `${name}에서 쉬는 중이다.`,
