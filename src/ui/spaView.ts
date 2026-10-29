@@ -19,6 +19,8 @@ const BASE = import.meta.env.BASE_URL;
 const SPA_TICK_MS = 1000;
 /** 걸어 들어오는 시간 (spa.css bha-spa-walkin 과 맞출 것) */
 const SPA_WALK_MS = 2200;
+/** 앉았을 때 물 높이 = 몸 상자 위에서 이 비율 (spa.css --bha-spa-wl 과 같은 값) */
+const SPA_WATERLINE = 0.66;
 let spaTimer = 0;
 
 export interface SpaHandlers {
@@ -64,7 +66,19 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const actor = el('div', 'bha-spa__actor is-entering');
   actor.append(status, char);
   scene.append(el('div', 'bha-spa__water'), actor, el('div', 'bha-spa__front'), el('div', 'bha-spa__steam'));
-  const seat = () => actor.classList.replace('is-entering', 'is-seated');
+  // 물에 잠김 (사용자 2026-10-30 "몸에다가 물 들어가는 식으로 색 … 몸이랑 물 표면 나뉘는 느낌"): 앉으면 물 높이 아래 몸이 비쳐 보이고(CSS 마스크) 그 높이에 물결 띠
+  // 물결 띠는 앞 반(몸 앞)·뒤 반(몸 뒤에 가려짐) 두 장 — 몸을 뚫고 뒤쪽 테두리가 보이지 않게
+  const ripples = (['back', 'front'] as const).map((side) => {
+    const r = el('span', `bha-spa__ripple bha-spa__ripple--${side}`);
+    r.setAttribute('aria-hidden', 'true');
+    return r;
+  });
+  char.append(...ripples);
+  const seat = () => {
+    actor.classList.replace('is-entering', 'is-seated');
+    const body = char.querySelector<HTMLElement>('.bha-char__body');
+    if (body) for (const r of ripples) r.style.top = `${body.offsetTop + body.offsetHeight * SPA_WATERLINE}px`;
+  };
   actor.addEventListener('animationend', (e) => { if ((e as AnimationEvent).animationName === 'bha-spa-walkin') seat(); });
   window.setTimeout(seat, SPA_WALK_MS + 400); // 연출이 꺼진 환경 안전 장치
 

@@ -1079,3 +1079,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **9 타일 칸**: 바퀴 끝 창 길 칸 72×48 → 60×80, 손 카드 줄·드래프트 카드(3칸 격자 → 128×132 세로 카드 한 줄) 가로 밀기. 출발 화면 6×2 배치판 칸(약 50×40)은 그대로 — 46px·정사각으로 키우면 손패 카드가 [출발] 띠와 겹침(ui-audit 2건). 결과 화면은 타일 칸 없음.
 - 엔진·밸런스·세이브 그대로(SAVE 55, BALANCE 89). 테스트 새 `tests/c202.test.ts` 13개, 고친 것 c176(canCancel)·c196(칸 크기)·exp-clock(조우 시간).
 - 캡처 `docs/captures/c202/`(1배 844×390, 테스트 세이브, `node scripts/c202-proof.cjs`): 호로 = plan-board·encounter-normal·encounter-elite·rest·absorb-back·absorb-status·lap-end-tiles, 사신 = encounter-normal·rest·absorb-status. proof.json.
+
+## C.205 — 온천: 앉은 캐릭터 물에 잠김 (GDD 128장 6 추가, v5.298, S-23, UI담당자C)
+- 사용자 원문은 GDD 128장 C.205 줄. 화면·CSS만(엔진·세이브·balance 변경 없음). 같은 날 온천 배경 그림 `public/art/scene-spa.webp`(사용자 그림, 18b49ba5)·세로 넘치면 아래 자름.
+- 기획서 값/실제 값/이유: 기획 수치 없음 → 물 높이 = 몸 상자 위에서 66%(그림 몸의 허리~무릎 사이, 호로 1단계 캡처로 맞춤), 물 아래 몸 불투명도 45% → 22%(경계 3% 흐림), 물결 띠 폭 88% + 바깥 번짐 1겹, 2.4초 왕복.
+- 방식: `.bha-char__body` 에 세로 그라데이션 마스크(그림·종이인형 둘 다 같은 몸 상자라 실루엣 그대로). 물결은 `.bha-spa__ripple`(앉을 때 몸 높이로 top 계산, CSS `--bha-spa-wl` 과 `SPA_WATERLINE` 같은 값). 움직임 줄이기면 물결 멈춤.
+- 테스트 +2(`tests/c205.test.ts`). 물결 띠는 뒤 반(몸 뒤, 몸이 가림)·앞 반(몸 앞) 두 장 — 사용자 "몸 뒷부분 표면장력 … 몸 뚫고 보이는 식" 금지. 캡처 `docs/captures/c205/` 3장(전체 / 확대 / 물 높이 5배).
+
