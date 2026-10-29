@@ -10,9 +10,9 @@ const read = (p: string) => readFileSync(p, 'utf8');
 const IX = BALANCE.provisional.idle;
 
 describe('C.170 확인 창·시작·종족', () => {
-  it('확인 창 기본 선택 = 주 버튼 (위험한 확인은 아니오에서 시작)', () => {
+  it('확인 창 기본 선택 = 주 버튼 (위험한 확인·focusNo 는 아니오에서 시작, C.198 GDD 124장 1)', () => {
     const c = read('src/ui/confirmDialog.ts');
-    expect(c).toContain('if (!o.danger && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });');
+    expect(c).toContain('if (!o.danger && !o.focusNo && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });');
   });
   it('세이브가 없으면 이어하기를 숨기고, 첫 화면 버전은 이름만', () => {
     const s = read('src/ui/startView.ts');

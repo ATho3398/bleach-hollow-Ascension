@@ -412,6 +412,10 @@ describe('124장 홈 뒤로 = 처음 화면 확인 · 더보기 [닫기] 삭제'
     expect(nav.cancel()).toBe('back');
     expect(left).toBe(1);
   });
+  it('처음 화면 확인 창 기본 선택 = 아니오', () => {
+    expect(readFileSync('src/ui/app.ts', 'utf8')).toContain("yes: '예', no: '아니오', focusNo: true");
+    expect(readFileSync('src/ui/confirmDialog.ts', 'utf8')).toContain('!o.focusNo');
+  });
   it('더보기 줄에 [닫기] 칸이 없다, ui-audit 검사', () => {
     expect(readFileSync('src/ui/bha/dock.ts', 'utf8')).not.toContain("x.dataset.dock = 'close'");
     expect(readFileSync('scripts/ui-audit/screens.cjs', 'utf8')).toContain("kind: '토글 메뉴 [닫기]'");

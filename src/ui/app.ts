@@ -585,7 +585,7 @@ export function startApp(host: HTMLElement): void {
     confirmDialog({
       title: '처음 화면으로',
       body: inExpedition ? '원정은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
-      yes: '예', no: '아니오',
+      yes: '예', no: '아니오', focusNo: true, // 기본 선택 = 아니오 (GDD 124장 1)
       onYes: () => {
         confirmingTitle = false;
         signalHold('leave');

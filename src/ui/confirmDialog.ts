@@ -12,6 +12,8 @@ export interface ConfirmOptions {
   no?: string;
   /** 위험한 선택(덮어쓰기 등)이면 예 버튼을 danger 로 */
   danger?: boolean;
+  /** 위험하지 않아도 '아니오'에서 시작 (예: 홈 뒤로 → 처음 화면 확인, GDD 124장 1) */
+  focusNo?: boolean;
   /** 알림 창: 확인 버튼 하나만 (C.140 대기 모드 결과 요약) */
   single?: boolean;
   /** 예 버튼을 비활성으로 둔다 (자리는 그대로, C.170 대기 보상 — 받을 게 없을 때) */
@@ -64,7 +66,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   untrap = trapModalFocus(layer); // 초기 초점(첫 버튼)·Tab 순환·배경 inert (C.139, GDD 88장 9) — 기기 선택은 초점 있는 항목에서 시작
   // 기본 선택 = 주 버튼(시작·귀환하기) (C.170, GDD 100장 #7·#8·#31): 강조가 둘(밝은 주 버튼 + 선택 테두리)로 갈리지 않게.
   // 지우기·덮어쓰기 같은 위험한 확인(danger)은 그대로 '아니오'에서 시작한다
-  if (!o.danger && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });
+  if (!o.danger && !o.focusNo && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });
   unregister = registerLayer(layer, no);
   return close;
 }
