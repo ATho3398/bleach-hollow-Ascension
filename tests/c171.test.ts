@@ -85,7 +85,8 @@ describe('전투 (#36~40·42)', () => {
     expect(b).toContain('libBtn.title = hintFull;');
     expect(b).toContain('하러 가기');
     expect(read('src/ui/bha/battle-scene.css')).toContain('.bha-hgauge.is-idle { visibility: hidden;');
-    expect(read('src/ui/bha/device.ts')).toContain("up.style.visibility = down.style.visibility = touchOnly ? 'hidden' : '';");
+    // C.197 (GDD 122장 2): 전투 중 ▲▼ 숨김은 대체됨 — 늘 보인다
+    expect(read('src/ui/bha/device.ts')).not.toContain('up.style.visibility');
   });
   it('튜토리얼 4단계, 본문 2줄 이내, 체인 설명은 블록 3개가 모인 뒤 (#40)', () => {
     expect(TUTORIAL_SCENES.map((s) => s.id)).toEqual(['tray', 'try', 'chain', 'liberation']);

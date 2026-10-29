@@ -94,6 +94,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (on === practiceOn) return;
     practiceOn = on;
     layer.classList.toggle('is-practice', on);
+    layer.toggleAttribute('data-dev-pass', on); // 기기 ▲▼·✓ 가 전투 블록·버튼도 고른다 (C.197, GDD 122장)
     opts.onPractice?.(on);
   };
   const teardown = () => {

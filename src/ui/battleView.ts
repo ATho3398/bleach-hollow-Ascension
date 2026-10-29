@@ -497,7 +497,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const halted = () => paused || overlayOpen;
 
   const pauseBtn = v2IconButton({ label: '일시정지', icon: 'i-pause' });
-  pauseBtn.dataset.devConfirm = ''; // 기기 [확정] 버튼 = 일시정지 (전투는 터치 위주, dev-log C.25)
   const helpBtn = v2IconButton({ label: '도움말', icon: 'i-help' });
   const timeNum = el('b', '', String(Math.ceil(timeLeftSeconds(s))));
   const timeEl = el('span', 'bha-num bha-v2time');
@@ -627,6 +626,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   helpBtn.dataset.sc = 'help';
   libBtn.dataset.sc = 'liberate';
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
+  // 기기 버튼 커서 (C.197, GDD 122장 3): 순서 = 머리 버튼 → 막기·소모품·장비·해방 → 블록 칸 왼쪽부터. 시작 = 첫 블록 칸, ✓ = 'bha-press'
+  for (const b of [guardBtn.root, itemBtn.root, gearBtn.root, libBtn]) b.dataset.devOrder = '1';
+  tray.cells.forEach((c, i) => {
+    c.dataset.devOrder = '2';
+    c.dataset.devPress = '';
+    c.dataset.devOff = '';
+    if (i === 0) c.dataset.devStart = '';
+  });
 
   // ── 일시정지 ──
   /** 일시정지 창의 기기 레이어 등록을 푼다 (닫힐 때·그만둘 때) */
@@ -967,6 +974,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const b = s.tray[i];
       if (!b) {
         if (cell.firstChild) cell.replaceChildren();
+        cell.toggleAttribute('data-dev-off', true);
         return;
       }
       let node = blockEls.get(b.uid);
@@ -985,6 +993,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const locked = (b.sealTicks ?? 0) > 0 || combatHalted(s);
       setV2Locked(node, locked);
       node.setAttribute('aria-disabled', String(locked));
+      cell.toggleAttribute('data-dev-off', locked);
       node.classList.toggle('is-pressed', !!down && down.uid === b.uid);
     });
     seeded = true;
@@ -1155,6 +1164,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     libBtn.classList.remove('is-pressed');
     if (overLib(e) && canLiberate(s) && !halted()) queue.push({ type: 'liberate' });
   });
+  // 기기 ✓·키보드(detail 0 = 포인터가 아닌 누름): 손가락 판정은 위 pointerup 이 한다 (C.197)
+  libBtn.addEventListener('click', (e) => {
+    if (e.detail === 0 && app.isConnected && !stopped && canLiberate(s) && !halted()) queue.push({ type: 'liberate' });
+  });
   // 막기·소모품·장비: 누르면 바로 (엔진이 게이지·쿨다운·잠김을 판정)
   const canAct = { guard: canGuard, item: canUseItem, gear: canUseGear } as const;
   const pressAct = (kind: 'guard' | 'item' | 'gear'): boolean => {
@@ -1182,6 +1195,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (input && s.status === 'playing' && !halted()) queue.push(input);
     endPress();
   });
+  // 기기 ✓ (C.197, GDD 122장 3): 커서가 있는 칸의 블록을 누른 것과 같다 (클릭·숫자키와 같은 판정)
+  tray.cells.forEach((c, i) => c.addEventListener('bha-press', () => {
+    const blk = s.tray[i];
+    if (!app.isConnected || stopped || !blk || s.status !== 'playing' || halted() || combatHalted(s)) return;
+    const input = releaseUse(blk.uid, i, s.tray);
+    if (input) queue.push(input);
+  }));
   // PC 단축키 (GDD 18-5): 숫자 N = N번 칸 블록, R = 해방 (저장 필살기 Q 는 C.134 에 삭제). 클릭과 같은 판정(releaseUse)을 쓴다
   const offKeys = registerShortcutHandlers({
     ...Object.fromEntries(Array.from({ length: p.trayCapacity }, (_, i) => [`block.${i + 1}`, () => {

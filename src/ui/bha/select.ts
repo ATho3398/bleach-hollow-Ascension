@@ -116,3 +116,26 @@ export function uiBox(r: { left: number; top: number; width: number; height: num
   if (!rotated) return { u: cx - lcd.left, v: cy - lcd.top, w: r.width, h: r.height };
   return { u: cy - lcd.top, v: lcd.left + lcd.width - cx, w: r.height, h: r.width };
 }
+
+/**
+ * 못 쓰는 대상을 건너뛰며 한 칸 이동 (전투 커서, GDD 122장 3): 끝에서 순환. 쓸 수 있는 대상이 없으면 -1.
+ * 지금 자리(cur)만 쓸 수 있으면 그 자리 그대로
+ */
+export function stepUsable(cur: number, dir: 1 | -1, usable: readonly boolean[]): number {
+  const n = usable.length;
+  let i = cur;
+  for (let k = 0; k < n; k++) {
+    i = stepIndex(i, dir, n);
+    if (usable[i]) return i;
+  }
+  return -1;
+}
+
+/** cur 에서 가장 가까운 쓸 수 있는 대상 (같은 거리면 왼쪽·앞 먼저, 순환하지 않음). 없으면 -1 */
+export function nearestUsable(cur: number, usable: readonly boolean[]): number {
+  for (let d = 0; d < usable.length; d++) {
+    if (usable[cur - d]) return cur - d;
+    if (usable[cur + d]) return cur + d;
+  }
+  return -1;
+}

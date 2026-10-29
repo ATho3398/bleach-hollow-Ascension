@@ -15,6 +15,23 @@ const ROOT = path.resolve(__dirname, '../..');
 const PORT = 5199;
 const MOVE_TOL = 1.5;
 const PORTRAIT = !!process.env.UI_AUDIT_PORTRAIT;
+/** 기기 버튼 기준 자리 (C.197, GDD 122장 1): 종족마다 처음 잰 ▲▼✓◀ 자리. 모든 화면·상태에서 같아야 한다 */
+const DEV_BTN_REF = new Map();
+
+/** 페이지 안: 기기 버튼 4개(▲▼✓◀)의 자리와 보이는지 */
+function devButtonsInPage() {
+  return [...document.querySelectorAll('.bha-dev > .bha-dev__side .bha-dev__btn')].map((b) => {
+    const r = b.getBoundingClientRect();
+    const cs = getComputedStyle(b);
+    let hidden = !!b.closest('[hidden]') || r.width < 1 || r.height < 1;
+    for (let e = b; e && !hidden; e = e.parentElement) {
+      const c = getComputedStyle(e);
+      if (c.display === 'none' || c.visibility === 'hidden' || Number(c.opacity) < 0.2) hidden = true;
+    }
+    if (r.right < 0 || r.bottom < 0 || r.left > innerWidth || r.top > innerHeight) hidden = true;
+    return { label: b.getAttribute('aria-label') || '', x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), hidden, vis: cs.visibility };
+  });
+}
 
 async function startServer() {
   if (process.env.UI_AUDIT_URL) return { url: process.env.UI_AUDIT_URL, stop: () => {} };
@@ -131,6 +148,7 @@ function makeHelper(page, faction, report) {
     },
     /** 정적 점검 + ▼ 순환으로 모든 조작 요소에 닿는지 */
     async check(screen, opts = {}) {
+      await h.devButtons(screen);
       if (process.env.UI_AUDIT_DUMP) {
         const list = await page.evaluate(() => [...document.querySelectorAll('.bha-lcd button, .bha-lcd [role="tab"], .bha-lcd input')].filter((e) => e.getClientRects().length > 0).map((e) => `${[...e.classList].filter((c) => c.startsWith('bha-')).slice(0, 2).join('.')}|${(e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 18)}`));
         console.log(`\n## ${faction} ${screen}\n${list.join('\n')}`);
@@ -211,13 +229,28 @@ function makeHelper(page, faction, report) {
         if (cnt > 1) await h.check(`${screen}/고른 뒤`, { ...opts, keys: false });
       }
     },
+    /** 기기 버튼 상시 표시·자리 고정 (C.197, GDD 122장 1·5): 숨거나(전투 포함) 처음 잰 자리·크기와 다르면 보고 */
+    async devButtons(screen) {
+      const btns = await page.evaluate(devButtonsInPage);
+      if (btns.length !== 4) return h.report({ kind: '기기 버튼 숨김', key: 'bha-dev__btn', detail: `기기 버튼 ${btns.length}개 (4개여야 함)` }, screen);
+      const refKey = `${faction}|${PORTRAIT}`;
+      if (!DEV_BTN_REF.has(refKey)) DEV_BTN_REF.set(refKey, { screen, btns });
+      const ref = DEV_BTN_REF.get(refKey);
+      for (const [i, b] of btns.entries()) {
+        if (b.hidden) h.report({ kind: '기기 버튼 숨김', key: b.label, detail: '보이지 않음' }, screen);
+        const a = ref.btns[i];
+        if (Math.abs(a.x - b.x) > MOVE_TOL || Math.abs(a.y - b.y) > MOVE_TOL || Math.abs(a.w - b.w) > MOVE_TOL || Math.abs(a.h - b.h) > MOVE_TOL) {
+          h.report({ kind: '기기 버튼 자리 바뀜', key: b.label, detail: `${ref.screen} 기준 (${b.x - a.x}, ${b.y - a.y})px 크기 ${b.w}x${b.h}` }, screen);
+        }
+      }
+    },
     async reach(screen, opts = {}) {
       const res = await page.evaluate(() => {
         const lcd = document.querySelector('.bha-lcd');
         const sel = lcd.querySelector('.bha-sel');
         const layer = [...lcd.querySelectorAll('[data-dev-layer]')].pop();
         const scope = layer || (sel && sel.closest('.bha-overlay')) || lcd;
-        const SEL = 'button, a[href], input, select, summary, [role="tab"]';
+        const SEL = 'button, a[href], input, select, summary, [role="tab"], [data-dev-press]';
         const vis = (e) => !e.closest('[hidden], [inert], .bha-dev__side') && !e.disabled && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
         return { n: [...scope.querySelectorAll(SEL)].filter(vis).length };
       });
@@ -239,8 +272,10 @@ function makeHelper(page, faction, report) {
         const sel = lcd.querySelector('.bha-sel');
         const layer = [...lcd.querySelectorAll('[data-dev-layer]')].pop();
         const scope = layer || (sel && sel.closest('.bha-overlay')) || lcd;
-        const SEL = 'button, a[href], input, select, summary, [role="tab"]';
-        const vis = (e) => !e.closest('[hidden], [inert], .bha-dev__side, [data-dev-skip]') && !e.disabled && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).pointerEvents !== 'none';
+        const SEL = 'button, a[href], input, select, summary, [role="tab"], [data-dev-press]';
+        // 전투(C.197, GDD 122장 3): 못 쓰는 대상(흐린 버튼·빈/잠긴 칸)은 ▲▼ 가 건너뛰는 게 맞다
+        const off = (e) => !!e.closest('.bha-battle') && (e.hasAttribute('data-dev-off') || e.classList.contains('is-disabled') || e.getAttribute('aria-disabled') === 'true');
+        const vis = (e) => !off(e) && !e.closest('[hidden], [inert], .bha-dev__side, [data-dev-skip]') && !e.disabled && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).pointerEvents !== 'none';
         // 펼친 메뉴·창에 덮인 칸은 그동안 못 고르는 게 맞다
         const uncovered = (e) => {
           const r = e.getBoundingClientRect();

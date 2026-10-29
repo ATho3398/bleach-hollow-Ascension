@@ -446,6 +446,8 @@ const SCREENS = [
       await toBattle(h);
       const inBattle = async () => (await h.page.locator('.bha-battle').count()) > 0 && !(await h.has('.bha-battle .bha-overlay'));
       await h.check(n, { keys: false });
+      // C.197 (GDD 122장 3): 전투 중에도 ▼ 로 머리 버튼·막기·소모품·장비·해방·블록 칸에 다 닿는다 (못 쓰는 대상은 건너뜀)
+      if (await inBattle()) await h.check(`${n}/커서`);
       // 숫자 칸 흔들기: 실제로 바뀌는 글자(남은 초 148 → 9, 소모품 ×3 → 씀, 장비 쿨다운 12 → 3)를 직접 넣어 다른 버튼이 움직이는지.
       // 15초 관찰로는 세 자리 → 한 자리·소모품 사용이 안 오므로 글자만 바꿔 본다 (엔진 상태는 안 건드림 — 다음 프레임에 원래 값으로 돌아온다)
       // 한 번의 실행 안에서(그 사이 화면 갱신 없이) 글자 넣기 → 재기 → 바꾸기 → 재기. 칸이 비어 있는 상태(소모품·장비 없음)는 그 상태 그대로 둔다
