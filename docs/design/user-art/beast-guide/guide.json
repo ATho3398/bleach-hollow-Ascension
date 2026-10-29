@@ -29,19 +29,38 @@
     -2
    ],
    "size": [
-    32,
+    21,
     20
    ],
    "pivots": [
     "body",
+    "belly",
     "head",
-    "tail",
-    "hleg_L",
-    "fleg_R",
-    "hleg_R"
+    "fleg_R"
    ],
    "sheet": [
     25,
+    4
+   ]
+  },
+  {
+   "slot": "belly",
+   "canvas": [
+    24,
+    4
+   ],
+   "size": [
+    18,
+    14
+   ],
+   "pivots": [
+    "belly",
+    "tail",
+    "hleg_L",
+    "hleg_R"
+   ],
+   "sheet": [
+    48,
     4
    ]
   },
@@ -60,7 +79,7 @@
     "tail2"
    ],
    "sheet": [
-    59,
+    68,
     4
    ]
   },
