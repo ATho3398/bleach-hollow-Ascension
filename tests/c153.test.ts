@@ -1,9 +1,9 @@
 // C.153 (GDD 95장 A): 홈 바닥 범위(물건·캐릭터 발 기준점이 늘 바닥 안) · 탭 선택 기억 · 스킨 하위 탭 · 수련장 드롭다운 · 걷기 이음새
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { inflateSync } from 'node:zlib';
 import { FACTIONS } from '../src/data/factions';
 import { roomOf, ROOM_PROPS } from '../src/engine/faction';
+import { decodePng } from './helpers/png';
 import { clampToPoly, floorPolyPx, footOnFloor, imageToScenePx, insidePoly, isFootOnFloor, REF_LIFT, REF_SCENE } from '../src/ui/bha/roomFloor';
 
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -98,50 +98,6 @@ describe('C.153 A2 → C.159 A1 수련장 머리 제목 토글', () => {
   });
 });
 
-/** 8비트 RGBA·비인터레이스 PNG 를 읽는 작은 해독기 (걷기 이음새 검사용) */
-function decodePng(path: string): { w: number; h: number; px: Uint8Array } {
-  const b = readFileSync(path);
-  let o = 8;
-  let w = 0;
-  let h = 0;
-  let ct = 0;
-  const idat: Buffer[] = [];
-  while (o < b.length) {
-    const len = b.readUInt32BE(o);
-    const type = b.toString('latin1', o + 4, o + 8);
-    const d = b.subarray(o + 8, o + 8 + len);
-    if (type === 'IHDR') { w = d.readUInt32BE(0); h = d.readUInt32BE(4); ct = d[9]!; }
-    else if (type === 'IDAT') idat.push(d);
-    o += 12 + len;
-  }
-  const bpp = ct === 6 ? 4 : ct === 2 ? 3 : 0;
-  if (!bpp) throw new Error(`${path}: RGB/RGBA PNG 만 지원`);
-  const raw = inflateSync(Buffer.concat(idat));
-  const stride = w * bpp;
-  const out = new Uint8Array(w * h * 4);
-  const prev = new Uint8Array(stride);
-  let cur = new Uint8Array(stride);
-  for (let y = 0; y < h; y++) {
-    const f = raw[y * (stride + 1)]!;
-    for (let i = 0; i < stride; i++) {
-      const x = raw[y * (stride + 1) + 1 + i]!;
-      const a = i >= bpp ? cur[i - bpp]! : 0;
-      const up = prev[i]!;
-      const c = i >= bpp ? prev[i - bpp]! : 0;
-      const pr = f === 0 ? 0 : f === 1 ? a : f === 2 ? up : f === 3 ? (a + up) >> 1 : (() => { const p = a + up - c; const pa = Math.abs(p - a); const pb = Math.abs(p - up); const pc = Math.abs(p - c); return pa <= pb && pa <= pc ? a : pb <= pc ? up : c; })();
-      cur[i] = (x + pr) & 255;
-    }
-    for (let i = 0; i < w; i++) {
-      out[(y * w + i) * 4] = cur[i * bpp]!;
-      out[(y * w + i) * 4 + 1] = cur[i * bpp + 1]!;
-      out[(y * w + i) * 4 + 2] = cur[i * bpp + 2]!;
-      out[(y * w + i) * 4 + 3] = bpp === 4 ? cur[i * 4 + 3]! : 255;
-    }
-    prev.set(cur);
-    cur = new Uint8Array(stride);
-  }
-  return { w, h, px: out };
-}
 const pixDiff = (a: Uint8Array, b: Uint8Array): number => {
   let n = 0;
   for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3]) n++;

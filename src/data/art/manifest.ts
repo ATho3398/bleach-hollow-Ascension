@@ -109,6 +109,11 @@ export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<
   return src ? withAnims({ ...a, src }, anims) : null;
 }
 
+/** 종이인형의 이동 방식 = 걷기 (C.194, GDD 120장 1). 진화체 표(forms.json)는 두 종족 공용이라 2단계 t2:base(날기)·4·5단계 부유/날기 진화체가
+ *  사신 학생·사신복·아란칼 종이인형에도 걸려 몸이 몸 높이의 12~30% 떠올랐다(발이 그림자보다 위, 말풍선이 머리를 가림). 종이인형은 두 발로 서는 몸이라
+ *  manifest 에 따로 적지 않는 한 늘 땅에 붙는다 — 그림 이동 방식은 진화체보다 우선(loco.ts) */
+export const RIG_LOCOMOTION: Locomotion = 'walk';
+
 /** 종이인형 그림 칸(view)에서 머리 윗변(캔버스 y 0)까지의 비율 */
 function rigHeadTop(): number {
   const r = HUMANOID.view?.rect;
@@ -154,7 +159,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     // 여성 외형 = 외형 id 뒤 -f (GDD 114·115장). 없으면 그 외형(남성) 그대로
     const look = female && HUMANOID.looks[rigLook + RIG_FEMALE_SUFFIX] ? rigLook + RIG_FEMALE_SUFFIX : rigLook;
     const e = manifest[rigKey]!;
-    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, locomotion: e.locomotion, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
+    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, locomotion: e.locomotion ?? RIG_LOCOMOTION, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
   }
   return tryKeys(keys) ?? artUrls(fallbackKey, base, manifest, files);
 }

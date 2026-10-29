@@ -112,6 +112,23 @@ export function characterButton(art: ArtUrls, label: string, loco: Locomotion = 
   return b;
 }
 
+/** 방 발-그림자 차이(px, 양수 = 발이 그림자보다 아래) — 그림의 발 높이(footGap = 그림 아래 끝에서 발바닥까지, 그림 높이 대비)·배율·offsetY 로 (C.194, GDD 120장 3 점검용).
+ *  그림 = 몸 상자(130×140) 아래쪽에 정사각 130, 확대 기준점 = 상자 92% 높이. 그림자 중심 = 상자 아래에서 CHAR_BODY_H × (FOOT_GAP − offsetY) 위. room.css 와 맞출 것 */
+export function roomFootShadowPx(footGap: number, scale: number, offsetY = 0): number {
+  const drawn = 130;
+  const pivotUp = CHAR_BODY_H * (1 - 0.92); // 상자 아래에서 확대 기준점까지
+  const footUp = pivotUp + (drawn * footGap - pivotUp) * scale - (offsetY / 100) * CHAR_BODY_H;
+  const shadowUp = CHAR_BODY_H * (FOOT_GAP - offsetY / 100);
+  return shadowUp - footUp;
+}
+
+/** 말풍선 자리 (C.194, GDD 120장 2): 머리 위(top = 아래 끝, translate −100%)에서 윗변이 방 위 끝(0)을 넘으면 옆 — 캐릭터가 오른쪽 절반이면 왼쪽, 아니면 오른쪽 */
+export type BubbleSpot = 'above' | 'right' | 'left';
+export function bubbleSpot(bottomY: number, bubbleH: number, charCenterX: number, sceneW: number): BubbleSpot {
+  if (bottomY - bubbleH >= 0) return 'above';
+  return charCenterX > sceneW / 2 ? 'left' : 'right';
+}
+
 /** 방 캐릭터 그림의 윗변 높이: 캐릭터 상자 중심에서 위로 몇 px 인지(음수). 머리 위 상태 칩이 이 위에 놓인다. room.css 의 .bha-char 치수와 맞출 것 */
 export function charTopOffset(art: ArtUrls, loco: Locomotion = 'walk'): number {
   const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)

@@ -177,12 +177,14 @@
 .bha-room__status:active { filter: brightness(1.2); }
 .bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
 
-/* ── 말풍선 (C.176, GDD 104장 1): 캐릭터 머리 위 가운데. 아래 끝 = 상태 칩 아래 끝(칩과 같은 top 식), 대사 동안 칩은 숨긴다(.is-saying).
-   가로는 캐릭터 중심, 방 끝에서 잘리지 않게 25~75% 로 묶는다 ── */
+/* ── 말풍선 (C.176, GDD 104장 1): 캐릭터 머리 위 가운데, 대사 동안 칩은 숨긴다(.is-saying).
+   가로는 캐릭터 중심, 방 끝에서 잘리지 않게 25~75% 로 묶는다.
+   C.194 (GDD 120장 2): 칩 높이(--chip-h)만큼 아래로 내리던 하한을 없앴다 — 칩보다 낮은 말풍선이 머리 위로 내려와 머리를 가렸다.
+   방 위 끝을 넘으면 roomView 가 .is-side 를 붙여 머리 높이로 캐릭터 옆에 둔다 ── */
 .bha-room__bubble {
   position: absolute; z-index: var(--bha-z-raised);
   left: clamp(25%, var(--char-x, 50%), 75%);
-  top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-6)));
+  top: calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4));
   transform: translate(-50%, -100%);
   width: max-content; max-width: 48%; padding: var(--bha-sp-3) var(--bha-sp-5);
   font-size: var(--bha-fs-sm); line-height: 1.35; text-align: center; color: var(--bha-text-1);
@@ -190,6 +192,10 @@
   pointer-events: none;
 }
 .bha-room__bubble.is-pop { animation: bha-bubble-pop 0.18s ease-out; }
+/* 옆 자리 (C.194): 캐릭터 상자 옆(--char-half = 상자 반폭, roomView 가 잰다), 위 끝은 방 안. 캐릭터가 오른쪽 절반이면 왼쪽(.is-left) */
+.bha-room__bubble.is-side { top: var(--bha-sp-2); left: calc(var(--char-x, 50%) + var(--char-half, 0px)); transform: none; max-width: calc(100% - var(--char-x, 50%) - var(--char-half, 0px) - var(--bha-sp-2)); }
+.bha-room__bubble.is-side.is-pop { animation-name: bha-bubble-pop-side; }
+.bha-room__bubble.is-side.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + var(--char-half, 0px)); max-width: calc(var(--char-x, 50%) - var(--char-half, 0px) - var(--bha-sp-2)); }
 .is-saying > .bha-room__status, .is-saying > .bha-room__statusinfo { visibility: hidden; }
 /* 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위 바깥 (칩 총 폭 94px 의 절반 = 47px), 칩과 같은 top 식 */
 .bha-room__statusinfo {
@@ -200,6 +206,7 @@
   width: 22px; height: 22px; background: rgb(0 0 0 / 0.55);
 }
 @keyframes bha-bubble-pop { from { opacity: 0; transform: translate(-50%, -100%) scale(0.9); } }
+@keyframes bha-bubble-pop-side { from { opacity: 0; transform: scale(0.9); } }
 
 /* 선택·포커스·누름 표시 (GDD 18-10): 그림 요소(.bha-art)는 사각 테두리·배경 없이 그림 윤곽을 따라 빛난다.
    그림 파일이든 임시 도형이든 .bha-art-img(그림 자리: 물건 모양·캐릭터 몸) 의 투명하지 않은 부분만 강조된다 */

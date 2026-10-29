@@ -14,7 +14,7 @@ import { animOf } from './bha/animPlayer';
 import { button, el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
-import { characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
 import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, reviveEvLossOf } from '../engine/nest';
 import { notice } from './bha/dom';
@@ -137,6 +137,16 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   bubble.setAttribute('aria-live', 'polite');
   bubble.hidden = true;
   let bubbleTimer = 0;
+  /** 말풍선 자리 (C.194, GDD 120장 2): 머리 위가 기본. 방 위 끝을 넘으면 방 위 끝 안쪽, 캐릭터 상자 옆(방 가운데 쪽)에 둔다 — 아래로 끌어내려 머리를 가리지 않는다 */
+  const placeBubble = () => {
+    bubble.classList.remove('is-side', 'is-left');
+    scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
+    // offsetTop·offsetLeft 는 transform 을 빼고 잰다: 말풍선 top = 아래 끝(translate −100%), 캐릭터 상자 left = 가운데(translate −50%)
+    const spot = bubbleSpot(bubble.offsetTop, bubble.offsetHeight, char.offsetLeft, scene.clientWidth);
+    if (spot === 'above') return;
+    bubble.classList.add('is-side');
+    if (spot === 'left') bubble.classList.add('is-left');
+  };
   const say = (text: string, ms = 3000) => {
     bubble.textContent = text;
     // 말풍선은 캐릭터 머리 위 가운데 (C.176, GDD 104장 1 — C.170 의 '옆 허리 높이'는 캐릭터 오른쪽에 떠 보였다). 대사 동안 상태 칩은 잠깐 숨긴다
@@ -145,6 +155,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     bubble.classList.remove('is-pop');
     void bubble.offsetWidth;
     bubble.classList.add('is-pop');
+    placeBubble();
     window.clearTimeout(bubbleTimer);
     bubbleTimer = window.setTimeout(() => {
       bubble.hidden = true;
