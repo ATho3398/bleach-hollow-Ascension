@@ -6,6 +6,7 @@ import {
   advance, chooseContinue, chooseReturn, createExpedition, finishBattle, finishRest, placeTile, plannedBattles,
   playExpedition, startBattle, summarize, buildRunRecord, type ExpeditionState,
   chooseRelease,
+  carryAttackMult,
 } from '../src/engine/expedition';
 import { applyAbsenceHunger, cureStatus, doNestAction, newNest } from '../src/engine/nest';
 import { createCombat } from '../src/engine/combat';
@@ -231,7 +232,8 @@ describe('허기', () => {
     const b = grab(4);
     expect(a.hpInAttacks).toBeCloseTo(getEnemy(a.id).hpInAttacks);
     expect(b.hpInAttacks).toBeGreaterThan(getEnemy(b.id).hpInAttacks);
-    expect(b.attackInAttacks).toBeGreaterThan(getEnemy(b.id).attackInAttacks);
+    expect(b.attackInAttacks).toBeGreaterThan(getEnemy(b.id).attackInAttacks * carryAttackMult(1)); // C.193: 원정 적 공격 × 체력 이어 가기 보정 (GDD 119장 1)
+    expect(b.attackInAttacks / getEnemy(b.id).attackInAttacks).toBeGreaterThan(a.attackInAttacks / getEnemy(a.id).attackInAttacks);
   });
 });
 
