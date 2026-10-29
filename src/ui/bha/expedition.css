@@ -253,7 +253,7 @@
 .bha-presetcard__acts { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
 /* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
 .bha-road__wrap { user-select: none; -webkit-user-select: none; }
-.bha-lcd .bha-plan .bha-road__cell { min-height: 0; aspect-ratio: 1; } /* C.202 (GDD 128장 9): 가로로 눌린 칸(약 50×40) → 정사각. 출발 화면 6×2 는 LCD 높이 안에 [출발] 띠까지 들어가야 해 바퀴 끝 창(3:4)보다 낮게 */
+.bha-lcd .bha-plan .bha-road__cell { min-height: 46px; } /* C.202 (GDD 128장 9): 가로로 눌린 칸(약 50×40) → 거의 정사각(50×46). 출발 화면 6×2 는 안내 줄·[출발] 띠까지 LCD 높이 안에 들어가야 해 바퀴 끝 창(3:4)보다 낮게 */
 /* 안내 줄 (C.196): 말줄임 없이 줄바꿈, 긴 타일 설명도 다 보인다 — 2줄 자리를 잡아 둬 [출발] 띠에 가리지 않는다 */
 .bha-lcd .bha-plan .bha-road__note { line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; min-height: calc(2em * var(--bha-lh-tight)); }
 .bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }
