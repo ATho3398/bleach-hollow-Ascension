@@ -11,7 +11,6 @@ import { hpNumbers } from './bha/battle';
 import { button, el, meter, notice } from './bha/dom';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { characterButton, roomCharArt } from './bha/room';
-import { locoOf } from './bha/loco';
 import { roomOf } from '../engine/faction';
 
 const BASE = import.meta.env.BASE_URL;
@@ -51,7 +50,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     scene.classList.add('has-art');
   }
   const art = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
-  const char = characterButton(art, '캐릭터', locoOf(faction, save.evolution.formId, art));
+  const char = characterButton(art, '캐릭터');
   char.disabled = true; // 보기만 (기기 선택 대상 아님)
   char.classList.add('bha-spa__char');
   if (n.collapsed) char.classList.add('is-collapsed');
