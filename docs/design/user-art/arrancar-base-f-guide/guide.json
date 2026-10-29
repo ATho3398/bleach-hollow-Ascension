@@ -6,8 +6,8 @@
   {
    "slot": "head",
    "canvas": [
-    4,
-    7
+    3,
+    6
    ],
    "size": [
     22,
@@ -18,8 +18,7 @@
     4
    ],
    "pivots": [
-    "head",
-    "hair_back"
+    "head"
    ]
   },
   {
@@ -34,18 +33,18 @@
    ],
    "ref": [
     {
-     "art": "shinigami/head",
+     "art": "head_bald",
      "at": [
-      7,
-      10
+      6,
+      9
      ]
     }
    ],
    "own": {
-    "art": "student/hair",
+    "art": "arrancar_f/hair",
     "at": [
-     -1,
-     0
+     1,
+     1
     ]
    },
    "sheet": [
@@ -69,18 +68,18 @@
    ],
    "ref": [
     {
-     "art": "shinigami/head",
+     "art": "head_bald",
      "at": [
-      7,
-      10
+      6,
+      9
      ]
     }
    ],
    "own": {
-    "art": "student_f/hair_back",
+    "art": "arrancar_f/hair_back",
     "at": [
-     21,
-     2
+     12,
+     -1
     ]
    },
    "sheet": [
@@ -94,12 +93,12 @@
   {
    "slot": "torso",
    "canvas": [
-    6,
+    4,
     22
    ],
    "size": [
-    24,
-    37
+    22,
+    34
    ],
    "sheet": [
     2,
@@ -116,15 +115,15 @@
   {
    "slot": "arm_L",
    "canvas": [
-    -1,
+    1,
     26
    ],
    "size": [
-    21,
+    18,
     35
    ],
    "sheet": [
-    28,
+    26,
     78
    ],
    "pivots": [
@@ -143,7 +142,7 @@
     12
    ],
    "sheet": [
-    51,
+    46,
     78
    ],
    "pivots": [
@@ -157,11 +156,11 @@
     26
    ],
    "size": [
-    19,
-    21
+    17,
+    17
    ],
    "sheet": [
-    62,
+    57,
     78
    ],
    "pivots": [
@@ -173,14 +172,14 @@
    "slot": "forearm_R",
    "canvas": [
     17,
-    34
+    35
    ],
    "size": [
-    20,
-    24
+    19,
+    22
    ],
    "sheet": [
-    83,
+    76,
     78
    ],
    "pivots": [
@@ -190,7 +189,7 @@
   {
    "slot": "leg_L",
    "canvas": [
-    3,
+    2,
     48
    ],
    "size": [
@@ -198,7 +197,7 @@
     31
    ],
    "sheet": [
-    105,
+    97,
     78
    ],
    "pivots": [
@@ -209,7 +208,7 @@
   {
    "slot": "leg_R",
    "canvas": [
-    12,
+    10,
     46
    ],
    "size": [
@@ -217,7 +216,7 @@
     33
    ],
    "sheet": [
-    130,
+    122,
     78
    ],
    "pivots": [
@@ -237,7 +236,7 @@
    ],
    "sheet": [
     2,
-    119
+    117
    ],
    "pivots": [
     "foot_L"
@@ -246,7 +245,7 @@
   {
    "slot": "foot_R",
    "canvas": [
-    17,
+    16,
     69
    ],
    "size": [
@@ -255,7 +254,7 @@
    ],
    "sheet": [
     21,
-    119
+    117
    ],
    "pivots": [
     "foot_R"
@@ -273,7 +272,7 @@
    ],
    "sheet": [
     38,
-    119
+    117
    ],
    "pivots": [
     "weapon"
@@ -291,7 +290,7 @@
    ],
    "sheet": [
     62,
-    119
+    117
    ],
    "pivots": [
     "scabbard"
