@@ -19,10 +19,15 @@ async function toMarket(h) {
 
 /** 시장(장터)에서 뒤로 → 방까지 (켬 = 시장 → 월드맵 → 방) */
 async function marketBackToRoom(h) {
-  await h.closeLayers();
-  await h.back();
-  await h.page.waitForTimeout(500);
-  if (await h.has('.bha-worldmap')) { await h.back(); await h.page.waitForTimeout(500); }
+  // 탐색 뒤 첫 Escape 는 화면이 고른 것을 먼저 풀 수 있다(device 키보드 취소) — 방에 닿을 때까지 몇 번 더 (뒤쪽은 왼쪽 위 돌아가기 버튼)
+  const home = '.bha-room:not(.bha-market):not(.bha-worldmap)';
+  for (let i = 0; i < 6 && !(await h.has(home)); i++) {
+    await h.closeLayers();
+    const space = h.page.locator('.bha-lcd [data-space-back]').first();
+    if (i >= 3 && (await space.count())) await space.click({ timeout: 2000 }).catch(() => {});
+    else await h.back();
+    await h.page.waitForTimeout(500);
+  }
   if (!(await h.has('.bha-room:not(.bha-market):not(.bha-worldmap)'))) {
     const at = await h.page.evaluate(() => [...document.querySelectorAll('.bha-lcd .bha-app')].map((e) => e.className).join('|'));
     throw new Error(`시장 뒤로 → 방에 못 닿음 (${at})`);
