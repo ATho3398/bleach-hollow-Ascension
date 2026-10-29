@@ -1,260 +1,283 @@
 {
  "id": "serpent",
- "note": "뱀형 종이인형 뼈대 (GDD 115-A 44, 사용자 2026-10-29 \"도트 준거에 뱀같이 생긴애 있지. 저렇게 생긴 애 구조도 구현해\"). 앞 = 왼쪽. 그림 칸 64×48, 바닥 줄 y=47. 몸 가운데(root)가 바닥에 닿고, 앞쪽 사슬 = 앞몸(front)·가슴(chest)·목(neck)·머리(head), 뒤쪽 사슬 = 몸 뒤 1·2(back1·back2)·꼬리(tail). 가슴에 작은 발톱 팔 둘(_R = 가까운 쪽, _L = 먼 쪽). 몸 test 는 임시 그림(placeholder.py)",
+ "note": "뱀형 종이인형 뼈대 (GDD 115-A 44·45). 사용자 도트 준거(docs/design/user-art/serpent-ref, 오른쪽 아래 뱀)의 형태 그대로: 몸이 위로 곧게 서고(코브라처럼) 목이 S자로 휘어 머리가 앞위로, 아래는 똬리, 꼬리는 오른쪽 바닥을 지나 높이 말려 올라간다. 앞 = 왼쪽. 그림 칸 40×40, 바닥 줄 y=39. 위로 선 사슬 = 몸통 1·2·목 1·2·머리, 뒤 사슬 = 똬리 1·2·꼬리 1·2, 가슴에 발톱 팔. 몸 ref = 사용자 도트를 cut 선으로 자른 그림(scripts/rig/cut_ref.py)",
  "canvas": [
-  64,
-  48
+  40,
+  40
  ],
- "ground": 47,
+ "ground": 39,
  "bones": [
   {
    "id": "root",
    "parent": null,
    "pivot": [
-    36,
-    44
+    18,
+    36
    ]
   },
   {
-   "id": "front",
+   "id": "body1",
    "parent": "root",
    "pivot": [
-    31,
-    42
+    17,
+    32
    ]
   },
   {
-   "id": "chest",
-   "parent": "front",
+   "id": "body2",
+   "parent": "body1",
    "pivot": [
-    23,
-    34
-   ]
-  },
-  {
-   "id": "neck",
-   "parent": "chest",
-   "pivot": [
-    19,
+    20,
     25
    ]
   },
   {
+   "id": "neck1",
+   "parent": "body2",
+   "pivot": [
+    16,
+    19
+   ]
+  },
+  {
+   "id": "neck2",
+   "parent": "neck1",
+   "pivot": [
+    14,
+    13
+   ]
+  },
+  {
    "id": "head",
-   "parent": "neck",
+   "parent": "neck2",
    "pivot": [
-    15,
-    15
+    16,
+    8
    ]
   },
   {
-   "id": "arm_L",
-   "parent": "chest",
+   "id": "arm",
+   "parent": "body2",
    "pivot": [
-    24,
-    31
+    14,
+    17
    ]
   },
   {
-   "id": "arm_R",
-   "parent": "chest",
+   "id": "coil1",
+   "parent": "root",
    "pivot": [
-    21,
+    22,
+    36
+   ]
+  },
+  {
+   "id": "coil2",
+   "parent": "coil1",
+   "pivot": [
+    29,
+    35
+   ]
+  },
+  {
+   "id": "tail1",
+   "parent": "coil2",
+   "pivot": [
+    36,
     30
    ]
   },
   {
-   "id": "back1",
-   "parent": "root",
+   "id": "tail2",
+   "parent": "tail1",
    "pivot": [
-    42,
-    45
-   ]
-  },
-  {
-   "id": "back2",
-   "parent": "back1",
-   "pivot": [
-    52,
-    43
-   ]
-  },
-  {
-   "id": "tail",
-   "parent": "back2",
-   "pivot": [
-    58,
-    35
+    34,
+    20
    ]
   }
  ],
  "slots": [
   {
-   "id": "arm_L",
-   "bone": "arm_L"
+   "id": "tail2",
+   "bone": "tail2"
   },
   {
-   "id": "tail",
-   "bone": "tail"
+   "id": "tail1",
+   "bone": "tail1"
   },
   {
-   "id": "back2",
-   "bone": "back2"
+   "id": "coil2",
+   "bone": "coil2"
   },
   {
-   "id": "back1",
-   "bone": "back1"
+   "id": "body1",
+   "bone": "body1"
   },
   {
-   "id": "root",
-   "bone": "root"
+   "id": "body2",
+   "bone": "body2"
   },
   {
-   "id": "front",
-   "bone": "front"
+   "id": "neck1",
+   "bone": "neck1"
   },
   {
-   "id": "chest",
-   "bone": "chest"
-  },
-  {
-   "id": "neck",
-   "bone": "neck"
+   "id": "neck2",
+   "bone": "neck2"
   },
   {
    "id": "head",
    "bone": "head"
   },
   {
-   "id": "arm_R",
-   "bone": "arm_R"
+   "id": "root",
+   "bone": "root"
+  },
+  {
+   "id": "coil1",
+   "bone": "coil1"
+  },
+  {
+   "id": "arm",
+   "bone": "arm"
   }
  ],
  "bodies": {
-  "test": {
-   "neck": {
-    "art": "test/neck",
+  "ref": {
+   "head": {
+    "art": "ref/head",
+    "at": [
+     0,
+     0
+    ],
+    "size": [
+     21,
+     16
+    ]
+   },
+   "neck2": {
+    "art": "ref/neck2",
     "at": [
      12,
-     14
+     4
     ],
     "size": [
-     10,
-     13
-    ]
-   },
-   "chest": {
-    "art": "test/chest",
-    "at": [
-     16,
-     23
-    ],
-    "size": [
-     11,
-     13
-    ]
-   },
-   "front": {
-    "art": "test/front",
-    "at": [
-     20,
-     31
-    ],
-    "size": [
-     14,
-     14
-    ]
-   },
-   "root": {
-    "art": "test/root",
-    "at": [
-     29,
-     38
-    ],
-    "size": [
-     15,
+     13,
      11
     ]
    },
-   "back1": {
-    "art": "test/back1",
+   "neck1": {
+    "art": "ref/neck1",
     "at": [
-     41,
-     40
+     11,
+     13
     ],
     "size": [
-     12,
+     9,
      9
     ]
    },
-   "back2": {
-    "art": "test/back2",
+   "arm": {
+    "art": "ref/arm",
     "at": [
-     49,
-     33
-    ],
-    "size": [
-     11,
-     12
-    ]
-   },
-   "tail": {
-    "art": "test/tail",
-    "at": [
-     54,
-     21
-    ],
-    "size": [
-     7,
+     5,
      15
-    ]
-   },
-   "head": {
-    "art": "test/head",
-    "at": [
-     -1,
-     8
     ],
     "size": [
-     22,
+     9,
      13
     ]
    },
-   "arm_R": {
-    "art": "test/arm_R",
+   "body2": {
+    "art": "ref/body2",
     "at": [
-     12,
-     29
+     15,
+     15
     ],
     "size": [
-     11,
+     13,
+     13
+    ]
+   },
+   "body1": {
+    "art": "ref/body1",
+    "at": [
+     13,
+     25
+    ],
+    "size": [
+     13,
+     8
+    ]
+   },
+   "root": {
+    "art": "ref/root",
+    "at": [
+     9,
+     27
+    ],
+    "size": [
+     15,
+     12
+    ]
+   },
+   "coil1": {
+    "art": "ref/coil1",
+    "at": [
+     20,
+     28
+    ],
+    "size": [
+     9,
+     12
+    ]
+   },
+   "coil2": {
+    "art": "ref/coil2",
+    "at": [
+     27,
+     27
+    ],
+    "size": [
+     12,
      11
     ]
    },
-   "arm_L": {
-    "art": "test/arm_L",
+   "tail1": {
+    "art": "ref/tail1",
     "at": [
-     15,
-     30
+     27,
+     19
     ],
     "size": [
-     11,
+     12,
      11
+    ]
+   },
+   "tail2": {
+    "art": "ref/tail2",
+    "at": [
+     24,
+     10
+    ],
+    "size": [
+     14,
+     10
     ]
    }
   }
  },
  "looks": {
   "serpent-test": {
-   "body": "test"
+   "body": "ref"
   }
  },
  "hairFrame": {
   "rect": [
    0,
    0,
-   64,
-   48
+   40,
+   40
   ],
   "keepOut": [
    0,
@@ -265,80 +288,211 @@
  },
  "view": {
   "rect": [
-   -14,
    -12,
-   92,
-   60
+   -10,
+   64,
+   50
   ]
  },
  "edit": {
   "names": {
-   "root": "몸 가운데",
-   "front": "앞몸",
-   "chest": "가슴",
-   "neck": "목",
+   "root": "똬리 가운데",
+   "body1": "몸통 1",
+   "body2": "몸통 2(가슴)",
+   "neck1": "목 1",
+   "neck2": "목 2",
    "head": "머리",
-   "arm_L": "먼 팔",
-   "arm_R": "팔",
-   "back1": "뒷몸 1",
-   "back2": "뒷몸 2",
-   "tail": "꼬리"
+   "arm": "팔",
+   "coil1": "똬리 1",
+   "coil2": "똬리 2",
+   "tail1": "꼬리 1",
+   "tail2": "꼬리 끝"
   },
   "groups": [
    [
-    "앞쪽",
+    "위로 선 몸",
     [
      "head",
-     "neck",
-     "chest",
-     "front"
+     "neck2",
+     "neck1",
+     "body2",
+     "body1",
+     "arm"
     ]
    ],
    [
-    "가운데",
+    "똬리",
     [
-     "root"
+     "root",
+     "coil1",
+     "coil2"
     ]
    ],
    [
-    "뒤쪽",
+    "꼬리",
     [
-     "back1",
-     "back2",
-     "tail"
-    ]
-   ],
-   [
-    "팔",
-    [
-     "arm_R",
-     "arm_L"
+     "tail1",
+     "tail2"
     ]
    ]
   ],
   "follow": {
-   "neck": [
+   "neck2": [
     "head"
    ],
-   "chest": [
-    "neck",
+   "neck1": [
+    "neck2",
+    "head"
+   ],
+   "body2": [
+    "neck1",
+    "neck2",
     "head",
-    "arm_L",
-    "arm_R"
+    "arm"
    ],
-   "front": [
-    "chest",
-    "neck",
+   "body1": [
+    "body2",
+    "neck1",
+    "neck2",
     "head",
-    "arm_L",
-    "arm_R"
+    "arm"
    ],
-   "back1": [
-    "back2",
-    "tail"
+   "coil1": [
+    "coil2",
+    "tail1",
+    "tail2"
    ],
-   "back2": [
-    "tail"
+   "coil2": [
+    "tail1",
+    "tail2"
+   ],
+   "tail1": [
+    "tail2"
+   ]
+  }
+ },
+ "cut": {
+  "note": "사용자 도트를 부위로 자르는 선(1배 그림 좌표): 칸마다 가장 가까운 선의 슬롯이 가진다",
+  "image": "docs/design/user-art/serpent-ref/serpent-1x.png",
+  "body": "ref",
+  "lines": {
+   "head": [
+    [
+     2,
+     9
+    ],
+    [
+     8,
+     6
+    ],
+    [
+     15,
+     6
+    ]
+   ],
+   "neck2": [
+    [
+     14,
+     13
+    ],
+    [
+     17,
+     9
+    ]
+   ],
+   "neck1": [
+    [
+     15,
+     19
+    ],
+    [
+     14,
+     13
+    ]
+   ],
+   "arm": [
+    [
+     14,
+     17
+    ],
+    [
+     9,
+     22
+    ]
+   ],
+   "body2": [
+    [
+     20,
+     25
+    ],
+    [
+     16,
+     19
+    ]
+   ],
+   "body1": [
+    [
+     17,
+     31
+    ],
+    [
+     20,
+     25
+    ]
+   ],
+   "root": [
+    [
+     13,
+     33
+    ],
+    [
+     18,
+     36
+    ],
+    [
+     22,
+     36
+    ]
+   ],
+   "coil1": [
+    [
+     22,
+     35
+    ],
+    [
+     29,
+     35
+    ]
+   ],
+   "coil2": [
+    [
+     29,
+     35
+    ],
+    [
+     36,
+     30
+    ]
+   ],
+   "tail1": [
+    [
+     36,
+     30
+    ],
+    [
+     34,
+     20
+    ]
+   ],
+   "tail2": [
+    [
+     34,
+     20
+    ],
+    [
+     32,
+     12
+    ]
    ]
   }
  }

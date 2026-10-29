@@ -51,18 +51,18 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   });
 });
 
-describe('뱀형 (GDD 115-A 44)', () => {
+describe('뱀형 (GDD 115-A 44·45, 사용자 도트 형태)', () => {
   const b = DRAFT_RIGS.serpent!;
-  it('기어가기: 물결이 앞몸 → 가슴 → 목으로 4분의 1 박자씩 늦게 흐른다', () => {
+  it('기어가기: 물결이 몸통 1 → 몸통 2 → 목으로 4분의 1 박자씩 늦게 흐른다', () => {
     const T = b.motions.move!.duration;
     // 마디가 가장 크게(+) 휘는 순간
     const peak = (bone: string) => b.motions.move!.tracks[bone]!.reduce((m, k) => (k[1] > m[1] ? k : m))[0];
-    expect(peak('chest') - peak('front')).toBe(T / 4);
-    expect(peak('neck') - peak('chest')).toBe(T / 4);
+    expect(peak('body2') - peak('body1')).toBe(T / 4);
+    expect(peak('neck1') - peak('body2')).toBe(T / 4);
   });
-  it('가슴을 옮기면 목·머리·팔도 같이, 꼬리는 안 따라온다', () => {
-    expect(followMove(b.rig, 'serpent-test', 'chest')!.parts.map((p) => p.slot)).toEqual(['chest', 'neck', 'head', 'arm_L', 'arm_R']);
-    expect(followMove(b.rig, 'serpent-test', 'tail')!.parts.map((p) => p.slot)).toEqual(['tail']);
+  it('가슴(몸통 2)을 옮기면 목·머리·팔도 같이, 꼬리 끝은 혼자', () => {
+    expect(followMove(b.rig, 'serpent-test', 'body2')!.parts.map((p) => p.slot)).toEqual(['body2', 'neck1', 'neck2', 'head', 'arm']);
+    expect(followMove(b.rig, 'serpent-test', 'tail2')!.parts.map((p) => p.slot)).toEqual(['tail2']);
   });
 });
 
