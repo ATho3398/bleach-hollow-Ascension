@@ -47,13 +47,9 @@
 .bha-break--split .bha-break__gauge { width: 100%; }
 .bha-break--split .bha-split__side { justify-content: center; align-self: stretch; }
 
-/* ═════ 토스트(알림 띠) (C.170, GDD 100장 #4): LCD 아래쪽 가운데, 홈 독(터치 높이) 위. 위쪽 버튼(탭·트랙·상태 칩)을 덮지 않는다.
-   누름은 통과(pointer-events: none, 기본 규칙), 한 번에 1개. 아래에서 올라왔다 아래로 사라진다 ═════ */
-.bha-lcd .bha-toast { top: auto; bottom: calc(var(--bha-touch) + var(--bha-sp-5)); }
-.bha-lcd .bha-toast.is-in { animation-name: bha-toast-up-in; }
-.bha-lcd .bha-toast.is-out { animation-name: bha-toast-down-out; }
-@keyframes bha-toast-up-in { from { opacity: 0; transform: translate(-50%, 130%); } to { opacity: 1; transform: translate(-50%, 0); } }
-@keyframes bha-toast-down-out { to { opacity: 0; transform: translate(-50%, 130%); } }
+/* ═════ 토스트(알림 띠) (C.193, GDD 119장 6 — C.170 의 아래쪽에서 바꿈): LCD 맨 위 가운데 고정, 여러 개면 위에서 아래로 쌓인다(--toast-i).
+   아래쪽 버튼·조작 줄을 가리지 않는다. 누름은 통과(pointer-events: none, 기본 규칙). 위에서 내려왔다 위로 사라진다(기본 애니메이션) ═════ */
+.bha-lcd .bha-toast { top: var(--bha-sp-1); bottom: auto; }
 /* 튜토리얼 달성 (GDD 109장 5번, C.180): 같은 띠를 화면 가운데에. 전투·대사 창 위, 누르면 바로 닫힌다 */
 .bha-toast--center, .bha-lcd .bha-toast--center { top: 50%; bottom: auto; z-index: var(--bha-z-tutorial); transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
 .bha-toast--center.is-in, .bha-lcd .bha-toast--center.is-in { animation-name: bha-toast-center-in; }

@@ -243,8 +243,8 @@
 .bha-empty__text { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); }
 
 /* =========================================================
-   7. 토스트  .bha-toast  (칭호 해금·목표 달성·새 트랙) — 얇은 한 줄 띠 (GDD 43장). 기기 화면(LCD)에서는 독 위 가운데 (GDD 100장 #4, lcd.css)
-   한 번에 1개, 나머지는 차례로(--toast-i 는 늘 0). 상태: .is-in(등장) .is-out(퇴장)
+   7. 토스트  .bha-toast  (칭호 해금·목표 달성·새 트랙) — 얇은 한 줄 띠 (GDD 43장). 기기 화면(LCD)에서도 맨 위 가운데 (GDD 119장 6, lcd.css)
+   3개까지 위에서 아래로 쌓임(--toast-i), 나머지는 차례로. 상태: .is-in(등장) .is-out(퇴장)
    ========================================================= */
 .bha-toast {
   position: fixed; z-index: var(--bha-z-toast);

@@ -44,9 +44,9 @@ describe('C.170 방·독', () => {
     expect(room).not.toContain("label: '튜토리얼'");
     expect(read('src/ui/helpView.ts')).toContain("label: '목표'");
   });
-  it('알림 띠: LCD 아래 가운데, 한 번에 1개', () => {
-    expect(read('src/ui/bha/lcd.css')).toContain('.bha-lcd .bha-toast { top: auto; bottom: calc(var(--bha-touch) + var(--bha-sp-5)); }');
-    expect(read('src/ui/bha/nest.ts')).toContain('const TOAST_VISIBLE = 1;');
+  it('알림 띠: LCD 맨 위 가운데 (C.193 GDD 119장 6 으로 아래 → 위), 3개까지 쌓임', () => {
+    expect(read('src/ui/bha/lcd.css')).toContain('.bha-lcd .bha-toast { top: var(--bha-sp-1); bottom: auto; }');
+    expect(read('src/ui/bha/nest.ts')).toContain('const TOAST_VISIBLE = 3;');
   });
 });
 

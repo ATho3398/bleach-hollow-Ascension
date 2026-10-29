@@ -31,9 +31,9 @@ describe('알림 띠 (GDD 43장 1·2번)', () => {
     expect(toast).toContain('pointer-events: none');
     expect(rule(css, '.bha-toast__text')).toContain('white-space: nowrap');
   });
-  it('토스트는 한 번에 1개만 보이고 나머지는 대기열 (C.170, GDD 100장 #4)', () => {
+  it('토스트는 3개까지 위에서 아래로 쌓이고 나머지는 대기열 (C.193, GDD 119장 6 — C.170 은 1개)', () => {
     const ts = read('src/ui/bha/nest.ts');
-    expect(ts).toContain('const TOAST_VISIBLE = 1;');
+    expect(ts).toContain('const TOAST_VISIBLE = 3;');
     expect(ts).toContain('st.queue.push(show)');
   });
   it('새 트랙 알림도 같은 showToast 를 쓴다', () => {
