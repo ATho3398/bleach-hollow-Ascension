@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""사용자 도트를 종이인형 부위로 자르기 (GDD 115-A 45): 뼈대 데이터의 cut 선(슬롯 → 꺾은선, 1배 그림 좌표)에서
+"""사용자 도트를 종이인형 부위로 자르기 (GDD 115-A 45·47): 뼈대 데이터 skeletons.<몸>(슬롯 → 뼈대 선, 1배 그림 좌표)에서
 칸마다 가장 가까운 선의 슬롯이 그 칸을 가진다. 슬롯마다 꼭 맞게 잘라 <뼈대>/<몸>/<슬롯>.png 로 저장하고 at·size 를 적는다.
 그림 좌표 = 캔버스 좌표(도트를 캔버스 왼쪽 위에 그대로 둔 것).
 사용: python3 scripts/rig/cut_ref.py serpent
@@ -28,7 +28,7 @@ def main(rig_id):
     rig = json.load(open(path, encoding='utf-8'))
     cut = rig['cut']
     src = np.array(Image.open(os.path.join(ROOT, cut['image'])).convert('RGBA'))
-    lines = cut['lines']
+    lines = {k: [p for st in v for p in st['pts']] for k, v in rig['skeletons'][cut['body']].items()}
     h, w = src.shape[:2]
     owner = np.full((h, w), '', dtype=object)
     for y in range(h):

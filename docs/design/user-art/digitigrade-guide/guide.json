@@ -1,0 +1,214 @@
+{
+ "note": "뼈대 가이드 칸(GDD 115-A 47): sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안 반투명 선 = 뼈대(가져올 때 무시), 불투명 칸만 그 슬롯 그림",
+ "rig": "humanoid",
+ "look": "digitigrade-test",
+ "body": "dg",
+ "boxes": [
+  {
+   "slot": "head",
+   "canvas": [
+    6,
+    35
+   ],
+   "size": [
+    19,
+    29
+   ],
+   "pivots": [
+    "head"
+   ],
+   "sheet": [
+    2,
+    4
+   ]
+  },
+  {
+   "slot": "torso",
+   "canvas": [
+    9,
+    49
+   ],
+   "size": [
+    15,
+    26
+   ],
+   "pivots": [
+    "torso",
+    "head",
+    "arm_L",
+    "arm_R"
+   ],
+   "sheet": [
+    23,
+    4
+   ]
+  },
+  {
+   "slot": "arm_L",
+   "canvas": [
+    4,
+    55
+   ],
+   "size": [
+    13,
+    26
+   ],
+   "pivots": [
+    "arm_L"
+   ],
+   "sheet": [
+    40,
+    4
+   ]
+  },
+  {
+   "slot": "arm_R",
+   "canvas": [
+    13,
+    54
+   ],
+   "size": [
+    11,
+    18
+   ],
+   "pivots": [
+    "arm_R",
+    "forearm_R"
+   ],
+   "sheet": [
+    55,
+    4
+   ]
+  },
+  {
+   "slot": "forearm_R",
+   "canvas": [
+    10,
+    63
+   ],
+   "size": [
+    12,
+    17
+   ],
+   "pivots": [
+    "forearm_R"
+   ],
+   "sheet": [
+    2,
+    37
+   ]
+  },
+  {
+   "slot": "leg_L",
+   "canvas": [
+    9,
+    63
+   ],
+   "size": [
+    14,
+    15
+   ],
+   "pivots": [
+    "leg_L",
+    "shin_L"
+   ],
+   "sheet": [
+    16,
+    37
+   ]
+  },
+  {
+   "slot": "shin_L",
+   "canvas": [
+    9,
+    68
+   ],
+   "size": [
+    14,
+    15
+   ],
+   "pivots": [
+    "shin_L",
+    "foot_L"
+   ],
+   "sheet": [
+    32,
+    37
+   ]
+  },
+  {
+   "slot": "foot_L",
+   "canvas": [
+    5,
+    74
+   ],
+   "size": [
+    13,
+    9
+   ],
+   "pivots": [
+    "foot_L"
+   ],
+   "sheet": [
+    48,
+    37
+   ]
+  },
+  {
+   "slot": "leg_R",
+   "canvas": [
+    13,
+    63
+   ],
+   "size": [
+    14,
+    15
+   ],
+   "pivots": [
+    "leg_R",
+    "shin_R"
+   ],
+   "sheet": [
+    63,
+    37
+   ]
+  },
+  {
+   "slot": "shin_R",
+   "canvas": [
+    13,
+    68
+   ],
+   "size": [
+    14,
+    15
+   ],
+   "pivots": [
+    "shin_R",
+    "foot_R"
+   ],
+   "sheet": [
+    2,
+    58
+   ]
+  },
+  {
+   "slot": "foot_R",
+   "canvas": [
+    9,
+    74
+   ],
+   "size": [
+    13,
+    9
+   ],
+   "pivots": [
+    "foot_R"
+   ],
+   "sheet": [
+    18,
+    58
+   ]
+  }
+ ]
+}

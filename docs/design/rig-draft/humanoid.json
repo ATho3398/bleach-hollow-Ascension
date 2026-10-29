@@ -140,19 +140,18 @@
       "thumb_L": { "art": "bare/thumb_L", "at": [6, 51], "size": [3, 6] },
       "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38], "size": [13, 16] }
     },
-    "bare_dg": {
-      "torso": { "art": "bare/torso", "at": [10, 26], "size": [17, 27] },
-      "arm_L": { "art": "bare/arm_L", "at": [5, 30], "size": [12, 29] },
-      "arm_R": { "art": "bare/arm_R", "at": [21, 29], "size": [12, 15] },
-      "leg_L": { "art": "dg/leg_L", "at": [7, 48], "size": [13, 16] },
-      "leg_R": { "art": "dg/leg_R", "at": [16, 48], "size": [13, 16] },
-      "head": { "art": "head_bald", "at": [7, 10], "size": [16, 19] },
-      "foot_L": { "art": "dg/foot_L", "at": [5, 70], "size": [10, 10] },
-      "foot_R": { "art": "dg/foot_R", "at": [14, 70], "size": [10, 10] },
-      "thumb_L": { "art": "bare/thumb_L", "at": [7, 52], "size": [3, 6] },
-      "forearm_R": { "art": "bare/forearm_R", "at": [20, 39], "size": [13, 17] },
-      "shin_L": { "art": "dg/shin_L", "at": [10, 60], "size": [10, 13] },
-      "shin_R": { "art": "dg/shin_R", "at": [19, 60], "size": [10, 13] }
+    "dg": {
+      "head": { "art": "dgref/head", "at": [8, 38], "size": [15, 19] },
+      "torso": { "art": "dgref/torso", "at": [11, 56], "size": [11, 13] },
+      "arm_L": { "art": "dgref/arm_L", "at": [6, 58], "size": [9, 20] },
+      "arm_R": { "art": "dgref/arm_R", "at": [15, 58], "size": [7, 10] },
+      "forearm_R": { "art": "dgref/forearm_R", "at": [12, 66], "size": [8, 11] },
+      "leg_L": { "art": "dgref/leg_L", "at": [11, 66], "size": [10, 9] },
+      "shin_L": { "art": "dgref/shin_L", "at": [12, 71], "size": [8, 9] },
+      "foot_L": { "art": "dgref/foot_L", "at": [8, 76], "size": [7, 4] },
+      "leg_R": { "art": "dgref/leg_R", "at": [15, 66], "size": [10, 9] },
+      "shin_R": { "art": "dgref/shin_R", "at": [16, 71], "size": [8, 9] },
+      "foot_R": { "art": "dgref/foot_R", "at": [12, 76], "size": [7, 4] }
     }
   },
   "looks": {
@@ -206,7 +205,7 @@
       "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1], "size": [16, 29] }
     },
     "digitigrade-test": {
-      "body": "bare_dg"
+      "body": "dg"
     },
     "cape-test": {
       "body": "arrancar",
@@ -306,19 +305,25 @@
         "foot_R": -2
       }
     },
-    "bare_dg": {
+    "dg": {
       "pivots": {
-        "leg_L": [11, 52],
-        "shin_L": [17, 62],
-        "foot_L": [12, 72],
-        "leg_R": [20, 52],
-        "shin_R": [26, 62],
-        "foot_R": [21, 72]
+        "root": [16, 68],
+        "torso": [16, 68],
+        "head": [15, 56],
+        "arm_L": [13, 59],
+        "arm_R": [19, 59],
+        "forearm_R": [18, 67],
+        "leg_L": [14, 68],
+        "leg_R": [18, 68],
+        "shin_L": [18, 73],
+        "shin_R": [22, 73],
+        "foot_L": [14, 78],
+        "foot_R": [18, 78]
       }
     }
   },
   "bodyMotions": {
-    "bare_dg": "digitigrade"
+    "dg": "digitigrade"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -433,6 +438,125 @@
       ],
       "shin_R": [
         "foot_R"
+      ]
+    }
+  },
+  "skeletonsNote": "뼈대 선(GDD 115-A 47): 몸 → 슬롯 → [{pts 꺾은선, w 굵기}]. 뼈대 가이드(scripts/rig/bone_guide.py)가 칸 안에 이 선을 그리고, 임시 그림·도트 자르기도 이것을 쓴다",
+  "skeletons": {
+    "dg": {
+      "head": [
+        {
+          "pts": [
+            [15, 56],
+            [15, 46]
+          ],
+          "w": 11
+        },
+        {
+          "pts": [
+            [12, 47],
+            [10, 39]
+          ],
+          "w": 3
+        },
+        {
+          "pts": [
+            [19, 47],
+            [21, 39]
+          ],
+          "w": 3
+        }
+      ],
+      "torso": [
+        {
+          "pts": [
+            [16, 56],
+            [16, 68]
+          ],
+          "w": 10
+        }
+      ],
+      "arm_L": [
+        {
+          "pts": [
+            [13, 59],
+            [11, 69],
+            [8, 77]
+          ],
+          "w": 4
+        }
+      ],
+      "arm_R": [
+        {
+          "pts": [
+            [19, 59],
+            [18, 67]
+          ],
+          "w": 5
+        }
+      ],
+      "forearm_R": [
+        {
+          "pts": [
+            [18, 67],
+            [14, 76]
+          ],
+          "w": 4
+        }
+      ],
+      "leg_L": [
+        {
+          "pts": [
+            [14, 68],
+            [18, 73]
+          ],
+          "w": 6
+        }
+      ],
+      "shin_L": [
+        {
+          "pts": [
+            [18, 73],
+            [14, 78]
+          ],
+          "w": 5
+        }
+      ],
+      "foot_L": [
+        {
+          "pts": [
+            [14, 78],
+            [9, 79]
+          ],
+          "w": 4
+        }
+      ],
+      "leg_R": [
+        {
+          "pts": [
+            [18, 68],
+            [22, 73]
+          ],
+          "w": 6
+        }
+      ],
+      "shin_R": [
+        {
+          "pts": [
+            [22, 73],
+            [18, 78]
+          ],
+          "w": 5
+        }
+      ],
+      "foot_R": [
+        {
+          "pts": [
+            [18, 78],
+            [13, 79]
+          ],
+          "w": 4
+        }
       ]
     }
   }

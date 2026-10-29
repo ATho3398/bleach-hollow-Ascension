@@ -1,0 +1,234 @@
+{
+ "note": "뼈대 가이드 칸(GDD 115-A 47): sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안 반투명 선 = 뼈대(가져올 때 무시), 불투명 칸만 그 슬롯 그림",
+ "rig": "beast",
+ "look": "beast-test",
+ "body": "ref",
+ "boxes": [
+  {
+   "slot": "head",
+   "canvas": [
+    -2,
+    0
+   ],
+   "size": [
+    21,
+    25
+   ],
+   "pivots": [
+    "head"
+   ],
+   "sheet": [
+    2,
+    4
+   ]
+  },
+  {
+   "slot": "body",
+   "canvas": [
+    10,
+    -2
+   ],
+   "size": [
+    32,
+    20
+   ],
+   "pivots": [
+    "body",
+    "head",
+    "tail",
+    "hleg_L",
+    "fleg_R",
+    "hleg_R"
+   ],
+   "sheet": [
+    25,
+    4
+   ]
+  },
+  {
+   "slot": "tail",
+   "canvas": [
+    36,
+    -1
+   ],
+   "size": [
+    15,
+    17
+   ],
+   "pivots": [
+    "tail",
+    "tail2"
+   ],
+   "sheet": [
+    59,
+    4
+   ]
+  },
+  {
+   "slot": "tail2",
+   "canvas": [
+    43,
+    1
+   ],
+   "size": [
+    11,
+    23
+   ],
+   "pivots": [
+    "tail2"
+   ],
+   "sheet": [
+    2,
+    33
+   ]
+  },
+  {
+   "slot": "fleg_R",
+   "canvas": [
+    9,
+    12
+   ],
+   "size": [
+    14,
+    16
+   ],
+   "pivots": [
+    "fleg_R",
+    "fleg_R2"
+   ],
+   "sheet": [
+    15,
+    33
+   ]
+  },
+  {
+   "slot": "fleg_R2",
+   "canvas": [
+    1,
+    19
+   ],
+   "size": [
+    17,
+    14
+   ],
+   "pivots": [
+    "fleg_R2"
+   ],
+   "sheet": [
+    31,
+    33
+   ]
+  },
+  {
+   "slot": "hleg_R",
+   "canvas": [
+    35,
+    12
+   ],
+   "size": [
+    13,
+    15
+   ],
+   "pivots": [
+    "hleg_R",
+    "hleg_R2"
+   ],
+   "sheet": [
+    50,
+    33
+   ]
+  },
+  {
+   "slot": "hleg_R2",
+   "canvas": [
+    38,
+    19
+   ],
+   "size": [
+    15,
+    15
+   ],
+   "pivots": [
+    "hleg_R2"
+   ],
+   "sheet": [
+    65,
+    33
+   ]
+  },
+  {
+   "slot": "fleg_L",
+   "canvas": [
+    16,
+    12
+   ],
+   "size": [
+    14,
+    17
+   ],
+   "pivots": [
+    "fleg_L",
+    "fleg_L2"
+   ],
+   "sheet": [
+    2,
+    60
+   ]
+  },
+  {
+   "slot": "fleg_L2",
+   "canvas": [
+    13,
+    21
+   ],
+   "size": [
+    14,
+    12
+   ],
+   "pivots": [
+    "fleg_L2"
+   ],
+   "sheet": [
+    18,
+    60
+   ]
+  },
+  {
+   "slot": "hleg_L",
+   "canvas": [
+    26,
+    12
+   ],
+   "size": [
+    14,
+    16
+   ],
+   "pivots": [
+    "hleg_L",
+    "hleg_L2"
+   ],
+   "sheet": [
+    34,
+    60
+   ]
+  },
+  {
+   "slot": "hleg_L2",
+   "canvas": [
+    25,
+    20
+   ],
+   "size": [
+    14,
+    13
+   ],
+   "pivots": [
+    "hleg_L2"
+   ],
+   "sheet": [
+    50,
+    60
+   ]
+  }
+ ]
+}

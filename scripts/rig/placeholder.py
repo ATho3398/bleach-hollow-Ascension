@@ -3,9 +3,8 @@
 사용자가 가이드 칸에 진짜 도트를 그려 오면 import_cut.py 로 바꾼다(이 그림은 그때 버린다).
 
 그리는 것(작업본):
-  사람형 역관절 다리  humanoid/dg/   (몸 bare_dg = 알몸 + 역관절 다리: 허벅지 leg_* · 정강이 shin_* · 발 foot_*)
+  사람형 역관절 몸    humanoid/dgref/ (몸 dg = 뼈대 선 skeletons.dg 를 굵게 칠한 막대 인형, GDD 115-A 47)
   사람형 망토         humanoid/cape/  (외형 cape-test 의 cape 층)
-  짐승형(네 발)       beast/test/     (beast.json 몸 test)
 부위마다 캔버스 좌표 다각형 → 꼭 맞게 잘라 저장하고, 작업본 데이터의 at·size 를 그 자리로 맞춘다.
 사용: python3 scripts/rig/placeholder.py
 """
@@ -68,80 +67,48 @@ def limb(a, b, wa, wb):
     return [(ax + px * wa / 2, ay + py * wa / 2), (bx + px * wb / 2, by + py * wb / 2), (bx - px * wb / 2, by - py * wb / 2), (ax - px * wa / 2, ay - py * wa / 2)]
 
 
-# 역관절 다리(앞 = 왼쪽): 엉덩이 → 뒤로 꺾인 관절 → 발목 → 앞으로 뻗은 발가락. 먼 쪽(_L)은 조금 어둡게
-DG = {
-    'L': {'hip': (11, 52), 'knee': (17, 62), 'ankle': (12, 72)},
-    'R': {'hip': (20, 52), 'knee': (26, 62), 'ankle': (21, 72)},
+# 역관절 몸 dg (GDD 115-A 47): 사용자 도트 준거(세 번째 사진 왼쪽 위 — 뿔 난 흰 호로, 정면 그림)의 비율을 옆모습으로 옮긴 뼈대.
+# 키 42칸(뿔 포함 머리가 거의 절반), 무릎까지 내려오는 긴 발톱 팔, 짧은 역관절 다리. 발 = 바닥 줄 y=80. 앞 = 왼쪽, _L = 먼 쪽
+DG_SKELETON = {
+    'head': [{'pts': [[15, 56], [15, 46]], 'w': 11}, {'pts': [[12, 47], [10, 39]], 'w': 3}, {'pts': [[19, 47], [21, 39]], 'w': 3}],
+    'torso': [{'pts': [[16, 56], [16, 68]], 'w': 10}],
+    'arm_L': [{'pts': [[13, 59], [11, 69], [8, 77]], 'w': 4}],
+    'arm_R': [{'pts': [[19, 59], [18, 67]], 'w': 5}],
+    'forearm_R': [{'pts': [[18, 67], [14, 76]], 'w': 4}],
+    'leg_L': [{'pts': [[14, 68], [18, 73]], 'w': 6}],
+    'shin_L': [{'pts': [[18, 73], [14, 78]], 'w': 5}],
+    'foot_L': [{'pts': [[14, 78], [9, 79]], 'w': 4}],
+    'leg_R': [{'pts': [[18, 68], [22, 73]], 'w': 6}],
+    'shin_R': [{'pts': [[22, 73], [18, 78]], 'w': 5}],
+    'foot_R': [{'pts': [[18, 78], [13, 79]], 'w': 4}],
 }
+DG_PIVOTS = {'root': [16, 68], 'torso': [16, 68], 'head': [15, 56], 'arm_L': [13, 59], 'arm_R': [19, 59], 'forearm_R': [18, 67],
+             'leg_L': [14, 68], 'leg_R': [18, 68], 'shin_L': [18, 73], 'shin_R': [22, 73], 'foot_L': [14, 78], 'foot_R': [18, 78]}
+
+
+def skeleton_polys(strokes, far):
+    """뼈대 선(꺾은선 + 굵기) → 막대 다각형들 (임시 그림 = 뼈대를 굵게 칠한 것)"""
+    c, d = (BONE_D, (160, 148, 122)) if far else (BONE, BONE_D)
+    out = []
+    for st in strokes:
+        pts = st['pts']
+        for p0, p1 in zip(pts, pts[1:]):
+            out.append((limb(p0, p1, st['w'], st['w']), c, d))
+    return out
 
 
 def humanoid():
     rig = json.load(open(DRAFT_RIG_JSON, encoding='utf-8'))
-    body = dict(rig['bodies']['bare'])
-    piv = {}
-    for side, p in DG.items():
-        far = side == 'L'
-        c, d = (BONE_D, (160, 148, 122)) if far else (BONE, BONE_D)
-        hx, hy = p['hip']
-        kx, ky = p['knee']
-        ax, ay = p['ankle']
-        body[f'leg_{side}'] = put(DRAFT_ART, f'dg/leg_{side}', [(limb((hx, hy - 1), (kx, ky), 9, 6), c, d)])
-        body[f'shin_{side}'] = put(DRAFT_ART, f'dg/shin_{side}', [(limb((kx, ky), (ax, ay), 6, 4), c, d)])
-        body[f'foot_{side}'] = put(DRAFT_ART, f'dg/foot_{side}', [([(ax - 2, ay - 2), (ax + 2, ay - 1), (ax + 1, ay + 7), (ax - 7, ay + 8), (ax - 7, ay + 5)], c, d)])
-        piv[f'leg_{side}'], piv[f'shin_{side}'], piv[f'foot_{side}'] = [hx, hy], [kx, ky], [ax, ay]
-    rig['bodies']['bare_dg'] = body
-    bj = rig.setdefault('bodyJoints', {})
-    cur = bj.get('bare_dg') if isinstance(bj.get('bare_dg'), dict) else {}
-    cur.setdefault('pivots', {}).update(piv)
-    bj['bare_dg'] = cur
+    rig.setdefault('skeletons', {})['dg'] = DG_SKELETON
+    rig['bodies']['dg'] = {slot: put(DRAFT_ART, f'dgref/{slot}', skeleton_polys(st, slot.endswith('_L')))
+                           for slot, st in DG_SKELETON.items()}
+    rig.setdefault('bodyJoints', {})['dg'] = {'pivots': dict(DG_PIVOTS)}
     # 망토: 어깨(목 아래)에서 무릎까지, 몸 뒤
     cape = put(DRAFT_ART, 'cape/test', [([(13, 27), (22, 27), (27, 40), (30, 66), (24, 68), (17, 64), (10, 68), (4, 66), (7, 40)], CAPE, CAPE_D)])
     rig['looks']['cape-test']['cape'] = cape
     dump(rig)
-    print('사람형: 역관절 다리·망토 임시 그림')
-
-
-BEAST_DIR = os.path.join(DRAFT_DIR, 'beast')
-BEAST_JSON = os.path.join(DRAFT_DIR, 'beast.json')
-# 짐승형(네 발, 앞 = 왼쪽). 먼 쪽 다리(_L)는 오른쪽으로 3칸 밀고 어둡게
-FAR = 3
-
-
-def beast():
-    rig = json.load(open(BEAST_JSON, encoding='utf-8'))
-    piv = {b['id']: b['pivot'] for b in rig['bones']}
-    parts = {}
-    parts['body'] = put(BEAST_DIR, 'test/body', [([(16, 14), (24, 9), (40, 9), (50, 12), (52, 18), (48, 26), (36, 28), (22, 28), (16, 24)], TEAL, TEAL_D),
-                                                ([(22, 9), (40, 8), (49, 11), (44, 14), (28, 14), (20, 13)], BONE, BONE_D)], w=90, h=60, ox=-10, oy=-10)
-    parts['head'] = put(BEAST_DIR, 'test/head', [([(-2, 13), (4, 8), (14, 8), (21, 13), (19, 19), (10, 22), (2, 22), (-3, 19)], BONE, BONE_D)], w=90, h=60, ox=-10, oy=-10)
-    # 눈
-    hp = os.path.join(BEAST_DIR, 'test/head.png')
-    h = np.array(Image.open(hp))
-    ex, ey = 4 - parts['head']['at'][0], 13 - parts['head']['at'][1]
-    h[ey, ex] = (240, 170, 30, 255)
-    h[ey, ex + 1] = (*OUT, 255)
-    Image.fromarray(h).save(hp)
-    parts['tail'] = put(BEAST_DIR, 'test/tail', [(limb((48, 15), (57, 10), 6, 4), TEAL, TEAL_D)], w=90, h=60, ox=-10, oy=-10)
-    parts['tail2'] = put(BEAST_DIR, 'test/tail2', [(limb((56, 10), (64, 4), 4, 2), TEAL, TEAL_D)], w=90, h=60, ox=-10, oy=-10)
-    for side, dx in (('R', 0), ('L', FAR)):
-        c, d = (TEAL, TEAL_D) if side == 'R' else (TEAL_D, (12, 40, 48))
-        bc, bd = (BONE, BONE_D) if side == 'R' else (BONE_D, (160, 148, 122))
-        sx, sy = piv[f'fleg_{side}']
-        ex, ey = piv[f'fleg_{side}2']
-        parts[f'fleg_{side}'] = put(BEAST_DIR, f'test/fleg_{side}', [(limb((sx, sy - 2), (ex, ey), 7, 5), c, d)], w=90, h=60, ox=-10, oy=-10)
-        parts[f'fleg_{side}2'] = put(BEAST_DIR, f'test/fleg_{side}2', [(limb((ex, ey), (ex - 1, 37), 5, 4), c, d),
-                                                                          ([(ex - 5, 36), (ex + 2, 36), (ex + 2, 39), (ex - 6, 39)], bc, bd)], w=90, h=60, ox=-10, oy=-10)
-        hx, hy = piv[f'hleg_{side}']
-        kx, ky = piv[f'hleg_{side}2']
-        parts[f'hleg_{side}'] = put(BEAST_DIR, f'test/hleg_{side}', [(limb((hx - 1, hy - 2), (kx, ky), 9, 5), c, d)], w=90, h=60, ox=-10, oy=-10)
-        parts[f'hleg_{side}2'] = put(BEAST_DIR, f'test/hleg_{side}2', [(limb((kx, ky), (kx - 4, 37), 4, 4), c, d),
-                                                                          ([(kx - 9, 36), (kx - 2, 36), (kx - 2, 39), (kx - 10, 39)], bc, bd)], w=90, h=60, ox=-10, oy=-10)
-    rig['bodies']['test'] = parts
-    s = json.dumps(rig, ensure_ascii=False, indent=1)
-    open(BEAST_JSON, 'w', encoding='utf-8').write(s + '\n')
-    print('짐승형: 임시 그림', len(parts), '조각')
+    print('사람형: 역관절 몸 dg·망토 임시 그림')
 
 
 if __name__ == '__main__':
     humanoid()
-    beast()

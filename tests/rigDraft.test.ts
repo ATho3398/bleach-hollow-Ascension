@@ -23,22 +23,22 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     for (const m of Object.values(motions)) expect(m.tracks.shin_L ?? m.tracks.shin_R).toBeUndefined();
   });
   it('역관절 몸만 동작 묶음을 쓴다: 걷기에서 정강이가 접힌다', () => {
-    const dg = resolveMotions(rig, motions, sets, 'bare_dg');
+    const dg = resolveMotions(rig, motions, sets, 'dg');
     expect(dg.move!.tracks.shin_L).toBeDefined();
     expect(dg.move!.tracks.arm_L).toEqual(motions.move!.tracks.arm_L); // 다리 밖은 기본 그대로
     expect(resolveMotions(rig, motions, sets, 'bare')).toBe(motions);
   });
   it('역관절 걷기: 디딘 발은 바닥 근처에 있다(발목이 바닥에서 크게 뜨지 않음)', () => {
-    const dg = resolveMotions(rig, motions, sets, 'bare_dg');
-    const ankle = rig.bodyJoints!.bare_dg as { pivots: Record<string, [number, number]> };
+    const dg = resolveMotions(rig, motions, sets, 'dg');
+    const ankle = rig.bodyJoints!.dg as { pivots: Record<string, [number, number]> };
     let lowest = 0;
     for (let t = 0; t < 640; t += 40) {
-      const m = boneMatrices(rig, samplePose(rig, dg.move!, t), 'bare_dg');
+      const m = boneMatrices(rig, samplePose(rig, dg.move!, t), 'dg');
       const y = Math.max(apply(m.foot_L!, ankle.pivots.foot_L!)[1], apply(m.foot_R!, ankle.pivots.foot_R!)[1]);
       lowest = Math.max(lowest, y);
-      expect(y, `t=${t}`).toBeGreaterThan(70);
+      expect(y, `t=${t}`).toBeGreaterThan(74);
     }
-    expect(lowest).toBeGreaterThan(72);
+    expect(lowest).toBeGreaterThan(77);
   });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {
     const b = DRAFT_RIGS.beast!;
