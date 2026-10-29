@@ -142,12 +142,24 @@ export function startApp(host: HTMLElement): void {
     onCancel: () => {
       const r = nav.cancel();
       if (r === 'home') askReturnToTitle();
-      return r !== 'none';
+      if (r !== 'none') return true;
+      lockedBack();
+      return true;
     },
-    canCancel: () => nav.canCancel,
+    // C.202 (GDD 128장 4): 뒤로는 어느 화면에서도 무언가 한다 — 버튼을 끄지 않는다
+    canCancel: () => true,
     onRotate: (rotated) => rotateEvent(rotated ? 'portrait' : 'landscape'),
   });
   const root = dev.view;
+  /**
+   * 잠긴 화면·맨 처음 화면의 뒤로 (GDD 128장 4, C.202): 화면 스스로 처리기(onScreenBack — 걷기 일시정지·흡수 넘어가기 확인 등)가 없으면
+   * 화면이 '뒤로 = 이 버튼'으로 표시한 버튼([data-back], 결과 [확인]·연출 [계속] 등)을 누르고, 그것도 없으면 안내 한 줄. 뒤로가 아무 반응 없는 화면은 없다
+   */
+  function lockedBack(): void {
+    const b = [...root.querySelectorAll<HTMLElement>('[data-back]')].find((e) => e.getClientRects().length > 0 && !(e as HTMLButtonElement).disabled);
+    if (b) return b.click();
+    showToast(nav.top?.id === 'title' ? { eyebrow: '뒤로', title: '처음 화면이다' } : { eyebrow: '뒤로', title: '지금은 ✓ 로 진행한다' });
+  }
   // 다마고치 모드 (GDD 27장): 기기 둘레 몸체·키링·뒷면. 꾸밈을 걸 때마다 지금 캐릭터를 알려 준다
   const tama = initTamago(dev, { persist: () => persist(), onKeyringTap: () => keyringTestTap() });
   const dress = (wear: WearState | null) => {

@@ -94,14 +94,22 @@
    창 안 스크롤 칸(.bha-sheet__scroll, 세로 flex)이 배치판 높이를 줄여 칸이 잘리던 것도 막는다 */
 .bha-sheet .bha-road__wrap { flex-shrink: 0; }
 .bha-sheet .bha-road { display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-4) var(--bha-sp-1) var(--bha-sp-2); }
-.bha-sheet .bha-road__cell { flex: 0 0 72px; min-height: 48px; scroll-snap-align: start; }
+.bha-sheet .bha-road__cell { flex: 0 0 60px; min-height: 0; height: 80px; scroll-snap-align: start; }
+/* C.202 (GDD 128장 9): 칸은 손패 카드처럼 세로로 넉넉한 비율(3:4) — 가로로 눌린 72×48 칸을 대체. 손 카드 줄도 한 줄 가로 밀기 */
+.bha-sheet .bha-road__cell .bha-icon { width: 24px; height: 24px; }
+.bha-sheet .bha-road__hand { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding-bottom: var(--bha-sp-1); }
+.bha-sheet .bha-road__hand > * { flex: none; scroll-snap-align: start; }
 
 /* 드래프트 (GDD 25-5 ①, C.57): 바퀴 끝 팝업 안 3장 중 1장 */
 .bha-draft { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
-.bha-draft__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-3); }
-.bha-draft__card { position: relative; align-items: flex-start; min-height: var(--bha-touch); height: auto; padding: var(--bha-sp-3) var(--bha-sp-4); text-align: left; }
-.bha-draft__text { display: flex; flex-direction: column; gap: var(--bha-sp-1); min-width: 0; }
-.bha-draft__text small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; white-space: normal; }
+.bha-draft__row { display: flex; gap: var(--bha-sp-3); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-3) var(--bha-sp-1) var(--bha-sp-1); }
+/* C.202 (GDD 128장 9): 드래프트 카드도 손패 카드꼴(세로) — 창 폭에 3장을 눌러 담지 않고 한 줄 가로 밀기 */
+.bha-draft__card { position: relative; flex: 0 0 128px; flex-direction: column; align-items: center; justify-content: flex-start; gap: var(--bha-sp-2); min-height: 132px; height: auto; padding: var(--bha-sp-3); border-radius: var(--bha-r-md); text-align: center; white-space: normal; scroll-snap-align: start; }
+.bha-draft__card .bha-tilechip__icon { width: 40px; height: 40px; }
+.bha-draft__card .bha-tilechip__icon .bha-icon { width: 24px; height: 24px; }
+.bha-draft__text { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); min-width: 0; }
+.bha-draft__text b { word-break: keep-all; line-height: 1.2; }
+.bha-draft__text small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; white-space: normal; word-break: keep-all; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .bha-draft__tag { position: absolute; top: calc(-1 * var(--bha-sp-3)); right: var(--bha-sp-3); }
 .bha-draft__card:disabled:not(.is-selected) { opacity: .45; }
 /* 이벤트 타일 창 (GDD 25-5 ③) */
@@ -245,7 +253,7 @@
 .bha-presetcard__acts { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
 /* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
 .bha-road__wrap { user-select: none; -webkit-user-select: none; }
-.bha-lcd .bha-plan .bha-road__cell { min-height: 40px; }
+.bha-lcd .bha-plan .bha-road__cell { min-height: 0; aspect-ratio: 1; } /* C.202 (GDD 128장 9): 가로로 눌린 칸(약 50×40) → 정사각. 출발 화면 6×2 는 LCD 높이 안에 [출발] 띠까지 들어가야 해 바퀴 끝 창(3:4)보다 낮게 */
 /* 안내 줄 (C.196): 말줄임 없이 줄바꿈, 긴 타일 설명도 다 보인다 — 2줄 자리를 잡아 둬 [출발] 띠에 가리지 않는다 */
 .bha-lcd .bha-plan .bha-road__note { line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; min-height: calc(2em * var(--bha-lh-tight)); }
 .bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }

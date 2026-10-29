@@ -118,7 +118,7 @@ describe('121장 1·2·3 배치판', () => {
   it('바퀴 끝 창 길 줄 = 한 줄 가로 밀기, 칸 크기 고정', () => {
     const css = read('src/ui/bha/expedition.css');
     expect(css).toMatch(/\.bha-sheet \.bha-road \{ display: flex; overflow-x: auto;/);
-    expect(css).toMatch(/\.bha-sheet \.bha-road__cell \{ flex: 0 0 72px;/);
+    expect(css).toMatch(/\.bha-sheet \.bha-road__cell \{ flex: 0 0 60px; min-height: 0; height: 80px;/); // C.202 (GDD 128장 9): 72×48 → 세로 카드꼴 60×80
     expect(css).toMatch(/\.bha-sheet \.bha-road__wrap \{ flex-shrink: 0; \}/);
   });
 });

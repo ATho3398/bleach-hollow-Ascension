@@ -15,6 +15,9 @@ import { lcdPage } from './bha/lcdpage';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { elementColor, elementDot, elementMark, paintElement } from './bha/element';
 import { devText, plainText, shownName } from './displayName';
+import { confirmDialog } from './confirmDialog';
+import { openAbsorbStatus } from './absorbStatus';
+import { onScreenBack } from './bha/screenBack';
 
 const AX = BALANCE.provisional.absorb;
 const RX = BALANCE.provisional.risk;
@@ -58,6 +61,8 @@ export interface RerollHandle {
   use: () => boolean;
 }
 
+let absorbSeq = 0;
+
 export function absorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: (absorbed: boolean) => void, reroll?: RerollHandle): void {
   const offer = exp.absorbOffer;
   if (!offer) return onDone(false);
@@ -77,7 +82,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return STAT_IDS.filter((k) => (ev[k] ?? 0) > 0).map((k) => `${statName(k, faction.id)} +${ev[k]}`).join(' · ');
   };
 
+  /** 이 화면이 끝났나 (뒤로 처리기를 푼다). owner = 이 흡수 화면 표시 */
+  let done = false;
+  const owner = `a${++absorbSeq}`;
   const finish = (r: { ok: true } | { ok: false; reason: string }, absorbed: boolean) => {
+    if (r.ok) done = true;
     if (!r.ok) {
       error = r.reason;
       render();
@@ -360,9 +369,37 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const main = devText() ? [...parts.main, el('p', 'bha-faint', PROVISIONAL_NOTE)] : parts.main;
     // 가로 LCD (T-3): 머리 = 단계 표시, 왼쪽·오른쪽 열이 각자 그 안에서 스크롤 (행동 버튼이 있는 오른쪽은 대부분 한 화면)
     const head = el('header', 'bha-absorb__head');
-    head.append(steps(stepNo), el('h1', 'bha-h1', parts.title));
-    lcdPage(root, { cls: 'bha-absorbpage', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, head, main, side);
+    // [내 상태] (GDD 128장 7): 장착 블록·강화·이번 원정 흡수·진화 쏠림 창
+    const me = button({ label: '내 상태', icon: 'i-info', size: 'small', variant: 'ghost', onClick: () => openAbsorbStatus(faction, exp) });
+    me.dataset.absorbMe = '';
+    head.append(steps(stepNo), el('h1', 'bha-h1', parts.title), me);
+    lcdPage(root, { cls: 'bha-absorbpage', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, head, main, side).app.dataset.owner = owner;
     (first as HTMLElement | null)?.focus({ preventScroll: true }); // 2·3단계 기본 선택 = 첫 후보·첫 슬롯 ([돌아가기] 가 아니라, GDD 100장 #50)
   }
+  // 뒤로 (GDD 128장 4, C.202): 열린 창은 기기가 먼저 닫는다 → 2·3단계는 한 단계 앞으로 → 첫 단계는 '흡수 안 하고 넘어가기' 확인(기본 아니오)
+  onScreenBack({
+    // 다른 흡수 화면이 열렸으면 이 처리기는 끝난 것
+    alive: () => !done && (root.querySelector<HTMLElement>('.bha-absorbpage')?.dataset.owner ?? owner) === owner,
+    mine: () => root.querySelector<HTMLElement>('.bha-absorbpage')?.dataset.owner === owner,
+    run: () => {
+      if (step === 'replace') step = 'pick';
+      else if (step === 'pick') step = 'choose';
+      else {
+        confirmDialog({
+          title: `${act} 안 하고 넘어가기`,
+          body: `${foeName}을(를) 놓아준다 · ${faction.riskGaugeName} −${RX.releaseRelief}`,
+          yes: '넘어가기',
+          no: '아니오',
+          focusNo: true,
+          onYes: () => {
+            if (!done) finish(chooseRelease(exp), false);
+          },
+        });
+        return;
+      }
+      error = '';
+      render();
+    },
+  });
   render();
 }

@@ -13,6 +13,7 @@ import { elementDot, elementsMark } from './bha/element';
 import { toward } from './bha/nestLogic';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { devText, shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -174,7 +175,7 @@ export function evolutionView(
     linesSection.hidden = true;
     resultSection.hidden = false;
   };
-  const skip = button({ label: '건너뛰기', variant: 'ghost', onClick: showResult });
+  const skip = asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: showResult }));
   linesSection.append(crack, lines, skip);
   if (CUTSCENE_PROVISIONAL && devText()) linesSection.append(h('p', 'bha-faint', ''));
   if (CUTSCENE_PROVISIONAL && devText()) linesSection.lastElementChild!.append('연출 문구는 ', provisionalTag('제안 문구'));
@@ -204,10 +205,10 @@ export function evolutionView(
   }
   effects.append(dl);
 
-  const home = button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
+  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();
-  } });
+  } }));
   const title = h('h1', 'bha-evolve__title', `${shownTo}!`);
   resultMain.append(h('span', 'bha-evolve__eyebrow', '진화'), title, path, created, home);
   resultSide.append(effects, evolutionNote());

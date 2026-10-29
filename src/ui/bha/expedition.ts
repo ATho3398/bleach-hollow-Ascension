@@ -45,7 +45,8 @@ export function bossOmenSub(cell: number, pos: number, tileLabel: string | null)
   return `${cell}번 칸${tileLabel ? ` · ${tileLabel}` : ''} · ${left > 0 ? `${left}칸 앞` : '지금 이 칸'}`;
 }
 
-export const ENCOUNTER_DELAY_MS = 700;
+/** C.202 (GDD 128장 2): 적이 앞쪽에서 다가와 마주치는 시간(walkAhead AHEAD_APPROACH_MS 1.3초) + 잠깐 마주 섬 */
+export const ENCOUNTER_DELAY_MS = 1500;
 /** 감시 타이머 (GDD 19-1): 조우 뒤 멈추지 않은 시간이 이만큼 지나도 전투가 안 열리면 바로 진입한다 (실제 시간, 배속 무관) */
 export const ENCOUNTER_WATCHDOG_MS = 3000;
 export const WATCHDOG_POLL_MS = 500;

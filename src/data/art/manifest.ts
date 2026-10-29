@@ -81,6 +81,11 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.market': {},
   'scene.market': {},
   'prop.wanderer': {},
+  // 휴식 칸 장소 그림 (GDD 128장 3, C.202): 걷는 앞쪽에 서는 장소 — 사용자 그림 대기(비어 있으면 임시 웅덩이 그림). 키 = place.<타일 id>.<종족 id>
+  'place.rest-a.hollow': {},
+  'place.rest-a.shinigami': {},
+  'place.rest-spring.hollow': {},
+  'place.rest-spring.shinigami': {},
 };
 
 /** 그림 키 → 실제 이미지 URL(없으면 null = 자리표시를 쓴다). base 는 배포 경로(Vite BASE_URL) */

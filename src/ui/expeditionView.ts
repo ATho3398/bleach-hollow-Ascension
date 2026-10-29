@@ -34,6 +34,9 @@ import { storyGoalLine } from './storyView';
 import { bossName } from '../data/bosses';
 import { statName } from '../data/elements';
 import { floatEl } from './bha/battle';
+import { foeAheadKind, walkAhead } from './bha/walkAhead';
+import { onScreenBack } from './bha/screenBack';
+import { showToast } from './bha/nest';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -140,6 +143,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const spring = exp.restSpring === true;
     const before = { full: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, risk: exp.risk };
     finishRest(exp);
+    restArrived = false;
+    ahead.leave(); // 쉬던 장소가 뒤로 흘러간다 (GDD 128장 3)
     h.onSave();
     // 회복 숫자 떠오름 (C.176, GDD 106장 2): 전투 회복 숫자(.bha-float--heal)와 같은 모양, 캐릭터 머리 위
     const gain = spring
@@ -196,6 +201,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         msg = `${tn_enemy(ev.battle)} 조우!`;
         battleRef = ev.battle;
         encounterWait = 0;
+        // 조우 연출 (GDD 128장 2, C.202): 적이 걷는 앞쪽에 서 있고 캐릭터가 걸어가 마주친 뒤 전투가 열린다(강적·보스 같음, 그림 없으면 실루엣)
+        approaching = true;
+        ahead.foe({ enemyId: ev.battle.enemy.id, element: ev.battle.enemy.element, kind: foeAheadKind(ev.battle), label: ev.battle.boss ? '보스' : '강적' }, speed, () => {
+          approaching = false;
+          if (!dead) render();
+        });
         h.onSave(); // 전투 시작 직전 상태 (전투 중 새로고침하면 여기서 다시 시작한다)
         render();
         clock.set('phase', ENCOUNTER_DELAY_MS, enterBattle);
@@ -209,6 +220,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         return;
       case 'rest':
         msg = `${tn(exp.slots[ev.cell]!)}에서 쉰다…`;
+        // 휴식 칸 장소 (GDD 128장 3, C.202): 장소가 앞쪽에서 다가와 닿으면 회복 연출. 시간은 휴식 시간 안에서 쓴다
+        restArrived = false;
+        ahead.place({ tileId: exp.slots[ev.cell]!, factionId: faction.id, label: tn(exp.slots[ev.cell]!), spring: exp.restSpring === true }, speed, () => {
+          restArrived = true;
+          if (!dead) render();
+        });
         render();
         clock.set('phase', PX.restTimeTiles * EX.restSecondsPerTile * 1000, endRest);
         return;
@@ -287,6 +304,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction));
   if (buddy) walk.walker.append(buddy);
   if (takeEnterFx()) window.setTimeout(() => playCosmeticFx('enter', walk.walker), 0); // 등장 연출 (GDD 25-11): 출발 직후 한 번
+  // 걷는 앞쪽 (GDD 128장 2·3): 조우한 적·휴식 장소가 서는 길. 캐릭터보다 아래 층
+  const ahead = walkAhead();
+  walk.el.insertBefore(ahead.el, walk.walker);
+  /** 적·장소가 다가오는 동안은 캐릭터가 계속 걷는다 */
+  let approaching = false;
+  let restArrived = exp.phase === 'rest'; // 휴식 중에 다시 열면(이어하기) 이미 도착한 것으로
   const sceneWrap = el('section', 'bha-exp__scene');
   sceneWrap.append(walk.el);
 
@@ -297,6 +320,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   banner.setAttribute('role', 'status');
   /** 이벤트 창 안내 한 줄 (골드 부족 등) */
   let eventNote = '';
+  /** 이벤트 창에서 뒤로 = 이 선택 (없으면 안내만) */
+  let eventBack: (() => void) | null = null;
 
   // 배속 묶음(1x·2x·4x)은 C.118 에 삭제 (GDD 62장: 1배 고정)
   const pauseBtn = el('button', 'bha-btn bha-btn--icon bha-btn--small');
@@ -359,7 +384,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // ── 상태에 맞춰 제자리 갱신 ──
   function render(): void {
     // 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오른다
-    healFx.hidden = exp.phase !== 'rest';
+    healFx.hidden = exp.phase !== 'rest' || !restArrived;
     const spike = exp.lap >= PX.hungerSpikeLap;
     const hungerDanger = spike || exp.hunger >= PX.hungerMax * 0.8;
     const bonus = riskBonus(exp);
@@ -402,7 +427,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     banner.replaceChildren(...bannerKids);
     main.classList.toggle('is-frenzy', inFrenzy(exp));
 
-    walk.update({ walking: isWalking(exp.phase, paused), speed });
+    walk.update({ walking: isWalking(exp.phase, paused) || (approaching && !paused) || (exp.phase === 'rest' && !restArrived && !paused), speed });
 
     // 머리 위 말풍선: 조우·획득·휴식·경고·일시정지·도착 때만 뜬다 (그냥 걷는 중에는 감춘다)
     const kind = msgKind(exp.phase, msg, spike);
@@ -535,6 +560,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     };
     const gold = goldAvailable(exp);
     let leave: HTMLElement | null = null;
+    eventBack = null;
     if (ev.event === 'merchant') {
       info.append(el('p', 'bha-sheet__body', `가진 ${TRADE_CURRENCY_NAME} ${gold}`));
       (ev.offers ?? []).forEach((o, i) => {
@@ -567,6 +593,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       );
     }
     if (eventNote) info.append(notice('warn', eventNote));
+    // 뒤로 (GDD 128장 4): 그냥 지나가기가 있는 창은 그것, 하나뿐인 선택(보물·함정)은 그 선택, 갈림길은 고르라는 안내
+    eventBack = leave || ev.event === 'treasure' || ev.event === 'trap' ? () => act(null) : null;
     const sheet = el('div', 'bha-sheet bha-event');
     sheet.dataset.event = ev.event;
     sheet.setAttribute('role', 'dialog');
@@ -577,6 +605,28 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     sheet.append(info, grid);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
+
+  // 뒤로 (GDD 128장 4, C.202 — 잠긴 원정 화면도 뒤로가 무언가 한다): 바퀴 끝 창 = 귀환 확인(기본 아니오) · 이벤트 창 = 지나가기 · 걷기 = 일시정지/재개
+  onScreenBack({
+    alive: () => !dead,
+    mine: () => main.isConnected && !away,
+    run: () => {
+      if (exp.phase === 'nest-choice') {
+        confirmDialog({
+          title: '지금 귀환', body: '지금 돌아가면 얻은 것을 모두 지킨다', yes: '귀환', no: '계속 고르기', focusNo: true,
+          onYes: () => {
+            if (dead || exp.phase !== 'nest-choice') return;
+            chooseReturn(exp);
+            dispose();
+            h.onEnded();
+          },
+        });
+      } else if (exp.phase === 'event') {
+        if (eventBack) eventBack();
+        else showToast({ eyebrow: '안내', title: '둘 중 하나를 고른다' });
+      } else pauseBtn.click();
+    },
+  });
 
   render();
   resumeClock();

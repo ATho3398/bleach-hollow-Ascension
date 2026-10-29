@@ -19,6 +19,7 @@ import { toward } from './bha/nestLogic';
 import { rebirthMark } from './rebirthView';
 import { rankLabel } from './rankView';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 const HX = BALANCE.provisional.hogyoku;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -235,14 +236,14 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
     linesSection.hidden = true;
     result.hidden = false;
   };
-  linesSection.append(h('span'), lines, button({ label: '건너뛰기', variant: 'ghost', onClick: show }));
+  linesSection.append(h('span'), lines, asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: show })));
 
   const main = h('div', 'bha-evolve__resmain');
   main.append(h('span', 'bha-evolve__eyebrow', `${record.index}번째 합체 · 초월체`), h('h1', 'bha-evolve__title', def.name), h('p', 'bha-evolve__path', def.concept));
-  const home = button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
+  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();
-  } });
+  } }));
   main.append(home);
   const side = h('div', 'bha-evolve__resside');
   const got = panel({ title: '합체 결과', aside: provisionalTag('임시 수치') });

@@ -14,6 +14,7 @@ import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter }
 import { elementDot, elementMark, paintElement } from './bha/element';
 import { battleLabels, comboBlockLabel, liberationBlockLabel, skillBlockLabel } from './labels';
 import { devText, shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 /** 연습 목록용 패턴 이름 (임시 표시) */
 export const PATTERN_LABEL: Record<EnemyPatternKind, string> = {
@@ -170,7 +171,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
   const two = el('div', 'bha-dock__row bha-dock__row--two');
   two.append(
     button({ label: '같은 상대와 다시', icon: 'i-loop', variant: 'primary', size: 'lg', onClick: h.onAgain }),
-    button({ label: '연습 메뉴로', size: 'lg', onClick: h.onMenu }),
+    asBack(button({ label: '연습 메뉴로', size: 'lg', onClick: h.onMenu })),
   );
   dock.append(two);
   splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbRuleText(faction, enemy))]);

@@ -17,6 +17,7 @@ import type { Device } from './bha/device';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { toward } from './bha/nestLogic';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 /** 이름 옆 환생 표시 칩 (0회면 null) */
 export function rebirthMark(count: number): HTMLElement | null {
@@ -153,15 +154,15 @@ export function rebirthView(root: HTMLElement, faction: FactionConfig, record: R
     linesSection.hidden = true;
     result.hidden = false;
   };
-  linesSection.append(h('span'), lines, button({ label: '건너뛰기', variant: 'ghost', onClick: show }));
+  linesSection.append(h('span'), lines, asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: show })));
 
   const main = h('div', 'bha-evolve__resmain');
   const title = h('h1', 'bha-evolve__title', faction.tierNames[0]!);
   title.append(' ', rebirthMark(record.count)!);
-  const home = button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
+  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();
-  } });
+  } }));
   main.append(h('span', 'bha-evolve__eyebrow', `${faction.rebirth.name} ${record.count}회`), title, h('p', 'bha-evolve__path', faction.rebirth.rebornText), home);
   const side = h('div', 'bha-evolve__resside');
   const got = panel({ title: '가지고 온 것', aside: provisionalTag('임시 수치') });

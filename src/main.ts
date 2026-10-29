@@ -15,6 +15,8 @@ import './ui/bha/screens-lcd.css';
 import './ui/bha/battle-scene.css';
 import './ui/bha/training.css';
 import './ui/bha/walk-scene.css';
+import './ui/bha/encounter.css'; // 조우·휴식 칸 앞쪽 (C.202)
+import './ui/bha/absorb-status.css'; // 흡수 [내 상태] 창 (C.202)
 import './ui/bha/shop.css';
 import './ui/bha/cosmetics.css';
 import './ui/bha/tamago.css';

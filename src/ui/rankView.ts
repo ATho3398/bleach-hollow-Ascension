@@ -18,6 +18,7 @@ import { PATTERN_LABEL } from './practiceView';
 import { battleLabels } from './labels';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 /** 번호(1~10, null = 무번호)의 종족별 표시 이름 */
 export function rankLabel(faction: FactionConfig, n: number | null): string {
@@ -128,7 +129,7 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
   ];
   if (!won) rows.push({ label: '재도전', icon: 'i-loop', value: '원정을 한 번 다녀온 뒤' });
   const dock = el('div', 'bha-dock');
-  dock.append(button({ label: toward(faction.rankBattleName), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack }));
+  dock.append(asBack(button({ label: toward(faction.rankBattleName), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);
   if (won) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11): 등급 획득
 }

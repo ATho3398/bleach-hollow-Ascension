@@ -3,6 +3,7 @@ import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, panel, provisionalTag } from './bha/dom';
 import { splitApp } from './bha/split';
+import { asBack } from './bha/screenBack';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 /** 디자인 원본의 균열 선 (viewBox 390×844) */
@@ -48,7 +49,7 @@ export function breakthroughView(root: HTMLElement, faction: FactionConfig, risk
   const penalty = panel({ title: `${faction.frenzyName} — 이번 원정 동안`, aside: provisionalTag('임시 수치') }, list);
   penalty.classList.add('bha-break__penalty');
 
-  const go = button({ label: '계속', variant: 'danger', size: 'lg', block: true, onClick: resume });
+  const go = asBack(button({ label: '계속', variant: 'danger', size: 'lg', block: true, onClick: resume }));
 
   const title = el('h1', 'bha-break__title', faction.breakthroughText);
 

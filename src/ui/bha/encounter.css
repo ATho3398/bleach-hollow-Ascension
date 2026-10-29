@@ -1,0 +1,53 @@
+/* 걷는 앞쪽에 서 있는 것 (GDD 128장 2·3, C.202): 조우한 적·휴식 칸 장소가 왼쪽(진행 방향)에서 다가와 캐릭터 앞에 선다.
+   길(.bha-walk__ahead)은 장면 크기 상자라 cqw·cqh 로 캐릭터(가운데, 높이 60%·정사각) 바로 앞 자리를 잡는다. 디자인 토큰만 쓴다. */
+.bha-walk__ahead { position: absolute; inset: 0; z-index: 1; pointer-events: none; container-type: size; overflow: hidden; }
+.bha-ahead {
+  --ahead-h: 46cqh;
+  --ahead-stop: calc(50cqw + 30cqh + 2cqh);
+  position: absolute; bottom: 10%; right: var(--ahead-stop); height: var(--ahead-h); aspect-ratio: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  animation: bha-ahead-come var(--ahead-ms, 1300ms) var(--bha-ease-out) both;
+}
+.bha-ahead--elite { --ahead-h: 52cqh; }
+.bha-ahead--boss { --ahead-h: 60cqh; --ahead-stop: calc(50cqw + 30cqh); }
+.bha-ahead--rest { --ahead-h: 40cqh; --ahead-stop: calc(50cqw + 26cqh); aspect-ratio: 1.4; }
+@keyframes bha-ahead-come { from { right: 100cqw; } to { right: var(--ahead-stop); } }
+@keyframes bha-ahead-go { from { right: var(--ahead-stop); } to { right: calc(var(--ahead-h) * -1.6); } }
+.bha-ahead.is-leaving { animation: bha-ahead-go 1400ms linear both; }
+/* 멈춤(일시정지·도움말·확인 창) 동안은 같이 멈춘다 */
+.bha-exp.is-paused .bha-ahead { animation-play-state: paused; }
+
+/* 적: 오른쪽(캐릭터 쪽)을 본다 — 그림·실루엣은 왼쪽을 보는 그림이라 뒤집는다 */
+.bha-ahead__fig.bha-foe { position: relative; width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.bha-ahead__fig .bha-foe__body { height: 100%; max-height: none; transform: scaleX(-1); }
+.bha-ahead__fig .bha-foe__img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.bha-ahead.is-arrived .bha-ahead__fig .bha-foe__aura { animation-duration: .8s; }
+.bha-ahead__tag {
+  position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+  padding: 2px var(--bha-sp-3); border-radius: var(--bha-r-pill); background: color-mix(in srgb, var(--bha-backdrop) 70%, transparent);
+  font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-1);
+}
+.bha-ahead--elite .bha-ahead__tag, .bha-ahead--boss .bha-ahead__tag { color: var(--bha-danger); }
+
+/* 휴식 장소: 그림이 없으면 임시 그림(빛나는 웅덩이 + 휴식 아이콘) */
+.bha-ahead__place { position: relative; width: 100%; height: 100%; }
+.bha-ahead__place.has-art .bha-ahead__img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.bha-ahead__pool {
+  position: absolute; left: 4%; right: 4%; bottom: 0; height: 30%; border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--bha-heal) 70%, var(--bha-bg-0)), color-mix(in srgb, var(--bha-heal) 25%, var(--bha-bg-0)) 70%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bha-heal) 50%, transparent), 0 0 18px color-mix(in srgb, var(--bha-heal) 45%, transparent);
+}
+.bha-ahead.is-spring .bha-ahead__pool { background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--bha-accent) 70%, var(--bha-bg-0)), color-mix(in srgb, var(--bha-accent) 25%, var(--bha-bg-0)) 70%); }
+.bha-ahead__glow {
+  position: absolute; left: 18%; right: 18%; bottom: 14%; height: 70%; border-radius: 50% 50% 0 0;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--bha-heal) 40%, transparent), transparent);
+  animation: bha-breathe 2.4s ease-in-out infinite;
+}
+.bha-ahead__mark { position: absolute; left: 50%; bottom: 34%; transform: translateX(-50%); color: var(--bha-heal); }
+.bha-ahead__mark .bha-icon { width: 28px; height: 28px; }
+.bha-ahead--rest.is-arrived .bha-ahead__glow { animation-duration: 1s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bha-ahead, .bha-ahead.is-leaving { animation: none; }
+  .bha-ahead__glow { animation: none; }
+}

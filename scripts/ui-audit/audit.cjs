@@ -230,6 +230,29 @@ function makeHelper(page, faction, report) {
       }
     },
     /** 기기 버튼 상시 표시·자리 고정 (C.197, GDD 122장 1·5): 숨거나(전투 포함) 처음 잰 자리·크기와 다르면 보고 */
+    /**
+     * 뒤로 반응 (GDD 128장 4, C.202): 기기 ◀ 를 한 번 눌러 무언가 바뀌는지 — 창이 열리거나 닫힘 · 일시정지 · 화면 바뀜. 안내 띠(토스트)만 뜨면 '뒤로 = 안내만'.
+     * 아무 변화가 없으면 '뒤로 무반응'. 돌려주는 값: 'layer'(창이 열림) · 'pause' · 'screen' · 'toast' · 'none' — 부른 쪽이 되돌린다(창 닫기·한 번 더 뒤로)
+     */
+    async backReacts(screen, opts = {}) {
+      const sig = () => page.evaluate(() => {
+        const lcd = document.querySelector('.bha-lcd');
+        return {
+          layers: lcd ? lcd.querySelectorAll('[data-dev-layer]').length : 0,
+          paused: !!document.querySelector('.bha-lcd .is-paused, .bha-lcd .bha-battle .bha-overlay'),
+          text: (lcd?.querySelector('.bha-app, .bha-lcdpage')?.textContent ?? lcd?.textContent ?? '').replace(/\s+/g, ' ').slice(0, 4000),
+          toasts: document.querySelectorAll('.bha-toast').length,
+        };
+      });
+      const a = await sig();
+      await page.locator('.bha-dev__btn--back').first().click({ timeout: 3000 });
+      await h.wait(opts.ms ?? 500);
+      const b = await sig();
+      const kind = b.layers > a.layers ? 'layer' : b.paused !== a.paused ? 'pause' : b.text !== a.text || b.layers < a.layers ? 'screen' : b.toasts > a.toasts ? 'toast' : 'none';
+      if (kind === 'none') h.report({ kind: '뒤로 무반응', key: opts.key ?? '◀', detail: '뒤로를 눌러도 아무것도 안 바뀐다 (GDD 128장 4)' }, screen);
+      else if (kind === 'toast' && !opts.toastOk) h.report({ kind: '뒤로 = 안내만', key: opts.key ?? '◀', detail: '창 닫기·일시정지·넘어가기 확인 중 아무것도 안 하고 안내만 뜬다' }, screen);
+      return kind;
+    },
     async devButtons(screen) {
       const btns = await page.evaluate(devButtonsInPage);
       if (btns.length !== 4) return h.report({ kind: '기기 버튼 숨김', key: 'bha-dev__btn', detail: `기기 버튼 ${btns.length}개 (4개여야 함)` }, screen);

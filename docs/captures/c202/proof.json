@@ -1,0 +1,35 @@
+{
+ "runs": [
+  {
+   "faction": "hollow",
+   "shots": [
+    "plan-board",
+    "rest",
+    "encounter-elite",
+    "absorb-back",
+    "encounter-normal",
+    "absorb-status",
+    "lap-end-tiles"
+   ],
+   "notes": [
+    "휴식 도착: 회복 빛 보임",
+    "흡수 뒤로 → 창 1개"
+   ],
+   "missing": [],
+   "errors": []
+  },
+  {
+   "faction": "shinigami",
+   "shots": [
+    "rest",
+    "encounter-normal",
+    "absorb-status"
+   ],
+   "notes": [
+    "휴식 도착: 회복 빛 보임"
+   ],
+   "missing": [],
+   "errors": []
+  }
+ ]
+}

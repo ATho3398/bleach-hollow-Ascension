@@ -175,6 +175,7 @@ const SCREENS = [
     fresh: true,
     async run(h, n) {
       await h.check(n);
+      await h.backReacts(n, { toastOk: true }); // 처음 화면 뒤로 = 안내 (C.202)
       await h.btn('설정', { ms: 600 });
       await settings(h, `${n}/설정`);
       await h.back();
@@ -295,6 +296,8 @@ const SCREENS = [
       await h.btn('출발', { ms: 1500 });
       await h.check(n, { keys: false });
       await h.explore(`${n}/2`, { tabs: false });
+      // C.202 (GDD 128장 4): 걷기 뒤로 = 일시정지 → 한 번 더 = 재개
+      if ((await h.backReacts(n)) === 'pause') await h.backReacts(`${n}/재개`);
     },
   },
   {
@@ -450,8 +453,20 @@ const SCREENS = [
       await h.page.getByRole('button', { name: /하러 가기$/ }).waitFor({ timeout: 120_000 });
       await h.click(h.page.getByRole('button', { name: /하러 가기$/ }), { ms: 900 });
       await h.explore(`${n}/포식`, { tabs: false });
+      // C.202 (GDD 128장 4·7): 뒤로 = '흡수 안 하고 넘어가기' 확인(기본 아니오) → 닫기 · [내 상태] 창 열고 뒤로로 닫기
+      if ((await h.backReacts(`${n}/포식`)) === 'layer') {
+        await h.check(`${n}/포식 뒤로 확인`, { keys: false });
+        await h.closeLayers();
+      }
+      if (await h.has('.bha-lcd [data-absorb-me]')) {
+        await h.click('.bha-lcd [data-absorb-me]', { ms: 500 });
+        await h.check(`${n}/내 상태`, { keys: false });
+        await h.closeLayers();
+      }
       await h.stable(`${n}/포식`, '첫 선택(둘 다)', () => h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 }));
       await h.explore(`${n}/포식 2`, { tabs: false, pick: '.bha-lcd .bha-cand' });
+      // 2단계 뒤로 = 1단계로 → 다시 2단계
+      if ((await h.backReacts(`${n}/포식 2`)) === 'screen') await h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 });
       // 끝까지 넘기기: 후보 → (슬롯) → 확인 성격의 버튼. 포식 화면이 닫힐 때까지 몇 번
       for (let i = 0; i < 8 && (await h.has('.bha-absorbpage')); i++) {
         const cand = h.page.locator('.bha-lcd .bha-cand').filter({ visible: true });
@@ -479,6 +494,7 @@ const SCREENS = [
           await layerGo.first().click({ timeout: 3000 }).catch(() => {});
         } else if (await nestHome.count()) {
           await h.check(`${n}/둥지 도착`, { keys: false });
+          if ((await h.backReacts(`${n}/둥지 도착`)) === 'layer') await h.closeLayers(); // 바퀴 끝 창 뒤로 = 귀환 확인 (C.202)
           await h.stable(`${n}/둥지 도착`, '드래프트 타일 고르기', () => h.click(h.page.locator('.bha-lcd .bha-draft__card, .bha-lcd [data-draft]').first()).catch(() => {}));
           await nestHome.first().click({ timeout: 3000 }).catch(() => {});
         } else if (await home.count()) {
@@ -493,7 +509,10 @@ const SCREENS = [
         await h.wait(1000);
       }
       // 결과: 원정 결과 화면(.bha-resultpage)이 있으면 그것, 아니면 방 위 귀환 결과 창까지 위에서 점검했다
-      if (await h.has('.bha-resultpage')) await h.explore(`${n}/결과`, { tabs: true });
+      if (await h.has('.bha-resultpage')) {
+        await h.explore(`${n}/결과`, { tabs: true });
+        await h.backReacts(`${n}/결과`); // 결과 뒤로 = [둥지로] (C.202)
+      }
     },
   },
   {
@@ -531,6 +550,9 @@ const SCREENS = [
         await h.stable(n, '로그 닫기', () => h.btn('로그'));
         await h.stable(n, '일시정지', () => h.btn('일시정지'));
         await h.check(`${n}/일시정지`);
+        await h.closeLayers();
+        // C.202: 전투 뒤로 = 일시정지(창) → 뒤로로 닫힘
+        if (await inBattle()) if ((await h.backReacts(`${n}/뒤로`)) === 'layer') await h.closeLayers();
       }
     },
   },
@@ -573,6 +595,7 @@ const SCREENS = [
       await testBody(h, 0);
       await runToResult(h);
       await h.explore(n, { tabs: false });
+      await h.backReacts(n); // 결과 뒤로 = [둥지로] (C.202)
     },
   },
   {

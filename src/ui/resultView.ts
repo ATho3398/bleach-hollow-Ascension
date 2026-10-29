@@ -22,6 +22,7 @@ import { chapterLabel } from './storyView';
 import { toward } from './bha/nestLogic';
 import { expeditionEndVitals } from '../engine/nest';
 import { difficultyGoldMultiplier } from '../engine/difficulty';
+import { asBack } from './bha/screenBack';
 
 /** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
 export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
@@ -144,7 +145,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');
 
   const dock = el('div', 'bha-dock');
-  dock.append(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome }));
+  dock.append(asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome })));
   // 가로 LCD: 왼쪽 = 결과 제목·시드·[둥지로], 오른쪽 = 성장 요약 한두 줄 + 원정 요약 표 (왼쪽 열이 길어지면 스크롤이 생겨 오른쪽 맨 위에 둔다)
   const growthBox = growth ? el('div', 'bha-growth') : null;
   growthBox?.setAttribute('role', 'status');

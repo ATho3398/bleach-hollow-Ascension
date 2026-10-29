@@ -30,7 +30,7 @@ describe('104장 7: 뒤로 = 처음 화면 버그', () => {
     const app = read('src/ui/app.ts');
     expect(app).toContain('const r = nav.cancel();');
     expect(app).toContain("if (r === 'home') askReturnToTitle();");
-    expect(app).toContain('canCancel: () => nav.canCancel,');
+    expect(app).toContain('canCancel: () => true,'); // C.202 (GDD 128장 4): 잠긴 화면도 뒤로가 무언가 한다 — 뒤로 버튼은 늘 켜짐
     expect(read('src/ui/battleView.ts')).toMatch(/registerCancelHook\(\(top\) => \{[\s\S]*?setPaused\(true\);[\s\S]*?\}, \{ button: true \}\)/);
     expect(read('src/ui/bha/dock.ts')).toMatch(/registerCancelHook\(\(top\) => \{[\s\S]*?setPanel\(CLOSED\);[\s\S]*?\}, \{ button: true \}\)/);
     expect(read('src/ui/bha/hold.ts')).not.toContain('requestTitle');

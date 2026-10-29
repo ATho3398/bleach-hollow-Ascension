@@ -15,6 +15,7 @@ import { button, chip, el, icon, meter, mountApp, notice, panel, provisionalTag,
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
+import { asBack } from './bha/screenBack';
 
 const TX = BALANCE.provisional.training;
 const LB = BALANCE.provisional.liberation;
@@ -306,7 +307,7 @@ export function trainingPlayView(root: HTMLElement, faction: FactionConfig, game
     window.removeEventListener('keydown', onKey, true);
     const won = s.status === 'won';
     const ov = el('div', `bha-train__end ${won ? 'is-win' : 'is-lose'}`);
-    const go = button({ label: '결과 보기', variant: 'primary', size: 'lg', onClick: () => hd.onDone(won) });
+    const go = asBack(button({ label: '결과 보기', variant: 'primary', size: 'lg', onClick: () => hd.onDone(won) }));
     ov.append(el('h2', 'bha-train__endtitle', won ? '승리' : '패배'), go);
     // 끝나면 조작 버튼을 끈다 (C.68: 그대로 살아 있어 기기 확인 키 선택이 [결과 보기] 로 안 옮겨 갔다)
     for (const b of app.querySelectorAll('button')) b.disabled = true;
@@ -353,7 +354,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   }
   const actions = el('div', 'bha-grid2');
   if (hd.onAgain) actions.append(button({ label: '한 판 더', icon: 'i-play', onClick: hd.onAgain }));
-  actions.append(button({ label: '수련 화면으로', variant: 'primary', icon: 'i-return', onClick: hd.onBack }));
+  actions.append(asBack(button({ label: '수련 화면으로', variant: 'primary', icon: 'i-return', onClick: hd.onBack })));
   right.push(actions);
   lcdPage(dev.view, { cls: 'bha-train-page bha-train-result' }, lcdHead({ title: faction.training.title }), left, right);
 }

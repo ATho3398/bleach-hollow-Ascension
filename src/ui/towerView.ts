@@ -16,6 +16,7 @@ import { battleLabels } from './labels';
 import { departTabs, type DepartTab } from './storyView';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 export interface TowerViewHandlers {
   onTab: (id: DepartTab) => void;
@@ -150,7 +151,7 @@ export function towerResultView(root: HTMLElement, faction: FactionConfig, f: To
   const dock = el('div', 'bha-dock');
   if (h.onNext) dock.append(button({ label: `${towerFloorText(faction, res.next!)} 도전`, icon: 'i-play', variant: 'primary', size: 'lg', onClick: h.onNext }));
   else if (!won) dock.append(button({ label: '다시 도전', icon: 'i-loop', variant: 'primary', size: 'lg', onClick: h.onAgain }));
-  dock.append(button({ label: L.name, icon: 'i-return', size: h.onNext || !won ? undefined : 'lg', variant: h.onNext || !won ? undefined : 'primary', onClick: h.onBack }));
+  dock.append(asBack(button({ label: L.name, icon: 'i-return', size: h.onNext || !won ? undefined : 'lg', variant: h.onNext || !won ? undefined : 'primary', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);
   app.dataset.screen = 'tower-result';
   if (won) playCosmeticFx('win', app);
