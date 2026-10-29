@@ -5,6 +5,7 @@ import { FACTIONS, getFaction } from '../src/data/factions';
 import { marketOf, MARKET_SPOTS, parseFactionConfig, roomOf, ROOM_PROPS } from '../src/engine/faction';
 import { newSaveData } from '../src/game';
 import { marketSpots } from '../src/ui/marketView';
+import { slotLine, slotTitle } from '../src/ui/startView';
 
 describe('127장 2 장터 = 방 물건 하나 + 따로 된 화면', () => {
   it('방에는 장터 물건 하나, 상점·온천은 방에서 빠지고 장터 안 자리로', () => {
@@ -59,5 +60,24 @@ describe('127장 2·3 화면 연결 (app.ts)', () => {
   it('방 장터 물건 배지 = 떠돌이 상인이 와 있을 때', () => {
     const room = readFileSync('src/ui/roomView.ts', 'utf8');
     expect(room).toContain("if (p === 'market' && save.shared.wanderer.visit !== null)");
+  });
+});
+
+describe('129장 1·2 슬롯 제목 · 종족 소개', () => {
+  const H = getFaction('hollow');
+  const S = getFaction('shinigami');
+  const ok = (o: Partial<{ factionId: string; tierIndex: number; rank: number | null; rebirths: number }>) => ({ slot: 1, state: 'ok' as const, factionId: 'shinigami', tierIndex: 1, expeditions: 7, playedAt: null, inExpedition: false, ...o });
+  it('제목 = 등급 이름만 (단계 숫자·종족·원정 횟수 없음)', () => {
+    expect(slotTitle(ok({}), S)).toBe('영술원 학생');
+    expect(slotLine(ok({}), FACTIONS).main).toBe('영술원 학생');
+    expect(slotLine(ok({ factionId: 'hollow', tierIndex: 2 }), FACTIONS).main).toBe('아쥬커스');
+  });
+  it('칭호가 있으면 칭호, 환생했을 때만 +환생 n회', () => {
+    expect(slotTitle(ok({ factionId: 'hollow', tierIndex: 4, rank: 3 }), H)).toBe('에스파다 No.3');
+    expect(slotTitle(ok({ rebirths: 2 }), S)).toBe('영술원 학생 +환생 2회');
+    expect(slotTitle(ok({ rebirths: 0 }), S)).toBe('영술원 학생');
+  });
+  it('종족 선택 카드에 한 줄 소개(tagline)를 그리지 않는다', () => {
+    expect(readFileSync('src/ui/startView.ts', 'utf8')).not.toContain('bha-species__tagline');
   });
 });

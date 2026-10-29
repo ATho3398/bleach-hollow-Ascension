@@ -3,6 +3,7 @@
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
 import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
 import { collectChunks, parseSaveText } from './saveCodec';
+import { rankOf } from './engine/rank/rank';
 
 export const SLOT_COUNT = 3;
 /** 슬롯별 마지막 플레이 시각 */
@@ -31,6 +32,10 @@ export type SlotSummary =
       playedAt: number | null;
       /** 원정 중간 저장이 있는가 */
       inExpedition: boolean;
+      /** 번호 쟁탈전·진급 시험 순위 (1 = 맨 위, 없으면 null) — 슬롯 제목 칭호 (GDD 129장 1) */
+      rank?: number | null;
+      /** 환생 횟수 — 1 이상일 때만 슬롯 제목 옆 '+환생 n회' (GDD 129장 1) */
+      rebirths?: number;
     };
 
 interface SlotsMeta {
@@ -101,6 +106,8 @@ export function slotSummary(storage: StorageLike, slot: number, min: number = sa
     expeditions: save.runLog.runs.length,
     playedAt: readMeta(storage).played[String(slot)] ?? null,
     inExpedition: save.activeExpedition != null,
+    rank: (() => { try { return save.rank ? rankOf(save.rank) : null; } catch { return null; } })(),
+    rebirths: save.rebirth?.count ?? 0,
   };
 }
 
