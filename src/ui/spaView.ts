@@ -62,7 +62,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const paint = (fraction: number, fullness: number) => {
     const { now, max } = hpNumbers(fraction * maxHp, maxHp);
     bars.replaceChildren(
-      meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` }),
+      meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` }),
       meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullness), max: 100, danger: fullness <= 20 }),
     );
   };

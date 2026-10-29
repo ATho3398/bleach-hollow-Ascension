@@ -25,6 +25,7 @@
 .bha-exp__chips .bha-meter__label span { display: none; }
 .bha-exp__chips .bha-meter--compact .bha-meter__label .bha-icon { width: 14px; height: 14px; }
 .bha-exp__chips .bha-meter--compact .bha-meter__track { height: 6px; }
+.bha-exp__chips .bha-meter--compact.bha-meter--inside .bha-meter__track { height: var(--bha-bar-h-lg); } /* 체력: 숫자는 막대 안 (GDD 127장 1) */
 .bha-exp__chips .bha-meter--compact .bha-meter__value { min-width: 0; font-size: var(--bha-fs-xs); }
 .bha-exp__chips .bha-meter__value small { display: none; }
 .bha-exp__chips .bha-exp__slots { flex-wrap: wrap; gap: var(--bha-sp-1) var(--bha-sp-3); font-size: var(--bha-fs-xs); }

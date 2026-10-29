@@ -331,10 +331,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const heroAnim = animOf(hero.root); // 프레임 애니 (GDD 26장): 있는 동작만. 없으면 null / 없는 동작은 기존 연출
   const foeAnim = animOf(foe);
 
-  // 체력 바 (핸드오프 게이지 hp·foe + 숫자 "78 / 108"): 값만 제자리에서 바꾼다
+  // 체력 바 (핸드오프 게이지 hp·foe + 숫자 "78 / 108" — 숫자는 막대 안, GDD 127장 1): 값만 제자리에서 바꾼다
   const hpBar = (kind: 'hp' | 'foe', label: string, now: number, max: number): HpBar => {
     const root = el('div', 'bha-v2hp');
-    const gauge = v2Gauge(kind, 100, { width: '130px', label });
+    const gauge = v2Gauge(kind, 100, { width: '184px', label });
     const num = el('span', 'bha-num bha-sm bha-b');
     const nowEl = el('span', '', String(now));
     const maxEl = el('span', 'bha-t2', ` / ${max}`);

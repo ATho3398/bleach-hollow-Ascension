@@ -268,7 +268,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const paintHp = () => {
     const h = previewHomeHp(n, Date.now());
     const { now, max } = hpNumbers(h.fraction * maxHp, maxHp);
-    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, thin: true, zoneLow: 0.3, danger: h.fraction < 0.3, valueText: `${now} / ${max}` }));
+    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: h.fraction < 0.3, valueText: `${now} / ${max}` }));
   };
   paintHp();
   scene.append(char, hpBox, statusBtn, statusInfoBtn, bubble);

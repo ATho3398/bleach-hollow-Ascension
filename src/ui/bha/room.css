@@ -250,13 +250,11 @@
 .bha-doll { position: relative; flex: none; }
 .bha-doll__part { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; image-rendering: pixelated; pointer-events: none; }
 
-/* ── 발밑 체력 막대 (GDD 123장 3, C.198): 그림자 바로 아래 가운데, 기존 체력 막대(meter player compact thin) ── */
+/* ── 발밑 체력 막대 (GDD 123장 3, C.198): 그림자 바로 아래 가운데, 기존 체력 막대(meter player, 숫자 안 — 127장 1) ── */
 .bha-room__hp {
   position: absolute; left: var(--char-x, 50%); top: calc(var(--foot-y, 80%) + var(--bha-sp-3)); transform: translateX(-50%);
-  width: 96px; z-index: 1; pointer-events: none;
+  width: 140px; z-index: 1; pointer-events: none; /* 길고 두껍게, 숫자는 막대 안 (GDD 127장 1, C.200) */
   padding: var(--bha-sp-1) var(--bha-sp-2); background: rgb(0 0 0 / 0.55); border-radius: var(--bha-r-sm);
 }
 .bha-room__hp .bha-meter { gap: 0; }
-.bha-room__hp .bha-meter__label { display: none; }
-.bha-room__hp .bha-meter__head { justify-content: center; }
-.bha-room__hp .bha-meter__value { font-size: var(--bha-fs-xs); }
+.bha-room__hp .bha-meter__head { display: none; }

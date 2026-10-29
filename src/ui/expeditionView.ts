@@ -367,7 +367,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     meters.replaceChildren(
       meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
       // 이어 오는 체력 (GDD 107장 4번): 진행 막대 바로 아래, 낮으면(30% 아래) 위험 색
-      meter({ kind: 'player', label: '체력', icon: 'i-heal', value: Math.round(hpFractionOf(exp) * 100), max: 100, compact: true, zoneLow: 0.3, danger: hpFractionOf(exp) < 0.3, valueText: `${Math.round(hpFractionOf(exp) * 100)}%` }),
+      meter({ kind: 'player', label: '체력', icon: 'i-heal', value: Math.round(hpFractionOf(exp) * 100), max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFractionOf(exp) < 0.3, valueText: `${Math.round(hpFractionOf(exp) * 100)}%` }),
       meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(exp.hunger, PX.hungerMax)), max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
       meter({
         kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(exp.condition), max: PX.conditionMax, compact: true,

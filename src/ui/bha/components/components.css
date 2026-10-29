@@ -157,6 +157,14 @@
 .bha-meter--stored { --c: var(--bha-sp-hi); }
 .bha-meter--lg .bha-meter__track { height: var(--bha-bar-h-lg); }
 .bha-meter--thin .bha-meter__track { height: 6px; }
+/* 숫자를 막대 안에 (GDD 127장 1, C.200): 두꺼운 막대 가운데 '현재 / 최대'. 위험이어도 글자는 밝게(빨간 채움 위에서도 읽히게) */
+.bha-meter--inside .bha-meter__track, .bha-meter--inside.bha-meter--thin .bha-meter__track { height: calc(var(--bha-bar-h-lg) + var(--bha-sp-2)); }
+.bha-meter--inside .bha-meter__track > .bha-meter__value {
+  position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+  font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-1); text-shadow: 0 1px 2px rgb(0 0 0 / 0.9);
+}
+.bha-meter--inside.is-danger .bha-meter__track > .bha-meter__value { color: var(--bha-text-1); }
+.bha-meter--compact.bha-meter--inside .bha-meter__track > .bha-meter__value { grid-column: auto; min-width: 0; text-align: center; } /* 줄 배치(compact)의 셋째 칸 규칙을 막대 안 숫자에는 안 쓴다 */
 
 .bha-meter.is-danger .bha-meter__value { color: var(--bha-danger); }
 .bha-meter.is-danger .bha-meter__track { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 70%, transparent), 0 0 10px color-mix(in srgb, var(--c) 40%, transparent); }

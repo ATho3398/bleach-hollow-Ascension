@@ -332,7 +332,11 @@
 .bha-root .bha-v2units .bha-unit__heads{width:100%;max-width:none}
 .bha-root .bha-v2units .bha-unit--foe .bha-unit__heads{width:184px;margin-left:-14px}
 .bha-root .bha-v2units .bha-unit__hp{width:auto;padding-top:4px;white-space:nowrap}
-.bha-root .bha-v2hp{display:flex;align-items:center;gap:8px}
+.bha-root .bha-v2hp{position:relative;display:flex;align-items:center;gap:8px}
+/* 숫자는 막대 안 (GDD 127장 1, C.200): 길고 두꺼운 막대 가운데 '현재 / 최대' */
+.bha-root .bha-v2hp>.bha-gauge{height:calc(var(--bha-bar-h-lg) + var(--bha-sp-2))}
+.bha-root .bha-v2hp>.bha-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:var(--bha-fs-xs);line-height:1;white-space:pre;color:var(--bha-text-1);text-shadow:0 1px 2px rgb(0 0 0 / .9);pointer-events:none}
+.bha-root .bha-v2hp>.bha-num .bha-t2{color:var(--bha-text-1)}
 .bha-root .bha-v2hp.is-danger .bha-gauge__fill{background:var(--bha-danger)}
 .bha-root .bha-v2units .bha-foe{position:relative;inset:auto;display:flex;align-items:flex-end;justify-content:center}
 .bha-root .bha-v2legendrow{position:absolute;left:10px;right:144px;top:7px;height:22px;display:flex;align-items:center;gap:10px}

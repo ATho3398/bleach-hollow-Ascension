@@ -87,3 +87,25 @@ describe('빈사(누운 모습)는 바닥 위에 눕고 발밑 체력 막대와 
     expect(css).toContain('.bha-char.is-collapsed .bha-char__body.has-art { transform-origin: 50% 92.6%; translate: var(--lie-dx, 0px) calc(var(--lie-up, 0px) * -1); }');
   });
 });
+
+describe('체력 막대 = 길고 두껍게, 숫자는 막대 안 (GDD 127장 1, C.200)', () => {
+  it('meter inside 옵션: 값이 막대(track) 안에 들어가고 막대가 두꺼워진다', () => {
+    const dom = read('src/ui/bha/dom.ts');
+    expect(dom).toContain("if (o.inside) track.append(valueEl);");
+    expect(dom).toContain('if (!o.inside) head.append(valueEl);');
+    const css = read('src/ui/bha/components/components.css');
+    expect(css).toContain('.bha-meter--inside .bha-meter__track > .bha-meter__value {');
+    expect(css).toMatch(/\.bha-meter--inside \.bha-meter__track, \.bha-meter--inside\.bha-meter--thin \.bha-meter__track \{ height: calc\(var\(--bha-bar-h-lg\) \+ var\(--bha-sp-2\)\); \}/);
+  });
+  it('방 발밑·걷기·온천 체력 막대가 inside, 방 막대는 140px', () => {
+    expect(read('src/ui/roomView.ts')).toMatch(/kind: 'player', label: '체력'[^\n]*inside: true/);
+    expect(read('src/ui/expeditionView.ts')).toMatch(/kind: 'player', label: '체력'[^\n]*inside: true/);
+    expect(read('src/ui/spaView.ts')).toMatch(/kind: 'player', label: '체력'[^\n]*inside: true/);
+    expect(read('src/ui/bha/room.css')).toContain('width: 140px;');
+  });
+  it('전투 체력 막대도 숫자를 막대 안에', () => {
+    const css = read('src/ui/bha/v2/bha.css');
+    expect(css).toContain('.bha-root .bha-v2hp>.bha-num{position:absolute;inset:0;');
+    expect(read('src/ui/battleView.ts')).toContain("v2Gauge(kind, 100, { width: '184px', label });");
+  });
+});

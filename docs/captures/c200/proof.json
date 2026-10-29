@@ -1,5 +1,5 @@
 {
- "note": "C.200 발-그림자(px, 1배 844x390). capture=캡처 장면 실행, all=옛 부유·날기 진화체 방·걷기·전투 전수",
+ "note": "C.200 발-그림자(px, 1배 844x390). capture=캡처 장면 실행, all=옛 부유·날기 진화체 방·걷기·전투 전수 / capture = 127장 1 막대 안 숫자 반영 뒤 재촬영",
  "capture": [
   {
    "fac": "hollow",
@@ -22,25 +22,36 @@
     "bottom": 58.546875,
     "top": 27,
     "left": 491,
-    "right": 616.71875,
+    "right": 611.671875,
     "sceneTop": 22,
     "side": "bha-room__bubble is-pop is-side"
    },
    "room2": {
     "foot": 259.1,
-    "head": 129.1,
+    "head": 128.1,
     "shadow": 258,
     "shadowVisible": true,
     "cx": 422,
     "nw": 256,
     "nh": 256,
-    "top": 109,
+    "top": 108,
+    "bot": 236
+   },
+   "walk": {
+    "foot": 319.3,
+    "head": 177.4,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 256,
+    "nh": 256,
+    "top": 121,
     "bot": 236
    },
    "battle": {
-    "foot": 217.7,
-    "head": 104.9,
-    "shadow": 216.4,
+    "foot": 217.3,
+    "head": 104.8,
+    "shadow": 216,
     "shadowVisible": true,
     "cx": 257,
     "nw": 256,
@@ -75,8 +86,8 @@
     "side": "bha-room__bubble is-pop"
    },
    "room2": {
-    "foot": 258.7,
-    "head": 133.9,
+    "foot": 259.2,
+    "head": 134.3,
     "shadow": 258,
     "shadowVisible": true,
     "cx": 422,
@@ -85,16 +96,27 @@
     "top": 236,
     "bot": 563
    },
+   "walk": {
+    "foot": 320.5,
+    "head": 169.8,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 236,
+    "bot": 565
+   },
    "battle": {
     "foot": 217.9,
-    "head": 110,
-    "shadow": 216.4,
+    "head": 109.9,
+    "shadow": 216,
     "shadowVisible": true,
     "cx": 257,
     "nw": 608,
     "nh": 608,
     "top": 236,
-    "bot": 563
+    "bot": 564
    }
   },
   {
@@ -117,14 +139,14 @@
     "hidden": false,
     "bottom": 111.6875,
     "top": 80.140625,
-    "left": 364.7578125,
-    "right": 479.2421875,
+    "left": 359.140625,
+    "right": 484.859375,
     "sceneTop": 22,
     "side": "bha-room__bubble is-pop"
    },
    "room2": {
-    "foot": 258.7,
-    "head": 133.5,
+    "foot": 259.2,
+    "head": 133.9,
     "shadow": 258,
     "shadowVisible": true,
     "cx": 422,
@@ -133,10 +155,21 @@
     "top": 235,
     "bot": 563
    },
+   "walk": {
+    "foot": 319.6,
+    "head": 168.9,
+    "shadow": 317.5,
+    "shadowVisible": true,
+    "cx": 422,
+    "nw": 608,
+    "nh": 608,
+    "top": 234,
+    "bot": 563
+   },
    "battle": {
-    "foot": 219.3,
-    "head": 109,
-    "shadow": 216.4,
+    "foot": 218.8,
+    "head": 108.9,
+    "shadow": 216,
     "shadowVisible": true,
     "cx": 257,
     "nw": 608,
@@ -165,8 +198,8 @@
     "hidden": false,
     "bottom": 111.6875,
     "top": 80.140625,
-    "left": 368.6953125,
-    "right": 475.3046875,
+    "left": 357.9921875,
+    "right": 486.0078125,
     "sceneTop": 22,
     "side": "bha-room__bubble is-pop"
    },
@@ -182,9 +215,9 @@
     "bot": 563
    },
    "battle": {
-    "foot": 219.3,
-    "head": 111.3,
-    "shadow": 216.4,
+    "foot": 218.8,
+    "head": 111.2,
+    "shadow": 216,
     "shadowVisible": true,
     "cx": 257,
     "nw": 608,
@@ -213,8 +246,8 @@
     "hidden": false,
     "bottom": 111.6875,
     "top": 80.140625,
-    "left": 359.140625,
-    "right": 484.859375,
+    "left": 353.5234375,
+    "right": 490.4765625,
     "sceneTop": 22,
     "side": "bha-room__bubble is-pop"
    },
@@ -230,9 +263,9 @@
     "bot": 564
    },
    "battle": {
-    "foot": 219.3,
-    "head": 111.6,
-    "shadow": 216.4,
+    "foot": 218.8,
+    "head": 111.5,
+    "shadow": 216,
     "shadowVisible": true,
     "cx": 257,
     "nw": 608,
