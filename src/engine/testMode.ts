@@ -2,6 +2,7 @@
 // - 세이브 분리(38-2): 진짜 세이브 키(SAVE_KEY 로 시작하는 모든 키 — 슬롯·백업·압축 덩어리·슬롯 기록)를 테스트 칸 키(TEST_SAVE_KEY 로 시작)로 바꿔 끼운 저장소를 쓴다.
 //   그래서 슬롯·백업·덩어리 코드를 그대로 써도 진짜 세이브는 읽지도 쓰지도 않는다. SaveData 구조는 그대로(형식 번호 무변화).
 // - 목록(진화체·특성·적·보스·스토리·꾸밈)은 모두 데이터에서 읽는다. 종족 id 로 분기하지 않는다(38-6).
+import { setHomeHp } from './nest';
 import { GUIDE_IDS } from './tutorial';
 import { BALANCE } from '../config/balance';
 import { BOSSES } from '../data/bosses';
@@ -349,6 +350,8 @@ export interface NestValues {
   risk?: number;
   hunger?: number;
   condition?: number;
+  /** 홈 체력 % (0~100) */
+  hp?: number;
 }
 
 /** 리스크·허기·컨디션 직접 넣기: 각자 범위로 자른다 (리스크 0~한계, 허기·컨디션 0~100) */
@@ -358,6 +361,8 @@ export function setNestValues(save: SaveData, v: NestValues): void {
   n.risk = clip(v.risk, BALANCE.provisional.risk.limit, n.risk);
   n.hunger = clip(v.hunger, 100, n.hunger);
   n.condition = clip(v.condition, 100, n.condition);
+  // 홈 체력 % (GDD 123장, C.198): 상한(빈사 10%) 안
+  if (typeof v.hp === 'number' && Number.isFinite(v.hp)) setHomeHp(n, Math.min(100, Math.max(0, v.hp)) / 100);
 }
 
 // ── 바로 전투 (38-4) ──

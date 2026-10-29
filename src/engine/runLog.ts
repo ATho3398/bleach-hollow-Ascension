@@ -396,6 +396,8 @@ export interface RunLog {
   pets: PetRecord[];
   /** 장비 기록 (C.150, 세이브 형식 44, GDD 91장 8번): 얻음·장착·해제·강화·판매 */
   gear: GearRecord[];
+  /** 홈 회복 기록 (C.198, 세이브 형식 55, GDD 123장 4·9장): 온천에 있다 나옴(들어간 시각·분·체력·배부름·나온 까닭)·체력 포션 */
+  homeHeals: HomeHealRecord[];
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
@@ -429,6 +431,24 @@ export interface VitalRecord {
   evLoss?: number;
   tierIndex?: number;
   formId?: string | null;
+}
+
+/** 홈 회복 1건 (GDD 123장 4, C.198): spa = 온천에 있다 나옴(at = 나온 시각, since = 들어간 시각, reason = full 체력 상한 · hungry 배부름 0 · left 뒤로 · away 끊김),
+ *  potion = 체력 포션. hpFrom·hpTo = 최대 체력 대비 비율, fullness = 배부름(온천만). dying = 빈사 중(상한 10%) */
+export interface HomeHealRecord {
+  at: number;
+  factionId: string;
+  kind: 'spa' | 'potion';
+  hpFrom: number;
+  hpTo: number;
+  since?: number;
+  minutes?: number;
+  fullnessFrom?: number;
+  fullnessTo?: number;
+  reason?: 'full' | 'hungry' | 'left' | 'away';
+  dying?: boolean;
+  /** 튜토리얼이 준 회복 (C.199 회복 안내) */
+  tutorial?: boolean;
 }
 
 /** 떠돌이 상인 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
@@ -581,5 +601,6 @@ export function emptyRunLog(): RunLog {
     idle: [],
     pets: [],
     gear: [],
+    homeHeals: [],
   };
 }

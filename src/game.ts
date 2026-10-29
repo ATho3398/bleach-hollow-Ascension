@@ -3,14 +3,14 @@
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { dropBasicBlockTraits, gainTrait, newBuild, type BuildState } from './engine/absorb';
-import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, cureStatus, departCare, dieNest, doNestAction, feedFood, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
+import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, cureStatus, departCare, dieNest, doNestAction, feedFood, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, type SpaEnd, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
 import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, stepsNeeded, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord } from './engine/runLog';
+import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
@@ -49,13 +49,12 @@ import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePr
 import { BATTLE_ITEM_IDS, CONSUMABLE_IDS } from './inventory';
 import { rollTileDraw } from './shop';
 
-/** 세이브 구조를 바꾸면 올린다. 개발 중(정식 플레이 전)에는 마이그레이션을 새로 만들지 않고 MIN_LOADABLE_SAVE_FORMAT 도 같이 올린다 (GDD 61장) */
-export const SAVE_FORMAT_VERSION = 54; // C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+/** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
+export const SAVE_FORMAT_VERSION = 55; // C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
- *  C.117 은 이미 있는 마이그레이션(형식 1~36)을 그대로 두어 1(전부 열림)이었고, C.120(형식 37)부터 같이 올린다 — 36 이하는 알림 후 새로 시작. **앞으로 SAVE_FORMAT_VERSION 을 올리는 패치는 이 값도 같이 올리고 마이그레이션은 만들지 않는다** (GDD 61장, 사용자 2026-10-22).
- *  정식 출시 전에 마이그레이션 방식으로 되돌릴 때 사용자와 다시 정한다 */
-export const MIN_LOADABLE_SAVE_FORMAT = 54; // C.195: 형식 54 와 같이 올림. C.193: 형식 53 과 같이 올림. C.188: 형식 52 와 같이 올림. C.184: 형식 51 과 같이 올림. C.177: 형식 50 과 같이 올림. C.181: 형식 49 와 같이 올림. C.179: 형식 48 과 같이 올림. C.178: 형식 47 과 같이 올림. C.175: 형식 46 과 같이 올림. C.167: 형식 45 와 같이 올림. C.150: 형식 44 와 같이 올림 (C.147: 43, C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
+ *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
+export const MIN_LOADABLE_SAVE_FORMAT = 54; // C.198: 54 고정(이후 형식은 마이그레이션, GDD 123장 6). C.195: 형식 54 와 같이 올림. C.193: 형식 53 과 같이 올림. C.188: 형식 52 와 같이 올림. C.184: 형식 51 과 같이 올림. C.177: 형식 50 과 같이 올림. C.181: 형식 49 와 같이 올림. C.179: 형식 48 과 같이 올림. C.178: 형식 47 과 같이 올림. C.175: 형식 46 과 같이 올림. C.167: 형식 45 와 같이 올림. C.150: 형식 44 와 같이 올림 (C.147: 43, C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -460,6 +459,7 @@ export function absenceOf(save: SaveData, nowMs: number = Date.now()): AbsenceRe
   const at = (h: number) => Math.round(save.lastSeenAt + h * 3_600_000);
   if (r.collapsed) logVital(save, { at: at(BALANCE.provisional.nest.care.collapseHours), kind: 'collapse', cause: 'absence', hours: r2(r.hours) });
   if (r.died) logVital(save, { at: nowMs, kind: 'death', hours: r2(r.hours) });
+  logSpaEnd(save, r.flow.spaEnded);
   markSeen(save, nowMs);
   return r;
 }
@@ -470,6 +470,23 @@ export function applyAbsence(save: SaveData, nowMs: number = Date.now()): number
 }
 
 const r2 = (x: number) => Math.round(x * 100) / 100;
+
+/** 런 로그 홈 회복 기록 (GDD 123장 4·9장, C.198) */
+export function logHomeHeal(t: Pick<SaveData, 'runLog' | 'factionId' | 'nest'>, rec: Omit<HomeHealRecord, 'factionId'>): void {
+  (t.runLog.homeHeals ??= []).push({ ...rec, factionId: t.factionId, ...(t.nest.collapsed ? { dying: true } : {}) });
+}
+
+/** 온천에서 나온 결과를 런 로그에 (없으면 그대로) */
+export function logSpaEnd(t: Pick<SaveData, 'runLog' | 'factionId' | 'nest'>, e: SpaEnd | null | undefined, tutorial = false): void {
+  if (!e) return;
+  logHomeHeal(t, { at: e.at, kind: 'spa', since: Math.round(e.at - e.minutes * 60_000), minutes: r2(e.minutes), hpFrom: r2(e.hpFrom), hpTo: r2(e.hpTo), fullnessFrom: Math.round(e.fullnessFrom), fullnessTo: Math.round(e.fullnessTo), reason: e.reason, ...(tutorial ? { tutorial: true } : {}) });
+}
+
+/** 원정 출발 체력 (GDD 123장 2): 홈 체력 그대로. 빈사 원정은 최대 체력이 상한(10%)만큼이라 그 안의 비율로 */
+export function departHpOf(save: Pick<SaveData, 'nest'>): number {
+  const cap = homeHpCap(save.nest);
+  return cap > 0 ? Math.min(1, homeHpOf(save.nest) / cap) : 1;
+}
 
 /** 런 로그 돌봄 상태 기록 (GDD 102장·9장) */
 function logVital(save: SaveData, rec: Omit<VitalRecord, 'factionId' | 'bond'>): void {
@@ -483,6 +500,7 @@ export function careBlock(save: Pick<SaveData, 'nest'>): 'dead' | null {
 
 /** 출발 (GDD 102-2): 이번 원정에 실을 쇠약·피곤·빈사 — 지금 수치가 문턱을 넘었으면 돌아올 때 풀린다. 원정을 만드는 쪽이 createExpedition 의 care 로 넘긴다 */
 export function departCareOf(save: SaveData): { weak: boolean; tired: boolean; dying: boolean } {
+  logSpaEnd(save, leaveSpa(save.nest, Date.now(), 'away')); // 온천에서 바로 나가는 길은 없지만, 남아 있으면 끊는다 (GDD 123장 4)
   return departCare(save.nest);
 }
 
@@ -734,7 +752,7 @@ export function switchTrack(save: SaveData, factionId: string, nowMs: number = D
   const parked = activeTrackOf(save, nowMs);
   const { parkedAt, ...track } = next;
   // 쉬던 트랙의 시간 흐름 (GDD 102-1): 수치·쇠약·피곤만 — 쓰러짐·사망은 실제 미접속에만 (그동안 다른 트랙으로 접속해 있었다, 코드 판단)
-  if (track.activeExpedition == null && Number.isFinite(parkedAt) && nowMs > parkedAt) passNestTime(track.nest, (nowMs - parkedAt) / 3_600_000, true);
+  if (track.activeExpedition == null && Number.isFinite(parkedAt) && nowMs > parkedAt) logSpaEnd(track, passNestTime(track.nest, (nowMs - parkedAt) / 3_600_000, true, nowMs).spaEnded);
   track.nest.lastTickMs = nowMs;
   putActiveTrack(save, track);
   save.otherTracks.splice(i, 1, parked);
@@ -1024,7 +1042,7 @@ export function accrueIdle(save: SaveData, nowMs: number = Date.now(), online = 
 export function tickIdle(save: SaveData, nowMs: number = Date.now()): boolean {
   // 켜 둔 동안 시간 흐름 (GDD 102-1): 허기·컨디션 — 원정 중이면 원정이 자기 수치를 쓴다
   const alive = !save.nest.dead;
-  tickNestOnline(save.nest, nowMs, save.activeExpedition != null);
+  logSpaEnd(save, tickNestOnline(save.nest, nowMs, save.activeExpedition != null)?.spaEnded);
   if (alive && save.nest.dead) logVital(save, { at: nowMs, kind: 'death' }); // 빈사 시간이 켜 둔 동안 다 됐다 (GDD 102장 수정)
   const r = accrueIdle(save, nowMs, true);
   markSeen(save, nowMs);
@@ -1475,6 +1493,32 @@ export interface StorageLike {
   removeItem?(key: string): void;
 }
 
+/** 형식 n → n+1 변환 (GDD 123장 6, C.198~). 키 = 옛 형식. 쉬는 트랙(otherTracks)도 같이 올린다. 빠진 칸은 뒤의 보정(repairCore·sanitize)이 다시 한 번 채운다.
+ *  **SAVE_FORMAT_VERSION 을 올리면 여기에 [옛 형식] 한 칸을 더하고 tests/saveMigration.test.ts 에 그 단계 테스트를 더한다** */
+export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>> = {
+  // 54 → 55 (C.198, GDD 123장 2·4): 홈 체력 = 가득, 온천 밖, 홈 회복 기록 빈 목록
+  54: (save) => {
+    for (const t of [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])]) {
+      if (isRec(t.nest)) {
+        t.nest.hpFraction = 1;
+        t.nest.spa = null;
+      }
+      if (isRec(t.runLog)) t.runLog.homeHeals = [];
+    }
+  },
+};
+
+/** 형식 54 이상 세이브를 지금 형식까지 한 단계씩 올린다. 빠진 단계가 있으면 false (못 연다) */
+function runSaveMigrations(save: SaveData): boolean {
+  while (save.meta.format < SAVE_FORMAT_VERSION) {
+    const step = SAVE_MIGRATIONS[save.meta.format];
+    if (!step) return false;
+    step(save);
+    save.meta.format++;
+  }
+  return true;
+}
+
 /** 이전 형식 세이브를 현재 형식으로 올린다. 알 수 없는 데이터는 null */
 export function migrateSave(raw: unknown, min: number = saveFormatGate.min): SaveData | null {
   if (typeof raw !== 'object' || raw === null) return null;
@@ -1758,9 +1802,11 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
     });
     save.meta.format = 36;
   }
-  // 형식 37 (C.120) 부터는 마이그레이션을 만들지 않는다 (GDD 61장): 게임은 36 이하를 위 문턱에서 이미 거절한다.
-  // 테스트가 옛 마이그레이션 코드를 시험하려고 문턱을 내렸을 때만 끝까지 올라간 옛 세이브에 지금 번호를 찍는다(새 필드는 아래 보정의 기본값)
-  if (min < MIN_LOADABLE_SAVE_FORMAT && save.meta.format < SAVE_FORMAT_VERSION) save.meta.format = SAVE_FORMAT_VERSION;
+  // 형식 37~54 (C.120~C.195) 는 마이그레이션을 만들지 않았다 (GDD 61장): 게임은 54 미만을 위 문턱에서 이미 거절한다.
+  // 테스트가 옛 마이그레이션 코드를 시험하려고 문턱을 내렸을 때만 끝까지 올라간 옛 세이브를 54 로 찍는다(그사이 새 필드는 아래 보정의 기본값)
+  if (min < MIN_LOADABLE_SAVE_FORMAT && save.meta.format < MIN_LOADABLE_SAVE_FORMAT) save.meta.format = MIN_LOADABLE_SAVE_FORMAT;
+  // 형식 54 부터는 한 단계씩 (GDD 123장 6, C.198)
+  if (!runSaveMigrations(save)) return null;
   if (!repairCore(save)) return null;
   save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
   if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
@@ -1849,6 +1895,11 @@ function sanitizeCare(t: Pick<SaveData, 'nest' | 'runLog'>): void {
   // 먹이 한도 (GDD 109장 6, 형식 49)
   t.nest.feedCount = nonNegInt(t.nest.feedCount);
   t.nest.lastFedAt = typeof t.nest.lastFedAt === 'number' && Number.isFinite(t.nest.lastFedAt) ? Math.max(0, t.nest.lastFedAt) : 0;
+  // 홈 체력·온천 (GDD 123장 2·4, 형식 55): 0~상한, 온천 기록 모양이 틀리면 방으로
+  t.nest.hpFraction = homeHpOf({ collapsed: t.nest.collapsed, hpFraction: typeof t.nest.hpFraction === 'number' && Number.isFinite(t.nest.hpFraction) ? t.nest.hpFraction : 1 });
+  const sp = t.nest.spa as unknown;
+  t.nest.spa = isRec(sp) && [sp.at, sp.hp, sp.fullness].every((v) => typeof v === 'number' && Number.isFinite(v)) && !t.nest.dead ? { at: sp.at as number, hp: sp.hp as number, fullness: sp.fullness as number } : null;
+  if (!Array.isArray(t.runLog.homeHeals)) t.runLog.homeHeals = [];
   const c = (isRec(t.runLog.care) ? t.runLog.care : {}) as Partial<Record<string, unknown>>;
   const pair = (v: unknown) => { const o = isRec(v) ? v : {}; return { pet: nonNegInt(o.pet), sleep: nonNegInt(o.sleep) }; };
   t.runLog.care = { answered: pair(c.answered), refused: pair(c.refused), missed: nonNegInt(c.missed) };

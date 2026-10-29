@@ -358,6 +358,24 @@ const SCREENS = [
     },
   },
   {
+    // C.198 (GDD 123장 4): 온천 — 체력을 낮춘 뒤 방 물건 [온천] → 온천 화면(✓ = 방으로 돌아가기, 뒤로 = 방)
+    name: '온천',
+    async run(h, n) {
+      await more(h, '테스트');
+      await h.click('.bha-lcd .bha-viewtitle__btn');
+      await h.btn('둥지·시간', { within: '.bha-viewtitle__list', role: 'option' });
+      const inputs = h.page.locator('.bha-lcd input[type="number"]');
+      await inputs.nth(3).fill('40');
+      await h.btn('적용');
+      await h.closeLayers();
+      await h.back();
+      await h.click('.bha-prop--spa', { ms: 900 });
+      await h.explore(n, { tabs: false });
+      await h.back();
+      if (!(await h.has('.bha-room'))) throw new Error('온천 뒤로 → 방에 못 닿음');
+    },
+  },
+  {
     name: '방 빈사·사망',
     async run(h, n) {
       await more(h, '테스트');

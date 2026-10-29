@@ -25,6 +25,8 @@ export interface ScreenEntry {
   render: () => void;
   /** true 면 취소 버튼이 이 화면을 닫지 못한다 */
   locked?: boolean;
+  /** 뒤로(취소)로 이 화면을 닫기 직전에 부른다 (예: 온천에서 나오기, GDD 123장 4) */
+  beforeBack?: () => void;
 }
 
 export class ScreenStack {
@@ -74,6 +76,7 @@ export class ScreenStack {
   back(): boolean {
     const t = this.top;
     if (!t || t.locked || this.entries.length <= 1) return false;
+    t.beforeBack?.();
     this.entries.pop();
     this.top!.render();
     return true;

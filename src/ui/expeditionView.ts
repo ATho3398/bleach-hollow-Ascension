@@ -472,7 +472,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     // 설명 영역(낮은 LCD 에서는 이 안만 스크롤)과 버튼 줄을 나눈다: 귀환/한 바퀴 더 버튼은 항상 보인다
     const info = el('div', 'bha-sheet__scroll');
     info.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
-    if (over) info.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
+    if (over) info.append(notice('warn', `권장 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
     // 드래프트 (GDD 25-5 ①): 3장 중 1장 → 이번 바퀴 길에 바로 놓는다(보관함에는 안 들어감, 안 놓고 계속하면 사라진다)
     const d = exp.draft;
     if (d) {

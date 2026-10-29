@@ -213,6 +213,8 @@ export interface CombatParams {
   playerStartHpFraction: number;
   startShieldFraction: number;
   enemyFirstStrike: boolean;
+  /** 적 기본 공격 묶음 (GDD 123장 1, C.198): 기본 공격 간격 × 이 값, 한 대 피해 × 이 값 — 초당 피해는 같고 한 대가 굵어진다(강공격·졸개는 그대로). 1 = 그대로 */
+  enemyHitPacing: number;
   /** 치명타 (C.63, GDD 28장 5번): 내 확률(기본 + 특성 critChance 합, 상한 critChanceMax), 치명 피해 배율, 적 확률. 공허 블록·반사·독 지속 피해 제외 */
   critChance: number;
   critMultiplier: number;
@@ -356,6 +358,7 @@ export function defaultCombatParams(): CombatParams {
     playerStartHpFraction: 1,
     startShieldFraction: 0,
     enemyFirstStrike: false,
+    enemyHitPacing: 1,
     liberationEnabled: true,
     liberationGaugePerBlock: LB.gaugePerBlock,
     liberationChainBonus: LB.chainBonus,
@@ -1115,9 +1118,9 @@ export function stanceMultiplier(s: CombatState): number {
   return s.enemy.stance && pat?.kind === 'stance' ? pat.blockDamageMultiplier : 1;
 }
 
-/** 이 적의 기본 공격 간격(초): 패턴이 정하면(속공·단단) 그 값, 아니면 공통 값 */
+/** 이 적의 기본 공격 간격(초): 패턴이 정하면(속공·단단) 그 값, 아니면 공통 값. 기본 공격 묶음(enemyHitPacing)만큼 늘어난다 */
 export function enemyAttackSecondsOf(p: CombatParams, pattern: EnemyPattern | undefined): number {
-  return pattern && 'attackSeconds' in pattern ? pattern.attackSeconds : p.enemyAttackSeconds;
+  return (pattern && 'attackSeconds' in pattern ? pattern.attackSeconds : p.enemyAttackSeconds) * (p.enemyHitPacing ?? 1);
 }
 
 /** 치명타 난수 시드 섞기 값 (주 난수와 다른 수열) */
@@ -2011,7 +2014,7 @@ function advanceTick(s: CombatState): void {
       e.attackTimer = attackTicks;
       if (!evaded(s)) {
         const crit = rollCrit(s, 'enemy');
-        const raw = enemyDamage(s, e.def.attackInAttacks) * (crit ? p.critMultiplier : 1);
+        const raw = enemyDamage(s, e.def.attackInAttacks) * (p.enemyHitPacing ?? 1) * (crit ? p.critMultiplier : 1);
         const guarded = s.guard.ticks > 0;
         const damage = raw * (1 - guardReductionOf(s));
         emit(s, { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit });

@@ -110,6 +110,7 @@
 .bha-prop--altar .bha-prop__shape { width: 60px; height: 34px; border-radius: var(--bha-r-xs); }
 .bha-prop--book .bha-prop__shape { width: 40px; height: 34px; border-left-width: 6px; }
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--spa .bha-prop__shape { width: 56px; height: 30px; border-radius: var(--bha-r-lg); }  /* 온천 (C.198): 낮은 탕 */
 .bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }  /* 상점 (C.63): 좌판·매대 */
 .bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
 /* 쓰러짐·사망 (GDD 102-7, C.175): 모험 문 잠김 = 흐리게 + 자물쇠, 캐릭터는 눕히고 흐리게, 사망 = 어두운 방, 위 줄 = 큰 안내 + 버튼 */
@@ -247,3 +248,14 @@
 /* ── 종이인형 (GDD 96장): 부위 그림을 같은 캔버스에 겹치고 뼈 행렬을 transform 으로 건다 ── */
 .bha-doll { position: relative; flex: none; }
 .bha-doll__part { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; image-rendering: pixelated; pointer-events: none; }
+
+/* ── 발밑 체력 막대 (GDD 123장 3, C.198): 그림자 바로 아래 가운데, 기존 체력 막대(meter player compact thin) ── */
+.bha-room__hp {
+  position: absolute; left: var(--char-x, 50%); top: calc(var(--foot-y, 80%) + var(--bha-sp-3)); transform: translateX(-50%);
+  width: 96px; z-index: 1; pointer-events: none;
+  padding: var(--bha-sp-1) var(--bha-sp-2); background: rgb(0 0 0 / 0.55); border-radius: var(--bha-r-sm);
+}
+.bha-room__hp .bha-meter { gap: 0; }
+.bha-room__hp .bha-meter__label { display: none; }
+.bha-room__hp .bha-meter__head { justify-content: center; }
+.bha-room__hp .bha-meter__value { font-size: var(--bha-fs-xs); }

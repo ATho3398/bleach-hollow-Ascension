@@ -79,6 +79,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.book': {},
   'prop.chest': {},
   'prop.shop': {},
+  // 온천 (GDD 123장 4, C.198): 방 물건·온천 화면 배경 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  'prop.spa': {},
+  'scene.spa': {},
 };
 
 /** 그림 키 → 실제 이미지 URL(없으면 null = 자리표시를 쓴다). base 는 배포 경로(Vite BASE_URL) */

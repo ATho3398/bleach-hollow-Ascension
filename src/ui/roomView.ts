@@ -11,12 +11,14 @@ import { artSkinOf, careNest, feedNest, tickCare, type SaveData } from '../game'
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
-import { button, el, icon, mountApp } from './bha/dom';
+import { button, el, icon, meter, mountApp } from './bha/dom';
+import { hpNumbers } from './bha/battle';
+import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
 import { locoOf } from './bha/loco';
 import { bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
-import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, reviveEvLossOf } from '../engine/nest';
+import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
 import { notice } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
@@ -58,12 +60,17 @@ export interface RoomHandlers {
   greet?: RoomTalk | null;
   /** 사망 상태의 [부활] (GDD 102-3): 확인 창에서 [부활]을 고르면 부른다 */
   onRevive?: () => void;
+  /** 온천 (GDD 123장 4): 방 물건 spa — 따로 된 온천 화면으로 */
+  onSpa: () => void;
 }
 
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
 let lastMood: Mood | null = null;
 const IDLE_TALK_MS = 14000;
 let idleTimer = 0;
+/** 발밑 체력 막대 다시 그리기 간격 (대기 회복 1분 2% — 몇 초마다 보이게) */
+const HP_PAINT_MS = 3000;
+let hpTimer = 0;
 
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
   tickCare(save); // 돌봄 요청 (GDD 82장): 꺼 두었다 와도 최대 1개
@@ -169,9 +176,10 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     book: hd.onBook,
     chest: hd.onChest,
     shop: hd.onShop, // 상점 (C.63, GDD 28장 9번: 더보기 → 방 물건)
+    spa: hd.onSpa, // 온천 (GDD 123장 4)
   };
   // 위/아래 순서: 위쪽 줄(책장·수련장) → 문 → 상자 → 인형 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['book', 'altar', 'door', 'chest', 'shop'];
+  const order: RoomProp[] = ['spa', 'book', 'altar', 'door', 'chest', 'shop'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
@@ -252,7 +260,16 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위. 누르면(폰)·올리면(PC) 지금 칩마다 무슨 뜻인지·풀리는 법이 창으로 뜬다
   const statusInfoBtn = infoTip('상태', () => roomStatusInfo(statusChips(n, faction), faction));
   statusInfoBtn.classList.add('bha-room__statusinfo');
-  scene.append(char, statusBtn, statusInfoBtn, bubble);
+  // 발밑 체력 막대 (GDD 123장 3): 홈 체력 '현재 / 최대' — 기존 체력 막대(meter player), 30% 아래면 위험 색. 대기 회복은 아래 타이머가 다시 그린다
+  const hpBox = el('div', 'bha-room__hp');
+  const maxHp = homeMaxHp(save);
+  const paintHp = () => {
+    const h = previewHomeHp(n, Date.now());
+    const { now, max } = hpNumbers(h.fraction * maxHp, maxHp);
+    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, thin: true, zoneLow: 0.3, danger: h.fraction < 0.3, valueText: `${now} / ${max}` }));
+  };
+  paintHp();
+  scene.append(char, hpBox, statusBtn, statusInfoBtn, bubble);
   // 이름표는 칩 위에 얹힌다: 칩이 방 위 끝에 붙지 않게 잴 때 이름표 높이도 넣는다
   floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
   const place = () => layoutOnFloor(scene, room.floor, floorEntries);
@@ -292,6 +309,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       dock.setRequest(n.careRequest?.action ?? null);
       hd.persist();
       paintGauges();
+      paintHp(); // 먹이 체력 회복 (GDD 123장 4)
       say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }));
       // 먹기·잠 애니가 있으면 그것을, 없으면 기존 뛰는 반응 (다른 동작 애니로 대신하지 않는다)
       const clip = action === 'feed' ? 'eat' : action === 'sleep' ? 'sleep' : null;
@@ -349,6 +367,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   lastMood = mood;
   // 방을 다시 그릴 때 이전 방의 혼잣말 타이머를 바로 끈다 (C.70: 화면을 빠르게 오가면 떨어진 방 DOM 이 최대 14초씩 쌓였다)
   window.clearInterval(idleTimer);
+  window.clearInterval(hpTimer);
+  const hpTick = hpTimer = window.setInterval(() => (main.isConnected ? paintHp() : window.clearInterval(hpTick)), HP_PAINT_MS);
   const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
     dock.refreshFeeds(); // 먹이 한도가 10분 뒤 다시 열린다 (GDD 109장 6)

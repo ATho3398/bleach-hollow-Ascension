@@ -1102,6 +1102,9 @@ if (want('difficulty')) {
       const C = measure(bodies, rec, tier, 0, null, HUMAN_CONTINUE_HP);
       console.log(`    새 몸 ★1 4바퀴(체력 ${HUMAN_CONTINUE_HP * 100}% 아래면 귀환): 원정 패배 ${(C.defeat * 100).toFixed(0)}% (가드 15% 이하) · 끝까지 4바퀴 ${(R.defeat * 100).toFixed(0)}%`);
       if (C.defeat > 0.15) failAt(tier, `난이도: 새 몸 ★1 4바퀴(체력 ${HUMAN_CONTINUE_HP * 100}% 아래면 귀환) 원정 패배 ${(C.defeat * 100).toFixed(0)}% > 15% (C.76 목표)`);
+      // C.198 (GDD 123장 1): 초반 긴장감 — 1단계 몸이 권장 ★1 을 끝까지 4바퀴 이어 돌면 약 40% 가 도중에 진다(약 60% 버팀). 가드 25~55%
+      console.log(`    초반 긴장감 (123장 1): 1단계 몸 ★1 끝까지 4바퀴 패배 ${(R.defeat * 100).toFixed(0)}% (가드 25~55%, 목표 약 40%)`);
+      if (R.defeat < 0.25 || R.defeat > 0.55) failAt(tier, `초반 긴장감: 1단계 몸 권장 ★1 끝까지 4바퀴 원정 패배 ${(R.defeat * 100).toFixed(0)}% 가 25~55% 밖 (GDD 123장 1: 약 40%)`);
     }
     const up = rows[`${tier}/${rec - 1}`];
     const down = rows[`${tier}/${rec + 1}`];

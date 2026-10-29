@@ -26,7 +26,7 @@ const withFormat = (f: number): SaveData => {
 describe('C.117 옛 형식 세이브는 열지 않는다 (GDD 61장)', () => {
   it('C.120 부터 문턱 = 현재 형식(46) — 현재 형식만 열리고 45 이하는 이전 버전', () => {
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.195(54)·C.193(53)·C.188(52)·C.184(51)·C.177(50)·C.181(49)·C.179(48)·C.178(47)·C.175(46). C.117 은 1, C.120(형식 37)·C.133(38)·C.134(39)·C.136(40)·C.140(41)·C.144(42)·C.147(43)·C.150(44)·C.167(45)에 같이 올렸다 (GDD 61장)
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
     expect(saveFormatStatus(42)).toBe('old');
     expect(saveFormatStatus(41)).toBe('old');
     expect(saveFormatStatus(SAVE_FORMAT_VERSION)).toBe('ok');
@@ -114,8 +114,8 @@ describe('C.117 옛 형식 세이브는 열지 않는다 (GDD 61장)', () => {
     expect(app).toContain('exportRawSlot(store, n)');
   });
 
-  it('형식을 올리는 패치 규칙이 코드 주석에 남아 있다', () => {
+  it('형식을 올리는 패치 규칙이 코드 주석에 남아 있다 (C.198: 61장 폐기 → 한 단계 변환, GDD 123장 6)', () => {
     const g = readFileSync('src/game.ts', 'utf8');
-    expect(g).toContain('이 값도 같이 올리고 마이그레이션은 만들지 않는다');
+    expect(g).toContain('SAVE_FORMAT_VERSION 을 올리면 여기에 [옛 형식] 한 칸을 더하고');
   });
 });

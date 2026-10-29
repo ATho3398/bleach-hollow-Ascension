@@ -12,7 +12,7 @@ const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '
 
 /** 물건 → 자리표시 아이콘(스프라이트). 그림이 들어오면 쓰이지 않는다 */
 export const PROP_ICON: Record<RoomProp, string> = {
-  door: 'i-loop', altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', shop: 'i-rare',
+  door: 'i-loop', altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', shop: 'i-rare', spa: 'i-tile-rest',
 };
 
 /** 방 장면 틀. 배경 그림이 있으면 --room-art 로 깔린다 */
@@ -175,6 +175,7 @@ export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entrie
       e.el.style.left = `${p.x}%`;
       e.el.style.top = `${top}px`;
       scene.style.setProperty('--char-y', `${top}px`);
+      scene.style.setProperty('--foot-y', `${top + fromCenter}px`); // 발 = 그림자 가운데 (발밑 체력 막대, GDD 123장 3)
       scene.style.setProperty('--char-x', `${p.x}%`);
     }
   }

@@ -120,7 +120,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
 
   const home = expeditionEndVitals(exp);
   const rows: IconInfoRow[] = [
-    { label: '도달 바퀴', icon: 'i-loop', value: val(`${s.laps}`, `/ 기본 ${BALANCE.expedition.defaultLaps}`) },
+    { label: '도달 바퀴', icon: 'i-loop', value: val(`${s.laps}`, `/ 권장 ${BALANCE.expedition.defaultLaps}`) },
     { label: '치른 전투', icon: 'i-practice', value: val(`${exp.battles.length}회`, `(승 ${wins})`) },
     countRow('지킨 타일', 'i-deck', s.kept, (id) => tileName(id, faction.id), '장', 'good'),
     countRow('잃은 타일', 'i-deck', s.lost, (id) => tileName(id, faction.id), '장', 'bad'),

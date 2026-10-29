@@ -7,6 +7,8 @@ import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
+import { SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
+import { spaEndText, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -22,7 +24,7 @@ import type { AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, careBlock, departCareOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -613,6 +615,40 @@ export function startApp(host: HTMLElement): void {
     if (!save) return titleScreen();
     activeExp = null;
     nav.reset({ id: 'room', render: () => { renderRoom(); root.scrollTop = 0; } });
+    // 온천에 있던 채로 껐다 켰으면 온천 화면으로 (GDD 123장 4: 앱을 꺼도 온천 유지)
+    if (save.nest.spa && !save.nest.dead) openSpa(getFaction(save.factionId), save, false);
+  }
+
+  /** 온천 (GDD 123장 4): enter = 방 물건을 눌러 들어감(못 들어가면 이유 알림), false = 이미 온천에 있는 세이브를 다시 염. 뒤로 = 나와서 방 */
+  function openSpa(faction: FactionConfig, s: SaveData, enter = true): void {
+    const name = roomOf(faction).props.spa;
+    if (enter) {
+      if (careBlocked(s)) return;
+      const why = s.nest.spa ? null : spaEnter(s);
+      if (why) return void showToast({ eyebrow: name, title: SPA_BLOCK_TEXT[why], meta: '' }, 0, 2600);
+      persist();
+    }
+    nav.push({
+      id: 'spa',
+      render: () => {
+        setBgm('nest');
+        spaView(root, faction, s, {
+          onBack: () => nav.back(),
+          onAutoLeave: (e) => {
+            tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다
+            persist();
+            if (nav.top?.id === 'spa') nav.pop();
+            showToast({ eyebrow: name, title: spaEndText(e, faction.fullnessName), meta: '' }, 0, 3200);
+          },
+        });
+        root.scrollTop = 0;
+      },
+      beforeBack: () => {
+        tickIdle(s); // 나오기 전까지 흐른 몫을 먼저 반영
+        spaLeave(s);
+        persist();
+      },
+    });
   }
 
   function renderRoom(): void {
@@ -723,6 +759,7 @@ export function startApp(host: HTMLElement): void {
       onHelp: () => openHelp('nest', true),
       // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
+      onSpa: () => openSpa(faction, s),
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
       onTamago: () => tama.toggle(true),
       // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)
@@ -870,6 +907,7 @@ export function startApp(host: HTMLElement): void {
       hunger: save.nest.hunger,
       condition: save.nest.condition,
       care: departCareOf(save), // 쇠약·피곤 (GDD 102-2)
+      hpFraction: departHpOf(save), // 홈 체력 그대로 출발 (GDD 123장 2)
       deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
       stability: save.nest.stability,
@@ -1058,6 +1096,7 @@ export function startApp(host: HTMLElement): void {
       hunger: save.nest.hunger,
       condition: save.nest.condition,
       care: departCareOf(save), // 쇠약·피곤 (GDD 102-2)
+      hpFraction: departHpOf(save), // 홈 체력 그대로 출발 (GDD 123장 2)
       deck: [],
       risk: save.nest.risk,
       stability: save.nest.stability,
@@ -1103,6 +1142,7 @@ export function startApp(host: HTMLElement): void {
       hunger: save.nest.hunger,
       condition: save.nest.condition,
       care: departCareOf(save), // 쇠약·피곤 (GDD 102-2)
+      hpFraction: departHpOf(save), // 홈 체력 그대로 출발 (GDD 123장 2)
       deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
       stability: save.nest.stability,

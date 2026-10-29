@@ -47,8 +47,8 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     const s = newSaveData('hollow', 1);
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(54); // C.195 (C.193 53) C.188 (C.184 51) (C.177 50)
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
+    expect(SAVE_FORMAT_VERSION).toBe(55); // C.198 (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
 
   it('첫 진화(1→2단계) 때 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 → 보관함·덱, 타일 안내 차례. 두 번째 진화엔 더 안 준다', () => {

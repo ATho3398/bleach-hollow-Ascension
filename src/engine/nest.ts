@@ -46,6 +46,28 @@ export interface NestState {
   /** 먹이 한도 (GDD 109장 6, C.181): 지금 묶음에서 먹은 개수와 마지막으로 먹은 시각(ms, 0 = 없음). 마지막으로 먹은 뒤 feedLimit.windowMinutes 가 지나면 묶음이 새로 시작 */
   feedCount: number;
   lastFedAt: number;
+  /** 홈 체력 (GDD 123장 2, C.198): 최대 체력 대비 비율 0~1. 원정 출발 체력이 되고 원정이 끝나면 남은 체력으로 돌아온다(귀환해도 가득 아님). 빈사면 상한 care.dying.hpFraction */
+  hpFraction: number;
+  /** 온천에 있는 중 (GDD 123장 4): 들어간 시각과 그때 체력·배부름(런 로그용). 방에 있으면 null. 앱을 꺼도 유지되고, 체력 상한 또는 배부름 0 이면 저절로 나온다 */
+  spa: SpaStay | null;
+}
+
+/** 온천에 들어간 기록 (런 로그 홈 회복에 남긴다) */
+export interface SpaStay {
+  at: number;
+  hp: number;
+  fullness: number;
+}
+
+/** 온천에서 나온 결과 (GDD 123장 4): reason = full(체력 상한) / hungry(배부름 0) / left(뒤로) / away(원정·빈사로 끊김) */
+export interface SpaEnd {
+  at: number;
+  minutes: number;
+  hpFrom: number;
+  hpTo: number;
+  fullnessFrom: number;
+  fullnessTo: number;
+  reason: 'full' | 'hungry' | 'left' | 'away';
 }
 
 /** 요청 대상 돌봄 (GDD 82장): 먹이는 요청제가 아니다 */
@@ -60,7 +82,7 @@ export interface CareRequest {
 export type CareOutcome = 'answered' | 'refused';
 
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0 };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0, hpFraction: 1, spa: null };
 }
 
 const CR = NX.careRequest;
@@ -124,13 +146,116 @@ export interface TimeFlow {
   hunger: number;
   condition: number;
   stability: number;
+  /** 홈 체력 변화 (비율, GDD 123장 4) */
+  hp?: number;
+  /** 이 시간 안에 온천에서 저절로 나왔으면 그 결과 */
+  spaEnded?: SpaEnd | null;
+}
+
+// ── 홈 체력 (GDD 123장 2·4, C.198) ──
+const HH = NX.homeHp;
+
+/** 지금 홈 체력 상한: 빈사면 care.dying.hpFraction(10%), 아니면 1 */
+export function homeHpCap(nest: Pick<NestState, 'collapsed'>): number {
+  return nest.collapsed ? CP.dying.hpFraction : 1;
+}
+
+/** 홈 체력 (0~상한) */
+export function homeHpOf(nest: Pick<NestState, 'hpFraction' | 'collapsed'>): number {
+  const v = Number.isFinite(nest.hpFraction) ? nest.hpFraction : 1;
+  return clamp(v, 0, homeHpCap(nest));
+}
+
+/** 온천을 끝낸다 (기록을 돌려준다). 온천이 아니면 null */
+function closeSpa(nest: NestState, atMs: number, reason: SpaEnd['reason']): SpaEnd | null {
+  const st = nest.spa;
+  if (!st) return null;
+  nest.spa = null;
+  return { at: atMs, minutes: Math.max(0, (atMs - st.at) / 60_000), hpFrom: st.hp, hpTo: homeHpOf(nest), fullnessFrom: st.fullness, fullnessTo: fullnessOfNest(nest), reason };
+}
+
+/** 홈 체력 즉시 회복 (먹이·포션·튜토리얼): 상한까지. 오른 양. 온천에서 상한에 닿으면 저절로 나온다(그 결과는 spaEnded 로 돌려받으려면 healHome 대신 부르는 쪽이 leaveSpa) */
+export function healHomeHp(nest: NestState, amount: number): number {
+  if (nest.dead) return 0;
+  const before = homeHpOf(nest);
+  nest.hpFraction = Math.min(homeHpCap(nest), before + Math.max(0, amount));
+  return nest.hpFraction - before;
+}
+
+/** 홈 체력을 그 값으로 맞춘다 (튜토리얼 연출 — 상한 안). 바뀐 뒤 값 */
+export function setHomeHp(nest: NestState, fraction: number): number {
+  nest.hpFraction = clamp(Number.isFinite(fraction) ? fraction : 1, 0, homeHpCap(nest));
+  return nest.hpFraction;
+}
+
+/** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·체력 상한·배부름 0 이면 못 들어간다(이유). 들어가면 null */
+export function enterSpa(nest: NestState, nowMs: number): 'dead' | 'already' | 'full' | 'hungry' | null {
+  if (nest.dead) return 'dead';
+  if (nest.spa) return 'already';
+  if (homeHpOf(nest) >= homeHpCap(nest) - 1e-9) return 'full';
+  if (fullnessOfNest(nest) <= 0) return 'hungry';
+  nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest) };
+  return null;
+}
+
+/** 온천에서 나온다 (뒤로). 온천이 아니면 null */
+export function leaveSpa(nest: NestState, nowMs: number, reason: SpaEnd['reason'] = 'left'): SpaEnd | null {
+  return closeSpa(nest, nowMs, reason);
+}
+
+/** 온천 시간 한 토막: 1분에 체력 +spa.hpPerMinute·배부름 −spa.fullnessPerMinute, 체력 상한 또는 배부름 0 에 닿는 순간 저절로 나온다.
+ *  startMs = 이 토막이 시작한 시각(나온 시각 계산용). 온천에서 보낸 분과 나온 결과 */
+function spaStep(nest: NestState, minutes: number, startMs: number): { used: number; ended: SpaEnd | null } {
+  if (!nest.spa || minutes <= 0) return { used: 0, ended: null };
+  const cap = homeHpCap(nest);
+  nest.hpFraction = homeHpOf(nest);
+  const toCap = Math.max(0, (cap - nest.hpFraction) / HH.spa.hpPerMinute);
+  const toEmpty = Math.max(0, fullnessOfNest(nest) / HH.spa.fullnessPerMinute);
+  const used = Math.min(minutes, toCap, toEmpty);
+  nest.hpFraction = Math.min(cap, nest.hpFraction + used * HH.spa.hpPerMinute);
+  nest.hunger = clamp(nest.hunger + used * HH.spa.fullnessPerMinute, 0, 100);
+  const full = nest.hpFraction >= cap - 1e-9;
+  const ended = full || fullnessOfNest(nest) <= 1e-9 ? closeSpa(nest, Math.round(startMs + used * 60_000), full ? 'full' : 'hungry') : null;
+  return { used, ended };
+}
+
+/** 온천 시간을 바로 흘린다 (GDD 123장 4 — 튜토리얼 회복 안내 '쉬게 하기'): 온천이 아니면 들어가서 minutes 분 만큼. 나오지는 않는다(상한·배부름 0 이면 저절로 나옴).
+ *  들어갈 수 없으면(enterSpa 이유) 아무것도 안 바뀐다. 오른 체력과 저절로 나온 결과 */
+export function soakSpa(nest: NestState, minutes: number, nowMs: number): { hp: number; ended: SpaEnd | null } {
+  if (!nest.spa && enterSpa(nest, nowMs)) return { hp: 0, ended: null };
+  const before = homeHpOf(nest);
+  const r = spaStep(nest, Math.max(0, minutes), nowMs);
+  return { hp: homeHpOf(nest) - before, ended: r.ended };
+}
+
+/** 지금 홈 체력 미리 보기 (방 체력 막대·온천 화면): 마지막으로 셈한 시각(lastTickMs)부터 지금까지 흘렀다고 치고 계산만 한다(세이브는 그대로).
+ *  spaEnded = 그사이 온천에서 저절로 나왔을 결과 — 화면은 이걸 보고 tickIdle 로 실제 반영한 뒤 방으로 */
+export function previewHomeHp(nest: NestState, nowMs: number): { fraction: number; fullness: number; spaEnded: SpaEnd | null } {
+  const c: NestState = { ...nest, spa: nest.spa ? { ...nest.spa } : null };
+  const r = Number.isFinite(c.lastTickMs) && nowMs > c.lastTickMs ? passHomeHp(c, (nowMs - c.lastTickMs) / HOUR, nowMs) : { spaEnded: null };
+  return { fraction: homeHpOf(c), fullness: fullnessOfNest(c), spaEnded: r.spaEnded };
+}
+
+/** 홈 체력 시간 흐름 (GDD 123장 4): 온천이면 온천 토막(spaStep) 뒤 남은 시간은 대기 회복. 대기 회복 = 1분에 +idlePerMinute, 빈사면 없음(온천은 빈사 상한까지).
+ *  endMs = 이 구간이 끝나는 시각 */
+export function passHomeHp(nest: NestState, hours: number, endMs: number): { hp: number; spaEnded: SpaEnd | null } {
+  if (nest.dead) return { hp: 0, spaEnded: null };
+  const before = homeHpOf(nest);
+  nest.hpFraction = before;
+  let minutes = Number.isFinite(hours) ? Math.max(0, hours) * 60 : 0;
+  const spa = spaStep(nest, minutes, endMs - minutes * 60_000);
+  minutes -= spa.used;
+  if (!nest.spa && !nest.collapsed && minutes > 0) nest.hpFraction = Math.min(homeHpCap(nest), nest.hpFraction + minutes * HH.idlePerMinute);
+  return { hp: nest.hpFraction - before, spaEnded: spa.ended };
 }
 
 /** 시간 흐름 (GDD 102-1): hours 동안 허기 +idleHungerPerHour/시, 배부름 conditionBelowFullness 이하면 컨디션 −conditionPerHour/시(배부름 0 이면 ×2),
  *  offline(꺼 둔 동안)이면 영압 안정도 −stabilityPerHour/시(배부름 또는 컨디션 stabilityDoubleBelow 이하면 ×2). 0.1시간 걸음으로 나눠 그 순간 값으로 배율을 정하고, 걸음마다 쇠약·피곤을 본다.
  *  리스크·교감은 여기서 안 바뀐다. 변화량(음수 = 줄어듦, 허기는 오른 양)을 돌려준다 */
-export function passNestTime(nest: NestState, hours: number, offline: boolean): TimeFlow {
+export function passNestTime(nest: NestState, hours: number, offline: boolean, endMs: number = Date.now()): TimeFlow {
   const before = { hunger: nest.hunger, condition: nest.condition, stability: nest.stability };
+  // 홈 체력·온천 (GDD 123장 4): 온천 배부름 소모를 먼저 반영하고 아래 걸음이 그 값으로 쇠약·컨디션을 본다
+  const home = passHomeHp(nest, hours, endMs);
   let left = Number.isFinite(hours) ? Math.max(0, hours) : 0;
   while (left > 1e-9) {
     const dt = Math.min(0.1, left);
@@ -142,7 +267,7 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean): 
     nest.hunger = clamp(nest.hunger + NX.idleHungerPerHour * dt, 0, 100);
     refreshCareStatus(nest);
   }
-  return { hunger: nest.hunger - before.hunger, condition: nest.condition - before.condition, stability: nest.stability - before.stability };
+  return { hunger: nest.hunger - before.hunger, condition: nest.condition - before.condition, stability: nest.stability - before.stability, hp: home.hp, spaEnded: home.spaEnded };
 }
 
 /** 교감 문턱 표 [[문턱, 값], …](높은 것부터)에서 지금 교감의 값 */
@@ -162,6 +287,8 @@ export function collapseNest(nest: NestState, atMs: number): boolean {
   nest.collapsed = true;
   nest.collapsedAt = atMs;
   nest.bond = Math.max(0, nest.bond - BX.collapseLoss);
+  // 빈사 = 체력 상한 10% (GDD 102장 수정·123장 4): 넘던 체력은 상한으로
+  nest.hpFraction = homeHpOf(nest);
   return true;
 }
 
@@ -236,11 +363,11 @@ export interface AbsenceReport {
  *  collapseHours 이상 비웠으면 빈사(그 시각부터, 교감 −collapseLoss) · 빈사 시간(실제 시간, deathHoursOf)이 지났으면 사망(교감 절반).
  *  paused(원정 중간 저장이 있음)·사망 상태면 아무것도 안 바뀐다. 기기 시계를 되돌렸으면(지금이 마지막 접속보다 앞) 0. 접속 시각 갱신은 부르는 쪽이 한다 */
 export function applyAbsenceTime(nest: NestState, lastSeenAt: number, nowMs: number, paused = false): AbsenceReport {
-  const none: AbsenceReport = { hours: 0, flow: { hunger: 0, condition: 0, stability: 0 }, bond: 0, collapsed: false, died: false };
+  const none: AbsenceReport = { hours: 0, flow: { hunger: 0, condition: 0, stability: 0, hp: 0, spaEnded: null }, bond: 0, collapsed: false, died: false };
   if (paused || nest.dead || !Number.isFinite(lastSeenAt) || nowMs <= lastSeenAt) return none;
   const hours = (nowMs - lastSeenAt) / HOUR;
   const bond0 = nest.bond;
-  const flow = passNestTime(nest, hours, true);
+  const flow = passNestTime(nest, hours, true, nowMs);
   nest.bond = Math.max(0, nest.bond - Math.floor(hours / BX.decayHours));
   const collapsed = hours >= CP.collapseHours && collapseNest(nest, lastSeenAt + CP.collapseHours * HOUR);
   const died = checkDying(nest, nowMs);
@@ -260,7 +387,7 @@ export function tickNestOnline(nest: NestState, nowMs: number, paused = false): 
   const hours = (nowMs - nest.lastTickMs) / HOUR;
   nest.lastTickMs = nowMs;
   if (paused || nest.dead) return null;
-  const flow = passNestTime(nest, hours, false);
+  const flow = passNestTime(nest, hours, false, nowMs);
   checkDying(nest, nowMs);
   return flow;
 }
@@ -285,6 +412,11 @@ export function cureStatus(nest: NestState, status: CareStatus): boolean {
 export function departCare(nest: NestState): { weak: boolean; tired: boolean; dying: boolean } {
   nest.cureOnReturn = { weak: fullnessOfNest(nest) > CP.weakFullness, tired: nest.condition > CP.tiredCondition };
   return { weak: nest.weakened, tired: nest.tired, dying: nest.collapsed };
+}
+
+/** 먹이 한 종류의 홈 체력 회복 (비율, GDD 123장 4 provisional) */
+export function foodHpHeal(food: FoodId): number {
+  return HH.foodHeal[food] ?? 0;
 }
 
 /** 먹이 한 종류의 효과 (허기 감소, 컨디션 변화). 임시 수치 (BALANCE.provisional.nest.foods) */
@@ -322,6 +454,7 @@ export function doNestAction(nest: NestState, action: NestAction, food: FoodId =
     const f = foodEffect(food);
     nest.hunger = clamp(nest.hunger - f.hunger, 0, 100);
     nest.condition = clamp(nest.condition + f.condition, 0, MAX);
+    healHomeHp(nest, foodHpHeal(food)); // 먹이 체력 소폭 회복 (GDD 123장 4)
   } else if (action === 'sleep') {
     nest.condition = clamp(nest.condition + NX.sleepCondition, 0, MAX);
   } else nest.condition = clamp(nest.condition + NX.petCondition, 0, MAX);
@@ -360,6 +493,9 @@ export function applyExpeditionEnd(nest: NestState, exp: ExpeditionState, nowMs:
     if (nest.cureOnReturn.tired && nest.tired) { nest.tired = false; recovered.push('tired'); }
   }
   nest.cureOnReturn = { weak: false, tired: false };
+  // 홈 체력 (GDD 123장 2): 남은 원정 체력을 그대로 가져온다(빈사 원정은 최대 체력이 상한만큼이라 그 비율로). 지면 빈사 상한(10%)
+  nest.spa = null;
+  nest.hpFraction = defeated ? homeHpCap(nest) : homeHpOf({ collapsed: nest.collapsed, hpFraction: Math.min(1, Math.max(0, exp.hpFraction ?? 1)) * (exp.care?.dying ? CP.dying.hpFraction : 1) });
   refreshCareStatus(nest);
   settleRiskToNest(nest, exp);
   nest.lastTickMs = nowMs;

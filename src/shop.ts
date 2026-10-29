@@ -11,6 +11,7 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
 import type { FactionConfig } from './engine/faction';
 import { CARE_STATUS_NAMES } from './engine/nest';
 import { addFood } from './engine/food';
+import { foodHpHeal } from './engine/nest';
 import { grantPet, pickNewPet } from './engine/pet';
 import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
 import { recommendedDifficulty } from './engine/difficulty';
@@ -135,7 +136,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'food': {
       // 효과 한 줄 (GDD 100장 #62): 보관함 카드와 같은 '배부름 +n · 컨디션 +n'. 보관 한도는 '보유 n/9' 배지가 말한다
       const fx = BALANCE.provisional.nest.foods[item.food!];
-      return `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`;
+      return `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''} · 체력 +${Math.round(foodHpHeal(item.food!) * 100)}%`;
     }
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로는 안 내려간다) · 가방에 쌓이고 가방에서 쓴다`;
     case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;
@@ -353,6 +354,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 가방`;
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 가방에서 쓴다`;
     case 'pet': return '아직 없는 펫 무작위 1마리 → 가방 펫 탭';
+    case 'hpPotion': return '홈에서 먹으면 체력 가득 (빈사 중엔 10%까지) · 가방에 쌓이고 가방에서 쓴다 · 전투 회복약과 다른 물건이다';
     case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 가방 장비 탭`;
   }
 }

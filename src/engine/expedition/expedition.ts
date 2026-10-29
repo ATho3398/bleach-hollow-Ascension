@@ -388,6 +388,8 @@ export interface ExpeditionSetup {
   gearDrops?: boolean;
   /** 출발 때 쇠약·피곤 (GDD 102-2): 없으면 효과 없음 (balance:check 기준 봇은 없음) */
   care?: CareCarry | null;
+  /** 출발 체력 (GDD 123장 2, C.198): 홈 체력(최대 체력 대비, 빈사면 빈사 최대 체력 대비). 없으면 가득 (balance:check 봇) */
+  hpFraction?: number;
 }
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
@@ -452,7 +454,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     goldLoot: [],
     traitBoosts: {},
     nextShield: 0,
-    hpFraction: 1,
+    hpFraction: Math.min(1, Math.max(0, Number.isFinite(setup.hpFraction) ? setup.hpFraction! : 1)),
     trapArmed: false,
     queuedBattle: null,
     restMult: 1,
@@ -600,6 +602,11 @@ export function pendingFreeBoss(exp: Pick<ExpeditionState, 'freeBoss' | 'lap' | 
 export function carryAttackMult(difficulty: number): number {
   const m = PX.hpCarry.enemyAttackMult;
   return m[String(clampDifficulty(difficulty))] ?? m.default ?? 1;
+}
+
+/** 원정 적 기본 공격 묶음 (GDD 123장 1, provisional): ★별 — 기본 공격 간격·한 대 피해 × 값(초당 피해 같음). 표에 없으면 1 */
+export function carryHitPacing(difficulty: number): number {
+  return PX.hpCarry.hitPacing[String(clampDifficulty(difficulty))] ?? 1;
 }
 
 /** 이어하기 적 배율 (GDD 121장 5): 바퀴 n 의 적 체력·공격 × (1 + enemy × (n − 1)). 옛 바퀴 강화를 대신한다(이중 적용 없음) */
@@ -822,6 +829,9 @@ function startBattleAt(
   const hpK2 = hpK * (hunter ? TT.hunter.hpMult : 1);
   const atkK2 = atkK * (hunter ? TT.hunter.attackMult : 1);
   if (hpK2 !== 1 || atkK2 !== 1) enemy = scaleEnemy(enemy, { hp: hpK2, attack: atkK2 });
+  // 한 대가 '1'처럼 보이지 않게 기본 공격을 묶는다 (GDD 123장 1): 튜토리얼·보스는 그대로
+  const pace = exp.tutorial || bossId ? 1 : carryHitPacing(exp.difficulty);
+  if (pace !== 1) params.enemyHitPacing = pace;
   // 뼈 표식/수련 말뚝 (C.124): 이기면 노력치 (상위 타일은 envMult 배)
   const trainingEv = !bossId && tile?.effect.type === 'environment' && tile.effect.preset === 'training' ? Math.round(TT.training.ev * (m.envMult ?? 1) * lapRewardMult(exp.lap)) : 0;
   const pending: PendingBattle = {

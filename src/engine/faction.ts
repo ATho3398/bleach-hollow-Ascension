@@ -67,7 +67,7 @@ export type SlotLocation = 'body' | 'zanpakuto';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
-export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'shop'] as const;
+export const ROOM_PROPS = ['door', 'altar', 'book', 'chest', 'shop', 'spa'] as const; // spa = 온천 (GDD 123장 4, C.198): 누르면 따로 된 온천 화면
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
@@ -140,11 +140,11 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', shop: '상점' },
+  props: { door: '문', altar: '수련장', book: '책장', chest: '상자', shop: '상점', spa: '온천' },
   floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
     door: { x: 9, y: 78, scale: 1 }, book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
-    chest: { x: 26, y: 90, scale: 0.81 }, shop: { x: 74, y: 90, scale: 0.54 },
+    chest: { x: 26, y: 90, scale: 0.81 }, shop: { x: 74, y: 90, scale: 0.54 }, spa: { x: 26, y: 61, scale: 0.54 },
   },
   characterFoot: { x: 50, y: 80 },
   talk: {

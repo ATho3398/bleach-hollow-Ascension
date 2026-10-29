@@ -131,7 +131,7 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
 
 describe('111장 2: 옛 노멀 특성 정리 (마이그레이션 없음)', () => {
   it('형식·문턱 51 같이 올림', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([54, 54]); // C.195 // C.188
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([55, 54]); // C.198: 문턱 54 고정(123장 6) // C.195 // C.188
   });
   it('불러올 때 보유·슬롯·장착 순서의 노멀 skill 특성을 지운다(다른 특성·노멀 패시브·강화는 그대로)', () => {
     const s = newSaveData('hollow');

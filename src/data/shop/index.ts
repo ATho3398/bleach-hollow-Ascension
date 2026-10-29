@@ -263,7 +263,7 @@ export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files:
 export const WANDERER_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
 export type WandererGrade = (typeof WANDERER_GRADES)[number];
 export const WANDERER_GRADE_NAMES: Record<WandererGrade, string> = { normal: '보통', rare: '희귀', epic: '영웅', legendary: '전설' };
-export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir', 'pet', 'gear'] as const;
+export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir', 'pet', 'gear', 'hpPotion'] as const;
 export type WandererKind = (typeof WANDERER_KINDS)[number];
 
 export interface WandererItemDef {

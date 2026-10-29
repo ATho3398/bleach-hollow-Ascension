@@ -28,7 +28,7 @@ import type { FoodId } from '../engine/faction';
 import type { EvolveResult } from '../engine/evolution/evolution';
 import { consumableName, gearKindName } from '../inventory';
 import { categoryName, cosmeticName, getCosmetic, getWandererItem, COSMETIC_ITEMS, WANDERER_GRADE_NAMES } from '../data/shop';
-import { CARE_ACTIONS, type CareAction } from '../engine/nest';
+import { CARE_ACTIONS, homeHpOf, type CareAction } from '../engine/nest';
 import { mutationName, tileName } from '../data/tiles';
 import { confirmDialog } from './confirmDialog';
 import { skinLabel } from '../data/skins';
@@ -421,14 +421,15 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const risk = numInput(save.nest.risk, 0, BALANCE.provisional.risk.limit, faction.riskGaugeName);
     const hunger = numInput(save.nest.hunger, 0, 100, '허기');
     const cond = numInput(save.nest.condition, 0, 100, '컨디션');
+    const hp = numInput(Math.round(homeHpOf(save.nest) * 100), 0, 100, '체력 %');
     const apply = button({ label: '적용', icon: 'i-check', variant: 'primary', onClick: () => {
-      setNestValues(save, { risk: Number(risk.value), hunger: Number(hunger.value), condition: Number(cond.value) });
+      setNestValues(save, { risk: Number(risk.value), hunger: Number(hunger.value), condition: Number(cond.value), hp: Number(hp.value) });
       saved('둥지 값을 넣었다');
       redraw();
     } });
     return [
       panel({ title: '속도 (전투·원정)' }, sp, note('전투는 전투 화면 배속에 곱한다. 원정은 시작 배속에 쓴다.')),
-      panel({ title: '리스크·허기·컨디션' }, grid([[faction.riskGaugeName, risk], ['허기', hunger], ['컨디션', cond]]), row(apply)),
+      panel({ title: '리스크·허기·컨디션·체력' }, grid([[faction.riskGaugeName, risk], ['허기', hunger], ['컨디션', cond], ['체력 %', hp]]), row(apply)),
       // 시간 앞당기기 (GDD 102-7·109장 7): 배부름·돌봄·대기 보상·먹이 한도(10분)·빈사(48시간)·사망을 바로 본다
       ...(hd.onTimeAdvanced ? [panel({ title: '시간 앞당기기' },
         row(...TEST_TIME_STEPS.map((t) => button({ label: t.label, icon: 'i-timer', size: 'small', variant: 'primary', onClick: () => advance(t.minutes) }))),

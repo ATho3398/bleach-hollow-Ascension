@@ -6,7 +6,8 @@ import { cosmeticName, COSMETIC_ITEMS, GOLD_ITEMS, getCosmetic, getGoldItem, get
 import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
-import { CARE_STATUS_NAMES } from './engine/nest';
+import { CARE_STATUS_NAMES, foodHpHeal, homeHpCap, homeHpOf } from './engine/nest';
+import { drinkHpPotion } from './home';
 import { cureNest, feedNest } from './game';
 import { wandererAmount } from './engine/wanderer';
 import { CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
@@ -25,11 +26,11 @@ const COND_MAX = BALANCE.provisional.expedition.conditionMax;
 /** 보관함에 쌓이는 소모품 id: 상점 정화제·각성제·약(GDD 102-4) + 상인 소모품(정화·각성·정수). 효과는 useInventoryItem */
 export const CONSUMABLE_IDS: readonly string[] = [
   ...GOLD_ITEMS.filter((g) => g.kind === 'calm' || g.kind === 'wake' || g.kind === 'medicine').map((g) => g.id),
-  ...WANDERER_ITEMS.filter((w) => w.kind === 'calm' || w.kind === 'wake' || w.kind === 'elixir').map((w) => w.id),
+  ...WANDERER_ITEMS.filter((w) => w.kind === 'calm' || w.kind === 'wake' || w.kind === 'elixir' || w.kind === 'hpPotion').map((w) => w.id),
 ];
 
 /** 소모품 효과 한 줄: cure = 상인 정수(쇠약 풀기), medicine = 약이 푸는 상태 (GDD 102-4, 수치는 안 바뀜) */
-type ConsumableEffect = { risk: number; condition: number; cure: boolean; medicine?: MedicineCure };
+type ConsumableEffect = { risk: number; condition: number; cure: boolean; medicine?: MedicineCure; /** 체력 포션 (GDD 123장 4): 홈 체력 가득 */ hpFull?: boolean };
 function consumableEffect(id: string): ConsumableEffect | null {
   const g = getGoldItem(id);
   if (g?.kind === 'medicine') return { risk: 0, condition: 0, cure: false, medicine: g.cures! };
@@ -39,6 +40,7 @@ function consumableEffect(id: string): ConsumableEffect | null {
   if (w?.kind === 'calm') return { risk: wandererAmount(id), condition: 0, cure: false };
   if (w?.kind === 'wake') return { risk: 0, condition: wandererAmount(id), cure: false };
   if (w?.kind === 'elixir') return { risk: wandererAmount(id), condition: COND_MAX, cure: true };
+  if (w?.kind === 'hpPotion') return { risk: 0, condition: 0, cure: false, hpFull: true };
   return null;
 }
 
@@ -47,6 +49,7 @@ export function consumableText(id: string, faction: Pick<FactionConfig, 'riskGau
   const e = consumableEffect(id);
   if (!e) return '';
   if (e.medicine) return medicineText(e.medicine);
+  if (e.hpFull) return '체력 가득 (빈사 중엔 10%까지, 가방에서 사용)';
   const parts = [e.risk > 0 ? `${faction.riskGaugeName} −${e.risk}` : '', e.condition > 0 ? (e.condition >= COND_MAX ? '컨디션 가득' : `컨디션 +${e.condition}`) : '', e.cure ? '쇠약 해소' : ''].filter(Boolean);
   return `${parts.join(' · ')} (가방에서 사용, 지금 캐릭터에 바로)`;
 }
@@ -82,6 +85,7 @@ function consumableLock(save: SaveData, id: string, faction: Pick<FactionConfig,
   if (save.activeExpedition != null) return '원정 중인 캐릭터에는 못 쓴다';
   if (save.nest.dead) return `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다`;
   if (e.medicine) return medicineNeeded(save, e.medicine) ? null : `${medicineStatusName(e.medicine)} 상태가 아니다`;
+  if (e.hpFull) return homeHpOf(save.nest) < homeHpCap(save.nest) - 1e-9 ? null : save.nest.collapsed ? '빈사 — 체력 10% 위로 못 채운다' : '체력 이미 가득';
   const helpsRisk = e.risk > 0 && save.nest.risk > 0;
   const helpsCond = e.condition > 0 && save.nest.condition < COND_MAX;
   const helpsCure = e.cure && save.nest.weakened;
@@ -97,7 +101,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     const n = save.shared.food[f];
     if (n <= 0) continue;
     const fx = BALANCE.provisional.nest.foods[f];
-    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`, action: 'use', lock: save.activeExpedition != null ? '원정 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
+    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''} · 체력 +${Math.round(foodHpHeal(f) * 100)}%`, action: 'use', lock: save.activeExpedition != null ? '원정 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
   }
   // 소모품: 보관한 정화제·각성제·상인 소모품 + 다시 뽑기권(흡수 화면에서 씀)
   for (const id of CONSUMABLE_IDS) {
@@ -159,6 +163,10 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     cureNest(save, e.medicine);
     takeItem(save, id);
     return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림` };
+  }
+  if (e.hpFull) {
+    const r = drinkHpPotion(save, id);
+    return r ? { ok: true, detail: `체력 ${Math.round(r.hpTo * 100)}%` } : { ok: false, reason: '쓸 수 없다' };
   }
   save.nest.risk = Math.max(0, save.nest.risk - e.risk);
   save.nest.condition = Math.min(COND_MAX, save.nest.condition + e.condition);

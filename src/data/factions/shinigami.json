@@ -224,7 +224,8 @@
       "altar": "수련장",
       "book": "책장",
       "chest": "가방",
-      "shop": "상점"
+      "shop": "상점",
+      "spa": "온천"
     },
     "floor": {
       "aspect": 2,
@@ -235,7 +236,8 @@
       "book": { "x": 76, "y": 60, "scale": 0.68 },
       "altar": { "x": 90, "y": 70, "scale": 0.68 },
       "chest": { "x": 26, "y": 90, "scale": 0.68 },
-      "shop": { "x": 74, "y": 90, "scale": 0.68 }
+      "shop": { "x": 74, "y": 90, "scale": 0.68 },
+      "spa": { "x": 26, "y": 61, "scale": 0.68 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {
