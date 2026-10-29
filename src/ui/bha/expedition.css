@@ -139,8 +139,9 @@
 .bha-lcd .bha-app.bha-plan.is-locked { grid-template-columns: minmax(0, 1fr); }
 .bha-lcd .bha-plan > * { grid-column: 1; min-width: 0; }
 .bha-lcd .bha-plan > .bha-exp__head { grid-column: 1 / -1; grid-row: 1; }
-.bha-lcd .bha-plan > .bha-plan__sub:not(.bha-plan__line) { grid-row: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bha-lcd .bha-plan .bha-plan__line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* C.196 (GDD 116장 3 · 121장 추가): 설명 줄은 말줄임 없이 줄바꿈으로 다 보인다. 고를 때마다 글 길이가 달라도 아래 버튼이 움직이지 않게 가장 긴 글의 줄 수만큼 높이를 잡아 둔다 */
+.bha-lcd .bha-plan > .bha-plan__sub { grid-row: auto; line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; }
+.bha-lcd .bha-plan > .bha-plan__sub:not(.bha-plan__line) { min-height: calc(2em * var(--bha-lh-tight)); }
 .bha-lcd .bha-plan .bha-road__wrap { display: contents; }
 .bha-lcd .bha-plan .bha-road { grid-column: 1; grid-row: 6; }
 .bha-lcd .bha-plan .bha-road__synline { grid-column: 1; grid-row: 7; }
@@ -235,8 +236,8 @@
 /* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
 .bha-road__wrap { user-select: none; -webkit-user-select: none; }
 .bha-lcd .bha-plan .bha-road__cell { min-height: 40px; }
-/* 안내 줄은 한 줄 — 긴 타일 설명을 고르면 두 줄로 늘어 화면이 16px 넘쳐 스크롤이 생겼다(같은 화면 .bha-plan__line 과 같은 방식) */
-.bha-lcd .bha-plan .bha-road__note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 안내 줄 (C.196): 말줄임 없이 줄바꿈, 긴 타일 설명도 다 보인다 — 아래에는 [출발] 고정 띠뿐이라 늘어나도 버튼이 안 움직인다 */
+.bha-lcd .bha-plan .bha-road__note { line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; min-height: calc(1em * var(--bha-lh-tight)); }
 .bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }
 
 /* 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오르고, 끝나면 회복 숫자(.bha-float--heal)가 떠오른다. 종족 무관 */

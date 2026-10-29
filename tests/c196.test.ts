@@ -122,3 +122,13 @@ describe('121장 1·2·3 배치판', () => {
     expect(css).toMatch(/\.bha-sheet \.bha-road__wrap \{ flex-shrink: 0; \}/);
   });
 });
+
+describe('116장 3 원정 준비 설명 줄 = 말줄임 없이 줄바꿈', () => {
+  it('지역·난이도 설명·안내 줄에 ellipsis·nowrap 이 없고, 설명 줄은 2줄 높이를 잡아 둔다', () => {
+    const css = read('src/ui/bha/expedition.css');
+    const rules = css.split('\n').filter((l) => /\.bha-lcd \.bha-plan (> )?\.(bha-plan__sub|bha-plan__line|bha-road__note)/.test(l));
+    expect(rules.length).toBeGreaterThan(0);
+    for (const r of rules) expect(r).not.toMatch(/text-overflow: ellipsis|white-space: nowrap/);
+    expect(css).toMatch(/\.bha-plan__sub:not\(\.bha-plan__line\) \{ min-height: calc\(2em/);
+  });
+});
