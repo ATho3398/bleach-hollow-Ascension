@@ -4,6 +4,7 @@
 // 텍스트는 FactionConfig·데이터에서 읽고 종족 id 로 분기하지 않는다.
 // 화면 모양(DOM·클래스)은 디자인 패키지 battle.html 을 따른다. 전투는 고정 틱으로 계속 갱신되므로 DOM 을 통째로 다시 만들지 않고
 // 바뀐 곳만 갱신한다(블록은 uid 로 같은 요소를 계속 쓰고, 묶음·삽입 막대는 달라졌을 때만 바꾼다).
+import { BALANCE } from '../config/balance';
 import { enemyPatternKind } from '../data/enemies';
 import { comboName, physBlockName } from '../data/evolution';
 import { pickFaction } from '../data/schema';
@@ -592,7 +593,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // ── 튜토리얼·도움말 ──
   let tutorial: TutorialHandle | null = null;
   let tutorialPractice = false;
-  const syncPausedLook = () => app.classList.toggle('is-paused', paused || (tutorialOpen && !tutorialPractice) || scriptAckOpen);
+  // 각본 전투 카드는 멈춰 있어도 화면을 흐리게 하지 않는다 (GDD 129장 3)
+  const syncPausedLook = () => app.classList.toggle('is-paused', paused || (tutorialOpen && !tutorialPractice));
 
   // ── 각본 전투 (첫 원정 첫 전투, GDD 123장 5, C.199): 엔진 각본(engine/combat/script)이 멈춰 기다리면 설명 카드를 띄운다.
   // 설명 카드(ack) = 전투 멈춤 + [다음](✓), 막기·블록 카드 = 전투 시간은 멈춘 채 그 버튼만 누를 수 있다 (기기 ▲▼ 도 그 대상만)
@@ -1376,7 +1378,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       stop();
       scriptCard?.dismiss();
       scriptCard = null;
-      if (scripted && s.status === 'won') opts.tutorial?.onDone(); // 각본 전투를 끝냈으면 첫 전투 튜토리얼을 본 것으로 (GDD 123장 5)
+      if (scripted && s.status === 'won') {
+        opts.tutorial?.onDone(); // 각본 전투를 끝냈으면 첫 전투 튜토리얼을 본 것으로 (GDD 123장 5)
+        // 처치 연출 (GDD 129장 3): 슬로우 + 적이 사라진 뒤 결과 창 없이 바로 다음(흡수) 화면
+        say({ role: 'cast', icon: 'i-flag-win', text: `${enemyName}을(를) 쓰러뜨렸다.` });
+        const slow = BALANCE.provisional.tutorialScript.killSlowSeconds;
+        for (const a of app.getAnimations({ subtree: true })) a.playbackRate = 0.3;
+        app.classList.add('is-tutkill');
+        app.style.setProperty('--bha-tutkill', `${slow}s`);
+        foe.classList.add('is-vanish');
+        endPress();
+        window.setTimeout(() => opts.onEnd(s), slow * 1000 + 200);
+        return;
+      }
       if (s.status === 'lost') say({ role: 'cast', icon: 'i-broken', text: s.lossReason === 'timeout' ? '시간 제한을 넘겼다…' : `${labels.defeatState}…` });
       endPress();
       if (tutorialOpen) tutorial?.close(); // 직접 해 보기 중에 끝나면 튜토리얼도 마무리

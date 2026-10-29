@@ -70,21 +70,21 @@
         "✓"
       ],
       "end": {
-        "win": true,
-        "hp": "13 / 108"
+        "win": true
       },
       "errors": [],
+      "kill": true,
       "recover": [
         {
           "step": "회복 안내 1 / 9",
           "title": "빈사로 돌아왔다",
-          "hp": "체력12 / 115",
+          "hp": "",
           "spa": false
         },
         {
           "step": "회복 안내 2 / 9",
           "title": "빈사부터 치료",
-          "hp": "체력12 / 115",
+          "hp": "",
           "spa": false
         },
         {
@@ -131,6 +131,7 @@
         }
       ],
       "recoverFallback": 0,
+      "absorbText": "쓰러뜨린 적을 포식하면 그 힘이 내 것이 된다.\n\n특성: 그 적의 기술을 내 특성으로 얻는다\n\n블록: 얻은 특성의 블록이 전투 블록 바에 나온다\n\n속성: 그 적의 속성 쪽으로 몸이 자란다\n\n능력치(노력치): 그 적이 강한 능력치의 노력치가 오른다\n\n고르는 길은 네 갈래다.",
       "home": {
         "hp": "체력115 / 115",
         "save": "TypeError: Cannot read properties of null (reading 'tracks')"
@@ -206,21 +207,21 @@
         "✓"
       ],
       "end": {
-        "win": true,
-        "hp": "13 / 108"
+        "win": true
       },
       "errors": [],
+      "kill": true,
       "recover": [
         {
           "step": "회복 안내 1 / 9",
           "title": "빈사로 돌아왔다",
-          "hp": "체력12 / 115",
+          "hp": "",
           "spa": false
         },
         {
           "step": "회복 안내 2 / 9",
           "title": "빈사부터 치료",
-          "hp": "체력12 / 115",
+          "hp": "",
           "spa": false
         },
         {
@@ -267,6 +268,7 @@
         }
       ],
       "recoverFallback": 0,
+      "absorbText": "쓰러뜨린 적을 정화 흡수하면 그 힘이 내 것이 된다.\n\n특성: 그 적의 기술을 내 특성으로 얻는다\n\n블록: 얻은 특성의 블록이 전투 블록 바에 나온다\n\n속성: 그 적의 속성 쪽으로 몸이 자란다\n\n능력치(노력치): 그 적이 강한 능력치의 노력치가 오른다\n\n고르는 길은 네 갈래다.",
       "home": {
         "hp": "체력115 / 115",
         "save": "TypeError: Cannot read properties of null (reading 'tracks')"

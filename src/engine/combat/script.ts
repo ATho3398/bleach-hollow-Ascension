@@ -8,7 +8,7 @@ import { applyInput, BASIC_SKILL_ID, blockDamage, maxChain, scriptHeavyCast, scr
 const TS = BALANCE.provisional.tutorialScript;
 
 export const SCRIPT_STAGES = [
-  'intro', 'auto', 'heavy-info', 'guard-now', 'guard-hold', 'auto2', 'heavy2', 'hurt', 'block-use', 'after-skill', 'chain-info', 'chain-spawn', 'chain-use', 'done',
+  'intro', 'auto', 'heavy-info', 'guard-now', 'guard-hold', 'auto2', 'heavy2', 'hurt-hold', 'hurt', 'block-use', 'after-skill', 'chain-info', 'chain-spawn', 'stack-hold', 'chain-use', 'done',
 ] as const;
 export type ScriptStage = (typeof SCRIPT_STAGES)[number];
 
@@ -106,8 +106,10 @@ export function scriptStep(s: CombatState, input?: CombatInput | CombatInput[] |
     if (st === 'auto2' && sc.hits >= TS.autoHits2) {
       scriptHeavyCast(s, TS.castSeconds);
       enter(s, 'heavy2');
-    } else if (st === 'heavy2' && sc.heavyHits > 0) enter(s, 'hurt');
-  } else if (st === 'after-skill' && sc.ticks >= tick(TS.afterSkillSeconds)) enter(s, 'chain-info');
+    } else if (st === 'heavy2' && sc.heavyHits > 0) enter(s, 'hurt-hold');
+  } else if (st === 'hurt-hold' && sc.ticks >= tick(TS.hurtHoldSeconds)) enter(s, 'hurt'); // 맞고 체력이 깎이는 모습을 보여 준 뒤 (GDD 129장 3)
+  else if (st === 'stack-hold' && sc.ticks >= tick(TS.stackHoldSeconds)) enter(s, 'chain-use'); // 블록이 쌓인 모습을 보여 준 뒤
+  else if (st === 'after-skill' && sc.ticks >= tick(TS.afterSkillSeconds)) enter(s, 'chain-info');
   else if (st === 'chain-spawn') {
     const n = Math.min(TS.chainLength, maxChain(s.params));
     if (sc.ticks >= tick(TS.spawnGapSeconds) * (sc.spawned + 1)) {
@@ -121,7 +123,7 @@ export function scriptStep(s: CombatState, input?: CombatInput | CombatInput[] |
       if (last) s.enemy.hp = Math.min(s.enemy.hp, Math.max(1, blockDamage(s, last, n) * 0.5));
       sc.lethal = true;
       sc.spawned = 0;
-      enter(s, 'chain-use');
+      enter(s, 'stack-hold');
     }
   }
   return out;

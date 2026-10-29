@@ -319,7 +319,24 @@ export function startApp(host: HTMLElement): void {
       });
     };
     if (start === 'potion') window.setTimeout(() => show(first), 450); // 가방이 그려진 뒤
-    else show(first); // 방은 이미 그려졌다 (renderRoom 400ms 뒤)
+    else {
+      // 방은 이미 그려졌다. 앞선 알림(튜토리얼 달성 등)이 맨 위에서 다 사라진 뒤 첫 카드 (GDD 129장 3 — 알림이 카드를 가리지 않게, 최대 약 10초)
+      // 기다리는 동안은 투명한 막이 방을 덮어 누름(터치·기기 ✓)을 받지 않는다 — 다른 화면으로 가 버리지 않게
+      const hold = el('div', 'bha-tut is-script');
+      hold.dataset.tutorial = 'recover-wait';
+      getOverlayHost().append(hold);
+      const offHold = registerLayer(hold, () => {});
+      let quiet = 0;
+      let tries = 0;
+      const wait = (): void => {
+        quiet = document.querySelector('.bha-toast') ? 0 : quiet + 1;
+        if (quiet < 2 && ++tries <= 40) return void window.setTimeout(wait, 250);
+        offHold();
+        hold.remove();
+        show(first);
+      };
+      wait();
+    }
     return true;
   }
 

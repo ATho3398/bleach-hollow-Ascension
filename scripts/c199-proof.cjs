@@ -8,8 +8,8 @@ const { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'docs/captures/c199');
 const PORT = 5299;
-const SHOTS = { hollow: ['intro', 'guard-now', 'hurt', 'block-use', 'chain-use'], shinigami: [] };
-const RECOVER_SHOTS = { hollow: ['dying', 'potion', 'to-spa', 'spa-rest', 'feed'], shinigami: [] };
+const SHOTS = { hollow: ['guard-now', 'hurt', 'block-use', 'chain-use'], shinigami: [] };
+const RECOVER_SHOTS = { hollow: ['dying', 'potion', 'to-spa', 'feed'], shinigami: [] };
 const RECOVER_IDS = ['dying', 'to-bag', 'cure', 'potion', 'merchant', 'to-spa', 'spa-rest', 'feed', 'done'];
 
 async function startServer() {
@@ -64,7 +64,13 @@ async function newGame(page, url, fi) {
       const run = { faction, cards: [], presses: [], end: null, errors };
       let lastCard = null;
       for (let t = 0; t < 400; t++) {
-        if (await page.locator('.bha-battle .bha-battle-ov--win').count()) break;
+        // 처치 = 슬로우 + 적 사라짐 (GDD 129장 3): 결과 창 없이 흡수 화면으로
+        if (await page.locator('.bha-battle.is-tutkill').count()) {
+          run.kill = true;
+          await page.waitForTimeout(700);
+          if (faction === 'hollow') await page.screenshot({ path: path.join(OUT, 'h-8-kill-slow.png') });
+          break;
+        }
         const card = await page.evaluate(() => {
           const l = document.querySelector('.bha-tut[data-tutorial="script"]');
           if (!l) return null;
@@ -92,7 +98,7 @@ async function newGame(page, url, fi) {
         } else await page.waitForTimeout(300);
       }
       await page.waitForTimeout(800);
-      run.end = await page.evaluate(() => ({ win: !!document.querySelector('.bha-battle-ov--win'), hp: document.querySelector('[data-help="battle.hp"]')?.textContent ?? '' }));
+      run.end = { win: !!run.kill };
       // 전투 뒤 → 방 회복 안내 (GDD 123장 5 수정): 기기 ✓ 만 누른다 (흡수 화면 등 ✓ 로 안 넘어가는 곳은 기록)
       run.recover = [];
       run.recoverFallback = 0;
@@ -102,8 +108,17 @@ async function newGame(page, url, fi) {
         const r = await page.evaluate(() => {
           const l = document.querySelector('.bha-tut[data-tutorial="recover"]');
           const hpEl = document.querySelector('.bha-room__hp');
+          // 튜토리얼 흡수 안내 (GDD 129장 4): '내 것이 된다' 다음 줄 특성·블록·속성·능력치
+          const g = [...document.querySelectorAll('.bha-tut')].find((x) => (x.textContent ?? '').includes('내 것이 된다'));
+          if (g && !window.__absorbSeen) { window.__absorbSeen = true; return { absorb: g.querySelector('.bha-tut__body')?.innerText ?? '' }; }
           return l ? { step: l.querySelector('.bha-tut__step')?.textContent ?? '', title: l.querySelector('.bha-tut__title')?.textContent ?? '', hp: hpEl?.textContent ?? '', spa: !!document.querySelector('.bha-spa') } : null;
         });
+        if (r && r.absorb) {
+          run.absorbText = r.absorb;
+          await page.waitForTimeout(400);
+          if (faction === 'hollow') await page.screenshot({ path: path.join(OUT, 'h-9-absorb-guide.png') });
+          continue;
+        }
         if (r && r.step !== lastR) {
           lastR = r.step;
           run.recover.push(r);

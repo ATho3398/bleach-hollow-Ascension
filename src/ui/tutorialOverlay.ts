@@ -76,6 +76,8 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', '튜토리얼');
   layer.dataset.tutorial = opts.name ?? 'true';
+  // 각본 전투·회복 안내 카드 (GDD 129장 3): 화면을 회색으로 덮지 않는다 — 카드·강조 테두리만
+  if (opts.script) layer.classList.add('is-script');
   const hole = el('div', 'bha-tut__hole');
   const card = el('div', 'bha-tut__card');
   if (opts.pauseLabel !== null) {
