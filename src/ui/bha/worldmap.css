@@ -1,6 +1,7 @@
 /* 월드맵 (GDD 130장 2, C.204): 방과 같은 장면 틀 + 임시 하이앵글 지도 배경(위에서 비스듬히 본 땅·길). 그림(scene.worldmap)이 오면 배경이 덮는다. 색·간격은 토큰만 */
 .bha-lcd .bha-app.bha-room.bha-worldmap { padding: var(--bha-sp-3); }
-.bha-worldmap__hud { justify-content: flex-start; align-items: flex-start; }
+.bha-worldmap__hud { justify-content: flex-start; align-items: flex-start; gap: var(--bha-sp-3); }   /* [둥지로] 왼쪽 위 = 시장·온천과 같은 자리 (GDD 129-1 2) */
+.bha-worldmap [data-space-back][aria-disabled="true"] { opacity: 0.45; }
 .bha-worldmap__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
 /* 하늘(먼 곳) 얇게 + 땅 넓게: 원근으로 줄어드는 격자 = 위에서 내려다보는 느낌 */
 .bha-room--worldmap .bha-room__wall { height: 30%; background: linear-gradient(180deg, var(--bha-bg-0), var(--bha-bg-1)); }

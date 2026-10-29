@@ -7,7 +7,8 @@ import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace }
 import { artSkinOf, type SaveData } from '../game';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
+import { fixParticles } from '../engine/josa';
 
 export interface WorldMapHandlers {
   onHome: () => void;
@@ -22,9 +23,12 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   const wm = worldMapOf(faction);
   const here = save.shared.wanderer.visit !== null;
 
-  // ── 위 한 줄: 지도 이름 ──
+  // ── 위 한 줄: 왼쪽 위 [둥지로]/[대원실로](다른 공간 화면과 같은 모양·자리 — GDD 129-1 2) · 지도 이름 ──
   const hud = el('header', 'bha-room__hud bha-worldmap__hud');
-  hud.append(el('h1', 'bha-worldmap__title', wm.name));
+  const homeLocked = hd.locked?.includes('home') ?? false;
+  const backBtn = spaceBackButton(homeLocked ? () => hd.onLocked?.('home') : hd.onHome, fixParticles(`${wm.places.home}(으)로`));
+  if (homeLocked) backBtn.setAttribute('aria-disabled', 'true'); // 첫 모험 강제 중 (GDD 131장 2)
+  hud.append(backBtn, el('h1', 'bha-worldmap__title', wm.name));
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(wm);
@@ -74,7 +78,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   // 선택 순서 = DOM 순서(홈 → 시장 → 모험, 지도 왼쪽 → 오른쪽). 'visual'(위 → 아래)을 쓰면 가운데 위 시장이 먼저 와서 쓰지 않는다
   if (here) main.dataset.wanderer = '';
   // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 모험), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 모험 (옛 방 첫 선택 = 문, 100장 #11)
-  const items: SelectItem[] = WORLD_PLACES.map((p) => ({ el: btns.get(p)! }));
+  const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))]; // 화면 위치 순서: 왼쪽 위 돌아가기 먼저
   btns.get('adventure')?.focus({ preventScroll: true });
   dev.setItems(items, main);
 }

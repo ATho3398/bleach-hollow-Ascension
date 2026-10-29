@@ -115,4 +115,5 @@ const screen = () => [...document.querySelectorAll('.bha-lcd .bha-app')].map((e)
   }
   fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify(proof, null, 2));
   console.log(JSON.stringify(proof, null, 1));
+  process.exit(0); // npx vite 자식이 남아 끝나지 않는 것 방지
 })();

@@ -18,9 +18,9 @@
     },
     "worldFirst": "모험",
     "worldDownOrder": [
+      "둥지로",
       "둥지",
-      "시장",
-      "모험"
+      "시장"
     ],
     "worldBack": "bha-app bha-room",
     "market": {
@@ -56,9 +56,9 @@
     },
     "worldFirst": "모험",
     "worldDownOrder": [
+      "대원실로",
       "대원실",
-      "시장",
-      "모험"
+      "시장"
     ],
     "worldBack": "bha-app bha-room",
     "market": {
