@@ -51,6 +51,21 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   });
 });
 
+describe('뱀형 (GDD 115-A 44)', () => {
+  const b = DRAFT_RIGS.serpent!;
+  it('기어가기: 물결이 앞몸 → 가슴 → 목으로 4분의 1 박자씩 늦게 흐른다', () => {
+    const T = b.motions.move!.duration;
+    // 마디가 가장 크게(+) 휘는 순간
+    const peak = (bone: string) => b.motions.move!.tracks[bone]!.reduce((m, k) => (k[1] > m[1] ? k : m))[0];
+    expect(peak('chest') - peak('front')).toBe(T / 4);
+    expect(peak('neck') - peak('chest')).toBe(T / 4);
+  });
+  it('가슴을 옮기면 목·머리·팔도 같이, 꼬리는 안 따라온다', () => {
+    expect(followMove(b.rig, 'serpent-test', 'chest')!.parts.map((p) => p.slot)).toEqual(['chest', 'neck', 'head', 'arm_L', 'arm_R']);
+    expect(followMove(b.rig, 'serpent-test', 'tail')!.parts.map((p) => p.slot)).toEqual(['tail']);
+  });
+});
+
 describe('편집기 같이 옮기기 (GDD 96장 42)', () => {
   const rig = DRAFT_RIGS.humanoid!.rig;
   it('머리를 옮기면 일반머리·뒷머리와 뒷머리 관절도 같이', () => {

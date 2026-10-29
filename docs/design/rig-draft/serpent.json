@@ -1,0 +1,345 @@
+{
+ "id": "serpent",
+ "note": "뱀형 종이인형 뼈대 (GDD 115-A 44, 사용자 2026-10-29 \"도트 준거에 뱀같이 생긴애 있지. 저렇게 생긴 애 구조도 구현해\"). 앞 = 왼쪽. 그림 칸 64×48, 바닥 줄 y=47. 몸 가운데(root)가 바닥에 닿고, 앞쪽 사슬 = 앞몸(front)·가슴(chest)·목(neck)·머리(head), 뒤쪽 사슬 = 몸 뒤 1·2(back1·back2)·꼬리(tail). 가슴에 작은 발톱 팔 둘(_R = 가까운 쪽, _L = 먼 쪽). 몸 test 는 임시 그림(placeholder.py)",
+ "canvas": [
+  64,
+  48
+ ],
+ "ground": 47,
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "pivot": [
+    36,
+    44
+   ]
+  },
+  {
+   "id": "front",
+   "parent": "root",
+   "pivot": [
+    31,
+    42
+   ]
+  },
+  {
+   "id": "chest",
+   "parent": "front",
+   "pivot": [
+    23,
+    34
+   ]
+  },
+  {
+   "id": "neck",
+   "parent": "chest",
+   "pivot": [
+    19,
+    25
+   ]
+  },
+  {
+   "id": "head",
+   "parent": "neck",
+   "pivot": [
+    15,
+    15
+   ]
+  },
+  {
+   "id": "arm_L",
+   "parent": "chest",
+   "pivot": [
+    24,
+    31
+   ]
+  },
+  {
+   "id": "arm_R",
+   "parent": "chest",
+   "pivot": [
+    21,
+    30
+   ]
+  },
+  {
+   "id": "back1",
+   "parent": "root",
+   "pivot": [
+    42,
+    45
+   ]
+  },
+  {
+   "id": "back2",
+   "parent": "back1",
+   "pivot": [
+    52,
+    43
+   ]
+  },
+  {
+   "id": "tail",
+   "parent": "back2",
+   "pivot": [
+    58,
+    35
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "arm_L",
+   "bone": "arm_L"
+  },
+  {
+   "id": "tail",
+   "bone": "tail"
+  },
+  {
+   "id": "back2",
+   "bone": "back2"
+  },
+  {
+   "id": "back1",
+   "bone": "back1"
+  },
+  {
+   "id": "root",
+   "bone": "root"
+  },
+  {
+   "id": "front",
+   "bone": "front"
+  },
+  {
+   "id": "chest",
+   "bone": "chest"
+  },
+  {
+   "id": "neck",
+   "bone": "neck"
+  },
+  {
+   "id": "head",
+   "bone": "head"
+  },
+  {
+   "id": "arm_R",
+   "bone": "arm_R"
+  }
+ ],
+ "bodies": {
+  "test": {
+   "neck": {
+    "art": "test/neck",
+    "at": [
+     12,
+     14
+    ],
+    "size": [
+     10,
+     13
+    ]
+   },
+   "chest": {
+    "art": "test/chest",
+    "at": [
+     16,
+     23
+    ],
+    "size": [
+     11,
+     13
+    ]
+   },
+   "front": {
+    "art": "test/front",
+    "at": [
+     20,
+     31
+    ],
+    "size": [
+     14,
+     14
+    ]
+   },
+   "root": {
+    "art": "test/root",
+    "at": [
+     29,
+     38
+    ],
+    "size": [
+     15,
+     11
+    ]
+   },
+   "back1": {
+    "art": "test/back1",
+    "at": [
+     41,
+     40
+    ],
+    "size": [
+     12,
+     9
+    ]
+   },
+   "back2": {
+    "art": "test/back2",
+    "at": [
+     49,
+     33
+    ],
+    "size": [
+     11,
+     12
+    ]
+   },
+   "tail": {
+    "art": "test/tail",
+    "at": [
+     54,
+     21
+    ],
+    "size": [
+     7,
+     15
+    ]
+   },
+   "head": {
+    "art": "test/head",
+    "at": [
+     -1,
+     8
+    ],
+    "size": [
+     22,
+     13
+    ]
+   },
+   "arm_R": {
+    "art": "test/arm_R",
+    "at": [
+     12,
+     29
+    ],
+    "size": [
+     11,
+     11
+    ]
+   },
+   "arm_L": {
+    "art": "test/arm_L",
+    "at": [
+     15,
+     30
+    ],
+    "size": [
+     11,
+     11
+    ]
+   }
+  }
+ },
+ "looks": {
+  "serpent-test": {
+   "body": "test"
+  }
+ },
+ "hairFrame": {
+  "rect": [
+   0,
+   0,
+   64,
+   48
+  ],
+  "keepOut": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "view": {
+  "rect": [
+   -14,
+   -12,
+   92,
+   60
+  ]
+ },
+ "edit": {
+  "names": {
+   "root": "몸 가운데",
+   "front": "앞몸",
+   "chest": "가슴",
+   "neck": "목",
+   "head": "머리",
+   "arm_L": "먼 팔",
+   "arm_R": "팔",
+   "back1": "뒷몸 1",
+   "back2": "뒷몸 2",
+   "tail": "꼬리"
+  },
+  "groups": [
+   [
+    "앞쪽",
+    [
+     "head",
+     "neck",
+     "chest",
+     "front"
+    ]
+   ],
+   [
+    "가운데",
+    [
+     "root"
+    ]
+   ],
+   [
+    "뒤쪽",
+    [
+     "back1",
+     "back2",
+     "tail"
+    ]
+   ],
+   [
+    "팔",
+    [
+     "arm_R",
+     "arm_L"
+    ]
+   ]
+  ],
+  "follow": {
+   "neck": [
+    "head"
+   ],
+   "chest": [
+    "neck",
+    "head",
+    "arm_L",
+    "arm_R"
+   ],
+   "front": [
+    "chest",
+    "neck",
+    "head",
+    "arm_L",
+    "arm_R"
+   ],
+   "back1": [
+    "back2",
+    "tail"
+   ],
+   "back2": [
+    "tail"
+   ]
+  }
+ }
+}

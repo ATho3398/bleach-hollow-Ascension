@@ -6,6 +6,7 @@
   사람형 역관절 다리  humanoid/dg/   (몸 bare_dg = 알몸 + 역관절 다리: 허벅지 leg_* · 정강이 shin_* · 발 foot_*)
   사람형 망토         humanoid/cape/  (외형 cape-test 의 cape 층)
   짐승형(네 발)       beast/test/     (beast.json 몸 test)
+  뱀형                serpent/test/   (serpent.json 몸 test, GDD 115-A 44)
 부위마다 캔버스 좌표 다각형 → 꼭 맞게 잘라 저장하고, 작업본 데이터의 at·size 를 그 자리로 맞춘다.
 사용: python3 scripts/rig/placeholder.py
 """
@@ -142,6 +143,39 @@ def beast():
     print('짐승형: 임시 그림', len(parts), '조각')
 
 
+SERPENT_DIR = os.path.join(DRAFT_DIR, 'serpent')
+SERPENT_JSON = os.path.join(DRAFT_DIR, 'serpent.json')
+CRIM, CRIM_D = (150, 36, 64), (104, 22, 44)
+
+
+def serpent():
+    """뱀형: 몸 마디는 관절에서 다음 관절까지 뻗은 막대(앞쪽이 굵고 꼬리로 갈수록 가늘게), 머리 = 해골, 가슴에 작은 발톱 팔"""
+    rig = json.load(open(SERPENT_JSON, encoding='utf-8'))
+    pv = {b['id']: tuple(b['pivot']) for b in rig['bones']}
+    kw = dict(w=110, h=80, ox=-20, oy=-15)
+    parts = {}
+    seg = [('neck', pv['neck'], (15, 16), 6, 5), ('chest', pv['chest'], pv['neck'], 8, 6), ('front', pv['front'], pv['chest'], 8, 8),
+           ('root', (30, 42), (43, 45), 7, 7), ('back1', pv['back1'], pv['back2'], 7, 6), ('back2', pv['back2'], pv['tail'], 6, 4)]
+    for name, a, b, wa, wb in seg:
+        parts[name] = put(SERPENT_DIR, f'test/{name}', [(limb(a, b, wa, wb), CRIM, CRIM_D)], **kw)
+    parts['tail'] = put(SERPENT_DIR, 'test/tail', [(limb(pv['tail'], (59, 26), 4, 3), CRIM, CRIM_D), (limb((59, 27), (55, 22), 3, 2), CRIM, CRIM_D)], **kw)
+    parts['head'] = put(SERPENT_DIR, 'test/head', [([(-1, 14), (4, 9), (13, 8), (19, 11), (20, 16), (16, 20), (8, 20), (1, 18)], BONE, BONE_D)], **kw)
+    hp = os.path.join(SERPENT_DIR, 'test/head.png')
+    h = np.array(Image.open(hp))
+    ex, ey = 6 - parts['head']['at'][0], 13 - parts['head']['at'][1]
+    h[ey, ex] = (60, 200, 230, 255)
+    h[ey, ex + 1] = (*OUT, 255)
+    Image.fromarray(h).save(hp)
+    for side, (cx, cy) in (('R', pv['arm_R']), ('L', pv['arm_L'])):
+        c, d = (BONE, BONE_D) if side == 'R' else (BONE_D, (160, 148, 122))
+        parts[f'arm_{side}'] = put(SERPENT_DIR, f'test/arm_{side}', [(limb((cx, cy), (cx - 5, cy + 6), 3, 3), c, d),
+                                                                       ([(cx - 8, cy + 5), (cx - 4, cy + 4), (cx - 3, cy + 7), (cx - 9, cy + 9)], c, d)], **kw)
+    rig['bodies']['test'] = parts
+    open(SERPENT_JSON, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '\n')
+    print('뱀형: 임시 그림', len(parts), '조각')
+
+
 if __name__ == '__main__':
     humanoid()
     beast()
+    serpent()
