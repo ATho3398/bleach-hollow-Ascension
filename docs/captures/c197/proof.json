@@ -1,0 +1,283 @@
+{
+ "tutorialOpen": 1,
+ "tutorialPractice": {
+  "sel": "칸1",
+  "blocks": 1,
+  "dev": [
+   {
+    "l": "위",
+    "x": 20,
+    "y": 135,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "아래",
+    "x": 20,
+    "y": 203,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "확정",
+    "x": 766,
+    "y": 133,
+    "w": 64,
+    "vis": "visible"
+   },
+   {
+    "l": "취소",
+    "x": 776,
+    "y": 213,
+    "w": 44,
+    "vis": "visible"
+   }
+  ]
+ },
+ "tutorialPress": {
+  "before": 1,
+  "after": 0
+ },
+ "expStart": {
+  "sel": "칸1",
+  "blocks": 0,
+  "dev": [
+   {
+    "l": "위",
+    "x": 20,
+    "y": 135,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "아래",
+    "x": 20,
+    "y": 203,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "확정",
+    "x": 766,
+    "y": 133,
+    "w": 64,
+    "vis": "visible"
+   },
+   {
+    "l": "취소",
+    "x": 776,
+    "y": 213,
+    "w": 44,
+    "vis": "visible"
+   }
+  ]
+ },
+ "roles": [
+  "bha-panel bha-v2role bha-v2role--guard is-disabled|true|막기",
+  "bha-panel bha-v2role bha-v2role--item is-ready|false|소모품×3",
+  "bha-panel bha-v2role bha-v2role--gear is-disabled|true|장비",
+  "bha-panel bha-v2rel is-disabled is-unique|true|만해○ 임시게이지 27%"
+ ],
+ "expBlocks": {
+  "sel": "칸1",
+  "blocks": 2,
+  "dev": [
+   {
+    "l": "위",
+    "x": 20,
+    "y": 135,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "아래",
+    "x": 20,
+    "y": 203,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "확정",
+    "x": 766,
+    "y": 133,
+    "w": 64,
+    "vis": "visible"
+   },
+   {
+    "l": "취소",
+    "x": 776,
+    "y": 213,
+    "w": 44,
+    "vis": "visible"
+   }
+  ]
+ },
+ "expDown": {
+  "sel": "칸2",
+  "blocks": 2,
+  "dev": [
+   {
+    "l": "위",
+    "x": 20,
+    "y": 135,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "아래",
+    "x": 20,
+    "y": 203,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "확정",
+    "x": 766,
+    "y": 133,
+    "w": 64,
+    "vis": "visible"
+   },
+   {
+    "l": "취소",
+    "x": 776,
+    "y": 213,
+    "w": 44,
+    "vis": "visible"
+   }
+  ]
+ },
+ "expUpSeq": [
+  "칸1",
+  "회복약 — 최대 체력 25% 회복 ("
+ ],
+ "expItem": {
+  "before": "소모품×3",
+  "after": "소모품씀"
+ },
+ "selCellInfo": "<div class=\"bha-v2cell bha-block--empty bha-sel\" role=\"listitem\" data-sc=\"block.1\" data-dev-order=\"2\" data-dev-press=\"\" data-dev-start=\"\" style=\"grid-area: 1 / 1;\" aria-current=\"true\"><div class=\"bha-",
+ "expPress": {
+  "before": 3,
+  "after": 2,
+  "fire": 1,
+  "sel": "칸1",
+  "used0": 0
+ },
+ "practiceStart": {
+  "sel": "칸1",
+  "blocks": 2,
+  "dev": [
+   {
+    "l": "위",
+    "x": 20,
+    "y": 135,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "아래",
+    "x": 20,
+    "y": 203,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "확정",
+    "x": 766,
+    "y": 133,
+    "w": 64,
+    "vis": "visible"
+   },
+   {
+    "l": "취소",
+    "x": 776,
+    "y": 213,
+    "w": 44,
+    "vis": "visible"
+   }
+  ]
+ },
+ "practiceDown": {
+  "sel": "칸2",
+  "blocks": 2,
+  "dev": [
+   {
+    "l": "위",
+    "x": 20,
+    "y": 135,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "아래",
+    "x": 20,
+    "y": 203,
+    "w": 52,
+    "vis": "visible"
+   },
+   {
+    "l": "확정",
+    "x": 766,
+    "y": 133,
+    "w": 64,
+    "vis": "visible"
+   },
+   {
+    "l": "취소",
+    "x": 776,
+    "y": 213,
+    "w": 44,
+    "vis": "visible"
+   }
+  ]
+ },
+ "expDownLoop": [
+  "그만두기",
+  "로그",
+  "일시정지",
+  "도움말",
+  "막기 준비됨 — 눌러 0.5초 강공격",
+  "칸1",
+  "칸2",
+  "칸3",
+  "그만두기",
+  "로그",
+  "일시정지",
+  "도움말",
+  "막기 준비됨 — 눌러 0.5초 강공격",
+  "칸1",
+  "칸2",
+  "칸3"
+ ],
+ "backOffBefore": false,
+ "backPauses": 1,
+ "expDev": [
+  {
+   "l": "위",
+   "x": 20,
+   "y": 135,
+   "w": 52,
+   "vis": "visible"
+  },
+  {
+   "l": "아래",
+   "x": 20,
+   "y": 203,
+   "w": 52,
+   "vis": "visible"
+  },
+  {
+   "l": "확정",
+   "x": 766,
+   "y": 133,
+   "w": 64,
+   "vis": "visible"
+  },
+  {
+   "l": "취소",
+   "x": 776,
+   "y": 213,
+   "w": 44,
+   "vis": "visible"
+  }
+ ]
+}

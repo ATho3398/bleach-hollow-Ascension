@@ -70,6 +70,9 @@ describe('전투 화면 연결 (GDD 122장 2~4)', () => {
   it('해방 버튼은 기기 ✓(포인터가 아닌 누름)로도 해방', () => {
     expect(bv).toContain('if (e.detail === 0 && app.isConnected && !stopped && canLiberate(s) && !halted()) queue.push({ type: \'liberate\' });');
   });
+  it('전투 중 뒤로 버튼은 흐리지 않다 (누르면 일시정지)', () => {
+    expect(dev).toContain("back.classList.toggle('is-off', layers.length === 0 && !opts.canCancel() && !battle);");
+  });
   it('뒤로 = 일시정지 그대로', () => {
     expect(bv).toContain('if (top || paused || overlayOpen || s.status !== \'playing\') return false;\n    setPaused(true);');
   });
