@@ -744,7 +744,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const f = familyOf(faction, id);
       if (!f) return null;
       const t = f.tiers[stage - 1];
-      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null };
+      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null };
     },
     nameOf: (e) => {
       if (e.kind !== 'block' || e.damage <= 0) return null;

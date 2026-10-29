@@ -152,6 +152,13 @@
 .bha-afx--ray.bha-afx--look-cero-oscuras { background: linear-gradient(180deg, transparent, var(--bha-fx-cero-oscuras-edge) 12%, var(--bha-fx-cero-oscuras-core) 30%, var(--bha-fx-cero-oscuras-core) 70%, var(--bha-fx-cero-oscuras-edge) 88%, transparent); }
 .bha-afx.bha-afx--look-cero-oscuras .afx-core, :root[data-cos-fx] .bha-afx.bha-afx--look-cero-oscuras[data-side] .afx-core { fill: var(--bha-fx-cero-oscuras-core); }
 .bha-afx.bha-afx--look-cero-oscuras .afx-core-s, :root[data-cos-fx] .bha-afx.bha-afx--look-cero-oscuras[data-side] .afx-core-s { stroke: var(--bha-fx-cero-oscuras-core); }
+/* 사신 귀도 단계 연출 (GDD 118장 3): 파도 2 백뢰 = 하얀 번개(지그재그 빛줄기), 파도 금강폭 = 큰 폭발(주황 불덩이 + 꽉 찬 폭발 구). 기술 고유색이라 공격 이펙트 색 꾸밈보다 우선 */
+.bha-afx.bha-afx--look-byakurai, :root[data-cos-fx] .bha-afx.bha-afx--look-byakurai[data-side] { color: var(--bha-text-1); filter: drop-shadow(0 0 3px var(--bha-text-1)) drop-shadow(0 0 10px var(--bha-lin-c)); }
+.bha-afx--ray.bha-afx--look-byakurai { background: var(--bha-text-1); clip-path: polygon(0 30%, 18% 5%, 30% 50%, 46% 0, 60% 55%, 74% 10%, 88% 45%, 100% 25%, 100% 65%, 88% 85%, 74% 50%, 60% 95%, 46% 40%, 30% 90%, 18% 45%, 0 70%); }
+.bha-afx.bha-afx--look-kongobaku, :root[data-cos-fx] .bha-afx.bha-afx--look-kongobaku[data-side] { color: var(--bha-chain3); filter: drop-shadow(0 0 4px var(--bha-chain3)) drop-shadow(0 0 14px var(--bha-warn)); }
+.bha-afx--shot.bha-afx--look-kongobaku svg { transform: scale(1.5); }
+.bha-afx--shot.bha-afx--look-kongobaku circle:first-child { fill: currentColor; fill-opacity: .55; }
+.bha-afx.bha-afx--look-kongobaku .afx-core, :root[data-cos-fx] .bha-afx.bha-afx--look-kongobaku[data-side] .afx-core { fill: var(--bha-warn); }
 .bha-afx-name {
   position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
   font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-3xl); line-height: var(--bha-lh-tight);

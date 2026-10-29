@@ -2,7 +2,7 @@
 // 위쪽은 DOM 이 없는 순수 함수(사건 → 강도 단계, 연출 큐, 애니메이션 계획)라 단위 테스트한다 (tests/attackfx.test.ts).
 // 아래쪽 attackFx() 가 Web Animations 로 그림 한 장을 움직인다. 엔진 틱·결과는 건드리지 않고, 사건이 났을 때 연출만 얹는다.
 import type { CombatEvent } from '../engine/combat';
-import type { AttackFxKind } from '../engine/faction';
+import type { AttackFxKind, FamilyMotionKind } from '../engine/faction';
 import type { Locomotion } from '../engine/locomotion';
 import type { AnimAction } from '../data/art/anim';
 import type { AnimPlayer } from './bha/animPlayer';
@@ -31,12 +31,14 @@ export interface AttackCue {
   fam?: string;
   /** 단계 고유 모양·색 (C.63, 종족 설정 tiers[].fxLook): bha-afx--look-<id> */
   look?: string;
+  /** 계열 몸동작 (GDD 118장 2, 종족 설정 families[].motion): 종이인형은 이 동작 묶음에서 고른다. 없으면 특수 동작 그대로 */
+  motion?: FamilyMotionKind;
   /** 즉발 (GDD 117장 3, 블록 공격): 타격(맞음 반응·자국)을 맨 앞에 보이고 몸 움직임은 뒤따른다. 재생 중인 기본 공격 연출을 기다리지 않는다 */
   instant?: boolean;
 }
 
 /** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
-export type FamilyFxSpec = AttackFxKind | { fx: AttackFxKind; look?: string | null };
+export type FamilyFxSpec = AttackFxKind | { fx: AttackFxKind; look?: string | null; motion?: FamilyMotionKind | null };
 
 /** 단계의 세기 순위 (클수록 세다) */
 export const tierRank = (t: AttackTier): number => ATTACK_TIER_ORDER.indexOf(t);
@@ -67,6 +69,7 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
         cue.stage = stage;
         cue.fam = e.family!;
         if (typeof spec === 'object' && spec?.look) cue.look = spec.look;
+        if (typeof spec === 'object' && spec?.motion) cue.motion = spec.motion;
       }
       return cue;
     }
@@ -610,7 +613,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 타격 순간은 애니의 hit 프레임. 동작이 없으면 아래 기존 연출 그대로
     // 즉발(블록 공격, GDD 117장 3): 애니는 타격 순간부터(휘두른 끝 → 되돌아옴), 맞음 반응은 0ms
     const act = from.anim ? animActionOf(cue, (a) => from.anim!.has(a)) : null;
-    const clipPlay = act ? from.anim!.play(act, { fromHit: !!cue.instant }) : null;
+    const clipPlay = act ? from.anim!.play(act, { fromHit: !!cue.instant, motion: cue.motion }) : null;
     if (mode === 'flash') {
       // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰)
       const at = clipPlay?.hitAtMs ?? 0;

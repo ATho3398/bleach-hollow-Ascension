@@ -18,6 +18,10 @@ export const FAMILY_TIERS = 3;
 export const ATTACK_FX_KINDS = ['claw', 'bite', 'shot', 'slash', 'impact', 'beam'] as const;
 export type AttackFxKind = (typeof ATTACK_FX_KINDS)[number];
 
+/** 계열 블록의 캐릭터 몸동작 (GDD 118장 2): strike = 맨손 타격(주먹·발차기) / slash = 칼 휘두르기 / cast = 손에서 쏘기(귀도). 없으면 특수 동작(skill) 그대로 */
+export const FAMILY_MOTION_KINDS = ['strike', 'slash', 'cast'] as const;
+export type FamilyMotionKind = (typeof FAMILY_MOTION_KINDS)[number];
+
 /** 체인 묶음 상한 기본값 (GDD 19-2): 종족 설정 maxChain 이 없을 때 */
 export const DEFAULT_MAX_CHAIN = 3;
 
@@ -39,9 +43,11 @@ export interface FamilyConfig {
   name: string;
   /** 블록 위에 쓰는 한 글자 */
   abbr: string;
-  /** 공격 연출 종류 (GDD 19-2): 조=claw·교=bite·탄=shot / 참=slash·권=impact·귀=beam */
+  /** 공격 연출 종류 (GDD 19-2): 조=claw·교=bite·탄=shot / 참=slash·권=impact·귀=beam(단계별 tiers[].fx 로 바뀔 수 있다) */
   fx: AttackFxKind;
-  /** 공격 분류 (GDD 20-1): 물리(조·참) / 특수(탄·귀) / 혼합(교·권). 피해 계산에 쓰는 능력치를 정한다 */
+  /** 캐릭터 몸동작 (GDD 118장 2): 사신 권=strike·참=slash·귀=cast. 없으면 특수 동작 그대로(호로) */
+  motion?: FamilyMotionKind;
+  /** 공격 분류 (GDD 20-1·118장 2): 물리(조·권) / 특수(탄·귀) / 혼합(교·참). 피해 계산에 쓰는 능력치를 정한다 */
   category: AttackCategory;
   /** 1·2·3단계 기술 */
   tiers: [FamilySkillConfig, FamilySkillConfig, FamilySkillConfig];
@@ -382,6 +388,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!isString(x.name)) errors.push(`families[${i}].name: 비어 있지 않은 문자열`);
       if (!isString(x.abbr) || Array.from(x.abbr).length !== 1) errors.push(`families[${i}].abbr: 한 글자`);
       if (!(ATTACK_FX_KINDS as readonly unknown[]).includes(x.fx)) errors.push(`families[${i}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
+      if (x.motion !== undefined && !(FAMILY_MOTION_KINDS as readonly unknown[]).includes(x.motion)) errors.push(`families[${i}].motion: ${FAMILY_MOTION_KINDS.join(' | ')}`);
       if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`families[${i}].category: ${ATTACK_CATEGORIES.join(' | ')}`);
       const tiers = x.tiers;
       if (!Array.isArray(tiers) || tiers.length !== FAMILY_TIERS) errors.push(`families[${i}].tiers: 기술 ${FAMILY_TIERS}개`);

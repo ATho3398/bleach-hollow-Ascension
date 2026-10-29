@@ -2,6 +2,7 @@
 // 동작마다 있는 것만 돈다 — 없는 동작은 play()가 null 을 돌려주니 호출하는 쪽이 기존 연출(몸통박치기·흔들림·이동 방식)을 쓴다.
 // 좌우 반전·윤곽·색조는 <img> 의 CSS 가 하므로 그대로 따라온다(src 만 바꾼다). 코어(createAnimPlayer)는 DOM 없이 돌아 테스트한다.
 import { clipDurationMs, clipHitMs, frameAt, hasAnims, type AnimAction, type AnimClip, type AnimSet } from '../../data/art/anim';
+import type { FamilyMotionKind } from '../../engine/faction';
 import type { ArtUrls } from '../../data/art/manifest';
 import { HUMANOID, MOTION_SETS, MOTIONS } from '../../data/art/rig/pose';
 import { bindRigAnim, RIG_ACTIONS } from './rigAnim';
@@ -18,6 +19,8 @@ export interface PlayOptions {
   onEnd?: () => void;
   /** 타격 순간부터 재생 (GDD 117장 3, 블록 즉발): 휘두른 끝에서 시작해 되돌아온다. onHit 은 바로. 돌려주는 길이는 남은 길이, 타격 시각 0 */
   fromHit?: boolean;
+  /** 계열 몸동작 (GDD 118장 2): 종이인형은 이 묶음의 동작을 쓴다(없으면 action 그대로). 프레임 그림은 무시 */
+  motion?: FamilyMotionKind;
 }
 
 export interface AnimPlayer {

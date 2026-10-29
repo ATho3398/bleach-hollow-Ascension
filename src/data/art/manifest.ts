@@ -62,17 +62,18 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'char.hollow': {},
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
-  // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4)
-  'char.shinigami': { rig: 'shinigami-base', scale: 1.33, offsetY: 0 },
+  // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
+  // 방(홈)은 다시 C.189 키 1.78, 걷기·전투 필드만 1.33 (C.192, GDD 118장 1: "홈에서 사신, 아란칼 크기는 원래가 좋아. 모험이랑 전투할 떄 사이즈는 지금이 딱 좋음")
+  'char.shinigami': { rig: 'shinigami-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 사신 1단계(혼백)·2단계(학생) = 진앙영술원 학생복 (사용자 2026-10-29 "기본적으로 혼백, 학생은 진앙영술원 학생복으로 시작", GDD 116장 2). 3단계부터 종족 공통(사신복)
-  'char.shinigami.1': { rig: 'shinigami-student', scale: 1.33, offsetY: 0 },
-  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.33, offsetY: 0 },
+  'char.shinigami.1': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
+  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
   // 걷기·전투 필드는 1.5배 (C.176, GDD 106장 3: 2배면 그림 높이가 1단계의 약 1.26배·폭 1.4배로 필드 위로 넘쳤다 → 높이·폭이 1단계와 비슷하게)
   'char.hollow.2': { scale: 2, fieldScale: 1.5, locomotion: 'walk' },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
-  'char.hollow.5': { rig: 'arrancar-base', scale: 1.33, offsetY: 0 },
+  'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   'prop.door': {},
   'prop.altar': {},
   'prop.book': {},

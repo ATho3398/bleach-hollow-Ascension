@@ -1,4 +1,4 @@
-// 물공 특수 블록·특성 데이터 (GDD 49장·49-1, C.103): 5단계 물리(조·참) 단일 속성 진화체의 기본 공격 블록 3계열이 전부 그 속성 물공 블록으로 바뀌고 특성 1칸이 더해진다.
+// 물공 특수 블록·특성 데이터 (GDD 49장·49-1, C.103): 5단계 물리(조·권) 단일 속성 진화체의 기본 공격 블록 3계열이 전부 그 속성 물공 블록으로 바뀌고 특성 1칸이 더해진다.
 // 효과 종류(effect)는 엔진이 알고, 이름·설명·발동 글자는 여기(종족별 `{ hollow, shinigami }` 또는 `{ "*" }`), 수치는 BALANCE.provisional.physBlocks. 종족 분기 없음.
 import { ELEMENT_IDS } from '../elements';
 import { pickFaction, type PerFaction } from '../schema';

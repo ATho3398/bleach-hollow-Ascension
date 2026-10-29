@@ -242,7 +242,7 @@ describe('체인 이펙트·세로 오스큐라스 (28장 11~13번)', () => {
     const c = H.families.find((f) => f.id === 'family-c')!;
     expect(c.tiers[2]).toMatchObject({ fx: 'beam', fxLook: 'cero-oscuras' });
     expect(c.tiers[0].fx).toBeUndefined();
-    for (const f of S.families) for (const t of f.tiers) expect(t.fxLook).toBeUndefined();
+    for (const f of S.families) for (const t of f.tiers) if (f.abbr !== '귀') expect(t.fxLook).toBeUndefined(); // 사신 귀도는 118장 3(C.192)에서 단계 연출이 생김 — c192
     const spec = (id: string, stage: number) => {
       const f = H.families.find((x) => x.id === id)!;
       const t = f.tiers[stage - 1];

@@ -1,8 +1,10 @@
 // 종이인형을 게임 캐릭터 그림으로 (GDD 96장 30): 프레임 애니 재생기(animPlayer)와 같은 모양(AnimPlayer)으로 동작을 받아
 // 뼈대 동작(motions.json)을 돌리고, 매 순간 캔버스에 그려 그 <img> 의 src 로 넣는다 — 좌우 반전·크기·윤곽 같은 기존 CSS 가 그대로 따라온다.
 // 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 무작위, 특수 skill·skill2 무작위(같은 것 두 번 연속까지, GDD 117장 4), 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
+// 계열 블록은 계열 몸동작(PlayOptions.motion, 종족 설정 families[].motion) 묶음에서 고른다(GDD 118장 2).
 // 코어(createRigPlayer)는 DOM 없이 돌아 테스트한다.
 import type { AnimAction } from '../../data/art/anim';
+import type { FamilyMotionKind } from '../../engine/faction';
 import { boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose, type Motion, type MotionSets, type Pose, type Rig } from '../../data/art/rig/pose';
 import type { AnimPlayer, PlayOptions } from './animPlayer';
 
@@ -13,6 +15,13 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   attack: ['attack', 'attack2'],
   skill: ['skill', 'skill2'],
   hit: ['hit'],
+};
+
+/** 계열 몸동작 → 종이인형 동작 (GDD 118장 2): 맨손 타격 = 주먹·발차기, 칼 = 내려베기·수평 베기·찌르기, 귀도 = 손에서 쏘기. 묶음에 있는 동작이 하나도 없으면 게임 동작(RIG_ACTIONS) 그대로 */
+export const FAMILY_RIG_MOTIONS: Readonly<Record<FamilyMotionKind, readonly string[]>> = {
+  strike: ['punch', 'kick'],
+  slash: ['attack', 'attack2', 'skill2'],
+  cast: ['skill'],
 };
 
 /** 같은 변형을 연속으로 몇 번까지 허용하나 (GDD 117장 4: 두 번까지, 세 번째는 다른 것) */
@@ -37,7 +46,8 @@ export interface RigPlayer extends AnimPlayer {
 
 export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake: () => void = () => {}, rng: () => number = Math.random): RigPlayer {
   const ids = (a: AnimAction) => (RIG_ACTIONS[a] ?? []).filter((id) => motions[id]);
-  const recent: Partial<Record<AnimAction, number[]>> = {};
+  const byMotion = (m: FamilyMotionKind | undefined) => (m ? FAMILY_RIG_MOTIONS[m].filter((id) => motions[id]) : []);
+  const recent: Record<string, number[]> = {};
   let loopAction: AnimAction | null = null;
   let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean } | null = null;
   let t = 0;
@@ -55,9 +65,10 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       wake();
     },
     play(a, o = {}) {
-      const list = ids(a);
+      const fam = byMotion(o.motion);
+      const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
-      const hist = (recent[a] ??= []);
+      const hist = (recent[fam.length ? `m:${o.motion}` : a] ??= []);
       const k = pickVariant(list.length, hist, rng);
       hist.push(k);
       if (hist.length > VARIANT_REPEAT_MAX) hist.shift();

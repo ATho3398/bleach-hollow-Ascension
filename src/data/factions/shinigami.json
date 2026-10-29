@@ -93,7 +93,8 @@
       "name": "참(斬)",
       "abbr": "참",
       "fx": "slash",
-      "category": "physical",
+      "motion": "slash",
+      "category": "mixed",
       "tiers": [
         {
           "name": "베기",
@@ -119,7 +120,8 @@
       "name": "권(拳)",
       "abbr": "권",
       "fx": "impact",
-      "category": "mixed",
+      "motion": "strike",
+      "category": "physical",
       "tiers": [
         {
           "name": "타격",
@@ -145,18 +147,24 @@
       "name": "귀(鬼)",
       "abbr": "귀",
       "fx": "beam",
+      "motion": "cast",
       "category": "special",
       "tiers": [
         {
-          "name": "파도의 1 쇼",
+          "name": "파도 1 충",
+          "fx": "shot",
           "multiplier": 1
         },
         {
-          "name": "파도의 31 적화포",
+          "name": "파도 2 백뢰",
+          "fx": "beam",
+          "fxLook": "byakurai",
           "multiplier": 2.2
         },
         {
-          "name": "파도의 63 뇌오포",
+          "name": "파도 금강폭",
+          "fx": "shot",
+          "fxLook": "kongobaku",
           "multiplier": 3.6,
           "bonus": {
             "kind": "stagger",

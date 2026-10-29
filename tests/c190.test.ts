@@ -30,12 +30,13 @@ describe('C.190 종이인형 위치 (116장 1)', () => {
 });
 
 describe('C.190 크기 ×0.75 (116장 4)', () => {
-  it('종이인형 자리 전부 같은 배율, C.189 의 키(1.32 × 152/113)의 0.75배, 위치 보정 없음', () => {
+  it('종이인형 자리 전부 같은 배율, 걷기·전투 필드 = C.189 의 키(1.32 × 152/113)의 0.75배, 방 = C.189 키 (C.192, 118장 1), 위치 보정 없음', () => {
     const rigs = Object.values(ART_MANIFEST).filter((e) => e.rig);
     expect(rigs.length).toBeGreaterThanOrEqual(4);
     const before = 1.32 * HUMANOID.view!.rect[2] / 113;
     for (const e of rigs) {
-      expect(e.scale!).toBeCloseTo(before * 0.75, 1);
+      expect(e.fieldScale!).toBeCloseTo(before * 0.75, 1);
+      expect(e.scale!).toBeCloseTo(before, 1);
       expect(e.offsetY ?? 0).toBe(0);
     }
   });
