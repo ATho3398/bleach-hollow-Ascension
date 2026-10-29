@@ -47,16 +47,14 @@
  "bodyJoints": {
   "arrancar_f": {
    "pivots": {
-    "arm_R": [22, 32],
-    "forearm_R": [29, 41],
-    "foot_R": [22, 75],
-    "head": [15, 16]
+    "hair_back": [24, 9],
+    "head": [13, 15]
    },
    "rot": {
-    "forearm_R": -15,
-    "torso": 2,
-    "head": -5,
-    "arm_R": 14
+    "arm_R": 6,
+    "forearm_R": -6,
+    "leg_R": 2,
+    "foot_R": -2
    }
   },
   "female": {
@@ -140,22 +138,22 @@
   "arrancar-base-f": {
    "body": "arrancar_f",
    "parts": {
-    "torso": { "art": "arrancar_f/torso", "at": [7, 25] },
-    "arm_L": { "art": "arrancar_f/arm_L", "at": [4, 29] },
-    "arm_R": { "art": "arrancar_f/arm_R", "at": [21, 29] },
-    "leg_L": { "art": "arrancar_f/leg_L", "at": [5, 51] },
-    "leg_R": { "art": "arrancar_f/leg_R", "at": [13, 49] },
-    "head": { "art": "head_bald", "at": [6, 9] },
-    "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
-    "foot_R": { "art": "bare/foot_R", "at": [19, 72] },
-    "thumb_L": { "art": "bare/thumb_L", "at": [6, 51] },
-    "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38] }
+    "torso": { "art": "student_f/torso", "at": [9, 25] },
+    "arm_L": { "art": "student_f/arm_L", "at": [2, 29] },
+    "arm_R": { "art": "student_f/arm_R", "at": [21, 29] },
+    "leg_L": { "art": "student_f/leg_L", "at": [6, 51] },
+    "leg_R": { "art": "student_f/leg_R", "at": [15, 49] },
+    "head": { "art": "shinigami/head", "at": [7, 10] },
+    "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
+    "foot_R": { "art": "shinigami/foot_R", "at": [20, 72] },
+    "thumb_L": { "art": "shinigami/thumb_L", "at": [6, 51] },
+    "forearm_R": { "art": "student_f/forearm_R", "at": [20, 37] }
    },
    "layers": {
     "weapon": { "art": "weapon/sword", "at": [0, 50] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] },
-    "hair": { "art": "arrancar_f/hair", "at": [1, 1] },
-    "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1] }
+    "hair": { "art": "student/hair", "at": [-1, 0] },
+    "hair_back": { "art": "student_f/hair_back", "at": [21, 2] }
    }
   },
   "bare-base": {
