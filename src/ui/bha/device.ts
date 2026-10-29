@@ -280,7 +280,10 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     battle = !!battleEl && !ov && (!layer || pass);
     if (explicit && !explicit.scope.isConnected) explicit = null;
     let next: SelectItem[];
-    if (pass) next = [...scanItems(battleEl!, lcd), ...scanItems(layer!.el, lcd)];
+    // 각본 전투 카드 (GDD 123장 5, C.199): data-dev-only 가 있으면 그 선택자에 맞는 전투 대상(막기 버튼·블록 칸)만
+    const only = pass ? layer!.el.dataset.devOnly : undefined;
+    if (pass && only) next = scanItems(battleEl!, lcd).filter((i) => i.el.matches(only));
+    else if (pass) next = [...scanItems(battleEl!, lcd), ...scanItems(layer!.el, lcd)];
     else if (layer) next = scanItems(layer.el, lcd);
     else if (ov) next = scanItems(ov, lcd);
     else if (battle) next = scanItems(battleEl!, lcd);
@@ -345,7 +348,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   };
   const mo = new MutationObserver(schedule);
   // hidden·disabled 가 바뀌어도(진화 연출 줄 → 결과 전환, 비활성 버튼) 항목을 다시 센다 (class 는 보지 않는다: 하이라이트 자신의 변화로 되돌아오지 않게)
-  mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled', 'data-dev-pass', 'data-dev-off'] });
+  mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled', 'data-dev-pass', 'data-dev-off', 'data-dev-only'] });
   // 창 크기·방향이 바뀌면 화면 속 선택 항목을 다시 센다 (T-2, 세로 회전 출력은 T-3)
   window.addEventListener('resize', schedule);
   // C.139 (GDD 88장 9): 키보드 Tab 으로 초점이 옮겨 가면(모달 초점 순환) 선택도 따라간다 — 하이라이트가 둘로 갈라지지 않게.

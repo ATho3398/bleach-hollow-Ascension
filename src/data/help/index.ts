@@ -42,6 +42,8 @@ export interface ScreenHelp {
 }
 
 export const TUTORIAL_SCENES: readonly TutorialScene[] = tutorialJson.scenes;
+/** 첫 원정 첫 전투 각본의 설명 카드 (GDD 123장 5, C.199): 각본 단계 id(engine/combat/script) → 장면 */
+export const SCRIPT_SCENES: Readonly<Record<string, TutorialScene>> = Object.fromEntries(tutorialJson.script.map((x) => [x.id, x as TutorialScene]));
 export const GLOSSARY: readonly GlossaryTerm[] = glossaryJson.terms;
 export const SCREEN_HELPS: readonly ScreenHelp[] = screensJson.screens;
 /** 한 번만 뜨는 안내 (C.120, GDD 64·67장): 안내 id → 장면 ('first-absorb' 는 튜토리얼 흡수 화면 위 장면, 저장 상태 없음) */
@@ -63,7 +65,7 @@ export function guideVars(f: FactionConfig): Record<string, string> {
 }
 
 /** 튜토리얼 장면 targets 가 가리킬 수 있는 전투 화면 요소 id (battleView 가 data-help 로 단다) */
-export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.liberation'] as const; // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
+export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.liberation', 'battle.guard', 'battle.hp'] as const; // battle.guard·battle.hp = 각본 전투 카드(C.199) // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
 
 const COMBAT = BALANCE.provisional.combat;
 const LIB = BALANCE.provisional.liberation;

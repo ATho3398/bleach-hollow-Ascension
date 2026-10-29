@@ -5,7 +5,7 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { DEFAULT_GENDER, genderLookNote, setActiveGender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
-import { buildBattleRecord, createCombat, liberationStartGaugeOf, type CombatState } from '../engine/combat';
+import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
@@ -307,7 +307,8 @@ export function startApp(host: HTMLElement): void {
       applyDifficultyToParams(params, star);
       params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
     }
-    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params });
+    // 다시 보기도 첫 원정 첫 전투와 같은 각본 전투 (GDD 123장 5, C.199 — 옛 '직접 해 보기' 대체)
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params, script: newCombatScript() });
     setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save?.evolution.tierIndex,

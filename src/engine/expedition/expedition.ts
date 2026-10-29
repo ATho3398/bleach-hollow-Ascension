@@ -8,7 +8,7 @@ import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, gateSpecialEnemies, pickFromPool, specialEnemyGate } from '../enemyPool';
 import { STAT_IDS, type EnemyDef, type EnvironmentPreset, type StatId } from '../../data/schema';
 import { deckTilesFor, getTile } from '../../data/tiles';
-import { buildBattleRecord, createCombat, liberationStartGaugeOf, type CombatParams, type CombatState } from '../combat';
+import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
@@ -904,7 +904,8 @@ export function startBattle(exp: ExpeditionState): CombatState {
   const boss = exp.pending.boss;
   // 이어 온 체력 (GDD 107장 1번): 함정의 시작 체력 감소는 이어 온 체력에 곱한다
   const params = { ...exp.pending.params, playerStartHpFraction: (exp.pending.params.playerStartHpFraction ?? 1) * hpFractionOf(exp) };
-  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params, ...(boss ? { boss: bossSetupOf(boss) } : {}) });
+  // 첫 원정 튜토리얼의 전투 = 각본 전투 (GDD 123장 5, C.199)
+  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params, ...(boss ? { boss: bossSetupOf(boss) } : {}), ...(exp.tutorial ? { script: newCombatScript() } : {}) });
 }
 
 /** 지금 이어 온 체력 비율 (GDD 107장): 옛 중간 저장에 없으면 1 */

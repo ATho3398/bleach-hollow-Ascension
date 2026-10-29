@@ -13,8 +13,10 @@ import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
   canGuard, canUseGear, canUseItem, halted as combatHalted, voidChanceOf,
+  scriptAck, scriptPrompt, scriptStep, SCRIPT_STAGES,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
+import { SCRIPT_SCENES } from '../data/help';
 import { riskText } from '../data/help/riskText';
 import { numLine, SECTION } from '../data/help/textFormat';
 import { infoTip } from './bha/infoTip';
@@ -347,6 +349,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   const enemyHp = hpBar('foe', '적 체력', hpNumbers(s.enemy.hp, s.enemy.maxHp).now, hpNumbers(s.enemy.hp, s.enemy.maxHp).max);
   const playerHp = hpBar('hp', '내 체력', hpNumbers(s.player.hp, s.player.maxHp).now, hpNumbers(s.player.hp, s.player.maxHp).max);
+  playerHp.root.dataset.help = 'battle.hp'; // 각본 전투 카드 대상 (C.199)
   setHpBar(enemyHp, s.enemy.hp, s.enemy.maxHp);
   setHpBar(playerHp, s.player.hp, s.player.maxHp);
   const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement): HTMLElement => {
@@ -460,6 +463,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     return { root: b, meta };
   };
   const guardBtn = actBtn('guard', 'i-guard', labels.role.guard);
+  guardBtn.root.dataset.help = 'battle.guard'; // 각본 전투 카드 대상 (C.199)
   // 막기 게이지 (0 → 100%): 다 차야 누를 수 있다
   const guardBar = el('span', 'bha-v2role__bar');
   const guardFill = el('i');
@@ -593,7 +597,56 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // ── 튜토리얼·도움말 ──
   let tutorial: TutorialHandle | null = null;
   let tutorialPractice = false;
-  const syncPausedLook = () => app.classList.toggle('is-paused', paused || (tutorialOpen && !tutorialPractice));
+  const syncPausedLook = () => app.classList.toggle('is-paused', paused || (tutorialOpen && !tutorialPractice) || scriptAckOpen);
+
+  // ── 각본 전투 (첫 원정 첫 전투, GDD 123장 5, C.199): 엔진 각본(engine/combat/script)이 멈춰 기다리면 설명 카드를 띄운다.
+  // 설명 카드(ack) = 전투 멈춤 + [다음](✓), 막기·블록 카드 = 전투 시간은 멈춘 채 그 버튼만 누를 수 있다 (기기 ▲▼ 도 그 대상만)
+  const scripted = !!s.script;
+  let scriptReady = false;
+  let scriptCard: TutorialHandle | null = null;
+  let scriptCardStage: string | null = null;
+  let scriptAckOpen = false;
+  /** 설명 카드가 뜨는 단계 (단계 글자 "튜토리얼 n / 7") */
+  const SCRIPT_CARDS = SCRIPT_STAGES.filter((x) => !!SCRIPT_SCENES[x]);
+  const scriptHold = (): boolean => !!s.script && scriptPrompt(s) !== null;
+  const syncScript = (): void => {
+    if (!scripted || !scriptReady) return;
+    const pr = s.status === 'playing' ? scriptPrompt(s) : null;
+    const id = pr?.stage ?? null;
+    if (id === scriptCardStage) return;
+    scriptCard?.dismiss();
+    scriptCard = null;
+    scriptCardStage = id;
+    if (scriptAckOpen) overlayOpen = false;
+    scriptAckOpen = false;
+    const scene = pr ? SCRIPT_SCENES[pr.stage] : undefined;
+    if (!pr || !scene) {
+      syncPausedLook();
+      return;
+    }
+    const ack = pr.wait === 'ack';
+    scriptAckOpen = ack;
+    if (ack) overlayOpen = true;
+    syncPausedLook();
+    scriptCard = tutorialOverlay(faction, {
+      scenes: [scene],
+      name: 'script',
+      pauseLabel: ack ? '튜토리얼 중 — 전투 멈춤' : null,
+      finishLabel: '다음',
+      script: { step: `튜토리얼 ${SCRIPT_CARDS.indexOf(pr.stage) + 1} / ${SCRIPT_CARDS.length}`, waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : undefined },
+      onFinish: (status) => {
+        if (scriptCardStage !== id) return;
+        scriptCard = null;
+        scriptCardStage = null;
+        if (scriptAckOpen) overlayOpen = false;
+        scriptAckOpen = false;
+        if (status === 'completed' && ack) scriptAck(s);
+        syncScript();
+        drawHud();
+        drawTray();
+      },
+    });
+  };
   const startTutorial = () => {
     if (tutorial) return;
     overlayOpen = true;
@@ -708,6 +761,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       stop();
       tutorial?.dismiss(); // 튜토리얼은 본 것으로 치지 않는다 (다음 첫 전투에서 다시)
       tutorial = null;
+      scriptCard?.dismiss();
+      scriptCard = null;
     }
   });
   // 앱 이탈 (GDD 119장 2): 홈키·앱 전환이면 일시정지 창을 띄운다. 돌아와도 자동으로 풀지 않는다(사용자가 [계속]).
@@ -1283,12 +1338,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const dt = Math.min(250, now - last);
     last = now;
     if (s.status === 'playing') {
-      if (halted() !== fxHalted) attack.setPaused((fxHalted = halted()));
-      const f = frameTicks(acc, dt, testSpeedMul(), tickMs, halted()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
+      const frozen = halted() || scriptHold(); // 각본 전투가 기다리는 동안도 시간이 흐르지 않는다 (C.199)
+      if (frozen !== fxHalted) attack.setPaused((fxHalted = frozen));
+      // 각본이 막기·블록을 기다리면 틱 없이 그 입력만 받는다
+      if (scriptHold() && !halted() && queue.length) scriptStep(s, queue.splice(0, queue.length));
+      const f = frameTicks(acc, dt, testSpeedMul(), tickMs, halted() || scriptHold()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
       acc = f.acc;
-      for (let n = 0; n < f.ticks && s.status === 'playing'; n++) {
+      for (let n = 0; n < f.ticks && s.status === 'playing' && !scriptHold(); n++) {
         const usedBefore = s.itemUsed;
-        step(s, queue.splice(0, queue.length));
+        if (s.script) scriptStep(s, queue.splice(0, queue.length));
+        else step(s, queue.splice(0, queue.length));
         // 소모품을 썼으면 보관 개수 −1 (GDD 108장 3번, 부르는 쪽이 세이브에 반영)
         if (!usedBefore && s.itemUsed) opts.battleItem?.onUse();
       }
@@ -1317,8 +1376,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     }
     drawHud();
     drawTray();
+    syncScript();
     if (s.status !== 'playing') {
       stop();
+      scriptCard?.dismiss();
+      scriptCard = null;
+      if (scripted && s.status === 'won') opts.tutorial?.onDone(); // 각본 전투를 끝냈으면 첫 전투 튜토리얼을 본 것으로 (GDD 123장 5)
       if (s.status === 'lost') say({ role: 'cast', icon: 'i-broken', text: s.lossReason === 'timeout' ? '시간 제한을 넘겼다…' : `${labels.defeatState}…` });
       endPress();
       if (tutorialOpen) tutorial?.close(); // 직접 해 보기 중에 끝나면 튜토리얼도 마무리
@@ -1379,7 +1442,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     encounterDone = true;
     hideOverlay();
     overlayOpen = false;
-    if (opts.tutorial) startTutorial();
+    if (scripted) {
+      scriptReady = true;
+      syncScript();
+    } else if (opts.tutorial) startTutorial();
   };
   encounterOverlay.addEventListener('pointerdown', endEncounter);
   window.setTimeout(endEncounter, opts.boss ? 2600 : 1500); // 보스 이름 띠는 조금 더 오래

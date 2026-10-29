@@ -1,0 +1,154 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "cards": [
+        {
+          "title": "일반 공격은 자동",
+          "step": "튜토리얼 1 / 7",
+          "body": "가만히 있어도 내 캐릭터가 적을 자동으로 때린다.먼저 자동 공격 몇 번을 지켜본다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "강공격 예고",
+          "step": "튜토리얼 2 / 7",
+          "body": "적 머리 위 게이지가 다 차면 강공격이 들어온다.막기 게이지가 다 찼을 때 막기 버튼을 누르면 0.5초 동안 강공격을 막는다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "지금 막기",
+          "step": "튜토리얼 3 / 7",
+          "body": "강공격이 곧 들어온다.막기 버튼을 눌러야 전투가 이어진다.",
+          "wait": true,
+          "only": "[data-sc=\"guard\"]",
+          "sel": "guard"
+        },
+        {
+          "title": "막지 못한 강공격",
+          "step": "튜토리얼 4 / 7",
+          "body": "강공격을 그대로 맞아 체력이 바닥 직전이다.이제 블록 바에 블록이 생긴다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "블록: 눌러서 사용",
+          "step": "튜토리얼 5 / 7",
+          "body": "블록 바에 생긴 블록을 누르면 스킬이 나간다.블록을 눌러야 전투가 이어진다.",
+          "wait": true,
+          "only": "[data-sc^=\"block.\"]",
+          "sel": "block.1"
+        },
+        {
+          "title": "같은 블록을 붙여서 체인",
+          "step": "튜토리얼 6 / 7",
+          "body": "완전히 같은 블록이 나란히 붙으면 함께 발동해 체인이 된다(최대 3).같은 블록 3개가 이어서 생긴다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "체인3로 마무리",
+          "step": "튜토리얼 7 / 7",
+          "body": "붙은 블록 하나를 누르면 3개가 한꺼번에 나간다.블록을 눌러 적을 쓰러뜨린다.",
+          "wait": true,
+          "only": "[data-sc^=\"block.\"]",
+          "sel": "block.1"
+        }
+      ],
+      "presses": [
+        "✓",
+        "✓",
+        "✓",
+        "✓",
+        "✓",
+        "✓",
+        "✓"
+      ],
+      "end": {
+        "win": true,
+        "hp": "13 / 108"
+      },
+      "errors": []
+    },
+    {
+      "faction": "shinigami",
+      "cards": [
+        {
+          "title": "일반 공격은 자동",
+          "step": "튜토리얼 1 / 7",
+          "body": "가만히 있어도 내 캐릭터가 적을 자동으로 때린다.먼저 자동 공격 몇 번을 지켜본다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "강공격 예고",
+          "step": "튜토리얼 2 / 7",
+          "body": "적 머리 위 게이지가 다 차면 강공격이 들어온다.막기 게이지가 다 찼을 때 막기 버튼을 누르면 0.5초 동안 강공격을 막는다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "지금 막기",
+          "step": "튜토리얼 3 / 7",
+          "body": "강공격이 곧 들어온다.막기 버튼을 눌러야 전투가 이어진다.",
+          "wait": true,
+          "only": "[data-sc=\"guard\"]",
+          "sel": "guard"
+        },
+        {
+          "title": "막지 못한 강공격",
+          "step": "튜토리얼 4 / 7",
+          "body": "강공격을 그대로 맞아 체력이 바닥 직전이다.이제 블록 바에 블록이 생긴다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "블록: 눌러서 사용",
+          "step": "튜토리얼 5 / 7",
+          "body": "블록 바에 생긴 블록을 누르면 스킬이 나간다.블록을 눌러야 전투가 이어진다.",
+          "wait": true,
+          "only": "[data-sc^=\"block.\"]",
+          "sel": "block.1"
+        },
+        {
+          "title": "같은 블록을 붙여서 체인",
+          "step": "튜토리얼 6 / 7",
+          "body": "완전히 같은 블록이 나란히 붙으면 함께 발동해 체인이 된다(최대 3).같은 블록 3개가 이어서 생긴다.",
+          "wait": false,
+          "only": null,
+          "sel": "bha-btn bha-btn--primary bha-btn--small bha-sel"
+        },
+        {
+          "title": "체인3로 마무리",
+          "step": "튜토리얼 7 / 7",
+          "body": "붙은 블록 하나를 누르면 3개가 한꺼번에 나간다.블록을 눌러 적을 쓰러뜨린다.",
+          "wait": true,
+          "only": "[data-sc^=\"block.\"]",
+          "sel": "block.1"
+        }
+      ],
+      "presses": [
+        "✓",
+        "✓",
+        "✓",
+        "✓",
+        "✓",
+        "✓",
+        "✓"
+      ],
+      "end": {
+        "win": true,
+        "hp": "13 / 108"
+      },
+      "errors": []
+    }
+  ]
+}

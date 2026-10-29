@@ -564,6 +564,25 @@ export interface CombatState {
   /** 받아들여진 입력 기록 (같은 시드로 다시 돌리면 같은 결과) */
   inputs: { tick: number; input: CombatInput }[];
   events: CombatEvent[];
+  /** 각본 전투 (첫 원정 첫 전투, GDD 123장 5, C.199): 있으면 무작위 블록 생성·적 일반 공격·특수 행동·치명타가 꺼지고, 진행은 engine/combat/script 가 정한다 */
+  script?: CombatScript;
+}
+
+/** 각본 전투 상태 (GDD 123장 5). 단계 진행은 engine/combat/script.ts, 전투 엔진은 아래 값만 본다 */
+export interface CombatScript {
+  stage: string;
+  /** 이번 단계에서 센 내 기본 공격 수 · 지난 틱 수 · 생긴 블록 수 */
+  hits: number;
+  ticks: number;
+  spawned: number;
+  /** 지금 받아 주는 입력 종류 (나머지는 applyInput 이 거절) */
+  allow: CombatInput['type'][];
+  /** 막지 못한 강공격이 체력을 이 비율(최대 체력 대비)만 남긴다 */
+  leaveHpFraction: number;
+  /** 이번 단계에서 착탄한 강공격 수 */
+  heavyHits: number;
+  /** true 면 적을 쓰러뜨릴 수 있다 (그 전에는 적 체력이 1 아래로 안 내려간다) */
+  lethal: boolean;
 }
 
 export interface LiberationState {
@@ -592,6 +611,8 @@ export interface CombatSetup {
   params?: Partial<CombatParams>;
   /** 보스전 (GDD 25-3, C.58): 페이즈·기믹·시간 제한. 없으면 일반 전투 */
   boss?: BossSetup;
+  /** 각본 전투 상태 (GDD 123장 5, engine/combat/script newCombatScript) */
+  script?: CombatScript;
 }
 
 /** 보스전 재료 (보스 데이터 + BALANCE.provisional.boss): 엔진은 보스 id 로 분기하지 않고 페이즈 구간·기믹 종류만 읽는다 */
@@ -990,6 +1011,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     ...(setup.boss ? { boss: { setup: { ...setup.boss, phases: setup.boss.phases.map((x) => ({ ...x })) }, phase: 1, attackMult: 1, gimmickTimer: t(gimmickEverySeconds(setup.boss)), seals: 0, ...(setup.boss.gimmick === 'summon' ? { minion: null, summons: 0, minionKills: 0 } : {}) } } : {}),
     inputs: [],
     events: [],
+    ...(setup.script ? { script: { ...setup.script, allow: [...setup.script.allow] } } : {}),
   };
 }
 
@@ -1105,6 +1127,7 @@ export function critChanceOf(p: CombatParams): number {
 
 /** 치명타 판정 한 번: 맞으면 횟수를 세고 true. 확률 0 이면 난수를 쓰지 않는다. bonus = 블록 공격 치명 가산(GDD 84장 3번) */
 function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0): boolean {
+  if (s.script) return false; // 각본 전투는 난수 없이 (GDD 123장 5)
   const chance = who === 'player' ? Math.min(s.params.critChanceMax, critChanceOf(s.params) + bonus) : Math.min(s.params.critChanceMax, Math.max(0, s.params.enemyCritChance));
   if (chance <= 0) return false;
   s.critRng ??= createRng((s.seed ^ CRIT_SEED_SALT) >>> 0);
@@ -1237,6 +1260,7 @@ function basicAttack(s: CombatState): void {
   if ((s.flashHits ?? 0) > 0) s.flashHits!--;
   if (a.current) s.currentHits = (s.currentHits ?? 0) + 1;
   s.basicCount = (s.basicCount ?? 0) + 1;
+  if (s.script) s.script.hits++;
   // 충전 (뇌 특성): 평타 n회마다 블록 1개가 바로 (기본 풀 추첨, 바가 가득이거나 봉인 중이면 없음)
   if (a.charge && a.charge > 0 && s.basicCount % a.charge === 0 && s.sealTicks === 0) {
     const e = drawBasic(s);
@@ -1312,7 +1336,8 @@ function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
     }
     if (amount <= 0) return;
   }
-  s.enemy.hp = Math.max(0, s.enemy.hp - amount);
+  // 각본 전투: 마무리 단계(lethal) 전에는 적이 쓰러지지 않는다
+  s.enemy.hp = Math.max(s.script && !s.script.lethal ? Math.min(s.enemy.hp, 1) : 0, s.enemy.hp - amount);
   if (s.enemy.hp <= 0) {
     s.status = 'won';
     s.finisher = finisher;
@@ -1443,7 +1468,8 @@ function takeDamage(s: CombatState, amount: number): void {
     s.player.shield -= absorbed;
     amount -= absorbed;
   }
-  s.player.hp = Math.max(0, s.player.hp - amount);
+  // 각본 전투는 지지 않는다 (체력 1 아래로 안 내려감)
+  s.player.hp = Math.max(s.script ? Math.min(s.player.hp, 1) : 0, s.player.hp - amount);
   const last = s.params.abilityEffects.lastStand;
   if (s.player.hp <= 0 && last && !s.lastStandUsed) {
     s.lastStandUsed = true;
@@ -1475,10 +1501,23 @@ function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, fami
   return true;
 }
 
+/** 각본 전투 (GDD 123장 5): 스킬 블록 하나를 바 끝에 놓는다. 바가 가득이면 false */
+export function scriptSpawnBlock(s: CombatState, traitId: string, family: string | null): boolean {
+  return spawn(s, 'skill', traitId, family);
+}
+
+/** 각본 전투 (GDD 123장 5): 적이 지금 강공격을 시전한다 (예고 seconds 초) */
+export function scriptHeavyCast(s: CombatState, seconds: number): void {
+  const total = ticksOf(s.params, seconds);
+  s.enemy.cast = { ticks: total, total, hitsLeft: 0 };
+  emit(s, { kind: 'heavy-cast', seconds });
+}
+
 /** 해방 게이지 적립 (GDD 83장, 옛 저장 게이지): 블록을 쓸 때 + 피해를 주고받을 때(95장 B2) 찬다. 해방 중에는 차지 않고(끝나면 0 부터), 100 에서 멈춘다 */
 function addGauge(s: CombatState, v: number): void {
   const lb = s.liberation;
-  if (!s.params.liberationEnabled || liberationActive(s) || lb.gauge >= LIBERATION_GAUGE_MAX) return;
+  // 각본 전투는 해방 게이지가 차지 않는다 (C.199: 해방 버튼이 '준비됨'으로 빛나 체인 안내를 가리지 않게)
+  if (s.script || !s.params.liberationEnabled || liberationActive(s) || lb.gauge >= LIBERATION_GAUGE_MAX) return;
   lb.gauge = Math.min(LIBERATION_GAUGE_MAX, lb.gauge + v);
   if (lb.gauge >= LIBERATION_GAUGE_MAX) emit(s, { kind: 'liberation-ready' });
 }
@@ -1690,6 +1729,7 @@ function chargeButtons(s: CombatState): void {
 /** 입력 하나 적용. 규칙에 맞지 않으면 false (상태 그대로) */
 export function applyInput(s: CombatState, input: CombatInput): boolean {
   if (s.status !== 'playing') return false;
+  if (s.script && !s.script.allow.includes(input.type)) return false;
   let ok = false;
   if (input.type === 'liberate') {
     ok = liberate(s);
@@ -1814,6 +1854,17 @@ function enemyHits(s: CombatState, damage: number): void {
 /** 강공격 착탄: 막기 상태면 크게 줄고(막기 성공), 반사 효과가 있으면 막은 피해를 돌려준다 */
 function resolveHeavy(s: CombatState): void {
   const pattern = s.enemy.def.pattern;
+  const sc = s.script;
+  if (sc) {
+    // 각본 전투 (GDD 123장 5): 강공격 패턴이 없는 적도 각본이 시전시킨다. 못 막으면 체력을 leaveHpFraction 만 남긴다
+    sc.heavyHits++;
+    const guarded = s.guard.ticks > 0;
+    if (guarded) s.guardSuccesses++;
+    const damage = guarded ? 0 : Math.max(0, s.player.hp - s.player.maxHp * sc.leaveHpFraction);
+    emit(s, { kind: 'heavy-hit', damage, guarded, reflected: 0, matchup: enemyMatchup(s), crit: false });
+    enemyHits(s, damage);
+    return;
+  }
   if (!pattern || !('heavyInAttacks' in pattern)) return;
   if (evaded(s)) return;
   const crit = rollCrit(s, 'enemy');
@@ -1902,13 +1953,13 @@ function advanceTick(s: CombatState): void {
     takeDamage(s, d.perTick);
     if (s.status !== 'playing') return;
   }
-  if (p.trayShuffleSeconds > 0 && --s.shuffleTimer <= 0) {
+  if (!s.script && p.trayShuffleSeconds > 0 && --s.shuffleTimer <= 0) {
     s.shuffleTimer = t(p.trayShuffleSeconds);
     shuffleTray(s);
   }
   // 블록 생성 (GDD 84장 6번, C.136): 타이머 하나가 다 되면 출현표에서 하나를 뽑는다. 바가 가득 차거나 봉인 중이거나 막기 중(84장 2번)이면 타이머가 멈춘다.
   // 해방 중(GDD 83장)에는 해방 표(장착 블록, 공허 없음)를 해방 생성 배율만큼 빠른 간격으로
-  if (s.sealTicks === 0 && !halted(s) && s.tray.length < p.trayCapacity && --s.spawnTimer <= 0) {
+  if (!s.script && s.sealTicks === 0 && !halted(s) && s.tray.length < p.trayCapacity && --s.spawnTimer <= 0) {
     s.spawnTimer = t(spawnIntervalOf(s));
     const e = drawSpawn(s, spawnTableOf(p).entries);
     if (e?.kind === 'void') spawn(s, 'void', null);
@@ -1949,7 +2000,8 @@ function advanceTick(s: CombatState): void {
         if (hasSpecialActions(pattern)) e.actionTimer = t(pattern.everySeconds);
       }
     }
-  } else {
+  } else if (!s.script) {
+    // 각본 전투는 적 일반 공격·특수 행동이 없다 — 강공격은 각본이 시전시킨다 (GDD 123장 5)
     if (--e.attackTimer <= 0) {
       e.attackTimer = attackTicks;
       if (!evaded(s)) {

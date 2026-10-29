@@ -40,5 +40,64 @@
       "title": "{liberation.baseName}, 그리고 {absorbActionName}",
       "body": "{liberation.baseName} 게이지가 차면 눌러 해방하고, {tier5}부터는 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
     }
+  ],
+  "script": [
+    {
+      "id": "intro",
+      "targets": [],
+      "title": "일반 공격은 자동",
+      "body": "가만히 있어도 내 캐릭터가 적을 자동으로 때린다.\n먼저 자동 공격 몇 번을 지켜본다."
+    },
+    {
+      "id": "heavy-info",
+      "targets": [
+        "battle.cast"
+      ],
+      "title": "강공격 예고",
+      "body": "적 머리 위 게이지가 다 차면 강공격이 들어온다.\n{roleNames.guard} 게이지가 다 찼을 때 {roleNames.guard} 버튼을 누르면 {guardSeconds}초 동안 강공격을 막는다."
+    },
+    {
+      "id": "guard-now",
+      "targets": [
+        "battle.guard"
+      ],
+      "title": "지금 {roleNames.guard}",
+      "body": "강공격이 곧 들어온다.\n{roleNames.guard} 버튼을 눌러야 전투가 이어진다."
+    },
+    {
+      "id": "hurt",
+      "targets": [
+        "battle.hp"
+      ],
+      "title": "막지 못한 강공격",
+      "body": "강공격을 그대로 맞아 체력이 바닥 직전이다.\n이제 블록 바에 블록이 생긴다."
+    },
+    {
+      "id": "block-use",
+      "targets": [
+        "battle.tray"
+      ],
+      "title": "블록: 눌러서 사용",
+      "sample": [
+        "attack"
+      ],
+      "body": "블록 바에 생긴 블록을 누르면 스킬이 나간다.\n블록을 눌러야 전투가 이어진다."
+    },
+    {
+      "id": "chain-info",
+      "targets": [
+        "battle.tray"
+      ],
+      "title": "같은 블록을 붙여서 {chainName}",
+      "body": "완전히 같은 블록이 나란히 붙으면 함께 발동해 {chainName}이(가) 된다(최대 {chainMax}).\n같은 블록 {chainMax}개가 이어서 생긴다."
+    },
+    {
+      "id": "chain-use",
+      "targets": [
+        "battle.tray"
+      ],
+      "title": "{chainName}{chainMax}로 마무리",
+      "body": "붙은 블록 하나를 누르면 {chainMax}개가 한꺼번에 나간다.\n블록을 눌러 적을 쓰러뜨린다."
+    }
   ]
 }

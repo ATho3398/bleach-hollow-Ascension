@@ -35,6 +35,9 @@ export interface TutorialOverlayOptions {
   vars?: Record<string, string>;
   /** 오버레이 이름 (data-tutorial 값, 없으면 'true') */
   name?: string;
+  /** 각본 전투 카드 (GDD 123장 5, C.199): 건너뛰기·이전 없이 단계 글자(step)만. waitFor 가 있으면 [다음] 없이 전투를 만지게 두고(직접 해 보기와 같음),
+   *  기기 ▲▼ 는 그 선택자에 맞는 전투 대상만 고른다 (GDD 122장) */
+  script?: { step: string; waitFor?: string };
 }
 
 /** 구멍을 대상보다 이만큼(px) 넓게 판다 (HANDOFF 5-4) */
@@ -186,6 +189,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     } });
     prev.disabled = state.index === 0;
     const mustTry = mustWait(scene);
+    const sc = opts.script;
     const next = button({ label: last ? opts.finishLabel ?? '전투 시작' : '다음', variant: 'primary', size: 'small', onClick: () => {
       state = tutorialNext(state);
       if (isTutorialActive(state)) render();
@@ -194,9 +198,12 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     next.append(icon(last ? 'i-play' : 'i-chevron-right'));
     next.disabled = mustTry; // 직접 해 보기는 블록을 하나 써야 넘어간다 (건너뛰기는 언제나 가능)
     nextBtn = next;
-    setPractice(!!scene.practice);
+    setPractice(!!scene.practice || !!sc?.waitFor);
+    if (sc?.waitFor) layer.dataset.devOnly = sc.waitFor;
     const actions = el('div', 'bha-tut__actions');
-    actions.append(skip, prev, next);
+    // 각본 카드: 강제 진행 — 건너뛰기·이전 없음, 기다리는 카드는 [다음]도 없음 (막기·블록을 눌러야 진행)
+    if (!sc) actions.append(skip, prev, next);
+    else if (!sc.waitFor) actions.append(next);
 
     const title = el('h2', 'bha-tut__title');
     title.id = 'tutorial-title';
@@ -205,7 +212,8 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     // 가로 LCD 는 낮아서 단계 표시와 버튼을 한 줄에 둔다 (T-2)
     const top = el('div', 'bha-tut__top');
     const steps = el('div', 'bha-tut__steps');
-    steps.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
+    if (sc) steps.append(el('span', 'bha-tut__step', sc.step));
+    else steps.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
     top.append(steps, actions);
     const body = linesBody(t(scene.practice && practiced && scene.done ? scene.done : scene.body), 'bha-tut__body');
     card.replaceChildren(top, title, body);
@@ -213,7 +221,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     card.style.visibility = 'hidden';
     layout();
     card.style.visibility = 'visible';
-    next.focus({ preventScroll: true });
+    if (!sc?.waitFor) next.focus({ preventScroll: true });
   }
 
   /** 샘플 블록: 블록 바에 생기는 블록의 역할 표시(아이콘 + 색 + 이름)를 카드 안에서 미리 보여 준다 */
