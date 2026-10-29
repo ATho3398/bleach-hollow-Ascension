@@ -27,6 +27,8 @@ export interface ScreenEntry {
   locked?: boolean;
   /** 뒤로(취소)로 이 화면을 닫기 직전에 부른다 (예: 온천에서 나오기, GDD 123장 4) */
   beforeBack?: () => void;
+  /** 홈(방): 더 갈 곳이 없을 때 뒤로 = '처음 화면으로' 확인 (GDD 124장 1). 잠긴 화면·다른 화면에는 붙이지 않는다 (104장 7 버그 재발 방지) */
+  home?: boolean;
 }
 
 export class ScreenStack {
@@ -70,6 +72,17 @@ export class ScreenStack {
   get canBack(): boolean {
     const t = this.top;
     return !!t && !t.locked && this.entries.length > 1;
+  }
+
+  /** 뒤로 규칙 (GDD 124장 1): 한 화면 뒤로('back') → 못 가면 맨 위가 홈 하나뿐일 때만 'home'(처음 화면 확인) → 아니면 'none'. 열린 창·메뉴 닫기는 기기(device)가 먼저 한다 */
+  cancel(): 'back' | 'home' | 'none' {
+    if (this.back()) return 'back';
+    return this.entries.length === 1 && this.top?.home === true && !this.top.locked ? 'home' : 'none';
+  }
+
+  /** 뒤로를 받을 수 있나: 한 단계 뒤로 가거나, 홈이라 처음 화면 확인을 띄울 수 있다 */
+  get canCancel(): boolean {
+    return this.canBack || (this.entries.length === 1 && this.top?.home === true && !this.top.locked);
   }
 
   /** 한 단계 뒤로. 홈뿐이거나 맨 위가 locked 면 false */

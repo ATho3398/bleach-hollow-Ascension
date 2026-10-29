@@ -195,10 +195,20 @@ const SCREENS = [
       await h.explore(n, { tabs: false });
       await h.stable(n, '더보기 열기', () => h.btn('더보기'), /homedock__tray/);
       await h.check(`${n}/더보기`, { reachIgnore: /bha-prop|bha-char|bha-room__status|statusinfo/ });
+      // GDD 124장 2 (C.198): 토글로 닫히는 메뉴(··· 더보기·먹이 줄)에 따로 붙은 [닫기] 없음
+      if (await h.page.locator('.bha-homedock__tray').getByRole('button', { name: '닫기', exact: true }).count()) h.report({ kind: '토글 메뉴 [닫기]', key: '더보기', detail: '··· 다시 누르기·뒤로로 닫히는 메뉴에 [닫기] 버튼이 있다' }, `${n}/더보기`);
       await h.back();
       await h.stable(n, '먹이 줄 열기', () => h.click('.bha-homedock__carebtn--feed'), /homedock__tray/);
       await h.check(`${n}/먹이 줄`, { reachIgnore: /bha-prop|bha-char|bha-room__status|statusinfo/ });
+      if (await h.page.locator('.bha-homedock__tray').getByRole('button', { name: '닫기', exact: true }).count()) h.report({ kind: '토글 메뉴 [닫기]', key: '먹이 줄', detail: '먹이 다시 누르기·뒤로로 닫히는 줄에 [닫기] 버튼이 있다' }, `${n}/먹이 줄`);
       await h.back();
+      // GDD 124장 1 (C.198): 홈에서 뒤로(열린 메뉴 없음) = 처음 화면 확인 창 → [아니오]로 그대로 방
+      await h.back();
+      if (!(await h.has('.bha-lcd [data-dev-layer]'))) h.report({ kind: '홈 뒤로', key: '처음 화면 확인', detail: '홈에서 뒤로를 눌러도 처음 화면 확인 창이 안 뜬다' }, n);
+      else {
+        await h.btn('아니오', { within: '.bha-lcd [data-dev-layer]' });
+        if (!(await h.has('.bha-room'))) h.report({ kind: '홈 뒤로', key: '아니오', detail: '[아니오] 뒤 방이 아니다' }, n);
+      }
       await h.stable(n, '재우기', () => h.click('.bha-homedock__carebtn--sleep'));
       await h.stable(n, '교감', () => h.click('.bha-homedock__carebtn--pet'));
     },
@@ -390,7 +400,7 @@ const SCREENS = [
       await more(h, '테스트');
       await h.btn('+48시간');
       await h.closeLayers();
-      await h.back();
+      if (!(await h.has('.bha-room'))) await h.back(); // 시간 앞당기기는 방으로 간다 — 방에서 뒤로는 처음 화면 확인(GDD 124장 1)
       await h.explore(`${n}/48시간 뒤`, { tabs: false });
       await h.stable(`${n}/48시간 뒤`, '먹이 누르기', () => h.click('.bha-homedock__carebtn--feed'), /homedock__tray/);
     },

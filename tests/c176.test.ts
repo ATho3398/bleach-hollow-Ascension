@@ -26,10 +26,11 @@ function toAbsorb(exp: ExpeditionState, element: string): void {
 }
 
 describe('104장 7: 뒤로 = 처음 화면 버그', () => {
-  it('뒤로(onCancel)는 화면 스택 뒤로만 — 갈 곳이 없으면 아무것도 안 한다. 전투 = 일시정지, 독 펼침 = 닫기', () => {
+  it('뒤로(onCancel)는 화면 스택 뒤로 — 갈 곳이 없으면 홈(home 표시)일 때만 처음 화면 확인(C.198, GDD 124장 1), 전투 = 일시정지, 독 펼침 = 닫기', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain('onCancel: () => nav.back(),');
-    expect(app).toContain('canCancel: () => nav.canBack,');
+    expect(app).toContain('const r = nav.cancel();');
+    expect(app).toContain("if (r === 'home') askReturnToTitle();");
+    expect(app).toContain('canCancel: () => nav.canCancel,');
     expect(read('src/ui/battleView.ts')).toMatch(/registerCancelHook\(\(top\) => \{[\s\S]*?setPaused\(true\);[\s\S]*?\}, \{ button: true \}\)/);
     expect(read('src/ui/bha/dock.ts')).toMatch(/registerCancelHook\(\(top\) => \{[\s\S]*?setPanel\(CLOSED\);[\s\S]*?\}, \{ button: true \}\)/);
     expect(read('src/ui/bha/hold.ts')).not.toContain('requestTitle');

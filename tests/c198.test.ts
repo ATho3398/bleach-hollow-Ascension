@@ -14,6 +14,7 @@ import {
 import { absenceOf, departHpOf, feedNest, migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, writeSave, loadSave, type SaveData } from '../src/game';
 import { drinkHpPotion, grantFood, grantHpPotion, homeHp, homeMaxHp, HP_POTION_ID, spaEnter, spaLeave, spaSoak } from '../src/home';
 import { inventoryOf, useInventoryItem } from '../src/inventory';
+import { ScreenStack } from '../src/ui/bha/select';
 import { wandererEffect } from '../src/shop';
 
 const HH = BALANCE.provisional.nest.homeHp;
@@ -380,5 +381,39 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     const m = migrateSave(raw)!;
     expect(m.nest.hpFraction).toBe(1);
     expect(m.nest.spa).toBeNull();
+  });
+});
+
+describe('124장 홈 뒤로 = 처음 화면 확인 · 더보기 [닫기] 삭제', () => {
+  it('뒤로: 한 화면 뒤로 → 홈 하나뿐이면 home(처음 화면 확인) → 홈 표시 없는 화면·잠긴 화면은 none (104장 7 재발 방지)', () => {
+    const nav = new ScreenStack();
+    const noop = () => undefined;
+    nav.reset({ id: 'room', home: true, render: noop });
+    expect(nav.canCancel).toBe(true);
+    nav.push({ id: 'shop', render: noop });
+    expect(nav.cancel()).toBe('back');
+    expect(nav.top?.id).toBe('room');
+    expect(nav.cancel()).toBe('home');
+    expect(nav.top?.id).toBe('room');
+    nav.reset({ id: 'expedition', locked: true, render: noop });
+    expect(nav.cancel()).toBe('none');
+    expect(nav.canCancel).toBe(false);
+    nav.reset({ id: 'title', render: noop });
+    expect(nav.cancel()).toBe('none');
+    nav.reset({ id: 'room', home: true, render: noop });
+    nav.push({ id: 'battle', locked: true, render: noop });
+    expect(nav.cancel()).toBe('none');
+  });
+  it('뒤로로 닫기 전에 beforeBack (온천 나오기)', () => {
+    const nav = new ScreenStack();
+    let left = 0;
+    nav.reset({ id: 'room', home: true, render: () => undefined });
+    nav.push({ id: 'spa', render: () => undefined, beforeBack: () => void left++ });
+    expect(nav.cancel()).toBe('back');
+    expect(left).toBe(1);
+  });
+  it('더보기 줄에 [닫기] 칸이 없다, ui-audit 검사', () => {
+    expect(readFileSync('src/ui/bha/dock.ts', 'utf8')).not.toContain("x.dataset.dock = 'close'");
+    expect(readFileSync('scripts/ui-audit/screens.cjs', 'utf8')).toContain("kind: '토글 메뉴 [닫기]'");
   });
 });

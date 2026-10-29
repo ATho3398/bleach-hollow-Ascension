@@ -130,12 +130,16 @@ export function startApp(host: HTMLElement): void {
   let activeExp: ExpeditionState | null = null;
   let confirmingTitle = false;
 
-  // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 뒤로 = 열린 창·레이어 닫기(device) → 화면 스택 한 단계 뒤로 → 더 갈 곳이 없으면(방·잠긴 화면) 아무것도 안 함.
-  // 시작 화면 복귀 확인은 더보기 [처음 화면]으로만 (GDD 104장 7, C.176 — 예전엔 갈 곳이 없으면 처음 화면 확인을 띄웠다)
+  // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 뒤로 = 열린 창·레이어 닫기(device) → 화면 스택 한 단계 뒤로 → 더 갈 곳이 없는 홈(방)이면 처음 화면 확인(GDD 124장 1, C.198).
+  // 잠긴 화면(전투·원정)이나 다른 화면에서는 처음 화면으로 가지 않는다 (104장 7 버그 — 홈 표시(home)가 있는 화면 하나뿐일 때만)
   const nav = new ScreenStack();
   const dev = createDevice(host, {
-    onCancel: () => nav.back(),
-    canCancel: () => nav.canBack,
+    onCancel: () => {
+      const r = nav.cancel();
+      if (r === 'home') askReturnToTitle();
+      return r !== 'none';
+    },
+    canCancel: () => nav.canCancel,
     onRotate: (rotated) => rotateEvent(rotated ? 'portrait' : 'landscape'),
   });
   const root = dev.view;
@@ -572,7 +576,7 @@ export function startApp(host: HTMLElement): void {
     }
   }
 
-  // ── 처음 화면으로 돌아가기 (Q-3): 더보기 [처음 화면] → 확인 → 저장 → 시작 화면 (C.176: 뒤로는 여기로 오지 않는다) ──
+  // ── 처음 화면으로 돌아가기 (Q-3): 더보기 [처음 화면]·홈에서 뒤로(GDD 124장 1) → 확인 → 저장 → 시작 화면 ──
   function askReturnToTitle(): void {
     if (confirmingTitle || nav.top?.id === 'title') return;
     confirmingTitle = true;
@@ -614,7 +618,7 @@ export function startApp(host: HTMLElement): void {
   function nestScreen(): void {
     if (!save) return titleScreen();
     activeExp = null;
-    nav.reset({ id: 'room', render: () => { renderRoom(); root.scrollTop = 0; } });
+    nav.reset({ id: 'room', home: true, render: () => { renderRoom(); root.scrollTop = 0; } });
     // 온천에 있던 채로 껐다 켰으면 온천 화면으로 (GDD 123장 4: 앱을 꺼도 온천 유지)
     if (save.nest.spa && !save.nest.dead) openSpa(getFaction(save.factionId), save, false);
   }
