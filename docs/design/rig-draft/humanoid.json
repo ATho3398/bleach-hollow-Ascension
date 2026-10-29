@@ -204,7 +204,7 @@
       "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
-      "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1], "size": [16, 29] }
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] }
     },
     "digitigrade-test": {
       "body": "dg"
@@ -221,7 +221,7 @@
       "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
-      "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1], "size": [16, 29] },
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] },
       "release": "arrancar-f-released-test"
     },
     "arrancar-f-released-test": {
@@ -229,7 +229,7 @@
       "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
-      "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1], "size": [16, 29] },
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] },
       "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
     }
   },
