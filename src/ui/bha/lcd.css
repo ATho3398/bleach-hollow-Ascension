@@ -50,12 +50,9 @@
 /* ═════ 토스트(알림 띠) (C.193, GDD 119장 6 — C.170 의 아래쪽에서 바꿈): LCD 맨 위 가운데 고정, 여러 개면 위에서 아래로 쌓인다(--toast-i).
    아래쪽 버튼·조작 줄을 가리지 않는다. 누름은 통과(pointer-events: none, 기본 규칙). 위에서 내려왔다 위로 사라진다(기본 애니메이션) ═════ */
 .bha-lcd .bha-toast { top: var(--bha-sp-1); bottom: auto; }
-/* 튜토리얼 달성 (GDD 109장 5번, C.180): 같은 띠를 화면 가운데에. 전투·대사 창 위, 누르면 바로 닫힌다 */
-.bha-toast--center, .bha-lcd .bha-toast--center { top: 50%; bottom: auto; z-index: var(--bha-z-tutorial); transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
-.bha-toast--center.is-in, .bha-lcd .bha-toast--center.is-in { animation-name: bha-toast-center-in; }
-.bha-toast--center.is-out, .bha-lcd .bha-toast--center.is-out { animation-name: bha-toast-center-out; }
-@keyframes bha-toast-center-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); } to { opacity: 1; transform: translate(-50%, -50%); } }
-@keyframes bha-toast-center-out { to { opacity: 0; transform: translate(-50%, -50%) scale(0.92); } }
+/* 튜토리얼 달성 (GDD 109장 5번, C.180 → C.196 GDD 119장 6 "전부 상단 고정"): 가운데에서 맨 위 가운데로 — 다른 알림과 같이 쌓인다.
+   전투·대사 창 위(z-index)와 누르면 바로 닫히는 것은 그대로 */
+.bha-toast--center, .bha-lcd .bha-toast--center { z-index: var(--bha-z-tutorial); pointer-events: auto; cursor: pointer; }
 
 /* 안내 문구 줄바꿈 (GDD 73장, C.126): 항목마다 한 줄, 항목 이름은 굵게 */
 .bha-lines { display: flex; flex-direction: column; gap: var(--bha-sp-3); }

@@ -54,12 +54,13 @@ describe('4 장비 → 가방', () => {
   });
 });
 
-describe('5 튜토리얼 달성 알림 = 화면 가운데', () => {
-  it('튜토리얼 토스트는 center, CSS 는 가운데·누르면 닫힘·전투·대사 창 위', () => {
+describe('5 튜토리얼 달성 알림 (C.196: 가운데 → 맨 위, GDD 119장 6)', () => {
+  it('튜토리얼 토스트는 center, CSS 는 맨 위(가운데 위치 규칙 없음)·누르면 닫힘·전투·대사 창 위', () => {
     expect(read('src/ui/tutorialGoalsView.ts')).toMatch(/tutorialGoalText\(g\.goal, faction\)[^\n]*faction, true\)/);
     expect(read('src/ui/bha/nest.ts')).toMatch(/if \(o\.center\) toast\.addEventListener\('click', remove\)/);
     const css = read('src/ui/bha/lcd.css');
-    expect(css).toMatch(/\.bha-lcd \.bha-toast--center \{ top: 50%; bottom: auto; z-index: var\(--bha-z-tutorial\)/);
+    expect(css).toMatch(/\.bha-lcd \.bha-toast--center \{ z-index: var\(--bha-z-tutorial\); pointer-events: auto;/);
+    expect(css).not.toMatch(/bha-toast--center[^{]*\{[^}]*top: 50%/);
   });
 });
 
