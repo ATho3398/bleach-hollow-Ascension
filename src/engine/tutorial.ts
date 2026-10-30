@@ -12,10 +12,11 @@ export type GuideMark = 'pending' | 'done';
 
 /** 한 번만 뜨는 안내 id (GDD 64·67장, 74장 'birth', 123장 5 'recover'). 화면 문구는 src/data/help/guides.json */
 /** 'home-intro' = 처음 켰을 때 홈 안내 → 첫 모험 강제 (GDD 131장, C.207). 새 세이브는 'first-run' 과 같이 pending */
-export const GUIDE_IDS = ['first-run', 'first-run-room', 'tile-intro', 'tile-plan', 'tile-draw', 'birth', 'recover', 'home-intro'] as const;
+/** 'recover-cure' = 회복 안내용 치료제를 이미 넣었다 (GDD 134장 1, C.211 — 시작 치료제와 따로 한 번만, 상태만 저장) */
+export const GUIDE_IDS = ['first-run', 'first-run-room', 'tile-intro', 'tile-plan', 'tile-draw', 'birth', 'recover', 'home-intro', 'recover-cure'] as const;
 export type GuideId = (typeof GUIDE_IDS)[number];
 /** 문구가 있는 안내 (birth 는 첫 시작 탄생 연출 — 상태만 저장, 문구 없음. GDD 74장 C.126 · recover 는 튜토리얼 회복 안내 — 문구는 tutorial.json recover, GDD 123장 5 C.199) */
-export type TextGuideId = Exclude<GuideId, 'birth' | 'recover' | 'home-intro'>;
+export type TextGuideId = Exclude<GuideId, 'birth' | 'recover' | 'home-intro' | 'recover-cure'>;
 
 export function newHelpState(): HelpState {
   return { tutorialSeen: false, guides: {} };

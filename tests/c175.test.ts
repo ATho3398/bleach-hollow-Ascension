@@ -23,11 +23,11 @@ function ended(save: SaveData, outcome: 'returned' | 'defeated'): ExpeditionStat
 }
 
 describe('102-1 시간 흐름', () => {
-  it('배부름 30 초과면 컨디션 그대로, 30 이하면 시간당 −4, 0 이면 ×2', () => {
+  it('배부름 30 초과 70 미만이면 컨디션 그대로, 30 이하면 시간당 −4, 0 이면 ×2 (70 이상 회복은 c211)', () => {
     const n = newNest(0);
-    n.hunger = 0;
+    n.hunger = 31; // 배부름 69 (GDD 135장 1: 70 이상이면 회복)
     n.condition = 80;
-    passNestTime(n, 4, false); // 허기 30 → 배부름 70
+    passNestTime(n, 4, false); // 배부름 69 → 49
     expect(n.condition).toBe(80);
     const m = newNest(0);
     m.hunger = 70; // 배부름 30

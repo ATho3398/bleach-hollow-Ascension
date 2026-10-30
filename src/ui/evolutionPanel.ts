@@ -160,7 +160,10 @@ export function evolutionView(
   crack.append(icon('i-broken'));
   const lines = h('div', 'bha-evolve__lines');
   lines.setAttribute('aria-live', 'polite');
-  cutsceneLines(faction.id, { nest: faction.nestName, absorb: faction.absorbActionName, from: faction.tierNames[from]! }).forEach((t, i) => {
+  // 진화 이유 (GDD 134장 3, C.211): 그 단계가 된 이유 1~2줄(종족 설정)이 있으면 연출 마지막 줄을 대신하고 결과 화면에도 남는다. 실패 진화는 공통 줄 그대로
+  const reasons = extra?.failLine ? [] : (faction.evolutionReasons[to] ?? []);
+  const base = cutsceneLines(faction.id, { nest: faction.nestName, absorb: faction.absorbActionName, from: faction.tierNames[from]! });
+  (reasons.length > 0 ? [...base.slice(0, -1), ...reasons] : base).forEach((t, i) => {
     const line = h('p', 'bha-evolve__line', t);
     line.style.setProperty('--k', String(i));
     lines.append(line);
@@ -184,6 +187,8 @@ export function evolutionView(
   const failLine = extra?.failLine === true;
   const shownTo = faction.tierNames[failLine ? 0 : to]!;
   path.append(`${from + 1}단계 `, h('b', '', faction.tierNames[failLine && form.label.kind !== 'fail' ? 0 : from]!), icon('i-chevron-right'), `${to + 1}단계 `, h('b', '', shownTo));
+  const reason = reasons.length > 0 ? h('p', 'bha-small bha-dim', reasons.join(' ')) : null;
+  if (reason) reason.dataset.evolveReason = '';
   const created = h('div', 'bha-evolve__new');
   for (const e of extra?.elements ?? form.elements ?? []) created.append(elementDot(e, faction.id));
   created.append(` 새 진화체: ${shownName(failLine ? shownTo : formName(form, faction.id, extra?.elements ?? []))}`);
@@ -210,7 +215,7 @@ export function evolutionView(
     onDone();
   } }));
   const title = h('h1', 'bha-evolve__title', `${shownTo}!`);
-  resultMain.append(h('span', 'bha-evolve__eyebrow', '진화'), title, path, created, home);
+  resultMain.append(h('span', 'bha-evolve__eyebrow', '진화'), title, path, ...(reason ? [reason] : []), created, home);
   resultSide.append(effects, evolutionNote());
   resultSection.append(resultMain, resultSide);
 

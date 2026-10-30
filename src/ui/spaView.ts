@@ -37,7 +37,7 @@ const SPA_WALK_MS = 1200;
 const SPA_STEP_MS = 220;
 const SPA_STEP_PAUSE_MS = 300;
 /** 지금 떠 있는 온천 화면 (튜토리얼 체력 차오름·나가기 연출을 바깥에서 부른다) */
-let live: { on: () => boolean; fill: (from: number, to: number, ms: number) => void; exit: (done: () => void) => boolean } | null = null;
+let live: { on: () => boolean; fill: (from: number, to: number, ms: number, cond?: { from: number; to: number }) => void; exit: (done: () => void) => boolean } | null = null;
 let spaTimer = 0;
 
 export interface SpaHandlers {
@@ -51,15 +51,15 @@ export interface SpaHandlers {
 
 /** 온천에서 나온 까닭 한 줄 (알림 띠·튜토리얼이 같이 쓴다) */
 export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: string): string {
-  if (e.reason === 'full') return `체력이 다 찼다 (${Math.round(e.hpTo * 100)}%). 방으로 돌아왔다.`;
+  if (e.reason === 'full') return `체력과 컨디션이 다 찼다 (체력 ${Math.round(e.hpTo * 100)}%). 방으로 돌아왔다.`;
   if (e.reason === 'hungry') return `${fullnessName}이 바닥나 방으로 돌아왔다.`;
   return '방으로 돌아왔다.';
 }
 
-/** 튜토리얼 온천 체력 차오름 (GDD 132장 3): 온천 화면이 떠 있으면 앉은 뒤 from → to 로 ms 동안 막대를 채운다 */
-export function spaTutorialFill(from: number, to: number, ms: number): boolean {
+/** 튜토리얼 온천 체력 차오름 (GDD 132장 3): 온천 화면이 떠 있으면 앉은 뒤 from → to 로 ms 동안 막대를 채운다. cond = 컨디션도 같이 (135장 2) */
+export function spaTutorialFill(from: number, to: number, ms: number, cond?: { from: number; to: number }): boolean {
   if (!live?.on()) return false;
-  live.fill(from, to, ms);
+  live.fill(from, to, ms, cond);
   return true;
 }
 
@@ -165,15 +165,17 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     row.append(icon(ic), track, el('span', 'bha-room__gaugenum bha-num', text));
     return row;
   };
-  const paint = (fraction: number, fullness: number) => {
+  // 컨디션도 온천에서 오른다 (GDD 135장 2)
+  const paint = (fraction: number, fullness: number, condition: number) => {
     const { now, max } = hpNumbers(fraction * maxHp, maxHp);
-    status.setAttribute('aria-label', `체력 ${now} / ${max}, ${faction.fullnessName} ${Math.round(fullness)}`);
+    status.setAttribute('aria-label', `체력 ${now} / ${max}, 컨디션 ${Math.round(condition)}, ${faction.fullnessName} ${Math.round(fullness)}`);
     status.replaceChildren(
       gauge('hp', 'i-heal', fraction * 100, `${now} / ${max}`, fraction < 0.3),
+      gauge('cond', 'i-cond', condition, String(Math.round(condition)), condition <= 30),
       gauge('hunger', 'i-hunger', fullness, String(Math.round(fullness)), fullness <= 20),
     );
   };
-  paint(previewHomeHp(n, Date.now()).fraction, fullnessOfNest(n));
+  { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }
 
   // ── 왼쪽 위: [방으로 돌아가기] 작게 + ⓘ 쉬는 중 설명 ──
   const backBtn = spaceBackButton(hd.onBack, hd.backLabel);
@@ -181,8 +183,8 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const infoBtn = infoTip('쉬는 중', () => ({
     lead: `${name}에서 쉬는 중이다.`,
     groups: [
-      { title: '쉬는 동안', lines: [`1분에 체력 +${Math.round(SP.hpPerMinute * 100)}%, ${faction.fullnessName} −${SP.fullnessPerMinute}`, '앱을 꺼도 계속 쉰다'] },
-      { title: '저절로 나올 때', lines: [`체력이 다 차거나 ${faction.fullnessName}이 0 이 되면 방으로 돌아간다`] },
+      { title: '쉬는 동안', lines: [`1분에 체력 +${Math.round(SP.hpPerMinute * 100)}% · 컨디션 +${SP.conditionPerMinute} · ${faction.fullnessName} −${SP.fullnessPerMinute}`, '앱을 꺼도 계속 쉰다'] },
+      { title: '저절로 나올 때', lines: [`체력과 컨디션이 둘 다 다 차거나 ${faction.fullnessName}이 0 이 되면 방으로 돌아간다`] },
       ...(n.collapsed ? [{ title: '빈사', lines: [`체력은 ${dyingPct}% 까지만 찬다`, '치료제로 풀어야 더 찬다'] }] : []),
     ],
   }));
@@ -195,12 +197,13 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
 
   // 튜토리얼 쉬기 (GDD 132장 3): 값은 이미 저장됐다 — 앉은 뒤 ms 동안 체력 막대가 from → to 로 천천히 찬다. 그동안 actionBusy (카드 [다음] 잠김)
   let filling = false;
-  const fill = (from: number, to: number, ms: number) => {
+  const fill = (from: number, to: number, ms: number, cond?: { from: number; to: number }) => {
     filling = true;
     const end = beginAction();
     const fullness = fullnessOfNest(n);
-    paint(from, fullness);
-    const run = () => tween(ms, (t) => paint(from + (to - from) * t, fullness), () => {
+    const c = cond ?? { from: n.condition, to: n.condition }; // 컨디션도 같이 차오른다 (GDD 135장 2)
+    paint(from, fullness, c.from);
+    const run = () => tween(ms, (t) => paint(from + (to - from) * t, fullness, c.from + (c.to - c.from) * t), () => {
       filling = false;
       end();
     });
@@ -234,7 +237,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     if (!app.isConnected || done) return window.clearInterval(tick);
     if (filling) return; // 튜토리얼 차오름 연출 중에는 연출이 그린다
     const p = previewHomeHp(n, Date.now());
-    paint(p.fraction, p.fullness);
+    paint(p.fraction, p.fullness, p.condition);
     if (p.spaEnded || !n.spa) {
       done = true;
       window.clearInterval(tick);

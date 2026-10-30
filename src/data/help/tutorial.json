@@ -106,8 +106,8 @@
       "targets": [
         "@.bha-room__hp"
       ],
-      "title": "빈사로 돌아왔다",
-      "body": "원래는 전투 중 체력이 0 이 되면 빈사가 된다.\n빈사 중에는 체력이 {dyingPct}% 위로 차지 않고, 오래 두면 사망한다."
+      "title": "빈사",
+      "body": "빈사는 치명상을 입어 체력이 {dyingPct}% 위로 차지 않는 상태다.\n그대로 두면 시간이 지나 사망하고, 치료제로만 풀린다."
     },
     {
       "id": "to-bag",
@@ -115,7 +115,7 @@
         "@.bha-prop--chest"
       ],
       "title": "빈사부터 치료",
-      "body": "빈사는 치료제를 써야 풀린다.\n치료제와 체력 포션을 1개씩 {chestName}에 넣었다. {chestName}을(를) 열자."
+      "body": "치료제와 체력 포션을 1개씩 {chestName}에 넣었다.\n{chestName}을(를) 연다."
     },
     {
       "id": "cure",
@@ -179,14 +179,14 @@
         "@.bha-spa__actor"
       ],
       "title": "{spaName}",
-      "body": "{spaName}에서 쉬면 체력이 1분에 {spaHpPct}% 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.",
+      "body": "{spaName}에서 쉬면 1분에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.",
       "stages": [
         {
           "targets": [
             "@.bha-prop--market",
             "@.bha-prop--outside"
           ],
-          "body": "{spaName}에서 쉬면 체력이 1분에 {spaHpPct}% 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
+          "body": "{spaName}에서 쉬면 1분에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
         },
         {
           "targets": [

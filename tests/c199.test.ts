@@ -153,12 +153,14 @@ describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () =>
       expect(recoverStep(s)).toBe('dying');
       expect(guidePending(s.help, 'first-run-room')).toBe(false);
       expect(s.runLog.vitals?.some((v) => v.kind === 'collapse' && v.cause === 'tutorial')).toBe(true);
+      const start = BALANCE.provisional.startItems[CURE_ITEM_ID]!; // 시작 치료제 (GDD 134장 1, C.211) + 안내용 1개 따로
       recoverGrantBag(s);
-      expect(s.shared.items[CURE_ITEM_ID]).toBe(1);
+      recoverGrantBag(s); // 다시 열어도 한 번만
+      expect(s.shared.items[CURE_ITEM_ID]).toBe(start + 1);
       expect(s.shared.items[HP_POTION_ID]).toBe(1);
       expect(recoverCure(s, 3000)).toBe(true);
       expect(s.nest.collapsed).toBe(false);
-      expect(s.shared.items[CURE_ITEM_ID]).toBeUndefined();
+      expect(s.shared.items[CURE_ITEM_ID]).toBe(start);
       expect(recoverStep(s)).toBe('potion');
       expect(recoverPotion(s, 3100)).toBe(true);
       expect(homeHp(s).fraction).toBeCloseTo(TR.potionTo, 6);

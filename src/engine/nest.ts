@@ -188,11 +188,16 @@ export function setHomeHp(nest: NestState, fraction: number): number {
   return nest.hpFraction;
 }
 
-/** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·체력 상한·배부름 0 이면 못 들어간다(이유). 들어가면 null */
+/** 온천에서 더 오를 게 없다: 체력 상한과 컨디션 가득 둘 다 (GDD 135장 2) */
+export function spaFull(nest: Pick<NestState, 'hpFraction' | 'collapsed' | 'condition'>): boolean {
+  return homeHpOf(nest) >= homeHpCap(nest) - 1e-9 && nest.condition >= MAX - 1e-9;
+}
+
+/** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·체력·컨디션 둘 다 가득(135장 2)·배부름 0 이면 못 들어간다(이유). 들어가면 null */
 export function enterSpa(nest: NestState, nowMs: number): 'dead' | 'already' | 'full' | 'hungry' | null {
   if (nest.dead) return 'dead';
   if (nest.spa) return 'already';
-  if (homeHpOf(nest) >= homeHpCap(nest) - 1e-9) return 'full';
+  if (spaFull(nest)) return 'full';
   if (fullnessOfNest(nest) <= 0) return 'hungry';
   nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest) };
   return null;
@@ -203,18 +208,19 @@ export function leaveSpa(nest: NestState, nowMs: number, reason: SpaEnd['reason'
   return closeSpa(nest, nowMs, reason);
 }
 
-/** 온천 시간 한 토막: 1분에 체력 +spa.hpPerMinute·배부름 −spa.fullnessPerMinute, 체력 상한 또는 배부름 0 에 닿는 순간 저절로 나온다.
+/** 온천 시간 한 토막: 1분에 체력 +spa.hpPerMinute·컨디션 +spa.conditionPerMinute(GDD 135장 2)·배부름 −spa.fullnessPerMinute, 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되는 순간 저절로 나온다.
  *  startMs = 이 토막이 시작한 시각(나온 시각 계산용). 온천에서 보낸 분과 나온 결과 */
 function spaStep(nest: NestState, minutes: number, startMs: number): { used: number; ended: SpaEnd | null } {
   if (!nest.spa || minutes <= 0) return { used: 0, ended: null };
   const cap = homeHpCap(nest);
   nest.hpFraction = homeHpOf(nest);
-  const toCap = Math.max(0, (cap - nest.hpFraction) / HH.spa.hpPerMinute);
+  const toCap = Math.max(0, (cap - nest.hpFraction) / HH.spa.hpPerMinute, (MAX - nest.condition) / HH.spa.conditionPerMinute);
   const toEmpty = Math.max(0, fullnessOfNest(nest) / HH.spa.fullnessPerMinute);
   const used = Math.min(minutes, toCap, toEmpty);
   nest.hpFraction = Math.min(cap, nest.hpFraction + used * HH.spa.hpPerMinute);
+  nest.condition = Math.min(MAX, nest.condition + used * HH.spa.conditionPerMinute);
   nest.hunger = clamp(nest.hunger + used * HH.spa.fullnessPerMinute, 0, 100);
-  const full = nest.hpFraction >= cap - 1e-9;
+  const full = spaFull(nest);
   const ended = full || fullnessOfNest(nest) <= 1e-9 ? closeSpa(nest, Math.round(startMs + used * 60_000), full ? 'full' : 'hungry') : null;
   return { used, ended };
 }
@@ -230,26 +236,27 @@ export function soakSpa(nest: NestState, minutes: number, nowMs: number): { hp: 
 
 /** 지금 홈 체력 미리 보기 (방 체력 막대·온천 화면): 마지막으로 셈한 시각(lastTickMs)부터 지금까지 흘렀다고 치고 계산만 한다(세이브는 그대로).
  *  spaEnded = 그사이 온천에서 저절로 나왔을 결과 — 화면은 이걸 보고 tickIdle 로 실제 반영한 뒤 방으로 */
-export function previewHomeHp(nest: NestState, nowMs: number): { fraction: number; fullness: number; spaEnded: SpaEnd | null } {
+export function previewHomeHp(nest: NestState, nowMs: number): { fraction: number; fullness: number; condition: number; spaEnded: SpaEnd | null } {
   const c: NestState = { ...nest, spa: nest.spa ? { ...nest.spa } : null };
   const r = Number.isFinite(c.lastTickMs) && nowMs > c.lastTickMs ? passHomeHp(c, (nowMs - c.lastTickMs) / HOUR, nowMs) : { spaEnded: null };
-  return { fraction: homeHpOf(c), fullness: fullnessOfNest(c), spaEnded: r.spaEnded };
+  return { fraction: homeHpOf(c), fullness: fullnessOfNest(c), condition: c.condition, spaEnded: r.spaEnded };
 }
 
 /** 홈 체력 시간 흐름 (GDD 123장 4): 온천이면 온천 토막(spaStep) 뒤 남은 시간은 대기 회복. 대기 회복 = 1분에 +idlePerMinute, 빈사면 없음(온천은 빈사 상한까지).
  *  endMs = 이 구간이 끝나는 시각 */
-export function passHomeHp(nest: NestState, hours: number, endMs: number): { hp: number; spaEnded: SpaEnd | null } {
-  if (nest.dead) return { hp: 0, spaEnded: null };
+export function passHomeHp(nest: NestState, hours: number, endMs: number): { hp: number; spaEnded: SpaEnd | null; spaMinutes: number } {
+  if (nest.dead) return { hp: 0, spaEnded: null, spaMinutes: 0 };
   const before = homeHpOf(nest);
   nest.hpFraction = before;
   let minutes = Number.isFinite(hours) ? Math.max(0, hours) * 60 : 0;
   const spa = spaStep(nest, minutes, endMs - minutes * 60_000);
   minutes -= spa.used;
   if (!nest.spa && !nest.collapsed && minutes > 0) nest.hpFraction = Math.min(homeHpCap(nest), nest.hpFraction + minutes * HH.idlePerMinute);
-  return { hp: nest.hpFraction - before, spaEnded: spa.ended };
+  return { hp: nest.hpFraction - before, spaEnded: spa.ended, spaMinutes: spa.used };
 }
 
 /** 시간 흐름 (GDD 102-1): hours 동안 허기 +idleHungerPerHour/시, 배부름 conditionBelowFullness 이하면 컨디션 −conditionPerHour/시(배부름 0 이면 ×2),
+ *  배부름 conditionRegenAtFullness 이상이면 컨디션 +conditionRegenPerHour/시(GDD 135장 1 — 온천에 있던 토막은 온천 규칙이라 빼고, 사망이면 없음),
  *  offline(꺼 둔 동안)이면 영압 안정도 −stabilityPerHour/시(배부름 또는 컨디션 stabilityDoubleBelow 이하면 ×2). 0.1시간 걸음으로 나눠 그 순간 값으로 배율을 정하고, 걸음마다 쇠약·피곤을 본다.
  *  리스크·교감은 여기서 안 바뀐다. 변화량(음수 = 줄어듦, 허기는 오른 양)을 돌려준다 */
 export function passNestTime(nest: NestState, hours: number, offline: boolean, endMs: number = Date.now()): TimeFlow {
@@ -257,12 +264,16 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean, e
   // 홈 체력·온천 (GDD 123장 4): 온천 배부름 소모를 먼저 반영하고 아래 걸음이 그 값으로 쇠약·컨디션을 본다
   const home = passHomeHp(nest, hours, endMs);
   let left = Number.isFinite(hours) ? Math.max(0, hours) : 0;
+  let spaLeft = (home.spaMinutes ?? 0) / 60; // 구간 앞쪽의 온천 토막 (passHomeHp 가 먼저 흘렸다)
   while (left > 1e-9) {
     const dt = Math.min(0.1, left);
     left -= dt;
+    const inSpa = Math.min(dt, spaLeft);
+    spaLeft = Math.max(0, spaLeft - dt);
     const full = fullnessOfNest(nest);
     const lowFull = full <= CP.conditionBelowFullness;
     if (lowFull) nest.condition = clamp(nest.condition - CP.conditionPerHour * dt * (full <= 0 ? 2 : 1), 0, MAX);
+    else if (full >= CP.conditionRegenAtFullness && !nest.dead && dt - inSpa > 1e-12) nest.condition = clamp(nest.condition + CP.conditionRegenPerHour * (dt - inSpa), 0, MAX);
     if (offline) nest.stability = clamp(nest.stability - CP.stabilityPerHour * dt * (full <= CP.stabilityDoubleBelow || nest.condition <= CP.stabilityDoubleBelow ? 2 : 1), 0, BALANCE.provisional.risk.stabilityMax);
     nest.hunger = clamp(nest.hunger + NX.idleHungerPerHour * dt, 0, 100);
     refreshCareStatus(nest);

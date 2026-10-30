@@ -7,9 +7,12 @@ import { GUIDES, guideVars } from '../data/help';
 import { pickFaction, STAT_IDS } from '../data/schema';
 import { getTile, tileName } from '../data/tiles';
 import { tutorialAbsorb, type ExpeditionState } from '../engine/expedition';
+import type { ArtUrls } from '../data/art/manifest';
 import type { FactionConfig } from '../engine/faction';
 import type { TextGuideId } from '../engine/tutorial';
-import { button, el, icon } from './bha/dom';
+import { button, el, icon, meter, setMeter } from './bha/dom';
+import { heroEl } from './bha/battle';
+import { tween } from './bha/actionFx';
 import { tileCss, tileIconId } from './bha/expedition';
 import { lcdPage } from './bha/lcdpage';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
@@ -95,6 +98,49 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
     ]);
     next.focus();
   }
+}
+
+/** 치명상 장면에서 체력 막대가 빈사 값까지 떨어지는 시간 (화면 연출값) */
+const WOUND_DRAIN_MS = 1200;
+
+/**
+ * 튜토리얼 원정 흡수 직후 치명상 장면 (GDD 134장 2, C.211): 캐릭터가 비틀거리고 체력 막대가 빈사 값까지 떨어지며 붉게 깜빡인다.
+ * 그 위에 각본 카드 1~2장(종족 설정 tutorialWound, 132장 방식 — 덮개 없음·막대를 가리지 않음·기기 버튼). 마지막 카드 뒤 onDone(원정 끝 → 귀환)
+ */
+export function tutorialWoundView(root: HTMLElement, faction: FactionConfig, art: ArtUrls, hpFrom: number, hpTo: number, onDone: () => void): void {
+  const pct = (x: number) => Math.round(Math.max(0, Math.min(1, x)) * 100);
+  const hero = heroEl(art);
+  hero.root.classList.add('bha-wound__hero');
+  const fig = el('div', 'bha-wound__fig');
+  fig.append(hero.root);
+  const from = pct(hpFrom);
+  const to = Math.min(from, pct(hpTo));
+  const bar = meter({ kind: 'player', label: '체력', icon: 'i-heal', value: from, max: 100, lg: true, inside: true, danger: true, valueText: `${from}%` });
+  bar.classList.add('bha-wound__hp');
+  const head = el('header', 'bha-absorb__head');
+  head.append(el('h1', 'bha-h1', '치명상'));
+  lcdPage(root, { cls: 'bha-absorbpage bha-wound', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, head, [fig], [bar]);
+  const value = bar.querySelector<HTMLElement>('.bha-meter__value');
+  tween(WOUND_DRAIN_MS, (t) => {
+    const v = Math.round(from + (to - from) * t);
+    setMeter(bar, v, 100);
+    if (value) value.textContent = `${v}%`;
+  }, () => bar.classList.add('is-blink'));
+  const cards = faction.tutorialWound;
+  const show = (i: number): void => {
+    const c = cards[i];
+    if (!c) return onDone();
+    tutorialOverlay(faction, {
+      scenes: [{ id: `wound-${i}`, targets: ['@.bha-wound__hp'], title: c.title, body: c.body, stages: [{ targets: ['@.bha-wound__hp'], avoid: ['@.bha-wound__hero'] }] }], // 막대·캐릭터를 가리지 않게
+      name: 'wound', pauseLabel: null, finishLabel: '다음',
+      script: { step: `튜토리얼 ${i + 1} / ${cards.length}` },
+      onFinish: (status) => {
+        if (status === 'completed') show(i + 1);
+        else onDone();
+      },
+    });
+  };
+  show(0);
 }
 
 /** 타일 뽑기 결과 (GDD 64장 2번): 카드 한 장이 뒤집히며 타일 이름과 설명 한 줄. [확인]으로 닫는다 */

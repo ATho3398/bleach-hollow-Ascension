@@ -360,6 +360,10 @@ export interface FactionConfig {
   matchupText: { strong: string; weak: string };
   /** 진화 임박 알림 문구 (GDD 20-5 v4.1): 남은 걸음 20% / 10% 순간 한 번씩 */
   evolutionNearText: [string, string];
+  /** 진화 이유 문구 (GDD 134장 3, C.211): 칸 = 도착 단계(tierIndex, 0 은 빈 목록). 그 단계가 된 이유가 느껴지는 1~2줄 — 진화 연출 마지막 줄·결과 화면 */
+  evolutionReasons: string[][];
+  /** 튜토리얼 원정 흡수 직후 치명상 카드 (GDD 134장 2, C.211): 1~2장 */
+  tutorialWound: { title: string; body: string }[];
   /** 둥지 / 대원실 (GDD 7장) */
   nestName: string;
   /** 둥지 행동 이름 (GDD 7장): 먹이 / 재우기 / 교감(참백도 손질) */
@@ -501,6 +505,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const mt = (r.matchupText ?? {}) as Record<string, unknown>;
   if (!isString(mt.strong) || !isString(mt.weak)) errors.push('matchupText: { strong, weak } 문자열');
   if (!isStringTuple(r.evolutionNearText, 2)) errors.push('evolutionNearText: 문자열 2개');
+  const er = r.evolutionReasons;
+  if (!Array.isArray(er) || er.length !== 5 || !er.every((x, i) => Array.isArray(x) && x.length <= 2 && (i === 0 || x.length >= 1) && x.every(isString))) errors.push('evolutionReasons: 단계 5칸, 1단계 빈 목록·나머지 문자열 1~2줄');
+  const tw = r.tutorialWound;
+  if (!Array.isArray(tw) || tw.length < 1 || tw.length > 2 || !tw.every((c) => isRec(c) && isString(c.title) && isString(c.body))) errors.push('tutorialWound: { title, body } 1~2장');
   if (r.maxChain !== undefined && !(Number.isInteger(r.maxChain) && (r.maxChain as number) >= 1)) errors.push('maxChain: 1 이상 정수');
   if (r.emblem !== undefined && !isString(r.emblem)) errors.push('emblem: 비어 있지 않은 문자열이어야 한다');
   if (r.logo !== undefined && !isString(r.logo)) errors.push('logo: 비어 있지 않은 문자열이어야 한다');

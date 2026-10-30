@@ -152,6 +152,7 @@ describe('123장 4 홈 회복', () => {
   });
   it('온천: 1분에 체력 +10%·배부름 −10, 가득 차면 저절로 나오고 남은 시간은 대기 회복', () => {
     const n = newNest(T0);
+    n.condition = 100; // 컨디션도 가득이어야 나온다 (GDD 135장 2, C.211) — 여기선 체력만 본다
     n.hunger = 0;
     n.hpFraction = 0.5;
     expect(enterSpa(n, T0)).toBeNull();
@@ -184,8 +185,9 @@ describe('123장 4 홈 회복', () => {
     expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(0.5);
   });
-  it('들어갈 수 없는 경우: 체력 가득·배부름 0·사망·이미 온천', () => {
+  it('들어갈 수 없는 경우: 체력·컨디션 가득·배부름 0·사망·이미 온천', () => {
     const n = newNest(T0);
+    n.condition = 100; // 둘 다 가득일 때만 'full' (GDD 135장 2)
     expect(enterSpa(n, T0)).toBe('full');
     n.hpFraction = 0.5;
     n.hunger = 100;
@@ -200,6 +202,7 @@ describe('123장 4 홈 회복', () => {
   it('빈사: 온천·먹이·포션 모두 10% 상한, 치료제로 풀린 뒤에는 그 값에서 다시 찬다', () => {
     const s = newSaveData('hollow', T0);
     collapseNest(s.nest, T0);
+    s.nest.condition = 100; // 컨디션 가득 — 체력 상한에서 나오는지만 본다 (GDD 135장 2)
     expect(homeHpCap(s.nest)).toBe(0.1);
     s.nest.hpFraction = 0.03;
     s.nest.hunger = 0;
@@ -215,6 +218,7 @@ describe('123장 4 홈 회복', () => {
   });
   it('미리 보기는 세이브를 바꾸지 않는다', () => {
     const n = newNest(T0);
+    n.condition = 100;
     n.hpFraction = 0.5;
     n.hunger = 0;
     enterSpa(n, T0);
@@ -293,6 +297,7 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
   it('꺼 둔 동안 온천에서 저절로 나오면 런 로그에 남는다 (absenceOf)', () => {
     const s = newSaveData('hollow', T0);
     s.nest.hpFraction = 0.6;
+    s.nest.condition = 100; // 체력만 차면 나오게 (GDD 135장 2)
     s.nest.hunger = 0;
     s.lastSeenAt = T0;
     spaEnter(s, T0);

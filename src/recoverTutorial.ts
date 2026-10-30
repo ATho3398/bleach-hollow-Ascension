@@ -31,9 +31,13 @@ export function recoverStep(save: SaveData): RecoverStep | null {
   return 'feed';
 }
 
-/** ② 가방: 치료제·체력 포션이 없으면 1개씩 넣는다 */
+/** ② 가방: 안내용 치료제 1개는 시작 치료제(GDD 134장 1)와 따로 한 번만 넣는다(빈사 중에만, 다 썼으면 다시) · 체력 포션은 없으면 1개 */
 export function recoverGrantBag(save: SaveData): void {
-  if ((save.shared.items[CURE_ITEM_ID] ?? 0) <= 0) storeConsumable(save, CURE_ITEM_ID, 1);
+  const cures = save.shared.items[CURE_ITEM_ID] ?? 0;
+  if (save.nest.collapsed && (save.help.guides['recover-cure'] !== 'done' || cures <= 0)) {
+    storeConsumable(save, CURE_ITEM_ID, 1);
+    markGuideDone(save.help, 'recover-cure');
+  }
   if ((save.shared.items[HP_POTION_ID] ?? 0) <= 0) grantHpPotion(save, 1);
 }
 

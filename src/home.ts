@@ -39,7 +39,7 @@ export function homeMaxHp(save: SaveData): number {
 export const SPA_BLOCK_TEXT: Record<'dead' | 'already' | 'full' | 'hungry' | 'expedition', string> = {
   dead: '사망 — 부활만 할 수 있다',
   already: '이미 온천에 있다',
-  full: '체력이 이미 가득하다',
+  full: '체력과 컨디션이 이미 가득하다',
   hungry: '배가 고파 온천에 못 들어간다',
   expedition: '원정 중에는 못 들어간다',
 };

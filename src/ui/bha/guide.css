@@ -26,3 +26,18 @@
 /* C.172 (GDD 100장 #48): 첫 포식 안내 — 위에 몰려 아래 절반이 비던 내용을 세로 가운데로, 버튼은 보통 높이 */
 .bha-tutabsorb .bha-lcdpage__col { justify-content: safe center; }
 .bha-absorbpage.bha-tutabsorb .bha-absorb__lead { display: block; }  /* 첫 포식엔 상대 카드가 없어 "…을(를) 쓰러뜨렸다" 를 보인다 */
+/* C.211 (GDD 134장 2): 튜토리얼 치명상 장면 — 캐릭터 비틀거림 · 체력 막대 붉게 깜빡 */
+.bha-wound__fig { display: flex; align-items: flex-end; justify-content: center; height: 100%; min-height: 120px; }
+.bha-wound__fig > .bha-hero { height: 100%; aspect-ratio: 1; max-width: 100%; }
+.bha-wound__hero { transform-origin: 50% 95%; animation: bha-wound-sway 1.8s var(--bha-ease-out) infinite; }
+.bha-meter.bha-wound__hp { --c: var(--bha-danger); width: 100%; }
+.bha-wound__hp.is-blink .bha-meter__track { animation: bha-wound-blink 0.8s steps(1, end) infinite; }
+@keyframes bha-wound-sway {
+  0%, 100% { transform: rotate(0) translateX(0); }
+  18% { transform: rotate(-7deg) translateX(-4%); }
+  40% { transform: rotate(5deg) translateX(3%); }
+  58% { transform: rotate(-3deg) translateY(2%); }
+  75% { transform: rotate(1deg); }
+}
+@keyframes bha-wound-blink { 50% { box-shadow: 0 0 0 2px var(--bha-danger); opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .bha-wound__hero, .bha-wound__hp.is-blink .bha-meter__track { animation: none; } }

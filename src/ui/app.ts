@@ -18,7 +18,7 @@ import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playe
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { abortExpedition, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { abortExpedition, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
@@ -90,7 +90,8 @@ import { playBirth } from './birthFx';
 import { pickFaction } from '../data/schema';
 import { playWarning } from './warningView';
 import { warningKind } from './warningLogic';
-import { showGuide, tutorialAbsorbView } from './guideView';
+import { showGuide, tutorialAbsorbView, tutorialWoundView } from './guideView';
+import { heroArtOf } from './bha/battle';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { carriedPet } from '../engine/pet';
@@ -262,7 +263,7 @@ export function startApp(host: HTMLElement): void {
     const pct = (x: number) => String(Math.round(x * 100));
     const vars = {
       chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
-      spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), idleHpPct: pct(HH.idlePerMinute),
+      spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), spaCond: String(HH.spa.conditionPerMinute), idleHpPct: pct(HH.idlePerMinute),
       // 온천 가는 길 (GDD 130장 5): 켬 = '밖으로 → 시장 → 온천', 끔 = '장터 → 온천'
       spaPath: FEATURES.WORLD_MAP ? `${props.outside} → ${mk.name} → ${mk.props.spa}` : `${mk.name} → ${mk.props.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
@@ -297,10 +298,11 @@ export function startApp(host: HTMLElement): void {
           if (soaked) return true;
           if (nav.top?.id !== 'spa' || !s.nest.spa) return false;
           const from = homeHp(s).fraction;
+          const cond0 = s.nest.condition;
           recoverSpaSoak(s, Date.now());
           persist();
           soaked = true;
-          spaTutorialFill(from, homeHp(s).fraction, SPA_TUTORIAL_FILL_MS);
+          spaTutorialFill(from, homeHp(s).fraction, SPA_TUTORIAL_FILL_MS, { from: cond0, to: s.nest.condition }); // 컨디션도 흘린 시간만큼 (GDD 135장 2)
           return true;
         } },
       },
@@ -1563,6 +1565,11 @@ export function startApp(host: HTMLElement): void {
     const proceed = () => {
       saveProgress(exp);
       const next = () => {
+        // 튜토리얼 원정 흡수 직후 (GDD 134장 2, C.211): 치명상 장면(비틀거림·체력 막대 붉게 깜빡 + 각본 카드) 뒤 귀환 → 방에서 빈사 설명부터 회복 안내
+        if (exp.phase === 'ended' && exp.tutorial) {
+          const art = heroArtOf(roomOf(faction), faction.id, save?.evolution.tierIndex ?? 0, save ? artSkinOf(save) : undefined);
+          return tutorialWoundView(root, faction, art, hpFractionOf(exp), BALANCE.provisional.nest.care.dying.hpFraction, () => endExpedition(faction, exp));
+        }
         if (exp.phase === 'ended') return endExpedition(faction, exp);
         // 스토리 중간 대사 (GDD 25-7): 조건(처치 수)을 채운 뒤 원정으로 돌아가기 전에 한 번
         const cue = takeStoryCue(exp);
