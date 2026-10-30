@@ -637,7 +637,7 @@ export function startApp(host: HTMLElement): void {
 
   function exportOldSlot(n: number): void {
     const r = exportRawSlot(store, n);
-    if (!r) return void showToast({ eyebrow: '내보내기', title: `슬롯 ${n}을 내보낼 수 없다`, meta: '세이브가 비었거나 읽을 수 없다.' }, 0, 4200);
+    if (!r) return void showToast({ eyebrow: '내보내기', title: fixParticles(`슬롯 ${n}을(를) 내보낼 수 없다`), meta: '세이브가 비었거나 읽을 수 없다.' }, 0, 4200);
     const name = backupFileName({ meta: { format: r.format } as SaveData['meta'] });
     try {
       const url = URL.createObjectURL(new Blob([r.text], { type: 'application/json' }));
@@ -676,7 +676,7 @@ export function startApp(host: HTMLElement): void {
       selected,
       onDelete: (sum) => confirmDialog({
         title: `슬롯 ${sum.slot} 지우기`,
-        body: `슬롯 ${sum.slot}을 지운다. 되돌릴 수 없다. 지우기 전의 세이브는 슬롯 백업에 한 번 보관된다.`,
+        body: fixParticles(`슬롯 ${sum.slot}을(를) 지운다. 되돌릴 수 없다. 지우기 전의 세이브는 슬롯 백업에 한 번 보관된다.`),
         yes: '지우기', no: '아니오', danger: true,
         onYes: () => {
           if (!deleteSlot(store, sum.slot)) showToast({ eyebrow: '슬롯', title: '지우지 못했다', meta: '저장소가 막혀 있다.' }, 0, 4200);
@@ -726,7 +726,7 @@ export function startApp(host: HTMLElement): void {
     const recovered = !loaded && recoverFromBackup(store, n);
     if (recovered) loaded = loadSave(store, slotKey(n));
     if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
-    if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: `슬롯 ${n}을 백업에서 열었다`, meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
+    if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: fixParticles(`슬롯 ${n}을(를) 백업에서 열었다`), meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
     else if (needsMigration(raw)) stashSlot(store, n, 'migration');
     save = loaded;
     slot = n;
