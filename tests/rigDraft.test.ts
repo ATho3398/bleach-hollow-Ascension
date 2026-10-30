@@ -102,12 +102,16 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
   it('기본 동작마다 왼 아래팔이 움직인다(나눠만 놓고 똑같이 움직이지 않게)', () => {
     for (const id of ['idle', 'move', 'attack', 'attack2', 'skill', 'skill2', 'hit', 'ultimate']) expect(motions[id]!.tracks.forearm_L, id).toBeDefined();
   });
-  it('스트레이트(칼 든 손, 칼 숨김)·옆차기(끊김 없이 바로) — 잽·옆차기 B 는 없앰', () => {
-    expect(motions.jab).toBeUndefined();
-    expect(motions.sidekick2).toBeUndefined();
+  it('스트레이트(칼 든 손, 칼 숨김) — 잽·옆차기는 없앰', () => {
+    for (const id of ['jab', 'sidekick', 'sidekick2']) expect(motions[id], id).toBeUndefined();
     expect(orderLayers(lookLayers(rig, 'shinigami-base'), motions.straight).some((l) => l.slot === 'weapon')).toBe(false);
-    expect(motions.sidekick!.tracks.leg_L!.length).toBe(4); // 0 → 바로 차기 → 잠깐 → 제자리
-    expect(Math.max(...motions.sidekick!.tracks.leg_L!.map((k) => k[1]))).toBeGreaterThan(80);
+  });
+  it('온천: 반복, 다리·칼은 물에 잠겨 숨김, 윗몸을 뒤로 기댐', () => {
+    const b = motions.bath!;
+    expect(b.loop).toBe(true);
+    const shown = orderLayers(lookLayers(rig, 'arrancar-base-f'), b).map((l) => l.slot);
+    for (const s of ['leg_L', 'leg_R', 'foot_L', 'weapon']) expect(shown).not.toContain(s);
+    expect(b.tracks.torso![0]![1]).toBeGreaterThan(20);
   });
   it('쓰러짐은 끝 자세로 멈춰 있고(엎드림), 빈사는 반복 동작(허리 굽힘, 90° 아님)', () => {
     const c = createDollClock(motions);
