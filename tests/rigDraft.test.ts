@@ -106,11 +106,12 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
     for (const id of ['jab', 'sidekick', 'sidekick2']) expect(motions[id], id).toBeUndefined();
     expect(orderLayers(lookLayers(rig, 'shinigami-base'), motions.straight).some((l) => l.slot === 'weapon')).toBe(false);
   });
-  it('온천: 반복, 다리·칼은 물에 잠겨 숨김, 윗몸을 뒤로 기댐', () => {
+  it('온천: 반복, 칼·칼집만 숨김(다리는 보임 — 사용자 "다리 왜 맘대로 없애냐"), 윗몸을 뒤로 기댐', () => {
     const b = motions.bath!;
     expect(b.loop).toBe(true);
     const shown = orderLayers(lookLayers(rig, 'arrancar-base-f'), b).map((l) => l.slot);
-    for (const s of ['leg_L', 'leg_R', 'foot_L', 'weapon']) expect(shown).not.toContain(s);
+    for (const s of ['leg_L', 'leg_R', 'foot_L']) expect(shown).toContain(s);
+    for (const s of ['weapon', 'scabbard']) expect(shown).not.toContain(s);
     expect(b.tracks.torso![0]![1]).toBeGreaterThan(20);
   });
   it('쓰러짐은 끝 자세로 멈춰 있고(엎드림), 빈사는 반복 동작(허리 굽힘, 90° 아님)', () => {
