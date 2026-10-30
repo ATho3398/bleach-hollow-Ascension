@@ -98,7 +98,7 @@ import { applyGearToParams, gearCarry } from '../engine/gear';
 import { battleItemEffectOf, consumableName, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, petNoticeOf, spendBattleItem, useHealItemOnWalk } from '../inventory';
 import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
-import { shopView } from './shopView';
+import { shopPicker, shopView } from './shopView';
 import { idleBadge, refreshIdleBadge, showIdlePanel, showIdleReturn } from './idleView';
 import { deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
 import { applyCosmetics } from './bha/cosmetics';
@@ -924,8 +924,10 @@ export function startApp(host: HTMLElement): void {
     wandererToast = null;
     open('market', () => marketView(dev, faction, s, {
       onSpa: () => openSpa(faction, s),
-      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
+      onShop: (kind) => open('shop', () => shopView(dev, faction, s, { persist, kind, onWear: () => dress(s.wear) })),
       onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
+      // 대장장이 (GDD 153장 2, provisional): 기능은 나중 — 노란 알림 한 줄만
+      onSmith: () => showToast({ eyebrow: marketOf(faction).props.smith, title: fixParticles(`${marketOf(faction).props.smith}은(는) 아직 문을 열지 않았다`) }, 0, 2600),
       onBack: () => nav.back(),
       // 시장의 왼쪽 위 버튼 = [월드맵으로], 뒤로 = 월드맵(스택 아래) (GDD 130장 3)
       backLabel: '월드맵으로',
@@ -1075,8 +1077,8 @@ export function startApp(host: HTMLElement): void {
       onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
-      // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
-      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
+      // 상점 (GDD 25-9·150장 2): 4곳 고르는 작은 창 → 그 상점
+      onShop: () => shopPicker(faction, (kind) => open('shop', () => shopView(dev, faction, s, { persist, kind, onWear: () => dress(s.wear) }))),
       onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1·137장 3)
       forceOutside: forceAdventure, // 첫 모험 강제 (GDD 131장 2)
       onFed: () => {

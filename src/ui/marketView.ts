@@ -1,17 +1,21 @@
 // 시장 화면 (GDD 130장 3, 옛 127장 장터): 월드맵 [시장]으로 들어오는 따로 된 공간. 이름은 종족 설정 market.name (두 종족 모두 "시장").
-// 안에 온천·상점(방에서 옮김)과 떠돌이 상인(와 있을 때만 서 있음, 누르면 떠돌이 상인 창). 뒤로·[방으로 돌아가기](왼쪽 위, 온천과 같은 자리 — GDD 129-1) = 방.
-// 배경 그림 키 scene.market·자리 그림(prop.spa·prop.shop·prop.wanderer)은 사용자 그림 대기 — 없으면 임시 배경(좌판 줄)과 아이콘.
+// 안에 온천·상점 4곳(GDD 150장 2: 소모품·장비·스킨·특성)과 떠돌이 상인(와 있을 때만 서 있음, 누르면 떠돌이 상인 창). 뒤로·[방으로 돌아가기](왼쪽 위, 온천과 같은 자리 — GDD 129-1) = 방.
+// 배경 그림 키 scene.market·자리 그림(prop.spa·prop.shop·prop.gearShop·prop.skinShop·prop.traitShop·prop.wanderer)은 사용자 그림 대기 — 없으면 임시 배경(좌판 줄)과 아이콘.
 import { artUrls } from '../data/art/manifest';
 import { fixParticles } from '../engine/josa';
 import { marketOf, MARKET_SPOTS, type FactionConfig, type MarketSpot } from '../engine/faction';
 import type { SaveData } from '../game';
+import type { ShopKind } from '../data/shop';
 import { el, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { layoutOnFloor, propButton, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
 
 export interface MarketHandlers {
   onSpa: () => void;
-  onShop: () => void;
+  /** 상점 4곳 중 하나 (GDD 150장 2) */
+  onShop: (kind: ShopKind) => void;
+  /** 대장장이 (GDD 153장 2): 기능은 사용자가 나중에 정한다 — 지금은 안내 한 줄 */
+  onSmith: () => void;
   /** 떠돌이 상인 창 (와 있을 때만 불린다) */
   onWanderer: () => void;
   /** [방으로 돌아가기] — 뒤로와 같다 */
@@ -39,7 +43,10 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(mk);
   scene.classList.add('bha-market__scene');
-  const act: Record<MarketSpot, () => void> = { spa: hd.onSpa, shop: hd.onShop, wanderer: hd.onWanderer };
+  const act: Record<MarketSpot, () => void> = {
+    spa: hd.onSpa, wanderer: hd.onWanderer, smith: hd.onSmith,
+    shop: () => hd.onShop('consumable'), gearShop: () => hd.onShop('gear'), skinShop: () => hd.onShop('skin'), traitShop: () => hd.onShop('trait'),
+  };
   const spots = marketSpots(save);
   const floor: FloorEntry[] = [];
   const btns: HTMLButtonElement[] = [];
@@ -61,8 +68,8 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   body.append(scene);
   const main = mountApp(dev.view, { cls: 'bha-room bha-market' }, hud, body);
   main.dataset.devLayout = 'visual';
-  // 기기 버튼 (GDD 122장): ▲▼ = [방으로 돌아가기](화면 위치 순서 — 왼쪽 위) → 자리들(왼 → 오), ✓ = 누름, 뒤로 = 방
+  // 기기 버튼 (GDD 122장): ▲▼ = [방으로 돌아가기](화면 위치 순서 — 왼쪽 위) → 자리들(뒷줄 상점 4곳 왼 → 오, 앞줄 온천·떠돌이 상인), ✓ = 누름, 뒤로 = 방
   const items: SelectItem[] = [{ el: backBtn }, ...btns.map((b) => ({ el: b }))];
-  btns[0]?.focus({ preventScroll: true }); // 첫 선택 = 온천 (기기는 초점 있는 항목부터 고른다)
+  btns[0]?.focus({ preventScroll: true }); // 첫 선택 = 첫 자리 (기기는 초점 있는 항목부터 고른다)
   dev.setItems(items, main);
 }

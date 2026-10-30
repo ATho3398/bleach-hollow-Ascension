@@ -10,21 +10,21 @@ import { slotLine, slotTitle } from '../src/ui/startView';
 describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 137장 3)', () => {
   it('방에는 장터·상점·온천 물건이 없고, 시장 안 자리 = 온천·상점·떠돌이 상인', () => {
     for (const k of ['market', 'shop', 'spa']) expect(ROOM_PROPS as readonly string[]).not.toContain(k);
-    expect([...MARKET_SPOTS]).toEqual(['spa', 'shop', 'wanderer']);
+    expect([...MARKET_SPOTS]).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer']); // GDD 150장 2: 상점 4곳
   });
   it('시장 이름 = 두 종족 모두 "시장", 상점·온천 이름은 그대로', () => {
     for (const f of FACTIONS) {
       expect(marketOf(f).name).toBe('시장');
-      expect(marketOf(f).props.shop).toBe('상점');
+      expect(marketOf(f).props.shop).toBe('소모품 상점'); // GDD 150장 1
       expect(marketOf(f).props.spa.startsWith('온천')).toBe(true);
       expect(marketOf(f).sceneArt).toBe('scene.market');
     }
   });
   it('떠돌이 상인은 와 있을 때만 시장에 서 있다', () => {
     const s = newSaveData('hollow');
-    expect(marketSpots(s)).toEqual(['spa', 'shop']);
+    expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa']);
     s.shared.wanderer.visit = { at: 1, runId: 1, tier: 1, stock: [] };
-    expect(marketSpots(s)).toEqual(['spa', 'shop', 'wanderer']);
+    expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer']);
   });
   it('종족 설정 검사: 시장 자리 이름·위치가 틀리면 오류, 옛 room.props.shop·market 은 알 수 없는 물건', () => {
     const base = JSON.parse(readFileSync('src/data/factions/hollow.json', 'utf8'));

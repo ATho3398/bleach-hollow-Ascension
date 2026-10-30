@@ -322,7 +322,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   });
   const empty = ui.tab === 'battle'
     ? `전투용 소모품이 없다. 상점에서 사면 여기에 들어온다. ${slotName} 칸에 넣은 것을 전투 [소모품 사용]이 쓴다.`
-    : '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·상점 장비 탭·떠돌이 상인에게서 얻는다.';
+    : '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
   const grid = itemGrid([...gearCards, ...battleCards], empty);
   grid.classList.add('bha-itemgrid--equip');
 

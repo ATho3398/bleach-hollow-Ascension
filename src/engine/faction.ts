@@ -73,7 +73,8 @@ export type RoomProp = (typeof ROOM_PROPS)[number];
 export const WORLD_PLACES = ['home', 'market', 'adventure', 'tower'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
-export const MARKET_SPOTS = ['spa', 'shop', 'wanderer'] as const;
+/** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 온천 · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서 */
+export const MARKET_SPOTS = ['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer'] as const;
 export type MarketSpot = (typeof MARKET_SPOTS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
@@ -199,6 +200,8 @@ export interface MarketConfig {
   sceneArt: string;
   /** 자리 표시 이름 */
   props: Record<MarketSpot, string>;
+  /** 상점 4곳을 함께 부르는 이름 — 방 [상점] 버튼·고르는 창 제목 (GDD 150장 2) */
+  shopsLabel: string;
   /** 바닥(걷는 면) 범위 — 방과 같은 규칙 */
   floor: RoomFloorConfig;
   /** 자리 발 기준점 (장면 %) */
@@ -207,11 +210,17 @@ export interface MarketConfig {
 
 export const DEFAULT_MARKET: MarketConfig = {
   name: '시장',
+  shopsLabel: '상점',
   shape: 'market',
   sceneArt: 'scene.market',
-  props: { spa: '온천', shop: '상점', wanderer: '떠돌이 상인' },
+  props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '떠돌이 상인' },
   floor: { aspect: 2, poly: [[0, 0.5], [1, 0.5], [1, 1], [0, 1]] },
-  layout: { spa: { x: 20, y: 86, scale: 0.8 }, shop: { x: 52, y: 74, scale: 0.8 }, wanderer: { x: 82, y: 88, scale: 0.8 } },
+  // 뒷줄 = 상점 4곳·대장장이(왼 → 오), 앞줄 = 온천·떠돌이 상인 (GDD 150장 2·153장 2)
+  layout: {
+    shop: { x: 12, y: 66, scale: 0.7 }, gearShop: { x: 31, y: 64, scale: 0.7 }, skinShop: { x: 50, y: 63, scale: 0.7 },
+    traitShop: { x: 69, y: 64, scale: 0.7 }, smith: { x: 88, y: 66, scale: 0.7 },
+    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 78, y: 92, scale: 0.7 },
+  },
 };
 
 /** 종족 설정의 market 에 빠진 값을 기본값으로 채운다 */
@@ -570,7 +579,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const mk = r.market as Record<string, unknown>;
     if (!isRec(mk)) errors.push('market: 객체여야 한다');
     else {
-      for (const k of ['name', 'shape', 'sceneArt']) if (mk[k] !== undefined && !isString(mk[k])) errors.push(`market.${k}: 비어 있지 않은 문자열이어야 한다`);
+      for (const k of ['name', 'shopsLabel', 'shape', 'sceneArt']) if (mk[k] !== undefined && !isString(mk[k])) errors.push(`market.${k}: 비어 있지 않은 문자열이어야 한다`);
       for (const k of Object.keys((mk.props ?? {}) as object)) if (!(MARKET_SPOTS as readonly string[]).includes(k) || !isString((mk.props as Record<string, unknown>)[k])) errors.push(`market.props.${k}: 알 수 없는 자리이거나 문자열이 아니다`);
       for (const [k, v] of Object.entries((mk.layout ?? {}) as Record<string, unknown>)) {
         const ok = isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;

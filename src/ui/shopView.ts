@@ -1,18 +1,19 @@
-// 상점 (GDD 25-9, S-16 C.60): 장터 안 상점(C.201, 이름은 종족 설정 market.props.shop). 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
+// 상점 (GDD 25-9, S-16 C.60): 시장 안 상점 4곳(GDD 150장 1·2, C.227 — 소모품·장비·스킨·특성, 이름은 종족 설정 market.props). 각 상점은 자기 탭만. 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 배치 칸만 확인 창 1번, 나머지는 바로 산다. C.140 (GDD 86장 4번): 산 꾸밈·스킨은 보관함에서 착용(여기선 "보유").
 // 떠돌이 상인(GDD 85장 5번)은 장터의 따로 된 창(mode 'wanderer', C.201 GDD 127장 2) — 같은 카드 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { equipInventoryItem, petNoticeOf, unequipInventoryItem } from '../inventory';
-import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory, type MedicineCure } from '../data/shop';
+import { trapModalFocus } from './bha/modalFocus';
+import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { SHOP_KIND_TABS, type ShopKind, type ShopTabId, CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory, type MedicineCure } from '../data/shop';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
-import type { FactionConfig } from '../engine/faction';
+import { marketOf, type FactionConfig, type MarketSpot } from '../engine/faction';
 import type { SaveData } from '../game';
 import { artTierIndexOf } from '../game';
 import { buyShopItem, buyWandererItem, goldRows, healDaily, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
 import { getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
 import { GEAR_KIND_ICONS } from '../data/gear';
-import { provisionalTag } from './bha/dom';
-import { h } from './bha/dom';
+import { button, el, h, provisionalTag } from './bha/dom';
 import { charArt } from '../data/art/manifest';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
 import { deviceCards, deviceEntries } from './bha/deviceCards';
@@ -24,12 +25,16 @@ import { showGuide, tileDrawCard } from './guideView';
 import { markGuideDone } from '../engine/tutorial';
 import { shownName } from './displayName';
 
-/** 상점 탭: 아이템 분류 + 약(GDD 102-4: '음식' 옆 칸, 보관함에서는 소모품) + 떠돌이 상인 */
-export type ShopTab = ItemCategory | 'medicine' | 'wanderer';
+/** 상점 탭: 아이템 분류 + 약(GDD 102-4: '음식' 옆 칸, 보관함에서는 소모품) + 특성(GDD 150장 3) + 떠돌이 상인 */
+export type ShopTab = ShopTabId | 'wanderer';
+/** 상점 → 시장 자리 (이름 = 종족 설정 market.props, GDD 150장 2) */
+export const SHOP_SPOT: Record<ShopKind, MarketSpot> = { consumable: 'shop', gear: 'gearShop', skin: 'skinShop', trait: 'traitShop' };
+/** 상점 이름 (종족 설정) */
+export const shopName = (faction: Pick<FactionConfig, 'market'>, kind: ShopKind): string => marketOf(faction).props[SHOP_SPOT[kind]];
 /** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
 const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', shell: 'body', cut: 'line', room: 'line' };
-/** 마지막으로 본 탭 (다시 열면 그 탭) */
-const shopUi: { tab: ShopTab; skinSub: SkinSubTab } = { tab: 'food', skinSub: 'character' };
+/** 상점마다 마지막으로 본 탭 (다시 열면 그 탭) */
+const shopUi: { tab: ShopTab; last: Partial<Record<ShopKind, ShopTabId>>; skinSub: SkinSubTab } = { tab: 'food', last: {}, skinSub: 'character' };
 /** 쌓아 사는 골드 품목 (수량 고르기): 나머지는 한 번에 하나 */
 const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'battle', 'reroll', 'trainingTicket']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
@@ -46,6 +51,8 @@ export interface ShopHandlers {
   onWear?: () => void;
   /** 'wanderer' = 장터의 떠돌이 상인 창 (GDD 127장 2, C.201): 떠돌이 상인 품목만, 탭 없음. 없으면 보통 상점(떠돌이 상인 탭은 장터로 옮겨 없음) */
   mode?: 'wanderer';
+  /** 어느 상점 (GDD 150장 1). 없으면 소모품 상점 */
+  kind?: ShopKind;
 }
 
 /** 확인 창 문구 (영옥 품목·덱 칸) */
@@ -70,8 +77,13 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
   let lastScroll = 0;
   const cur = (c: ShopRow['currency']): string => (c === 'gold' ? TRADE_CURRENCY_NAME : JADE_NAME);
   const only = hd.mode === 'wanderer';
+  const kind: ShopKind = hd.kind ?? 'consumable';
+  const kindTabs = SHOP_KIND_TABS[kind];
   if (only) shopUi.tab = 'wanderer';
-  else if (shopUi.tab === 'wanderer') shopUi.tab = 'food';
+  else {
+    const last = shopUi.last[kind];
+    shopUi.tab = last && kindTabs.includes(last) ? last : kindTabs[0]!;
+  }
 
   /** 한 번 산다 (구매 창 [가격] 버튼). 쌓는 품목은 n 번 되풀이해 막히면 거기까지 */
   const buy = (row: ShopRow, qty: number) => {
@@ -208,14 +220,16 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (SHOP_PROVISIONAL) sub.append(' ', provisionalTag('임시 가격'));
     const rows: (ShopRow & { grade?: string })[] = shopUi.tab === 'wanderer'
       ? wandererRows(save, faction)
-      : shopUi.tab === 'medicine'
+      : shopUi.tab === 'trait'
+        ? []
+        : shopUi.tab === 'medicine'
         ? goldRows(save, faction).filter((r) => isMedicine(r.id))
         : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => (itemCategoryOf(r.id) ?? 'etc') === shopUi.tab && !isMedicine(r.id));
-    const cats = (['food', 'medicine', 'consumable', 'equipment', 'skin', 'tile', 'etc'] as const).map((id) => ({
-      id, label: id === 'medicine' ? '약' : ITEM_CATEGORY_NAMES[id],
-    }));
+    // 이 상점의 탭만 (GDD 150장 1): 탭이 하나뿐인 상점(장비·스킨·특성)은 탭 줄 없음
+    const cats = kindTabs.map((id) => ({ id, label: id === 'medicine' ? '약' : id === 'trait' ? '특성' : ITEM_CATEGORY_NAMES[id] }));
     const tabs = categoryTabs(cats, shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;
+      shopUi.last[kind] = id as ShopTabId;
       lastScroll = 0;
       render();
     }, '상품 분류');
@@ -232,14 +246,50 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       }, '스킨 종류', true)
       : null;
     const shown = shopUi.tab === 'skin' ? skinRows.filter((r) => skinSubOf(r.category) === shopUi.skinSub) : rows;
-    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '떠돌이 상인이 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : '지금 파는 물건이 없다.';
+    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '떠돌이 상인이 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : shopUi.tab === 'trait' ? '지금 파는 특성이 없다.' : '지금 파는 물건이 없다.';
     const grid = itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 칸마다 하나씩, 다음 원정에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]
       : [];
-    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : '상점', sub }), [...(only ? [] : [tabs]), ...(subTabs ? [subTabs] : []), ...note, grid], []);
+    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : shopName(faction, kind), sub }), [...(only || kindTabs.length < 2 ? [] : [tabs]), ...(subTabs ? [subTabs] : []), ...note, grid], []);
     page.app.dataset.tab = shopUi.tab;
+    page.app.dataset.shop = only ? 'wanderer' : kind;
     grid.scrollTop = lastScroll;
   }
   render();
+}
+
+/** 상점 고르기 창 (GDD 150장 2, C.227): 방 [상점] → 상점 4곳 중 하나. 기기 ▲▼ = 고르기, ✓ = 들어감, 뒤로·[닫기] = 닫힘 */
+export function shopPicker(faction: FactionConfig, onPick: (kind: ShopKind) => void): () => void {
+  const title = marketOf(faction).shopsLabel;
+  const layer = el('div', 'bha-overlay bha-overlay--in-app bha-confirm bha-shoppick');
+  layer.setAttribute('role', 'dialog');
+  layer.setAttribute('aria-modal', 'true');
+  layer.setAttribute('aria-label', title);
+  const modal = el('div', 'bha-modal');
+  modal.append(el('h2', 'bha-modal__title', title), el('p', 'bha-modal__body', '들어갈 곳을 고른다.'));
+  let closed = false;
+  let unregister: () => void = () => {};
+  let untrap: () => void = () => {};
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    unregister();
+    layer.remove();
+    untrap();
+  };
+  const list = el('div', 'bha-modal__actions bha-shoppick__list');
+  const btns = (Object.keys(SHOP_SPOT) as ShopKind[]).map((k) => {
+    const b = button({ label: shopName(faction, k), variant: 'primary', onClick: () => { close(); onPick(k); } });
+    b.dataset.shop = k;
+    return b;
+  });
+  list.append(...btns, button({ label: '닫기', variant: 'ghost', onClick: close }));
+  modal.append(list);
+  layer.append(modal);
+  getOverlayHost().append(layer);
+  untrap = trapModalFocus(layer);
+  btns[0]?.focus({ preventScroll: true });
+  unregister = registerLayer(layer, close);
+  return close;
 }

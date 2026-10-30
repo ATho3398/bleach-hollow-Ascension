@@ -81,6 +81,11 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.market': {},
   'scene.market': {},
   'prop.wanderer': {},
+  // 상점 4곳 (GDD 150장 2, C.227): 소모품 상점 = prop.shop, 나머지 3곳 — 사용자 그림 대기(비어 있으면 아이콘)
+  'prop.gearShop': {},
+  'prop.skinShop': {},
+  'prop.traitShop': {},
+  'prop.smith': {}, // 대장장이 (GDD 153장 2)
   // 밖으로·월드맵 (GDD 130장, C.204): 방 물건(밖으로)·월드맵 하이앵글 배경·지도 위 장소(홈·모험; 시장은 prop.market) — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
   'prop.outside': {},
   'scene.worldmap': {},

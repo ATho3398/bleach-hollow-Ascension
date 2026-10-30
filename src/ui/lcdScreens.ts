@@ -195,7 +195,7 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
   p.setAttribute('aria-label', '스킨');
   p.dataset.skins = String(skins.length);
   if (skins.length === 0) {
-    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. ${marketOf(faction).name}의 상점 스킨 탭에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
+    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. ${marketOf(faction).name}의 ${marketOf(faction).props.skinShop}에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
     return p;
   }
   const list = h('div', 'bha-stack bha-stack--tight');
@@ -245,7 +245,7 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   coins.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ' ', h('span', 'bha-faint', '상점'));
   const jade = h('p', 'bha-small');
   jade.dataset.currency = 'jade';
-  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', h('span', 'bha-faint', '상점 스킨 탭 (꾸밈)'));
+  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', h('span', 'bha-faint', '스킨 상점 (꾸밈)'));
   p.append(food, crystals, coins, jade);
   if (save.shared.rerollTickets > 0) p.append(h('p', 'bha-small', `다시 뽑기권 ${save.shared.rerollTickets}장`));
   return p;
@@ -339,7 +339,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       const lock = panel({ title: '타일', aside: h('span', 'bha-chip', TILES_LOCKED_TEXT) });
       lock.dataset.tilesLocked = '';
       lock.querySelector('.bha-panel__title')?.prepend(icon('i-lock'));
-      lock.append(h('p', 'bha-dim', `원정 타일은 첫 진화 후 열린다. 첫 진화 때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 상점 [타일 뽑기]로 모은다.`));
+      lock.append(h('p', 'bha-dim', `원정 타일은 첫 진화 후 열린다. 첫 진화 때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 소모품 상점 [타일 뽑기]로 모은다.`));
       page.left.replaceChildren(lock);
       page.right.replaceChildren(h('p', 'bha-faint', '지금 원정은 타일 없이 기본 길을 걷는다.'));
       return;
@@ -408,7 +408,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       row.append(ic, main);
       list.append(row);
     }
-    if (owned.length === 0) list.append(h('p', 'bha-faint', '가진 타일이 없다. 상점 [타일 뽑기]로 모은다.'));
+    if (owned.length === 0) list.append(h('p', 'bha-faint', '가진 타일이 없다. 소모품 상점 [타일 뽑기]로 모은다.'));
     info.append(h('p', 'bha-faint', '길에 놓기는 원정 출발 화면에서 한다.'));
     page.left.replaceChildren(info);
     page.right.replaceChildren(list);
@@ -488,7 +488,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => openItem(faction, save, e, artOf(e), changed),
   }));
-  const empty = itemsUi.cat === 'skin' ? SKIN_SUB_EMPTY : itemsUi.cat === 'equipment' ? '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·상점 장비 탭·떠돌이 상인에게서 얻는다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  const empty = itemsUi.cat === 'skin' ? SKIN_SUB_EMPTY : itemsUi.cat === 'equipment' ? '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   if (!petOnly) box.append(tabs);
   if (itemsUi.cat === 'skin') {

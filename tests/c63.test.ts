@@ -194,8 +194,8 @@ describe('방 상점 (28장 9번 → C.201 장터 안)', () => {
   it('상점은 시장 안 자리(GDD 127장 2·130장 3), 이름은 두 종족 공통 상점(GDD 34-2). 방에는 상점·장터 물건이 없다 (137장 3)', () => {
     expect(ROOM_PROPS as readonly string[]).not.toContain('market');
     expect(ROOM_PROPS as readonly string[]).not.toContain('shop');
-    expect(marketOf(H).props.shop).toBe('상점');
-    expect(marketOf(S).props.shop).toBe('상점');
+    expect(marketOf(H).props.shop).toBe('소모품 상점'); // GDD 150장 1: 상점 4곳 — 옛 상점 = 소모품 상점
+    expect(marketOf(S).props.shop).toBe('소모품 상점');
   });
   it('더보기 줄에 상점이 없다', () => {
     expect(src('src/ui/roomView.ts')).not.toMatch(/label: '상점'/);

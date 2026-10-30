@@ -11,11 +11,13 @@
     var(--bha-bg-1);
 }
 .bha-room--market .bha-room__floor { height: 50%; }
-/* 자리 모양 (그림 없을 때): 온천 = 낮은 탕, 상점 = 매대, 떠돌이 상인 = 짐 진 사람 자리 */
+/* 자리 모양 (그림 없을 때): 온천 = 낮은 탕, 상점 4곳 = 매대(GDD 150장 2), 떠돌이 상인 = 짐 진 사람 자리 */
 .bha-prop--spa .bha-prop__shape { width: 56px; height: 30px; border-radius: var(--bha-r-lg); }
-.bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
+.bha-prop--shop .bha-prop__shape, .bha-prop--gearShop .bha-prop__shape, .bha-prop--skinShop .bha-prop__shape, .bha-prop--traitShop .bha-prop__shape, .bha-prop--smith .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--wanderer .bha-prop__shape { width: 34px; height: 52px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); border-color: var(--bha-hunger); }
 .bha-prop--market .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
 /* 월드맵 시장: 떠돌이 상인이 와 있으면 오른쪽 위 배지 (GDD 130장 2) */
 .bha-prop.has-visitor .bha-prop__shape { position: relative; overflow: visible; }
 .bha-prop.has-visitor .bha-prop__badge { position: absolute; top: 0; right: 0; translate: 20% -40%; margin: 0; line-height: 1.3; }
+/* 상점 고르기 창 (GDD 150장 2, C.227): 상점 4곳 + [닫기] 를 한 줄에 하나씩 (기기 ▲▼ 순서 = 위 → 아래) */
+.bha-shoppick__list { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-2); }

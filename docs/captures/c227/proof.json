@@ -1,0 +1,45 @@
+{
+  "shots": [
+    "01-market-4-shops.png",
+    "03-trait-shop.png",
+    "02-room-shop-picker.png"
+  ],
+  "errors": [],
+  "trace": [
+    [
+      "room",
+      "bha-room"
+    ]
+  ],
+  "spots": [
+    "shop: 소모품 상점",
+    "gearShop: 장비 상점",
+    "skinShop: 스킨 상점",
+    "traitShop: 특성 상점",
+    "spa: 온천"
+  ],
+  "consumable": {
+    "title": "소모품 상점",
+    "tabs": [
+      "음식",
+      "약",
+      "소모품",
+      "타일",
+      "기타"
+    ]
+  },
+  "trait": {
+    "cards": []
+  },
+  "picker": {
+    "btns": [
+      "소모품 상점",
+      "장비 상점",
+      "스킨 상점",
+      "특성 상점",
+      "닫기"
+    ],
+    "focus": ""
+  },
+  "pickedTitle": "gear"
+}

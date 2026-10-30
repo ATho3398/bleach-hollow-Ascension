@@ -24,6 +24,18 @@ export const ITEM_CATEGORIES = ['food', 'consumable', 'equipment', 'pet', 'skin'
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = { food: '음식', consumable: '소모품', equipment: '장비', pet: '펫', skin: '스킨', tile: '타일', etc: '기타' };
 
+/** 상점 4곳 (GDD 150장 1, C.227): 소모품 상점 = 음식·약·소모품·타일·기타 탭, 장비 상점 = 장비, 스킨 상점 = 스킨(하위 탭 그대로), 특성 상점 = 탈착 특성.
+ *  'medicine' = 약 칸(GDD 102-4·145장 4, 보관함에서는 소모품), 'trait' = 특성 상점 칸. 이름은 종족 설정 market.props(자리 이름) */
+export const SHOP_KINDS = ['consumable', 'gear', 'skin', 'trait'] as const;
+export type ShopKind = (typeof SHOP_KINDS)[number];
+export type ShopTabId = ItemCategory | 'medicine' | 'trait';
+export const SHOP_KIND_TABS: Record<ShopKind, readonly ShopTabId[]> = {
+  consumable: ['food', 'medicine', 'consumable', 'tile', 'etc'],
+  gear: ['equipment'],
+  skin: ['skin'],
+  trait: ['trait'],
+};
+
 /** '스킨' 탭 안의 하위 탭 (C.153, GDD 95장 A3): 상점·보관함이 같은 구분을 쓴다. 꾸밈 분류(skin·fx·trail·keyring·device …) → 하위 탭 */
 export const SKIN_SUBTABS = [['character', '캐릭터'], ['attackFx', '공격 이펙트'], ['moveFx', '이동 이펙트'], ['keyring', '키링'], ['device', '기기'], ['etc', '연출·꾸밈']] as const;
 export type SkinSubTab = (typeof SKIN_SUBTABS)[number][0];
