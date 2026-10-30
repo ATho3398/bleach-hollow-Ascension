@@ -8,7 +8,7 @@ import { addFood } from './engine/food';
 import { applyGearToParams, gearCarry } from './engine/gear';
 import type { FoodId } from './engine/faction';
 import { enterSpa, healHomeHp, homeHpCap, homeHpOf, leaveSpa, setHomeHp, soakSpa, type SpaEnd } from './engine/nest';
-import { logHomeHeal, logSpaEnd, statBonusOf, type SaveData } from './game';
+import { logHomeHeal, logSpaEnd, statBonusOf, tickIdle, type SaveData } from './game';
 import { storeConsumable } from './shop';
 
 /** 체력 포션 품목 id (떠돌이 상인 영웅 품목, 보관함 소모품) */
@@ -47,11 +47,14 @@ export const SPA_BLOCK_TEXT: Record<'dead' | 'already' | 'full' | 'hungry' | 'ex
 /** 온천에 들어간다. 못 들어가면 이유 키, 들어가면 null */
 export function spaEnter(save: SaveData, nowMs: number = Date.now()): keyof typeof SPA_BLOCK_TEXT | null {
   if (save.activeExpedition != null) return 'expedition';
+  // 들어가기 전까지의 시간은 먼저 대기로 흘린다 (C.214 — 온천이 10초에 가득이라, 마지막 1분 시계 뒤 시간이 온천 시간으로 잡히면 들어가자마자 가득 찼다)
+  tickIdle(save, nowMs);
   return enterSpa(save.nest, nowMs);
 }
 
 /** 온천에서 나온다 (뒤로). 런 로그 homeHeals 'spa'. 온천이 아니었으면 null */
 export function spaLeave(save: SaveData, nowMs: number = Date.now(), tutorial = false): SpaEnd | null {
+  if (save.activeExpedition == null) tickIdle(save, nowMs); // 나오기 전까지의 온천 시간을 먼저 흘린다 (C.214 — 그사이 가득 차 저절로 나왔으면 아래는 null)
   const e = leaveSpa(save.nest, nowMs, 'left');
   logSpaEnd(save, e, tutorial);
   return e;
@@ -60,6 +63,7 @@ export function spaLeave(save: SaveData, nowMs: number = Date.now(), tutorial = 
 /** 온천 시간을 바로 minutes 분 흘린다 (튜토리얼 '쉬게 하기' — 예: 5분 = 체력 +50%·배부름 −50). 온천이 아니면 들어가서. 저절로 나오면 기록 */
 export function spaSoak(save: SaveData, minutes: number, nowMs: number = Date.now(), tutorial = false): { hp: number; ended: SpaEnd | null } {
   if (save.activeExpedition != null) return { hp: 0, ended: null };
+  tickIdle(save, nowMs); // 흘리기 전까지의 시간을 먼저 (C.214)
   const r = soakSpa(save.nest, minutes, nowMs);
   logSpaEnd(save, r.ended, tutorial);
   return r;

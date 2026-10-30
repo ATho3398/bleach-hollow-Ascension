@@ -239,7 +239,7 @@
     {
      "id": "to-spa",
      "title": "온천",
-     "body": "온천에서 쉬면 1분에 체력 10%·컨디션 1씩 차고 배부름이 10 준다.[밖으로]를 누른다.",
+     "body": "온천에서 쉬면 1초에 체력 10%·컨디션 10씩 차고 배부름이 1 준다.[밖으로]를 누른다.",
      "cover": [
       {
        "what": "hole",
@@ -250,7 +250,7 @@
     {
      "id": "spa-rest",
      "title": "쉬기",
-     "body": "튜토리얼에서는 기다리지 않고 체력이 80%까지 빨리 찼다.[다음]을 누르면 방으로 돌아간다.",
+     "body": "체력이 80%까지 찼다. 10초면 가득 차고, 체력과 컨디션이 다 차면 저절로 방으로 돌아간다.[다음]을 누르면 방으로 돌아간다.",
      "cover": []
     },
     {
@@ -299,6 +299,11 @@
      "after": "bha-app bha-lcdpage bha-chest-page"
     },
     {
+     "id": "cure",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
      "id": "potion",
      "before": "bha-app bha-lcdpage bha-chest-page",
      "after": "bha-app bha-lcdpage bha-chest-page"
@@ -310,13 +315,13 @@
     },
     {
      "id": "to-spa",
-     "before": "bha-app bha-spa",
-     "after": "bha-app bha-spa"
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
     },
     {
      "id": "spa-rest",
-     "before": "bha-app bha-spa",
-     "after": "bha-app bha-spa"
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
     },
     {
      "id": "feed",
@@ -327,6 +332,24 @@
      "id": "done",
      "before": "bha-app bha-room",
      "after": "bha-app bha-room"
+    }
+   ],
+   "spaFill": [
+    {
+     "ms": 300,
+     "status": "체력 65 / 115, 컨디션 84, 배부름 77"
+    },
+    {
+     "ms": 1501,
+     "status": "체력 79 / 115, 컨디션 96, 배부름 76"
+    },
+    {
+     "ms": 2702,
+     "status": "체력 92 / 115, 컨디션 100, 배부름 75"
+    },
+    {
+     "ms": 6000,
+     "status": null
     }
    ],
    "reachedNext": true,
@@ -596,7 +619,7 @@
     {
      "id": "to-spa",
      "title": "온천",
-     "body": "온천에서 쉬면 1분에 체력 10%·컨디션 1씩 차고 배부름이 10 준다.[밖으로]를 누른다.",
+     "body": "온천에서 쉬면 1초에 체력 10%·컨디션 10씩 차고 배부름이 1 준다.[밖으로]를 누른다.",
      "cover": [
       {
        "what": "hole",
@@ -607,7 +630,7 @@
     {
      "id": "spa-rest",
      "title": "쉬기",
-     "body": "튜토리얼에서는 기다리지 않고 체력이 80%까지 빨리 찼다.[다음]을 누르면 방으로 돌아간다.",
+     "body": "체력이 80%까지 찼다. 10초면 가득 차고, 체력과 컨디션이 다 차면 저절로 방으로 돌아간다.[다음]을 누르면 방으로 돌아간다.",
      "cover": []
     },
     {
@@ -628,10 +651,6 @@
      "cover": [
       {
        "what": "hole",
-       "pct": 0
-      },
-      {
-       "what": ".bha-homedock__tray--food",
        "pct": 0
       }
      ]
@@ -672,13 +691,13 @@
     },
     {
      "id": "to-spa",
-     "before": "bha-app bha-spa",
-     "after": "bha-app bha-spa"
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
     },
     {
      "id": "spa-rest",
-     "before": "bha-app bha-spa",
-     "after": "bha-app bha-spa"
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
     },
     {
      "id": "feed",
@@ -689,6 +708,24 @@
      "id": "done",
      "before": "bha-app bha-room",
      "after": "bha-app bha-room"
+    }
+   ],
+   "spaFill": [
+    {
+     "ms": 301,
+     "status": "체력 65 / 115, 컨디션 84, 배부름 77"
+    },
+    {
+     "ms": 1501,
+     "status": "체력 79 / 115, 컨디션 96, 배부름 76"
+    },
+    {
+     "ms": 2702,
+     "status": "체력 92 / 115, 컨디션 100, 배부름 75"
+    },
+    {
+     "ms": 6002,
+     "status": null
     }
    ],
    "reachedNext": true,

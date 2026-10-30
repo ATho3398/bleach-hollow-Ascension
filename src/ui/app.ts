@@ -7,13 +7,12 @@ import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
-import { homeHp, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
+import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
 import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
-import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverSpaSoak, recoverStep } from '../recoverTutorial';
+import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaEndText, spaExitFx, spaTutorialFill, spaView } from './spaView';
-import { SPA_TUTORIAL_FILL_MS } from './bha/actionFx';
+import { spaEndText, spaExitFx, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -25,7 +24,7 @@ import { towerResultView, towerView } from './towerView';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { absenceText, careBlockText } from './bha/roomLogic';
-import type { AbsenceReport } from '../engine/nest';
+import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
@@ -262,7 +261,7 @@ export function startApp(host: HTMLElement): void {
     const pct = (x: number) => String(Math.round(x * 100));
     const vars = {
       chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
-      spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), spaCond: String(HH.spa.conditionPerMinute), idleHpPct: pct(HH.idlePerMinute),
+      spaHpPct: pct(HH.spa.hpPerSecond), spaFullness: String(HH.spa.fullnessPerSecond), spaCond: String(HH.spa.conditionPerSecond), idleHpPct: pct(HH.idlePerMinute),
       // 온천 가는 길 (GDD 130장 5): 밖으로 → 시장 → 온천
       spaPath: `${props.outside} → ${mk.name} → ${mk.props.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
@@ -284,6 +283,7 @@ export function startApp(host: HTMLElement): void {
     };
     let fedAt = s.nest.lastFedAt;
     let soaked = false;
+    let inSpa = false;
     const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: (go: () => void) => void; skip?: () => boolean }> = {
       dying: {},
       'to-bag': {
@@ -294,18 +294,19 @@ export function startApp(host: HTMLElement): void {
       potion: { act: { selector: '[data-item="w-hp-potion"]', done: () => closeItemWhen(homeHp(s).fraction >= TR.potionTo - EPS) } },
       merchant: { next: (go) => { toRoom(); go(); } },
       'to-spa': {
-        // 온천에 들어가면(원래 조작) 튜토리얼 동안만 체력 spaTo 까지 시간을 바로 흘린다 — 나오지는 않는다 (다음 카드 [다음] 뒤 방으로)
-        // 앉은 뒤 약 3초 동안 체력 막대가 spaTo 까지 천천히 찬다 (GDD 132장 3 — 값은 들어간 순간 저장, 연출이 끝나야 [다음])
+        // 온천에 들어가면(원래 조작) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
+        // 체력이 spaTo 에 닿으면 [다음]. 배부름이 먼저 바닥나 나왔으면 각본 값 spaTo 까지 채운다
         act: { selector: `${spaWay}, .bha-spa__actor`, done: () => {
           if (soaked) return true;
-          if (nav.top?.id !== 'spa' || !s.nest.spa) return false;
-          const from = homeHp(s).fraction;
-          const cond0 = s.nest.condition;
-          recoverSpaSoak(s, Date.now());
-          persist();
-          soaked = true;
-          spaTutorialFill(from, homeHp(s).fraction, SPA_TUTORIAL_FILL_MS, { from: cond0, to: s.nest.condition }); // 컨디션도 흘린 시간만큼 (GDD 135장 2)
-          return true;
+          if (!s.nest.spa) {
+            if (!inSpa) return false;
+            if (homeHp(s).fraction < TR.spaTo - EPS) setHomeHpOf(s, TR.spaTo);
+            persist();
+            return (soaked = true);
+          }
+          if (nav.top?.id !== 'spa') return false;
+          inSpa = true;
+          return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);
         } },
       },
       // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로

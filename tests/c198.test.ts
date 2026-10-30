@@ -151,38 +151,38 @@ describe('123장 4 홈 회복', () => {
     tickNestOnline(n, T0 + 60 * MIN, true);
     expect(n.hpFraction).toBeCloseTo(0.3);
   });
-  it('온천: 1분에 체력 +10%·배부름 −10, 가득 차면 저절로 나오고 남은 시간은 대기 회복', () => {
+  it('온천: 1초에 체력 +10%·배부름 −1 (C.214 GDD 139장 2), 가득 차면 저절로 나오고 남은 시간은 대기 회복', () => {
     const n = newNest(T0);
     n.condition = 100; // 컨디션도 가득이어야 나온다 (GDD 135장 2, C.211) — 여기선 체력만 본다
     n.hunger = 0;
     n.hpFraction = 0.5;
     expect(enterSpa(n, T0)).toBeNull();
-    const f = passNestTime(n, 7 / 60, false, T0 + 7 * MIN);
-    // 5분에 가득(+50%), 배부름 −50, 그 뒤 2분은 대기(이미 가득)
+    const f = passNestTime(n, 7 / 3600, false, T0 + 7_000);
+    // 5초에 가득(+50%), 배부름 −5, 그 뒤 2초는 대기(이미 가득)
     expect(n.hpFraction).toBeCloseTo(1);
     expect(n.spa).toBeNull();
     expect(f.spaEnded?.reason).toBe('full');
-    expect(f.spaEnded?.at).toBe(T0 + 5 * MIN);
-    expect(100 - n.hunger).toBeGreaterThan(49); // 온천 −50 + 평소 시간 흐름(시간당 −5) 7분
-    expect(100 - n.hunger).toBeLessThanOrEqual(50);
+    expect(f.spaEnded?.at).toBe(T0 + 5_000);
+    expect(100 - n.hunger).toBeGreaterThan(94.9); // 온천 −5 + 평소 시간 흐름 7초
+    expect(100 - n.hunger).toBeLessThanOrEqual(95);
   });
   it('온천: 배부름이 0 이 되면 저절로 나온다 (굶지 않게)', () => {
     const n = newNest(T0);
-    n.hunger = 80; // 배부름 20 = 2분
+    n.hunger = 97; // 배부름 3 = 3초
     n.hpFraction = 0.1;
     enterSpa(n, T0);
-    const f = passNestTime(n, 10 / 60, true, T0 + 10 * MIN);
+    const f = passNestTime(n, 1 / 60, true, T0 + MIN);
     expect(f.spaEnded?.reason).toBe('hungry');
     expect(n.spa).toBeNull();
-    // 2분 온천(+20%) + 8분 대기(+16%)
-    expect(n.hpFraction).toBeCloseTo(0.1 + 0.2 + 0.16, 2);
+    // 3초 온천(+30%) + 57초 대기(+1.9%)
+    expect(n.hpFraction).toBeCloseTo(0.1 + 0.3 + 0.019, 3);
   });
   it('온천은 앱을 꺼도 유지된다 (꺼 둔 시간에 계산)', () => {
     const n = newNest(T0);
     n.hunger = 0;
     n.hpFraction = 0.2;
     enterSpa(n, T0);
-    applyAbsenceTime(n, T0, T0 + 3 * MIN);
+    applyAbsenceTime(n, T0, T0 + 3_000);
     expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(0.5);
   });
@@ -267,10 +267,10 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     s.nest.hunger = 0;
     expect(spaEnter(s, T0)).toBeNull();
     expect(homeHp(s).inSpa).toBe(true);
-    const r = spaSoak(s, 4, T0, true);
+    const r = spaSoak(s, 4 / 60, T0, true); // 4초
     expect(r.hp).toBeCloseTo(0.4);
-    expect(100 - s.nest.hunger).toBeCloseTo(60);
-    const e = spaLeave(s, T0 + 4 * MIN, true)!;
+    expect(100 - s.nest.hunger).toBeCloseTo(96);
+    const e = spaLeave(s, T0, true)!;
     expect(e.reason).toBe('left');
     expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'left', hpFrom: 0.1, hpTo: 0.5, tutorial: true });
   });
@@ -304,7 +304,8 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     spaEnter(s, T0);
     absenceOf(s, T0 + 30 * MIN);
     expect(s.nest.spa).toBeNull();
-    expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'full', minutes: 4 });
+    expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'full' });
+    expect((s.runLog.homeHeals.at(-1) as { minutes: number }).minutes).toBeCloseTo(4 / 60, 1); // 4초 (기록은 분 소수 둘째 자리)
     leaveSpa(s.nest, T0);
   });
 });

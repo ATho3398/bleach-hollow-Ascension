@@ -28,10 +28,10 @@ describe('135장 수정 v5.315: 대기 때 컨디션은 안 찬다', () => {
     passNestTime(n, 1, false, 3_600_000);
     expect(n.condition).toBeLessThan(50);
   });
-  it('balance 에 홈 대기 회복 키가 없다 · 온천 +1/분은 남는다', () => {
+  it('balance 에 홈 대기 회복 키가 없다 · 온천 컨디션은 남는다', () => {
     expect(CP).not.toHaveProperty('conditionRegenAtFullness');
     expect(CP).not.toHaveProperty('conditionRegenPerHour');
-    expect(BALANCE.provisional.nest.homeHp.spa.conditionPerMinute).toBe(1);
+    expect(BALANCE.provisional.nest.homeHp.spa.conditionPerSecond).toBe(10);
   });
   it('컨디션·배부름 ⓘ 에 "쉬는 동안" 회복 문구 없음, 온천 문구는 있음', () => {
     for (const f of FACTIONS) {
@@ -39,7 +39,7 @@ describe('135장 수정 v5.315: 대기 때 컨디션은 안 찬다', () => {
       const hunger = statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n');
       expect(cond).not.toMatch(/쉬는 동안/);
       expect(hunger).not.toMatch(/쉬는 동안|컨디션이 시간당 \+/);
-      expect(cond).toMatch(/1분에 \+1/);
+      expect(cond).toMatch(/1초에 \+10/);
     }
   });
 });
@@ -58,5 +58,44 @@ describe('회복 안내: 치료제·포션을 쓰면 물건 창을 닫는다 (C.
     expect(src).toContain("done: () => closeItemWhen(!s.nest.collapsed)");
     expect(src).toContain('done: () => closeItemWhen(homeHp(s).fraction >= TR.potionTo - EPS)');
     expect(src).toContain(".bha-itemdialog .bha-itemmodal__close')?.click()");
+  });
+});
+
+describe('139장 2 온천 = 10초 안 (C.214 추가)', () => {
+  const SP = BALANCE.provisional.nest.homeHp.spa;
+  it('1초에 체력 +10%·컨디션 +10·배부름 −1 → 체력 1% → 100% 약 10초, 그 한 번에 배부름 −10 안쪽', async () => {
+    const { enterSpa } = await import('../src/engine/nest');
+    expect([SP.hpPerSecond, SP.conditionPerSecond, SP.fullnessPerSecond]).toEqual([0.1, 10, 1]);
+    const n = newNest(0);
+    n.hpFraction = 0.01;
+    n.condition = 0;
+    n.hunger = 0;
+    expect(enterSpa(n, 0)).toBeNull();
+    const f = passNestTime(n, 10 / 3600, false, 10_000);
+    expect(n.hpFraction).toBeCloseTo(1, 6);
+    expect(n.condition).toBeCloseTo(100, 6);
+    expect(n.spa).toBeNull(); // 둘 다 가득 → 저절로 나옴
+    expect(f.spaEnded?.reason).toBe('full');
+    expect(f.spaEnded!.at).toBe(10_000);
+    expect(100 - n.hunger).toBeGreaterThanOrEqual(90 - 0.1);
+  });
+  it('들어가기 전 시간은 온천 시간으로 안 친다 (spaEnter 가 먼저 시계를 흘림)', async () => {
+    const { newSaveData } = await import('../src/game');
+    const { spaEnter, homeHp } = await import('../src/home');
+    const s = newSaveData('hollow', 0);
+    s.nest.lastTickMs = 0;
+    s.nest.hpFraction = 0.2;
+    s.nest.hunger = 0;
+    expect(spaEnter(s, 50_000)).toBeNull(); // 마지막 1분 시계 뒤 50초 지나 들어감
+    const { previewHomeHp } = await import('../src/engine/nest');
+    expect(previewHomeHp(s.nest, 52_000).fraction).toBeCloseTo(homeHp(s).fraction + 0.2, 6); // 들어간 뒤 2초만 = +20%
+    expect(homeHp(s).fraction).toBeLessThan(0.3); // 앞선 50초는 대기 회복(1분에 +2%)
+  });
+  it('문구: 온천 ⓘ 1초에 · 튜토리얼 온천 카드 1초에 · 쉬기 카드 = 실제 시간', () => {
+    expect(readFileSync('src/ui/spaView.ts', 'utf8')).toContain('`1초에 체력 +${Math.round(SP.hpPerSecond * 100)}%');
+    const tut = readFileSync('src/data/help/tutorial.json', 'utf8');
+    expect(tut).not.toContain('1분에 체력 {spaHpPct}%');
+    expect(tut).toContain('1초에 체력 {spaHpPct}%');
+    expect(tut).not.toContain('기다리지 않고');
   });
 });

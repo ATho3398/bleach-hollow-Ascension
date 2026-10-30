@@ -178,13 +178,13 @@
         "@.bha-spa__actor"
       ],
       "title": "{spaName}",
-      "body": "{spaName}에서 쉬면 1분에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.",
+      "body": "{spaName}에서 쉬면 1초에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.",
       "stages": [
         {
           "targets": [
                 "@.bha-prop--outside"
           ],
-          "body": "{spaName}에서 쉬면 1분에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
+          "body": "{spaName}에서 쉬면 1초에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
         },
         {
           "targets": [
@@ -205,13 +205,13 @@
           "body": "{spaName}에 들어가 쉬는 중이다.\n체력이 차오른다."
         }
       ],
-      "done": "체력이 {spaToPct}%까지 찼다.\n[다음]을 누른다."
+      "done": "체력이 1초에 {spaHpPct}%씩 빠르게 찬다.\n[다음]을 누른다."
     },
     {
       "id": "spa-rest",
       "targets": [],
       "title": "쉬기",
-      "body": "튜토리얼에서는 기다리지 않고 체력이 {spaToPct}%까지 빨리 찼다.\n[다음]을 누르면 방으로 돌아간다."
+      "body": "온천에서는 10초면 체력이 가득 찬다. 체력과 컨디션이 다 차면 저절로 방으로 돌아간다.\n[다음]을 누르면 방으로 돌아간다."
     },
     {
       "id": "feed",

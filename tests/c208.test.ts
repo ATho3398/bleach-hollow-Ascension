@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { HOME_INTRO, RECOVER_SCENES, helpVars, renderHelpText } from '../src/data/help';
 import { FACTIONS } from '../src/data/factions';
 import { lastShownStage } from '../src/ui/tutorialOverlay';
-import { actionBusy, beginAction, tween, ACTION_FILL_MS, SPA_TUTORIAL_FILL_MS } from '../src/ui/bha/actionFx';
+import { actionBusy, beginAction, tween, ACTION_FILL_MS } from '../src/ui/bha/actionFx';
 import { SPA_PATH } from '../src/ui/spaView';
 import { standFoot } from '../src/ui/worldMapView';
 import { ScreenStack } from '../src/ui/bha/select';
@@ -65,9 +65,8 @@ describe('132장 2 월드맵 캐릭터·초점 = 있던 곳', () => {
 });
 
 describe('132장 3 행동 진행 연출', () => {
-  it('연출 시간 = 화면 상수 (아이템·먹이 약 1초, 튜토리얼 온천 약 3초)', () => {
+  it('연출 시간 = 화면 상수 (아이템·먹이 약 1초 — 튜토리얼 온천은 C.214 부터 실제 시간)', () => {
     expect(ACTION_FILL_MS).toBe(1000);
-    expect(SPA_TUTORIAL_FILL_MS).toBe(3000);
     expect(read('src/config/balance.ts')).not.toContain('ACTION_FILL');
   });
   it('연출 중 actionBusy, 끝나면 풀림 (화면 연출이 없는 환경은 바로 끝)', () => {
@@ -87,7 +86,7 @@ describe('132장 3 행동 진행 연출', () => {
     expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actDone || !act.done() || actionBusy()) return;');
     expect(read('src/ui/lcdScreens.ts')).toContain('if (r.ok && !r.spat) useFx(faction, save, e, art, hpBefore, fullBefore);');
     expect(read('src/ui/roomView.ts')).toContain('tween(ACTION_FILL_MS, (t) => {');
-    expect(read('src/ui/app.ts')).toContain('spaTutorialFill(from, homeHp(s).fraction, SPA_TUTORIAL_FILL_MS, { from: cond0, to: s.nest.condition });');
+    expect(read('src/ui/app.ts')).toContain('return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);'); // C.214: 실제 시간으로 spaTo 까지
   });
 });
 

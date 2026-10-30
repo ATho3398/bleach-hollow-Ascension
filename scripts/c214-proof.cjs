@@ -158,6 +158,17 @@ const cover = () => {
           if (process.env.C214_SHOT_ALL) await shot(page, `${fi}-r-${id}`);
           if (id === 'dying') await shot(page, `${fi}-2-home-dying-card`);
         }
+        if (id === 'to-spa' && st.screen.includes('spa') && !run.spaFill) {
+          // C.214 추가 (GDD 139장 2): 온천 실시간 차오름 — 들어간 뒤 체력·컨디션 막대를 시간대별로 잰다
+          run.spaFill = [];
+          const t0 = Date.now();
+          for (const at of [300, 1500, 2700, 6000]) {
+            await page.waitForTimeout(Math.max(0, at - (Date.now() - t0)));
+            run.spaFill.push({ ms: Date.now() - t0, status: await page.evaluate(() => document.querySelector('.bha-spa__status')?.getAttribute('aria-label') ?? null) });
+            if (at === 1500 || at === 6000) await shot(page, `${fi}-spa-${at}ms`);
+          }
+          continue;
+        }
         if (id === 'to-spa' && st.screen.includes('spa') && st.next?.disabled) { await page.waitForTimeout(150); continue; }
         let k;
         if (st.dialog) k = st.selUse ? '확정' : '아래';

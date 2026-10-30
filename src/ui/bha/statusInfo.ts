@@ -91,7 +91,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine(a.pet, signed(NX.petCondition)),
           numLine(`${f.fullnessName} ${CP.conditionBelowFullness} 이하`, `시간당 ${MINUS}${num(CP.conditionPerHour)}`, `${f.fullnessName} 0이면 ×2`),
           // 온천 회복 (GDD 135장 3 — 배부름 홈 대기 회복은 수정 v5.315 에서 폐기)
-          numLine(f.room ? marketOf({ market: f.market }).props.spa : '온천', `1분에 ${signed(NX.homeHp.spa.conditionPerMinute)}`),
+          numLine(f.room ? marketOf({ market: f.market }).props.spa : '온천', `1초에 ${signed(NX.homeHp.spa.conditionPerSecond)}`),
           numLine('원정 패배', `${NX.defeatCondition}까지 떨어진다`),
           numLine(`${f.frenzyName} 후 귀환`, signed(-RX.frenzyConditionLoss)),
         ],

@@ -5,7 +5,7 @@
 import { BALANCE } from './config/balance';
 import type { FoodId } from './engine/faction';
 import { guidePending, markGuideDone, queueGuide } from './engine/tutorial';
-import { cureNest, feedNest, type SaveData } from './game';
+import { cureNest, feedNest, tickIdle, type SaveData } from './game';
 import { drinkHpPotion, grantFood, grantHpPotion, homeHp, HP_POTION_ID, setHomeHpOf, spaEnter, spaLeave, spaSoak } from './home';
 import { storeConsumable } from './shop';
 
@@ -59,10 +59,11 @@ export function recoverPotion(save: SaveData, nowMs: number): boolean {
 
 /** ⑤ 온천에서 쉬기: spaTo 까지 걸리는 온천 시간을 바로 흘리고 나온다 (배부름이 그만큼 준다) */
 export function recoverSpa(save: SaveData, nowMs: number): boolean {
-  const from = homeHp(save).fraction;
-  if (from >= TR.spaTo - EPS) return false;
+  if (homeHp(save).fraction >= TR.spaTo - EPS) return false;
   if (!save.nest.spa && spaEnter(save, nowMs)) return false;
-  spaSoak(save, (TR.spaTo - from) / SPA.hpPerMinute, nowMs, true);
+  tickIdle(save, nowMs); // 지금까지 흘린 뒤 남은 만큼만 (C.214 — 온천이 빨라 앞선 시간도 크게 잡힘)
+  const from = homeHp(save).fraction;
+  spaSoak(save, (TR.spaTo - from) / (SPA.hpPerSecond * 60), nowMs, true);
   spaLeave(save, nowMs, true);
   setHomeHpOf(save, Math.max(homeHp(save).fraction, TR.spaTo)); // 배부름이 먼저 바닥나 저절로 나왔어도 각본 값까지
   return true;
@@ -70,9 +71,10 @@ export function recoverSpa(save: SaveData, nowMs: number): boolean {
 
 /** ⑤ 온천에 들어간 순간 (GDD 129-2 2, C.206): spaTo 까지 걸리는 온천 시간을 바로 흘린다 — 온천에서 나오지는 않는다(쉬기 설명 뒤 방으로) */
 export function recoverSpaSoak(save: SaveData, nowMs: number): boolean {
+  if (save.nest.spa) tickIdle(save, nowMs); // 지금까지 흘린 뒤 남은 만큼만 (C.214)
   const from = homeHp(save).fraction;
   if (!save.nest.spa || from >= TR.spaTo - EPS) return false;
-  spaSoak(save, (TR.spaTo - from) / SPA.hpPerMinute, nowMs, true);
+  spaSoak(save, (TR.spaTo - from) / (SPA.hpPerSecond * 60), nowMs, true);
   if (homeHp(save).fraction < TR.spaTo - EPS) setHomeHpOf(save, TR.spaTo); // 배부름이 먼저 바닥났어도 각본 값까지
   return true;
 }

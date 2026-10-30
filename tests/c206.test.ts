@@ -46,8 +46,8 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
       expect(useInventoryItem(s, fc, HP_POTION_ID).ok).toBe(true);
       expect(homeHp(s).fraction).toBeCloseTo(TR.potionTo, 6); // 튜토리얼 중 포션 = 각본 값까지
       expect(recoverStep(s)).toBe('spa');
-      expect(spaEnter(s)).toBeNull();
-      expect(recoverSpaSoak(s, Date.now())).toBe(true);
+      expect(spaEnter(s, 2500)).toBeNull(); // 세이브 시각과 이어지게 (C.214: 들어가기 전에 시계를 흘림)
+      expect(recoverSpaSoak(s, 2600)).toBe(true);
       expect(s.nest.spa).not.toBeNull(); // 들어간 채로 (쉬기 설명 뒤 방으로)
       expect(homeHp(s).fraction).toBeGreaterThanOrEqual(TR.spaTo - 1e-6);
       const before = s.shared.food[TR.food];

@@ -208,18 +208,21 @@ export function leaveSpa(nest: NestState, nowMs: number, reason: SpaEnd['reason'
   return closeSpa(nest, nowMs, reason);
 }
 
-/** 온천 시간 한 토막: 1분에 체력 +spa.hpPerMinute·컨디션 +spa.conditionPerMinute(GDD 135장 2)·배부름 −spa.fullnessPerMinute, 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되는 순간 저절로 나온다.
+/** 온천 시간 한 토막: 1초에 체력 +spa.hpPerSecond·컨디션 +spa.conditionPerSecond(GDD 135장 2·139장 2)·배부름 −spa.fullnessPerSecond (아래 계산은 분 단위라 ×60), 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되는 순간 저절로 나온다.
  *  startMs = 이 토막이 시작한 시각(나온 시각 계산용). 온천에서 보낸 분과 나온 결과 */
 function spaStep(nest: NestState, minutes: number, startMs: number): { used: number; ended: SpaEnd | null } {
   if (!nest.spa || minutes <= 0) return { used: 0, ended: null };
   const cap = homeHpCap(nest);
   nest.hpFraction = homeHpOf(nest);
-  const toCap = Math.max(0, (cap - nest.hpFraction) / HH.spa.hpPerMinute, (MAX - nest.condition) / HH.spa.conditionPerMinute);
-  const toEmpty = Math.max(0, fullnessOfNest(nest) / HH.spa.fullnessPerMinute);
+  const hpPm = HH.spa.hpPerSecond * 60;
+  const condPm = HH.spa.conditionPerSecond * 60;
+  const fullPm = HH.spa.fullnessPerSecond * 60;
+  const toCap = Math.max(0, (cap - nest.hpFraction) / hpPm, (MAX - nest.condition) / condPm);
+  const toEmpty = Math.max(0, fullnessOfNest(nest) / fullPm);
   const used = Math.min(minutes, toCap, toEmpty);
-  nest.hpFraction = Math.min(cap, nest.hpFraction + used * HH.spa.hpPerMinute);
-  nest.condition = Math.min(MAX, nest.condition + used * HH.spa.conditionPerMinute);
-  nest.hunger = clamp(nest.hunger + used * HH.spa.fullnessPerMinute, 0, 100);
+  nest.hpFraction = Math.min(cap, nest.hpFraction + used * hpPm);
+  nest.condition = Math.min(MAX, nest.condition + used * condPm);
+  nest.hunger = clamp(nest.hunger + used * fullPm, 0, 100);
   const full = spaFull(nest);
   const ended = full || fullnessOfNest(nest) <= 1e-9 ? closeSpa(nest, Math.round(startMs + used * 60_000), full ? 'full' : 'hungry') : null;
   return { used, ended };
