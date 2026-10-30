@@ -73,22 +73,21 @@ describe('임시 데이터', () => {
     expect(ELEMENTS.map((e) => e.name['*'])).toEqual(['노멀', '물', '불', '흙', '뇌', '혈', '독', '허(虛)']);
     for (const e of ELEMENTS) {
       const ts = TRAITS.filter((t) => t.element === e.id && !t.boss); // 보스 특성(C.58)은 따로
-      expect(ts, e.id).toHaveLength(6);
+      expect(ts, e.id).toHaveLength(5); // C.213 (GDD 136장 1): 희귀 특성 삭제 6 → 5
       expect(new Set(ts.map((t) => t.kind))).toEqual(new Set(['skill', 'passive', 'part']));
-      expect(new Set(ts.filter((t) => t.role === 'attack' && !t.rare).map((t) => t.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
+      expect(new Set(ts.filter((t) => t.role === 'attack').map((t) => t.family))).toEqual(new Set(['family-a', 'family-b', 'family-c']));
       expect(ts.some((t) => t.role === 'guard' || t.role === 'heal')).toBe(false);
-      expect(ts.filter((t) => t.rare)).toHaveLength(1);
     }
     expect(TRAITS.every((t) => t.provisional === true)).toBe(true);
   });
 
-  it('테스트 적에 속성·공격 분류·노력치·희귀 확률이 있다', () => {
+  it('테스트 적에 속성·공격 분류·노력치가 있다 (희귀 확률은 C.213 에 삭제)', () => {
     for (const id of ['test-a', 'test-b', 'test-elite']) {
       const e = getEnemy(id);
       expect(ELEMENTS.some((x) => x.id === e.element)).toBe(true);
       expect(['physical', 'special', 'mixed']).toContain(e.category);
       expect(Object.values(e.ev).reduce((x, y) => x + (y ?? 0), 0)).toBeGreaterThan(0);
-      expect(e.rareChance).toBeGreaterThan(0);
+      expect('rareChance' in e).toBe(false);
     }
     expect(getEnemy('test-a').element).toBe('fire');
   });
@@ -227,7 +226,7 @@ describe('슬롯 장착·교체·가득 참', () => {
     const exp = mk({ seed: 5 });
     exp.build.owned.push(...A.slice(0, 3));
     exp.build.slots = A.slice(0, 3);
-    toAbsorb(exp, { element: 'water', rare: false });
+    toAbsorb(exp, { element: 'water' });
     const offer = exp.absorbOffer!;
     expect(offer.element).toBe('water');
     expect(offer.candidates.length).toBeGreaterThanOrEqual(1);
@@ -247,7 +246,7 @@ describe('슬롯 장착·교체·가득 참', () => {
     const exp = mk({ seed: 6, hunger: 50 });
     exp.build.owned.push(...A.slice(0, 3));
     exp.build.slots = A.slice(0, 3);
-    toAbsorb(exp, { element: 'water', rare: false });
+    toAbsorb(exp, { element: 'water' });
     expect(chooseAbsorb(exp, null).ok).toBe(true);
     expect(exp.build.slots).toEqual(A.slice(0, 3));
     expect(exp.acquiredTraits).toHaveLength(0);
@@ -347,46 +346,32 @@ describe('skill 특성이 스킬 블록이 된다 (GDD 3-5)', () => {
   });
 });
 
-describe('희귀 개체', () => {
-  it('희귀 개체는 그 속성의 희귀 특성이 확정 후보로 나온다 (여러 시드)', () => {
-    for (const element of ['fire', 'water', 'kyo']) {
-      for (let seed = 1; seed <= 30; seed++) {
-        // 특수 속성(허)은 숨김이 풀린 화면에서만 (C.106, 49-7 ①)
-        const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element, rare: true }, newBuild(), NO, 0, null);
-        expect(offer.rare).toBe(true);
-        expect(getTrait(offer.candidates[0]!).rare).toBe(true);
-        expect(getTrait(offer.candidates[0]!).element).toBe(element);
-      }
-    }
-  });
-
-  it('일반 개체는 희귀 특성이 나오지 않는다 (C.176 GDD 106장 1: 가진 속성·특성도 후보 — 고르면 강화만)', () => {
+describe('흡수 후보 (희귀 개체·희귀 특성은 C.213 에 삭제 — GDD 136장 1)', () => {
+  it('후보는 그 속성 일반 특성 (C.176 GDD 106장 1: 가진 속성·특성도 후보 — 고르면 강화만)', () => {
     const build = newBuild();
     gainTrait(build, A[0]!);
     for (let seed = 1; seed <= 30; seed++) {
-      const fire = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire', rare: false }, build, NO).candidates;
+      const fire = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'fire' }, build, NO).candidates;
       expect(fire.length).toBeGreaterThanOrEqual(1);
-      expect(fire.every((id) => !getTrait(id).rare && getTrait(id).element === 'fire')).toBe(true);
-      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'water', rare: false }, build, NO);
-      expect(offer.rare).toBe(false);
+      expect(fire.every((id) => !getTrait(id).boss && getTrait(id).element === 'fire')).toBe(true);
+      const offer = buildOffer(createRng(seed), { ...getEnemy('test-a'), element: 'water' }, build, NO);
       expect(offer.candidates.length).toBeGreaterThanOrEqual(1);
       expect(offer.candidates.length).toBeLessThanOrEqual(2);
-      expect(offer.candidates.every((id) => !getTrait(id).rare)).toBe(true);
+      expect(offer.candidates.every((id) => !getTrait(id).boss)).toBe(true);
     }
-    expect(buildOffer(createRng(1), { ...getEnemy('test-elite'), rare: false }, newBuild(), NO).candidates).toHaveLength(AX.candidatesElite);
+    expect(buildOffer(createRng(1), getEnemy('test-elite'), newBuild(), NO).candidates).toHaveLength(AX.candidatesElite);
   });
 
-  it('조우한 적의 희귀 여부는 시드로 정해지고 흡수 제안에 그대로 실린다', () => {
-    const rares = new Set<boolean>();
-    for (let seed = 1; seed <= 80; seed++) {
+  it('희귀 개체·희귀 특성은 없다 (C.213, GDD 136장 1): 조우 적·흡수 제안에 희귀 표시가 없고 후보에 t-*-rare 가 나오지 않는다', () => {
+    expect(TRAITS.some((t) => /-rare$/.test(t.id))).toBe(false);
+    for (let seed = 1; seed <= 40; seed++) {
       const exp = mk({ seed });
       fightNext(exp);
-      const rare = exp.pending!.enemy.rare === true;
-      rares.add(rare);
+      expect('rare' in exp.pending!.enemy).toBe(false);
       winWith(exp, { absorbable: true });
-      expect(exp.absorbOffer!.rare).toBe(rare);
+      expect('rare' in exp.absorbOffer!).toBe(false);
+      expect(exp.absorbOffer!.candidates.some((id) => /-rare$/.test(id))).toBe(false);
     }
-    expect(rares).toEqual(new Set([true, false]));
   });
 });
 
@@ -602,7 +587,7 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
   function twoLapRun(endWith: 'return' | 'lose') {
     const save = newSaveData('hollow', 0);
     const exp = mk({ seed: 30, runId: nextRunId(save), hunger: 0 });
-    toAbsorb(exp, { element: 'fire', rare: false });
+    toAbsorb(exp, { element: 'fire' });
     chooseAbsorb(exp, exp.absorbOffer!.candidates[0]!);
     const first = exp.build.owned[0]!;
     while (exp.phase !== 'nest-choice') {
@@ -612,7 +597,7 @@ describe('패배: 마지막 바퀴에서 얻은 것만 잃는다', () => {
       else if (exp.phase === 'absorb') chooseRelease(exp); // C.125: 이기면 늘 흡수 화면 — 옛 '조건 미달 → 이동' 대신 놓아줌
     }
     chooseContinue(exp);
-    toAbsorb(exp, { element: 'water', rare: false }); // C.147 (94장 B): fire 는 이미 가져 강화만 — 처음 먹는 속성
+    toAbsorb(exp, { element: 'water' }); // C.147 (94장 B): fire 는 이미 가져 강화만 — 처음 먹는 속성
     chooseAbsorb(exp, exp.absorbOffer!.candidates[0]!);
     const second = exp.build.owned.find((id) => id !== first)!;
     expect(exp.build.slots.filter(Boolean)).toHaveLength(2);
@@ -682,7 +667,7 @@ describe('시드 결정성', () => {
   });
 
   it('흡수 제안(후보)은 시드로 결정된다', () => {
-    const enemy = { ...getEnemy('test-b'), rare: false };
+    const enemy = { ...getEnemy('test-b') };
     const a = buildOffer(createRng(9), enemy, newBuild(), NO);
     expect(buildOffer(createRng(9), enemy, newBuild(), NO)).toEqual(a);
   });
@@ -787,12 +772,12 @@ describe('C.7 흡수 문구와 기준 빌드 봇', () => {
 });
 
 describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
-  const normal = (element: string): EnemyDef => ({ ...getEnemy('test-a'), element, rare: false });
+  const normal = (element: string): EnemyDef => ({ ...getEnemy('test-a'), element });
   const fams = (ids: string[]) => ids.map(attackFamilyOf).filter((f): f is string => f !== null);
 
   it('모든 속성이 서로 다른 계열의 일반 공격 특성을 2개 이상 가진다', () => {
     for (const l of ELEMENTS) {
-      const set = new Set(fams(TRAITS.filter((t) => t.element === l.id && !t.rare).map((t) => t.id)));
+      const set = new Set(fams(TRAITS.filter((t) => t.element === l.id && !t.boss).map((t) => t.id)));
       expect(set.size, l.id).toBeGreaterThanOrEqual(2);
     }
   });

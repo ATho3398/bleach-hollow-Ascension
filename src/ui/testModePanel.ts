@@ -230,7 +230,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   }
 
   function traitsTab(): Node[] {
-    const opts = [{ value: '', label: '— 빈칸 —' }, ...TRAITS.filter((t) => !isBasicBlockTrait(t.id)).map((t) => ({ value: t.id, label: traitName(t.id, fid), group: t.boss ? '보스' : t.rare ? '희귀' : t.kind }))];
+    const opts = [{ value: '', label: '— 빈칸 —' }, ...TRAITS.filter((t) => !isBasicBlockTrait(t.id)).map((t) => ({ value: t.id, label: traitName(t.id, fid), group: t.boss ? '보스' : t.kind }))];
     const sels = save.build.slots.map((id, i) => select(opts, id ?? '', `특성 칸 ${i + 1}`));
     const abil = select([{ value: '', label: '없음' }, ...STAT_IDS.map((s) => ({ value: s, label: abilityName(s, fid) }))], save.evolution.ability ?? '', '고유 특성');
     const apply = button({ label: '적용', icon: 'i-check', variant: 'primary', onClick: () => {

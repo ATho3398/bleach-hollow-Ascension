@@ -1,6 +1,7 @@
 // 진화체 특성 데이터 (GDD 20-3·v4.0 성향 6종 + 39장 속성 8종·전용 5종). 이름·설명·효과 종류·진화체 종류별 칸 규칙은 abilities.json, 수치는 BALANCE.provisional.abilities
 import { ELEMENT_IDS } from '../elements';
 import { FORM_KINDS, pickFaction, STAT_IDS, type FormKind, type PerFaction, type StatId } from '../schema';
+import { getFaction } from '../factions';
 import raw from './abilities.json';
 
 export interface AbilityText {
@@ -66,16 +67,21 @@ export function uniqueAbility(kind: string): EffectAbilityText {
 }
 
 export function abilityName(stat: StatId, factionId: string): string {
-  return pickFaction(DATA.abilities[stat].name, factionId);
+  return abilityTextName(DATA.abilities[stat], factionId);
 }
 
 export function abilityDescription(stat: StatId, factionId: string): string {
   return pickFaction(DATA.abilities[stat].description, factionId);
 }
 
+/** 특성 표시 이름: '{frenzyName}' 은 종족 설정의 폭주 상태 이름으로 채운다 (C.213, GDD 136장 2 — 옛 '한계 돌파', 종족 분기 없음) */
+export function abilityTextName(a: AbilityText, factionId: string): string {
+  return pickFaction(a.name, factionId).replace('{frenzyName}', getFaction(factionId).frenzyName);
+}
+
 /** 효과 종류 → 그 효과를 가진 특성 이름 (전투 중 발동 글자). 없으면 null */
 export function abilityNameByEffect(effect: string, factionId: string): string | null {
   const all = [...Object.values(DATA.elementAbilities), ...Object.values(DATA.uniqueAbilities)];
   const a = all.find((x) => x.effect === effect);
-  return a ? pickFaction(a.name, factionId) : null;
+  return a ? abilityTextName(a, factionId) : null;
 }

@@ -29,10 +29,6 @@ export interface EnemyDef {
   ev: Partial<Record<StatId, number>>;
   /** 행동 패턴 (GDD 3-5, 14-5). 없으면 기본형(기본 공격만). 수치 전부 임시 */
   pattern?: EnemyPattern;
-  /** 조우할 때 희귀 개체일 확률 (임시, GDD 4장). 조우가 정해지면 rare 가 채워진다 */
-  rareChance: number;
-  /** 이 개체가 희귀 개체인가: 흡수 화면에 미리 표시되고 그 속성의 희귀 특성이 확정 후보로 나온다 */
-  rare?: boolean;
   /** true 면 원정 출현 풀에 들어가지 않는다 (테스트·연습용 고정 적) */
   testOnly?: boolean;
   provisional?: boolean;
@@ -149,9 +145,7 @@ export interface TraitDef {
   abbr?: PerFaction<string>;
   /** 설명: 종족별 텍스트(키 '*' 는 공통) */
   description: PerFaction<string>;
-  /** 희귀 개체에서만 나오는 특성 (확정 등장) */
-  rare?: boolean;
-  /** 보스 특성 (GDD 25-3, C.58): 그 보스를 이긴 흡수 화면에서만 확정 후보로 나온다(일반 흡수 후보·희귀 후보에 안 섞인다). rare 와 함께 쓴다 */
+  /** 보스 특성 (GDD 25-3, C.58): 그 보스를 이긴 흡수 화면에서만 확정 후보로 나온다(일반 흡수 후보에 안 섞인다). 희귀 특성은 C.213 에 삭제(GDD 136장 1) */
   boss?: boolean;
   /** skill: 블록 역할 (GDD 3-5). 계통과 역할은 별개다 */
   role?: SkillRole;
@@ -209,7 +203,7 @@ export type TitleKind = 'rank' | 'hidden-rank' | 'tag' | 'story' | 'tower';
 export type TitleCondition =
   | { type: 'and'; all: TitleCondition[] }
   | { type: 'or'; any: TitleCondition[] }
-  /** 흡수한 횟수(놓아준 것 제외). element 가 없으면 전체 속성, rareOnly 면 희귀 개체만 */
+  /** 흡수한 횟수(놓아준 것 제외). element 가 없으면 전체 속성, rareOnly 면 희귀 개체만(희귀 개체는 C.213 에 삭제 — 옛 기록만 센다) */
   | { type: 'absorbCount'; min: number; element?: string; rareOnly?: boolean }
   /** 진화 기록에 이 진화체 id 가 있다(진화한 진화체 또는 진화 전 진화체 = 경로 포함) */
   | { type: 'passedForm'; formId: string }

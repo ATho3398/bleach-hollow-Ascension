@@ -651,8 +651,7 @@ function pickEnemy(exp: ExpeditionState, cls: 'normal' | 'elite', source: string
   const pool = gateSpecialEnemies(enemyPool(cls, exp.lap, source, ground), specialGateOf(exp, cls === 'elite').chance, elementBias);
   if (pool.length === 0) throw new Error(`적 출현 풀이 비었다: ${cls} ${exp.lap}바퀴 ${source}`);
   const base = pickFromPool(exp.rng, pool);
-  const rare = nextFloat(exp.rng) < base.rareChance;
-  return { ...scaleEnemy(base, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak, cls)), rare };
+  return scaleEnemy(base, enemyScale(exp.lap, exp.groundId, exp.difficulty, exp.streak, cls));
 }
 
 /** 이 칸이 조합(같은 comboGroup 3칸 인접)의 끝 칸인가 */
@@ -1051,7 +1050,7 @@ function logAbsorb(exp: ExpeditionState, offer: AbsorbOffer, absorbed: boolean, 
   // 특수 속성 적 (GDD 75장, 9장): 그 적이 나온 까닭(등장 숨김이 풀린 까닭)과, 고른 특성이 특수 속성이었는지
   const hidden = offer.specialGates ? { specialGates: [...offer.specialGates], ...(absorbed && traitId && isSpecialTrait(getTrait(traitId)) ? { hiddenTrait: true } : {}) } : {};
   // 흡수 갈래 (GDD 52, 9장): 흡수했을 때만, 기본 갈래(둘 다)는 적지 않는다(없음 = both, absorbModeOf) — 저장 크기
-  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: offer.rare, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden, ...(absorbed && mode && mode !== 'both' ? { mode } : {}), ...(enhance !== undefined ? { enhance } : {}) });
+  exp.absorbRecords.push({ runId: exp.runId, enemyId: offer.enemyId, element: offer.element, rare: false, absorbed, traitId, lap: exp.lap, ...(offer.rerolled ? { rerolled: true } : {}), ...hidden, ...(absorbed && mode && mode !== 'both' ? { mode } : {}), ...(enhance !== undefined ? { enhance } : {}) });
 }
 
 /** 다시 뽑기 (GDD 25-9): 흡수 화면에서 특성 후보를 한 번 다시 뽑는다(흡수 1번에 1장 — 이미 다시 뽑았으면 거절). 다시 뽑기권은 부르는 쪽(세이브)이 쓴다.

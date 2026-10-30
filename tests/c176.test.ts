@@ -46,7 +46,7 @@ describe('104장 5·6: 포식 설명·이름', () => {
   it("표시 이름에서 앞 속성 글자를 뺀다 ('물 조' → '조'), 데이터 이름·id 는 그대로", () => {
     expect(traitName('t-water-a', 'hollow')).toBe('조');
     expect(traitName('t-normal-c', 'shinigami')).toBe('귀');
-    expect(traitName('t-fire-rare', 'hollow')).toBe('탄·극');
+    expect(traitName('t-fire-rare', 'hollow')).toBe('불 강화(옛 기록)'); // C.213: 희귀 특성 삭제 — 런 로그 옛 기록 이름
     expect(traitName('t-kyo-b', 'hollow')).toBe('교'); // 속성 이름 '허(虛)' 이 아니라 약어 '허' 로 시작
     expect(traitAbbr('t-water-a', 'hollow')).toBe('조');
     expect(getTrait('t-water-a').name).toEqual({ hollow: '물 조', shinigami: '물 참' });

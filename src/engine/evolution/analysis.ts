@@ -23,7 +23,7 @@ function randomBuild(rng: Rng, slots: number, focus: string | null): BuildState 
   while (b.slots.length < slots) b.slots.push(null);
   const n = nextInt(rng, slots + 1);
   for (let i = 0; i < n; i++) {
-    const pool = TRAITS.filter((t) => !t.rare && !b.owned.includes(t.id) && (focus === null || nextFloat(rng) < 0.3 || t.element === focus));
+    const pool = TRAITS.filter((t) => !t.boss && !b.owned.includes(t.id) && (focus === null || nextFloat(rng) < 0.3 || t.element === focus));
     if (pool.length === 0) break;
     gainTrait(b, pool[nextInt(rng, pool.length)]!.id);
   }

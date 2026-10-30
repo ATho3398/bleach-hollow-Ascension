@@ -2,6 +2,7 @@
 // 종족 필드로 목록을 거르므로 코드에 종족 이름이 들어가지 않는다. 'all' = 모든 종족 공용.
 // 성별 (GDD 114장, C.188): 여성 그림은 같은 키 뒤에 `-f` — 스킨 `skin-<id>-f.png`(폴더면 `skin-<id>-f/`), 진화체 `char-<종족>-<단계>-f.png`. 남성 = 지금 이름 그대로.
 //   여성이고 종족 설정 genderLookFromTier 단계 이상일 때만 `-f` 를 먼저 찾고, 없으면 지금 그림(남성)으로 보인다. 그 전 단계는 남녀 같은 그림(`-f` 를 넣어도 안 쓴다).
+import { getFaction } from '../factions'; // 히든 '폭주' 외형 이름 = 종족 설정 frenzyName (C.213, GDD 136장 2 — 옛 '한계 돌파')
 
 export interface SkinDef {
   /** 파일 이름에 쓰는 고정 id (영문 소문자) */
@@ -40,7 +41,7 @@ const BASE_SKINS: readonly SkinDef[] = [
 const ARRANCAR_ELEMENTS: readonly (readonly [string, string])[] = [['normal', '노멀'], ['water', '물'], ['fire', '불'], ['earth', '흙'], ['thunder', '뇌'], ['blood', '혈'], ['poison', '독'], ['kyo', '허']];
 const ARRANCAR_SKINS: readonly SkinDef[] = [
   ...ARRANCAR_ELEMENTS.flatMap(([id, name]) => [1, 2, 3, 4].map((n): SkinDef => ({ id: `arr${id}${'abcd'[n - 1]}`, name: `아란칼 ${name} ${n}`, factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true }))),
-  ...([['limit', '한계 돌파'], ['restraint', '절제'], ['hunter', '강적 사냥꾼'], ['reborn', '환생']] as const).map(([_k, name], i): SkinDef => ({ id: `arrhidden${'abcd'[i]}`, name: `아란칼 ${name}`, factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true })),
+  ...([['limit', getFaction('hollow').frenzyName], ['restraint', '절제'], ['hunter', '강적 사냥꾼'], ['reborn', '환생']] as const).map(([_k, name], i): SkinDef => ({ id: `arrhidden${'abcd'[i]}`, name: `아란칼 ${name}`, factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true })),
 ];
 
 export const SKINS: readonly SkinDef[] = [...BASE_SKINS, ...ARRANCAR_SKINS];

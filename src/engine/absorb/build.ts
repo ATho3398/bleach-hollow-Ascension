@@ -2,7 +2,7 @@
 // 모두 임시 데이터(provisional)를 쓴다.
 
 import { BALANCE } from '../../config/balance';
-import { getTrait, TRAITS } from '../../data/traits';
+import { getTrait, retiredRareElement, TRAITS } from '../../data/traits';
 import { NORMAL_ELEMENT } from '../../data/elements';
 import type { AttackCategory, PassiveStat } from '../../data/schema';
 import { getFaction } from '../../data/factions';
@@ -35,6 +35,17 @@ export function addEnhance(b: BuildState, element: string): number {
   const m = (b.enhance ??= {});
   m[element] = (m[element] ?? 0) + 1;
   return m[element]!;
+}
+
+/** 삭제된 희귀 특성을 같은 속성 강화 1단계로 바꾼다 (C.213, GDD 136장 1 — 세이브 마이그레이션). 보유·슬롯·장착 순서에서 빼고(슬롯 칸은 비운다) 바꾼 수를 돌려준다 */
+export function convertRetiredRareTraits(b: BuildState): number {
+  const els = b.owned.map((id) => (typeof id === 'string' ? retiredRareElement(id) : null)).filter((e): e is string => e !== null);
+  for (const el of els) addEnhance(b, el);
+  const keep = (id: unknown): boolean => typeof id !== 'string' || retiredRareElement(id) === null;
+  b.owned = b.owned.filter(keep);
+  b.slots = b.slots.map((id) => (id !== null && !keep(id) ? null : id));
+  b.equipOrder = (b.equipOrder ?? []).filter(keep);
+  return els.length;
 }
 
 /** 강화 단계 → 공격 블록 위력 가산 (C.147): 앞 earlyLevels 단계는 earlyPerLevel, 그 뒤는 attackPerLevel */
@@ -93,7 +104,7 @@ export function isFull(b: BuildState): boolean {
   return emptySlot(b) < 0;
 }
 
-/** 노멀 skill 특성인가 (GDD 111장 1, C.184): 노멀 조·탄·교(희귀 포함)는 기본 블록 하나가 그 역할이라 슬롯·보유에 들지 않는다 */
+/** 노멀 skill 특성인가 (GDD 111장 1, C.184): 노멀 조·탄·교는 기본 블록 하나가 그 역할이라 슬롯·보유에 들지 않는다 */
 export function isBasicBlockTrait(traitId: string): boolean {
   const t = TRAITS.find((x) => x.id === traitId);
   return t !== undefined && t.kind === 'skill' && t.element === NORMAL_ELEMENT;

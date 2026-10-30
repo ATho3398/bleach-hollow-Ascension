@@ -49,7 +49,6 @@ export function parseEnemy(r: unknown): EnemyDef {
   const statMap = (v: unknown, min: number) => typeof v === 'object' && v !== null && Object.entries(v).every(([k, x]) => (STAT_IDS as readonly string[]).includes(k) && typeof x === 'number' && x >= min);
   if (e.statBias !== undefined && !statMap(e.statBias, 0.01)) errors.push('statBias: { 능력치: 양수 배율 }');
   if (!statMap(e.ev, 0)) errors.push('ev: { 능력치: 0 이상 }');
-  if (typeof e.rareChance !== 'number' || e.rareChance < 0 || e.rareChance > 1) errors.push('rareChance: 0~1');
   if (e.pattern !== undefined) errors.push(...patternErrors((e.pattern ?? {}) as Record<string, unknown>));
   if (errors.length > 0) throw new Error(`적 데이터 오류 (${String(e.id ?? '?')}): ${errors.join(', ')}`);
   return r as EnemyDef;

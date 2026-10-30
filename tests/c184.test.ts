@@ -26,8 +26,8 @@ function toAbsorb(exp: ExpeditionState, element: string): void {
 }
 
 describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
-  it('노멀 조·탄·교·희귀는 늘 가진 블록, 노멀 패시브·부위와 다른 속성은 아니다', () => {
-    expect(NORMAL_SKILLS.sort()).toEqual(['t-normal-a', 't-normal-b', 't-normal-c', 't-normal-rare']);
+  it('노멀 조·탄·교는 늘 가진 블록, 노멀 패시브·부위와 다른 속성은 아니다', () => {
+    expect(NORMAL_SKILLS.sort()).toEqual(['t-normal-a', 't-normal-b', 't-normal-c']); // C.213: 희귀 삭제
     const b = newBuild();
     for (const id of NORMAL_SKILLS) {
       expect(isBasicBlockTrait(id)).toBe(true);
@@ -74,7 +74,7 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
     const save = newTestSave('hollow', 1);
     expect(save.build.slots.every((x) => x === null)).toBe(true);
     expect(fillDefaultTraits(save)).toBe(0);
-    expect(setTraitSlots(save, ['t-normal-a', 't-water-a', 't-normal-rare'])).toEqual([null, 't-water-a', null]);
+    expect(setTraitSlots(save, ['t-normal-a', 't-water-a', 't-normal-b'])).toEqual([null, 't-water-a', null]);
     expect(save.build.owned.some(isBasicBlockTrait)).toBe(false);
     expect(read('src/ui/testModePanel.ts')).toContain('TRAITS.filter((t) => !isBasicBlockTrait(t.id))');
   });
@@ -131,13 +131,13 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
 
 describe('111장 2: 옛 노멀 특성 정리 (마이그레이션 없음)', () => {
   it('형식·문턱 51 같이 올림', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([55, 54]); // C.198: 문턱 54 고정(123장 6) // C.195 // C.188
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([56, 54]); // C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
   });
   it('불러올 때 보유·슬롯·장착 순서의 노멀 skill 특성을 지운다(다른 특성·노멀 패시브·강화는 그대로)', () => {
     const s = newSaveData('hollow');
-    s.build.owned = ['t-normal-a', 't-water-a', 't-normal-passive', 't-normal-rare'];
-    s.build.slots = ['t-normal-a', 't-water-a', 't-normal-rare'];
-    s.build.equipOrder = ['t-normal-a', 't-water-a', 't-normal-rare'];
+    s.build.owned = ['t-normal-a', 't-water-a', 't-normal-passive', 't-normal-b'];
+    s.build.slots = ['t-normal-a', 't-water-a', 't-normal-b'];
+    s.build.equipOrder = ['t-normal-a', 't-water-a', 't-normal-b'];
     s.build.enhance = { normal: 4 };
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m.build.owned).toEqual(['t-water-a', 't-normal-passive']);

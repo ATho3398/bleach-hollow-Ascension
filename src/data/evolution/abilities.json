@@ -20,7 +20,7 @@
   },
   "uniqueAbilities": {
     "complete": { "effect": "noWeak", "name": { "*": "완성" }, "description": { "*": "속성 상성에서 불리 효과를 받지 않는다." } },
-    "limit": { "effect": "desperate", "name": { "*": "한계 돌파" }, "description": { "*": "체력이 절반 아래면 주는 피해가 오른다." } },
+    "limit": { "effect": "desperate", "name": { "*": "{frenzyName}" }, "description": { "*": "체력이 절반 아래면 주는 피해가 오른다." } },
     "restraint": { "effect": "rampUp", "name": { "*": "억눌린 힘" }, "description": { "*": "싸울수록 공격이 강해진다." } },
     "hunter": { "effect": "eliteSlayer", "name": { "*": "사냥꾼" }, "description": { "*": "강적·보스에게 주는 피해가 오른다." } },
     "reborn": { "effect": "lastStand", "name": { "*": "다시 일어남" }, "description": { "*": "전투마다 한 번, 쓰러질 때 버틴다." } }

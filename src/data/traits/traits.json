@@ -103,28 +103,6 @@
     "provisional": true
   },
   {
-    "id": "t-normal-rare",
-    "element": "normal",
-    "kind": "skill",
-    "name": {
-      "hollow": "노멀 조·극",
-      "shinigami": "노멀 참·극"
-    },
-    "abbr": {
-      "hollow": "노멀 조극",
-      "shinigami": "노멀 참극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 노멀 속성 본체 기술(물리 공격 블록)이다. 기본 공격 블록이 이 역할을 해서 칸에 들어가지 않는다.\n효과: 고르면 노멀 강화 +1(기본 공격 블록)",
-      "shinigami": "[임시] 희귀 노멀 속성 시해 능력(혼합 공격 블록)이다. 기본 공격 블록이 이 역할을 해서 칸에 들어가지 않는다.\n효과: 고르면 노멀 강화 +1(기본 공격 블록)"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-a",
-    "provisional": true
-  },
-  {
     "id": "t-water-a",
     "element": "water",
     "kind": "skill",
@@ -225,28 +203,6 @@
       "hollow": "[임시] 물 속성 본체 외형 파츠다. 표시만 바뀐다.",
       "shinigami": "[임시] 물 속성 참백도 외형 파츠다. 표시만 바뀐다."
     },
-    "provisional": true
-  },
-  {
-    "id": "t-water-rare",
-    "element": "water",
-    "kind": "skill",
-    "name": {
-      "hollow": "물 교·극",
-      "shinigami": "물 권·극"
-    },
-    "abbr": {
-      "hollow": "물 교극",
-      "shinigami": "물 권극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 물 속성 본체 기술(혼합 공격 블록)이다.\n효과: 위력 기본 공격 6회분",
-      "shinigami": "[임시] 희귀 물 속성 시해 능력(물리 공격 블록)이다.\n효과: 위력 기본 공격 6회분"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-b",
     "provisional": true
   },
   {
@@ -353,28 +309,6 @@
     "provisional": true
   },
   {
-    "id": "t-fire-rare",
-    "element": "fire",
-    "kind": "skill",
-    "name": {
-      "hollow": "불 탄·극",
-      "shinigami": "불 귀·극"
-    },
-    "abbr": {
-      "hollow": "불 탄극",
-      "shinigami": "불 귀극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 불 속성 본체 기술(특수 공격 블록)이다.\n효과: 위력 기본 공격 6회분",
-      "shinigami": "[임시] 희귀 불 속성 시해 능력(특수 공격 블록)이다.\n효과: 위력 기본 공격 6회분"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-c",
-    "provisional": true
-  },
-  {
     "id": "t-earth-a",
     "element": "earth",
     "kind": "skill",
@@ -475,28 +409,6 @@
       "hollow": "[임시] 흙 속성 본체 외형 파츠다. 표시만 바뀐다.",
       "shinigami": "[임시] 흙 속성 참백도 외형 파츠다. 표시만 바뀐다."
     },
-    "provisional": true
-  },
-  {
-    "id": "t-earth-rare",
-    "element": "earth",
-    "kind": "skill",
-    "name": {
-      "hollow": "흙 조·극",
-      "shinigami": "흙 참·극"
-    },
-    "abbr": {
-      "hollow": "흙 조극",
-      "shinigami": "흙 참극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 흙 속성 본체 기술(물리 공격 블록)이다.\n효과: 위력 기본 공격 6회분",
-      "shinigami": "[임시] 희귀 흙 속성 시해 능력(혼합 공격 블록)이다.\n효과: 위력 기본 공격 6회분"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-a",
     "provisional": true
   },
   {
@@ -604,28 +516,6 @@
     "critChance": 0.05
   },
   {
-    "id": "t-thunder-rare",
-    "element": "thunder",
-    "kind": "skill",
-    "name": {
-      "hollow": "뇌 교·극",
-      "shinigami": "뇌 권·극"
-    },
-    "abbr": {
-      "hollow": "뇌 교극",
-      "shinigami": "뇌 권극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 뇌 속성 본체 기술(혼합 공격 블록)이다.\n효과: 위력 기본 공격 6회분",
-      "shinigami": "[임시] 희귀 뇌 속성 시해 능력(물리 공격 블록)이다.\n효과: 위력 기본 공격 6회분"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-b",
-    "provisional": true
-  },
-  {
     "id": "t-blood-a",
     "element": "blood",
     "kind": "skill",
@@ -726,28 +616,6 @@
       "hollow": "[임시] 혈 속성 본체 외형 파츠다. 표시만 바뀐다.",
       "shinigami": "[임시] 혈 속성 참백도 외형 파츠다. 표시만 바뀐다."
     },
-    "provisional": true
-  },
-  {
-    "id": "t-blood-rare",
-    "element": "blood",
-    "kind": "skill",
-    "name": {
-      "hollow": "혈 탄·극",
-      "shinigami": "혈 귀·극"
-    },
-    "abbr": {
-      "hollow": "혈 탄극",
-      "shinigami": "혈 귀극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 혈 속성 본체 기술(특수 공격 블록)이다.\n효과: 위력 기본 공격 6회분",
-      "shinigami": "[임시] 희귀 혈 속성 시해 능력(특수 공격 블록)이다.\n효과: 위력 기본 공격 6회분"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-c",
     "provisional": true
   },
   {
@@ -854,28 +722,6 @@
     "provisional": true
   },
   {
-    "id": "t-poison-rare",
-    "element": "poison",
-    "kind": "skill",
-    "name": {
-      "hollow": "독 조·극",
-      "shinigami": "독 참·극"
-    },
-    "abbr": {
-      "hollow": "독 조극",
-      "shinigami": "독 참극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 독 속성 본체 기술(물리 공격 블록)이다.\n효과: 위력 기본 공격 6회분",
-      "shinigami": "[임시] 희귀 독 속성 시해 능력(혼합 공격 블록)이다.\n효과: 위력 기본 공격 6회분"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-a",
-    "provisional": true
-  },
-  {
     "id": "t-kyo-a",
     "element": "kyo",
     "kind": "skill",
@@ -979,29 +825,6 @@
     "provisional": true
   },
   {
-    "id": "t-kyo-rare",
-    "element": "kyo",
-    "kind": "skill",
-    "name": {
-      "hollow": "허 교·극",
-      "shinigami": "허 권·극"
-    },
-    "abbr": {
-      "hollow": "허 교극",
-      "shinigami": "허 권극"
-    },
-    "description": {
-      "hollow": "[임시] 희귀 허 속성 본체 기술(혼합 공격 블록)이다.\n효과: 위력 기본 공격 6회분 · 치명타 확률 +5%",
-      "shinigami": "[임시] 희귀 허 속성 시해 능력(물리 공격 블록)이다.\n효과: 위력 기본 공격 6회분 · 치명타 확률 +5%"
-    },
-    "rare": true,
-    "role": "attack",
-    "powerInAttacks": 6,
-    "family": "family-b",
-    "provisional": true,
-    "critChance": 0.05
-  },
-  {
     "id": "boss-sand-maw",
     "element": "earth",
     "kind": "skill",
@@ -1017,7 +840,6 @@
       "hollow": "[임시] 보스 모래 아귀를 쓰러뜨리고 얻는 흙 속성 본체 기술(물리 공격 블록)이다.\n효과: 위력 기본 공격 6.5회분",
       "shinigami": "[임시] 보스 들개 대허를 쓰러뜨리고 얻는 흙 속성 시해 능력(혼합 공격 블록)이다.\n효과: 위력 기본 공격 6.5회분"
     },
-    "rare": true,
     "boss": true,
     "role": "attack",
     "powerInAttacks": 6.5,
@@ -1040,7 +862,6 @@
       "hollow": "[임시] 보스 협곡의 왕을 쓰러뜨리고 얻는 불 속성 본체 기술(물리 공격 블록)이다.\n효과: 위력 기본 공격 7회분",
       "shinigami": "[임시] 보스 현세의 대허를 쓰러뜨리고 얻는 불 속성 시해 능력(혼합 공격 블록)이다.\n효과: 위력 기본 공격 7회분"
     },
-    "rare": true,
     "boss": true,
     "role": "attack",
     "powerInAttacks": 7,
@@ -1063,7 +884,6 @@
       "hollow": "[임시] 보스 숲의 군주를 쓰러뜨리고 얻는 허(虛) 속성 본체 기술(혼합 공격 블록)이다.\n효과: 위력 기본 공격 7.5회분",
       "shinigami": "[임시] 보스 웨코문도의 문지기를 쓰러뜨리고 얻는 허(虛) 속성 시해 능력(물리 공격 블록)이다.\n효과: 위력 기본 공격 7.5회분"
     },
-    "rare": true,
     "boss": true,
     "role": "attack",
     "powerInAttacks": 7.5,

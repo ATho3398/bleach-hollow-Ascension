@@ -227,7 +227,7 @@ export function fillDefaultTraits(save: SaveData): number {
   const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : null;
   const element = form?.elements?.[0] ?? TM.fallbackElement;
   // 노멀 skill 특성은 기본 블록이 그 역할이라 채우지 않는다 (GDD 111장 1) — 노멀 몸이면 비워 둔다
-  const usable = (el: string, role: string) => TRAITS.filter((t) => t.kind === 'skill' && !t.rare && !t.boss && t.element === el && t.role === role && !isBasicBlockTrait(t.id));
+  const usable = (el: string, role: string) => TRAITS.filter((t) => t.kind === 'skill' && !t.boss && t.element === el && t.role === role && !isBasicBlockTrait(t.id));
   const picks: string[] = [];
   const take = (role: string): void => {
     const t = [...usable(element, role), ...usable(TM.fallbackElement, role)].find((x) => !picks.includes(x.id));

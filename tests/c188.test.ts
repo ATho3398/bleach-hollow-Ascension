@@ -83,7 +83,7 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
 
 describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
   it('형식·문턱 52, 새 세이브 남성, 저장·불러오기로 남고 깨진 값은 남성', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([55, 54]); // C.198: 문턱 54 고정(123장 6) // C.195
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([56, 54]); // C.213 · C.198: 문턱 54 고정(123장 6) // C.195
     const s = newSaveData('hollow');
     expect(s.gender).toBe('male');
     s.gender = 'female';

@@ -33,8 +33,6 @@ export interface AbsorbOffer {
   element: string;
   /** 흡수하면 오르는 노력치 (적 데이터 ev, GDD 20-4) */
   ev: Partial<Record<StatId, number>>;
-  /** 희귀 개체: 흡수 화면에서 미리 표시되고 희귀 특성이 확정 후보로 나온다 */
-  rare: boolean;
   elite: boolean;
   /** 적 강함(hpInAttacks, 바퀴 강화 포함): 리스크 상승량의 기준 */
   strength: number;
@@ -92,7 +90,7 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
   return out;
 }
 
-/** 후보 만들기 (C.47 → C.125 GDD 70장): **그 적의 속성(elements) 특성에서만** 뽑는다 — 아직 없는 특성 중에서. 희귀 개체는 희귀 특성이 첫 후보로 확정, 일반 후보는 희귀 아닌 특성에서 무작위.
+/** 후보 만들기 (C.47 → C.125 GDD 70장): **그 적의 속성(elements) 특성에서만** 뽑는다 — 아직 없는 특성 중에서. 후보는 보스 특성이 아닌 특성에서 무작위(희귀 개체·희귀 특성은 C.213 에 삭제 — GDD 136장 1).
  *  그 속성 특성이 모자라면 후보 수를 줄인다(다른 속성으로 채우지 않는다). elements = 적 속성(보스는 속성 바뀜 기믹의 속성까지, offerElementsOf) */
 /** extraCandidates: 원정 시너지·바퀴 변이의 흡수 후보 +n (GDD 25-5). bossTrait: 보스를 이긴 흡수 화면의 보스 특성 (GDD 25-3, 아직 없고 elements 안 속성이면 첫 후보로 확정).
  *  보스 특성(boss: true)은 그 밖의 후보에는 나오지 않는다 */
@@ -100,17 +98,12 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
 /** C.127 (GDD 75장): 특수 속성(혈·독·허) 특성 숨김(옛 49-7 ①)은 없앴다 — 숨김은 적 등장 쪽(enemyPool gateSpecialEnemies). 혈·독·허 적을 잡으면 그 속성 특성이 늘 후보 */
 export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, candidateMult = 1, elements: readonly string[] = [enemy.element]): AbsorbOffer {
   const elite = enemy.class === 'elite';
-  const rare = enemy.rare === true;
   // 106장 1: 가진 속성이어도 그 속성 조·탄·교 등이 평소처럼 후보로 — 가진 특성은 고르면 강화만. 보스 특성은 보스 보상이라 그대로(아직 없을 때만)
   const pool = offerPool(elements);
   const candidates: string[] = [];
   const bossAdded = bossTrait !== null && !build.owned.includes(bossTrait) && elements.includes(getTrait(bossTrait).element);
   if (bossAdded) candidates.push(bossTrait);
-  if (rare) {
-    const rarePool = pool.filter((t) => t.rare);
-    if (rarePool.length > 0) candidates.push(pick(rng, rarePool).id);
-  }
-  const own = pool.filter((t) => !t.rare && !candidates.includes(t.id));
+  const own = pool.filter((t) => !candidates.includes(t.id));
   const want = (elite ? AX.candidatesElite : 1 + nextInt(rng, AX.candidatesNormalMax)) * candidateMult + extraCandidates + (bossAdded ? 1 : 0);
   while (candidates.length < want && own.length > 0) {
     const t = pick(rng, own);
@@ -122,7 +115,6 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     enemyId: enemy.id,
     element: enemy.element,
     ev: { ...enemy.ev },
-    rare,
     elite,
     strength: enemy.hpInAttacks,
     candidates,
@@ -134,14 +126,14 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
 }
 
 /**
- * 다시 뽑기 (GDD 25-9 다시 뽑기권, C.60): 확정 후보(보스 특성·희귀 개체의 희귀 특성)는 그대로 두고 나머지 후보를 같은 수만큼 새로 뽑는다.
+ * 다시 뽑기 (GDD 25-9 다시 뽑기권, C.60): 확정 후보(보스 특성)는 그대로 두고 나머지 후보를 같은 수만큼 새로 뽑는다.
  * 지금 후보와 겹치지 않게 뽑고(모자라면 겹침 허용), buildOffer 와 같이 그 적의 속성(elements) 특성에서만(C.125 GDD 70장 — 모자라면 줄인다)·공격 계열 섞임
  */
 export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates' | 'element'>, build: BuildState, bossTrait: string | null = null, elements: readonly string[] = [offer.element]): string[] {
-  const fixed = offer.candidates.filter((id) => id === bossTrait || getTrait(id).rare === true);
+  const fixed = offer.candidates.filter((id) => id === bossTrait || getTrait(id).boss === true);
   const want = offer.candidates.length - fixed.length;
   const usable = offerPool(elements);
-  const free = usable.filter((t) => !t.rare && !fixed.includes(t.id));
+  const free = usable.filter((t) => !fixed.includes(t.id));
   const unseen = free.filter((t) => !offer.candidates.includes(t.id));
   const enough = unseen.length >= want;
   const list = [...(enough ? unseen : free)];
@@ -159,7 +151,7 @@ export function rerollCandidates(rng: Rng, offer: Pick<AbsorbOffer, 'candidates'
 /**
  * 공격 계열 섞임 (GDD 18-8 ③, C.41, 임시): 한 원정에서 공격 계열이 1가지로만 보이던 문제(옛 데이터는 한 계통에 공격 특성이 0~1개였다)를 막는다.
  * 장착한 공격 특성의 계열이 attackFamilyGuarantee 가지 미만이면, 후보에 "장착하지 않은 계열의 공격 특성"이 없을 때 하나를 끼워 넣는다
- * (후보가 2개 이상이면 희귀가 아닌 마지막 후보를 바꾸고, 하나뿐이면 그것을 바꾼다). 첫 흡수(장착 skill 특성 없음)는 서로 다른 계열 공격 후보 2개를 낸다.
+ * (후보가 2개 이상이면 보스 특성이 아닌 마지막 후보를 바꾸고, 하나뿐이면 그것을 바꾼다). 첫 흡수(장착 skill 특성 없음)는 서로 다른 계열 공격 후보 2개를 낸다.
  * 맞는 특성이 없으면 아무것도 바꾸지 않는다. pool 은 그 적 속성의 아직 없는 특성(C.125 GDD 70장: 다른 속성 공격 특성을 끼워 넣지 않는다)이다.
  */
 function mixAttackFamilies(rng: Rng, candidates: string[], pool: TraitDef[], build: BuildState): void {
@@ -169,12 +161,12 @@ function mixAttackFamilies(rng: Rng, candidates: string[], pool: TraitDef[], bui
     const f = attackFamilyOf(id);
     return f !== null && !equipped.has(f);
   };
-  const fresh = (): TraitDef[] => pool.filter((t) => !t.rare && !candidates.includes(t.id) && isNewAttack(t.id));
+  const fresh = (): TraitDef[] => pool.filter((t) => !candidates.includes(t.id) && isNewAttack(t.id));
   if (!candidates.some(isNewAttack)) {
     const list = fresh();
     if (list.length > 0) {
       const t = pick(rng, list);
-      const at = candidates.map((id, i) => ({ id, i })).filter((c) => !getTrait(c.id).rare).map((c) => c.i).pop();
+      const at = candidates.map((id, i) => ({ id, i })).filter((c) => !getTrait(c.id).boss).map((c) => c.i).pop();
       if (at === undefined) candidates.push(t.id);
       else candidates[at] = t.id;
     }
@@ -185,10 +177,10 @@ function mixAttackFamilies(rng: Rng, candidates: string[], pool: TraitDef[], bui
     const list = fresh().filter((t) => !have.has(t.family!));
     if (have.size < 2 && list.length > 0) {
       const t = pick(rng, list);
-      // 공격이 아닌 희귀 아닌 후보가 있으면 그것을 바꾸고, 없으면 같은 계열이 겹친 뒤쪽 후보를 바꾸고(C.47: 둘째 후보가 다른 속성에서 같은 계열로 나올 수 있다), 그것도 없으면 후보가 1개일 때만 덧붙인다
-      const rows = candidates.map((id, i) => ({ id, i, fam: attackFamilyOf(id), rare: getTrait(id).rare === true }));
-      const nonAttack = rows.filter((c) => !c.rare && c.fam === null).map((c) => c.i).pop();
-      const dup = rows.filter((c, k) => !c.rare && c.fam !== null && rows.slice(0, k).some((p) => p.fam === c.fam)).map((c) => c.i).pop();
+      // 공격이 아닌 보스 아닌 후보가 있으면 그것을 바꾸고, 없으면 같은 계열이 겹친 뒤쪽 후보를 바꾸고(C.47: 둘째 후보가 다른 속성에서 같은 계열로 나올 수 있다), 그것도 없으면 후보가 1개일 때만 덧붙인다
+      const rows = candidates.map((id, i) => ({ id, i, fam: attackFamilyOf(id), boss: getTrait(id).boss === true }));
+      const nonAttack = rows.filter((c) => !c.boss && c.fam === null).map((c) => c.i).pop();
+      const dup = rows.filter((c, k) => !c.boss && c.fam !== null && rows.slice(0, k).some((p) => p.fam === c.fam)).map((c) => c.i).pop();
       const at = nonAttack ?? dup;
       if (at !== undefined) candidates[at] = t.id;
       else if (candidates.length < 2) candidates.push(t.id);

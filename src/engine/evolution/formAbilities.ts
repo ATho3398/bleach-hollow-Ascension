@@ -1,7 +1,7 @@
 // 진화체 특성 (GDD 39장, C.89): 칸 2개 — ① 성향(노력치 최고 능력치, 20-5·v4.0) ② 속성(진화체 label 속성, 4단계부터)·전용(특별 진화체 5종).
 // 진화체 id·종족 분기 없이 label(kind·elements) → abilities.json kindSlots 규칙으로 정한다. 효과는 전투 엔진 AbilityEffects 종류로, 수치는 BALANCE.provisional.abilities.
 import { BALANCE } from '../../config/balance';
-import { abilityDescription, abilityName, elementAbility, kindSlot, physElementOf, uniqueAbility, type PhysElementDef } from '../../data/evolution';
+import { abilityDescription, abilityName, abilityTextName, elementAbility, kindSlot, physElementOf, uniqueAbility, type PhysElementDef } from '../../data/evolution';
 import { pickFaction, STAT_IDS, type FormDef, type FormKind, type StatId, type Stats } from '../../data/schema';
 import type { AbilityEffects, PhysBlock } from '../combat/combat';
 
@@ -162,8 +162,8 @@ export function abilityLines(fa: FormAbilities, factionId: string): AbilityLine[
   const lines: AbilityLine[] = fa.dispositions.map((d) => ({ slot: '성향', name: abilityName(d, factionId), description: abilityDescription(d, factionId) }));
   const { effects, critChance } = abilityEffectsOf({ ...fa, dispositions: [], phys: null });
   const summary = effectSummary(effects, critChance);
-  if (fa.unique) lines.push({ slot: '전용', name: pickFaction(uniqueAbility(fa.unique).name, factionId), description: summary });
-  else if (fa.elements.length > 0) lines.push({ slot: '속성', name: fa.elements.map((x) => pickFaction(elementAbility(x.element).name, factionId)).join('·'), description: summary });
+  if (fa.unique) lines.push({ slot: '전용', name: abilityTextName(uniqueAbility(fa.unique), factionId), description: summary });
+  else if (fa.elements.length > 0) lines.push({ slot: '속성', name: fa.elements.map((x) => abilityTextName(elementAbility(x.element), factionId)).join('·'), description: summary });
   // 물공 칸 (GDD 49장): 특성 이름 — 특성 효과 · 블록 「이름」: 블록 효과
   if (fa.phys) {
     const physFx = abilityEffectsOf({ dispositions: [], elements: [], unique: null, phys: fa.phys }).effects;

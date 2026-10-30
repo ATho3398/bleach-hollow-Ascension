@@ -337,8 +337,8 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     raw.evolution.ev.hp = 9;
     return raw;
   };
-  it('형식 55·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(55);
+  it('형식 56(C.213)·문턱 54 고정, 단계 표에 54 가 있다', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(56);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();
@@ -346,7 +346,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
   it('54 세이브가 그대로 불러와지고 체력 = 가득·온천 밖·기록 빈 목록, 다른 값은 그대로', () => {
     const m = migrateSave(v54())!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(55);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.nest.hpFraction).toBe(1);
     expect(m.nest.spa).toBeNull();
     expect(m.runLog.homeHeals).toEqual([]);
@@ -369,15 +369,15 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     const st = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };
     writeSave(st, v54() as unknown as SaveData);
     const back = loadSave(st)!;
-    expect(back.meta.format).toBe(55);
+    expect(back.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(back.nest.hpFraction).toBe(1);
   });
-  it('53 이하는 그대로 이전 버전(문턱), 56(미래)은 못 연다', () => {
+  it('53 이하는 그대로 이전 버전(문턱), 미래 형식은 못 연다', () => {
     const r53 = v54();
     (r53.meta as { format: number }).format = 53;
     expect(migrateSave(r53)).toBeNull();
     const r56 = v54();
-    (r56.meta as { format: number }).format = 56;
+    (r56.meta as { format: number }).format = SAVE_FORMAT_VERSION + 1;
     expect(migrateSave(r56)).toBeNull();
   });
   it('깨진 홈 체력 값은 보정 (0~상한)', () => {

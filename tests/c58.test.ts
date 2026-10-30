@@ -66,7 +66,7 @@ describe('보스 데이터 (GDD 25-3·25-7)', () => {
     expect(BOSS_GIMMICKS).toEqual(['seal', 'summon', 'element', 'reflect']);
     const t = getTrait(b.trait);
     expect(t.boss).toBe(true);
-    expect(t.rare).toBe(true);
+    expect('rare' in t).toBe(false); // 희귀 표시는 C.213 에 삭제 — 보스 특성은 boss 로만 가린다
     expect(BX.timeLimitSeconds).toBe(180);
     expect(BX.seal).toEqual({ everySeconds: 10, seconds: 4, cells: 1 });
     expect(BX.reward.gold).toBe(100);
@@ -148,7 +148,7 @@ describe('보스 특성 (흡수)', () => {
     const boss = getBoss('sand-maw');
     const input = { finisher: null, chain3Count: 0, weakChain3Count: 0, firstAbsorb: false } as never;
     for (let seed = 1; seed <= 200; seed++) {
-      const o = buildOffer(createRng(seed), { ...boss.enemy, rare: true }, newBuild(), input);
+      const o = buildOffer(createRng(seed), boss.enemy, newBuild(), input);
       expect(o.candidates).not.toContain(boss.trait);
     }
     const o = buildOffer(createRng(5), boss.enemy, newBuild(), input, 0, boss.trait);

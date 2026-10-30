@@ -16,7 +16,7 @@ import { useLegacyMigrations } from './helpers/legacyGate';
 useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
 const RB = BALANCE.provisional.rebirth;
-const traitIds = TRAITS.filter((t) => !t.rare && t.element !== 'normal').slice(0, 3).map((t) => t.id); // C.184: 노멀 skill 특성은 기본 블록(GDD 111장 1)
+const traitIds = TRAITS.filter((t) => !t.boss && t.element !== 'normal').slice(0, 3).map((t) => t.id); // C.184: 노멀 skill 특성은 기본 블록(GDD 111장 1)
 
 /** 5단계(아란칼)에 닿은 세이브: 장착 특성 3개, 노력치 상한까지, 번호·수련·자원이 조금씩 있다 */
 function tier5Save(factionId = 'hollow'): SaveData {

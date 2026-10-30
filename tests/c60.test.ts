@@ -215,13 +215,13 @@ describe('영옥 탭: 꾸밈 보유(공유)·착용(트랙별, 분류당 1개)',
 
 describe('다시 뽑기 (흡수 화면)', () => {
   const offerFor = (cands: string[], el: string, enemyId: string): AbsorbOffer => ({
-    enemyId, element: el, ev: {}, rare: false, elite: false, strength: 30, candidates: cands, reasons: ['victory'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
+    enemyId, element: el, ev: {}, elite: false, strength: 30, candidates: cands, reasons: ['victory'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
   });
   it('후보를 같은 수로 다시 뽑고(겹치지 않게), 흡수 1번에 1번만. 흡수 기록에 rerolled', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 99, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
     const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly && x.element !== 'normal')!; // C.147: 노멀은 강화만(후보 없음)
-    const own = TRAITS.filter((t) => t.element === enemy.element && !t.rare && !t.boss).map((t) => t.id);
+    const own = TRAITS.filter((t) => t.element === enemy.element && !t.boss).map((t) => t.id);
     e.phase = 'absorb';
     e.absorbOffer = offerFor(own.slice(0, 2), enemy.element, enemy.id);
     const before = [...e.absorbOffer.candidates];
@@ -234,16 +234,16 @@ describe('다시 뽑기 (흡수 화면)', () => {
     expect(chooseAbsorb(e, after[0]!).ok).toBe(true);
     expect(e.absorbRecords.at(-1)!.rerolled).toBe(true);
   });
-  it('확정 후보(희귀 특성)는 그대로 남는다', () => {
+  it('확정 후보(보스 특성)는 그대로 남는다 (희귀 특성은 C.213 에 삭제)', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 5, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
-    const rare = TRAITS.find((t) => t.rare && !t.boss && t.element !== 'normal')!;
-    const plain = TRAITS.find((t) => t.element === rare.element && !t.rare && !t.boss)!;
-    const enemy = ENEMIES.find((x) => x.element === rare.element) ?? ENEMIES[0]!;
+    const boss = TRAITS.find((t) => t.boss && t.element !== 'normal')!;
+    const plain = TRAITS.find((t) => t.element === boss.element && !t.boss)!;
+    const enemy = ENEMIES.find((x) => x.element === boss.element) ?? ENEMIES[0]!;
     e.phase = 'absorb';
-    e.absorbOffer = { ...offerFor([rare.id, plain.id], rare.element, enemy.id), rare: true };
+    e.absorbOffer = offerFor([boss.id, plain.id], boss.element, enemy.id);
     rerollAbsorb(e);
-    expect(e.absorbOffer!.candidates[0]).toBe(rare.id);
+    expect(e.absorbOffer!.candidates[0]).toBe(boss.id);
     expect(e.absorbOffer!.candidates.length).toBe(2);
   });
 });

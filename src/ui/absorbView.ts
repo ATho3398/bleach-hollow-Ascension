@@ -97,13 +97,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     } else onDone(absorbed);
   };
 
-  /** 특성 종류 태그 + 희귀 칩 */
-  const traitTags = (id: string): HTMLElement[] => {
-    const t = getTrait(id);
-    const out: HTMLElement[] = [tag(faction.traitKindNames[t.kind], 'kind')];
-    if (t.rare) out.push(chip('희귀', 'rare'));
-    return out;
-  };
+  /** 특성 종류 태그 (희귀 칩은 C.213 에 삭제 — GDD 136장 1) */
+  const traitTags = (id: string): HTMLElement[] => [tag(faction.traitKindNames[getTrait(id).kind], 'kind')];
 
   const steps = (n: number): HTMLElement => {
     const nav = el('nav', 'bha-steps');
@@ -214,13 +209,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const risk = riskOf('both');
     const willBreak = breaks('both');
     const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
-    const rareNote = offer!.rare ? notice('rare', '이 개체의 희귀 특성이 후보에 확정으로 나온다.', { title: '희귀 개체!' }) : null;
     // GDD 100장 #44·45: 설명 표는 버튼 아래 작은 글과 같은 내용이라 뺐다. 왼쪽 = 상대 + 갈래 버튼 2×2, 오른쪽 = 슬롯 목록만(3칸이 가려지지 않게)
     const enh = el('p', 'bha-small');
     enh.append(enhanceRow());
     nodes.push(
       enh,
-      ...(rareNote ? [rareNote] : []),
       el('p', 'bha-faint', `${act}하면 ${faction.fullnessName} 가득 · 타일 +1.`),
     );
     const side: HTMLElement[] = [

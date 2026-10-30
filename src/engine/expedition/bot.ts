@@ -29,10 +29,10 @@ export interface AutoOptions {
 
 const KIND_SCORE = { skill: 3, passive: 2, part: 1 } as const;
 
-/** 봇의 특성 점수: 슬롯에 같은 속성이 많을수록(속성 보너스), skill > passive > part, 희귀 가산 */
+/** 봇의 특성 점수: 슬롯에 같은 속성이 많을수록(속성 보너스), skill > passive > part, 보스 특성 가산 */
 function traitScore(b: BuildState, id: string): number {
   const t = getTrait(id);
-  return (elementCounts(b)[t.element] ?? 0) * 10 + KIND_SCORE[t.kind] + (t.rare ? 2 : 0);
+  return (elementCounts(b)[t.element] ?? 0) * 10 + KIND_SCORE[t.kind] + (t.boss ? 2 : 0);
 }
 
 /** 후보 중 가장 좋은 특성과, 가득 찼을 때 교체할 슬롯(교체가 이득이 아니면 null = 포기) */
