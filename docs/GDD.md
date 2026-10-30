@@ -964,7 +964,7 @@ data/
 - UI 검수 방법(사용자 요청으로 만든 것): 기준 `docs/ui-review.md` · 캡처 `UI_AUDIT_SHOTS=<폴더> npm run ui-audit`(두 종족 281장, 테스트_* 제외 215장) · 화면 5묶음 검수 에이전트 + 확인 에이전트(Workflow 10개, 약 95만 토큰) → 엑셀(캡처 썸네일). ui-audit 실패 2건(온천 클릭 시간 초과·원정 결과 완주 못 닿음) 남음.
 - 사용자가 알려줄 일(요청하면 엑셀 SendUserFile): 진화체·특성 초안 · 대장장이 역할 · 기타 아이템 용도(docs/drafts, 스크립트 user-drafts-xlsx.py). 아이콘 없는 목록 `docs/drafts/블리치_아이콘_없는_목록.xlsx`(391개, 스크립트 missing-icons-xlsx.py). 검수 프로토콜 합치기 도구 `docs/qa-setup/`(사용자 로컬용, zip 링크 https://github.com/ATho3398/bleach-hollow-Ascension/archive/refs/heads/main.zip).
 - 다음 코딩 174, 다음 패치 = 그 시점 가장 큰 값+1(코딩173 이 C.237 예상). UI담당자C = session_01LmFYYdTyBXcbM3dRNuzGuc(사신 탑 그림 없음).
-**10-31 02:4x 사용자 지시 → 161장(v5.361)**: 소모품·일반 장비 획득 알림 끔 → **코딩175**(Opus). 다음 코딩 176.
+**10-31 02:4x 사용자 지시 → 161장(v5.361)**: 소모품·일반 장비 획득 알림 끔 → **코딩175**(Opus, session_01YVaigLHaiVw68bBauUTMMY, 02:43 생성). 다음 코딩 176.
 **10-31 02:4x 사용자 지시(AA 세션으로 옴, AA 가 AB 로 넘김) → 160장(v5.360)**: 그림 크기·시장 그림·방 짚인형·상태 화면 상태이상 위로·노력치 글자·능력치 펼침 → ⓘ → **코딩174**(Opus, session_01YVaigKoLbXkmeLspJ6Syxs, 02:39 생성). 코딩173(159장)과 상태 화면·방 파일 겹침 → pull --rebase. 다음 코딩 175.
 **10-31 02:3x 사용자 지시 → 159장(v5.359)**: UI 검수 1~45번 체크본 반영(나머지 46~ 는 사용자가 다음에 줌) → **코딩173**(Opus, session_01YVaigLXnzf4GfHqDME7M5k, 02:32 생성). 다음 코딩 174. 원정 → 모험 통일, 임시 표시는 그대로.
 **10-31 01:5x 아이콘 5종 배포 확인**(UI담당자C 3aeb84ff, 사용자 직통 "각각 월드맵, 탑, 온천, 장비상점, 대장간 아이콘으로 ㄱㄱ", Pages run 311 success, 배포 art/prop-smith.png 200). public/art prop-outside·place-tower-hollow·prop-spa·prop-gearShop·prop-smith(사신 탑 그림 없음). 캡처 art-icons/2 월드맵·3 시장 확인 — 단 C.236 이전 배치로 찍힘(그림 적용은 파일 규칙이라 C.236 배치에도 그대로). UI 검수 엑셀 docs/drafts/블리치_UI검수_1031.xlsx 111건 사용자에게 보냄(답 대기: 원정/모험 통일·임시 표시 숨김).
