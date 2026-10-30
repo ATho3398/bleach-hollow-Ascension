@@ -100,9 +100,10 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   const menu = el('div', 'bha-start__menu');
   menu.dataset.scList = '';
   // C.170 (GDD 100장 #1): 세이브가 없으면 [이어하기]를 숨기고 [새로 시작]이 첫 줄 (비활성 밝은 버튼이 가장 눈에 띄던 문제)
-  if (last !== null) menu.append(button({ label: '이어하기', icon: 'i-loop', variant: 'primary', onClick: h.onContinue }));
+  // 버튼은 모두 같은 어두운 모양, 고른 버튼은 초점 테두리 하나로만 (GDD 159장 16: 밝게 채운 버튼과 초점이 따로 보였다)
+  if (last !== null) menu.append(button({ label: '이어하기', icon: 'i-loop', onClick: h.onContinue }));
   menu.append(
-    button({ label: '새로 시작', icon: 'i-play', variant: last === null ? 'primary' : undefined, onClick: h.onNew }),
+    button({ label: '새로 시작', icon: 'i-play', onClick: h.onNew }),
     button({ label: '불러오기', icon: 'i-deck', onClick: h.onImport }),
   );
   if (h.onSettings) {

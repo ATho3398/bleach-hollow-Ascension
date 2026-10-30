@@ -57,19 +57,19 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   // ── 왼쪽: 사다리 ──
   const list = el('ol', 'bha-ranklist');
   list.setAttribute('aria-label', '등급표');
-  for (let n = 1; n <= RANK_COUNT + 1; n++) {
-    const id = n <= RANK_COUNT ? holderAt(r, n)! : r.ladder[RANK_COUNT]!;
+  // 번호 칸만 (GDD 159장 42): 맨 아래 무번호 줄(내 줄)과 줄 앞 순번은 뺐다 — 이름이 이미 번호를 말한다. 내가 번호를 달면 그 줄에 '나'
+  for (let n = 1; n <= RANK_COUNT; n++) {
+    const id = holderAt(r, n)!;
     const mine = id === PLAYER_ID;
     const row = el('li', `bha-rankrow${mine ? ' is-me' : ''}`);
-    const num = el('span', 'bha-rankrow__num bha-num', n <= RANK_COUNT ? String(n) : '-');
-    const name = el('span', 'bha-rankrow__name', rankLabel(faction, n <= RANK_COUNT ? n : null));
+    const name = el('span', 'bha-rankrow__name', rankLabel(faction, n));
     const who = el('span', 'bha-rankrow__who');
     if (mine) who.append(tag('나', 'kind'));
     else {
       const holder = getHolder(id);
       who.append(elementDot(holder.element, faction.id), shownName(pickFaction(holder.name, faction.id)), ' ', el('span', 'bha-faint', difficultyText(faction, holder.difficulty)));
     }
-    row.append(num, name, who);
+    row.append(name, who);
     list.append(row);
   }
 

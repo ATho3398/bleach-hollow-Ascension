@@ -13,6 +13,7 @@ import { ascensionAccess, type SaveData } from '../game';
 import { STAT_IDS, type StatId } from '../data/schema';
 import { statName } from '../data/elements';
 import { button, chip, el, icon, meter, mountApp, notice, panel, provisionalTag, tag } from './bha/dom';
+import { iconArt, itemDialog } from './bha/itemUi';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
@@ -111,7 +112,8 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     if (t.completed) notes.push(notice('good', faction.training.completeText, { title: '수련 완료' }));
   }
   prog.append(...notes);
-  const left = [prog, ascensionPanel(faction, save, hd)];
+  // 왼쪽 = 수련 칸만, 아란칼화·구상화 칸은 오른쪽 카드 아래 (GDD 159장 45: 왼쪽이 넘쳐 위·아래 줄이 잘렸다 — 카드가 짧아져 오른쪽에 자리가 남는다)
+  const left = [prog];
 
   // 오른쪽: 4종목 카드
   const cards = el('div', 'bha-train__cards');
@@ -124,10 +126,10 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     card.dataset.game = g;
     const top = el('span', 'bha-train__cardtop');
     top.append(el('b', 'bha-train__cardname', cfg.name), el('span', 'bha-chip', `${level}단계`));
-    // 보상·비용은 칩으로 — 글 한 줄은 어중간한 곳에서 줄바꿈됐다 (GDD 100장 #67). 광기(리스크) 비용은 위험 칩 (#68: 테두리는 선택 전용)
+    // 카드 = 이름·단계 + 대표 효과 하나 (GDD 159장 44: 증감 칩 4~5개가 수치판처럼 보였다). 전체 증감은 누르면 뜨는 상세 창
+    const rewards = lines.reward.split(' · ');
     const chips = el('span', 'bha-train__chips');
-    chips.append(...lines.reward.split(' · ').map((x) => chip(x, 'guard')));
-    if (lines.cost !== '없음') chips.append(...lines.cost.split(' · ').map((x) => chip(x, x.startsWith(faction.riskGaugeName) ? 'danger' : undefined)));
+    chips.append(chip(rewards.find((x) => x.includes('노력치')) ?? rewards[0]!, 'guard'));
     card.append(top, chips);
     card.setAttribute('aria-label', `${cfg.name} ${level}단계. 승리 ${lines.reward}. 비용 ${lines.cost}`);
     card.title = cfg.desc;
@@ -135,10 +137,17 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
       card.disabled = true;
       card.classList.add('is-locked');
       card.prepend(icon('i-lock', 'sm'));
-    } else card.onclick = () => hd.onPlay(g);
+    } else card.onclick = () => {
+      // 상세 창: 설명 · 승리 보상 · 비용 · 진 때 (GDD 159장 44·45: 아래 안내 줄은 틀 끝에 걸려 있어 이 창으로 옮겼다)
+      const close = itemDialog({
+        heading: faction.training.title, name: cfg.name, art: iconArt('i-practice'), have: `${level}단계`,
+        desc: [cfg.desc, `승리: ${lines.reward}`, `비용: ${lines.cost}`, `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로다.`, `종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`].join('\n'),
+        actions: [{ key: 'play', label: () => '시작', variant: 'primary', onClick: () => { close(); hd.onPlay(g); } }],
+      });
+    };
     cards.append(card);
   }
-  const right = [cards, el('p', 'bha-faint', `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로. 종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`)];
+  const right = [cards, ascensionPanel(faction, save, hd)];
   lcdPage(dev.view, { cls: 'bha-train-page', cols: '0.9fr 1.1fr' }, head, left, right);
 }
 
@@ -152,8 +161,9 @@ function ascensionPanel(faction: FactionConfig, save: SaveData, hd: TrainingHand
   if (save.evolution.ascended) p.append(notice('good', `${faction.liberation.name}을(를) 쓸 수 있다.`, { title: `${A.name} 완료` }));
   else if (!access.ok && access.reason === 'tier') p.append(notice('info', trainingLockedText(faction, A.name), { icon: 'i-lock' }));
   else {
-    p.append(el('p', 'bha-faint', `상대: ${A.foe} (보스전 · 임시) · 지면 잃는 것 없이 다시 도전할 수 있다.`));
-    p.append(button({ label: `${A.name}에 도전`, icon: 'i-attack', variant: 'primary', disabled: !access.ok || !hd.onAscend, onClick: () => hd.onAscend?.() }));
+    // 칸이 틀 안에 들어가게 설명 한 줄 + 버튼만 (GDD 159장 45) — 상대·재도전 안내는 버튼 설명(title)
+    p.append(button({ label: `${A.name}에 도전`, icon: 'i-attack', variant: 'primary', size: 'small', disabled: !access.ok || !hd.onAscend, onClick: () => hd.onAscend?.() }));
+    p.lastElementChild?.setAttribute('title', `상대: ${A.foe} · 져도 잃는 것이 없다`);
   }
   return p;
 }

@@ -165,14 +165,15 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
 /** 방 상태 칩 ⓘ: 칩에 보이는 것 전부를 한 창에 — 수치 상태 = 구간별 손해 줄(지금 구간 강조), 상태 이상 = 손해·풀리는 법 한 줄씩 */
 export function roomStatusInfo(chips: readonly StatusChip[], f: Names): InfoBody {
   return {
-    lead: '상태마다 지금 구간에 ◀ 표시가 붙는다',
+    // 상태마다 지금 구간 한 줄만 (GDD 159장 21: 모든 구간 줄이 빽빽해 아래가 잘렸다). 자세한 구간표는 상태별 ⓘ
+    lead: '상태마다 지금 구간 한 줄 — 자세한 구간은 상태 화면의 ⓘ에서 본다',
     groups: chips.map((c) => {
       const title = c.value === null ? c.label : `${c.label} ${c.value}`;
       const kind: StatusInfoKind = c.kind === 'collapsed' && c.label === CARE_NAMES.dead ? 'dead' : c.kind;
       const doc = statusInfo(kind, f, c.value ?? undefined);
       const zones = doc.groups.find((g) => g.title === SECTION.zones);
-      if (zones) return { title, lines: zones.lines, ...(zones.mark !== undefined ? { mark: zones.mark } : {}) };
-      return { title, lines: doc.groups.flatMap((g) => g.lines) };
+      if (zones) return { title, lines: zones.mark !== undefined ? [zones.lines[zones.mark]!] : zones.lines.slice(0, 1) };
+      return { title, lines: doc.groups[0]?.lines.slice(0, 1) ?? [] };
     }),
   };
 }

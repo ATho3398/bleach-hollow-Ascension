@@ -189,7 +189,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   body.dataset.area = 'body';
   build.slots.forEach((_, i) => body.append(cellButton(faction, build, state, tierIndex, { area: 'body', index: i }, onChange)));
   left.append(h('h3', 'bha-sgrow__title', `${faction.slotName}`), body);
-  if (!state.held) left.append(h('p', 'bha-faint', '카드를 칸으로 끌어다 놓는다. 칸을 오른쪽 목록으로 끌면 뺀다.'));
+  if (!state.held) left.append(h('p', 'bha-faint', '카드를 ✓로 열어 칸에 넣고, 칸을 ✓로 열어 뺀다.')); // 버튼 조작 기준 (GDD 159장 26)
 
   const heldId = state.held?.id ?? null;
   const spare = build.owned.filter((id) => !build.slots.includes(id));

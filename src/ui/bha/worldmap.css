@@ -22,7 +22,7 @@
 }
 /* 장소 모양 (그림 없을 때): 홈 = 둥근 지붕, 시장 = 천막, 모험 = 길 끝 문 */
 .bha-prop--home .bha-prop__shape { width: 46px; height: 40px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
-.bha-prop--adventure .bha-prop__shape { width: 40px; height: 52px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); border-color: var(--bha-accent); }
+.bha-prop--adventure .bha-prop__shape { width: 40px; height: 52px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); } /* 늘 강조색 테두리라 초점처럼 보였다 (GDD 159장 39) */
 .bha-prop--outside .bha-prop__shape { width: 40px; height: 58px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--outside .bha-prop__shape.has-art { width: calc(74px * var(--ps)); height: calc(100px * var(--ps)); }
 /* 첫 모험 강제 등으로 잠긴 장소 (GDD 131장 2): 흐리게 */

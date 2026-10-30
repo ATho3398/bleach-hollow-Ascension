@@ -997,7 +997,9 @@ export function startApp(host: HTMLElement): void {
       const line = absenceText(away, faction);
       // 알림 띠는 한 줄(머리말 + 제목)이라 비운 시간·줄어든 양을 제목에 (C.170 알림 띠)
       const head = away.died ? '복귀 · 사망' : away.collapsed ? '복귀 · 빈사' : '복귀';
-      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '' }, 0, 5200), 300);
+      // 빈사·사망이면 방 위 줄에 큰 안내 상자가 있어 위 알림 띠가 그 제목('남은 시간')을 덮었다 → 가운데에 띄운다 (GDD 159장 19)
+      const care = s.nest.dead || s.nest.collapsed;
+      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '', center: care }, 0, 5200), 300);
     }
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
     const notes: { eyebrow: string; title: string; meta: string }[] = [];

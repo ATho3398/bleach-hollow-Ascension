@@ -14,7 +14,7 @@ import { fullnessOf } from './bha/fullness';
 import { hpNumbers } from './bha/battle';
 import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
-import { choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { BATTLE_ITEM_IDS, choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
 import { gearCarry } from '../engine/gear';
 import { equipTab, equipTitle, gearArt, openGear } from './equipView';
@@ -292,7 +292,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
   // 장비·타일·펫·기타에는 가진 수를 같이 보인다 (기타 = 재료 + 다시 뽑기권·수련권)
   const petCount = () => inventoryOf(save, faction).filter((e) => e.category === 'pet').length;
   const headTabs = (): HTMLElement => selectLast(categoryTabs([
-    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: ITEM_CATEGORY_NAMES.consumable }, { id: 'skin', label: ITEM_CATEGORY_NAMES.skin }, { id: 'pet', label: '펫', count: petCount() }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length + etcEntries(save, faction).length },
+    // 장비 탭 숫자 = 안의 '전체' 칸 수(장비 + 전투용 소모품) (GDD 159장 27)
+    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length + BATTLE_ITEM_IDS.filter((id) => (save.shared.items[id] ?? 0) > 0 || save.shared.battleItem === id).length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: ITEM_CATEGORY_NAMES.consumable }, { id: 'skin', label: ITEM_CATEGORY_NAMES.skin }, { id: 'pet', label: '펫', count: petCount() }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length + etcEntries(save, faction).length },
   ], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
@@ -374,7 +375,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     }
     const info = panel({ title: '가진 타일', aside: h('span', 'bha-chip', `${tileCount()}장`) });
     info.querySelector('.bha-panel__title')?.prepend(icon('i-deck'));
-    info.append(h('p', 'bha-dim', `모험 출발 때 가진 타일을 전부 보고 길에 최대 ${placementLimitOf(save)}칸 놓는다. 놓은 타일이 모험 보상으로 뽑힌다.`));
+    // 한 줄 요약만, 합성 규칙은 합성 목록을 열었을 때만 (GDD 159장 29)
+    info.append(h('p', 'bha-dim', `모험 출발 때 길에 최대 ${placementLimitOf(save)}칸 놓는다.`));
     // 타일 합성 (GDD 25-5 ⑤): 같은 타일 3장 → 상위 타일("+") 1장. 오른쪽 목록을 합성 목록으로 바꾼다
     const cost = BALANCE.provisional.tileVariants.synthCost;
     const synthBtn = button({
@@ -385,7 +387,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       },
     });
     synthBtn.dataset.sc = 'synth';
-    info.append(synthBtn, h('p', 'bha-faint', `합성: 같은 타일 ${cost}장 → 이름 뒤 "+" 상위 타일 1장 (상위 타일은 다시 합성하지 않는다)`));
+    info.append(synthBtn);
+    if (chestUi.synth) info.append(h('p', 'bha-faint', `같은 타일 ${cost}장 → "+" 상위 타일 1장`));
     if (chestUi.synth) {
       const list = h('div', 'bha-stack');
       list.dataset.synth = '';

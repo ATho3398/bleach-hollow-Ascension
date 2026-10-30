@@ -18,12 +18,13 @@ export function tutorialGoalText(def: TutorialGoalDef, faction: FactionConfig): 
 }
 
 /** 보상 한 줄: "간식 3 · 영혼 결정 1" (도감 보상은 "· 영옥 2") */
-export function rewardText(reward: TutorialReward | { food: [FoodId, number][]; soulCrystals?: number; jade?: number }, faction: FactionConfig): string {
+export function rewardText(reward: TutorialReward | { food: [FoodId, number][]; soulCrystals?: number; jade?: number }, faction: FactionConfig, plus = false): string {
+  const p = plus ? '+' : ''; // 알림 띠는 받은 양 "영옥 +11" (GDD 159장 30)
   const food = Array.isArray(reward.food) ? reward.food : (Object.entries(reward.food ?? {}) as [FoodId, number][]);
-  const parts = food.filter(([, n]) => n > 0).map(([id, n]) => `${faction.foodNames[id]} ${n}`);
-  if ((reward.soulCrystals ?? 0) > 0) parts.push(`${SOUL_CRYSTAL_NAME} ${reward.soulCrystals}`);
+  const parts = food.filter(([, n]) => n > 0).map(([id, n]) => `${faction.foodNames[id]} ${p}${n}`);
+  if ((reward.soulCrystals ?? 0) > 0) parts.push(`${SOUL_CRYSTAL_NAME} ${p}${reward.soulCrystals}`);
   const jade = 'jade' in reward ? reward.jade ?? 0 : 0;
-  if (jade > 0) parts.push(`${JADE_NAME} ${jade}`);
+  if (jade > 0) parts.push(`${JADE_NAME} ${p}${jade}`);
   return parts.length > 0 ? parts.join(' · ') : '보관 한도가 차서 받지 못했다';
 }
 
@@ -78,8 +79,8 @@ function showRewardToasts(label: string, items: readonly RewardToastItem[], fact
   // 칭호 해금·다른 보상 토스트가 이미 떠 있으면 그 아래로 쌓는다
   const base = getOverlayHost().querySelectorAll('.bha-toast').length;
   if (items.length <= 2) {
-    // 가로 LCD 는 토스트 meta 줄을 숨기므로 보상은 머리 줄에 붙인다 ("튜토리얼 달성 — 보상 ○○" / 목표 이름)
-    items.forEach((g, i) => showToast({ eyebrow: `${label} — 보상 ${rewardText(g, faction)}`, title: g.name, center }, base + i, 3200));
+    // 가로 LCD 는 토스트 meta 줄을 숨긴다 → 머리 = 종류("도감 보상"), 제목 = "목표 — 받은 양" 한 번에 (GDD 159장 30: '보상'이 두 번 겹쳤다)
+    items.forEach((g, i) => showToast({ eyebrow: label, title: `${g.name} — ${rewardText(g, faction, true)}`, center }, base + i, 3200));
     return;
   }
   const food = new Map<FoodId, number>();
@@ -90,7 +91,7 @@ function showRewardToasts(label: string, items: readonly RewardToastItem[], fact
     crystals += g.soulCrystals ?? 0;
     jade += g.jade ?? 0;
   }
-  showToast({ eyebrow: `${label} — 보상 ${rewardText({ food: [...food.entries()], soulCrystals: crystals, jade }, faction)}`, title: `이미 이룬 목표 ${items.length}개`, center }, base, 3600);
+  showToast({ eyebrow: label, title: `목표 ${items.length}개 달성 — ${rewardText({ food: [...food.entries()], soulCrystals: crystals, jade }, faction, true)}`, center }, base, 3600);
 }
 
 /** 새로 받은 튜토리얼 보상 토스트 (GDD 23-3): 화면 가운데 (GDD 109장 5번) */

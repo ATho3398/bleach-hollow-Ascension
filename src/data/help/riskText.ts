@@ -63,7 +63,8 @@ export function riskText(f: Names): RiskText {
       fixParticles(`${RX.limit}이(가) 되면 그 모험 끝까지 ${f.frenzyName} 상태다(모험당 1번)`),
     ],
     stabilityDoes: [
-      `전투 시작 해방 게이지 = ${s} ÷ ${RX.stabilityMax} × ${LIB.startGaugeMax}`,
+      // 공식 줄 대신 뜻만 (GDD 159장 23)
+      fixParticles(`${s}이(가) 높을수록 해방 게이지가 많이 찬 채로 전투를 시작한다`),
       '그 밖의 직접 손해는 없다',
     ],
     riskUp: [
@@ -107,11 +108,12 @@ export function riskZones(f: Names): RiskZone[] {
 /** 영압 안정도 구간별 손해 (109장 2): 전투 시작 해방 게이지 = 값 ÷ 상한 × 시작 최대(선형) — 4구간으로 끊어 그 구간의 시작 게이지를 숫자로 */
 export function stabilityZones(_f: Names): RiskZone[] {
   const max = RX.stabilityMax;
-  const gauge = (v: number) => num((v / max) * LIB.startGaugeMax);
+  // 구간 값은 정수 (GDD 159장 23: 12.5~24.5 같은 소수가 보였다) — 시작은 올림, 끝은 내림이라 이웃 구간과 겹치지 않는다
+  const at = (v: number) => (v / max) * LIB.startGaugeMax;
   const cuts = [0, max * 0.25, max * 0.5, max * 0.75, max + 1].map(Math.round);
   return cuts.slice(0, -1).map((from, i) => {
     const to = cuts[i + 1]! - 1;
-    return { from, to, text: `전투 시작 해방 게이지 ${gauge(from)}~${gauge(to)}/${LIB.gaugeMax}` };
+    return { from, to, text: `전투 시작 해방 게이지 ${Math.ceil(at(from))}~${Math.floor(at(to))}/${LIB.gaugeMax}` };
   });
 }
 

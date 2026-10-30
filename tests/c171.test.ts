@@ -141,7 +141,7 @@ describe('보관함·상점 (#54~65)', () => {
 
 describe('훈련장·책장·상태 (#67~75·83·84)', () => {
   it('수련 카드 보상·비용은 칩, 테두리는 선택 전용 (#67·68), 테스트 적은 테스트 모드만 (#70)', () => {
-    expect(read('src/ui/trainingView.ts')).toContain("chip(x, 'guard')");
+    expect(read('src/ui/trainingView.ts')).toContain("chips.append(chip(rewards.find((x) => x.includes('노력치')) ?? rewards[0]!, 'guard'));"); // C.237 (GDD 159장 44): 대표 효과 칩 하나
     expect(read('src/ui/bha/training.css')).not.toContain(':hover, .bha-train__card.bha-sel');
     expect(read('src/ui/practiceView.ts')).toContain('!e.testOnly || devText()');
   });

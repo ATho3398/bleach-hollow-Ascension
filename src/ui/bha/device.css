@@ -106,3 +106,7 @@ html.bha-pc, html.bha-pc body { background: var(--bha-bg-0); }
 
 /* ── 선택 하이라이트 (위/아래로 옮기는 표시) ── */
 .bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 5px var(--bha-accent-soft); }
+/* 기기 화면 안의 초점 표시는 선택 하이라이트(.bha-sel) 하나만 (GDD 159장 14·39): 브라우저 초점(:focus-visible)이 남은 버튼·그림이
+   같은 붉은 테두리·빛으로 함께 강조돼 초점이 두 곳처럼 보였다(설정 [전체 화면], 월드맵 둥지 + 고른 장소) */
+.bha-lcd :focus-visible:not(.bha-sel) { outline: none; }
+.bha-lcd .bha-art:focus-visible:not(.bha-sel) .bha-art-img { filter: none; }

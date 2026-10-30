@@ -8,6 +8,7 @@ import { difficultyText, towerFloorText, towerLabels, type FactionConfig } from 
 import { nextTowerFloor, TOWER_FLOORS, towerFloor, towerOpen, type TowerFloor, type TowerReward } from '../engine/tower';
 import type { SaveData, TowerOutcome } from '../game';
 import { button, el, icon, panel, tag } from './bha/dom';
+import { infoTip } from './bha/infoTip';
 import { elementLocalRect } from './bha/viewport';
 import { iconInfo, type IconInfoRow } from './bha/expedition';
 import { lcdPage, selectLast } from './bha/lcdpage';
@@ -77,7 +78,8 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
     title.append(el('span', 'bha-label', `다음 · ${towerFloorText(faction, f.floor)}`), el('b', 'bha-tower__foe', towerEnemyName(faction, f)));
     const meta = el('div', 'bha-row');
     meta.append(tag(TOWER_KIND_LABEL[f.kind], f.kind === 'normal' ? 'normal' : 'elite'), el('span', 'bha-num', difficultyText(faction, f.star)));
-    if (f.floorMult > 1) meta.append(el('span', 'bha-faint bha-num', `적 +${Math.round((f.floorMult - 1) * 100)}%`));
+    // 층 배율은 ⓘ 를 눌러야 보인다 (GDD 159장 41: 카드에 '적 +158%'가 그대로 보였다)
+    if (f.floorMult > 1) meta.append(infoTip('층 세기', { lead: '높은 층일수록 적이 세다', groups: [{ title: '이 층', lines: [`적 체력·공격 +${Math.round((f.floorMult - 1) * 100)}%`] }] }));
     const reward = el('p', 'bha-tower__reward');
     reward.append(icon('i-rare'), `첫 클리어 · ${towerRewardText(faction, f.reward)}`);
     const go = button({ label: '도전', icon: 'i-play', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(f) });

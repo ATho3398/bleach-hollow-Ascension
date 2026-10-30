@@ -64,11 +64,11 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
   };
   // 이름 옆 ⓘ (C.176, GDD 104장 2): 누르면(폰)·올리면(PC) 설명 창. 옛 '광기·자아 설명' 패널은 이 창으로 옮겼다
   root.append(
-    withTip(meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(s.hunger)), max: 100 }), 'hunger', faction.fullnessName),
+    withTip(meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(s.hunger)), max: 100 }), 'hunger', faction.fullnessName, fullnessOf(s.hunger)), // 지금 구간 ◀ (GDD 159장 22)
     withTip(meter({
       kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), max: 100,
       danger: s.condition < s.condWarn, note: s.condition < s.condWarn ? '나쁨: 전투에 공허 블록 ↑' : undefined,
-    }), 'cond', '컨디션'),
+    }), 'cond', '컨디션', s.condition),
     withTip(meter({ kind: 'stab', label: faction.stabilityName, icon: 'i-stab', value: Math.round(s.stability), max: s.stabilityMax }), 'stab', faction.stabilityName, s.stability),
     withTip(meter({
       kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), max: s.riskLimit,
