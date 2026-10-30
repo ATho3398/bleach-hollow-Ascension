@@ -108,3 +108,47 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     expect(back.build.enhance).toEqual({ earth: 3 });
   });
 });
+
+describe("136장 2: '한계 돌파' 표시 문구 → 폭주(호로)·호로화(사신), 종족 설정에서 읽기", () => {
+  /** src 아래 파일 (재귀) */
+  const files = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
+    const p = join(dir, n);
+    return statSync(p).isDirectory() ? files(p) : [p];
+  });
+  it("화면 문구(문자열·데이터)에 '한계 돌파' 가 없다 — 주석만 남는다", () => {
+    const hits: string[] = [];
+    for (const f of files('src').filter((p) => /\.(ts|json)$/.test(p))) {
+      readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+        if (!line.includes('한계 돌파')) return;
+        const code = f.endsWith('.json') ? line : line.replace(/\/\/.*$/, '').replace(/\/\*.*?\*\//g, '');
+        if (f.endsWith('.ts') && /^\s*(\*|\/\*)/.test(line)) return; // 블록 주석 줄
+        if (code.includes('한계 돌파')) hits.push(`${f}:${i + 1}`);
+      });
+    }
+    expect(hits).toEqual([]);
+  });
+  it('폭주 고유 특성·진화 힌트·외형 이름은 종족 설정 frenzyName', async () => {
+    const { abilityNameByEffect, abilityTextName, uniqueAbility, formHint, FORM_TABLE } = await import('../src/data/evolution');
+    const { getFaction } = await import('../src/data/factions');
+    expect(abilityTextName(uniqueAbility('limit'), 'hollow')).toBe(getFaction('hollow').frenzyName);
+    expect(abilityTextName(uniqueAbility('limit'), 'shinigami')).toBe('호로화');
+    expect(abilityNameByEffect('desperate', 'hollow')).toBe('폭주');
+    const limit = (FORM_TABLE as readonly { label: { kind: string } }[]).find((f) => f.label.kind === 'limit');
+    expect(limit).toBeDefined();
+    expect(formHint(limit as never, 'shinigami')).toContain('호로화');
+    const { SKINS } = await import('../src/data/skins');
+    expect(SKINS.find((s) => s.id === 'arrhiddena')?.name).toBe('아란칼 폭주');
+  });
+});
+
+describe('136장 3: 출발 화면 배치판 = 바퀴 끝 창과 같은 칸 비율 + 가로 밀기', () => {
+  const css = readFileSync('src/ui/bha/expedition.css', 'utf8');
+  it('출발 화면 길은 한 줄 가로 스크롤, 칸 60×80 (바퀴 끝 창과 같은 규칙)', () => {
+    expect(css).toContain('.bha-sheet .bha-road, .bha-lcd .bha-plan .bha-road { display: flex; overflow-x: auto;');
+    expect(css).toContain('.bha-sheet .bha-road__cell, .bha-lcd .bha-plan .bha-road__cell { flex: 0 0 60px; min-height: 0; height: 80px;');
+    expect(css).not.toContain('.bha-lcd .bha-plan .bha-road__cell { min-height: 40px; }');
+  });
+  it('길도 마우스 끌기로 넘긴다 (dragScroll)', () => {
+    expect(readFileSync('src/ui/bha/road.ts', 'utf8')).toContain('dragScroll(road);');
+  });
+});

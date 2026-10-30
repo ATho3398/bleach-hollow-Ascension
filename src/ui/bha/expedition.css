@@ -93,10 +93,11 @@
 /* 바퀴 끝 창(드래프트) 길 줄 (GDD 121장 3, C.196): 창 폭에 6칸씩 눌러 담지 않고 출발 화면과 같은 칸 크기로 한 줄, 넘치면 옆으로 민다.
    창 안 스크롤 칸(.bha-sheet__scroll, 세로 flex)이 배치판 높이를 줄여 칸이 잘리던 것도 막는다 */
 .bha-sheet .bha-road__wrap { flex-shrink: 0; }
-.bha-sheet .bha-road { display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-4) var(--bha-sp-1) var(--bha-sp-2); }
-.bha-sheet .bha-road__cell { flex: 0 0 60px; min-height: 0; height: 80px; scroll-snap-align: start; }
+/* C.213 (GDD 136장 3 · 128장 9 · 121장 3 "같은 패턴 다 같게"): 출발 화면 배치판도 같은 한 줄 60×80 칸 + 가로 밀기 (기기 ▲▼ 는 device.move 의 scrollIntoView 가 그 칸을 보이게 민다) */
+.bha-sheet .bha-road, .bha-lcd .bha-plan .bha-road { display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-4) var(--bha-sp-1) var(--bha-sp-2); }
+.bha-sheet .bha-road__cell, .bha-lcd .bha-plan .bha-road__cell { flex: 0 0 60px; min-height: 0; height: 80px; scroll-snap-align: start; }
 /* C.202 (GDD 128장 9): 칸은 손패 카드처럼 세로로 넉넉한 비율(3:4) — 가로로 눌린 72×48 칸을 대체. 손 카드 줄도 한 줄 가로 밀기 */
-.bha-sheet .bha-road__cell .bha-icon { width: 24px; height: 24px; }
+.bha-sheet .bha-road__cell .bha-icon, .bha-lcd .bha-plan .bha-road__cell .bha-icon { width: 24px; height: 24px; }
 .bha-sheet .bha-road__hand { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding-bottom: var(--bha-sp-1); }
 .bha-sheet .bha-road__hand > * { flex: none; scroll-snap-align: start; }
 
@@ -253,7 +254,6 @@
 .bha-presetcard__acts { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
 /* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
 .bha-road__wrap { user-select: none; -webkit-user-select: none; }
-.bha-lcd .bha-plan .bha-road__cell { min-height: 40px; } /* C.202 (GDD 128장 9) 확인: 출발 화면 6×2 는 높이를 늘리면 왼쪽 열이 길어져 손패 카드가 [출발] 띠 밑으로 겹친다(ui-audit) — 아이콘만 있는 칸이라 그대로 */
 /* 안내 줄 (C.196): 말줄임 없이 줄바꿈, 긴 타일 설명도 다 보인다 — 2줄 자리를 잡아 둬 [출발] 띠에 가리지 않는다 */
 .bha-lcd .bha-plan .bha-road__note { line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; min-height: calc(2em * var(--bha-lh-tight)); }
 .bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }

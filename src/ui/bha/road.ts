@@ -134,6 +134,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   hand.dataset.scList = '';
   hand.dataset.help = 'plan.hand';
   dragScroll(hand);
+  dragScroll(road); // C.213 (GDD 136장 3): 길도 한 줄 가로 밀기 — 마우스로 끌어도 넘어간다
   // 시너지 목록 한 줄 (칸 사이 이름표 + 효과 요약)
   const synLine = el('p', 'bha-road__synline');
   const root = el('div', 'bha-road__wrap');

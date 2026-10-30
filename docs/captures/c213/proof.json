@@ -1,0 +1,62 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "shots": [
+        "plan-board",
+        "plan-board-scrolled"
+      ],
+      "notes": [],
+      "before": {
+        "cells": 12,
+        "cell": {
+          "w": 60,
+          "h": 80
+        },
+        "road": {
+          "scrollW": 768,
+          "clientW": 344,
+          "top": 195,
+          "bottom": 287
+        },
+        "goTop": 320,
+        "roadOverGo": false,
+        "handBoxOverGo": true
+      },
+      "afterKeys": {
+        "scrollLeft": 424,
+        "focused": "bha-dev__btn bha-dev__btn--dir"
+      },
+      "errors": []
+    },
+    {
+      "faction": "shinigami",
+      "shots": [
+        "plan-board",
+        "plan-board-scrolled"
+      ],
+      "notes": [],
+      "before": {
+        "cells": 12,
+        "cell": {
+          "w": 60,
+          "h": 80
+        },
+        "road": {
+          "scrollW": 768,
+          "clientW": 344,
+          "top": 195,
+          "bottom": 287
+        },
+        "goTop": 320,
+        "roadOverGo": false,
+        "handBoxOverGo": true
+      },
+      "afterKeys": {
+        "scrollLeft": 424,
+        "focused": "bha-dev__btn bha-dev__btn--dir"
+      },
+      "errors": []
+    }
+  ]
+}

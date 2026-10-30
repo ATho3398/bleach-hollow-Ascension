@@ -111,7 +111,7 @@ describe('흡수 [내 상태] 진화 쏠림 (128장 7)', () => {
 describe('타일 칸 비율 (128장 9)', () => {
   it('바퀴 끝 창 길 칸 = 세로 카드꼴, 드래프트·손 카드 = 한 줄 가로 밀기', () => {
     const css = src('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-sheet \.bha-road__cell \{ flex: 0 0 60px; min-height: 0; height: 80px;/);
+    expect(css).toMatch(/\.bha-sheet \.bha-road__cell, \.bha-lcd \.bha-plan \.bha-road__cell \{ flex: 0 0 60px; min-height: 0; height: 80px;/);
     expect(css).not.toMatch(/flex: 0 0 72px; min-height: 48px/);
     expect(css).toMatch(/\.bha-draft__row \{ display: flex;[^}]*overflow-x: auto/);
     expect(css).toMatch(/\.bha-sheet \.bha-road__hand \{ flex-wrap: nowrap; overflow-x: auto/);
