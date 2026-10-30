@@ -5,7 +5,12 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { homeHp, homeMaxHp } from '../home';
+import { itemUseFx, type ActionBar } from './bha/actionFx';
+import { fullnessOf } from './bha/fullness';
+import { hpNumbers } from './bha/battle';
+import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
@@ -487,6 +492,22 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
   return row;
 }
 
+/**
+ * 아이템 쓰기 연출 (GDD 132장 3, C.208): 캐릭터가 쓰는 모션 + 체력(또는 배부름) 막대가 약 1초에 걸쳐 차오른다. 값은 이미 저장됐다.
+ * 막대가 바뀌지 않는 물건(치료제 등)은 체력 막대를 그대로 보여 준다
+ */
+function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemArt: HTMLElement, hpBefore: number, fullBefore: number): void {
+  const maxHp = homeMaxHp(save);
+  const hpNow = homeHp(save).fraction;
+  const fullNow = fullnessOf(save.nest.hunger);
+  const hp = (f: number) => hpNumbers(f * maxHp, maxHp).now;
+  const bars: ActionBar[] = [];
+  if (Math.abs(fullNow - fullBefore) > 1e-6 && Math.abs(hpNow - hpBefore) <= 1e-6) bars.push({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', from: Math.round(fullBefore), to: Math.round(fullNow), max: 100 });
+  else bars.push({ kind: 'player', label: '체력', icon: 'i-heal', from: hp(hpBefore), to: hp(hpNow), max: hpNumbers(maxHp, maxHp).max });
+  const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, save.evolution.tierIndex, artSkinOf(save)).src;
+  itemUseFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), bars });
+}
+
 /** 보관함 카드 상세 창: 쓰기·장착·해제 (GDD 86장 5번) */
 function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art: HTMLElement, changed: () => void): void {
   if (e.gear) return openGear(faction, save, e.id, changed);
@@ -497,7 +518,10 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       key: 'use', label: () => '사용', disabled: e.lock !== null,
       onClick: () => {
         close();
+        const hpBefore = homeHp(save).fraction;
+        const fullBefore = fullnessOf(save.nest.hunger);
         const r = useInventoryItem(save, faction, e.id);
+        if (r.ok && !r.spat) useFx(faction, save, e, art, hpBefore, fullBefore);
         showToast({ eyebrow: '가방', title: r.ok ? (r.spat ? fixParticles(`${e.name}을(를) 뱉었다`) : `${e.name} 사용`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
         if (r.ok) changed();
       },
@@ -525,7 +549,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
     });
   }
   close = itemDialog({
-    heading: ITEM_CATEGORY_NAMES[e.category], name: e.name, desc: cardDetailOf(e), art, have: e.category === 'pet' ? petAffinityText(save, e.id) : `보유: ${e.count}`,
+    id: e.id, heading: ITEM_CATEGORY_NAMES[e.category], name: e.name, desc: cardDetailOf(e), art, have: e.category === 'pet' ? petAffinityText(save, e.id) : `보유: ${e.count}`,
     tag: getCosmetic(e.id)?.category === 'skin' ? '미리보기' : undefined, lock: e.lock, actions,
   });
 }

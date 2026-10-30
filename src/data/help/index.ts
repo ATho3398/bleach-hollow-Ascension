@@ -27,6 +27,20 @@ export interface TutorialScene {
   done?: string;
   /** 직접 해 보기에서 [다음]이 열리려면 블록 바에 이만큼 모여야 한다 (다음 체인 설명에 보여 줄 블록, GDD 100장 #40) */
   minBlocks?: number;
+  /**
+   * 한 카드 안의 여러 번 누름 (GDD 132장 1, C.208): 지금 화면에 보이는 마지막 단계가 '지금 누를 것'이다 — 강조 테두리·문구·카드 자리·기기 초점이 그 단계를 따라간다.
+   * 사용자가 창을 닫거나 뒤로 가 앞 단계 대상만 남으면 저절로 그 단계로 되돌아간다
+   */
+  stages?: TutorialStage[];
+}
+
+export interface TutorialStage {
+  /** 지금 누를 대상 ('@' + CSS 선택자, 쉼표 없이 하나씩) */
+  targets: string[];
+  /** 이 단계 문구 (없으면 카드 본문) */
+  body?: string;
+  /** 카드가 가리면 안 되는 열린 창 (예: 아이템 상세 창·먹이 목록) */
+  avoid?: string[];
 }
 
 export interface GlossaryTerm {

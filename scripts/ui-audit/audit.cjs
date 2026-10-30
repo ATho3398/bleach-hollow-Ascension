@@ -30,6 +30,33 @@ function tutDimInPage() {
   });
 }
 
+/**
+ * 페이지 안: 튜토리얼 안내 카드가 강조 대상(구멍)·열린 창(아이템 상세 창·먹이 목록·행동 연출 창)을 가리는가 (C.208, GDD 132장 1).
+ * 카드와 겹친 넓이가 대상 넓이의 15% 를 넘으면 문제. 결과 = [{ name, what, pct }]
+ */
+function tutCoverInPage() {
+  const out = [];
+  const box = (e) => e.getBoundingClientRect();
+  const over = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  for (const t of document.querySelectorAll('.bha-tut')) {
+    const card = t.querySelector('.bha-tut__card');
+    if (!card || card.getClientRects().length === 0 || getComputedStyle(card).visibility === 'hidden') continue;
+    const c = box(card);
+    const hole = t.querySelector('.bha-tut__hole:not(.is-none)');
+    const targets = hole && hole.getClientRects().length ? [['강조 대상', box(hole)]] : [];
+    for (const sel of ['.bha-itemdialog .bha-itemmodal', '.bha-homedock__tray--food', '.bha-homedock__tray--more', '.bha-actfx']) {
+      for (const w of document.querySelectorAll(sel)) if (w.getClientRects().length) targets.push([sel, box(w)]);
+    }
+    for (const [what, r] of targets) {
+      const area = r.width * r.height;
+      if (area < 4) continue;
+      const pct = Math.round((100 * over(c, r)) / area);
+      if (pct > 15) out.push({ name: t.dataset.tutorial || '?', what, pct, stage: t.dataset.stage ?? null });
+    }
+  }
+  return out;
+}
+
 /** 페이지 안: 공간 화면 '방으로 돌아가기'([data-space-back]) 자리 — LCD 화면 기준 */
 function spaceBackInPage() {
   const b = document.querySelector('.bha-lcd [data-space-back]');
@@ -171,6 +198,7 @@ function makeHelper(page, faction, report) {
     async check(screen, opts = {}) {
       await h.devButtons(screen);
       await h.tutDim(screen);
+      await h.tutCover(screen);
       await h.spaceBack(screen);
       if (process.env.UI_AUDIT_DUMP) {
         const list = await page.evaluate(() => [...document.querySelectorAll('.bha-lcd button, .bha-lcd [role="tab"], .bha-lcd input')].filter((e) => e.getClientRects().length > 0).map((e) => `${[...e.classList].filter((c) => c.startsWith('bha-')).slice(0, 2).join('.')}|${(e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 18)}`));
@@ -279,6 +307,10 @@ function makeHelper(page, faction, report) {
     /** 튜토리얼 안내 카드 회색 덮개 없음 (C.203, GDD 129장 3·129-1): 저절로 뜬 안내·각본 카드는 카드·테두리만 */
     async tutDim(screen) {
       for (const name of await page.evaluate(tutDimInPage)) h.report({ kind: '튜토리얼 안내 회색 덮개', key: name, detail: '저절로 뜬 안내 카드가 뒤 화면을 어둡게 덮는다 (다시 보기만 허용)' }, screen);
+    },
+    /** 튜토리얼 안내 카드가 대상·열린 창을 가리지 않음 (C.208, GDD 132장 1): 단계마다(카드가 뜬 모든 점검) */
+    async tutCover(screen) {
+      for (const x of await page.evaluate(tutCoverInPage)) h.report({ kind: '튜토리얼 카드 겹침', key: `${x.name}${x.stage !== null ? `#${x.stage}` : ''}|${x.what}`, detail: `카드가 ${x.what} 를 ${x.pct}% 가림` }, screen);
     },
     /** 공간 화면 방으로 자리 같음 (C.203, GDD 129-1): 장터·온천 [방으로 돌아가기] = 왼쪽 위, 화면끼리 같은 자리·크기 */
     async spaceBack(screen) {

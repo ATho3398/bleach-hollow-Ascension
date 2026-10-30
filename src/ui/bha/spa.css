@@ -28,20 +28,24 @@
   animation: bha-spa-steam 4s var(--bha-ease-linear) infinite alternate;
 }
 
-/* 캐릭터 + 머리 위 상태 창 한 묶음: 걸어 들어온 뒤(is-seated) 탕 안으로 내려앉는다 */
+/* 캐릭터 + 머리 위 상태 창 한 묶음 (GDD 132장 4, C.208): 자리(left·bottom)는 spaView SPA_PATH 가 한 칸씩 옮긴다 — 평지는 걷기(선형), 계단은 한 단 툭(ease-in) */
 .bha-spa__actor {
-  position: absolute; left: 50%; bottom: 22%; z-index: 1; transform: translateX(-50%);
+  position: absolute; left: 112%; bottom: 30%; z-index: 1; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-2);
-  transition: bottom 0.6s var(--bha-ease-out, ease-out);
+  --bha-spa-t: 0ms;
+  transition: left var(--bha-spa-t) var(--bha-ease-linear), bottom var(--bha-spa-t) ease-in;
 }
-.bha-spa__actor.is-entering { animation: bha-spa-walkin 2.2s var(--bha-ease-linear) both; }
-.bha-spa__actor.is-entering .bha-char__body { animation: bha-spa-step 0.36s steps(2, jump-none) infinite; }
-.bha-spa__actor.is-seated { bottom: 16%; } /* 몸 위쪽 절반 남짓이 앞 물 위로 보인다 */
-.bha-spa__actor.is-seated .bha-char__shadow { visibility: hidden; }
+.bha-spa__actor.is-walking { transition: left var(--bha-spa-t) var(--bha-ease-linear), bottom var(--bha-spa-t) var(--bha-ease-linear); }
+.bha-spa__actor.is-walking .bha-char__body { animation: bha-spa-step 0.36s steps(2, jump-none) infinite; }
+.bha-spa__actor.is-leaving .bha-char__body { scale: -1 1; } /* 나갈 때는 들어온 쪽(오른쪽)을 본다 */
+.bha-spa__actor.is-wading .bha-char__shadow { visibility: hidden; }
 .bha-spa__actor.is-seated .bha-char__body { animation: bha-spa-bob 3.2s var(--bha-ease-linear) infinite alternate; }
+/* 탕 가장자리 돌계단 (임시 도형, 그림이 오면 숨김): 오른쪽 가장자리에서 한 단씩 낮아진다 — SPA_PATH 1~3단 발 자리 아래 */
+.bha-spa__stair { position: absolute; z-index: 0; width: 11%; height: 3%; transform: translateX(-50%); border-radius: var(--bha-r-xs); border: 1px solid var(--bha-line-2); background: var(--bha-bg-3); }
+.bha-spa__scene.has-art .bha-spa__stair { display: none; }
 /* 물에 잠김 (사용자 2026-10-30): 물 높이(--bha-spa-wl, spaView SPA_WATERLINE 과 같은 값) 아래 몸은 반투명 — 뒤 물 색이 비쳐 잠긴 것처럼 보인다. 경계는 짧게 흐려 표면 느낌 */
 .bha-spa__actor { --bha-spa-wl: 66%; }
-.bha-spa__actor.is-seated .bha-char__body {
+.bha-spa__actor.is-wading .bha-char__body {
   -webkit-mask-image: linear-gradient(to bottom, #000 0 calc(var(--bha-spa-wl) - 1%), rgb(0 0 0 / 0.45) calc(var(--bha-spa-wl) + 2%), rgb(0 0 0 / 0.22) 100%);
           mask-image: linear-gradient(to bottom, #000 0 calc(var(--bha-spa-wl) - 1%), rgb(0 0 0 / 0.45) calc(var(--bha-spa-wl) + 2%), rgb(0 0 0 / 0.22) 100%);
 }
@@ -59,10 +63,10 @@
   border: 1px solid color-mix(in srgb, var(--bha-text-1) 45%, transparent);
 }
 /* 뒤 반(위쪽 호) = 몸 뒤(z 0, 몸이 가림) / 앞 반(아래쪽 호) = 몸 앞(z 2) */
-.bha-spa__actor.is-seated .bha-char__body { z-index: 1; }
+.bha-spa__actor.is-wading .bha-char__body { z-index: 1; }
 .bha-spa__ripple--back { z-index: 0; clip-path: inset(-10px -30% 50% -30%); }
 .bha-spa__ripple--front { z-index: 2; clip-path: inset(50% -30% -10px -30%); }
-.bha-spa__actor.is-seated .bha-spa__ripple { display: block; animation: bha-spa-ripple 2.4s var(--bha-ease-linear) infinite alternate; }
+.bha-spa__actor.is-wading .bha-spa__ripple { display: block; animation: bha-spa-ripple 2.4s var(--bha-ease-linear) infinite alternate; }
 @keyframes bha-spa-ripple { from { transform: translate(-50%, -50%) scaleX(0.94); opacity: 0.75; } to { transform: translate(-50%, -50%) scaleX(1.06); opacity: 1; } }
 .bha-spa__actor .bha-char.bha-spa__char { position: relative; left: auto; top: auto; transform: none; cursor: default; }
 .bha-spa__char.is-collapsed .bha-char__body { rotate: 0deg; translate: none; }
@@ -76,11 +80,9 @@
 .bha-spa__hud > .bha-info { margin: 0; }
 .bha-spa__name { padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / 0.55); color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); line-height: 1.6; }
 
-@keyframes bha-spa-walkin { from { left: 112%; } to { left: 50%; } }
 @keyframes bha-spa-step { 0% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes bha-spa-bob { from { transform: translateY(0); } to { transform: translateY(3px); } }
 @keyframes bha-spa-steam { from { opacity: 0.5; transform: translateY(4px); } to { opacity: 1; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) {
-  .bha-spa__actor.is-entering { animation: none; }
   .bha-spa__actor, .bha-spa__actor .bha-char__body, .bha-spa__steam, .bha-spa__ripple { animation: none !important; transition: none; }
 }

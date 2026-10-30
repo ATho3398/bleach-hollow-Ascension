@@ -27,6 +27,8 @@ export interface ScreenEntry {
   locked?: boolean;
   /** 뒤로(취소)로 이 화면을 닫기 직전에 부른다 (예: 온천에서 나오기, GDD 123장 4) */
   beforeBack?: () => void;
+  /** 뒤로를 잠시 맡는다 (예: 온천 나가기 연출, GDD 132장 4): true 면 지금은 빼지 않는다 — 연출이 끝나면 화면이 스스로 back() 을 다시 부른다 */
+  interceptBack?: () => boolean;
   /** 홈(방): 더 갈 곳이 없을 때 뒤로 = '처음 화면으로' 확인 (GDD 124장 1). 잠긴 화면·다른 화면에는 붙이지 않는다 (104장 7 버그 재발 방지) */
   home?: boolean;
 }
@@ -89,6 +91,7 @@ export class ScreenStack {
   back(): boolean {
     const t = this.top;
     if (!t || t.locked || this.entries.length <= 1) return false;
+    if (t.interceptBack?.()) return true;
     t.beforeBack?.();
     this.entries.pop();
     this.top!.render();

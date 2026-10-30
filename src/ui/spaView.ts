@@ -8,6 +8,7 @@ import type { FactionConfig } from '../engine/faction';
 import { fullnessOfNest, previewHomeHp, type SpaEnd } from '../engine/nest';
 import { artSkinOf, type SaveData } from '../game';
 import { homeMaxHp } from '../home';
+import { beginAction, tween } from './bha/actionFx';
 import { hpNumbers } from './bha/battle';
 import { button, el, icon, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
@@ -17,10 +18,26 @@ import { marketOf, roomOf } from '../engine/faction';
 const BASE = import.meta.env.BASE_URL;
 /** 막대 다시 그리기·저절로 나오기 확인 간격 */
 const SPA_TICK_MS = 1000;
-/** 걸어 들어오는 시간 (spa.css bha-spa-walkin 과 맞출 것) */
-const SPA_WALK_MS = 2200;
-/** 앉았을 때 물 높이 = 몸 상자 위에서 이 비율 (spa.css --bha-spa-wl 과 같은 값) */
+/**
+ * 계단식 입수 (GDD 132장 4, C.208): 오른쪽 밖에서 평지를 걸어와(walk) 탕 가장자리 돌부터 한 단씩 툭 내려가고(짧게 멈칫, 물 잠김도 단마다 깊어짐) 자리에 앉는다.
+ * 나갈 때는 거꾸로. 자리 = 캐릭터 가운데 x(%)·발 높이 bottom(%), wl = 몸 위에서 물 높이 비율(없으면 물 밖). 화면 연출값이라 balance 밖
+ */
+/** 앉았을 때 물 높이 = 몸 상자 위에서 이 비율 (spa.css --bha-spa-wl 기본값과 같은 값) */
 const SPA_WATERLINE = 0.66;
+export const SPA_PATH: readonly { left: number; bottom: number; wl: number | null }[] = [
+  { left: 112, bottom: 30, wl: null }, // 화면 밖 (오른쪽)
+  { left: 82, bottom: 30, wl: null }, // 탕 가장자리 돌 앞까지 평지
+  { left: 74, bottom: 26, wl: 0.9 }, // 1단
+  { left: 66, bottom: 22, wl: 0.8 }, // 2단
+  { left: 58, bottom: 19, wl: 0.72 }, // 3단
+  { left: 50, bottom: 16, wl: SPA_WATERLINE }, // 자리 (앉기)
+];
+/** 평지 걷기 시간 · 한 단 내려가는 시간 · 단마다 멈칫 */
+const SPA_WALK_MS = 1200;
+const SPA_STEP_MS = 220;
+const SPA_STEP_PAUSE_MS = 300;
+/** 지금 떠 있는 온천 화면 (튜토리얼 체력 차오름·나가기 연출을 바깥에서 부른다) */
+let live: { on: () => boolean; fill: (from: number, to: number, ms: number) => void; exit: (done: () => void) => boolean } | null = null;
 let spaTimer = 0;
 
 export interface SpaHandlers {
@@ -37,6 +54,18 @@ export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: str
   if (e.reason === 'full') return `체력이 다 찼다 (${Math.round(e.hpTo * 100)}%). 방으로 돌아왔다.`;
   if (e.reason === 'hungry') return `${fullnessName}이 바닥나 방으로 돌아왔다.`;
   return '방으로 돌아왔다.';
+}
+
+/** 튜토리얼 온천 체력 차오름 (GDD 132장 3): 온천 화면이 떠 있으면 앉은 뒤 from → to 로 ms 동안 막대를 채운다 */
+export function spaTutorialFill(from: number, to: number, ms: number): boolean {
+  if (!live?.on()) return false;
+  live.fill(from, to, ms);
+  return true;
+}
+
+/** 온천에서 나가는 연출 (GDD 132장 4): 화면이 떠 있으면 계단을 거꾸로 올라와 걸어 나간 뒤 done 을 부르고 true. 없으면 false(바로 나가면 된다) */
+export function spaExitFx(done: () => void): boolean {
+  return live?.on() ? live.exit(done) : false;
 }
 
 export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveData, hd: SpaHandlers): void {
@@ -67,7 +96,14 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   status.setAttribute('role', 'status');
   const actor = el('div', 'bha-spa__actor is-entering');
   actor.append(status, char);
-  scene.append(el('div', 'bha-spa__water'), actor, el('div', 'bha-spa__front'), el('div', 'bha-spa__steam'));
+  // 돌계단 (임시 도형): 계단 칸(물에 잠기는 칸, 자리 앞까지) 발 아래
+  const stairs = SPA_PATH.slice(0, -1).filter((p) => p.wl !== null).map((p) => {
+    const st = el('span', 'bha-spa__stair');
+    st.style.left = `${p.left}%`;
+    st.style.bottom = `${p.bottom - 3}%`;
+    return st;
+  });
+  scene.append(el('div', 'bha-spa__water'), ...stairs, actor, el('div', 'bha-spa__front'), el('div', 'bha-spa__steam'));
   // 물에 잠김 (사용자 2026-10-30 "몸에다가 물 들어가는 식으로 색 … 몸이랑 물 표면 나뉘는 느낌"): 앉으면 물 높이 아래 몸이 비쳐 보이고(CSS 마스크) 그 높이에 물결 띠
   // 물결 띠는 앞 반(몸 앞)·뒤 반(몸 뒤에 가려짐) 두 장 — 몸을 뚫고 뒤쪽 테두리가 보이지 않게
   const ripples = (['back', 'front'] as const).map((side) => {
@@ -76,13 +112,48 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     return r;
   });
   char.append(...ripples);
-  const seat = () => {
-    actor.classList.replace('is-entering', 'is-seated');
+  // 계단식 입수 (GDD 132장 4): 자리마다 left·bottom 을 옮기고(CSS 전환), 물 잠김 높이(--bha-spa-wl)·물결 띠도 그 단에 맞춘다
+  const setWl = (wl: number | null) => {
+    actor.classList.toggle('is-wading', wl !== null);
+    if (wl === null) return;
+    actor.style.setProperty('--bha-spa-wl', `${Math.round(wl * 100)}%`);
     const body = char.querySelector<HTMLElement>('.bha-char__body');
-    if (body) for (const r of ripples) r.style.top = `${body.offsetTop + body.offsetHeight * SPA_WATERLINE}px`;
+    if (body) for (const r of ripples) r.style.top = `${body.offsetTop + body.offsetHeight * wl}px`;
   };
-  actor.addEventListener('animationend', (e) => { if ((e as AnimationEvent).animationName === 'bha-spa-walkin') seat(); });
-  window.setTimeout(seat, SPA_WALK_MS + 400); // 연출이 꺼진 환경 안전 장치
+  const goTo = (i: number, ms: number) => {
+    const p = SPA_PATH[i]!;
+    actor.style.setProperty('--bha-spa-t', `${ms}ms`);
+    actor.style.left = `${p.left}%`;
+    actor.style.bottom = `${p.bottom}%`;
+    setWl(p.wl);
+  };
+  let pathTimer = 0;
+  /** from → to 자리까지 한 칸씩 (평지 = 걷기, 계단 = 한 단 툭 + 멈칫). 끝나면 done */
+  const walkPath = (from: number, to: number, done: () => void) => {
+    const dir = to > from ? 1 : -1;
+    let i = from;
+    const next = () => {
+      if (!actor.isConnected) return;
+      if (i === to) return done();
+      const flat = SPA_PATH[i]!.wl === null && SPA_PATH[i + dir]!.wl === null; // 화면 밖 ↔ 돌 앞 = 평지 걷기
+      i += dir;
+      actor.classList.toggle('is-walking', flat);
+      goTo(i, flat ? SPA_WALK_MS : SPA_STEP_MS);
+      pathTimer = window.setTimeout(next, flat ? SPA_WALK_MS : SPA_STEP_MS + SPA_STEP_PAUSE_MS);
+    };
+    next();
+  };
+  const SEAT = SPA_PATH.length - 1;
+  let seated = false;
+  const onSeated: Array<() => void> = [];
+  goTo(0, 0);
+  requestAnimationFrame(() => walkPath(0, SEAT, () => {
+    actor.classList.remove('is-entering', 'is-walking');
+    actor.classList.add('is-seated');
+    seated = true;
+    onSeated.splice(0).forEach((f) => f());
+  }));
+  let exiting = false;
 
   // 머리 위 상태 창 (방 상태 칩과 같은 모양): 체력 '현재 / 최대' · 배부름
   const gauge = (kind: string, ic: string, pct: number, text: string, danger: boolean) => {
@@ -122,11 +193,46 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const app = mountApp(root, { cls: 'bha-spa' }, scene);
   backBtn.focus({ preventScroll: true });
 
+  // 튜토리얼 쉬기 (GDD 132장 3): 값은 이미 저장됐다 — 앉은 뒤 ms 동안 체력 막대가 from → to 로 천천히 찬다. 그동안 actionBusy (카드 [다음] 잠김)
+  let filling = false;
+  const fill = (from: number, to: number, ms: number) => {
+    filling = true;
+    const end = beginAction();
+    const fullness = fullnessOfNest(n);
+    paint(from, fullness);
+    const run = () => tween(ms, (t) => paint(from + (to - from) * t, fullness), () => {
+      filling = false;
+      end();
+    });
+    if (seated) run();
+    else onSeated.push(run);
+  };
+  // 나가기 (GDD 132장 4): 앉은 자리에서 계단을 거꾸로 한 단씩 올라와 평지를 걸어 나간 뒤 done. 이미 나가는 중이면 아무것도 안 함
+  const exit = (done: () => void): boolean => {
+    if (!actor.isConnected) return false;
+    if (exiting) return true;
+    exiting = true;
+    window.clearTimeout(pathTimer);
+    const end = beginAction();
+    actor.classList.remove('is-seated', 'is-entering');
+    actor.classList.add('is-leaving'); // 오른쪽(들어온 쪽)을 보고 나간다
+    // 아직 걸어 들어오는 중이면 지금 자리(가장 가까운 칸)에서 거꾸로
+    const nowLeft = parseFloat(actor.style.left) || SPA_PATH[SEAT]!.left;
+    const from = SPA_PATH.reduce((b, p, i) => (Math.abs(p.left - nowLeft) < Math.abs(SPA_PATH[b]!.left - nowLeft) ? i : b), SEAT);
+    walkPath(from, 0, () => {
+      end();
+      done();
+    });
+    return true;
+  };
+  live = { on: () => app.isConnected, fill, exit };
+
   // 시간이 흐르는 동안 상태 창을 다시 그리고, 저절로 나올 때가 되면 부르는 쪽에 알린다 (한 번만)
   window.clearInterval(spaTimer);
   let done = false;
   const tick = spaTimer = window.setInterval(() => {
     if (!app.isConnected || done) return window.clearInterval(tick);
+    if (filling) return; // 튜토리얼 차오름 연출 중에는 연출이 그린다
     const p = previewHomeHp(n, Date.now());
     paint(p.fraction, p.fullness);
     if (p.spaEnded || !n.spa) {

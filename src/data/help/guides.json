@@ -94,7 +94,7 @@
     ]
   },
   "homeIntro": {
-    "note": "C.207 (GDD 131장) 처음 켰을 때 홈 안내: 카드는 방에 실제로 있는 것만(대상이 화면에 없으면 건너뜀). 자리표시자는 종족 설정 + 앱이 넣는 이름(homeIntro vars)",
+    "note": "C.207 (GDD 131장) 처음 켰을 때 홈 안내: 카드는 방에 실제로 있는 것만(대상이 화면에 없으면 건너뜀). 자리표시자는 종족 설정 + 앱이 넣는 이름(homeIntro vars) · last.stages = 월드맵 켬일 때 누를 때마다 따라가는 단계(GDD 132장 1, 끔이면 앱이 뺀다)",
     "intro": {
       "title": "{nestName}",
       "body": "여기가 {nestName}다.\n{nestName}에 있는 버튼이 무엇을 하는지 하나씩 본다."
@@ -192,7 +192,21 @@
     "last": {
       "id": "go",
       "title": "첫 모험",
-      "body": "이제 모험을 떠나자.\n{goPath}"
+      "body": "이제 모험을 떠나자.\n{goPath}",
+      "stages": [
+        {
+          "targets": [
+            "@.bha-prop--outside"
+          ],
+          "body": "이제 모험을 떠나자.\n[{outsideName}]을(를) 누른다."
+        },
+        {
+          "targets": [
+            "@.bha-worldmap [data-place=\"adventure\"]"
+          ],
+          "body": "{worldName} 지도다.\n[{doorName}]을(를) 누르면 떠난다."
+        }
+      ]
     }
   }
 }

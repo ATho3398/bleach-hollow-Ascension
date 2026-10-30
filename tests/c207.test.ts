@@ -62,7 +62,7 @@ describe('129-1 2 같은 종류: 월드맵 왼쪽 위 [둥지로]/[대원실로]
   it('공용 spaceBackButton, 이름 = nestName, ▲▼ 맨 앞, 첫 모험 강제 중 잠김', () => {
     expect(wm).toContain("spaceBackButton(homeLocked ? () => hd.onLocked?.('home') : hd.onHome, fixParticles(`${wm.places.home}(으)로`))");
     expect(wm).toContain('const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map(');
-    expect(wm).toContain("btns.get('adventure')?.focus(");
+    expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208: 첫 모험 강제 중 focus = 모험
   });
 });
 

@@ -92,11 +92,11 @@ describe('128장 6 온천 화면 개편', () => {
   it('화면 전체 장면 + 걸어 들어와 앉는 연출 + 왼쪽 위 [방으로 돌아가기]·ⓘ + 머리 위 상태 창', () => {
     expect(v).toContain("mountApp(root, { cls: 'bha-spa' }, scene)");
     expect(v).toContain("el('div', 'bha-spa__actor is-entering')");
-    expect(v).toContain("actor.classList.replace('is-entering', 'is-seated')");
+    expect(v).toContain("actor.classList.add('is-seated')"); // C.208 (GDD 132장 4): 계단식 입수 끝에 앉는다
     expect(v).toContain("el('div', 'bha-room__status bha-spa__status')");
     expect(v).toContain("infoTip('쉬는 중'");
     expect(v).not.toContain('lcdPage(');
-    expect(css).toContain('@keyframes bha-spa-walkin');
+    expect(css).toContain('.bha-spa__actor.is-walking .bha-char__body'); // C.208: 걷기는 SPA_PATH 평지 칸
     expect(css).toMatch(/\.bha-spa__hud \{ position: absolute; top: [^;]+; left: /);
   });
 });

@@ -430,3 +430,5 @@ button.bha-slot { cursor: pointer; }
 .bha-nest__state--danger { color: var(--bha-danger); }
 .bha-nest__state--warn { color: var(--bha-warn, var(--bha-text-1)); }
 .bha-nest__bond { display: flex; align-items: center; gap: var(--bha-sp-1); }
+/* 튜토리얼 실제 조작 카드가 떠 있으면 (GDD 132장 1, C.208): 아이템 상세 창은 아래로 붙는다 — 위에 카드 자리가 생겨 카드가 창·[사용]을 가리지 않는다 */
+:where(*):has(> .bha-tut.is-script.is-practice) > .bha-itemdialog { place-items: end center; }

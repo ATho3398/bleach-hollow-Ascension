@@ -1,6 +1,6 @@
 // 월드맵 (GDD 130장 2, C.204): 방 물건 [밖으로]로 나오는 하이앵글 지도 한 장. 이름은 종족 설정(worldmap.name — 호로 '웨코문도' / 사신 '소울 소사이어티').
 // 장소 3개 = 홈(방, 이름 nestName) · 시장(온천·상점·떠돌이 상인) · 모험(출발 준비 화면). 누르면 바로 그 화면으로(걷는 연출 없음).
-// 캐릭터는 방 그림 그대로 홈 옆에 서 있다(보기만). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
+// 캐릭터는 방 그림 그대로 지금 있던 장소 위에 서 있다(보기만, GDD 132장 2). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
 // 기능 스위치 FEATURES.WORLD_MAP 이 꺼지면 이 화면은 쓰이지 않는다(옛 방 문·장터 그대로, GDD 130장 6).
 import { artUrls } from '../data/art/manifest';
 import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace } from '../engine/faction';
@@ -17,6 +17,16 @@ export interface WorldMapHandlers {
   /** 잠긴 장소 (GDD 131장 2 첫 모험 강제): 이 장소들은 흐리게 잠기고 눌러도 onLocked */
   locked?: readonly WorldPlace[];
   onLocked?: (p: WorldPlace) => void;
+  /** 캐릭터가 서 있는 장소 = 지금 있던 곳 (GDD 132장 2: 홈에서 열면 홈 위, 시장에서 돌아오면 시장 위). 없으면 홈 */
+  at?: WorldPlace;
+  /** 처음 기기 초점 장소 (없으면 at). 첫 모험 강제 중 = 모험 */
+  focus?: WorldPlace;
+}
+
+/** 장소에 선 캐릭터 발 자리: 장소 발 자리 바로 뒤(조금 위) — 캐릭터는 장소 단추 뒤에 그려져 장소 모양·이름표를 가리지 않고 몸 위쪽이 그 위로 보인다 */
+export const WORLD_STAND_DY = -3;
+export function standFoot(layout: { x: number; y: number }): { x: number; y: number } {
+  return { x: layout.x, y: Math.max(0, Math.min(98, layout.y + WORLD_STAND_DY)) };
 }
 
 export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData, hd: WorldMapHandlers): void {
@@ -59,14 +69,16 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     btns.set(p, b);
     floor.push({ el: b, foot: wm.layout[p], kind: 'prop' });
   }
-  // 캐릭터: 방 그림 그대로, 홈 옆에 서 있다 (보기만 — 기기 선택 대상 아님)
+  // 캐릭터: 방 그림 그대로, 지금 있던 장소 위에 서 있다 (보기만 — 기기 선택 대상 아님, GDD 132장 2)
+  const at = hd.at ?? 'home';
   const char = characterButton(roomCharArt(roomOf(faction, save.wear.talk), faction.id, save.evolution.tierIndex, artSkinOf(save)), '캐릭터');
   char.disabled = true;
   char.setAttribute('aria-hidden', 'true');
   char.classList.add('bha-worldmap__char');
   if (save.nest.collapsed || save.nest.dead) char.classList.add('is-collapsed');
-  scene.append(char);
-  floor.push({ el: char, foot: wm.characterFoot, kind: 'char' });
+  scene.insertBefore(char, btns.get(WORLD_PLACES[0]!) ?? null); // 장소 단추 뒤 층 — 장소 모양·이름표가 캐릭터 앞에 보인다
+  char.dataset.at = at;
+  floor.push({ el: char, foot: standFoot(wm.layout[at]), kind: 'char' });
   const place = () => layoutOnFloor(scene, wm.floor, floor);
   place();
   requestAnimationFrame(place);
@@ -77,8 +89,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   const main = mountApp(dev.view, { cls: 'bha-room bha-worldmap' }, hud, body);
   // 선택 순서 = DOM 순서(홈 → 시장 → 모험, 지도 왼쪽 → 오른쪽). 'visual'(위 → 아래)을 쓰면 가운데 위 시장이 먼저 와서 쓰지 않는다
   if (here) main.dataset.wanderer = '';
-  // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 모험), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 모험 (옛 방 첫 선택 = 문, 100장 #11)
+  // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 모험), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
   const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))]; // 화면 위치 순서: 왼쪽 위 돌아가기 먼저
-  btns.get('adventure')?.focus({ preventScroll: true });
+  btns.get(hd.focus ?? at)?.focus({ preventScroll: true });
   dev.setItems(items, main);
 }

@@ -12,7 +12,8 @@ import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverSpaSoak, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaEndText, spaView } from './spaView';
+import { spaEndText, spaExitFx, spaTutorialFill, spaView } from './spaView';
+import { SPA_TUTORIAL_FILL_MS } from './bha/actionFx';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -26,7 +27,7 @@ import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { absenceText, careBlockText } from './bha/roomLogic';
 import type { AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
-import type { FactionConfig } from '../engine/faction';
+import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
@@ -239,6 +240,8 @@ export function startApp(host: HTMLElement): void {
 
   /** 튜토리얼 회복 안내가 진행 중이다 (GDD 123장 5 수정 v5.280, C.199) */
   let recoverOpen = false;
+  /** 회복 안내 먹이 카드: 먹인 순간 각본 값(배부름·체력 가득)을 넣는다 (방 onFed, GDD 132장 3) */
+  let recoverFedHook: (() => void) | null = null;
 
   /**
    * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206): 카드 9장을 순서대로. 건너뛰기 없음.
@@ -262,7 +265,8 @@ export function startApp(host: HTMLElement): void {
       spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), idleHpPct: pct(HH.idlePerMinute),
       // 온천 가는 길 (GDD 130장 5): 켬 = '밖으로 → 시장 → 온천', 끔 = '장터 → 온천'
       spaPath: FEATURES.WORLD_MAP ? `${props.outside} → ${mk.name} → ${mk.props.spa}` : `${mk.name} → ${mk.props.spa}`,
-      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food],
+      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
+      spaFirst: FEATURES.WORLD_MAP ? props.outside : mk.name, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -276,7 +280,8 @@ export function startApp(host: HTMLElement): void {
       ? '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]' // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
       : '.bha-prop--market, .bha-market [data-spot="spa"]'; // 스위치 끔: 방 → 장터 → 온천 (127장 4)
     let fedAt = s.nest.lastFedAt;
-    const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: () => void; skip?: () => boolean }> = {
+    let soaked = false;
+    const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: (go: () => void) => void; skip?: () => boolean }> = {
       dying: {},
       'to-bag': {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
@@ -284,23 +289,33 @@ export function startApp(host: HTMLElement): void {
       },
       cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => !s.nest.collapsed } },
       potion: { act: { selector: '[data-item="w-hp-potion"]', done: () => homeHp(s).fraction >= TR.potionTo - EPS } },
-      merchant: { next: () => toRoom() },
+      merchant: { next: (go) => { toRoom(); go(); } },
       'to-spa': {
         // 온천에 들어가면(원래 조작) 튜토리얼 동안만 체력 spaTo 까지 시간을 바로 흘린다 — 나오지는 않는다 (다음 카드 [다음] 뒤 방으로)
-        act: { selector: spaWay, done: () => {
+        // 앉은 뒤 약 3초 동안 체력 막대가 spaTo 까지 천천히 찬다 (GDD 132장 3 — 값은 들어간 순간 저장, 연출이 끝나야 [다음])
+        act: { selector: `${spaWay}, .bha-spa__actor`, done: () => {
+          if (soaked) return true;
           if (nav.top?.id !== 'spa' || !s.nest.spa) return false;
+          const from = homeHp(s).fraction;
           recoverSpaSoak(s, Date.now());
           persist();
-          nav.top.render();
+          soaked = true;
+          spaTutorialFill(from, homeHp(s).fraction, SPA_TUTORIAL_FILL_MS);
           return true;
         } },
       },
-      'spa-rest': { next: () => { spaLeave(s); persist(); nestScreen(); } },
+      // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로
+      'spa-rest': { next: (go) => {
+        const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
+        if (!spaExitFx(leave)) leave();
+      } },
       feed: {
-        show: () => { grantRecoverFood(s); fedAt = s.nest.lastFedAt; persist(); onRoomRender(); },
+        // 먹인 순간(방 onFed) 각본 값을 넣어, 방 막대가 약 1초에 걸쳐 그 값까지 차는 걸 보여 준다 (GDD 132장 3)
+        show: () => { grantRecoverFood(s); fedAt = s.nest.lastFedAt; recoverFedHook = () => recoverFeedDone(s); persist(); onRoomRender(); },
         act: { selector: `.bha-homedock__carebtn--feed, .bha-homedock__food[data-food="${TR.food}"]`, done: () => {
           if (s.nest.lastFedAt === fedAt) return false;
-          recoverFeedDone(s);
+          if (recoverFedHook) recoverFeedDone(s); // 훅을 못 탔으면(다른 길로 먹임) 여기서
+          recoverFedHook = null;
           persist();
           return true;
         } },
@@ -331,8 +346,9 @@ export function startApp(host: HTMLElement): void {
             recoverOpen = false;
             return;
           }
-          st.next?.();
-          window.setTimeout(() => show(i + 1), 450); // 화면이 바뀐 뒤 대상 위치를 잰다
+          const go = () => window.setTimeout(() => show(i + 1), 450); // 화면이 바뀐 뒤 대상 위치를 잰다
+          if (st.next) st.next(go);
+          else go();
         },
       });
     };
@@ -405,7 +421,8 @@ export function startApp(host: HTMLElement): void {
       forceAdventure = true;
       if (nav.top?.id === 'room') nav.top.render();
       const go = FEATURES.WORLD_MAP ? '.bha-prop--outside, .bha-worldmap [data-place="adventure"]' : '.bha-prop--door';
-      const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
+      // 월드맵 켬: 밖으로 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1). 끔이면 모험 문 하나
+      const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`), stages: FEATURES.WORLD_MAP ? HOME_INTRO.last.stages : undefined };
       window.setTimeout(() => tutorialOverlay(faction, {
         scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
         script: { step: `홈 안내 ${total} / ${total}`, act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' } },
@@ -834,6 +851,8 @@ export function startApp(host: HTMLElement): void {
   }
 
   /** 온천 (GDD 123장 4): enter = 방 물건을 눌러 들어감(못 들어가면 이유 알림), false = 이미 온천에 있는 세이브를 다시 염. 뒤로 = 나와서 방 */
+  /** 온천 나가기 연출이 끝나 실제로 뒤로 가는 중 (interceptBack 이 다시 맡지 않게) */
+  let spaLeaving = false;
   function openSpa(faction: FactionConfig, s: SaveData, enter = true): void {
     const name = marketOf(faction).props.spa;
     if (enter) {
@@ -861,6 +880,15 @@ export function startApp(host: HTMLElement): void {
         });
         root.scrollTop = 0;
       },
+      // 나가기 연출 (GDD 132장 4): 뒤로·[돌아가기] = 계단을 거꾸로 올라와 걸어 나간 뒤 실제로 뒤로
+      interceptBack: () => {
+        if (spaLeaving) return false;
+        return spaExitFx(() => {
+          spaLeaving = true;
+          if (nav.top?.id === 'spa') nav.back();
+          spaLeaving = false;
+        });
+      },
       beforeBack: () => {
         tickIdle(s); // 나오기 전까지 흐른 몫을 먼저 반영
         spaLeave(s);
@@ -885,12 +913,18 @@ export function startApp(host: HTMLElement): void {
     }));
   }
 
+  /** 월드맵에서 캐릭터가 서 있는 곳 = 마지막으로 있던 장소 (GDD 132장 2) */
+  let worldAt: WorldPlace = 'home';
   /** 월드맵 (GDD 130장 2, C.204): 방 [밖으로] → 홈·시장·모험. 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
   function openWorldMap(faction: FactionConfig, s: SaveData): void {
+    worldAt = 'home'; // 방에서 나왔다 (GDD 132장 2)
     open('worldmap', () => worldMapView(dev, faction, s, {
+      // 캐릭터·처음 초점 = 지금 있던 곳 (시장·모험 준비에서 뒤로 돌아오면 그 장소 위). 첫 모험 강제 중 초점은 모험
+      at: worldAt,
+      focus: forceAdventure ? 'adventure' : worldAt,
       onHome: () => nestScreen(),
-      onMarket: () => openMarket(faction, s),
-      onAdventure: () => departFromHome(faction, s),
+      onMarket: () => { worldAt = 'market'; openMarket(faction, s); },
+      onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
       // 첫 모험 강제 (GDD 131장 2): 홈·시장 잠김
       locked: forceAdventure ? ['home', 'market'] : undefined,
       onLocked: () => showToast(FORCE_HINT, 0, 1800),
@@ -1022,6 +1056,11 @@ export function startApp(host: HTMLElement): void {
       onMarket: () => openMarket(faction, s),
       onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1): 월드맵 스위치 켬일 때만 방에 놓인다
       forceOutside: forceAdventure, // 첫 모험 강제 (GDD 131장 2)
+      onFed: () => {
+        const f = recoverFedHook;
+        recoverFedHook = null;
+        f?.();
+      },
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
       onTamago: () => tama.toggle(true),
       // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)

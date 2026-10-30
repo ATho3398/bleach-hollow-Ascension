@@ -11,7 +11,7 @@ describe('C.205 온천 물에 잠김', () => {
     const tsWl = Number(/SPA_WATERLINE = ([\d.]+)/.exec(view)?.[1]);
     expect(cssWl).toBeGreaterThan(0);
     expect(tsWl * 100).toBeCloseTo(cssWl, 5);
-    expect(css).toMatch(/\.bha-spa__actor\.is-seated \.bha-char__body \{\s*-webkit-mask-image: linear-gradient/);
+    expect(css).toMatch(/\.bha-spa__actor\.is-wading \.bha-char__body \{\s*-webkit-mask-image: linear-gradient/);
   });
   it('물결 띠는 앉은 뒤에만, 움직임 줄이기 설정이면 멈춘다', () => {
     expect(view).toContain('bha-spa__ripple bha-spa__ripple--${side}');
@@ -19,7 +19,7 @@ describe('C.205 온천 물에 잠김', () => {
     expect(css).toMatch(/\.bha-spa__ripple--back \{ z-index: 0; clip-path: inset\([^)]*50%/);
     expect(css).toMatch(/\.bha-spa__ripple--front \{ z-index: 2; clip-path: inset\(50%/);
     expect(css).toMatch(/\.bha-spa__ripple \{[^}]*display: none/);
-    expect(css).toContain('.bha-spa__actor.is-seated .bha-spa__ripple { display: block;');
+    expect(css).toContain('.bha-spa__actor.is-wading .bha-spa__ripple { display: block;');
     expect(css).toMatch(/prefers-reduced-motion[\s\S]*\.bha-spa__ripple/);
   });
 });

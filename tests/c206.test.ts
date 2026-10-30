@@ -78,7 +78,7 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
   it('tutorialOverlay: 행동 카드는 하기 전 [다음] 잠김 · 뒤 화면 통과(data-dev-pass·data-dev-only) · 하면 [다음] 켜짐', () => {
     const o = read('src/ui/tutorialOverlay.ts');
     expect(o).toContain('if (acting) next.disabled = true;');
-    expect(o).toContain('else if (acting) layer.dataset.devOnly = sc!.act!.selector;');
+    expect(o).toContain('else if (acting) layer.dataset.devOnly = stage ? selectorOf(stage.targets) : sc!.act!.selector;');
     expect(o).toContain('actDone = true;');
   });
   it('기기 버튼: 전투 밖에서도 튜토리얼 카드를 연 채 뒤 화면 대상을 고른다 (device)', () => {

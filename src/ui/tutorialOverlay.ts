@@ -1,7 +1,8 @@
 // 첫 플레이 튜토리얼 오버레이 (GDD 14-2, C.19 / U-2 새 디자인): 전투 화면의 해당 요소를 컷아웃(구멍)으로 하이라이트하고 설명 카드를 보여 준다.
 // 장면 순서·상태는 engine/tutorial 의 순수 상태 머신이 정하고, 텍스트는 src/data/help 에서 종족 설정으로 치환해 읽는다.
 // 실제로 손을 써 보는 단계는 넣지 않았다: 전투 시간이 멈춘 상태에서 블록을 쓰게 하려면 엔진 입력 경로를 열어야 해서 결정성 규칙(멈춤은 결과에 영향 없음)과 부딪힌다.
-import { helpVars, renderHelpText, TUTORIAL_SCENES, type TutorialScene } from '../data/help';
+import { helpVars, renderHelpText, TUTORIAL_SCENES, type TutorialScene, type TutorialStage } from '../data/help';
+import { actionBusy } from './bha/actionFx';
 import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
@@ -86,10 +87,28 @@ function targetRect(ids: string[], host: HTMLElement): Rect | null {
   return unionRect(rects);
 }
 
+/** 선택자 목록 ('@' 떼고 쉼표로 이은 것) */
+const selectorOf = (targets: readonly string[]) => targets.map((t) => (t.startsWith('@') ? t.slice(1) : `[data-help="${t}"]`)).join(', ');
+
+/** 지금 누를 단계 (GDD 132장 1): 대상이 화면에 보이는 마지막 단계. 아무것도 안 보이면 첫 단계 */
+export function currentStage(stages: readonly TutorialStage[], host: HTMLElement): number {
+  return lastShownStage(stages.map((st) => targetRect(st.targets, host) !== null));
+}
+/** 보이는 단계 표시(단계마다 대상이 보이나)에서 지금 단계: 보이는 마지막 단계, 없으면 0 */
+export function lastShownStage(shown: readonly boolean[]): number {
+  for (let i = shown.length - 1; i > 0; i--) if (shown[i]) return i;
+  return 0;
+}
+
+/** 카드가 가리면 안 되는 열린 창 (GDD 132장 1): 단계에 적힌 것 + 늘 지키는 창(아이템 상세 창·독 펼친 줄) */
+const OPEN_WINDOWS = ['@.bha-itemdialog .bha-itemmodal', '@.bha-actfx', '@.bha-homedock__tray--food', '@.bha-homedock__tray--more'];
+
 export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOptions): TutorialHandle {
   const vars = { ...helpVars(faction), ...(opts.vars ?? {}) };
   const t = (s: string) => renderHelpText(s, vars);
-  const SCENES = opts.scenes ?? TUTORIAL_SCENES;
+  // 단계 대상 선택자의 자리표시자({foodId} 등)는 값만 바꿔 넣는다 (조사 고치기 없이)
+  const sub = (x: string) => x.replace(/\{(\w+)\}/g, (_, k: string) => vars[k] ?? '');
+  const SCENES = (opts.scenes ?? TUTORIAL_SCENES).map((sc) => (sc.stages ? { ...sc, stages: sc.stages.map((st) => ({ ...st, targets: st.targets.map(sub), avoid: st.avoid?.map(sub) })) } : sc));
   let state: TutorialState = startTutorial(SCENES.length);
 
   const layer = el('div', 'bha-tut');
@@ -113,6 +132,9 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   host.append(layer);
   const unregister = registerLayer(layer, opts.onBack ?? (() => {})); // 뒤로 = 아무것도 안 함(또는 부르는 쪽 안내) — 튜토리얼은 [다음]·[건너뛰기]로만 닫는다 (C.176, GDD 104장 7)
 
+  /** 지금 단계 (stages 가 있는 장면만) */
+  let stageIdx = 0;
+  const stageOf = (scene: TutorialScene): TutorialStage | null => scene.stages?.[stageIdx] ?? null;
   let practiceOn = false;
   let practiced = false;
   let blocks = 0;
@@ -142,7 +164,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   };
 
   /** 블록 바와 저장 필살기 버튼: 설명 카드가 가리지 않게 보호할 영역 */
-  const protectedRects = () => ['battle.tray', 'battle.liberation'].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+  const protectedRects = () => {
+    const st = stageOf(SCENES[state.index]!);
+    return ['battle.tray', 'battle.liberation', ...OPEN_WINDOWS, ...(st?.avoid ?? [])].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+  };
 
   /** 가로 화면(LCD)에서 카드가 후보로 삼는 너비: 넓게(위·아래에 걸쳐) / 좁게(옆·모서리) */
   const WIDE_W = 456;
@@ -151,7 +176,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   function layout(): void {
     const scene = SCENES[state.index]!;
     const vp = host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight };
-    const rect = targetRect(scene.targets, host);
+    const rect = targetRect(stageOf(scene)?.targets ?? scene.targets, host);
     const landscape = vp.width > vp.height;
     let belowCard = false;
     let aside = false;
@@ -231,8 +256,9 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (acting) next.disabled = true; // 실제 조작 카드: 하기 전에는 [다음] 잠김 (GDD 129-2 2)
     nextBtn = next;
     setPractice(!!scene.practice || !!sc?.waitFor || acting);
+    const stage = stageOf(scene);
     if (sc?.waitFor) layer.dataset.devOnly = sc.waitFor;
-    else if (acting) layer.dataset.devOnly = sc!.act!.selector;
+    else if (acting) layer.dataset.devOnly = stage ? selectorOf(stage.targets) : sc!.act!.selector; // 기기 초점도 지금 누를 것을 따라간다 (GDD 132장 1)
     else delete layer.dataset.devOnly;
     const actions = el('div', 'bha-tut__actions');
     // 각본 카드: 강제 진행 — 건너뛰기·이전 없음, 기다리는 카드는 [다음]도 없음 (막기·블록을 눌러야 진행)
@@ -249,7 +275,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (sc) steps.append(el('span', 'bha-tut__step', sc.step));
     else steps.append(el('span', 'bha-tut__step', `${state.index + 1} / ${state.count}`), dots(state.count, state.index));
     top.append(steps, actions);
-    const body = linesBody(t(scene.practice && practiced && scene.done ? scene.done : scene.body), 'bha-tut__body');
+    const body = linesBody(t(scene.practice && practiced && scene.done ? scene.done : sc?.act && actDone && scene.done ? scene.done : (acting ? stage?.body : undefined) ?? scene.body), 'bha-tut__body');
     card.replaceChildren(top, title, body);
     if (scene.sample?.length) card.append(sampleRow(scene.sample));
     card.style.visibility = 'hidden';
@@ -271,13 +297,27 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   };
 
   window.addEventListener('resize', layout);
+  if (SCENES[state.index]!.stages) {
+    stageIdx = currentStage(SCENES[state.index]!.stages!, host);
+    layer.dataset.stage = String(stageIdx);
+  }
   render();
   const act = opts.script?.act;
   if (act) {
     const poll = () => {
       if (!layer.isConnected) return window.clearInterval(actTimer);
+      const scene = SCENES[state.index]!;
+      if (scene.stages && !actDone) {
+        // 누를 때마다 다음 대상으로 (GDD 132장 1): 강조 테두리·문구·카드 자리·기기 초점을 지금 단계로
+        const i = currentStage(scene.stages, host);
+        if (i !== stageIdx) {
+          stageIdx = i;
+          layer.dataset.stage = String(i);
+          render();
+        }
+      }
       layout(); // 화면이 바뀌면 강조 테두리가 지금 보이는 대상으로 옮겨 간다
-      if (actDone || !act.done()) return;
+      if (actDone || !act.done() || actionBusy()) return; // 행동 연출(막대 차오름)이 끝나야 [다음]이 풀린다 (GDD 132장 3)
       actDone = true;
       if (act.autoFinish) return finish('completed');
       render(); // [다음] 켜짐 · 뒤 화면 통과 끝 · 초점 = [다음]

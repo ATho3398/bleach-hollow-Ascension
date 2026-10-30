@@ -13,6 +13,8 @@ import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, icon, meter, mountApp } from './bha/dom';
 import { hpNumbers } from './bha/battle';
+import { ACTION_FILL_MS, tween } from './bha/actionFx';
+import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
 import { bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
@@ -65,6 +67,8 @@ export interface RoomHandlers {
   onOutside: () => void;
   /** 첫 모험 강제 (GDD 131장 2, C.207): 켜지면 밖으로(끔이면 모험 문)만 누를 수 있고 나머지 방 버튼은 흐린 잠김 */
   forceOutside?: boolean;
+  /** 먹이를 먹인 직후 (막대 연출 전): 튜토리얼 회복 안내가 각본 값을 넣는다 (GDD 132장 3) */
+  onFed?: () => void;
 }
 
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
@@ -243,8 +247,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   statusBtn.dataset.sc = 'status';
   scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
   statusBtn.onclick = hd.onStatus;
-  const paintGauges = () => {
-    const chips = statusChips(n, faction);
+  /** over = 연출 중 칩 값 덮어쓰기 (GDD 132장 3: 돌보기 뒤 막대가 천천히 참) */
+  const paintGauges = (over?: Partial<Record<string, number>>) => {
+    const chips = statusChips(n, faction).map((c) => (over?.[c.kind] !== undefined && c.value !== null ? { ...c, value: over[c.kind]! } : c));
     statusBtn.setAttribute('aria-label', `상태 보기: ${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
     // 상태 칩(쇠약·피곤·쓰러짐) 풀리는 법 한 줄 툴팁 (GDD 102-7)
     statusBtn.title = chips.filter((c) => c.hint).map((c) => `${c.label}: ${c.hint}`).join('\n');
@@ -271,10 +276,12 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 발밑 체력 막대 (GDD 123장 3): 홈 체력 '현재 / 최대' — 기존 체력 막대(meter player), 30% 아래면 위험 색. 대기 회복은 아래 타이머가 다시 그린다
   const hpBox = el('div', 'bha-room__hp');
   const maxHp = homeMaxHp(save);
-  const paintHp = () => {
-    const h = previewHomeHp(n, Date.now());
-    const { now, max } = hpNumbers(h.fraction * maxHp, maxHp);
-    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: h.fraction < 0.3, valueText: `${now} / ${max}` }));
+  /** 행동 연출 중이면 1분 시계가 막대를 덮어 그리지 않는다 */
+  let fxOn = false;
+  const paintHp = (fraction?: number) => {
+    const f = fraction ?? previewHomeHp(n, Date.now()).fraction;
+    const { now, max } = hpNumbers(f * maxHp, maxHp);
+    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: f < 0.3, valueText: `${now} / ${max}` }));
   };
   paintHp();
   scene.append(char, hpBox, statusBtn, statusInfoBtn, bubble);
@@ -292,6 +299,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
+      const hpBefore = previewHomeHp(n, Date.now()).fraction;
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
@@ -307,6 +315,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
           window.setTimeout(() => char.classList.remove('is-spit'), 700);
           return say(pickLine(room.talk, 'spit'));
         }
+        hd.onFed?.(); // 튜토리얼 회복 안내: 먹인 순간 각본 값(배부름·체력 가득)을 넣어 연출이 그 값까지 차게 (GDD 132장 3)
         dock.refreshFeeds();
       } else if (careNest(save, action) === 'refused') {
         // 요청이 없거나 다른 것을 청했을 때: 거절 말풍선, 효과 없음 (GDD 82장)
@@ -316,8 +325,28 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       }
       dock.setRequest(n.careRequest?.action ?? null);
       hd.persist();
-      paintGauges();
-      paintHp(); // 먹이 체력 회복 (GDD 123장 4)
+      // 행동 진행 연출 (GDD 132장 3): 값은 이미 저장 — 막대가 ACTION_FILL_MS 동안 전 값에서 새 값으로 차오르고 숫자도 따라 오른다
+      const from = { hunger: fullnessOf(before.hunger), cond: before.condition, stab: before.stability, risk: before.risk };
+      const to = { hunger: fullnessOf(n.hunger), cond: n.condition, stab: n.stability, risk: n.risk };
+      const hpAfter = previewHomeHp(n, Date.now()).fraction;
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      fxOn = true;
+      tween(ACTION_FILL_MS, (t) => {
+        if (!main.isConnected) return;
+        paintGauges({ hunger: lerp(from.hunger, to.hunger, t), cond: lerp(from.cond, to.cond, t), stab: lerp(from.stab, to.stab, t), risk: lerp(from.risk, to.risk, t) });
+        paintHp(lerp(hpBefore, hpAfter, t)); // 먹이 체력 회복 (GDD 123장 4)
+      }, () => {
+        fxOn = false;
+        if (main.isConnected) {
+          paintGauges();
+          paintHp();
+        }
+      });
+      if (action === 'feed') {
+        // 먹는 모션: 먹기 애니가 없으면 막대가 차는 동안 우물우물 (room.css is-eating)
+        char.classList.add('is-eating');
+        window.setTimeout(() => char.classList.remove('is-eating'), ACTION_FILL_MS);
+      }
       say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }));
       // 먹기·잠 애니가 있으면 그것을, 없으면 기존 뛰는 반응 (다른 동작 애니로 대신하지 않는다)
       const clip = action === 'feed' ? 'eat' : action === 'sleep' ? 'sleep' : null;
@@ -377,7 +406,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 방을 다시 그릴 때 이전 방의 혼잣말 타이머를 바로 끈다 (C.70: 화면을 빠르게 오가면 떨어진 방 DOM 이 최대 14초씩 쌓였다)
   window.clearInterval(idleTimer);
   window.clearInterval(hpTimer);
-  const hpTick = hpTimer = window.setInterval(() => (main.isConnected ? paintHp() : window.clearInterval(hpTick)), HP_PAINT_MS);
+  const hpTick = hpTimer = window.setInterval(() => (main.isConnected ? fxOn || paintHp() : window.clearInterval(hpTick)), HP_PAINT_MS);
   const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
     dock.refreshFeeds(); // 먹이 한도가 10분 뒤 다시 열린다 (GDD 109장 6)

@@ -67,7 +67,7 @@ describe('130장 화면 연결 (app.ts·worldMapView)', () => {
     expect(app).toContain("open('worldmap', () => worldMapView(");
     expect(app).toContain('onHome: () => nestScreen()');
     expect(app).toContain('onMarket: () => openMarket(faction, s)');
-    expect(app).toContain('onAdventure: () => departFromHome(faction, s)');
+    expect(app).toContain("onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); }");
     expect(app).toContain('onDepart: () => departFromHome(faction, s)');
   });
   it('시장 왼쪽 위 = [월드맵으로](켬), 끔이면 옛 [방으로 돌아가기]', () => {
@@ -75,7 +75,7 @@ describe('130장 화면 연결 (app.ts·worldMapView)', () => {
   });
   it('기기 버튼: ▲▼ = 홈 → 시장 → 모험, 첫 선택 = 모험, 떠돌이 상인 배지·사망 잠김은 지도 위', () => {
     expect(wm).toContain('WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))');
-    expect(wm).toContain("btns.get('adventure')?.focus(");
+    expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208 (GDD 132장 2): 첫 선택 = 지금 있던 장소
     expect(wm).toContain("if (p === 'market' && here)");
     expect(wm).toContain("if (p === 'adventure' && save.nest.dead)");
   });

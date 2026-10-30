@@ -1,0 +1,567 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "homeIntro": [
+        {
+          "key": "홈 안내 1 / 11#null",
+          "body": "여기가 둥지다.둥지에 있는 버튼이 무엇을 하는지 하나씩 본다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room is-born",
+          "cover": []
+        },
+        {
+          "key": "홈 안내 2 / 11#null",
+          "body": "밖으로 나가면 웨코문도 지도가 나온다.둥지·시장·모험 가운데 골라 바로 간다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 3 / 11#null",
+          "body": "해방 수련을 하고 진화 정보를 본다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 4 / 11#null",
+          "body": "도감이다. 만난 진화체와 칭호를 본다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 5 / 11#null",
+          "body": "장비·물건·타일을 보고 쓴다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 6 / 11#null",
+          "body": "머리 위 막대는 배부름·컨디션·광기이다.누르면 상태 화면이 열린다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 7 / 11#null",
+          "body": "원정에는 이 체력 그대로 나간다.둥지에 있으면 조금씩 찬다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 8 / 11#null",
+          "body": "먹이·재우기·교감으로 캐릭터를 돌본다.먹이는 원정에서 얻는다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 9 / 11#null",
+          "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 10 / 11#null",
+          "body": "설정·도움말·사진·백업 같은 메뉴가 있다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 11 / 11#0",
+          "body": "이제 모험을 떠나자.[밖으로]를 누른다.",
+          "only": ".bha-prop--outside",
+          "sel": "밖으로",
+          "screen": "bha-room is-force-out",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 11 / 11#1",
+          "body": "웨코문도 지도다.[모험]을 누르면 떠난다.",
+          "only": ".bha-worldmap [data-place=\"adventure\"]",
+          "sel": "모험",
+          "screen": "bha-room bha-worldmap",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        }
+      ],
+      "recover": [
+        {
+          "id": "dying",
+          "stage": null,
+          "screen": "bha-room",
+          "dialog": false,
+          "body": "원래는 전투 중 체력이 0 이 되면 빈사가 된다.빈사 중에는 체력이 10% 위로 차지 않고, 오래 두면 사망한다.",
+          "only": null,
+          "sel": "다음",
+          "nextLocked": false,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "to-bag",
+          "stage": null,
+          "screen": "bha-room",
+          "dialog": false,
+          "body": "빈사는 치료제를 써야 풀린다.치료제와 체력 포션을 1개씩 가방에 넣었다. 가방을 열자.",
+          "only": ".bha-prop--chest",
+          "sel": "가방",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "to-bag",
+          "stage": null,
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": false,
+          "body": "빈사는 치료제를 써야 풀린다.치료제와 체력 포션을 1개씩 가방에 넣었다. 가방을 열자.",
+          "only": ".bha-prop--chest",
+          "sel": null,
+          "nextLocked": true,
+          "cover": []
+        },
+        {
+          "id": "cure",
+          "stage": "0",
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": false,
+          "body": "빈사는 치료제로 푼다.치료제를 누른다.",
+          "only": "[data-item=\"med-cure\"]",
+          "sel": "치료제 ×1",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "cure",
+          "stage": "1",
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": true,
+          "body": "[사용]을 누른다.치료제는 상점에서 산다.",
+          "only": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+          "sel": "닫기",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            },
+            {
+              "what": ".bha-itemdialog .bha-itemmodal",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "cure",
+          "stage": "1",
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": false,
+          "body": "[사용]을 누른다.치료제는 상점에서 산다.",
+          "only": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+          "sel": null,
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": ".bha-actfx",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "cure",
+          "stage": "0",
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": false,
+          "body": "빈사가 풀렸다.[다음]을 누른다.",
+          "only": null,
+          "sel": "다음",
+          "nextLocked": false,
+          "cover": []
+        },
+        {
+          "id": "potion",
+          "stage": "0",
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": false,
+          "body": "이제 체력을 채운다.체력 포션을 누른다.",
+          "only": "[data-item=\"w-hp-potion\"]",
+          "sel": "체력 포션 ×1",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "potion",
+          "stage": "1",
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": true,
+          "body": "[사용]을 누른다.튜토리얼의 체력 포션은 체력을 50%까지 채운다.",
+          "only": ".bha-itemdialog[data-item-dialog=\"w-hp-potion\"] [data-act=\"use\"]",
+          "sel": "닫기",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            },
+            {
+              "what": ".bha-itemdialog .bha-itemmodal",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "potion",
+          "stage": "0",
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": false,
+          "body": "이제 체력을 채운다.체력 포션을 누른다.",
+          "only": "[data-item=\"w-hp-potion\"]",
+          "sel": null,
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": ".bha-actfx",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "merchant",
+          "stage": null,
+          "screen": "bha-lcdpage bha-chest-page",
+          "dialog": false,
+          "body": "체력 포션은 떠돌이 상인에게서 드물게 나온다.평소의 체력 포션은 체력을 가득 채운다.",
+          "only": null,
+          "sel": "다음",
+          "nextLocked": false,
+          "cover": []
+        },
+        {
+          "id": "to-spa",
+          "stage": "0",
+          "screen": "bha-room",
+          "dialog": false,
+          "body": "온천에서 쉬면 체력이 1분에 10% 차고 배부름이 10 준다.[밖으로]를 누른다.",
+          "only": ".bha-prop--market, .bha-prop--outside",
+          "sel": "밖으로",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "to-spa",
+          "stage": "0",
+          "screen": "bha-room bha-worldmap",
+          "dialog": false,
+          "body": "온천에서 쉬면 체력이 1분에 10% 차고 배부름이 10 준다.[밖으로]를 누른다.",
+          "only": ".bha-prop--market, .bha-prop--outside",
+          "sel": "시장",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "to-spa",
+          "stage": "2",
+          "screen": "bha-room bha-market",
+          "dialog": false,
+          "body": "[온천]을 누른다.체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다.",
+          "only": ".bha-market [data-spot=\"spa\"]",
+          "sel": "온천",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "to-spa",
+          "stage": "3",
+          "screen": "bha-spa",
+          "dialog": false,
+          "body": "온천에 들어가 쉬는 중이다.체력이 차오른다.",
+          "only": ".bha-spa__actor",
+          "sel": null,
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "spa-rest",
+          "stage": null,
+          "screen": "bha-spa",
+          "dialog": false,
+          "body": "튜토리얼에서는 기다리지 않고 체력이 80%까지 빨리 찼다.[다음]을 누르면 방으로 돌아간다.",
+          "only": null,
+          "sel": "다음",
+          "nextLocked": false,
+          "cover": []
+        },
+        {
+          "id": "feed",
+          "stage": "0",
+          "screen": "bha-room",
+          "dialog": false,
+          "body": "짐승 고기 1개를 넣었다.[먹이]를 누른다.",
+          "only": ".bha-homedock__carebtn--feed",
+          "sel": "먹이 주기",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "feed",
+          "stage": "1",
+          "screen": "bha-room",
+          "dialog": false,
+          "body": "짐승 고기를 고른다.먹이를 주면 배부름과 함께 체력도 조금 찬다.",
+          "only": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+          "sel": "짐승 고기 8개",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            },
+            {
+              "what": ".bha-homedock__tray--food",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "feed",
+          "stage": "0",
+          "screen": "bha-room",
+          "dialog": false,
+          "body": "짐승 고기 1개를 넣었다.[먹이]를 누른다.",
+          "only": ".bha-homedock__carebtn--feed",
+          "sel": "먹이 주기",
+          "nextLocked": true,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "done",
+          "stage": null,
+          "screen": "bha-room",
+          "dialog": false,
+          "body": "배부름과 체력이 모두 가득 찼다.방에 있으면 체력이 1분에 2%씩 찬다.",
+          "only": null,
+          "sel": "다음",
+          "nextLocked": false,
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            },
+            {
+              "what": ".bha-homedock__tray--food",
+              "pct": 0
+            }
+          ]
+        }
+      ],
+      "covers": [
+        {
+          "where": "battle 튜토리얼 1 / 7",
+          "cover": []
+        },
+        {
+          "where": "battle 튜토리얼 2 / 7",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "where": "battle 튜토리얼 3 / 7",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "where": "battle 튜토리얼 4 / 7",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "where": "battle 튜토리얼 5 / 7",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "where": "battle 튜토리얼 6 / 7",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "where": "battle 튜토리얼 7 / 7",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        }
+      ],
+      "timing": {
+        "to-bagUnlock": 1288,
+        "cureUnlock": 2890,
+        "potionUnlock": 2218,
+        "spaEnter": 1793320291839,
+        "spaSeated": 1793320294411,
+        "spaHpMid": "체력 82 / 115, 배부름 48",
+        "spaUnlock": 1793320297438,
+        "spaHpEnd": "체력 92 / 115, 배부름 48",
+        "to-spaUnlock": 6501,
+        "doneUnlock": 1208,
+        "spaUnlockAfterSeatMs": 3027
+      },
+      "worldmap": {
+        "forced": {
+          "at": "home",
+          "sel": "adventure"
+        },
+        "fromHome": {
+          "at": "home",
+          "sel": "home"
+        },
+        "fromMarket": {
+          "at": "market",
+          "sel": "market"
+        }
+      },
+      "errors": [],
+      "reachedNext": true
+    }
+  ]
+}
