@@ -51,7 +51,8 @@ describe('130장 2·3 월드맵·시장 (종족 설정)', () => {
   });
   it('그림 키 자리: scene.worldmap·prop.outside·prop.home·prop.adventure (비어 있음 = 임시)', () => {
     const m = read('src/data/art/manifest.ts');
-    for (const k of ['scene.worldmap', 'prop.outside', 'prop.home', 'prop.adventure']) expect(m).toContain(`'${k}': {}`);
+    for (const k of ['scene.worldmap', 'prop.home', 'prop.adventure']) expect(m).toContain(`'${k}': {}`);
+    expect(m).toContain(`'prop.outside': { scale: 1.5 }`); // C.238 (GDD 160장 1): 월드맵 물건 ×1.5
   });
   it('종족 id 분기 없음', () => {
     for (const p of ['src/ui/worldMapView.ts']) expect(read(p)).not.toMatch(/'hollow'|'shinigami'/);

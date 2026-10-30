@@ -107,6 +107,7 @@
 .bha-care-page .bha-care__btn { min-height: 92px; padding: var(--bha-sp-3); }
 /* 능력치 2열 (GDD 100장 #84): 진화 정보까지 스크롤이 짧게 */
 .bha-care-page .bha-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-5); }
+.bha-care-page .bha-stats .bha-statrow__name { min-width: 4em; } /* 노력치(.bha-ev)가 값 옆 같은 줄에 들어가게 이름 칸을 좁힘 (GDD 160장 6) */
 .bha-care-page .bha-care__btn span { text-align: center; line-height: 1.25; }
 
 /* ═════ 상자 ═════ */

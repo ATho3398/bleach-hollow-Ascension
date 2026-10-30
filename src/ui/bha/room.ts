@@ -53,7 +53,9 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   // 발 기준점 (x, y = 장면 %): 첫 그림용 값. 실제 위치는 layoutOnFloor 가 바닥 안으로 끌어 다시 놓는다
   b.style.left = `${o.x}%`;
   b.style.top = `${o.y}%`;
-  if (o.scale !== undefined && o.scale !== 1) b.style.setProperty('--prop-s', String(o.scale));
+  // 배치 배율(종족 설정 layout) × 그림 배율(ART_MANIFEST prop.<물건>.scale — 월드맵 물건 1.5·장비 상점 1.2, GDD 160장 1·3)
+  const s = (o.scale ?? 1) * artUrls(`prop.${o.prop}`, BASE).scale;
+  if (s !== 1) b.style.setProperty('--prop-s', String(s));
   b.setAttribute('aria-label', o.name);
   const shape = el('span', 'bha-prop__shape bha-art-img');
   const src = artUrls(`prop.${o.prop}`, BASE).src ?? (o.fallbackArt ? artUrls(o.fallbackArt, BASE).src : null);

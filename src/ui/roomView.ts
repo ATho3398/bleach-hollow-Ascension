@@ -31,6 +31,8 @@ import { formDisplayName, playerElementsOf } from '../engine/evolution';
 import { shownName } from './displayName';
 
 export interface RoomHandlers {
+  /** 수련장 (GDD 160장 4): 방 짚인형 → 수련 화면, 뒤로 = 방 */
+  onAltar: () => void;
   onBook: () => void;
   onChest: () => void;
   onStatus: () => void;
@@ -174,20 +176,21 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }, ms);
   };
 
-  // 수련장(altar)은 방에 없다 — 월드맵 장소 (GDD 158장 1). 이름(room.props.altar)만 월드맵이 쓴다
-  const act: Record<Exclude<RoomProp, 'altar'>, () => void> = {
+  // 수련장(altar, 짚인형) = 방 물건 + 월드맵 장소 둘 다 (GDD 160장 4: C.236 에서 뺀 것을 되살림)
+  const act: Record<RoomProp, () => void> = {
+    altar: hd.onAltar,
     book: hd.onBook,
     chest: hd.onChest,
     outside: hd.onOutside, // 월드맵 물건 (GDD 130장 1·158장 2): 옛 모험 문·장터 자리 (137장 3 고정)
   };
-  // 위/아래 순서: 위쪽 줄(책장) → 월드맵 → 상자 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['book', 'outside', 'chest'];
+  // 위/아래 순서: 위쪽 줄(책장·수련장) → 월드맵 → 상자 → 상태 칩 → 캐릭터 → 독 메뉴
+  const order: RoomProp[] = ['book', 'altar', 'outside', 'chest'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
-    if (p === 'altar') continue;
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, fallbackArt: p === 'outside' ? 'prop.door' : undefined });
     b.onclick = act[p];
+    if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(짚인형) = 단축키 T (GDD 160장 4)
     props.set(p, b);
     scene.append(b);
     floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });

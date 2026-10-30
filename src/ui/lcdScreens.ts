@@ -39,7 +39,7 @@ import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
-import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
+import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
 import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
@@ -125,27 +125,41 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
       ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired')] : []),
     ];
     weakSlot.replaceChildren(...states);
+    weakSlot.hidden = states.length === 0; // 걸린 상태이상이 없으면 칸째 안 보이고 능력치가 위로 (GDD 160장 5)
   };
   paint();
   // 광기·자아 설명 패널(C.141)은 C.176 에 상태 막대 이름 옆 ⓘ 창으로 옮겼다 (GDD 104장 2, bha/statusInfo.ts)
   const evo = save.evolution;
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
-  // 능력치가 무엇에 쓰이는지 (GDD 141장 2): 평타 = {stat.atk}, 블록 공격 = {stat.int}. 제목 옆 ⓘ
-  stats.querySelector('.bha-panel__title')?.append(infoTip('능력치', () => ({ lead: statUseLead(faction), groups: [{ title: '하는 일', lines: statUseLines(faction) }] })));
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry));
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
   const CXM = BALANCE.provisional.combat;
   const gc = gearCarry(save.shared.gear);
-  // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 마우스(터치)를 올리면 기본·가산(+n%p)·최대
+  // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 기본·가산(+n%p)·최대는 능력치 ⓘ 창 (GDD 160장 7 — 줄 펼침 폐지)
   const cc = critChances(save.build, save.evolution, gc?.crit ?? 0);
   const addText = (base: number, extra: number) => [`기본 ${pctText(base)}`, ...(extra > 0 ? [ppText(extra)] : [])].join(' ');
-  const critRows = statRow('평타 치명', pctText(cc.basic), `${addText(CXM.critChance, cc.bonus)} · 최대 ${pctText(cc.basicMax)}`);
+  const critRows = statRow('평타 치명', pctText(cc.basic));
   critRows.dataset.crit = 'basic';
-  const blockCritRow = statRow('블록 치명', pctText(cc.block), `${addText(CXM.blockCritChance, cc.bonus)}${cc.blockPlay > 0 ? ` · 블록 보정 ${ppText(cc.blockPlay)}` : ''} · 최대 ${pctText(cc.blockMax)}`);
+  const blockCritRow = statRow('블록 치명', pctText(cc.block));
   blockCritRow.dataset.crit = 'block';
-  const critDmg = statRow('치명타 피해', `×${Math.round((CXM.critMultiplier + (gc?.critDamage ?? 0)) * 100) / 100}`);
+  const critMul = Math.round((CXM.critMultiplier + (gc?.critDamage ?? 0)) * 100) / 100;
+  const critDmg = statRow('치명타 피해', `×${critMul}`);
+  // 능력치 설명은 전부 제목 옆 ⓘ 창 한 곳 (GDD 141장 2 · 160장 7): 능력치 6종이 하는 일 + 치명·속성 피해 + 노력치. 지금 수치 내역도 이 창에서
+  stats.querySelector('.bha-panel__title')?.append(infoTip('능력치', () => ({
+    lead: statUseLead(faction),
+    groups: [
+      { title: '하는 일', lines: statUseLines(faction) },
+      { title: '치명', lines: [
+        `평타 치명 = 평타가 치명타로 터질 확률 · ${addText(CXM.critChance, cc.bonus)} · 최대 ${pctText(cc.basicMax)}`,
+        `블록 치명 = 블록 공격이 치명타로 터질 확률 · ${addText(CXM.blockCritChance, cc.bonus)}${cc.blockPlay > 0 ? ` · 블록 보정 ${ppText(cc.blockPlay)}` : ''} · 최대 ${pctText(cc.blockMax)}`,
+        `치명타 피해 = 치명타가 터지면 피해 ×${critMul}`,
+      ] },
+      { title: '속성 피해', lines: ['그 속성 공격의 피해가 이만큼 늘어난다'] },
+      { title: '값 옆 굵은 +숫자', lines: [`노력치(와 ${faction.rebirth.name} 계승) — 이미 능력치 값에 더해져 있다`] },
+    ],
+  })));
   // 속성 피해 5종 (C.101, GDD 48장 4번 · C.137 85장 8): 치명타 밑에 속성마다 한 줄씩, 0 이어도 보인다
   const rows = [critRows, blockCritRow, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
   const speedRow = stats.querySelector('.bha-stats')?.lastElementChild;
@@ -162,7 +176,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const mark = rebirthMark(save.rebirth.count);
   if (mark) {
     const line = h('p', 'bha-faint');
-    line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 ${carryLine(faction.id, evo.carry ?? zeroStats())}`);
+    line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 `, evText(carryLine(faction.id, evo.carry ?? zeroStats())));
     stats.append(line);
   }
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
@@ -188,7 +202,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
   // GDD 108장 1번 (C.179): 장착 5칸 대신 바로가기 한 줄 + 장비 합산 숫자만. 바로가기 = 가방 장비 탭 (109장 4번)
   const gear = gearShortcut(faction, save, hd.onGear);
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [weakSlot, stats, evoPanel, h('p', 'bha-faint', `값 옆 굵은 +숫자는 노력치(와 ${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.

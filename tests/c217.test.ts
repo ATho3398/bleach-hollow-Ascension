@@ -22,7 +22,7 @@ describe('139장 1 탑 → 월드맵', () => {
   it('그림 키 자리 place.tower.<종족> (비어 있음 = 아이콘)', () => {
     const m = read('src/data/art/manifest.ts');
     for (const f of FACTIONS) expect(m).toContain(`'place.tower.${f.id}': {}`);
-    expect(read('src/ui/worldMapView.ts')).toContain('const placeArt = `place.${p}.${faction.id}`;');
+    expect(read('src/ui/worldMapView.ts')).toContain(': `place.${p}.${faction.id}`;'); // C.238: 비면 PLACE_ART_FALLBACK (수련장 = 짚인형)
   });
   it('모험 시작 화면 머리 탭 = 자유 원정·스토리 (탑 없음), 탑 화면은 탭 대신 제목', () => {
     const sv = read('src/ui/storyView.ts');

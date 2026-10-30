@@ -17,6 +17,14 @@ import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
 import { asBack } from './bha/screenBack';
+import { evText } from './bha/nest';
+
+/** 앞말 + 강조 조각 한 줄 (노력치 글자, GDD 160장 6) */
+const labeled = (lead: string, strong: HTMLElement): HTMLElement => {
+  const p = el('p');
+  p.append(lead, strong);
+  return p;
+};
 
 const TX = BALANCE.provisional.training;
 const LB = BALANCE.provisional.liberation;
@@ -356,10 +364,10 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   const cfg = faction.training.games[out.game];
   const t = save.training;
   const rows = el('div', 'bha-stack');
-  const evText = Object.entries(out.ev).filter(([, v]) => (v ?? 0) > 0).map(([k, v]) => `${statName(k as StatId, faction.id)} +${v}`).join(' · ');
+  const evStr = Object.entries(out.ev).filter(([, v]) => (v ?? 0) > 0).map(([k, v]) => `${statName(k as StatId, faction.id)} +${v}`).join(' · ');
   rows.append(
     el('p', '', `수련치 +${out.points} (지금 ${Math.min(t.points, TX.pointsToComplete)} / ${TX.pointsToComplete})`),
-    ...(evText ? [el('p', '', `노력치 ${evText}`)] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
+    ...(evStr ? [labeled('노력치 ', evText(evStr))] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
     el('p', 'bha-faint', [out.condition ? signedText('컨디션', out.condition) : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || '둥지 수치 변화 없음'),
     el('p', 'bha-faint', `남은 수련권 ${t.tickets}/${TX.ticketsMax}`),
   );

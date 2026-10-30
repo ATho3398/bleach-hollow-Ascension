@@ -13,6 +13,9 @@ import type { Device, SelectItem } from './bha/device';
 import { characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
 import { fixParticles } from '../engine/josa';
 
+/** 장소 그림(place.<장소>.<종족>)이 비었을 때 대신 쓰는 그림 키 — 수련장 = 방 짚인형 (GDD 160장 4) */
+const PLACE_ART_FALLBACK: Partial<Record<WorldPlace, string>> = { training: 'prop.altar' };
+
 export interface WorldMapHandlers {
   onHome: () => void;
   onMarket: () => void;
@@ -93,7 +96,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   const btns = new Map<WorldPlace, HTMLButtonElement>();
   for (const p of WORLD_PLACES) {
     // 그림 키: prop.<장소>, 없으면 종족별 장소 그림 place.<장소>.<종족> (탑 = GDD 139장 1). 둘 다 비면 아이콘
-    const placeArt = `place.${p}.${faction.id}`;
+    // 장소 그림도 비면 대신 쓰는 물건 그림 (수련장 = 방 짚인형, GDD 160장 4)
+    const placeArt = !artUrls(`place.${p}.${faction.id}`).src && PLACE_ART_FALLBACK[p] ? PLACE_ART_FALLBACK[p]! : `place.${p}.${faction.id}`;
     const b = propButton({ prop: p, name: wm.places[p], ...wm.layout[p], art: !!artUrls(`prop.${p}`).src || !!artUrls(placeArt).src, fallbackArt: placeArt });
     b.dataset.place = p;
     const reason = hd.lockReasons?.[p];

@@ -33,7 +33,7 @@ describe('131장 1 카드 문구 (종족 설정 이름, 하드코딩 없음)', (
       }
     }
     for (const it of HOME_INTRO.items) expect(it.targets.length).toBeGreaterThan(0);
-    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'book', 'chest', 'status', 'hp', 'care', 'idle', 'more']); // C.215: 모험 문·장터 카드 폐기 (137장 3), C.236: 수련장 카드 삭제(월드맵 장소, 158장 1)
+    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'altar', 'book', 'chest', 'status', 'hp', 'care', 'idle', 'more']); // C.215: 모험 문·장터 카드 폐기 (137장 3), C.238: 수련장 카드 되살림(160장 4)
   });
 });
 

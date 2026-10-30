@@ -908,13 +908,12 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-keytable__row { display: flex; gap: var(--bha-sp-3); align-items: baseline; padding: var(--bha-sp-1) 0; border-top: 1px solid var(--bha-line-1); font-size: var(--bha-fs-sm); }
 .bha-keytable__keys { flex: 0 0 8.5em; font-family: var(--bha-font-num); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }
 
-/* 능력치 한 줄 (C.131, GDD 77장 ①): 막대 없이 이름 + 값. tip 이 있는 줄은 올리거나 누르면 값 옆에 안내 */
-.bha-statrow { display: flex; align-items: baseline; gap: var(--bha-sp-3); width: 100%; padding: var(--bha-sp-1) 0; font: inherit; color: var(--bha-text-1); background: none; border: 0; text-align: left; }
+/* 능력치 한 줄 (C.131, GDD 77장 ①): 막대 없이 이름 + 값 (+ 노력치). 누르면 펼쳐지는 안내는 없앴다 — 설명은 능력치 칸 ⓘ 창 (GDD 160장 7) */
+.bha-statrow { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--bha-sp-3); width: 100%; padding: var(--bha-sp-1) 0; font: inherit; color: var(--bha-text-1); background: none; border: 0; text-align: left; }
 .bha-statrow__name { flex: none; min-width: 5.5em; color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
 .bha-statrow__value { font-size: var(--bha-fs-md); }
-.bha-statrow__tip { display: none; margin-left: auto; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: var(--bha-bg-3); color: var(--bha-text-1); font-size: var(--bha-fs-xs); }
-button.bha-statrow { cursor: help; }
-.bha-statrow:hover .bha-statrow__tip, .bha-statrow.is-tip .bha-statrow__tip, .bha-statrow:focus-visible .bha-statrow__tip { display: inline-block; }
+/* 노력치 글자 (GDD 160장 6): 굵게·한 단계 크게, 줄 안에서 끊기지 않게. 상태 화면·수련 결과·환생 계승 줄이 같이 쓴다 */
+.bha-ev { font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-heavy); color: var(--bha-text-1); white-space: nowrap; }
 
 /* ── ⓘ 설명 (C.176, GDD 104장 2): 상태 이름 옆 원 안의 i. 누르면(폰)·올리면(PC) 작은 설명 창(.bha-pop, 오버레이 자리에 붙음) ── */
 button.bha-info { /* C.182: button 으로 좁힘 — 정보 표(dl.bha-info, 9번)까지 18px 상자로 찌그러뜨렸다 */

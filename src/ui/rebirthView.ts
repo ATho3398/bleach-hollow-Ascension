@@ -19,6 +19,7 @@ import { lcdHead, lcdPage } from './bha/lcdpage';
 import { toward } from './bha/nestLogic';
 import { shownName } from './displayName';
 import { asBack } from './bha/screenBack';
+import { evText } from './bha/nest';
 
 /** 이름 옆 환생 표시 칩 (0회면 null) */
 export function rebirthMark(count: number): HTMLElement | null {
@@ -118,7 +119,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
   const reward = [`${SOUL_CRYSTAL_NAME} +${BALANCE.provisional.soulCrystals.perRebirth}`, ...(save.rebirth.count === 0 ? [`${JADE_NAME} +${RB.firstJade} (첫 ${faction.rebirth.name})`] : [])].join(' · ');
   const stars = h('p', 'bha-small');
   stars.append('이름 옆 표시 ', rebirthMark(save.rebirth.count + 1)!);
-  info.append(h('p', 'bha-small', `시작 노력치(계승): ${carryLine(faction.id, carry)}`), h('p', 'bha-small', `보상: ${reward}`), stars);
+  info.append((() => { const p = h('p', 'bha-small'); p.append('시작 노력치(계승): ', evText(carryLine(faction.id, carry))); return p; })(), h('p', 'bha-small', `보상: ${reward}`), stars);
 
   const blocked = save.activeExpedition != null;
   const next = button({ label: '다음 — 최종 확인', icon: 'i-chevron-right', variant: 'danger', block: true, disabled: blocked, onClick: () => hd.onNext(pick) });
@@ -169,15 +170,17 @@ export function rebirthView(root: HTMLElement, faction: FactionConfig, record: R
   const side = h('div', 'bha-evolve__resside');
   const got = panel({ title: '가지고 온 것', aside: provisionalTag('임시 수치') });
   const dl = h('dl', 'bha-info');
-  const row = (label: string, value: string) => {
+  const row = (label: string, value: string | HTMLElement) => {
     const r = h('div', 'bha-info__row bha-info__row--stack');
-    r.append(h('dt', '', label), h('dd', '', value));
+    const dd = h('dd');
+    dd.append(value);
+    r.append(h('dt', '', label), dd);
     dl.append(r);
   };
   const prev = record.prevFormId ? tryGetForm(record.prevFormId) : undefined;
   row('이전 생', shownName(prev ? formName(prev, faction.id, record.prevElements) : faction.tierNames[record.prevTierIndex]!));
   row('블록', record.keptTraitId ? traitName(record.keptTraitId, faction.id) : '없음');
-  row('계승 노력치', carryLine(faction.id, record.carry as Stats));
+  row('계승 노력치', evText(carryLine(faction.id, record.carry as Stats))); // 노력치 글자 (GDD 160장 6)
   row('보상', [`${SOUL_CRYSTAL_NAME} +${reward.soulCrystals}`, ...(reward.jade ? [`${JADE_NAME} +${reward.jade}`] : [])].join(' · '));
   got.append(dl);
   side.append(got);

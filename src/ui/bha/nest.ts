@@ -84,7 +84,8 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
   return root;
 }
 
-/** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. C.131(GDD 77장 ①)부터 막대 없이 이름 + 값만 (ref 는 옛 호출 호환용) */
+/** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. C.131(GDD 77장 ①)부터 막대 없이 이름 + 값만 (ref 는 옛 호출 호환용).
+ *  노력치(+계승)는 값 옆 따로 굵게·한 단계 크게 (.bha-ev, GDD 160장 6) */
 export function statsBlock(factionId: string, stats: Stats, ev: Stats, _ref: number, carry?: Stats): HTMLElement {
   const root = el('div', 'bha-stack bha-stats');
   for (const k of STAT_IDS) {
@@ -93,24 +94,23 @@ export function statsBlock(factionId: string, stats: Stats, ev: Stats, _ref: num
     const extra = [ev[k] > 0 ? `+${ev[k]}` : '', c > 0 ? `계승 +${c}` : ''].filter(Boolean).join(' · ');
     // 능력치 절대 상한 (GDD 22-1): 닿으면 '상한' 표시
     const capped = v >= STAT_MAX ? ' 상한' : '';
-    const row = statRow(statName(k, factionId), `${v}${capped}${extra ? ` (${extra})` : ''}`);
+    const row = statRow(statName(k, factionId), `${v}${capped}`);
+    if (extra) row.append(evText(extra));
     if (capped) row.dataset.capped = 'true';
     root.append(row);
   }
   return root;
 }
 
-/** 능력치 한 줄: 이름 · 값 (막대 없음). tip 이 있으면 마우스를 올리거나 (폰은) 눌렀을 때 값 옆에 짧은 안내가 뜬다 */
-export function statRow(name: string, value: string, tip?: string): HTMLElement {
-  const row = el(tip ? 'button' : 'div', 'bha-statrow');
-  if (tip) {
-    (row as HTMLButtonElement).type = 'button';
-    row.title = tip;
-    row.dataset.tip = tip;
-    row.append(el('span', 'bha-statrow__name', name), el('b', 'bha-statrow__value bha-num', value), el('span', 'bha-statrow__tip', tip));
-    row.addEventListener('click', () => row.classList.toggle('is-tip'));
-    row.addEventListener('blur', () => row.classList.remove('is-tip'));
-  } else row.append(el('span', 'bha-statrow__name', name), el('b', 'bha-statrow__value bha-num', value));
+/** 노력치 글자 (GDD 160장 6): 노력치가 보이는 곳은 전부 이 모양 — 굵게·한 단계 크게 (bha 토큰만, components.css .bha-ev) */
+export function evText(text: string): HTMLElement {
+  return el('b', 'bha-ev bha-num', text);
+}
+
+/** 능력치 한 줄: 이름 · 값 (막대 없음). 누르면 펼쳐지는 설명은 없다 — 능력치별 설명은 능력치 칸 제목 옆 ⓘ 창 (GDD 160장 7) */
+export function statRow(name: string, value: string): HTMLElement {
+  const row = el('div', 'bha-statrow');
+  row.append(el('span', 'bha-statrow__name', name), el('b', 'bha-statrow__value bha-num', value));
   return row;
 }
 
