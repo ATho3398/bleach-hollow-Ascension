@@ -506,7 +506,7 @@ if (want('variants')) {
   console.log(`\n타일 변수 (GDD 25-5, 4바퀴 섞음 봇 ${TVN}회 × 종족, 끔 → 켬)`);
   const sumOff = { food: 0, gold: 0, def: 0, risk: 0 };
   const sumOn = { food: 0, gold: 0, def: 0, risk: 0 };
-  for (const fid of (process.env.LAPS_FID ?? 'hollow,shinigami').split(',')) {
+  for (const fid of (process.env.LAPS_FID ?? 'hollow,shinigami').split(',')) { // LAPS_FID=hollow 로 한 종족만 (조정할 때)
     const off = tvStat(fid, false);
     const on = tvStat(fid, true);
     for (const k of ['food', 'gold', 'def', 'risk'] as const) {
@@ -1220,7 +1220,7 @@ if (want('laps')) {
     return row;
   };
   const pct = (x: number) => `${(x * 100).toFixed(0)}%`.padStart(4);
-  for (const fid of (process.env.LAPS_FID ?? 'hollow,shinigami').split(',')) {
+  for (const fid of (process.env.LAPS_FID ?? 'hollow,shinigami').split(',')) { // LAPS_FID=hollow 로 한 종족만 (조정할 때)
     const firstAt = fid === 'hollow' ? campaignFirstAt : campaign({ factionId: fid }).firstAt;
     const fresh: SaveData[] = Array.from({ length: CAMPAIGNS }, (_, i) => { const sv = newSaveData(fid, 777 + i * 31); botTutorialRun(sv, 4242 + i); botDecks.set(sv.tiles, botDeck(sv.tiles, fid)); return sv; });
     console.log(`\n바퀴 곡선 (GDD 134장 5, ${fid}, 사람형 봇 · 그 단계에 갓 닿은 몸 × ${LR}원정 · 최대 ${ML}바퀴 끝까지): 바퀴별 완주율 (완주 몸 끝 체력) · 1바퀴 일반 처치`);
@@ -1357,7 +1357,7 @@ if (want('bosses')) {
     let tier = -1;
     let ground = GROUNDS[0]!.id;
     for (const ch of STORY_CHAPTERS) {
-      for (const fid of (process.env.LAPS_FID ?? 'hollow,shinigami').split(',')) {
+      for (const fid of (process.env.LAPS_FID ?? 'hollow,shinigami').split(',')) { // LAPS_FID=hollow 로 한 종족만 (조정할 때)
         const ep = chapterContent(fid, ch.id)?.episodes.find((e) => e.boss?.id === boss.id);
         if (ep && tier < 0) {
           tier = ep.recommendedTier - 1;
