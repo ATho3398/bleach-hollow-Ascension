@@ -49,7 +49,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     return raw;
   };
   it('단계 표에 55 가 있고 형식은 56', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(59); // C.225
+    expect(SAVE_FORMAT_VERSION).toBe(60); // C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[55]).toBe('function');
   });
   it('가진 희귀 특성 → 같은 속성 강화 1단계, 다른 값과 런 로그 옛 기록은 그대로', () => {

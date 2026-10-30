@@ -126,7 +126,7 @@ export function formHint(form: FormDef, factionId: string): string {
 }
 
 // ── 특성 (GDD 20-3·v4.0 성향 6종, 39장 속성·전용): 데이터·이름은 abilities.ts, 효과 수치는 BALANCE.provisional.abilities ──
-export { ABILITIES_PROVISIONAL, abilityDescription, abilityName, abilityTextName, abilityNameByEffect, elementAbility, kindSlot, uniqueAbility, validateAbilities } from './abilities';
+export { ABILITIES_PROVISIONAL, abilityDescription, abilityName, abilityTextName, abilityNameByEffect, elementAbility, elementAbilityName, kindSlot, uniqueAbility, validateAbilities } from './abilities';
 export {
   PHYS_ABILITY_EFFECTS, PHYS_BLOCK_EFFECTS, PHYS_BLOCKS_PROVISIONAL, PHYS_ELEMENT_IDS, physAbilityName, physBlockName, physElementOf, physProcText, validatePhysBlocks,
   type PhysAbilityEffect, type PhysBlockEffect, type PhysElementDef,

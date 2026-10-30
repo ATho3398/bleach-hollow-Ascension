@@ -115,25 +115,34 @@ export interface EvolutionExtra {
   failLine?: boolean;
   /** 실제 종족값 (실패형 줄기 낮춤 반영). 없으면 진화체 값 */
   stats?: Stats;
-  /** 이 진화로 특성 받은 결과 (GDD 148장, C.225)와 받은 뒤 그 특성 세기. 있으면 특성 행은 이 한 줄 */
+  /** 이 진화로 특성 받은 결과 (GDD 148·149장, C.225·C.226)와 받은 뒤 그 특성 세기. 있으면 특성 행은 이 한 줄 */
   abilityGain?: AbilityGain;
   abilityScale?: number;
+  /** 이 진화로 늘어난 특성 칸 (GDD 151장 2: 4단계 진화 처음 +1)과 늘어난 뒤 칸 수 */
+  abilitySlotsAdded?: number;
+  abilitySlots?: number;
 }
 
 /** 진화 결과 화면에 넘길 특성 결과 (받은 뒤 세기는 보유 목록에서) */
-export function gainExtra(evo: EvolutionState, gain: AbilityGain): Pick<EvolutionExtra, 'abilityGain' | 'abilityScale'> {
-  return { abilityGain: gain, ...(gain.kind !== 'none' && evo.abilities?.owned[gain.id] !== undefined ? { abilityScale: evo.abilities.owned[gain.id] } : {}) };
+export function gainExtra(evo: EvolutionState, gain: AbilityGain, slotsAdded = 0): Pick<EvolutionExtra, 'abilityGain' | 'abilityScale' | 'abilitySlotsAdded' | 'abilitySlots'> {
+  return {
+    abilityGain: gain,
+    ...(gain.kind !== 'none' && evo.abilities?.owned[gain.id] !== undefined ? { abilityScale: evo.abilities.owned[gain.id] } : {}),
+    ...(slotsAdded > 0 && evo.abilities ? { abilitySlotsAdded: slotsAdded, abilitySlots: evo.abilities.slots } : {}),
+  };
 }
 
-/** 진화 결과 특성 한 줄 (GDD 148장): 새로 받음 / 같은 루트 강화('+') / 이미 가짐 / 칸이 없어 못 받음. 특성을 주지 않는 진화면 null */
+/** 진화 결과 특성 한 줄 (GDD 148·149장): 새로 받음 / 3단계 특성 → 4단계 특성(바뀜) / 이미 가짐 / 칸이 없어 못 받음. 특성을 주지 않는 진화면 null */
 export function abilityGainRow(gain: AbilityGain, scale: number, factionId: string): { icon: string; label: string; value: string; mod: 'good' | 'stack' } | null {
   if (gain.kind === 'none') return null;
-  const line = abilityIdLine(gain.id, scale, factionId, gain.kind === 'enhanced');
+  const line = abilityIdLine(gain.id, scale, factionId);
   if (!line) return null;
+  const nameOf = (id: string) => abilityIdLine(id, 1, factionId)?.name ?? id;
+  const gone = (ids: string[] | undefined) => (ids ?? []).map((id) => `${nameOf(id)} 사라짐 · `).join('');
   switch (gain.kind) {
     case 'new': return { icon: 'i-rare', label: '특성', value: `새로 받음 · ${line.name} — ${line.description}`, mod: 'good' };
-    case 'enhanced': return { icon: 'i-rare', label: '특성', value: `강화 · ${line.name} — ${line.description}`, mod: 'good' };
-    case 'owned': return { icon: 'i-rare', label: '특성', value: `${line.name} — 이미 가진 특성이라 다시 받지 않았다`, mod: 'stack' };
+    case 'replaced': return { icon: 'i-rare', label: '특성', value: `${gone(gain.gone)}바뀜 · ${nameOf(gain.from)} → ${line.name} — ${line.description}`, mod: 'good' };
+    case 'owned': return { icon: 'i-rare', label: '특성', value: `${gone(gain.gone)}${line.name} — 이미 가진 특성이라 다시 받지 않았다`, mod: 'stack' };
     case 'full': return { icon: 'i-rare', label: '특성', value: `특성 칸이 없어 받지 못했다 (${line.name})`, mod: 'stack' };
   }
 }
@@ -151,6 +160,9 @@ export function evolutionEffectRows(
     { icon: 'i-heal', label: '체력', value: '가득 회복', mod: 'good' }, // 진화하면 체력 가득 (GDD 145장 2)
   ];
   if (extra) rows.push({ icon: 'i-weak', label: '속성', value: elementsMark(extra.elements, faction.id) });
+  if (extra?.abilitySlotsAdded && extra.abilitySlots !== undefined) {
+    rows.push({ icon: 'i-rare', label: '특성 칸', value: `${extra.abilitySlots - extra.abilitySlotsAdded} → ${extra.abilitySlots}칸`, sub: `+${extra.abilitySlotsAdded}`, mod: 'good' });
+  }
   if (extra?.abilityGain) {
     const r = abilityGainRow(extra.abilityGain, extra.abilityScale ?? 1, faction.id);
     if (r) rows.push(r);

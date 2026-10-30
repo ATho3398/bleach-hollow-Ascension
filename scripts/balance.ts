@@ -12,7 +12,7 @@ import { addEnhance, buildCombatParams, canAbsorb, gainTrait, isBasicBlockTrait,
 import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
 import { ELEMENT_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
-import { abilityEffectsOf, abilityFor, abilitySlotCount, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, isFailLine, MAX_TIER_INDEX, newAbilityLoadout, newEvolution, setAbilitySlots, TIER_COUNT, worldRefStat, zeroStats } from '../src/engine/evolution';
+import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, isFailLine, MAX_TIER_INDEX, newEvolution, TIER_COUNT, worldRefStat, zeroStats } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
 import { buyShopItem } from '../src/shop';
 import { getFaction } from '../src/data/factions';
@@ -600,14 +600,11 @@ const MAX_RUNS = 40;
 const STAGE_TARGET = [1.5, 2.5, 3];
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
 type CampaignStats = { stageRuns: number[][]; /** C.220: 그 단계에서 실패형 줄기(망한 진화체)가 아닌 봇만 — 가드용 */ stageRunsGuard: number[][]; finalRuns: number[]; formCounts: Record<number, Record<string, number>>; stepsPerRun: number[]; hidden: number; evolutions: number; finalDefeats: number[]; saves: SaveData[]; /** 그 단계(tierIndex)에 갓 닿은 순간의 세이브 사본 (사냥터 점검용) */ firstAt: Record<number, SaveData[]> };
-/** 봇이 아란칼화 / 참백도 구상화를 깬 것으로 (C.220, GDD 126장 3 — 지금은 보스전 임시라 점검 봇은 결과만): 레스렉시온/만해 + 특성 칸 +1 (빈 칸은 보유 특성으로) */
+/** 봇이 아란칼화 / 참백도 구상화를 깬 것으로 (C.220, GDD 126장 3 — 지금은 보스전 임시라 점검 봇은 결과만): 레스렉시온/만해 (특성 칸은 C.226 151장 2 부터 4단계 진화 때) */
 function botAscend(save: SaveData): void {
   const e = save.evolution;
   if (e.ascended) return;
   e.ascended = true;
-  const l = (e.abilities ??= newAbilityLoadout());
-  l.ascendedEver = true;
-  setAbilitySlots(l, abilitySlotCount(save.rebirth.count, true));
 }
 /** 첫 원정 튜토리얼 (C.120, GDD 67장): 새 세이브는 고정 길 1판(약한 적 1마리 → 튜토리얼 흡수 = 모든 능력치 +3)부터 */
 function botTutorialRun(save: SaveData, seed: number): void {

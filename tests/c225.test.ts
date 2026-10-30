@@ -1,4 +1,4 @@
-// C.225 (GDD 147·148장): 특성 = 3·4단계 진화 때만 1개 · 같은 루트면 3단계 특성 강화('+') · 같은 특성 두 번 없음 · 칸 꽉 차면 못 받음 ·
+// C.225 (GDD 147·148장): 특성 = 3·4단계 진화 때만 1개 · (같은 루트 강화는 C.226 149장에서 폐기 — tests/c226) · 같은 특성 두 번 없음 · 칸 꽉 차면 못 받음 ·
 // 받으면 영구(바꿔 끼기 없음) · 환생해도 유지 · 환생 화면 '가지고 갈 블록 1개' · 세이브 형식 58 → 59 마이그레이션
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
@@ -39,18 +39,7 @@ describe('특성 받는 때 = 3·4단계 진화 (GDD 148장 1)', () => {
   });
 });
 
-describe('같은 루트면 4단계에서 3단계 특성 강화 (GDD 148장 2)', () => {
-  it('3·4단계 속성이 같으면(타입 무관) 새로 받지 않고 ×1.5 · 이름 뒤 + · 칸 안 씀', () => {
-    const l = loadout(1);
-    expect(gainEvolutionAbility(l, f('t3:water'), f('t2:base'))).toEqual({ kind: 'new', id: 'el:water' });
-    expect(gainEvolutionAbility(l, f('t4:water:special'), f('t3:water'))).toEqual({ kind: 'enhanced', id: 'el:water' });
-    expect(l.owned).toEqual({ 'el:water': 1 * BALANCE.provisional.abilityGain.enhance });
-    expect(l.enhanced).toEqual(['el:water']);
-    expect(l.equipped).toEqual(['el:water']);
-    const name = abilityIdLine('el:water', l.owned['el:water']!, 'hollow', true)!.name;
-    expect(name.endsWith('+')).toBe(true);
-    expect(abilityIdLine('el:water', 1, 'hollow')!.name.endsWith('+')).toBe(false);
-  });
+describe('같은 루트 판정 (GDD 148장 2 — C.226 부터 특성 규칙에는 안 씀)', () => {
   it('히든 통로 → 4단계 히든, 망한 진화체 → 실패형 = 같은 루트. 다른 속성은 다른 루트', () => {
     expect(sameRoute(f('h3:passage'), f('h4:complete'))).toBe(true);
     expect(sameRoute(f('h3:passage'), f('t4:water:mixed'))).toBe(false);
@@ -59,33 +48,19 @@ describe('같은 루트면 4단계에서 3단계 특성 강화 (GDD 148장 2)', 
     expect(sameRoute(f('t3:fire'), f('t4:blood:physical'))).toBe(false);
     expect(sameRoute(f('t3:water'), f('h4:fusion:water+earth'))).toBe(false);
   });
-  it('3단계가 특성을 주지 않는 진화체(히든 통로)면 4단계 히든 특성을 새로 받는다', () => {
-    const l = loadout(1);
-    expect(gainEvolutionAbility(l, f('h3:passage'), f('t2:base'))).toEqual({ kind: 'none' });
-    expect(gainEvolutionAbility(l, f('h4:complete'), f('h3:passage'))).toEqual({ kind: 'new', id: 'uniq:complete' });
-  });
-  it('다른 루트면 4단계 특성을 새로 받는다 — 칸이 꽉 차면 못 받음(진화 화면 한 줄)', () => {
-    const l = loadout(1);
+  it('칸이 꽉 차면 못 받음(진화 화면 한 줄)', () => {
+    const l = { ...loadout(1), tier4Ever: true }; // 4단계 칸 +1 은 이미 받음(151장 2)
     gainEvolutionAbility(l, f('t3:fire'), f('t2:base'));
-    expect(gainEvolutionAbility(l, f('t4:blood:physical'), f('t3:fire'))).toEqual({ kind: 'full', id: 'el:blood' });
+    delete l.pending; // 전생 3단계 특성처럼 바뀌지 않는 자리
+    expect(gainEvolutionAbility(l, f('t4:blood:physical'), f('t3:fire'))).toEqual({ kind: 'full', id: 'el4:blood' });
     expect(Object.keys(l.owned)).toEqual(['el:fire']);
-    const row = abilityGainRow({ kind: 'full', id: 'el:blood' }, 1.5, 'hollow')!;
+    const row = abilityGainRow({ kind: 'full', id: 'el4:blood' }, 1.5, 'hollow')!;
     expect(row.value).toContain('특성 칸이 없어 받지 못했다');
-    const l2 = loadout(2);
-    gainEvolutionAbility(l2, f('t3:fire'), f('t2:base'));
-    expect(gainEvolutionAbility(l2, f('t4:blood:physical'), f('t3:fire'))).toEqual({ kind: 'new', id: 'el:blood' });
-    expect(l2.equipped).toEqual(['el:fire', 'el:blood']);
-  });
-  it('융합은 두 속성이 한 특성(칸 1개)', () => {
-    const l = loadout(2);
-    gainEvolutionAbility(l, f('t3:water'), f('t2:base'));
-    expect(gainEvolutionAbility(l, f('h4:fusion:water+earth'), f('t3:water'))).toEqual({ kind: 'new', id: 'el:water+earth' });
-    expect(abilityIdLine('el:water+earth', 0.75, 'hollow')!.name).toContain('·');
   });
 });
 
 describe('같은 특성 두 번 없음 · 환생해도 유지 · 받으면 영구 (GDD 147장, 148장 3·5)', () => {
-  it('환생 뒤 같은 루트로 3·4단계를 가면 다시 받지 않는다(강화된 것도 그대로), 칸만 늘어난다', () => {
+  it('환생 뒤 같은 루트로 3·4단계를 가면 다시 받지 않는다(4단계 특성 그대로), 칸만 늘어난다', () => {
     const s = newSaveData('hollow', 1);
     const l = s.evolution.abilities!;
     gainEvolutionAbility(l, f('t3:water'), f('t2:base'));
@@ -93,15 +68,15 @@ describe('같은 특성 두 번 없음 · 환생해도 유지 · 받으면 영�
     Object.assign(s.evolution, { tierIndex: 3, formId: 't4:water:physical', formHistory: ['t2:base', 't3:water', 't4:water:physical'], ability: 'atk' });
     expect(performRebirth(s, null, 5).ok).toBe(true);
     const l2 = s.evolution.abilities!;
-    expect(l2.slots).toBe(2);
-    expect(l2.owned).toEqual({ 'el:water': 1.5 });
-    expect(gainEvolutionAbility(l2, f('t3:water'), f('t2:base'))).toEqual({ kind: 'owned', id: 'el:water' });
-    expect(gainEvolutionAbility(l2, f('t4:water:mixed'), f('t3:water'))).toEqual({ kind: 'owned', id: 'el:water' });
-    expect(l2.owned).toEqual({ 'el:water': 1.5 });
-    expect(abilityGainRow({ kind: 'owned', id: 'el:water' }, 1.5, 'hollow')!.value).toContain('이미 가진 특성');
+    expect(l2.slots).toBe(3); // 1 + 4단계 진화 1 + 환생 1 (C.226 151장 2)
+    expect(l2.owned).toEqual({ 'el4:water': 1.5 });
+    expect(gainEvolutionAbility(l2, f('t3:water'), f('t2:base'))).toEqual({ kind: 'owned', id: 'el4:water' });
+    expect(gainEvolutionAbility(l2, f('t4:water:mixed'), f('t3:water'))).toEqual({ kind: 'owned', id: 'el4:water' });
+    expect(l2.owned).toEqual({ 'el4:water': 1.5 });
+    expect(abilityGainRow({ kind: 'owned', id: 'el4:water' }, 1.5, 'hollow')!.value).toContain('이미 가진 특성');
     // 다른 루트면 빈 칸에 새 특성
     expect(gainEvolutionAbility(l2, f('t3:fire'), f('t2:base'))).toEqual({ kind: 'new', id: 'el:fire' });
-    expect(l2.equipped).toEqual(['el:water', 'el:fire']);
+    expect(l2.equipped).toEqual(['el4:water', 'el:fire']);
   });
   it('바꿔 끼기 없음: 칸 수가 바뀌어도 받은 특성은 빠지지 않는다 · equipAbility 삭제', () => {
     const l = loadout(2);
@@ -124,9 +99,9 @@ describe("환생 화면 '가지고 갈 블록 1개' (GDD 148장 6)", () => {
   });
 });
 
-describe('세이브 형식 58 → 59 (GDD 148장 7, 123장 6)', () => {
-  it('형식 59 · 문턱 54 고정 · 단계 표에 58', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(59);
+describe('세이브 형식 58 → 59 → 60 (GDD 148장 7·149장 7, 123장 6)', () => {
+  it('문턱 54 고정 · 단계 표에 58', () => {
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(59);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[58]).toBe('function');
   });
@@ -138,22 +113,20 @@ describe('세이브 형식 58 → 59 (GDD 148장 7, 123장 6)', () => {
     s.evolution.abilities = { owned, equipped: Object.keys(owned), slots: 1 + rebirths, ascendedEver: false };
     return s;
   };
-  it('성향·물공·2단계 몫은 빼고, 같은 루트면 강화 1개', () => {
+  it('성향·물공·2단계 몫은 빼고, 3단계 특성 → 4단계 특성 1개', () => {
     const m = migrateSave(old58(['t2:base', 't3:water', 't4:water:physical'], { 'disp:atk': 1, 'el:water': 1.5, 'phys:water': 1 }))!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(m.evolution.abilities!.owned).toEqual({ 'el:water': 1.5 });
-    expect(m.evolution.abilities!.equipped).toEqual(['el:water']);
-    expect(m.evolution.abilities!.enhanced).toEqual(['el:water']);
+    expect(m.evolution.abilities!.owned).toEqual({ 'el4:water': 1.5 });
+    expect(m.evolution.abilities!.equipped).toEqual(['el4:water']);
   });
   it('다른 루트·융합 조각 정리 · 칸 넘치면 먼저 얻은 것부터 · 쉬는 트랙도', () => {
     const old = old58(['t2:base', 't3:fire', 't4:blood:physical'], { 'el:blood': 1.5, 'el:fire': 1, 'disp:hp': 1 });
     old.otherTracks = [old58(['t2:base', 't3:water', 'h4:fusion:water+earth'], { 'el:water': 0.75, 'el:earth': 0.75, 'disp:int': 1 }, 1)];
     old.otherTracks[0].factionId = 'shinigami';
     const m = migrateSave(old)!;
-    expect(m.evolution.abilities!.owned).toEqual({ 'el:blood': 1.5 }); // 칸 1 — 먼저 얻은 것(보유 목록 앞)
-    expect(m.evolution.abilities!.enhanced).toBeUndefined();
+    expect(m.evolution.abilities!.owned).toEqual({ 'el4:blood': 1.5 }); // 불 3단계 특성 → 혈 4단계 특성
     const t = m.otherTracks![0]!;
-    expect(t.evolution.abilities!.slots).toBe(2);
-    expect(t.evolution.abilities!.owned).toEqual({ 'el:water': 1, 'el:water+earth': 0.75 });
+    expect(t.evolution.abilities!.slots).toBe(3); // 1 + 4단계 진화 1 + 환생 1 (C.226 151장 2)
+    expect(t.evolution.abilities!.owned).toEqual({ 'el4:water+earth': 0.75 });
   });
 });

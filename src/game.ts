@@ -10,7 +10,7 @@ import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvo
 import { tryGetForm } from './data/evolution';
 import { SPECIAL_ELEMENT_IDS } from './data/elements';
 import { abilitySlotCount, cloneLoadout, newAbilityLoadout, setAbilitySlots, type AbilityLoadout } from './engine/evolution';
-import { migrateAbilities148, migrateEvolutionTo4, remapOldFormId } from './saveTier4';
+import { migrateAbilities148, migrateAbilities149, migrateEvolutionTo4, remapOldFormId } from './saveTier4';
 import { pickLook } from './engine/evolution/tierLook';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
@@ -54,7 +54,7 @@ import { BATTLE_ITEM_IDS, CONSUMABLE_IDS } from './inventory';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 59; // C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 60; // C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -1433,24 +1433,18 @@ export function ascensionAccess(save: Pick<SaveData, 'evolution' | 'nest'>): { o
   return { ok: true };
 }
 
-/** 아란칼화 / 참백도 구상화 도전 결과 (GDD 126장 3): 이기면 이번 생 레스렉시온/만해 해금, 특성 칸 +1(처음 한 번), 호로는 외형이 아란칼로(종족 설정 ascension.lookChange).
+/** 아란칼화 / 참백도 구상화 도전 결과 (GDD 126장 3): 이기면 이번 생 레스렉시온/만해 해금(특성 칸은 151장부터 4단계 진화 때), 호로는 외형이 아란칼로(종족 설정 ascension.lookChange).
  *  전투 기록(enemyClass 'ascension')·도전 기록을 런 로그에. 지면 잃는 것 없음(빈사로 지면 사망 규칙은 그대로) */
-export function recordAscension(save: SaveData, s: CombatState, nowMs: number = Date.now()): { won: boolean; slotsAdded: number } {
+export function recordAscension(save: SaveData, s: CombatState, nowMs: number = Date.now()): { won: boolean } {
   const won = s.status === 'won';
   const AX = BALANCE.provisional.ascension;
   const battle = buildBattleRecord(s, { factionId: save.factionId, tierIndex: save.evolution.tierIndex });
   battle.enemyClass = 'ascension';
   save.runLog.battles.push(battle);
   (save.runLog.ascensions ??= []).push({ at: nowMs, factionId: save.factionId, bossId: AX.bossId, difficulty: AX.difficulty, won, seed: s.seed, durationSeconds: battle.durationSeconds, tierIndex: save.evolution.tierIndex, formId: save.evolution.formId });
-  let slotsAdded = 0;
   if (won && !save.evolution.ascended) {
     const e = save.evolution;
     e.ascended = true;
-    const l = (e.abilities ??= newAbilityLoadout());
-    const before = l.slots;
-    l.ascendedEver = true;
-    setAbilitySlots(l, abilitySlotCount(save.rebirth.count, true));
-    slotsAdded = l.slots - before;
     const fac = getFaction(save.factionId);
     const form = e.formId ? tryGetForm(e.formId) : undefined;
     if (fac.ascension.lookChange && form) {
@@ -1460,7 +1454,7 @@ export function recordAscension(save: SaveData, s: CombatState, nowMs: number = 
   }
   dieIfDyingLost(save, won, nowMs, 'ascension');
   checkTitles(save, 'rank', nowMs);
-  return { won, slotsAdded };
+  return { won };
 }
 
 /** 탑 한 판 결과 (화면이 결과 줄에 쓴다) */
@@ -1549,7 +1543,7 @@ export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs
   // 특성 (GDD 126-1 수정 1·2): 보유·장착은 환생해도 남고, 칸은 환생 1회당 +1 (최대 4)
   if (prev.abilities) {
     evolution.abilities = cloneLoadout(prev.abilities);
-    setAbilitySlots(evolution.abilities, abilitySlotCount(count, evolution.abilities.ascendedEver));
+    setAbilitySlots(evolution.abilities, abilitySlotCount(count, evolution.abilities.tier4Ever));
   }
   save.evolution = evolution;
   const build = newBuild();
@@ -1678,6 +1672,17 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
       const snap = t.activeExpedition as unknown;
       const ex = isRec(snap) && isRec((snap as { exp?: unknown }).exp) ? (snap as { exp: Record<string, unknown> }).exp : null;
       if (ex && isRec(ex.evolution)) migrateAbilities148(ex.evolution as unknown as EvolutionState, rebirths);
+    }
+  },
+  // 59 → 60 (C.226, GDD 149장 7·151장 2): '+' 강화 특성 → 그 진화체의 4단계 특성(el4:), 특성 칸 아란칼화 +1 → 4단계 진화 +1(ascendedEver → tier4Ever), 지금 생의 3·4단계 몫을 149·151장 규칙으로 다시 밟는다. 트랙마다(쉬는 트랙·원정 사본 포함)
+  59: (save) => {
+    for (const t of [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])]) {
+      if (!isRec(t.evolution)) continue;
+      const rebirths = isRec(t.rebirth) && typeof t.rebirth.count === 'number' ? t.rebirth.count : 0;
+      migrateAbilities149(t.evolution, rebirths);
+      const snap = t.activeExpedition as unknown;
+      const ex = isRec(snap) && isRec((snap as { exp?: unknown }).exp) ? (snap as { exp: Record<string, unknown> }).exp : null;
+      if (ex && isRec(ex.evolution)) migrateAbilities149(ex.evolution as unknown as EvolutionState, rebirths);
     }
   },
 };
@@ -2115,17 +2120,16 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
   if (e.ascended !== true) delete e.ascended;
   const raw = e.abilities as unknown;
   const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof AbilityLoadout, unknown>>;
-  const validId = (id: string) => /^(el:[a-z]+(\+[a-z]+)*|uniq:[a-z]+)$/.test(id); // C.225: 성향·물공 특성 없음, 융합은 el:<속성>+<속성>
+  const validId = (id: string) => /^(el4?:[a-z]+(\+[a-z]+)*|uniq:[a-z0-9]+)$/.test(id); // C.225: 성향·물공 특성 없음, 융합은 el:<속성>+<속성>. C.226: 4단계 몫 el4:, uniq:fail4
   const ownedRaw = isRec(r.owned) ? r.owned : {};
   const ownedAb = Object.fromEntries(Object.entries(ownedRaw).filter(([id, v]) => validId(id) && typeof v === 'number' && Number.isFinite(v) && v > 0)) as Record<string, number>;
-  const ascendedEver = r.ascendedEver === true || e.ascended === true;
-  const loadout: AbilityLoadout = isRec(raw) ? { owned: ownedAb, equipped: [], slots: 1, ascendedEver } : newAbilityLoadout();
-  loadout.ascendedEver = ascendedEver;
-  loadout.slots = abilitySlotCount(typeof rebirths === 'number' ? rebirths : 0, ascendedEver);
-  // 받으면 영구 (GDD 147장): 칸 = 보유 전부(얻은 순서). 강화 표시는 가진 것만
+  const tier4Ever = r.tier4Ever === true || e.tierIndex >= 3; // GDD 151장 2: 4단계 진화를 한 번이라도 했다(칸 +1)
+  const loadout: AbilityLoadout = isRec(raw) ? { owned: ownedAb, equipped: [], slots: 1, tier4Ever } : newAbilityLoadout();
+  loadout.tier4Ever = tier4Ever;
+  loadout.slots = abilitySlotCount(typeof rebirths === 'number' ? rebirths : 0, tier4Ever);
+  // 받으면 영구 (GDD 147장): 칸 = 보유 전부(얻은 순서). 4단계에서 바뀔 3단계 특성 표시(149장 1)는 가진 것만
   loadout.equipped = Object.keys(ownedAb);
-  const enhanced = Array.isArray(r.enhanced) ? [...new Set(r.enhanced.filter((id): id is string => typeof id === 'string' && id in ownedAb))] : [];
-  if (enhanced.length > 0) loadout.enhanced = enhanced;
+  if (typeof r.pending === 'string' && r.pending in ownedAb) loadout.pending = r.pending;
   e.abilities = loadout;
 }
 

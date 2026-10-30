@@ -9,21 +9,23 @@
     "spd": { "name": { "*": "평타 가속" }, "description": { "*": "자동 공격이 더 빨라진다." } }
   },
   "elementAbilities": {
-    "normal": { "effect": "blockPower", "name": { "*": "균형" }, "description": { "*": "모든 블록 위력이 오른다." } },
-    "water": { "effect": "crit", "name": { "*": "날카로운 물결" }, "description": { "*": "치명타 확률이 오른다." } },
-    "fire": { "effect": "ignoreDefense", "name": { "*": "작열" }, "description": { "*": "블록과 기본 공격이 적의 방어·정신력을 일부 무시한다." } },
-    "earth": { "effect": "thorns", "name": { "*": "되갚기" }, "description": { "*": "받은 피해를 쌓아 두었다가 한 번에 되돌려준다." } },
-    "thunder": { "effect": "doubleHit", "name": { "*": "연타" }, "description": { "*": "기본 공격이 가끔 한 번 더 나간다." } },
-    "blood": { "effect": "bloodlust", "name": { "*": "피의 갈증" }, "description": { "*": "체력이 낮을수록 공격이 강해진다." } },
-    "poison": { "effect": "corrode", "name": { "*": "부식" }, "description": { "*": "싸울수록 적이 받는 피해가 늘어난다." } },
-    "kyo": { "effect": "chainHaste", "name": { "*": "연쇄" }, "description": { "*": "체인이 이어지면 다음 블록이 빨리 생긴다." } }
+    "normal": { "effect": "blockPower", "name": { "*": "균형" }, "name4": { "*": "조화" }, "description": { "*": "모든 블록 위력이 오른다." } },
+    "water": { "effect": "crit", "name": { "*": "날카로운 물결" }, "name4": { "*": "폭포" }, "description": { "*": "치명타 확률이 오른다." } },
+    "fire": { "effect": "ignoreDefense", "name": { "*": "작열" }, "name4": { "*": "업화" }, "description": { "*": "블록과 기본 공격이 적의 방어·정신력을 일부 무시한다." } },
+    "earth": { "effect": "thorns", "name": { "*": "되갚기" }, "name4": { "*": "응보" }, "description": { "*": "받은 피해를 쌓아 두었다가 한 번에 되돌려준다." } },
+    "thunder": { "effect": "doubleHit", "name": { "*": "연타" }, "name4": { "*": "뇌명" }, "description": { "*": "기본 공격이 가끔 한 번 더 나간다." } },
+    "blood": { "effect": "bloodlust", "name": { "*": "피의 갈증" }, "name4": { "*": "피의 광기" }, "description": { "*": "체력이 낮을수록 공격이 강해진다." } },
+    "poison": { "effect": "corrode", "name": { "*": "부식" }, "name4": { "*": "맹독" }, "description": { "*": "싸울수록 적이 받는 피해가 늘어난다." } },
+    "kyo": { "effect": "chainHaste", "name": { "*": "연쇄" }, "name4": { "*": "끝없는 연쇄" }, "description": { "*": "체인이 이어지면 다음 블록이 빨리 생긴다." } }
   },
   "uniqueAbilities": {
     "complete": { "effect": "noWeak", "name": { "*": "완성" }, "description": { "*": "속성 상성에서 불리 효과를 받지 않는다." } },
     "frenzy": { "effect": "desperate", "name": { "*": "{frenzyName} 본능" }, "description": { "*": "체력이 절반 아래면 주는 피해가 오른다." } },
     "restraint": { "effect": "rampUp", "name": { "*": "절제" }, "description": { "*": "싸울수록 공격이 강해진다." } },
     "hunter": { "effect": "eliteSlayer", "name": { "*": "사냥꾼" }, "description": { "*": "강적·보스에게 주는 피해가 오른다." } },
-    "awakened": { "effect": "lastStand", "name": { "*": "다시 일어남" }, "description": { "*": "전투마다 한 번, 쓰러질 때 버틴다." } }
+    "awakened": { "effect": "lastStand", "replaces": ["fail"], "name": { "*": "다시 일어남" }, "description": { "*": "전투마다 한 번, 쓰러질 때 버틴다." } },
+    "passage": { "effect": "mutation", "name": { "*": "변이의 기운" }, "description": { "*": "주는 피해가 조금 오르고 받는 피해가 조금 줄어든다." } },
+    "fail": { "effect": "evGain", "permanent": true, "name": { "*": "허우적" }, "description": { "*": "노력치를 얻는 양이 크게 줄어든다." } }
   },
   "kindSlots": {
     "base": { "element": "none" },
@@ -31,8 +33,8 @@
     "arrancar": { "element": "label", "physical": true },
     "fusion": { "element": "label", "scale": "fusion" },
     "complete": { "element": "unique" },
-    "fail": { "element": "none", "dispositions": 2 },
-    "passage": { "element": "none" },
+    "fail": { "element": "none", "dispositions": 2, "ability": { "3": "fail" } },
+    "passage": { "element": "none", "ability": { "3": "passage" } },
     "awakened": { "element": "unique" },
     "frenzy": { "element": "unique" },
     "restraint": { "element": "unique" },

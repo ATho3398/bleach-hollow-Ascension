@@ -37,7 +37,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, isEnhancedAbility, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
@@ -162,7 +162,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     stats.append(line);
   }
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
-  // 특성 칸 (GDD 126-1 수정 → 147·148장, C.225): 3·4단계 진화 때 받은 특성(보기 전용). 칸 = 기본 1 + 아란칼화/참백도 구상화 1 + 환생당 1 (최대 4). 칸이 없는 옛 모양(점검 도구)이면 진화체 특성 줄
+  // 특성 칸 (GDD 126-1 수정 → 147~151장, C.226): 3·4단계 진화 때 받은 특성(보기 전용). 칸 = 기본 1 + 4단계 진화 1 + 환생당 1 (최대 4). 칸이 없는 옛 모양(점검 도구)이면 진화체 특성 줄
   const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
   if (evo.abilities) stats.append(abilitySlotsBlock(faction, evo));
@@ -577,7 +577,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
   });
 }
 
-/** 특성 칸 묶음 (GDD 126-1 수정 → 147·148장, C.225): 보기 전용 — 받은 특성은 영구라 빼거나 바꿔 끼지 않는다. 칸마다 한 줄(강화된 것은 이름 뒤 '+') */
+/** 특성 칸 묶음 (GDD 126-1 수정 → 147~149장, C.226): 보기 전용 — 받은 특성은 영구라 빼거나 바꿔 끼지 않는다. 칸마다 한 줄(3단계 특성은 '4단계 진화 때 바뀐다') */
 function abilitySlotsBlock(faction: FactionConfig, evo: EvolutionState): HTMLElement {
   const box = h('div', 'bha-stack bha-stack--tight');
   box.dataset.abilitySlots = '';
@@ -587,10 +587,10 @@ function abilitySlotsBlock(faction: FactionConfig, evo: EvolutionState): HTMLEle
   box.append(head);
   for (let i = 0; i < l.slots; i++) {
     const id = l.equipped[i];
-    const line = id ? abilityIdLine(id, l.owned[id] ?? 1, faction.id, isEnhancedAbility(l, id)) : null;
+    const line = id ? abilityIdLine(id, l.owned[id] ?? 1, faction.id) : null;
     const p = h('p', 'bha-faint');
     p.dataset.abilitySlot = String(i);
-    if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`);
+    if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`, id === l.pending ? ' · 4단계 진화 때 바뀐다' : '');
     else p.append(`${i + 1}칸 · 비어 있음`);
     box.append(p);
   }

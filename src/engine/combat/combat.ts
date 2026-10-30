@@ -305,6 +305,8 @@ export interface AbilityEffects {
   eliteSlayer?: number;
   /** 전투마다 1번, 쓰러질 때 최대 체력 × 이 비율로 버틴다 (환생 '다시 일어남') */
   lastStand?: number;
+  /** 주는 피해 +dealt · 받는 피해 −taken (히든 통로 '변이의 기운', GDD 149장 2) */
+  mutation?: { dealt: number; taken: number };
   // ── 물공 특성 (GDD 49장, C.103) — 모두 평타 쪽 ──
   /** 되갚기가 터지면 다음 평타 hits 회 피해 +bonus (흙 '굳은 주먹') */
   hardFist?: { hits: number; bonus: number };
@@ -1193,6 +1195,7 @@ export function abilityPowerOf(s: CombatState, block: boolean): number {
   m *= 1 + rampBonus(s, a.rampUp);
   if (a.desperate && hpRatio < a.desperate.below) m *= 1 + a.desperate.bonus;
   if (a.eliteSlayer && (s.enemy.def.class === 'elite' || s.boss)) m *= 1 + a.eliteSlayer;
+  if (a.mutation) m *= 1 + a.mutation.dealt;
   return m;
 }
 
@@ -1867,7 +1870,8 @@ function enemyDamage(s: CombatState, inAttacks: number): number {
   const ratio = statRatio(s.enemy.stats, s.player.stats, cat);
   const em = enemyMatchup(s);
   const mm = em === 'strong' && p.abilityEffects.noWeak ? 1 : matchupMultiplier(p, em);
-  return inAttacks * p.playerAttackDamage * jitter * p.damageTakenMultiplier * ratio * mm * p.categoryTaken[cat];
+  const mutation = 1 - (p.abilityEffects.mutation?.taken ?? 0);
+  return inAttacks * p.playerAttackDamage * jitter * p.damageTakenMultiplier * ratio * mm * p.categoryTaken[cat] * mutation;
 }
 
 /** 지금 막기 상태의 경감 (GDD 105장 수정 v5.233): 강공격 = 완전히 막음, 일반 공격 = 경감 없음 */

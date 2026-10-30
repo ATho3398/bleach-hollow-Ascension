@@ -233,6 +233,6 @@ describe('107장 원정 체력 이어 가기', () => {
   });
 
   it('세이브 형식·문턱 50 (마이그레이션 없음)', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([59, 54]); // C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([60, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184
   });
 });

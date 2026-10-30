@@ -7,7 +7,9 @@ import { tryGetForm } from './data/evolution';
 import { NORMAL_ELEMENT } from './data/elements';
 import { getFaction } from './data/factions';
 import type { BuildState } from './engine/absorb/build';
-import { abilityFor, abilityIdsOf, abilitySlotCount, dominantCategory, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, tier3Element, type AbilityLoadout, type EvolutionState } from './engine/evolution';
+import { abilityFor, abilityIdsOf, abilitySlotCount, dominantCategory, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, representativeAbility, tier3Element, type AbilityLoadout, type EvolutionState } from './engine/evolution';
+import { BALANCE } from './config/balance';
+import type { FormDef } from './data/schema';
 import { pickFormLook } from './engine/evolution/tierLook';
 
 /** 옛 5단계 행동 히든 → 새 4단계 히든 */
@@ -84,9 +86,9 @@ export function migrateEvolutionTo4(e: EvolutionState, build: BuildState, factio
     e.look = null;
   }
   if (form && !e.ability) e.ability = abilityFor(e.ev, form);
-  // 특성: 그 몸이 쓰던 특성을 보유 목록에, 칸은 새 규칙(기본 1 + 아란칼화 + 환생)
+  // 특성: 그 몸이 쓰던 특성을 보유 목록에, 칸은 그때 규칙(기본 1 + 아란칼화 + 환생). 형식 60(C.226)이 151장 칸(4단계 진화 +1)으로 다시 센다
   const l = newAbilityLoadout();
-  l.ascendedEver = ascended;
+  l.tier4Ever = ascended;
   l.slots = abilitySlotCount(rebirths, ascended);
   // C.220 그때 규칙(진화체 특성 전부·칸은 앞에서부터). 형식 59(C.225)가 148장 규칙으로 다시 만든다
   if (form) for (const g of abilityIdsOf(formAbilitiesOf(form, e.ev, e.ability))) l.owned[g.id] = Math.max(l.owned[g.id] ?? 0, g.scale);
@@ -103,8 +105,8 @@ export function migrateEvolutionTo4(e: EvolutionState, build: BuildState, factio
  */
 export function migrateAbilities148(e: EvolutionState, rebirths: number): void {
   const raw = (typeof e.abilities === 'object' && e.abilities !== null ? e.abilities : newAbilityLoadout()) as Partial<AbilityLoadout>;
-  const ascendedEver = raw.ascendedEver === true || e.ascended === true;
-  const l: AbilityLoadout = { owned: {}, equipped: [], slots: abilitySlotCount(rebirths, ascendedEver), ascendedEver };
+  const tier4Ever = (raw as { ascendedEver?: unknown }).ascendedEver === true || e.ascended === true || e.tierIndex >= 3;
+  const l: AbilityLoadout = { owned: {}, equipped: [], slots: abilitySlotCount(rebirths, tier4Ever), tier4Ever };
   const owned = typeof raw.owned === 'object' && raw.owned !== null ? raw.owned : {};
   for (const [id, v] of Object.entries(owned)) {
     if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) continue;
@@ -116,6 +118,36 @@ export function migrateAbilities148(e: EvolutionState, rebirths: number): void {
   history.forEach((f, i) => {
     if (f) gainEvolutionAbility(l, f, history[i - 1]);
   });
+  l.equipped = Object.keys(l.owned);
+  e.abilities = l;
+}
+
+/**
+ * 세이브 형식 59 → 60 (C.226, GDD 149장 7·151장): '+' 강화(enhanced) 특성 el:<속성> → 그 4단계 특성 el4:<속성>(같은 자리·세기 그대로). 칸 = 기본 + 4단계 진화 + 환생(ascendedEver 버림).
+ * 지금 생의 3·4단계 몫(옛 id 포함)은 빼고 149장 규칙으로 다시 밟는다(4단계면 3단계 특성 → 4단계 특성, 히든 통로·망한 진화체·실패형 특성 포함).
+ */
+export function migrateAbilities149(e: EvolutionState, rebirths: number): void {
+  const raw = (typeof e.abilities === 'object' && e.abilities !== null ? e.abilities : newAbilityLoadout()) as Partial<AbilityLoadout> & { enhanced?: unknown };
+  const enhanced = Array.isArray(raw.enhanced) ? raw.enhanced.filter((id): id is string => typeof id === 'string') : [];
+  const owned = typeof raw.owned === 'object' && raw.owned !== null ? raw.owned : {};
+  const l: AbilityLoadout = {
+    owned: Object.fromEntries(Object.entries(owned).map(([id, v]) => [enhanced.includes(id) && id.startsWith('el:') ? `el4:${id.slice(3)}` : id, v])),
+    equipped: [],
+    slots: 0,
+    // 151장 2: 칸 +1 = 4단계 진화(아란칼화 대신). 환생했으면 4단계를 거쳤다. 지금 생 4단계 진화는 다시 밟을 때 붙는다
+    tier4Ever: rebirths > 0,
+  };
+  l.slots = abilitySlotCount(rebirths, l.tier4Ever);
+  const history = (Array.isArray(e.formHistory) ? e.formHistory.map((id) => tryGetForm(id)) : []).filter((f): f is FormDef => f !== undefined);
+  const tiers = BALANCE.provisional.abilityGain.tiers;
+  for (const f of history) {
+    if (!tiers.includes(f.tier)) continue;
+    const id = representativeAbility(f)?.id;
+    if (!id) continue;
+    delete l.owned[id];
+    if (id.startsWith('el4:')) delete l.owned[`el:${id.slice(4)}`]; // C.225 때 4단계 속성 특성 id
+  }
+  for (const f of history) gainEvolutionAbility(l, f);
   l.equipped = Object.keys(l.owned);
   e.abilities = l;
 }

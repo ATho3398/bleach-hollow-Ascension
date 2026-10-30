@@ -88,13 +88,12 @@ describe('특성 칸 (GDD 126-1 수정, 142장 6)', () => {
   it('환생해도 보유·장착이 남고 칸이 1 늘어난다', () => {
     const s = newSaveData('hollow', 1);
     Object.assign(s.evolution, { tierIndex: 3, formId: 't4:fire:physical', formHistory: ['t2:base', 't3:fire', 't4:fire:physical'], ability: 'atk' });
-    Object.assign(s.evolution.abilities!, { owned: { 'el:fire': 1.5 }, equipped: ['el:fire'], enhanced: ['el:fire'] });
+    Object.assign(s.evolution.abilities!, { owned: { 'el4:fire': 1.5 }, equipped: ['el4:fire'] });
     expect(performRebirth(s, null, 5).ok).toBe(true);
     expect(s.evolution.tierIndex).toBe(0);
     expect(s.evolution.abilities!.slots).toBe(2);
-    expect(s.evolution.abilities!.enhanced).toEqual(['el:fire']);
-    expect(Object.keys(s.evolution.abilities!.owned)).toEqual(['el:fire']);
-    expect(s.evolution.abilities!.owned['el:fire']).toBe(1.5);
+    expect(Object.keys(s.evolution.abilities!.owned)).toEqual(['el4:fire']);
+    expect(s.evolution.abilities!.owned['el4:fire']).toBe(1.5);
   });
 });
 
@@ -104,7 +103,7 @@ describe('아란칼화 / 참백도 구상화 (GDD 126장 3, 142장 3 — 지금�
     Object.assign(s.evolution, { tierIndex: 3, formId: 't4:fire:mixed', formHistory: ['t2:base', 't3:fire', 't4:fire:mixed'], ability: 'atk' });
     return s;
   };
-  it('4단계부터 수련장에서 도전, 깨면 레스렉시온/만해 해금 + 칸 +1 (처음 한 번)', () => {
+  it('4단계부터 수련장에서 도전, 깨면 레스렉시온/만해 해금 (특성 칸은 C.226 151장 2 부터 4단계 진화 때 — 아란칼화는 칸 안 줌)', () => {
     const low = newSaveData('hollow', 1);
     low.evolution.tierIndex = 2;
     expect(ascensionAccess(low)).toEqual({ ok: false, reason: 'tier' });
@@ -113,9 +112,11 @@ describe('아란칼화 / 참백도 구상화 (GDD 126장 3, 142장 3 — 지금�
     const pre: Partial<CombatParams> = {};
     applyEvolutionToParams(pre, s.evolution, 'hollow');
     expect(pre.liberationUnique).toBe(false); // 4단계여도 깨기 전에는 영력 해방
-    expect(recordAscension(s, wonBattle(false), 1)).toEqual({ won: false, slotsAdded: 0 });
+    expect(recordAscension(s, wonBattle(false), 1)).toEqual({ won: false });
     expect(s.evolution.ascended).toBeUndefined();
-    expect(recordAscension(s, wonBattle(true), 2)).toEqual({ won: true, slotsAdded: 1 });
+    const slots = s.evolution.abilities!.slots;
+    expect(recordAscension(s, wonBattle(true), 2)).toEqual({ won: true });
+    expect(s.evolution.abilities!.slots).toBe(slots);
     expect(s.evolution.ascended).toBe(true);
     expect(ascensionAccess(s)).toEqual({ ok: false, reason: 'done' });
     const post: Partial<CombatParams> = {};
@@ -136,13 +137,14 @@ describe('아란칼화 / 참백도 구상화 (GDD 126장 3, 142장 3 — 지금�
     expect(artTierIndexOf(sh)).toBe(3);
     expect(sh.evolution.look ?? null).toBeNull();
   });
-  it('환생하면 아란칼화는 다시(이번 생), 칸 +1 은 남는다', () => {
+  it('환생하면 아란칼화는 다시(이번 생), 4단계 진화 칸 +1 은 남는다', () => {
     const s = at4('hollow');
+    Object.assign(s.evolution.abilities!, { tier4Ever: true, slots: 2 });
     recordAscension(s, wonBattle(), 1);
     expect(s.evolution.abilities!.slots).toBe(2);
     performRebirth(s, null, 3);
     expect(s.evolution.ascended).toBeUndefined();
-    expect(s.evolution.abilities!.slots).toBe(3); // 1 + 아란칼화 1 + 환생 1
+    expect(s.evolution.abilities!.slots).toBe(3); // 1 + 4단계 진화 1 + 환생 1 (C.226 151장 2)
   });
 });
 
@@ -175,8 +177,7 @@ describe('세이브 형식 57 → 58 (GDD 142장 9, 123장 6 — C.223 이 57 �
     expect(m.evolution.ascended).toBe(true);
     expect(getFaction('hollow').formLooks!['t4:water:mixed']).toContain(m.evolution.look);
     expect(m.evolution.abilities!.slots).toBe(3); // 1 + 아란칼화 1 + 환생 1
-    expect(Object.keys(m.evolution.abilities!.owned)).toEqual(['el:water']); // 59(C.225): 성향 빠짐, 물 3·4단계 같은 루트 → 강화
-    expect(m.evolution.abilities!.enhanced).toEqual(['el:water']);
+    expect(Object.keys(m.evolution.abilities!.owned)).toEqual(['el4:water']); // 59(C.225): 성향 빠짐 → 60(C.226): 물 3단계 특성 → 4단계 특성
     expect(m.build.slots).toHaveLength(6);
     expect(m.formDex).toEqual(expect.arrayContaining(['t2:base', 't3:water', 't4:water:mixed']));
     expect(m.formDex).not.toContain('t5:water:mixed');

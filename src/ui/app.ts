@@ -1691,7 +1691,7 @@ export function startApp(host: HTMLElement): void {
       };
       if (evo?.ok) {
         const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded) };
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
           holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
           nav.pop();
@@ -1767,7 +1767,7 @@ export function startApp(host: HTMLElement): void {
       // 다음 진화 (GDD 109장 7): 원정 귀환 때와 같은 진화 연출 → 끝나면 테스트 패널로
       onEvolved: (fromTier, r) => {
         dress(s.wear);
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded) };
         open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
           nav.pop();
         }, s.build.slots.length, extra), true);
@@ -1904,7 +1904,7 @@ export function startApp(host: HTMLElement): void {
         const res = recordAscension(s0, done);
         settleLiberationRisk(s0, done);
         persist();
-        const lines = res.won ? [...faction.ascension.completeText, ...(res.slotsAdded > 0 ? [`특성 칸이 ${res.slotsAdded}칸 늘었다.`] : [])] : [`${faction.ascension.foe}에게 졌다. 잃은 것은 없다 — 다시 도전할 수 있다.`];
+        const lines = res.won ? [...faction.ascension.completeText] : [`${faction.ascension.foe}에게 졌다. 잃은 것은 없다 — 다시 도전할 수 있다.`];
         nav.replace({ id: 'ascension-result', locked: true, render: () => { ascensionResultView(root, faction, res.won, lines, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
         showTitleToasts(s0, faction, persist);
       },

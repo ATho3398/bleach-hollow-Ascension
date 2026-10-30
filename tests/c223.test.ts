@@ -136,7 +136,7 @@ describe('145장 4: 상점 약 칸 — 하루 판매 수', () => {
 
 describe('세이브 형식 57 (56 → 57 마이그레이션)', () => {
   it('하루 판매 기록이 빈 것으로 생기고, 가방 개수(옛 id)는 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(59); // C.225
+    expect(SAVE_FORMAT_VERSION).toBe(60); // C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[56]).toBe('function');
     const s = newSaveData('hollow', T0);
     s.shared.items = { 'battle-potion': 4, 'w-hp-potion': 1 };
@@ -144,7 +144,7 @@ describe('세이브 형식 57 (56 → 57 마이그레이션)', () => {
     raw.meta.format = 56;
     delete raw.shared.shopDaily;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(59);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.shared.shopDaily).toEqual({ day: '', bought: {} });
     expect(m.shared.items).toEqual({ 'battle-potion': 4, 'w-hp-potion': 1 });
   });
