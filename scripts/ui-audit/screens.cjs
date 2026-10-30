@@ -417,9 +417,11 @@ const SCREENS = [
       await h.closeLayers();
       await h.back();
       await toMarket(h); // C.201 (GDD 127장 2): 온천은 장터 안 · C.204: 밖으로 → 시장
-      await h.click('.bha-market [data-spot="spa"]', { ms: 3200 }); // C.201 (128장 6): 캐릭터가 걸어 들어와 앉을 때까지(2.2초 + 앉기) 기다린 뒤 잰다
+      await h.click('.bha-market [data-spot="spa"]', { ms: 4000 }); // C.208 (132장 4): 평지 1.2초 + 계단 3단 + 앉기(약 3.3초)까지 기다린 뒤 잰다
       await h.explore(n, { tabs: false });
       await h.back();
+      // 나가기 연출(계단을 거꾸로 올라와 걸어 나감, 약 2.8초) 뒤에 장터로
+      for (let i = 0; i < 20 && !(await h.has('.bha-market')); i++) await h.wait(250);
       if (!(await h.has('.bha-market'))) throw new Error('온천 뒤로 → 장터에 못 닿음');
       await marketBackToRoom(h);
     },
