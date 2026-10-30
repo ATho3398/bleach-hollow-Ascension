@@ -70,7 +70,7 @@ export type SlotLocation = 'body' | 'zanpakuto';
 export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·모험(출발 준비 화면)·탑(도전의 탑 화면). ▲▼ 순서도 이 순서 */
-export const WORLD_PLACES = ['home', 'market', 'adventure', 'tower'] as const;
+export const WORLD_PLACES = ['home', 'market', 'adventure', 'tower', 'spa'] as const; // 온천 = 월드맵 장소 (GDD 153장 1)
 export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
 /** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
@@ -249,6 +249,8 @@ export interface WorldMapConfig {
   characterFoot: { x: number; y: number };
   /** 모험 장소 이름 (옛 방 모험 문 이름 room.props.door 를 옮김, GDD 137장 3) */
   adventureName: string;
+  /** 온천 장소 이름 (GDD 153장 1: 시장 안 칸 → 월드맵 장소) */
+  spaName: string;
 }
 
 export const DEFAULT_WORLDMAP: WorldMapConfig = {
@@ -256,12 +258,13 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   shape: 'worldmap',
   sceneArt: 'scene.worldmap',
   floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
-  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 58, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 }, tower: { x: 82, y: 46, scale: 0.9 } },
+  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 58, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 }, tower: { x: 82, y: 46, scale: 0.9 }, spa: { x: 18, y: 50, scale: 0.9 } },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',
+  spaName: '온천',
 };
 
-/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels) */
+/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels, 온천 = worldmap.spaName) */
 export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
   const w = f.worldmap ?? {};
   return {
@@ -270,7 +273,7 @@ export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestN
     floor: w.floor ?? DEFAULT_WORLDMAP.floor,
     layout: { ...DEFAULT_WORLDMAP.layout, ...w.layout },
     characterFoot: w.characterFoot ?? DEFAULT_WORLDMAP.characterFoot,
-    places: { home: f.nestName, market: marketOf(f).name, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name },
+    places: { home: f.nestName, market: marketOf(f).name, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
   };
 }
 
@@ -591,7 +594,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const wm = r.worldmap as Record<string, unknown>;
     if (!isRec(wm)) errors.push('worldmap: 객체여야 한다');
     else {
-      for (const k of ['name', 'shape', 'sceneArt', 'adventureName']) if (wm[k] !== undefined && !isString(wm[k])) errors.push(`worldmap.${k}: 비어 있지 않은 문자열이어야 한다`);
+      for (const k of ['name', 'shape', 'sceneArt', 'adventureName', 'spaName']) if (wm[k] !== undefined && !isString(wm[k])) errors.push(`worldmap.${k}: 비어 있지 않은 문자열이어야 한다`);
       const okPct = (v: unknown) => isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;
       for (const [k, v] of Object.entries((wm.layout ?? {}) as Record<string, unknown>)) if (!(WORLD_PLACES as readonly string[]).includes(k) || !okPct(v)) errors.push(`worldmap.layout.${k}: 알 수 없는 장소이거나 { x, y } 장면 % 가 아니다`);
       if (wm.characterFoot !== undefined && !okPct(wm.characterFoot)) errors.push('worldmap.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');

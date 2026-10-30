@@ -7,7 +7,7 @@ import { TRAITS, traitDescription } from '../src/data/traits';
 import { ABILITY_SLOT_LABEL } from '../src/engine/evolution';
 import { worldMapOf } from '../src/engine/faction';
 import { SPA_PATH } from '../src/ui/spaView';
-import { worldWalkMs, standFoot, WORLD_FADE_AT, WORLD_WALK_MAX_MS, WORLD_WALK_MIN_MS } from '../src/ui/worldMapView';
+import { departFoot, standFoot, WORLD_DEPART_MS, WORLD_MOVE_MS } from '../src/ui/worldMapView';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -60,21 +60,23 @@ describe('137장 3 밖으로 고정 · 월드맵 걸어가서 페이드 전환',
     expect(app).not.toContain('.bha-prop--door');
     expect(app).not.toContain('.bha-prop--market');
   });
-  it('걷기 시간 = 거리 비례, 최소·최대 안, 같은 자리면 0', () => {
+  // C.228 (GDD 153장 3): 목적지까지 걷기 → 한두 걸음 출발 + 바로 페이드로 대체
+  it('출발 = 목적지 쪽으로 짧게, 같은 자리면 그대로, 0.5초 안에 전환', () => {
     for (const f of FACTIONS) {
       const L = worldMapOf(f).layout;
-      const ms = worldWalkMs(standFoot(L.home), standFoot(L.adventure));
-      expect(ms).toBeGreaterThanOrEqual(WORLD_WALK_MIN_MS);
-      expect(ms).toBeLessThanOrEqual(WORLD_WALK_MAX_MS);
-      expect(worldWalkMs(standFoot(L.home), standFoot(L.home))).toBe(0);
+      const a = standFoot(L.home), b = standFoot(L.adventure);
+      const d = departFoot(a, b);
+      expect(Math.hypot(d.x - a.x, d.y - a.y)).toBeLessThan(Math.hypot(b.x - a.x, b.y - a.y) / 2);
+      expect(d.x).toBeGreaterThan(a.x);
+      expect(departFoot(a, a)).toEqual(a);
     }
-    expect(WORLD_FADE_AT).toBeGreaterThan(0.5);
-    expect(WORLD_FADE_AT).toBeLessThan(1);
+    expect(WORLD_DEPART_MS).toBe(400);
+    expect(WORLD_MOVE_MS).toBeLessThanOrEqual(500);
   });
-  it('장소를 고르면 바로 가지 않고 walkTo → 닿을 즈음 페이드 → 화면 전환, 걷는 중 입력 잠금', () => {
-    expect(wm).toContain('if (walking) return; // 걷는 동안 입력 잠금');
+  it('장소를 고르면 walkTo → 출발하자마자 페이드 → 화면 전환, 출발 중 입력 잠금', () => {
+    expect(wm).toContain('if (walking) return; // 출발하는 동안 입력 잠금');
     expect(wm).toContain('walkTo(p);');
-    expect(wm).toContain('if (!fadeStarted && k >= WORLD_FADE_AT) startFade(now);');
+    expect(wm).toContain('if (!fadeStarted && t >= WORLD_FADE_DELAY_MS) startFade();');
     expect(wm).toContain('act[p]();');
     expect(read('src/ui/bha/worldmap.css')).toContain('.bha-worldmap__fade.is-on { opacity: 1;');
   });

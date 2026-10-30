@@ -1,0 +1,1348 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "homeIntro": [
+        {
+          "key": "홈 안내 1 / 11#null",
+          "body": "여기가 둥지다.둥지에 있는 버튼이 무엇을 하는지 하나씩 본다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room is-born",
+          "cover": []
+        },
+        {
+          "key": "홈 안내 2 / 11#null",
+          "body": "밖으로 나가면 웨코문도 지도가 나온다.둥지·시장·모험·도전의 탑 가운데 골라 걸어간다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 3 / 11#null",
+          "body": "해방 수련을 하고 진화 정보를 본다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 4 / 11#null",
+          "body": "도감이다. 만난 진화체와 칭호를 본다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 5 / 11#null",
+          "body": "장비·물건·타일을 보고 쓴다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 6 / 11#null",
+          "body": "머리 위 막대는 배부름·컨디션·광기다.누르면 상태 화면이 열린다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 7 / 11#null",
+          "body": "원정에는 이 체력 그대로 나간다.둥지에 있으면 조금씩 찬다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 8 / 11#null",
+          "body": "먹이·재우기·교감으로 캐릭터를 돌본다.먹이는 원정에서 얻는다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 9 / 11#null",
+          "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 10 / 11#null",
+          "body": "설정·도움말·사진·백업 같은 메뉴가 있다.",
+          "only": null,
+          "sel": "다음",
+          "screen": "bha-room",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 11 / 11#0",
+          "body": "이제 모험을 떠나자.[밖으로]를 누른다.",
+          "only": ".bha-prop--outside",
+          "sel": "밖으로",
+          "screen": "bha-room is-force-out",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "key": "홈 안내 11 / 11#1",
+          "body": "웨코문도 지도다.[모험]을 누르면 떠난다.",
+          "only": ".bha-worldmap [data-place=\"adventure\"]",
+          "sel": "모험",
+          "screen": "bha-room bha-worldmap",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        }
+      ],
+      "wound": [
+        {
+          "step": "튜토리얼 1 / 2",
+          "title": "겨우 쓰러뜨렸다",
+          "body": "겨우 쓰러뜨렸지만 치명상을 입었다.이대로는 위험하다…",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ],
+          "hp": "10",
+          "blink": true,
+          "sway": "bha-wound-sway"
+        },
+        {
+          "step": "튜토리얼 2 / 2",
+          "title": "둥지로",
+          "body": "갈라진 가면 틈으로 영력이 새어 나간다.비틀거리며 둥지로 돌아간다.",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ],
+          "hp": "10",
+          "blink": true,
+          "sway": "bha-wound-sway"
+        }
+      ],
+      "recover": [
+        {
+          "id": "dying",
+          "title": "빈사",
+          "body": "빈사는 치명상을 입어 체력이 10% 위로 차지 않는 상태다.그대로 두면 시간이 지나 사망하고, 구급상자로만 풀린다.",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "to-bag",
+          "title": "빈사부터 치료",
+          "body": "구급상자 1개를 가방에 넣었다.가방을 연다.",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "cure",
+          "title": "구급상자",
+          "body": "빈사는 구급상자로 푼다.구급상자를 누른다.",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "to-spa",
+          "title": "온천",
+          "body": "온천에서 쉬면 1초에 체력 10%·컨디션 10씩 차고 배부름이 1 준다.[밖으로]를 누른다.",
+          "cover": [
+            {
+              "what": "hole",
+              "pct": 0
+            }
+          ]
+        },
+        {
+          "id": "spa-rest",
+          "title": "쉬기",
+          "body": "튜토리얼 온천은 10초면 체력이 가득 찬다. 평소엔 가득 차는 데 5분쯤 걸린다.[다음]을 누르면 방으로 돌아간다.",
+          "cover": []
+        }
+      ],
+      "worldmap": {
+        "forced": {
+          "at": "home",
+          "sel": "adventure"
+        },
+        "focus": {
+          "sel": "spa",
+          "places": [
+            [
+              "home",
+              "둥지"
+            ],
+            [
+              "market",
+              "시장"
+            ],
+            [
+              "adventure",
+              "모험"
+            ],
+            [
+              "tower",
+              "도전의 탑"
+            ],
+            [
+              "spa",
+              "온천"
+            ]
+          ]
+        },
+        "midFade": {
+          "veil": true,
+          "opacity": "0.839953",
+          "char": "bha-art bha-char bha-worldmap__char is-walking",
+          "tutHidden": true
+        },
+        "toSpaMs": 1512,
+        "spaBack": null
+      },
+      "errors": [],
+      "trace": [
+        {
+          "t": 0,
+          "name": null,
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": "",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": "block.1",
+          "dialog": null,
+          "selUse": false,
+          "screen": "",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": "0 / 314"
+        },
+        {
+          "t": 1,
+          "name": "first-absorb",
+          "step": "1 / 3",
+          "title": "이기면 포식",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb",
+          "stage": null,
+          "body": "쓰러뜨린 적을 포식하면 내 것이 된다.특성: 그 적의 기술블록: 그 특성의 전투 블록속성: 그 적의 속성능력치(노력치): 그 적이 강한 능력치의 노력치",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 2,
+          "name": "first-absorb",
+          "step": "2 / 3",
+          "title": "포식 네 갈래",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb",
+          "stage": null,
+          "body": "둘 다 포식: 특성 + 노력치속성만: 특성만(그 속성 쪽으로 자란다)스탯만: 노력치 ×2, 특성 없음안 함: 놓아주고 영압 안정도 ↑포식할수록 광기가 오른다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 3,
+          "name": "first-absorb",
+          "step": "3 / 3",
+          "title": "첫 포식은 연습",
+          "next": {
+            "text": "알겠어요",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "알겠어요",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb",
+          "stage": null,
+          "body": "이번 한 번은 연습이라 특성·속성·광기에 들어가지 않는다.대신 모든 능력치가 똑같이 노력치 +3 오른다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 4,
+          "name": null,
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": "포식하기",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 11,
+          "name": null,
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": "계속",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 18,
+          "name": "wound",
+          "step": "튜토리얼 1 / 2",
+          "title": "겨우 쓰러뜨렸다",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-absorbpage bha-wound",
+          "stage": "0",
+          "body": "겨우 쓰러뜨렸지만 치명상을 입었다.이대로는 위험하다…",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 19,
+          "name": "wound",
+          "step": "튜토리얼 2 / 2",
+          "title": "둥지로",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-absorbpage bha-wound",
+          "stage": "0",
+          "body": "갈라진 가면 틈으로 영력이 새어 나간다.비틀거리며 둥지로 돌아간다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 20,
+          "name": null,
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": "둥지로",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-split bha-split--sticky bha-resultpage",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 27,
+          "name": null,
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": "밖으로",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력12 / 115",
+          "foe": null
+        },
+        {
+          "t": 28,
+          "name": "recover-wait",
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": null,
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력12 / 115",
+          "foe": null
+        },
+        {
+          "t": 33,
+          "name": "recover",
+          "step": "회복 안내 1 / 7",
+          "title": "빈사",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": null,
+          "body": "빈사는 치명상을 입어 체력이 10% 위로 차지 않는 상태다.그대로 두면 시간이 지나 사망하고, 구급상자로만 풀린다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력12 / 115",
+          "foe": null
+        },
+        {
+          "t": 34,
+          "name": "recover-wait",
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": null,
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력12 / 115",
+          "foe": null
+        },
+        {
+          "t": 35,
+          "name": "recover",
+          "step": "회복 안내 2 / 7",
+          "title": "빈사부터 치료",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-prop--chest",
+          "pass": true,
+          "sel": "가방",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": null,
+          "body": "구급상자 1개를 가방에 넣었다.가방을 연다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력12 / 115",
+          "foe": null
+        },
+        {
+          "t": 36,
+          "name": "recover",
+          "step": "회복 안내 2 / 7",
+          "title": "빈사부터 치료",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": null,
+          "body": "구급상자 1개를 가방에 넣었다.가방을 연다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 37,
+          "name": "recover-wait",
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": null,
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 38,
+          "name": "recover",
+          "step": "회복 안내 3 / 7",
+          "title": "구급상자",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": "[data-item=\"med-cure\"]",
+          "pass": true,
+          "sel": "구급상자 ×4",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": "0",
+          "body": "빈사는 구급상자로 푼다.구급상자를 누른다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 39,
+          "name": "recover",
+          "step": "회복 안내 3 / 7",
+          "title": "구급상자",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+          "pass": true,
+          "sel": "닫기",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": "소모품보유: 4구급상자빈사 상태를 바로 푼다(수치는 안 오른다) · 가방",
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": "1",
+          "body": "[사용]을 누른다.구급상자는 상점에서 산다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 40,
+          "name": "recover",
+          "step": "회복 안내 3 / 7",
+          "title": "구급상자",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+          "pass": true,
+          "sel": "사용",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": "소모품보유: 4구급상자빈사 상태를 바로 푼다(수치는 안 오른다) · 가방",
+          "selUse": true,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": "1",
+          "body": "[사용]을 누른다.구급상자는 상점에서 산다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 41,
+          "name": "recover",
+          "step": "회복 안내 3 / 7",
+          "title": "구급상자",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": "[data-item=\"med-cure\"]",
+          "pass": true,
+          "sel": "구급상자 ×3",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": "0",
+          "body": "빈사는 구급상자로 푼다.구급상자를 누른다.",
+          "actor": null,
+          "actfx": true,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 42,
+          "name": "recover",
+          "step": "회복 안내 3 / 7",
+          "title": "구급상자",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+          "pass": true,
+          "sel": null,
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": "1",
+          "body": "[사용]을 누른다.구급상자는 상점에서 산다.",
+          "actor": null,
+          "actfx": true,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 43,
+          "name": "recover",
+          "step": "회복 안내 3 / 7",
+          "title": "구급상자",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": "[data-item=\"med-cure\"]",
+          "pass": true,
+          "sel": "구급상자 ×3",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": "0",
+          "body": "빈사는 구급상자로 푼다.구급상자를 누른다.",
+          "actor": null,
+          "actfx": true,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 44,
+          "name": "recover",
+          "step": "회복 안내 3 / 7",
+          "title": "구급상자",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "stage": "1",
+          "body": "빈사가 풀렸다.[다음]을 누른다.",
+          "actor": null,
+          "actfx": true,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 45,
+          "name": "recover-wait",
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": null,
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력12 / 115",
+          "foe": null
+        },
+        {
+          "t": 46,
+          "name": "recover",
+          "step": "회복 안내 4 / 7",
+          "title": "온천",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-prop--outside",
+          "pass": true,
+          "sel": "밖으로",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": "0",
+          "body": "온천에서 쉬면 1초에 체력 10%·컨디션 10씩 차고 배부름이 1 준다.[밖으로]를 누른다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력12 / 115",
+          "foe": null
+        },
+        {
+          "t": 47,
+          "name": "recover",
+          "step": "회복 안내 4 / 7",
+          "title": "온천",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-worldmap [data-place=\"spa\"]",
+          "pass": true,
+          "sel": "온천",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room bha-worldmap",
+          "stage": "1",
+          "body": "웨코문도에 온천이 있다.[온천]을 누른다. 체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 48,
+          "name": "recover",
+          "step": "회복 안내 4 / 7",
+          "title": "온천",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-worldmap [data-place=\"spa\"]",
+          "pass": true,
+          "sel": "온천",
+          "selInTut": false,
+          "selOnly": true,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room bha-worldmap is-walking",
+          "stage": "1",
+          "body": "웨코문도에 온천이 있다.[온천]을 누른다. 체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다.",
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 49,
+          "name": "recover",
+          "step": "회복 안내 4 / 7",
+          "title": "온천",
+          "next": {
+            "text": "다음",
+            "disabled": true
+          },
+          "only": ".bha-worldmap [data-place=\"spa\"]",
+          "pass": true,
+          "sel": null,
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-spa",
+          "stage": "1",
+          "body": "웨코문도에 온천이 있다.[온천]을 누른다. 체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다.",
+          "actor": "bha-spa__actor is-entering is-walking",
+          "actfx": false,
+          "spaHp": "체력 15 / 115, 컨디션 80, 배부름 78",
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 50,
+          "name": "recover",
+          "step": "회복 안내 4 / 7",
+          "title": "온천",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-spa",
+          "stage": "2",
+          "body": "체력이 1초에 10%씩 빠르게 찬다.[다음]을 누른다.",
+          "actor": "bha-spa__actor is-wading is-seated",
+          "actfx": false,
+          "spaHp": "체력 95 / 115, 컨디션 100, 배부름 71",
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 51,
+          "name": "recover-wait",
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": null,
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-spa",
+          "stage": null,
+          "body": null,
+          "actor": "bha-spa__actor is-wading is-seated",
+          "actfx": false,
+          "spaHp": "체력 98 / 115, 컨디션 100, 배부름 70",
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 52,
+          "name": "recover",
+          "step": "회복 안내 5 / 7",
+          "title": "쉬기",
+          "next": {
+            "text": "다음",
+            "disabled": false
+          },
+          "only": null,
+          "pass": false,
+          "sel": "다음",
+          "selInTut": true,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-spa",
+          "stage": null,
+          "body": "튜토리얼 온천은 10초면 체력이 가득 찬다. 평소엔 가득 차는 데 5분쯤 걸린다.[다음]을 누르면 방으로 돌아간다.",
+          "actor": "bha-spa__actor is-wading is-seated",
+          "actfx": false,
+          "spaHp": "체력 101 / 115, 컨디션 100, 배부름 70",
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 53,
+          "name": null,
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": "월드맵으로 돌아가기",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-spa",
+          "stage": null,
+          "body": null,
+          "actor": "bha-spa__actor is-wading is-leaving is-walking",
+          "actfx": false,
+          "spaHp": "체력 112 / 115, 컨디션 100, 배부름 69",
+          "hp": null,
+          "foe": null
+        },
+        {
+          "t": 54,
+          "name": null,
+          "step": null,
+          "title": null,
+          "next": null,
+          "only": null,
+          "pass": false,
+          "sel": "밖으로",
+          "selInTut": false,
+          "selOnly": false,
+          "selSc": null,
+          "dialog": null,
+          "selUse": false,
+          "screen": "bha-room",
+          "stage": null,
+          "body": null,
+          "actor": null,
+          "actfx": false,
+          "spaHp": null,
+          "hp": "체력115 / 115",
+          "foe": null
+        }
+      ],
+      "tutWorldmap": {
+        "name": "recover",
+        "step": "회복 안내 4 / 7",
+        "title": "온천",
+        "next": {
+          "text": "다음",
+          "disabled": true
+        },
+        "only": ".bha-worldmap [data-place=\"spa\"]",
+        "pass": true,
+        "sel": "온천",
+        "selInTut": false,
+        "selOnly": true,
+        "selSc": null,
+        "dialog": null,
+        "selUse": false,
+        "screen": "bha-room bha-worldmap",
+        "stage": "1",
+        "body": "웨코문도에 온천이 있다.[온천]을 누른다. 체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다.",
+        "actor": null,
+        "actfx": false,
+        "spaHp": null,
+        "hp": null,
+        "foe": null
+      },
+      "spaFill": [
+        {
+          "ms": 106,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-entering is-walking"
+        },
+        {
+          "ms": 405,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-entering is-walking"
+        },
+        {
+          "ms": 704,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-entering is-walking"
+        },
+        {
+          "ms": 1010,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-entering is-walking is-wading"
+        },
+        {
+          "ms": 1305,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-entering is-walking is-wading"
+        },
+        {
+          "ms": 1605,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-entering is-walking is-wading"
+        },
+        {
+          "ms": 1906,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-entering is-walking is-wading"
+        },
+        {
+          "ms": 2205,
+          "visible": false,
+          "top": 240,
+          "left": 194,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 2504,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 2804,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 3104,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 3403,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 3704,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 4004,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 4305,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 4604,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 4904,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 5203,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 5504,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 5805,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 6104,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 6404,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 6704,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        },
+        {
+          "ms": 7004,
+          "visible": true,
+          "top": 24,
+          "left": 108,
+          "actor": "bha-spa__actor is-wading is-seated"
+        }
+      ],
+      "stall": {
+        "t": 94,
+        "name": null,
+        "step": null,
+        "title": null,
+        "next": null,
+        "only": null,
+        "pass": false,
+        "sel": "밖으로",
+        "selInTut": false,
+        "selOnly": false,
+        "selSc": null,
+        "dialog": null,
+        "selUse": false,
+        "screen": "bha-room",
+        "stage": null,
+        "body": null,
+        "actor": null,
+        "actfx": false,
+        "spaHp": null,
+        "hp": "체력115 / 115",
+        "foe": null,
+        "sigCount": 40
+      },
+      "recoverDone": false,
+      "end": {
+        "name": null,
+        "step": null,
+        "title": null,
+        "next": null,
+        "only": null,
+        "pass": false,
+        "sel": "온천",
+        "selInTut": false,
+        "selOnly": false,
+        "selSc": null,
+        "dialog": null,
+        "selUse": false,
+        "screen": "bha-room bha-worldmap",
+        "stage": null,
+        "body": null,
+        "actor": null,
+        "actfx": false,
+        "spaHp": null,
+        "hp": null,
+        "foe": null
+      }
+    }
+  ]
+}

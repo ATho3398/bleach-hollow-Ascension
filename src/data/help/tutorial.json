@@ -144,8 +144,7 @@
       "id": "to-spa",
       "targets": [
         "@.bha-prop--outside",
-        "@.bha-worldmap [data-place=\"market\"]",
-        "@.bha-market [data-spot=\"spa\"]",
+        "@.bha-worldmap [data-place=\"spa\"]",
         "@.bha-spa__actor"
       ],
       "title": "{spaName}",
@@ -153,21 +152,15 @@
       "stages": [
         {
           "targets": [
-                "@.bha-prop--outside"
+            "@.bha-prop--outside"
           ],
           "body": "{spaName}에서 쉬면 1초에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
         },
         {
           "targets": [
-            "@.bha-worldmap [data-place=\"market\"]"
+            "@.bha-worldmap [data-place=\"spa\"]"
           ],
-          "body": "{marketName}에 {spaName}이(가) 있다.\n[{marketName}]을(를) 누른다."
-        },
-        {
-          "targets": [
-            "@.bha-market [data-spot=\"spa\"]"
-          ],
-          "body": "[{spaName}]을(를) 누른다.\n체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
+          "body": "{worldMapName}에 {spaName}이(가) 있다.\n[{spaName}]을(를) 누른다. 체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
         },
         {
           "targets": [

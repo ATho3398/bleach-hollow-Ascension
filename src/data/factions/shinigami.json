@@ -216,7 +216,7 @@
   "breakthroughText": "호로화가 한계를 넘었다. 영압이 일그러지고 공허가 몰려든다…",
   "frenzyName": "호로화",
   "market": { "name": "시장" },
-  "worldmap": { "name": "소울 소사이어티", "adventureName": "모험" },
+  "worldmap": { "name": "소울 소사이어티", "adventureName": "모험", "spaName": "온천" },
   "room": {
     "shape": "room",
     "sceneArt": "scene.room",

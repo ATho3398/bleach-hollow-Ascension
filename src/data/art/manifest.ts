@@ -94,6 +94,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 월드맵 탑 (GDD 139장 1, C.217): 키 = place.tower.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
   'place.tower.hollow': {},
   'place.tower.shinigami': {},
+  // 월드맵 온천 (GDD 153장 1, C.228): 키 = place.spa.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
+  'place.spa.hollow': {},
+  'place.spa.shinigami': {},
   // 휴식 칸 장소 그림 (GDD 128장 3, C.202): 걷는 앞쪽에 서는 장소 — 사용자 그림 대기(비어 있으면 임시 웅덩이 그림). 키 = place.<타일 id>.<종족 id>
   'place.rest-a.hollow': {},
   'place.rest-a.shinigami': {},

@@ -8,7 +8,7 @@ import { riskText, riskZones, stabilityZones, zoneLines } from '../../data/help/
 import { MINUS, num, numLine, pct, pctDelta, range, SECTION, signed, zonesBy, type Zone } from '../../data/help/textFormat';
 import { bondIdleBonus, bondStage, CARE_STATUS_NAMES as CARE_NAMES, deathHoursOf, reviveEvLossOf } from '../../engine/nest';
 import { fixParticles } from '../../engine/josa';
-import { marketOf, type FactionConfig } from '../../engine/faction';
+import { DEFAULT_WORLDMAP, type FactionConfig } from '../../engine/faction';
 import type { InfoBody, InfoDoc, InfoGroup } from './infoTip';
 import { BOND_STAGE_NAMES, type StatusChip } from './roomLogic';
 
@@ -18,7 +18,7 @@ const BD = NX.bond;
 const RX = BALANCE.provisional.risk;
 const PX = BALANCE.provisional.expedition;
 
-type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market'>>;
+type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market' | 'worldmap'>>;
 
 export type StatusInfoKind = StatusChip['kind'] | 'stab' | 'dead';
 
@@ -91,7 +91,8 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine(a.pet, signed(NX.petCondition)),
           numLine(`${f.fullnessName} ${CP.conditionBelowFullness} 이하`, `시간당 ${MINUS}${num(CP.conditionPerHour)}`, `${f.fullnessName} 0이면 ×2`),
           // 온천 회복 (GDD 135장 3 — 배부름 홈 대기 회복은 수정 v5.315 에서 폐기)
-          numLine(f.room ? marketOf({ market: f.market }).props.spa : '온천', `1분에 ${signed(Math.round(NX.homeHp.spa.conditionPerSecond * 60))}`), // 평소 온천 약 5분에 가득 (GDD 145장 1)
+          numLine(f.worldmap?.spaName ?? DEFAULT_WORLDMAP.spaName, // 온천 이름 = 월드맵 장소 이름 (GDD 153장 1)
+             `1분에 ${signed(Math.round(NX.homeHp.spa.conditionPerSecond * 60))}`), // 평소 온천 약 5분에 가득 (GDD 145장 1)
           numLine('원정 패배', `${NX.defeatCondition}까지 떨어진다`),
           numLine(`${f.frenzyName} 후 귀환`, signed(-RX.frenzyConditionLoss)),
         ],

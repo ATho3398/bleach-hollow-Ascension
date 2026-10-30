@@ -247,7 +247,7 @@ export function startApp(host: HTMLElement): void {
   /**
    * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 7장을 순서대로. 건너뛰기 없음.
    * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
-   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (밖으로 → 시장 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
+   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (밖으로 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -257,15 +257,15 @@ export function startApp(host: HTMLElement): void {
     if (!start) return false;
     recoverOpen = true;
     const props = roomOf(faction).props;
-    const mk = marketOf(faction); // 온천은 장터 안 (GDD 127장 4, C.201)
+    const wm = worldMapOf(faction); // 온천 = 월드맵 장소 (GDD 153장 1)
     const HH = BALANCE.provisional.nest.homeHp;
     const TR = BALANCE.provisional.tutorialRecover;
     const pct = (x: number) => String(Math.round(x * 100));
     const vars = {
-      chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
+      chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalMin: String(Math.round(1 / HH.spa.hpPerSecond / 60)), // 튜토리얼 온천 10초 · 평소 5분 (GDD 145장 1) idleHpPct: pct(HH.idlePerMinute),
-      // 온천 가는 길 (GDD 130장 5): 밖으로 → 시장 → 온천
-      spaPath: `${props.outside} → ${mk.name} → ${mk.props.spa}`,
+      // 온천 가는 길 (GDD 153장 1): 밖으로 → 월드맵 → 온천
+      spaPath: `${props.outside} → ${wm.name} → ${wm.places.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
       spaFirst: props.outside, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
     };
@@ -276,8 +276,8 @@ export function startApp(host: HTMLElement): void {
     const onRoomRender = () => { if (nav.top?.id === 'room') nav.top.render(); }; // 지급한 먹이 개수가 독에 보이게
     const EPS = 1e-6;
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
-    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
-    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'; // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
+    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → (밖으로 → 월드맵 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
+    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]'; // 방 → 밖으로 → 월드맵 온천 (GDD 153장 1)
     // 썼으면 물건 창을 닫는다 (C.214): 시작 구급상자 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
     const closeItemWhen = (done: boolean): boolean => {
       if (done) document.querySelector<HTMLButtonElement>('.bha-itemdialog .bha-itemmodal__close')?.click();
@@ -873,15 +873,15 @@ export function startApp(host: HTMLElement): void {
   /** 온천 나가기 연출이 끝나 실제로 뒤로 가는 중 (interceptBack 이 다시 맡지 않게) */
   let spaLeaving = false;
   function openSpa(faction: FactionConfig, s: SaveData, enter = true): void {
-    const name = marketOf(faction).props.spa;
+    const name = worldMapOf(faction).places.spa;
     if (enter) {
       if (careBlocked(s)) return;
       const why = s.nest.spa ? null : spaEnter(s);
       if (why) return void showToast({ eyebrow: name, title: SPA_BLOCK_TEXT[why], meta: '' }, 0, 2600);
       persist();
     }
-    // 시장에서 들어왔으면 [돌아가기] = 시장 (GDD 130장 3). 껐다 켜서 방에서 바로 열린 온천은 옛 이름 그대로
-    const backLabel = nav.top?.id === 'market' ? `${fixParticles(`${marketOf(faction).name}(으)로`)} 돌아가기` : undefined;
+    // 월드맵에서 들어왔으면 [돌아가기] = 월드맵 (GDD 153장 1 — 시장 안 칸은 C.227 에서 삭제). 껐다 켜서 방에서 바로 열린 온천은 옛 이름 그대로
+    const backLabel = nav.top?.id === 'worldmap' ? '월드맵으로 돌아가기' : undefined;
     nav.push({
       id: 'spa',
       render: () => {
@@ -951,8 +951,10 @@ export function startApp(host: HTMLElement): void {
       onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
       // 탑 (GDD 139장 1): 모험 화면 탭에서 월드맵 장소로. 사망이면 막힘 안내
       onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },
-      // 첫 모험 강제 (GDD 131장 2): 홈·시장·탑 잠김. 탑 해금 전(36장)이면 탑은 이유 한 줄과 함께 잠김
-      locked: forceAdventure ? ['home', 'market', 'tower'] : undefined,
+      // 온천 (GDD 153장 1): 시장 안 칸 → 월드맵 장소. 뒤로 = 월드맵, 저절로 나오면 방(그대로)
+      onSpa: () => { openSpa(faction, s); if (nav.top?.id === 'spa') worldAt = 'spa'; }, // 못 들어갔으면(막힘 알림) 제자리
+      // 첫 모험 강제 (GDD 131장 2): 홈·시장·탑·온천 잠김. 탑 해금 전(36장)이면 탑은 이유 한 줄과 함께 잠김
+      locked: forceAdventure ? ['home', 'market', 'tower', 'spa'] : undefined,
       lockReasons: towerOpen(s.runLog, faction.id, s.tower.best) ? undefined : { tower: towerLabels(faction).locked },
       onLocked: (p) => showToast(!forceAdventure && p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' } : FORCE_HINT, 0, 1800),
     });

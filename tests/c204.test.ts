@@ -34,10 +34,10 @@ describe('130장 2·3 월드맵·시장 (종족 설정)', () => {
   it('월드맵 이름 = 호로 웨코문도 / 사신 소울 소사이어티, 장소 = 홈(nestName)·시장·모험·탑(139장 1)', () => {
     expect(worldMapOf(getFaction('hollow')).name).toBe('웨코문도');
     expect(worldMapOf(getFaction('shinigami')).name).toBe('소울 소사이어티');
-    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'adventure', 'tower']);
+    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'adventure', 'tower', 'spa']); // 온천 = C.228 (GDD 153장 1)
     for (const f of FACTIONS) {
       const w = worldMapOf(f);
-      expect(w.places).toEqual({ home: f.nestName, market: '시장', adventure: '모험', tower: '도전의 탑' });
+      expect(w.places).toEqual({ home: f.nestName, market: '시장', adventure: '모험', tower: '도전의 탑', spa: '온천' }); // 온천 = C.228
       expect(w.sceneArt).toBe('scene.worldmap');
     }
     expect(worldMapOf(getFaction('hollow')).places.home).toBe('둥지');
@@ -77,8 +77,8 @@ describe('130장 화면 연결 (app.ts·worldMapView)', () => {
     expect(wm).toContain("if (p === 'market' && here)");
     expect(wm).toContain("if ((p === 'adventure' || p === 'tower') && save.nest.dead)"); // C.217: 탑도 사망 잠김 (139장 1)
   });
-  it('회복 안내 온천: 밖으로 → 시장 → 온천, 대상 = 밖으로 (C.206 부터 사용자가 직접 간다)', () => {
-    expect(app).toContain(`'.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'`);
+  it('회복 안내 온천: 밖으로 → 월드맵 온천 (C.228, GDD 153장 1), 대상 = 밖으로 (C.206 부터 사용자가 직접 간다)', () => {
+    expect(app).toContain(`'.bha-prop--outside, .bha-worldmap [data-place="spa"]'`);
     expect(read('src/data/help/tutorial.json')).toContain('"@.bha-prop--outside"');
   });
 });

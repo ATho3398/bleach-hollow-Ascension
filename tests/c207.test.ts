@@ -46,7 +46,7 @@ describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
   });
   it('강제 중: 방 다른 버튼 흐린 잠김, 월드맵 홈·시장 잠김, 뒤로 = 짧은 안내', () => {
     expect(app).toContain('forceOutside: forceAdventure,');
-    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'tower'] : undefined,"); // C.217: 탑도 잠김 (139장 1)
+    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'tower', 'spa'] : undefined,"); // C.217: 탑도 잠김 (139장 1)
     expect(app).toContain("const FORCE_HINT = { eyebrow: '튜토리얼', title: '먼저 모험을 떠나자', meta: '' };");
     expect(read('src/ui/roomView.ts')).toContain("if (hd.forceOutside) main.classList.add('is-force-out');");
     expect(read('src/ui/bha/worldmap.css')).toContain('.bha-room.is-force-out .bha-homedock');

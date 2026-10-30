@@ -1363,3 +1363,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **주는 곳 없음**: 전투 보상·상점·개발 메뉴 아이템 생성 어디에도 없음(154장 3 수정). 캡처·테스트는 세이브에 직접 넣는다.
 - 테스트: 새 `tests/c229.test.ts` 4개(이름·순서 22종·호박 보석 / 처음 0개·물건 탭에 안 섞임 / 개발 메뉴에 없음 / 저장·불러오기 유지·모르는 id 버림). 전체 2301 통과, balance:check 회귀 가드 통과.
 - 캡처 `docs/captures/c229/`(`scripts/c229-proof.cjs`, 1배 844×390, 호로): 01 기타 창(재료 8종) · 02 0개 · 03 재료 상세 창(기기 ▼▼ ✓ 로 연 강철, 뒤로 = 닫힘 확인).
+## C.228 — 온천 = 월드맵 장소 · 월드맵 이동 = 출발하자마자 페이드 (GDD 153장 1 월드맵 쪽·3, v5.348, S-23, 코딩168 Opus)
+사용 모델: Opus 5.5. `PATCH_LABEL` C.230(C.229 가 먼저 올라가 그보다 크게). 세이브·밸런스 변경 없음(SAVE 그대로, BALANCE 그대로). C.227(코딩167) 중간 2 의 장터 온천 칸 삭제 위에 얹음.
+- 사용자 원문: "-그리고 온천은 상점에서 빼서 월드맵으로 옮겨 … -월드맵 목적지까지 다 걸어가는거 보여줄 필요 없고, 출발하는거 인식만 시키면 돼. 걍 목적지로 출발하면서 바로 페이드아웃 걸어"
+- **온천 장소**: `WORLD_PLACES` = home·market·adventure·tower·**spa**, `WorldMapConfig.spaName`(종족 설정 worldmap.spaName, 기본 '온천')·layout.spa (18, 50), 매니페스트 `place.spa.<종족>` 비움. 월드맵 핸들러 `onSpa` → `openSpa`(들어가면 worldAt = spa), [돌아가기] = '월드맵으로 돌아가기'. 첫 모험 강제 잠김 목록에 spa. 온천 이름 = `worldMapOf(f).places.spa`(app·spaView·statusInfo — 시장 설정에서 분리).
+- **튜토리얼 회복 안내**: `to-spa` 단계 = 밖으로 → `.bha-worldmap [data-place="spa"]` → 쉬는 중, 문구 '{worldMapName}에 {spaName}이(가) 있다', spaPath = 밖으로 → 월드맵 이름 → 온천.
+- **월드맵 이동**: `worldWalkMs`·`WORLD_WALK_*`·`WORLD_FADE_AT` 삭제 → `departFoot`(목적지 쪽 `WORLD_DEPART_PCT` 6%)·`WORLD_DEPART_MS` 400·`WORLD_FADE_DELAY_MS` 100·`WORLD_FADE_MS` 320·`WORLD_MOVE_MS` 420. beginSceneMove 는 페이드인 끝까지(그대로).
+- 테스트: 새 `tests/c228.test.ts` 7개, c204·c207·c208·c215·c217 기대값 갱신.
+- 캡처 `docs/captures/c228/`(`scripts/c228-proof.cjs`, 1배 844×390, 호로): 01 월드맵 온천 초점 · 02 출발 직후 페이드 중(0.22초, 막 불투명도 0.84) · 03 회복 안내 4/7 월드맵 [온천] 단계.
+- 발견(이번 변경 전 main 에서도 같음, 손대지 않음): 캡처 스크립트에서 회복 안내 5/7(쉬기) [다음] → 방으로 온 뒤 6/7 먹이 카드가 뜨지 않고 멈춘다(proof.json stall). 마스터에게 보고.
+
