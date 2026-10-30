@@ -96,7 +96,7 @@
       "targets": [
         "battle.tray"
       ],
-      "title": "{chainName}{chainMax}로 마무리",
+      "title": "{chainName}{chainMax}(으)로 마무리",
       "body": "붙은 블록 하나를 누르면 {chainMax}개가 한꺼번에 나간다.\n블록을 눌러 적을 쓰러뜨린다."
     }
   ],

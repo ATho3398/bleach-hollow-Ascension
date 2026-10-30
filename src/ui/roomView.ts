@@ -2,6 +2,7 @@
 //   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 장터=장터 화면(상점·온천·떠돌이 상인, C.201 GDD 127장) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·사진·다마고치·트랙 전환·백업·처음 화면·닫기, GDD 100장).
 // 위 한 줄: 원정 이어하기만 (이름표는 상태 칩 위, C.170). 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { infoTip } from './bha/infoTip';
+import { fixParticles } from '../engine/josa';
 import { roomStatusInfo } from './bha/statusInfo';
 import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
@@ -125,9 +126,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     for (const t of [
       `노력치 전부 −${loss}% (교감 ${Math.round(n.bond)} 기준)`,
       `진화 초기화 — 1단계 ${faction.tierNames[0]}(으)로 다시 시작`,
-      `${faction.fullnessName}·컨디션·${faction.stabilityName}은 시작값`,
+      fixParticles(`${faction.fullnessName}·컨디션·${faction.stabilityName}은(는) 시작값`),
       '가진 물건·골드·타일·흡수 특성·도감·칭호·스킨은 그대로',
-      `${faction.rebirth.name}과 다르다 — 보상·횟수 없음`,
+      fixParticles(`${faction.rebirth.name}과(와) 다르다 — 보상·횟수 없음`),
     ]) list.append(el('li', '', t));
     confirmDialog({ title: '부활한다', body: '되돌릴 수 없다.', content: list, yes: '부활', no: '아니오', danger: true, onYes: () => hd.onRevive?.() });
   }

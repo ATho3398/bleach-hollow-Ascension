@@ -97,7 +97,7 @@
     "note": "C.207 (GDD 131장) 처음 켰을 때 홈 안내: 카드는 방에 실제로 있는 것만(대상이 화면에 없으면 건너뜀). 자리표시자는 종족 설정 + 앱이 넣는 이름(homeIntro vars) · last.stages = 월드맵 켬일 때 누를 때마다 따라가는 단계(GDD 132장 1, 끔이면 앱이 뺀다)",
     "intro": {
       "title": "{nestName}",
-      "body": "여기가 {nestName}다.\n{nestName}에 있는 버튼이 무엇을 하는지 하나씩 본다."
+      "body": "여기가 {nestName}(이)다.\n{nestName}에 있는 버튼이 무엇을 하는지 하나씩 본다."
     },
     "items": [
       {
@@ -138,7 +138,7 @@
           "@.bha-room__status"
         ],
         "title": "상태",
-        "body": "머리 위 막대는 배부름·컨디션·{riskGaugeName}이다.\n누르면 상태 화면이 열린다."
+        "body": "머리 위 막대는 배부름·컨디션·{riskGaugeName}(이)다.\n누르면 상태 화면이 열린다."
       },
       {
         "id": "hp",

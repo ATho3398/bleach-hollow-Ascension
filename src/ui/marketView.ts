@@ -2,6 +2,7 @@
 // 안에 온천·상점(방에서 옮김)과 떠돌이 상인(와 있을 때만 서 있음, 누르면 떠돌이 상인 창). 뒤로·[방으로 돌아가기](왼쪽 위, 온천과 같은 자리 — GDD 129-1) = 방.
 // 배경 그림 키 scene.market·자리 그림(prop.spa·prop.shop·prop.wanderer)은 사용자 그림 대기 — 없으면 임시 배경(좌판 줄)과 아이콘.
 import { artUrls } from '../data/art/manifest';
+import { fixParticles } from '../engine/josa';
 import { marketOf, MARKET_SPOTS, type FactionConfig, type MarketSpot } from '../engine/faction';
 import type { SaveData } from '../game';
 import { el, mountApp } from './bha/dom';
@@ -31,7 +32,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   // ── 위 한 줄: [방으로 돌아가기](왼쪽 위 작게, 온천과 같은 모양·자리 — GDD 129-1) · 이름 · 떠돌이 상인 소식 ──
   const hud = el('header', 'bha-room__hud bha-market__hud');
   const titles = el('div', 'bha-market__titles');
-  titles.append(el('h1', 'bha-market__title', mk.name), el('p', 'bha-small bha-market__sub', here ? `${mk.props.wanderer}이 와 있다. 다음 원정에서 돌아오면 떠난다.` : `${mk.props.wanderer}은 원정을 돌다 보면 가끔 들른다.`));
+  titles.append(el('h1', 'bha-market__title', mk.name), el('p', 'bha-small bha-market__sub', fixParticles(here ? `${mk.props.wanderer}이(가) 와 있다. 다음 원정에서 돌아오면 떠난다.` : `${mk.props.wanderer}은(는) 원정을 돌다 보면 가끔 들른다.`)));
   const backBtn = spaceBackButton(hd.onBack, hd.backLabel);
   hud.append(backBtn, titles);
 

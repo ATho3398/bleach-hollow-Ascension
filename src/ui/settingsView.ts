@@ -2,6 +2,7 @@
 // [저장] 없이 뒤로(◀·Esc·폰 뒤로가기·닫기)면 "바꾼 설정을 저장할까요?" [저장][저장 안 함][취소].
 // 공통 설정(기기 전체, 항목마다 localStorage 키) + 게임 안에서는 [공통]/[이 슬롯] 토글 — 슬롯 설정(세이브 settings)은 항목별로 공통보다 우선(settingsScope.ts).
 import { button, el, enableRangeDrag, icon } from './bha/dom';
+import { fixParticles } from '../engine/josa';
 import { endScreen, screenSignal } from './bha/screenScope';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { registerCancelHook } from './bha/shortcuts';
@@ -511,7 +512,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     paints.push(() => {
       const has = parseSlotSettings(slotSaved) !== null || parseSlotSettings(slot) !== null;
       clearBtn.disabled = !has;
-      slotNote.textContent = has ? `${host.label}에만 쓰는 설정이 있다. 지우면 다시 공통 설정을 따른다.` : `${host.label}은 공통 설정을 따른다. 머리의 [이 슬롯]에서 바꾸고 저장하면 이 슬롯에서만 우선한다.`;
+      slotNote.textContent = has ? `${host.label}에만 쓰는 설정이 있다. 지우면 다시 공통 설정을 따른다.` : fixParticles(`${host.label}은(는) 공통 설정을 따른다. 머리의 [이 슬롯]에서 바꾸고 저장하면 이 슬롯에서만 우선한다.`);
     });
     slotPanels.push(panel('슬롯 설정', clearBtn, slotNote));
   }

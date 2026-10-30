@@ -2,6 +2,7 @@
 // 규칙·시간은 engine/training 이 정하고, 화면은 상태를 그리기만 한다. 문구·종목 이름은 종족 설정 training 에서 읽는다 (종족 id 분기 없음).
 // 조작은 한 손가락: 화면 버튼 / 칸 누르기, PC 는 방향키·스페이스(숫자 1~9 = 먹이사슬 칸).
 import { fullnessDeltaText } from './bha/fullness';
+import { fixParticles } from '../engine/josa';
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
 import {
@@ -23,7 +24,7 @@ const LB = BALANCE.provisional.liberation;
 /** 제단(수련) 화면 진입 문구: 5단계 미만이면 "<5단계 이름>이(가) 되면 열린다" */
 export function trainingLockedText(f: Pick<FactionConfig, 'tierNames' | 'training'>): string {
   const t5 = f.tierNames[LB.minTierIndex] ?? '5단계';
-  return `${t5}${hasBatchim(t5) ? '이' : '가'} 되면 ${f.training.title}이 열린다.`;
+  return fixParticles(`${t5}${hasBatchim(t5) ? '이' : '가'} 되면 ${f.training.title}이(가) 열린다.`);
 }
 
 function hasBatchim(word: string): boolean {

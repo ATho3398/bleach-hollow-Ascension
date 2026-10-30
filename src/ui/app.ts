@@ -997,7 +997,7 @@ export function startApp(host: HTMLElement): void {
         if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
         wandererAnnounced = visit.at;
         const path = `${roomOf(faction).props.outside} → ${mk.name}`; // 밖으로 → 시장 (GDD 130장 2)
-        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: `${mk.props.wanderer}이 ${mk.name}에 왔다`, meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
+        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: fixParticles(`${mk.props.wanderer}이(가) ${mk.name}에 왔다`), meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
       }, 2600);
     }
     if (notes.length > 0) {

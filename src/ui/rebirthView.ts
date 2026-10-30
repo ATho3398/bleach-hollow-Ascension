@@ -1,6 +1,7 @@
 // 환생 화면 (GDD 22-1·22-7): 확인 1(초기화·남김 목록 + 계승할 특성 1개 고르기) → 확인 2(최종, app 의 confirmDialog) → 연출(짧은 페이드 + 종족 설정 문구).
 // 문구는 종족 설정(rebirth·tierNames·slotName·rankBattleName·riskGaugeName)에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.rebirth.
 import { BALANCE } from '../config/balance';
+import { fixParticles } from '../engine/josa';
 import { getTrait, traitName } from '../data/traits';
 import { formName, tryGetForm } from '../data/evolution';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
@@ -130,7 +131,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
 /** 최종 확인(확인 2) 문구 */
 export function rebirthFinalText(faction: FactionConfig, keepTraitId: string | null): { title: string; body: string } {
   const keep = keepTraitId ? `「${traitName(keepTraitId, faction.id)}」 하나만 가지고` : '특성 없이';
-  return { title: `${faction.rebirth.name} 최종 확인`, body: `되돌릴 수 없다. ${keep} 1단계 ${faction.tierNames[0]}로 돌아간다. (직전 상태는 자동 백업된다)` };
+  return { title: `${faction.rebirth.name} 최종 확인`, body: fixParticles(`되돌릴 수 없다. ${keep} 1단계 ${faction.tierNames[0]}(으)로 돌아간다. (직전 상태는 자동 백업된다)`) };
 }
 
 /**

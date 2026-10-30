@@ -3,6 +3,7 @@
 // C.201 (GDD 128장 6): 화면 전체가 온천 장면, 캐릭터가 걸어 들어와 탕에 앉는다, [방으로 돌아가기]·ⓘ(쉬는 중 설명) = 왼쪽 위 작게, 체력·배부름 = 방처럼 머리 위 상태 창.
 // 배경 그림 키 scene.spa·온천 모션은 사용자 그림 대기 — 없으면 임시 배경(탕 도형)과 CSS 임시 연출(몸 아래쪽을 물이 가림). 이름은 종족 설정 market.props.spa.
 import { BALANCE } from '../config/balance';
+import { fixParticles } from '../engine/josa';
 import { artUrls } from '../data/art/manifest';
 import type { FactionConfig } from '../engine/faction';
 import { fullnessOfNest, previewHomeHp, type SpaEnd } from '../engine/nest';
@@ -51,7 +52,7 @@ export interface SpaHandlers {
 /** 온천에서 나온 까닭 한 줄 (알림 띠·튜토리얼이 같이 쓴다) */
 export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: string): string {
   if (e.reason === 'full') return `체력과 컨디션이 다 찼다 (체력 ${Math.round(e.hpTo * 100)}%). 방으로 돌아왔다.`;
-  if (e.reason === 'hungry') return `${fullnessName}이 바닥나 방으로 돌아왔다.`;
+  if (e.reason === 'hungry') return fixParticles(`${fullnessName}이(가) 바닥나 방으로 돌아왔다.`);
   return '방으로 돌아왔다.';
 }
 
@@ -205,7 +206,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     lead: `${name}에서 쉬는 중이다.`,
     groups: [
       { title: '쉬는 동안', lines: [`1분에 체력 +${Math.round(SP.hpPerMinute * 100)}% · 컨디션 +${SP.conditionPerMinute} · ${faction.fullnessName} −${SP.fullnessPerMinute}`, '앱을 꺼도 계속 쉰다'] },
-      { title: '저절로 나올 때', lines: [`체력과 컨디션이 둘 다 다 차거나 ${faction.fullnessName}이 0 이 되면 방으로 돌아간다`] },
+      { title: '저절로 나올 때', lines: [fixParticles(`체력과 컨디션이 둘 다 다 차거나 ${faction.fullnessName}이(가) 0 이 되면 방으로 돌아간다`)] },
       ...(n.collapsed ? [{ title: '빈사', lines: [`체력은 ${dyingPct}% 까지만 찬다`, '치료제로 풀어야 더 찬다'] }] : []),
     ],
   }));
