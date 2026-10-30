@@ -63,12 +63,30 @@ if 'bodies' in data:
             if lid in rig['looks'] and isinstance(v, dict) and isinstance(rig['looks'][lid].get(k), dict):
                 rig['looks'][lid][k]['at'] = v['at']
     if RIG_ID != 'humanoid':
-        open(RIG_JSON, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '
-')
+        open(RIG_JSON, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '\n')
     else:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from feet_weapon import dump  # noqa: E402
         dump(rig)
+    # 동작 키 고친 것(GDD 115-A 55, 편집기 '이 동작에만'): '<묶음>/<동작>' → 뼈 → 키 목록 — 그 뼈 트랙을 통째로 바꾼다
+    medits = data.get('motionEdits') or {}
+    if medits:
+        mp = os.path.join(DRAFT_DIR, 'motions.json' if RIG_ID == 'humanoid' else f'{RIG_ID}-motions.json')
+        mo = json.load(open(mp, encoding='utf-8'))
+        n = 0
+        for key, edits in medits.items():
+            setn, mid = key.split('/', 1)
+            target = mo.get('sets', {}).get(setn, {}).get(mid) if setn else mo.get(mid)
+            if not isinstance(target, dict):
+                print('동작 없음(건너뜀):', key)
+                continue
+            target.setdefault('tracks', {}).update(edits)
+            n += len(edits)
+        s2 = json.dumps(mo, ensure_ascii=False, indent=1)
+        s2 = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2, \3, \4]', s2)
+        s2 = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2]', s2)
+        open(mp, 'w', encoding='utf-8').write(s2 + '\n')
+        print('동작 키 적용: 뼈 트랙', n, '→', os.path.basename(mp))
     print(RIG_ID, '적용(전체 상태): 관절', len(piv), '몸', len(data['bodies']), '외형', len(data.get('looks', {})))
     sys.exit(0)
 piv = {b['id']: b['pivot'] for b in data['bones']}

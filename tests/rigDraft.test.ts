@@ -127,6 +127,13 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
     expect(Math.min(...bend)).toBeLessThan(-20);
     expect(Math.min(...bend)).toBeGreaterThan(-60);
   });
+  it('대기 = 팔 내린 자세(오른팔 아래로), 홈 대기 = 예전 대기(검집 잡음), 걷기 오른팔은 대기 기준', () => {
+    const arm = (id: string) => motions[id]!.tracks.arm_R!.map((k) => k[1]);
+    expect(motions.homeIdle!.loop).toBe(true);
+    expect(Math.min(...arm('idle'))).toBeGreaterThan(30);
+    expect(Math.max(...arm('homeIdle'))).toBeLessThan(Math.min(...arm('idle')));
+    expect(Math.min(...arm('move'))).toBeGreaterThan(30);
+  });
   it('해방 동작(양손으로 칼 내밀고 변신)은 아란칼(여) 몸에만 하나, swapAt 이 지나면 해방 외형', () => {
     const af = resolveMotions(rig, motions, sets, 'arrancar_f');
     const m = af.release1!;
