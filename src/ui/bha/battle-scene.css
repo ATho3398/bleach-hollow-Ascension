@@ -203,3 +203,7 @@
 /* 각본 전투 처치 (GDD 129장 3, C.199): 슬로우 동안 적이 밝아지며 천천히 사라진다. 시간 = --bha-tutkill */
 .bha-battle.is-tutkill .is-vanish { transition: opacity var(--bha-tutkill, 1.6s) ease-in, filter var(--bha-tutkill, 1.6s) ease-in, transform var(--bha-tutkill, 1.6s) ease-in; opacity: 0; filter: brightness(1.8); transform: scale(0.9); }
 @media (prefers-reduced-motion: reduce) { .bha-battle.is-tutkill .is-vanish { transition-duration: 0.3s; } }
+
+/* 해방 준비 아우라 (C.216, GDD 139장 3): 규칙은 v2/bha.css 의 .is-lib-ready. 뿜어 나오는 고리 */
+@keyframes bha-lib-burst{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.25)}}
+@media (prefers-reduced-motion: reduce){.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::before,.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::after{animation:none}}

@@ -97,11 +97,11 @@ const measure = () => {
       // ① 테스트 바로 전투: 일반 · 보스(몸 크기 단계별)
       const scenes = [
         { id: 'normal', foeGroup: '일반', form: null },
-        { id: 'boss', foeGroup: '보스', form: { group: '3단계', nth: 0 } },
+        { id: 'boss', skip: !!process.env.C216_LIB_ONLY, foeGroup: '보스', form: { group: '3단계', nth: 0 } },
         { id: 'elite-t2', foeGroup: '강적', form: { group: '2단계', nth: 0 }, noShot: true },
         { id: 'normal-t4', foeGroup: '일반', form: { group: '4단계', nth: 0 }, noShot: faction === 'shinigami' },
       ];
-      for (const sc of process.env.C216_SKIP_TEST ? [] : scenes) {
+      for (const sc of process.env.C216_SKIP_TEST ? [] : (process.env.C216_LIB_ONLY ? [{ id: 'lib', foeGroup: '보스', form: null, noShot: true }] : scenes)) {
         const page = await browser.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
         page.on('pageerror', (e) => run.errors.push(e.message));
         await newGame(page, server.url, fi, true);
@@ -124,13 +124,13 @@ const measure = () => {
         await page.waitForTimeout(2500);
         const m = { id: sc.id, ...(await page.evaluate(measure)) };
         if (!sc.noShot) await page.screenshot({ path: path.join(OUT, `${p}-${sc.id}.png`) });
-        if (sc.id === 'normal') {
+        if (sc.id === 'normal' || sc.id === 'lib') {
           // 블록이 쌓인 뒤(흐르는 중)
           await page.waitForTimeout(3500);
           m.flow = await page.evaluate(measure);
-          await page.screenshot({ path: path.join(OUT, `${p}-blocks-flow.png`) });
+          if (sc.id === 'normal') await page.screenshot({ path: path.join(OUT, `${p}-blocks-flow.png`) });
           // 블록 공격 순간 (가장 오래된 블록 = 칸 1 = 맨 오른쪽): 즉발 + 계열 연출
-          const cell = page.locator('.bha-v2tray__grid > .bha-v2cell[data-sc="block.1"] .bha-block');
+          const cell = sc.id === 'lib' ? page.locator('#none') : page.locator('.bha-v2tray__grid > .bha-v2cell[data-sc="block.1"] .bha-block');
           if (await cell.count()) {
             await cell.click();
             await page.waitForTimeout(faction === 'hollow' ? 260 : 380);
@@ -139,12 +139,25 @@ const measure = () => {
           }
           // 적 공격 순간(넉백 방향)
           await page.waitForTimeout(1200);
+          // 해방 = 캐릭터 누르기 (GDD 139장 3): 게이지가 차 아우라가 켜질 때까지 기다렸다가 캐릭터를 누른다
+          const ready = page.locator('.bha-battle.is-lib-ready .bha-v2herolib.is-ready');
+          await ready.waitFor({ timeout: 170_000 }).catch(() => {});
+          m.libReady = await ready.count() > 0;
+          if (m.libReady) {
+            await page.waitForTimeout(500);
+            m.libLog = await page.evaluate(() => [...document.querySelectorAll('.bha-log__line')].map((n) => n.textContent).filter((t) => t.includes('준비')).pop() ?? null);
+            await page.screenshot({ path: path.join(OUT, `${p}-lib-ready.png`) });
+            await page.locator('.bha-v2herolib').click();
+            await page.waitForTimeout(2200);
+            m.libOn = await page.evaluate(() => ({ liberated: !!document.querySelector('.bha-battle.is-liberated'), time: document.querySelector('.bha-v2herolib__time')?.textContent ?? '' }));
+            await page.screenshot({ path: path.join(OUT, `${p}-lib-on.png`) });
+          }
         }
         run.battles.push(m);
         await page.close();
       }
       // ② 각본 튜토리얼 전투 (첫 원정 첫 전투): 막기 카드·체력 카드
-      if (faction === 'hollow' || process.env.C216_TUT_ALL) {
+      if (!process.env.C216_LIB_ONLY && (faction === 'hollow' || process.env.C216_TUT_ALL)) {
         const page = await browser.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
         page.on('pageerror', (e) => run.errors.push(e.message));
         await newGame(page, server.url, fi, false);
@@ -192,6 +205,6 @@ const measure = () => {
     await browser.close();
     server.stop();
   }
-  fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify(proof, null, 2));
+  fs.writeFileSync(path.join(OUT, process.env.C216_LIB_ONLY ? 'proof-lib.json' : 'proof.json'), JSON.stringify(proof, null, 2));
   console.log(JSON.stringify(proof, null, 2));
 })();

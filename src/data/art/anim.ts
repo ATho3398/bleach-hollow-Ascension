@@ -35,7 +35,7 @@ export const ANIM_ACTIONS: readonly AnimActionDef[] = [
   { key: 'lose', label: '패배', mode: 'hold', ms: 180, where: '전투 패배(적은 쓰러짐)', fallback: '지금 연출' },
   { key: 'eat', label: '먹기', mode: 'once', ms: 180, where: '먹이 주기', fallback: '지금 연출' },
   { key: 'sleep', label: '잠', mode: 'loop', ms: 450, where: '재우기', fallback: '지금 연출' },
-  { key: 'release', label: '해방 변신', mode: 'once', ms: 150, where: '해방 버튼', fallback: '공통 컷인' },
+  { key: 'release', label: '해방 변신', mode: 'once', ms: 150, where: '해방(캐릭터 누르기)', fallback: '공통 컷인' },
 ];
 
 export const ANIM_ACTION_KEYS: readonly AnimAction[] = ANIM_ACTIONS.map((a) => a.key);

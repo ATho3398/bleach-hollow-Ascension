@@ -486,3 +486,16 @@
 .bha-root .bha-v2tray__grid{direction:rtl}
 .bha-root .bha-v2tray__grid>*{direction:ltr}
 .bha-root .bha-v2cut::before{left:auto;right:-3px}
+/* ③ 해방 = 캐릭터 누르기 (C.216, GDD 139장 3): 해방 카드·게이지 막대 대신 내 캐릭터 그림 칸 전체가 투명 버튼.
+      가득 차면(.is-lib-ready) 캐릭터 주변에 해방 색(강조색 토큰) 아우라가 뿜어 나오고, 해방 중에는 기존 오오라 + 머리 위 남은 초 */
+.bha-root .bha-v2units .bha-unit--me .bha-unit__fig{position:relative}
+.bha-root .bha-v2herolib{position:absolute;inset:0;z-index:3;margin:0;padding:0;border:0;border-radius:var(--bha-r-md);background:none;color:var(--bha-text-1);font-family:inherit;pointer-events:auto;cursor:default;-webkit-tap-highlight-color:transparent}
+.bha-root .bha-v2herolib.is-ready{cursor:pointer}
+.bha-root .bha-v2herolib.is-pressed{background:color-mix(in srgb,var(--bha-accent-hi) 18%,transparent)}
+.bha-root .bha-v2herolib__time{position:absolute;left:50%;top:0;transform:translateX(-50%);padding:0 var(--bha-sp-2);border-radius:var(--bha-r-pill);background:rgb(0 0 0 / .6);box-shadow:inset 0 0 0 1px var(--bha-accent-hi);font-size:var(--bha-fs-xs);font-weight:800;line-height:16px;white-space:nowrap;color:var(--bha-text-1)}
+.bha-root .bha-v2herolib__time:empty{display:none}
+.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig{filter:drop-shadow(0 0 10px var(--bha-accent-hi))}
+.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::before,
+.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::after{content:"";position:absolute;inset:6% 12% 0;border-radius:50% 50% 40% 40%;pointer-events:none;z-index:-1}
+.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::before{background:radial-gradient(ellipse at 50% 70%,color-mix(in srgb,var(--bha-accent-hi) 65%,transparent),transparent 70%);animation:bha-aura .7s ease-in-out infinite alternate}
+.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::after{border:2px solid var(--bha-accent-hi);animation:bha-lib-burst 1.1s ease-out infinite}

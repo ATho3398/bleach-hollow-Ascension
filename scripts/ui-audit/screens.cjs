@@ -93,7 +93,7 @@ async function battleRowStates(h, n) {
     const sty = (e, k, v) => { if (!e) return; const o = e.style[k]; undo.push(() => { e.style[k] = o; }); e.style[k] = v; };
     const ready = (e, on) => { cls(e, 'is-ready', on); cls(e, 'is-disabled', !on); };
     const q = (s) => document.querySelector(s);
-    const guard = q('.bha-v2role--guard'), item = q('.bha-v2role--item'), gear = q('.bha-v2role--gear'), rel = q('.bha-v2rel'), app = q('.bha-battle');
+    const guard = q('.bha-v2role--guard'), item = q('.bha-v2role--item'), gear = q('.bha-v2role--gear'), rel = q('.bha-v2herolib'), app = q('.bha-battle');
     const itemMeta = item?.querySelector('.bha-v2role__meta'), gearMeta = gear?.querySelector('.bha-v2role__meta');
     const hasItem = !!itemMeta?.textContent, hasGear = !!gearMeta?.textContent;
     const SCEN = [
@@ -102,8 +102,8 @@ async function battleRowStates(h, n) {
       ['막기 게이지 빔', () => { ready(guard, false); cls(guard, 'is-full', false); sty(guard?.querySelector('.bha-v2role__bar i'), 'width', '0%'); }],
       ...(hasItem ? [['소모품 ×3', () => { ready(item, true); text(itemMeta, '×3'); }], ['소모품 씀', () => { ready(item, false); text(itemMeta, '씀'); }], ['소모품 ×0', () => { ready(item, false); text(itemMeta, '×0'); }]] : []),
       ...(hasGear ? [['장비 쿨 12', () => { ready(gear, false); text(gearMeta, '12'); }], ['장비 쿨 끝(준비)', () => { ready(gear, true); text(gearMeta, ' '); }]] : []),
-      ...(rel && !rel.hidden ? [['해방 준비됨', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-ready', true); text(rel.querySelector('.bha-v2rel__meta'), '준비됨 — 눌러 해방'); }],
-        ['해방 중', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-on', true); cls(app, 'is-liberated', true); text(rel.querySelector('.bha-v2rel__meta'), '12.5초'); }]] : []),
+      ...(rel && !rel.hidden ? [['해방 준비됨', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-ready', true); cls(app, 'is-lib-ready', true); }],
+        ['해방 중', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-on', true); cls(app, 'is-lib-ready', false); cls(app, 'is-liberated', true); text(rel.querySelector('.bha-v2herolib__time'), '12.5초'); }]] : []),
       ['경직(블록 잠금·머리 게이지)', () => { for (const b of all('.bha-v2tray .bha-block')) cls(b, 'is-locked', true); for (const g of all('.bha-unit--me .bha-unit__heads > *')) hid(g, false); }],
       ['전부 함께', null],
     ];
@@ -116,7 +116,7 @@ async function battleRowStates(h, n) {
       btns.forEach((e, i) => {
         const [x, y, w, hh] = base[i];
         const [x2, y2, w2, h2] = p[i];
-        const self = e.closest('.bha-v2role, .bha-v2rel') && (label.includes('전부') || /막기|소모품|장비|해방/.test(label)) ? e : null;
+        const self = e.closest('.bha-v2role, .bha-v2herolib') && (label.includes('전부') || /막기|소모품|장비|해방/.test(label)) ? e : null;
         // 바뀐 버튼 자신은 폭이 바뀌면 안 되고(오른쪽 고정 줄), 다른 버튼은 자리도 폭도 그대로
         if (Math.abs(x2 - x) > 1.5 || Math.abs(y2 - y) > 1.5 || Math.abs(w2 - w) > 1.5 || Math.abs(h2 - hh) > 1.5) out.push(`${label}: ${name(e)} (${Math.round(x2 - x)}, ${Math.round(y2 - y)}) 폭 ${Math.round(w2 - w)}${self ? ' (자기 칸)' : ''}`);
       });
