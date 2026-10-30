@@ -17,9 +17,11 @@ if (!SRC || !fs.existsSync(SRC)) die('프로토콜 폴더를 찾지 못했다. �
 const has = (p) => fs.existsSync(path.join(SRC, p));
 if (!has('.claude') && !has('CLAUDE.md') && !has('project.yaml')) die(`${SRC} 안에 .claude/ · CLAUDE.md · project.yaml 이 하나도 없다. 프로토콜 폴더 맞는지 확인.`);
 
+const IS_GIT = fs.existsSync(path.join(GAME, '.git'));
 const git = (c) => execSync(`git ${c}`, { cwd: GAME, stdio: ['ignore', 'pipe', 'pipe'] }).toString().trim();
-// ① 백업 브랜치
-try {
+// ① 백업 브랜치 (zip 으로 받은 폴더라 git 이 없으면 건너뜀 — 받은 zip 자체가 백업)
+if (!IS_GIT) log('① git 폴더 아님(zip 으로 받음) — 브랜치 없이 바로 합침. 원본이 필요하면 zip 을 다시 풀면 된다');
+else try {
   if (git('status --porcelain')) die('게임 폴더에 커밋 안 된 변경이 있다. 먼저 커밋하거나 되돌린 뒤 다시 실행.');
   const cur = git('rev-parse --abbrev-ref HEAD');
   if (cur !== 'qa-review') {
@@ -87,7 +89,8 @@ if (has('project.yaml')) {
   log('④ project.yaml 복사');
 } else log('④ project.yaml 없음 — 건너뜀');
 // ⑤ 커밋
-try {
+if (!IS_GIT) log('⑤ git 폴더 아님 — 커밋 건너뜀');
+else try {
   git('add -A');
   if (git('status --porcelain')) git('commit -q -m "qa-review: 검수 프로토콜 합침 (.claude/ · QA-PROTOCOL.md · project.yaml)"');
   log('⑤ 커밋 완료 (qa-review 브랜치)');
