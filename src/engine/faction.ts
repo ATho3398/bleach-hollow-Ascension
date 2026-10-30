@@ -257,8 +257,9 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   name: '월드맵',
   shape: 'worldmap',
   sceneArt: 'scene.worldmap',
-  floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
-  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 58, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 }, tower: { x: 82, y: 46, scale: 0.9 }, spa: { x: 18, y: 50, scale: 0.9 } },
+  // 땅 = 화면 전체 (GDD 155장 1). 맨 위 띠(장면 16%)는 [둥지로]·지도 이름이 겹치는 자리라 장소를 두지 않는다
+  floor: { aspect: 2, poly: [[0, 0.16], [1, 0.16], [1, 1], [0, 1]] },
+  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 54, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 }, tower: { x: 82, y: 36, scale: 0.9 }, spa: { x: 18, y: 42, scale: 0.9 } },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',
   spaName: '온천',

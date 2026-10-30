@@ -138,8 +138,8 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   let pathRaf = 0;
   /** 들고 나는 연출이 끝나면 부른다 — 그동안 튜토리얼 안내 창은 안 뜬다 (GDD 143장 1) */
   let endMove: () => void = () => {};
-  /** from → to 자리까지 경로를 따라 쭉 (평지 = 걷기, 계단 = 단 사이 대각선, 멈칫 없음 — GDD 137장 2). 끝나면 done */
-  const walkPath = (from: number, to: number, done: () => void) => {
+  /** from → to 자리까지 경로를 따라 쭉 (평지 = 걷기, 계단 = 단 사이 대각선, 멈칫 없음 — GDD 137장 2). 끝나면 done, 중간에 화면이 바뀌어 끊기면 cut */
+  const walkPath = (from: number, to: number, done: () => void, cut?: () => void) => {
     const dir = to > from ? 1 : -1;
     const segs: { a: number; b: number; ms: number }[] = [];
     for (let i = from; i !== to; i += dir) {
@@ -150,7 +150,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     actor.classList.add('is-walking');
     const t0 = performance.now();
     const frame = (now: number) => {
-      if (!actor.isConnected) return endMove();
+      if (!actor.isConnected) return cut ? cut() : endMove();
       let t = now - t0;
       for (const sg of segs) {
         if (t <= sg.ms) {
@@ -240,11 +240,16 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     // 아직 걸어 들어오는 중이면 지금 자리(가장 가까운 칸)에서 거꾸로
     const nowLeft = parseFloat(actor.style.left) || SPA_PATH[SEAT]!.left;
     const from = SPA_PATH.reduce((b, p, i) => (Math.abs(p.left - nowLeft) < Math.abs(SPA_PATH[b]!.left - nowLeft) ? i : b), SEAT);
-    walkPath(from, 0, () => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
       end();
       done();
       endMove(); // 방으로 넘어간 뒤 — 다음 안내 창은 방 위에 바로 고정해서 뜬다
-    });
+    };
+    // 나가는 도중 화면이 바뀌어도(다른 길로 방에 감) done 은 꼭 부른다 — 안 부르면 튜토리얼 회복 안내가 6/7 에서 멈췄다 (GDD 155장 2)
+    walkPath(from, 0, finish, finish);
     return true;
   };
   live = { on: () => app.isConnected, exit };
@@ -256,6 +261,8 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     if (!app.isConnected || done) return window.clearInterval(tick);
     const p = previewHomeHp(n, Date.now());
     paint(p.fraction, p.fullness, p.condition);
+    // 걸어 나가는 중이면 저절로 나오기를 부르지 않는다 — 나가기 연출이 끝나면 부른 쪽이 나온다 (GDD 155장 2: 튜토리얼 온천이 빨라 나가는 도중 가득 차 방으로 끊겼다)
+    if (exiting) return;
     if (p.spaEnded || !n.spa) {
       done = true;
       window.clearInterval(tick);

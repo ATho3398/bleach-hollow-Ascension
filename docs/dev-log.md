@@ -1386,3 +1386,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: 새 `tests/c232.test.ts` 10개(앱 모드 판정·앱 모드에서 requestFullscreen 안 불림·탭은 그대로·manifest·설정 줄), c116(manifest display)·c190(import 줄) 기대값 갱신.
 - 캡처 `docs/captures/c232/`(`scripts/c232-proof.cjs`, 1배 844×390): 1 설정 화면 탭 모드 · 2 앱 모드 흉내(matchMedia 의 display-mode fullscreen 을 참으로 — 크롬 CDP 는 display-mode 에뮬레이션을 안 받음).
 - 사용자 안내: 이미 설치한 앱은 크롬이 설치 정보를 늦게 갱신하므로, 한 번 지우고 다시 '홈 화면에 추가'해야 fullscreen 이 적용될 수 있다.
+
+## C.233 — 월드맵 = 화면 전체 · 회복 안내 6/7·7/7 멈춤 수리 (GDD 155장, v5.353, S-23, 코딩168 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스 변경 없음.
+- 사용자 원문: "월드맵 근데 위 여백 왜있는거?그냥 화면다채워"
+- **월드맵**(worldmap.css·faction.ts DEFAULT_WORLDMAP): 앱 칸 padding 0, 장면 테두리·둥근 모서리 없음, `.bha-worldmap__hud` 를 지도 위에 absolute(z sticky, 빈 곳은 누름 통과), `.bha-room--worldmap` wall 숨김·floor 100%, floor poly 위 0.3 → 0.16, 장소 y = 탑 36·온천 42·시장 54(나머지 그대로). 측정: 앱 칸 = 장면 = 644×358(1배 844×390), 맨 위 장소(탑) 위 끝 102px > 머리 줄 아래 끝 66px.
+- **회복 안내 6/7 멈춤**(C.228 때 발견): 튜토리얼 온천이 빨라 5/7 [다음] 뒤 나가는 걷기 도중 가득 차 `onAutoLeave → nestScreen` 이 끼어들고, 걷기 프레임이 '배우가 화면에서 빠짐'으로 그냥 끝나 나가기 done(→ 튜토리얼 leave → 6/7)이 영영 안 불렸다. `spaView` walkPath 에 cut 콜백 — 나가기는 끊겨도 finish(한 번만), 나가는 중엔 저절로 나오기를 부르지 않음.
+- **회복 안내 7/7 빈 카드**: `runRecover` vars 의 `idleHpPct` 가 앞 줄 주석 끝에 붙어 주석이 되어 있었다(C.223) → '회복 끝' 문구 렌더가 예외로 빈 카드에서 멈춤. 값을 제 줄로 복구.
+- 테스트: 새 `tests/c233.test.ts` 7개(월드맵 CSS·땅/장소 배치, 끊겨도 done·나가는 중 저절로 나오기 안 부름, 회복 안내 7장, 두 종족 1~7 끝까지 엔진 흐름(온천에서 저절로 나온 뒤 나가기 다시 불러도 먹이로), 회복 안내 자리표시자 전부 채워짐), c215 기대값 갱신.
+- 캡처 `docs/captures/c233/`(`scripts/c233-proof.cjs`, 1배 844×390, 호로): 01 월드맵 화면 전체(위 여백 없음) · 02 회복 안내 6/7 먹이 카드 · 03 회복 안내 7/7 '회복 끝'. proof.json = 회복 안내 1~7 → '다음 할 일' 도달(reachedNext true), 페이지 오류 0.
+

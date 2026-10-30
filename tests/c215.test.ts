@@ -46,7 +46,7 @@ describe('137장 2 온천 계단: 멈칫 없이 쭉', () => {
     expect(SPA_PATH.slice(2).every((p) => p.wl !== null)).toBe(true);
   });
   it('나갈 때도 같은 경로를 거꾸로 (walkPath(from, 0)', () => {
-    expect(v).toContain('walkPath(from, 0, () => {');
+    expect(v).toContain('walkPath(from, 0, finish, finish);'); // C.233: 끊겨도 done (GDD 155장 2)
   });
 });
 
