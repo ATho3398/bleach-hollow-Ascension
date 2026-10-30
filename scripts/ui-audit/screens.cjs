@@ -337,7 +337,8 @@ const SCREENS = [
     name: '테스트 패널',
     async run(h, n) {
       await more(h, '테스트');
-      await h.explore(n, { maxTabs: 12, views: true });
+      // [적용]·[테스트 모드 끄기] = 보기 본문 맨 아래(스크롤 칸 안, GDD 112장 1) — 보기마다 본문 길이가 달라 자리가 다른 게 맞다 (C.209)
+      await h.explore(n, { maxTabs: 12, views: true, viewIgnore: /\|(적용|테스트 모드 끄기)$/ });
     },
   },
   {

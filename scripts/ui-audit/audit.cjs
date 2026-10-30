@@ -83,16 +83,18 @@ function devButtonsInPage() {
 
 async function startServer() {
   if (process.env.UI_AUDIT_URL) return { url: process.env.UI_AUDIT_URL, stop: () => {} };
-  const p = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { cwd: ROOT, stdio: 'pipe' });
+  // 프로세스 그룹째 띄워 그룹째 끈다 — npx 만 끄면 vite 가 남아 포트를 잡고 이 프로세스도 안 끝났다 (C.209)
+  const p = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { cwd: ROOT, stdio: 'ignore', detached: true });
+  const kill = () => { try { process.kill(-p.pid); } catch { p.kill(); } };
   const url = `http://localhost:${PORT}/`;
   for (let i = 0; i < 60; i++) {
     try {
       const r = await fetch(url);
-      if (r.ok) return { url, stop: () => p.kill() };
+      if (r.ok) return { url, stop: kill };
     } catch { /* 아직 */ }
     await new Promise((r) => setTimeout(r, 500));
   }
-  p.kill();
+  kill();
   throw new Error('vite 서버가 뜨지 않았다');
 }
 
@@ -243,15 +245,19 @@ function makeHelper(page, faction, report) {
         }
       }
       if (opts.infos !== false) {
-        // 맨 위 층(열린 창이 있으면 그 안)의 ⓘ 만
-        const scopeSel = (await h.has('.bha-lcd [data-dev-layer]')) ? '.bha-lcd [data-dev-layer]:last-of-type .bha-info:visible' : '.bha-lcd .bha-info:visible';
+        // 맨 위 층(열린 창이 있으면 그 안)의 ⓘ 만. ⓘ = button.bha-info — 정보 표 dl.bha-info(결과·연습 결과 요약)는 같은 이름이지만 누를 것이 아니다.
+        // (C.209: 결과 화면에서 정보 표를 눌러 아무것도 안 열린 채 뒤로 → 결과 뒤로 = [둥지로] 로 둥지에 가 버려 [둥지로] 클릭이 시간 초과였다)
+        const layersBefore = await page.locator('.bha-lcd [data-dev-layer]').count();
+        const scopeSel = layersBefore ? '.bha-lcd [data-dev-layer]:last-of-type button.bha-info:visible' : '.bha-lcd button.bha-info:visible';
         const n = await page.locator(scopeSel).count();
         for (let i = 0; i < Math.min(n, 8); i++) {
           const loc = page.locator(scopeSel).nth(i);
           const lab = (await loc.getAttribute('aria-label')) || `ⓘ${i}`;
           const ok = await h.stable(screen, `${lab} 열기`, () => loc.click({ timeout: 3000 }), null, loc);
           if (ok) await h.check(`${screen}/${lab}`, { keys: false });
-          await h.back();
+          // 연 창이 있을 때만 닫는다 — 안 열렸는데 뒤로를 누르면 화면 자체가 뒤로 간다
+          if ((await page.locator('.bha-lcd [data-dev-layer]').count()) > layersBefore) await h.back();
+          else h.report({ kind: 'ⓘ 무반응', key: lab, detail: 'ⓘ 를 눌러도 설명 창이 안 열린다' }, screen);
         }
       }
       // 제목 토글(▾)의 다른 보기마다 열어 같은 탐색 (보기 전환 = 상태 바꿈: 제목·머리 버튼이 안 움직여야 한다)
@@ -264,7 +270,9 @@ function makeHelper(page, faction, report) {
           await h.closeLayers();
           await h.click('.bha-lcd .bha-viewtitle__btn');
           const item = page.locator('.bha-lcd .bha-viewtitle__item').nth(i);
-          const ok = await h.stable(screen, `보기 '${lab.trim()}'`, () => item.click({ timeout: 3000 }), /viewtitle__item/);
+          // 보기마다 본문이 통째로 바뀐다 — 본문 안 버튼(opts.viewIgnore)은 이름이 같아도 다른 버튼이라 짝짓지 않는다 (C.209)
+          const vIgn = opts.viewIgnore ? new RegExp(`viewtitle__item|${opts.viewIgnore.source}`) : /viewtitle__item/;
+          const ok = await h.stable(screen, `보기 '${lab.trim()}'`, () => item.click({ timeout: 3000 }), vIgn);
           if (ok) await h.explore(`${screen}/${lab.trim()}`, { ...opts, views: false, ...(opts.viewOpts?.[lab.trim()] ?? {}) });
         }
         // 첫 보기로 돌아온다(뒤 단계가 처음 보기를 전제로)
@@ -428,7 +436,8 @@ async function newGame(page, url, factionIndex) {
   const report = [];
   const only = process.env.UI_AUDIT_ONLY;
   try {
-    for (const [fi, faction] of (process.env.UI_AUDIT_FACTION === '0' ? [[0, 'hollow']] : [[0, 'hollow'], [1, 'shinigami']])) {
+    // 0 = 호로만, 1 = 사신만 (C.209: 둘을 따로 띄워 나눠 돌리기)
+    for (const [fi, faction] of [[0, 'hollow'], [1, 'shinigami']].filter(([i]) => !process.env.UI_AUDIT_FACTION || String(i) === process.env.UI_AUDIT_FACTION)) {
       for (const sc of SCREENS) {
         if (only && !only.split(',').some((o) => sc.name.includes(o))) continue; // 쉼표로 여럿
         // 세로 회전 출력 (C.183): 세로 폰(390×844, 터치) — 기기 화면이 90° 돌아간 채로 같은 점검
@@ -442,8 +451,9 @@ async function newGame(page, url, factionIndex) {
             await page.goto(`${server.url}?test=1`);
             await page.waitForTimeout(1200);
           } else await newGame(page, server.url, fi);
-          // 화면 하나가 멈춰도 전체가 서지 않게 4분 제한
-          await Promise.race([sc.run(h, sc.name), new Promise((_, rej) => setTimeout(() => rej(new Error('4분 넘김')), 240_000))]);
+          // 화면 하나가 멈춰도 전체가 서지 않게 4분 제한. 끝나면 타이머를 지운다 — 안 지우면 마지막 화면 뒤 4분 동안 프로세스가 안 끝났다 (C.209)
+          let timer;
+          await Promise.race([sc.run(h, sc.name), new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('4분 넘김')), 240_000); })]).finally(() => clearTimeout(timer));
         } catch (e) {
           report.push({ faction, screen: sc.name, kind: '검수 스크립트 실패', key: '', detail: process.env.UI_AUDIT_DEBUG ? String(e.message).slice(0, 900) : String(e.message).split('\n')[0].slice(0, 160) });
         }
