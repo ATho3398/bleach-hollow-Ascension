@@ -19,7 +19,7 @@ import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogi
 import { setTiltPref } from './bha/tamago';
 import { openInstall } from './installView';
 import { detectPlatform, installMode, installPrompt, isStandalone, loadInstallPrefs } from '../pwaInstall';
-import { FULLSCREEN_EVENT, fullscreenSupported, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
+import { FULLSCREEN_EVENT, fullscreenSupported, isAppMode, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 import { confirmDialog } from './confirmDialog';
 import { parseSlotSettings, setActiveSlotSettings, slotSettingsHost, SLOT_SETTING_KEYS, type SlotSettings } from './settingsScope';
@@ -389,10 +389,14 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     fsBtn.classList.toggle('is-on', isFullscreen());
     fsBtn.setAttribute('aria-pressed', String(isFullscreen()));
   };
-  const fsPanel = panel('전체 화면', fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다(누르면 바로 바뀐다).'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 되고 화면이 가로로 고정된다(안드로이드). 꺼져 있어도 세로로 들고 있으면 가로 고정은 시도한다.'));
+  // 앱 모드(홈 화면 앱, GDD 156장 2): manifest 가 이미 꽉 채우므로 버튼·시작 진입 없이 안내 한 줄 — API 를 부르면 크롬 안내가 뜬다
+  const appMode = isAppMode();
+  const fsPanel = appMode
+    ? panel('전체 화면', hintLine('앱으로 실행 중 — 이미 전체 화면'))
+    : panel('전체 화면', fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다(누르면 바로 바뀐다).'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 되고 화면이 가로로 고정된다(안드로이드). 꺼져 있어도 세로로 들고 있으면 가로 고정은 시도한다.'), hintLine('홈 화면에 앱으로 추가해 켜면 "전체 화면을 종료하려면…" 브라우저 안내가 뜨지 않는다.'));
   fsPanel.dataset.panel = 'fullscreen';
   paintFs();
-  const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];
+  const fsPanels: HTMLElement[] = appMode || fullscreenSupported() ? [fsPanel] : [];
   // 화면 크기 (GDD 17-5): PC 에서만 적용
   const sizeNote = el('p', 'bha-faint');
   const paintSize = () => {

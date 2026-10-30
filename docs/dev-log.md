@@ -1378,3 +1378,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 캡처 `docs/captures/c228/`(`scripts/c228-proof.cjs`, 1배 844×390, 호로): 01 월드맵 온천 초점 · 02 출발 직후 페이드 중(0.22초, 막 불투명도 0.84) · 03 회복 안내 4/7 월드맵 [온천] 단계.
 - 발견(이번 변경 전 main 에서도 같음, 손대지 않음): 캡처 스크립트에서 회복 안내 5/7(쉬기) [다음] → 방으로 온 뒤 6/7 먹이 카드가 뜨지 않고 멈춘다(proof.json stall). 마스터에게 보고.
 
+## C.232 — 앱(홈 화면)으로 켰을 때 크롬 '전체 화면 종료' 안내 안 뜨게 (GDD 156장, v5.352, S-23, 코딩170 Opus)
+- 원인: 크롬은 페이지가 Fullscreen API(requestFullscreen)를 부를 때마다 '전체 화면을 종료하려면…' 보안 알림을 띄운다. 설치 앱(manifest display standalone)도 시작할 때·[전체 화면] 버튼으로 API 를 불러 똑같이 떴다.
+- **manifest**: display `fullscreen` + display_override `["fullscreen","standalone"]` → 앱 아이콘으로 켜면 처음부터 상태바·주소창 없이 꽉 참. orientation landscape 그대로.
+- **앱 모드면 API 안 부름**: `isAppMode()`(orientation.ts, display-mode fullscreen/standalone, 탭에서 API 전체 화면 중이면 거짓). enterFullscreen·toggleFullscreen·enterFullscreenOnStart(자동 진입·가로 고정 둘 다 안 함)·lockLandscape 전체 화면 우회 모두 막음. `pwaInstall.isStandalone` 도 display-mode fullscreen 포함(앱 안에서 설치 안내 안 뜨게).
+- **설정 '전체 화면' 패널**: 앱 모드 = '앱으로 실행 중 — 이미 전체 화면' 한 줄. 탭 = 지금 그대로 + '홈 화면에 앱으로 추가해 켜면 "전체 화면을 종료하려면…" 브라우저 안내가 뜨지 않는다.'
+- 테스트: 새 `tests/c232.test.ts` 10개(앱 모드 판정·앱 모드에서 requestFullscreen 안 불림·탭은 그대로·manifest·설정 줄), c116(manifest display)·c190(import 줄) 기대값 갱신.
+- 캡처 `docs/captures/c232/`(`scripts/c232-proof.cjs`, 1배 844×390): 1 설정 화면 탭 모드 · 2 앱 모드 흉내(matchMedia 의 display-mode fullscreen 을 참으로 — 크롬 CDP 는 display-mode 에뮬레이션을 안 받음).
+- 사용자 안내: 이미 설치한 앱은 크롬이 설치 정보를 늦게 갱신하므로, 한 번 지우고 다시 '홈 화면에 추가'해야 fullscreen 이 적용될 수 있다.

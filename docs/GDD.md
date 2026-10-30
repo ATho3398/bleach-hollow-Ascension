@@ -1,4 +1,4 @@
-# 호로 / 사신 키우기 — 기획서 v5.351 (Claude Code 인수인계용)
+# 호로 / 사신 키우기 — 기획서 v5.352 (Claude Code 인수인계용)
 
 > 프로젝트 이름: 블리치 할로우 어센션 (Bleach Hollow Ascension). 변경 이력과 결정 기록은 12장, 개발 로드맵과 현재 상태는 13장. 기획은 이 문서 하나가 기준이다.
 
@@ -356,6 +356,9 @@ data/
 ---
 
 ## 12. 결정 기록 / 변경 이력
+
+### v5.352 (2026-10-30, 코딩170 C.232)
+- 156장 1~3 구현 완료 줄. 코드 판단: ① 앱 모드 = display-mode fullscreen 또는 standalone. 단 탭에서 API 로 들어간 전체 화면(전체 화면 요소 있음)은 크롬이 display-mode fullscreen 을 맞출 수 있어 앱 모드로 보지 않는다 ② 앱 모드에서는 글자 입력칸 가로 고정(109장 8번)도 전체 화면 우회 없이 lock 만 시도 ③ 설치 안내 판정(isStandalone)도 display-mode fullscreen 을 앱으로 본다(안 그러면 manifest fullscreen 으로 바뀐 뒤 앱 안에서 설치 안내가 뜬다).
 
 ### v5.351 (2026-10-30, 코딩167 C.227)
 - 150장 3~6 구현 완료 줄, 153장 1·2 장터 쪽 구현 완료 줄. 코드 판단(provisional, 마스터 확인 대기): ① 탈착 특성 보유 = 슬롯 공유 자원(shared.traits — 두 트랙이 같이 가짐, 골드와 같은 자리), 끼운 칸 = 트랙마다(evolution.abilities.detached) ② 진화 특성이 들어올 칸이 없으면 **마지막에 끼운** 탈착 특성이 빠진다 ③ 보유한 탈착 특성은 특성 상점 카드에서도 바로 [끼우기]/[빼기](시장은 방 밖이지만 원정 중이 아니므로 허용) ④ 받는 피해·주는 피해는 '변이의 기운'과 같은 계산 자리에 더한다 ⑤ 칸이 줄면(마이그레이션·보정) 탈착 특성부터 뺀다.
@@ -5217,3 +5220,4 @@ data/
   3. 브라우저 탭에서 켤 때는 지금처럼(버튼 누르면 크롬 안내가 한 번 뜨는 건 어쩔 수 없음) + 설정 줄에 "홈 화면에 앱으로 추가해 켜면 이 안내가 안 뜬다" 한 줄.
   4. 사용자 안내: 이미 설치한 앱은 manifest 가 바뀐 뒤 한 번 지우고 다시 '홈 화면에 추가'해야 fullscreen 이 적용될 수 있다(크롬이 설치 정보를 늦게 갱신).
 - 세션: **코딩170**(Opus, 새 세션), 패치 번호 = 그 시점 가장 큰 값+1.
+- **구현 완료 1~3 (C.232, v5.352, 코딩170)**: 1 = `public/manifest.webmanifest` display `fullscreen` + display_override `["fullscreen","standalone"]`, orientation landscape 그대로. 2 = `isAppMode()`(`src/ui/bha/orientation.ts`, fullscreen.ts 에서 다시 내보냄) — 참이면 `enterFullscreen`·`toggleFullscreen`·`enterFullscreenOnStart`(가로 고정도 안 함, manifest 가 맡음)·`lockLandscape` 의 전체 화면 우회 모두 requestFullscreen 을 부르지 않는다. 설정 '전체 화면' 패널 = '앱으로 실행 중 — 이미 전체 화면' 한 줄(버튼·시작할 때 전체 화면 줄 없음). `pwaInstall.isStandalone` 도 display-mode fullscreen 을 앱으로 본다. 3 = 탭 설정 줄 끝에 '홈 화면에 앱으로 추가해 켜면 "전체 화면을 종료하려면…" 브라우저 안내가 뜨지 않는다.' 4 = 보고에 사용자 안내. 기기 크기·비율 손대지 않음(133장). 테스트 `tests/c232.test.ts`, 캡처 `docs/captures/c232/`. dev-log C.232.

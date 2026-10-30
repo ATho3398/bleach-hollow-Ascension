@@ -99,7 +99,7 @@ describe('C.190 시작 때 가로 고정 (117장 1)', () => {
   });
   it('시작 버튼 연결은 그대로, 가로 고정은 orientation.ts lockLandscape 재사용', () => {
     const src = read('src/ui/fullscreen.ts');
-    expect(src).toContain("import { lockLandscape } from './bha/orientation'");
+    expect(src).toMatch(/import \{[^}]*\blockLandscape\b[^}]*\} from '\.\/bha\/orientation'/); // C.232: isAppMode 도 같이 가져온다
     expect(src).toMatch(/enterFullscreen\(\)\.then\(\(ok\) => \{ if \(ok\) return lock\(\); \}\)/);
   });
 });
