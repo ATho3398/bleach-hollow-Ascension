@@ -3,7 +3,9 @@
 import { BALANCE } from '../config/balance';
 import { elementName } from '../data/elements';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { emptySlot, enhanceLevel, isBasicBlockTrait, setSlot, type BuildResult, type BuildState } from '../engine/absorb';
+import { basicAttackMultiplier, emptySlot, enhanceAttackBonus, enhanceLevel, isBasicBlockTrait, setSlot, type BuildResult, type BuildState } from '../engine/absorb';
+import { NORMAL_ELEMENT } from '../data/elements';
+import { numLine } from '../data/help/textFormat';
 import type { FactionConfig } from '../engine/faction';
 import { button, h, icon, panel, provisionalTag } from './bha/dom';
 import { enableDrag } from './bha/dragdrop';
@@ -82,6 +84,23 @@ function traitArt(faction: FactionConfig, id: string): HTMLElement {
   return art;
 }
 
+/** 블록 상세 수치 줄 (GDD 158장 5): 흡수 화면에서 뺀 위력·강화 효과 수치를 가방 블록 상세에서 보인다. 문구 형식 = text-style 3장 수치 줄 */
+export function traitNumberLines(faction: FactionConfig, build: Pick<BuildState, 'enhance' | 'slots'>, id: string): string[] {
+  const t = getTrait(id);
+  const lv = enhanceLevel(build, t.element);
+  const max = BALANCE.provisional.absorb.enhance.max;
+  const pct = (x: number) => `+${(x * 100).toFixed(1).replace(/\.0$/, '')}%`;
+  const lines: string[] = [];
+  if (t.kind === 'skill' && t.role === 'attack' && t.powerInAttacks !== undefined && !isBasicBlockTrait(id)) {
+    lines.push(numLine('위력', `기본 공격 ${t.powerInAttacks}회분`));
+    lines.push(numLine(faction.chainName, '같은 속성·같은 계열 블록이 붙으면 함께 발동'));
+  }
+  // 속성 강화: 노멀 = 기본 공격 블록 배율(빈 칸 몫 포함, C.184 GDD 111장 3), 그 밖 = 그 속성 공격 블록
+  const bonus = t.element === NORMAL_ELEMENT ? basicAttackMultiplier(build) - 1 : enhanceAttackBonus(lv);
+  lines.push(numLine('속성 강화', `${lv}/${max}`, `${t.element === NORMAL_ELEMENT ? '기본 공격 블록' : '공격 블록'} ${pct(bonus)}`));
+  return lines;
+}
+
 /** 상세 창 (아이템 탭 상세 창과 같은 컴포넌트): 이름 · 계열 · 속성 · 효과 · 속성 강화 n강(/100 작게, C.176 GDD 106장 1) · [장착]/[칸 고르기]/[빼기] */
 function openTraitDetail(faction: FactionConfig, build: BuildState, state: TraitsTabState, tierIndex: number, id: string, from: SlotCell | null, onChange: () => void): void {
   const t = getTrait(id);
@@ -107,10 +126,12 @@ function openTraitDetail(faction: FactionConfig, build: BuildState, state: Trait
     });
     if (free >= 0) actions.push({ key: 'pick', label: () => '칸 고르기', variant: 'ghost', onClick: pick });
   }
+  // 블록 상세 (GDD 158장 5): 설명 + 수치 줄(위력 기본 공격 n회분·체인·속성 강화). 데이터 설명의 위력 줄은 수치 줄과 겹쳐 뺀다
+  const text = plainDesc(traitDescription(id, faction.id)).split('\n').filter((l) => !/회분/.test(l)).join('\n');
   close = itemDialog({
-    heading: from ? `${faction.slotName} ${from.index + 1}번 칸` : '특성',
-    name, desc: `${kind} · ${elementName(t.element, faction.id)} 속성\n${plainDesc(traitDescription(id, faction.id))}`,
-    art: traitArt(faction, id), have: `속성 강화 ${lv}강 (/${BALANCE.provisional.absorb.enhance.max})`, actions,
+    heading: from ? `${faction.slotName} ${from.index + 1}번 칸` : t.kind === 'skill' ? '블록 상세' : '특성',
+    name, desc: [`${kind} · ${elementName(t.element, faction.id)} 속성`, text, ...traitNumberLines(faction, build, id)].filter(Boolean).join('\n'),
+    art: traitArt(faction, id), have: `속성 강화 ${lv}/${BALANCE.provisional.absorb.enhance.max}`, actions,
   });
 }
 

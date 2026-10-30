@@ -15,7 +15,7 @@
         "id": "absorb",
         "targets": [],
         "title": "{absorbActionName}",
-        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**둘 다 {absorbActionName}**: 특성과 능력치를 함께 얻는다\n**속성만**: 특성만 얻고 그 속성 쪽으로 자란다\n**스탯만**: 능력치를 두 배로 얻는다\n**안 함**: 놓아주고 {stabilityName}이(가) 오른다"
+        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 특성과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 특성만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 놓아주고 {stabilityName}이(가) 오른다"
       },
       {
         "id": "practice",
@@ -95,14 +95,6 @@
         ],
         "title": "{outsideName}",
         "body": "{worldName} 지도로 나간다."
-      },
-      {
-        "id": "altar",
-        "targets": [
-          "@.bha-prop--altar"
-        ],
-        "title": "{altarName}",
-        "body": "해방 수련을 하고 진화를 살펴본다."
       },
       {
         "id": "book",

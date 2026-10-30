@@ -120,6 +120,7 @@
   },
   "riskGaugeName": "광기",
   "absorbActionName": "포식",
+  "absorbModeNames": { "both": "포식", "trait": "속성 포식", "stat": "능력치 포식", "none": "놓아주기" },
   "walkAnim": "stomp",
   "slotLocation": "body",
   "appearanceChange": true,
@@ -297,7 +298,7 @@
       "altar": "수련장",
       "book": "책장",
       "chest": "가방",
-      "outside": "밖으로"
+      "outside": "월드맵"
     },
     "floor": {
       "aspect": 2,

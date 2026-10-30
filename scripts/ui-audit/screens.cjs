@@ -1,19 +1,19 @@
 // UI 검수 화면 목록 (GDD 110장 2, C.182). 각 항목: name, run(h, name). fresh = 슬롯 없이 시작 화면부터.
 // 전투 화면은 C.177 배포 뒤 넣었다(마스터 13장 03:2x 지시). h.explore = 정적 점검 + 탭·ⓘ·목록 고르기 전후 비교(audit.cjs).
 
-/** 방 → 모험 시작 화면 (GDD 130장): [밖으로] → 지도 [모험]. 장소를 고르면 걸어가서 페이드 전환이라 기다림이 길다 (137장 3, C.215) */
+/** 방 → 모험 시작 화면 (GDD 130장): [월드맵] → 지도 [모험]. 장소를 고르면 걸어가서 페이드 전환이라 기다림이 길다 (137장 3, C.215) */
 async function toAdventure(h) {
   await h.click('.bha-prop--outside', { ms: 700 });
   await h.click('.bha-worldmap [data-place="adventure"]', { ms: 2000 });
 }
 
-/** 방 → 시장 화면 (GDD 130장): [밖으로] → 지도 [시장] */
+/** 방 → 시장 화면 (GDD 130장): [월드맵] → 지도 [시장] */
 async function toMarket(h) {
   await h.click('.bha-prop--outside', { ms: 700 });
   await h.click('.bha-worldmap [data-place="market"]', { ms: 2000 });
 }
 
-/** 방 → 탑 화면 (GDD 139장 1, C.217): [밖으로] → 지도 [탑] */
+/** 방 → 탑 화면 (GDD 139장 1, C.217): [월드맵] → 지도 [탑] */
 async function toTower(h) {
   await h.click('.bha-prop--outside', { ms: 700 });
   await h.click('.bha-worldmap [data-place="tower"]', { ms: 2000 });
@@ -302,7 +302,9 @@ const SCREENS = [
   {
     name: '수련장',
     async run(h, n) {
-      await h.click('.bha-prop--altar', { ms: 700 });
+      // C.236 (GDD 158장 1): 수련장 = 월드맵 장소
+      await h.click('.bha-prop--outside', { ms: 700 });
+      await h.click('.bha-worldmap [data-place="training"]', { ms: 2000 });
       await h.explore(n, { pick: '.bha-lcd .bha-train__card', views: true });
     },
   },

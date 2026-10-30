@@ -86,7 +86,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.skinShop': {},
   'prop.traitShop': {},
   'prop.smith': {}, // 대장장이 (GDD 153장 2)
-  // 밖으로·월드맵 (GDD 130장, C.204): 방 물건(밖으로)·월드맵 하이앵글 배경·지도 위 장소(홈·모험; 시장은 prop.market) — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  // 월드맵 (GDD 130장, C.204): 방 물건(월드맵)·월드맵 하이앵글 배경·지도 위 장소(홈·모험; 시장은 prop.market) — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
   'prop.outside': {},
   'scene.worldmap': {},
   'prop.home': {},
@@ -97,6 +97,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 월드맵 온천 (GDD 153장 1, C.228): 키 = place.spa.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
   'place.spa.hollow': {},
   'place.spa.shinigami': {},
+  // 월드맵 수련장 (GDD 158장 1): 키 = place.training.<종족 id> — 사용자 그림 대기(비어 있으면 수련장 아이콘)
+  'place.training.hollow': {},
+  'place.training.shinigami': {},
   // 휴식 칸 장소 그림 (GDD 128장 3, C.202): 걷는 앞쪽에 서는 장소 — 사용자 그림 대기(비어 있으면 임시 웅덩이 그림). 키 = place.<타일 id>.<종족 id>
   'place.rest-a.hollow': {},
   'place.rest-a.shinigami': {},

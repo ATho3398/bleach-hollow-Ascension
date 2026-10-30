@@ -31,7 +31,6 @@ import { formDisplayName, playerElementsOf } from '../engine/evolution';
 import { shownName } from './displayName';
 
 export interface RoomHandlers {
-  onAltar: () => void;
   onBook: () => void;
   onChest: () => void;
   onStatus: () => void;
@@ -61,9 +60,9 @@ export interface RoomHandlers {
   greet?: RoomTalk | null;
   /** 사망 상태의 [부활] (GDD 102-3): 확인 창에서 [부활]을 고르면 부른다 */
   onRevive?: () => void;
-  /** 밖으로 (GDD 130장 1, C.204): 방 물건 outside — 월드맵(홈·시장·모험) */
+  /** 월드맵 (GDD 130장 1, C.204 · 158장 2): 방 물건 outside — 월드맵(홈·시장·수련장·모험·탑·온천) */
   onOutside: () => void;
-  /** 첫 모험 강제 (GDD 131장 2, C.207): 켜지면 밖으로(끔이면 모험 문)만 누를 수 있고 나머지 방 버튼은 흐린 잠김 */
+  /** 첫 모험 강제 (GDD 131장 2, C.207): 켜지면 월드맵 물건만 누를 수 있고 나머지 방 버튼은 흐린 잠김 */
   forceOutside?: boolean;
   /** 먹이를 먹인 직후 (막대 연출 전): 튜토리얼 회복 안내가 각본 값을 넣는다 (GDD 132장 3) */
   onFed?: () => void;
@@ -175,20 +174,20 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }, ms);
   };
 
-  const act: Record<RoomProp, () => void> = {
-    altar: hd.onAltar,
+  // 수련장(altar)은 방에 없다 — 월드맵 장소 (GDD 158장 1). 이름(room.props.altar)만 월드맵이 쓴다
+  const act: Record<Exclude<RoomProp, 'altar'>, () => void> = {
     book: hd.onBook,
     chest: hd.onChest,
-    outside: hd.onOutside, // 밖으로 (GDD 130장 1): 옛 모험 문·장터 자리 (137장 3 고정)
+    outside: hd.onOutside, // 월드맵 물건 (GDD 130장 1·158장 2): 옛 모험 문·장터 자리 (137장 3 고정)
   };
-  // 위/아래 순서: 위쪽 줄(책장·수련장) → 밖으로 → 상자 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['book', 'altar', 'outside', 'chest'];
+  // 위/아래 순서: 위쪽 줄(책장) → 월드맵 → 상자 → 상태 칩 → 캐릭터 → 독 메뉴
+  const order: RoomProp[] = ['book', 'outside', 'chest'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
+    if (p === 'altar') continue;
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, fallbackArt: p === 'outside' ? 'prop.door' : undefined });
     b.onclick = act[p];
-    if (p === 'altar') b.dataset.sc = 'altar'; // 수련장(훈련 인형 모양) = 단축키 T
     props.set(p, b);
     scene.append(b);
     floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
@@ -359,7 +358,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
   const main = mountApp(dev.view, { cls: 'bha-room' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
-  if (hd.forceOutside) main.classList.add('is-force-out'); // 첫 모험 강제 (GDD 131장 2): 밖으로·모험 문 말고는 흐린 잠김 (room.css)
+  if (hd.forceOutside) main.classList.add('is-force-out'); // 첫 모험 강제 (GDD 131장 2): 월드맵 물건 말고는 흐린 잠김 (room.css)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
   if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번·127장 3) — 배지는 월드맵 시장에 (130장 2)
 
@@ -373,7 +372,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     dev.setItems([...tray.map((b) => ({ el: b })), ...(tray.length > 0 ? [] : list), ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
   }
   dock.setRequest(n.careRequest?.action ?? null);
-  // 첫 선택 (GDD 100장 #11): 밖으로(옛 모험 문 자리). 돌봄 요청 중이면 그 돌보기 버튼 — 기기는 새 화면에서 초점 있는 항목부터 고른다
+  // 첫 선택 (GDD 100장 #11): 월드맵 물건(옛 모험 문 자리). 돌봄 요청 중이면 그 돌보기 버튼 — 기기는 새 화면에서 초점 있는 항목부터 고른다
   const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('outside');
   firstPick?.focus({ preventScroll: true });
   registerItems();

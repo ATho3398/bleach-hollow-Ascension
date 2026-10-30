@@ -243,6 +243,13 @@
 .bha-absorbpage .bha-lcdpage__head { min-height: 0; }
 .bha-absorbpage .bha-absorb__actions { position: sticky; bottom: calc(-1 * var(--bha-sp-4)); z-index: var(--bha-z-sticky); padding-top: var(--bha-sp-3); background: linear-gradient(180deg, transparent, var(--bha-bg-0) 10px); }
 .bha-absorbpage .bha-absorb__actions .bha-btn { min-height: 52px; }
+/* 갈래 버튼 4개 = 작게 한 줄 (GDD 158장 6): 이름 + 아래 리스크 게이지 변화 한 줄. 아이콘·긴 설명 없음 */
+.bha-absorbpage .bha-absorb__actions--modes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-absorbpage .bha-absorb__actions--modes .bha-btn { min-height: 0; flex-direction: column; gap: 0; padding: var(--bha-sp-2) var(--bha-sp-1); line-height: 1.2; white-space: nowrap; }
+.bha-absorbpage .bha-absorb__actions--modes .bha-btn small { font-size: var(--bha-fs-xs); }
+/* 흡수 화면 블록 (GDD 158장 4): 첫 줄 "1번 물 권", 아래 줄 속성 강화 "n/100" */
+.bha-absorbpage .bha-slot--filled { grid-template-columns: minmax(0, 1fr); gap: 0; align-content: center; }
+.bha-absorbpage .bha-slot__enh, .bha-absorbstat .bha-slot__enh { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-absorbpage .bha-foecard { grid-template-columns: 40px minmax(0, 1fr); gap: var(--bha-sp-4); padding: var(--bha-sp-3) var(--bha-sp-4); }
 .bha-absorbpage .bha-foecard .bha-foe { height: 40px; }
 .bha-absorbpage .bha-foecard__name { font-size: var(--bha-fs-lg); }

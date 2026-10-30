@@ -172,10 +172,10 @@ describe('94장 B 같은 속성 흡수 = 강화만', () => {
     expect(basicSources({ ...c.params, basicAttackEnhance: undefined }).find((x) => x.id === BASIC_SKILL_ID)!.powerMultiplier).toBe(1);
   });
 
-  it('흡수 화면 문구: "새 블록" / "n강 → n+1강" (C.176 GDD 106장 1)', () => {
+  it('흡수 화면 문구: "새 블록" / "가진 블록" · 강화 n/100 (C.176 GDD 106장 1 → C.236 158장 4)', () => {
     const src = readFileSync('src/ui/absorbView.ts', 'utf8');
-    expect(src).toContain("chip(have ? step : '새 블록')");
-    expect(src).toContain('`${lv}강 → ${lv + 1}강`');
+    expect(src).toContain("chip(have ? '가진 블록' : '새 블록')");
+    expect(src).toContain('`${elementName(elId, faction.id)} 강화 ${lv}/${max} → ${lv + 1}/${max}`');
     expect(src).toContain('이미 가진 속성 — 강화만');
   });
 });

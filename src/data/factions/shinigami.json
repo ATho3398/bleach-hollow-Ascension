@@ -42,6 +42,7 @@
   },
   "riskGaugeName": "호로화",
   "absorbActionName": "정화 흡수",
+  "absorbModeNames": { "both": "정화 흡수", "trait": "속성 흡수", "stat": "능력치 흡수", "none": "놓아주기" },
   "walkAnim": "stride",
   "slotLocation": "zanpakuto",
   "appearanceChange": false,
@@ -225,7 +226,7 @@
       "altar": "수련장",
       "book": "책장",
       "chest": "가방",
-      "outside": "밖으로"
+      "outside": "월드맵"
     },
     "floor": {
       "aspect": 2,

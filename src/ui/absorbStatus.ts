@@ -1,10 +1,12 @@
-// 흡수 화면 [내 상태] 창 (GDD 128장 7, C.202): 지금 장착 블록·속성 강화 단계·이번 원정에서 흡수한 것·진화 쏠림(어느 속성으로 가는지).
+// 흡수 화면 [내 상태] 창 (GDD 128장 7, C.202): 지금 장착 블록 + 가방 블록(158장 7)·속성 강화 단계·이번 원정에서 흡수한 것·진화 쏠림(어느 속성으로 가는지).
+// 블록 표기는 흡수 화면과 같다 (GDD 158장 4): "1번 물 권 · n/100", 가방 블록은 번호 대신 '가방'.
 // 진화 쏠림은 막대·순위만 보인다(숨겨진 판정 기준 수치는 내보이지 않는다). 창은 확인창(confirmDialog) 한 장: ✓(확인)·뒤로로 닫힌다.
 import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName } from '../data/elements';
 import { pickFaction } from '../data/schema';
 import { getTrait, traitName } from '../data/traits';
 import { enhanceLevel } from '../engine/absorb';
+import { absorbBlockName, enhanceFraction } from './absorbView';
 import { dominantElement, judgeElementCounts } from '../engine/evolution';
 import type { ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
@@ -41,24 +43,30 @@ export function absorbStatusContent(faction: FactionConfig, exp: ExpeditionState
     return s;
   };
 
-  // 장착 블록 + 강화 단계 (강화는 속성 단위, GDD 84장 8)
+  // 장착 블록 → 가방 블록 (GDD 158장 7) + 강화 수치 n/100 (강화는 속성 단위, GDD 84장 8)
+  const blockRow = (where: string, id: string): HTMLElement => {
+    const t = getTrait(id);
+    const li = paintElement(el('li'), t.element);
+    li.append(elementDot(t.element, faction.id), el('span', '', `${where} ${absorbBlockName(faction, id)}`), el('small', 'bha-faint bha-num', enhanceFraction(b, t.element)));
+    return li;
+  };
   const slots = el('ul', 'bha-absorbstat__list');
   b.slots.forEach((id, i) => {
-    const li = el('li');
-    if (!id) {
-      li.append(el('span', 'bha-faint', `${i + 1}번 · 비어 있음`));
-    } else {
-      const t = getTrait(id);
-      paintElement(li, t.element);
-      const lv = enhanceLevel(b, t.element);
-      li.append(elementDot(t.element, faction.id), el('span', '', `${i + 1}번 ${traitName(id, faction.id)}`), el('small', 'bha-faint', `${faction.traitKindNames[t.kind]}${lv > 0 ? ` · ${lv}강` : ''}`));
-    }
-    slots.append(li);
+    if (id) return slots.append(blockRow(`${i + 1}번`, id));
+    slots.append(el('li', 'bha-faint', `${i + 1}번 · 비어 있음`));
   });
+  const spare = b.owned.filter((id) => !b.slots.includes(id));
+  const bag = el('ul', 'bha-absorbstat__list');
+  bag.dataset.absorbBag = '';
+  for (const id of spare) bag.append(blockRow('가방', id));
   const enh = Object.keys(b.enhance ?? {}).filter((l) => enhanceLevel(b, l) > 0);
-  const enhLine = el('p', 'bha-faint', enh.length ? `속성 강화: ${enh.map((l) => `${elementName(l, faction.id)} ${enhanceLevel(b, l)}강`).join(' · ')}` : '속성 강화: 아직 없다');
+  const enhLine = el('p', 'bha-faint', enh.length ? `속성 강화: ${enh.map((l) => `${elementName(l, faction.id)} ${enhanceFraction(b, l)}`).join(' · ')}` : '속성 강화: 아직 없다');
   const left = el('div', 'bha-absorbstat__col');
-  left.append(sec(`${faction.slotName} ${b.slots.filter(Boolean).length} / ${b.slots.length}`, slots, enhLine));
+  left.append(
+    sec(`${faction.slotName} ${b.slots.filter(Boolean).length} / ${b.slots.length}`, slots),
+    sec(`가방 블록 ${spare.length}개`, spare.length ? bag : el('p', 'bha-faint', '없다')),
+    enhLine,
+  );
 
   // 이번 원정에서 흡수한 것 (놓아준 것은 빼고, 최근 것이 위)
   const got = exp.absorbRecords.filter((r) => r.absorbed).slice().reverse();
