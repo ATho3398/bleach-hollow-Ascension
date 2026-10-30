@@ -1,5 +1,7 @@
 // 방 물건이 여는 기능 화면: 돌보기·상태 / 상자(슬롯·덱) / 제단(진화). LCD 가로 2단 배치 (T-3).
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
+import { detachedOf, detachEffectText, detachTotals, getDetachTrait } from '../engine/traitShop';
+import { pickDialog } from './pickDialog';
 import { infoTip } from './bha/infoTip';
 import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
@@ -25,7 +27,7 @@ import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
 import { skinItemId } from '../data/shop';
 import { MATERIAL_DESC, MATERIALS_EMPTY, ownedMaterials } from '../data/materials';
-import { TILES_LOCKED_TEXT } from '../shop';
+import { equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, unequipTrait } from '../shop';
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
@@ -65,9 +67,10 @@ export function critChances(build: SaveData['build'], evo?: SaveData['evolution'
   const fromForm = fa ? abilityEffectsOf(fa).critChance : 0;
   const bonus = critChanceBonus(build) + fromForm + gearCrit;
   const blockPlay = fa?.phys ? 0 : CX.blockPlayCrit;
+  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit; // 탈착 특성 '집중' (GDD 150장 4): 블록 치명만, 상한도 같이
   const basicMax = CX.critChanceMax + fromForm;
-  const blockMax = CX.blockCritChanceMax + fromForm;
-  return { basic: Math.min(basicMax, CX.critChance + bonus), block: Math.min(blockMax, CX.blockCritChance + bonus + blockPlay), basicMax, blockMax, bonus, blockPlay };
+  const blockMax = CX.blockCritChanceMax + fromForm + detach;
+  return { basic: Math.min(basicMax, CX.critChance + bonus), block: Math.min(blockMax, CX.blockCritChance + bonus + blockPlay + detach), basicMax, blockMax, bonus, blockPlay };
 }
 
 const pctText = (x: number) => `${Math.round(x * 100)}%`;
@@ -166,7 +169,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 특성 칸 (GDD 126-1 수정 → 147~151장, C.226): 3·4단계 진화 때 받은 특성(보기 전용). 칸 = 기본 1 + 4단계 진화 1 + 환생당 1 (최대 4). 칸이 없는 옛 모양(점검 도구)이면 진화체 특성 줄
   const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
-  if (evo.abilities) stats.append(abilitySlotsBlock(faction, evo));
+  if (evo.abilities) stats.append(abilitySlotsBlock(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); }));
   // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
   const evoPanel = panel({ title: '진화 정보' });
   evoPanel.setAttribute('aria-label', '진화 정보');
@@ -599,23 +602,56 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
   });
 }
 
-/** 특성 칸 묶음 (GDD 126-1 수정 → 147~149장, C.226): 보기 전용 — 받은 특성은 영구라 빼거나 바꿔 끼지 않는다. 칸마다 한 줄(3단계 특성은 '4단계 진화 때 바뀐다') */
-function abilitySlotsBlock(faction: FactionConfig, evo: EvolutionState): HTMLElement {
+/** 특성 칸 묶음 (GDD 126-1 수정 → 147~149장, C.226 · 150장 5, C.227): 진화 특성은 보기 전용(받으면 영구), 탈착 특성(특성 상점) 칸에만 [빼기],
+ *  빈 칸에는 가진 탈착 특성이 있으면 [끼우기](고르기 창). 원정 중에는 잠금(버튼 흐림 + 이유 한 줄). 바꾸면 changed()(저장 + 다시 그림) */
+function abilitySlotsBlock(faction: FactionConfig, save: SaveData, changed: () => void): HTMLElement {
+  const evo = save.evolution;
   const box = h('div', 'bha-stack bha-stack--tight');
   box.dataset.abilitySlots = '';
   const l = evo.abilities!;
+  const det = detachedOf(l);
+  const used = l.equipped.length + det.length;
   const head = h('p', 'bha-small');
-  head.append(h('b', '', `특성 칸 ${l.equipped.length}/${l.slots}`), ` · 3·4단계 진화 때 받고 ${faction.rebirth.name}해도 남는다`);
+  head.append(h('b', '', `특성 칸 ${used}/${l.slots}`), ` · 3·4단계 진화 때 받고 ${faction.rebirth.name}해도 남는다`);
   box.append(head);
+  const locked = save.activeExpedition ? TRAIT_LOCKED_IN_RUN : null;
+  const spare = save.shared.traits.filter((id) => !det.includes(id));
+  const shop = marketOf(faction).props.traitShop;
   for (let i = 0; i < l.slots; i++) {
-    const id = l.equipped[i];
-    const line = id ? abilityIdLine(id, l.owned[id] ?? 1, faction.id) : null;
     const p = h('p', 'bha-faint');
     p.dataset.abilitySlot = String(i);
-    if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`, id === l.pending ? ' · 4단계 진화 때 바뀐다' : '');
-    else p.append(`${i + 1}칸 · 비어 있음`);
+    const id = l.equipped[i];
+    const dId = id ? undefined : det[i - l.equipped.length];
+    if (id) {
+      const line = abilityIdLine(id, l.owned[id] ?? 1, faction.id);
+      if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`, id === l.pending ? ' · 4단계 진화 때 바뀐다' : '');
+      else p.append(`${i + 1}칸 · 비어 있음`);
+    } else if (dId) {
+      const t = getDetachTrait(dId);
+      p.dataset.detach = dId;
+      p.append(h('b', '', `${i + 1}칸 · ${t?.name ?? dId}`), ` — ${t ? detachEffectText(t) : ''} · ${shop}`, ' ');
+      const out = button({ label: '빼기', size: 'small', disabled: locked !== null, onClick: () => { if (unequipTrait(save, dId)) changed(); } });
+      out.dataset.act = 'detach-out';
+      p.append(out);
+    } else {
+      p.append(`${i + 1}칸 · 비어 있음`);
+      if (spare.length > 0) {
+        p.append(' ');
+        const put = button({ label: '끼우기', size: 'small', disabled: locked !== null, onClick: () => pickDialog({
+          title: '탈착 특성 끼우기',
+          body: `${i + 1}칸에 끼울 특성을 고른다.`,
+          options: spare.map((sid) => {
+            const t = getDetachTrait(sid)!;
+            return { key: sid, label: `${t.name} · ${detachEffectText(t)}`, onPick: () => { if (equipTrait(save, sid)) changed(); } };
+          }),
+        }) });
+        put.dataset.act = 'detach-in';
+        p.append(put);
+      }
+    }
     box.append(p);
   }
+  if (locked && (det.length > 0 || spare.length > 0)) box.append(h('p', 'bha-faint', `탈착 특성: ${locked}`));
   return box;
 }
 

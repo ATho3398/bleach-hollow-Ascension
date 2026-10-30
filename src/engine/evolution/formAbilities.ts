@@ -8,6 +8,7 @@ import { BALANCE } from '../../config/balance';
 import { abilityDescription, abilityName, abilityTextName, elementAbility, elementAbilityName, kindSlot, physElementOf, uniqueAbility, type PhysElementDef } from '../../data/evolution';
 import { pickFaction, STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import type { AbilityEffects, PhysBlock } from '../combat/combat';
+import { makeRoomForEvolution, trimDetached, usedAbilitySlots } from '../traitShop';
 
 const AB = BALANCE.provisional.abilities;
 const PB = BALANCE.provisional.physBlocks;
@@ -37,6 +38,8 @@ export interface AbilityLoadout {
   tier4Ever: boolean;
   /** 이번 생 3단계 진화에서 받은 특성 id (GDD 149장 1): 4단계 진화 때 이 자리에 4단계 특성이 들어간다. 4단계 전에 생이 끝났으면 다음 3단계 특성이 이 자리를 바꾼다 */
   pending?: string;
+  /** 칸에 끼운 탈착 특성 id (GDD 150장 3, C.227): 특성 상점에서 산 것(보유 = shared.traits). 진화 특성과 같은 칸 수를 나눠 쓰고 방에서 뺄 수 있다 */
+  detached?: string[];
 }
 
 export function newAbilityLoadout(): AbilityLoadout {
@@ -85,8 +88,8 @@ export function routeTier4AbilityId(third: FormDef): string | null {
 
 /** 진화 때 특성 받은 결과 (진화 화면 한 줄·런 로그) */
 export type AbilityGain =
-  /** 새 특성을 칸에 받았다 */
-  | { kind: 'new'; id: string }
+  /** 새 특성을 칸에 받았다. bumped = 칸을 비우려고 보유 목록으로 뺀 탈착 특성 (GDD 150장 3) */
+  | { kind: 'new'; id: string; bumped?: string }
   /** from 이 사라지고 같은 칸에 새 특성을 받았다 (GDD 149장 1: 3단계 특성, 151장 3: 각성형 → 허우적). gone = 함께 사라진 3단계 특성 */
   | { kind: 'replaced'; id: string; from: string; gone?: string[] }
   /** 이미 가진 특성이라 다시 받지 않았다 (그 루트 4단계 특성을 가졌을 때 포함). gone = 그래도 사라진 특성(3단계 특성·각성형이면 허우적) */
@@ -171,10 +174,11 @@ export function gainEvolutionAbility(l: AbilityLoadout, form: FormDef, _prev?: F
       mark();
       return done({ kind: 'replaced', id: got.id, from: pend });
     }
-    if (Object.keys(l.owned).length >= l.slots) return { kind: 'full', id: got.id };
+    const bumped = makeRoomForEvolution(l); // 진화 특성 우선 (GDD 150장 3)
+    if (usedAbilitySlots(l) >= l.slots) return { kind: 'full', id: got.id };
     l.owned[got.id] = got.scale;
     mark();
-    return done({ kind: 'new', id: got.id });
+    return done({ kind: 'new', id: got.id, ...(bumped ? { bumped } : {}) });
   }
   // 4단계
   delete l.pending;
@@ -190,15 +194,17 @@ export function gainEvolutionAbility(l: AbilityLoadout, form: FormDef, _prev?: F
     replaceOwned(l, slot, got.id, got.scale);
     return done({ kind: 'replaced', id: got.id, from: slot, ...gone([slot === target ? pend : undefined]) });
   }
-  if (Object.keys(l.owned).length >= l.slots) return { kind: 'full', id: got.id };
+  const bumped = makeRoomForEvolution(l); // 진화 특성 우선 (GDD 150장 3)
+  if (usedAbilitySlots(l) >= l.slots) return { kind: 'full', id: got.id };
   l.owned[got.id] = got.scale;
-  return done({ kind: 'new', id: got.id });
+  return done({ kind: 'new', id: got.id, ...(bumped ? { bumped } : {}) });
 }
 
 /** 칸 수를 다시 정한다(환생·아란칼화). 받은 특성은 빠지지 않는다 */
 export function setAbilitySlots(l: AbilityLoadout, slots: number): void {
   l.slots = slots;
   syncEquipped(l);
+  trimDetached(l); // 넘치면 탈착 특성부터 보유 목록으로 (GDD 150장 3)
 }
 
 /** 노력치 얻는 양 배율 (GDD 149장 3·4: 허우적·마구잡이 — 칸에 든 evGain 특성의 곱) */

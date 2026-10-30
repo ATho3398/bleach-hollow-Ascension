@@ -7,6 +7,8 @@ import { normalSlotNote } from '../data/help/textFormat';
 import { ABILITY_SLOT_LABEL, abilityIdLine, abilityLines, equippedAbilitiesOf, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityGain, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
+import { fixParticles } from '../engine/josa';
+import { getDetachTrait } from '../engine/traitShop';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
 import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { elementDot, elementsMark } from './bha/element';
@@ -140,7 +142,8 @@ export function abilityGainRow(gain: AbilityGain, scale: number, factionId: stri
   const nameOf = (id: string) => abilityIdLine(id, 1, factionId)?.name ?? id;
   const gone = (ids: string[] | undefined) => (ids ?? []).map((id) => `${nameOf(id)} 사라짐 · `).join('');
   switch (gain.kind) {
-    case 'new': return { icon: 'i-rare', label: '특성', value: `새로 받음 · ${line.name} — ${line.description}`, mod: 'good' };
+    // 진화 특성 우선 (GDD 150장 3): 칸을 비우려고 뺀 탈착 특성은 안내 한 줄
+    case 'new': return { icon: 'i-rare', label: '특성', value: `새로 받음 · ${line.name} — ${line.description}${gain.bumped ? fixParticles(` · 칸이 모자라 ${getDetachTrait(gain.bumped)?.name ?? gain.bumped}은(는) 보유 목록으로 뺐다`) : ''}`, mod: 'good' };
     case 'replaced': return { icon: 'i-rare', label: '특성', value: `${gone(gain.gone)}바뀜 · ${nameOf(gain.from)} → ${line.name} — ${line.description}`, mod: 'good' };
     case 'owned': return { icon: 'i-rare', label: '특성', value: `${gone(gain.gone)}${line.name} — 이미 가진 특성이라 다시 받지 않았다`, mod: 'stack' };
     case 'full': return { icon: 'i-rare', label: '특성', value: `특성 칸이 없어 받지 못했다 (${line.name})`, mod: 'stack' };

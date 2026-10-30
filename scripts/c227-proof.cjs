@@ -114,14 +114,16 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
     await page.locator('.bha-market [data-spot="traitShop"]').click({ timeout: 4000 });
     await page.waitForTimeout(800);
     proof.trait = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.bha-itemcard')].map((c) => `${c.dataset.item}: ${c.textContent}`) }));
+    // 집중 하나 사기 → 산 뒤 모습(③)
+    await page.locator('.bha-itemcard[data-item="trait-focus"]').click().catch(() => {});
+    await page.waitForTimeout(400);
+    await page.locator('.bha-itemdialog [data-act="buy"]').first().click().catch(() => {});
+    await page.waitForTimeout(500);
+    await page.locator('.bha-confirm .bha-btn--primary').first().click().catch(() => {});
+    await page.waitForTimeout(900);
+    proof.afterBuy = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.bha-itemcard')].map((c) => `${c.dataset.item}: ${c.textContent}`), note: document.querySelector('.bha-shop p.bha-small')?.textContent }));
+    await page.waitForTimeout(2200);
     await shot('03-trait-shop');
-    if (process.env.C227_BUY) {
-      await page.locator(`.bha-itemcard[data-item="${process.env.C227_BUY}"]`).click().catch(() => {});
-      await page.waitForTimeout(400);
-      await page.locator('.bha-itemdialog [data-act="buy"]').first().click().catch(() => {});
-      await page.waitForTimeout(800);
-      proof.afterBuy = await page.evaluate(() => [...document.querySelectorAll('.bha-itemcard')].map((c) => `${c.dataset.item}: ${c.textContent}`));
-    }
     await page.goto(`${srv.url}?test=1`);
     // ② 방 [상점] 고르는 창 (빈사일 때 위 줄 버튼)
     await patchSave(page, `t.nest.collapsed = true; t.nest.collapsedAt = Date.now(); t.nest.hpFraction = 0.05;`);
@@ -131,23 +133,31 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
     await page.waitForTimeout(600);
     await devBtn('down');
     await page.waitForTimeout(300);
-    proof.picker = await page.evaluate(() => ({ btns: [...document.querySelectorAll('.bha-shoppick button')].map((b) => b.textContent), focus: document.activeElement?.textContent }));
+    proof.picker = await page.evaluate(() => ({ btns: [...document.querySelectorAll(".bha-shoppick button")].map((b) => b.textContent), focus: document.activeElement?.textContent }));
     await shot('02-room-shop-picker');
     await devBtn('ok');
     await page.waitForTimeout(800);
     proof.pickedTitle = await page.evaluate(() => document.querySelector('.bha-shop')?.dataset.shop);
-    if (process.env.C227_STATUS) {
-      await page.goto(`${srv.url}?test=1`);
-      await patchSave(page, `t.nest.collapsed = false; t.nest.hpFraction = 1;`);
-      await reopen(page);
-      await page.locator('.bha-prop--book, [data-prop="status"], button[aria-label="상태"]').first().click().catch(() => {});
-      await page.waitForTimeout(800);
-      const slots = page.locator('.bha-abilityslots, [data-section="abilities"]').first();
-      if (await slots.count()) await slots.scrollIntoViewIfNeeded().catch(() => {});
-      await page.waitForTimeout(300);
-      proof.status = await page.evaluate(() => [...document.querySelectorAll('[data-ability-slot]')].map((e) => e.textContent));
-      await shot('04-status-ability-slots');
-    }
+    // ④ 상태 화면 특성 칸: 진화 특성 1(보기 전용) + 탈착 특성 1([빼기]) + 빈 칸([끼우기]). 환생 2회 = 칸 3
+    await page.goto(`${srv.url}?test=1`);
+    await patchSave(page, `t.nest.collapsed = false; t.nest.hpFraction = 1; t.rebirth.count = 2;
+      t.evolution.abilities = { owned: { 'el:water': 1 }, equipped: ['el:water'], slots: 3, tier4Ever: false, detached: ['focus'] };
+      if (shared) shared.traits = ['focus', 'tough', 'sharpen'];`);
+    await reopen(page);
+    await page.locator('.bha-room__status').first().click({ timeout: 4000 });
+    await page.waitForTimeout(900);
+    const slots = page.locator('[data-ability-slots]').first();
+    await slots.scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(300);
+    proof.status = await page.evaluate(() => [...document.querySelectorAll('[data-ability-slot]')].map((e) => `${e.textContent} [${[...e.querySelectorAll('button')].map((b) => b.textContent).join(',')}]`));
+    await shot('04-status-ability-slots');
+    // [끼우기] → 질긴 몸 → 칸 3/3
+    await page.locator('[data-act="detach-in"]').first().click().catch(() => {});
+    await page.waitForTimeout(500);
+    proof.equipPick = await page.evaluate(() => [...document.querySelectorAll('.bha-shoppick button')].map((b) => b.textContent));
+    await page.locator('.bha-shoppick [data-pick="tough"]').click().catch(() => {});
+    await page.waitForTimeout(800);
+    proof.statusAfterEquip = await page.evaluate(() => [...document.querySelectorAll('[data-ability-slot]')].map((e) => e.textContent));
   } catch (e) {
     proof.fatal = String(e && e.stack || e);
   } finally {

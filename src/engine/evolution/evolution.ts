@@ -2,6 +2,7 @@
 // 진화 타이밍 = 그 단계에서 원정으로 걸은 칸 수(숨김). 흡수는 진화 결과(속성·노력치·히든)만 정한다. 어떤 진화체로 가는지는 judge.ts.
 // 사망·퇴화·단계 스킵은 없다. 진화는 둥지로 돌아올 때 자동으로 일어난다(원정 중에는 일어나지 않는다).
 
+import { detachedOf, detachTotals } from '../traitShop';
 import { BALANCE } from '../../config/balance';
 import { combosAtTier, FORM_TABLE, formName, getForm, tryGetForm } from '../../data/evolution';
 import { distribute, failLineTotal } from '../../data/evolution/generate';
@@ -80,7 +81,7 @@ export function cloneEvolution(e: EvolutionState): EvolutionState {
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
-  return { ...l, owned: { ...l.owned }, equipped: [...l.equipped] };
+  return { ...l, owned: { ...l.owned }, equipped: [...l.equipped], ...(l.detached ? { detached: [...l.detached] } : {}) };
 }
 
 export function isMaxTier(e: EvolutionState): boolean {
@@ -398,6 +399,23 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
     // 치명 두 값 (C.220): 특성 치명은 블록 치명에도 같이 (진화체별 나눔은 2차)
     params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + critChance;
     params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + critChance;
+  }
+  applyDetachedTraits(params, detachedOf(e.abilities));
+}
+
+/** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
+export function applyDetachedTraits(params: Partial<CombatParams>, ids: readonly string[]): void {
+  if (ids.length === 0) return;
+  const t = detachTotals(ids);
+  if (t.dealt || t.taken) {
+    const fx = { ...(params.abilityEffects ?? {}) };
+    fx.mutation = { dealt: (fx.mutation?.dealt ?? 0) + t.dealt, taken: (fx.mutation?.taken ?? 0) + t.taken };
+    params.abilityEffects = fx;
+  }
+  if (t.maxHp) params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * (1 + t.maxHp);
+  if (t.blockCrit) {
+    params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + t.blockCrit;
+    params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + t.blockCrit;
   }
 }
 

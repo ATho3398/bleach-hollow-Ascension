@@ -17,6 +17,7 @@ import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
 import { recommendedDifficulty } from './engine/difficulty';
 import { GEAR_GRADE_NAMES, type GearGrade } from './data/gear';
 import type { SaveData } from './game';
+import { DETACH_TRAITS, detachedOf, detachEffectText, equipDetach, getDetachTrait, unequipDetach, detachLock } from './engine/traitShop';
 
 const SX = BALANCE.shop;
 const FOOD_MAX = BALANCE.provisional.food.cap;
@@ -497,3 +498,55 @@ function giveGear(save: SaveData, faction: FactionConfig, roll: GearRoll, source
   const slot = it.kind === 'accessory' ? 'acc1' : it.kind;
   return `${GEAR_GRADE_NAMES[it.grade]} ${faction.gearSlotNames[slot]} → 가방 장비 탭`;
 }
+
+// ── 특성 상점 (GDD 150장 3·4, C.227): 탈착 특성 — 골드로 한 번 사면 계속 보유(중복 구매 없음), 빈 특성 칸에 끼우고 방에서 뺀다(원정 중 잠금) ──
+
+/** 특성 상점 품목 id: trait-<탈착 특성 id> */
+export const traitItemId = (id: string): string => `trait-${id}`;
+const traitOfItem = (itemId: string): string | null => (itemId.startsWith('trait-') ? itemId.slice(6) : null);
+/** 원정 중 잠금 한 줄 */
+export const TRAIT_LOCKED_IN_RUN = '원정 중에는 바꿀 수 없다';
+
+/** 특성 상점 줄: 보유하면 '보유'(지금 트랙 칸에 끼웠으면 worn) */
+export function traitRows(save: SaveData): ShopRow[] {
+  return DETACH_TRAITS.map((t) => {
+    const owned = save.shared.traits.includes(t.id);
+    const short = !owned && wallet(save, 'gold') < t.price ? shortText('gold', t.price - wallet(save, 'gold')) : null;
+    return { id: traitItemId(t.id), currency: 'gold', name: t.name, effect: detachEffectText(t), price: t.price, canBuy: !owned && short === null, lock: owned ? null : short, have: owned ? '보유' : null, confirm: true, owned, worn: detachedOf(save.evolution.abilities).includes(t.id) };
+  });
+}
+
+/** 탈착 특성을 산다: 돈을 내고 보유 목록에. 이미 가졌거나 돈이 모자라면 실패(아무것도 안 바뀜) */
+export function buyTraitItem(save: SaveData, itemId: string, nowMs: number = Date.now()): BuyResult {
+  const id = traitOfItem(itemId);
+  const t = id ? getDetachTrait(id) : undefined;
+  if (!t) return { ok: false, reason: '지금은 살 수 없는 품목이다' };
+  if (save.shared.traits.includes(t.id)) return { ok: false, reason: '이미 가지고 있다' };
+  if (wallet(save, 'gold') < t.price) return { ok: false, reason: shortText('gold', t.price - wallet(save, 'gold')) };
+  save.shared.tradeCoins -= t.price;
+  save.shared.traits.push(t.id);
+  record(save, itemId, 'gold', t.price, nowMs);
+  return { ok: true, id: itemId, price: t.price, currency: 'gold', detail: `${detachEffectText(t)} · 상태 화면 특성 칸에 끼운다` };
+}
+
+/** 끼우기·빼기를 못 하는 이유 (원정 중 · 칸 없음 …). 되면 null */
+export function traitToggleLock(save: SaveData, id: string): string | null {
+  if (save.activeExpedition) return TRAIT_LOCKED_IN_RUN;
+  const l = save.evolution.abilities;
+  if (!l) return '특성 칸이 없다';
+  if (detachedOf(l).includes(id)) return null;
+  return detachLock(l, save.shared.traits, id);
+}
+
+/** 지금 트랙 특성 칸에 끼운다 / 뺀다 (방에서만 — 원정 중 잠금). 됐으면 true */
+export function equipTrait(save: SaveData, id: string): boolean {
+  const l = save.evolution.abilities;
+  if (save.activeExpedition || !l) return false;
+  return equipDetach(l, save.shared.traits, id);
+}
+export function unequipTrait(save: SaveData, id: string): boolean {
+  const l = save.evolution.abilities;
+  if (save.activeExpedition || !l) return false;
+  return unequipDetach(l, id);
+}
+

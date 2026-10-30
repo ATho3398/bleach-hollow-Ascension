@@ -136,7 +136,7 @@ describe('같은 특성 두 번 없음 (GDD 149장 5)', () => {
 
 describe('세이브 형식 59 → 60 (GDD 149장 7, 123장 6)', () => {
   it('형식 60 · 문턱 54 고정 · 단계 표에 59', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(60);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(60); // C.227 에서 61
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[59]).toBe('function');
   });
