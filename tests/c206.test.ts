@@ -35,18 +35,16 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
     return save;
   };
   for (const f of ['hollow', 'shinigami']) {
-    it(`${f}: 가방에서 구급상자·포션을 원래대로 쓰면 빈사 풀림·체력 각본 값, 온천 들어가면 80%, 먹이 준 뒤 가득 · '다음 할 일'`, () => {
+    it(`${f}: 가방에서 구급상자를 원래대로 쓰면 빈사 풀림, 튜토리얼 온천(10초) 들어가면 80%, 먹이 준 뒤 가득 · '다음 할 일'`, () => {
       const s = afterTutorial(f);
       const fc = getFaction(f);
       expect(recoverStep(s)).toBe('dying');
       recoverGrantBag(s);
       expect(useInventoryItem(s, fc, CURE_ITEM_ID).ok).toBe(true);
       expect(s.nest.collapsed).toBe(false);
-      expect(recoverStep(s)).toBe('potion');
-      expect(useInventoryItem(s, fc, HP_POTION_ID).ok).toBe(true);
-      expect(homeHp(s).fraction).toBeCloseTo(TR.potionTo, 6); // 튜토리얼 중 포션 = 각본 값까지
-      expect(recoverStep(s)).toBe('spa');
+      expect(recoverStep(s)).toBe('spa'); // 방 포션 단계 삭제 (C.223, GDD 144장 4)
       expect(spaEnter(s, 2500)).toBeNull(); // 세이브 시각과 이어지게 (C.214: 들어가기 전에 시계를 흘림)
+      expect(s.nest.spa?.fast).toBe(true); // 튜토리얼 온천 = 10초 빠르기 (GDD 145장 1)
       expect(recoverSpaSoak(s, 2600)).toBe(true);
       expect(s.nest.spa).not.toBeNull(); // 들어간 채로 (쉬기 설명 뒤 방으로)
       expect(homeHp(s).fraction).toBeGreaterThanOrEqual(TR.spaTo - 1e-6);
@@ -60,13 +58,15 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
       expect(guidePending(s.help, 'first-run-room')).toBe(true);
     });
   }
-  it('튜토리얼이 끝난 뒤의 체력 포션은 평소대로 가득', () => {
+  it('튜토리얼이 끝난 뒤의 온천은 평소 빠르기(5분), 치료제(옛 체력 포션)는 방에서 안 쓴다 (C.223, GDD 144·145장)', () => {
     const s = newSaveData('hollow', 1000);
     s.help.guides.recover = 'done';
     s.nest.hpFraction = 0.2;
     s.shared.items[HP_POTION_ID] = 1;
-    expect(useInventoryItem(s, getFaction('hollow'), HP_POTION_ID).ok).toBe(true);
-    expect(homeHp(s).fraction).toBe(1);
+    expect(useInventoryItem(s, getFaction('hollow'), HP_POTION_ID).ok).toBe(false);
+    expect(homeHp(s).fraction).toBe(0.2);
+    expect(spaEnter(s, 1000)).toBeNull();
+    expect(s.nest.spa?.fast).toBeUndefined();
   });
   it('app: 행동을 대신 해 주는 카드 버튼 없음 — 모든 카드 버튼 = [다음], 행동 카드는 act(대상·완료)', () => {
     const app = read('src/ui/app.ts');

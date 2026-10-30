@@ -9,7 +9,7 @@ import { advance, createExpedition, playExpedition, startBattle, type Expedition
 import { guidePending } from '../src/engine/tutorial';
 import { absenceOf, newSaveData, nextRunId, recordExpedition, tickIdle } from '../src/game';
 import { homeHp, HP_POTION_ID } from '../src/home';
-import { CURE_ITEM_ID, recoverCure, recoverFeed, recoverGrantBag, recoverPotion, recoverSpa, recoverStep } from '../src/recoverTutorial';
+import { CURE_ITEM_ID, recoverCure, recoverFeed, recoverGrantBag, recoverSpa, recoverStep } from '../src/recoverTutorial';
 
 const TS = BALANCE.provisional.tutorialScript;
 const TR = BALANCE.provisional.tutorialRecover;
@@ -147,7 +147,7 @@ describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () =>
     return save;
   };
   for (const f of ['hollow', 'shinigami']) {
-    it(`${f}: 빈사 복귀 → 구급상자 → 포션 50% → 온천 → 먹이 = 배부름·체력 100% → '다음 할 일' 차례`, () => {
+    it(`${f}: 빈사 복귀 → 구급상자 → 온천 → 먹이 = 배부름·체력 100% → '다음 할 일' 차례`, () => {
       const s = afterTutorial(f);
       expect(s.nest.collapsed).toBe(true);
       expect(recoverStep(s)).toBe('dying');
@@ -157,14 +157,10 @@ describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () =>
       recoverGrantBag(s);
       recoverGrantBag(s); // 다시 열어도 한 번만
       expect(s.shared.items[CURE_ITEM_ID]).toBe(start + 1);
-      expect(s.shared.items[HP_POTION_ID]).toBe(1);
+      expect(s.shared.items[HP_POTION_ID]).toBeUndefined(); // 방 포션 지급·단계 삭제 (C.223, GDD 144장 4)
       expect(recoverCure(s, 3000)).toBe(true);
       expect(s.nest.collapsed).toBe(false);
       expect(s.shared.items[CURE_ITEM_ID]).toBe(start);
-      expect(recoverStep(s)).toBe('potion');
-      expect(recoverPotion(s, 3100)).toBe(true);
-      expect(homeHp(s).fraction).toBeCloseTo(TR.potionTo, 6);
-      expect(s.shared.items[HP_POTION_ID]).toBeUndefined();
       expect(recoverStep(s)).toBe('spa');
       const full0 = 100 - s.nest.hunger;
       expect(recoverSpa(s, 3200)).toBe(true);
@@ -195,6 +191,6 @@ describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () =>
     const s = afterTutorial('shinigami');
     recoverCure(s, 3000);
     const back = JSON.parse(JSON.stringify(s));
-    expect(recoverStep(back)).toBe('potion');
+    expect(recoverStep(back)).toBe('spa') // 포션 단계 삭제 (C.223);
   });
 });

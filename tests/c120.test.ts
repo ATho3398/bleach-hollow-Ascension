@@ -47,7 +47,7 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     const s = newSaveData('hollow', 1);
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(56); // C.213 (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(57); // C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
 

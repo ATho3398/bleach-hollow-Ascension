@@ -215,7 +215,7 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
   });
 
   it('세이브: 강화 횟수가 저장·불러오기로 남고 깨진 값은 버린다. 형식 45(C.167)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(56); // C.213 (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(57); // C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
     const s = newSaveData('hollow', 1);
     expect(s.build.enhance).toEqual({});
     s.build.enhance = { earth: 120, fire: 3 };

@@ -109,7 +109,7 @@ describe('134장 3: 진화 이유 문구 (종족 설정)', () => {
 
 describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', () => {
   const CP = BALANCE.provisional.nest.care;
-  const SP = BALANCE.provisional.nest.homeHp.spa;
+  const SP = BALANCE.provisional.nest.homeHp.tutorialSpa; // C.223: 1초 +10 은 튜토리얼 온천만 (GDD 145장 1)
   const nestAt = (fullness: number, condition: number) => {
     const n = newNest(0);
     n.hunger = 100 - fullness;
@@ -136,7 +136,7 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
     expect(SP.conditionPerSecond).toBe(10);
     const n = nestAt(100, 40);
     n.hpFraction = 0.95;
-    expect(enterSpa(n, 0)).toBeNull();
+    expect(enterSpa(n, 0, true)).toBeNull();
     const r = soakSpa(n, 5 / 60, 0); // 체력은 0.5초면 가득, 컨디션은 5초 → +50
     expect(r.ended).toBeNull();
     expect(n.condition).toBeCloseTo(90, 6);
@@ -153,7 +153,7 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
   it('2 온천 시간은 온천 규칙만 (1초에 +10)', () => {
     const n = nestAt(100, 50);
     n.hpFraction = 0.5;
-    enterSpa(n, 0);
+    enterSpa(n, 0, true);
     passNestTime(n, 3 / 3600, false, 3_000); // 온천 3초: 컨디션 +30, 체력 +30%
     expect(n.spa).not.toBeNull();
     expect(n.condition).toBeCloseTo(80, 6);
@@ -164,11 +164,11 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
       const cond = statusInfo('cond', f).groups.flatMap((g) => g.lines).join('\n');
       expect(cond).not.toContain('쉬는 동안');
       expect(cond).not.toContain('70 이상');
-      expect(cond).toMatch(/1초에 \+10/);
+      expect(cond).toMatch(/1분에 \+20/); // 평소 온천 (C.223, GDD 145장 1)
       const hunger = statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n');
       expect(hunger).not.toContain('쉬는 동안');
       expect(hunger).not.toContain('컨디션이 시간당 +');
     }
-    expect(readFileSync('src/ui/spaView.ts', 'utf8')).toContain('컨디션 +${SP.conditionPerSecond}');
+    expect(readFileSync('src/ui/spaView.ts', 'utf8')).toContain('컨디션 +${fmt(r.conditionPerSecond * k)}');
   });
 });

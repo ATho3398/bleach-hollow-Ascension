@@ -94,7 +94,8 @@ import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorial
 import { showToast } from './bha/nest';
 import { carriedPet } from '../engine/pet';
 import { applyGearToParams, gearCarry } from '../engine/gear';
-import { battleItemEffectOf, gearDropText, gearNoticeOf, petNoticeOf, spendBattleItem } from '../inventory';
+import { battleItemEffectOf, consumableName, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, petNoticeOf, spendBattleItem, useHealItemOnWalk } from '../inventory';
+import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
 import { shopView } from './shopView';
 import { idleBadge, refreshIdleBadge, showIdlePanel, showIdleReturn } from './idleView';
@@ -103,7 +104,7 @@ import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
-import { useRerollTicket } from '../shop';
+import { battleItemText, useRerollTicket } from '../shop';
 import { applyTestExpeditionForce, clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
@@ -243,9 +244,9 @@ export function startApp(host: HTMLElement): void {
   let recoverFedHook: (() => void) | null = null;
 
   /**
-   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206): 카드 9장을 순서대로. 건너뛰기 없음.
+   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 7장을 순서대로. 건너뛰기 없음.
    * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
-   * 빈사 설명 → 가방 열기(구급상자·체력 포션 지급) → 구급상자 [사용] → 포션 [사용](50%) → 상인 안내 → 방 → (밖으로 → 시장 →) 온천 들어가기(80%) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
+   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (밖으로 → 시장 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -260,8 +261,8 @@ export function startApp(host: HTMLElement): void {
     const TR = BALANCE.provisional.tutorialRecover;
     const pct = (x: number) => String(Math.round(x * 100));
     const vars = {
-      chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
-      spaHpPct: pct(HH.spa.hpPerSecond), spaFullness: String(HH.spa.fullnessPerSecond), spaCond: String(HH.spa.conditionPerSecond), idleHpPct: pct(HH.idlePerMinute),
+      chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
+      spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalMin: String(Math.round(1 / HH.spa.hpPerSecond / 60)), // 튜토리얼 온천 10초 · 평소 5분 (GDD 145장 1) idleHpPct: pct(HH.idlePerMinute),
       // 온천 가는 길 (GDD 130장 5): 밖으로 → 시장 → 온천
       spaPath: `${props.outside} → ${mk.name} → ${mk.props.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
@@ -274,7 +275,7 @@ export function startApp(host: HTMLElement): void {
     const onRoomRender = () => { if (nav.top?.id === 'room') nav.top.render(); }; // 지급한 먹이 개수가 독에 보이게
     const EPS = 1e-6;
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
-    // 실제 조작: 가방 열기 → 구급상자·체력 포션 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
+    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
     const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'; // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
     // 썼으면 물건 창을 닫는다 (C.214): 시작 구급상자 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
     const closeItemWhen = (done: boolean): boolean => {
@@ -290,9 +291,8 @@ export function startApp(host: HTMLElement): void {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
         act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' },
       },
-      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) } },
-      potion: { act: { selector: '[data-item="w-hp-potion"]', done: () => closeItemWhen(homeHp(s).fraction >= TR.potionTo - EPS) } },
-      merchant: { next: (go) => { toRoom(); go(); } },
+      // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
+      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
       'to-spa': {
         // 온천에 들어가면(원래 조작) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
         // 체력이 spaTo 에 닿으면 [다음]. 배부름이 먼저 바닥나 나왔으면 각본 값 spaTo 까지 채운다
@@ -340,8 +340,8 @@ export function startApp(host: HTMLElement): void {
       }, ms);
     };
     const ids = RECOVER_SCENES.map((x) => x.id);
-    // 이어 가기: 빈사 = 처음, 포션 = 가방 카드(구급상자는 건너뜀), 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
-    const first = start === 'dying' ? 0 : start === 'potion' ? ids.indexOf('to-bag') : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
+    // 이어 가기: 빈사 = 처음, 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
+    const first = start === 'dying' ? 0 : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
     const show = (i: number): void => {
       const scene = RECOVER_SCENES[i];
       if (!scene) {
@@ -1440,7 +1440,11 @@ export function startApp(host: HTMLElement): void {
         opened = true;
         // 걷기·조우 안내 동안 원정 시간이 멈춘다
         signalHold('hold');
-        showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 원정 멈춤', onDone: () => signalHold('release') });
+        showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 원정 멈춤', onDone: () => {
+          signalHold('release');
+          // 회복 물건 안내 한 줄 (GDD 144장 4·145장 3): 시작 가방에 넣어 둔 회복 물건 — 노란 알림(맨 위)
+          showToast({ eyebrow: '회복 물건', title: '원정·전투 중에 체력이 모자라면 회복 물건을 쓴다', meta: '걷기 중 [가방] · 전투 [소모품]' }, 0, 4200);
+        } });
       },
     });
   }
@@ -1629,6 +1633,21 @@ export function startApp(host: HTMLElement): void {
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, exp, resume),
       openHelp: (onClose) => openHelp('expedition', false, onClose),
+      // 걷기 중 가방 (GDD 144장 3): 회복 물건 4종 — 쓰면 원정 체력이 차고 바로 저장
+      openBag: (onClose) => {
+        const sv = save;
+        if (!sv) return onClose();
+        healBag({
+          items: () => HEAL_ITEM_IDS.map((id) => ({ id, name: consumableName(id), count: sv.shared.items[id] ?? 0, detail: battleItemText(id) })),
+          hp: () => hpFractionOf(exp),
+          use: (id) => {
+            const r = useHealItemOnWalk(sv, exp, id);
+            if (r.ok) saveProgress(exp);
+            return r;
+          },
+          onClose,
+        });
+      },
     }, msg);
   }
 

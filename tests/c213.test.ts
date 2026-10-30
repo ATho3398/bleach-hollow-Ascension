@@ -49,13 +49,13 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     return raw;
   };
   it('단계 표에 55 가 있고 형식은 56', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(56);
+    expect(SAVE_FORMAT_VERSION).toBe(57);
     expect(typeof SAVE_MIGRATIONS[55]).toBe('function');
   });
   it('가진 희귀 특성 → 같은 속성 강화 1단계, 다른 값과 런 로그 옛 기록은 그대로', () => {
     const m = migrateSave(v55())!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(56);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.build.owned).toEqual(['t-earth-a']);
     expect(m.build.slots).toEqual(['t-earth-a', null, null]);
     expect(m.build.equipOrder).toEqual(['t-earth-a']);
@@ -66,7 +66,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     const raw = v55();
     (raw.meta as { format: number }).format = 54;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(56);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.build.enhance).toEqual({ earth: 3 });
   });
   it('쉬는 트랙도 바꾼다', () => {
@@ -104,7 +104,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     const st = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };
     writeSave(st, v55() as unknown as SaveData);
     const back = loadSave(st)!;
-    expect(back.meta.format).toBe(56);
+    expect(back.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(back.build.enhance).toEqual({ earth: 3 });
   });
 });

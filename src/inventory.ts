@@ -7,8 +7,7 @@ import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
 import { CARE_STATUS_NAMES, foodHpHeal, homeHpCap, homeHpOf } from './engine/nest';
-import { drinkHpPotion } from './home';
-import { cureNest, feedNest } from './game';
+import { cureNest, feedNest, logHomeHeal } from './game';
 import { wandererAmount } from './engine/wanderer';
 import { guidePending } from './engine/tutorial';
 import { CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
@@ -24,15 +23,30 @@ import type { BattleItemEffect } from './engine/combat';
 const SX = BALANCE.shop;
 const COND_MAX = BALANCE.provisional.expedition.conditionMax;
 
-/** 보관함에 쌓이는 소모품 id: 상점 정화제·각성제·약(GDD 102-4) + 상인 소모품(정화·각성·정수). 효과는 useInventoryItem */
-export const CONSUMABLE_IDS: readonly string[] = [
+/** 체력 회복 물건 4종 (GDD 144장 1, C.223): 전투용 소모품 중 회복 효과 — 반창고·붕대·회복약·치료제 순(데이터 순서). 원정 걷기·전투 중에만 쓴다 */
+export const HEAL_ITEM_IDS: readonly string[] = GOLD_ITEMS.filter((g) => g.battle && BALANCE.provisional.battleItems[g.id]?.effect === 'heal').map((g) => g.id);
+
+/** 회복 물건의 회복량 (최대 체력 대비). 회복 물건이 아니면 null */
+export function healItemFraction(id: string): number | null {
+  const b = BALANCE.provisional.battleItems[id];
+  return b?.effect === 'heal' ? b.fraction : null;
+}
+
+/** 보관함에 쌓이는 소모품 id: 회복 물건 4종(GDD 144장) + 상점 정화제·각성제·약(GDD 102-4) + 상인 소모품(정화·각성·정수). 효과는 useInventoryItem */
+export const CONSUMABLE_IDS: readonly string[] = [...new Set([
+  ...HEAL_ITEM_IDS,
   ...GOLD_ITEMS.filter((g) => g.kind === 'calm' || g.kind === 'wake' || g.kind === 'medicine').map((g) => g.id),
   ...WANDERER_ITEMS.filter((w) => w.kind === 'calm' || w.kind === 'wake' || w.kind === 'elixir' || w.kind === 'hpPotion').map((w) => w.id),
-];
+])];
 
-/** 소모품 효과 한 줄: cure = 상인 정수(쇠약 풀기), medicine = 약이 푸는 상태 (GDD 102-4, 수치는 안 바뀜) */
-type ConsumableEffect = { risk: number; condition: number; cure: boolean; medicine?: MedicineCure; /** 체력 포션 (GDD 123장 4): 홈 체력 가득 */ hpFull?: boolean };
+/** 회복 물건을 방에서 눌렀을 때 (GDD 144장 2) */
+export const HEAL_ROOM_LOCK = '원정·전투 중에만 쓴다';
+
+/** 소모품 효과 한 줄: cure = 상인 정수(쇠약 풀기), medicine = 약이 푸는 상태 (GDD 102-4, 수치는 안 바뀜), heal = 회복 물건(GDD 144장) */
+type ConsumableEffect = { risk: number; condition: number; cure: boolean; medicine?: MedicineCure; heal?: number };
 function consumableEffect(id: string): ConsumableEffect | null {
+  const heal = healItemFraction(id);
+  if (heal !== null) return { risk: 0, condition: 0, cure: false, heal };
   const g = getGoldItem(id);
   if (g?.kind === 'medicine') return { risk: 0, condition: 0, cure: false, medicine: g.cures! };
   if (g?.kind === 'calm') return { risk: SX.calmRisk, condition: 0, cure: false };
@@ -41,7 +55,6 @@ function consumableEffect(id: string): ConsumableEffect | null {
   if (w?.kind === 'calm') return { risk: wandererAmount(id), condition: 0, cure: false };
   if (w?.kind === 'wake') return { risk: 0, condition: wandererAmount(id), cure: false };
   if (w?.kind === 'elixir') return { risk: wandererAmount(id), condition: COND_MAX, cure: true };
-  if (w?.kind === 'hpPotion') return { risk: 0, condition: 0, cure: false, hpFull: true };
   return null;
 }
 
@@ -50,7 +63,7 @@ export function consumableText(id: string, faction: Pick<FactionConfig, 'riskGau
   const e = consumableEffect(id);
   if (!e) return '';
   if (e.medicine) return medicineText(e.medicine);
-  if (e.hpFull) return '체력 가득 (빈사 중엔 10%까지, 가방에서 사용)';
+  if (e.heal !== undefined) return healItemText(id);
   const parts = [e.risk > 0 ? `${faction.riskGaugeName} −${e.risk}` : '', e.condition > 0 ? (e.condition >= COND_MAX ? '컨디션 가득' : `컨디션 +${e.condition}`) : '', e.cure ? '쇠약 해소' : ''].filter(Boolean);
   return `${parts.join(' · ')} (가방에서 사용, 지금 캐릭터에 바로)`;
 }
@@ -83,10 +96,10 @@ export interface InventoryEntry {
 function consumableLock(save: SaveData, id: string, faction: Pick<FactionConfig, 'riskGaugeName'>): string | null {
   const e = consumableEffect(id);
   if (!e) return '쓸 수 없다';
+  if (e.heal !== undefined) return save.activeExpedition != null ? '원정 화면 [가방]에서 쓴다' : HEAL_ROOM_LOCK; // 방에서는 안 쓴다 — 방 체력은 온천·먹이 (GDD 144장 2)
   if (save.activeExpedition != null) return '원정 중인 캐릭터에는 못 쓴다';
   if (save.nest.dead) return `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다`;
   if (e.medicine) return medicineNeeded(save, e.medicine) ? null : `${medicineStatusName(e.medicine)} 상태가 아니다`;
-  if (e.hpFull) return homeHpOf(save.nest) < homeHpCap(save.nest) - 1e-9 ? null : save.nest.collapsed ? '빈사 — 체력 10% 위로 못 채운다' : '체력 이미 가득';
   const helpsRisk = e.risk > 0 && save.nest.risk > 0;
   const helpsCond = e.condition > 0 && save.nest.condition < COND_MAX;
   const helpsCure = e.cure && save.nest.weakened;
@@ -165,17 +178,32 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     takeItem(save, id);
     return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림` };
   }
-  if (e.hpFull) {
-    // 튜토리얼 회복 안내 중(빈사가 풀린 뒤)에는 각본 값까지만 (GDD 123장 5·129-2 2: 사용자가 가방에서 직접 마신다)
-    const tut = guidePending(save.help, 'recover') && !save.nest.collapsed;
-    const r = drinkHpPotion(save, id, Date.now(), tut, tut ? BALANCE.provisional.tutorialRecover.potionTo : 1);
-    return r ? { ok: true, detail: `체력 ${Math.round(r.hpTo * 100)}%` } : { ok: false, reason: '쓸 수 없다' };
-  }
   save.nest.risk = Math.max(0, save.nest.risk - e.risk);
   save.nest.condition = Math.min(COND_MAX, save.nest.condition + e.condition);
   if (e.cure) save.nest.weakened = false;
   takeItem(save, id);
   return { ok: true, detail: `${faction.riskGaugeName} ${Math.round(save.nest.risk)} · 컨디션 ${Math.round(save.nest.condition)}` };
+}
+
+/** 회복 물건 효과 한 줄 (GDD 144장): 회복량 · 쓰는 곳 */
+export function healItemText(id: string): string {
+  const f = healItemFraction(id);
+  return f === null ? '' : `체력 ${f >= 1 ? '가득' : `+${Math.round(f * 100)}%`} · 원정 걷기 중 [가방]·전투 [소모품]에서 쓴다`;
+}
+
+/** 원정 걷기 중 회복 물건 쓰기 (GDD 144장 3): 가방에서 하나 써서 이어 가는 체력(최대 체력 대비)을 채운다. 빈사 원정은 최대 체력이 이미 줄어 있어 그 안에서 찬다.
+ *  못 쓰면 이유. 쓰면 전·후 체력 비율 */
+export function useHealItemOnWalk(save: SaveData, exp: { hpFraction?: number; status?: string }, id: string): { ok: true; from: number; to: number } | { ok: false; reason: string } {
+  const f = healItemFraction(id);
+  if (f === null) return { ok: false, reason: '회복 물건이 아니다' };
+  if ((save.shared.items[id] ?? 0) <= 0) return { ok: false, reason: '가진 물건이 아니다' };
+  const from = Math.min(1, Math.max(0, exp.hpFraction ?? 1));
+  if (from >= 1 - 1e-9) return { ok: false, reason: '체력 이미 가득' };
+  const to = Math.min(1, from + f);
+  exp.hpFraction = to;
+  takeItem(save, id);
+  logHomeHeal(save, { at: Date.now(), kind: 'item', itemId: id, hpFrom: Math.round(from * 100) / 100, hpTo: Math.round(to * 100) / 100 }); // 런 로그 (GDD 9장)
+  return { ok: true, from, to };
 }
 
 /** 보관함 소모품 하나 쓰기 */

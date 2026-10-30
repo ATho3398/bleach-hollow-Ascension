@@ -6,7 +6,7 @@ import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { artUrls } from '../data/art/manifest';
 import type { FactionConfig } from '../engine/faction';
-import { fullnessOfNest, previewHomeHp, type SpaEnd } from '../engine/nest';
+import { fullnessOfNest, previewHomeHp, spaRateOf, type SpaEnd } from '../engine/nest';
 import { artSkinOf, type SaveData } from '../game';
 import { homeMaxHp } from '../home';
 import { beginAction, beginSceneMove } from './bha/actionFx';
@@ -56,6 +56,19 @@ export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: str
   return '방으로 돌아왔다.';
 }
 
+/** 쉬는 동안 줄 (GDD 145장 1): 평소 온천은 1분 단위(약 5분에 가득), 튜토리얼 온천(10초)은 1초 단위 */
+export function spaRateLines(r: { hpPerSecond: number; conditionPerSecond: number; fullnessPerSecond: number }, fullnessName: string): string[] {
+  const full = 0.99 / r.hpPerSecond;
+  const fmt = (v: number) => String(Math.round(v * 10) / 10);
+  const perMin = full >= 60;
+  const k = perMin ? 60 : 1;
+  return [
+    `${perMin ? '1분' : '1초'}에 체력 +${fmt(r.hpPerSecond * k * 100)}% · 컨디션 +${fmt(r.conditionPerSecond * k)} · ${fullnessName} −${fmt(r.fullnessPerSecond * k)}`,
+    `체력 1% → 가득 약 ${perMin ? `${Math.ceil(full / 60)}분` : `${Math.ceil(full)}초`}`,
+    '앱을 꺼도 계속 쉰다',
+  ];
+}
+
 /** 온천에서 나가는 연출 (GDD 132장 4): 화면이 떠 있으면 계단을 거꾸로 올라와 걸어 나간 뒤 done 을 부르고 true. 없으면 false(바로 나가면 된다) */
 export function spaExitFx(done: () => void): boolean {
   return live?.on() ? live.exit(done) : false;
@@ -64,7 +77,6 @@ export function spaExitFx(done: () => void): boolean {
 export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveData, hd: SpaHandlers): void {
   const room = roomOf(faction, save.wear.talk);
   const name = marketOf(faction).props.spa;
-  const SP = BALANCE.provisional.nest.homeHp.spa;
   const n = save.nest;
   const maxHp = homeMaxHp(save);
 
@@ -202,7 +214,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const infoBtn = infoTip('쉬는 중', () => ({
     lead: `${name}에서 쉬는 중이다.`,
     groups: [
-      { title: '쉬는 동안', lines: [`1초에 체력 +${Math.round(SP.hpPerSecond * 100)}% · 컨디션 +${SP.conditionPerSecond} · ${faction.fullnessName} −${SP.fullnessPerSecond}`, `체력 1% → 가득 약 ${Math.ceil(0.99 / SP.hpPerSecond)}초`, '앱을 꺼도 계속 쉰다'] },
+      { title: '쉬는 동안', lines: spaRateLines(spaRateOf(n.spa), faction.fullnessName) },
       { title: '저절로 나올 때', lines: [fixParticles(`체력과 컨디션이 둘 다 다 차거나 ${faction.fullnessName}이(가) 0 이 되면 방으로 돌아간다`)] },
       ...(n.collapsed ? [{ title: '빈사', lines: [`체력은 ${dyingPct}% 까지만 찬다`, '구급상자로 풀어야 더 찬다'] }] : []),
     ],

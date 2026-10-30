@@ -54,6 +54,8 @@ export interface ExpeditionViewHandlers {
   onSave: () => void;
   /** [?] 도움말 (C.19): 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다 */
   openHelp: (onClose: () => void) => void;
+  /** [가방] (GDD 144장 3, C.223): 걷기·휴식 중 회복 물건을 쓴다. 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다. 없으면 버튼 없음 */
+  openBag?: (onClose: () => void) => void;
 }
 
 const EX = BALANCE.expedition;
@@ -358,10 +360,26 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       },
     });
   };
+  // [가방] (GDD 144장 3): 걷기·휴식 중 회복 물건 — 일시정지하고 창, 닫으면 이어 간다
+  const bagBtn = button({ label: '가방', icon: 'i-heal', variant: 'ghost', size: 'small' });
+  bagBtn.classList.add('bha-exp__bag');
+  bagBtn.onclick = () => {
+    if (!h.openBag || dead || !(exp.phase === 'moving' || exp.phase === 'rest')) return;
+    const wasPaused = paused;
+    paused = true;
+    resumeClock();
+    render();
+    h.openBag(() => {
+      paused = wasPaused;
+      resumeClock();
+      render();
+    });
+  };
   const handCount = el('span', 'bha-exp__hand-count');
   // 오른쪽 위 모서리: 귀환하기·일시정지·도움말을 작게 (+ 손에 든 타일 수)
   const corner = el('div', 'bha-exp__corner');
   const cornerRow = el('div', 'bha-exp__cornerrow');
+  if (h.openBag) cornerRow.append(bagBtn);
   cornerRow.append(abortBtn, pauseBtn);
   corner.append(cornerRow, handCount);
 
@@ -441,6 +459,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     pauseBtn.classList.toggle('is-on', paused);
     pauseBtn.setAttribute('aria-label', paused ? '재개' : '일시정지');
     abortBtn.hidden = !canAbort(exp);
+    bagBtn.disabled = !(exp.phase === 'moving' || exp.phase === 'rest'); // 걷기·휴식 중만 (전투는 [소모품], 이벤트·바퀴 끝 창은 그 창부터)
     handCount.textContent = exp.hand.length > 0 ? `손에 든 타일 ${exp.hand.length}장` : '';
     handCount.hidden = exp.hand.length === 0;
     main.classList.toggle('is-paused', paused);

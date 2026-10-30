@@ -7,7 +7,7 @@ import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, IT
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
-import { buyShopItem, buyWandererItem, goldRows, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
+import { buyShopItem, buyWandererItem, goldRows, healDaily, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
 import { getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
 import { GEAR_KIND_ICONS } from '../data/gear';
 import { provisionalTag } from './bha/dom';
@@ -30,13 +30,13 @@ const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', sh
 /** 마지막으로 본 탭 (다시 열면 그 탭) */
 const shopUi: { tab: ShopTab; skinSub: SkinSubTab } = { tab: 'food', skinSub: 'character' };
 /** 쌓아 사는 골드 품목 (수량 고르기): 나머지는 한 번에 하나 */
-const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'reroll', 'trainingTicket']);
+const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'battle', 'reroll', 'trainingTicket']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
 const QTY_CAP = 99;
 /** 약 아이콘 (GDD 102-4, 있는 아이콘 재사용): 구급상자 = 회복 · 링거 = 배부름 · 에너지 드링크 = 컨디션 */
 const MEDICINE_ICONS: Record<MedicineCure, string> = { collapsed: 'i-heal', weak: 'i-hunger', tired: 'i-cond' };
-/** 이 줄이 약인가 */
-const isMedicine = (id: string): boolean => getGoldItem(id)?.kind === 'medicine';
+/** 이 줄이 약 칸인가: 약 3종(GDD 102-4) + 체력 회복 물건 4종(GDD 145장 4 — 하루 판매 수) */
+const isMedicine = (id: string): boolean => getGoldItem(id)?.kind === 'medicine' || healDaily(id) !== null;
 
 export interface ShopHandlers {
   /** 구매·착용을 저장한다 */
@@ -138,7 +138,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (gold?.kind === 'gear') return gradeArt(iconArt(GEAR_KIND_ICONS[gold.gearKind!]), 'normal');
     const wi = getWandererItem(row.id);
     if (wi?.kind === 'gear') return gradeArt(iconArt('i-unknown'), wi.grade);
-    const ic = !gold ? 'i-rare' : gold.kind === 'food' ? 'i-hunger' : gold.kind === 'calm' ? 'i-risk' : gold.kind === 'wake' ? 'i-cond' : gold.kind === 'medicine' ? MEDICINE_ICONS[gold.cures!] : gold.kind === 'tileDraw' || gold.kind === 'rareTile' ? 'i-tile-combo' : gold.kind === 'deckSlot' ? 'i-deck' : gold.kind === 'reroll' ? 'i-swap' : 'i-practice';
+    const ic = !gold ? 'i-rare' : gold.kind === 'food' ? 'i-hunger' : gold.kind === 'calm' ? 'i-risk' : gold.kind === 'wake' ? 'i-cond' : gold.kind === 'medicine' ? MEDICINE_ICONS[gold.cures!] : healDaily(gold.id) !== null ? 'i-heal' : gold.kind === 'tileDraw' || gold.kind === 'rareTile' ? 'i-tile-combo' : gold.kind === 'deckSlot' ? 'i-deck' : gold.kind === 'reroll' ? 'i-swap' : 'i-practice';
     void big;
     return iconArt(ic);
   };
@@ -183,10 +183,11 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const owned = Boolean(row.owned);
     // 보관 가득이면 가격 대신 '가득' (GDD 100장 #63: 가격이 살아 있어 살 수 있는 것처럼 보였다)
     const full = !owned && !row.canBuy && /가득/.test(row.lock ?? '');
+    const soldOut = !owned && row.lock === SOLD_OUT_TODAY; // 회복 물건 하루 판매 수 (GDD 145장 4)
     const c = itemCard({
       id: row.id, name: row.name, detail: row.effect || undefined,
       art: artOf(row), badge: owned ? (row.worn ? '착용 중' : '보유') : row.have ?? undefined,
-      foot: owned ? (row.worn ? '해제' : '착용') : full ? '가득' : row.price === null ? '—' : `${cur(row.currency)} ${row.price}`,
+      foot: owned ? (row.worn ? '해제' : '착용') : soldOut ? SOLD_OUT_TODAY : full ? '가득' : row.price === null ? '—' : `${cur(row.currency)} ${row.price}`,
       state: owned ? (row.worn ? 'worn' : 'owned') : row.canBuy ? undefined : 'locked',
       onClick: () => (owned ? toggleWear(row) : openDetail(row)),
     });

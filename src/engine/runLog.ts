@@ -435,11 +435,14 @@ export interface VitalRecord {
 }
 
 /** 홈 회복 1건 (GDD 123장 4, C.198): spa = 온천에 있다 나옴(at = 나온 시각, since = 들어간 시각, reason = full 체력 상한 · hungry 배부름 0 · left 뒤로 · away 끊김),
- *  potion = 체력 포션. hpFrom·hpTo = 최대 체력 대비 비율, fullness = 배부름(온천만). dying = 빈사 중(상한 10%) */
+ *  potion = 옛 체력 포션(C.223 전 기록). evolution = 진화 순간 체력 가득(GDD 145장 2) · item = 원정 걷기 중 회복 물건(GDD 144장 3, itemId·원정 체력 비율, 형식 57).
+ *  hpFrom·hpTo = 최대 체력 대비 비율, fullness = 배부름(온천만). dying = 빈사 중(상한 10%) */
 export interface HomeHealRecord {
   at: number;
   factionId: string;
-  kind: 'spa' | 'potion';
+  kind: 'spa' | 'potion' | 'evolution' | 'item';
+  /** kind 'item': 쓴 회복 물건 품목 id */
+  itemId?: string;
   hpFrom: number;
   hpTo: number;
   since?: number;

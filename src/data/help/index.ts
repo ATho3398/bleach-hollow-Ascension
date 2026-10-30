@@ -11,6 +11,7 @@ import tutorialJson from './tutorial.json';
 import guidesJson from './guides.json';
 import { synergyName, tileName } from '../tiles';
 import { statName } from '../elements';
+import { GOLD_ITEMS } from '../shop';
 import { STAT_IDS } from '../schema';
 import type { TextGuideId } from '../../engine/tutorial';
 
@@ -110,9 +111,11 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.guardSeconds = String(COMBAT.guardSeconds);
   vars.gearCooldownSeconds = String(COMBAT.gearCooldownSeconds);
   const BI = BALANCE.provisional.battleItems;
-  const potion = BI['battle-potion'];
   const haste = BI['battle-haste'];
-  vars.potionPct = potion?.effect === 'heal' ? String(Math.round(potion.fraction * 100)) : '';
+  // 회복 물건 4종 (GDD 144장): 이름·회복량 — 상점 품목 데이터 순서
+  const heals = GOLD_ITEMS.filter((g) => BI[g.id]?.effect === 'heal');
+  vars.healNames = heals.map((g) => g.name).join('·');
+  vars.healPcts = heals.map((g) => { const b = BI[g.id]; return b?.effect === 'heal' ? String(Math.round(b.fraction * 100)) : ''; }).join('·');
   vars.hasteSeconds = haste?.effect === 'haste' ? String(haste.seconds) : '';
   vars.hasteMult = haste?.effect === 'haste' ? String(haste.spawnMult) : '';
   delete vars.basicSkillName;

@@ -12,7 +12,7 @@ import {
   applyAbsenceTime, applyExpeditionEnd, collapseNest, cureStatus, doNestAction, enterSpa, foodHpHeal, healHomeHp, homeHpCap, homeHpOf, leaveSpa, newNest, passNestTime, previewHomeHp, soakSpa, tickNestOnline,
 } from '../src/engine/nest';
 import { absenceOf, departHpOf, feedNest, migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, writeSave, loadSave, type SaveData } from '../src/game';
-import { drinkHpPotion, grantFood, grantHpPotion, homeHp, homeMaxHp, HP_POTION_ID, spaEnter, spaLeave, spaSoak } from '../src/home';
+import { grantFood, homeHp, homeMaxHp, HP_POTION_ID, spaEnter, spaLeave, spaSoak } from '../src/home';
 import { inventoryOf, useInventoryItem } from '../src/inventory';
 import { ScreenStack } from '../src/ui/bha/select';
 import { wandererEffect } from '../src/shop';
@@ -151,12 +151,12 @@ describe('123장 4 홈 회복', () => {
     tickNestOnline(n, T0 + 60 * MIN, true);
     expect(n.hpFraction).toBeCloseTo(0.3);
   });
-  it('온천: 1초에 체력 +10%·배부름 −1 (C.214 GDD 139장 2), 가득 차면 저절로 나오고 남은 시간은 대기 회복', () => {
+  it('튜토리얼 온천(fast): 1초에 체력 +10%·배부름 −1 (C.214 GDD 139장 2 → 145장 1 튜토리얼만), 가득 차면 저절로 나오고 남은 시간은 대기 회복', () => {
     const n = newNest(T0);
     n.condition = 100; // 컨디션도 가득이어야 나온다 (GDD 135장 2, C.211) — 여기선 체력만 본다
     n.hunger = 0;
     n.hpFraction = 0.5;
-    expect(enterSpa(n, T0)).toBeNull();
+    expect(enterSpa(n, T0, true)).toBeNull();
     const f = passNestTime(n, 7 / 3600, false, T0 + 7_000);
     // 5초에 가득(+50%), 배부름 −5, 그 뒤 2초는 대기(이미 가득)
     expect(n.hpFraction).toBeCloseTo(1);
@@ -168,9 +168,9 @@ describe('123장 4 홈 회복', () => {
   });
   it('온천: 배부름이 0 이 되면 저절로 나온다 (굶지 않게)', () => {
     const n = newNest(T0);
-    n.hunger = 97; // 배부름 3 = 3초
+    n.hunger = 97; // 배부름 3 = 3초 (튜토리얼 빠르기)
     n.hpFraction = 0.1;
-    enterSpa(n, T0);
+    enterSpa(n, T0, true);
     const f = passNestTime(n, 1 / 60, true, T0 + MIN);
     expect(f.spaEnded?.reason).toBe('hungry');
     expect(n.spa).toBeNull();
@@ -182,7 +182,7 @@ describe('123장 4 홈 회복', () => {
     n.hunger = 0;
     n.hpFraction = 0.2;
     enterSpa(n, T0);
-    applyAbsenceTime(n, T0, T0 + 3_000);
+    applyAbsenceTime(n, T0, T0 + 90_000); // 평소 온천: 90초 = +30% (5분에 가득, GDD 145장 1)
     expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(0.5);
   });
@@ -238,25 +238,19 @@ describe('123장 4 홈 회복', () => {
     doNestAction(n, 'feed', 'hearty', T0);
     expect(n.hpFraction).toBeCloseTo(0.5 + foodHpHeal('hearty'));
   });
-  it('체력 포션: 떠돌이 상인 영웅 품목(드물게), 홈에서 먹으면 가득, 전투 회복약과 다른 물건', () => {
+  it('치료제(옛 체력 포션, C.223 GDD 144장): 떠돌이 상인 영웅 품목 그대로 · 100% 회복 물건 — 방에서는 안 쓴다', () => {
     const w = getWandererItem(HP_POTION_ID)!;
     expect(w.grade).toBe('epic');
     expect(w.category).toBe('consumable');
-    expect(HP_POTION_ID).not.toBe('battle-potion');
+    expect(w.name).toBe('치료제');
     expect(wandererEffect(HP_POTION_ID, H)).toContain('체력 가득');
     const s = newSaveData('hollow', T0);
     s.nest.hpFraction = 0.2;
-    expect(drinkHpPotion(s, HP_POTION_ID, T0)).toBeNull(); // 없음
-    expect(grantHpPotion(s)).toBe(1);
+    s.shared.items[HP_POTION_ID] = 1;
     const card = inventoryOf(s, H).find((e) => e.id === HP_POTION_ID)!;
-    expect(card.lock).toBeNull();
-    const r = useInventoryItem(s, H, HP_POTION_ID);
-    expect(r.ok).toBe(true);
-    expect(s.nest.hpFraction).toBe(1);
-    expect(s.shared.items[HP_POTION_ID]).toBeUndefined();
-    expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'potion', hpFrom: 0.2, hpTo: 1 });
-    grantHpPotion(s);
-    expect(inventoryOf(s, H).find((e) => e.id === HP_POTION_ID)!.lock).toBe('체력 이미 가득');
+    expect(card.lock).toBe('원정·전투 중에만 쓴다');
+    expect(useInventoryItem(s, H, HP_POTION_ID).ok).toBe(false);
+    expect(s.nest.hpFraction).toBe(0.2);
   });
 });
 
@@ -267,7 +261,7 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     s.nest.hunger = 0;
     expect(spaEnter(s, T0)).toBeNull();
     expect(homeHp(s).inSpa).toBe(true);
-    const r = spaSoak(s, 4 / 60, T0, true); // 4초
+    const r = spaSoak(s, 2, T0, true); // 2분 (평소 온천 5분에 가득 — GDD 145장 1)
     expect(r.hp).toBeCloseTo(0.4);
     expect(100 - s.nest.hunger).toBeCloseTo(96);
     const e = spaLeave(s, T0, true)!;
@@ -281,13 +275,6 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     expect(grantFood(s, 'hearty', 1)).toBe(1);
     expect(feedNest(s, 'hearty', T0)).toBe('ate');
     expect(s.nest.hpFraction).toBeCloseTo(0.5 + foodHpHeal('hearty'));
-  });
-  it('체력 포션 각본 값 (123장 5 수정: 튜토리얼은 체력 50%)', () => {
-    const s = newSaveData('hollow', T0);
-    s.nest.hpFraction = 0.1;
-    grantHpPotion(s);
-    expect(drinkHpPotion(s, HP_POTION_ID, T0, true, 0.5)).toMatchObject({ hpFrom: 0.1, hpTo: 0.5 });
-    expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'potion', tutorial: true });
   });
   it('원정 중엔 온천에 못 들어간다', () => {
     const s = newSaveData('hollow', T0);
@@ -305,7 +292,7 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     absenceOf(s, T0 + 30 * MIN);
     expect(s.nest.spa).toBeNull();
     expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'full' });
-    expect((s.runLog.homeHeals.at(-1) as { minutes: number }).minutes).toBeCloseTo(4 / 60, 1); // 4초 (기록은 분 소수 둘째 자리)
+    expect((s.runLog.homeHeals.at(-1) as { minutes: number }).minutes).toBeCloseTo(2, 1); // 2분 = +40% (평소 온천 5분에 가득, GDD 145장 1)
     leaveSpa(s.nest, T0);
   });
 });
@@ -339,8 +326,8 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     raw.evolution.ev.hp = 9;
     return raw;
   };
-  it('형식 56(C.213)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(56);
+  it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(57);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();

@@ -115,7 +115,7 @@
         "@.bha-prop--chest"
       ],
       "title": "빈사부터 치료",
-      "body": "구급상자와 체력 포션을 1개씩 {chestName}에 넣었다.\n{chestName}을(를) 연다."
+      "body": "구급상자 1개를 {chestName}에 넣었다.\n{chestName}을(를) 연다."
     },
     {
       "id": "cure",
@@ -139,35 +139,6 @@
         }
       ],
       "done": "빈사가 풀렸다.\n[다음]을 누른다."
-    },
-    {
-      "id": "potion",
-      "targets": [
-        "@[data-item=\"w-hp-potion\"]"
-      ],
-      "title": "체력 포션",
-      "body": "빈사가 풀렸으니 이제 체력을 채운다. 체력 포션을 눌러 [사용]한다.\n튜토리얼의 체력 포션은 체력을 {potionPct}%까지 채운다.",
-      "stages": [
-        {
-          "targets": [
-            "@[data-item=\"w-hp-potion\"]"
-          ],
-          "body": "이제 체력을 채운다.\n체력 포션을 누른다."
-        },
-        {
-          "targets": [
-            "@.bha-itemdialog[data-item-dialog=\"w-hp-potion\"] [data-act=\"use\"]"
-          ],
-          "body": "[사용]을 누른다.\n튜토리얼의 체력 포션은 체력을 {potionPct}%까지 채운다."
-        }
-      ],
-      "done": "체력이 {potionPct}%까지 찼다.\n[다음]을 누른다."
-    },
-    {
-      "id": "merchant",
-      "targets": [],
-      "title": "체력 포션은 드물다",
-      "body": "체력 포션은 떠돌이 상인에게서 드물게 나온다.\n평소의 체력 포션은 체력을 가득 채운다."
     },
     {
       "id": "to-spa",
@@ -211,7 +182,7 @@
       "id": "spa-rest",
       "targets": [],
       "title": "쉬기",
-      "body": "온천에서는 10초면 체력이 가득 찬다. 체력과 컨디션이 다 차면 저절로 방으로 돌아간다.\n[다음]을 누르면 방으로 돌아간다."
+      "body": "튜토리얼 온천은 10초면 체력이 가득 찬다. 평소엔 가득 차는 데 {spaNormalMin}분쯤 걸린다.\n[다음]을 누르면 방으로 돌아간다."
     },
     {
       "id": "feed",

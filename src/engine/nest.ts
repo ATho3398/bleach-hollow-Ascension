@@ -57,6 +57,8 @@ export interface SpaStay {
   at: number;
   hp: number;
   fullness: number;
+  /** 튜토리얼 온천 (GDD 145장 1, 형식 57): 옛 빠르기(homeHp.tutorialSpa, 10초에 가득) — 평소 온천은 5분 */
+  fast?: true;
 }
 
 /** 온천에서 나온 결과 (GDD 123장 4): reason = full(체력 상한) / hungry(배부름 0) / left(뒤로) / away(원정·빈사로 끊김) */
@@ -194,12 +196,12 @@ export function spaFull(nest: Pick<NestState, 'hpFraction' | 'collapsed' | 'cond
 }
 
 /** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·체력·컨디션 둘 다 가득(135장 2)·배부름 0 이면 못 들어간다(이유). 들어가면 null */
-export function enterSpa(nest: NestState, nowMs: number): 'dead' | 'already' | 'full' | 'hungry' | null {
+export function enterSpa(nest: NestState, nowMs: number, fast = false): 'dead' | 'already' | 'full' | 'hungry' | null {
   if (nest.dead) return 'dead';
   if (nest.spa) return 'already';
   if (spaFull(nest)) return 'full';
   if (fullnessOfNest(nest) <= 0) return 'hungry';
-  nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest) };
+  nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest), ...(fast ? { fast: true as const } : {}) };
   return null;
 }
 
@@ -208,15 +210,21 @@ export function leaveSpa(nest: NestState, nowMs: number, reason: SpaEnd['reason'
   return closeSpa(nest, nowMs, reason);
 }
 
+/** 온천 빠르기 (GDD 145장 1): 평소 = homeHp.spa(약 5분에 가득), 튜토리얼 온천 = homeHp.tutorialSpa(10초) */
+export function spaRateOf(stay: Pick<SpaStay, 'fast'> | null | undefined): { hpPerSecond: number; conditionPerSecond: number; fullnessPerSecond: number } {
+  return stay?.fast ? HH.tutorialSpa : HH.spa;
+}
+
 /** 온천 시간 한 토막: 1초에 체력 +spa.hpPerSecond·컨디션 +spa.conditionPerSecond(GDD 135장 2·139장 2)·배부름 −spa.fullnessPerSecond (아래 계산은 분 단위라 ×60), 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되는 순간 저절로 나온다.
  *  startMs = 이 토막이 시작한 시각(나온 시각 계산용). 온천에서 보낸 분과 나온 결과 */
 function spaStep(nest: NestState, minutes: number, startMs: number): { used: number; ended: SpaEnd | null } {
   if (!nest.spa || minutes <= 0) return { used: 0, ended: null };
   const cap = homeHpCap(nest);
   nest.hpFraction = homeHpOf(nest);
-  const hpPm = HH.spa.hpPerSecond * 60;
-  const condPm = HH.spa.conditionPerSecond * 60;
-  const fullPm = HH.spa.fullnessPerSecond * 60;
+  const rate = spaRateOf(nest.spa);
+  const hpPm = rate.hpPerSecond * 60;
+  const condPm = rate.conditionPerSecond * 60;
+  const fullPm = rate.fullnessPerSecond * 60;
   const toCap = Math.max(0, (cap - nest.hpFraction) / hpPm, (MAX - nest.condition) / condPm);
   const toEmpty = Math.max(0, fullnessOfNest(nest) / fullPm);
   const used = Math.min(minutes, toCap, toEmpty);

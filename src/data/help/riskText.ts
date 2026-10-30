@@ -37,7 +37,7 @@ function frenzyFight(): string[] {
     `주는 피해 ${multPct(RX.frenzyDamageDealt)}`,
     `받는 피해 ${multPct(RX.frenzyDamageTaken)}`,
     `적 공격 ${pct(RX.frenzyEvadeChance)} 회피`,
-    '회복약 사용 불가',
+    '회복 물건 사용 불가',
     `공허 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
   ];
 }

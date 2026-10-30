@@ -44,7 +44,8 @@ describe('143장 2: 빈사 치료제 이름 = 구급상자 (id 그대로)', () =
     expect(GOLD_ITEMS.find((g) => g.id === 'med-cure')?.name).toBe('구급상자');
   });
   it('화면 문구에 치료제 없음 (튜토리얼·빈사 안내·라벨·온천)', () => {
-    for (const p of ['src/data/help/tutorial.json', 'src/data/shop/items.json', 'src/ui/labels.ts', 'src/ui/bha/roomLogic.ts', 'src/ui/roomView.ts', 'src/ui/spaView.ts', 'src/ui/bha/statusInfo.ts', 'docs/text-style.md']) {
+    // items.json 의 '치료제' = 100% 회복 물건(옛 체력 포션, C.223 GDD 144장) — 빈사 품목 med-cure 이름만 본다
+    for (const p of ['src/data/help/tutorial.json', 'src/ui/labels.ts', 'src/ui/bha/roomLogic.ts', 'src/ui/roomView.ts', 'src/ui/spaView.ts', 'src/ui/bha/statusInfo.ts', 'docs/text-style.md']) {
       expect(read(p), p).not.toContain('치료제');
     }
     expect(CARE_STATUS_HINTS.collapsed).toContain('구급상자를 쓰면 풀린다');

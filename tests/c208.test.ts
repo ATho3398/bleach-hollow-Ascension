@@ -18,17 +18,17 @@ describe('132장 1 카드가 누를 때마다 다음 대상으로', () => {
     expect(lastShownStage([false, false, true, false])).toBe(2);
     expect(lastShownStage([false, false])).toBe(0);
   });
-  it('여러 번 누르는 회복 안내 카드 = 단계가 있다 (구급상자·포션: 카드 → [사용], 온천: 밖으로 → 시장 → 온천 → 쉬는 중, 먹이: [먹이] → 고르기)', () => {
+  it('여러 번 누르는 회복 안내 카드 = 단계가 있다 (구급상자: 카드 → [사용], 온천: 밖으로 → 시장 → 온천 → 쉬는 중, 먹이: [먹이] → 고르기)', () => {
     const by = Object.fromEntries(RECOVER_SCENES.map((s) => [s.id, s]));
     expect(by.cure!.stages!.map((s) => s.targets[0])).toEqual(['@[data-item="med-cure"]', '@.bha-itemdialog[data-item-dialog="med-cure"] [data-act="use"]']);
-    expect(by.potion!.stages![1]!.targets[0]).toBe('@.bha-itemdialog[data-item-dialog="w-hp-potion"] [data-act="use"]');
+    expect(by.potion).toBeUndefined(); // 방 포션 단계 삭제 (C.223, GDD 144장 4)
     expect(by['to-spa']!.stages!.map((s) => s.targets.at(-1))).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="market"]', '@.bha-market [data-spot="spa"]', '@.bha-spa__actor']);
     expect(by.feed!.stages![1]!.avoid).toEqual(['@.bha-homedock__tray--food']); // 열린 도시락 목록을 가리지 않는다
     expect(HOME_INTRO.last.stages!.map((s) => s.targets[0])).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="adventure"]']);
   });
   it('단계 문구는 두 종족 모두 채워지고, 한 카드 2줄 이내', () => {
     const extra = {
-      chestName: '가방', spaName: '온천', marketName: '시장', dyingPct: '10', potionPct: '50', spaToPct: '80', spaHpPct: '10', spaFullness: '10', spaCond: '1', idleHpPct: '1',
+      chestName: '가방', spaName: '온천', marketName: '시장', dyingPct: '10', spaToPct: '80', spaHpPct: '10', spaFullness: '10', spaCond: '1', idleHpPct: '1', spaNormalMin: '5',
       spaPath: '밖으로 → 시장 → 온천', foodName: '도시락', foodId: 'basic', spaFirst: '밖으로', outsideName: '밖으로', adventureName: '모험', towerName: '도전의 탑', worldName: '지도', goPath: '',
       altarName: '', bookName: '', careNames: '',
     };

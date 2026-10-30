@@ -3,7 +3,7 @@
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { convertRetiredRareTraits, dropBasicBlockTraits, gainTrait, newBuild, type BuildState } from './engine/absorb';
-import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, type SpaEnd, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
+import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
 import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, stepsNeeded, type EvolutionState, type EvolveResult } from './engine/evolution';
@@ -50,7 +50,7 @@ import { BATTLE_ITEM_IDS, CONSUMABLE_IDS } from './inventory';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 56; // C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 57; // C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -316,6 +316,13 @@ export interface SharedState {
   gear: GearState;
   /** 장비 화면 소모품 칸 (GDD 108장 3번, 형식 48): 전투용 소모품 품목 id(없으면 null). 전투 [소모품 사용]이 이것을 쓴다. 개수가 0 이어도 칸에 남는다 */
   battleItem: string | null;
+  /** 상점 회복 물건 하루 판매 (GDD 145장 4, 형식 57): 기기 날짜(dayKey) · 그날 품목별 산 수. 날짜가 바뀌면 새로 센다 */
+  shopDaily: ShopDaily;
+}
+
+export interface ShopDaily {
+  day: string;
+  bought: Record<string, number>;
 }
 
 /** 기본으로 주는 꾸밈 id (GDD 29장: 영옥 구슬) */
@@ -329,7 +336,7 @@ export function defaultWear(): WearState {
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState(), gear: newGearState(), battleItem: null };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState(), gear: newGearState(), battleItem: null, shopDaily: { day: '', bought: {} } };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -352,7 +359,15 @@ export function sanitizeShared(raw: unknown): SharedState {
     rerollTickets: Math.min(SX.rerollMax, nonNegInt(r.rerollTickets)), deckSlots: Math.min(SX.deckSlotPrices.length, nonNegInt(r.deckSlots)), cosmetics,
     items: sanitizeItems(r.items), wanderer: sanitizeWanderer(r.wanderer), pets: sanitizePets(r.pets), gear: sanitizeGear(r.gear),
     battleItem: typeof r.battleItem === 'string' && getGoldItem(r.battleItem)?.battle ? r.battleItem : null,
+    shopDaily: sanitizeShopDaily(r.shopDaily),
   };
+}
+
+/** 상점 하루 판매 기록 정리: 날짜 글자 + 회복 물건 id 의 1 이상 정수만 */
+function sanitizeShopDaily(raw: unknown): ShopDaily {
+  const r = isRec(raw) ? raw : {};
+  const b = isRec(r.bought) ? r.bought : {};
+  return { day: typeof r.day === 'string' ? r.day : '', bought: Object.fromEntries(BATTLE_ITEM_IDS.map((id) => [id, nonNegInt(b[id])] as const).filter(([, n]) => n > 0)) };
 }
 
 /** 보관함 소모품 정리: 아는 소모품 id 의 1 이상 정수만. 전투 소모품(C.177)도 — C.183 전에는 빠져 있어 불러올 때마다 지워졌다 */
@@ -1239,6 +1254,10 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
   const r = evolve(save.evolution, save.build, { factionId: save.factionId, hunger: care.hunger, condition: care.condition, rebirths: save.rebirth.count }, nowMs);
   if (r.ok) {
     save.runLog.tiers.evolutions.push(r.record);
+    // 진화하면 체력 가득 (GDD 145장 2): 체력만 — 빈사·상태 이상은 그대로(빈사면 상한 10%까지)
+    const hpFrom = homeHpOf(save.nest);
+    const hpTo = setHomeHp(save.nest, 1);
+    if (hpTo > hpFrom + 1e-9) logHomeHeal(save, { at: nowMs, kind: 'evolution', hpFrom: Math.round(hpFrom * 100) / 100, hpTo: Math.round(hpTo * 100) / 100 });
     // 첫 진화 (1→2단계) 때 시작 타일 3장 + 타일 안내 (GDD 64장 1번). 이미 받았으면(환생 뒤 등) 없음
     if (save.evolution.tierIndex >= 1) grantStarterTiles(save);
     // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
@@ -1538,6 +1557,10 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
         if (Array.isArray(o.candidates)) o.candidates = o.candidates.filter((id: unknown) => !retired(id));
       }
     }
+  },
+  // 56 → 57 (C.223, GDD 145장 4): 상점 회복 물건 하루 판매 기록 — 빈 기록(오늘 아직 안 삼). 가방 개수는 그대로(옛 id battle-potion = 붕대, w-hp-potion = 치료제)
+  56: (save) => {
+    if (isRec(save.shared)) save.shared.shopDaily = { day: '', bought: {} };
   },
 };
 
@@ -1931,7 +1954,7 @@ function sanitizeCare(t: Pick<SaveData, 'nest' | 'runLog'>): void {
   // 홈 체력·온천 (GDD 123장 2·4, 형식 55): 0~상한, 온천 기록 모양이 틀리면 방으로
   t.nest.hpFraction = homeHpOf({ collapsed: t.nest.collapsed, hpFraction: typeof t.nest.hpFraction === 'number' && Number.isFinite(t.nest.hpFraction) ? t.nest.hpFraction : 1 });
   const sp = t.nest.spa as unknown;
-  t.nest.spa = isRec(sp) && [sp.at, sp.hp, sp.fullness].every((v) => typeof v === 'number' && Number.isFinite(v)) && !t.nest.dead ? { at: sp.at as number, hp: sp.hp as number, fullness: sp.fullness as number } : null;
+  t.nest.spa = isRec(sp) && [sp.at, sp.hp, sp.fullness].every((v) => typeof v === 'number' && Number.isFinite(v)) && !t.nest.dead ? { at: sp.at as number, hp: sp.hp as number, fullness: sp.fullness as number, ...(sp.fast === true ? { fast: true as const } : {}) } : null;
   if (!Array.isArray(t.runLog.homeHeals)) t.runLog.homeHeals = [];
   const c = (isRec(t.runLog.care) ? t.runLog.care : {}) as Partial<Record<string, unknown>>;
   const pair = (v: unknown) => { const o = isRec(v) ? v : {}; return { pet: nonNegInt(o.pet), sleep: nonNegInt(o.sleep) }; };

@@ -1,6 +1,6 @@
 // 홈 체력·회복 (GDD 123장 2·4, C.198): 세이브 쪽 API. 수치 계산은 src/engine/nest.ts(homeHpOf·passHomeHp·enterSpa·soakSpa·healHomeHp),
-// 수치는 balance.ts provisional.nest.homeHp. 런 로그 homeHeals(온천·포션)를 여기서 남긴다. 종족 무관 — 온천 이름은 종족 설정 spaName.
-// 튜토리얼(C.199 회복 안내)도 이 함수들을 부른다: spaEnter → spaSoak(분) → spaLeave, grantFood → feedNest, grantHpPotion → drinkHpPotion.
+// 수치는 balance.ts provisional.nest.homeHp. 런 로그 homeHeals(온천, 옛 기록은 포션도)를 여기서 남긴다. 종족 무관 — 온천 이름은 종족 설정 spaName.
+// 튜토리얼(C.199 회복 안내)도 이 함수들을 부른다: spaEnter → spaSoak(분) → spaLeave, grantFood → feedNest.
 import { buildCombatParams } from './engine/absorb';
 import { defaultCombatParams, playerStatsOf } from './engine/combat';
 import { applyEvolutionToParams } from './engine/evolution';
@@ -10,8 +10,9 @@ import type { FoodId } from './engine/faction';
 import { enterSpa, healHomeHp, homeHpCap, homeHpOf, leaveSpa, setHomeHp, soakSpa, type SpaEnd } from './engine/nest';
 import { logHomeHeal, logSpaEnd, statBonusOf, tickIdle, type SaveData } from './game';
 import { storeConsumable } from './shop';
+import { guidePending } from './engine/tutorial';
 
-/** 체력 포션 품목 id (떠돌이 상인 영웅 품목, 보관함 소모품) */
+/** 치료제(옛 체력 포션) 품목 id — 떠돌이 상인·상점 약 칸. C.223 부터 원정·전투 전용 회복 물건(100%, GDD 144장), 방에서는 안 쓴다 */
 export const HP_POTION_ID = 'w-hp-potion';
 
 /** 지금 홈 체력: 비율(0~상한)·상한(빈사 10%)·빈사·온천에 있나 */
@@ -49,7 +50,7 @@ export function spaEnter(save: SaveData, nowMs: number = Date.now()): keyof type
   if (save.activeExpedition != null) return 'expedition';
   // 들어가기 전까지의 시간은 먼저 대기로 흘린다 (C.214 — 온천이 10초에 가득이라, 마지막 1분 시계 뒤 시간이 온천 시간으로 잡히면 들어가자마자 가득 찼다)
   tickIdle(save, nowMs);
-  return enterSpa(save.nest, nowMs);
+  return enterSpa(save.nest, nowMs, guidePending(save.help, 'recover')); // 튜토리얼 회복 안내 중의 온천만 10초 (GDD 145장 1)
 }
 
 /** 온천에서 나온다 (뒤로). 런 로그 homeHeals 'spa'. 온천이 아니었으면 null */
@@ -67,28 +68,6 @@ export function spaSoak(save: SaveData, minutes: number, nowMs: number = Date.no
   const r = soakSpa(save.nest, minutes, nowMs);
   logSpaEnd(save, r.ended, tutorial);
   return r;
-}
-
-/** 체력 포션을 먹는다 (GDD 123장 4): 가방에 있어야 하고 하나 쓴다. 체력 상한(빈사 10%)까지 가득. 온천에 있었으면 나온다.
- *  toFraction = 튜토리얼 각본 값(123장 5 수정: 체력 50%) — 그 값까지만(상한 안). 못 먹으면(없음·원정 중·사망·이미 그 값 이상) null, 아무것도 안 바뀐다 */
-export function drinkHpPotion(save: SaveData, id: string = HP_POTION_ID, nowMs: number = Date.now(), tutorial = false, toFraction = 1): { hpFrom: number; hpTo: number } | null {
-  if ((save.shared.items[id] ?? 0) <= 0 || save.activeExpedition != null || save.nest.dead) return null;
-  const hpFrom = homeHpOf(save.nest);
-  const target = Math.min(homeHpCap(save.nest), Math.max(0, toFraction));
-  if (hpFrom >= target - 1e-9) return null;
-  healHomeHp(save.nest, target - hpFrom);
-  const n = (save.shared.items[id] ?? 1) - 1;
-  if (n <= 0) delete save.shared.items[id];
-  else save.shared.items[id] = n;
-  logSpaEnd(save, leaveSpa(save.nest, nowMs, 'full'), tutorial);
-  const hpTo = homeHpOf(save.nest);
-  logHomeHeal(save, { at: nowMs, kind: 'potion', hpFrom: Math.round(hpFrom * 100) / 100, hpTo: Math.round(hpTo * 100) / 100, ...(tutorial ? { tutorial: true } : {}) });
-  return { hpFrom, hpTo };
-}
-
-/** 체력 포션을 가방에 넣는다 (튜토리얼 지급 등, 보관 상한까지). 넣은 개수 */
-export function grantHpPotion(save: Pick<SaveData, 'shared'>, n = 1): number {
-  return storeConsumable(save, HP_POTION_ID, n);
 }
 
 /** 먹이를 가방에 넣는다 (튜토리얼 지급 등, 종류별 상한까지). 넣은 개수. 먹이기는 game.ts feedNest */

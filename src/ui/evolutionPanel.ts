@@ -127,6 +127,7 @@ export function evolutionEffectRows(
       icon: 'i-slot', label: faction.slotName, mod: 'good',
       value: slotsAfter !== undefined ? `${slotsAfter - slots} → ${slotsAfter}칸` : `+${slots}칸`, sub: `+${slots}`,
     },
+    { icon: 'i-heal', label: '체력', value: '가득 회복', mod: 'good' }, // 진화하면 체력 가득 (GDD 145장 2)
   ];
   if (extra) rows.push({ icon: 'i-weak', label: '속성', value: elementsMark(extra.elements, faction.id) });
   const lines = extra ? (extra.ev ? abilityLines(formAbilitiesOf(form, extra.ev, extra.ability), faction.id) : abilityLines(formAbilitiesOf(form, zeroStats(), extra.ability), faction.id)) : [];

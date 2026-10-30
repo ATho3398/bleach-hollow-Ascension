@@ -316,6 +316,8 @@ button.bha-slot { cursor: pointer; }
 .bha-lcd .bha-confirm .bha-modal__title { font-size: var(--bha-fs-xl); }
 .bha-lcd .bha-confirm .bha-modal__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
 .bha-lcd .bha-overlay.bha-confirm { z-index: calc(var(--bha-z-tutorial) + 1); } /* 튜토리얼·도움말 위에서도 보인다 */
+.bha-lcd .bha-confirm.bha-healbag .bha-modal { width: min(640px, 100%); } /* 원정 걷기 중 가방 — 회복 물건 4종 카드 한 줄 (GDD 144장 3) */
+.bha-lcd .bha-confirm.bha-healbag .bha-itemgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); flex: none; }
 
 /* ═════ 튜토리얼: 샘플 블록·직접 해 보기 (Q-3, C.31) ═════ */
 .bha-tut__sample { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
