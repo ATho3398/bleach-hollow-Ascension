@@ -130,8 +130,19 @@ function sizeStage() {
   [W, H] = rig.canvas;
   stage.style.width = `${W * K}px`;
   stage.style.height = `${H * K}px`;
+  fitSide();
+}
+/** 동작 단추 칸: 미리보기 높이를 넘으면 오른쪽에 새 줄로 (사용자 2026-10-31 "미리보기칸 넘어가는 모션버튼은 오른쪽 옆에 새 줄") */
+function fitSide() {
+  const side = document.querySelector<HTMLElement>('.side');
+  const wrap = stage.parentElement;
+  const btn = side?.querySelector('button');
+  if (!side || !wrap || !btn) return;
+  const row = btn.offsetHeight + 6;
+  side.style.gridTemplateRows = `repeat(${Math.max(4, Math.floor((wrap.offsetHeight + 6) / row))}, auto)`;
 }
 sizeStage();
+window.addEventListener('resize', fitSide);
 
 let dbTimer = 0;
 const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits });
