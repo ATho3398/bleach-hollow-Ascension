@@ -102,7 +102,7 @@ export function openGear(faction: FactionConfig, save: SaveData, uid: string, ch
   const it = findGear(g, uid);
   if (!it) return;
   const slot = equippedSlotOf(g, uid);
-  const locked = save.activeExpedition != null ? '원정 중에는 바꿀 수 없다' : null;
+  const locked = save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null;
   const cost = enhanceCost(it);
   const GX = BALANCE.provisional.gear;
   const lines = [
@@ -172,13 +172,14 @@ export function openGear(faction: FactionConfig, save: SaveData, uid: string, ch
 function openBattleItem(faction: FactionConfig, save: SaveData, id: string, changed: () => void): void {
   const inSlot = save.shared.battleItem === id;
   const n = save.shared.items[id] ?? 0;
-  const locked = save.activeExpedition != null ? '원정 중에는 바꿀 수 없다' : null;
+  const locked = save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null;
   let close: () => void = () => {};
   const slotName = battleSlotName(faction);
   close = itemDialog({
     heading: slotName, name: consumableName(id),
-    desc: [`보관 ${n}개${inSlot ? ` · ${slotName} 칸에 넣음` : ''}`, `${slotName} 칸에 넣으면 전투 [소모품 사용]이 이것을 쓴다 (전투당 1회, 1개 소모).`, ...(n === 0 ? ['개수가 0이면 칸은 흐리게 남고 버튼은 꺼진다.'] : [])].join('\n'),
-    art: iconArt('i-heal'), have: `보관 ${n}개`, lock: locked,
+    // 남은 개수는 본문 한 곳만 (GDD 159장 28: '보관' → '남은 개수', 아이콘 밑 줄 삭제, 버튼 이름 대괄호·괄호 부가 설명 정리)
+    desc: [`남은 개수 ${n}${inSlot ? ` · ${slotName} 칸에 넣음` : ''}`, `${slotName} 칸에 넣으면 전투 중 한 번 쓴다.`, ...(n === 0 ? ['다 쓰면 칸은 흐리게 남고 버튼은 꺼진다.'] : [])].join('\n'),
+    art: iconArt('i-heal'), lock: locked,
     actions: [inSlot
       ? { key: 'unequip', label: () => '빼기', variant: 'ghost', disabled: locked !== null, onClick: () => { close(); if (setBattleItem(save, null)) changed(); } }
       : { key: 'equip', label: () => `${slotName} 칸에 넣기`, variant: 'primary', disabled: locked !== null, onClick: () => { close(); if (setBattleItem(save, id)) changed(); } }],
@@ -321,8 +322,8 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     return card;
   });
   const empty = ui.tab === 'battle'
-    ? `전투용 소모품이 없다. 상점에서 사면 여기에 들어온다. ${slotName} 칸에 넣은 것을 전투 [소모품 사용]이 쓴다.`
-    : '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
+    ? `전투용 소모품이 없다. 상점에서 사면 여기에 들어온다. ${slotName} 칸에 넣은 것을 전투 중에 쓴다.`
+    : '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
   const grid = itemGrid([...gearCards, ...battleCards], empty);
   grid.classList.add('bha-itemgrid--equip');
 
@@ -364,7 +365,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   right.append(tabs, grid, foot);
   const left = h('div', 'bha-eqleft');
   left.append(doll, statsRow);
-  if (locked) left.append(h('p', 'bha-faint', '원정 중에는 장비를 바꿀 수 없다.'));
+  if (locked) left.append(h('p', 'bha-faint', '모험 중에는 장비를 바꿀 수 없다.'));
 
 
   // 끌어다 놓기 (C.149 슬롯 화면과 같은 방식): 카드 → 같은 종류 칸(착용) · 소모품 카드 → 소모품 칸, 칸 → 오른쪽 바둑판(해제)

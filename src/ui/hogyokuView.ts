@@ -44,7 +44,7 @@ export function fusionBlockText(b: FusionBlock): string {
     case 'tracks': return '두 캐릭터가 모두 있어야 한다.';
     case 'gauge': return `붕옥 2단계에 ${SOUL_CRYSTAL_NAME} ${HX.fusionCost}개를 먹여야 한다.`;
     case 'rank': return '두 캐릭터 모두 등급 1위여야 한다.';
-    case 'expedition': return '진행 중인 원정이 있다. 원정을 끝내야 한다.';
+    case 'expedition': return '진행 중인 모험이 있다. 모험을 끝내야 한다.';
     case 'complete': return '초월체 6종을 모두 모았다. 더는 합체할 수 없다.';
   }
 }

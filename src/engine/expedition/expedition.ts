@@ -1261,7 +1261,7 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
       changeRisk(exp, E.altar.risk, 'altar');
       exp.traitBoosts[id] = (exp.traitBoosts[id] ?? 0) + E.altar.traitPower;
       log = `trait:${id}`;
-      text = `위력 +${Math.round(E.altar.traitPower * 100)}% (이번 원정)`;
+      text = `위력 +${Math.round(E.altar.traitPower * 100)}% (이번 모험)`;
     }
   } else if (ev.event === 'treasure') {
     const t = ev.treasure ?? {};
@@ -1503,14 +1503,14 @@ function tempSnap(exp: ExpeditionState): { tempHand: string[]; tempCells: number
  */
 /** 사냥터 고르기 (GDD 24-2): 배치 단계(출발 전)에서만. 적·먹이는 전투 때 뽑으므로 시드·길 계획은 그대로 */
 export function chooseGround(exp: ExpeditionState, groundId: string): void {
-  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 사냥터를 고를 수 있다');
+  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('모험 시작 전에만 사냥터를 고를 수 있다');
   if (!isGroundId(groundId)) throw new Error(`알 수 없는 사냥터: ${groundId}`);
   exp.groundId = groundId;
 }
 
 /** 원정 난이도 ★ 고르기 (GDD 32-1 4번): 배치 단계(출발 전)에서만. 스토리 화는 못 바꾼다. unlockedMax 를 주면 그보다 높은 ★ 는 거부한다 */
 export function chooseDifficulty(exp: ExpeditionState, star: number, unlockedMax?: number): void {
-  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 난이도를 고를 수 있다');
+  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('모험 시작 전에만 난이도를 고를 수 있다');
   if (exp.story) throw new Error('스토리 화의 난이도는 정해져 있다');
   const s = clampDifficulty(star);
   if (s !== star) throw new Error(`알 수 없는 난이도: ${star}`);
@@ -1525,7 +1525,7 @@ export function placedCount(exp: Pick<ExpeditionState, 'slots'>): number {
 
 /** 배치 단계 시작: 손 = 가져온 타일 전부(C.140 부터 가진 타일 전부). limit 를 주면 그 칸 수까지만 놓을 수 있다 (GDD 85장 11번 8칸) */
 export function beginPlanning(exp: ExpeditionState, limit?: number): void {
-  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('원정 시작 전에만 배치 단계를 열 수 있다');
+  if (exp.phase !== 'moving' || exp.pos !== 0 || exp.lap !== 1 || exp.elapsedSeconds !== 0) throw new Error('모험 시작 전에만 배치 단계를 열 수 있다');
   exp.hand = [...exp.deck];
   if (limit !== undefined) exp.planLimit = Math.max(0, Math.floor(limit));
   else delete exp.planLimit;
@@ -1546,7 +1546,7 @@ export function finishPlanning(exp: ExpeditionState): number {
  * 호출하는 쪽(game.ts)이 덱 상한·보유 수량을 지켜 덱에 넣는다
  */
 export function unplacedKept(exp: ExpeditionState): string[] {
-  if (exp.phase !== 'ended') throw new Error('원정이 끝나지 않았다');
+  if (exp.phase !== 'ended') throw new Error('모험이 끝나지 않았다');
   const lost = [...summarize(exp).lost];
   const temp = [...(exp.tempHand ?? [])]; // 임시 타일은 보관하지 않는다 (GDD 121장 4 ②)
   const kept: string[] = [];
@@ -1601,7 +1601,7 @@ export interface ExpeditionSummary {
 }
 
 export function summarize(exp: ExpeditionState): ExpeditionSummary {
-  if (exp.phase !== 'ended' || !exp.outcome) throw new Error('원정이 끝나지 않았다');
+  if (exp.phase !== 'ended' || !exp.outcome) throw new Error('모험이 끝나지 않았다');
   const lostEntries = exp.outcome === 'defeated' ? exp.acquired.filter((a) => a.lap === exp.lap) : [];
   const keptEntries = exp.acquired.filter((a) => !lostEntries.includes(a));
   const lostTraitEntries = exp.outcome === 'defeated' ? exp.acquiredTraits.filter((a) => a.lap === exp.lap) : [];

@@ -9,6 +9,8 @@ import { ART_FILES, findArtFile } from '../art/files';
 import { isGearKind, type GearKind } from '../gear';
 import raw from './items.json';
 import wandererRaw from './wanderer.json';
+import blurbsRaw from './blurbs.json';
+import { fixParticles } from '../../engine/josa';
 
 export const GOLD_KINDS = ['food', 'calm', 'wake', 'medicine', 'battle', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
@@ -23,6 +25,9 @@ export const WEAR_CATEGORIES = COSMETIC_CATEGORIES.filter((c): c is WearCategory
 export const ITEM_CATEGORIES = ['food', 'consumable', 'equipment', 'pet', 'skin', 'tile', 'etc'] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = { food: '음식', consumable: '소모품', equipment: '장비', pet: '펫', skin: '스킨', tile: '타일', etc: '기타' };
+/** 소모품 안의 두 칸 이름 (GDD 159장 24·36): 약 · 전투 소모품 — 상점 탭·가방 소모품 탭이 같이 쓴다 */
+export const MEDICINE_NAME = '약';
+export const BATTLE_ITEMS_NAME = '전투 소모품';
 
 /** 상점 4곳 (GDD 150장 1, C.227): 소모품 상점 = 음식·약·소모품·타일·기타 탭, 장비 상점 = 장비, 스킨 상점 = 스킨(하위 탭 그대로), 특성 상점 = 탈착 특성.
  *  'medicine' = 약 칸(GDD 102-4·145장 4, 보관함에서는 소모품), 'trait' = 특성 상점 칸. 이름은 종족 설정 market.props(자리 이름) */
@@ -53,6 +58,11 @@ export function skinListed(c: Pick<CosmeticItemDef, 'category' | 'test'> | undef
 /** 꾸밈 분류 → 스킨 하위 탭 (표에 없는 분류·분류 없음은 '연출·꾸밈') */
 export function skinSubOf(category: string | undefined | null): SkinSubTab {
   return SKIN_SUB_OF[category as CosmeticCategory] ?? 'etc';
+}
+/** 음식 한 줄 (GDD 159장 25·37, provisional blurbs.json): 하는 일만 짧게. 상점 음식 칸·가방 음식 칸이 같이 쓴다 */
+export function foodBlurb(food: FoodId, faction: Pick<FactionConfig, 'fullnessName'>): string {
+  const t = (blurbsRaw as { food: Record<string, string> }).food[food];
+  return t ? fixParticles(t.replaceAll('{fullness}', faction.fullnessName)) : '';
 }
 /** 하위 탭이 비었을 때 문구 */
 export const SKIN_SUB_EMPTY = '아직 없음';

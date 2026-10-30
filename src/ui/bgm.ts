@@ -2,7 +2,6 @@
 // 같은 트랙이면 끊지 않고 이어 재생, 다른 트랙이면 짧게 페이드 아웃 → 페이드 인. 브라우저 자동재생 제한 때문에 첫 터치(키 입력) 뒤에 소리가 난다.
 // 설정(켬/끔·음량)은 효과음(fxSettings)과 별도 키 bha-bgm-settings 에 이 기기만 저장한다 — 세이브 구조와 무관.
 import { BGM_FILES, PLAYLIST, findBgmFile, type BgmTrack, type PlaylistTrack } from '../data/audio/bgm';
-import { showToast } from './bha/nest';
 import type { SettingsStorage } from './fxSettings';
 import { activeSlotSettings, clampVolume, type SlotSettings } from './settingsScope';
 
@@ -404,7 +403,7 @@ export function bgm(): BgmPlayer {
     playlist: PLAYLIST,
     // 곡 넘김·반복·제외만 공통 저장에 쓴다 — 켬/음량은 설정 화면 [저장]만 (슬롯 설정·미리 듣기 값이 공통에 새지 않게, C.178)
     persist: (s) => { const c = loadBgmSettings(store); saveBgmSettings(store, { ...c, track: s.track, repeat: s.repeat, excluded: s.excluded }); },
-    onTrack: (t) => { try { showToast({ eyebrow: '배경음', title: t.name }); } catch { /* 알림은 부가 */ } },
+    // 곡이 바뀔 때 띄우던 곡 이름 알림은 뺐다 (GDD 159장 17 사용자 "브금알람 없애")
   });
   shared = p;
   if (typeof window !== 'undefined') {

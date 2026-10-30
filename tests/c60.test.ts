@@ -99,7 +99,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: `${H.riskGaugeName} 이미 0` });
     s.nest.risk = 50;
     s.activeExpedition = {} as SaveData['activeExpedition'];
-    expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: '원정 중인 캐릭터에는 못 쓴다' });
+    expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: '모험 중인 캐릭터에는 못 쓴다' });
     s.shared.items.calm = BALANCE.provisional.inventory.consumableCap;
     expect(row(s, 'calm')!.lock).toBe('보관 가득 (9/9)');
   });

@@ -248,7 +248,7 @@ describe('123장 4 홈 회복', () => {
     s.nest.hpFraction = 0.2;
     s.shared.items[HP_POTION_ID] = 1;
     const card = inventoryOf(s, H).find((e) => e.id === HP_POTION_ID)!;
-    expect(card.lock).toBe('원정·전투 중에만 쓴다');
+    expect(card.lock).toBe('모험·전투 중에만 쓴다');
     expect(useInventoryItem(s, H, HP_POTION_ID).ok).toBe(false);
     expect(s.nest.hpFraction).toBe(0.2);
   });

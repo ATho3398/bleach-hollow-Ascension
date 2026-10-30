@@ -226,7 +226,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [panel({ title: '능력치 직접 입력', aside: `0~${max}` }, grid([...inputs.map(([s, i]) => [statName(s, fid), i] as [string, Node]), ...elemInputs.map(([id, i]) => [`${elementDamageAbbr(id, fid)} 피해 %`, i] as [string, Node])]), row(apply, reset),
-      note('입력값은 원정·등급전·연습·바로 전투 모두에 그대로 쓰인다(노력치는 0으로).'))];
+      note('입력값은 모험·등급전·연습·바로 전투 모두에 그대로 쓰인다(노력치는 0으로).'))];
   }
 
   function traitsTab(): Node[] {
@@ -428,7 +428,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [
-      panel({ title: '속도 (전투·원정)' }, sp, note('전투는 전투 화면 배속에 곱한다. 원정은 시작 배속에 쓴다.')),
+      panel({ title: '속도 (전투·모험)' }, sp, note('전투는 전투 화면 배속에 곱한다. 모험은 시작 배속에 쓴다.')),
       panel({ title: '리스크·허기·컨디션·체력' }, grid([[faction.riskGaugeName, risk], ['허기', hunger], ['컨디션', cond], ['체력 %', hp]]), row(apply)),
       // 시간 앞당기기 (GDD 102-7·109장 7): 배부름·돌봄·대기 보상·먹이 한도(10분)·빈사(48시간)·사망을 바로 본다
       ...(hd.onTimeAdvanced ? [panel({ title: '시간 앞당기기' },
@@ -454,13 +454,13 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const callW = button({ label: '지금 부르기', icon: 'i-check', variant: 'primary', onClick: () => {
       lastCall = { ...lastCall, tier: Number(tierSel.value) };
       testCallWanderer(save, lastCall.tier);
-      done('떠돌이 상인을 불렀다', '밖으로 → 시장 → [떠돌이 상인]에서 산다. 다음 원정에서 돌아오면 떠난다.');
+      done('떠돌이 상인을 불렀다', '밖으로 → 시장 → [떠돌이 상인]에서 산다. 다음 모험에서 돌아오면 떠난다.');
     } });
     const rerollW = button({ label: '물건 다시 뽑기', icon: 'i-loop', disabled: !visit, onClick: () => {
       if (testRerollWanderer(save)) done('물건을 다시 뽑았다', '팔린 칸도 새로 채운다.');
     } });
     const sendW = button({ label: '보내기', icon: 'i-quit', disabled: !visit, onClick: () => {
-      if (testSendWanderer(save)) done('떠돌이 상인을 보냈다', '다음 원정 바퀴부터 다시 확률이 쌓인다.');
+      if (testSendWanderer(save)) done('떠돌이 상인을 보냈다', '다음 모험 바퀴부터 다시 확률이 쌓인다.');
     } });
     // 돌봄 요청 (GDD 82장)
     const care = save.nest.careRequest;
@@ -485,9 +485,9 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const force = getTestExpeditionForce();
     const evSel = select([{ value: '', label: '— 없음 —' }, ...testEventTiles(fid).map((id) => ({ value: id, label: tileName(id, fid) }))], force.eventTile ?? '', '이벤트 타일');
     const mutSel = select([{ value: '', label: '— 없음 —' }, ...testMutations().map((id) => ({ value: id, label: mutationName(id, fid) }))], force.mutation ?? '', '바퀴 변이');
-    const callE = button({ label: '다음 원정에 부르기', icon: 'i-check', variant: 'primary', onClick: () => {
+    const callE = button({ label: '다음 모험에 부르기', icon: 'i-check', variant: 'primary', onClick: () => {
       const f = setTestExpeditionForce({ eventTile: evSel.value || null, mutation: mutSel.value || null });
-      showToast({ eyebrow: '테스트', title: f.eventTile || f.mutation ? '다음 원정에 부른다' : '예약 없음', meta: '다음 자유 원정 배치 단계에서 이벤트 타일은 첫 빈 칸에, 변이는 1바퀴에 놓인다.' }, 0, 1800);
+      showToast({ eyebrow: '테스트', title: f.eventTile || f.mutation ? '다음 모험에 부른다' : '예약 없음', meta: '다음 자유 모험 배치 단계에서 이벤트 타일은 첫 빈 칸에, 변이는 1바퀴에 놓인다.' }, 0, 1800);
       redraw();
     } });
     const clearE = button({ label: '예약 취소', icon: 'i-quit', disabled: !force.eventTile && !force.mutation, onClick: () => {
@@ -502,8 +502,8 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
         note(save.nest.dead ? '사망 상태에서는 요청이 오지 않는다.' : '방 아래 독 버튼에 요청 표시가 붙는다.')),
       panel({ title: '대기 보상', aside: save.idlePending ? `${Math.round(save.idlePending.hours * 10) / 10}시간 쌓임` : '없음' }, grid([['시간', idleSel.el]]), row(callI, clearI),
         note('그 시간만큼 자동 모험을 한 것으로 쌓는다. 시간까지 흐르게 하려면 [둥지·시간] 탭의 시간 앞당기기를 쓴다.')),
-      panel({ title: '원정 이벤트', aside: forced || '예약 없음' }, grid([['이벤트 타일', evSel.el], ['바퀴 변이', mutSel.el]]), row(callE, clearE),
-        note('원정 안에서만 뜨는 것이라 다음 자유 원정 출발 때 놓는다(스토리·첫 진화 전 원정은 제외). 예약은 이 실행 동안만 남는다.')),
+      panel({ title: '모험 이벤트', aside: forced || '예약 없음' }, grid([['이벤트 타일', evSel.el], ['바퀴 변이', mutSel.el]]), row(callE, clearE),
+        note('모험 안에서만 뜨는 것이라 다음 자유 모험 출발 때 놓는다(스토리·첫 진화 전 모험은 제외). 예약은 이 실행 동안만 남는다.')),
     ];
   }
 }

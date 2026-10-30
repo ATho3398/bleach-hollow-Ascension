@@ -27,7 +27,7 @@ export interface AnimActionDef {
 /** 동작 키 10종 (GDD 26-3, 속도는 26-4b 의 프레임당 ms). 새 동작은 이 표에 한 줄 */
 export const ANIM_ACTIONS: readonly AnimActionDef[] = [
   { key: 'idle', label: '대기', mode: 'loop', ms: 300, endMs: 450, where: '방, 전투 대기, 걷기 멈춤', fallback: '정지 그림' },
-  { key: 'move', label: '이동', mode: 'loop', ms: 130, where: '원정 걷기', fallback: '걷기 흔들림' },
+  { key: 'move', label: '이동', mode: 'loop', ms: 130, where: '모험 걷기', fallback: '걷기 흔들림' },
   { key: 'attack', label: '공격', mode: 'once', ms: 150, where: '평타·블록 공격', fallback: '몸통박치기' },
   { key: 'skill', label: '특수 공격', mode: 'once', ms: 150, where: '필살기·계열 특수 공격', fallback: '지금 계열 연출' },
   { key: 'hit', label: '맞음', mode: 'once', ms: 140, where: '피격', fallback: '흰 실루엣 깜빡임 2번 + 뒤로 튕김' },

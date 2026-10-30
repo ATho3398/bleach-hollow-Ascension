@@ -81,7 +81,7 @@ export function absorbStatusContent(faction: FactionConfig, exp: ExpeditionState
   }
   if (got.length > 6) gotList.append(el('li', 'bha-faint', `그 밖 ${got.length - 6}번`));
   const right = el('div', 'bha-absorbstat__col');
-  right.append(sec(`이번 원정 ${faction.absorbActionName} ${got.length}번`, got.length ? gotList : el('p', 'bha-faint', '아직 없다')));
+  right.append(sec(`이번 모험 ${faction.absorbActionName} ${got.length}번`, got.length ? gotList : el('p', 'bha-faint', '아직 없다')));
 
   // 진화 쏠림: 장착 속성 개수 기준(진화 판정과 같은 셈)의 막대·순위만
   const rows = leanRows(judgeElementCounts(b), dominantElement(b));

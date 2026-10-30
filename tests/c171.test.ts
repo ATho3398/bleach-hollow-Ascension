@@ -5,7 +5,7 @@ import { devText, setDevText, shownName } from '../src/ui/displayName';
 import { getFaction } from '../src/data/factions';
 import { TUTORIAL_SCENES } from '../src/data/help';
 import { FLOAT_SPOTS, HURT_SPOTS } from '../src/ui/bha/battle';
-import { actionChipOf, cardDetailOf } from '../src/ui/lcdScreens';
+import { actionChipOf, bagGroupOf, cardDetailOf } from '../src/ui/lcdScreens';
 import { absorbModeText } from '../src/ui/absorbView';
 import { inventoryOf, petEffectText } from '../src/inventory';
 import { goldRows } from '../src/shop';
@@ -126,7 +126,7 @@ describe('보관함·상점 (#54~65)', () => {
   });
   it("물건 분류에 '타일' 없음 · 타일 탭은 목록·합성만 (#56·57), 슬롯 머리 숫자 = 남는 수 (#55)", () => {
     const l = read('src/ui/lcdScreens.ts');
-    expect(l).toContain("c !== 'tile'");
+    expect(bagGroupOf({ id: 'tile-x', category: 'tile' })).toBeNull(); // C.237: 소모품 탭에 타일 없음
     expect(l).toContain('dataset.ownedTiles');
     expect(read('src/ui/buildPanel.ts')).toContain('`남는 ${spare.length}개`');
   });

@@ -203,7 +203,7 @@ describe('보스전·보상·런 로그 (GDD 37장 3~6번)', () => {
     expect(s.shared.jade).toBe(jade0);
     const rec = s.runLog.bossBattles.at(-1)!;
     expect(rec).toMatchObject({ bossId: 'sand-maw', won: true, firstKill: false, source: 'free', difficulty: 2, episode: null });
-    expect(storyResultLines(e, getFaction('hollow'))[0]).toContain('자유 원정 보스');
+    expect(storyResultLines(e, getFaction('hollow'))[0]).toContain('자유 모험 보스');
   });
 
   it('지면 원정 패배와 같다 (마지막 바퀴 전리품을 잃는다), 런 로그 won false', () => {

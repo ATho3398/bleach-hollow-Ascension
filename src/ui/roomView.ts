@@ -134,7 +134,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     confirmDialog({ title: '부활한다', body: '되돌릴 수 없다.', content: list, yes: '부활', no: '아니오', danger: true, onYes: () => hd.onRevive?.() });
   }
   if (hd.resume) {
-    resumeBtn = button({ label: '원정 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
+    resumeBtn = button({ label: '모험 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
     resumeBtn.title = hd.resume.info;
     resumeBtn.append(el('small', 'bha-room__resumeinfo', hd.resume.info));
     hud.append(resumeBtn);
@@ -291,7 +291,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
         const fed = food ? feedNest(save, food) : null;
-        if (!fed) return say('먹을 것이 없다. 원정에서 적을 이기면 먹이를 얻는다.');
+        if (!fed) return say('먹을 것이 없다. 모험에서 적을 이기면 먹이를 얻는다.');
         if (fed === 'spat') {
           // 10분에 3개를 넘김 (GDD 109장 6): 먹이는 없어지고 효과 없음 — 뱉는 모션 + 말풍선
           hd.persist();

@@ -531,7 +531,7 @@ export function startApp(host: HTMLElement): void {
       };
       next(0);
     };
-    const out = [{ label: '첫 원정 안내', run: chain(['first-run', 'first-absorb', 'first-run-room']) }];
+    const out = [{ label: '첫 모험 안내', run: chain(['first-run', 'first-absorb', 'first-run-room']) }];
     // 홈 안내 다시 보기 (GDD 131장 3): 방에서 연 도움말일 때만(대상이 방 버튼) — 설명 카드만, 강제 없음
     if (nav.top?.id === 'room') out.unshift({ label: '홈 안내', run: () => {
       const { scenes, vars } = homeIntroScenes(faction);
@@ -693,7 +693,7 @@ export function startApp(host: HTMLElement): void {
       selected,
       onDelete: (sum) => confirmDialog({
         title: `슬롯 ${sum.slot} 지우기`,
-        body: fixParticles(`슬롯 ${sum.slot}을(를) 지운다. 되돌릴 수 없다. 지우기 전의 세이브는 슬롯 백업에 한 번 보관된다.`),
+        body: fixParticles(`슬롯 ${sum.slot}을(를) 지운다. 지우기 전 세이브 하나는 백업으로 남는다.`), // GDD 159장 15: '되돌릴 수 없다'와 '백업' 말이 어긋났다
         yes: '지우기', no: '아니오', danger: true,
         onYes: () => {
           if (!deleteSlot(store, sum.slot)) showToast({ eyebrow: '슬롯', title: '지우지 못했다', meta: '저장소가 막혀 있다.' }, 0, 4200);
@@ -827,7 +827,7 @@ export function startApp(host: HTMLElement): void {
     const inExpedition = activeExp !== null && activeExp.phase !== 'ended';
     confirmDialog({
       title: '처음 화면으로',
-      body: inExpedition ? '원정은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
+      body: inExpedition ? '모험은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
       yes: '예', no: '아니오', focusNo: true, // 기본 선택 = 아니오 (GDD 124장 1)
       onYes: () => {
         confirmingTitle = false;
@@ -974,7 +974,7 @@ export function startApp(host: HTMLElement): void {
     const active = readActiveExpedition(s);
     if (!active.ok && active.reason !== 'none') {
       persist(); // 손상·구버전 영역을 비운 것을 저장
-      resumeNote = active.reason === 'version' ? '저장된 원정이 이전 버전이라 이어할 수 없어 지웠다.' : '저장된 원정이 손상되어 이어할 수 없어 지웠다.';
+      resumeNote = active.reason === 'version' ? '저장된 모험이 이전 버전이라 이어할 수 없어 지웠다.' : '저장된 모험이 손상되어 이어할 수 없어 지웠다.';
     }
     const props = roomOf(faction).props;
     setBgm('nest');
@@ -1018,7 +1018,7 @@ export function startApp(host: HTMLElement): void {
         if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
         wandererAnnounced = visit.at;
         const path = `${roomOf(faction).props.outside} → ${mk.name}`; // 월드맵 → 시장 (GDD 130장 2·158장 2)
-        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: fixParticles(`${mk.props.wanderer}이(가) ${mk.name}에 왔다`), meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
+        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: fixParticles(`${mk.props.wanderer}이(가) ${mk.name}에 왔다`), meta: `${path} → [${mk.props.wanderer}]. 다음 모험에서 돌아오면 떠난다.` }, notes.length, 5200);
       }, 2600);
     }
     if (notes.length > 0) {
@@ -1437,16 +1437,16 @@ export function startApp(host: HTMLElement): void {
       id: 'expedition', locked: true,
       render: () => {
         armEnterFx();
-        showExpedition(faction, exp, '첫 원정 출발!');
+        showExpedition(faction, exp, '첫 모험 출발!');
         root.scrollTop = 0;
         if (opened) return;
         opened = true;
         // 걷기·조우 안내 동안 원정 시간이 멈춘다
         signalHold('hold');
-        showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 원정 멈춤', onDone: () => {
+        showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 모험 멈춤', onDone: () => {
           signalHold('release');
           // 회복 물건 안내 한 줄 (GDD 144장 4·145장 3): 시작 가방에 넣어 둔 회복 물건 — 노란 알림(맨 위)
-          showToast({ eyebrow: '회복 물건', title: '원정·전투 중에 체력이 모자라면 회복 물건을 쓴다', meta: '걷기 중 [가방] · 전투 [소모품]' }, 0, 4200);
+          showToast({ eyebrow: '회복 물건', title: '모험·전투 중에 체력이 모자라면 회복 물건을 쓴다', meta: '걷기 중 [가방] · 전투 [소모품]' }, 0, 4200);
         } });
       },
     });
@@ -1530,8 +1530,8 @@ export function startApp(host: HTMLElement): void {
     // 저장된 배속 값은 무시한다 (C.118, GDD 62장: 1배 고정)
     if (exp.phase === 'battle') runBattle(faction, exp);
     else if (exp.phase === 'absorb') afterBattle(faction, exp);
-    else if (drainEvents(exp).length > 0) breakthroughScreen(faction, exp, () => showExpedition(faction, exp, '원정을 이어간다'));
-    else showExpedition(faction, exp, '원정을 이어간다');
+    else if (drainEvents(exp).length > 0) breakthroughScreen(faction, exp, () => showExpedition(faction, exp, '모험을 이어간다'));
+    else showExpedition(faction, exp, '모험을 이어간다');
   }
 
   /** 전투 직전 강적·보스 WARNING 경고가 떠 있다 (GDD 76장, C.128) */
@@ -1562,7 +1562,7 @@ export function startApp(host: HTMLElement): void {
       tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
-      ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 원정' } } : {}),
+      ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 모험' } } : {}),
       // 배경 (GDD 34-1): 보스전은 무대(없으면 사냥터), 그 밖은 사냥터
       bg: (p.boss ? arenaSceneBg(faction) : null) ?? groundSceneBg(faction, exp.groundId),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,

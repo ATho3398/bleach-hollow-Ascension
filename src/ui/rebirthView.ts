@@ -125,7 +125,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
   const next = button({ label: '다음 — 최종 확인', icon: 'i-chevron-right', variant: 'danger', block: true, disabled: blocked, onClick: () => hd.onNext(pick) });
   next.dataset.sc = 'rebirth-next';
   const right: HTMLElement[] = [pickPanel, info];
-  if (blocked) right.push(notice('danger', '진행 중인 원정이 있다. 원정을 끝내고 돌아와야 환생할 수 있다.', { icon: 'i-broken' }));
+  if (blocked) right.push(notice('danger', '진행 중인 모험이 있다. 모험을 끝내고 돌아와야 환생할 수 있다.', { icon: 'i-broken' }));
   right.push(next);
   lcdPage(dev.view, { cls: 'bha-rebirth-page' }, head, [listPanel('초기화된다', lists.resets, '초기화되는 것'), listPanel('남는다', lists.keeps, '남는 것')], right);
 }

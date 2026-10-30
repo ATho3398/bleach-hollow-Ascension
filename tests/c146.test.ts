@@ -55,7 +55,7 @@ describe('C.146 보관함', () => {
   });
   it('I5: 탭 숫자는 카드(종류) 수 — 개수 합이 아니다 (펫 탭 포함 전 탭 같은 기준)', () => {
     const src = read('src/ui/lcdScreens.ts');
-    expect(src).toContain(".filter((e) => e.category === c && listed(e)).length");
+    expect(src).toContain('count: all.filter((e) => bagGroupOf(e) === g).length'); // C.237: 소모품 칸 탭도 카드 수
     expect(src).not.toContain(".filter((e) => e.category === c).reduce((a, e) => a + e.count, 0)");
   });
   it('I6: 카드 설명에 "착용 중"·"보유"·"데리고 다니는 중"이 배지와 겹쳐 반복되지 않는다', () => {

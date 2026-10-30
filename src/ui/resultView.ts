@@ -32,8 +32,8 @@ export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): 
     const BR = B.provisional.boss.reward;
     const gold = Math.round(BR.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak));
     return [fb.won
-      ? `자유 원정 보스 ${bossName(fb.bossId, faction.id)} 처치! ${TRADE_CURRENCY_NAME} +${gold} · ${faction.foodNames[BR.food as FoodId]} 1 · 보스 도감 처치 +1`
-      : `자유 원정 보스 ${bossName(fb.bossId, faction.id)}에게 졌다 (마지막 바퀴 전리품을 잃었다)`];
+      ? `자유 모험 보스 ${bossName(fb.bossId, faction.id)} 처치! ${TRADE_CURRENCY_NAME} +${gold} · ${faction.foodNames[BR.food as FoodId]} 1 · 보스 도감 처치 +1`
+      : `자유 모험 보스 ${bossName(fb.bossId, faction.id)}에게 졌다 (마지막 바퀴 전리품을 잃었다)`];
   }
   const r = exp.storySettled;
   if (!r) return [];
@@ -74,10 +74,10 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     if (exp.permTile !== undefined) {
       out.push(exp.permTile
         ? { label: '영구 타일', icon: 'i-deck', value: val(tileName(exp.permTile, faction.id), '가방에 들어갔다'), mod: 'good' }
-        : { label: '영구 타일', icon: 'i-deck', value: val('이번엔 없음', '원정 2~3번에 1장 꼴') });
+        : { label: '영구 타일', icon: 'i-deck', value: val('이번엔 없음', '모험 2~3번에 1장 꼴') });
     }
     const temp = exp.tempLog?.length ?? 0;
-    if (temp > 0) out.push({ label: '임시 타일', icon: 'i-deck', value: val(`${temp}장`, '이번 원정만 — 끝나며 사라졌다') });
+    if (temp > 0) out.push({ label: '임시 타일', icon: 'i-deck', value: val(`${temp}장`, '이번 모험만 — 끝나며 사라졌다') });
     return out;
   }
 
@@ -137,9 +137,9 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
     // 둥지로 가져가는 값 = 패배·폭주 감소를 뺀 뒤 (둥지 상태와 같은 값, C.68)
     { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(home.hunger))}`) },
-    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `원정 끝 ${Math.round(exp.condition)}` : undefined) },
+    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `모험 끝 ${Math.round(exp.condition)}` : undefined) },
   ];
-  const sum = panel({ title: '원정 요약' }, iconInfo(rows));
+  const sum = panel({ title: '모험 요약' }, iconInfo(rows));
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
   seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');

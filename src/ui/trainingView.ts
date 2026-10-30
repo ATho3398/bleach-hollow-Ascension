@@ -100,11 +100,11 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   tickets.setAttribute('aria-label', `수련권 ${t.tickets} / ${TX.ticketsMax}`);
   tickets.append(el('span', 'bha-train__ticketlabel', '수련권'));
   for (let i = 0; i < TX.ticketsMax; i++) tickets.append(el('i', i < t.tickets ? 'is-on' : ''));
-  tickets.append(el('span', 'bha-num', `${t.tickets}/${TX.ticketsMax}`), el('span', 'bha-faint', '원정에서 돌아올 때마다 1장 (최대 3장, 한 판에 1장)'));
+  tickets.append(el('span', 'bha-num', `${t.tickets}/${TX.ticketsMax}`), el('span', 'bha-faint', '모험에서 돌아올 때마다 1장 (최대 3장, 한 판에 1장)'));
   prog.append(tickets);
   const notes: HTMLElement[] = [];
   if (!gate.ok && gate.reason === 'tier') notes.push(notice('info', trainingLockedText(faction), { icon: 'i-lock' }));
-  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 원정에서 돌아오면 1장 생긴다.', { icon: 'i-lock' }));
+  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 모험에서 돌아오면 1장 생긴다.', { icon: 'i-lock' }));
   else if (!gate.ok && gate.reason === 'condition') notes.push(notice('warn', `컨디션이 ${TX.minCondition} 미만이라 수련할 수 없다. ${faction.nestActions.sleep}(으)로 회복한다.`));
   if (gate.ok || gate.reason !== 'tier') {
     if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). ${faction.riskGaugeName}이(가) 오르는 종목은 조심해야 한다.`));

@@ -131,7 +131,7 @@ export function eventHint(ev: TileEvent): string {
   const E = TV.events;
   return {
     merchant: '골드로 먹이·타일 1개를 산다 · 한 번 밟으면 사라진다',
-    altar: `리스크 +${E.altar.risk} 대신 장착 특성 하나 위력 +${Math.round(E.altar.traitPower * 100)}% (이번 원정) · 한 번`,
+    altar: `리스크 +${E.altar.risk} 대신 장착 특성 하나 위력 +${Math.round(E.altar.traitPower * 100)}% (이번 모험) · 한 번`,
     treasure: `희귀 먹이 1개 또는 골드 ${E.treasure.gold[0]}~${E.treasure.gold[1]} · 한 번`,
     trap: `다음 전투 시작 체력 −${Math.round((1 - E.trap.startHpFraction) * 100)}%, 이기면 보상 ×${E.trap.rewardMult} · 한 번`,
     crossroads: `둘 중 하나: 다음 전투 보호막 ${Math.round(E.crossroads.shield * 100)}% / 골드 ${E.crossroads.gold} · 한 번`,
@@ -174,7 +174,7 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
     'battle-lost': `전투에서 졌다(${f.defeatStateName}). 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 구급상자를 써야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`,
     exhausted: fixParticles(`${f.fullnessName}이(가) 바닥나 쓰러졌다. 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 구급상자를 써야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`),
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
-    'tutorial-clear': `첫 원정을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
-    abort: `원정 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,
+    'tutorial-clear': `첫 모험을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
+    abort: `모험 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,
   }[reason];
 }

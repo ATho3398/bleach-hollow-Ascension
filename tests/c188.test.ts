@@ -97,10 +97,10 @@ describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
 });
 
 describe('설정 화면 · 테스트 패널', () => {
-  it('[이 슬롯]에서만 바꾸는 성별 줄, 체크 자리 고정', () => {
+  it('성별 줄은 이 캐릭터 칸 (C.237 GDD 159장 13: 늘 바꿀 수 있다), 체크 자리 고정', () => {
     const v = read('src/ui/settingsView.ts');
     expect(v).toContain("genderRow.dataset.set = 'gender';");
-    expect(v).toContain("() => scope === 'slot'");
+    expect(v).toContain("panel('이 캐릭터 · 성별'");
     expect(v).toContain('b.replaceChildren(icon(\'i-check\'), label(v));');
     expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-settings__choices .bha-btn[aria-pressed="false"] .bha-icon { visibility: hidden; }');
     expect(read('src/ui/app.ts')).toContain('setActiveGender(save?.gender);');

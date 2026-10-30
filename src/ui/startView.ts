@@ -39,7 +39,7 @@ export function slotLine(sum: SlotSummary, factions: readonly FactionConfig[]): 
   const at = sum.playedAt !== null ? formatPlayedAt(sum.playedAt) : '시각 기록 없음';
   return {
     main: slotTitle(sum, f),
-    sub: `마지막 플레이 ${at}${sum.inExpedition ? ' · 원정 중' : ''}`,
+    sub: `마지막 플레이 ${at}${sum.inExpedition ? ' · 모험 중' : ''}`,
   };
 }
 

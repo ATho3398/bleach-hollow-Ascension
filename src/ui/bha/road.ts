@@ -222,7 +222,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   /** 임시 타일 표시 (GDD 121장 4 ②): 기존 시계 아이콘을 구석에 작게 */
   function tempMark(): HTMLElement {
     const m = el('span', 'bha-tempmark');
-    m.setAttribute('aria-label', '임시 타일 — 이번 원정만');
+    m.setAttribute('aria-label', '임시 타일 — 이번 모험만');
     m.append(icon('i-timer'));
     return m;
   }
@@ -244,7 +244,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       if (id && isTempCell(exp, i)) b.append(tempMark());
       if (id && placedHere.has(i)) b.dataset.drag = 'cell';
       else delete b.dataset.drag;
-      b.title = id ? `${o.tileName(id)}${isTempCell(exp, i) ? ' (임시 — 이번 원정만)' : ''} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : '빈 칸';
+      b.title = id ? `${o.tileName(id)}${isTempCell(exp, i) ? ' (임시 — 이번 모험만)' : ''} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : '빈 칸';
       b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 고정 칸'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
     }
     // 인접 시너지 (GDD 25-5 ②): 붙은 두 칸을 테두리로 묶고 오른쪽 칸 왼쪽 위(두 칸 사이)에 이름표. 줄이 바뀌는 짝(6열 경계)은 오른쪽 칸 모서리에
@@ -281,7 +281,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       const temp = tempHandCount(exp, id);
       if (temp > 0) {
         chip.append(tempMark());
-        chip.title = `임시 타일 ${temp}장 — 이번 원정 동안만 놓을 수 있다`;
+        chip.title = `임시 타일 ${temp}장 — 이번 모험 동안만 놓을 수 있다`;
       }
       chip.onclick = () => {
         selected = selected === id ? null : id;

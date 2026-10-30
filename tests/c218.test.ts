@@ -93,7 +93,7 @@ describe('C.218 드래프트 창·카드 고르는 창 (GDD 140장 2·3)', () =>
   });
   it('임시 타일 설명은 한 번만, 머리 한 줄 "n바퀴 끝 — 타일 1장 고르기"', () => {
     const nest = view.slice(view.indexOf('function nestSheet'), view.indexOf('function eventSheet'));
-    expect(nest.match(/이번 원정에만 쓰는 타일|임시 타일이다/g)?.length).toBe(1);
+    expect(nest.match(/이번 모험에만 쓰는 타일|임시 타일이다/g)?.length).toBe(1);
     expect(nest).toContain('바퀴 끝 — 타일 1장 고르기');
   });
   it('흡수 후보 카드 아래 줄: 강화 단계는 배지에만, 고르기 표시 앞 떠도는 · 없음', () => {

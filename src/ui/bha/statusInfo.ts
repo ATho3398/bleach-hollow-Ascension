@@ -84,7 +84,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
       });
       return gaugeDoc(
         `${a.sleep}(으)로 오르고, 낮을수록 전투에 공허 블록이 자주 나온다`,
-        [`원정 전투의 공허 블록 확률을 정한다(최대 +${pct(PX.conditionRiskBonusMax)}p)`],
+        [`모험 전투의 공허 블록 확률을 정한다(최대 +${pct(PX.conditionRiskBonusMax)}p)`],
         zones, value,
         [
           numLine(a.sleep, signed(NX.sleepCondition)),
@@ -93,7 +93,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           // 온천 회복 (GDD 135장 3 — 배부름 홈 대기 회복은 수정 v5.315 에서 폐기)
           numLine(f.worldmap?.spaName ?? DEFAULT_WORLDMAP.spaName, // 온천 이름 = 월드맵 장소 이름 (GDD 153장 1)
              `1분에 ${signed(Math.round(NX.homeHp.spa.conditionPerSecond * 60))}`), // 평소 온천 약 5분에 가득 (GDD 145장 1)
-          numLine('원정 패배', `${NX.defeatCondition}까지 떨어진다`),
+          numLine('모험 패배', `${NX.defeatCondition}까지 떨어진다`),
           numLine(`${f.frenzyName} 후 귀환`, signed(-RX.frenzyConditionLoss)),
         ],
       );
@@ -138,14 +138,14 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
     case 'weak':
       return ailmentDoc(
         `${f.fullnessName}이(가) ${CP.weakFullness} 이하가 되는 순간 걸린다`,
-        [numLine('원정 전투', `최대 체력 ${pctDelta(-CP.weakMaxHpCut)}`), numLine('대기 보상', `×${BALANCE.provisional.idle.weakenedRate}`)],
-        [`${f.fullnessName}을(를) ${CP.weakFullness} 넘게 채우고 원정을 한 번 다녀오면 풀린다`, `${medicineName('weak')}을(를) 먹이면 바로 풀린다`],
+        [numLine('모험 전투', `최대 체력 ${pctDelta(-CP.weakMaxHpCut)}`), numLine('대기 보상', `×${BALANCE.provisional.idle.weakenedRate}`)],
+        [`${f.fullnessName}을(를) ${CP.weakFullness} 넘게 채우고 모험을 한 번 다녀오면 풀린다`, `${medicineName('weak')}을(를) 먹이면 바로 풀린다`],
       );
     case 'tired':
       return ailmentDoc(
         `컨디션이 ${CP.tiredCondition} 이하가 되는 순간 걸린다`,
         [numLine('전투', `블록 생성 간격 ${pctDelta(CP.tiredSpawnSlow)}`)],
-        [`컨디션을 ${CP.tiredCondition} 넘게 올리고 원정을 한 번 다녀오면 풀린다`, `${medicineName('tired')}을(를) 먹이면 바로 풀린다`],
+        [`컨디션을 ${CP.tiredCondition} 넘게 올리고 모험을 한 번 다녀오면 풀린다`, `${medicineName('tired')}을(를) 먹이면 바로 풀린다`],
       );
     case 'collapsed':
       return ailmentDoc(

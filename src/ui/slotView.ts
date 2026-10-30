@@ -51,6 +51,8 @@ export function slotPickView(root: HTMLElement, mode: SlotPickMode, summaries: r
     selected = s.slot;
     sync();
   }, selected);
+  // 기기 초점도 고른 슬롯에서 시작 (GDD 159장 10: 지운 뒤 초점은 슬롯 1, 선택·상세는 지운 슬롯에 있어 두 칸이 같이 강조됐다)
+  if (selected !== null) rows.querySelector<HTMLElement>(`.bha-slot[data-slot="${selected}"]`)?.setAttribute('data-dev-start', '');
   const list = panel({ title: '세이브 슬롯' }, rows);
 
   function sync(): void {

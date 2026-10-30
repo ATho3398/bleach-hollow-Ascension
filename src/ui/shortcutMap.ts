@@ -112,7 +112,7 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
     ],
   },
   {
-    title: '원정 배치판',
+    title: '모험 배치판',
     rows: [
       { keys: 'W A S D', does: '선택 이동' },
       { keys: 'F', does: '그 칸 누르기 (놓기·선택·교체·이동, 놓은 타일을 선택한 채 같은 칸을 다시 누르면 손으로 돌아온다)' },

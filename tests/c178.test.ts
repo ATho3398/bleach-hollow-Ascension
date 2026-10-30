@@ -88,9 +88,10 @@ describe('설정 화면 (103장 1·2·4)', () => {
     const c = read('src/ui/confirmDialog.ts');
     expect(c).toContain('alt?: { label: string; onClick: () => void };');
   });
-  it('[공통]/[이 슬롯] 토글 · 줄마다 슬롯 표시 · 슬롯 설정 지우기 = 확인(기본 아니오)', () => {
-    expect(s).toContain("id === 'common' ? '공통' : '이 슬롯'");
-    expect(s).toContain("text = !slotable(k) ? '공통만' : inSlot ? '슬롯' : '';");
+  it('C.237 (GDD 159장 13): [공통]/[이 슬롯] 토글·줄마다 슬롯 꼬리표는 화면에서 뺐다 · 남은 슬롯 값 지우기 = 확인(기본 아니오)', () => {
+    expect(s).toContain("if (host && scope === 'slot') {");
+    expect(s).not.toContain("text = !slotable(k) ? '공통만'");
+    expect(s).toContain("panel('이 캐릭터만 쓰던 설정'");
     expect(s).toContain("yes: '지우기', no: '아니오', danger: true,");
   });
   it('시작 화면 [설정] = 공통만, 방에서 연 설정은 슬롯 토글', () => {

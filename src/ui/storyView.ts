@@ -24,7 +24,7 @@ export type DepartTab = 'free' | 'story';
 
 /** 원정 출발 화면 머리의 제목 토글 "자유 원정 ▾" — 누르면 [자유 원정] / [스토리] 목록이 열린다 (GDD 25-7, 예전 탭 줄을 대신함 C.114). 탑은 월드맵 장소로 옮김 (139장 1) */
 export function departTabs(current: DepartTab, onSelect: (id: DepartTab) => void): HTMLElement {
-  const t = viewTitle([{ id: 'free', label: '자유 원정' }, { id: 'story', label: '스토리' }], current, (id) => {
+  const t = viewTitle([{ id: 'free', label: '자유 모험' }, { id: 'story', label: '스토리' }], current, (id) => {
     if (id !== current) onSelect(id as DepartTab);
   });
   t.classList.add('bha-depart-tabs');

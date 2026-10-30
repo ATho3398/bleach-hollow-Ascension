@@ -11,8 +11,8 @@
     { "id": "w-soul-elixir", "name": "영혼 정수", "grade": "legendary", "kind": "elixir", "category": "consumable" },
     { "id": "w-pet-egg", "name": "길 잃은 동반자", "grade": "legendary", "kind": "pet", "category": "pet" },
     { "id": "w-hp-potion", "name": "치료제", "grade": "epic", "kind": "hpPotion", "category": "consumable" },
-    { "id": "w-gear-rare", "name": "떠돌이 장비 (레어)", "grade": "rare", "kind": "gear", "category": "equipment" },
-    { "id": "w-gear-epic", "name": "떠돌이 장비 (영웅)", "grade": "epic", "kind": "gear", "category": "equipment" },
-    { "id": "w-gear-legend", "name": "떠돌이 장비 (전설)", "grade": "legendary", "kind": "gear", "category": "equipment" }
+    { "id": "w-gear-rare", "name": "떠돌이 장비", "grade": "rare", "kind": "gear", "category": "equipment" },
+    { "id": "w-gear-epic", "name": "떠돌이 장비", "grade": "epic", "kind": "gear", "category": "equipment" },
+    { "id": "w-gear-legend", "name": "떠돌이 장비", "grade": "legendary", "kind": "gear", "category": "equipment" }
   ]
 }

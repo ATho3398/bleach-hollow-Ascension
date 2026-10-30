@@ -38,7 +38,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   // ── 위 한 줄: 이름 · 떠돌이 상인 소식 (나가기는 장면 안 월드맵 물건 — GDD 158장 3) ──
   const hud = el('header', 'bha-room__hud bha-market__hud');
   const titles = el('div', 'bha-market__titles');
-  titles.append(el('h1', 'bha-market__title', mk.name), el('p', 'bha-small bha-market__sub', fixParticles(here ? `${mk.props.wanderer}이(가) 와 있다. 다음 원정에서 돌아오면 떠난다.` : `${mk.props.wanderer}은(는) 원정을 돌다 보면 가끔 들른다.`)));
+  titles.append(el('h1', 'bha-market__title', mk.name), el('p', 'bha-small bha-market__sub', fixParticles(here ? `${mk.props.wanderer}이(가) 와 있다. 다음 모험에서 돌아오면 떠난다.` : `${mk.props.wanderer}은(는) 모험을 돌다 보면 가끔 들른다.`)));
   hud.append(titles);
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──

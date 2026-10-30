@@ -53,14 +53,14 @@ export function riskText(f: Names): RiskText {
   const nest = RX.nestActions;
   const a = f.nestActions;
   return {
-    riskTip: numLine(`${g} ${RX.limit}`, `${f.frenzyName}(원정당 1번)`, ...frenzyEffects(f)),
-    frenzyLead: fixParticles(`${g} ${RX.limit}이(가) 되면 원정당 1번 걸린다`),
-    frenzyLines: [numLine('그 원정 끝까지', ...frenzyFight()), numLine('귀환하면', ...frenzyReturn(f))],
-    riskLead: fixParticles(`원정에서 힘을 쓸수록 쌓이고, ${RX.limit}이(가) 되면 ${f.frenzyName} 상태가 된다`),
+    riskTip: numLine(`${g} ${RX.limit}`, `${f.frenzyName}(모험당 1번)`, ...frenzyEffects(f)),
+    frenzyLead: fixParticles(`${g} ${RX.limit}이(가) 되면 모험당 1번 걸린다`),
+    frenzyLines: [numLine('그 모험 끝까지', ...frenzyFight()), numLine('귀환하면', ...frenzyReturn(f))],
+    riskLead: fixParticles(`모험에서 힘을 쓸수록 쌓이고, ${RX.limit}이(가) 되면 ${f.frenzyName} 상태가 된다`),
     stabilityLead: `낮을수록 전투 시작 때 해방 게이지가 적게 찬다`,
     riskDoes: [
       `${RX.limit} 미만은 직접 손해가 없고 게이지만 쌓인다`,
-      fixParticles(`${RX.limit}이(가) 되면 그 원정 끝까지 ${f.frenzyName} 상태다(원정당 1번)`),
+      fixParticles(`${RX.limit}이(가) 되면 그 모험 끝까지 ${f.frenzyName} 상태다(모험당 1번)`),
     ],
     stabilityDoes: [
       `전투 시작 해방 게이지 = ${s} ÷ ${RX.stabilityMax} × ${LIB.startGaugeMax}`,
@@ -100,7 +100,7 @@ export function riskZones(f: Names): RiskZone[] {
   return [
     { from: 0, to: warn - 1, text: '직접 손해가 없다' },
     { from: warn, to: RX.limit - 1, text: `직접 손해가 없다 · 수련장에 '${g} 높음' 경고` },
-    { from: RX.limit, to: RX.limit, text: [`${f.frenzyName}(원정당 1번)`, ...frenzyEffects(f)].join(' · ') },
+    { from: RX.limit, to: RX.limit, text: [`${f.frenzyName}(모험당 1번)`, ...frenzyEffects(f)].join(' · ') },
   ];
 }
 

@@ -72,7 +72,7 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
     withTip(meter({ kind: 'stab', label: faction.stabilityName, icon: 'i-stab', value: Math.round(s.stability), max: s.stabilityMax }), 'stab', faction.stabilityName, s.stability),
     withTip(meter({
       kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), max: s.riskLimit,
-      zone: s.riskWarn / s.riskLimit, danger: s.risk >= s.riskWarn, note: s.risk >= s.riskWarn ? '높음: 원정 시작부터 위험' : undefined,
+      zone: s.riskWarn / s.riskLimit, danger: s.risk >= s.riskWarn, note: s.risk >= s.riskWarn ? '높음: 모험 시작부터 위험' : undefined,
     }), 'risk', faction.riskGaugeName, s.risk),
   );
   if (s.bond) {
@@ -189,8 +189,27 @@ export function showToast(o: { eyebrow: string; title: string; meta?: string; ce
       setTimeout(remove, 800);
     }, holdMs + index * 300);
   };
-  const free = st.slots.findIndex((x) => !x);
-  if (free >= 0) show(free);
-  else st.queue.push(show);
+  const start = () => {
+    const free = st.slots.findIndex((x) => !x);
+    if (free >= 0) show(free);
+    else st.queue.push(show);
+  };
+  // 설정 화면이 열려 있는 동안은 알림을 미뤘다가 닫히면 띄운다 (GDD 159장 17: 보상·도감 알림이 설정 머리줄을 덮었다)
+  if (settingsOpen()) deferUntilSettingsClosed(start);
+  else start();
   return toast;
+}
+
+const settingsOpen = (): boolean => typeof document !== 'undefined' && document.querySelector('[data-screen="settings"]') !== null;
+const deferred: (() => void)[] = [];
+let deferTimer: ReturnType<typeof setInterval> | null = null;
+function deferUntilSettingsClosed(run: () => void): void {
+  deferred.push(run);
+  if (deferTimer !== null) return;
+  deferTimer = setInterval(() => {
+    if (settingsOpen()) return;
+    clearInterval(deferTimer!);
+    deferTimer = null;
+    for (const r of deferred.splice(0)) r();
+  }, 300);
 }

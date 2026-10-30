@@ -2,7 +2,7 @@
   "provisional": true,
   "goals": [
     { "id": "tutorial", "check": "tutorialSeen", "text": "첫 튜토리얼 끝내기", "reward": { "food": { "snack": 3 } } },
-    { "id": "first-return", "check": "returned", "text": "첫 원정에서 돌아오기", "reward": { "food": { "basic": 2 } } },
+    { "id": "first-return", "check": "returned", "text": "첫 모험에서 돌아오기", "reward": { "food": { "basic": 2 } } },
     { "id": "first-absorb", "check": "absorbed", "text": "첫 {absorbActionName}", "reward": { "food": { "snack": 2 } } },
     { "id": "first-chain3", "check": "chain3", "text": "첫 3{chainName} 기술 쓰기", "reward": { "food": { "basic": 2 } } },
     { "id": "first-evolution", "check": "evolved", "text": "첫 진화", "reward": { "food": { "hearty": 2 } } },

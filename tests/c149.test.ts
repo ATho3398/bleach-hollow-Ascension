@@ -61,9 +61,10 @@ describe('C.149 블록 이름·아이콘·문구', () => {
   });
   it('위쪽 탭 [슬롯 · 타일 · 물건 · 펫] (드롭다운 대신), 물건 탭 분류에서 펫 제외', () => {
     const src = read('src/ui/lcdScreens.ts');
-    for (const k of ["id: 'slots', label: '슬롯'", "id: 'tiles', label: '타일'", "id: 'items', label: '물건'", "id: 'pet', label: '펫'"]) expect(src).toContain(k);
+    // C.237 (GDD 159장 24): '물건' → '소모품', 스킨은 위쪽 탭
+    for (const k of ["id: 'slots', label: '슬롯'", "id: 'tiles', label: '타일'", "id: 'items', label: ITEM_CATEGORY_NAMES.consumable", "id: 'skin', label: ITEM_CATEGORY_NAMES.skin", "id: 'pet', label: '펫'"]) expect(src).toContain(k);
     expect(src).not.toContain('viewTitle');
-    expect(src).toContain("(c === 'pet') === petOnly");
+    expect(src).toContain("mode === 'pet' ? all.filter((e) => e.category === 'pet')");
   });
   it('끌어놓기는 공용 dragdrop, 장착·해제는 기존 엔진 함수만', () => {
     const src = read('src/ui/buildPanel.ts');

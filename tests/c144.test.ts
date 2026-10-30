@@ -67,7 +67,7 @@ describe('90장 펫 데이터 (가칭)', () => {
     expect(petBonus({ id: 'pet-seek', level: 1 }, 'seekTile')).toBeCloseTo(0.1);
     expect(petBonus(null, 'gold')).toBe(0);
     expect(petEffectText('pet-guard', 1)).toBe('전투 시작 보호막 (최대 체력 4%)');
-    expect(petEffectText('pet-belly', 3)).toBe('원정 배부름 줄어듦 −22.5%');
+    expect(petEffectText('pet-belly', 3)).toBe('모험 배부름 줄어듦 −22.5%');
   });
 
   it('상태: 여러 마리 보유 · 1마리만 데리고 다님 · 바퀴 누계로 친밀도 오름 · 정리', () => {
@@ -220,7 +220,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
     expect(s.runLog.pets.map((r) => r.kind)).toEqual(['take', 'leave', 'take']);
     s.activeExpedition = {} as never;
     expect(choosePet(s, null, 4)).toBe(false);
-    expect(inventoryOf(s, H).find((e) => e.id === 'pet-gold')!.lock).toBe('원정 중에는 바꿀 수 없다');
+    expect(inventoryOf(s, H).find((e) => e.id === 'pet-gold')!.lock).toBe('모험 중에는 바꿀 수 없다');
   });
 
   it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {

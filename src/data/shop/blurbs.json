@@ -9,15 +9,24 @@
     "accessory": { "*": "부적" }
   },
   "wandererGear": { "*": "무엇이 나올지 모르는 장비" },
+  "foodNote": "C.237 (GDD 159장 25·37): 음식은 종류마다 하는 일을 짧게 — {fullness} = 종족 설정 fullnessName. 상점 음식 칸·가방 음식 칸이 같은 줄을 쓴다",
+  "food": {
+    "snack": "{fullness}이(가) 조금 찬다",
+    "basic": "{fullness}이(가) 찬다",
+    "hearty": "{fullness}이(가) 많이 찬다",
+    "tonic": "컨디션이 오른다",
+    "feast": "{fullness}이(가) 가득 찬다"
+  },
   "kind": {
     "food": { "*": "먹이다" },
     "calm": { "*": "마음을 가라앉히는 약" },
     "wake": { "*": "기운을 끌어올리는 약" },
     "medicine": { "*": "상태 이상을 푸는 약" },
     "battle": { "*": "전투에서 쓰는 소모품" },
-    "hpPotion": { "*": "전투에서 쓰는 소모품" },
+    "heal": { "*": "체력을 채우는 약" },
+    "hpPotion": { "*": "체력을 채우는 약" },
     "trainingTicket": { "*": "수련을 더 할 수 있는 권" },
-    "tileDraw": { "*": "원정 타일 한 장" },
+    "tileDraw": { "*": "모험 타일 한 장" },
     "rareTile": { "*": "아직 없는 타일 한 장" },
     "reroll": { "*": "후보를 다시 뽑는 권" },
     "deckSlot": { "*": "타일 칸을 늘린다" },

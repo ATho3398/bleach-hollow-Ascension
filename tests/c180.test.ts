@@ -5,6 +5,7 @@ import { FACTIONS, getFaction } from '../src/data/factions';
 import { statusChips } from '../src/ui/bha/roomLogic';
 import { roomOf } from '../src/engine/faction';
 import { wantsLandscapeLock } from '../src/ui/bha/orientation';
+import { bagGroupOf } from '../src/ui/lcdScreens';
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -41,9 +42,9 @@ describe('4 장비 → 가방', () => {
   });
   it('가방 탭 = 장비 · 슬롯 · 타일 · 물건 · 펫 (장비 첫 탭), 물건 분류에 장비 없음', () => {
     const lcd = read('src/ui/lcdScreens.ts');
-    expect(lcd).toMatch(/\{ id: 'gear', label: equipTitle\(faction\)[^\n]*\{ id: 'slots'[^\n]*\{ id: 'tiles'[^\n]*\{ id: 'items'[^\n]*\{ id: 'pet'/);
+    expect(lcd).toMatch(/\{ id: 'gear', label: equipTitle\(faction\)[^\n]*\{ id: 'slots'[^\n]*\{ id: 'tiles'[^\n]*\{ id: 'items'[^\n]*\{ id: 'skin'[^\n]*\{ id: 'pet'/);
     expect(lcd).toMatch(/tab: 'gear', traits/);
-    expect(lcd).toMatch(/c !== 'tile' && c !== 'equipment'/);
+    expect(bagGroupOf({ id: 'g1', category: 'equipment' })).toBeNull(); // C.237: 소모품 탭에 장비 없음
   });
   it('방 [가방] 버튼은 종족 설정 이름, 화면 문구에 보관함 없음', () => {
     expect(read('src/ui/roomView.ts')).toMatch(/label: room\.props\.chest/);

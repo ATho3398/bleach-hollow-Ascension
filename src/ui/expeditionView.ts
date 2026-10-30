@@ -529,7 +529,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       box.dataset.draft = d.picked === null ? 'open' : 'picked';
       const head = el('p', 'bha-sheet__body bha-draft__head');
       // 임시 타일 설명은 여기 한 번만 (C.218)
-      head.append(d.picked === null ? `${d.options.length}장 중 1장 — 이번 원정에만 쓰는 타일` : fixParticles(`${tn(d.options[d.picked]!)}을(를) 골랐다 — 오른쪽 길에 놓거나 손에 둔다`));
+      head.append(d.picked === null ? `${d.options.length}장 중 1장 — 이번 모험에만 쓰는 타일` : fixParticles(`${tn(d.options[d.picked]!)}을(를) 골랐다 — 오른쪽 길에 놓거나 손에 둔다`));
       const row = el('div', 'bha-draft__row');
       d.options.forEach((id, i) => {
         const t = getTile(id);

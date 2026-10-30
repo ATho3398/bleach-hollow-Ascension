@@ -9,8 +9,8 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { marketOf, type FactionConfig, type MarketSpot } from '../engine/faction';
 import type { SaveData } from '../game';
 import { artTierIndexOf } from '../game';
-import { buyTraitItem, equipTrait, traitRows, traitToggleLock, unequipTrait, buyShopItem, buyWandererItem, goldRows, healDaily, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
-import { getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
+import { buyTraitItem, equipTrait, traitRows, traitToggleLock, unequipTrait, buyShopItem, buyWandererItem, goldRows, healDaily, consumableGroupOf, shopDailyLeft, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
+import { BATTLE_ITEMS_NAME, MEDICINE_NAME, foodBlurb, getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
 import { GEAR_KIND_ICONS } from '../data/gear';
 import blurbsJson from '../data/shop/blurbs.json';
 import { h, provisionalTag } from './bha/dom';
@@ -44,7 +44,13 @@ const MEDICINE_ICONS: Record<MedicineCure, string> = { collapsed: 'i-heal', weak
 /** 이 줄이 약 칸인가: 약 3종(GDD 102-4) + 체력 회복 물건 4종(GDD 145장 4 — 하루 판매 수) */
 /** 특성 상점 품목인가 (trait-<id>, GDD 150장 3) */
 const isTrait = (id: string): boolean => id.startsWith('trait-');
-const isMedicine = (id: string): boolean => getGoldItem(id)?.kind === 'medicine' || healDaily(id) !== null;
+/** 품목이 놓이는 상점 탭 (GDD 159장 36): 소모품 분류는 약('medicine') · 전투 소모품('consumable') · 기타(다시 뽑기권)로 나눈다 — 가방 '소모품' 탭과 같은 구분 */
+const shopTabOf = (id: string): ShopTabId => {
+  const cat = itemCategoryOf(id) ?? 'etc';
+  if (cat !== 'consumable') return cat;
+  const g = consumableGroupOf(id);
+  return g === 'medicine' ? 'medicine' : g === 'battle' ? 'consumable' : 'etc';
+};
 
 export interface ShopHandlers {
   /** 구매·착용을 저장한다 */
@@ -79,12 +85,16 @@ const pickBy = (m: ByFaction | undefined, factionId: string): string => m?.[fact
 
 /** 상점 목록 칸 한 줄 (GDD 158장 8, provisional 데이터 blurbs.json): 장비 = "평범한 칼자루"(등급 말 + 종류 이름), 그 밖 = 품목 종류별 짧은 글.
  *  수치(효과·능력치)는 목록에 쓰지 않고 칸을 눌러 뜨는 상세 창에서 본다. 꾸밈은 분류 이름 */
-export function shopBlurb(row: Pick<ShopRow, 'id'> & { grade?: string }, factionId: string): string {
+export function shopBlurb(row: Pick<ShopRow, 'id'> & { grade?: string }, faction: Pick<FactionConfig, 'id' | 'fullnessName'>): string {
+  const factionId = faction.id;
   if (isTrait(row.id)) return pickBy(BLURBS.kind.trait, factionId);
   const gold = getGoldItem(row.id);
   if (gold?.kind === 'gear') return `${BLURBS.gearGrade.normal} ${pickBy(BLURBS.gearNoun[gold.gearKind!], factionId)}`;
-  if (gold) return pickBy(BLURBS.kind[gold.kind], factionId);
+  // 음식은 종류마다 하는 일, 체력 회복 물건은 약 (GDD 159장 36·37)
+  if (gold?.kind === 'food' && gold.food) return foodBlurb(gold.food, faction);
+  if (gold) return pickBy(BLURBS.kind[healDaily(row.id) !== null ? 'heal' : gold.kind], factionId);
   const wi = getWandererItem(row.id);
+  if (wi?.kind === 'food' && wi.food) return foodBlurb(wi.food, faction);
   if (wi?.kind === 'gear') return `${BLURBS.gearGrade[wi.grade] ?? ''} ${pickBy(BLURBS.wandererGear, factionId)}`.trim();
   if (wi) return pickBy(BLURBS.kind[wi.kind], factionId);
   const cos = getCosmetic(row.id);
@@ -185,14 +195,14 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       heading: '상품 구매',
       name: row.name,
       // 상세 = 한 줄 설명 + 수치(효과·능력치) (GDD 158장 8)
-      desc: [shopBlurb(row, faction.id), [row.effect, cos && cos.category !== 'skin' ? `${CATEGORIES.find((c) => c.id === cos.category)?.where ?? ''}`.trim() : ''].filter(Boolean).join(' · ') || (cos?.category === 'skin' ? '입히면 모습이 바뀐다. 사면 카드를 눌러 바로 착용한다.' : '')].filter(Boolean).join('\n'),
+      desc: [shopBlurb(row, faction), [row.effect, cos && cos.category !== 'skin' ? `${CATEGORIES.find((c) => c.id === cos.category)?.where ?? ''}`.trim() : ''].filter(Boolean).join(' · ') || (cos?.category === 'skin' ? '입히면 모습이 바뀐다. 사면 카드를 눌러 바로 착용한다.' : '')].filter(Boolean).join('\n'),
       art: artOf(row, true),
       tag: cos?.category === 'skin' ? '미리보기' : undefined,
       have: row.have ?? (row.owned ? '보유' : undefined),
       qty: { max },
       lock: row.owned ? '이미 가지고 있다' : row.lock,
       actions: [{
-        key: 'buy', label: (q) => (row.price === null ? '—' : `${cur(row.currency)} ${price * q}`), disabled: !row.canBuy || row.owned,
+        key: 'buy', label: (q) => (row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${price * q}`), // GDD 159장 34: 빈 '—' 대신 이유 disabled: !row.canBuy || row.owned,
         onClick: (q) => { close(); buy(row, q); },
       }],
     });
@@ -230,10 +240,13 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const full = !owned && !row.canBuy && /가득/.test(row.lock ?? '');
     const soldOut = !owned && row.lock === SOLD_OUT_TODAY; // 회복 물건 하루 판매 수 (GDD 145장 4)
     // 목록 = 그림·이름·한 줄(+가격), 수치는 상세 창 (GDD 158장 8)
+    // 남은 구매 수가 정해진 품목은 한 줄 = 'n/m개 구매 가능' (GDD 159장 3·33: 떠돌이 상인 칸마다 1개 · 회복 물건 하루 판매 수)
+    const daily = shopDailyLeft(save, row.id);
+    const left = shopUi.tab === 'wanderer' ? `${(row as { sold?: boolean }).sold ? 0 : 1}/1개 구매 가능` : daily !== null ? `오늘 ${daily}/${healDaily(row.id)}개 구매 가능` : null;
     const c = itemCard({
-      id: row.id, name: row.name, detail: shopBlurb(row, faction.id) || undefined,
+      id: row.id, name: row.name, detail: left ?? (shopBlurb(row, faction) || undefined),
       art: artOf(row), badge: owned ? (row.worn ? (isTrait(row.id) ? '끼움' : '착용 중') : '보유') : row.have ?? undefined,
-      foot: owned ? (isTrait(row.id) ? (row.worn ? '빼기' : '끼우기') : row.worn ? '해제' : '착용') : soldOut ? SOLD_OUT_TODAY : full ? '가득' : row.price === null ? '—' : `${cur(row.currency)} ${row.price}`,
+      foot: owned ? (isTrait(row.id) ? (row.worn ? '빼기' : '끼우기') : row.worn ? '해제' : '착용') : soldOut ? SOLD_OUT_TODAY : full ? '가득' : row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${row.price}`,
       state: owned ? (row.worn ? 'worn' : 'owned') : row.canBuy ? undefined : 'locked',
       onClick: () => (owned ? toggleWear(row) : openDetail(row)),
     });
@@ -264,11 +277,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       ? wandererRows(save, faction)
       : shopUi.tab === 'trait'
         ? traitRows(save)
-        : shopUi.tab === 'medicine'
-        ? goldRows(save, faction).filter((r) => isMedicine(r.id))
-        : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => (itemCategoryOf(r.id) ?? 'etc') === shopUi.tab && !isMedicine(r.id));
+        : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => shopTabOf(r.id) === shopUi.tab);
     // 이 상점의 탭만 (GDD 150장 1): 탭이 하나뿐인 상점(장비·스킨·특성)은 탭 줄 없음
-    const cats = kindTabs.map((id) => ({ id, label: id === 'medicine' ? '약' : id === 'trait' ? '특성' : ITEM_CATEGORY_NAMES[id] }));
+    const cats = kindTabs.map((id) => ({ id, label: id === 'medicine' ? MEDICINE_NAME : id === 'trait' ? '특성' : id === 'consumable' ? BATTLE_ITEMS_NAME : ITEM_CATEGORY_NAMES[id] }));
     const tabs = categoryTabs(cats, shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;
       shopUi.last[kind] = id as ShopTabId;
@@ -291,7 +302,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '떠돌이 상인이 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : shopUi.tab === 'trait' ? '지금 파는 특성이 없다.' : '지금 파는 물건이 없다.';
     const grid = itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
-      ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 칸마다 하나씩, 다음 원정에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]
+      ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 다음 모험에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]
       : shopUi.tab === 'trait'
         ? [traitNote()]
         : [];

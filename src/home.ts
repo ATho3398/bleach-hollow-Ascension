@@ -42,7 +42,7 @@ export const SPA_BLOCK_TEXT: Record<'dead' | 'already' | 'full' | 'hungry' | 'ex
   already: '이미 온천에 있다',
   full: '체력과 컨디션이 이미 가득하다',
   hungry: '배가 고파 온천에 못 들어간다',
-  expedition: '원정 중에는 못 들어간다',
+  expedition: '모험 중에는 못 들어간다',
 };
 
 /** 온천에 들어간다. 못 들어가면 이유 키, 들어가면 null */

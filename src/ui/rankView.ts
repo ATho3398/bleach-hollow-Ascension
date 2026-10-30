@@ -97,7 +97,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
     right.push(notice('good', `${rankLabel(faction, 1)} — 더 오를 곳이 없다.`, { icon: 'i-flag-win', title: '정상' }));
   } else {
     const holder = getHolder(c.opponentId!);
-    right.push(notice('warn', `${shownName(pickFaction(holder.name, faction.id))}에게 졌다. 원정을 한 번 다녀온 뒤 다시 도전할 수 있다.`, { icon: 'i-timer', title: '재도전 대기' }));
+    right.push(notice('warn', `${shownName(pickFaction(holder.name, faction.id))}에게 졌다. 모험을 한 번 다녀온 뒤 다시 도전할 수 있다.`, { icon: 'i-timer', title: '재도전 대기' }));
   }
   if (r.history.everRanked) right.push(el('p', 'bha-faint', `최고 기록 ${rankLabel(faction, r.history.best)}`));
 
@@ -128,7 +128,7 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
     { label: `${labels.chain}3 발동`, icon: 'i-chain-3', value: `${s.chain3Count}회` },
     { label: '강공격 막기', icon: 'i-guard', value: `${s.guardSuccesses}회` },
   ];
-  if (!won) rows.push({ label: '재도전', icon: 'i-loop', value: '원정을 한 번 다녀온 뒤' });
+  if (!won) rows.push({ label: '재도전', icon: 'i-loop', value: '모험을 한 번 다녀온 뒤' });
   const dock = el('div', 'bha-dock');
   dock.append(asBack(button({ label: toward(faction.rankBattleName), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);

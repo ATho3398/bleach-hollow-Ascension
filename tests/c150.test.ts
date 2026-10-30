@@ -109,7 +109,7 @@ describe('91장 강화·장착·판매 (보관함)', () => {
     expect(s.shared.tradeCoins).toBe(GX.sellGold.normal);
     s.activeExpedition = {} as SaveData['activeExpedition'];
     expect(equipGearItem(s, b.uid, 'acc1')).toBeNull();
-    expect(inventoryOf(s, H).find((e) => e.id === c.uid)!.lock).toBe('원정 중에는 바꿀 수 없다');
+    expect(inventoryOf(s, H).find((e) => e.id === c.uid)!.lock).toBe('모험 중에는 바꿀 수 없다');
   });
 
   it('보관함 장비 탭: 낀 것 먼저 · 이름 "등급 칸이름 +n" · 등급·낀 칸 정보', () => {
