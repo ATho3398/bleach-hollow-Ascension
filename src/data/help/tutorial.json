@@ -107,7 +107,7 @@
         "@.bha-room__hp"
       ],
       "title": "빈사",
-      "body": "빈사는 치명상을 입어 체력이 {dyingPct}% 위로 차지 않는 상태다.\n그대로 두면 시간이 지나 사망하고, 치료제로만 풀린다."
+      "body": "빈사는 치명상을 입어 체력이 {dyingPct}% 위로 차지 않는 상태다.\n그대로 두면 시간이 지나 사망하고, 구급상자로만 풀린다."
     },
     {
       "id": "to-bag",
@@ -115,27 +115,27 @@
         "@.bha-prop--chest"
       ],
       "title": "빈사부터 치료",
-      "body": "치료제와 체력 포션을 1개씩 {chestName}에 넣었다.\n{chestName}을(를) 연다."
+      "body": "구급상자와 체력 포션을 1개씩 {chestName}에 넣었다.\n{chestName}을(를) 연다."
     },
     {
       "id": "cure",
       "targets": [
         "@[data-item=\"med-cure\"]"
       ],
-      "title": "치료제",
-      "body": "치료제를 눌러 [사용]하면 빈사가 풀린다.\n치료제는 상점에서 산다.",
+      "title": "구급상자",
+      "body": "구급상자를 눌러 [사용]하면 빈사가 풀린다.\n구급상자는 상점에서 산다.",
       "stages": [
         {
           "targets": [
             "@[data-item=\"med-cure\"]"
           ],
-          "body": "빈사는 치료제로 푼다.\n치료제를 누른다."
+          "body": "빈사는 구급상자로 푼다.\n구급상자를 누른다."
         },
         {
           "targets": [
             "@.bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]"
           ],
-          "body": "[사용]을 누른다.\n치료제는 상점에서 산다."
+          "body": "[사용]을 누른다.\n구급상자는 상점에서 산다."
         }
       ],
       "done": "빈사가 풀렸다.\n[다음]을 누른다."

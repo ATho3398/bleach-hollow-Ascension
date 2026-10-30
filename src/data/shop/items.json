@@ -47,7 +47,7 @@
       "id": "med-cure",
       "kind": "medicine",
       "category": "consumable",
-      "name": "치료제",
+      "name": "구급상자",
       "cures": "collapsed"
     },
     {

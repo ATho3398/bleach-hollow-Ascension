@@ -154,7 +154,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine('버티는 시간', `${CP.dyingBaseHours}시간 + 교감 × ${CP.dyingHoursPerBond}시간`),
           '버티는 시간이 다 되거나 모험에서 지면 사망한다',
         ],
-        [`상점 약 칸의 ${medicineName('collapsed')}을(를) 먹이면 풀린다`],
+        [`상점 약 칸의 ${medicineName('collapsed')}을(를) 쓰면 풀린다`],
       );
     case 'dead':
       return ailmentDoc('오래 돌보지 않아 숨이 끊어졌다', [], ['방에서 [부활]을 하면 다시 시작한다']);

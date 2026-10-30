@@ -9,7 +9,7 @@ import type { FactionConfig } from '../engine/faction';
 import { fullnessOfNest, previewHomeHp, type SpaEnd } from '../engine/nest';
 import { artSkinOf, type SaveData } from '../game';
 import { homeMaxHp } from '../home';
-import { beginAction } from './bha/actionFx';
+import { beginAction, beginSceneMove } from './bha/actionFx';
 import { hpNumbers } from './bha/battle';
 import { button, el, icon, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
@@ -124,6 +124,8 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   };
   actor.style.setProperty('--bha-spa-t', '0ms'); // 자리는 프레임마다 직접 옮긴다 (CSS 전환 없음)
   let pathRaf = 0;
+  /** 들고 나는 연출이 끝나면 부른다 — 그동안 튜토리얼 안내 창은 안 뜬다 (GDD 143장 1) */
+  let endMove: () => void = () => {};
   /** from → to 자리까지 경로를 따라 쭉 (평지 = 걷기, 계단 = 단 사이 대각선, 멈칫 없음 — GDD 137장 2). 끝나면 done */
   const walkPath = (from: number, to: number, done: () => void) => {
     const dir = to > from ? 1 : -1;
@@ -136,7 +138,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     actor.classList.add('is-walking');
     const t0 = performance.now();
     const frame = (now: number) => {
-      if (!actor.isConnected) return;
+      if (!actor.isConnected) return endMove();
       let t = now - t0;
       for (const sg of segs) {
         if (t <= sg.ms) {
@@ -162,7 +164,9 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   let seated = false;
   const onSeated: Array<() => void> = [];
   goTo(0);
+  endMove = beginSceneMove();
   requestAnimationFrame(() => walkPath(0, SEAT, () => {
+    endMove();
     actor.classList.remove('is-entering', 'is-walking');
     actor.classList.add('is-seated');
     seated = true;
@@ -200,7 +204,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     groups: [
       { title: '쉬는 동안', lines: [`1초에 체력 +${Math.round(SP.hpPerSecond * 100)}% · 컨디션 +${SP.conditionPerSecond} · ${faction.fullnessName} −${SP.fullnessPerSecond}`, `체력 1% → 가득 약 ${Math.ceil(0.99 / SP.hpPerSecond)}초`, '앱을 꺼도 계속 쉰다'] },
       { title: '저절로 나올 때', lines: [fixParticles(`체력과 컨디션이 둘 다 다 차거나 ${faction.fullnessName}이(가) 0 이 되면 방으로 돌아간다`)] },
-      ...(n.collapsed ? [{ title: '빈사', lines: [`체력은 ${dyingPct}% 까지만 찬다`, '치료제로 풀어야 더 찬다'] }] : []),
+      ...(n.collapsed ? [{ title: '빈사', lines: [`체력은 ${dyingPct}% 까지만 찬다`, '구급상자로 풀어야 더 찬다'] }] : []),
     ],
   }));
   const hud = el('div', 'bha-spa__hud');
@@ -216,6 +220,8 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     if (exiting) return true;
     exiting = true;
     cancelAnimationFrame(pathRaf);
+    endMove(); // 들어오던 중이면 그 연출은 여기서 끝
+    endMove = beginSceneMove();
     const end = beginAction();
     actor.classList.remove('is-seated', 'is-entering');
     actor.classList.add('is-leaving'); // 오른쪽(들어온 쪽)을 보고 나간다
@@ -225,6 +231,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     walkPath(from, 0, () => {
       end();
       done();
+      endMove(); // 방으로 넘어간 뒤 — 다음 안내 창은 방 위에 바로 고정해서 뜬다
     });
     return true;
   };

@@ -245,7 +245,7 @@ export function startApp(host: HTMLElement): void {
   /**
    * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206): 카드 9장을 순서대로. 건너뛰기 없음.
    * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
-   * 빈사 설명 → 가방 열기(치료제·체력 포션 지급) → 치료제 [사용] → 포션 [사용](50%) → 상인 안내 → 방 → (밖으로 → 시장 →) 온천 들어가기(80%) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
+   * 빈사 설명 → 가방 열기(구급상자·체력 포션 지급) → 구급상자 [사용] → 포션 [사용](50%) → 상인 안내 → 방 → (밖으로 → 시장 →) 온천 들어가기(80%) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -274,9 +274,9 @@ export function startApp(host: HTMLElement): void {
     const onRoomRender = () => { if (nav.top?.id === 'room') nav.top.render(); }; // 지급한 먹이 개수가 독에 보이게
     const EPS = 1e-6;
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
-    // 실제 조작: 가방 열기 → 치료제·체력 포션 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
+    // 실제 조작: 가방 열기 → 구급상자·체력 포션 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
     const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'; // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
-    // 썼으면 물건 창을 닫는다 (C.214): 시작 치료제 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
+    // 썼으면 물건 창을 닫는다 (C.214): 시작 구급상자 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
     const closeItemWhen = (done: boolean): boolean => {
       if (done) document.querySelector<HTMLButtonElement>('.bha-itemdialog .bha-itemmodal__close')?.click();
       return done;
@@ -340,7 +340,7 @@ export function startApp(host: HTMLElement): void {
       }, ms);
     };
     const ids = RECOVER_SCENES.map((x) => x.id);
-    // 이어 가기: 빈사 = 처음, 포션 = 가방 카드(치료제는 건너뜀), 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
+    // 이어 가기: 빈사 = 처음, 포션 = 가방 카드(구급상자는 건너뜀), 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
     const first = start === 'dying' ? 0 : start === 'potion' ? ids.indexOf('to-bag') : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
     const show = (i: number): void => {
       const scene = RECOVER_SCENES[i];

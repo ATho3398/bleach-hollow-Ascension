@@ -200,7 +200,7 @@ describe('123장 4 홈 회복', () => {
     n.spa = null;
     expect(enterSpa(n, T0)).toBe('dead');
   });
-  it('빈사: 온천·먹이·포션 모두 10% 상한, 치료제로 풀린 뒤에는 그 값에서 다시 찬다', () => {
+  it('빈사: 온천·먹이·포션 모두 10% 상한, 구급상자로 풀린 뒤에는 그 값에서 다시 찬다', () => {
     const s = newSaveData('hollow', T0);
     collapseNest(s.nest, T0);
     s.nest.condition = 100; // 컨디션 가득 — 체력 상한에서 나오는지만 본다 (GDD 135장 2)

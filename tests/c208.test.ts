@@ -18,7 +18,7 @@ describe('132장 1 카드가 누를 때마다 다음 대상으로', () => {
     expect(lastShownStage([false, false, true, false])).toBe(2);
     expect(lastShownStage([false, false])).toBe(0);
   });
-  it('여러 번 누르는 회복 안내 카드 = 단계가 있다 (치료제·포션: 카드 → [사용], 온천: 밖으로 → 시장 → 온천 → 쉬는 중, 먹이: [먹이] → 고르기)', () => {
+  it('여러 번 누르는 회복 안내 카드 = 단계가 있다 (구급상자·포션: 카드 → [사용], 온천: 밖으로 → 시장 → 온천 → 쉬는 중, 먹이: [먹이] → 고르기)', () => {
     const by = Object.fromEntries(RECOVER_SCENES.map((s) => [s.id, s]));
     expect(by.cure!.stages!.map((s) => s.targets[0])).toEqual(['@[data-item="med-cure"]', '@.bha-itemdialog[data-item-dialog="med-cure"] [data-act="use"]']);
     expect(by.potion!.stages![1]!.targets[0]).toBe('@.bha-itemdialog[data-item-dialog="w-hp-potion"] [data-act="use"]');

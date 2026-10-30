@@ -33,7 +33,7 @@ const shopUi: { tab: ShopTab; skinSub: SkinSubTab } = { tab: 'food', skinSub: 'c
 const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'reroll', 'trainingTicket']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
 const QTY_CAP = 99;
-/** 약 아이콘 (GDD 102-4, 있는 아이콘 재사용): 치료제 = 회복 · 링거 = 배부름 · 에너지 드링크 = 컨디션 */
+/** 약 아이콘 (GDD 102-4, 있는 아이콘 재사용): 구급상자 = 회복 · 링거 = 배부름 · 에너지 드링크 = 컨디션 */
 const MEDICINE_ICONS: Record<MedicineCure, string> = { collapsed: 'i-heal', weak: 'i-hunger', tired: 'i-cond' };
 /** 이 줄이 약인가 */
 const isMedicine = (id: string): boolean => getGoldItem(id)?.kind === 'medicine';

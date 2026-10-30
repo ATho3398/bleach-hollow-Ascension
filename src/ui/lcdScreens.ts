@@ -235,7 +235,7 @@ type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'pet';
 const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'gear', traits: {}, synth: false };
 
 /** 가방을 장비 탭으로 연다 (상태 화면 장비 바로가기, GDD 109장 4번) */
-/** 가방을 물건 탭의 소모품 분류로 연다 (튜토리얼 회복 안내 — 치료제·체력 포션, GDD 123장 5 수정) */
+/** 가방을 물건 탭의 소모품 분류로 연다 (튜토리얼 회복 안내 — 구급상자·체력 포션, GDD 123장 5 수정) */
 export function openChestAtConsumables(): void {
   chestUi.tab = 'items';
   itemsUi.cat = 'consumable';
@@ -497,7 +497,7 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
 
 /**
  * 아이템 쓰기 연출 (GDD 132장 3, C.208): 캐릭터가 쓰는 모션 + 체력(또는 배부름) 막대가 약 1초에 걸쳐 차오른다. 값은 이미 저장됐다.
- * 막대가 바뀌지 않는 물건(치료제 등)은 체력 막대를 그대로 보여 준다
+ * 막대가 바뀌지 않는 물건(구급상자 등)은 체력 막대를 그대로 보여 준다
  */
 function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemArt: HTMLElement, hpBefore: number, fullBefore: number): void {
   const maxHp = homeMaxHp(save);

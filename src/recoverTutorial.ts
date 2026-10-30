@@ -1,7 +1,7 @@
 // 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199): 세이브 쪽 순수 함수 — 화면은 ui/app.ts runRecover.
-// 시작(빈사로 복귀 + 안내 차례)은 recordExpedition(game.ts). 순서 고정: ① 빈사로 복귀(설명) ② 가방 — 치료제·체력 포션 지급 ③ 치료제 → 빈사 해제 ④ 체력 포션 → 체력 50% ⑤ 온천 → 쉬기(체력 ↑·배부름 ↓) ⑥ 먹이 1개 → 배부름·체력 가득 ⑦ 기존 '다음 할 일' 안내.
+// 시작(빈사로 복귀 + 안내 차례)은 recordExpedition(game.ts). 순서 고정: ① 빈사로 복귀(설명) ② 가방 — 구급상자·체력 포션 지급 ③ 구급상자 → 빈사 해제 ④ 체력 포션 → 체력 50% ⑤ 온천 → 쉬기(체력 ↑·배부름 ↓) ⑥ 먹이 1개 → 배부름·체력 가득 ⑦ 기존 '다음 할 일' 안내.
 // 진행 상태는 저장하지 않고 세이브 값에서 다시 읽는다(앱을 껐다 켜도 이어짐): 빈사 → ①, 체력 < potionTo → ④, 체력 < spaTo → ⑤, 아니면 ⑥.
-// 홈 체력·온천·포션은 C.198 API(src/home.ts), 빈사·치료제는 102장 엔진(cureNest). 종족 분기 없음.
+// 홈 체력·온천·포션은 C.198 API(src/home.ts), 빈사·구급상자는 102장 엔진(cureNest). 종족 분기 없음.
 import { BALANCE } from './config/balance';
 import type { FoodId } from './engine/faction';
 import { guidePending, markGuideDone, queueGuide } from './engine/tutorial';
@@ -11,7 +11,7 @@ import { storeConsumable } from './shop';
 
 const TR = BALANCE.provisional.tutorialRecover;
 const SPA = BALANCE.provisional.nest.homeHp.spa;
-/** 빈사 치료제 품목 id (GDD 102-4) */
+/** 빈사 구급상자 품목 id (GDD 102-4) */
 export const CURE_ITEM_ID = 'med-cure';
 const EPS = 1e-6;
 
@@ -31,7 +31,7 @@ export function recoverStep(save: SaveData): RecoverStep | null {
   return 'feed';
 }
 
-/** ② 가방: 안내용 치료제 1개는 시작 치료제(GDD 134장 1)와 따로 한 번만 넣는다(빈사 중에만, 다 썼으면 다시) · 체력 포션은 없으면 1개 */
+/** ② 가방: 안내용 구급상자 1개는 시작 구급상자(GDD 134장 1)와 따로 한 번만 넣는다(빈사 중에만, 다 썼으면 다시) · 체력 포션은 없으면 1개 */
 export function recoverGrantBag(save: SaveData): void {
   const cures = save.shared.items[CURE_ITEM_ID] ?? 0;
   if (save.nest.collapsed && (save.help.guides['recover-cure'] !== 'done' || cures <= 0)) {
@@ -41,7 +41,7 @@ export function recoverGrantBag(save: SaveData): void {
   if ((save.shared.items[HP_POTION_ID] ?? 0) <= 0) grantHpPotion(save, 1);
 }
 
-/** ③ 치료제 → 빈사 해제 (치료제 1개 사용) */
+/** ③ 구급상자 → 빈사 해제 (구급상자 1개 사용) */
 export function recoverCure(save: SaveData, nowMs: number): boolean {
   recoverGrantBag(save);
   if (!cureNest(save, 'collapsed', nowMs)) return false;

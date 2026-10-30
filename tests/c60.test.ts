@@ -84,7 +84,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
   });
   it('정화제·각성제 (C.140, GDD 86장 4번): 사면 보관함에 쌓이고(상한 9) 보관함에서 쓴다 — 리스크 −30(0 아래로 안 감)·컨디션 +30(100 위로 안 감), 이미 0/가득·원정 중이면 못 쓴다', () => {
     const s = rich();
-    s.shared.items = {}; // 시작 치료제(GDD 134장 1, C.211)는 이 검사 밖
+    s.shared.items = {}; // 시작 구급상자(GDD 134장 1, C.211)는 이 검사 밖
     s.nest.risk = 20;
     s.nest.condition = 90;
     expect(buyShopItem(s, H, 'calm').ok).toBe(true);

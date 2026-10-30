@@ -24,6 +24,25 @@ export function beginAction(): () => void {
   };
 }
 
+let moving = 0;
+/** 장면 이동 연출(온천 계단 들고 나기·월드맵 걷기 → 페이드)이 도는 중이다 — 튜토리얼 안내 창은 끝난 뒤에 뜬다 (GDD 143장 1) */
+export function sceneMoving(): boolean {
+  return moving > 0;
+}
+/** 장면 이동 연출 시작. 돌려받은 함수를 부르면 끝 (여러 번 불러도 한 번만, 못 불러도 maxMs 뒤 저절로 끝 — 안내 창이 영영 안 뜨지 않게) */
+export function beginSceneMove(maxMs = 6000): () => void {
+  moving++;
+  let done = false;
+  const end = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(guard);
+    moving = Math.max(0, moving - 1);
+  };
+  const guard = setTimeout(end, maxMs);
+  return end;
+}
+
 /** 0→1 로 ms 동안 step(t) 를 부르고 끝나면 onEnd. 화면 연출이 꺼진 환경(rAF 없음)에서는 바로 끝 */
 export function tween(ms: number, step: (t: number) => void, onEnd?: () => void): () => void {
   const end = beginAction();

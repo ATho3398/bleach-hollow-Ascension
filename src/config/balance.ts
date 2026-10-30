@@ -519,9 +519,9 @@ export const BALANCE = {
     tutorialRun: { cell: 3, enemyHpMult: 0.6, enemyAttackMult: 0.5, statEv: 3 },
     /** 첫 원정 첫 전투 각본 (GDD 123장 5, C.199, provisional): 자동 공격 autoHits 대 → 강공격(막기) → autoHits2 대 → 못 막는 강공격(체력 leaveHpFraction 남김) → hurtHoldSeconds 동안 맞은 모습을 보여 준 뒤 설명 → 블록 1개 → afterSkillSeconds(누름·공격·적 피해 흐름) 뒤 같은 블록 chainLength 개(spawnGapSeconds 간격) → 쌓인 모습 stackHoldSeconds 뒤 → 체인으로 처치 → killSlowSeconds 슬로우·적 사라짐 뒤 흡수 화면(GDD 129장 3). 강공격 예고 castSeconds 초 */
     tutorialScript: { autoHits: 3, autoHits2: 2, castSeconds: 1.5, leaveHpFraction: 0.12, afterSkillSeconds: 2, spawnGapSeconds: 0.35, chainLength: 3, hurtHoldSeconds: 1, stackHoldSeconds: 1, killSlowSeconds: 1.6 },
-    /** 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199, provisional): 빈사로 복귀 → 치료제 → 체력 포션은 potionTo 까지 → 온천에서 spaTo 까지(그만큼 온천 시간을 바로 흘림, 배부름 줄어듦) → 먹이 food 1개 = 배부름·체력 가득 */
+    /** 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199, provisional): 빈사로 복귀 → 구급상자 → 체력 포션은 potionTo 까지 → 온천에서 spaTo 까지(그만큼 온천 시간을 바로 흘림, 배부름 줄어듦) → 먹이 food 1개 = 배부름·체력 가득 */
     tutorialRecover: { potionTo: 0.5, spaTo: 0.8, food: 'basic' as const },
-    /** 새 세이브 가방 시작 소모품 (GDD 134장 1, C.211): 빈사 치료제 3개. 튜토리얼 회복 안내 치료제는 따로 1개(recoverTutorial) — 안내가 끝나면 이 수만큼 남는다. 진행 중 세이브엔 소급 안 함 */
+    /** 새 세이브 가방 시작 소모품 (GDD 134장 1, C.211): 빈사 구급상자 3개. 튜토리얼 회복 안내 구급상자는 따로 1개(recoverTutorial) — 안내가 끝나면 이 수만큼 남는다. 진행 중 세이브엔 소급 안 함 */
     startItems: { 'med-cure': 3 } as Record<string, number>,
     /** 환경 타일 프리셋: 전투 조건 변경. 이름은 종족 스킨, 효과 종류는 엔진 (GDD 6장) */
     tiles: {
@@ -628,7 +628,7 @@ export const BALANCE = {
        *  stabilityPerHour: 꺼 둔 동안만 영압 안정도 시간당 감소, 배부름 또는 컨디션이 doubleBelow 이하면 ×2.
        *  weakFullness / tiredCondition: 그 값 이하가 되는 순간 쇠약 / 피곤 — 수치를 넘긴 뒤 원정을 한 번 끝내거나 약으로만 풀린다.
        *  weakMaxHpCut: 쇠약 원정 전투 최대 체력 −20% (대기 보상 ×idle.weakenedRate). tiredSpawnSlow: 피곤 블록 생성 간격 +15%.
-       *  collapseHours: 이만큼 미접속이면 빈사(옛 쓰러짐). 빈사가 된 순간부터 실제 시간 dyingBaseHours + 교감 × dyingHoursPerBond(교감 100 = 24시간) 안에 치료제를 안 먹이면 사망 (GDD 102장 수정 v5.228).
+       *  collapseHours: 이만큼 미접속이면 빈사(옛 쓰러짐). 빈사가 된 순간부터 실제 시간 dyingBaseHours + 교감 × dyingHoursPerBond(교감 100 = 24시간) 안에 구급상자를 안 쓰면 사망 (GDD 102장 수정 v5.228).
        *  dying: 빈사 모험 — 최대 체력 × hpFraction(그 위로 회복 안 됨), 공격 속도·블록 생성 속도 × speedMult, 보상(골드·먹이·노력치) × rewardMult, 빈사에서 지면 사망.
        *  reviveEvLoss: 부활 노력치 손실 비율 — 교감 문턱별(높은 것부터) 줄어듦 */
       care: {
@@ -659,7 +659,7 @@ export const BALANCE = {
         idleBonusMax: 0.2,
         stages: [30, 70] as [number, number],
       },
-      /** 약 3종 값 (GDD 102-4, provisional): 보통 먹이(shop.goldPrices food-basic 35) 기준 치료제 약 6배, 링거·에너지 드링크 약 3배 */
+      /** 약 3종 값 (GDD 102-4, provisional): 보통 먹이(shop.goldPrices food-basic 35) 기준 구급상자 약 6배, 링거·에너지 드링크 약 3배 */
       medicinePrices: { 'med-cure': 210, 'med-iv': 105, 'med-energy': 105 } as Record<string, number>,
       feedHunger: 3,
       /** 먹이 5종 (GDD 18-2, 임시 provisional): 허기 감소·컨디션 변화. basic 은 예전 단일 먹이(feedHunger)와 같다.

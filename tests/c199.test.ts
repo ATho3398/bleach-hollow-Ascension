@@ -147,13 +147,13 @@ describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () =>
     return save;
   };
   for (const f of ['hollow', 'shinigami']) {
-    it(`${f}: 빈사 복귀 → 치료제 → 포션 50% → 온천 → 먹이 = 배부름·체력 100% → '다음 할 일' 차례`, () => {
+    it(`${f}: 빈사 복귀 → 구급상자 → 포션 50% → 온천 → 먹이 = 배부름·체력 100% → '다음 할 일' 차례`, () => {
       const s = afterTutorial(f);
       expect(s.nest.collapsed).toBe(true);
       expect(recoverStep(s)).toBe('dying');
       expect(guidePending(s.help, 'first-run-room')).toBe(false);
       expect(s.runLog.vitals?.some((v) => v.kind === 'collapse' && v.cause === 'tutorial')).toBe(true);
-      const start = BALANCE.provisional.startItems[CURE_ITEM_ID]!; // 시작 치료제 (GDD 134장 1, C.211) + 안내용 1개 따로
+      const start = BALANCE.provisional.startItems[CURE_ITEM_ID]!; // 시작 구급상자 (GDD 134장 1, C.211) + 안내용 1개 따로
       recoverGrantBag(s);
       recoverGrantBag(s); // 다시 열어도 한 번만
       expect(s.shared.items[CURE_ITEM_ID]).toBe(start + 1);

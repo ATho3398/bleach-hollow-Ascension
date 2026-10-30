@@ -52,7 +52,7 @@ describe('회복 안내: 카드 사이 450ms 틈에도 누름을 막는다 (C.21
   });
 });
 
-describe('회복 안내: 치료제·포션을 쓰면 물건 창을 닫는다 (C.214 — 시작 치료제 3개라 창이 남아 기기 초점이 갇혔다)', () => {
+describe('회복 안내: 구급상자·포션을 쓰면 물건 창을 닫는다 (C.214 — 시작 구급상자 3개라 창이 남아 기기 초점이 갇혔다)', () => {
   it('cure·potion act 완료가 closeItemWhen 을 거친다', () => {
     const src = readFileSync('src/ui/app.ts', 'utf8');
     expect(src).toContain("done: () => closeItemWhen(!s.nest.collapsed)");

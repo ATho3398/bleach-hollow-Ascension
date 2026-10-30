@@ -20,7 +20,7 @@ export interface NestState {
   weakened: boolean;
   /** 피곤 (GDD 102-2): 컨디션이 care.tiredCondition 이하가 되는 순간. 컨디션을 넘긴 뒤 원정 한 번 또는 에너지 드링크 */
   tired: boolean;
-  /** 빈사 (GDD 102-3, v5.228 수정 — 옛 쓰러짐): collapseHours 미접속 또는 원정 패배. 치료제로만 풀림. 모험은 되지만 체력 10%·속도·보상 절반, 지면 사망 */
+  /** 빈사 (GDD 102-3, v5.228 수정 — 옛 쓰러짐): collapseHours 미접속 또는 원정 패배. 구급상자로만 풀림. 모험은 되지만 체력 10%·속도·보상 절반, 지면 사망 */
   collapsed: boolean;
   /** 빈사가 된 시각(ms). 여기부터 실제 시간 deathHoursOf(교감) 이 지나면 사망. 빈사가 아니면 0 */
   collapsedAt: number;

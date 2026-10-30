@@ -7,6 +7,7 @@
 import { artUrls } from '../data/art/manifest';
 import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace } from '../engine/faction';
 import { artSkinOf, type SaveData } from '../game';
+import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
@@ -149,6 +150,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   let walking = false;
   let raf = 0;
   let veil: HTMLElement | null = null;
+  /** 걷기 → 페이드인 끝까지 = 장면 이동 연출 (튜토리얼 안내 창은 끝난 뒤에 — GDD 143장 1) */
+  let endMove: () => void = () => {};
   const stopWalk = () => {
     cancelAnimationFrame(raf);
     walking = false;
@@ -162,6 +165,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     place();
     veil?.remove();
     veil = null;
+    endMove();
   }
   function arrive(p: WorldPlace): void {
     stopWalk();
@@ -173,10 +177,14 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       charEntry.foot = standFoot(wm.layout[at]);
       place();
     }
-    if (!v) return;
+    const end = endMove;
+    if (!v) return end();
     requestAnimationFrame(() => {
       v.classList.remove('is-on');
-      window.setTimeout(() => v.remove(), WORLD_FADE_MS + 40);
+      window.setTimeout(() => {
+        v.remove();
+        end();
+      }, WORLD_FADE_MS + 40);
     });
   }
   function walkTo(p: WorldPlace): void {
@@ -184,6 +192,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     const to = standFoot(wm.layout[p]);
     const ms = worldWalkMs(from, to);
     walking = true;
+    endMove = beginSceneMove();
     main.classList.add('is-walking');
     char.classList.toggle('is-walk-right', to.x > from.x); // 그림은 왼쪽을 본다 — 오른쪽으로 가면 뒤집는다
     if (ms > 0) char.classList.add('is-walking');
@@ -198,7 +207,10 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     };
     const t0 = performance.now();
     const frame = (now: number) => {
-      if (!main.isConnected) return stopWalk();
+      if (!main.isConnected) {
+        endMove();
+        return stopWalk();
+      }
       const k = ms > 0 ? Math.min(1, (now - t0) / ms) : 1;
       charEntry.foot = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
       place();

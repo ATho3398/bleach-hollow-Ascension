@@ -35,7 +35,7 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
     return save;
   };
   for (const f of ['hollow', 'shinigami']) {
-    it(`${f}: 가방에서 치료제·포션을 원래대로 쓰면 빈사 풀림·체력 각본 값, 온천 들어가면 80%, 먹이 준 뒤 가득 · '다음 할 일'`, () => {
+    it(`${f}: 가방에서 구급상자·포션을 원래대로 쓰면 빈사 풀림·체력 각본 값, 온천 들어가면 80%, 먹이 준 뒤 가득 · '다음 할 일'`, () => {
       const s = afterTutorial(f);
       const fc = getFaction(f);
       expect(recoverStep(s)).toBe('dying');
@@ -70,7 +70,7 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
   });
   it('app: 행동을 대신 해 주는 카드 버튼 없음 — 모든 카드 버튼 = [다음], 행동 카드는 act(대상·완료)', () => {
     const app = read('src/ui/app.ts');
-    for (const old of ["label: '치료제 쓰기'", "label: '체력 포션 마시기'", "label: '먹이 주기'", "label: '쉬기'", '열기`, act:']) expect(app).not.toContain(old);
+    for (const old of ["label: '구급상자 쓰기'", "label: '체력 포션 마시기'", "label: '먹이 주기'", "label: '쉬기'", '열기`, act:']) expect(app).not.toContain(old);
     expect(app).toContain("finishLabel: '다음', vars,");
     expect(app).toContain("act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' }");
     expect(app).toContain(`act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }`); // C.214: 쓰면 물건 창 닫음

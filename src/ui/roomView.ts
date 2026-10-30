@@ -112,7 +112,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   } else if (n.collapsed) {
     const shopBtn = button({ label: marketOf(faction).props.shop, icon: 'i-rare', size: 'small', variant: 'primary', onClick: hd.onShop });
     const chestBtn = button({ label: room.props.chest, icon: 'i-deck', size: 'small', onClick: hd.onChest });
-    const box = notice('danger', CARE_STATUS_HINTS.collapsed, { title: `${CARE_STATUS_NAMES.collapsed} — 치료제가 필요하다 · 남은 시간 `, icon: 'i-broken' });
+    const box = notice('danger', CARE_STATUS_HINTS.collapsed, { title: `${CARE_STATUS_NAMES.collapsed} — 구급상자가 필요하다 · 남은 시간 `, icon: 'i-broken' });
     dyingClockEl = el('b', 'bha-num', dyingClock(dyingLeftMs(n, Date.now()) ?? 0));
     box.querySelector('.bha-notice__title')?.append(dyingClockEl);
     hud.append(box, shopBtn, chestBtn);
