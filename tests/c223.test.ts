@@ -72,8 +72,8 @@ describe('144장 4·145장 3: 튜토리얼 회복 안내 · 시작 가방', () =
   it('새 세이브 가방 = 구급상자 3 + 반창고 3·붕대 2·회복약 1', () => {
     expect(newSaveData('hollow', T0).shared.items).toEqual({ 'med-cure': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 });
   });
-  it('첫 원정 회복 물건 안내 한 줄(노란 알림)', () => {
-    expect(read('src/ui/app.ts')).toContain("title: '모험·전투 중에 체력이 모자라면 회복 물건을 쓴다'");
+  it('첫 모험 회복 물건 안내 노란 알림은 161장에서 뺐다 (소모품은 알리지 않는다)', () => {
+    expect(read('src/ui/app.ts')).not.toContain("title: '모험·전투 중에 체력이 모자라면 회복 물건을 쓴다'");
   });
 });
 

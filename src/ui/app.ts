@@ -93,6 +93,8 @@ import { showGuide, tutorialAbsorbView, tutorialWoundView } from './guideView';
 import { heroArtOf } from './bha/battle';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
+import { gearToastWanted } from '../config/notify';
+import { isGearGrade } from '../data/gear';
 import { carriedPet } from '../engine/pet';
 import { applyGearToParams, gearCarry } from '../engine/gear';
 import { battleItemEffectOf, consumableName, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, petNoticeOf, spendBattleItem, useHealItemOnWalk } from '../inventory';
@@ -1447,8 +1449,7 @@ export function startApp(host: HTMLElement): void {
         signalHold('hold');
         showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 모험 멈춤', onDone: () => {
           signalHold('release');
-          // 회복 물건 안내 한 줄 (GDD 144장 4·145장 3): 시작 가방에 넣어 둔 회복 물건 — 노란 알림(맨 위)
-          showToast({ eyebrow: '회복 물건', title: '모험·전투 중에 체력이 모자라면 회복 물건을 쓴다', meta: '걷기 중 [가방] · 전투 [소모품]' }, 0, 4200);
+          // 회복 물건 안내 노란 알림은 뺐다 (GDD 161장 1번: 소모품은 알리지 않는다). 쓰는 법은 모험 안내·도움말에 있다
         } });
       },
     });
@@ -1578,8 +1579,8 @@ export function startApp(host: HTMLElement): void {
       onEnd: (done) => {
         const finds = exp.gearFinds?.length ?? 0;
         finishBattle(exp, done);
-        // 장비 드롭 알림 (GDD 91장 2번): 이 전투에서 나온 장비 — 보관함에는 귀환 때 들어간다
-        for (const f of exp.gearFinds?.slice(finds) ?? []) showToast({ eyebrow: f.from === 'boss' ? '보스 드롭' : f.from === 'elite' ? '강적 드롭' : '장비 드롭', title: `장비 발견: ${gearDropText(f.roll, faction)}`, meta: `★${f.roll.star} · 귀환하면 가방 장비 탭으로` }, 0, 3600);
+        // 장비 드롭 알림 (GDD 91장 2번): 이 전투에서 나온 장비 — 보관함에는 귀환 때 들어간다. 161장: 알림 최소 등급(NOTIFY) 이상만
+        for (const f of (exp.gearFinds?.slice(finds) ?? []).filter((f) => gearToastWanted(f.roll.grade))) showToast({ eyebrow: f.from === 'boss' ? '보스 드롭' : f.from === 'elite' ? '강적 드롭' : '장비 드롭', title: `장비 발견: ${gearDropText(f.roll, faction)}`, meta: `★${f.roll.star} · 귀환하면 가방 장비 탭으로` }, 0, 3600);
         saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
         afterBattle(faction, exp);
       },
@@ -1684,7 +1685,8 @@ export function startApp(host: HTMLElement): void {
       // 펫 알림 (GDD 90장): 이번 귀환에서 얻은 펫·친밀도 오름·골드로 바뀐 펫 (첫 진화 선물 포함)
       petNotes = save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
       // 장비 알림 (GDD 91장): 귀환 때 보관함에 들어간 드롭 장비(넷 넘으면 한 줄로)·가득 차서 판 장비
-      const gearNotes = save.runLog.gear.slice(gearLog0).map((r) => gearNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
+      // 161장: 새 장비는 알림 최소 등급(NOTIFY) 이상만, '가득 차서 판매'는 경고라 남긴다
+      const gearNotes = save.runLog.gear.slice(gearLog0).filter((r) => r.kind !== 'get' || (isGearGrade(r.grade) && gearToastWanted(r.grade))).map((r) => gearNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
       petNotes.push(...(gearNotes.length > 4 ? [{ eyebrow: '장비', title: `장비 ${gearNotes.length}개를 가지고 돌아왔다`, meta: '가방 장비 탭에서 착용' }] : gearNotes));
       growth = {
         newTraits: summarize(exp).keptTraits.length,
