@@ -106,7 +106,7 @@
           "@.bha-prop--outside"
         ],
         "title": "{outsideName}",
-        "body": "밖으로 나가면 {worldName} 지도가 나온다.\n{nestName}·{marketName}·{adventureName} 가운데 골라 걸어간다."
+        "body": "밖으로 나가면 {worldName} 지도가 나온다.\n{nestName}·{marketName}·{adventureName}·{towerName} 가운데 골라 걸어간다."
       },
       {
         "id": "altar",

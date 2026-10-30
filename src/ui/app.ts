@@ -22,7 +22,7 @@ import { abortExpedition, applyCareToParams, bossSetupOf, canAbortBattle, create
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
-import { createTowerCombat, towerFloor, type TowerFloor } from '../engine/tower';
+import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { absenceText, careBlockText } from './bha/roomLogic';
 import type { AbsenceReport } from '../engine/nest';
@@ -385,7 +385,7 @@ export function startApp(host: HTMLElement): void {
     const wm = worldMapOf(faction);
     const care = (['feed', 'sleep', 'pet'] as const).map((a) => faction.nestActionsShort?.[a] ?? faction.nestActions[a]).join('·');
     const vars = {
-      outsideName: props.outside, adventureName: wm.places.adventure, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
+      outsideName: props.outside, adventureName: wm.places.adventure, towerName: wm.places.tower, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
       goPath: `[${props.outside}] → [${wm.places.adventure}]을(를) 누른다.`,
     };
     const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
@@ -928,9 +928,12 @@ export function startApp(host: HTMLElement): void {
       onHome: () => nestScreen(),
       onMarket: () => { worldAt = 'market'; openMarket(faction, s); },
       onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
-      // 첫 모험 강제 (GDD 131장 2): 홈·시장 잠김
-      locked: forceAdventure ? ['home', 'market'] : undefined,
-      onLocked: () => showToast(FORCE_HINT, 0, 1800),
+      // 탑 (GDD 139장 1): 모험 화면 탭에서 월드맵 장소로. 사망이면 막힘 안내
+      onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },
+      // 첫 모험 강제 (GDD 131장 2): 홈·시장·탑 잠김. 탑 해금 전(36장)이면 탑은 이유 한 줄과 함께 잠김
+      locked: forceAdventure ? ['home', 'market', 'tower'] : undefined,
+      lockReasons: towerOpen(s.runLog, faction.id, s.tower.best) ? undefined : { tower: towerLabels(faction).locked },
+      onLocked: (p) => showToast(!forceAdventure && p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' } : FORCE_HINT, 0, 1800),
     });
   }
 
@@ -1277,8 +1280,8 @@ export function startApp(host: HTMLElement): void {
             nav.replace({ id: 'expedition', locked: true, render: () => { armEnterFx(); showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
           },
           onHelp: () => openHelp('expedition', false),
-          // [스토리]·[탑] 탭 (GDD 25-7·36장): 같은 자리에서 스토리 장·화 목록 / 탑 화면으로 바꾼다
-          onTab: (id) => (id === 'story' ? storyScreen(faction) : towerScreen(faction)),
+          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다. 탑은 월드맵 장소 (139장 1)
+          onTab: () => storyScreen(faction),
         });
         root.scrollTop = 0;
         // 진화 후 첫 출발: 덱 고르기 → 첫 배치 → 조합 안내 (GDD 64장 3번 ①~③)
@@ -1306,22 +1309,20 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 출발 화면 머리 탭 전환 (자유 원정 = 배치 단계 / 스토리 / 탑) */
+  /** 출발 화면 머리 탭 전환 (자유 원정 = 배치 단계 / 스토리) */
   function departTab(faction: FactionConfig, id: DepartTab): void {
     if (id === 'free') departScreen(faction, true);
-    else if (id === 'story') storyScreen(faction);
-    else towerScreen(faction);
+    else storyScreen(faction);
   }
 
-  // ── 도전의 탑 (GDD 36장, C.85): 원정 출발 화면의 [탑] 탭. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
+  // ── 도전의 탑 (GDD 36장, C.85 → 139장 1): 월드맵 장소 [탑]. 뒤로 = 월드맵. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
   function towerScreen(faction: FactionConfig): void {
     if (!save) return;
-    nav.replace({
+    nav.push({
       id: 'tower', locked: false,
       render: () => {
         setBgm('expedition');
         towerView(root, faction, save!, {
-          onTab: (id) => departTab(faction, id),
           onChallenge: (f) => towerBattle(faction, f),
           onHelp: () => openHelp('expedition', false),
         });

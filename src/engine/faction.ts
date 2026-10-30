@@ -69,8 +69,8 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** outside = 밖으로 (GDD 130장 1, C.204): 누르면 월드맵(홈·시장·모험). 옛 모험 문·장터 물건은 폐기 (GDD 137장 3, C.215) */
 export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
-/** 월드맵 장소 (GDD 130장 2): 홈(방)·시장·모험(출발 준비 화면). ▲▼ 순서도 이 순서 */
-export const WORLD_PLACES = ['home', 'market', 'adventure'] as const;
+/** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·모험(출발 준비 화면)·탑(도전의 탑 화면). ▲▼ 순서도 이 순서 */
+export const WORLD_PLACES = ['home', 'market', 'adventure', 'tower'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
 export const MARKET_SPOTS = ['spa', 'shop', 'wanderer'] as const;
@@ -233,13 +233,13 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   shape: 'worldmap',
   sceneArt: 'scene.worldmap',
   floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
-  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 58, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 } },
+  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 58, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 }, tower: { x: 82, y: 46, scale: 0.9 } },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',
 };
 
-/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 모험 = worldmap.adventureName) */
-export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
+/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels) */
+export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
   const w = f.worldmap ?? {};
   return {
     ...DEFAULT_WORLDMAP,
@@ -247,7 +247,7 @@ export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestN
     floor: w.floor ?? DEFAULT_WORLDMAP.floor,
     layout: { ...DEFAULT_WORLDMAP.layout, ...w.layout },
     characterFoot: w.characterFoot ?? DEFAULT_WORLDMAP.characterFoot,
-    places: { home: f.nestName, market: marketOf(f).name, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName },
+    places: { home: f.nestName, market: marketOf(f).name, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name },
   };
 }
 

@@ -31,13 +31,13 @@ describe('130장 2·3 월드맵·시장 (종족 설정)', () => {
   it('시장 이름 = 두 종족 모두 "시장" (사용자 03:0x)', () => {
     for (const f of FACTIONS) expect(marketOf(f).name).toBe('시장');
   });
-  it('월드맵 이름 = 호로 웨코문도 / 사신 소울 소사이어티, 장소 = 홈(nestName)·시장·모험(옛 문 이름)', () => {
+  it('월드맵 이름 = 호로 웨코문도 / 사신 소울 소사이어티, 장소 = 홈(nestName)·시장·모험·탑(139장 1)', () => {
     expect(worldMapOf(getFaction('hollow')).name).toBe('웨코문도');
     expect(worldMapOf(getFaction('shinigami')).name).toBe('소울 소사이어티');
-    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'adventure']);
+    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'adventure', 'tower']);
     for (const f of FACTIONS) {
       const w = worldMapOf(f);
-      expect(w.places).toEqual({ home: f.nestName, market: '시장', adventure: '모험' });
+      expect(w.places).toEqual({ home: f.nestName, market: '시장', adventure: '모험', tower: '도전의 탑' });
       expect(w.sceneArt).toBe('scene.worldmap');
     }
     expect(worldMapOf(getFaction('hollow')).places.home).toBe('둥지');
@@ -71,11 +71,11 @@ describe('130장 화면 연결 (app.ts·worldMapView)', () => {
   it('시장 왼쪽 위 = [월드맵으로]', () => {
     expect(app).toContain("backLabel: '월드맵으로',");
   });
-  it('기기 버튼: ▲▼ = 홈 → 시장 → 모험, 첫 선택 = 모험, 떠돌이 상인 배지·사망 잠김은 지도 위', () => {
+  it('기기 버튼: ▲▼ = 홈 → 시장 → 모험 → 탑, 첫 선택 = 모험, 떠돌이 상인 배지·사망 잠김은 지도 위', () => {
     expect(wm).toContain('WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))');
     expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208 (GDD 132장 2): 첫 선택 = 지금 있던 장소
     expect(wm).toContain("if (p === 'market' && here)");
-    expect(wm).toContain("if (p === 'adventure' && save.nest.dead)");
+    expect(wm).toContain("if ((p === 'adventure' || p === 'tower') && save.nest.dead)"); // C.217: 탑도 사망 잠김 (139장 1)
   });
   it('회복 안내 온천: 밖으로 → 시장 → 온천, 대상 = 밖으로 (C.206 부터 사용자가 직접 간다)', () => {
     expect(app).toContain(`'.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'`);

@@ -13,18 +13,18 @@ import { lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
 
 export interface StoryViewHandlers {
-  /** [자유 원정]·[탑] 탭 */
+  /** [자유 원정] 탭 */
   onTab: (id: DepartTab) => void;
   /** 열린 화 [도전] */
   onPick: (chapterId: string, episodeId: string) => void;
   onHelp: () => void;
 }
 
-export type DepartTab = 'free' | 'story' | 'tower';
+export type DepartTab = 'free' | 'story';
 
-/** 원정 출발 화면 머리의 제목 토글 "자유 원정 ▾" — 누르면 [자유 원정] / [스토리] / [탑] 목록이 열린다 (GDD 25-7, 36장 3번, 예전 탭 줄을 대신함 C.114) */
+/** 원정 출발 화면 머리의 제목 토글 "자유 원정 ▾" — 누르면 [자유 원정] / [스토리] 목록이 열린다 (GDD 25-7, 예전 탭 줄을 대신함 C.114). 탑은 월드맵 장소로 옮김 (139장 1) */
 export function departTabs(current: DepartTab, onSelect: (id: DepartTab) => void): HTMLElement {
-  const t = viewTitle([{ id: 'free', label: '자유 원정' }, { id: 'story', label: '스토리' }, { id: 'tower', label: '탑' }], current, (id) => {
+  const t = viewTitle([{ id: 'free', label: '자유 원정' }, { id: 'story', label: '스토리' }], current, (id) => {
     if (id !== current) onSelect(id as DepartTab);
   });
   t.classList.add('bha-depart-tabs');

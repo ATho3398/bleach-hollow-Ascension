@@ -1,20 +1,22 @@
 // UI 검수 화면 목록 (GDD 110장 2, C.182). 각 항목: name, run(h, name). fresh = 슬롯 없이 시작 화면부터.
 // 전투 화면은 C.177 배포 뒤 넣었다(마스터 13장 03:2x 지시). h.explore = 정적 점검 + 탭·ⓘ·목록 고르기 전후 비교(audit.cjs).
 
-/** 방 → 모험 시작 화면 (C.204, GDD 130장): 월드맵 켬 = [밖으로] → 지도 [모험], 끔 = 옛 모험 문 */
+/** 방 → 모험 시작 화면 (GDD 130장): [밖으로] → 지도 [모험]. 장소를 고르면 걸어가서 페이드 전환이라 기다림이 길다 (137장 3, C.215) */
 async function toAdventure(h) {
-  if (await h.has('.bha-prop--outside')) {
-    await h.click('.bha-prop--outside', { ms: 700 });
-    await h.click('.bha-worldmap [data-place="adventure"]', { ms: 900 });
-  } else await h.click('.bha-prop--door', { ms: 900 });
+  await h.click('.bha-prop--outside', { ms: 700 });
+  await h.click('.bha-worldmap [data-place="adventure"]', { ms: 2000 });
 }
 
-/** 방 → 시장(장터) 화면 (C.204, GDD 130장): 켬 = [밖으로] → 지도 [시장], 끔 = 옛 장터 물건 */
+/** 방 → 시장 화면 (GDD 130장): [밖으로] → 지도 [시장] */
 async function toMarket(h) {
-  if (await h.has('.bha-prop--outside')) {
-    await h.click('.bha-prop--outside', { ms: 700 });
-    await h.click('.bha-worldmap [data-place="market"]', { ms: 700 });
-  } else await h.click('.bha-prop--market', { ms: 700 });
+  await h.click('.bha-prop--outside', { ms: 700 });
+  await h.click('.bha-worldmap [data-place="market"]', { ms: 2000 });
+}
+
+/** 방 → 탑 화면 (GDD 139장 1, C.217): [밖으로] → 지도 [탑] */
+async function toTower(h) {
+  await h.click('.bha-prop--outside', { ms: 700 });
+  await h.click('.bha-worldmap [data-place="tower"]', { ms: 2000 });
 }
 
 /** 시장(장터)에서 뒤로 → 방까지 (켬 = 시장 → 월드맵 → 방) */
@@ -305,10 +307,17 @@ const SCREENS = [
     },
   },
   {
+    name: '탑',
+    async run(h, n) {
+      await toTower(h);
+      await h.explore(n, { pick: '.bha-lcd .bha-tower__floor, .bha-lcd .bha-mdrow' });
+    },
+  },
+  {
     name: '원정 출발',
     async run(h, n) {
       await toAdventure(h);
-      await h.explore(n, { pick: '.bha-lcd .bha-road__cell', views: true, viewOpts: { 스토리: { pick: '.bha-lcd .bha-mdrow, .bha-lcd .bha-story__ep' }, 탑: { pick: '.bha-lcd .bha-tower__floor, .bha-lcd .bha-mdrow' } } });
+      await h.explore(n, { pick: '.bha-lcd .bha-road__cell', views: true, viewOpts: { 스토리: { pick: '.bha-lcd .bha-mdrow, .bha-lcd .bha-story__ep' } } });
       await h.stable(n, '난이도 ★1', () => h.btn('★1', { exact: true }));
       await h.stable(n, '지역 바꾸기', () => h.click('.bha-lcd .bha-btn--small >> nth=1'));
       // 타일 놓기: 카드 고르고 칸 누르기
@@ -441,15 +450,10 @@ const SCREENS = [
       await h.page.locator('.bha-lcd').getByRole('button', { name: '지금 부르기', exact: true }).nth(0).click({ timeout: 3000 });
       await h.closeLayers();
       await h.back();
-      if (await h.has('.bha-prop--outside')) {
-        await h.click('.bha-prop--outside', { ms: 700 });
-        if (!(await h.has('.bha-worldmap [data-place="market"].has-visitor'))) throw new Error('떠돌이 상인이 왔는데 지도 위 시장에 배지가 없음');
-        await h.explore(`${n}/월드맵 상인 배지`, { tabs: false });
-        await h.click('.bha-worldmap [data-place="market"]', { ms: 700 });
-      } else {
-        if (!(await h.has('.bha-prop--market.has-visitor'))) throw new Error('떠돌이 상인이 왔는데 방 장터 물건에 배지가 없음');
-        await h.click('.bha-prop--market', { ms: 700 });
-      }
+      await h.click('.bha-prop--outside', { ms: 700 });
+      if (!(await h.has('.bha-worldmap [data-place="market"].has-visitor'))) throw new Error('떠돌이 상인이 왔는데 지도 위 시장에 배지가 없음');
+      await h.explore(`${n}/월드맵 상인 배지`, { tabs: false });
+      await h.click('.bha-worldmap [data-place="market"]', { ms: 2000 });
       if (!(await h.has('.bha-market [data-spot="wanderer"]'))) throw new Error('떠돌이 상인이 왔는데 장터에 없음');
       await h.explore(`${n}/상인 있음`, { tabs: false });
       await h.click('.bha-market [data-spot="wanderer"]', { ms: 700 });
@@ -469,10 +473,10 @@ const SCREENS = [
       await h.back();
       if (!(await h.has('.bha-room:not(.bha-worldmap)'))) throw new Error('월드맵 뒤로 → 방에 못 닿음');
       await h.click('.bha-prop--outside', { ms: 700 });
-      await h.click('.bha-worldmap [data-place="home"]', { ms: 700 });
+      await h.click('.bha-worldmap [data-place="home"]', { ms: 2000 });
       if (!(await h.has('.bha-room:not(.bha-worldmap)'))) throw new Error('월드맵 홈 → 방에 못 닿음');
       await h.click('.bha-prop--outside', { ms: 700 });
-      await h.click('.bha-worldmap [data-place="adventure"]', { ms: 900 });
+      await h.click('.bha-worldmap [data-place="adventure"]', { ms: 2000 });
       await h.back();
       if (!(await h.has('.bha-worldmap'))) throw new Error('모험 시작 화면 뒤로 → 월드맵에 못 닿음');
       await h.back();

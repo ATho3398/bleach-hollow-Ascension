@@ -181,8 +181,9 @@ describe('36장 2·3번: 열림·화면 문구', () => {
       expect(towerRewardText(f, towerReward(10))).toContain('칭호 「탑 10층 돌파」');
     }
   });
-  it('원정 출발 화면 머리 탭 [자유 원정]/[스토리]/[탑], 칭호 도감 [탑] 탭', () => {
-    expect(src('src/ui/storyView.ts')).toMatch(/id: 'tower', label: '탑'/);
+  it('원정 출발 화면 머리 탭 [자유 원정]/[스토리] (탑은 C.217 부터 월드맵 장소, GDD 139장 1), 칭호 도감 [탑] 탭', () => {
+    expect(src('src/ui/storyView.ts')).not.toMatch(/id: 'tower', label: '탑'/);
+    expect(src('src/ui/worldMapView.ts')).toContain('tower: hd.onTower');
     expect(TITLE_TABS.map((t) => t.label)).toContain('탑');
   });
 });

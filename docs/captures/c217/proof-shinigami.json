@@ -1,0 +1,61 @@
+{
+ "faction": "shinigami",
+ "selOrder": "tower",
+ "places": [
+  {
+   "place": "home",
+   "name": "대원실",
+   "locked": null,
+   "why": null,
+   "box": [
+    195,
+    278,
+    50,
+    60
+   ]
+  },
+  {
+   "place": "market",
+   "name": "시장",
+   "locked": null,
+   "why": null,
+   "box": [
+    396,
+    201,
+    52,
+    60
+   ]
+  },
+  {
+   "place": "adventure",
+   "name": "모험",
+   "locked": null,
+   "why": null,
+   "box": [
+    614,
+    260,
+    44,
+    72
+   ]
+  },
+  {
+   "place": "tower",
+   "name": "도전의 탑",
+   "locked": null,
+   "why": null,
+   "box": [
+    593,
+    166,
+    60,
+    60
+   ]
+  }
+ ],
+ "towerScreen": "bha-lcdpage bha-tower",
+ "towerTitle": "도전의 탑",
+ "afterBack": "bha-room bha-worldmap",
+ "departTabs": [
+  "자유 원정",
+  "스토리"
+ ]
+}

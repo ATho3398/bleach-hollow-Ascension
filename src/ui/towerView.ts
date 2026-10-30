@@ -13,13 +13,11 @@ import { iconInfo, type IconInfoRow } from './bha/expedition';
 import { lcdPage, selectLast } from './bha/lcdpage';
 import { splitApp } from './bha/split';
 import { battleLabels } from './labels';
-import { departTabs, type DepartTab } from './storyView';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
 import { asBack } from './bha/screenBack';
 
 export interface TowerViewHandlers {
-  onTab: (id: DepartTab) => void;
   onChallenge: (f: TowerFloor) => void;
   onHelp: () => void;
 }
@@ -51,7 +49,7 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
 
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   const head = el('header', 'bha-exp__head bha-depart-head');
-  head.append(departTabs('tower', h.onTab), el('p', 'bha-depart-head__sub', `${L.name} · ${L.desc}`), selectLast(help));
+  head.append(el('h2', 'bha-plan__title', L.name), el('p', 'bha-depart-head__sub', L.desc), selectLast(help)); // 월드맵 장소 (GDD 139장 1): 출발 화면 탭 대신 제목
 
   // 왼쪽: 지금 층·최고 층 + 다음 층 카드
   const left: HTMLElement[] = [];

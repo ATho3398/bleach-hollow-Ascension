@@ -24,7 +24,7 @@ describe('131장 1·3 홈 안내 상태', () => {
 
 describe('131장 1 카드 문구 (종족 설정 이름, 하드코딩 없음)', () => {
   it('방 물건·독 카드 = 대상 선택자가 있고, 두 종족 자리표시자가 모두 채워진다', () => {
-    const extra = { outsideName: '밖으로', adventureName: '모험', altarName: '수련장', bookName: '책장', chestName: '가방', marketName: '시장', worldName: '지도', careNames: '먹이·재우기·교감', goPath: '[밖으로] → [모험]' };
+    const extra = { outsideName: '밖으로', adventureName: '모험', towerName: '도전의 탑', altarName: '수련장', bookName: '책장', chestName: '가방', marketName: '시장', worldName: '지도', careNames: '먹이·재우기·교감', goPath: '[밖으로] → [모험]' };
     for (const f of FACTIONS) {
       const v = { ...helpVars(f), ...extra };
       for (const sc of [HOME_INTRO.intro, ...HOME_INTRO.items, HOME_INTRO.last]) {
@@ -46,7 +46,7 @@ describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
   });
   it('강제 중: 방 다른 버튼 흐린 잠김, 월드맵 홈·시장 잠김, 뒤로 = 짧은 안내', () => {
     expect(app).toContain('forceOutside: forceAdventure,');
-    expect(app).toContain("locked: forceAdventure ? ['home', 'market'] : undefined,");
+    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'tower'] : undefined,"); // C.217: 탑도 잠김 (139장 1)
     expect(app).toContain("const FORCE_HINT = { eyebrow: '튜토리얼', title: '먼저 모험을 떠나자', meta: '' };");
     expect(read('src/ui/roomView.ts')).toContain("if (hd.forceOutside) main.classList.add('is-force-out');");
     expect(read('src/ui/bha/worldmap.css')).toContain('.bha-room.is-force-out .bha-homedock');

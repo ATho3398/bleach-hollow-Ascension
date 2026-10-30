@@ -16,7 +16,7 @@ export interface PlanViewHandlers {
   /** [출발]: 배치가 끝났다 (손은 이미 비웠다). 원정 시작 */
   onStart: (placed: number) => void;
   onHelp: () => void;
-  /** [스토리]·[탑] 탭 (GDD 25-7·36장): 있으면 머리에 [자유 원정]/[스토리]/[탑] 탭을 보인다 */
+  /** [스토리] 탭 (GDD 25-7): 있으면 머리에 [자유 원정]/[스토리] 탭을 보인다. 탑은 월드맵 장소 (139장 1) */
   onTab?: (id: Exclude<DepartTab, 'free'>) => void;
   /** 연 원정 난이도 ★ 최대 (GDD 32-1, 세이브 difficulty.unlocked). 없으면 1 */
   unlockedDifficulty?: number;
@@ -122,7 +122,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   pickStar(Math.min(unlocked, exp.difficulty));
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   const head = el('div', `bha-exp__head${h.onTab ? ' bha-depart-head' : ''}`);
-  // [자유 원정]/[스토리]/[탑] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
+  // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
   const onTab = h.onTab;
   head.append(onTab ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }) : title, grounds, help);
 
