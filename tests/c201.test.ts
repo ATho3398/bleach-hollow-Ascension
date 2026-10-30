@@ -22,9 +22,9 @@ describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 13
   });
   it('떠돌이 상인은 와 있을 때만 시장에 서 있다', () => {
     const s = newSaveData('hollow');
-    expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa']);
+    expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith']); // 온천은 월드맵 (GDD 153장 1)
     s.shared.wanderer.visit = { at: 1, runId: 1, tier: 1, stock: [] };
-    expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer']);
+    expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'wanderer']);
   });
   it('종족 설정 검사: 시장 자리 이름·위치가 틀리면 오류, 옛 room.props.shop·market 은 알 수 없는 물건', () => {
     const base = JSON.parse(readFileSync('src/data/factions/hollow.json', 'utf8'));
@@ -44,7 +44,6 @@ describe('127장 2·3 화면 연결 (app.ts)', () => {
   it('월드맵 시장 → 시장 화면, 안의 온천·상점·떠돌이 상인 창 (C.215: 방 장터 물건 폐기)', () => {
     expect(app).toContain("onMarket: () => { worldAt = 'market'; openMarket(faction, s); }");
     expect(app).toContain("open('market', () => marketView(");
-    expect(app).toContain('onSpa: () => openSpa(faction, s)');
     expect(app).toContain("mode: 'wanderer'");
   });
   it('떠돌이 상인 도착 알림은 방에서만, 장터에 먼저 들어가면 본 것으로', () => {

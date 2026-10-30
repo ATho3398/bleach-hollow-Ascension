@@ -51,3 +51,12 @@ describe('153장 2 장터 대장장이', () => {
     expect(readFileSync('src/ui/app.ts', 'utf8')).toContain('아직 문을 열지 않았다');
   });
 });
+
+describe('153장 1 장터의 온천 칸 삭제', () => {
+  it('장터에 서는 자리에 온천이 없다 (이름 market.props.spa 는 온천 화면이 쓴다)', async () => {
+    const { marketSpots } = await import('../src/ui/marketView');
+    const { newSaveData } = await import('../src/game');
+    expect(marketSpots(newSaveData('hollow'))).not.toContain('spa');
+    expect(readFileSync('src/ui/app.ts', 'utf8')).not.toContain('onSpa: () => openSpa(faction, s)');
+  });
+});

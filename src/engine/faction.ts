@@ -73,7 +73,7 @@ export type RoomProp = (typeof ROOM_PROPS)[number];
 export const WORLD_PLACES = ['home', 'market', 'adventure', 'tower'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
-/** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 온천 · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서 */
+/** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
 export const MARKET_SPOTS = ['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer'] as const;
 export type MarketSpot = (typeof MARKET_SPOTS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
@@ -215,11 +215,11 @@ export const DEFAULT_MARKET: MarketConfig = {
   sceneArt: 'scene.market',
   props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '떠돌이 상인' },
   floor: { aspect: 2, poly: [[0, 0.5], [1, 0.5], [1, 1], [0, 1]] },
-  // 뒷줄 = 상점 4곳·대장장이(왼 → 오), 앞줄 = 온천·떠돌이 상인 (GDD 150장 2·153장 2)
+  // 뒷줄 = 상점 4곳·대장장이(왼 → 오), 앞줄 = 떠돌이 상인 (GDD 150장 2·153장 2). 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1)
   layout: {
     shop: { x: 12, y: 66, scale: 0.7 }, gearShop: { x: 31, y: 64, scale: 0.7 }, skinShop: { x: 50, y: 63, scale: 0.7 },
     traitShop: { x: 69, y: 64, scale: 0.7 }, smith: { x: 88, y: 66, scale: 0.7 },
-    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 78, y: 92, scale: 0.7 },
+    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 50, y: 92, scale: 0.7 },
   },
 };
 

@@ -923,7 +923,6 @@ export function startApp(host: HTMLElement): void {
     if (wandererToast?.isConnected) wandererToast.classList.replace('is-in', 'is-out'); // 방에서 뜬 알림이 장터까지 남지 않게 (사라지는 연출 뒤 지워진다)
     wandererToast = null;
     open('market', () => marketView(dev, faction, s, {
-      onSpa: () => openSpa(faction, s),
       onShop: (kind) => open('shop', () => shopView(dev, faction, s, { persist, kind, onWear: () => dress(s.wear) })),
       onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
       // 대장장이 (GDD 153장 2, provisional): 기능은 나중 — 노란 알림 한 줄만
