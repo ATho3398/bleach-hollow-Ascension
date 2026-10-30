@@ -1340,6 +1340,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **150장 1 상점 4곳**: `SHOP_KINDS`·`SHOP_KIND_TABS`(src/data/shop), `shopView` 의 `kind`. 소모품 = 음식·약·소모품·타일·기타, 장비·스킨·특성 = 탭 하나(탭 줄 숨김, 스킨 하위 탭 그대로). 제목 = 상점 이름, 상점마다 마지막 탭 기억. 하루 판매 수·떠돌이 상인 그대로.
 - **150장 2 들어가는 곳**: 시장 자리 shop(소모품)·gearShop·skinShop·traitShop(이름 = 종족 설정 market.props, 기본값 DEFAULT_MARKET 두 종족 같음). 방 빈사 줄 [상점](이름 market.shopsLabel) = 4곳 고르는 창(`shopPicker` → `pickDialog`, ▲▼✓·뒤로·[닫기]). 튜토리얼 구급상자 안내·타일 뽑기·장비·스킨·액자 안내 = 해당 상점 이름.
 - **150장 3~5 탈착 특성**: `src/engine/traitShop.ts` + `shop.ts`(`traitRows`·`buyTraitItem`·`equipTrait`·`unequipTrait`·`traitToggleLock`). 보유 = shared.traits(두 트랙 공유), 끼운 칸 = evolution.abilities.detached(진화 특성과 같은 칸 수). 진화 특성 우선: `gainEvolutionAbility` 가 칸이 없으면 마지막에 끼운 탈착 특성을 빼고(AbilityGain new.bumped) 진화 결과 줄에 '칸이 모자라 ○○은(는) 보유 목록으로 뺐다'. 전투 `applyDetachedTraits`. 상태 화면 특성 칸 = 진화 특성 보기 전용 · 탈착 특성 [빼기] · 빈 칸 [끼우기], 원정 중 잠금.
+- **이름 수정**(마스터Z 21:51): 특성 상점 '단단한 껍질' → '굳은 피부'(옛 성향 특성 이름과 겹침). 캡처 다시 찍음.
 - **150장 6 세이브**: `SAVE_MIGRATIONS[60]`(shared.traits = [], detached 없음), 불러오기 보정(모르는 id·안 가진 것·넘친 칸 버림).
 - **153장 장터 쪽**: 장터 자리에서 온천 삭제(이름 market.props.spa 는 남김), 대장장이 자리(누르면 노란 알림 '대장장이는 아직 문을 열지 않았다', 기능 없음). 월드맵 온천·튜토리얼 온천 길은 C.228.
 - **기획서 값 / 실제 값 / 이유**: ① 보유 범위 — 기획서 없음 → 슬롯 공유(골드가 공유라 산 것도 공유) ② 빠지는 탈착 특성 — 기획서 '하나' → 마지막에 끼운 것 ③ 상점 카드에서도 끼우기 — 기획서 '방에서' → 시장도 원정 밖이라 허용(원정 중만 잠금).

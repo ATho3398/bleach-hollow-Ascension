@@ -75,7 +75,7 @@ const lo = (slots = 1): AbilityLoadout => ({ ...newAbilityLoadout(), slots });
 describe('150장 4 처음 품목 4개 (provisional)', () => {
   it('날 세우기·단단한 껍질·질긴 몸·집중 — 가격·효과는 balance.ts', () => {
     expect(DETACH_TRAITS.map((t) => [t.id, t.name, t.price])).toEqual([
-      ['sharpen', '날 세우기', 800], ['shell', '단단한 껍질', 800], ['tough', '질긴 몸', 900], ['focus', '집중', 900],
+      ['sharpen', '날 세우기', 800], ['shell', '굳은 피부', 800], ['tough', '질긴 몸', 900], ['focus', '집중', 900],
     ]);
     expect(DETACH_TRAITS.map(detachEffectText)).toEqual(['주는 피해 +5%', '받는 피해 −5%', '최대 체력 +8%', '블록 치명 +5%p']);
     expect(BALANCE.provisional.traitShop.tough!.maxHp).toBe(0.08);
