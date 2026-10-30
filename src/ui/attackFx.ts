@@ -540,7 +540,8 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       ], travel + 120, delay, fam);
       const len = Math.hypot(dx, dy);
       const thick = Math.max(6, from.h * 0.1 * scale);
-      const ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+      // 왼쪽으로 쏠 때(dx < 0)는 오른쪽 끝(쏘는 쪽)을 기준점으로, 뒤집힌 방향의 각도만큼만 돌린다 (C.216 — 180° 돌리면 광선이 반대쪽으로 뻗었다)
+      const ang = (Math.atan2(dx >= 0 ? dy : -dy, dx >= 0 ? dx : -dx) * 180) / Math.PI;
       const b = spawn(layer, 'bha-afx--ray', '', from.x + dx / 2, from.y + dy / 2, len, thick, [
         { offset: 0, opacity: 0, transform: `rotate(${ang}deg) scaleX(0)` },
         { offset: 0.25, opacity: 1, transform: `rotate(${ang}deg) scaleX(1)` },

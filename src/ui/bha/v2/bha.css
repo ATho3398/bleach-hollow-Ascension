@@ -324,8 +324,8 @@
 .bha-root .bha-v2time b{min-width:3ch;text-align:right;font-variant-numeric:tabular-nums}
 .bha-root .bha-v2units{position:absolute;inset:0;pointer-events:none}
 .bha-root .bha-v2units>.bha-unit{position:absolute;top:46px;width:170px;height:150px;display:flex;flex-direction:column;align-items:center}
-.bha-root .bha-v2units>.bha-unit--me{left:70px}
-.bha-root .bha-v2units>.bha-unit--foe{left:392px}
+.bha-root .bha-v2units>.bha-unit--me{left:392px}
+.bha-root .bha-v2units>.bha-unit--foe{left:70px}
 .bha-root .bha-v2units .bha-unit__heads{width:100%;max-width:none}
 .bha-root .bha-v2units .bha-unit--foe .bha-unit__heads{width:184px;margin-left:-14px}
 .bha-root .bha-v2units .bha-unit__hp{width:auto;padding-top:4px;white-space:nowrap}
@@ -407,8 +407,8 @@
 .bha-root.bha-battle .bha-field{height:auto;bottom:110px}
 .bha-root.bha-battle .bha-skillpanel{top:auto;height:110px}
 .bha-root .bha-v2units>.bha-unit{top:46px;bottom:4px;height:auto;width:180px}
-.bha-root .bha-v2units>.bha-unit--me{left:calc(50% - 255px)}
-.bha-root .bha-v2units>.bha-unit--foe{left:calc(50% + 75px)}
+.bha-root .bha-v2units>.bha-unit--me{left:calc(50% + 75px)}
+.bha-root .bha-v2units>.bha-unit--foe{left:calc(50% - 255px)}
 .bha-root .bha-v2legendrow{top:5px;right:112px}
 .bha-root .bha-blockbar.bha-v2tray{top:30px;right:112px;height:66px}
 .bha-root .bha-v2tray__grid,.bha-root .bha-v2cell,.bha-root .bha-v2cell>.bha-block{height:58px}
@@ -472,3 +472,17 @@
 .bha-root .bha-v2role .bha-keycap{top:-7px;right:-4px}
 .bha-root .bha-v2roles.is-compact .bha-v2role--item .bha-v2role__name,.bha-root .bha-v2roles.is-compact .bha-v2role--gear .bha-v2role__name{display:none}
 .bha-root .bha-v2roles.is-compact .bha-v2role--item,.bha-root .bha-v2roles.is-compact .bha-v2role--gear{padding:0 8px 0 6px}
+
+/* ───────── 전투 좌우 반전 (C.216, GDD 138장) ─────────
+   ① 내 캐릭터 = 오른쪽(왼쪽을 봄), 적 = 왼쪽(오른쪽을 봄). 그림 파일은 그대로 — 그림은 모두 왼쪽을 보는 한 장이라 내 쪽은 그대로, 적 쪽을 뒤집는다.
+      적은 몸 상자(.bha-foe__body)가 아니라 안쪽 그림을 뒤집는다 — 몸 상자에는 맞음 흔들림(composite add)이 얹혀 뒤집으면 넉백 방향도 뒤집힌다
+   ② 블록 바 = 왼쪽에서 생겨 오른쪽으로: 칸 1(가장 먼저 생긴 블록)이 맨 오른쪽, 새 블록은 그 왼쪽에 붙는다. 데이터 순서는 그대로, 칸 배치만 rtl.
+      칸 안 글자·체인 탭은 ltr 그대로. 묶음 경계 선은 칸의 오른쪽 끝(rtl 의 시작) 바깥 틈에 */
+.bha-root .bha-v2units .bha-hero__img{transform:translateY(var(--art-dy,0%)) scale(var(--art-scale,1))}
+.bha-root .bha-v2units .bha-hero__eye{right:auto;left:20%}
+.bha-root .bha-v2units .bha-hero__eye:nth-of-type(1){right:auto;left:40%}
+.bha-root .bha-v2units .bha-foe__img{transform:translateY(var(--art-dy,0%)) scale(var(--art-scale,1)) scaleX(-1)}
+.bha-root .bha-v2units .bha-foe__body>svg{transform:scaleX(-1)}
+.bha-root .bha-v2tray__grid{direction:rtl}
+.bha-root .bha-v2tray__grid>*{direction:ltr}
+.bha-root .bha-v2cut::before{left:auto;right:-3px}

@@ -75,9 +75,9 @@ describe("용어 '포식'·'배부름' (#46·58·81)", () => {
 });
 
 describe('전투 (#36~40·42)', () => {
-  it('피해 숫자는 맞은 쪽 머리 위: 적 = 오른쪽, 나 = 왼쪽 (#38)', () => {
-    for (const s of FLOAT_SPOTS) expect(s.left).toBeGreaterThanOrEqual(60);
-    for (const s of HURT_SPOTS) expect(s.left).toBeLessThanOrEqual(30);
+  it('피해 숫자는 맞은 쪽 머리 위: 적 = 왼쪽, 나 = 오른쪽 (#38, C.216 GDD 138장 좌우 반전)', () => {
+    for (const s of FLOAT_SPOTS) expect(s.left).toBeLessThanOrEqual(30);
+    for (const s of HURT_SPOTS) expect(s.left).toBeGreaterThanOrEqual(60);
   });
   it('범례 줄에 해방 설명이 없고 해방 버튼 툴팁으로 (#37), 빈 예고 띠는 안 보임 (#36), 승리 버튼은 행동 (#42)', () => {
     const b = read('src/ui/battleView.ts');

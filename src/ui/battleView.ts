@@ -712,7 +712,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   helpBtn.dataset.sc = 'help';
   libBtn.dataset.sc = 'liberate';
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
-  // 기기 버튼 커서 (C.197, GDD 122장 3): 순서 = 머리 버튼 → 막기·소모품·장비·해방 → 블록 칸 왼쪽부터. 시작 = 첫 블록 칸, ✓ = 'bha-press'
+  // 기기 버튼 커서 (C.197, GDD 122장 3): 순서 = 머리 버튼 → 막기·소모품·장비·해방 → 블록 칸 왼쪽부터. 시작 = 첫 블록 칸(칸 1), ✓ = 'bha-press'
+  // C.216 (GDD 138장 2): 칸 1 이 맨 오른쪽이라 DOM 순서를 뒤집어 ▲▼ 도 화면 왼쪽 → 오른쪽으로 (칸 자리는 grid-column 이 정한다)
+  tray.grid.prepend(...[...tray.cells].reverse());
   for (const b of [guardBtn.root, itemBtn.root, gearBtn.root, libBtn]) b.dataset.devOrder = '1';
   tray.cells.forEach((c, i) => {
     c.dataset.devOrder = '2';
@@ -844,8 +846,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const cues: FxCue[] = [];
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
-    player: { root: hero.root, body: hero.body, dir: 1, anim: heroAnim },
-    enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: -1, anim: foeAnim },
+    // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
+    player: { root: hero.root, body: hero.body, dir: -1, anim: heroAnim },
+    enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: 1, anim: foeAnim },
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
@@ -1004,7 +1007,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     });
   };
 
-  /** 쓰여서 바에서 사라진 블록: 제자리에서 발동 연출(is-fire)을 하고 지운다 (엔진은 바로 오른쪽 블록을 당긴다) */
+  /** 쓰여서 바에서 사라진 블록: 제자리에서 발동 연출(is-fire)을 하고 지운다 (엔진은 바로 뒤 블록을 당긴다 — 화면에서는 왼쪽 블록이 오른쪽으로 온다, C.216) */
   const fireAway = (node: HTMLElement) => {
     const g = elementLocalRect(tray.grid);
     const r = elementLocalRect(node);
@@ -1226,7 +1229,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 칸 찾기는 기기 안 좌표(가로 방향)로: 세로 폰에서는 기기를 돌려 놓았으므로 화면 좌표를 바꿔 쓴다 (GDD 16-6)
   const slotOf = (e: { clientX: number; clientY: number }) => {
     const r = elementLocalRect(tray.grid);
-    return slotAt(pointerLocal(e).x, r.left, r.width, cap);
+    return cap - 1 - slotAt(pointerLocal(e).x, r.left, r.width, cap); // 칸 1 = 맨 오른쪽 (C.216, GDD 138장 2 — 블록 바 rtl)
   };
   // 해방 버튼: 블록과 같은 판정 (버튼 위에서 누르고 버튼 위에서 떼면 사용 — 옛 저장 필살기 버튼 판정)
   let libDown: number | null = null;
