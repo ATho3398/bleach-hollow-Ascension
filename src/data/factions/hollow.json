@@ -8,96 +8,76 @@
   "genderLookFromTier": 5,
   "startLooks": ["mantis", "brute", "ghoul", "shackled"],
   "formLooks": {
-    "t5:normal:physical": [
+    "t4:normal:physical": [
       "arrnormala",
       "arrnormald"
     ],
-    "t5:normal:special": [
+    "t4:normal:special": [
       "arrnormalb"
     ],
-    "t5:normal:mixed": [
+    "t4:normal:mixed": [
       "arrnormalc"
     ],
-    "t5:water:physical": [
+    "t4:water:physical": [
       "arrwaterd"
     ],
-    "t5:water:special": [
+    "t4:water:special": [
       "arrwatera",
       "arrwaterb"
     ],
-    "t5:water:mixed": [
+    "t4:water:mixed": [
       "arrwaterc"
     ],
-    "t5:fire:physical": [
+    "t4:fire:physical": [
       "arrfirea",
       "arrfired"
     ],
-    "t5:fire:special": [
+    "t4:fire:special": [
       "arrfireb"
     ],
-    "t5:fire:mixed": [
+    "t4:fire:mixed": [
       "arrfirec"
     ],
-    "t5:earth:physical": [
+    "t4:earth:physical": [
       "arreartha",
       "arrearthd"
     ],
-    "t5:earth:special": [
+    "t4:earth:special": [
       "arrearthb"
     ],
-    "t5:earth:mixed": [
+    "t4:earth:mixed": [
       "arrearthc"
     ],
-    "t5:thunder:physical": [
+    "t4:thunder:physical": [
       "arrthundera"
     ],
-    "t5:thunder:special": [
+    "t4:thunder:special": [
       "arrthunderb",
       "arrthunderd"
     ],
-    "t5:thunder:mixed": [
+    "t4:thunder:mixed": [
       "arrthunderc"
     ],
-    "t5:blood:physical": [
+    "t4:blood:physical": [
       "arrblooda",
       "arrbloodd"
     ],
-    "t5:blood:special": [
-      "arrbloodb"
-    ],
-    "t5:blood:mixed": [
-      "arrbloodc"
-    ],
-    "t5:poison:physical": [
-      "arrpoisona",
-      "arrpoisond"
-    ],
-    "t5:poison:special": [
+    "t4:poison:special": [
       "arrpoisonb"
     ],
-    "t5:poison:mixed": [
-      "arrpoisonc"
-    ],
-    "t5:kyo:physical": [
-      "arrkyoa",
-      "arrkyod"
-    ],
-    "t5:kyo:special": [
-      "arrkyob"
-    ],
-    "t5:kyo:mixed": [
+    "t4:kyo:mixed": [
       "arrkyoc"
     ],
-    "h5:limit": [
+    "h4:frenzy": [
       "arrhiddena"
     ],
-    "h5:restraint": [
+    "h4:restraint": [
       "arrhiddenb"
     ],
-    "h5:hunter": [
+    "h4:hunter": [
       "arrhiddenc"
     ],
-    "h5:reborn": [
+    "h4:awakened": [
       "arrhiddend"
     ]
   },
@@ -111,8 +91,7 @@
     "호로",
     "길리안",
     "아쥬커스",
-    "바스트로데",
-    "아란칼"
+    "바스트로데"
   ],
   "rankNames": [
     "에스파다 No.1",
@@ -146,7 +125,7 @@
   "appearanceChange": true,
   "defeatStateName": "가면이 깨져 쓰러짐",
   "basicSkillName": "본체 능력",
-  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest", "5": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "웨코문도",
   "arenaBg": "seireitei",
@@ -184,7 +163,7 @@
     "몸이 근질거린다…",
     "가면 아래가 뜨겁다… 곧 무언가 바뀐다."
   ],
-  "evolutionReasons": [[], ["굶주림에 몸을 맡기고 수많은 호로를 삼켰다.", "뒤엉킨 영혼들이 하나로 뭉쳐 길리안이 되었다."], ["길리안 무리 속에서도 삼켜지지 않고 나를 지켰다.", "동족을 포식해 몸을 다듬고 아쥬커스로 올라섰다."], ["멈추면 무너진다는 굶주림을 끝까지 버텼다.", "다듬어진 힘이 바스트로데의 모습으로 굳었다."], ["가면이 깨지며 사신의 힘에 닿았다.", "짐승의 껍질을 벗고 아란칼로 눈을 떴다."]],
+  "evolutionReasons": [[], ["굶주림에 몸을 맡기고 수많은 호로를 삼켰다.", "뒤엉킨 영혼들이 하나로 뭉쳐 길리안이 되었다."], ["길리안 무리 속에서도 삼켜지지 않고 나를 지켰다.", "동족을 포식해 몸을 다듬고 아쥬커스로 올라섰다."], ["멈추면 무너진다는 굶주림을 끝까지 버텼다.", "다듬어진 힘이 바스트로데의 모습으로 굳었다."]],
   "tutorialWound": [{"title": "겨우 쓰러뜨렸다", "body": "겨우 쓰러뜨렸지만 치명상을 입었다.\n이대로는 위험하다…"}, {"title": "둥지로", "body": "갈라진 가면 틈으로 영력이 새어 나간다.\n비틀거리며 둥지로 돌아간다."}],
   "families": [
     {
@@ -448,6 +427,7 @@
       "keyring-bell": "bonebell"
     }
   },
+  "ascension": { "name": "아란칼화", "desc": "가면을 깨고 사신의 힘에 닿는다. 깨면 레스렉시온을 쓸 수 있고 모습이 아란칼로 바뀐다.", "foe": "가면 속의 짐승", "cutin": "가면이 깨진다 — 아란칼화!", "completeText": ["가면이 깨지며 사신의 힘에 닿았다.", "짐승의 껍질을 벗고 아란칼로 눈을 떴다."], "lookChange": true, "artTier": 5 },
   "liberation": {
     "baseName": "영력 해방",
     "baseCutin": "영력을 끌어올린다 — 영력 해방!",

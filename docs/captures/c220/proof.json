@@ -1,0 +1,46 @@
+{
+  "shots": [
+    "01-evolve-3to4-hollow.png",
+    "02-status-slots-crit-hollow.png",
+    "03-training-ascension-hollow.png",
+    "04a-old-save-room-hollow.png",
+    "04b-old-save-status-hollow.png"
+  ],
+  "errors": [],
+  "evolvePath": "3단계 아쥬커스4단계 바스트로데",
+  "evolveName": "바스트로데!",
+  "abilitySlots": "특성 칸 1/1 · 보유 2개 · 진화할 때 얻고 환생해도 남는다1칸 · 작열",
+  "critRows": [
+    "평타 치명5%기본 5% · 최대 50%",
+    "블록 치명9%기본 5% · 블록 보정 +4%p · 최대 50%"
+  ],
+  "ascension": "아란칼화임시가면을 깨고 사신의 힘에 닿는다. 깨면 레스렉시온을 쓸 수 있고 모습이 아란칼로 바뀐다.상대: 가면 속의 짐승 (보스전 · 임시) · 지면 잃는 것 없이 다시 도전할 수 있다.아란칼화에 도전",
+  "migrated": {
+    "format": 57,
+    "evolution": {
+      "tierIndex": 3,
+      "formId": "t4:water:mixed",
+      "formHistory": [
+        "t2:base",
+        "t3:water",
+        "t4:water:mixed"
+      ],
+      "ascended": true,
+      "look": "arrwaterc",
+      "abilities": {
+        "owned": {
+          "el:water": 1.5,
+          "disp:spr": 1
+        },
+        "equipped": [
+          "el:water",
+          "disp:spr"
+        ],
+        "slots": 3,
+        "ascendedEver": true
+      }
+    },
+    "slots": 6
+  },
+  "migratedEvo": "진화 정보바스트로데 물 교 임시 ★4단계 · 바스트로데 · 속성 물물마지막 단계(바스트로데)에 도달했다더 이상 진화하지 않는다. 포식 기록은 칭호 조건에 계속 쌓인다.진화 트리·수치·진화체 이름은 임시다(기획 20-5, 이름·그림은 사용자 확정 전 자리 표시) 임시환생하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 특성 1개는 남는다.환생진화체 도감"
+}

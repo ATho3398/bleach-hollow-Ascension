@@ -115,7 +115,7 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
 
 describe('C.108 노력치 상한·수련 보상', () => {
   it('상한 = 3~5단계 합계의 약 15% (70·88·110), 능력치 1개 50% — 1·2단계는 C.115(GDD 59)에서 약 8%(24·32)로 내림', () => {
-    expect(SX.evCapTotal).toEqual([24, 32, 70, 88, 110]);
+    expect(SX.evCapTotal).toEqual([24, 32, 70, 88]); // C.220: 4단계 (마지막 110 삭제)
     SX.evCapTotal.forEach((cap, i) => {
       if (i >= 2) {
         expect(cap / SX.tierTotals[i]!).toBeGreaterThan(0.14);

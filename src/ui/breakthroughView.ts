@@ -1,4 +1,4 @@
-// 한계 돌파 연출 (U-4): 균열·떨림은 CSS(reduced-motion 이면 정지 화면). 한계 돌파 = 폭주(GDD 23-2): 상태 이름은 종족 설정 frenzyName.
+// 폭주(호로화) 연출 (U-4): 균열·떨림은 CSS(reduced-motion 이면 정지 화면). 폭주(호로화) = 폭주(GDD 23-2): 상태 이름은 종족 설정 frenzyName.
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, panel, provisionalTag } from './bha/dom';

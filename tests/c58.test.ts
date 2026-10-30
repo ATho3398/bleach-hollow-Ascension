@@ -163,7 +163,7 @@ describe('보스 특성 (흡수)', () => {
 
 describe('스토리 데이터 (GDD 25-4·25-7)', () => {
   it('장 3개(1장 = 1단계 웨코문도 외곽 자리, 2장 = 3단계, 3장 = 5단계), 2·3장 내용은 C.84 에서 채움', () => {
-    expect(STORY_CHAPTERS.map((c) => [c.id, c.unlockTierIndex, c.groundId])).toEqual([['ch1', 0, 'outskirts'], ['ch2', 2, 'canyon'], ['ch3', 4, 'forest']]);
+    expect(STORY_CHAPTERS.map((c) => [c.id, c.unlockTierIndex, c.groundId])).toEqual([['ch1', 0, 'outskirts'], ['ch2', 2, 'canyon'], ['ch3', 3, 'forest']]);
     for (const fid of ['hollow', 'shinigami']) {
       expect(chapterContent(fid, 'ch1')!.episodes).toHaveLength(4);
       expect(chapterContent(fid, 'ch2')!.episodes).toHaveLength(4);

@@ -1,4 +1,4 @@
-// 진화체 트리 (GDD 20-5 v3.7~v4.2, 22-7): 1·1·1 → 바스트로데 속성 8 → 아란칼 속성 × 분류 24 + 히든 12(환생 전용 1 포함). 데이터는 forms.json (생성기 결과를 커밋한 것 — 손으로 고칠 수 있다).
+// 진화체 트리 (GDD 126장 4단계 개편, C.220): 2단계 1 → 3단계 속성 5 + 히든 2(망한 진화체·통로) → 4단계 속성 × 타입 18 + 히든 10. 데이터는 forms.json (생성기 결과를 커밋한 것 — 손으로 고칠 수 있다).
 // 생성기: generate.ts / `npm run gen:forms`. 이름은 자리 표시이며, 정식 이름은 진화체의 name 에 종족별로 넣으면 그것이 우선한다.
 import { NORMAL_ELEMENT, categoryName, elementName, isElement } from '../elements';
 import { normalSlotNote } from '../help/textFormat';
@@ -12,7 +12,7 @@ export { generateFormTable, generateForms };
 
 /** 진화체 단계 범위 (1단계는 진화체가 없다) */
 export const FORM_MIN_TIER = 2;
-export const FORM_MAX_TIER = 5;
+export const FORM_MAX_TIER = 4;
 
 /** 트리 구조 검사. 문제 목록 (비면 정상) */
 export function validateFormTable(table: readonly FormDef[]): string[] {
@@ -62,7 +62,7 @@ export function formsOfTier(tier: number, table: readonly FormDef[] = FORM_TABLE
   return table.filter((f) => f.tier === tier);
 }
 
-/** 이름 자리 표시 (GDD 20장 v5.3 `단계_속성_분류`, 사용자 지시): "길리안", "바스트로데_불", "아란칼_불_탄"(분류 = 종족 계열 표시명), 히든 "바스트로데_융합_물흙"·"아란칼_한계돌파_불".
+/** 이름 자리 표시 (GDD 20장 v5.3 `단계_속성_분류`, 사용자 지시): "길리안", "아쥬커스_불", "바스트로데_불_탄"(분류 = 종족 계열 표시명), 히든 "바스트로데_융합_물흙"·"바스트로데_폭주형_불".
  *  단계 이름·계열 표시명은 종족 설정에서 읽는다 (종족 분기 없음). 속성을 잇는 아란칼 히든은 inherited(지금 캐릭터 속성)가 있으면 뒤에 `_속성` — 도감처럼 상태가 없으면 생략 */
 export function placeholderName(form: FormDef, factionId: string, inherited: readonly string[] = []): string {
   const fac = getFaction(factionId);
@@ -78,14 +78,15 @@ export function placeholderName(form: FormDef, factionId: string, inherited: rea
     element: [els[0] ?? ''],
     arrancar: [els.join(''), catName],
     fusion: ['융합', els.join('')],
-    complete: ['완전체'],
-    special: ['특수', els[0] ?? ''],
-    pure: ['순수'],
+    complete: ['4속성형'],
     fail: ['실패'],
-    limit: ['한계돌파', heir],
-    restraint: ['절제', heir],
-    hunter: ['강적사냥꾼', heir],
-    reborn: ['환생', heir],
+    passage: ['히든'],
+    awakened: ['각성형', heir],
+    frenzy: [`${fac.frenzyName}형`, heir],
+    restraint: ['절제형', heir],
+    stable: ['안정형', heir],
+    hunter: ['사냥꾼', heir],
+    void: ['허무형'],
   };
   return [tierName, ...parts[form.label.kind]].filter(Boolean).join('_');
 }
@@ -112,13 +113,14 @@ export function formHint(form: FormDef, factionId: string): string {
     arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(form.label.category, factionId)} 공격 특성을 가장 많이 장착하고 진화`,
     fusion: `${els.join('·')} 적을 고루 많이 ${getFaction(factionId).absorbActionName}`,
     complete: '네 원소의 적을 모두 고루',
-    special: `${els[0]} 적과 다른 한 속성의 적을 많이`,
-    pure: '노멀 위주로, 몸 상태가 좋을 때',
-    fail: '특성 없이, 또는 돌보지 못한 채 진화',
-    limit: `${getFaction(factionId).frenzyName} 상태를 여러 번 겪은 채 진화`,
-    restraint: '놓아준 수가 더 많은 채 진화',
-    hunter: '강적을 많이 쓰러뜨린 채 진화',
-    reborn: '여러 번 다시 태어난 끝에 진화',
+    fail: '특성 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화',
+    passage: '숨은 진화의 조건을 어느 정도 채운 채 진화',
+    awakened: '한 번 망했던 몸을 다시 태어나서까지 고르게 단련해 진화',
+    frenzy: `${getFaction(factionId).frenzyName} 상태를 여러 번 겪고, 흔들린 채 진화`,
+    restraint: '놓아준 수가 더 많고, 배를 채우지 않은 채 진화',
+    stable: '깊이 교감하며 한 번도 무너지지 않은 채 진화',
+    hunter: '먼 바퀴에서 강적을 여러 번 쓰러뜨린 채 진화',
+    void: '다시 태어난 끝에 세 가지 특수한 적을 고루',
   };
   return byKind[form.label.kind];
 }
@@ -135,7 +137,7 @@ import { FACTIONS } from '../factions';
 import type { ComboDef } from '../schema';
 import combosRaw from './combos.json';
 
-export const COMBO_MAX_TIER = 5;
+export const COMBO_MAX_TIER = 4;
 
 export function parseCombos(r: unknown): ComboDef[] {
   if (!Array.isArray(r)) throw new Error('콤보 데이터 오류: combos.json 은 배열이어야 한다');

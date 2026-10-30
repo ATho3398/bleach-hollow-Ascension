@@ -184,7 +184,7 @@ export interface CombatParams {
   blockPlayCrit: number;
   /** 환경(안개): 이 간격(초)마다 블록 바의 순서가 섞인다. 0 = 없음 */
   trayShuffleSeconds: number;
-  /** 컨디션·환경(폐가)·5바퀴 이후·한계 돌파: 공허 블록 생성 확률 가산 */
+  /** 컨디션·환경(폐가)·5바퀴 이후·폭주(호로화): 공허 블록 생성 확률 가산 */
   voidChanceBonus: number;
   /** 적 공격 한 번을 통째로 피할 확률 (GDD 101장 4번 — 폭주 중 risk.frenzyEvadeChance). 0 = 없음 */
   evadeChance: number;
@@ -218,6 +218,9 @@ export interface CombatParams {
   critMultiplier: number;
   enemyCritChance: number;
   critChanceMax: number;
+  /** 블록 치명 (GDD 126-1 확정 ②, C.220): 블록 공격의 치명 확률·상한. 옛 상태(없음)는 평타 값 */
+  blockCritChance: number;
+  blockCritChanceMax: number;
   /** 진화체 특성 효과 (C.89, GDD 39장): 진화체 label 에서 계산한 효과 종류별 값 (src/engine/evolution/formAbilities.ts). 비면 효과 없음 */
   abilityEffects: AbilityEffects;
   /** 속성 피해 (C.101, GDD 48장): 속성 id(노멀 + 기본 원소) → %. 없는 칸은 0. 값은 elementDamageOf(출처 합)가 정한다 */
@@ -296,7 +299,7 @@ export interface AbilityEffects {
   chainHaste?: number;
   /** 상성 불리(내 공격 약함·적 공격 강함)를 ×1 로 (완전형 '완성') */
   noWeak?: boolean;
-  /** 체력 below 아래에서 주는 피해 +bonus (한계 '한계 돌파') */
+  /** 체력 below 아래에서 주는 피해 +bonus (한계 '폭주(호로화)') */
   desperate?: { below: number; bonus: number };
   /** 강적·보스에게 주는 피해 +비율 (사냥꾼) */
   eliteSlayer?: number;
@@ -1135,15 +1138,22 @@ const CRIT_SEED_SALT = 0x9e3779b9;
 /** 특성 난수 시드 섞기 값 */
 const ABILITY_SEED_SALT = 0x7f4a7c15;
 
-/** 내 치명타 확률 (C.63): 기본 + 특성 합, 0 ~ 상한 */
+/** 내 평타 치명 확률 (C.63 → C.220 평타 치명): 기본 + 특성 합, 0 ~ 상한 */
 export function critChanceOf(p: CombatParams): number {
   return Math.min(p.critChanceMax, Math.max(0, p.critChance));
 }
 
-/** 치명타 판정 한 번: 맞으면 횟수를 세고 true. 확률 0 이면 난수를 쓰지 않는다. bonus = 블록 공격 치명 가산(GDD 84장 3번) */
-function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0): boolean {
+/** 내 블록 치명 확률 (GDD 126-1 확정 ②, C.220): 블록 치명 기본 + 특성 합, 0 ~ 블록 상한 (블록 보정 가산 전). 옛 상태는 평타 값 */
+export function blockCritChanceOf(p: CombatParams): number {
+  return Math.min(p.blockCritChanceMax ?? p.critChanceMax, Math.max(0, p.blockCritChance ?? p.critChance));
+}
+
+/** 치명타 판정 한 번: 맞으면 횟수를 세고 true. 확률 0 이면 난수를 쓰지 않는다. block = 블록 공격(블록 치명), bonus = 블록 공격 치명 가산(GDD 84장 3번) */
+function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = false): boolean {
   if (s.script) return false; // 각본 전투는 난수 없이 (GDD 123장 5)
-  const chance = who === 'player' ? Math.min(s.params.critChanceMax, critChanceOf(s.params) + bonus) : Math.min(s.params.critChanceMax, Math.max(0, s.params.enemyCritChance));
+  const p = s.params;
+  const chance = who === 'enemy' ? Math.min(p.critChanceMax, Math.max(0, p.enemyCritChance))
+    : block ? Math.min(p.blockCritChanceMax ?? p.critChanceMax, blockCritChanceOf(p) + bonus) : Math.min(p.critChanceMax, critChanceOf(p) + bonus);
   if (chance <= 0) return false;
   s.critRng ??= createRng((s.seed ^ CRIT_SEED_SALT) >>> 0);
   if (nextFloat(s.critRng) >= chance) return false;
@@ -1153,8 +1163,8 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0): boolean {
 }
 
 /** 내 공격 피해에 치명타를 굴린다: 피해가 있을 때만 */
-function playerCrit(s: CombatState, damage: number, bonus = 0): { damage: number; crit: boolean } {
-  if (damage <= 0 || !rollCrit(s, 'player', bonus)) return { damage, crit: false };
+function playerCrit(s: CombatState, damage: number, bonus = 0, block = false): { damage: number; crit: boolean } {
+  if (damage <= 0 || !rollCrit(s, 'player', bonus, block)) return { damage, crit: false };
   return { damage: damage * s.params.critMultiplier, crit: true };
 }
 
@@ -1172,7 +1182,7 @@ function rampBonus(s: CombatState, r: { per: number; everySeconds: number; max: 
   return r ? Math.min(r.max, r.per * Math.floor(elapsedSeconds(s) / r.everySeconds)) : 0;
 }
 
-/** 특성이 내 공격 피해에 곱하는 배율 (피의 갈증·부식·억눌린 힘·한계 돌파·사냥꾼). block = 블록 공격이면 균형도 */
+/** 특성이 내 공격 피해에 곱하는 배율 (피의 갈증·부식·억눌린 힘·폭주(호로화)·사냥꾼). block = 블록 공격이면 균형도 */
 export function abilityPowerOf(s: CombatState, block: boolean): number {
   const a = s.params.abilityEffects;
   const hpRatio = s.player.hp / Math.max(1e-6, s.player.maxHp);
@@ -1194,7 +1204,7 @@ function playerHit(s: CombatState, damage: number, block: boolean, elements: rea
   const blockPlay = block && !p.physBlock;
   const blockMult = block ? (p.blockDamageMultiplier ?? 1) * (blockPlay ? (p.blockPlayDamage ?? 1) : 1) : 1;
   const physMult = p.physBlock?.damage ?? 1;
-  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * (elem ? 1 + elem.pct / 100 : 1), blockPlay ? (p.blockPlayCrit ?? 0) : 0);
+  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * (elem ? 1 + elem.pct / 100 : 1), blockPlay ? (p.blockPlayCrit ?? 0) : 0, block);
   return elem ? { ...hit, elem } : hit;
 }
 

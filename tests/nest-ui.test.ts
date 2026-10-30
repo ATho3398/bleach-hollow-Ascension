@@ -47,8 +47,8 @@ describe('진화체 도감 카드 상태', () => {
     expect(formCardModel(other, u, other.id)).toMatchObject({ state: 'found', current: true, hidden: false, element: other.label.elements[0] });
     expect(formCardModel(hiddenForm, u, other.id)).toMatchObject({ state: 'found', current: false, hidden: true });
   });
-  it('속성을 잇는 아란칼 히든은 카드 색 속성이 없다', () => {
-    const limit = formsOfTier(5).find((f) => f.label.kind === 'limit')!;
+  it('속성을 잇는 4단계 행동 히든은 카드 색 속성이 없다', () => {
+    const limit = formsOfTier(4).find((f) => f.label.kind === 'frenzy')!;
     expect(formCardModel(limit, new Set([limit.id]), null).element).toBeUndefined();
   });
   it('히든은 목록 맨 뒤로 정렬한다 (안정 정렬)', () => {
@@ -58,9 +58,9 @@ describe('진화체 도감 카드 상태', () => {
     expect(sorted.slice(0, firstHidden)).toEqual(t4.filter((f) => !f.hidden));
     expect(sorted).toHaveLength(t4.length);
   });
-  it('모든 단계에 일반 진화체가 있고, 히든은 4·5단계에만', () => {
-    for (const t of [2, 3, 4, 5]) expect(formsOfTier(t).filter((f) => !f.hidden).length).toBeGreaterThan(0);
-    for (const t of [2, 3]) expect(formsOfTier(t).filter((f) => f.hidden)).toHaveLength(0);
+  it('모든 단계에 일반 진화체가 있고, 히든은 3·4단계에만 (C.220)', () => {
+    for (const t of [2, 3, 4]) expect(formsOfTier(t).filter((f) => !f.hidden).length).toBeGreaterThan(0);
+    for (const t of [2]) expect(formsOfTier(t).filter((f) => f.hidden)).toHaveLength(0);
     expect(FORM_TABLE.length).toBeGreaterThan(0);
   });
 });

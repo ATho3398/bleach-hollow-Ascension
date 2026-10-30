@@ -84,18 +84,32 @@ export type RoomTalk = (typeof ROOM_TALK)[number];
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
 export const TRAINING_GAME_IDS = ['duel', 'dodge', 'clash', 'chain'] as const;
 
-/** 해방 (GDD 83장): 버튼·블록·연출 문구. 5단계 전 = base*(양 종족 "영력 해방"), 5단계(BALANCE liberation.minTierIndex)부터 = 호로 "레스렉시온" / 사신 "만해" */
+/** 해방 (GDD 83장 → 126장 3): 버튼·블록·연출 문구. 아란칼화 / 참백도 구상화 전 = base*(양 종족 "영력 해방"), 깬 뒤 = 호로 "레스렉시온" / 사신 "만해" */
 export interface LiberationConfig {
-  /** 5단계 전 이름·컷인·풀릴 때 문구 */
+  /** 고유 해방 전 이름·컷인·풀릴 때 문구 */
   baseName: string;
   baseCutin: string;
   baseEndText: string;
-  /** 5단계부터 버튼·상태 이름 */
+  /** 아란칼화 / 참백도 구상화를 깬 뒤 버튼·상태 이름 */
   name: string;
   /** 해방하는 순간 짧은 컷인 한 줄 */
   cutin: string;
   /** 풀릴 때 로그 한 줄 (리스크 상승) */
   endText: string;
+}
+
+/** 아란칼화 / 참백도 구상화 (GDD 126장 3, C.220): 4단계부터 수련장에서 도전(지금은 보스전 임시). 깨면 레스렉시온/만해 해금.
+ *  lookChange = 깨는 순간 외형이 바뀌는가(호로 true, 사신 false) — artTier = 그때 쓰는 그림 단계 번호(1부터, 그림 키 char.<종족>.<n>·formLooks·genderLookFromTier 와 같은 수) */
+export interface AscensionConfig {
+  name: string;
+  desc: string;
+  /** 상대 이름 (보스전 머리글) */
+  foe: string;
+  cutin: string;
+  /** 깼을 때 두 줄 */
+  completeText: [string, string];
+  lookChange: boolean;
+  artTier?: number;
 }
 
 /** 환생 (GDD 22-1·22-7): 버튼·확인·연출 문구 */
@@ -289,8 +303,8 @@ export interface FactionConfig {
   /** 성별 외형이 갈리는 첫 단계 번호 (GDD 114장 2, 1부터): 이 단계부터 여성은 여성 그림(그림 키 + `.f`)을 찾는다. 그 전 단계는 남녀 같은 그림. 없으면 외형이 갈리지 않는다 */
   genderLookFromTier?: number;
   tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[] }>;
-  /** 육성 5단계 이름 (GDD 8-1) */
-  tierNames: [string, string, string, string, string];
+  /** 육성 4단계 이름 (GDD 126장 확정 1, C.220) */
+  tierNames: [string, string, string, string];
   /** 등급 번호 1~10 의 표시 이름 (GDD 21-1, [0] = 1번). 엔진은 번호만 다룬다 */
   rankNames: string[];
   /** 번호가 없는 상태의 표시 이름 (GDD 21-1 v4.4, 호로 "무번호") */
@@ -329,9 +343,9 @@ export interface FactionConfig {
   lineageBonusName: string;
   /** 특성 종류 표기 (GDD 4장): 기술·시해 능력 / 패시브 / 외형·참백도 파츠 */
   traitKindNames: Record<'skill' | 'passive' | 'part', string>;
-  /** 리스크 한계 돌파 연출 문구 */
+  /** 리스크 폭주(호로화) 연출 문구 */
   breakthroughText: string;
-  /** 한계 돌파 = 폭주 상태 이름 (GDD 23-2): 호로 "폭주", 사신 "호로화" (GDD 102-5). 원정·전투 화면 상태 칩과 결과 화면에 쓴다 */
+  /** 폭주(호로화) = 폭주 상태 이름 (GDD 23-2): 호로 "폭주", 사신 "호로화" (GDD 102-5). 원정·전투 화면 상태 칩과 결과 화면에 쓴다 */
   frenzyName: string;
   /** 사냥터 이름 (GDD 6장) */
   huntingGroundName: string;
@@ -377,6 +391,7 @@ export interface FactionConfig {
   gearScreen?: { title?: string; battleSlot?: string };
   /** 해방 (GDD 22-5): 이름·컷인·풀릴 때 문구 */
   liberation: LiberationConfig;
+  ascension: AscensionConfig;
   /** 해방 수련 (GDD 22-5): 제단 화면·4종목 문구 */
   training: TrainingConfig;
   /** 환생 (GDD 22-7): 버튼 이름·연출 문구 */
@@ -411,7 +426,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
-  if (!isStringTuple(r.tierNames, 5)) errors.push('tierNames: 문자열 5개여야 한다');
+  if (!isStringTuple(r.tierNames, 4)) errors.push('tierNames: 문자열 4개여야 한다');
   if (!isStringTuple(r.rankNames, RANK_NAME_COUNT)) errors.push(`rankNames: 문자열 ${RANK_NAME_COUNT}개여야 한다 (번호 1~${RANK_NAME_COUNT})`);
   const rn = (r.roleNames ?? {}) as Record<string, unknown>;
   for (const role of BLOCK_ROLES) {
@@ -501,7 +516,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (!isString(mt.strong) || !isString(mt.weak)) errors.push('matchupText: { strong, weak } 문자열');
   if (!isStringTuple(r.evolutionNearText, 2)) errors.push('evolutionNearText: 문자열 2개');
   const er = r.evolutionReasons;
-  if (!Array.isArray(er) || er.length !== 5 || !er.every((x, i) => Array.isArray(x) && x.length <= 2 && (i === 0 || x.length >= 1) && x.every(isString))) errors.push('evolutionReasons: 단계 5칸, 1단계 빈 목록·나머지 문자열 1~2줄');
+  if (!Array.isArray(er) || er.length !== 4 || !er.every((x, i) => Array.isArray(x) && x.length <= 2 && (i === 0 || x.length >= 1) && x.every(isString))) errors.push('evolutionReasons: 단계 4칸, 1단계 빈 목록·나머지 문자열 1~2줄');
   const tw = r.tutorialWound;
   if (!Array.isArray(tw) || tw.length < 1 || tw.length > 2 || !tw.every((c) => isRec(c) && isString(c.title) && isString(c.body))) errors.push('tutorialWound: { title, body } 1~2장');
   if (r.maxChain !== undefined && !(Number.isInteger(r.maxChain) && (r.maxChain as number) >= 1)) errors.push('maxChain: 1 이상 정수');
@@ -581,6 +596,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       for (const [k, v] of Object.entries((pv ?? {}) as Record<string, unknown>)) if (!(ROOM_TALK as readonly string[]).includes(k) || !Array.isArray(v) || v.length === 0 || !v.every(isString)) errors.push(`cosmetics.talkPacks.${pk}.${k}: 알려진 혼잣말 키의 비어 있지 않은 문자열 목록이어야 한다`);
     }
   }
+  const asc = (r.ascension ?? {}) as Record<string, unknown>;
+  for (const k of ['name', 'desc', 'foe', 'cutin']) if (!isString(asc[k])) errors.push(`ascension.${k}: 비어 있지 않은 문자열이어야 한다`);
+  if (!isStringTuple(asc.completeText, 2)) errors.push('ascension.completeText: 문자열 2개여야 한다');
+  if (typeof asc.lookChange !== 'boolean') errors.push('ascension.lookChange: boolean');
+  if (asc.artTier !== undefined && !(Number.isInteger(asc.artTier) && (asc.artTier as number) >= 1)) errors.push('ascension.artTier: 1 이상 정수');
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
   for (const k of ['baseName', 'baseCutin', 'baseEndText', 'name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
   const rb = (r.rebirth ?? {}) as Record<string, unknown>;

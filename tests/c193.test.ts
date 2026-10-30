@@ -148,7 +148,7 @@ describe('119장 3 사신 지역 이름', () => {
 
 describe('119장 4 성별 설명', () => {
   it('"여성 그림이 없으면…" 문구 삭제', () => {
-    expect(genderLookNote(getFaction('hollow').tierNames, 5)).toBe('아란칼부터 모습이 달라진다.');
+    expect(genderLookNote(getFaction('hollow').tierNames, 5, getFaction('hollow').ascension)).toBe('아란칼화를 깬 뒤부터 모습이 달라진다.');
   });
 });
 

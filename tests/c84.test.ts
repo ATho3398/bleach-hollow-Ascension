@@ -43,7 +43,7 @@ describe('스토리 2장·3장 데이터 (GDD 35-1~35-4)', () => {
         { type: 'boss' },
       ]);
       expect(c2.episodes.map((e) => [e.recommendedTier, e.difficulty])).toEqual([[3, 3], [3, 3], [4, 4], [4, 4]]);
-      expect(c3.episodes.map((e) => [e.recommendedTier, e.difficulty])).toEqual([[5, 5], [5, 5], [5, 5], [5, 5]]);
+      expect(c3.episodes.map((e) => [e.recommendedTier, e.difficulty])).toEqual([[4, 4], [4, 4], [4, 4], [4, 4]]); // C.220: 옛 ★5 → ★4
       expect(c2.episodes[0]!.maxLaps).toBe(3);
       expect(c3.episodes[0]!.maxLaps).toBe(3);
       expect(c2.episodes[3]!.boss).toEqual({ id: 'canyon-king', cell: 11 });

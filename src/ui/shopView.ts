@@ -7,6 +7,7 @@ import { CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, IT
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
+import { artTierIndexOf } from '../game';
 import { buyShopItem, buyWandererItem, goldRows, healDaily, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
 import { getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
 import { GEAR_KIND_ICONS } from '../data/gear';
@@ -126,7 +127,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const artOf = (row: ShopRow, big = false): HTMLElement => {
     const cos = getCosmetic(row.id);
     if (cos?.category === 'skin') {
-      const src = charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, cos.look).src;
+      const src = charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, cos.look).src;
       return src ? imageArt(src) : iconArt('i-rare');
     }
     if (cos && cos.category !== 'device') {

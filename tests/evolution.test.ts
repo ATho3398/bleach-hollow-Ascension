@@ -29,9 +29,9 @@ const buildWith = (...ids: string[]): BuildState => {
   return b;
 };
 /** 단계 tierIndex 에 머문 진화 상태 (진화 경로는 일반형) */
-function atTier(tierIndex: number, vasto = 't4:fire'): EvolutionState {
+function atTier(tierIndex: number, vasto = 't3:fire'): EvolutionState {
   const e = newEvolution(12345);
-  const path = ['t2:base', 't3:base', vasto, 't5:fire:physical'].slice(0, tierIndex);
+  const path = ['t2:base', vasto, 't4:fire:physical'].slice(0, tierIndex);
   e.tierIndex = tierIndex;
   e.formHistory = path;
   e.formId = path[path.length - 1] ?? null;
@@ -111,79 +111,98 @@ describe('진화 타이밍 = 걸음 수 (v4.1)', () => {
   });
 });
 
-describe('트리 판정', () => {
-  it('1~3단계는 분기 없이 base 하나', () => {
-    for (const t of [0, 1]) {
-      const e = atTier(t);
-      expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'))).form.id).toBe(`t${t + 2}:base`);
-    }
+describe('트리 판정 (GDD 126장, C.220)', () => {
+  it('2단계는 분기 없이 base 하나', () => {
+    expect(judgeEvolution(atTier(0), ctxOf(buildWith('t-water-a'))).form.id).toBe('t2:base');
   });
 
-  it('바스트로데 = 진화 순간 장착 특성 중 가장 많은 속성, 동률이면 가장 최근에 장착한 특성의 속성', () => {
-    const e = atTier(2);
-    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a', 't-water-b', 't-fire-c'))).form.id).toBe('t4:water');
+  it('3단계 = 진화 순간 장착 특성 중 가장 많은 속성(노멀·원소), 동률이면 가장 최근에 장착한 특성의 속성', () => {
+    const e = atTier(1);
+    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a', 't-water-b', 't-fire-c'))).form.id).toBe('t3:water');
     const tie = buildWith('t-water-a', 't-fire-c');
     expect(dominantElement(tie)).toBe('fire');
     setSlot(tie, 0, 't-water-a'); // 다시 장착하면 가장 최근이 된다
     expect(dominantElement(tie)).toBe('water');
-    expect(judgeEvolution(e, ctxOf(tie)).form.id).toBe('t4:water');
+    expect(judgeEvolution(e, ctxOf(tie)).form.id).toBe('t3:water');
   });
 
-  it('실패형은 강제: 장착 특성 없음 / 허기 높음 / 컨디션 낮음. 히든 조건을 채워도 실패형이 우선', () => {
-    const e = absorbs(atTier(2), { water: 5, earth: 5 });
-    expect(judgeEvolution(e, ctxOf(newBuild())).form.id).toBe('h4:fail');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'), { hunger: H.failHunger })).form.id).toBe('h4:fail');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'), { condition: H.failCondition })).form.id).toBe('h4:fail');
+  it('망한 진화체(3단계)·실패형(4단계)은 강제: 장착 특성 없음 / 허기 높음 / 컨디션 낮음 / (3단계) 흩어지게 먹음', () => {
+    const e = absorbs(atTier(1), { water: 5, earth: 5 });
+    expect(judgeEvolution(e, ctxOf(newBuild())).form.id).toBe('h3:fail');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'), { hunger: H.failHunger })).form.id).toBe('h3:fail');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-water-a'), { condition: H.failCondition })).form.id).toBe('h3:fail');
+    // 최다 속성 30% 미만
+    expect(judgeEvolution(absorbs(atTier(1), { water: 1, earth: 1, fire: 1, thunder: 1, normal: 1, blood: 1 }), ctxOf(buildWith('t-water-a'))).form.id).toBe('h3:fail');
     const snap = judgeEvolution(e, ctxOf(newBuild())).snapshot;
     expect(snap.forced).toBe(true);
     expect(snap.candidates).toHaveLength(1);
+    expect(judgeEvolution(atTier(2), ctxOf(newBuild())).form.id).toBe('h4:fail');
   });
 
-  it('속성 히든 후보: 마주 보는 원소 융합·완전체·특수·순수 (흡수가 minAbsorbs 이상일 때만)', () => {
+  it('3단계 히든 통로: 4단계 히든 조건의 약 60% (융합 25%·4속성 9%·폭주 2·놓아줌 60%·교감 60·사냥 2)', () => {
     const b = buildWith('t-water-a');
-    const ids = (e: EvolutionState, build = b, o = {}) => evolutionCandidates(e, ctxOf(build, o)).hidden.map((c) => c.formId);
+    const ids = (e: EvolutionState, o: Record<string, unknown> = {}) => evolutionCandidates(e, { ...ctxOf(b), ...o }).hidden.map((c) => c.formId);
+    expect(ids(absorbs(atTier(1), { water: 3, earth: 3, fire: 4 }))).toEqual(['h3:passage']);
+    expect(ids(absorbs(atTier(1), { water: 9, earth: 1 }))).toEqual([]);
+    const bt = absorbs(atTier(1), { water: 5 });
+    bt.breakthroughs = 2;
+    expect(ids(bt)).toEqual(['h3:passage']);
+    expect(ids(absorbs(atTier(1), { water: 5 }), { bond: 60 })).toEqual(['h3:passage']);
+  });
+
+  it('4단계 히든 후보: 융합(각 40%)·4속성형(각 15%)·허무형(혈독허 각 20% + 환생)·폭주형·절제형·안정형·사냥꾼·각성형', () => {
+    const b = buildWith('t-water-a');
+    const ids = (e: EvolutionState, o: Record<string, unknown> = {}) => evolutionCandidates(e, { ...ctxOf(b), ...o }).hidden.map((c) => c.formId).sort();
     expect(ids(absorbs(atTier(2), { water: 5, earth: 5 }))).toEqual(['h4:fusion:water+earth']);
     expect(ids(absorbs(atTier(2), { fire: 5, thunder: 5 }))).toEqual(['h4:fusion:fire+thunder']);
-    // 상성 관계인 쌍(물+불)은 융합이 없다
-    expect(ids(absorbs(atTier(2), { water: 5, fire: 5 }))).toEqual([]);
-    expect(ids(absorbs(atTier(2), { water: 2, fire: 2, earth: 2, thunder: 2 }))).toEqual(['h4:complete']);
-    expect(ids(absorbs(atTier(2), { blood: 5, fire: 5 }))).toEqual(['h4:special:blood']);
-    // 특수끼리면 흡수 수 많은 쪽 하나
-    expect(ids(absorbs(atTier(2), { poison: 6, kyo: 5 }))).toEqual(['h4:special:poison']);
-    // 순수형: 장착 최다 노멀 + 노멀 흡수 40%↑ + 컨디션 양호
-    const nb = buildWith(); // C.184: 노멀 skill 특성은 기본 블록(GDD 111장 1) — 빈 슬롯 + 노멀 강화 = 노멀 장착
-    nb.enhance = { normal: 6 };
-    expect(ids(absorbs(atTier(2), { normal: 6 }), nb)).toEqual(['h4:pure']);
-    expect(ids(absorbs(atTier(2), { normal: 6 }), nb, { condition: H.pureCondition - 1 })).toEqual([]);
-    expect(ids(absorbs(atTier(2), { normal: 6 }), b)).toEqual([]);
-    // 흡수가 적으면 분포 히든을 보지 않는다
-    expect(ids(absorbs(atTier(2), { water: 2, earth: 2 }))).toEqual([]);
+    expect(ids(absorbs(atTier(2), { water: 5, fire: 5 }))).toEqual([]); // 상성 관계인 쌍은 융합 없음
+    expect(ids(absorbs(atTier(2), { water: 2, fire: 2, earth: 2, thunder: 2, normal: 2 }))).toEqual(['h4:complete', 'h4:fail']); // 30% 미만이면 실패형 후보도
+    expect(ids(absorbs(atTier(2), { blood: 2, poison: 2, kyo: 2 }))).toEqual([]); // 환생 전엔 없음
+    expect(ids(absorbs(atTier(2), { blood: 2, poison: 2, kyo: 2 }), { rebirths: 1 })).toEqual(['h4:void']);
+    const fr = atTier(2);
+    fr.breakthroughs = H.breakthroughs;
+    expect(ids(fr, { stability: H.frenzyStabilityBelow - 1 })).toEqual(['h4:frenzy']);
+    expect(ids(fr, { stability: H.frenzyStabilityBelow })).toEqual([]);
+    const rs = atTier(2);
+    rs.releases = 3;
+    rs.absorbs = 1;
+    expect(ids(rs, { hunger: 100 - H.restraintFullnessMax })).toEqual(['h4:restraint']);
+    expect(ids(rs, { hunger: 20 })).toEqual([]); // 배부름 80 > 50
+    expect(ids(atTier(2), { bond: H.stableBond })).toEqual(['h4:stable']);
+    const faint = atTier(2);
+    faint.faints = 1;
+    expect(ids(faint, { bond: H.stableBond })).toEqual([]);
+    const hu = atTier(2);
+    hu.hunterRuns = H.hunterRuns;
+    expect(ids(hu)).toEqual(['h4:hunter']);
+    const aw = atTier(2);
+    aw.practices = H.awakenedPractices;
+    for (const k of STAT_IDS) aw.ev[k] = 10;
+    const awCtx = { failLineage: true, rebirths: 1, statTotal: BALANCE.provisional.stats.tierTotals[3] };
+    expect(ids(aw, awCtx)).toEqual(['h4:awakened']);
+    aw.ev.atk = 20; // 한쪽으로 쏠리면 아니다
+    expect(ids(aw, awCtx)).toEqual([]);
+    expect(ids(absorbs(atTier(2), { water: 2, earth: 2 }))).toEqual([]); // 흡수가 적으면 분포 히든을 보지 않는다
   });
 
-  it('아란칼 = 바스트로데 속성 × 장착 최다 공격 분류 (공격 특성이 없으면 혼합)', () => {
-    const e = atTier(3, 't4:thunder');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-a', 't-water-a', 't-fire-c'))).form.id).toBe('t5:thunder:physical');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-c'))).form.id).toBe('t5:thunder:special');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-passive'))).form.id).toBe('t5:thunder:mixed'); // C.136: 막기 속성 특성 삭제 — 공격 아닌 특성은 패시브로
+  it('4단계 일반 = 3단계 속성 × 장착 최다 공격 분류 (공격 특성이 없으면 혼합), 혈·독·허가 장착 최다면 그 속성 하나뿐인 타입', () => {
+    const e = atTier(2, 't3:thunder');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-a', 't-water-a', 't-fire-c'))).form.id).toBe('t4:thunder:physical');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-c'))).form.id).toBe('t4:thunder:special');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-fire-passive'))).form.id).toBe('t4:thunder:mixed');
     expect(dominantCategory(buildWith('t-fire-b'), 'hollow')).toBe('mixed');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-blood-a', 't-blood-b', 't-fire-c'))).form.id).toBe('t4:blood:physical');
+    expect(judgeEvolution(e, ctxOf(buildWith('t-poison-a', 't-poison-b'))).form.id).toBe('t4:poison:special');
+    expect(judgeEvolution(atTier(2, 'h3:fail'), ctxOf(buildWith('t-fire-a'))).form.id).toBe('h4:fail');
   });
 
-  it('아란칼 행동 히든: 한계 돌파·절제(놓아준 수 > 흡수 수)·강적 사냥꾼', () => {
-    const b = buildWith('t-fire-a');
-    const ids = (e: EvolutionState) => evolutionCandidates(e, ctxOf(b)).hidden.map((c) => c.formId).sort();
-    const e = atTier(3);
-    e.breakthroughs = H.breakthroughs;
-    e.releases = 3;
-    e.absorbs = 1;
-    e.elitesDefeated = H.elites;
-    expect(ids(e)).toEqual(['h5:hunter', 'h5:limit', 'h5:restraint']);
-    const none = atTier(3);
-    none.releases = 2;
-    none.absorbs = 2;
-    expect(ids(none)).toEqual([]);
+  it('4단계 우선순위 (확정 5): 조건을 채운 히든이 있으면 일반은 후보에서 빠진다', () => {
+    const e = absorbs(atTier(2), { water: 5, earth: 5 });
+    const snap = judgeEvolution(e, ctxOf(buildWith('t-water-a'))).snapshot;
+    expect(snap.candidates.map((c) => c.formId)).toEqual(['h4:fusion:water+earth']);
   });
 
-  it('가중 랜덤 (v4.2): 겨우 채우면 일반과 반반(가중 1), 크게 넘기면 히든 90%(가중 9). 같은 단계 시드 = 같은 결과', () => {
+  it('가중 랜덤 (v4.2, 3단계 통로): 겨우 채우면 일반과 반반(가중 1), 크게 넘기면 히든 90%(가중 9). 같은 단계 시드 = 같은 결과', () => {
     expect(hiddenWeight(0)).toBe(1);
     expect(hiddenWeight(EV.weight.fullExcess)).toBe(EV.weight.max);
     expect(hiddenWeight(10)).toBe(EV.weight.max);
@@ -191,37 +210,35 @@ describe('트리 판정', () => {
     const tally = (counts: Record<string, number>) => {
       let hidden = 0;
       for (let seed = 1; seed <= 400; seed++) {
-        const e = absorbs(atTier(2), counts);
+        const e = absorbs(atTier(1), counts);
         e.stageSeed = seed * 2654435761;
         if (judgeEvolution(e, ctxOf(b)).form.hidden) hidden++;
       }
       return hidden / 400;
     };
-    expect(tally({ water: 4, earth: 4, fire: 1, thunder: 1 })).toBeGreaterThan(0.35);
-    expect(tally({ water: 4, earth: 4, fire: 1, thunder: 1 })).toBeLessThan(0.65);
+    expect(tally({ water: 3, earth: 3, fire: 6 })).toBeGreaterThan(0.35);
+    expect(tally({ water: 3, earth: 3, fire: 6 })).toBeLessThan(0.65);
     expect(tally({ water: 5, earth: 5 })).toBeGreaterThan(0.75);
-    const e = absorbs(atTier(2), { water: 4, earth: 4, fire: 2 });
+    const e = absorbs(atTier(1), { water: 4, earth: 4, fire: 2 });
     expect(judgeEvolution(e, ctxOf(b)).form.id).toBe(judgeEvolution(cloneEvolution(e), ctxOf(b)).form.id);
   });
 });
 
 describe('속성·자기 속성 보정 잇기', () => {
   const evolved = (...path: string[]): EvolutionState => ({ ...newEvolution(), tierIndex: path.length, formHistory: path, formId: path[path.length - 1]! });
-  it('1단계는 노멀, 바스트로데부터 그 속성. 융합은 두 속성, 융합에서 온 아란칼도 두 속성', () => {
+  it('1단계는 노멀, 3단계부터 그 속성. 융합은 두 속성, 행동 히든은 3단계 속성을 잇는다', () => {
     expect(playerElementsOf(newEvolution())).toEqual(['normal']);
-    expect(playerElementsOf(evolved('t2:base', 't3:base', 't4:fire'))).toEqual(['fire']);
-    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:water+earth'))).toEqual(['water', 'earth']);
-    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:water+earth', 't5:water:special'))).toEqual(['water', 'earth']);
-    // 행동 히든은 바스트로데 속성을 잇는다
-    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:special:poison', 'h5:hunter'))).toEqual(['poison']);
-    expect(playerElementsOf(evolved('t2:base', 't3:base', 'h4:fusion:fire+thunder', 'h5:limit'))).toEqual(['fire', 'thunder']);
+    expect(playerElementsOf(evolved('t2:base', 't3:fire'))).toEqual(['fire']);
+    expect(playerElementsOf(evolved('t2:base', 't3:water', 'h4:fusion:water+earth'))).toEqual(['water', 'earth']);
+    expect(playerElementsOf(evolved('t2:base', 't3:water', 't4:water:special'))).toEqual(['water']);
+    expect(playerElementsOf(evolved('t2:base', 't3:thunder', 'h4:hunter'))).toEqual(['thunder']);
+    expect(playerElementsOf(evolved('t2:base', 'h3:passage', 'h4:frenzy'))).toEqual(['normal']);
+    expect(playerElementsOf(evolved('t2:base', 't3:fire', 'h4:void'))).toEqual(['kyo']);
   });
-  it('순수형은 자기 속성 보정이 크고, 그 아란칼(노멀)·행동 히든이 잇는다', () => {
+  it('안정형은 자기 속성 보정이 크다 (옛 순수형 값)', () => {
     expect(stabOf(newEvolution())).toBe(BALANCE.elements.stab);
-    expect(stabOf(evolved('t2:base', 't3:base', 'h4:pure'))).toBe(EV.template.pureStab);
-    expect(stabOf(evolved('t2:base', 't3:base', 'h4:pure', 't5:normal:mixed'))).toBe(EV.template.pureStab);
-    expect(stabOf(evolved('t2:base', 't3:base', 'h4:pure', 'h5:restraint'))).toBe(EV.template.pureStab);
-    expect(stabOf(evolved('t2:base', 't3:base', 't4:normal', 't5:normal:mixed'))).toBe(BALANCE.elements.stab);
+    expect(stabOf(evolved('t2:base', 't3:normal', 'h4:stable'))).toBe(EV.template.pureStab);
+    expect(stabOf(evolved('t2:base', 't3:normal', 't4:normal:mixed'))).toBe(BALANCE.elements.stab);
   });
 });
 
@@ -279,23 +296,26 @@ describe('노력치 (GDD 20-4)', () => {
 
 describe('진화 확정', () => {
   it('단계 +1, 슬롯 +1, 단계 기록 리셋(노력치 유지), 새 단계 시드, 런 로그 스냅샷', () => {
-    const e = absorbs(atTier(2), { water: 3, fire: 1 });
+    const e = absorbs(atTier(1), { water: 3, fire: 1 });
     e.releases = 2;
     const seed = e.stageSeed;
     const b = buildWith('t-water-a');
     const r = evolve(e, b, { factionId: 'hollow', hunger: 30, condition: 70 }, 77);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(e.tierIndex).toBe(3);
+    expect(e.tierIndex).toBe(2);
     expect(b.slots).toHaveLength(BALANCE.absorb.slotCount + 1);
     expect([e.steps, e.absorbs, e.releases, e.breakthroughs, e.elitesDefeated, e.alerts]).toEqual([0, 0, 0, 0, 0, 0]);
     expect(e.elementAbsorbs).toEqual({});
     expect(e.stageSeed).not.toBe(seed);
-    expect(r.record).toMatchObject({ fromTier: 2, toTier: 3, fromFormId: 't3:base', toFormId: 't4:water', at: 77 });
+    expect(r.record).toMatchObject({ fromTier: 1, toTier: 2, fromFormId: 't2:base', toFormId: 't3:water', at: 77 });
+    // 특성은 진화할 때 얻는다 (GDD 126-1 수정 1): 보유 목록 + 칸 1 (기본 1칸)
+    expect(Object.keys(e.abilities!.owned).sort()).toEqual(['disp:' + e.ability, 'el:water'].sort());
+    expect(e.abilities!.equipped).toEqual(['el:water']);
     expect(r.record.snapshot).toMatchObject({ elementAbsorbs: { water: 3, fire: 1 }, releases: 2, hunger: 30, condition: 70, equippedElement: 'water' });
   });
-  it('5단계 이후에는 진화하지 않는다', () => {
-    const e = atTier(4);
+  it('4단계(마지막) 이후에는 진화하지 않는다', () => {
+    const e = atTier(3);
     e.steps = 999;
     expect(evolve(e, newBuild(), { factionId: 'hollow', hunger: 0, condition: 100 }, 0).ok).toBe(false);
   });
@@ -366,16 +386,16 @@ describe('세이브 마이그레이션 (형식 13 → 14)', () => {
 
   it('진화: 단계를 유지하고 새 트리의 대응 형태로 (4단계 = 옛 4단계 첫 계통의 속성), 계통 누적은 버리고 걸음 0부터', () => {
     const m = migrateSave(oldSave13())!;
-    // 옛 4단계 진화체의 첫 계통 lineage-c → 뇌
-    expect(m.evolution.formHistory).toEqual(['t2:base', 't3:base', 't4:thunder']);
-    expect(m.evolution.formId).toBe('t4:thunder');
+    // 옛 4단계 진화체의 첫 계통 lineage-c → 뇌. C.220(형식 57): 옛 4단계(바스트로데 속성)는 4단계에 머물고 타입은 장착 최다(동률 → 최근 장착 특수)
+    expect(m.evolution.formHistory).toEqual(['t2:base', 't3:thunder', 't4:thunder:special']);
+    expect(m.evolution.formId).toBe('t4:thunder:special');
     expect(m.evolution.tierIndex).toBe(3);
     expect(m.evolution.steps).toBe(0);
     expect(m.evolution.absorbs).toBe(0);
     expect(evTotal(m.evolution.ev)).toBe(0);
     expect(m.evolution).not.toHaveProperty('lineageScores');
     expect(m.evolution.ability).not.toBeNull();
-    expect(m.formDex).toEqual(['t2:base', 't3:base', 't4:thunder']);
+    expect(m.formDex).toEqual(['t2:base', 't3:thunder', 't4:thunder:special']);
     expect(m.activeExpedition).toBeNull();
     expect(m.lastScreen).toBe('room');
     expect(m.runLog.absorbs[0]).toMatchObject({ lineageId: 'lineage-b', element: null });
@@ -384,10 +404,10 @@ describe('세이브 마이그레이션 (형식 13 → 14)', () => {
   it('5단계 세이브는 바스트로데 속성 × 지금 장착 최다 분류의 아란칼이 되고, 이어서 원정·전투 파라미터가 만들어진다', () => {
     const old = oldSave13();
     old.evolution.tierIndex = 4;
-    old.evolution.formHistory.push('t5:pair@lineage-a+lineage-b');
+    old.evolution.formHistory.push('t4:pair@lineage-a+lineage-b');
     const m = migrateSave(old)!;
     // 장착: 물리(t-fire-a)·특수(t-thunder-c) 동률 → 더 최근(슬롯 순서상 뒤) 특수
-    expect(m.evolution.formId).toBe('t5:thunder:special');
+    expect(m.evolution.formId).toBe('t4:thunder:special');
     const p: Partial<CombatParams> = {};
     expect(() => applyEvolutionToParams(p, m.evolution, m.factionId)).not.toThrow();
     expect(p.playerElements).toEqual(['thunder']);
@@ -402,7 +422,7 @@ describe('세이브 마이그레이션 (형식 13 → 14)', () => {
     const store = new Map<string, string>([['k', JSON.stringify(oldSave13())]]);
     const loaded = loadSave({ getItem: (k) => store.get(k) ?? null, setItem: () => {} }, 'k');
     expect(loaded?.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(loaded?.evolution.formId).toBe('t4:thunder');
+    expect(loaded?.evolution.formId).toBe('t4:thunder:special');
   });
 
   it('현재 형식 세이브는 그대로 열린다', () => {
@@ -418,12 +438,12 @@ describe('종족 설정만 바꿔 표기가 바뀐다 (코드 분기 없음)', (
     const run = (factionId: string) => judgeEvolution(absorbs(atTier(2), { water: 5, earth: 5 }), { ...ctxOf(buildWith('t-water-a')), factionId }).form.id;
     expect(run('hollow')).toBe(run('shinigami'));
     for (const f of FACTIONS) {
-      expect(f.tierNames).toHaveLength(5);
+      expect(f.tierNames).toHaveLength(4);
       expect(f.baseStats).toBeDefined();
       expect(f.evolutionNearText).toHaveLength(2);
     }
-    // 일반 32종 = 1단계(진화체 없음) + 1 + 1 + 5(C.106 노멀+원소) + 24, 히든 12 (C.56 환생 전용 1 추가)
-    expect(FORM_TABLE.filter((f) => !f.hidden)).toHaveLength(31);
+    // C.220 (GDD 126장): 일반 = 2단계 1 + 3단계 5 + 4단계 18, 히든 = 3단계 2 + 4단계 10
+    expect(FORM_TABLE.filter((f) => !f.hidden)).toHaveLength(24);
     expect(FORM_TABLE.filter((f) => f.hidden)).toHaveLength(12);
   });
 

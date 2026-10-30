@@ -45,7 +45,7 @@ describe('C.173 공허 블록 (GDD 101장)', () => {
       applyEvolutionToParams(p, { ...newEvolution(), tierIndex: 3, formId, formHistory: [], ability: 'atk' }, 'hollow');
       return p.voidPowerInAttacks;
     };
-    expect(on('t4:water')).toBe(CX.voidPowerInAttacks);
+    expect(on('t3:water')).toBe(CX.voidPowerInAttacks);
     expect(on('h4:complete')).toBe(CX.voidPowerHiddenInAttacks);
   });
 

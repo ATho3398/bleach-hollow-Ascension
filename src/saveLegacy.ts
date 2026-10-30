@@ -63,7 +63,8 @@ export function migrateEvolution(old: { tierIndex?: number; formHistory?: string
   const oldHistory = old?.formHistory ?? [];
   const el4 = legacyFormElement(oldHistory[2] ?? (tierIndex === 3 ? old?.formId : null));
   const path = ['t2:base', 't3:base', `t4:${el4}`, `t5:${el4}:${dominantCategory(build, factionId)}`].slice(0, tierIndex);
-  e.formHistory = path.filter((id) => tryGetForm(id) !== undefined);
+  // 옛 5단계 트리의 id 그대로 둔다 — 형식 56 → 57(C.220, src/saveTier4.ts)이 새 4단계 트리로 옮긴다
+  e.formHistory = path;
   e.formId = e.formHistory[e.formHistory.length - 1] ?? null;
   e.tierIndex = e.formHistory.length;
   const form = e.formId ? tryGetForm(e.formId) : undefined;

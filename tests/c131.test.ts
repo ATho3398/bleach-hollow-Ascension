@@ -11,7 +11,8 @@ describe('C.131 상태 화면·방·블록', () => {
     const body = nest.slice(nest.indexOf('export function statsBlock'), nest.indexOf('export function statRow'));
     expect(body).not.toContain('meter(');
     const lcd = read('src/ui/lcdScreens.ts');
-    expect(lcd).toContain("statRow('치명타 확률'");
+    expect(lcd).toContain("statRow('평타 치명'"); // C.220: 치명 두 줄 (126-1 확정 ②)
+    expect(lcd).toContain("statRow('블록 치명'");
     expect(lcd).toContain("statRow('치명타 피해'");
     expect(lcd).toContain('critChanceMax');
   });

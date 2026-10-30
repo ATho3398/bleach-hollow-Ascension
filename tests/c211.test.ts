@@ -80,13 +80,13 @@ describe('134장 3: 진화 이유 문구 (종족 설정)', () => {
   const sh = FACTIONS.find((f) => f.tierNames[1] === '영술원 학생')!;
   it('사신: 혼백 → 영술원 학생 = 진앙영술원 합격, 학생 → 다음 = 경쟁을 뚫고 정식 사신', () => {
     expect(sh.evolutionReasons[1]!.join(' ')).toMatch(/평범한 영혼.*뛰어난 능력.*진앙영술원에 합격/);
-    expect(sh.evolutionReasons[2]!.join(' ')).toMatch(/진앙영술원의 치열한 경쟁을 뚫.*정식 사신/);
+    expect(sh.evolutionReasons[2]!.join(' ')).toMatch(/진앙영술원의 치열한 경쟁을 뚫.*평대원/); // C.220: 견습 대원 삭제 — 학생 → 평대원
   });
   it('모든 종족·모든 진화 단계에 1~2줄, 문장마다 마침표, 1단계는 비어 있음', () => {
     for (const f of FACTIONS) {
-      expect(f.evolutionReasons).toHaveLength(5);
+      expect(f.evolutionReasons).toHaveLength(4);
       expect(f.evolutionReasons[0]).toEqual([]);
-      for (let i = 1; i < 5; i++) {
+      for (let i = 1; i < 4; i++) {
         const r = f.evolutionReasons[i]!;
         expect(r.length).toBeGreaterThanOrEqual(1);
         expect(r.length).toBeLessThanOrEqual(2);

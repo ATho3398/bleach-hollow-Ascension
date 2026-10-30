@@ -7,7 +7,7 @@ import { fixParticles } from '../engine/josa';
 import { artUrls } from '../data/art/manifest';
 import type { FactionConfig } from '../engine/faction';
 import { fullnessOfNest, previewHomeHp, spaRateOf, type SpaEnd } from '../engine/nest';
-import { artSkinOf, type SaveData } from '../game';
+import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { homeMaxHp } from '../home';
 import { beginAction, beginSceneMove } from './bha/actionFx';
 import { hpNumbers } from './bha/battle';
@@ -91,7 +91,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     scene.classList.add('has-art');
   }
   // 캐릭터 + 머리 위 상태 창: 오른쪽에서 걸어 들어와(그림은 왼쪽을 본다) 탕 안에 들어가 앉는다 — 온천 모션 그림은 사용자 대기, 지금은 CSS 임시 연출
-  const art = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
+  const art = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const char = characterButton(art, '캐릭터');
   char.disabled = true; // 보기만 (기기 선택 대상 아님)
   char.setAttribute('aria-hidden', 'true'); // 걸어 들어오는 장식 — 조작 요소가 아니다 (상태는 머리 위 상태 창이 읽힌다)

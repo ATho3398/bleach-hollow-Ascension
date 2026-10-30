@@ -6,7 +6,7 @@
 // 옛 방 모험 문·장터 물건 경로와 기능 스위치는 폐기했다 (GDD 137장 3, C.215).
 import { artUrls } from '../data/art/manifest';
 import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace } from '../engine/faction';
-import { artSkinOf, type SaveData } from '../game';
+import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
@@ -122,7 +122,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   }
   // 캐릭터: 방 그림 그대로, 지금 있던 장소 위에 서 있다 (보기만 — 기기 선택 대상 아님, GDD 132장 2)
   const at = hd.at ?? 'home';
-  const char = characterButton(roomCharArt(roomOf(faction, save.wear.talk), faction.id, save.evolution.tierIndex, artSkinOf(save)), '캐릭터');
+  const char = characterButton(roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)), '캐릭터');
   char.disabled = true;
   char.setAttribute('aria-hidden', 'true');
   char.classList.add('bha-worldmap__char');

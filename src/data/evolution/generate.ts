@@ -1,4 +1,4 @@
-// 진화체 자동 생성기 (GDD 20-5, 임시 템플릿). 속성·분류 목록과 BALANCE 템플릿만 받아 트리를 만든다 — 속성 수가 달라져도 동작한다.
+// 진화체 자동 생성기 (GDD 20-5 → 126장 4단계 개편 C.220, 임시 템플릿). 속성·분류 목록과 BALANCE 템플릿만 받아 트리를 만든다 — 속성 수가 달라져도 동작한다.
 // 결과는 forms.json 에 커밋하고 손으로 고쳐 쓴다 (`npm run gen:forms`). 이름은 자리 표시이고 원작 호로 이름은 쓰지 않는다.
 import { STAT_IDS, type AttackCategory, type FormDef, type FormKind, type StatId, type Stats } from '../schema';
 
@@ -10,7 +10,6 @@ export interface FormTemplate {
   category: Record<string, Tendency>;
   hidden: Record<string, Tendency>;
   fusionScale: number;
-  specialScale: number;
   totalScale: Record<string, number>;
   pureStab: number;
 }
@@ -82,31 +81,58 @@ function form(id: string, tier: number, kind: FormKind, stats: Stats, extra: Par
   };
 }
 
+/** 4단계 히든 10종 (GDD 126장 7): 종류 · 공격 타입 · 속성(없으면 3단계 속성을 잇는다). 융합 2종은 fusionPairs 에서 따로 */
+export const TIER4_HIDDEN: readonly { kind: FormKind; category: AttackCategory }[] = [
+  { kind: 'complete', category: 'mixed' },
+  { kind: 'fail', category: 'physical' },
+  { kind: 'awakened', category: 'mixed' },
+  { kind: 'frenzy', category: 'physical' },
+  { kind: 'restraint', category: 'special' },
+  { kind: 'stable', category: 'special' },
+  { kind: 'hunter', category: 'physical' },
+  { kind: 'void', category: 'mixed' },
+];
+
+/** 4단계 일반에서 특수 속성(혈·독·허)이 가지는 단 하나의 공격 타입 (GDD 126장 6: 혈 = 물리 · 독 = 특수 · 허 = 혼합). 특수 속성 순서대로 */
+export const SPECIAL_ELEMENT_CATEGORY: readonly AttackCategory[] = ['physical', 'special', 'mixed'];
+
 export function generateForms(input: GenerateInput): FormDef[] {
   const T = input.template;
   const total = (tier: number, kind?: string) => Math.round(input.tierTotals[tier - 1]! * (kind ? (T.totalScale[kind] ?? 1) : 1));
-  const all = [input.normal, ...input.elemental, ...input.special];
   const out: FormDef[] = [];
-  // 1~3단계: 분기 없음 (2·3단계 각 1종)
-  for (const tier of [2, 3]) out.push(form(`t${tier}:base`, tier, 'base', distribute(total(tier), T.base[tier] ?? {}), { elements: [input.normal] }, []));
-  // 4단계 바스트로데 일반: 노멀 + 원소 (GDD 49-7 ②, C.106 — 특수 속성은 히든 특수형으로만)
-  [input.normal, ...input.elemental].forEach((el) => out.push(form(`t4:${el}`, 4, 'element', distribute(total(4), T.element[el] ?? {}), { elements: [el] }, [el])));
-  // 4단계 히든 8: 원소 융합 2 · 완전체 · 특수 3 · 노멀 순수 · 노멀 실패
-  input.fusionPairs.forEach(([a, b]) =>
-    out.push(form(`h4:fusion:${a}+${b}`, 4, 'fusion', distribute(total(4), scaleTendency(addTendency(T.element[a], T.element[b]), T.fusionScale)), { elements: [a, b] }, [a, b])),
-  );
-  out.push(form('h4:complete', 4, 'complete', distribute(total(4, 'complete'), T.hidden.complete ?? {}), { elements: [input.normal] }, []));
-  input.special.forEach((el) => out.push(form(`h4:special:${el}`, 4, 'special', distribute(total(4), scaleTendency(T.element[el], T.specialScale)), { elements: [el] }, [el])));
-  out.push(form('h4:pure', 4, 'pure', distribute(total(4), T.hidden.pure ?? {}), { elements: [input.normal], stab: T.pureStab }, [input.normal]));
-  out.push(form('h4:fail', 4, 'fail', distribute(failLineTotal(input.tierTotals, input.failGainRatio, 4, 4), T.hidden.fail ?? {}), { elements: [input.normal] }, [input.normal]));
-  // 5단계 아란칼: 속성 × 분류 24
-  all.forEach((el) =>
+  // 2단계: 분기 없음
+  out.push(form('t2:base', 2, 'base', distribute(total(2), T.base[2] ?? {}), { elements: [input.normal] }, []));
+  // 3단계 7종 (GDD 126장 4): 노멀 + 원소 4 · 망한 진화체 · 히든 통로
+  [input.normal, ...input.elemental].forEach((el) => out.push(form(`t3:${el}`, 3, 'element', distribute(total(3), T.element[el] ?? {}), { elements: [el] }, [el])));
+  out.push(form('h3:fail', 3, 'fail', distribute(failLineTotal(input.tierTotals, input.failGainRatio, 3, 3), T.hidden.fail ?? {}), { elements: [input.normal] }, [input.normal]));
+  out.push(form('h3:passage', 3, 'passage', distribute(total(3), T.hidden.passage ?? {}), { elements: [input.normal] }, []));
+  // 4단계 일반 18종 (GDD 126장 6): 노멀·원소 × 공격 타입 3 + 특수 속성은 타입 하나씩
+  [input.normal, ...input.elemental].forEach((el) =>
     input.categories.forEach((cat) =>
-      out.push(form(`t5:${el}:${cat}`, 5, 'arrancar', distribute(total(5), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], cat)),
+      out.push(form(`t4:${el}:${cat}`, 4, 'arrancar', distribute(total(4), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], cat)),
     ),
   );
-  // 5단계 히든 4: 속성은 바스트로데에서 잇는다 (elements 없음). reborn = 환생 N회 이상 전용 (GDD 22-7)
-  (['limit', 'restraint', 'hunter', 'reborn'] as const).forEach((kind) => out.push(form(`h5:${kind}`, 5, kind, distribute(total(5, kind), T.hidden[kind] ?? {}), {}, [])));
+  input.special.forEach((el, i) => {
+    const cat = SPECIAL_ELEMENT_CATEGORY[i] ?? 'mixed';
+    out.push(form(`t4:${el}:${cat}`, 4, 'arrancar', distribute(total(4), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], cat));
+  });
+  // 4단계 히든 10종 (GDD 126장 7): 융합 2 + TIER4_HIDDEN. 속성이 없는 종류는 3단계 속성을 잇는다
+  input.fusionPairs.forEach(([a, b]) =>
+    out.push(form(`h4:fusion:${a}+${b}`, 4, 'fusion', distribute(total(4), scaleTendency(addTendency(T.element[a], T.element[b]), T.fusionScale)), { elements: [a, b] }, [a, b], 'mixed')),
+  );
+  for (const { kind, category } of TIER4_HIDDEN) {
+    const stats = kind === 'fail'
+      ? distribute(failLineTotal(input.tierTotals, input.failGainRatio, 4, 4), T.hidden.fail ?? {})
+      : distribute(total(4, kind), T.hidden[kind] ?? {});
+    const extra: Partial<FormDef> & { elements?: string[] } =
+      kind === 'complete' || kind === 'fail' ? { elements: [input.normal] }
+      : kind === 'void' ? { elements: [input.special[input.special.length - 1] ?? input.normal] }
+      : kind === 'stable' ? { stab: T.pureStab }
+      : {};
+    // 특성 칸용 label 속성 (C.220 provisional — 진화체 특성 표는 2차): 허무형 = 특수 속성 셋, 안정형 = 노멀, 실패형 = 노멀
+    const labelEls = kind === 'void' ? [...input.special] : kind === 'stable' || kind === 'fail' ? [input.normal] : [];
+    out.push(form(`h4:${kind}`, 4, kind, stats, extra, labelEls, category));
+  }
   return out;
 }
 

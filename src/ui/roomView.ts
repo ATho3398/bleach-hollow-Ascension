@@ -8,7 +8,7 @@ import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
 import { marketOf, roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { artSkinOf, careNest, feedNest, tickCare, type SaveData } from '../game';
+import { artSkinOf, careNest, feedNest, tickCare, type SaveData, artTierIndexOf } from '../game';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
@@ -193,7 +193,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     scene.append(b);
     floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
   }
-  const charArtUrls = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
+  const charArtUrls = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const char = characterButton(charArtUrls, '캐릭터');
   if (n.collapsed || n.dead) char.classList.add('is-collapsed'); // 쓰러진 모습 (그림이 없어 캐릭터를 눕히고 흐리게, GDD 102-7)
   // 데리고 다니는 펫 (GDD 90장): 캐릭터 옆 발치에 작게 (그림이 없으면 아이콘 원)

@@ -38,7 +38,7 @@
         "battle.liberation"
       ],
       "title": "{liberation.baseName}, 그리고 {absorbActionName}",
-      "body": "{liberation.baseName} 게이지가 차면 아우라가 뿜어 나오는 캐릭터를 눌러 해방하고, {tier5}부터는 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
+      "body": "{liberation.baseName} 게이지가 차면 아우라가 뿜어 나오는 캐릭터를 눌러 해방하고, {tier4}에 {ascensionName}을(를) 깨면 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
     }
   ],
   "script": [

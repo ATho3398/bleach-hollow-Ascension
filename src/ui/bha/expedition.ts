@@ -1,4 +1,4 @@
-// 원정 계열 화면(원정·한계 돌파·결과·흡수·전투 연습) 전용 헬퍼 (U-4). 순수 함수는 tests/bha-expedition.test.ts 에서 검사한다.
+// 원정 계열 화면(원정·폭주(호로화)·결과·흡수·전투 연습) 전용 헬퍼 (U-4). 순수 함수는 tests/bha-expedition.test.ts 에서 검사한다.
 import type { EnemyDef, TerrainTileDef } from '../../data/schema';
 import type { EndReason, ExpeditionPhase } from '../../engine/expedition';
 import { el, icon, type InfoRow } from './dom';

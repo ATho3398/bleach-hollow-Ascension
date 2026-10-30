@@ -1,6 +1,6 @@
 {
   "provisional": true,
-  "_comment": "GDD 49장 물공(조·참) 단일 속성 5단계 진화체의 기본 공격 블록(3계열 전부)과 추가 특성 1칸. 효과 종류는 엔진(combat.ts PhysBlockEffect·AbilityEffects), 수치는 balance.ts provisional.physBlocks. 이름은 종족별, proc 은 전투 중 작은 글자",
+  "_comment": "GDD 49장 물공(조·권) 단일 속성 4단계 진화체(C.220, 옛 5단계)의 기본 공격 블록(3계열 전부)과 추가 특성 1칸. 효과 종류는 엔진(combat.ts PhysBlockEffect·AbilityEffects), 수치는 balance.ts provisional.physBlocks. 이름은 종족별, proc 은 전투 중 작은 글자",
   "elements": {
     "earth": {
       "block": { "effect": "stoneStance", "name": { "hollow": "바위 자세", "shinigami": "암반 베기" }, "proc": { "hollow": "바위 자세!", "shinigami": "암반 자세!" }, "description": { "*": "블록 피해는 줄고, 잠시 받는 피해가 줄며 맞을 때마다 다음 기본 공격이 세진다." } },

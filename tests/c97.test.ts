@@ -21,24 +21,24 @@ const paramsFor = (formId: string, tier: number): Partial<CombatParams> => {
 };
 
 describe('치명 상한 (GDD 45장 1번)', () => {
-  it('물 4단계 몸은 상한 50% + 물 특성 8%p = 58%, 다른 속성 4단계는 50%', () => {
-    const water = formOf(4, ['water'])!;
-    const fire = formOf(4, ['fire'])!;
-    expect(paramsFor(water.id, 3).critChanceMax).toBeCloseTo(CX.critChanceMax + WATER);
-    expect(paramsFor(water.id, 3).critChanceMax).toBeCloseTo(0.58);
-    expect(paramsFor(fire.id, 3).critChanceMax ?? CX.critChanceMax).toBeCloseTo(CX.critChanceMax);
+  it('물 3단계 몸(C.220, 옛 4단계)은 상한 50% + 물 특성 8%p = 58%, 다른 속성은 50%', () => {
+    const water = formOf(3, ['water'])!;
+    const fire = formOf(3, ['fire'])!;
+    expect(paramsFor(water.id, 2).critChanceMax).toBeCloseTo(CX.critChanceMax + WATER);
+    expect(paramsFor(water.id, 2).critChanceMax).toBeCloseTo(0.58);
+    expect(paramsFor(fire.id, 2).critChanceMax ?? CX.critChanceMax).toBeCloseTo(CX.critChanceMax);
   });
 
   it('상태 화면 치명 표시도 같은 상한: 물 4단계 몸이 확률을 넘치게 가져도 58%', () => {
-    const water = formOf(4, ['water'])!;
+    const water = formOf(3, ['water'])!;
     const build = { ...newBuild(), slots: [] as (string | null)[] };
-    expect(critPercentText(build, evoOf(water.id, 3))).toBe(`${Math.round((CX.critChance + WATER) * 100)}%`);
+    expect(critPercentText(build, evoOf(water.id, 2))).toBe(`${Math.round((CX.critChance + WATER) * 100)}%`);
     // 특성 치명 확률이 넘치는 몸: 표시 상한 = 50% + 물 값
     const many = { ...newBuild(), slots: Array(20).fill('t-thunder-part') as (string | null)[] };
-    const shown = Number(critPercentText(many, evoOf(water.id, 3)).replace('%', ''));
+    const shown = Number(critPercentText(many, evoOf(water.id, 2)).replace('%', ''));
     expect(shown).toBeLessThanOrEqual(58);
-    const fire = formOf(4, ['fire'])!;
-    expect(Number(critPercentText(many, evoOf(fire.id, 3)).replace('%', ''))).toBeLessThanOrEqual(50);
+    const fire = formOf(3, ['fire'])!;
+    expect(Number(critPercentText(many, evoOf(fire.id, 2)).replace('%', ''))).toBeLessThanOrEqual(50);
   });
 });
 
@@ -56,18 +56,19 @@ describe("불 속성 특성 '작열' = 방어·정신력 8% 무시 (GDD 45장 3�
     return paramsFor(f.id, tier - 1).abilityEffects?.ignoreDefense ?? 0;
   };
   it('4단계 8%, 5단계 ×1.5 = 12%, 융합 불+뇌 50% 세기 = 4%. 다른 속성은 없음', () => {
-    expect(ignoreOf(4, ['fire'])).toBeCloseTo(0.08);
-    expect(ignoreOf(5, ['fire'])).toBeCloseTo(0.12);
-    expect(ignoreOf(4, ['fire', 'thunder'])).toBeCloseTo(0.04);
-    expect(ignoreOf(4, ['water'])).toBe(0);
+    // C.220: 3단계 8%, 4단계 ×1.5 = 12%, 융합 불+뇌(4단계 히든) 각 50% × 4단계 1.5 = 6%
+    expect(ignoreOf(3, ['fire'])).toBeCloseTo(0.08);
+    expect(ignoreOf(4, ['fire'])).toBeCloseTo(0.12);
+    expect(ignoreOf(4, ['fire', 'thunder'])).toBeCloseTo(0.06);
+    expect(ignoreOf(3, ['water'])).toBe(0);
   });
   it('내 블록·평타 피해가 적 방어 × (1 − 8%) 로 계산된다', async () => {
     const { createCombat, statRatio, uniformStats } = await import('../src/engine/combat');
     const { getEnemy } = await import('../src/data/enemies');
     const a = uniformStats(50);
     expect(statRatio(a, a, 'physical', 0.08)).toBeCloseTo(1 / 0.92);
-    const fire = formOf(4, ['fire'])!;
-    const s = createCombat(1, { enemy: getEnemy('test-a'), params: paramsFor(fire.id, 3) });
+    const fire = formOf(3, ['fire'])!;
+    const s = createCombat(1, { enemy: getEnemy('test-a'), params: paramsFor(fire.id, 2) });
     expect(s.params.abilityEffects.ignoreDefense).toBeCloseTo(0.08);
   });
 });

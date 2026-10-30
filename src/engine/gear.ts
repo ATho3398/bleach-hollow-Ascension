@@ -271,7 +271,10 @@ export function applyGearToParams(params: Partial<CombatParams>, carry: GearCarr
     for (const s of STAT_IDS) if (carry.stats[s]) st[s] += carry.stats[s]!;
     params.playerStats = st;
   }
-  if (carry.crit > 0) params.critChance = (params.critChance ?? CX.critChance) + carry.crit;
+  if (carry.crit > 0) {
+    params.critChance = (params.critChance ?? CX.critChance) + carry.crit;
+    params.blockCritChance = (params.blockCritChance ?? CX.blockCritChance) + carry.crit; // 치명 두 값 (C.220): 장비 치명은 둘 다
+  }
   if (carry.critDamage > 0) params.critMultiplier = (params.critMultiplier ?? CX.critMultiplier) + carry.critDamage;
   if (carry.shield > 0) params.startShieldFraction = (params.startShieldFraction ?? 0) + carry.shield;
   const a = carry.active;

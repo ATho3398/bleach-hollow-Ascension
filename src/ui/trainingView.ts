@@ -9,7 +9,7 @@ import {
   clashZone, createMiniGame, DODGE_PLAYER_X, DUEL_DIRS, gameRule, stepMiniGame, TRAINING_GAMES, trainingGate, trainingLevel, trainingRiskWarning,
   type DuelDir, type MiniGameInput, type MiniGameState, type TrainingGameId, type TrainingOutcome,
 } from '../engine/training';
-import type { SaveData } from '../game';
+import { ascensionAccess, type SaveData } from '../game';
 import { STAT_IDS, type StatId } from '../data/schema';
 import { statName } from '../data/elements';
 import { button, chip, el, icon, meter, mountApp, notice, panel, provisionalTag, tag } from './bha/dom';
@@ -21,10 +21,10 @@ import { asBack } from './bha/screenBack';
 const TX = BALANCE.provisional.training;
 const LB = BALANCE.provisional.liberation;
 
-/** 제단(수련) 화면 진입 문구: 5단계 미만이면 "<5단계 이름>이(가) 되면 열린다" */
-export function trainingLockedText(f: Pick<FactionConfig, 'tierNames' | 'training'>): string {
-  const t5 = f.tierNames[LB.minTierIndex] ?? '5단계';
-  return fixParticles(`${t5}${hasBatchim(t5) ? '이' : '가'} 되면 ${f.training.title}이(가) 열린다.`);
+/** 제단(수련) 화면 진입 문구: 4단계(liberation.minTierIndex) 미만이면 "<4단계 이름>이(가) 되면 열린다" */
+export function trainingLockedText(f: Pick<FactionConfig, 'tierNames' | 'training'>, what: string = f.training.title): string {
+  const t4 = f.tierNames[LB.minTierIndex] ?? `${LB.minTierIndex + 1}단계`;
+  return fixParticles(`${t4}${hasBatchim(t4) ? '이' : '가'} 되면 ${what}이(가) 열린다.`);
 }
 
 function hasBatchim(word: string): boolean {
@@ -51,6 +51,8 @@ export interface TrainingHandlers {
   onPlay: (game: TrainingGameId) => void;
   /** 머리 제목 토글로 훈련 인형(전투 연습) · 번호 쟁탈전으로 (C.137 → GDD 98장 A1·99장 2) */
   onSwitch: (id: TrainingScreenId) => void;
+  /** 아란칼화 / 참백도 구상화 도전 (GDD 126장 3, C.220 — 지금은 보스전 임시) */
+  onAscend?: () => void;
 }
 
 /** 수련장 묶음의 세 화면: 수련(본능 수련) · 훈련 인형 · 번호 쟁탈전 */
@@ -101,7 +103,7 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     if (t.completed) notes.push(notice('good', faction.training.completeText, { title: '수련 완료' }));
   }
   prog.append(...notes);
-  const left = [prog];
+  const left = [prog, ascensionPanel(faction, save, hd)];
 
   // 오른쪽: 4종목 카드
   const cards = el('div', 'bha-train__cards');
@@ -130,6 +132,22 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   }
   const right = [cards, el('p', 'bha-faint', `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로. 종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`)];
   lcdPage(dev.view, { cls: 'bha-train-page', cols: '0.9fr 1.1fr' }, head, left, right);
+}
+
+/** 아란칼화 / 참백도 구상화 칸 (GDD 126장 3, C.220): 4단계부터 도전. 지금은 보스전 임시(미니게임은 나중) */
+function ascensionPanel(faction: FactionConfig, save: SaveData, hd: TrainingHandlers): HTMLElement {
+  const A = faction.ascension;
+  const access = ascensionAccess(save);
+  const p = panel({ title: A.name, aside: save.evolution.ascended ? tag('완료', 'kind') : provisionalTag() });
+  p.dataset.training = 'ascension';
+  p.append(el('p', 'bha-small', A.desc));
+  if (save.evolution.ascended) p.append(notice('good', `${faction.liberation.name}을(를) 쓸 수 있다.`, { title: `${A.name} 완료` }));
+  else if (!access.ok && access.reason === 'tier') p.append(notice('info', trainingLockedText(faction, A.name), { icon: 'i-lock' }));
+  else {
+    p.append(el('p', 'bha-faint', `상대: ${A.foe} (보스전 · 임시) · 지면 잃는 것 없이 다시 도전할 수 있다.`));
+    p.append(button({ label: `${A.name}에 도전`, icon: 'i-attack', variant: 'primary', disabled: !access.ok || !hd.onAscend, onClick: () => hd.onAscend?.() }));
+  }
+  return p;
 }
 
 // ── 한 판 ──

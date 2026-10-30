@@ -1,5 +1,6 @@
-// 진화체 특성 (GDD 39장, C.89): 칸 2개 — ① 성향(노력치 최고 능력치, 20-5·v4.0) ② 속성(진화체 label 속성, 4단계부터)·전용(특별 진화체 5종).
+// 진화체 특성 (GDD 39장 → 126-1 수정, C.220): 진화체가 주는 특성 — ① 성향(노력치 최고 능력치) ② 속성(진화체 label 속성, 3단계부터)·전용(히든) ③ 물공 특성.
 // 진화체 id·종족 분기 없이 label(kind·elements) → abilities.json kindSlots 규칙으로 정한다. 효과는 전투 엔진 AbilityEffects 종류로, 수치는 BALANCE.provisional.abilities.
+// C.220: 특성은 진화할 때 얻어 보유 목록(AbilityLoadout.owned)에 남고(환생해도 유지), 특성 칸(기본 1 + 아란칼화/참백도 구상화 1 + 환생당 1, 최대 4)에 낀 것만 효과가 있다.
 import { BALANCE } from '../../config/balance';
 import { abilityDescription, abilityName, abilityTextName, elementAbility, kindSlot, physElementOf, uniqueAbility, type PhysElementDef } from '../../data/evolution';
 import { pickFaction, STAT_IDS, type FormDef, type FormKind, type StatId, type Stats } from '../../data/schema';
@@ -11,13 +12,94 @@ const PB = BALANCE.provisional.physBlocks;
 export interface FormAbilities {
   /** 성향 특성 (보통 1개, 실패형 2개 = 노력치 1·2위) */
   dispositions: StatId[];
-  /** 속성 특성: 속성과 세기 (4단계 1, 5단계 ×1.5, 융합 각 ×0.6, 특수·순수 ×1.5) */
+  /** 속성 특성: 속성과 세기 (3단계 1, 4단계 ×1.5, 융합·허무형 각 ×0.5, 안정형 ×1.5) */
   elements: { element: string; scale: number }[];
-  /** 전용 특성 (완전형·한계·억제·사냥꾼·환생) — 있으면 속성 특성 대신 */
-  unique: FormKind | null;
-  /** 물공 특수 블록·특성 1칸 (GDD 49장, C.103): kindSlots.physical 인 진화체 중 공격 분류 물리·속성 하나이고 physBlocks.json 에 그 속성이 있을 때 */
+  /** 전용 특성 (4속성형·폭주형·절제형·사냥꾼·각성형) — 진화체가 줄 때는 속성 특성 대신 하나 */
+  uniques: FormKind[];
+  /** 물공 특수 블록 (GDD 49장, C.103): kindSlots.physical 인 진화체 중 공격 분류 물리·속성 하나이고 physBlocks.json 에 그 속성이 있을 때. 블록은 몸(진화체)에 붙는다 */
   phys: { element: string; def: PhysElementDef } | null;
+  /** 물공 특성 (그 블록과 짝인 특성): 진화체가 줄 때는 phys 의 속성, 장착 칸에서는 낀 것만 */
+  physAbilities: string[];
 }
+
+/** 특성 보유·장착 (GDD 126-1 수정, C.220): EvolutionState.abilities. 환생해도 그대로 넘긴다(slots 만 다시 센다) */
+export interface AbilityLoadout {
+  /** 보유 특성 id → 세기(같은 특성을 다시 얻으면 큰 값). id = disp:<능력치> · el:<속성> · uniq:<진화체 종류> · phys:<속성> */
+  owned: Record<string, number>;
+  /** 칸에 낀 특성 id (앞에서부터 칸 순서, slots 개 이하) */
+  equipped: string[];
+  /** 특성 칸 수 = min(4, 1 + 아란칼화 1 + 환생 수) */
+  slots: number;
+  /** 아란칼화 / 참백도 구상화를 한 번이라도 깼다 (칸 +1, 영구) */
+  ascendedEver: boolean;
+}
+
+export function newAbilityLoadout(): AbilityLoadout {
+  return { owned: {}, equipped: [], slots: abilitySlotCount(0, false), ascendedEver: false };
+}
+
+/** 특성 칸 수 (GDD 126-1 수정 2): 기본 1 + 아란칼화/참백도 구상화 1 + 환생 1회당 1, 최대 4 */
+export function abilitySlotCount(rebirths: number, ascendedEver: boolean): number {
+  const AS = BALANCE.provisional.abilitySlots;
+  return Math.min(AS.max, AS.base + (ascendedEver ? AS.perAscension : 0) + Math.max(0, Math.floor(rebirths)) * AS.perRebirth);
+}
+
+/** 진화체가 주는 특성 id 와 세기 (얻는 순서 = 칸 우선순위: 전용·속성 → 물공 → 성향) */
+export function abilityIdsOf(fa: FormAbilities): { id: string; scale: number }[] {
+  return [
+    ...fa.uniques.map((k) => ({ id: `uniq:${k}`, scale: 1 })),
+    ...fa.elements.map((x) => ({ id: `el:${x.element}`, scale: x.scale })),
+    ...fa.physAbilities.map((el) => ({ id: `phys:${el}`, scale: 1 })),
+    ...fa.dispositions.map((d) => ({ id: `disp:${d}`, scale: 1 })),
+  ];
+}
+
+/** 진화해서 특성을 얻는다: 보유 목록에 더하고(세기는 큰 값), 칸은 새 진화체 특성부터 채운 뒤 전에 낀 것을 이어 붙여 칸 수만큼 (화면에서 바꿔 낄 수 있다) */
+export function gainAbilities(l: AbilityLoadout, gained: readonly { id: string; scale: number }[]): void {
+  for (const g of gained) l.owned[g.id] = Math.max(l.owned[g.id] ?? 0, g.scale);
+  const ids = [...new Set([...gained.map((g) => g.id), ...l.equipped])];
+  l.equipped = ids.filter((id) => id in l.owned).slice(0, l.slots);
+}
+
+/** 칸 수를 다시 정하고(환생·아란칼화) 넘친 장착은 뒤에서부터 빼고, 늘어난 빈 칸은 아직 안 낀 보유 특성(얻은 순서)으로 채운다 */
+export function setAbilitySlots(l: AbilityLoadout, slots: number): void {
+  l.slots = slots;
+  l.equipped = l.equipped.filter((id) => id in l.owned).slice(0, slots);
+  for (const id of Object.keys(l.owned)) {
+    if (l.equipped.length >= slots) break;
+    if (!l.equipped.includes(id)) l.equipped.push(id);
+  }
+}
+
+/** 칸 하나를 바꿔 낀다 (index = 칸 번호, id = 보유 특성 또는 null = 빼기). 같은 특성이 다른 칸에 있으면 그 칸과 맞바꾼다. 바뀌면 true */
+export function equipAbility(l: AbilityLoadout, index: number, id: string | null): boolean {
+  if (!Number.isInteger(index) || index < 0 || index >= l.slots) return false;
+  if (id !== null && !(id in l.owned)) return false;
+  const cur = [...l.equipped];
+  while (cur.length <= index) cur.push('');
+  const other = id === null ? -1 : cur.indexOf(id);
+  if (other === index) return false;
+  if (other >= 0) cur[other] = cur[index] ?? '';
+  cur[index] = id ?? '';
+  l.equipped = cur.filter((x) => x !== '');
+  return true;
+}
+
+/** 장착 칸 → 특성 묶음 (전투·상태 화면). 물공 블록은 진화체에서(form), 특성은 낀 것만 */
+export function equippedAbilitiesOf(form: FormDef | null, l: AbilityLoadout): FormAbilities {
+  const out: FormAbilities = { dispositions: [], elements: [], uniques: [], phys: form ? formAbilitiesOf(form, zeroEv(), null).phys : null, physAbilities: [] };
+  for (const id of l.equipped) {
+    const [kind, key] = id.split(':') as [string, string];
+    const scale = l.owned[id] ?? 1;
+    if (kind === 'disp' && (STAT_IDS as readonly string[]).includes(key)) out.dispositions.push(key as StatId);
+    else if (kind === 'el') out.elements.push({ element: key, scale });
+    else if (kind === 'uniq') out.uniques.push(key as FormKind);
+    else if (kind === 'phys' && physElementOf(key)) out.physAbilities.push(key);
+  }
+  return out;
+}
+
+const zeroEv = (): Stats => ({ hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 });
 
 /** 노력치 순위 (동률이면 진화체 종족값 → STAT_IDS 순). abilityFor 와 같은 규칙 */
 export function rankedStats(ev: Stats, form: FormDef): StatId[] {
@@ -26,17 +108,20 @@ export function rankedStats(ev: Stats, form: FormDef): StatId[] {
 
 /** 이 진화체의 특성 칸. ability = 진화 때 정한 성향(저장값), 실패형 2위는 지금 노력치에서 (새 저장 없음) */
 export function formAbilitiesOf(form: FormDef | null, ev: Stats, ability: StatId | null): FormAbilities {
-  const out: FormAbilities = { dispositions: ability ? [ability] : [], elements: [], unique: null, phys: null };
+  const out: FormAbilities = { dispositions: ability ? [ability] : [], elements: [], uniques: [], phys: null, physAbilities: [] };
   if (!form) return out;
   const slot = kindSlot(form.label.kind);
   if (slot.physical && form.label.category === 'physical' && form.label.elements.length === 1) {
     const element = form.label.elements[0]!;
     const def = physElementOf(element);
-    if (def) out.phys = { element, def };
+    if (def) {
+      out.phys = { element, def };
+      out.physAbilities = [element];
+    }
   }
   const want = slot.dispositions ?? 1;
   if (ability && want > 1) out.dispositions.push(...rankedStats(ev, form).filter((s) => s !== ability).slice(0, want - 1));
-  if (slot.element === 'unique') out.unique = form.label.kind;
+  if (slot.element === 'unique') out.uniques = [form.label.kind];
   else if (slot.element === 'label') {
     const scale = (AB.scale.tier[form.tier] ?? 1) * (slot.scale ? AB.scale[slot.scale] : 1);
     out.elements = form.label.elements.map((element) => ({ element, scale }));
@@ -61,19 +146,21 @@ export function abilityEffectsOf(fa: FormAbilities): { effects: AbilityEffects; 
       case 'chainHaste': fx.chainHaste = (fx.chainHaste ?? 0) + v.chainHastePerChain! * scale; break;
     }
   }
-  if (fa.phys) {
-    switch (fa.phys.def.ability.effect) {
+  for (const element of fa.physAbilities) {
+    const def = physElementOf(element);
+    if (!def) continue;
+    switch (def.ability.effect) {
       case 'hardFist': fx.hardFist = { ...PB.hardFist }; break;
       case 'bloodScent': fx.bloodScent = PB.bloodScent.drainMultiplier; break;
-      case 'emberStack': fx.emberStack = { element: fa.phys.element, ...PB.emberStack }; break;
+      case 'emberStack': fx.emberStack = { element, ...PB.emberStack }; break;
       case 'current': fx.current = { ...PB.current }; break;
       case 'charge': fx.charge = PB.charge.every; break;
       case 'tempering': fx.tempering = { ...PB.tempering }; break;
     }
   }
-  if (fa.unique) {
-    const v = AB.unique[fa.unique] ?? {};
-    switch (uniqueAbility(fa.unique).effect) {
+  for (const u of fa.uniques) {
+    const v = AB.unique[u] ?? {};
+    switch (uniqueAbility(u).effect) {
       case 'noWeak': fx.noWeak = true; break;
       case 'desperate': fx.desperate = { below: v.desperateBelow!, bonus: v.desperateBonus! }; break;
       case 'rampUp': fx.rampUp = { per: v.rampPer!, everySeconds: v.rampEverySeconds!, max: v.rampMax! }; break;
@@ -163,16 +250,29 @@ export interface AbilityLine {
 /** 표시용 특성 줄 (상태 화면·진화 결과·도감): 성향 줄들 + 속성/전용 줄 1개(융합은 이름 둘을 '·'로) */
 export function abilityLines(fa: FormAbilities, factionId: string): AbilityLine[] {
   const lines: AbilityLine[] = fa.dispositions.map((d) => ({ slot: '성향', name: abilityName(d, factionId), description: abilityDescription(d, factionId) }));
-  const { effects, critChance } = abilityEffectsOf({ ...fa, dispositions: [], phys: null });
-  const summary = effectSummary(effects, critChance);
-  if (fa.unique) lines.push({ slot: '전용', name: abilityTextName(uniqueAbility(fa.unique), factionId), description: summary });
-  else if (fa.elements.length > 0) lines.push({ slot: '속성', name: fa.elements.map((x) => abilityTextName(elementAbility(x.element), factionId)).join('·'), description: summary });
-  // 물공 칸 (GDD 49장): 특성 이름 — 특성 효과 · 블록 「이름」: 블록 효과
-  if (fa.phys) {
-    const physFx = abilityEffectsOf({ dispositions: [], elements: [], unique: null, phys: fa.phys }).effects;
-    const pb = physBlockOf(fa);
-    const blockText = pb ? ` · 블록 「${pickFaction(fa.phys.def.block.name, factionId)}」 ${physBlockSummary(pb)}` : '';
-    lines.push({ slot: '물공', name: pickFaction(fa.phys.def.ability.name, factionId), description: `${effectSummary(physFx, 0)}${blockText}` });
+  const none: FormAbilities = { dispositions: [], elements: [], uniques: [], phys: null, physAbilities: [] };
+  for (const u of fa.uniques) {
+    const { effects, critChance } = abilityEffectsOf({ ...none, uniques: [u] });
+    lines.push({ slot: '전용', name: abilityTextName(uniqueAbility(u), factionId), description: effectSummary(effects, critChance) });
+  }
+  if (fa.elements.length > 0) {
+    const { effects, critChance } = abilityEffectsOf({ ...none, elements: fa.elements });
+    lines.push({ slot: '속성', name: fa.elements.map((x) => abilityTextName(elementAbility(x.element), factionId)).join('·'), description: effectSummary(effects, critChance) });
+  }
+  // 물공 칸 (GDD 49장): 특성 이름 — 특성 효과 · 블록 「이름」: 블록 효과 (블록은 몸에 붙어 있을 때만)
+  for (const element of fa.physAbilities) {
+    const def = physElementOf(element);
+    if (!def) continue;
+    const physFx = abilityEffectsOf({ ...none, physAbilities: [element] }).effects;
+    const pb = fa.phys?.element === element ? physBlockOf(fa) : null;
+    const blockText = pb && fa.phys ? ` · 블록 「${pickFaction(fa.phys.def.block.name, factionId)}」 ${physBlockSummary(pb)}` : '';
+    lines.push({ slot: '물공', name: pickFaction(def.ability.name, factionId), description: `${effectSummary(physFx, 0)}${blockText}` });
   }
   return lines;
+}
+
+/** 보유 특성 하나의 화면 줄 (특성 칸 화면, C.220): 칸 종류·이름·설명. 모르는 id 면 null */
+export function abilityIdLine(id: string, scale: number, factionId: string): AbilityLine | null {
+  const fa = equippedAbilitiesOf(null, { owned: { [id]: scale }, equipped: [id], slots: 1, ascendedEver: false });
+  return abilityLines(fa, factionId)[0] ?? null;
 }

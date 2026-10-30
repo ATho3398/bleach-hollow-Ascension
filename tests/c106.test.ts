@@ -26,61 +26,61 @@ function evo(path: string[], tierIndex = path.length): EvolutionState {
 
 // 49-7 ① 특성 숨김은 C.127 (GDD 75장)에서 적 등장 숨김으로 옮김 — tests/c127.test.ts
 
-describe('49-7 ② 4단계 일반 진화 = 노멀 + 원소 4종', () => {
-  it('일반 바스트로데 5종, 특수 속성은 히든 특수형만', () => {
-    expect(formsOfTier(4).filter((f) => !f.hidden).map((f) => f.id).sort()).toEqual([NORMAL_ELEMENT, ...ELEMENTAL_IDS].map((el) => `t4:${el}`).sort());
+describe('49-7 ② → GDD 126장 6 (C.220): 3단계 일반 = 노멀 + 원소 4종, 혈·독·허는 4단계에서 타입 하나씩', () => {
+  it('3단계 일반 5종, 특수 속성은 3단계에 없고 4단계에 단일 타입(혈 물리·독 특수·허 혼합)만', () => {
+    expect(formsOfTier(3).filter((f) => !f.hidden).map((f) => f.id).sort()).toEqual([NORMAL_ELEMENT, ...ELEMENTAL_IDS].map((el) => `t3:${el}`).sort());
     for (const el of SPECIAL_ELEMENT_IDS) {
-      expect(FORM_TABLE.some((f) => f.id === `t4:${el}`)).toBe(false);
-      expect(getForm(`h4:special:${el}`).hidden).toBe(true);
+      expect(FORM_TABLE.some((f) => f.id === `t3:${el}`)).toBe(false);
+      expect(formsOfTier(4).filter((f) => !f.hidden && f.label.elements[0] === el)).toHaveLength(1);
     }
   });
-  it('혈 특성을 가장 많이 장착해도 일반 후보는 그다음 일반 속성(없으면 노멀)', () => {
+  it('혈 특성을 가장 많이 장착해도 3단계 일반 후보는 그다음 일반 속성(없으면 노멀)', () => {
     const b = newBuild();
     gainTrait(b, 't-blood-a');
     gainTrait(b, 't-blood-c');
     const ctx = { factionId: 'hollow', build: b, hunger: 0, condition: 100 };
-    const e = evo(['t2:base', 't3:base'], 2);
-    expect(evolutionCandidates(e, ctx).normal.id).toBe('t4:normal');
+    const e = evo(['t2:base'], 1);
+    expect(evolutionCandidates(e, ctx).normal.id).toBe('t3:normal');
     gainTrait(b, 't-fire-a');
-    expect(evolutionCandidates(e, ctx).normal.id).toBe('t4:fire');
+    expect(evolutionCandidates(e, ctx).normal.id).toBe('t3:fire');
   });
 });
 
-describe('49-8 1·2번 실패형 줄기', () => {
-  it('종족값 합계: 4단계 = 3단계 + 오름분 × 30%, 5단계도 같은 낮춤 (일반 줄기는 그대로)', () => {
-    const t4 = failLineTotal(SX.tierTotals, FL.gainRatio, 4, 4);
-    const t5 = failLineTotal(SX.tierTotals, FL.gainRatio, 5, 4);
-    expect(t4).toBe(Math.round(SX.tierTotals[2]! + (SX.tierTotals[3]! - SX.tierTotals[2]!) * FL.gainRatio));
-    expect(t5).toBe(Math.round(SX.tierTotals[2]! + (SX.tierTotals[4]! - SX.tierTotals[2]!) * FL.gainRatio));
-    expect(sum(getForm('h4:fail').stats)).toBe(t4);
-    const fail5 = evo(['t2:base', 't3:base', 'h4:fail', 't5:normal:physical']);
-    const norm5 = evo(['t2:base', 't3:base', 't4:normal', 't5:normal:physical']);
-    expect(sum(baseStatsOf(fail5, 'hollow'))).toBe(t5);
-    expect(sum(baseStatsOf(norm5, 'hollow'))).toBe(SX.tierTotals[4]);
-    // 비율(쏠림)은 그대로: 물리 아란칼은 힘 > 지능
-    const s = baseStatsOf(fail5, 'hollow');
+describe('49-8 1·2번 실패형 줄기 (C.220: 3단계 망한 진화체부터)', () => {
+  it('종족값 합계: 3단계 망한 진화체 = 2단계 + 오름분 × 30%, 4단계도 같은 낮춤 (일반 줄기는 그대로)', () => {
+    const t3 = failLineTotal(SX.tierTotals, FL.gainRatio, 3, 3);
+    const t4 = failLineTotal(SX.tierTotals, FL.gainRatio, 4, 3);
+    expect(t3).toBe(Math.round(SX.tierTotals[1]! + (SX.tierTotals[2]! - SX.tierTotals[1]!) * FL.gainRatio));
+    expect(t4).toBe(Math.round(SX.tierTotals[1]! + (SX.tierTotals[3]! - SX.tierTotals[1]!) * FL.gainRatio));
+    expect(sum(getForm('h3:fail').stats)).toBe(t3);
+    const fail4 = evo(['t2:base', 'h3:fail', 't4:normal:physical']);
+    const norm4 = evo(['t2:base', 't3:normal', 't4:normal:physical']);
+    expect(sum(baseStatsOf(fail4, 'hollow'))).toBe(t4);
+    expect(sum(baseStatsOf(norm4, 'hollow'))).toBe(SX.tierTotals[3]);
+    // 비율(쏠림)은 그대로: 물리형은 힘 > 지능
+    const s = baseStatsOf(fail4, 'hollow');
     expect(s.atk).toBeGreaterThan(s.int);
-    expect(isFailLine(fail5)).toBe(true);
-    expect(isFailLine(norm5)).toBe(false);
+    expect(isFailLine(fail4)).toBe(true);
+    expect(isFailLine(norm4)).toBe(false);
   });
   it('블록 관련 피해 ×0.5 (실패형 줄기만)', () => {
     const p1: Record<string, unknown> = {};
-    applyEvolutionToParams(p1, evo(['t2:base', 't3:base', 'h4:fail', 't5:normal:mixed']), 'hollow');
+    applyEvolutionToParams(p1, evo(['t2:base', 'h3:fail', 't4:normal:mixed']), 'hollow');
     expect(p1.blockDamageMultiplier).toBe(FL.blockDamage);
     const p2: Record<string, unknown> = {};
-    applyEvolutionToParams(p2, evo(['t2:base', 't3:base', 't4:fire']), 'hollow');
+    applyEvolutionToParams(p2, evo(['t2:base', 't3:fire']), 'hollow');
     expect(p2.blockDamageMultiplier).toBe(1);
   });
   it('이름·단계 표시 = 종족 설정 1단계 이름 (호로 / 혼백)', () => {
     for (const fid of ['hollow', 'shinigami']) {
       const first = getFaction(fid).tierNames[0]!;
-      for (const path of [['t2:base', 't3:base', 'h4:fail'], ['t2:base', 't3:base', 'h4:fail', 't5:fire:special']]) {
+      for (const path of [['t2:base', 'h3:fail'], ['t2:base', 'h3:fail', 't4:fire:special'], ['t2:base', 't3:fire', 'h4:fail']]) {
         const e = evo(path);
         expect(formDisplayName(e, fid)).toBe(first);
         expect(tierDisplayName(e, fid)).toBe(first);
       }
-      const n = evo(['t2:base', 't3:base', 't4:fire']);
-      expect(tierDisplayName(n, fid)).toBe(getFaction(fid).tierNames[3]);
+      const n = evo(['t2:base', 't3:fire']);
+      expect(tierDisplayName(n, fid)).toBe(getFaction(fid).tierNames[2]);
       expect(formDisplayName(n, fid)).not.toBe(first);
     }
     expect(getFaction('hollow').tierNames[0]).toBe('호로');
@@ -91,7 +91,7 @@ describe('49-8 1·2번 실패형 줄기', () => {
 describe('49-8 3번 특별 태그 종족별 · 최초의 호로', () => {
   const failSave = (fid: string, carry: number) => {
     const s = newSaveData(fid, 0);
-    Object.assign(s.evolution, evo(['t2:base', 't3:base', 'h4:fail', 't5:normal:physical']));
+    Object.assign(s.evolution, evo(['t2:base', 'h3:fail', 't4:normal:physical']));
     s.evolution.carry = Object.fromEntries(STAT_IDS.map((k) => [k, carry])) as never;
     return s;
   };
@@ -107,20 +107,20 @@ describe('49-8 3번 특별 태그 종족별 · 최초의 호로', () => {
     expect(titlesForFaction('shinigami').some((t) => t.id === 'tag-1')).toBe(false);
     expect(t1.hidden).toBe(true);
   });
-  it('실패형 줄기 5단계 + 능력치 합계 tierTotals[4] 이상이면 지급, 모자라면 안 줌. 런 로그에 지급 기록', () => {
+  it('실패형 줄기 4단계(C.220) + 능력치 합계 tierTotals[3] 이상이면 지급, 모자라면 안 줌. 런 로그에 지급 기록', () => {
     const low = failSave('hollow', 0);
-    expect(sum(currentStats(low.evolution, 'hollow', statBonusOf(low).total))).toBeLessThan(SX.tierTotals[4]!);
+    expect(sum(currentStats(low.evolution, 'hollow', statBonusOf(low).total))).toBeLessThan(SX.tierTotals[3]!);
     expect(checkTitles(low, 'load', 1).map((d) => d.id)).not.toContain('tag-1');
     const high = failSave('hollow', 40);
     expect(checkTitles(high, 'evolution', 5).map((d) => d.id)).toContain('tag-1');
     const rec = high.runLog.titleUnlocks!.find((r) => r.titleId === 'tag-1')!;
-    expect(rec).toMatchObject({ at: 5, factionId: 'hollow', trigger: 'evolution', tierIndex: 4 });
-    expect(rec.statTotal).toBeGreaterThanOrEqual(SX.tierTotals[4]!);
-    expect(rec.formHistory).toContain('h4:fail');
+    expect(rec).toMatchObject({ at: 5, factionId: 'hollow', trigger: 'evolution', tierIndex: 3 });
+    expect(rec.statTotal).toBeGreaterThanOrEqual(SX.tierTotals[3]!);
+    expect(rec.formHistory).toContain('h3:fail');
   });
   it('일반 줄기는 합계가 넘어도 안 주고, 사신 트랙은 같은 상태여도 tag-1 이 없다', () => {
     const n = newSaveData('hollow', 0);
-    Object.assign(n.evolution, evo(['t2:base', 't3:base', 't4:fire', 't5:fire:physical']));
+    Object.assign(n.evolution, evo(['t2:base', 't3:fire', 't4:fire:physical']));
     expect(checkTitles(n, 'load', 1).map((d) => d.id)).not.toContain('tag-1');
     expect(checkTitles(failSave('shinigami', 40), 'load', 1).map((d) => d.id)).not.toContain('tag-1');
   });
@@ -130,7 +130,7 @@ describe('세이브 형식 32 마이그레이션', () => {
   it('옛 t4 특수 속성 진화체 → 같은 속성 h4 특수형 (진화 상태·기록·도감), 사신 tag-1 → tag-1-shinigami', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(32); // C.109 에서 33 (형식 33 검사는 c109.test.ts)
     expect(remapSpecialVastoId('t4:blood')).toBe('h4:special:blood');
-    expect(remapSpecialVastoId('t4:fire')).toBe('t4:fire');
+    expect(remapSpecialVastoId('t3:fire')).toBe('t3:fire');
     const old = JSON.parse(JSON.stringify(newSaveData('shinigami', 0)));
     old.meta.format = 31;
     Object.assign(old.evolution, { tierIndex: 4, formId: 't5:poison:mixed', formHistory: ['t2:base', 't3:base', 't4:poison', 't5:poison:mixed'] });
@@ -139,10 +139,11 @@ describe('세이브 형식 32 마이그레이션', () => {
     old.titles = [{ titleId: 'tag-1', at: 1, trigger: 'load', seen: true, snapshot: { runs: 0, returned: 0, defeated: 0, absorbs: 0, maxLap: 0, tierIndex: 3, formId: 't4:poison', factionId: 'shinigami' } }];
     const s = migrateSave(old)!;
     expect(s.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(s.evolution.formHistory).toEqual(['t2:base', 't3:base', 'h4:special:poison', 't5:poison:mixed']);
-    expect(s.formDex).toContain('h4:special:poison');
+    // 형식 32 가 h4:special:poison 으로 옮긴 뒤 형식 57(C.220)이 4단계 개편: 옛 4단계 특수형 → 3단계 히든 통로, 옛 5단계 독 혼합 → 독 하나뿐인 특수형
+    expect(s.evolution.formHistory).toEqual(['t2:base', 'h3:passage', 't4:poison:special']);
+    expect(s.formDex).toContain('h3:passage');
     expect(s.formDex).not.toContain('t4:poison');
-    expect(s.runLog.tiers.evolutions[0]).toMatchObject({ toFormId: 'h4:special:poison', formId: 'h4:special:poison' });
+    expect(s.runLog.tiers.evolutions[0]).toMatchObject({ toFormId: 'h3:passage', formId: 'h3:passage' });
     expect(s.titles.map((t) => t.titleId)).toEqual(['tag-1-shinigami']);
     expect(s.titles[0]!.snapshot.formId).toBe('h4:special:poison');
   });

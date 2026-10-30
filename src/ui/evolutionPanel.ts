@@ -4,7 +4,7 @@ import { abilityNameByEffect, formName, physProcText, tryGetForm } from '../data
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
 import { normalSlotNote } from '../data/help/textFormat';
-import { ABILITY_SLOT_LABEL, abilityLines, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { ABILITY_SLOT_LABEL, abilityLines, equippedAbilitiesOf, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
@@ -42,10 +42,10 @@ export function evolutionNote(): HTMLElement {
   return p;
 }
 
-/** 지금 진화체의 특성 줄 (GDD 39장): 성향 + 속성·전용 */
+/** 지금 특성 줄 (GDD 39장 → 126-1 수정, C.220): 특성 칸에 낀 것 (보유·장착이 없는 옛 모양이면 진화체 특성 전부) */
 export function evolutionAbilityLines(evo: EvolutionState, factionId: string): AbilityLine[] {
   const form = evo.formId ? tryGetForm(evo.formId) : undefined;
-  return abilityLines(formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
+  return abilityLines(evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
 }
 
 /** 도감용 특성 줄: 성향은 진화 순간 노력치로 정해지므로 규칙만, 속성·전용은 진화체 label 로 */

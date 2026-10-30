@@ -13,7 +13,7 @@ import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
 import { spaEndText, spaExitFx, spaView } from './spaView';
-import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
+import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
@@ -29,7 +29,7 @@ import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
-  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
+  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
@@ -37,7 +37,8 @@ import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
-import { rankLabel, rankResultView, rankView } from './rankView';
+import { ascensionResultView, rankLabel, rankResultView, rankView } from './rankView';
+import { getBoss } from '../data/bosses';
 import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
 import { absorbView } from './absorbView';
@@ -563,7 +564,7 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params, script: newCombatScript() });
     setBgm('battle');
     battleView(root, faction, s, {
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
@@ -601,7 +602,7 @@ export function startApp(host: HTMLElement): void {
           setActiveGender(g);
           persist();
         },
-        note: genderLookNote(getFaction(save.factionId).tierNames, getFaction(save.factionId).genderLookFromTier),
+        note: genderLookNote(getFaction(save.factionId).tierNames, getFaction(save.factionId).genderLookFromTier, getFaction(save.factionId).ascension),
       },
     } : null);
     setActiveGender(save?.gender);
@@ -1005,7 +1006,7 @@ export function startApp(host: HTMLElement): void {
       s.trackNotice = null;
     }
     if (s.hogyoku.tabNotice) {
-      notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 5단계에 닿았다. 더보기 ⋯ → [붕옥]' });
+      notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 마지막 단계(4단계)에 닿았다. 더보기 ⋯ → [붕옥]' });
       s.hogyoku.tabNotice = false;
     }
     // 떠돌이 상인 (GDD 85장 5번·127장 3): 이번 방문을 처음 보는 방이면 한 번 알린다 — 방에서만(장터 안에서는 안 뜬다). 먼저 장터에 들어갔으면 본 것으로 친다
@@ -1134,6 +1135,7 @@ export function startApp(host: HTMLElement): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
       onSwitch: (id) => switchTraining(faction, s, id),
+      onAscend: () => !careBlocked(s) && open('ascension-battle', () => runAscensionBattle(faction), true),
     });
   }
 
@@ -1381,7 +1383,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(f.bossId ? 'boss' : f.kind === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       battleItem: armBattleItem(s0, s),
-      tierIndex: s0.evolution.tierIndex,
+      tierIndex: artTierIndexOf(s0),
       skinId: artSkinOf(s0),
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
@@ -1556,7 +1558,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       battleItem: save ? armBattleItem(save, s) : undefined,
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 원정' } } : {}),
@@ -1581,7 +1583,7 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 승리 후 흡수 가능하면 흡수 화면 → 한계 돌파 연출 → 원정으로 돌아간다 */
+  /** 승리 후 흡수 가능하면 흡수 화면 → 폭주(호로화) 연출 → 원정으로 돌아간다 */
   function afterBattle(faction: FactionConfig, exp: ExpeditionState): void {
     activeExp = exp;
     const proceed = () => {
@@ -1589,7 +1591,7 @@ export function startApp(host: HTMLElement): void {
       const next = () => {
         // 튜토리얼 원정 흡수 직후 (GDD 134장 2, C.211): 치명상 장면(비틀거림·체력 막대 붉게 깜빡 + 각본 카드) 뒤 귀환 → 방에서 빈사 설명부터 회복 안내
         if (exp.phase === 'ended' && exp.tutorial) {
-          const art = heroArtOf(roomOf(faction), faction.id, save?.evolution.tierIndex ?? 0, save ? artSkinOf(save) : undefined);
+          const art = heroArtOf(roomOf(faction), faction.id, save ? artTierIndexOf(save) : 0, save ? artSkinOf(save) : undefined);
           return tutorialWoundView(root, faction, art, hpFractionOf(exp), BALANCE.provisional.nest.care.dying.hpFraction, () => endExpedition(faction, exp));
         }
         if (exp.phase === 'ended') return endExpedition(faction, exp);
@@ -1626,7 +1628,7 @@ export function startApp(host: HTMLElement): void {
     activeExp = exp;
     setBgm('expedition');
     expeditionView(root, faction, exp, {
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
@@ -1651,7 +1653,7 @@ export function startApp(host: HTMLElement): void {
     }, msg);
   }
 
-  /** 한계 돌파 연출 (텍스트 수준). 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 임시 페널티만 있다 */
+  /** 폭주(호로화) 연출 (텍스트 수준). 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 임시 페널티만 있다 */
   function breakthroughScreen(faction: FactionConfig, exp: ExpeditionState, resume: () => void): void {
     breakthroughView(root, faction, exp.risk, resume);
   }
@@ -1809,7 +1811,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       battleItem: save ? armBattleItem(save, s) : undefined,
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       notice,
       tutorial: tutorialFor(),
@@ -1817,6 +1819,7 @@ export function startApp(host: HTMLElement): void {
       onEnd: (done) => {
         if (save) {
           recordBattle(save, buildBattleRecord(done, { factionId: faction.id, tierIndex: save.evolution.tierIndex }));
+          if (fixedStar === undefined) recordEvolutionPractice(save.evolution); // 각성형 조건 (GDD 126장 협의 답, C.220): 이번 생 훈련 인형 전투 수
           settleLiberationRisk(save, done);
           persist();
         }
@@ -1856,7 +1859,7 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
       battleItem: armBattleItem(s0, s),
-      tierIndex: s0.evolution.tierIndex,
+      tierIndex: artTierIndexOf(s0),
       skinId: artSkinOf(s0),
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
@@ -1867,6 +1870,41 @@ export function startApp(host: HTMLElement): void {
         persist();
         // 결과 화면은 전투 자리를 바꿔 끼운다: 돌아가면 등급표(다시 그려 새 번호를 보인다)
         nav.replace({ id: 'rank-result', locked: true, render: () => { rankResultView(root, faction, holder, done, res, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
+        showTitleToasts(s0, faction, persist);
+      },
+    });
+  }
+
+  // ── 아란칼화 / 참백도 구상화 (GDD 126장 3, C.220): 지금은 보스전 임시 — 둥지 빌드 그대로, 이기면 레스렉시온/만해 해금 ──
+  function runAscensionBattle(faction: FactionConfig): void {
+    if (!save) return;
+    const s0 = save;
+    if (!ascensionAccess(s0).ok) return void nav.pop();
+    persist();
+    stashSlot(store, slot, 'ascension');
+    setBgm('elite');
+    const AX = BALANCE.provisional.ascension;
+    const boss = getBoss(AX.bossId);
+    const params = buildCombatParams(s0.build, faction.id);
+    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
+    applyDifficultyToParams(params, AX.difficulty);
+    params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
+    applyGearToParams(params, gearCarry(s0.shared.gear), true);
+    applyCareToParams(params, battleCareOf(s0));
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: { ...enemyAtDifficulty(boss.enemy, AX.difficulty), name: { '*': faction.ascension.foe } }, params, boss: bossSetupOf(boss.id) });
+    battleView(root, faction, s, {
+      battleItem: armBattleItem(s0, s),
+      tierIndex: artTierIndexOf(s0),
+      skinId: artSkinOf(s0),
+      banner: `${faction.ascension.name} · ${faction.ascension.foe}`,
+      enter: true,
+      bg: arenaSceneBg(faction),
+      onEnd: (done) => {
+        const res = recordAscension(s0, done);
+        settleLiberationRisk(s0, done);
+        persist();
+        const lines = res.won ? [...faction.ascension.completeText, ...(res.slotsAdded > 0 ? [`특성 칸이 ${res.slotsAdded}칸 늘었다.`] : [])] : [`${faction.ascension.foe}에게 졌다. 잃은 것은 없다 — 다시 도전할 수 있다.`];
+        nav.replace({ id: 'ascension-result', locked: true, render: () => { ascensionResultView(root, faction, res.won, lines, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
         showTitleToasts(s0, faction, persist);
       },
     });

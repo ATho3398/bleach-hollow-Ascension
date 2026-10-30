@@ -29,9 +29,10 @@ export function pickFormLook(faction: Pick<FactionConfig, 'formLooks'>, formId: 
   return list[x % list.length]!;
 }
 
-/** 진화체 외형: 진화체 표 → 없으면 단계 표(능력치 순위) */
-export function pickLook(faction: Pick<FactionConfig, 'formLooks' | 'tierLooks'>, form: FormDef, ev: Stats, seed: number): string | null {
-  return pickFormLook(faction, form.id, seed) ?? pickTierLook(faction, form.tier, ev, form);
+/** 진화체 외형: 진화체 표 → 없으면 단계 표(능력치 순위). C.220 (GDD 126장 3): 종족 설정 ascension.lookChange 면 진화체 표(아란칼 모습)는 아란칼화를 깬 뒤에만 */
+export function pickLook(faction: Pick<FactionConfig, 'formLooks' | 'tierLooks'> & { ascension?: Pick<FactionConfig['ascension'], 'lookChange'> }, form: FormDef, ev: Stats, seed: number, ascended = true): string | null {
+  const formLook = faction.ascension?.lookChange && !ascended ? null : pickFormLook(faction, form.id, seed);
+  return formLook ?? pickTierLook(faction, form.tier, ev, form);
 }
 
 /** 표에 나오는 모든 외형 id (검증·테스트용) */

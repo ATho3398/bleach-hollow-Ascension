@@ -251,6 +251,7 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
     damageTakenMultiplier: pm.damageTaken,
     blockSpawnMultiplier: pm.blockSpawn,
     critChance: BALANCE.provisional.combat.critChance + critChanceBonus(b),
+    blockCritChance: BALANCE.provisional.combat.blockCritChance + critChanceBonus(b),
     guardHealEnhance: enhanceGuardHealMultiplier(b),
     basicAttackEnhance: basicAttackMultiplier(b),
   };

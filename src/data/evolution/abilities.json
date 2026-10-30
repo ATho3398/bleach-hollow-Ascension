@@ -20,23 +20,24 @@
   },
   "uniqueAbilities": {
     "complete": { "effect": "noWeak", "name": { "*": "완성" }, "description": { "*": "속성 상성에서 불리 효과를 받지 않는다." } },
-    "limit": { "effect": "desperate", "name": { "*": "{frenzyName}" }, "description": { "*": "체력이 절반 아래면 주는 피해가 오른다." } },
-    "restraint": { "effect": "rampUp", "name": { "*": "억눌린 힘" }, "description": { "*": "싸울수록 공격이 강해진다." } },
+    "frenzy": { "effect": "desperate", "name": { "*": "{frenzyName} 본능" }, "description": { "*": "체력이 절반 아래면 주는 피해가 오른다." } },
+    "restraint": { "effect": "rampUp", "name": { "*": "절제" }, "description": { "*": "싸울수록 공격이 강해진다." } },
     "hunter": { "effect": "eliteSlayer", "name": { "*": "사냥꾼" }, "description": { "*": "강적·보스에게 주는 피해가 오른다." } },
-    "reborn": { "effect": "lastStand", "name": { "*": "다시 일어남" }, "description": { "*": "전투마다 한 번, 쓰러질 때 버틴다." } }
+    "awakened": { "effect": "lastStand", "name": { "*": "다시 일어남" }, "description": { "*": "전투마다 한 번, 쓰러질 때 버틴다." } }
   },
   "kindSlots": {
     "base": { "element": "none" },
     "element": { "element": "label" },
     "arrancar": { "element": "label", "physical": true },
     "fusion": { "element": "label", "scale": "fusion" },
-    "special": { "element": "label", "scale": "boosted" },
-    "pure": { "element": "label", "scale": "boosted" },
-    "fail": { "element": "none", "dispositions": 2 },
     "complete": { "element": "unique" },
-    "limit": { "element": "unique" },
+    "fail": { "element": "none", "dispositions": 2 },
+    "passage": { "element": "none" },
+    "awakened": { "element": "unique" },
+    "frenzy": { "element": "unique" },
     "restraint": { "element": "unique" },
+    "stable": { "element": "label", "scale": "boosted" },
     "hunter": { "element": "unique" },
-    "reborn": { "element": "unique" }
+    "void": { "element": "label", "scale": "fusion" }
   }
 }

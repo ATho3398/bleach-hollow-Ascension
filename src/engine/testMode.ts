@@ -260,7 +260,7 @@ export function newTestSave(factionId: string, nowMs: number = Date.now()): Save
 function refreshLook(save: SaveData): void {
   const e = save.evolution;
   const form = e.formId ? tryGetForm(e.formId) : undefined;
-  e.look = form ? pickLook(getFaction(save.factionId), form, currentStats(e, save.factionId), e.stageSeed) : null;
+  e.look = form ? pickLook(getFaction(save.factionId), form, currentStats(e, save.factionId), e.stageSeed, e.ascended === true) : null;
 }
 
 /** 진화체 고르기: null = 1단계(진화 전). 단계·도감·이력도 맞춘다. 고유 특성은 그대로(따로 고른다) */

@@ -1309,3 +1309,16 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **상점**(145장 4): 약 칸에 4종, 기기 날짜(dayKey) 기준 하루 판매 수, 카드 배지 '오늘 n/m', 다 사면 '오늘 다 팔림'. `shared.shopDaily { day, bought }`.
 - 테스트 `tests/c223.test.ts`(15) + 형식·온천 속도·포션 단계 관련 기존 테스트 갱신(c60·c120·c134·c136·c140·c144·c177·c178·c179·c184·c188·c198·c199·c206·c208·c211·c213·c214·c221·economy·nest-ui). 전체 181파일 2244개.
 - 캡처 `docs/captures/c223/`(`scripts/c223-proof.cjs`, 1배 844×390, 호로 테스트 칸): 01 걷기 중 가방 반창고 사용(체력 막대 차는 중) · 02 전투 [소모품] 칸 회복약 ×1 · 03 온천 ⓘ 1분에 +20%·약 5분(6초에 80 → 86/264) · 04 상점 약 칸 '오늘 4/5' 등.
+
+## C.220 — 126장 뼈대: 4단계 · 등급 사다리 · 아란칼화/참백도 구상화(보스전 임시) · 특성 칸 · 치명 두 값 · 세이브 형식 57 (GDD 142장, v5.336, S-23, 코딩162 Opus)
+사용 모델: Opus 5.5. `PATCH_LABEL` C.223(푸시 시점 가장 큰 값 — C.221~C.223 이 먼저 올라감). SAVE_FORMAT_VERSION 57(C.223) → 58(문턱 54 그대로), BALANCE_VERSION 97(C.223) → 98(전부 provisional — 진화체 밸런스는 2차).
+- 사용자 원문: "뭐 아직 진화체에 관련된 밸런스는 맞추지 말아봐. 진화체에 구성을 다 끝나면 그때 밸런스 맞추고. …" · "ㅇㅇ기본1칸 돼있지?" · "ㅇㅇ 뼈대 패치 먼저 ㄱㄱ"
+- **구조**: 단계 4(`TIER_COUNT`), 진화체 36종(`generate.ts` → forms.json — 2단계 1 · 3단계 5+히든 2 · 4단계 18+히든 10), 판정 `judge.ts` 새로(3단계 망함·통로 가중 랜덤, 4단계 히든 우선). FORM_KINDS 에 passage·awakened·frenzy·stable·void(limit·reborn·special·pure 삭제). 종족 설정 tierNames 4칸·`ascension`·사신 rankNames/진급 시험·formLooks t4 키.
+- **아란칼화**: `ascensionAccess`·`recordAscension`(game.ts), 수련 화면 칸(`trainingView` ascensionPanel), 보스전 `runAscensionBattle`(app.ts), 결과 `ascensionResultView`. 레스렉시온/만해 = `hasUniqueLiberation(e)`(e.ascended), 해방 이름 `liberationLabels(f, unique)`. 그림 단계 `artTierIndexOf`(호로 5 = 아란칼).
+- **특성 칸**: `AbilityLoadout`(formAbilities.ts — owned·equipped·slots·ascendedEver), 진화 때 `gainAbilities`, 환생·아란칼화 `setAbilitySlots`(빈 칸은 보유로 채움), 화면 `abilitySlotsBlock`(상태 화면, confirmDialog 목록). `applyEvolutionToParams` = 낀 것만(abilities 없는 점검 도구 몸은 옛 규칙 = 진화체 특성 전부). 흡수 후보 skill 만.
+- **치명**: `blockCritChance`·`blockCritChanceMax`(combat params·build·gear·특성), 상태 화면 두 줄 `critChances`.
+- **마이그레이션** `src/saveTier4.ts`(`migrateEvolutionTo4`·`remapOldFormId`), `SAVE_MIGRATIONS[57]`(57 → 58). 옛 형식 테스트용 `saveLegacy.migrateEvolution` 은 옛 id 그대로 두고 57 이 옮김. `remapSpecialVastoId` 는 지금 표를 안 보고 문자열로.
+- **기획서 값 / 실제 값 / 이유**: ① '최다 속성 30%' → 그 단계 흡수 속성 분포(흡수 5회↑, 다른 히든 비율 조건과 같은 기준). ② 4단계 속성 → 3단계 속성 잇기, 혈·독·허는 장착 최다(동률 포함)일 때(우선순위 '일반 < 혈독허'). ③ 종족값 표 4칸 → 마지막 칸 삭제(★1~4 적·1~3단계 몸 그대로). ④ 진화 걸음 50·80·110 → C.212 0.8배 값 40·65·85. ⑤ 옛 5단계 세이브 = 아란칼화 깬 것(이미 레스렉시온·아란칼 모습). ⑥ 4단계 히든 사냥꾼 '5바퀴째 강적 2회↑' = 5바퀴째 이상에서 강적 2마리↑ 처치한 원정(바퀴당 강적 1마리 규칙). — 마스터 확인 대기.
+- **밸런스**(`npm run balance:check` 통과): 수치 조정 없음, 가드만 — 단계 목표 3칸, 트리 24+12, 등가·특성·물공 점검 id 4단계로, 4단계 봇 아란칼화 처리(`botAscend`), 1~3단계 가드 몸·단계 평균에서 실패형 줄기 제외(`guardBodies`), 타일 변수 패배율 가드 +8 → +13%p(패시브 흡수 제외 몫: 켬/끔 +5.5 → +11.7%p, 실험으로 확인). 진화 봇 단계 원정 2.1/3.2/5.6(실패형 빼면 4.7), 3단계 망함 37%·통로 23%, 4단계 실패형 47%·폭주형 33%. 후반 보류 경고(4단계) 14건 — 등급전·탑 41~50층·forest-lord 보스·4단계 바퀴 곡선 등(2차 몫).
+- 테스트: 새 `tests/c220.test.ts` 18개(구조·특성 칸·아란칼화·치명·마이그레이션 57→58·id 옮기기). 옛 5단계 가정 테스트 44파일 갱신.
+- 캡처 `docs/captures/c220/`(`scripts/c220-proof.cjs`, 1배 844×390, 호로): 01 3단계 → 4단계 진화(아쥬커스 → 바스트로데) · 02 상태 화면 평타/블록 치명 두 줄 + 특성 칸 1칸 · 03 수련장 아란칼화 도전 칸 · 04a·04b 옛 세이브(형식 56 5단계 아란칼 물 혼합) → 4단계 바스트로데_물_교 + 아란칼 모습 유지.

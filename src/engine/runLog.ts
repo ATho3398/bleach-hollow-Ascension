@@ -49,7 +49,7 @@ export interface LineageRecord {
 export interface RiskRecord {
   /** 역대 리스크 게이지 최고치 */
   peak: number;
-  /** 한계 돌파 횟수 */
+  /** 폭주(호로화) 횟수 */
   breakthroughs: number;
   /** 돌파 후 생존 횟수 */
   survivedBreakthroughs: number;
@@ -215,6 +215,19 @@ export interface RankChangeRecord {
 }
 
 /** 등급전 1회 기록 (GDD 21장, 세이브 형식 15): 이기든 지든 남긴다. 히든 등급·태그·해방 조건이 나중에 읽는다 */
+/** 아란칼화 / 참백도 구상화 도전 한 판 (C.220): 보스 id·★·승패·그때 진화체 */
+export interface AscensionRecord {
+  at: number;
+  factionId: string;
+  bossId: string;
+  difficulty: number;
+  won: boolean;
+  seed: number;
+  durationSeconds: number;
+  tierIndex: number;
+  formId: string | null;
+}
+
 export interface RankBattleRecord {
   /** 시각(ms) */
   at: number;
@@ -248,7 +261,7 @@ export interface RunRecord {
   endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort';
   seed: number;
   factionId: string;
-  /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 한계 돌파 여부 */
+  /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 폭주(호로화) 여부 */
   gainedTraits: string[];
   lostTraits: string[];
   riskPeak: number;
@@ -373,6 +386,8 @@ export interface RunLog {
   runs: RunRecord[];
   /** 수련 기록 (C.54, 세이브 형식 18) */
   trainings: TrainingRecord[];
+  /** 아란칼화 / 참백도 구상화 도전 기록 (C.220, 세이브 형식 57, GDD 126장 3 — 지금은 보스전 임시). 옛 세이브엔 없음 */
+  ascensions?: AscensionRecord[];
   /** 환생 기록 (C.56, 세이브 형식 20) */
   rebirths: RebirthRecord[];
   /** 보스전·스토리 화 기록 (C.58, 세이브 형식 22) */

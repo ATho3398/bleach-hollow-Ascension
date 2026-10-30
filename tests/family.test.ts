@@ -282,7 +282,7 @@ const use = (s: CombatState, cell: number) => applyInput(s, { type: 'use', cell 
 
 describe('콤보 데이터 (진화 단계마다 1개씩 열림, GDD 17-3)', () => {
   it('단계가 오를 때마다 콤보가 하나씩 열린다', () => {
-    expect([0, 1, 2, 3, 4].map((t) => combosAtTier(t).length)).toEqual([0, 1, 2, 3, 4]);
+    expect([0, 1, 2, 3].map((t) => combosAtTier(t).length)).toEqual([0, 1, 2, 3]); // C.220 (GDD 126-1 E): 콤보 4 → 3
     const e = newEvolution();
     expect(comboRulesOf(e)).toEqual([]);
     e.tierIndex = 1;

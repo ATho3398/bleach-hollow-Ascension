@@ -50,7 +50,7 @@ function forceBattle(e: ExpeditionState, win: boolean): CombatState {
 function atTier(tierIndex: number) {
   const e = newEvolution();
   e.tierIndex = tierIndex;
-  const ids = ['t2:base', 't3:base', 't4:fire', 't5:fire:physical'];
+  const ids = ['t2:base', 't3:normal', 't3:fire', 't4:fire:physical'];
   e.formHistory = ids.slice(0, tierIndex);
   e.formId = tierIndex > 0 ? ids[tierIndex - 1]! : null;
   return e;
@@ -112,7 +112,8 @@ describe('32-1 2번: 적의 세기 = 원정 난이도 ★', () => {
     expect(clampDifficulty(99)).toBe(MAX_DIFFICULTY);
     expect(clampDifficulty(NaN)).toBe(1);
     expect(recommendedDifficulty(2)).toBe(3);
-    expect(unlockedByTier(4)).toBe(5);
+    expect(unlockedByTier(3)).toBe(4); // C.220: ★1~4
+    expect(MAX_DIFFICULTY).toBe(4);
   });
   it('전투 파라미터: applyDifficultyToParams 가 적 기준 능력치를 ★ 로, 적 능력치 = 기준 × 성향; enemyAtDifficulty 가 체력·공격 배율을 입힌다', () => {
     const p: Partial<CombatParams> = {};
@@ -193,12 +194,12 @@ describe('32-1 6·7번: 사냥터 강도 일원화, 스토리 화·보스·등�
     }
     expect(BOSSES.find((b) => b.id === 'sand-maw')!.difficulty).toBe(2);
   });
-  it('등급전 보유자: No.1 = ★5, 아래 번호일수록 낮거나 같다, 모두 1~5', () => {
+  it('등급전 보유자: No.1 = 최고 ★(C.220: ★4), 아래 번호일수록 낮거나 같다', () => {
     const byRank = [...RANK_HOLDERS].sort((a, b) => a.rank - b.rank);
     expect(byRank[0]!.difficulty).toBe(MAX_DIFFICULTY);
     for (let i = 1; i < byRank.length; i++) expect(byRank[i]!.difficulty).toBeLessThanOrEqual(byRank[i - 1]!.difficulty);
     for (const h of byRank) expect(h.difficulty).toBeGreaterThanOrEqual(1);
-    expect(byRank[byRank.length - 1]!.difficulty).toBeLessThan(MAX_DIFFICULTY);
+    expect(byRank[byRank.length - 1]!.difficulty).toBeLessThanOrEqual(MAX_DIFFICULTY); // C.220: 옛 ★5 보유자는 ★4 로 (전원 ★4)
   });
 });
 
@@ -212,9 +213,9 @@ describe('32-1 5·11번: 보상은 난이도 따라 — 먹이·노력치 ★당
     expect(difficultyGoldMultiplier(1)).toBe(1);
     expect(difficultyGoldMultiplier(3)).toBeCloseTo(1.2);
     expect(difficultyGoldMultiplier(3, 4)).toBeCloseTo(1.28);
-    expect(difficultyGoldMultiplier(5, 10)).toBeCloseTo(1.6);
-    expect(difficultyGoldMultiplier(5, 99)).toBeCloseTo(1.6); // 연속 상한 10·골드 가산 상한 +20%
-    expect(difficultyRewardMultiplier(5, 10)).toBeCloseTo(2.5);
+    expect(difficultyGoldMultiplier(4, 10)).toBeCloseTo(1.5); // C.220: ★ 최대 4
+    expect(difficultyGoldMultiplier(4, 99)).toBeCloseTo(1.5); // 연속 상한 10·골드 가산 상한 +20%
+    expect(difficultyRewardMultiplier(4, 10)).toBeCloseTo(2.25);
     expect(scaleEv({ hp: 3, def: 2 }, 1)).toEqual({ hp: 3, def: 2 });
     expect(scaleEv({ hp: 3, def: 2 }, 3)).toEqual({ hp: 5, def: 3 });
     expect(scaleEv({ hp: 1 }, 2)).toEqual({ hp: 1 });
@@ -244,18 +245,18 @@ describe('32-1 4·8번: ★ 열림(세이브)·마이그레이션·런 로그', 
   it('진화로 n단계에 닿으면 ★n 이 열리고(영구), 환생해도 남는다', () => {
     const s = newSaveData('hollow', 2);
     const need = BALANCE.provisional.evolution.stepsNeeded;
-    for (let t = 0; t < 4; t++) {
+    for (let t = 0; t < 3; t++) {
       s.evolution.steps = need[t]!;
       expect(performEvolution(s, 1, { hunger: 30, condition: 80 }).ok).toBe(true);
       expect(s.difficulty.unlocked).toBe(t + 2);
     }
-    expect(s.evolution.tierIndex).toBe(4);
-    expect(defaultDifficulty(s)).toBe(5);
+    expect(s.evolution.tierIndex).toBe(3);
+    expect(defaultDifficulty(s)).toBe(4);
     s.difficulty.last = 3;
     const r = performRebirth(s, null, 5);
     expect(r.ok).toBe(true);
     expect(s.evolution.tierIndex).toBe(0);
-    expect(s.difficulty.unlocked).toBe(5);
+    expect(s.difficulty.unlocked).toBe(4);
     expect(defaultDifficulty(s)).toBe(1); // 기본은 내 단계(권장)
     expect(unlockDifficultyFor(s)).toBe(false);
   });
@@ -265,17 +266,17 @@ describe('32-1 4·8번: ★ 열림(세이브)·마이그레이션·런 로그', 
     (s.meta as { format: number }).format = 28;
     const t = s as unknown as SaveData;
     t.evolution.tierIndex = 2;
-    t.runLog.tiers.evolutions.push({ at: 1, fromTier: 2, toTier: 3, formId: 't4:fire', factionId: 'hollow', hidden: false, steps: 110 } as never);
+    t.runLog.tiers.evolutions.push({ at: 1, fromTier: 2, toTier: 3, formId: 't3:fire', factionId: 'hollow', hidden: false, steps: 110 } as never);
     expect(maxTierReached(t)).toBe(3);
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.difficulty).toEqual({ unlocked: 4, last: 3, streak: { star: 1, count: 0 } });
-    // 환생한 세이브는 5단계에 닿은 것
+    // 환생한 세이브는 마지막 단계에 닿은 것 (C.220: 4단계 = ★4)
     const r = newSaveData('hollow', 4);
     r.rebirth.count = 1;
     delete (r as unknown as Record<string, unknown>).difficulty;
     r.meta.format = 28;
-    expect(migrateSave(JSON.parse(JSON.stringify(r)))!.difficulty).toEqual({ unlocked: 5, last: 1, streak: { star: 1, count: 0 } });
+    expect(migrateSave(JSON.parse(JSON.stringify(r)))!.difficulty).toEqual({ unlocked: 4, last: 1, streak: { star: 1, count: 0 } });
     // 깨진 값 보정: 연 ★ 는 최고 단계 이상, 마지막 선택은 연 범위 안
     expect(sanitizeDifficulty({ ...newSaveData('hollow', 5), evolution: atTier(1), difficulty: { unlocked: 0, last: 9 } })).toEqual({ unlocked: 2, last: 2, streak: { star: 1, count: 0 } });
     expect(sanitizeDifficulty({ ...newSaveData('hollow', 5), difficulty: { unlocked: 4, last: 2, streak: { star: 3, count: 99 } } })).toEqual({ unlocked: 4, last: 2, streak: { star: 3, count: 10 } });

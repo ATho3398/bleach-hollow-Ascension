@@ -248,7 +248,7 @@ function setMeterValue(root: HTMLElement, value: number, max?: number): void {
 }
 
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
-  const labels = battleLabels(faction, opts.tierIndex ?? 0);
+  const labels = battleLabels(faction, opts.tierIndex ?? 0, s.params.liberationUnique);
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));

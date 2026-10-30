@@ -78,7 +78,7 @@ describe('C.93 #5 상태 화면 특성 줄: 성향이 비어도 진화체 속성
   it('formId 가 있고 ability 가 null 이면 속성 특성 줄만, 1단계는 null', async () => {
     const { newEvolution } = await import('../src/engine/evolution');
     const { statusAbilityLines } = await import('../src/ui/lcdScreens');
-    const evo = { ...newEvolution(), tierIndex: 3, formId: 't4:water', formHistory: ['t2:base', 't3:base', 't4:water'], ability: null };
+    const evo = { ...newEvolution(), tierIndex: 3, formId: 't3:water', formHistory: ['t2:base', 't3:normal', 't3:water'], ability: null };
     const lines = statusAbilityLines(evo, 'hollow')!;
     expect(lines.length).toBeGreaterThan(0);
     expect(lines.every((l) => l.slot !== '성향')).toBe(true);

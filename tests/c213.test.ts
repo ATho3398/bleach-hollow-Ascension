@@ -49,7 +49,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     return raw;
   };
   it('단계 표에 55 가 있고 형식은 56', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(57);
+    expect(SAVE_FORMAT_VERSION).toBe(58);
     expect(typeof SAVE_MIGRATIONS[55]).toBe('function');
   });
   it('가진 희귀 특성 → 같은 속성 강화 1단계, 다른 값과 런 로그 옛 기록은 그대로', () => {
@@ -130,10 +130,10 @@ describe("136장 2: '한계 돌파' 표시 문구 → 폭주(호로)·호로화(
   it('폭주 고유 특성·진화 힌트·외형 이름은 종족 설정 frenzyName', async () => {
     const { abilityNameByEffect, abilityTextName, uniqueAbility, formHint, FORM_TABLE } = await import('../src/data/evolution');
     const { getFaction } = await import('../src/data/factions');
-    expect(abilityTextName(uniqueAbility('limit'), 'hollow')).toBe(getFaction('hollow').frenzyName);
-    expect(abilityTextName(uniqueAbility('limit'), 'shinigami')).toBe('호로화');
-    expect(abilityNameByEffect('desperate', 'hollow')).toBe('폭주');
-    const limit = (FORM_TABLE as readonly { label: { kind: string } }[]).find((f) => f.label.kind === 'limit');
+    expect(abilityTextName(uniqueAbility('frenzy'), 'hollow')).toBe(`${getFaction('hollow').frenzyName} 본능`);
+    expect(abilityTextName(uniqueAbility('frenzy'), 'shinigami')).toBe('호로화 본능');
+    expect(abilityNameByEffect('desperate', 'hollow')).toBe('폭주 본능');
+    const limit = (FORM_TABLE as readonly { label: { kind: string } }[]).find((f) => f.label.kind === 'frenzy');
     expect(limit).toBeDefined();
     expect(formHint(limit as never, 'shinigami')).toContain('호로화');
     const { SKINS } = await import('../src/data/skins');

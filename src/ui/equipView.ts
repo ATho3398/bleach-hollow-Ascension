@@ -10,7 +10,7 @@ import { statName } from '../data/elements';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName } from '../engine/evolution';
 import { carryOfItems, enhanceCost, equippedSlotOf, findGear, gearScore, gearStatsOf, sellGold, type GearItem } from '../engine/gear';
-import { artSkinOf, statBonusOf, type SaveData } from '../game';
+import { artSkinOf, statBonusOf, type SaveData, artTierIndexOf } from '../game';
 import {
   autoEquipGear, BATTLE_ITEM_IDS, bulkSellGear, bulkSellTargets, consumableName, enhanceGearItem, equipGearItem, gearKindName, gearName, gearSlotName, gearSpecialText, gearStatText,
   sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
@@ -253,7 +253,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const colR = h('div', 'bha-eqcol');
   colR.append(...(['acc1', 'acc2'] as GearSlot[]).map(slotBtn), battleBtn);
   const figure = h('div', 'bha-eqfigure');
-  const art = roomCharArt(roomOf(faction), faction.id, save.evolution.tierIndex, artSkinOf(save));
+  const art = roomCharArt(roomOf(faction), faction.id, artTierIndexOf(save), artSkinOf(save));
   if (art.src) {
     const img = h('img', 'bha-eqfigure__img');
     img.src = art.src;

@@ -485,7 +485,7 @@ export function expeditionEndVitals(exp: ExpeditionState): { hunger: number; con
   const defeated = summarize(exp).outcome === 'defeated';
   const hunger = Math.min(100, exp.hunger + (defeated ? NX.defeatHunger : 0));
   let condition = defeated ? Math.min(exp.condition, NX.defeatCondition) : exp.condition;
-  // 폭주(한계 돌파)한 원정에서 돌아오면 컨디션 −30 (GDD 23-2). 패배로 돌아와도 같다.
+  // 폭주(폭주(호로화))한 원정에서 돌아오면 컨디션 −30 (GDD 23-2). 패배로 돌아와도 같다.
   // 단 바퀴당 감소 하한(GDD 42장 3번) 아래로는 안 깎는다 — 패배 급락(defeatCondition)은 그대로 두고 폭주분만 막는다
   if (exp.breakthrough) condition = Math.max(clamp(condition - BALANCE.provisional.risk.frenzyConditionLoss, 0, MAX), conditionFloor({ ...exp, condition }));
   return { hunger, condition };

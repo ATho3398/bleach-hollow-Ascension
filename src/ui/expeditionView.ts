@@ -48,7 +48,7 @@ export interface ExpeditionViewHandlers {
   /** 전투가 시작될 때: 전투 화면으로 넘어간다. 끝나면 호출자가 expeditionView 를 다시 부른다 */
   onBattle: (p: PendingBattle) => void;
   onEnded: () => void;
-  /** 한계 돌파가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
+  /** 폭주(호로화)가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
   onBreakthrough: (resume: () => void) => void;
   /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더 */
   onSave: () => void;
@@ -75,7 +75,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let msg = startMsg;
   const tn = (id: string) => tileName(id, faction.id);
 
-  /** 처음 화면 복귀 확인창(Q-3)·세로 전환이 열려 있으면 true: 시간이 멈춘다. dead = 이 화면을 떠났다(전투·결과로 넘어감). away = 한계 돌파 연출이 덮고 있다 */
+  /** 처음 화면 복귀 확인창(Q-3)·세로 전환이 열려 있으면 true: 시간이 멈춘다. dead = 이 화면을 떠났다(전투·결과로 넘어감). away = 폭주(호로화) 연출이 덮고 있다 */
   let held = false;
   let dead = false;
   let away = false;
@@ -177,7 +177,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       else if (e.kind === 'tile-ev') nearMsg = e.amount > 0 ? `${statName(e.stat, faction.id)} 노력치 +${e.amount}` : `${statName(e.stat, faction.id)} 노력치가 상한이다`;
     }
     if (events.some((e) => e.kind === 'breakthrough')) {
-      // 한계 돌파 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
+      // 폭주(호로화) 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
       away = true;
       clock.cancel();
       const stage = main.parentElement!;
@@ -258,7 +258,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // 지금 고른 사냥터 이름 (GDD 24-2). 종족 전체 지역 이름(huntingGroundName)이 아니라 사냥터별 이름
   const groundLabel = groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
   where.append(el('b', '', groundLabel));
-  // 폭주 상태 칩 (GDD 23-2): 한계 돌파한 원정의 남은 동안 보인다. 문구는 종족 설정 frenzyName
+  // 폭주 상태 칩 (GDD 23-2): 폭주(호로화)한 원정의 남은 동안 보인다. 문구는 종족 설정 frenzyName
   const frenzyChip = chip(faction.frenzyName, 'danger');
   frenzyChip.classList.add('bha-frenzychip');
   frenzyChip.prepend(icon('i-risk', 'sm'));

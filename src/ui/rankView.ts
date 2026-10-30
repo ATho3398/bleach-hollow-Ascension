@@ -1,5 +1,6 @@
 // 등급전 화면 (GDD 21장, C.49): 왼쪽 = 번호 사다리(No.1 → No.10 → 무번호), 오른쪽 = 지금 도전할 상대와 [도전] / 막힌 이유. 결과 화면은 rankResultView.
 // 번호의 표시 이름은 종족 설정 rankNames·unrankedName 에서 읽는다 (엔진은 번호만, 종족 id 분기 없음). 번호 보유자는 자리 표시 데이터(provisional).
+import { BALANCE } from '../config/balance';
 import { elementName } from '../data/elements';
 import { RANK_COUNT, getHolder, type RankHolderDef } from '../data/ranks';
 import { enemyPatternKind } from '../data/enemies';
@@ -91,7 +92,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
       button({ label: `${rankLabel(faction, c.targetRank)}에 도전`, icon: 'i-attack', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(holder) }),
     );
   } else if (c.reason === 'locked') {
-    right.push(notice('info', `${faction.tierNames[4]}이(가) 되면 ${faction.rankBattleName}이(가) 열린다.`, { icon: 'i-lock', title: '아직 잠김' }));
+    right.push(notice('info', `${faction.tierNames[BALANCE.rank.unlockTierIndex]}이(가) 되면 ${faction.rankBattleName}이(가) 열린다.`, { icon: 'i-lock', title: '아직 잠김' }));
   } else if (c.reason === 'top') {
     right.push(notice('good', `${rankLabel(faction, 1)} — 더 오를 곳이 없다.`, { icon: 'i-flag-win', title: '정상' }));
   } else {
@@ -132,4 +133,20 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
   dock.append(asBack(button({ label: toward(faction.rankBattleName), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);
   if (won) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11): 등급 획득
+}
+
+/** 아란칼화 / 참백도 구상화 결과 (GDD 126장 3, C.220 — 지금은 보스전 임시): 머리글 + 결과 줄 + [수련장으로] */
+export function ascensionResultView(root: HTMLElement, faction: FactionConfig, won: boolean, lines: readonly string[], h: RankResultHandlers): void {
+  const labels = battleLabels(faction);
+  const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
+  const mark = el('span', 'bha-result__mark');
+  mark.append(icon(won ? 'i-flag-win' : 'i-broken'));
+  head.append(mark, el('span', 'bha-label', `${faction.ascension.name} · ${faction.ascension.foe}`), el('h1', 'bha-result__title', won ? '승리' : labels.defeatState));
+  const body = panel({});
+  for (const line of lines) body.append(el('p', 'bha-result__reason', line));
+  if (won) body.append(el('p', 'bha-small', `이제 전투에서 ${faction.liberation.name}을(를) 쓸 수 있다.`));
+  const dock = el('div', 'bha-dock');
+  dock.append(asBack(button({ label: toward(faction.ascension.name), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack })));
+  const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [body]);
+  if (won) playCosmeticFx('win', app);
 }

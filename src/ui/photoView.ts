@@ -5,7 +5,7 @@ import { formName, tryGetForm } from '../data/evolution';
 import { getCosmetic } from '../data/shop';
 import { marketOf, roomOf, type FactionConfig } from '../engine/faction';
 import { formDisplayName, playerElementsOf } from '../engine/evolution';
-import { artSkinOf, type SaveData } from '../game';
+import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { button, el, seg } from './bha/dom';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
@@ -19,7 +19,7 @@ const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '
 /** 지금 방 장면을 사진 재료로 (입은 꾸밈의 모양 키만 뽑는다) */
 export function photoSceneOf(faction: FactionConfig, save: SaveData, frameId: string | null, date: Date): PhotoScene {
   const room = roomOf(faction);
-  const art = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
+  const art = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
   const look = (id: string | undefined): string | undefined => getCosmetic(id)?.look;
   const frame = frameChoices(save.shared.cosmetics).find((f) => f.id === frameId) ?? frameChoices([])[0]!;

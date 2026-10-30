@@ -5,7 +5,7 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp } from '../home';
 import { itemUseFx, type ActionBar } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
@@ -37,7 +37,8 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { ABILITY_SLOT_LABEL, abilityEffectsOf, abilityIdLine, currentStats, equipAbility, equippedAbilitiesOf, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
 import { statUseLead, statUseLines } from '../data/help/statText';
@@ -54,14 +55,26 @@ import { BOND_STAGE_NAMES, dyingClock } from './bha/roomLogic';
 import { statusInfo, type StatusInfoKind } from './bha/statusInfo';
 import type { VariantMods } from '../engine/expedition';
 
-/** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax (치명 특성이 있는 몸은 상한 + 그 특성 값, GDD 45장 1번 — 전투와 같은 규칙) */
-export function critPercentText(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): string {
+/** 치명 두 값 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명 확률(0~1)과 상한·가산 내역. 기본 + 장착 특성 + 칸에 낀 진화체 특성 + 장비,
+ *  블록 치명은 블록형 몸(물공 블록이 없는 몸)만 블록 보정(blockPlayCrit)을 더한다 — 전투와 같은 규칙 */
+export function critChances(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): { basic: number; block: number; basicMax: number; blockMax: number; bonus: number; blockPlay: number } {
   const CX = BALANCE.provisional.combat;
-  // 진화체 속성 특성 '날카로운 물결'(GDD 39장)의 치명타 확률도 더한다
   const form = evo?.formId ? tryGetForm(evo.formId) : undefined;
-  const fromForm = evo ? abilityEffectsOf(formAbilitiesOf(form ?? null, evo.ev, evo.ability)).critChance : 0;
-  // 장비 치명 줄 (GDD 91장 4번, C.150): 전투와 같이 확률에 더하고 상한은 그대로
-  return `${Math.round(Math.min(CX.critChanceMax + fromForm, CX.critChance + critChanceBonus(build) + fromForm + gearCrit) * 100)}%`;
+  const fa = evo ? (evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability)) : null;
+  const fromForm = fa ? abilityEffectsOf(fa).critChance : 0;
+  const bonus = critChanceBonus(build) + fromForm + gearCrit;
+  const blockPlay = fa?.phys ? 0 : CX.blockPlayCrit;
+  const basicMax = CX.critChanceMax + fromForm;
+  const blockMax = CX.blockCritChanceMax + fromForm;
+  return { basic: Math.min(basicMax, CX.critChance + bonus), block: Math.min(blockMax, CX.blockCritChance + bonus + blockPlay), basicMax, blockMax, bonus, blockPlay };
+}
+
+const pctText = (x: number) => `${Math.round(x * 100)}%`;
+const ppText = (x: number) => `+${Math.round(x * 1000) / 10}%p`;
+
+/** 옛 이름: 평타 치명 확률 "5%" */
+export function critPercentText(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): string {
+  return pctText(critChances(build, evo, gearCrit).basic);
 }
 
 /** 상태 자리: 왼쪽 상태 4바(배부름·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
@@ -121,11 +134,16 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
   const CXM = BALANCE.provisional.combat;
   const gc = gearCarry(save.shared.gear);
-  const critRows = statRow('치명타 확률', critPercentText(save.build, save.evolution, gc?.crit ?? 0), `최대 ${Math.round(CXM.critChanceMax * 100)}%`);
-  critRows.dataset.crit = '';
+  // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 마우스(터치)를 올리면 기본·가산(+n%p)·최대
+  const cc = critChances(save.build, save.evolution, gc?.crit ?? 0);
+  const addText = (base: number, extra: number) => [`기본 ${pctText(base)}`, ...(extra > 0 ? [ppText(extra)] : [])].join(' ');
+  const critRows = statRow('평타 치명', pctText(cc.basic), `${addText(CXM.critChance, cc.bonus)} · 최대 ${pctText(cc.basicMax)}`);
+  critRows.dataset.crit = 'basic';
+  const blockCritRow = statRow('블록 치명', pctText(cc.block), `${addText(CXM.blockCritChance, cc.bonus)}${cc.blockPlay > 0 ? ` · 블록 보정 ${ppText(cc.blockPlay)}` : ''} · 최대 ${pctText(cc.blockMax)}`);
+  blockCritRow.dataset.crit = 'block';
   const critDmg = statRow('치명타 피해', `×${Math.round((CXM.critMultiplier + (gc?.critDamage ?? 0)) * 100) / 100}`);
   // 속성 피해 5종 (C.101, GDD 48장 4번 · C.137 85장 8): 치명타 밑에 속성마다 한 줄씩, 0 이어도 보인다
-  const rows = [critRows, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
+  const rows = [critRows, blockCritRow, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
   const speedRow = stats.querySelector('.bha-stats')?.lastElementChild;
   if (speedRow) speedRow.after(...rows);
   else stats.append(...rows);
@@ -146,6 +164,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
   const abil = statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
+  // 특성 칸 (GDD 126-1 수정, C.220): 진화할 때 얻은 특성을 칸에 골라 낀다. 칸 = 기본 1 + 아란칼화/참백도 구상화 1 + 환생당 1 (최대 4)
+  if (evo.abilities) stats.append(abilitySlotsBlock(faction, evo, persist));
   // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
   const evoPanel = panel({ title: '진화 정보' });
   evoPanel.setAttribute('aria-label', '진화 정보');
@@ -205,8 +225,8 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
     list.append(btn);
   };
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-  add(null, '기본(진화체)', charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, save.evolution.look).src);
-  for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, sk.id).src);
+  add(null, '기본(진화체)', charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, save.evolution.look).src);
+  for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, sk.id).src);
   mark();
   p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·원정·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
   return p;
@@ -447,7 +467,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     if (e.category === 'skin') {
       const c = getCosmetic(e.id);
       if (c?.category === 'skin') {
-        const src = charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, c.look).src;
+        const src = charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, c.look).src;
         return src ? imageArt(src) : iconArt('i-rare');
       }
       if (c && c.category !== 'device') return swatchArt(c.category, c.category === 'keyring' ? `var(--bha-cos-keyring-${keyringShapeOf(c, faction)}-body)` : `var(${cosmeticToken(c, ({ bar: 'line', shell: 'body', cut: 'line', room: 'line' } as Record<string, string>)[c.category] ?? '')})`, c.category === 'tint' ? `var(${cosmeticToken(c)})` : undefined);
@@ -507,7 +527,7 @@ function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemAr
   const bars: ActionBar[] = [];
   if (Math.abs(fullNow - fullBefore) > 1e-6 && Math.abs(hpNow - hpBefore) <= 1e-6) bars.push({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', from: Math.round(fullBefore), to: Math.round(fullNow), max: 100 });
   else bars.push({ kind: 'player', label: '체력', icon: 'i-heal', from: hp(hpBefore), to: hp(hpNow), max: hpNumbers(maxHp, maxHp).max });
-  const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, save.evolution.tierIndex, artSkinOf(save)).src;
+  const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)).src;
   itemUseFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), bars });
 }
 
@@ -555,6 +575,49 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
     id: e.id, heading: ITEM_CATEGORY_NAMES[e.category], name: e.name, desc: cardDetailOf(e), art, have: e.category === 'pet' ? petAffinityText(save, e.id) : `보유: ${e.count}`,
     tag: getCosmetic(e.id)?.category === 'skin' ? '미리보기' : undefined, lock: e.lock, actions,
   });
+}
+
+/** 특성 칸 묶음 (GDD 126-1 수정, C.220): 칸마다 버튼 하나 — 누르면 보유 특성 목록 창(기기 위/아래/확정으로 고른다, 122장). 고르면 그 칸에 끼우고 저장 */
+function abilitySlotsBlock(faction: FactionConfig, evo: EvolutionState, persist: () => void): HTMLElement {
+  const box = h('div', 'bha-stack');
+  box.dataset.abilitySlots = '';
+  const paint = () => {
+    const l = evo.abilities!;
+    const head = h('p', 'bha-small');
+    head.append(h('b', '', `특성 칸 ${l.equipped.length}/${l.slots}`), ` · 보유 ${Object.keys(l.owned).length}개 · 진화할 때 얻고 ${faction.rebirth.name}해도 남는다`);
+    const cells = Array.from({ length: l.slots }, (_, i) => {
+      const id = l.equipped[i];
+      const line = id ? abilityIdLine(id, l.owned[id] ?? 1, faction.id) : null;
+      const b = button({ label: line ? `${i + 1}칸 · ${line.name}` : `${i + 1}칸 · 비어 있음`, size: 'small', block: true, onClick: () => pick(i) });
+      if (line) b.title = `${ABILITY_SLOT_LABEL[line.slot]} — ${line.description}`;
+      b.dataset.abilitySlot = String(i);
+      return b;
+    });
+    box.replaceChildren(head, ...cells);
+  };
+  const pick = (index: number) => {
+    const l = evo.abilities!;
+    const list = h('div', 'bha-stack');
+    let close: () => void = () => {};
+    const choose = (id: string | null) => {
+      if (equipAbility(l, index, id)) persist();
+      close();
+      paint();
+    };
+    for (const [id, scale] of Object.entries(l.owned)) {
+      const line = abilityIdLine(id, scale, faction.id);
+      if (!line) continue;
+      const at = l.equipped.indexOf(id);
+      const b = button({ label: `${line.name}${at >= 0 ? ` (${at + 1}칸)` : ''}`, size: 'small', block: true, on: at === index, onClick: () => choose(id) });
+      b.title = `${ABILITY_SLOT_LABEL[line.slot]} — ${line.description}`;
+      list.append(b, h('p', 'bha-faint', `${ABILITY_SLOT_LABEL[line.slot]} · ${line.description}`));
+    }
+    if (l.equipped[index]) list.append(button({ label: '이 칸 비우기', size: 'small', variant: 'ghost', block: true, onClick: () => choose(null) }));
+    if (Object.keys(l.owned).length === 0) list.append(h('p', 'bha-faint', '아직 얻은 특성이 없다. 진화하면 얻는다.'));
+    close = confirmDialog({ title: `특성 칸 ${index + 1}`, content: list, single: true, yes: '닫기', onYes: () => {} });
+  };
+  paint();
+  return box;
 }
 
 /** 상태 화면 특성 줄: 진화체가 있으면 성향(비었으면 생략) + 속성·전용, 1단계면 null (C.93) */
