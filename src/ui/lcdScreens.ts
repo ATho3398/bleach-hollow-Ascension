@@ -24,6 +24,7 @@ import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatch
 import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
 import { skinItemId } from '../data/shop';
+import { MATERIAL_DESC, MATERIALS_EMPTY, ownedMaterials } from '../data/materials';
 import { TILES_LOCKED_TEXT } from '../shop';
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
@@ -251,7 +252,7 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   return p;
 }
 
-type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'pet';
+type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'pet' | 'material';
 const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'gear', traits: {}, synth: false };
 
 /** 가방을 장비 탭으로 연다 (상태 화면 장비 바로가기, GDD 109장 4번) */
@@ -270,10 +271,10 @@ export function openChestAtGear(): void {
 export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
 
-  // 위쪽 탭 [장비 · 슬롯 · 타일 · 물건 · 펫] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭): 물건 탭의 분류 탭과 같은 방식. 장비·타일·펫에는 가진 수를 같이 보인다
+  // 위쪽 탭 [장비 · 슬롯 · 타일 · 물건 · 펫 · 기타] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭 · 154장 1 기타 = 재료): 물건 탭의 분류 탭과 같은 방식. 장비·타일·펫·기타에는 가진 수를 같이 보인다
   const petCount = () => inventoryOf(save, faction).filter((e) => e.category === 'pet').length;
   const headTabs = (): HTMLElement => selectLast(categoryTabs([
-    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: '물건' }, { id: 'pet', label: '펫', count: petCount() },
+    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: '물건' }, { id: 'pet', label: '펫', count: petCount() }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length },
   ], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
@@ -302,7 +303,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(headTabs());
     // 두 열/한 열 전환은 탭마다 먼저 맞춘다 (C.159 A2: 물건·펫 탭에서 숨긴 오른쪽 열이 슬롯 탭으로 돌아와도 숨은 채여서 장착 칸만 보였다)
     const body = page.left.parentElement!;
-    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
+    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet' || chestUi.tab === 'material';
     body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : chestUi.tab === 'gear' ? 'minmax(0, 5fr) minmax(0, 6fr)' : '1fr 1fr';
     page.right.hidden = oneCol;
     page.app.classList.toggle('bha-equip-page', chestUi.tab === 'gear');
@@ -321,6 +322,12 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       }, save.evolution.tierIndex);
       page.left.replaceChildren(slotsPanel!);
       page.right.replaceChildren(ownedPanel!);
+      return;
+    }
+    // 기타 탭 (GDD 154장, C.229): 재료 22종만. 쓰임·얻는 곳은 아직 없다 — 보기만
+    if (chestUi.tab === 'material') {
+      page.left.replaceChildren(materialsTab(save));
+      page.right.replaceChildren(h('div'));
       return;
     }
     // 물건 탭은 한 열 (카드 격자가 폭을 다 쓴다), 나머지는 두 열
@@ -498,6 +505,21 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
   }
   box.append(itemGrid(cards, empty));
   return [box, h('div')];
+}
+
+/** 가방 '기타' 창 (GDD 154장 1~4, C.229): 가진 재료 카드 격자. 누르면 상세 창(설명·보유 수, 행동 버튼 없음). 0개면 한 줄 */
+function materialsTab(save: SaveData): HTMLElement {
+  const box = h('div', 'bha-stack bha-itembox');
+  box.dataset.materials = '';
+  const cards = ownedMaterials(save.shared.items).map(({ def, count }) => {
+    const art = () => iconArt(def.icon);
+    return itemCard({
+      id: def.id, name: def.name, detail: def.note ?? MATERIAL_DESC, art: art(), badge: `×${count}`,
+      onClick: () => itemDialog({ id: def.id, heading: '재료', name: def.name, desc: `${def.note ? `${def.note}. ` : ''}${MATERIAL_DESC}.`, art: art(), have: `보유: ${count}`, actions: [] }),
+    });
+  });
+  box.append(itemGrid(cards, MATERIALS_EMPTY));
+  return box;
 }
 
 /** 상태 화면의 장비 바로가기 한 줄 (GDD 108장 1번 · 109장 4번): [가방 · 장비] 버튼(가방 장비 탭) + 장비 합산 능력치 숫자 */
