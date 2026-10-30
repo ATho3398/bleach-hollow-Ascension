@@ -90,7 +90,7 @@ describe('121장 9 배경음 끊김', () => {
 describe("121장 10 '브금' → '배경음'", () => {
   it('곡 알림 머리는 배경음, 화면에 나가는 글자에 브금이 없다', () => {
     const src = read('src/ui/bgm.ts');
-    expect(src).not.toContain("eyebrow: '배경음'"); // C.237 (GDD 159장 17): 곡 이름 알림은 뺐다
+    expect(src).not.toContain("eyebrow: '배경음'"); // C.239 (GDD 159장 17): 곡 이름 알림은 뺐다
     for (const f of ['src/ui/bgm.ts', 'src/ui/settingsView.ts', 'src/data/audio/bgm.ts']) {
       const code = read(f).split('\n').filter((l) => !/^\s*(\/\/|\/\*|\*)/.test(l)).map((l) => l.replace(/\/\/.*$/, '').replace(/\/\*.*?\*\//g, ''));
       expect(code.join('\n')).not.toContain('브금');

@@ -84,7 +84,7 @@ describe('C.141', () => {
   });
   it('86장: 보관함 물건 탭 = 카테고리 탭(음식·소모품·장비·스킨·타일·기타) + 카드 + 상세 창([사용]/[장착]/[해제])', () => {
     const src = read('src/ui/lcdScreens.ts');
-    expect(src).toContain('categoryTabs(BAG_GROUPS.map('); // C.237 (GDD 159장 24): 소모품 탭 = 음식·약·전투 소모품
+    expect(src).toContain('categoryTabs(BAG_GROUPS.map('); // C.239 (GDD 159장 24): 소모품 탭 = 음식·약·전투 소모품
     // 장비 탭은 C.150 에 '준비 중' → 장비 카드·상세 창(장착·강화·판매, GDD 91장)
     for (const k of ["label: () => '사용'", "(on ? '장착' : '해제')", 'openGear(faction, save, e.id, changed)']) expect(src).toContain(k);
   });

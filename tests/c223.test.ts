@@ -123,7 +123,7 @@ describe('145장 4: 상점 약 칸 — 하루 판매 수', () => {
     s.shared.items = {};
     s.shared.tradeCoins = 10_000;
     const row = () => goldRows(s, H).find((r) => r.id === 'heal-patch')!;
-    expect(row().have).toBe('보유 0/9'); // C.237 (GDD 159장 33): 배지는 보유 수, 하루 판매 수는 칸 한 줄 'n/m개 구매 가능'
+    expect(row().have).toBe('보유 0/9'); // C.239 (GDD 159장 33): 배지는 보유 수, 하루 판매 수는 칸 한 줄 'n/m개 구매 가능'
     expect(shopDailyLeft(s, 'heal-patch', T0)).toBe(5);
     for (let i = 0; i < 5; i++) expect(buyShopItem(s, H, 'heal-patch', T0).ok).toBe(true);
     expect(s.shared.shopDaily).toEqual({ day: dayKey(T0), bought: { 'heal-patch': 5 } });

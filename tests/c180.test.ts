@@ -44,7 +44,7 @@ describe('4 장비 → 가방', () => {
     const lcd = read('src/ui/lcdScreens.ts');
     expect(lcd).toMatch(/\{ id: 'gear', label: equipTitle\(faction\)[^\n]*\{ id: 'slots'[^\n]*\{ id: 'tiles'[^\n]*\{ id: 'items'[^\n]*\{ id: 'skin'[^\n]*\{ id: 'pet'/);
     expect(lcd).toMatch(/tab: 'gear', traits/);
-    expect(bagGroupOf({ id: 'g1', category: 'equipment' })).toBeNull(); // C.237: 소모품 탭에 장비 없음
+    expect(bagGroupOf({ id: 'g1', category: 'equipment' })).toBeNull(); // C.239: 소모품 탭에 장비 없음
   });
   it('방 [가방] 버튼은 종족 설정 이름, 화면 문구에 보관함 없음', () => {
     expect(read('src/ui/roomView.ts')).toMatch(/label: room\.props\.chest/);

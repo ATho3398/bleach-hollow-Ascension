@@ -9,7 +9,7 @@
     "accessory": { "*": "부적" }
   },
   "wandererGear": { "*": "무엇이 나올지 모르는 장비" },
-  "foodNote": "C.237 (GDD 159장 25·37): 음식은 종류마다 하는 일을 짧게 — {fullness} = 종족 설정 fullnessName. 상점 음식 칸·가방 음식 칸이 같은 줄을 쓴다",
+  "foodNote": "C.239 (GDD 159장 25·37): 음식은 종류마다 하는 일을 짧게 — {fullness} = 종족 설정 fullnessName. 상점 음식 칸·가방 음식 칸이 같은 줄을 쓴다",
   "food": {
     "snack": "{fullness}이(가) 조금 찬다",
     "basic": "{fullness}이(가) 찬다",

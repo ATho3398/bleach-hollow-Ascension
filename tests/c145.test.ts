@@ -24,7 +24,7 @@ describe('C.145 슬롯 선택·확인·삭제', () => {
     const v = read('src/ui/slotView.ts');
     expect(v).toContain("sum.state === 'empty'");
     const a = read('src/ui/app.ts');
-    expect(a).toContain('을(를) 지운다. 지우기 전 세이브 하나는 백업으로 남는다.'); // C.237 (GDD 159장 15) // C.218: 슬롯 번호 뒤 조사는 fixParticles
+    expect(a).toContain('을(를) 지운다. 지우기 전 세이브 하나는 백업으로 남는다.'); // C.239 (GDD 159장 15) // C.218: 슬롯 번호 뒤 조사는 fixParticles
     expect(a).toContain('deleteSlot(store, sum.slot)');
   });
   it('deleteSlot: 슬롯이 비고, 지우기 전 내용은 슬롯 백업에 보관, 다른 슬롯·마지막 플레이 갱신', () => {

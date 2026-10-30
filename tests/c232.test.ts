@@ -83,7 +83,7 @@ describe('C.232 manifest·설정 줄 (156장 1·2·3)', () => {
   it('설정: 앱 모드 = 안내 한 줄, 탭 = 버튼 + 홈 화면 앱 안내', () => {
     const src = read('src/ui/settingsView.ts');
     expect(src).toContain("hintLine('앱으로 실행 중 — 이미 전체 화면')");
-    expect(src).not.toContain('홈 화면에 앱으로 추가해 켜면'); // C.237 (GDD 159장 12): 기기·브라우저 사정 설명은 뺐다
+    expect(src).not.toContain('홈 화면에 앱으로 추가해 켜면'); // C.239 (GDD 159장 12): 기기·브라우저 사정 설명은 뺐다
     expect(src).toContain("hintLine('화면을 넓게 쓴다.')");
   });
 });
