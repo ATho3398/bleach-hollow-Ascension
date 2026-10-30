@@ -267,7 +267,8 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     }
     expect(renderHelpText(GUIDES['tile-plan'][2]!.body, { ...helpVars(H), ...guideVars(H) })).toContain('오아시스');
     expect(renderHelpText(GUIDES['tile-plan'][2]!.body, { ...helpVars(S), ...guideVars(S) })).toContain('샘터');
-    expect(renderHelpText(GUIDES['first-absorb'][2]!.body, { ...helpVars(H), ...guideVars(H) })).toContain(`+${TUT.statEv}`);
+    expect(GUIDES['first-absorb'].map((x) => x.id)).toEqual(['absorb', 'practice']); // GDD 157장 3: 3장 → 2장, 연습·노력치 설명 삭제
+    expect(renderHelpText(GUIDES['first-absorb'][1]!.body, { ...helpVars(H), ...guideVars(H) })).toBe(renderHelpText('첫 {absorbActionName}을(를) 해 보자.', helpVars(H)));
   });
 
   it('안내는 1회성: 본 것으로 저장하면 다시 차례가 아니고, 저장 값은 보정된다', () => {

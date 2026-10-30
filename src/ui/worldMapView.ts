@@ -1,5 +1,5 @@
-// 월드맵 (GDD 130장 2, C.204): 방 물건 [밖으로]로 나오는 하이앵글 지도 한 장. 이름은 종족 설정(worldmap.name — 호로 '웨코문도' / 사신 '소울 소사이어티').
-// 장소 5개 = 홈(방, 이름 nestName) · 시장(상점·떠돌이 상인) · 모험(출발 준비 화면) · 탑(도전의 탑 화면, GDD 139장 1) · 온천(온천 화면, GDD 153장 1).
+// 월드맵 (GDD 130장 2, C.204): 방 물건 [월드맵]으로 나오는 하이앵글 지도 한 장. 이름은 종족 설정(worldmap.name — 호로 '웨코문도' / 사신 '소울 소사이어티').
+// 장소 6개 = 홈(방, 이름 nestName) · 시장(상점·떠돌이 상인) · 수련장(수련 화면, GDD 158장 1) · 모험(출발 준비 화면) · 탑(도전의 탑 화면, GDD 139장 1) · 온천(온천 화면, GDD 153장 1).
 // 고르면(✓) 캐릭터가 그쪽으로 한두 걸음 출발하는 모습(약 0.4초)과 함께 바로 화면이 어두워지고(페이드아웃) 그 화면이 밝아진다(페이드인) — GDD 153장 3(137장 '끝까지 걷기' 대체).
 // 출발하는 동안 입력 잠금, 뒤로 = 취소하고 제자리.
 // 캐릭터는 방 그림 그대로 지금 있던 장소 위에 서 있다(보기만, GDD 132장 2). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
@@ -16,6 +16,8 @@ import { fixParticles } from '../engine/josa';
 export interface WorldMapHandlers {
   onHome: () => void;
   onMarket: () => void;
+  /** 수련장 (GDD 158장 1): 방 물건 → 월드맵 장소. 뒤로 = 월드맵 */
+  onTraining: () => void;
   onAdventure: () => void;
   onTower: () => void;
   /** 온천 (GDD 153장 1): 시장 안 칸에서 월드맵 장소로 */
@@ -86,7 +88,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(wm);
   scene.classList.add('bha-worldmap__scene');
-  const act: Record<WorldPlace, () => void> = { home: hd.onHome, market: hd.onMarket, adventure: hd.onAdventure, tower: hd.onTower, spa: hd.onSpa };
+  const act: Record<WorldPlace, () => void> = { home: hd.onHome, market: hd.onMarket, training: hd.onTraining, adventure: hd.onAdventure, tower: hd.onTower, spa: hd.onSpa };
   const floor: FloorEntry[] = [];
   const btns = new Map<WorldPlace, HTMLButtonElement>();
   for (const p of WORLD_PLACES) {
@@ -115,8 +117,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       b.classList.add('has-visitor');
       b.querySelector('.bha-prop__shape')?.append(el('span', 'bha-room__idlebadge bha-prop__badge', '상인'));
     }
-    // 사망이면 모험·탑 잠김 표시 (GDD 102-7·139장 1). 눌러도 막힘 안내는 onAdventure·onTower 쪽
-    if ((p === 'adventure' || p === 'tower') && save.nest.dead) {
+    // 사망이면 모험·탑·수련장 잠김 표시 (GDD 102-7·139장 1·158장 1). 눌러도 막힘 안내는 onAdventure·onTower·onTraining 쪽
+    if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead) {
       b.classList.add('is-locked');
       b.append(icon('i-lock'));
     }
@@ -145,7 +147,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   const main = mountApp(dev.view, { cls: 'bha-room bha-worldmap' }, hud, body);
   // 선택 순서 = DOM 순서(홈 → 시장 → 모험, 지도 왼쪽 → 오른쪽). 'visual'(위 → 아래)을 쓰면 가운데 위 시장이 먼저 와서 쓰지 않는다
   if (here) main.dataset.wanderer = '';
-  // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 모험 → 탑 → 온천), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
+  // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 수련장 → 모험 → 탑 → 온천), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
   const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))]; // 화면 위치 순서: 왼쪽 위 돌아가기 먼저
   btns.get(hd.focus ?? at)?.focus({ preventScroll: true });
   dev.setItems(items, main);

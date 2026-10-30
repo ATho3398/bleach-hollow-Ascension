@@ -1,0 +1,487 @@
+{
+  "cards": [
+    {
+      "shot": "01-first-run",
+      "name": "first-run",
+      "step": "1 / 1",
+      "title": "첫 모험",
+      "body": "모험을 떠나 길을 나아가다 보면 적을 마주친다.적과 마주치면 전투가 시작된다.",
+      "screen": "bha-app--fixed bha-exp is-paused"
+    },
+    {
+      "shot": "02-heavy",
+      "name": "script",
+      "step": "튜토리얼 1 / 5",
+      "title": "강공격",
+      "body": "적의 강공격 게이지가 가득 찼다!막기를 눌러 보자.",
+      "screen": ""
+    },
+    {
+      "shot": "03-guard-ok",
+      "name": "script",
+      "step": "튜토리얼 2 / 5",
+      "title": "막기 성공",
+      "body": "강공격을 막아 냈다!강적의 강공격은 때맞춰 막기로 막을 수 있다.",
+      "screen": ""
+    },
+    {
+      "shot": "04-crisis",
+      "name": "script",
+      "step": "튜토리얼 3 / 5",
+      "title": "위기",
+      "body": "연달아 들어온 강공격에 체력이 얼마 남지 않았다.블록 스킬로 적을 더 빨리 쓰러뜨려 보자.",
+      "screen": ""
+    },
+    {
+      "shot": "05-nice",
+      "name": "script",
+      "step": "튜토리얼 4 / 5",
+      "title": "좋아!",
+      "body": "블록 스킬을 잘 썼다!",
+      "screen": ""
+    },
+    {
+      "shot": "06-chain",
+      "name": "script",
+      "step": "튜토리얼 5 / 5",
+      "title": "체인",
+      "body": "같은 블록이 모이면 체인이 발동해 더 강한 공격이 나간다(최대 3개).3체인 블록을 써 보자.",
+      "screen": ""
+    },
+    {
+      "shot": "07-absorb",
+      "name": "first-absorb",
+      "step": "1 / 2",
+      "title": "포식",
+      "body": "적을 쓰러뜨리면 포식해서 성장할 수 있다.둘 다 포식: 특성과 능력치를 함께 얻는다속성만: 특성만 얻고 그 속성 쪽으로 자란다스탯만: 능력치를 두 배로 얻는다안 함: 놓아주고 영압 안정도가 오른다",
+      "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb"
+    },
+    {
+      "name": "first-absorb",
+      "step": "2 / 2",
+      "title": "첫 포식",
+      "body": "첫 포식을 해 보자."
+    },
+    {
+      "key": "1#치명상을 입어 빈사 상태가 됐다.이대로 두면 죽는다.",
+      "name": "recover",
+      "step": "회복 안내 1 / 7",
+      "title": "빈사",
+      "body": "치명상을 입어 빈사 상태가 됐다.이대로 두면 죽는다.",
+      "screen": "bha-room"
+    },
+    {
+      "key": "2#구급상자 1개가 들어왔다.가방을 열어 보자.",
+      "name": "recover",
+      "step": "회복 안내 2 / 7",
+      "title": "치료",
+      "body": "구급상자 1개가 들어왔다.가방을 열어 보자.",
+      "screen": "bha-room"
+    },
+    {
+      "key": "3#구급상자를 사용해 보자.",
+      "name": "recover",
+      "step": "회복 안내 3 / 7",
+      "title": "구급상자",
+      "body": "구급상자를 사용해 보자.",
+      "screen": "bha-lcdpage bha-chest-page"
+    },
+    {
+      "shot": "08-recover3-cure",
+      "name": "recover",
+      "step": "회복 안내 3 / 7",
+      "title": "구급상자",
+      "body": "구급상자를 사용해 보자.",
+      "screen": "bha-lcdpage bha-chest-page"
+    },
+    {
+      "key": "3#빈사가 풀렸다!",
+      "name": "recover",
+      "step": "회복 안내 3 / 7",
+      "title": "구급상자",
+      "body": "빈사가 풀렸다!",
+      "screen": "bha-lcdpage bha-chest-page"
+    },
+    {
+      "key": "4#빈사는 풀렸지만 체력은 아직 그대로다.온천에서 체력을 회복해 보자.",
+      "name": "recover",
+      "step": "회복 안내 4 / 7",
+      "title": "온천",
+      "body": "빈사는 풀렸지만 체력은 아직 그대로다.온천에서 체력을 회복해 보자.",
+      "screen": "bha-room"
+    },
+    {
+      "key": "4#온천으로 가 보자.",
+      "name": "recover",
+      "step": "회복 안내 4 / 7",
+      "title": "온천",
+      "body": "온천으로 가 보자.",
+      "screen": "bha-room bha-worldmap"
+    },
+    {
+      "key": "4#체력이 차오른다.",
+      "name": "recover",
+      "step": "회복 안내 4 / 7",
+      "title": "온천",
+      "body": "체력이 차오른다.",
+      "screen": "bha-spa"
+    },
+    {
+      "shot": "09-recover4-spa",
+      "name": "recover",
+      "step": "회복 안내 4 / 7",
+      "title": "온천",
+      "body": "체력이 차오른다.",
+      "screen": "bha-spa"
+    },
+    {
+      "key": "4#체력이 가득 찼다!",
+      "name": "recover",
+      "step": "회복 안내 4 / 7",
+      "title": "온천",
+      "body": "체력이 가득 찼다!",
+      "screen": "bha-spa"
+    },
+    {
+      "key": "5#온천에서는 체력이 빠르게 찬다.이제 방으로 돌아가자.",
+      "name": "recover",
+      "step": "회복 안내 5 / 7",
+      "title": "쉬기",
+      "body": "온천에서는 체력이 빠르게 찬다.이제 방으로 돌아가자.",
+      "screen": "bha-spa"
+    },
+    {
+      "key": "6#짐승 고기 1개가 들어왔다.먹이를 줘 보자.",
+      "name": "recover",
+      "step": "회복 안내 6 / 7",
+      "title": "먹이",
+      "body": "짐승 고기 1개가 들어왔다.먹이를 줘 보자.",
+      "screen": "bha-room"
+    },
+    {
+      "key": "7#배부름도 체력도 가득 찼다.방에서 쉬어도 체력이 조금씩 찬다.",
+      "name": "recover",
+      "step": "회복 안내 7 / 7",
+      "title": "회복 끝",
+      "body": "배부름도 체력도 가득 찼다.방에서 쉬어도 체력이 조금씩 찬다.",
+      "screen": "bha-room"
+    },
+    {
+      "name": "first-run-room",
+      "title": "다음 할 일",
+      "body": "첫 모험을 마쳤다.먹이를 주고 수련장에서 단련하며 다시 모험을 떠나자."
+    }
+  ],
+  "errors": [],
+  "heads": [
+    {
+      "style": "visibility: visible; width: 456px; left: 94px; top: 128px; bottom: auto; --tail: 416.7578125px;",
+      "cls": "bha-tut__card is-placed is-above",
+      "layer": "bha-tut is-script is-nodim is-practice",
+      "host": [
+        99,
+        15,
+        646,
+        360
+      ],
+      "parent": "bha-lcd",
+      "tray": [
+        108,
+        294,
+        628,
+        76
+      ],
+      "lib": [
+        497,
+        78,
+        180,
+        150
+      ],
+      "guard": [
+        560,
+        259,
+        100,
+        28
+      ],
+      "gauge": [
+        157,
+        62,
+        186,
+        16
+      ],
+      "heads": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "card": [
+        194,
+        144,
+        456,
+        108
+      ],
+      "foe": [
+        167,
+        62,
+        180,
+        188
+      ],
+      "me": [
+        497,
+        62,
+        180,
+        188
+      ]
+    },
+    {
+      "style": "visibility: visible; width: 456px; left: 94px; top: 116px; bottom: auto;",
+      "cls": "bha-tut__card is-placed",
+      "layer": "bha-tut is-script is-nodim",
+      "host": [
+        99,
+        15,
+        646,
+        360
+      ],
+      "parent": "bha-lcd",
+      "tray": [
+        108,
+        294,
+        628,
+        76
+      ],
+      "lib": [
+        497,
+        78,
+        180,
+        150
+      ],
+      "guard": [
+        560,
+        259,
+        100,
+        28
+      ],
+      "gauge": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "heads": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "card": [
+        194,
+        132,
+        456,
+        126
+      ],
+      "foe": [
+        167,
+        62,
+        180,
+        188
+      ],
+      "me": [
+        497,
+        62,
+        180,
+        188
+      ]
+    },
+    {
+      "style": "visibility: visible; width: 456px; left: 94px; top: 8px; bottom: auto; --tail: 229px;",
+      "cls": "bha-tut__card is-placed is-above",
+      "layer": "bha-tut is-script is-nodim is-practice",
+      "host": [
+        99,
+        15,
+        646,
+        360
+      ],
+      "parent": "bha-lcd",
+      "tray": [
+        108,
+        294,
+        628,
+        76
+      ],
+      "lib": [
+        497,
+        78,
+        180,
+        150
+      ],
+      "guard": [
+        560,
+        259,
+        100,
+        28
+      ],
+      "gauge": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "heads": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "card": [
+        194,
+        24,
+        456,
+        156
+      ],
+      "foe": [
+        167,
+        62,
+        180,
+        188
+      ],
+      "me": [
+        497,
+        62,
+        180,
+        188
+      ]
+    },
+    {
+      "style": "visibility: visible; width: 456px; left: 94px; top: 129px; bottom: auto;",
+      "cls": "bha-tut__card is-placed",
+      "layer": "bha-tut is-script is-nodim",
+      "host": [
+        99,
+        15,
+        646,
+        360
+      ],
+      "parent": "bha-lcd",
+      "tray": [
+        108,
+        294,
+        628,
+        76
+      ],
+      "lib": [
+        497,
+        78,
+        180,
+        150
+      ],
+      "guard": [
+        560,
+        259,
+        100,
+        28
+      ],
+      "gauge": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "heads": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "card": [
+        194,
+        145,
+        456,
+        101
+      ],
+      "foe": [
+        167,
+        62,
+        180,
+        188
+      ],
+      "me": [
+        497,
+        62,
+        180,
+        188
+      ]
+    },
+    {
+      "style": "visibility: visible; width: 456px; left: 94px; top: 163px; bottom: auto; --tail: 229px;",
+      "cls": "bha-tut__card is-placed is-above",
+      "layer": "bha-tut is-script is-nodim is-practice",
+      "host": [
+        99,
+        15,
+        646,
+        360
+      ],
+      "parent": "bha-lcd",
+      "tray": [
+        108,
+        294,
+        628,
+        76
+      ],
+      "lib": [
+        497,
+        78,
+        180,
+        150
+      ],
+      "guard": [
+        560,
+        259,
+        100,
+        28
+      ],
+      "gauge": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "heads": [
+        158,
+        62,
+        184,
+        16
+      ],
+      "card": [
+        194,
+        179,
+        456,
+        108
+      ],
+      "foe": [
+        167,
+        62,
+        180,
+        188
+      ],
+      "me": [
+        497,
+        62,
+        180,
+        188
+      ]
+    }
+  ],
+  "absorb2": true,
+  "spaFrom": {
+    "screen": "bha-room bha-worldmap is-walking",
+    "at": 1793376181045
+  },
+  "spaArrive": {
+    "ms": 7566
+  },
+  "reachedNext": true
+}

@@ -247,7 +247,7 @@ export function startApp(host: HTMLElement): void {
   /**
    * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 7장을 순서대로. 건너뛰기 없음.
    * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
-   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (밖으로 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
+   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (월드맵 물건 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -265,10 +265,7 @@ export function startApp(host: HTMLElement): void {
       chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalMin: String(Math.round(1 / HH.spa.hpPerSecond / 60)), // 튜토리얼 온천 10초 · 평소 5분 (GDD 145장 1)
       idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
-      // 온천 가는 길 (GDD 153장 1): 밖으로 → 월드맵 → 온천
-      spaPath: `${props.outside} → ${wm.name} → ${wm.places.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
-      spaFirst: props.outside, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -277,8 +274,8 @@ export function startApp(host: HTMLElement): void {
     const onRoomRender = () => { if (nav.top?.id === 'room') nav.top.render(); }; // 지급한 먹이 개수가 독에 보이게
     const EPS = 1e-6;
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
-    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → (밖으로 → 월드맵 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
-    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]'; // 방 → 밖으로 → 월드맵 온천 (GDD 153장 1)
+    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → 월드맵 → 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
+    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]'; // 방 → 월드맵 → 온천 (GDD 153장 1, 157장 4 단계 안내)
     // 썼으면 물건 창을 닫는다 (C.214): 시작 구급상자 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
     const closeItemWhen = (done: boolean): boolean => {
       if (done) document.querySelector<HTMLButtonElement>('.bha-itemdialog .bha-itemmodal__close')?.click();
@@ -296,7 +293,7 @@ export function startApp(host: HTMLElement): void {
       // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
       cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
       'to-spa': {
-        // 온천에 들어가면(원래 조작) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
+        // 온천에 들어가면(원래 조작, 방 → 월드맵 → 온천 단계 안내 — GDD 157장 4) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
         // 체력이 spaTo 에 닿으면 [다음]. 배부름이 먼저 바닥나 나왔으면 각본 값 spaTo 까지 채운다
         act: { selector: `${spaWay}, .bha-spa__actor`, done: () => {
           if (soaked) return true;
@@ -395,7 +392,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 처음 켰을 때 홈 안내가 떠 있다 (GDD 131장, C.207) */
   let homeIntroOpen = false;
-  /** 첫 모험 강제 중 (GDD 131장 2): 방은 밖으로(모험 문)만, 월드맵은 모험만 */
+  /** 첫 모험 강제 중 (GDD 131장 2): 방은 월드맵 물건(모험 문)만, 월드맵은 모험만 */
   let forceAdventure = false;
   const FORCE_HINT = { eyebrow: '튜토리얼', title: '먼저 모험을 떠나자', meta: '' };
 
@@ -407,7 +404,6 @@ export function startApp(host: HTMLElement): void {
     const care = (['feed', 'sleep', 'pet'] as const).map((a) => faction.nestActionsShort?.[a] ?? faction.nestActions[a]).join('·');
     const vars = {
       outsideName: props.outside, adventureName: wm.places.adventure, towerName: wm.places.tower, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
-      goPath: `[${props.outside}] → [${wm.places.adventure}]을(를) 누른다.`,
     };
     const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
     const scenes: TutorialScene[] = [{ id: 'intro', targets: [], ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)];
@@ -416,7 +412,7 @@ export function startApp(host: HTMLElement): void {
 
   /**
    * 처음 켰을 때 홈 안내 → 첫 모험 강제 (GDD 131장, C.207): 새 세이브(첫 원정 전)의 첫 방. 회색 덮개·건너뛰기 없음.
-   * 카드마다 [다음] → 마지막 카드 = 밖으로(끔이면 모험 문)만 켜고 나머지 방 버튼 흐린 잠김, 월드맵은 모험만. 실제 버튼을 눌러 떠나면 끝(본 것으로 저장).
+   * 카드마다 [다음] → 마지막 카드 = 월드맵 물건만 켜고 나머지 방 버튼 흐린 잠김, 월드맵은 모험만. 실제 버튼을 눌러 떠나면 끝(본 것으로 저장).
    * 뒤로 = 짧은 안내. 띄웠으면 true
    */
   function runHomeIntro(faction: FactionConfig): boolean {
@@ -437,11 +433,11 @@ export function startApp(host: HTMLElement): void {
         });
         return;
       }
-      // 마지막: 첫 모험 강제 — 방을 잠금 모습으로 다시 그리고, 실제 버튼(밖으로 → 모험 / 모험 문)을 눌러 떠나야 끝난다
+      // 마지막: 첫 모험 강제 — 방을 잠금 모습으로 다시 그리고, 실제 버튼(월드맵 물건 → 모험)을 눌러 떠나야 끝난다
       forceAdventure = true;
       if (nav.top?.id === 'room') nav.top.render();
       const go = '.bha-prop--outside, .bha-worldmap [data-place="adventure"]';
-      // 밖으로 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1)
+      // 월드맵 물건 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1)
       const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
       window.setTimeout(() => tutorialOverlay(faction, {
         scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
@@ -928,15 +924,14 @@ export function startApp(host: HTMLElement): void {
       onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
       // 대장장이 (GDD 153장 2, provisional): 기능은 나중 — 노란 알림 한 줄만
       onSmith: () => showToast({ eyebrow: marketOf(faction).props.smith, title: fixParticles(`${marketOf(faction).props.smith}은(는) 아직 문을 열지 않았다`) }, 0, 2600),
+      // 시장의 월드맵 물건·뒤로 = 월드맵(스택 아래) (GDD 130장 3·158장 3)
       onBack: () => nav.back(),
-      // 시장의 왼쪽 위 버튼 = [월드맵으로], 뒤로 = 월드맵(스택 아래) (GDD 130장 3)
-      backLabel: '월드맵으로',
     }));
   }
 
   /** 월드맵에서 캐릭터가 서 있는 곳 = 마지막으로 있던 장소 (GDD 132장 2) */
   let worldAt: WorldPlace = 'home';
-  /** 월드맵 (GDD 130장 2, C.204): 방 [밖으로] → 홈·시장·모험. 고르면 걸어가서 페이드 전환 (137장 3). 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
+  /** 월드맵 (GDD 130장 2, C.204): 방 [월드맵] → 홈·시장·수련장·모험·탑·온천. 고르면 걸어가서 페이드 전환 (137장 3). 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
   function openWorldMap(faction: FactionConfig, s: SaveData): void {
     worldAt = 'home'; // 방에서 나왔다 (GDD 132장 2)
     // 걷는 중 뒤로 = 취소하고 제자리 (GDD 137장 3)
@@ -949,13 +944,15 @@ export function startApp(host: HTMLElement): void {
       focus: forceAdventure ? 'adventure' : worldAt,
       onHome: () => nestScreen(),
       onMarket: () => { worldAt = 'market'; openMarket(faction, s); },
+      // 수련장 (GDD 158장 1): 방 물건 → 월드맵 장소, 뒤로 = 월드맵. 진화 정보는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
+      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { worldAt = 'training'; open('training', () => renderTraining(faction, s)); }); },
       onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
       // 탑 (GDD 139장 1): 모험 화면 탭에서 월드맵 장소로. 사망이면 막힘 안내
       onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },
       // 온천 (GDD 153장 1): 시장 안 칸 → 월드맵 장소. 뒤로 = 월드맵, 저절로 나오면 방(그대로)
       onSpa: () => { openSpa(faction, s); if (nav.top?.id === 'spa') worldAt = 'spa'; }, // 못 들어갔으면(막힘 알림) 제자리
-      // 첫 모험 강제 (GDD 131장 2): 홈·시장·탑·온천 잠김. 탑 해금 전(36장)이면 탑은 이유 한 줄과 함께 잠김
-      locked: forceAdventure ? ['home', 'market', 'tower', 'spa'] : undefined,
+      // 첫 모험 강제 (GDD 131장 2): 홈·시장·수련장·탑·온천 잠김. 탑 해금 전(36장)이면 탑은 이유 한 줄과 함께 잠김
+      locked: forceAdventure ? ['home', 'market', 'training', 'tower', 'spa'] : undefined,
       lockReasons: towerOpen(s.runLog, faction.id, s.tower.best) ? undefined : { tower: towerLabels(faction).locked },
       onLocked: (p) => showToast(!forceAdventure && p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' } : FORCE_HINT, 0, 1800),
     });
@@ -1020,7 +1017,7 @@ export function startApp(host: HTMLElement): void {
       window.setTimeout(() => {
         if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
         wandererAnnounced = visit.at;
-        const path = `${roomOf(faction).props.outside} → ${mk.name}`; // 밖으로 → 시장 (GDD 130장 2)
+        const path = `${roomOf(faction).props.outside} → ${mk.name}`; // 월드맵 → 시장 (GDD 130장 2·158장 2)
         wandererToast = showToast({ eyebrow: mk.props.wanderer, title: fixParticles(`${mk.props.wanderer}이(가) ${mk.name}에 왔다`), meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
       }, 2600);
     }
@@ -1055,8 +1052,6 @@ export function startApp(host: HTMLElement): void {
       resumeNote,
       idle: { badge: idleBadge(s), onOpen: () => showIdlePanel(s, faction, claim) },
       persist,
-      // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
-      onAltar: () => (careBlocked(s) ? undefined : askDying(s, () => open('training', () => renderTraining(faction, s)))),
       // 부활 (GDD 102-3): 되돌릴 수 없어 자동 백업 후
       onRevive: () => {
         persist();
@@ -1081,7 +1076,7 @@ export function startApp(host: HTMLElement): void {
       onHelp: () => openHelp('nest', true),
       // 상점 (GDD 25-9·150장 2): 4곳 고르는 작은 창 → 그 상점
       onShop: () => shopPicker(faction, (kind) => open('shop', () => shopView(dev, faction, s, { persist, kind, onWear: () => dress(s.wear) }))),
-      onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1·137장 3)
+      onOutside: () => openWorldMap(faction, s), // 월드맵 물건 (GDD 130장 1·137장 3·158장 2)
       forceOutside: forceAdventure, // 첫 모험 강제 (GDD 131장 2)
       onFed: () => {
         const f = recoverFedHook;
@@ -1143,7 +1138,7 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 방으로 (GDD 99장 2, C.163) */
+  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1)으로 (GDD 99장 2, C.163) */
   function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
     const render = id === 'practice' ? () => practiceScreen(faction) : id === 'rank' ? () => rankScreen(faction) : () => renderTraining(faction, s);
     nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });

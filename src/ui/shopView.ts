@@ -12,6 +12,7 @@ import { artTierIndexOf } from '../game';
 import { buyTraitItem, equipTrait, traitRows, traitToggleLock, unequipTrait, buyShopItem, buyWandererItem, goldRows, healDaily, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
 import { getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
 import { GEAR_KIND_ICONS } from '../data/gear';
+import blurbsJson from '../data/shop/blurbs.json';
 import { h, provisionalTag } from './bha/dom';
 import { charArt } from '../data/art/manifest';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
@@ -70,6 +71,24 @@ export function shopConfirmText(row: Pick<ShopRow, 'name' | 'price' | 'currency'
 export function boughtText(row: Pick<ShopRow, 'name'>, r: BuyResult & { ok: true }): { eyebrow: string; title: string; meta: string } {
   const cur = r.currency === 'gold' ? TRADE_CURRENCY_NAME : JADE_NAME;
   return { eyebrow: `상점 — ${cur} −${r.price}`, title: row.name, meta: r.detail };
+}
+
+type ByFaction = Record<string, string>;
+const BLURBS = blurbsJson as { gearGrade: Record<string, string>; gearNoun: Record<string, ByFaction>; wandererGear: ByFaction; kind: Record<string, ByFaction> };
+const pickBy = (m: ByFaction | undefined, factionId: string): string => m?.[factionId] ?? m?.['*'] ?? '';
+
+/** 상점 목록 칸 한 줄 (GDD 158장 8, provisional 데이터 blurbs.json): 장비 = "평범한 칼자루"(등급 말 + 종류 이름), 그 밖 = 품목 종류별 짧은 글.
+ *  수치(효과·능력치)는 목록에 쓰지 않고 칸을 눌러 뜨는 상세 창에서 본다. 꾸밈은 분류 이름 */
+export function shopBlurb(row: Pick<ShopRow, 'id'> & { grade?: string }, factionId: string): string {
+  if (isTrait(row.id)) return pickBy(BLURBS.kind.trait, factionId);
+  const gold = getGoldItem(row.id);
+  if (gold?.kind === 'gear') return `${BLURBS.gearGrade.normal} ${pickBy(BLURBS.gearNoun[gold.gearKind!], factionId)}`;
+  if (gold) return pickBy(BLURBS.kind[gold.kind], factionId);
+  const wi = getWandererItem(row.id);
+  if (wi?.kind === 'gear') return `${BLURBS.gearGrade[wi.grade] ?? ''} ${pickBy(BLURBS.wandererGear, factionId)}`.trim();
+  if (wi) return pickBy(BLURBS.kind[wi.kind], factionId);
+  const cos = getCosmetic(row.id);
+  return cos ? CATEGORIES.find((c) => c.id === cos.category)?.name ?? '' : '';
 }
 
 export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd: ShopHandlers): void {
@@ -165,7 +184,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const close = itemDialog({
       heading: '상품 구매',
       name: row.name,
-      desc: [row.effect, cos && cos.category !== 'skin' ? `${CATEGORIES.find((c) => c.id === cos.category)?.where ?? ''}`.trim() : ''].filter(Boolean).join(' · ') || (cos?.category === 'skin' ? '입히면 모습이 바뀐다. 사면 카드를 눌러 바로 착용한다.' : ''),
+      // 상세 = 한 줄 설명 + 수치(효과·능력치) (GDD 158장 8)
+      desc: [shopBlurb(row, faction.id), [row.effect, cos && cos.category !== 'skin' ? `${CATEGORIES.find((c) => c.id === cos.category)?.where ?? ''}`.trim() : ''].filter(Boolean).join(' · ') || (cos?.category === 'skin' ? '입히면 모습이 바뀐다. 사면 카드를 눌러 바로 착용한다.' : '')].filter(Boolean).join('\n'),
       art: artOf(row, true),
       tag: cos?.category === 'skin' ? '미리보기' : undefined,
       have: row.have ?? (row.owned ? '보유' : undefined),
@@ -209,8 +229,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     // 보관 가득이면 가격 대신 '가득' (GDD 100장 #63: 가격이 살아 있어 살 수 있는 것처럼 보였다)
     const full = !owned && !row.canBuy && /가득/.test(row.lock ?? '');
     const soldOut = !owned && row.lock === SOLD_OUT_TODAY; // 회복 물건 하루 판매 수 (GDD 145장 4)
+    // 목록 = 그림·이름·한 줄(+가격), 수치는 상세 창 (GDD 158장 8)
     const c = itemCard({
-      id: row.id, name: row.name, detail: row.effect || undefined,
+      id: row.id, name: row.name, detail: shopBlurb(row, faction.id) || undefined,
       art: artOf(row), badge: owned ? (row.worn ? (isTrait(row.id) ? '끼움' : '착용 중') : '보유') : row.have ?? undefined,
       foot: owned ? (isTrait(row.id) ? (row.worn ? '빼기' : '끼우기') : row.worn ? '해제' : '착용') : soldOut ? SOLD_OUT_TODAY : full ? '가득' : row.price === null ? '—' : `${cur(row.currency)} ${row.price}`,
       state: owned ? (row.worn ? 'worn' : 'owned') : row.canBuy ? undefined : 'locked',

@@ -6,34 +6,22 @@
       {
         "id": "walk",
         "targets": [],
-        "title": "첫 원정: 길을 걷는다",
-        "body": "원정은 {nestName}에서 출발해 길을 한 칸씩 저절로 걷는다.\n이번 첫 원정은 정해진 짧은 길이다.\n{tutorialCell}칸쯤 걸으면 약한 적이 하나 나타난다."
-      },
-      {
-        "id": "encounter",
-        "targets": [],
-        "title": "적을 만나면 자동 전투",
-        "body": "적이 나타나면 전투 화면으로 바뀌고 내 캐릭터와 적이 알아서 싸운다.\n할 일은 블록을 눌러 거드는 것이다.\n블록·체인·필살기 설명은 전투가 시작될 때 나온다."
+        "title": "첫 모험",
+        "body": "모험을 떠나 길을 나아가다 보면 적을 마주친다.\n적과 마주치면 전투가 시작된다."
       }
     ],
     "first-absorb": [
       {
         "id": "absorb",
         "targets": [],
-        "title": "이기면 {absorbActionName}",
-        "body": "쓰러뜨린 적을 {absorbActionName}하면 내 것이 된다.\n**특성**: 그 적의 기술\n**블록**: 그 특성의 전투 블록\n**속성**: 그 적의 속성\n**능력치(노력치)**: 그 적이 강한 능력치의 노력치"
-      },
-      {
-        "id": "modes",
-        "targets": [],
-        "title": "{absorbActionName} 네 갈래",
-        "body": "**둘 다 {absorbActionName}**: 특성 + 노력치\n**속성만**: 특성만(그 속성 쪽으로 자란다)\n**스탯만**: 노력치 ×2, 특성 없음\n**안 함**: 놓아주고 {stabilityName} ↑\n{absorbActionName}할수록 {riskGaugeName}이(가) 오른다."
+        "title": "{absorbActionName}",
+        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 특성과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 특성만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 놓아주고 {stabilityName}이(가) 오른다"
       },
       {
         "id": "practice",
         "targets": [],
-        "title": "첫 {absorbActionName}은(는) 연습",
-        "body": "이번 한 번은 연습이라 특성·속성·{riskGaugeName}에 들어가지 않는다.\n대신 모든 능력치가 똑같이 노력치 +{statEv} 오른다."
+        "title": "첫 {absorbActionName}",
+        "body": "첫 {absorbActionName}을(를) 해 보자."
       }
     ],
     "first-run-room": [
@@ -41,15 +29,15 @@
         "id": "next",
         "targets": [],
         "title": "다음 할 일",
-        "body": "첫 원정이 끝났다.\n이제 {nestName}에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠난다.\n원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받는다."
+        "body": "첫 모험을 마쳤다.\n먹이를 주고 수련장에서 단련하며 다시 모험을 떠나자."
       }
     ],
     "tile-intro": [
       {
         "id": "tiles",
         "targets": [],
-        "title": "원정 타일 {starterCount}장을 받았다",
-        "body": "첫 진화 기념으로 {tile.prey} · {tile.elite} · {tile.rest}을(를) 1장씩 받았다.\n받은 타일은 가방에 있다.\n원정 출발 때 가진 타일을 전부 보고 길에 놓는다.\n자주 쓰는 배치는 프리셋으로 저장해 둘 수 있다."
+        "title": "원정 타일",
+        "body": "첫 진화 기념으로 원정 타일을 받았다.\n모험을 떠날 때 길에 놓아 보자."
       }
     ],
     "tile-plan": [
@@ -58,38 +46,38 @@
         "targets": [
           "plan.hand"
         ],
-        "title": "가진 타일 = 놓을 타일",
-        "body": "출발 전 이 카드들이 가진 타일이다.\n눌러서 고르거나 끌어서 길에 놓는다(길에는 {deckSize}칸까지).\n새 타일은 소모품 상점 [타일 뽑기]로 얻는다."
+        "title": "가진 타일",
+        "body": "아래 카드가 지금 가진 타일이다.\n눌러 고르거나 끌어서 길에 놓아 보자."
       },
       {
         "id": "place",
         "targets": [
           "plan.road"
         ],
-        "title": "길에 놓으면 그 칸에서 일이 생긴다",
-        "body": "**{tile.prey}**: 약한 적\n**{tile.elite}**: 강적(보상 ↑)\n**{tile.rest}**: 회복\n**환경 타일**: 그 칸 전투 조건이 바뀐다\n안 놓은 칸에는 떠돌이 적이 나온다."
+        "title": "길에 놓기",
+        "body": "타일을 놓은 칸에서 그 타일의 일이 생긴다.\n안 놓은 칸에는 떠돌이 적이 나온다."
       },
       {
         "id": "combo",
         "targets": [
           "plan.road"
         ],
-        "title": "붙여 놓으면 조합",
-        "body": "두 타일을 바로 옆에 붙이면 시너지가 생긴다.\n예: {tile.rest} 옆에 {tile.prey} = 「{comboExample}」(휴식 회복 ↑ · 먹이 ↑)"
+        "title": "조합",
+        "body": "두 타일을 바로 옆에 붙이면 조합이 생긴다.\n{tile.rest} 옆에 {tile.prey}을(를) 놓으면 「{comboExample}」이(가) 된다."
       }
     ],
     "tile-draw": [
       {
         "id": "draw",
         "targets": [],
-        "title": "새 타일은 가방에 들어온다",
-        "body": "뽑은 타일은 가방에 들어간다.\n다음 원정 출발 화면에서 가진 타일 전부를 보고 길에 놓는다(길에는 {deckSize}칸까지)."
+        "title": "새 타일",
+        "body": "뽑은 타일은 가방에 들어간다.\n다음 모험 때 길에 놓아 보자."
       },
       {
         "id": "special",
         "targets": [],
-        "title": "뽑기에서만 나오는 타일",
-        "body": "**{tile.training}**: 이기면 노력치 +1\n**{tile.hunter}**: 센 사냥꾼 · 이기면 흡수 후보 ×2\n**{tile.spring}**: 회복 대신 {riskGaugeName} 크게 ↓\n**{tile.echo}**: 바로 앞 칸 효과 한 번 더"
+        "title": "뽑기 타일",
+        "body": "뽑기에서만 나오는 특별한 타일도 있다."
       }
     ]
   },
@@ -97,7 +85,7 @@
     "note": "C.207 (GDD 131장) 처음 켰을 때 홈 안내: 카드는 방에 실제로 있는 것만(대상이 화면에 없으면 건너뜀). 자리표시자는 종족 설정 + 앱이 넣는 이름(homeIntro vars) · last.stages = 월드맵 켬일 때 누를 때마다 따라가는 단계(GDD 132장 1, 끔이면 앱이 뺀다)",
     "intro": {
       "title": "{nestName}",
-      "body": "여기가 {nestName}(이)다.\n{nestName}에 있는 버튼이 무엇을 하는지 하나씩 본다."
+      "body": "여기가 {nestName}(이)다.\n버튼이 하는 일을 하나씩 살펴보자."
     },
     "items": [
       {
@@ -106,15 +94,7 @@
           "@.bha-prop--outside"
         ],
         "title": "{outsideName}",
-        "body": "밖으로 나가면 {worldName} 지도가 나온다.\n{nestName}·{marketName}·{adventureName}·{towerName} 가운데 골라 걸어간다."
-      },
-      {
-        "id": "altar",
-        "targets": [
-          "@.bha-prop--altar"
-        ],
-        "title": "{altarName}",
-        "body": "해방 수련을 하고 진화 정보를 본다."
+        "body": "{worldName} 지도로 나간다."
       },
       {
         "id": "book",
@@ -122,7 +102,7 @@
           "@.bha-prop--book"
         ],
         "title": "{bookName}",
-        "body": "도감이다. 만난 진화체와 칭호를 본다."
+        "body": "만난 진화체와 칭호를 모아 본다."
       },
       {
         "id": "chest",
@@ -130,7 +110,7 @@
           "@.bha-prop--chest"
         ],
         "title": "{chestName}",
-        "body": "장비·물건·타일을 보고 쓴다."
+        "body": "장비와 물건을 꺼내 쓴다."
       },
       {
         "id": "status",
@@ -138,7 +118,7 @@
           "@.bha-room__status"
         ],
         "title": "상태",
-        "body": "머리 위 막대는 배부름·컨디션·{riskGaugeName}(이)다.\n누르면 상태 화면이 열린다."
+        "body": "배부름·컨디션·{riskGaugeName}(이)다."
       },
       {
         "id": "hp",
@@ -146,7 +126,7 @@
           "@.bha-room__hp"
         ],
         "title": "체력",
-        "body": "원정에는 이 체력 그대로 나간다.\n{nestName}에 있으면 조금씩 찬다."
+        "body": "모험에는 이 체력 그대로 나간다."
       },
       {
         "id": "care",
@@ -154,7 +134,7 @@
           "@.bha-homedock__care"
         ],
         "title": "돌보기",
-        "body": "{careNames}(으)로 캐릭터를 돌본다.\n먹이는 원정에서 얻는다."
+        "body": "{careNames}(으)로 돌본다."
       },
       {
         "id": "idle",
@@ -162,7 +142,7 @@
           "@[data-sc=\"idle-reward\"]"
         ],
         "title": "대기 보상",
-        "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다."
+        "body": "쉬는 동안 쌓인 보상을 받는다."
       },
       {
         "id": "more",
@@ -170,25 +150,25 @@
           "@[data-dock=\"more\"]"
         ],
         "title": "더보기",
-        "body": "설정·도움말·사진·백업 같은 메뉴가 있다."
+        "body": "설정과 도움말이 있다."
       }
     ],
     "last": {
       "id": "go",
       "title": "첫 모험",
-      "body": "이제 모험을 떠나자.\n{goPath}",
+      "body": "이제 모험을 떠나자.",
       "stages": [
         {
           "targets": [
             "@.bha-prop--outside"
           ],
-          "body": "이제 모험을 떠나자.\n[{outsideName}]을(를) 누른다."
+          "body": "이제 모험을 떠나자.\n{outsideName}(으)로 나가 보자."
         },
         {
           "targets": [
             "@.bha-worldmap [data-place=\"adventure\"]"
           ],
-          "body": "{worldName} 지도다.\n[{adventureName}]을(를) 누르면 떠난다."
+          "body": "{worldName} 지도다.\n{adventureName}(으)로 떠나 보자."
         }
       ]
     }

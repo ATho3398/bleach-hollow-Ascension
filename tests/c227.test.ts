@@ -37,9 +37,9 @@ describe('150장 2 들어가는 곳', () => {
     expect(app).toContain('onShop: (kind) => open(\'shop\', () => shopView(dev, faction, s, { persist, kind,');
     expect(readFileSync('src/ui/roomView.ts', 'utf8')).toContain('marketOf(faction).shopsLabel');
   });
-  it('튜토리얼 구급상자 안내 = 소모품 상점', () => {
+  it('튜토리얼 구급상자 안내 = "구급상자를 사용해 보자." (C.235 GDD 157장 4 — 소모품 상점 줄 삭제)', () => {
     const t = readFileSync('src/data/help/tutorial.json', 'utf8');
-    expect(t).toContain('구급상자는 소모품 상점에서 산다.');
+    expect(t).toContain('구급상자를 사용해 보자.');
     expect(t).not.toMatch(/구급상자는 상점에서/);
   });
 });

@@ -33,7 +33,7 @@ describe('131장 1 카드 문구 (종족 설정 이름, 하드코딩 없음)', (
       }
     }
     for (const it of HOME_INTRO.items) expect(it.targets.length).toBeGreaterThan(0);
-    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'altar', 'book', 'chest', 'status', 'hp', 'care', 'idle', 'more']); // C.215: 모험 문·장터 카드 폐기 (137장 3)
+    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'book', 'chest', 'status', 'hp', 'care', 'idle', 'more']); // C.215: 모험 문·장터 카드 폐기 (137장 3), C.236: 수련장 카드 삭제(월드맵 장소, 158장 1)
   });
 });
 
@@ -46,7 +46,7 @@ describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
   });
   it('강제 중: 방 다른 버튼 흐린 잠김, 월드맵 홈·시장 잠김, 뒤로 = 짧은 안내', () => {
     expect(app).toContain('forceOutside: forceAdventure,');
-    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'tower', 'spa'] : undefined,"); // C.217: 탑도 잠김 (139장 1)
+    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'training', 'tower', 'spa'] : undefined,"); // C.217: 탑도 잠김 (139장 1)
     expect(app).toContain("const FORCE_HINT = { eyebrow: '튜토리얼', title: '먼저 모험을 떠나자', meta: '' };");
     expect(read('src/ui/roomView.ts')).toContain("if (hd.forceOutside) main.classList.add('is-force-out');");
     expect(read('src/ui/bha/worldmap.css')).toContain('.bha-room.is-force-out .bha-homedock');

@@ -66,11 +66,12 @@ export type SlotLocation = 'body' | 'zanpakuto';
 
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
-/** outside = 밖으로 (GDD 130장 1, C.204): 누르면 월드맵(홈·시장·모험). 옛 모험 문·장터 물건은 폐기 (GDD 137장 3, C.215) */
+/** outside = 월드맵 물건 (GDD 130장 1, C.204 · 158장 2 이름 '월드맵'): 누르면 월드맵. 옛 모험 문·장터 물건은 폐기 (GDD 137장 3, C.215) */
+/** altar = 수련장 이름만 (GDD 158장 1): 방에는 서지 않고 월드맵 장소 training 의 이름으로 쓴다 */
 export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
-/** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·모험(출발 준비 화면)·탑(도전의 탑 화면). ▲▼ 순서도 이 순서 */
-export const WORLD_PLACES = ['home', 'market', 'adventure', 'tower', 'spa'] as const; // 온천 = 월드맵 장소 (GDD 153장 1)
+/** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·수련장(158장 1)·모험(출발 준비 화면)·탑(도전의 탑 화면)·온천(153장 1). ▲▼ 순서도 이 순서 */
+export const WORLD_PLACES = ['home', 'market', 'training', 'adventure', 'tower', 'spa'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
 /** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
@@ -161,7 +162,7 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { altar: '수련장', book: '책장', chest: '상자', outside: '밖으로' },
+  props: { altar: '수련장', book: '책장', chest: '상자', outside: '월드맵' },
   floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
     book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
@@ -206,6 +207,8 @@ export interface MarketConfig {
   floor: RoomFloorConfig;
   /** 자리 발 기준점 (장면 %) */
   layout: Record<MarketSpot, { x: number; y: number; scale?: number }>;
+  /** 월드맵 물건 발 기준점 (GDD 158장 3): 방의 월드맵 물건(room.props.outside)과 같은 물건 — 누르면 월드맵으로 나간다 */
+  exit: { x: number; y: number; scale?: number };
 }
 
 export const DEFAULT_MARKET: MarketConfig = {
@@ -216,12 +219,14 @@ export const DEFAULT_MARKET: MarketConfig = {
   props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '떠돌이 상인' },
   // 바닥 = 장면 30% 아래 전부 (GDD 155장 1 — 화면 전체를 쓰게 옛 50% 에서 올림)
   floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
-  // 뒷줄 = 상점 4곳·대장장이(왼 → 오), 앞줄 = 떠돌이 상인 (GDD 150장 2·153장 2). 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1)
+  // 방처럼 장면 곳곳에 (GDD 158장 3): 뒤(위)는 작게, 앞(아래)은 크게 — 앞뒤 깊이로 화면 전체를 쓴다. 왼쪽 앞 = 월드맵 물건(exit, 방과 같은 자리).
+  // 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1). 떠돌이 상인은 와 있을 때만 가운데
   layout: {
-    shop: { x: 12, y: 59, scale: 0.7 }, gearShop: { x: 31, y: 57, scale: 0.7 }, skinShop: { x: 50, y: 56, scale: 0.7 },
-    traitShop: { x: 69, y: 57, scale: 0.7 }, smith: { x: 88, y: 59, scale: 0.7 },
-    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 50, y: 92, scale: 0.7 },
+    shop: { x: 32, y: 48, scale: 0.9 }, gearShop: { x: 58, y: 42, scale: 0.8 }, skinShop: { x: 85, y: 50, scale: 0.9 },
+    traitShop: { x: 82, y: 88, scale: 1.15 }, smith: { x: 52, y: 90, scale: 1.15 },
+    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 66, y: 68, scale: 1 },
   },
+  exit: { x: 9, y: 78, scale: 1 },
 };
 
 /** 종족 설정의 market 에 빠진 값을 기본값으로 채운다 */
@@ -233,6 +238,7 @@ export function marketOf(f: Pick<FactionConfig, 'market'>): MarketConfig {
     props: { ...DEFAULT_MARKET.props, ...m.props },
     floor: m.floor ?? DEFAULT_MARKET.floor,
     layout: { ...DEFAULT_MARKET.layout, ...m.layout },
+    exit: m.exit ?? DEFAULT_MARKET.exit,
   };
 }
 
@@ -259,15 +265,19 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   shape: 'worldmap',
   sceneArt: 'scene.worldmap',
   // 땅 = 화면 전체 (GDD 155장 1). 맨 위 띠(장면 16%)는 [둥지로]·지도 이름이 겹치는 자리라 장소를 두지 않는다
+  // 장소 6곳 (158장 1 수련장 추가): 위 줄 온천·시장·탑, 아래 줄 홈·수련장·모험 — 서로 겹치지 않게 펼침
   floor: { aspect: 2, poly: [[0, 0.16], [1, 0.16], [1, 1], [0, 1]] },
-  layout: { home: { x: 18, y: 84, scale: 0.9 }, market: { x: 50, y: 54, scale: 0.9 }, adventure: { x: 84, y: 82, scale: 0.9 }, tower: { x: 82, y: 36, scale: 0.9 }, spa: { x: 18, y: 42, scale: 0.9 } },
+  layout: {
+    home: { x: 16, y: 84, scale: 0.9 }, market: { x: 50, y: 48, scale: 0.9 }, training: { x: 50, y: 88, scale: 0.9 },
+    adventure: { x: 84, y: 84, scale: 0.9 }, tower: { x: 84, y: 40, scale: 0.9 }, spa: { x: 16, y: 40, scale: 0.9 },
+  },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',
   spaName: '온천',
 };
 
-/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels, 온천 = worldmap.spaName) */
-export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
+/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 수련장 = room.props.altar, 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels, 온천 = worldmap.spaName) */
+export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower' | 'room'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
   const w = f.worldmap ?? {};
   return {
     ...DEFAULT_WORLDMAP,
@@ -275,7 +285,7 @@ export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestN
     floor: w.floor ?? DEFAULT_WORLDMAP.floor,
     layout: { ...DEFAULT_WORLDMAP.layout, ...w.layout },
     characterFoot: w.characterFoot ?? DEFAULT_WORLDMAP.characterFoot,
-    places: { home: f.nestName, market: marketOf(f).name, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
+    places: { home: f.nestName, market: marketOf(f).name, training: roomOf(f).props.altar, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
   };
 }
 
@@ -340,6 +350,8 @@ export interface FactionConfig {
   riskGaugeName: string;
   /** 흡수 행위 이름 (GDD 4장) */
   absorbActionName: string;
+  /** 흡수 갈래 버튼 이름 (GDD 158장 6): both = 특성 + 노력치, trait = 특성만, stat = 노력치만, none = 놓아주기. 호로 포식/속성 포식/능력치 포식/놓아주기 · 사신 정화 흡수/속성 흡수/능력치 흡수/놓아주기 */
+  absorbModeNames: Record<'both' | 'trait' | 'stat' | 'none', string>;
   slotLocation: SlotLocation;
   /** 흡수로 본체 외형이 변하는가 (호로 true, 사신 false) */
   appearanceChange: boolean;
@@ -440,6 +452,8 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
+  const amn = (r.absorbModeNames ?? {}) as Record<string, unknown>;
+  for (const k of ['both', 'trait', 'stat', 'none']) if (!isString(amn[k])) errors.push(`absorbModeNames.${k}: 비어 있지 않은 문자열이어야 한다`);
   if (!isStringTuple(r.tierNames, 4)) errors.push('tierNames: 문자열 4개여야 한다');
   if (!isStringTuple(r.rankNames, RANK_NAME_COUNT)) errors.push(`rankNames: 문자열 ${RANK_NAME_COUNT}개여야 한다 (번호 1~${RANK_NAME_COUNT})`);
   const rn = (r.roleNames ?? {}) as Record<string, unknown>;
@@ -590,6 +604,8 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
         const ok = isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;
         if (!(MARKET_SPOTS as readonly string[]).includes(k) || !ok) errors.push(`market.layout.${k}: 알 수 없는 자리이거나 { x, y } 장면 % 가 아니다`);
       }
+      const ex = mk.exit as Record<string, unknown> | undefined;
+      if (ex !== undefined && !(isRec(ex) && typeof ex.x === 'number' && typeof ex.y === 'number' && ex.x >= 0 && ex.x <= 100 && ex.y >= 0 && ex.y <= 100)) errors.push('market.exit: { x, y } 장면 % (0~100) 이어야 한다');
     }
   }
   if (r.worldmap !== undefined) {

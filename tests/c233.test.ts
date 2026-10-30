@@ -103,6 +103,8 @@ describe('155장 1 보충 — 장터도 화면 전체 (C.234)', () => {
     expect(css).toMatch(/\.bha-market__hud \{\n\s+position: absolute;/);
     expect(css).toMatch(/\.bha-room--market \.bha-room__wall \{\n\s+height: 30%;/);
     expect(DEFAULT_MARKET.floor.poly[0]![1]).toBe(0.3);
-    for (const k of ['shop', 'gearShop', 'skinShop', 'traitShop', 'smith'] as const) expect(DEFAULT_MARKET.layout[k].y).toBeLessThan(60);
+    // C.236 (GDD 158장 3): 한 줄 대신 방처럼 앞뒤 깊이 — 뒤 줄(상점 3곳)은 위, 앞 줄(특성 상점·대장장이)은 아래로 화면 전체
+    for (const k of ['shop', 'gearShop', 'skinShop'] as const) expect(DEFAULT_MARKET.layout[k].y).toBeLessThan(60);
+    for (const k of ['traitShop', 'smith'] as const) expect(DEFAULT_MARKET.layout[k].y).toBeGreaterThan(80);
   });
 });

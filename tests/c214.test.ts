@@ -96,7 +96,7 @@ describe('139장 2 온천 = 10초 안 (C.214 추가) → C.223(GDD 145장 1): �
     expect(readFileSync('src/ui/spaView.ts', 'utf8')).toContain("`${perMin ? '1분' : '1초'}에 체력 +");
     const tut = readFileSync('src/data/help/tutorial.json', 'utf8');
     expect(tut).not.toContain('1분에 체력 {spaHpPct}%');
-    expect(tut).toContain('1초에 체력 {spaHpPct}%');
+    expect(tut).not.toContain('{spaHpPct}'); // C.235 (GDD 157장 4): 회복 안내 카드에 수치 없음
     expect(tut).not.toContain('기다리지 않고');
   });
 });

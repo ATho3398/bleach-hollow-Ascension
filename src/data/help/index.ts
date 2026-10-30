@@ -33,6 +33,8 @@ export interface TutorialScene {
    * 사용자가 창을 닫거나 뒤로 가 앞 단계 대상만 남으면 저절로 그 단계로 되돌아간다
    */
   stages?: TutorialStage[];
+  /** 카드가 가리면 안 되는 것 (단계가 없는 카드 — 예: 강공격 카드의 적 예고 게이지, GDD 157장 2) */
+  avoid?: string[];
 }
 
 export interface TutorialStage {

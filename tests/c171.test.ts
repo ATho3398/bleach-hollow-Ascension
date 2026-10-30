@@ -66,9 +66,10 @@ describe("용어 '포식'·'배부름' (#46·58·81)", () => {
   });
   it('포식 갈래 문구는 한 곳(absorbModeText)에서 화면·첫 포식 안내가 같이 읽는다 (#47)', () => {
     const m = absorbModeText(H);
-    expect(m.both.label).toBe(`둘 다 ${H.absorbActionName}`);
+    // C.236 (GDD 158장 6): 갈래 이름 = 종족 설정 absorbModeNames
+    expect(m.both.label).toBe(H.absorbModeNames.both);
     expect(m.trait.sub).toBe('특성만 · 노력치 없음');
-    expect(absorbModeText(S).none.label).toBe(`${S.absorbActionName} 안 함`);
+    expect(absorbModeText(S).none.label).toBe(S.absorbModeNames.none);
     expect(read('src/ui/guideView.ts')).toContain('absorbModeText(faction)');
     expect(read('src/ui/guideView.ts')).not.toContain('그 속성 쪽으로 자란다');
   });

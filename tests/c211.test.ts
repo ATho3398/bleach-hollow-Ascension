@@ -57,14 +57,14 @@ describe('134장 2: 튜토리얼 흡수 직후 치명상 카드 → 귀환 → �
       for (const c of f.tutorialWound) expect(c.body.split('\n').length).toBeLessThanOrEqual(2);
     }
   });
-  it('회복 안내 첫 카드 = 빈사 설명 2줄(사망·구급상자)', () => {
+  it('회복 안내 첫 카드 = 빈사 설명 2줄 (GDD 157장 4: 상황만 — 구급상자는 다음 카드)', () => {
     const first = RECOVER_SCENES[0]!;
     expect(first.id).toBe('dying');
     expect(first.title).toBe('빈사');
     const lines = first.body.split('\n');
     expect(lines).toHaveLength(2);
-    expect(first.body).toContain('사망');
-    expect(first.body).toContain('구급상자');
+    expect(first.body).toContain('죽는다');
+    expect(first.body).toContain('빈사');
   });
   it('흡수 → 원정 끝이면 치명상 장면을 거쳐 endExpedition (종족 분기 없음)', () => {
     const app = readFileSync('src/ui/app.ts', 'utf8');

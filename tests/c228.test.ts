@@ -27,7 +27,7 @@ describe('153장 1 온천 = 월드맵 장소', () => {
     expect(wm).toContain('spa: hd.onSpa };');
     expect(app).toContain("onSpa: () => { openSpa(faction, s); if (nav.top?.id === 'spa') worldAt = 'spa'; },");
     expect(app).toContain("const backLabel = nav.top?.id === 'worldmap' ? '월드맵으로 돌아가기' : undefined;");
-    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'tower', 'spa'] : undefined,");
+    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'training', 'tower', 'spa'] : undefined,");
   });
   it('온천 이름은 시장 설정이 아니라 월드맵 장소 이름에서 (시장 칸이 빠져도 동작)', () => {
     expect(app).not.toContain('marketOf(faction).props.spa');
@@ -39,7 +39,8 @@ describe('153장 1 온천 = 월드맵 장소', () => {
     expect(sc.stages!.map((s) => s.targets.at(-1))).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="spa"]', '@.bha-spa__actor']);
     expect(JSON.stringify(sc)).not.toContain('bha-market');
     expect(JSON.stringify(sc)).not.toContain('marketName');
-    expect(app).toContain('spaPath: `${props.outside} → ${wm.name} → ${wm.places.spa}`,');
+    expect(app).toContain(`const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]';`); // C.235: 길 문구 spaPath 대신 단계 문구 (GDD 157장 4)
+    expect(sc.stages!.map((x) => x.body)).toEqual([sc.body, '{spaName}(으)로 가 보자.', '체력이 차오른다.']);
   });
 });
 

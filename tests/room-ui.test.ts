@@ -61,7 +61,7 @@ describe('종족 설정 room', () => {
   it('room 이 없는 종족도 기본값으로 열린다 (3번째 종족 추가 쉬움)', () => {
     const { room: _omit, ...noRoom } = getFaction('hollow');
     const f = parseFactionConfig({ ...noRoom, id: 'third' });
-    expect(roomOf(f).props.outside).toBe('밖으로');
+    expect(roomOf(f).props.outside).toBe('월드맵');
   });
   it('잘못된 room 은 이유와 함께 던진다', () => {
     const h = getFaction('hollow');

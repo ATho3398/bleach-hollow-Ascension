@@ -43,61 +43,52 @@
   ],
   "script": [
     {
-      "id": "intro",
-      "targets": [],
-      "title": "일반 공격은 자동",
-      "body": "가만히 있어도 내 캐릭터가 적을 자동으로 때린다.\n먼저 자동 공격 몇 번을 지켜본다."
-    },
-    {
-      "id": "heavy-info",
-      "targets": [
-        "battle.cast"
-      ],
-      "title": "강공격 예고",
-      "body": "적 머리 위 게이지가 다 차면 강공격이 들어온다.\n{roleNames.guard} 게이지가 다 찼을 때 {roleNames.guard} 버튼을 누르면 {guardSeconds}초 동안 강공격을 막는다."
-    },
-    {
       "id": "guard-now",
       "targets": [
         "battle.guard"
       ],
-      "title": "지금 {roleNames.guard}",
-      "body": "강공격이 곧 들어온다.\n{roleNames.guard} 버튼을 눌러야 전투가 이어진다."
+      "avoid": [
+        "@.bha-unit--foe .bha-hgauge--cast"
+      ],
+      "title": "강공격",
+      "body": "적의 강공격 게이지가 가득 찼다!\n{roleNames.guard}을(를) 눌러 보자."
+    },
+    {
+      "id": "guard-ok",
+      "targets": [],
+      "avoid": [
+        "@.bha-unit--foe .bha-hgauge--cast"
+      ],
+      "title": "{roleNames.guard} 성공",
+      "body": "강공격을 막아 냈다!\n강적의 강공격은 때맞춰 {roleNames.guard}(으)로 막을 수 있다."
     },
     {
       "id": "hurt",
       "targets": [
-        "battle.hp"
-      ],
-      "title": "막지 못한 강공격",
-      "body": "강공격을 그대로 맞아 체력이 바닥 직전이다.\n이제 블록 바에 블록이 생긴다."
-    },
-    {
-      "id": "block-use",
-      "targets": [
         "battle.tray"
       ],
-      "title": "블록: 눌러서 사용",
+      "avoid": [
+        "battle.hp"
+      ],
+      "title": "위기",
       "sample": [
         "attack"
       ],
-      "body": "블록 바에 생긴 블록을 누르면 스킬이 나간다.\n블록을 눌러야 전투가 이어진다."
+      "body": "연달아 들어온 강공격에 체력이 얼마 남지 않았다.\n블록 스킬로 적을 더 빨리 쓰러뜨려 보자."
     },
     {
-      "id": "chain-info",
-      "targets": [
-        "battle.tray"
-      ],
-      "title": "같은 블록을 붙여서 {chainName}",
-      "body": "완전히 같은 블록이 나란히 붙으면 함께 발동해 {chainName}이(가) 된다(최대 {chainMax}).\n같은 블록 {chainMax}개가 이어서 생긴다."
+      "id": "nice",
+      "targets": [],
+      "title": "좋아!",
+      "body": "블록 스킬을 잘 썼다!"
     },
     {
       "id": "chain-use",
       "targets": [
         "battle.tray"
       ],
-      "title": "{chainName}{chainMax}(으)로 마무리",
-      "body": "붙은 블록 하나를 누르면 {chainMax}개가 한꺼번에 나간다.\n블록을 눌러 적을 쓰러뜨린다."
+      "title": "{chainName}",
+      "body": "같은 블록이 모이면 {chainName}이(가) 발동해 더 강한 공격이 나간다(최대 {chainMax}개).\n{chainMax}{chainName} 블록을 써 보자."
     }
   ],
   "recover": [
@@ -107,15 +98,15 @@
         "@.bha-room__hp"
       ],
       "title": "빈사",
-      "body": "빈사는 치명상을 입어 체력이 {dyingPct}% 위로 차지 않는 상태다.\n그대로 두면 시간이 지나 사망하고, 구급상자로만 풀린다."
+      "body": "치명상을 입어 빈사 상태가 됐다.\n이대로 두면 죽는다."
     },
     {
       "id": "to-bag",
       "targets": [
         "@.bha-prop--chest"
       ],
-      "title": "빈사부터 치료",
-      "body": "구급상자 1개를 {chestName}에 넣었다.\n{chestName}을(를) 연다."
+      "title": "치료",
+      "body": "구급상자 1개가 들어왔다.\n{chestName}을(를) 열어 보자."
     },
     {
       "id": "cure",
@@ -123,22 +114,22 @@
         "@[data-item=\"med-cure\"]"
       ],
       "title": "구급상자",
-      "body": "구급상자를 눌러 [사용]하면 빈사가 풀린다.\n구급상자는 소모품 상점에서 산다.",
+      "body": "구급상자를 사용해 보자.",
       "stages": [
         {
           "targets": [
             "@[data-item=\"med-cure\"]"
           ],
-          "body": "빈사는 구급상자로 푼다.\n구급상자를 누른다."
+          "body": "구급상자를 사용해 보자."
         },
         {
           "targets": [
             "@.bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]"
           ],
-          "body": "[사용]을 누른다.\n구급상자는 소모품 상점에서 산다."
+          "body": "구급상자를 사용해 보자."
         }
       ],
-      "done": "빈사가 풀렸다.\n[다음]을 누른다."
+      "done": "빈사가 풀렸다!"
     },
     {
       "id": "to-spa",
@@ -148,34 +139,34 @@
         "@.bha-spa__actor"
       ],
       "title": "{spaName}",
-      "body": "{spaName}에서 쉬면 1초에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.",
+      "body": "빈사는 풀렸지만 체력은 아직 그대로다.\n{spaName}에서 체력을 회복해 보자.",
       "stages": [
         {
           "targets": [
             "@.bha-prop--outside"
           ],
-          "body": "{spaName}에서 쉬면 1초에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
+          "body": "빈사는 풀렸지만 체력은 아직 그대로다.\n{spaName}에서 체력을 회복해 보자."
         },
         {
           "targets": [
             "@.bha-worldmap [data-place=\"spa\"]"
           ],
-          "body": "{worldMapName}에 {spaName}이(가) 있다.\n[{spaName}]을(를) 누른다. 체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
+          "body": "{spaName}(으)로 가 보자."
         },
         {
           "targets": [
             "@.bha-spa__actor"
           ],
-          "body": "{spaName}에 들어가 쉬는 중이다.\n체력이 차오른다."
+          "body": "체력이 차오른다."
         }
       ],
-      "done": "체력이 1초에 {spaHpPct}%씩 빠르게 찬다.\n[다음]을 누른다."
+      "done": "체력이 가득 찼다!"
     },
     {
       "id": "spa-rest",
       "targets": [],
       "title": "쉬기",
-      "body": "튜토리얼 온천은 10초면 체력이 가득 찬다. 평소엔 가득 차는 데 {spaNormalMin}분쯤 걸린다.\n[다음]을 누르면 방으로 돌아간다."
+      "body": "{spaName}에서는 체력이 빠르게 찬다.\n이제 방으로 돌아가자."
     },
     {
       "id": "feed",
@@ -183,13 +174,13 @@
         "@.bha-homedock__carebtn--feed"
       ],
       "title": "먹이",
-      "body": "먹이를 주면 배부름과 함께 체력도 조금 찬다.\n{foodName} 1개를 넣었다. [먹이]를 눌러 {foodName}을(를) 주자.",
+      "body": "{foodName} 1개가 들어왔다.\n먹이를 줘 보자.",
       "stages": [
         {
           "targets": [
             "@.bha-homedock__carebtn--feed"
           ],
-          "body": "{foodName} 1개를 넣었다.\n[먹이]를 누른다."
+          "body": "{foodName} 1개가 들어왔다.\n먹이를 줘 보자."
         },
         {
           "targets": [
@@ -198,7 +189,7 @@
           "avoid": [
             "@.bha-homedock__tray--food"
           ],
-          "body": "{foodName}을(를) 고른다.\n먹이를 주면 배부름과 함께 체력도 조금 찬다."
+          "body": "{foodName} 1개가 들어왔다.\n먹이를 줘 보자."
         }
       ]
     },
@@ -208,7 +199,7 @@
         "@.bha-room__hp"
       ],
       "title": "회복 끝",
-      "body": "배부름과 체력이 모두 가득 찼다.\n방에 있으면 체력이 1분에 {idleHpPct}%씩 찬다."
+      "body": "배부름도 체력도 가득 찼다.\n방에서 쉬어도 체력이 조금씩 찬다."
     }
   ]
 }

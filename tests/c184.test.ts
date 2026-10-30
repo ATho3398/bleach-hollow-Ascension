@@ -64,7 +64,7 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
   it("포식 화면: 후보 카드·교체 판단이 같은 헬퍼 — 노멀 후보는 'n강 → n+1강'", () => {
     const src = read('src/ui/absorbView.ts');
     expect(src).toContain('const have = ownsTraitBlock(exp.build, id);');
-    expect(src).toContain("chip(have ? step : '새 블록')");
+    expect(src).toContain("chip(have ? '가진 블록' : '새 블록')"); // C.236 (GDD 158장 4): 강화 단계는 n/100 줄
     expect(src).toContain('if (isFull(exp.build) && !ownsTraitBlock(exp.build, id))');
     expect(src).not.toContain('exp.build.owned.includes(id)');
     expect(read('src/engine/expedition/expedition.ts')).toContain('if (!ownsTraitBlock(exp.build, traitId)) {');
@@ -98,7 +98,8 @@ describe('111장 3: 빈 칸 몫', () => {
     expect(basicAttackMultiplier(b)).toBeCloseTo((1 + EH.earlyPerLevel) * (1 + EH.basicPerEmptySlot * 3));
     gainTrait(b, 't-water-a');
     expect(buildCombatParams(b, 'hollow').basicAttackEnhance).toBeCloseTo((1 + EH.earlyPerLevel) * (1 + EH.basicPerEmptySlot * 2));
-    expect(read('src/ui/absorbView.ts')).toContain('basicAttackMultiplier({ enhance: { [elId]: n }, slots: exp.build.slots })');
+    // C.236 (GDD 158장 4·5): 효과 % 는 흡수 화면에서 빼고 가방 블록 상세 수치 줄에서
+    expect(read('src/ui/buildPanel.ts')).toContain('basicAttackMultiplier(build) - 1');
   });
 });
 
