@@ -75,3 +75,30 @@ describe('C.218 조사 전수 (GDD 140장 1)', () => {
     expect(body('hollow')).toContain('여기가 둥지다.');
   });
 });
+
+describe('C.218 드래프트 창·카드 고르는 창 (GDD 140장 2·3)', () => {
+  const css = (p: string) => readFileSync(p, 'utf8');
+  const view = readFileSync('src/ui/expeditionView.ts', 'utf8');
+  it('카드는 같은 너비·같은 높이 격자(1fr 행), 이름·설명 줄바꿈, 말줄임·줄 수 제한·가로 밀기 없음 · 가로 화면 두 칸', () => {
+    const c = css('src/ui/bha/expedition.css');
+    expect(c).toMatch(/\.bha-draft__row \{ display: grid; grid-template-columns: minmax\(0, 1fr\); grid-auto-rows: 1fr;/);
+    expect(c).toMatch(/\.bha-nestsheet__body\.has-draft \{ display: grid; grid-template-columns: minmax\(0, 0\.8fr\) minmax\(0, 1\.2fr\);/);
+    const draft = c.slice(c.indexOf('.bha-draft {'), c.indexOf('/* 이벤트 타일 창'));
+    expect(draft).not.toMatch(/line-clamp|text-overflow|overflow-x: auto|nowrap/);
+  });
+  it('버튼 줄 [귀환]·[한 바퀴 더] 같은 너비, 뒤 HUD 는 창이 떠 있으면 숨김', () => {
+    const w = css('src/ui/bha/walk-scene.css');
+    expect(w).toMatch(/\.bha-sheet > \.bha-continue > \.bha-grid2 \{ flex: none; grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+    expect(w).toMatch(/\.bha-exp\.has-sheet \.bha-exp__chips, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__corner \{ visibility: hidden; \}/);
+  });
+  it('임시 타일 설명은 한 번만, 머리 한 줄 "n바퀴 끝 — 타일 1장 고르기"', () => {
+    const nest = view.slice(view.indexOf('function nestSheet'), view.indexOf('function eventSheet'));
+    expect(nest.match(/이번 원정에만 쓰는 타일|임시 타일이다/g)?.length).toBe(1);
+    expect(nest).toContain('바퀴 끝 — 타일 1장 고르기');
+  });
+  it('흡수 후보 카드 아래 줄: 강화 단계는 배지에만, 고르기 표시 앞 떠도는 · 없음', () => {
+    const a = readFileSync('src/ui/absorbView.ts', 'utf8');
+    expect(a).not.toContain("foot.append(' · '");
+    expect(a).toContain("el('b', 'bha-cand__pick', '✓ 고르기')");
+  });
+});

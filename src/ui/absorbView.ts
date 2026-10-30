@@ -265,9 +265,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const badge = chip(have ? step : '새 블록');
     badge.dataset.candStep = have ? 'owned' : 'new';
     top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), badge, ...traitTags(id));
-    const foot = el('span', 'bha-cand__foot', have ? `이미 가진 블록 — 고르면 ${elementName(t.element, faction.id)} 강화만 (${step})` : `새 블록을 얻는다 · ${elementName(t.element, faction.id)} ${step}`);
+    // 강화 단계는 머리 배지에 있으니 아래 줄은 한 번만 짧게 (C.218, GDD 140장 3)
+    const foot = el('span', 'bha-cand__foot');
+    foot.append(el('span', '', have ? `이미 가진 블록 — ${elementName(t.element, faction.id)} 강화만` : `새 블록 · ${elementName(t.element, faction.id)} ${step}`));
     // 카드 자체가 고르기 버튼이라는 표시 (GDD 100장 #50)
-    if (tagName === 'button') foot.append(' · ', el('b', '', '✓ 고르기'));
+    if (tagName === 'button') foot.append(el('b', 'bha-cand__pick', '✓ 고르기'));
     const body = el('span', 'bha-cand__body');
     body.append(top, el('span', 'bha-cand__desc', plainText(traitDescription(id, faction.id))), foot);
     c.append(mark, body);

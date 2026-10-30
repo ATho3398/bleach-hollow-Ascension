@@ -113,7 +113,8 @@ describe('타일 칸 비율 (128장 9)', () => {
     const css = src('src/ui/bha/expedition.css');
     expect(css).toMatch(/\.bha-sheet \.bha-road__cell, \.bha-lcd \.bha-plan \.bha-road__cell \{ flex: 0 0 60px; min-height: 0; height: 80px;/);
     expect(css).not.toMatch(/flex: 0 0 72px; min-height: 48px/);
-    expect(css).toMatch(/\.bha-draft__row \{ display: flex;[^}]*overflow-x: auto/);
+    // 드래프트 카드는 C.218 (GDD 140장 2) 부터 같은 너비·높이 격자 (가로 밀기 대체) — tests/c218.test.ts
+    expect(css).toMatch(/\.bha-draft__row \{ display: grid; grid-template-columns: minmax\(0, 1fr\); grid-auto-rows: 1fr;/);
     expect(css).toMatch(/\.bha-sheet \.bha-road__hand \{ flex-wrap: nowrap; overflow-x: auto/);
   });
 });

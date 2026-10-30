@@ -102,19 +102,30 @@
 .bha-sheet .bha-road__cell .bha-icon, .bha-lcd .bha-plan .bha-road__cell .bha-icon { width: 24px; height: 24px; }
 .bha-sheet .bha-road__hand { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding-bottom: var(--bha-sp-1); }
 .bha-sheet .bha-road__hand > * { flex: none; scroll-snap-align: start; }
+/* C.218 (GDD 140장 2): 바퀴 끝 창 손 카드는 가로꼴(아이콘 왼쪽 · 이름·설명 오른쪽) — 창이 가로 화면 한 장에 들어가게. 같은 너비, 줄 높이에 맞춰 같은 높이 */
+.bha-sheet .bha-road__hand > .bha-tilecard { display: grid; grid-template-columns: 32px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--bha-sp-2); row-gap: 0; align-items: start; width: 156px; min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-2); text-align: left; }
+.bha-sheet .bha-road__hand > .bha-tilecard .bha-tilecard__icon { grid-row: span 2; align-self: center; width: 32px; height: 32px; }
+.bha-sheet .bha-road__hand > .bha-tilecard .bha-tilecard__icon .bha-icon { width: 20px; height: 20px; }
+.bha-sheet .bha-road__hand > .bha-tilecard .bha-tilecard__count { top: auto; bottom: var(--bha-sp-1); left: var(--bha-sp-1); min-width: 0; line-height: 16px; }
 
 /* 드래프트 (GDD 25-5 ①, C.57): 바퀴 끝 팝업 안 3장 중 1장 */
-.bha-draft { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
-.bha-draft__row { display: flex; gap: var(--bha-sp-3); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-3) var(--bha-sp-1) var(--bha-sp-1); }
-/* C.202 (GDD 128장 9): 드래프트 카드도 손패 카드꼴(세로) — 창 폭에 3장을 눌러 담지 않고 한 줄 가로 밀기 */
-.bha-draft__card { position: relative; flex: 0 0 128px; flex-direction: column; align-items: center; justify-content: flex-start; gap: var(--bha-sp-2); min-height: 132px; height: auto; padding: var(--bha-sp-3); border-radius: var(--bha-r-md); text-align: center; white-space: normal; scroll-snap-align: start; }
-.bha-draft__card .bha-tilechip__icon { width: 40px; height: 40px; }
-.bha-draft__card .bha-tilechip__icon .bha-icon { width: 24px; height: 24px; }
-.bha-draft__text { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); min-width: 0; }
-.bha-draft__text b { word-break: keep-all; line-height: 1.2; }
-.bha-draft__text small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; white-space: normal; word-break: keep-all; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.bha-draft__tag { position: absolute; top: calc(-1 * var(--bha-sp-3)); right: var(--bha-sp-3); }
+.bha-draft { display: flex; flex-direction: column; gap: var(--bha-sp-1); min-width: 0; }
+.bha-draft__head { margin: 0; }
+/* C.218 (GDD 140장 2): 카드 N장은 같은 너비·같은 높이(격자 1fr 행). 아이콘은 왼쪽 칸, 이름·설명은 오른쪽 칸에서 줄바꿈(말줄임·줄 수 제한 없음).
+   (C.202 의 가로 밀기 128px 카드는 글 길이에 따라 너비가 달라 보였다) */
+.bha-draft__row { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; row-gap: var(--bha-sp-2); padding: var(--bha-sp-2) var(--bha-sp-1) 0; }
+.bha-draft__row > .bha-draft__card { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--bha-sp-3); row-gap: var(--bha-sp-1); align-items: start; width: auto; min-width: 0; min-height: 0; height: auto; padding: var(--bha-sp-2) var(--bha-sp-3); border-radius: var(--bha-r-md); text-align: left; white-space: normal; }
+.bha-draft__card .bha-tilechip__icon { grid-row: span 2; align-self: center; width: 32px; height: 32px; }
+.bha-draft__card .bha-tilechip__icon .bha-icon { width: 20px; height: 20px; }
+.bha-draft__name { min-width: 0; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
+.bha-draft__hint { min-width: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+.bha-draft__tag { position: absolute; top: calc(-1 * var(--bha-sp-2)); right: var(--bha-sp-2); }
 .bha-draft__card:disabled:not(.is-selected) { opacity: .45; }
+/* 바퀴 끝 창 몸통: 드래프트가 있으면 두 칸(왼쪽 카드 · 오른쪽 배치판), 없으면 배치판만 */
+.bha-nestsheet__body { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-width: 0; }
+.bha-nestsheet__body.has-draft { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); align-items: start; gap: var(--bha-sp-4); }
+.bha-nestsheet__body > * { min-width: 0; }
+.bha-lcd .bha-exp .bha-sheet.bha-sheet--wide { width: min(640px, calc(100% - 24px)); }
 /* 이벤트 타일 창 (GDD 25-5 ③) */
 .bha-event__choices { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
 .bha-event__choices > .bha-btn { flex: 1 1 40%; }
@@ -188,11 +199,16 @@
 .bha-tilecard__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--tile); color: #fff; box-shadow: 0 2px 4px rgb(0 0 0 / .45); }
 .bha-tilecard__icon .bha-icon { width: 24px; height: 24px; }
 .bha-tilecard__name { font-size: var(--bha-fs-sm); line-height: 1.15; word-break: keep-all; }
-.bha-tilecard__hint { font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
+/* C.218 (GDD 140장 3): 설명은 줄 수 제한 없이 줄바꿈 — 같은 줄 카드는 줄(flex) 높이에 맞춰 같은 높이 */
+.bha-tilecard__hint { font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); word-break: keep-all; overflow-wrap: anywhere; }
 /* 수량은 왼쪽 위, 키 배지는 오른쪽 위 (GDD 100장 #26: '×4'+'1' 이 '×41' 로 읽히던 문제) */
 /* 이어하기 배율 줄 (GDD 121장 5, C.195): [한 바퀴 더] 아래 */
 .bha-continue { display: flex; flex-direction: column; gap: var(--bha-sp-1); }
 .bha-continue-mult { margin: 0; text-align: right; font-size: var(--bha-fs-xs); color: var(--bha-warn); font-variant-numeric: tabular-nums; }
+/* C.218: [귀환]·[한 바퀴 더] 아래 작은 글 한 줄 — 왼쪽 = 지킨다, 오른쪽 = 다음 바퀴 배율 */
+.bha-continue__notes { display: flex; align-items: baseline; justify-content: space-between; gap: var(--bha-sp-3); }
+.bha-continue__notes > .bha-continue-mult { flex: 1 1 auto; min-width: 0; }
+.bha-continue-keep { flex: none; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 /* 임시 타일 표시 (GDD 121장 4 ②, C.195): 칸·카드 오른쪽 위 구석에 작은 시계 */
 .bha-tempmark { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: var(--bha-r-pill); background: var(--bha-bg-0); color: var(--bha-warn); pointer-events: none; }
 .bha-tempmark .bha-icon, .bha-road__cell .bha-tempmark .bha-icon { width: 11px; height: 11px; }

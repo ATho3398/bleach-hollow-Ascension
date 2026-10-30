@@ -251,6 +251,7 @@
 .bha-absorbpage .bha-cand { padding: var(--bha-sp-4); gap: var(--bha-sp-4); grid-template-columns: 32px minmax(0, 1fr); }
 .bha-absorbpage .bha-cand__mark { width: 32px; height: 32px; }
 .bha-absorbpage .bha-cand__mark .bha-icon { width: 20px; height: 20px; }
+.bha-cand__pick { flex: none; margin-left: auto; white-space: nowrap; }  /* C.218: 고르기 표시는 줄 오른쪽 끝, 앞 글과 따로 줄바꿈 */
 .bha-absorbpage .bha-info__row { padding: var(--bha-sp-1) 0; }
 .bha-absorbpage .bha-info dt, .bha-absorbpage .bha-info dd { font-size: var(--bha-fs-xs); line-height: 1.35; }
 .bha-absorbpage .bha-absorb__lead { display: none; }  /* "…을(를) 쓰러뜨렸다" 는 상대 카드와 겹친다 */

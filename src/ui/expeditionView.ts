@@ -457,8 +457,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   function nestSheet(): HTMLElement[] {
     const over = exp.lap >= EX.defaultLaps;
+    const d = exp.draft;
     const title = el('h2', 'bha-sheet__title');
-    title.append(icon('i-nest'), `${faction.nestName}에 도착했다`, helpBtn); // 시트가 머리 줄을 대신하므로 [?] 도 시트 제목 줄로 옮긴다 (T-2)
+    // 머리 한 줄 (C.218, GDD 140장 2): "1바퀴 끝 — 타일 1장 고르기"
+    title.append(icon('i-nest'), d && d.picked === null ? `${exp.lap}바퀴 끝 — 타일 1장 고르기` : `${exp.lap}바퀴 끝 — ${faction.nestName}에 도착`, helpBtn); // 시트가 머리 줄을 대신하므로 [?] 도 시트 제목 줄로 옮긴다 (T-2)
     const ret = button({
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
@@ -482,26 +484,33 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     more.append(label);
     // 이어하기 배율 (GDD 121장 5): [한 바퀴 더] 아래에 다음 바퀴 보상·적 배율과 사냥 힐
     const nx = exp.lap + 1;
-    const multLine = el('p', 'bha-sheet__body bha-continue-mult', `다음 바퀴: 보상 ×${fmtMult(lapRewardMult(nx))} · 적 체력 ×${fmtMult(lapScale(nx).hp)} · 공격 ×${fmtMult(lapScale(nx).attack)} · 사냥 힐 ${Math.round(winHealOf(nx) * 100)}%`);
+    const multLine = el('p', 'bha-continue-mult', `다음 바퀴 보상 ×${fmtMult(lapRewardMult(nx))} · 적 체력 ×${fmtMult(lapScale(nx).hp)} · 공격 ×${fmtMult(lapScale(nx).attack)} · 힐 ${Math.round(winHealOf(nx) * 100)}%`);
     multLine.dataset.continueMult = '';
     const grid = el('div', 'bha-grid2');
     grid.append(ret, more);
+    // 버튼 아래 작은 글 두 칸: [귀환] 아래 = 지킨다, [한 바퀴 더] 아래 = 다음 바퀴 배율 (C.218)
+    const notes = el('div', 'bha-continue__notes');
+    notes.append(el('p', 'bha-continue-keep', '돌아가면 얻은 것을 지킨다'), multLine);
     const actions = el('div', 'bha-continue');
-    actions.append(grid, multLine);
+    actions.append(grid, notes);
     const sheet = el('div', 'bha-sheet');
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-label', `${faction.nestName}에 도착했다`);
     // 설명 영역(낮은 LCD 에서는 이 안만 스크롤)과 버튼 줄을 나눈다: 귀환/한 바퀴 더 버튼은 항상 보인다
     const info = el('div', 'bha-sheet__scroll');
-    info.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
-    if (over) info.append(notice('warn', `권장 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
+    info.append(title);
+    // 노란 알림은 맨 위 (GDD 140장 2)
+    if (over) info.append(notice('warn', `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
+    // 가로 화면 한 장에 다 들어가게 (C.218, GDD 140장 2): 드래프트가 있으면 왼쪽 = 카드 3장(같은 크기 세로 줄), 오른쪽 = 길·손 배치판
+    const body = el('div', `bha-nestsheet__body${d ? ' has-draft' : ''}`);
+    if (d) sheet.classList.add('bha-sheet--wide');
     // 드래프트 (GDD 25-5 ①): 3장 중 1장 → 이번 바퀴 길에 바로 놓는다(보관함에는 안 들어감, 안 놓고 계속하면 사라진다)
-    const d = exp.draft;
     if (d) {
       const box = el('div', 'bha-draft');
       box.dataset.draft = d.picked === null ? 'open' : 'picked';
       const head = el('p', 'bha-sheet__body bha-draft__head');
-      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 원정 동안 쓰는 임시 타일이다 (가방에는 안 들어간다)' : fixParticles(` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓거나 손에 두고 다음 바퀴에 놓는다`));
+      // 임시 타일 설명은 여기 한 번만 (C.218)
+      head.append(d.picked === null ? `${d.options.length}장 중 1장 — 이번 원정에만 쓰는 타일` : fixParticles(`${tn(d.options[d.picked]!)}을(를) 골랐다 — 오른쪽 길에 놓거나 손에 둔다`));
       const row = el('div', 'bha-draft__row');
       d.options.forEach((id, i) => {
         const t = getTile(id);
@@ -512,9 +521,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         card.setAttribute('aria-pressed', String(d.picked === i));
         const ic = el('span', 'bha-tilechip__icon');
         ic.append(icon(tileIconId(css)));
-        const txt = el('span', 'bha-draft__text');
-        txt.append(el('b', '', tn(id)), el('small', '', tileHint(t)));
-        card.append(ic, txt);
+        // 아이콘·이름·설명은 카드마다 같은 자리 (C.218) — 설명은 줄바꿈, 말줄임 없음
+        card.append(ic, el('b', 'bha-draft__name', tn(id)), el('small', 'bha-draft__hint', tileHint(t)));
         if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '새 타일'));
         card.onclick = () => {
           const r = chooseDraft(exp, i);
@@ -525,13 +533,15 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         row.append(card);
       });
       box.append(head, row);
-      info.append(box);
+      body.append(box);
     }
     if (exp.hand.length > 0 || planner.canEdit() || d) {
       // 받은 타일(임시, GDD 121장 4 ②)은 지금 다음 바퀴 칸에 놓거나 손에 두고 다음 바퀴에 놓는다. 원정이 끝나면 사라진다. 이 팝업이 길 순서가 보이는 유일한 곳
-      info.append(el('p', 'bha-sheet__body', '받은 타일은 이번 원정만 쓰는 임시 타일(시계 표시)이다 — 바퀴를 이어 돌며 길에 쌓고, 원정이 끝나면 사라진다. 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
+      // 놓는 법은 배치판 안내 줄(road note)이 말한다 — 같은 설명을 두 번 쓰지 않는다 (C.218)
+      body.append(planner.el);
       planner.refresh();
     }
+    if (body.childElementCount > 0) info.append(body);
     sheet.append(info, actions);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
