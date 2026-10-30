@@ -2,8 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { artUrls } from '../src/data/art/manifest';
 import { FACTIONS, getFaction } from '../src/data/factions';
-import { parseFactionConfig, roomOf, roomPropsShown, ROOM_PROPS, ROOM_TALK } from '../src/engine/faction';
-import { FEATURES } from '../src/config/features';
+import { parseFactionConfig, roomOf, ROOM_PROPS, ROOM_TALK } from '../src/engine/faction';
 import { moodOf, pickLine, statusChips } from '../src/ui/bha/roomLogic';
 
 describe('moodOf', () => {
@@ -44,7 +43,7 @@ describe('그림 매니페스트', () => {
 });
 
 describe('종족 설정 room', () => {
-  it('모든 종족이 소품 이름 6개와 반응 문구를 가진다', () => {
+  it('모든 종족이 소품 이름 4개와 반응 문구를 가진다', () => {
     for (const f of FACTIONS) {
       const r = roomOf(f);
       for (const p of ROOM_PROPS) {
@@ -62,7 +61,7 @@ describe('종족 설정 room', () => {
   it('room 이 없는 종족도 기본값으로 열린다 (3번째 종족 추가 쉬움)', () => {
     const { room: _omit, ...noRoom } = getFaction('hollow');
     const f = parseFactionConfig({ ...noRoom, id: 'third' });
-    expect(roomOf(f).props.door).toBe('문');
+    expect(roomOf(f).props.outside).toBe('밖으로');
   });
   it('잘못된 room 은 이유와 함께 던진다', () => {
     const h = getFaction('hollow');
@@ -78,17 +77,13 @@ describe('수련장 = 훈련 인형 통합 (GDD 85장 3, C.137)', () => {
     expect(artUrls('prop.altar', '/', {}, ['prop-altar.webp']).src).toBe('/art/prop-altar.webp');
   });
   it('물건들이 서로 겹치지 않는다', () => {
-    // 지금 방에 놓이는 물건끼리 — 월드맵 스위치 켬(밖으로)·끔(문·장터) 둘 다 (GDD 130장 6)
-    for (const on of [true, false]) for (const f of FACTIONS) {
-      FEATURES.WORLD_MAP = on;
+    for (const f of FACTIONS) {
       const r = roomOf(f);
-      const shown = roomPropsShown();
-      for (const p of shown) for (const q of shown) {
+      for (const p of ROOM_PROPS) for (const q of ROOM_PROPS) {
         if (p >= q) continue;
         expect(Math.hypot(r.layout[p].x - r.layout[q].x, r.layout[p].y - r.layout[q].y), `${f.id}: ${p}–${q}`).toBeGreaterThan(14);
       }
     }
-    FEATURES.WORLD_MAP = true;
   });
 });
 

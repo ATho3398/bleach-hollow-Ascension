@@ -9,8 +9,14 @@ export interface AbilityText {
   description: PerFaction<string>;
 }
 export interface EffectAbilityText extends AbilityText {
-  /** 전투 엔진 효과 종류 (AbilityEffects 의 키 또는 crit) */
+  /** 전투 엔진 효과 종류 (AbilityEffects 의 키 또는 crit · 노력치 쪽은 evGain) */
   effect: string;
+  /** 4단계 진화체 몫 이름 (GDD 149장 1, 속성 특성만, provisional): 3단계 특성이 4단계 진화 때 이 이름의 특성으로 바뀐다 */
+  name4?: PerFaction<string>;
+  /** 4단계 진화 때 바뀌지 않고 계속 남는 3단계 특성 (GDD 151장 1: 망한 진화체 '허우적') */
+  permanent?: boolean;
+  /** 이 특성을 받으면 사라지고 그 자리에 들어가는 특성 키 (GDD 151장 3: 각성형 → 허우적) */
+  replaces?: string[];
 }
 /** 진화체 종류별 특성 칸 규칙 (39장 1·3·4번): element = 속성 칸을 label 속성으로 / 전용 / 없음, scale = 세기 배율 이름, dispositions = 성향 특성 개수(실패형 2) */
 export interface KindSlot {
@@ -19,6 +25,8 @@ export interface KindSlot {
   dispositions?: number;
   /** true 면 공격 분류가 물리이고 속성이 하나인 진화체에 물공 특수 블록·특성(GDD 49장, physBlocks.json)이 붙는다 */
   physical?: boolean;
+  /** 진화체 단계 → 받는 특성 키(uniqueAbilities) — 속성·전용 칸이 없는 진화체의 대표 특성 (GDD 149장 2~4: 히든 통로·망한 진화체·실패형, provisional) */
+  ability?: Record<string, string>;
 }
 
 interface AbilitiesFile {
@@ -35,11 +43,15 @@ const DATA = raw as AbilitiesFile;
 export function validateAbilities(d: AbilitiesFile = DATA): string[] {
   const errors: string[] = [];
   for (const k of STAT_IDS) if (!d.abilities[k]) errors.push(`성향 특성 ${k} 없음`);
-  for (const el of ELEMENT_IDS) if (!d.elementAbilities[el]?.effect) errors.push(`속성 특성 ${el} 없음`);
+  for (const el of ELEMENT_IDS) if (!d.elementAbilities[el]?.effect || !d.elementAbilities[el]?.name4) errors.push(`속성 특성 ${el} 없음(효과·4단계 이름)`);
   for (const kind of FORM_KINDS) {
     const slot = d.kindSlots[kind];
     if (!slot) errors.push(`진화체 종류 ${kind} 의 특성 칸 규칙 없음`);
     else if (slot.element === 'unique' && !d.uniqueAbilities[kind]?.effect) errors.push(`전용 특성 ${kind} 없음`);
+    for (const key of Object.values(slot?.ability ?? {})) if (!d.uniqueAbilities[key]?.effect) errors.push(`진화체 종류 ${kind} 의 특성 ${key} 없음`);
+  }
+  for (const [key, a] of Object.entries(d.uniqueAbilities)) {
+    for (const r of a.replaces ?? []) if (!d.uniqueAbilities[r]) errors.push(`전용 특성 ${key} 가 바꾸는 특성 ${r} 없음`);
   }
   return errors;
 }
@@ -74,9 +86,15 @@ export function abilityDescription(stat: StatId, factionId: string): string {
   return pickFaction(DATA.abilities[stat].description, factionId);
 }
 
-/** 특성 표시 이름: '{frenzyName}' 은 종족 설정의 폭주 상태 이름으로 채운다 (C.213, GDD 136장 2 — 옛 '한계 돌파', 종족 분기 없음) */
+/** 특성 표시 이름: '{frenzyName}' 은 종족 설정의 폭주 상태 이름으로 채운다 (C.213, GDD 136장 2 — 옛 이름 폐기, 종족 분기 없음) */
 export function abilityTextName(a: AbilityText, factionId: string): string {
   return pickFaction(a.name, factionId).replace('{frenzyName}', getFaction(factionId).frenzyName);
+}
+
+/** 속성 특성 표시 이름 — tier4 면 4단계 몫 이름(name4, GDD 149장 1) */
+export function elementAbilityName(element: string, factionId: string, tier4 = false): string {
+  const a = elementAbility(element);
+  return abilityTextName(tier4 && a.name4 ? { ...a, name: a.name4 } : a, factionId);
 }
 
 /** 효과 종류 → 그 효과를 가진 특성 이름 (전투 중 발동 글자). 없으면 null */

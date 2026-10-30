@@ -1,4 +1,4 @@
-// 진화 트리 점검 (GDD 20-5·22-7, npm run balance): ① 모든 진화체(일반 35 + 히든 12, 환생 횟수도 무작위)가 어떤 상태에서 실제로 뽑힐 수 있는가 ② 무작위 상태에서 히든이 나오는 비율 ③ 가중 랜덤 곡선.
+// 진화 트리 점검 (GDD 126장 C.220, npm run balance): ① 모든 진화체(일반 24 + 히든 12, 환생 횟수·안정 수치·교감·계보도 무작위)가 어떤 상태에서 실제로 뽑힐 수 있는가 ② 무작위 상태에서 히든이 나오는 비율 ③ 가중 랜덤 곡선.
 // 장착 특성·흡수 속성 분포·돌보기 상태·행동 기록을 무작위로 만들어 judgeEvolution 을 그대로 돌린다. 종족 무관, 데이터만 본다.
 import { ELEMENT_IDS } from '../../data/elements';
 import { TRAITS } from '../../data/traits';
@@ -54,6 +54,14 @@ export function randomState(rng: Rng, tierIndex: number, prevForms: readonly str
   e.releases = nextInt(rng, e.absorbs + 6);
   e.breakthroughs = nextFloat(rng) < 0.3 ? nextInt(rng, 6) : 0;
   e.elitesDefeated = nextInt(rng, 25);
+  // C.220 안정형·사냥꾼·각성형 조건 칸
+  e.faints = nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 2) : 0;
+  e.longAbsences = nextFloat(rng) < 0.2 ? 1 : 0;
+  e.hunterRuns = nextFloat(rng) < 0.25 ? nextInt(rng, 5) : 0;
+  e.practices = nextInt(rng, 40);
+  const evBase = nextInt(rng, 12);
+  const even = nextFloat(rng) < 0.3;
+  for (const k of Object.keys(e.ev) as (keyof typeof e.ev)[]) e.ev[k] = even ? evBase + 4 : nextInt(rng, 16);
   return e;
 }
 
@@ -61,16 +69,19 @@ export function analyzeTree(table: readonly FormDef[], factionId: string, sample
   const rng = createRng(seed);
   const picked: Record<string, number> = {};
   const hiddenRate: TreeReport['hiddenRate'] = {};
-  const t4 = table.filter((f) => f.tier === 4);
-  for (const tierIndex of [0, 1, 2, 3]) {
+  const t3 = table.filter((f) => f.tier === 3);
+  for (const tierIndex of [0, 1, 2]) {
     const rec = (hiddenRate[tierIndex + 2] = { samples: 0, hidden: 0 });
     for (let i = 0; i < samples; i++) {
-      const prev = tierIndex === 0 ? [] : tierIndex === 1 ? ['t2:base'] : tierIndex === 2 ? ['t2:base', 't3:base'] : ['t2:base', 't3:base', t4[nextInt(rng, t4.length)]!.id];
+      const prev = tierIndex === 0 ? [] : tierIndex === 1 ? ['t2:base'] : ['t2:base', t3[nextInt(rng, t3.length)]!.id];
       const e = randomState(rng, tierIndex, prev);
       const focus = nextFloat(rng) < 0.6 ? ELEMENT_IDS[nextInt(rng, ELEMENT_IDS.length)]! : null;
       const build = randomBuild(rng, 3 + tierIndex, focus);
       const good = nextFloat(rng) < 0.85;
-      const ctx = { factionId, build, hunger: good ? nextInt(rng, 60) : 60 + nextInt(rng, 41), condition: good ? 40 + nextInt(rng, 61) : nextInt(rng, 60), rebirths: nextFloat(rng) < 0.15 ? 2 + nextInt(rng, 4) : 0 };
+      const ctx = {
+        factionId, build, hunger: good ? nextInt(rng, 60) : 60 + nextInt(rng, 41), condition: good ? 40 + nextInt(rng, 61) : nextInt(rng, 60), rebirths: nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 4) : 0,
+        stability: nextInt(rng, 101), bond: nextFloat(rng) < 0.3 ? 100 : nextInt(rng, 100), failLineage: nextFloat(rng) < 0.3, statTotal: 400 + nextInt(rng, 400),
+      };
       const { form } = judgeEvolution(e, ctx, table);
       picked[form.id] = (picked[form.id] ?? 0) + 1;
       rec.samples++;

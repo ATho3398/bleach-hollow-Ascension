@@ -207,9 +207,9 @@ export type TitleCondition =
   | { type: 'absorbCount'; min: number; element?: string; rareOnly?: boolean }
   /** 진화 기록에 이 진화체 id 가 있다(진화한 진화체 또는 진화 전 진화체 = 경로 포함) */
   | { type: 'passedForm'; formId: string }
-  /** 리스크 한계 돌파 횟수 */
+  /** 리스크 폭주(호로화) 횟수 */
   | { type: 'breakthroughs'; min: number }
-  /** 한계 돌파 후 귀환한 횟수 */
+  /** 폭주(호로화) 후 귀환한 횟수 */
   | { type: 'survivedBreakthroughs'; min: number }
   /** 체인3 발동 누계 */
   | { type: 'chain3Total'; min: number }
@@ -279,24 +279,25 @@ export interface ComboDef {
 }
 
 /**
- * 진화체 종류 (GDD 20-5 v3.7~v4.2): 일반 = 1·2·3단계 base, 바스트로데 element(속성 8), 아란칼 arrancar(속성 × 분류 24).
- * 히든 12종: 바스트로데 시점 fusion 2 · complete 1 · special 3 · pure · fail / 아란칼 시점 limit(한계 돌파) · restraint(절제) · hunter(강적 사냥꾼) · reborn(환생, GDD 22-7 환생 N회 이상).
+ * 진화체 종류 (GDD 126장, C.220 4단계 개편): 일반 = 2단계 base, 3단계 element(노멀·원소 5), 4단계 arrancar(속성 × 공격 타입 15 + 혈 물리·독 특수·허 혼합 3 = 18).
+ * 히든: 3단계 fail(망한 진화체) · passage(히든 통로) / 4단계 fusion 2 · complete(4속성형) · fail(실패형) · awakened(각성형) · frenzy(폭주형) · restraint(절제형) · stable(안정형) · hunter(사냥꾼) · void(허무형).
+ * 'arrancar' 는 옛 5단계 이름에서 온 데이터 키일 뿐(속성 + 공격 타입 진화체) — 화면 이름은 종족 설정 단계 이름.
  */
-export const FORM_KINDS = ['base', 'element', 'arrancar', 'fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter', 'reborn'] as const;
+export const FORM_KINDS = ['base', 'element', 'arrancar', 'fusion', 'complete', 'fail', 'passage', 'awakened', 'frenzy', 'restraint', 'stable', 'hunter', 'void'] as const;
 export type FormKind = (typeof FORM_KINDS)[number];
-export const HIDDEN_FORM_KINDS: readonly FormKind[] = ['fusion', 'complete', 'special', 'pure', 'fail', 'limit', 'restraint', 'hunter', 'reborn'];
+export const HIDDEN_FORM_KINDS: readonly FormKind[] = ['fusion', 'complete', 'fail', 'passage', 'awakened', 'frenzy', 'restraint', 'stable', 'hunter', 'void'];
 
 export interface FormLabel {
   kind: FormKind;
   /** 이름 자리 표시·힌트에 쓰는 속성 (융합은 2개, 없으면 빈 목록) */
   elements: string[];
-  /** 아란칼 일반형의 공격 분류 */
+  /** 4단계(속성 + 공격 타입) 진화체·타입이 정해진 히든의 공격 분류 */
   category?: AttackCategory;
 }
 
 /** 진화체 (GDD 20-5). 데이터는 src/data/evolution/forms.json (생성기 generate.ts 결과를 커밋, 손으로 고칠 수 있다) */
 export interface FormDef {
-  /** 예 "t4:fire", "t5:fire:physical", "h4:fusion:water+earth" */
+  /** 예 "t3:fire", "t4:fire:physical", "h4:fusion:water+earth" */
   id: string;
   /** 진화해서 도달하는 단계 (2~5, 1-based) */
   tier: number;

@@ -107,8 +107,9 @@ describe('105장 수정 3 [소모품] · 108장 3번 소모품 칸', () => {
   });
 
   it('보관함: 전투용 2종, 칸에 들고 개수가 있어야 실린다, 쓰면 1개 줄어든다', () => {
-    expect(BATTLE_ITEM_IDS).toEqual(['battle-potion', 'battle-haste']);
+    expect(BATTLE_ITEM_IDS).toEqual(['heal-patch', 'battle-potion', 'heal-salve', 'w-hp-potion', 'battle-haste']); // C.223 회복 물건 4종 (GDD 144장)
     const save = newSaveData('hollow', 1);
+    save.shared.items = {}; // 시작 가방(구급상자·회복 물건, C.223)은 이 검사 밖
     expect(battleItemEffectOf(save)).toBeNull();
     save.shared.battleItem = 'battle-potion';
     expect(battleItemEffectOf(save)).toBeNull(); // 0개
@@ -232,6 +233,6 @@ describe('107장 원정 체력 이어 가기', () => {
   });
 
   it('세이브 형식·문턱 50 (마이그레이션 없음)', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([56, 54]); // C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184
   });
 });

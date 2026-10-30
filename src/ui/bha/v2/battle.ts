@@ -61,7 +61,7 @@ function pathSvg(d: string): SVGSVGElement {
   return svg;
 }
 
-/** 스킬 블록 한 개 (각인 컷). 눌림·체인 점·약점·잠김은 화면이 제자리에서 바꾼다 */
+/** 스킬 블록 한 개 (각인 컷). 눌림·약점·잠김은 화면이 제자리에서 바꾼다 */
 export function v2BlockEl(spec: V2BlockSpec): HTMLElement {
   const b = document.createElement('div');
   b.className = `bha-block bha-block--${spec.kind}${spec.weak ? ' is-weak' : ''}`;
@@ -72,9 +72,6 @@ export function v2BlockEl(spec: V2BlockSpec): HTMLElement {
   b.dataset.kind = spec.kind;
   const face = document.createElement('span');
   face.className = 'bha-block__face';
-  const pips = document.createElement('span');
-  pips.className = 'bha-block__pips';
-  pips.append(document.createElement('i'), document.createElement('i'), document.createElement('i'));
   const icon = document.createElement('span');
   icon.className = 'bha-block__icon';
   icon.append(pathSvg(spec.path));
@@ -85,15 +82,9 @@ export function v2BlockEl(spec: V2BlockSpec): HTMLElement {
   const name = document.createElement('span');
   name.className = 'bha-block__name';
   name.textContent = spec.label;
-  b.append(face, pips, icon, glyph, name);
-  setV2Pips(b, 1);
+  // 블록 안 체인 원 3개는 없앴다 — 체인은 블록 바의 체인 알림(묶음 라벨)으로만 (GDD 137장 4, C.215)
+  b.append(face, icon, glyph, name);
   return b;
-}
-
-/** 체인 점 켜기: level 1~3 (첫 점은 항상 켜짐) */
-export function setV2Pips(block: HTMLElement, level: number): void {
-  const dots = block.querySelectorAll('.bha-block__pips i');
-  dots.forEach((d, i) => d.classList.toggle('on', i < Math.max(1, Math.min(3, level))));
 }
 
 /** 봉인(잠김) 표시: 글자를 '봉' 으로 바꾸고 회색으로 (보스 기믹 칸 봉인) — 풀리면 원래 글자 */

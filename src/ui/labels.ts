@@ -39,19 +39,19 @@ export interface LiberationLabels {
   unique: boolean;
 }
 
-/** 지금 단계의 해방 이름·문구: 5단계(BALANCE liberation.minTierIndex) 전은 영력 해방, 그 뒤는 종족 이름(레스렉시온/만해) */
-export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, tierIndex: number): LiberationLabels {
+/** 해방 이름·문구 (GDD 83장 → 126장 3, C.220): 아란칼화 / 참백도 구상화 전은 영력 해방, 깬 뒤(unique)는 종족 이름(레스렉시온/만해) */
+export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, unique: boolean): LiberationLabels {
   const lb = f.liberation;
-  return tierIndex >= BALANCE.provisional.liberation.minTierIndex
+  return unique
     ? { name: lb.name, cutin: lb.cutin, endText: lb.endText, unique: true }
     : { name: lb.baseName, cutin: lb.baseCutin, endText: lb.baseEndText, unique: false };
 }
 
-export function battleLabels(f: FactionConfig, tierIndex = 0): BattleLabels {
+export function battleLabels(f: FactionConfig, _tierIndex = 0, liberationUnique = false): BattleLabels {
   return {
     role: { ...f.roleNames },
     skillBlock: f.skillBlockName,
-    liberation: liberationLabels(f, tierIndex),
+    liberation: liberationLabels(f, liberationUnique),
     voidBlock: BLOCK_WORDS.void,
     chain: f.chainName,
     families: f.families,
@@ -170,9 +170,9 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
   return {
     returned: '둥지 칸에서 귀환했다. 얻은 것은 모두 지킨다.',
     'forced-max-laps': '최대 바퀴를 채워 귀환했다. 얻은 것은 모두 지킨다.',
-    // C.175 (GDD 102-3·102장 수정): 원정 패배 = 빈사(이미 빈사였으면 사망) — 남은 시간 안에 치료제
-    'battle-lost': `전투에서 졌다(${f.defeatStateName}). 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 치료제를 먹여야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`,
-    exhausted: fixParticles(`${f.fullnessName}이(가) 바닥나 쓰러졌다. 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 치료제를 먹여야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`),
+    // C.175 (GDD 102-3·102장 수정): 원정 패배 = 빈사(이미 빈사였으면 사망) — 남은 시간 안에 구급상자
+    'battle-lost': `전투에서 졌다(${f.defeatStateName}). 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 구급상자를 써야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`,
+    exhausted: fixParticles(`${f.fullnessName}이(가) 바닥나 쓰러졌다. 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 구급상자를 써야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`),
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
     'tutorial-clear': `첫 원정을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
     abort: `원정 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,

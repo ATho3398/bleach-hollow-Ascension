@@ -7,14 +7,13 @@ import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
-import { homeHp, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
+import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
 import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
-import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverSpaSoak, recoverStep } from '../recoverTutorial';
+import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaEndText, spaExitFx, spaTutorialFill, spaView } from './spaView';
-import { SPA_TUTORIAL_FILL_MS } from './bha/actionFx';
-import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf } from '../engine/evolution';
+import { spaEndText, spaExitFx, spaView } from './spaView';
+import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
@@ -22,15 +21,15 @@ import { abortExpedition, applyCareToParams, bossSetupOf, canAbortBattle, create
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
-import { createTowerCombat, towerFloor, type TowerFloor } from '../engine/tower';
+import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { absenceText, careBlockText } from './bha/roomLogic';
-import type { AbsenceReport } from '../engine/nest';
+import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
-  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, type SaveData,
+  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
@@ -38,7 +37,8 @@ import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
-import { rankLabel, rankResultView, rankView } from './rankView';
+import { ascensionResultView, rankLabel, rankResultView, rankView } from './rankView';
+import { getBoss } from '../data/bosses';
 import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
 import { absorbView } from './absorbView';
@@ -71,15 +71,14 @@ import { planView } from './planView';
 import { bookView } from './bookView';
 import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
-import { evolutionView } from './evolutionPanel';
+import { evolutionView, gainExtra } from './evolutionPanel';
 import { roomView } from './roomView';
 import { careView, chestView, openChestAtConsumables, openChestAtGear } from './lcdScreens';
 import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { marketOf, roomOf, worldMapOf } from '../engine/faction';
 import { marketView } from './marketView';
-import { worldMapView } from './worldMapView';
-import { FEATURES } from '../config/features';
+import { worldMapCancelWalk, worldMapView } from './worldMapView';
 import { openGrounds } from '../data/grounds';
 import { applySettingsNow, settingsView } from './settingsView';
 import { parseSlotSettings, setSlotSettingsHost } from './settingsScope';
@@ -96,16 +95,17 @@ import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorial
 import { showToast } from './bha/nest';
 import { carriedPet } from '../engine/pet';
 import { applyGearToParams, gearCarry } from '../engine/gear';
-import { battleItemEffectOf, gearDropText, gearNoticeOf, petNoticeOf, spendBattleItem } from '../inventory';
+import { battleItemEffectOf, consumableName, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, petNoticeOf, spendBattleItem, useHealItemOnWalk } from '../inventory';
+import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
-import { shopView } from './shopView';
+import { shopPicker, shopView } from './shopView';
 import { idleBadge, refreshIdleBadge, showIdlePanel, showIdleReturn } from './idleView';
 import { deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
 import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
-import { useRerollTicket } from '../shop';
+import { battleItemText, useRerollTicket } from '../shop';
 import { applyTestExpeditionForce, clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
@@ -245,9 +245,9 @@ export function startApp(host: HTMLElement): void {
   let recoverFedHook: (() => void) | null = null;
 
   /**
-   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206): 카드 9장을 순서대로. 건너뛰기 없음.
+   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 7장을 순서대로. 건너뛰기 없음.
    * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
-   * 빈사 설명 → 가방 열기(치료제·체력 포션 지급) → 치료제 [사용] → 포션 [사용](50%) → 상인 안내 → 방 → (밖으로 → 시장 →) 온천 들어가기(80%) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
+   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (밖으로 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -257,17 +257,18 @@ export function startApp(host: HTMLElement): void {
     if (!start) return false;
     recoverOpen = true;
     const props = roomOf(faction).props;
-    const mk = marketOf(faction); // 온천은 장터 안 (GDD 127장 4, C.201)
+    const wm = worldMapOf(faction); // 온천 = 월드맵 장소 (GDD 153장 1)
     const HH = BALANCE.provisional.nest.homeHp;
     const TR = BALANCE.provisional.tutorialRecover;
     const pct = (x: number) => String(Math.round(x * 100));
     const vars = {
-      chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
-      spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), spaCond: String(HH.spa.conditionPerMinute), idleHpPct: pct(HH.idlePerMinute),
-      // 온천 가는 길 (GDD 130장 5): 켬 = '밖으로 → 시장 → 온천', 끔 = '장터 → 온천'
-      spaPath: FEATURES.WORLD_MAP ? `${props.outside} → ${mk.name} → ${mk.props.spa}` : `${mk.name} → ${mk.props.spa}`,
+      chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
+      spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalMin: String(Math.round(1 / HH.spa.hpPerSecond / 60)), // 튜토리얼 온천 10초 · 평소 5분 (GDD 145장 1)
+      idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
+      // 온천 가는 길 (GDD 153장 1): 밖으로 → 월드맵 → 온천
+      spaPath: `${props.outside} → ${wm.name} → ${wm.places.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
-      spaFirst: FEATURES.WORLD_MAP ? props.outside : mk.name, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
+      spaFirst: props.outside, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -276,34 +277,38 @@ export function startApp(host: HTMLElement): void {
     const onRoomRender = () => { if (nav.top?.id === 'room') nav.top.render(); }; // 지급한 먹이 개수가 독에 보이게
     const EPS = 1e-6;
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
-    // 실제 조작: 가방 열기 → 치료제·체력 포션 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
-    const spaWay = FEATURES.WORLD_MAP
-      ? '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]' // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
-      : '.bha-prop--market, .bha-market [data-spot="spa"]'; // 스위치 끔: 방 → 장터 → 온천 (127장 4)
+    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → (밖으로 → 월드맵 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
+    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]'; // 방 → 밖으로 → 월드맵 온천 (GDD 153장 1)
+    // 썼으면 물건 창을 닫는다 (C.214): 시작 구급상자 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
+    const closeItemWhen = (done: boolean): boolean => {
+      if (done) document.querySelector<HTMLButtonElement>('.bha-itemdialog .bha-itemmodal__close')?.click();
+      return done;
+    };
     let fedAt = s.nest.lastFedAt;
     let soaked = false;
+    let inSpa = false;
     const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: (go: () => void) => void; skip?: () => boolean }> = {
       dying: {},
       'to-bag': {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
         act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' },
       },
-      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => !s.nest.collapsed } },
-      potion: { act: { selector: '[data-item="w-hp-potion"]', done: () => homeHp(s).fraction >= TR.potionTo - EPS } },
-      merchant: { next: (go) => { toRoom(); go(); } },
+      // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
+      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
       'to-spa': {
-        // 온천에 들어가면(원래 조작) 튜토리얼 동안만 체력 spaTo 까지 시간을 바로 흘린다 — 나오지는 않는다 (다음 카드 [다음] 뒤 방으로)
-        // 앉은 뒤 약 3초 동안 체력 막대가 spaTo 까지 천천히 찬다 (GDD 132장 3 — 값은 들어간 순간 저장, 연출이 끝나야 [다음])
+        // 온천에 들어가면(원래 조작) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
+        // 체력이 spaTo 에 닿으면 [다음]. 배부름이 먼저 바닥나 나왔으면 각본 값 spaTo 까지 채운다
         act: { selector: `${spaWay}, .bha-spa__actor`, done: () => {
           if (soaked) return true;
-          if (nav.top?.id !== 'spa' || !s.nest.spa) return false;
-          const from = homeHp(s).fraction;
-          const cond0 = s.nest.condition;
-          recoverSpaSoak(s, Date.now());
-          persist();
-          soaked = true;
-          spaTutorialFill(from, homeHp(s).fraction, SPA_TUTORIAL_FILL_MS, { from: cond0, to: s.nest.condition }); // 컨디션도 흘린 시간만큼 (GDD 135장 2)
-          return true;
+          if (!s.nest.spa) {
+            if (!inSpa) return false;
+            if (homeHp(s).fraction < TR.spaTo - EPS) setHomeHpOf(s, TR.spaTo);
+            persist();
+            return (soaked = true);
+          }
+          if (nav.top?.id !== 'spa') return false;
+          inSpa = true;
+          return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);
         } },
       },
       // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로
@@ -324,9 +329,21 @@ export function startApp(host: HTMLElement): void {
       },
       done: {},
     };
+    /** 투명한 막(recover-wait)으로 ms 동안 터치·기기 버튼을 받지 않다가 then */
+    const holdInput = (ms: number, then: () => void): void => {
+      const hold = el('div', 'bha-tut is-script is-nodim');
+      hold.dataset.tutorial = 'recover-wait';
+      getOverlayHost().append(hold);
+      const offHold = registerLayer(hold, () => {});
+      window.setTimeout(() => {
+        offHold();
+        hold.remove();
+        then();
+      }, ms);
+    };
     const ids = RECOVER_SCENES.map((x) => x.id);
-    // 이어 가기: 빈사 = 처음, 포션 = 가방 카드(치료제는 건너뜀), 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
-    const first = start === 'dying' ? 0 : start === 'potion' ? ids.indexOf('to-bag') : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
+    // 이어 가기: 빈사 = 처음, 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
+    const first = start === 'dying' ? 0 : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
     const show = (i: number): void => {
       const scene = RECOVER_SCENES[i];
       if (!scene) {
@@ -348,7 +365,8 @@ export function startApp(host: HTMLElement): void {
             recoverOpen = false;
             return;
           }
-          const go = () => window.setTimeout(() => show(i + 1), 450); // 화면이 바뀐 뒤 대상 위치를 잰다
+          // 화면이 바뀐 뒤 대상 위치를 잰다. 그 틈에도 투명한 막으로 누름을 막는다 — 틈에 다른 버튼(상점 등)을 누르면 다음 카드가 대상 없는 화면에 떠 갇혔다 (C.214)
+          const go = () => holdInput(450, () => show(i + 1));
           if (st.next) st.next(go);
           else go();
         },
@@ -388,8 +406,8 @@ export function startApp(host: HTMLElement): void {
     const wm = worldMapOf(faction);
     const care = (['feed', 'sleep', 'pet'] as const).map((a) => faction.nestActionsShort?.[a] ?? faction.nestActions[a]).join('·');
     const vars = {
-      outsideName: props.outside, doorName: props.door, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
-      goPath: FEATURES.WORLD_MAP ? `[${props.outside}] → [${props.door}]을(를) 누른다.` : `[${props.door}]을(를) 누른다.`,
+      outsideName: props.outside, adventureName: wm.places.adventure, towerName: wm.places.tower, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
+      goPath: `[${props.outside}] → [${wm.places.adventure}]을(를) 누른다.`,
     };
     const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
     const scenes: TutorialScene[] = [{ id: 'intro', targets: [], ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)];
@@ -422,9 +440,9 @@ export function startApp(host: HTMLElement): void {
       // 마지막: 첫 모험 강제 — 방을 잠금 모습으로 다시 그리고, 실제 버튼(밖으로 → 모험 / 모험 문)을 눌러 떠나야 끝난다
       forceAdventure = true;
       if (nav.top?.id === 'room') nav.top.render();
-      const go = FEATURES.WORLD_MAP ? '.bha-prop--outside, .bha-worldmap [data-place="adventure"]' : '.bha-prop--door';
-      // 월드맵 켬: 밖으로 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1). 끔이면 모험 문 하나
-      const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`), stages: FEATURES.WORLD_MAP ? HOME_INTRO.last.stages : undefined };
+      const go = '.bha-prop--outside, .bha-worldmap [data-place="adventure"]';
+      // 밖으로 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1)
+      const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
       window.setTimeout(() => tutorialOverlay(faction, {
         scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
         script: { step: `홈 안내 ${total} / ${total}`, act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' } },
@@ -547,7 +565,7 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params, script: newCombatScript() });
     setBgm('battle');
     battleView(root, faction, s, {
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
@@ -585,7 +603,7 @@ export function startApp(host: HTMLElement): void {
           setActiveGender(g);
           persist();
         },
-        note: genderLookNote(getFaction(save.factionId).tierNames, getFaction(save.factionId).genderLookFromTier),
+        note: genderLookNote(getFaction(save.factionId).tierNames, getFaction(save.factionId).genderLookFromTier, getFaction(save.factionId).ascension),
       },
     } : null);
     setActiveGender(save?.gender);
@@ -640,7 +658,7 @@ export function startApp(host: HTMLElement): void {
 
   function exportOldSlot(n: number): void {
     const r = exportRawSlot(store, n);
-    if (!r) return void showToast({ eyebrow: '내보내기', title: `슬롯 ${n}을 내보낼 수 없다`, meta: '세이브가 비었거나 읽을 수 없다.' }, 0, 4200);
+    if (!r) return void showToast({ eyebrow: '내보내기', title: fixParticles(`슬롯 ${n}을(를) 내보낼 수 없다`), meta: '세이브가 비었거나 읽을 수 없다.' }, 0, 4200);
     const name = backupFileName({ meta: { format: r.format } as SaveData['meta'] });
     try {
       const url = URL.createObjectURL(new Blob([r.text], { type: 'application/json' }));
@@ -679,7 +697,7 @@ export function startApp(host: HTMLElement): void {
       selected,
       onDelete: (sum) => confirmDialog({
         title: `슬롯 ${sum.slot} 지우기`,
-        body: `슬롯 ${sum.slot}을 지운다. 되돌릴 수 없다. 지우기 전의 세이브는 슬롯 백업에 한 번 보관된다.`,
+        body: fixParticles(`슬롯 ${sum.slot}을(를) 지운다. 되돌릴 수 없다. 지우기 전의 세이브는 슬롯 백업에 한 번 보관된다.`),
         yes: '지우기', no: '아니오', danger: true,
         onYes: () => {
           if (!deleteSlot(store, sum.slot)) showToast({ eyebrow: '슬롯', title: '지우지 못했다', meta: '저장소가 막혀 있다.' }, 0, 4200);
@@ -729,7 +747,7 @@ export function startApp(host: HTMLElement): void {
     const recovered = !loaded && recoverFromBackup(store, n);
     if (recovered) loaded = loadSave(store, slotKey(n));
     if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
-    if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: `슬롯 ${n}을 백업에서 열었다`, meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
+    if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: fixParticles(`슬롯 ${n}을(를) 백업에서 열었다`), meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
     else if (needsMigration(raw)) stashSlot(store, n, 'migration');
     save = loaded;
     slot = n;
@@ -856,15 +874,15 @@ export function startApp(host: HTMLElement): void {
   /** 온천 나가기 연출이 끝나 실제로 뒤로 가는 중 (interceptBack 이 다시 맡지 않게) */
   let spaLeaving = false;
   function openSpa(faction: FactionConfig, s: SaveData, enter = true): void {
-    const name = marketOf(faction).props.spa;
+    const name = worldMapOf(faction).places.spa;
     if (enter) {
       if (careBlocked(s)) return;
       const why = s.nest.spa ? null : spaEnter(s);
       if (why) return void showToast({ eyebrow: name, title: SPA_BLOCK_TEXT[why], meta: '' }, 0, 2600);
       persist();
     }
-    // 시장에서 들어왔으면 [돌아가기] = 시장 (월드맵 켬, GDD 130장 3). 껐다 켜서 방에서 바로 열린 온천·스위치 끔은 옛 이름 그대로
-    const backLabel = FEATURES.WORLD_MAP && nav.top?.id === 'market' ? `${fixParticles(`${marketOf(faction).name}(으)로`)} 돌아가기` : undefined;
+    // 월드맵에서 들어왔으면 [돌아가기] = 월드맵 (GDD 153장 1 — 시장 안 칸은 C.227 에서 삭제). 껐다 켜서 방에서 바로 열린 온천은 옛 이름 그대로
+    const backLabel = nav.top?.id === 'worldmap' ? '월드맵으로 돌아가기' : undefined;
     nav.push({
       id: 'spa',
       render: () => {
@@ -906,31 +924,41 @@ export function startApp(host: HTMLElement): void {
     if (wandererToast?.isConnected) wandererToast.classList.replace('is-in', 'is-out'); // 방에서 뜬 알림이 장터까지 남지 않게 (사라지는 연출 뒤 지워진다)
     wandererToast = null;
     open('market', () => marketView(dev, faction, s, {
-      onSpa: () => openSpa(faction, s),
-      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
+      onShop: (kind) => open('shop', () => shopView(dev, faction, s, { persist, kind, onWear: () => dress(s.wear) })),
       onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
+      // 대장장이 (GDD 153장 2, provisional): 기능은 나중 — 노란 알림 한 줄만
+      onSmith: () => showToast({ eyebrow: marketOf(faction).props.smith, title: fixParticles(`${marketOf(faction).props.smith}은(는) 아직 문을 열지 않았다`) }, 0, 2600),
       onBack: () => nav.back(),
-      // 월드맵 켬 (GDD 130장 3): 시장의 왼쪽 위 버튼 = [월드맵으로], 뒤로 = 월드맵(스택 아래). 끔 = 옛 [방으로 돌아가기]
-      backLabel: FEATURES.WORLD_MAP ? '월드맵으로' : undefined,
+      // 시장의 왼쪽 위 버튼 = [월드맵으로], 뒤로 = 월드맵(스택 아래) (GDD 130장 3)
+      backLabel: '월드맵으로',
     }));
   }
 
   /** 월드맵에서 캐릭터가 서 있는 곳 = 마지막으로 있던 장소 (GDD 132장 2) */
   let worldAt: WorldPlace = 'home';
-  /** 월드맵 (GDD 130장 2, C.204): 방 [밖으로] → 홈·시장·모험. 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
+  /** 월드맵 (GDD 130장 2, C.204): 방 [밖으로] → 홈·시장·모험. 고르면 걸어가서 페이드 전환 (137장 3). 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
   function openWorldMap(faction: FactionConfig, s: SaveData): void {
     worldAt = 'home'; // 방에서 나왔다 (GDD 132장 2)
-    open('worldmap', () => worldMapView(dev, faction, s, {
+    // 걷는 중 뒤로 = 취소하고 제자리 (GDD 137장 3)
+    nav.push({ id: 'worldmap', interceptBack: worldMapCancelWalk, render: () => { setBgm('nest'); renderWorldMap(faction, s); root.scrollTop = 0; } });
+  }
+  function renderWorldMap(faction: FactionConfig, s: SaveData): void {
+    worldMapView(dev, faction, s, {
       // 캐릭터·처음 초점 = 지금 있던 곳 (시장·모험 준비에서 뒤로 돌아오면 그 장소 위). 첫 모험 강제 중 초점은 모험
       at: worldAt,
       focus: forceAdventure ? 'adventure' : worldAt,
       onHome: () => nestScreen(),
       onMarket: () => { worldAt = 'market'; openMarket(faction, s); },
       onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
-      // 첫 모험 강제 (GDD 131장 2): 홈·시장 잠김
-      locked: forceAdventure ? ['home', 'market'] : undefined,
-      onLocked: () => showToast(FORCE_HINT, 0, 1800),
-    }));
+      // 탑 (GDD 139장 1): 모험 화면 탭에서 월드맵 장소로. 사망이면 막힘 안내
+      onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },
+      // 온천 (GDD 153장 1): 시장 안 칸 → 월드맵 장소. 뒤로 = 월드맵, 저절로 나오면 방(그대로)
+      onSpa: () => { openSpa(faction, s); if (nav.top?.id === 'spa') worldAt = 'spa'; }, // 못 들어갔으면(막힘 알림) 제자리
+      // 첫 모험 강제 (GDD 131장 2): 홈·시장·탑·온천 잠김. 탑 해금 전(36장)이면 탑은 이유 한 줄과 함께 잠김
+      locked: forceAdventure ? ['home', 'market', 'tower', 'spa'] : undefined,
+      lockReasons: towerOpen(s.runLog, faction.id, s.tower.best) ? undefined : { tower: towerLabels(faction).locked },
+      onLocked: (p) => showToast(!forceAdventure && p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' } : FORCE_HINT, 0, 1800),
+    });
   }
 
   /** 모험 떠나기: 사망이면 막힘, 빈사면 확인 창, 새 세이브의 첫 원정은 고정 길 튜토리얼 (옛 방 문 = 월드맵 모험이 같이 쓴다) */
@@ -982,7 +1010,7 @@ export function startApp(host: HTMLElement): void {
       s.trackNotice = null;
     }
     if (s.hogyoku.tabNotice) {
-      notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 5단계에 닿았다. 더보기 ⋯ → [붕옥]' });
+      notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 마지막 단계(4단계)에 닿았다. 더보기 ⋯ → [붕옥]' });
       s.hogyoku.tabNotice = false;
     }
     // 떠돌이 상인 (GDD 85장 5번·127장 3): 이번 방문을 처음 보는 방이면 한 번 알린다 — 방에서만(장터 안에서는 안 뜬다). 먼저 장터에 들어갔으면 본 것으로 친다
@@ -992,8 +1020,8 @@ export function startApp(host: HTMLElement): void {
       window.setTimeout(() => {
         if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
         wandererAnnounced = visit.at;
-        const path = FEATURES.WORLD_MAP ? `${roomOf(faction).props.outside} → ${mk.name}` : mk.name; // 월드맵 켬 (GDD 130장 2): 밖으로 → 시장
-        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: `${mk.props.wanderer}이 ${mk.name}에 왔다`, meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
+        const path = `${roomOf(faction).props.outside} → ${mk.name}`; // 밖으로 → 시장 (GDD 130장 2)
+        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: fixParticles(`${mk.props.wanderer}이(가) ${mk.name}에 왔다`), meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
       }, 2600);
     }
     if (notes.length > 0) {
@@ -1027,8 +1055,6 @@ export function startApp(host: HTMLElement): void {
       resumeNote,
       idle: { badge: idleBadge(s), onOpen: () => showIdlePanel(s, faction, claim) },
       persist,
-      // 새 세이브의 첫 원정은 고정 길 튜토리얼 (GDD 67장)
-      onDepart: () => departFromHome(faction, s),
       // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
       onAltar: () => (careBlocked(s) ? undefined : askDying(s, () => open('training', () => renderTraining(faction, s)))),
       // 부활 (GDD 102-3): 되돌릴 수 없어 자동 백업 후
@@ -1053,10 +1079,9 @@ export function startApp(host: HTMLElement): void {
       onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
-      // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
-      onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
-      onMarket: () => openMarket(faction, s),
-      onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1): 월드맵 스위치 켬일 때만 방에 놓인다
+      // 상점 (GDD 25-9·150장 2): 4곳 고르는 작은 창 → 그 상점
+      onShop: () => shopPicker(faction, (kind) => open('shop', () => shopView(dev, faction, s, { persist, kind, onWear: () => dress(s.wear) }))),
+      onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1·137장 3)
       forceOutside: forceAdventure, // 첫 모험 강제 (GDD 131장 2)
       onFed: () => {
         const f = recoverFedHook;
@@ -1114,6 +1139,7 @@ export function startApp(host: HTMLElement): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
       onSwitch: (id) => switchTraining(faction, s, id),
+      onAscend: () => !careBlocked(s) && open('ascension-battle', () => runAscensionBattle(faction), true),
     });
   }
 
@@ -1279,8 +1305,8 @@ export function startApp(host: HTMLElement): void {
             nav.replace({ id: 'expedition', locked: true, render: () => { armEnterFx(); showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
           },
           onHelp: () => openHelp('expedition', false),
-          // [스토리]·[탑] 탭 (GDD 25-7·36장): 같은 자리에서 스토리 장·화 목록 / 탑 화면으로 바꾼다
-          onTab: (id) => (id === 'story' ? storyScreen(faction) : towerScreen(faction)),
+          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다. 탑은 월드맵 장소 (139장 1)
+          onTab: () => storyScreen(faction),
         });
         root.scrollTop = 0;
         // 진화 후 첫 출발: 덱 고르기 → 첫 배치 → 조합 안내 (GDD 64장 3번 ①~③)
@@ -1308,22 +1334,20 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 출발 화면 머리 탭 전환 (자유 원정 = 배치 단계 / 스토리 / 탑) */
+  /** 출발 화면 머리 탭 전환 (자유 원정 = 배치 단계 / 스토리) */
   function departTab(faction: FactionConfig, id: DepartTab): void {
     if (id === 'free') departScreen(faction, true);
-    else if (id === 'story') storyScreen(faction);
-    else towerScreen(faction);
+    else storyScreen(faction);
   }
 
-  // ── 도전의 탑 (GDD 36장, C.85): 원정 출발 화면의 [탑] 탭. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
+  // ── 도전의 탑 (GDD 36장, C.85 → 139장 1): 월드맵 장소 [탑]. 뒤로 = 월드맵. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
   function towerScreen(faction: FactionConfig): void {
     if (!save) return;
-    nav.replace({
+    nav.push({
       id: 'tower', locked: false,
       render: () => {
         setBgm('expedition');
         towerView(root, faction, save!, {
-          onTab: (id) => departTab(faction, id),
           onChallenge: (f) => towerBattle(faction, f),
           onHelp: () => openHelp('expedition', false),
         });
@@ -1363,7 +1387,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(f.bossId ? 'boss' : f.kind === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       battleItem: armBattleItem(s0, s),
-      tierIndex: s0.evolution.tierIndex,
+      tierIndex: artTierIndexOf(s0),
       skinId: artSkinOf(s0),
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
@@ -1422,7 +1446,11 @@ export function startApp(host: HTMLElement): void {
         opened = true;
         // 걷기·조우 안내 동안 원정 시간이 멈춘다
         signalHold('hold');
-        showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 원정 멈춤', onDone: () => signalHold('release') });
+        showGuide(faction, 'first-run', { finishLabel: '걷기 시작', pauseLabel: '안내 중 — 원정 멈춤', onDone: () => {
+          signalHold('release');
+          // 회복 물건 안내 한 줄 (GDD 144장 4·145장 3): 시작 가방에 넣어 둔 회복 물건 — 노란 알림(맨 위)
+          showToast({ eyebrow: '회복 물건', title: '원정·전투 중에 체력이 모자라면 회복 물건을 쓴다', meta: '걷기 중 [가방] · 전투 [소모품]' }, 0, 4200);
+        } });
       },
     });
   }
@@ -1534,7 +1562,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       battleItem: save ? armBattleItem(save, s) : undefined,
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 원정' } } : {}),
@@ -1559,7 +1587,7 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 승리 후 흡수 가능하면 흡수 화면 → 한계 돌파 연출 → 원정으로 돌아간다 */
+  /** 승리 후 흡수 가능하면 흡수 화면 → 폭주(호로화) 연출 → 원정으로 돌아간다 */
   function afterBattle(faction: FactionConfig, exp: ExpeditionState): void {
     activeExp = exp;
     const proceed = () => {
@@ -1567,7 +1595,7 @@ export function startApp(host: HTMLElement): void {
       const next = () => {
         // 튜토리얼 원정 흡수 직후 (GDD 134장 2, C.211): 치명상 장면(비틀거림·체력 막대 붉게 깜빡 + 각본 카드) 뒤 귀환 → 방에서 빈사 설명부터 회복 안내
         if (exp.phase === 'ended' && exp.tutorial) {
-          const art = heroArtOf(roomOf(faction), faction.id, save?.evolution.tierIndex ?? 0, save ? artSkinOf(save) : undefined);
+          const art = heroArtOf(roomOf(faction), faction.id, save ? artTierIndexOf(save) : 0, save ? artSkinOf(save) : undefined);
           return tutorialWoundView(root, faction, art, hpFractionOf(exp), BALANCE.provisional.nest.care.dying.hpFraction, () => endExpedition(faction, exp));
         }
         if (exp.phase === 'ended') return endExpedition(faction, exp);
@@ -1604,17 +1632,32 @@ export function startApp(host: HTMLElement): void {
     activeExp = exp;
     setBgm('expedition');
     expeditionView(root, faction, exp, {
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, exp, resume),
       openHelp: (onClose) => openHelp('expedition', false, onClose),
+      // 걷기 중 가방 (GDD 144장 3): 회복 물건 4종 — 쓰면 원정 체력이 차고 바로 저장
+      openBag: (onClose) => {
+        const sv = save;
+        if (!sv) return onClose();
+        healBag({
+          items: () => HEAL_ITEM_IDS.map((id) => ({ id, name: consumableName(id), count: sv.shared.items[id] ?? 0, detail: battleItemText(id) })),
+          hp: () => hpFractionOf(exp),
+          use: (id) => {
+            const r = useHealItemOnWalk(sv, exp, id);
+            if (r.ok) saveProgress(exp);
+            return r;
+          },
+          onClose,
+        });
+      },
     }, msg);
   }
 
-  /** 한계 돌파 연출 (텍스트 수준). 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 임시 페널티만 있다 */
+  /** 폭주(호로화) 연출 (텍스트 수준). 정식 결과(폭주·진화 정체·가면 분기)는 미정이라 임시 페널티만 있다 */
   function breakthroughScreen(faction: FactionConfig, exp: ExpeditionState, resume: () => void): void {
     breakthroughView(root, faction, exp.risk, resume);
   }
@@ -1651,7 +1694,7 @@ export function startApp(host: HTMLElement): void {
       };
       if (evo?.ok) {
         const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded) };
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
           holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
           nav.pop();
@@ -1727,7 +1770,7 @@ export function startApp(host: HTMLElement): void {
       // 다음 진화 (GDD 109장 7): 원정 귀환 때와 같은 진화 연출 → 끝나면 테스트 패널로
       onEvolved: (fromTier, r) => {
         dress(s.wear);
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded) };
         open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
           nav.pop();
         }, s.build.slots.length, extra), true);
@@ -1772,7 +1815,7 @@ export function startApp(host: HTMLElement): void {
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
       battleItem: save ? armBattleItem(save, s) : undefined,
-      tierIndex: save?.evolution.tierIndex,
+      tierIndex: save ? artTierIndexOf(save) : undefined,
       skinId: save ? artSkinOf(save) : undefined,
       notice,
       tutorial: tutorialFor(),
@@ -1780,6 +1823,7 @@ export function startApp(host: HTMLElement): void {
       onEnd: (done) => {
         if (save) {
           recordBattle(save, buildBattleRecord(done, { factionId: faction.id, tierIndex: save.evolution.tierIndex }));
+          if (fixedStar === undefined) recordEvolutionPractice(save.evolution); // 각성형 조건 (GDD 126장 협의 답, C.220): 이번 생 훈련 인형 전투 수
           settleLiberationRisk(save, done);
           persist();
         }
@@ -1819,7 +1863,7 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
       battleItem: armBattleItem(s0, s),
-      tierIndex: s0.evolution.tierIndex,
+      tierIndex: artTierIndexOf(s0),
       skinId: artSkinOf(s0),
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
@@ -1830,6 +1874,41 @@ export function startApp(host: HTMLElement): void {
         persist();
         // 결과 화면은 전투 자리를 바꿔 끼운다: 돌아가면 등급표(다시 그려 새 번호를 보인다)
         nav.replace({ id: 'rank-result', locked: true, render: () => { rankResultView(root, faction, holder, done, res, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
+        showTitleToasts(s0, faction, persist);
+      },
+    });
+  }
+
+  // ── 아란칼화 / 참백도 구상화 (GDD 126장 3, C.220): 지금은 보스전 임시 — 둥지 빌드 그대로, 이기면 레스렉시온/만해 해금 ──
+  function runAscensionBattle(faction: FactionConfig): void {
+    if (!save) return;
+    const s0 = save;
+    if (!ascensionAccess(s0).ok) return void nav.pop();
+    persist();
+    stashSlot(store, slot, 'ascension');
+    setBgm('elite');
+    const AX = BALANCE.provisional.ascension;
+    const boss = getBoss(AX.bossId);
+    const params = buildCombatParams(s0.build, faction.id);
+    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
+    applyDifficultyToParams(params, AX.difficulty);
+    params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
+    applyGearToParams(params, gearCarry(s0.shared.gear), true);
+    applyCareToParams(params, battleCareOf(s0));
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: { ...enemyAtDifficulty(boss.enemy, AX.difficulty), name: { '*': faction.ascension.foe } }, params, boss: bossSetupOf(boss.id) });
+    battleView(root, faction, s, {
+      battleItem: armBattleItem(s0, s),
+      tierIndex: artTierIndexOf(s0),
+      skinId: artSkinOf(s0),
+      banner: `${faction.ascension.name} · ${faction.ascension.foe}`,
+      enter: true,
+      bg: arenaSceneBg(faction),
+      onEnd: (done) => {
+        const res = recordAscension(s0, done);
+        settleLiberationRisk(s0, done);
+        persist();
+        const lines = res.won ? [...faction.ascension.completeText] : [`${faction.ascension.foe}에게 졌다. 잃은 것은 없다 — 다시 도전할 수 있다.`];
+        nav.replace({ id: 'ascension-result', locked: true, render: () => { ascensionResultView(root, faction, res.won, lines, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
         showTitleToasts(s0, faction, persist);
       },
     });

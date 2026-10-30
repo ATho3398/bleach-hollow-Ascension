@@ -14,7 +14,7 @@ import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
   canGuard, canUseGear, canUseItem, halted as combatHalted, voidChanceOf,
-  scriptAck, scriptPrompt, scriptStep, SCRIPT_STAGES,
+  scriptAck, scriptLand, scriptPrompt, scriptStep, SCRIPT_STAGES,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -29,12 +29,12 @@ import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
 import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v2TempChip } from './bha/v2/components';
-import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, setV2Pips, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
+import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
 import { animOf } from './bha/animPlayer';
 import { onHold } from './bha/hold';
 import { onAppAway } from './bha/appAway';
 import {
-  blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
+  blockEl, blockVisual, heroEl, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setHidden, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
@@ -167,7 +167,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'combo':
       return { role: 'chain', icon: 'i-special', text: `콤보! ${comboBlockLabel(labels, comboOf(s.params, e.comboId)?.family)} 블록이 생겼다 (${comboName(e.comboId, factionId)})` };
     case 'liberation-ready':
-      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.name} 게이지가 가득 찼다! [${labels.liberation.name}]을(를) 눌러라` };
+      return { role: 'chain', icon: 'i-special', text: `${labels.liberation.name} 준비 — 캐릭터를 눌러라` }; // GDD 139장 3
     case 'heavy-cast':
       return { role: 'cast', icon: 'i-cast', text: `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 버튼으로 막아라` };
     case 'heavy-hit':
@@ -248,7 +248,7 @@ function setMeterValue(root: HTMLElement, value: number, max?: number): void {
 }
 
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
-  const labels = battleLabels(faction, opts.tierIndex ?? 0);
+  const labels = battleLabels(faction, opts.tierIndex ?? 0, s.params.liberationUnique);
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));
@@ -421,17 +421,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libOn = p.liberationEnabled;
   // 오오라 색 = 내 속성 색 토큰 (GDD 83장 4번: 진화체 속성에 따라)
   const auraEl = p.playerElements[0];
-  const libBtn = el('button', `bha-panel bha-v2rel is-disabled${labels.liberation.unique ? ' is-unique' : ''}`);
+  // C.216 (GDD 139장 3): 해방 카드·게이지 막대는 숨기고(게이지는 엔진에서 그대로 찬다) 내 캐릭터 그림 칸 전체가 해방 버튼.
+  // 가득 차면 캐릭터 주변 아우라(.is-lib-ready), 해방 중 남은 시간은 머리 위 작은 숫자. 누름 판정·기기 ✓ 는 옛 해방 카드와 같다
+  const libBtn = el('button', `bha-v2herolib is-disabled${labels.liberation.unique ? ' is-unique' : ''}`);
   libBtn.type = 'button';
   libBtn.dataset.help = 'battle.liberation';
-  const libSeal = el('span', 'bha-release__seal');
-  libSeal.append(v2Svg('i-special'));
-  const libName = el('span', 'bha-display bha-md bha-v2rel__name', labels.liberation.name);
-  const libTemp = v2TempChip();
-  libTemp.style.height = '18px';
-  const libMeta = el('span', 'bha-xs bha-t2 bha-v2rel__meta');
-  const libGauge = v2Gauge('release', 0, { width: '100%', label: labels.liberation.name });
-  libBtn.append(libSeal, libName, libTemp, libMeta, libGauge);
+  const libTime = el('span', 'bha-num bha-v2herolib__time');
+  libBtn.append(libTime);
   // 무엇으로 차는지·해방 중 나오는 블록 한 줄 (GDD 95장 B2 ③, C.154): C.171(GDD 100장 #37) 범례 줄에서 빼고 해방 버튼 툴팁으로 (자세한 것은 도움말 battle.liberation)
   const hintFull = liberationHint();
   const hintDuring = hintFull.slice(hintFull.lastIndexOf(' · ') + 3); // 해방 중에는 나오는 블록만 ('해방 중 장착 탄·조')
@@ -467,7 +463,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   guardBtn.meta.replaceWith(guardBar);
   const itemBtn = actBtn('item', 'i-heal', '소모품');
   const gearBtn = actBtn('gear', 'i-attack', '장비');
-  const roles = el('div', `bha-v2roles${libOn ? '' : ' is-alone'}`);
+  const roles = el('div', 'bha-v2roles is-alone'); // 해방 카드가 캐릭터로 옮겨 가 버튼 줄은 오른쪽 끝 (C.216)
   roles.append(guardBtn.root, itemBtn.root, gearBtn.root);
 
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
@@ -477,7 +473,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   for (const n of [libChip, legend]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
-  controls.append(legendRow, roles, tray.root, ...(libOn ? [libBtn] : []));
+  controls.append(legendRow, roles, tray.root);
+  if (libOn) units.querySelector('.bha-unit--me .bha-unit__fig')?.append(libBtn);
 
   // ── 7. 하단 컨트롤 ──
   // 배속 버튼은 C.118 에 삭제 — 1배 고정 (GDD 62장). 테스트 모드 속도 배율(GDD 38-4)만 남는다
@@ -712,7 +709,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   helpBtn.dataset.sc = 'help';
   libBtn.dataset.sc = 'liberate';
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
-  // 기기 버튼 커서 (C.197, GDD 122장 3): 순서 = 머리 버튼 → 막기·소모품·장비·해방 → 블록 칸 왼쪽부터. 시작 = 첫 블록 칸, ✓ = 'bha-press'
+  // 기기 버튼 커서 (C.197, GDD 122장 3): 순서 = 머리 버튼 → 막기·소모품·장비·해방 → 블록 칸 왼쪽부터. 시작 = 첫 블록 칸(칸 1), ✓ = 'bha-press'
+  // C.216 (GDD 138장 2): 칸 1 이 맨 오른쪽이라 DOM 순서를 뒤집어 ▲▼ 도 화면 왼쪽 → 오른쪽으로 (칸 자리는 grid-column 이 정한다)
+  tray.grid.prepend(...[...tray.cells].reverse());
   for (const b of [guardBtn.root, itemBtn.root, gearBtn.root, libBtn]) b.dataset.devOrder = '1';
   tray.cells.forEach((c, i) => {
     c.dataset.devOrder = '2';
@@ -844,8 +843,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const cues: FxCue[] = [];
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
-    player: { root: hero.root, body: hero.body, dir: 1, anim: heroAnim },
-    enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: -1, anim: foeAnim },
+    // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
+    player: { root: hero.root, body: hero.body, dir: -1, anim: heroAnim },
+    enemy: { root: foe, body: foe.querySelector<HTMLElement>('.bha-foe__body')!, dir: 1, anim: foeAnim },
     top,
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
@@ -873,10 +873,39 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 피해 크기 기준 (C.63): 내 기본 공격 1회 피해(육성·환경 반영) / 적 쪽은 기본 공격 피해 단위 */
   const myUnit = p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier * p.attackPowerMultiplier;
   const hurtUnit = p.playerAttackDamage;
+  /** 블록 사건의 피해 숫자·상성 문구·체인 표시 */
+  const blockFloats = (e: Extract<CombatEvent, { kind: 'block' }>) => {
+    if (e.block === 'void') {
+      spawnFloat('void', `−${n0(e.damage)}`, { iconId: 'i-void' });
+      replayOnce(flashVoid, 'is-on', 900);
+    } else if (e.block === 'skill' && e.role === 'guard') {
+      spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
+    } else if (e.block === 'skill' && e.role === 'heal') {
+      spawnFloat('heal', n0(e.heal));
+    } else {
+      const ult = e.block === 'combo' || e.block === 'liberation';
+      spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });
+    }
+    // 상성 문구 (GDD 20-2, 종족 설정 matchupText)
+    if (e.matchup === 'strong') spawnFloat('strong', labels.matchupText.strong);
+    else if (e.matchup === 'weak') spawnFloat('dull', labels.matchupText.weak);
+    if (e.chain > 1) {
+      // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N
+      if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+      flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
+    }
+    if (e.block === 'combo') flash('is-special', 600);
+  };
+  /** 튜토리얼 마무리 체인의 블록 사건 (GDD 146장): 착탄까지 숫자를 미룬다 */
+  let heldBlock: Extract<CombatEvent, { kind: 'block' }> | null = null;
   const react = (e: CombatEvent) => {
-    const cue = cueOf(e, top);
+    // 각본 마무리 체인 (GDD 146장): 동작 → 스킬 연출 → 닿는 순간 피해. 피해는 엔진이 맡겨 두고 연출이 닿을 때 scriptLand 로 넣는다
+    const landing = e.kind === 'block' && s.script?.stage === 'chain-hit' && !!s.script.held;
+    if (landing) heldBlock = e;
+    const cue = landing ? null : cueOf(e, top);
     if (cue) cues.push(cue);
-    attack.react(e);
+    if (landing) attack.react(e, { windup: true, onLand: () => void scriptLand(s) });
+    else attack.react(e);
     if (e.kind === 'block' || e.kind === 'liberate') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':
@@ -884,28 +913,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         if (e.crit) spawnFloat('attack', `−${n0(e.damage)}`, { critical: true });
         break;
       case 'block': {
-        if (e.block === 'void') {
-          spawnFloat('void', `−${n0(e.damage)}`, { iconId: 'i-void' });
-          replayOnce(flashVoid, 'is-on', 900);
-        } else if (e.block === 'skill' && e.role === 'guard') {
-          spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
-        } else if (e.block === 'skill' && e.role === 'heal') {
-          spawnFloat('heal', n0(e.heal));
-        } else {
-          const ult = e.block === 'combo' || e.block === 'liberation';
-          spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });
-        }
-        // 상성 문구 (GDD 20-2, 종족 설정 matchupText)
-        if (e.matchup === 'strong') spawnFloat('strong', labels.matchupText.strong);
-        else if (e.matchup === 'weak') spawnFloat('dull', labels.matchupText.weak);
-        if (e.chain > 1) {
-          // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N
-          if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
-          flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
-        }
-        if (e.block === 'combo') flash('is-special', 600);
+        // 튜토리얼 마무리 체인 (GDD 146장): 피해 숫자·번쩍임은 연출이 닿을 때(script-impact)
+        if (heldBlock !== e) blockFloats(e);
         break;
       }
+      case 'script-impact':
+        if (heldBlock) {
+          blockFloats({ ...heldBlock, damage: e.damage });
+          const c = cueOf(heldBlock, top);
+          if (c) cues.push(c);
+        }
+        heldBlock = null;
+        break;
       case 'ability':
         // 진화체 특성 발동 글자 (GDD 39장 5번): 연타! / 되갚기! / 다시 일어남! / 연쇄!
         spawnFloat('chain', abilityProcText(e.effect, faction.id), { chain3: e.effect !== 'chainHaste' });
@@ -1004,7 +1023,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     });
   };
 
-  /** 쓰여서 바에서 사라진 블록: 제자리에서 발동 연출(is-fire)을 하고 지운다 (엔진은 바로 오른쪽 블록을 당긴다) */
+  /** 쓰여서 바에서 사라진 블록: 제자리에서 발동 연출(is-fire)을 하고 지운다 (엔진은 바로 뒤 블록을 당긴다 — 화면에서는 왼쪽 블록이 오른쪽으로 온다, C.216) */
   const fireAway = (node: HTMLElement) => {
     const g = elementLocalRect(tray.grid);
     const r = elementLocalRect(node);
@@ -1073,8 +1092,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       }
       placedAt.set(b.uid, i);
       if (node.parentElement !== cell) cell.replaceChildren(node);
-      const level = chainLevelAt(specs, i);
-      setV2Pips(node, level);
       node.classList.toggle('is-cue', casting && node.dataset.kind === 'guard');
       // 보스 기믹 칸 봉인 (GDD 25-3): 글자가 '봉'으로 바뀌고 회색, 누를 수 없다
       // 막기·공허 경직 중(공격 불가)에는 블록을 쓸 수 없다 (GDD 105장 1번): 같은 잠금 표시
@@ -1211,13 +1228,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (libOn) {
       const lb = s.liberation;
       const ready = canLiberate(s);
-      setV2Gauge(libGauge, (libActive ? lb.ticksLeft / Math.max(1, Math.round(p.liberationSeconds / p.tickSeconds)) : lb.gauge / LIBERATION_GAUGE_MAX) * 100);
       libBtn.classList.toggle('is-ready', ready);
+      app.classList.toggle('is-lib-ready', ready);
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-on', libActive);
       libBtn.setAttribute('aria-disabled', String(!ready));
-      const libText = libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : ready ? '준비됨 — 눌러 해방' : `게이지 ${Math.floor(lb.gauge)}%`;
-      setText(libMeta, libText);
+      const libText = libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : ready ? `${labels.liberation.name} 준비 — 캐릭터를 눌러라` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`;
+      setText(libTime, libActive ? secondsText(lb.ticksLeft * p.tickSeconds) : '');
       libBtn.title = libText;
       libBtn.setAttribute('aria-label', `${labels.liberation.name}, ${libText}`);
     }
@@ -1228,7 +1245,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 칸 찾기는 기기 안 좌표(가로 방향)로: 세로 폰에서는 기기를 돌려 놓았으므로 화면 좌표를 바꿔 쓴다 (GDD 16-6)
   const slotOf = (e: { clientX: number; clientY: number }) => {
     const r = elementLocalRect(tray.grid);
-    return slotAt(pointerLocal(e).x, r.left, r.width, cap);
+    return cap - 1 - slotAt(pointerLocal(e).x, r.left, r.width, cap); // 칸 1 = 맨 오른쪽 (C.216, GDD 138장 2 — 블록 바 rtl)
   };
   // 해방 버튼: 블록과 같은 판정 (버튼 위에서 누르고 버튼 위에서 떼면 사용 — 옛 저장 필살기 버튼 판정)
   let libDown: number | null = null;

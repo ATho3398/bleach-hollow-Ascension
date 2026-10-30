@@ -1,12 +1,10 @@
-// 행동 진행 연출 (GDD 132장 3, C.208): 아이템 쓰기·먹이 주기·튜토리얼 온천 쉬기를 하면 값은 누른 순간 저장하고, 화면은 막대가 천천히 차오르는 모습을 보여 준 뒤 끝난다.
+// 행동 진행 연출 (GDD 132장 3, C.208): 아이템 쓰기·먹이 주기를 하면(튜토리얼 온천은 C.214 부터 실제 시간 — GDD 139장 2) 값은 누른 순간 저장하고, 화면은 막대가 천천히 차오르는 모습을 보여 준 뒤 끝난다.
 // 연출 시간은 화면 연출값이라 balance 밖(이 파일 상수). 연출이 도는 동안 actionBusy() 가 참 — 튜토리얼 실제 조작 카드는 그동안 [다음]을 풀지 않는다.
 import { el, icon, meter, type MeterKind } from './dom';
 import { getOverlayHost } from './overlayHost';
 
 /** 아이템·먹이 막대가 차오르는 시간 */
 export const ACTION_FILL_MS = 1000;
-/** 튜토리얼 온천: 앉은 뒤 체력이 목표까지 차오르는 시간 */
-export const SPA_TUTORIAL_FILL_MS = 3000;
 /** 아이템 연출 창이 다 찬 뒤 머무는 시간 */
 const ITEM_HOLD_MS = 500;
 
@@ -24,6 +22,25 @@ export function beginAction(): () => void {
     done = true;
     busy = Math.max(0, busy - 1);
   };
+}
+
+let moving = 0;
+/** 장면 이동 연출(온천 계단 들고 나기·월드맵 걷기 → 페이드)이 도는 중이다 — 튜토리얼 안내 창은 끝난 뒤에 뜬다 (GDD 143장 1) */
+export function sceneMoving(): boolean {
+  return moving > 0;
+}
+/** 장면 이동 연출 시작. 돌려받은 함수를 부르면 끝 (여러 번 불러도 한 번만, 못 불러도 maxMs 뒤 저절로 끝 — 안내 창이 영영 안 뜨지 않게) */
+export function beginSceneMove(maxMs = 6000): () => void {
+  moving++;
+  let done = false;
+  const end = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(guard);
+    moving = Math.max(0, moving - 1);
+  };
+  const guard = setTimeout(end, maxMs);
+  return end;
 }
 
 /** 0→1 로 ms 동안 step(t) 를 부르고 끝나면 onEnd. 화면 연출이 꺼진 환경(rAF 없음)에서는 바로 끝 */

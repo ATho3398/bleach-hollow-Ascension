@@ -165,7 +165,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
   });
 
   it('세이브: 형식 46(C.175) · 문턱 같이, 옛 해방 칸 필드는 지운다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(56); // C.213 (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     const s = newSaveData('hollow', 1);
     expect('liberation' in s.build).toBe(false);
@@ -176,13 +176,10 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
 });
 
 describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
-  it('이름은 종족 설정: 5단계 전 = 영력 해방(양 종족), 5단계부터 = 호로 레스렉시온 / 사신 만해', () => {
-    for (const f of FACTIONS) {
-      expect(liberationLabels(f, 0).name).toBe('영력 해방');
-      expect(liberationLabels(f, LB.minTierIndex - 1)).toMatchObject({ name: '영력 해방', unique: false });
-    }
-    expect(liberationLabels(getFaction('hollow'), LB.minTierIndex)).toMatchObject({ name: '레스렉시온', unique: true });
-    expect(liberationLabels(getFaction('shinigami'), LB.minTierIndex)).toMatchObject({ name: '만해', unique: true });
+  it('이름은 종족 설정: 아란칼화/참백도 구상화 전 = 영력 해방(양 종족), 깬 뒤 = 호로 레스렉시온 / 사신 만해 (C.220)', () => {
+    for (const f of FACTIONS) expect(liberationLabels(f, false)).toMatchObject({ name: '영력 해방', unique: false });
+    expect(liberationLabels(getFaction('hollow'), true)).toMatchObject({ name: '레스렉시온', unique: true });
+    expect(liberationLabels(getFaction('shinigami'), true)).toMatchObject({ name: '만해', unique: true });
     const h = getFaction('hollow');
     expect(() => parseFactionConfig({ ...h, liberation: { ...h.liberation, baseName: '' } })).toThrow(/liberation.baseName/);
   });
@@ -200,11 +197,12 @@ describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
     expect(exp.battles.some((b) => (b.liberationUses ?? 0) > 0)).toBe(true);
   });
 
-  it('5단계 전에는 블록 효과만, 5단계부터 공격 속도·체인 속도·능력치 소폭 상승 (수련 완료면 더)', () => {
+  it('아란칼화 전에는 블록 효과만, 깬 뒤 공격 속도·체인 속도·능력치 소폭 상승 (수련 완료면 더) — C.220: 단계가 아니라 아란칼화', () => {
     const at = (tier: number, trained = false) => {
       const p = buildCombatParams(newBuild(), 'hollow');
       const e = newEvolution(1);
-      e.tierIndex = tier;
+      e.tierIndex = Math.min(tier, 3);
+      if (tier >= 4) e.ascended = true;
       applyEvolutionToParams(p, e, 'hollow', 0, trained);
       return p;
     };

@@ -9,7 +9,7 @@ import { canWear } from './data/skins';
 import { baseTilesFor, tileName } from './data/tiles';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
 import type { FactionConfig } from './engine/faction';
-import { CARE_STATUS_NAMES } from './engine/nest';
+import { CARE_STATUS_NAMES, dayKey } from './engine/nest';
 import { addFood } from './engine/food';
 import { foodHpHeal } from './engine/nest';
 import { grantPet, pickNewPet } from './engine/pet';
@@ -17,6 +17,7 @@ import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
 import { recommendedDifficulty } from './engine/difficulty';
 import { GEAR_GRADE_NAMES, type GearGrade } from './data/gear';
 import type { SaveData } from './game';
+import { DETACH_TRAITS, detachedOf, detachEffectText, equipDetach, getDetachTrait, unequipDetach, detachLock } from './engine/traitShop';
 
 const SX = BALANCE.shop;
 const FOOD_MAX = BALANCE.provisional.food.cap;
@@ -113,12 +114,38 @@ export function rollTileDraw(factionId: string, first: boolean, rand: () => numb
   return pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]!;
 }
 
+/** 하루 판매 수가 다 찼을 때 (GDD 145장 4) */
+export const SOLD_OUT_TODAY = '오늘 다 팔림';
+
+/** 상점 하루 판매 수 (GDD 145장 4): 회복 물건만. 아니면 null */
+export function healDaily(id: string): number | null {
+  const b = BALANCE.provisional.battleItems[id];
+  return b?.effect === 'heal' ? b.daily : null;
+}
+
+/** 오늘(기기 날짜) 그 품목을 더 살 수 있는 수. 하루 제한이 없는 품목이면 null */
+export function shopDailyLeft(save: Pick<SaveData, 'shared'>, id: string, nowMs: number = Date.now()): number | null {
+  const max = healDaily(id);
+  if (max === null) return null;
+  const d = save.shared.shopDaily;
+  const bought = d.day === dayKey(nowMs) ? d.bought[id] ?? 0 : 0;
+  return Math.max(0, max - bought);
+}
+
+/** 상점에서 산 회복 물건을 오늘 판매 수에 센다 (날짜가 바뀌었으면 새로) */
+function countShopDaily(save: Pick<SaveData, 'shared'>, id: string, nowMs: number): void {
+  if (healDaily(id) === null) return;
+  const day = dayKey(nowMs);
+  if (save.shared.shopDaily.day !== day) save.shared.shopDaily = { day, bought: {} };
+  save.shared.shopDaily.bought[id] = (save.shared.shopDaily.bought[id] ?? 0) + 1;
+}
+
 /** 약 효과 한 줄 (GDD 102-4): 그 상태만 푼다, 수치는 안 오른다 */
 /** 전투용 소모품 효과 한 줄 (GDD 105장 수정 3, C.177 provisional) */
 export function battleItemText(id: string): string {
   const b = BALANCE.provisional.battleItems[id];
   if (!b) return '';
-  return b.effect === 'heal' ? `최대 체력 ${Math.round(b.fraction * 100)}% 회복` : `${b.seconds}초 동안 블록 생성 ×${b.spawnMult}`;
+  return b.effect === 'heal' ? (b.fraction >= 1 ? '체력 가득 회복' : `최대 체력 ${Math.round(b.fraction * 100)}% 회복`) : `${b.seconds}초 동안 블록 생성 ×${b.spawnMult}`;
 }
 
 export function medicineText(cures: MedicineCure): string {
@@ -141,7 +168,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로는 안 내려간다) · 가방에 쌓이고 가방에서 쓴다`;
     case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;
     case 'medicine': return medicineText(item.cures!);
-    case 'battle': return `${battleItemText(item.id)} · 장비 화면 소모품 칸에 넣으면 전투 [소모품]으로 전투당 1번`;
+    case 'battle': return healDaily(item.id) !== null ? `${battleItemText(item.id)} · 원정 걷기 중 [가방]에서 쓰고, 장비 화면 소모품 칸에 넣으면 전투 [소모품]으로 전투당 1번` : `${battleItemText(item.id)} · 장비 화면 소모품 칸에 넣으면 전투 [소모품]으로 전투당 1번`;
     case 'trainingTicket': return `지금 트랙 수련권 +1 (최대 ${BALANCE.provisional.training.ticketsMax})`;
     case 'tileDraw': return `원정 타일 1장 → 가방 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}% · ${TD.groups.spring!.map((id) => tileName(id, faction.id)).join('·')} ${TD.weights.spring}% · 희귀(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) ${TD.weights.rare}%, 첫 뽑기는 환경 타일`;
     case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 가방 (이벤트 타일 제외)';
@@ -167,7 +194,9 @@ function goldBlock(save: SaveData, item: GoldItemDef): string | null {
     case 'calm':
     case 'wake':
     case 'medicine':
-    case 'battle': return canStoreConsumable(save, item.id) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
+    case 'battle':
+      if (shopDailyLeft(save, item.id) === 0) return SOLD_OUT_TODAY; // 회복 물건 하루 판매 수 (GDD 145장 4)
+      return canStoreConsumable(save, item.id) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
     case 'trainingTicket': return save.training.tickets >= BALANCE.provisional.training.ticketsMax ? `수련권 가득 (${BALANCE.provisional.training.ticketsMax}/${BALANCE.provisional.training.ticketsMax})` : null;
     case 'tileDraw':
     case 'rareTile': return save.tiles.unlocked ? null : TILES_LOCKED_TEXT;
@@ -186,7 +215,11 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
     case 'calm':
     case 'wake':
     case 'medicine':
-    case 'battle': return `보관 ${save.shared.items[item.id] ?? 0}/${CONSUMABLE_CAP}`;
+    case 'battle': {
+      const left = shopDailyLeft(save, item.id);
+      // 회복 물건은 오늘 남은 판매 수 (GDD 145장 4) — 카드 배지가 그림을 덮지 않게 한 가지만
+      return left === null ? `보관 ${save.shared.items[item.id] ?? 0}/${CONSUMABLE_CAP}` : `오늘 ${left}/${healDaily(item.id)}`;
+    }
     case 'tileDraw': return save.tiles.unlocked ? `뽑은 횟수 ${save.tiles.draws}` : null;
     case 'rareTile': return null;
     case 'gear': return `장비 ${save.shared.gear.items.length}/${BALANCE.provisional.gear.cap}`;
@@ -247,6 +280,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
       case 'medicine':
       case 'battle':
         storeConsumable(save, gold.id);
+        countShopDaily(save, gold.id, nowMs);
         detail = `${gold.name} → 가방 (${save.shared.items[gold.id]}개)`;
         break;
       case 'trainingTicket':
@@ -354,7 +388,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 가방`;
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 가방에서 쓴다`;
     case 'pet': return '아직 없는 펫 무작위 1마리 → 가방 펫 탭';
-    case 'hpPotion': return '홈에서 먹으면 체력 가득 (빈사 중엔 10%까지) · 가방에 쌓이고 가방에서 쓴다 · 전투 회복약과 다른 물건이다';
+    case 'hpPotion': return `${battleItemText(itemId)} · 원정 걷기 중 [가방]·전투 [소모품]에서 쓴다`;
     case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 가방 장비 탭`;
   }
 }
@@ -464,3 +498,55 @@ function giveGear(save: SaveData, faction: FactionConfig, roll: GearRoll, source
   const slot = it.kind === 'accessory' ? 'acc1' : it.kind;
   return `${GEAR_GRADE_NAMES[it.grade]} ${faction.gearSlotNames[slot]} → 가방 장비 탭`;
 }
+
+// ── 특성 상점 (GDD 150장 3·4, C.227): 탈착 특성 — 골드로 한 번 사면 계속 보유(중복 구매 없음), 빈 특성 칸에 끼우고 방에서 뺀다(원정 중 잠금) ──
+
+/** 특성 상점 품목 id: trait-<탈착 특성 id> */
+export const traitItemId = (id: string): string => `trait-${id}`;
+const traitOfItem = (itemId: string): string | null => (itemId.startsWith('trait-') ? itemId.slice(6) : null);
+/** 원정 중 잠금 한 줄 */
+export const TRAIT_LOCKED_IN_RUN = '원정 중에는 바꿀 수 없다';
+
+/** 특성 상점 줄: 보유하면 '보유'(지금 트랙 칸에 끼웠으면 worn) */
+export function traitRows(save: SaveData): ShopRow[] {
+  return DETACH_TRAITS.map((t) => {
+    const owned = save.shared.traits.includes(t.id);
+    const short = !owned && wallet(save, 'gold') < t.price ? shortText('gold', t.price - wallet(save, 'gold')) : null;
+    return { id: traitItemId(t.id), currency: 'gold', name: t.name, effect: detachEffectText(t), price: t.price, canBuy: !owned && short === null, lock: owned ? null : short, have: owned ? '보유' : null, confirm: true, owned, worn: detachedOf(save.evolution.abilities).includes(t.id) };
+  });
+}
+
+/** 탈착 특성을 산다: 돈을 내고 보유 목록에. 이미 가졌거나 돈이 모자라면 실패(아무것도 안 바뀜) */
+export function buyTraitItem(save: SaveData, itemId: string, nowMs: number = Date.now()): BuyResult {
+  const id = traitOfItem(itemId);
+  const t = id ? getDetachTrait(id) : undefined;
+  if (!t) return { ok: false, reason: '지금은 살 수 없는 품목이다' };
+  if (save.shared.traits.includes(t.id)) return { ok: false, reason: '이미 가지고 있다' };
+  if (wallet(save, 'gold') < t.price) return { ok: false, reason: shortText('gold', t.price - wallet(save, 'gold')) };
+  save.shared.tradeCoins -= t.price;
+  save.shared.traits.push(t.id);
+  record(save, itemId, 'gold', t.price, nowMs);
+  return { ok: true, id: itemId, price: t.price, currency: 'gold', detail: `${detachEffectText(t)} · 상태 화면 특성 칸에 끼운다` };
+}
+
+/** 끼우기·빼기를 못 하는 이유 (원정 중 · 칸 없음 …). 되면 null */
+export function traitToggleLock(save: SaveData, id: string): string | null {
+  if (save.activeExpedition) return TRAIT_LOCKED_IN_RUN;
+  const l = save.evolution.abilities;
+  if (!l) return '특성 칸이 없다';
+  if (detachedOf(l).includes(id)) return null;
+  return detachLock(l, save.shared.traits, id);
+}
+
+/** 지금 트랙 특성 칸에 끼운다 / 뺀다 (방에서만 — 원정 중 잠금). 됐으면 true */
+export function equipTrait(save: SaveData, id: string): boolean {
+  const l = save.evolution.abilities;
+  if (save.activeExpedition || !l) return false;
+  return equipDetach(l, save.shared.traits, id);
+}
+export function unequipTrait(save: SaveData, id: string): boolean {
+  const l = save.evolution.abilities;
+  if (save.activeExpedition || !l) return false;
+  return unequipDetach(l, id);
+}
+

@@ -4,9 +4,11 @@ import { abilityNameByEffect, formName, physProcText, tryGetForm } from '../data
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
 import { normalSlotNote } from '../data/help/textFormat';
-import { abilityLines, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { ABILITY_SLOT_LABEL, abilityIdLine, abilityLines, equippedAbilitiesOf, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityGain, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
+import { fixParticles } from '../engine/josa';
+import { getDetachTrait } from '../engine/traitShop';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
 import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { elementDot, elementsMark } from './bha/element';
@@ -42,10 +44,10 @@ export function evolutionNote(): HTMLElement {
   return p;
 }
 
-/** 지금 진화체의 특성 줄 (GDD 39장): 성향 + 속성·전용 */
+/** 지금 특성 줄 (GDD 39장 → 126-1 수정, C.220): 특성 칸에 낀 것 (보유·장착이 없는 옛 모양이면 진화체 특성 전부) */
 export function evolutionAbilityLines(evo: EvolutionState, factionId: string): AbilityLine[] {
   const form = evo.formId ? tryGetForm(evo.formId) : undefined;
-  return abilityLines(formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
+  return abilityLines(evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
 }
 
 /** 도감용 특성 줄: 성향은 진화 순간 노력치로 정해지므로 규칙만, 속성·전용은 진화체 label 로 */
@@ -62,7 +64,7 @@ export function abilityParagraph(lines: readonly AbilityLine[], cls = 'bha-dim')
   if (lines.length === 0) p.append('특성: 아직 없음 (진화하면 생긴다)');
   lines.forEach((l, i) => {
     if (i > 0) p.append(h('br'));
-    const tag = h('span', '', `${l.slot} 특성 `);
+    const tag = h('span', '', `${ABILITY_SLOT_LABEL[l.slot]} 특성 `);
     tag.dataset.abilitySlot = l.slot;
     p.append(tag, h('b', '', l.name), ` — ${l.description}`);
   });
@@ -100,7 +102,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   text.append(
     h('b', '', '진화할 때는 비밀이다.'), h('br'),
     `원정을 다니다 보면 몸에 신호가 온다. 진화는 ${toward(faction.nestName)} 돌아오면 저절로 일어난다.`, h('br'),
-    h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 분류와 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
+    h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
   );
   how.append(text);
   return { left, right: [how, evolutionNote()] };
@@ -115,6 +117,37 @@ export interface EvolutionExtra {
   failLine?: boolean;
   /** 실제 종족값 (실패형 줄기 낮춤 반영). 없으면 진화체 값 */
   stats?: Stats;
+  /** 이 진화로 특성 받은 결과 (GDD 148·149장, C.225·C.226)와 받은 뒤 그 특성 세기. 있으면 특성 행은 이 한 줄 */
+  abilityGain?: AbilityGain;
+  abilityScale?: number;
+  /** 이 진화로 늘어난 특성 칸 (GDD 151장 2: 4단계 진화 처음 +1)과 늘어난 뒤 칸 수 */
+  abilitySlotsAdded?: number;
+  abilitySlots?: number;
+}
+
+/** 진화 결과 화면에 넘길 특성 결과 (받은 뒤 세기는 보유 목록에서) */
+export function gainExtra(evo: EvolutionState, gain: AbilityGain, slotsAdded = 0): Pick<EvolutionExtra, 'abilityGain' | 'abilityScale' | 'abilitySlotsAdded' | 'abilitySlots'> {
+  return {
+    abilityGain: gain,
+    ...(gain.kind !== 'none' && evo.abilities?.owned[gain.id] !== undefined ? { abilityScale: evo.abilities.owned[gain.id] } : {}),
+    ...(slotsAdded > 0 && evo.abilities ? { abilitySlotsAdded: slotsAdded, abilitySlots: evo.abilities.slots } : {}),
+  };
+}
+
+/** 진화 결과 특성 한 줄 (GDD 148·149장): 새로 받음 / 3단계 특성 → 4단계 특성(바뀜) / 이미 가짐 / 칸이 없어 못 받음. 특성을 주지 않는 진화면 null */
+export function abilityGainRow(gain: AbilityGain, scale: number, factionId: string): { icon: string; label: string; value: string; mod: 'good' | 'stack' } | null {
+  if (gain.kind === 'none') return null;
+  const line = abilityIdLine(gain.id, scale, factionId);
+  if (!line) return null;
+  const nameOf = (id: string) => abilityIdLine(id, 1, factionId)?.name ?? id;
+  const gone = (ids: string[] | undefined) => (ids ?? []).map((id) => `${nameOf(id)} 사라짐 · `).join('');
+  switch (gain.kind) {
+    // 진화 특성 우선 (GDD 150장 3): 칸을 비우려고 뺀 탈착 특성은 안내 한 줄
+    case 'new': return { icon: 'i-rare', label: '특성', value: `새로 받음 · ${line.name} — ${line.description}${gain.bumped ? fixParticles(` · 칸이 모자라 ${getDetachTrait(gain.bumped)?.name ?? gain.bumped}은(는) 보유 목록으로 뺐다`) : ''}`, mod: 'good' };
+    case 'replaced': return { icon: 'i-rare', label: '특성', value: `${gone(gain.gone)}바뀜 · ${nameOf(gain.from)} → ${line.name} — ${line.description}`, mod: 'good' };
+    case 'owned': return { icon: 'i-rare', label: '특성', value: `${gone(gain.gone)}${line.name} — 이미 가진 특성이라 다시 받지 않았다`, mod: 'stack' };
+    case 'full': return { icon: 'i-rare', label: '특성', value: `특성 칸이 없어 받지 못했다 (${line.name})`, mod: 'stack' };
+  }
 }
 
 /** 진화 후 달라진 점 행들(임시 수치): 슬롯·속성·고유 특성·종족값·외형 */
@@ -127,10 +160,19 @@ export function evolutionEffectRows(
       icon: 'i-slot', label: faction.slotName, mod: 'good',
       value: slotsAfter !== undefined ? `${slotsAfter - slots} → ${slotsAfter}칸` : `+${slots}칸`, sub: `+${slots}`,
     },
+    { icon: 'i-heal', label: '체력', value: '가득 회복', mod: 'good' }, // 진화하면 체력 가득 (GDD 145장 2)
   ];
   if (extra) rows.push({ icon: 'i-weak', label: '속성', value: elementsMark(extra.elements, faction.id) });
-  const lines = extra ? (extra.ev ? abilityLines(formAbilitiesOf(form, extra.ev, extra.ability), faction.id) : abilityLines(formAbilitiesOf(form, zeroStats(), extra.ability), faction.id)) : [];
-  for (const l of lines) rows.push({ icon: 'i-rare', label: `${l.slot} 특성`, value: `${l.name} — ${l.description}`, mod: 'stack' });
+  if (extra?.abilitySlotsAdded && extra.abilitySlots !== undefined) {
+    rows.push({ icon: 'i-rare', label: '특성 칸', value: `${extra.abilitySlots - extra.abilitySlotsAdded} → ${extra.abilitySlots}칸`, sub: `+${extra.abilitySlotsAdded}`, mod: 'good' });
+  }
+  if (extra?.abilityGain) {
+    const r = abilityGainRow(extra.abilityGain, extra.abilityScale ?? 1, faction.id);
+    if (r) rows.push(r);
+  } else {
+    const lines = extra ? (extra.ev ? abilityLines(formAbilitiesOf(form, extra.ev, extra.ability), faction.id) : abilityLines(formAbilitiesOf(form, zeroStats(), extra.ability), faction.id)) : [];
+    for (const l of lines) rows.push({ icon: 'i-rare', label: `${ABILITY_SLOT_LABEL[l.slot]} 특성`, value: `${l.name} — ${l.description}`, mod: 'stack' });
+  }
   rows.push(
     { icon: 'i-cond', label: '종족값', value: statsLine(faction.id, extra?.stats ?? form.stats), mod: 'stack' },
     { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },

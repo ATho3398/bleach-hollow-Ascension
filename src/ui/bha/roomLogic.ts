@@ -53,7 +53,7 @@ export interface StatusChip {
 export const CARE_STATUS_HINTS = {
   weak: `배부름을 ${CP.weakFullness} 넘게 채우고 원정을 한 번 다녀오거나 링거를 먹이면 풀린다`,
   tired: `컨디션을 ${CP.tiredCondition} 넘게 올리고 원정을 한 번 다녀오거나 에너지 드링크를 먹이면 풀린다`,
-  collapsed: '상점 약 칸의 치료제를 먹이면 풀린다. 남은 시간이 다 되거나 모험에서 지면 사망한다.',
+  collapsed: '상점 약 칸의 구급상자를 쓰면 풀린다. 남은 시간이 다 되거나 모험에서 지면 사망한다.',
 } as const;
 
 /** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지·교감(GDD 102-6) + 쓰러짐·쇠약·피곤 칩(GDD 102-7).

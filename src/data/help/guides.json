@@ -59,7 +59,7 @@
           "plan.hand"
         ],
         "title": "가진 타일 = 놓을 타일",
-        "body": "출발 전 이 카드들이 가진 타일이다.\n눌러서 고르거나 끌어서 길에 놓는다(길에는 {deckSize}칸까지).\n새 타일은 상점 [타일 뽑기]로 얻는다."
+        "body": "출발 전 이 카드들이 가진 타일이다.\n눌러서 고르거나 끌어서 길에 놓는다(길에는 {deckSize}칸까지).\n새 타일은 소모품 상점 [타일 뽑기]로 얻는다."
       },
       {
         "id": "place",
@@ -97,7 +97,7 @@
     "note": "C.207 (GDD 131장) 처음 켰을 때 홈 안내: 카드는 방에 실제로 있는 것만(대상이 화면에 없으면 건너뜀). 자리표시자는 종족 설정 + 앱이 넣는 이름(homeIntro vars) · last.stages = 월드맵 켬일 때 누를 때마다 따라가는 단계(GDD 132장 1, 끔이면 앱이 뺀다)",
     "intro": {
       "title": "{nestName}",
-      "body": "여기가 {nestName}다.\n{nestName}에 있는 버튼이 무엇을 하는지 하나씩 본다."
+      "body": "여기가 {nestName}(이)다.\n{nestName}에 있는 버튼이 무엇을 하는지 하나씩 본다."
     },
     "items": [
       {
@@ -106,15 +106,7 @@
           "@.bha-prop--outside"
         ],
         "title": "{outsideName}",
-        "body": "밖으로 나가면 {worldName} 지도가 나온다.\n{nestName}·{marketName}·{doorName} 가운데 골라 바로 간다."
-      },
-      {
-        "id": "door",
-        "targets": [
-          "@.bha-prop--door"
-        ],
-        "title": "{doorName}",
-        "body": "원정을 떠난다.\n길을 걸으며 싸우고, 쓰러뜨린 적을 흡수해 강해진다."
+        "body": "밖으로 나가면 {worldName} 지도가 나온다.\n{nestName}·{marketName}·{adventureName}·{towerName} 가운데 골라 걸어간다."
       },
       {
         "id": "altar",
@@ -141,20 +133,12 @@
         "body": "장비·물건·타일을 보고 쓴다."
       },
       {
-        "id": "market",
-        "targets": [
-          "@.bha-prop--market"
-        ],
-        "title": "{marketName}",
-        "body": "상점·온천이 있고, 떠돌이 상인이 가끔 들른다."
-      },
-      {
         "id": "status",
         "targets": [
           "@.bha-room__status"
         ],
         "title": "상태",
-        "body": "머리 위 막대는 배부름·컨디션·{riskGaugeName}이다.\n누르면 상태 화면이 열린다."
+        "body": "머리 위 막대는 배부름·컨디션·{riskGaugeName}(이)다.\n누르면 상태 화면이 열린다."
       },
       {
         "id": "hp",
@@ -204,7 +188,7 @@
           "targets": [
             "@.bha-worldmap [data-place=\"adventure\"]"
           ],
-          "body": "{worldName} 지도다.\n[{doorName}]을(를) 누르면 떠난다."
+          "body": "{worldName} 지도다.\n[{adventureName}]을(를) 누르면 떠난다."
         }
       ]
     }

@@ -2,6 +2,7 @@
 // 진화 타이밍 = 그 단계에서 원정으로 걸은 칸 수(숨김). 흡수는 진화 결과(속성·노력치·히든)만 정한다. 어떤 진화체로 가는지는 judge.ts.
 // 사망·퇴화·단계 스킵은 없다. 진화는 둥지로 돌아올 때 자동으로 일어난다(원정 중에는 일어나지 않는다).
 
+import { detachedOf, detachTotals } from '../traitShop';
 import { BALANCE } from '../../config/balance';
 import { combosAtTier, FORM_TABLE, formName, getForm, tryGetForm } from '../../data/evolution';
 import { distribute, failLineTotal } from '../../data/evolution/generate';
@@ -11,20 +12,20 @@ import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/sche
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
 import type { BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
-import { abilityEffectsOf, formAbilitiesOf, physBlockOf, physSpawnSecondsFor } from './formAbilities';
+import { abilityEffectsOf, equippedAbilitiesOf, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
 import { pickLook } from './tierLook';
 
 const EV = BALANCE.provisional.evolution;
 const SX = BALANCE.provisional.stats;
 
-/** 육성 단계 수 (GDD 8-1). index 0~4 */
-export const TIER_COUNT = 5;
+/** 육성 단계 수 (GDD 126장 확정 1, C.220: 5 → 4). index 0~3 */
+export const TIER_COUNT = 4;
 export const MAX_TIER_INDEX = TIER_COUNT - 1;
 
 /** 저장 구조(SaveData.evolution)이자 원정 중 사본 (C.47, 세이브 형식 14) */
 export interface EvolutionState {
-  /** 현재 육성 단계 (0 ~ 4) */
+  /** 현재 육성 단계 (0 ~ 3) */
   tierIndex: number;
   /** 현재 진화체 id. 처음 단계는 null */
   formId: string | null;
@@ -36,7 +37,7 @@ export interface EvolutionState {
   alerts: number;
   /** 이 단계의 진화 난수 시드 (단계 진입 때 정한다 → 같은 상태 = 같은 결과, v4.2) */
   stageSeed: number;
-  /** 이 단계 기록 (진화하면 0): 흡수 수, 놓아준 수, 흡수한 적의 속성별 수, 한계 돌파 수, 강적 처치 수 */
+  /** 이 단계 기록 (진화하면 0): 흡수 수, 놓아준 수, 흡수한 적의 속성별 수, 폭주(호로화) 수, 강적 처치 수 */
   absorbs: number;
   releases: number;
   elementAbsorbs: Record<string, number>;
@@ -50,6 +51,16 @@ export interface EvolutionState {
   look?: string | null;
   /** 환생 계승 노력치 (GDD 22-7, 형식 20): 이 생을 시작할 때 받은 값(정수). 단계 상한과 따로 더해진다. 없으면 0 */
   carry?: Stats;
+  /** 이 단계 기록 (C.220, GDD 126장 7 안정형·사냥꾼 — 진화하면 0, 옛 세이브엔 없음 = 0): 빈사가 된 수, 24시간 넘게 꺼 둔 수, 원정 5바퀴째(이상) 강적 2마리↑ 처치 원정 수 */
+  faints?: number;
+  longAbsences?: number;
+  hunterRuns?: number;
+  /** 이번 생 훈련 인형 전투 수 (C.220, 각성형 ②) — 진화해도 유지, 환생하면 0 */
+  practices?: number;
+  /** 특성 보유·장착 (C.220, GDD 126-1 수정): 진화할 때 얻고 환생해도 넘긴다. 없으면(점검 도구가 만든 옛 모양) 지금 진화체 특성을 전부 쓴다 */
+  abilities?: AbilityLoadout;
+  /** 아란칼화 / 참백도 구상화를 깼다 (C.220, GDD 126장 3): 이번 생의 레스렉시온/만해 해금 · 외형(종족 설정 ascension.lookChange). 환생하면 false */
+  ascended?: boolean;
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
   testElementDamage?: Record<string, number>;
 }
@@ -66,7 +77,11 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
+}
+
+export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
+  return { ...l, owned: { ...l.owned }, equipped: [...l.equipped], ...(l.detached ? { detached: [...l.detached] } : {}) };
 }
 
 export function isMaxTier(e: EvolutionState): boolean {
@@ -87,11 +102,12 @@ export function evTotal(ev: Stats): number {
 export function addEv(e: EvolutionState, gain: Partial<Record<StatId, number>>): Partial<Record<StatId, number>> {
   const cap = evCaps(e.tierIndex);
   const out: Partial<Record<StatId, number>> = {};
+  const mult = evGainMultOf(e.abilities); // 허우적·마구잡이 (GDD 149장 3·4)
   for (const s of STAT_IDS) {
-    const want = gain[s] ?? 0;
+    const want = (gain[s] ?? 0) * mult;
     if (want <= 0) continue;
     const room = Math.max(0, Math.min(cap.perStat - e.ev[s], cap.total - evTotal(e.ev)));
-    const v = Math.min(want, room);
+    const v = Math.round(Math.min(want, room) * 100) / 100; // 배율(×1/4 등)이 붙으면 소수 — 둘째 자리까지
     if (v > 0) {
       e.ev[s] += v;
       out[s] = v;
@@ -119,6 +135,26 @@ export function recordEvolutionElite(e: EvolutionState): void {
   e.elitesDefeated++;
 }
 
+/** 빈사가 됐다 (안정형 조건) */
+export function recordEvolutionFaint(e: EvolutionState): void {
+  e.faints = (e.faints ?? 0) + 1;
+}
+
+/** 24시간 넘게 꺼 뒀다 돌아왔다 (안정형 조건) */
+export function recordEvolutionLongAbsence(e: EvolutionState): void {
+  e.longAbsences = (e.longAbsences ?? 0) + 1;
+}
+
+/** 원정 5바퀴째(이상)에 강적 2마리↑ 처치한 원정 (사냥꾼 조건) */
+export function recordEvolutionHunterRun(e: EvolutionState): void {
+  e.hunterRuns = (e.hunterRuns ?? 0) + 1;
+}
+
+/** 훈련 인형 전투 1판 (각성형 조건, 이번 생 누적) */
+export function recordEvolutionPractice(e: EvolutionState): void {
+  e.practices = (e.practices ?? 0) + 1;
+}
+
 /** 다음 진화까지 필요한 걸음 수 (마지막 단계면 null). 화면에는 보이지 않는다 */
 export function stepsNeeded(e: EvolutionState): number | null {
   return isMaxTier(e) ? null : (EV.stepsNeeded[e.tierIndex] ?? null);
@@ -143,7 +179,7 @@ export function recordEvolutionStep(e: EvolutionState): number | null {
   return null;
 }
 
-/** 진화하면 도달하는 단계 (2~5, 1-based). 마지막 단계면 null */
+/** 진화하면 도달하는 단계 (2~4, 1-based). 마지막 단계면 null */
 export function nextTier(e: EvolutionState): number | null {
   return isMaxTier(e) ? null : e.tierIndex + 2;
 }
@@ -246,7 +282,7 @@ export function stabOf(e: EvolutionState): number {
 }
 
 export type EvolveResult =
-  | { ok: true; form: FormDef; record: EvolutionRecord; slotsAdded: number }
+  | { ok: true; form: FormDef; record: EvolutionRecord; slotsAdded: number; abilityGain: AbilityGain; abilitySlotsAdded: number }
   | { ok: false; reason: string };
 
 /** 단계 시드 다음 값 (결정적): 진화할 때마다 새 단계 시드를 만든다 */
@@ -263,12 +299,14 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   if (!canEvolve(e)) return { ok: false, reason: '아직 진화할 때가 아니다' };
   const fromTier = e.tierIndex;
   const fromFormId = e.formId;
-  const { form, snapshot } = judgeEvolution(e, { ...ctx, build }, table);
+  const statTotal = ctx.statTotal ?? STAT_IDS.reduce((a, k) => a + currentStats(e, ctx.factionId)[k], 0);
+  const { form, snapshot } = judgeEvolution(e, { ...ctx, build, statTotal }, table);
+  const prevForm = fromFormId ? table.find((f) => f.id === fromFormId) ?? tryGetForm(fromFormId) : undefined;
   e.tierIndex = fromTier + 1;
   e.formId = form.id;
   e.formHistory.push(form.id);
   e.ability = snapshot.ability;
-  e.look = pickLook(getFaction(ctx.factionId), form, e.ev, e.stageSeed);
+  e.look = pickLook(getFaction(ctx.factionId), form, e.ev, e.stageSeed, e.ascended === true);
   e.steps = 0;
   e.alerts = 0;
   e.absorbs = 0;
@@ -276,13 +314,22 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   e.elementAbsorbs = {};
   e.breakthroughs = 0;
   e.elitesDefeated = 0;
+  delete e.faints;
+  delete e.longAbsences;
+  delete e.hunterRuns;
   e.stageSeed = nextStageSeed(e.stageSeed, e.tierIndex);
   for (let i = 0; i < EV.slotsPerEvolution; i++) build.slots.push(null);
+  // 특성은 3·4단계 진화 때만 1개 (GDD 148·149·151장): 4단계에서는 특성 칸 +1(처음) · 3단계 특성 → 4단계 특성, 가진 것은 다시 안 받음, 칸이 꽉 차면 못 받음
+  const loadout = (e.abilities ??= newAbilityLoadout());
+  const abilitySlotsBefore = loadout.slots;
+  const abilityGain = gainEvolutionAbility(loadout, form, prevForm);
   return {
     ok: true,
     form,
-    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs },
+    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs, ...(abilityGain.kind !== 'none' ? { abilityGain } : {}) },
     slotsAdded: EV.slotsPerEvolution,
+    abilityGain,
+    abilitySlotsAdded: loadout.slots - abilitySlotsBefore,
   };
 }
 
@@ -321,17 +368,15 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.playerStats = currentStats(e, factionId, statBonus);
   params.playerElements = playerElementsOf(e);
   params.stabMultiplier = stabOf(e);
-  // 해방 블록 분류 (GDD 22-5): 진화체 분류(아란칼 일반형), 없으면 혼합
-  params.liberationCategory = form?.label.category ?? 'mixed';
-  // 해방 (GDD 83장): 5단계부터 고유 효과(레스렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
+  // 해방 (GDD 83장 → 126장 3, C.220): 아란칼화 / 참백도 구상화를 깨면 고유 효과(레스렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
   const LB = BALANCE.provisional.liberation;
-  const unique = e.tierIndex >= LB.minTierIndex;
+  const unique = hasUniqueLiberation(e);
   params.liberationUnique = unique;
   params.liberationAttackSpeed = unique ? LB.uniqueAttackSpeed : 1;
   params.liberationChainSpeed = unique ? LB.uniqueChainSpeed : 1;
   params.liberationStatMultiplier = unique ? (trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier) : 1;
-  // 특성 칸 2개 (GDD 39장): 성향(실패형 2개) + 속성·전용 효과
-  const fa = formAbilitiesOf(form ?? null, e.ev, e.ability);
+  // 특성 (GDD 39장 → 126-1 수정): 칸에 낀 것만. 보유·장착이 없는 옛 모양(점검 도구)이면 지금 진화체 특성 전부
+  const fa = e.abilities ? equippedAbilitiesOf(form ?? null, e.abilities) : formAbilitiesOf(form ?? null, e.ev, e.ability);
   for (const d of fa.dispositions) applyAbility(params, d);
   // 블록 풀 성향 보정 (GDD 44장 4번)
   params.dispositions = [...fa.dispositions];
@@ -351,7 +396,32 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
     params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
     // 치명 상한 돌파 (GDD 45장 1번): 치명 특성(물 '날카로운 물결')이 있는 몸만 상한 = 기본 상한 + 그 특성 값
     params.critChanceMax = (params.critChanceMax ?? BALANCE.provisional.combat.critChanceMax) + critChance;
+    // 치명 두 값 (C.220): 특성 치명은 블록 치명에도 같이 (진화체별 나눔은 2차)
+    params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + critChance;
+    params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + critChance;
   }
+  applyDetachedTraits(params, detachedOf(e.abilities));
+}
+
+/** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
+export function applyDetachedTraits(params: Partial<CombatParams>, ids: readonly string[]): void {
+  if (ids.length === 0) return;
+  const t = detachTotals(ids);
+  if (t.dealt || t.taken) {
+    const fx = { ...(params.abilityEffects ?? {}) };
+    fx.mutation = { dealt: (fx.mutation?.dealt ?? 0) + t.dealt, taken: (fx.mutation?.taken ?? 0) + t.taken };
+    params.abilityEffects = fx;
+  }
+  if (t.maxHp) params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * (1 + t.maxHp);
+  if (t.blockCrit) {
+    params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + t.blockCrit;
+    params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + t.blockCrit;
+  }
+}
+
+/** 레스렉시온/만해(고유 해방)를 쓸 수 있는가 (GDD 126장 3): 아란칼화 / 참백도 구상화를 깬 생 */
+export function hasUniqueLiberation(e: Pick<EvolutionState, 'ascended'>): boolean {
+  return e.ascended === true;
 }
 
 /** 속성 피해 % (C.101, GDD 48장): 출처를 모두 더한 값, 칸 = 노멀 + 기본 원소(ELEMENT_DAMAGE_IDS). 지금 출처는 테스트 모드 입력뿐이라 보통 모두 0 */

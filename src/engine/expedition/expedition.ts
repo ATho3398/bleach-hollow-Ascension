@@ -626,7 +626,7 @@ export function winHealOf(lap: number): number {
   return t[Math.min(t.length - 1, Math.max(1, lap) - 1)] ?? 0;
 }
 
-/** 공허 블록 생성 확률 가산: 컨디션이 나쁠수록, 5바퀴 이후, 한계 돌파 뒤 (GDD 3-2, 2-1, 4-1) */
+/** 공허 블록 생성 확률 가산: 컨디션이 나쁠수록, 5바퀴 이후, 폭주(호로화) 뒤 (GDD 3-2, 2-1, 4-1) */
 export function riskBonus(exp: ExpeditionState): number {
   const cond = PX.conditionRiskBonusMax * (1 - exp.condition / PX.conditionMax);
   const late = Math.max(0, exp.lap - PX.lateLapStart + 1) * PX.lateLapRiskBonusPerLap;
@@ -867,7 +867,7 @@ export function applyEnvironment(params: Partial<CombatParams>, preset: Environm
   else params.voidChanceBonus = (params.voidChanceBonus ?? 0) + T.void.voidChanceBonus * strength;
 }
 
-/** 폭주 (GDD 23-2·101장 4번): 한계 돌파한 원정의 남은 전투는 주는 피해·받는 피해가 함께 오르고, 적 공격을 확률로 통째로 피한다 (공허 생성 증가는 riskBonus 가 따로 더한다) */
+/** 폭주 (GDD 23-2·101장 4번): 폭주(호로화)한 원정의 남은 전투는 주는 피해·받는 피해가 함께 오르고, 적 공격을 확률로 통째로 피한다 (공허 생성 증가는 riskBonus 가 따로 더한다) */
 export function applyFrenzy(params: Partial<CombatParams>): void {
   params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * RX.frenzyDamageDealt;
   params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * RX.frenzyDamageTaken;
@@ -895,7 +895,7 @@ function dyingReward(exp: Pick<ExpeditionState, 'care'>): number {
   return exp.care?.dying ? BALANCE.provisional.nest.care.dying.rewardMult : 1;
 }
 
-/** 폭주 중인가: 이번 원정에서 한계 돌파가 일어났다 (원정당 1회) */
+/** 폭주 중인가: 이번 원정에서 폭주(호로화)가 일어났다 (원정당 1회) */
 export function inFrenzy(exp: Pick<ExpeditionState, 'breakthrough'>): boolean {
   return exp.breakthrough !== null;
 }
@@ -1139,7 +1139,7 @@ export function tutorialAbsorb(exp: ExpeditionState): AbsorbResult {
   return { ok: true };
 }
 
-/** 쌓인 엔진 이벤트(한계 돌파 등)를 꺼낸다. 화면이 연출하고 비운다 */
+/** 쌓인 엔진 이벤트(폭주(호로화) 등)를 꺼낸다. 화면이 연출하고 비운다 */
 export function drainEvents(exp: ExpeditionState): EngineEvent[] {
   return exp.events.splice(0, exp.events.length);
 }

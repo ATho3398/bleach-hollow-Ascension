@@ -1,14 +1,16 @@
 // 첫 원정 첫 전투 각본 (GDD 123장 5, C.199). DOM 에 의존하지 않는 순수 함수라 단위 테스트한다.
 // 순서: ① 멈춤·설명(일반 공격은 자동) ② 자동 공격 N대 ③ 강공격 예고 → 멈춤·설명 → 막기를 눌러야 진행 ④ N대 더
 // ⑤ 곧바로 못 막는 강공격 → 죽기 직전 체력 ⑥ 멈춤·설명 → 블록 1개 → 눌러 쓰게 함 ⑦ 멈춤·설명 → 같은 블록 3개 → 체인으로 처치.
+// ⑦ 의 체인 (GDD 146장): 쓰는 순간에는 피해를 맡겨 두고(chain-hit) 동작·스킬 연출이 적에게 닿을 때 화면이 scriptLand 로 넣는다 → 피해 숫자·체력 감소 → 쓰러짐.
+// 화면이 부르지 않으면(헤드리스·연출 끔) chainHitMaxSeconds 뒤에 넣는다.
 // 난수를 쓰지 않는다: 블록 생성·적 일반 공격·치명타는 엔진이 각본 전투에서 끈다(combat.ts script). 종족 분기 없음 — 문구는 src/data/help/tutorial.json.
 import { BALANCE } from '../../config/balance';
-import { applyInput, BASIC_SKILL_ID, blockDamage, maxChain, scriptHeavyCast, scriptSpawnBlock, spawnTableOf, step, type CombatInput, type CombatScript, type CombatState } from './combat';
+import { applyInput, BASIC_SKILL_ID, blockDamage, maxChain, scriptHeavyCast, scriptLandHit, scriptSpawnBlock, spawnTableOf, step, type CombatInput, type CombatScript, type CombatState } from './combat';
 
 const TS = BALANCE.provisional.tutorialScript;
 
 export const SCRIPT_STAGES = [
-  'intro', 'auto', 'heavy-info', 'guard-now', 'guard-hold', 'auto2', 'heavy2', 'hurt-hold', 'hurt', 'block-use', 'after-skill', 'chain-info', 'chain-spawn', 'stack-hold', 'chain-use', 'done',
+  'intro', 'auto', 'heavy-info', 'guard-now', 'guard-hold', 'auto2', 'heavy2', 'hurt-hold', 'hurt', 'block-use', 'after-skill', 'chain-info', 'chain-spawn', 'stack-hold', 'chain-use', 'chain-hit', 'done',
 ] as const;
 export type ScriptStage = (typeof SCRIPT_STAGES)[number];
 
@@ -79,14 +81,18 @@ export function scriptStep(s: CombatState, input?: CombatInput | CombatInput[] |
     return list.map((x) => {
       if (s.script !== sc || stageOf(s) !== p.stage) return false;
       // 기다리는 단계에서는 틱 없이 입력만 받는다 (step 은 입력 뒤 틱을 한 번 돈다)
-      if (!applyInput(s, x)) return false;
+      // 마무리 체인 (GDD 146장): 피해는 맡겨 두고 연출이 닿을 때 넣는다
+      if (p.stage === 'chain-use') sc.holdHit = true;
+      const ok = applyInput(s, x);
+      sc.holdHit = false;
+      if (!ok) return false;
       if (p.wait === 'guard') {
         // 막기가 끝나기 전에 착탄하게 예고를 줄인다
         const c = s.enemy.cast;
         if (c) c.ticks = Math.min(c.ticks, Math.max(1, s.guard.ticks - 1));
         enter(s, 'guard-hold');
       } else if (p.stage === 'block-use') enter(s, 'after-skill');
-      else enter(s, 'done');
+      else enter(s, sc.held ? 'chain-hit' : 'done');
       return true;
     });
   }
@@ -110,6 +116,7 @@ export function scriptStep(s: CombatState, input?: CombatInput | CombatInput[] |
   } else if (st === 'hurt-hold' && sc.ticks >= tick(TS.hurtHoldSeconds)) enter(s, 'hurt'); // 맞고 체력이 깎이는 모습을 보여 준 뒤 (GDD 129장 3)
   else if (st === 'stack-hold' && sc.ticks >= tick(TS.stackHoldSeconds)) enter(s, 'chain-use'); // 블록이 쌓인 모습을 보여 준 뒤
   else if (st === 'after-skill' && sc.ticks >= tick(TS.afterSkillSeconds)) enter(s, 'chain-info');
+  else if (st === 'chain-hit' && sc.ticks >= tick(TS.chainHitMaxSeconds)) scriptLand(s); // 화면이 착탄을 알리지 않았으면 (헤드리스·연출 끔)
   else if (st === 'chain-spawn') {
     const n = Math.min(TS.chainLength, maxChain(s.params));
     if (sc.ticks >= tick(TS.spawnGapSeconds) * (sc.spawned + 1)) {
@@ -121,12 +128,19 @@ export function scriptStep(s: CombatState, input?: CombatInput | CombatInput[] |
       // 체인 한 번에 쓰러지게: 적 체력을 그 체인 피해 아래로 (각본 전투만)
       const last = s.tray[s.tray.length - 1];
       if (last) s.enemy.hp = Math.min(s.enemy.hp, Math.max(1, blockDamage(s, last, n) * 0.5));
-      sc.lethal = true;
-      sc.spawned = 0;
+      sc.spawned = 0; // 쓰러질 수 있게(lethal) 되는 것은 체인이 닿는 순간 (scriptLandHit, GDD 146장)
       enter(s, 'stack-hold');
     }
   }
   return out;
+}
+
+/** 마무리 체인이 적에게 닿았다 (GDD 146장): 맡겨 둔 피해를 넣는다. 화면은 연출의 마지막 타격 순간에 부른다. 넣었으면 true */
+export function scriptLand(s: CombatState): boolean {
+  if (stageOf(s) !== 'chain-hit') return false;
+  const ok = scriptLandHit(s);
+  if (s.status === 'playing' && s.script) enter(s, 'done');
+  return ok;
 }
 
 /** 각본 전투를 끝까지 돌린다 (헤드리스 — 봇·시험): 설명은 바로 넘기고, 막기·블록은 기다리는 즉시 쓴다. 결과는 언제나 같다 */

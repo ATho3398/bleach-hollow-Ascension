@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { HOME_INTRO, RECOVER_SCENES, helpVars, renderHelpText } from '../src/data/help';
 import { FACTIONS } from '../src/data/factions';
 import { lastShownStage } from '../src/ui/tutorialOverlay';
-import { actionBusy, beginAction, tween, ACTION_FILL_MS, SPA_TUTORIAL_FILL_MS } from '../src/ui/bha/actionFx';
+import { actionBusy, beginAction, tween, ACTION_FILL_MS } from '../src/ui/bha/actionFx';
 import { SPA_PATH } from '../src/ui/spaView';
 import { standFoot } from '../src/ui/worldMapView';
 import { ScreenStack } from '../src/ui/bha/select';
@@ -18,18 +18,18 @@ describe('132장 1 카드가 누를 때마다 다음 대상으로', () => {
     expect(lastShownStage([false, false, true, false])).toBe(2);
     expect(lastShownStage([false, false])).toBe(0);
   });
-  it('여러 번 누르는 회복 안내 카드 = 단계가 있다 (치료제·포션: 카드 → [사용], 온천: 밖으로 → 시장 → 온천 → 쉬는 중, 먹이: [먹이] → 고르기)', () => {
+  it('여러 번 누르는 회복 안내 카드 = 단계가 있다 (구급상자: 카드 → [사용], 온천: 밖으로 → 시장 → 온천 → 쉬는 중, 먹이: [먹이] → 고르기)', () => {
     const by = Object.fromEntries(RECOVER_SCENES.map((s) => [s.id, s]));
     expect(by.cure!.stages!.map((s) => s.targets[0])).toEqual(['@[data-item="med-cure"]', '@.bha-itemdialog[data-item-dialog="med-cure"] [data-act="use"]']);
-    expect(by.potion!.stages![1]!.targets[0]).toBe('@.bha-itemdialog[data-item-dialog="w-hp-potion"] [data-act="use"]');
-    expect(by['to-spa']!.stages!.map((s) => s.targets.at(-1))).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="market"]', '@.bha-market [data-spot="spa"]', '@.bha-spa__actor']);
+    expect(by.potion).toBeUndefined(); // 방 포션 단계 삭제 (C.223, GDD 144장 4)
+    expect(by['to-spa']!.stages!.map((s) => s.targets.at(-1))).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="spa"]', '@.bha-spa__actor']); // 월드맵 경유 (C.228)
     expect(by.feed!.stages![1]!.avoid).toEqual(['@.bha-homedock__tray--food']); // 열린 도시락 목록을 가리지 않는다
     expect(HOME_INTRO.last.stages!.map((s) => s.targets[0])).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="adventure"]']);
   });
   it('단계 문구는 두 종족 모두 채워지고, 한 카드 2줄 이내', () => {
     const extra = {
-      chestName: '가방', spaName: '온천', marketName: '시장', dyingPct: '10', potionPct: '50', spaToPct: '80', spaHpPct: '10', spaFullness: '10', spaCond: '1', idleHpPct: '1',
-      spaPath: '밖으로 → 시장 → 온천', foodName: '도시락', foodId: 'basic', spaFirst: '밖으로', outsideName: '밖으로', doorName: '모험', worldName: '지도', goPath: '',
+      chestName: '가방', spaName: '온천', marketName: '시장', dyingPct: '10', spaToPct: '80', spaHpPct: '10', spaFullness: '10', spaCond: '1', idleHpPct: '1', spaNormalMin: '5',
+      spaPath: '밖으로 → 지도 → 온천', worldMapName: '지도', foodName: '도시락', foodId: 'basic', spaFirst: '밖으로', outsideName: '밖으로', adventureName: '모험', towerName: '도전의 탑', worldName: '지도', goPath: '',
       altarName: '', bookName: '', careNames: '',
     };
     for (const f of FACTIONS) {
@@ -65,9 +65,8 @@ describe('132장 2 월드맵 캐릭터·초점 = 있던 곳', () => {
 });
 
 describe('132장 3 행동 진행 연출', () => {
-  it('연출 시간 = 화면 상수 (아이템·먹이 약 1초, 튜토리얼 온천 약 3초)', () => {
+  it('연출 시간 = 화면 상수 (아이템·먹이 약 1초 — 튜토리얼 온천은 C.214 부터 실제 시간)', () => {
     expect(ACTION_FILL_MS).toBe(1000);
-    expect(SPA_TUTORIAL_FILL_MS).toBe(3000);
     expect(read('src/config/balance.ts')).not.toContain('ACTION_FILL');
   });
   it('연출 중 actionBusy, 끝나면 풀림 (화면 연출이 없는 환경은 바로 끝)', () => {
@@ -87,7 +86,7 @@ describe('132장 3 행동 진행 연출', () => {
     expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actDone || !act.done() || actionBusy()) return;');
     expect(read('src/ui/lcdScreens.ts')).toContain('if (r.ok && !r.spat) useFx(faction, save, e, art, hpBefore, fullBefore);');
     expect(read('src/ui/roomView.ts')).toContain('tween(ACTION_FILL_MS, (t) => {');
-    expect(read('src/ui/app.ts')).toContain('spaTutorialFill(from, homeHp(s).fraction, SPA_TUTORIAL_FILL_MS, { from: cond0, to: s.nest.condition });');
+    expect(read('src/ui/app.ts')).toContain('return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);'); // C.214: 실제 시간으로 spaTo 까지
   });
 });
 

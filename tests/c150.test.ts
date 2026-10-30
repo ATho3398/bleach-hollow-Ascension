@@ -242,7 +242,7 @@ describe('91장 세이브·참고 줄', () => {
     expect(m.runLog.gear).toHaveLength(1);
     raw.shared.gear = { items: [{ uid: 'g1', kind: 'armor', grade: 'rare', star: 99, stats: { hp: 4, nope: 3 }, plus: 77, special: { id: 'sp-x', value: 1 } }, { uid: 'g2', kind: 'hat' }], equipped: { weapon: 'g1', armor: 'g1' }, nextId: 'x' };
     const g = migrateSave(JSON.parse(JSON.stringify(raw)))!.shared.gear;
-    expect(g.items).toEqual([{ uid: 'g1', kind: 'armor', grade: 'rare', star: 5, stats: { hp: 4 }, special: null, plus: GX.maxPlus, gotAt: 0 }]);
+    expect(g.items).toEqual([{ uid: 'g1', kind: 'armor', grade: 'rare', star: 4, stats: { hp: 4 }, special: null, plus: GX.maxPlus, gotAt: 0 }]);
     expect(g.equipped).toEqual({ weapon: null, armor: 'g1', shoes: null, acc1: null, acc2: null });
     expect(g.nextId).toBe(2);
     expect(sanitizeGear(undefined)).toEqual(newGearState());

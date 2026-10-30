@@ -40,6 +40,8 @@
 .bha-exp__corner .bha-btn--icon.bha-btn--small { width: 34px; }
 .bha-exp__hand-count { padding: 2px var(--bha-sp-3); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / 0.5); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
 .bha-lcd .bha-exp.has-sheet .bha-exp__cornerrow .bha-seg, .bha-lcd .bha-exp.has-sheet .bha-exp__cornerrow .bha-btn--icon:not(:last-child), .bha-lcd .bha-exp.has-sheet .bha-exp__hand-count { display: none; }
+/* C.218 (GDD 140장 2): 창이 떠 있으면 뒤 HUD(상태 막대·모서리 버튼)는 창 옆으로 비치지 않게 숨긴다 — 창이 결정만 받는다 (덮개는 그대로) */
+.bha-lcd .bha-exp.has-sheet .bha-exp__chips, .bha-lcd .bha-exp.has-sheet .bha-exp__corner { visibility: hidden; }
 
 /* 머리 위 말풍선 (조우·획득·휴식·경고·일시정지·도착) */
 .bha-exp .bha-exp__msg {
@@ -62,7 +64,8 @@
 .bha-lcd .bha-exp .bha-sheet::before { display: none; }
 .bha-sheet__scroll { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-2); overflow-y: auto; overscroll-behavior: contain; }
 .bha-lcd .bha-exp .bha-sheet > .bha-continue { flex: none; }
-.bha-lcd .bha-exp .bha-sheet > .bha-continue > .bha-grid2 { flex: none; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: var(--bha-sp-3); }
+/* C.218 (GDD 140장 2): [귀환]·[한 바퀴 더] 같은 너비·같은 높이 */
+.bha-lcd .bha-exp .bha-sheet > .bha-continue > .bha-grid2 { flex: none; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--bha-sp-1) var(--bha-sp-3); }
 .bha-lcd .bha-exp .bha-sheet .bha-btn { padding: 0 var(--bha-sp-3); gap: var(--bha-sp-2); }
 .bha-lcd .bha-exp .bha-sheet .bha-btn__label { white-space: nowrap; }
 .bha-lcd .bha-exp .bha-sheet__title { font-size: var(--bha-fs-md); gap: var(--bha-sp-3); }

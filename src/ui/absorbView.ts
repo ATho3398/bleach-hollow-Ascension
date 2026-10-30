@@ -1,6 +1,7 @@
 // 흡수 화면 (GDD 4장, 4-1): 전투 승리 후 흡수 / 놓아줌 → 특성 후보 선택 → 슬롯 장착(가득 차면 교체/포기).
 // 문구는 FactionConfig(absorbActionName, chainName, riskGaugeName, stabilityName …)에서 읽는다.
 import { BALANCE } from '../config/balance';
+import { fixParticles } from '../engine/josa';
 import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
 import { normalSlotNote } from '../data/help/textFormat';
@@ -31,7 +32,7 @@ export function weaknessText(enemy: Pick<EnemyDef, 'element'>, factionId: string
 /** 흡수 안내 (C.125, GDD 70·71장): 조건 없이 이기면 언제나, 특성 후보는 그 적의 속성 특성에서만 */
 export function absorbRuleText(faction: FactionConfig, enemy: Pick<EnemyDef, 'element'>): string {
   // C.176 (GDD 106장 1): 가진 속성이어도 그 속성 블록이 후보로 뜬다 — 가진 블록을 고르면 새 블록 없이 강화만
-  return `이기면 언제나 ${faction.absorbActionName}할 수 있다. 후보는 그 속성(${elementName(enemy.element, faction.id)}) 블록이다. 안 가진 블록은 새 블록 + 강화, 이미 가진 블록(${elementName(NORMAL_ELEMENT, faction.id)}은 기본 블록)은 강화만 오른다.`;
+  return fixParticles(`이기면 언제나 ${faction.absorbActionName}할 수 있다. 후보는 그 속성(${elementName(enemy.element, faction.id)}) 블록이다. 안 가진 블록은 새 블록 + 강화, 이미 가진 블록(${elementName(NORMAL_ELEMENT, faction.id)}은(는) 기본 블록)은 강화만 오른다.`);
 }
 
 /** 한 단계의 두 열 내용: 왼쪽(설명·선택 상대 정보) / 오른쪽(고를 것·조작) — 가로 LCD (T-2) */
@@ -264,9 +265,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const badge = chip(have ? step : '새 블록');
     badge.dataset.candStep = have ? 'owned' : 'new';
     top.append(el('span', 'bha-cand__name', traitName(id, faction.id)), badge, ...traitTags(id));
-    const foot = el('span', 'bha-cand__foot', have ? `이미 가진 블록 — 고르면 ${elementName(t.element, faction.id)} 강화만 (${step})` : `새 블록을 얻는다 · ${elementName(t.element, faction.id)} ${step}`);
+    // 강화 단계는 머리 배지에 있으니 아래 줄은 한 번만 짧게 (C.218, GDD 140장 3)
+    const foot = el('span', 'bha-cand__foot');
+    foot.append(el('span', '', have ? `이미 가진 블록 — ${elementName(t.element, faction.id)} 강화만` : `새 블록 · ${elementName(t.element, faction.id)} ${step}`));
     // 카드 자체가 고르기 버튼이라는 표시 (GDD 100장 #50)
-    if (tagName === 'button') foot.append(' · ', el('b', '', '✓ 고르기'));
+    if (tagName === 'button') foot.append(el('b', 'bha-cand__pick', '✓ 고르기'));
     const body = el('span', 'bha-cand__body');
     body.append(top, el('span', 'bha-cand__desc', plainText(traitDescription(id, faction.id))), foot);
     c.append(mark, body);

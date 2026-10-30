@@ -7,7 +7,7 @@
     { "id": "first-chain3", "check": "chain3", "text": "첫 3{chainName} 기술 쓰기", "reward": { "food": { "basic": 2 } } },
     { "id": "first-evolution", "check": "evolved", "text": "첫 진화", "reward": { "food": { "hearty": 2 } } },
     { "id": "first-elite", "check": "eliteWin", "text": "첫 강적 처치", "reward": { "food": { "hearty": 1 }, "soulCrystals": 1 } },
-    { "id": "tier5", "check": "tier5", "text": "5단계({tier5}) 도달", "reward": { "food": { "tonic": 2 }, "soulCrystals": 3 } },
+    { "id": "tier5", "check": "tier5", "text": "4단계({tier4}) 도달", "reward": { "food": { "tonic": 2 }, "soulCrystals": 3 } },
     { "id": "first-rank", "check": "ranked", "text": "첫 등급 따기 ({rankBattleName})", "reward": { "soulCrystals": 3 } },
     { "id": "first-training", "check": "training", "text": "첫 수련 완료 (해방 해금)", "reward": { "food": { "feast": 1 }, "soulCrystals": 5 } },
     { "id": "first-rebirth", "check": "rebirth", "text": "첫 환생", "reward": { "soulCrystals": 5 } }

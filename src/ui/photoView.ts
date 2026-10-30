@@ -5,7 +5,7 @@ import { formName, tryGetForm } from '../data/evolution';
 import { getCosmetic } from '../data/shop';
 import { marketOf, roomOf, type FactionConfig } from '../engine/faction';
 import { formDisplayName, playerElementsOf } from '../engine/evolution';
-import { artSkinOf, type SaveData } from '../game';
+import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { button, el, seg } from './bha/dom';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
@@ -19,7 +19,7 @@ const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '
 /** 지금 방 장면을 사진 재료로 (입은 꾸밈의 모양 키만 뽑는다) */
 export function photoSceneOf(faction: FactionConfig, save: SaveData, frameId: string | null, date: Date): PhotoScene {
   const room = roomOf(faction);
-  const art = roomCharArt(room, faction.id, save.evolution.tierIndex, artSkinOf(save));
+  const art = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
   const look = (id: string | undefined): string | undefined => getCosmetic(id)?.look;
   const frame = frameChoices(save.shared.cosmetics).find((f) => f.id === frameId) ?? frameChoices([])[0]!;
@@ -64,7 +64,7 @@ export function photoView(dev: Device, faction: FactionConfig, save: SaveData): 
     showToast({ eyebrow: '사진', title: ok ? '저장했다' : '저장하지 못했다', meta: ok ? name : '이 기기에서 파일 저장을 막았다' }, 0, 2600);
   } });
   saveBtn.dataset.sc = 'photo-save';
-  const hint = el('p', 'bha-faint', choices.length > 1 ? '액자를 고르고 [사진 저장]을 누른다. 기본 액자는 무료이고, 다른 액자는 상점 스킨 탭에서 산다.' : `기본 액자는 무료다. 다른 액자는 ${marketOf(faction).name}의 상점 스킨 탭에서 산다.`);
+  const hint = el('p', 'bha-faint', choices.length > 1 ? '액자를 고르고 [사진 저장]을 누른다. 기본 액자는 무료이고, 다른 액자는 ' + marketOf(faction).props.skinShop + '에서 산다.' : `기본 액자는 무료다. 다른 액자는 ${marketOf(faction).name}의 ${marketOf(faction).props.skinShop}에서 산다.`);
   const page = lcdPage(root, { cls: 'bha-photo', cols: 'minmax(0, 1.5fr) minmax(0, 1fr)' }, lcdHead({ title: '사진', sub: '지금 방 모습을 PNG 로 저장한다.' }), [canvas], [el('b', 'bha-label', '액자'), selectLast(frames), hint, saveBtn]);
   page.app.dataset.frame = frameId ?? 'default';
   void paint();

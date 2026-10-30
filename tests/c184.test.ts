@@ -6,7 +6,7 @@ import { NORMAL_ELEMENT } from '../src/data/elements';
 import { addEnhance, basicAttackMultiplier, buildCombatParams, dropBasicBlockTraits, enhanceLevel, gainTrait, isBasicBlockTrait, newBuild, ownsTraitBlock } from '../src/engine/absorb';
 import { BALANCE } from '../src/config/balance';
 import { advance, chooseAbsorb, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
-import { dominantElement, evolutionCandidates, judgeElementCounts, vastoNormalElement } from '../src/engine/evolution/judge';
+import { dominantElement, evolutionCandidates, judgeElementCounts, tier3Element } from '../src/engine/evolution/judge';
 import { newEvolution } from '../src/engine/evolution';
 import { fillDefaultTraits, newTestSave, setTraitSlots } from '../src/engine/testMode';
 import { MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, migrateSave, newSaveData } from '../src/game';
@@ -111,7 +111,7 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
     addEnhance(b, NORMAL_ELEMENT);
     expect(judgeElementCounts(b)).toEqual({ fire: 1, normal: 2 });
     expect(dominantElement(b)).toBe('normal');
-    expect(vastoNormalElement(b)).toBe('normal');
+    expect(tier3Element(b)).toBe('normal');
     gainTrait(b, 't-water-a');
     expect(judgeElementCounts(b)).toEqual({ fire: 1, water: 1, normal: 1 });
     expect(dominantElement(b)).toBe('water'); // 동률: 가장 최근 장착
@@ -121,17 +121,17 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
   });
   it('노멀 강화 + 칸 1개만 장착한 몸은 바스트로데_노멀 (칸을 일부러 비우지 않아도)', () => {
     const e = newEvolution(1);
-    e.tierIndex = 2;
+    e.tierIndex = 1;
     const b = newBuild();
     b.enhance = { [NORMAL_ELEMENT]: 2 };
     gainTrait(b, 't-earth-a');
-    expect(evolutionCandidates(e, { factionId: 'hollow', build: b, hunger: 20, condition: 80 }).normal.id).toBe('t4:normal');
+    expect(evolutionCandidates(e, { factionId: 'hollow', build: b, hunger: 20, condition: 80 }).normal.id).toBe('t3:normal');
   });
 });
 
 describe('111장 2: 옛 노멀 특성 정리 (마이그레이션 없음)', () => {
   it('형식·문턱 51 같이 올림', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([56, 54]); // C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
   });
   it('불러올 때 보유·슬롯·장착 순서의 노멀 skill 특성을 지운다(다른 특성·노멀 패시브·강화는 그대로)', () => {
     const s = newSaveData('hollow');

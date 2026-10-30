@@ -49,7 +49,7 @@ export interface LineageRecord {
 export interface RiskRecord {
   /** 역대 리스크 게이지 최고치 */
   peak: number;
-  /** 한계 돌파 횟수 */
+  /** 폭주(호로화) 횟수 */
   breakthroughs: number;
   /** 돌파 후 생존 횟수 */
   survivedBreakthroughs: number;
@@ -194,6 +194,8 @@ export interface EvolutionRecord {
   at: number;
   /** C.9 호환용 = toFormId. 새 기록에도 채운다 */
   formId: string;
+  /** C.225 (GDD 148장) → C.226 (149장): 이 진화로 특성을 받은 결과 — new 새로 받음 · replaced 3단계 특성(from) → 새 특성 · owned 이미 가져 안 받음(from = 사라진 3단계 특성) · full 칸이 없어 못 받음 (C.225 의 enhanced 는 옛 기록에만). 특성을 주지 않는 진화면 없음 */
+  abilityGain?: { kind: 'new' | 'replaced' | 'enhanced' | 'owned' | 'full'; id: string; from?: string; /** C.227 (GDD 150장 3): 진화 특성 칸을 비우려고 보유 목록으로 뺀 탈착 특성 */ bumped?: string };
   /** C.9 필드(조합 키, 진화 순간의 안정 수치): 의미가 사라져 새 기록에서는 비운다. C.9 기록에만 있다 */
   comboKey?: string;
   stability?: number;
@@ -215,6 +217,19 @@ export interface RankChangeRecord {
 }
 
 /** 등급전 1회 기록 (GDD 21장, 세이브 형식 15): 이기든 지든 남긴다. 히든 등급·태그·해방 조건이 나중에 읽는다 */
+/** 아란칼화 / 참백도 구상화 도전 한 판 (C.220): 보스 id·★·승패·그때 진화체 */
+export interface AscensionRecord {
+  at: number;
+  factionId: string;
+  bossId: string;
+  difficulty: number;
+  won: boolean;
+  seed: number;
+  durationSeconds: number;
+  tierIndex: number;
+  formId: string | null;
+}
+
 export interface RankBattleRecord {
   /** 시각(ms) */
   at: number;
@@ -248,7 +263,7 @@ export interface RunRecord {
   endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort';
   seed: number;
   factionId: string;
-  /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 한계 돌파 여부 */
+  /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 폭주(호로화) 여부 */
   gainedTraits: string[];
   lostTraits: string[];
   riskPeak: number;
@@ -373,6 +388,8 @@ export interface RunLog {
   runs: RunRecord[];
   /** 수련 기록 (C.54, 세이브 형식 18) */
   trainings: TrainingRecord[];
+  /** 아란칼화 / 참백도 구상화 도전 기록 (C.220, 세이브 형식 57, GDD 126장 3 — 지금은 보스전 임시). 옛 세이브엔 없음 */
+  ascensions?: AscensionRecord[];
   /** 환생 기록 (C.56, 세이브 형식 20) */
   rebirths: RebirthRecord[];
   /** 보스전·스토리 화 기록 (C.58, 세이브 형식 22) */
@@ -435,11 +452,14 @@ export interface VitalRecord {
 }
 
 /** 홈 회복 1건 (GDD 123장 4, C.198): spa = 온천에 있다 나옴(at = 나온 시각, since = 들어간 시각, reason = full 체력 상한 · hungry 배부름 0 · left 뒤로 · away 끊김),
- *  potion = 체력 포션. hpFrom·hpTo = 최대 체력 대비 비율, fullness = 배부름(온천만). dying = 빈사 중(상한 10%) */
+ *  potion = 옛 체력 포션(C.223 전 기록). evolution = 진화 순간 체력 가득(GDD 145장 2) · item = 원정 걷기 중 회복 물건(GDD 144장 3, itemId·원정 체력 비율, 형식 57).
+ *  hpFrom·hpTo = 최대 체력 대비 비율, fullness = 배부름(온천만). dying = 빈사 중(상한 10%) */
 export interface HomeHealRecord {
   at: number;
   factionId: string;
-  kind: 'spa' | 'potion';
+  kind: 'spa' | 'potion' | 'evolution' | 'item';
+  /** kind 'item': 쓴 회복 물건 품목 id */
+  itemId?: string;
   hpFrom: number;
   hpTo: number;
   since?: number;

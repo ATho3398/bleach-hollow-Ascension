@@ -1,4 +1,4 @@
-// C.211 (GDD 134장 1·2·3): 시작 치료제 3개 · 튜토리얼 치명상 장면 → 빈사 설명 · 단계별 진화 이유 문구
+// C.211 (GDD 134장 1·2·3): 시작 구급상자 3개 · 튜토리얼 치명상 장면 → 빈사 설명 · 단계별 진화 이유 문구
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
@@ -14,12 +14,12 @@ import hollowRaw from '../src/data/factions/hollow.json';
 
 const START = BALANCE.provisional.startItems[CURE_ITEM_ID]!;
 
-describe('134장 1: 새 세이브 = 가방에 치료제 3개, 안내용 치료제는 따로', () => {
+describe('134장 1: 새 세이브 = 가방에 구급상자 3개, 안내용 구급상자는 따로', () => {
   it('시작 수는 balance provisional 3개', () => {
     expect(START).toBe(3);
     for (const f of FACTIONS) expect(newSaveData(f.id, 1000).shared.items[CURE_ITEM_ID]).toBe(START);
   });
-  it('튜토리얼 원정 → 회복 안내 치료제 사용 뒤에도 3개 남는다', () => {
+  it('튜토리얼 원정 → 회복 안내 구급상자 사용 뒤에도 3개 남는다', () => {
     for (const f of FACTIONS) {
       const save = newSaveData(f.id, 1000);
       const exp = createExpedition({
@@ -36,7 +36,7 @@ describe('134장 1: 새 세이브 = 가방에 치료제 3개, 안내용 치료�
       expect(save.shared.items[CURE_ITEM_ID]).toBe(START);
     }
   });
-  it('진행 중 세이브(시작 치료제 없음)에는 소급하지 않는다: 안내용 1개만', () => {
+  it('진행 중 세이브(시작 구급상자 없음)에는 소급하지 않는다: 안내용 1개만', () => {
     const save = newSaveData('hollow', 1000);
     save.shared.items = {};
     save.nest.collapsed = true;
@@ -57,14 +57,14 @@ describe('134장 2: 튜토리얼 흡수 직후 치명상 카드 → 귀환 → �
       for (const c of f.tutorialWound) expect(c.body.split('\n').length).toBeLessThanOrEqual(2);
     }
   });
-  it('회복 안내 첫 카드 = 빈사 설명 2줄(사망·치료제)', () => {
+  it('회복 안내 첫 카드 = 빈사 설명 2줄(사망·구급상자)', () => {
     const first = RECOVER_SCENES[0]!;
     expect(first.id).toBe('dying');
     expect(first.title).toBe('빈사');
     const lines = first.body.split('\n');
     expect(lines).toHaveLength(2);
     expect(first.body).toContain('사망');
-    expect(first.body).toContain('치료제');
+    expect(first.body).toContain('구급상자');
   });
   it('흡수 → 원정 끝이면 치명상 장면을 거쳐 endExpedition (종족 분기 없음)', () => {
     const app = readFileSync('src/ui/app.ts', 'utf8');
@@ -80,13 +80,13 @@ describe('134장 3: 진화 이유 문구 (종족 설정)', () => {
   const sh = FACTIONS.find((f) => f.tierNames[1] === '영술원 학생')!;
   it('사신: 혼백 → 영술원 학생 = 진앙영술원 합격, 학생 → 다음 = 경쟁을 뚫고 정식 사신', () => {
     expect(sh.evolutionReasons[1]!.join(' ')).toMatch(/평범한 영혼.*뛰어난 능력.*진앙영술원에 합격/);
-    expect(sh.evolutionReasons[2]!.join(' ')).toMatch(/진앙영술원의 치열한 경쟁을 뚫.*정식 사신/);
+    expect(sh.evolutionReasons[2]!.join(' ')).toMatch(/진앙영술원의 치열한 경쟁을 뚫.*평대원/); // C.220: 견습 대원 삭제 — 학생 → 평대원
   });
   it('모든 종족·모든 진화 단계에 1~2줄, 문장마다 마침표, 1단계는 비어 있음', () => {
     for (const f of FACTIONS) {
-      expect(f.evolutionReasons).toHaveLength(5);
+      expect(f.evolutionReasons).toHaveLength(4);
       expect(f.evolutionReasons[0]).toEqual([]);
-      for (let i = 1; i < 5; i++) {
+      for (let i = 1; i < 4; i++) {
         const r = f.evolutionReasons[i]!;
         expect(r.length).toBeGreaterThanOrEqual(1);
         expect(r.length).toBeLessThanOrEqual(2);
@@ -109,36 +109,37 @@ describe('134장 3: 진화 이유 문구 (종족 설정)', () => {
 
 describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', () => {
   const CP = BALANCE.provisional.nest.care;
-  const SP = BALANCE.provisional.nest.homeHp.spa;
+  const SP = BALANCE.provisional.nest.homeHp.tutorialSpa; // C.223: 1초 +10 은 튜토리얼 온천만 (GDD 145장 1)
   const nestAt = (fullness: number, condition: number) => {
     const n = newNest(0);
     n.hunger = 100 - fullness;
     n.condition = condition;
     return n;
   };
-  it('1 홈 대기: 배부름 70 이상이면 시간당 +5 (최대 100), 30~70 사이는 그대로, 30 이하는 −4', () => {
-    expect([CP.conditionRegenAtFullness, CP.conditionRegenPerHour]).toEqual([70, 5]);
+  it('1 홈 대기: 컨디션은 저절로 안 찬다 (GDD 135장 수정 v5.315) — 30 초과는 그대로, 30 이하는 −4', () => {
+    expect(CP).not.toHaveProperty('conditionRegenAtFullness');
+    expect(CP).not.toHaveProperty('conditionRegenPerHour');
     const hi = nestAt(100, 50);
     passNestTime(hi, 1, false, 3_600_000);
-    expect(hi.condition).toBeCloseTo(55, 6);
+    expect(hi.condition).toBeCloseTo(50, 6);
     const mid = nestAt(60, 50);
     passNestTime(mid, 1, true, 3_600_000);
     expect(mid.condition).toBeCloseTo(50, 6);
     const lo = nestAt(20, 50);
     passNestTime(lo, 1, false, 3_600_000);
     expect(lo.condition).toBeCloseTo(46, 6);
-    const cap = nestAt(100, 99);
-    passNestTime(cap, 2, true, 7_200_000);
-    expect(cap.condition).toBe(100);
+    const off = nestAt(100, 99);
+    passNestTime(off, 2, true, 7_200_000);
+    expect(off.condition).toBeCloseTo(99, 6);
   });
-  it('2 온천: 1분에 컨디션 +1, 체력이 가득이어도 컨디션이 덜 차면 안 나온다 · 둘 다 가득이면 못 들어간다', () => {
-    expect(SP.conditionPerMinute).toBe(1);
-    const n = nestAt(100, 90);
+  it('2 온천: 1초에 컨디션 +10 (C.214 139장 2), 체력이 가득이어도 컨디션이 덜 차면 안 나온다 · 둘 다 가득이면 못 들어간다', () => {
+    expect(SP.conditionPerSecond).toBe(10);
+    const n = nestAt(100, 40);
     n.hpFraction = 0.95;
-    expect(enterSpa(n, 0)).toBeNull();
-    const r = soakSpa(n, 5, 0); // 체력은 0.5분이면 가득, 컨디션은 5분 → +5
+    expect(enterSpa(n, 0, true)).toBeNull();
+    const r = soakSpa(n, 5 / 60, 0); // 체력은 0.5초면 가득, 컨디션은 5초 → +50
     expect(r.ended).toBeNull();
-    expect(n.condition).toBeCloseTo(95, 6);
+    expect(n.condition).toBeCloseTo(90, 6);
     expect(n.hpFraction).toBe(1);
     const r2 = soakSpa(n, 20, 300_000);
     expect(r2.ended?.reason).toBe('full');
@@ -149,21 +150,25 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
     n.hunger = 0;
     expect(enterSpa(n, 0)).toBeNull(); // 체력 가득이어도 컨디션이 덜 차면 들어간다
   });
-  it('2 온천 시간은 홈 대기 +5 를 빼고 온천 규칙만', () => {
+  it('2 온천 시간은 온천 규칙만 (1초에 +10)', () => {
     const n = nestAt(100, 50);
     n.hpFraction = 0.5;
-    enterSpa(n, 0);
-    passNestTime(n, 0.1, false, 360_000); // 온천 6분: 컨디션 +6 (홈 대기 +5/시 = +0.5 는 안 붙는다)
+    enterSpa(n, 0, true);
+    passNestTime(n, 3 / 3600, false, 3_000); // 온천 3초: 컨디션 +30, 체력 +30%
     expect(n.spa).not.toBeNull();
-    expect(n.condition).toBeCloseTo(56, 6);
+    expect(n.condition).toBeCloseTo(80, 6);
+    expect(n.hpFraction).toBeCloseTo(0.8, 6);
   });
-  it('3 컨디션·배부름 ⓘ 와 온천 ⓘ 에 회복 문구', () => {
+  it('3 컨디션 ⓘ·온천 ⓘ 에 온천 회복 문구, 배부름 홈 대기 회복 문구는 없음 (수정 v5.315)', () => {
     for (const f of FACTIONS) {
       const cond = statusInfo('cond', f).groups.flatMap((g) => g.lines).join('\n');
-      expect(cond).toContain(`${CP.conditionRegenAtFullness} 이상: 쉬는 동안 시간당 +${CP.conditionRegenPerHour}`);
-      expect(cond).toMatch(/1분에 \+1/);
-      expect(statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n')).toContain('컨디션이 시간당 +5');
+      expect(cond).not.toContain('쉬는 동안');
+      expect(cond).not.toContain('70 이상');
+      expect(cond).toMatch(/1분에 \+20/); // 평소 온천 (C.223, GDD 145장 1)
+      const hunger = statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n');
+      expect(hunger).not.toContain('쉬는 동안');
+      expect(hunger).not.toContain('컨디션이 시간당 +');
     }
-    expect(readFileSync('src/ui/spaView.ts', 'utf8')).toContain('컨디션 +${SP.conditionPerMinute}');
+    expect(readFileSync('src/ui/spaView.ts', 'utf8')).toContain('컨디션 +${fmt(r.conditionPerSecond * k)}');
   });
 });

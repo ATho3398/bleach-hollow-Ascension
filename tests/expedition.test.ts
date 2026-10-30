@@ -170,7 +170,7 @@ describe('패배', () => {
     expect(exp.endReason).toBe('battle-lost');
   });
 
-  it('패배는 사망이 아니다: 둥지로 돌아오고 쓰러짐 상태가 되며(GDD 102-3) 재우기로는 안 풀리고 치료제로 풀린다', () => {
+  it('패배는 사망이 아니다: 둥지로 돌아오고 쓰러짐 상태가 되며(GDD 102-3) 재우기로는 안 풀리고 구급상자로 풀린다', () => {
     const save = newSaveData('hollow', 0);
     const exp = mk({ seed: 10, runId: nextRunId(save) });
     walkToStop(exp);

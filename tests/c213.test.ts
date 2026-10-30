@@ -49,13 +49,13 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     return raw;
   };
   it('단계 표에 55 가 있고 형식은 56', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(56);
+    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[55]).toBe('function');
   });
   it('가진 희귀 특성 → 같은 속성 강화 1단계, 다른 값과 런 로그 옛 기록은 그대로', () => {
     const m = migrateSave(v55())!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(56);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.build.owned).toEqual(['t-earth-a']);
     expect(m.build.slots).toEqual(['t-earth-a', null, null]);
     expect(m.build.equipOrder).toEqual(['t-earth-a']);
@@ -66,7 +66,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     const raw = v55();
     (raw.meta as { format: number }).format = 54;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(56);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.build.enhance).toEqual({ earth: 3 });
   });
   it('쉬는 트랙도 바꾼다', () => {
@@ -104,7 +104,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     const st = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };
     writeSave(st, v55() as unknown as SaveData);
     const back = loadSave(st)!;
-    expect(back.meta.format).toBe(56);
+    expect(back.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(back.build.enhance).toEqual({ earth: 3 });
   });
 });
@@ -130,10 +130,10 @@ describe("136장 2: '한계 돌파' 표시 문구 → 폭주(호로)·호로화(
   it('폭주 고유 특성·진화 힌트·외형 이름은 종족 설정 frenzyName', async () => {
     const { abilityNameByEffect, abilityTextName, uniqueAbility, formHint, FORM_TABLE } = await import('../src/data/evolution');
     const { getFaction } = await import('../src/data/factions');
-    expect(abilityTextName(uniqueAbility('limit'), 'hollow')).toBe(getFaction('hollow').frenzyName);
-    expect(abilityTextName(uniqueAbility('limit'), 'shinigami')).toBe('호로화');
-    expect(abilityNameByEffect('desperate', 'hollow')).toBe('폭주');
-    const limit = (FORM_TABLE as readonly { label: { kind: string } }[]).find((f) => f.label.kind === 'limit');
+    expect(abilityTextName(uniqueAbility('frenzy'), 'hollow')).toBe(`${getFaction('hollow').frenzyName} 본능`);
+    expect(abilityTextName(uniqueAbility('frenzy'), 'shinigami')).toBe('호로화 본능');
+    expect(abilityNameByEffect('desperate', 'hollow')).toBe('폭주 본능');
+    const limit = (FORM_TABLE as readonly { label: { kind: string } }[]).find((f) => f.label.kind === 'frenzy');
     expect(limit).toBeDefined();
     expect(formHint(limit as never, 'shinigami')).toContain('호로화');
     const { SKINS } = await import('../src/data/skins');

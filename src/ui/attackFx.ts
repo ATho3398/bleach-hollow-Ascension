@@ -33,6 +33,10 @@ export interface AttackCue {
   motion?: FamilyMotionKind;
   /** 즉발 (GDD 117장 3, 블록 공격): 타격(맞음 반응·자국)을 맨 앞에 보이고 몸 움직임은 뒤따른다. 재생 중인 기본 공격 연출을 기다리지 않는다 */
   instant?: boolean;
+  /** 각본 마무리 체인 (GDD 146장): 즉발처럼 기다리지 않고 바로 시작하되, 동작을 처음부터(휘두르기 → 스킬 → 타격) 보인다 */
+  windup?: boolean;
+  /** 연출이 적에게 닿는 순간(마지막 타격) 한 번 부른다 — 각본 전투가 이때 피해를 넣는다 (GDD 146장) */
+  onLand?: () => void;
 }
 
 /** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
@@ -106,6 +110,16 @@ export function familyHits(stage: number, firstMs: number): FamilyHit[] {
   }));
 }
 
+/**
+ * 연출이 적에게 닿는 순간(ms, 1배, 시작부터) (GDD 146장): 계열 공격이면 마지막 타격, 아니면 첫 타격(hitAtMs).
+ * 각본 마무리 체인은 이 순간에 피해가 들어간다 — 언제나 hitAtMs(동작이 닿는 때) 이상이다
+ */
+export function landAtMs(hitAtMs: number, stage: number | null): number {
+  if (stage === null) return hitAtMs;
+  const hits = familyHits(stage, hitAtMs);
+  return hits[hits.length - 1]!.atMs;
+}
+
 /** 이 단계에서 화면을 흔드는가 */
 export const familyShakes = (stage: number): boolean => FAMILY_STAGE_FX[familyStage(stage) - 1]!.shake;
 
@@ -164,7 +178,8 @@ export class AttackQueue {
 
   /** 결과: started 바로 재생 / queued 대기 / replaced 대기 중이던 것을 바꿈 / dropped 새 것을 버림 */
   push(cue: AttackCue): 'started' | 'queued' | 'replaced' | 'dropped' {
-    if (!this.running || (cue.instant && !this.running.instant)) {
+    // 각본 마무리 체인(windup)은 무엇이 재생 중이든 바로 (GDD 146장 — 닿는 순간 피해가 들어가므로 기다리면 안 된다)
+    if (!this.running || cue.windup || (cue.instant && !this.running.instant)) {
       this.start(cue);
       return 'started';
     }
@@ -325,7 +340,7 @@ export function animActionOf(cue: Pick<AttackCue, 'ult' | 'fx' | 'tier'>, has: (
 
 export interface AttackFxDriver {
   /** 사건을 연출로 바꿔 큐에 넣는다. 연출이 필요 없는 사건이면 false */
-  react(e: CombatEvent): boolean;
+  react(e: CombatEvent, extra?: Pick<AttackCue, 'windup' | 'onLand'>): boolean;
   /** 배속(1~4) 바꾸기: 재생 중인 연출도 따라간다 */
   setSpeed(speed: number): void;
   /** 일시정지/재개: 재생 중인 연출을 멈췄다 이어간다 */
@@ -540,7 +555,8 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       ], travel + 120, delay, fam);
       const len = Math.hypot(dx, dy);
       const thick = Math.max(6, from.h * 0.1 * scale);
-      const ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+      // 왼쪽으로 쏠 때(dx < 0)는 오른쪽 끝(쏘는 쪽)을 기준점으로, 뒤집힌 방향의 각도만큼만 돌린다 (C.216 — 180° 돌리면 광선이 반대쪽으로 뻗었다)
+      const ang = (Math.atan2(dx >= 0 ? dy : -dy, dx >= 0 ? dx : -dx) * 180) / Math.PI;
       const b = spawn(layer, 'bha-afx--ray', '', from.x + dx / 2, from.y + dy / 2, len, thick, [
         { offset: 0, opacity: 0, transform: `rotate(${ang}deg) scaleX(0)` },
         { offset: 0.25, opacity: 1, transform: `rotate(${ang}deg) scaleX(1)` },
@@ -596,8 +612,21 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     const from = cue.side === 'player' ? opts.player : opts.enemy;
     const to = cue.side === 'player' ? opts.enemy : opts.player;
     const level = ATTACK_FX[cue.tier];
+    // 닿는 순간 알림 (GDD 146장): 한 번만, 연출과 같이 배속·일시정지를 따른다 (안전장치 setTimeout 도 같이)
+    let landed = !cue.onLand;
+    const land = () => {
+      if (landed) return;
+      landed = true;
+      cue.onLand!();
+    };
+    const landAt = (ms: number) => {
+      if (landed) return;
+      after(from.root, ms, land);
+      window.setTimeout(land, ms / rate + FX_SAFETY_MS);
+    };
     if (!canAnimate(from.root) || !canAnimate(to.body)) {
       done();
+      land();
       return;
     }
     const layer = opts.layer && canAnimate(opts.layer) ? opts.layer : null;
@@ -606,11 +635,13 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 타격 순간은 애니의 hit 프레임. 동작이 없으면 아래 기존 연출 그대로
     // 즉발(블록 공격, GDD 117장 3): 애니는 타격 순간부터(휘두른 끝 → 되돌아옴), 맞음 반응은 0ms
     const act = from.anim ? animActionOf(cue, (a) => from.anim!.has(a)) : null;
-    const clipPlay = act ? from.anim!.play(act, { fromHit: !!cue.instant, motion: cue.motion }) : null;
+    const quick = !!cue.instant && !cue.windup; // 즉발: 타격 순간부터 / 각본 마무리 체인: 동작 처음부터
+    const clipPlay = act ? from.anim!.play(act, { fromHit: quick, motion: cue.motion }) : null;
     if (mode === 'flash') {
       // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰)
       const at = clipPlay?.hitAtMs ?? 0;
       hit(to, level, cue.guarded, at);
+      landAt(at);
       const ms = Math.max(at + Math.max(level.hitMs, HIT_FLASH_MIN_MS), clipPlay?.durationMs ?? 0);
       after(from.root, ms, done);
       window.setTimeout(done, ms / rate + FX_SAFETY_MS); // 안전장치
@@ -643,7 +674,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       ga.addEventListener('cancel', rm);
     }
     let endAt = plan.durationMs;
-    const hitAt = cue.instant ? 0 : plan.hitAtMs;
+    const hitAt = quick ? 0 : plan.hitAtMs;
     if (cue.fx && motion) {
       // 계열 공격 (GDD 19-2): 단계만큼 타격 + 종류별 자국, 3단계는 크게 + 흔들림
       const stage = cue.stage ?? 1;
@@ -662,10 +693,12 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       }
       spawnLook = null;
       for (const h of hits) hit(to, level, cue.guarded, h.atMs);
+      landAt(landAtMs(hitAt, stage));
       if (familyShakes(stage) && opts.shake) after(from.root, hits[hits.length - 1]!.atMs, opts.shake);
       endAt = Math.max(endAt, hits[hits.length - 1]!.atMs + motion.markMs * 0.6);
     } else {
       hit(to, level, cue.guarded, hitAt);
+      landAt(landAtMs(hitAt, null));
     }
     let ended = false;
     const end = () => {
@@ -686,9 +719,13 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
   const queues: Record<Side, AttackQueue> = { player: new AttackQueue(run), enemy: new AttackQueue(run) };
 
   return {
-    react(e) {
+    react(e, extra) {
       const cue = attackCueOf(e, opts.top, opts.familyFx);
-      if (!cue) return false;
+      if (!cue) {
+        extra?.onLand?.(); // 연출이 없는 사건이면 바로 닿은 것으로
+        return false;
+      }
+      if (extra) Object.assign(cue, extra);
       const nm = opts.nameOf?.(e);
       if (nm) {
         cue.name = nm.name;

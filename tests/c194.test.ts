@@ -33,8 +33,9 @@ function allLooks(): Look[] {
   const out: Look[] = [];
   for (const f of FACTIONS) {
     const room = roomOf(f);
-    for (let tier = 0; tier < f.tierNames.length; tier++) {
-      const forms: (string | null)[] = tier === 0 ? [null] : FORM_TABLE.filter((x) => x.tier === tier + 1).map((x) => x.id);
+    // C.220: 그림 단계는 육성 단계 + 아란칼화 그림 단계(종족 설정 ascension.artTier — 호로 5 = 아란칼 모습)까지
+    for (let tier = 0; tier < Math.max(f.tierNames.length, f.ascension.artTier ?? 0); tier++) {
+      const forms: (string | null)[] = tier === 0 ? [null] : FORM_TABLE.filter((x) => x.tier === Math.min(tier + 1, f.tierNames.length)).map((x) => x.id);
       for (const gender of GENDERS as readonly Gender[]) {
         for (const skin of [null, ...skinsFor(f.id).map((s) => s.id)]) {
           const art = charArt(f.id, tier, room.characterArt, '/', undefined, undefined, skin, undefined, gender);

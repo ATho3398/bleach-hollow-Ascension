@@ -20,7 +20,7 @@ export interface NestState {
   weakened: boolean;
   /** 피곤 (GDD 102-2): 컨디션이 care.tiredCondition 이하가 되는 순간. 컨디션을 넘긴 뒤 원정 한 번 또는 에너지 드링크 */
   tired: boolean;
-  /** 빈사 (GDD 102-3, v5.228 수정 — 옛 쓰러짐): collapseHours 미접속 또는 원정 패배. 치료제로만 풀림. 모험은 되지만 체력 10%·속도·보상 절반, 지면 사망 */
+  /** 빈사 (GDD 102-3, v5.228 수정 — 옛 쓰러짐): collapseHours 미접속 또는 원정 패배. 구급상자로만 풀림. 모험은 되지만 체력 10%·속도·보상 절반, 지면 사망 */
   collapsed: boolean;
   /** 빈사가 된 시각(ms). 여기부터 실제 시간 deathHoursOf(교감) 이 지나면 사망. 빈사가 아니면 0 */
   collapsedAt: number;
@@ -57,6 +57,8 @@ export interface SpaStay {
   at: number;
   hp: number;
   fullness: number;
+  /** 튜토리얼 온천 (GDD 145장 1, 형식 57): 옛 빠르기(homeHp.tutorialSpa, 10초에 가득) — 평소 온천은 5분 */
+  fast?: true;
 }
 
 /** 온천에서 나온 결과 (GDD 123장 4): reason = full(체력 상한) / hungry(배부름 0) / left(뒤로) / away(원정·빈사로 끊김) */
@@ -194,12 +196,12 @@ export function spaFull(nest: Pick<NestState, 'hpFraction' | 'collapsed' | 'cond
 }
 
 /** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·체력·컨디션 둘 다 가득(135장 2)·배부름 0 이면 못 들어간다(이유). 들어가면 null */
-export function enterSpa(nest: NestState, nowMs: number): 'dead' | 'already' | 'full' | 'hungry' | null {
+export function enterSpa(nest: NestState, nowMs: number, fast = false): 'dead' | 'already' | 'full' | 'hungry' | null {
   if (nest.dead) return 'dead';
   if (nest.spa) return 'already';
   if (spaFull(nest)) return 'full';
   if (fullnessOfNest(nest) <= 0) return 'hungry';
-  nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest) };
+  nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest), ...(fast ? { fast: true as const } : {}) };
   return null;
 }
 
@@ -208,18 +210,27 @@ export function leaveSpa(nest: NestState, nowMs: number, reason: SpaEnd['reason'
   return closeSpa(nest, nowMs, reason);
 }
 
-/** 온천 시간 한 토막: 1분에 체력 +spa.hpPerMinute·컨디션 +spa.conditionPerMinute(GDD 135장 2)·배부름 −spa.fullnessPerMinute, 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되는 순간 저절로 나온다.
+/** 온천 빠르기 (GDD 145장 1): 평소 = homeHp.spa(약 5분에 가득), 튜토리얼 온천 = homeHp.tutorialSpa(10초) */
+export function spaRateOf(stay: Pick<SpaStay, 'fast'> | null | undefined): { hpPerSecond: number; conditionPerSecond: number; fullnessPerSecond: number } {
+  return stay?.fast ? HH.tutorialSpa : HH.spa;
+}
+
+/** 온천 시간 한 토막: 1초에 체력 +spa.hpPerSecond·컨디션 +spa.conditionPerSecond(GDD 135장 2·139장 2)·배부름 −spa.fullnessPerSecond (아래 계산은 분 단위라 ×60), 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되는 순간 저절로 나온다.
  *  startMs = 이 토막이 시작한 시각(나온 시각 계산용). 온천에서 보낸 분과 나온 결과 */
 function spaStep(nest: NestState, minutes: number, startMs: number): { used: number; ended: SpaEnd | null } {
   if (!nest.spa || minutes <= 0) return { used: 0, ended: null };
   const cap = homeHpCap(nest);
   nest.hpFraction = homeHpOf(nest);
-  const toCap = Math.max(0, (cap - nest.hpFraction) / HH.spa.hpPerMinute, (MAX - nest.condition) / HH.spa.conditionPerMinute);
-  const toEmpty = Math.max(0, fullnessOfNest(nest) / HH.spa.fullnessPerMinute);
+  const rate = spaRateOf(nest.spa);
+  const hpPm = rate.hpPerSecond * 60;
+  const condPm = rate.conditionPerSecond * 60;
+  const fullPm = rate.fullnessPerSecond * 60;
+  const toCap = Math.max(0, (cap - nest.hpFraction) / hpPm, (MAX - nest.condition) / condPm);
+  const toEmpty = Math.max(0, fullnessOfNest(nest) / fullPm);
   const used = Math.min(minutes, toCap, toEmpty);
-  nest.hpFraction = Math.min(cap, nest.hpFraction + used * HH.spa.hpPerMinute);
-  nest.condition = Math.min(MAX, nest.condition + used * HH.spa.conditionPerMinute);
-  nest.hunger = clamp(nest.hunger + used * HH.spa.fullnessPerMinute, 0, 100);
+  nest.hpFraction = Math.min(cap, nest.hpFraction + used * hpPm);
+  nest.condition = Math.min(MAX, nest.condition + used * condPm);
+  nest.hunger = clamp(nest.hunger + used * fullPm, 0, 100);
   const full = spaFull(nest);
   const ended = full || fullnessOfNest(nest) <= 1e-9 ? closeSpa(nest, Math.round(startMs + used * 60_000), full ? 'full' : 'hungry') : null;
   return { used, ended };
@@ -256,7 +267,7 @@ export function passHomeHp(nest: NestState, hours: number, endMs: number): { hp:
 }
 
 /** 시간 흐름 (GDD 102-1): hours 동안 허기 +idleHungerPerHour/시, 배부름 conditionBelowFullness 이하면 컨디션 −conditionPerHour/시(배부름 0 이면 ×2),
- *  배부름 conditionRegenAtFullness 이상이면 컨디션 +conditionRegenPerHour/시(GDD 135장 1 — 온천에 있던 토막은 온천 규칙이라 빼고, 사망이면 없음),
+ *  배부름 30 초과면 컨디션 그대로(홈 대기 회복 없음 — GDD 135장 수정 v5.315, 컨디션은 온천·잠·쓰다듬기로만 오름),
  *  offline(꺼 둔 동안)이면 영압 안정도 −stabilityPerHour/시(배부름 또는 컨디션 stabilityDoubleBelow 이하면 ×2). 0.1시간 걸음으로 나눠 그 순간 값으로 배율을 정하고, 걸음마다 쇠약·피곤을 본다.
  *  리스크·교감은 여기서 안 바뀐다. 변화량(음수 = 줄어듦, 허기는 오른 양)을 돌려준다 */
 export function passNestTime(nest: NestState, hours: number, offline: boolean, endMs: number = Date.now()): TimeFlow {
@@ -264,16 +275,12 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean, e
   // 홈 체력·온천 (GDD 123장 4): 온천 배부름 소모를 먼저 반영하고 아래 걸음이 그 값으로 쇠약·컨디션을 본다
   const home = passHomeHp(nest, hours, endMs);
   let left = Number.isFinite(hours) ? Math.max(0, hours) : 0;
-  let spaLeft = (home.spaMinutes ?? 0) / 60; // 구간 앞쪽의 온천 토막 (passHomeHp 가 먼저 흘렸다)
   while (left > 1e-9) {
     const dt = Math.min(0.1, left);
     left -= dt;
-    const inSpa = Math.min(dt, spaLeft);
-    spaLeft = Math.max(0, spaLeft - dt);
     const full = fullnessOfNest(nest);
     const lowFull = full <= CP.conditionBelowFullness;
     if (lowFull) nest.condition = clamp(nest.condition - CP.conditionPerHour * dt * (full <= 0 ? 2 : 1), 0, MAX);
-    else if (full >= CP.conditionRegenAtFullness && !nest.dead && dt - inSpa > 1e-12) nest.condition = clamp(nest.condition + CP.conditionRegenPerHour * (dt - inSpa), 0, MAX);
     if (offline) nest.stability = clamp(nest.stability - CP.stabilityPerHour * dt * (full <= CP.stabilityDoubleBelow || nest.condition <= CP.stabilityDoubleBelow ? 2 : 1), 0, BALANCE.provisional.risk.stabilityMax);
     nest.hunger = clamp(nest.hunger + NX.idleHungerPerHour * dt, 0, 100);
     refreshCareStatus(nest);
@@ -478,7 +485,7 @@ export function expeditionEndVitals(exp: ExpeditionState): { hunger: number; con
   const defeated = summarize(exp).outcome === 'defeated';
   const hunger = Math.min(100, exp.hunger + (defeated ? NX.defeatHunger : 0));
   let condition = defeated ? Math.min(exp.condition, NX.defeatCondition) : exp.condition;
-  // 폭주(한계 돌파)한 원정에서 돌아오면 컨디션 −30 (GDD 23-2). 패배로 돌아와도 같다.
+  // 폭주(폭주(호로화))한 원정에서 돌아오면 컨디션 −30 (GDD 23-2). 패배로 돌아와도 같다.
   // 단 바퀴당 감소 하한(GDD 42장 3번) 아래로는 안 깎는다 — 패배 급락(defeatCondition)은 그대로 두고 폭주분만 막는다
   if (exp.breakthrough) condition = Math.max(clamp(condition - BALANCE.provisional.risk.frenzyConditionLoss, 0, MAX), conditionFloor({ ...exp, condition }));
   return { hunger, condition };

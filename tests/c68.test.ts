@@ -44,7 +44,7 @@ describe('결과 화면 버튼 조사 (둥지으로 → 둥지로)', () => {
     expect(toward(getFaction('hollow').nestName)).toBe('둥지로');
     expect(toward(getFaction('shinigami').nestName)).toBe('대원실로');
     expect(toward(getFaction('hollow').rankBattleName)).toBe('번호 쟁탈전으로');
-    expect(toward(getFaction('shinigami').rankBattleName)).toBe('석차 도전으로');
+    expect(toward(getFaction('shinigami').rankBattleName)).toBe('진급 시험으로'); // C.220: 석차 도전 → 진급 시험
   });
   it('결과·등급전 화면이 이름 뒤에 "으로"를 그대로 붙이지 않는다', () => {
     expect(src('src/ui/resultView.ts')).not.toMatch(/nestName\}으로/);
@@ -139,7 +139,7 @@ describe('수련 미니게임', () => {
 
 describe('등급전 도전 버튼 이름 겹침 (석차 도전 도전)', () => {
   it('버튼은 종족 등급전 이름 뒤에 "도전"을 붙이지 않는다 (사신 이름이 이미 "석차 도전")', () => {
-    expect(getFaction('shinigami').rankBattleName.endsWith('도전')).toBe(true);
+    expect(getFaction('shinigami').rankBattleName).toBe('진급 시험'); // C.220 (옛 '석차 도전')
     expect(src('src/ui/rankView.ts')).not.toMatch(/rankBattleName\} 도전/);
     expect(src('src/ui/rankView.ts')).toContain('에 도전`');
   });

@@ -10,8 +10,9 @@ const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '
 
 /** 물건 → 자리표시 아이콘(스프라이트). 그림이 들어오면 쓰이지 않는다. 장터 안 자리(GDD 127장 2)도 같은 물건 단추를 쓴다 */
 export const PROP_ICON: Record<RoomProp | MarketSpot | WorldPlace, string> = {
-  door: 'i-loop', altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', market: 'i-flag-win', shop: 'i-rare', spa: 'i-tile-rest', wanderer: 'i-special',
-  outside: 'i-loop', home: 'i-nest', adventure: 'i-loop', // 밖으로·월드맵 장소 (GDD 130장, C.204)
+  altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', market: 'i-flag-win', shop: 'i-heal', spa: 'i-tile-rest', wanderer: 'i-special',
+  gearShop: 'i-guard', skinShop: 'i-rare', traitShop: 'i-slot', smith: 'i-attack', // 상점 4곳 (GDD 150장 2): shop = 소모품 상점 · 대장장이 (153장 2)
+  outside: 'i-loop', home: 'i-nest', adventure: 'i-loop', tower: 'i-title', // 밖으로·월드맵 장소 (GDD 130장, C.204 · 탑 139장 1)
 };
 
 /** 방 장면 틀. 배경 그림이 있으면 --room-art 로 깔린다 */

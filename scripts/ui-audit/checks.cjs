@@ -214,4 +214,63 @@ function staticInPage(reached) {
   return issues;
 }
 
-module.exports = { snapshotInPage, staticInPage };
+/**
+ * 페이지 안: 카드 고르는 창 점검 (C.218, GDD 140장 3) — 드래프트·흡수 후보·종족 고르기 등 같은 줄에 놓인 고르기 카드.
+ * ① 같은 부모·같은 줄(위쪽이 같은) 카드는 너비·높이가 같다 ② 카드 안 글은 잘리지 않는다(말줄임·줄 수 제한·넘침 숨김)
+ * ③ 창(대화창·시트)이 처음 열렸을 때 안쪽 스크롤은 맨 위(0). audit.check 가 ▼ 돌리기 전에 부른다. 결과 = [{ kind, key, detail }]
+ */
+function cardsInPage() {
+  const CARD = '.bha-draft__card, .bha-cand, .bha-species__card, .bha-pickcard';
+  const lcd = document.querySelector('.bha-lcd') || document.body;
+  const out = [];
+  const shown = (e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
+  const groups = new Map();
+  for (const c of lcd.querySelectorAll(CARD)) {
+    if (!shown(c)) continue;
+    const r = c.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) continue;
+    const k = c.parentElement;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push({ c, r });
+  }
+  for (const list of groups.values()) {
+    const rows = new Map();
+    for (const it of list) {
+      const top = Math.round(it.r.top / 4);
+      if (!rows.has(top)) rows.set(top, []);
+      rows.get(top).push(it);
+    }
+    for (const row of rows.values()) {
+      if (row.length < 2) continue;
+      const ws = row.map((x) => x.r.width), hs = row.map((x) => x.r.height);
+      if (Math.max(...ws) - Math.min(...ws) > 1.5 || Math.max(...hs) - Math.min(...hs) > 1.5) {
+        out.push({ kind: '카드 크기 다름', key: String(row[0].c.className).split(' ').filter((x) => x.startsWith('bha-')).slice(-1)[0] || '?', detail: row.map((x) => `${Math.round(x.r.width)}×${Math.round(x.r.height)}`).join(' / ') });
+      }
+    }
+    for (const { c } of list) {
+      for (const e of [c, ...c.querySelectorAll('*')]) {
+        if (!shown(e) || e.closest('.bha-icon, svg')) continue;
+        const s = getComputedStyle(e);
+        const clamp = s.webkitLineClamp && s.webkitLineClamp !== 'none';
+        const hid = /(hidden|clip)/.test(s.overflowX + s.overflowY) && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1);
+        if (clamp || s.textOverflow === 'ellipsis' || hid) {
+          if (!clamp && s.textOverflow === 'ellipsis' && e.scrollWidth <= e.clientWidth + 1) continue;
+          out.push({ kind: '카드 글 잘림', key: (c.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 20), detail: `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} ${clamp ? '줄 수 제한' : s.textOverflow === 'ellipsis' ? '말줄임' : '넘침 숨김'}` });
+          break;
+        }
+      }
+    }
+  }
+  for (const w of lcd.querySelectorAll('[role="dialog"], .bha-sheet')) {
+    if (!shown(w)) continue;
+    for (const e of [w, ...w.querySelectorAll('*')]) {
+      if (e.scrollTop > 0 && /(auto|scroll)/.test(getComputedStyle(e).overflowY)) {
+        out.push({ kind: '창 처음 스크롤', key: (w.getAttribute('aria-label') || String(w.className).split(' ')[0]).slice(0, 30), detail: `${String(e.className).split(' ')[0]} scrollTop ${Math.round(e.scrollTop)}` });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+module.exports = { snapshotInPage, staticInPage, cardsInPage };

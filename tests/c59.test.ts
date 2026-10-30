@@ -22,10 +22,11 @@ const HX = BALANCE.provisional.hogyoku;
 const other = (fid: string) => FACTIONS.find((f) => f.id !== fid)!.id;
 
 /** 트랙을 5단계로 (진화체·속성 지정 가능) */
-function toTier5(t: Pick<SaveData, TrackKey>, formId = 't5:fire:physical'): void {
+/** 마지막 단계(C.220: 4단계 바스트로데/수석 대원)로 */
+function toTier5(t: Pick<SaveData, TrackKey>, formId = 't4:fire:physical'): void {
   const e = t.evolution;
-  e.tierIndex = 4;
-  e.formHistory = ['t2:base', 't3:base', 't4:fire', formId];
+  e.tierIndex = 3;
+  e.formHistory = ['t2:base', 't3:fire', formId];
   e.formId = formId;
   e.ev = { hp: 20, atk: 20, int: 0, def: 0, spr: 0, spd: 0 };
 }
@@ -39,7 +40,9 @@ function makeTop(t: Pick<SaveData, TrackKey>): void {
 /** 5단계·기록·자원이 쌓인 형식 22 세이브 원문 (옛 구조 그대로) */
 function oldFormat22(): Record<string, unknown> {
   const s = newSaveData('hollow', 5000);
-  toTier5(s);
+  // 형식 22 = 옛 5단계 트리 (형식 57 이 4단계로 옮긴다)
+  Object.assign(s.evolution, { tierIndex: 4, formHistory: ['t2:base', 't3:base', 't4:fire', 't5:fire:physical'], formId: 't5:fire:physical', ev: { hp: 20, atk: 20, int: 0, def: 0, spr: 0, spd: 0 } });
+  delete (s.evolution as { abilities?: unknown }).abilities;
   s.formDex = [...s.evolution.formHistory];
   s.shared.soulCrystals = 42;
   s.shared.jade = 9;
@@ -69,7 +72,7 @@ function memStorage(): { getItem(k: string): string | null; setItem(k: string, v
 }
 
 /** 두 트랙 모두 5단계·1위, 붕옥 해방·2단계 게이지 가득인 세이브 */
-function fusionReady(forms: [string, string] = ['t5:fire:physical', 't5:water:special']): SaveData {
+function fusionReady(forms: [string, string] = ['t4:fire:physical', 't4:water:special']): SaveData {
   const s = newSaveData('hollow', 1000);
   toTier5(s, forms[0]);
   checkTrackOpen(s, 2000);
@@ -93,6 +96,7 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     // 옛 값은 하나도 빠지지 않는다 (C.60 형식 24 가 shared·runLog 에 새 키를 붙이는 것만 허용)
     for (const [k, v] of Object.entries(before)) {
       if (k === 'meta') continue;
+      if (['evolution', 'formDex', 'runLog'].includes(k)) continue; // C.220 형식 57: 5단계 → 4단계 진화 상태·진화체 id 를 옮긴다 (saveTier4.test.ts)
       const got = (m as unknown as Record<string, unknown>)[k];
       if (typeof v === 'object' && v !== null && !Array.isArray(v)) expect(got, k).toMatchObject(v);
       else expect(got, k).toEqual(v);
@@ -109,7 +113,7 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     st.setItem('k', JSON.stringify(oldFormat22()));
     const s = loadSave(st, 'k')!;
     expect(s.factionId).toBe('hollow');
-    expect(s.evolution.tierIndex).toBe(4);
+    expect(s.evolution.tierIndex).toBe(3); // C.220: 옛 5단계 → 4단계
     expect(s.otherTracks.map((t) => t.factionId)).toEqual([other('hollow')]);
     expect(s.otherTracks[0]!.evolution.tierIndex).toBe(0);
     expect(s.trackNotice).toBe(other('hollow'));
@@ -268,7 +272,7 @@ describe('합체 (GDD 22-3)', () => {
     const s = fusionReady();
     s.shared.soulCrystals = 25;
     s.shared.tradeCoins = 77;
-    s.formDex = ['t5:fire:physical'];
+    s.formDex = ['t4:fire:physical'];
     s.rebirth.count = 2;
     s.titles.push({ titleId: 'rank-1', at: 1, trigger: 'rank', snapshot: {} as never, seen: true });
     const pv = fusionPreview(s);
@@ -290,7 +294,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.evolution.stageSeed).not.toBe(s.otherTracks[0]!.evolution.stageSeed);
     expect(s.shared.soulCrystals).toBe(25);
     expect(s.shared.tradeCoins).toBe(77);
-    expect(s.formDex).toEqual(['t5:fire:physical']);
+    expect(s.formDex).toEqual(['t4:fire:physical']);
     expect(s.titles.some((t) => t.titleId === 'rank-1')).toBe(true);
     expect(s.hogyoku.liberated).toBe(true);
     expect(s.hogyoku.tabOpen).toBe(true);
@@ -301,7 +305,7 @@ describe('합체 (GDD 22-3)', () => {
     const rec = s.slotLog.fusions[0]!;
     expect(rec).toMatchObject({ index: 1, transcendentId: r.def.id, soulSpent: HX.fusionCost, jade: HX.firstTranscendentJade });
     expect(rec.characters.map((c) => c.factionId)).toEqual(['hollow', other('hollow')]);
-    expect(rec.characters[0]).toMatchObject({ tierIndex: 4, formId: 't5:fire:physical', rank: 1, rebirths: 2 });
+    expect(rec.characters[0]).toMatchObject({ tierIndex: 3, formId: 't4:fire:physical', rank: 1, rebirths: 2 });
     expect(s.shared.jade).toBe(HX.firstTranscendentJade);
   });
 
@@ -318,7 +322,7 @@ describe('합체 (GDD 22-3)', () => {
       // 다음 합체 준비 (같은 진화체·같은 상태)
       const keep = s;
       for (const [j, t] of allTracks(keep).entries()) {
-        toTier5(t, j === 0 ? 't5:fire:physical' : 't5:water:special');
+        toTier5(t, j === 0 ? 't4:fire:physical' : 't4:water:special');
         makeTop(t);
       }
       keep.shared.soulCrystals = HX.fusionCost;
@@ -363,7 +367,7 @@ describe('초월체 6종 결정 규칙', () => {
   });
 
   it('실제 진화체로: 히든 둘이면 아이젠 미리보기, 조건이 맞았다고 표시', () => {
-    const hidden5 = FORM_TABLE.filter((f) => f.tier === 5 && f.hidden && f.label.kind !== 'reborn').map((f) => f.id);
+    const hidden5 = FORM_TABLE.filter((f) => f.tier === 4 && f.hidden && ['frenzy', 'restraint', 'hunter'].includes(f.label.kind)).map((f) => f.id);
     expect(hidden5.length).toBeGreaterThan(0);
     const s = fusionReady([hidden5[0]!, hidden5[0]!]);
     const pv = fusionPreview(s);

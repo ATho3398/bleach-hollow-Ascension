@@ -2,6 +2,8 @@
 // 여성 외형 = 같은 그림 키 뒤에 `.f`(파일 이름 `-f`)가 붙은 그림. 없으면 지금 그림(남성) 그대로 (src/data/art/manifest.ts charArt).
 // 그림 함수가 화면마다 세이브를 받지 않으므로, 지금 열린 슬롯의 성별을 여기 보관한다(app 이 슬롯을 열 때·설정을 저장할 때 건다).
 
+import { fixParticles } from './josa';
+
 export const GENDERS = ['male', 'female'] as const;
 export type Gender = (typeof GENDERS)[number];
 export const DEFAULT_GENDER: Gender = 'male';
@@ -33,8 +35,9 @@ export function activeGender(): Gender {
 }
 
 /** 설정 성별 줄 안내 (GDD 114장): 외형이 갈리는 단계를 종족 설정의 단계 이름으로 */
-export function genderLookNote(tierNames: readonly string[], genderLookFromTier: number | undefined): string {
+export function genderLookNote(tierNames: readonly string[], genderLookFromTier: number | undefined, ascension?: { name: string; artTier?: number }): string {
   if (genderLookFromTier === undefined) return '모습은 성별과 상관없이 같다.';
-  const from = genderLookFromTier <= 1 ? '처음' : tierNames[genderLookFromTier - 1] ?? `${genderLookFromTier}단계`;
+  // C.220 (GDD 126장 3): 그림 단계가 육성 단계를 넘으면(호로 5 = 아란칼 모습) 아란칼화를 깬 뒤부터
+  const from = genderLookFromTier <= 1 ? '처음' : tierNames[genderLookFromTier - 1] ?? (ascension && ascension.artTier !== undefined && genderLookFromTier >= ascension.artTier ? fixParticles(`${ascension.name}을(를) 깬 뒤`) : `${genderLookFromTier}단계`);
   return `${from}부터 모습이 달라진다.`;
 }

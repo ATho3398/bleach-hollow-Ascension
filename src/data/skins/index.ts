@@ -2,7 +2,7 @@
 // 종족 필드로 목록을 거르므로 코드에 종족 이름이 들어가지 않는다. 'all' = 모든 종족 공용.
 // 성별 (GDD 114장, C.188): 여성 그림은 같은 키 뒤에 `-f` — 스킨 `skin-<id>-f.png`(폴더면 `skin-<id>-f/`), 진화체 `char-<종족>-<단계>-f.png`. 남성 = 지금 이름 그대로.
 //   여성이고 종족 설정 genderLookFromTier 단계 이상일 때만 `-f` 를 먼저 찾고, 없으면 지금 그림(남성)으로 보인다. 그 전 단계는 남녀 같은 그림(`-f` 를 넣어도 안 쓴다).
-import { getFaction } from '../factions'; // 히든 '폭주' 외형 이름 = 종족 설정 frenzyName (C.213, GDD 136장 2 — 옛 '한계 돌파')
+import { getFaction } from '../factions'; // 히든 '폭주' 외형 이름 = 종족 설정 frenzyName (C.213, GDD 136장 2 — 옛 이름 폐기)
 
 export interface SkinDef {
   /** 파일 이름에 쓰는 고정 id (영문 소문자) */

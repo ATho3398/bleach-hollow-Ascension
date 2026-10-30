@@ -18,13 +18,13 @@ useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장
 const RB = BALANCE.provisional.rebirth;
 const traitIds = TRAITS.filter((t) => !t.boss && t.element !== 'normal').slice(0, 3).map((t) => t.id); // C.184: 노멀 skill 특성은 기본 블록(GDD 111장 1)
 
-/** 5단계(아란칼)에 닿은 세이브: 장착 특성 3개, 노력치 상한까지, 번호·수련·자원이 조금씩 있다 */
+/** 마지막 단계(C.220: 4단계 바스트로데)에 닿은 세이브: 장착 특성 3개, 노력치 상한까지, 번호·수련·자원이 조금씩 있다 */
 function tier5Save(factionId = 'hollow'): SaveData {
   const s = newSaveData(factionId, 1000);
   const e = s.evolution;
-  e.tierIndex = 4;
-  e.formHistory = ['t2:base', 't3:base', 't4:fire', 't5:fire:physical'];
-  e.formId = 't5:fire:physical';
+  e.tierIndex = 3;
+  e.formHistory = ['t2:base', 't3:fire', 't4:fire:physical'];
+  e.formId = 't4:fire:physical';
   e.ability = 'atk';
   e.steps = 33;
   e.ev = { hp: 20, atk: 20, int: 0, def: 0, spr: 0, spd: 0 };
@@ -49,9 +49,9 @@ function tier5Save(factionId = 'hollow'): SaveData {
 }
 
 describe('환생 진입 (22-7)', () => {
-  it('5단계 이상만, 원정 중이면 못 한다, 장착하지 않은 특성은 고를 수 없다', () => {
+  it('마지막 단계(4단계)만, 원정 중이면 못 한다, 장착하지 않은 특성은 고를 수 없다', () => {
     const low = newSaveData('hollow', 1);
-    low.evolution.tierIndex = 3;
+    low.evolution.tierIndex = 2;
     expect(canRebirth(low.evolution)).toBe(false);
     expect(performRebirth(low, null)).toEqual({ ok: false, reason: 'tier' });
     const s = tier5Save();
@@ -86,7 +86,7 @@ describe('환생 결과: 초기화와 남김 (22-7)', () => {
     expect(s.nest.hunger).toBe(BALANCE.provisional.nest.startHunger);
     expect(s.nest.condition).toBe(BALANCE.provisional.nest.startCondition);
     expect(s.nest.stability).toBe(stability);
-    expect(s.formDex).toEqual(['t2:base', 't3:base', 't4:fire', 't5:fire:physical']);
+    expect(s.formDex).toEqual(['t2:base', 't3:fire', 't4:fire:physical']);
     expect(s.titles).toHaveLength(1);
     expect([s.training.completed, s.training.points, s.training.tickets]).toEqual([true, 61, 2]);
     expect(s.shared.tradeCoins).toBe(50);
@@ -115,7 +115,7 @@ describe('환생 결과: 초기화와 남김 (22-7)', () => {
     const s = tier5Save();
     performRebirth(s, traitIds[0]!, 4242);
     expect(s.runLog.rebirths).toEqual([{
-      at: 4242, count: 1, factionId: 'hollow', prevFormId: 't5:fire:physical', prevTierIndex: 4, prevElements: ['fire'], keptTraitId: traitIds[0], carry: { hp: 2, atk: 2, int: 0, def: 0, spr: 0, spd: 0 }, runsCompleted: 0,
+      at: 4242, count: 1, factionId: 'hollow', prevFormId: 't4:fire:physical', prevTierIndex: 3, prevElements: ['fire'], keptTraitId: traitIds[0], carry: { hp: 2, atk: 2, int: 0, def: 0, spr: 0, spd: 0 }, runsCompleted: 0,
     }]);
   });
 });
@@ -162,60 +162,51 @@ describe('★ 표시 (22-7)', () => {
   });
 });
 
-describe('환생 전용 히든 진화체 (22-7, 20-5 가중 랜덤)', () => {
+describe('환생 조건형 히든 (GDD 126장 7 허무형·각성형, C.220 — 옛 환생 전용 히든 h5:reborn 은 각성형으로)', () => {
   const ctxOf = (rebirths: number) => {
     const build = newBuild();
     for (let i = 0; i < 4; i++) build.slots.push(null);
     for (const id of traitIds) gainTrait(build, id);
     return { factionId: 'hollow', build, hunger: 20, condition: 80, rebirths };
   };
-  const t4 = (): EvolutionState => {
+  const t3 = (): EvolutionState => {
     const e = newEvolution(77);
-    e.tierIndex = 3;
-    e.formHistory = ['t2:base', 't3:base', 't4:fire'];
-    e.formId = 't4:fire';
+    e.tierIndex = 2;
+    e.formHistory = ['t2:base', 't3:fire'];
+    e.formId = 't3:fire';
     e.steps = 999;
+    for (const el of ['blood', 'poison', 'kyo', 'blood', 'poison', 'kyo']) { e.absorbs++; e.elementAbsorbs[el] = (e.elementAbsorbs[el] ?? 0) + 1; }
     return e;
   };
-  it('데이터: 5단계 히든 h5:reborn 1종, 속성은 바스트로데에서 잇고 이름 `아란칼_환생_<속성>`', () => {
-    const f = getForm('h5:reborn');
-    expect([f.tier, f.hidden, f.label.kind, f.elements]).toEqual([5, true, 'reborn', undefined]);
-    expect(formName(f, 'hollow', ['fire'])).toBe('아란칼_환생_불');
-    expect(formName(f, 'shinigami', ['fire'])).toBe('수석 대원_환생_불');
-    expect(FORM_TABLE.filter((x) => x.label.kind === 'reborn')).toHaveLength(1);
+  it('데이터: 4단계 히든 각성형(혼합)·허무형(혼합) 하나씩', () => {
+    const f = getForm('h4:awakened');
+    expect([f.tier, f.hidden, f.label.kind, f.elements, f.label.category]).toEqual([4, true, 'awakened', undefined, 'mixed']);
+    expect(formName(f, 'hollow', ['fire'])).toBe('바스트로데_각성형_불');
+    expect(formName(getForm('h4:void'), 'shinigami')).toBe('수석 대원_허무형');
   });
-  it('환생 3회 이상일 때만 아란칼 진화 후보에 든다 (많을수록 무겁다)', () => {
-    expect(evolutionCandidates(t4(), ctxOf(2)).hidden.map((c) => c.formId)).not.toContain('h5:reborn');
-    const at3 = evolutionCandidates(t4(), ctxOf(3)).hidden.find((c) => c.formId === 'h5:reborn')!;
-    const at6 = evolutionCandidates(t4(), ctxOf(6)).hidden.find((c) => c.formId === 'h5:reborn')!;
-    expect(at3.weight).toBe(1);
-    expect(at6.weight).toBeGreaterThan(at3.weight);
-    // 바스트로데 진화(4단계)에는 나오지 않는다
-    const e3 = t4();
-    e3.tierIndex = 2;
-    expect(evolutionCandidates(e3, ctxOf(9)).hidden.map((c) => c.formId)).not.toContain('h5:reborn');
+  it('허무형은 환생 1회 이상일 때만 후보 (혈·독·허 각 20%↑)', () => {
+    expect(evolutionCandidates(t3(), ctxOf(0)).hidden.map((c) => c.formId)).not.toContain('h4:void');
+    expect(evolutionCandidates(t3(), ctxOf(1)).hidden.map((c) => c.formId)).toContain('h4:void');
+    // 3단계 진화에는 나오지 않는다 (통로 없이 직접)
+    const e2 = t3();
+    e2.tierIndex = 1;
+    expect(evolutionCandidates(e2, ctxOf(9)).hidden.map((c) => c.formId)).not.toContain('h4:void');
   });
-  it('가중 랜덤으로 실제로 뽑히고, 뽑히면 바스트로데 속성을 잇는다', () => {
-    let hit: EvolutionState | null = null;
-    for (let seed = 1; seed < 200 && !hit; seed++) {
-      const e = t4();
-      e.stageSeed = seed;
-      if (judgeEvolution(e, ctxOf(6)).form.id === 'h5:reborn') hit = e;
-    }
-    expect(hit).not.toBeNull();
-    const r = evolve(hit!, ctxOf(6).build, ctxOf(6), 0);
-    expect(r.ok && r.form.id).toBe('h5:reborn');
+  it('조건을 채운 히든이 있으면 일반보다 우선 — 실제로 진화한다', () => {
+    const e = t3();
+    const r = evolve(e, ctxOf(1).build, ctxOf(1), 0);
+    expect(r.ok && r.form.id).toBe('h4:void');
   });
   it('performEvolution 이 세이브의 환생 횟수를 판정에 넘긴다', async () => {
     const { performEvolution } = await import('../src/game');
     const s = newSaveData('hollow', 3);
-    s.evolution = t4();
+    s.evolution = t3();
     s.build = ctxOf(0).build;
-    s.rebirth.count = 9;
+    s.rebirth.count = 2;
     s.nest.hunger = 20;
     s.nest.condition = 80;
     const r = performEvolution(s, 0);
-    expect(r.ok && r.record.snapshot!.candidates.map((c) => c.formId)).toContain('h5:reborn');
+    expect(r.ok && r.record.snapshot!.candidates.map((c) => c.formId)).toContain('h4:void');
   });
 });
 

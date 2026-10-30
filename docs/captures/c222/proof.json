@@ -1,0 +1,88 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "cards": [
+        "튜토리얼 1 / 7",
+        "튜토리얼 2 / 7",
+        "튜토리얼 3 / 7",
+        "튜토리얼 4 / 7",
+        "튜토리얼 5 / 7",
+        "튜토리얼 6 / 7",
+        "튜토리얼 7 / 7"
+      ],
+      "errors": [],
+      "timeline": [
+        {
+          "k": "skill-name",
+          "ms": 551
+        },
+        {
+          "k": "hp-change",
+          "ms": 966,
+          "from": "51 / 314",
+          "to": "0 / 314"
+        },
+        {
+          "k": "damage-float",
+          "ms": 966,
+          "text": "−144"
+        },
+        {
+          "k": "tutkill",
+          "ms": 966
+        }
+      ],
+      "shot1HpUnchanged": true,
+      "order": {
+        "skillName": 551,
+        "hpChange": 966,
+        "damageFloat": 966,
+        "tutkill": 966
+      },
+      "ok": true
+    },
+    {
+      "faction": "shinigami",
+      "cards": [
+        "튜토리얼 1 / 7",
+        "튜토리얼 2 / 7",
+        "튜토리얼 3 / 7",
+        "튜토리얼 4 / 7",
+        "튜토리얼 5 / 7",
+        "튜토리얼 6 / 7",
+        "튜토리얼 7 / 7"
+      ],
+      "errors": [],
+      "timeline": [
+        {
+          "k": "skill-name",
+          "ms": 560
+        },
+        {
+          "k": "hp-change",
+          "ms": 1466,
+          "from": "38 / 314",
+          "to": "0 / 314"
+        },
+        {
+          "k": "damage-float",
+          "ms": 1466,
+          "text": "−118"
+        },
+        {
+          "k": "tutkill",
+          "ms": 1466
+        }
+      ],
+      "shot1HpUnchanged": true,
+      "order": {
+        "skillName": 560,
+        "hpChange": 1466,
+        "damageFloat": 1466,
+        "tutkill": 1466
+      },
+      "ok": true
+    }
+  ]
+}

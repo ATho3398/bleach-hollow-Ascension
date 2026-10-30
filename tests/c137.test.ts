@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { getFaction } from '../src/data/factions';
-import { roomOf, ROOM_PROPS } from '../src/engine/faction';
+import { ROOM_PROPS, worldMapOf } from '../src/engine/faction';
 import { charArt, artUrls } from '../src/data/art/manifest';
 import { GLOSSARY, helpVars, renderHelpText } from '../src/data/help';
 import { BALANCE } from '../src/config/balance';
@@ -22,7 +22,7 @@ describe('C.137', () => {
     expect(a.scale).toBeGreaterThanOrEqual(2);
   });
   it('85장 2: 문 이름 "모험", 방 물건 크기 ×1.25', () => {
-    for (const id of ['hollow', 'shinigami']) expect(roomOf(getFaction(id)).props.door).toBe('모험');
+    for (const id of ['hollow', 'shinigami']) expect(worldMapOf(getFaction(id)).places.adventure).toBe('모험'); // C.215: 옛 문 이름 → 월드맵 모험 (137장 3)
     expect(read('src/ui/bha/room.css')).toContain('* 1.25');
   });
   it('85장 3: 훈련 인형은 방 물건이 아니고 수련장 안에 훈련 인형·번호 쟁탈전 입구가 있다', () => {

@@ -35,7 +35,7 @@ const row = (s: SaveData, id: string) => [...goldRows(s, getFaction(s.factionId)
 
 describe('상점 데이터 (25-9 표)', () => {
   it('골드 11종·영옥 꾸밈 8분류, 가격은 balance.ts', () => {
-    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'battle-potion', 'battle-haste', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
+    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'heal-patch', 'battle-potion', 'heal-salve', 'w-hp-potion', 'battle-haste', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
     expect(CATEGORIES.map((c) => c.id).slice(0, 8)).toEqual(['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate']); // 2차 분류는 c61
     const count = (c: string) => COSMETIC_ITEMS.filter((x) => x.category === c).length;
     expect([count('aura'), count('tint'), count('trail'), count('fx'), count('bar'), count('shell'), count('plate')]).toEqual([4, 4, 3, 3, 3, 3, 3]);
@@ -84,7 +84,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
   });
   it('정화제·각성제 (C.140, GDD 86장 4번): 사면 보관함에 쌓이고(상한 9) 보관함에서 쓴다 — 리스크 −30(0 아래로 안 감)·컨디션 +30(100 위로 안 감), 이미 0/가득·원정 중이면 못 쓴다', () => {
     const s = rich();
-    s.shared.items = {}; // 시작 치료제(GDD 134장 1, C.211)는 이 검사 밖
+    s.shared.items = {}; // 시작 구급상자(GDD 134장 1, C.211)는 이 검사 밖
     s.nest.risk = 20;
     s.nest.condition = 90;
     expect(buyShopItem(s, H, 'calm').ok).toBe(true);

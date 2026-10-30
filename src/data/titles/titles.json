@@ -5,7 +5,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.10",
-      "shinigami": "9석"
+      "shinigami": "10석"
     },
     "condition": {
       "type": "rankReached",
@@ -19,7 +19,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.9",
-      "shinigami": "8석"
+      "shinigami": "9석"
     },
     "condition": {
       "type": "rankReached",
@@ -33,7 +33,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.8",
-      "shinigami": "7석"
+      "shinigami": "8석"
     },
     "condition": {
       "type": "rankReached",
@@ -47,7 +47,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.7",
-      "shinigami": "6석"
+      "shinigami": "7석"
     },
     "condition": {
       "type": "rankReached",
@@ -61,7 +61,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.6",
-      "shinigami": "5석"
+      "shinigami": "6석"
     },
     "condition": {
       "type": "rankReached",
@@ -75,7 +75,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.5",
-      "shinigami": "4석"
+      "shinigami": "5석"
     },
     "condition": {
       "type": "rankReached",
@@ -89,7 +89,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.4",
-      "shinigami": "3석"
+      "shinigami": "4석"
     },
     "condition": {
       "type": "rankReached",
@@ -103,7 +103,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.3",
-      "shinigami": "부대장"
+      "shinigami": "3석"
     },
     "condition": {
       "type": "rankReached",
@@ -117,7 +117,7 @@
     "hidden": false,
     "name": {
       "hollow": "에스파다 No.2",
-      "shinigami": "대장 대행"
+      "shinigami": "부대장"
     },
     "condition": {
       "type": "rankReached",
@@ -176,7 +176,7 @@
         },
         {
           "type": "passedForm",
-          "formId": "t4:fire"
+          "formId": "t3:fire"
         }
       ]
     },
@@ -195,8 +195,8 @@
     "condition": {
       "type": "lineageStatTotal",
       "lineageKind": "fail",
-      "minTier": 5,
-      "totalOfTier": 5
+      "minTier": 4,
+      "totalOfTier": 4
     },
     "provisional": true
   },

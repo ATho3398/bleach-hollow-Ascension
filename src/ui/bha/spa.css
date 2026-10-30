@@ -28,7 +28,7 @@
   animation: bha-spa-steam 4s var(--bha-ease-linear) infinite alternate;
 }
 
-/* 캐릭터 + 머리 위 상태 창 한 묶음 (GDD 132장 4, C.208): 자리(left·bottom)는 spaView SPA_PATH 가 한 칸씩 옮긴다 — 평지는 걷기(선형), 계단은 한 단 툭(ease-in) */
+/* 캐릭터 + 머리 위 상태 창 한 묶음 (GDD 132장 4·137장 2): 자리(left·bottom)는 spaView 가 SPA_PATH 경로를 따라 프레임마다 옮긴다 — 평지 걷기 → 계단 대각선, 멈칫 없이 쭉 */
 .bha-spa__actor {
   position: absolute; left: 112%; bottom: 30%; z-index: 1; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-2);

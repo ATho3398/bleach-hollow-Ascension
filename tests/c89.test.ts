@@ -29,40 +29,41 @@ const run = (s: CombatState, seconds: number) => {
 const fx = (id: string, ability: 'atk' | null = 'atk') => abilityEffectsOf(formAbilitiesOf(getForm(id), zeroStats(), ability));
 
 describe('C.89 특성 매핑 (label → 특성, 39장 1·3·4번)', () => {
-  it('데이터 검사 통과 · 진화체 43종 전부 특성이 있다 (2·3단계 = 성향 1줄, 4·5단계 = 2줄)', () => {
+  it('데이터 검사 통과 · 진화체 36종 전부 특성이 있다 (2단계·통로 = 성향 1줄, 망함 = 성향 2줄, 3·4단계 = 2줄) — C.220 4단계 개편', () => {
     expect(validateAbilities()).toEqual([]);
-    expect(FORM_TABLE).toHaveLength(43); // C.106: 4단계 일반 특수 속성 3종 빠짐
+    expect(FORM_TABLE).toHaveLength(36);
     for (const f of FORM_TABLE) {
       const fa = formAbilitiesOf(f, { hp: 0, atk: 5, int: 3, def: 0, spr: 0, spd: 0 }, 'atk');
       const lines = abilityLines(fa, 'hollow');
       // C.103 (GDD 49장): 5단계 물리 단일 속성 6종은 물공 칸 1줄이 더 있다
-      expect(lines.length, f.id).toBe(f.tier <= 3 ? 1 : fa.phys ? 3 : 2);
+      const want = f.tier <= 2 || f.label.kind === 'passage' ? 1 : fa.phys ? 3 : 2;
+      expect(lines.length, f.id).toBe(want);
       for (const l of lines) expect(l.name.length, f.id).toBeGreaterThan(0);
-      if (f.tier >= 4) expect(lines[1]!.description.length, f.id).toBeGreaterThan(0);
+      if (want >= 2) expect(lines[1]!.description.length, f.id).toBeGreaterThan(0);
     }
   });
-  it('속성 특성: 같은 속성은 단계 무관 같은 특성, 5단계 ×1.5 · 융합 두 속성 각 scale.fusion · 특수·순수 ×1.5', () => {
-    expect(fx('t4:water').critChance).toBeCloseTo(AB.element.water!.critChance!);
-    expect(fx('t5:water:mixed').critChance).toBeCloseTo(AB.element.water!.critChance! * 1.5);
+  it('속성 특성: 같은 속성은 단계 무관 같은 특성, 4단계 ×1.5 · 융합 두 속성 각 scale.fusion(× 4단계) · 안정형 ×1.5', () => {
+    expect(fx('t3:water').critChance).toBeCloseTo(AB.element.water!.critChance!);
+    expect(fx('t4:water:mixed').critChance).toBeCloseTo(AB.element.water!.critChance! * 1.5);
     const fu = fx('h4:fusion:water+earth');
-    expect(fu.critChance).toBeCloseTo(AB.element.water!.critChance! * AB.scale.fusion);
-    expect(fu.effects.thorns!.ret).toBeCloseTo(AB.element.earth!.thornsReturn! * AB.scale.fusion);
-    expect(fx('h4:special:kyo').effects.chainHaste).toBeCloseTo(AB.element.kyo!.chainHastePerChain! * 1.5);
-    expect(fx('h4:pure').effects.blockPower).toBeCloseTo(AB.element.normal!.blockPower! * 1.5);
-    expect(formAbilitiesOf(getForm('t3:base'), zeroStats(), 'atk').elements).toEqual([]);
+    expect(fu.critChance).toBeCloseTo(AB.element.water!.critChance! * AB.scale.fusion * 1.5);
+    expect(fu.effects.thorns!.ret).toBeCloseTo(AB.element.earth!.thornsReturn! * AB.scale.fusion * 1.5);
+    expect(fx('t4:kyo:mixed').effects.chainHaste).toBeCloseTo(AB.element.kyo!.chainHastePerChain! * 1.5);
+    expect(fx('h4:stable').effects.blockPower).toBeCloseTo(AB.element.normal!.blockPower! * 1.5 * 1.5);
+    expect(formAbilitiesOf(getForm('t2:base'), zeroStats(), 'atk').elements).toEqual([]);
   });
   it('실패형 = 성향 2개(노력치 1·2위), 속성 특성 없음 · 전용 5종은 속성 특성 대신', () => {
     const fa = formAbilitiesOf(getForm('h4:fail'), { hp: 1, atk: 9, int: 7, def: 0, spr: 0, spd: 0 }, 'atk');
     expect(fa.dispositions).toEqual(['atk', 'int']);
     expect(fa.elements).toEqual([]);
     expect(fx('h4:complete').effects.noWeak).toBe(true);
-    expect(fx('h5:limit').effects.desperate).toBeDefined();
-    expect(fx('h5:restraint').effects.rampUp).toBeDefined();
-    expect(fx('h5:hunter').effects.eliteSlayer).toBeGreaterThan(0);
-    expect(fx('h5:reborn').effects.lastStand).toBeGreaterThan(0);
+    expect(fx('h4:frenzy').effects.desperate).toBeDefined();
+    expect(fx('h4:restraint').effects.rampUp).toBeDefined();
+    expect(fx('h4:hunter').effects.eliteSlayer).toBeGreaterThan(0);
+    expect(fx('h4:awakened').effects.lastStand).toBeGreaterThan(0);
   });
   it('종족 분기 없음: 두 종족 효과가 같고, 매핑·엔진 코드에 종족 id 가 없다', () => {
-    const evo = { ...newEvolution(), tierIndex: 3, formId: 't4:water', formHistory: ['t2:base', 't3:base', 't4:water'], ability: 'atk' as const };
+    const evo = { ...newEvolution(), tierIndex: 2, formId: 't3:water', formHistory: ['t2:base', 't3:water'], ability: 'atk' as const };
     const per = FACTIONS.map((f) => {
       const p: Partial<CombatParams> = {};
       applyEvolutionToParams(p, evo, f.id);
@@ -79,7 +80,7 @@ describe('C.89 특성 매핑 (label → 특성, 39장 1·3·4번)', () => {
 describe('C.89 사용자 지정 효과 4종 (39장 2번)', () => {
   it('물 = 치명타 확률 +8%p (기존 critChance 에 더함)', () => {
     const p: Partial<CombatParams> = {};
-    applyEvolutionToParams(p, { ...newEvolution(), tierIndex: 3, formId: 't4:water', formHistory: [], ability: 'atk' }, 'hollow');
+    applyEvolutionToParams(p, { ...newEvolution(), tierIndex: 3, formId: 't3:water', formHistory: [], ability: 'atk' }, 'hollow');
     expect(p.critChance).toBeCloseTo(BALANCE.provisional.combat.critChance + 0.08);
   });
   it('뇌 = 기본 공격이 확률로 한 번 더 (같은 위력, 연타는 다시 연타 안 함)', () => {
@@ -179,7 +180,8 @@ describe('C.89 상태 화면 치명 확률', () => {
     const { newSaveData } = await import('../src/game');
     const sv = newSaveData('hollow', 3);
     const base = critPercentText(sv.build, sv.evolution);
-    Object.assign(sv.evolution, { tierIndex: 3, formId: 't4:water', formHistory: ['t2:base', 't3:base', 't4:water'], ability: 'atk' });
+    // C.220: 특성은 칸에 낀 것만 — 진화로 얻은 물 속성 특성을 칸에 끼운 몸
+    Object.assign(sv.evolution, { tierIndex: 2, formId: 't3:water', formHistory: ['t2:base', 't3:water'], ability: 'atk', abilities: { owned: { 'el:water': 1, 'disp:atk': 1 }, equipped: ['el:water'], slots: 1, ascendedEver: false } });
     expect(parseInt(critPercentText(sv.build, sv.evolution))).toBe(parseInt(base) + 8);
   });
 });

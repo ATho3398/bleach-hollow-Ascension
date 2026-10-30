@@ -1,4 +1,4 @@
-// 한계 돌파 연출 (U-4): 균열·떨림은 CSS(reduced-motion 이면 정지 화면). 한계 돌파 = 폭주(GDD 23-2): 상태 이름은 종족 설정 frenzyName.
+// 폭주(호로화) 연출 (U-4): 균열·떨림은 CSS(reduced-motion 이면 정지 화면). 폭주(호로화) = 폭주(GDD 23-2): 상태 이름은 종족 설정 frenzyName.
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, panel, provisionalTag } from './bha/dom';
@@ -41,7 +41,7 @@ export function breakthroughView(root: HTMLElement, faction: FactionConfig, risk
   for (const t of [
     `· 주는 피해 +${pct(RX.frenzyDamageDealt)}% · 받는 피해 +${pct(RX.frenzyDamageTaken)}%`,
     `· 대신 적 공격의 ${Math.round(RX.frenzyEvadeChance * 100)}%를 통째로 회피한다`,
-    '· 전투에서 회복약을 쓸 수 없다',
+    '· 전투에서 회복 물건을 쓸 수 없다',
     '· 블록이 공허 블록으로 바뀌는 일이 크게 늘어난다',
     `· ${faction.nestName}에 돌아오면 컨디션 −${RX.frenzyConditionLoss}, ${faction.stabilityName}이(가) 떨어진다`,
     `· ${faction.riskGaugeName}은(는) ${RX.riskAfterBreakthrough}에서 다시 시작한다`,

@@ -2,6 +2,22 @@
 // 세로로 든 폰은 기기를 CSS 로 90도 돌려 그리므로(GDD 16-6) 화면은 가로처럼 보여도 키보드는 실제 방향(세로)으로 열린다.
 // screen.orientation.lock 은 설치한 앱(manifest orientation landscape)이나 전체 화면에서만 된다 — 안 되면 전체 화면을 켜고 한 번 더.
 // 안 되는 환경(iOS 사파리·설치 앱 포함: lock 자체가 없음)은 그대로 둔다. 자체 키보드는 만들지 않는다.
+// 홈 화면 앱(앱 모드)에서는 전체 화면 우회를 하지 않는다 — 크롬 '전체 화면 종료' 안내가 뜨므로 (GDD 156장 2)
+
+/**
+ * 홈 화면 앱으로 켜졌는가 (display-mode fullscreen/standalone, GDD 156장 2). 참이면 Fullscreen API 를 부르지 않는다.
+ * 브라우저 탭에서 API 로 전체 화면에 들어가도 display-mode fullscreen 이 맞을 수 있어, 그때(전체 화면 요소가 있음)는 탭으로 본다 — 앱 모드에선 API 를 안 부르니 요소가 생기지 않는다
+ */
+export function isAppMode(): boolean {
+  try {
+    if (typeof matchMedia !== 'function') return false;
+    const d = typeof document !== 'undefined' ? (document as Document & { webkitFullscreenElement?: Element | null }) : undefined;
+    if (d && (d.fullscreenElement ?? d.webkitFullscreenElement)) return false;
+    return matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches;
+  } catch {
+    return false;
+  }
+}
 
 type LockableOrientation = ScreenOrientation & { lock?: (o: 'landscape') => Promise<void> };
 
@@ -22,7 +38,7 @@ export async function lockLandscape(doc: Document = document): Promise<'locked' 
     return 'locked';
   } catch {
     const root = doc.documentElement;
-    if (doc.fullscreenElement || !root.requestFullscreen) return 'failed';
+    if (isAppMode() || doc.fullscreenElement || !root.requestFullscreen) return 'failed';
     try {
       await root.requestFullscreen({ navigationUI: 'hide' });
       await o.lock('landscape');

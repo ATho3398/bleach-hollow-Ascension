@@ -48,7 +48,7 @@ describe("129-1 2 공간 화면 '방으로 돌아가기' 자리", () => {
   it('장터: 버튼이 위 줄 맨 왼쪽, 기기 ▲▼ 순서도 화면 위치 순서(버튼 먼저)', () => {
     expect(market).toContain('hud.append(backBtn, titles);');
     expect(market).toContain('const items: SelectItem[] = [{ el: backBtn }, ...btns.map((b) => ({ el: b }))];');
-    expect(mcss).toContain('.bha-market__hud { justify-content: flex-start; align-items: flex-start;');
+    expect(mcss).toContain('justify-content: flex-start; align-items: flex-start; gap: var(--bha-sp-3); pointer-events: none;'); // C.234: 장면 위에 겹친 머리 줄 (GDD 155장 1)
   });
   it('ui-audit 에 두 검사가 있다', () => {
     const a = src('scripts/ui-audit/audit.cjs');

@@ -251,6 +251,7 @@
 .bha-absorbpage .bha-cand { padding: var(--bha-sp-4); gap: var(--bha-sp-4); grid-template-columns: 32px minmax(0, 1fr); }
 .bha-absorbpage .bha-cand__mark { width: 32px; height: 32px; }
 .bha-absorbpage .bha-cand__mark .bha-icon { width: 20px; height: 20px; }
+.bha-cand__pick { flex: none; margin-left: auto; white-space: nowrap; }  /* C.218: 고르기 표시는 줄 오른쪽 끝, 앞 글과 따로 줄바꿈 */
 .bha-absorbpage .bha-info__row { padding: var(--bha-sp-1) 0; }
 .bha-absorbpage .bha-info dt, .bha-absorbpage .bha-info dd { font-size: var(--bha-fs-xs); line-height: 1.35; }
 .bha-absorbpage .bha-absorb__lead { display: none; }  /* "…을(를) 쓰러뜨렸다" 는 상대 카드와 겹친다 */
@@ -315,6 +316,8 @@ button.bha-slot { cursor: pointer; }
 .bha-lcd .bha-confirm .bha-modal__title { font-size: var(--bha-fs-xl); }
 .bha-lcd .bha-confirm .bha-modal__body { font-size: var(--bha-fs-sm); line-height: 1.4; }
 .bha-lcd .bha-overlay.bha-confirm { z-index: calc(var(--bha-z-tutorial) + 1); } /* 튜토리얼·도움말 위에서도 보인다 */
+.bha-lcd .bha-confirm.bha-healbag .bha-modal { width: min(640px, 100%); } /* 원정 걷기 중 가방 — 회복 물건 4종 카드 한 줄 (GDD 144장 3) */
+.bha-lcd .bha-confirm.bha-healbag .bha-itemgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); flex: none; }
 
 /* ═════ 튜토리얼: 샘플 블록·직접 해 보기 (Q-3, C.31) ═════ */
 .bha-tut__sample { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }

@@ -1,0 +1,760 @@
+{
+ "runs": [
+  {
+   "faction": "hollow",
+   "homeIntro": [
+    {
+     "key": "홈 안내 1 / 11#null",
+     "body": "여기가 둥지다.둥지에 있는 버튼이 무엇을 하는지 하나씩 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room is-born",
+     "cover": []
+    },
+    {
+     "key": "홈 안내 2 / 11#null",
+     "body": "밖으로 나가면 웨코문도 지도가 나온다.둥지·시장·모험·도전의 탑 가운데 골라 걸어간다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 3 / 11#null",
+     "body": "해방 수련을 하고 진화 정보를 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 4 / 11#null",
+     "body": "도감이다. 만난 진화체와 칭호를 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 5 / 11#null",
+     "body": "장비·물건·타일을 보고 쓴다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 6 / 11#null",
+     "body": "머리 위 막대는 배부름·컨디션·광기다.누르면 상태 화면이 열린다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 7 / 11#null",
+     "body": "원정에는 이 체력 그대로 나간다.둥지에 있으면 조금씩 찬다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 8 / 11#null",
+     "body": "먹이·재우기·교감으로 캐릭터를 돌본다.먹이는 원정에서 얻는다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 9 / 11#null",
+     "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 10 / 11#null",
+     "body": "설정·도움말·사진·백업 같은 메뉴가 있다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 11 / 11#0",
+     "body": "이제 모험을 떠나자.[밖으로]를 누른다.",
+     "only": ".bha-prop--outside",
+     "sel": "밖으로",
+     "screen": "bha-room is-force-out",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 11 / 11#1",
+     "body": "웨코문도 지도다.[모험]을 누르면 떠난다.",
+     "only": ".bha-worldmap [data-place=\"adventure\"]",
+     "sel": "모험",
+     "screen": "bha-room bha-worldmap",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    }
+   ],
+   "wound": [
+    {
+     "step": "튜토리얼 1 / 2",
+     "title": "겨우 쓰러뜨렸다",
+     "body": "겨우 쓰러뜨렸지만 치명상을 입었다.이대로는 위험하다…",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ],
+     "hp": "10",
+     "blink": true,
+     "sway": "bha-wound-sway"
+    },
+    {
+     "step": "튜토리얼 2 / 2",
+     "title": "둥지로",
+     "body": "갈라진 가면 틈으로 영력이 새어 나간다.비틀거리며 둥지로 돌아간다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ],
+     "hp": "10",
+     "blink": true,
+     "sway": "bha-wound-sway"
+    }
+   ],
+   "recover": [
+    {
+     "id": "dying",
+     "title": "빈사",
+     "body": "빈사는 치명상을 입어 체력이 10% 위로 차지 않는 상태다.그대로 두면 시간이 지나 사망하고, 치료제로만 풀린다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "to-bag",
+     "title": "빈사부터 치료",
+     "body": "치료제와 체력 포션을 1개씩 가방에 넣었다.가방을 연다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "cure",
+     "title": "치료제",
+     "body": "빈사는 치료제로 푼다.치료제를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "potion",
+     "title": "체력 포션",
+     "body": "이제 체력을 채운다.체력 포션을 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "merchant",
+     "title": "체력 포션은 드물다",
+     "body": "체력 포션은 떠돌이 상인에게서 드물게 나온다.평소의 체력 포션은 체력을 가득 채운다.",
+     "cover": []
+    },
+    {
+     "id": "to-spa",
+     "title": "온천",
+     "body": "온천에서 쉬면 1초에 체력 10%·컨디션 10씩 차고 배부름이 1 준다.[밖으로]를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "spa-rest",
+     "title": "쉬기",
+     "body": "체력이 80%까지 찼다. 10초면 가득 차고, 체력과 컨디션이 다 차면 저절로 방으로 돌아간다.[다음]을 누르면 방으로 돌아간다.",
+     "cover": []
+    },
+    {
+     "id": "feed",
+     "title": "먹이",
+     "body": "짐승 고기 1개를 넣었다.[먹이]를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "done",
+     "title": "회복 끝",
+     "body": "배부름과 체력이 모두 가득 찼다.방에 있으면 체력이 1분에 2%씩 찬다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      },
+      {
+       "what": ".bha-homedock__tray--food",
+       "pct": 0
+      }
+     ]
+    }
+   ],
+   "worldmap": {
+    "forced": {
+     "at": "home",
+     "sel": "adventure"
+    }
+   },
+   "errors": [],
+   "gapTaps": [
+    {
+     "id": "dying",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "to-bag",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "cure",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "potion",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "merchant",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "to-spa",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "spa-rest",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "feed",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "done",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    }
+   ],
+   "spaFill": [
+    {
+     "ms": 300,
+     "status": "체력 65 / 115, 컨디션 84, 배부름 77"
+    },
+    {
+     "ms": 1501,
+     "status": "체력 79 / 115, 컨디션 96, 배부름 76"
+    },
+    {
+     "ms": 2702,
+     "status": "체력 92 / 115, 컨디션 100, 배부름 75"
+    },
+    {
+     "ms": 6000,
+     "status": null
+    }
+   ],
+   "reachedNext": true,
+   "recoverDone": true,
+   "end": {
+    "name": "first-run-room",
+    "step": "1 / 1",
+    "title": "다음 할 일",
+    "next": {
+     "text": "알겠어요",
+     "disabled": false
+    },
+    "only": null,
+    "pass": false,
+    "sel": "알겠어요",
+    "selInTut": true,
+    "selOnly": false,
+    "selSc": null,
+    "dialog": null,
+    "selUse": false,
+    "screen": "bha-room",
+    "stage": null,
+    "body": "첫 원정이 끝났다.이제 둥지에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠난다.원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받는다.",
+    "actor": null,
+    "actfx": false,
+    "spaHp": null,
+    "hp": "체력115 / 115",
+    "foe": null
+   }
+  },
+  {
+   "faction": "shinigami",
+   "homeIntro": [
+    {
+     "key": "홈 안내 1 / 11#null",
+     "body": "여기가 대원실이다.대원실에 있는 버튼이 무엇을 하는지 하나씩 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room is-born",
+     "cover": []
+    },
+    {
+     "key": "홈 안내 2 / 11#null",
+     "body": "밖으로 나가면 소울 소사이어티 지도가 나온다.대원실·시장·모험·도전의 탑 가운데 골라 걸어간다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 3 / 11#null",
+     "body": "해방 수련을 하고 진화 정보를 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 4 / 11#null",
+     "body": "도감이다. 만난 진화체와 칭호를 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 5 / 11#null",
+     "body": "장비·물건·타일을 보고 쓴다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 6 / 11#null",
+     "body": "머리 위 막대는 배부름·컨디션·호로화다.누르면 상태 화면이 열린다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 7 / 11#null",
+     "body": "원정에는 이 체력 그대로 나간다.대원실에 있으면 조금씩 찬다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 8 / 11#null",
+     "body": "식사·재우기·손질로 캐릭터를 돌본다.먹이는 원정에서 얻는다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 9 / 11#null",
+     "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 10 / 11#null",
+     "body": "설정·도움말·사진·백업 같은 메뉴가 있다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 11 / 11#0",
+     "body": "이제 모험을 떠나자.[밖으로]를 누른다.",
+     "only": ".bha-prop--outside",
+     "sel": "밖으로",
+     "screen": "bha-room is-force-out",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 11 / 11#1",
+     "body": "소울 소사이어티 지도다.[모험]을 누르면 떠난다.",
+     "only": ".bha-worldmap [data-place=\"adventure\"]",
+     "sel": "모험",
+     "screen": "bha-room bha-worldmap",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    }
+   ],
+   "wound": [
+    {
+     "step": "튜토리얼 1 / 2",
+     "title": "겨우 쓰러뜨렸다",
+     "body": "겨우 쓰러뜨렸지만 치명상을 입었다.이대로는 위험하다…",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ],
+     "hp": "10",
+     "blink": true,
+     "sway": "bha-wound-sway"
+    },
+    {
+     "step": "튜토리얼 2 / 2",
+     "title": "대원실로",
+     "body": "베인 상처에서 영압이 새어 나간다.비틀거리며 대원실로 돌아간다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ],
+     "hp": "10",
+     "blink": true,
+     "sway": "bha-wound-sway"
+    }
+   ],
+   "recover": [
+    {
+     "id": "dying",
+     "title": "빈사",
+     "body": "빈사는 치명상을 입어 체력이 10% 위로 차지 않는 상태다.그대로 두면 시간이 지나 사망하고, 치료제로만 풀린다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "to-bag",
+     "title": "빈사부터 치료",
+     "body": "치료제와 체력 포션을 1개씩 가방에 넣었다.가방을 연다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "cure",
+     "title": "치료제",
+     "body": "빈사는 치료제로 푼다.치료제를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "potion",
+     "title": "체력 포션",
+     "body": "이제 체력을 채운다.체력 포션을 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "merchant",
+     "title": "체력 포션은 드물다",
+     "body": "체력 포션은 떠돌이 상인에게서 드물게 나온다.평소의 체력 포션은 체력을 가득 채운다.",
+     "cover": []
+    },
+    {
+     "id": "to-spa",
+     "title": "온천",
+     "body": "온천에서 쉬면 1초에 체력 10%·컨디션 10씩 차고 배부름이 1 준다.[밖으로]를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "spa-rest",
+     "title": "쉬기",
+     "body": "체력이 80%까지 찼다. 10초면 가득 차고, 체력과 컨디션이 다 차면 저절로 방으로 돌아간다.[다음]을 누르면 방으로 돌아간다.",
+     "cover": []
+    },
+    {
+     "id": "feed",
+     "title": "먹이",
+     "body": "도시락 1개를 넣었다.[먹이]를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "done",
+     "title": "회복 끝",
+     "body": "배부름과 체력이 모두 가득 찼다.방에 있으면 체력이 1분에 2%씩 찬다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    }
+   ],
+   "worldmap": {
+    "forced": {
+     "at": "home",
+     "sel": "adventure"
+    }
+   },
+   "errors": [],
+   "gapTaps": [
+    {
+     "id": "dying",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "to-bag",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "cure",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "potion",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "merchant",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "to-spa",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "spa-rest",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "feed",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "done",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    }
+   ],
+   "spaFill": [
+    {
+     "ms": 301,
+     "status": "체력 65 / 115, 컨디션 84, 배부름 77"
+    },
+    {
+     "ms": 1501,
+     "status": "체력 79 / 115, 컨디션 96, 배부름 76"
+    },
+    {
+     "ms": 2702,
+     "status": "체력 92 / 115, 컨디션 100, 배부름 75"
+    },
+    {
+     "ms": 6002,
+     "status": null
+    }
+   ],
+   "reachedNext": true,
+   "recoverDone": true,
+   "end": {
+    "name": "first-run-room",
+    "step": "1 / 1",
+    "title": "다음 할 일",
+    "next": {
+     "text": "알겠어요",
+     "disabled": false
+    },
+    "only": null,
+    "pass": false,
+    "sel": "알겠어요",
+    "selInTut": true,
+    "selOnly": false,
+    "selSc": null,
+    "dialog": null,
+    "selUse": false,
+    "screen": "bha-room",
+    "stage": null,
+    "body": "첫 원정이 끝났다.이제 대원실에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠난다.원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받는다.",
+    "actor": null,
+    "actfx": false,
+    "spaHp": null,
+    "hp": "체력115 / 115",
+    "foe": null
+   }
+  }
+ ]
+}

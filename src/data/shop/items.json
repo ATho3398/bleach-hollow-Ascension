@@ -47,7 +47,7 @@
       "id": "med-cure",
       "kind": "medicine",
       "category": "consumable",
-      "name": "치료제",
+      "name": "구급상자",
       "cures": "collapsed"
     },
     {
@@ -65,10 +65,31 @@
       "cures": "tired"
     },
     {
+      "id": "heal-patch",
+      "kind": "battle",
+      "category": "consumable",
+      "name": "반창고",
+      "battle": true
+    },
+    {
       "id": "battle-potion",
       "kind": "battle",
       "category": "consumable",
+      "name": "붕대",
+      "battle": true
+    },
+    {
+      "id": "heal-salve",
+      "kind": "battle",
+      "category": "consumable",
       "name": "회복약",
+      "battle": true
+    },
+    {
+      "id": "w-hp-potion",
+      "kind": "battle",
+      "category": "consumable",
+      "name": "치료제",
       "battle": true
     },
     {

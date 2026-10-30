@@ -67,7 +67,8 @@ export function ownsElement(build: Pick<BuildState, 'owned'>, element: string): 
 /** 후보 풀 (C.176, GDD 106장 1 — C.147 의 '가진 속성 후보 빼기' 폐기): 그 적 속성(elements)의 보스 아닌 특성 전부. 이미 가진 특성도 나온다 —
  *  고르면 새 블록 없이 그 속성 강화 +1 만(chooseAbsorb). 화면은 가진 것 = 'n강 → n+1강', 안 가진 것 = '새 블록' */
 function offerPool(elements: readonly string[]): TraitDef[] {
-  return TRAITS.filter((t) => !t.boss && elements.includes(t.element));
+  // C.220 (GDD 126-1 수정 1 "특성은 블록으로 먹는거 아냐"): 흡수는 블록(skill)과 그 강화만 — 패시브·파츠는 후보에서 뺀다(이미 가진 것은 그대로)
+  return TRAITS.filter((t) => !t.boss && t.kind === 'skill' && elements.includes(t.element));
 }
 
 function pick<T>(rng: Rng, list: T[]): T {

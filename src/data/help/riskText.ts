@@ -2,6 +2,7 @@
 // 이름은 종족 설정(riskGaugeName·stabilityName 등), 수치는 BALANCE — 숫자 하드코딩 없음. 도움말 변수(helpVars)와 상태 ⓘ 창이 같이 쓴다.
 // 서식은 textFormat.ts(수치 줄 "조건: 효과 · 효과", −는 빼기 기호).
 import { BALANCE } from '../../config/balance';
+import { fixParticles } from '../../engine/josa';
 import type { FactionConfig } from '../../engine/faction';
 import { MINUS, multPct, num, numLine, pct, signed, zoneLine, type Zone } from './textFormat';
 
@@ -36,12 +37,12 @@ function frenzyFight(): string[] {
     `주는 피해 ${multPct(RX.frenzyDamageDealt)}`,
     `받는 피해 ${multPct(RX.frenzyDamageTaken)}`,
     `적 공격 ${pct(RX.frenzyEvadeChance)} 회피`,
-    '회복약 사용 불가',
+    '회복 물건 사용 불가',
     `공허 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
   ];
 }
 function frenzyReturn(f: Names): string[] {
-  return [`컨디션 ${MINUS}${RX.frenzyConditionLoss}`, `${f.stabilityName} ${MINUS}${RX.breakthroughStabilityLoss}`, `${f.riskGaugeName} ${RX.riskAfterBreakthrough}으로`];
+  return [`컨디션 ${MINUS}${RX.frenzyConditionLoss}`, `${f.stabilityName} ${MINUS}${RX.breakthroughStabilityLoss}`, fixParticles(`${f.riskGaugeName} ${RX.riskAfterBreakthrough}(으)로`)];
 }
 const frenzyEffects = (f: Names): string[] => [...frenzyFight(), `귀환하면 ${frenzyReturn(f).join(' · ')}`];
 
@@ -53,13 +54,13 @@ export function riskText(f: Names): RiskText {
   const a = f.nestActions;
   return {
     riskTip: numLine(`${g} ${RX.limit}`, `${f.frenzyName}(원정당 1번)`, ...frenzyEffects(f)),
-    frenzyLead: `${g} ${RX.limit}이 되면 원정당 1번 걸린다`,
+    frenzyLead: fixParticles(`${g} ${RX.limit}이(가) 되면 원정당 1번 걸린다`),
     frenzyLines: [numLine('그 원정 끝까지', ...frenzyFight()), numLine('귀환하면', ...frenzyReturn(f))],
-    riskLead: `원정에서 힘을 쓸수록 쌓이고, ${RX.limit}이 되면 ${f.frenzyName} 상태가 된다`,
+    riskLead: fixParticles(`원정에서 힘을 쓸수록 쌓이고, ${RX.limit}이(가) 되면 ${f.frenzyName} 상태가 된다`),
     stabilityLead: `낮을수록 전투 시작 때 해방 게이지가 적게 찬다`,
     riskDoes: [
       `${RX.limit} 미만은 직접 손해가 없고 게이지만 쌓인다`,
-      `${RX.limit}이 되면 그 원정 끝까지 ${f.frenzyName} 상태다(원정당 1번)`,
+      fixParticles(`${RX.limit}이(가) 되면 그 원정 끝까지 ${f.frenzyName} 상태다(원정당 1번)`),
     ],
     stabilityDoes: [
       `전투 시작 해방 게이지 = ${s} ÷ ${RX.stabilityMax} × ${LIB.startGaugeMax}`,

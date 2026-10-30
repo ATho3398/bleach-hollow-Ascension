@@ -12,13 +12,11 @@
   "tierNames": [
     "혼백",
     "영술원 학생",
-    "견습 대원",
     "평대원",
     "수석 대원"
   ],
   "rankNames": [
     "대장",
-    "대장 대행",
     "부대장",
     "3석",
     "4석",
@@ -26,11 +24,12 @@
     "6석",
     "7석",
     "8석",
-    "9석"
+    "9석",
+    "10석"
   ],
   "unrankedName": "무석",
   "rankUnitName": "석차",
-  "rankBattleName": "석차 도전",
+  "rankBattleName": "진급 시험",
   "rankWinText": "{rank} 자리에 올랐다!",
   "rankLoseText": "패배… 석차가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
@@ -48,7 +47,7 @@
   "appearanceChange": false,
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
-  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest", "5": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "카라쿠라 마을 / 루콘가 외곽",
   "arenaBg": "seireitei",
@@ -86,7 +85,7 @@
     "영압이 근질거린다…",
     "참백도가 떨린다… 곧 한 단계 오를 것 같다."
   ],
-  "evolutionReasons": [[], ["평범한 영혼 가운데 뛰어난 능력을 보였다.", "진앙영술원에 합격해 사신의 길에 들어섰다."], ["진앙영술원의 치열한 경쟁을 뚫었다.", "호정십삼대에 들어가 정식 사신이 되었다."], ["견습 기간 동안 실전에서 공을 세웠다.", "대장에게 실력을 인정받아 평대원이 되었다."], ["수많은 호로를 정화하며 대에서 손꼽히는 실력자가 되었다.", "수석 대원 자리에 올랐다."]],
+  "evolutionReasons": [[], ["평범한 영혼 가운데 뛰어난 능력을 보였다.", "진앙영술원에 합격해 사신의 길에 들어섰다."], ["진앙영술원의 치열한 경쟁을 뚫었다.", "호정십삼대에 들어가 평대원이 되었다."], ["수많은 호로를 정화하며 대에서 손꼽히는 실력자가 되었다.", "수석 대원 자리에 올랐다."]],
   "tutorialWound": [{"title": "겨우 쓰러뜨렸다", "body": "겨우 쓰러뜨렸지만 치명상을 입었다.\n이대로는 위험하다…"}, {"title": "대원실로", "body": "베인 상처에서 영압이 새어 나간다.\n비틀거리며 대원실로 돌아간다."}],
   "families": [
     {
@@ -217,17 +216,15 @@
   "breakthroughText": "호로화가 한계를 넘었다. 영압이 일그러지고 공허가 몰려든다…",
   "frenzyName": "호로화",
   "market": { "name": "시장" },
-  "worldmap": { "name": "소울 소사이어티" },
+  "worldmap": { "name": "소울 소사이어티", "adventureName": "모험", "spaName": "온천" },
   "room": {
     "shape": "room",
     "sceneArt": "scene.room",
     "characterArt": "char.shinigami",
     "props": {
-      "door": "모험",
       "altar": "수련장",
       "book": "책장",
       "chest": "가방",
-      "market": "루콘가 저잣거리",
       "outside": "밖으로"
     },
     "floor": {
@@ -235,11 +232,9 @@
       "poly": [[0, 0.46], [1, 0.46], [1, 1], [0, 1]]
     },
     "layout": {
-      "door": { "x": 9, "y": 78, "scale": 1 },
       "book": { "x": 76, "y": 60, "scale": 0.68 },
       "altar": { "x": 90, "y": 70, "scale": 0.68 },
       "chest": { "x": 26, "y": 90, "scale": 0.68 },
-      "market": { "x": 74, "y": 90, "scale": 0.68 },
       "outside": { "x": 9, "y": 78, "scale": 1 }
     },
     "characterFoot": { "x": 50, "y": 80 },
@@ -360,6 +355,7 @@
       "keyring-bell": "bell"
     }
   },
+  "ascension": { "name": "참백도 구상화", "desc": "참백도의 정령을 눈앞에 불러내 굴복시킨다. 깨면 만해를 쓸 수 있다.", "foe": "참백도의 정령", "cutin": "정령을 불러낸다 — 참백도 구상화!", "completeText": ["참백도의 정령을 눈앞에 불러내 굴복시켰다.", "진명을 알아내 만해에 닿았다."], "lookChange": false },
   "liberation": {
     "baseName": "영력 해방",
     "baseCutin": "영압을 끌어올린다 — 영력 해방!",

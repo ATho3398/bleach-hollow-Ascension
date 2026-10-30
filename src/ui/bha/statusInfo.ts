@@ -8,7 +8,7 @@ import { riskText, riskZones, stabilityZones, zoneLines } from '../../data/help/
 import { MINUS, num, numLine, pct, pctDelta, range, SECTION, signed, zonesBy, type Zone } from '../../data/help/textFormat';
 import { bondIdleBonus, bondStage, CARE_STATUS_NAMES as CARE_NAMES, deathHoursOf, reviveEvLossOf } from '../../engine/nest';
 import { fixParticles } from '../../engine/josa';
-import { marketOf, type FactionConfig } from '../../engine/faction';
+import { DEFAULT_WORLDMAP, type FactionConfig } from '../../engine/faction';
 import type { InfoBody, InfoDoc, InfoGroup } from './infoTip';
 import { BOND_STAGE_NAMES, type StatusChip } from './roomLogic';
 
@@ -18,7 +18,7 @@ const BD = NX.bond;
 const RX = BALANCE.provisional.risk;
 const PX = BALANCE.provisional.expedition;
 
-type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market'>>;
+type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market' | 'worldmap'>>;
 
 export type StatusInfoKind = StatusChip['kind'] | 'stab' | 'dead';
 
@@ -65,7 +65,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
       });
       return gaugeDoc(
         `${a.feed}(으)로 채우고, 시간이 흐르면 준다`,
-        [`낮으면 컨디션이 줄고 ${CARE_NAMES.weak}에 걸린다`, `${CP.conditionRegenAtFullness} 이상이면 쉬는 동안 컨디션이 시간당 ${signed(CP.conditionRegenPerHour)} 오른다`],
+        [`낮으면 컨디션이 줄고 ${CARE_NAMES.weak}에 걸린다`],
         zones, value,
         [numLine(a.feed, '먹이마다 정해진 만큼 +'), numLine('시간 흐름', `시간당 ${MINUS}${num(NX.idleHungerPerHour)}`)],
       );
@@ -90,9 +90,9 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine(a.sleep, signed(NX.sleepCondition)),
           numLine(a.pet, signed(NX.petCondition)),
           numLine(`${f.fullnessName} ${CP.conditionBelowFullness} 이하`, `시간당 ${MINUS}${num(CP.conditionPerHour)}`, `${f.fullnessName} 0이면 ×2`),
-          // 배부르면 쉬는 동안 회복 · 온천 회복 (GDD 135장 3)
-          numLine(`${f.fullnessName} ${CP.conditionRegenAtFullness} 이상`, `쉬는 동안 시간당 ${signed(CP.conditionRegenPerHour)}`),
-          numLine(f.room ? marketOf({ room: f.room, market: f.market }).props.spa : '온천', `1분에 ${signed(NX.homeHp.spa.conditionPerMinute)}`),
+          // 온천 회복 (GDD 135장 3 — 배부름 홈 대기 회복은 수정 v5.315 에서 폐기)
+          numLine(f.worldmap?.spaName ?? DEFAULT_WORLDMAP.spaName, // 온천 이름 = 월드맵 장소 이름 (GDD 153장 1)
+             `1분에 ${signed(Math.round(NX.homeHp.spa.conditionPerSecond * 60))}`), // 평소 온천 약 5분에 가득 (GDD 145장 1)
           numLine('원정 패배', `${NX.defeatCondition}까지 떨어진다`),
           numLine(`${f.frenzyName} 후 귀환`, signed(-RX.frenzyConditionLoss)),
         ],
@@ -155,7 +155,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine('버티는 시간', `${CP.dyingBaseHours}시간 + 교감 × ${CP.dyingHoursPerBond}시간`),
           '버티는 시간이 다 되거나 모험에서 지면 사망한다',
         ],
-        [`상점 약 칸의 ${medicineName('collapsed')}을(를) 먹이면 풀린다`],
+        [`상점 약 칸의 ${medicineName('collapsed')}을(를) 쓰면 풀린다`],
       );
     case 'dead':
       return ailmentDoc('오래 돌보지 않아 숨이 끊어졌다', [], ['방에서 [부활]을 하면 다시 시작한다']);

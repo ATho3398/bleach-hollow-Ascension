@@ -47,7 +47,7 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     const s = newSaveData('hollow', 1);
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(56); // C.213 (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
 
@@ -280,6 +280,6 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     markGuideDone(s.help, 'tile-intro');
     expect(guidePending(s.help, 'tile-intro')).toBe(false);
     expect(sanitizeHelpState(JSON.parse(JSON.stringify(s.help)))).toEqual(s.help);
-    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'home-intro', 'recover', 'recover-cure', 'tile-draw', 'tile-intro', 'tile-plan']); // C.211 'recover-cure'(회복 안내 치료제 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
+    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'home-intro', 'recover', 'recover-cure', 'tile-draw', 'tile-intro', 'tile-plan']); // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
   });
 });

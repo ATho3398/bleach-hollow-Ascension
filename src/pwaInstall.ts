@@ -59,10 +59,10 @@ export function shouldAutoShow(prefs: InstallPrefs, standalone: boolean, mode: I
   return mode !== 'none';
 }
 
-/** 홈 화면 앱으로 열렸는가 (안드로이드·데스크톱 display-mode, 아이폰 navigator.standalone) */
+/** 홈 화면 앱으로 열렸는가 (안드로이드·데스크톱 display-mode fullscreen/standalone — GDD 156장 1 manifest fullscreen, 아이폰 navigator.standalone) */
 export function isStandalone(win: Pick<Window, 'matchMedia'> & { navigator: Navigator & { standalone?: boolean } } = window): boolean {
   try {
-    return win.matchMedia('(display-mode: standalone)').matches || win.navigator.standalone === true;
+    return win.matchMedia('(display-mode: fullscreen)').matches || win.matchMedia('(display-mode: standalone)').matches || win.navigator.standalone === true;
   } catch {
     return false;
   }

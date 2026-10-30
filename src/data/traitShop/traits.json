@@ -1,0 +1,9 @@
+{
+  "_comment": "특성 상점 탈착 특성 (GDD 150장 4, C.227, provisional — 사용자 초안 오면 교체). 이름만 — 가격·효과 수치는 src/config/balance.ts provisional.traitShop. 종족 공통",
+  "traits": [
+    { "id": "sharpen", "name": "날 세우기" },
+    { "id": "shell", "name": "굳은 피부" },
+    { "id": "tough", "name": "질긴 몸" },
+    { "id": "focus", "name": "집중" }
+  ]
+}

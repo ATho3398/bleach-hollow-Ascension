@@ -21,20 +21,22 @@
     "provisional": true
   },
   {
-    "id": "t3:base",
+    "id": "t3:normal",
     "tier": 3,
     "label": {
-      "kind": "base",
-      "elements": []
+      "kind": "element",
+      "elements": [
+        "normal"
+      ]
     },
     "elements": [
       "normal"
     ],
     "stats": {
       "hp": 79,
-      "atk": 78,
-      "int": 82,
-      "def": 75,
+      "atk": 79,
+      "int": 78,
+      "def": 78,
       "spr": 78,
       "spd": 78
     },
@@ -42,13 +44,200 @@
     "provisional": true
   },
   {
-    "id": "t4:normal",
-    "tier": 4,
+    "id": "t3:water",
+    "tier": 3,
     "label": {
       "kind": "element",
       "elements": [
+        "water"
+      ]
+    },
+    "elements": [
+      "water"
+    ],
+    "stats": {
+      "hp": 86,
+      "atk": 71,
+      "int": 78,
+      "def": 78,
+      "spr": 90,
+      "spd": 67
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t3:fire",
+    "tier": 3,
+    "label": {
+      "kind": "element",
+      "elements": [
+        "fire"
+      ]
+    },
+    "elements": [
+      "fire"
+    ],
+    "stats": {
+      "hp": 78,
+      "atk": 90,
+      "int": 78,
+      "def": 71,
+      "spr": 67,
+      "spd": 86
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t3:earth",
+    "tier": 3,
+    "label": {
+      "kind": "element",
+      "elements": [
+        "earth"
+      ]
+    },
+    "elements": [
+      "earth"
+    ],
+    "stats": {
+      "hp": 86,
+      "atk": 78,
+      "int": 71,
+      "def": 94,
+      "spr": 78,
+      "spd": 63
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t3:thunder",
+    "tier": 3,
+    "label": {
+      "kind": "element",
+      "elements": [
+        "thunder"
+      ]
+    },
+    "elements": [
+      "thunder"
+    ],
+    "stats": {
+      "hp": 67,
+      "atk": 78,
+      "int": 86,
+      "def": 67,
+      "spr": 78,
+      "spd": 94
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h3:fail",
+    "tier": 3,
+    "label": {
+      "kind": "fail",
+      "elements": [
         "normal"
       ]
+    },
+    "hidden": true,
+    "elements": [
+      "normal"
+    ],
+    "stats": {
+      "hp": 68,
+      "atk": 68,
+      "int": 67,
+      "def": 67,
+      "spr": 67,
+      "spd": 67
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h3:passage",
+    "tier": 3,
+    "label": {
+      "kind": "passage",
+      "elements": []
+    },
+    "hidden": true,
+    "elements": [
+      "normal"
+    ],
+    "stats": {
+      "hp": 79,
+      "atk": 79,
+      "int": 78,
+      "def": 78,
+      "spr": 78,
+      "spd": 78
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:normal:physical",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "normal"
+      ],
+      "category": "physical"
+    },
+    "elements": [
+      "normal"
+    ],
+    "stats": {
+      "hp": 98,
+      "atk": 117,
+      "int": 97,
+      "def": 88,
+      "spr": 88,
+      "spd": 97
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:normal:special",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "normal"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "normal"
+    ],
+    "stats": {
+      "hp": 98,
+      "atk": 78,
+      "int": 117,
+      "def": 98,
+      "spr": 97,
+      "spd": 97
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:normal:mixed",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "normal"
+      ],
+      "category": "mixed"
     },
     "elements": [
       "normal"
@@ -65,13 +254,62 @@
     "provisional": true
   },
   {
-    "id": "t4:water",
+    "id": "t4:water:physical",
     "tier": 4,
     "label": {
-      "kind": "element",
+      "kind": "arrancar",
       "elements": [
         "water"
-      ]
+      ],
+      "category": "physical"
+    },
+    "elements": [
+      "water"
+    ],
+    "stats": {
+      "hp": 107,
+      "atk": 107,
+      "int": 98,
+      "def": 88,
+      "spr": 102,
+      "spd": 83
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:water:special",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "water"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "water"
+    ],
+    "stats": {
+      "hp": 107,
+      "atk": 68,
+      "int": 117,
+      "def": 98,
+      "spr": 112,
+      "spd": 83
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:water:mixed",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "water"
+      ],
+      "category": "mixed"
     },
     "elements": [
       "water"
@@ -88,13 +326,62 @@
     "provisional": true
   },
   {
-    "id": "t4:fire",
+    "id": "t4:fire:physical",
     "tier": 4,
     "label": {
-      "kind": "element",
+      "kind": "arrancar",
       "elements": [
         "fire"
-      ]
+      ],
+      "category": "physical"
+    },
+    "elements": [
+      "fire"
+    ],
+    "stats": {
+      "hp": 98,
+      "atk": 132,
+      "int": 97,
+      "def": 78,
+      "spr": 73,
+      "spd": 107
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:fire:special",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "fire"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "fire"
+    ],
+    "stats": {
+      "hp": 97,
+      "atk": 93,
+      "int": 117,
+      "def": 88,
+      "spr": 83,
+      "spd": 107
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:fire:mixed",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "fire"
+      ],
+      "category": "mixed"
     },
     "elements": [
       "fire"
@@ -111,13 +398,62 @@
     "provisional": true
   },
   {
-    "id": "t4:earth",
+    "id": "t4:earth:physical",
     "tier": 4,
     "label": {
-      "kind": "element",
+      "kind": "arrancar",
       "elements": [
         "earth"
-      ]
+      ],
+      "category": "physical"
+    },
+    "elements": [
+      "earth"
+    ],
+    "stats": {
+      "hp": 107,
+      "atk": 117,
+      "int": 88,
+      "def": 107,
+      "spr": 88,
+      "spd": 78
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:earth:special",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "earth"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "earth"
+    ],
+    "stats": {
+      "hp": 107,
+      "atk": 78,
+      "int": 107,
+      "def": 117,
+      "spr": 98,
+      "spd": 78
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:earth:mixed",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "earth"
+      ],
+      "category": "mixed"
     },
     "elements": [
       "earth"
@@ -134,13 +470,62 @@
     "provisional": true
   },
   {
-    "id": "t4:thunder",
+    "id": "t4:thunder:physical",
     "tier": 4,
     "label": {
-      "kind": "element",
+      "kind": "arrancar",
       "elements": [
         "thunder"
-      ]
+      ],
+      "category": "physical"
+    },
+    "elements": [
+      "thunder"
+    ],
+    "stats": {
+      "hp": 83,
+      "atk": 117,
+      "int": 107,
+      "def": 73,
+      "spr": 88,
+      "spd": 117
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:thunder:special",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "thunder"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "thunder"
+    ],
+    "stats": {
+      "hp": 83,
+      "atk": 78,
+      "int": 127,
+      "def": 83,
+      "spr": 97,
+      "spd": 117
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:thunder:mixed",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "thunder"
+      ],
+      "category": "mixed"
     },
     "elements": [
       "thunder"
@@ -157,6 +542,78 @@
     "provisional": true
   },
   {
+    "id": "t4:blood:physical",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "blood"
+      ],
+      "category": "physical"
+    },
+    "elements": [
+      "blood"
+    ],
+    "stats": {
+      "hp": 112,
+      "atk": 127,
+      "int": 83,
+      "def": 88,
+      "spr": 78,
+      "spd": 97
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:poison:special",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "poison"
+      ],
+      "category": "special"
+    },
+    "elements": [
+      "poison"
+    ],
+    "stats": {
+      "hp": 83,
+      "atk": 68,
+      "int": 132,
+      "def": 98,
+      "spr": 107,
+      "spd": 97
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "t4:kyo:mixed",
+    "tier": 4,
+    "label": {
+      "kind": "arrancar",
+      "elements": [
+        "kyo"
+      ],
+      "category": "mixed"
+    },
+    "elements": [
+      "kyo"
+    ],
+    "stats": {
+      "hp": 98,
+      "atk": 107,
+      "int": 112,
+      "def": 88,
+      "spr": 83,
+      "spd": 97
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
     "id": "h4:fusion:water+earth",
     "tier": 4,
     "label": {
@@ -164,7 +621,8 @@
       "elements": [
         "water",
         "earth"
-      ]
+      ],
+      "category": "mixed"
     },
     "hidden": true,
     "elements": [
@@ -190,7 +648,8 @@
       "elements": [
         "fire",
         "thunder"
-      ]
+      ],
+      "category": "mixed"
     },
     "hidden": true,
     "elements": [
@@ -213,7 +672,8 @@
     "tier": 4,
     "label": {
       "kind": "complete",
-      "elements": []
+      "elements": [],
+      "category": "mixed"
     },
     "hidden": true,
     "elements": [
@@ -231,110 +691,14 @@
     "provisional": true
   },
   {
-    "id": "h4:special:blood",
-    "tier": 4,
-    "label": {
-      "kind": "special",
-      "elements": [
-        "blood"
-      ]
-    },
-    "hidden": true,
-    "elements": [
-      "blood"
-    ],
-    "stats": {
-      "hp": 119,
-      "atk": 112,
-      "int": 76,
-      "def": 98,
-      "spr": 83,
-      "spd": 97
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "h4:special:poison",
-    "tier": 4,
-    "label": {
-      "kind": "special",
-      "elements": [
-        "poison"
-      ]
-    },
-    "hidden": true,
-    "elements": [
-      "poison"
-    ],
-    "stats": {
-      "hp": 76,
-      "atk": 83,
-      "int": 119,
-      "def": 98,
-      "spr": 112,
-      "spd": 97
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "h4:special:kyo",
-    "tier": 4,
-    "label": {
-      "kind": "special",
-      "elements": [
-        "kyo"
-      ]
-    },
-    "hidden": true,
-    "elements": [
-      "kyo"
-    ],
-    "stats": {
-      "hp": 98,
-      "atk": 112,
-      "int": 119,
-      "def": 83,
-      "spr": 76,
-      "spd": 97
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "h4:pure",
-    "tier": 4,
-    "label": {
-      "kind": "pure",
-      "elements": [
-        "normal"
-      ]
-    },
-    "hidden": true,
-    "elements": [
-      "normal"
-    ],
-    "stab": 1.3,
-    "stats": {
-      "hp": 98,
-      "atk": 98,
-      "int": 98,
-      "def": 97,
-      "spr": 97,
-      "spd": 97
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
     "id": "h4:fail",
     "tier": 4,
     "label": {
       "kind": "fail",
       "elements": [
         "normal"
-      ]
+      ],
+      "category": "physical"
     },
     "hidden": true,
     "elements": [
@@ -352,653 +716,131 @@
     "provisional": true
   },
   {
-    "id": "t5:normal:physical",
-    "tier": 5,
+    "id": "h4:awakened",
+    "tier": 4,
     "label": {
-      "kind": "arrancar",
-      "elements": [
-        "normal"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "normal"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 146,
-      "int": 97,
-      "def": 122,
-      "spr": 122,
-      "spd": 121
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:normal:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "normal"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "normal"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 97,
-      "int": 146,
-      "def": 122,
-      "spr": 122,
-      "spd": 121
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:normal:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "normal"
-      ],
+      "kind": "awakened",
+      "elements": [],
       "category": "mixed"
-    },
-    "elements": [
-      "normal"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 122,
-      "int": 122,
-      "def": 122,
-      "spr": 121,
-      "spd": 121
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:water:physical",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "water"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "water"
-    ],
-    "stats": {
-      "hp": 134,
-      "atk": 134,
-      "int": 97,
-      "def": 122,
-      "spr": 140,
-      "spd": 103
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:water:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "water"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "water"
-    ],
-    "stats": {
-      "hp": 134,
-      "atk": 85,
-      "int": 146,
-      "def": 122,
-      "spr": 140,
-      "spd": 103
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:water:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "water"
-      ],
-      "category": "mixed"
-    },
-    "elements": [
-      "water"
-    ],
-    "stats": {
-      "hp": 134,
-      "atk": 109,
-      "int": 122,
-      "def": 122,
-      "spr": 140,
-      "spd": 103
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:fire:physical",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "fire"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "fire"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 164,
-      "int": 97,
-      "def": 110,
-      "spr": 103,
-      "spd": 134
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:fire:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "fire"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "fire"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 116,
-      "int": 146,
-      "def": 109,
-      "spr": 103,
-      "spd": 134
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:fire:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "fire"
-      ],
-      "category": "mixed"
-    },
-    "elements": [
-      "fire"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 140,
-      "int": 122,
-      "def": 109,
-      "spr": 103,
-      "spd": 134
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:earth:physical",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "earth"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "earth"
-    ],
-    "stats": {
-      "hp": 134,
-      "atk": 146,
-      "int": 85,
-      "def": 146,
-      "spr": 122,
-      "spd": 97
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:earth:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "earth"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "earth"
-    ],
-    "stats": {
-      "hp": 134,
-      "atk": 97,
-      "int": 134,
-      "def": 146,
-      "spr": 122,
-      "spd": 97
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:earth:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "earth"
-      ],
-      "category": "mixed"
-    },
-    "elements": [
-      "earth"
-    ],
-    "stats": {
-      "hp": 134,
-      "atk": 122,
-      "int": 109,
-      "def": 146,
-      "spr": 122,
-      "spd": 97
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:thunder:physical",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "thunder"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "thunder"
-    ],
-    "stats": {
-      "hp": 103,
-      "atk": 146,
-      "int": 110,
-      "def": 103,
-      "spr": 122,
-      "spd": 146
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:thunder:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "thunder"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "thunder"
-    ],
-    "stats": {
-      "hp": 104,
-      "atk": 97,
-      "int": 158,
-      "def": 103,
-      "spr": 122,
-      "spd": 146
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:thunder:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "thunder"
-      ],
-      "category": "mixed"
-    },
-    "elements": [
-      "thunder"
-    ],
-    "stats": {
-      "hp": 103,
-      "atk": 122,
-      "int": 134,
-      "def": 103,
-      "spr": 122,
-      "spd": 146
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:blood:physical",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "blood"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "blood"
-    ],
-    "stats": {
-      "hp": 140,
-      "atk": 158,
-      "int": 79,
-      "def": 122,
-      "spr": 109,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:blood:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "blood"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "blood"
-    ],
-    "stats": {
-      "hp": 140,
-      "atk": 109,
-      "int": 128,
-      "def": 122,
-      "spr": 109,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:blood:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "blood"
-      ],
-      "category": "mixed"
-    },
-    "elements": [
-      "blood"
-    ],
-    "stats": {
-      "hp": 140,
-      "atk": 134,
-      "int": 103,
-      "def": 122,
-      "spr": 109,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:poison:physical",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "poison"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "poison"
-    ],
-    "stats": {
-      "hp": 103,
-      "atk": 134,
-      "int": 115,
-      "def": 122,
-      "spr": 134,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:poison:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "poison"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "poison"
-    ],
-    "stats": {
-      "hp": 103,
-      "atk": 85,
-      "int": 164,
-      "def": 122,
-      "spr": 134,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:poison:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "poison"
-      ],
-      "category": "mixed"
-    },
-    "elements": [
-      "poison"
-    ],
-    "stats": {
-      "hp": 103,
-      "atk": 109,
-      "int": 140,
-      "def": 122,
-      "spr": 134,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:kyo:physical",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "kyo"
-      ],
-      "category": "physical"
-    },
-    "elements": [
-      "kyo"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 158,
-      "int": 116,
-      "def": 109,
-      "spr": 103,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:kyo:special",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "kyo"
-      ],
-      "category": "special"
-    },
-    "elements": [
-      "kyo"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 110,
-      "int": 164,
-      "def": 109,
-      "spr": 103,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "t5:kyo:mixed",
-    "tier": 5,
-    "label": {
-      "kind": "arrancar",
-      "elements": [
-        "kyo"
-      ],
-      "category": "mixed"
-    },
-    "elements": [
-      "kyo"
-    ],
-    "stats": {
-      "hp": 122,
-      "atk": 134,
-      "int": 140,
-      "def": 109,
-      "spr": 103,
-      "spd": 122
-    },
-    "maxChain": 3,
-    "provisional": true
-  },
-  {
-    "id": "h5:limit",
-    "tier": 5,
-    "label": {
-      "kind": "limit",
-      "elements": []
     },
     "hidden": true,
     "stats": {
-      "hp": 122,
-      "atk": 146,
-      "int": 146,
+      "hp": 108,
+      "atk": 97,
+      "int": 97,
       "def": 97,
-      "spr": 97,
-      "spd": 122
+      "spr": 108,
+      "spd": 107
     },
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "h5:restraint",
-    "tier": 5,
+    "id": "h4:frenzy",
+    "tier": 4,
+    "label": {
+      "kind": "frenzy",
+      "elements": [],
+      "category": "physical"
+    },
+    "hidden": true,
+    "stats": {
+      "hp": 98,
+      "atk": 117,
+      "int": 117,
+      "def": 78,
+      "spr": 78,
+      "spd": 97
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h4:restraint",
+    "tier": 4,
     "label": {
       "kind": "restraint",
-      "elements": []
+      "elements": [],
+      "category": "special"
     },
     "hidden": true,
     "stats": {
-      "hp": 134,
-      "atk": 91,
-      "int": 91,
-      "def": 146,
-      "spr": 146,
-      "spd": 122
+      "hp": 107,
+      "atk": 73,
+      "int": 73,
+      "def": 117,
+      "spr": 117,
+      "spd": 98
     },
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "h5:hunter",
-    "tier": 5,
+    "id": "h4:stable",
+    "tier": 4,
+    "label": {
+      "kind": "stable",
+      "elements": [
+        "normal"
+      ],
+      "category": "special"
+    },
+    "hidden": true,
+    "stab": 1.3,
+    "stats": {
+      "hp": 98,
+      "atk": 98,
+      "int": 98,
+      "def": 97,
+      "spr": 97,
+      "spd": 97
+    },
+    "maxChain": 3,
+    "provisional": true
+  },
+  {
+    "id": "h4:hunter",
+    "tier": 4,
     "label": {
       "kind": "hunter",
-      "elements": []
+      "elements": [],
+      "category": "physical"
     },
     "hidden": true,
     "stats": {
-      "hp": 140,
-      "atk": 134,
-      "int": 103,
-      "def": 110,
-      "spr": 109,
-      "spd": 134
+      "hp": 112,
+      "atk": 107,
+      "int": 83,
+      "def": 88,
+      "spr": 88,
+      "spd": 107
     },
     "maxChain": 3,
     "provisional": true
   },
   {
-    "id": "h5:reborn",
-    "tier": 5,
+    "id": "h4:void",
+    "tier": 4,
     "label": {
-      "kind": "reborn",
-      "elements": []
+      "kind": "void",
+      "elements": [
+        "blood",
+        "poison",
+        "kyo"
+      ],
+      "category": "mixed"
     },
     "hidden": true,
+    "elements": [
+      "kyo"
+    ],
     "stats": {
-      "hp": 134,
-      "atk": 122,
-      "int": 122,
-      "def": 121,
-      "spr": 134,
-      "spd": 134
+      "hp": 98,
+      "atk": 98,
+      "int": 98,
+      "def": 97,
+      "spr": 97,
+      "spd": 97
     },
     "maxChain": 3,
     "provisional": true

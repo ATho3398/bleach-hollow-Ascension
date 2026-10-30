@@ -22,15 +22,18 @@ describe('종족 설정', () => {
   });
 
   it('기획서 표 값이 들어 있다', () => {
-    expect(getFaction('hollow').tierNames[4]).toBe('아란칼');
-    expect(getFaction('shinigami').tierNames[4]).toBe('수석 대원');
+    expect(getFaction('hollow').tierNames[3]).toBe('바스트로데'); // C.220 (GDD 126장 확정 1): 4단계
+    expect(getFaction('shinigami').tierNames[3]).toBe('수석 대원');
+    expect(getFaction('hollow').ascension.name).toBe('아란칼화');
+    expect(getFaction('shinigami').ascension.name).toBe('참백도 구상화');
     // 등급표 (GDD 21-1): 번호 1~10 이름, 무번호 이름. 오르는 방식은 양쪽 동일이라 rankMode 는 없앴다
     expect(getFaction('hollow').rankNames).toHaveLength(10);
     expect(getFaction('hollow').rankNames[0]).toBe('에스파다 No.1');
     expect(getFaction('hollow').rankNames[9]).toBe('에스파다 No.10');
     expect(getFaction('shinigami').rankNames[0]).toBe('대장');
-    expect(getFaction('shinigami').rankNames[2]).toBe('부대장');
-    expect(getFaction('shinigami').rankNames[9]).toBe('9석');
+    expect(getFaction('shinigami').rankNames[1]).toBe('부대장'); // C.220 (126장 수정 a): 대장·부대장·3석…10석
+    expect(getFaction('shinigami').rankNames[2]).toBe('3석');
+    expect(getFaction('shinigami').rankNames[9]).toBe('10석');
     expect('rankMode' in getFaction('hollow')).toBe(false);
   });
 

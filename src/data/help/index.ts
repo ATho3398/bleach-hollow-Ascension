@@ -11,6 +11,7 @@ import tutorialJson from './tutorial.json';
 import guidesJson from './guides.json';
 import { synergyName, tileName } from '../tiles';
 import { statName } from '../elements';
+import { GOLD_ITEMS } from '../shop';
 import { STAT_IDS } from '../schema';
 import type { TextGuideId } from '../../engine/tutorial';
 
@@ -110,9 +111,11 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.guardSeconds = String(COMBAT.guardSeconds);
   vars.gearCooldownSeconds = String(COMBAT.gearCooldownSeconds);
   const BI = BALANCE.provisional.battleItems;
-  const potion = BI['battle-potion'];
   const haste = BI['battle-haste'];
-  vars.potionPct = potion?.effect === 'heal' ? String(Math.round(potion.fraction * 100)) : '';
+  // 회복 물건 4종 (GDD 144장): 이름·회복량 — 상점 품목 데이터 순서
+  const heals = GOLD_ITEMS.filter((g) => BI[g.id]?.effect === 'heal');
+  vars.healNames = heals.map((g) => g.name).join('·');
+  vars.healPcts = heals.map((g) => { const b = BI[g.id]; return b?.effect === 'heal' ? String(Math.round(b.fraction * 100)) : ''; }).join('·');
   vars.hasteSeconds = haste?.effect === 'haste' ? String(haste.seconds) : '';
   vars.hasteMult = haste?.effect === 'haste' ? String(haste.spawnMult) : '';
   delete vars.basicSkillName;
@@ -122,7 +125,7 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   // 해방 (GDD 83장, 옛 저장형 필살기 자리): {liberation.baseName}·{liberation.name} 은 종족 설정에서 그대로, 수치는 BALANCE
   vars.liberationSeconds = String(LIB.seconds);
   vars.liberationRisk = String(LIB.riskOnEnd);
-  // 진화 단계 이름 (GDD 20-5 설명용): {tier4} = 바스트로데/평대원, {tier5} = 아란칼/수석 대원
+  // 진화 단계 이름 (GDD 126장 4단계 설명용): {tier3} = 아쥬커스/평대원, {tier4} = 바스트로데/수석 대원, {ascensionName} = 아란칼화/참백도 구상화
   // 능력치 자세한 설명 (C.137, GDD 85장 9): 이름은 종족 설정 표기, 수치는 BALANCE 에서 읽는다 (숫자 하드코딩 없음)
   for (const id of STAT_IDS) vars[`stat.${id}`] = statName(id, f.id);
   vars.statRef = String(BALANCE.provisional.stats.tierTotals[0]! / STAT_IDS.length);
@@ -145,8 +148,9 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.stabilityZoneText = zoneLines(stabilityZones(f)).join('\n');
   vars.stabilityMoveText = rt.stabilityMove.join('\n');
   vars.normalSlotNote = normalSlotNote(f.slotName);
+  vars.tier3 = f.tierNames[2];
   vars.tier4 = f.tierNames[3];
-  vars.tier5 = f.tierNames[4];
+  vars.ascensionName = f.ascension.name;
   return vars;
 }
 

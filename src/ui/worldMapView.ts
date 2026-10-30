@@ -1,10 +1,13 @@
 // 월드맵 (GDD 130장 2, C.204): 방 물건 [밖으로]로 나오는 하이앵글 지도 한 장. 이름은 종족 설정(worldmap.name — 호로 '웨코문도' / 사신 '소울 소사이어티').
-// 장소 3개 = 홈(방, 이름 nestName) · 시장(온천·상점·떠돌이 상인) · 모험(출발 준비 화면). 누르면 바로 그 화면으로(걷는 연출 없음).
+// 장소 5개 = 홈(방, 이름 nestName) · 시장(상점·떠돌이 상인) · 모험(출발 준비 화면) · 탑(도전의 탑 화면, GDD 139장 1) · 온천(온천 화면, GDD 153장 1).
+// 고르면(✓) 캐릭터가 그쪽으로 한두 걸음 출발하는 모습(약 0.4초)과 함께 바로 화면이 어두워지고(페이드아웃) 그 화면이 밝아진다(페이드인) — GDD 153장 3(137장 '끝까지 걷기' 대체).
+// 출발하는 동안 입력 잠금, 뒤로 = 취소하고 제자리.
 // 캐릭터는 방 그림 그대로 지금 있던 장소 위에 서 있다(보기만, GDD 132장 2). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
-// 기능 스위치 FEATURES.WORLD_MAP 이 꺼지면 이 화면은 쓰이지 않는다(옛 방 문·장터 그대로, GDD 130장 6).
+// 옛 방 모험 문·장터 물건 경로와 기능 스위치는 폐기했다 (GDD 137장 3, C.215).
 import { artUrls } from '../data/art/manifest';
 import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace } from '../engine/faction';
-import { artSkinOf, type SaveData } from '../game';
+import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
+import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
@@ -14,9 +17,14 @@ export interface WorldMapHandlers {
   onHome: () => void;
   onMarket: () => void;
   onAdventure: () => void;
-  /** 잠긴 장소 (GDD 131장 2 첫 모험 강제): 이 장소들은 흐리게 잠기고 눌러도 onLocked */
+  onTower: () => void;
+  /** 온천 (GDD 153장 1): 시장 안 칸에서 월드맵 장소로 */
+  onSpa: () => void;
+  /** 잠긴 장소 (GDD 131장 2 첫 모험 강제·139장 1 탑 해금 전): 이 장소들은 흐리게 잠기고 눌러도 onLocked */
   locked?: readonly WorldPlace[];
   onLocked?: (p: WorldPlace) => void;
+  /** 열리기 전이라 잠긴 장소와 그 이유 한 줄 (GDD 139장 1: 탑 해금 전). 흐린 잠김 + 자물쇠, 누르면 onLocked */
+  lockReasons?: Partial<Record<WorldPlace, string>>;
   /** 캐릭터가 서 있는 장소 = 지금 있던 곳 (GDD 132장 2: 홈에서 열면 홈 위, 시장에서 돌아오면 시장 위). 없으면 홈 */
   at?: WorldPlace;
   /** 처음 기기 초점 장소 (없으면 at). 첫 모험 강제 중 = 모험 */
@@ -29,6 +37,41 @@ export function standFoot(layout: { x: number; y: number }): { x: number; y: num
   return { x: layout.x, y: Math.max(0, Math.min(98, layout.y + WORLD_STAND_DY)) };
 }
 
+/** 출발 연출 (GDD 153장 3): 출발 시간·걸음 거리(장면 %) · 페이드 시작(출발 뒤 ms) · 페이드 시간. 화면 연출값이라 balance 밖 */
+export const WORLD_DEPART_MS = 400;
+export const WORLD_DEPART_PCT = 6;
+export const WORLD_FADE_DELAY_MS = 100;
+export const WORLD_FADE_MS = 320;
+/** 출발해서 닿는 자리: 목적지 쪽으로 WORLD_DEPART_PCT 만큼(목적지가 더 가까우면 목적지). 같은 자리면 그대로 */
+export function departFoot(from: { x: number; y: number }, to: { x: number; y: number }): { x: number; y: number } {
+  const d = Math.hypot(to.x - from.x, to.y - from.y);
+  if (d < 0.5) return { ...from };
+  const k = Math.min(1, WORLD_DEPART_PCT / d);
+  return { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
+}
+/** 고르고 나서 목적지 화면으로 바뀌기까지 (출발과 페이드 중 늦게 끝나는 쪽) */
+export const WORLD_MOVE_MS = Math.max(WORLD_DEPART_MS, WORLD_FADE_DELAY_MS + WORLD_FADE_MS);
+
+/** 지금 떠 있는 월드맵의 걷기 (뒤로 = 취소를 바깥(화면 스택)에서 부른다) */
+let live: { walking: () => boolean; cancel: () => void } | null = null;
+/** 걷는 중이면 취소하고 제자리로 돌린 뒤 true (GDD 137장 3: 뒤로 = 취소). 아니면 false */
+export function worldMapCancelWalk(): boolean {
+  if (!live?.walking()) return false;
+  live.cancel();
+  return true;
+}
+
+/** 페이드 막: 기기 LCD(화면들이 바뀌어도 남는 틀) 위에 깔아 화면 전환을 넘어 이어진다 */
+function fadeVeil(view: HTMLElement): HTMLElement {
+  const host = view.parentElement ?? view;
+  host.querySelector(':scope > .bha-worldmap__fade')?.remove();
+  const v = el('div', 'bha-worldmap__fade');
+  v.setAttribute('aria-hidden', 'true');
+  v.style.setProperty('--bha-wm-fade', `${WORLD_FADE_MS}ms`);
+  host.append(v);
+  return v;
+}
+
 export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData, hd: WorldMapHandlers): void {
   const wm = worldMapOf(faction);
   const here = save.shared.wanderer.visit !== null;
@@ -36,32 +79,44 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   // ── 위 한 줄: 왼쪽 위 [둥지로]/[대원실로](다른 공간 화면과 같은 모양·자리 — GDD 129-1 2) · 지도 이름 ──
   const hud = el('header', 'bha-room__hud bha-worldmap__hud');
   const homeLocked = hd.locked?.includes('home') ?? false;
-  const backBtn = spaceBackButton(homeLocked ? () => hd.onLocked?.('home') : hd.onHome, fixParticles(`${wm.places.home}(으)로`));
+  const backBtn = spaceBackButton(() => (walking ? cancelWalk() : homeLocked ? hd.onLocked?.('home') : hd.onHome()), fixParticles(`${wm.places.home}(으)로`));
   if (homeLocked) backBtn.setAttribute('aria-disabled', 'true'); // 첫 모험 강제 중 (GDD 131장 2)
   hud.append(backBtn, el('h1', 'bha-worldmap__title', wm.name));
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(wm);
   scene.classList.add('bha-worldmap__scene');
-  const act: Record<WorldPlace, () => void> = { home: hd.onHome, market: hd.onMarket, adventure: hd.onAdventure };
+  const act: Record<WorldPlace, () => void> = { home: hd.onHome, market: hd.onMarket, adventure: hd.onAdventure, tower: hd.onTower, spa: hd.onSpa };
   const floor: FloorEntry[] = [];
   const btns = new Map<WorldPlace, HTMLButtonElement>();
   for (const p of WORLD_PLACES) {
-    const b = propButton({ prop: p, name: wm.places[p], ...wm.layout[p], art: !!artUrls(`prop.${p}`).src });
+    // 그림 키: prop.<장소>, 없으면 종족별 장소 그림 place.<장소>.<종족> (탑 = GDD 139장 1). 둘 다 비면 아이콘
+    const placeArt = `place.${p}.${faction.id}`;
+    const b = propButton({ prop: p, name: wm.places[p], ...wm.layout[p], art: !!artUrls(`prop.${p}`).src || !!artUrls(placeArt).src, fallbackArt: placeArt });
     b.dataset.place = p;
-    const locked = hd.locked?.includes(p) ?? false;
-    b.onclick = locked ? () => hd.onLocked?.(p) : act[p];
+    const reason = hd.lockReasons?.[p];
+    const locked = (hd.locked?.includes(p) ?? false) || reason !== undefined;
+    b.onclick = () => {
+      if (walking) return; // 출발하는 동안 입력 잠금 (GDD 153장 3)
+      if (locked) return hd.onLocked?.(p);
+      walkTo(p);
+    };
     if (locked) {
       b.classList.add('is-locked');
       b.setAttribute('aria-disabled', 'true');
+    }
+    if (reason !== undefined) {
+      b.append(icon('i-lock'));
+      b.title = reason;
+      b.setAttribute('aria-description', reason);
     }
     // 떠돌이 상인이 와 있으면 시장에 배지 (GDD 130장 2 — 옛 방 장터 물건 배지 자리를 옮김)
     if (p === 'market' && here) {
       b.classList.add('has-visitor');
       b.querySelector('.bha-prop__shape')?.append(el('span', 'bha-room__idlebadge bha-prop__badge', '상인'));
     }
-    // 사망이면 모험 잠김 표시 (GDD 102-7 — 옛 방 문 자리를 옮김). 눌러도 막힘 안내는 onAdventure 쪽
-    if (p === 'adventure' && save.nest.dead) {
+    // 사망이면 모험·탑 잠김 표시 (GDD 102-7·139장 1). 눌러도 막힘 안내는 onAdventure·onTower 쪽
+    if ((p === 'adventure' || p === 'tower') && save.nest.dead) {
       b.classList.add('is-locked');
       b.append(icon('i-lock'));
     }
@@ -71,14 +126,15 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   }
   // 캐릭터: 방 그림 그대로, 지금 있던 장소 위에 서 있다 (보기만 — 기기 선택 대상 아님, GDD 132장 2)
   const at = hd.at ?? 'home';
-  const char = characterButton(roomCharArt(roomOf(faction, save.wear.talk), faction.id, save.evolution.tierIndex, artSkinOf(save)), '캐릭터');
+  const char = characterButton(roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)), '캐릭터');
   char.disabled = true;
   char.setAttribute('aria-hidden', 'true');
   char.classList.add('bha-worldmap__char');
   if (save.nest.collapsed || save.nest.dead) char.classList.add('is-collapsed');
   scene.insertBefore(char, btns.get(WORLD_PLACES[0]!) ?? null); // 장소 단추 뒤 층 — 장소 모양·이름표가 캐릭터 앞에 보인다
   char.dataset.at = at;
-  floor.push({ el: char, foot: standFoot(wm.layout[at]), kind: 'char' });
+  const charEntry: FloorEntry = { el: char, foot: standFoot(wm.layout[at]), kind: 'char' };
+  floor.push(charEntry);
   const place = () => layoutOnFloor(scene, wm.floor, floor);
   place();
   requestAnimationFrame(place);
@@ -89,8 +145,84 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   const main = mountApp(dev.view, { cls: 'bha-room bha-worldmap' }, hud, body);
   // 선택 순서 = DOM 순서(홈 → 시장 → 모험, 지도 왼쪽 → 오른쪽). 'visual'(위 → 아래)을 쓰면 가운데 위 시장이 먼저 와서 쓰지 않는다
   if (here) main.dataset.wanderer = '';
-  // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 모험), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
+  // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 모험 → 탑 → 온천), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
   const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))]; // 화면 위치 순서: 왼쪽 위 돌아가기 먼저
   btns.get(hd.focus ?? at)?.focus({ preventScroll: true });
   dev.setItems(items, main);
+
+  // ── 출발 → 바로 페이드아웃 → 그 화면 → 페이드인 (GDD 153장 3) ──
+  let walking = false;
+  let raf = 0;
+  let veil: HTMLElement | null = null;
+  /** 출발 → 페이드인 끝까지 = 장면 이동 연출 (튜토리얼 안내 창은 끝난 뒤에 — GDD 143장 1) */
+  let endMove: () => void = () => {};
+  const stopWalk = () => {
+    cancelAnimationFrame(raf);
+    walking = false;
+    main.classList.remove('is-walking');
+    char.classList.remove('is-walking', 'is-walk-right');
+  };
+  /** 취소: 제자리(걷기 전 장소)로 돌리고 페이드도 걷는다 */
+  function cancelWalk(): void {
+    stopWalk();
+    charEntry.foot = standFoot(wm.layout[at]);
+    place();
+    veil?.remove();
+    veil = null;
+    endMove();
+  }
+  function arrive(p: WorldPlace): void {
+    stopWalk();
+    const v = veil;
+    veil = null;
+    act[p]();
+    // 다른 화면으로 갔으면 그 화면 위에서 페이드인, 못 갔으면(확인 창·막힘 알림) 제자리로 돌리고 걷는다
+    if (main.isConnected && v) {
+      charEntry.foot = standFoot(wm.layout[at]);
+      place();
+    }
+    const end = endMove;
+    if (!v) return end();
+    requestAnimationFrame(() => {
+      v.classList.remove('is-on');
+      window.setTimeout(() => {
+        v.remove();
+        end();
+      }, WORLD_FADE_MS + 40);
+    });
+  }
+  function walkTo(p: WorldPlace): void {
+    const from = standFoot(wm.layout[at]);
+    const to = departFoot(from, standFoot(wm.layout[p]));
+    const stepping = to.x !== from.x || to.y !== from.y;
+    walking = true;
+    endMove = beginSceneMove();
+    main.classList.add('is-walking');
+    char.classList.toggle('is-walk-right', to.x > from.x); // 그림은 왼쪽을 본다 — 오른쪽으로 가면 뒤집는다
+    if (stepping) char.classList.add('is-walking');
+    let fadeStarted = false;
+    const startFade = () => {
+      fadeStarted = true;
+      veil = fadeVeil(dev.view);
+      void veil.offsetWidth; // 처음 불투명도 0 을 먼저 그린 뒤 켠다
+      veil.classList.add('is-on');
+    };
+    // 그쪽으로 한두 걸음 출발 → 출발하자마자 페이드아웃 → 목적지 화면 (GDD 153장 3 — 목적지까지 걷지 않는다)
+    const t0 = performance.now();
+    const frame = (now: number) => {
+      if (!main.isConnected) {
+        endMove();
+        return stopWalk();
+      }
+      const t = now - t0;
+      const k = Math.min(1, t / WORLD_DEPART_MS);
+      charEntry.foot = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
+      place();
+      if (!fadeStarted && t >= WORLD_FADE_DELAY_MS) startFade();
+      if (t >= WORLD_MOVE_MS) return arrive(p);
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+  }
+  live = { walking: () => walking && main.isConnected, cancel: cancelWalk };
 }

@@ -38,7 +38,7 @@
         "battle.liberation"
       ],
       "title": "{liberation.baseName}, 그리고 {absorbActionName}",
-      "body": "{liberation.baseName} 게이지가 차면 눌러 해방하고, {tier5}부터는 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
+      "body": "{liberation.baseName} 게이지가 차면 아우라가 뿜어 나오는 캐릭터를 눌러 해방하고, {tier4}에 {ascensionName}을(를) 깨면 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
     }
   ],
   "script": [
@@ -96,7 +96,7 @@
       "targets": [
         "battle.tray"
       ],
-      "title": "{chainName}{chainMax}로 마무리",
+      "title": "{chainName}{chainMax}(으)로 마무리",
       "body": "붙은 블록 하나를 누르면 {chainMax}개가 한꺼번에 나간다.\n블록을 눌러 적을 쓰러뜨린다."
     }
   ],
@@ -107,7 +107,7 @@
         "@.bha-room__hp"
       ],
       "title": "빈사",
-      "body": "빈사는 치명상을 입어 체력이 {dyingPct}% 위로 차지 않는 상태다.\n그대로 두면 시간이 지나 사망하고, 치료제로만 풀린다."
+      "body": "빈사는 치명상을 입어 체력이 {dyingPct}% 위로 차지 않는 상태다.\n그대로 두면 시간이 지나 사망하고, 구급상자로만 풀린다."
     },
     {
       "id": "to-bag",
@@ -115,90 +115,52 @@
         "@.bha-prop--chest"
       ],
       "title": "빈사부터 치료",
-      "body": "치료제와 체력 포션을 1개씩 {chestName}에 넣었다.\n{chestName}을(를) 연다."
+      "body": "구급상자 1개를 {chestName}에 넣었다.\n{chestName}을(를) 연다."
     },
     {
       "id": "cure",
       "targets": [
         "@[data-item=\"med-cure\"]"
       ],
-      "title": "치료제",
-      "body": "치료제를 눌러 [사용]하면 빈사가 풀린다.\n치료제는 상점에서 산다.",
+      "title": "구급상자",
+      "body": "구급상자를 눌러 [사용]하면 빈사가 풀린다.\n구급상자는 소모품 상점에서 산다.",
       "stages": [
         {
           "targets": [
             "@[data-item=\"med-cure\"]"
           ],
-          "body": "빈사는 치료제로 푼다.\n치료제를 누른다."
+          "body": "빈사는 구급상자로 푼다.\n구급상자를 누른다."
         },
         {
           "targets": [
             "@.bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]"
           ],
-          "body": "[사용]을 누른다.\n치료제는 상점에서 산다."
+          "body": "[사용]을 누른다.\n구급상자는 소모품 상점에서 산다."
         }
       ],
       "done": "빈사가 풀렸다.\n[다음]을 누른다."
     },
     {
-      "id": "potion",
-      "targets": [
-        "@[data-item=\"w-hp-potion\"]"
-      ],
-      "title": "체력 포션",
-      "body": "빈사가 풀렸으니 이제 체력을 채운다. 체력 포션을 눌러 [사용]한다.\n튜토리얼의 체력 포션은 체력을 {potionPct}%까지 채운다.",
-      "stages": [
-        {
-          "targets": [
-            "@[data-item=\"w-hp-potion\"]"
-          ],
-          "body": "이제 체력을 채운다.\n체력 포션을 누른다."
-        },
-        {
-          "targets": [
-            "@.bha-itemdialog[data-item-dialog=\"w-hp-potion\"] [data-act=\"use\"]"
-          ],
-          "body": "[사용]을 누른다.\n튜토리얼의 체력 포션은 체력을 {potionPct}%까지 채운다."
-        }
-      ],
-      "done": "체력이 {potionPct}%까지 찼다.\n[다음]을 누른다."
-    },
-    {
-      "id": "merchant",
-      "targets": [],
-      "title": "체력 포션은 드물다",
-      "body": "체력 포션은 떠돌이 상인에게서 드물게 나온다.\n평소의 체력 포션은 체력을 가득 채운다."
-    },
-    {
       "id": "to-spa",
       "targets": [
-        "@.bha-prop--market",
         "@.bha-prop--outside",
-        "@.bha-worldmap [data-place=\"market\"]",
-        "@.bha-market [data-spot=\"spa\"]",
+        "@.bha-worldmap [data-place=\"spa\"]",
         "@.bha-spa__actor"
       ],
       "title": "{spaName}",
-      "body": "{spaName}에서 쉬면 1분에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.",
+      "body": "{spaName}에서 쉬면 1초에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n{spaPath}(으)로 가자.",
       "stages": [
         {
           "targets": [
-            "@.bha-prop--market",
             "@.bha-prop--outside"
           ],
-          "body": "{spaName}에서 쉬면 1분에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
+          "body": "{spaName}에서 쉬면 1초에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
         },
         {
           "targets": [
-            "@.bha-worldmap [data-place=\"market\"]"
+            "@.bha-worldmap [data-place=\"spa\"]"
           ],
-          "body": "{marketName}에 {spaName}이(가) 있다.\n[{marketName}]을(를) 누른다."
-        },
-        {
-          "targets": [
-            "@.bha-market [data-spot=\"spa\"]"
-          ],
-          "body": "[{spaName}]을(를) 누른다.\n체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
+          "body": "{worldMapName}에 {spaName}이(가) 있다.\n[{spaName}]을(를) 누른다. 체력이 가득 차거나 배부름이 0 이 되면 저절로 나온다."
         },
         {
           "targets": [
@@ -207,13 +169,13 @@
           "body": "{spaName}에 들어가 쉬는 중이다.\n체력이 차오른다."
         }
       ],
-      "done": "체력이 {spaToPct}%까지 찼다.\n[다음]을 누른다."
+      "done": "체력이 1초에 {spaHpPct}%씩 빠르게 찬다.\n[다음]을 누른다."
     },
     {
       "id": "spa-rest",
       "targets": [],
       "title": "쉬기",
-      "body": "튜토리얼에서는 기다리지 않고 체력이 {spaToPct}%까지 빨리 찼다.\n[다음]을 누르면 방으로 돌아간다."
+      "body": "튜토리얼 온천은 10초면 체력이 가득 찬다. 평소엔 가득 차는 데 {spaNormalMin}분쯤 걸린다.\n[다음]을 누르면 방으로 돌아간다."
     },
     {
       "id": "feed",

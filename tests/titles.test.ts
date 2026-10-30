@@ -132,7 +132,8 @@ describe('평가 시점 훅', () => {
     const save = newSaveData('hollow', 0);
     save.runLog.absorbs.push(...times(10, () => absorb()));
     // 3단계(아쥬커스)에서 걸음을 채우고 불 특성을 장착한 채 진화 → 불 바스트로데 (hidden-rank-3 = 흡수 10 + t4:fire 경로)
-    Object.assign(save.evolution, { tierIndex: 2, formId: 't3:base', formHistory: ['t2:base', 't3:base'], steps: BALANCE.provisional.evolution.stepsNeeded[2]! });
+    // C.220: 2단계(길리안)에서 불 특성 장착 → 3단계 불 (hidden-rank-3 = 흡수 10 + t3:fire 경로)
+    Object.assign(save.evolution, { tierIndex: 1, formId: 't2:base', formHistory: ['t2:base'], steps: BALANCE.provisional.evolution.stepsNeeded[1]! });
     gainTrait(save.build, 't-fire-a');
     expect(save.titles).toEqual([]);
     expect(performEvolution(save, 4000).ok).toBe(true);
@@ -204,7 +205,7 @@ describe('도감 표시', () => {
   });
   it('미해금 일반 등급은 종족별 이름 목록으로 보인다', () => {
     expect(titleCellView(normal, 'hollow', null).text).toBe('에스파다 No.4');
-    expect(titleCellView(normal, 'shinigami', null).text).toBe('3석');
+    expect(titleCellView(normal, 'shinigami', null).text).toBe('4석');
   });
   it('해금한 칭호는 종족별 이름과 해금 시각', () => {
     const v = titleCellView(hidden, 'shinigami', Date.UTC(2026, 9, 18, 2, 5));
