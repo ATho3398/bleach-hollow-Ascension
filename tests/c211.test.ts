@@ -116,20 +116,21 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
     n.condition = condition;
     return n;
   };
-  it('1 홈 대기: 배부름 70 이상이면 시간당 +5 (최대 100), 30~70 사이는 그대로, 30 이하는 −4', () => {
-    expect([CP.conditionRegenAtFullness, CP.conditionRegenPerHour]).toEqual([70, 5]);
+  it('1 홈 대기: 컨디션은 저절로 안 찬다 (GDD 135장 수정 v5.315) — 30 초과는 그대로, 30 이하는 −4', () => {
+    expect(CP).not.toHaveProperty('conditionRegenAtFullness');
+    expect(CP).not.toHaveProperty('conditionRegenPerHour');
     const hi = nestAt(100, 50);
     passNestTime(hi, 1, false, 3_600_000);
-    expect(hi.condition).toBeCloseTo(55, 6);
+    expect(hi.condition).toBeCloseTo(50, 6);
     const mid = nestAt(60, 50);
     passNestTime(mid, 1, true, 3_600_000);
     expect(mid.condition).toBeCloseTo(50, 6);
     const lo = nestAt(20, 50);
     passNestTime(lo, 1, false, 3_600_000);
     expect(lo.condition).toBeCloseTo(46, 6);
-    const cap = nestAt(100, 99);
-    passNestTime(cap, 2, true, 7_200_000);
-    expect(cap.condition).toBe(100);
+    const off = nestAt(100, 99);
+    passNestTime(off, 2, true, 7_200_000);
+    expect(off.condition).toBeCloseTo(99, 6);
   });
   it('2 온천: 1분에 컨디션 +1, 체력이 가득이어도 컨디션이 덜 차면 안 나온다 · 둘 다 가득이면 못 들어간다', () => {
     expect(SP.conditionPerMinute).toBe(1);
@@ -149,20 +150,23 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
     n.hunger = 0;
     expect(enterSpa(n, 0)).toBeNull(); // 체력 가득이어도 컨디션이 덜 차면 들어간다
   });
-  it('2 온천 시간은 홈 대기 +5 를 빼고 온천 규칙만', () => {
+  it('2 온천 시간은 온천 규칙만 (1분에 +1)', () => {
     const n = nestAt(100, 50);
     n.hpFraction = 0.5;
     enterSpa(n, 0);
-    passNestTime(n, 0.1, false, 360_000); // 온천 6분: 컨디션 +6 (홈 대기 +5/시 = +0.5 는 안 붙는다)
+    passNestTime(n, 0.1, false, 360_000); // 온천 6분: 컨디션 +6
     expect(n.spa).not.toBeNull();
     expect(n.condition).toBeCloseTo(56, 6);
   });
-  it('3 컨디션·배부름 ⓘ 와 온천 ⓘ 에 회복 문구', () => {
+  it('3 컨디션 ⓘ·온천 ⓘ 에 온천 회복 문구, 배부름 홈 대기 회복 문구는 없음 (수정 v5.315)', () => {
     for (const f of FACTIONS) {
       const cond = statusInfo('cond', f).groups.flatMap((g) => g.lines).join('\n');
-      expect(cond).toContain(`${CP.conditionRegenAtFullness} 이상: 쉬는 동안 시간당 +${CP.conditionRegenPerHour}`);
+      expect(cond).not.toContain('쉬는 동안');
+      expect(cond).not.toContain('70 이상');
       expect(cond).toMatch(/1분에 \+1/);
-      expect(statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n')).toContain('컨디션이 시간당 +5');
+      const hunger = statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n');
+      expect(hunger).not.toContain('쉬는 동안');
+      expect(hunger).not.toContain('컨디션이 시간당 +');
     }
     expect(readFileSync('src/ui/spaView.ts', 'utf8')).toContain('컨디션 +${SP.conditionPerMinute}');
   });

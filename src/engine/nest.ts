@@ -256,7 +256,7 @@ export function passHomeHp(nest: NestState, hours: number, endMs: number): { hp:
 }
 
 /** 시간 흐름 (GDD 102-1): hours 동안 허기 +idleHungerPerHour/시, 배부름 conditionBelowFullness 이하면 컨디션 −conditionPerHour/시(배부름 0 이면 ×2),
- *  배부름 conditionRegenAtFullness 이상이면 컨디션 +conditionRegenPerHour/시(GDD 135장 1 — 온천에 있던 토막은 온천 규칙이라 빼고, 사망이면 없음),
+ *  배부름 30 초과면 컨디션 그대로(홈 대기 회복 없음 — GDD 135장 수정 v5.315, 컨디션은 온천·잠·쓰다듬기로만 오름),
  *  offline(꺼 둔 동안)이면 영압 안정도 −stabilityPerHour/시(배부름 또는 컨디션 stabilityDoubleBelow 이하면 ×2). 0.1시간 걸음으로 나눠 그 순간 값으로 배율을 정하고, 걸음마다 쇠약·피곤을 본다.
  *  리스크·교감은 여기서 안 바뀐다. 변화량(음수 = 줄어듦, 허기는 오른 양)을 돌려준다 */
 export function passNestTime(nest: NestState, hours: number, offline: boolean, endMs: number = Date.now()): TimeFlow {
@@ -264,16 +264,12 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean, e
   // 홈 체력·온천 (GDD 123장 4): 온천 배부름 소모를 먼저 반영하고 아래 걸음이 그 값으로 쇠약·컨디션을 본다
   const home = passHomeHp(nest, hours, endMs);
   let left = Number.isFinite(hours) ? Math.max(0, hours) : 0;
-  let spaLeft = (home.spaMinutes ?? 0) / 60; // 구간 앞쪽의 온천 토막 (passHomeHp 가 먼저 흘렸다)
   while (left > 1e-9) {
     const dt = Math.min(0.1, left);
     left -= dt;
-    const inSpa = Math.min(dt, spaLeft);
-    spaLeft = Math.max(0, spaLeft - dt);
     const full = fullnessOfNest(nest);
     const lowFull = full <= CP.conditionBelowFullness;
     if (lowFull) nest.condition = clamp(nest.condition - CP.conditionPerHour * dt * (full <= 0 ? 2 : 1), 0, MAX);
-    else if (full >= CP.conditionRegenAtFullness && !nest.dead && dt - inSpa > 1e-12) nest.condition = clamp(nest.condition + CP.conditionRegenPerHour * (dt - inSpa), 0, MAX);
     if (offline) nest.stability = clamp(nest.stability - CP.stabilityPerHour * dt * (full <= CP.stabilityDoubleBelow || nest.condition <= CP.stabilityDoubleBelow ? 2 : 1), 0, BALANCE.provisional.risk.stabilityMax);
     nest.hunger = clamp(nest.hunger + NX.idleHungerPerHour * dt, 0, 100);
     refreshCareStatus(nest);

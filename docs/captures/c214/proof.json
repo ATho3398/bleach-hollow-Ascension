@@ -1,0 +1,394 @@
+{
+ "note": "hollow = 요약 줄(run 끝에 브라우저 닫기가 멈춰 전체 기록은 못 씀), shinigami = 전체 기록(gapTaps = 카드 사이 틈 누르기 시험)",
+ "runs": [
+  {
+   "faction": "hollow",
+   "recover": [
+    "dying",
+    "to-bag",
+    "cure",
+    "potion",
+    "merchant",
+    "to-spa",
+    "spa-rest",
+    "feed",
+    "done"
+   ],
+   "reachedNext": true,
+   "end": {
+    "name": "first-run-room",
+    "step": "1 / 1",
+    "title": "다음 할 일",
+    "next": {
+     "text": "알겠어요",
+     "disabled": false
+    },
+    "only": null,
+    "pass": false,
+    "sel": "알겠어요",
+    "selInTut": true,
+    "selOnly": false,
+    "selSc": null,
+    "dialog": null,
+    "selUse": false,
+    "screen": "bha-room",
+    "stage": null,
+    "body": "첫 원정이 끝났다.이제 둥지에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠난다.원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받는다.",
+    "actor": null,
+    "actfx": false,
+    "spaHp": null,
+    "hp": "체력115 / 115",
+    "foe": null
+   },
+   "errors": []
+  },
+  {
+   "faction": "shinigami",
+   "homeIntro": [
+    {
+     "key": "홈 안내 1 / 11#null",
+     "body": "여기가 대원실다.대원실에 있는 버튼이 무엇을 하는지 하나씩 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room is-born",
+     "cover": []
+    },
+    {
+     "key": "홈 안내 2 / 11#null",
+     "body": "밖으로 나가면 소울 소사이어티 지도가 나온다.대원실·시장·모험 가운데 골라 바로 간다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 3 / 11#null",
+     "body": "해방 수련을 하고 진화 정보를 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 4 / 11#null",
+     "body": "도감이다. 만난 진화체와 칭호를 본다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 5 / 11#null",
+     "body": "장비·물건·타일을 보고 쓴다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 6 / 11#null",
+     "body": "머리 위 막대는 배부름·컨디션·호로화이다.누르면 상태 화면이 열린다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 7 / 11#null",
+     "body": "원정에는 이 체력 그대로 나간다.대원실에 있으면 조금씩 찬다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 8 / 11#null",
+     "body": "식사·재우기·손질로 캐릭터를 돌본다.먹이는 원정에서 얻는다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 9 / 11#null",
+     "body": "켜 두거나 꺼 둔 동안 쌓인 보상을 받는다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 10 / 11#null",
+     "body": "설정·도움말·사진·백업 같은 메뉴가 있다.",
+     "only": null,
+     "sel": "다음",
+     "screen": "bha-room",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 11 / 11#0",
+     "body": "이제 모험을 떠나자.[밖으로]를 누른다.",
+     "only": ".bha-prop--outside",
+     "sel": "밖으로",
+     "screen": "bha-room is-force-out",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "key": "홈 안내 11 / 11#1",
+     "body": "소울 소사이어티 지도다.[모험]을 누르면 떠난다.",
+     "only": ".bha-worldmap [data-place=\"adventure\"]",
+     "sel": "모험",
+     "screen": "bha-room bha-worldmap",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    }
+   ],
+   "wound": [
+    {
+     "step": "튜토리얼 1 / 2",
+     "title": "겨우 쓰러뜨렸다",
+     "body": "겨우 쓰러뜨렸지만 치명상을 입었다.이대로는 위험하다…",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ],
+     "hp": "10",
+     "blink": true,
+     "sway": "bha-wound-sway"
+    },
+    {
+     "step": "튜토리얼 2 / 2",
+     "title": "대원실로",
+     "body": "베인 상처에서 영압이 새어 나간다.비틀거리며 대원실로 돌아간다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ],
+     "hp": "10",
+     "blink": true,
+     "sway": "bha-wound-sway"
+    }
+   ],
+   "recover": [
+    {
+     "id": "dying",
+     "title": "빈사",
+     "body": "빈사는 치명상을 입어 체력이 10% 위로 차지 않는 상태다.그대로 두면 시간이 지나 사망하고, 치료제로만 풀린다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "to-bag",
+     "title": "빈사부터 치료",
+     "body": "치료제와 체력 포션을 1개씩 가방에 넣었다.가방을 연다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "cure",
+     "title": "치료제",
+     "body": "빈사는 치료제로 푼다.치료제를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "potion",
+     "title": "체력 포션",
+     "body": "이제 체력을 채운다.체력 포션을 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "merchant",
+     "title": "체력 포션은 드물다",
+     "body": "체력 포션은 떠돌이 상인에게서 드물게 나온다.평소의 체력 포션은 체력을 가득 채운다.",
+     "cover": []
+    },
+    {
+     "id": "to-spa",
+     "title": "온천",
+     "body": "온천에서 쉬면 1분에 체력 10%·컨디션 1씩 차고 배부름이 10 준다.[밖으로]를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "spa-rest",
+     "title": "쉬기",
+     "body": "튜토리얼에서는 기다리지 않고 체력이 80%까지 빨리 찼다.[다음]을 누르면 방으로 돌아간다.",
+     "cover": []
+    },
+    {
+     "id": "feed",
+     "title": "먹이",
+     "body": "도시락 1개를 넣었다.[먹이]를 누른다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    },
+    {
+     "id": "done",
+     "title": "회복 끝",
+     "body": "배부름과 체력이 모두 가득 찼다.방에 있으면 체력이 1분에 2%씩 찬다.",
+     "cover": [
+      {
+       "what": "hole",
+       "pct": 0
+      }
+     ]
+    }
+   ],
+   "worldmap": {
+    "forced": {
+     "at": "home",
+     "sel": "adventure"
+    }
+   },
+   "errors": [],
+   "gapTaps": [
+    {
+     "id": "dying",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "to-bag",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "potion",
+     "before": "bha-app bha-lcdpage bha-chest-page",
+     "after": "bha-app bha-lcdpage bha-chest-page"
+    },
+    {
+     "id": "merchant",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    },
+    {
+     "id": "to-spa",
+     "before": "bha-app bha-spa",
+     "after": "bha-app bha-spa"
+    },
+    {
+     "id": "spa-rest",
+     "before": "bha-app bha-spa",
+     "after": "bha-app bha-spa"
+    },
+    {
+     "id": "done",
+     "before": "bha-app bha-room",
+     "after": "bha-app bha-room"
+    }
+   ],
+   "reachedNext": true,
+   "recoverDone": true,
+   "end": {
+    "name": "first-run-room",
+    "step": "1 / 1",
+    "title": "다음 할 일",
+    "next": {
+     "text": "알겠어요",
+     "disabled": false
+    },
+    "only": null,
+    "pass": false,
+    "sel": "알겠어요",
+    "selInTut": true,
+    "selOnly": false,
+    "selSc": null,
+    "dialog": null,
+    "selUse": false,
+    "screen": "bha-room",
+    "stage": null,
+    "body": "첫 원정이 끝났다.이제 대원실에서 먹이를 주고, 수련장에서 몸을 단련하고, 다시 원정을 떠난다.원정을 다니다 보면 진화하고, 첫 진화 때 원정 타일을 받는다.",
+    "actor": null,
+    "actfx": false,
+    "spaHp": null,
+    "hp": "체력115 / 115",
+    "foe": null
+   }
+  }
+ ]
+}

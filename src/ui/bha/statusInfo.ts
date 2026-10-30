@@ -65,7 +65,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
       });
       return gaugeDoc(
         `${a.feed}(으)로 채우고, 시간이 흐르면 준다`,
-        [`낮으면 컨디션이 줄고 ${CARE_NAMES.weak}에 걸린다`, `${CP.conditionRegenAtFullness} 이상이면 쉬는 동안 컨디션이 시간당 ${signed(CP.conditionRegenPerHour)} 오른다`],
+        [`낮으면 컨디션이 줄고 ${CARE_NAMES.weak}에 걸린다`],
         zones, value,
         [numLine(a.feed, '먹이마다 정해진 만큼 +'), numLine('시간 흐름', `시간당 ${MINUS}${num(NX.idleHungerPerHour)}`)],
       );
@@ -90,8 +90,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine(a.sleep, signed(NX.sleepCondition)),
           numLine(a.pet, signed(NX.petCondition)),
           numLine(`${f.fullnessName} ${CP.conditionBelowFullness} 이하`, `시간당 ${MINUS}${num(CP.conditionPerHour)}`, `${f.fullnessName} 0이면 ×2`),
-          // 배부르면 쉬는 동안 회복 · 온천 회복 (GDD 135장 3)
-          numLine(`${f.fullnessName} ${CP.conditionRegenAtFullness} 이상`, `쉬는 동안 시간당 ${signed(CP.conditionRegenPerHour)}`),
+          // 온천 회복 (GDD 135장 3 — 배부름 홈 대기 회복은 수정 v5.315 에서 폐기)
           numLine(f.room ? marketOf({ market: f.market }).props.spa : '온천', `1분에 ${signed(NX.homeHp.spa.conditionPerMinute)}`),
           numLine('원정 패배', `${NX.defeatCondition}까지 떨어진다`),
           numLine(`${f.frenzyName} 후 귀환`, signed(-RX.frenzyConditionLoss)),

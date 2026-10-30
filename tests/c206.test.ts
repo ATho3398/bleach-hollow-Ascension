@@ -73,7 +73,7 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
     for (const old of ["label: '치료제 쓰기'", "label: '체력 포션 마시기'", "label: '먹이 주기'", "label: '쉬기'", '열기`, act:']) expect(app).not.toContain(old);
     expect(app).toContain("finishLabel: '다음', vars,");
     expect(app).toContain("act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' }");
-    expect(app).toContain(`act: { selector: '[data-item="med-cure"]', done: () => !s.nest.collapsed }`);
+    expect(app).toContain(`act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }`); // C.214: 쓰면 물건 창 닫음
   });
   it('tutorialOverlay: 행동 카드는 하기 전 [다음] 잠김 · 뒤 화면 통과(data-dev-pass·data-dev-only) · 하면 [다음] 켜짐', () => {
     const o = read('src/ui/tutorialOverlay.ts');

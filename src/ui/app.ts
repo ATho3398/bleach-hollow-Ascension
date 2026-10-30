@@ -277,6 +277,11 @@ export function startApp(host: HTMLElement): void {
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
     // 실제 조작: 가방 열기 → 치료제·체력 포션 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
     const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'; // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
+    // 썼으면 물건 창을 닫는다 (C.214): 시작 치료제 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
+    const closeItemWhen = (done: boolean): boolean => {
+      if (done) document.querySelector<HTMLButtonElement>('.bha-itemdialog .bha-itemmodal__close')?.click();
+      return done;
+    };
     let fedAt = s.nest.lastFedAt;
     let soaked = false;
     const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: (go: () => void) => void; skip?: () => boolean }> = {
@@ -285,8 +290,8 @@ export function startApp(host: HTMLElement): void {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
         act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' },
       },
-      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => !s.nest.collapsed } },
-      potion: { act: { selector: '[data-item="w-hp-potion"]', done: () => homeHp(s).fraction >= TR.potionTo - EPS } },
+      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) } },
+      potion: { act: { selector: '[data-item="w-hp-potion"]', done: () => closeItemWhen(homeHp(s).fraction >= TR.potionTo - EPS) } },
       merchant: { next: (go) => { toRoom(); go(); } },
       'to-spa': {
         // 온천에 들어가면(원래 조작) 튜토리얼 동안만 체력 spaTo 까지 시간을 바로 흘린다 — 나오지는 않는다 (다음 카드 [다음] 뒤 방으로)
@@ -321,6 +326,18 @@ export function startApp(host: HTMLElement): void {
       },
       done: {},
     };
+    /** 투명한 막(recover-wait)으로 ms 동안 터치·기기 버튼을 받지 않다가 then */
+    const holdInput = (ms: number, then: () => void): void => {
+      const hold = el('div', 'bha-tut is-script is-nodim');
+      hold.dataset.tutorial = 'recover-wait';
+      getOverlayHost().append(hold);
+      const offHold = registerLayer(hold, () => {});
+      window.setTimeout(() => {
+        offHold();
+        hold.remove();
+        then();
+      }, ms);
+    };
     const ids = RECOVER_SCENES.map((x) => x.id);
     // 이어 가기: 빈사 = 처음, 포션 = 가방 카드(치료제는 건너뜀), 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
     const first = start === 'dying' ? 0 : start === 'potion' ? ids.indexOf('to-bag') : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
@@ -345,7 +362,8 @@ export function startApp(host: HTMLElement): void {
             recoverOpen = false;
             return;
           }
-          const go = () => window.setTimeout(() => show(i + 1), 450); // 화면이 바뀐 뒤 대상 위치를 잰다
+          // 화면이 바뀐 뒤 대상 위치를 잰다. 그 틈에도 투명한 막으로 누름을 막는다 — 틈에 다른 버튼(상점 등)을 누르면 다음 카드가 대상 없는 화면에 떠 갇혔다 (C.214)
+          const go = () => holdInput(450, () => show(i + 1));
           if (st.next) st.next(go);
           else go();
         },
