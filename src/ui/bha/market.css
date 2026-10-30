@@ -1,16 +1,24 @@
 /* 장터 화면 (GDD 127장 2, C.201): 방과 같은 장면 틀 + 임시 배경(천막 줄·좌판 바닥). 그림(scene.market)이 오면 배경이 덮는다. 색·간격은 토큰만 */
-.bha-lcd .bha-app.bha-room.bha-market { padding: var(--bha-sp-3); }   /* [방으로 돌아가기] 자리 = 온천과 같은 왼쪽 위 (GDD 129-1) */
-.bha-market__hud { justify-content: flex-start; align-items: flex-start; gap: var(--bha-sp-3); }
+/* 장면 = LCD 화면 전체 (GDD 155장 1 — 월드맵과 같은 식): 바깥 여백·장면 테두리 없음, 위 한 줄([월드맵으로]·이름)은 장면 위에 겹친다 */
+.bha-lcd .bha-app.bha-room.bha-market { padding: 0; gap: 0; position: relative; }
+.bha-market .bha-room__body { gap: 0; }
+.bha-market__scene { border: 0; border-radius: 0; }
+.bha-market__hud {
+  position: absolute; top: var(--bha-sp-3); left: var(--bha-sp-3); right: var(--bha-sp-3); z-index: var(--bha-z-sticky);
+  justify-content: flex-start; align-items: flex-start; gap: var(--bha-sp-3); pointer-events: none;
+}   /* [월드맵으로] 자리 = 월드맵·온천과 같은 왼쪽 위 (GDD 129-1) */
+.bha-market__hud > * { pointer-events: auto; }
 .bha-market__titles { min-width: 0; display: flex; flex-direction: column; gap: var(--bha-sp-1); }
 .bha-market__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
 .bha-market__sub { margin: 0; color: var(--bha-text-2); }
+/* 위 한 줄 아래에 차양만 얇게, 그 아래는 전부 바닥 (GDD 155장 1 — 옛 차양 밑 빈 벽 띠 삭제) */
 .bha-room--market .bha-room__wall {
-  height: 50%;
+  height: 30%;
   background:
-    repeating-linear-gradient(90deg, color-mix(in srgb, var(--bha-hunger) 22%, var(--bha-bg-1)) 0 24px, var(--bha-bg-1) 24px 48px) top / 100% 22% no-repeat,
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--bha-hunger) 22%, var(--bha-bg-1)) 0 24px, var(--bha-bg-1) 24px 48px) bottom / 100% 36% no-repeat,
     var(--bha-bg-1);
 }
-.bha-room--market .bha-room__floor { height: 50%; }
+.bha-room--market .bha-room__floor { height: 70%; }
 /* 자리 모양 (그림 없을 때): 온천 = 낮은 탕, 상점 4곳 = 매대(GDD 150장 2), 떠돌이 상인 = 짐 진 사람 자리 */
 .bha-prop--spa .bha-prop__shape { width: 56px; height: 30px; border-radius: var(--bha-r-lg); }
 .bha-prop--shop .bha-prop__shape, .bha-prop--gearShop .bha-prop__shape, .bha-prop--skinShop .bha-prop__shape, .bha-prop--traitShop .bha-prop__shape, .bha-prop--smith .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }

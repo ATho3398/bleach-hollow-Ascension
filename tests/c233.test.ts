@@ -93,3 +93,16 @@ describe('155장 2 회복 안내 7/7 빈 카드', () => {
     expect(keys.has('idleHpPct')).toBe(true);
   });
 });
+
+describe('155장 1 보충 — 장터도 화면 전체 (C.234)', () => {
+  it('장터: 바깥 여백·테두리 없음, 머리 줄 겹침, 차양 아래 빈 벽 띠 줄임(벽 30%), 바닥 30% 아래 전부, 뒷줄 상점 위로', async () => {
+    const { DEFAULT_MARKET } = await import('../src/engine/faction');
+    const css = read('src/ui/bha/market.css');
+    expect(css).toContain('.bha-lcd .bha-app.bha-room.bha-market { padding: 0; gap: 0; position: relative; }');
+    expect(css).toContain('.bha-market__scene { border: 0; border-radius: 0; }');
+    expect(css).toMatch(/\.bha-market__hud \{\n\s+position: absolute;/);
+    expect(css).toMatch(/\.bha-room--market \.bha-room__wall \{\n\s+height: 30%;/);
+    expect(DEFAULT_MARKET.floor.poly[0]![1]).toBe(0.3);
+    for (const k of ['shop', 'gearShop', 'skinShop', 'traitShop', 'smith'] as const) expect(DEFAULT_MARKET.layout[k].y).toBeLessThan(60);
+  });
+});

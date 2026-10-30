@@ -214,11 +214,12 @@ export const DEFAULT_MARKET: MarketConfig = {
   shape: 'market',
   sceneArt: 'scene.market',
   props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '떠돌이 상인' },
-  floor: { aspect: 2, poly: [[0, 0.5], [1, 0.5], [1, 1], [0, 1]] },
+  // 바닥 = 장면 30% 아래 전부 (GDD 155장 1 — 화면 전체를 쓰게 옛 50% 에서 올림)
+  floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
   // 뒷줄 = 상점 4곳·대장장이(왼 → 오), 앞줄 = 떠돌이 상인 (GDD 150장 2·153장 2). 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1)
   layout: {
-    shop: { x: 12, y: 66, scale: 0.7 }, gearShop: { x: 31, y: 64, scale: 0.7 }, skinShop: { x: 50, y: 63, scale: 0.7 },
-    traitShop: { x: 69, y: 64, scale: 0.7 }, smith: { x: 88, y: 66, scale: 0.7 },
+    shop: { x: 12, y: 59, scale: 0.7 }, gearShop: { x: 31, y: 57, scale: 0.7 }, skinShop: { x: 50, y: 56, scale: 0.7 },
+    traitShop: { x: 69, y: 57, scale: 0.7 }, smith: { x: 88, y: 59, scale: 0.7 },
     spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 50, y: 92, scale: 0.7 },
   },
 };
