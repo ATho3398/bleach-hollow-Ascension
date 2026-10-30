@@ -133,6 +133,10 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
     expect(Math.min(...arm('idle'))).toBeGreaterThan(30);
     expect(Math.max(...arm('homeIdle'))).toBeLessThan(Math.min(...arm('idle')));
     expect(Math.min(...arm('move'))).toBeGreaterThan(30);
+    // 몸 그림마다 팔 쉬는 각이 달라 몸 묶음으로 맞춤: 아란칼(여) = 사용자 편집기 그림 각도(위팔 28°·아래팔 -47° = 몸 각도 14°·-15° + 동작 14°·-32°)
+    const af = resolveMotions(rig, motions, sets, 'arrancar_f').idle!.tracks;
+    expect([af.arm_R![0]![1], af.forearm_R![0]![1]]).toEqual([14, -32]);
+    for (const b of ['female', 'student', 'student_f', 'shinigami_f']) expect(resolveMotions(rig, motions, sets, b).idle!.tracks.arm_R, b).not.toEqual(motions.idle!.tracks.arm_R);
   });
   it('해방 동작(양손으로 칼 내밀고 변신)은 아란칼(여) 몸에만 하나, swapAt 이 지나면 해방 외형', () => {
     const af = resolveMotions(rig, motions, sets, 'arrancar_f');

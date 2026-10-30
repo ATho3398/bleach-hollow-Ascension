@@ -94,8 +94,8 @@ const NAMES = () => rig.edit?.names ?? {};
 /** 지금 몸이 쓰는 동작(역관절 몸은 동작 묶음을 덮은 것) */
 const motionsNow = (): Record<string, Motion> => {
   const out = { ...resolveMotions(rig, C.src.motions, C.src.sets, curBody()) };
-  const set = rig.bodyMotions?.[curBody()];
-  // 고친 동작 키를 덮는다: 기본 동작 것 먼저, 이 몸의 동작 묶음 것 나중
+  const set = rig.bodyMotions?.[curBody()] ?? curBody();
+  // 고친 동작 트랙을 덮는다: 기본 동작 것 먼저, 이 몸의 동작 묶음 것 나중
   const entries = Object.entries(C.medits).sort(([a], [b]) => (a.startsWith('/') ? 0 : 1) - (b.startsWith('/') ? 0 : 1));
   for (const [key, edits] of entries) {
     const [s0, id] = key.split('/') as [string, string];
@@ -105,10 +105,9 @@ const motionsNow = (): Record<string, Motion> => {
   }
   return out;
 };
-/** 지금 동작을 고칠 때 넣을 자리: 이 몸의 동작 묶음에 있는 동작이면 그 묶음, 아니면 기본 동작 */
+/** 지금 동작을 고칠 때 넣을 자리 = 이 몸의 동작 묶음(없으면 몸 이름으로 새 묶음 — 고정할 때 apply_editor.py 가 만든다). 다른 몸 동작은 안 바뀜 */
 function motionKeyOf(id: string): string {
-  const set = rig.bodyMotions?.[curBody()];
-  return set && C.src.sets[set]?.[id] ? `${set}/${id}` : `/${id}`;
+  return `${rig.bodyMotions?.[curBody()] ?? curBody()}/${id}`;
 }
 
 let look = 'arrancar-base';
@@ -117,8 +116,7 @@ let mode: 'pivot' | 'part' = 'pivot';
 let testRot = 0;
 let motion: string | null = null;
 let mt = 0;
-/** 동작 멈춤(그 순간 자세로 각 잡기) · 저장 범위(기본 자세 = 이 몸 / 이 동작에만 = 동작 키) — 사용자 2026-10-31 */
-let paused = false;
+/** 저장 범위: 기본 자세(이 몸) / 이 동작에만(그 동작 내내 더해지는 각도·위치) — 사용자 2026-10-31. 고치는 동안 동작은 멈추지 않는다 */
 let scope: 'base' | 'motion' = 'base';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -274,20 +272,15 @@ function draw() {
   const part = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
   $('info').textContent = `${NAMES()[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}` + ` · 기본 각도 ${baseRot(b.id)}°`;
   const editingMotion = scope === 'motion' && motion && MOTIONS[motion];
-  const shownRot = editingMotion ? Math.round(samplePose(rig, MOTIONS[motion!]!, mt)[b.id]?.rot ?? 0) : baseRot(b.id);
+  const shownRot = editingMotion ? motionOffset(b.id)[0] : baseRot(b.id);
   const br = document.getElementById('brot') as HTMLInputElement | null;
   if (br && document.activeElement !== br) br.value = String(shownRot);
   const bv = document.getElementById('brotv');
   if (bv) bv.textContent = `${shownRot}°`;
   const bs = document.getElementById('brotscope');
-  if (bs) bs.textContent = editingMotion ? `(이 동작 ${motion} 의 ${Math.round(mt)}ms 키에 저장)` : '(이 몸에만 저장)';
-  const cmm = motion ? MOTIONS[motion] : undefined;
+  if (bs) bs.textContent = editingMotion ? `(이 몸의 ${motion} 동작에만 — 동작 내내 더함)` : '(이 몸에만 저장)';
   const mtv = document.getElementById('mtv');
-  if (mtv) mtv.textContent = cmm ? `${motion} · ${Math.round(mt)} / ${cmm.duration}ms${paused ? ' · 멈춤' : ''}` : '—';
-  const mtime = document.getElementById('mtime') as HTMLInputElement | null;
-  if (mtime && cmm) { mtime.max = String(cmm.duration); if (document.activeElement !== mtime) mtime.value = String(Math.round(mt)); }
-  const mplay = document.getElementById('mplay');
-  if (mplay) mplay.textContent = paused || !motion ? '▶ 재생' : '❚❚ 멈춤';
+  if (mtv) mtv.textContent = motion ?? '—';
 }
 
 /** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
@@ -319,38 +312,34 @@ function buildChips() {
   }
 }
 
-/** 지금 동작의 지금 시각에 이 뼈의 키를 고친다(없으면 그 순간 값으로 새 키). 반복 동작은 처음·끝 키를 같이 */
-function editKey(boneId: string, fn: (k: Key) => void) {
+/** 이 동작에서 이 뼈의 원래 트랙(고친 것 덮기 전) */
+function baseTrack(boneId: string): Key[] | undefined {
+  if (!motion) return undefined;
+  return resolveMotions(rig, C.src.motions, C.src.sets, curBody())[motion]?.tracks[boneId];
+}
+/** 이 동작에만 더한 값 [각도, x, y] = 고친 트랙 첫 키 − 원래 트랙 첫 키 */
+function motionOffset(boneId: string): [number, number, number] {
+  const ed = motion ? C.medits[motionKeyOf(motion)]?.[boneId]?.[0] : undefined;
+  if (!ed) return [0, 0, 0];
+  const o = baseTrack(boneId)?.[0] ?? [0, 0, 0, 0];
+  return [ed[1] - o[1], ed[2] - o[2], ed[3] - o[3]];
+}
+/** 이 동작에만: 이 뼈 트랙의 모든 키에 같은 값을 더한다(동작은 그대로 흐름 — 사용자 "움직이고 있어도 … 멈추지 말란 얘기") */
+function shiftMotion(boneId: string, drot: number, dx: number, dy: number) {
   if (!motion) return;
   const m = motionsNow()[motion];
   if (!m) return;
-  paused = true;
-  const edits = (C.medits[motionKeyOf(motion)] ??= {});
-  const track: Key[] = (edits[boneId] ??= JSON.parse(JSON.stringify(m.tracks[boneId] ?? [[0, 0, 0, 0], [m.duration, 0, 0, 0]])) as Key[]);
-  const t = Math.max(0, Math.min(m.duration, Math.round(mt)));
-  let k = track.find((x) => Math.abs(x[0] - t) <= 15);
-  if (!k) {
-    const p = samplePose(rig, { ...m, tracks: { [boneId]: track } }, t)[boneId] ?? { rot: 0, x: 0, y: 0 };
-    k = [t, Math.round(p.rot), Math.round(p.x), Math.round(p.y)];
-    track.push(k);
-    track.sort((a, b) => a[0] - b[0]);
-  }
-  fn(k);
-  if (m.loop && track.length > 1) {
-    const first = track[0]!, lastK = track[track.length - 1]!;
-    if (k === first && lastK[0] === m.duration) { lastK[1] = k[1]; lastK[2] = k[2]; lastK[3] = k[3]; }
-    if (k === lastK && first[0] === 0) { first[1] = k[1]; first[2] = k[2]; first[3] = k[3]; }
-  }
+  const key = motionKeyOf(motion);
+  const edits = (C.medits[key] ??= {});
+  const track: Key[] = (edits[boneId] ??= JSON.parse(JSON.stringify(baseTrack(boneId) ?? [[0, 0, 0, 0], [m.duration, 0, 0, 0]])) as Key[]);
+  for (const k of track) { k[1] += drot; k[2] += dx; k[3] += dy; }
+  const [r, x, y] = motionOffset(boneId);
+  if (!r && !x && !y) { delete edits[boneId]; if (!Object.keys(edits).length) delete C.medits[key]; }
   save(); draw();
 }
 
 function nudge(dx: number, dy: number) {
-  if (scope === 'motion' && motion) {
-    // 이 동작에만: 그 순간 뼈 위치 이동 키(사용자 "저 장면일 때만큼은 위치 변환")
-    editKey(boneOfSel(), (k) => { k[2] += dx; k[3] += dy; });
-    return;
-  }
-  if (motion) paused = true; // 동작 중이면 그 자세로 멈춘 채 고친다(풀리지 않게)
+  if (scope === 'motion' && motion) { shiftMotion(boneOfSel(), 0, dx, dy); return; }
   if (mode === 'pivot') {
     const b = bone(boneOfSel());
     setPivot(b.id, [b.pivot[0] + dx, b.pivot[1] + dy]);
@@ -391,8 +380,7 @@ const brot = document.getElementById('brot') as HTMLInputElement | null;
 if (brot) brot.oninput = () => {
   const id = boneOfSel();
   const v = Number(brot.value);
-  if (scope === 'motion' && motion) { editKey(id, (k) => { k[1] = v; }); return; }
-  if (motion) paused = true;
+  if (scope === 'motion' && motion) { shiftMotion(id, v - motionOffset(id)[0], 0, 0); return; }
   const r = (joints().rot ??= {});
   if (v) r[id] = v; else delete r[id];
   save(); draw();
@@ -405,7 +393,6 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
   const m = b.dataset.m!;
   motion = m === 'stop' ? null : m;
   mt = 0;
-  paused = false;
   document.querySelectorAll('[data-m]').forEach((x) => x.classList.toggle('on', x === b && m !== 'stop'));
   draw();
 });
@@ -434,8 +421,6 @@ stage.addEventListener('click', (e) => {
   save(); draw();
 });
 
-document.getElementById('mplay')?.addEventListener('click', () => { if (!motion) return; paused = !paused; draw(); });
-document.getElementById('mtime')?.addEventListener('input', (e) => { if (!motion) return; paused = true; mt = Number((e.target as HTMLInputElement).value); draw(); });
 document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.onclick = () => {
   scope = b.dataset.scope as 'base' | 'motion';
   document.querySelectorAll('[data-scope]').forEach((x) => x.classList.toggle('on', x === b));
@@ -445,7 +430,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
 let last = 0;
 function tick(now: number) {
   if (motion) {
-    if (last && !paused) mt += Math.min(100, now - last);
+    if (last) mt += Math.min(100, now - last);
     const m = motionsNow()[motion];
     if (!m) motion = null;
     else if (!m.loop && mt > m.duration + 400) mt = 0;

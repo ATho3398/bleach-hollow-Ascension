@@ -62,6 +62,11 @@ if 'bodies' in data:
         for k, v in lk.items():
             if lid in rig['looks'] and isinstance(v, dict) and isinstance(rig['looks'][lid].get(k), dict):
                 rig['looks'][lid][k]['at'] = v['at']
+    # '이 동작에만' 묶음이 아직 없는 몸 = 몸 이름으로 새 묶음 → 그 몸이 그 묶음을 쓰게
+    for key in (data.get('motionEdits') or {}):
+        setn = key.split('/', 1)[0]
+        if setn in rig.get('bodies', {}) and setn not in (rig.get('bodyMotions') or {}).values():
+            rig.setdefault('bodyMotions', {}).setdefault(setn, setn)
     if RIG_ID != 'humanoid':
         open(RIG_JSON, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '\n')
     else:
@@ -76,7 +81,10 @@ if 'bodies' in data:
         n = 0
         for key, edits in medits.items():
             setn, mid = key.split('/', 1)
-            target = mo.get('sets', {}).get(setn, {}).get(mid) if setn else mo.get(mid)
+            if setn:
+                target = mo.setdefault('sets', {}).setdefault(setn, {}).setdefault(mid, {'tracks': {}})
+            else:
+                target = mo.get(mid)
             if not isinstance(target, dict):
                 print('동작 없음(건너뜀):', key)
                 continue
