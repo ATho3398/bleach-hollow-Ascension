@@ -97,7 +97,7 @@ async function newGame(page, url, fi, run) {
         run.homeIntro = txt.replace(/\s+/g, ' ').slice(0, 80);
         await page.screenshot({ path: path.join(OUT, `${TAG}${faction}-home-intro.png`) });
         run.shots.push('home-intro');
-        for (let i = 0; i < 6 && (await page.locator('.bha-tut').count()); i++) { await page.locator('.bha-dev__btn--back').first().click().catch(() => {}); await page.waitForTimeout(400); }
+        for (let i = 0; i < 6 && (await page.locator('.bha-tut').count()); i++) { await page.locator('.bha-tut').getByRole('button', { name: '건너뛰기' }).first().click({ timeout: 2000 }).catch(() => page.keyboard.press('Escape')); await page.waitForTimeout(400); }
         for (let i = 0; i < 4 && (await page.locator('.bha-lcd [data-dev-layer]').count()); i++) { await page.keyboard.press('Escape'); await page.waitForTimeout(250); }
       }
       // 테스트 속도 ×4
