@@ -106,15 +106,7 @@
           "@.bha-prop--outside"
         ],
         "title": "{outsideName}",
-        "body": "밖으로 나가면 {worldName} 지도가 나온다.\n{nestName}·{marketName}·{doorName} 가운데 골라 바로 간다."
-      },
-      {
-        "id": "door",
-        "targets": [
-          "@.bha-prop--door"
-        ],
-        "title": "{doorName}",
-        "body": "원정을 떠난다.\n길을 걸으며 싸우고, 쓰러뜨린 적을 흡수해 강해진다."
+        "body": "밖으로 나가면 {worldName} 지도가 나온다.\n{nestName}·{marketName}·{adventureName} 가운데 골라 걸어간다."
       },
       {
         "id": "altar",
@@ -139,14 +131,6 @@
         ],
         "title": "{chestName}",
         "body": "장비·물건·타일을 보고 쓴다."
-      },
-      {
-        "id": "market",
-        "targets": [
-          "@.bha-prop--market"
-        ],
-        "title": "{marketName}",
-        "body": "상점·온천이 있고, 떠돌이 상인이 가끔 들른다."
       },
       {
         "id": "status",
@@ -204,7 +188,7 @@
           "targets": [
             "@.bha-worldmap [data-place=\"adventure\"]"
           ],
-          "body": "{worldName} 지도다.\n[{doorName}]을(를) 누르면 떠난다."
+          "body": "{worldName} 지도다.\n[{adventureName}]을(를) 누르면 떠난다."
         }
       ]
     }

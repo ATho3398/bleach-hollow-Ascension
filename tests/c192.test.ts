@@ -55,12 +55,10 @@ describe('118장 2: 사신 권 = 물리 · 참 = 혼합 · 귀 = 특공', () => 
     // 몸동작 없음(호로·필살) = 특수 동작 skill·skill2 그대로
     expect(['skill', 'skill2']).toContain(Object.keys(MOTIONS).find((id) => { p.play('skill'); return MOTIONS[id] === p.pose().motion; }));
   });
-  it('사신 특성 설명: 참 = 혼합, 권 = 물리 (호로 그대로)', () => {
+  it('특성 설명에 공격 분류는 안 보인다 (C.215: GDD 137장 1 — 분류는 데이터 category 로만)', () => {
     const a = TRAITS.find((t) => t.family === fam('참').id && t.kind === 'skill')!;
     const b = TRAITS.find((t) => t.family === fam('권').id && t.kind === 'skill')!;
-    expect(traitDescription(a.id, 'shinigami')).toContain('(혼합 공격 블록)');
-    expect(traitDescription(b.id, 'shinigami')).toContain('(물리 공격 블록)');
-    expect(traitDescription(a.id, 'hollow')).toContain('(물리 공격 블록)');
+    for (const id of [a.id, b.id]) for (const f of ['hollow', 'shinigami']) expect(traitDescription(id, f)).not.toMatch(/물리|혼합|특수/);
   });
 });
 

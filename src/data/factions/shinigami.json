@@ -217,17 +217,15 @@
   "breakthroughText": "호로화가 한계를 넘었다. 영압이 일그러지고 공허가 몰려든다…",
   "frenzyName": "호로화",
   "market": { "name": "시장" },
-  "worldmap": { "name": "소울 소사이어티" },
+  "worldmap": { "name": "소울 소사이어티", "adventureName": "모험" },
   "room": {
     "shape": "room",
     "sceneArt": "scene.room",
     "characterArt": "char.shinigami",
     "props": {
-      "door": "모험",
       "altar": "수련장",
       "book": "책장",
       "chest": "가방",
-      "market": "루콘가 저잣거리",
       "outside": "밖으로"
     },
     "floor": {
@@ -235,11 +233,9 @@
       "poly": [[0, 0.46], [1, 0.46], [1, 1], [0, 1]]
     },
     "layout": {
-      "door": { "x": 9, "y": 78, "scale": 1 },
       "book": { "x": 76, "y": 60, "scale": 0.68 },
       "altar": { "x": 90, "y": 70, "scale": 0.68 },
       "chest": { "x": 26, "y": 90, "scale": 0.68 },
-      "market": { "x": 74, "y": 90, "scale": 0.68 },
       "outside": { "x": 9, "y": 78, "scale": 1 }
     },
     "characterFoot": { "x": 50, "y": 80 },

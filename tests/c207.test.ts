@@ -24,7 +24,7 @@ describe('131장 1·3 홈 안내 상태', () => {
 
 describe('131장 1 카드 문구 (종족 설정 이름, 하드코딩 없음)', () => {
   it('방 물건·독 카드 = 대상 선택자가 있고, 두 종족 자리표시자가 모두 채워진다', () => {
-    const extra = { outsideName: '밖으로', doorName: '모험', altarName: '수련장', bookName: '책장', chestName: '가방', marketName: '시장', worldName: '지도', careNames: '먹이·재우기·교감', goPath: '[밖으로] → [모험]' };
+    const extra = { outsideName: '밖으로', adventureName: '모험', altarName: '수련장', bookName: '책장', chestName: '가방', marketName: '시장', worldName: '지도', careNames: '먹이·재우기·교감', goPath: '[밖으로] → [모험]' };
     for (const f of FACTIONS) {
       const v = { ...helpVars(f), ...extra };
       for (const sc of [HOME_INTRO.intro, ...HOME_INTRO.items, HOME_INTRO.last]) {
@@ -33,14 +33,14 @@ describe('131장 1 카드 문구 (종족 설정 이름, 하드코딩 없음)', (
       }
     }
     for (const it of HOME_INTRO.items) expect(it.targets.length).toBeGreaterThan(0);
-    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'door', 'altar', 'book', 'chest', 'market', 'status', 'hp', 'care', 'idle', 'more']);
+    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'altar', 'book', 'chest', 'status', 'hp', 'care', 'idle', 'more']); // C.215: 모험 문·장터 카드 폐기 (137장 3)
   });
 });
 
 describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
   const app = read('src/ui/app.ts');
-  it('마지막 카드 = 실제 버튼(켬: 밖으로 → 모험 / 끔: 모험 문)을 눌러 떠나야 끝, 다음 버튼 없이 저절로 닫힘', () => {
-    expect(app).toContain(`const go = FEATURES.WORLD_MAP ? '.bha-prop--outside, .bha-worldmap [data-place="adventure"]' : '.bha-prop--door';`);
+  it('마지막 카드 = 실제 버튼(밖으로 → 모험)을 눌러 떠나야 끝, 다음 버튼 없이 저절로 닫힘', () => {
+    expect(app).toContain(`const go = '.bha-prop--outside, .bha-worldmap [data-place="adventure"]';`);
     expect(app).toContain("act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' }");
     expect(app).toContain("markGuideDone(s.help, 'home-intro');");
   });
@@ -59,8 +59,8 @@ describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
 
 describe('129-1 2 같은 종류: 월드맵 왼쪽 위 [둥지로]/[대원실로] (마스터W 04:33)', () => {
   const wm = readFileSync('src/ui/worldMapView.ts', 'utf8');
-  it('공용 spaceBackButton, 이름 = nestName, ▲▼ 맨 앞, 첫 모험 강제 중 잠김', () => {
-    expect(wm).toContain("spaceBackButton(homeLocked ? () => hd.onLocked?.('home') : hd.onHome, fixParticles(`${wm.places.home}(으)로`))");
+  it('공용 spaceBackButton, 이름 = nestName, ▲▼ 맨 앞, 첫 모험 강제 중 잠김, 걷는 중 = 취소 (137장 3)', () => {
+    expect(wm).toContain("spaceBackButton(() => (walking ? cancelWalk() : homeLocked ? hd.onLocked?.('home') : hd.onHome()), fixParticles(`${wm.places.home}(으)로`))");
     expect(wm).toContain('const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map(');
     expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208: 첫 모험 강제 중 focus = 모험
   });

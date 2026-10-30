@@ -29,12 +29,12 @@ import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
 import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v2TempChip } from './bha/v2/components';
-import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, setV2Pips, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
+import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
 import { animOf } from './bha/animPlayer';
 import { onHold } from './bha/hold';
 import { onAppAway } from './bha/appAway';
 import {
-  blockEl, blockVisual, heroEl, chainLevelAt, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
+  blockEl, blockVisual, heroEl, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setHidden, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
@@ -1073,8 +1073,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       }
       placedAt.set(b.uid, i);
       if (node.parentElement !== cell) cell.replaceChildren(node);
-      const level = chainLevelAt(specs, i);
-      setV2Pips(node, level);
       node.classList.toggle('is-cue', casting && node.dataset.kind === 'guard');
       // 보스 기믹 칸 봉인 (GDD 25-3): 글자가 '봉'으로 바뀌고 회색, 누를 수 없다
       // 막기·공허 경직 중(공격 불가)에는 블록을 쓸 수 없다 (GDD 105장 1번): 같은 잠금 표시

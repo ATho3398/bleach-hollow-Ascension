@@ -112,6 +112,9 @@ export function physSpawnSecondsFor(element: string | null): number {
 
 const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
 
+/** 특성 칸 화면 이름: '물공' 칸은 데이터 키일 뿐 화면에는 '기본 공격' (블록 타입 숨김, GDD 137장 1) */
+export const ABILITY_SLOT_LABEL: Record<AbilityLine['slot'], string> = { 성향: '성향', 속성: '속성', 전용: '전용', 물공: '기본 공격' };
+
 /** 물공 블록 효과 한 줄 (화면용, 종족 무관) */
 export function physBlockSummary(pb: PhysBlock): string {
   const head = `블록 피해 ×${pb.power}`;

@@ -78,8 +78,7 @@ import { createDevice } from './bha/device';
 import { ScreenStack } from './bha/select';
 import { marketOf, roomOf, worldMapOf } from '../engine/faction';
 import { marketView } from './marketView';
-import { worldMapView } from './worldMapView';
-import { FEATURES } from '../config/features';
+import { worldMapCancelWalk, worldMapView } from './worldMapView';
 import { openGrounds } from '../data/grounds';
 import { applySettingsNow, settingsView } from './settingsView';
 import { parseSlotSettings, setSlotSettingsHost } from './settingsScope';
@@ -264,10 +263,10 @@ export function startApp(host: HTMLElement): void {
     const vars = {
       chestName: props.chest, spaName: mk.props.spa, marketName: mk.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), potionPct: pct(TR.potionTo), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.spa.hpPerMinute), spaFullness: String(HH.spa.fullnessPerMinute), spaCond: String(HH.spa.conditionPerMinute), idleHpPct: pct(HH.idlePerMinute),
-      // 온천 가는 길 (GDD 130장 5): 켬 = '밖으로 → 시장 → 온천', 끔 = '장터 → 온천'
-      spaPath: FEATURES.WORLD_MAP ? `${props.outside} → ${mk.name} → ${mk.props.spa}` : `${mk.name} → ${mk.props.spa}`,
+      // 온천 가는 길 (GDD 130장 5): 밖으로 → 시장 → 온천
+      spaPath: `${props.outside} → ${mk.name} → ${mk.props.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
-      spaFirst: FEATURES.WORLD_MAP ? props.outside : mk.name, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
+      spaFirst: props.outside, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -277,9 +276,7 @@ export function startApp(host: HTMLElement): void {
     const EPS = 1e-6;
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
     // 실제 조작: 가방 열기 → 치료제·체력 포션 카드 눌러 [사용] → (밖으로 → 시장 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
-    const spaWay = FEATURES.WORLD_MAP
-      ? '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]' // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
-      : '.bha-prop--market, .bha-market [data-spot="spa"]'; // 스위치 끔: 방 → 장터 → 온천 (127장 4)
+    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="market"], .bha-market [data-spot="spa"]'; // 방 → 밖으로 → 시장 → 온천 (GDD 130장 5)
     let fedAt = s.nest.lastFedAt;
     let soaked = false;
     const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: (go: () => void) => void; skip?: () => boolean }> = {
@@ -388,8 +385,8 @@ export function startApp(host: HTMLElement): void {
     const wm = worldMapOf(faction);
     const care = (['feed', 'sleep', 'pet'] as const).map((a) => faction.nestActionsShort?.[a] ?? faction.nestActions[a]).join('·');
     const vars = {
-      outsideName: props.outside, doorName: props.door, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
-      goPath: FEATURES.WORLD_MAP ? `[${props.outside}] → [${props.door}]을(를) 누른다.` : `[${props.door}]을(를) 누른다.`,
+      outsideName: props.outside, adventureName: wm.places.adventure, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
+      goPath: `[${props.outside}] → [${wm.places.adventure}]을(를) 누른다.`,
     };
     const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
     const scenes: TutorialScene[] = [{ id: 'intro', targets: [], ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)];
@@ -422,9 +419,9 @@ export function startApp(host: HTMLElement): void {
       // 마지막: 첫 모험 강제 — 방을 잠금 모습으로 다시 그리고, 실제 버튼(밖으로 → 모험 / 모험 문)을 눌러 떠나야 끝난다
       forceAdventure = true;
       if (nav.top?.id === 'room') nav.top.render();
-      const go = FEATURES.WORLD_MAP ? '.bha-prop--outside, .bha-worldmap [data-place="adventure"]' : '.bha-prop--door';
-      // 월드맵 켬: 밖으로 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1). 끔이면 모험 문 하나
-      const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`), stages: FEATURES.WORLD_MAP ? HOME_INTRO.last.stages : undefined };
+      const go = '.bha-prop--outside, .bha-worldmap [data-place="adventure"]';
+      // 밖으로 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1)
+      const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
       window.setTimeout(() => tutorialOverlay(faction, {
         scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
         script: { step: `홈 안내 ${total} / ${total}`, act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' } },
@@ -863,8 +860,8 @@ export function startApp(host: HTMLElement): void {
       if (why) return void showToast({ eyebrow: name, title: SPA_BLOCK_TEXT[why], meta: '' }, 0, 2600);
       persist();
     }
-    // 시장에서 들어왔으면 [돌아가기] = 시장 (월드맵 켬, GDD 130장 3). 껐다 켜서 방에서 바로 열린 온천·스위치 끔은 옛 이름 그대로
-    const backLabel = FEATURES.WORLD_MAP && nav.top?.id === 'market' ? `${fixParticles(`${marketOf(faction).name}(으)로`)} 돌아가기` : undefined;
+    // 시장에서 들어왔으면 [돌아가기] = 시장 (GDD 130장 3). 껐다 켜서 방에서 바로 열린 온천은 옛 이름 그대로
+    const backLabel = nav.top?.id === 'market' ? `${fixParticles(`${marketOf(faction).name}(으)로`)} 돌아가기` : undefined;
     nav.push({
       id: 'spa',
       render: () => {
@@ -910,17 +907,21 @@ export function startApp(host: HTMLElement): void {
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
       onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
       onBack: () => nav.back(),
-      // 월드맵 켬 (GDD 130장 3): 시장의 왼쪽 위 버튼 = [월드맵으로], 뒤로 = 월드맵(스택 아래). 끔 = 옛 [방으로 돌아가기]
-      backLabel: FEATURES.WORLD_MAP ? '월드맵으로' : undefined,
+      // 시장의 왼쪽 위 버튼 = [월드맵으로], 뒤로 = 월드맵(스택 아래) (GDD 130장 3)
+      backLabel: '월드맵으로',
     }));
   }
 
   /** 월드맵에서 캐릭터가 서 있는 곳 = 마지막으로 있던 장소 (GDD 132장 2) */
   let worldAt: WorldPlace = 'home';
-  /** 월드맵 (GDD 130장 2, C.204): 방 [밖으로] → 홈·시장·모험. 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
+  /** 월드맵 (GDD 130장 2, C.204): 방 [밖으로] → 홈·시장·모험. 고르면 걸어가서 페이드 전환 (137장 3). 홈 = 방, 시장 = 시장 화면(뒤로 = 월드맵), 모험 = 출발 준비 화면(뒤로 = 월드맵). 뒤로 = 방 */
   function openWorldMap(faction: FactionConfig, s: SaveData): void {
     worldAt = 'home'; // 방에서 나왔다 (GDD 132장 2)
-    open('worldmap', () => worldMapView(dev, faction, s, {
+    // 걷는 중 뒤로 = 취소하고 제자리 (GDD 137장 3)
+    nav.push({ id: 'worldmap', interceptBack: worldMapCancelWalk, render: () => { setBgm('nest'); renderWorldMap(faction, s); root.scrollTop = 0; } });
+  }
+  function renderWorldMap(faction: FactionConfig, s: SaveData): void {
+    worldMapView(dev, faction, s, {
       // 캐릭터·처음 초점 = 지금 있던 곳 (시장·모험 준비에서 뒤로 돌아오면 그 장소 위). 첫 모험 강제 중 초점은 모험
       at: worldAt,
       focus: forceAdventure ? 'adventure' : worldAt,
@@ -930,7 +931,7 @@ export function startApp(host: HTMLElement): void {
       // 첫 모험 강제 (GDD 131장 2): 홈·시장 잠김
       locked: forceAdventure ? ['home', 'market'] : undefined,
       onLocked: () => showToast(FORCE_HINT, 0, 1800),
-    }));
+    });
   }
 
   /** 모험 떠나기: 사망이면 막힘, 빈사면 확인 창, 새 세이브의 첫 원정은 고정 길 튜토리얼 (옛 방 문 = 월드맵 모험이 같이 쓴다) */
@@ -992,7 +993,7 @@ export function startApp(host: HTMLElement): void {
       window.setTimeout(() => {
         if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
         wandererAnnounced = visit.at;
-        const path = FEATURES.WORLD_MAP ? `${roomOf(faction).props.outside} → ${mk.name}` : mk.name; // 월드맵 켬 (GDD 130장 2): 밖으로 → 시장
+        const path = `${roomOf(faction).props.outside} → ${mk.name}`; // 밖으로 → 시장 (GDD 130장 2)
         wandererToast = showToast({ eyebrow: mk.props.wanderer, title: `${mk.props.wanderer}이 ${mk.name}에 왔다`, meta: `${path} → [${mk.props.wanderer}]. 다음 원정에서 돌아오면 떠난다.` }, notes.length, 5200);
       }, 2600);
     }
@@ -1027,8 +1028,6 @@ export function startApp(host: HTMLElement): void {
       resumeNote,
       idle: { badge: idleBadge(s), onOpen: () => showIdlePanel(s, faction, claim) },
       persist,
-      // 새 세이브의 첫 원정은 고정 길 튜토리얼 (GDD 67장)
-      onDepart: () => departFromHome(faction, s),
       // 제단 = 해방 수련 (GDD 22-5). 진화 정보(옛 제단 화면)는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
       onAltar: () => (careBlocked(s) ? undefined : askDying(s, () => open('training', () => renderTraining(faction, s)))),
       // 부활 (GDD 102-3): 되돌릴 수 없어 자동 백업 후
@@ -1055,8 +1054,7 @@ export function startApp(host: HTMLElement): void {
       onHelp: () => openHelp('nest', true),
       // 상점 (GDD 25-9): 골드 = 소모품·편의, 영옥 = 꾸밈
       onShop: () => open('shop', () => shopView(dev, faction, s, { persist, onWear: () => dress(s.wear) })),
-      onMarket: () => openMarket(faction, s),
-      onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1): 월드맵 스위치 켬일 때만 방에 놓인다
+      onOutside: () => openWorldMap(faction, s), // 밖으로 (GDD 130장 1·137장 3)
       forceOutside: forceAdventure, // 첫 모험 강제 (GDD 131장 2)
       onFed: () => {
         const f = recoverFedHook;

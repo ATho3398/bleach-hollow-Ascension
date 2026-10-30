@@ -29,7 +29,7 @@ describe('132장 1 카드가 누를 때마다 다음 대상으로', () => {
   it('단계 문구는 두 종족 모두 채워지고, 한 카드 2줄 이내', () => {
     const extra = {
       chestName: '가방', spaName: '온천', marketName: '시장', dyingPct: '10', potionPct: '50', spaToPct: '80', spaHpPct: '10', spaFullness: '10', spaCond: '1', idleHpPct: '1',
-      spaPath: '밖으로 → 시장 → 온천', foodName: '도시락', foodId: 'basic', spaFirst: '밖으로', outsideName: '밖으로', doorName: '모험', worldName: '지도', goPath: '',
+      spaPath: '밖으로 → 시장 → 온천', foodName: '도시락', foodId: 'basic', spaFirst: '밖으로', outsideName: '밖으로', adventureName: '모험', worldName: '지도', goPath: '',
       altarName: '', bookName: '', careNames: '',
     };
     for (const f of FACTIONS) {

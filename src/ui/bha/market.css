@@ -16,6 +16,6 @@
 .bha-prop--shop .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--wanderer .bha-prop__shape { width: 34px; height: 52px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); border-color: var(--bha-hunger); }
 .bha-prop--market .bha-prop__shape { width: 48px; height: 40px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
-/* 방의 장터 물건: 떠돌이 상인이 와 있으면 오른쪽 위 배지 (GDD 127장 3) */
+/* 월드맵 시장: 떠돌이 상인이 와 있으면 오른쪽 위 배지 (GDD 130장 2) */
 .bha-prop.has-visitor .bha-prop__shape { position: relative; overflow: visible; }
 .bha-prop.has-visitor .bha-prop__badge { position: absolute; top: 0; right: 0; translate: 20% -40%; margin: 0; line-height: 1.3; }

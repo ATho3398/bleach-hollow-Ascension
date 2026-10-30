@@ -191,17 +191,11 @@ describe('출발 화면 탭 고정 (28장 8번)', () => {
 });
 
 describe('방 상점 (28장 9번 → C.201 장터 안)', () => {
-  it('상점은 장터 안 자리(GDD 127장 2), 이름은 두 종족 공통 상점(GDD 34-2). 방의 장터 물건은 다른 물건과 겹치지 않는다', () => {
-    expect(ROOM_PROPS).toContain('market');
+  it('상점은 시장 안 자리(GDD 127장 2·130장 3), 이름은 두 종족 공통 상점(GDD 34-2). 방에는 상점·장터 물건이 없다 (137장 3)', () => {
+    expect(ROOM_PROPS as readonly string[]).not.toContain('market');
+    expect(ROOM_PROPS as readonly string[]).not.toContain('shop');
     expect(marketOf(H).props.shop).toBe('상점');
     expect(marketOf(S).props.shop).toBe('상점');
-    for (const f of FACTIONS) {
-      const r = roomOf(f);
-      for (const p of ROOM_PROPS) {
-        if (p === 'market') continue;
-        expect(Math.hypot(r.layout[p].x - r.layout.market.x, r.layout[p].y - r.layout.market.y), `${f.id}: market–${p}`).toBeGreaterThan(14);
-      }
-    }
   });
   it('더보기 줄에 상점이 없다', () => {
     expect(src('src/ui/roomView.ts')).not.toMatch(/label: '상점'/);

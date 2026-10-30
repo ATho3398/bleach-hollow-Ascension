@@ -38,10 +38,12 @@ describe('104장 7: 뒤로 = 처음 화면 버그', () => {
 });
 
 describe('104장 5·6: 포식 설명·이름', () => {
-  it("설명 '(공격 블록, 조 계열·물리)' → '(물리 공격 블록)', 계열 글자 없음", () => {
-    for (const t of TRAITS) for (const f of ['hollow', 'shinigami']) expect(traitDescription(t.id, f)).not.toMatch(/\(공격 블록, [^)]*계열/);
-    expect(traitDescription('t-water-a', 'hollow')).toContain('(물리 공격 블록)');
-    expect(traitDescription('t-water-b', 'hollow')).toContain('(혼합 공격 블록)');
+  it("설명에 계열 글자·공격 분류(물리·혼합·특수) 없음 (C.215: GDD 137장 1 블록 타입 숨김)", () => {
+    for (const t of TRAITS) for (const f of ['hollow', 'shinigami']) {
+      expect(traitDescription(t.id, f)).not.toMatch(/\(공격 블록, [^)]*계열/);
+      expect(traitDescription(t.id, f)).not.toMatch(/물리|혼합|\((물리|특수|혼합) 공격 블록\)/);
+    }
+    expect(traitDescription('t-water-a', 'hollow')).toContain('물 속성 본체 기술이다');
   });
   it("표시 이름에서 앞 속성 글자를 뺀다 ('물 조' → '조'), 데이터 이름·id 는 그대로", () => {
     expect(traitName('t-water-a', 'hollow')).toBe('조');

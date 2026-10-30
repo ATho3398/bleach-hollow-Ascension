@@ -25,8 +25,8 @@ describe('C.151 핸드오프 CSS (src/ui/bha/v2/bha.css)', () => {
     // 어댑터는 .bha-v2host(우리 틀)와 그 안 .bha-root 만 건드린다
     expect(selectors(adapter).filter((s) => !s.startsWith('.bha-v2host') && !s.startsWith('.bha-root'))).toEqual([]);
   });
-  it('핸드오프의 클래스·토큰 이름이 그대로 들어 있다 (시트용 5개만 뺌)', () => {
-    const want = [...classesOf(orig)].filter((c) => !SHEET_ONLY.has(c));
+  it('핸드오프의 클래스·토큰 이름이 그대로 들어 있다 (시트용 5개 + 블록 안 체인 원(GDD 137장 4, C.215)만 뺌)', () => {
+    const want = [...classesOf(orig)].filter((c) => !SHEET_ONLY.has(c) && c !== 'bha-block__pips');
     const have = classesOf(css);
     expect(want.filter((c) => !have.has(c))).toEqual([]);
     const tok = (t: string) => new Set([...t.matchAll(/--(bha-[a-z0-9-]+)\s*:/g)].map((m) => m[1]!));

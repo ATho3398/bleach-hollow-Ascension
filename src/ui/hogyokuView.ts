@@ -3,7 +3,6 @@
 import { BALANCE } from '../config/balance';
 import { getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
-import { categoryName } from '../data/elements';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
 import type { FactionConfig } from '../engine/faction';
@@ -150,14 +149,14 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
   lcdPage(dev.view, { cls: 'bha-hogyoku-page' }, head, [core, fusion], [transcendentDexPanel(save)]);
 }
 
-/** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 분류 · 히든 · 환생 */
+/** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 히든 · 환생 (공격 분류는 화면에 안 보임, GDD 137장 1) */
 function charCard(t: Pick<SaveData, TrackKey>): HTMLElement {
   const f = getFaction(t.factionId);
   const inp = fusionInputOf(t);
   const p = panel({ title: `${f.name} · ${trackName(t)}`, aside: elementsMark([...inp.elements], f.id) });
   p.dataset.faction = t.factionId;
   const line = h('p', 'bha-small');
-  line.append(`분류 ${categoryName(inp.category, f.id)} · ${inp.hidden ? '히든 진화체' : '일반 진화체'} · 환생 ${inp.rebirths}회 `);
+  line.append(`${inp.hidden ? '히든 진화체' : '일반 진화체'} · 환생 ${inp.rebirths}회 `);
   const mark = rebirthMark(inp.rebirths);
   if (mark) line.append(mark);
   p.append(line);

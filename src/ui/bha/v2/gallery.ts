@@ -1,7 +1,7 @@
 // v2 공통 컴포넌트 갤러리 (C.151, 개발 전용 — `npm run dev` 에서 `?v2gallery=<종족 theme 값>`). 배포 빌드에는 들어가지 않는다 (main.ts 의 import.meta.env.DEV 가드).
 // 컴포넌트 시트(docs/bha-ui-handoff/design/sheets/Components.dc.html)와 같은 항목을 한 화면씩 보여 준다.
 import { FACTIONS } from '../../../data/factions';
-import { V2_GLYPH, V2_PATH, setV2Locked, setV2Pips, v2AttackKind, v2BlockEl, v2ChainEl, v2FamilyPath, v2TrayEl } from './battle';
+import { V2_GLYPH, V2_PATH, setV2Locked, v2AttackKind, v2BlockEl, v2ChainEl, v2FamilyPath, v2TrayEl } from './battle';
 import { mountV2Root } from './root';
 import { v2Badge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Modal, v2Notice, v2Panel, v2Tabs, v2TempChip, v2TitleToggle, v2Toast } from './components';
 
@@ -29,7 +29,6 @@ function mountBlockSheet(root: HTMLElement, faction: (typeof FACTIONS)[number]):
   const c = fx[2] ?? a;
   const make = (kind: Parameters<typeof v2BlockEl>[0]['kind'], path: string, glyph: string, label: string, o: { weak?: boolean; pips?: number; locked?: boolean } = {}): HTMLElement => {
     const n = v2BlockEl({ kind, path, glyph, label, uid: 0, weak: !!o.weak });
-    setV2Pips(n, o.pips ?? 1);
     if (o.locked) setV2Locked(n, true);
     return n;
   };

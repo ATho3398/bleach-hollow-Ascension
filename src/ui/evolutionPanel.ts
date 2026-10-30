@@ -4,7 +4,7 @@ import { abilityNameByEffect, formName, physProcText, tryGetForm } from '../data
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
 import { normalSlotNote } from '../data/help/textFormat';
-import { abilityLines, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { ABILITY_SLOT_LABEL, abilityLines, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
@@ -62,7 +62,7 @@ export function abilityParagraph(lines: readonly AbilityLine[], cls = 'bha-dim')
   if (lines.length === 0) p.append('특성: 아직 없음 (진화하면 생긴다)');
   lines.forEach((l, i) => {
     if (i > 0) p.append(h('br'));
-    const tag = h('span', '', `${l.slot} 특성 `);
+    const tag = h('span', '', `${ABILITY_SLOT_LABEL[l.slot]} 특성 `);
     tag.dataset.abilitySlot = l.slot;
     p.append(tag, h('b', '', l.name), ` — ${l.description}`);
   });
@@ -100,7 +100,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   text.append(
     h('b', '', '진화할 때는 비밀이다.'), h('br'),
     `원정을 다니다 보면 몸에 신호가 온다. 진화는 ${toward(faction.nestName)} 돌아오면 저절로 일어난다.`, h('br'),
-    h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 분류와 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
+    h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
   );
   how.append(text);
   return { left, right: [how, evolutionNote()] };
@@ -130,7 +130,7 @@ export function evolutionEffectRows(
   ];
   if (extra) rows.push({ icon: 'i-weak', label: '속성', value: elementsMark(extra.elements, faction.id) });
   const lines = extra ? (extra.ev ? abilityLines(formAbilitiesOf(form, extra.ev, extra.ability), faction.id) : abilityLines(formAbilitiesOf(form, zeroStats(), extra.ability), faction.id)) : [];
-  for (const l of lines) rows.push({ icon: 'i-rare', label: `${l.slot} 특성`, value: `${l.name} — ${l.description}`, mod: 'stack' });
+  for (const l of lines) rows.push({ icon: 'i-rare', label: `${ABILITY_SLOT_LABEL[l.slot]} 특성`, value: `${l.name} — ${l.description}`, mod: 'stack' });
   rows.push(
     { icon: 'i-cond', label: '종족값', value: statsLine(faction.id, extra?.stats ?? form.stats), mod: 'stack' },
     { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },

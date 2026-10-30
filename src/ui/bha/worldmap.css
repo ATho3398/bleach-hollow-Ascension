@@ -22,10 +22,23 @@
 .bha-worldmap .bha-prop[aria-disabled="true"] .bha-prop__tag { opacity: 0.45; }
 /* 캐릭터: 지도 위라 방보다 작게, 보기만 */
 .bha-worldmap__char { scale: 0.6; pointer-events: none; }
-/* 첫 모험 강제 (GDD 131장 2, C.207): 방에서 밖으로(스위치 끔이면 모험 문)만 켜고 나머지 버튼은 흐린 잠김 — 누를 수 없다 */
-.bha-room.is-force-out .bha-prop:not(.bha-prop--outside):not(.bha-prop--door),
+/* 첫 모험 강제 (GDD 131장 2, C.207): 방에서 밖으로만 켜고 나머지 버튼은 흐린 잠김 — 누를 수 없다 */
+.bha-room.is-force-out .bha-prop:not(.bha-prop--outside),
 .bha-room.is-force-out .bha-homedock,
 .bha-room.is-force-out .bha-room__status,
 .bha-room.is-force-out .bha-room__statusinfo,
 .bha-room.is-force-out .bha-char,
 .bha-room.is-force-out .bha-room__hud button { opacity: 0.45; pointer-events: none; }
+/* 월드맵 이동 연출 (GDD 137장 3, C.215): 장소를 고르면 캐릭터가 걸어가고(입력 잠금), 닿을 즈음 LCD 전체가 어두워졌다가 다음 화면에서 밝아진다 */
+.bha-worldmap.is-walking .bha-prop { cursor: default; }
+.bha-worldmap__char.is-walking .bha-char__body { animation: bha-wm-step 0.36s steps(2, jump-none) infinite; }
+.bha-worldmap__char.is-walk-right .bha-char__body { scale: -1 1; }
+.bha-worldmap__fade {
+  position: absolute; inset: 0; z-index: var(--bha-z-overlay); pointer-events: none;
+  background: var(--bha-bg-0); opacity: 0; transition: opacity var(--bha-wm-fade, 320ms) var(--bha-ease-out);
+}
+.bha-worldmap__fade.is-on { opacity: 1; pointer-events: auto; }
+@keyframes bha-wm-step { 0% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .bha-worldmap__char.is-walking .bha-char__body { animation: none; }
+}

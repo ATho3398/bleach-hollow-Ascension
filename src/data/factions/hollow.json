@@ -309,17 +309,15 @@
   "breakthroughText": "광기가 한계를 넘었다. 영압이 흔들리고 공허가 몰려든다…",
   "frenzyName": "폭주",
   "market": { "name": "시장" },
-  "worldmap": { "name": "웨코문도" },
+  "worldmap": { "name": "웨코문도", "adventureName": "모험" },
   "room": {
     "shape": "cave",
     "sceneArt": "scene.cave",
     "characterArt": "char.hollow",
     "props": {
-      "door": "모험",
       "altar": "수련장",
       "book": "책장",
       "chest": "가방",
-      "market": "웨코문도 장터",
       "outside": "밖으로"
     },
     "floor": {
@@ -327,11 +325,9 @@
       "poly": [[0, 0.58], [0.25, 0.55], [0.5, 0.53], [0.75, 0.55], [1, 0.58], [1, 1], [0, 1]]
     },
     "layout": {
-      "door": { "x": 9, "y": 78, "scale": 1 },
       "book": { "x": 76, "y": 60, "scale": 0.68 },
       "altar": { "x": 90, "y": 70, "scale": 0.68 },
       "chest": { "x": 26, "y": 90, "scale": 0.68 },
-      "market": { "x": 74, "y": 90, "scale": 0.68 },
       "outside": { "x": 9, "y": 78, "scale": 1 }
     },
     "characterFoot": { "x": 50, "y": 80 },

@@ -1,46 +1,39 @@
-// C.201 (GDD 127장 2·3·4): 장터 — 방 물건 [장터] → 장터 화면(온천·상점·떠돌이 상인), 떠돌이 상인 도착 알림(방에서만)·방 장터 물건 배지
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { FEATURES } from '../src/config/features';
+// C.201 (GDD 127장 2·3·4): 장터(→ 130장 시장) — 온천·상점·떠돌이 상인, 떠돌이 상인 도착 알림(방에서만). C.215: 방 장터 물건 폐기 (137장 3)
+import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { FACTIONS, getFaction } from '../src/data/factions';
-import { marketOf, MARKET_SPOTS, parseFactionConfig, roomOf, ROOM_PROPS } from '../src/engine/faction';
+import { marketOf, MARKET_SPOTS, parseFactionConfig, ROOM_PROPS } from '../src/engine/faction';
 import { newSaveData } from '../src/game';
 import { marketSpots } from '../src/ui/marketView';
 import { slotLine, slotTitle } from '../src/ui/startView';
 
-describe('127장 2 장터 = 방 물건 하나 + 따로 된 화면', () => {
-  // 옛 방(장터) = 월드맵 스위치 끔 상태 (GDD 130장 6 — 되돌리면 그대로여야 한다)
-  beforeAll(() => { FEATURES.WORLD_MAP = false; });
-  afterAll(() => { FEATURES.WORLD_MAP = true; });
-  it('방에는 장터 물건 하나, 상점·온천은 방에서 빠지고 장터 안 자리로', () => {
-    expect(ROOM_PROPS).toContain('market');
-    expect(ROOM_PROPS as readonly string[]).not.toContain('shop');
-    expect(ROOM_PROPS as readonly string[]).not.toContain('spa');
+describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 137장 3)', () => {
+  it('방에는 장터·상점·온천 물건이 없고, 시장 안 자리 = 온천·상점·떠돌이 상인', () => {
+    for (const k of ['market', 'shop', 'spa']) expect(ROOM_PROPS as readonly string[]).not.toContain(k);
     expect([...MARKET_SPOTS]).toEqual(['spa', 'shop', 'wanderer']);
   });
-  it('장터 이름 = 종족 설정 (호로 웨코문도 장터 / 사신 루콘가 저잣거리), 상점·온천 이름은 그대로', () => {
-    expect(marketOf(getFaction('hollow')).name).toBe('웨코문도 장터');
-    expect(marketOf(getFaction('shinigami')).name).toBe('루콘가 저잣거리');
+  it('시장 이름 = 두 종족 모두 "시장", 상점·온천 이름은 그대로', () => {
     for (const f of FACTIONS) {
-      expect(marketOf(f).name).toBe(roomOf(f).props.market);
+      expect(marketOf(f).name).toBe('시장');
       expect(marketOf(f).props.shop).toBe('상점');
       expect(marketOf(f).props.spa.startsWith('온천')).toBe(true);
       expect(marketOf(f).sceneArt).toBe('scene.market');
     }
   });
-  it('떠돌이 상인은 와 있을 때만 장터에 서 있다', () => {
+  it('떠돌이 상인은 와 있을 때만 시장에 서 있다', () => {
     const s = newSaveData('hollow');
     expect(marketSpots(s)).toEqual(['spa', 'shop']);
     s.shared.wanderer.visit = { at: 1, runId: 1, tier: 1, stock: [] };
     expect(marketSpots(s)).toEqual(['spa', 'shop', 'wanderer']);
   });
-  it('종족 설정 검사: 장터 자리 이름·위치가 틀리면 오류, 옛 room.props.shop 은 알 수 없는 물건', () => {
+  it('종족 설정 검사: 시장 자리 이름·위치가 틀리면 오류, 옛 room.props.shop·market 은 알 수 없는 물건', () => {
     const base = JSON.parse(readFileSync('src/data/factions/hollow.json', 'utf8'));
     expect(() => parseFactionConfig({ ...base, market: { props: { tavern: '술집' } } })).toThrow(/market\.props\.tavern/);
     expect(() => parseFactionConfig({ ...base, market: { layout: { shop: { x: 200, y: 1 } } } })).toThrow(/market\.layout\.shop/);
     expect(() => parseFactionConfig({ ...base, room: { ...base.room, props: { ...base.room.props, shop: '상점' } } })).toThrow(/room\.props\.shop/);
+    expect(() => parseFactionConfig({ ...base, room: { ...base.room, props: { ...base.room.props, market: '장터' } } })).toThrow(/room\.props\.market/);
   });
-  it('그림 키 자리: scene.market·prop.market·prop.wanderer (비어 있음 = 임시 배경)', () => {
+  it('그림 키 자리: scene.market·prop.market(월드맵 시장)·prop.wanderer (비어 있음 = 임시 배경)', () => {
     const m = readFileSync('src/data/art/manifest.ts', 'utf8');
     for (const k of ['scene.market', 'prop.market', 'prop.wanderer']) expect(m).toContain(`'${k}': {}`);
   });
@@ -48,8 +41,8 @@ describe('127장 2 장터 = 방 물건 하나 + 따로 된 화면', () => {
 
 describe('127장 2·3 화면 연결 (app.ts)', () => {
   const app = readFileSync('src/ui/app.ts', 'utf8');
-  it('방 물건 → 장터, 장터 안 온천·상점·떠돌이 상인 창, 뒤로 = 방', () => {
-    expect(app).toContain('onMarket: () => openMarket(faction, s)');
+  it('월드맵 시장 → 시장 화면, 안의 온천·상점·떠돌이 상인 창 (C.215: 방 장터 물건 폐기)', () => {
+    expect(app).toContain("onMarket: () => { worldAt = 'market'; openMarket(faction, s); }");
     expect(app).toContain("open('market', () => marketView(");
     expect(app).toContain('onSpa: () => openSpa(faction, s)');
     expect(app).toContain("mode: 'wanderer'");
@@ -61,9 +54,9 @@ describe('127장 2·3 화면 연결 (app.ts)', () => {
   it('온천이 저절로 끝나면 방으로 (장터에서 들어갔어도)', () => {
     expect(app).toContain("if (nav.top?.id === 'spa') nestScreen();");
   });
-  it('방 장터 물건 배지 = 떠돌이 상인이 와 있을 때', () => {
-    const room = readFileSync('src/ui/roomView.ts', 'utf8');
-    expect(room).toContain("if (p === 'market' && save.shared.wanderer.visit !== null)");
+  it('떠돌이 상인 배지 = 월드맵 시장 (방에는 없음)', () => {
+    expect(readFileSync('src/ui/worldMapView.ts', 'utf8')).toContain("if (p === 'market' && here)");
+    expect(readFileSync('src/ui/roomView.ts', 'utf8')).not.toContain("p === 'market'");
   });
 });
 

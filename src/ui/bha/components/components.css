@@ -442,10 +442,9 @@ button.bha-slot:active { transform: scale(0.98); }
    17. 블록  .bha-block   ★ 전투 핵심
    종류: --attack --guard --heal --basic --special --void
    상태: .is-weak .is-pressed .is-sealed .is-disabled .is-popin .is-fire
-   체인 단계: 클래스 .is-chain2 / .is-chain3 (없으면 ●○○).
+   체인 단계: 블록 안에는 표시하지 않는다 (GDD 137장 4 — 체인은 블록 바 묶음 라벨로만).
    구조:
    <div class="bha-block bha-block--attack is-weak is-chain2">
-     <span class="bha-block__pips"><i></i><i></i><i></i></span>
      <span class="bha-block__icon"><svg class="bha-icon"><use href="#i-attack"/></svg></span>
      <b class="bha-block__abbr">뼈발톱</b>
      <span class="bha-block__weak"><svg class="bha-icon"><use href="#i-weak"/></svg></span>
@@ -485,11 +484,6 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-block[data-fam="family-c"] { --fam: var(--bha-lin-c); }
 .bha-block[data-fam]::after, .bha-block[data-el]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--fam); }
 /* 속성 색 (C.47, GDD 20-2): 블록 = 계열 글자 + 속성 색. 화면이 --fam 을 속성 토큰으로 덮어쓴다 (data-el) */
-.bha-block__pips { position: absolute; top: 4px; left: 0; right: 0; display: flex; justify-content: center; gap: 3px; }
-.bha-block__pips i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; opacity: 0.85; }
-.bha-block__pips i:nth-child(-n + 1) { background: currentColor; }
-.bha-block.is-chain2 .bha-block__pips i:nth-child(-n + 2) { background: currentColor; }
-.bha-block.is-chain3 .bha-block__pips i { background: currentColor; }
 /* 블록 색 = 속성 (C.131, GDD 79장): 몸통을 속성 색으로. 모양(아이콘)은 계열·역할, 계열 글자 배지는 어두운 바탕 */
 .bha-block[data-el]:not(.bha-block--special):not(.bha-block--void) { --blk: var(--fam); --ink: var(--bha-bg-0); }
 .bha-block[data-el] .bha-block__fam { background: rgb(0 0 0 / 0.45); color: var(--bha-text-1); }

@@ -92,7 +92,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine(`${f.fullnessName} ${CP.conditionBelowFullness} 이하`, `시간당 ${MINUS}${num(CP.conditionPerHour)}`, `${f.fullnessName} 0이면 ×2`),
           // 배부르면 쉬는 동안 회복 · 온천 회복 (GDD 135장 3)
           numLine(`${f.fullnessName} ${CP.conditionRegenAtFullness} 이상`, `쉬는 동안 시간당 ${signed(CP.conditionRegenPerHour)}`),
-          numLine(f.room ? marketOf({ room: f.room, market: f.market }).props.spa : '온천', `1분에 ${signed(NX.homeHp.spa.conditionPerMinute)}`),
+          numLine(f.room ? marketOf({ market: f.market }).props.spa : '온천', `1분에 ${signed(NX.homeHp.spa.conditionPerMinute)}`),
           numLine('원정 패배', `${NX.defeatCondition}까지 떨어진다`),
           numLine(`${f.frenzyName} 후 귀환`, signed(-RX.frenzyConditionLoss)),
         ],

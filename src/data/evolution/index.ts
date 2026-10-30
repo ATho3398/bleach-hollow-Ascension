@@ -95,13 +95,21 @@ export function formName(form: FormDef, factionId: string, inherited: readonly s
   return form.name ? pickFaction(form.name, factionId) : placeholderName(form, factionId, inherited);
 }
 
+/** 공격 분류에 드는 종족 블록 계열 표시명 ('조·권 계열'). 분류가 없거나 계열 표가 없으면 빈 문자열 앞뒤 공백 없이 '' */
+function categoryFamilies(cat: FormDef['label']['category'], factionId: string): string {
+  if (!cat) return '';
+  const fams = getFaction(factionId).families.filter((f) => f.category === cat).map((f) => f.abbr);
+  return fams.length > 0 ? `${fams.join('·')} 계열` : '';
+}
+
 /** 도감 힌트 (해금된 진화체에만 보인다) */
 export function formHint(form: FormDef, factionId: string): string {
   const els = form.label.elements.map((e) => elementName(e, factionId));
   const byKind: Record<FormKind, string> = {
     base: '정해진 걸음을 걸으면 진화',
     element: `${els[0]} 특성을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
-    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${form.label.category ? categoryName(form.label.category, factionId) : ''} 공격 특성을 가장 많이 장착하고 진화`,
+    // 공격 분류(물리·특수·혼합)는 화면에 안 보인다 (GDD 137장 1): 그 분류에 드는 블록 계열 이름으로 말한다
+    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(form.label.category, factionId)} 공격 특성을 가장 많이 장착하고 진화`,
     fusion: `${els.join('·')} 적을 고루 많이 ${getFaction(factionId).absorbActionName}`,
     complete: '네 원소의 적을 모두 고루',
     special: `${els[0]} 적과 다른 한 속성의 적을 많이`,

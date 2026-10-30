@@ -172,7 +172,6 @@
     {
       "id": "to-spa",
       "targets": [
-        "@.bha-prop--market",
         "@.bha-prop--outside",
         "@.bha-worldmap [data-place=\"market\"]",
         "@.bha-market [data-spot=\"spa\"]",
@@ -183,8 +182,7 @@
       "stages": [
         {
           "targets": [
-            "@.bha-prop--market",
-            "@.bha-prop--outside"
+                "@.bha-prop--outside"
           ],
           "body": "{spaName}에서 쉬면 1분에 체력 {spaHpPct}%·컨디션 {spaCond}씩 차고 배부름이 {spaFullness} 준다.\n[{spaFirst}]을(를) 누른다."
         },

@@ -47,9 +47,6 @@ export function blockVisual(kind: 'skill' | 'void' | 'combo' | 'liberation', isB
   return role ?? 'attack';
 }
 
-/** 체인 단계 표시가 붙는 외형 (공격·막기·회복·기본) */
-export const hasPips = (v: BlockVisual): boolean => v === 'attack' || v === 'guard' || v === 'heal';
-
 export interface RunSpec {
   /** 시작 칸 (1부터: CSS --start) */
   start: number;
@@ -367,11 +364,6 @@ export function blockEl(spec: BlockSpec): HTMLElement {
   node.setAttribute('aria-label', spec.label);
   node.dataset.uid = String(spec.uid);
   node.dataset.visual = spec.visual;
-  if (hasPips(spec.visual)) {
-    const pips = el('span', 'bha-block__pips');
-    pips.append(el('i'), el('i'), el('i'));
-    node.append(pips);
-  }
   const ico = el('span', 'bha-block__icon');
   // 아이콘 = 계열 모양 (C.138, 84장 5번): 공격 블록과 기본(노말) 블록 모두 계열마다 다르게
   ico.append(icon((spec.visual === 'attack' || spec.visual === 'basic') && spec.fx ? `i-fx-${spec.fx}` : BLOCK_ICON[spec.visual]));
