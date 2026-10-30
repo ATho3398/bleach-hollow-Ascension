@@ -192,10 +192,10 @@ describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
     expect(liberationAccess(s)).toEqual({ usable: true, trained: false });
     s.training.completed = true;
     expect(liberationAccess(s).trained).toBe(true);
-    // C.195: 사냥 힐 축소(121장 6)로 블록 봇이 시드 3 에서 해방 전에 쓰러져 시드 4 (해방 게이지가 차고 쓰는 판)
+    // C.195: 사냥 힐 축소(121장 6)로 블록 봇이 시드 3 에서 해방 전에 쓰러져 시드 4 (해방 게이지가 차고 쓰는 판). C.212: 1단계 몸은 2바퀴가 고비라(134장 5) 체력 가득 봇
     const exp = createExpedition({ factionId: 'hollow', seed: 4, hunger: 20, condition: 80, deck: ['prey-nest-a'] });
     let used = 0;
-    playExpedition(exp, { returnAfterLap: 3, playBattle: (b) => { expect(b.params.liberationEnabled).toBe(true); playCombatBot(b); used += b.liberation.uses; } });
+    playExpedition(exp, { returnAfterLap: 3, fullHp: true, playBattle: (b) => { expect(b.params.liberationEnabled).toBe(true); playCombatBot(b); used += b.liberation.uses; } });
     expect(used).toBeGreaterThan(0);
     expect(exp.battles.some((b) => (b.liberationUses ?? 0) > 0)).toBe(true);
   });

@@ -418,6 +418,7 @@ if (want('absorb')) for (const stopLap of [4, 6]) {
     let defeated = 0;
     let traits = 0;
     let risk = 0;
+    let riskRuns = 0;
     let secs = 0;
     let battles = 0;
     let wins = 0;
@@ -431,7 +432,8 @@ if (want('absorb')) for (const stopLap of [4, 6]) {
       if (e.breakthrough) bt++;
       if (e.outcome === 'defeated') defeated++;
       traits += e.build.owned.length;
-      risk += e.risk;
+      // C.212 (GDD 134장 5): 1단계 몸은 체력 가득 봇도 3~4바퀴 전투에서 지기 시작해(바퀴당 적 공격 +30%) 끝 리스크는 그 바퀴까지 간 원정만 센다 (진 원정은 '4바퀴 끝'이 아님)
+      if (e.outcome !== 'defeated') { risk += e.risk; riskRuns++; }
       food += e.foodLoot.length;
       for (const b of e.battles) {
         secs += b.durationSeconds;
@@ -441,9 +443,9 @@ if (want('absorb')) for (const stopLap of [4, 6]) {
         if (b.absorbable) absorbable++;
       }
     }
-    absorbStats[`${stopLap}-${policy}`] = { breakthrough: bt, defeated, absorbableRate: wins ? absorbable / wins : 0, endRisk: risk / M };
+    absorbStats[`${stopLap}-${policy}`] = { breakthrough: bt, defeated, absorbableRate: wins ? absorbable / wins : 0, endRisk: risk / Math.max(1, riskRuns) };
     console.log(
-      `  ${stopLap}바퀴 ${POLICY_NAME[policy]}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 끝 리스크 ${(risk / M).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투 · 먹이 전리품 ${(food / M).toFixed(1)}개`,
+      `  ${stopLap}바퀴 ${POLICY_NAME[policy]}: 흡수 ${(absorbs / M).toFixed(1)}회 · 놓아줌 ${(releases / M).toFixed(1)}회 · 승리 중 흡수 가능 ${wins ? ((absorbable / wins) * 100).toFixed(0) : 0}% · 한계 돌파 ${bt}/${M} · 패배 ${defeated}/${M} · 끝 특성 ${(traits / M).toFixed(1)}개 · 끝 리스크 ${(risk / Math.max(1, riskRuns)).toFixed(0)} · 전투당 ${(secs / battles).toFixed(1)}초 · 공허 사용 ${(voids / battles).toFixed(2)}/전투 · 먹이 전리품 ${(food / M).toFixed(1)}개`,
     );
   }
 }
@@ -459,11 +461,15 @@ if (want('absorb')) {
   // C.63 (마스터 결정): 끝 리스크 판정은 60판이면 잡음이 ±3 쯤이라 경계(40)에서 흔들린다 → 같은 봇을 시드 1~RISK_M 으로 더 돌린 평균으로 판정한다 (위 60판 줄은 참고)
   const RISK_M = 300;
   let riskSum = 0;
+  let riskN = 0;
   for (let seed = 1; seed <= RISK_M; seed++) {
-    riskSum += playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: 4, fullHp: true, absorb: 'absorb', absorbWanted: mixedWanted }).risk;
+    const e = playExpedition(createExpedition({ factionId: 'hollow', seed, hunger: 20, condition: 80, deck }), { returnAfterLap: 4, fullHp: true, absorb: 'absorb', absorbWanted: mixedWanted });
+    if (e.outcome === 'defeated') continue; // C.212: 진 원정은 '4바퀴 끝'이 아니다 (위 60판 줄과 같은 기준)
+    riskSum += e.risk;
+    riskN++;
   }
-  m4.endRisk = riskSum / RISK_M;
-  console.log(`  리스크 판정 표본: 4바퀴 섞음 ${RISK_M}판(시드 1~${RISK_M}) 평균 끝 리스크 ${m4.endRisk.toFixed(1)}`);
+  m4.endRisk = riskSum / Math.max(1, riskN);
+  console.log(`  리스크 판정 표본: 4바퀴 섞음 ${RISK_M}판(시드 1~${RISK_M}) 중 4바퀴를 마친 ${riskN}판 평균 끝 리스크 ${m4.endRisk.toFixed(1)}`);
   // C.63 (마스터 승인, GDD 28-1): 300판 판정에서 치명타 전(39.40)·후(39.4) 모두 40 바로 아래 — 목표 40~60(23-2, provisional)은 그대로 두고 회귀 가드 하한만 39
   // C.69 (B-1): 놓아주기 −6 → −5 로 41.3 이 되어 가드 하한을 목표대로 40 으로 되돌림
   const RISK_GUARD_MIN = 40;
