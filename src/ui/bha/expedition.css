@@ -19,7 +19,7 @@
 /* 시드·기록 저장 줄: 체크 아이콘을 글자 줄 안에 */
 .bha-seedline .bha-icon { display: inline-block; vertical-align: -3px; }
 
-/* 낮은 화면(360×740)에서 4바퀴 초과 경고 + 배치판이 있어도 시트가 넘치지 않도록 시트 안 여백을 줄인다 */
+/* 낮은 화면(360×740)에서 권장 바퀴 초과 경고 + 배치판이 있어도 시트가 넘치지 않도록 시트 안 여백을 줄인다 */
 @media (max-height: 780px), (orientation: portrait) {
   .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-3) var(--bha-sp-5); }
   .bha-exp .bha-sheet { gap: var(--bha-sp-4); }

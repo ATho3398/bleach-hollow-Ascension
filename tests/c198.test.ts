@@ -54,7 +54,8 @@ describe('123장 1 초반 긴장감: ★1 적 공격', () => {
     expect(b).not.toContain('R.defeat < 0.25 || R.defeat > 0.55');
     expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.7) && '2바퀴 25~70% 밖'");
   });
-  it("화면 문구 '기본 4바퀴' → '권장 4바퀴'", () => {
+  it("화면 문구 '기본 4바퀴' → '권장 n바퀴' (C.212: 권장 2바퀴)", () => {
+    expect(BALANCE.expedition.defaultLaps).toBe(2);
     expect(readFileSync('src/ui/resultView.ts', 'utf8')).toContain('/ 권장 ${BALANCE.expedition.defaultLaps}');
     const ex = readFileSync('src/ui/expeditionView.ts', 'utf8');
     expect(ex).toContain('권장 ${EX.defaultLaps}바퀴를 넘겼다');
