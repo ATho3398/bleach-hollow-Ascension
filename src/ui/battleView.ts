@@ -14,7 +14,7 @@ import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
   canGuard, canUseGear, canUseItem, halted as combatHalted, voidChanceOf,
-  scriptAck, scriptPrompt, scriptStep, SCRIPT_STAGES,
+  scriptAck, scriptLand, scriptPrompt, scriptStep, SCRIPT_STAGES,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -873,10 +873,39 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 피해 크기 기준 (C.63): 내 기본 공격 1회 피해(육성·환경 반영) / 적 쪽은 기본 공격 피해 단위 */
   const myUnit = p.playerAttackDamage * p.growthMultiplier * p.playerPowerMultiplier * p.attackPowerMultiplier;
   const hurtUnit = p.playerAttackDamage;
+  /** 블록 사건의 피해 숫자·상성 문구·체인 표시 */
+  const blockFloats = (e: Extract<CombatEvent, { kind: 'block' }>) => {
+    if (e.block === 'void') {
+      spawnFloat('void', `−${n0(e.damage)}`, { iconId: 'i-void' });
+      replayOnce(flashVoid, 'is-on', 900);
+    } else if (e.block === 'skill' && e.role === 'guard') {
+      spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
+    } else if (e.block === 'skill' && e.role === 'heal') {
+      spawnFloat('heal', n0(e.heal));
+    } else {
+      const ult = e.block === 'combo' || e.block === 'liberation';
+      spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });
+    }
+    // 상성 문구 (GDD 20-2, 종족 설정 matchupText)
+    if (e.matchup === 'strong') spawnFloat('strong', labels.matchupText.strong);
+    else if (e.matchup === 'weak') spawnFloat('dull', labels.matchupText.weak);
+    if (e.chain > 1) {
+      // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N
+      if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+      flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
+    }
+    if (e.block === 'combo') flash('is-special', 600);
+  };
+  /** 튜토리얼 마무리 체인의 블록 사건 (GDD 146장): 착탄까지 숫자를 미룬다 */
+  let heldBlock: Extract<CombatEvent, { kind: 'block' }> | null = null;
   const react = (e: CombatEvent) => {
-    const cue = cueOf(e, top);
+    // 각본 마무리 체인 (GDD 146장): 동작 → 스킬 연출 → 닿는 순간 피해. 피해는 엔진이 맡겨 두고 연출이 닿을 때 scriptLand 로 넣는다
+    const landing = e.kind === 'block' && s.script?.stage === 'chain-hit' && !!s.script.held;
+    if (landing) heldBlock = e;
+    const cue = landing ? null : cueOf(e, top);
     if (cue) cues.push(cue);
-    attack.react(e);
+    if (landing) attack.react(e, { windup: true, onLand: () => void scriptLand(s) });
+    else attack.react(e);
     if (e.kind === 'block' || e.kind === 'liberate') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':
@@ -884,28 +913,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         if (e.crit) spawnFloat('attack', `−${n0(e.damage)}`, { critical: true });
         break;
       case 'block': {
-        if (e.block === 'void') {
-          spawnFloat('void', `−${n0(e.damage)}`, { iconId: 'i-void' });
-          replayOnce(flashVoid, 'is-on', 900);
-        } else if (e.block === 'skill' && e.role === 'guard') {
-          spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
-        } else if (e.block === 'skill' && e.role === 'heal') {
-          spawnFloat('heal', n0(e.heal));
-        } else {
-          const ult = e.block === 'combo' || e.block === 'liberation';
-          spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });
-        }
-        // 상성 문구 (GDD 20-2, 종족 설정 matchupText)
-        if (e.matchup === 'strong') spawnFloat('strong', labels.matchupText.strong);
-        else if (e.matchup === 'weak') spawnFloat('dull', labels.matchupText.weak);
-        if (e.chain > 1) {
-          // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N
-          if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
-          flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
-        }
-        if (e.block === 'combo') flash('is-special', 600);
+        // 튜토리얼 마무리 체인 (GDD 146장): 피해 숫자·번쩍임은 연출이 닿을 때(script-impact)
+        if (heldBlock !== e) blockFloats(e);
         break;
       }
+      case 'script-impact':
+        if (heldBlock) {
+          blockFloats({ ...heldBlock, damage: e.damage });
+          const c = cueOf(heldBlock, top);
+          if (c) cues.push(c);
+        }
+        heldBlock = null;
+        break;
       case 'ability':
         // 진화체 특성 발동 글자 (GDD 39장 5번): 연타! / 되갚기! / 다시 일어남! / 연쇄!
         spawnFloat('chain', abilityProcText(e.effect, faction.id), { chain3: e.effect !== 'chainHaste' });

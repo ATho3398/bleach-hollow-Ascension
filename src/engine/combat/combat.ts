@@ -448,6 +448,8 @@ export type CombatEvent =
   | { kind: 'evade' }
   /** 보스 기믹 element (GDD 35장): 페이즈가 바뀌며 보스 속성이 바뀌었다 */
   | { kind: 'boss-element'; element: string }
+  /** 각본 전투 마무리 체인의 피해가 지금 들어갔다 (GDD 146장): 블록 사건(block)은 쓸 때, 피해 숫자·체력 감소는 이 사건에 */
+  | { kind: 'script-impact'; damage: number }
   | { kind: 'end'; status: CombatStatus };
 
 export interface CombatState {
@@ -583,6 +585,9 @@ export interface CombatScript {
   heavyHits: number;
   /** true 면 적을 쓰러뜨릴 수 있다 (그 전에는 적 체력이 1 아래로 안 내려간다) */
   lethal: boolean;
+  /** 마무리 체인 (GDD 146장): holdHit 동안 준 피해는 바로 들어가지 않고 held 에 맡겨 둔다 → 연출이 닿는 순간 scriptLandHit 이 넣는다 */
+  holdHit?: boolean;
+  held?: { amount: number; finisher: Finisher } | null;
 }
 
 export interface LiberationState {
@@ -1331,6 +1336,12 @@ export function drainCombatEvents(s: CombatState): CombatEvent[] {
 
 function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
   if (s.status !== 'playing') return;
+  if (s.script?.holdHit) {
+    // 각본 마무리 체인 (GDD 146장): 동작·스킬 연출이 닿을 때까지 피해를 맡겨 둔다
+    const h = s.script.held;
+    s.script.held = { amount: (h?.amount ?? 0) + amount, finisher };
+    return;
+  }
   // 해방 게이지 (95장 B2): 실제로 깎은 체력(졸개 몫 포함, 넘친 피해 제외) ÷ 적 최대 체력
   if (amount > 0 && s.enemy.maxHp > 0) addGauge(s, (Math.min(amount, s.enemy.hp + (s.boss?.minion?.hp ?? 0)) / s.enemy.maxHp) * s.params.liberationGaugePerDealt);
   // 졸개 (보스 기믹 summon): 내 피해를 먼저 받는 방패. 넘친 피해는 보스에게 간다
@@ -1508,6 +1519,18 @@ function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, fami
   const element = kind === 'skill' ? (sourceOf(s.params, traitId)?.element ?? null) : null;
   s.tray.push({ uid: s.nextUid++, kind, traitId, family, element });
   emit(s, { kind: 'spawn', index: s.tray.length - 1, block: kind });
+  return true;
+}
+
+/** 각본 마무리 체인 착탄 (GDD 146장): 맡겨 둔 피해를 지금 넣는다(쓰러질 수 있다). 맡긴 것이 없으면 false */
+export function scriptLandHit(s: CombatState): boolean {
+  const sc = s.script;
+  const h = sc?.held;
+  if (!sc || !h || s.status !== 'playing') return false;
+  sc.held = null;
+  sc.lethal = true;
+  emit(s, { kind: 'script-impact', damage: h.amount });
+  dealDamage(s, h.amount, h.finisher);
   return true;
 }
 
@@ -1980,7 +2003,8 @@ function advanceTick(s: CombatState): void {
   }
   if (s.boss) bossGimmick(s, s.boss);
   // 내 자동 기본 공격: 막기 중(GDD 84장 2번)에는 멈춘다
-  if (!halted(s) && --s.player.attackTimer <= 0) {
+  // 각본 마무리 체인이 날아가는 동안(피해를 맡겨 둔 동안)도 멈춘다 (GDD 146장)
+  if (!halted(s) && !s.script?.held && --s.player.attackTimer <= 0) {
     s.player.attackTimer = t(currentAttackSeconds(s));
     basicAttack(s);
     if (s.status !== 'playing') return;
