@@ -2,10 +2,10 @@
   "provisional": true,
   "abilities": {
     "hp": { "name": { "*": "강인한 몸" }, "description": { "*": "최대 체력이 늘어난다." } },
-    "atk": { "name": { "*": "괴력" }, "description": { "*": "힘이 실린 공격의 피해가 늘어난다." } },
+    "atk": { "name": { "*": "괴력" }, "description": { "*": "일반 공격(평타) 피해가 늘어난다." } },
     "int": { "name": { "*": "블록 가속" }, "description": { "*": "블록이 더 빨리 생긴다." } },
-    "def": { "name": { "*": "단단한 껍질" }, "description": { "*": "힘이 실린 공격을 덜 아프게 받는다." } },
-    "spr": { "name": { "*": "흔들림 없는 마음" }, "description": { "*": "지능이 실린 공격을 덜 아프게 받는다." } },
+    "def": { "name": { "*": "단단한 껍질" }, "description": { "*": "적의 힘이 실린 공격을 덜 아프게 받는다." } },
+    "spr": { "name": { "*": "흔들림 없는 마음" }, "description": { "*": "적의 지능이 실린 공격을 덜 아프게 받는다." } },
     "spd": { "name": { "*": "평타 가속" }, "description": { "*": "자동 공격이 더 빨라진다." } }
   },
   "elementAbilities": {

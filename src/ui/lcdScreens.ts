@@ -40,6 +40,7 @@ import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/n
 import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
+import { statUseLead, statUseLines } from '../data/help/statText';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
@@ -113,6 +114,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const evo = save.evolution;
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
+  // 능력치가 무엇에 쓰이는지 (GDD 141장 2): 평타 = {stat.atk}, 블록 공격 = {stat.int}. 제목 옆 ⓘ
+  stats.querySelector('.bha-panel__title')?.append(infoTip('능력치', () => ({ lead: statUseLead(faction), groups: [{ title: '하는 일', lines: statUseLines(faction) }] })));
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
   stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry));
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치

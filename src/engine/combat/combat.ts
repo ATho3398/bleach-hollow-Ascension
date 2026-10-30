@@ -197,8 +197,6 @@ export interface CombatParams {
   /** C.154 (GDD 95장 B2): 피해로도 찬다 — 적 최대 체력만큼 주면 +liberationGaugePerDealt, 내 최대 체력만큼 받으면 +liberationGaugePerTaken (평타형·블록 안 쓰는 자동전투도 해방) */
   liberationGaugePerDealt: number;
   liberationGaugePerTaken: number;
-  /** 해방 블록(옛 22-5 kind 'liberation', C.134 부터는 생기지 않는다 — 옛 상태 호환)의 공격 분류. 속성은 내 캐릭터 속성 */
-  liberationCategory: AttackCategory;
   /** 해방 수치 (BALANCE.provisional.liberation): 지속, 해방 중 블록 생성 속도 배율(모든 생성 타이머가 이만큼 빨리 돈다), 해방 블록 위력(기본 공격 N회분), 끝날 때 리스크 */
   liberationSeconds: number;
   liberationSpawnSpeed: number;
@@ -365,7 +363,6 @@ export function defaultCombatParams(): CombatParams {
     liberationStartGauge: 0,
     liberationGaugePerDealt: LB.gaugePerDealt,
     liberationGaugePerTaken: LB.gaugePerTaken,
-    liberationCategory: 'mixed',
     liberationSeconds: LB.seconds,
     liberationSpawnSpeed: LB.spawnSpeed,
     liberationPowerInAttacks: CX.basicBlockPowerInAttacks * LB.blockPowerMultiplier,
@@ -1058,6 +1055,11 @@ export function isEffective(s: CombatState, skill: CombatSkill): boolean {
   return skillMatchup(s, skill) === 'strong';
 }
 
+/** 내 공격이 쓰는 능력치 분류 (GDD 141장 1, 126-1 확정 ③): 평타(·장비) = 공격력 ÷ 적 방어, 블록 공격 전부(흡수·기본 공격 블록·콤보·공허·해방) = 특공 ÷ 적 정신력.
+ *  블록의 계열 분류(category)는 데이터에 남지만 내 피해 계산엔 쓰지 않는다. 적이 주는 피해는 적 분류 그대로 */
+export const PLAYER_BASIC_CATEGORY: AttackCategory = 'physical';
+export const PLAYER_BLOCK_CATEGORY: AttackCategory = 'special';
+
 /** 내 공격의 상성·능력치 비·분류 배율을 곱한 배율 (속성 = 공격 속성 목록, 비면 상성 없음) */
 function playerHitMultiplier(s: CombatState, elements: readonly string[], cat: AttackCategory): { mult: number; matchup: Matchup } {
   const p = s.params;
@@ -1073,7 +1075,7 @@ export function tierEffect(p: CombatParams, skill: CombatSkill, chain: number): 
   return { multiplier: p.chainMultipliers[chain - 1] ?? 1, bonus: chain >= p.chainBonusFromChain ? skill.chainBonus : null };
 }
 
-/** 스킬 블록 위력 배율: 속성 보너스 × 단계 기술 배율(체인 배율을 이어받음) × 상성(강 ×1.2 / 약 ×0.85) × 자기 속성 보정 × 능력치 비 × 분류 배율.
+/** 스킬 블록 위력 배율: 속성 보너스 × 단계 기술 배율(체인 배율을 이어받음) × 상성(강 ×1.2 / 약 ×0.85) × 자기 속성 보정 × 능력치 비(특공 ÷ 정신력) × 분류 배율.
  *  chain = 함께 발동하는 블록 수(1~3), 바에 있는 블록 하나만 볼 때는 1. weak = 흡수 조건의 우위 공격인가 */
 export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: CombatSkill; mult: number; weak: boolean; matchup: Matchup; stab: boolean } | null {
   if (b.kind !== 'skill') return null;
@@ -1081,7 +1083,7 @@ export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: Comba
   if (!src) return null;
   // 기본 블록은 블록마다 계열을 가진다 (GDD 20장 v5.4): 그 계열 단계 기술(특공)·체인 기록·콤보가 그 계열로 나간다. 위력(powerInAttacks)·분류·속성은 기본 블록 값
   const skill = src.id === BASIC_SKILL_ID && b.family && !src.family ? { ...src, family: b.family } : src;
-  const hit = playerHitMultiplier(s, skill.element ? [skill.element] : [], skill.category);
+  const hit = playerHitMultiplier(s, skill.element ? [skill.element] : [], PLAYER_BLOCK_CATEGORY);
   const stab = skill.element !== null && s.params.playerElements.includes(skill.element);
   const mult = skill.powerMultiplier * tierEffect(s.params, skill, chain).multiplier * hit.mult * (stab ? s.params.stabMultiplier : 1);
   return { skill, mult, weak: isEffective(s, skill), matchup: hit.matchup, stab };
@@ -1091,14 +1093,14 @@ export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: Comba
 export function liberationHit(s: CombatState): { mult: number; matchup: Matchup; weak: boolean; element: string | null } {
   const p = s.params;
   const els = p.playerElements;
-  const hit = playerHitMultiplier(s, els, p.liberationCategory);
+  const hit = playerHitMultiplier(s, els, PLAYER_BLOCK_CATEGORY);
   const weak = weaknessesOf(enemyElements(s.enemy.def)).length === 0 || hit.matchup === 'strong';
   return { mult: hit.mult * p.stabMultiplier, matchup: hit.matchup, weak, element: els[0] ?? null };
 }
 
-/** 속성 없는 큰 블록(필살·공허·콤보·저장 필살)의 능력치 비: 혼합 분류 */
+/** 속성 없는 큰 블록(필살·공허·콤보·저장 필살)의 능력치 비: 블록 공격이라 특공 */
 function plainHitMultiplier(s: CombatState): number {
-  return playerHitMultiplier(s, [], 'mixed').mult;
+  return playerHitMultiplier(s, [], PLAYER_BLOCK_CATEGORY).mult;
 }
 
 /** 이 블록을 지금 쓰면 줄 피해 (봇·화면 예고용) */
@@ -1245,8 +1247,8 @@ export function basicPowerOf(s: CombatState): number {
 function basicAttack(s: CombatState): void {
   const p = s.params;
   const a = p.abilityEffects;
-  // 평타 = 물리, 내 캐릭터 속성 (GDD 20-3 v3.6)
-  const hit = playerHitMultiplier(s, p.playerElements, 'physical');
+  // 평타 = 공격력 ÷ 적 방어, 내 캐릭터 속성 (GDD 20-3 v3.6, 141장 1)
+  const hit = playerHitMultiplier(s, p.playerElements, PLAYER_BASIC_CATEGORY);
   const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s);
   // 전광 (뇌 블록): 두 번 때림, 각 each. 타격마다 따로 치명 판정
   const flash = (s.flashHits ?? 0) > 0 && p.physBlock?.effect === 'flash' ? { n: 2, each: p.physBlock.each } : { n: 1, each: 1 };
@@ -1713,7 +1715,7 @@ function useGear(s: CombatState): boolean {
   let damage = 0;
   if (g.effect === 'shield') s.gearShieldTicks = ticksOf(p, g.seconds);
   else {
-    const hit = playerHitMultiplier(s, p.playerElements, 'physical');
+    const hit = playerHitMultiplier(s, p.playerElements, PLAYER_BASIC_CATEGORY);
     damage = playerHit(s, unitDamage(p) * hit.mult * g.powerInAttacks, false, p.playerElements).damage;
   }
   emit(s, { kind: 'gear', id: g.id, effect: g.effect, damage });

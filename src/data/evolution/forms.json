@@ -367,10 +367,10 @@
     "stats": {
       "hp": 122,
       "atk": 146,
-      "int": 97,
-      "def": 122,
-      "spr": 122,
-      "spd": 121
+      "int": 122,
+      "def": 109,
+      "spr": 109,
+      "spd": 122
     },
     "maxChain": 3,
     "provisional": true
@@ -439,9 +439,9 @@
     "stats": {
       "hp": 134,
       "atk": 134,
-      "int": 97,
-      "def": 122,
-      "spr": 140,
+      "int": 122,
+      "def": 109,
+      "spr": 128,
       "spd": 103
     },
     "maxChain": 3,
@@ -511,9 +511,9 @@
     "stats": {
       "hp": 122,
       "atk": 164,
-      "int": 97,
-      "def": 110,
-      "spr": 103,
+      "int": 122,
+      "def": 97,
+      "spr": 91,
       "spd": 134
     },
     "maxChain": 3,
@@ -583,9 +583,9 @@
     "stats": {
       "hp": 134,
       "atk": 146,
-      "int": 85,
-      "def": 146,
-      "spr": 122,
+      "int": 110,
+      "def": 134,
+      "spr": 109,
       "spd": 97
     },
     "maxChain": 3,
@@ -655,9 +655,9 @@
     "stats": {
       "hp": 103,
       "atk": 146,
-      "int": 110,
-      "def": 103,
-      "spr": 122,
+      "int": 134,
+      "def": 91,
+      "spr": 110,
       "spd": 146
     },
     "maxChain": 3,
@@ -727,9 +727,9 @@
     "stats": {
       "hp": 140,
       "atk": 158,
-      "int": 79,
-      "def": 122,
-      "spr": 109,
+      "int": 103,
+      "def": 110,
+      "spr": 97,
       "spd": 122
     },
     "maxChain": 3,
@@ -799,9 +799,9 @@
     "stats": {
       "hp": 103,
       "atk": 134,
-      "int": 115,
-      "def": 122,
-      "spr": 134,
+      "int": 140,
+      "def": 109,
+      "spr": 122,
       "spd": 122
     },
     "maxChain": 3,
@@ -871,9 +871,9 @@
     "stats": {
       "hp": 122,
       "atk": 158,
-      "int": 116,
-      "def": 109,
-      "spr": 103,
+      "int": 140,
+      "def": 97,
+      "spr": 91,
       "spd": 122
     },
     "maxChain": 3,
