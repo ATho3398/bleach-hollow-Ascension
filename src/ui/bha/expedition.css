@@ -95,6 +95,8 @@
 .bha-sheet .bha-road__wrap { flex-shrink: 0; }
 /* C.213 (GDD 136장 3 · 128장 9 · 121장 3 "같은 패턴 다 같게"): 출발 화면 배치판도 같은 한 줄 60×80 칸 + 가로 밀기 (기기 ▲▼ 는 device.move 의 scrollIntoView 가 그 칸을 보이게 민다) */
 .bha-sheet .bha-road, .bha-lcd .bha-plan .bha-road { display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-4) var(--bha-sp-1) var(--bha-sp-2); }
+/* 출발 화면은 아래 여백만 줄여 안내 줄까지 [출발] 띠 위에서 끝나게 (위 8px 은 칸 사이 시너지 이름표 자리) */
+.bha-lcd .bha-plan .bha-road { padding-bottom: 0; }
 .bha-sheet .bha-road__cell, .bha-lcd .bha-plan .bha-road__cell { flex: 0 0 60px; min-height: 0; height: 80px; scroll-snap-align: start; }
 /* C.202 (GDD 128장 9): 칸은 손패 카드처럼 세로로 넉넉한 비율(3:4) — 가로로 눌린 72×48 칸을 대체. 손 카드 줄도 한 줄 가로 밀기 */
 .bha-sheet .bha-road__cell .bha-icon, .bha-lcd .bha-plan .bha-road__cell .bha-icon { width: 24px; height: 24px; }

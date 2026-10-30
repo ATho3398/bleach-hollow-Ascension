@@ -59,6 +59,8 @@ async function measure(page) {
       cell: cells[0] ? { w: Math.round(cells[0].width), h: Math.round(cells[0].height) } : null,
       road: r ? { scrollW: road.scrollWidth, clientW: road.clientWidth, top: Math.round(r.top), bottom: Math.round(r.bottom) } : null,
       goTop: go ? Math.round(go.top) : null,
+      noteBottom: Math.round(document.querySelector('.bha-lcd .bha-plan .bha-road__noterow')?.getBoundingClientRect().bottom ?? 0),
+      planOverflow: (() => { const p = document.querySelector('.bha-lcd .bha-app.bha-plan'); return p ? p.scrollHeight - p.clientHeight : null; })(),
       roadOverGo: r && go ? r.bottom > go.top + 1 : null,
       handBoxOverGo: go && handBox ? handBox.bottom > go.top + 1 : null, // 손패는 자기 상자 안에서만 세로 스크롤 — 상자가 띠 위에서 끝나면 카드가 띠 밑으로 겹치지 않는다
     };
@@ -77,6 +79,7 @@ async function measure(page) {
       page.on('pageerror', (e) => errors.push(e.message));
       const run = { faction, shots: [], notes: [] };
       await newGame(page, server.url, fi);
+      if (process.env.C213_DEBUG) await page.screenshot({ path: path.join(OUT, `_debug-${faction}.png`) });
       if (faction === 'shinigami') {
         // 폭주 상태 이름 문구 (GDD 136장 2): 도움말 → 용어 사전 '[소모품]' 항목 = "{frenzyName} 중에는 회복약을 못 쓴다" → 사신 "호로화"
         await lcd(page).getByRole('button', { name: '더보기' }).click({ timeout: 4000 }).catch(() => {});
@@ -125,6 +128,11 @@ async function measure(page) {
       await page.close();
     }
   } finally {
+    // 한 종족만 돌렸으면 다른 종족 기록은 남긴다
+    let old = { runs: [] };
+    try { old = JSON.parse(fs.readFileSync(path.join(OUT, 'proof.json'), 'utf8')); } catch { /* 없음 */ }
+    const done = new Set(proof.runs.map((r) => r.faction));
+    proof.runs = [...old.runs.filter((r) => !done.has(r.faction)), ...proof.runs];
     fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify(proof, null, 2));
     await browser.close();
     server.stop();

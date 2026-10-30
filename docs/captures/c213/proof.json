@@ -17,11 +17,13 @@
           "scrollW": 768,
           "clientW": 344,
           "top": 195,
-          "bottom": 287
+          "bottom": 283
         },
         "goTop": 320,
+        "noteBottom": 318,
+        "planOverflow": 2,
         "roadOverGo": false,
-        "handBoxOverGo": true
+        "handBoxOverGo": false
       },
       "afterKeys": {
         "scrollLeft": 424,
@@ -32,10 +34,12 @@
     {
       "faction": "shinigami",
       "shots": [
+        "frenzy-name",
         "plan-board",
         "plan-board-scrolled"
       ],
       "notes": [],
+      "frenzyText": " 호로화 중에는 회복약을 못 쓴다",
       "before": {
         "cells": 12,
         "cell": {
@@ -46,11 +50,13 @@
           "scrollW": 768,
           "clientW": 344,
           "top": 195,
-          "bottom": 287
+          "bottom": 283
         },
         "goTop": 320,
+        "noteBottom": 318,
+        "planOverflow": 2,
         "roadOverGo": false,
-        "handBoxOverGo": true
+        "handBoxOverGo": false
       },
       "afterKeys": {
         "scrollLeft": 424,
