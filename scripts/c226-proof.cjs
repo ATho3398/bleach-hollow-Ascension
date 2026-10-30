@@ -1,5 +1,5 @@
 // C.226 (GDD 149·151장) proof: ① 3 → 4단계 같은 루트 진화(3단계 특성 → 4단계 특성으로 바뀜) ② 2 → 3단계 히든 통로(변이의 기운)
-// ③ 2 → 3단계 망한 진화체(허우적 — 151장: 진화해도 남음) ④ 상태 화면 특성 칸. ①은 151장 2 특성 칸 +1 행도. 새 테스트 칸(?test=1). 저장 JSON 을 직접 고쳐 다시 연다.
+// ③ 2 → 3단계 망한 진화체(허우적 — 151장: 진화해도 남음) ④ 상태 화면 특성 칸 ⑤ 망한 진화체 → 4단계(허우적 남고 새 칸). ①은 151장 2 특성 칸 +1 행도. 새 테스트 칸(?test=1). 저장 JSON 을 직접 고쳐 다시 연다.
 // 캡처 docs/captures/c226/ (1배 844×390). 실행: node scripts/c226-proof.cjs (C226_URL=<주소> 면 그 주소)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -155,6 +155,14 @@ async function back(page) {
       return null;
     });
     await shot(page, '04-status-ability-slots');
+    // ⑤ 망한 진화체 → 4단계 (151장 1·2): 허우적은 남고 4단계 진화 칸 +1 에 4단계 특성
+    await editSave(page, `
+      Object.assign(d.evolution, { tierIndex: 2, formId: 'h3:fail', formHistory: ['t2:base', 'h3:fail'], breakthroughs: 0, steps: 999,
+        abilities: { owned: { 'el4:water': 1.5, 'uniq:fail': 1 }, equipped: ['el4:water', 'uniq:fail'], slots: 2, tier4Ever: false } }); d.rebirth.count = 1;
+      d.build.owned = ['t-fire-a', 't-fire-b', 't-fire-c']; d.build.slots = ['t-fire-a', 't-fire-b', 't-fire-c', null, null]; d.build.equipOrder = ['t-fire-a', 't-fire-b', 't-fire-c'];
+      d.nest.hunger = 20; d.nest.condition = 80;
+    `);
+    await evolveNow(page, '05-evolve-fail-to-4');
     await page.close();
   } catch (e) {
     proof.error = String(e && e.stack || e);

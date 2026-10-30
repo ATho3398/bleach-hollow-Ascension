@@ -3,7 +3,8 @@
     "01-evolve-3to4-replaced.png",
     "02-evolve-2to3-passage.png",
     "03-evolve-2to3-fail.png",
-    "04-status-ability-slots.png"
+    "04-status-ability-slots.png",
+    "05-evolve-fail-to-4.png"
   ],
   "errors": [],
   "tmp-2to3": {
@@ -88,6 +89,17 @@
         "kind": "new",
         "id": "uniq:fail"
       }
+    ]
+  },
+  "05-evolve-fail-to-4": {
+    "path": "3단계 아쥬커스4단계 호로",
+    "rows": [
+      "본체 슬롯5 → 6칸 +1",
+      "체력가득 회복",
+      "속성노노멀",
+      "특성 칸2 → 3칸 +1",
+      "종족값체력 73 · 힘 73 · 지능 73 · 방어 73 · 정신력 73 · 속도 73",
+      "외형본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)"
     ]
   }
 }
