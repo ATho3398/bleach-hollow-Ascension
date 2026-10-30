@@ -1311,7 +1311,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 캡처 `docs/captures/c223/`(`scripts/c223-proof.cjs`, 1배 844×390, 호로 테스트 칸): 01 걷기 중 가방 반창고 사용(체력 막대 차는 중) · 02 전투 [소모품] 칸 회복약 ×1 · 03 온천 ⓘ 1분에 +20%·약 5분(6초에 80 → 86/264) · 04 상점 약 칸 '오늘 4/5' 등.
 
 ## C.220 — 126장 뼈대: 4단계 · 등급 사다리 · 아란칼화/참백도 구상화(보스전 임시) · 특성 칸 · 치명 두 값 · 세이브 형식 57 (GDD 142장, v5.336, S-23, 코딩162 Opus)
-사용 모델: Opus 5.5. `PATCH_LABEL` C.223(푸시 시점 가장 큰 값 — C.221~C.223 이 먼저 올라감). SAVE_FORMAT_VERSION 57(C.223) → 58(문턱 54 그대로), BALANCE_VERSION 97(C.223) → 98(전부 provisional — 진화체 밸런스는 2차).
+사용 모델: Opus 5.5. `PATCH_LABEL` C.224(C.221~C.223 이 먼저 올라가 그보다 크게, 마스터Z 지시). SAVE_FORMAT_VERSION 57(C.223) → 58(문턱 54 그대로), BALANCE_VERSION 97(C.223) → 98(전부 provisional — 진화체 밸런스는 2차).
 - 사용자 원문: "뭐 아직 진화체에 관련된 밸런스는 맞추지 말아봐. 진화체에 구성을 다 끝나면 그때 밸런스 맞추고. …" · "ㅇㅇ기본1칸 돼있지?" · "ㅇㅇ 뼈대 패치 먼저 ㄱㄱ"
 - **구조**: 단계 4(`TIER_COUNT`), 진화체 36종(`generate.ts` → forms.json — 2단계 1 · 3단계 5+히든 2 · 4단계 18+히든 10), 판정 `judge.ts` 새로(3단계 망함·통로 가중 랜덤, 4단계 히든 우선). FORM_KINDS 에 passage·awakened·frenzy·stable·void(limit·reborn·special·pure 삭제). 종족 설정 tierNames 4칸·`ascension`·사신 rankNames/진급 시험·formLooks t4 키.
 - **아란칼화**: `ascensionAccess`·`recordAscension`(game.ts), 수련 화면 칸(`trainingView` ascensionPanel), 보스전 `runAscensionBattle`(app.ts), 결과 `ascensionResultView`. 레스렉시온/만해 = `hasUniqueLiberation(e)`(e.ascended), 해방 이름 `liberationLabels(f, unique)`. 그림 단계 `artTierIndexOf`(호로 5 = 아란칼).
