@@ -930,6 +930,7 @@ data/
 - 남은 사용자 확인 거리: 119장 판단 거리(타일 뽑기 300·막기 8초·혈 예외·v2 3단계), (#18 기기 90% = 133장에서 폐기). 그림 대기: 온천·장터·떠돌이 상인·휴식 칸 장소(place.<타일>.<종족>)·적 그림.
 - 운영 메모: ntfy 가 10-30 02:3x 부터 429 두 번(재시도 금지 규칙대로 둠). 캡처 이미지는 컨텍스트를 크게 먹는다 — 확인은 패치당 3~4장. UI담당자C = session_01LmFYYdTyBXcbM3dRNuzGuc, 종이인형 세션 = session_011W8zFEjKADtTYyQZXReU7r.
 - 다음 코딩 150, 다음 패치 C.204.
+**10-30 22:2x C.232 배포 확인**(코딩170 f889bf89, Pages run 306 success, 배포 index-B2rFwlC3.js 에 "C.232"). 156장: manifest display fullscreen + display_override, 앱 모드(display-mode fullscreen/standalone)면 requestFullscreen 안 부름, 설정 전체 화면 칸 앱 모드 = '앱으로 실행 중 — 이미 전체 화면'. 테스트 2328. 캡처 c232/1 탭·2 앱 모드 확인. 사용자 안내: 이미 설치한 앱은 아이콘 지우고 크롬에서 다시 '홈 화면에 추가'. 코딩170 DONE_…_대기(13.6만). 다음 코딩 171, 다음 패치 C.233.
 **10-30 22:2x 마스터Z→AA 인수인계** (마스터Z = session_01YVaigKdC9NGLoyrh7q4Fnw, 비용 약 17달러·컨텍스트 약 39만 — 15달러/30만 넘어 교체. 마스터AA = session_01YVaigHtGwxfHM54qdEDbDS). main 최신 C.227 bc378dd 배포(run 305 success), PATCH_LABEL C.231, SAVE 61, BALANCE 101, 테스트 2319.
 - 마스터Z 기간 끝난 것(전부 배포·캡처 확인·DONE_): C.220 126장 뼈대(코딩162) · C.221·C.223 구급상자·튜토 안내 창·회복 물건 4종·온천 5분(코딩163) · C.222 튜토 3체인(코딩164) · C.225 특성 3·4차(코딩165) · C.226 4차 특성 교체·망체 특성(코딩166) · C.227 상점 4개·특성 상점·대장장이 칸(코딩167) · C.228 온천 월드맵·이동 페이드(코딩168) · C.229 가방 기타 창·재료 22종(코딩169).
 - **진행 중**: 코딩168(session_01YVaigKfZ3Dar7qvuHqBhZG, 19.4만에서 이어 받음) = 155장 월드맵 화면 전체 + 장터 위 빈 띠 + 회복 안내 6/7 멈춤 수리 · 코딩170(session_01YVaigKiNCVqSpQGyDmS2Cd) = 156장 앱 모드 크롬 전체 화면 안내. 보고처를 AA 로 바꾼다고 둘에게 알림. 끝나면 배포·캡처 확인 → DONE_·ntfy·13장 줄.
