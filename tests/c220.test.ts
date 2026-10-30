@@ -9,7 +9,7 @@ import { gainTrait, newBuild, buildCombatParams } from '../src/engine/absorb';
 import { createCombat, type CombatParams } from '../src/engine/combat';
 import { MAX_DIFFICULTY } from '../src/engine/difficulty';
 import {
-  abilitySlotCount, applyEvolutionToParams, equipAbility, evolve, gainAbilities, newAbilityLoadout, newEvolution, TIER_COUNT, type EvolutionState,
+  abilitySlotCount, applyEvolutionToParams, evolve, newAbilityLoadout, newEvolution, TIER_COUNT, type EvolutionState,
 } from '../src/engine/evolution';
 import {
   artTierIndexOf, ascensionAccess, loadSave, migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, performRebirth, recordAscension, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, writeSave, type SaveData,
@@ -72,48 +72,28 @@ describe('특성 칸 (GDD 126-1 수정, 142장 6)', () => {
     expect(abilitySlotCount(2, true)).toBe(4);
     expect(abilitySlotCount(9, true)).toBe(4);
   });
-  it('진화할 때 얻고 보유 목록에 남는다 · 칸은 새 진화체 특성부터 · 바꿔 끼우기', () => {
-    const e = newEvolution(3);
-    e.abilities = newAbilityLoadout();
-    e.ev.def = 5;
-    e.steps = 999;
-    const b = newBuild();
-    gainTrait(b, 't-water-a');
-    expect(evolve(e, b, { factionId: 'hollow', hunger: 20, condition: 80 }, 0).ok).toBe(true); // → 2단계: 성향
-    expect(e.abilities.equipped).toEqual(['disp:def']);
-    e.steps = 999;
-    gainTrait(b, 't-water-b');
-    expect(evolve(e, b, { factionId: 'hollow', hunger: 20, condition: 80 }, 0).ok).toBe(true); // → 3단계 물: 속성 특성
-    expect(e.formId).toBe('t3:water');
-    expect(Object.keys(e.abilities.owned).sort()).toEqual(['disp:def', 'el:water']);
-    expect(e.abilities.equipped).toEqual(['el:water']); // 1칸 — 새 진화체 특성부터
-    expect(equipAbility(e.abilities, 0, 'disp:def')).toBe(true);
-    expect(e.abilities.equipped).toEqual(['disp:def']);
-    expect(equipAbility(e.abilities, 1, 'el:water')).toBe(false); // 칸 밖
-    expect(equipAbility(e.abilities, 0, 'el:nope')).toBe(false); // 보유하지 않은 특성
-  });
-  it('전투에는 칸에 낀 특성만 실린다', () => {
+  // 진화 때 받는 규칙·바꿔 끼기 삭제·전투에 실리는 것은 C.225 (GDD 147·148장) — tests/c225.test.ts
+  it('전투에는 칸에 든 특성만 실린다', () => {
     const e: EvolutionState = { ...newEvolution(1), tierIndex: 2, formId: 't3:water', formHistory: ['t2:base', 't3:water'], ability: 'atk' };
-    e.abilities = newAbilityLoadout();
-    gainAbilities(e.abilities, [{ id: 'el:water', scale: 1 }, { id: 'disp:atk', scale: 1 }]);
+    e.abilities = { ...newAbilityLoadout(), owned: { 'el:water': 1 }, equipped: ['el:water'] };
     const p1: Partial<CombatParams> = buildCombatParams(newBuild(), 'hollow');
     applyEvolutionToParams(p1, e, 'hollow');
     expect(p1.critChance).toBeCloseTo(BALANCE.provisional.combat.critChance + BALANCE.provisional.abilities.element.water!.critChance!);
     expect(p1.dispositions).toEqual([]);
-    equipAbility(e.abilities, 0, 'disp:atk');
+    e.abilities = newAbilityLoadout();
     const p2: Partial<CombatParams> = buildCombatParams(newBuild(), 'hollow');
     applyEvolutionToParams(p2, e, 'hollow');
     expect(p2.critChance).toBeCloseTo(BALANCE.provisional.combat.critChance);
-    expect(p2.dispositions).toEqual(['atk']);
   });
   it('환생해도 보유·장착이 남고 칸이 1 늘어난다', () => {
     const s = newSaveData('hollow', 1);
     Object.assign(s.evolution, { tierIndex: 3, formId: 't4:fire:physical', formHistory: ['t2:base', 't3:fire', 't4:fire:physical'], ability: 'atk' });
-    gainAbilities(s.evolution.abilities!, [{ id: 'el:fire', scale: 1.5 }, { id: 'disp:atk', scale: 1 }]);
+    Object.assign(s.evolution.abilities!, { owned: { 'el:fire': 1.5 }, equipped: ['el:fire'], enhanced: ['el:fire'] });
     expect(performRebirth(s, null, 5).ok).toBe(true);
     expect(s.evolution.tierIndex).toBe(0);
     expect(s.evolution.abilities!.slots).toBe(2);
-    expect(Object.keys(s.evolution.abilities!.owned).sort()).toEqual(['disp:atk', 'el:fire']);
+    expect(s.evolution.abilities!.enhanced).toEqual(['el:fire']);
+    expect(Object.keys(s.evolution.abilities!.owned)).toEqual(['el:fire']);
     expect(s.evolution.abilities!.owned['el:fire']).toBe(1.5);
   });
 });
@@ -180,8 +160,8 @@ describe('치명 두 값 (GDD 126-1 확정 ②, 142장 7)', () => {
 });
 
 describe('세이브 형식 57 → 58 (GDD 142장 9, 123장 6 — C.223 이 57 을 먼저 씀)', () => {
-  it('형식 58 · 문턱 54 고정 · 단계 표에 57 이 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(58);
+  it('형식 58 이상 · 문턱 54 고정 · 단계 표에 57 이 있다', () => {
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(58);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[57]).toBe('function');
   });
@@ -189,13 +169,14 @@ describe('세이브 형식 57 → 58 (GDD 142장 9, 123장 6 — C.223 이 57 �
     const old = old56({ tierIndex: 4, history: ['t2:base', 't3:base', 't4:water', 't5:water:mixed'], slots: 7 });
     old.rebirth.count = 1;
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(58);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.evolution.tierIndex).toBe(3);
     expect(m.evolution.formHistory).toEqual(['t2:base', 't3:water', 't4:water:mixed']);
     expect(m.evolution.ascended).toBe(true);
     expect(getFaction('hollow').formLooks!['t4:water:mixed']).toContain(m.evolution.look);
     expect(m.evolution.abilities!.slots).toBe(3); // 1 + 아란칼화 1 + 환생 1
-    expect(Object.keys(m.evolution.abilities!.owned).sort()).toEqual(['disp:atk', 'el:water']);
+    expect(Object.keys(m.evolution.abilities!.owned)).toEqual(['el:water']); // 59(C.225): 성향 빠짐, 물 3·4단계 같은 루트 → 강화
+    expect(m.evolution.abilities!.enhanced).toEqual(['el:water']);
     expect(m.build.slots).toHaveLength(6);
     expect(m.formDex).toEqual(expect.arrayContaining(['t2:base', 't3:water', 't4:water:mixed']));
     expect(m.formDex).not.toContain('t5:water:mixed');

@@ -37,7 +37,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { ABILITY_SLOT_LABEL, abilityEffectsOf, abilityIdLine, currentStats, equipAbility, equippedAbilitiesOf, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, isEnhancedAbility, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
@@ -162,10 +162,10 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     stats.append(line);
   }
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
-  const abil = statusAbilityLines(evo, faction.id);
+  // 특성 칸 (GDD 126-1 수정 → 147·148장, C.225): 3·4단계 진화 때 받은 특성(보기 전용). 칸 = 기본 1 + 아란칼화/참백도 구상화 1 + 환생당 1 (최대 4). 칸이 없는 옛 모양(점검 도구)이면 진화체 특성 줄
+  const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
-  // 특성 칸 (GDD 126-1 수정, C.220): 진화할 때 얻은 특성을 칸에 골라 낀다. 칸 = 기본 1 + 아란칼화/참백도 구상화 1 + 환생당 1 (최대 4)
-  if (evo.abilities) stats.append(abilitySlotsBlock(faction, evo, persist));
+  if (evo.abilities) stats.append(abilitySlotsBlock(faction, evo));
   // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
   const evoPanel = panel({ title: '진화 정보' });
   evoPanel.setAttribute('aria-label', '진화 정보');
@@ -177,7 +177,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   if (canRebirth(evo)) {
     const rb = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', block: true, onClick: hd.onRebirth });
     rb.dataset.sc = 'rebirth';
-    evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 특성 1개는 남는다.`), rb);
+    evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`), rb);
   }
   evoPanel.append(h('div', 'bha-row', ''));
   const evoBtns = evoPanel.lastElementChild!;
@@ -577,46 +577,23 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
   });
 }
 
-/** 특성 칸 묶음 (GDD 126-1 수정, C.220): 칸마다 버튼 하나 — 누르면 보유 특성 목록 창(기기 위/아래/확정으로 고른다, 122장). 고르면 그 칸에 끼우고 저장 */
-function abilitySlotsBlock(faction: FactionConfig, evo: EvolutionState, persist: () => void): HTMLElement {
-  const box = h('div', 'bha-stack');
+/** 특성 칸 묶음 (GDD 126-1 수정 → 147·148장, C.225): 보기 전용 — 받은 특성은 영구라 빼거나 바꿔 끼지 않는다. 칸마다 한 줄(강화된 것은 이름 뒤 '+') */
+function abilitySlotsBlock(faction: FactionConfig, evo: EvolutionState): HTMLElement {
+  const box = h('div', 'bha-stack bha-stack--tight');
   box.dataset.abilitySlots = '';
-  const paint = () => {
-    const l = evo.abilities!;
-    const head = h('p', 'bha-small');
-    head.append(h('b', '', `특성 칸 ${l.equipped.length}/${l.slots}`), ` · 보유 ${Object.keys(l.owned).length}개 · 진화할 때 얻고 ${faction.rebirth.name}해도 남는다`);
-    const cells = Array.from({ length: l.slots }, (_, i) => {
-      const id = l.equipped[i];
-      const line = id ? abilityIdLine(id, l.owned[id] ?? 1, faction.id) : null;
-      const b = button({ label: line ? `${i + 1}칸 · ${line.name}` : `${i + 1}칸 · 비어 있음`, size: 'small', block: true, onClick: () => pick(i) });
-      if (line) b.title = `${ABILITY_SLOT_LABEL[line.slot]} — ${line.description}`;
-      b.dataset.abilitySlot = String(i);
-      return b;
-    });
-    box.replaceChildren(head, ...cells);
-  };
-  const pick = (index: number) => {
-    const l = evo.abilities!;
-    const list = h('div', 'bha-stack');
-    let close: () => void = () => {};
-    const choose = (id: string | null) => {
-      if (equipAbility(l, index, id)) persist();
-      close();
-      paint();
-    };
-    for (const [id, scale] of Object.entries(l.owned)) {
-      const line = abilityIdLine(id, scale, faction.id);
-      if (!line) continue;
-      const at = l.equipped.indexOf(id);
-      const b = button({ label: `${line.name}${at >= 0 ? ` (${at + 1}칸)` : ''}`, size: 'small', block: true, on: at === index, onClick: () => choose(id) });
-      b.title = `${ABILITY_SLOT_LABEL[line.slot]} — ${line.description}`;
-      list.append(b, h('p', 'bha-faint', `${ABILITY_SLOT_LABEL[line.slot]} · ${line.description}`));
-    }
-    if (l.equipped[index]) list.append(button({ label: '이 칸 비우기', size: 'small', variant: 'ghost', block: true, onClick: () => choose(null) }));
-    if (Object.keys(l.owned).length === 0) list.append(h('p', 'bha-faint', '아직 얻은 특성이 없다. 진화하면 얻는다.'));
-    close = confirmDialog({ title: `특성 칸 ${index + 1}`, content: list, single: true, yes: '닫기', onYes: () => {} });
-  };
-  paint();
+  const l = evo.abilities!;
+  const head = h('p', 'bha-small');
+  head.append(h('b', '', `특성 칸 ${l.equipped.length}/${l.slots}`), ` · 3·4단계 진화 때 받고 ${faction.rebirth.name}해도 남는다`);
+  box.append(head);
+  for (let i = 0; i < l.slots; i++) {
+    const id = l.equipped[i];
+    const line = id ? abilityIdLine(id, l.owned[id] ?? 1, faction.id, isEnhancedAbility(l, id)) : null;
+    const p = h('p', 'bha-faint');
+    p.dataset.abilitySlot = String(i);
+    if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`);
+    else p.append(`${i + 1}칸 · 비어 있음`);
+    box.append(p);
+  }
   return box;
 }
 

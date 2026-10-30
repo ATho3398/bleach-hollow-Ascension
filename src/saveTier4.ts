@@ -7,7 +7,7 @@ import { tryGetForm } from './data/evolution';
 import { NORMAL_ELEMENT } from './data/elements';
 import { getFaction } from './data/factions';
 import type { BuildState } from './engine/absorb/build';
-import { abilityFor, abilityIdsOf, abilitySlotCount, dominantCategory, formAbilitiesOf, gainAbilities, newAbilityLoadout, tier3Element, type EvolutionState } from './engine/evolution';
+import { abilityFor, abilityIdsOf, abilitySlotCount, dominantCategory, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, tier3Element, type AbilityLoadout, type EvolutionState } from './engine/evolution';
 import { pickFormLook } from './engine/evolution/tierLook';
 
 /** 옛 5단계 행동 히든 → 새 4단계 히든 */
@@ -88,9 +88,34 @@ export function migrateEvolutionTo4(e: EvolutionState, build: BuildState, factio
   const l = newAbilityLoadout();
   l.ascendedEver = ascended;
   l.slots = abilitySlotCount(rebirths, ascended);
-  if (form) gainAbilities(l, abilityIdsOf(formAbilitiesOf(form, e.ev, e.ability)));
+  // C.220 그때 규칙(진화체 특성 전부·칸은 앞에서부터). 형식 59(C.225)가 148장 규칙으로 다시 만든다
+  if (form) for (const g of abilityIdsOf(formAbilitiesOf(form, e.ev, e.ability))) l.owned[g.id] = Math.max(l.owned[g.id] ?? 0, g.scale);
+  l.equipped = Object.keys(l.owned).slice(0, l.slots);
   e.abilities = l;
   // 흡수 칸: 새 최대(3 + 단계)를 넘는 칸은 뒤에서부터 비워 없앤다(특성은 보유에 남는다)
   const maxSlots = 3 + e.tierIndex;
   if (Array.isArray(build.slots) && build.slots.length > maxSlots) build.slots = build.slots.slice(0, maxSlots);
+}
+
+/**
+ * 세이브 형식 58 → 59 (C.225, GDD 148장 7): 특성 = 3·4단계 진화 때만 1개. 보유 특성 중 성향(disp:)·물공(phys:)·융합 조각(세기 1 미만 el:)은 빼고,
+ * 지금 생의 3·4단계 진화체로 148장 규칙을 다시 밟는다(같은 루트면 강화 1개, 이미 가진 것은 그대로). 칸이 넘치면 먼저 얻은 것부터 남긴다.
+ */
+export function migrateAbilities148(e: EvolutionState, rebirths: number): void {
+  const raw = (typeof e.abilities === 'object' && e.abilities !== null ? e.abilities : newAbilityLoadout()) as Partial<AbilityLoadout>;
+  const ascendedEver = raw.ascendedEver === true || e.ascended === true;
+  const l: AbilityLoadout = { owned: {}, equipped: [], slots: abilitySlotCount(rebirths, ascendedEver), ascendedEver };
+  const owned = typeof raw.owned === 'object' && raw.owned !== null ? raw.owned : {};
+  for (const [id, v] of Object.entries(owned)) {
+    if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) continue;
+    if (id.startsWith('uniq:') || (id.startsWith('el:') && v >= 1)) l.owned[id] = v;
+  }
+  const history = Array.isArray(e.formHistory) ? e.formHistory.map((id) => tryGetForm(id)) : [];
+  // 넘친 칸을 먼저 자르고(먼저 얻은 것부터) 다시 밟는다 — 다시 밟을 때 칸 수를 지킨다
+  for (const id of Object.keys(l.owned).slice(l.slots)) delete l.owned[id];
+  history.forEach((f, i) => {
+    if (f) gainEvolutionAbility(l, f, history[i - 1]);
+  });
+  l.equipped = Object.keys(l.owned);
+  e.abilities = l;
 }

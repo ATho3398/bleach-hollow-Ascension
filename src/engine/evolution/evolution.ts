@@ -11,7 +11,7 @@ import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/sche
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
 import type { BuildState } from '../absorb/build';
 import type { EvolutionRecord } from '../runLog';
-import { abilityEffectsOf, abilityIdsOf, equippedAbilitiesOf, formAbilitiesOf, gainAbilities, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityLoadout } from './formAbilities';
+import { abilityEffectsOf, equippedAbilitiesOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
 import { pickLook } from './tierLook';
 
@@ -80,7 +80,7 @@ export function cloneEvolution(e: EvolutionState): EvolutionState {
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
-  return { ...l, owned: { ...l.owned }, equipped: [...l.equipped] };
+  return { ...l, owned: { ...l.owned }, equipped: [...l.equipped], ...(l.enhanced ? { enhanced: [...l.enhanced] } : {}) };
 }
 
 export function isMaxTier(e: EvolutionState): boolean {
@@ -280,7 +280,7 @@ export function stabOf(e: EvolutionState): number {
 }
 
 export type EvolveResult =
-  | { ok: true; form: FormDef; record: EvolutionRecord; slotsAdded: number }
+  | { ok: true; form: FormDef; record: EvolutionRecord; slotsAdded: number; abilityGain: AbilityGain }
   | { ok: false; reason: string };
 
 /** 단계 시드 다음 값 (결정적): 진화할 때마다 새 단계 시드를 만든다 */
@@ -299,6 +299,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   const fromFormId = e.formId;
   const statTotal = ctx.statTotal ?? STAT_IDS.reduce((a, k) => a + currentStats(e, ctx.factionId)[k], 0);
   const { form, snapshot } = judgeEvolution(e, { ...ctx, build, statTotal }, table);
+  const prevForm = fromFormId ? table.find((f) => f.id === fromFormId) ?? tryGetForm(fromFormId) : undefined;
   e.tierIndex = fromTier + 1;
   e.formId = form.id;
   e.formHistory.push(form.id);
@@ -316,13 +317,14 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   delete e.hunterRuns;
   e.stageSeed = nextStageSeed(e.stageSeed, e.tierIndex);
   for (let i = 0; i < EV.slotsPerEvolution; i++) build.slots.push(null);
-  // 특성은 진화할 때 얻는다 (GDD 126-1 수정 1): 새 진화체의 특성을 보유 목록에 더하고 칸을 채운다
-  gainAbilities((e.abilities ??= newAbilityLoadout()), abilityIdsOf(formAbilitiesOf(form, e.ev, e.ability)));
+  // 특성은 3·4단계 진화 때만 1개 (GDD 148장): 같은 루트면 3단계 특성 강화, 가진 것은 다시 안 받음, 칸이 꽉 차면 못 받음
+  const abilityGain = gainEvolutionAbility((e.abilities ??= newAbilityLoadout()), form, prevForm);
   return {
     ok: true,
     form,
-    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs },
+    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs, ...(abilityGain.kind !== 'none' ? { abilityGain } : {}) },
     slotsAdded: EV.slotsPerEvolution,
+    abilityGain,
   };
 }
 

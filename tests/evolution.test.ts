@@ -309,8 +309,8 @@ describe('진화 확정', () => {
     expect(e.elementAbsorbs).toEqual({});
     expect(e.stageSeed).not.toBe(seed);
     expect(r.record).toMatchObject({ fromTier: 1, toTier: 2, fromFormId: 't2:base', toFormId: 't3:water', at: 77 });
-    // 특성은 진화할 때 얻는다 (GDD 126-1 수정 1): 보유 목록 + 칸 1 (기본 1칸)
-    expect(Object.keys(e.abilities!.owned).sort()).toEqual(['disp:' + e.ability, 'el:water'].sort());
+    // 특성은 3·4단계 진화 때 1개 (GDD 148장 1): 성향 특성은 받지 않는다
+    expect(Object.keys(e.abilities!.owned)).toEqual(['el:water']);
     expect(e.abilities!.equipped).toEqual(['el:water']);
     expect(r.record.snapshot).toMatchObject({ elementAbsorbs: { water: 3, fire: 1 }, releases: 2, hunger: 30, condition: 70, equippedElement: 'water' });
   });

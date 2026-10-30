@@ -1,6 +1,7 @@
 // 진화체 특성 (GDD 39장 → 126-1 수정, C.220): 진화체가 주는 특성 — ① 성향(노력치 최고 능력치) ② 속성(진화체 label 속성, 3단계부터)·전용(히든) ③ 물공 특성.
 // 진화체 id·종족 분기 없이 label(kind·elements) → abilities.json kindSlots 규칙으로 정한다. 효과는 전투 엔진 AbilityEffects 종류로, 수치는 BALANCE.provisional.abilities.
-// C.220: 특성은 진화할 때 얻어 보유 목록(AbilityLoadout.owned)에 남고(환생해도 유지), 특성 칸(기본 1 + 아란칼화/참백도 구상화 1 + 환생당 1, 최대 4)에 낀 것만 효과가 있다.
+// C.220: 특성은 진화할 때 얻어 보유 목록(AbilityLoadout.owned)에 남고(환생해도 유지), 특성 칸(기본 1 + 아란칼화/참백도 구상화 1 + 환생당 1, 최대 4)에 든 것만 효과가 있다.
+// C.225 (GDD 147·148장): 3·4단계 진화 때만 대표 특성 1개, 같은 루트면 4단계에서 3단계 특성 강화, 같은 특성 두 번 없음, 받으면 영구(바꿔 끼기 없음).
 import { BALANCE } from '../../config/balance';
 import { abilityDescription, abilityName, abilityTextName, elementAbility, kindSlot, physElementOf, uniqueAbility, type PhysElementDef } from '../../data/evolution';
 import { pickFaction, STAT_IDS, type FormDef, type FormKind, type StatId, type Stats } from '../../data/schema';
@@ -22,16 +23,18 @@ export interface FormAbilities {
   physAbilities: string[];
 }
 
-/** 특성 보유·장착 (GDD 126-1 수정, C.220): EvolutionState.abilities. 환생해도 그대로 넘긴다(slots 만 다시 센다) */
+/** 특성 보유 (GDD 126-1 수정 → 147·148장, C.225): EvolutionState.abilities. 받으면 영구(빼기·바꿔 끼기 없음), 환생해도 그대로 넘긴다(slots 만 다시 센다) */
 export interface AbilityLoadout {
-  /** 보유 특성 id → 세기(같은 특성을 다시 얻으면 큰 값). id = disp:<능력치> · el:<속성> · uniq:<진화체 종류> · phys:<속성> */
+  /** 보유 특성 id → 세기. id = el:<속성>(융합·허무형은 el:<속성>+<속성>…) · uniq:<진화체 종류> (C.225 전 세이브의 disp:·phys: 는 마이그레이션이 뺀다) */
   owned: Record<string, number>;
-  /** 칸에 낀 특성 id (앞에서부터 칸 순서, slots 개 이하) */
+  /** 칸에 든 특성 id = 보유 특성 전부(얻은 순서, slots 개 이하). 받으면 바로 칸에 들어가고 빠지지 않는다 */
   equipped: string[];
   /** 특성 칸 수 = min(4, 1 + 아란칼화 1 + 환생 수) */
   slots: number;
   /** 아란칼화 / 참백도 구상화를 한 번이라도 깼다 (칸 +1, 영구) */
   ascendedEver: boolean;
+  /** 같은 루트로 강화된 특성 id (GDD 148장 2: 이름 뒤 '+', 칸을 쓰지 않음) */
+  enhanced?: string[];
 }
 
 export function newAbilityLoadout(): AbilityLoadout {
@@ -44,7 +47,7 @@ export function abilitySlotCount(rebirths: number, ascendedEver: boolean): numbe
   return Math.min(AS.max, AS.base + (ascendedEver ? AS.perAscension : 0) + Math.max(0, Math.floor(rebirths)) * AS.perRebirth);
 }
 
-/** 진화체가 주는 특성 id 와 세기 (얻는 순서 = 칸 우선순위: 전용·속성 → 물공 → 성향) */
+/** 진화체가 주는 특성 id 와 세기 (C.220 옛 규칙 — 성향·물공 포함 전부. 지금 받는 특성은 representativeAbility) */
 export function abilityIdsOf(fa: FormAbilities): { id: string; scale: number }[] {
   return [
     ...fa.uniques.map((k) => ({ id: `uniq:${k}`, scale: 1 })),
@@ -54,35 +57,75 @@ export function abilityIdsOf(fa: FormAbilities): { id: string; scale: number }[]
   ];
 }
 
-/** 진화해서 특성을 얻는다: 보유 목록에 더하고(세기는 큰 값), 칸은 새 진화체 특성부터 채운 뒤 전에 낀 것을 이어 붙여 칸 수만큼 (화면에서 바꿔 낄 수 있다) */
-export function gainAbilities(l: AbilityLoadout, gained: readonly { id: string; scale: number }[]): void {
-  for (const g of gained) l.owned[g.id] = Math.max(l.owned[g.id] ?? 0, g.scale);
-  const ids = [...new Set([...gained.map((g) => g.id), ...l.equipped])];
-  l.equipped = ids.filter((id) => id in l.owned).slice(0, l.slots);
+/** 진화체가 주는 대표 특성 1개 (GDD 148장 1, provisional — 진화체 초안이 오면 표로): 전용 → 속성(융합·허무형은 속성 여럿을 한 특성으로). 성향 특성은 받지 않는다. 없으면 null */
+export function representativeAbility(form: FormDef): { id: string; scale: number } | null {
+  const fa = formAbilitiesOf(form, zeroEv(), null);
+  if (fa.uniques.length > 0) return { id: `uniq:${fa.uniques[0]!}`, scale: 1 };
+  if (fa.elements.length > 0) return { id: `el:${fa.elements.map((x) => x.element).join('+')}`, scale: fa.elements[0]!.scale };
+  return null;
 }
 
-/** 칸 수를 다시 정하고(환생·아란칼화) 넘친 장착은 뒤에서부터 빼고, 늘어난 빈 칸은 아직 안 낀 보유 특성(얻은 순서)으로 채운다 */
+/** 진화 때 특성 받은 결과 (진화 화면 한 줄·런 로그) */
+export type AbilityGain =
+  /** 새 특성을 칸에 받았다 */
+  | { kind: 'new'; id: string }
+  /** 같은 루트 — 3단계 특성이 강화됐다 (칸 안 씀) */
+  | { kind: 'enhanced'; id: string }
+  /** 이미 가진 특성(강화된 것 포함)이라 다시 받지 않았다 */
+  | { kind: 'owned'; id: string }
+  /** 특성 칸이 없어 받지 못했다 */
+  | { kind: 'full'; id: string }
+  /** 이 진화는 특성을 주지 않는다 (2단계 진화·특성 없는 진화체) */
+  | { kind: 'none' };
+
+/** 같은 루트 (GDD 148장 2): 3단계와 4단계의 속성이 같다(타입 무관) · 히든 통로 → 4단계 히든 · 망한 진화체 → 실패형 */
+export function sameRoute(third: FormDef, fourth: FormDef): boolean {
+  const k = (f: FormDef) => [...f.label.elements].sort().join('+');
+  if (third.label.kind === 'passage') return fourth.hidden === true;
+  if (third.label.kind === 'fail') return fourth.label.kind === 'fail';
+  return k(third) === k(fourth);
+}
+
+/** 칸 = 보유 특성 전부(얻은 순서) — 받으면 영구라 따로 고르지 않는다 */
+function syncEquipped(l: AbilityLoadout): void {
+  l.equipped = Object.keys(l.owned);
+}
+
+/**
+ * 진화해서 특성을 받는다 (GDD 148장): 3·4단계 진화 때만 대표 특성 1개.
+ * 4단계가 3단계와 같은 루트면 새로 받지 않고 3단계 특성을 강화(세기 × enhance, 칸 안 씀). 이미 가진 특성은 다시 안 받고, 칸이 꽉 차면 못 받는다.
+ * form = 새 진화체, prev = 직전 진화체(4단계 진화면 3단계 몸)
+ */
+export function gainEvolutionAbility(l: AbilityLoadout, form: FormDef, prev: FormDef | undefined): AbilityGain {
+  const AG = BALANCE.provisional.abilityGain;
+  if (!AG.tiers.includes(form.tier)) return { kind: 'none' };
+  const t3 = prev && prev.tier === form.tier - 1 && AG.tiers.includes(prev.tier) ? representativeAbility(prev) : null;
+  if (t3 && prev && sameRoute(prev, form)) {
+    if (!(t3.id in l.owned)) return { kind: 'full', id: t3.id };
+    const enhanced = (l.enhanced ??= []);
+    if (enhanced.includes(t3.id)) return { kind: 'owned', id: t3.id };
+    enhanced.push(t3.id);
+    l.owned[t3.id] = Math.max(l.owned[t3.id]!, t3.scale * AG.enhance);
+    return { kind: 'enhanced', id: t3.id };
+  }
+  const got = representativeAbility(form);
+  if (!got) return { kind: 'none' };
+  if (got.id in l.owned) return { kind: 'owned', id: got.id };
+  if (Object.keys(l.owned).length >= l.slots) return { kind: 'full', id: got.id };
+  l.owned[got.id] = got.scale;
+  syncEquipped(l);
+  return { kind: 'new', id: got.id };
+}
+
+/** 칸 수를 다시 정한다(환생·아란칼화). 받은 특성은 빠지지 않는다 */
 export function setAbilitySlots(l: AbilityLoadout, slots: number): void {
   l.slots = slots;
-  l.equipped = l.equipped.filter((id) => id in l.owned).slice(0, slots);
-  for (const id of Object.keys(l.owned)) {
-    if (l.equipped.length >= slots) break;
-    if (!l.equipped.includes(id)) l.equipped.push(id);
-  }
+  syncEquipped(l);
 }
 
-/** 칸 하나를 바꿔 낀다 (index = 칸 번호, id = 보유 특성 또는 null = 빼기). 같은 특성이 다른 칸에 있으면 그 칸과 맞바꾼다. 바뀌면 true */
-export function equipAbility(l: AbilityLoadout, index: number, id: string | null): boolean {
-  if (!Number.isInteger(index) || index < 0 || index >= l.slots) return false;
-  if (id !== null && !(id in l.owned)) return false;
-  const cur = [...l.equipped];
-  while (cur.length <= index) cur.push('');
-  const other = id === null ? -1 : cur.indexOf(id);
-  if (other === index) return false;
-  if (other >= 0) cur[other] = cur[index] ?? '';
-  cur[index] = id ?? '';
-  l.equipped = cur.filter((x) => x !== '');
-  return true;
+/** 특성 이름 (강화된 것은 뒤에 '+', GDD 148장 2) */
+export function isEnhancedAbility(l: Pick<AbilityLoadout, 'enhanced'>, id: string): boolean {
+  return l.enhanced?.includes(id) === true;
 }
 
 /** 장착 칸 → 특성 묶음 (전투·상태 화면). 물공 블록은 진화체에서(form), 특성은 낀 것만 */
@@ -92,7 +135,7 @@ export function equippedAbilitiesOf(form: FormDef | null, l: AbilityLoadout): Fo
     const [kind, key] = id.split(':') as [string, string];
     const scale = l.owned[id] ?? 1;
     if (kind === 'disp' && (STAT_IDS as readonly string[]).includes(key)) out.dispositions.push(key as StatId);
-    else if (kind === 'el') out.elements.push({ element: key, scale });
+    else if (kind === 'el') for (const element of key.split('+')) out.elements.push({ element, scale });
     else if (kind === 'uniq') out.uniques.push(key as FormKind);
     else if (kind === 'phys' && physElementOf(key)) out.physAbilities.push(key);
   }
@@ -271,8 +314,9 @@ export function abilityLines(fa: FormAbilities, factionId: string): AbilityLine[
   return lines;
 }
 
-/** 보유 특성 하나의 화면 줄 (특성 칸 화면, C.220): 칸 종류·이름·설명. 모르는 id 면 null */
-export function abilityIdLine(id: string, scale: number, factionId: string): AbilityLine | null {
+/** 보유 특성 하나의 화면 줄 (특성 칸 화면, C.220): 칸 종류·이름·설명. 강화된 것은 이름 뒤 '+' (GDD 148장 2). 모르는 id 면 null */
+export function abilityIdLine(id: string, scale: number, factionId: string, enhanced = false): AbilityLine | null {
   const fa = equippedAbilitiesOf(null, { owned: { [id]: scale }, equipped: [id], slots: 1, ascendedEver: false });
-  return abilityLines(fa, factionId)[0] ?? null;
+  const line = abilityLines(fa, factionId)[0];
+  return line ? { ...line, name: enhanced ? `${line.name}+` : line.name } : null;
 }

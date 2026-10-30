@@ -104,7 +104,7 @@ describe('설정 화면 (103장 1·2·4)', () => {
 
 describe('세이브 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 47, 새 세이브 settings = null, 저장·불러오기로 남고 깨진 값은 버린다', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([58, 54]); // C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([59, 54]); // C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
     const s = newSaveData('hollow');
     expect(s.settings).toBeNull();
     s.settings = { shake: false, sfxVolume: 30 };

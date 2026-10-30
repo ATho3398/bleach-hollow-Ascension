@@ -194,6 +194,8 @@ export interface EvolutionRecord {
   at: number;
   /** C.9 호환용 = toFormId. 새 기록에도 채운다 */
   formId: string;
+  /** C.225 (GDD 148장): 이 진화로 특성을 받은 결과 — new 새로 받음 · enhanced 같은 루트 강화 · owned 이미 가져 안 받음 · full 칸이 없어 못 받음. 특성을 주지 않는 진화면 없음 */
+  abilityGain?: { kind: 'new' | 'enhanced' | 'owned' | 'full'; id: string };
   /** C.9 필드(조합 키, 진화 순간의 안정 수치): 의미가 사라져 새 기록에서는 비운다. C.9 기록에만 있다 */
   comboKey?: string;
   stability?: number;

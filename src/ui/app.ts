@@ -71,7 +71,7 @@ import { planView } from './planView';
 import { bookView } from './bookView';
 import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
-import { evolutionView } from './evolutionPanel';
+import { evolutionView, gainExtra } from './evolutionPanel';
 import { roomView } from './roomView';
 import { careView, chestView, openChestAtConsumables, openChestAtGear } from './lcdScreens';
 import { createDevice } from './bha/device';
@@ -1690,7 +1690,7 @@ export function startApp(host: HTMLElement): void {
       };
       if (evo?.ok) {
         const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain) };
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
           holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
           nav.pop();
@@ -1766,7 +1766,7 @@ export function startApp(host: HTMLElement): void {
       // 다음 진화 (GDD 109장 7): 원정 귀환 때와 같은 진화 연출 → 끝나면 테스트 패널로
       onEvolved: (fromTier, r) => {
         dress(s.wear);
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain) };
         open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
           nav.pop();
         }, s.build.slots.length, extra), true);
