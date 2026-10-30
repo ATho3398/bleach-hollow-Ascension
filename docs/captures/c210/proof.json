@@ -1,0 +1,598 @@
+{
+ "hollow_zaraki": {
+  "faction": 0,
+  "cases": [
+   {
+    "name": "세로→가로 전환 뒤 다마고치 켜기",
+    "d": 0,
+    "m": {
+     "up": [
+      284,
+      167,
+      24,
+      24
+     ],
+     "down": [
+      284,
+      199,
+      24,
+      24
+     ],
+     "ok": [
+      632,
+      169,
+      30,
+      30
+     ],
+     "back": [
+      632,
+      202,
+      20,
+      20
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   },
+   {
+    "name": "켠 채 가로→세로(전체 화면 해제)",
+    "d": 0,
+    "m": {
+     "up": [
+      204,
+      134,
+      30,
+      30
+     ],
+     "down": [
+      165,
+      134,
+      30,
+      30
+     ],
+     "ok": [
+      202,
+      567,
+      37,
+      37
+     ],
+     "back": [
+      161,
+      567,
+      25,
+      25
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      100,
+      704,
+      212,
+      72,
+      "rotated"
+     ],
+     "rotated": true,
+     "tama": true
+    }
+   },
+   {
+    "name": "켠 채 세로→가로(다시 전체 화면)",
+    "d": 0,
+    "m": {
+     "up": [
+      284,
+      167,
+      24,
+      24
+     ],
+     "down": [
+      284,
+      199,
+      24,
+      24
+     ],
+     "ok": [
+      632,
+      169,
+      30,
+      30
+     ],
+     "back": [
+      632,
+      202,
+      20,
+      20
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   },
+   {
+    "name": "폰 직접 회전 세로→가로",
+    "d": 0,
+    "m": {
+     "up": [
+      284,
+      167,
+      24,
+      24
+     ],
+     "down": [
+      284,
+      199,
+      24,
+      24
+     ],
+     "ok": [
+      632,
+      169,
+      30,
+      30
+     ],
+     "back": [
+      632,
+      202,
+      20,
+      20
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   },
+   {
+    "name": "세로에서 켜고 가로 전환",
+    "d": 0,
+    "m": {
+     "up": [
+      284,
+      167,
+      24,
+      24
+     ],
+     "down": [
+      284,
+      199,
+      24,
+      24
+     ],
+     "ok": [
+      632,
+      169,
+      30,
+      30
+     ],
+     "back": [
+      632,
+      202,
+      20,
+      20
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   }
+  ],
+  "refL": {
+   "up": [
+    284,
+    167,
+    24,
+    24
+   ],
+   "down": [
+    284,
+    199,
+    24,
+    24
+   ],
+   "ok": [
+    632,
+    169,
+    30,
+    30
+   ],
+   "back": [
+    632,
+    202,
+    20,
+    20
+   ],
+   "css-up": null,
+   "css-down": null,
+   "css-ok": null,
+   "css-back": null,
+   "bar": [
+    352,
+    336,
+    212,
+    72,
+    "bottom"
+   ],
+   "rotated": false,
+   "tama": true
+  },
+  "refP": {
+   "up": [
+    204,
+    134,
+    30,
+    30
+   ],
+   "down": [
+    165,
+    134,
+    30,
+    30
+   ],
+   "ok": [
+    202,
+    567,
+    37,
+    37
+   ],
+   "back": [
+    161,
+    567,
+    25,
+    25
+   ],
+   "css-up": null,
+   "css-down": null,
+   "css-ok": null,
+   "css-back": null,
+   "bar": [
+    100,
+    704,
+    212,
+    72,
+    "rotated"
+   ],
+   "rotated": true,
+   "tama": true
+  }
+ },
+ "shinigami_badge": {
+  "faction": 1,
+  "cases": [
+   {
+    "name": "세로→가로 전환 뒤 다마고치 켜기",
+    "d": 0,
+    "m": {
+     "up": [
+      308,
+      140,
+      21,
+      21
+     ],
+     "down": [
+      308,
+      167,
+      21,
+      21
+     ],
+     "ok": [
+      607,
+      142,
+      25,
+      25
+     ],
+     "back": [
+      607,
+      170,
+      17,
+      17
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   },
+   {
+    "name": "켠 채 가로→세로(전체 화면 해제)",
+    "d": 0,
+    "m": {
+     "up": [
+      238,
+      164,
+      26,
+      26
+     ],
+     "down": [
+      204,
+      164,
+      26,
+      26
+     ],
+     "ok": [
+      236,
+      535,
+      32,
+      32
+     ],
+     "back": [
+      201,
+      535,
+      22,
+      22
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      100,
+      704,
+      212,
+      72,
+      "rotated"
+     ],
+     "rotated": true,
+     "tama": true
+    }
+   },
+   {
+    "name": "켠 채 세로→가로(다시 전체 화면)",
+    "d": 0,
+    "m": {
+     "up": [
+      308,
+      140,
+      21,
+      21
+     ],
+     "down": [
+      308,
+      167,
+      21,
+      21
+     ],
+     "ok": [
+      607,
+      142,
+      25,
+      25
+     ],
+     "back": [
+      607,
+      170,
+      17,
+      17
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   },
+   {
+    "name": "폰 직접 회전 세로→가로",
+    "d": 0,
+    "m": {
+     "up": [
+      308,
+      140,
+      21,
+      21
+     ],
+     "down": [
+      308,
+      167,
+      21,
+      21
+     ],
+     "ok": [
+      607,
+      142,
+      25,
+      25
+     ],
+     "back": [
+      607,
+      170,
+      17,
+      17
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   },
+   {
+    "name": "세로에서 켜고 가로 전환",
+    "d": 0,
+    "m": {
+     "up": [
+      308,
+      140,
+      21,
+      21
+     ],
+     "down": [
+      308,
+      167,
+      21,
+      21
+     ],
+     "ok": [
+      607,
+      142,
+      25,
+      25
+     ],
+     "back": [
+      607,
+      170,
+      17,
+      17
+     ],
+     "css-up": null,
+     "css-down": null,
+     "css-ok": null,
+     "css-back": null,
+     "bar": [
+      352,
+      336,
+      212,
+      72,
+      "bottom"
+     ],
+     "rotated": false,
+     "tama": true
+    }
+   }
+  ],
+  "refL": {
+   "up": [
+    308,
+    140,
+    21,
+    21
+   ],
+   "down": [
+    308,
+    167,
+    21,
+    21
+   ],
+   "ok": [
+    607,
+    142,
+    25,
+    25
+   ],
+   "back": [
+    607,
+    170,
+    17,
+    17
+   ],
+   "css-up": null,
+   "css-down": null,
+   "css-ok": null,
+   "css-back": null,
+   "bar": [
+    352,
+    336,
+    212,
+    72,
+    "bottom"
+   ],
+   "rotated": false,
+   "tama": true
+  },
+  "refP": {
+   "up": [
+    238,
+    164,
+    26,
+    26
+   ],
+   "down": [
+    204,
+    164,
+    26,
+    26
+   ],
+   "ok": [
+    236,
+    535,
+    32,
+    32
+   ],
+   "back": [
+    201,
+    535,
+    22,
+    22
+   ],
+   "css-up": null,
+   "css-down": null,
+   "css-ok": null,
+   "css-back": null,
+   "bar": [
+    100,
+    704,
+    212,
+    72,
+    "rotated"
+   ],
+   "rotated": true,
+   "tama": true
+  }
+ }
+}

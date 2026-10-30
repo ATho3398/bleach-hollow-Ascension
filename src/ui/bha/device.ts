@@ -228,6 +228,11 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   window.addEventListener(VIEW_SCALE_EVENT, fitDevice);
   window.addEventListener('orientationchange', refit);
   window.visualViewport?.addEventListener('resize', fitDevice);
+  // 가로 강제 전환(전체 화면 + 가로 고정, GDD 133장 2)은 orientationchange 없이 screen.orientation change·fullscreenchange 만 오기도 하고 크기가 늦게 바뀐다 — 같이 다시 맞춘다
+  const so = typeof screen !== 'undefined' ? screen.orientation : undefined;
+  so?.addEventListener?.('change', refit);
+  document.addEventListener('fullscreenchange', refit);
+  document.addEventListener('webkitfullscreenchange', refit);
 
   // ── 선택 상태 ──
   let items: SelectItem[] = [];
@@ -575,6 +580,9 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       window.removeEventListener('resize', fitDevice);
       window.removeEventListener('orientationchange', refit);
       window.visualViewport?.removeEventListener('resize', fitDevice);
+      so?.removeEventListener?.('change', refit);
+      document.removeEventListener('fullscreenchange', refit);
+      document.removeEventListener('webkitfullscreenchange', refit);
       setOverlayHost(null);
     },
   };
