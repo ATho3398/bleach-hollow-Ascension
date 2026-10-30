@@ -2,7 +2,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
-import { GLOSSARY, GUIDES, guideVars, helpVars, renderHelpText, SCREEN_HELPS, TUTORIAL_SCENES } from '../src/data/help';
+import { GLOSSARY, GUIDES, guideVars, helpVars, RECOVER_SCENES, renderHelpText, SCREEN_HELPS, SCRIPT_SCENES, TUTORIAL_SCENES } from '../src/data/help';
+
+const SCRIPT_SCENES_LIST = Object.values(SCRIPT_SCENES);
 import { riskText, riskZones, stabilityZones, zoneLines } from '../src/data/help/riskText';
 import { MINUS, multPct, numLine, pctDelta, range, SECTION, signed, zonesBy } from '../src/data/help/textFormat';
 import { TRAITS, traitDescription } from '../src/data/traits';
@@ -109,6 +111,19 @@ describe('111장 4: 설명 데이터 말투', () => {
       ];
       for (const t of texts) for (const s of sentences(renderHelpText(t, vars))) expect(s, s).not.toMatch(BAD_END);
     }
+  });
+  it('튜토리얼·한 번 뜨는 안내 (C.235, GDD 157장): 본문 2줄 이내(흡수 갈래 목록 카드만 예외) · 할 일 줄 "~해 보자" 허용 · "~을 누른다"·칸 수 없음', () => {
+    const cards = [
+      ...Object.entries(GUIDES).flatMap(([id, list]) => list.map((g) => ({ key: `${id}/${g.id}`, body: g.body }))),
+      ...SCRIPT_SCENES_LIST.map((x) => ({ key: `script/${x.id}`, body: x.body })),
+      ...RECOVER_SCENES.map((x) => ({ key: `recover/${x.id}`, body: x.body })),
+    ];
+    for (const c of cards) {
+      if (c.key !== 'first-absorb/absorb') expect(c.body.split('\n').length, c.key).toBeLessThanOrEqual(2);
+      expect(c.body, c.key).not.toMatch(/누른다|\{tutorialCell\}|한 칸씩/);
+    }
+    expect(cards.some((c) => /해 보자\.$/.test(c.body))).toBe(true);
+    expect('블록 스킬로 적을 더 빨리 쓰러뜨려 보자.').not.toMatch(BAD_END);
   });
   it('특성 설명: 문장은 \'~다.\', 수치는 "효과: …" 줄', () => {
     for (const t of TRAITS) for (const fid of FIDS) {

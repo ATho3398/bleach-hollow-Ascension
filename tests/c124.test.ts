@@ -60,12 +60,13 @@ describe('데이터 (GDD 65장)', () => {
     expect(upgradeIdOf('hunter-den')).toBe('hunter-den-plus');
   });
 
-  it('타일 안내에 4종 한 줄 — 자리표시자가 모두 풀린다', () => {
+  it('타일 안내 뽑기 카드 — 자리표시자가 모두 풀린다 (C.235 GDD 157장 5: 4종 이름·수치 나열 줄 삭제, 하는 일은 타일 설명에)', () => {
     for (const f of [getFaction('hollow'), getFaction('shinigami')]) {
       const step = GUIDES['tile-draw']!.find((s) => s.id === 'special')!;
       const text = renderHelpText(step.body, { ...helpVars(f), ...guideVars(f) });
       expect(text).not.toContain('{');
-      for (const id of ['env-training', 'hunter-den', 'rest-spring', 'echo']) expect(text).toContain(tileName(id, f.id));
+      expect(text).toContain('뽑기에서만');
+      for (const id of ['env-training', 'hunter-den', 'rest-spring', 'echo']) expect(tileHint(getTile(id)).length).toBeGreaterThan(0);
     }
   });
 });

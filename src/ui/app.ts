@@ -265,10 +265,7 @@ export function startApp(host: HTMLElement): void {
       chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalMin: String(Math.round(1 / HH.spa.hpPerSecond / 60)), // 튜토리얼 온천 10초 · 평소 5분 (GDD 145장 1)
       idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
-      // 온천 가는 길 (GDD 153장 1): 밖으로 → 월드맵 → 온천
-      spaPath: `${props.outside} → ${wm.name} → ${wm.places.spa}`,
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
-      spaFirst: props.outside, // 온천 가는 길 첫 누름 (GDD 132장 1 단계 문구)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -277,8 +274,8 @@ export function startApp(host: HTMLElement): void {
     const onRoomRender = () => { if (nav.top?.id === 'room') nav.top.render(); }; // 지급한 먹이 개수가 독에 보이게
     const EPS = 1e-6;
     // 카드마다 (GDD 129-2 2): 카드는 눌러야 할 버튼만 가리킨다 — act = 원래 게임 조작으로 할 것(하기 전에는 [다음] 잠김), show = 카드가 뜰 때 지급, next = [다음] 뒤 할 일
-    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → (밖으로 → 월드맵 →) 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
-    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]'; // 방 → 밖으로 → 월드맵 온천 (GDD 153장 1)
+    // 실제 조작: 가방 열기 → 구급상자 카드 눌러 [사용] → 월드맵 → 온천 → 먹이 주기. [다음]만으로 넘어가는 것은 설명 카드뿐
+    const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]'; // 방 → 월드맵 → 온천 (GDD 153장 1, 157장 4 단계 안내)
     // 썼으면 물건 창을 닫는다 (C.214): 시작 구급상자 3개(C.211)라 쓰고도 남아 창이 그대로 떠 있었고, 기기 초점이 창 안(닫기·흐린 [사용])에 갇혀 카드 [다음]으로 못 갔다
     const closeItemWhen = (done: boolean): boolean => {
       if (done) document.querySelector<HTMLButtonElement>('.bha-itemdialog .bha-itemmodal__close')?.click();
@@ -296,7 +293,7 @@ export function startApp(host: HTMLElement): void {
       // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
       cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
       'to-spa': {
-        // 온천에 들어가면(원래 조작) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
+        // 온천에 들어가면(원래 조작, 방 → 월드맵 → 온천 단계 안내 — GDD 157장 4) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
         // 체력이 spaTo 에 닿으면 [다음]. 배부름이 먼저 바닥나 나왔으면 각본 값 spaTo 까지 채운다
         act: { selector: `${spaWay}, .bha-spa__actor`, done: () => {
           if (soaked) return true;
@@ -407,7 +404,6 @@ export function startApp(host: HTMLElement): void {
     const care = (['feed', 'sleep', 'pet'] as const).map((a) => faction.nestActionsShort?.[a] ?? faction.nestActions[a]).join('·');
     const vars = {
       outsideName: props.outside, adventureName: wm.places.adventure, towerName: wm.places.tower, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
-      goPath: `[${props.outside}] → [${wm.places.adventure}]을(를) 누른다.`,
     };
     const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
     const scenes: TutorialScene[] = [{ id: 'intro', targets: [], ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)];

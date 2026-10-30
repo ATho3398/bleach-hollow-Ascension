@@ -45,11 +45,11 @@ const runLog = (s: CombatState) => {
 
 describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
   for (const f of ['hollow', 'shinigami']) {
-    it(`${f}: ①설명 → ②자동 ${TS.autoHits}대 → ③강공격·막기 → ④${TS.autoHits2}대 → ⑤못 막는 강공격(죽기 직전) → ⑥블록 1개 → ⑦같은 블록 3개 체인 처치`, () => {
+    it(`${f}: ①자동 ${TS.autoHits}대(설명 없음) → ②강공격·막기 → 막기 성공 → ③${TS.autoHits2}대 → ④못 막는 강공격(죽기 직전)·블록 1개 → 좋아! → ⑤같은 블록 3개 체인 처치 (GDD 157장 2)`, () => {
       const { s } = tutorialBattle(f);
-      expect(s.script?.stage).toBe('intro');
+      expect(s.script?.stage).toBe('auto');
       const { prompts, events } = runLog(s);
-      expect(prompts).toEqual(['intro', 'heavy-info', 'guard-now', 'hurt', 'block-use', 'chain-info', 'chain-use']);
+      expect(prompts).toEqual(['guard-now', 'guard-ok', 'hurt', 'nice', 'chain-use']);
       expect(s.status).toBe('won');
       // 사건 순서: 평타 3 → 예고 → 막기 → 막은 착탄 → 평타 2 → 예고 → 못 막은 착탄 → 블록 1 → 체인 3
       const seq = events.filter((e) => ['player-attack', 'heavy-cast', 'heavy-hit', 'block', 'enemy-attack'].includes(e.kind)).map((e) =>
@@ -57,7 +57,7 @@ describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
       expect(seq.filter((x) => x !== 'player-attack')).toEqual(['heavy-cast', 'guard', 'heavy-guarded', 'heavy-cast', 'heavy-hit', 'block1', `block${TS.chainLength}`]);
       const at = (k: string) => seq.indexOf(k);
       expect(seq.slice(0, at('heavy-cast')).length).toBe(TS.autoHits); // ② 자동 공격 3대 뒤 예고
-      expect(seq.slice(at('heavy-guarded') + 1, seq.lastIndexOf('heavy-cast')).length).toBe(TS.autoHits2); // ④ 2대 더 뒤 곧바로 예고
+      expect(seq.slice(at('heavy-guarded') + 1, seq.lastIndexOf('heavy-cast')).length).toBeGreaterThanOrEqual(TS.autoHits2); // 막아 낸 모습(잠깐 흐름) + 막기 성공 카드 뒤 2대 더 → 예고
       expect(seq).not.toContain('enemy-attack'); // 적 일반 공격 없음
       expect(s.finisher?.kind).toBe('skill');
       expect(s.chain3Count).toBe(1);
@@ -84,10 +84,6 @@ describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
 
   it('기다리는 단계에서는 시간이 흐르지 않고, 기다리는 입력 말고는 받지 않는다', () => {
     const { s } = tutorialBattle('shinigami');
-    const t0 = s.tick;
-    expect(scriptStep(s, { type: 'guard' })).toEqual([false]); // ① 설명 중: 아무 입력도 안 받음
-    expect(s.tick).toBe(t0);
-    scriptAck(s);
     while (scriptPrompt(s)?.stage !== 'guard-now') {
       if (scriptPrompt(s)?.wait === 'ack') scriptAck(s);
       else scriptStep(s);
@@ -99,6 +95,36 @@ describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
     expect(scriptPrompt(s)?.stage).toBe('guard-now'); // 막기를 해야 진행
     expect(scriptStep(s, { type: 'guard' })).toEqual([true]);
     expect(s.script?.stage).toBe('guard-hold');
+    while (scriptPrompt(s)?.stage !== 'guard-ok') scriptStep(s);
+    const t2 = s.tick;
+    expect(scriptStep(s, { type: 'guard' })).toEqual([false]); // 막기 성공 카드: [다음] 말고는 안 받음
+    expect(s.tick).toBe(t2);
+  });
+
+  it('157장 2: 강공격 카드는 예고 게이지가 거의 찼을 때, 막기 성공 카드는 막아 낸 뒤, 위기 카드는 블록 1개와 함께', () => {
+    for (const f of ['hollow', 'shinigami']) {
+      const { s } = tutorialBattle(f);
+      while (!scriptPrompt(s)) scriptStep(s);
+      expect(scriptPrompt(s)?.stage).toBe('guard-now');
+      expect(s.enemy.cast!.ticks).toBeLessThanOrEqual(2);
+      expect(s.guardFilled).toBe(true);
+      scriptStep(s, { type: 'guard' });
+      while (!scriptPrompt(s)) scriptStep(s);
+      expect(scriptPrompt(s)?.stage).toBe('guard-ok');
+      expect(s.guardSuccesses).toBe(1);
+      scriptAck(s);
+      while (!scriptPrompt(s)) scriptStep(s);
+      expect(scriptPrompt(s)).toEqual({ stage: 'hurt', wait: 'use' });
+      expect(s.tray).toHaveLength(1);
+      expect(s.player.hp / s.player.maxHp).toBeCloseTo(TS.leaveHpFraction, 2);
+      scriptStep(s, { type: 'use', cell: 0 });
+      while (!scriptPrompt(s)) scriptStep(s);
+      expect(scriptPrompt(s)).toEqual({ stage: 'nice', wait: 'ack' });
+      scriptAck(s);
+      while (!scriptPrompt(s)) scriptStep(s);
+      expect(scriptPrompt(s)).toEqual({ stage: 'chain-use', wait: 'use' });
+      expect(s.tray).toHaveLength(TS.chainLength);
+    }
   });
 
   it('⑤ 강공격은 막을 수 없다 (막기 게이지가 0)', () => {

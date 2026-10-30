@@ -17,11 +17,11 @@ describe('73장 안내 문구 줄바꿈', () => {
     expect(parseLines('')).toEqual([]);
   });
 
-  it('첫 포식 2/3 "포식 네 갈래": 항목마다 한 줄, 이름 굵게 (이어 붙인 · 없음)', () => {
-    const g = JSON.parse(read('src/data/help/guides.json')).guides['first-absorb'][1] as { body: string };
+  it('첫 포식 1/2 갈래 목록 (C.235 GDD 157장 3: 첫 줄 + 네 갈래): 항목마다 한 줄, 이름 굵게 (이어 붙인 · 없음)', () => {
+    const g = JSON.parse(read('src/data/help/guides.json')).guides['first-absorb'][0] as { body: string };
     const lines = parseLines(g.body);
     expect(lines).toHaveLength(5);
-    expect(lines.slice(0, 4).every((l) => l[0]!.b)).toBe(true);
+    expect(lines.slice(1).every((l) => l[0]!.b)).toBe(true);
     expect(g.body).not.toContain(' · ');
   });
 
@@ -35,8 +35,8 @@ describe('73장 안내 문구 줄바꿈', () => {
 
   it('타일 안내(64장)·전투 튜토리얼 블록 바 역할도 항목마다 한 줄', () => {
     const g = JSON.parse(read('src/data/help/guides.json')).guides;
-    expect(parseLines(g['tile-plan'][1].body).filter((l) => l[0]!.b)).toHaveLength(4);
-    expect(parseLines(g['tile-draw'][1].body).filter((l) => l[0]!.b)).toHaveLength(4);
+    // C.235 (GDD 157장 5): 타일 안내는 카드당 2줄 — 굵은 이름 목록 줄 삭제
+    for (const c of [...g['tile-plan'], ...g['tile-draw']]) expect(parseLines(c.body).length).toBeLessThanOrEqual(2);
     // C.171(GDD 100장 #40): 블록 바 역할은 본문 줄 대신 카드 안 샘플 블록으로 (C.174 GDD 105장: 막기·회복은 버튼이라 공격 하나)
     const tray = (JSON.parse(read('src/data/help/tutorial.json')).scenes as { id: string; body: string; sample?: string[] }[]).find((s) => s.id === 'tray')!;
     expect(tray.sample).toEqual(['attack']);

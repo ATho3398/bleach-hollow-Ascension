@@ -39,7 +39,8 @@ describe('153장 1 온천 = 월드맵 장소', () => {
     expect(sc.stages!.map((s) => s.targets.at(-1))).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="spa"]', '@.bha-spa__actor']);
     expect(JSON.stringify(sc)).not.toContain('bha-market');
     expect(JSON.stringify(sc)).not.toContain('marketName');
-    expect(app).toContain('spaPath: `${props.outside} → ${wm.name} → ${wm.places.spa}`,');
+    expect(app).toContain(`const spaWay = '.bha-prop--outside, .bha-worldmap [data-place="spa"]';`); // C.235: 길 문구 spaPath 대신 단계 문구 (GDD 157장 4)
+    expect(sc.stages!.map((x) => x.body)).toEqual([sc.body, '{spaName}(으)로 가 보자.', '체력이 차오른다.']);
   });
 });
 

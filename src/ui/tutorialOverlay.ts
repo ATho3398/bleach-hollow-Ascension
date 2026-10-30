@@ -203,8 +203,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
 
   /** 블록 바와 저장 필살기 버튼: 설명 카드가 가리지 않게 보호할 영역 */
   const protectedRects = () => {
-    const st = stageOf(SCENES[state.index]!);
-    return ['battle.tray', 'battle.liberation', ...OPEN_WINDOWS, ...(st?.avoid ?? [])].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+    const sc = SCENES[state.index]!;
+    const st = stageOf(sc);
+    // 각본 카드(첫 전투)는 해방을 쓰지 않는다 — 해방 대상(내 캐릭터 전체)을 피하느라 적 예고 게이지를 덮던 것 (C.235, GDD 157장 2)
+    return ['battle.tray', ...(opts.script ? [] : ['battle.liberation']), ...OPEN_WINDOWS, ...(st?.avoid ?? sc.avoid ?? [])].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
   };
 
   /** 가로 화면(LCD)에서 카드가 후보로 삼는 너비: 넓게(위·아래에 걸쳐) / 좁게(옆·모서리) */
