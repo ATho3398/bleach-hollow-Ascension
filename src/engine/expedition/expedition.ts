@@ -609,10 +609,10 @@ export function carryHitPacing(difficulty: number): number {
   return PX.hpCarry.hitPacing[String(clampDifficulty(difficulty))] ?? 1;
 }
 
-/** 이어하기 적 배율 (GDD 121장 5): 바퀴 n 의 적 체력·공격 × (1 + enemy × (n − 1)). 옛 바퀴 강화를 대신한다(이중 적용 없음) */
+/** 이어하기 적 배율 (GDD 121장 5): 바퀴 n 의 적 체력 × (1 + enemy × (n − 1)), 공격 × (1 + enemyAttack × (n − 1)) (GDD 134장 5 — 공격만 더 가파르게, 처치 시간은 그대로). 옛 바퀴 강화를 대신한다(이중 적용 없음) */
 export function lapScale(lap: number): { hp: number; attack: number } {
-  const k = 1 + PX.continueScale.enemy * (Math.max(1, lap) - 1);
-  return { hp: k, attack: k };
+  const n = Math.max(1, lap) - 1;
+  return { hp: 1 + PX.continueScale.enemy * n, attack: 1 + PX.continueScale.enemyAttack * n };
 }
 
 /** 이어하기 보상 배율 (GDD 121장 5): 바퀴 n 의 골드·노력치·먹이·장비 드롭률 × (1 + reward × (n − 1)) */

@@ -31,13 +31,13 @@ function runLap(exp: ExpeditionState): void {
 
 describe('121장 5: 이어하기 배율', () => {
   it('바퀴 n: 보상 × (1 + 0.25(n − 1)), 적 체력·공격 × (1 + 0.12(n − 1)) — 옛 바퀴 강화와 이중 적용 없음', () => {
-    expect(PX.continueScale).toEqual({ reward: 0.25, enemy: 0.12 });
+    expect(PX.continueScale).toEqual({ reward: 0.25, enemy: 0.12, enemyAttack: 0.3 }); // C.212 (GDD 134장 5): 공격만 바퀴당 +30%
     expect(lapRewardMult(1)).toBe(1);
     expect(lapRewardMult(2)).toBeCloseTo(1.25);
     expect(lapRewardMult(4)).toBeCloseTo(1.75);
     expect(lapScale(1)).toEqual({ hp: 1, attack: 1 });
     expect(lapScale(3).hp).toBeCloseTo(1.24);
-    expect(lapScale(3).attack).toBeCloseTo(1.24);
+    expect(lapScale(3).attack).toBeCloseTo(1.6);
     expect('lapHpScale' in PX || 'lapAttackScale' in PX).toBe(false);
   });
 
@@ -55,7 +55,7 @@ describe('121장 5: 이어하기 배율', () => {
     expect(k(p3) / k(p1)).toBeCloseTo(lapScale(3).hp);
     // 보상 배율은 전투 재료(mods.rewardMult)에 바퀴 배율로 실린다
     expect(p3.mods!.rewardMult / p1.mods!.rewardMult).toBeCloseTo(lapRewardMult(3));
-    expect(carryAttackMult(1)).toBeLessThan(1);
+    expect(carryAttackMult(1)).toBeLessThan(carryAttackMult(2)); // C.212 (GDD 134장 5): ★1 1.05 < 그 밖 1.3 (원정 체력 이어 가기 곡선용, 1 보다 클 수 있음)
   });
 });
 

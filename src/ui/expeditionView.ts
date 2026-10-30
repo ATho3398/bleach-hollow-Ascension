@@ -482,7 +482,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     more.append(label);
     // 이어하기 배율 (GDD 121장 5): [한 바퀴 더] 아래에 다음 바퀴 보상·적 배율과 사냥 힐
     const nx = exp.lap + 1;
-    const multLine = el('p', 'bha-sheet__body bha-continue-mult', `다음 바퀴: 보상 ×${fmtMult(lapRewardMult(nx))} · 적 ×${fmtMult(lapScale(nx).hp)} · 사냥 힐 ${Math.round(winHealOf(nx) * 100)}%`);
+    const multLine = el('p', 'bha-sheet__body bha-continue-mult', `다음 바퀴: 보상 ×${fmtMult(lapRewardMult(nx))} · 적 체력 ×${fmtMult(lapScale(nx).hp)} · 공격 ×${fmtMult(lapScale(nx).attack)} · 사냥 힐 ${Math.round(winHealOf(nx) * 100)}%`);
     multLine.dataset.continueMult = '';
     const grid = el('div', 'bha-grid2');
     grid.append(ret, more);

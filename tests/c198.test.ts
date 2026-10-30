@@ -23,8 +23,8 @@ const T0 = 1_700_000_000_000;
 const H = getFaction('hollow');
 
 describe('123장 1 초반 긴장감: ★1 적 공격', () => {
-  it('★1 적 공격 배율 0.425·기본 공격 묶음 ×4 (provisional), 다른 ★ 은 묶음 없음', () => {
-    expect(carryAttackMult(1)).toBe(0.425);
+  it('★1 적 공격 배율 1.05(C.212 134장 5, 옛 0.425)·기본 공격 묶음 ×4 (provisional), 다른 ★ 은 묶음 없음', () => {
+    expect(carryAttackMult(1)).toBe(1.05);
     expect(carryHitPacing(1)).toBe(4);
     for (const st of [2, 3, 4, 5]) expect(carryHitPacing(st)).toBe(1);
     expect(BALANCE_VERSION_OK()).toBe(true);
@@ -49,10 +49,10 @@ describe('123장 1 초반 긴장감: ★1 적 공격', () => {
     const src = readFileSync('src/engine/expedition/expedition.ts', 'utf8');
     expect(src).toContain('const pace = exp.tutorial || bossId ? 1 : carryHitPacing(exp.difficulty);');
   });
-  it("balance:check 에 '초반 긴장감' 가드(1단계 ★1 끝까지 4바퀴 패배 25~55%)", () => {
+  it("balance:check 의 '초반 긴장감' 가드는 C.212 '바퀴 곡선' 가드로 바뀜 (GDD 134장 5: 1단계 ★1 2바퀴 25~70%·3바퀴 15% 이하)", () => {
     const b = readFileSync('scripts/balance.ts', 'utf8');
-    expect(b).toContain('초반 긴장감');
-    expect(b).toContain('R.defeat < 0.25 || R.defeat > 0.55');
+    expect(b).not.toContain('R.defeat < 0.25 || R.defeat > 0.55');
+    expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.7) && '2바퀴 25~70% 밖'");
   });
   it("화면 문구 '기본 4바퀴' → '권장 4바퀴'", () => {
     expect(readFileSync('src/ui/resultView.ts', 'utf8')).toContain('/ 권장 ${BALANCE.expedition.defaultLaps}');

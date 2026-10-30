@@ -25,6 +25,8 @@ export interface AutoOptions {
   absorb?: 'release' | 'absorb';
   /** absorb 가 'absorb' 일 때만: 이 제안(계통)을 흡수할지 정하는 정책. false 면 놓아준다 (계통을 몰거나 흩는 점검 봇용, 없으면 항상 흡수) */
   absorbWanted?: (exp: ExpeditionState) => boolean;
+  /** 둥지 칸에 닿을 때마다(바퀴를 마칠 때) 부른다 — 바퀴별 완주·끝 체력을 재는 점검용 (GDD 134장 5) */
+  onLapEnd?: (exp: ExpeditionState) => void;
 }
 
 const KIND_SCORE = { skill: 3, passive: 2, part: 1 } as const;
@@ -122,6 +124,7 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
     } else if (exp.phase === 'rest') finishRest(exp);
     else if (exp.phase === 'event') botEvent(exp);
     else if (exp.phase === 'nest-choice') {
+      opt.onLapEnd?.(exp);
       if (opt.place !== false) placeAll(exp);
       if (opt.place !== false && exp.lap < opt.returnAfterLap) botDraft(exp); // 귀환해도 임시 타일은 사라질 뿐이라 먼저 고른다
       if (exp.lap >= opt.returnAfterLap || (opt.minContinueHp !== undefined && (exp.hpFraction ?? 1) < opt.minContinueHp)) chooseReturn(exp);
