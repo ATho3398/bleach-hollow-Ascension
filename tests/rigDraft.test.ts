@@ -27,7 +27,7 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
     expect(dg.move!.tracks.shin_L).toBeDefined();
     expect(dg.move!.tracks.arm_L).toEqual(motions.move!.tracks.arm_L); // 다리 밖은 기본 그대로
-    expect(resolveMotions(rig, motions, sets, 'shinigami')).toBe(motions); // 기본 몸(사신)은 묶음 없음;
+    expect(resolveMotions(rig, motions, sets)).toBe(motions); // 몸 없으면 기본 동작 그대로;
   });
   it('역관절 걷기: 디딘 발은 바닥 근처에 있다(발목이 바닥에서 크게 뜨지 않음)', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
@@ -148,12 +148,14 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
       }
     }
   });
-  it('해방 동작(양손으로 칼 내밀고 변신)은 아란칼(여) 몸에만 하나, swapAt 이 지나면 해방 외형', () => {
+  it('해방 동작(양손으로 칼 내밀고 변신): 아란칼(여)·남자 몸, 하나, swapAt 이 지나면 해방 외형', () => {
     const af = resolveMotions(rig, motions, sets, 'arrancar_f');
     const m = af.release1!;
     expect(af.release2).toBeUndefined();
     expect(motionLook(rig, 'arrancar-f-release-test', m, m.swapAt! - 1)).toBe('arrancar-f-release-test');
     expect(motionLook(rig, 'arrancar-f-release-test', m, m.swapAt!)).toBe('arrancar-f-released-test');
-    expect(resolveMotions(rig, motions, sets, 'shinigami').release1).toBeUndefined();
+    // 남자 몸도 같은 해방 동작(사용자 2026-11-01 "아란칼 여체 보고 남자도 해방 모션 따라하라니까?") — 여자 몸은 아란칼(여)만
+    for (const b of ['shinigami', 'student', 'arrancar', 'bare']) expect(resolveMotions(rig, motions, sets, b).release1?.duration, b).toBe(m.duration);
+    for (const b of ['female', 'shinigami_f', 'student_f']) expect(resolveMotions(rig, motions, sets, b).release1, b).toBeUndefined();
   });
 });
