@@ -308,7 +308,7 @@
     },
     "arrancar": {
       "pivots": {
-        "arm_R": [24, 34],
+        "arm_R": [22, 35],
         "forearm_L": [7, 44]
       }
     },
@@ -361,12 +361,14 @@
     }
   },
   "bodyMotions": {
-    "dg": "digitigrade",
-    "arrancar_f": "arrancarRelease",
-    "female": "female",
-    "student": "student",
-    "student_f": "student_f",
-    "shinigami_f": "shinigami_f"
+   "dg": "digitigrade",
+   "arrancar_f": "arrancarRelease",
+   "female": "female",
+   "student": "student",
+   "student_f": "student_f",
+   "shinigami_f": "shinigami_f",
+   "arrancar": "arrancar",
+   "bare": "bare"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {

@@ -23,11 +23,11 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   it('정강이 그림이 없는 몸은 기본 동작에서 발이 다리를 그대로 따라간다(정강이 0°)', () => {
     for (const m of Object.values(motions)) expect(m.tracks.shin_L ?? m.tracks.shin_R).toBeUndefined();
   });
-  it('역관절 몸만 동작 묶음을 쓴다: 걷기에서 정강이가 접힌다', () => {
+  it('역관절 몸은 다리 동작 묶음을 쓴다: 걷기에서 정강이가 접힌다', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
     expect(dg.move!.tracks.shin_L).toBeDefined();
     expect(dg.move!.tracks.arm_L).toEqual(motions.move!.tracks.arm_L); // 다리 밖은 기본 그대로
-    expect(resolveMotions(rig, motions, sets, 'bare')).toBe(motions);
+    expect(resolveMotions(rig, motions, sets, 'shinigami')).toBe(motions); // 기본 몸(사신)은 묶음 없음;
   });
   it('역관절 걷기: 디딘 발은 바닥 근처에 있다(발목이 바닥에서 크게 뜨지 않음)', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
@@ -137,6 +137,14 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
     const af = resolveMotions(rig, motions, sets, 'arrancar_f').idle!.tracks;
     expect([af.arm_R![0]![1], af.forearm_R![0]![1]]).toEqual([14, -32]);
     for (const b of ['female', 'student', 'student_f', 'shinigami_f']) expect(resolveMotions(rig, motions, sets, b).idle!.tracks.arm_R, b).not.toEqual(motions.idle!.tracks.arm_R);
+  });
+  it('팔이 떨어지지 않게: 아래팔·칼·발·머리 뼈는 위치 이동 키가 없다(몸 묶음 포함 — 사용자 "필살기 쓰는거 보면 얘들 팔 떨어지잖아")', () => {
+    const all = [motions, ...Object.values(sets).map((st) => st as Record<string, { tracks?: Record<string, number[][]> }>)];
+    for (const ms of all) for (const [id, m] of Object.entries(ms)) {
+      for (const b of ['forearm_R', 'forearm_L', 'weapon', 'shin_L', 'shin_R', 'foot_L', 'foot_R', 'head']) {
+        for (const k of (m as { tracks?: Record<string, number[][]> }).tracks?.[b] ?? []) expect([k[2], k[3]], `${id} ${b}`).toEqual([0, 0]);
+      }
+    }
   });
   it('해방 동작(양손으로 칼 내밀고 변신)은 아란칼(여) 몸에만 하나, swapAt 이 지나면 해방 외형', () => {
     const af = resolveMotions(rig, motions, sets, 'arrancar_f');
