@@ -1,4 +1,4 @@
-# 호로 / 사신 키우기 — 기획서 v5.375 (Claude Code 인수인계용)
+# 호로 / 사신 키우기 — 기획서 v5.376 (Claude Code 인수인계용)
 
 > 프로젝트 이름: 블리치 할로우 어센션 (Bleach Hollow Ascension). 변경 이력과 결정 기록은 12장, 개발 로드맵과 현재 상태는 13장. 기획은 이 문서 하나가 기준이다.
 
@@ -356,6 +356,9 @@ data/
 ---
 
 ## 12. 결정 기록 / 변경 이력
+
+### v5.376 (2026-11-01, 코딩181 — C.246)
+- 167장 1~6 구현 완료 표시. 구현에서 정한 것: 도구는 `scripts/ai-tools/`(vite-node TS + `@anthropic-ai/sdk` devDependency, 엑셀은 python openpyxl `make-xlsx.py`), 단가 표·상한·걸음 수는 `scripts/ai-tools/lib/config.ts` 한 곳(provisional). 요청은 고정 지시문 캐시 + JSON 스키마 구조화 출력 + effort(플레이 low·검수 medium, Opus 5.5 는 thinking 끄기 불가). 플레이테스트 입력 = ▲▼◀▶✓·뒤로·기다리기(키보드 ↑↓←→ Enter Esc 와 같음), 화면 글자·초점·열린 창·고를 수 있는 칸 목록을 캡처와 같이 준다. 막힘 = 화면 글자가 14걸음 그대로. 검수 캡처의 글자는 ui-audit 이 `UI_AUDIT_SHOTS` 때 `.txt` 로 같이 남긴다. 지난 검수 1~111(사용자 표시 포함)은 `scripts/ai-tools/data/prior-review-1031.json`. 7 첫 실행은 키 문제(401)로 대기.
 
 ### v5.375 (2026-11-01, 마스터AC)
 - 167장 추가: API 크레딧(200달러)으로 개발 전용 AI 검수 도구 2개 — ① `npm run ai-playtest`(AI 첫 플레이어가 기기 버튼만으로 튜토리얼~첫 모험~회복까지 진행, 막힘·헷갈림 기록) ② `npm run ai-review`(전 화면 캡처 + 게임 문구를 ui-review.md·text-style.md 기준 검수, Batch). 키 = 클라우드 환경 변수 `BHA_CLAUDE_API_KEY`(ANTHROPIC_API_KEY 안 씀), 게임·CI 에 안 들어감, 실행마다 금액 상한. 코딩181.
@@ -5644,3 +5647,4 @@ data/
   7. **첫 실행**: 코딩181 이 도구를 만든 뒤 ①(두 종족 각 1판) ②(1회)를 실제로 돌려 첫 엑셀 2개 + 쓴 금액 보고. 마스터가 확인 뒤 사용자에게 엑셀을 보낸다.
   8. **(01:2x 사용자 추가) 크레딧 200달러 다 쓰면 끝, 추가 결제 없음**: 사용자 원문 "수정했고, 근데 이거 200달러 다쓰면 더 쓸 생각 없는데? / 기획서에 올려서 툴로 만들면 나중에 api 다쓰면 문제생기는거아님?" → 도구는 **선택 사항**이다. 게임·빌드·CI·배포·테스트 어디에도 엮지 않고, 누가 명령으로 직접 돌릴 때만 돈다(자동 예약 없음). 크레딧이 떨어지면 API 가 거절하고 도구는 "크레딧이 없다"는 한 줄을 내고 그때까지 결과만 저장한 뒤 멈춘다(오류로 다른 일을 막지 않음). 그 뒤 검수는 예전 방식(구독 세션 Workflow)으로 돌아간다. 마스터는 `docs/drafts/ai-usage.md` 누적을 보고 150달러에서 사용자에게 알리고 190달러에서 실행을 멈춘다. 사용자 확인 거리: 콘솔 Billing 의 자동 충전(auto reload)이 꺼져 있는지.
 - 세션: **코딩181**(Opus, 새 세션 — 키를 넣은 뒤 연 세션이라 환경 변수를 읽는다).
+- **구현 완료(C.246, v5.376, 코딩181)**: `npm run ai-playtest -- [--faction hollow|shinigami|both] [--steps 250] [--budget 10] [--dry-run]` · `npm run ai-review -- [--shots <폴더>] [--budget 8] [--only-ui|--only-text] [--dry-run]`. 결과 `docs/drafts/블리치_AI검수_<MMDD>_<playtest|review>.xlsx`, 문제 캡처 `docs/drafts/ai-shots/<MMDD>/`, 사용 기록 `docs/drafts/ai-usage.md`. 테스트 `tests/ai-tools.test.ts`(가짜 클라이언트). 7 첫 실행: 환경 변수 키가 API 에서 401(invalid x-api-key)로 거절 — 키를 다시 넣은 뒤 실행.

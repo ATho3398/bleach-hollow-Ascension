@@ -2,7 +2,7 @@
 // 두 종족 × 화면마다: ① 정적 점검(가로 스크롤·버튼/글자 잘림·겹침·가려짐·키보드로 못 고르는 칸) ② ▼ 를 돌려 모든 버튼에 닿는지
 // ③ 상태 바꾸기(체크·토글·탭·선택·삭제·ⓘ 열기 …) 전후로 다른 버튼이 움직였는지(bounding box 비교).
 // 테스트 모드(?test=1, 따로 된 테스트 세이브 칸)로 돈다. 뷰포트 = 게임 기준 가로 844×390, 1배.
-// 옵션: UI_AUDIT_URL=<이미 떠 있는 주소> (없으면 vite 를 띄운다), UI_AUDIT_ONLY=<화면 이름 일부>, UI_AUDIT_SHOTS=<폴더> (화면마다 캡처),
+// 옵션: UI_AUDIT_URL=<이미 떠 있는 주소> (없으면 vite 를 띄운다), UI_AUDIT_ONLY=<화면 이름 일부>, UI_AUDIT_SHOTS=<폴더> (화면마다 캡처 + 화면 글자 .txt),
 //       UI_AUDIT_PORTRAIT=1 (세로 폰 390×844 터치 — 기기 화면 90° 회전 출력, C.183)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -221,7 +221,11 @@ function makeHelper(page, faction, report) {
       if (process.env.UI_AUDIT_SHOTS) {
         const dir = process.env.UI_AUDIT_SHOTS;
         fs.mkdirSync(dir, { recursive: true });
-        await page.screenshot({ path: path.join(dir, `${faction}-${screen.replace(/[^\w가-힣-]+/g, '_')}.png`) });
+        const base = path.join(dir, `${faction}-${screen.replace(/[^\w가-힣-]+/g, '_')}`);
+        await page.screenshot({ path: `${base}.png` });
+        // 화면 글자도 같이 (ai-review, GDD 167장 4): LCD 의 보이는 글자
+        const txt = await page.evaluate(() => (document.querySelector('.bha-lcd')?.innerText ?? '').replace(/\n{2,}/g, '\n').trim());
+        fs.writeFileSync(`${base}.txt`, txt);
       }
     },
     /**
