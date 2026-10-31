@@ -318,7 +318,8 @@ export function startApp(host: HTMLElement): void {
       feed: {
         // 먹인 순간(방 onFed) 각본 값을 넣어, 방 막대가 약 1초에 걸쳐 그 값까지 차는 걸 보여 준다 (GDD 132장 3)
         show: () => { grantRecoverFood(s); fedAt = s.nest.lastFedAt; recoverFedHook = () => recoverFeedDone(s); persist(); onRoomRender(); },
-        act: { selector: `.bha-homedock__carebtn--feed, .bha-homedock__food[data-food="${TR.food}"]`, done: () => {
+        // 먹는 연출(막대 차오름)이 끝나면 [다음] 없이 바로 결과 카드('회복 끝')로 — 먹은 뒤 '먹어 보자' 카드에 [다음]을 한 번 더 누르게 하지 않는다 (GDD 162장 2)
+        act: { selector: `.bha-homedock__carebtn--feed, .bha-homedock__food[data-food="${TR.food}"]`, autoFinish: true, done: () => {
           if (s.nest.lastFedAt === fedAt) return false;
           if (recoverFedHook) recoverFeedDone(s); // 훅을 못 탔으면(다른 길로 먹임) 여기서
           recoverFedHook = null;
@@ -326,7 +327,8 @@ export function startApp(host: HTMLElement): void {
           return true;
         } },
       },
-      done: {},
+      // 결과 카드: 펼친 먹이 줄이 남아 있으면 닫는다 — 상태 칩(대상)을 가리고 같은 행동을 또 하게 두지 않게 (GDD 162장 2)
+      done: { show: () => document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click() },
     };
     /** 투명한 막(recover-wait)으로 ms 동안 터치·기기 버튼을 받지 않다가 then */
     const holdInput = (ms: number, then: () => void): void => {

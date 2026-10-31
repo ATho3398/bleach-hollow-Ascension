@@ -23,7 +23,7 @@ describe('132장 1 카드가 누를 때마다 다음 대상으로', () => {
     expect(by.cure!.stages!.map((s) => s.targets[0])).toEqual(['@[data-item="med-cure"]', '@.bha-itemdialog[data-item-dialog="med-cure"] [data-act="use"]']);
     expect(by.potion).toBeUndefined(); // 방 포션 단계 삭제 (C.223, GDD 144장 4)
     expect(by['to-spa']!.stages!.map((s) => s.targets.at(-1))).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="spa"]', '@.bha-spa__actor']); // 월드맵 경유 (C.228)
-    expect(by.feed!.stages![1]!.avoid).toEqual(['@.bha-homedock__tray--food']); // 열린 도시락 목록을 가리지 않는다
+    expect(by.feed!.stages![1]!.avoid).toContain('@.bha-homedock__tray--food'); // 열린 도시락 목록을 가리지 않는다 (C.245: 상태 칩·체력 막대도)
     expect(HOME_INTRO.last.stages!.map((s) => s.targets[0])).toEqual(['@.bha-prop--outside', '@.bha-worldmap [data-place="adventure"]']);
   });
   it('단계 문구는 두 종족 모두 채워지고, 한 카드 2줄 이내', () => {
@@ -83,7 +83,7 @@ describe('132장 3 행동 진행 연출', () => {
     expect(actionBusy()).toBe(false);
   });
   it('카드는 연출이 끝나야 [다음]이 풀린다 · 아이템 쓰기·먹이·온천이 연출을 부른다', () => {
-    expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actDone || !act.done() || actionBusy()) return;');
+    expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actionBusy()) return showCard(false);'); // C.245: 연출 중에는 창을 숨긴다
     expect(read('src/ui/lcdScreens.ts')).toContain('if (r.ok && !r.spat) useFx(faction, save, e, art, hpBefore, fullBefore);');
     expect(read('src/ui/roomView.ts')).toContain('tween(ACTION_FILL_MS, (t) => {');
     expect(read('src/ui/app.ts')).toContain('return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);'); // C.214: 실제 시간으로 spaTo 까지

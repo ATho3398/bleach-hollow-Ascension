@@ -100,6 +100,14 @@ export function lastShownStage(shown: readonly boolean[]): number {
   return 0;
 }
 
+/** 사방으로 pad 만큼 넓힌 영역 */
+const padRect = (r: Rect, pad: number): Rect => ({ top: r.top - pad, left: r.left - pad, width: r.width + pad * 2, height: r.height + pad * 2 });
+
+/** 두 영역이 겹친다 */
+export function rectsOverlap(a: Rect, b: Rect): boolean {
+  return Math.min(a.left + a.width, b.left + b.width) > Math.max(a.left, b.left) && Math.min(a.top + a.height, b.top + b.height) > Math.max(a.top, b.top);
+}
+
 /** 대상 자리가 크게 바뀌었다 (나타남·사라짐·MOVE 허용치 넘게 옮김) */
 function movedFar(a: Rect | null, b: Rect | null, tol = 24): boolean {
   if (!a || !b) return a !== b;
@@ -108,6 +116,9 @@ function movedFar(a: Rect | null, b: Rect | null, tol = 24): boolean {
 
 /** 카드가 가리면 안 되는 열린 창 (GDD 132장 1): 단계에 적힌 것 + 늘 지키는 창(아이템 상세 창·독 펼친 줄) */
 const OPEN_WINDOWS = ['@.bha-itemdialog .bha-itemmodal', '@.bha-actfx', '@.bha-homedock__tray--food', '@.bha-homedock__tray--more'];
+
+/** 카드가 되도록 피하는 주인공 (GDD 162장 1): 방 캐릭터·온천 캐릭터 — 먹는 모습·온천에 몸 담근 모습이 안내 창에 가리지 않게 */
+const SUBJECTS = ['@.bha-char', '@.bha-spa__actor'];
 
 export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOptions): TutorialHandle {
   const vars = { ...helpVars(faction), ...(opts.vars ?? {}) };
@@ -152,6 +163,14 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   let actTimer = 0;
   /** 장면 이동 연출(온천 들고 나기·월드맵 걷기 → 페이드) 중에는 창을 숨기고, 끝나면 그 자리에 한 번 놓고 고정한다 (GDD 143장 1) */
   let moveTimer = 0;
+  /** 카드가 대상을 덮게 됐는지 보는 타이머 (모든 장면) */
+  let coverTimer = 0;
+  /** 요소 자리를 오버레이 자리(host) 기준으로 */
+  const hostRect = (n: HTMLElement): Rect => {
+    const o = host === document.body ? { left: 0, top: 0 } : elementLocalRect(host);
+    const r = elementLocalRect(n);
+    return { top: r.top - o.top, left: r.left - o.left, width: r.width, height: r.height };
+  };
   let hiddenForMove = false;
   /** 마지막으로 놓은 대상 자리 — 대상이 크게 옮겨 갈 때만 다시 놓는다(제자리에서 흔들리는 대상을 따라 창이 움직이지 않게) */
   let placedFor: Rect | null = null;
@@ -191,6 +210,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   const teardown = () => {
     window.clearInterval(actTimer);
     window.clearInterval(moveTimer);
+    window.clearInterval(coverTimer);
     setPractice(false);
     window.removeEventListener('resize', layout);
     unregister();
@@ -206,18 +226,24 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     const sc = SCENES[state.index]!;
     const st = stageOf(sc);
     // 각본 카드(첫 전투)는 해방을 쓰지 않는다 — 해방 대상(내 캐릭터 전체)을 피하느라 적 예고 게이지를 덮던 것 (C.235, GDD 157장 2)
-    return ['battle.tray', ...(opts.script ? [] : ['battle.liberation']), ...OPEN_WINDOWS, ...(st?.avoid ?? sc.avoid ?? [])].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+    return ['battle.tray', ...(opts.script ? [] : ['battle.liberation']), ...OPEN_WINDOWS, ...SUBJECTS, ...(st?.avoid ?? sc.avoid ?? [])].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
   };
 
   /** 가로 화면(LCD)에서 카드가 후보로 삼는 너비: 넓게(위·아래에 걸쳐) / 좁게(옆·모서리) */
   const WIDE_W = 456;
   const NARROW_W = 280;
+  /** 모서리에 좁게 서는 너비 (GDD 162장 1): 방처럼 위 칩·가운데 캐릭터·아래 독이 다 찬 화면에서 모서리 빈 곳에 들어가게 */
+  const SLIM_W = 240;
+  /** 대상 옆 빈 곳에 맞춘 너비의 하한 (이보다 좁으면 글이 너무 접힌다) */
+  const MIN_SIDE_W = 200;
 
   function layout(): void {
     const scene = SCENES[state.index]!;
     const vp = host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight };
     const rect = targetRect(stageOf(scene)?.targets ?? scene.targets, host);
     placedFor = rect;
+    // 자리 고르기는 강조 테두리(구멍)까지 넓힌 대상으로 잰다 — 카드가 테두리에 걸쳐 대상을 덮지 않게 (GDD 162장 1)
+    const keep = rect ? padRect(rect, TUTORIAL_HOLE_PAD) : null;
     const landscape = vp.width > vp.height;
     let belowCard = false;
     let aside = false;
@@ -226,10 +252,12 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
       // 가로: 너비 두 가지를 시험해 대상·블록 바를 가장 적게 가리는 자리를 고른다 (T-2)
       const prot = protectedRects();
       let best: { w: number; h: number; p: ReturnType<typeof placeCardBox> } | null = null;
-      for (const w of [Math.min(WIDE_W, vp.width - 16), Math.min(NARROW_W, vp.width - 16)]) {
+      // + 대상 왼쪽·오른쪽 빈 곳에 꼭 맞는 너비 (GDD 162장 1): 위·아래가 막혔을 때(위 끝 칩·아래 독 사이) 대상 옆에 좁게 서서 대상을 가리지 않는다
+      const sideW = keep ? [keep.left - 16, vp.width - keep.left - keep.width - 16].filter((w) => w >= MIN_SIDE_W && w < NARROW_W) : [];
+      for (const w of [Math.min(WIDE_W, vp.width - 16), Math.min(NARROW_W, vp.width - 16), Math.min(SLIM_W, vp.width - 16), ...sideW]) {
         card.style.width = `${w}px`;
         const h = card.offsetHeight;
-        const p = placeCardBox(rect, { width: w, height: h }, vp, prot);
+        const p = placeCardBox(keep, { width: w, height: h }, vp, prot);
         if (!best || p.cost < best.p.cost) best = { w, h, p };
       }
       card.style.width = `${best!.w}px`;
@@ -241,7 +269,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     } else {
       card.style.width = '';
       card.style.left = '';
-      const place = placeCard(rect, card.offsetHeight, vp, protectedRects());
+      const place = placeCard(keep, card.offsetHeight, vp, protectedRects());
       card.style.top = `${place.top}px`;
       belowCard = !!rect && place.top >= rect.top + rect.height / 2;
       cardLeft = place.left;
@@ -339,6 +367,16 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   };
 
   window.addEventListener('resize', layout);
+  // 모든 장면 공통 (GDD 162장 1): 화면이 바뀌어 대상이 크게 옮겨 갔거나, 조금 옮겨 간 대상을 카드가 덮게 됐으면 다시 놓는다.
+  // 그 밖에는 뜬 창을 제자리에 둔다(제자리에서 흔들리는 대상을 따라 움직이지 않게 — GDD 143장 1)
+  coverTimer = window.setInterval(() => {
+    if (!layer.isConnected) return window.clearInterval(coverTimer);
+    if (hiddenForMove || card.style.visibility === 'hidden') return;
+    const sc = SCENES[state.index]!;
+    const r = targetRect(stageOf(sc)?.targets ?? sc.targets, host);
+    if (movedFar(r, placedFor)) return layout();
+    if (r && movedFar(r, placedFor, 2) && rectsOverlap(hostRect(card), padRect(r, TUTORIAL_HOLE_PAD))) layout();
+  }, ACT_POLL_MS);
   if (SCENES[state.index]!.stages) {
     stageIdx = currentStage(SCENES[state.index]!.stages!, host);
     layer.dataset.stage = String(stageIdx);
@@ -359,9 +397,9 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
           render();
         }
       }
-      // 화면이 바뀌어 대상이 크게 옮겨 갔을 때만 다시 놓는다 — 뜬 창은 제자리 고정 (GDD 143장 1)
-      if (movedFar(targetRect(stageOf(scene)?.targets ?? scene.targets, host), placedFor)) layout();
-      if (actDone || !act.done() || actionBusy()) return; // 행동 연출(막대 차오름)이 끝나야 [다음]이 풀린다 (GDD 132장 3)
+      if (actDone || !act.done()) return;
+      // 행동 연출(막대 차오름·먹는 모습)이 끝나야 [다음]이 풀린다 (GDD 132장 3). 그동안은 창을 숨긴다 — 이미 한 행동을 시키는 문구가 연출을 덮지 않게 (GDD 162장 2)
+      if (actionBusy()) return showCard(false);
       actDone = true;
       if (act.autoFinish) return finish('completed');
       render(); // [다음] 켜짐 · 뒤 화면 통과 끝 · 초점 = [다음]

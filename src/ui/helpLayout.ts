@@ -118,6 +118,11 @@ export function placeCardBox(
         { side: 'center', left: cx, top: (viewport.height - ch) / 2 },
         { side: 'top', left: cx, top },
         { side: 'bottom', left: cx, top: bottom },
+        // 가운데·위·아래가 다 보호 영역(캐릭터·열린 창)에 걸리면 네 모서리 (GDD 162장 1)
+        { side: 'corner', left, top },
+        { side: 'corner', left: right, top },
+        { side: 'corner', left, top: bottom },
+        { side: 'corner', left: right, top: bottom },
       ];
   let best: BoxPlacement | null = null;
   for (const c of candidates) {
