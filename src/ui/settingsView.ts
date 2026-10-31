@@ -385,10 +385,11 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     fsBtn.classList.toggle('is-on', isFullscreen());
     fsBtn.setAttribute('aria-pressed', String(isFullscreen()));
   };
-  // 앱 모드(홈 화면 앱, GDD 156장 2): manifest 가 이미 꽉 채우므로 버튼·시작 진입 없이 안내 한 줄 — API 를 부르면 크롬 안내가 뜬다
+  // 앱 모드(홈 화면 앱이 display-mode fullscreen, GDD 156장 2·166장 1): 이미 꽉 찼으므로 버튼·시작 진입 없이 한 줄 — API 를 부르면 크롬 안내가 뜬다.
+  // standalone(상태바 보임)은 전체 화면이 아니라 탭과 같이 버튼을 보인다 (166장 1·3)
   const appMode = isAppMode();
   const fsPanel = appMode
-    ? panel('전체 화면', hintLine('앱으로 실행 중 — 이미 전체 화면'))
+    ? panel('전체 화면', hintLine('전체 화면 중'))
     // 설명은 한 줄씩 — 브라우저·기기 사정 설명은 뺐다 (GDD 159장 12)
     : panel('전체 화면', fsBtn, hintLine('화면을 넓게 쓴다.'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작할 때 전체 화면이 된다.'));
   fsPanel.dataset.panel = 'fullscreen';

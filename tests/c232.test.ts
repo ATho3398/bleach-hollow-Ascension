@@ -24,10 +24,8 @@ function setup(mode: 'browser' | 'fullscreen' | 'standalone') {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('C.232 앱 모드 판정 (156장 2)', () => {
-  it('display-mode fullscreen·standalone = 앱 모드, 브라우저 탭은 아님', () => {
+  it('display-mode fullscreen = 앱 모드, 브라우저 탭은 아님 (standalone 은 C.243·166장부터 탭과 같다 — tests/c243.test.ts)', () => {
     setup('fullscreen');
-    expect(isAppMode()).toBe(true);
-    setup('standalone');
     expect(isAppMode()).toBe(true);
     setup('browser');
     expect(isAppMode()).toBe(false);
@@ -53,7 +51,7 @@ describe('C.232 앱 모드에서는 requestFullscreen 을 부르지 않는다 (1
     expect(lock).not.toHaveBeenCalled();
   });
   it('[전체 화면] 버튼(toggle·enter)도 안 부른다', async () => {
-    const { requestFullscreen } = setup('standalone');
+    const { requestFullscreen } = setup('fullscreen');
     expect(await toggleFullscreen()).toBe(false);
     expect(await enterFullscreen()).toBe(false);
     expect(requestFullscreen).not.toHaveBeenCalled();
@@ -82,7 +80,7 @@ describe('C.232 manifest·설정 줄 (156장 1·2·3)', () => {
   });
   it('설정: 앱 모드 = 안내 한 줄, 탭 = 버튼 + 홈 화면 앱 안내', () => {
     const src = read('src/ui/settingsView.ts');
-    expect(src).toContain("hintLine('앱으로 실행 중 — 이미 전체 화면')");
+    expect(src).toContain("hintLine('전체 화면 중')"); // C.243 (GDD 166장 3): '앱으로 실행 중' 문구 뺌
     expect(src).not.toContain('홈 화면에 앱으로 추가해 켜면'); // C.239 (GDD 159장 12): 기기·브라우저 사정 설명은 뺐다
     expect(src).toContain("hintLine('화면을 넓게 쓴다.')");
   });

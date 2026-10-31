@@ -1,4 +1,4 @@
-# 호로 / 사신 키우기 — 기획서 v5.371 (Claude Code 인수인계용)
+# 호로 / 사신 키우기 — 기획서 v5.372 (Claude Code 인수인계용)
 
 > 프로젝트 이름: 블리치 할로우 어센션 (Bleach Hollow Ascension). 변경 이력과 결정 기록은 12장, 개발 로드맵과 현재 상태는 13장. 기획은 이 문서 하나가 기준이다.
 
@@ -356,6 +356,9 @@ data/
 ---
 
 ## 12. 결정 기록 / 변경 이력
+
+### v5.372 (2026-10-31, 코딩180 — C.243)
+- 166장 구현 완료: 앱 모드(`isAppMode`) = display-mode **fullscreen** 이고 전체 화면 요소가 없을 때만. standalone(상태바 보이는 앱 창)은 탭과 같이 [전체 화면] 버튼·시작할 때 전체 화면·가로 고정 우회(requestFullscreen) 사용. 156장 'API 안 부름'은 display-mode fullscreen 에서만. 설정 문구 '앱으로 실행 중 — 이미 전체 화면' → '전체 화면 중'.
 
 ### v5.371 (2026-10-31, 코딩179)
 - 165장 1·2 구현(C.242): 방 수련장 삭제(월드맵에만, 짚인형 그림 폴백 유지), 능력치 ⓘ = 능력치마다 한 줄 · 도움말 '능력치' 앞말도 같은 문구. 165장 아래 '구현 완료' 줄.
@@ -5600,3 +5603,4 @@ data/
   3. 설정 문구: 전체 화면 중이면 '전체 화면 중', 아니면 [전체 화면] 버튼 — '앱으로 실행 중' 같은 말은 빼도 됨(text-style).
   4. 테스트: standalone·fullscreen·탭 세 경우 matchMedia 흉내로.
 - 세션: **코딩180**(Opus, 새 세션).
+- **구현 완료 1~4 (C.243, v5.372, 코딩180)**: 1·2 = `src/ui/bha/orientation.ts` `isAppMode()` 에서 `display-mode: standalone` 판정을 뺐다 → 앱 모드 = display-mode fullscreen 이고 `fullscreenElement` 가 없을 때만. 그때만 `enterFullscreen`·`toggleFullscreen`·`enterFullscreenOnStart`·`lockLandscape` 우회가 requestFullscreen 을 부르지 않는다(156장 2 유지). standalone·탭은 [전체 화면] 버튼(누르면 requestFullscreen) + '시작할 때 전체 화면'(+ 가로 고정 시도) 그대로. `pwaInstall.isStandalone`(설치 안내 숨김)은 그대로 standalone 도 앱으로 본다. 3 = 설정 '전체 화면' 패널: 앱 모드 = '전체 화면 중' 한 줄, 그 밖 = 버튼(탭에서 API 로 들어가 있으면 버튼이 켜짐 표시). 4 = `tests/c243.test.ts`(standalone·fullscreen·탭) + `tests/c232.test.ts` 기대값 갱신. 캡처 `docs/captures/c243/`. dev-log C.243.

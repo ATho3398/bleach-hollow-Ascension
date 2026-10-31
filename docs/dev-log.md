@@ -1486,3 +1486,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **2 능력치 ⓘ**: `statText.ts` `STAT_USE`·`statInfoLines` — 체력 = 최대 체력 / 힘 = 일반 공격 피해 관련 / 지능 = 블록 공격 피해 관련 / 방어 = 받는 일반 공격 피해 관련 / 정신력 = 받는 블록 공격 피해 관련 / 속도 = 일반 공격 빠르기 관련 / 평타 치명 = 일반 공격이 치명타로 터질 확률 (최대 50%) / 블록 치명 = 블록 공격이 치명타로 터질 확률 (최대 50%) / 치명타 피해 = 치명타가 터지면 들어가는 피해 배율 / 속성 피해 = 그 속성 공격 피해 관련 / 값 옆 굵은 +숫자 = 노력치. 머리 줄·소제목·'기본 n%'·'+n%p'·블록 보정·'맞선다'·괄호 부연 삭제(능력치 이름은 종족 표기 statName, 최대값은 critChances 의 basicMax·blockMax). 도움말 '능력치'(glossary) 각 줄 앞말도 같은 문구로(공식 줄은 유지, '확률 기본 n%' → '(최대 n%)', '괄호 안 숫자' → '값 옆 굵은 +숫자 = 노력치'). 흡수 '내 상태'에는 능력치 설명이 없어 해당 없음.
 - 테스트 `tests/c242.test.ts` 7개 + 옛 기대값(c238 방 짚인형 → 없음 · c207 홈 안내 카드 · shortcut-map T · c219 문구) 갱신.
 - 캡처 `docs/captures/c242/`(`scripts/c242-proof.cjs`, 1배 844×390): 01 사신 방(수련장 없음) · 02 월드맵(수련장 짚인형) · 03 상태 화면 능력치 ⓘ 창 · 04 호로 방(`C242_FI=0`).
+
+## C.243 — 앱인데 전체 화면이 아닐 때 '이미 전체 화면'으로 뜨던 버그 (GDD 166장, v5.372, S-23, 코딩180 Opus)
+사용 모델: Opus 5.5. 게임 수치·세이브 변경 없음.
+- 사용자 원문(10-31 16:4x, 안드로이드 크롬 홈 화면 앱, 상태바 보임): "전체화면 아닌데, 전체화면중으로 뜸 ㅇㅇ"
+- **원인**: `isAppMode()` 가 `display-mode: standalone` 도 앱 모드로 쳐서, standalone 으로 열린 앱(옛 manifest 설치 등)에서도 '앱으로 실행 중 — 이미 전체 화면'이 뜨고 requestFullscreen 이 막혔다.
+- **판정 규칙(바뀜)**: 앱 모드 = `(display-mode: fullscreen)` 이 맞고 `fullscreenElement`(webkit 포함)가 없을 때만. standalone·탭 = 앱 모드 아님 → [전체 화면] 버튼·시작할 때 전체 화면·가로 고정 실패 시 전체 화면 우회 모두 탭과 같음. 156장(크롬 '전체 화면 종료' 안내 피하기 = API 안 부름)은 display-mode fullscreen 에서만.
+- **문구**: 설정 '전체 화면' 패널 앱 모드 줄 '앱으로 실행 중 — 이미 전체 화면' → '전체 화면 중'.
+- 그대로 둔 것: `pwaInstall.isStandalone`(설치 안내 숨김용)은 standalone 도 '설치된 앱'으로 본다 — 전체 화면 여부와 무관.
+- 테스트 `tests/c243.test.ts` 6개(standalone·fullscreen·탭 matchMedia 흉내) + `tests/c232.test.ts` 기대값(standalone 앱 모드 아님, 문구) 갱신.
+- 캡처 `docs/captures/c243/`(`scripts/c243-proof.cjs`, 1배 844×390, matchMedia 흉내): 1 standalone(전체 화면 버튼 보임) · 2 display-mode fullscreen('전체 화면 중') · 3 일반 탭.
