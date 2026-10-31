@@ -50,35 +50,38 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
     expect(absorbEvOf(offer, 'stat', 3)).toEqual({ atk: 6, spd: 3 });
   });
 
-  it('둘 다: 특성 장착 + 속성 카운트 + 노력치 ×1 + 리스크 그대로 + 허기 리셋, 기록은 mode 없음(= both)', () => {
+  it('둘 다: 특성 장착 + 속성 카운트 + 노력치 ×1 + 리스크 그대로 + 배부름 그대로, 기록은 mode 없음(= both)', () => {
     const { e, own, enemy } = atAbsorb({ atk: 2 });
+    const hunger0 = e.hunger;
     expect(chooseAbsorb(e, own[0]!, undefined, 'both').ok).toBe(true);
     expect(e.build.slots).toContain(own[0]);
     expect(e.evolution.elementAbsorbs[enemy.element]).toBe(1);
     expect(e.evolution.absorbs).toBe(1);
     expect(e.evolution.ev.atk).toBe(2);
     expect(e.risk).toBeCloseTo(20 + absorbRisk(30));
-    expect(e.hunger).toBe(AX.hungerAfterAbsorb);
+    expect(e.hunger).toBe(hunger0); // GDD 163장 5: 흡수해도 배부름 그대로
     expect(e.absorbRecords.at(-1)).toMatchObject({ absorbed: true, traitId: own[0] });
     expect(e.absorbRecords.at(-1)!.mode).toBeUndefined();
     expect(absorbModeOf(e.absorbRecords.at(-1)!)).toBe('both');
     expect(e.phase).toBe('moving');
   });
 
-  it('속성만: 특성·속성 카운트 O, 노력치 없음, 리스크 ×0.7, 허기 리셋, 기록 mode trait', () => {
+  it('속성만: 특성·속성 카운트 O, 노력치 없음, 리스크 ×0.7, 배부름 그대로, 기록 mode trait', () => {
     const { e, own, enemy } = atAbsorb({ atk: 2 });
+    const hunger0 = e.hunger;
     expect(chooseAbsorb(e, own[1]!, undefined, 'trait').ok).toBe(true);
     expect(e.build.slots).toContain(own[1]);
     expect(e.evolution.elementAbsorbs[enemy.element]).toBe(1);
     expect(e.evolution.ev.atk).toBe(0);
     expect(e.risk).toBeCloseTo(20 + absorbRisk(30) * 0.7);
-    expect(e.hunger).toBe(AX.hungerAfterAbsorb);
+    expect(e.hunger).toBe(hunger0); // GDD 163장 5: 흡수해도 배부름 그대로
     expect(e.absorbRecords.at(-1)).toMatchObject({ absorbed: true, traitId: own[1], mode: 'trait' });
     expect(absorbModeOf(e.absorbRecords.at(-1)!)).toBe('trait');
   });
 
-  it('스탯만: 특성·속성 카운트 X, 노력치 ×2, 리스크 ×0.5, 허기 리셋, 흡수 수는 센다, 특성을 고르면 거절', () => {
+  it('스탯만: 특성·속성 카운트 X, 노력치 ×2, 리스크 ×0.5, 배부름 그대로, 흡수 수는 센다, 특성을 고르면 거절', () => {
     const { e, own, enemy } = atAbsorb({ atk: 2 });
+    const hunger0 = e.hunger;
     expect(chooseAbsorb(e, own[0]!, undefined, 'stat')).toEqual({ ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' });
     expect(e.phase).toBe('absorb');
     expect(chooseAbsorb(e, null, undefined, 'stat').ok).toBe(true);
@@ -87,7 +90,7 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
     expect(e.evolution.absorbs).toBe(1);
     expect(e.evolution.ev.atk).toBe(4);
     expect(e.risk).toBeCloseTo(20 + absorbRisk(30) * 0.5);
-    expect(e.hunger).toBe(AX.hungerAfterAbsorb);
+    expect(e.hunger).toBe(hunger0); // GDD 163장 5: 흡수해도 배부름 그대로
     expect(e.absorbRecords.at(-1)).toMatchObject({ absorbed: true, traitId: null, mode: 'stat' });
   });
 

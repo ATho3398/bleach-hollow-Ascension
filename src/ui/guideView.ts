@@ -19,7 +19,7 @@ import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { tileHint } from './labels';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { shownName } from './displayName';
-import { absorbModeText } from './absorbView';
+import { absorbModePicker } from './absorbView';
 
 
 export interface GuideOptions {
@@ -41,7 +41,8 @@ export function showGuide(faction: FactionConfig, id: TextGuideId | 'first-absor
   });
 }
 
-/** 튜토리얼 흡수 화면 (GDD 67장 2·3번): 흡수 4갈래를 한 줄씩 보여 주고, [흡수하기] → 시스템상 흡수가 아닌 '모든 능력치 +n' → [계속] */
+/** 튜토리얼 흡수 화면 (GDD 67장 2·3번 → 163장 4): 진짜 흡수 화면과 같은 갈래 버튼 4개 + 설명 칸(고르기 → 설명 → 같은 버튼 다시·✓ = 실행).
+ *  어느 갈래든 시스템상 흡수가 아닌 '모든 능력치 +n'(엔진 tutorialAbsorb, 설명 칸 값도 엔진 미리보기 그대로) → [계속] */
 export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: () => void): void {
   const offer = exp.absorbOffer;
   if (!offer) return onDone();
@@ -52,31 +53,20 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
     h.append(el('h1', 'bha-h1', title));
     return h;
   };
-  const modes = el('ul', 'bha-tutabsorb__modes');
-  const line = (name: string, text: string) => {
-    const li = el('li', 'bha-tutabsorb__mode');
-    li.append(el('b', '', name), el('span', '', text));
-    return li;
-  };
-  // 갈래 문구는 포식 화면 버튼과 한 곳에서 (GDD 100장 #47)
-  const mt = absorbModeText(faction);
-  modes.append(...(['both', 'trait', 'stat', 'none'] as const).map((m) => line(mt[m].label, mt[m].sub)));
-  const go = button({
-    label: `${act}하기`, icon: 'i-absorb', variant: 'primary', block: true,
-    onClick: () => {
-      if (!tutorialAbsorb(exp).ok) return onDone();
-      result();
-    },
+  const picker = absorbModePicker(faction, exp, () => {
+    if (!tutorialAbsorb(exp).ok) return onDone();
+    result();
   });
-  go.dataset.mode = 'tutorial';
-  lcdPage(root, { cls: 'bha-absorbpage bha-tutabsorb', cols: 'minmax(0, 1fr) minmax(0, 1fr)' }, head(`첫 ${act}`), [
+  // 갈래 줄 + 설명 칸을 한 덩어리로: 첫 흡수 안내 2장(guides first-absorb practice)이 이 덩어리를 강조하고 카드는 그 밖에 놓인다
+  const pick = el('div', 'bha-stack bha-absorb__pick');
+  pick.append(picker.actions, picker.desc);
+  lcdPage(root, { cls: 'bha-absorbpage bha-tutabsorb', cols: 'minmax(0, 1.1fr) minmax(0, 0.9fr)' }, head(`첫 ${act}`), [
     el('p', 'bha-dim bha-absorb__lead', `${foe}을(를) 쓰러뜨렸다.`),
-    el('p', 'bha-small', `${act}하면 쓰러뜨린 적의 힘(특성·속성·능력치)이 내 것이 된다. 고르는 길은 네 갈래:`),
-    modes,
+    pick,
   ], [
-    el('p', 'bha-small', `이번 첫 ${act}은(는) 연습이다. 특성·속성·${faction.riskGaugeName}에 들어가지 않고, 대신 모든 능력치가 똑같이 오른다.`),
-    go,
+    el('p', 'bha-small', `이번 첫 ${act}은(는) 연습이다. 어느 갈래를 골라도 모든 능력치가 똑같이 오르고 ${faction.riskGaugeName}은(는) 그대로다.`),
   ]);
+  picker.first.focus({ preventScroll: true });
   showGuide(faction, 'first-absorb', { finishLabel: '알겠어요', pauseLabel: '안내 중' });
 
   function result(): void {

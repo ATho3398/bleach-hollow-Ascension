@@ -4,11 +4,11 @@ import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
-import { normalSlotNote } from '../data/help/textFormat';
-import { STAT_IDS, pickFaction, type EnemyDef } from '../data/schema';
+import { normalSlotNote, signed } from '../data/help/textFormat';
+import { STAT_IDS, pickFaction, type EnemyDef, type StatId } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbModeRule, absorbRisk, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
-import { absorbEvOf, chooseAbsorb, chooseRelease, type ExpeditionState } from '../engine/expedition';
+import { absorbModeRule, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
+import { chooseAbsorb, chooseRelease, previewAbsorb, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { PROVISIONAL_NOTE } from './buildPanel';
 import { button, chip, el, icon, meter, notice, tag } from './bha/dom';
@@ -45,15 +45,110 @@ interface StepParts {
 
 const STEP_LABELS = ['선택', '특성 고르기', '교체'] as const;
 
-/** 포식 갈래 이름·한 줄 설명 (GDD 52·100장 #47): 포식 화면 버튼과 첫 포식 안내가 이 한 곳에서 읽는다. 이름은 종족 설정 absorbModeNames (GDD 158장 6) */
+/** 포식 갈래 이름·이 흡수가 뭔지 한 줄 (GDD 52·100장 #47 → 163장 2): 갈래 버튼 이름과 설명 칸 첫 줄이 이 한 곳에서 읽는다. 이름은 종족 설정 absorbModeNames (GDD 158장 6) */
 export function absorbModeText(faction: Pick<FactionConfig, 'absorbModeNames' | 'riskGaugeName' | 'stabilityName'>): Record<AbsorbMode | 'none', { label: string; sub: string }> {
   const n = faction.absorbModeNames;
   return {
-    both: { label: n.both, sub: '특성 + 노력치' },
-    trait: { label: n.trait, sub: '특성만 · 노력치 없음' },
-    stat: { label: n.stat, sub: `노력치 ×${absorbModeRule('stat').ev} · 특성 없음` },
-    none: { label: n.none, sub: `놓아준다 · ${faction.riskGaugeName} −${RX.releaseRelief} · ${faction.stabilityName} +${RX.releaseStability}` },
+    both: { label: n.both, sub: '블록과 능력치를 함께 얻는다.' },
+    trait: { label: n.trait, sub: '속성 블록만 얻는다. 능력치는 오르지 않는다.' },
+    stat: { label: n.stat, sub: `능력치만 ${absorbModeRule('stat').ev}배로 얻는다. 블록은 얻지 않는다.` },
+    none: { label: n.none, sub: '얻지 않고 놓아준다.' },
   };
+}
+
+/** 갈래 순서 (버튼 왼쪽부터) */
+export const ABSORB_MODES = ['both', 'trait', 'stat', 'none'] as const;
+export type AbsorbChoice = (typeof ABSORB_MODES)[number];
+
+/** 노력치 차이 → "힘 +2 · 체력 +1". 모두 같은 값이면 "모두 +n" (첫 흡수 연습) */
+export function evLine(ev: Partial<Record<StatId, number>>, factionId: string): string {
+  const got = STAT_IDS.filter((k) => (ev[k] ?? 0) > 0);
+  if (got.length === 0) return '';
+  if (got.length === STAT_IDS.length && got.every((k) => ev[k] === ev[got[0]!])) return `모두 +${ev[got[0]!]}`;
+  return got.map((k) => `${statName(k, factionId)} +${ev[k]}`).join(' · ');
+}
+
+/** 게이지 변화 "+3 (5 → 8)" / 그대로면 "그대로 (5)" */
+export function gaugeDelta(from: number, to: number): string {
+  const a = Math.round(from);
+  const b = Math.round(to);
+  return a === b ? `그대로 (${a})` : `${signed(b - a)} (${a} → ${b})`;
+}
+
+/** 설명 칸 줄 (GDD 163장 2): 이 흡수가 뭔지 / 능력치 / 리스크 게이지 변화(+ 한계 경고) / 받는 것. 값은 엔진 previewAbsorb 그대로 */
+export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] {
+  const p = previewAbsorb(exp, m);
+  const out: { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] = [{ kind: 'what', text: absorbModeText(faction)[m].sub }];
+  const ev = evLine(p.ev, faction.id);
+  if (ev) out.push({ kind: 'stat', text: `능력치: ${ev}` });
+  out.push({ kind: 'risk', text: `${faction.riskGaugeName}: ${gaugeDelta(p.riskFrom, p.riskTo)}` });
+  if (p.frenzy) out.push({ kind: 'warn', text: `한계(${RX.limit})에 닿아 ${faction.frenzyName} 상태가 된다.` });
+  const gain: string[] = [];
+  if (p.tiles > 0) gain.push(`타일 +${p.tiles}`);
+  if (Math.round(p.stabilityTo) !== Math.round(p.stabilityFrom)) gain.push(`${faction.stabilityName} ${gaugeDelta(p.stabilityFrom, p.stabilityTo)}`);
+  if (gain.length) out.push({ kind: 'gain', text: `받는 것: ${gain.join(' · ')}` });
+  return out;
+}
+
+/**
+ * 갈래 버튼 4개 + 설명 칸 (GDD 163장 1~3): 버튼 = 갈래 이름만. 첫 누름·▲▼ 하이라이트 = 고르기(설명 칸이 바뀐다),
+ * 고른 버튼을 한 번 더 누르거나 ✓ = 실행. 처음엔 첫 갈래가 골라진 상태. 흡수 화면과 첫 흡수 연습 화면이 같이 쓴다
+ */
+export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, run: (m: AbsorbChoice) => void, extra?: (m: AbsorbChoice) => HTMLElement[]): { actions: HTMLElement; desc: HTMLElement; first: HTMLButtonElement } {
+  const names = absorbModeText(faction);
+  const actions = el('div', 'bha-absorb__actions bha-absorb__actions--modes');
+  const desc = el('div', 'bha-panel bha-panel--inset bha-absorb__desc');
+  desc.setAttribute('aria-live', 'polite');
+  let sel: AbsorbChoice = ABSORB_MODES[0];
+  // 손가락으로 누르면 기기가 pointerdown 에서 하이라이트를 먼저 옮긴다(→ 'bha-select' = 고르기). 그래서 손가락 누름은
+  // '누르기 시작할 때 이미 골라져 있던 갈래'(armed)일 때만 실행한다. fresh = 이번 누름에서 하이라이트가 막 고른 갈래
+  let fresh: AbsorbChoice | null = null;
+  let armed: AbsorbChoice | null = null;
+  const btns = ABSORB_MODES.map((m) => {
+    const frenzy = m !== 'none' && previewAbsorb(exp, m).frenzy;
+    const b = button({ label: names[m].label, variant: frenzy ? 'danger' : undefined, size: 'small' });
+    b.dataset.mode = m;
+    if (frenzy) b.title = `${faction.frenzyName} 상태가 된다`;
+    // ▲▼ 하이라이트가 옮겨 오면 고르기만 (기기가 보내는 'bha-select', lcdpage.masterDetail 과 같은 방식)
+    b.addEventListener('bha-select', () => {
+      if (sel !== m) {
+        fresh = m;
+        setTimeout(() => { if (fresh === m) fresh = null; }, 0);
+      }
+      select(m);
+    });
+    b.addEventListener('pointerdown', () => { armed = sel === m && fresh !== m ? m : null; });
+    b.onclick = (e) => {
+      // 기기 ✓·키보드 = click() (detail 0): 하이라이트된 갈래 = 골라진 갈래라 바로 실행. 손가락 = 이미 골라져 있던 갈래를 다시 누를 때만
+      const again = e.detail > 0 ? armed === m : sel === m;
+      armed = null;
+      if (!again) {
+        select(m);
+        b.dispatchEvent(new CustomEvent('bha-goto', { bubbles: true })); // 손가락으로 고른 버튼에 기기 하이라이트도 옮긴다 (✓ = 이 갈래 실행)
+        return;
+      }
+      run(m);
+    };
+    return b;
+  });
+  function select(m: AbsorbChoice): void {
+    sel = m;
+    btns.forEach((b) => {
+      const on = b.dataset.mode === m;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    desc.dataset.descMode = m;
+    desc.replaceChildren(...absorbDescLines(faction, exp, m).map((l) => {
+      const cls = l.kind === 'what' ? 'bha-small bha-absorb__what' : l.kind === 'warn' ? 'bha-small bha-danger-text' : 'bha-small';
+      const p = el('p', cls, l.text);
+      p.dataset.line = l.kind;
+      return p;
+    }), ...(extra?.(m) ?? []));
+  }
+  actions.append(...btns);
+  select(sel);
+  return { actions, desc, first: btns[0]! };
 }
 
 /** 흡수 화면 블록 이름 (GDD 158장 4): "물 권" — 속성 + 블록 이름. 슬롯 칸은 앞에 "n번" */
@@ -93,12 +188,6 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   let error = '';
   /** 갈래 표시명 (공통 문구, 행동 이름만 종족 설정) — 첫 포식 안내와 같은 곳에서 읽는다 */
   const MODE_LABELS = absorbModeText(faction);
-  /** 갈래별 노력치 문구 ("힘 +4 · 속도 +2"), 없으면 '' */
-  const evTextOf = (m: AbsorbMode): string => {
-    const ev = absorbEvOf(offer!, m, exp.difficulty, exp.streak);
-    return STAT_IDS.filter((k) => (ev[k] ?? 0) > 0).map((k) => `${statName(k, faction.id)} +${ev[k]}`).join(' · ');
-  };
-
   /** 이 화면이 끝났나 (뒤로 처리기를 푼다). owner = 이 흡수 화면 표시 */
   let done = false;
   const owner = `a${++absorbSeq}`;
@@ -210,45 +299,27 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   }
 
   function chooseStep(): StepParts {
-    const riskOf = (m: AbsorbMode) => absorbRisk(offer!.strength, m);
-    const breaks = (m: AbsorbMode) => exp.risk + riskOf(m) >= RX.limit;
-    const risk = riskOf('both');
-    const willBreak = breaks('both');
-    const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard()];
-    // GDD 100장 #44·45: 설명 표는 버튼 아래 작은 글과 같은 내용이라 뺐다. 왼쪽 = 상대 + 갈래 버튼 2×2, 오른쪽 = 슬롯 목록만(3칸이 가려지지 않게)
-    const enh = el('p', 'bha-small');
-    enh.append(enhanceRow());
-    nodes.push(
-      enh,
-      el('p', 'bha-faint', `${act}하면 ${faction.fullnessName} 가득 · 타일 +1.`),
-    );
+    // GDD 163장: 갈래 버튼 = 고르기, 같은 버튼 다시·✓ = 실행. 버튼 아래(왼쪽 아래 전부) = 고른 갈래 설명 칸. 오른쪽 = 지금 리스크 게이지 + 슬롯
+    const picker = absorbModePicker(faction, exp, (m) => {
+      if (m === 'none') return finish(chooseRelease(exp), false);
+      mode = m;
+      if (m === 'stat') return finish(chooseAbsorb(exp, null, undefined, 'stat'), true);
+      step = 'pick';
+      render();
+    }, (m) => {
+      // 블록을 얻는 갈래만: 속성 강화 줄 (새 블록 / 강화 n → n+1)
+      if (m !== 'both' && m !== 'trait') return [];
+      const enh = el('p', 'bha-small');
+      enh.append(enhanceRow());
+      return [enh];
+    });
+    first = picker.first;
+    const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard(), picker.actions, picker.desc];
     const side: HTMLElement[] = [
-      meter({
-        kind: 'risk', label: `지금 ${faction.riskGaugeName}`, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, zone: 0.6, danger: exp.risk >= 60 || willBreak,
-        note: willBreak ? `${act}하면 ${faction.frenzyName}! (${Math.round(exp.risk)} + ${Math.round(risk)} = ${Math.round(exp.risk + risk)})` : undefined,
-      }),
+      meter({ kind: 'risk', label: `지금 ${faction.riskGaugeName}`, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, zone: 0.6, danger: exp.risk >= 60 }),
       slotSummary(),
     ];
     if (error) side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
-    // 갈래 버튼 4개 (GDD 158장 6): 작게 한 줄 — 이름(종족 설정) + 아래 작은 글씨로 리스크 게이지 변화 하나. 아이콘·긴 설명 없음
-    const sub = (b: HTMLButtonElement, text: string) => {
-      b.append(el('small', '', text));
-      return b;
-    };
-    const modeBtn = (m: AbsorbMode, go: () => void): HTMLButtonElement => {
-      const b = sub(button({ label: MODE_LABELS[m].label, variant: breaks(m) ? 'danger' : m === 'both' ? 'primary' : undefined, size: 'small', onClick: go }), `${faction.riskGaugeName} +${Math.round(riskOf(m))}`);
-      b.dataset.mode = m;
-      if (breaks(m)) b.title = `${faction.frenzyName} 상태가 된다`;
-      return b;
-    };
-    const both = modeBtn('both', () => { mode = 'both'; step = 'pick'; render(); });
-    const trait = modeBtn('trait', () => { mode = 'trait'; step = 'pick'; render(); });
-    const stat = modeBtn('stat', () => { mode = 'stat'; finish(chooseAbsorb(exp, null, undefined, 'stat'), true); });
-    const r = sub(button({ label: MODE_LABELS.none.label, size: 'small', onClick: () => finish(chooseRelease(exp), false) }), `${faction.riskGaugeName} −${RX.releaseRelief}`);
-    r.dataset.mode = 'none';
-    const actions = el('div', 'bha-absorb__actions bha-absorb__actions--modes');
-    actions.append(both, trait, stat, r);
-    nodes.push(actions);
     return { title: `${act} 가능`, main: nodes, side };
   }
 
@@ -369,7 +440,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     me.dataset.absorbMe = '';
     head.append(steps(stepNo), el('h1', 'bha-h1', parts.title), me);
     lcdPage(root, { cls: 'bha-absorbpage', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, head, main, side).app.dataset.owner = owner;
-    (first as HTMLElement | null)?.focus({ preventScroll: true }); // 2·3단계 기본 선택 = 첫 후보·첫 슬롯 ([돌아가기] 가 아니라, GDD 100장 #50)
+    (first as HTMLElement | null)?.focus({ preventScroll: true }); // 기본 선택 = 첫 갈래(163장 1)·첫 후보·첫 슬롯 ([돌아가기] 가 아니라, GDD 100장 #50)
   }
   // 뒤로 (GDD 128장 4, C.202): 열린 창은 기기가 먼저 닫는다 → 2·3단계는 한 단계 앞으로 → 첫 단계는 '흡수 안 하고 넘어가기' 확인(기본 아니오)
   onScreenBack({

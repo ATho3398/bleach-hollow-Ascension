@@ -247,11 +247,12 @@ describe('슬롯 장착·교체·가득 참', () => {
     exp.build.owned.push(...A.slice(0, 3));
     exp.build.slots = A.slice(0, 3);
     toAbsorb(exp, { element: 'water' });
+    const hunger0 = exp.hunger;
     expect(chooseAbsorb(exp, null).ok).toBe(true);
     expect(exp.build.slots).toEqual(A.slice(0, 3));
     expect(exp.acquiredTraits).toHaveLength(0);
     expect(exp.absorbRecords[0]).toMatchObject({ absorbed: true, traitId: null });
-    expect(exp.hunger).toBe(AX.hungerAfterAbsorb);
+    expect(exp.hunger).toBe(hunger0); // GDD 163장 5: 흡수해도 배부름 그대로
   });
 });
 
@@ -394,8 +395,9 @@ describe('흡수의 효과', () => {
     const strength = weak.absorbOffer!.strength;
     const tilesBefore = weak.acquired.length;
     const riskBefore = weak.risk;
+    const hunger0 = weak.hunger;
     expect(chooseAbsorb(weak, weak.absorbOffer!.candidates[0] ?? null).ok).toBe(true);
-    expect(weak.hunger).toBe(AX.hungerAfterAbsorb);
+    expect(weak.hunger).toBe(hunger0); // GDD 163장 5
     expect(weak.risk - riskBefore).toBeCloseTo(absorbRisk(strength));
     expect(weak.acquired.length).toBeGreaterThanOrEqual(tilesBefore);
     expect(weak.tilesThisLap).toBeLessThanOrEqual(BALANCE.expedition.tilesPerLap.max);

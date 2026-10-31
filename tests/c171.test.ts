@@ -68,9 +68,10 @@ describe("용어 '포식'·'배부름' (#46·58·81)", () => {
     const m = absorbModeText(H);
     // C.236 (GDD 158장 6): 갈래 이름 = 종족 설정 absorbModeNames
     expect(m.both.label).toBe(H.absorbModeNames.both);
-    expect(m.trait.sub).toBe('특성만 · 노력치 없음');
+    expect(m.trait.sub).toBe('속성 블록만 얻는다. 능력치는 오르지 않는다.'); // GDD 163장 2: 설명 칸 첫 줄
     expect(absorbModeText(S).none.label).toBe(S.absorbModeNames.none);
-    expect(read('src/ui/guideView.ts')).toContain('absorbModeText(faction)');
+    expect(read('src/ui/absorbView.ts')).toContain('absorbModeText(faction)[m].sub'); // GDD 163장: 설명 칸 첫 줄도 같은 곳
+    expect(read('src/ui/guideView.ts')).toContain('absorbModePicker(faction, exp'); // 첫 포식 연습 화면도 같은 갈래 버튼·설명 칸
     expect(read('src/ui/guideView.ts')).not.toContain('그 속성 쪽으로 자란다');
   });
 });
@@ -101,7 +102,7 @@ describe('포식 (#44~53)', () => {
   const a = read('src/ui/absorbView.ts');
   it('설명 표 삭제, 갈래 버튼은 왼쪽, 오른쪽은 슬롯 목록 (#44·45)', () => {
     expect(a).not.toContain('info([');
-    expect(a).toContain('nodes.push(actions);');
+    expect(a).toContain('foeCard(), picker.actions, picker.desc]'); // GDD 163장: 왼쪽 = 상대 + 갈래 버튼 + 설명 칸
   });
   it('후보 0개 머리 · 기본 선택 = 첫 후보 · 다시 뽑기 숫자 하나 · 교체 단계 새 특성 카드 · 필요한 단계만 (#49~53)', () => {
     expect(a).toContain("'새 특성 없음 — 강화만'");

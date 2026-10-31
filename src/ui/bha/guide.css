@@ -17,9 +17,6 @@
 .bha-draw__hint { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 @media (prefers-reduced-motion: reduce) { .bha-draw__card { transition: none; } }
 
-.bha-tutabsorb__modes { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin: 0; padding: 0; list-style: none; }
-.bha-tutabsorb__mode { display: flex; gap: var(--bha-sp-3); align-items: baseline; font-size: var(--bha-fs-sm); color: var(--bha-text-2); }
-.bha-tutabsorb__mode b { color: var(--bha-text-1); min-width: 4.5em; }
 .bha-tutabsorb__gain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
 .bha-tutabsorb__stat { display: flex; justify-content: space-between; padding: var(--bha-sp-2) var(--bha-sp-3); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); font-size: var(--bha-fs-sm); }
 .bha-tutabsorb__stat b { color: var(--bha-accent); }

@@ -1092,7 +1092,7 @@ export function absorbEvOf(offer: Pick<AbsorbOffer, 'ev'>, mode: AbsorbMode, dif
 
 /** 흡수 (GDD 4장, 4-1 → 52장 갈래): 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체, traitId null 이면 특성을 포기하고 효과만).
  *  mode = 'both'(특성·속성 카운트 + 노력치 ×1) / 'trait'(특성·속성 카운트만, 리스크 ×0.7) / 'stat'(노력치 ×2, 리스크 ×0.5, 특성·속성 카운트 없음 — traitId 는 null 이어야 한다).
- *  공통 효과: 허기 리셋, 리스크 상승(강할수록 많이), 보상 타일 +1. 실패하면 아무것도 바뀌지 않는다 */
+ *  공통 효과: 리스크 상승(강할수록 많이), 보상 타일 +1 (배부름은 그대로 — GDD 163장 5). 실패하면 아무것도 바뀌지 않는다 */
 export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: number | null, mode: AbsorbMode = 'both'): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
@@ -1113,7 +1113,6 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   const ev = absorbEvOf(offer, mode, exp.difficulty, exp.streak);
   const evK = dyingReward(exp) * lapRewardMult(exp.lap); // 빈사면 노력치 절반 (GDD 102장 수정), 이어하기 배율 (121장 5)
   recordEvolutionAbsorb(exp.evolution, offer.element, evK === 1 ? ev : Object.fromEntries(Object.entries(ev).map(([k, v]) => [k, (v ?? 0) * evK])), mode !== 'stat');
-  exp.hunger = Math.min(exp.hunger, AX.hungerAfterAbsorb);
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1, 'absorb');
   changeRisk(exp, absorbRisk(offer.strength, mode), 'absorb');
   // 스토리 흡수 목표 (GDD 25-4): 그 등급 적을 흡수
@@ -1123,6 +1122,42 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   exp.phase = 'moving';
   checkStoryClear(exp);
   return { ok: true };
+}
+
+/** 흡수 갈래를 실행하면 바뀌는 것 (GDD 163장 2: 흡수 화면 설명 칸). 화면 값이 실제와 같도록 상태 복제본에 그 갈래를 그대로 실행해 차이를 잰다 */
+export interface AbsorbPreview {
+  /** 실행할 수 있나 (안 되면 아래 값은 0) */
+  ok: boolean;
+  /** 실제로 오르는 노력치 (빈사·이어하기 배율·단계 상한까지 반영) */
+  ev: Partial<Record<StatId, number>>;
+  riskFrom: number;
+  riskTo: number;
+  /** 이번 실행으로 리스크 게이지가 한계에 닿아 폭주(호로화)가 일어난다 */
+  frenzy: boolean;
+  /** 받는 보상 타일 수 (흡수의 배부름 효과는 GDD 163장 5 에 삭제) */
+  tiles: number;
+  stabilityFrom: number;
+  stabilityTo: number;
+}
+
+export function previewAbsorb(exp: ExpeditionState, mode: AbsorbMode | 'none'): AbsorbPreview {
+  const c = structuredClone(exp);
+  const r = mode === 'none' ? chooseRelease(c) : chooseAbsorb(c, null, undefined, mode);
+  const ev: Partial<Record<StatId, number>> = {};
+  if (r.ok) for (const s of STAT_IDS) {
+    const d = Math.round((c.evolution.ev[s] - exp.evolution.ev[s]) * 100) / 100;
+    if (d > 0) ev[s] = d;
+  }
+  return {
+    ok: r.ok,
+    ev,
+    riskFrom: exp.risk,
+    riskTo: r.ok ? c.risk : exp.risk,
+    frenzy: r.ok && exp.breakthrough === null && c.breakthrough !== null,
+    tiles: r.ok ? Math.max(0, c.hand.length - exp.hand.length) : 0,
+    stabilityFrom: exp.stability,
+    stabilityTo: r.ok ? c.stability : exp.stability,
+  };
 }
 
 /** 튜토리얼 첫 흡수 (GDD 67장 3번): 시스템상 흡수가 아니다 — 흡수 수·속성 카운트·특성·리스크·흡수 기록·보상 타일 없음.
