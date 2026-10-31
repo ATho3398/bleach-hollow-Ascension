@@ -334,8 +334,10 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     if (cur && changed && cur.el instanceof HTMLInputElement) cur.el.focus({ preventScroll: true });
     if (!layer && explicit?.onChange && changed) explicit.onChange(cur);
     const canMove = items.length > 0;
-    up.classList.toggle('is-off', !canMove);
-    down.classList.toggle('is-off', !canMove);
+    // 누를 것 없는 글 창(ⓘ)이 넘치면 ▲▼ = 스크롤이라 켜 둔다 (GDD 168장 3)
+    const canScroll = !canMove && !!layer && layer.el.scrollHeight > layer.el.clientHeight + 1;
+    up.classList.toggle('is-off', !canMove && !canScroll);
+    down.classList.toggle('is-off', !canMove && !canScroll);
     // C.197 (GDD 122장 2): ▲▼ 는 전투 중에도 늘 보인다 (GDD 100장 #39 의 전투 중 숨김은 대체됨)
     ok.classList.toggle('is-off', !canMove);
     back.classList.toggle('is-off', layers.length === 0 && !opts.canCancel() && !battle); // 전투: 뒤로 = 일시정지 (GDD 122장 4)

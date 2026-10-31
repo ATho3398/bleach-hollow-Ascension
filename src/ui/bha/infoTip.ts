@@ -52,6 +52,8 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
   const onDown = (e: PointerEvent) => {
     const t = e.target as Node | null;
     if (pop && t && (pop.contains(t) || b.contains(t))) return;
+    // 기기 ▲▼ = 창 스크롤 (GDD 168장 3) — 기기 버튼 누름은 '밖 누름'으로 닫지 않는다 (◀ 는 레이어 취소로 닫는다)
+    if (pinned && t instanceof Element && t.closest('.bha-dev__btn')) return;
     close();
   };
   function close(): void {

@@ -88,6 +88,7 @@ describe('3 리스크 ⓘ 창: 계산식 대신 쉬운 말 + 대표 값, 잘리�
   it('ⓘ 창: 넘치면 "▼ 더 있음", 기기 ▲▼ 는 누를 것 없는 맨 위 창을 스크롤', () => {
     expect(read('src/ui/bha/infoTip.ts')).toContain("'bha-pop__more', '▼ 더 있음'");
     expect(read('src/ui/bha/device.ts')).toMatch(/top\.scrollBy\(/);
+    expect(read('src/ui/bha/device.ts')).toContain('const canScroll');
     expect(read('src/ui/bha/components/components.css')).toContain('.bha-pop__more');
   });
 });
