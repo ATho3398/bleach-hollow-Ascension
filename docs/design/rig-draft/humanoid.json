@@ -263,7 +263,7 @@
     "note": "몸마다 따로 맞춘 관절(GDD 96장 33): pivots = 관절 자리, rot = 기본 각도(도, 쉬는 각도에 더함). 없으면 bones 의 값",
     "arrancar_f": {
       "pivots": {
-        "arm_R": [19, 32],
+        "arm_R": [24, 34],
         "forearm_R": [29, 41],
         "foot_R": [22, 75],
         "forearm_L": [7, 44]
@@ -275,12 +275,12 @@
         "arm_R": 14
       },
       "shift": {
-        "arm_R": [0.09, -0.72]
+        "arm_R": [-0.54, 0.43]
       }
     },
     "female": {
       "pivots": {
-        "arm_R": [19, 32],
+        "arm_R": [24, 34],
         "forearm_R": [29, 41],
         "foot_R": [22, 75],
         "forearm_L": [7, 44]
@@ -292,7 +292,7 @@
         "arm_R": 14
       },
       "shift": {
-        "arm_R": [0.09, -0.72]
+        "arm_R": [-0.54, 0.43]
       }
     },
     "student": {
@@ -332,7 +332,7 @@
       "pivots": {
         "hair_back": [24, 9],
         "forearm_L": [7, 44],
-        "arm_R": [19, 32],
+        "arm_R": [24, 34],
         "foot_R": [22, 75],
         "forearm_R": [29, 41]
       },
@@ -343,14 +343,14 @@
         "torso": 2
       },
       "shift": {
-        "arm_R": [0.09, -0.72]
+        "arm_R": [-0.54, 0.43]
       }
     },
     "shinigami_f": {
       "pivots": {
         "hair_back": [24, 9],
         "forearm_L": [7, 44],
-        "arm_R": [19, 32],
+        "arm_R": [24, 34],
         "foot_R": [22, 75],
         "forearm_R": [29, 41]
       },
@@ -361,7 +361,7 @@
         "torso": 2
       },
       "shift": {
-        "arm_R": [0.09, -0.72]
+        "arm_R": [-0.54, 0.43]
       }
     },
     "dg": {
