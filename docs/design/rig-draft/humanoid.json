@@ -82,7 +82,7 @@
       "foot_L": { "art": "bare/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "bare/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "bare/thumb_L", "at": [7, 52], "size": [3, 6] },
-      "forearm_R": { "art": "bare/forearm_R", "at": [20, 40], "size": [13, 17] },
+      "forearm_R": { "art": "bare/forearm_R", "at": [19, 40], "size": [13, 17] },
       "forearm_L": { "art": "bare/forearm_L", "at": [5, 42], "size": [12, 17] }
     },
     "female": {
@@ -296,7 +296,7 @@
         "forearm_R": [32, 42]
       },
       "rot": {
-        "forearm_R": -46,
+        "forearm_R": -35,
         "arm_R": 19
       }
     },
@@ -308,7 +308,7 @@
       },
       "rot": {
         "arm_R": 19,
-        "forearm_R": -46
+        "forearm_R": -35
       }
     },
     "arrancar": {
@@ -319,7 +319,7 @@
       },
       "rot": {
         "arm_R": 19,
-        "forearm_R": -46
+        "forearm_R": -35
       }
     },
     "student_f": {
@@ -376,7 +376,7 @@
       },
       "rot": {
         "arm_R": 19,
-        "forearm_R": -46
+        "forearm_R": -35
       }
     }
   },
