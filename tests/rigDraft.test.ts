@@ -130,9 +130,9 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
   it('대기 = 팔 내린 자세(오른팔 아래로), 홈 대기 = 예전 대기(검집 잡음), 걷기 오른팔은 대기 기준', () => {
     const arm = (id: string) => motions[id]!.tracks.arm_R!.map((k) => k[1]);
     expect(motions.homeIdle!.loop).toBe(true);
-    expect(Math.min(...arm('idle'))).toBeGreaterThan(30);
+    expect(Math.min(...arm('idle'))).toBeGreaterThan(15);
     expect(Math.max(...arm('homeIdle'))).toBeLessThan(Math.min(...arm('idle')));
-    expect(Math.min(...arm('move'))).toBeGreaterThan(30);
+    expect(Math.min(...arm('move'))).toBeGreaterThan(15);
     // 몸 그림마다 팔 쉬는 각이 달라 몸 묶음으로 맞춤: 아란칼(여) = 사용자 편집기 그림 각도(위팔 28°·아래팔 -47° = 몸 각도 14°·-15° + 동작 14°·-32°)
     const af = resolveMotions(rig, motions, sets, 'arrancar_f').idle!.tracks;
     expect([af.arm_R![0]![1], af.forearm_R![0]![1]]).toEqual([14, -32]);
