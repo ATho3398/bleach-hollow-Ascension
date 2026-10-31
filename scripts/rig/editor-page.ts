@@ -278,10 +278,10 @@ function draw() {
       stage.append(f);
     }
   }
-  if (!motion) {
+  {
+    // 관절 점 = 이 뼈가 지금 실제로 도는 자리(보정 이동 포함) — 동작 중에도 그 순간 자리에(사용자 2026-11-01 "동작에선 왜 관절 위치가 안떠", GDD 115-A 64)
     for (const b of bodyBones(rig, curBody())) {
       const d = document.createElement('div');
-      // 관절 점 = 이 뼈가 실제로 도는 자리(보정 이동 포함)
       const [px, py] = apply(mats[b.id]!, b.pivot);
       d.className = 'dot' + (b.id === boneOfSel() ? ' on' : '');
       d.style.left = `${(px + 0.5) * K}px`;
@@ -470,10 +470,11 @@ stage.addEventListener('click', (e) => {
   const fy = (e.clientY - r.top) / (r.height / H);
   const hit = slotAt(fx, fy);
   if (hit && hit !== sel) { pick(hit); return; }
-  if (mode !== 'pivot' || motion) return;
-  // 누른 칸이 관절 점 자리가 되게: 화면 → 이 뼈의 그림 좌표(쉬는 자세)로 되돌려 그 칸으로 관절만 옮김
+  if (mode !== 'pivot') return;
+  // 누른 칸이 관절 점 자리가 되게: 화면 → 이 뼈의 그림 좌표(지금 보이는 자세 — 동작 중이면 그 순간)로 되돌려 그 칸으로 관절만 옮김
   const id = boneOfSel();
-  const m = boneMatrices(rig, {}, curBody())[id]!;
+  const cm = motion ? motionsNow()[motion] : undefined;
+  const m = boneMatrices(rig, cm ? samplePose(rig, cm, mt) : {}, curBody())[id]!;
   const det = m[0] * m[3] - m[1] * m[2];
   if (!det) return;
   const qx = fx - m[4], qy = fy - m[5];
