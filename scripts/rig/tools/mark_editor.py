@@ -19,5 +19,6 @@ commit = subprocess.check_output(['git', '-C', ROOT, 'rev-parse', 'HEAD'], text=
 p = os.path.join(ROOT, DRAFT, 'editor-page.json')
 d = json.load(open(p, encoding='utf-8')) if os.path.exists(p) else {}
 d['commit'] = commit
+d['applied'] = {}  # 새 페이지 = 이 페이지에서 고정으로 넣은 항목 없음(apply_editor.py 가 채움)
 open(p, 'w', encoding='utf-8').write(json.dumps(d, ensure_ascii=False, indent=1) + '\n')
 print('editor-page.json ←', commit[:7])
