@@ -113,7 +113,6 @@ function motionKeyOf(id: string): string {
 let look = 'arrancar-base';
 let sel = 'arm_L';
 let mode: 'pivot' | 'part' = 'pivot';
-let testRot = 0;
 let motion: string | null = null;
 let mt = 0;
 /** 저장 범위: 기본 자세(이 몸) / 이 동작에만(그 동작 내내 더해지는 각도·위치) — 사용자 2026-10-31. 고치는 동안 동작은 멈추지 않는다 */
@@ -215,7 +214,6 @@ function draw() {
   const MOTIONS = motionsNow();
   if (motion && !MOTIONS[motion]) motion = null;
   if (motion) pose = samplePose(rig, MOTIONS[motion]!, mt);
-  else if (testRot) pose = { [boneOfSel()]: { rot: testRot, x: 0, y: 0 } };
   const mats = boneMatrices(rig, pose, curBody());
   drawn = [];
   // 해방 동작이면 그 순간 외형, 필살기면 칼을 맨 앞으로(GDD 115-A 48·49)
@@ -285,7 +283,7 @@ function draw() {
 
 /** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
 const CHIP_GROUPS = (): [string, string[]][] => rig.edit?.groups ?? [];
-function pick(id: string) { sel = id; testRot = 0; ($('rot') as HTMLInputElement).value = '0'; buildChips(); draw(); }
+function pick(id: string) { sel = id; buildChips(); draw(); }
 function buildChips() {
   const box = $('parts');
   box.innerHTML = '';
@@ -375,7 +373,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.onclic
   const [dx, dy] = b.dataset.d!.split(',').map(Number);
   nudge(dx!, dy!);
 });
-// 기본 각도(이 몸에서 쉬는 자세의 관절 각도) — 저장된다. 시험 회전은 저장 안 됨
+// 기본 각도(이 몸에서 쉬는 자세의 관절 각도) — 저장된다
 const brot = document.getElementById('brot') as HTMLInputElement | null;
 if (brot) brot.oninput = () => {
   const id = boneOfSel();
@@ -388,7 +386,6 @@ if (brot) brot.oninput = () => {
 const brotStep = (d: number) => { if (!brot) return; brot.value = String(Number(brot.value) + d); brot.oninput?.(new Event('input')); };
 document.getElementById('brot-m')?.addEventListener('click', () => brotStep(-1));
 document.getElementById('brot-p')?.addEventListener('click', () => brotStep(1));
-$<HTMLInputElement>('rot').oninput = (e) => { motion = null; testRot = Number((e.target as HTMLInputElement).value); $('rotv').textContent = `${testRot}°`; draw(); };
 document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclick = () => {
   const m = b.dataset.m!;
   motion = m === 'stop' ? null : m;
@@ -416,7 +413,7 @@ stage.addEventListener('click', (e) => {
   const fy = (e.clientY - r.top) / (r.height / H);
   const hit = slotAt(fx, fy);
   if (hit && hit !== sel) { pick(hit); return; }
-  if (mode !== 'pivot' || motion || testRot) return;
+  if (mode !== 'pivot' || motion) return;
   setPivot(boneOfSel(), [Math.floor(fx), Math.floor(fy)]);
   save(); draw();
 });
