@@ -266,7 +266,6 @@
         "arm_R": [22, 32],
         "forearm_R": [29, 41],
         "foot_R": [22, 75],
-        "head": [15, 16],
         "forearm_L": [7, 44]
       },
       "rot": {
@@ -292,12 +291,13 @@
     },
     "student": {
       "pivots": {
-        "arm_R": [24, 34],
-        "forearm_L": [8, 44]
+        "arm_R": [26, 36],
+        "forearm_L": [9, 44],
+        "forearm_R": [32, 42]
       },
       "rot": {
-        "forearm_R": -10,
-        "arm_R": 15
+        "forearm_R": -46,
+        "arm_R": 19
       }
     },
     "bare": {
@@ -313,34 +313,43 @@
     },
     "arrancar": {
       "pivots": {
-        "arm_R": [22, 35],
-        "forearm_L": [7, 44]
+        "arm_R": [26, 36],
+        "forearm_L": [9, 44],
+        "forearm_R": [32, 42]
+      },
+      "rot": {
+        "arm_R": 19,
+        "forearm_R": -46
       }
     },
     "student_f": {
       "pivots": {
         "hair_back": [24, 9],
-        "head": [13, 15],
-        "forearm_L": [8, 44]
+        "forearm_L": [7, 44],
+        "arm_R": [22, 32],
+        "foot_R": [22, 75],
+        "forearm_R": [29, 41]
       },
       "rot": {
-        "arm_R": 6,
-        "forearm_R": -6,
-        "leg_R": 2,
-        "foot_R": -2
+        "arm_R": 14,
+        "forearm_R": -15,
+        "head": -5,
+        "torso": 2
       }
     },
     "shinigami_f": {
       "pivots": {
         "hair_back": [24, 9],
-        "head": [13, 15],
-        "forearm_L": [8, 44]
+        "forearm_L": [7, 44],
+        "arm_R": [22, 32],
+        "foot_R": [22, 75],
+        "forearm_R": [29, 41]
       },
       "rot": {
-        "arm_R": 6,
-        "forearm_R": -6,
-        "leg_R": 2,
-        "foot_R": -2
+        "arm_R": 14,
+        "forearm_R": -15,
+        "head": -5,
+        "torso": 2
       }
     },
     "dg": {
@@ -361,7 +370,13 @@
     },
     "shinigami": {
       "pivots": {
-        "forearm_L": [8, 44]
+        "forearm_L": [9, 44],
+        "arm_R": [26, 36],
+        "forearm_R": [32, 42]
+      },
+      "rot": {
+        "arm_R": 19,
+        "forearm_R": -46
       }
     }
   },
