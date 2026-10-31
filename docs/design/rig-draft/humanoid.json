@@ -291,7 +291,7 @@
     },
     "student": {
       "pivots": {
-        "arm_R": [26, 36],
+        "arm_R": [25, 35],
         "forearm_L": [9, 44],
         "forearm_R": [32, 42]
       },
@@ -302,7 +302,7 @@
     },
     "bare": {
       "pivots": {
-        "arm_R": [26, 36],
+        "arm_R": [25, 35],
         "forearm_L": [9, 44],
         "forearm_R": [32, 42]
       },
@@ -313,7 +313,7 @@
     },
     "arrancar": {
       "pivots": {
-        "arm_R": [26, 36],
+        "arm_R": [25, 35],
         "forearm_L": [9, 44],
         "forearm_R": [32, 42]
       },
@@ -371,7 +371,7 @@
     "shinigami": {
       "pivots": {
         "forearm_L": [9, 44],
-        "arm_R": [26, 36],
+        "arm_R": [25, 35],
         "forearm_R": [32, 42]
       },
       "rot": {
