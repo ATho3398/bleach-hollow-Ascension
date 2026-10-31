@@ -122,11 +122,14 @@ export function filterFindings(list: Finding[], prior: PriorItem[]): FilterResul
 export const FACTION_KO: Record<string, string> = { hollow: '호로', shinigami: '사신', '둘 다': '둘 다' };
 
 /** 엑셀 행 — 열: 번호·심각도·묶음·화면·종족·관점·문제·추천 수정·마스터 메모·고칠까(O/X)·캡처 (+ 플레이테스트 '걸음') */
+/** 엑셀 화면·묶음 이름: 게임 용어 '모험' (GDD 168장 1 — AI 가 옛 말 '원정'을 써도 고친다) */
+export const screenTerm = (s: string): string => s.replace(/원정/g, '모험');
+
 export function xlsxRows(list: Finding[], kind: 'playtest' | 'review'): { header: string[]; rows: (string | number)[][]; shots: string[] } {
   const header = ['번호', '심각도', '묶음', '화면', '종족', '관점', '문제', '추천 수정', '마스터 메모', '고칠까(O/X)', '캡처'];
   if (kind === 'playtest') header.splice(4, 0, '걸음');
   const rows = list.map((f, i) => {
-    const base: (string | number)[] = [i + 1, f.severity, f.group, f.screen, FACTION_KO[f.faction] ?? f.faction, f.viewpoint, f.problem, f.fix, f.source ? `원문 위치: ${f.source}` : '', '', f.shot ? f.shot.split('/').pop()! : ''];
+    const base: (string | number)[] = [i + 1, f.severity, screenTerm(f.group), screenTerm(f.screen), FACTION_KO[f.faction] ?? f.faction, f.viewpoint, f.problem, f.fix, f.source ? `원문 위치: ${f.source}` : '', '', f.shot ? f.shot.split('/').pop()! : ''];
     if (kind === 'playtest') base.splice(4, 0, f.step ?? '');
     return base;
   });

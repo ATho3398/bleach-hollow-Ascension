@@ -4,13 +4,12 @@ import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { findEnemyDef } from '../data/bosses';
 import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/elements';
-import { normalSlotNote, signed } from '../data/help/textFormat';
+import { MINUS, normalSlotNote, signed } from '../data/help/textFormat';
 import { STAT_IDS, pickFaction, type EnemyDef, type StatId } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
 import { absorbModeRule, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
 import { chooseAbsorb, chooseRelease, previewAbsorb, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
-import { PROVISIONAL_NOTE } from './buildPanel';
 import { button, chip, el, icon, meter, notice, tag } from './bha/dom';
 import { lcdPage } from './bha/lcdpage';
 import { playCosmeticFx } from './bha/cosmeticFx';
@@ -75,13 +74,22 @@ export function gaugeDelta(from: number, to: number): string {
   return a === b ? `그대로 (${a})` : `${signed(b - a)} (${a} → ${b})`;
 }
 
+/** 놓아주기 리스크 줄 (GDD 168장 2): 늘 "−1 (5 → 4)", 0 이면 "−1 (0, 0 아래로는 안 내려간다)" */
+export function releaseDelta(from: number, to: number): string {
+  const a = Math.round(from);
+  const b = Math.round(to);
+  const d = `${MINUS}${RX.releaseRelief}`;
+  return a === b ? `${d} (${a}, 0 아래로는 안 내려간다)` : `${d} (${a} → ${b})`;
+}
+
 /** 설명 칸 줄 (GDD 163장 2): 이 흡수가 뭔지 / 능력치 / 리스크 게이지 변화(+ 한계 경고) / 받는 것. 값은 엔진 previewAbsorb 그대로 */
 export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] {
   const p = previewAbsorb(exp, m);
   const out: { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] = [{ kind: 'what', text: absorbModeText(faction)[m].sub }];
   const ev = evLine(p.ev, faction.id);
   if (ev) out.push({ kind: 'stat', text: `능력치: ${ev}` });
-  out.push({ kind: 'risk', text: `${faction.riskGaugeName}: ${gaugeDelta(p.riskFrom, p.riskTo)}` });
+  // 놓아주기 = 리스크 게이지 −releaseRelief (GDD 168장 2): 게이지가 0 이라 더 못 내려가도 설명은 같은 값 (확인 창·도움말과 같게)
+  out.push({ kind: 'risk', text: `${faction.riskGaugeName}: ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}` });
   if (p.frenzy) out.push({ kind: 'warn', text: `한계(${RX.limit})에 닿아 ${faction.frenzyName} 상태가 된다.` });
   const gain: string[] = [];
   if (p.tiles > 0) gain.push(`타일 +${p.tiles}`);
@@ -431,8 +439,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const parts = step === 'choose' ? chooseStep() : step === 'pick' ? pickStep() : replaceStep();
     const side = [...parts.side];
     if (error && step !== 'choose') side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
-    // 임시 데이터 안내는 테스트 모드에서만, 왼쪽 열 맨 아래 (T-4, 플레이어 화면에서는 뺀다 — GDD 94장 A 2번과 같이, C.150)
-    const main = devText() ? [...parts.main, el('p', 'bha-faint', PROVISIONAL_NOTE)] : parts.main;
+    // 임시 데이터 개발 메모 줄은 삭제 (GDD 168장 4 — 테스트 모드에서도 안 보인다. 이름의 '임시' 표시는 그대로)
+    const main = parts.main;
     // 가로 LCD (T-3): 머리 = 단계 표시, 왼쪽·오른쪽 열이 각자 그 안에서 스크롤 (행동 버튼이 있는 오른쪽은 대부분 한 화면)
     const head = el('header', 'bha-absorb__head');
     // [내 상태] (GDD 128장 7): 장착 블록·강화·이번 원정 흡수·진화 쏠림 창

@@ -51,7 +51,7 @@ describe('C.149 블록 이름·아이콘·문구', () => {
     expect(src).not.toContain('공격 분류');
     expect(src).not.toContain('bha-owned__row');
     expect(src).toContain('남는 특성이 없다');
-    expect(src).toMatch(/devText\(\)\) right\.append[\s\S]*PROVISIONAL_NOTE/); // C.171: 개발용 문구 스위치 하나
+    expect(src).not.toContain('PROVISIONAL_NOTE'); // C.247 (GDD 168장 4): 개발 메모 줄은 테스트 모드에서도 삭제
     expect(src).toMatch(/if \(devText\(\)\) left\.querySelector/);
   });
   it('칸·카드에 속성 강화 n강 (C.176 GDD 106장 1, n/3 속성 칩 없음)', () => {

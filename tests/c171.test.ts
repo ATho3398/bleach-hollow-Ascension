@@ -46,7 +46,7 @@ describe('개발용 문구는 테스트 모드에서만 (시급 10)', () => {
   it("칭호 조건은 일반 화면에 '조건 공개 예정' 한 줄 (11-7 [미정] 그대로), 설정 > 정보에 '임시 수치 있음'", () => {
     const t = read('src/ui/titleDexView.ts');
     expect(t).toContain("TITLE_CONDITION_SOON = '조건 공개 예정'");
-    expect(t).toContain('devText() ? [head, body, h(\'p\', \'bha-faint\', TITLE_NOTE)] : [head, body]');
+    expect(t).not.toContain('TITLE_NOTE'); // C.247 (GDD 168장 4): 개발 메모 줄 삭제
     expect(read('src/ui/settingsView.ts')).toContain("'임시 수치가 있다");
   });
   it("상인 품목 효과 글에 '(가칭)' 이 없다", () => {

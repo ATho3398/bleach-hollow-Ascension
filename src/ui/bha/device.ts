@@ -378,7 +378,12 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   });
 
   function move(dir: 1 | -1): void {
-    if (items.length === 0) return;
+    if (items.length === 0) {
+      // 누를 것이 없는 글 창(ⓘ 설명 창 등)이 맨 위 레이어면 ▲▼ = 그 창 스크롤 (GDD 168장 3)
+      const top = layers[layers.length - 1]?.el;
+      if (top && top.scrollHeight > top.clientHeight + 1) top.scrollBy({ top: dir * Math.max(24, Math.round(top.clientHeight * 0.6)) });
+      return;
+    }
     if (battle) {
       const to = stepUsable(index, dir, items.map((i) => !unusable(i.el)));
       if (to < 0) return; // 지금 누를 수 있는 대상이 하나도 없다

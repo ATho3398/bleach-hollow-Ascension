@@ -20,8 +20,7 @@ export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
   { kind: 'tower', label: '탑' },
 ];
 
-export const TITLE_NOTE = '칭호 조건은 모두 임시이거나 아직 없다(기획서 11-7 미정). "임시" 표시가 붙은 칭호만 해금될 수 있다.';
-/** 일반 화면의 조건 문구 (GDD 100장 #75: 조건 자체는 11-7 [미정] 그대로 — 테스트 모드에서만 TITLE_NOTE) */
+/** 일반 화면의 조건 문구 (GDD 100장 #75: 조건 자체는 11-7 [미정] 그대로 — 개발 메모 줄은 168장 4 에서 삭제) */
 export const TITLE_CONDITION_SOON = '조건 공개 예정';
 
 export function formatUnlockTime(ms: number): string {
@@ -53,10 +52,10 @@ function titleRow(def: TitleDef, factionId: string, unlockedAt: number | null): 
       const body = h('p', 'bha-mddetail__body');
       if (rk === 'hidden') body.append('조건 비공개');
       else {
-        body.append(rk === 'unlocked' ? (v.sub ?? '') : !devText() ? TITLE_CONDITION_SOON : def.condition ? '조건은 임시다' : '조건 미정');
+        body.append(rk === 'unlocked' ? (v.sub ?? '') : !devText() ? TITLE_CONDITION_SOON : def.condition ? '조건은 임시다' : TITLE_CONDITION_SOON);
         if (def.provisional) body.append(' ', provisionalTag('임시 조건'));
       }
-      return devText() ? [head, body, h('p', 'bha-faint', TITLE_NOTE)] : [head, body];
+      return [head, body]; // 개발 메모 줄 삭제 (GDD 168장 4)
     },
   };
 }

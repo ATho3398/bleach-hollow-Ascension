@@ -1534,3 +1534,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
   4. 검수 1회: `npm run ai-review` (캡처가 없으면 ui-audit 로 `scripts/ai-tools/out/shots-<MMDD>/` 를 먼저 찍는다 — 약 15분, 이미 있으면 `--shots <폴더>`). Batch 두 번(검수·확인)을 기다리므로 `run_in_background` 로 돌린다. 중간에 끊겨도 `scripts/ai-tools/out/batch-*.id` 가 남아 다시 실행하면 같은 Batch 를 이어 기다린다.
   5. 결과: `docs/drafts/블리치_AI검수_<MMDD>_playtest.xlsx` · `_review.xlsx`, 문제 캡처 `docs/drafts/ai-shots/<MMDD>/`, 금액 `docs/drafts/ai-usage.md`(누적), 검수 중간 결과 `scripts/ai-tools/out/review-candidates-<MMDD>.json`·`review-dropped-<MMDD>.json`(커밋 안 함).
 - 테스트 `tests/ai-tools.test.ts` 20개(가짜 클라이언트, 키 없이 돈다): 키 읽기·금액·상한 멈춤·사용 기록 누적·요청 모양·막힘·묶기·문구 모으기·제외·지난 검수 중복·확인 적용·엑셀 행·크레딧 부족/키 거절 한 줄·누적 150/190 기준. 전체 198파일 2421개 통과, typecheck·balance:check 가드 통과.
+
+## C.247 — AI 검수 첫 결과 바로 고칠 것: 놓아주기 −1 통일 · 리스크 ⓘ 창 · 개발 메모 삭제 · AI 지시문 기본 흐름 (GDD 168장 1~4, v5.378, S-23, 코딩183 Opus)
+- 사용자 원문: "-너 플레이 안해봄? 1번은 저거 걷다보면 알아서 조우 하잖아;;;" / "-포식은 놓아주면 -1로 고쳐." / "-3번은 ㅇㅇ" / "-4번도 ㄱㄱ"
+- **2 놓아주기 −1**: 엔진은 원래 −1(`releaseEffect` −`releaseRelief`=1) — BALANCE 그대로(103). 설명 칸이 0 에서 '그대로 (0)' 이던 것을 `releaseDelta` 로 늘 "−1 (a → b)" / "−1 (0, 0 아래로는 안 내려간다)". 확인 창(원래 −1)·도움말 오르내림(원래 −1)·첫 흡수 안내 카드(새로 `{riskGaugeName} {releaseRelief}`) 같은 값. 두 종족 이름은 faction json.
+- **3 리스크 ⓘ 창**: 오르내림 계산식 3줄 → 쉬운 말 + 대표 값(일반 적 약 +2.9 · 강적 약 +6.7, 일부만 흡수 그 70%·50%, 5바퀴 +0.5 · 6바퀴 +1 — BALANCE 에서 계산). ⓘ 창이 넘치면 바닥에 '▼ 더 있음'(끝까지 내리면 숨김), 누를 것 없는 맨 위 창은 기기 ▲▼ = 스크롤(`device.move`). 같은 infoTip·statusInfo 를 쓰는 배부름·컨디션·영압 안정도·교감·방 상태·전투 광기 칩 모두 같이 적용, 계산식은 리스크 줄에만 있었다.
+- **4 개발 메모 삭제**(테스트 모드에서도): 흡수 화면·슬롯 '임시 데이터다(기획 11-3, 11-4 미정)', 칭호 도감 '(기획서 11-7 미정)' 줄·'조건 미정' → '조건 공개 예정', 진화·도감 '(기획 20-5 …)' 줄. '임시' 태그는 그대로.
+- **1 AI 도구**: `playtest.ts` 지시문에 기본 흐름(자동으로 걷고 조우·전투 자동 → 기다리기가 정상, 내 캐릭터 오른쪽·적 왼쪽, 용어 '모험'), 화면 글자에 '[전투] 내 체력 · 적 체력' 줄, 엑셀 화면·묶음 이름 '원정' → '모험'(`screenTerm`). 실제 API 실행 안 함.
+- 테스트 `tests/c247.test.ts` 13개 + 옛 테스트 3곳(c149·c150·c171 개발 메모 기대) 고침.
+- 캡처 `docs/captures/c247/` (1배 844×390, `scripts/c247-proof.cjs`): 1-release-desc · 2-release-confirm · 3-risk-info · 3b-risk-info-end (사신·호로).

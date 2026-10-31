@@ -120,6 +120,14 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
       pop.style.left = `${left}px`;
       pop.style.top = `${down ? below : (br.top - hr.top) * k - 6 - h}px`;
     }
+    // 창이 자리보다 길면 아래에 '▼ 더 있음' (끝까지 내리면 숨김) — 손가락 스크롤·기기 ▲▼ 둘 다 (GDD 168장 3)
+    const more = el('div', 'bha-pop__more', '▼ 더 있음');
+    more.setAttribute('aria-hidden', 'true');
+    pop.append(more);
+    const p = pop;
+    const syncMore = () => { more.hidden = p.scrollTop + p.clientHeight >= p.scrollHeight - 2; };
+    p.addEventListener('scroll', syncMore, { passive: true });
+    syncMore();
     pinned = pin;
     if (pin) unreg = registerLayer(pop, close);
     document.addEventListener('pointerdown', onDown, true);

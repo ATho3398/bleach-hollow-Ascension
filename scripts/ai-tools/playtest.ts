@@ -45,7 +45,7 @@ export const STEP_SCHEMA = {
   additionalProperties: false,
   required: ['screen', 'thought', 'action', 'wait_sec', 'reached', 'issues', 'give_up'],
   properties: {
-    screen: { type: 'string', description: '지금 화면 이름(짧게, 예: 방, 원정 출발, 전투, 흡수 고르기)' },
+    screen: { type: 'string', description: '지금 화면 이름(짧게, 예: 방, 모험 출발, 전투, 흡수 고르기). 게임 용어는 \'원정\'이 아니라 \'모험\'' },
     thought: { type: 'string', description: '이 버튼을 누르는 이유 한두 문장' },
     action: { type: 'string', enum: [...ACTIONS] },
     wait_sec: { type: 'integer', description: 'action 이 wait 일 때 기다릴 초(1~12). 아니면 0' },
@@ -82,9 +82,16 @@ export function systemPrompt(): string {
 화면을 직접 터치할 수는 없다. 한 걸음에 버튼 하나만 누른다.
 
 ## 이번 판 목표 (이 순서로 진행해 본다)
-1 시작 화면에서 새로 시작 → 2 종족 고르기(지시받은 종족) → 3 튜토리얼 따라가기 → 4 첫 모험(원정) 나가기 → 5 첫 전투(자동 전투, 기다리며 본다) → 6 흡수(이긴 뒤 무언가 고르기) → 7 귀환(둥지로) → 8 온천에서 회복.
+1 시작 화면에서 새로 시작 → 2 종족 고르기(지시받은 종족) → 3 튜토리얼 따라가기 → 4 첫 모험 나가기 → 5 첫 전투(자동 전투, 기다리며 본다) → 6 흡수(이긴 뒤 무언가 고르기) → 7 귀환(둥지로) → 8 온천에서 회복.
 reached 에는 지금까지 실제로 해낸 가장 먼 단계를 쓴다(title, faction, tutorial, first_expedition, first_battle, absorb, return, hot_spring). 온천에서 회복까지 했으면 hot_spring.
 튜토리얼 안내가 시키는 것은 따른다. 모르는 화면이면 ▼ 로 칸을 훑어 이름을 읽고 고른다. 같은 곳을 맴돌면 다른 칸·뒤로를 시도한다.
+
+## 게임 기본 흐름 (정상 동작 — 문제로 적지 않는다, GDD 168장 1)
+- 모험은 출발하면 내 캐릭터가 **저절로 길을 걷고**, 걷다가 적과 **저절로 조우**한다. 조우하면 전투도 **자동으로 진행**된다. 이때 누를 것이 없거나 초점이 없는 것은 정상이다 → 기다리기(wait)로 지켜본다. "누를 게 없다·진행이 안 된다"로 적지 않는다(화면 글자가 몇 걸음 동안 정말 하나도 안 바뀔 때만 막힘).
+- 전투 화면은 **내 캐릭터가 오른쪽, 적이 왼쪽**이다. 각자 발밑 체력 막대가 그 주인의 체력이다. 화면 글자에는 '내 체력 / 적 체력' 줄로 따로 적어 준다 — 체력 막대 주인을 헷갈리지 않는다.
+- 전투 중 할 일은 블록을 눌러 쓰는 것뿐이고, 안 눌러도 기본 공격은 저절로 나간다.
+- 이기면 흡수 화면이 뜬다(그때 고른다). 길을 한 바퀴 돌면 귀환할지 고른다.
+- 게임 용어: '원정'이 아니라 **'모험'**이다(screen 이름에도 '모험').
 
 ## 문제 기록 (issues)
 처음 하는 사람으로서 헷갈림·막힘·이상함을 느낀 순간에만 기록한다. 같은 문제는 한 번만(이미 기록한 목록을 보고 겹치면 쓰지 않는다).
@@ -125,8 +132,11 @@ export function stateInPage(): PageState {
   const vis = (e: Element) => !e.closest('[hidden], [inert], .bha-dev__side, [data-dev-skip]') && !(e as HTMLButtonElement).disabled && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
   const label = (e: Element) => clean(e.getAttribute('aria-label') || (e as HTMLElement).innerText || e.textContent).slice(0, 40);
   const options = [...scope.querySelectorAll(SEL)].filter(vis).slice(0, 30).map((e) => (sel && (e === sel || e.contains(sel) || sel.contains(e)) ? '▶ ' : '  ') + label(e));
+  // 전투 체력 막대 주인 라벨 (GDD 168장 1): 막대 숫자만 보이면 AI 가 내/적 체력을 헷갈린다 — 내 캐릭터 오른쪽 · 적 왼쪽
+  const hpOf = (cls: string) => clean((lcd.querySelector(`.bha-unit--${cls} .bha-unit__hp`) as HTMLElement | null)?.innerText);
+  const hpLines = lcd.querySelector('.bha-unit--me') ? `\n[전투] 내 체력(오른쪽 내 캐릭터): ${hpOf('me') || '?'} · 적 체력(왼쪽 적): ${hpOf('foe') || '?'}` : '';
   return {
-    text: (lcd.innerText ?? '').replace(/\n{2,}/g, '\n').trim().slice(0, 1800),
+    text: ((lcd.innerText ?? '').replace(/\n{2,}/g, '\n').trim().slice(0, 1800) + hpLines).trim(),
     focus: sel ? label(sel) : '',
     layers: layersEl.map((l) => clean(l.querySelector('h1,h2,h3,[class*="title"]')?.textContent || l.className).slice(0, 40)),
     options,
