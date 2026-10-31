@@ -1525,5 +1525,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
   - `npm run ai-review` — ui-audit 전 화면 캡처(+ 이번에 추가한 화면 글자 `.txt`) 묶음 요청 + 게임 문구(src/data json — story 제외, 화면 ts 한글 문자열) → Message Batches 검수 → 확인 Batch(진짜 문제인지·지난 검수 1~111과 같은지) → 제외 규칙(테스트·'임시' 표시·그림 없음·기기 크기)·두 종족 합침 → 엑셀.
   - 공통: 고정 지시문 프롬프트 캐시, JSON 스키마 구조화 출력, effort(low/medium), 금액 상한(playtest 한 판 $10·review $8, `--budget`), `--dry-run`, 끝에 토큰·금액 출력 + `docs/drafts/ai-usage.md` 한 줄(누적). 엑셀은 `make-xlsx.py`(지난 UI 검수와 같은 열, 플레이테스트 '걸음' 열, 캡처 썸네일).
 - **dry-run 예상**: playtest 한 판 최대 약 $5.9(250걸음), review 1회 약 $2.2(캡처 73장 12요청 + 문구 2560줄 12요청, Batch 반값).
-- **첫 실행**: 환경 변수 키가 API 에서 401 invalid x-api-key 로 거절(값 모양이 'sk-ant-api03-…' 가 아님) → 마스터에게 보고, 키를 다시 넣은 뒤 실행. 쓴 금액 $0.
-- 테스트 `tests/ai-tools.test.ts` 17개(가짜 클라이언트, 키 없이 돈다): 키 읽기·금액·상한 멈춤·사용 기록 누적·요청 모양·막힘·묶기·문구 모으기·제외·지난 검수 중복·확인 적용·엑셀 행.
+- **크레딧 소진(167장 8)**: 크레딧 부족(400 credit balance)·키 거절(401)은 "크레딧이 없다" / "API 키가 거절됐다" 한 줄 + 그때까지 결과 저장 후 정상 종료(다음 종족도 안 돌림). 실행 전 `ai-usage.md` 누적 150달러 이상 경고 한 줄, 190달러 이상이면 안 돌린다(`--over-190` 으로만 넘김). 게임·빌드·CI·배포·npm test 에 안 엮임.
+- **첫 실행**: 이 세션의 환경 변수 키가 API 에서 401 로 거절(붙여 넣은 값에 접두어가 겹침 — 사용자가 고침, 이 세션은 새 값을 못 읽음) → 실제 실행은 키 대기. 쓴 금액 $0.
+- **사용법(새 세션에서 그대로)**:
+  1. `npm ci` 뒤 키 확인만: `[ -n "$BHA_CLAUDE_API_KEY" ] && echo set || echo missing` (값은 출력하지 않는다).
+  2. 예상치: `npm run ai-playtest -- --dry-run` · `npm run ai-review -- --dry-run`.
+  3. 플레이테스트 두 종족: `npm run ai-playtest` (기본 both·250걸음·한 판 $10 상한, 한 종족은 `--faction hollow`). 10~30분.
+  4. 검수 1회: `npm run ai-review` (캡처가 없으면 ui-audit 로 `scripts/ai-tools/out/shots-<MMDD>/` 를 먼저 찍는다 — 약 15분, 이미 있으면 `--shots <폴더>`). Batch 두 번(검수·확인)을 기다리므로 `run_in_background` 로 돌린다. 중간에 끊겨도 `scripts/ai-tools/out/batch-*.id` 가 남아 다시 실행하면 같은 Batch 를 이어 기다린다.
+  5. 결과: `docs/drafts/블리치_AI검수_<MMDD>_playtest.xlsx` · `_review.xlsx`, 문제 캡처 `docs/drafts/ai-shots/<MMDD>/`, 금액 `docs/drafts/ai-usage.md`(누적), 검수 중간 결과 `scripts/ai-tools/out/review-candidates-<MMDD>.json`·`review-dropped-<MMDD>.json`(커밋 안 함).
+- 테스트 `tests/ai-tools.test.ts` 20개(가짜 클라이언트, 키 없이 돈다): 키 읽기·금액·상한 멈춤·사용 기록 누적·요청 모양·막힘·묶기·문구 모으기·제외·지난 검수 중복·확인 적용·엑셀 행·크레딧 부족/키 거절 한 줄·누적 150/190 기준. 전체 198파일 2421개 통과, typecheck·balance:check 가드 통과.

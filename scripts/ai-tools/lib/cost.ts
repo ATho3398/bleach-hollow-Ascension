@@ -94,3 +94,17 @@ export function appendUsageLog(file: string, row: { date: string; tool: string; 
   fs.writeFileSync(file, (md.endsWith('\n') ? md : md + '\n') + line);
   return cum;
 }
+
+/** 크레딧 누적 경고·정지 기준 (GDD 167장 8 — 200달러 다 쓰면 끝, 추가 결제 없음) */
+export const CREDIT_GUARD = { warnAt: 150, stopAt: 190 } as const;
+
+/** 실행 전 누적 확인: stopAt 이상이면 멈춤(옵션 --over-190 으로 넘김), warnAt 이상이면 경고 한 줄 */
+export function creditGuard(cum: number, allowOver = false): { stop: boolean; line: string | null } {
+  if (cum >= CREDIT_GUARD.stopAt && !allowOver) return { stop: true, line: `누적 사용 $${cum.toFixed(2)} — ${CREDIT_GUARD.stopAt}달러 이상이라 실행하지 않는다(크레딧 200달러 거의 다 씀). 그래도 돌리려면 --over-190` };
+  if (cum >= CREDIT_GUARD.warnAt) return { stop: false, line: `경고: 누적 사용 $${cum.toFixed(2)} — ${CREDIT_GUARD.warnAt}달러를 넘었다(크레딧 200달러)` };
+  return { stop: false, line: null };
+}
+
+export function cumulativeOfFile(file: string): number {
+  return fs.existsSync(file) ? cumulativeFrom(fs.readFileSync(file, 'utf8')) : 0;
+}

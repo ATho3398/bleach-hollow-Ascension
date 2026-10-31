@@ -53,6 +53,18 @@ export function realClient(apiKey: string): LlmClient {
   };
 }
 
+/**
+ * 멈춰야 하는 API 오류를 한 줄로 (GDD 167장 8): 크레딧 부족·키 거절은 다시 시도해도 안 되므로 그때까지 결과만 저장하고 끝낸다.
+ * 크레딧 부족은 전용 예외 클래스가 없어 400/403 의 오류 문구로 가린다. 그 밖의 오류는 null(평소대로 처리).
+ */
+export function fatalApiError(e: unknown): { kind: 'credit' | 'auth'; line: string } | null {
+  if (e instanceof Anthropic.AuthenticationError) return { kind: 'auth', line: 'API 키가 거절됐다(401) — 환경 변수 BHA_CLAUDE_API_KEY 를 확인한다' };
+  if (e instanceof Anthropic.BadRequestError || e instanceof Anthropic.PermissionDeniedError || (e instanceof Anthropic.APIError && e.status === 402)) {
+    if (/credit|balance|billing|payment|quota/i.test(e.message)) return { kind: 'credit', line: '크레딧이 없다 — API 크레딧이 떨어져 멈췄다(그때까지 결과는 저장)' };
+  }
+  return null;
+}
+
 /** 응답의 text 블록을 이어 붙인다 (thinking 블록은 건너뜀) */
 export function textOf(m: Anthropic.Message): string {
   return m.content.map((b) => (b.type === 'text' ? b.text : '')).join('');

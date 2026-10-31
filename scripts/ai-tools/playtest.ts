@@ -1,14 +1,14 @@
 // ① AI 첫 플레이어 테스트 (GDD 167장 3). `npm run ai-playtest -- [옵션]`
 //   --faction hollow|shinigami|both (기본 both) · --steps 250 · --budget 10(한 판 달러) · --dry-run(호출 없이 예상치) · --probe(API 없이 첫 화면 상태만 출력)
-//   --url <이미 떠 있는 주소> · --out <엑셀 경로>
+//   --url <이미 떠 있는 주소> · --out <엑셀 경로> · --over-190(누적 190달러 넘어도 실행)
 // 새 세이브로 실제 첫 플레이(테스트 패널 안 씀). 입력은 기기 버튼(▲▼◀▶✓·뒤로)과 '기다리기'만.
 import fs from 'node:fs';
 import path from 'node:path';
 import type Anthropic from '@anthropic-ai/sdk';
 import { apiKeyFromEnv, DEFAULT_BUDGET, kstStamp, mmddKst, parseArgs, PLAYTEST, ROOT } from './lib/config';
-import { appendUsageLog, Budget, BudgetExceeded, costOf, emptyTally, fmtTally, type Tally } from './lib/cost';
+import { appendUsageLog, Budget, BudgetExceeded, costOf, creditGuard, cumulativeOfFile, emptyTally, fmtTally, type Tally } from './lib/cost';
 import { filterFindings, PLAYTEST_VIEWPOINTS, SEVERITIES, type Finding } from './lib/findings';
-import { baseParams, imageBlock, parseJson, realClient, type LlmClient } from './lib/llm';
+import { baseParams, fatalApiError, imageBlock, parseJson, realClient, type LlmClient } from './lib/llm';
 import { loadPlaywright, readDoc, startVite, textStyleCore, writeXlsx } from './lib/common';
 
 export const ACTIONS = ['up', 'down', 'left', 'right', 'confirm', 'back', 'wait'] as const;
@@ -193,6 +193,8 @@ export interface RunResult {
   findings: Finding[];
   pageErrors: string[];
   tally: Tally;
+  /** 크레딧 부족·키 거절로 멈췄으면 그 한 줄 — 다음 종족도 돌리지 않는다 */
+  fatal: string | null;
 }
 
 /** 한 종족 한 판 */
@@ -214,6 +216,7 @@ export async function playOne(o: { client: LlmClient; url: string; faction: 'hol
   let reached: Milestone = 'title';
   let end = '걸음 상한';
   let step = 0;
+  let fatal: string | null = null;
   const startUsd = o.budget.tally.usd;
   try {
     for (step = 1; step <= o.maxSteps; step++) {
@@ -269,8 +272,13 @@ export async function playOne(o: { client: LlmClient; url: string; faction: 'hol
       }
     }
   } catch (e) {
+    const f = fatalApiError(e);
     if (e instanceof BudgetExceeded) end = `금액 상한($${e.cap})`;
-    else {
+    else if (f) {
+      fatal = f.line;
+      end = f.kind === 'credit' ? '크레딧 없음' : '키 거절';
+      o.log(`  ${f.line}`);
+    } else {
       end = `오류: ${String((e as Error).message).slice(0, 120)}`;
       o.log(`  ${end}`);
     }
@@ -278,7 +286,7 @@ export async function playOne(o: { client: LlmClient; url: string; faction: 'hol
     await browser.close();
   }
   const tally = { ...o.budget.tally, usd: o.budget.tally.usd - startUsd };
-  return { faction: o.faction, steps: Math.min(step, o.maxSteps), reached, end, findings, pageErrors: [...new Set(pageErrors)], tally };
+  return { faction: o.faction, steps: Math.min(step, o.maxSteps), reached, end, findings, pageErrors: [...new Set(pageErrors)], tally, fatal };
 }
 
 async function main() {
@@ -297,6 +305,10 @@ async function main() {
     console.log(`  전체 최대 예상: $${(est.usd * factions.length).toFixed(2)}`);
     return;
   }
+  const usageFile = path.join(ROOT, 'docs/drafts/ai-usage.md');
+  const guard = creditGuard(cumulativeOfFile(usageFile), !!args['over-190']);
+  if (guard.line) console.log(guard.line);
+  if (guard.stop) return;
   const server = await startVite(5198, typeof args.url === 'string' ? args.url : undefined);
   if (args.probe) {
     const { chromium } = loadPlaywright();
@@ -315,7 +327,6 @@ async function main() {
   fs.mkdirSync(shotDir, { recursive: true });
   const client = realClient(key);
   const results: RunResult[] = [];
-  const usageFile = path.join(ROOT, 'docs/drafts/ai-usage.md');
   try {
     for (const f of factions) {
       console.log(`== ${f} 시작 (상한 $${cap}, 걸음 ${maxSteps})`);
@@ -325,6 +336,7 @@ async function main() {
       console.log(`== ${f} 끝: ${r.end} · 걸음 ${r.steps} · 도달 ${MILESTONE_KO[r.reached]} · 문제 ${r.findings.length} · ${fmtTally(r.tally)}`);
       const cum = appendUsageLog(usageFile, { date: kstStamp(), tool: 'ai-playtest', target: f === 'hollow' ? '호로' : '사신', count: `${r.steps}걸음`, tally: r.tally, memo: `${r.end} · 도달 ${MILESTONE_KO[r.reached]} · 문제 ${r.findings.length}` });
       console.log(`   누적 $${cum.toFixed(3)}`);
+      if (r.fatal) break; // 크레딧·키 문제면 다음 종족도 안 돌린다
     }
   } finally {
     server.stop();
@@ -338,6 +350,7 @@ async function main() {
     sub: `npm run ai-playtest · 모델 claude-opus-5-5 · 새 세이브·기기 버튼만 · 걸음 상한 ${maxSteps} · 쓴 금액 $${total.toFixed(3)}`,
     summary: [
       ...results.map((r) => `${r.faction === 'hollow' ? '호로' : '사신'}: ${r.end} · ${r.steps}걸음 · 도달 ${MILESTONE_KO[r.reached]} · 문제 ${r.findings.length}건 · $${r.tally.usd.toFixed(3)}`),
+      ...results.flatMap((r) => (r.fatal ? [r.fatal] : [])),
       ...results.flatMap((r) => r.pageErrors.map((e) => `스크립트 오류(${r.faction}): ${e}`)),
       `같은 문제 합침·제외로 뺀 것 ${dropped.length}건${dropped.length ? ': ' + dropped.map((d) => `${d.finding.screen}(${d.reason})`).join(', ') : ''}`,
       '고칠까(O/X) 칸에 표시하면 마스터가 새 장 + 코딩 세션으로 넘긴다. 도구는 게임 코드를 고치지 않는다.',

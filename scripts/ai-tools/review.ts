@@ -1,15 +1,15 @@
 // ② 자동 UI·문구 검수 (GDD 167장 4). `npm run ai-review -- [옵션]`
 //   --shots <폴더>(이미 찍은 ui-audit 캡처 다시 쓰기, 없으면 UI_AUDIT_SHOTS 로 새로 찍음) · --budget 8(달러) · --dry-run · --no-text(문구 검수 빼기)
-//   --only-ui / --only-text · --out <엑셀 경로>
+//   --only-ui / --only-text · --out <엑셀 경로> · --over-190(누적 190달러 넘어도 실행)
 // 흐름: 화면 캡처+글자 → Batch 검수(ui-review.md 7관점) + 게임 문구 Batch 검수(text-style.md) → 확인 Batch(진짜 문제인지·지난 검수와 같은지) → 제외 규칙 → 엑셀.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import type Anthropic from '@anthropic-ai/sdk';
 import { apiKeyFromEnv, DEFAULT_BUDGET, kstStamp, mmddKst, parseArgs, REVIEW, ROOT } from './lib/config';
-import { appendUsageLog, Budget, costOf, fmtTally, type Tally } from './lib/cost';
+import { appendUsageLog, Budget, costOf, creditGuard, cumulativeOfFile, fmtTally, type Tally } from './lib/cost';
 import { filterFindings, SEVERITIES, VIEWPOINTS, type Finding, type PriorItem } from './lib/findings';
-import { baseParams, imageBlock, parseJson, realClient, type BatchItem, type LlmClient } from './lib/llm';
+import { baseParams, fatalApiError, imageBlock, parseJson, realClient, type BatchItem, type LlmClient } from './lib/llm';
 import { readDoc, textStyleCore, writeXlsx } from './lib/common';
 
 // ───────── 재료 모으기 ─────────
@@ -370,6 +370,10 @@ async function main() {
     console.log(`  검수 예상 $${e1.toFixed(2)} + 확인 예상 약 $${(e1 * 0.6).toFixed(2)} (Batch 반값 반영, 상한 $${cap})${shots.length ? '' : ' — 캡처가 없어 UI 는 0으로 셈'}`);
     return;
   }
+  const usageFile = path.join(ROOT, 'docs/drafts/ai-usage.md');
+  const guard = creditGuard(cumulativeOfFile(usageFile), !!args['over-190']);
+  if (guard.line) console.log(guard.line);
+  if (guard.stop) return;
   const client = realClient(key!);
   const budget = new Budget(cap);
   const prior = loadPrior();
@@ -409,12 +413,15 @@ async function main() {
         allDropped.push(...r.dropped);
       }
     } catch (e) {
-      notes.push(`확인 단계 못 함(${(e as Error).message}) — 아래 지적은 확인 전 결과`);
+      const f = fatalApiError(e);
+      notes.push(`확인 단계 못 함(${f ? f.line : (e as Error).message}) — 아래 지적은 확인 전 결과`);
       finalKept = candidates.flatMap((c) => c.items);
     }
   } catch (e) {
-    notes.push(`중단: ${(e as Error).message}`);
-    console.log(`중단: ${(e as Error).message}`);
+    const f = fatalApiError(e);
+    const line = f ? f.line : `중단: ${(e as Error).message}`;
+    notes.push(line);
+    console.log(line);
     if (!finalKept.length) finalKept = candidates.flatMap((c) => c.items);
   }
   const { kept, dropped } = filterFindings(finalKept, prior);
@@ -447,7 +454,7 @@ async function main() {
     ],
   });
   fs.writeFileSync(path.join(workDir, `review-dropped-${mmdd}.json`), JSON.stringify(allDropped.map((d) => ({ reason: d.reason, screen: d.finding.screen, problem: d.finding.problem })), null, 1));
-  const cum = appendUsageLog(path.join(ROOT, 'docs/drafts/ai-usage.md'), { date: kstStamp(), tool: 'ai-review', target: '두 종족', count: `${t.requests}요청`, tally: t, memo: `지적 ${kept.length}건 · 뺀 것 ${allDropped.length}건${notes.length ? ' · ' + notes[0] : ''}` });
+  const cum = appendUsageLog(usageFile, { date: kstStamp(), tool: 'ai-review', target: '두 종족', count: `${t.requests}요청`, tally: t, memo: `지적 ${kept.length}건 · 뺀 것 ${allDropped.length}건${notes.length ? ' · ' + notes[0] : ''}` });
   console.log(`끝: 지적 ${kept.length}건 · ${fmtTally(t)} · 누적 $${cum.toFixed(3)} · 엑셀 ${out}`);
 }
 

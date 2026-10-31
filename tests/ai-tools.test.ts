@@ -3,11 +3,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '@anthropic-ai/sdk';
 import { apiKeyFromEnv, mmddKst, parseArgs, MODEL } from '../scripts/ai-tools/lib/config';
-import { appendUsageLog, Budget, BudgetExceeded, costOf, cumulativeFrom } from '../scripts/ai-tools/lib/cost';
+import { appendUsageLog, Budget, BudgetExceeded, costOf, creditGuard, cumulativeFrom } from '../scripts/ai-tools/lib/cost';
 import { excludedReason, filterFindings, priorDuplicate, similarity, xlsxRows, type Finding, type PriorItem } from '../scripts/ai-tools/lib/findings';
-import { baseParams, parseJson, type LlmClient } from '../scripts/ai-tools/lib/llm';
+import { baseParams, fatalApiError, parseJson, type LlmClient } from '../scripts/ai-tools/lib/llm';
 import { isStuck, userContent, estimatePlaytest, STEP_SCHEMA } from '../scripts/ai-tools/playtest';
 import { applyVerdicts, collectGameText, estimateBatch, packShots, packText, textFindingsOf, textRequest, uiFindingsOf, uiRequest, verifyRequest, type Shot } from '../scripts/ai-tools/review';
 
@@ -166,5 +166,28 @@ describe('엑셀 행', () => {
     const p = xlsxRows([f({ step: '12 · 직전 ✓' })], 'playtest');
     expect(p.header[4]).toBe('걸음');
     expect(p.rows[0]![4]).toBe('12 · 직전 ✓');
+  });
+});
+
+describe('크레딧 소진·누적 기준 (GDD 167장 8)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const err = (C: any, status: number, msg: string): Error => new C(status, { type: 'error', error: { type: 'invalid_request_error', message: msg } }, msg, new Headers());
+  it('크레딧 부족·키 거절은 한 줄로, 다른 오류는 null', () => {
+    expect(fatalApiError(err(Anthropic.BadRequestError, 400, 'Your credit balance is too low to access the Anthropic API.'))?.kind).toBe('credit');
+    expect(fatalApiError(err(Anthropic.BadRequestError, 400, 'Your credit balance is too low'))?.line).toContain('크레딧이 없다');
+    expect(fatalApiError(err(Anthropic.AuthenticationError, 401, 'invalid x-api-key'))?.kind).toBe('auth');
+    expect(fatalApiError(err(Anthropic.BadRequestError, 400, 'messages: field required'))).toBeNull();
+    expect(fatalApiError(new Error('x'))).toBeNull();
+  });
+  it('누적 150 경고 · 190 정지(옵션으로 넘김)', () => {
+    expect(creditGuard(10)).toEqual({ stop: false, line: null });
+    expect(creditGuard(151).line).toContain('경고');
+    expect(creditGuard(190).stop).toBe(true);
+    expect(creditGuard(195, true).stop).toBe(false);
+  });
+  it('가짜 클라이언트가 크레딧 부족을 내면 상한·결과 저장 흐름으로 끝난다', async () => {
+    const client: LlmClient = { create: async () => { throw err(Anthropic.BadRequestError, 400, 'Your credit balance is too low'); }, runBatch: async () => [] };
+    const e = await client.create(baseParams({ system: 's', content: [{ type: 'text', text: 'u' }], schema: {}, effort: 'low', maxTokens: 10 })).catch((x) => x);
+    expect(fatalApiError(e)?.kind).toBe('credit');
   });
 });
