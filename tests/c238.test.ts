@@ -26,26 +26,26 @@ describe('160장 1~3 그림 크기·시장 그림', () => {
   });
 });
 
-describe('160장 4 방 짚인형 되살림', () => {
-  it('방 물건에 수련장(altar)이 다시 서고, 월드맵 수련장 장소도 그대로', () => {
+describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 수련장 짚인형은 유지', () => {
+  it('방 물건에 수련장(altar)이 없고, 월드맵 수련장 장소는 그대로', () => {
     const rv = read('src/ui/roomView.ts');
-    expect(rv).toContain("const order: RoomProp[] = ['book', 'altar', 'outside', 'chest'];");
-    expect(rv).toContain('altar: hd.onAltar,');
-    expect(rv).not.toContain("if (p === 'altar') continue;");
-    expect([...ROOM_PROPS]).toContain('altar');
+    expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'chest'];");
+    expect(rv).not.toContain('altar: hd.onAltar,');
+    expect(rv).toContain("if (p === 'altar') continue;");
+    expect([...ROOM_PROPS]).toContain('altar'); // 이름·그림 키용
     for (const f of FACTIONS) {
       expect(roomOf(f).layout.altar).toBeDefined();
       expect(worldMapOf(f).places.training).toBe(roomOf(f).props.altar);
     }
   });
-  it('단축키 T·홈 안내 카드도 원래대로', () => {
-    expect(actionFor('room', 'KeyT')).toBe('altar');
-    expect(HOME_INTRO.items.map((x) => x.id)).toContain('altar');
+  it('단축키 T·홈 안내 수련장 카드도 삭제', () => {
+    expect(actionFor('room', 'KeyT')).toBeNull();
+    expect(HOME_INTRO.items.map((x) => x.id)).not.toContain('altar');
   });
-  it('방에서 열면 뒤로 = 방(스택), 사망 막힘·빈사 확인 같게, 첫 모험 강제 중엔 흐린 잠김(월드맵 물건만)', () => {
+  it('방에서 여는 길 없음 — 수련장은 월드맵에서만(뒤로 = 월드맵)', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain("onAltar: () => (careBlocked(s) ? undefined : askDying(s, () => open('training', () => renderTraining(faction, s)))),");
-    expect(read('src/ui/bha/worldmap.css')).toContain('.bha-room.is-force-out .bha-prop:not(.bha-prop--outside)');
+    expect(app).not.toContain('onAltar');
+    expect(app).toContain("onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { worldAt = 'training'; open('training', () => renderTraining(faction, s)); }); },");
   });
   it('월드맵 수련장 그림이 비면 짚인형 그림', () => {
     const wm = read('src/ui/worldMapView.ts');
@@ -69,15 +69,13 @@ describe('160장 5~7 상태 화면', () => {
     expect(nest).toContain('if (extra) row.append(evText(extra));');
     for (const p of ['src/ui/lcdScreens.ts', 'src/ui/trainingView.ts', 'src/ui/rebirthView.ts']) expect(read(p)).toContain('evText(');
   });
-  it('능력치 줄 누름 펼침 없음 → 능력치 ⓘ 창에 능력치별 설명(치명 포함)', () => {
+  it('능력치 줄 누름 펼침 없음 → 능력치 ⓘ 창에 능력치별 한 줄 (165장 2: 기본 n%·머리 줄 없음)', () => {
     const nest = read('src/ui/bha/nest.ts');
     expect(nest).not.toContain('is-tip');
     expect(nest).not.toContain('bha-statrow__tip');
     expect(read('src/ui/bha/components/components.css')).not.toContain('.bha-statrow__tip');
     expect(lcd).toContain("statRow('평타 치명', pctText(cc.basic));");
-    expect(lcd).toContain('평타 치명 = 평타가 치명타로 터질 확률');
-    expect(lcd).toContain('블록 치명 = 블록 공격이 치명타로 터질 확률');
-    expect(lcd).toContain('치명타 피해 = 치명타가 터지면 피해');
-    expect(lcd).toContain("{ title: '하는 일', lines: statUseLines(faction) }");
+    expect(lcd).toContain('statInfoLines(faction,');
+    expect(lcd).not.toContain('기본 ${');
   });
 });

@@ -44,7 +44,7 @@ import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, ele
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
-import { statUseLead, statUseLines } from '../data/help/statText';
+import { statInfoLines } from '../data/help/statText';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
@@ -74,7 +74,6 @@ export function critChances(build: SaveData['build'], evo?: SaveData['evolution'
 }
 
 const pctText = (x: number) => `${Math.round(x * 100)}%`;
-const ppText = (x: number) => `+${Math.round(x * 1000) / 10}%p`;
 
 /** 옛 이름: 평타 치명 확률 "5%" */
 export function critPercentText(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): string {
@@ -137,29 +136,16 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
   const CXM = BALANCE.provisional.combat;
   const gc = gearCarry(save.shared.gear);
-  // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 기본·가산(+n%p)·최대는 능력치 ⓘ 창 (GDD 160장 7 — 줄 펼침 폐지)
+  // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 설명은 능력치 ⓘ 창 (GDD 160장 7·165장 2 — 최대만, '기본 n%' 없음)
   const cc = critChances(save.build, save.evolution, gc?.crit ?? 0);
-  const addText = (base: number, extra: number) => [`기본 ${pctText(base)}`, ...(extra > 0 ? [ppText(extra)] : [])].join(' ');
   const critRows = statRow('평타 치명', pctText(cc.basic));
   critRows.dataset.crit = 'basic';
   const blockCritRow = statRow('블록 치명', pctText(cc.block));
   blockCritRow.dataset.crit = 'block';
   const critMul = Math.round((CXM.critMultiplier + (gc?.critDamage ?? 0)) * 100) / 100;
   const critDmg = statRow('치명타 피해', `×${critMul}`);
-  // 능력치 설명은 전부 제목 옆 ⓘ 창 한 곳 (GDD 141장 2 · 160장 7): 능력치 6종이 하는 일 + 치명·속성 피해 + 노력치. 지금 수치 내역도 이 창에서
-  stats.querySelector('.bha-panel__title')?.append(infoTip('능력치', () => ({
-    lead: statUseLead(faction),
-    groups: [
-      { title: '하는 일', lines: statUseLines(faction) },
-      { title: '치명', lines: [
-        `평타 치명 = 평타가 치명타로 터질 확률 · ${addText(CXM.critChance, cc.bonus)} · 최대 ${pctText(cc.basicMax)}`,
-        `블록 치명 = 블록 공격이 치명타로 터질 확률 · ${addText(CXM.blockCritChance, cc.bonus)}${cc.blockPlay > 0 ? ` · 블록 보정 ${ppText(cc.blockPlay)}` : ''} · 최대 ${pctText(cc.blockMax)}`,
-        `치명타 피해 = 치명타가 터지면 피해 ×${critMul}`,
-      ] },
-      { title: '속성 피해', lines: ['그 속성 공격의 피해가 이만큼 늘어난다'] },
-      { title: '값 옆 굵은 +숫자', lines: [`노력치(와 ${faction.rebirth.name} 계승) — 이미 능력치 값에 더해져 있다`] },
-    ],
-  })));
+  // 능력치 설명은 전부 제목 옆 ⓘ 창 한 곳 (GDD 141장 2 · 160장 7 · 165장 2): 능력치마다 한 줄 '이름 = 하는 일'
+  stats.querySelector('.bha-panel__title')?.append(infoTip('능력치', () => statInfoLines(faction, { basic: pctText(cc.basicMax), block: pctText(cc.blockMax) })));
   // 속성 피해 5종 (C.101, GDD 48장 4번 · C.137 85장 8): 치명타 밑에 속성마다 한 줄씩, 0 이어도 보인다
   const rows = [critRows, blockCritRow, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
   const speedRow = stats.querySelector('.bha-stats')?.lastElementChild;

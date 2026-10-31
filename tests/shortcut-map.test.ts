@@ -50,7 +50,7 @@ describe('단축키 매핑', () => {
 
   it('홈 독·배치판 전용 키', () => {
     expect(actionFor('room', 'KeyZ')).toBe('care.feed');
-    expect(actionFor('room', 'KeyT')).toBe('altar'); // C.238 (GDD 160장 4): 방 짚인형 되살림
+    expect(actionFor('room', 'KeyT')).toBeNull(); // C.241 (GDD 165장 1): 수련장은 방에 없다(월드맵 장소)
     expect(actionFor('plan', 'KeyR')).toBeNull(); // 되돌리기 키는 18-8 에서 삭제
     expect(actionFor('plan', 'KeyQ')).toBe('cancel'); // 선택 취소(배치판이 먼저 가로챈다)
     expect(actionFor('room', 'KeyG')).toBe('status');

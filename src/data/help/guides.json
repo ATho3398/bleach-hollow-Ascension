@@ -97,14 +97,6 @@
         "body": "{worldName} 지도로 나간다."
       },
       {
-        "id": "altar",
-        "targets": [
-          "@.bha-prop--altar"
-        ],
-        "title": "{altarName}",
-        "body": "해방 수련을 하고 진화를 살펴본다."
-      },
-      {
         "id": "book",
         "targets": [
           "@.bha-prop--book"

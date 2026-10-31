@@ -946,7 +946,7 @@ export function startApp(host: HTMLElement): void {
       focus: forceAdventure ? 'adventure' : worldAt,
       onHome: () => nestScreen(),
       onMarket: () => { worldAt = 'market'; openMarket(faction, s); },
-      // 수련장 (GDD 158장 1·160장 4): 월드맵 장소(방 짚인형과 같은 화면), 뒤로 = 월드맵. 진화 정보는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
+      // 수련장 (GDD 158장 1·165장 1): 월드맵 장소에만, 뒤로 = 월드맵. 진화 정보는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
       onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { worldAt = 'training'; open('training', () => renderTraining(faction, s)); }); },
       onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
       // 탑 (GDD 139장 1): 모험 화면 탭에서 월드맵 장소로. 사망이면 막힘 안내
@@ -1066,8 +1066,6 @@ export function startApp(host: HTMLElement): void {
         nestScreen();
         showToast({ eyebrow: '부활', title: `${faction.tierNames[0]}(으)로 다시 시작한다`, meta: `노력치 −${Math.round(r.evLoss * 100)}% · 진화 초기화` }, 0, 4200);
       },
-      // 수련장 = 해방 수련 (GDD 22-5 · 160장 4: 방 짚인형 되살림, 월드맵 수련장 장소와 같은 화면). 뒤로 = 방. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
-      onAltar: () => (careBlocked(s) ? undefined : askDying(s, () => open('training', () => renderTraining(faction, s)))),
       onBook: () => open('dex', () => bookView(root, faction, s)),
       onChest: openChest,
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
@@ -1144,7 +1142,7 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(방 짚인형이면 방, 월드맵이면 월드맵 — GDD 160장 4)으로 (GDD 99장 2, C.163) */
+  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1·165장 1)으로 (GDD 99장 2, C.163) */
   function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
     const render = id === 'practice' ? () => practiceScreen(faction) : id === 'rank' ? () => rankScreen(faction) : () => renderTraining(faction, s);
     nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });

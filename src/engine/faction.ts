@@ -67,7 +67,7 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
 /** outside = 월드맵 물건 (GDD 130장 1, C.204 · 158장 2 이름 '월드맵'): 누르면 월드맵. 옛 모험 문·장터 물건은 폐기 (GDD 137장 3, C.215) */
-/** altar = 수련장(짚인형): 방 물건이면서 월드맵 장소 training 의 이름 (GDD 158장 1·160장 4 — 둘 다 같은 수련장) */
+/** altar = 수련장 이름만 (GDD 158장 1·165장 1): 방에는 서지 않고 월드맵 장소 training 의 이름으로 쓴다(그림 prop.altar 짚인형은 월드맵 수련장 폴백) */
 export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·수련장(158장 1)·모험(출발 준비 화면)·탑(도전의 탑 화면)·온천(153장 1). ▲▼ 순서도 이 순서 */

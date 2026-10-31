@@ -1,0 +1,19 @@
+{
+  "faction": 0,
+  "shots": [
+    "04-hollow-room.png"
+  ],
+  "errors": [],
+  "trace": [
+    [
+      "after-T",
+      "bha-room"
+    ]
+  ],
+  "roomProps": [
+    "bha-art bha-prop bha-prop--book",
+    "bha-art bha-prop bha-prop--chest",
+    "bha-art bha-prop bha-prop--outside bha-sel"
+  ],
+  "altarInRoom": 0
+}

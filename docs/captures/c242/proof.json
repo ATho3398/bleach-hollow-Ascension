@@ -1,0 +1,69 @@
+{
+  "faction": 1,
+  "shots": [
+    "01-room.png",
+    "02-worldmap.png",
+    "03-status-info.png"
+  ],
+  "errors": [],
+  "trace": [
+    [
+      "after-T",
+      "bha-room"
+    ],
+    [
+      "training-from-map",
+      "bha-lcdpage bha-train-page"
+    ],
+    [
+      "training-back",
+      "bha-room bha-worldmap"
+    ]
+  ],
+  "roomProps": [
+    "bha-art bha-prop bha-prop--book",
+    "bha-art bha-prop bha-prop--chest",
+    "bha-art bha-prop bha-prop--outside bha-sel"
+  ],
+  "altarInRoom": 0,
+  "worldImgs": [
+    [
+      "home",
+      "icon"
+    ],
+    [
+      "market",
+      "/art/prop-shop.webp"
+    ],
+    [
+      "training",
+      "/art/prop-altar.webp"
+    ],
+    [
+      "adventure",
+      "icon"
+    ],
+    [
+      "tower",
+      "icon"
+    ],
+    [
+      "spa",
+      "/art/prop-spa.png"
+    ]
+  ],
+  "statInfo": [
+    "능력치",
+    "체력 = 최대 체력",
+    "힘 = 일반 공격 피해 관련",
+    "지능 = 블록 공격 피해 관련",
+    "방어 = 받는 일반 공격 피해 관련",
+    "정신력 = 받는 블록 공격 피해 관련",
+    "속도 = 일반 공격 빠르기 관련",
+    "평타 치명 = 일반 공격이 치명타로 터질 확률 (최대 50%)",
+    "블록 치명 = 블록 공격이 치명타로 터질 확률 (최대 50%)",
+    "치명타 피해 = 치명타가 터지면 들어가는 피해 배율",
+    "속성 피해 = 그 속성 공격 피해 관련",
+    "값 옆 굵은 +숫자 = 노력치"
+  ]
+}
