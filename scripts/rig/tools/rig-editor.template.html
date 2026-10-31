@@ -1,0 +1,67 @@
+<title>종이인형 관절 편집기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 위: 무대(캐릭터 6배) / 아래: 부위 고르기 · 이동 패드 · 회전 시험 · 동작 · 내보내기 */
+:root{--bg:#eceaf0;--panel:#fbfafc;--fg:#1d1b22;--muted:#6a6573;--line:#d6d2dc;--stage:#9fb39a;--accent:#4b3f6b;--on:#fff;--pivot:#e0353b;--body:"Noto Sans KR",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16151a;--panel:#201e25;--fg:#ece9f1;--muted:#a19cab;--line:#34313b;--stage:#3d4a3b;--accent:#b7a6e6;--on:#16151a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16151a;--panel:#201e25;--fg:#ece9f1;--muted:#a19cab;--line:#34313b;--stage:#3d4a3b;--accent:#b7a6e6;--on:#16151a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+main{max-width:1180px;margin:0 auto;display:grid;gap:10px}
+h1{font-size:18px;margin:0} .lead{color:var(--muted);margin:2px 0 0;font-size:13px;line-height:1.5}
+.wrap{background:var(--stage);border-radius:10px;padding:14px 0;display:grid;place-items:center}
+#stage{position:relative;touch-action:manipulation;
+ background-image:linear-gradient(to right,rgb(0 0 0 / .07) 1px,transparent 1px),linear-gradient(to bottom,rgb(0 0 0 / .07) 1px,transparent 1px);background-size:6px 6px}
+.part{position:absolute;left:0;top:0;transform-origin:0 0;image-rendering:pixelated;max-width:none;pointer-events:none}
+.part.sel{filter:drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 1px var(--accent))}
+.dot{position:absolute;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--fg);opacity:.55;pointer-events:none}
+.dot.on{width:10px;height:10px;margin:-5px 0 0 -5px;background:var(--pivot);opacity:1;box-shadow:0 0 0 2px var(--on)}
+.dot.frame,.dot.keep{left:0;top:0;margin:0;border-radius:0;background:none;opacity:1;transform-origin:0 0}
+.dot.frame{border:2px solid var(--accent)}
+.dot.keep{border:2px dashed var(--pivot)}
+#info{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.4em}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-size:14px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+button.on{background:var(--accent);color:var(--on);border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pad{display:grid;grid-template-columns:repeat(3,52px);gap:6px;justify-content:center}
+.pad button{padding:12px 0;font-size:18px}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:8px}
+.sec h2{font-size:13px;margin:0;color:var(--muted);font-weight:600}
+input[type=range]{width:100%}
+textarea{width:100%;box-sizing:border-box;min-height:84px;font:12px/1.4 ui-monospace,monospace;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px}
+
+#parts{flex-direction:column;align-items:stretch}
+.chipgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chiplabel{min-width:64px;font-size:12px;opacity:.7}
+
+.stagerow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.toolcol{flex:0 0 330px;min-width:0;position:sticky;top:8px;display:grid;gap:8px}
+.padrow{display:flex;gap:10px;align-items:center}
+.modecol{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.modecol button{width:100%;white-space:nowrap}
+.angbox{flex:1;min-width:0}
+.angbox h2{font-size:12px;margin:0 0 4px}
+.angbox input[type=range]{width:100%;max-width:150px}
+.stagerow .leftcol{flex:0 0 auto;width:min-content;min-width:0;display:grid;gap:8px}
+.wrap{padding-left:140px;padding-right:12px}
+.side{display:grid;grid-auto-flow:column;grid-auto-columns:76px;align-content:start;gap:6px;flex:none;position:sticky;top:8px}
+.side button{width:100%;padding-left:2px;padding-right:2px;white-space:nowrap;letter-spacing:-.02em}
+.sidelabel{font-size:11px;opacity:.7;margin-top:2px}
+.sync{margin:0;font-size:11px;opacity:.75;line-height:1.3}
+</style>
+<main>
+<header><h1>종이인형 관절 편집기</h1><p class="lead">부위를 고르고 ↑↓←→ 로 1도트씩 옮긴다. '관절' 모드에선 무대를 눌러 관절 자리를 바로 찍을 수도 있다. 머리카락은 틀(진한 테두리) 밖으로 못 나가고, 빨간 점선은 가리지 않을 얼굴 칸. 고친 값은 서버에 저장돼 어느 기기에서 열어도 같다. 동작이 움직이는 채로 각을 잡을 수 있고, ‘이 동작에만’을 고르면 그 동작에만 저장된다. 관절 자리·기본 각도는 고른 외형의 몸에만 들어간다. 다 맞추면 오른쪽 ‘고정’ — 작업본에 저장된다(시험 페이지에 바로 보임). 게임에는 Claude 에게 “게임 넣어”라고 할 때 들어간다.</p></header>
+<div class="row"><button data-look="shinigami-base">사신</button><button data-look="shinigami-base-f">사신(여)</button><button data-look="shinigami-student">영술원 학생</button><button data-look="shinigami-student-f">영술원 학생(여)</button><button data-look="arrancar-base" class="on">아란칼 기본형</button><button data-look="arrancar-base-f">아란칼(여)</button><button data-look="arrancar-f-release-test">아란칼(여) 해방(시험)</button><button data-look="bare-base">알몸</button><button data-look="female-base">여성</button><button data-look="digitigrade-test">역관절(시험)</button><button data-look="cape-test">망토(시험)</button><button data-look="beast-test">짐승(시험)</button><button data-look="serpent-test">뱀(시험)</button></div>
+<div class="stagerow"><div class="toolcol"><section class="sec"><h2>부위 <small style="opacity:.7">(미리보기를 눌러도 골라진다 · 관절 모드에서 고른 부위를 한 번 더 누르면 거기가 관절)</small></h2><div class="row" id="parts"></div>
+
+</section><section class="sec"><h2>옮기기 <small style="opacity:.7">(↑↓←→ 1도트)</small></h2><div class="padrow"><div class="pad"><span></span><button data-d="0,-1" aria-label="위">↑</button><span></span><button data-d="-1,0" aria-label="왼쪽">←</button><span></span><button data-d="1,0" aria-label="오른쪽">→</button><span></span><button data-d="0,1" aria-label="아래">↓</button><span></span></div><div class="modecol"><button data-mode="pivot" class="on">관절 옮기기</button><button data-mode="part">부위 그림 옮기기</button><button id="back">뒤로 보내기</button><button id="front">앞으로 보내기</button></div></div></section></div><div class="leftcol"><div class="wrap"><div id="stage"></div></div><section class="sec" id="mbar"><h2>저장 범위 <small style="opacity:.7">지금 동작: <span id="mtv">—</span></small></h2>
+<div class="row"><button data-scope="base" class="on">기본 자세(이 몸)</button><button data-scope="motion">이 동작에만</button></div>
+<p class="sync" id="mhint">동작이 움직이는 채로 각도·위치를 고친다(멈추지 않음). 기본 자세 = 이 몸의 모든 동작에, ‘이 동작에만’ = 지금 동작에만 그 값이 동작 내내 더해진다.</p></section><section class="sec"><h2>관절 기본 각도 <span id="brotv">0°</span> <small style="opacity:.7"><span id="brotscope">(이 몸에만 저장)</span></small></h2><input id="brot" type="range" min="-180" max="180" value="0" step="1" aria-label="기본 각도"><div class="row"><button id="brot-m">−1°</button><button id="brot-p">+1°</button></div></section></div><div class="side" aria-label="동작·고정"><span class="sidelabel">동작</span><button data-m="idle">대기</button><button data-m="homeIdle">홈 대기</button><button data-m="move">걷기</button><button data-m="attack">공격</button><button data-m="attack2">공격2</button><button data-m="skill">특수1</button><button data-m="skill2">특수2</button><button data-m="hit">맞음</button><button data-m="ultimate">필살기</button><button data-m="release1">해방1</button><button data-m="straight">스트레이트</button><button data-m="bath">온천</button><button data-m="down">쓰러짐</button><button data-m="dying">빈사</button><button data-m="stop">멈춤</button><span class="sidelabel">저장</span><button id="fix" class="on">고정</button><p id="sync" class="sync">저장 위치 확인 중…</p></div></div>
+<div id="info"></div>
+
+
+
+<section class="sec"><h2>내보내기</h2><textarea id="out" readonly aria-label="관절·부위 자리 값"></textarea><div class="row"><button id="copy">값 복사</button><button id="reset">처음 값으로</button></div></section>
+</main>
+<script>var ART_MAP={};</script>
+<script>/*JS*/</script>

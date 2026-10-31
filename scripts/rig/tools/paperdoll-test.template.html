@@ -1,0 +1,24 @@
+<title>종이인형 시험</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 무대 하나 + 동작 버튼 줄 */
+:root{--bg:#eceaf0;--panel:#fbfafc;--fg:#1d1b22;--muted:#6a6573;--line:#d6d2dc;--stage:#9fb39a;--accent:#4b3f6b;--on:#fff;--body:"Noto Sans KR",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16151a;--panel:#201e25;--fg:#ece9f1;--muted:#a19cab;--line:#34313b;--stage:#3d4a3b;--accent:#b7a6e6;--on:#16151a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16151a;--panel:#201e25;--fg:#ece9f1;--muted:#a19cab;--line:#34313b;--stage:#3d4a3b;--accent:#b7a6e6;--on:#16151a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+main{max-width:640px;margin:0 auto;display:grid;gap:12px}
+h1{font-size:20px;margin:0} .lead{color:var(--muted);margin:4px 0 0;line-height:1.5;font-size:14px}
+#stage{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;background:var(--stage);border-radius:10px;padding:24px 8px}
+.cell{display:grid;place-items:end center}
+.bha-doll{position:relative;flex:none}
+.bha-doll__part{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;image-rendering:pixelated;pointer-events:none}
+.btns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+button{font:inherit;font-size:15px;padding:12px 0;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+button.on{background:var(--accent);color:var(--on);border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+<main><header><h1>종이인형 시험 (A안)</h1><p class="lead">작업본 부위 그림을 실시간으로 돌리고 옮기는 시험판. 끝의 넷(역관절 다리·망토·네 발 짐승·뱀)은 움직임을 먼저 맞추려고 단순한 도형으로 채운 임시 그림.</p></header>
+<div id="stage"></div>
+<div class="btns"><button data-m="idle" class="on">대기</button><button data-m="homeIdle">홈 대기</button><button data-m="move">걷기</button><button data-m="attack">공격</button><button data-m="attack2">공격2</button><button data-m="skill">특수1</button><button data-m="skill2">특수2</button><button data-m="hit">맞음</button><button data-m="ultimate">필살기</button><button data-m="release1">해방1</button><button data-m="straight">스트레이트</button><button data-m="bath">온천</button><button data-m="down">쓰러짐</button><button data-m="dying">빈사</button></div></main>
+<script>var ART_MAP={};</script>
+<script>/*JS*/</script>
