@@ -1,6 +1,6 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓰고, 값은 작업본(draft.ts, GDD 96장 36)
 import { DRAFT_RIGS, type DraftRig } from './draft';
-import { bodyBones, boneMatrices, fxAt, hairRect, insideFrame, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
@@ -60,6 +60,7 @@ function merge(c: Ctx, s: Saved): boolean {
     rig.bodyJoints[bid] = {
       pivots: Object.fromEntries(Object.entries(j.pivots ?? {}).filter(([k]) => ok(k))),
       rot: Object.fromEntries(Object.entries(j.rot ?? {}).filter(([k]) => ok(k))),
+      shift: Object.fromEntries(Object.entries(j.shift ?? {}).filter(([k]) => ok(k))),
     };
   }
   if (s.slots && s.slotsEdited) {
@@ -180,6 +181,22 @@ function joints(): BodyJoints {
 /** 이 몸에서의 뼈(관절 자리·쉬는 각도) */
 function bone(id: string) { return bodyBones(rig, curBody()).find((b) => b.id === id)!; }
 function setPivot(id: string, p: [number, number]) { (joints().pivots ??= {})[id] = p; }
+/** 관절만 옮긴다(GDD 115-A 61, 사용자 2026-11-01 "왜 자꾸 관절 옮기면 부위가 같이 이동함? 이거 고쳐"):
+ *  관절 자리를 d 만큼 옮기고, 쉬는 각도로 돌아간 만큼 그림이 밀리는 것을 보정 이동(shift)으로 되돌린다 → 쉬는 자세에서 부위·아래 부위 그림은 제자리.
+ *  관절 자리는 몸마다 하나라 '이 동작에만'이어도 이 몸의 모든 동작에 들어간다 */
+function moveJoint(id: string, dx: number, dy: number) {
+  if (!dx && !dy) return;
+  const b = bone(id);
+  setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]);
+  const [ex, ey] = jointMoveShift(b.restRot ?? 0, [dx, dy]);
+  const sh = (joints().shift ??= {});
+  const [ox, oy] = sh[id] ?? [0, 0];
+  const nx = Math.round((ox + ex) * 100) / 100;
+  const ny = Math.round((oy + ey) * 100) / 100;
+  if (Math.abs(nx) < 0.01 && Math.abs(ny) < 0.01) delete sh[id];
+  else sh[id] = [nx, ny];
+  if (!Object.keys(sh).length) delete joints().shift;
+}
 function baseRot(id: string) { return (rig.bodyJoints?.[curBody()] as BodyJoints | undefined)?.rot?.[id] ?? 0; }
 function boneOfSel() { return rig.slots.find((s) => s.id === sel)?.bone ?? sel; }
 
@@ -254,9 +271,8 @@ function draw() {
   if (!motion) {
     for (const b of bodyBones(rig, curBody())) {
       const d = document.createElement('div');
-      const m = mats[b.parent ?? b.id] ?? mats[b.id]!;
-      const px = m[0] * b.pivot[0] + m[2] * b.pivot[1] + m[4];
-      const py = m[1] * b.pivot[0] + m[3] * b.pivot[1] + m[5];
+      // 관절 점 = 이 뼈가 실제로 도는 자리(보정 이동 포함)
+      const [px, py] = apply(mats[b.id]!, b.pivot);
       d.className = 'dot' + (b.id === boneOfSel() ? ' on' : '');
       d.style.left = `${(px + 0.5) * K}px`;
       d.style.top = `${(py + 0.5) * K}px`;
@@ -268,7 +284,8 @@ function draw() {
   const body = rig.bodies[rig.looks[look]!.body]!;
   const lk = rig.looks[look]!;
   const part = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
-  $('info').textContent = `${NAMES()[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}` + ` · 기본 각도 ${baseRot(b.id)}°`;
+  $('info').textContent = `${NAMES()[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (b.shift ? ` · 보정 (${b.shift[0]}, ${b.shift[1]})` : '') + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}` + ` · 기본 각도 ${baseRot(b.id)}°`
+    + (mode === 'pivot' && scope === 'motion' && motion ? ' · 관절 자리는 이 몸의 모든 동작에 들어감' : '');
   const editingMotion = scope === 'motion' && motion && MOTIONS[motion];
   const shownRot = editingMotion ? motionOffset(b.id)[0] : baseRot(b.id);
   const br = document.getElementById('brot') as HTMLInputElement | null;
@@ -337,21 +354,18 @@ function shiftMotion(boneId: string, drot: number, dx: number, dy: number) {
 }
 
 function nudge(dx: number, dy: number) {
+  // 관절 옮기기 = 언제나 관절만(그림은 제자리). '이 동작에만'에서 그 동작만 부위를 옮기려면 '부위 그림 옮기기'
+  if (mode === 'pivot') { moveJoint(boneOfSel(), dx, dy); save(); draw(); return; }
   if (scope === 'motion' && motion) { shiftMotion(boneOfSel(), 0, dx, dy); return; }
-  if (mode === 'pivot') {
-    const b = bone(boneOfSel());
-    setPivot(b.id, [b.pivot[0] + dx, b.pivot[1] + dy]);
-  } else {
-    // 부위를 옮기면 딸린 부위(머리 → 머리카락·뒷머리, 왼팔 → 엄지, 오른 위팔 → 아래팔, 다리 → 정강이·발)와 그 관절도 같이(사용자 2026-10-29)
-    const moves = followMove(rig, look, sel);
-    if (!moves) return;
-    for (const m of moves.parts) {
-      const next: PartArt = { ...m.part, at: [m.part.at[0] + dx, m.part.at[1] + dy] };
-      if ((m.slot === 'hair' || m.slot === 'hair_back') && !insideFrame(rig, next, m.slot)) { $('info').textContent = '머리카락이 틀 밖으로 나가서 못 옮김'; return; }
-    }
-    for (const m of moves.parts) m.part.at = [m.part.at[0] + dx, m.part.at[1] + dy];
-    for (const id of moves.bones) { const b = bone(id); setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]); }
+  // 부위를 옮기면 딸린 부위(머리 → 머리카락·뒷머리, 왼팔 → 엄지, 오른 위팔 → 아래팔, 다리 → 정강이·발)와 그 관절도 같이(사용자 2026-10-29)
+  const moves = followMove(rig, look, sel);
+  if (!moves) return;
+  for (const m of moves.parts) {
+    const next: PartArt = { ...m.part, at: [m.part.at[0] + dx, m.part.at[1] + dy] };
+    if ((m.slot === 'hair' || m.slot === 'hair_back') && !insideFrame(rig, next, m.slot)) { $('info').textContent = '머리카락이 틀 밖으로 나가서 못 옮김'; return; }
   }
+  for (const m of moves.parts) m.part.at = [m.part.at[0] + dx, m.part.at[1] + dy];
+  for (const id of moves.bones) { const b = bone(id); setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]); }
   save(); draw();
 }
 
@@ -414,7 +428,15 @@ stage.addEventListener('click', (e) => {
   const hit = slotAt(fx, fy);
   if (hit && hit !== sel) { pick(hit); return; }
   if (mode !== 'pivot' || motion) return;
-  setPivot(boneOfSel(), [Math.floor(fx), Math.floor(fy)]);
+  // 누른 칸이 관절 점 자리가 되게: 화면 → 이 뼈의 그림 좌표(쉬는 자세)로 되돌려 그 칸으로 관절만 옮김
+  const id = boneOfSel();
+  const m = boneMatrices(rig, {}, curBody())[id]!;
+  const det = m[0] * m[3] - m[1] * m[2];
+  if (!det) return;
+  const qx = fx - m[4], qy = fy - m[5];
+  const u = (m[3] * qx - m[2] * qy) / det, v = (-m[1] * qx + m[0] * qy) / det;
+  const b = bone(id);
+  moveJoint(id, Math.floor(u) - b.pivot[0], Math.floor(v) - b.pivot[1]);
   save(); draw();
 });
 

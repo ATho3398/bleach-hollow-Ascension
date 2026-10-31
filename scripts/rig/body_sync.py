@@ -5,7 +5,7 @@
   그리고 뭔가 캐릭별로 좀 이상하면, 그 캐릭만 따로 내가 잡을테니까"
 
 복사하는 것(숫자 그대로, 몸 그림 차이 계산 없음):
-- 몸별 관절(bodyJoints): 관절 자리(pivots)·기본 각도(rot). 외형 층 관절(머리카락·뒷머리·망토·겉옷)은 외형마다 모양이 달라 받는 몸 값 유지
+- 몸별 관절(bodyJoints): 관절 자리(pivots)·기본 각도(rot)·보정 이동(shift). 외형 층 관절(머리카락·뒷머리·망토·겉옷)은 외형마다 모양이 달라 받는 몸 값 유지
 - 동작: 기준 몸의 동작 묶음(bodyMotions)을 받는 몸의 묶음에 — 해방(release1)·필살기 포함, 모든 뼈
 부위 그림 자리(bodies.<몸>.<부위>.at)는 몸마다 그림이 달라 옮기지 않는다.
 
@@ -27,7 +27,7 @@ from feet_weapon import dump  # noqa: E402
 GROUPS = {'bare': ['shinigami', 'student', 'arrancar'], 'female': ['shinigami_f', 'student_f', 'arrancar_f']}
 LOOK_BONES = {'hair', 'hair_back', 'cape'}
 MOTIONS_JSON = os.path.join(DRAFT_DIR, 'motions.json')
-KINDS = ('pivots', 'rot')
+KINDS = ('pivots', 'rot', 'shift')  # 관절 자리·기본 각도·보정 이동(115-A 61)
 
 
 def body_bone(b: str) -> bool:

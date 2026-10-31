@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { HUMANOID, MOTIONS, apply, bodyBones, boneMatrices, insideFrame, layerMatrix, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -190,6 +190,33 @@ describe('자세·행렬', () => {
     const a = boneMatrices(rig, {}, 'female').forearm_R!;
     const b = boneMatrices(rig, {}, 'bare').forearm_R!;
     expect(a[0]).not.toBeCloseTo(b[0]);
+  });
+  it('관절만 옮기기(GDD 115-A 61): 관절을 옮겨도 보정 이동(shift)으로 쉬는 자세 그림·아래 뼈는 제자리, 도는 자리만 옮겨진다', () => {
+    const rig = JSON.parse(JSON.stringify(HUMANOID)) as typeof HUMANOID;
+    rig.bodyJoints = { bare: { pivots: { arm_R: [24, 33], forearm_R: [32, 41] }, rot: { arm_R: 19, forearm_R: -46 } } };
+    const before = boneMatrices(rig, {}, 'bare');
+    const j = rig.bodyJoints.bare as { pivots: Record<string, [number, number]>; shift?: Record<string, [number, number]> };
+    for (const [id, rot, d] of [['arm_R', 19, [2, -1]], ['forearm_R', -46, [-1, 3]]] as const) {
+      const p = j.pivots[id]!;
+      j.pivots[id] = [p[0] + d[0], p[1] + d[1]];
+      const [sx, sy] = jointMoveShift(rot, [d[0], d[1]]);
+      const o = (j.shift ??= {})[id] ?? [0, 0];
+      j.shift[id] = [o[0] + sx, o[1] + sy];
+    }
+    const after = boneMatrices(rig, {}, 'bare');
+    // 위팔·아래팔·손에 붙은 부위(아래 뼈 포함) 그림 칸이 같은 화면 자리
+    for (const id of ['arm_R', 'forearm_R']) for (const q of [[20, 30], [35, 50], [26, 44]] as [number, number][]) {
+      const a = apply(before[id]!, q), b = apply(after[id]!, q);
+      expect(a[0], id).toBeCloseTo(b[0], 6);
+      expect(a[1], id).toBeCloseTo(b[1], 6);
+    }
+    // 각도를 더 돌리면 새 관절 자리(보정 포함) 둘레로 돈다
+    const pose = { forearm_R: { rot: 30, x: 0, y: 0 } };
+    const m = boneMatrices(rig, pose, 'bare').forearm_R!;
+    const pivotNow = apply(after.forearm_R!, j.pivots.forearm_R!);
+    const turned = apply(m, j.pivots.forearm_R!);
+    expect(turned[0]).toBeCloseTo(pivotNow[0], 6);
+    expect(turned[1]).toBeCloseTo(pivotNow[1], 6);
   });
   it('뒷머리: 머리에 붙은 따로 뼈라 모든 동작에서 찰랑거린다(걷기는 반복 이음매가 맞다)', () => {
     expect(HUMANOID.bones.find((b) => b.id === 'hair_back')!.parent).toBe('head');

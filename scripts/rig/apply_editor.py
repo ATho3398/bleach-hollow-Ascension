@@ -67,14 +67,14 @@ if 'bodies' in data:
     # 몸별 관절(자리·기본 각도): 몸·종류·뼈마다 편집기에서 고친 것만(빈 값 = 지움)
     def norm(j):
         j = j if isinstance(j, dict) else {}
-        return {kind: {b: v for b, v in (j.get(kind) or {}).items() if v} for kind in ('pivots', 'rot')}
+        return {kind: {b: v for b, v in (j.get(kind) or {}).items() if v} for kind in ('pivots', 'rot', 'shift')}
     edited_j = {}
     cur = rig.setdefault('bodyJoints', {})
     for body in data['bodies']:
         if body not in rig['bodies']:
             continue
         e, b0 = norm((data.get('bodyJoints') or {}).get(body)), norm((base.get('bodyJoints') or {}).get(body))
-        for kind in ('pivots', 'rot'):
+        for kind in ('pivots', 'rot', 'shift'):
             for bone in set(e[kind]) | set(b0[kind]):
                 if e[kind].get(bone) == b0[kind].get(bone):
                     continue

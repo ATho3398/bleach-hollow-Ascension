@@ -31,7 +31,8 @@ def bone_mats(body=None):
     j = (RIG.get('bodyJoints') or {}).get(body) if body else None
     j = j if isinstance(j, dict) else {}
     by = {b['id']: dict(b, pivot=(j.get('pivots') or {}).get(b['id'], b['pivot']),
-                        restRot=b.get('restRot', 0) + (j.get('rot') or {}).get(b['id'], 0)) for b in RIG['bones']}
+                        restRot=b.get('restRot', 0) + (j.get('rot') or {}).get(b['id'], 0),
+                        shift=(j.get('shift') or {}).get(b['id'], [0, 0])) for b in RIG['bones']}
     out = {}
 
     def get(i):
@@ -41,7 +42,8 @@ def bone_mats(body=None):
         r = math.radians(b.get('restRot', 0))
         c, s = math.cos(r), math.sin(r)
         px, py = b['pivot']
-        m = [c, s, -s, c, px - c * px + s * py, py - s * px - c * py]
+        sx, sy = b['shift']  # 몸별 보정 이동(GDD 115-A 61)
+        m = [c, s, -s, c, px - c * px + s * py + sx, py - s * px - c * py + sy]
         w = mul(get(b['parent']), m) if b['parent'] else m
         out[i] = w
         return w

@@ -14,7 +14,7 @@ def samp(keys,t):
             u=ease((t-a[0])/max(1,b[0]-a[0])); return [a[i]+(b[i]-a[i])*u for i in (1,2,3)]
     return keys[-1][1:]
 L=rig['looks'][look]; body=L['body']; bj=rig['bodyJoints'].get(body) or {}
-bones={b['id']:dict(b,pivot=(bj.get('pivots') or {}).get(b['id'],b['pivot']),restRot=b.get('restRot',0)+(bj.get('rot') or {}).get(b['id'],0)) for b in rig['bones']}
+bones={b['id']:dict(b,pivot=(bj.get('pivots') or {}).get(b['id'],b['pivot']),restRot=b.get('restRot',0)+(bj.get('rot') or {}).get(b['id'],0),shift=(bj.get('shift') or {}).get(b['id'],[0,0])) for b in rig['bones']}
 vx,vy,vw,vh=-58,-16,113,98;K=3
 frames=[]
 for t in ts:
@@ -23,7 +23,7 @@ for t in ts:
         if i in mats: return mats[i]
         b=bones[i]; rot,x,y=samp(mot['tracks'][i],t) if i in mot['tracks'] else (0,0,0)
         r=math.radians(rot+b['restRot']);c,s=math.cos(r),math.sin(r);px,py=b['pivot']
-        m=[c,s,-s,c,px-c*px+s*py+x,py-s*px-c*py+y]
+        sx,sy=b['shift'];m=[c,s,-s,c,px-c*px+s*py+x+sx,py-s*px-c*py+y+sy]
         w=mul(get(b['parent']),m) if b['parent'] else m; mats[i]=w; return w
     im=Image.new('RGBA',(vw*K,vh*K),(160,180,155,255))
     slots=[x for x in rig['slots'] if x['id'] not in mot.get('hide',[])]

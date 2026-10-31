@@ -14,6 +14,8 @@ export interface Bone {
   pivot: Vec2;
   /** 쉬는 자세 각도(도). 무기처럼 그림은 곧게 그리고 들고 있는 각도만 주고 싶을 때. 동작 각도에 더해진다 */
   restRot?: number;
+  /** 보정 이동(도트, 부모 좌표 — 동작 x·y 처럼 더함). 몸별 관절(bodyJoints.shift)에서만 온다: 편집기에서 관절을 옮겨도 쉬는 자세 그림이 제자리에 있게(GDD 115-A 61) */
+  shift?: Vec2;
 }
 export interface Slot {
   id: string;
@@ -53,6 +55,8 @@ export interface RigEdit {
 export interface BodyJoints {
   pivots?: Record<string, Vec2>;
   rot?: Record<string, number>;
+  /** 뼈 id → 보정 이동(도트). 관절을 옮기면 편집기가 넣는다(jointMoveShift, GDD 115-A 61) */
+  shift?: Record<string, Vec2>;
 }
 
 /** 부위 그림 하나: `public/art/rig/<rig id>/<art>.png`(꼭 맞게 자른 그림), at = 캔버스에서 왼쪽 위 자리, size = 그림 크기 */
@@ -200,15 +204,28 @@ function local(b: Bone, p: BonePose): Mat {
   const c = Math.cos(r);
   const s = Math.sin(r);
   const [px, py] = b.pivot;
-  // T(x,y) · T(pivot) · R · T(-pivot)
-  return [c, s, -s, c, px - c * px + s * py + p.x, py - s * px - c * py + p.y];
+  const [sx, sy] = b.shift ?? [0, 0];
+  // T(x,y) · T(shift) · T(pivot) · R · T(-pivot)
+  return [c, s, -s, c, px - c * px + s * py + p.x + sx, py - s * px - c * py + p.y + sy];
+}
+
+/** 관절을 d 만큼 옮길 때 더할 보정 이동(GDD 115-A 61, 사용자 2026-11-01 "왜 자꾸 관절 옮기면 부위가 같이 이동함? 이거 고쳐").
+ *  관절 둘레로 돌아간 뼈(쉬는 각도 θ)는 관절만 옮기면 그림이 (I − R(θ))·d 만큼 밀린다 → 그만큼 거꾸로. 쉬는 자세에서 이 뼈·아래 뼈 그림이 그대로 */
+export function jointMoveShift(restRotDeg: number, d: Vec2): Vec2 {
+  const r = (restRotDeg * Math.PI) / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return [-(d[0] - (c * d[0] - s * d[1])), -(d[1] - (s * d[0] + c * d[1]))];
 }
 
 /** 이 몸의 관절(따로 맞춘 자리·기본 각도를 얹은 뼈 목록). body 가 없거나 따로 맞춘 게 없으면 bones 그대로 */
 export function bodyBones(rig: Rig, body?: string): Bone[] {
   const j = body ? rig.bodyJoints?.[body] : undefined;
   if (!j || typeof j !== 'object') return rig.bones;
-  return rig.bones.map((b) => ({ ...b, pivot: j.pivots?.[b.id] ?? b.pivot, restRot: (b.restRot ?? 0) + (j.rot?.[b.id] ?? 0) }));
+  return rig.bones.map((b) => {
+    const sh = j.shift?.[b.id];
+    return { ...b, pivot: j.pivots?.[b.id] ?? b.pivot, restRot: (b.restRot ?? 0) + (j.rot?.[b.id] ?? 0), ...(sh ? { shift: sh } : {}) };
+  });
 }
 
 /** 뼈마다 '원래 그림 좌표 → 지금 화면 좌표' 행렬(도트 단위). 부모 뼈를 따라 움직인다. body = 그 몸에 따로 맞춘 관절을 쓴다 */
@@ -318,7 +335,7 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
   for (const [bid, j] of Object.entries(rig.bodyJoints ?? {})) {
     if (typeof j !== 'object') continue;
     if (!rig.bodies[bid]) errs.push(`몸별 관절 ${bid}: 몸 없음`);
-    for (const k of [...Object.keys(j.pivots ?? {}), ...Object.keys(j.rot ?? {})]) if (!ids.has(k)) errs.push(`몸별 관절 ${bid}: 뼈 ${k} 없음`);
+    for (const k of [...Object.keys(j.pivots ?? {}), ...Object.keys(j.rot ?? {}), ...Object.keys(j.shift ?? {})]) if (!ids.has(k)) errs.push(`몸별 관절 ${bid}: 뼈 ${k} 없음`);
   }
   for (const [lid, look] of Object.entries(rig.looks)) {
     if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);

@@ -13,13 +13,13 @@ def samp(keys,t):
 def mul(a,b): return [a[0]*b[0]+a[2]*b[1],a[1]*b[0]+a[3]*b[1],a[0]*b[2]+a[2]*b[3],a[1]*b[2]+a[3]*b[3],a[0]*b[4]+a[2]*b[5]+a[4],a[1]*b[4]+a[3]*b[5]+a[5]]
 def mats(tracks,t,body='shinigami'):
     bj=rig['bodyJoints'].get(body) or {}
-    bones={b['id']:dict(b,pivot=(bj.get('pivots') or {}).get(b['id'],b['pivot']),restRot=b.get('restRot',0)+(bj.get('rot') or {}).get(b['id'],0)) for b in rig['bones']}
+    bones={b['id']:dict(b,pivot=(bj.get('pivots') or {}).get(b['id'],b['pivot']),restRot=b.get('restRot',0)+(bj.get('rot') or {}).get(b['id'],0),shift=(bj.get('shift') or {}).get(b['id'],[0,0])) for b in rig['bones']}
     out={}
     def get(i):
         if i in out: return out[i]
         b=bones[i]; rot,x,y=samp(tracks.get(i),t)
         r=math.radians(rot+b['restRot']);c,s=math.cos(r),math.sin(r);px,py=b['pivot']
-        M=[c,s,-s,c,px-c*px+s*py+x,py-s*px-c*py+y]; w=mul(get(b['parent']),M) if b['parent'] else M; out[i]=w; return w
+        sx,sy=b['shift'];M=[c,s,-s,c,px-c*px+s*py+x+sx,py-s*px-c*py+y+sy]; w=mul(get(b['parent']),M) if b['parent'] else M; out[i]=w; return w
     for b in bones: get(b)
     return out,bones
 def ap(M,p): return (M[0]*p[0]+M[2]*p[1]+M[4], M[1]*p[0]+M[3]*p[1]+M[5])
@@ -27,4 +27,4 @@ def sword_dir(tracks,t,body='shinigami'):
     M,_=mats(tracks,t,body); ax=rig['swordAxis']; g,tp=ax['grip'],ax['tip']; W=M['weapon']
     dx=W[0]*(tp[0]-g[0])+W[2]*(tp[1]-g[1]); dy=W[1]*(tp[0]-g[0])+W[3]*(tp[1]-g[1]); return math.degrees(math.atan2(dy,dx))
 def joint(tracks,t,bone,body='shinigami'):
-    M,B=mats(tracks,t,body); b=B[bone]; return ap(M[b['parent']] if b['parent'] else M[bone], b['pivot'])
+    M,B=mats(tracks,t,body); b=B[bone]; return ap(M[bone], b['pivot'])  # 관절 = 이 뼈가 도는 자리(보정 이동 포함)
