@@ -49,6 +49,7 @@ if 'bodies' in data:
     bj = {k: {kk: vv for kk, vv in v.items() if vv} for k, v in bj.items()}
     bj = {k: v for k, v in bj.items() if v}
     # 편집기 상태에 있는 몸만 바꾼다(편집기보다 나중에 생긴 몸의 관절은 그대로)
+    old_bj = json.loads(json.dumps(rig.get('bodyJoints') or {}))
     cur = rig.get('bodyJoints') or {}
     for k in data['bodies']:
         if k in rig['bodies']:
@@ -95,6 +96,16 @@ if 'bodies' in data:
         s2 = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2]', s2)
         open(mp, 'w', encoding='utf-8').write(s2 + '\n')
         print('동작 키 적용: 뼈 트랙', n, '→', os.path.basename(mp))
+    # 남녀 알몸으로 잡은 동작 → 같은 성별 몸에(GDD 115-A 59, body_sync.py): 알몸 동작을 고쳤으면 그 동작, 알몸 관절·기본 각도를 고쳤으면 그 몸 동작 전부
+    if RIG_ID == 'humanoid':
+        from body_sync import sync  # noqa: E402
+        bm = rig.get('bodyMotions') or {}
+        for src in ('bare', 'female'):
+            mids = sorted({k.split('/', 1)[1] for k in medits if k.split('/', 1)[0] == bm.get(src, src)})
+            norm = lambda j: {k: v for k, v in (j or {}).items() if v}  # noqa: E731
+            joints = norm(old_bj.get(src)) != norm((rig.get('bodyJoints') or {}).get(src))
+            if joints or mids:
+                print('알몸 기준 옮김', src, '→', ' '.join(sync(src, None if joints else mids)))
     print(RIG_ID, '적용(전체 상태): 관절', len(piv), '몸', len(data['bodies']), '외형', len(data.get('looks', {})))
     sys.exit(0)
 piv = {b['id']: b['pivot'] for b in data['bones']}
