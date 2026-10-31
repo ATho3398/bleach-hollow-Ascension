@@ -4,3 +4,5 @@ dist
 scripts/*/out/
 __pycache__/
 .rig-pages/
+scripts/rig/tools/tmp.png
+scripts/rig/tools/tmp_m.json
