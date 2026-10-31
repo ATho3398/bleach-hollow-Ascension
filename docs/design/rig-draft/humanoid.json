@@ -303,7 +303,12 @@
     "bare": {
       "pivots": {
         "arm_R": [23, 33],
-        "forearm_L": [9, 44]
+        "forearm_L": [9, 44],
+        "forearm_R": [31, 41]
+      },
+      "rot": {
+        "arm_R": -16,
+        "forearm_R": 17
       }
     },
     "arrancar": {
