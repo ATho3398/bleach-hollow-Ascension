@@ -991,6 +991,7 @@ data/
 - UI 검수 방법(사용자 요청으로 만든 것): 기준 `docs/ui-review.md` · 캡처 `UI_AUDIT_SHOTS=<폴더> npm run ui-audit`(두 종족 281장, 테스트_* 제외 215장) · 화면 5묶음 검수 에이전트 + 확인 에이전트(Workflow 10개, 약 95만 토큰) → 엑셀(캡처 썸네일). ui-audit 실패 2건(온천 클릭 시간 초과·원정 결과 완주 못 닿음) 남음.
 - 사용자가 알려줄 일(요청하면 엑셀 SendUserFile): 진화체·특성 초안 · 대장장이 역할 · 기타 아이템 용도(docs/drafts, 스크립트 user-drafts-xlsx.py). 아이콘 없는 목록 `docs/drafts/블리치_아이콘_없는_목록.xlsx`(391개, 스크립트 missing-icons-xlsx.py). 검수 프로토콜 합치기 도구 `docs/qa-setup/`(사용자 로컬용, zip 링크 https://github.com/ATho3398/bleach-hollow-Ascension/archive/refs/heads/main.zip).
 - 다음 코딩 174, 다음 패치 = 그 시점 가장 큰 값+1(코딩173 이 C.237 예상). UI담당자C = session_01LmFYYdTyBXcbM3dRNuzGuc(사신 탑 그림 없음).
+**10-31 16:5x C.241 배포 확인**(코딩178 793279b, Pages run 315 success, 배포 index-CI7aB5Nf.js 에 "C.241"). 164장: homeHp.spa 1초 체력 +5%·컨디션 +5·배부름 −0.5(0 → 가득 20초, 배부름 10), BALANCE 102, 온천·컨디션 ⓘ 문구 1초 단위. 상점 하루 판매 테스트 nowMs 수리. 테스트 2371. 캡처 c241/02 10초 117/212 확인. 코딩178 DONE_·_대기(15.7만).
 **10-31 16:4x 사용자 지시 → 166장(v5.369)**: 앱 standalone 인데 '이미 전체 화면' 뜨는 버그 → **코딩180**(Opus, session_01YVaigJvUgTNMP3yLhh979X, 16:48 생성). 다음 코딩 181.
 **10-31 16:4x 사용자 지시 → 165장(v5.368)**: 방 수련장 삭제(160장 4 정정) + 능력치 ⓘ 설명 한 줄씩 → **코딩179**(Opus, session_01YVaigGeyETGDRw1Te2dUD4, 16:47 생성). 다음 코딩 180.
 **10-31 16:3x 사용자 지시 → 163장 5·164장(v5.367)**: 흡수 배부름 효과 삭제(코딩177 에 추가) + 온천 가득 20초 → **코딩178**(Opus, session_01YVaigHe1TnfoDz8bTYMg7Y, 16:39 생성). 다음 코딩 179.
