@@ -57,7 +57,7 @@ export interface SpaStay {
   at: number;
   hp: number;
   fullness: number;
-  /** 튜토리얼 온천 (GDD 145장 1, 형식 57): 옛 빠르기(homeHp.tutorialSpa, 10초에 가득) — 평소 온천은 5분 */
+  /** 튜토리얼 온천 (GDD 145장 1, 형식 57): 옛 빠르기(homeHp.tutorialSpa, 10초에 가득) — 평소 온천은 약 20초(GDD 164장) */
   fast?: true;
 }
 
@@ -210,7 +210,7 @@ export function leaveSpa(nest: NestState, nowMs: number, reason: SpaEnd['reason'
   return closeSpa(nest, nowMs, reason);
 }
 
-/** 온천 빠르기 (GDD 145장 1): 평소 = homeHp.spa(약 5분에 가득), 튜토리얼 온천 = homeHp.tutorialSpa(10초) */
+/** 온천 빠르기 (GDD 145장 1): 평소 = homeHp.spa(약 20초에 가득, GDD 164장), 튜토리얼 온천 = homeHp.tutorialSpa(10초) */
 export function spaRateOf(stay: Pick<SpaStay, 'fast'> | null | undefined): { hpPerSecond: number; conditionPerSecond: number; fullnessPerSecond: number } {
   return stay?.fast ? HH.tutorialSpa : HH.spa;
 }

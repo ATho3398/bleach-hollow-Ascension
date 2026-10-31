@@ -265,7 +265,7 @@ export function startApp(host: HTMLElement): void {
     const pct = (x: number) => String(Math.round(x * 100));
     const vars = {
       chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
-      spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalMin: String(Math.round(1 / HH.spa.hpPerSecond / 60)), // 튜토리얼 온천 10초 · 평소 5분 (GDD 145장 1)
+      spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalSec: String(Math.round(1 / HH.spa.hpPerSecond)), // 튜토리얼 온천 10초 · 평소 약 20초 (GDD 164장 1)
       idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
     };

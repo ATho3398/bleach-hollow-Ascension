@@ -92,7 +92,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine(`${f.fullnessName} ${CP.conditionBelowFullness} 이하`, `시간당 ${MINUS}${num(CP.conditionPerHour)}`, `${f.fullnessName} 0이면 ×2`),
           // 온천 회복 (GDD 135장 3 — 배부름 홈 대기 회복은 수정 v5.315 에서 폐기)
           numLine(f.worldmap?.spaName ?? DEFAULT_WORLDMAP.spaName, // 온천 이름 = 월드맵 장소 이름 (GDD 153장 1)
-             `1분에 ${signed(Math.round(NX.homeHp.spa.conditionPerSecond * 60))}`), // 평소 온천 약 5분에 가득 (GDD 145장 1)
+             `1초에 ${signed(Math.round(NX.homeHp.spa.conditionPerSecond * 10) / 10)}`), // 평소 온천 약 20초에 가득 (GDD 164장 1)
           numLine('모험 패배', `${NX.defeatCondition}까지 떨어진다`),
           numLine(`${f.frenzyName} 후 귀환`, signed(-RX.frenzyConditionLoss)),
         ],

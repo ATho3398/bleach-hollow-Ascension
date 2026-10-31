@@ -31,8 +31,8 @@ describe('135장 수정 v5.315: 대기 때 컨디션은 안 찬다', () => {
   it('balance 에 홈 대기 회복 키가 없다 · 온천 컨디션은 남는다', () => {
     expect(CP).not.toHaveProperty('conditionRegenAtFullness');
     expect(CP).not.toHaveProperty('conditionRegenPerHour');
-    expect(BALANCE.provisional.nest.homeHp.tutorialSpa.conditionPerSecond).toBe(10); // C.223: 1초 +10 = 튜토리얼 온천만, 평소 5분 (GDD 145장 1)
-    expect(BALANCE.provisional.nest.homeHp.spa.conditionPerSecond).toBeCloseTo(1 / 3, 9);
+    expect(BALANCE.provisional.nest.homeHp.tutorialSpa.conditionPerSecond).toBe(10); // C.223: 1초 +10 = 튜토리얼 온천만, 평소 약 20초 (GDD 164장 1)
+    expect(BALANCE.provisional.nest.homeHp.spa.conditionPerSecond).toBe(5);
   });
   it('컨디션·배부름 ⓘ 에 "쉬는 동안" 회복 문구 없음, 온천 문구는 있음', () => {
     for (const f of FACTIONS) {
@@ -40,7 +40,7 @@ describe('135장 수정 v5.315: 대기 때 컨디션은 안 찬다', () => {
       const hunger = statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n');
       expect(cond).not.toMatch(/쉬는 동안/);
       expect(hunger).not.toMatch(/쉬는 동안|컨디션이 시간당 \+/);
-      expect(cond).toMatch(/1분에 \+20/); // 평소 온천 (C.223)
+      expect(cond).toMatch(/1초에 \+5/); // 평소 온천 (C.241, GDD 164장 1)
     }
   });
 });
@@ -89,7 +89,7 @@ describe('139장 2 온천 = 10초 안 (C.214 추가) → C.223(GDD 145장 1): �
     s.nest.hunger = 0;
     expect(spaEnter(s, 50_000)).toBeNull(); // 마지막 1분 시계 뒤 50초 지나 들어감
     const { previewHomeHp } = await import('../src/engine/nest');
-    expect(previewHomeHp(s.nest, 110_000).fraction).toBeCloseTo(homeHp(s).fraction + 0.2, 6); // 들어간 뒤 60초만 = +20% (평소 온천 5분에 가득)
+    expect(previewHomeHp(s.nest, 54_000).fraction).toBeCloseTo(homeHp(s).fraction + 0.2, 6); // 들어간 뒤 4초만 = +20% (평소 온천 약 20초에 가득, GDD 164장 1)
     expect(homeHp(s).fraction).toBeLessThan(0.3); // 앞선 50초는 대기 회복(1분에 +2%)
   });
   it('문구: 온천 ⓘ 평소 1분에·튜토리얼 1초에 · 튜토리얼 온천 카드 1초에 · 쉬기 카드 = 평소 5분 안내', () => {

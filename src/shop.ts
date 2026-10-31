@@ -206,14 +206,14 @@ function goldPrice(save: SaveData, item: GoldItemDef): number | null {
 }
 
 /** 품목 효과로 막힌 이유 (돈과 별개). 없으면 null */
-function goldBlock(save: SaveData, item: GoldItemDef): string | null {
+function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()): string | null {
   switch (item.kind) {
     case 'food': return save.shared.food[item.food!] >= FOOD_MAX ? `보관 가득 (${FOOD_MAX}/${FOOD_MAX})` : null;
     case 'calm':
     case 'wake':
     case 'medicine':
     case 'battle':
-      if (shopDailyLeft(save, item.id) === 0) return SOLD_OUT_TODAY; // 회복 물건 하루 판매 수 (GDD 145장 4)
+      if (shopDailyLeft(save, item.id, nowMs) === 0) return SOLD_OUT_TODAY; // 회복 물건 하루 판매 수 (GDD 145장 4)
       return canStoreConsumable(save, item.id) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
     case 'trainingTicket': return save.training.tickets >= BALANCE.provisional.training.ticketsMax ? `수련권 가득 (${BALANCE.provisional.training.ticketsMax}/${BALANCE.provisional.training.ticketsMax})` : null;
     case 'tileDraw':
@@ -244,10 +244,10 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
 }
 
 /** 골드 탭 줄 (GDD 25-9 표 순서). 수련권은 수련이 열린 트랙(5단계 이상)에서만 보인다 */
-export function goldRows(save: SaveData, faction: FactionConfig): ShopRow[] {
+export function goldRows(save: SaveData, faction: FactionConfig, nowMs: number = Date.now()): ShopRow[] {
   return GOLD_ITEMS.filter((it) => it.kind !== 'trainingTicket' || trainingOpen(save)).map((it) => {
     const price = goldPrice(save, it);
-    const block = goldBlock(save, it) ?? (price !== null && wallet(save, 'gold') < price ? shortText('gold', price - wallet(save, 'gold')) : null);
+    const block = goldBlock(save, it, nowMs) ?? (price !== null && wallet(save, 'gold') < price ? shortText('gold', price - wallet(save, 'gold')) : null);
     const effect = goldEffect(it, faction) + (it.kind === 'tileDraw' && save.tiles.unlocked ? ` · 뽑은 횟수 ${save.tiles.draws}` : '');
     return { id: it.id, currency: 'gold', name: goldName(it, faction), effect, price, canBuy: block === null && price !== null, lock: block, have: goldHave(save, it), confirm: it.kind === 'deckSlot' };
   });
@@ -281,7 +281,7 @@ function record(save: SaveData, id: string, currency: ShopCurrency, price: numbe
 export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, nowMs: number = Date.now(), rand: () => number = Math.random, files?: readonly string[]): BuyResult {
   const gold = getGoldItem(id);
   if (gold) {
-    const row = goldRows(save, faction).find((r) => r.id === id);
+    const row = goldRows(save, faction, nowMs).find((r) => r.id === id); // 하루 판매 수는 nowMs 기준 (C.241 — 날짜가 다르면 Date.now() 로 잘못 셌다)
     if (!row) return { ok: false, reason: '지금은 살 수 없는 품목이다' };
     if (!row.canBuy || row.price === null) return { ok: false, reason: row.lock ?? '살 수 없다' };
     const price = row.price;

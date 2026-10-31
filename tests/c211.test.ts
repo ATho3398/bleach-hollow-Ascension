@@ -164,7 +164,7 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
       const cond = statusInfo('cond', f).groups.flatMap((g) => g.lines).join('\n');
       expect(cond).not.toContain('쉬는 동안');
       expect(cond).not.toContain('70 이상');
-      expect(cond).toMatch(/1분에 \+20/); // 평소 온천 (C.223, GDD 145장 1)
+      expect(cond).toMatch(/1초에 \+5/); // 평소 온천 (C.241, GDD 164장 1)
       const hunger = statusInfo('hunger', f).groups.flatMap((g) => g.lines).join('\n');
       expect(hunger).not.toContain('쉬는 동안');
       expect(hunger).not.toContain('컨디션이 시간당 +');

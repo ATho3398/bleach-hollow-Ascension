@@ -56,7 +56,7 @@ export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: str
   return '방으로 돌아왔다.';
 }
 
-/** 쉬는 동안 줄 (GDD 145장 1): 평소 온천은 1분 단위(약 5분에 가득), 튜토리얼 온천(10초)은 1초 단위 */
+/** 쉬는 동안 줄 (GDD 145장 1): 가득까지 1분 이상이면 1분 단위, 아니면 1초 단위 — 평소 온천 약 20초(GDD 164장 1)·튜토리얼 온천 10초 둘 다 지금은 1초 단위 */
 export function spaRateLines(r: { hpPerSecond: number; conditionPerSecond: number; fullnessPerSecond: number }, fullnessName: string): string[] {
   const full = 0.99 / r.hpPerSecond;
   const fmt = (v: number) => String(Math.round(v * 10) / 10);

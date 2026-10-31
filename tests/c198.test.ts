@@ -182,7 +182,7 @@ describe('123장 4 홈 회복', () => {
     n.hunger = 0;
     n.hpFraction = 0.2;
     enterSpa(n, T0);
-    applyAbsenceTime(n, T0, T0 + 90_000); // 평소 온천: 90초 = +30% (5분에 가득, GDD 145장 1)
+    applyAbsenceTime(n, T0, T0 + 6_000); // 평소 온천: 6초 = +30% (약 20초에 가득, GDD 164장 1)
     expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(0.5);
   });
@@ -261,12 +261,12 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     s.nest.hunger = 0;
     expect(spaEnter(s, T0)).toBeNull();
     expect(homeHp(s).inSpa).toBe(true);
-    const r = spaSoak(s, 2, T0, true); // 2분 (평소 온천 5분에 가득 — GDD 145장 1)
-    expect(r.hp).toBeCloseTo(0.4);
-    expect(100 - s.nest.hunger).toBeCloseTo(96);
+    const r = spaSoak(s, 0.1, T0, true); // 6초 (평소 온천 약 20초에 가득 — GDD 164장 1)
+    expect(r.hp).toBeCloseTo(0.3); // 오른 몫 (0.1 → 0.4)
+    expect(100 - s.nest.hunger).toBeCloseTo(97); // 1초에 −0.5
     const e = spaLeave(s, T0, true)!;
     expect(e.reason).toBe('left');
-    expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'left', hpFrom: 0.1, hpTo: 0.5, tutorial: true });
+    expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'left', hpFrom: 0.1, hpTo: 0.4, tutorial: true });
   });
   it('먹이 지급 → feedNest (배부름·체력 같이)', () => {
     const s = newSaveData('hollow', T0);
@@ -292,7 +292,7 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     absenceOf(s, T0 + 30 * MIN);
     expect(s.nest.spa).toBeNull();
     expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'full' });
-    expect((s.runLog.homeHeals.at(-1) as { minutes: number }).minutes).toBeCloseTo(2, 1); // 2분 = +40% (평소 온천 5분에 가득, GDD 145장 1)
+    expect((s.runLog.homeHeals.at(-1) as { minutes: number }).minutes).toBeCloseTo(8 / 60, 2); // 8초 = +40% (평소 온천 약 20초에 가득, GDD 164장 1)
     leaveSpa(s.nest, T0);
   });
 });

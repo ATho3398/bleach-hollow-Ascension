@@ -77,19 +77,19 @@ describe('144장 4·145장 3: 튜토리얼 회복 안내 · 시작 가방', () =
   });
 });
 
-describe('145장 1: 온천 = 약 5분, 튜토리얼 온천만 10초', () => {
-  it('평소: 5분에 체력 0 → 가득·컨디션 +100·배부름 −10', () => {
+describe('145장 1 → 164장 1: 온천 = 약 20초(옛 5분), 튜토리얼 온천만 10초', () => {
+  it('평소: 20초에 체력 0 → 가득·컨디션 +100·배부름 −10 (GDD 164장 1)', () => {
     const n = newNest(0);
     n.hpFraction = 0;
     n.condition = 0;
     n.hunger = 0;
     expect(enterSpa(n, 0)).toBeNull();
-    passNestTime(n, 299 / 3600, false, 299_000);
+    passNestTime(n, 19 / 3600, false, 19_000);
     expect(n.spa).not.toBeNull();
-    const f = passNestTime(n, 2 / 3600, false, 301_000);
+    const f = passNestTime(n, 2 / 3600, false, 21_000);
     expect(f.spaEnded?.reason).toBe('full');
     expect(n.hpFraction).toBeCloseTo(1, 6);
-    expect(100 - n.hunger).toBeGreaterThan(89); // 온천 −10 + 평소 시간 흐름 5분
+    expect(100 - n.hunger).toBeGreaterThan(89); // 온천 −10 (가득까지 배부름 총량 그대로)
   });
   it('튜토리얼(회복 안내 중) 온천 = fast, 10초에 가득', () => {
     const n = newNest(0);
@@ -101,9 +101,9 @@ describe('145장 1: 온천 = 약 5분, 튜토리얼 온천만 10초', () => {
     passNestTime(n, 10 / 3600, false, 10_000);
     expect(n.hpFraction).toBeCloseTo(1, 6);
   });
-  it('쉬기 카드: 수치 없이 상황만 (GDD 157장 4 — "튜토리얼 온천은 10초…·평소 n분" 삭제), 평소 5분은 그대로', () => {
+  it('쉬기 카드: 수치 없이 상황만 (GDD 157장 4 — "튜토리얼 온천은 10초…·평소 n분" 삭제), 평소 약 20초 (GDD 164장 1)', () => {
     expect(RECOVER_SCENES.find((s) => s.id === 'spa-rest')!.body).toBe('{spaName}에서는 체력이 빠르게 찬다.\n이제 방으로 돌아가자.');
-    expect(Math.round(1 / BALANCE.provisional.nest.homeHp.spa.hpPerSecond / 60)).toBe(5);
+    expect(Math.round(1 / BALANCE.provisional.nest.homeHp.spa.hpPerSecond)).toBe(20);
   });
 });
 
@@ -128,7 +128,7 @@ describe('145장 4: 상점 약 칸 — 하루 판매 수', () => {
     for (let i = 0; i < 5; i++) expect(buyShopItem(s, H, 'heal-patch', T0).ok).toBe(true);
     expect(s.shared.shopDaily).toEqual({ day: dayKey(T0), bought: { 'heal-patch': 5 } });
     expect(shopDailyLeft(s, 'heal-patch', T0)).toBe(0);
-    expect(goldRows(s, H).find((r) => r.id === 'heal-patch')!.lock).toBe(SOLD_OUT_TODAY);
+    expect(goldRows(s, H, T0).find((r) => r.id === 'heal-patch')!.lock).toBe(SOLD_OUT_TODAY);
     expect(buyShopItem(s, H, 'heal-patch', T0).ok).toBe(false);
     expect(shopDailyLeft(s, 'heal-patch', T0 + 86_400_000)).toBe(5);
     expect(shopDailyLeft(s, 'med-cure', T0)).toBeNull(); // 구급상자는 하루 제한 없음
