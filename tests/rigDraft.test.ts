@@ -124,7 +124,7 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
     expect(c.current?.id).toBe('idle');
     const bend = motions.dying!.tracks.torso!.map((k) => k[1]);
     expect(motions.dying!.loop).toBe(true);
-    expect(Math.min(...bend)).toBeLessThan(-20);
+    expect(Math.min(...bend)).toBeLessThan(-5); // 사용자 2026-10-31 편집기로 잡은 알몸 빈사 = 허리 7~11°
     expect(Math.min(...bend)).toBeGreaterThan(-60);
   });
   it('대기 = 팔 내린 자세(오른팔 아래로), 홈 대기 = 예전 대기(검집 잡음), 걷기 오른팔은 대기 기준', () => {
