@@ -68,14 +68,17 @@ if 'bodies' in data:
     prev_lk = {tuple(x) for x in prev.get('looks', [])}
     prev_m = {tuple(x) for x in prev.get('motions', [])}
     prev_b = set(prev.get('bones', []))
-    done = {'joints': set(), 'at': set(), 'looks': set(), 'motions': set(), 'bones': set()}
+    prev_o = set(prev.get('orders', []))
+    done = {'joints': set(), 'at': set(), 'looks': set(), 'motions': set(), 'bones': set(), 'orders': set(), 'slots': set()}
     bpiv = {b['id']: b['pivot'] for b in base['bones']}
     piv = {b['id']: b['pivot'] for b in data['bones']}
     for b in rig['bones']:
         if b['id'] in piv and (piv[b['id']] != bpiv.get(b['id']) or b['id'] in prev_b):
             b['pivot'] = piv[b['id']]
             done['bones'].add(b['id'])
-    if data.get('slotsEdited'):
+    # 모든 동작의 기본 앞뒤 순서: 편집기에서 페이지 순서와 다르게 바꿨거나(또는 앞 고정에서 넣었으면) 그때만
+    if data.get('slotsEdited') and ([x['id'] for x in data['slots']] != [x['id'] for x in base['slots']] or 'slots' in prev.get('slots', [])):
+        done['slots'].add('slots')
         order = [x['id'] for x in data['slots']]
         by = {s['id']: s for s in rig['slots']}
         slots = [by[i] for i in order if i in by] + [s for s in rig['slots'] if s['id'] not in order]
@@ -141,9 +144,11 @@ if 'bodies' in data:
     # 동작 키 고친 것(GDD 115-A 55, 편집기 '이 동작에만'): '<묶음>/<동작>' → 뼈 → 키 목록 — 그 뼈 트랙을 통째로 바꾼다.
     # 앞 고정에서 넣었는데 지금 편집기에 없는 뼈 트랙 = 편집기에서 되돌린 것 → 페이지를 만든 데이터의 트랙으로(GDD 115-A 61)
     medits = data.get('motionEdits') or {}
+    morder = data.get('motionOrder') or {}  # 이 동작에만 쓰는 앞뒤 순서(GDD 115-A 62)
     mp = os.path.join(DRAFT_DIR, 'motions.json' if RIG_ID == 'humanoid' else f'{RIG_ID}-motions.json')
     undo = sorted(x for x in prev_m if x[1] not in (medits.get(x[0]) or {}))
-    if medits or undo:
+    undo_o = sorted(k for k in prev_o if k not in morder)
+    if medits or undo or morder or undo_o:
         mo = json.load(open(mp, encoding='utf-8'))
         mo0 = editor_base(mp) or {}
         n = 0
@@ -170,11 +175,26 @@ if 'bodies' in data:
             else:
                 target.setdefault('tracks', {})[bone] = src
             done['motions'].add((key, bone))
+        for key, order in morder.items():
+            target = target_of(mo, key, True)
+            if isinstance(target, dict):
+                target['order'] = list(order)
+                done['orders'].add(key)
+        for key in undo_o:
+            target = target_of(mo, key, False)
+            if not isinstance(target, dict):
+                continue
+            src = (target_of(mo0, key, False) or {}).get('order')
+            if src is None:
+                target.pop('order', None)
+            else:
+                target['order'] = src
+            done['orders'].add(key)
         s2 = json.dumps(mo, ensure_ascii=False, indent=1)
         s2 = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2, \3, \4]', s2)
         s2 = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2]', s2)
         open(mp, 'w', encoding='utf-8').write(s2 + '\n')
-        print('동작 키 적용: 뼈 트랙', n, '· 되돌림', len(undo), '→', os.path.basename(mp))
+        print('동작 키 적용: 뼈 트랙', n, '· 되돌림', len(undo), '· 동작 앞뒤 순서', len(morder), '(되돌림', len(undo_o), ') →', os.path.basename(mp))
     # 남녀 알몸 = 같은 성별 몸 전부(GDD 115-A 60, body_sync.py): 알몸에서 고친 관절·기본 각도·동작 뼈 트랙을 그대로 덮는다.
     # 받는 몸에서 따로 고친 항목(이 페이지에서)은 그 몸 값 유지(사용자 "캐릭별로 좀 이상하면, 그 캐릭만 따로 내가 잡을테니까")
     if RIG_ID == 'humanoid':
@@ -184,11 +204,14 @@ if 'bodies' in data:
             sn = bm.get(body, body)
             items = {(k, b) for k, ed in medits.items() for b in ed} if only_now else done['motions']
             return {(k.split('/', 1)[1], bone) for k, bone in items if k.split('/', 1)[0] == sn}
+        def oedited(body, only_now=False):
+            sn = bm.get(body, body)
+            return {k.split('/', 1)[1] for k in (morder if only_now else done['orders']) if k.split('/', 1)[0] == sn}
         for src in ('bare', 'female'):
-            jit, mit = edited_j.get(src, set()), medited(src)
-            if jit or mit:
-                keep = {d: (own_j.get(d, set()), medited(d, True)) for d in GROUPS[src]}
-                res = sync(src, jit, mit, keep)
+            jit, mit, oit = edited_j.get(src, set()), medited(src), oedited(src)
+            if jit or mit or oit:
+                keep = {d: (own_j.get(d, set()), medited(d, True), oedited(d, True)) for d in GROUPS[src]}
+                res = sync(src, jit, mit, keep, orders=oit)
                 print('알몸 그대로', src, '→', ', '.join(f'{d} 관절 {a}·트랙 {b}' for d, (a, b) in res.items()))
     # 이 페이지에서 넣은 항목 기록(편집기를 다시 올리면 mark_editor.py 가 비움)
     mark.setdefault('applied', {})[RIG_ID] = {k: sorted(list(x) if isinstance(x, tuple) else x for x in v) for k, v in done.items() if v}

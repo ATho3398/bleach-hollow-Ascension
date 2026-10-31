@@ -1249,7 +1249,30 @@
       [1500, 20, 0, 0],
       [3000, 18, 0, 0]
      ]
-    }
+    },
+    "order": [
+     "cape",
+     "arm_L",
+     "outer_arm_L",
+     "weapon",
+     "thumb_L",
+     "hair_back",
+     "foot_L",
+     "foot_R",
+     "leg_L",
+     "shin_L",
+     "leg_R",
+     "shin_R",
+     "torso",
+     "outer_torso",
+     "forearm_L",
+     "scabbard",
+     "head",
+     "forearm_R",
+     "hair",
+     "arm_R",
+     "outer_arm_R"
+    ]
    }
   },
   "female": {
@@ -1487,7 +1510,30 @@
       [0, 64, -2, 1],
       [3000, 64, -2, 1]
      ]
-    }
+    },
+    "order": [
+     "cape",
+     "arm_L",
+     "outer_arm_L",
+     "weapon",
+     "thumb_L",
+     "hair_back",
+     "foot_L",
+     "foot_R",
+     "leg_L",
+     "shin_L",
+     "leg_R",
+     "shin_R",
+     "torso",
+     "outer_torso",
+     "forearm_L",
+     "scabbard",
+     "head",
+     "forearm_R",
+     "hair",
+     "arm_R",
+     "outer_arm_R"
+    ]
    },
    "release1": {
     "duration": 1700,
@@ -2202,7 +2248,30 @@
       [1500, 20, 0, 0],
       [3000, 18, 0, 0]
      ]
-    }
+    },
+    "order": [
+     "cape",
+     "arm_L",
+     "outer_arm_L",
+     "weapon",
+     "thumb_L",
+     "hair_back",
+     "foot_L",
+     "foot_R",
+     "leg_L",
+     "shin_L",
+     "leg_R",
+     "shin_R",
+     "torso",
+     "outer_torso",
+     "forearm_L",
+     "scabbard",
+     "head",
+     "forearm_R",
+     "hair",
+     "arm_R",
+     "outer_arm_R"
+    ]
    },
    "release1": {
     "duration": 1700,
@@ -2569,7 +2638,30 @@
       [1500, 20, 0, 0],
       [3000, 18, 0, 0]
      ]
-    }
+    },
+    "order": [
+     "cape",
+     "arm_L",
+     "outer_arm_L",
+     "weapon",
+     "thumb_L",
+     "hair_back",
+     "foot_L",
+     "foot_R",
+     "leg_L",
+     "shin_L",
+     "leg_R",
+     "shin_R",
+     "torso",
+     "outer_torso",
+     "forearm_L",
+     "scabbard",
+     "head",
+     "forearm_R",
+     "hair",
+     "arm_R",
+     "outer_arm_R"
+    ]
    },
    "release1": {
     "duration": 1700,

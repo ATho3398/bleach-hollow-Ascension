@@ -103,9 +103,29 @@ def copy_motions(rig: dict, mo: dict, src: str, dst: str, items: set | None, kee
     return n
 
 
-def sync(src: str, joints: set | None = None, motions: set | None = None, keep: dict | None = None, full: bool = False) -> dict:
-    """기준 몸 src 의 값을 같은 성별 몸에. full = 통째, 아니면 joints·motions 에 든 항목만.
-    keep = {받는 몸: (관절 항목 set, 동작 항목 set)} — 받는 몸에서 따로 고친 것"""
+def copy_orders(rig: dict, mo: dict, src: str, dst: str, mids: set, keep: set) -> int:
+    """동작에만 쓰는 앞뒤 순서(order, GDD 115-A 62)를 기준 몸 묶음에서 받는 몸 묶음으로(없으면 지움)"""
+    bm = rig.setdefault('bodyMotions', {})
+    sset = mo['sets'].get(bm.get(src, src), {})
+    dset = mo['sets'].setdefault(bm.setdefault(dst, dst), {})
+    n = 0
+    for mid in sorted(mids - keep):
+        so = (sset.get(mid) or {}).get('order')
+        tgt = dset.get(mid)
+        if so is not None:
+            tgt = dset.setdefault(mid, {'tracks': {}})
+            if tgt.get('order') != so:
+                tgt['order'] = list(so)
+                n += 1
+        elif isinstance(tgt, dict) and 'order' in tgt:
+            tgt.pop('order')
+            n += 1
+    return n
+
+
+def sync(src: str, joints: set | None = None, motions: set | None = None, keep: dict | None = None, full: bool = False, orders: set | None = None) -> dict:
+    """기준 몸 src 의 값을 같은 성별 몸에. full = 통째, 아니면 joints·motions·orders 에 든 항목만.
+    keep = {받는 몸: (관절 항목 set, 동작 항목 set, 앞뒤 순서 동작 set)} — 받는 몸에서 따로 고친 것"""
     rig = json.load(open(DRAFT_RIG_JSON, encoding='utf-8'))
     mo = json.load(open(MOTIONS_JSON, encoding='utf-8'))
     keep = keep or {}
@@ -113,9 +133,13 @@ def sync(src: str, joints: set | None = None, motions: set | None = None, keep: 
     for dst in GROUPS[src]:
         if dst not in rig['bodies']:
             continue
-        kj, km = keep.get(dst, (set(), set()))
+        kj, km, ko = (tuple(keep.get(dst, ())) + (set(), set(), set()))[:3]
         nj = copy_joints(rig, src, dst, None if full else (joints or set()), kj)
         nm = copy_motions(rig, mo, src, dst, None if full else (motions or set()), km)
+        sset = mo['sets'].get(rig['bodyMotions'].get(src, src), {})
+        dset = mo['sets'].get(rig['bodyMotions'].get(dst, dst), {})
+        omids = ({m for m in sset if m != 'note'} | {m for m in dset if m != 'note'}) if full else (orders or set())
+        nm += copy_orders(rig, mo, src, dst, omids, ko)
         out[dst] = (nj, nm)
     write_motions(mo)
     dump(rig)

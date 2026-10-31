@@ -84,6 +84,8 @@ export interface Motion {
   front?: string[];
   /** 이 동작 동안 숨길 슬롯 — 칼 든 손으로 치는 스트레이트에서 칼을 잠시 감춤 (GDD 115-A 52) */
   hide?: string[];
+  /** 이 동작에서만 쓰는 그림 앞뒤 순서(슬롯 id, 뒤 → 앞). 없으면 뼈대의 slots 순서. 편집기 '이 동작에만'에서 앞·뒤로 보내기 (GDD 115-A 62) */
+  order?: string[];
   /** 끝나도 마지막 자세로 멈춰 있는다(쓰러짐 — 다음 동작이 올 때까지) (GDD 115-A 53) */
   hold?: boolean;
   /** 이펙트 키(베기 궤적·폭발·바닥 고리·기둥) — 그림 층 위에 그린다 (GDD 115-A 48) */
@@ -280,7 +282,12 @@ export function flipMatrix(rig: Rig, layer: PartArt & { slot: string }): Mat {
 /** 그리는 차례: 이 동작의 hide 슬롯은 빼고, front 슬롯을 맨 앞으로(나머지는 슬롯 차례 그대로) */
 export function orderLayers<T extends { slot: string }>(layers: T[], motion?: Motion): T[] {
   const hide = motion?.hide;
-  const shown = hide?.length ? layers.filter((l) => !hide.includes(l.slot)) : layers;
+  const order = motion?.order;
+  // 이 동작의 앞뒤 순서(목록에 없는 층은 원래 순서대로 맨 뒤 쪽 차례를 지킴 — 목록 밖 = 원래 자리 순)
+  const sorted = order?.length
+    ? layers.map((l, i) => ({ l, k: order.indexOf(l.slot) < 0 ? order.length + i : order.indexOf(l.slot) })).sort((a, b) => a.k - b.k).map((x) => x.l)
+    : layers;
+  const shown = hide?.length ? sorted.filter((l) => !hide.includes(l.slot)) : sorted;
   const front = motion?.front;
   if (!front?.length) return shown;
   return [...shown.filter((l) => !front.includes(l.slot)), ...front.flatMap((f) => shown.filter((l) => l.slot === f))];

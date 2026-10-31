@@ -26,6 +26,7 @@
     { "id": "cape", "bone": "cape" },
     { "id": "arm_L", "bone": "arm_L" },
     { "id": "outer_arm_L", "bone": "arm_L" },
+    { "id": "forearm_L", "bone": "forearm_L" },
     { "id": "weapon", "bone": "weapon" },
     { "id": "thumb_L", "bone": "forearm_L" },
     { "id": "hair_back", "bone": "hair_back" },
@@ -37,13 +38,12 @@
     { "id": "shin_R", "bone": "shin_R" },
     { "id": "torso", "bone": "torso" },
     { "id": "outer_torso", "bone": "torso" },
-    { "id": "forearm_L", "bone": "forearm_L" },
     { "id": "scabbard", "bone": "scabbard" },
     { "id": "head", "bone": "head" },
-    { "id": "forearm_R", "bone": "forearm_R" },
     { "id": "hair", "bone": "head" },
     { "id": "arm_R", "bone": "arm_R" },
-    { "id": "outer_arm_R", "bone": "arm_R" }
+    { "id": "outer_arm_R", "bone": "arm_R" },
+    { "id": "forearm_R", "bone": "forearm_R" }
   ],
   "bodies": {
     "shinigami": {

@@ -22,7 +22,9 @@ const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장 = 절대값(관절·부위 자리·외형 층 자리·앞뒤 순서) + 그때의 게임 데이터 표시(dataStamp).
  * 게임 데이터가 바뀌었으면(Claude 가 사용자 값을 넣었거나 새 시트) 이 기기에 남은 옛 저장은 버리고 데이터 값을 쓴다 —
  * 서버 저장은 Claude 가 데이터를 바꿀 때마다 같이 맞춘다 */
-type Saved = Partial<Rig> & { dataStamp?: string; slotsEdited?: boolean; motionEdits?: MotionEdits };
+type Saved = Partial<Rig> & { dataStamp?: string; slotsEdited?: boolean; motionEdits?: MotionEdits; motionOrder?: MotionOrder };
+/** 동작에만 쓰는 그림 앞뒤 순서(GDD 115-A 62, 사용자 2026-11-01 "부위별 레이어도, 동작에서만이 작동 되야지"): '<동작 묶음>/<동작 id>' → 슬롯 id 목록(뒤 → 앞) */
+type MotionOrder = Record<string, string[]>;
 /** 동작 키 고친 것(사용자 2026-10-31 "이 모션에만 값 저장하기"): '<동작 묶음>/<동작 id>' → 뼈 → 키 목록(그 뼈 트랙 통째). 묶음이 없으면 '/<동작 id>' */
 type MotionEdits = Record<string, Record<string, Key[]>>;
 const stampOf = (r: unknown) => {
@@ -32,10 +34,10 @@ const stampOf = (r: unknown) => {
   return (h >>> 0).toString(36);
 };
 /** 뼈대마다(사람형·짐승형 — GDD 96장 41) 따로 고친 값·저장 자리. 사람형 저장 자리 이름은 예전 그대로 */
-interface Ctx { id: string; src: DraftRig; rig: Rig; stamp: string; store: string; db: string; fix: string; slotsEdited: boolean; dbRef: DocRef | null; medits: MotionEdits }
+interface Ctx { id: string; src: DraftRig; rig: Rig; stamp: string; store: string; db: string; fix: string; slotsEdited: boolean; dbRef: DocRef | null; medits: MotionEdits; morder: MotionOrder }
 const CTX: Record<string, Ctx> = Object.fromEntries(Object.entries(DRAFT_RIGS).map(([id, src]) => {
   const tail = id === 'humanoid' ? '' : `-${id}`;
-  return [id, { id, src, rig: JSON.parse(JSON.stringify(src.rig)) as Rig, stamp: stampOf({ rig: src.rig, motions: src.motions, sets: src.sets }), store: `bha-rig-editor${tail}`, db: `rig/editor${tail}`, fix: `rig/fixed${tail}`, slotsEdited: false, dbRef: null, medits: {} }];
+  return [id, { id, src, rig: JSON.parse(JSON.stringify(src.rig)) as Rig, stamp: stampOf({ rig: src.rig, motions: src.motions, sets: src.sets }), store: `bha-rig-editor${tail}`, db: `rig/editor${tail}`, fix: `rig/fixed${tail}`, slotsEdited: false, dbRef: null, medits: {}, morder: {} }];
 }));
 let C: Ctx = CTX.humanoid!;
 let rig: Rig = C.rig;
@@ -48,6 +50,7 @@ function merge(c: Ctx, s: Saved): boolean {
   const rig = c.rig;
   if (s.dataStamp !== c.stamp) return false;
   c.medits = JSON.parse(JSON.stringify(s.motionEdits ?? {})) as MotionEdits;
+  c.morder = JSON.parse(JSON.stringify(s.motionOrder ?? {})) as MotionOrder;
   if (s.bones) for (const b of rig.bones) {
     const v = s.bones.find((x) => x.id === b.id);
     if (v) b.pivot = v.pivot; // 쉬는 각도(restRot)는 편집기에서 안 바꾸므로 데이터 값
@@ -83,7 +86,7 @@ function merge(c: Ctx, s: Saved): boolean {
 function resetRig(c: Ctx) {
   const fresh: Rig = JSON.parse(JSON.stringify(c.src.rig));
   const r = c.rig;
-  r.bones = fresh.bones; r.slots = fresh.slots; r.bodies = fresh.bodies; r.looks = fresh.looks; r.bodyJoints = fresh.bodyJoints; c.slotsEdited = false; c.medits = {};
+  r.bones = fresh.bones; r.slots = fresh.slots; r.bodies = fresh.bodies; r.looks = fresh.looks; r.bodyJoints = fresh.bodyJoints; c.slotsEdited = false; c.medits = {}; c.morder = {};
 }
 for (const c of Object.values(CTX)) {
   try {
@@ -103,6 +106,13 @@ const motionsNow = (): Record<string, Motion> => {
     if (s0 && s0 !== set) continue;
     const m = out[id];
     if (m) out[id] = { ...m, tracks: { ...m.tracks, ...edits } };
+  }
+  // 이 동작에만 바꾼 앞뒤 순서
+  for (const [key, order] of Object.entries(C.morder)) {
+    const [s0, id] = key.split('/') as [string, string];
+    if (s0 && s0 !== set) continue;
+    const m = out[id];
+    if (m) out[id] = { ...m, order };
   }
   return out;
 };
@@ -143,7 +153,7 @@ sizeStage();
 window.addEventListener('resize', fitSide);
 
 let dbTimer = 0;
-const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits });
+const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits, motionOrder: c.morder });
 function save(user = true) {
   const st = state();
   try { localStorage.setItem(C.store, st); } catch { /* 무시 */ }
@@ -284,7 +294,7 @@ function draw() {
   const body = rig.bodies[rig.looks[look]!.body]!;
   const lk = rig.looks[look]!;
   const part = body[sel] ?? (typeof lk[sel] === 'object' ? (lk[sel] as PartArt) : undefined);
-  $('info').textContent = `${NAMES()[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (b.shift ? ` · 보정 (${b.shift[0]}, ${b.shift[1]})` : '') + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${rig.slots.findIndex((s) => s.id === sel) + 1}/${rig.slots.length}` + ` · 기본 각도 ${baseRot(b.id)}°`
+  $('info').textContent = `${NAMES()[sel] ?? sel} · 관절 (${b.pivot[0]}, ${b.pivot[1]})` + (b.shift ? ` · 보정 (${b.shift[0]}, ${b.shift[1]})` : '') + (part ? ` · 부위 자리 (${part.at[0]}, ${part.at[1]})` : '') + ` · 앞뒤 ${layerPos()}` + ` · 기본 각도 ${baseRot(b.id)}°`
     + (mode === 'pivot' && scope === 'motion' && motion ? ' · 관절 자리는 이 몸의 모든 동작에 들어감' : '');
   const editingMotion = scope === 'motion' && motion && MOTIONS[motion];
   const shownRot = editingMotion ? motionOffset(b.id)[0] : baseRot(b.id);
@@ -298,6 +308,12 @@ function draw() {
   if (mtv) mtv.textContent = motion ?? '—';
 }
 
+/** 고른 부위의 앞뒤 자리: '이 동작에만'이면 그 동작 순서로 */
+function layerPos(): string {
+  const m = scope === 'motion' && motion ? motionsNow()[motion] : undefined;
+  const ids = m?.order ?? rig.slots.map((s) => s.id);
+  return `${ids.indexOf(sel) + 1}/${ids.length}` + (m?.order ? ' (이 동작)' : '');
+}
 /** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
 const CHIP_GROUPS = (): [string, string[]][] => rig.edit?.groups ?? [];
 function pick(id: string) { sel = id; buildChips(); draw(); }
@@ -407,8 +423,35 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
   document.querySelectorAll('[data-m]').forEach((x) => x.classList.toggle('on', x === b && m !== 'stop'));
   draw();
 });
-$('front').onclick = () => { C.slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i >= 0 && i < rig.slots.length - 1) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i + 1, 0, s!); save(); draw(); } };
-$('back').onclick = () => { C.slotsEdited = true; const i = rig.slots.findIndex((s) => s.id === sel); if (i > 0) { const [s] = rig.slots.splice(i, 1); rig.slots.splice(i - 1, 0, s!); save(); draw(); } };
+/** 앞·뒤로 보내기: '이 동작에만'이면 지금 동작의 앞뒤 순서만(GDD 115-A 62), 아니면 모든 동작의 기본 순서 */
+function moveLayer(step: 1 | -1) {
+  if (scope === 'motion' && motion) {
+    const key = motionKeyOf(motion);
+    const cur = [...(motionsNow()[motion]?.order ?? rig.slots.map((s) => s.id))];
+    for (const s of rig.slots) if (!cur.includes(s.id)) cur.push(s.id);
+    const i = cur.indexOf(sel);
+    const j = i + step;
+    if (i < 0 || j < 0 || j >= cur.length) return;
+    [cur[i], cur[j]] = [cur[j]!, cur[i]!];
+    if (cur.join() === rig.slots.map((s) => s.id).join() && !motionOrderInData(motion)) delete C.morder[key];
+    else C.morder[key] = cur;
+    save(); draw();
+    return;
+  }
+  C.slotsEdited = true;
+  const i = rig.slots.findIndex((s) => s.id === sel);
+  const j = i + step;
+  if (i < 0 || j < 0 || j >= rig.slots.length) return;
+  const [s] = rig.slots.splice(i, 1);
+  rig.slots.splice(j, 0, s!);
+  save(); draw();
+}
+/** 데이터(작업본)에 이 동작만의 앞뒤 순서가 이미 있는지 — 있으면 기본 순서와 같아져도 지우지 않고 그 순서로 남긴다 */
+function motionOrderInData(id: string): boolean {
+  return !!resolveMotions(rig, C.src.motions, C.src.sets, curBody())[id]?.order;
+}
+$('front').onclick = () => moveLayer(1);
+$('back').onclick = () => moveLayer(-1);
 $('reset').onclick = () => {
   resetRig(C);
   try { for (const k of [C.store, ...(C.id === 'humanoid' ? LEGACY : [])]) localStorage.removeItem(k); } catch { /* 무시 */ }

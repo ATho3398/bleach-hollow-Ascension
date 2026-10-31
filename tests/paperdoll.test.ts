@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { HUMANOID, MOTIONS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, lookLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -190,6 +190,15 @@ describe('자세·행렬', () => {
     const a = boneMatrices(rig, {}, 'female').forearm_R!;
     const b = boneMatrices(rig, {}, 'bare').forearm_R!;
     expect(a[0]).not.toBeCloseTo(b[0]);
+  });
+  it('동작에만 쓰는 앞뒤 순서(GDD 115-A 62): order 가 있으면 그 동작에서만 그 순서, 숨김·맨 앞은 그 위에', () => {
+    const layers = ['a', 'b', 'c', 'd'].map((slot) => ({ slot }));
+    const base = { duration: 100, loop: false, tracks: {} };
+    expect(orderLayers(layers, base).map((l) => l.slot)).toEqual(['a', 'b', 'c', 'd']);
+    expect(orderLayers(layers, { ...base, order: ['c', 'a', 'b', 'd'] }).map((l) => l.slot)).toEqual(['c', 'a', 'b', 'd']);
+    // 목록에 없는 층은 원래 차례대로 뒤에
+    expect(orderLayers(layers, { ...base, order: ['b', 'a'] }).map((l) => l.slot)).toEqual(['b', 'a', 'c', 'd']);
+    expect(orderLayers(layers, { ...base, order: ['d', 'c', 'b', 'a'], hide: ['c'], front: ['d'] }).map((l) => l.slot)).toEqual(['b', 'a', 'd']);
   });
   it('관절만 옮기기(GDD 115-A 61): 관절을 옮겨도 보정 이동(shift)으로 쉬는 자세 그림·아래 뼈는 제자리, 도는 자리만 옮겨진다', () => {
     const rig = JSON.parse(JSON.stringify(HUMANOID)) as typeof HUMANOID;
