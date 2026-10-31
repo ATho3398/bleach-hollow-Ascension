@@ -115,10 +115,15 @@ describe('C.153 A4 걷기 이음새 (마지막 프레임 → 첫 프레임)', ()
     const inner = frames.slice(0, -1).map((f, i) => pixDiff(f, frames[i + 1]!));
     expect(pixDiff(frames[frames.length - 1]!, frames[0]!), `${d} 이음새`).toBeLessThanOrEqual(Math.max(...inner));
   });
-  it('스토커(char-hollow): 한 바퀴 6장 = 같은 세 걸음 두 번 — 첫 걸음 = 네 번째 걸음', () => {
-    const f = (i: number) => decodePng(`public/art/char-hollow/move-${i}.png`).px;
-    for (const i of [1, 2, 3]) expect(pixDiff(f(i), f(i + 3)), `move-${i} = move-${i + 3}`).toBe(0);
-    // 끝 → 처음 바뀜이 가운데(3 → 4) 바뀜과 같다
-    expect(pixDiff(f(6), f(1))).toBe(pixDiff(f(3), f(4)));
+  // 2026-11-01 사용자 새 이동 그림(GIF 6장)으로 교체 — 옛 '세 걸음 두 번' 구조는 없어졌다. 6장이 같은 크기·같은 발밑 줄이면 걷는 동안 위아래로 튀지 않는다
+  it('스토커(char-hollow): 이동 6장, 모두 같은 칸 크기·같은 발밑 줄', () => {
+    const fr = [1, 2, 3, 4, 5, 6].map((i) => decodePng(`public/art/char-hollow/move-${i}.png`));
+    const foot = (img: { px: Uint8Array; w: number; h: number }): number => {
+      for (let y = img.h - 1; y >= 0; y--) for (let x = 0; x < img.w; x++) if (img.px[(y * img.w + x) * 4 + 3]! > 0) return y;
+      return -1;
+    };
+    for (const f of fr) expect([f.w, f.h]).toEqual([fr[0]!.w, fr[0]!.h]);
+    expect([...new Set(fr.map(foot))]).toEqual([235]);
+    expect(existsSync('public/art/char-hollow/move-7.png')).toBe(false);
   });
 });
