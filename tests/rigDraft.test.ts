@@ -138,11 +138,12 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
     expect([af.arm_R![0]![1], af.forearm_R![0]![1]]).toEqual([14, -32]);
     for (const b of ['female', 'student', 'student_f', 'shinigami_f']) expect(resolveMotions(rig, motions, sets, b).idle!.tracks.arm_R, b).not.toEqual(motions.idle!.tracks.arm_R);
   });
-  it('팔이 떨어지지 않게: 아래팔·칼·발 뼈는 위치 이동 키가 없다(몸 묶음 포함 — 사용자 "필살기 쓰는거 보면 얘들 팔 떨어지잖아")', () => {
+  it('팔이 떨어지지 않게: 아래팔·칼·발 뼈는 위치 이동 키가 1칸 넘게 없다(몸 묶음 포함 — 사용자 "필살기 쓰는거 보면 얘들 팔 떨어지잖아")', () => {
     const all = [motions, ...Object.values(sets).map((st) => st as Record<string, { tracks?: Record<string, number[][]> }>)];
     for (const ms of all) for (const [id, m] of Object.entries(ms)) {
       for (const b of ['forearm_R', 'forearm_L', 'weapon', 'shin_L', 'shin_R', 'foot_L', 'foot_R']) {
-        for (const k of (m as { tracks?: Record<string, number[][]> }).tracks?.[b] ?? []) expect([k[2], k[3]], `${id} ${b}`).toEqual([0, 0]);
+        // 사용자가 편집기로 1칸 옮겨 잡은 것은 허용(2026-10-31 알몸 필살기 아래팔)
+        for (const k of (m as { tracks?: Record<string, number[][]> }).tracks?.[b] ?? []) expect(Math.max(Math.abs(k[2]!), Math.abs(k[3]!)), `${id} ${b}`).toBeLessThanOrEqual(1);
       }
     }
   });

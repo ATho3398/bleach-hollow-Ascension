@@ -39,11 +39,11 @@
     { "id": "torso", "bone": "torso" },
     { "id": "outer_torso", "bone": "torso" },
     { "id": "scabbard", "bone": "scabbard" },
-    { "id": "forearm_R", "bone": "forearm_R" },
     { "id": "head", "bone": "head" },
     { "id": "hair", "bone": "head" },
     { "id": "arm_R", "bone": "arm_R" },
-    { "id": "outer_arm_R", "bone": "arm_R" }
+    { "id": "outer_arm_R", "bone": "arm_R" },
+    { "id": "forearm_R", "bone": "forearm_R" }
   ],
   "bodies": {
     "shinigami": {
