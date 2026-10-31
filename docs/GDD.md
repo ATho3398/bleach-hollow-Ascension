@@ -982,7 +982,7 @@ data/
 - UI 검수 방법(사용자 요청으로 만든 것): 기준 `docs/ui-review.md` · 캡처 `UI_AUDIT_SHOTS=<폴더> npm run ui-audit`(두 종족 281장, 테스트_* 제외 215장) · 화면 5묶음 검수 에이전트 + 확인 에이전트(Workflow 10개, 약 95만 토큰) → 엑셀(캡처 썸네일). ui-audit 실패 2건(온천 클릭 시간 초과·원정 결과 완주 못 닿음) 남음.
 - 사용자가 알려줄 일(요청하면 엑셀 SendUserFile): 진화체·특성 초안 · 대장장이 역할 · 기타 아이템 용도(docs/drafts, 스크립트 user-drafts-xlsx.py). 아이콘 없는 목록 `docs/drafts/블리치_아이콘_없는_목록.xlsx`(391개, 스크립트 missing-icons-xlsx.py). 검수 프로토콜 합치기 도구 `docs/qa-setup/`(사용자 로컬용, zip 링크 https://github.com/ATho3398/bleach-hollow-Ascension/archive/refs/heads/main.zip).
 - 다음 코딩 174, 다음 패치 = 그 시점 가장 큰 값+1(코딩173 이 C.237 예상). UI담당자C = session_01LmFYYdTyBXcbM3dRNuzGuc(사신 탑 그림 없음).
-**10-31 16:3x 사용자 지시 → 163장 5·164장(v5.367)**: 흡수 배부름 효과 삭제(코딩177 에 추가) + 온천 가득 20초 → **코딩178**(Opus). 다음 코딩 179.
+**10-31 16:3x 사용자 지시 → 163장 5·164장(v5.367)**: 흡수 배부름 효과 삭제(코딩177 에 추가) + 온천 가득 20초 → **코딩178**(Opus, session_01YVaigHe1TnfoDz8bTYMg7Y, 16:39 생성). 다음 코딩 179.
 **10-31 16:3x 사용자 지시 → 163장(v5.366)**: 흡수 갈래 버튼 = 고르기 → 아래 설명 칸 → 한 번 더 눌러 실행, 버튼 호로화 수치 삭제 → **코딩177**(Opus, session_01YVaigJLK7c3QCET1TGgTBz, 16:34 생성, 코딩176 에 겹침 알림). 다음 코딩 178.
 **10-31 16:2x 사용자 지시 → 162장(v5.365)**: 온천 튜토 안내 창이 온천 가림 + 튜토리얼 먹이 부분 흐름·타이밍 재검수 → **코딩176**(Opus, session_01YVaigJfggynAy4BiaHDGeV, 16:23 생성). 다음 코딩 177.
 **10-31 03:4x C.240 배포 확인**(코딩175 d22b11d, Pages run 314 success, 배포 index-DLjYSeh9.js 에 "C.240"). 161장: 알림 규칙 src/config/notify.ts(gearToastMinGrade null), 끈 것 = 첫 모험 회복 물건 안내·튜토리얼 목표 보상 알림·전투 끝 장비·귀환 새 장비·도감 보상의 먹이 줄. 남긴 것 = 진행·경고·펫·직접 누른 행동 결과. 테스트 2366. 캡처 c240/1 출발·2 귀환 확인. 사용자 확인 거리: 튜토리얼 목표 보상 알림 통째로 끔·펫 알림 남김. 코딩175 DONE_(22.8만).
