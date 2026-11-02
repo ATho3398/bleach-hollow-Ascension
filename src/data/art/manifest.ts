@@ -78,8 +78,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.spa': {},
   'scene.spa': {},
   // 장터 (GDD 127장 2, C.201): 방 물건(장터 문)·장터 배경·떠돌이 상인 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
-  // 월드맵 '시장' 장소 그림 = 소모품 상점 수레 그림 (GDD 160장 2). 시장 안 소모품 상점 칸(prop.shop)은 그대로
-  'prop.market': { src: 'art/prop-shop.webp' },
+  // 월드맵 '시장' 장소 그림 = prop-market.png (사용자 2026-11-03 "시장 … 아이콘으로 넣고", 옛 160장 2 수레 그림 지정 해제).
+  // 수레 그림은 떠돌이 상인(prop-wanderer.webp)으로 옮김 — 시장 안 소모품 상점 칸(prop.shop)은 그림 대기(아이콘)
+  'prop.market': {},
   'scene.market': {},
   'prop.wanderer': {},
   // 상점 4곳 (GDD 150장 2, C.227): 소모품 상점 = prop.shop, 나머지 3곳 — 사용자 그림 대기(비어 있으면 아이콘)

@@ -20,9 +20,10 @@ describe('160장 1~3 그림 크기·시장 그림', () => {
     expect(room).toContain("const s = (o.scale ?? 1) * artUrls(`prop.${o.prop}`, BASE).scale;");
     expect(read('src/ui/marketView.ts')).toContain("propButton({ prop: 'outside'");
   });
-  it("월드맵 '시장' 장소 = 소모품 상점 수레 그림, 시장 안 소모품 상점 칸은 그대로", () => {
-    expect(artUrls('prop.market').src).toBe('/art/prop-shop.webp');
-    expect(artUrls('prop.shop').src).toBe('/art/prop-shop.webp');
+  // 2026-11-03 사용자 그림으로 바뀜: 월드맵 시장 = 상점 그림(prop-market.png), 수레 그림은 떠돌이 상인으로 옮김
+  it("월드맵 '시장' 장소 = prop-market 그림, 수레 그림 = 떠돌이 상인", () => {
+    expect(artUrls('prop.market').src).toBe('/art/prop-market.png');
+    expect(artUrls('prop.wanderer').src).toBe('/art/prop-wanderer.webp');
   });
 });
 

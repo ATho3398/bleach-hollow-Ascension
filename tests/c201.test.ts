@@ -35,8 +35,8 @@ describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 13
   });
   it('그림 키 자리: scene.market·prop.market(월드맵 시장)·prop.wanderer (비어 있음 = 임시 배경)', () => {
     const m = readFileSync('src/data/art/manifest.ts', 'utf8');
-    for (const k of ['scene.market', 'prop.wanderer']) expect(m).toContain(`'${k}': {}`);
-    expect(m).toContain(`'prop.market': { src: 'art/prop-shop.webp' }`); // C.238 (GDD 160장 2): 월드맵 시장 = 소모품 상점 수레 그림
+    // 2026-11-03 사용자 그림: 월드맵 시장 = prop-market.png, 수레 그림 = 떠돌이 상인(prop-wanderer.webp) — 둘 다 파일 규칙(목록은 빈 칸)
+    for (const k of ['scene.market', 'prop.wanderer', 'prop.market']) expect(m).toContain(`'${k}': {}`);
   });
 });
 
