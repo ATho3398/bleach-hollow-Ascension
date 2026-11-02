@@ -1728,3 +1728,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 
 - 세이브·밸런스 그대로. 테스트 +9(`tests/c189.test.ts`), 기존 기대값 고침(c112 호로 피곤 줄·c150 노멀·c171·c175·c223·c245·nest-ui·save-backup).
 - 캡처 `docs/captures/c260/`(`scripts/c189-proof.cjs`, 1배).
+
+## C.261 — 전투 블록 생성 게이지 · 강조는 그림 모양대로 (GDD 178장, v5.399, S-23, 코딩190 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스 변경 없음(엔진은 표시용 값만 꺼냄, 규칙 그대로).
+- 사용자 원문: "-전투할 때, 블록 나오는 쿨타임을, 막기 옆에 게이지로 보여주도록 패치. … 블록 생성 봉인 때, 블록칸 전체를 가려버리니까 '사용도 못하는건가?'라는 의문도 없앨 수 있고 … / -캐릭터 해방하면 캐릭터 주변에 오라 안생기고, 캐릭터 전체 이미지에 맞춰서 네모모양으로 오라생김;; 이거 캐릭뿐만 아니라 이런경우 아예 싹없애. 뭔가 오오라나 테두리로 강조할 땐 무조건 투명화된 곳 제외하고 이미지 있는곳만 강조하도록"
+- **생성 게이지**: 스킬창 위 줄 [막기] 왼쪽 '생성' 알약(막기와 같은 모양, 블록 색, 버튼 아님). 엔진 `spawnGaugeOf(s)` = { fill, intervalSeconds, state(filling·full·sealed·paused·off) } — 지금 생성 타이머 ÷ 지금 간격(`spawnIntervalOf`, 모든 보정 포함). 가득 = 100% + 흐림, 막기·경직 = 흐림.
+- **봉인**: 블록 칸 덮개(`.bha-v2tray__veil`) 삭제. 생성 칸만 자물쇠·회색·남은 초. 칸 안내 줄('봉인 중: … 있는 블록은 쓸 수 있다')은 그대로. 도움말 battle-buttons 에 생성 게이지 한 줄.
+- **강조 = 그림 모양**: 해방 중·해방 준비 오오라, 해방 투명 버튼의 선택·누름 네모, 적 몸 뒤 타원 빛·강공격 준비 빛·방어 자세 고리, 꾸미기 오라 → `filter: drop-shadow` 겹치기(몸 그림에). 그대로 둔 것은 GDD 178장 완료 줄.
+- ui-audit 에 `boxGlowInPage`(배경·테두리 없는 그림 버튼에 .bha-sel·켜진 강조가 outline·box-shadow·배경으로 그려지면 '강조 네모 상자').
+- 실측(1배 844×390, `docs/captures/c261/proof.json`): 생성 간격 3.3초(두 종족 5단계), 봉인 중 블록 4 → 3개 사용, 생성 칸 폭 100 → 134(봉인) 에도 [막기] x 461 고정. 해방 중 그림 칸 filter none·::before none.
+- 테스트 +9(`tests/c261.test.ts`). 캡처 `docs/captures/c261/`(`scripts/c261-proof.cjs`, `?test=1` 에서만 `window.__bhaCombat` 로 상태 만듦): h-spawn-filling(차는 중) · h-spawn-full(칸 가득) · h-spawn-sealed(봉인, 칸 보임) · h/s-lib-before → h/s-lib-after(해방 오라 전/후) · h-lib-ready-after(해방 준비).

@@ -13,7 +13,7 @@ import { absorbReasons } from '../engine/absorb';
 import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
-  canGuard, canUseGear, canUseItem, halted as combatHalted, voidChanceOf,
+  canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf,
   scriptAck, scriptLand, scriptPrompt, scriptStep, SCRIPT_STAGES,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
@@ -57,7 +57,7 @@ import { FX_REACH_FIELD } from './attackFxConfig';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
 import type { SceneBg } from '../data/art/backgrounds';
-import { testSpeedMul } from './testMode';
+import { isTestMode, testSpeedMul } from './testMode';
 import { abilityProcText } from './evolutionPanel';
 import { shownName } from './displayName';
 
@@ -463,8 +463,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   guardBtn.meta.replaceWith(guardBar);
   const itemBtn = actBtn('item', 'i-heal', '소모품');
   const gearBtn = actBtn('gear', 'i-attack', '장비');
+  // 블록 생성 게이지 (GDD 178장 1·2): [막기] 왼쪽, 같은 알약 모양. 버튼이 아니라 표시(누르지 않는다·초점 대상 아님).
+  // 엔진의 실제 생성 타이머·간격(spawnGaugeOf)을 읽어 차오른다. 블록 바 가득 = 가득·흐림, 봉인 = 자물쇠·회색·남은 초 (블록 칸은 덮지 않는다)
+  const spawnPill = el('div', 'bha-panel bha-v2role bha-v2role--spawn');
+  const spawnIcon = el('span', 'bha-v2role__ico');
+  spawnIcon.append(icon('i-deck'));
+  const spawnSealIcon = el('span', 'bha-v2role__ico bha-v2role__ico--seal');
+  spawnSealIcon.append(icon('i-seal'));
+  const spawnBar = el('span', 'bha-v2role__bar');
+  const spawnFill = el('i');
+  spawnBar.append(spawnFill);
+  const spawnMeta = el('span', 'bha-v2role__meta bha-v2role__meta--spawn');
+  spawnPill.append(spawnIcon, spawnSealIcon, el('span', 'bha-v2role__name', '생성'), spawnBar, spawnMeta);
   const roles = el('div', 'bha-v2roles is-alone'); // 해방 카드가 캐릭터로 옮겨 가 버튼 줄은 오른쪽 끝 (C.216)
-  roles.append(guardBtn.root, itemBtn.root, gearBtn.root);
+  roles.append(spawnPill, guardBtn.root, itemBtn.root, gearBtn.root);
 
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
@@ -1187,7 +1199,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (s.voidUsed > 0) setText(voidChip.value, `${s.voidUsed}회`);
     setHidden(chain3Chip.root, s.chain3Count <= 0);
     if (s.chain3Count > 0) setText(chain3Chip.value, `${s.chain3Count}회`);
-    setText(tray.veilText, `봉인 — ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)}`);
+    // 블록 생성 게이지 (GDD 178장 1·2): 엔진 값을 읽기만 한다
+    const sg = spawnGaugeOf(s);
+    spawnFill.style.width = `${Math.round(sg.fill * 100)}%`;
+    if (spawnPill.dataset.state !== sg.state) spawnPill.dataset.state = sg.state;
+    setText(spawnMeta, sg.state === 'sealed' ? secondsText(s.sealTicks * p.tickSeconds) : '');
+    const spawnLabel = sg.state === 'sealed' ? `봉인 — 새 ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)} (있는 블록은 쓸 수 있다)`
+      : sg.state === 'full' ? `블록 바가 가득 차 생성 정지`
+        : sg.state === 'paused' ? `${labels.role.guard}·경직 중 생성 정지`
+          : sg.state === 'off' ? `블록 생성 게이지`
+            : `다음 ${labels.skillBlock}까지 ${Math.round(sg.fill * 100)}% · ${sg.intervalSeconds.toFixed(1)}초마다 1개`;
+    if (spawnPill.getAttribute('aria-label') !== spawnLabel) {
+      spawnPill.setAttribute('aria-label', spawnLabel);
+      spawnPill.title = spawnLabel;
+    }
 
     // 막기 게이지·[소모품]·[장비] (GDD 105장 수정): 쓸 수 있으면 강조, 못 쓰면 흐리게 — 자리는 그대로
     const setAct = (btn: { root: HTMLElement }, ready: boolean, label: string) => {
@@ -1380,6 +1405,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // ── 실시간 루프: 화면 프레임마다 쌓인 시간만큼 엔진 틱을 돌린다 (1x/2x) ──
   const tickMs = p.tickSeconds * 1000;
+  // 테스트 모드(?test=1)에서만: 캡처 proof 스크립트가 상태(봉인·해방 게이지)를 만들 수 있게 전투 상태를 건넨다 (C.261). 평소에는 아무것도 없다
+  if (isTestMode()) (window as unknown as { __bhaCombat?: unknown }).__bhaCombat = s;
   let acc = 0;
   let fxHalted = false;
   let last = performance.now();

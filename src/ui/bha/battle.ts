@@ -384,8 +384,9 @@ export interface TrayParts {
   root: HTMLElement;
   grid: HTMLElement;
   cells: HTMLElement[];
-  veil: HTMLElement;
-  veilText: HTMLElement;
+  /** 옛 블록 바(trayEl)의 봉인 가림막. v2 블록 바에는 없다 (GDD 178장 2) */
+  veil?: HTMLElement;
+  veilText?: HTMLElement;
 }
 
 /** 블록 바 틀 (HANDOFF 5-2): 칸 N개 + 봉인 가림막. 묶음·삽입 막대는 화면이 grid 에 붙였다 뗀다 */
