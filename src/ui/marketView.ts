@@ -9,7 +9,7 @@ import { artSkinOf, artTierIndexOf, type SaveData } from '../game';
 import type { ShopKind } from '../data/shop';
 import { el, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 
 export interface MarketHandlers {
   /** 상점 4곳 중 하나 (GDD 150장 2) */
@@ -69,7 +69,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   char.disabled = true;
   char.setAttribute('aria-hidden', 'true');
   char.classList.add('bha-market__char');
-  if (save.nest.collapsed || save.nest.dead) char.classList.add('is-collapsed');
+  applyCarePose(char, save.nest); // 돌봄 상태 자세 (GDD 170장)
   scene.append(char);
   floor.push({ el: char, foot: { x: Math.min(96, mk.exit.x + MARKET_CHAR_DX), y: mk.exit.y + 4 }, kind: 'char' });
   if (here) scene.dataset.wanderer = '';

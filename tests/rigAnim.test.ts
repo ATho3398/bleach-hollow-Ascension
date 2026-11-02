@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { HUMANOID, MOTIONS, apply, boneMatrices, layerMatrix, lookLayers, samplePose } from '../src/data/art/rig/pose';
-import { createRigPlayer } from '../src/ui/bha/rigAnim';
+import { createRigPlayer, FAMILY_RIG_MOTIONS, RIG_ACTIONS } from '../src/ui/bha/rigAnim';
 import { charArt, ART_MANIFEST } from '../src/data/art/manifest';
 
 describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
-  it('대기·이동·공격·특수·맞음만 있고 그 밖은 없다(기존 연출)', () => {
+  it('대기·이동·공격·특수·맞음 + 홈 대기·빈사 자세·온천·패배(쓰러짐)가 있고 그 밖은 없다(기존 연출, GDD 170장)', () => {
     const p = createRigPlayer(HUMANOID, MOTIONS);
-    for (const a of ['idle', 'move', 'attack', 'skill', 'hit'] as const) expect(p.has(a), a).toBe(true);
-    for (const a of ['win', 'lose', 'eat', 'sleep', 'release'] as const) expect(p.has(a), a).toBe(false);
+    for (const a of ['idle', 'move', 'attack', 'skill', 'hit', 'homeIdle', 'dying', 'bath', 'lose'] as const) expect(p.has(a), a).toBe(true);
+    for (const a of ['win', 'eat', 'sleep', 'release'] as const) expect(p.has(a), a).toBe(false);
     expect(p.play('win')).toBeNull();
+    // 패배 = 쓰러짐: 끝 자세 그대로 멈춰 있는다(hold)
+    const r = p.play('lose')!;
+    p.advance(r.durationMs + 500);
+    expect(p.pose().motion).toBe(MOTIONS.down);
+    expect(p.playing).toBe('lose');
   });
   it('공격은 공격1·2 중 난수로 고르고(GDD 117장 4, 자세한 규칙은 c191), 타격·끝 콜백이 온다', () => {
     let k = 0;
@@ -61,7 +66,9 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     const [vx, vy, vw, vh] = HUMANOID.view!.rect;
     for (const look of Object.keys(HUMANOID.looks)) {
       const layers = lookLayers(HUMANOID, look);
-      for (const [mid, m] of Object.entries(MOTIONS)) {
+      // 게임이 실제로 트는 동작만(연결표 RIG_ACTIONS·FAMILY_RIG_MOTIONS) — 필살기·박치기처럼 아직 게임 연결이 없는 동작은 빼고
+      const used = new Set([...Object.values(RIG_ACTIONS).flat(), ...Object.values(FAMILY_RIG_MOTIONS).flat()]);
+      for (const [mid, m] of Object.entries(MOTIONS).filter(([id]) => used.has(id))) {
         for (let t = 0; t <= m.duration; t += 20) {
           const mats = boneMatrices(HUMANOID, samplePose(HUMANOID, m, t));
           for (const l of layers) {

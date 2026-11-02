@@ -10,7 +10,7 @@ import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
+import { applyCarePose, characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
 import { fixParticles } from '../engine/josa';
 
 /** 장소 그림(place.<장소>.<종족>)이 비었을 때 대신 쓰는 그림 키 — 수련장 = 방 짚인형 (GDD 160장 4) */
@@ -136,7 +136,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   char.disabled = true;
   char.setAttribute('aria-hidden', 'true');
   char.classList.add('bha-worldmap__char');
-  if (save.nest.collapsed || save.nest.dead) char.classList.add('is-collapsed');
+  applyCarePose(char, save.nest); // 돌봄 상태 자세 (GDD 170장)
   scene.insertBefore(char, btns.get(WORLD_PLACES[0]!) ?? null); // 장소 단추 뒤 층 — 장소 모양·이름표가 캐릭터 앞에 보인다
   char.dataset.at = at;
   const charEntry: FloorEntry = { el: char, foot: standFoot(wm.layout[at]), kind: 'char' };

@@ -1,6 +1,7 @@
 // 종이인형을 게임 캐릭터 그림으로 (GDD 96장 30): 프레임 애니 재생기(animPlayer)와 같은 모양(AnimPlayer)으로 동작을 받아
 // 뼈대 동작(motions.json)을 돌리고, 매 순간 캔버스에 그려 그 <img> 의 src 로 넣는다 — 좌우 반전·크기·윤곽 같은 기존 CSS 가 그대로 따라온다.
-// 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 무작위, 특수 skill·skill2 무작위(같은 것 두 번 연속까지, GDD 117장 4), 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
+// 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 무작위, 특수 skill·skill2 무작위(같은 것 두 번 연속까지, GDD 117장 4), 맞음 hit,
+// 홈 대기 homeIdle, 빈사 자세 dying, 온천 bath, 패배 = 쓰러짐 down(끝 자세 유지) (GDD 170장). 그 밖(승리·먹기·잠·해방)은 없음 = 기존 연출.
 // 계열 블록은 계열 몸동작(PlayOptions.motion, 종족 설정 families[].motion) 묶음에서 고른다(GDD 118장 2).
 // 코어(createRigPlayer)는 DOM 없이 돌아 테스트한다.
 import type { AnimAction } from '../../data/art/anim';
@@ -16,13 +17,18 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   attack: ['attack', 'attack2'],
   skill: ['skill', 'skill2'],
   hit: ['hit'],
+  // GDD 170장 (사용자 2026-11-01·11-03): 방 평소 = 홈 대기, 빈사·상태 이상 = 빈사 자세, 온천 = 온천 자세, 전투 패배·사망 = 쓰러짐
+  homeIdle: ['homeIdle'],
+  dying: ['dying'],
+  bath: ['bath'],
+  lose: ['down'],
 };
 
-/** 계열 몸동작 → 종이인형 동작 (GDD 118장 2): 맨손 타격 = 주먹·발차기, 칼 = 내려베기·수평 베기·찌르기, 귀도 = 손에서 쏘기. 묶음에 있는 동작이 하나도 없으면 게임 동작(RIG_ACTIONS) 그대로 */
+/** 계열 몸동작 → 종이인형 동작 (GDD 118장 2 → 170장, 사용자 2026-11-01 "권 블록=스트레이트, 귀 블록=특수1,2, 참 블록=공격1,2 모션"): 맨손 타격(권) = 스트레이트, 칼(참) = 공격1·2, 귀도(귀) = 특수1·2. 묶음에 있는 동작이 하나도 없으면 게임 동작(RIG_ACTIONS) 그대로 */
 export const FAMILY_RIG_MOTIONS: Readonly<Record<FamilyMotionKind, readonly string[]>> = {
-  strike: ['punch', 'kick'],
-  slash: ['attack', 'attack2', 'skill2'],
-  cast: ['skill'],
+  strike: ['straight'],
+  slash: ['attack', 'attack2'],
+  cast: ['skill', 'skill2'],
 };
 
 /** 같은 변형을 연속으로 몇 번까지 허용하나 (GDD 117장 4: 두 번까지, 세 번째는 다른 것) */

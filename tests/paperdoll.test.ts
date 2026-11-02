@@ -1,15 +1,15 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { HUMANOID, MOTIONS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, MOTION_SETS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
   it('뼈·슬롯·외형·동작에 문제가 없다', () => {
-    expect(validateRig(HUMANOID, MOTIONS)).toEqual([]);
+    expect(validateRig(HUMANOID, MOTIONS, MOTION_SETS)).toEqual([]);
   });
-  it('동작 7개(대기·걷기·공격·공격2·특수1·특수2·맞음)가 있다', () => {
-    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'hit', 'idle', 'kick', 'move', 'punch', 'skill', 'skill2']);
+  it('동작: 대기·걷기·공격·공격2·특수1·특수2·맞음 + 홈 대기·필살기·스트레이트·쓰러짐·빈사·온천·박치기(GDD 115-A, C.249 게임 넣기)·주먹·발차기(118장 2)', () => {
+    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'bath', 'down', 'dying', 'headbutt', 'hit', 'homeIdle', 'idle', 'kick', 'move', 'punch', 'skill', 'skill2', 'straight', 'ultimate']);
     expect(MOTIONS.idle!.loop && MOTIONS.move!.loop).toBe(true);
     expect(MOTIONS.attack!.hit).toBeGreaterThan(0);
   });
@@ -86,14 +86,14 @@ describe('자세·행렬', () => {
   });
   it('칼: 앞팔에 붙어 있고 쉬는 자세에서 손잡이가 손 자리에 있다', () => {
     const w = HUMANOID.bones.find((b) => b.id === 'weapon')!;
-    expect(w.parent).toBe('arm_L');
+    expect(w.parent).toBe('forearm_L'); // 왼팔을 위팔·아래팔로 나눈 뒤 칼은 아래팔에 (GDD 115-A 50)
     const m = boneMatrices(HUMANOID, {});
     const p = apply(m.weapon!, w.pivot);
     expect(p[0]).toBeCloseTo(w.pivot[0]);
     expect(p[1]).toBeCloseTo(w.pivot[1]);
     // 앞팔이 돌면 칼도 같이 돈다
     const m2 = boneMatrices(HUMANOID, { arm_L: { rot: 90, x: 0, y: 0 } });
-    const [a, b] = [apply(m2.weapon!, w.pivot), apply(m2.arm_L!, w.pivot)];
+    const [a, b] = [apply(m2.weapon!, w.pivot), apply(m2.forearm_L!, w.pivot)];
     expect(a[0]).toBeCloseTo(b[0]);
     expect(a[1]).toBeCloseTo(b[1]);
   });
@@ -110,7 +110,7 @@ describe('자세·행렬', () => {
   });
   it('엄지: 칼 잡는 앞팔에 고정(관절 없음), 칼 앞에 그려진다', () => {
     const ids = HUMANOID.slots.map((s) => s.id);
-    expect(HUMANOID.slots.find((s) => s.id === 'thumb_L')!.bone).toBe('arm_L');
+    expect(HUMANOID.slots.find((s) => s.id === 'thumb_L')!.bone).toBe('forearm_L'); // 칼 잡는 아래팔 (GDD 115-A 50)
     expect(ids.indexOf('thumb_L')).toBeGreaterThan(ids.indexOf('weapon'));
     expect(HUMANOID.bones.some((b) => b.id === 'thumb_L')).toBe(false);
   });
@@ -175,8 +175,9 @@ describe('자세·행렬', () => {
     for (const id of ['attack', 'attack2']) {
       const m = MOTIONS[id]!;
       const ks = m.tracks.forearm_R!;
-      expect(Math.max(...ks.map((k) => k[1])), id).toBeGreaterThan(5);
-      expect(samplePose(HUMANOID, m, m.hit!).forearm_R!.rot, id).toBeLessThan(-10);
+      // 대기 쪽 첫 키 기준(사용자가 편집기로 각도를 잡아 절대값은 바뀐다): 젖힐 때 더 굽히고 칠 때 뒤로 뻗는다
+      expect(Math.max(...ks.map((k) => k[1])) - ks[0]![1], id).toBeGreaterThan(5);
+      expect(samplePose(HUMANOID, m, m.hit!).forearm_R!.rot - ks[0]![1], id).toBeLessThan(-10);
     }
   });
   it('몸별 관절: 한 몸에서 옮긴 관절·기본 각도는 그 몸에만 (다른 몸은 그대로)', () => {
@@ -247,7 +248,8 @@ describe('자세·행렬', () => {
   });
   it('특수1: 타격 순간 뒷팔이 수평(약 90°), 특수2: 팔은 수평보다 낮고 칼날은 수평, 쏜 뒤 몸이 뒤로 밀린다(반동)', () => {
     const s1 = MOTIONS.skill!;
-    expect(Math.abs(samplePose(HUMANOID, s1, s1.hit!).arm_R!.rot - 90)).toBeLessThan(10);
+    // 처음 자세에서 약 90° 들어 올림(절대 각도는 사용자가 편집기로 잡은 쉬는 각도에 따라 다름)
+    expect(Math.abs(samplePose(HUMANOID, s1, s1.hit!).arm_R!.rot - samplePose(HUMANOID, s1, 0).arm_R!.rot - 90)).toBeLessThan(10);
     const s2 = MOTIONS.skill2!;
     const p = samplePose(HUMANOID, s2, s2.hit!);
     expect(p.arm_L!.rot).toBeLessThan(80);

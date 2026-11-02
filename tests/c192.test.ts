@@ -40,7 +40,8 @@ describe('118장 2: 사신 권 = 물리 · 참 = 혼합 · 귀 = 특공', () => 
     const cue = attackCueOf(block({ family: fam('권').id }), 3, familyFx)!;
     expect(cue.motion).toBe('strike');
     expect(animActionOf(cue, () => true)).toBe('skill');
-    expect(FAMILY_RIG_MOTIONS).toEqual({ strike: ['punch', 'kick'], slash: ['attack', 'attack2', 'skill2'], cast: ['skill'] });
+    // GDD 170장 (사용자 2026-11-01 "권 블록=스트레이트, 귀 블록=특수1,2, 참 블록=공격1,2 모션")
+    expect(FAMILY_RIG_MOTIONS).toEqual({ strike: ['straight'], slash: ['attack', 'attack2'], cast: ['skill', 'skill2'] });
     let k = 0;
     const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => [0, 0.99][k++ % 2]!);
     const seen = (motion: 'strike' | 'slash' | 'cast', n: number) => Array.from({ length: n }, () => {
@@ -49,11 +50,13 @@ describe('118장 2: 사신 권 = 물리 · 참 = 혼합 · 귀 = 특공', () => 
       p.advance(r.durationMs + 1);
       return Object.keys(MOTIONS).find((id) => MOTIONS[id] === m);
     });
-    expect(new Set(seen('strike', 4))).toEqual(new Set(['punch', 'kick']));
-    expect(new Set(seen('cast', 3))).toEqual(new Set(['skill']));
+    expect(new Set(seen('strike', 4))).toEqual(new Set(['straight']));
+    expect(new Set(seen('cast', 4))).toEqual(new Set(['skill', 'skill2']));
     expect(seen('slash', 6).every((id) => FAMILY_RIG_MOTIONS.slash.includes(id!))).toBe(true);
     // 몸동작 없음(호로·필살) = 특수 동작 skill·skill2 그대로
-    expect(['skill', 'skill2']).toContain(Object.keys(MOTIONS).find((id) => { p.play('skill'); return MOTIONS[id] === p.pose().motion; }));
+    p.play('skill');
+    const plain = p.pose().motion;
+    expect(['skill', 'skill2']).toContain(Object.keys(MOTIONS).find((id) => MOTIONS[id] === plain));
   });
   it('특성 설명에 공격 분류는 안 보인다 (C.215: GDD 137장 1 — 분류는 데이터 category 로만)', () => {
     const a = TRAITS.find((t) => t.family === fam('참').id && t.kind === 'skill')!;

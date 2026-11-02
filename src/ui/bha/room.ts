@@ -2,7 +2,7 @@
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
-import { bindAnim } from './animPlayer';
+import { animOf, bindAnim } from './animPlayer';
 import { button, el, icon } from './dom';
 import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 
@@ -68,6 +68,22 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   } else shape.append(icon(PROP_ICON[o.prop]));
   b.append(shape, el('span', 'bha-prop__tag', o.name));
   return b;
+}
+
+/**
+ * 돌봄 상태 자세 (GDD 170장, 사용자 2026-11-01 "빈사자세는 빈사 및 상태이상 걸렸을 때"): characterButton 으로 만든 캐릭터에.
+ * 종이인형(빈사 자세 동작이 있는 그림)이면 사망 = 쓰러짐(끝 자세 유지), 빈사·쇠약·피곤 = 빈사 자세, 평소 = 대기(방 home 이면 홈 대기).
+ * 종이인형이 아니면 옛 연출 그대로 — 빈사·사망 = .is-collapsed(눕히고 흐리게, GDD 102-7). 종족 분기 없음(그림·동작 데이터만 본다)
+ */
+export function applyCarePose(char: HTMLElement, care: { collapsed: boolean; dead: boolean; weakened?: boolean; tired?: boolean }, o: { home?: boolean } = {}): void {
+  const anim = animOf(char);
+  if (!anim?.has('dying')) {
+    if (care.collapsed || care.dead) char.classList.add('is-collapsed');
+    return;
+  }
+  if (care.dead) anim.play('lose');
+  else if (care.collapsed || care.weakened || care.tired) anim.setLoop('dying');
+  else if (o.home && anim.has('homeIdle')) anim.setLoop('homeIdle');
 }
 
 /** 종족·단계에 맞는 캐릭터 그림 (GDD 17-6) */
