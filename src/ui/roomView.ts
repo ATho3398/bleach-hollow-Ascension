@@ -18,7 +18,7 @@ import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
 import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
 import { notice } from './bha/dom';
@@ -192,6 +192,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
     if (p === 'altar') continue;
+    if (room.layout[p].hidden) continue; // UI 배치 도구로 숨긴 물건 (GDD 175장)
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, fallbackArt: p === 'outside' ? 'prop.door' : undefined });
     b.onclick = act[p];
     // 잠긴 진급 시험 (GDD 174장 3): 월드맵 잠긴 장소(탑)와 같은 모양 — 흐림 + 자물쇠 + 이유 툴팁
@@ -206,6 +207,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     scene.append(b);
     floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
   }
+  const extras = extraPropButtons(scene, room.extras, floorEntries); // 새 물건 (GDD 175장): 아이콘만, 누르면 '준비 중'
   const charArtUrls = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const char = characterButton(charArtUrls, '캐릭터');
   applyCarePose(char, n, { home: true }); // 돌봄 상태 자세 (GDD 171장): 종이인형 = 빈사·쇠약·피곤 → 빈사 자세, 사망 → 쓰러짐, 평소 → 홈 대기. 아니면 눕히고 흐리게(GDD 102-7)
@@ -379,7 +381,11 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
   function registerItems(): void {
     const list: SelectItem[] = [...items];
-    for (const p of order) list.push({ el: props.get(p)! });
+    for (const p of order) {
+      const b = props.get(p);
+      if (b) list.push({ el: b });
+    }
+    for (const b of extras) list.push({ el: b });
     list.push({ el: statusBtn }, { el: statusInfoBtn }, { el: char });
     const tray = dock.items().filter((b) => b.closest('.bha-homedock__tray'));
     // 펼친 줄(더보기·먹이)이 방 물건을 덮으므로, 펼친 동안은 물건·캐릭터를 고르지 않는다 — 덮인 칸에 하이라이트가 가던 문제 (C.182 UI 검수)

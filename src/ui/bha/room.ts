@@ -1,10 +1,11 @@
 // 메인 방 화면의 장면 부품 (GDD 16장, T-1): 방 배경·물건·캐릭터. 그림은 src/data/art 매니페스트의 키로 참조하고,
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
-import type { MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
+import type { ExtraProp, MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
 import { animOf, bindAnim } from './animPlayer';
 import { button, el, icon } from './dom';
 import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
+import { showToast } from './nest';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -33,7 +34,8 @@ export function sceneBox(room: Pick<RoomConfig, 'shape' | 'sceneArt'>): HTMLElem
 }
 
 export interface PropOpts {
-  prop: RoomProp | MarketSpot | WorldPlace;
+  /** 물건 id. 새 물건(GDD 175장)은 자기 id 라 icon·artKey 를 같이 준다 */
+  prop: RoomProp | MarketSpot | WorldPlace | string;
   name: string;
   x: number;
   y: number;
@@ -44,8 +46,10 @@ export interface PropOpts {
   alert?: boolean;
   /** 제 그림(prop.<물건>)이 없을 때 대신 쓸 그림 키 — 장터 물건은 상점 그림 (C.201, 장터 그림 대기) */
   fallbackArt?: string;
-  /** 그림 키를 prop.<물건> 대신 이것으로 (같은 물건이 화면마다 다른 그림 — 시장의 월드맵 물건 = 지도 그림, C.255) */
+  /** 그림 키를 prop.<물건> 대신 이것으로 (같은 물건이 화면마다 다른 그림 — 시장의 월드맵 물건 = 지도 그림, C.255 · 새 물건은 자기 키, GDD 175장) */
   artKey?: string;
+  /** 그림이 없을 때 아이콘 (기본 PROP_ICON) — 새 물건·배치 도구에서 고른 아이콘 */
+  icon?: string;
 }
 
 /** 방 안 물건 = 선택 항목(button). 이름표는 항상 보인다 */
@@ -69,9 +73,25 @@ export function propButton(o: PropOpts): HTMLButtonElement {
     img.alt = '';
     shape.append(img);
     shape.classList.add('has-art');
-  } else shape.append(icon(PROP_ICON[o.prop]));
+  } else shape.append(icon(o.icon ?? PROP_ICON[o.prop as RoomProp] ?? 'i-special'));
   b.append(shape, el('span', 'bha-prop__tag', o.name));
   return b;
+}
+
+/** 새 물건 (GDD 175장 3): 아이콘(그림 키가 있으면 그림)만 서 있고 기능은 없다 — 누르면 '준비 중' 알림. 숨긴 것은 뺀다.
+ *  장면에 붙이고 바닥 배치 목록에 더한 뒤 단추들을 돌려준다(기기 선택 목록용) */
+export function extraPropButtons(scene: HTMLElement, extras: readonly ExtraProp[] | undefined, floor: FloorEntry[]): HTMLButtonElement[] {
+  const out: HTMLButtonElement[] = [];
+  for (const x of extras ?? []) {
+    if (x.hidden) continue;
+    const b = propButton({ prop: x.id, name: x.name, x: x.x, y: x.y, scale: x.scale, art: false, artKey: x.art ?? `prop.extra.${x.id}`, icon: x.icon });
+    b.dataset.extra = x.id;
+    b.onclick = () => showToast({ eyebrow: x.name, title: '준비 중' }, 0, 2200);
+    scene.append(b);
+    floor.push({ el: b, foot: x, kind: 'prop' });
+    out.push(b);
+  }
+  return out;
 }
 
 /**

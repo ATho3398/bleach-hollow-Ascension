@@ -112,13 +112,24 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'place.rest-spring.shinigami': {},
 };
 
+/** 실행 중에만 덮어쓰는 그림 (UI 배치 도구 미리보기, GDD 175장 4): 키 → 그림 주소(data URL 등) 또는 null(그림 숨김 = 아이콘). 세이브·배포 데이터와 무관 */
+const RUNTIME_ART = new Map<string, string | null>();
+export function setRuntimeArt(key: string, src: string | null | undefined): void {
+  if (src === undefined) RUNTIME_ART.delete(key);
+  else RUNTIME_ART.set(key, src);
+}
+export function clearRuntimeArt(): void {
+  RUNTIME_ART.clear();
+}
+
 /** 그림 키 → 실제 이미지 URL(없으면 null = 자리표시를 쓴다). base 는 배포 경로(Vite BASE_URL) */
 export function artUrls(key: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): ArtUrls {
   const e = manifest[key];
-  const join = (p: string) => (/^(https?:|data:)/.test(p) ? p : `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`);
+  const join = (p: string) => (/^(https?:|data:|blob:)/.test(p) ? p : `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`);
+  const rt = manifest === ART_MANIFEST && RUNTIME_ART.has(key) ? RUNTIME_ART.get(key)! : undefined;
   const auto = !e?.src && !e?.frames ? findArtFile(key, files) : null;
   return {
-    src: e?.src ? join(e.src) : auto ? join(auto) : null,
+    src: rt !== undefined ? (rt ? join(rt) : null) : e?.src ? join(e.src) : auto ? join(auto) : null,
     frames: e?.frames ? [join(e.frames[0]), join(e.frames[1])] : null,
     scale: e?.scale ?? 1,
     ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}),
