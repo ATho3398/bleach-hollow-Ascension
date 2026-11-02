@@ -29,3 +29,6 @@
 .bha-prop.has-visitor .bha-prop__badge { position: absolute; top: 0; right: 0; translate: 20% -40%; margin: 0; line-height: 1.3; }
 /* 상점 고르기 창 (GDD 150장 2, C.227): 상점 4곳 + [닫기] 를 한 줄에 하나씩 (기기 ▲▼ 순서 = 위 → 아래) */
 .bha-shoppick__list { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-2); }
+/* 사용자 2026-11-03 캡처 점검: 캐릭터는 물건 그림 앞, '상인' 배지는 그림 지붕 바로 위(그림 칸 위쪽 투명 여백 약 14% 만큼 내림) */
+.bha-market__char { z-index: 2; }
+.bha-prop.has-visitor .bha-prop__shape.has-art .bha-prop__badge { top: 14%; right: 10%; }

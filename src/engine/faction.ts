@@ -224,7 +224,7 @@ export const DEFAULT_MARKET: MarketConfig = {
   layout: {
     shop: { x: 32, y: 48, scale: 0.9 }, gearShop: { x: 58, y: 42, scale: 0.8 }, skinShop: { x: 85, y: 50, scale: 0.9 },
     traitShop: { x: 82, y: 88, scale: 1.15 }, smith: { x: 52, y: 90, scale: 1.15 },
-    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 66, y: 68, scale: 1 },
+    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 34, y: 90, scale: 0.85 }, // 떠돌이 상인: 장비 상점 이름표·대장장이·특성 상점과 안 겹치게 (사용자 2026-11-03 캡처 점검)
   },
   exit: { x: 9, y: 78, scale: 1 },
 };
