@@ -1,7 +1,8 @@
 // 종이인형 그리기 (GDD 96장): 부위 그림(<img>)을 같은 캔버스에 겹쳐 두고, 뼈 행렬(pose.ts)을 CSS transform 으로 건다.
 // 매 순간 실시간으로 움직인다(크루세이더 퀘스트식). 도트는 image-rendering: pixelated 로 흐림 없이 확대·회전된다.
 // 코어(createDollClock)는 DOM 없이 시간·동작 전환만 다뤄 테스트한다.
-import { boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose, type Mat, type Motion, type MotionSets, type Rig } from '../../data/art/rig/pose';
+import { boneMatrices, fxAt, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, type Mat, type Motion, type MotionSets, type Rig } from '../../data/art/rig/pose';
+import { fxSvg } from './rigFx';
 import { el } from '../dom';
 
 export interface DollPlayOptions {
@@ -22,6 +23,11 @@ export function createDollClock(motions: Record<string, Motion>) {
       return id && motions[id] ? { id, t } : null;
     },
     setLoop(id: string | null) {
+      // 끝 자세로 멈춰 있던 동작(쓰러짐)은 반복 동작을 고르면 풀린다
+      if (onceId && motions[onceId]?.hold && t >= motions[onceId]!.duration) {
+        onceId = null;
+        t = 0;
+      }
       if (loopId === id) return;
       loopId = id;
       if (!onceId) t = 0;
@@ -46,6 +52,13 @@ export function createDollClock(motions: Record<string, Motion>) {
       }
       if (!m.loop && t >= m.duration) {
         const end = opts.onEnd;
+        if (m.hold) {
+          // 마지막 자세로 멈춤(쓰러짐) — 다음 play 가 올 때까지
+          t = m.duration;
+          opts = {};
+          end?.();
+          return;
+        }
         onceId = null;
         t = 0;
         opts = {};
@@ -88,7 +101,10 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
   const root = el('div', 'bha-doll');
   root.style.width = `${w * k}px`;
   root.style.height = `${h * k}px`;
-  const parts = lookLayers(rig, o.look).map((l) => {
+  // 외형 + (있으면) 해방 외형(GDD 115-A 49): 두 벌을 같이 두고 그 순간 외형만 보인다
+  const release = rig.looks[o.look]?.release;
+  const lookIds = [o.look, ...(typeof release === 'string' && rig.looks[release] ? [release] : [])];
+  const sets = new Map(lookIds.map((lid) => [lid, lookLayers(rig, lid).map((l) => {
     const img = el('img', 'bha-doll__part');
     img.src = `${o.base}art/rig/${rig.id}/${l.art}.png`;
     img.alt = '';
@@ -97,15 +113,33 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
     img.style.height = `${l.size[1] * k}px`;
     img.dataset.slot = l.slot;
     root.append(img);
-    return { img, layer: l };
-  });
+    return { img, layer: l, slot: l.slot };
+  })]));
+  // 이펙트 층(GDD 115-A 48): 그림 위, 캔버스 밖으로 넘쳐도 보이게
+  const fx = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  fx.setAttribute('class', 'bha-doll__fx');
+  fx.setAttribute('width', String(w * k));
+  fx.setAttribute('height', String(h * k));
+  fx.style.cssText = 'position:absolute;left:0;top:0;overflow:visible;pointer-events:none';
+  root.append(fx);
   const clock = createDollClock(motions);
   const draw = () => {
     const cur = clock.current;
     const m = cur ? motions[cur.id] : undefined;
-    const pose = m && cur ? samplePose(rig, m, cur.t) : {};
+    const t = cur?.t ?? 0;
+    const pose = m && cur ? samplePose(rig, m, t) : {};
     const mats = boneMatrices(rig, pose, body);
-    for (const p of parts) p.img.style.transform = css(layerMatrix(rig, mats, p.layer, m), k);
+    const showing = motionLook(rig, o.look, m, t);
+    for (const [lid, parts] of sets) {
+      const shown = lid === showing ? orderLayers(parts, m) : [];
+      for (const p of parts) p.img.style.display = shown.includes(p) ? '' : 'none';
+      shown.forEach((p, i) => {
+        p.img.style.zIndex = String(i + 1);
+        p.img.style.transform = css(layerMatrix(rig, mats, p.layer, m), k);
+      });
+    }
+    fx.style.zIndex = '999';
+    fx.innerHTML = fxSvg(fxAt(m, t, mats), k);
   };
   draw();
   let raf = 0;

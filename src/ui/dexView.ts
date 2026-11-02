@@ -9,7 +9,7 @@ import { lcdHead, lcdPage, masterDetail, type ListRow } from './bha/lcdpage';
 import { elementDot, paintElement } from './bha/element';
 import { formCardModel, sortFormsForDex } from './bha/nestLogic';
 import { logoMark } from './bha/logo';
-import { abilityParagraph, dexAbilityLines, evolutionNote, formEffectLines } from './evolutionPanel';
+import { abilityParagraph, dexAbilityLines, formEffectLines } from './evolutionPanel';
 import { shownName } from './displayName';
 
 /** 속성 마크 줄 (속성을 잇는 진화체는 "속성 잇기") */
@@ -49,7 +49,7 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
       const body = h('p', 'bha-mddetail__body');
       body.append(formHint(f, faction.id));
       for (const line of lines.slice(1)) body.append(h('br'), line);
-      return [head, body, abilityParagraph(dexAbilityLines(f, faction.id)), evolutionNote()];
+      return [head, body, abilityParagraph(dexAbilityLines(f, faction.id))];
     },
   };
 }

@@ -22,8 +22,8 @@ describe('프레임 파일 찾기 (26-2)', () => {
     expect(frameFiles('char.hollow.1', 'move', files)).toEqual(['char-hollow-1/move-1.webp', 'char-hollow-1/move-2.png']);
     expect(frameFiles('char.hollow.1', 'attack', files)).toEqual([]);
   });
-  it('동작 키는 10종 데이터 표이고 재생 방식·프레임당 ms 가 26-3·26-4b 표와 같다', () => {
-    expect(ANIM_ACTIONS.map((a) => a.key)).toEqual(['idle', 'move', 'attack', 'skill', 'hit', 'win', 'lose', 'eat', 'sleep', 'release']);
+  it('동작 키는 13종 데이터 표이고 재생 방식·프레임당 ms 가 26-3·26-4b 표와 같다(홈 대기·빈사 자세·온천 = GDD 171장)', () => {
+    expect(ANIM_ACTIONS.map((a) => a.key)).toEqual(['idle', 'move', 'attack', 'skill', 'hit', 'win', 'lose', 'eat', 'sleep', 'release', 'homeIdle', 'dying', 'bath']);
     const by = Object.fromEntries(ANIM_ACTIONS.map((a) => [a.key, a]));
     expect([by.idle!.mode, by.idle!.ms, by.idle!.endMs]).toEqual(['loop', 300, 450]);
     expect([by.move!.mode, by.move!.ms]).toEqual(['loop', 130]);
@@ -34,6 +34,7 @@ describe('프레임 파일 찾기 (26-2)', () => {
     expect([by.lose!.mode, by.lose!.ms]).toEqual(['hold', 180]);
     expect([by.sleep!.mode, by.sleep!.ms]).toEqual(['loop', 450]);
     expect([by.eat!.ms, by.release!.ms]).toEqual([180, 150]);
+    expect([by.homeIdle!.mode, by.dying!.mode, by.bath!.mode]).toEqual(['loop', 'loop', 'loop']);
     expect(ANIM_ACTIONS.every((a) => a.ms >= 100 && a.ms <= 450)).toBe(true);
   });
   it('동작별 프레임 수 한 줄 (art:list): 없는 동작은 없음', () => {

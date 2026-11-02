@@ -18,7 +18,7 @@ import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
 import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
 import { notice } from './bha/dom';
@@ -194,7 +194,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   }
   const charArtUrls = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const char = characterButton(charArtUrls, '캐릭터');
-  if (n.collapsed || n.dead) char.classList.add('is-collapsed'); // 쓰러진 모습 (그림이 없어 캐릭터를 눕히고 흐리게, GDD 102-7)
+  applyCarePose(char, n, { home: true }); // 돌봄 상태 자세 (GDD 171장): 종이인형 = 빈사·쇠약·피곤 → 빈사 자세, 사망 → 쓰러짐, 평소 → 홈 대기. 아니면 눕히고 흐리게(GDD 102-7)
   // 데리고 다니는 펫 (GDD 90장): 캐릭터 옆 발치에 작게 (그림이 없으면 아이콘 원)
   const buddy = petBuddy(save.shared.pets.active, petName(save.shared.pets.active ?? '', faction));
   if (buddy) char.append(buddy);

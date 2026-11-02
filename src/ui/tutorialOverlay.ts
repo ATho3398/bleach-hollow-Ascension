@@ -9,7 +9,7 @@ import { button, dots, el, icon } from './bha/dom';
 import { linesBody } from './bha/lines';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
-import { placeCard, placeCardBox, unionRect, type Rect } from './helpLayout';
+import { placeCard, placeCardFit, unionRect, type BoxSide, type Rect } from './helpLayout';
 
 export interface TutorialHandle {
   close(): void;
@@ -120,6 +120,13 @@ const OPEN_WINDOWS = ['@.bha-itemdialog .bha-itemmodal', '@.bha-actfx', '@.bha-h
 /** 카드가 되도록 피하는 주인공 (GDD 162장 1): 방 캐릭터·온천 캐릭터 — 먹는 모습·온천에 몸 담근 모습이 안내 창에 가리지 않게 */
 const SUBJECTS = ['@.bha-char', '@.bha-spa__actor'];
 
+/** 대상 옆 네 자리 */
+const NEAR_SIDES: readonly BoxSide[] = ['below', 'above', 'right', 'left'];
+/** 지금 화면 (창 자리 기억을 같은 화면 안에서만 잇는다) */
+const screenKey = () => [...document.querySelectorAll('.bha-app')].map((e) => [...e.classList].filter((c) => !c.startsWith('is-')).join(' ')).join('|');
+/** 앞 단계 창 자리 (GDD 169장 3·4): 안내마다 오버레이를 새로 띄워도(홈 안내·회복 안내는 카드 한 장씩) 같은 화면이면 같은 쪽을 먼저 쓴다 */
+let lastPlaced: { screen: string; side: BoxSide | null; rect: Rect } | null = null;
+
 export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOptions): TutorialHandle {
   const vars = { ...helpVars(faction), ...(opts.vars ?? {}) };
   const t = (s: string) => renderHelpText(s, vars);
@@ -221,12 +228,17 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     opts.onFinish(status);
   };
 
-  /** 블록 바와 저장 필살기 버튼: 설명 카드가 가리지 않게 보호할 영역 */
-  const protectedRects = () => {
+  /** 가리면 안 되는 것 (GDD 162장 1·169장 2): 블록 바·저장 필살기 버튼(눌러야 할 버튼)·열린 창 */
+  const protectedRects = () =>
+    // 각본 카드(첫 전투)는 해방을 쓰지 않는다 — 해방 대상(내 캐릭터 전체)을 피하느라 적 예고 게이지를 덮던 것 (C.235, GDD 157장 2)
+    ['battle.tray', ...(opts.script ? [] : ['battle.liberation']), ...OPEN_WINDOWS].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+  /** 되도록 피하는 것 (GDD 169장 2): 캐릭터·단계에 적힌 것(상태 칩·체력 막대·말풍선 등). 단계에 적힌 것은 3배 무게 */
+  const softRects = () => {
     const sc = SCENES[state.index]!;
     const st = stageOf(sc);
-    // 각본 카드(첫 전투)는 해방을 쓰지 않는다 — 해방 대상(내 캐릭터 전체)을 피하느라 적 예고 게이지를 덮던 것 (C.235, GDD 157장 2)
-    return ['battle.tray', ...(opts.script ? [] : ['battle.liberation']), ...OPEN_WINDOWS, ...SUBJECTS, ...(st?.avoid ?? sc.avoid ?? [])].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+    const rs = (ids: readonly string[]) => ids.map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+    const avoid = rs(st?.avoid ?? sc.avoid ?? []);
+    return [...rs(SUBJECTS), ...avoid, ...avoid, ...avoid];
   };
 
   /** 가로 화면(LCD)에서 카드가 후보로 삼는 너비: 넓게(위·아래에 걸쳐) / 좁게(옆·모서리) */
@@ -248,32 +260,36 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     let belowCard = false;
     let aside = false;
     let cardLeft = (vp.width - card.offsetWidth) / 2;
+    let side: BoxSide = 'center';
+    const prev = lastPlaced && lastPlaced.screen === screenKey() ? lastPlaced : null;
     if (landscape) {
-      // 가로: 너비 두 가지를 시험해 대상·블록 바를 가장 적게 가리는 자리를 고른다 (T-2)
-      const prot = protectedRects();
-      let best: { w: number; h: number; p: ReturnType<typeof placeCardBox> } | null = null;
-      // + 대상 왼쪽·오른쪽 빈 곳에 꼭 맞는 너비 (GDD 162장 1): 위·아래가 막혔을 때(위 끝 칩·아래 독 사이) 대상 옆에 좁게 서서 대상을 가리지 않는다
+      // 가로: 너비 후보마다 높이를 재고, 대상 옆에 붙는 자리·크기를 함께 고른다 (GDD 169장)
+      // + 대상 왼쪽·오른쪽 빈 곳에 꼭 맞는 너비 (GDD 162장 1): 위·아래가 막혔을 때 대상 옆에 좁게 선다
       const sideW = keep ? [keep.left - 16, vp.width - keep.left - keep.width - 16].filter((w) => w >= MIN_SIDE_W && w < NARROW_W) : [];
-      for (const w of [Math.min(WIDE_W, vp.width - 16), Math.min(NARROW_W, vp.width - 16), Math.min(SLIM_W, vp.width - 16), ...sideW]) {
+      const sizes = [Math.min(WIDE_W, vp.width - 16), Math.min(NARROW_W, vp.width - 16), Math.min(SLIM_W, vp.width - 16), ...sideW].map((w) => {
         card.style.width = `${w}px`;
-        const h = card.offsetHeight;
-        const p = placeCardBox(keep, { width: w, height: h }, vp, prot);
-        if (!best || p.cost < best.p.cost) best = { w, h, p };
-      }
-      card.style.width = `${best!.w}px`;
-      card.style.left = `${best!.p.left}px`;
-      card.style.top = `${best!.p.top}px`;
-      cardLeft = best!.p.left;
-      belowCard = !!rect && best!.p.top >= rect.top + rect.height / 2;
-      aside = !rect || best!.p.side === 'right' || best!.p.side === 'left' || best!.p.side === 'corner' || best!.p.side === 'center';
+        return { width: w, height: card.offsetHeight };
+      });
+      const p = placeCardFit(keep, sizes, vp, protectedRects(), { soft: softRects(), prefer: keep ? prev?.side : null, prev: prev?.rect ?? null });
+      card.style.width = `${p.width}px`;
+      card.style.left = `${p.left}px`;
+      card.style.top = `${p.top}px`;
+      cardLeft = p.left;
+      side = p.side;
+      belowCard = !!rect && p.top >= rect.top + rect.height / 2;
+      aside = !rect || p.side === 'right' || p.side === 'left' || p.side === 'corner' || p.side === 'center';
     } else {
       card.style.width = '';
       card.style.left = '';
-      const place = placeCard(keep, card.offsetHeight, vp, protectedRects());
+      const place = placeCard(keep, card.offsetHeight, vp, [...protectedRects(), ...softRects()], 12, 10, 456, prev?.side === 'above' ? 'above' : 'below');
       card.style.top = `${place.top}px`;
       belowCard = !!rect && place.top >= rect.top + rect.height / 2;
       cardLeft = place.left;
+      side = place.side === 'center' ? 'center' : place.side;
     }
+    // 다음 단계가 같은 쪽을 먼저 쓰도록 (GDD 169장 3) — 대상 없는 카드는 자리만 남기고 쪽은 앞 것을 이어 둔다
+    lastPlaced = { screen: screenKey(), side: rect && NEAR_SIDES.includes(side) ? side : prev?.side ?? null, rect: { top: parseFloat(card.style.top) || 0, left: cardLeft, width: card.offsetWidth, height: card.offsetHeight } };
+    card.dataset.side = side;
     card.style.bottom = 'auto';
     card.classList.toggle('is-placed', landscape);
     const pad = TUTORIAL_HOLE_PAD;

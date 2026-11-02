@@ -14,6 +14,8 @@ export interface Bone {
   pivot: Vec2;
   /** 쉬는 자세 각도(도). 무기처럼 그림은 곧게 그리고 들고 있는 각도만 주고 싶을 때. 동작 각도에 더해진다 */
   restRot?: number;
+  /** 보정 이동(도트, 부모 좌표 — 동작 x·y 처럼 더함). 몸별 관절(bodyJoints.shift)에서만 온다: 편집기에서 관절을 옮겨도 쉬는 자세 그림이 제자리에 있게(GDD 115-A 61) */
+  shift?: Vec2;
 }
 export interface Slot {
   id: string;
@@ -54,6 +56,8 @@ export interface RigEdit {
 export interface BodyJoints {
   pivots?: Record<string, Vec2>;
   rot?: Record<string, number>;
+  /** 뼈 id → 보정 이동(도트). 관절을 옮기면 편집기가 넣는다(jointMoveShift, GDD 115-A 61) */
+  shift?: Record<string, Vec2>;
 }
 
 /** 부위 그림 하나: `public/art/rig/<rig id>/<art>.png`(꼭 맞게 자른 그림), at = 캔버스에서 왼쪽 위 자리, size = 그림 크기 */
@@ -77,7 +81,39 @@ export interface Motion {
   hit?: number;
   /** 이 동작 동안 그림을 뒤집어 그릴 슬롯(칼 = 칼날 축 기준으로 날·등이 바뀜, 그 밖 = 그림 세로 가운데 기준) */
   flip?: string[];
+  /** 이 동작 동안 맨 앞으로 올려 그릴 슬롯(차례대로) — 필살기에서 칼을 몸 위로 (GDD 115-A 48) */
+  front?: string[];
+  /** 이 동작 동안 숨길 슬롯 — 칼 든 손으로 치는 스트레이트에서 칼을 잠시 감춤 (GDD 115-A 52) */
+  hide?: string[];
+  /** 이 동작에서만 쓰는 그림 앞뒤 순서(슬롯 id, 뒤 → 앞). 없으면 뼈대의 slots 순서. 편집기 '이 동작에만'에서 앞·뒤로 보내기 (GDD 115-A 62) */
+  order?: string[];
+  /** 끝나도 마지막 자세로 멈춰 있는다(쓰러짐 — 다음 동작이 올 때까지) (GDD 115-A 53) */
+  hold?: boolean;
+  /** 이펙트 키(베기 궤적·폭발·바닥 고리·기둥) — 그림 층 위에 그린다 (GDD 115-A 48) */
+  fx?: FxKey[];
+  /** 이 시각부터 외형을 해방 외형(look.release)으로 바꿔 그린다 — 해방 1안 (GDD 115-A 49) */
+  swapAt?: number;
   tracks: Record<string, Key[]>;
+}
+
+/** 이펙트 하나. pts = 캔버스 좌표(bone 이 있으면 그 뼈를 따라 움직인다). 색은 그림 데이터(UI 토큰 아님) */
+export interface FxKey {
+  t: number;
+  dur: number;
+  kind: 'slash' | 'burst' | 'ring' | 'pillar';
+  pts: Vec2[];
+  bone?: string;
+  /** 굵기(도트) */
+  w?: number;
+  /** 반지름(burst·ring, 도트) */
+  r?: number;
+  color: string;
+  /** 가운데 밝은 색 */
+  core?: string;
+}
+/** 지금 그릴 이펙트: 좌표는 화면(캔버스) 좌표로 옮긴 것, u = 0~1 진행 */
+export interface FxDraw extends Omit<FxKey, 't' | 'dur' | 'bone'> {
+  u: number;
 }
 export interface BonePose {
   rot: number;
@@ -171,15 +207,28 @@ function local(b: Bone, p: BonePose): Mat {
   const c = Math.cos(r);
   const s = Math.sin(r);
   const [px, py] = b.pivot;
-  // T(x,y) · T(pivot) · R · T(-pivot)
-  return [c, s, -s, c, px - c * px + s * py + p.x, py - s * px - c * py + p.y];
+  const [sx, sy] = b.shift ?? [0, 0];
+  // T(x,y) · T(shift) · T(pivot) · R · T(-pivot)
+  return [c, s, -s, c, px - c * px + s * py + p.x + sx, py - s * px - c * py + p.y + sy];
+}
+
+/** 관절을 d 만큼 옮길 때 더할 보정 이동(GDD 115-A 61, 사용자 2026-11-01 "왜 자꾸 관절 옮기면 부위가 같이 이동함? 이거 고쳐").
+ *  관절 둘레로 돌아간 뼈(쉬는 각도 θ)는 관절만 옮기면 그림이 (I − R(θ))·d 만큼 밀린다 → 그만큼 거꾸로. 쉬는 자세에서 이 뼈·아래 뼈 그림이 그대로 */
+export function jointMoveShift(restRotDeg: number, d: Vec2): Vec2 {
+  const r = (restRotDeg * Math.PI) / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return [-(d[0] - (c * d[0] - s * d[1])), -(d[1] - (s * d[0] + c * d[1]))];
 }
 
 /** 이 몸의 관절(따로 맞춘 자리·기본 각도를 얹은 뼈 목록). body 가 없거나 따로 맞춘 게 없으면 bones 그대로 */
 export function bodyBones(rig: Rig, body?: string): Bone[] {
   const j = body ? rig.bodyJoints?.[body] : undefined;
   if (!j || typeof j !== 'object') return rig.bones;
-  return rig.bones.map((b) => ({ ...b, pivot: j.pivots?.[b.id] ?? b.pivot, restRot: (b.restRot ?? 0) + (j.rot?.[b.id] ?? 0) }));
+  return rig.bones.map((b) => {
+    const sh = j.shift?.[b.id];
+    return { ...b, pivot: j.pivots?.[b.id] ?? b.pivot, restRot: (b.restRot ?? 0) + (j.rot?.[b.id] ?? 0), ...(sh ? { shift: sh } : {}) };
+  });
 }
 
 /** 뼈마다 '원래 그림 좌표 → 지금 화면 좌표' 행렬(도트 단위). 부모 뼈를 따라 움직인다. body = 그 몸에 따로 맞춘 관절을 쓴다 */
@@ -231,6 +280,38 @@ export function flipMatrix(rig: Rig, layer: PartArt & { slot: string }): Mat {
   return [a, b, b, d, gx - a * gx - b * gy, gy - b * gx - d * gy];
 }
 
+/** 그리는 차례: 이 동작의 hide 슬롯은 빼고, front 슬롯을 맨 앞으로(나머지는 슬롯 차례 그대로) */
+export function orderLayers<T extends { slot: string }>(layers: T[], motion?: Motion): T[] {
+  const hide = motion?.hide;
+  const order = motion?.order;
+  // 이 동작의 앞뒤 순서(목록에 없는 층은 원래 순서대로 맨 뒤 쪽 차례를 지킴 — 목록 밖 = 원래 자리 순)
+  const sorted = order?.length
+    ? layers.map((l, i) => ({ l, k: order.indexOf(l.slot) < 0 ? order.length + i : order.indexOf(l.slot) })).sort((a, b) => a.k - b.k).map((x) => x.l)
+    : layers;
+  const shown = hide?.length ? sorted.filter((l) => !hide.includes(l.slot)) : sorted;
+  const front = motion?.front;
+  if (!front?.length) return shown;
+  return [...shown.filter((l) => !front.includes(l.slot)), ...front.flatMap((f) => shown.filter((l) => l.slot === f))];
+}
+
+/** 이 순간 그릴 외형: 해방 동작(swapAt)이 그 시각을 지났고 외형에 해방 외형(release)이 있으면 그것 */
+export function motionLook(rig: Rig, lookId: string, motion: Motion | undefined, t: number): string {
+  const rel = rig.looks[lookId]?.release;
+  return motion?.swapAt !== undefined && t >= motion.swapAt && typeof rel === 'string' && rig.looks[rel] ? rel : lookId;
+}
+
+/** t 순간의 이펙트(진행 중인 것만), 뼈를 따라가는 것은 뼈 행렬로 옮겨서 */
+export function fxAt(motion: Motion | undefined, t: number, mats: Record<string, Mat>): FxDraw[] {
+  const out: FxDraw[] = [];
+  for (const f of motion?.fx ?? []) {
+    if (t < f.t || t > f.t + f.dur) continue;
+    const m = f.bone ? mats[f.bone] : undefined;
+    const { t: _t, dur, bone: _b, ...rest } = f;
+    out.push({ ...rest, pts: f.pts.map((p) => (m ? apply(m, p) : p)), u: (t - f.t) / Math.max(1, dur) });
+  }
+  return out;
+}
+
 /** 층 하나의 화면 행렬: 뼈 · 자리 · (이 동작에서 뒤집는 슬롯이면 뒤집기) */
 export function layerMatrix(rig: Rig, mats: Record<string, Mat>, layer: Layer, motion?: Motion): Mat {
   const m = partMatrix(mats[layer.bone]!, layer.at);
@@ -262,10 +343,11 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
   for (const [bid, j] of Object.entries(rig.bodyJoints ?? {})) {
     if (typeof j !== 'object') continue;
     if (!rig.bodies[bid]) errs.push(`몸별 관절 ${bid}: 몸 없음`);
-    for (const k of [...Object.keys(j.pivots ?? {}), ...Object.keys(j.rot ?? {})]) if (!ids.has(k)) errs.push(`몸별 관절 ${bid}: 뼈 ${k} 없음`);
+    for (const k of [...Object.keys(j.pivots ?? {}), ...Object.keys(j.rot ?? {}), ...Object.keys(j.shift ?? {})]) if (!ids.has(k)) errs.push(`몸별 관절 ${bid}: 뼈 ${k} 없음`);
   }
   for (const [lid, look] of Object.entries(rig.looks)) {
     if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);
+    if (typeof look.release === 'string' && !rig.looks[look.release]) errs.push(`외형 ${lid}: 해방 외형 ${look.release} 없음`);
     for (const k of HAIR_SLOTS) {
       const hair = look[k];
       if (typeof hair === 'object' && !insideFrame(rig, hair, k)) errs.push(`외형 ${lid}: ${k} 가 머리카락 틀 밖`);
@@ -287,6 +369,13 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
     if (!(m.duration > 0)) errs.push(`${mid}: 길이 0`);
     if (m.hit !== undefined && (m.hit < 0 || m.hit > m.duration)) errs.push(`${mid}: 타격 시각이 길이 밖`);
     for (const f of m.flip ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 뒤집을 슬롯 ${f} 없음`);
+    for (const f of m.front ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 앞으로 올릴 슬롯 ${f} 없음`);
+    for (const f of m.hide ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 숨길 슬롯 ${f} 없음`);
+    for (const f of m.fx ?? []) {
+      if (f.bone && !ids.has(f.bone)) errs.push(`${mid}: 이펙트 뼈 ${f.bone} 없음`);
+      if (f.t < 0 || f.t > m.duration) errs.push(`${mid}: 이펙트 시각이 길이 밖`);
+    }
+    if (m.swapAt !== undefined && (m.swapAt < 0 || m.swapAt > m.duration)) errs.push(`${mid}: 해방 바꿔치기 시각이 길이 밖`);
     for (const [bid, keys] of Object.entries(m.tracks)) {
       if (!ids.has(bid)) errs.push(`${mid}: 뼈 ${bid} 없음`);
       for (let i = 0; i < keys.length; i++) {

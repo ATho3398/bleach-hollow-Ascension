@@ -936,3 +936,10 @@ button.bha-info:hover, button.bha-info.is-open, button.bha-info:focus-visible { 
 .bha-pop__list { margin: 0; padding-left: var(--bha-sp-6); }
 .bha-pop__list li + li { margin-top: var(--bha-sp-1); }
 .bha-pop__list li.is-now { color: var(--bha-warn); font-weight: var(--bha-fw-bold); }
+/* 창이 자리보다 길 때 아래 '▼ 더 있음' (GDD 168장 3): 창 바닥에 붙어 있고 끝까지 내리면 숨는다 */
+.bha-pop__more {
+  position: sticky; bottom: calc(-1 * var(--bha-sp-4)); margin: var(--bha-sp-2) calc(-1 * var(--bha-sp-5)) calc(-1 * var(--bha-sp-4));
+  padding: var(--bha-sp-1) var(--bha-sp-5); background: var(--bha-bg-1); border-top: 1px solid var(--bha-line-2);
+  color: var(--bha-text-2); text-align: center; pointer-events: none;
+}
+.bha-pop__more[hidden] { display: none; }

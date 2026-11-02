@@ -19,8 +19,6 @@ import { asBack } from './bha/screenBack';
 
 const EV = BALANCE.provisional.evolution;
 
-export const EVOLUTION_NOTE = '진화 트리·수치·진화체 이름은 임시다(기획 20-5, 이름·그림은 사용자 확정 전 자리 표시)';
-
 /** 외형 변화 문구: 호로 = 본체 파츠, 사신 = 본체 그대로 참백도 외형 (종족 설정 appearanceChange) */
 export function appearanceText(faction: FactionConfig): string {
   return faction.appearanceChange ? '본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)' : `본체는 그대로, ${faction.slotName}의 외형이 변한다`;
@@ -34,14 +32,6 @@ export function statsLine(factionId: string, stats: Stats): string {
 /** 진화체 설명 줄 (도감 상세): 종족값 · 외형 */
 export function formEffectLines(faction: FactionConfig, form: FormDef): string[] {
   return [`${faction.slotName} +${EV.slotsPerEvolution}칸`, `종족값 ${statsLine(faction.id, form.stats)}`, form.stab ? `자기 속성 보정 ×${form.stab}` : '', appearanceText(faction)].filter(Boolean);
-}
-
-/** 임시 데이터 안내 한 줄 (작게 + 임시 태그) */
-export function evolutionNote(): HTMLElement {
-  const p = h('p', 'bha-faint', EVOLUTION_NOTE);
-  p.append(' ', provisionalTag());
-  p.hidden = !devText(); // GDD 100장: 개발용 문구는 테스트 모드에서만
-  return p;
 }
 
 /** 지금 특성 줄 (GDD 39장 → 126-1 수정, C.220): 특성 칸에 낀 것 (보유·장착이 없는 옛 모양이면 진화체 특성 전부) */
@@ -94,7 +84,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   if (isMaxTier(evo)) {
     return {
       left,
-      right: [notice('rare', `더 이상 진화하지 않는다. ${faction.absorbActionName} 기록은 칭호 조건에 계속 쌓인다.`, { title: `마지막 단계(${tierName})에 도달했다`, icon: 'i-rare' }), evolutionNote()],
+      right: [notice('rare', `더 이상 진화하지 않는다. ${faction.absorbActionName} 기록은 칭호 조건에 계속 쌓인다.`, { title: `마지막 단계(${tierName})에 도달했다`, icon: 'i-rare' })],
     };
   }
   const how = h('div', 'bha-evo__cta');
@@ -105,7 +95,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
     h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
   );
   how.append(text);
-  return { left, right: [how, evolutionNote()] };
+  return { left, right: [how] };
 }
 
 /** 진화 결과 화면에 넘기는 지금 상태: 속성·성향 특성·노력치(실패형 2위 성향) */
@@ -258,7 +248,7 @@ export function evolutionView(
   } }));
   const title = h('h1', 'bha-evolve__title', `${shownTo}!`);
   resultMain.append(h('span', 'bha-evolve__eyebrow', '진화'), title, path, ...(reason ? [reason] : []), created, home);
-  resultSide.append(effects, evolutionNote());
+  resultSide.append(effects); // 개발 메모 줄(진화 트리 임시·기획 20-5)은 GDD 168장 4 에서 삭제
   resultSection.append(resultMain, resultSide);
 
   const app = mountApp(root, { cls: 'bha-evolve' }, burst, linesSection, resultSection);

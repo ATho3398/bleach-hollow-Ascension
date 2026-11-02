@@ -4,7 +4,7 @@
 // 동작마다 따로 있다/없다 — 있는 동작만 애니로 돌리고 없는 동작은 기존 연출을 그대로 쓴다(다른 동작 애니로 대신하지 않는다).
 import { ART_EXTS } from './files';
 
-export type AnimAction = 'idle' | 'move' | 'attack' | 'skill' | 'hit' | 'win' | 'lose' | 'eat' | 'sleep' | 'release';
+export type AnimAction = 'idle' | 'move' | 'attack' | 'skill' | 'hit' | 'win' | 'lose' | 'eat' | 'sleep' | 'release' | 'homeIdle' | 'dying' | 'bath';
 
 /** loop 반복 / once 한 번 재생 후 대기 동작으로 / hold 한 번 재생 후 마지막 장 유지 */
 export type AnimPlayMode = 'loop' | 'once' | 'hold';
@@ -24,7 +24,7 @@ export interface AnimActionDef {
   fallback: string;
 }
 
-/** 동작 키 10종 (GDD 26-3, 속도는 26-4b 의 프레임당 ms). 새 동작은 이 표에 한 줄 */
+/** 동작 키 13종 (GDD 26-3, 속도는 26-4b 의 프레임당 ms). 새 동작은 이 표에 한 줄. homeIdle·dying·bath = 종이인형 동작 연결용(GDD 171장, 프레임 그림은 아직 없음) */
 export const ANIM_ACTIONS: readonly AnimActionDef[] = [
   { key: 'idle', label: '대기', mode: 'loop', ms: 300, endMs: 450, where: '방, 전투 대기, 걷기 멈춤', fallback: '정지 그림' },
   { key: 'move', label: '이동', mode: 'loop', ms: 130, where: '모험 걷기', fallback: '걷기 흔들림' },
@@ -36,6 +36,9 @@ export const ANIM_ACTIONS: readonly AnimActionDef[] = [
   { key: 'eat', label: '먹기', mode: 'once', ms: 180, where: '먹이 주기', fallback: '지금 연출' },
   { key: 'sleep', label: '잠', mode: 'loop', ms: 450, where: '재우기', fallback: '지금 연출' },
   { key: 'release', label: '해방 변신', mode: 'once', ms: 150, where: '해방(캐릭터 누르기)', fallback: '공통 컷인' },
+  { key: 'homeIdle', label: '홈 대기', mode: 'loop', ms: 300, endMs: 450, where: '방(둥지) 평소', fallback: '대기' },
+  { key: 'dying', label: '빈사 자세', mode: 'loop', ms: 300, where: '빈사·쇠약·피곤일 때 방·월드맵·장터·온천', fallback: '눕히고 흐리게(빈사)·대기' },
+  { key: 'bath', label: '온천', mode: 'loop', ms: 300, where: '온천 탕에 앉아 있는 동안', fallback: '대기 + 물 잠김 연출' },
 ];
 
 export const ANIM_ACTION_KEYS: readonly AnimAction[] = ANIM_ACTIONS.map((a) => a.key);

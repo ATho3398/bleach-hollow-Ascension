@@ -97,7 +97,7 @@ REST_ROT = 60        # 쉬는 자세: 칼날이 앞아래로(사용자 2026-10-2
 
 def dump(rig, path=None):
     s = json.dumps(rig, ensure_ascii=False, indent=2)
-    s = re.sub(r'\[\s+(-?\d+),\s+(-?\d+)\s+\]', r'[\1, \2]', s)
+    s = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2]', s)  # 보정 이동(shift)은 소수
     s = re.sub(r'\[\s+(-?\d+),\s+(-?\d+),\s+(-?\d+),\s+(-?\d+)\s+\]', r'[\1, \2, \3, \4]', s)
     s = re.sub(r'\{\s+"id": "([^"]+)",\s+"bone": "([^"]+)"\s+\}', r'{ "id": "\1", "bone": "\2" }', s)
     s = re.sub(r'\{\s+"id": "([^"]+)",\s+"parent": ([^,]+),\s+"pivot": (\[[^\]]+\])(,\s+"restRot": (-?\d+))?\s+\}',

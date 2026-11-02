@@ -1,0 +1,15 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:800,height:900}});
+p.on('pageerror',e=>console.log('ERR',e.message));
+await p.goto('file://'+process.argv[2]);await p.waitForTimeout(500);
+await p.click('[data-look="female-base"]');
+await p.evaluate(()=>{[...document.querySelectorAll('#parts button')].find(x=>x.textContent.includes('오른 위팔')||x.textContent.includes('오른팔'))?.click()});
+await p.click('[data-m="idle"]');await p.waitForTimeout(300);
+await p.fill('#brot','5');await p.dispatchEvent('#brot','input');
+const t1=await p.textContent('#mtv');
+await p.click('[data-scope="motion"]');
+await p.fill('#brot','10');await p.dispatchEvent('#brot','input');
+await p.waitForTimeout(400);
+const st=await p.evaluate(()=>{for(const k of Object.keys(localStorage)) if(k.startsWith('bha-rig-editor')) return localStorage.getItem(k)});
+const s=JSON.parse(st);console.log(t1, await p.textContent('#brotscope'), JSON.stringify(s.motionEdits), JSON.stringify(s.bodyJoints.female.rot));
+await p.screenshot({path:'ed.png'});await b.close();})();

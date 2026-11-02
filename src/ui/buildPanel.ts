@@ -14,7 +14,6 @@ import { iconArt, itemCard, itemDialog } from './bha/itemUi';
 import { battleLabels, skillBlockLabel } from './labels';
 import { devText, plainText } from './displayName';
 
-export const PROVISIONAL_NOTE = '속성·특성 풀과 리스크 수치는 임시 데이터다(기획 11-3, 11-4 미정)';
 
 /** 장착 칸 하나: 본체 슬롯 (해방 블록 칸 'lib' 은 C.167 에 폐지 — GDD 98장 B: 해방 중에는 장착 블록이 나온다) */
 export interface SlotCell {
@@ -218,7 +217,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
     for (const id of build.slots) if (id) worn.append(h('p', 'bha-small', `${traitBlockName(faction, id, tierIndex)} — ${traitBrief(faction, id)}`));
     right.append(worn);
   }
-  if (devText()) right.append(h('p', 'bha-faint', PROVISIONAL_NOTE));
+  // 개발 메모('임시 데이터다(기획 11-3, 11-4 미정)') 줄은 GDD 168장 4 에서 테스트 모드에서도 삭제
 
   // 끌어다 놓기: 카드·칸 → 칸 (놓기/옮기기), 칸 → 카드 쪽(밖) (빼기)
   type Src = { id: string; from: SlotCell | null };

@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import tempfile
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -29,9 +30,9 @@ PAD = 3   # 칸 사방 여유(관절 겹침·삐져나온 곳)
 GAP = 2   # 칸 사이
 TOP = 1   # 아래 테두리 자리
 ROWGAP = 4  # 줄 사이(1배 칸 수)
-PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'foot_L', 'foot_R', 'weapon', 'scabbard', 'cape']
-NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼팔(칼)', 'thumb_L': '엄지',
-         'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집', 'shin_L': '왼 정강이', 'shin_R': '오른 정강이', 'cape': '망토'}
+PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'forearm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'foot_L', 'foot_R', 'weapon', 'scabbard', 'cape']
+NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼 위팔(칼)', 'thumb_L': '엄지',
+         'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'forearm_L': '왼 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집', 'shin_L': '왼 정강이', 'shin_R': '오른 정강이', 'cape': '망토'}
 GHOST_A = 70
 MARKS: dict = {}  # 사용자가 칸 안에 그은 선(<out>/marks.json, 캔버스 좌표) — main 에서 읽는다
 LINE = (0, 190, 255, 140)
@@ -54,6 +55,17 @@ def main():
     bj = bj if isinstance(bj, dict) else {}
     bones = {b['id']: dict(b, pivot=(bj.get('pivots') or {}).get(b['id'], b['pivot'])) for b in RIG['bones']}
     hf = RIG['hairFrame']
+    body = dict(body)
+    # 왼팔 아래팔(GDD 115-A 50): 아직 아래팔 그림이 없는 몸은 지금 왼팔을 팔꿈치 줄에서 나눠 위팔·아래팔 칸에 따로 넣어 준다
+    if 'forearm_L' not in body and 'arm_L' in body:
+        arm = body['arm_L']
+        im = np.array(Image.open(os.path.join(ART, arm['art'] + '.png')).convert('RGBA'))
+        ey = bones['forearm_L']['pivot'][1] - arm['at'][1]
+        if 0 < ey < im.shape[0]:
+            sp = tempfile.mkdtemp(prefix='guide-split-')
+            for name, rows, dy in (('arm_L', im[:ey], 0), ('forearm_L', im[ey:], ey)):
+                Image.fromarray(rows).save(os.path.join(sp, name + '.png'))
+                body[name] = {'path': os.path.join(sp, name + '.png'), 'at': [arm['at'][0], arm['at'][1] + dy], 'size': [arm['size'][0], rows.shape[0]]}
     boxes = []
     for p in PARTS:
         art = body.get(p) or (look[p] if isinstance(look.get(p), dict) else None)  # 칼·칼집은 외형 층
@@ -86,7 +98,7 @@ def main():
         cx, cy = b['canvas']
         w, h = b['size']
         for g, alpha in [(g, GHOST_A) for g in b['ghost']] + [(g, 255) for g in b['solid']]:
-            pa = np.array(Image.open(os.path.join(ART, g['art'] + '.png')).convert('RGBA'))
+            pa = np.array(Image.open(g.get('path') or os.path.join(ART, g['art'] + '.png')).convert('RGBA'))
             ox, oy = g['at'][0] - cx + x, g['at'][1] - cy + TOP_
             for yy, xx in zip(*np.nonzero(pa[..., 3] > 0)):
                 X, Y = ox + xx, oy + yy
@@ -131,7 +143,7 @@ def main():
         fs = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc', 15)
     except OSError:
         f = fs = ImageFont.load_default()
-    pname = {'head': '목', 'torso': '허리', 'arm_L': '어깨', 'arm_R': '어깨', 'forearm_R': '팔꿈치', 'leg_L': '엉덩이', 'leg_R': '엉덩이',
+    pname = {'head': '목', 'torso': '허리', 'arm_L': '어깨', 'arm_R': '어깨', 'forearm_R': '팔꿈치', 'forearm_L': '팔꿈치', 'hair_back': '뒷머리 관절', 'leg_L': '엉덩이', 'leg_R': '엉덩이',
              'foot_L': '발목', 'foot_R': '발목', 'shin_L': '무릎', 'shin_R': '무릎', 'cape': '목', 'weapon': '칼 손잡이', 'scabbard': '칼집', 'thumb_L': '엄지'}
     for b in boxes:
         sx, sy = b['sheet']

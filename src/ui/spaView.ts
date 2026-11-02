@@ -13,7 +13,8 @@ import { beginAction, beginSceneMove } from './bha/actionFx';
 import { hpNumbers } from './bha/battle';
 import { button, el, icon, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
-import { characterButton, roomCharArt, spaceBackButton } from './bha/room';
+import { applyCarePose, characterButton, roomCharArt, spaceBackButton } from './bha/room';
+import { animOf } from './bha/animPlayer';
 import { roomOf, worldMapOf } from '../engine/faction';
 
 const BASE = import.meta.env.BASE_URL;
@@ -90,13 +91,16 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     scene.append(img);
     scene.classList.add('has-art');
   }
-  // 캐릭터 + 머리 위 상태 창: 오른쪽에서 걸어 들어와(그림은 왼쪽을 본다) 탕 안에 들어가 앉는다 — 온천 모션 그림은 사용자 대기, 지금은 CSS 임시 연출
+  // 캐릭터 + 머리 위 상태 창: 오른쪽에서 걸어 들어와(그림은 왼쪽을 본다) 탕 안에 들어가 앉는다. 종이인형이면 걸을 때 걷기·앉으면 온천 자세(GDD 171장), 아니면 CSS 임시 연출
   const art = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const char = characterButton(art, '캐릭터');
   char.disabled = true; // 보기만 (기기 선택 대상 아님)
   char.setAttribute('aria-hidden', 'true'); // 걸어 들어오는 장식 — 조작 요소가 아니다 (상태는 머리 위 상태 창이 읽힌다)
   char.classList.add('bha-spa__char');
-  if (n.collapsed) char.classList.add('is-collapsed');
+  applyCarePose(char, { collapsed: n.collapsed, dead: false, weakened: n.weakened, tired: n.tired }); // 돌봄 상태 자세 (GDD 171장)
+  const charAnim = animOf(char);
+  /** 걷는 동안 = 걷기, 다 걸으면 = 자리면 온천 자세, 아니면 돌봄 상태 자세 그대로 (종이인형만 — 동작이 없으면 아무 것도 안 함) */
+  const restLoop = charAnim?.has('dying') && (n.collapsed || n.weakened || n.tired) ? 'dying' : 'idle';
   const status = el('div', 'bha-room__status bha-spa__status');
   status.setAttribute('role', 'status');
   const actor = el('div', 'bha-spa__actor is-entering');
@@ -148,6 +152,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     }
     if (segs.length === 0) return done();
     actor.classList.add('is-walking');
+    if (charAnim?.has('move')) charAnim.setLoop('move');
     const t0 = performance.now();
     const frame = (now: number) => {
       if (!actor.isConnected) return cut ? cut() : endMove();
@@ -168,6 +173,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
       }
       goTo(to);
       actor.classList.remove('is-walking');
+      if (charAnim) charAnim.setLoop(to === SPA_PATH.length - 1 && charAnim.has('bath') ? 'bath' : restLoop);
       done();
     };
     pathRaf = requestAnimationFrame(frame);

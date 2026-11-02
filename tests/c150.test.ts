@@ -264,7 +264,7 @@ describe('94장 B 후속: 같은 속성 3개 보너스 삭제 · 흡수 화면 �
     expect(src).not.toContain("MODE_LABELS[m].sub.replace('특성', '강화')");
     expect(src).not.toContain('elementBonusCount');
     expect(src).not.toContain('completedElements');
-    expect(src).toMatch(/devText\(\) \? \[\.\.\.parts\.main, el\('p', 'bha-faint', PROVISIONAL_NOTE\)\] : parts\.main/); // C.171: 개발용 문구 스위치 하나(devText = 테스트 모드)
+    expect(src).not.toContain('PROVISIONAL_NOTE'); // C.247 (GDD 168장 4): 개발 메모 줄 삭제
     expect('elementBonusCount' in BALANCE.provisional.absorb).toBe(false);
     expect('elementSkillBonus' in BALANCE.provisional.absorb).toBe(false);
   });

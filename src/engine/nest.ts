@@ -465,7 +465,7 @@ export function feedFood(nest: NestState, food: FoodId, nowMs: number): 'ate' | 
   return 'ate';
 }
 
-/** 둥지 행동: 먹이(허기↓, 종류별 컨디션 변화) / 재우기(컨디션↑) / 쓰다듬기(컨디션 소량↑). food 는 먹이일 때만 쓰고 기본은 basic(예전 단일 먹이).
+/** 둥지 행동: 먹이(허기↓, 종류별 컨디션 변화) / 재우기(컨디션↑) / 쓰다듬기(컨디션 소량↑) — 재우기·쓰다듬기는 배부름 −careFullnessCost(GDD 170장 1). food 는 먹이일 때만 쓰고 기본은 basic(예전 단일 먹이).
  *  C.175 (GDD 102-2·102-6): 수치만 올리고 쇠약·피곤은 안 푼다(옛 '재우기로 쇠약 해소' 삭제). 교감 +bond.gain(하루 상한) */
 export function doNestAction(nest: NestState, action: NestAction, food: FoodId = 'basic', nowMs: number = Date.now()): void {
   if (action === 'feed') {
@@ -473,9 +473,12 @@ export function doNestAction(nest: NestState, action: NestAction, food: FoodId =
     nest.hunger = clamp(nest.hunger - f.hunger, 0, 100);
     nest.condition = clamp(nest.condition + f.condition, 0, MAX);
     healHomeHp(nest, foodHpHeal(food)); // 먹이 체력 소폭 회복 (GDD 123장 4)
-  } else if (action === 'sleep') {
-    nest.condition = clamp(nest.condition + NX.sleepCondition, 0, MAX);
-  } else nest.condition = clamp(nest.condition + NX.petCondition, 0, MAX);
+  } else {
+    nest.condition = clamp(nest.condition + (action === 'sleep' ? NX.sleepCondition : NX.petCondition), 0, MAX);
+    // 돌보기도 배가 꺼진다 (GDD 170장 1): 배부름 −careFullnessCost(0 아래 없음), 쇠약 문턱 아래로 내려가면 지금 규칙 그대로 쇠약
+    nest.hunger = clamp(nest.hunger + NX.careFullnessCost, 0, 100);
+    refreshCareStatus(nest);
+  }
   nestRiskAction(nest, action);
   gainBond(nest, BX.gain[action], nowMs);
 }

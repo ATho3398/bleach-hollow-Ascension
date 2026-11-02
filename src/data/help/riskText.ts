@@ -10,6 +10,11 @@ const RX = BALANCE.provisional.risk;
 const LIB = BALANCE.provisional.liberation;
 const LAP = BALANCE.provisional.expedition.lateLapStart;
 const CP = BALANCE.provisional.nest.care;
+const CX = BALANCE.provisional.combat;
+/** 대표 값 (소수 한 자리): 적 체력[기본 공격 횟수] → 포식 상승, 바퀴 → 칸당 상승 */
+const round1 = (v: number) => Math.round(v * 10) / 10;
+const absorbAt = (hpInAttacks: number) => round1(hpInAttacks * RX.absorbPerHpAttack);
+const lapAt = (lap: number) => round1((lap - LAP + 1) * RX.lateLapPerTile);
 
 type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'>;
 
@@ -69,8 +74,10 @@ export function riskText(f: Names): RiskText {
     ],
     riskUp: [
       numLine('공허 블록 1개 사용', signed(RX.perVoidBlock)),
-      numLine(`강한 적 ${f.absorbActionName}`, `+(적 체력[기본 공격 횟수] × ${RX.absorbPerHpAttack})`, `특성·속성만 ×${m.trait.risk}`, `능력치만 ×${m.stat.risk}`),
-      numLine(`${LAP}바퀴째부터 칸을 지날 때`, `+(바퀴 ${MINUS} ${LAP - 1}) × ${RX.lateLapPerTile}`),
+      // 계산식 대신 쉬운 말 + 대표 값 (GDD 168장 3): 뜻은 absorbRisk·lateLapRisk 그대로
+      numLine(`적 ${f.absorbActionName}`, '강한 적일수록 많이 오른다', `일반 적 약 ${signed(absorbAt(CX.enemyHpInAttacks.normal))}`, `강적 약 ${signed(absorbAt(CX.enemyHpInAttacks.elite))}`),
+      numLine(`일부만 ${f.absorbActionName}`, `특성·속성만 그 ${pct(m.trait.risk)}`, `능력치만 그 ${pct(m.stat.risk)}`),
+      numLine(`${LAP}바퀴째부터 칸을 지날 때`, '바퀴가 늘수록 더 오른다', `${LAP}바퀴 ${signed(lapAt(LAP))}`, `${LAP + 1}바퀴 ${signed(lapAt(LAP + 1))}`),
       numLine('해방이 끝날 때', signed(LIB.riskOnEnd)),
       numLine('제단 타일', signed(BALANCE.provisional.tileVariants.events.altar.risk)),
       numLine('수련 결투', signed(BALANCE.provisional.training.games.duel?.risk ?? 0)),

@@ -1,7 +1,7 @@
 // 도움말·튜토리얼 텍스트 데이터 (GDD 14-2, C.19). 본문은 템플릿이고 {자리표시자}는 종족 설정(FactionConfig)·밸런스 값으로 치환한다.
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
 import { riskText, riskZones, stabilityZones, zoneLines } from './riskText';
-import { normalSlotNote } from './textFormat';
+import { MINUS, normalSlotNote } from './textFormat';
 import { BALANCE } from '../../config/balance';
 import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
 import { fixParticles } from '../../engine/josa';
@@ -127,6 +127,8 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   // 해방 (GDD 83장, 옛 저장형 필살기 자리): {liberation.baseName}·{liberation.name} 은 종족 설정에서 그대로, 수치는 BALANCE
   vars.liberationSeconds = String(LIB.seconds);
   vars.liberationRisk = String(LIB.riskOnEnd);
+  // 놓아주기 = 리스크 게이지 −releaseRelief (GDD 168장 2): 흡수 설명 칸·확인 창·도움말이 같은 값
+  vars.releaseRelief = `${MINUS}${BALANCE.provisional.risk.releaseRelief}`;
   // 진화 단계 이름 (GDD 126장 4단계 설명용): {tier3} = 아쥬커스/평대원, {tier4} = 바스트로데/수석 대원, {ascensionName} = 아란칼화/참백도 구상화
   // 능력치 자세한 설명 (C.137, GDD 85장 9): 이름은 종족 설정 표기, 수치는 BALANCE 에서 읽는다 (숫자 하드코딩 없음)
   for (const id of STAT_IDS) vars[`stat.${id}`] = statName(id, f.id);

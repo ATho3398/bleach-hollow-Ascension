@@ -13,9 +13,9 @@ describe('162장 1 안내 창 자리', () => {
     expect(by['spa-rest']!.targets).toEqual(['@.bha-spa__status']);
     const o = read('src/ui/tutorialOverlay.ts');
     expect(o).toContain("const SUBJECTS = ['@.bha-char', '@.bha-spa__actor'];");
-    expect(o).toContain('...OPEN_WINDOWS, ...SUBJECTS,');
+    expect(o).toContain('...rs(SUBJECTS)'); // C.248(169장 2): 주인공은 '되도록 피함'(soft)
     // 자리는 강조 테두리까지 넓힌 대상으로 잰다 · 모든 장면에서 카드가 대상을 덮게 되면 다시 놓는다
-    expect(o).toContain('placeCardBox(keep,');
+    expect(o).toContain('placeCardFit(keep,');
     expect(o).toContain('rectsOverlap(hostRect(card), padRect(r, TUTORIAL_HOLE_PAD))');
   });
   it('대상 없는 카드: 가운데·위·아래가 막히면 모서리로', () => {

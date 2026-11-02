@@ -6,6 +6,7 @@
   "head": [15, 17],
   "hair_back": [26, 11],
   "arm_L": [12, 31],
+  "forearm_L": [11, 44],
   "arm_R": [24, 33],
   "forearm_R": [32, 41],
   "leg_L": [11, 52],
@@ -26,6 +27,7 @@
   "cape",
   "arm_L",
   "outer_arm_L",
+  "forearm_L",
   "weapon",
   "thumb_L",
   "hair_back",
@@ -38,81 +40,137 @@
   "torso",
   "outer_torso",
   "scabbard",
-  "forearm_R",
   "head",
   "hair",
   "arm_R",
-  "outer_arm_R"
+  "outer_arm_R",
+  "forearm_R"
  ],
  "bodyJoints": {
   "arrancar_f": {
    "pivots": {
-    "arm_R": [22, 32],
+    "arm_R": [24, 34],
     "forearm_R": [29, 41],
     "foot_R": [22, 75],
-    "head": [15, 16]
+    "forearm_L": [7, 44]
    },
    "rot": {
     "forearm_R": -15,
     "torso": 2,
     "head": -5,
-    "arm_R": 14
+    "arm_R": 4
+   },
+   "shift": {
+    "arm_R": [
+     -0.54,
+     0.43
+    ]
    }
   },
   "female": {
    "pivots": {
-    "arm_R": [22, 32],
+    "arm_R": [24, 34],
     "forearm_R": [29, 41],
-    "foot_R": [22, 75]
+    "foot_R": [22, 75],
+    "forearm_L": [7, 44]
    },
    "rot": {
     "forearm_R": -15,
     "torso": 2,
     "head": -5,
-    "arm_R": 14
+    "arm_R": 4
+   },
+   "shift": {
+    "arm_R": [
+     -0.54,
+     0.43
+    ]
    }
   },
   "student": {
    "pivots": {
-    "arm_R": [24, 34]
+    "arm_R": [25, 35],
+    "forearm_L": [9, 44],
+    "forearm_R": [32, 42]
    },
    "rot": {
-    "forearm_R": -10,
-    "arm_R": 15
+    "forearm_R": -35,
+    "arm_R": 19
    }
   },
   "bare": {
    "pivots": {
-    "arm_R": [23, 33]
+    "arm_R": [25, 35],
+    "forearm_L": [9, 44],
+    "forearm_R": [32, 42]
+   },
+   "rot": {
+    "arm_R": 19,
+    "forearm_R": -35
    }
   },
   "arrancar": {
    "pivots": {
-    "arm_R": [24, 34]
+    "arm_R": [25, 35],
+    "forearm_L": [9, 44],
+    "forearm_R": [32, 42]
+   },
+   "rot": {
+    "arm_R": 19,
+    "forearm_R": -35
    }
   },
   "student_f": {
    "pivots": {
     "hair_back": [24, 9],
-    "head": [13, 15]
+    "forearm_L": [7, 44],
+    "arm_R": [24, 34],
+    "foot_R": [22, 75],
+    "forearm_R": [29, 41]
    },
    "rot": {
-    "arm_R": 6,
-    "forearm_R": -6,
-    "leg_R": 2,
-    "foot_R": -2
+    "arm_R": 4,
+    "forearm_R": -15,
+    "head": -5,
+    "torso": 2
+   },
+   "shift": {
+    "arm_R": [
+     -0.54,
+     0.43
+    ]
    }
   },
   "shinigami_f": {
    "pivots": {
     "hair_back": [24, 9],
-    "head": [13, 15]
+    "forearm_L": [7, 44],
+    "arm_R": [24, 34],
+    "foot_R": [22, 75],
+    "forearm_R": [29, 41]
    },
    "rot": {
-    "arm_R": 6,
-    "forearm_R": -6,
-    "leg_R": 2,
-    "foot_R": -2
+    "arm_R": 4,
+    "forearm_R": -15,
+    "head": -5,
+    "torso": 2
+   },
+   "shift": {
+    "arm_R": [
+     -0.54,
+     0.43
+    ]
+   }
+  },
+  "shinigami": {
+   "pivots": {
+    "forearm_L": [9, 44],
+    "arm_R": [25, 35],
+    "forearm_R": [32, 42]
+   },
+   "rot": {
+    "arm_R": 19,
+    "forearm_R": -35
    }
   }
  },
@@ -129,7 +187,8 @@
     "foot_L": { "art": "arrancar/foot_L", "at": [5, 72] },
     "foot_R": { "art": "arrancar/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "arrancar/thumb_L", "at": [7, 53] },
-    "forearm_R": { "art": "arrancar/forearm_R", "at": [19, 37] }
+    "forearm_R": { "art": "arrancar/forearm_R", "at": [19, 37] },
+    "forearm_L": { "art": "arrancar/forearm_L", "at": [1, 42] }
    },
    "layers": {
     "hair": { "art": "arrancar/hair", "at": [0, -1] },
@@ -149,13 +208,14 @@
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
     "foot_R": { "art": "bare/foot_R", "at": [19, 72] },
     "thumb_L": { "art": "bare/thumb_L", "at": [6, 51] },
-    "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38] }
+    "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38] },
+    "forearm_L": { "art": "arrancar_f/forearm_L", "at": [4, 42] }
    },
    "layers": {
     "weapon": { "art": "weapon/sword", "at": [0, 50] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] },
     "hair": { "art": "arrancar_f/hair", "at": [1, 1] },
-    "hair_back": { "art": "arrancar_f/hair_back", "at": [12, -1] }
+    "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3] }
    }
   },
   "bare-base": {
@@ -163,14 +223,15 @@
    "parts": {
     "torso": { "art": "bare/torso", "at": [10, 26] },
     "arm_L": { "art": "bare/arm_L", "at": [5, 30] },
-    "arm_R": { "art": "bare/arm_R", "at": [21, 29] },
+    "arm_R": { "art": "bare/arm_R", "at": [21, 30] },
     "leg_L": { "art": "bare/leg_L", "at": [6, 51] },
     "leg_R": { "art": "bare/leg_R", "at": [14, 49] },
     "head": { "art": "head_bald", "at": [7, 10] },
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
     "foot_R": { "art": "bare/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "bare/thumb_L", "at": [7, 52] },
-    "forearm_R": { "art": "bare/forearm_R", "at": [20, 39] }
+    "forearm_R": { "art": "bare/forearm_R", "at": [19, 40] },
+    "forearm_L": { "art": "bare/forearm_L", "at": [5, 42] }
    },
    "layers": {
     "weapon": { "art": "weapon/sword", "at": [1, 50] },
@@ -189,7 +250,8 @@
     "foot_L": { "art": "bare/foot_L", "at": [5, 72] },
     "foot_R": { "art": "bare/foot_R", "at": [19, 72] },
     "thumb_L": { "art": "bare/thumb_L", "at": [6, 51] },
-    "forearm_R": { "art": "female/forearm_R", "at": [20, 38] }
+    "forearm_R": { "art": "female/forearm_R", "at": [20, 38] },
+    "forearm_L": { "art": "female/forearm_L", "at": [4, 42] }
    },
    "layers": {
     "weapon": { "art": "weapon/sword", "at": [0, 50] },
@@ -208,7 +270,8 @@
     "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
     "foot_R": { "art": "shinigami/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "shinigami/forearm_R", "at": [20, 38] }
+    "forearm_R": { "art": "shinigami/forearm_R", "at": [20, 38] },
+    "forearm_L": { "art": "shinigami/forearm_L", "at": [2, 42] }
    },
    "layers": {
     "hair": { "art": "shinigami/hair", "at": [-1, 0] },
@@ -228,7 +291,8 @@
     "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
     "foot_R": { "art": "shinigami/foot_R", "at": [20, 72] },
     "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "shinigami_f/forearm_R", "at": [20, 37] }
+    "forearm_R": { "art": "shinigami_f/forearm_R", "at": [20, 37] },
+    "forearm_L": { "art": "shinigami_f/forearm_L", "at": [2, 42] }
    },
    "layers": {
     "hair": { "art": "student/hair", "at": [-1, 0] },
@@ -249,7 +313,8 @@
     "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
     "foot_R": { "art": "shinigami/foot_R", "at": [21, 72] },
     "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "student/forearm_R", "at": [21, 38] }
+    "forearm_R": { "art": "student/forearm_R", "at": [21, 38] },
+    "forearm_L": { "art": "student/forearm_L", "at": [2, 42] }
    },
    "layers": {
     "hair": { "art": "student/hair", "at": [-1, 0] },
@@ -269,7 +334,8 @@
     "foot_L": { "art": "shinigami/foot_L", "at": [5, 72] },
     "foot_R": { "art": "shinigami/foot_R", "at": [20, 72] },
     "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51] },
-    "forearm_R": { "art": "student_f/forearm_R", "at": [20, 37] }
+    "forearm_R": { "art": "student_f/forearm_R", "at": [20, 37] },
+    "forearm_L": { "art": "student_f/forearm_L", "at": [2, 42] }
    },
    "layers": {
     "hair": { "art": "student/hair", "at": [-1, 0] },
