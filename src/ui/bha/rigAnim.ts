@@ -60,6 +60,8 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
   let t = 0;
   let rate = 1;
   let paused = false;
+  /** 승리·패배(쓰러짐)를 틀면 다음 stop 까지 다른 동작을 무시한다 — 프레임 애니 재생기와 같게. 마지막 타격의 늦은 '맞음'이 쓰러짐을 덮지 않게 (GDD 170장, C.249) */
+  let locked = false;
   const curId = () => once?.id ?? (loopAction ? ids(loopAction)[0] : undefined);
   const self: RigPlayer = {
     has: (a) => ids(a).length > 0,
@@ -75,6 +77,11 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       const fam = byMotion(o.motion);
       const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
+      if (locked && a !== 'win' && a !== 'lose') {
+        const m0 = motions[list[0]!]!;
+        return { durationMs: m0.duration, hitAtMs: m0.hit ?? m0.duration / 2 };
+      }
+      locked = a === 'win' || a === 'lose';
       const hist = (recent[fam.length ? `m:${o.motion}` : a] ??= []);
       const k = pickVariant(list.length, hist, rng);
       hist.push(k);
@@ -91,6 +98,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       return skip ? { durationMs: m.duration - hitAt, hitAtMs: 0 } : { durationMs: m.duration, hitAtMs: hitAt };
     },
     stop() {
+      locked = false;
       once = null;
       t = 0;
       wake();

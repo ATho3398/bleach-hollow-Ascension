@@ -14,6 +14,13 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     p.advance(r.durationMs + 500);
     expect(p.pose().motion).toBe(MOTIONS.down);
     expect(p.playing).toBe('lose');
+    // 쓰러진 뒤 늦게 온 '맞음'·공격은 무시(프레임 애니와 같은 잠금) — stop 하면 풀린다
+    p.play('hit');
+    p.play('attack');
+    expect(p.pose().motion).toBe(MOTIONS.down);
+    p.stop();
+    expect(p.play('hit')).not.toBeNull();
+    expect(p.pose().motion).toBe(MOTIONS.hit);
   });
   it('공격은 공격1·2 중 난수로 고르고(GDD 117장 4, 자세한 규칙은 c191), 타격·끝 콜백이 온다', () => {
     let k = 0;
