@@ -493,6 +493,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       onClick: () => {
         chooseContinue(exp);
         h.onSave();
+        // 바퀴 끝 창 동안 일시정지가 걸려 있었어도 다시 걷는다 (GDD 176장 2: 서 있던 문제)
+        paused = false;
         msg = '다시 출발!';
         render();
         nextStep();
@@ -505,6 +507,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const nx = exp.lap + 1;
     const multLine = el('p', 'bha-continue-mult', `다음 바퀴 보상 ×${fmtMult(lapRewardMult(nx))} · 적 체력 ×${fmtMult(lapScale(nx).hp)} · 공격 ×${fmtMult(lapScale(nx).attack)} · 힐 ${Math.round(winHealOf(nx) * 100)}%`);
     multLine.dataset.continueMult = '';
+    // 창이 뜨면 기기 초점 = [귀환] (GDD 176장 2) — 창 뒤 모서리 버튼은 visibility 로 숨어 초점 순서에서 빠진다
+    ret.dataset.devStart = 'nest-choice';
     const grid = el('div', 'bha-grid2');
     grid.append(ret, more);
     // 버튼 아래 작은 글 두 칸: [귀환] 아래 = 지킨다, [한 바퀴 더] 아래 = 다음 바퀴 배율 (C.218)
@@ -637,6 +641,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const grid = el('div', 'bha-event__foot');
     grid.append(choices);
     if (leave) grid.append(leave);
+    // 창이 뜨면 기기 초점 = 첫 고를 수 있는 선택 (GDD 176장 2와 같은 규칙)
+    [...grid.querySelectorAll<HTMLButtonElement>('button')].find((b) => !b.disabled)?.setAttribute('data-dev-start', 'event');
     sheet.append(info, grid);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }

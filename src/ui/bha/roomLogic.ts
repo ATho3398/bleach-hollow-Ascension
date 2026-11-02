@@ -71,7 +71,7 @@ export function statusChips(
     ...(s.stability !== undefined ? [{ kind: 'stab' as const, label: names.stabilityName ?? '안정', icon: 'i-stab', value: Math.round(s.stability), danger: false }] : []),
     { kind: 'risk', label: names.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), danger: s.risk >= warn.risk },
   ];
-  if (s.dead) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.dead, icon: 'i-broken', value: null, danger: true, hint: '방 위 [부활]로 다시 시작한다' });
+  if (s.dead) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.dead, icon: 'i-broken', value: null, danger: true, hint: '방의 [부활]로 다시 시작한다' });
   else if (s.collapsed) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.collapsed, icon: 'i-broken', value: null, danger: true, hint: CARE_STATUS_HINTS.collapsed });
   if (s.weakened) chips.push({ kind: 'weak', label: CARE_STATUS_NAMES.weak, icon: 'i-hunger', value: null, danger: true, hint: CARE_STATUS_HINTS.weak });
   if (s.tired) chips.push({ kind: 'tired', label: CARE_STATUS_NAMES.tired, icon: 'i-cond', value: null, danger: true, hint: CARE_STATUS_HINTS.tired });

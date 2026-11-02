@@ -74,6 +74,7 @@ function deviceFrame(): { frame: HTMLElement; dev: Device } {
   const dev: Device = {
     view, lcd, frame: devEl,
     setItems: noop, move: noop, confirm: noop, cancel: noop, refresh: noop, setStage: noop, restage: noop, setSkin: noop, destroy: noop,
+    setExtraItems: noop, focusMark: () => null, restoreFocus: noop, // C.259 기기 초점 기억·LCD 밖 항목 (도구에서는 안 씀)
   };
   return { frame, dev };
 }

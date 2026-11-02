@@ -35,7 +35,8 @@ describe('150장 2 들어가는 곳', () => {
     const app = readFileSync('src/ui/app.ts', 'utf8');
     expect(app).toContain('onShop: () => shopPicker(faction, (kind) =>');
     expect(app).toContain('onShop: (kind) => open(\'shop\', () => shopView(dev, faction, s, { persist, kind,');
-    expect(readFileSync('src/ui/roomView.ts', 'utf8')).toContain('marketOf(faction).shopsLabel');
+    // C.259 (GDD 177장): 빈사 띠의 [상점] 바로가기는 띠와 함께 삭제 — 방에 상점 버튼 없음(시장은 월드맵)
+    expect(readFileSync('src/ui/roomView.ts', 'utf8')).not.toContain('marketOf(faction).shopsLabel');
   });
   it('튜토리얼 구급상자 안내 = "구급상자를 사용해 보자." (C.235 GDD 157장 4 — 소모품 상점 줄 삭제)', () => {
     const t = readFileSync('src/data/help/tutorial.json', 'utf8');

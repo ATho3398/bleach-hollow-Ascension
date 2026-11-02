@@ -52,7 +52,7 @@ import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { blockInput, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
@@ -144,7 +144,7 @@ export function startApp(host: HTMLElement): void {
 
   // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 뒤로 = 열린 창·레이어 닫기(device) → 화면 스택 한 단계 뒤로 → 더 갈 곳이 없는 홈(방)이면 처음 화면 확인(GDD 124장 1, C.198).
   // 잠긴 화면(전투·원정)이나 다른 화면에서는 처음 화면으로 가지 않는다 (104장 7 버그 — 홈 표시(home)가 있는 화면 하나뿐일 때만)
-  const nav = new ScreenStack();
+  const nav = new ScreenStack({ save: () => dev.focusMark(), restore: (m) => dev.restoreFocus(m) }); // 뒤로 돌아오면 들어갔던 칸으로 초점 (GDD 176장 8)
   const dev = createDevice(host, {
     onCancel: () => {
       const r = nav.cancel();
@@ -487,7 +487,15 @@ export function startApp(host: HTMLElement): void {
       },
       onDone: () => {
         birthOpen = false;
-        window.setTimeout(() => { if (nav.top?.id === 'room') runHomeIntro(faction); }, 300); // 탄생 연출 뒤 홈 안내 (GDD 131장)
+        // 연출 끝 → 홈 안내가 뜰 때까지 입력을 막는다 (GDD 176장 5: 틈에 ✓ 가 월드맵을 열던 문제). 안내 레이어는 runHomeIntro 안에서 바로 등록된다
+        const release = blockInput();
+        window.setTimeout(() => {
+          try {
+            if (nav.top?.id === 'room') runHomeIntro(faction); // 탄생 연출 뒤 홈 안내 (GDD 131장)
+          } finally {
+            release();
+          }
+        }, 300);
         if (!save) return;
         markGuideDone(save.help, 'birth');
         persist();
@@ -1002,9 +1010,8 @@ export function startApp(host: HTMLElement): void {
       const line = absenceText(away, faction);
       // 알림 띠는 한 줄(머리말 + 제목)이라 비운 시간·줄어든 양을 제목에 (C.170 알림 띠)
       const head = away.died ? '복귀 · 사망' : away.collapsed ? '복귀 · 빈사' : '복귀';
-      // 빈사·사망이면 방 위 줄에 큰 안내 상자가 있어 위 알림 띠가 그 제목('남은 시간')을 덮었다 → 가운데에 띄운다 (GDD 159장 19)
-      const care = s.nest.dead || s.nest.collapsed;
-      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '', center: care }, 0, 5200), 300);
+      // 방 위 빈사·사망 안내 상자는 없어졌다(GDD 177장) — 알림 띠는 평소 자리 (159장 19 의 가운데 띄우기는 필요 없음)
+      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '' }, 0, 5200), 300);
     }
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
     const notes: { eyebrow: string; title: string; meta: string }[] = [];
@@ -1095,7 +1102,7 @@ export function startApp(host: HTMLElement): void {
         f?.();
       },
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
-      onTamago: () => tama.toggle(true),
+      onTamago: () => tama.toggle(), // 다시 누르면 끈다 (GDD 176장 10)
       // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)
       onBackup: testOn ? null : () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTest: testOn ? () => open('test', () => renderTest(faction, s)) : null,

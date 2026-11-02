@@ -25,8 +25,8 @@ export interface DockOpts {
   more: DockMenuItem[];
   /** 대기 보상 시계 버튼 (GDD 98장 A3): ⋯ 옆, 글자 없음, 쌓인 시간은 작은 배지. 누르면 대기 보상 창 */
   idle?: { badge: string | null; onOpen: () => void };
-  /** 펼침 상태가 바뀌어 선택 가능 항목이 달라졌을 때 */
-  onItemsChange: () => void;
+  /** 펼침 상태가 바뀌어 선택 가능 항목이 달라졌을 때. focus = 기기 초점을 둘 버튼(누른 돌보기·펼친 줄을 연 버튼, GDD 176장 4). null = 기본(펼친 줄 첫 칸) */
+  onItemsChange: (focus: HTMLElement | null) => void;
 }
 
 export interface Dock {
@@ -71,8 +71,8 @@ export function createDock(o: DockOpts): Dock {
     b.append(icon(CARE_META[a].icon), el('span', '', faction.nestActionsShort?.[a] ?? faction.nestActions[a]));
     b.title = faction.nestActions[a];
     b.onclick = () => {
-      if (a === 'feed') return setPanel(togglePanel(panel, 'food'));
-      setPanel(CLOSED);
+      if (a === 'feed') return setPanel(togglePanel(panel, 'food'), b);
+      setPanel(CLOSED, b); // 누른 돌보기 버튼에 초점 그대로 (GDD 176장 4)
       o.onCare(a);
     };
     careBtns.set(a, b);
@@ -92,14 +92,14 @@ export function createDock(o: DockOpts): Dock {
 
   // ── 더보기: 메뉴 전부가 들어 있는 버튼 하나 (⋯) ──
   const menu = el('div', 'bha-homedock__menu');
-  const moreBtn = button({ label: '더보기', icon: 'i-more', iconOnly: true, variant: 'ghost', onClick: () => setPanel(togglePanel(panel, 'more')) });
+  const moreBtn = button({ label: '더보기', icon: 'i-more', iconOnly: true, variant: 'ghost', onClick: () => setPanel(togglePanel(panel, 'more'), moreBtn) });
   moreBtn.dataset.dock = 'more';
   moreBtn.dataset.sc = 'dock.more';
   moreBtn.setAttribute('aria-expanded', 'false');
   const menuBtns: HTMLButtonElement[] = [moreBtn];
   menu.append(moreBtn);
   if (o.idle) {
-    const idleBtn = button({ label: '대기 보상', icon: 'i-timer', iconOnly: true, variant: 'ghost', onClick: () => { setPanel(CLOSED); o.idle!.onOpen(); } });
+    const idleBtn = button({ label: '대기 보상', icon: 'i-timer', iconOnly: true, variant: 'ghost', onClick: () => { setPanel(CLOSED, idleBtn); o.idle!.onOpen(); } });
     idleBtn.dataset.sc = 'idle-reward'; // 1분마다 refreshIdleBadge 가 이 버튼의 배지를 고친다
     idleBtn.classList.add('bha-homedock__idle');
     if (o.idle.badge) {
@@ -137,7 +137,7 @@ export function createDock(o: DockOpts): Dock {
         b.append(name, el('small', '', eff.join(' · ')));
         b.onclick = () => {
           if (o.foodCount(id) <= 0) return;
-          setPanel(CLOSED);
+          setPanel(CLOSED, careBtns.get('feed')!); // 먹인 뒤 초점 = [먹이] 버튼 (GDD 176장 4)
           o.onCare('feed', id);
         };
         trayBtns.push(b);
@@ -153,7 +153,7 @@ export function createDock(o: DockOpts): Dock {
         b.type = 'button';
         b.setAttribute('aria-label', m.label);
         b.append(icon(m.icon), el('span', '', m.label));
-        b.onclick = () => { setPanel(CLOSED); m.onClick(); };
+        b.onclick = () => { setPanel(CLOSED, moreBtn); m.onClick(); };
         trayBtns.push(b);
         tray.append(b);
       }
@@ -163,7 +163,9 @@ export function createDock(o: DockOpts): Dock {
     for (const b of trayBtns) b.setAttribute('data-dev-order', '-1');
   }
 
-  function setPanel(next: DockPanel): void {
+  /** opener = 이 펼침을 바꾼 버튼. 줄이 닫히면 거기에 기기 초점을 둔다(열리면 펼친 줄 첫 칸) */
+  function setPanel(next: DockPanel, opener: HTMLElement | null = null): void {
+    const was = panel;
     panel = next;
     tray.hidden = panel === CLOSED;
     root.classList.toggle('is-open', panel !== CLOSED);
@@ -172,7 +174,9 @@ export function createDock(o: DockOpts): Dock {
     moreBtn.classList.toggle('is-active', panel === 'more');
     moreBtn.setAttribute('aria-expanded', String(panel === 'more'));
     fillTray();
-    o.onItemsChange();
+    // 줄을 닫으면(뒤로 포함) 그 줄을 열었던 버튼으로 초점 (GDD 176장 4·8)
+    const back = was === 'food' ? careBtns.get('feed')! : was === 'more' ? moreBtn : null;
+    o.onItemsChange(panel === CLOSED ? opener ?? back : null);
   }
 
   // 뒤로(◀·Esc·폰 뒤로): 펼친 먹이·더보기 칸이 있으면 그것만 닫는다 (C.176, GDD 104장 7). 독이 화면에서 사라지면 등록을 지운다

@@ -47,7 +47,8 @@ describe('4 장비 → 가방', () => {
     expect(bagGroupOf({ id: 'g1', category: 'equipment' })).toBeNull(); // C.239: 소모품 탭에 장비 없음
   });
   it('방 [가방] 버튼은 종족 설정 이름, 화면 문구에 보관함 없음', () => {
-    expect(read('src/ui/roomView.ts')).toMatch(/label: room\.props\.chest/);
+    // C.259 (GDD 177장): 빈사 띠의 [가방]·[상점] 버튼은 띠와 함께 삭제 — 방 가방 물건 이름이 종족 설정(room.props.chest)
+    expect(read('src/ui/roomView.ts')).toMatch(/name: room\.props\[p\]/);
     for (const p of ['src/shop.ts', 'src/inventory.ts', 'src/data/help/guides.json', 'src/data/help/screens.json']) {
       const code = read(p).split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
       expect(code.match(/['"`][^'"`\n]*보관함[^'"`\n]*['"`]/g)).toBeNull();

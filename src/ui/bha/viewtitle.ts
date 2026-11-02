@@ -2,7 +2,7 @@
 // 예전 머리의 보기 전환 탭 줄(도감·상점·보관함·원정 출발·수련장·테스트)을 이 제목이 대신해 머리 폭이 넓어진다. 목록 바깥을 누르면 닫힌다.
 // 대상은 1차 "어느 화면/보기" 전환만 — 2차 필터(도감 단계 탭 등)·켜기/끄기 토글·전투 조작은 아니다. 모양은 screens-lcd.css 의 .bha-viewtitle.
 import { el, icon } from './dom';
-import { getOverlayHost, registerLayer } from './overlayHost';
+import { getOverlayHost, isDeviceButtonPress, registerLayer } from './overlayHost';
 import { elementLocalRect } from './viewport';
 
 export interface ViewTitleOption {
@@ -39,6 +39,8 @@ export function viewTitle(options: readonly ViewTitleOption[], current: string, 
   // 바깥을 누르면 닫는다. 화면이 다시 그려져 제목이 사라지면 스스로 푼다
   const outside = (e: Event) => {
     if (!root.isConnected) return stop();
+    // 기기 버튼(▲▼✓◀)은 바깥 누름이 아니다 — ▼ 로 목록 안을 내려가야 한다 (GDD 176장 1). ◀ 는 레이어 취소로 닫는다
+    if (isDeviceButtonPress(e.target)) return;
     if (!root.contains(e.target as Node)) close();
   };
   let unreg = (): void => undefined;
