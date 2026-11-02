@@ -104,7 +104,7 @@ export function absorbRunLabel(label: string): string {
 }
 
 /**
- * 갈래 버튼 4개 + 설명 칸 + [흡수] 버튼 (GDD 163장 2·3 → 172장 1~3): 갈래 버튼 = 고르기만(다시 눌러도 실행 안 함, 설명 칸이 바뀐다),
+ * 갈래 버튼 4개 + 설명 칸 + [흡수] 버튼 (GDD 163장 2·3 → 172장 1~3 → 173장 1: 버튼은 왼쪽 열 맨 아래 고정 자리, 갈래가 바뀌어도 안 움직인다): 갈래 버튼 = 고르기만(다시 눌러도 실행 안 함, 설명 칸이 바뀐다),
  * 설명 칸 바로 아래 [흡수] 버튼(글자 = 고른 갈래 이름 + '하기')을 눌러야 실행. 기기 ▲▼ = 갈래 → [흡수] 버튼(DOM 순서), ✓ = 갈래면 고르기·버튼이면 실행.
  * 처음엔 첫 갈래가 골라진 상태. 흡수 화면과 첫 흡수 연습 화면이 같이 쓴다
  */
@@ -135,6 +135,11 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
   go.classList.add('bha-absorb__go');
   go.dataset.absorbGo = '';
   go.onclick = () => run(sel);
+  // 설명 칸 = 버튼 위 남은 자리를 고정 높이로 쓴다(GDD 173장 1). 넘치면 그 안에서 스크롤 + 바닥 '▼ 더 있음'(ⓘ 창과 같은 방식, 168장 3)
+  const more = el('div', 'bha-pop__more', '▼ 더 있음');
+  more.setAttribute('aria-hidden', 'true');
+  const syncMore = (): void => { more.hidden = desc.scrollTop + desc.clientHeight >= desc.scrollHeight - 2; };
+  desc.addEventListener('scroll', syncMore, { passive: true });
   function select(m: AbsorbChoice): void {
     sel = m;
     btns.forEach((b) => {
@@ -148,7 +153,9 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
       const p = el('p', cls, l.text);
       p.dataset.line = l.kind;
       return p;
-    }), ...(extra?.(m) ?? []));
+    }), ...(extra?.(m) ?? []), more);
+    desc.scrollTop = 0;
+    requestAnimationFrame(syncMore);
     const frenzy = m !== 'none' && previewAbsorb(exp, m).frenzy;
     go.textContent = absorbRunLabel(names[m].label);
     go.classList.toggle('bha-btn--danger', frenzy);
@@ -373,7 +380,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       first = go;
       side.push(none, go);
     } else {
-      const list = el('div', 'bha-stack');
+      // 후보 목록 = 남은 높이 고정(넘치면 그 안 스크롤) → 아래 [다시 뽑기] 줄 자리 고정 (GDD 173장 2)
+      const list = el('div', 'bha-stack bha-absorb__cands');
       for (const id of offer!.candidates) {
         const c = candCard(id, 'button');
         first ??= c;

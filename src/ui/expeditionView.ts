@@ -561,6 +561,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       planner.refresh();
     }
     if (body.childElementCount > 0) info.append(body);
+    // GDD 173장 2: 고르기·배치로 안 글이 바뀌는 창(뽑기·손·배치판)은 높이 고정 → [귀환]·[한 바퀴 더]가 위아래로 안 움직인다
+    if (body.childElementCount > 0) sheet.classList.add('bha-sheet--fixed');
     sheet.append(info, actions);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
@@ -621,7 +623,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         button({ label: `${TRADE_CURRENCY_NAME} +${E.crossroads.gold}`, icon: 'i-rare', onClick: () => act(1) }),
       );
     }
-    if (eventNote) info.append(notice('warn', eventNote));
+    // 실패 이유 줄은 늘 자리를 둔다(한 줄, 비면 안 보임) — 생겼다 없어지며 아래 선택 버튼이 내려가지 않게 (GDD 173장 2)
+    const note = el('p', 'bha-small bha-danger-text bha-event__note', eventNote || '\u00a0');
+    note.style.visibility = eventNote ? 'visible' : 'hidden';
+    note.dataset.eventNote = '';
+    info.append(note);
     // 뒤로 (GDD 128장 4): 그냥 지나가기가 있는 창은 그것, 하나뿐인 선택(보물·함정)은 그 선택, 갈림길은 고르라는 안내
     eventBack = leave || ev.event === 'treasure' || ev.event === 'trap' ? () => act(null) : null;
     const sheet = el('div', 'bha-sheet bha-event');
