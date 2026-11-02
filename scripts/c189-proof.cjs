@@ -78,9 +78,12 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
   const vis = (loc) => loc.filter({ visible: true });
   const toRoom = async () => { for (let i = 0; i < 6 && !(await page.locator('.bha-lcd .bha-room').count()); i++) { await page.keyboard.press('Escape'); await page.waitForTimeout(400); } };
   try {
-    await page.goto(`${srv.url}?test=1`);
+    // C189_MODE=normal: 테스트 모드 밖 새 게임(결과·진화·백업 — 시드·런 로그 줄이 없고 백업 메뉴가 보인다). 기본 = 테스트 모드(상태·상점·흡수·빈사·회복 안내)
+    const NORMAL = process.env.C189_MODE === 'normal';
+    const Q = NORMAL ? '?test=0' : '?test=1';
+    await page.goto(`${srv.url}${Q}`);
     await page.evaluate(() => localStorage.clear());
-    await page.goto(`${srv.url}?test=1`);
+    await page.goto(`${srv.url}${Q}`);
     await page.waitForTimeout(1200);
     await page.getByRole('button', { name: '새로 시작' }).click();
     await page.waitForTimeout(300);
@@ -96,12 +99,12 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
     await patchSave(page, `
       t.help.guides = { ...t.help.guides, 'first-run': 'done', 'home-intro': 'done', 'first-run-room': 'done', 'birth': 'done', 'recover': 'done' };
       for (const k of Object.keys(t.evolution.ev)) t.evolution.ev[k] = 9999;
-      t.evolution.steps = 39; // 첫 진화 걸음(40) 바로 앞 — 이번 모험에서 넘겨 귀환 때 진화
+      if (${NORMAL}) { t.evolution.tierIndex = 2; t.evolution.steps = 84; } // 4단계 진화 걸음(85) 바로 앞 — 이번 모험에서 넘겨 귀환 때 진화 (테스트 모드 새 게임은 이미 마지막 단계)
       for (const k of Object.keys(shared.food)) shared.food[k] = 3;
       shared.tradeCoins = 5000;
     `);
     await reopen(page);
-    if (process.env.C189_ONLY !== 'recover') {
+    if (!NORMAL) {
     // 2 상태 화면 가진 것
     await page.locator('.bha-room__status').first().click({ timeout: 3000 }).catch((e) => proof.trace.push(['status', String(e).slice(0, 120)]));
     // (상태 화면에서 방으로는 다시 열기로 — Esc 가 방에서 '처음 화면으로' 창을 연다)
@@ -123,6 +126,8 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
     proof.text.traitShop = await lcdText();
     await shot('06-trait-shop');
     await reopen(page);
+    } // !NORMAL
+    if (NORMAL) {
     // 모험 출발 → 흡수 노력치 가득
     await page.locator('.bha-prop--outside').first().click({ timeout: 4000 }).catch(() => {});
     await page.waitForTimeout(1200);
@@ -133,8 +138,16 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
     for (let i = 0; i < 6 && (await page.locator('.bha-lcd [data-dev-layer]').count()); i++) { await page.keyboard.press('Escape'); await page.waitForTimeout(250); }
     await page.locator('.bha-lcd').getByRole('button', { name: '★1', exact: true }).click({ timeout: 3000 }).catch(() => {});
     await page.waitForTimeout(500);
-    await page.locator('.bha-lcd').getByRole('button', { name: '출발' }).first().click({ timeout: 3000 }).catch(() => proof.trace.push(['no-depart']));
+    await page.locator('.bha-lcd [data-sc="go"]').first().click({ timeout: 3000 }).catch(() => proof.trace.push(['no-depart']));
     await page.waitForTimeout(1200);
+    // 빈 길 확인 창 등: 보이는 확인 버튼을 누른다
+    for (let i = 0; i < 3 && (await page.locator('.bha-lcd [data-sc="go"]').count()); i++) {
+      const yes = vis(page.locator('.bha-lcd [role="dialog"] .bha-btn--primary, .bha-lcd [data-dev-layer] .bha-btn--primary'));
+      proof.trace.push(['depart-dialog', await page.evaluate(() => document.querySelector('.bha-lcd [role="dialog"], .bha-lcd [data-dev-layer]')?.innerText?.slice(0, 200) ?? null)]);
+      if (await yes.count()) await yes.first().click({ timeout: 2000 }).catch(() => {});
+      else await page.locator('.bha-lcd [data-sc="go"]').first().click({ timeout: 2000 }).catch(() => {});
+      await page.waitForTimeout(1200);
+    }
     let absorbShot = false;
     for (let t = 0; t < 700; t++) {
       if (await vis(page.getByRole('button', { name: '귀환', exact: true })).count()) break;
@@ -143,7 +156,7 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
       if (await page.locator('.bha-absorbpage').count()) {
         if (!absorbShot && (await page.locator('.bha-absorbpage button[data-mode="stat"]').count())) {
           absorbShot = true;
-          await page.locator('.bha-absorbpage button[data-mode="stat"]').click();
+          await page.locator('.bha-absorbpage button[data-mode="stat"]').click({ force: true });
           await page.waitForTimeout(300);
           proof.text.absorb = await page.evaluate(() => ({ desc: [...document.querySelectorAll('.bha-absorbpage .bha-absorb__desc p')].map((p) => p.textContent), dim: document.querySelector('.bha-absorbpage button[data-mode="stat"]')?.getAttribute('aria-disabled') }));
           await shot('03-absorb-ev-full');
@@ -178,24 +191,29 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
     await shot('07-evolution-result');
     for (let t = 0; t < 6; t++) { const b = vis(page.locator('.bha-lcd .bha-evolve__result .bha-btn--primary')); if (await b.count()) { await b.first().click().catch(() => {}); await page.waitForTimeout(800); } }
     await reopen(page);
-    // 8 백업
+    // 8 백업 (테스트 모드에선 숨는다 — 테스트 표시 없이 다시 연다)
     await page.locator('.bha-homedock button[aria-label="더보기"]').first().click({ timeout: 3000 }).catch((e) => proof.trace.push(['more', String(e).slice(0, 120)]));
     await page.waitForTimeout(500);
-    await vis(page.locator('.bha-lcd').getByRole('button', { name: '설정' })).first().click({ timeout: 3000 }).catch((e) => proof.trace.push(['settings', String(e).slice(0, 120)]));
+    const direct = vis(page.locator('.bha-lcd').getByRole('button', { name: '백업·불러오기' }));
+    if (await direct.count()) await direct.first().click().catch(() => {});
+    else await vis(page.locator('.bha-lcd').getByRole('button', { name: '설정' })).first().click({ timeout: 3000 }).catch((e) => proof.trace.push(['settings', String(e).slice(0, 120)]));
     await page.waitForTimeout(900);
-    for (const name of ['기타', '정보', '저장']) { if (await page.locator('.bha-lcd').getByRole('button', { name: '세이브 백업' }).filter({ visible: true }).count()) break; await vis(page.locator('.bha-lcd').getByRole('button', { name, exact: true })).first().click({ timeout: 1500 }).catch(() => {}); await vis(page.locator('.bha-lcd').getByRole('tab', { name, exact: true })).first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
-    await vis(page.locator('.bha-lcd').getByRole('button', { name: '세이브 백업' })).first().click({ timeout: 3000 }).catch((e) => proof.trace.push(['backup', String(e).slice(0, 120)]));
+    if (!(await page.getByText('세이브 백업').count())) for (const name of ['기타', '정보', '저장']) { if (await page.locator('.bha-lcd').getByRole('button', { name: '세이브 백업' }).filter({ visible: true }).count()) break; await vis(page.locator('.bha-lcd').getByRole('button', { name, exact: true })).first().click({ timeout: 1500 }).catch(() => {}); await vis(page.locator('.bha-lcd').getByRole('tab', { name, exact: true })).first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
+    if (!(await page.locator('.bha-lcd').getByText('내보내기').count())) await vis(page.locator('.bha-lcd').getByRole('button', { name: '세이브 백업' })).first().click({ timeout: 3000 }).catch((e) => proof.trace.push(['backup', String(e).slice(0, 120)]));
     await page.waitForTimeout(900);
     proof.text.backup = await lcdText();
     await shot('08-backup');
+    } // NORMAL
+    if (!NORMAL) {
     // 5 빈사 남은 시간 (상태 화면 줄)
     await patchSave(page, `t.nest.collapsed = true; t.nest.dead = false; t.nest.collapsedAt = Date.now() - 60000;`);
     await reopen(page);
+    await page.waitForTimeout(3500); // 말풍선 동안은 상태 칩이 숨는다
     await page.locator('.bha-room__status').first().click({ timeout: 3000 }).catch(() => {});
     await page.waitForTimeout(900);
+    if (!(await page.getByText('남은 시간').count())) { await page.keyboard.press('KeyG'); await page.waitForTimeout(900); }
     proof.text.dying = await page.evaluate(() => [...document.querySelectorAll('.bha-lcd *')].map((e) => e.childElementCount === 0 ? e.textContent : '').filter((x) => x && x.includes('남은 시간')).slice(0, 3));
     await shot('05-dying-time');
-    } // C189_ONLY
     // 4 회복 안내 5/7: recover 안내를 다시 켜고 안내가 시키는 것을 누른다
     await patchSave(page, `t.help.guides.recover = 'pending'; delete t.help.guides['recover-cure']; t.nest.collapsed = true; t.nest.dead = false; t.nest.hpFraction = 0.1; t.nest.collapsedAt = Date.now() - 60000; shared.items = shared.items || {};`);
     await reopen(page, false);
@@ -210,6 +228,7 @@ const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bh
     }
     proof.text.recover = await page.evaluate(() => document.querySelector('[data-tutorial]')?.innerText ?? null);
     await shot('04-recover-5of7');
+    } // !NORMAL (빈사·회복 안내)
   } finally {
     fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify(proof, null, 2));
     await browser.close();
