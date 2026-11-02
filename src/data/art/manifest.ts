@@ -94,6 +94,8 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.home': {},
   'prop.adventure': {},
   // 월드맵 탑 (GDD 139장 1, C.217): 키 = place.tower.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
+  // 탑 그림은 두 종족 같은 그림 prop-tower.png (사용자 2026-11-03 "홈 ui 아이콘은 통일 (대원실, 둥지 빼고)") — 종족별 키는 남김(prop.tower 가 먼저)
+  'prop.tower': {},
   'place.tower.hollow': {},
   'place.tower.shinigami': {},
   // 월드맵 온천 (GDD 153장 1, C.228): 키 = place.spa.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
