@@ -50,7 +50,9 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   };
   const floor: FloorEntry[] = [];
   // 월드맵 물건 (GDD 158장 3): 방의 월드맵 물건과 같은 그림·이름 — 누르면 월드맵으로
-  const exit = propButton({ prop: 'outside', name: room.props.outside, ...mk.exit, art: !!artUrls('prop.outside').src, fallbackArt: 'prop.door' });
+  // 그림 = 지도(prop.worldmap, 사용자 2026-11-03 "월드맵 아이콘으로 변경 (대원실에서 나가기 아이콘은 지금 그대로)") — 없으면 방과 같은 문 그림
+  const exitArt = artUrls('prop.worldmap').src ? 'prop.worldmap' : 'prop.outside';
+  const exit = propButton({ prop: 'outside', name: room.props.outside, ...mk.exit, artKey: exitArt, art: !!artUrls(exitArt).src, fallbackArt: 'prop.door' });
   exit.dataset.exit = '';
   exit.onclick = hd.onBack;
   scene.append(exit);

@@ -43,6 +43,8 @@ export interface PropOpts {
   alert?: boolean;
   /** 제 그림(prop.<물건>)이 없을 때 대신 쓸 그림 키 — 장터 물건은 상점 그림 (C.201, 장터 그림 대기) */
   fallbackArt?: string;
+  /** 그림 키를 prop.<물건> 대신 이것으로 (같은 물건이 화면마다 다른 그림 — 시장의 월드맵 물건 = 지도 그림, C.255) */
+  artKey?: string;
 }
 
 /** 방 안 물건 = 선택 항목(button). 이름표는 항상 보인다 */
@@ -54,11 +56,12 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   b.style.left = `${o.x}%`;
   b.style.top = `${o.y}%`;
   // 배치 배율(종족 설정 layout) × 그림 배율(ART_MANIFEST prop.<물건>.scale — 월드맵 물건 1.5·장비 상점 1.2, GDD 160장 1·3)
-  const s = (o.scale ?? 1) * artUrls(`prop.${o.prop}`, BASE).scale;
+  const key = o.artKey ?? `prop.${o.prop}`;
+  const s = (o.scale ?? 1) * artUrls(key, BASE).scale;
   if (s !== 1) b.style.setProperty('--prop-s', String(s));
   b.setAttribute('aria-label', o.name);
   const shape = el('span', 'bha-prop__shape bha-art-img');
-  const src = artUrls(`prop.${o.prop}`, BASE).src ?? (o.fallbackArt ? artUrls(o.fallbackArt, BASE).src : null);
+  const src = artUrls(key, BASE).src ?? (o.fallbackArt ? artUrls(o.fallbackArt, BASE).src : null);
   if (src) {
     const img = el('img', 'bha-prop__img') as HTMLImageElement;
     img.src = src;

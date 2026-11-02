@@ -17,7 +17,7 @@ describe('160장 1~3 그림 크기·시장 그림', () => {
   });
   it('물건 단추 크기 = 배치 배율 × 그림 배율 (방·시장 같은 propButton)', () => {
     const room = read('src/ui/bha/room.ts');
-    expect(room).toContain("const s = (o.scale ?? 1) * artUrls(`prop.${o.prop}`, BASE).scale;");
+    expect(room).toContain("const s = (o.scale ?? 1) * artUrls(key, BASE).scale;"); // C.255: key = o.artKey ?? prop.<물건>
     expect(read('src/ui/marketView.ts')).toContain("propButton({ prop: 'outside'");
   });
   // 2026-11-03 사용자 그림으로 바뀜: 월드맵 시장 = 상점 그림(prop-market.png), 수레 그림은 떠돌이 상인으로 옮김

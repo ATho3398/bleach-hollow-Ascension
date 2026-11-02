@@ -89,6 +89,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.traitShop': {},
   'prop.smith': {}, // 대장장이 (GDD 153장 2)
   // 월드맵 (GDD 130장, C.204): 방 물건(월드맵)·월드맵 하이앵글 배경·지도 위 장소(홈·모험; 시장은 prop.market) — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  'prop.worldmap': { scale: 1.5 }, // 시장의 월드맵 물건 = 지도 그림 (C.255, 방의 나가기 문은 prop.outside 그대로)
   'prop.outside': { scale: 1.5 }, // 방·시장의 월드맵 물건 그림 ×1.5 (GDD 160장 1)
   'scene.worldmap': {},
   'prop.home': {},

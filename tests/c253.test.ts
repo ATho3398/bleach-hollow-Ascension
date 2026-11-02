@@ -8,7 +8,7 @@ const read = (p: string) => readFileSync(p, 'utf8');
 describe('C.253 장소 그림 점검', () => {
   it('물건 그림은 상자 안에 갇히고(격자 칸 최소 크기 풀기) 이름표는 그림 위 층', () => {
     const css = read('src/ui/bha/room.css');
-    expect(css).toContain('.bha-prop .bha-prop__shape.has-art > .bha-prop__img { min-width: 0; min-height: 0; }');
+    expect(css).toContain('.bha-prop .bha-prop__shape.has-art > .bha-prop__img { min-width: 0; min-height: 0; object-position: 50% 100%; }');
     expect(css).toContain('.bha-prop__tag { position: relative; z-index: 1; }');
   });
   it('월드맵·시장 캐릭터는 장소 그림 앞(z 2)', () => {
@@ -32,5 +32,16 @@ describe('C.254 장소 그림 크기·자리', () => {
   });
   it('월드맵 탑 그림은 두 종족 공용 키 prop.tower', () => {
     expect(read('src/data/art/manifest.ts')).toContain("'prop.tower': {},");
+  });
+});
+
+// C.255 (사용자 2026-11-03 "각각 가방, 월드맵 아이콘으로 변경(대원실에서 나가기 아이콘은 지금 그대로 놔둬)")
+describe('C.255 가방·시장 월드맵 물건 그림', () => {
+  it('시장의 월드맵 물건은 지도 그림 키(prop.worldmap), 방의 나가기 문은 prop.outside 그대로', () => {
+    const mv = read('src/ui/marketView.ts');
+    expect(mv).toContain("const exitArt = artUrls('prop.worldmap').src ? 'prop.worldmap' : 'prop.outside';");
+    expect(mv).toContain('artKey: exitArt');
+    expect(read('src/ui/bha/room.ts')).toContain('const key = o.artKey ?? `prop.${o.prop}`;');
+    expect(read('src/data/art/manifest.ts')).toContain("'prop.worldmap': { scale: 1.5 }");
   });
 });

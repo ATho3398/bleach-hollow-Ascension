@@ -1644,3 +1644,8 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 기획서 값/실제 값/이유: `marketOf` 기본 layout 떠돌이 상인 scale 0.85→1.02(×1.2), 특성 상점 1.15→0.92(×0.8), 대장장이 x 52→60('너무 왼쪽' → 가운데쯤, 떠돌이 상인 34·특성 상점 82 사이). 월드맵 layout 탑·온천·홈 0.9→1.08(×1.2) — 홈 배율은 그림이 있을 때만 커짐(호로 둥지는 아이콘 그대로). 두 종족 화면 좌표로 그림·이름표 겹침 0.
 - 테스트 +2(`tests/c253.test.ts` C.254 묶음, 떠돌이 상인 기대값 갱신). 캡처 `docs/captures/c254/` 3장(호로 월드맵·시장, 사신 월드맵).
 
+## C.255 — 가방 배낭 그림 · 시장 월드맵 물건 지도 그림 (GDD 170장 추가, S-23, UI담당자C)
+- 사용자 원문은 GDD 170장 C.255 줄. 그림: 사용자 도트(8px = 1점) → 1배 → `prop-chest.png` ×6(옛 `prop-chest.webp` 삭제), `prop-worldmap.png` ×5(59점 폭이라 ×6 이면 칸 320 을 넘음).
+- 코드: `propButton` 에 `artKey`(그림 키를 prop.<물건> 대신) — 시장 `marketView` 월드맵 물건만 `prop.worldmap`(없으면 옛 문 그림), 방은 그대로. manifest `prop.worldmap: { scale: 1.5 }`(문 그림과 같은 배율). `.bha-prop__img` object-position 바닥 — 가로로 긴 지도가 이름표에서 떠 보이던 것.
+- 테스트 +1(`tests/c253.test.ts` C.255 묶음, C.253 기대값 갱신). 캡처 `docs/captures/c255/` 2장(방·시장).
+

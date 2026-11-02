@@ -101,7 +101,7 @@
 /* 그림이 들어온 물건: 자리표시 틀(배경·테두리)을 걷고 그림 자체를 보인다. 상자 크기는 모두 같고 그림은 비율을 지켜 그 안에 맞춘다 */
 .bha-prop .bha-prop__shape.has-art { width: calc(86px * var(--ps)); height: calc(76px * var(--ps)); background: none; border: 0; border-radius: var(--bha-r-sm); }
 /* 그림이 상자(가로가 긴 86×76)를 넘쳐 아래 이름표를 덮지 않게: 격자 칸 최소 크기를 풀어 그림을 상자 안에 가둔다 (사용자 2026-11-03 캡처 점검) */
-.bha-prop .bha-prop__shape.has-art > .bha-prop__img { min-width: 0; min-height: 0; }
+.bha-prop .bha-prop__shape.has-art > .bha-prop__img { min-width: 0; min-height: 0; object-position: 50% 100%; } /* 그림은 칸 바닥(이름표 바로 위)에 붙인다 — 가로로 긴 그림(지도)이 이름표에서 떠 보이지 않게 (C.255) */
 .bha-prop__tag { position: relative; z-index: 1; }
 .bha-prop__tag {
   font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; white-space: nowrap;
