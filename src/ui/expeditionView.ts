@@ -10,7 +10,7 @@ import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
-  abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
+  abortExpedition, advance, canAbort, lapRewardMult, lapScale, winHealOf, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
@@ -18,13 +18,14 @@ import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
+import { fixParticles } from '../engine/josa';
 import { confirmDialog } from './confirmDialog';
 import { onHold } from './bha/hold';
+import { isAppAway, onAppAway } from './bha/appAway';
 import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDOG_POLL_MS, watchdogAction } from './bha/expedition';
 import { createExpClock, monoNow } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
-import { locoOf } from './bha/loco';
 import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
 import { groundSceneBg } from './bha/sceneBg';
@@ -33,6 +34,9 @@ import { storyGoalLine } from './storyView';
 import { bossName } from '../data/bosses';
 import { statName } from '../data/elements';
 import { floatEl } from './bha/battle';
+import { foeAheadKind, walkAhead } from './bha/walkAhead';
+import { onScreenBack } from './bha/screenBack';
+import { showToast } from './bha/nest';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -41,17 +45,17 @@ export interface ExpeditionViewHandlers {
   tierIndex?: number;
   /** 입고 있는 스킨 id (GDD 26-5). 없으면 진화체 그림 */
   skinId?: string | null;
-  /** 현재 진화체 id (이동 방식 GDD 18-11 을 고른다). 1단계는 null */
-  formId?: string | null;
   /** 전투가 시작될 때: 전투 화면으로 넘어간다. 끝나면 호출자가 expeditionView 를 다시 부른다 */
   onBattle: (p: PendingBattle) => void;
   onEnded: () => void;
-  /** 한계 돌파가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
+  /** 폭주(호로화)가 일어났을 때: 연출 화면을 보여주고 끝나면 resume 을 부른다 */
   onBreakthrough: (resume: () => void) => void;
   /** 자동 저장 시점(GDD 14-1): 전투 시작 직전, 둥지 칸 도착, 타일 배치, 휴식 후, 한 바퀴 더 */
   onSave: () => void;
   /** [?] 도움말 (C.19): 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다 */
   openHelp: (onClose: () => void) => void;
+  /** [가방] (GDD 144장 3, C.223): 걷기·휴식 중 회복 물건을 쓴다. 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다. 없으면 버튼 없음 */
+  openBag?: (onClose: () => void) => void;
 }
 
 const EX = BALANCE.expedition;
@@ -71,12 +75,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let msg = startMsg;
   const tn = (id: string) => tileName(id, faction.id);
 
-  /** 처음 화면 복귀 확인창(Q-3)·세로 전환이 열려 있으면 true: 시간이 멈춘다. dead = 이 화면을 떠났다(전투·결과로 넘어감). away = 한계 돌파 연출이 덮고 있다 */
+  /** 처음 화면 복귀 확인창(Q-3)·세로 전환이 열려 있으면 true: 시간이 멈춘다. dead = 이 화면을 떠났다(전투·결과로 넘어감). away = 폭주(호로화) 연출이 덮고 있다 */
   let held = false;
   let dead = false;
   let away = false;
   // 다음 할 일(한 칸 이동·전투 진입·휴식 끝)은 시계가 들고 있다: 일시정지·도움말은 남은 시간만 다시 셈하고 할 일을 지우지 않는다 (19-1)
-  const clock = createExpClock({ speed: () => speed, blocked: () => paused || held || dead || away });
+  const clock = createExpClock({ speed: () => speed, blocked: () => paused || held || dead || away || isAppAway() }); // 앱 이탈도 멈춤 (GDD 119장 2)
   const stepMs = EX.secondsPerTile * 1000;
 
   /** 한 칸 이동을 새로 예약 */
@@ -105,7 +109,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const dt = Math.max(0, t - lastWatch); // C.139: 단조 시계 + 음수 방어
     lastWatch = t;
     if (dead) return clearInterval(watch);
-    if (away) return;
+    if (away || isAppAway()) return;
     if (!main.isConnected) return dispose();
     const blocked = paused || held;
     if (exp.phase === 'battle' && !blocked) encounterWait += dt;
@@ -116,11 +120,17 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   /** C.139 (GDD 88장 4): 화면 종료(전투로·끝·취소·귀환·떠남) 때 한 곳에서 시계·감시·hold 구독을 모두 푼다 */
   let unhold = (): void => undefined;
+  // 앱 이탈 (GDD 119장 2): 떠나면 남은 시간을 셈해 멈추고, 돌아오면 그 남은 시간부터 그대로 이어 간다 (몰아서 진행하지 않는다)
+  const unaway = onAppAway(() => {
+    if (dead) return;
+    resumeClock();
+  });
   function dispose(): void {
     dead = true;
     clock.cancel();
     clearInterval(watch);
     unhold();
+    unaway();
   }
 
   let battleRef: PendingBattle | null = exp.phase === 'battle' ? exp.pending ?? null : null;
@@ -135,6 +145,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const spring = exp.restSpring === true;
     const before = { full: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, risk: exp.risk };
     finishRest(exp);
+    restArrived = false;
+    ahead.leave(); // 쉬던 장소가 뒤로 흘러간다 (GDD 128장 3)
     h.onSave();
     // 회복 숫자 떠오름 (C.176, GDD 106장 2): 전투 회복 숫자(.bha-float--heal)와 같은 모양, 캐릭터 머리 위
     const gain = spring
@@ -165,7 +177,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       else if (e.kind === 'tile-ev') nearMsg = e.amount > 0 ? `${statName(e.stat, faction.id)} 노력치 +${e.amount}` : `${statName(e.stat, faction.id)} 노력치가 상한이다`;
     }
     if (events.some((e) => e.kind === 'breakthrough')) {
-      // 한계 돌파 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
+      // 폭주(호로화) 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
       away = true;
       clock.cancel();
       const stage = main.parentElement!;
@@ -191,6 +203,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         msg = `${tn_enemy(ev.battle)} 조우!`;
         battleRef = ev.battle;
         encounterWait = 0;
+        // 조우 연출 (GDD 128장 2, C.202): 적이 걷는 앞쪽에 서 있고 캐릭터가 걸어가 마주친 뒤 전투가 열린다(강적·보스 같음, 그림 없으면 실루엣)
+        approaching = true;
+        ahead.foe({ enemyId: ev.battle.enemy.id, element: ev.battle.enemy.element, kind: foeAheadKind(ev.battle), label: ev.battle.boss ? '보스' : '강적' }, speed, () => {
+          approaching = false;
+          if (!dead) render();
+        });
         h.onSave(); // 전투 시작 직전 상태 (전투 중 새로고침하면 여기서 다시 시작한다)
         render();
         clock.set('phase', ENCOUNTER_DELAY_MS, enterBattle);
@@ -204,6 +222,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         return;
       case 'rest':
         msg = `${tn(exp.slots[ev.cell]!)}에서 쉰다…`;
+        // 휴식 칸 장소 (GDD 128장 3, C.202): 장소가 앞쪽에서 다가와 닿으면 회복 연출. 시간은 휴식 시간 안에서 쓴다
+        restArrived = false;
+        ahead.place({ tileId: exp.slots[ev.cell]!, factionId: faction.id, label: tn(exp.slots[ev.cell]!), spring: exp.restSpring === true }, speed, () => {
+          restArrived = true;
+          if (!dead) render();
+        });
         render();
         clock.set('phase', PX.restTimeTiles * EX.restSecondsPerTile * 1000, endRest);
         return;
@@ -234,7 +258,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // 지금 고른 사냥터 이름 (GDD 24-2). 종족 전체 지역 이름(huntingGroundName)이 아니라 사냥터별 이름
   const groundLabel = groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
   where.append(el('b', '', groundLabel));
-  // 폭주 상태 칩 (GDD 23-2): 한계 돌파한 원정의 남은 동안 보인다. 문구는 종족 설정 frenzyName
+  // 폭주 상태 칩 (GDD 23-2): 폭주(호로화)한 원정의 남은 동안 보인다. 문구는 종족 설정 frenzyName
   const frenzyChip = chip(faction.frenzyName, 'danger');
   frenzyChip.classList.add('bha-frenzychip');
   frenzyChip.prepend(icon('i-risk', 'sm'));
@@ -269,7 +293,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   chips.append(goal, where, meters, slotsLine);
 
   const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
-  const walk = walkScene(faction.walkAnim, groundLabel, walkArt, locoOf(faction, h.formId, walkArt), groundSceneBg(faction, exp.groundId));
+  const walk = walkScene(faction.walkAnim, groundLabel, walkArt, groundSceneBg(faction, exp.groundId));
   const msgEl = el('p', 'bha-exp__msg');
   msgEl.setAttribute('aria-live', 'polite');
   walk.walker.append(msgEl); // 머리 위 말풍선
@@ -282,6 +306,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction));
   if (buddy) walk.walker.append(buddy);
   if (takeEnterFx()) window.setTimeout(() => playCosmeticFx('enter', walk.walker), 0); // 등장 연출 (GDD 25-11): 출발 직후 한 번
+  // 걷는 앞쪽 (GDD 128장 2·3): 조우한 적·휴식 장소가 서는 길. 캐릭터보다 아래 층
+  const ahead = walkAhead();
+  walk.el.insertBefore(ahead.el, walk.walker);
+  /** 적·장소가 다가오는 동안은 캐릭터가 계속 걷는다 */
+  let approaching = false;
+  let restArrived = exp.phase === 'rest'; // 휴식 중에 다시 열면(이어하기) 이미 도착한 것으로
   const sceneWrap = el('section', 'bha-exp__scene');
   sceneWrap.append(walk.el);
 
@@ -292,6 +322,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   banner.setAttribute('role', 'status');
   /** 이벤트 창 안내 한 줄 (골드 부족 등) */
   let eventNote = '';
+  /** 이벤트 창에서 뒤로 = 이 선택 (없으면 안내만) */
+  let eventBack: (() => void) | null = null;
 
   // 배속 묶음(1x·2x·4x)은 C.118 에 삭제 (GDD 62장: 1배 고정)
   const pauseBtn = el('button', 'bha-btn bha-btn--icon bha-btn--small');
@@ -328,10 +360,26 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       },
     });
   };
+  // [가방] (GDD 144장 3): 걷기·휴식 중 회복 물건 — 일시정지하고 창, 닫으면 이어 간다
+  const bagBtn = button({ label: '가방', icon: 'i-heal', variant: 'ghost', size: 'small' });
+  bagBtn.classList.add('bha-exp__bag');
+  bagBtn.onclick = () => {
+    if (!h.openBag || dead || !(exp.phase === 'moving' || exp.phase === 'rest')) return;
+    const wasPaused = paused;
+    paused = true;
+    resumeClock();
+    render();
+    h.openBag(() => {
+      paused = wasPaused;
+      resumeClock();
+      render();
+    });
+  };
   const handCount = el('span', 'bha-exp__hand-count');
   // 오른쪽 위 모서리: 귀환하기·일시정지·도움말을 작게 (+ 손에 든 타일 수)
   const corner = el('div', 'bha-exp__corner');
   const cornerRow = el('div', 'bha-exp__cornerrow');
+  if (h.openBag) cornerRow.append(bagBtn);
   cornerRow.append(abortBtn, pauseBtn);
   corner.append(cornerRow, handCount);
 
@@ -354,7 +402,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // ── 상태에 맞춰 제자리 갱신 ──
   function render(): void {
     // 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오른다
-    healFx.hidden = exp.phase !== 'rest';
+    healFx.hidden = exp.phase !== 'rest' || !restArrived;
     const spike = exp.lap >= PX.hungerSpikeLap;
     const hungerDanger = spike || exp.hunger >= PX.hungerMax * 0.8;
     const bonus = riskBonus(exp);
@@ -362,7 +410,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     meters.replaceChildren(
       meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
       // 이어 오는 체력 (GDD 107장 4번): 진행 막대 바로 아래, 낮으면(30% 아래) 위험 색
-      meter({ kind: 'player', label: '체력', icon: 'i-heal', value: Math.round(hpFractionOf(exp) * 100), max: 100, compact: true, zoneLow: 0.3, danger: hpFractionOf(exp) < 0.3, valueText: `${Math.round(hpFractionOf(exp) * 100)}%` }),
+      meter({ kind: 'player', label: '체력', icon: 'i-heal', value: Math.round(hpFractionOf(exp) * 100), max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFractionOf(exp) < 0.3, valueText: `${Math.round(hpFractionOf(exp) * 100)}%` }),
       meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(exp.hunger, PX.hungerMax)), max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
       meter({
         kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(exp.condition), max: PX.conditionMax, compact: true,
@@ -397,7 +445,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     banner.replaceChildren(...bannerKids);
     main.classList.toggle('is-frenzy', inFrenzy(exp));
 
-    walk.update({ walking: isWalking(exp.phase, paused), speed });
+    walk.update({ walking: isWalking(exp.phase, paused) || (approaching && !paused) || (exp.phase === 'rest' && !restArrived && !paused), speed });
 
     // 머리 위 말풍선: 조우·획득·휴식·경고·일시정지·도착 때만 뜬다 (그냥 걷는 중에는 감춘다)
     const kind = msgKind(exp.phase, msg, spike);
@@ -411,6 +459,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     pauseBtn.classList.toggle('is-on', paused);
     pauseBtn.setAttribute('aria-label', paused ? '재개' : '일시정지');
     abortBtn.hidden = !canAbort(exp);
+    bagBtn.disabled = !(exp.phase === 'moving' || exp.phase === 'rest'); // 걷기·휴식 중만 (전투는 [소모품], 이벤트·바퀴 끝 창은 그 창부터)
     handCount.textContent = exp.hand.length > 0 ? `손에 든 타일 ${exp.hand.length}장` : '';
     handCount.hidden = exp.hand.length === 0;
     main.classList.toggle('is-paused', paused);
@@ -427,8 +476,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
 
   function nestSheet(): HTMLElement[] {
     const over = exp.lap >= EX.defaultLaps;
+    const d = exp.draft;
     const title = el('h2', 'bha-sheet__title');
-    title.append(icon('i-nest'), `${faction.nestName}에 도착했다`, helpBtn); // 시트가 머리 줄을 대신하므로 [?] 도 시트 제목 줄로 옮긴다 (T-2)
+    // 머리 한 줄 (C.218, GDD 140장 2): "1바퀴 끝 — 타일 1장 고르기"
+    title.append(icon('i-nest'), d && d.picked === null ? `${exp.lap}바퀴 끝 — 타일 1장 고르기` : `${exp.lap}바퀴 끝 — ${faction.nestName}에 도착`, helpBtn); // 시트가 머리 줄을 대신하므로 [?] 도 시트 제목 줄로 옮긴다 (T-2)
     const ret = button({
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
@@ -450,22 +501,35 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const label = el('span', 'bha-btn__label');
     label.append('한 바퀴 더', el('span', 'bha-btn__sub', `(${exp.lap + 1}바퀴)`));
     more.append(label);
+    // 이어하기 배율 (GDD 121장 5): [한 바퀴 더] 아래에 다음 바퀴 보상·적 배율과 사냥 힐
+    const nx = exp.lap + 1;
+    const multLine = el('p', 'bha-continue-mult', `다음 바퀴 보상 ×${fmtMult(lapRewardMult(nx))} · 적 체력 ×${fmtMult(lapScale(nx).hp)} · 공격 ×${fmtMult(lapScale(nx).attack)} · 힐 ${Math.round(winHealOf(nx) * 100)}%`);
+    multLine.dataset.continueMult = '';
     const grid = el('div', 'bha-grid2');
     grid.append(ret, more);
+    // 버튼 아래 작은 글 두 칸: [귀환] 아래 = 지킨다, [한 바퀴 더] 아래 = 다음 바퀴 배율 (C.218)
+    const notes = el('div', 'bha-continue__notes');
+    notes.append(el('p', 'bha-continue-keep', '돌아가면 얻은 것을 지킨다'), multLine);
+    const actions = el('div', 'bha-continue');
+    actions.append(grid, notes);
     const sheet = el('div', 'bha-sheet');
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-label', `${faction.nestName}에 도착했다`);
     // 설명 영역(낮은 LCD 에서는 이 안만 스크롤)과 버튼 줄을 나눈다: 귀환/한 바퀴 더 버튼은 항상 보인다
     const info = el('div', 'bha-sheet__scroll');
-    info.append(title, el('p', 'bha-sheet__body', `${exp.lap}바퀴를 돌았다. 지금 돌아가면 얻은 것을 모두 지킨다.`));
-    if (over) info.append(notice('warn', `기본 ${EX.defaultLaps}바퀴를 넘겼다. 바퀴를 더 돌수록 보상도 위험도 커진다.`));
+    info.append(title);
+    // 노란 알림은 맨 위 (GDD 140장 2)
+    if (over) info.append(notice('warn', `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
+    // 가로 화면 한 장에 다 들어가게 (C.218, GDD 140장 2): 드래프트가 있으면 왼쪽 = 카드 3장(같은 크기 세로 줄), 오른쪽 = 길·손 배치판
+    const body = el('div', `bha-nestsheet__body${d ? ' has-draft' : ''}`);
+    if (d) sheet.classList.add('bha-sheet--wide');
     // 드래프트 (GDD 25-5 ①): 3장 중 1장 → 이번 바퀴 길에 바로 놓는다(보관함에는 안 들어감, 안 놓고 계속하면 사라진다)
-    const d = exp.draft;
     if (d) {
       const box = el('div', 'bha-draft');
       box.dataset.draft = d.picked === null ? 'open' : 'picked';
       const head = el('p', 'bha-sheet__body bha-draft__head');
-      head.append(el('b', '', `드래프트 — ${d.options.length}장 중 1장`), d.picked === null ? ' 고른 타일은 이번 바퀴 길에 바로 놓는다 (가방에는 안 들어간다)' : ` ${tn(d.options[d.picked]!)}을(를) 골랐다. 아래 길에 놓는다 (안 놓고 계속하면 사라진다)`);
+      // 임시 타일 설명은 여기 한 번만 (C.218)
+      head.append(d.picked === null ? `${d.options.length}장 중 1장 — 이번 모험에만 쓰는 타일` : fixParticles(`${tn(d.options[d.picked]!)}을(를) 골랐다 — 오른쪽 길에 놓거나 손에 둔다`));
       const row = el('div', 'bha-draft__row');
       d.options.forEach((id, i) => {
         const t = getTile(id);
@@ -476,9 +540,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         card.setAttribute('aria-pressed', String(d.picked === i));
         const ic = el('span', 'bha-tilechip__icon');
         ic.append(icon(tileIconId(css)));
-        const txt = el('span', 'bha-draft__text');
-        txt.append(el('b', '', tn(id)), el('small', '', tileHint(t)));
-        card.append(ic, txt);
+        // 아이콘·이름·설명은 카드마다 같은 자리 (C.218) — 설명은 줄바꿈, 말줄임 없음
+        card.append(ic, el('b', 'bha-draft__name', tn(id)), el('small', 'bha-draft__hint', tileHint(t)));
         if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '새 타일'));
         card.onclick = () => {
           const r = chooseDraft(exp, i);
@@ -489,14 +552,16 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         row.append(card);
       });
       box.append(head, row);
-      info.append(box);
+      body.append(box);
     }
     if (exp.hand.length > 0 || planner.canEdit() || d) {
-      // 획득한 타일은 지금 다음 바퀴 칸에 놓는다 (GDD 17-1). 안 놓으면 다음 원정 덱으로 보관된다. 이 팝업이 길 순서가 보이는 유일한 곳
-      info.append(el('p', 'bha-sheet__body', '얻은 타일을 다음 바퀴 길에 놓는다 (안 놓으면 가방에 남는다). 계속하기 전에는 놓은 타일을 눌러 고친다: 선택 → 빈 칸은 이동, 다른 놓은 타일은 교체, 같은 칸을 다시 누르면 손으로 돌아온다'), planner.el);
+      // 받은 타일(임시, GDD 121장 4 ②)은 지금 다음 바퀴 칸에 놓거나 손에 두고 다음 바퀴에 놓는다. 원정이 끝나면 사라진다. 이 팝업이 길 순서가 보이는 유일한 곳
+      // 놓는 법은 배치판 안내 줄(road note)이 말한다 — 같은 설명을 두 번 쓰지 않는다 (C.218)
+      body.append(planner.el);
       planner.refresh();
     }
-    sheet.append(info, grid);
+    if (body.childElementCount > 0) info.append(body);
+    sheet.append(info, actions);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
 
@@ -524,6 +589,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     };
     const gold = goldAvailable(exp);
     let leave: HTMLElement | null = null;
+    eventBack = null;
     if (ev.event === 'merchant') {
       info.append(el('p', 'bha-sheet__body', `가진 ${TRADE_CURRENCY_NAME} ${gold}`));
       (ev.offers ?? []).forEach((o, i) => {
@@ -556,6 +622,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       );
     }
     if (eventNote) info.append(notice('warn', eventNote));
+    // 뒤로 (GDD 128장 4): 그냥 지나가기가 있는 창은 그것, 하나뿐인 선택(보물·함정)은 그 선택, 갈림길은 고르라는 안내
+    eventBack = leave || ev.event === 'treasure' || ev.event === 'trap' ? () => act(null) : null;
     const sheet = el('div', 'bha-sheet bha-event');
     sheet.dataset.event = ev.event;
     sheet.setAttribute('role', 'dialog');
@@ -566,6 +634,28 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     sheet.append(info, grid);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
+
+  // 뒤로 (GDD 128장 4, C.202 — 잠긴 원정 화면도 뒤로가 무언가 한다): 바퀴 끝 창 = 귀환 확인(기본 아니오) · 이벤트 창 = 지나가기 · 걷기 = 일시정지/재개
+  onScreenBack({
+    alive: () => !dead,
+    mine: () => main.isConnected && !away,
+    run: () => {
+      if (exp.phase === 'nest-choice') {
+        confirmDialog({
+          title: '지금 귀환', body: '지금 돌아가면 얻은 것을 모두 지킨다', yes: '귀환', no: '계속 고르기', focusNo: true,
+          onYes: () => {
+            if (dead || exp.phase !== 'nest-choice') return;
+            chooseReturn(exp);
+            dispose();
+            h.onEnded();
+          },
+        });
+      } else if (exp.phase === 'event') {
+        if (eventBack) eventBack();
+        else showToast({ eyebrow: '안내', title: '둘 중 하나를 고른다' });
+      } else pauseBtn.click();
+    },
+  });
 
   render();
   resumeClock();
@@ -590,4 +680,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       dispose();
     }
   });
+}
+
+/** 배율 표시: ×1.25 · ×1.5 · ×2 (끝 0 없앰) */
+function fmtMult(k: number): string {
+  return String(Math.round(k * 100) / 100);
 }

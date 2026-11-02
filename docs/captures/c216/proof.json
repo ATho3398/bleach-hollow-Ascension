@@ -1,0 +1,167 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "battles": [
+        {
+          "id": "normal",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*",
+          "flow": {
+            "me": 488,
+            "foe": 158,
+            "meHp": 488,
+            "foeHp": 158,
+            "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+            "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+            "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487* block.1@566*"
+          },
+          "fx": "bha-afx--claw"
+        },
+        {
+          "id": "boss",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1, 0, 0, 1, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*"
+        },
+        {
+          "id": "elite-t2",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.5, 0, 0, 1.5, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*"
+        },
+        {
+          "id": "normal-t4",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1, 0, 0, 1, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*"
+        }
+      ],
+      "errors": [],
+      "tut": [
+        {
+          "step": "튜토리얼 1 / 7",
+          "title": "일반 공격은 자동",
+          "wait": false,
+          "sel": "",
+          "card": 323
+        },
+        {
+          "step": "튜토리얼 2 / 7",
+          "title": "강공격 예고",
+          "wait": false,
+          "sel": "",
+          "card": 323
+        },
+        {
+          "step": "튜토리얼 3 / 7",
+          "title": "지금 막기",
+          "wait": true,
+          "sel": "guard",
+          "card": 323
+        },
+        {
+          "step": "튜토리얼 4 / 7",
+          "title": "막지 못한 강공격",
+          "wait": false,
+          "sel": "",
+          "card": 323
+        },
+        {
+          "step": "튜토리얼 5 / 7",
+          "title": "블록: 눌러서 사용",
+          "wait": true,
+          "sel": "block.1",
+          "card": 323
+        },
+        {
+          "step": "튜토리얼 6 / 7",
+          "title": "같은 블록을 붙여서 체인",
+          "wait": false,
+          "sel": "",
+          "card": 323
+        },
+        {
+          "step": "튜토리얼 7 / 7",
+          "title": "체인3로 마무리",
+          "wait": true,
+          "sel": "block.1",
+          "card": 323
+        }
+      ]
+    },
+    {
+      "faction": "shinigami",
+      "battles": [
+        {
+          "id": "normal",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*",
+          "flow": {
+            "me": 488,
+            "foe": 158,
+            "meHp": 488,
+            "foeHp": 158,
+            "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+            "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+            "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487* block.1@566*"
+          },
+          "fx": ""
+        },
+        {
+          "id": "boss",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*"
+        },
+        {
+          "id": "elite-t2",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*"
+        },
+        {
+          "id": "normal-t4",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*"
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -88,9 +88,10 @@ describe('설정 화면 (103장 1·2·4)', () => {
     const c = read('src/ui/confirmDialog.ts');
     expect(c).toContain('alt?: { label: string; onClick: () => void };');
   });
-  it('[공통]/[이 슬롯] 토글 · 줄마다 슬롯 표시 · 슬롯 설정 지우기 = 확인(기본 아니오)', () => {
-    expect(s).toContain("id === 'common' ? '공통' : '이 슬롯'");
-    expect(s).toContain("text = !slotable(k) ? '공통만' : inSlot ? '슬롯' : '';");
+  it('C.239 (GDD 159장 13): [공통]/[이 슬롯] 토글·줄마다 슬롯 꼬리표는 화면에서 뺐다 · 남은 슬롯 값 지우기 = 확인(기본 아니오)', () => {
+    expect(s).toContain("if (host && scope === 'slot') {");
+    expect(s).not.toContain("text = !slotable(k) ? '공통만'");
+    expect(s).toContain("panel('이 캐릭터만 쓰던 설정'");
     expect(s).toContain("yes: '지우기', no: '아니오', danger: true,");
   });
   it('시작 화면 [설정] = 공통만, 방에서 연 설정은 슬롯 토글', () => {
@@ -104,7 +105,7 @@ describe('설정 화면 (103장 1·2·4)', () => {
 
 describe('세이브 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 47, 새 세이브 settings = null, 저장·불러오기로 남고 깨진 값은 버린다', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([52, 52]); // C.188 // C.184 // C.181
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
     const s = newSaveData('hollow');
     expect(s.settings).toBeNull();
     s.settings = { shake: false, sfxVolume: 30 };

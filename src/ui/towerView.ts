@@ -8,17 +8,17 @@ import { difficultyText, towerFloorText, towerLabels, type FactionConfig } from 
 import { nextTowerFloor, TOWER_FLOORS, towerFloor, towerOpen, type TowerFloor, type TowerReward } from '../engine/tower';
 import type { SaveData, TowerOutcome } from '../game';
 import { button, el, icon, panel, tag } from './bha/dom';
+import { infoTip } from './bha/infoTip';
 import { elementLocalRect } from './bha/viewport';
 import { iconInfo, type IconInfoRow } from './bha/expedition';
 import { lcdPage, selectLast } from './bha/lcdpage';
 import { splitApp } from './bha/split';
 import { battleLabels } from './labels';
-import { departTabs, type DepartTab } from './storyView';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 export interface TowerViewHandlers {
-  onTab: (id: DepartTab) => void;
   onChallenge: (f: TowerFloor) => void;
   onHelp: () => void;
 }
@@ -50,7 +50,7 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
 
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   const head = el('header', 'bha-exp__head bha-depart-head');
-  head.append(departTabs('tower', h.onTab), el('p', 'bha-depart-head__sub', `${L.name} · ${L.desc}`), selectLast(help));
+  head.append(el('h2', 'bha-plan__title', L.name), el('p', 'bha-depart-head__sub', L.desc), selectLast(help)); // 월드맵 장소 (GDD 139장 1): 출발 화면 탭 대신 제목
 
   // 왼쪽: 지금 층·최고 층 + 다음 층 카드
   const left: HTMLElement[] = [];
@@ -78,7 +78,8 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
     title.append(el('span', 'bha-label', `다음 · ${towerFloorText(faction, f.floor)}`), el('b', 'bha-tower__foe', towerEnemyName(faction, f)));
     const meta = el('div', 'bha-row');
     meta.append(tag(TOWER_KIND_LABEL[f.kind], f.kind === 'normal' ? 'normal' : 'elite'), el('span', 'bha-num', difficultyText(faction, f.star)));
-    if (f.floorMult > 1) meta.append(el('span', 'bha-faint bha-num', `적 +${Math.round((f.floorMult - 1) * 100)}%`));
+    // 층 배율은 ⓘ 를 눌러야 보인다 (GDD 159장 41: 카드에 '적 +158%'가 그대로 보였다)
+    if (f.floorMult > 1) meta.append(infoTip('층 세기', { lead: '높은 층일수록 적이 세다', groups: [{ title: '이 층', lines: [`적 체력·공격 +${Math.round((f.floorMult - 1) * 100)}%`] }] }));
     const reward = el('p', 'bha-tower__reward');
     reward.append(icon('i-rare'), `첫 클리어 · ${towerRewardText(faction, f.reward)}`);
     const go = button({ label: '도전', icon: 'i-play', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(f) });
@@ -150,7 +151,7 @@ export function towerResultView(root: HTMLElement, faction: FactionConfig, f: To
   const dock = el('div', 'bha-dock');
   if (h.onNext) dock.append(button({ label: `${towerFloorText(faction, res.next!)} 도전`, icon: 'i-play', variant: 'primary', size: 'lg', onClick: h.onNext }));
   else if (!won) dock.append(button({ label: '다시 도전', icon: 'i-loop', variant: 'primary', size: 'lg', onClick: h.onAgain }));
-  dock.append(button({ label: L.name, icon: 'i-return', size: h.onNext || !won ? undefined : 'lg', variant: h.onNext || !won ? undefined : 'primary', onClick: h.onBack }));
+  dock.append(asBack(button({ label: L.name, icon: 'i-return', size: h.onNext || !won ? undefined : 'lg', variant: h.onNext || !won ? undefined : 'primary', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);
   app.dataset.screen = 'tower-result';
   if (won) playCosmeticFx('win', app);

@@ -6,7 +6,7 @@ import { NORMAL_ELEMENT } from '../src/data/elements';
 import { addEnhance, basicAttackMultiplier, buildCombatParams, dropBasicBlockTraits, enhanceLevel, gainTrait, isBasicBlockTrait, newBuild, ownsTraitBlock } from '../src/engine/absorb';
 import { BALANCE } from '../src/config/balance';
 import { advance, chooseAbsorb, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
-import { dominantElement, evolutionCandidates, judgeElementCounts, vastoNormalElement } from '../src/engine/evolution/judge';
+import { dominantElement, evolutionCandidates, judgeElementCounts, tier3Element } from '../src/engine/evolution/judge';
 import { newEvolution } from '../src/engine/evolution';
 import { fillDefaultTraits, newTestSave, setTraitSlots } from '../src/engine/testMode';
 import { MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, migrateSave, newSaveData } from '../src/game';
@@ -26,8 +26,8 @@ function toAbsorb(exp: ExpeditionState, element: string): void {
 }
 
 describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
-  it('노멀 조·탄·교·희귀는 늘 가진 블록, 노멀 패시브·부위와 다른 속성은 아니다', () => {
-    expect(NORMAL_SKILLS.sort()).toEqual(['t-normal-a', 't-normal-b', 't-normal-c', 't-normal-rare']);
+  it('노멀 조·탄·교는 늘 가진 블록, 노멀 패시브·부위와 다른 속성은 아니다', () => {
+    expect(NORMAL_SKILLS.sort()).toEqual(['t-normal-a', 't-normal-b', 't-normal-c']); // C.213: 희귀 삭제
     const b = newBuild();
     for (const id of NORMAL_SKILLS) {
       expect(isBasicBlockTrait(id)).toBe(true);
@@ -64,7 +64,7 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
   it("포식 화면: 후보 카드·교체 판단이 같은 헬퍼 — 노멀 후보는 'n강 → n+1강'", () => {
     const src = read('src/ui/absorbView.ts');
     expect(src).toContain('const have = ownsTraitBlock(exp.build, id);');
-    expect(src).toContain("chip(have ? step : '새 블록')");
+    expect(src).toContain("chip(have ? '가진 블록' : '새 블록')"); // C.236 (GDD 158장 4): 강화 단계는 n/100 줄
     expect(src).toContain('if (isFull(exp.build) && !ownsTraitBlock(exp.build, id))');
     expect(src).not.toContain('exp.build.owned.includes(id)');
     expect(read('src/engine/expedition/expedition.ts')).toContain('if (!ownsTraitBlock(exp.build, traitId)) {');
@@ -74,7 +74,7 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
     const save = newTestSave('hollow', 1);
     expect(save.build.slots.every((x) => x === null)).toBe(true);
     expect(fillDefaultTraits(save)).toBe(0);
-    expect(setTraitSlots(save, ['t-normal-a', 't-water-a', 't-normal-rare'])).toEqual([null, 't-water-a', null]);
+    expect(setTraitSlots(save, ['t-normal-a', 't-water-a', 't-normal-b'])).toEqual([null, 't-water-a', null]);
     expect(save.build.owned.some(isBasicBlockTrait)).toBe(false);
     expect(read('src/ui/testModePanel.ts')).toContain('TRAITS.filter((t) => !isBasicBlockTrait(t.id))');
   });
@@ -98,7 +98,8 @@ describe('111장 3: 빈 칸 몫', () => {
     expect(basicAttackMultiplier(b)).toBeCloseTo((1 + EH.earlyPerLevel) * (1 + EH.basicPerEmptySlot * 3));
     gainTrait(b, 't-water-a');
     expect(buildCombatParams(b, 'hollow').basicAttackEnhance).toBeCloseTo((1 + EH.earlyPerLevel) * (1 + EH.basicPerEmptySlot * 2));
-    expect(read('src/ui/absorbView.ts')).toContain('basicAttackMultiplier({ enhance: { [elId]: n }, slots: exp.build.slots })');
+    // C.236 (GDD 158장 4·5): 효과 % 는 흡수 화면에서 빼고 가방 블록 상세 수치 줄에서
+    expect(read('src/ui/buildPanel.ts')).toContain('basicAttackMultiplier(build) - 1');
   });
 });
 
@@ -111,7 +112,7 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
     addEnhance(b, NORMAL_ELEMENT);
     expect(judgeElementCounts(b)).toEqual({ fire: 1, normal: 2 });
     expect(dominantElement(b)).toBe('normal');
-    expect(vastoNormalElement(b)).toBe('normal');
+    expect(tier3Element(b)).toBe('normal');
     gainTrait(b, 't-water-a');
     expect(judgeElementCounts(b)).toEqual({ fire: 1, water: 1, normal: 1 });
     expect(dominantElement(b)).toBe('water'); // 동률: 가장 최근 장착
@@ -121,23 +122,23 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
   });
   it('노멀 강화 + 칸 1개만 장착한 몸은 바스트로데_노멀 (칸을 일부러 비우지 않아도)', () => {
     const e = newEvolution(1);
-    e.tierIndex = 2;
+    e.tierIndex = 1;
     const b = newBuild();
     b.enhance = { [NORMAL_ELEMENT]: 2 };
     gainTrait(b, 't-earth-a');
-    expect(evolutionCandidates(e, { factionId: 'hollow', build: b, hunger: 20, condition: 80 }).normal.id).toBe('t4:normal');
+    expect(evolutionCandidates(e, { factionId: 'hollow', build: b, hunger: 20, condition: 80 }).normal.id).toBe('t3:normal');
   });
 });
 
 describe('111장 2: 옛 노멀 특성 정리 (마이그레이션 없음)', () => {
   it('형식·문턱 51 같이 올림', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([52, 52]); // C.188
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
   });
   it('불러올 때 보유·슬롯·장착 순서의 노멀 skill 특성을 지운다(다른 특성·노멀 패시브·강화는 그대로)', () => {
     const s = newSaveData('hollow');
-    s.build.owned = ['t-normal-a', 't-water-a', 't-normal-passive', 't-normal-rare'];
-    s.build.slots = ['t-normal-a', 't-water-a', 't-normal-rare'];
-    s.build.equipOrder = ['t-normal-a', 't-water-a', 't-normal-rare'];
+    s.build.owned = ['t-normal-a', 't-water-a', 't-normal-passive', 't-normal-b'];
+    s.build.slots = ['t-normal-a', 't-water-a', 't-normal-b'];
+    s.build.equipOrder = ['t-normal-a', 't-water-a', 't-normal-b'];
     s.build.enhance = { normal: 4 };
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m.build.owned).toEqual(['t-water-a', 't-normal-passive']);

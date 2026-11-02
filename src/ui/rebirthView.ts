@@ -1,6 +1,7 @@
-// 환생 화면 (GDD 22-1·22-7): 확인 1(초기화·남김 목록 + 계승할 특성 1개 고르기) → 확인 2(최종, app 의 confirmDialog) → 연출(짧은 페이드 + 종족 설정 문구).
+// 환생 화면 (GDD 22-1·22-7): 확인 1(초기화·남김 목록 + 가지고 갈 블록 1개 고르기) → 확인 2(최종, app 의 confirmDialog) → 연출(짧은 페이드 + 종족 설정 문구).
 // 문구는 종족 설정(rebirth·tierNames·slotName·rankBattleName·riskGaugeName)에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.rebirth.
 import { BALANCE } from '../config/balance';
+import { fixParticles } from '../engine/josa';
 import { getTrait, traitName } from '../data/traits';
 import { formName, tryGetForm } from '../data/evolution';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
@@ -17,6 +18,8 @@ import type { Device } from './bha/device';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { toward } from './bha/nestLogic';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
+import { evText } from './bha/nest';
 
 /** 이름 옆 환생 표시 칩 (0회면 null) */
 export function rebirthMark(count: number): HTMLElement | null {
@@ -41,7 +44,7 @@ export function rebirthLists(faction: FactionConfig): { resets: string[]; keeps:
   return {
     resets: [
       `단계·진화체 → 1단계 ${faction.tierNames[0]}`,
-      `장착한 ${faction.slotName} 특성 (고른 1개는 가지고 간다)`,
+      `장착한 ${faction.slotName} 블록 (고른 1개는 가지고 간다)`,
       '진화 걸음',
       `${faction.rankBattleName} 번호·전적`,
       `노력치 (${rate}%는 다음 생에 쌓인다)`,
@@ -50,6 +53,7 @@ export function rebirthLists(faction: FactionConfig): { resets: string[]; keeps:
     ],
     keeps: [
       '진화체 도감·칭호',
+      '진화 때 받은 특성 (특성 칸 +1, 최대 4)',
       '등급 이력',
       '수련 완료·수련치·수련권',
       `먹이·${TRADE_CURRENCY_NAME}·${JADE_NAME}·${SOUL_CRYSTAL_NAME}·가진 타일`,
@@ -68,8 +72,8 @@ function listPanel(title: string, items: string[], aria: string): HTMLElement {
 }
 
 /**
- * 확인 1: 왼쪽 = 초기화 / 남는 것, 오른쪽 = 계승할 특성 1개 고르기 + 다음 생 계승 노력치 + 보상 + [다음 — 최종 확인].
- * 특성은 지금 장착한 것 중 하나(또는 가져가지 않음). 기본 선택 = 첫 번째 장착 특성.
+ * 확인 1: 왼쪽 = 초기화 / 남는 것, 오른쪽 = 가지고 갈 블록 1개 고르기 + 다음 생 계승 노력치 + 보상 + [다음 — 최종 확인].
+ * 블록은 지금 장착한 흡수 블록 중 하나(또는 가져가지 않음). 기본 선택 = 첫 번째 장착 블록. 진화 특성은 고르지 않고 전부 남는다(GDD 147장 2).
  */
 export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: SaveData, hd: { onNext: (keepTraitId: string | null) => void }): void {
   const evo = save.evolution;
@@ -84,8 +88,8 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
 
   const traits = inheritableTraits(save.build);
   let pick: string | null = traits[0] ?? null;
-  const pickPanel = panel({ title: '가지고 갈 특성 1개' });
-  pickPanel.setAttribute('aria-label', '가지고 갈 특성');
+  const pickPanel = panel({ title: '가지고 갈 블록 1개' });
+  pickPanel.setAttribute('aria-label', '가지고 갈 블록');
   const rows: { id: string | null; btn: HTMLButtonElement }[] = [];
   const mark2 = () => {
     for (const r of rows) {
@@ -106,7 +110,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
   add(null, '가지고 가지 않는다');
   mark2();
   pickPanel.append(list);
-  if (traits.length === 0) pickPanel.append(h('p', 'bha-faint', `장착한 특성이 없다. ${faction.slotName}에 특성을 장착해 두면 하나를 가지고 갈 수 있다.`));
+  if (traits.length === 0) pickPanel.append(h('p', 'bha-faint', `장착한 블록이 없다. ${faction.slotName}에 블록을 장착해 두면 하나를 가지고 갈 수 있다.`));
 
   const carry = startingCarry(nextCarry(save.rebirth, evo));
   const info = panel({ title: '다음 생', aside: provisionalTag('임시 수치') });
@@ -115,25 +119,25 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
   const reward = [`${SOUL_CRYSTAL_NAME} +${BALANCE.provisional.soulCrystals.perRebirth}`, ...(save.rebirth.count === 0 ? [`${JADE_NAME} +${RB.firstJade} (첫 ${faction.rebirth.name})`] : [])].join(' · ');
   const stars = h('p', 'bha-small');
   stars.append('이름 옆 표시 ', rebirthMark(save.rebirth.count + 1)!);
-  info.append(h('p', 'bha-small', `시작 노력치(계승): ${carryLine(faction.id, carry)}`), h('p', 'bha-small', `보상: ${reward}`), stars);
+  info.append((() => { const p = h('p', 'bha-small'); p.append('시작 노력치(계승): ', evText(carryLine(faction.id, carry))); return p; })(), h('p', 'bha-small', `보상: ${reward}`), stars);
 
   const blocked = save.activeExpedition != null;
   const next = button({ label: '다음 — 최종 확인', icon: 'i-chevron-right', variant: 'danger', block: true, disabled: blocked, onClick: () => hd.onNext(pick) });
   next.dataset.sc = 'rebirth-next';
   const right: HTMLElement[] = [pickPanel, info];
-  if (blocked) right.push(notice('danger', '진행 중인 원정이 있다. 원정을 끝내고 돌아와야 환생할 수 있다.', { icon: 'i-broken' }));
+  if (blocked) right.push(notice('danger', '진행 중인 모험이 있다. 모험을 끝내고 돌아와야 환생할 수 있다.', { icon: 'i-broken' }));
   right.push(next);
   lcdPage(dev.view, { cls: 'bha-rebirth-page' }, head, [listPanel('초기화된다', lists.resets, '초기화되는 것'), listPanel('남는다', lists.keeps, '남는 것')], right);
 }
 
 /** 최종 확인(확인 2) 문구 */
 export function rebirthFinalText(faction: FactionConfig, keepTraitId: string | null): { title: string; body: string } {
-  const keep = keepTraitId ? `「${traitName(keepTraitId, faction.id)}」 하나만 가지고` : '특성 없이';
-  return { title: `${faction.rebirth.name} 최종 확인`, body: `되돌릴 수 없다. ${keep} 1단계 ${faction.tierNames[0]}로 돌아간다. (직전 상태는 자동 백업된다)` };
+  const keep = keepTraitId ? `「${traitName(keepTraitId, faction.id)}」 하나만 가지고` : '블록 없이';
+  return { title: `${faction.rebirth.name} 최종 확인`, body: fixParticles(`되돌릴 수 없다. ${keep} 1단계 ${faction.tierNames[0]}(으)로 돌아간다. (직전 상태는 자동 백업된다)`) };
 }
 
 /**
- * 환생 연출: 화면이 하얗게 바랬다가 돌아오며(페이드) 종족 설정 문구 3줄 → 결과(1단계 이름 + ★, 계승 노력치·특성·보상) + [둥지로].
+ * 환생 연출: 화면이 하얗게 바랬다가 돌아오며(페이드) 종족 설정 문구 3줄 → 결과(1단계 이름 + ★, 계승 노력치·블록·보상) + [둥지로].
  * 3.4초 뒤 결과, [건너뛰기]로 바로.
  */
 export function rebirthView(root: HTMLElement, faction: FactionConfig, record: RebirthRecord, reward: { soulCrystals: number; jade: number }, onDone: () => void): void {
@@ -153,28 +157,30 @@ export function rebirthView(root: HTMLElement, faction: FactionConfig, record: R
     linesSection.hidden = true;
     result.hidden = false;
   };
-  linesSection.append(h('span'), lines, button({ label: '건너뛰기', variant: 'ghost', onClick: show }));
+  linesSection.append(h('span'), lines, asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: show })));
 
   const main = h('div', 'bha-evolve__resmain');
   const title = h('h1', 'bha-evolve__title', faction.tierNames[0]!);
   title.append(' ', rebirthMark(record.count)!);
-  const home = button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
+  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();
-  } });
+  } }));
   main.append(h('span', 'bha-evolve__eyebrow', `${faction.rebirth.name} ${record.count}회`), title, h('p', 'bha-evolve__path', faction.rebirth.rebornText), home);
   const side = h('div', 'bha-evolve__resside');
   const got = panel({ title: '가지고 온 것', aside: provisionalTag('임시 수치') });
   const dl = h('dl', 'bha-info');
-  const row = (label: string, value: string) => {
+  const row = (label: string, value: string | HTMLElement) => {
     const r = h('div', 'bha-info__row bha-info__row--stack');
-    r.append(h('dt', '', label), h('dd', '', value));
+    const dd = h('dd');
+    dd.append(value);
+    r.append(h('dt', '', label), dd);
     dl.append(r);
   };
   const prev = record.prevFormId ? tryGetForm(record.prevFormId) : undefined;
   row('이전 생', shownName(prev ? formName(prev, faction.id, record.prevElements) : faction.tierNames[record.prevTierIndex]!));
-  row('특성', record.keptTraitId ? traitName(record.keptTraitId, faction.id) : '없음');
-  row('계승 노력치', carryLine(faction.id, record.carry as Stats));
+  row('블록', record.keptTraitId ? traitName(record.keptTraitId, faction.id) : '없음');
+  row('계승 노력치', evText(carryLine(faction.id, record.carry as Stats))); // 노력치 글자 (GDD 160장 6)
   row('보상', [`${SOUL_CRYSTAL_NAME} +${reward.soulCrystals}`, ...(reward.jade ? [`${JADE_NAME} +${reward.jade}`] : [])].join(' · '));
   got.append(dl);
   side.append(got);

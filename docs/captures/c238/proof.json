@@ -1,0 +1,147 @@
+{
+  "shots": [
+    "01-room.png",
+    "02-training.png",
+    "03-status-ailment.png",
+    "04-status-ev.png",
+    "05-status-info.png",
+    "06-worldmap.png",
+    "07-market.png"
+  ],
+  "errors": [],
+  "trace": [
+    [
+      "room",
+      "bha-room"
+    ],
+    [
+      "training-from-room",
+      "bha-lcdpage bha-train-page"
+    ],
+    [
+      "training-back",
+      "bha-room"
+    ],
+    [
+      "status",
+      "bha-lcdpage bha-care-page"
+    ],
+    [
+      "status-back",
+      "bha-room"
+    ],
+    [
+      "training-from-map",
+      "bha-lcdpage bha-train-page"
+    ],
+    [
+      "training-map-back",
+      "bha-room bha-worldmap"
+    ]
+  ],
+  "roomProps": {
+    "altar": [
+      {
+        "x": 634,
+        "y": 163,
+        "w": 77,
+        "h": 85,
+        "s": "0.68"
+      }
+    ],
+    "outside": [
+      {
+        "x": 109,
+        "y": 65,
+        "w": 142,
+        "h": 207,
+        "s": "1.5"
+      }
+    ],
+    "book": [
+      {
+        "x": 546,
+        "y": 134,
+        "w": 77,
+        "h": 85,
+        "s": "0.68"
+      }
+    ]
+  },
+  "statusOrder": [
+    [
+      "쇠약",
+      74
+    ],
+    [
+      "피곤",
+      106
+    ],
+    [
+      "능력치노노멀체력110+12힘147+30지능105+8방어",
+      136
+    ]
+  ],
+  "evStyle": {
+    "text": "+12",
+    "size": "16px",
+    "weight": "800"
+  },
+  "tipRows": 0,
+  "statInfo": "능력치평타는 힘, 블록 공격은 지능을 따라간다.하는 일체력 = 최대 체력힘 = 일반 공격(평타) 피해 — 상대 방어와 맞선다지능 = 블록 공격 피해(기술 블록·기본 공격 블록·콤보 등 전부) — 상대 정신력과 맞선다방어 = 적의 힘이 실린 공격을 막는다정신력 = 적의 지능이 실린 공격을 막는다속도 = 평타가 나가는 빠르기치명평타 치명 = 평타가 치명타로 터질 확률 · 기본 5% · 최대 50%블록 치명 = 블록 공격이 치명타로 터질 확률 · 기본 5% · 최대 50%치명타 피해 = 치명타가 터지면 피해 ×1.5속성 피해그 속성 공격의 피해가 이만큼 늘어난다값 옆 굵은 +숫자노력치(와 환생 계승) — 이미 능력치 값에 더해져 있다",
+  "worldImgs": [
+    [
+      "home",
+      "icon"
+    ],
+    [
+      "market",
+      "/art/prop-shop.webp"
+    ],
+    [
+      "training",
+      "/art/prop-altar.webp"
+    ],
+    [
+      "adventure",
+      "icon"
+    ],
+    [
+      "tower",
+      "icon"
+    ],
+    [
+      "spa",
+      "/art/prop-spa.png"
+    ]
+  ],
+  "marketProps": {
+    "exit": [
+      {
+        "x": 100,
+        "y": 105,
+        "w": 143,
+        "h": 208,
+        "s": "1.5"
+      }
+    ],
+    "gearShop": [
+      {
+        "x": 420,
+        "y": 74,
+        "w": 107,
+        "h": 112,
+        "s": "0.96"
+      }
+    ],
+    "shop": [
+      {
+        "x": 256,
+        "y": 100,
+        "w": 101,
+        "h": 106,
+        "s": "0.9"
+      }
+    ]
+  }
+}

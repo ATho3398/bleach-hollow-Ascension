@@ -1,0 +1,118 @@
+{
+  "_note": "재료 22종 (GDD 154장, C.229). 두 종족 공통. 쓰임·얻는 곳은 사용자가 나중에 정한다 — 설명은 provisional",
+  "provisional": true,
+  "desc": "쓰임은 아직 알려지지 않았다",
+  "materials": [
+    {
+      "id": "mat-leather-thick",
+      "name": "두꺼운 가죽",
+      "icon": "i-guard"
+    },
+    {
+      "id": "mat-leather-supple",
+      "name": "유연한 가죽",
+      "icon": "i-guard"
+    },
+    {
+      "id": "mat-leather-light",
+      "name": "가벼운 가죽",
+      "icon": "i-guard"
+    },
+    {
+      "id": "mat-leather-tough",
+      "name": "질긴 가죽",
+      "icon": "i-guard"
+    },
+    {
+      "id": "mat-obsidian",
+      "name": "흑요석",
+      "icon": "i-rare"
+    },
+    {
+      "id": "mat-metal-light",
+      "name": "가벼운 금속",
+      "icon": "i-attack"
+    },
+    {
+      "id": "mat-steel",
+      "name": "강철",
+      "icon": "i-attack"
+    },
+    {
+      "id": "mat-metal-supple",
+      "name": "유연한 금속",
+      "icon": "i-attack"
+    },
+    {
+      "id": "mat-metal-soft",
+      "name": "무른 금속",
+      "icon": "i-attack"
+    },
+    {
+      "id": "mat-hollow-fang",
+      "name": "호로 이빨",
+      "icon": "i-fx-bite"
+    },
+    {
+      "id": "mat-mask-shard",
+      "name": "가면 조각",
+      "icon": "i-broken"
+    },
+    {
+      "id": "mat-mask-whole",
+      "name": "온전한 가면",
+      "icon": "i-seal"
+    },
+    {
+      "id": "mat-gold-shard",
+      "name": "금 조각",
+      "icon": "i-special"
+    },
+    {
+      "id": "mat-silver-shard",
+      "name": "은 조각",
+      "icon": "i-special"
+    },
+    {
+      "id": "mat-dye",
+      "name": "염료",
+      "icon": "i-cond"
+    },
+    {
+      "id": "mat-gem-shiny",
+      "name": "반짝이는 보석",
+      "icon": "i-rare"
+    },
+    {
+      "id": "mat-abrasive",
+      "name": "연마제",
+      "icon": "i-practice"
+    },
+    {
+      "id": "mat-lubricant",
+      "name": "윤활제",
+      "icon": "i-heal"
+    },
+    {
+      "id": "mat-thread-tough",
+      "name": "질긴 실",
+      "icon": "i-loop"
+    },
+    {
+      "id": "mat-cloth-scrap",
+      "name": "천 조각",
+      "icon": "i-shelf"
+    },
+    {
+      "id": "mat-glue",
+      "name": "아교",
+      "icon": "i-grip"
+    },
+    {
+      "id": "mat-amber",
+      "name": "호박",
+      "icon": "i-rare",
+      "note": "보석"
+    }
+  ]
+}

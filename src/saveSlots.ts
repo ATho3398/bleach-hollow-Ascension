@@ -3,6 +3,7 @@
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
 import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
 import { collectChunks, parseSaveText } from './saveCodec';
+import { rankOf } from './engine/rank/rank';
 
 export const SLOT_COUNT = 3;
 /** 슬롯별 마지막 플레이 시각 */
@@ -31,6 +32,10 @@ export type SlotSummary =
       playedAt: number | null;
       /** 원정 중간 저장이 있는가 */
       inExpedition: boolean;
+      /** 번호 쟁탈전·진급 시험 순위 (1 = 맨 위, 없으면 null) — 슬롯 제목 칭호 (GDD 129장 1) */
+      rank?: number | null;
+      /** 환생 횟수 — 1 이상일 때만 슬롯 제목 옆 '+환생 n회' (GDD 129장 1) */
+      rebirths?: number;
     };
 
 interface SlotsMeta {
@@ -101,6 +106,8 @@ export function slotSummary(storage: StorageLike, slot: number, min: number = sa
     expeditions: save.runLog.runs.length,
     playedAt: readMeta(storage).played[String(slot)] ?? null,
     inExpedition: save.activeExpedition != null,
+    rank: (() => { try { return save.rank ? rankOf(save.rank) : null; } catch { return null; } })(),
+    rebirths: save.rebirth?.count ?? 0,
   };
 }
 
@@ -142,8 +149,8 @@ export function deleteSlot(storage: StorageLike, slot: number): boolean {
 }
 
 /** 백업을 남긴 까닭 (GDD 24-5): 되돌리기 화면에 "○○ 직전" 으로 보인다 */
-export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'revive' | 'fusion' | 'revert' | 'delete';
-export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'revive', 'fusion', 'revert', 'delete'];
+export type BackupReason = 'overwrite' | 'import' | 'rank' | 'migration' | 'rebirth' | 'revive' | 'fusion' | 'revert' | 'delete' | 'ascension';
+export const BACKUP_REASONS: readonly BackupReason[] = ['overwrite', 'import', 'rank', 'migration', 'rebirth', 'revive', 'fusion', 'revert', 'delete', 'ascension'];
 /** 슬롯 백업의 까닭·시각 기록 키 (세이브 밖 — SaveData 구조와 무관) */
 export const slotBackupMetaKey = (slot: number): string => `${slotBackupKey(slot)}.meta`;
 

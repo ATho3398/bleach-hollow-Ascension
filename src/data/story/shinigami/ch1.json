@@ -19,14 +19,14 @@
     },
     {
       "id": "ep2",
-      "title": "밤의 루콘가이",
+      "title": "밤의 루콘가 외곽",
       "objective": { "type": "survive", "laps": 2 },
       "recommendedTier": 1,
       "difficulty": 1,
       "maxLaps": 2,
       "road": { "3": "prey-nest-a", "6": "env-ruin", "9": "prey-nest-a", "11": "rest-a" },
       "dialogue": {
-        "start": [{ "speaker": "분대장", "text": "밤의 루콘가이는 다르다. 정신 바짝 차려라." }],
+        "start": [{ "speaker": "분대장", "text": "밤의 루콘가 외곽는 다르다. 정신 바짝 차려라." }],
         "end": [{ "speaker": "분대장", "text": "…버텼군. 제법이다." }]
       }
     },

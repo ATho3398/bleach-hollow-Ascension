@@ -1,0 +1,31 @@
+{
+  "shots": [
+    "02-etc-empty.png",
+    "01-etc-materials.png",
+    "03-material-detail.png"
+  ],
+  "errors": [],
+  "trace": [],
+  "empty": "아직 가진 재료가 없다",
+  "tabs": [
+    "장비0",
+    "슬롯",
+    "타일17",
+    "물건",
+    "펫0",
+    "기타0"
+  ],
+  "cards": [
+    "mat-leather-thick: 두꺼운 가죽쓰임은 아직 알려지지 않았다×3",
+    "mat-steel: 강철쓰임은 아직 알려지지 않았다×12",
+    "mat-hollow-fang: 호로 이빨쓰임은 아직 알려지지 않았다×5",
+    "mat-mask-shard: 가면 조각쓰임은 아직 알려지지 않았다×2",
+    "mat-gold-shard: 금 조각쓰임은 아직 알려지지 않았다×1",
+    "mat-gem-shiny: 반짝이는 보석쓰임은 아직 알려지지 않았다×1",
+    "mat-glue: 아교쓰임은 아직 알려지지 않았다×4",
+    "mat-amber: 호박보석×2"
+  ],
+  "focus": "강철쓰임은 아직 알려지지 않았다×12",
+  "dialog": "재료보유: 12강철쓰임은 아직 알려지지 않았다.",
+  "closedByBack": true
+}

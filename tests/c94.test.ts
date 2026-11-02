@@ -19,11 +19,11 @@ describe('C.94 탑 구간별 배율', () => {
     expect(towerFloorMultiplier(25)).toBeCloseTo((1 + 4 * TX.perFloorInBand) * TX.eliteScale * TX.eliteScaleByBand[3]!); // C.174: ★3 강적 층 ×0.9
   });
 
-  it('★2·★3 구간 보스 층(20·30층)만 보스 층 배율을 곱하고 40층은 1 (C.136: ★3 0.65 → C.176 0.72)', () => {
+  it('★2·★3 구간 보스 층(20·30층)만 보스 층 배율을 곱하고 40층은 1 (C.136: ★3 0.65 → C.176 0.72 → C.212 0.65)', () => {
     expect(TX.bossScaleByBand[2]).toBe(0.72);
-    expect(TX.bossScaleByBand[3]).toBe(0.72);
+    expect(TX.bossScaleByBand[3]).toBe(0.65);
     expect(towerFloorMultiplier(20)).toBeCloseTo((1 + 9 * 0.02) * 0.72);
-    expect(towerFloorMultiplier(30)).toBeCloseTo((1 + 9 * TX.perFloorInBand) * 0.72);
+    expect(towerFloorMultiplier(30)).toBeCloseTo((1 + 9 * TX.perFloorInBand) * 0.65);
     expect(towerFloorMultiplier(40)).toBeCloseTo(1 + 9 * TX.perFloorInBand);
     // 보스 층 배율은 보통·강적 층에는 붙지 않는다
     expect(towerFloorMultiplier(19)).toBeCloseTo(1 + 8 * 0.02);

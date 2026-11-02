@@ -78,8 +78,8 @@ describe('수련 상태 (GDD 22-4·22-5)', () => {
 
   it('시작 조건: 5단계 미만 · 수련권 0 · 컨디션 30 미만이면 막힌다', () => {
     const t = newTrainingState();
-    expect(trainingGate(t, 3, 80)).toEqual({ ok: false, reason: 'tier' });
-    expect(trainingGate(t, 4, 80)).toEqual({ ok: false, reason: 'tickets' });
+    expect(trainingGate(t, 2, 80)).toEqual({ ok: false, reason: 'tier' }); // C.220: 4단계(tierIndex 3)부터
+    expect(trainingGate(t, 3, 80)).toEqual({ ok: false, reason: 'tickets' });
     t.tickets = 1;
     expect(trainingGate(t, 4, TX.minCondition - 1)).toEqual({ ok: false, reason: 'condition' });
     expect(trainingGate(t, 4, TX.minCondition)).toEqual({ ok: true });
@@ -239,7 +239,7 @@ describe('종족 설정·표시 (규칙 2: 종족 분기 없음)', () => {
   });
 
   it('5단계 미만 제단 안내 = 종족 5단계 이름, 해방 블록 이름 = 속성_해방', () => {
-    expect(trainingLockedText(getFaction('hollow'))).toContain('아란칼');
+    expect(trainingLockedText(getFaction('hollow'))).toContain('바스트로데');
     expect(trainingLockedText(getFaction('shinigami'))).toContain('수석 대원');
     expect(liberationBlockLabel('hollow', 'fire')).toBe('불_해방');
     expect(liberationBlockLabel('hollow', null)).toBe('해방');

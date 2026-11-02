@@ -257,7 +257,7 @@ describe('켜기 (38-1)·바로 전투 상대', () => {
     expect(towerFloorScale(1)).toEqual({ star: 1, factor: 1 });
     expect(towerFloorScale(10).star).toBe(1);
     expect(towerFloorScale(10).factor).toBeCloseTo(1.36);
-    expect(towerFloorScale(41)).toEqual({ star: 5, factor: 1 });
+    expect(towerFloorScale(41)).toEqual({ star: 4, factor: 1 }); // C.220: ★ 최대 4
     expect(towerFloorScale(50).factor).toBeCloseTo(1.36 * 1.2);
     const tower = testBattleEnemy({ foeId: BOSSES[0]!.id, star: 1, streak: 9, floor: 30 })!;
     expect(tower.star).toBe(3);

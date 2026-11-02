@@ -8,12 +8,16 @@ import './ui/bha/expedition.css';
 import './ui/bha/story.css';
 import './ui/bha/device.css';
 import './ui/bha/room.css';
+import './ui/bha/spa.css';
+import './ui/bha/market.css';
+import './ui/bha/worldmap.css';
 import './ui/bha/lcd.css';
 import './ui/bha/screens-lcd.css';
 import './ui/bha/battle-scene.css';
 import './ui/bha/training.css';
 import './ui/bha/walk-scene.css';
-import './ui/bha/loco.css';
+import './ui/bha/encounter.css'; // 조우·휴식 칸 앞쪽 (C.202)
+import './ui/bha/absorb-status.css'; // 흡수 [내 상태] 창 (C.202)
 import './ui/bha/shop.css';
 import './ui/bha/cosmetics.css';
 import './ui/bha/tamago.css';

@@ -132,7 +132,7 @@ describe('세이브 반영 (형식 15)', () => {
   };
   const aran = () => {
     const save = newSaveData('hollow', 0);
-    Object.assign(save.evolution, { tierIndex: UNLOCK, formId: 't5:fire:physical' });
+    Object.assign(save.evolution, { tierIndex: UNLOCK, formId: 't4:fire:physical' });
     return save;
   };
   it('등급전 승리: 번호·등급 이력·런 로그(등급전 기록 + 전투 기록 enemyClass rank)·영혼 결정 +3·등급 칭호', () => {
@@ -142,7 +142,7 @@ describe('세이브 반영 (형식 15)', () => {
     expect(r).toMatchObject({ won: true, after: 10, firstRanked: true });
     expect(rankOf(save.rank)).toBe(10);
     expect(save.rank.history.everRanked).toBe(true);
-    expect(save.runLog.rankBattles).toEqual([expect.objectContaining({ at: 777, won: true, rankBefore: null, rankAfter: 10, firstRanked: true, tierIndex: UNLOCK, formId: 't5:fire:physical', seed: 42 })]);
+    expect(save.runLog.rankBattles).toEqual([expect.objectContaining({ at: 777, won: true, rankBefore: null, rankAfter: 10, firstRanked: true, tierIndex: UNLOCK, formId: 't4:fire:physical', seed: 42 })]);
     expect(save.runLog.battles.at(-1)!.enemyClass).toBe('rank');
     expect(save.shared.soulCrystals).toBe(BALANCE.provisional.soulCrystals.perRankWin);
     expect(save.titles.find((t) => t.titleId === 'rank-1')).toMatchObject({ at: 777, trigger: 'rank' });
@@ -200,6 +200,6 @@ describe('표시 이름 (종족 설정에서, 엔진은 번호만)', () => {
     expect(rankLabel(getFaction('hollow'), 10)).toBe('에스파다 No.10');
     expect(rankLabel(getFaction('hollow'), null)).toBe('무번호');
     expect(rankLabel(getFaction('shinigami'), 1)).toBe('대장');
-    expect(rankLabel(getFaction('shinigami'), 10)).toBe('9석');
+    expect(rankLabel(getFaction('shinigami'), 10)).toBe('10석'); // C.220: 10석…3석·부대장·대장
   });
 });

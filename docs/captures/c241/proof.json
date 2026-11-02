@@ -1,0 +1,38 @@
+{
+  "shots": [
+    "01-spa-enter.png",
+    "02-spa-10s.png",
+    "03-room-after.png"
+  ],
+  "errors": [],
+  "trace": [
+    [
+      "room",
+      "bha-room"
+    ],
+    [
+      "worldmap",
+      "bha-room bha-worldmap"
+    ],
+    [
+      "spa",
+      "bha-spa"
+    ],
+    [
+      "after",
+      "bha-room"
+    ]
+  ],
+  "samples": [
+    [
+      1.6,
+      "22 / 212599월드맵으로 돌아가기온천"
+    ],
+    [
+      10.5,
+      "117 / 2125095월드맵으로 돌아가기온천"
+    ]
+  ],
+  "leftAt": 20.7,
+  "roomStatus": "수석 대원 노멀 권90100500피곤"
+}

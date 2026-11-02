@@ -25,6 +25,12 @@ export interface ScreenEntry {
   render: () => void;
   /** true 면 취소 버튼이 이 화면을 닫지 못한다 */
   locked?: boolean;
+  /** 뒤로(취소)로 이 화면을 닫기 직전에 부른다 (예: 온천에서 나오기, GDD 123장 4) */
+  beforeBack?: () => void;
+  /** 뒤로를 잠시 맡는다 (예: 온천 나가기 연출, GDD 132장 4): true 면 지금은 빼지 않는다 — 연출이 끝나면 화면이 스스로 back() 을 다시 부른다 */
+  interceptBack?: () => boolean;
+  /** 홈(방): 더 갈 곳이 없을 때 뒤로 = '처음 화면으로' 확인 (GDD 124장 1). 잠긴 화면·다른 화면에는 붙이지 않는다 (104장 7 버그 재발 방지) */
+  home?: boolean;
 }
 
 export class ScreenStack {
@@ -70,10 +76,23 @@ export class ScreenStack {
     return !!t && !t.locked && this.entries.length > 1;
   }
 
+  /** 뒤로 규칙 (GDD 124장 1): 한 화면 뒤로('back') → 못 가면 맨 위가 홈 하나뿐일 때만 'home'(처음 화면 확인) → 아니면 'none'. 열린 창·메뉴 닫기는 기기(device)가 먼저 한다 */
+  cancel(): 'back' | 'home' | 'none' {
+    if (this.back()) return 'back';
+    return this.entries.length === 1 && this.top?.home === true && !this.top.locked ? 'home' : 'none';
+  }
+
+  /** 뒤로를 받을 수 있나: 한 단계 뒤로 가거나, 홈이라 처음 화면 확인을 띄울 수 있다 */
+  get canCancel(): boolean {
+    return this.canBack || (this.entries.length === 1 && this.top?.home === true && !this.top.locked);
+  }
+
   /** 한 단계 뒤로. 홈뿐이거나 맨 위가 locked 면 false */
   back(): boolean {
     const t = this.top;
     if (!t || t.locked || this.entries.length <= 1) return false;
+    if (t.interceptBack?.()) return true;
+    t.beforeBack?.();
     this.entries.pop();
     this.top!.render();
     return true;
@@ -115,4 +134,27 @@ export function uiBox(r: { left: number; top: number; width: number; height: num
   const cy = r.top + r.height / 2;
   if (!rotated) return { u: cx - lcd.left, v: cy - lcd.top, w: r.width, h: r.height };
   return { u: cy - lcd.top, v: lcd.left + lcd.width - cx, w: r.height, h: r.width };
+}
+
+/**
+ * 못 쓰는 대상을 건너뛰며 한 칸 이동 (전투 커서, GDD 122장 3): 끝에서 순환. 쓸 수 있는 대상이 없으면 -1.
+ * 지금 자리(cur)만 쓸 수 있으면 그 자리 그대로
+ */
+export function stepUsable(cur: number, dir: 1 | -1, usable: readonly boolean[]): number {
+  const n = usable.length;
+  let i = cur;
+  for (let k = 0; k < n; k++) {
+    i = stepIndex(i, dir, n);
+    if (usable[i]) return i;
+  }
+  return -1;
+}
+
+/** cur 에서 가장 가까운 쓸 수 있는 대상 (같은 거리면 왼쪽·앞 먼저, 순환하지 않음). 없으면 -1 */
+export function nearestUsable(cur: number, usable: readonly boolean[]): number {
+  for (let d = 0; d < usable.length; d++) {
+    if (usable[cur - d]) return cur - d;
+    if (usable[cur + d]) return cur + d;
+  }
+  return -1;
 }

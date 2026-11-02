@@ -47,8 +47,8 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     const s = newSaveData('hollow', 1);
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(52); // C.188 (C.184 51) (C.177 50)
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
+    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
 
   it('첫 진화(1→2단계) 때 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 → 보관함·덱, 타일 안내 차례. 두 번째 진화엔 더 안 준다', () => {
@@ -226,7 +226,9 @@ describe('67장: 첫 원정 튜토리얼', () => {
     expect(s.evolution.absorbs).toBe(0);
     expect(firstRunPending(s)).toBe(false);
     expect(s.help.guides['first-run']).toBe('done');
-    expect(guidePending(s.help, 'first-run-room')).toBe(true);
+    // C.199 (GDD 123장 5 수정): 튜토리얼 뒤 먼저 회복 안내(빈사 복귀), '다음 할 일'은 그 안내를 마친 뒤
+    expect(guidePending(s.help, 'recover')).toBe(true);
+    expect(s.nest.collapsed).toBe(true);
     // 첫 진화 전이라 타일은 여전히 0장
     expect(s.tiles.collection).toEqual({});
     const mem = new Map<string, string>();
@@ -265,7 +267,8 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     }
     expect(renderHelpText(GUIDES['tile-plan'][2]!.body, { ...helpVars(H), ...guideVars(H) })).toContain('오아시스');
     expect(renderHelpText(GUIDES['tile-plan'][2]!.body, { ...helpVars(S), ...guideVars(S) })).toContain('샘터');
-    expect(renderHelpText(GUIDES['first-absorb'][2]!.body, { ...helpVars(H), ...guideVars(H) })).toContain(`+${TUT.statEv}`);
+    expect(GUIDES['first-absorb'].map((x) => x.id)).toEqual(['absorb', 'practice']); // GDD 157장 3: 3장 → 2장, 연습·노력치 설명 삭제
+    expect(renderHelpText(GUIDES['first-absorb'][1]!.body, { ...helpVars(H), ...guideVars(H) })).toBe(renderHelpText('갈래를 누르면 아래에 설명이 나온다.\n같은 갈래를 한 번 더 눌러 {absorbActionName}해 보자.', helpVars(H))); // GDD 163장 4: 고르기 → 설명 → 실행
   });
 
   it('안내는 1회성: 본 것으로 저장하면 다시 차례가 아니고, 저장 값은 보정된다', () => {
@@ -278,6 +281,6 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     markGuideDone(s.help, 'tile-intro');
     expect(guidePending(s.help, 'tile-intro')).toBe(false);
     expect(sanitizeHelpState(JSON.parse(JSON.stringify(s.help)))).toEqual(s.help);
-    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'tile-draw', 'tile-intro', 'tile-plan']); // C.126: 'birth'(탄생 연출, GDD 74장) 추가
+    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'home-intro', 'recover', 'recover-cure', 'tile-draw', 'tile-intro', 'tile-plan']); // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
   });
 });

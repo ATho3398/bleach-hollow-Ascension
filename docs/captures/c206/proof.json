@@ -1,0 +1,368 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "battle": [
+        {
+          "step": "튜토리얼 3 / 7",
+          "title": "지금 막기",
+          "cardGoneMs": 44,
+          "foeChangeMs": 926,
+          "foe0": "280 / 314"
+        },
+        {
+          "step": "튜토리얼 5 / 7",
+          "title": "블록: 눌러서 사용",
+          "cardGoneMs": 43,
+          "foeChangeMs": 546,
+          "foe0": "236 / 314"
+        },
+        {
+          "step": "튜토리얼 7 / 7",
+          "title": "체인3로 마무리",
+          "cardGoneMs": 43,
+          "foeChangeMs": 552,
+          "foe0": "43 / 314"
+        }
+      ],
+      "recover": [
+        {
+          "step": "회복 안내 1 / 9",
+          "title": "빈사로 돌아왔다",
+          "nextLockedAtStart": false,
+          "screen": "bha-room",
+          "hp": "체력12 / 115",
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "dying",
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 2 / 9",
+          "title": "빈사부터 치료",
+          "nextLockedAtStart": true,
+          "screen": "bha-room",
+          "hp": "체력12 / 115",
+          "presses": [
+            "✓(가방)",
+            "✓(다음)"
+          ],
+          "id": "to-bag",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-lcdpage bha-chest-page"
+        },
+        {
+          "step": "회복 안내 3 / 9",
+          "title": "치료제",
+          "nextLockedAtStart": true,
+          "screen": "bha-lcdpage bha-chest-page",
+          "hp": null,
+          "presses": [
+            "✓(치료제 ×1)",
+            "▼",
+            "✓(사용)",
+            "✓(다음)"
+          ],
+          "id": "cure",
+          "shot": true,
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-lcdpage bha-chest-page"
+        },
+        {
+          "step": "회복 안내 4 / 9",
+          "title": "체력 포션",
+          "nextLockedAtStart": true,
+          "screen": "bha-lcdpage bha-chest-page",
+          "hp": null,
+          "presses": [
+            "✓(체력 포션 ×1)",
+            "▼",
+            "✓(사용)",
+            "✓(다음)"
+          ],
+          "id": "potion",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-lcdpage bha-chest-page"
+        },
+        {
+          "step": "회복 안내 5 / 9",
+          "title": "체력 포션은 드물다",
+          "nextLockedAtStart": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "hp": null,
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "merchant",
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 6 / 9",
+          "title": "온천",
+          "nextLockedAtStart": true,
+          "screen": "bha-room",
+          "hp": "체력58 / 115",
+          "presses": [
+            "✓(밖으로)",
+            "✓(시장)",
+            "✓(온천)",
+            "✓(다음)"
+          ],
+          "id": "to-spa",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-spa",
+          "shot": true
+        },
+        {
+          "step": "회복 안내 7 / 9",
+          "title": "쉬기",
+          "nextLockedAtStart": false,
+          "screen": "bha-spa",
+          "hp": null,
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "spa-rest",
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 8 / 9",
+          "title": "먹이",
+          "nextLockedAtStart": true,
+          "screen": "bha-room",
+          "hp": "체력92 / 115",
+          "presses": [
+            "✓(먹이 주기)",
+            "✓(짐승 고기 8개)",
+            "✓(다음)"
+          ],
+          "id": "feed",
+          "shot": true,
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 9 / 9",
+          "title": "회복 끝",
+          "nextLockedAtStart": false,
+          "screen": "bha-room",
+          "hp": "체력95 / 115",
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "done",
+          "after": "bha-room"
+        }
+      ],
+      "errors": [],
+      "reachedNext": true,
+      "home": {
+        "name": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "next": {
+          "text": "알겠어요",
+          "disabled": false
+        },
+        "only": null,
+        "pass": false,
+        "sel": "알겠어요",
+        "selInTut": true,
+        "selOnly": false,
+        "selSc": null,
+        "dialog": null,
+        "selUse": false,
+        "screen": "bha-room",
+        "hp": "체력115 / 115",
+        "foe": null
+      }
+    },
+    {
+      "faction": "shinigami",
+      "battle": [
+        {
+          "step": "튜토리얼 3 / 7",
+          "title": "지금 막기",
+          "cardGoneMs": 44,
+          "foeChangeMs": 926,
+          "foe0": "286 / 314"
+        },
+        {
+          "step": "튜토리얼 5 / 7",
+          "title": "블록: 눌러서 사용",
+          "cardGoneMs": 42,
+          "foeChangeMs": 552,
+          "foe0": "250 / 314"
+        },
+        {
+          "step": "튜토리얼 7 / 7",
+          "title": "체인3로 마무리",
+          "cardGoneMs": 43,
+          "foeChangeMs": 547,
+          "foe0": "45 / 314"
+        }
+      ],
+      "recover": [
+        {
+          "step": "회복 안내 1 / 9",
+          "title": "빈사로 돌아왔다",
+          "nextLockedAtStart": false,
+          "screen": "bha-room",
+          "hp": "체력12 / 115",
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "dying",
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 2 / 9",
+          "title": "빈사부터 치료",
+          "nextLockedAtStart": true,
+          "screen": "bha-room",
+          "hp": "체력12 / 115",
+          "presses": [
+            "✓(가방)",
+            "✓(다음)"
+          ],
+          "id": "to-bag",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-lcdpage bha-chest-page"
+        },
+        {
+          "step": "회복 안내 3 / 9",
+          "title": "치료제",
+          "nextLockedAtStart": true,
+          "screen": "bha-lcdpage bha-chest-page",
+          "hp": null,
+          "presses": [
+            "✓(치료제 ×1)",
+            "▼",
+            "✓(사용)",
+            "✓(다음)"
+          ],
+          "id": "cure",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-lcdpage bha-chest-page"
+        },
+        {
+          "step": "회복 안내 4 / 9",
+          "title": "체력 포션",
+          "nextLockedAtStart": true,
+          "screen": "bha-lcdpage bha-chest-page",
+          "hp": null,
+          "presses": [
+            "✓(체력 포션 ×1)",
+            "▼",
+            "✓(사용)",
+            "✓(다음)"
+          ],
+          "id": "potion",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-lcdpage bha-chest-page"
+        },
+        {
+          "step": "회복 안내 5 / 9",
+          "title": "체력 포션은 드물다",
+          "nextLockedAtStart": false,
+          "screen": "bha-lcdpage bha-chest-page",
+          "hp": null,
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "merchant",
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 6 / 9",
+          "title": "온천",
+          "nextLockedAtStart": true,
+          "screen": "bha-room",
+          "hp": "체력58 / 115",
+          "presses": [
+            "✓(밖으로)",
+            "✓(시장)",
+            "✓(온천)",
+            "✓(다음)"
+          ],
+          "id": "to-spa",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-spa",
+          "shot": true
+        },
+        {
+          "step": "회복 안내 7 / 9",
+          "title": "쉬기",
+          "nextLockedAtStart": false,
+          "screen": "bha-spa",
+          "hp": null,
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "spa-rest",
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 8 / 9",
+          "title": "먹이",
+          "nextLockedAtStart": true,
+          "screen": "bha-room",
+          "hp": "체력92 / 115",
+          "presses": [
+            "✓(식사 / 영력 보급)",
+            "✓(도시락 8개)",
+            "✓(다음)"
+          ],
+          "id": "feed",
+          "triedLocked": true,
+          "lockedHeld": true,
+          "after": "bha-room"
+        },
+        {
+          "step": "회복 안내 9 / 9",
+          "title": "회복 끝",
+          "nextLockedAtStart": false,
+          "screen": "bha-room",
+          "hp": "체력95 / 115",
+          "presses": [
+            "✓(다음)"
+          ],
+          "id": "done",
+          "after": "bha-room"
+        }
+      ],
+      "errors": [],
+      "reachedNext": true,
+      "home": {
+        "name": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "next": {
+          "text": "알겠어요",
+          "disabled": false
+        },
+        "only": null,
+        "pass": false,
+        "sel": "상태 보기: 배부름 51, 컨디션 7",
+        "selInTut": false,
+        "selOnly": false,
+        "selSc": "status",
+        "dialog": null,
+        "selUse": false,
+        "screen": "bha-room",
+        "hp": "체력115 / 115",
+        "foe": null
+      }
+    }
+  ]
+}

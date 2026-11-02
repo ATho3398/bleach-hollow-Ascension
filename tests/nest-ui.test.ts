@@ -47,8 +47,8 @@ describe('진화체 도감 카드 상태', () => {
     expect(formCardModel(other, u, other.id)).toMatchObject({ state: 'found', current: true, hidden: false, element: other.label.elements[0] });
     expect(formCardModel(hiddenForm, u, other.id)).toMatchObject({ state: 'found', current: false, hidden: true });
   });
-  it('속성을 잇는 아란칼 히든은 카드 색 속성이 없다', () => {
-    const limit = formsOfTier(5).find((f) => f.label.kind === 'limit')!;
+  it('속성을 잇는 4단계 행동 히든은 카드 색 속성이 없다', () => {
+    const limit = formsOfTier(4).find((f) => f.label.kind === 'frenzy')!;
     expect(formCardModel(limit, new Set([limit.id]), null).element).toBeUndefined();
   });
   it('히든은 목록 맨 뒤로 정렬한다 (안정 정렬)', () => {
@@ -58,9 +58,9 @@ describe('진화체 도감 카드 상태', () => {
     expect(sorted.slice(0, firstHidden)).toEqual(t4.filter((f) => !f.hidden));
     expect(sorted).toHaveLength(t4.length);
   });
-  it('모든 단계에 일반 진화체가 있고, 히든은 4·5단계에만', () => {
-    for (const t of [2, 3, 4, 5]) expect(formsOfTier(t).filter((f) => !f.hidden).length).toBeGreaterThan(0);
-    for (const t of [2, 3]) expect(formsOfTier(t).filter((f) => f.hidden)).toHaveLength(0);
+  it('모든 단계에 일반 진화체가 있고, 히든은 3·4단계에만 (C.220)', () => {
+    for (const t of [2, 3, 4]) expect(formsOfTier(t).filter((f) => !f.hidden).length).toBeGreaterThan(0);
+    for (const t of [2]) expect(formsOfTier(t).filter((f) => f.hidden)).toHaveLength(0);
     expect(FORM_TABLE.length).toBeGreaterThan(0);
   });
 });
@@ -128,12 +128,13 @@ describe('진화 연출 문구 데이터', () => {
 describe('진화 후 달라진 점 행', () => {
   const faction = FACTIONS[0]!;
   const form = FORM_TABLE.find((f) => f.tier === 2 && !f.hidden)!;
-  it('슬롯은 진화 전 → 후 칸 수, 그 밖의 행은 종족값·외형 (속성·고유 특성은 extra 가 있을 때만)', () => {
+  it('슬롯은 진화 전 → 후 칸 수, 체력 가득, 그 밖의 행은 종족값·외형 (속성·고유 특성은 extra 가 있을 때만)', () => {
     const rows = evolutionEffectRows(faction, form, 4);
     const per = BALANCE.provisional.evolution.slotsPerEvolution;
     expect(rows[0]!.value).toBe(`${4 - per} → 4칸`);
-    expect(rows.map((r) => r.label)).toEqual([faction.slotName, '종족값', '외형']);
-    expect(rows[1]!.value).toBe(statsLine(faction.id, form.stats));
+    expect(rows.map((r) => r.label)).toEqual([faction.slotName, '체력', '종족값', '외형']); // 체력 가득 회복 (C.223, GDD 145장 2)
+    expect(rows[1]!.value).toBe('가득 회복');
+    expect(rows[2]!.value).toBe(statsLine(faction.id, form.stats));
   });
   it('종족값 한 줄은 능력치 6개를 이름과 함께 적는다', () => {
     const line = statsLine(faction.id, form.stats);

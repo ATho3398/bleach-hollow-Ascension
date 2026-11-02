@@ -8,6 +8,7 @@ import {
 } from './combat';
 import { createRng, nextFloat } from '../rng';
 import { chainGroup, runAt, type Block, type Tray } from './tray';
+import { playScriptedCombat } from './script';
 
 export interface BotOptions {
   /** 공허 블록: never = 안 씀, when-full = 트레이가 가득 찼을 때만, smart(기본) = 가득 찼거나 공허가 2개 이상 쌓였을 때, always = 생기면 바로 */
@@ -165,6 +166,7 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
 
 /** 봇으로 전투를 끝까지 돌린다 (헤드리스) */
 export function playCombatBot(s: CombatState, opt: BotOptions = {}): CombatState {
+  if (s.script) return playScriptedCombat(s); // 첫 원정 각본 전투 (GDD 123장 5)
   const every = ticksOf(s.params, opt.actEverySeconds ?? 0.5);
   while (s.status === 'playing') {
     // 막기 창 (GDD 105장 수정: 0.5초)은 입력 간격과 같아 간격 틱에만 보면 늘 놓친다 — 착탄이 막기 지속 안에 들어온 틱에는 바로 본다
@@ -196,6 +198,7 @@ export const HUMAN_BOT_DEFAULTS = { reactionSeconds: [0.5, 1.2] as [number, numb
 
 /** 사람형 봇으로 전투를 끝까지 돌린다: 반응 지연(무작위), 막기 성공률, 체인 정리 확률. 무작위는 전투 시드에서 따로 뽑아 전투 rng 를 건드리지 않는다 */
 export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): CombatState {
+  if (s.script) return playScriptedCombat(s); // 첫 원정 각본 전투 (GDD 123장 5)
   const [lo, hi] = opt.reactionSeconds ?? HUMAN_BOT_DEFAULTS.reactionSeconds;
   const guardSuccess = opt.guardSuccess ?? HUMAN_BOT_DEFAULTS.guardSuccess;
   const joinChance = opt.joinChance ?? HUMAN_BOT_DEFAULTS.joinChance;

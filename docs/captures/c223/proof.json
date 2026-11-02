@@ -1,0 +1,54 @@
+{
+  "shots": [
+    "04-shop-medicine-daily.png",
+    "03-spa-5min.png",
+    "01-walk-bag-heal.png",
+    "02-battle-item-salve.png"
+  ],
+  "errors": [],
+  "trace": [
+    [
+      "room",
+      "bha-room"
+    ],
+    [
+      "after-shop",
+      "bha-room bha-worldmap"
+    ],
+    [
+      "after-spa",
+      "bha-room bha-market"
+    ],
+    [
+      "room2",
+      "bha-room bha-market"
+    ],
+    [
+      "depart",
+      "bha-app--fixed bha-plan"
+    ]
+  ],
+  "shopHave": [
+    "med-cure: 보관 3/9",
+    "med-iv: 보관 0/9",
+    "med-energy: 보관 0/9",
+    "heal-patch: 오늘 4/5",
+    "battle-potion: 오늘 3/3",
+    "heal-salve: 오늘 2/2",
+    "w-hp-potion: 오늘 1/1"
+  ],
+  "spa": "체력 86 / 264, 컨디션 62, 배부름 80",
+  "spaInfo": "쉬는 중온천에서 쉬는 중이다.쉬는 동안1분에 체력 +20% · 컨디션 +20 · 배부름 −2체력 1% → 가득 약 5분앱을 꺼도 계속 쉰다저절로 나올 때체력과 컨디션이 둘 다 다 차거나 배부름이 0 이 되면 방으로 돌아간다",
+  "bag": {
+    "cards": [
+      "반창고 ×3",
+      "붕대 ×2",
+      "회복약 ×1",
+      "치료제 ×0"
+    ],
+    "hp": "체력44%"
+  },
+  "battleItem": [
+    "회복약 — 최대 체력 50% 회복 (전투당 1번, 남은 1개)"
+  ]
+}

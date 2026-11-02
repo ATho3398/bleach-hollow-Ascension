@@ -1,0 +1,66 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "battles": [
+        {
+          "id": "lib",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*",
+          "flow": {
+            "me": 488,
+            "foe": 158,
+            "meHp": 488,
+            "foeHp": 158,
+            "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+            "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+            "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487* block.1@566*"
+          },
+          "libReady": true,
+          "libLog": "레스렉시온 준비 — 캐릭터를 눌러라",
+          "libOn": {
+            "liberated": true,
+            "time": "3.8초"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "faction": "shinigami",
+      "battles": [
+        {
+          "id": "lib",
+          "me": 488,
+          "foe": 158,
+          "meHp": 488,
+          "foeHp": 158,
+          "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+          "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+          "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487 block.1@566*",
+          "flow": {
+            "me": 488,
+            "foe": 158,
+            "meHp": 488,
+            "foeHp": 158,
+            "heroImg": "matrix(1.33, 0, 0, 1.33, 0, 0)",
+            "foeImg": "matrix(-1, 0, 0, 1, 0, 0)",
+            "cellsDomOrder": "block.8@14 block.7@93 block.6@172 block.5@251 block.4@329 block.3@408 block.2@487* block.1@566*"
+          },
+          "libReady": true,
+          "libLog": "만해 준비 — 캐릭터를 눌러라",
+          "libOn": {
+            "liberated": true,
+            "time": "3.8초"
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

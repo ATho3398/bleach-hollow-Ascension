@@ -5,7 +5,7 @@ import { devText, setDevText, shownName } from '../src/ui/displayName';
 import { getFaction } from '../src/data/factions';
 import { TUTORIAL_SCENES } from '../src/data/help';
 import { FLOAT_SPOTS, HURT_SPOTS } from '../src/ui/bha/battle';
-import { actionChipOf, cardDetailOf } from '../src/ui/lcdScreens';
+import { actionChipOf, bagGroupOf, cardDetailOf } from '../src/ui/lcdScreens';
 import { absorbModeText } from '../src/ui/absorbView';
 import { inventoryOf, petEffectText } from '../src/inventory';
 import { goldRows } from '../src/shop';
@@ -46,7 +46,7 @@ describe('개발용 문구는 테스트 모드에서만 (시급 10)', () => {
   it("칭호 조건은 일반 화면에 '조건 공개 예정' 한 줄 (11-7 [미정] 그대로), 설정 > 정보에 '임시 수치 있음'", () => {
     const t = read('src/ui/titleDexView.ts');
     expect(t).toContain("TITLE_CONDITION_SOON = '조건 공개 예정'");
-    expect(t).toContain('devText() ? [head, body, h(\'p\', \'bha-faint\', TITLE_NOTE)] : [head, body]');
+    expect(t).not.toContain('TITLE_NOTE'); // C.247 (GDD 168장 4): 개발 메모 줄 삭제
     expect(read('src/ui/settingsView.ts')).toContain("'임시 수치가 있다");
   });
   it("상인 품목 효과 글에 '(가칭)' 이 없다", () => {
@@ -66,18 +66,20 @@ describe("용어 '포식'·'배부름' (#46·58·81)", () => {
   });
   it('포식 갈래 문구는 한 곳(absorbModeText)에서 화면·첫 포식 안내가 같이 읽는다 (#47)', () => {
     const m = absorbModeText(H);
-    expect(m.both.label).toBe(`둘 다 ${H.absorbActionName}`);
-    expect(m.trait.sub).toBe('특성만 · 노력치 없음');
-    expect(absorbModeText(S).none.label).toBe(`${S.absorbActionName} 안 함`);
-    expect(read('src/ui/guideView.ts')).toContain('absorbModeText(faction)');
+    // C.236 (GDD 158장 6): 갈래 이름 = 종족 설정 absorbModeNames
+    expect(m.both.label).toBe(H.absorbModeNames.both);
+    expect(m.trait.sub).toBe('속성 블록만 얻는다. 능력치는 오르지 않는다.'); // GDD 163장 2: 설명 칸 첫 줄
+    expect(absorbModeText(S).none.label).toBe(S.absorbModeNames.none);
+    expect(read('src/ui/absorbView.ts')).toContain('absorbModeText(faction)[m].sub'); // GDD 163장: 설명 칸 첫 줄도 같은 곳
+    expect(read('src/ui/guideView.ts')).toContain('absorbModePicker(faction, exp'); // 첫 포식 연습 화면도 같은 갈래 버튼·설명 칸
     expect(read('src/ui/guideView.ts')).not.toContain('그 속성 쪽으로 자란다');
   });
 });
 
 describe('전투 (#36~40·42)', () => {
-  it('피해 숫자는 맞은 쪽 머리 위: 적 = 오른쪽, 나 = 왼쪽 (#38)', () => {
-    for (const s of FLOAT_SPOTS) expect(s.left).toBeGreaterThanOrEqual(60);
-    for (const s of HURT_SPOTS) expect(s.left).toBeLessThanOrEqual(30);
+  it('피해 숫자는 맞은 쪽 머리 위: 적 = 왼쪽, 나 = 오른쪽 (#38, C.216 GDD 138장 좌우 반전)', () => {
+    for (const s of FLOAT_SPOTS) expect(s.left).toBeLessThanOrEqual(30);
+    for (const s of HURT_SPOTS) expect(s.left).toBeGreaterThanOrEqual(60);
   });
   it('범례 줄에 해방 설명이 없고 해방 버튼 툴팁으로 (#37), 빈 예고 띠는 안 보임 (#36), 승리 버튼은 행동 (#42)', () => {
     const b = read('src/ui/battleView.ts');
@@ -85,7 +87,8 @@ describe('전투 (#36~40·42)', () => {
     expect(b).toContain('libBtn.title = hintFull;');
     expect(b).toContain('하러 가기');
     expect(read('src/ui/bha/battle-scene.css')).toContain('.bha-hgauge.is-idle { visibility: hidden;');
-    expect(read('src/ui/bha/device.ts')).toContain("up.style.visibility = down.style.visibility = touchOnly ? 'hidden' : '';");
+    // C.197 (GDD 122장 2): 전투 중 ▲▼ 숨김은 대체됨 — 늘 보인다
+    expect(read('src/ui/bha/device.ts')).not.toContain('up.style.visibility');
   });
   it('튜토리얼 4단계, 본문 2줄 이내, 체인 설명은 블록 3개가 모인 뒤 (#40)', () => {
     expect(TUTORIAL_SCENES.map((s) => s.id)).toEqual(['tray', 'try', 'chain', 'liberation']);
@@ -99,7 +102,7 @@ describe('포식 (#44~53)', () => {
   const a = read('src/ui/absorbView.ts');
   it('설명 표 삭제, 갈래 버튼은 왼쪽, 오른쪽은 슬롯 목록 (#44·45)', () => {
     expect(a).not.toContain('info([');
-    expect(a).toContain('nodes.push(actions);');
+    expect(a).toContain('foeCard(), picker.actions, picker.desc]'); // GDD 163장: 왼쪽 = 상대 + 갈래 버튼 + 설명 칸
   });
   it('후보 0개 머리 · 기본 선택 = 첫 후보 · 다시 뽑기 숫자 하나 · 교체 단계 새 특성 카드 · 필요한 단계만 (#49~53)', () => {
     expect(a).toContain("'새 특성 없음 — 강화만'");
@@ -124,7 +127,7 @@ describe('보관함·상점 (#54~65)', () => {
   });
   it("물건 분류에 '타일' 없음 · 타일 탭은 목록·합성만 (#56·57), 슬롯 머리 숫자 = 남는 수 (#55)", () => {
     const l = read('src/ui/lcdScreens.ts');
-    expect(l).toContain("c !== 'tile'");
+    expect(bagGroupOf({ id: 'tile-x', category: 'tile' })).toBeNull(); // C.239: 소모품 탭에 타일 없음
     expect(l).toContain('dataset.ownedTiles');
     expect(read('src/ui/buildPanel.ts')).toContain('`남는 ${spare.length}개`');
   });
@@ -139,7 +142,7 @@ describe('보관함·상점 (#54~65)', () => {
 
 describe('훈련장·책장·상태 (#67~75·83·84)', () => {
   it('수련 카드 보상·비용은 칩, 테두리는 선택 전용 (#67·68), 테스트 적은 테스트 모드만 (#70)', () => {
-    expect(read('src/ui/trainingView.ts')).toContain("chip(x, 'guard')");
+    expect(read('src/ui/trainingView.ts')).toContain("chips.append(chip(rewards.find((x) => x.includes('노력치')) ?? rewards[0]!, 'guard'));"); // C.239 (GDD 159장 44): 대표 효과 칩 하나
     expect(read('src/ui/bha/training.css')).not.toContain(':hover, .bha-train__card.bha-sel');
     expect(read('src/ui/practiceView.ts')).toContain('!e.testOnly || devText()');
   });

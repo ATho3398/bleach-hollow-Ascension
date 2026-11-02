@@ -104,6 +104,19 @@ export const MASTER_VOLUME = 0.12;
 
 let ctx: AudioContext | null = null;
 let unlocked = false;
+/** 앱 이탈 동안 효과음 멈춤 (GDD 119장 2) */
+let sfxSuspended = false;
+
+/** 앱 이탈 = 효과음 멈춤(울리던 소리도 끊김), 돌아오면 다시 낼 수 있게 */
+export function setSfxSuspended(on: boolean): void {
+  sfxSuspended = on;
+  try {
+    if (on) void ctx?.suspend();
+    else if (unlocked) void ctx?.resume();
+  } catch {
+    /* 무시 */
+  }
+}
 let unlockHooked = false;
 
 type AudioCtor = typeof AudioContext;
@@ -127,7 +140,7 @@ export function hookAudioUnlock(): void {
 }
 
 function playTones(cue: FxCue, volume: number): void {
-  if (!unlocked || !ctx) return;
+  if (!unlocked || !ctx || sfxSuspended) return;
   try {
     if (ctx.state === 'suspended') void ctx.resume();
     const t0 = ctx.currentTime + 0.005;

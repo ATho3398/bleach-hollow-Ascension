@@ -10,9 +10,9 @@ const read = (p: string) => readFileSync(p, 'utf8');
 const IX = BALANCE.provisional.idle;
 
 describe('C.170 확인 창·시작·종족', () => {
-  it('확인 창 기본 선택 = 주 버튼 (위험한 확인은 아니오에서 시작)', () => {
+  it('확인 창 기본 선택 = 주 버튼 (위험한 확인·focusNo 는 아니오에서 시작, C.198 GDD 124장 1)', () => {
     const c = read('src/ui/confirmDialog.ts');
-    expect(c).toContain('if (!o.danger && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });');
+    expect(c).toContain('if (!o.danger && !o.focusNo && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });');
   });
   it('세이브가 없으면 이어하기를 숨기고, 첫 화면 버전은 이름만', () => {
     const s = read('src/ui/startView.ts');
@@ -36,17 +36,17 @@ describe('C.170 방·독', () => {
     expect(room).toContain('statusBtn.prepend(nameTag)');
   });
   it('방 첫 선택 = 모험(돌봄 요청 중이면 그 버튼)', () => {
-    expect(room).toContain("const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('door');");
+    expect(room).toContain("const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('outside');"); // C.215: 밖으로 고정 · C.204: 월드맵 켬이면 밖으로
   });
-  it('더보기 4열 + 닫기 칸, 튜토리얼 칸은 도움말 [목표]로', () => {
+  it('더보기 4열, 닫기 칸은 C.198 에 삭제(GDD 124장 2), 튜토리얼 칸은 도움말 [목표]로', () => {
     expect(read('src/ui/bha/room.css')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr))');
-    expect(read('src/ui/bha/dock.ts')).toContain("x.dataset.dock = 'close';");
+    expect(read('src/ui/bha/dock.ts')).not.toContain("x.dataset.dock = 'close';");
     expect(room).not.toContain("label: '튜토리얼'");
     expect(read('src/ui/helpView.ts')).toContain("label: '목표'");
   });
-  it('알림 띠: LCD 아래 가운데, 한 번에 1개', () => {
-    expect(read('src/ui/bha/lcd.css')).toContain('.bha-lcd .bha-toast { top: auto; bottom: calc(var(--bha-touch) + var(--bha-sp-5)); }');
-    expect(read('src/ui/bha/nest.ts')).toContain('const TOAST_VISIBLE = 1;');
+  it('알림 띠: LCD 맨 위 가운데 (C.193 GDD 119장 6 으로 아래 → 위), 3개까지 쌓임', () => {
+    expect(read('src/ui/bha/lcd.css')).toContain('.bha-lcd .bha-toast { top: var(--bha-sp-1); bottom: auto; }');
+    expect(read('src/ui/bha/nest.ts')).toContain('const TOAST_VISIBLE = 3;');
   });
 });
 

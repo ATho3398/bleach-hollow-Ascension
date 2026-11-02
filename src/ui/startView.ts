@@ -23,17 +23,23 @@ export const INCOMPATIBLE_TEXT = {
   newer: '더 새로운 버전 세이브라 이어서 할 수 없다. 새로 시작한다.',
 } as const;
 
-/** 슬롯 한 줄의 글: "호로 · 2단계 바이저드 · 원정 5회" / "비어 있음" / "손상됨" 과 마지막 플레이 시각 */
+/** 슬롯 제목 (GDD 129장 1): 등급 이름만(단계 숫자·종족·원정 횟수 없음 — 종족은 왼쪽 로고). 번호 쟁탈전·진급 시험 칭호가 있으면 칭호, 환생했으면 옆에 '+환생 n회' */
+export function slotTitle(sum: Extract<SlotSummary, { state: 'ok' }>, f: FactionConfig | undefined): string {
+  const grade = (sum.rank ? f?.rankNames[sum.rank - 1] : undefined) ?? f?.tierNames[sum.tierIndex] ?? `${sum.tierIndex + 1}단계`;
+  const n = sum.rebirths ?? 0;
+  return n > 0 ? `${grade} +${f?.rebirth.name ?? '환생'} ${n}회` : grade;
+}
+
+/** 슬롯 한 줄의 글: 제목(slotTitle) / "비어 있음" / "손상됨" 과 마지막 플레이 시각 */
 export function slotLine(sum: SlotSummary, factions: readonly FactionConfig[]): { main: string; sub: string } {
   if (sum.state === 'empty') return { main: '비어 있음', sub: '' };
   if (sum.state === 'incompatible') return { main: sum.reason === 'old' ? '이전 버전 세이브' : '더 새로운 버전 세이브', sub: '이어서 할 수 없다 · 내보내거나 새로 시작' };
   if (sum.state === 'broken') return sum.recoverable ? { main: '손상된 세이브', sub: '열면 슬롯 백업으로 복구한다' } : { main: '읽을 수 없는 세이브', sub: '손상되었거나 알 수 없는 형식' };
   const f = factions.find((x) => x.id === sum.factionId);
-  const tier = f ? `${sum.tierIndex + 1}단계 ${f.tierNames[sum.tierIndex] ?? ''}`.trim() : `${sum.tierIndex + 1}단계`;
   const at = sum.playedAt !== null ? formatPlayedAt(sum.playedAt) : '시각 기록 없음';
   return {
-    main: `${f?.name ?? sum.factionId} · ${tier} · 원정 ${sum.expeditions}회`,
-    sub: `마지막 플레이 ${at}${sum.inExpedition ? ' · 원정 중' : ''}`,
+    main: slotTitle(sum, f),
+    sub: `마지막 플레이 ${at}${sum.inExpedition ? ' · 모험 중' : ''}`,
   };
 }
 
@@ -94,9 +100,10 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   const menu = el('div', 'bha-start__menu');
   menu.dataset.scList = '';
   // C.170 (GDD 100장 #1): 세이브가 없으면 [이어하기]를 숨기고 [새로 시작]이 첫 줄 (비활성 밝은 버튼이 가장 눈에 띄던 문제)
-  if (last !== null) menu.append(button({ label: '이어하기', icon: 'i-loop', variant: 'primary', onClick: h.onContinue }));
+  // 버튼은 모두 같은 어두운 모양, 고른 버튼은 초점 테두리 하나로만 (GDD 159장 16: 밝게 채운 버튼과 초점이 따로 보였다)
+  if (last !== null) menu.append(button({ label: '이어하기', icon: 'i-loop', onClick: h.onContinue }));
   menu.append(
-    button({ label: '새로 시작', icon: 'i-play', variant: last === null ? 'primary' : undefined, onClick: h.onNew }),
+    button({ label: '새로 시작', icon: 'i-play', onClick: h.onNew }),
     button({ label: '불러오기', icon: 'i-deck', onClick: h.onImport }),
   );
   if (h.onSettings) {
@@ -148,8 +155,7 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
     card.setAttribute('aria-label', f.name);
     const mark = logoMark(f, 'bha-logo--xl');
     card.append(mark ?? el('span', 'bha-species__emblem', emblemOf(f)), el('span', 'bha-species__name', f.name));
-    // 종족 한 줄 소개 (#6): 문구는 종족 설정 tagline (없으면 생략)
-    if (f.tagline) card.append(el('span', 'bha-species__tagline', f.tagline));
+    // 종족 한 줄 소개는 화면에서 뺐다 (GDD 129장 2, C.201 — 아이콘·이름만)
     card.onclick = () => {
       for (const c of cards) {
         const on = c === card;

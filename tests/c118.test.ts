@@ -146,7 +146,7 @@ describe('66장 2번 완전히 같은 블록끼리만 체인 (보상 수치는 �
     expect(sameChainKind(blk(BASIC_GUARD_ID), blk(BASIC_GUARD_ID))).toBe(true);
     expect(sameChainKind(blk(BASIC_GUARD_ID), blk(BASIC_HEAL_ID))).toBe(false); // C.136: 막기·회복 속성 특성 삭제 — 막기 ≠ 회복
     // 사슬 표시(runAt)도 같은 판정
-    const t = [blk('t-thunder-c', 'family-c', 'thunder'), blk('t-blood-rare', 'family-c', 'blood'), blk('t-thunder-c', 'family-c', 'thunder'), blk('t-thunder-c', 'family-c', 'thunder')];
+    const t = [blk('t-thunder-c', 'family-c', 'thunder'), blk('t-blood-c', 'family-c', 'blood'), blk('t-thunder-c', 'family-c', 'thunder'), blk('t-thunder-c', 'family-c', 'thunder')];
     expect(runAt(t, 0)).toEqual([0, 0]);
     expect(runAt(t, 2)).toEqual([2, 3]);
     expect(chainGroup(t, 3, 3)).toEqual([2, 3]);

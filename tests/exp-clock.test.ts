@@ -45,7 +45,8 @@ describe('원정 시계 (19-1 조우 후 멈춤 회귀)', () => {
     st.speed = 4; // 배속 버튼
     clock.rearm();
     expect(clock.pending()).toBe('phase');
-    ft.advance(99); // 남은 400ms(1x) ÷ 4 = 100ms
+    const left = (ENCOUNTER_DELAY_MS - 300) / 4; // 남은 시간(1x) ÷ 4 (C.202: 조우 시간 0.7 → 1.5초)
+    ft.advance(left - 1);
     expect(entered).toBe(0);
     ft.advance(1);
     expect(entered).toBe(1);
@@ -64,7 +65,7 @@ describe('원정 시계 (19-1 조우 후 멈춤 회귀)', () => {
     expect(clock.armed()).toBe(false);
     st.paused = false;
     clock.rearm();
-    ft.advance(499);
+    ft.advance(ENCOUNTER_DELAY_MS - 200 - 1);
     expect(entered).toBe(0);
     ft.advance(1);
     expect(entered).toBe(1);

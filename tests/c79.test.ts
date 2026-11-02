@@ -50,8 +50,8 @@ describe('종족 설정의 배경 연결 (34-1)', () => {
 });
 
 describe('홈 물건 이름 두 종족 통일 (34-2)', () => {
-  it('5종 이름이 두 종족 같다', () => {
-    const want = { door: '모험', altar: '수련장', book: '책장', chest: '가방', shop: '상점' };
+  it('방 물건 이름 4종이 두 종족 같다 (C.215: 모험 문·장터 폐기, GDD 137장 3)', () => {
+    const want = { altar: '수련장', book: '책장', chest: '가방', outside: '월드맵' }; // C.236 (GDD 158장 2): '밖으로' → '월드맵'
     for (const f of FACTIONS) expect(roomOf(f).props).toEqual(want);
   });
 });

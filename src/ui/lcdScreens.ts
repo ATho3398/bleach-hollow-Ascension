@@ -1,25 +1,33 @@
 // 방 물건이 여는 기능 화면: 돌보기·상태 / 상자(슬롯·덱) / 제단(진화). LCD 가로 2단 배치 (T-3).
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
+import { detachedOf, detachEffectText, detachTotals, getDetachTrait } from '../engine/traitShop';
+import { pickDialog } from './pickDialog';
 import { infoTip } from './bha/infoTip';
 import { critChanceBonus } from '../engine/absorb/build';
-import { roomOf } from '../engine/faction';
+import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData } from '../game';
+import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { homeHp, homeMaxHp } from '../home';
+import { itemUseFx, type ActionBar } from './bha/actionFx';
+import { fullnessOf } from './bha/fullness';
+import { hpNumbers } from './bha/battle';
+import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
-import { choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { BATTLE_ITEM_IDS, choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
 import { gearCarry } from '../engine/gear';
 import { equipTab, equipTitle, gearArt, openGear } from './equipView';
 import { screenSignal } from './bha/screenScope';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
-import { categoryName, cosmeticToken, getCosmetic, getGoldItem, ITEM_CATEGORIES, ITEM_CATEGORY_NAMES, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory, type ItemCategory } from '../data/shop';
+import { categoryName, cosmeticToken, getCosmetic, getGoldItem, BATTLE_ITEMS_NAME, ITEM_CATEGORY_NAMES, MEDICINE_NAME, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory } from '../data/shop';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
 import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
 import { skinItemId } from '../data/shop';
-import { TILES_LOCKED_TEXT } from '../shop';
+import { MATERIAL_DESC, MATERIALS_EMPTY, ownedMaterials } from '../data/materials';
+import { consumableGroupOf, equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, unequipTrait } from '../shop';
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
@@ -31,10 +39,12 @@ import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
-import { showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, currentStats, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
+import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
+import { statInfoLines } from '../data/help/statText';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
@@ -48,14 +58,26 @@ import { BOND_STAGE_NAMES, dyingClock } from './bha/roomLogic';
 import { statusInfo, type StatusInfoKind } from './bha/statusInfo';
 import type { VariantMods } from '../engine/expedition';
 
-/** 치명타 확률 표시 "5%" (C.63): 기본 + 장착 특성, 상한 critChanceMax (치명 특성이 있는 몸은 상한 + 그 특성 값, GDD 45장 1번 — 전투와 같은 규칙) */
-export function critPercentText(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): string {
+/** 치명 두 값 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명 확률(0~1)과 상한·가산 내역. 기본 + 장착 특성 + 칸에 낀 진화체 특성 + 장비,
+ *  블록 치명은 블록형 몸(물공 블록이 없는 몸)만 블록 보정(blockPlayCrit)을 더한다 — 전투와 같은 규칙 */
+export function critChances(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): { basic: number; block: number; basicMax: number; blockMax: number; bonus: number; blockPlay: number } {
   const CX = BALANCE.provisional.combat;
-  // 진화체 속성 특성 '날카로운 물결'(GDD 39장)의 치명타 확률도 더한다
   const form = evo?.formId ? tryGetForm(evo.formId) : undefined;
-  const fromForm = evo ? abilityEffectsOf(formAbilitiesOf(form ?? null, evo.ev, evo.ability)).critChance : 0;
-  // 장비 치명 줄 (GDD 91장 4번, C.150): 전투와 같이 확률에 더하고 상한은 그대로
-  return `${Math.round(Math.min(CX.critChanceMax + fromForm, CX.critChance + critChanceBonus(build) + fromForm + gearCrit) * 100)}%`;
+  const fa = evo ? (evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability)) : null;
+  const fromForm = fa ? abilityEffectsOf(fa).critChance : 0;
+  const bonus = critChanceBonus(build) + fromForm + gearCrit;
+  const blockPlay = fa?.phys ? 0 : CX.blockPlayCrit;
+  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit; // 탈착 특성 '집중' (GDD 150장 4): 블록 치명만, 상한도 같이
+  const basicMax = CX.critChanceMax + fromForm;
+  const blockMax = CX.blockCritChanceMax + fromForm + detach;
+  return { basic: Math.min(basicMax, CX.critChance + bonus), block: Math.min(blockMax, CX.blockCritChance + bonus + blockPlay + detach), basicMax, blockMax, bonus, blockPlay };
+}
+
+const pctText = (x: number) => `${Math.round(x * 100)}%`;
+
+/** 옛 이름: 평타 치명 확률 "5%" */
+export function critPercentText(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): string {
+  return pctText(critChances(build, evo, gearCrit).basic);
 }
 
 /** 상태 자리: 왼쪽 상태 4바(배부름·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
@@ -73,7 +95,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const RX = BALANCE.provisional.risk;
   const runs = save.runLog.runs;
   const sub = h('span');
-  sub.append('사냥터 ', h('b', '', faction.huntingGroundName), ' · 원정 ', h('b', '', String(runs.length)), '회 · 귀환 ', h('b', '', String(runs.filter((r) => r.outcome === 'returned').length)), ' · 패배 ', h('b', '', String(runs.filter((r) => r.outcome === 'defeated').length)));
+  sub.append('사냥터 ', h('b', '', faction.huntingGroundName), ' · 모험 ', h('b', '', String(runs.length)), '회 · 귀환 ', h('b', '', String(runs.filter((r) => r.outcome === 'returned').length)), ' · 패배 ', h('b', '', String(runs.filter((r) => r.outcome === 'defeated').length)));
 
   const status = panel({ title: '상태' });
   status.setAttribute('aria-label', '상태');
@@ -102,6 +124,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
       ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired')] : []),
     ];
     weakSlot.replaceChildren(...states);
+    weakSlot.hidden = states.length === 0; // 걸린 상태이상이 없으면 칸째 안 보이고 능력치가 위로 (GDD 160장 5)
   };
   paint();
   // 광기·자아 설명 패널(C.141)은 C.176 에 상태 막대 이름 옆 ⓘ 창으로 옮겼다 (GDD 104장 2, bha/statusInfo.ts)
@@ -113,11 +136,18 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
   const CXM = BALANCE.provisional.combat;
   const gc = gearCarry(save.shared.gear);
-  const critRows = statRow('치명타 확률', critPercentText(save.build, save.evolution, gc?.crit ?? 0), `최대 ${Math.round(CXM.critChanceMax * 100)}%`);
-  critRows.dataset.crit = '';
-  const critDmg = statRow('치명타 피해', `×${Math.round((CXM.critMultiplier + (gc?.critDamage ?? 0)) * 100) / 100}`);
+  // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 설명은 능력치 ⓘ 창 (GDD 160장 7·165장 2 — 최대만, '기본 n%' 없음)
+  const cc = critChances(save.build, save.evolution, gc?.crit ?? 0);
+  const critRows = statRow('평타 치명', pctText(cc.basic));
+  critRows.dataset.crit = 'basic';
+  const blockCritRow = statRow('블록 치명', pctText(cc.block));
+  blockCritRow.dataset.crit = 'block';
+  const critMul = Math.round((CXM.critMultiplier + (gc?.critDamage ?? 0)) * 100) / 100;
+  const critDmg = statRow('치명타 피해', `×${critMul}`);
+  // 능력치 설명은 전부 제목 옆 ⓘ 창 한 곳 (GDD 141장 2 · 160장 7 · 165장 2): 능력치마다 한 줄 '이름 = 하는 일'
+  stats.querySelector('.bha-panel__title')?.append(infoTip('능력치', () => statInfoLines(faction, { basic: pctText(cc.basicMax), block: pctText(cc.blockMax) })));
   // 속성 피해 5종 (C.101, GDD 48장 4번 · C.137 85장 8): 치명타 밑에 속성마다 한 줄씩, 0 이어도 보인다
-  const rows = [critRows, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
+  const rows = [critRows, blockCritRow, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
   const speedRow = stats.querySelector('.bha-stats')?.lastElementChild;
   if (speedRow) speedRow.after(...rows);
   else stats.append(...rows);
@@ -132,12 +162,14 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const mark = rebirthMark(save.rebirth.count);
   if (mark) {
     const line = h('p', 'bha-faint');
-    line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 ${carryLine(faction.id, evo.carry ?? zeroStats())}`);
+    line.append(mark, ` ${faction.rebirth.name} ${save.rebirth.count}회 · 계승 노력치 `, evText(carryLine(faction.id, evo.carry ?? zeroStats())));
     stats.append(line);
   }
   // 특성 2줄 (GDD 39장): 성향 / 속성·전용. 성향이 비어 있어도(C.89 전 세이브·테스트 모드 몸) 속성·전용 특성은 전투에 실리므로 진화체면 보인다 (C.93)
-  const abil = statusAbilityLines(evo, faction.id);
+  // 특성 칸 (GDD 126-1 수정 → 147~151장, C.226): 3·4단계 진화 때 받은 특성(보기 전용). 칸 = 기본 1 + 4단계 진화 1 + 환생당 1 (최대 4). 칸이 없는 옛 모양(점검 도구)이면 진화체 특성 줄
+  const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
+  if (evo.abilities) stats.append(abilitySlotsBlock(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); }));
   // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
   const evoPanel = panel({ title: '진화 정보' });
   evoPanel.setAttribute('aria-label', '진화 정보');
@@ -149,14 +181,14 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   if (canRebirth(evo)) {
     const rb = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', block: true, onClick: hd.onRebirth });
     rb.dataset.sc = 'rebirth';
-    evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 특성 1개는 남는다.`), rb);
+    evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`), rb);
   }
   evoPanel.append(h('div', 'bha-row', ''));
   const evoBtns = evoPanel.lastElementChild!;
   evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
   // GDD 108장 1번 (C.179): 장착 5칸 대신 바로가기 한 줄 + 장비 합산 숫자만. 바로가기 = 가방 장비 탭 (109장 4번)
   const gear = gearShortcut(faction, save, hd.onGear);
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [stats, evoPanel, weakSlot, h('p', 'bha-faint', `괄호는 노력치(+${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [weakSlot, stats, evoPanel, h('p', 'bha-faint', `값 옆 굵은 +숫자는 노력치(와 ${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
@@ -167,7 +199,7 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
   p.setAttribute('aria-label', '스킨');
   p.dataset.skins = String(skins.length);
   if (skins.length === 0) {
-    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. 방의 ${roomOf(faction).props.shop}(상점) 스킨 탭에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
+    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. ${marketOf(faction).name}의 ${marketOf(faction).props.skinShop}에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
     return p;
   }
   const list = h('div', 'bha-stack bha-stack--tight');
@@ -197,10 +229,10 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
     list.append(btn);
   };
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-  add(null, '기본(진화체)', charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, save.evolution.look).src);
-  for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, sk.id).src);
+  add(null, '기본(진화체)', charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, save.evolution.look).src);
+  for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, sk.id).src);
   mark();
-  p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·원정·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
+  p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
   return p;
 }
 
@@ -217,16 +249,22 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   coins.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ' ', h('span', 'bha-faint', '상점'));
   const jade = h('p', 'bha-small');
   jade.dataset.currency = 'jade';
-  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', h('span', 'bha-faint', '상점 스킨 탭 (꾸밈)'));
+  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', h('span', 'bha-faint', '스킨 상점 (꾸밈)'));
   p.append(food, crystals, coins, jade);
   if (save.shared.rerollTickets > 0) p.append(h('p', 'bha-small', `다시 뽑기권 ${save.shared.rerollTickets}장`));
   return p;
 }
 
-type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'pet';
+type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'skin' | 'pet' | 'material';
 const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'gear', traits: {}, synth: false };
 
 /** 가방을 장비 탭으로 연다 (상태 화면 장비 바로가기, GDD 109장 4번) */
+/** 가방을 물건 탭의 소모품 분류로 연다 (튜토리얼 회복 안내 — 구급상자·체력 포션, GDD 123장 5 수정) */
+export function openChestAtConsumables(): void {
+  chestUi.tab = 'items';
+  itemsUi.group = 'medicine';
+}
+
 export function openChestAtGear(): void {
   chestUi.tab = 'gear';
 }
@@ -236,10 +274,12 @@ export function openChestAtGear(): void {
 export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
 
-  // 위쪽 탭 [장비 · 슬롯 · 타일 · 물건 · 펫] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭): 물건 탭의 분류 탭과 같은 방식. 장비·타일·펫에는 가진 수를 같이 보인다
+  // 위쪽 탭 [장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭 · 154장 1 기타 = 재료 · 159장 24 물건 → 소모품, 스킨은 위 탭으로).
+  // 장비·타일·펫·기타에는 가진 수를 같이 보인다 (기타 = 재료 + 다시 뽑기권·수련권)
   const petCount = () => inventoryOf(save, faction).filter((e) => e.category === 'pet').length;
   const headTabs = (): HTMLElement => selectLast(categoryTabs([
-    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: '물건' }, { id: 'pet', label: '펫', count: petCount() },
+    // 장비 탭 숫자 = 안의 '전체' 칸 수(장비 + 전투용 소모품) (GDD 159장 27)
+    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length + BATTLE_ITEM_IDS.filter((id) => (save.shared.items[id] ?? 0) > 0 || save.shared.battleItem === id).length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: ITEM_CATEGORY_NAMES.consumable }, { id: 'skin', label: ITEM_CATEGORY_NAMES.skin }, { id: 'pet', label: '펫', count: petCount() }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length + etcEntries(save, faction).length },
   ], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
@@ -268,7 +308,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(headTabs());
     // 두 열/한 열 전환은 탭마다 먼저 맞춘다 (C.159 A2: 물건·펫 탭에서 숨긴 오른쪽 열이 슬롯 탭으로 돌아와도 숨은 채여서 장착 칸만 보였다)
     const body = page.left.parentElement!;
-    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'pet';
+    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'skin' || chestUi.tab === 'pet' || chestUi.tab === 'material';
     body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : chestUi.tab === 'gear' ? 'minmax(0, 5fr) minmax(0, 6fr)' : '1fr 1fr';
     page.right.hidden = oneCol;
     page.app.classList.toggle('bha-equip-page', chestUi.tab === 'gear');
@@ -289,13 +329,22 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       page.right.replaceChildren(ownedPanel!);
       return;
     }
+    // 기타 탭 (GDD 154장, C.229): 재료 22종만. 쓰임·얻는 곳은 아직 없다 — 보기만
+    if (chestUi.tab === 'material') {
+      page.left.replaceChildren(materialsTab(faction, save, () => {
+        persist();
+        fill();
+      }));
+      page.right.replaceChildren(h('div'));
+      return;
+    }
     // 물건 탭은 한 열 (카드 격자가 폭을 다 쓴다), 나머지는 두 열
     if (oneCol) {
       const [l, r] = itemsTab(faction, save, () => {
         persist();
         onWear?.();
         fill();
-      }, chestUi.tab === 'pet');
+      }, chestUi.tab === 'pet' ? 'pet' : chestUi.tab === 'skin' ? 'skin' : 'items');
       page.left.replaceChildren(l);
       page.right.replaceChildren(r);
       return;
@@ -305,14 +354,15 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       const lock = panel({ title: '타일', aside: h('span', 'bha-chip', TILES_LOCKED_TEXT) });
       lock.dataset.tilesLocked = '';
       lock.querySelector('.bha-panel__title')?.prepend(icon('i-lock'));
-      lock.append(h('p', 'bha-dim', `원정 타일은 첫 진화 후 열린다. 첫 진화 때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 상점 [타일 뽑기]로 모은다.`));
+      lock.append(h('p', 'bha-dim', `모험 타일은 첫 진화 후 열린다. 첫 진화 때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 소모품 상점 [타일 뽑기]로 모은다.`));
       page.left.replaceChildren(lock);
-      page.right.replaceChildren(h('p', 'bha-faint', '지금 원정은 타일 없이 기본 길을 걷는다.'));
+      page.right.replaceChildren(h('p', 'bha-faint', '지금 모험은 타일 없이 기본 길을 걷는다.'));
       return;
     }
     const info = panel({ title: '가진 타일', aside: h('span', 'bha-chip', `${tileCount()}장`) });
     info.querySelector('.bha-panel__title')?.prepend(icon('i-deck'));
-    info.append(h('p', 'bha-dim', `원정 출발 때 가진 타일을 전부 보고 길에 최대 ${placementLimitOf(save)}칸 놓는다. 놓은 타일이 원정 보상으로 뽑힌다.`));
+    // 한 줄 요약만, 합성 규칙은 합성 목록을 열었을 때만 (GDD 159장 29)
+    info.append(h('p', 'bha-dim', `모험 출발 때 길에 최대 ${placementLimitOf(save)}칸 놓는다.`));
     // 타일 합성 (GDD 25-5 ⑤): 같은 타일 3장 → 상위 타일("+") 1장. 오른쪽 목록을 합성 목록으로 바꾼다
     const cost = BALANCE.provisional.tileVariants.synthCost;
     const synthBtn = button({
@@ -323,7 +373,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       },
     });
     synthBtn.dataset.sc = 'synth';
-    info.append(synthBtn, h('p', 'bha-faint', `합성: 같은 타일 ${cost}장 → 이름 뒤 "+" 상위 타일 1장 (상위 타일은 다시 합성하지 않는다)`));
+    info.append(synthBtn);
+    if (chestUi.synth) info.append(h('p', 'bha-faint', `같은 타일 ${cost}장 → "+" 상위 타일 1장`));
     if (chestUi.synth) {
       const list = h('div', 'bha-stack');
       list.dataset.synth = '';
@@ -374,20 +425,33 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       row.append(ic, main);
       list.append(row);
     }
-    if (owned.length === 0) list.append(h('p', 'bha-faint', '가진 타일이 없다. 상점 [타일 뽑기]로 모은다.'));
-    info.append(h('p', 'bha-faint', '길에 놓기는 원정 출발 화면에서 한다.'));
+    if (owned.length === 0) list.append(h('p', 'bha-faint', '가진 타일이 없다. 소모품 상점 [타일 뽑기]로 모은다.'));
+    info.append(h('p', 'bha-faint', '길에 놓기는 모험 출발 화면에서 한다.'));
     page.left.replaceChildren(info);
     page.right.replaceChildren(list);
   }
   fill();
 }
 
-/** 보관함 물건 탭 (GDD 86장 4·5번, C.141): 카테고리 탭(음식·소모품·장비·스킨·타일·기타) + 카드 격자. 카드를 누르면 상세 창([사용]/[장착]/[해제]).
- *  장비는 품목이 생기기 전까지 "준비 중". 타일 카드는 가진 타일 보기 */
-const itemsUi: { cat: ItemCategory; skinSub: SkinSubTab } = { cat: 'food', skinSub: 'character' };
+/** 가방 소모품 탭 (GDD 86장 4·5번 · 159장 24): 칸 탭(음식 · 약 · 전투 소모품) + 카드 격자. 카드를 누르면 상세 창([사용]).
+ *  스킨·펫은 위쪽 탭이 따로, 다시 뽑기권·수련권은 위쪽 '기타' 탭 */
+type BagGroup = 'food' | 'medicine' | 'battle';
+const BAG_GROUPS: readonly [BagGroup, string][] = [['food', ITEM_CATEGORY_NAMES.food], ['medicine', MEDICINE_NAME], ['battle', BATTLE_ITEMS_NAME]];
+const itemsUi: { group: BagGroup; skinSub: SkinSubTab } = { group: 'food', skinSub: 'character' };
+/** 가방 칸 하나가 드는 소모품 칸 (음식·소모품만, 나머지 null). 다시 뽑기권·수련권 = 'etc' (위쪽 '기타' 탭) */
+export function bagGroupOf(e: Pick<InventoryEntry, 'id' | 'category'>): BagGroup | 'etc' | null {
+  if (e.category === 'food') return 'food';
+  if (e.category === 'consumable') return consumableGroupOf(e.id);
+  return e.category === 'etc' ? 'etc' : null;
+}
+/** 위쪽 '기타' 탭에 재료와 같이 보이는 권(다시 뽑기권·수련권) */
+function etcEntries(save: SaveData, faction: FactionConfig): InventoryEntry[] {
+  return inventoryOf(save, faction).filter((e) => bagGroupOf(e) === 'etc');
+}
 
 /** 카드 설명 한 줄 (C.146, 사용자 "i6"): 배지가 이미 말하는 "착용 중"·"보유"·"데리고 다니는 중"은 빼고, 스킨 카드는 꾸밈 분류 이름을 보인다 */
-export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'cosmeticCategory'>): string {
+export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'cosmeticCategory' | 'brief'>): string {
+  if (e.brief) return e.brief; // 음식·소모품은 짧은 효과 한 줄 (GDD 159장 25)
   // 캐릭터 스킨은 하위 탭이 이미 '캐릭터'라 카드마다 '스킨' 반복 줄을 뺀다 (GDD 100장 #61)
   if (e.category === 'skin' && (e.detail === '착용 중' || e.detail === '보유')) return e.cosmeticCategory && e.cosmeticCategory !== 'skin' ? categoryName(e.cosmeticCategory as CosmeticCategory) : '';
   return e.detail.replace(/^데리고 다니는 중 · /, '');
@@ -405,23 +469,19 @@ export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'>): string
   }
 }
 
-function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, petOnly = false): [HTMLElement, HTMLElement] {
-  // 펫은 위쪽 '펫' 탭이 따로 보인다 (C.149): 물건 탭의 분류에는 없다
-  // 물건 분류에서 '타일'은 뺀다 — 위쪽 '타일' 탭과 같은 것이 두 곳에 있었다 (GDD 100장 #56)
-  // 장비는 가방 위쪽 '장비' 탭이 맡는다 (GDD 109장 4번, C.180): 물건 분류에는 없다
-  const cats = ITEM_CATEGORIES.filter((c) => (c === 'pet') === petOnly && c !== 'tile' && c !== 'equipment');
-  if (!cats.includes(itemsUi.cat)) itemsUi.cat = cats[0]!;
+function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, mode: 'items' | 'skin' | 'pet'): [HTMLElement, HTMLElement] {
+  // 펫·스킨은 위쪽 탭이 따로 (C.149 · GDD 159장 24). 타일·장비도 위쪽 탭 (GDD 100장 #56 · 109장 4번)
   const all = inventoryOf(save, faction);
   // 스킨: 옛 기기 껍데기 색·견본·시험 기기는 빼고(GDD 99장 3, C.163), '기기' 하위 탭은 기본 + 가진 정식 기기 카드(누르면 장착)
   const listed = (e: InventoryEntry) => e.category !== 'skin' || skinListed(getCosmetic(e.id));
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
   // 탭 숫자 = 그 탭의 카드(종류) 수 (C.146, 사용자 "i5": 이전에는 음식은 개수 합·스킨은 종류 수라 기준이 달랐다). 개수는 카드의 ×n
-  const tabs = categoryTabs(cats.map((c) => ({
-    id: c, label: ITEM_CATEGORY_NAMES[c], count: all.filter((e) => e.category === c && listed(e)).length,
-  })), itemsUi.cat, (id) => {
-    itemsUi.cat = id as ItemCategory;
+  const tabs = categoryTabs(BAG_GROUPS.map(([g, label]) => ({
+    id: g, label, count: all.filter((e) => bagGroupOf(e) === g).length,
+  })), itemsUi.group, (id) => {
+    itemsUi.group = id as BagGroup;
     changed();
-  }, '가방 분류');
+  }, '소모품 칸');
   const artOf = (e: InventoryEntry): HTMLElement => {
     // 장비 (GDD 91장 8번): 그림이 없으니 종류 아이콘 + 등급 색
     if (e.gear) return gearArt(e.gear.kind, e.gear.grade);
@@ -433,7 +493,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     if (e.category === 'skin') {
       const c = getCosmetic(e.id);
       if (c?.category === 'skin') {
-        const src = charArt(faction.id, save.evolution.tierIndex, '', base, undefined, undefined, c.look).src;
+        const src = charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, c.look).src;
         return src ? imageArt(src) : iconArt('i-rare');
       }
       if (c && c.category !== 'device') return swatchArt(c.category, c.category === 'keyring' ? `var(--bha-cos-keyring-${keyringShapeOf(c, faction)}-body)` : `var(${cosmeticToken(c, ({ bar: 'line', shell: 'body', cut: 'line', room: 'line' } as Record<string, string>)[c.category] ?? '')})`, c.category === 'tint' ? `var(${cosmeticToken(c)})` : undefined);
@@ -443,9 +503,10 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     if (med) return iconArt(med === 'collapsed' ? 'i-heal' : med === 'weak' ? 'i-hunger' : 'i-cond');
     return iconArt(e.category === 'food' ? 'i-hunger' : e.category === 'consumable' ? (e.id.includes('calm') || e.id === 'elixir' ? 'i-risk' : e.id === 'reroll' ? 'i-swap' : 'i-cond') : 'i-practice');
   };
-  const inGroup = (e: InventoryEntry) => itemsUi.cat !== 'skin' || skinSubOf(e.cosmeticCategory) === itemsUi.skinSub;
-  const rows = all.filter((e) => e.category === itemsUi.cat && listed(e) && inGroup(e));
-  const devices = itemsUi.cat === 'skin' && itemsUi.skinSub === 'device' ? deviceCards(save, faction, changed) : null;
+  const rows = mode === 'pet' ? all.filter((e) => e.category === 'pet')
+    : mode === 'skin' ? all.filter((e) => e.category === 'skin' && listed(e) && skinSubOf(e.cosmeticCategory) === itemsUi.skinSub)
+    : all.filter((e) => bagGroupOf(e) === itemsUi.group);
+  const devices = mode === 'skin' && itemsUi.skinSub === 'device' ? deviceCards(save, faction, changed) : null;
   const cards = devices ?? rows.map((e) => itemCard({
     id: e.id, name: e.name, detail: cardDetailOf(e), art: artOf(e),
     grade: e.gear?.grade,
@@ -454,16 +515,36 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, p
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => openItem(faction, save, e, artOf(e), changed),
   }));
-  const empty = itemsUi.cat === 'skin' ? SKIN_SUB_EMPTY : itemsUi.cat === 'equipment' ? '장비가 없다. 원정 드롭(강적·보스에게서 잘 나온다)·상점 장비 탭·떠돌이 상인에게서 얻는다.' : itemsUi.cat === 'pet' ? '아직 펫이 없다. 첫 진화 선물·원정 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  const empty = mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 진화 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
-  if (!petOnly) box.append(tabs);
-  if (itemsUi.cat === 'skin') {
+  if (mode === 'items') box.append(tabs);
+  if (mode === 'skin') {
     // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
     const skins = all.filter((e) => e.category === 'skin' && listed(e));
     box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: `보유 ${id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length}` })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
   }
   box.append(itemGrid(cards, empty));
   return [box, h('div')];
+}
+
+/** 가방 '기타' 창 (GDD 154장 1~4, C.229): 가진 재료 카드 격자. 누르면 상세 창(설명·보유 수, 행동 버튼 없음). 0개면 한 줄 */
+function materialsTab(faction: FactionConfig, save: SaveData, changed: () => void): HTMLElement {
+  const box = h('div', 'bha-stack bha-itembox');
+  box.dataset.materials = '';
+  // 다시 뽑기권·수련권 (GDD 159장 24: 소모품 탭에서 '기타' 칸을 없애며 이리로)
+  const tickets = etcEntries(save, faction).map((e) => {
+    const art = () => iconArt(e.id === 'reroll' ? 'i-swap' : 'i-practice');
+    return itemCard({ id: e.id, name: e.name, detail: e.detail, art: art(), badge: `×${e.count}`, onClick: () => openItem(faction, save, e, art(), changed) });
+  });
+  const cards = ownedMaterials(save.shared.items).map(({ def, count }) => {
+    const art = () => iconArt(def.icon);
+    return itemCard({
+      id: def.id, name: def.name, detail: def.note ?? MATERIAL_DESC, art: art(), badge: `×${count}`,
+      onClick: () => itemDialog({ id: def.id, heading: '재료', name: def.name, desc: `${def.note ? `${def.note}. ` : ''}${MATERIAL_DESC}.`, art: art(), have: `보유 ${count}`, actions: [] }),
+    });
+  });
+  box.append(itemGrid([...tickets, ...cards], MATERIALS_EMPTY));
+  return box;
 }
 
 /** 상태 화면의 장비 바로가기 한 줄 (GDD 108장 1번 · 109장 4번): [가방 · 장비] 버튼(가방 장비 탭) + 장비 합산 능력치 숫자 */
@@ -481,6 +562,22 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
   return row;
 }
 
+/**
+ * 아이템 쓰기 연출 (GDD 132장 3, C.208): 캐릭터가 쓰는 모션 + 체력(또는 배부름) 막대가 약 1초에 걸쳐 차오른다. 값은 이미 저장됐다.
+ * 막대가 바뀌지 않는 물건(구급상자 등)은 체력 막대를 그대로 보여 준다
+ */
+function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemArt: HTMLElement, hpBefore: number, fullBefore: number): void {
+  const maxHp = homeMaxHp(save);
+  const hpNow = homeHp(save).fraction;
+  const fullNow = fullnessOf(save.nest.hunger);
+  const hp = (f: number) => hpNumbers(f * maxHp, maxHp).now;
+  const bars: ActionBar[] = [];
+  if (Math.abs(fullNow - fullBefore) > 1e-6 && Math.abs(hpNow - hpBefore) <= 1e-6) bars.push({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', from: Math.round(fullBefore), to: Math.round(fullNow), max: 100 });
+  else bars.push({ kind: 'player', label: '체력', icon: 'i-heal', from: hp(hpBefore), to: hp(hpNow), max: hpNumbers(maxHp, maxHp).max });
+  const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)).src;
+  itemUseFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), bars });
+}
+
 /** 보관함 카드 상세 창: 쓰기·장착·해제 (GDD 86장 5번) */
 function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art: HTMLElement, changed: () => void): void {
   if (e.gear) return openGear(faction, save, e.id, changed);
@@ -491,7 +588,10 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       key: 'use', label: () => '사용', disabled: e.lock !== null,
       onClick: () => {
         close();
+        const hpBefore = homeHp(save).fraction;
+        const fullBefore = fullnessOf(save.nest.hunger);
         const r = useInventoryItem(save, faction, e.id);
+        if (r.ok && !r.spat) useFx(faction, save, e, art, hpBefore, fullBefore);
         showToast({ eyebrow: '가방', title: r.ok ? (r.spat ? fixParticles(`${e.name}을(를) 뱉었다`) : `${e.name} 사용`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
         if (r.ok) changed();
       },
@@ -503,7 +603,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       onClick: () => {
         close();
         if (choosePet(save, on ? e.id : null)) {
-          showToast({ eyebrow: '펫', title: fixParticles(on ? `${e.name}을(를) 데리고 다닌다` : `${e.name}을(를) 두고 간다`), meta: on ? '원정 바퀴마다 친밀도가 오른다' : undefined }, 0, 2400);
+          showToast({ eyebrow: '펫', title: fixParticles(on ? `${e.name}을(를) 데리고 다닌다` : `${e.name}을(를) 두고 간다`), meta: on ? '모험 바퀴마다 친밀도가 오른다' : undefined }, 0, 2400);
           changed();
         }
       },
@@ -519,9 +619,63 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
     });
   }
   close = itemDialog({
-    heading: ITEM_CATEGORY_NAMES[e.category], name: e.name, desc: cardDetailOf(e), art, have: e.category === 'pet' ? petAffinityText(save, e.id) : `보유: ${e.count}`,
+    // 상세 창은 자세한 수치(detail), 목록 칸만 짧은 한 줄(brief) — GDD 159장 25. 머리 = 소모품 칸 이름(음식·약·전투 소모품)
+    id: e.id, heading: BAG_GROUPS.find(([g]) => g === bagGroupOf(e))?.[1] ?? ITEM_CATEGORY_NAMES[e.category], name: e.name, desc: cardDetailOf({ ...e, brief: undefined }), art, have: e.category === 'pet' ? petAffinityText(save, e.id) : `보유 ${e.count}`,
     tag: getCosmetic(e.id)?.category === 'skin' ? '미리보기' : undefined, lock: e.lock, actions,
   });
+}
+
+/** 특성 칸 묶음 (GDD 126-1 수정 → 147~149장, C.226 · 150장 5, C.227): 진화 특성은 보기 전용(받으면 영구), 탈착 특성(특성 상점) 칸에만 [빼기],
+ *  빈 칸에는 가진 탈착 특성이 있으면 [끼우기](고르기 창). 원정 중에는 잠금(버튼 흐림 + 이유 한 줄). 바꾸면 changed()(저장 + 다시 그림) */
+function abilitySlotsBlock(faction: FactionConfig, save: SaveData, changed: () => void): HTMLElement {
+  const evo = save.evolution;
+  const box = h('div', 'bha-stack bha-stack--tight');
+  box.dataset.abilitySlots = '';
+  const l = evo.abilities!;
+  const det = detachedOf(l);
+  const used = l.equipped.length + det.length;
+  const head = h('p', 'bha-small');
+  head.append(h('b', '', `특성 칸 ${used}/${l.slots}`), ` · 3·4단계 진화 때 받고 ${faction.rebirth.name}해도 남는다`);
+  box.append(head);
+  const locked = save.activeExpedition ? TRAIT_LOCKED_IN_RUN : null;
+  const spare = save.shared.traits.filter((id) => !det.includes(id));
+  const shop = marketOf(faction).props.traitShop;
+  for (let i = 0; i < l.slots; i++) {
+    const p = h('p', 'bha-faint');
+    p.dataset.abilitySlot = String(i);
+    const id = l.equipped[i];
+    const dId = id ? undefined : det[i - l.equipped.length];
+    if (id) {
+      const line = abilityIdLine(id, l.owned[id] ?? 1, faction.id);
+      if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`, id === l.pending ? ' · 4단계 진화 때 바뀐다' : '');
+      else p.append(`${i + 1}칸 · 비어 있음`);
+    } else if (dId) {
+      const t = getDetachTrait(dId);
+      p.dataset.detach = dId;
+      p.append(h('b', '', `${i + 1}칸 · ${t?.name ?? dId}`), ` — ${t ? detachEffectText(t) : ''} · ${shop}`, ' ');
+      const out = button({ label: '빼기', size: 'small', disabled: locked !== null, onClick: () => { if (unequipTrait(save, dId)) changed(); } });
+      out.dataset.act = 'detach-out';
+      p.append(out);
+    } else {
+      p.append(`${i + 1}칸 · 비어 있음`);
+      if (spare.length > 0) {
+        p.append(' ');
+        const put = button({ label: '끼우기', size: 'small', disabled: locked !== null, onClick: () => pickDialog({
+          title: '탈착 특성 끼우기',
+          body: `${i + 1}칸에 끼울 특성을 고른다.`,
+          options: spare.map((sid) => {
+            const t = getDetachTrait(sid)!;
+            return { key: sid, label: `${t.name} · ${detachEffectText(t)}`, onPick: () => { if (equipTrait(save, sid)) changed(); } };
+          }),
+        }) });
+        put.dataset.act = 'detach-in';
+        p.append(put);
+      }
+    }
+    box.append(p);
+  }
+  if (locked && (det.length > 0 || spare.length > 0)) box.append(h('p', 'bha-faint', `탈착 특성: ${locked}`));
+  return box;
 }
 
 /** 상태 화면 특성 줄: 진화체가 있으면 성향(비었으면 생략) + 속성·전용, 1단계면 null (C.93) */

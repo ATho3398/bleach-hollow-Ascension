@@ -26,10 +26,11 @@ function toAbsorb(exp: ExpeditionState, element: string): void {
 }
 
 describe('104장 7: 뒤로 = 처음 화면 버그', () => {
-  it('뒤로(onCancel)는 화면 스택 뒤로만 — 갈 곳이 없으면 아무것도 안 한다. 전투 = 일시정지, 독 펼침 = 닫기', () => {
+  it('뒤로(onCancel)는 화면 스택 뒤로 — 갈 곳이 없으면 홈(home 표시)일 때만 처음 화면 확인(C.198, GDD 124장 1), 전투 = 일시정지, 독 펼침 = 닫기', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain('onCancel: () => nav.back(),');
-    expect(app).toContain('canCancel: () => nav.canBack,');
+    expect(app).toContain('const r = nav.cancel();');
+    expect(app).toContain("if (r === 'home') askReturnToTitle();");
+    expect(app).toContain('canCancel: () => true,'); // C.202 (GDD 128장 4): 잠긴 화면도 뒤로가 무언가 한다 — 뒤로 버튼은 늘 켜짐
     expect(read('src/ui/battleView.ts')).toMatch(/registerCancelHook\(\(top\) => \{[\s\S]*?setPaused\(true\);[\s\S]*?\}, \{ button: true \}\)/);
     expect(read('src/ui/bha/dock.ts')).toMatch(/registerCancelHook\(\(top\) => \{[\s\S]*?setPanel\(CLOSED\);[\s\S]*?\}, \{ button: true \}\)/);
     expect(read('src/ui/bha/hold.ts')).not.toContain('requestTitle');
@@ -37,15 +38,17 @@ describe('104장 7: 뒤로 = 처음 화면 버그', () => {
 });
 
 describe('104장 5·6: 포식 설명·이름', () => {
-  it("설명 '(공격 블록, 조 계열·물리)' → '(물리 공격 블록)', 계열 글자 없음", () => {
-    for (const t of TRAITS) for (const f of ['hollow', 'shinigami']) expect(traitDescription(t.id, f)).not.toMatch(/\(공격 블록, [^)]*계열/);
-    expect(traitDescription('t-water-a', 'hollow')).toContain('(물리 공격 블록)');
-    expect(traitDescription('t-water-b', 'hollow')).toContain('(혼합 공격 블록)');
+  it("설명에 계열 글자·공격 분류(물리·혼합·특수) 없음 (C.215: GDD 137장 1 블록 타입 숨김)", () => {
+    for (const t of TRAITS) for (const f of ['hollow', 'shinigami']) {
+      expect(traitDescription(t.id, f)).not.toMatch(/\(공격 블록, [^)]*계열/);
+      expect(traitDescription(t.id, f)).not.toMatch(/물리|혼합|\((물리|특수|혼합) 공격 블록\)/);
+    }
+    expect(traitDescription('t-water-a', 'hollow')).toContain('물 속성 본체 기술이다');
   });
   it("표시 이름에서 앞 속성 글자를 뺀다 ('물 조' → '조'), 데이터 이름·id 는 그대로", () => {
     expect(traitName('t-water-a', 'hollow')).toBe('조');
     expect(traitName('t-normal-c', 'shinigami')).toBe('귀');
-    expect(traitName('t-fire-rare', 'hollow')).toBe('탄·극');
+    expect(traitName('t-fire-rare', 'hollow')).toBe('불 강화(옛 기록)'); // C.213: 희귀 특성 삭제 — 런 로그 옛 기록 이름
     expect(traitName('t-kyo-b', 'hollow')).toBe('교'); // 속성 이름 '허(虛)' 이 아니라 약어 '허' 로 시작
     expect(traitAbbr('t-water-a', 'hollow')).toBe('조');
     expect(getTrait('t-water-a').name).toEqual({ hollow: '물 조', shinigami: '물 참' });
@@ -97,7 +100,7 @@ describe('106장 1: 같은 속성 포식 후보 · n강', () => {
   });
   it("화면: 안 가진 블록 = '새 블록', 가진 블록 = 'n강 → n+1강', 가진 블록은 가득이어도 교체 단계 없이", () => {
     const src = read('src/ui/absorbView.ts');
-    expect(src).toContain("chip(have ? step : '새 블록')");
+    expect(src).toContain("chip(have ? '가진 블록' : '새 블록')"); // C.236 (GDD 158장 4): 강화 단계는 n/100 줄
     expect(src).toContain('if (isFull(exp.build) && !ownsTraitBlock(exp.build, id))');
     expect(read('src/engine/absorb/offer.ts')).not.toContain('freshElements');
   });

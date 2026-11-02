@@ -103,6 +103,8 @@ export interface MeterOpts {
   full?: boolean;
   /** 값 오른쪽 표기를 바꾼다 (기본 "value / max") */
   valueText?: string;
+  /** 숫자를 막대 안에 (GDD 127장 1, C.200): 두꺼운 막대 가운데에 값. 라벨은 위 줄에 그대로(숨기려면 쓰는 곳 CSS) */
+  inside?: boolean;
 }
 
 /** 상태 바. 채움은 width 가 아니라 --fill(0~1) 로 scaleX 한다 */
@@ -113,6 +115,7 @@ export function meter(o: MeterOpts): HTMLElement {
   if (o.thin) cls.push('bha-meter--thin');
   if (o.danger) cls.push('is-danger');
   if (o.full) cls.push('is-full');
+  if (o.inside) cls.push('bha-meter--inside');
   const root = el('div', cls.join(' '));
   root.style.setProperty('--fill', cssRatio(o.value, o.max));
   if (o.ghost !== undefined) root.style.setProperty('--ghost', cssRatio(o.ghost, o.max));
@@ -128,7 +131,8 @@ export function meter(o: MeterOpts): HTMLElement {
   if (o.valueText !== undefined) valueEl.textContent = o.valueText;
   else valueEl.append(`${o.value}`, el('small', '', ` / ${o.max}`));
   const head = el('div', 'bha-meter__head');
-  head.append(labelEl, valueEl);
+  head.append(labelEl);
+  if (!o.inside) head.append(valueEl);
   const track = el('div', 'bha-meter__track');
   if (o.ghost !== undefined) track.append(el('i', 'bha-meter__ghost'));
   track.append(el('i', 'bha-meter__fill'));
@@ -142,6 +146,7 @@ export function meter(o: MeterOpts): HTMLElement {
     z.style.setProperty('--zone', String(o.zoneLow));
     track.append(z);
   }
+  if (o.inside) track.append(valueEl); // 채움·위험 구간 위 층
   root.append(head, track);
   if (o.note) {
     const note = el('p', 'bha-meter__note');

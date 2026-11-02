@@ -32,9 +32,9 @@ function ended(floor: number, won: boolean) {
 }
 
 describe('36장 4·5번: 층 구성·★·배율', () => {
-  it('50층, ★ = ⌈층 ÷ 10⌉', () => {
+  it('50층, ★ = ⌈층 ÷ 10⌉ (C.220: ★ 최대 4 — 41~50층도 ★4)', () => {
     expect(TOWER_FLOORS).toBe(50);
-    expect([1, 10, 11, 20, 21, 30, 31, 40, 41, 50].map(towerStar)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5]);
+    expect([1, 10, 11, 20, 21, 30, 31, 40, 41, 50].map(towerStar)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 4, 4]);
     expect(clampFloor(0)).toBe(1);
     expect(clampFloor(99)).toBe(50);
   });
@@ -100,14 +100,14 @@ describe('36장 4·5번: 층 구성·★·배율', () => {
 });
 
 describe('36장 8번: 보상 (첫 클리어만)', () => {
-  it('골드 10 × ★, 5의 배수 든든한 먹이 1, 10의 배수 영옥 3 + 칭호, 50층 영옥 10 추가 — 골드 합 1500', () => {
+  it('골드 10 × ★, 5의 배수 든든한 먹이 1, 10의 배수 영옥 3 + 칭호, 50층 영옥 10 추가 — 골드 합 1400 (C.220: 41~50층 ★4)', () => {
     expect(towerReward(3)).toEqual({ gold: 10, food: null, jade: 0, titleId: null });
     expect(towerReward(15)).toEqual({ gold: 20, food: 'hearty', jade: 0, titleId: null });
     expect(towerReward(30)).toEqual({ gold: 30, food: null, jade: 3, titleId: 'tower-30' });
-    expect(towerReward(50)).toEqual({ gold: 50, food: null, jade: 13, titleId: 'tower-50' });
+    expect(towerReward(50)).toEqual({ gold: 40, food: null, jade: 13, titleId: 'tower-50' });
     let gold = 0;
     for (let n = 1; n <= TOWER_FLOORS; n++) gold += towerReward(n).gold;
-    expect(gold).toBe(1500);
+    expect(gold).toBe(1400);
   });
   it('이기면 최고 층·보상, 같은 층을 다시 이겨도 보상 없음, 지면 아무것도 잃지 않는다(리스크·허기·컨디션 그대로)', () => {
     const save = newSaveData('hollow', 1);
@@ -152,7 +152,7 @@ describe('36장 8번: 보상 (첫 클리어만)', () => {
     save.tower.best = 49;
     const w = ended(50, true);
     const r = recordTowerBattle(save, w.f, w.s, 100);
-    expect(r).toMatchObject({ firstClear: true, jade: 13, gold: 50, next: null });
+    expect(r).toMatchObject({ firstClear: true, jade: 13, gold: 40, next: null });
     expect(save.titles.map((t) => t.titleId)).toContain('tower-50');
   });
 });
@@ -181,8 +181,9 @@ describe('36장 2·3번: 열림·화면 문구', () => {
       expect(towerRewardText(f, towerReward(10))).toContain('칭호 「탑 10층 돌파」');
     }
   });
-  it('원정 출발 화면 머리 탭 [자유 원정]/[스토리]/[탑], 칭호 도감 [탑] 탭', () => {
-    expect(src('src/ui/storyView.ts')).toMatch(/id: 'tower', label: '탑'/);
+  it('원정 출발 화면 머리 탭 [자유 원정]/[스토리] (탑은 C.217 부터 월드맵 장소, GDD 139장 1), 칭호 도감 [탑] 탭', () => {
+    expect(src('src/ui/storyView.ts')).not.toMatch(/id: 'tower', label: '탑'/);
+    expect(src('src/ui/worldMapView.ts')).toContain('tower: hd.onTower');
     expect(TITLE_TABS.map((t) => t.label)).toContain('탑');
   });
 });

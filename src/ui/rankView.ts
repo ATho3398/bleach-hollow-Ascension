@@ -1,5 +1,6 @@
 // 등급전 화면 (GDD 21장, C.49): 왼쪽 = 번호 사다리(No.1 → No.10 → 무번호), 오른쪽 = 지금 도전할 상대와 [도전] / 막힌 이유. 결과 화면은 rankResultView.
 // 번호의 표시 이름은 종족 설정 rankNames·unrankedName 에서 읽는다 (엔진은 번호만, 종족 id 분기 없음). 번호 보유자는 자리 표시 데이터(provisional).
+import { BALANCE } from '../config/balance';
 import { elementName } from '../data/elements';
 import { RANK_COUNT, getHolder, type RankHolderDef } from '../data/ranks';
 import { enemyPatternKind } from '../data/enemies';
@@ -18,6 +19,7 @@ import { PATTERN_LABEL } from './practiceView';
 import { battleLabels } from './labels';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 /** 번호(1~10, null = 무번호)의 종족별 표시 이름 */
 export function rankLabel(faction: FactionConfig, n: number | null): string {
@@ -55,19 +57,19 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
   // ── 왼쪽: 사다리 ──
   const list = el('ol', 'bha-ranklist');
   list.setAttribute('aria-label', '등급표');
-  for (let n = 1; n <= RANK_COUNT + 1; n++) {
-    const id = n <= RANK_COUNT ? holderAt(r, n)! : r.ladder[RANK_COUNT]!;
+  // 번호 칸만 (GDD 159장 42): 맨 아래 무번호 줄(내 줄)과 줄 앞 순번은 뺐다 — 이름이 이미 번호를 말한다. 내가 번호를 달면 그 줄에 '나'
+  for (let n = 1; n <= RANK_COUNT; n++) {
+    const id = holderAt(r, n)!;
     const mine = id === PLAYER_ID;
     const row = el('li', `bha-rankrow${mine ? ' is-me' : ''}`);
-    const num = el('span', 'bha-rankrow__num bha-num', n <= RANK_COUNT ? String(n) : '-');
-    const name = el('span', 'bha-rankrow__name', rankLabel(faction, n <= RANK_COUNT ? n : null));
+    const name = el('span', 'bha-rankrow__name', rankLabel(faction, n));
     const who = el('span', 'bha-rankrow__who');
     if (mine) who.append(tag('나', 'kind'));
     else {
       const holder = getHolder(id);
       who.append(elementDot(holder.element, faction.id), shownName(pickFaction(holder.name, faction.id)), ' ', el('span', 'bha-faint', difficultyText(faction, holder.difficulty)));
     }
-    row.append(num, name, who);
+    row.append(name, who);
     list.append(row);
   }
 
@@ -90,12 +92,12 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
       button({ label: `${rankLabel(faction, c.targetRank)}에 도전`, icon: 'i-attack', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(holder) }),
     );
   } else if (c.reason === 'locked') {
-    right.push(notice('info', `${faction.tierNames[4]}이(가) 되면 ${faction.rankBattleName}이(가) 열린다.`, { icon: 'i-lock', title: '아직 잠김' }));
+    right.push(notice('info', `${faction.tierNames[BALANCE.rank.unlockTierIndex]}이(가) 되면 ${faction.rankBattleName}이(가) 열린다.`, { icon: 'i-lock', title: '아직 잠김' }));
   } else if (c.reason === 'top') {
     right.push(notice('good', `${rankLabel(faction, 1)} — 더 오를 곳이 없다.`, { icon: 'i-flag-win', title: '정상' }));
   } else {
     const holder = getHolder(c.opponentId!);
-    right.push(notice('warn', `${shownName(pickFaction(holder.name, faction.id))}에게 졌다. 원정을 한 번 다녀온 뒤 다시 도전할 수 있다.`, { icon: 'i-timer', title: '재도전 대기' }));
+    right.push(notice('warn', `${shownName(pickFaction(holder.name, faction.id))}에게 졌다. 모험을 한 번 다녀온 뒤 다시 도전할 수 있다.`, { icon: 'i-timer', title: '재도전 대기' }));
   }
   if (r.history.everRanked) right.push(el('p', 'bha-faint', `최고 기록 ${rankLabel(faction, r.history.best)}`));
 
@@ -126,9 +128,25 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
     { label: `${labels.chain}3 발동`, icon: 'i-chain-3', value: `${s.chain3Count}회` },
     { label: '강공격 막기', icon: 'i-guard', value: `${s.guardSuccesses}회` },
   ];
-  if (!won) rows.push({ label: '재도전', icon: 'i-loop', value: '원정을 한 번 다녀온 뒤' });
+  if (!won) rows.push({ label: '재도전', icon: 'i-loop', value: '모험을 한 번 다녀온 뒤' });
   const dock = el('div', 'bha-dock');
-  dock.append(button({ label: toward(faction.rankBattleName), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack }));
+  dock.append(asBack(button({ label: toward(faction.rankBattleName), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);
   if (won) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11): 등급 획득
+}
+
+/** 아란칼화 / 참백도 구상화 결과 (GDD 126장 3, C.220 — 지금은 보스전 임시): 머리글 + 결과 줄 + [수련장으로] */
+export function ascensionResultView(root: HTMLElement, faction: FactionConfig, won: boolean, lines: readonly string[], h: RankResultHandlers): void {
+  const labels = battleLabels(faction);
+  const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
+  const mark = el('span', 'bha-result__mark');
+  mark.append(icon(won ? 'i-flag-win' : 'i-broken'));
+  head.append(mark, el('span', 'bha-label', `${faction.ascension.name} · ${faction.ascension.foe}`), el('h1', 'bha-result__title', won ? '승리' : labels.defeatState));
+  const body = panel({});
+  for (const line of lines) body.append(el('p', 'bha-result__reason', line));
+  if (won) body.append(el('p', 'bha-small', `이제 전투에서 ${faction.liberation.name}을(를) 쓸 수 있다.`));
+  const dock = el('div', 'bha-dock');
+  dock.append(asBack(button({ label: toward(faction.ascension.name), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack })));
+  const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [body]);
+  if (won) playCosmeticFx('win', app);
 }

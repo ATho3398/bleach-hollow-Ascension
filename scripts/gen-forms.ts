@@ -5,5 +5,5 @@ import { generateFormTable } from '../src/data/evolution/build';
 
 const forms = generateFormTable();
 writeFileSync('src/data/evolution/forms.json', `${JSON.stringify(forms, null, 2)}\n`);
-const counts = [2, 3, 4, 5].map((t) => `${t}단계 ${forms.filter((f) => f.tier === t && !f.hidden).length}종(+히든 ${forms.filter((f) => f.tier === t && f.hidden).length})`);
+const counts = [2, 3, 4].map((t) => `${t}단계 ${forms.filter((f) => f.tier === t && !f.hidden).length}종(+히든 ${forms.filter((f) => f.tier === t && f.hidden).length})`);
 console.log(`forms.json: ${counts.join(' · ')}`);

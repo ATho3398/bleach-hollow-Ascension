@@ -392,10 +392,15 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     layout = tamaLayout(f.w, f.h, artBox, flipDeg, view, f.w - u.w, f.h - u.h);
     view = clampView(view, layout.zoom, layout.box, u.w, u.h);
     gravityLocal = tiltOn() ? gravityLocal : defaultGravity(f.rotated);
+    // 크기·방향이 바뀐 맞춤(resize·회전·전체 화면 전환)마다 몸체·누름 영역도 새 배치로 다시 놓는다 (GDD 133장 2, C.210:
+    // 전에는 relayout() 을 부를 때만 놓아서, 세로에서 켠 뒤 가로 전체 화면이 되면 그림 기기 버튼 누름 영역이 옛 크기 자리에 남았다)
+    place();
     return on ? layout.stage : '';
   };
   function relayout(): void {
-    dev.restage();
+    dev.restage(); // → stageOf → place()
+  }
+  function place(): void {
     if (!layout) return;
     box(body, layout.body);
     box(backFace, layout.body);

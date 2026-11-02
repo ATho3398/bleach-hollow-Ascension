@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
 import { TRAIT_ABBR_MAX_LENGTH, TRAITS, parseTrait, traitAbbr, traitName } from '../src/data/traits';
 import {
-  blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, gaugeFill, gaugeSlots, hasPips, pickAbbr, runSpecs, secondsText, trackTotal,
+  blockVisual, chainLevelAt, fitAbbr, floatSpot, FLOAT_SPOTS, gaugeFill, gaugeSlots, pickAbbr, runSpecs, secondsText, trackTotal,
 } from '../src/ui/bha/battle';
 import { blockAbbr, blockName } from '../src/ui/battleView';
 import { getEnemy } from '../src/data/enemies';
@@ -110,10 +110,6 @@ describe('블록 외형', () => {
     expect(blockVisual('skill', true, 'attack')).toBe('basic');
     expect(blockVisual('skill', false, 'heal')).toBe('heal');
     expect(blockVisual('skill', false, null)).toBe('attack');
-  });
-  it('체인 단계 표시는 공격·막기·회복만', () => {
-    expect(['attack', 'guard', 'heal'].every((v) => hasPips(v as 'attack'))).toBe(true);
-    expect(['basic', 'special', 'void'].some((v) => hasPips(v as 'basic'))).toBe(false);
   });
 });
 

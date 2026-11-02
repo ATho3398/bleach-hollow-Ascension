@@ -1,0 +1,77 @@
+{
+  "shots": [
+    "01-market-4-shops.png",
+    "03-trait-shop.png",
+    "02-room-shop-picker.png",
+    "04-status-ability-slots.png"
+  ],
+  "errors": [],
+  "trace": [
+    [
+      "room",
+      "bha-room"
+    ]
+  ],
+  "spots": [
+    "shop: 소모품 상점",
+    "gearShop: 장비 상점",
+    "skinShop: 스킨 상점",
+    "traitShop: 특성 상점",
+    "smith: 대장장이"
+  ],
+  "consumable": {
+    "title": "소모품 상점",
+    "tabs": [
+      "음식",
+      "약",
+      "소모품",
+      "타일",
+      "기타"
+    ]
+  },
+  "trait": {
+    "cards": [
+      "trait-sharpen: 날 세우기주는 피해 +5%골드 800",
+      "trait-shell: 굳은 피부받는 피해 −5%골드 800",
+      "trait-tough: 질긴 몸최대 체력 +8%골드 900",
+      "trait-focus: 집중블록 치명 +5%p골드 900"
+    ]
+  },
+  "afterBuy": {
+    "cards": [
+      "trait-sharpen: 날 세우기주는 피해 +5%골드 800",
+      "trait-shell: 굳은 피부받는 피해 −5%골드 800",
+      "trait-tough: 질긴 몸최대 체력 +8%골드 900",
+      "trait-focus: 집중블록 치명 +5%p보유끼우기"
+    ],
+    "note": "한 번 사면 계속 가진다. 빈 특성 칸에 끼우고 방에서 뺀다. 특성 칸 0/2 임시 품목"
+  },
+  "picker": {
+    "btns": [
+      "소모품 상점",
+      "장비 상점",
+      "스킨 상점",
+      "특성 상점",
+      "닫기"
+    ],
+    "focus": ""
+  },
+  "pickedTitle": "gear",
+  "status": [
+    "1칸 · 날카로운 물결 — 치명타 확률 +8%p(상한도 +8%p) []",
+    "2칸 · 집중 — 블록 치명 +5%p · 특성 상점 빼기 [빼기]",
+    "3칸 · 비어 있음 끼우기 [끼우기]",
+    "4칸 · 비어 있음 끼우기 [끼우기]"
+  ],
+  "equipPick": [
+    "질긴 몸 · 최대 체력 +8%",
+    "날 세우기 · 주는 피해 +5%",
+    "닫기"
+  ],
+  "statusAfterEquip": [
+    "1칸 · 날카로운 물결 — 치명타 확률 +8%p(상한도 +8%p)",
+    "2칸 · 집중 — 블록 치명 +5%p · 특성 상점 빼기",
+    "3칸 · 질긴 몸 — 최대 체력 +8% · 특성 상점 빼기",
+    "4칸 · 비어 있음 끼우기"
+  ]
+}

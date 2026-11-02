@@ -153,7 +153,7 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
       { label: '슬롯', value: `슬롯 ${slot}` },
       { label: '종족', value: f.name },
       { label: '단계', value: `${p.save.evolution.tierIndex + 1}단계 ${f.tierNames[p.save.evolution.tierIndex] ?? ''}` },
-      { label: '원정', value: `${p.save.runLog.runs.length}회` },
+      { label: '모험', value: `${p.save.runLog.runs.length}회` },
       ...(p.migrated ? [{ label: '형식', value: `v${p.fromFormat} → 현재 형식으로 올림` }] : []),
     ];
     const act = el('div', 'bha-backup__row');

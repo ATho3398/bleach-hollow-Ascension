@@ -109,7 +109,7 @@ describe('91장 강화·장착·판매 (보관함)', () => {
     expect(s.shared.tradeCoins).toBe(GX.sellGold.normal);
     s.activeExpedition = {} as SaveData['activeExpedition'];
     expect(equipGearItem(s, b.uid, 'acc1')).toBeNull();
-    expect(inventoryOf(s, H).find((e) => e.id === c.uid)!.lock).toBe('원정 중에는 바꿀 수 없다');
+    expect(inventoryOf(s, H).find((e) => e.id === c.uid)!.lock).toBe('모험 중에는 바꿀 수 없다');
   });
 
   it('보관함 장비 탭: 낀 것 먼저 · 이름 "등급 칸이름 +n" · 등급·낀 칸 정보', () => {
@@ -242,7 +242,7 @@ describe('91장 세이브·참고 줄', () => {
     expect(m.runLog.gear).toHaveLength(1);
     raw.shared.gear = { items: [{ uid: 'g1', kind: 'armor', grade: 'rare', star: 99, stats: { hp: 4, nope: 3 }, plus: 77, special: { id: 'sp-x', value: 1 } }, { uid: 'g2', kind: 'hat' }], equipped: { weapon: 'g1', armor: 'g1' }, nextId: 'x' };
     const g = migrateSave(JSON.parse(JSON.stringify(raw)))!.shared.gear;
-    expect(g.items).toEqual([{ uid: 'g1', kind: 'armor', grade: 'rare', star: 5, stats: { hp: 4 }, special: null, plus: GX.maxPlus, gotAt: 0 }]);
+    expect(g.items).toEqual([{ uid: 'g1', kind: 'armor', grade: 'rare', star: 4, stats: { hp: 4 }, special: null, plus: GX.maxPlus, gotAt: 0 }]);
     expect(g.equipped).toEqual({ weapon: null, armor: 'g1', shoes: null, acc1: null, acc2: null });
     expect(g.nextId).toBe(2);
     expect(sanitizeGear(undefined)).toEqual(newGearState());
@@ -264,7 +264,7 @@ describe('94장 B 후속: 같은 속성 3개 보너스 삭제 · 흡수 화면 �
     expect(src).not.toContain("MODE_LABELS[m].sub.replace('특성', '강화')");
     expect(src).not.toContain('elementBonusCount');
     expect(src).not.toContain('completedElements');
-    expect(src).toMatch(/devText\(\) \? \[\.\.\.parts\.main, el\('p', 'bha-faint', PROVISIONAL_NOTE\)\] : parts\.main/); // C.171: 개발용 문구 스위치 하나(devText = 테스트 모드)
+    expect(src).not.toContain('PROVISIONAL_NOTE'); // C.247 (GDD 168장 4): 개발 메모 줄 삭제
     expect('elementBonusCount' in BALANCE.provisional.absorb).toBe(false);
     expect('elementSkillBonus' in BALANCE.provisional.absorb).toBe(false);
   });

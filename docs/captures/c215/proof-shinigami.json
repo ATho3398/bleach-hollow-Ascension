@@ -1,0 +1,486 @@
+{
+ "faction": "shinigami",
+ "screenAfterTest": "bha-room",
+ "worldmapStart": {
+  "left": "18%",
+  "top": "174.64px",
+  "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char"
+ },
+ "walkTrack": [
+  {
+   "ms": 50,
+   "left": "20.0703%",
+   "top": "169.695px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": null,
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 96,
+   "left": "22.4945%",
+   "top": "163.904px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": null,
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 146,
+   "left": "24.9188%",
+   "top": "158.113px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": null,
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 192,
+   "left": "27.343%",
+   "top": "152.322px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": null,
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 238,
+   "left": "28.9624%",
+   "top": "148.454px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": null,
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 287,
+   "left": "31.3867%",
+   "top": "142.663px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": null,
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 332,
+   "left": "33.8061%",
+   "top": "136.883px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": null,
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 502,
+   "left": "41.8885%",
+   "top": "117.576px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": "0.21",
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 547,
+   "left": "44.3079%",
+   "top": "111.797px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking",
+   "fade": "0.70",
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 683,
+   "left": "50%",
+   "top": "98.2px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right",
+   "fade": "0.98",
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 728,
+   "left": "50%",
+   "top": "98.2px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right",
+   "fade": "0.99",
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 773,
+   "left": "50%",
+   "top": "98.2px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right",
+   "fade": "1.00",
+   "screen": "bha-room bha-worldmap is-walking"
+  },
+  {
+   "ms": 821,
+   "fade": "1.00",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 867,
+   "fade": "0.59",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 911,
+   "fade": "0.22",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 956,
+   "fade": "0.12",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1001,
+   "fade": "0.05",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1048,
+   "fade": "0.02",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1094,
+   "fade": "0.00",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1138,
+   "fade": "0.00",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1182,
+   "fade": "0.00",
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1227,
+   "fade": null,
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1272,
+   "fade": null,
+   "screen": "bha-room bha-market"
+  },
+  {
+   "ms": 1316,
+   "fade": null,
+   "screen": "bha-room bha-market"
+  }
+ ],
+ "afterWalk": "bha-room bha-market",
+ "backToMap": "bha-room bha-worldmap",
+ "cancel": {
+  "before": {
+   "left": "50%",
+   "top": "98.2px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char"
+  },
+  "mid": {
+   "left": "62.8751%",
+   "top": "124.92px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char is-walk-right is-walking"
+  },
+  "after": {
+   "left": "50%",
+   "top": "98.2px",
+   "cls": "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit bha-worldmap__char"
+  },
+  "screen": "bha-room bha-worldmap",
+  "fade": null
+ },
+ "spaShot": {
+  "left": 71.072,
+  "bottom": 24.536,
+  "wl": "86%",
+  "cls": "is-entering is-walking is-wading",
+  "ms": 1573
+ },
+ "spaTrack": [
+  {
+   "left": 109.672,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 63
+  },
+  {
+   "left": 108.005,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 124
+  },
+  {
+   "left": 106.338,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 190
+  },
+  {
+   "left": 104.67,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 252
+  },
+  {
+   "left": 103.422,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 315
+  },
+  {
+   "left": 101.755,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 378
+  },
+  {
+   "left": 100.088,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 441
+  },
+  {
+   "left": 98.4225,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 507
+  },
+  {
+   "left": 96.755,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 575
+  },
+  {
+   "left": 95.0875,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 640
+  },
+  {
+   "left": 93.4225,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 705
+  },
+  {
+   "left": 91.755,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 771
+  },
+  {
+   "left": 90.09,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 837
+  },
+  {
+   "left": 88.42,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 904
+  },
+  {
+   "left": 86.755,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 972
+  },
+  {
+   "left": 85.09,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 1037
+  },
+  {
+   "left": 83.4225,
+   "bottom": 30,
+   "wl": "",
+   "cls": "is-entering is-walking",
+   "ms": 1106
+  },
+  {
+   "left": 81.7387,
+   "bottom": 29.8693,
+   "wl": "100%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1173
+  },
+  {
+   "left": 79.9627,
+   "bottom": 28.9813,
+   "wl": "97%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1239
+  },
+  {
+   "left": 78.184,
+   "bottom": 28.092,
+   "wl": "95%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1306
+  },
+  {
+   "left": 76.4053,
+   "bottom": 27.2027,
+   "wl": "93%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1373
+  },
+  {
+   "left": 74.6293,
+   "bottom": 26.3147,
+   "wl": "91%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1442
+  },
+  {
+   "left": 72.8507,
+   "bottom": 25.4253,
+   "wl": "89%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1507
+  },
+  {
+   "left": 71.072,
+   "bottom": 24.536,
+   "wl": "86%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1573
+  },
+  {
+   "left": 63.9627,
+   "bottom": 21.236,
+   "wl": "78%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1835
+  },
+  {
+   "left": 62.6293,
+   "bottom": 20.736,
+   "wl": "77%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1898
+  },
+  {
+   "left": 60.8507,
+   "bottom": 20.069,
+   "wl": "75%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 1960
+  },
+  {
+   "left": 59.0747,
+   "bottom": 19.403,
+   "wl": "73%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 2023
+  },
+  {
+   "left": 57.296,
+   "bottom": 18.736,
+   "wl": "71%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 2090
+  },
+  {
+   "left": 55.52,
+   "bottom": 18.07,
+   "wl": "70%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 2157
+  },
+  {
+   "left": 53.7413,
+   "bottom": 17.403,
+   "wl": "69%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 2221
+  },
+  {
+   "left": 51.9627,
+   "bottom": 16.736,
+   "wl": "67%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 2289
+  },
+  {
+   "left": 50.1867,
+   "bottom": 16.07,
+   "wl": "66%",
+   "cls": "is-entering is-walking is-wading",
+   "ms": 2355
+  },
+  {
+   "left": 50,
+   "bottom": 16,
+   "wl": "66%",
+   "cls": "is-wading is-seated",
+   "ms": 2422
+  },
+  {
+   "left": 50,
+   "bottom": 16,
+   "wl": "66%",
+   "cls": "is-wading is-seated",
+   "ms": 2487
+  },
+  {
+   "left": 50,
+   "bottom": 16,
+   "wl": "66%",
+   "cls": "is-wading is-seated",
+   "ms": 2549
+  },
+  {
+   "left": 50,
+   "bottom": 16,
+   "wl": "66%",
+   "cls": "is-wading is-seated",
+   "ms": 2612
+  },
+  {
+   "left": 50,
+   "bottom": 16,
+   "wl": "66%",
+   "cls": "is-wading is-seated",
+   "ms": 2675
+  },
+  {
+   "left": 50,
+   "bottom": 16,
+   "wl": "66%",
+   "cls": "is-wading is-seated",
+   "ms": 2738
+  },
+  {
+   "left": 50,
+   "bottom": 16,
+   "wl": "66%",
+   "cls": "is-wading is-seated",
+   "ms": 2801
+  }
+ ],
+ "spaStallSamples": 0,
+ "detail": "참백도 슬롯 1번 칸불속성 강화 0강 (/100)권권(拳) · 불 속성\n[임시] 불 속성 시해 능력이다. 같은 계열 블록이 붙으면 단계 기술이 강해진다.\n효과: 위력 기본 공격 4.2회분다른 칸으로빼기",
+ "detailTypeWords": [],
+ "battle": {
+  "blocks": 5,
+  "pips": 0,
+  "runs": 0
+ },
+ "typeWords": []
+}

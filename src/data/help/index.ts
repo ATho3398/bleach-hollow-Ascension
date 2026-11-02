@@ -1,7 +1,7 @@
 // 도움말·튜토리얼 텍스트 데이터 (GDD 14-2, C.19). 본문은 템플릿이고 {자리표시자}는 종족 설정(FactionConfig)·밸런스 값으로 치환한다.
 // 종족 id 분기 없이 종족별 표시 이름이 들어간다. 텍스트는 모두 provisional(임시) — 기획 확정 전 문구다.
 import { riskText, riskZones, stabilityZones, zoneLines } from './riskText';
-import { normalSlotNote } from './textFormat';
+import { MINUS, normalSlotNote } from './textFormat';
 import { BALANCE } from '../../config/balance';
 import { BLOCK_WORDS, type FactionConfig } from '../../engine/faction';
 import { fixParticles } from '../../engine/josa';
@@ -11,6 +11,7 @@ import tutorialJson from './tutorial.json';
 import guidesJson from './guides.json';
 import { synergyName, tileName } from '../tiles';
 import { statName } from '../elements';
+import { GOLD_ITEMS } from '../shop';
 import { STAT_IDS } from '../schema';
 import type { TextGuideId } from '../../engine/tutorial';
 
@@ -27,6 +28,22 @@ export interface TutorialScene {
   done?: string;
   /** 직접 해 보기에서 [다음]이 열리려면 블록 바에 이만큼 모여야 한다 (다음 체인 설명에 보여 줄 블록, GDD 100장 #40) */
   minBlocks?: number;
+  /**
+   * 한 카드 안의 여러 번 누름 (GDD 132장 1, C.208): 지금 화면에 보이는 마지막 단계가 '지금 누를 것'이다 — 강조 테두리·문구·카드 자리·기기 초점이 그 단계를 따라간다.
+   * 사용자가 창을 닫거나 뒤로 가 앞 단계 대상만 남으면 저절로 그 단계로 되돌아간다
+   */
+  stages?: TutorialStage[];
+  /** 카드가 가리면 안 되는 것 (단계가 없는 카드 — 예: 강공격 카드의 적 예고 게이지, GDD 157장 2) */
+  avoid?: string[];
+}
+
+export interface TutorialStage {
+  /** 지금 누를 대상 ('@' + CSS 선택자, 쉼표 없이 하나씩) */
+  targets: string[];
+  /** 이 단계 문구 (없으면 카드 본문) */
+  body?: string;
+  /** 카드가 가리면 안 되는 열린 창 (예: 아이템 상세 창·먹이 목록) */
+  avoid?: string[];
 }
 
 export interface GlossaryTerm {
@@ -42,10 +59,16 @@ export interface ScreenHelp {
 }
 
 export const TUTORIAL_SCENES: readonly TutorialScene[] = tutorialJson.scenes;
+/** 첫 원정 첫 전투 각본의 설명 카드 (GDD 123장 5, C.199): 각본 단계 id(engine/combat/script) → 장면 */
+export const SCRIPT_SCENES: Readonly<Record<string, TutorialScene>> = Object.fromEntries(tutorialJson.script.map((x) => [x.id, x as TutorialScene]));
+/** 튜토리얼 원정 뒤 회복 안내 카드 (GDD 123장 5 수정 v5.280, C.199): 순서 그대로. 대상 '@선택자' = CSS 선택자 */
+export const RECOVER_SCENES: readonly TutorialScene[] = tutorialJson.recover;
 export const GLOSSARY: readonly GlossaryTerm[] = glossaryJson.terms;
 export const SCREEN_HELPS: readonly ScreenHelp[] = screensJson.screens;
 /** 한 번만 뜨는 안내 (C.120, GDD 64·67장): 안내 id → 장면 ('first-absorb' 는 튜토리얼 흡수 화면 위 장면, 저장 상태 없음) */
 export const GUIDES: Readonly<Record<TextGuideId | 'first-absorb', readonly TutorialScene[]>> = guidesJson.guides;
+/** 처음 켰을 때 홈 안내 (GDD 131장, C.207): 첫 카드 · 방 물건·독 카드(방에 있는 것만) · 마지막 첫 모험 카드 */
+export const HOME_INTRO: { intro: Omit<TutorialScene, 'id' | 'targets'>; items: readonly TutorialScene[]; last: Omit<TutorialScene, 'targets'> } = guidesJson.homeIntro;
 
 /** 안내 본문 자리표시자 (종족 설정 helpVars 에 더함): 시작 타일 이름·조합 예시·튜토리얼 수치 */
 export function guideVars(f: FactionConfig): Record<string, string> {
@@ -63,7 +86,7 @@ export function guideVars(f: FactionConfig): Record<string, string> {
 }
 
 /** 튜토리얼 장면 targets 가 가리킬 수 있는 전투 화면 요소 id (battleView 가 data-help 로 단다) */
-export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.liberation'] as const; // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
+export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.liberation', 'battle.guard', 'battle.hp'] as const; // battle.guard·battle.hp = 각본 전투 카드(C.199) // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
 
 const COMBAT = BALANCE.provisional.combat;
 const LIB = BALANCE.provisional.liberation;
@@ -90,9 +113,11 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.guardSeconds = String(COMBAT.guardSeconds);
   vars.gearCooldownSeconds = String(COMBAT.gearCooldownSeconds);
   const BI = BALANCE.provisional.battleItems;
-  const potion = BI['battle-potion'];
   const haste = BI['battle-haste'];
-  vars.potionPct = potion?.effect === 'heal' ? String(Math.round(potion.fraction * 100)) : '';
+  // 회복 물건 4종 (GDD 144장): 이름·회복량 — 상점 품목 데이터 순서
+  const heals = GOLD_ITEMS.filter((g) => BI[g.id]?.effect === 'heal');
+  vars.healNames = heals.map((g) => g.name).join('·');
+  vars.healPcts = heals.map((g) => { const b = BI[g.id]; return b?.effect === 'heal' ? String(Math.round(b.fraction * 100)) : ''; }).join('·');
   vars.hasteSeconds = haste?.effect === 'haste' ? String(haste.seconds) : '';
   vars.hasteMult = haste?.effect === 'haste' ? String(haste.spawnMult) : '';
   delete vars.basicSkillName;
@@ -102,7 +127,9 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   // 해방 (GDD 83장, 옛 저장형 필살기 자리): {liberation.baseName}·{liberation.name} 은 종족 설정에서 그대로, 수치는 BALANCE
   vars.liberationSeconds = String(LIB.seconds);
   vars.liberationRisk = String(LIB.riskOnEnd);
-  // 진화 단계 이름 (GDD 20-5 설명용): {tier4} = 바스트로데/평대원, {tier5} = 아란칼/수석 대원
+  // 놓아주기 = 리스크 게이지 −releaseRelief (GDD 168장 2): 흡수 설명 칸·확인 창·도움말이 같은 값
+  vars.releaseRelief = `${MINUS}${BALANCE.provisional.risk.releaseRelief}`;
+  // 진화 단계 이름 (GDD 126장 4단계 설명용): {tier3} = 아쥬커스/평대원, {tier4} = 바스트로데/수석 대원, {ascensionName} = 아란칼화/참백도 구상화
   // 능력치 자세한 설명 (C.137, GDD 85장 9): 이름은 종족 설정 표기, 수치는 BALANCE 에서 읽는다 (숫자 하드코딩 없음)
   for (const id of STAT_IDS) vars[`stat.${id}`] = statName(id, f.id);
   vars.statRef = String(BALANCE.provisional.stats.tierTotals[0]! / STAT_IDS.length);
@@ -125,8 +152,9 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.stabilityZoneText = zoneLines(stabilityZones(f)).join('\n');
   vars.stabilityMoveText = rt.stabilityMove.join('\n');
   vars.normalSlotNote = normalSlotNote(f.slotName);
+  vars.tier3 = f.tierNames[2];
   vars.tier4 = f.tierNames[3];
-  vars.tier5 = f.tierNames[4];
+  vars.ascensionName = f.ascension.name;
   return vars;
 }
 

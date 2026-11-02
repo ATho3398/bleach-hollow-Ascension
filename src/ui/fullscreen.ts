@@ -1,6 +1,11 @@
 // 전체 화면 (GDD 46장): 모바일 주소창 가림 대책. Fullscreen API(webkit 접두 포함)로 게임 전체를 전체 화면에 넣고 뺀다.
 // 지원하지 않는 브라우저(아이폰 사파리 등)에서는 설정 줄을 숨긴다. "시작할 때 전체 화면" 값은 기기 localStorage(키 bha-fullscreen-start), 세이브 무관, 기본 켬.
+// 홈 화면 앱이 display-mode fullscreen 으로 켜지면(앱 모드, GDD 156장) 이미 꽉 채우므로 API 를 절대 부르지 않는다 — 부르면 크롬 '전체 화면 종료' 안내가 뜬다.
+// standalone 으로 켜진 앱(상태바 보임)은 전체 화면이 아니므로 탭과 똑같이 다룬다 (GDD 166장).
 import type { SettingsStorage } from './fxSettings';
+import { isAppMode, lockLandscape } from './bha/orientation';
+
+export { isAppMode };
 
 export const FULLSCREEN_START_KEY = 'bha-fullscreen-start';
 export const FULLSCREEN_EVENT = 'bha-fullscreen-change';
@@ -36,7 +41,7 @@ export function isFullscreen(): boolean {
 
 /** 전체 화면 진입. 사용자 터치 안에서 불러야 한다. 거부·미지원이면 조용히 false */
 export async function enterFullscreen(): Promise<boolean> {
-  if (!fullscreenSupported()) return false;
+  if (isAppMode() || !fullscreenSupported()) return false;
   if (isFullscreen()) return true;
   const el = document.documentElement as unknown as FsElement;
   try {
@@ -84,10 +89,28 @@ export function saveFullscreenStart(storage: SettingsStorage | null | undefined,
   return on;
 }
 
-/** 시작 화면 버튼을 누를 때 부른다: 지원 기기 + "시작할 때 전체 화면"이 켜져 있으면 전체 화면 진입 */
-export function enterFullscreenOnStart(storage?: SettingsStorage | null): void {
-  if (!fullscreenSupported() || !loadFullscreenStart(storage)) return;
-  void enterFullscreen();
+/** 손가락 기기를 세로로 들고 있는가 */
+function portraitTouch(): boolean {
+  const mq = (q: string) => (typeof matchMedia === 'function' ? matchMedia(q).matches : false);
+  const portrait = typeof screen !== 'undefined' && screen.orientation ? screen.orientation.type.startsWith('portrait') : mq('(orientation: portrait)');
+  return portrait && mq('(pointer: coarse)');
+}
+
+/**
+ * 시작 화면 버튼을 누를 때 부른다(손가락 누름 안 = 브라우저 허락 조건).
+ * "시작할 때 전체 화면"이 켜져 있으면 전체 화면 + 가로 고정, 꺼져 있어도 세로로 든 폰이면 가로 고정만 시도 (GDD 117장 1, C.190 — 안드로이드 크롬).
+ * 가로 고정은 전체 화면·설치 앱에서만 되고, 전체 화면을 나가면 브라우저가 풀어 폰 원래 방향으로 돌아간다. 안 되는 환경(아이폰)은 지금 그대로(CSS 90° 돌려 그리기)
+ * 앱 모드(display-mode fullscreen)면 아무것도 안 한다 — 전체 화면·가로는 manifest(display fullscreen·orientation landscape)가 맡는다 (GDD 156장 2). standalone 은 탭과 같다 (166장 2)
+ */
+export function enterFullscreenOnStart(storage?: SettingsStorage | null, deps: { lock?: () => Promise<unknown>; portrait?: () => boolean } = {}): void {
+  const lock = deps.lock ?? (() => lockLandscape());
+  const portrait = deps.portrait ?? portraitTouch;
+  if (isAppMode()) return;
+  if (fullscreenSupported() && loadFullscreenStart(storage)) {
+    void enterFullscreen().then((ok) => { if (ok) return lock(); }).catch(() => {});
+    return;
+  }
+  if (portrait()) void lock().catch(() => {});
 }
 
 /** fullscreenchange(접두 포함)를 듣는다. 들어가고 나올 때 기기 틀·세로 회전 출력·다마고치 모드가 화면 크기를 다시 계산하도록 resize 도 알린다. 해제 함수 반환 */

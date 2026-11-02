@@ -14,6 +14,10 @@ export interface BgLayerDef {
   height: number;
   /** 걷기 화면 흐르는 빠르기 배율 (1 = 땅). 작을수록 멀리 보인다 */
   speed: number;
+  /** 장면 아래에서 층 아랫변까지 (%, 없으면 0 = 아래에 붙음). 땅 그림에서 떼어 낸 나무 층처럼 땅 위에 얹을 때 (C.190, GDD 116장 4) */
+  bottom?: number;
+  /** 층 크기 배율 (없으면 1) — 아랫변 기준으로 위·옆으로 커진다. 숲 나무 층 ×1.5 (사용자 2026-10-29 "배경 나무는 1.5배 키우자") */
+  scale?: number;
 }
 
 export interface SceneBgLayer {
@@ -22,6 +26,8 @@ export interface SceneBgLayer {
   ratio: number;
   height: number;
   speed: number;
+  /** 장면 아래에서 층 아랫변까지 (%) */
+  bottom: number;
 }
 
 export interface SceneBg {
@@ -52,7 +58,9 @@ export function parseBackgrounds(r: unknown): { credit: string; scenes: Record<s
       if (!isPos(x.w) || !isPos(x.h)) errors.push(`scenes.${id}.layers[${i}]: w·h 양수`);
       if (!isPos(x.height) || (x.height as number) > 100) errors.push(`scenes.${id}.layers[${i}].height: 0~100`);
       if (!isPos(x.speed)) errors.push(`scenes.${id}.layers[${i}].speed: 양수`);
-      return { id: x.id as string, w: x.w as number, h: x.h as number, height: x.height as number, speed: x.speed as number };
+      if (x.bottom !== undefined && (typeof x.bottom !== 'number' || !(x.bottom >= 0) || x.bottom >= 100)) errors.push(`scenes.${id}.layers[${i}].bottom: 0~100`);
+      if (x.scale !== undefined && !isPos(x.scale)) errors.push(`scenes.${id}.layers[${i}].scale: 양수`);
+      return { id: x.id as string, w: x.w as number, h: x.h as number, height: x.height as number, speed: x.speed as number, ...(x.bottom !== undefined ? { bottom: x.bottom as number } : {}), ...(x.scale !== undefined ? { scale: x.scale as number } : {}) };
     });
   }
   if (errors.length > 0) throw new Error(`배경 데이터 오류: ${errors.join(', ')}`);
@@ -86,11 +94,11 @@ export function sceneBg(sceneId: string | undefined | null, base = '/', files: r
   const layers: SceneBgLayer[] = [];
   for (const d of defs) {
     const f = findArtFile(bgArtKey(sceneId, d.id), files);
-    if (f) layers.push({ url: `${base.replace(/\/$/, '')}/${f}`, ratio: d.w / d.h, height: d.height, speed: d.speed });
+    if (f) layers.push({ url: `${base.replace(/\/$/, '')}/${f}`, ratio: d.w / d.h, height: d.height * (d.scale ?? 1), speed: d.speed, bottom: d.bottom ?? 0 });
   }
   if (layers.length === 0) return null;
   // 모든 층을 같은 배율로 키운다(하늘:땅 비율 그대로, 아래 기준, 넘치는 위쪽은 잘림)
   const ground = defs.find((d) => d.id === 'ground');
   const zoom = ground ? bgZoom(ground.height) : 1;
-  return { id: sceneId, zoom, layers: layers.map((l) => ({ ...l, height: l.height * zoom })) };
+  return { id: sceneId, zoom, layers: layers.map((l) => ({ ...l, height: l.height * zoom, bottom: l.bottom * zoom })) };
 }

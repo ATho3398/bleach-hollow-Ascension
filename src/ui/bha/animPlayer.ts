@@ -2,6 +2,7 @@
 // 동작마다 있는 것만 돈다 — 없는 동작은 play()가 null 을 돌려주니 호출하는 쪽이 기존 연출(몸통박치기·흔들림·이동 방식)을 쓴다.
 // 좌우 반전·윤곽·색조는 <img> 의 CSS 가 하므로 그대로 따라온다(src 만 바꾼다). 코어(createAnimPlayer)는 DOM 없이 돌아 테스트한다.
 import { clipDurationMs, clipHitMs, frameAt, hasAnims, type AnimAction, type AnimClip, type AnimSet } from '../../data/art/anim';
+import type { FamilyMotionKind } from '../../engine/faction';
 import type { ArtUrls } from '../../data/art/manifest';
 import { HUMANOID, MOTION_SETS, MOTIONS } from '../../data/art/rig/pose';
 import { bindRigAnim, RIG_ACTIONS } from './rigAnim';
@@ -16,6 +17,10 @@ export interface PlayOptions {
   onHit?: () => void;
   /** 끝났을 때 (hold 동작은 마지막 장을 보인 채로) */
   onEnd?: () => void;
+  /** 타격 순간부터 재생 (GDD 117장 3, 블록 즉발): 휘두른 끝에서 시작해 되돌아온다. onHit 은 바로. 돌려주는 길이는 남은 길이, 타격 시각 0 */
+  fromHit?: boolean;
+  /** 계열 몸동작 (GDD 118장 2): 종이인형은 이 묶음의 동작을 쓴다(없으면 action 그대로). 프레임 그림은 무시 */
+  motion?: FamilyMotionKind;
 }
 
 export interface AnimPlayer {
@@ -85,11 +90,13 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
       cur = c;
       phase = 'once';
       curOpts = o;
-      elapsed = 0;
-      hitFired = false;
-      show(c.frames[0]);
+      const hitAt = clipHitMs(c);
+      elapsed = o.fromHit ? hitAt : 0;
+      hitFired = !!o.fromHit;
+      show(c.frames[o.fromHit ? frameAt(c, elapsed).index : 0]);
+      if (o.fromHit) o.onHit?.();
       wake();
-      return { durationMs: clipDurationMs(c), hitAtMs: clipHitMs(c) };
+      return o.fromHit ? { durationMs: clipDurationMs(c) - hitAt, hitAtMs: 0 } : { durationMs: clipDurationMs(c), hitAtMs: hitAt };
     },
     stop() {
       locked = false;
@@ -162,7 +169,7 @@ export function preloadFrames(anims: AnimSet): void {
 
 /**
  * <img> 에 재생기를 붙이고 owner 요소(캐릭터 버튼·내 그림·적 상자…)에 등록한다. 프레임 애니가 하나도 없으면 아무것도 하지 않고 null.
- * owner 에는 `has-anim` 과 동작별 `has-anim-<동작>` 클래스가 붙어 CSS 가 겹치는 가짜 움직임(부유 출렁임·걸음 흔들림)을 끈다.
+ * owner 에는 `has-anim` 과 동작별 `has-anim-<동작>` 클래스가 붙어 CSS 가 겹치는 가짜 움직임(걸음 흔들림)을 끈다.
  */
 export function bindAnim(owner: HTMLElement, img: HTMLImageElement, art: ArtUrls | null): AnimPlayer | null {
   // 종이인형 그림(GDD 96장 30): 뼈대 동작으로 움직인다

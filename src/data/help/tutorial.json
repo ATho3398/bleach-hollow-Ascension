@@ -38,7 +38,179 @@
         "battle.liberation"
       ],
       "title": "{liberation.baseName}, 그리고 {absorbActionName}",
-      "body": "{liberation.baseName} 게이지가 차면 눌러 해방하고, {tier5}부터는 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
+      "body": "{liberation.baseName} 게이지가 차면 아우라가 뿜어 나오는 캐릭터를 눌러 해방하고, {tier4}에 {ascensionName}을(를) 깨면 {liberation.name}(으)로 바뀐다.\n이기면 {absorbActionName}할 수 있고, 나머지는 [?] 도움말에서 다시 볼 수 있다."
+    }
+  ],
+  "script": [
+    {
+      "id": "guard-now",
+      "targets": [
+        "battle.guard"
+      ],
+      "avoid": [
+        "@.bha-unit--foe .bha-hgauge--cast"
+      ],
+      "title": "강공격",
+      "body": "적의 강공격 게이지가 가득 찼다!\n{roleNames.guard}을(를) 눌러 보자."
+    },
+    {
+      "id": "guard-ok",
+      "targets": [],
+      "avoid": [
+        "@.bha-unit--foe .bha-hgauge--cast"
+      ],
+      "title": "{roleNames.guard} 성공",
+      "body": "강공격을 막아 냈다!\n강적의 강공격은 때맞춰 {roleNames.guard}(으)로 막을 수 있다."
+    },
+    {
+      "id": "hurt",
+      "targets": [
+        "battle.tray"
+      ],
+      "avoid": [
+        "battle.hp"
+      ],
+      "title": "위기",
+      "sample": [
+        "attack"
+      ],
+      "body": "연달아 들어온 강공격에 체력이 얼마 남지 않았다.\n블록 스킬로 적을 더 빨리 쓰러뜨려 보자."
+    },
+    {
+      "id": "nice",
+      "targets": [],
+      "title": "좋아!",
+      "body": "블록 스킬을 잘 썼다!"
+    },
+    {
+      "id": "chain-use",
+      "targets": [
+        "battle.tray"
+      ],
+      "title": "{chainName}",
+      "body": "같은 블록이 모이면 {chainName}이(가) 발동해 더 강한 공격이 나간다(최대 {chainMax}개).\n{chainMax}{chainName} 블록을 써 보자."
+    }
+  ],
+  "recover": [
+    {
+      "id": "dying",
+      "targets": [
+        "@.bha-room__hp"
+      ],
+      "title": "빈사",
+      "body": "치명상을 입어 빈사 상태가 됐다.\n이대로 두면 죽는다."
+    },
+    {
+      "id": "to-bag",
+      "targets": [
+        "@.bha-prop--chest"
+      ],
+      "title": "치료",
+      "body": "구급상자 1개가 들어왔다.\n{chestName}을(를) 열어 보자."
+    },
+    {
+      "id": "cure",
+      "targets": [
+        "@[data-item=\"med-cure\"]"
+      ],
+      "title": "구급상자",
+      "body": "구급상자를 사용해 보자.",
+      "stages": [
+        {
+          "targets": [
+            "@[data-item=\"med-cure\"]"
+          ],
+          "body": "구급상자를 사용해 보자."
+        },
+        {
+          "targets": [
+            "@.bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]"
+          ],
+          "body": "구급상자를 사용해 보자."
+        }
+      ],
+      "done": "빈사가 풀렸다!"
+    },
+    {
+      "id": "to-spa",
+      "targets": [
+        "@.bha-prop--outside",
+        "@.bha-worldmap [data-place=\"spa\"]",
+        "@.bha-spa__actor"
+      ],
+      "title": "{spaName}",
+      "body": "빈사는 풀렸지만 체력은 아직 그대로다.\n{spaName}에서 체력을 회복해 보자.",
+      "stages": [
+        {
+          "targets": [
+            "@.bha-prop--outside"
+          ],
+          "body": "빈사는 풀렸지만 체력은 아직 그대로다.\n{spaName}에서 체력을 회복해 보자."
+        },
+        {
+          "targets": [
+            "@.bha-worldmap [data-place=\"spa\"]"
+          ],
+          "body": "{spaName}(으)로 가 보자."
+        },
+        {
+          "targets": [
+            "@.bha-spa__actor"
+          ],
+          "body": "체력이 차오른다."
+        }
+      ],
+      "done": "체력이 가득 찼다!"
+    },
+    {
+      "id": "spa-rest",
+      "targets": [
+        "@.bha-spa__status"
+      ],
+      "title": "쉬기",
+      "body": "{spaName}에서는 체력이 빠르게 찬다.\n이제 방으로 돌아가자."
+    },
+    {
+      "id": "feed",
+      "targets": [
+        "@.bha-homedock__carebtn--feed"
+      ],
+      "title": "{nestActionsShort.feed}",
+      "body": "온천에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자.",
+      "stages": [
+        {
+          "targets": [
+            "@.bha-homedock__carebtn--feed"
+          ],
+          "body": "온천에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
+        },
+        {
+          "targets": [
+            "@.bha-homedock__tray--food .bha-homedock__food[data-food=\"{foodId}\"]"
+          ],
+          "avoid": [
+            "@.bha-homedock__tray--food",
+            "@.bha-room__status",
+            "@.bha-room__hp"
+          ],
+          "body": "온천에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
+        }
+      ],
+      "avoid": [
+        "@.bha-room__status",
+        "@.bha-room__hp"
+      ]
+    },
+    {
+      "id": "done",
+      "targets": [
+        "@.bha-room__hp"
+      ],
+      "title": "회복 끝",
+      "body": "배가 든든해졌다.\n방에서 쉬어도 체력이 조금씩 찬다.",
+      "avoid": [
+        "@.bha-room__bubble"
+      ]
     }
   ]
 }

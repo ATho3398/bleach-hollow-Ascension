@@ -82,6 +82,8 @@ export function itemGrid(cards: HTMLElement[], empty: string, emptyIcon = 'i-she
 export interface ItemDialogSpec {
   /** 창 제목 ("상품 구매" · "물건") */
   heading: string;
+  /** 물건 id (data-item-dialog — 튜토리얼 카드가 이 창의 버튼을 가리킨다, GDD 132장 1) */
+  id?: string;
   name: string;
   desc: string;
   /** 왼쪽 큰 그림 */
@@ -102,6 +104,7 @@ export interface ItemDialogSpec {
 export function itemDialog(s: ItemDialogSpec): () => void {
   s = { ...s, name: shownName(s.name) };
   const layer = el('div', 'bha-overlay bha-overlay--in-app bha-itemdialog');
+  if (s.id) layer.dataset.itemDialog = s.id;
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', s.name);

@@ -12,7 +12,7 @@ type Box = { l: number; r: number; t: number; b: number };
 const SCENE = { w: 628, h: 296 };
 const boxOf = (id: string, p: { x: number; y: number; scale?: number }): Box => {
   const s = (p.scale ?? 1) * 1.25;
-  const [w, h] = id === 'door' ? [74, 100] : [86, 76];
+  const [w, h] = id === 'outside' ? [74, 100] : [86, 76];
   const cx = (p.x / 100) * SCENE.w;
   const bottom = (p.y / 100) * SCENE.h;
   return { l: cx - (w * s) / 2, r: cx + (w * s) / 2, t: bottom - h * s, b: bottom + 20 }; // 이름표 20px 포함
@@ -23,13 +23,12 @@ const charBox = (f: { x: number; y: number }): Box => ({ l: (f.x / 100) * SCENE.
 
 describe.each(['hollow', 'shinigami'])('C.146 방 물건 (%s)', (fid) => {
   const L = getFaction(fid!).room!.layout as Record<string, { x: number; y: number; scale?: number }>;
-  const ids = ['door', 'book', 'altar', 'chest', 'shop'];
-  it('R2 (C.153 A1): 크기 — 모험(문)이 가장 크고 책장·상점이 가장 작다, 수련장·보관함은 같다', () => {
+  const ids = ['outside', 'book', 'altar', 'chest']; // C.215: 밖으로(옛 문 자리) 고정, 장터 물건 폐기 (GDD 137장 3)
+  it('R2 (C.153 A1): 크기 — 밖으로(옛 문)가 가장 크고, 수련장·보관함은 같다', () => {
     const sc = (i: string) => L[i]!.scale ?? 1;
-    expect(sc('door')).toBeGreaterThan(sc('altar'));
+    expect(sc('outside')).toBeGreaterThan(sc('altar'));
     expect(sc('altar')).toBe(sc('chest'));
     expect(sc('book')).toBe(sc('altar')); // C.159 A4: 보관함·책장·상점·수련장 4개 같은 크기
-    expect(sc('shop')).toBe(sc('book'));
   });
   it('R1: 물건끼리·물건과 캐릭터가 겹치지 않는다 (펫 자리 오른쪽 발치 40px 포함)', () => {
     const boxes = Object.fromEntries(ids.map((i) => [i, boxOf(i, L[i]!)]));
@@ -37,10 +36,10 @@ describe.each(['hollow', 'shinigami'])('C.146 방 물건 (%s)', (fid) => {
     for (const i of ids) expect(hit(boxes[i]!, { ...CHAR, r: CHAR.r + 40 }), `${i} × 캐릭터`).toBe(false);
     for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) expect(hit(boxes[ids[a]!]!, boxes[ids[b]!]!), `${ids[a]} × ${ids[b]}`).toBe(false);
   });
-  it('문은 맨 왼쪽 · 수련장은 오른쪽 끝 (C.131 규칙 유지)', () => {
-    expect(L.door!.x).toBeLessThanOrEqual(12);
+  it('밖으로(옛 문)는 맨 왼쪽 · 수련장은 오른쪽 끝 (C.131 규칙 유지)', () => {
+    expect(L.outside!.x).toBeLessThanOrEqual(12);
     expect(L.altar!.x).toBeGreaterThan(75);
-    expect(L.door!.x).toBeLessThan(L.book!.x);
+    expect(L.outside!.x).toBeLessThan(L.book!.x);
   });
 });
 
@@ -56,7 +55,7 @@ describe('C.146 보관함', () => {
   });
   it('I5: 탭 숫자는 카드(종류) 수 — 개수 합이 아니다 (펫 탭 포함 전 탭 같은 기준)', () => {
     const src = read('src/ui/lcdScreens.ts');
-    expect(src).toContain(".filter((e) => e.category === c && listed(e)).length");
+    expect(src).toContain('count: all.filter((e) => bagGroupOf(e) === g).length'); // C.239: 소모품 칸 탭도 카드 수
     expect(src).not.toContain(".filter((e) => e.category === c).reduce((a, e) => a + e.count, 0)");
   });
   it('I6: 카드 설명에 "착용 중"·"보유"·"데리고 다니는 중"이 배지와 겹쳐 반복되지 않는다', () => {

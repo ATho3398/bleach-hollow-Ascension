@@ -33,6 +33,7 @@ export function idleYieldLines(y: IdleYield, faction: Pick<FactionConfig, 'foodN
     y.ev > 0 ? `노력치 +${y.ev}` : '',
     y.food > 0 ? `${faction.foodNames[IX.foodId as FoodId]} +${y.food}` : '',
     y.tiles > 0 ? `타일 ${y.tiles}장` : '',
+    y.gear > 0 || y.gearChance > 0 ? `장비 ${y.gearChance > 0 ? `${y.gear}~${y.gear + 1}` : y.gear}개` : '', // GDD 119장 5: 남은 확률이 있으면 하나 더 나올 수 있다
     y.laps > 0 ? `자동 모험 ${y.laps}바퀴` : '',
   ].filter(Boolean);
 }
@@ -45,6 +46,7 @@ export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foo
     r.ev > 0 ? `노력치 +${r.ev}` : '',
     r.food > 0 ? `${faction.foodNames[IX.foodId as FoodId]} +${r.food}` : '',
     r.tiles.length > 0 ? `타일 ${r.tiles.map((id) => tileName(id, faction.id)).join('·')}` : '',
+    (r.gear ?? 0) > 0 ? `장비 ${r.gear}개` : '',
   ].filter(Boolean);
   const stopped = r.activeHours < r.hours ? ` (배고파서·지쳐서 ${hm(r.activeHours)}만 돌았다)` : '';
   return {

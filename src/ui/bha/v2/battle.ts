@@ -12,7 +12,7 @@ export const V2_PATH = {
   bite: 'M3 6h18M5 6l2 7 2-7M10 6l2 9 2-9M15 6l2 7 2-7',
   shot: 'M14 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0M3 9h9M5 12h8M3 15h9',
   slash: 'M5 19L19 5M10 21L21 10M3 14L14 3',
-  impact: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3',
+  impact: 'M6 10v5a5 5 0 0 0 5 5h2a5 5 0 0 0 5-5v-5M6 10a1.5 1.5 0 0 1 3 0M9 9.5a1.5 1.5 0 0 1 3 0M12 9.5a1.5 1.5 0 0 1 3 0M15 10a1.5 1.5 0 0 1 3 0M6 14h5a1.75 1.75 0 0 0 0-3.5H9',
   beam: 'M3 8h11M3 12h15M3 16h11M18 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
   guard: 'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z',
   heal: 'M12 5v14M5 12h14',
@@ -61,7 +61,7 @@ function pathSvg(d: string): SVGSVGElement {
   return svg;
 }
 
-/** 스킬 블록 한 개 (각인 컷). 눌림·체인 점·약점·잠김은 화면이 제자리에서 바꾼다 */
+/** 스킬 블록 한 개 (각인 컷). 눌림·약점·잠김은 화면이 제자리에서 바꾼다 */
 export function v2BlockEl(spec: V2BlockSpec): HTMLElement {
   const b = document.createElement('div');
   b.className = `bha-block bha-block--${spec.kind}${spec.weak ? ' is-weak' : ''}`;
@@ -72,9 +72,6 @@ export function v2BlockEl(spec: V2BlockSpec): HTMLElement {
   b.dataset.kind = spec.kind;
   const face = document.createElement('span');
   face.className = 'bha-block__face';
-  const pips = document.createElement('span');
-  pips.className = 'bha-block__pips';
-  pips.append(document.createElement('i'), document.createElement('i'), document.createElement('i'));
   const icon = document.createElement('span');
   icon.className = 'bha-block__icon';
   icon.append(pathSvg(spec.path));
@@ -85,15 +82,9 @@ export function v2BlockEl(spec: V2BlockSpec): HTMLElement {
   const name = document.createElement('span');
   name.className = 'bha-block__name';
   name.textContent = spec.label;
-  b.append(face, pips, icon, glyph, name);
-  setV2Pips(b, 1);
+  // 블록 안 체인 원 3개는 없앴다 — 체인은 블록 바의 체인 알림(묶음 라벨)으로만 (GDD 137장 4, C.215)
+  b.append(face, icon, glyph, name);
   return b;
-}
-
-/** 체인 점 켜기: level 1~3 (첫 점은 항상 켜짐) */
-export function setV2Pips(block: HTMLElement, level: number): void {
-  const dots = block.querySelectorAll('.bha-block__pips i');
-  dots.forEach((d, i) => d.classList.toggle('on', i < Math.max(1, Math.min(3, level))));
 }
 
 /** 봉인(잠김) 표시: 글자를 '봉' 으로 바꾸고 회색으로 (보스 기믹 칸 봉인) — 풀리면 원래 글자 */

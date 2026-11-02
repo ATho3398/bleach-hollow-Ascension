@@ -6,14 +6,14 @@
   "episodes": [
     {
       "id": "ep1",
-      "title": "단가이 돌파",
+      "title": "웨코문도 돌파",
       "objective": {
         "type": "defeat",
         "enemyClass": "elite",
         "count": 2
       },
-      "recommendedTier": 5,
-      "difficulty": 5,
+      "recommendedTier": 4,
+      "difficulty": 4,
       "maxLaps": 3,
       "road": {
         "2": "prey-nest-a",
@@ -25,7 +25,7 @@
         "start": [
           {
             "speaker": "분대장",
-            "text": "단가이는 시간도 길도 뒤틀린 곳이다. 멈추면 휩쓸린다."
+            "text": "웨코문도는 호로의 사막이다. 밤이 끝나지 않는다. 멈추면 먹힌다."
           }
         ],
         "end": [
@@ -43,8 +43,8 @@
         "type": "survive",
         "laps": 4
       },
-      "recommendedTier": 5,
-      "difficulty": 5,
+      "recommendedTier": 4,
+      "difficulty": 4,
       "maxLaps": 4,
       "road": {
         "2": "prey-nest-a",
@@ -76,8 +76,8 @@
         "enemyClass": "elite",
         "count": 2
       },
-      "recommendedTier": 5,
-      "difficulty": 5,
+      "recommendedTier": 4,
+      "difficulty": 4,
       "maxLaps": 5,
       "road": {
         "2": "prey-nest-a",
@@ -111,12 +111,12 @@
     },
     {
       "id": "ep4",
-      "title": "단가이의 문지기",
+      "title": "웨코문도의 문지기",
       "objective": {
         "type": "boss"
       },
-      "recommendedTier": 5,
-      "difficulty": 5,
+      "recommendedTier": 4,
+      "difficulty": 4,
       "maxLaps": 1,
       "road": {
         "3": "prey-nest-a",
@@ -130,7 +130,7 @@
       "dialogue": {
         "start": [
           {
-            "speaker": "단가이의 문지기",
+            "speaker": "웨코문도의 문지기",
             "text": "이 문을 지나려는 사신은 모두 길에 묻혔다."
           },
           {
@@ -141,7 +141,7 @@
         "end": [
           {
             "speaker": "대장",
-            "text": "단가이를 넘어온 자가 있다고 들었다. 석차를 원하나? 그럼 증명해라."
+            "text": "웨코문도를 넘어온 자가 있다고 들었다. 석차를 원하나? 그럼 증명해라."
           },
           {
             "speaker": "나",

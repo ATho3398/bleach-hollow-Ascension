@@ -32,14 +32,11 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
     }
   });
 
-  it('다시 뽑기도 그 적 속성 안에서만 (확정 희귀 후보는 그대로)', () => {
+  it('다시 뽑기도 그 적 속성 안에서만', () => {
     for (let seed = 1; seed <= 40; seed++) {
-      const enemy = { ...getEnemy('poison-heavy-seal'), rare: true };
-      const o = buildOffer(createRng(seed), enemy, newBuild(), WON, 1, null);
+      const o = buildOffer(createRng(seed), getEnemy('poison-heavy-seal'), newBuild(), WON, 1, null);
       const again = rerollCandidates(createRng(seed + 1000), o, newBuild());
       expect([...elementsOf(again)]).toEqual(['poison']);
-      expect(again[0]).toBe(o.candidates[0]); // 희귀 특성 확정 후보
-      expect(getTrait(again[0]!).rare).toBe(true);
     }
   });
 

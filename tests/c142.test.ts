@@ -43,10 +43,10 @@ describe('84장 3번 블록형 > 평타형 (C.142)', () => {
       const d = PB.damageByElement[el] ?? PB.damage;
       expect(d).toBeGreaterThan(0.5);
       expect(d).toBeLessThan(1);
-      expect(physBlockOf(formAbilitiesOf(getForm(`t5:${el}:physical`), zeroStats(), 'atk'))?.damage).toBe(d);
+      expect(physBlockOf(formAbilitiesOf(getForm(`t4:${el}:physical`), zeroStats(), 'atk'))?.damage).toBe(d);
     }
     // 특수·혼합(블록형) 몸은 물공 칸이 없다
-    expect(physBlockOf(formAbilitiesOf(getForm('t5:fire:special'), zeroStats(), 'atk'))).toBeNull();
+    expect(physBlockOf(formAbilitiesOf(getForm('t4:fire:special'), zeroStats(), 'atk'))).toBeNull();
   });
 
   it('물공 몸은 평타·블록 피해가 × damage, 블록 보정은 없다', () => {

@@ -22,6 +22,7 @@ import { chapterLabel } from './storyView';
 import { toward } from './bha/nestLogic';
 import { expeditionEndVitals } from '../engine/nest';
 import { difficultyGoldMultiplier } from '../engine/difficulty';
+import { asBack } from './bha/screenBack';
 
 /** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
 export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
@@ -31,8 +32,8 @@ export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): 
     const BR = B.provisional.boss.reward;
     const gold = Math.round(BR.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak));
     return [fb.won
-      ? `자유 원정 보스 ${bossName(fb.bossId, faction.id)} 처치! ${TRADE_CURRENCY_NAME} +${gold} · ${faction.foodNames[BR.food as FoodId]} 1 · 보스 도감 처치 +1`
-      : `자유 원정 보스 ${bossName(fb.bossId, faction.id)}에게 졌다 (마지막 바퀴 전리품을 잃었다)`];
+      ? `자유 모험 보스 ${bossName(fb.bossId, faction.id)} 처치! ${TRADE_CURRENCY_NAME} +${gold} · ${faction.foodNames[BR.food as FoodId]} 1 · 보스 도감 처치 +1`
+      : `자유 모험 보스 ${bossName(fb.bossId, faction.id)}에게 졌다 (마지막 바퀴 전리품을 잃었다)`];
   }
   const r = exp.storySettled;
   if (!r) return [];
@@ -66,6 +67,19 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     if (ids.length > 0) v.append(el('br'), el('small', '', names(ids, f)));
     return { label, icon: ic, value: v, mod: ids.length > 0 ? mod : undefined };
   };
+
+  // 영구 타일·임시 타일 (GDD 121장 4): 원정 끝 굴림 결과(꽝이면 '이번엔 없음'), 바퀴 중 받은 임시 타일은 원정과 함께 사라짐
+  function permTileRows(): IconInfoRow[] {
+    const out: IconInfoRow[] = [];
+    if (exp.permTile !== undefined) {
+      out.push(exp.permTile
+        ? { label: '영구 타일', icon: 'i-deck', value: val(tileName(exp.permTile, faction.id), '가방에 들어갔다'), mod: 'good' }
+        : { label: '영구 타일', icon: 'i-deck', value: val('이번엔 없음', '모험 2~3번에 1장 꼴') });
+    }
+    const temp = exp.tempLog?.length ?? 0;
+    if (temp > 0) out.push({ label: '임시 타일', icon: 'i-deck', value: val(`${temp}장`, '이번 모험만 — 끝나며 사라졌다') });
+    return out;
+  }
 
   // 얻은 먹이 (GDD 23-1 전리품): 종류별 개수, 상한(9)으로 못 넣은 것·패배로 잃은 것, 막힘 방지 간식
   function foodRow(): IconInfoRow {
@@ -107,10 +121,11 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
 
   const home = expeditionEndVitals(exp);
   const rows: IconInfoRow[] = [
-    { label: '도달 바퀴', icon: 'i-loop', value: val(`${s.laps}`, `/ 기본 ${BALANCE.expedition.defaultLaps}`) },
+    { label: '도달 바퀴', icon: 'i-loop', value: val(`${s.laps}`, `/ 권장 ${BALANCE.expedition.defaultLaps}`) },
     { label: '치른 전투', icon: 'i-practice', value: val(`${exp.battles.length}회`, `(승 ${wins})`) },
     countRow('지킨 타일', 'i-deck', s.kept, (id) => tileName(id, faction.id), '장', 'good'),
     countRow('잃은 타일', 'i-deck', s.lost, (id) => tileName(id, faction.id), '장', 'bad'),
+    ...permTileRows(),
     countRow('얻은 특성', 'i-slot', s.keptTraits, (id) => traitName(id, faction.id), '개', 'good'),
     countRow('잃은 특성', 'i-slot', s.lostTraits, (id) => traitName(id, faction.id), '개', 'bad'),
     foodRow(),
@@ -122,15 +137,15 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
     // 둥지로 가져가는 값 = 패배·폭주 감소를 뺀 뒤 (둥지 상태와 같은 값, C.68)
     { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(home.hunger))}`) },
-    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `원정 끝 ${Math.round(exp.condition)}` : undefined) },
+    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `모험 끝 ${Math.round(exp.condition)}` : undefined) },
   ];
-  const sum = panel({ title: '원정 요약' }, iconInfo(rows));
+  const sum = panel({ title: '모험 요약' }, iconInfo(rows));
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
   seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');
 
   const dock = el('div', 'bha-dock');
-  dock.append(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome }));
+  dock.append(asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome })));
   // 가로 LCD: 왼쪽 = 결과 제목·시드·[둥지로], 오른쪽 = 성장 요약 한두 줄 + 원정 요약 표 (왼쪽 열이 길어지면 스크롤이 생겨 오른쪽 맨 위에 둔다)
   const growthBox = growth ? el('div', 'bha-growth') : null;
   growthBox?.setAttribute('role', 'status');

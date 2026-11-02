@@ -1,6 +1,41 @@
 // UI 검수 화면 목록 (GDD 110장 2, C.182). 각 항목: name, run(h, name). fresh = 슬롯 없이 시작 화면부터.
 // 전투 화면은 C.177 배포 뒤 넣었다(마스터 13장 03:2x 지시). h.explore = 정적 점검 + 탭·ⓘ·목록 고르기 전후 비교(audit.cjs).
 
+/** 방 → 모험 시작 화면 (GDD 130장): [월드맵] → 지도 [모험]. 장소를 고르면 걸어가서 페이드 전환이라 기다림이 길다 (137장 3, C.215) */
+async function toAdventure(h) {
+  await h.click('.bha-prop--outside', { ms: 700 });
+  await h.click('.bha-worldmap [data-place="adventure"]', { ms: 2000 });
+}
+
+/** 방 → 시장 화면 (GDD 130장): [월드맵] → 지도 [시장] */
+async function toMarket(h) {
+  await h.click('.bha-prop--outside', { ms: 700 });
+  await h.click('.bha-worldmap [data-place="market"]', { ms: 2000 });
+}
+
+/** 방 → 탑 화면 (GDD 139장 1, C.217): [월드맵] → 지도 [탑] */
+async function toTower(h) {
+  await h.click('.bha-prop--outside', { ms: 700 });
+  await h.click('.bha-worldmap [data-place="tower"]', { ms: 2000 });
+}
+
+/** 시장(장터)에서 뒤로 → 방까지 (켬 = 시장 → 월드맵 → 방) */
+async function marketBackToRoom(h) {
+  // 탐색 뒤 첫 Escape 는 화면이 고른 것을 먼저 풀 수 있다(device 키보드 취소) — 방에 닿을 때까지 몇 번 더 (뒤쪽은 왼쪽 위 돌아가기 버튼)
+  const home = '.bha-room:not(.bha-market):not(.bha-worldmap)';
+  for (let i = 0; i < 6 && !(await h.has(home)); i++) {
+    await h.closeLayers();
+    const space = h.page.locator('.bha-lcd [data-space-back]').first();
+    if (i >= 3 && (await space.count())) await space.click({ timeout: 2000 }).catch(() => {});
+    else await h.back();
+    await h.page.waitForTimeout(500);
+  }
+  if (!(await h.has('.bha-room:not(.bha-market):not(.bha-worldmap)'))) {
+    const at = await h.page.evaluate(() => [...document.querySelectorAll('.bha-lcd .bha-app')].map((e) => e.className).join('|'));
+    throw new Error(`시장 뒤로 → 방에 못 닿음 (${at})`);
+  }
+}
+
 /** 방에서 독 [더보기] → 메뉴 항목 */
 async function more(h, label) {
   await h.btn('더보기');
@@ -58,7 +93,7 @@ async function battleRowStates(h, n) {
     const sty = (e, k, v) => { if (!e) return; const o = e.style[k]; undo.push(() => { e.style[k] = o; }); e.style[k] = v; };
     const ready = (e, on) => { cls(e, 'is-ready', on); cls(e, 'is-disabled', !on); };
     const q = (s) => document.querySelector(s);
-    const guard = q('.bha-v2role--guard'), item = q('.bha-v2role--item'), gear = q('.bha-v2role--gear'), rel = q('.bha-v2rel'), app = q('.bha-battle');
+    const guard = q('.bha-v2role--guard'), item = q('.bha-v2role--item'), gear = q('.bha-v2role--gear'), rel = q('.bha-v2herolib'), app = q('.bha-battle');
     const itemMeta = item?.querySelector('.bha-v2role__meta'), gearMeta = gear?.querySelector('.bha-v2role__meta');
     const hasItem = !!itemMeta?.textContent, hasGear = !!gearMeta?.textContent;
     const SCEN = [
@@ -67,8 +102,8 @@ async function battleRowStates(h, n) {
       ['막기 게이지 빔', () => { ready(guard, false); cls(guard, 'is-full', false); sty(guard?.querySelector('.bha-v2role__bar i'), 'width', '0%'); }],
       ...(hasItem ? [['소모품 ×3', () => { ready(item, true); text(itemMeta, '×3'); }], ['소모품 씀', () => { ready(item, false); text(itemMeta, '씀'); }], ['소모품 ×0', () => { ready(item, false); text(itemMeta, '×0'); }]] : []),
       ...(hasGear ? [['장비 쿨 12', () => { ready(gear, false); text(gearMeta, '12'); }], ['장비 쿨 끝(준비)', () => { ready(gear, true); text(gearMeta, ' '); }]] : []),
-      ...(rel && !rel.hidden ? [['해방 준비됨', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-ready', true); text(rel.querySelector('.bha-v2rel__meta'), '준비됨 — 눌러 해방'); }],
-        ['해방 중', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-on', true); cls(app, 'is-liberated', true); text(rel.querySelector('.bha-v2rel__meta'), '12.5초'); }]] : []),
+      ...(rel && !rel.hidden ? [['해방 준비됨', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-ready', true); cls(app, 'is-lib-ready', true); }],
+        ['해방 중', () => { cls(rel, 'is-disabled', false); cls(rel, 'is-on', true); cls(app, 'is-lib-ready', false); cls(app, 'is-liberated', true); text(rel.querySelector('.bha-v2herolib__time'), '12.5초'); }]] : []),
       ['경직(블록 잠금·머리 게이지)', () => { for (const b of all('.bha-v2tray .bha-block')) cls(b, 'is-locked', true); for (const g of all('.bha-unit--me .bha-unit__heads > *')) hid(g, false); }],
       ['전부 함께', null],
     ];
@@ -81,7 +116,7 @@ async function battleRowStates(h, n) {
       btns.forEach((e, i) => {
         const [x, y, w, hh] = base[i];
         const [x2, y2, w2, h2] = p[i];
-        const self = e.closest('.bha-v2role, .bha-v2rel') && (label.includes('전부') || /막기|소모품|장비|해방/.test(label)) ? e : null;
+        const self = e.closest('.bha-v2role, .bha-v2herolib') && (label.includes('전부') || /막기|소모품|장비|해방/.test(label)) ? e : null;
         // 바뀐 버튼 자신은 폭이 바뀌면 안 되고(오른쪽 고정 줄), 다른 버튼은 자리도 폭도 그대로
         if (Math.abs(x2 - x) > 1.5 || Math.abs(y2 - y) > 1.5 || Math.abs(w2 - w) > 1.5 || Math.abs(h2 - hh) > 1.5) out.push(`${label}: ${name(e)} (${Math.round(x2 - x)}, ${Math.round(y2 - y)}) 폭 ${Math.round(w2 - w)}${self ? ' (자기 칸)' : ''}`);
       });
@@ -122,7 +157,7 @@ async function armItems(h) {
 
 /** 원정 ★1 출발 → 첫 전투 조우 연출 뒤 */
 async function toBattle(h) {
-  await h.click('.bha-prop--door', { ms: 900 });
+  await toAdventure(h);
   await h.btn('★1', { exact: true });
   await h.btn('출발', { ms: 600 });
   await h.page.locator('.bha-battle').waitFor({ timeout: 60_000 });
@@ -146,7 +181,7 @@ async function testBody(h, stat) {
 
 /** 원정을 끝까지: 포식은 '… 안 함', 둥지 칸에서 [귀환], 지면 [결과 보기] → 원정 결과 화면(.bha-resultpage) */
 async function runToResult(h) {
-  await h.click('.bha-prop--door', { ms: 900 });
+  await toAdventure(h);
   await h.btn('★1', { exact: true });
   await h.btn('출발', { ms: 1200 });
   const vis = (l) => l.filter({ visible: true });
@@ -175,6 +210,7 @@ const SCREENS = [
     fresh: true,
     async run(h, n) {
       await h.check(n);
+      await h.backReacts(n, { toastOk: true }); // 처음 화면 뒤로 = 안내 (C.202)
       await h.btn('설정', { ms: 600 });
       await settings(h, `${n}/설정`);
       await h.back();
@@ -195,10 +231,20 @@ const SCREENS = [
       await h.explore(n, { tabs: false });
       await h.stable(n, '더보기 열기', () => h.btn('더보기'), /homedock__tray/);
       await h.check(`${n}/더보기`, { reachIgnore: /bha-prop|bha-char|bha-room__status|statusinfo/ });
+      // GDD 124장 2 (C.198): 토글로 닫히는 메뉴(··· 더보기·먹이 줄)에 따로 붙은 [닫기] 없음
+      if (await h.page.locator('.bha-homedock__tray').getByRole('button', { name: '닫기', exact: true }).count()) h.report({ kind: '토글 메뉴 [닫기]', key: '더보기', detail: '··· 다시 누르기·뒤로로 닫히는 메뉴에 [닫기] 버튼이 있다' }, `${n}/더보기`);
       await h.back();
       await h.stable(n, '먹이 줄 열기', () => h.click('.bha-homedock__carebtn--feed'), /homedock__tray/);
       await h.check(`${n}/먹이 줄`, { reachIgnore: /bha-prop|bha-char|bha-room__status|statusinfo/ });
+      if (await h.page.locator('.bha-homedock__tray').getByRole('button', { name: '닫기', exact: true }).count()) h.report({ kind: '토글 메뉴 [닫기]', key: '먹이 줄', detail: '먹이 다시 누르기·뒤로로 닫히는 줄에 [닫기] 버튼이 있다' }, `${n}/먹이 줄`);
       await h.back();
+      // GDD 124장 1 (C.198): 홈에서 뒤로(열린 메뉴 없음) = 처음 화면 확인 창 → [아니오]로 그대로 방
+      await h.back();
+      if (!(await h.has('.bha-lcd [data-dev-layer]'))) h.report({ kind: '홈 뒤로', key: '처음 화면 확인', detail: '홈에서 뒤로를 눌러도 처음 화면 확인 창이 안 뜬다' }, n);
+      else {
+        await h.btn('아니오', { within: '.bha-lcd [data-dev-layer]' });
+        if (!(await h.has('.bha-room'))) h.report({ kind: '홈 뒤로', key: '아니오', detail: '[아니오] 뒤 방이 아니다' }, n);
+      }
       await h.stable(n, '재우기', () => h.click('.bha-homedock__carebtn--sleep'));
       await h.stable(n, '교감', () => h.click('.bha-homedock__carebtn--pet'));
     },
@@ -241,7 +287,8 @@ const SCREENS = [
   {
     name: '상점',
     async run(h, n) {
-      await h.click('.bha-prop--shop', { ms: 700 });
+      await toMarket(h); // C.201 (GDD 127장 2): 상점은 장터 안 · C.204: 밖으로 → 시장
+      await h.click('.bha-market [data-spot="shop"]', { ms: 700 });
       await h.explore(n, { pick: '.bha-lcd .bha-itemcard' });
     },
   },
@@ -255,15 +302,24 @@ const SCREENS = [
   {
     name: '수련장',
     async run(h, n) {
-      await h.click('.bha-prop--altar', { ms: 700 });
+      // C.236 (GDD 158장 1): 수련장 = 월드맵 장소
+      await h.click('.bha-prop--outside', { ms: 700 });
+      await h.click('.bha-worldmap [data-place="training"]', { ms: 2000 });
       await h.explore(n, { pick: '.bha-lcd .bha-train__card', views: true });
+    },
+  },
+  {
+    name: '탑',
+    async run(h, n) {
+      await toTower(h);
+      await h.explore(n, { pick: '.bha-lcd .bha-tower__floor, .bha-lcd .bha-mdrow' });
     },
   },
   {
     name: '원정 출발',
     async run(h, n) {
-      await h.click('.bha-prop--door', { ms: 900 });
-      await h.explore(n, { pick: '.bha-lcd .bha-road__cell', views: true, viewOpts: { 스토리: { pick: '.bha-lcd .bha-mdrow, .bha-lcd .bha-story__ep' }, 탑: { pick: '.bha-lcd .bha-tower__floor, .bha-lcd .bha-mdrow' } } });
+      await toAdventure(h);
+      await h.explore(n, { pick: '.bha-lcd .bha-road__cell', views: true, viewOpts: { 스토리: { pick: '.bha-lcd .bha-mdrow, .bha-lcd .bha-story__ep' } } });
       await h.stable(n, '난이도 ★1', () => h.btn('★1', { exact: true }));
       await h.stable(n, '지역 바꾸기', () => h.click('.bha-lcd .bha-btn--small >> nth=1'));
       // 타일 놓기: 카드 고르고 칸 누르기
@@ -279,18 +335,50 @@ const SCREENS = [
   {
     name: '원정 걷기',
     async run(h, n) {
-      await h.click('.bha-prop--door', { ms: 900 });
+      await toAdventure(h);
       await h.btn('★1', { exact: true });
       await h.btn('출발', { ms: 1500 });
       await h.check(n, { keys: false });
       await h.explore(`${n}/2`, { tabs: false });
+      // C.202 (GDD 128장 4): 걷기 뒤로 = 일시정지 → 한 번 더 = 재개
+      if ((await h.backReacts(n)) === 'pause') await h.backReacts(`${n}/재개`);
     },
   },
   {
     name: '테스트 패널',
     async run(h, n) {
       await more(h, '테스트');
-      await h.explore(n, { maxTabs: 12, views: true });
+      // [적용]·[테스트 모드 끄기] = 보기 본문 맨 아래(스크롤 칸 안, GDD 112장 1) — 보기마다 본문 길이가 달라 자리가 다른 게 맞다 (C.209)
+      await h.explore(n, { maxTabs: 12, views: true, viewIgnore: /\|(적용|테스트 모드 끄기)$/ });
+    },
+  },
+  {
+    // C.190 (GDD 116장 추가 5): 테스트 패널 고르기 칸 = 게임 안 목록. 열기 → ▼·뒤로 닫기 → 다시 열어 고르기, 전후로 다른 버튼이 안 움직이는지·목록이 LCD 안인지
+    name: '테스트 고르기 목록',
+    async run(h, n) {
+      await more(h, '테스트');
+      // 시작 직후 도감 보상 토스트가 고르기 칸을 덮으면 Playwright 가 패널을 스크롤해 버튼이 움직인 것처럼 잡힌다 — 사라질 때까지 기다린다
+      await h.page.locator('.bha-toast').first().waitFor({ state: 'detached', timeout: 20_000 }).catch(() => {});
+      const pick = h.page.locator('.bha-lcd button.bha-pick[aria-label="진화체"]');
+      const list = '.bha-lcd .bha-pick__list';
+      if (await h.stable(n, '진화체 목록 열기', () => pick.click({ timeout: 3000 }), /bha-pick__list/, pick)) {
+        await h.check(`${n}/목록`, { keys: false });
+        const inside = await h.page.evaluate((sel) => {
+          const l = document.querySelector(sel)?.getBoundingClientRect();
+          const lcd = document.querySelector('.bha-lcd')?.getBoundingClientRect();
+          return !!l && !!lcd && l.top >= lcd.top - 1 && l.bottom <= lcd.bottom + 1 && l.left >= lcd.left - 1 && l.right <= lcd.right + 1;
+        }, list);
+        if (!inside) h.report({ kind: '목록이 화면 밖', key: '진화체', detail: '고르기 목록이 LCD 밖으로 나감' }, n);
+        await h.key('ArrowDown', 2);
+        await h.stable(n, '뒤로 닫기', () => h.back());
+        if (await h.has(list)) h.report({ kind: '목록 안 닫힘', key: '진화체', detail: '뒤로로 안 닫힘' }, n);
+      }
+      await h.stable(n, '진화체 고르기', async () => {
+        await pick.click({ timeout: 3000 });
+        await h.click(`${list} .bha-viewtitle__item >> nth=2`);
+      }, null, pick);
+      if (await h.has(list)) h.report({ kind: '목록 안 닫힘', key: '진화체', detail: '고른 뒤 안 닫힘' }, n);
+      await h.closeLayers();
     },
   },
   {
@@ -302,7 +390,10 @@ const SCREENS = [
       await h.btn('불러오기', { within: '.bha-viewtitle__list', role: 'option' });
       await h.explore(n, { tabs: false, views: false, infos: false }); // 정보 표(dl.bha-info)는 눌러도 창이 안 열려 뒤로가 패널을 닫는다
       for (const [name, i] of [['지금 부르기', 0], ['물건 다시 뽑기', 0], ['지금 부르기', 1], ['지금 부르기', 2], ['다음 원정에 부르기', 0], ['보내기', 0], ['걷기', 0], ['비우기', 0], ['예약 취소', 0]]) {
-        if (name === '다음 원정에 부르기') await h.page.locator('.bha-lcd select[aria-label="이벤트 타일"]').selectOption({ index: 1 }); // 고른 게 있어야 [예약 취소]가 켜진다
+        if (name === '다음 원정에 부르기') { // 고른 게 있어야 [예약 취소]가 켜진다 (C.190: 게임 안 고르기 목록)
+          await h.click('.bha-lcd button[aria-label="이벤트 타일"]');
+          await h.click('.bha-lcd .bha-pick__list .bha-viewtitle__item >> nth=1');
+        }
         const loc = h.page.locator('.bha-lcd').getByRole('button', { name, exact: true }).nth(i);
         if (await h.stable(n, `${name} ${i + 1}`, () => loc.click({ timeout: 3000 }), null, loc)) await h.check(`${n}/${name} ${i + 1}`, { keys: false });
       }
@@ -326,6 +417,95 @@ const SCREENS = [
     },
   },
   {
+    // C.198 (GDD 123장 4): 온천 — 체력을 낮춘 뒤 방 물건 [온천] → 온천 화면(✓ = 방으로 돌아가기, 뒤로 = 방)
+    name: '온천',
+    async run(h, n) {
+      await more(h, '테스트');
+      await h.click('.bha-lcd .bha-viewtitle__btn');
+      await h.btn('둥지·시간', { within: '.bha-viewtitle__list', role: 'option' });
+      const inputs = h.page.locator('.bha-lcd input[type="number"]');
+      await inputs.nth(3).fill('40');
+      await h.btn('적용');
+      await h.closeLayers();
+      await h.back();
+      await toMarket(h); // C.201 (GDD 127장 2): 온천은 장터 안 · C.204: 밖으로 → 시장
+      await h.click('.bha-market [data-spot="spa"]', { ms: 4000 }); // C.208 (132장 4): 평지 1.2초 + 계단 3단 + 앉기(약 3.3초)까지 기다린 뒤 잰다
+      await h.explore(n, { tabs: false });
+      await h.back();
+      // 나가기 연출(계단을 거꾸로 올라와 걸어 나감, 약 2.8초) 뒤에 장터로
+      for (let i = 0; i < 20 && !(await h.has('.bha-market')); i++) await h.wait(250);
+      if (!(await h.has('.bha-market'))) throw new Error('온천 뒤로 → 장터에 못 닿음');
+      await marketBackToRoom(h);
+    },
+  },
+  {
+    // C.201 (GDD 127장 2·3): 장터 — 떠돌이 상인 없음 / 있음(테스트 불러오기로 부름) · 떠돌이 상인 창 · 뒤로 = 방
+    // C.204 (GDD 130장): 월드맵 켬 = 시장(밖으로 → 지도 → 시장), 배지는 지도 위 시장에
+    name: '장터',
+    async run(h, n) {
+      await toMarket(h);
+      await h.explore(`${n}/상인 없음`, { tabs: false });
+      await marketBackToRoom(h);
+      await more(h, '테스트');
+      await h.click('.bha-lcd .bha-viewtitle__btn');
+      await h.btn('불러오기', { within: '.bha-viewtitle__list', role: 'option' });
+      await h.page.locator('.bha-lcd').getByRole('button', { name: '지금 부르기', exact: true }).nth(0).click({ timeout: 3000 });
+      await h.closeLayers();
+      await h.back();
+      await h.click('.bha-prop--outside', { ms: 700 });
+      if (!(await h.has('.bha-worldmap [data-place="market"].has-visitor'))) throw new Error('떠돌이 상인이 왔는데 지도 위 시장에 배지가 없음');
+      await h.explore(`${n}/월드맵 상인 배지`, { tabs: false });
+      await h.click('.bha-worldmap [data-place="market"]', { ms: 2000 });
+      if (!(await h.has('.bha-market [data-spot="wanderer"]'))) throw new Error('떠돌이 상인이 왔는데 장터에 없음');
+      await h.explore(`${n}/상인 있음`, { tabs: false });
+      await h.click('.bha-market [data-spot="wanderer"]', { ms: 700 });
+      await h.explore(`${n}/떠돌이 상인`, { pick: '.bha-lcd .bha-itemcard' });
+      await h.back();
+      await marketBackToRoom(h);
+    },
+  },
+  {
+    // C.204 (GDD 130장 2): 월드맵 — 장소 3개(홈·시장·모험), ▲▼ 순서 = 홈 → 시장 → 모험, 첫 선택 = 모험, 뒤로 = 방, 홈 = 방
+    name: '월드맵',
+    async run(h, n) {
+      if (!(await h.has('.bha-prop--outside'))) return; // 스위치 끔: 월드맵 없음
+      await h.click('.bha-prop--outside', { ms: 700 });
+      if (!(await h.has('.bha-worldmap'))) throw new Error('밖으로 → 월드맵에 못 닿음');
+      await h.explore(n, { tabs: false });
+      await h.back();
+      if (!(await h.has('.bha-room:not(.bha-worldmap)'))) throw new Error('월드맵 뒤로 → 방에 못 닿음');
+      await h.click('.bha-prop--outside', { ms: 700 });
+      await h.click('.bha-worldmap [data-place="home"]', { ms: 2000 });
+      if (!(await h.has('.bha-room:not(.bha-worldmap)'))) throw new Error('월드맵 홈 → 방에 못 닿음');
+      await h.click('.bha-prop--outside', { ms: 700 });
+      await h.click('.bha-worldmap [data-place="adventure"]', { ms: 2000 });
+      await h.back();
+      if (!(await h.has('.bha-worldmap'))) throw new Error('모험 시작 화면 뒤로 → 월드맵에 못 닿음');
+      await h.back();
+    },
+  },
+  {
+    // C.203 (GDD 129-1): 저절로 뜨는 튜토리얼 안내(첫 원정 뒤 '다음 할 일')는 회색 덮개 없이 카드·테두리만 — check 가 덮개를 잰다.
+    // 도움말에서 직접 연 다시 보기는 덮개 그대로(data-replay)
+    name: '튜토리얼 안내',
+    async run(h, n) {
+      await h.page.evaluate(() => {
+        const k = 'bha-save-test';
+        const j = JSON.parse(localStorage.getItem(k));
+        j.help.guides['first-run-room'] = 'pending';
+        localStorage.setItem(k, JSON.stringify(j));
+      });
+      await h.page.reload();
+      await h.wait(1500);
+      await h.page.getByRole('button', { name: '이어하기' }).click();
+      await h.page.locator('.bha-tut[data-tutorial="first-run-room"]').waitFor({ timeout: 8000 });
+      await h.wait(600);
+      if (!(await h.has('.bha-tut[data-tutorial="first-run-room"].is-nodim'))) h.report({ kind: '튜토리얼 안내 회색 덮개', key: 'first-run-room', detail: '저절로 뜬 안내에 is-nodim 이 없다' }, n);
+      await h.check(n, { keys: false });
+      await h.click('.bha-tut__card .bha-btn--primary', { ms: 400 });
+    },
+  },
+  {
     name: '방 빈사·사망',
     async run(h, n) {
       await more(h, '테스트');
@@ -340,7 +520,7 @@ const SCREENS = [
       await more(h, '테스트');
       await h.btn('+48시간');
       await h.closeLayers();
-      await h.back();
+      if (!(await h.has('.bha-room'))) await h.back(); // 시간 앞당기기는 방으로 간다 — 방에서 뒤로는 처음 화면 확인(GDD 124장 1)
       await h.explore(`${n}/48시간 뒤`, { tabs: false });
       await h.stable(`${n}/48시간 뒤`, '먹이 누르기', () => h.click('.bha-homedock__carebtn--feed'), /homedock__tray/);
     },
@@ -355,15 +535,27 @@ const SCREENS = [
       await h.click(h.page.locator('.bha-lcd .bha-seg__item').filter({ hasText: '×4' }));
       await h.closeLayers();
       await h.back();
-      await h.click('.bha-prop--door', { ms: 900 });
+      await toAdventure(h);
       await h.btn('★1', { exact: true });
       await h.btn('출발', { ms: 1200 });
       // 버튼 이름은 종족 설정(absorbActionName)을 따른다 — '포식하러 가기' 등
       await h.page.getByRole('button', { name: /하러 가기$/ }).waitFor({ timeout: 120_000 });
       await h.click(h.page.getByRole('button', { name: /하러 가기$/ }), { ms: 900 });
       await h.explore(`${n}/포식`, { tabs: false });
+      // C.202 (GDD 128장 4·7): 뒤로 = '흡수 안 하고 넘어가기' 확인(기본 아니오) → 닫기 · [내 상태] 창 열고 뒤로로 닫기
+      if ((await h.backReacts(`${n}/포식`)) === 'layer') {
+        await h.check(`${n}/포식 뒤로 확인`, { keys: false });
+        await h.closeLayers();
+      }
+      if (await h.has('.bha-lcd [data-absorb-me]')) {
+        await h.click('.bha-lcd [data-absorb-me]', { ms: 500 });
+        await h.check(`${n}/내 상태`, { keys: false });
+        await h.closeLayers();
+      }
       await h.stable(`${n}/포식`, '첫 선택(둘 다)', () => h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 }));
       await h.explore(`${n}/포식 2`, { tabs: false, pick: '.bha-lcd .bha-cand' });
+      // 2단계 뒤로 = 1단계로 → 다시 2단계
+      if ((await h.backReacts(`${n}/포식 2`)) === 'screen') await h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 });
       // 끝까지 넘기기: 후보 → (슬롯) → 확인 성격의 버튼. 포식 화면이 닫힐 때까지 몇 번
       for (let i = 0; i < 8 && (await h.has('.bha-absorbpage')); i++) {
         const cand = h.page.locator('.bha-lcd .bha-cand').filter({ visible: true });
@@ -391,6 +583,7 @@ const SCREENS = [
           await layerGo.first().click({ timeout: 3000 }).catch(() => {});
         } else if (await nestHome.count()) {
           await h.check(`${n}/둥지 도착`, { keys: false });
+          if ((await h.backReacts(`${n}/둥지 도착`)) === 'layer') await h.closeLayers(); // 바퀴 끝 창 뒤로 = 귀환 확인 (C.202)
           await h.stable(`${n}/둥지 도착`, '드래프트 타일 고르기', () => h.click(h.page.locator('.bha-lcd .bha-draft__card, .bha-lcd [data-draft]').first()).catch(() => {}));
           await nestHome.first().click({ timeout: 3000 }).catch(() => {});
         } else if (await home.count()) {
@@ -405,7 +598,10 @@ const SCREENS = [
         await h.wait(1000);
       }
       // 결과: 원정 결과 화면(.bha-resultpage)이 있으면 그것, 아니면 방 위 귀환 결과 창까지 위에서 점검했다
-      if (await h.has('.bha-resultpage')) await h.explore(`${n}/결과`, { tabs: true });
+      if (await h.has('.bha-resultpage')) {
+        await h.explore(`${n}/결과`, { tabs: true });
+        await h.backReacts(`${n}/결과`); // 결과 뒤로 = [둥지로] (C.202)
+      }
     },
   },
   {
@@ -414,6 +610,8 @@ const SCREENS = [
       await toBattle(h);
       const inBattle = async () => (await h.page.locator('.bha-battle').count()) > 0 && !(await h.has('.bha-battle .bha-overlay'));
       await h.check(n, { keys: false });
+      // C.197 (GDD 122장 3): 전투 중에도 ▼ 로 머리 버튼·막기·소모품·장비·해방·블록 칸에 다 닿는다 (못 쓰는 대상은 건너뜀)
+      if (await inBattle()) await h.check(`${n}/커서`);
       // 숫자 칸 흔들기: 실제로 바뀌는 글자(남은 초 148 → 9, 소모품 ×3 → 씀, 장비 쿨다운 12 → 3)를 직접 넣어 다른 버튼이 움직이는지.
       // 15초 관찰로는 세 자리 → 한 자리·소모품 사용이 안 오므로 글자만 바꿔 본다 (엔진 상태는 안 건드림 — 다음 프레임에 원래 값으로 돌아온다)
       // 한 번의 실행 안에서(그 사이 화면 갱신 없이) 글자 넣기 → 재기 → 바꾸기 → 재기. 칸이 비어 있는 상태(소모품·장비 없음)는 그 상태 그대로 둔다
@@ -441,6 +639,9 @@ const SCREENS = [
         await h.stable(n, '로그 닫기', () => h.btn('로그'));
         await h.stable(n, '일시정지', () => h.btn('일시정지'));
         await h.check(`${n}/일시정지`);
+        await h.closeLayers();
+        // C.202: 전투 뒤로 = 일시정지(창) → 뒤로로 닫힘
+        if (await inBattle()) if ((await h.backReacts(`${n}/뒤로`)) === 'layer') await h.closeLayers();
       }
     },
   },
@@ -483,6 +684,7 @@ const SCREENS = [
       await testBody(h, 0);
       await runToResult(h);
       await h.explore(n, { tabs: false });
+      await h.backReacts(n); // 결과 뒤로 = [둥지로] (C.202)
     },
   },
   {
@@ -490,7 +692,7 @@ const SCREENS = [
     // 칩은 이름 길이만큼 폭이 바뀌는 게 맞다(칩끼리는 비교에서 뺌) — 아래 버튼 줄·안내 줄이 움직이면 에러
     name: '프리셋 긴 이름',
     async run(h, n) {
-      await h.click('.bha-prop--door', { ms: 900 });
+      await toAdventure(h);
       await h.btn('★1', { exact: true });
       await h.click('.bha-lcd .bha-tilecard >> nth=0');
       await h.click('.bha-lcd .bha-road__cell >> nth=2');

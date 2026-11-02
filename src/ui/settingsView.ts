@@ -2,6 +2,7 @@
 // [저장] 없이 뒤로(◀·Esc·폰 뒤로가기·닫기)면 "바꾼 설정을 저장할까요?" [저장][저장 안 함][취소].
 // 공통 설정(기기 전체, 항목마다 localStorage 키) + 게임 안에서는 [공통]/[이 슬롯] 토글 — 슬롯 설정(세이브 settings)은 항목별로 공통보다 우선(settingsScope.ts).
 import { button, el, enableRangeDrag, icon } from './bha/dom';
+import { fixParticles } from '../engine/josa';
 import { endScreen, screenSignal } from './bha/screenScope';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { registerCancelHook } from './bha/shortcuts';
@@ -18,7 +19,7 @@ import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogi
 import { setTiltPref } from './bha/tamago';
 import { openInstall } from './installView';
 import { detectPlatform, installMode, installPrompt, isStandalone, loadInstallPrefs } from '../pwaInstall';
-import { FULLSCREEN_EVENT, fullscreenSupported, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
+import { FULLSCREEN_EVENT, fullscreenSupported, isAppMode, isFullscreen, loadFullscreenStart, saveFullscreenStart, toggleFullscreen } from './fullscreen';
 import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_EVENT, VIEW_SCALES, type ViewScalePref } from './viewScale';
 import { confirmDialog } from './confirmDialog';
 import { parseSlotSettings, setActiveSlotSettings, slotSettingsHost, SLOT_SETTING_KEYS, type SlotSettings } from './settingsScope';
@@ -151,12 +152,8 @@ function scopeTag(): HTMLElement {
 /** 레이어로 열린 설정의 닫기 X (도움말과 같은 모양) */
 const closeX = (onClose: () => void): HTMLButtonElement => button({ label: '닫기', icon: 'i-close', iconOnly: true, variant: 'ghost', onClick: onClose });
 
-/** 설명 한 줄 (#77): 넘치면 말줄임, 전체 글은 툴팁 */
-const hintLine = (text: string): HTMLElement => {
-  const p = el('p', 'bha-faint bha-settings__hint', text);
-  p.title = text;
-  return p;
-};
+/** 설명 줄 (#77): 넘치면 줄바꿈으로 다 보인다 — 말줄임 없음 (C.190, GDD 116장 3 사용자 "설명짤리는걸 왜 ...으로 대체해") */
+const hintLine = (text: string): HTMLElement => el('p', 'bha-faint bha-settings__hint', text);
 
 const panel = (title: string, ...n: Node[]): HTMLElement => {
   const p = el('section', 'bha-panel');
@@ -216,22 +213,23 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   const genderHost = host?.gender ?? null;
   let genderSaved: Gender = genderHost?.read() ?? DEFAULT_GENDER;
   let gender: Gender = genderSaved;
-  let scope: 'common' | 'slot' = 'common';
+  // 공통/이 슬롯 나누기는 화면에서 뺐다 (GDD 159장 13): 늘 공통 값을 고친다. 옛 세이브에 남은 슬롯 값은 그 줄을 고치면 지워져 공통을 따른다
+  const scope = 'common' as 'common' | 'slot';
   let tab: SettingsTab = o.tab ?? 'screen';
   let note = '';
   const slotable = (k: keyof CommonValues): k is keyof SlotSettings => (SLOT_SETTING_KEYS as readonly string[]).includes(k);
   const editable = (k: keyof CommonValues) => scope === 'common' || slotable(k);
-  /** 화면에 보이는 값: 슬롯 탭이면 슬롯 값 → 없으면 공통 */
+  /** 화면에 보이는 값 = 지금 쓰이는 값: 이 슬롯에 남은 값이 있으면 그것 → 없으면 공통 */
   const val = <K extends keyof CommonValues>(k: K): CommonValues[K] => {
-    if (scope === 'slot' && slotable(k)) {
+    if (host && slotable(k)) {
       const v = slot[k as keyof SlotSettings];
       if (v !== undefined) return v as CommonValues[K];
     }
     return common[k];
   };
   const setVal = <K extends keyof CommonValues>(k: K, v: CommonValues[K]) => {
-    if (scope === 'slot' && slotable(k)) (slot as Record<string, unknown>)[k] = v;
-    else common[k] = v;
+    common[k] = v;
+    if (slotable(k)) delete (slot as Record<string, unknown>)[k];
   };
   const commonDirty = () => !sameValue(common, commonSaved);
   const slotDirty = () => !sameValue(parseSlotSettings(slot), parseSlotSettings(slotSaved));
@@ -240,14 +238,10 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
 
   const paints: (() => void)[] = [];
   const tagPaint = (tag: HTMLElement, k: keyof CommonValues) => {
-    let text = '';
-    if (host) {
-      const inSlot = slotable(k) && slot[k as keyof SlotSettings] !== undefined;
-      if (scope === 'slot') text = !slotable(k) ? '공통만' : inSlot ? '슬롯' : '';
-      else text = inSlot ? '슬롯 우선' : '';
-    }
-    tag.textContent = text;
-    tag.hidden = text === '';
+    // 줄마다 붙던 '슬롯'·'공통만' 꼬리표는 뺐다 (GDD 159장 13)
+    void k;
+    tag.textContent = '';
+    tag.hidden = true;
   };
 
   // ── 줄 만들기 ──
@@ -366,17 +360,16 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     pickRow(options, label, () => val(k), (v) => setVal(k, v), () => editable(k), (tag) => tagPaint(tag, k));
 
   // ── 화면 탭 ──
-  // 성별 (GDD 114장): 남성/여성. [공통]에서는 흐리게 두고 '슬롯만' 표시(자리 고정)
+  // 성별 (GDD 114장): 남성/여성. 캐릭터(슬롯)마다 다른 항목이라 '이 캐릭터' 칸에 따로 묶는다 (GDD 159장 13)
   const charPanels: HTMLElement[] = [];
   if (genderHost) {
-    const genderRow = pickRow(GENDERS, (g) => GENDER_LABEL[g], () => gender, (g) => { gender = g; }, () => scope === 'slot', (tag) => {
-      tag.textContent = scope === 'slot' ? '슬롯' : '슬롯만';
-      tag.hidden = false;
+    const genderRow = pickRow(GENDERS, (g) => GENDER_LABEL[g], () => gender, (g) => { gender = g; }, () => true, (tag) => {
+      tag.hidden = true;
     });
     genderRow.dataset.set = 'gender';
     genderRow.setAttribute('role', 'group');
     genderRow.setAttribute('aria-label', '성별');
-    const p = panel('성별', genderRow, hintLine('캐릭터(슬롯)마다 따로 정한다. [이 슬롯]에서 바꾼다.'), hintLine(genderHost.note));
+    const p = panel('이 캐릭터 · 성별', genderRow, hintLine('캐릭터마다 따로 정한다.'), hintLine(genderHost.note));
     p.dataset.panel = 'gender';
     charPanels.push(p);
   }
@@ -392,10 +385,16 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     fsBtn.classList.toggle('is-on', isFullscreen());
     fsBtn.setAttribute('aria-pressed', String(isFullscreen()));
   };
-  const fsPanel = panel('전체 화면', fsBtn, hintLine('주소창·상태 표시줄을 숨겨 화면을 넓게 쓴다(누르면 바로 바뀐다).'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작 화면에서 첫 버튼을 누를 때 함께 전체 화면이 된다.'));
+  // 앱 모드(홈 화면 앱이 display-mode fullscreen, GDD 156장 2·166장 1): 이미 꽉 찼으므로 버튼·시작 진입 없이 한 줄 — API 를 부르면 크롬 안내가 뜬다.
+  // standalone(상태바 보임)은 전체 화면이 아니라 탭과 같이 버튼을 보인다 (166장 1·3)
+  const appMode = isAppMode();
+  const fsPanel = appMode
+    ? panel('전체 화면', hintLine('전체 화면 중'))
+    // 설명은 한 줄씩 — 브라우저·기기 사정 설명은 뺐다 (GDD 159장 12)
+    : panel('전체 화면', fsBtn, hintLine('화면을 넓게 쓴다.'), boolRow('fsStart', '시작할 때 전체 화면'), hintLine('켜 두면 시작할 때 전체 화면이 된다.'));
   fsPanel.dataset.panel = 'fullscreen';
   paintFs();
-  const fsPanels: HTMLElement[] = fullscreenSupported() ? [fsPanel] : [];
+  const fsPanels: HTMLElement[] = appMode || fullscreenSupported() ? [fsPanel] : [];
   // 화면 크기 (GDD 17-5): PC 에서만 적용
   const sizeNote = el('p', 'bha-faint');
   const paintSize = () => {
@@ -500,7 +499,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       paintAll();
     },
   });
-  paints.push(() => { reset.disabled = scope !== 'common'; });
+  paints.push(() => { reset.disabled = scope !== 'common'; }); // 늘 켜짐 (공통만 고친다)
   const etc: Node[] = [reset];
   if (o.onHelp) etc.push(button({ label: '도움말', icon: 'i-help', onClick: o.onHelp }));
   if (o.onBackup) etc.push(button({ label: '세이브 백업', icon: 'i-check', onClick: o.onBackup }));
@@ -509,15 +508,16 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   const etcPanel = panel('기타', etcRow, hintLine('기본값 복원 = 전투 효과·소리·음악 목록(공통). 도움말에서 안내를 다시 볼 수 있다.'));
   const slotPanels: HTMLElement[] = [];
   if (host) {
-    const clearBtn = button({ label: '이 슬롯 설정 지우기', icon: 'i-close', variant: 'danger', onClick: () => askClearSlot() });
+    // 옛 세이브에 이 캐릭터만 쓰던 값이 남아 있을 때만 보인다 (GDD 159장 13: 공통/이 슬롯 나누기는 뺐다)
+    const clearBtn = button({ label: '지우기', icon: 'i-close', variant: 'danger', onClick: () => askClearSlot() });
     clearBtn.dataset.set = 'slot-clear';
-    const slotNote = el('p', 'bha-faint');
+    const slotPanel = panel('이 캐릭터만 쓰던 설정', clearBtn, hintLine('지우면 다른 캐릭터와 같은 설정을 쓴다.'));
     paints.push(() => {
       const has = parseSlotSettings(slotSaved) !== null || parseSlotSettings(slot) !== null;
       clearBtn.disabled = !has;
-      slotNote.textContent = has ? `${host.label}에만 쓰는 설정이 있다. 지우면 다시 공통 설정을 따른다.` : `${host.label}은 공통 설정을 따른다. 머리의 [이 슬롯]에서 바꾸고 저장하면 이 슬롯에서만 우선한다.`;
+      slotPanel.hidden = !has;
     });
-    slotPanels.push(panel('슬롯 설정', clearBtn, slotNote));
+    slotPanels.push(slotPanel);
   }
 
   const TAB_BODY: Record<SettingsTab, HTMLElement[]> = {
@@ -533,7 +533,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   saveBtn.dataset.set = 'save';
   const aside: HTMLElement[] = [];
   let scopeBtns: { id: 'common' | 'slot'; b: HTMLButtonElement }[] = [];
-  if (host) {
+  if (host && scope === 'slot') {
     const seg = el('div', 'bha-seg bha-seg--sm bha-settings__scopes');
     seg.setAttribute('role', 'tablist');
     seg.setAttribute('aria-label', '설정 범위');
@@ -543,7 +543,6 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       b.setAttribute('role', 'tab');
       b.dataset.scope = id;
       b.onclick = () => {
-        scope = id;
         note = '';
         paintAll();
       };
@@ -581,8 +580,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       // 체크 아이콘은 늘 두고 안 고른 쪽은 숨김 — 고를 때마다 두 버튼 폭·위치가 바뀌던 문제 (C.182 UI 검수)
       b.replaceChildren(icon('i-check'), id === 'common' ? '공통' : '이 슬롯');
     }
-    const where = scope === 'slot' && host ? `${host.label} 설정 — 이 슬롯에서만 우선` : host ? '공통 설정 — 슬롯 설정이 없는 항목에 쓴다' : '공통 설정 — 모든 슬롯에 쓴다';
-    sub.textContent = note || (dirty ? `${where} · 저장 안 됨` : where);
+    sub.textContent = note || (dirty ? '바꾼 설정이 있다 · 저장 안 됨' : '바꾼 뒤 저장한다');
   }
   function paintAll(): void {
     for (const p of paints) p();
@@ -641,7 +639,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     if (!host) return;
     confirmDialog({
       title: `${host.label} 설정 지우기`,
-      body: '이 슬롯에만 쓰던 값을 지우고 다시 공통 설정을 따른다.',
+      body: '이 캐릭터만 쓰던 값을 지우고 다른 캐릭터와 같은 설정을 쓴다.',
       yes: '지우기', no: '아니오', danger: true,
       onYes: () => {
         host.write(null);
@@ -649,7 +647,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
         slot = {};
         slotSaved = {};
         applySettingsNow(storage);
-        note = '슬롯 설정을 지웠다. 이제 공통 설정을 따른다.';
+        note = '이 캐릭터만 쓰던 설정을 지웠다.';
         paintAll();
       },
     });

@@ -6,6 +6,8 @@ import {
   advance, chooseContinue, chooseReturn, createExpedition, finishBattle, finishRest, placeTile, plannedBattles,
   playExpedition, startBattle, summarize, buildRunRecord, type ExpeditionState,
   chooseRelease,
+  carryAttackMult,
+  lapScale,
 } from '../src/engine/expedition';
 import { applyAbsenceHunger, cureStatus, doNestAction, newNest } from '../src/engine/nest';
 import { createCombat } from '../src/engine/combat';
@@ -126,14 +128,16 @@ describe('원정 순환', () => {
     expect(s.lost).toEqual([]);
     expect(s.kept).toHaveLength(exp.acquired.length);
     expect(s.laps).toBe(2);
-    expect(exp.acquired.length).toBeGreaterThanOrEqual(4);
+    // 121장 4: 바퀴 중 받은 타일은 임시(가방 X), 원정 끝 영구 타일은 0~1장
+    expect((exp.tempLog ?? []).length).toBeGreaterThanOrEqual(4);
+    expect(exp.acquired.length).toBe(exp.permTile ? 1 : 0);
   });
 
-  it('바퀴당 타일 획득은 2~3장', () => {
+  it('바퀴당 (임시) 타일 획득은 2~3장', () => {
     const exp = mk({ seed: 6 });
     for (let lap = 1; lap <= 4; lap++) {
       runLap(exp);
-      const n = exp.acquired.filter((a) => a.lap === lap).length;
+      const n = (exp.tempLog ?? []).filter((a) => a.lap === lap).length;
       expect(n).toBeGreaterThanOrEqual(BALANCE.expedition.tilesPerLap.min);
       expect(n).toBeLessThanOrEqual(BALANCE.expedition.tilesPerLap.max);
       chooseContinue(exp);
@@ -150,22 +154,23 @@ describe('패배', () => {
     chooseContinue(exp); // 3바퀴째
     walkToStop(exp);
     expect(exp.phase).toBe('battle');
-    winBattle(exp); // 3바퀴 첫 승리로 타일 획득
+    winBattle(exp); // 3바퀴 첫 승리로 (임시) 타일 획득
+    expect((exp.tempLog ?? []).some((t) => t.lap === 3)).toBe(true);
     walkToStop(exp);
     expect(exp.phase).toBe('battle');
     loseBattle(exp);
     expect(exp.phase).toBe('ended');
     const s = summarize(exp);
     expect(s.outcome).toBe('defeated');
-    const lap3 = exp.acquired.filter((a) => a.lap === 3).map((a) => a.tileId);
-    expect(lap3.length).toBeGreaterThan(0);
-    expect(s.lost).toEqual(lap3);
-    expect(s.kept).toEqual(exp.acquired.filter((a) => a.lap < 3).map((a) => a.tileId));
+    // 121장 4: 임시 타일은 원래 가방에 안 들어가고, 패배면 영구 타일 굴림도 없다
+    expect(exp.permTile).toBeUndefined();
+    expect(s.lost).toEqual([]);
+    expect(s.kept).toEqual([]);
     expect(s.laps).toBe(3);
     expect(exp.endReason).toBe('battle-lost');
   });
 
-  it('패배는 사망이 아니다: 둥지로 돌아오고 쓰러짐 상태가 되며(GDD 102-3) 재우기로는 안 풀리고 치료제로 풀린다', () => {
+  it('패배는 사망이 아니다: 둥지로 돌아오고 쓰러짐 상태가 되며(GDD 102-3) 재우기로는 안 풀리고 구급상자로 풀린다', () => {
     const save = newSaveData('hollow', 0);
     const exp = mk({ seed: 10, runId: nextRunId(save) });
     walkToStop(exp);
@@ -231,7 +236,8 @@ describe('허기', () => {
     const b = grab(4);
     expect(a.hpInAttacks).toBeCloseTo(getEnemy(a.id).hpInAttacks);
     expect(b.hpInAttacks).toBeGreaterThan(getEnemy(b.id).hpInAttacks);
-    expect(b.attackInAttacks).toBeGreaterThan(getEnemy(b.id).attackInAttacks);
+    expect(a.attackInAttacks).toBeCloseTo(getEnemy(a.id).attackInAttacks * carryAttackMult(1)); // C.193 원정 적 공격 보정 (GDD 119장 1)
+    expect(b.attackInAttacks).toBeCloseTo(getEnemy(b.id).attackInAttacks * carryAttackMult(1) * lapScale(4).attack); // 이어하기 적 배율 (121장 5)
   });
 });
 
@@ -395,7 +401,7 @@ describe('시드 결정성', () => {
   });
 
   it('전투 기록의 lap 이 실제 바퀴 수로 채워진다', () => {
-    const e = playExpedition(mk({ seed: 83 }), { returnAfterLap: 3 }); // 3바퀴까지 사는 시드 (C.147: 82 → 81, C.154: 해방 게이지가 피해로도 차서 81 → 83)
+    const e = playExpedition(mk({ seed: 83 }), { returnAfterLap: 3, fullHp: true }); // 3바퀴까지 사는 시드 (C.147: 82 → 81, C.154: 해방 게이지가 피해로도 차서 81 → 83, C.212: 1단계 몸은 2바퀴가 고비라(GDD 134장 5) 체력 가득 봇)
     expect(new Set(e.battles.map((b) => b.lap))).toEqual(new Set([1, 2, 3]));
     expect(e.battles.length).toBe(e.battlesByLap.reduce((x, y) => x + y, 0));
     expect(buildRunRecord(e).laps).toBe(3);

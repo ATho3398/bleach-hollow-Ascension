@@ -157,15 +157,7 @@ export function createDock(o: DockOpts): Dock {
         trayBtns.push(b);
         tray.append(b);
       }
-      // 닫기 칸 (GDD 100장 #17): ··· 다시 누르기·뒤로 말고도 닫을 수 있게
-      const x = el('button', 'bha-homedock__moreitem');
-      x.type = 'button';
-      x.dataset.dock = 'close';
-      x.setAttribute('aria-label', '닫기');
-      x.append(icon('i-close'), el('span', '', '닫기'));
-      x.onclick = () => setPanel(CLOSED);
-      trayBtns.push(x);
-      tray.append(x);
+      // [닫기] 칸 없음 (GDD 124장 2, C.198): ··· 다시 누르기·뒤로·장면 누르기로 닫힌다
     }
     // 펼친 줄은 장면 위에 떠 있으니 기기 버튼 선택에서 먼저 (보이는 위치 순서 안에서도 맨 앞 묶음, GDD 63장)
     for (const b of trayBtns) b.setAttribute('data-dev-order', '-1');

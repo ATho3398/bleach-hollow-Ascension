@@ -48,6 +48,13 @@ export function parseTrait(r: unknown): TraitDef {
 
 export const TRAITS: readonly TraitDef[] = (raw as unknown[]).map(parseTrait);
 
+/** 삭제된 희귀 특성 (C.213, GDD 136장 1): 옛 id 't-<속성>-rare' → 그 속성 id, 아니면 null.
+ *  세이브는 같은 속성 강화 1단계로 바꾸고(SAVE_MIGRATIONS[55]), 런 로그 옛 기록은 이 id 를 그대로 남겨 traitName 이 읽는다 */
+export function retiredRareElement(id: string): string | null {
+  const m = /^t-([a-z]+)-rare$/.exec(id);
+  return m && isElement(m[1]) && !TRAITS.some((t) => t.id === id) ? m[1]! : null;
+}
+
 export function getTrait(id: string): TraitDef {
   const t = TRAITS.find((x) => x.id === id);
   if (!t) throw new Error(`알 수 없는 특성: ${id}`);
@@ -65,6 +72,8 @@ function withoutElement(name: string, element: string, factionId: string): strin
 }
 
 export function traitName(id: string, factionId: string): string {
+  const retired = retiredRareElement(id);
+  if (retired) return `${elementName(retired, factionId)} 강화(옛 기록)`;
   const t = getTrait(id);
   return withoutElement(pickFaction(t.name, factionId), t.element, factionId);
 }

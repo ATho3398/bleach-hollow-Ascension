@@ -12,7 +12,6 @@
     "ev": {
       "atk": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "testOnly": true
   },
@@ -29,7 +28,6 @@
     "ev": {
       "int": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "testOnly": true
   },
@@ -47,7 +45,6 @@
       "atk": 1,
       "int": 1
     },
-    "rareChance": 0.1,
     "provisional": true,
     "testOnly": true
   },
@@ -64,7 +61,6 @@
     "ev": {
       "atk": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "testOnly": true
   },
@@ -94,7 +90,6 @@
       "sealSeconds": 4,
       "provisional": true
     },
-    "rareChance": 0.25,
     "provisional": true,
     "testOnly": true
   },
@@ -115,7 +110,6 @@
     "ev": {
       "atk": 2
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -135,7 +129,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -160,7 +153,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -186,7 +178,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -219,7 +210,6 @@
       "hp": 2,
       "int": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -250,7 +240,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",
@@ -278,7 +267,6 @@
     "ev": {
       "int": 2
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -298,7 +286,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -323,7 +310,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -349,7 +335,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -383,7 +368,6 @@
       "atk": 1,
       "int": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -414,7 +398,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",
@@ -443,7 +426,6 @@
       "atk": 1,
       "int": 1
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -463,7 +445,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -488,7 +469,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -514,7 +494,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -547,7 +526,6 @@
       "hp": 2,
       "atk": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -578,7 +556,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",
@@ -606,7 +583,6 @@
     "ev": {
       "atk": 2
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -626,7 +602,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -651,7 +626,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -677,7 +651,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -710,7 +683,6 @@
       "hp": 2,
       "int": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -741,7 +713,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",
@@ -769,7 +740,6 @@
     "ev": {
       "int": 2
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -789,7 +759,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -814,7 +783,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -840,7 +808,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -874,7 +841,6 @@
       "atk": 1,
       "int": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -905,7 +871,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",
@@ -934,7 +899,6 @@
       "atk": 1,
       "int": 1
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -954,7 +918,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -979,7 +942,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -1005,7 +967,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -1038,7 +999,6 @@
       "hp": 2,
       "atk": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -1069,7 +1029,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",
@@ -1097,7 +1056,6 @@
     "ev": {
       "atk": 2
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -1117,7 +1075,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -1142,7 +1099,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -1168,7 +1124,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -1201,7 +1156,6 @@
       "hp": 2,
       "int": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -1232,7 +1186,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",
@@ -1260,7 +1213,6 @@
     "ev": {
       "int": 2
     },
-    "rareChance": 0.1,
     "provisional": true
   },
   {
@@ -1280,7 +1232,6 @@
     "ev": {
       "spd": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "swift",
@@ -1305,7 +1256,6 @@
     "ev": {
       "def": 2
     },
-    "rareChance": 0.1,
     "provisional": true,
     "pattern": {
       "kind": "sturdy",
@@ -1331,7 +1281,6 @@
       "hp": 2,
       "spr": 2
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-seal",
@@ -1365,7 +1314,6 @@
       "atk": 1,
       "int": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "heavy-chain",
@@ -1396,7 +1344,6 @@
       "def": 1,
       "spr": 1
     },
-    "rareChance": 0.25,
     "provisional": true,
     "pattern": {
       "kind": "stance",

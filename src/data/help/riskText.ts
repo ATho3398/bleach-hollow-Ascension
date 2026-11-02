@@ -2,6 +2,7 @@
 // 이름은 종족 설정(riskGaugeName·stabilityName 등), 수치는 BALANCE — 숫자 하드코딩 없음. 도움말 변수(helpVars)와 상태 ⓘ 창이 같이 쓴다.
 // 서식은 textFormat.ts(수치 줄 "조건: 효과 · 효과", −는 빼기 기호).
 import { BALANCE } from '../../config/balance';
+import { fixParticles } from '../../engine/josa';
 import type { FactionConfig } from '../../engine/faction';
 import { MINUS, multPct, num, numLine, pct, signed, zoneLine, type Zone } from './textFormat';
 
@@ -9,6 +10,11 @@ const RX = BALANCE.provisional.risk;
 const LIB = BALANCE.provisional.liberation;
 const LAP = BALANCE.provisional.expedition.lateLapStart;
 const CP = BALANCE.provisional.nest.care;
+const CX = BALANCE.provisional.combat;
+/** 대표 값 (소수 한 자리): 적 체력[기본 공격 횟수] → 포식 상승, 바퀴 → 칸당 상승 */
+const round1 = (v: number) => Math.round(v * 10) / 10;
+const absorbAt = (hpInAttacks: number) => round1(hpInAttacks * RX.absorbPerHpAttack);
+const lapAt = (lap: number) => round1((lap - LAP + 1) * RX.lateLapPerTile);
 
 type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'>;
 
@@ -36,12 +42,12 @@ function frenzyFight(): string[] {
     `주는 피해 ${multPct(RX.frenzyDamageDealt)}`,
     `받는 피해 ${multPct(RX.frenzyDamageTaken)}`,
     `적 공격 ${pct(RX.frenzyEvadeChance)} 회피`,
-    '회복약 사용 불가',
+    '회복 물건 사용 불가',
     `공허 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
   ];
 }
 function frenzyReturn(f: Names): string[] {
-  return [`컨디션 ${MINUS}${RX.frenzyConditionLoss}`, `${f.stabilityName} ${MINUS}${RX.breakthroughStabilityLoss}`, `${f.riskGaugeName} ${RX.riskAfterBreakthrough}으로`];
+  return [`컨디션 ${MINUS}${RX.frenzyConditionLoss}`, `${f.stabilityName} ${MINUS}${RX.breakthroughStabilityLoss}`, fixParticles(`${f.riskGaugeName} ${RX.riskAfterBreakthrough}(으)로`)];
 }
 const frenzyEffects = (f: Names): string[] => [...frenzyFight(), `귀환하면 ${frenzyReturn(f).join(' · ')}`];
 
@@ -52,23 +58,26 @@ export function riskText(f: Names): RiskText {
   const nest = RX.nestActions;
   const a = f.nestActions;
   return {
-    riskTip: numLine(`${g} ${RX.limit}`, `${f.frenzyName}(원정당 1번)`, ...frenzyEffects(f)),
-    frenzyLead: `${g} ${RX.limit}이 되면 원정당 1번 걸린다`,
-    frenzyLines: [numLine('그 원정 끝까지', ...frenzyFight()), numLine('귀환하면', ...frenzyReturn(f))],
-    riskLead: `원정에서 힘을 쓸수록 쌓이고, ${RX.limit}이 되면 ${f.frenzyName} 상태가 된다`,
+    riskTip: numLine(`${g} ${RX.limit}`, `${f.frenzyName}(모험당 1번)`, ...frenzyEffects(f)),
+    frenzyLead: fixParticles(`${g} ${RX.limit}이(가) 되면 모험당 1번 걸린다`),
+    frenzyLines: [numLine('그 모험 끝까지', ...frenzyFight()), numLine('귀환하면', ...frenzyReturn(f))],
+    riskLead: fixParticles(`모험에서 힘을 쓸수록 쌓이고, ${RX.limit}이(가) 되면 ${f.frenzyName} 상태가 된다`),
     stabilityLead: `낮을수록 전투 시작 때 해방 게이지가 적게 찬다`,
     riskDoes: [
       `${RX.limit} 미만은 직접 손해가 없고 게이지만 쌓인다`,
-      `${RX.limit}이 되면 그 원정 끝까지 ${f.frenzyName} 상태다(원정당 1번)`,
+      fixParticles(`${RX.limit}이(가) 되면 그 모험 끝까지 ${f.frenzyName} 상태다(모험당 1번)`),
     ],
     stabilityDoes: [
-      `전투 시작 해방 게이지 = ${s} ÷ ${RX.stabilityMax} × ${LIB.startGaugeMax}`,
+      // 공식 줄 대신 뜻만 (GDD 159장 23)
+      fixParticles(`${s}이(가) 높을수록 해방 게이지가 많이 찬 채로 전투를 시작한다`),
       '그 밖의 직접 손해는 없다',
     ],
     riskUp: [
       numLine('공허 블록 1개 사용', signed(RX.perVoidBlock)),
-      numLine(`강한 적 ${f.absorbActionName}`, `+(적 체력[기본 공격 횟수] × ${RX.absorbPerHpAttack})`, `특성·속성만 ×${m.trait.risk}`, `능력치만 ×${m.stat.risk}`),
-      numLine(`${LAP}바퀴째부터 칸을 지날 때`, `+(바퀴 ${MINUS} ${LAP - 1}) × ${RX.lateLapPerTile}`),
+      // 계산식 대신 쉬운 말 + 대표 값 (GDD 168장 3): 뜻은 absorbRisk·lateLapRisk 그대로
+      numLine(`적 ${f.absorbActionName}`, '강한 적일수록 많이 오른다', `일반 적 약 ${signed(absorbAt(CX.enemyHpInAttacks.normal))}`, `강적 약 ${signed(absorbAt(CX.enemyHpInAttacks.elite))}`),
+      numLine(`일부만 ${f.absorbActionName}`, `특성·속성만 그 ${pct(m.trait.risk)}`, `능력치만 그 ${pct(m.stat.risk)}`),
+      numLine(`${LAP}바퀴째부터 칸을 지날 때`, '바퀴가 늘수록 더 오른다', `${LAP}바퀴 ${signed(lapAt(LAP))}`, `${LAP + 1}바퀴 ${signed(lapAt(LAP + 1))}`),
       numLine('해방이 끝날 때', signed(LIB.riskOnEnd)),
       numLine('제단 타일', signed(BALANCE.provisional.tileVariants.events.altar.risk)),
       numLine('수련 결투', signed(BALANCE.provisional.training.games.duel?.risk ?? 0)),
@@ -99,18 +108,19 @@ export function riskZones(f: Names): RiskZone[] {
   return [
     { from: 0, to: warn - 1, text: '직접 손해가 없다' },
     { from: warn, to: RX.limit - 1, text: `직접 손해가 없다 · 수련장에 '${g} 높음' 경고` },
-    { from: RX.limit, to: RX.limit, text: [`${f.frenzyName}(원정당 1번)`, ...frenzyEffects(f)].join(' · ') },
+    { from: RX.limit, to: RX.limit, text: [`${f.frenzyName}(모험당 1번)`, ...frenzyEffects(f)].join(' · ') },
   ];
 }
 
 /** 영압 안정도 구간별 손해 (109장 2): 전투 시작 해방 게이지 = 값 ÷ 상한 × 시작 최대(선형) — 4구간으로 끊어 그 구간의 시작 게이지를 숫자로 */
 export function stabilityZones(_f: Names): RiskZone[] {
   const max = RX.stabilityMax;
-  const gauge = (v: number) => num((v / max) * LIB.startGaugeMax);
+  // 구간 값은 정수 (GDD 159장 23: 12.5~24.5 같은 소수가 보였다) — 시작은 올림, 끝은 내림이라 이웃 구간과 겹치지 않는다
+  const at = (v: number) => (v / max) * LIB.startGaugeMax;
   const cuts = [0, max * 0.25, max * 0.5, max * 0.75, max + 1].map(Math.round);
   return cuts.slice(0, -1).map((from, i) => {
     const to = cuts[i + 1]! - 1;
-    return { from, to, text: `전투 시작 해방 게이지 ${gauge(from)}~${gauge(to)}/${LIB.gaugeMax}` };
+    return { from, to, text: `전투 시작 해방 게이지 ${Math.ceil(at(from))}~${Math.floor(at(to))}/${LIB.gaugeMax}` };
   });
 }
 

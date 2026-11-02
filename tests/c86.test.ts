@@ -9,6 +9,7 @@ import { difficultyGoldMultiplier } from '../src/engine/difficulty';
 import {
   advance, chooseContinue, enemyScale, chooseRelease, chooseReturn, createExpedition, EXPEDITION_SNAPSHOT_VERSION, finishBattle, finishRest, freeBossCandidate, pendingFreeBoss, restoreExpedition,
   serializeExpedition, startBattle, type ExpeditionState,
+  lapRewardMult,
 } from '../src/engine/expedition';
 import { bossesBeaten, newSaveData, recordExpedition, sanitizeDeck } from '../src/game';
 import { bossOmenSub } from '../src/ui/bha/expedition';
@@ -166,7 +167,7 @@ describe('보스전·보상·런 로그 (GDD 37장 3~6번)', () => {
     expect(startBattle(e).boss).toBeTruthy();
     const want = scaleEnemy(getBoss('sand-maw').enemy, enemyScale(1, 'outskirts', 3, 2, 'normal'));
     expect(e.pending!.enemy.hpInAttacks).toBeCloseTo(want.hpInAttacks, 9);
-    expect(e.pending!.enemy.attackInAttacks).toBeCloseTo(want.attackInAttacks, 9);
+    expect(e.pending!.enemy.attackInAttacks).toBeCloseTo(want.attackInAttacks, 9); // C.195: 원정 보스는 원정 적 공격 배율 없이 보스 조정값 그대로 (C.193 의 ×0.5 로 자유 원정 보스 패배 171/220 → 18/220)
   });
 
   it('이기면 골드 100 × 골드 배율 · 잔치 1 · 보스 특성 확정 첫 후보 → 도감 +1 · 런 로그 source free · 영옥 없음', () => {
@@ -175,7 +176,7 @@ describe('보스전·보상·런 로그 (GDD 37장 3~6번)', () => {
     const gold0 = e.goldLoot.length;
     finishBattle(e, forceBattle(e, true));
     expect(e.freeBoss!.result!.won).toBe(true);
-    expect(e.goldLoot.slice(gold0)).toEqual([{ amount: Math.round(BX.reward.gold * difficultyGoldMultiplier(2, 3)), lap: e.lap }]);
+    expect(e.goldLoot.slice(gold0)).toEqual([{ amount: Math.round(Math.round(BX.reward.gold * difficultyGoldMultiplier(2, 3)) * lapRewardMult(e.lap)), lap: e.lap }]); // 이어하기 보상 배율 (121장 5)
     expect(e.foodLoot.at(-1)).toEqual({ food: BX.reward.food, lap: e.lap });
     expect(e.phase).toBe('absorb');
     expect(e.absorbOffer!.candidates[0]).toBe(getBoss('sand-maw').trait);
@@ -202,7 +203,7 @@ describe('보스전·보상·런 로그 (GDD 37장 3~6번)', () => {
     expect(s.shared.jade).toBe(jade0);
     const rec = s.runLog.bossBattles.at(-1)!;
     expect(rec).toMatchObject({ bossId: 'sand-maw', won: true, firstKill: false, source: 'free', difficulty: 2, episode: null });
-    expect(storyResultLines(e, getFaction('hollow'))[0]).toContain('자유 원정 보스');
+    expect(storyResultLines(e, getFaction('hollow'))[0]).toContain('자유 모험 보스');
   });
 
   it('지면 원정 패배와 같다 (마지막 바퀴 전리품을 잃는다), 런 로그 won false', () => {

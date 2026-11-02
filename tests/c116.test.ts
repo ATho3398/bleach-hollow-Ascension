@@ -8,7 +8,8 @@ describe('C.116 오프라인 플레이(PWA)', () => {
     const m = JSON.parse(read('public/manifest.webmanifest'));
     expect(m.name).toBe('블리치 할로우 어센션');
     expect(m.short_name).toBeTruthy();
-    expect(m.display).toBe('standalone');
+    expect(m.display).toBe('fullscreen'); // C.232 (GDD 156장 1): 앱으로 켜면 처음부터 꽉 찬 화면, 안 되는 곳은 standalone
+    expect(m.display_override).toEqual(['fullscreen', 'standalone']);
     expect(m.orientation).toBe('landscape'); // C.180 (GDD 109장 9번): 앱 아이콘으로 켤 때 시작 화면도 가로
     expect(m.start_url).toBe('./');
     expect(m.scope).toBe('./');

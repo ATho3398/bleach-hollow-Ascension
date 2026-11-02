@@ -1,13 +1,15 @@
 // 종이인형을 게임 캐릭터 그림으로 (GDD 96장 30): 프레임 애니 재생기(animPlayer)와 같은 모양(AnimPlayer)으로 동작을 받아
 // 뼈대 동작(motions.json)을 돌리고, 매 순간 캔버스에 그려 그 <img> 의 src 로 넣는다 — 좌우 반전·크기·윤곽 같은 기존 CSS 가 그대로 따라온다.
-// 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 번갈아, 특수 skill·skill2 번갈아, 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
+// 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 무작위, 특수 skill·skill2 무작위(같은 것 두 번 연속까지, GDD 117장 4), 맞음 hit. 그 밖(승리·패배·먹기·잠·해방)은 없음 = 기존 연출.
+// 계열 블록은 계열 몸동작(PlayOptions.motion, 종족 설정 families[].motion) 묶음에서 고른다(GDD 118장 2).
 // 코어(createRigPlayer)는 DOM 없이 돌아 테스트한다.
 import type { AnimAction } from '../../data/art/anim';
+import type { FamilyMotionKind } from '../../engine/faction';
 import { boneMatrices, fxAt, layerMatrix, lookLayers, orderLayers, resolveMotions, samplePose, type Motion, type MotionSets, type Pose, type Rig } from '../../data/art/rig/pose';
 import { drawFxCanvas } from './rigFx';
 import type { AnimPlayer, PlayOptions } from './animPlayer';
 
-/** 게임 동작 → 종이인형 동작(여럿이면 번갈아) */
+/** 게임 동작 → 종이인형 동작(여럿이면 무작위, pickVariant) */
 export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   idle: ['idle'],
   move: ['move'],
@@ -16,14 +18,37 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   hit: ['hit'],
 };
 
+/** 계열 몸동작 → 종이인형 동작 (GDD 118장 2): 맨손 타격 = 주먹·발차기, 칼 = 내려베기·수평 베기·찌르기, 귀도 = 손에서 쏘기. 묶음에 있는 동작이 하나도 없으면 게임 동작(RIG_ACTIONS) 그대로 */
+export const FAMILY_RIG_MOTIONS: Readonly<Record<FamilyMotionKind, readonly string[]>> = {
+  strike: ['punch', 'kick'],
+  slash: ['attack', 'attack2', 'skill2'],
+  cast: ['skill'],
+};
+
+/** 같은 변형을 연속으로 몇 번까지 허용하나 (GDD 117장 4: 두 번까지, 세 번째는 다른 것) */
+export const VARIANT_REPEAT_MAX = 2;
+
+/**
+ * 변형 고르기 (순수, GDD 117장 4): n 개 중 무작위. 최근 recent(오래된 → 최근)의 끝이 같은 것 VARIANT_REPEAT_MAX 번이면 그것은 뺀다.
+ * rng = 0 이상 1 미만 난수 (테스트에서 주입)
+ */
+export function pickVariant(n: number, recent: readonly number[], rng: () => number): number {
+  if (n <= 1) return 0;
+  const tail = recent.slice(-VARIANT_REPEAT_MAX);
+  const banned = tail.length === VARIANT_REPEAT_MAX && tail.every((v) => v === tail[0]) ? tail[0]! : -1;
+  const pool = Array.from({ length: n }, (_, i) => i).filter((i) => i !== banned);
+  return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]!;
+}
+
 export interface RigPlayer extends AnimPlayer {
   /** 지금 그릴 자세와 동작(뒤집기 슬롯용) */
   pose(): { pose: Pose; motion: Motion | undefined; t: number };
 }
 
-export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake: () => void = () => {}): RigPlayer {
+export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake: () => void = () => {}, rng: () => number = Math.random): RigPlayer {
   const ids = (a: AnimAction) => (RIG_ACTIONS[a] ?? []).filter((id) => motions[id]);
-  const turn: Partial<Record<AnimAction, number>> = {};
+  const byMotion = (m: FamilyMotionKind | undefined) => (m ? FAMILY_RIG_MOTIONS[m].filter((id) => motions[id]) : []);
+  const recent: Record<string, number[]> = {};
   let loopAction: AnimAction | null = null;
   let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean } | null = null;
   let t = 0;
@@ -41,16 +66,23 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       wake();
     },
     play(a, o = {}) {
-      const list = ids(a);
+      const fam = byMotion(o.motion);
+      const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
-      const n = turn[a] ?? 0;
-      turn[a] = n + 1;
-      const id = list[n % list.length]!;
+      const hist = (recent[fam.length ? `m:${o.motion}` : a] ??= []);
+      const k = pickVariant(list.length, hist, rng);
+      hist.push(k);
+      if (hist.length > VARIANT_REPEAT_MAX) hist.shift();
+      const id = list[k]!;
       const m = motions[id]!;
-      once = { action: a, id, opts: o, hitFired: m.hit === undefined };
-      t = 0;
+      const hitAt = m.hit ?? m.duration / 2;
+      // 타격부터 (GDD 117장 3, 블록 즉발): 휘두른 끝 자세에서 시작해 되돌아온다. 타격 콜백은 바로
+      const skip = !!o.fromHit && m.hit !== undefined;
+      once = { action: a, id, opts: o, hitFired: m.hit === undefined || skip };
+      t = skip ? hitAt : 0;
+      if (skip) o.onHit?.();
       wake();
-      return { durationMs: m.duration, hitAtMs: m.hit ?? m.duration / 2 };
+      return skip ? { durationMs: m.duration - hitAt, hitAtMs: 0 } : { durationMs: m.duration, hitAtMs: hitAt };
     },
     stop() {
       once = null;
@@ -113,6 +145,7 @@ const MIN_FRAME_MS = 33;
 /** sets = 동작 묶음(몸이 묶음을 쓰면 그 몸 동작으로 덮는다, GDD 96장 40) */
 export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record<string, Motion>, lookId: string, partBase: string, sets?: MotionSets): RigPlayer {
   const [vx, vy, vw, vh] = rig.view?.rect ?? [0, 0, rig.canvas[0], rig.canvas[1]];
+  const clipH = rig.view?.clipY !== undefined ? Math.min(vh, rig.view.clipY - vy) : vh; // 바닥 밑(clipY 아래)은 땅에 가려진 것처럼 안 그린다
   const canvas = document.createElement('canvas');
   canvas.width = vw * K;
   canvas.height = vh * K;
@@ -133,14 +166,19 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     const mats = boneMatrices(rig, pose, body);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, canvas.width, clipH * K);
+    ctx.clip();
     ctx.imageSmoothingEnabled = false;
     for (const { layer, im } of orderLayers(layers.map((l) => ({ ...l, slot: l.layer.slot })), motion)) {
       const m = layerMatrix(rig, mats, layer, motion);
       ctx.setTransform(m[0] * K, m[1] * K, m[2] * K, m[3] * K, (m[4] - vx) * K, (m[5] - vy) * K);
       ctx.drawImage(im, 0, 0);
     }
-    // 이펙트(GDD 115-A 48): 그림 층 위
+    // 이펙트(GDD 115-A 48): 그림 층 위(바닥 밑은 같이 잘림)
     drawFxCanvas(ctx, fxAt(motion, t, mats), (p) => [(p[0] - vx) * K, (p[1] - vy) * K], K);
+    ctx.restore();
     img.src = canvas.toDataURL();
     return true;
   };

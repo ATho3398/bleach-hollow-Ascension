@@ -23,11 +23,11 @@ function ended(save: SaveData, outcome: 'returned' | 'defeated'): ExpeditionStat
 }
 
 describe('102-1 시간 흐름', () => {
-  it('배부름 30 초과면 컨디션 그대로, 30 이하면 시간당 −4, 0 이면 ×2', () => {
+  it('배부름 30 초과면 컨디션 그대로(70 이상 회복은 C.214 에서 폐기), 30 이하면 시간당 −4, 0 이면 ×2', () => {
     const n = newNest(0);
-    n.hunger = 0;
+    n.hunger = 31; // 배부름 69
     n.condition = 80;
-    passNestTime(n, 4, false); // 허기 30 → 배부름 70
+    passNestTime(n, 4, false); // 배부름 69 → 49
     expect(n.condition).toBe(80);
     const m = newNest(0);
     m.hunger = 70; // 배부름 30
@@ -188,12 +188,12 @@ describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', (
 });
 
 describe('102-4 약 3종', () => {
-  it('상점 약 칸: 치료제·링거·에너지 드링크, 값 = 보통 먹이 6·3·3배쯤, 보관함 소모품으로', () => {
+  it('상점 약 칸: 구급상자·링거·에너지 드링크, 값 = 보통 먹이 6·3·3배쯤, 보관함 소모품으로', () => {
     const s = newSaveData('hollow', 0);
     s.shared.tradeCoins = 1000;
     const f = getFaction('hollow');
     const rows = goldRows(s, f).filter((r) => r.id.startsWith('med-'));
-    expect(rows.map((r) => [r.name, r.price])).toEqual([['치료제', 210], ['링거', 105], ['에너지 드링크', 105]]);
+    expect(rows.map((r) => [r.name, r.price])).toEqual([['구급상자', 210], ['링거', 105], ['에너지 드링크', 105]]);
     for (const id of ['med-cure', 'med-iv', 'med-energy']) expect(buyShopItem(s, f, id, 0).ok).toBe(true);
     expect(inventoryOf(s, f).filter((e) => e.id.startsWith('med-')).every((e) => e.category === 'consumable' && e.lock !== null)).toBe(true); // 상태가 없으면 못 쓴다
     Object.assign(s.nest, { collapsed: true, weakened: true, tired: true });

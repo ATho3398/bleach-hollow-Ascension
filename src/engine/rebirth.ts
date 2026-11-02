@@ -1,4 +1,4 @@
-// 환생 (GDD 22-1·22-7). 종족 무관 순수 로직: 환생 횟수·누적 계승 노력치·★ 표시·계승할 특성 후보.
+// 환생 (GDD 22-1·22-7). 종족 무관 순수 로직: 환생 횟수·누적 계승 노력치·★ 표시·가지고 갈 블록 후보.
 // 세이브 전체를 바꾸는 일(초기화·남김·보상·런 로그)은 game.ts performRebirth 가 이 모듈을 써서 한다. 문구는 종족 설정 rebirth.
 import { BALANCE } from '../config/balance';
 import { STAT_IDS, type Stats } from '../data/schema';

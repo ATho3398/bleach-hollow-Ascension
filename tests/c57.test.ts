@@ -185,7 +185,7 @@ describe('① 드래프트', () => {
     expect(special / 200).toBeGreaterThan(0.15);
     expect(special / 200).toBeLessThan(0.45);
   });
-  it('바퀴 끝에 3장 → 1장 고르면 손에, 놓은 타일은 남고 안 놓은 것은 계속할 때 사라진다. 덱·보유에는 안 들어감', () => {
+  it('바퀴 끝에 3장 → 1장 고르면 임시 타일로 손에, 계속해도 이번 원정 동안 남는다(121장 4 ②). 덱·보유에는 안 들어감', () => {
     const e = exp();
     road(e, {});
     stepTo(e, 0);
@@ -198,8 +198,10 @@ describe('① 드래프트', () => {
     expect(chooseDraft(e, 0).ok).toBe(false);
     expect(e.hand.length).toBe(hand0 + 1);
     const id = e.draft!.options[1]!;
+    expect(e.tempHand).toContain(id);
     chooseContinue(e);
-    expect(e.hand.length).toBe(hand0);
+    expect(e.hand.length).toBe(hand0 + 1);
+    expect(e.tempHand).toContain(id);
     expect(e.draft).toBeNull();
     expect(e.variantLog.drafts).toEqual([{ tileId: id, lap: 1 }]);
   });
@@ -242,7 +244,7 @@ describe('③ 이벤트 타일', () => {
   });
   it('제단: 리스크 +15, 장착 특성 위력 +10% (전투 블록 위력에 반영)', () => {
     const e = exp();
-    const skill = TRAITS.find((t) => t.kind === 'skill' && t.role === 'attack' && !t.rare && t.element !== 'normal')!; // C.184: 노멀 = 기본 블록
+    const skill = TRAITS.find((t) => t.kind === 'skill' && t.role === 'attack' && !t.boss && t.element !== 'normal')!; // C.184: 노멀 = 기본 블록
     gainTrait(e.build, skill.id);
     road(e, { 4: 'event-altar', 5: 'prey-nest-a' });
     stepTo(e, 4);

@@ -106,7 +106,7 @@ describe('82장 런 로그·세이브', () => {
   });
   it('세이브 형식 38(이후 C.134 에 39) · 최소 형식 같이 올림 (61장, 마이그레이션 없음)', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(38);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
   it('요청 상태가 저장·불러오기로 남고, 깨진 값은 버린다', () => {
     const s = newSaveData('hollow', T0);

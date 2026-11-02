@@ -43,18 +43,18 @@ describe('단계별 최대 체력 = 기본 체력 × (체력 능력치 ÷ 세계
     const save = newSaveData('hollow', 1);
     const e = save.evolution;
     const hpAt: number[] = [];
-    for (let t = 0; t <= 4; t++) {
+    for (let t = 0; t <= 3; t++) {
       const st = currentStats(e, 'hollow', 0);
       hpAt.push(base * (st.hp / worldRefStat()));
-      if (t < 4) {
+      if (t < 3) {
         e.steps = need[t]!;
         expect(evolve(e, save.build, { factionId: 'hollow', hunger: 30, condition: 80, rebirths: 0 }, 1)).not.toBeNull();
       }
     }
-    expect(e.tierIndex).toBe(4);
+    expect(e.tierIndex).toBe(3);
     expect(hpAt[0]).toBeCloseTo(base);
-    expect(hpAt[4]).toBeGreaterThan(base * 1.5); // 5단계 체력 ≈ 103 ÷ 50
+    expect(hpAt[3]).toBeGreaterThan(base * 1.4); // C.220: 4단계 체력 ≈ 80~100 ÷ 50
     expect(worldRefStat()).toBe(refStatOf(0));
-    expect(refStatOf(4)).toBeGreaterThan(refStatOf(0));
+    expect(refStatOf(3)).toBeGreaterThan(refStatOf(0));
   });
 });

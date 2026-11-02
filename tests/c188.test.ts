@@ -27,9 +27,9 @@ describe('성별 값 (114장 1)', () => {
 });
 
 describe('외형이 갈리는 단계 = 종족 설정 (114장 2)', () => {
-  it('호로 5(아란칼)·사신 1, 단계 번호는 1부터', () => {
+  it('호로 5(아란칼 모습 = 아란칼화를 깬 그림 단계, C.220)·사신 1, 단계 번호는 1부터', () => {
     expect(getFaction('hollow').genderLookFromTier).toBe(5);
-    expect(getFaction('hollow').tierNames[4]).toBe('아란칼');
+    expect(getFaction('hollow').ascension.artTier).toBe(5);
     expect(getFaction('shinigami').genderLookFromTier).toBe(1);
     expect(usesFemaleLook('female', 3, 5)).toBe(false); // 4단계 = 남녀 같음
     expect(usesFemaleLook('female', 4, 5)).toBe(true);
@@ -47,7 +47,7 @@ describe('외형이 갈리는 단계 = 종족 설정 (114장 2)', () => {
     for (const p of ['src/engine/gender.ts', 'src/data/art/manifest.ts', 'src/ui/settingsView.ts']) expect(read(p)).not.toMatch(/=== '(hollow|shinigami)'/);
   });
   it('안내 문구는 종족 설정의 단계 이름으로', () => {
-    expect(genderLookNote(getFaction('hollow').tierNames, 5)).toBe('아란칼부터 모습이 달라진다. 여성 그림이 없으면 지금 그림으로 보인다.');
+    expect(genderLookNote(getFaction('hollow').tierNames, 5, getFaction('hollow').ascension)).toBe('아란칼화를 깬 뒤부터 모습이 달라진다.');
     expect(genderLookNote(getFaction('shinigami').tierNames, 1)).toMatch(/^처음부터/);
   });
 });
@@ -73,7 +73,7 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
     const art = (fid: string, t: number, g: 'male' | 'female') => charArt(fid, t, getFaction(fid).room?.characterArt ?? '', '/', undefined, ART_FILES, null, undefined, g);
     expect(art('hollow', 0, 'female')).toEqual(art('hollow', 0, 'male'));
     expect(art('hollow', 3, 'female')).toEqual(art('hollow', 3, 'male'));
-    for (const [fid, t, look] of [['hollow', 4, 'arrancar-base'], ['shinigami', 0, 'shinigami-base'], ['shinigami', 1, 'shinigami-student'], ['shinigami', 2, 'shinigami-base']] as const) {
+    for (const [fid, t, look] of [['hollow', 4, 'arrancar-base'], ['shinigami', 0, 'shinigami-student'], ['shinigami', 1, 'shinigami-student'], ['shinigami', 2, 'shinigami-base']] as const) {
       expect(art(fid, t, 'male').rig?.look, `${fid}${t}`).toBe(look);
       expect(art(fid, t, 'female').rig?.look, `${fid}${t}`).toBe(`${look}-f`);
       expect(art(fid, t, 'female').src).toBe(`/art/rig/humanoid/still/${look}-f.png`);
@@ -83,7 +83,7 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
 
 describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
   it('형식·문턱 52, 새 세이브 남성, 저장·불러오기로 남고 깨진 값은 남성', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([52, 52]);
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195
     const s = newSaveData('hollow');
     expect(s.gender).toBe('male');
     s.gender = 'female';
@@ -97,10 +97,10 @@ describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
 });
 
 describe('설정 화면 · 테스트 패널', () => {
-  it('[이 슬롯]에서만 바꾸는 성별 줄, 체크 자리 고정', () => {
+  it('성별 줄은 이 캐릭터 칸 (C.239 GDD 159장 13: 늘 바꿀 수 있다), 체크 자리 고정', () => {
     const v = read('src/ui/settingsView.ts');
     expect(v).toContain("genderRow.dataset.set = 'gender';");
-    expect(v).toContain("() => scope === 'slot'");
+    expect(v).toContain("panel('이 캐릭터 · 성별'");
     expect(v).toContain('b.replaceChildren(icon(\'i-check\'), label(v));');
     expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-settings__choices .bha-btn[aria-pressed="false"] .bha-icon { visibility: hidden; }');
     expect(read('src/ui/app.ts')).toContain('setActiveGender(save?.gender);');

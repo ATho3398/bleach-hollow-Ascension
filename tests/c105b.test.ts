@@ -29,10 +29,10 @@ describe('C.105b 속성별 물공 생성원 간격', () => {
   });
 
   it('applyEvolutionToParams 가 params.physBlockSpawnSeconds 를 채운다: 혈 1.8초 · 흙 3.5초(C.118) · 물공 아닌 몸은 기본값', () => {
-    expect(bodyOf('t5:blood:physical').physBlockSpawnSeconds).toBe(1.8);
-    expect(physSpawnSecondsOf(bodyOf('t5:blood:physical'))).toBe(1.8);
-    expect(bodyOf('t5:earth:physical').physBlockSpawnSeconds).toBe(PB.spawnSeconds);
-    const special = bodyOf('t5:blood:special');
+    expect(bodyOf('t4:blood:physical').physBlockSpawnSeconds).toBe(1.8);
+    expect(physSpawnSecondsOf(bodyOf('t4:blood:physical'))).toBe(1.8);
+    expect(bodyOf('t4:earth:physical').physBlockSpawnSeconds).toBe(PB.spawnSeconds);
+    const special = bodyOf('t4:blood:special');
     expect(special.physBlock).toBeNull();
     expect(physSpawnSecondsOf(special)).toBeNull();
   });
@@ -44,8 +44,8 @@ describe('C.105b 속성별 물공 생성원 간격', () => {
       for (let i = 0; i < ticksOf(s.params, sec); i++) { step(s); s.tray = []; }
       return s.physSpawned ?? 0;
     };
-    const blood = countIn('t5:blood:physical', 600);
-    const earth = countIn('t5:earth:physical', 600);
+    const blood = countIn('t4:blood:physical', 600);
+    const earth = countIn('t4:earth:physical', 600);
     expect(blood).toBeGreaterThan(earth);
     expect(Math.abs(blood - 600 / 1.8)).toBeLessThanOrEqual((600 / 1.8) * 0.12);
     expect(Math.abs(earth - 600 / PB.spawnSeconds)).toBeLessThanOrEqual((600 / PB.spawnSeconds) * 0.12);

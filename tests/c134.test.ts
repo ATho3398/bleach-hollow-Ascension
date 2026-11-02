@@ -165,8 +165,8 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
   });
 
   it('세이브: 형식 46(C.175) · 문턱 같이, 옛 해방 칸 필드는 지운다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(52); // C.188 (C.184 51) (C.177 50)
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(52);
+    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     const s = newSaveData('hollow', 1);
     expect('liberation' in s.build).toBe(false);
     const raw = JSON.parse(JSON.stringify(s));
@@ -176,13 +176,10 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
 });
 
 describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
-  it('이름은 종족 설정: 5단계 전 = 영력 해방(양 종족), 5단계부터 = 호로 레스렉시온 / 사신 만해', () => {
-    for (const f of FACTIONS) {
-      expect(liberationLabels(f, 0).name).toBe('영력 해방');
-      expect(liberationLabels(f, LB.minTierIndex - 1)).toMatchObject({ name: '영력 해방', unique: false });
-    }
-    expect(liberationLabels(getFaction('hollow'), LB.minTierIndex)).toMatchObject({ name: '레스렉시온', unique: true });
-    expect(liberationLabels(getFaction('shinigami'), LB.minTierIndex)).toMatchObject({ name: '만해', unique: true });
+  it('이름은 종족 설정: 아란칼화/참백도 구상화 전 = 영력 해방(양 종족), 깬 뒤 = 호로 레스렉시온 / 사신 만해 (C.220)', () => {
+    for (const f of FACTIONS) expect(liberationLabels(f, false)).toMatchObject({ name: '영력 해방', unique: false });
+    expect(liberationLabels(getFaction('hollow'), true)).toMatchObject({ name: '레스렉시온', unique: true });
+    expect(liberationLabels(getFaction('shinigami'), true)).toMatchObject({ name: '만해', unique: true });
     const h = getFaction('hollow');
     expect(() => parseFactionConfig({ ...h, liberation: { ...h.liberation, baseName: '' } })).toThrow(/liberation.baseName/);
   });
@@ -192,18 +189,20 @@ describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
     expect(liberationAccess(s)).toEqual({ usable: true, trained: false });
     s.training.completed = true;
     expect(liberationAccess(s).trained).toBe(true);
-    const exp = createExpedition({ factionId: 'hollow', seed: 3, hunger: 20, condition: 80, deck: ['prey-nest-a'] });
+    // C.195: 사냥 힐 축소(121장 6)로 블록 봇이 시드 3 에서 해방 전에 쓰러져 시드 4 (해방 게이지가 차고 쓰는 판). C.212: 1단계 몸은 2바퀴가 고비라(134장 5) 체력 가득 봇
+    const exp = createExpedition({ factionId: 'hollow', seed: 4, hunger: 20, condition: 80, deck: ['prey-nest-a'] });
     let used = 0;
-    playExpedition(exp, { returnAfterLap: 3, playBattle: (b) => { expect(b.params.liberationEnabled).toBe(true); playCombatBot(b); used += b.liberation.uses; } });
+    playExpedition(exp, { returnAfterLap: 3, fullHp: true, playBattle: (b) => { expect(b.params.liberationEnabled).toBe(true); playCombatBot(b); used += b.liberation.uses; } });
     expect(used).toBeGreaterThan(0);
     expect(exp.battles.some((b) => (b.liberationUses ?? 0) > 0)).toBe(true);
   });
 
-  it('5단계 전에는 블록 효과만, 5단계부터 공격 속도·체인 속도·능력치 소폭 상승 (수련 완료면 더)', () => {
+  it('아란칼화 전에는 블록 효과만, 깬 뒤 공격 속도·체인 속도·능력치 소폭 상승 (수련 완료면 더) — C.220: 단계가 아니라 아란칼화', () => {
     const at = (tier: number, trained = false) => {
       const p = buildCombatParams(newBuild(), 'hollow');
       const e = newEvolution(1);
-      e.tierIndex = tier;
+      e.tierIndex = Math.min(tier, 3);
+      if (tier >= 4) e.ascended = true;
       applyEvolutionToParams(p, e, 'hollow', 0, trained);
       return p;
     };

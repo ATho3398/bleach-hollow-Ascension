@@ -2,27 +2,38 @@
 // 규칙·시간은 engine/training 이 정하고, 화면은 상태를 그리기만 한다. 문구·종목 이름은 종족 설정 training 에서 읽는다 (종족 id 분기 없음).
 // 조작은 한 손가락: 화면 버튼 / 칸 누르기, PC 는 방향키·스페이스(숫자 1~9 = 먹이사슬 칸).
 import { fullnessDeltaText } from './bha/fullness';
+import { fixParticles } from '../engine/josa';
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
 import {
   clashZone, createMiniGame, DODGE_PLAYER_X, DUEL_DIRS, gameRule, stepMiniGame, TRAINING_GAMES, trainingGate, trainingLevel, trainingRiskWarning,
   type DuelDir, type MiniGameInput, type MiniGameState, type TrainingGameId, type TrainingOutcome,
 } from '../engine/training';
-import type { SaveData } from '../game';
+import { ascensionAccess, type SaveData } from '../game';
 import { STAT_IDS, type StatId } from '../data/schema';
 import { statName } from '../data/elements';
 import { button, chip, el, icon, meter, mountApp, notice, panel, provisionalTag, tag } from './bha/dom';
+import { iconArt, itemDialog } from './bha/itemUi';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
+import { asBack } from './bha/screenBack';
+import { evText } from './bha/nest';
+
+/** 앞말 + 강조 조각 한 줄 (노력치 글자, GDD 160장 6) */
+const labeled = (lead: string, strong: HTMLElement): HTMLElement => {
+  const p = el('p');
+  p.append(lead, strong);
+  return p;
+};
 
 const TX = BALANCE.provisional.training;
 const LB = BALANCE.provisional.liberation;
 
-/** 제단(수련) 화면 진입 문구: 5단계 미만이면 "<5단계 이름>이(가) 되면 열린다" */
-export function trainingLockedText(f: Pick<FactionConfig, 'tierNames' | 'training'>): string {
-  const t5 = f.tierNames[LB.minTierIndex] ?? '5단계';
-  return `${t5}${hasBatchim(t5) ? '이' : '가'} 되면 ${f.training.title}이 열린다.`;
+/** 제단(수련) 화면 진입 문구: 4단계(liberation.minTierIndex) 미만이면 "<4단계 이름>이(가) 되면 열린다" */
+export function trainingLockedText(f: Pick<FactionConfig, 'tierNames' | 'training'>, what: string = f.training.title): string {
+  const t4 = f.tierNames[LB.minTierIndex] ?? `${LB.minTierIndex + 1}단계`;
+  return fixParticles(`${t4}${hasBatchim(t4) ? '이' : '가'} 되면 ${what}이(가) 열린다.`);
 }
 
 function hasBatchim(word: string): boolean {
@@ -49,6 +60,8 @@ export interface TrainingHandlers {
   onPlay: (game: TrainingGameId) => void;
   /** 머리 제목 토글로 훈련 인형(전투 연습) · 번호 쟁탈전으로 (C.137 → GDD 98장 A1·99장 2) */
   onSwitch: (id: TrainingScreenId) => void;
+  /** 아란칼화 / 참백도 구상화 도전 (GDD 126장 3, C.220 — 지금은 보스전 임시) */
+  onAscend?: () => void;
 }
 
 /** 수련장 묶음의 세 화면: 수련(본능 수련) · 훈련 인형 · 번호 쟁탈전 */
@@ -88,17 +101,18 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   tickets.setAttribute('aria-label', `수련권 ${t.tickets} / ${TX.ticketsMax}`);
   tickets.append(el('span', 'bha-train__ticketlabel', '수련권'));
   for (let i = 0; i < TX.ticketsMax; i++) tickets.append(el('i', i < t.tickets ? 'is-on' : ''));
-  tickets.append(el('span', 'bha-num', `${t.tickets}/${TX.ticketsMax}`), el('span', 'bha-faint', '원정에서 돌아올 때마다 1장 (최대 3장, 한 판에 1장)'));
+  tickets.append(el('span', 'bha-num', `${t.tickets}/${TX.ticketsMax}`), el('span', 'bha-faint', '모험에서 돌아올 때마다 1장 (최대 3장, 한 판에 1장)'));
   prog.append(tickets);
   const notes: HTMLElement[] = [];
   if (!gate.ok && gate.reason === 'tier') notes.push(notice('info', trainingLockedText(faction), { icon: 'i-lock' }));
-  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 원정에서 돌아오면 1장 생긴다.', { icon: 'i-lock' }));
+  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 모험에서 돌아오면 1장 생긴다.', { icon: 'i-lock' }));
   else if (!gate.ok && gate.reason === 'condition') notes.push(notice('warn', `컨디션이 ${TX.minCondition} 미만이라 수련할 수 없다. ${faction.nestActions.sleep}(으)로 회복한다.`));
   if (gate.ok || gate.reason !== 'tier') {
     if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). ${faction.riskGaugeName}이(가) 오르는 종목은 조심해야 한다.`));
     if (t.completed) notes.push(notice('good', faction.training.completeText, { title: '수련 완료' }));
   }
   prog.append(...notes);
+  // 왼쪽 = 수련 칸만, 아란칼화·구상화 칸은 오른쪽 카드 아래 (GDD 159장 45: 왼쪽이 넘쳐 위·아래 줄이 잘렸다 — 카드가 짧아져 오른쪽에 자리가 남는다)
   const left = [prog];
 
   // 오른쪽: 4종목 카드
@@ -112,10 +126,10 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     card.dataset.game = g;
     const top = el('span', 'bha-train__cardtop');
     top.append(el('b', 'bha-train__cardname', cfg.name), el('span', 'bha-chip', `${level}단계`));
-    // 보상·비용은 칩으로 — 글 한 줄은 어중간한 곳에서 줄바꿈됐다 (GDD 100장 #67). 광기(리스크) 비용은 위험 칩 (#68: 테두리는 선택 전용)
+    // 카드 = 이름·단계 + 대표 효과 하나 (GDD 159장 44: 증감 칩 4~5개가 수치판처럼 보였다). 전체 증감은 누르면 뜨는 상세 창
+    const rewards = lines.reward.split(' · ');
     const chips = el('span', 'bha-train__chips');
-    chips.append(...lines.reward.split(' · ').map((x) => chip(x, 'guard')));
-    if (lines.cost !== '없음') chips.append(...lines.cost.split(' · ').map((x) => chip(x, x.startsWith(faction.riskGaugeName) ? 'danger' : undefined)));
+    chips.append(chip(rewards.find((x) => x.includes('노력치')) ?? rewards[0]!, 'guard'));
     card.append(top, chips);
     card.setAttribute('aria-label', `${cfg.name} ${level}단계. 승리 ${lines.reward}. 비용 ${lines.cost}`);
     card.title = cfg.desc;
@@ -123,11 +137,35 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
       card.disabled = true;
       card.classList.add('is-locked');
       card.prepend(icon('i-lock', 'sm'));
-    } else card.onclick = () => hd.onPlay(g);
+    } else card.onclick = () => {
+      // 상세 창: 설명 · 승리 보상 · 비용 · 진 때 (GDD 159장 44·45: 아래 안내 줄은 틀 끝에 걸려 있어 이 창으로 옮겼다)
+      const close = itemDialog({
+        heading: faction.training.title, name: cfg.name, art: iconArt('i-practice'), have: `${level}단계`,
+        desc: [cfg.desc, `승리: ${lines.reward}`, `비용: ${lines.cost}`, `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로다.`, `종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`].join('\n'),
+        actions: [{ key: 'play', label: () => '시작', variant: 'primary', onClick: () => { close(); hd.onPlay(g); } }],
+      });
+    };
     cards.append(card);
   }
-  const right = [cards, el('p', 'bha-faint', `패배해도 수련치 +${TX.lossPoints}, 비용은 그대로. 종목별 승리 ${TX.levelWins.slice(1).join('·')}번에서 난이도가 오른다.`)];
+  const right = [cards, ascensionPanel(faction, save, hd)];
   lcdPage(dev.view, { cls: 'bha-train-page', cols: '0.9fr 1.1fr' }, head, left, right);
+}
+
+/** 아란칼화 / 참백도 구상화 칸 (GDD 126장 3, C.220): 4단계부터 도전. 지금은 보스전 임시(미니게임은 나중) */
+function ascensionPanel(faction: FactionConfig, save: SaveData, hd: TrainingHandlers): HTMLElement {
+  const A = faction.ascension;
+  const access = ascensionAccess(save);
+  const p = panel({ title: A.name, aside: save.evolution.ascended ? tag('완료', 'kind') : provisionalTag() });
+  p.dataset.training = 'ascension';
+  p.append(el('p', 'bha-small', A.desc));
+  if (save.evolution.ascended) p.append(notice('good', `${faction.liberation.name}을(를) 쓸 수 있다.`, { title: `${A.name} 완료` }));
+  else if (!access.ok && access.reason === 'tier') p.append(notice('info', trainingLockedText(faction, A.name), { icon: 'i-lock' }));
+  else {
+    // 칸이 틀 안에 들어가게 설명 한 줄 + 버튼만 (GDD 159장 45) — 상대·재도전 안내는 버튼 설명(title)
+    p.append(button({ label: `${A.name}에 도전`, icon: 'i-attack', variant: 'primary', size: 'small', disabled: !access.ok || !hd.onAscend, onClick: () => hd.onAscend?.() }));
+    p.lastElementChild?.setAttribute('title', `상대: ${A.foe} · 져도 잃는 것이 없다`);
+  }
+  return p;
 }
 
 // ── 한 판 ──
@@ -306,7 +344,7 @@ export function trainingPlayView(root: HTMLElement, faction: FactionConfig, game
     window.removeEventListener('keydown', onKey, true);
     const won = s.status === 'won';
     const ov = el('div', `bha-train__end ${won ? 'is-win' : 'is-lose'}`);
-    const go = button({ label: '결과 보기', variant: 'primary', size: 'lg', onClick: () => hd.onDone(won) });
+    const go = asBack(button({ label: '결과 보기', variant: 'primary', size: 'lg', onClick: () => hd.onDone(won) }));
     ov.append(el('h2', 'bha-train__endtitle', won ? '승리' : '패배'), go);
     // 끝나면 조작 버튼을 끈다 (C.68: 그대로 살아 있어 기기 확인 키 선택이 [결과 보기] 로 안 옮겨 갔다)
     for (const b of app.querySelectorAll('button')) b.disabled = true;
@@ -336,10 +374,10 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   const cfg = faction.training.games[out.game];
   const t = save.training;
   const rows = el('div', 'bha-stack');
-  const evText = Object.entries(out.ev).filter(([, v]) => (v ?? 0) > 0).map(([k, v]) => `${statName(k as StatId, faction.id)} +${v}`).join(' · ');
+  const evStr = Object.entries(out.ev).filter(([, v]) => (v ?? 0) > 0).map(([k, v]) => `${statName(k as StatId, faction.id)} +${v}`).join(' · ');
   rows.append(
     el('p', '', `수련치 +${out.points} (지금 ${Math.min(t.points, TX.pointsToComplete)} / ${TX.pointsToComplete})`),
-    ...(evText ? [el('p', '', `노력치 ${evText}`)] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
+    ...(evStr ? [labeled('노력치 ', evText(evStr))] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
     el('p', 'bha-faint', [out.condition ? signedText('컨디션', out.condition) : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || '둥지 수치 변화 없음'),
     el('p', 'bha-faint', `남은 수련권 ${t.tickets}/${TX.ticketsMax}`),
   );
@@ -353,7 +391,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   }
   const actions = el('div', 'bha-grid2');
   if (hd.onAgain) actions.append(button({ label: '한 판 더', icon: 'i-play', onClick: hd.onAgain }));
-  actions.append(button({ label: '수련 화면으로', variant: 'primary', icon: 'i-return', onClick: hd.onBack }));
+  actions.append(asBack(button({ label: '수련 화면으로', variant: 'primary', icon: 'i-return', onClick: hd.onBack })));
   right.push(actions);
   lcdPage(dev.view, { cls: 'bha-train-page bha-train-result' }, lcdHead({ title: faction.training.title }), left, right);
 }

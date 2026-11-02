@@ -60,12 +60,13 @@ describe('데이터 (GDD 65장)', () => {
     expect(upgradeIdOf('hunter-den')).toBe('hunter-den-plus');
   });
 
-  it('타일 안내에 4종 한 줄 — 자리표시자가 모두 풀린다', () => {
+  it('타일 안내 뽑기 카드 — 자리표시자가 모두 풀린다 (C.235 GDD 157장 5: 4종 이름·수치 나열 줄 삭제, 하는 일은 타일 설명에)', () => {
     for (const f of [getFaction('hollow'), getFaction('shinigami')]) {
       const step = GUIDES['tile-draw']!.find((s) => s.id === 'special')!;
       const text = renderHelpText(step.body, { ...helpVars(f), ...guideVars(f) });
       expect(text).not.toContain('{');
-      for (const id of ['env-training', 'hunter-den', 'rest-spring', 'echo']) expect(text).toContain(tileName(id, f.id));
+      expect(text).toContain('뽑기에서만');
+      for (const id of ['env-training', 'hunter-den', 'rest-spring', 'echo']) expect(tileHint(getTile(id)).length).toBeGreaterThan(0);
     }
   });
 });
@@ -132,13 +133,14 @@ describe('포식자 둥지 / 사냥꾼 출몰지', () => {
     winBattle(e);
     expect(e.phase).toBe('absorb');
     // C.125 (70장): 후보는 그 적 속성 안에서만. C.127 (75장): 특수 속성 특성 숨김이 없어져 늘 배율만큼
-    expect(e.absorbOffer!.candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite * T.hunter.absorbCandidateMult);
+    // C.220 (GDD 126-1 수정 1): 후보는 블록(skill) 특성만 — 그 속성 블록 수(3)가 상한
+    expect(e.absorbOffer!.candidates.length).toBe(Math.min(3, BALANCE.provisional.absorb.candidatesElite * T.hunter.absorbCandidateMult));
     // buildOffer 단위: 배율 1 이면 예전과 같다
     const enemy = { ...getEnemy('fire-heavy-seal'), class: 'elite' as const }; // C.125: 원소 속성 적으로
     const input = { status: 'won' as const, finisher: null, chain3Count: 0, weakChain3Count: 0, params: { skills: [] } };
     const build = { owned: [], slots: [null, null, null, null] };
     expect(buildOffer(createRng(1), enemy, build, input).candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite);
-    expect(buildOffer(createRng(1), enemy, build, input, 0, null, 2).candidates.length).toBe(BALANCE.provisional.absorb.candidatesElite * 2);
+    expect(buildOffer(createRng(1), enemy, build, input, 0, null, 2).candidates.length).toBe(Math.min(3, BALANCE.provisional.absorb.candidatesElite * 2)); // C.220: 블록 특성만(그 속성 3개)
   });
 });
 

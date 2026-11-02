@@ -3,6 +3,7 @@
 
 import type { TutorialCheck, TutorialGoalDef } from '../data/tutorials';
 import type { RunLog } from './runLog';
+import { MAX_TIER_INDEX } from './evolution/evolution';
 
 /** 판정에 쓰는 세이브의 일부 */
 export interface TutorialGoalView {
@@ -35,7 +36,7 @@ const CHECKS: Record<TutorialCheck, (v: TutorialGoalView) => boolean> = {
   chain3: (v) => v.runLog.battles.some((b) => b.factionId === v.factionId && (b.chain3Count ?? 0) > 0),
   evolved: (v) => v.tierIndex >= 1 || v.runLog.tiers.evolutions.length > 0,
   eliteWin: (v) => v.runLog.battles.some((b) => b.factionId === v.factionId && b.won && b.enemyClass === 'elite'),
-  tier5: (v) => v.tierIndex >= 4,
+  tier5: (v) => v.tierIndex >= MAX_TIER_INDEX, // id 는 옛 이름 그대로(받은 기록 키) — C.220: 마지막 단계(4단계)
   ranked: (v) => v.everRanked,
   training: (v) => v.trainingCompleted === true,
   rebirth: (v) => (v.rebirths ?? 0) >= 1,

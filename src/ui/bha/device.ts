@@ -2,9 +2,9 @@
 //   [왼쪽: 위/아래] [가운데: LCD 창] [오른쪽: 확정 / 작은 취소]. 버튼에는 글자 없이 아이콘만. 세로로 들면 기기 전체를 돌려 출력(viewport.ts).
 // 화면은 두 가지로 항목을 알린다: (1) setItems 로 직접 등록(방 화면), (2) 등록이 없으면 LCD 안의 누를 수 있는 요소를 자동으로 찾는다(옛 화면).
 // 위/아래는 하이라이트(.bha-sel)를 순서대로 옮기고(끝에서 순환), 확정은 실행(click), 취소는 열린 레이어 → 화면 스택 한 단계 뒤로.
-// 전투 화면(.bha-battle)은 터치 위주라 위/아래는 쉬고 확정만 [data-dev-confirm](일시정지)에 쓴다 (dev-log C.25 결정).
+// 전투 화면(.bha-battle)도 같다 (C.197, GDD 122장): ▲▼ = 머리 버튼 → 막기·소모품·장비·해방 → 블록 칸(왼쪽부터) 사이 커서, 못 쓰는 대상은 건너뜀, ✓ = 커서 대상을 누른 것, 뒤로 = 일시정지.
 import { el, icon } from './dom';
-import { keepSelection, orderByRank, stepIndex, uiBox, visualOrder, type VisualBox } from './select';
+import { keepSelection, nearestUsable, orderByRank, stepIndex, stepUsable, uiBox, visualOrder, type VisualBox } from './select';
 import { setOverlayHost } from './overlayHost';
 import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewScale, saveViewScale, setViewState, shortcutScale, VIEW_SCALE_EVENT } from '../viewScale';
 import { actionFor, isNavAction } from '../shortcutMap';
@@ -56,7 +56,11 @@ export interface Device {
   destroy(): void;
 }
 
-const AUTO_SELECTOR = 'button, a[href], input, select, summary, [role="tab"]';
+// [data-dev-press] = 버튼이 아닌 누를 대상(전투 블록 칸): ✓ 는 click 대신 'bha-press' 이벤트를 보낸다 (C.197)
+const AUTO_SELECTOR = 'button, a[href], input, select, summary, [role="tab"], [data-dev-press]';
+
+/** 지금 누를 수 없는 대상 (▲▼ 가 건너뛴다, GDD 122장 3): 흐린 버튼(is-disabled·aria-disabled), 빈·잠긴 블록 칸(data-dev-off). 전투에서만 본다 */
+const unusable = (e: HTMLElement): boolean => e.hasAttribute('data-dev-off') || e.classList.contains('is-disabled') || e.getAttribute('aria-disabled') === 'true';
 
 function visible(e: HTMLElement): boolean {
   if (e.closest('[hidden], [inert]')) return false;
@@ -224,13 +228,19 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   window.addEventListener(VIEW_SCALE_EVENT, fitDevice);
   window.addEventListener('orientationchange', refit);
   window.visualViewport?.addEventListener('resize', fitDevice);
+  // 가로 강제 전환(전체 화면 + 가로 고정, GDD 133장 2)은 orientationchange 없이 screen.orientation change·fullscreenchange 만 오기도 하고 크기가 늦게 바뀐다 — 같이 다시 맞춘다
+  const so = typeof screen !== 'undefined' ? screen.orientation : undefined;
+  so?.addEventListener?.('change', refit);
+  document.addEventListener('fullscreenchange', refit);
+  document.addEventListener('webkitfullscreenchange', refit);
 
   // ── 선택 상태 ──
   let items: SelectItem[] = [];
   let index = -1;
   let explicit: { scope: HTMLElement; items: SelectItem[]; onChange?: (i: SelectItem | null) => void } | null = null;
   const layers: { el: HTMLElement; onCancel: () => void }[] = [];
-  let touchOnly = false;
+  /** 전투 커서 중: ▲▼ 가 못 쓰는 대상을 건너뛴다 (GDD 122장 3) */
+  let battle = false;
 
   let lastSel: HTMLElement | null = null;
   /** 탭의 이름표: 탭을 눌러 화면이 새로 그려져도 같은 탭에 선택을 돌려주려고 기억한다 (공용 탭: 세그먼트·카테고리 탭·하위 탭·제목 토글 — role=tab 이거나 .bha-viewtitle__btn) */
@@ -268,12 +278,26 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     const layer = layers[layers.length - 1];
     // 전투 중 일시정지·승패 오버레이(.bha-overlay)가 열리면 그 안의 버튼을 고른다
     const ov = view.querySelector<HTMLElement>('.bha-battle .bha-overlay');
-    touchOnly = !layer && !ov && !!view.querySelector('.bha-battle');
+    const battleEl = view.querySelector<HTMLElement>('.bha-battle');
+    // 튜토리얼 '직접 해 보기'(data-dev-pass)는 레이어가 열린 채 전투를 만진다: 전투 대상 + 레이어 버튼을 같이 고른다
+    const passAny = !!layer && layer.el.hasAttribute('data-dev-pass');
+    const pass = passAny && !!battleEl;
+    const wasBattle = battle;
+    battle = !!battleEl && !ov && (!layer || pass);
     if (explicit && !explicit.scope.isConnected) explicit = null;
     let next: SelectItem[];
-    if (layer) next = scanItems(layer.el, lcd);
+    // 각본 전투 카드 (GDD 123장 5, C.199): data-dev-only 가 있으면 그 선택자에 맞는 전투 대상(막기 버튼·블록 칸)만
+    const only = passAny ? layer!.el.dataset.devOnly : undefined;
+    if (pass && only) next = scanItems(battleEl!, lcd).filter((i) => i.el.matches(only));
+    else if (pass) next = [...scanItems(battleEl!, lcd), ...scanItems(layer!.el, lcd)];
+    else if (passAny) {
+      // 전투 밖 튜토리얼 실제 조작 카드 (GDD 129-2 2, C.206): 카드를 연 채 뒤 화면 대상(data-dev-only 에 맞는 것)을 고르고, 카드 버튼([다음])도 같이
+      const base = explicit?.scope.isConnected ? explicit.items.filter((i) => i.el.isConnected && visible(i.el)) : scanItems(view, lcd);
+      next = [...base.filter((i) => !layer!.el.contains(i.el) && (!only || i.el.matches(only))), ...scanItems(layer!.el, lcd)];
+    }
+    else if (layer) next = scanItems(layer.el, lcd);
     else if (ov) next = scanItems(ov, lcd);
-    else if (touchOnly) next = [];
+    else if (battle) next = scanItems(battleEl!, lcd);
     else if (explicit) {
       next = explicit.items.filter((i) => i.el.isConnected && !i.el.hasAttribute('hidden'));
       // 자유 배치 화면(홈)은 등록 순서 대신 보이는 위치 순서로 (GDD 63장)
@@ -286,9 +310,20 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       const focused = next.findIndex((i) => i.el === document.activeElement);
       // 탭을 눌러 화면이 통째로 다시 그려졌으면(상점·책장·출발 탭) 방금 그 탭에 선택을 둔다 — 안 그러면 첫 항목으로 돌아가 확정이 탭을 되돌린다
       const sameTab = lastTabSig === null ? -1 : next.findIndex((i) => tabSig(i.el) === lastTabSig);
-      index = sameTab >= 0 ? sameTab : focused >= 0 ? focused : 0;
+      // 시작 자리를 정한 화면(전투 = 첫 블록 칸, GDD 122장 3)
+      const start = next.findIndex((i) => i.el.hasAttribute('data-dev-start'));
+      index = sameTab >= 0 ? sameTab : start >= 0 ? start : focused >= 0 ? focused : 0;
+    } else if (battle && !wasBattle && next.some((i) => i.el.hasAttribute('data-dev-start'))) {
+      // 전투 커서가 (다시) 켜졌다(튜토리얼 직접 해 보기 시작 등): 첫 블록 칸부터 (GDD 122장 3)
+      index = next.findIndex((i) => i.el.hasAttribute('data-dev-start'));
     } else {
       index = keepSelection(prev.map((i) => i.el), prevIdx, next.map((i) => i.el));
+    }
+    // 전투: 블록이 쓰여 커서 칸이 비면 같은 자리에서 가장 가까운 블록으로 (GDD 122장 3)
+    const curEl = next[index]?.el;
+    if (battle && curEl?.hasAttribute('data-dev-press') && !curEl.firstElementChild) {
+      const near = nearestUsable(index, next.map((i) => i.el.hasAttribute('data-dev-press') && !!i.el.firstElementChild));
+      if (near >= 0) index = near; // 블록이 하나도 없으면(전투 시작 등) 그 칸에서 다음 블록을 기다린다
     }
     for (const p of prev) if (!next.includes(p)) unmark(p.el);
     markSel();
@@ -299,12 +334,13 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     if (cur && changed && cur.el instanceof HTMLInputElement) cur.el.focus({ preventScroll: true });
     if (!layer && explicit?.onChange && changed) explicit.onChange(cur);
     const canMove = items.length > 0;
-    up.classList.toggle('is-off', !canMove);
-    down.classList.toggle('is-off', !canMove);
-    // 전투 중(블록은 손가락으로만)에는 ▲▼ 를 쓰지 않으니 숨긴다 — 흐린 버튼이 '눌러도 되나' 헷갈렸다 (GDD 100장 #39). 자리는 그대로
-    up.style.visibility = down.style.visibility = touchOnly ? 'hidden' : '';
-    ok.classList.toggle('is-off', !(canMove || (touchOnly && !!view.querySelector('[data-dev-confirm]'))));
-    back.classList.toggle('is-off', layers.length === 0 && !opts.canCancel());
+    // 누를 것 없는 글 창(ⓘ)이 넘치면 ▲▼ = 스크롤이라 켜 둔다 (GDD 168장 3)
+    const canScroll = !canMove && !!layer && layer.el.scrollHeight > layer.el.clientHeight + 1;
+    up.classList.toggle('is-off', !canMove && !canScroll);
+    down.classList.toggle('is-off', !canMove && !canScroll);
+    // C.197 (GDD 122장 2): ▲▼ 는 전투 중에도 늘 보인다 (GDD 100장 #39 의 전투 중 숨김은 대체됨)
+    ok.classList.toggle('is-off', !canMove);
+    back.classList.toggle('is-off', layers.length === 0 && !opts.canCancel() && !battle); // 전투: 뒤로 = 일시정지 (GDD 122장 4)
     for (const b of [up, down, ok, back]) b.setAttribute('aria-disabled', String(b.classList.contains('is-off')));
   }
 
@@ -325,7 +361,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   };
   const mo = new MutationObserver(schedule);
   // hidden·disabled 가 바뀌어도(진화 연출 줄 → 결과 전환, 비활성 버튼) 항목을 다시 센다 (class 는 보지 않는다: 하이라이트 자신의 변화로 되돌아오지 않게)
-  mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled'] });
+  mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled', 'data-dev-pass', 'data-dev-off', 'data-dev-only'] });
   // 창 크기·방향이 바뀌면 화면 속 선택 항목을 다시 센다 (T-2, 세로 회전 출력은 T-3)
   window.addEventListener('resize', schedule);
   // C.139 (GDD 88장 9): 키보드 Tab 으로 초점이 옮겨 가면(모달 초점 순환) 선택도 따라간다 — 하이라이트가 둘로 갈라지지 않게.
@@ -344,8 +380,17 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   });
 
   function move(dir: 1 | -1): void {
-    if (items.length === 0) return;
-    index = stepIndex(index, dir, items.length);
+    if (items.length === 0) {
+      // 누를 것이 없는 글 창(ⓘ 설명 창 등)이 맨 위 레이어면 ▲▼ = 그 창 스크롤 (GDD 168장 3)
+      const top = layers[layers.length - 1]?.el;
+      if (top && top.scrollHeight > top.clientHeight + 1) top.scrollBy({ top: dir * Math.max(24, Math.round(top.clientHeight * 0.6)) });
+      return;
+    }
+    if (battle) {
+      const to = stepUsable(index, dir, items.map((i) => !unusable(i.el)));
+      if (to < 0) return; // 지금 누를 수 있는 대상이 하나도 없다
+      index = to;
+    } else index = stepIndex(index, dir, items.length);
     markSel();
     const cur = items[index]!;
     cur.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -364,13 +409,10 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   });
 
   function confirm(): void {
-    if (touchOnly) {
-      view.querySelector<HTMLElement>('[data-dev-confirm]')?.click();
-      return;
-    }
     const cur = items[index];
     if (!cur) return;
     if (cur.activate) cur.activate();
+    else if (cur.el.hasAttribute('data-dev-press')) cur.el.dispatchEvent(new CustomEvent('bha-press'));
     else cur.el.click();
   }
 
@@ -545,6 +587,9 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       window.removeEventListener('resize', fitDevice);
       window.removeEventListener('orientationchange', refit);
       window.visualViewport?.removeEventListener('resize', fitDevice);
+      so?.removeEventListener?.('change', refit);
+      document.removeEventListener('fullscreenchange', refit);
+      document.removeEventListener('webkitfullscreenchange', refit);
       setOverlayHost(null);
     },
   };

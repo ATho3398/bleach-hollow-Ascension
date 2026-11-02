@@ -17,7 +17,7 @@ useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장
 
 const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 const shin = FACTIONS.find((f) => f.id !== 'hollow')!;
-const t3 = tryGetForm('t3:base')!;
+const t3 = tryGetForm('t3:normal')!;
 const evOf = (o: Partial<Record<StatId, number>>) => ({ ...zeroStats(), ...o });
 
 describe('C.109 아쥬커스 외형 = 노력치 1위 능력치 (GDD 53)', () => {
@@ -37,7 +37,7 @@ describe('C.109 아쥬커스 외형 = 노력치 1위 능력치 (GDD 53)', () => 
     expect(pickTierLook(hollow, 3, zeroStats(), t3)).toBe(l); // 결정적
   });
   it('표가 없는 단계·종족은 null (4·5단계 기존 그림, 사신 기본)', () => {
-    expect(pickTierLook(hollow, 4, evOf({ atk: 5 }), tryGetForm('t4:fire')!)).toBeNull();
+    expect(pickTierLook(hollow, 4, evOf({ atk: 5 }), tryGetForm('t3:fire')!)).toBeNull();
     expect(pickTierLook(shin, 3, evOf({ atk: 5 }), t3)).toBeNull();
     expect(shin.tierLooks).toEqual({});
   });
@@ -111,7 +111,7 @@ describe('C.109 진화 때 고정 · 시작 외형 덮어쓰기 · 스킨 선택
   });
   it('테스트 칸: 진화체·능력치를 고르면 외형이 같은 규칙으로 다시 정해진다', () => {
     const s = newSaveData('hollow', 1);
-    expect(setForm(s, 't3:base')).toBe(true);
+    expect(setForm(s, 't3:normal')).toBe(true);
     setCustomStats(s, { spd: 200, int: 150 });
     expect(s.evolution.look).toBe('raptor');
     setCustomStats(s, { hp: 300 });
@@ -126,8 +126,8 @@ describe('C.109 세이브 형식 33 마이그레이션', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(33);
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
     old.meta.format = 32;
-    Object.assign(old.evolution, { tierIndex: 2, formId: 't3:base', formHistory: ['t2:base', 't3:base'], ev: evOf({ int: 6, spd: 5 }) });
-    old.formDex = ['t2:base', 't3:base'];
+    Object.assign(old.evolution, { tierIndex: 2, formId: 't3:normal', formHistory: ['t2:base', 't3:normal'], ev: evOf({ int: 6, spd: 5 }) });
+    old.formDex = ['t2:base', 't3:normal'];
     delete old.evolution.look;
     const s = migrateSave(old)!;
     expect(s.meta.format).toBe(SAVE_FORMAT_VERSION);

@@ -20,6 +20,8 @@
 
 /* 내 그림 한 장 (몸통박치기 연출 대상, 임시 도형). 적과 마주 본다 */
 .bha-hero { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+.bha-hero__lift { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 100%; } /* 몸 상자(꾸미기 기운 자리). 걷기 하나라 떠오르지 않는다 (GDD 125장) */
+.bha-hero__shadow { position: absolute; left: 22%; right: 22%; bottom: 5%; height: 6%; border-radius: 50%; background: #000; opacity: 0.3; } /* 발밑 그림자: 중심 = 그림 아래 8%(발바닥, 확대 기준점 92%) */
 .bha-hero__body { position: relative; display: block; width: 62%; aspect-ratio: 52 / 56; background: var(--bha-text-2); border: 2px solid var(--bha-line-2); border-radius: 50% 50% 42% 42%; margin-bottom: 4%; }
 .bha-hero__body.has-art { width: 100%; height: 100%; aspect-ratio: auto; background: none; border: 0; border-radius: 0; margin-bottom: 0; }
 .bha-hero__img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)) scaleX(-1); pointer-events: none; } /* 그림은 왼쪽을 보는 한 장, 내 쪽은 오른쪽을 본다 */
@@ -152,6 +154,13 @@
 .bha-afx--ray.bha-afx--look-cero-oscuras { background: linear-gradient(180deg, transparent, var(--bha-fx-cero-oscuras-edge) 12%, var(--bha-fx-cero-oscuras-core) 30%, var(--bha-fx-cero-oscuras-core) 70%, var(--bha-fx-cero-oscuras-edge) 88%, transparent); }
 .bha-afx.bha-afx--look-cero-oscuras .afx-core, :root[data-cos-fx] .bha-afx.bha-afx--look-cero-oscuras[data-side] .afx-core { fill: var(--bha-fx-cero-oscuras-core); }
 .bha-afx.bha-afx--look-cero-oscuras .afx-core-s, :root[data-cos-fx] .bha-afx.bha-afx--look-cero-oscuras[data-side] .afx-core-s { stroke: var(--bha-fx-cero-oscuras-core); }
+/* 사신 귀도 단계 연출 (GDD 118장 3): 파도 2 백뢰 = 하얀 번개(지그재그 빛줄기), 파도 금강폭 = 큰 폭발(주황 불덩이 + 꽉 찬 폭발 구). 기술 고유색이라 공격 이펙트 색 꾸밈보다 우선 */
+.bha-afx.bha-afx--look-byakurai, :root[data-cos-fx] .bha-afx.bha-afx--look-byakurai[data-side] { color: var(--bha-text-1); filter: drop-shadow(0 0 3px var(--bha-text-1)) drop-shadow(0 0 10px var(--bha-lin-c)); }
+.bha-afx--ray.bha-afx--look-byakurai { background: var(--bha-text-1); clip-path: polygon(0 30%, 18% 5%, 30% 50%, 46% 0, 60% 55%, 74% 10%, 88% 45%, 100% 25%, 100% 65%, 88% 85%, 74% 50%, 60% 95%, 46% 40%, 30% 90%, 18% 45%, 0 70%); }
+.bha-afx.bha-afx--look-kongobaku, :root[data-cos-fx] .bha-afx.bha-afx--look-kongobaku[data-side] { color: var(--bha-chain3); filter: drop-shadow(0 0 4px var(--bha-chain3)) drop-shadow(0 0 14px var(--bha-warn)); }
+.bha-afx--shot.bha-afx--look-kongobaku svg { transform: scale(1.5); }
+.bha-afx--shot.bha-afx--look-kongobaku circle:first-child { fill: currentColor; fill-opacity: .55; }
+.bha-afx.bha-afx--look-kongobaku .afx-core, :root[data-cos-fx] .bha-afx.bha-afx--look-kongobaku[data-side] .afx-core { fill: var(--bha-warn); }
 .bha-afx-name {
   position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
   font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-3xl); line-height: var(--bha-lh-tight);
@@ -190,3 +199,11 @@
 }
 @keyframes bha-libcut { 0% { opacity: 0; transform: scaleX(0.6); } 15% { opacity: 1; transform: scaleX(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .bha-libcut.is-on { animation-duration: 1ms; opacity: 1; } }
+
+/* 각본 전투 처치 (GDD 129장 3, C.199): 슬로우 동안 적이 밝아지며 천천히 사라진다. 시간 = --bha-tutkill */
+.bha-battle.is-tutkill .is-vanish { transition: opacity var(--bha-tutkill, 1.6s) ease-in, filter var(--bha-tutkill, 1.6s) ease-in, transform var(--bha-tutkill, 1.6s) ease-in; opacity: 0; filter: brightness(1.8); transform: scale(0.9); }
+@media (prefers-reduced-motion: reduce) { .bha-battle.is-tutkill .is-vanish { transition-duration: 0.3s; } }
+
+/* 해방 준비 아우라 (C.216, GDD 139장 3): 규칙은 v2/bha.css 의 .is-lib-ready. 뿜어 나오는 고리 */
+@keyframes bha-lib-burst{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.25)}}
+@media (prefers-reduced-motion: reduce){.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::before,.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::after{animation:none}}

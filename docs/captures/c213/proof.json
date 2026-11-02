@@ -1,0 +1,68 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "shots": [
+        "plan-board",
+        "plan-board-scrolled"
+      ],
+      "notes": [],
+      "before": {
+        "cells": 12,
+        "cell": {
+          "w": 60,
+          "h": 80
+        },
+        "road": {
+          "scrollW": 768,
+          "clientW": 344,
+          "top": 195,
+          "bottom": 283
+        },
+        "goTop": 320,
+        "noteBottom": 318,
+        "planOverflow": 2,
+        "roadOverGo": false,
+        "handBoxOverGo": false
+      },
+      "afterKeys": {
+        "scrollLeft": 424,
+        "focused": "bha-dev__btn bha-dev__btn--dir"
+      },
+      "errors": []
+    },
+    {
+      "faction": "shinigami",
+      "shots": [
+        "frenzy-name",
+        "plan-board",
+        "plan-board-scrolled"
+      ],
+      "notes": [],
+      "frenzyText": " 호로화 중에는 회복약을 못 쓴다",
+      "before": {
+        "cells": 12,
+        "cell": {
+          "w": 60,
+          "h": 80
+        },
+        "road": {
+          "scrollW": 768,
+          "clientW": 344,
+          "top": 195,
+          "bottom": 283
+        },
+        "goTop": 320,
+        "noteBottom": 318,
+        "planOverflow": 2,
+        "roadOverGo": false,
+        "handBoxOverGo": false
+      },
+      "afterKeys": {
+        "scrollLeft": 424,
+        "focused": "bha-dev__btn bha-dev__btn--dir"
+      },
+      "errors": []
+    }
+  ]
+}

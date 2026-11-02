@@ -54,7 +54,7 @@ const nextBasic = (s: CombatState) => {
 };
 
 describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
-  const earthBody = () => mk({ ...build6(), timeLimitSeconds: 1e9, physBlock: physOf('t5:earth:physical')! }, 3);
+  const earthBody = () => mk({ ...build6(), timeLimitSeconds: 1e9, physBlock: physOf('t4:earth:physical')! }, 3);
   const plainBody = () => mk({ ...build6(), timeLimitSeconds: 1e9 }, 3);
 
   it('물공 몸은 출현표에 물공 몫이 하나 더 (C.136 타이머 하나 + 확률표), 몫 = 1 ÷ (physBlocks.spawnSeconds ÷ 블록 가속)', () => {
@@ -113,7 +113,7 @@ describe('C.105 물공 블록 생성원 타이머 (GDD 49-11)', () => {
 
 describe('C.105 흙 버티기 · 혈 속도 (GDD 49-9)', () => {
   it('받은 피해 집계: damageTaken = 바위 자세 감소 뒤의 양 (보호막 전)', () => {
-    const a = mk({ playerElements: ['earth'], physBlock: physOf('t5:earth:physical')!, abilityEffects: fxOf('t5:earth:physical') });
+    const a = mk({ playerElements: ['earth'], physBlock: physOf('t4:earth:physical')!, abilityEffects: fxOf('t4:earth:physical') });
     a.tray.push(blk(BASIC_SKILL_ID));
     applyInput(a, { type: 'use', cell: 0 });
     drainCombatEvents(a);
@@ -125,7 +125,7 @@ describe('C.105 흙 버티기 · 혈 속도 (GDD 49-9)', () => {
   });
 
   it('흙: 바위 자세가 켜진 동안 받는 피해가 같은 몸(물공 없음)보다 확실히 적다 (−55%)', () => {
-    const on = mk({ playerElements: ['earth'], physBlock: physOf('t5:earth:physical')!, abilityEffects: fxOf('t5:earth:physical'), playerAttackSeconds: 1e6 }, 7);
+    const on = mk({ playerElements: ['earth'], physBlock: physOf('t4:earth:physical')!, abilityEffects: fxOf('t4:earth:physical'), playerAttackSeconds: 1e6 }, 7);
     const off = mk({ playerElements: ['earth'], playerAttackSeconds: 1e6 }, 7);
     on.tray.push(blk(BASIC_SKILL_ID));
     applyInput(on, { type: 'use', cell: 0 });
@@ -136,7 +136,7 @@ describe('C.105 흙 버티기 · 혈 속도 (GDD 49-9)', () => {
   });
 
   it('혈: 피 튀기기 뒤 평타 40회 +150% — 같은 적을 같은 몸(물공 없음)보다 빨리 잡는다', () => {
-    const blood = () => mk({ ...build6(), playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: fxOf('t5:blood:physical') }, 11);
+    const blood = () => mk({ ...build6(), playerElements: ['blood'], physBlock: physOf('t4:blood:physical')!, abilityEffects: fxOf('t4:blood:physical') }, 11);
     const a = blood();
     a.enemy.hp = a.enemy.maxHp = 1e12; // 40회 동안 안 죽게
     a.tray.push(blk(BASIC_SKILL_ID));
@@ -149,7 +149,7 @@ describe('C.105 흙 버티기 · 혈 속도 (GDD 49-9)', () => {
     let onSum = 0;
     let offSum = 0;
     for (let seed = 1; seed <= 6; seed++) {
-      const onEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: fxOf('t5:blood:physical'), hpScale: 1, playerHpScale: 1 }, seed));
+      const onEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], physBlock: physOf('t4:blood:physical')!, abilityEffects: fxOf('t4:blood:physical'), hpScale: 1, playerHpScale: 1 }, seed));
       const offEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], hpScale: 1, playerHpScale: 1 }, seed));
       expect(onEnd.status).toBe('won');
       expect(offEnd.status).toBe('won');

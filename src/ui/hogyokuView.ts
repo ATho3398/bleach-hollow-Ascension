@@ -3,7 +3,6 @@
 import { BALANCE } from '../config/balance';
 import { getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
-import { categoryName } from '../data/elements';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
 import type { FactionConfig } from '../engine/faction';
@@ -19,6 +18,7 @@ import { toward } from './bha/nestLogic';
 import { rebirthMark } from './rebirthView';
 import { rankLabel } from './rankView';
 import { shownName } from './displayName';
+import { asBack } from './bha/screenBack';
 
 const HX = BALANCE.provisional.hogyoku;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -44,7 +44,7 @@ export function fusionBlockText(b: FusionBlock): string {
     case 'tracks': return '두 캐릭터가 모두 있어야 한다.';
     case 'gauge': return `붕옥 2단계에 ${SOUL_CRYSTAL_NAME} ${HX.fusionCost}개를 먹여야 한다.`;
     case 'rank': return '두 캐릭터 모두 등급 1위여야 한다.';
-    case 'expedition': return '진행 중인 원정이 있다. 원정을 끝내야 한다.';
+    case 'expedition': return '진행 중인 모험이 있다. 모험을 끝내야 한다.';
     case 'complete': return '초월체 6종을 모두 모았다. 더는 합체할 수 없다.';
   }
 }
@@ -149,14 +149,14 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
   lcdPage(dev.view, { cls: 'bha-hogyoku-page' }, head, [core, fusion], [transcendentDexPanel(save)]);
 }
 
-/** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 분류 · 히든 · 환생 */
+/** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 히든 · 환생 (공격 분류는 화면에 안 보임, GDD 137장 1) */
 function charCard(t: Pick<SaveData, TrackKey>): HTMLElement {
   const f = getFaction(t.factionId);
   const inp = fusionInputOf(t);
   const p = panel({ title: `${f.name} · ${trackName(t)}`, aside: elementsMark([...inp.elements], f.id) });
   p.dataset.faction = t.factionId;
   const line = h('p', 'bha-small');
-  line.append(`분류 ${categoryName(inp.category, f.id)} · ${inp.hidden ? '히든 진화체' : '일반 진화체'} · 환생 ${inp.rebirths}회 `);
+  line.append(`${inp.hidden ? '히든 진화체' : '일반 진화체'} · 환생 ${inp.rebirths}회 `);
   const mark = rebirthMark(inp.rebirths);
   if (mark) line.append(mark);
   p.append(line);
@@ -235,14 +235,14 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
     linesSection.hidden = true;
     result.hidden = false;
   };
-  linesSection.append(h('span'), lines, button({ label: '건너뛰기', variant: 'ghost', onClick: show }));
+  linesSection.append(h('span'), lines, asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: show })));
 
   const main = h('div', 'bha-evolve__resmain');
   main.append(h('span', 'bha-evolve__eyebrow', `${record.index}번째 합체 · 초월체`), h('h1', 'bha-evolve__title', def.name), h('p', 'bha-evolve__path', def.concept));
-  const home = button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
+  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();
-  } });
+  } }));
   main.append(home);
   const side = h('div', 'bha-evolve__resside');
   const got = panel({ title: '합체 결과', aside: provisionalTag('임시 수치') });

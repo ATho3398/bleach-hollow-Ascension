@@ -9,7 +9,7 @@ const SX = BALANCE.provisional.stats;
 
 describe('C.115 초반 노력치 상한 약 8% (GDD 59, A안 조정)', () => {
   it('상한 = 1·2단계 합계의 약 8%(24·32), 3~5단계는 15%(70·88·110) 유지', () => {
-    expect(SX.evCapTotal).toEqual([24, 32, 70, 88, 110]);
+    expect(SX.evCapTotal).toEqual([24, 32, 70, 88]); // C.220: 4단계 (마지막 110 삭제)
     SX.evCapTotal.forEach((cap, i) => {
       const ratio = cap / SX.tierTotals[i]!;
       if (i < 2) {

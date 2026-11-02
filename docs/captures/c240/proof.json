@@ -1,0 +1,45 @@
+{
+  "toasts": [
+    "가방 구급상자 사용",
+    "도감 보상 진화체 도감 10종 등록 — 영옥 +3"
+  ],
+  "shots": [
+    {
+      "name": "1-tutorial-depart",
+      "note": "첫 모험 [걷기 시작] 직후 1.5초 — 회복 물건 알림 없음",
+      "toastsOnScreen": []
+    },
+    {
+      "name": "2-return-items-no-toast",
+      "note": "첫 모험 귀환 결과 — 얻은 먹이·물건은 목록에만, 알림 없음",
+      "toastsOnScreen": []
+    },
+    {
+      "name": "3-gear-drop-no-toast",
+      "note": "두 번째 모험 첫 전투 승리 직후(장비 드롭 확률 1) — 장비 알림 없음",
+      "toastsOnScreen": []
+    },
+    {
+      "name": "4-progress-toast-kept",
+      "note": "진행 알림(도감 보상)은 그대로 — 보상 줄의 먹이(주먹밥 2)는 빠짐",
+      "toastsOnScreen": [
+        "도감 보상 진화체 도감 10종 등록 — 영옥 +3"
+      ]
+    }
+  ],
+  "errors": [],
+  "brokenImgs": [
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "departShot": true,
+  "resultShot": true,
+  "reachedRoom": true,
+  "toastsAfterTutorial": [
+    "가방 구급상자 사용"
+  ],
+  "toastsSecondRun": []
+}

@@ -35,7 +35,7 @@ const row = (s: SaveData, id: string) => [...goldRows(s, getFaction(s.factionId)
 
 describe('상점 데이터 (25-9 표)', () => {
   it('골드 11종·영옥 꾸밈 8분류, 가격은 balance.ts', () => {
-    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'battle-potion', 'battle-haste', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
+    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'heal-patch', 'battle-potion', 'heal-salve', 'w-hp-potion', 'battle-haste', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
     expect(CATEGORIES.map((c) => c.id).slice(0, 8)).toEqual(['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate']); // 2차 분류는 c61
     const count = (c: string) => COSMETIC_ITEMS.filter((x) => x.category === c).length;
     expect([count('aura'), count('tint'), count('trail'), count('fx'), count('bar'), count('shell'), count('plate')]).toEqual([4, 4, 3, 3, 3, 3, 3]);
@@ -84,6 +84,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
   });
   it('정화제·각성제 (C.140, GDD 86장 4번): 사면 보관함에 쌓이고(상한 9) 보관함에서 쓴다 — 리스크 −30(0 아래로 안 감)·컨디션 +30(100 위로 안 감), 이미 0/가득·원정 중이면 못 쓴다', () => {
     const s = rich();
+    s.shared.items = {}; // 시작 구급상자(GDD 134장 1, C.211)는 이 검사 밖
     s.nest.risk = 20;
     s.nest.condition = 90;
     expect(buyShopItem(s, H, 'calm').ok).toBe(true);
@@ -98,7 +99,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: `${H.riskGaugeName} 이미 0` });
     s.nest.risk = 50;
     s.activeExpedition = {} as SaveData['activeExpedition'];
-    expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: '원정 중인 캐릭터에는 못 쓴다' });
+    expect(useInventoryItem(s, H, 'calm')).toEqual({ ok: false, reason: '모험 중인 캐릭터에는 못 쓴다' });
     s.shared.items.calm = BALANCE.provisional.inventory.consumableCap;
     expect(row(s, 'calm')!.lock).toBe('보관 가득 (9/9)');
   });
@@ -214,13 +215,13 @@ describe('영옥 탭: 꾸밈 보유(공유)·착용(트랙별, 분류당 1개)',
 
 describe('다시 뽑기 (흡수 화면)', () => {
   const offerFor = (cands: string[], el: string, enemyId: string): AbsorbOffer => ({
-    enemyId, element: el, ev: {}, rare: false, elite: false, strength: 30, candidates: cands, reasons: ['victory'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
+    enemyId, element: el, ev: {}, elite: false, strength: 30, candidates: cands, reasons: ['victory'], chain3Count: 0, weakChain3Count: 0, finisherElement: null,
   });
   it('후보를 같은 수로 다시 뽑고(겹치지 않게), 흡수 1번에 1번만. 흡수 기록에 rerolled', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 99, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
     const enemy = ENEMIES.find((x) => x.class === 'normal' && !x.testOnly && x.element !== 'normal')!; // C.147: 노멀은 강화만(후보 없음)
-    const own = TRAITS.filter((t) => t.element === enemy.element && !t.rare && !t.boss).map((t) => t.id);
+    const own = TRAITS.filter((t) => t.element === enemy.element && !t.boss).map((t) => t.id);
     e.phase = 'absorb';
     e.absorbOffer = offerFor(own.slice(0, 2), enemy.element, enemy.id);
     const before = [...e.absorbOffer.candidates];
@@ -233,16 +234,16 @@ describe('다시 뽑기 (흡수 화면)', () => {
     expect(chooseAbsorb(e, after[0]!).ok).toBe(true);
     expect(e.absorbRecords.at(-1)!.rerolled).toBe(true);
   });
-  it('확정 후보(희귀 특성)는 그대로 남는다', () => {
+  it('확정 후보(보스 특성)는 그대로 남는다 (희귀 특성은 C.213 에 삭제)', () => {
     const s = newSaveData('hollow', 1);
     const e = createExpedition({ factionId: 'hollow', seed: 5, hunger: 20, condition: 80, deck: sanitizeDeck(s.tiles, 'hollow'), build: s.build, evolution: s.evolution });
-    const rare = TRAITS.find((t) => t.rare && !t.boss && t.element !== 'normal')!;
-    const plain = TRAITS.find((t) => t.element === rare.element && !t.rare && !t.boss)!;
-    const enemy = ENEMIES.find((x) => x.element === rare.element) ?? ENEMIES[0]!;
+    const boss = TRAITS.find((t) => t.boss && t.element !== 'normal')!;
+    const plain = TRAITS.find((t) => t.element === boss.element && !t.boss)!;
+    const enemy = ENEMIES.find((x) => x.element === boss.element) ?? ENEMIES[0]!;
     e.phase = 'absorb';
-    e.absorbOffer = { ...offerFor([rare.id, plain.id], rare.element, enemy.id), rare: true };
+    e.absorbOffer = offerFor([boss.id, plain.id], boss.element, enemy.id);
     rerollAbsorb(e);
-    expect(e.absorbOffer!.candidates[0]).toBe(rare.id);
+    expect(e.absorbOffer!.candidates[0]).toBe(boss.id);
     expect(e.absorbOffer!.candidates.length).toBe(2);
   });
 });

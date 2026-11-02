@@ -51,7 +51,7 @@ describe('C.149 블록 이름·아이콘·문구', () => {
     expect(src).not.toContain('공격 분류');
     expect(src).not.toContain('bha-owned__row');
     expect(src).toContain('남는 특성이 없다');
-    expect(src).toMatch(/devText\(\)\) right\.append[\s\S]*PROVISIONAL_NOTE/); // C.171: 개발용 문구 스위치 하나
+    expect(src).not.toContain('PROVISIONAL_NOTE'); // C.247 (GDD 168장 4): 개발 메모 줄은 테스트 모드에서도 삭제
     expect(src).toMatch(/if \(devText\(\)\) left\.querySelector/);
   });
   it('칸·카드에 속성 강화 n강 (C.176 GDD 106장 1, n/3 속성 칩 없음)', () => {
@@ -61,9 +61,10 @@ describe('C.149 블록 이름·아이콘·문구', () => {
   });
   it('위쪽 탭 [슬롯 · 타일 · 물건 · 펫] (드롭다운 대신), 물건 탭 분류에서 펫 제외', () => {
     const src = read('src/ui/lcdScreens.ts');
-    for (const k of ["id: 'slots', label: '슬롯'", "id: 'tiles', label: '타일'", "id: 'items', label: '물건'", "id: 'pet', label: '펫'"]) expect(src).toContain(k);
+    // C.239 (GDD 159장 24): '물건' → '소모품', 스킨은 위쪽 탭
+    for (const k of ["id: 'slots', label: '슬롯'", "id: 'tiles', label: '타일'", "id: 'items', label: ITEM_CATEGORY_NAMES.consumable", "id: 'skin', label: ITEM_CATEGORY_NAMES.skin", "id: 'pet', label: '펫'"]) expect(src).toContain(k);
     expect(src).not.toContain('viewTitle');
-    expect(src).toContain("(c === 'pet') === petOnly");
+    expect(src).toContain("mode === 'pet' ? all.filter((e) => e.category === 'pet')");
   });
   it('끌어놓기는 공용 dragdrop, 장착·해제는 기존 엔진 함수만', () => {
     const src = read('src/ui/buildPanel.ts');

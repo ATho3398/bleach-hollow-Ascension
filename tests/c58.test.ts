@@ -66,7 +66,7 @@ describe('보스 데이터 (GDD 25-3·25-7)', () => {
     expect(BOSS_GIMMICKS).toEqual(['seal', 'summon', 'element', 'reflect']);
     const t = getTrait(b.trait);
     expect(t.boss).toBe(true);
-    expect(t.rare).toBe(true);
+    expect('rare' in t).toBe(false); // 희귀 표시는 C.213 에 삭제 — 보스 특성은 boss 로만 가린다
     expect(BX.timeLimitSeconds).toBe(180);
     expect(BX.seal).toEqual({ everySeconds: 10, seconds: 4, cells: 1 });
     expect(BX.reward.gold).toBe(100);
@@ -148,7 +148,7 @@ describe('보스 특성 (흡수)', () => {
     const boss = getBoss('sand-maw');
     const input = { finisher: null, chain3Count: 0, weakChain3Count: 0, firstAbsorb: false } as never;
     for (let seed = 1; seed <= 200; seed++) {
-      const o = buildOffer(createRng(seed), { ...boss.enemy, rare: true }, newBuild(), input);
+      const o = buildOffer(createRng(seed), boss.enemy, newBuild(), input);
       expect(o.candidates).not.toContain(boss.trait);
     }
     const o = buildOffer(createRng(5), boss.enemy, newBuild(), input, 0, boss.trait);
@@ -163,7 +163,7 @@ describe('보스 특성 (흡수)', () => {
 
 describe('스토리 데이터 (GDD 25-4·25-7)', () => {
   it('장 3개(1장 = 1단계 웨코문도 외곽 자리, 2장 = 3단계, 3장 = 5단계), 2·3장 내용은 C.84 에서 채움', () => {
-    expect(STORY_CHAPTERS.map((c) => [c.id, c.unlockTierIndex, c.groundId])).toEqual([['ch1', 0, 'outskirts'], ['ch2', 2, 'canyon'], ['ch3', 4, 'forest']]);
+    expect(STORY_CHAPTERS.map((c) => [c.id, c.unlockTierIndex, c.groundId])).toEqual([['ch1', 0, 'outskirts'], ['ch2', 2, 'canyon'], ['ch3', 3, 'forest']]);
     for (const fid of ['hollow', 'shinigami']) {
       expect(chapterContent(fid, 'ch1')!.episodes).toHaveLength(4);
       expect(chapterContent(fid, 'ch2')!.episodes).toHaveLength(4);
@@ -189,7 +189,7 @@ describe('스토리 데이터 (GDD 25-4·25-7)', () => {
     expect(h.episodes[3]!.dialogue.end).toEqual([{ speaker: '나', text: '굶주림 너머에, 무언가가 있다.' }]);
     const s = chapterContent('shinigami', 'ch1')!;
     expect(s.title).toBe('입대');
-    expect(s.episodes.map((e) => e.title)).toEqual(['첫 순찰', '밤의 루콘가이', '큰 기척', '들개 대허']);
+    expect(s.episodes.map((e) => e.title)).toEqual(['첫 순찰', '밤의 루콘가 외곽', '큰 기척', '들개 대허']);
     expect(s.episodes[1]!.dialogue.end).toEqual([{ speaker: '분대장', text: '…버텼군. 제법이다.' }]);
     expect(s.episodes[2]!.dialogue.end).toEqual([{ speaker: '나', text: '내 참백도가… 대답했다.' }]);
     expect(s.episodes[3]!.dialogue.start).toEqual([

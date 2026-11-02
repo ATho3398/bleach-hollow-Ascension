@@ -10,7 +10,6 @@
 // enemy-<적id>.png, char-<종족>-<단계번호>.png, char-<종족>.png)으로 넣으면 이 목록을 고치지 않아도 인식한다(`files.ts`).
 // 이 목록의 src·frames 는 파일 규칙에 맞지 않는 이름을 쓰고 싶을 때의 직접 지정이고, scale·offsetY 는 어느 쪽이든 쓴다.
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
-import type { Locomotion } from '../../engine/locomotion';
 import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
 import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
 import { getSkin, skinArtKey } from '../skins';
@@ -32,8 +31,6 @@ export interface ArtEntry {
   fieldScale?: number;
   /** 세로 위치 보정(기본 0): 칸 높이 대비 %, 양수면 아래로 */
   offsetY?: number;
-  /** 이 그림의 이동 방식(GDD 18-11): 부유 float / 걷기 walk / 날기 fly. 진화체·종족 기본보다 우선한다. 비우면 그쪽 값 */
-  locomotion?: Locomotion;
   /** 종이인형 외형 id(GDD 96장 30, src/data/art/rig/humanoid.json 의 looks). 있으면 단계별 파일이 없는 한 종족 공통 그림 대신 종이인형이 움직인다 */
   rig?: string;
 }
@@ -46,12 +43,12 @@ export interface ArtUrls {
   /** 걷기·전투 필드 배율 (없으면 scale) */
   fieldScale?: number;
   offsetY: number;
-  /** manifest 에서 정한 이동 방식(없으면 undefined = 진화체·종족 기본을 따른다) */
-  locomotion?: Locomotion;
   /** 프레임 애니 (GDD 26장): 동작별로 있는 것만. 없는 동작은 기존 연출을 쓴다 */
   anims?: AnimSet;
   /** 종이인형 (GDD 96장 30): 외형 id 와 부위 그림 폴더 주소. src 는 쉬는 자세 정지 그림 */
   rig?: { look: string; partBase: string };
+  /** 그림 위에서 머리 윗변까지 (그림 높이 대비 0~1, 없으면 0 = 그림 윗변). 종이인형은 칸이 칼 자리까지 넓어 머리 위가 비어 있다 — 머리 위 상태 칩 높이용 (C.190) */
+  headTop?: number;
 }
 
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
@@ -59,21 +56,56 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'scene.room': {},
   'char.hollow': {},
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
-  // 정지 그림 칸(view)이 칼 휘두를 자리까지 넓어서 옛 한 장 그림(char-shinigami.png)과 같은 키로 보이게 키우고, 발이 칸 아래 끝이라 조금 올린다
-  'char.shinigami': { rig: 'shinigami-base', scale: 1.32, offsetY: -5 },
-  // 사신 2단계 = 진앙영술원 학생 (사용자 2026-10-29 "얘는 사신쪽에 진앙영술원 학생으로")
-  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.32, offsetY: -5 },
-  // 메노스 그랑데(2단계): 공중에 뜨지 않고 땅에 붙어 걷게, 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
+  // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
+  // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
+  // 방(홈)은 다시 C.189 키 1.78, 걷기·전투 필드만 1.33 (C.192, GDD 118장 1: "홈에서 사신, 아란칼 크기는 원래가 좋아. 모험이랑 전투할 떄 사이즈는 지금이 딱 좋음")
+  'char.shinigami': { rig: 'shinigami-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
+  // 사신 1단계(혼백)·2단계(학생) = 진앙영술원 학생복 (사용자 2026-10-29 "기본적으로 혼백, 학생은 진앙영술원 학생복으로 시작", GDD 116장 2). 3단계부터 종족 공통(사신복)
+  'char.shinigami.1': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
+  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
+  // 메노스 그랑데(2단계): 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
   // 걷기·전투 필드는 1.5배 (C.176, GDD 106장 3: 2배면 그림 높이가 1단계의 약 1.26배·폭 1.4배로 필드 위로 넘쳤다 → 높이·폭이 1단계와 비슷하게)
-  'char.hollow.2': { scale: 2, fieldScale: 1.5, locomotion: 'walk' },
+  'char.hollow.2': { scale: 2, fieldScale: 1.5 },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
-  'char.hollow.5': { rig: 'arrancar-base', scale: 1.32, offsetY: -5 },
+  'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   'prop.door': {},
   'prop.altar': {},
   'prop.book': {},
   'prop.chest': {},
   'prop.shop': {},
+  // 온천 (GDD 123장 4, C.198): 방 물건·온천 화면 배경 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  'prop.spa': {},
+  'scene.spa': {},
+  // 장터 (GDD 127장 2, C.201): 방 물건(장터 문)·장터 배경·떠돌이 상인 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  // 월드맵 '시장' 장소 그림 = 소모품 상점 수레 그림 (GDD 160장 2). 시장 안 소모품 상점 칸(prop.shop)은 그대로
+  'prop.market': { src: 'art/prop-shop.webp' },
+  'scene.market': {},
+  'prop.wanderer': {},
+  // 상점 4곳 (GDD 150장 2, C.227): 소모품 상점 = prop.shop, 나머지 3곳 — 사용자 그림 대기(비어 있으면 아이콘)
+  'prop.gearShop': { scale: 1.2 }, // 장비 상점 그림 ×1.2 (GDD 160장 3)
+  'prop.skinShop': {},
+  'prop.traitShop': {},
+  'prop.smith': {}, // 대장장이 (GDD 153장 2)
+  // 월드맵 (GDD 130장, C.204): 방 물건(월드맵)·월드맵 하이앵글 배경·지도 위 장소(홈·모험; 시장은 prop.market) — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  'prop.outside': { scale: 1.5 }, // 방·시장의 월드맵 물건 그림 ×1.5 (GDD 160장 1)
+  'scene.worldmap': {},
+  'prop.home': {},
+  'prop.adventure': {},
+  // 월드맵 탑 (GDD 139장 1, C.217): 키 = place.tower.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
+  'place.tower.hollow': {},
+  'place.tower.shinigami': {},
+  // 월드맵 온천 (GDD 153장 1, C.228): 키 = place.spa.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
+  'place.spa.hollow': {},
+  'place.spa.shinigami': {},
+  // 월드맵 수련장 (GDD 158장 1): 키 = place.training.<종족 id> — 사용자 그림 대기(비어 있으면 방 짚인형 그림 prop.altar, GDD 160장 4)
+  'place.training.hollow': {},
+  'place.training.shinigami': {},
+  // 휴식 칸 장소 그림 (GDD 128장 3, C.202): 걷는 앞쪽에 서는 장소 — 사용자 그림 대기(비어 있으면 임시 웅덩이 그림). 키 = place.<타일 id>.<종족 id>
+  'place.rest-a.hollow': {},
+  'place.rest-a.shinigami': {},
+  'place.rest-spring.hollow': {},
+  'place.rest-spring.shinigami': {},
 };
 
 /** 그림 키 → 실제 이미지 URL(없으면 null = 자리표시를 쓴다). base 는 배포 경로(Vite BASE_URL) */
@@ -87,7 +119,6 @@ export function artUrls(key: string, base = '/', manifest: Readonly<Record<strin
     scale: e?.scale ?? 1,
     ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}),
     offsetY: e?.offsetY ?? 0,
-    locomotion: e?.locomotion,
   };
 }
 
@@ -102,6 +133,12 @@ export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<
   // 한 장짜리 파일이 없고 idle 애니만 있으면 idle-1 을 정지 그림으로도 쓴다 (GDD 26-2)
   const src = a.src ?? anims.idle?.frames[0] ?? null;
   return src ? withAnims({ ...a, src }, anims) : null;
+}
+
+/** 종이인형 그림 칸(view)에서 머리 윗변(캔버스 y 0)까지의 비율 */
+function rigHeadTop(): number {
+  const r = HUMANOID.view?.rect;
+  return r ? Math.max(0, -r[1] / r[3]) : 0;
 }
 
 /** 캐릭터 그림. 새 규칙(단계별 파일 > 종족 공통 파일)이 있으면 그 한 장이 우선이고(frames 없음),
@@ -119,7 +156,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
       if (!still) continue;
       const own = manifest[key] ?? (key.endsWith(FEMALE_KEY_SUFFIX) ? manifest[key.slice(0, -FEMALE_KEY_SUFFIX.length)] : undefined); // 여성 키는 같은 키(남성)의 크기·위치를 물려받는다
       const e = own ?? manifest[fallbackKey];
-      const a: ArtUrls = { src: joinBase(base, still.startsWith('art/') ? still : `art/${still}`), frames: null, scale: e?.scale ?? 1, ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e?.offsetY ?? 0, locomotion: own?.locomotion ?? manifest[fallbackKey]?.locomotion };
+      const a: ArtUrls = { src: joinBase(base, still.startsWith('art/') ? still : `art/${still}`), frames: null, scale: e?.scale ?? 1, ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e?.offsetY ?? 0 };
       return withAnims(a, resolveAnims(keys, base, files, overrides));
     }
     return null;
@@ -143,7 +180,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     // 여성 외형 = 외형 id 뒤 -f (GDD 114·115장). 없으면 그 외형(남성) 그대로
     const look = female && HUMANOID.looks[rigLook + RIG_FEMALE_SUFFIX] ? rigLook + RIG_FEMALE_SUFFIX : rigLook;
     const e = manifest[rigKey]!;
-    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, locomotion: e.locomotion, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') } };
+    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
   }
   return tryKeys(keys) ?? artUrls(fallbackKey, base, manifest, files);
 }

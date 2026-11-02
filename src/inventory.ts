@@ -2,14 +2,15 @@
 // 장비·스킨은 사면 바로 끼지 않는다 — 여기서 equip. 종족 무관: 이름은 종족 설정(먹이·리스크 게이지)·데이터, 수치는 balance.ts.
 // 화면(C.141 카드형 UI)은 inventoryOf 가 돌려준 목록만 그린다. 상점 품목·가격은 그대로(src/shop.ts).
 import { BALANCE } from './config/balance';
-import { cosmeticName, COSMETIC_ITEMS, GOLD_ITEMS, getCosmetic, getGoldItem, getWandererItem, ITEM_CATEGORIES, WANDERER_ITEMS, shopVisible, type ItemCategory, type MedicineCure } from './data/shop';
+import { cosmeticName, COSMETIC_ITEMS, foodBlurb, GOLD_ITEMS, getCosmetic, getGoldItem, getWandererItem, ITEM_CATEGORIES, WANDERER_ITEMS, shopVisible, type ItemCategory, type MedicineCure } from './data/shop';
 import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
-import { CARE_STATUS_NAMES } from './engine/nest';
-import { cureNest, feedNest } from './game';
+import { CARE_STATUS_NAMES, foodHpHeal, homeHpCap, homeHpOf } from './engine/nest';
+import { cureNest, feedNest, logHomeHeal } from './game';
 import { wandererAmount } from './engine/wanderer';
-import { CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
+import { guidePending } from './engine/tutorial';
+import { battleItemBrief, CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
 import { getPet, PET_IDS } from './data/pets';
 import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet } from './engine/pet';
@@ -22,15 +23,30 @@ import type { BattleItemEffect } from './engine/combat';
 const SX = BALANCE.shop;
 const COND_MAX = BALANCE.provisional.expedition.conditionMax;
 
-/** 보관함에 쌓이는 소모품 id: 상점 정화제·각성제·약(GDD 102-4) + 상인 소모품(정화·각성·정수). 효과는 useInventoryItem */
-export const CONSUMABLE_IDS: readonly string[] = [
-  ...GOLD_ITEMS.filter((g) => g.kind === 'calm' || g.kind === 'wake' || g.kind === 'medicine').map((g) => g.id),
-  ...WANDERER_ITEMS.filter((w) => w.kind === 'calm' || w.kind === 'wake' || w.kind === 'elixir').map((w) => w.id),
-];
+/** 체력 회복 물건 4종 (GDD 144장 1, C.223): 전투용 소모품 중 회복 효과 — 반창고·붕대·회복약·치료제 순(데이터 순서). 원정 걷기·전투 중에만 쓴다 */
+export const HEAL_ITEM_IDS: readonly string[] = GOLD_ITEMS.filter((g) => g.battle && BALANCE.provisional.battleItems[g.id]?.effect === 'heal').map((g) => g.id);
 
-/** 소모품 효과 한 줄: cure = 상인 정수(쇠약 풀기), medicine = 약이 푸는 상태 (GDD 102-4, 수치는 안 바뀜) */
-type ConsumableEffect = { risk: number; condition: number; cure: boolean; medicine?: MedicineCure };
+/** 회복 물건의 회복량 (최대 체력 대비). 회복 물건이 아니면 null */
+export function healItemFraction(id: string): number | null {
+  const b = BALANCE.provisional.battleItems[id];
+  return b?.effect === 'heal' ? b.fraction : null;
+}
+
+/** 보관함에 쌓이는 소모품 id: 회복 물건 4종(GDD 144장) + 상점 정화제·각성제·약(GDD 102-4) + 상인 소모품(정화·각성·정수). 효과는 useInventoryItem */
+export const CONSUMABLE_IDS: readonly string[] = [...new Set([
+  ...HEAL_ITEM_IDS,
+  ...GOLD_ITEMS.filter((g) => g.kind === 'calm' || g.kind === 'wake' || g.kind === 'medicine').map((g) => g.id),
+  ...WANDERER_ITEMS.filter((w) => w.kind === 'calm' || w.kind === 'wake' || w.kind === 'elixir' || w.kind === 'hpPotion').map((w) => w.id),
+])];
+
+/** 회복 물건을 방에서 눌렀을 때 (GDD 144장 2) */
+export const HEAL_ROOM_LOCK = '모험·전투 중에만 쓴다';
+
+/** 소모품 효과 한 줄: cure = 상인 정수(쇠약 풀기), medicine = 약이 푸는 상태 (GDD 102-4, 수치는 안 바뀜), heal = 회복 물건(GDD 144장) */
+type ConsumableEffect = { risk: number; condition: number; cure: boolean; medicine?: MedicineCure; heal?: number };
 function consumableEffect(id: string): ConsumableEffect | null {
+  const heal = healItemFraction(id);
+  if (heal !== null) return { risk: 0, condition: 0, cure: false, heal };
   const g = getGoldItem(id);
   if (g?.kind === 'medicine') return { risk: 0, condition: 0, cure: false, medicine: g.cures! };
   if (g?.kind === 'calm') return { risk: SX.calmRisk, condition: 0, cure: false };
@@ -47,6 +63,7 @@ export function consumableText(id: string, faction: Pick<FactionConfig, 'riskGau
   const e = consumableEffect(id);
   if (!e) return '';
   if (e.medicine) return medicineText(e.medicine);
+  if (e.heal !== undefined) return healItemText(id);
   const parts = [e.risk > 0 ? `${faction.riskGaugeName} −${e.risk}` : '', e.condition > 0 ? (e.condition >= COND_MAX ? '컨디션 가득' : `컨디션 +${e.condition}`) : '', e.cure ? '쇠약 해소' : ''].filter(Boolean);
   return `${parts.join(' · ')} (가방에서 사용, 지금 캐릭터에 바로)`;
 }
@@ -56,6 +73,15 @@ export function consumableName(id: string): string {
   return getGoldItem(id)?.name ?? getWandererItem(id)?.name ?? id;
 }
 
+/** 소모품 짧은 효과 한 줄 (가방 목록 칸, GDD 159장 25): "체력 10% 회복" · "빈사 치료" · "광기 −30". 자세한 수치는 상세 창(detail) */
+export function consumableBrief(id: string, faction: Pick<FactionConfig, 'riskGaugeName'>): string {
+  if (BALANCE.provisional.battleItems[id]) return battleItemBrief(id);
+  const e = consumableEffect(id);
+  if (!e) return '';
+  if (e.medicine) return `${medicineStatusName(e.medicine)} 치료`;
+  return [e.risk > 0 ? `${faction.riskGaugeName} −${e.risk}` : '', e.condition > 0 ? (e.condition >= COND_MAX ? '컨디션 가득' : `컨디션 +${e.condition}`) : '', e.cure ? '쇠약 치료' : ''].filter(Boolean).join(' · ');
+}
+
 /** 보관함 한 칸 (카드 하나) */
 export interface InventoryEntry {
   /** 품목 id: 먹이 `food-<종류>`, 소모품·꾸밈 = 품목 id, 타일 = 타일 id, 기타 = `training-ticket`·`reroll` */
@@ -63,8 +89,10 @@ export interface InventoryEntry {
   category: ItemCategory;
   name: string;
   count: number;
-  /** 효과·설명 한 줄 */
+  /** 효과·설명 한 줄 (상세 창) */
   detail: string;
+  /** 목록 칸의 짧은 효과 한 줄 (GDD 159장 25 — 음식·소모품). 없으면 detail */
+  brief?: string;
   /** 누르면 할 수 있는 일: use = 쓰기(먹이·소모품), equip/unequip = 끼기·빼기(스킨·꾸밈), take/leave = 펫 데리고 가기·두고 가기, null = 보기만 */
   action: 'use' | 'equip' | 'unequip' | 'take' | 'leave' | null;
   /** 지금 못 쓰는 이유 (쓸 수 있으면 null) */
@@ -79,7 +107,8 @@ export interface InventoryEntry {
 function consumableLock(save: SaveData, id: string, faction: Pick<FactionConfig, 'riskGaugeName'>): string | null {
   const e = consumableEffect(id);
   if (!e) return '쓸 수 없다';
-  if (save.activeExpedition != null) return '원정 중인 캐릭터에는 못 쓴다';
+  if (e.heal !== undefined) return save.activeExpedition != null ? '모험 화면 [가방]에서 쓴다' : HEAL_ROOM_LOCK; // 방에서는 안 쓴다 — 방 체력은 온천·먹이 (GDD 144장 2)
+  if (save.activeExpedition != null) return '모험 중인 캐릭터에는 못 쓴다';
   if (save.nest.dead) return `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다`;
   if (e.medicine) return medicineNeeded(save, e.medicine) ? null : `${medicineStatusName(e.medicine)} 상태가 아니다`;
   const helpsRisk = e.risk > 0 && save.nest.risk > 0;
@@ -97,12 +126,12 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     const n = save.shared.food[f];
     if (n <= 0) continue;
     const fx = BALANCE.provisional.nest.foods[f];
-    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''}`, action: 'use', lock: save.activeExpedition != null ? '원정 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
+    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, brief: foodBlurb(f, faction), detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''} · 체력 +${Math.round(foodHpHeal(f) * 100)}%`, action: 'use', lock: save.activeExpedition != null ? '모험 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
   }
   // 소모품: 보관한 정화제·각성제·상인 소모품 + 다시 뽑기권(흡수 화면에서 씀)
   for (const id of CONSUMABLE_IDS) {
     const n = save.shared.items[id] ?? 0;
-    if (n > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, detail: consumableText(id, faction), action: 'use', lock: consumableLock(save, id, faction) });
+    if (n > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, brief: consumableBrief(id, faction) || undefined, detail: consumableText(id, faction), action: 'use', lock: consumableLock(save, id, faction) });
   }
   if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, detail: `${faction.absorbActionName} 화면에서 특성 후보를 한 번 다시 뽑는다`, action: null, lock: null });
   // 장비 (GDD 91장): 낀 것 먼저(칸 순서), 그다음 등급 높은 것·최근 것. 장착·해제·강화·판매는 상세 창
@@ -110,7 +139,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     const slot = equippedSlotOf(save.shared.gear, it.uid);
     out.push({
       id: it.uid, category: 'equipment', name: gearName(it, faction), count: 1, detail: gearLineText(it, faction),
-      action: slot ? 'unequip' : 'equip', lock: save.activeExpedition != null ? '원정 중에는 바꿀 수 없다' : null, gear: { grade: it.grade, kind: it.kind, slot },
+      action: slot ? 'unequip' : 'equip', lock: save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null, gear: { grade: it.grade, kind: it.kind, slot },
     });
   }
   // 펫 (GDD 90장): 가진 펫, 1마리만 데리고 다닌다
@@ -118,7 +147,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     const o = save.shared.pets.owned[id];
     if (!o) continue;
     const on = save.shared.pets.active === id;
-    out.push({ id, category: 'pet', name: petName(id, faction), count: 1, detail: `${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, action: on ? 'leave' : 'take', lock: save.activeExpedition != null ? '원정 중에는 바꿀 수 없다' : null });
+    out.push({ id, category: 'pet', name: petName(id, faction), count: 1, detail: `${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, action: on ? 'leave' : 'take', lock: save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null });
   }
   // 스킨·꾸밈: 가진 것 (이 종족이 입을 수 있는 스킨만), 끼기·빼기
   for (const c of COSMETIC_ITEMS) {
@@ -130,7 +159,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   // 타일: 가진 타일 보기 (덱 없음 — 원정 배치 화면에서 전부 보고 놓는다)
   for (const t of deckTilesFor(save.factionId)) {
     const n = save.tiles.collection[t.id] ?? 0;
-    if (n > 0) out.push({ id: t.id, category: 'tile', name: tileName(t.id, save.factionId), count: n, detail: '원정 배치 화면에서 길에 놓는다', action: null, lock: null });
+    if (n > 0) out.push({ id: t.id, category: 'tile', name: tileName(t.id, save.factionId), count: n, detail: '모험 배치 화면에서 길에 놓는다', action: null, lock: null });
   }
   // 기타: 수련권
   if (save.training.tickets > 0) out.push({ id: 'training-ticket', category: 'etc', name: getGoldItem('training-ticket')?.name ?? '수련권', count: save.training.tickets, detail: '수련장에서 쓴다 (지금 트랙)', action: null, lock: null });
@@ -144,7 +173,7 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
   if (id.startsWith('food-')) {
     const f = id.slice(5) as FoodId;
     if (!(FOOD_IDS as readonly string[]).includes(f)) return { ok: false, reason: '모르는 먹이다' };
-    if (save.activeExpedition != null) return { ok: false, reason: '원정 중인 캐릭터에는 못 쓴다' };
+    if (save.activeExpedition != null) return { ok: false, reason: '모험 중인 캐릭터에는 못 쓴다' };
     if (save.nest.dead) return { ok: false, reason: `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` };
     const fed = feedNest(save, f);
     if (!fed) return { ok: false, reason: '먹이가 없다' };
@@ -165,6 +194,27 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
   if (e.cure) save.nest.weakened = false;
   takeItem(save, id);
   return { ok: true, detail: `${faction.riskGaugeName} ${Math.round(save.nest.risk)} · 컨디션 ${Math.round(save.nest.condition)}` };
+}
+
+/** 회복 물건 효과 한 줄 (GDD 144장): 회복량 · 쓰는 곳 */
+export function healItemText(id: string): string {
+  const f = healItemFraction(id);
+  return f === null ? '' : `체력 ${f >= 1 ? '가득' : `+${Math.round(f * 100)}%`} · 모험 걷기 중 [가방]·전투 [소모품]에서 쓴다`;
+}
+
+/** 원정 걷기 중 회복 물건 쓰기 (GDD 144장 3): 가방에서 하나 써서 이어 가는 체력(최대 체력 대비)을 채운다. 빈사 원정은 최대 체력이 이미 줄어 있어 그 안에서 찬다.
+ *  못 쓰면 이유. 쓰면 전·후 체력 비율 */
+export function useHealItemOnWalk(save: SaveData, exp: { hpFraction?: number; status?: string }, id: string): { ok: true; from: number; to: number } | { ok: false; reason: string } {
+  const f = healItemFraction(id);
+  if (f === null) return { ok: false, reason: '회복 물건이 아니다' };
+  if ((save.shared.items[id] ?? 0) <= 0) return { ok: false, reason: '가진 물건이 아니다' };
+  const from = Math.min(1, Math.max(0, exp.hpFraction ?? 1));
+  if (from >= 1 - 1e-9) return { ok: false, reason: '체력 이미 가득' };
+  const to = Math.min(1, from + f);
+  exp.hpFraction = to;
+  takeItem(save, id);
+  logHomeHeal(save, { at: Date.now(), kind: 'item', itemId: id, hpFrom: Math.round(from * 100) / 100, hpTo: Math.round(to * 100) / 100 }); // 런 로그 (GDD 9장)
+  return { ok: true, from, to };
 }
 
 /** 보관함 소모품 하나 쓰기 */
@@ -209,8 +259,8 @@ const pct = (v: number): string => `${Math.round(v * 1000) / 10}%`;
 export function petEffectText(id: string, level: number): string {
   const carry = { id, level };
   switch (getPet(id)?.effect) {
-    case 'gold': return `원정 골드 +${pct(petBonus(carry, 'gold'))}`;
-    case 'belly': return `원정 배부름 줄어듦 −${pct(petBonus(carry, 'belly'))}`;
+    case 'gold': return `모험 골드 +${pct(petBonus(carry, 'gold'))}`;
+    case 'belly': return `모험 배부름 줄어듦 −${pct(petBonus(carry, 'belly'))}`;
     case 'guard': return `전투 시작 보호막 (최대 체력 ${pct(petBonus(carry, 'guard'))})`;
     case 'seek': return `떠돌이 상인 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
     default: return '';
@@ -240,7 +290,7 @@ export function choosePet(save: SaveData, id: string | null, nowMs: number = Dat
 export function petNoticeOf(rec: PetRecord, faction: Pick<FactionConfig, 'petNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = petName(rec.petId, faction);
   switch (rec.kind) {
-    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'wanderer' ? '떠돌이 상인' : '원정 바퀴 끝 보상'} · 가방 펫 탭에서 데리고 간다` };
+    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'wanderer' ? '떠돌이 상인' : '모험 바퀴 끝 보상'} · 가방 펫 탭에서 데리고 간다` };
     case 'level': return { eyebrow: '펫', title: `${name} 친밀도 ${rec.level}/${PET_MAX_LEVEL}`, meta: petEffectText(rec.petId, rec.level ?? 1) };
     case 'dupGold': return { eyebrow: '펫', title: `이미 있는 ${name} → 골드 +${rec.gold ?? 0}` };
     default: return null;
@@ -361,7 +411,7 @@ export function sellGearEntry(save: SaveData, uid: string, nowMs: number = Date.
 /** 장비 런 로그 → 알림 문구 (얻음·자동 판매만) */
 export function gearNoticeOf(rec: GearRecord, faction: Pick<FactionConfig, 'gearSlotNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = gearName({ grade: rec.grade as GearGrade, kind: rec.gearKind as GearKind }, faction);
-  const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '떠돌이 상인' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '원정 드롭';
+  const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '떠돌이 상인' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '모험 드롭';
   if (rec.kind === 'get') return { eyebrow: '장비', title: `새 장비: ${name}`, meta: `${where} · ★${rec.star ?? 1} · 가방 장비 탭에서 착용` };
   if (rec.kind === 'autoSell') return { eyebrow: '장비', title: `가방 가득 → ${name} 판매`, meta: `골드 +${rec.gold ?? 0}` };
   return null;

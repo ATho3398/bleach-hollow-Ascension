@@ -1,0 +1,15 @@
+/* 흡수 화면 [내 상태] 창 (GDD 128장 7, C.202): 두 열 — 왼쪽 장착 블록·강화, 오른쪽 이번 원정 흡수·진화 쏠림(막대·순위만). 디자인 토큰만 */
+.bha-absorbstat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--bha-sp-4); text-align: left; font-size: var(--bha-fs-xs); }
+.bha-absorbstat__col { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
+.bha-absorbstat__sec { display: flex; flex-direction: column; gap: var(--bha-sp-1); min-width: 0; }
+.bha-absorbstat__title { font-size: var(--bha-fs-sm); color: var(--bha-text-1); }
+.bha-absorbstat__list, .bha-absorbstat__lean { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.bha-absorbstat__list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--bha-sp-2); line-height: 1.25; }
+.bha-absorbstat__list li > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-absorbstat p { margin: 0; }
+.bha-absorbstat__lean li { display: grid; grid-template-columns: 2.2em auto auto minmax(0, 1fr); align-items: center; gap: var(--bha-sp-2); }
+.bha-absorbstat__lean li.is-top { color: var(--bha-text-1); font-weight: var(--bha-fw-bold); }
+.bha-absorbstat__rank { color: var(--bha-text-2); font-variant-numeric: tabular-nums; }
+.bha-absorbstat__bar { display: block; height: 6px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); overflow: hidden; }
+.bha-absorbstat__bar i { display: block; height: 100%; border-radius: inherit; background: var(--bha-lin-color, var(--bha-accent)); }
+.bha-confirm .bha-modal:has(.bha-absorbstat) { width: min(560px, calc(100% - 24px)); max-width: none; }

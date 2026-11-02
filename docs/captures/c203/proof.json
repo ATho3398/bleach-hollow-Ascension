@@ -1,0 +1,169 @@
+{
+  "guides": [
+    {
+      "faction": "hollow",
+      "name": "first-run",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "적을 만나면 자동 전투",
+      "step": "2 / 2"
+    },
+    {
+      "faction": "hollow",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "일반 공격은 자동",
+      "step": "튜토리얼 1 / 7"
+    },
+    {
+      "faction": "hollow",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "강공격 예고",
+      "step": "튜토리얼 2 / 7"
+    },
+    {
+      "faction": "hollow",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "지금 막기",
+      "step": "튜토리얼 3 / 7"
+    },
+    {
+      "faction": "hollow",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "막지 못한 강공격",
+      "step": "튜토리얼 4 / 7"
+    },
+    {
+      "faction": "hollow",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "블록: 눌러서 사용",
+      "step": "튜토리얼 5 / 7"
+    },
+    {
+      "faction": "hollow",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "같은 블록을 붙여서 체인",
+      "step": "튜토리얼 6 / 7"
+    },
+    {
+      "faction": "hollow",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "체인3로 마무리",
+      "step": "튜토리얼 7 / 7"
+    },
+    {
+      "faction": "hollow",
+      "name": "first-absorb",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "이기면 포식",
+      "step": "1 / 3"
+    },
+    {
+      "faction": "shinigami",
+      "name": "first-run",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "적을 만나면 자동 전투",
+      "step": "2 / 2"
+    },
+    {
+      "faction": "shinigami",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "일반 공격은 자동",
+      "step": "튜토리얼 1 / 7"
+    },
+    {
+      "faction": "shinigami",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "지금 막기",
+      "step": "튜토리얼 3 / 7"
+    },
+    {
+      "faction": "shinigami",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "블록: 눌러서 사용",
+      "step": "튜토리얼 5 / 7"
+    },
+    {
+      "faction": "shinigami",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "같은 블록을 붙여서 체인",
+      "step": "튜토리얼 6 / 7"
+    },
+    {
+      "faction": "shinigami",
+      "name": "script",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "체인3로 마무리",
+      "step": "튜토리얼 7 / 7"
+    },
+    {
+      "faction": "shinigami",
+      "name": "first-absorb",
+      "nodim": true,
+      "replay": false,
+      "dim": false,
+      "title": "이기면 정화 흡수",
+      "step": "1 / 3"
+    }
+  ],
+  "spaces": {
+    "market": {
+      "text": "방으로 돌아가기",
+      "x": 7,
+      "y": 7,
+      "w": 142,
+      "h": 36
+    },
+    "marketDevOrder": "온천",
+    "spa": {
+      "text": "방으로 돌아가기",
+      "x": 7,
+      "y": 7,
+      "w": 142,
+      "h": 36
+    },
+    "same": true
+  },
+  "hollowErrors": [],
+  "shinigamiErrors": [],
+  "anyAutoDim": []
+}

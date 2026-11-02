@@ -61,57 +61,57 @@ describe('C.103 데이터·매핑 (GDD 49-1 1~3번)', () => {
     expect(physProcText('shout', 'shinigami')).toBe('기합!');
     expect(physBlockName('poison', 'hollow')).toBeNull();
   });
-  it('5단계 물리 단일 속성 6종만 물공 칸이 있다 (특수·혼합·독·허·히든·4단계는 없음)', () => {
+  it('4단계 물리 단일 속성 6종만 물공 칸이 있다 (특수·혼합·독·허·히든·3단계는 없음, C.220)', () => {
     const withPhys = FORM_TABLE.filter((f) => formAbilitiesOf(f, zeroStats(), 'atk').phys).map((f) => f.id).sort();
-    expect(withPhys).toEqual(['t5:blood:physical', 't5:earth:physical', 't5:fire:physical', 't5:normal:physical', 't5:thunder:physical', 't5:water:physical']);
-    expect(physOf('t5:fire:special')).toBeNull();
-    expect(physOf('t5:poison:physical')).toBeNull();
-    expect(physOf('t4:fire')).toBeNull();
+    expect(withPhys).toEqual(['t4:blood:physical', 't4:earth:physical', 't4:fire:physical', 't4:normal:physical', 't4:thunder:physical', 't4:water:physical']);
+    expect(physOf('t4:fire:special')).toBeNull();
+    expect(physOf('t4:poison:special')).toBeNull();
+    expect(physOf('t3:fire')).toBeNull();
   });
   it('블록 파라미터: 속성·효과·피해 배율(표)', () => {
-    expect(physOf('t5:earth:physical')).toEqual({ element: 'earth', effect: 'stoneStance', power: PB.power.earth!, ...PB.stoneStance, damage: D('earth') });
-    expect(physOf('t5:blood:physical')).toEqual({ element: 'blood', effect: 'knockback', power: PB.power.blood!, ...PB.knockback, damage: D('blood') });
-    expect(physOf('t5:fire:physical')).toEqual({ element: 'fire', effect: 'ember', power: PB.power.fire!, damage: D('fire') });
-    expect(physOf('t5:water:physical')).toEqual({ element: 'water', effect: 'wave', power: PB.power.water!, ...PB.wave, damage: D('water') });
-    expect(physOf('t5:thunder:physical')).toEqual({ element: 'thunder', effect: 'flash', power: PB.power.thunder!, ...PB.flash, damage: D('thunder') });
-    expect(physOf('t5:normal:physical')).toEqual({ element: 'normal', effect: 'shout', power: PB.power.normal!, damage: D('normal') });
+    expect(physOf('t4:earth:physical')).toEqual({ element: 'earth', effect: 'stoneStance', power: PB.power.earth!, ...PB.stoneStance, damage: D('earth') });
+    expect(physOf('t4:blood:physical')).toEqual({ element: 'blood', effect: 'knockback', power: PB.power.blood!, ...PB.knockback, damage: D('blood') });
+    expect(physOf('t4:fire:physical')).toEqual({ element: 'fire', effect: 'ember', power: PB.power.fire!, damage: D('fire') });
+    expect(physOf('t4:water:physical')).toEqual({ element: 'water', effect: 'wave', power: PB.power.water!, ...PB.wave, damage: D('water') });
+    expect(physOf('t4:thunder:physical')).toEqual({ element: 'thunder', effect: 'flash', power: PB.power.thunder!, ...PB.flash, damage: D('thunder') });
+    expect(physOf('t4:normal:physical')).toEqual({ element: 'normal', effect: 'shout', power: PB.power.normal!, damage: D('normal') });
     // 표(GDD 49장 3판)의 블록 피해 배율: 흙·혈·불·물 0.7, 뇌 0.6, 노멀 0.8
     expect([PB.power.earth, PB.power.blood, PB.power.fire, PB.power.water, PB.power.thunder, PB.power.normal]).toEqual([0.7, 0.7, 0.7, 0.7, 0.6, 0.8]);
   });
   it('특성 효과: 속성 특성(39장)은 그대로 두고 물공 특성이 1칸 더', () => {
-    const earth = fxOf('t5:earth:physical');
+    const earth = fxOf('t4:earth:physical');
     expect(earth.thorns).toBeDefined();
     expect(earth.hardFist).toEqual(PB.hardFist);
-    expect(fxOf('t5:blood:physical').bloodScent).toBe(PB.bloodScent.drainMultiplier);
-    expect(fxOf('t5:fire:physical').emberStack).toEqual({ element: 'fire', ...PB.emberStack });
-    expect(fxOf('t5:water:physical').current).toEqual(PB.current);
-    expect(fxOf('t5:thunder:physical').charge).toBe(PB.charge.every);
-    expect(fxOf('t5:normal:physical').tempering).toEqual(PB.tempering);
-    expect(fxOf('t5:earth:mixed').hardFist).toBeUndefined();
+    expect(fxOf('t4:blood:physical').bloodScent).toBe(PB.bloodScent.drainMultiplier);
+    expect(fxOf('t4:fire:physical').emberStack).toEqual({ element: 'fire', ...PB.emberStack });
+    expect(fxOf('t4:water:physical').current).toEqual(PB.current);
+    expect(fxOf('t4:thunder:physical').charge).toBe(PB.charge.every);
+    expect(fxOf('t4:normal:physical').tempering).toEqual(PB.tempering);
+    expect(fxOf('t4:earth:mixed').hardFist).toBeUndefined();
   });
   it('상태 화면 특성 줄: 성향 + 속성 + 물공(블록 이름 포함) 3줄', () => {
-    const lines = abilityLines(formAbilitiesOf(getForm('t5:earth:physical'), zeroStats(), 'atk'), 'hollow');
+    const lines = abilityLines(formAbilitiesOf(getForm('t4:earth:physical'), zeroStats(), 'atk'), 'hollow');
     expect(lines.map((l) => l.slot)).toEqual(['성향', '속성', '물공']);
     expect(lines[2]!.name).toBe('굳은 주먹');
     expect(lines[2]!.description).toContain('바위 자세');
     expect(lines[2]!.description).toContain(`×${PB.power.earth}`);
-    const sh = abilityLines(formAbilitiesOf(getForm('t5:earth:physical'), zeroStats(), 'atk'), 'shinigami');
+    const sh = abilityLines(formAbilitiesOf(getForm('t4:earth:physical'), zeroStats(), 'atk'), 'shinigami');
     expect(sh[2]!.description).toContain('암반 베기');
   });
   it('applyEvolutionToParams: 물공 몸은 params.physBlock + 특성, 아니면 null', () => {
     const p: Partial<CombatParams> = {};
-    applyEvolutionToParams(p, { ...newEvolution(), tierIndex: 4, formId: 't5:thunder:physical', ability: 'atk' }, 'hollow');
+    applyEvolutionToParams(p, { ...newEvolution(), tierIndex: 4, formId: 't4:thunder:physical', ability: 'atk' }, 'hollow');
     expect(p.physBlock).toMatchObject({ element: 'thunder', effect: 'flash' });
     expect(p.abilityEffects?.charge).toBe(PB.charge.every);
     const q: Partial<CombatParams> = {};
-    applyEvolutionToParams(q, { ...newEvolution(), tierIndex: 4, formId: 't5:thunder:mixed', ability: 'atk' }, 'hollow');
+    applyEvolutionToParams(q, { ...newEvolution(), tierIndex: 4, formId: 't4:thunder:mixed', ability: 'atk' }, 'hollow');
     expect(q.physBlock).toBeNull();
   });
 });
 
 describe('C.103 기본 공격 블록 3계열 → 물공 블록 (49-1 2번)', () => {
   it('공격 생성원만 바뀐다: 속성·물리 분류·피해 배율. 막기·회복·계열 가중은 그대로', () => {
-    const s = mk({ physBlock: physOf('t5:earth:physical')!, families: { 'family-a': { tiers: [{ multiplier: 1 }] }, 'family-b': { tiers: [{ multiplier: 1 }] }, 'family-c': { tiers: [{ multiplier: 1 }] } } });
+    const s = mk({ physBlock: physOf('t4:earth:physical')!, families: { 'family-a': { tiers: [{ multiplier: 1 }] }, 'family-b': { tiers: [{ multiplier: 1 }] }, 'family-c': { tiers: [{ multiplier: 1 }] } } });
     const [atk, guard, heal] = basicSources(s.params);
     expect(atk).toMatchObject({ id: BASIC_SKILL_ID, element: 'earth', category: 'physical', powerMultiplier: 0.7, role: 'attack' });
     expect(guard).toMatchObject({ id: BASIC_GUARD_ID, element: null, role: 'guard' });
@@ -121,14 +121,14 @@ describe('C.103 기본 공격 블록 3계열 → 물공 블록 (49-1 2번)', () 
   });
   it('물공 블록 피해 = 보통 기본 블록 × 배율 × 자속성 보정 (물리 분류 비, 노멀 속성 상성 없음)', () => {
     const plain = mk({ playerElements: ['normal'] });
-    const phys = mk({ playerElements: ['normal'], physBlock: physOf('t5:normal:physical')! });
+    const phys = mk({ playerElements: ['normal'], physBlock: physOf('t4:normal:physical')! });
     const b = blk(BASIC_SKILL_ID);
     // 노멀 vs 불 적: 상성 없음. 보통 기본 블록은 혼합 분류, 물공 블록은 물리 분류 — 능력치가 모두 같아 비는 1
     expect(blockDamage(phys, b)).toBeCloseTo(blockDamage(plain, b) * PB.power.normal! * phys.params.stabMultiplier);
   });
   it('화면 이름: 물공 몸의 기본 공격 블록은 표 이름(종족별), 막기·회복은 그대로', () => {
     const hollow = getFaction('hollow');
-    const s = mk({ playerElements: ['earth'], physBlock: physOf('t5:earth:physical')! });
+    const s = mk({ playerElements: ['earth'], physBlock: physOf('t4:earth:physical')! });
     expect(blockName(blk(BASIC_SKILL_ID), battleLabels(hollow), 'hollow', s.params)).toBe('바위 자세');
     expect(blockName(blk(BASIC_SKILL_ID), battleLabels(getFaction('shinigami')), 'shinigami', s.params)).toBe('암반 베기');
     expect(blockName(blk(BASIC_GUARD_ID, null), battleLabels(hollow), 'hollow', s.params)).toBe('막기');
@@ -138,7 +138,7 @@ describe('C.103 기본 공격 블록 3계열 → 물공 블록 (49-1 2번)', () 
 });
 
 describe('C.103 흙 — 바위 자세 · 굳은 주먹', () => {
-  const earth = () => mk({ playerElements: ['earth'], physBlock: physOf('t5:earth:physical')!, abilityEffects: fxOf('t5:earth:physical') });
+  const earth = () => mk({ playerElements: ['earth'], physBlock: physOf('t4:earth:physical')!, abilityEffects: fxOf('t4:earth:physical') });
   const ST = PB.stoneStance;
   it('쓰면 n초 동안 받는 피해 감소, 맞을 때마다 다음 평타 보너스 쌓임(상한), 평타 한 번에 다 쓴다', () => {
     const a = earth();
@@ -189,7 +189,7 @@ describe('C.103 흙 — 바위 자세 · 굳은 주먹', () => {
 });
 
 describe('C.103 혈 — 피 튀기기(넉백) · 피 냄새', () => {
-  const blood = () => mk({ playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: fxOf('t5:blood:physical') });
+  const blood = () => mk({ playerElements: ['blood'], physBlock: physOf('t4:blood:physical')!, abilityEffects: fxOf('t4:blood:physical') });
   const KB = PB.knockback;
   it('넉백 동안 적 공격 타이머가 멈춘다 · 다음 평타 n회 피해 +', () => {
     const a = blood();
@@ -207,7 +207,7 @@ describe('C.103 혈 — 피 튀기기(넉백) · 피 냄새', () => {
     expect(a.enemy.attackTimer).toBe(timer - 1); // 풀리면 다시 줄어든다
   });
   it('버프는 평타 n회 뒤 사라진다 (피의 갈증 없이 비교)', () => {
-    const a = mk({ playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: { bloodScent: 2 } });
+    const a = mk({ playerElements: ['blood'], physBlock: physOf('t4:blood:physical')!, abilityEffects: { bloodScent: 2 } });
     const b = mk({ playerElements: ['blood'] });
     a.enemy.hp = a.enemy.maxHp = 1e12; // C.118: 적 체력이 절반이라 40회 평타 전에 죽는다 — 버프 지속만 본다
     const plainHit = nextBasic(b)[0]!.damage;
@@ -238,7 +238,7 @@ describe('C.103 혈 — 피 튀기기(넉백) · 피 냄새', () => {
 describe('C.103 불 — 잔불(약한 불 블록) · 불씨 모으기', () => {
   const EM = PB.emberStack;
   it('바에 쌓인 불 공격 블록 1개당 평타 +per (최대 max), 막기·회복은 세지 않는다', () => {
-    const a = mk({ playerElements: ['fire'], physBlock: physOf('t5:fire:physical')!, abilityEffects: fxOf('t5:fire:physical') });
+    const a = mk({ playerElements: ['fire'], physBlock: physOf('t4:fire:physical')!, abilityEffects: fxOf('t4:fire:physical') });
     expect(basicPowerOf(a)).toBe(1);
     a.tray.push(blk(BASIC_SKILL_ID), blk(BASIC_SKILL_ID, 'family-b'), blk(BASIC_SKILL_ID, 'family-c'), blk(BASIC_GUARD_ID, null), blk(BASIC_HEAL_ID, null));
     expect(basicPowerOf(a)).toBeCloseTo(1 + Math.min(EM.max, 3 * EM.per));
@@ -256,7 +256,7 @@ describe('C.103 불 — 잔불(약한 불 블록) · 불씨 모으기', () => {
 });
 
 describe('C.103 물 — 물결 가르기(평타 가속) · 물살', () => {
-  const water = () => mk({ playerElements: ['water'], physBlock: physOf('t5:water:physical')!, abilityEffects: fxOf('t5:water:physical') });
+  const water = () => mk({ playerElements: ['water'], physBlock: physOf('t4:water:physical')!, abilityEffects: fxOf('t4:water:physical') });
   const WV = PB.wave;
   it('쓰면 n초 동안 평타 간격 −haste: 그동안 평타가 더 많이 나간다', () => {
     const a = water();
@@ -286,7 +286,7 @@ describe('C.103 물 — 물결 가르기(평타 가속) · 물살', () => {
 });
 
 describe('C.103 뇌 — 전광(두 번 때림) · 충전', () => {
-  const thunder = () => mk({ playerElements: ['thunder'], physBlock: physOf('t5:thunder:physical')!, abilityEffects: { ...fxOf('t5:thunder:physical'), doubleHit: 0 } });
+  const thunder = () => mk({ playerElements: ['thunder'], physBlock: physOf('t4:thunder:physical')!, abilityEffects: { ...fxOf('t4:thunder:physical'), doubleHit: 0 } });
   const FL = PB.flash;
   it('쓰면 다음 평타 n회는 두 번 때림(각 each), 그 뒤 보통 평타', () => {
     const a = thunder();
@@ -321,7 +321,7 @@ describe('C.103 뇌 — 전광(두 번 때림) · 충전', () => {
 });
 
 describe('C.103 노멀 — 기합(즉시 평타) · 단련', () => {
-  const plainBody = () => mk({ playerElements: ['normal'], physBlock: physOf('t5:normal:physical')!, abilityEffects: fxOf('t5:normal:physical') });
+  const plainBody = () => mk({ playerElements: ['normal'], physBlock: physOf('t4:normal:physical')!, abilityEffects: fxOf('t4:normal:physical') });
   it('기합: 쓰는 순간 평타 1회가 바로 나가고 평타 타이머는 처음부터', () => {
     const a = plainBody();
     run(a, 0.4);
@@ -356,7 +356,7 @@ describe('C.103 전투 로그·런 로그', () => {
     expect(abilityProcText('doubleHit', 'hollow')).toBe('연타!');
   });
   it('런 로그 abilityProcs 에 물공 발동 횟수가 남는다', () => {
-    const a = mk({ playerElements: ['blood'], physBlock: physOf('t5:blood:physical')!, abilityEffects: fxOf('t5:blood:physical') });
+    const a = mk({ playerElements: ['blood'], physBlock: physOf('t4:blood:physical')!, abilityEffects: fxOf('t4:blood:physical') });
     a.tray.push(blk(BASIC_SKILL_ID));
     use(a);
     run(a, 1);

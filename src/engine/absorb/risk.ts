@@ -1,5 +1,5 @@
 // 리스크 게이지(호로 광기 / 사신 호로화, 이름은 종족 설정) 순수 로직 (GDD 5장, 4-1).
-// 한계 돌파 = 폭주 (GDD 23-2, 원정당 1회): 남은 원정 주는·받는 피해 증가(expedition applyFrenzy), 공허 생성 증가, 귀환 때 컨디션·안정 수치 하락, 게이지 60.
+// 폭주(호로화) = 폭주 (GDD 23-2, 원정당 1회): 남은 원정 주는·받는 피해 증가(expedition applyFrenzy), 공허 생성 증가, 귀환 때 컨디션·안정 수치 하락, 게이지 60.
 
 import { BALANCE } from '../../config/balance';
 import type { NestAction } from '../faction';
@@ -36,7 +36,7 @@ export interface RiskState {
   riskPeak: number;
   /** 안정 수치 (호로 자아 / 사신 영압 안정도). 컨디션·허기와 별개 */
   stability: number;
-  /** 이번 원정에서 한계 돌파가 일어났는가 → 남은 동안 임시 페널티 */
+  /** 이번 원정에서 폭주(호로화)가 일어났는가 → 남은 동안 임시 페널티 */
   breakthrough: { lap: number; cell: number } | null;
   events: EngineEvent[];
 }

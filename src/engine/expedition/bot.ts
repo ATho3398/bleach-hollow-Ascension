@@ -13,6 +13,10 @@ import { synergyPairs } from './variants';
 export interface AutoOptions {
   /** 이 바퀴를 마치면 귀환 */
   returnAfterLap: number;
+  /** 둥지 칸에서 이어 온 체력이 이 비율 아래면 returnAfterLap 전이라도 귀환 (GDD 121장 8 — 사냥 힐이 줄어 사람도 체력을 보고 이어 간다). 없으면 체력을 안 본다 */
+  minContinueHp?: number;
+  /** 전투마다 체력을 가득 채워 시작 (체력 이어 가기 끔): 리스크·흡수 같은 다른 계통만 재는 점검 봇용 — 생존은 이어하기 가드(GDD 121장 8)가 따로 본다 */
+  fullHp?: boolean;
   /** 전투 대신 플레이: 기본은 블록 봇 */
   playBattle?: (s: ReturnType<typeof startBattle>) => void;
   /** 손에 든 타일을 놓는가 (기본 true) */
@@ -21,14 +25,16 @@ export interface AutoOptions {
   absorb?: 'release' | 'absorb';
   /** absorb 가 'absorb' 일 때만: 이 제안(계통)을 흡수할지 정하는 정책. false 면 놓아준다 (계통을 몰거나 흩는 점검 봇용, 없으면 항상 흡수) */
   absorbWanted?: (exp: ExpeditionState) => boolean;
+  /** 둥지 칸에 닿을 때마다(바퀴를 마칠 때) 부른다 — 바퀴별 완주·끝 체력을 재는 점검용 (GDD 134장 5) */
+  onLapEnd?: (exp: ExpeditionState) => void;
 }
 
 const KIND_SCORE = { skill: 3, passive: 2, part: 1 } as const;
 
-/** 봇의 특성 점수: 슬롯에 같은 속성이 많을수록(속성 보너스), skill > passive > part, 희귀 가산 */
+/** 봇의 특성 점수: 슬롯에 같은 속성이 많을수록(속성 보너스), skill > passive > part, 보스 특성 가산 */
 function traitScore(b: BuildState, id: string): number {
   const t = getTrait(id);
-  return (elementCounts(b)[t.element] ?? 0) * 10 + KIND_SCORE[t.kind] + (t.rare ? 2 : 0);
+  return (elementCounts(b)[t.element] ?? 0) * 10 + KIND_SCORE[t.kind] + (t.boss ? 2 : 0);
 }
 
 /** 후보 중 가장 좋은 특성과, 가득 찼을 때 교체할 슬롯(교체가 이득이 아니면 null = 포기) */
@@ -106,6 +112,7 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
       if (opt.place !== false) placeAll(exp);
       advance(exp);
     } else if (exp.phase === 'battle') {
+      if (opt.fullHp) exp.hpFraction = 1;
       const b = startBattle(exp);
       (opt.playBattle ?? playCombatBot)(b);
       finishBattle(exp, b);
@@ -117,9 +124,10 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
     } else if (exp.phase === 'rest') finishRest(exp);
     else if (exp.phase === 'event') botEvent(exp);
     else if (exp.phase === 'nest-choice') {
+      opt.onLapEnd?.(exp);
       if (opt.place !== false) placeAll(exp);
-      if (opt.place !== false && exp.lap < opt.returnAfterLap) botDraft(exp);
-      if (exp.lap >= opt.returnAfterLap) chooseReturn(exp);
+      if (opt.place !== false && exp.lap < opt.returnAfterLap) botDraft(exp); // 귀환해도 임시 타일은 사라질 뿐이라 먼저 고른다
+      if (exp.lap >= opt.returnAfterLap || (opt.minContinueHp !== undefined && (exp.hpFraction ?? 1) < opt.minContinueHp)) chooseReturn(exp);
       else chooseContinue(exp);
     }
   }

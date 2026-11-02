@@ -19,14 +19,14 @@ export interface BossPhase {
 export interface BossDef {
   id: string;
   name: PerFaction<string>;
-  /** 전투 엔진에 넘길 적 정의 (class elite, 희귀 개체 없음) */
+  /** 전투 엔진에 넘길 적 정의 (class elite) */
   enemy: EnemyDef;
   /** 2페이즈부터 (1페이즈 = 처음 상태). 체력 구간이 높은 것부터 */
   phases: BossPhase[];
   gimmick: BossGimmick;
   /** element 기믹: 2페이즈부터 페이즈마다의 새 속성 (phases 와 같은 길이). 다른 기믹은 없음 */
   elementShifts?: string[];
-  /** 처치 보상 보스 특성 (희귀, 흡수 화면 확정 후보) */
+  /** 처치 보상 보스 특성 (흡수 화면 확정 후보) */
   trait: string;
   /** 이 보스의 난이도 ★ (GDD 32-1 7번, C.75): 보스가 나오는 스토리 화의 ★ 와 같아야 한다(테스트가 본다). 자유 원정 등장은 미정 */
   difficulty: number;
@@ -63,9 +63,9 @@ export function parseBoss(r: unknown): BossDef {
     }
   }
   if (errors.length > 0) throw new Error(`보스 데이터 오류 (${String(b.id ?? '?')}): ${errors.join(', ')}`);
-  const enemy = parseEnemy({ ...b, class: 'elite', rareChance: 0 });
+  const enemy = parseEnemy({ ...b, class: 'elite' });
   const { id, name, gimmick, trait, provisional, difficulty } = b as unknown as BossDef;
-  return { id, name, enemy: { ...enemy, rare: false }, phases: phases as unknown as BossPhase[], gimmick, ...(gimmick === 'element' ? { elementShifts: [...(shifts as string[])] } : {}), trait, difficulty, provisional };
+  return { id, name, enemy, phases: phases as unknown as BossPhase[], gimmick, ...(gimmick === 'element' ? { elementShifts: [...(shifts as string[])] } : {}), trait, difficulty, provisional };
 }
 
 export const BOSSES: readonly BossDef[] = ((raw as { bosses: unknown[] }).bosses).map(parseBoss);

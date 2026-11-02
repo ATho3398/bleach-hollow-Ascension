@@ -35,7 +35,7 @@ describe('85장 4번 칭호 도감 에스파다 No.1~10', () => {
     expect(ranks.map((t) => titleName(t, 'hollow'))).toEqual([10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => `에스파다 No.${n}`));
     expect(ranks.map((t) => (t.condition as { rank: number }).rank)).toEqual([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
     expect(ranks.every((t) => t.provisional === true && !t.hidden)).toBe(true);
-    expect(ranks.map((t) => titleName(t, 'shinigami'))).toEqual(['9석', '8석', '7석', '6석', '5석', '4석', '3석', '부대장', '대장 대행', '대장']);
+    expect(ranks.map((t) => titleName(t, 'shinigami'))).toEqual(['10석', '9석', '8석', '7석', '6석', '5석', '4석', '3석', '부대장', '대장']);
     // 종족 설정 rankNames(번호 1~10)와 같은 이름
     for (const f of [H, S]) expect(ranks.map((t) => titleName(t, f.id))).toEqual([10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => f.rankNames[n - 1]));
   });
@@ -303,13 +303,13 @@ describe('86장 보관함', () => {
 
 describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 44(C.150 장비로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([52, 52]); // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);
     s.shared.items = { calm: 3 };
     s.shared.wanderer = { lapsSince: 7, visit: { at: 1, runId: 2, tier: 3, stock: [{ itemId: 'w-calm-deep', price: 140, sold: false }] } };
-    s.runLog.idle.push({ at: 1, factionId: 'hollow', from: 0, hours: 1, activeHours: 1, share: 0.1, laps: 4, steps: 48, gold: 88, ev: 1, tiles: [], food: 0 });
+    s.runLog.idle.push({ at: 1, factionId: 'hollow', from: 0, hours: 1, activeHours: 1, share: 0.1, laps: 4, steps: 48, gold: 88, ev: 1, tiles: [], food: 0, gear: 0 });
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m.tiles.presets).toEqual(s.tiles.presets);
     expect(m.shared.items).toEqual({ calm: 3 });

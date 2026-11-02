@@ -1,0 +1,879 @@
+{
+ "faction": "hollow",
+ "shots": [
+  "h-home-3",
+  "h-05-battle-2"
+ ],
+ "errors": [],
+ "reachedNext": true,
+ "rec": [
+  {
+   "name": "home-intro",
+   "step": "홈 안내 1 / 10",
+   "stage": "",
+   "title": "둥지",
+   "body": "여기가 둥지다.버튼이 하는 일을 하나씩 살펴",
+   "screen": "bha-room",
+   "card": [
+    108,
+    24,
+    240,
+    126
+   ],
+   "hole": null,
+   "side": "center",
+   "dist": null,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 9
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 2 / 10",
+   "stage": "",
+   "title": "월드맵",
+   "body": "웨코문도 지도로 나간다.",
+   "screen": "bha-room",
+   "card": [
+    266,
+    24,
+    456,
+    101
+   ],
+   "hole": [
+    104,
+    60,
+    154,
+    219
+   ],
+   "side": "right",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 1,
+   "edge": 9
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 3 / 10",
+   "stage": "",
+   "title": "책장",
+   "body": "만난 진화체와 칭호를 모아 본다.",
+   "screen": "bha-room",
+   "card": [
+    280,
+    24,
+    456,
+    101
+   ],
+   "hole": [
+    541,
+    129,
+    89,
+    97
+   ],
+   "side": "above",
+   "dist": 4,
+   "holeCover": 0,
+   "charCover": 1,
+   "edge": 9
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 4 / 10",
+   "stage": "",
+   "title": "가방",
+   "body": "장비와 물건을 꺼내 쓴다.",
+   "screen": "bha-room",
+   "card": [
+    108,
+    108,
+    240,
+    101
+   ],
+   "hole": [
+    228,
+    217,
+    89,
+    97
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 93
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 5 / 10",
+   "stage": "",
+   "title": "상태",
+   "body": "배부름·컨디션·광기다.",
+   "screen": "bha-room",
+   "card": [
+    484,
+    37,
+    240,
+    101
+   ],
+   "hole": [
+    370,
+    47,
+    106,
+    82
+   ],
+   "side": "right",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 1,
+   "edge": 22
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 6 / 10",
+   "stage": "",
+   "title": "체력",
+   "body": "모험에는 이 체력 그대로 나간다.",
+   "screen": "bha-room",
+   "card": [
+    505,
+    226,
+    231,
+    101
+   ],
+   "hole": [
+    347,
+    259,
+    152,
+    34
+   ],
+   "side": "right",
+   "dist": 6,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 48
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 7 / 10",
+   "stage": "",
+   "title": "돌보기",
+   "body": "먹이·재우기·교감으로 돌본다.",
+   "screen": "bha-room",
+   "card": [
+    108,
+    210,
+    240,
+    101
+   ],
+   "hole": [
+    103,
+    319,
+    537,
+    56
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 64
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 8 / 10",
+   "stage": "",
+   "title": "대기 보상",
+   "body": "쉬는 동안 쌓인 보상을 받는다.",
+   "screen": "bha-room",
+   "card": [
+    496,
+    210,
+    240,
+    101
+   ],
+   "hole": [
+    641,
+    319,
+    56,
+    56
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 64
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 9 / 10",
+   "stage": "",
+   "title": "더보기",
+   "body": "설정과 도움말이 있다.",
+   "screen": "bha-room",
+   "card": [
+    496,
+    210,
+    240,
+    101
+   ],
+   "hole": [
+    687,
+    319,
+    56,
+    56
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 64
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 10 / 10",
+   "stage": "0",
+   "title": "첫 모험",
+   "body": "이제 모험을 떠나자.월드맵으로 나가 보자.",
+   "screen": "bha-room",
+   "card": [
+    266,
+    24,
+    456,
+    126
+   ],
+   "hole": [
+    104,
+    60,
+    154,
+    219
+   ],
+   "side": "right",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 18,
+   "edge": 9
+  },
+  {
+   "name": "home-intro",
+   "step": "홈 안내 10 / 10",
+   "stage": "1",
+   "title": "첫 모험",
+   "body": "웨코문도 지도다.모험으로 떠나 보자.",
+   "screen": "bha-room bha-worldmap",
+   "card": [
+    280,
+    123,
+    456,
+    126
+   ],
+   "hole": [
+    614,
+    257,
+    56,
+    84
+   ],
+   "side": "above",
+   "dist": 9,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 108
+  },
+  {
+   "name": "first-run",
+   "step": "1 / 1",
+   "stage": "",
+   "title": "첫 모험",
+   "body": "모험을 떠나 길을 나아가다 보면 적을 마주친",
+   "screen": "bha-app--fixed bha-exp",
+   "card": [
+    194,
+    132,
+    456,
+    126
+   ],
+   "hole": null,
+   "side": "center",
+   "dist": null,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 117
+  },
+  {
+   "name": "script",
+   "step": "튜토리얼 1 / 5",
+   "stage": "",
+   "title": "강공격",
+   "body": "적의 강공격 게이지가 가득 찼다!막기를 눌러",
+   "screen": "",
+   "card": [
+    280,
+    138,
+    456,
+    108
+   ],
+   "hole": [
+    555,
+    254,
+    112,
+    40
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 123
+  },
+  {
+   "name": "script",
+   "step": "튜토리얼 2 / 5",
+   "stage": "",
+   "title": "막기 성공",
+   "body": "강공격을 막아 냈다!강적의 강공격은 때맞춰 ",
+   "screen": "",
+   "card": [
+    282,
+    132,
+    280,
+    126
+   ],
+   "hole": null,
+   "side": "center",
+   "dist": null,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 117
+  },
+  {
+   "name": "script",
+   "step": "튜토리얼 3 / 5",
+   "stage": "",
+   "title": "위기",
+   "body": "연달아 들어온 강공격에 체력이 얼마 남지 않",
+   "screen": "",
+   "card": [
+    108,
+    125,
+    280,
+    156
+   ],
+   "hole": [
+    103,
+    289,
+    640,
+    88
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 94
+  },
+  {
+   "name": "script",
+   "step": "튜토리얼 4 / 5",
+   "stage": "",
+   "title": "좋아!",
+   "body": "블록 스킬을 잘 썼다!",
+   "screen": "",
+   "card": [
+    194,
+    145,
+    456,
+    101
+   ],
+   "hole": null,
+   "side": "center",
+   "dist": null,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 129
+  },
+  {
+   "name": "script",
+   "step": "튜토리얼 5 / 5",
+   "stage": "",
+   "title": "체인",
+   "body": "같은 블록이 모이면 체인이 발동해 더 강한 ",
+   "screen": "",
+   "card": [
+    195,
+    173,
+    456,
+    108
+   ],
+   "hole": [
+    103,
+    289,
+    640,
+    88
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 94
+  },
+  {
+   "name": "first-absorb",
+   "step": "1 / 2",
+   "stage": "",
+   "title": "포식",
+   "body": "적을 쓰러뜨리면 포식해서 성장할 수 있다.포",
+   "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb",
+   "card": [
+    194,
+    95,
+    456,
+    200
+   ],
+   "hole": null,
+   "side": "center",
+   "dist": null,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 80
+  },
+  {
+   "name": "first-absorb",
+   "step": "2 / 2",
+   "stage": "",
+   "title": "첫 포식",
+   "body": "갈래를 누르면 아래에 설명이 나온다.같은 갈",
+   "screen": "bha-lcdpage bha-absorbpage bha-tutabsorb",
+   "card": [
+    108,
+    27,
+    456,
+    126
+   ],
+   "hole": [
+    107,
+    161,
+    349,
+    121
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 12
+  },
+  {
+   "name": "wound",
+   "step": "튜토리얼 1 / 2",
+   "stage": "0",
+   "title": "겨우 쓰러뜨렸다",
+   "body": "겨우 쓰러뜨렸지만 치명상을 입었다.이대로는 ",
+   "screen": "bha-lcdpage bha-absorbpage bha-wound",
+   "card": [
+    440,
+    108,
+    280,
+    126
+   ],
+   "hole": [
+    421,
+    47,
+    318,
+    54
+   ],
+   "side": "below",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 93
+  },
+  {
+   "name": "wound",
+   "step": "튜토리얼 2 / 2",
+   "stage": "0",
+   "title": "둥지로",
+   "body": "갈라진 가면 틈으로 영력이 새어 나간다.비틀",
+   "screen": "bha-lcdpage bha-absorbpage bha-wound",
+   "card": [
+    440,
+    108,
+    280,
+    126
+   ],
+   "hole": [
+    421,
+    47,
+    318,
+    54
+   ],
+   "side": "below",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 93
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 1 / 7",
+   "stage": "",
+   "title": "빈사",
+   "body": "치명상을 입어 빈사 상태가 됐다.이대로 두면",
+   "screen": "bha-room",
+   "card": [
+    108,
+    143,
+    240,
+    126
+   ],
+   "hole": [
+    347,
+    277,
+    152,
+    34
+   ],
+   "side": "above",
+   "dist": 9,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 106
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 2 / 7",
+   "stage": "",
+   "title": "치료",
+   "body": "구급상자 1개가 들어왔다.가방을 열어 보자.",
+   "screen": "bha-room",
+   "card": [
+    108,
+    111,
+    240,
+    126
+   ],
+   "hole": [
+    239,
+    245,
+    67,
+    77
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 96
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 2 / 7",
+   "stage": "",
+   "title": "치료",
+   "body": "구급상자 1개가 들어왔다.가방을 열어 보자.",
+   "screen": "bha-lcdpage bha-chest-page",
+   "card": [
+    194,
+    132,
+    456,
+    126
+   ],
+   "hole": null,
+   "side": "center",
+   "dist": null,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 117
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 3 / 7",
+   "stage": "0",
+   "title": "구급상자",
+   "body": "구급상자를 사용해 보자.",
+   "screen": "bha-lcdpage bha-chest-page",
+   "card": [
+    280,
+    245,
+    456,
+    101
+   ],
+   "hole": [
+    577,
+    107,
+    163,
+    130
+   ],
+   "side": "below",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 29
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 3 / 7",
+   "stage": "1",
+   "title": "구급상자",
+   "body": "구급상자를 사용해 보자.",
+   "screen": "bha-lcdpage bha-chest-page",
+   "card": [
+    280,
+    24,
+    456,
+    101
+   ],
+   "hole": [
+    362,
+    296,
+    346,
+    68
+   ],
+   "side": "above",
+   "dist": 171,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 9,
+   "flip": true
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 3 / 7",
+   "stage": "0",
+   "title": "구급상자",
+   "body": "빈사가 풀렸다!",
+   "screen": "bha-lcdpage bha-chest-page",
+   "card": [
+    280,
+    245,
+    456,
+    101
+   ],
+   "hole": [
+    577,
+    107,
+    163,
+    130
+   ],
+   "side": "below",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 29,
+   "flip": true
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 4 / 7",
+   "stage": "0",
+   "title": "온천",
+   "body": "빈사는 풀렸지만 체력은 아직 그대로다.온천에",
+   "screen": "bha-room",
+   "card": [
+    266,
+    24,
+    456,
+    126
+   ],
+   "hole": [
+    104,
+    60,
+    154,
+    219
+   ],
+   "side": "right",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 18,
+   "edge": 9
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 4 / 7",
+   "stage": "1",
+   "title": "온천",
+   "body": "온천으로 가 보자.",
+   "screen": "bha-room bha-worldmap",
+   "card": [
+    268,
+    75,
+    456,
+    101
+   ],
+   "hole": [
+    148,
+    66,
+    113,
+    118
+   ],
+   "side": "right",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 60
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 4 / 7",
+   "stage": "2",
+   "title": "온천",
+   "body": "체력이 차오른다.",
+   "screen": "bha-spa",
+   "card": [
+    108,
+    167,
+    240,
+    101
+   ],
+   "hole": [
+    348,
+    112,
+    150,
+    212
+   ],
+   "side": "left",
+   "dist": 0,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 107
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 4 / 7",
+   "stage": "2",
+   "title": "온천",
+   "body": "체력이 가득 찼다!",
+   "screen": "bha-spa",
+   "card": [
+    108,
+    167,
+    240,
+    101
+   ],
+   "hole": [
+    348,
+    112,
+    150,
+    212
+   ],
+   "side": "left",
+   "dist": 0,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 107
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 5 / 7",
+   "stage": "",
+   "title": "쉬기",
+   "body": "온천에서는 체력이 빠르게 찬다.이제 방으로 ",
+   "screen": "bha-spa",
+   "card": [
+    108,
+    82,
+    240,
+    126
+   ],
+   "hole": [
+    355,
+    112,
+    136,
+    66
+   ],
+   "side": "left",
+   "dist": 7,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 67
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 6 / 7",
+   "stage": "0",
+   "title": "먹이",
+   "body": "온천에서 배가 꺼졌다.짐승 고기를 먹어 보자",
+   "screen": "bha-room",
+   "card": [
+    108,
+    185,
+    240,
+    126
+   ],
+   "hole": [
+    103,
+    319,
+    184,
+    56
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 64
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 6 / 7",
+   "stage": "1",
+   "title": "먹이",
+   "body": "온천에서 배가 꺼졌다.짐승 고기를 먹어 보자",
+   "screen": "bha-room",
+   "card": [
+    108,
+    131,
+    240,
+    126
+   ],
+   "hole": [
+    232,
+    265,
+    132,
+    57
+   ],
+   "side": "above",
+   "dist": 8,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 116
+  },
+  {
+   "name": "recover",
+   "step": "회복 안내 7 / 7",
+   "stage": "",
+   "title": "회복 끝",
+   "body": "배가 든든해졌다.방에서 쉬어도 체력이 조금씩",
+   "screen": "bha-room",
+   "card": [
+    108,
+    125,
+    240,
+    126
+   ],
+   "hole": [
+    347,
+    259,
+    152,
+    34
+   ],
+   "side": "above",
+   "dist": 9,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 110
+  },
+  {
+   "name": "first-run-room",
+   "step": "1 / 1",
+   "stage": "",
+   "title": "다음 할 일",
+   "body": "첫 모험을 마쳤다.먹이를 챙기고 수련장에서 ",
+   "screen": "bha-room",
+   "card": [
+    108,
+    199,
+    240,
+    167
+   ],
+   "hole": null,
+   "side": "center",
+   "dist": null,
+   "holeCover": 0,
+   "charCover": 0,
+   "edge": 9
+  }
+ ],
+ "flips": 2
+}

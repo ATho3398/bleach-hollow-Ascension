@@ -9,7 +9,7 @@ describe('종이인형 데이터', () => {
     expect(validateRig(HUMANOID, MOTIONS)).toEqual([]);
   });
   it('동작 7개(대기·걷기·공격·공격2·특수1·특수2·맞음)가 있다', () => {
-    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'hit', 'idle', 'move', 'skill', 'skill2']);
+    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'hit', 'idle', 'kick', 'move', 'punch', 'skill', 'skill2']);
     expect(MOTIONS.idle!.loop && MOTIONS.move!.loop).toBe(true);
     expect(MOTIONS.attack!.hit).toBeGreaterThan(0);
   });
