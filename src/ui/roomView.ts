@@ -319,7 +319,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
         const fed = food ? feedNest(save, food) : null;
-        if (!fed) return say('먹을 것이 없다. 모험에서 적을 이기면 먹이를 얻는다.');
+        if (!fed) return say(fixParticles(`먹을 것이 없다. 모험에서 적을 이기면 ${faction.foodGroupName}을(를) 얻는다.`));
         if (fed === 'spat') {
           // 10분에 3개를 넘김 (GDD 109장 6): 먹이는 없어지고 효과 없음 — 뱉는 모션 + 말풍선
           hd.persist();

@@ -83,10 +83,11 @@ export function careBlockText(_b: 'dead'): { eyebrow: string; title: string; met
   return { eyebrow: CARE_STATUS_NAMES.dead, title: '방에서 [부활]해야 다시 움직일 수 있다', meta: '죽은 몸으로는 아무 데도 갈 수 없다.' };
 }
 
-/** 빈사 남은 시간 "5:42" (시:분, 올림 분) */
+/** 빈사 남은 시간 "5시간 59분" (올림 분, 1시간 미만이면 "59분" — GDD 176장 15: "6:00"이 6분처럼 보였다) */
 export function dyingClock(leftMs: number): string {
   const m = Math.max(0, Math.ceil(leftMs / 60_000));
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+  const hh = Math.floor(m / 60);
+  return hh > 0 ? `${hh}시간 ${m % 60}분` : `${m % 60}분`;
 }
 
 /** 복귀 알림 띠 (GDD 102-7): "○시간 동안 비웠다 — 배부름 −n · 컨디션 −n · 영압 안정도 −n". 줄어든 것이 없으면 그 칸은 뺀다 */

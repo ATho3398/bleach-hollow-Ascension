@@ -14,7 +14,7 @@ import { fullnessOf } from './bha/fullness';
 import { hpNumbers } from './bha/battle';
 import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
-import { BATTLE_ITEM_IDS, choosePet, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { BATTLE_ITEM_IDS, choosePet, HEAL_ROOM_LOCK, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
 import { gearCarry } from '../engine/gear';
 import { equipTab, equipTitle, gearArt, openGear } from './equipView';
@@ -241,7 +241,7 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   const p = panel({ title: '가진 것' });
   p.setAttribute('aria-label', '가진 것');
   const food = h('p', 'bha-small');
-  food.append('먹이: ', FOOD_IDS.map((id) => `${faction.foodNames[id]} ${save.shared.food[id]}`).join(' · '));
+  food.append(`${faction.foodGroupName}: `, FOOD_IDS.map((id) => `${faction.foodNames[id]} ${save.shared.food[id]}`).join(' · '));
   const crystals = h('p', 'bha-small');
   crystals.append(`${SOUL_CRYSTAL_NAME} `, h('b', 'bha-num', String(save.shared.soulCrystals)));
   const coins = h('p', 'bha-small');
@@ -457,10 +457,11 @@ export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'co
   return e.detail.replace(/^데리고 다니는 중 · /, '');
 }
 /** 카드 아래 동작 칩: 사용 · 착용/해제 · 데리고 가기/두고 가기 · 장착/강화 (없으면 undefined) */
-export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'>): string | undefined {
+export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'> & { lock?: string | null }): string | undefined {
   if (e.gear) return e.gear.slot ? '해제·강화' : '장착·강화';
   switch (e.action) {
-    case 'use': return '사용';
+    // 지금 못 쓰면 '사용' 대신 쓰는 곳·이유 (GDD 176장 16: 방에서 회복 물건 카드가 '사용'인데 열면 꺼져 있었다)
+    case 'use': return !e.lock ? '사용' : e.lock === HEAL_ROOM_LOCK ? '모험 중' : '못 씀';
     case 'equip': return '착용';
     case 'unequip': return '해제';
     case 'take': return '데리고 가기';

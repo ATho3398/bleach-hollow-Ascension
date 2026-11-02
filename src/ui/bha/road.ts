@@ -108,11 +108,11 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       const nest = el('button', 'bha-road__cell bha-road__cell--nest is-locked');
       nest.type = 'button';
       nest.dataset.nest = ''; // data-cell 이 없어 끌어 놓기 대상이 아니다
-      nest.setAttribute('aria-label', '0번 칸 (둥지, 고정 칸)');
-      nest.title = `${LOCKED_NOTE} (둥지)`;
+      nest.setAttribute('aria-label', '0번 칸 (출발, 고정 칸)');
+      nest.title = `${LOCKED_NOTE} (출발 칸)`;
       nest.append(icon('i-nest'), lockBadge());
       nest.onclick = () => {
-        note = `${LOCKED_NOTE} (둥지)`;
+        note = `${LOCKED_NOTE} (출발 칸)`;
         refresh();
       };
       cells.push(nest);

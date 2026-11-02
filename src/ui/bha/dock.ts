@@ -120,7 +120,7 @@ export function createDock(o: DockOpts): Dock {
     delete tray.dataset.scList;
     tray.className = `bha-homedock__tray bha-homedock__tray--${panel}`;
     if (panel === 'food') {
-      tray.setAttribute('aria-label', '먹이 고르기');
+      tray.setAttribute('aria-label', `${faction.nestActionsShort?.feed ?? faction.nestActions.feed} 고르기`);
       tray.dataset.scList = '';
       for (const id of FOOD_IDS) {
         const f = foodEffect(id);

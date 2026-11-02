@@ -377,7 +377,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   rows.append(
     el('p', '', `수련치 +${out.points} (지금 ${Math.min(t.points, TX.pointsToComplete)} / ${TX.pointsToComplete})`),
     ...(evStr ? [labeled('노력치 ', evText(evStr))] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
-    el('p', 'bha-faint', [out.condition ? signedText('컨디션', out.condition) : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || '둥지 수치 변화 없음'),
+    el('p', 'bha-faint', [out.condition ? signedText('컨디션', out.condition) : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || `${faction.nestName} 수치 변화 없음`),
     el('p', 'bha-faint', `남은 수련권 ${t.tickets}/${TX.ticketsMax}`),
   );
   const left = [panel({ title: `${cfg.name} · ${out.level}단계 ${out.won ? '승리' : '패배'}`, aside: out.won ? tag('승리', 'kind') : undefined }, rows)];

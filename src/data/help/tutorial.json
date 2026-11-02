@@ -168,7 +168,7 @@
         "@.bha-spa__status"
       ],
       "title": "쉬기",
-      "body": "{spaName}에서는 체력이 빠르게 찬다.\n이제 방으로 돌아가자."
+      "body": "{spaName}에서 체력을 가득 채웠다.\n{nestName}(으)로 돌아왔다."
     },
     {
       "id": "feed",
@@ -176,13 +176,13 @@
         "@.bha-homedock__carebtn--feed"
       ],
       "title": "{nestActionsShort.feed}",
-      "body": "온천에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자.",
+      "body": "{spaName}에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자.",
       "stages": [
         {
           "targets": [
             "@.bha-homedock__carebtn--feed"
           ],
-          "body": "온천에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
+          "body": "{spaName}에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
         },
         {
           "targets": [
@@ -193,7 +193,7 @@
             "@.bha-room__status",
             "@.bha-room__hp"
           ],
-          "body": "온천에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
+          "body": "{spaName}에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
         }
       ],
       "avoid": [
@@ -207,7 +207,7 @@
         "@.bha-room__hp"
       ],
       "title": "회복 끝",
-      "body": "배가 든든해졌다.\n방에서 쉬어도 체력이 조금씩 찬다.",
+      "body": "배가 든든해졌다.\n{nestName}에서 쉬어도 체력이 조금씩 찬다.",
       "avoid": [
         "@.bha-room__bubble"
       ]

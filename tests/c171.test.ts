@@ -7,7 +7,7 @@ import { TUTORIAL_SCENES } from '../src/data/help';
 import { FLOAT_SPOTS, HURT_SPOTS } from '../src/ui/bha/battle';
 import { actionChipOf, bagGroupOf, cardDetailOf } from '../src/ui/lcdScreens';
 import { absorbModeText } from '../src/ui/absorbView';
-import { inventoryOf, petEffectText } from '../src/inventory';
+import { HEAL_ROOM_LOCK, inventoryOf, petEffectText } from '../src/inventory';
 import { goldRows } from '../src/shop';
 import { newSaveData } from '../src/game';
 
@@ -124,6 +124,7 @@ describe('보관함·상점 (#54~65)', () => {
     expect(actionChipOf({ action: 'use' })).toBe('사용');
     expect(actionChipOf({ action: 'equip' })).toBe('착용');
     expect(actionChipOf({ action: 'take' })).toBe('데리고 가기');
+    expect(actionChipOf({ action: 'use', lock: HEAL_ROOM_LOCK })).toBe('모험 중'); // GDD 176장 16
   });
   it("물건 분류에 '타일' 없음 · 타일 탭은 목록·합성만 (#56·57), 슬롯 머리 숫자 = 남는 수 (#55)", () => {
     const l = read('src/ui/lcdScreens.ts');

@@ -56,7 +56,7 @@ export function rebirthLists(faction: FactionConfig): { resets: string[]; keeps:
       '진화 때 받은 특성 (특성 칸 +1, 최대 4)',
       '등급 이력',
       '수련 완료·수련치·수련권',
-      `먹이·${TRADE_CURRENCY_NAME}·${JADE_NAME}·${SOUL_CRYSTAL_NAME}·가진 타일`,
+      `${faction.foodGroupName}·${TRADE_CURRENCY_NAME}·${JADE_NAME}·${SOUL_CRYSTAL_NAME}·가진 타일`,
       '입은 스킨',
     ],
   };

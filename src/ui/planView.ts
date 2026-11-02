@@ -46,7 +46,7 @@ export function difficultyInfo(faction: FactionConfig, star: number, tierIndex: 
   const enemy = streakEnemyFactor(n);
   const rec = star === recommendedDifficulty(tierIndex) ? ` · ${L.recommended}` : '';
   const head = `${difficultyText(faction, star)}${n > 0 ? ` · 연속 ${n}` : ''}${rec}`;
-  const bonus = [food > 1 ? `먹이·노력치 ${pct(food)}` : '', gold > 1 ? `골드 ${pct(gold)}` : ''].filter(Boolean).join(' · ');
+  const bonus = [food > 1 ? `${faction.foodGroupName}·노력치 ${pct(food)}` : '', gold > 1 ? `골드 ${pct(gold)}` : ''].filter(Boolean).join(' · ');
   return `${head}: 적은 ${star}단계(${faction.tierNames[star - 1] ?? ''}) 기준${enemy > 1 ? ` ${pct(enemy)}` : ''}${bonus ? ` · ${bonus}` : ''}`;
 }
 

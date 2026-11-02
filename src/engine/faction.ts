@@ -430,6 +430,8 @@ export interface FactionConfig {
   nestActions: Record<NestAction, string>;
   /** 홈 독 버튼에 쓰는 짧은 이름 (GDD 100장 #14, 4글자 안팎). 없는 행동은 nestActions */
   nestActionsShort?: Partial<Record<NestAction, string>>;
+  /** 먹이 묶음 이름 (GDD 176장 3): 결과 '얻은 …'·가진 것 '…:' 등 화면 글자 — 호로 '먹이' / 사신 '식량' */
+  foodGroupName: string;
   /** 종족 선택 카드 아래 한 줄 소개 (GDD 100장 #6). 없으면 생략 */
   tagline?: string;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
@@ -492,7 +494,7 @@ export function extrasErrors(where: string, v: unknown): string[] {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'foodGroupName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   const amn = (r.absorbModeNames ?? {}) as Record<string, unknown>;

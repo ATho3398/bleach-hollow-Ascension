@@ -128,13 +128,13 @@ describe('진화 연출 문구 데이터', () => {
 describe('진화 후 달라진 점 행', () => {
   const faction = FACTIONS[0]!;
   const form = FORM_TABLE.find((f) => f.tier === 2 && !f.hidden)!;
-  it('슬롯은 진화 전 → 후 칸 수, 체력 가득, 그 밖의 행은 종족값·외형 (속성·고유 특성은 extra 가 있을 때만)', () => {
+  it('슬롯은 +N칸, 체력 가득, 능력치 한 줄 — 외형 줄·종족값 수치·칸 수 전후 없음 (GDD 176장 20)', () => {
     const rows = evolutionEffectRows(faction, form, 4);
     const per = BALANCE.provisional.evolution.slotsPerEvolution;
-    expect(rows[0]!.value).toBe(`${4 - per} → 4칸`);
-    expect(rows.map((r) => r.label)).toEqual([faction.slotName, '체력', '종족값', '외형']); // 체력 가득 회복 (C.223, GDD 145장 2)
+    expect(rows[0]!.value).toBe(`+${per}칸`);
+    expect(rows.map((r) => r.label)).toEqual([faction.slotName, '체력', '능력치']); // 체력 가득 회복 (C.223, GDD 145장 2)
     expect(rows[1]!.value).toBe('가득 회복');
-    expect(rows[2]!.value).toBe(statsLine(faction.id, form.stats));
+    expect(String(rows[2]!.value)).not.toMatch(/\d/);
   });
   it('종족값 한 줄은 능력치 6개를 이름과 함께 적는다', () => {
     const line = statsLine(faction.id, form.stats);

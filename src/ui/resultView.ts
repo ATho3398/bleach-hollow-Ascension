@@ -3,7 +3,7 @@ import { fullnessOf } from './bha/fullness';
 import { BALANCE } from '../config/balance';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
-import { traitName } from '../data/traits';
+import { traitNameWithElement } from '../data/traits';
 import type { ExpeditionState } from '../engine/expedition';
 import { summarize } from '../engine/expedition';
 import { groundName, type FactionConfig, type FoodId } from '../engine/faction';
@@ -14,7 +14,7 @@ import { splitApp } from './bha/split';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
-import { growthLines, type GrowthInput } from './bha/growthLogic';
+import { EVOLVE_HINT, growthLines, type GrowthInput } from './bha/growthLogic';
 import { chapterClearJade, chapterContent, getEpisode, STORY_CHAPTERS } from '../data/story';
 import { bossName } from '../data/bosses';
 import { BALANCE as B } from '../config/balance';
@@ -23,6 +23,7 @@ import { toward } from './bha/nestLogic';
 import { expeditionEndVitals } from '../engine/nest';
 import { difficultyGoldMultiplier } from '../engine/difficulty';
 import { asBack } from './bha/screenBack';
+import { devText } from './displayName';
 
 /** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
 export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
@@ -61,7 +62,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const s = summarize(exp);
   const win = endTone(exp.endReason!) === 'win';
   const wins = exp.battles.filter((b) => b.won).length;
-  const names = (ids: string[], f: (id: string) => string) => ids.map(f).join(', ');
+  const names = (ids: string[], f: (id: string) => string) => ids.map(f).join(' · ');
   const countRow = (label: string, ic: string, ids: string[], f: (id: string) => string, unit: string, mod: 'good' | 'bad'): IconInfoRow => {
     const v = val(`${ids.length}${unit}`);
     if (ids.length > 0) v.append(el('br'), el('small', '', names(ids, f)));
@@ -94,7 +95,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     if (lost.length > 0) notes.push(`잃음 ${list(lost)}`);
     if ((fs?.fallback ?? 0) > 0) notes.push(`주변에서 겨우 먹을 것을 찾았다 (${faction.foodNames.snack} ${fs!.fallback})`);
     for (const n of notes) v.append(el('br'), el('small', '', n));
-    return { label: '얻은 먹이', icon: 'i-care-feed', value: v, mod: gained.length > 0 || (fs?.fallback ?? 0) > 0 ? 'good' : lost.length > 0 ? 'bad' : undefined };
+    return { label: `얻은 ${faction.foodGroupName}`, icon: 'i-care-feed', value: v, mod: gained.length > 0 || (fs?.fallback ?? 0) > 0 ? 'good' : lost.length > 0 ? 'bad' : undefined };
   }
 
   // 골드 (C.57, GDD 25-5): 번 것 − 상인에게 쓴 것, 패배로 잃은 것. 타일 변수 기록(시너지·변이·이벤트)은 한 줄로
@@ -126,8 +127,8 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     countRow('지킨 타일', 'i-deck', s.kept, (id) => tileName(id, faction.id), '장', 'good'),
     countRow('잃은 타일', 'i-deck', s.lost, (id) => tileName(id, faction.id), '장', 'bad'),
     ...permTileRows(),
-    countRow('얻은 특성', 'i-slot', s.keptTraits, (id) => traitName(id, faction.id), '개', 'good'),
-    countRow('잃은 특성', 'i-slot', s.lostTraits, (id) => traitName(id, faction.id), '개', 'bad'),
+    countRow('얻은 특성', 'i-slot', s.keptTraits, (id) => traitNameWithElement(id, faction.id), '개', 'good'), // 속성까지 '흙 탄 · 물 조' (GDD 176장 17)
+    countRow('잃은 특성', 'i-slot', s.lostTraits, (id) => traitNameWithElement(id, faction.id), '개', 'bad'),
     foodRow(),
     goldRow(),
     {
@@ -142,7 +143,9 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const sum = panel({ title: '모험 요약' }, iconInfo(rows));
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
-  seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');
+  // 플레이어에겐 '기록을 남겼다'만, 시드·런 로그는 테스트 모드에서만 (GDD 176장 20·21 개발자 말 정리). 줄은 늘 있어 [둥지로] 자리가 같다
+  if (devText()) seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');
+  else seed.append(icon('i-check', 'sm'), ' 모험 기록을 남겼다');
 
   const dock = el('div', 'bha-dock');
   dock.append(asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome })));
@@ -155,18 +158,22 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const storyBox = storyLines.length > 0 ? el('div', 'bha-growth bha-result__story') : null;
   storyBox?.setAttribute('role', 'status');
   for (const line of storyLines) storyBox!.append(el('p', 'bha-growth__line', line));
-  const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [...(storyBox ? [storyBox] : []), ...(growthBox ? [growthBox] : []), sum]);
+  // 진화했으면 [둥지로] 아래 한 줄 (GDD 176장 6): 이름 없이, 오른쪽 맨 위(알림 띠 자리)와 안 겹치게. 버튼 위가 아니라 아래라 버튼 자리는 그대로
+  const evolveNote = growth?.evolvedTo ? el('div', 'bha-growth bha-result__evolve') : null;
+  evolveNote?.setAttribute('role', 'status');
+  evolveNote?.append(el('p', 'bha-growth__line', EVOLVE_HINT));
+  const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock, ...(evolveNote ? [evolveNote] : [])], [...(storyBox ? [storyBox] : []), ...(growthBox ? [growthBox] : []), sum]);
   if (win) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11)
 }
 
 /** 원정 도중 귀환 결과 카드 한 줄 (C.170, GDD 100장 #32): "전투 3 · 포식 1 · 골드 +40 · 먹이 2 · 타일 1장". 행동 이름은 종족 설정(absorbActionName) */
-export function abortSummaryLine(exp: ExpeditionState, faction: Pick<FactionConfig, 'absorbActionName'>): string {
+export function abortSummaryLine(exp: ExpeditionState, faction: Pick<FactionConfig, 'absorbActionName' | 'foodGroupName'>): string {
   const sum = summarize(exp);
   return [
     `전투 ${exp.battles.length}`,
     `${faction.absorbActionName} ${exp.absorbRecords.filter((a) => a.absorbed).length}`,
     `${TRADE_CURRENCY_NAME} +${sum.keptGold}`,
-    sum.keptFood.length > 0 ? `먹이 ${sum.keptFood.length}` : '',
+    sum.keptFood.length > 0 ? `${faction.foodGroupName} ${sum.keptFood.length}` : '',
     sum.kept.length > 0 ? `타일 ${sum.kept.length}장` : '',
   ].filter(Boolean).join(' · ');
 }

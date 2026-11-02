@@ -268,7 +268,7 @@ export function startApp(host: HTMLElement): void {
       chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalSec: String(Math.round(1 / HH.spa.hpPerSecond)), // 튜토리얼 온천 10초 · 평소 약 20초 (GDD 164장 1)
       idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
-      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
+      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food, nestName: faction.nestName, // 5/7·7/7 '방' = 종족 이름 (GDD 176장 9)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -1087,7 +1087,7 @@ export function startApp(host: HTMLElement): void {
         if (!switchTrack(s, fid)) return;
         persist();
         nestScreen();
-        showToast({ eyebrow: '트랙 전환', title: `${getFaction(fid).name} 트랙`, meta: '키우기는 트랙마다 따로, 먹이·타일·영혼 결정은 같이 쓴다.' }, 0, 3000);
+        showToast({ eyebrow: '트랙 전환', title: `${getFaction(fid).name} 트랙`, meta: `키우기는 트랙마다 따로, ${getFaction(fid).foodGroupName}·타일·영혼 결정은 같이 쓴다.` }, 0, 3000);
       } : null,
       onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
       onSettings: settingsOpener(true),

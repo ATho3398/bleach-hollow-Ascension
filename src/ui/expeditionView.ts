@@ -523,7 +523,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const info = el('div', 'bha-sheet__scroll');
     info.append(title);
     // 노란 알림은 맨 위 (GDD 140장 2)
-    if (over) info.append(notice('warn', `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
+    // 권장 바퀴 딱 = '다 돌았다', 넘기면 '넘겼다' (GDD 176장 18: 2바퀴 막 끝냈는데 '넘겼다'였다)
+    if (over) info.append(notice('warn', exp.lap === EX.defaultLaps ? '권장 바퀴를 다 돌았다. 더 돌수록 보상도 위험도 커진다.' : `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
     // 가로 화면 한 장에 다 들어가게 (C.218, GDD 140장 2): 드래프트가 있으면 왼쪽 = 카드 3장(같은 크기 세로 줄), 오른쪽 = 길·손 배치판
     const body = el('div', `bha-nestsheet__body${d ? ' has-draft' : ''}`);
     if (d) sheet.classList.add('bha-sheet--wide');
