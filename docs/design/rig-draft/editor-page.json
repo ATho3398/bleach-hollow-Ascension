@@ -11,7 +11,18 @@
     ],
     [
      "female",
+     "rot",
+     "arm_R"
+    ],
+    [
+     "female",
      "shift",
+     "arm_R"
+    ]
+   ],
+   "motions": [
+    [
+     "female/dying",
      "arm_R"
     ]
    ]

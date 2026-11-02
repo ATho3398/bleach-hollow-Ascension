@@ -272,7 +272,7 @@
         "forearm_R": -15,
         "torso": 2,
         "head": -5,
-        "arm_R": 14
+        "arm_R": 4
       },
       "shift": {
         "arm_R": [-0.54, 0.43]
@@ -289,7 +289,7 @@
         "forearm_R": -15,
         "torso": 2,
         "head": -5,
-        "arm_R": 14
+        "arm_R": 4
       },
       "shift": {
         "arm_R": [-0.54, 0.43]
@@ -337,7 +337,7 @@
         "forearm_R": [29, 41]
       },
       "rot": {
-        "arm_R": 14,
+        "arm_R": 4,
         "forearm_R": -15,
         "head": -5,
         "torso": 2
@@ -355,7 +355,7 @@
         "forearm_R": [29, 41]
       },
       "rot": {
-        "arm_R": 14,
+        "arm_R": 4,
         "forearm_R": -15,
         "head": -5,
         "torso": 2
