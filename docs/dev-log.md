@@ -1553,3 +1553,15 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **전수 확인**(`scripts/c248-proof.cjs`, 새 게임부터 다음 할 일까지 창 36장, 두 종족 같은 값): 대상과 창 거리 중앙값 109 → 8px · 40px 넘게 떨어진 창 18 → 1 · 대상 가림 0 → 0 · 같은 화면 위↔아래 뒤집힘 2 → 2 · 화면 반대쪽으로 튄 창 6 → 1. 남은 1(뒤집힘 2)은 회복 3/7 가방에서 구급상자 상세 창이 열려 '사용' 버튼 위·옆이 전부 그 창(가리면 안 됨)이라 화면 위 띠로 가는 것(마지막 수단 규칙대로). 캐릭터 가림 최대 0 → 18%(월드맵 문 오른쪽에 붙는 2/10·10/10·회복 4/7 — 169장 2 '옆이 먼저'). 단계별 표 = proof-*.json(전 = before-proof-*.json).
 - 테스트 `tests/c248.test.ts` 10개 + c245 소스 기대 2줄 갱신.
 - 캡처 `docs/captures/c248/`(1배 844×390): 00 전/후(홈 3/10 책장) · 01~04 사신 홈 2~5/10(월드맵·책장·가방·상태) · 05 첫 전투 2/5 · 06 온천 4/7 · 07 식사 6/7 · h-home-3 호로 홈 3/10.
+
+## C.249 — pixelfx 도구: 고정 버전 받기 · 가져오기 메뉴 · 시트 재생기 · 개발 전용 실험실 · 저장소 스킬 (개발 도구, S-23, Opus)
+사용 모델: Opus 5.5. 게임 수치·세이브·화면 변경 없음(BALANCE·SAVE 그대로). 전투 연출에는 아직 안 붙임(13장 로드맵에서 시작 지시가 있을 때).
+- 사용자 지시: "pixelfx를 Claude가 전부 활용할 수 있게 세팅해 줘 … 고정 버전 … 렌더 → 스프라이트 시트(PNG+JSON) → 블리치 할로우 어센션 게임으로 가져오는 스크립트·메뉴 … MIT 크레딧은 서드파티 고지에, Patch Pixel 폰트는 쓰지 마 … 이펙트 하나를 실제로 뽑아서 게임 안에서 돌아가는지 확인"
+- **고정 버전** `scripts/pixelfx/pin.json`(patch-gg/pixelfx 0.3.0, 커밋 a84159688af3) · `npm run fx:fetch` → `vendor/pixelfx`(.gitignore, 커밋을 확인하고 다르면 다시 받음, `gallery/fonts` Patch Pixel 글꼴은 받은 뒤 지움).
+- **가져오기** `npm run fx`(메뉴: 찾기 → 고르기 → 색 → 이름 → 렌더·가져오기 / 목록 / 지우기 / 전부 다시 렌더), 명령형 `npm run fx -- add <분류/이름> [--name] [--palette 이름|#색,…] [--seed] [--opts]` · `list` · `remove` · `rebuild` · `find` · `palettes`. 결과 = `public/fx/<이름>.png` + 작은 `.json`(프레임 크기·열·길이·반복·기준점) + `public/fx/index.json` + `public/fx/LICENSE-pixelfx.txt`. 직접 만든 이펙트는 `scripts/pixelfx/custom/` 에 커밋하면 렌더 전에 vendor 에 겹쳐 넣는다.
+- **게임 쪽** `src/ui/bha/pixelFx.ts`: `loadPixelFx(이름)` → `playPixelFx(host, 시트, { x, y, scale, flip, rate, onEnd })` — div 배경 위치를 프레임마다 옮기는 DOM/CSS 재생(외부 라이브러리·canvas 없음, 기획서 11-1), 기준점(pivot)이 (x, y). CSS `src/ui/bha/pixel-fx.css` `.bha-pxfx`(pixelated, 색 없음). pixelfx 코드는 게임 번들에 안 들어간다.
+- **개발 전용 실험실** `?fxlab`(`src/ui/bha/fxLab.ts`, main.ts `import.meta.env.DEV` 가드 — 배포 빌드에 없음 확인): 가져온 시트를 세이레이테이 배경·사신·호로 그림 위에서 실제 재생기로 반복 재생, ×1·×2·×3.
+- **스킬** `.claude/skills/pixelfx/SKILL.md`(원문 + "이 프로젝트에서" 절: vendor 경로·시트 길만·종족 색은 config·연출 연결은 로드맵 지시 후·글꼴 금지) · `LICENSE`. 클라우드 세션에서도 자동으로 잡힌다. 플러그인(`/plugin marketplace add patch-gg/pixelfx` → `/plugin install pixelfx@pixelfx`)은 사용자가 자기 PC 의 Claude Code 에서 직접 입력.
+- **고지** `THIRD_PARTY_NOTICES.md`(pixelfx MIT 전문 + NOTICE: Hugo Duprez·Hollow Crown, Patch Pixel 글꼴 안 씀).
+- **실제 확인**: `impacts/hit-spark`(136×80 · 16장 · 528ms · 한 번) 가져옴 → `npm run dev` `?fxlab` 에서 Playwright 로 프레임 4~15 진행·끝나면 지워짐·`onEnd` 호출·콘솔 오류 0 · `npm run build` 에 `fx/` 4개 파일 들어가고 서비스 워커 미리 받기 목록에 포함.
+- 테스트 `tests/c249.test.ts` 12개(frameAt·framePos·pivotBox, 시트 PNG 크기 = 프레임×열·줄, 목록 밖 파일 없음, 고지, 글꼴 금지, DEV 가드, 스킬 파일). 캡처 `docs/captures/c249/`(1-fxlab-x2 · 2-fxlab-x3).

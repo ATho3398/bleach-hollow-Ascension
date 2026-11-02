@@ -16,6 +16,8 @@
     "balance:b1": "vite-node scripts/b1-check.ts",
     "art:list": "vite-node scripts/art-list.ts",
     "gen:forms": "vite-node scripts/gen-forms.ts",
+    "fx": "node scripts/pixelfx/fx.mjs",
+    "fx:fetch": "node scripts/pixelfx/fetch.mjs",
     "ui-audit": "node scripts/ui-audit/audit.cjs",
     "ai-playtest": "vite-node scripts/ai-tools/playtest.ts --",
     "ai-review": "vite-node scripts/ai-tools/review.ts --"
