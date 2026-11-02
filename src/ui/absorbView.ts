@@ -98,47 +98,43 @@ export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m:
   return out;
 }
 
+/** [흡수] 버튼 글자 (GDD 172장 2): 고른 갈래 이름 + '하기'. 이름이 이미 '~기'(놓아주기)면 그대로. 이름은 종족 설정 absorbModeNames */
+export function absorbRunLabel(label: string): string {
+  return /기$/.test(label) ? label : `${label}하기`;
+}
+
 /**
- * 갈래 버튼 4개 + 설명 칸 (GDD 163장 1~3): 버튼 = 갈래 이름만. 첫 누름·▲▼ 하이라이트 = 고르기(설명 칸이 바뀐다),
- * 고른 버튼을 한 번 더 누르거나 ✓ = 실행. 처음엔 첫 갈래가 골라진 상태. 흡수 화면과 첫 흡수 연습 화면이 같이 쓴다
+ * 갈래 버튼 4개 + 설명 칸 + [흡수] 버튼 (GDD 163장 2·3 → 172장 1~3): 갈래 버튼 = 고르기만(다시 눌러도 실행 안 함, 설명 칸이 바뀐다),
+ * 설명 칸 바로 아래 [흡수] 버튼(글자 = 고른 갈래 이름 + '하기')을 눌러야 실행. 기기 ▲▼ = 갈래 → [흡수] 버튼(DOM 순서), ✓ = 갈래면 고르기·버튼이면 실행.
+ * 처음엔 첫 갈래가 골라진 상태. 흡수 화면과 첫 흡수 연습 화면이 같이 쓴다
  */
-export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, run: (m: AbsorbChoice) => void, extra?: (m: AbsorbChoice) => HTMLElement[]): { actions: HTMLElement; desc: HTMLElement; first: HTMLButtonElement } {
+export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, run: (m: AbsorbChoice) => void, extra?: (m: AbsorbChoice) => HTMLElement[]): { actions: HTMLElement; desc: HTMLElement; go: HTMLButtonElement; first: HTMLButtonElement } {
   const names = absorbModeText(faction);
   const actions = el('div', 'bha-absorb__actions bha-absorb__actions--modes');
   const desc = el('div', 'bha-panel bha-panel--inset bha-absorb__desc');
   desc.setAttribute('aria-live', 'polite');
   let sel: AbsorbChoice = ABSORB_MODES[0];
-  // 손가락으로 누르면 기기가 pointerdown 에서 하이라이트를 먼저 옮긴다(→ 'bha-select' = 고르기). 그래서 손가락 누름은
-  // '누르기 시작할 때 이미 골라져 있던 갈래'(armed)일 때만 실행한다. fresh = 이번 누름에서 하이라이트가 막 고른 갈래
-  let fresh: AbsorbChoice | null = null;
-  let armed: AbsorbChoice | null = null;
   const btns = ABSORB_MODES.map((m) => {
     const frenzy = m !== 'none' && previewAbsorb(exp, m).frenzy;
     const b = button({ label: names[m].label, variant: frenzy ? 'danger' : undefined, size: 'small' });
     b.dataset.mode = m;
     if (frenzy) b.title = `${faction.frenzyName} 상태가 된다`;
-    // ▲▼ 하이라이트가 옮겨 오면 고르기만 (기기가 보내는 'bha-select', lcdpage.masterDetail 과 같은 방식)
-    b.addEventListener('bha-select', () => {
-      if (sel !== m) {
-        fresh = m;
-        setTimeout(() => { if (fresh === m) fresh = null; }, 0);
-      }
-      select(m);
-    });
-    b.addEventListener('pointerdown', () => { armed = sel === m && fresh !== m ? m : null; });
+    // ▲▼ 하이라이트가 옮겨 오면 고르기 (기기가 보내는 'bha-select', lcdpage.masterDetail 과 같은 방식)
+    b.addEventListener('bha-select', () => select(m));
+    // 손가락·기기 ✓ 모두 고르기만 (GDD 172장 1: 같은 버튼을 다시 눌러도 실행하지 않는다)
+    // 손가락 = 그 버튼에 기기 하이라이트도 옮긴다. 기기 ✓·키보드(click detail 0) = 고른 뒤 하이라이트를 [흡수] 버튼으로
+    // (▼ 로 갈래를 지나 버튼까지 가면 마지막 갈래 '놓아주기'가 골라지므로, 고른 갈래 그대로 버튼에 가는 길)
     b.onclick = (e) => {
-      // 기기 ✓·키보드 = click() (detail 0): 하이라이트된 갈래 = 골라진 갈래라 바로 실행. 손가락 = 이미 골라져 있던 갈래를 다시 누를 때만
-      const again = e.detail > 0 ? armed === m : sel === m;
-      armed = null;
-      if (!again) {
-        select(m);
-        b.dispatchEvent(new CustomEvent('bha-goto', { bubbles: true })); // 손가락으로 고른 버튼에 기기 하이라이트도 옮긴다 (✓ = 이 갈래 실행)
-        return;
-      }
-      run(m);
+      select(m);
+      (e.detail > 0 ? b : go).dispatchEvent(new CustomEvent('bha-goto', { bubbles: true }));
     };
     return b;
   });
+  // [흡수] 버튼: 설명 칸 바로 아래. 한계를 넘는 갈래면 빨간 버튼
+  const go = button({ label: '', block: true, size: 'lg' });
+  go.classList.add('bha-absorb__go');
+  go.dataset.absorbGo = '';
+  go.onclick = () => run(sel);
   function select(m: AbsorbChoice): void {
     sel = m;
     btns.forEach((b) => {
@@ -153,10 +149,15 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
       p.dataset.line = l.kind;
       return p;
     }), ...(extra?.(m) ?? []));
+    const frenzy = m !== 'none' && previewAbsorb(exp, m).frenzy;
+    go.textContent = absorbRunLabel(names[m].label);
+    go.classList.toggle('bha-btn--danger', frenzy);
+    go.classList.toggle('bha-btn--primary', !frenzy);
+    go.dataset.goMode = m;
   }
   actions.append(...btns);
   select(sel);
-  return { actions, desc, first: btns[0]! };
+  return { actions, desc, go, first: btns[0]! };
 }
 
 /** 흡수 화면 블록 이름 (GDD 158장 4): "물 권" — 속성 + 블록 이름. 슬롯 칸은 앞에 "n번" */
@@ -307,7 +308,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   }
 
   function chooseStep(): StepParts {
-    // GDD 163장: 갈래 버튼 = 고르기, 같은 버튼 다시·✓ = 실행. 버튼 아래(왼쪽 아래 전부) = 고른 갈래 설명 칸. 오른쪽 = 지금 리스크 게이지 + 슬롯
+    // GDD 163장 → 172장: 갈래 버튼 = 고르기만, 설명 칸 아래 [흡수] 버튼 = 실행. 버튼 아래(왼쪽 아래 전부) = 고른 갈래 설명 칸. 오른쪽 = 지금 리스크 게이지 + 슬롯
     const picker = absorbModePicker(faction, exp, (m) => {
       if (m === 'none') return finish(chooseRelease(exp), false);
       mode = m;
@@ -322,7 +323,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       return [enh];
     });
     first = picker.first;
-    const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard(), picker.actions, picker.desc];
+    const nodes: HTMLElement[] = [el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`), foeCard(), picker.actions, picker.desc, picker.go];
     const side: HTMLElement[] = [
       meter({ kind: 'risk', label: `지금 ${faction.riskGaugeName}`, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, zone: 0.6, danger: exp.risk >= 60 }),
       slotSummary(),

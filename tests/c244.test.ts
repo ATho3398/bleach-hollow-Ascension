@@ -120,11 +120,8 @@ describe('화면 (GDD 163장 1·3·4)', () => {
     expect(a).not.toMatch(/button\(\{ label: names\[m\]\.label[^)]*\}\)[^;]*riskGaugeName/);
     expect(a).not.toContain('가득 · 타일 +1.');
   });
-  it('첫 누름 = 고르기, 같은 버튼 다시 = 실행, 기기 ▲▼ 하이라이트 = 고르기, 첫 갈래가 골라진 채 시작', () => {
-    expect(a).toContain("b.addEventListener('bha-select', () => {");
-    // 손가락: 기기가 pointerdown 에서 하이라이트(=고르기)를 먼저 옮기므로, 누르기 시작할 때 이미 골라져 있던 갈래만 실행
-    expect(a).toContain("b.addEventListener('pointerdown', () => { armed = sel === m && fresh !== m ? m : null; });");
-    expect(a).toContain('const again = e.detail > 0 ? armed === m : sel === m;');
+  it('갈래 버튼 = 고르기만, 기기 ▲▼ 하이라이트 = 고르기, 첫 갈래가 골라진 채 시작 (실행은 172장 [흡수] 버튼 — tests/c252)', () => {
+    expect(a).toContain("b.addEventListener('bha-select', () => select(m));");
     expect(a).toContain('let sel: AbsorbChoice = ABSORB_MODES[0];');
     expect(a).toContain('first = picker.first;');
   });

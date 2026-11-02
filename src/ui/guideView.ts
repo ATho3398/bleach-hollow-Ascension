@@ -41,7 +41,7 @@ export function showGuide(faction: FactionConfig, id: TextGuideId | 'first-absor
   });
 }
 
-/** 튜토리얼 흡수 화면 (GDD 67장 2·3번 → 163장 4): 진짜 흡수 화면과 같은 갈래 버튼 4개 + 설명 칸(고르기 → 설명 → 같은 버튼 다시·✓ = 실행).
+/** 튜토리얼 흡수 화면 (GDD 67장 2·3번 → 163장 4): 진짜 흡수 화면과 같은 갈래 버튼 4개 + 설명 칸(고르기 → 설명 → 설명 아래 [흡수] 버튼 = 실행, 172장).
  *  어느 갈래든 시스템상 흡수가 아닌 '모든 능력치 +n'(엔진 tutorialAbsorb, 설명 칸 값도 엔진 미리보기 그대로) → [계속] */
 export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onDone: () => void): void {
   const offer = exp.absorbOffer;
@@ -59,7 +59,7 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
   });
   // 갈래 줄 + 설명 칸을 한 덩어리로: 첫 흡수 안내 2장(guides first-absorb practice)이 이 덩어리를 강조하고 카드는 그 밖에 놓인다
   const pick = el('div', 'bha-stack bha-absorb__pick');
-  pick.append(picker.actions, picker.desc);
+  pick.append(picker.actions, picker.desc, picker.go);
   lcdPage(root, { cls: 'bha-absorbpage bha-tutabsorb', cols: 'minmax(0, 1.1fr) minmax(0, 0.9fr)' }, head(`첫 ${act}`), [
     el('p', 'bha-dim bha-absorb__lead', `${foe}을(를) 쓰러뜨렸다.`),
     pick,
