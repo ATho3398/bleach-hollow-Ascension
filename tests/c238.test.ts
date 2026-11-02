@@ -30,7 +30,7 @@ describe('160장 1~3 그림 크기·시장 그림', () => {
 describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 수련장 짚인형은 유지', () => {
   it('방 물건에 수련장(altar)이 없고, 월드맵 수련장 장소는 그대로', () => {
     const rv = read('src/ui/roomView.ts');
-    expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'chest'];");
+    expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'chest', 'rank'];"); // rank = C.257 (GDD 174장 2)
     expect(rv).not.toContain('altar: hd.onAltar,');
     expect(rv).toContain("if (p === 'altar') continue;");
     expect([...ROOM_PROPS]).toContain('altar'); // 이름·그림 키용

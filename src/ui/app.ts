@@ -37,7 +37,8 @@ import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
-import { ascensionResultView, rankLabel, rankResultView, rankView } from './rankView';
+import { ascensionResultView, rankLabel, rankLockedText, rankResultView, rankView } from './rankView';
+import { rankUnlocked } from '../engine/rank';
 import { getBoss } from '../data/bosses';
 import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
@@ -1070,6 +1071,10 @@ export function startApp(host: HTMLElement): void {
       },
       onBook: () => open('dex', () => bookView(root, faction, s)),
       onChest: openChest,
+      // 진급 시험 물건 (GDD 174장 2·3, C.257): 책장 아래. 해금 전이면 자물쇠·흐림 + 탑과 같은 토스트 안내
+      onRank: () => open('rank', () => rankScreen(faction)),
+      rankLock: rankUnlocked(s.evolution.tierIndex) ? null : rankLockedText(faction),
+      onRankLocked: () => showToast({ eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' }, 0, 1800),
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
@@ -1144,9 +1149,9 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1·165장 1)으로 (GDD 99장 2, C.163) */
+  /** 수련장 두 화면(수련 · 훈련 인형)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1·165장 1)으로 (GDD 99장 2, C.163). 진급 시험은 방 물건 (174장 1) */
   function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
-    const render = id === 'practice' ? () => practiceScreen(faction) : id === 'rank' ? () => rankScreen(faction) : () => renderTraining(faction, s);
+    const render = id === 'practice' ? () => practiceScreen(faction) : () => renderTraining(faction, s);
     nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });
   }
   const trainingHead = (faction: FactionConfig, id: TrainingScreenId): HTMLElement | undefined =>
@@ -1839,9 +1844,10 @@ export function startApp(host: HTMLElement): void {
   }
 
   // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──
+  // 들어오는 곳 = 방 책장 아래 물건 (GDD 174장 2, C.257): 머리 제목 = 종족 설정 rankBattleName, 뒤로 = 방
   function rankScreen(faction: FactionConfig): void {
     if (!save) return;
-    rankView(root, faction, save, { onChallenge: (holder) => !careBlocked(save!) && open('rank-battle', () => runRankBattle(faction, holder), true), title: trainingHead(faction, 'rank') });
+    rankView(root, faction, save, { onChallenge: (holder) => !careBlocked(save!) && open('rank-battle', () => runRankBattle(faction, holder), true) });
   }
 
   function runRankBattle(faction: FactionConfig, holder: RankHolderDef): void {

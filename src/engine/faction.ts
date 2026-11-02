@@ -68,7 +68,8 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
 /** outside = 월드맵 물건 (GDD 130장 1, C.204 · 158장 2 이름 '월드맵'): 누르면 월드맵. 옛 모험 문·장터 물건은 폐기 (GDD 137장 3, C.215) */
 /** altar = 수련장 이름만 (GDD 158장 1·165장 1): 방에는 서지 않고 월드맵 장소 training 의 이름으로 쓴다(그림 prop.altar 짚인형은 월드맵 수련장 폴백) */
-export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside'] as const;
+/** rank = 진급 시험(등급전) 물건 (GDD 174장 2, C.257): 책장 바로 아래. 이름 = 종족 설정 rankBattleName(room.props.rank 로 덮을 수 있다), 그림 키 prop.rank */
+export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside', 'rank'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·수련장(158장 1)·모험(출발 준비 화면)·탑(도전의 탑 화면)·온천(153장 1). ▲▼ 순서도 이 순서 */
 export const WORLD_PLACES = ['home', 'market', 'training', 'adventure', 'tower', 'spa'] as const;
@@ -162,11 +163,12 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { altar: '수련장', book: '책장', chest: '상자', outside: '월드맵' },
+  props: { altar: '수련장', book: '책장', chest: '상자', outside: '월드맵', rank: '진급 시험' },
   floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
     book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
     chest: { x: 26, y: 90, scale: 0.81 }, outside: { x: 9, y: 78, scale: 1 },
+    rank: { x: 76, y: 90, scale: 0.81 }, // 책장 바로 아래 (책장 x 그대로, 바닥 앞쪽 — GDD 174장 2)
   },
   characterFoot: { x: 50, y: 80 },
   talk: {
@@ -177,13 +179,14 @@ export const DEFAULT_ROOM: RoomConfig = {
 };
 
 /** 종족 설정의 room 에 빠진 값을 기본값으로 채운다. talkPack = 입은 말풍선 팩 id(GDD 25-11): 팩이 가진 키만 혼잣말 문구를 덮고, 없는 키는 기본 문구 */
-export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics'>>, talkPack?: string | null): RoomConfig {
+export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics' | 'rankBattleName'>>, talkPack?: string | null): RoomConfig {
   const r = f.room ?? {};
   const pack = talkPack ? f.cosmetics?.talkPacks?.[talkPack] : undefined;
   return {
     ...DEFAULT_ROOM,
     ...r,
-    props: { ...DEFAULT_ROOM.props, ...r.props },
+    // 진급 시험 물건 이름 = 종족 설정 rankBattleName (GDD 174장 2) — room.props.rank 를 적었으면 그것
+    props: { ...DEFAULT_ROOM.props, ...(f.rankBattleName ? { rank: f.rankBattleName } : {}), ...r.props },
     floor: r.floor ?? DEFAULT_ROOM.floor,
     layout: { ...DEFAULT_ROOM.layout, ...r.layout },
     characterFoot: r.characterFoot ?? DEFAULT_ROOM.characterFoot,

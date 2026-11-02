@@ -58,21 +58,20 @@ export function gameRuleLines(f: Pick<FactionConfig, 'riskGaugeName' | 'fullness
 
 export interface TrainingHandlers {
   onPlay: (game: TrainingGameId) => void;
-  /** 머리 제목 토글로 훈련 인형(전투 연습) · 번호 쟁탈전으로 (C.137 → GDD 98장 A1·99장 2) */
+  /** 머리 제목 토글로 훈련 인형(전투 연습)으로 (C.137 → GDD 98장 A1·99장 2). 진급 시험은 방 책장 아래로 옮겼다 (GDD 174장 1, C.257) */
   onSwitch: (id: TrainingScreenId) => void;
   /** 아란칼화 / 참백도 구상화 도전 (GDD 126장 3, C.220 — 지금은 보스전 임시) */
   onAscend?: () => void;
 }
 
-/** 수련장 묶음의 세 화면: 수련(본능 수련) · 훈련 인형 · 번호 쟁탈전 */
-export type TrainingScreenId = 'train' | 'practice' | 'rank';
+/** 수련장 묶음의 두 화면: 수련(본능 수련) · 훈련 인형. 진급 시험은 방 책장 아래 물건 (GDD 174장 1, C.257) */
+export type TrainingScreenId = 'train' | 'practice';
 
-/** 수련장 세 화면이 같이 쓰는 머리 제목 토글 (GDD 99장 2, C.163): 어느 화면에서든 나머지 둘로 바로 오간다. altarName = 방 물건 이름(수련장) */
+/** 수련장 두 화면이 같이 쓰는 머리 제목 토글 (GDD 99장 2, C.163 · 174장 1): 수련 ↔ 훈련 인형. altarName = 수련장 이름 */
 export function trainingTitle(faction: FactionConfig, altarName: string, current: TrainingScreenId, onSwitch: (id: TrainingScreenId) => void): HTMLElement {
   return selectLast(viewTitle([
     { id: 'train', label: `${altarName} · ${faction.training.title}` },
     { id: 'practice', label: '훈련 인형' },
-    { id: 'rank', label: faction.rankBattleName },
   ], current, (id) => onSwitch(id as TrainingScreenId)));
 }
 
@@ -83,7 +82,7 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   const gate = trainingGate(t, save.evolution.tierIndex, n.condition);
   const head = lcdHead({
     // 진화 정보는 상태 화면 능력치 아래로 옮겼다 (C.137, GDD 85장 7)
-    // 책장처럼 머리 제목이 토글: 누르면 훈련 인형(전투 연습) · 등급전(번호 쟁탈전) 이 열린다 (GDD 98장 A1). 수련권·컨디션 게이트와 무관
+    // 책장처럼 머리 제목이 토글: 누르면 훈련 인형(전투 연습)이 열린다 (GDD 98장 A1 · 174장 1 진급 시험은 방으로). 수련권·컨디션 게이트와 무관
     title: trainingTitle(faction, title, 'train', hd.onSwitch),
     sub: (() => {
       const s = el('span');

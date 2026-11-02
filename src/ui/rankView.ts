@@ -9,6 +9,7 @@ import { elapsedSeconds, type CombatState } from '../engine/combat';
 import { difficultyText, type FactionConfig } from '../engine/faction';
 import { holderAt, PLAYER_ID, rankOf, type ChallengeResult } from '../engine/rank';
 import { rankChallenge, type SaveData } from '../game';
+import { fixParticles } from '../engine/josa';
 import { button, el, icon, notice, panel, provisionalTag, tag } from './bha/dom';
 import { elementDot, paintElement } from './bha/element';
 import { iconInfo, type IconInfoRow } from './bha/expedition';
@@ -41,6 +42,11 @@ export interface RankHandlers {
 /** 도전 전 안내 (C.68): 무번호에서 지면 내려갈 칸이 없어 그대로다 (엔진 rank.ts 규칙과 같게) */
 export function rankStakeText(faction: Pick<FactionConfig, 'unrankedName'>, target: string, me: number | null): string {
   return `이기면 ${target}을(를) 빼앗고 상대는 한 칸 내려간다. ${me === null ? `지면 ${faction.unrankedName} 그대로다.` : '지면 한 칸 내려간다.'}`;
+}
+
+/** 진급 시험 잠김 한 줄 (GDD 174장 3): 방 물건 툴팁·토스트·화면 안내가 같이 쓴다. 해금 단계 = BALANCE.rank.unlockTierIndex, 이름 = 종족 설정 */
+export function rankLockedText(faction: Pick<FactionConfig, 'tierNames' | 'rankBattleName'>): string {
+  return fixParticles(`${faction.tierNames[BALANCE.rank.unlockTierIndex]}이(가) 되면 ${faction.rankBattleName}이(가) 열린다`);
 }
 
 /** 패배 문구 (C.68): 원래 무번호였으면 "한 칸 내려갔다" 대신 그대로라고 쓴다 */
@@ -92,7 +98,7 @@ export function rankView(root: HTMLElement, faction: FactionConfig, save: SaveDa
       button({ label: `${rankLabel(faction, c.targetRank)}에 도전`, icon: 'i-attack', variant: 'primary', size: 'lg', onClick: () => h.onChallenge(holder) }),
     );
   } else if (c.reason === 'locked') {
-    right.push(notice('info', `${faction.tierNames[BALANCE.rank.unlockTierIndex]}이(가) 되면 ${faction.rankBattleName}이(가) 열린다.`, { icon: 'i-lock', title: '아직 잠김' }));
+    right.push(notice('info', `${rankLockedText(faction)}.`, { icon: 'i-lock', title: '아직 잠김' }));
   } else if (c.reason === 'top') {
     right.push(notice('good', `${rankLabel(faction, 1)} — 더 오를 곳이 없다.`, { icon: 'i-flag-win', title: '정상' }));
   } else {

@@ -14,6 +14,7 @@ export const PROP_ICON: Record<RoomProp | MarketSpot | WorldPlace, string> = {
   gearShop: 'i-guard', skinShop: 'i-rare', traitShop: 'i-slot', smith: 'i-attack', // 상점 4곳 (GDD 150장 2): shop = 소모품 상점 · 대장장이 (153장 2)
   outside: 'i-loop', home: 'i-nest', adventure: 'i-loop', tower: 'i-title', // 월드맵 물건·월드맵 장소 (GDD 130장, C.204 · 탑 139장 1)
   training: 'i-practice', // 월드맵 수련장 (GDD 158장 1): 옛 방 수련장과 같은 아이콘
+  rank: 'i-flag-win', // 방 진급 시험 (GDD 174장 2): 그림 prop.rank 대기 — 진급 시험 화면의 깃발과 같은 아이콘
 };
 
 /** 방 장면 틀. 배경 그림이 있으면 --room-art 로 깔린다 */

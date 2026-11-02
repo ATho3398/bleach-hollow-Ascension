@@ -33,6 +33,11 @@ import { shownName } from './displayName';
 export interface RoomHandlers {
   onBook: () => void;
   onChest: () => void;
+  /** 진급 시험 물건 (GDD 174장 2, C.257): 책장 아래 — 지금 진급 시험(등급전) 화면, 뒤로 = 방 */
+  onRank: () => void;
+  /** 진급 시험 잠김 이유 (해금 단계 전, GDD 174장 3). 있으면 자물쇠·흐림, 누르면 onRankLocked(월드맵 잠긴 장소와 같은 모양·안내) */
+  rankLock?: string | null;
+  onRankLocked?: () => void;
   onStatus: () => void;
   /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 다른 트랙이 아직 안 열렸으면(5단계 전) null — 다른 종족으로 가는 유일한 길 (C.63) */
   onSwitchTrack: ((factionId: string) => void) | null;
@@ -179,15 +184,24 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     book: hd.onBook,
     chest: hd.onChest,
     outside: hd.onOutside, // 월드맵 물건 (GDD 130장 1·158장 2): 옛 모험 문·장터 자리 (137장 3 고정)
+    rank: () => (hd.rankLock ? hd.onRankLocked?.() : hd.onRank()), // 진급 시험 (GDD 174장 2): 책장 아래
   };
-  // 위/아래 순서: 위쪽 줄(책장) → 월드맵 → 상자 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['book', 'outside', 'chest'];
+  // 위/아래 순서: 위쪽 줄(책장) → 월드맵 → 상자 → 진급 시험(책장 아래) → 상태 칩 → 캐릭터 → 독 메뉴
+  const order: RoomProp[] = ['book', 'outside', 'chest', 'rank'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
     if (p === 'altar') continue;
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, fallbackArt: p === 'outside' ? 'prop.door' : undefined });
     b.onclick = act[p];
+    // 잠긴 진급 시험 (GDD 174장 3): 월드맵 잠긴 장소(탑)와 같은 모양 — 흐림 + 자물쇠 + 이유 툴팁
+    if (p === 'rank' && hd.rankLock) {
+      b.classList.add('is-locked');
+      b.setAttribute('aria-disabled', 'true');
+      b.append(icon('i-lock'));
+      b.title = hd.rankLock;
+      b.setAttribute('aria-description', hd.rankLock);
+    }
     props.set(p, b);
     scene.append(b);
     floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
