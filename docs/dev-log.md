@@ -1738,3 +1738,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - ui-audit 에 `boxGlowInPage`(배경·테두리 없는 그림 버튼에 .bha-sel·켜진 강조가 outline·box-shadow·배경으로 그려지면 '강조 네모 상자').
 - 실측(1배 844×390, `docs/captures/c261/proof.json`): 생성 간격 3.3초(두 종족 5단계), 봉인 중 블록 4 → 3개 사용, 생성 칸 폭 100 → 134(봉인) 에도 [막기] x 461 고정. 해방 중 그림 칸 filter none·::before none.
 - 테스트 +9(`tests/c261.test.ts`). 캡처 `docs/captures/c261/`(`scripts/c261-proof.cjs`, `?test=1` 에서만 `window.__bhaCombat` 로 상태 만듦): h-spawn-filling(차는 중) · h-spawn-full(칸 가득) · h-spawn-sealed(봉인, 칸 보임) · h/s-lib-before → h/s-lib-after(해방 오라 전/후) · h-lib-ready-after(해방 준비).
+
+## C.262 — 178장 보충 확인(하얀 적) · 노멀 피해 표기 · 사신 진화 이유 오타 (GDD 178장 보충·176장 22 같은 종류, v5.400, S-23, 코딩190 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스 변경 없음.
+- 마스터AE 확인 요청: C.261 캡처에서 적이 하얀 덩어리로 보임 → 원인 = 피격 흰 깜빡임(GDD 26-4c, `attackFx.hitPlan` WHITE, 0.3초·composite add 라 윤곽 빛은 유지). 5단계 공격 속도면 0.5초마다 깜빡여 캡처 4장 중 1장꼴로 흰 순간이 찍힌다. 측정(`probe-*.json`): 깜빡임 애니가 매번 running 으로 끝남(멈춰 남지 않음). 깜빡임 없는 순간 캡처(내 공격 타이머만 멈춤)는 패치 전/후 같은 모습(검은 실루엣 + 그림 모양 테두리 빛) — 수정 없음.
+- 상태 화면 속성 피해: '무속성 피해' → '노멀 피해', 칸 글자 '무' → '노'(전투 로그·테스트 패널도). 속성 표기 '노멀'과 맞춤.
+- 사신 4단계 진화 이유: "대에서 손꼽히는" → "소속 대에서 손꼽히는".
+- 테스트: c101 기대값('노') 고침. 캡처 `docs/captures/c262/`(`scripts/c262-proof.cjs`): h/s-normal·h/s-boss -before/-after(적 강조 전/후, 일반 적·보스) · h-status-normal-damage(상태 피해 줄) · s-evolve-t4-reason(사신 4단계 진화 이유).

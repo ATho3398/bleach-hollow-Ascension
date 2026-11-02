@@ -164,9 +164,9 @@ describe('기록·테스트 모드·표시 (GDD 48장 4~6번)', () => {
     setElementDamage(save, all(0));
     expect(save.evolution.testElementDamage).toBeUndefined();
   });
-  it('상태 화면·전투 로그 글자: 노멀 칸 = "무", 원소 = 속성 한 글자, % 부호', () => {
-    expect(elementDamageAbbr(NORMAL_ELEMENT, 'hollow')).toBe('무');
-    expect(ELEMENT_DAMAGE_IDS.map((id) => elementDamageAbbr(id, 'hollow'))).toEqual(['무', '물', '불', '흙', '뇌']);
+  it('상태 화면·전투 로그 글자: 노멀 칸 = "노"(C.262 노멀 통일, 옛 "무"), 원소 = 속성 한 글자, % 부호', () => {
+    expect(elementDamageAbbr(NORMAL_ELEMENT, 'hollow')).toBe('노');
+    expect(ELEMENT_DAMAGE_IDS.map((id) => elementDamageAbbr(id, 'hollow'))).toEqual(['노', '물', '불', '흙', '뇌']);
     expect([elementDamagePct(0), elementDamagePct(50), elementDamagePct(-10)]).toEqual(['+0%', '+50%', '−10%']);
   });
 });

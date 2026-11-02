@@ -35,9 +35,9 @@ export function elementsMark(ids: readonly string[], factionId: string): HTMLEle
   return box;
 }
 
-/** 속성 피해 칸 글자 (GDD 48장 4번): 노멀 칸 = '무'(무속성), 나머지 = 속성 한 글자 */
+/** 속성 피해 칸 글자 (GDD 48장 4번): 속성 한 글자 — 노멀 칸도 '노' (C.262: 화면 표기 '노멀' 통일, 176장 22와 같은 종류) */
 export function elementDamageAbbr(id: string, factionId: string): string {
-  return id === NORMAL_ELEMENT ? '무' : elementAbbr(id, factionId);
+  return elementAbbr(id, factionId);
 }
 
 /** 속성 피해 % 글자 "+50%" (음수면 −) */
@@ -46,12 +46,12 @@ export function elementDamagePct(pct: number): string {
   return v < 0 ? `−${-v}%` : `+${v}%`;
 }
 
-/** 상태 화면 속성 피해 (GDD 48장 4번, C.137 85장 8): 속성마다 능력치 행과 같은 형식으로 **한 줄에 하나** — [동그라미] 무속성 피해 · +0%. 0 이어도 보인다 */
+/** 상태 화면 속성 피해 (GDD 48장 4번, C.137 85장 8): 속성마다 능력치 행과 같은 형식으로 **한 줄에 하나** — [동그라미] 노멀 피해 · +0%. 0 이어도 보인다 */
 export function elementDamageRows(values: Record<string, number>, ids: readonly string[], factionId: string): HTMLElement[] {
   return ids.map((id) => {
     const row = el('div', 'bha-statrow');
     row.dataset.elemDmg = `${id}:${values[id] ?? 0}`;
-    const label = `${id === NORMAL_ELEMENT ? '무속성' : elementName(id, factionId)} 피해`;
+    const label = `${elementName(id, factionId)} 피해`; // 노멀 칸 = '노멀 피해' (C.262, 옛 '무속성 피해')
     const name = el('span', 'bha-statrow__name');
     name.append(elementDot(id, factionId), ' ', label);
     row.append(name, el('b', 'bha-statrow__value bha-num', elementDamagePct(values[id] ?? 0)));
