@@ -40,7 +40,7 @@ describe('118장 2: 사신 권 = 물리 · 참 = 혼합 · 귀 = 특공', () => 
     const cue = attackCueOf(block({ family: fam('권').id }), 3, familyFx)!;
     expect(cue.motion).toBe('strike');
     expect(animActionOf(cue, () => true)).toBe('skill');
-    // GDD 170장 (사용자 2026-11-01 "권 블록=스트레이트, 귀 블록=특수1,2, 참 블록=공격1,2 모션")
+    // GDD 171장 (사용자 2026-11-01 "권 블록=스트레이트, 귀 블록=특수1,2, 참 블록=공격1,2 모션")
     expect(FAMILY_RIG_MOTIONS).toEqual({ strike: ['straight'], slash: ['attack', 'attack2'], cast: ['skill', 'skill2'] });
     let k = 0;
     const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => [0, 0.99][k++ % 2]!);

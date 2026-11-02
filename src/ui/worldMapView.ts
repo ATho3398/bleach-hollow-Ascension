@@ -136,7 +136,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   char.disabled = true;
   char.setAttribute('aria-hidden', 'true');
   char.classList.add('bha-worldmap__char');
-  applyCarePose(char, save.nest); // 돌봄 상태 자세 (GDD 170장)
+  applyCarePose(char, save.nest); // 돌봄 상태 자세 (GDD 171장)
   scene.insertBefore(char, btns.get(WORLD_PLACES[0]!) ?? null); // 장소 단추 뒤 층 — 장소 모양·이름표가 캐릭터 앞에 보인다
   char.dataset.at = at;
   const charEntry: FloorEntry = { el: char, foot: standFoot(wm.layout[at]), kind: 'char' };

@@ -1,0 +1,12 @@
+{
+ "pixelfx": {
+  "version": "0.3.0",
+  "commit": "a84159688af3ca37a4be05a0d422b94451b2e24e"
+ },
+ "effects": [
+  {
+   "name": "hit-spark",
+   "id": "impacts/hit-spark"
+  }
+ ]
+}

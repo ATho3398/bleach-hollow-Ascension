@@ -91,13 +91,13 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     scene.append(img);
     scene.classList.add('has-art');
   }
-  // 캐릭터 + 머리 위 상태 창: 오른쪽에서 걸어 들어와(그림은 왼쪽을 본다) 탕 안에 들어가 앉는다. 종이인형이면 걸을 때 걷기·앉으면 온천 자세(GDD 170장), 아니면 CSS 임시 연출
+  // 캐릭터 + 머리 위 상태 창: 오른쪽에서 걸어 들어와(그림은 왼쪽을 본다) 탕 안에 들어가 앉는다. 종이인형이면 걸을 때 걷기·앉으면 온천 자세(GDD 171장), 아니면 CSS 임시 연출
   const art = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const char = characterButton(art, '캐릭터');
   char.disabled = true; // 보기만 (기기 선택 대상 아님)
   char.setAttribute('aria-hidden', 'true'); // 걸어 들어오는 장식 — 조작 요소가 아니다 (상태는 머리 위 상태 창이 읽힌다)
   char.classList.add('bha-spa__char');
-  applyCarePose(char, { collapsed: n.collapsed, dead: false, weakened: n.weakened, tired: n.tired }); // 돌봄 상태 자세 (GDD 170장)
+  applyCarePose(char, { collapsed: n.collapsed, dead: false, weakened: n.weakened, tired: n.tired }); // 돌봄 상태 자세 (GDD 171장)
   const charAnim = animOf(char);
   /** 걷는 동안 = 걷기, 다 걸으면 = 자리면 온천 자세, 아니면 돌봄 상태 자세 그대로 (종이인형만 — 동작이 없으면 아무 것도 안 함) */
   const restLoop = charAnim?.has('dying') && (n.collapsed || n.weakened || n.tired) ? 'dying' : 'idle';

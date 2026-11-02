@@ -1,5 +1,5 @@
-// C.249 proof (GDD 170장): 종이인형 동작 게임 연결 — 방 홈 대기 · 온천 앉은 뒤 온천 자세 · 방 빈사 자세 · 전투 패배 쓰러짐 · 권/귀/참 블록 동작. 사신(C249_FI=1 기본).
-// 실행: node scripts/c249-proof.cjs (C249_URL=<주소>, C249_OUT=<폴더>, C249_PART=room|battle|all, C249_BURST=1, C249_LOSEMS=150,350,…) — 캡처 docs/captures/c249/ (1배 844×390)
+// C.250 proof (GDD 171장): 종이인형 동작 게임 연결 — 방 홈 대기 · 온천 앉은 뒤 온천 자세 · 방 빈사 자세 · 전투 패배 쓰러짐 · 권/귀/참 블록 동작. 사신(C249_FI=1 기본).
+// 실행: node scripts/c250-proof.cjs (C249_URL=<주소>, C249_OUT=<폴더>, C249_PART=room|battle|all, C249_BURST=1, C249_LOSEMS=150,350,…) — 캡처 docs/captures/c250/ (1배 844×390)
 // 블록은 누른 뒤 다음 전투 틱에 나가 시점이 흔들려 C249_BURST=1(60ms 간격 10장)로 찍고 동작이 보이는 장을 골랐다(권 b1·참 b0·귀 b0), 패배는 체력 0 뒤 350ms 장.
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -7,7 +7,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = process.env.C249_OUT ?? path.join(ROOT, 'docs/captures/c249');
+const OUT = process.env.C249_OUT ?? path.join(ROOT, 'docs/captures/c250');
 const PART = process.env.C249_PART ?? 'all';
 const PORT = 5349;
 

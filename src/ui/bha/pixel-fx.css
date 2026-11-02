@@ -1,0 +1,9 @@
+/* pixelfx 스프라이트 시트 재생 (C.249, src/ui/bha/pixelFx.ts). 크기·위치·배경 위치는 시트 값으로 인라인, 색은 그림 그대로 */
+.bha-pxfx {
+  position: absolute;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  z-index: 1;
+}
+.bha-pxfx--flip { transform: scaleX(-1); }

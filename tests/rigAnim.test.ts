@@ -4,7 +4,7 @@ import { createRigPlayer, FAMILY_RIG_MOTIONS, RIG_ACTIONS } from '../src/ui/bha/
 import { charArt, ART_MANIFEST } from '../src/data/art/manifest';
 
 describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
-  it('대기·이동·공격·특수·맞음 + 홈 대기·빈사 자세·온천·패배(쓰러짐)가 있고 그 밖은 없다(기존 연출, GDD 170장)', () => {
+  it('대기·이동·공격·특수·맞음 + 홈 대기·빈사 자세·온천·패배(쓰러짐)가 있고 그 밖은 없다(기존 연출, GDD 171장)', () => {
     const p = createRigPlayer(HUMANOID, MOTIONS);
     for (const a of ['idle', 'move', 'attack', 'skill', 'hit', 'homeIdle', 'dying', 'bath', 'lose'] as const) expect(p.has(a), a).toBe(true);
     for (const a of ['win', 'eat', 'sleep', 'release'] as const) expect(p.has(a), a).toBe(false);

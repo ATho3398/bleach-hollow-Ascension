@@ -1590,13 +1590,25 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트 `tests/c248.test.ts` 10개 + c245 소스 기대 2줄 갱신.
 - 캡처 `docs/captures/c248/`(1배 844×390): 00 전/후(홈 3/10 책장) · 01~04 사신 홈 2~5/10(월드맵·책장·가방·상태) · 05 첫 전투 2/5 · 06 온천 4/7 · 07 식사 6/7 · h-home-3 호로 홈 3/10.
 
-## C.249 — 종이인형 게임 넣기 + 동작 연결: 온천·빈사·쓰러짐·홈 대기·사신 블록 몸동작 (GDD 170장, v5.381, S-23, 종이인형 세션 Opus)
+## C.249 — pixelfx 도구: 고정 버전 받기 · 가져오기 메뉴 · 시트 재생기 · 개발 전용 실험실 · 저장소 스킬 (개발 도구, S-23, Opus)
+사용 모델: Opus 5.5. 게임 수치·세이브·화면 변경 없음(BALANCE·SAVE 그대로). 전투 연출에는 아직 안 붙임(13장 로드맵에서 시작 지시가 있을 때).
+- 사용자 지시: "pixelfx를 Claude가 전부 활용할 수 있게 세팅해 줘 … 고정 버전 … 렌더 → 스프라이트 시트(PNG+JSON) → 블리치 할로우 어센션 게임으로 가져오는 스크립트·메뉴 … MIT 크레딧은 서드파티 고지에, Patch Pixel 폰트는 쓰지 마 … 이펙트 하나를 실제로 뽑아서 게임 안에서 돌아가는지 확인"
+- **고정 버전** `scripts/pixelfx/pin.json`(patch-gg/pixelfx 0.3.0, 커밋 a84159688af3) · `npm run fx:fetch` → `vendor/pixelfx`(.gitignore, 커밋을 확인하고 다르면 다시 받음, `gallery/fonts` Patch Pixel 글꼴은 받은 뒤 지움).
+- **가져오기** `npm run fx`(메뉴: 찾기 → 고르기 → 색 → 이름 → 렌더·가져오기 / 목록 / 지우기 / 전부 다시 렌더), 명령형 `npm run fx -- add <분류/이름> [--name] [--palette 이름|#색,…] [--seed] [--opts]` · `list` · `remove` · `rebuild` · `find` · `palettes`. 결과 = `public/fx/<이름>.png` + 작은 `.json`(프레임 크기·열·길이·반복·기준점) + `public/fx/index.json` + `public/fx/LICENSE-pixelfx.txt`. 직접 만든 이펙트는 `scripts/pixelfx/custom/` 에 커밋하면 렌더 전에 vendor 에 겹쳐 넣는다.
+- **게임 쪽** `src/ui/bha/pixelFx.ts`: `loadPixelFx(이름)` → `playPixelFx(host, 시트, { x, y, scale, flip, rate, onEnd })` — div 배경 위치를 프레임마다 옮기는 DOM/CSS 재생(외부 라이브러리·canvas 없음, 기획서 11-1), 기준점(pivot)이 (x, y). CSS `src/ui/bha/pixel-fx.css` `.bha-pxfx`(pixelated, 색 없음). pixelfx 코드는 게임 번들에 안 들어간다.
+- **개발 전용 실험실** `?fxlab`(`src/ui/bha/fxLab.ts`, main.ts `import.meta.env.DEV` 가드 — 배포 빌드에 없음 확인): 가져온 시트를 세이레이테이 배경·사신·호로 그림 위에서 실제 재생기로 반복 재생, ×1·×2·×3.
+- **스킬** `.claude/skills/pixelfx/SKILL.md`(원문 + "이 프로젝트에서" 절: vendor 경로·시트 길만·종족 색은 config·연출 연결은 로드맵 지시 후·글꼴 금지) · `LICENSE`. 클라우드 세션에서도 자동으로 잡힌다. 플러그인(`/plugin marketplace add patch-gg/pixelfx` → `/plugin install pixelfx@pixelfx`)은 사용자가 자기 PC 의 Claude Code 에서 직접 입력.
+- **고지** `THIRD_PARTY_NOTICES.md`(pixelfx MIT 전문 + NOTICE: Hugo Duprez·Hollow Crown, Patch Pixel 글꼴 안 씀).
+- **실제 확인**: `impacts/hit-spark`(136×80 · 16장 · 528ms · 한 번) 가져옴 → `npm run dev` `?fxlab` 에서 Playwright 로 프레임 4~15 진행·끝나면 지워짐·`onEnd` 호출·콘솔 오류 0 · `npm run build` 에 `fx/` 4개 파일 들어가고 서비스 워커 미리 받기 목록에 포함.
+- 테스트 `tests/c249.test.ts` 12개(frameAt·framePos·pivotBox, 시트 PNG 크기 = 프레임×열·줄, 목록 밖 파일 없음, 고지, 글꼴 금지, DEV 가드, 스킬 파일). 캡처 `docs/captures/c249/`(1-fxlab-x2 · 2-fxlab-x3).
+
+## C.250 — 종이인형 게임 넣기 + 동작 연결: 온천·빈사·쓰러짐·홈 대기·사신 블록 몸동작 (GDD 171장, v5.382, S-23, 종이인형 세션 Opus)
 사용 모델: Opus 5.5. 세이브·밸런스 변경 없음.
 - 사용자 원문(11-01 03:0x): "자 이제, 온천 자세는 온천 이용 모션으로, 빈사자세는 빈사 및 상태이상 걸렸을 때, 권 블록=스트레이트, 귀 블록=특수1,2, 참 블록=공격1,2 모션 / 그리고 남, 녀에 박치기 모션도 추가." · (11-03 01:0x) "빈사, 쓰러짐, 온천 넣으라니까 왜 안넣지?" → "온천이 왜없어 … 블리치 마스터 ad랑 소통해서 다시 파악해".
 - **merge**: 종이인형 브랜치 `ccr-14d5b05b-vt28rc` 에 main(3cc63eb, C.248)을 merge 커밋으로(rebase·force 없음). 충돌 2곳 — `docs/GDD.md`(버전 줄 = main, 12장 = main 이력 + 브랜치 v5.265~v5.281 은 '종이인형 브랜치 이력' 묶음), `src/ui/bha/rigAnim.ts`(main 의 계열 몸동작·바닥 자르기 clipY + 브랜치의 이펙트 그리기·동작 앞뒤 순서 둘 다). 브랜치 쪽 엔진(`pose.ts` 몸별 보정 이동 shift·동작 order)·편집기·도구는 자동 merge.
 - **게임 넣기**(`scripts/rig/promote.py`): main 게임본의 그림 칸(116장 1 정사각 152·clipY 82)·주먹·발차기(118장 2)를 작업본에 먼저 옮긴 뒤 작업본 → 게임본(데이터 2·그림 19장·정지 그림 8·고정 파일). 게임 동작 16개.
 - **연결**: `RIG_ACTIONS` 에 homeIdle·dying·bath·lose(= 쓰러짐 down), `FAMILY_RIG_MOTIONS` strike = straight · slash = attack·attack2 · cast = skill·skill2. 게임 동작 키 13종(`anim.ts`). 새 `applyCarePose`(`src/ui/bha/room.ts`): 종이인형이면 사망 = 쓰러짐, 빈사·쇠약·피곤 = 빈사 자세, 방 평소 = 홈 대기 / 아니면 옛 .is-collapsed — 방·월드맵·장터·온천이 씀. 온천(`spaView`) 걷는 동안 걷기, 자리에 앉으면 온천 자세. 종이인형 재생기 승리·패배 잠금(늦게 온 맞음이 쓰러짐을 덮던 것, 프레임 애니와 같게). 종족 분기 없음.
 - 손질: 쓰러짐 칼 30° 세움(칼끝이 그림 칸 밖으로 잘림). 박치기·필살기·주먹·발차기는 게임 데이터만(연결 없음).
-- 남은 것: 빈사 안내 띠로 방이 낮아지면 상태 칩이 빈사 자세 머리를 가림(C.93 칩 하한 규칙) — 사용자 확인 뒤(GDD 170장).
+- 남은 것: 빈사 안내 띠로 방이 낮아지면 상태 칩이 빈사 자세 머리를 가림(C.93 칩 하한 규칙) — 사용자 확인 뒤(GDD 171장).
 - 테스트: 옛 게임본 기준 시험을 새 구조로 — paperdoll(동작 16개·칼/엄지 = 왼 아래팔·사용자가 잡은 각도는 처음 자세 기준 상대값·validateRig 묶음 포함), rigAnim(연결 동작·쓰러짐 유지·잠금, 그림 칸 시험은 게임이 트는 동작만), c55(동작 키 13종), c192(권/참/귀 새 표, 특수 동작 고르기 시험이 무작위 순서에 기대던 것). 전체 200파일 2457개 → 이번 추가 포함 통과, 타입체크·balance:check 통과.
-- 캡처 `docs/captures/c249/`(1배 844×390, `scripts/c249-proof.cjs`): 00 방 홈 대기 · 01 온천 앉은 온천 자세 · 02 방 빈사 자세(상태 칩 겹침 보임) · 03 전투 패배 쓰러짐 · 04 권 블록 스트레이트(타격) · 05 참 블록 공격2(베기) · 06 귀 블록 특수(파도 1 충).
+- 캡처 `docs/captures/c250/`(1배 844×390, `scripts/c250-proof.cjs`): 00 방 홈 대기 · 01 온천 앉은 온천 자세 · 02 방 빈사 자세(상태 칩 겹침 보임) · 03 전투 패배 쓰러짐 · 04 권 블록 스트레이트(타격) · 05 참 블록 공격2(베기) · 06 귀 블록 특수(파도 1 충).

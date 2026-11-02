@@ -24,7 +24,7 @@ export interface AnimActionDef {
   fallback: string;
 }
 
-/** 동작 키 13종 (GDD 26-3, 속도는 26-4b 의 프레임당 ms). 새 동작은 이 표에 한 줄. homeIdle·dying·bath = 종이인형 동작 연결용(GDD 170장, 프레임 그림은 아직 없음) */
+/** 동작 키 13종 (GDD 26-3, 속도는 26-4b 의 프레임당 ms). 새 동작은 이 표에 한 줄. homeIdle·dying·bath = 종이인형 동작 연결용(GDD 171장, 프레임 그림은 아직 없음) */
 export const ANIM_ACTIONS: readonly AnimActionDef[] = [
   { key: 'idle', label: '대기', mode: 'loop', ms: 300, endMs: 450, where: '방, 전투 대기, 걷기 멈춤', fallback: '정지 그림' },
   { key: 'move', label: '이동', mode: 'loop', ms: 130, where: '모험 걷기', fallback: '걷기 흔들림' },
