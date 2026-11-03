@@ -146,7 +146,9 @@ async function probe(page, label, shotName, shot) {
   return r;
 }
 
-(async () => {
+module.exports = { startServer, press, newGame, snap, sel, findOther, probe };
+
+if (require.main === module) (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = await startServer();
   const browser = await chromium.launch();
