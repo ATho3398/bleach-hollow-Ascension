@@ -155,11 +155,45 @@ export function tutorialAllows(g: TutorialGuard, t: EventTarget | null): boolean
   const sel = g.allow();
   return !!sel && !!t.closest(sel);
 }
+/**
+ * 허용된 곳에서 시작한 누름 (GDD 182장 2): 그 누름이 끝날 때까지(놓기 + 이어지는 mouseup·touchend·click) 같은 누름의 사건은 대상이 바뀌어도 지나간다.
+ * 블록 바는 누르는 순간 포인터를 붙잡아(setPointerCapture) 놓기(pointerup) 대상이 블록 칸이 아니라 바 전체가 된다 — 이걸 막아 튜토리얼 블록 안내에서 블록을 눌러도 안 써졌다.
+ * 끌어 놓기·다른 칸에서 놓기도 같은 누름이다
+ */
+export interface PressTrack {
+  /** 지금 누름이 허용된 곳에서 시작했다 */
+  open: boolean;
+  /** 놓은 뒤 이어지는 사건을 받는 마감 (아직 안 놓았으면 Infinity) */
+  until: number;
+}
+/** 놓은 뒤 이어지는 호환 사건(mouseup·touchend·click)을 받아 주는 시간 */
+export const PRESS_FOLLOW_MS = 600;
+const PRESS_START = new Set(['pointerdown', 'mousedown', 'touchstart']);
+const PRESS_END = new Set(['pointerup', 'pointercancel', 'touchend']);
+/** 이 사건을 지나가게 하나: allowed = 사건 대상이 지금 허용 대상인가. 누름 상태(p)를 갱신한다 */
+export function pressPasses(p: PressTrack, type: string, now: number, allowed: boolean): boolean {
+  if (PRESS_START.has(type)) {
+    if (type === 'pointerdown' || !p.open || now > p.until) {
+      p.open = allowed;
+      p.until = Infinity;
+    }
+    return allowed || p.open;
+  }
+  if (allowed) return true;
+  if (!p.open || now > p.until) {
+    p.open = false;
+    return false;
+  }
+  if (PRESS_END.has(type) && p.until === Infinity) p.until = now + PRESS_FOLLOW_MS;
+  return true;
+}
+const press: PressTrack = { open: false, until: 0 };
 const onGuardedEvent = (e: Event): void => {
   // 다른 길로 치워진 안내(레이어가 문서에서 빠짐)는 가드도 푼다 — 남은 가드가 화면을 막지 않게
   for (const dead of guards.filter((x) => !x.layer.isConnected)) dead.release();
   const g = guards[guards.length - 1];
-  if (!g || !e.isTrusted || tutorialAllows(g, e.target)) return;
+  if (!g || !e.isTrusted) return;
+  if (pressPasses(press, e.type, performance.now(), tutorialAllows(g, e.target))) return;
   if (e.cancelable) e.preventDefault();
   e.stopImmediatePropagation();
   if (e.type === 'pointerdown') g.nudge();

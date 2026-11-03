@@ -11,7 +11,8 @@ const css = read('src/ui/bha/screens-lcd.css');
 describe('180-1 화면 터치: 안내 창·지금 대상만', () => {
   it('진짜 누름(isTrusted)을 문서 맨 앞(capture)에서 거른다 — 기기 버튼·안내 창·지금 대상(data-dev-only)만 지나간다', () => {
     expect(tut).toContain("const GUARDED_EVENTS = ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'dblclick', 'contextmenu'] as const;");
-    expect(tut).toContain('if (!g || !e.isTrusted || tutorialAllows(g, e.target)) return;');
+    expect(tut).toContain('if (!g || !e.isTrusted) return;');
+    expect(tut).toContain('if (pressPasses(press, e.type, performance.now(), tutorialAllows(g, e.target))) return;'); // C.279: 허용된 곳에서 시작한 누름은 끝까지 (GDD 182장 2)
     expect(tut).toContain('e.stopImmediatePropagation();');
     expect(tut).toContain('if (t.closest(DEVICE_BUTTON_SELECTOR)) return true;');
     expect(tut).toContain('if (g.card.contains(t)) return true;');

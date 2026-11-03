@@ -1867,3 +1867,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 배경: `public/art/scene-worldmap-hollow.webp`(164KB)·`scene-worldmap-shinigami.webp`(309KB) 1672×941, 두 json `worldmap.sceneArt`·`worldmap.floor`(aspect 2·기본 다각형 + view). 자리: 호로 `DEFAULT_WORLDMAP.layout`, 사신 `shinigami.json worldmap.layout`.
 - 테스트: c258-layout-tool(월드맵 자리 기대값 11줄)·c204(sceneArt 종족별) 갱신. 캡처 `docs/captures/c278/` 2장. 배치 도구: https://atho3398.github.io/bleach-hollow-Ascension/?layout
 
+## C.279 — 튜토리얼 가방 창 · 튜토리얼 블록 눌림 · 월드맵 그림 윤곽 (GDD 182장 1·2·4, v5.419, S-23, 코딩193 Opus)
+- 사용자 원문: "-튜토따라 가방왓는데도 아직 떠잇는 창 수정 / -튜토전투에서 블록 알려줄 때, 블록 눌러도 안써짐. 튜토 버튼 외에 못누르게 한거가 잘못 적용된듯. 알아서 눈치껏 쳐야지;; / -월드맵에서 좀 구분이 되게, 아이콘들은 외곽선이나 그림자 이펙트 좀 더 강조시켜줘"
+- 1 가방: `src/ui/app.ts` 회복 안내 `to-bag` act 에 `autoFinish: true` → 가방이 열리면 '열어 보자' 카드가 닫히고 3/7 '구급상자' 카드가 구급상자 옆에. 같은 종류(화면 이동 카드) 점검: 홈 안내 마지막·먹이 = 이미 autoFinish, 온천 = 단계 안내.
+- 2 블록 안 눌림: 원인 = 블록 바 `tray.root.setPointerCapture` 로 pointerup 대상이 바 전체 → C.276 가드(`[data-sc^="block."]` 만 허용)가 놓기를 막아 블록이 안 쓰임. `src/ui/tutorialOverlay.ts` `pressPasses`(PressTrack): 허용 대상에서 시작한 누름은 끝(놓기 + 0.6초 안의 mouseup·touchend·click)까지 통과, 허용 안 된 곳에서 시작한 누름은 끝까지 막음. 단계별 허용 = 구멍 대상 + 가르치는 행동(각본 블록 = 블록 바, 막기 = [막기], 실제 조작 = 지금 단계 대상) 그대로.
+- 4 월드맵: 토큰 `--bha-art-edge`·`--bha-art-drop`·`--bha-art-ring`·`--bha-art-outline`(`design-system/tokens.css`), `worldmap.css` 장소 그림 img 에 적용. 2px 어두운 외곽선 + 아래 그림자, 흐린 빛·네모 상자 없음. 초점 강조는 그대로.
+- 자동 점검: `tests/c279.test.ts`(11) — 누름 추적 4가지 경우, 각본 단계 대상, autoFinish, 토큰 모양. 브라우저 `scripts/c279-proof.cjs` — 새 게임을 안내대로 진짜 마우스로만 끝까지(홈 안내 → 첫 모험 → 각본 전투 → 첫 흡수 → 치명상 → 회복 안내 7장 → 다음 할 일) 두 종족: 막힘 0, 각본 블록 안내 2번 모두 블록 쓰임, 가방 연 뒤 '열어 보자' 남음 없음. 캡처 `docs/captures/c279/`.
+- 세이브 형식·밸런스 그대로.
+

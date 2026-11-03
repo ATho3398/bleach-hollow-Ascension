@@ -291,7 +291,8 @@ export function startApp(host: HTMLElement): void {
       dying: {},
       'to-bag': {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
-        act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' },
+        // 가방이 열리면 [다음] 없이 바로 다음 카드(가방 안 구급상자 옆 안내)로 — 가방 화면에 '열어 보자' 카드가 남아 목록을 덮지 않게 (GDD 182장 1)
+        act: { selector: '.bha-prop--chest', autoFinish: true, done: () => nav.top?.id === 'chest' },
       },
       // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
       cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
