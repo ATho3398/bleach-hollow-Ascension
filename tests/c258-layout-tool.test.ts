@@ -207,7 +207,7 @@ describe('C.264 월드맵 배치 반영 (종족별)', () => {
   });
   it('사신 = shinigami.json worldmap.layout 6곳', () => {
     const w = W('shinigami');
-    expect(spot(w.home)).toEqual({ x: 45.3, y: 69, scale: 1.7 });
+    expect(spot(w.home)).toEqual({ x: 45.3, y: 69, scale: 1.28 }); // C.271 (사용자 2026-11-04 01:33 "이건 사신 월드맵만 적용"): ×1.7 → ×1.28 + 대원실 그림 교체
     expect(spot(w.market)).toEqual({ x: 61.8, y: 32.1, scale: 0.98 });
     expect(spot(w.training)).toEqual({ x: 62.3, y: 89.6, scale: 0.85 });
     expect(spot(w.adventure)).toEqual({ x: 17.7, y: 85.6, scale: 1.05 });
@@ -224,6 +224,6 @@ describe('C.270 호로 둥지 월드맵 그림 (호로만)', () => {
     expect(artUrls('prop.home').src).toBeNull();
   });
   it('사신 월드맵 홈 자리는 json 값 그대로 (호로 변경 영향 없음)', () => {
-    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 45.3, y: 69, scale: 1.7 });
+    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 45.3, y: 69, scale: 1.28 }); // C.271
   });
 });

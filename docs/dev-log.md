@@ -1802,3 +1802,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 그림: 도구는 두 종족 공통 키 `prop.home` 으로 올렸지만, 그대로 넣으면 월드맵이 prop.home 을 먼저 써서 사신 대원실 그림(place-home-shinigami.png)까지 바뀜 → 종족별 장소 그림 `public/art/place-home-hollow.png` 로 넣음(호로만). 도트 그림이라 `.bha-prop__img` pixelated 로 그대로 선명.
 - 자리: 호로 = 공통 기본값 `DEFAULT_WORLDMAP.home` (45.1, 64, ×1.08) → (47.4, 65.6, ×1.61). 사신은 shinigami.json worldmap.layout 이 덮어 그대로. 같은 파일의 방 값·가방 그림은 C.269 와 같아 변경 없음.
 - 테스트 +2(c258-layout-tool C.270: place.home.hollow 그림·prop.home 비어 있음·사신 홈 그대로), 호로 홈 기대값 갱신. 캡처 `docs/captures/c270/`(기기 844×390 1배, `scripts/c270-proof.cjs`): 1 호로 웨코문도(새 둥지) · 2 사신(그대로). 그림 상자 겹침 호로 둥지×시장 3367px² — 가로로 긴 그림이라 칸 위쪽이 투명, 눈으로 가림 없음.
+
+## C.271 — 배치 도구 반영 6: 사신 월드맵 대원실 그림·크기 (사신만) (GDD 175장, v5.409, S-23, UI 배치 도구 세션 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스 변경 없음.
+- 사용자 원문: "이건 사신 월드맵만 적용" — `bha-layout-20261104-0133.json`(사신 월드맵 대원실 ×1.28 + 대원실 그림 업로드 720×480 png).
+- 그림: 업로드를 `public/art/place-home-shinigami.png` 로 교체(옛 320×320 대원실 그림 대체, 사신만 — 도구의 공통 키 prop.home 은 비워 둠, C.270 과 같은 이유). 크기: shinigami.json `worldmap.layout.home.scale` 1.7 → 1.28. 호로는 그대로.
+- 테스트: c258-layout-tool 사신 홈 기대값 1.28. 캡처 `docs/captures/c271/`(기기 844×390 1배, `scripts/c271-proof.cjs`): 1 호로(그대로) · 2 사신(새 대원실). 그림 상자 겹침 사신 대원실×수련장 35px² — 투명 여백, 눈으로 가림 없음.
