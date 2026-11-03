@@ -365,8 +365,6 @@ export function startApp(host: HTMLElement): void {
       tutorialOverlay(faction, {
         scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: '다음', vars,
         script: { step: `회복 안내 ${i + 1} / ${RECOVER_SCENES.length}`, act: st.act },
-        // 기기 뒤로: 건너뛰기 없는 안내라 짧은 안내만 (GDD 131장 2 와 같은 결)
-        onBack: () => showToast({ eyebrow: '튜토리얼', title: st.act ? '강조된 버튼을 눌러 진행한다' : '[다음]을 눌러 진행한다', meta: '' }, 0, 1800),
         onFinish: (status) => {
           if (status !== 'completed') {
             recoverOpen = false;
@@ -432,12 +430,11 @@ export function startApp(host: HTMLElement): void {
     homeIntroOpen = true;
     const { scenes, vars } = homeIntroScenes(faction);
     const total = scenes.length + 1;
-    const hint = () => showToast({ eyebrow: '튜토리얼', title: '[다음]을 눌러 진행한다', meta: '' }, 0, 1800);
     const show = (i: number): void => {
       const scene = scenes[i];
       if (scene) {
         tutorialOverlay(faction, {
-          scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: hint,
+          scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars,
           script: { step: `홈 안내 ${i + 1} / ${total}` },
           onFinish: (st) => (st === 'completed' ? show(i + 1) : void (homeIntroOpen = false)),
         });
@@ -450,7 +447,7 @@ export function startApp(host: HTMLElement): void {
       // 월드맵 물건 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1)
       const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
       window.setTimeout(() => tutorialOverlay(faction, {
-        scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
+        scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars,
         script: { step: `홈 안내 ${total} / ${total}`, act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' } },
         onFinish: () => {
           forceAdventure = false;

@@ -7,7 +7,7 @@ import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
 import { linesBody } from './bha/lines';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { DEVICE_BUTTON_SELECTOR, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
 import { placeCard, placeCardFit, unionRect, type BoxSide, type Rect } from './helpLayout';
 
@@ -39,8 +39,6 @@ export interface TutorialOverlayOptions {
   /** 각본 전투 카드 (GDD 123장 5, C.199): 건너뛰기·이전 없이 단계 글자(step)만. waitFor 가 있으면 [다음] 없이 전투를 만지게 두고(직접 해 보기와 같음),
    *  기기 ▲▼ 는 그 선택자에 맞는 전투 대상만 고른다 (GDD 122장) */
   script?: { step: string; waitFor?: string; act?: TutorialAct };
-  /** 기기 뒤로 (없으면 아무것도 안 함 — 튜토리얼은 [다음]·[건너뛰기]로만 닫는다) */
-  onBack?: () => void;
   /** 도움말에서 직접 연 다시 보기 (GDD 129-1): 이때만 뒤 화면을 회색으로 덮는다. 없으면(저절로 뜨는 안내·각본 카드) 카드·강조 테두리만 */
   replay?: boolean;
 }
@@ -127,6 +125,70 @@ const screenKey = () => [...document.querySelectorAll('.bha-app')].map((e) => [.
 /** 앞 단계 창 자리 (GDD 169장 3·4): 안내마다 오버레이를 새로 띄워도(홈 안내·회복 안내는 카드 한 장씩) 같은 화면이면 같은 쪽을 먼저 쓴다 */
 let lastPlaced: { screen: string; side: BoxSide | null; rect: Rect } | null = null;
 
+/**
+ * 튜토리얼 입력 막기 (GDD 180장 1, C.276): 안내가 떠 있는 동안 지시한 버튼(구멍 대상)·안내 창 버튼만 눌린다.
+ * 화면 터치(진짜 누름 = isTrusted)는 문서 맨 앞(capture)에서 거른다 — 실제 조작 카드는 레이어가 누름을 통과시키므로(is-practice) 여기서 막아야 뒤 화면 다른 버튼이 안 눌린다.
+ * 기기 버튼(▲▼✓◀) 누름은 지나가고, 기기 쪽(device.ts)이 data-tut-guard 레이어를 보고 초점·✓·◀ 를 대상으로 좁힌다. 프로그램이 부르는 click(기기 ✓ 등)은 막지 않는다
+ */
+export interface TutorialGuard {
+  /** 안내 레이어 (data-tut-guard) */
+  layer: HTMLElement;
+  /** 안내 창 (창 안 버튼은 언제나 눌린다) */
+  card: HTMLElement;
+  /** 지금 눌러도 되는 뒤 화면 대상 (CSS 선택자, 없으면 창 버튼만) */
+  allow: () => string | null;
+  /** 다른 곳을 눌렀다: 대상을 잠깐 깜빡인다 */
+  nudge: () => void;
+  /** 가드를 푼다 (pushGuard 가 채운다) */
+  release: () => void;
+}
+const guards: TutorialGuard[] = [];
+/** 게임이 아니라 기기 보기만 바꾸는 조작 (다마고치 모드 뒤집기·확대·줌아웃 화면 탭, GDD 27장) */
+const VIEW_CONTROL_SELECTOR = '.bha-tama__shield, [data-tama="flip"], [data-tama="zoom-in"]';
+const GUARDED_EVENTS = ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'dblclick', 'contextmenu'] as const;
+/** 눌러도 되는 곳인가 (지금 맨 위 안내 기준) */
+export function tutorialAllows(g: TutorialGuard, t: EventTarget | null): boolean {
+  if (!(t instanceof Element)) return true;
+  if (t.closest(DEVICE_BUTTON_SELECTOR)) return true; // 기기 버튼은 device.ts 가 대상으로 좁힌다
+  if (t.closest(VIEW_CONTROL_SELECTOR)) return true; // 기기 보기 조작(다마고치 뒤집기·확대)은 게임을 진행시키지 않는다
+  if (g.card.contains(t)) return true;
+  const sel = g.allow();
+  return !!sel && !!t.closest(sel);
+}
+const onGuardedEvent = (e: Event): void => {
+  // 다른 길로 치워진 안내(레이어가 문서에서 빠짐)는 가드도 푼다 — 남은 가드가 화면을 막지 않게
+  for (const dead of guards.filter((x) => !x.layer.isConnected)) dead.release();
+  const g = guards[guards.length - 1];
+  if (!g || !e.isTrusted || tutorialAllows(g, e.target)) return;
+  if (e.cancelable) e.preventDefault();
+  e.stopImmediatePropagation();
+  if (e.type === 'pointerdown') g.nudge();
+};
+function pushGuard(g: Omit<TutorialGuard, 'release'>): () => void {
+  if (guards.length === 0) for (const type of GUARDED_EVENTS) window.addEventListener(type, onGuardedEvent, { capture: true, passive: false });
+  const entry: TutorialGuard = { ...g, release: () => {} };
+  guards.push(entry);
+  g.layer.dataset.tutGuard = '';
+  return (entry.release = () => {
+    const g = entry;
+    const i = guards.indexOf(g);
+    if (i >= 0) guards.splice(i, 1);
+    delete g.layer.dataset.tutGuard;
+    if (guards.length === 0) for (const type of GUARDED_EVENTS) window.removeEventListener(type, onGuardedEvent, { capture: true });
+  });
+}
+/** 깜빡임 길이 (토큰 --bha-dur-5 와 같은 값 — 끝나면 클래스를 뗀다) */
+const NUDGE_MS = 900;
+/** 대상을 잠깐 깜빡인다 (GDD 180장 1): 대상 자신의 밝기만 — 네모 상자 빛 없음 (178장 3) */
+export function nudgeTargets(els: readonly Element[]): void {
+  for (const n of els) {
+    n.classList.remove('bha-tut-nudge');
+    void (n as HTMLElement).offsetWidth; // 연달아 눌러도 처음부터 다시
+    n.classList.add('bha-tut-nudge');
+    window.setTimeout(() => n.classList.remove('bha-tut-nudge'), NUDGE_MS);
+  }
+}
+
 export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOptions): TutorialHandle {
   const vars = { ...helpVars(faction), ...(opts.vars ?? {}) };
   const t = (s: string) => renderHelpText(s, vars);
@@ -154,7 +216,8 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   layer.append(hole, card);
   const host = getOverlayHost();
   host.append(layer);
-  const unregister = registerLayer(layer, opts.onBack ?? (() => {})); // 뒤로 = 아무것도 안 함(또는 부르는 쪽 안내) — 튜토리얼은 [다음]·[건너뛰기]로만 닫는다 (C.176, GDD 104장 7)
+  // 뒤로(◀·Esc) = 대상 깜빡임만 (GDD 180장 1 — 새 알림·문구 없음). 튜토리얼은 [다음]·[건너뛰기]로만 닫는다 (C.176, GDD 104장 7)
+  const unregister = registerLayer(layer, () => nudge());
 
   /** 지금 단계 (stages 가 있는 장면만) */
   let stageIdx = 0;
@@ -168,6 +231,22 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   /** 실제 조작 카드: 해야 할 것을 했다 */
   let actDone = false;
   let actTimer = 0;
+  /** 지금 눌러도 되는 뒤 화면 대상 (실제 조작·직접 해 보기·각본 대기 중일 때만 — 기기 초점과 같은 선택자) */
+  const allowSel = (): string | null => {
+    if (!practiceOn) return null;
+    // 단계가 있는 실제 조작 카드: 누르는 순간의 단계로 다시 잰다 — 화면이 막 바뀐 틈(단계 갱신 0.25초 전)에 다음 대상이 막히지 않게 (GDD 132장 1)
+    const sc = SCENES[state.index];
+    if (sc?.stages && opts.script?.act && !actDone) return selectorOf(sc.stages[currentStage(sc.stages, host)]!.targets);
+    return layer.dataset.devOnly ?? null;
+  };
+  /** '여기': 누를 대상(뒤 화면 대상, 없으면 창의 [다음])을 깜빡인다 */
+  const nudge = (): void => {
+    const sel = allowSel();
+    const shown = (n: Element) => n instanceof HTMLElement && n.getClientRects().length > 0;
+    const els = sel ? [...document.querySelectorAll(sel)].filter(shown) : nextBtn && !nextBtn.disabled && nextBtn.isConnected ? [nextBtn] : [];
+    nudgeTargets(els);
+  };
+  const unguard = pushGuard({ layer, card, allow: allowSel, nudge });
   /** 장면 이동 연출(온천 들고 나기·월드맵 걷기 → 페이드) 중에는 창을 숨기고, 끝나면 그 자리에 한 번 놓고 고정한다 (GDD 143장 1) */
   let moveTimer = 0;
   /** 카드가 대상을 덮게 됐는지 보는 타이머 (모든 장면) */
@@ -221,6 +300,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     setPractice(false);
     window.removeEventListener('resize', layout);
     unregister();
+    unguard();
     layer.remove();
   };
   const finish = (status: Exclude<TutorialStatus, 'active'>) => {
@@ -344,6 +424,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     const stage = stageOf(scene);
     if (sc?.waitFor) layer.dataset.devOnly = sc.waitFor;
     else if (acting) layer.dataset.devOnly = stage ? selectorOf(stage.targets) : sc!.act!.selector; // 기기 초점도 지금 누를 것을 따라간다 (GDD 132장 1)
+    else if (scene.practice && (stage?.targets ?? scene.targets).length > 0) layer.dataset.devOnly = selectorOf(stage?.targets ?? scene.targets); // 직접 해 보기도 구멍 대상만 (GDD 180장 1)
     else delete layer.dataset.devOnly;
     const actions = el('div', 'bha-tut__actions');
     // 각본 카드: 강제 진행 — 건너뛰기·이전 없음, 기다리는 카드는 [다음]도 없음 (막기·블록을 눌러야 진행)
@@ -382,6 +463,11 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     return row;
   };
 
+  // 말풍선 누름 = [다음] (GDD 180장 1): 창 안 빈 곳을 눌러도 다음 단계로. 버튼 위 누름은 그 버튼이 처리한다
+  card.addEventListener('click', (e) => {
+    if (e.target instanceof Element && e.target.closest('button')) return;
+    if (nextBtn && nextBtn.isConnected && !nextBtn.disabled) nextBtn.click();
+  });
   window.addEventListener('resize', layout);
   // 모든 장면 공통 (GDD 162장 1): 화면이 바뀌어 대상이 크게 옮겨 갔거나, 조금 옮겨 간 대상을 카드가 덮게 됐으면 다시 놓는다.
   // 그 밖에는 뜬 창을 제자리에 둔다(제자리에서 흔들리는 대상을 따라 움직이지 않게 — GDD 143장 1)
