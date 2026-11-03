@@ -130,7 +130,8 @@ async function runFactionInner(browser, fi, tag, proof, traits, page0) {
       const geo = await page.evaluate(() => {
         const b = document.querySelector('.bha-foe__body').getBoundingClientRect();
         const l = document.querySelector('.bha-afx-layer').getBoundingClientRect();
-        return { foe: { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height }, layer: { x: l.left, y: l.top, w: l.width, h: l.height }, afx: document.querySelectorAll('.bha-afx, .bha-pxfx').length };
+        const m = document.querySelector('.bha-hero__body').getBoundingClientRect();
+        return { foe: { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height }, hero: { x: m.left + m.width / 2, y: m.top + m.height / 2, w: m.width, h: m.height }, layer: { x: l.left, y: l.top, w: l.width, h: l.height }, afx: document.querySelectorAll('.bha-afx, .bha-pxfx').length };
       });
       await page.screenshot({ path: path.join(OUT, `bg-${tag}-${k}.png`) });
       proof.trace.push({ tag, bg: k, geo });
@@ -188,6 +189,7 @@ async function runFactionInner(browser, fi, tag, proof, traits, page0) {
     // 이름 = 테스트 패널 특성 목록 글자
     const order = ['water', 'fire', 'earth', 'thunder', 'blood', 'poison', 'kyo'];
     const runs = [...(process.env.C268_ELS || 'fire,water,kyo').split(',').map((el) => [1, `s-${el}`, ['참', order.indexOf(el)]]), ...(process.env.C268_ELS ? [] : [[0, 'h-fire', ['조', order.indexOf('fire')]]])];
+    if (process.env.C268_BG) runs.splice(0, runs.length, [1, 's', ['참', 1]], [0, 'h', ['조', 1]]);
     for (const [fi, tag, traits] of runs) {
       try { await runFaction(browser, fi, tag, proof, traits); } catch (e) { proof.errors.push(`${tag}: ${e.message}`); }
     }
