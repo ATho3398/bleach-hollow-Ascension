@@ -30,7 +30,7 @@ const elements = json('src/data/elements/elements.json').map((e) => ({ id: e.id,
 const ORDER = [['shinigami', '참'], ['shinigami', '권'], ['shinigami', '귀'], ['hollow', '교'], ['hollow', '조'], ['hollow', '탄']];
 // 연타 처음 값 = 지금 게임(src/ui/attackFxConfig.ts FAMILY_STAGE_FX): 1블록 1번 · 2블록 3번 110ms · 3블록 3번 90ms
 const TIMING = [[1, 0], [3, 110], [3, 90]];
-const slash = { fx: 'melee/sword-slash', color: 'element', anchor: 'target', when: 'each', delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: true };
+const slash = { fx: 'melee/sword-slash', color: 'element', anchor: 'target', delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: true };
 const entries = [];
 const defaults = {};
 for (const [fid, abbr] of ORDER) {
@@ -40,7 +40,8 @@ for (const [fid, abbr] of ORDER) {
   const key = `${fid}/${fam.id}`;
   entries.push({ key, label: `${fac.name} ${fam.name}`, faction: fid, bg: dataUri(`scripts/pixelfx/tool/battle-bg-${fid}.png`, 'image/png'), dir: -1 });
   // 처음 값: 사신 참 = 지금 붙여 둔 sword-slash(GDD 180장 1), 나머지는 비어 있음
-  defaults[key] = TIMING.map(([hits, gapMs]) => ({ hits, gapMs, layers: fid === 'shinigami' && abbr === '참' ? [{ ...slash }] : [] }));
+  const all = (n) => Array.from({ length: n }, (_, i) => i);
+  defaults[key] = TIMING.map(([hits, gapMs]) => ({ hits, gaps: all(hits - 1).map(() => gapMs), speed: 1, layers: fid === 'shinigami' && abbr === '참' ? [{ ...slash, on: all(hits) }] : [] }));
 }
 
 const CAT = { arcane: '비전', critters: '생물', explosions: '폭발', fire: '불', holy: '신성', ice: '얼음', impacts: '타격', lightning: '번개', melee: '근접', moves: '연속기', nature: '자연', pickups: '아이템', projectiles: '투사체', scifi: 'SF', shadow: '어둠', spawn: '등장·소멸', status: '상태', transitions: '화면 전환', ui: 'UI', water: '물', weather: '날씨' };
@@ -55,7 +56,7 @@ const data = {
   entries,
   defaults,
   catNames: CAT,
-  stamp: 'v2', // 저장 모양이 바뀔 때만 올린다 (올리면 옛 편집 값은 버린다)
+  stamp: 'v3', // 저장 모양이 바뀔 때만 올린다 (도구 load 가 v2 를 v3 로 옮긴다)
   built: `게임 ${execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', 'HEAD']).toString().trim()}`,
 };
 

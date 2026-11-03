@@ -4,7 +4,7 @@
 
 | 페이지 | 주소 | 데이터 |
 |---|---|---|
-| 이펙트 배치 도구 | https://claude.ai/artifact/8zYJY6nUzygqcDZGRG32to | db `fx/editor`(편집 중)·`fx/fixed`(확정) — 문서 필드 `json` = `{ stamp: "v2", families: { "<종족>/<계열 id>": [1블록, 2블록, 3블록] }, at }`, 블록 = `{ hits, gapMs, layers: [최대 3 × { fx(pixelfx id), color(element·original), anchor(target·attacker), when(each·first·last), delay, dx, dy, scale, angle, rate, altFlip }] }` |
+| 이펙트 배치 도구 | https://claude.ai/artifact/8zYJY6nUzygqcDZGRG32to | db `fx/editor`(편집 중)·`fx/fixed`(확정) — 문서 필드 `json` = `{ stamp: "v3", families: { "<종족>/<계열 id>": [1블록, 2블록, 3블록] }, at }`, 블록 = `{ hits, gaps[타격 사이 ms], speed(시전 속도), layers: [최대 3 × { fx(pixelfx id), color(element·original), anchor(target·attacker), on[나오는 타격 0부터], delay, dx, dy, scale, angle, rate(재생 속도), altFlip }] }` (stamp v3, v2 는 도구가 옮김) |
 
 v2 (사용자 2026-11-04 01:5x "연타 넣을거면 연타 타이밍 조정도 추가하고, 맞는 이펙트도 넣을 수 있도록 한 공격당 이펙트 최대 3개까지 불러올 수 있게 해. 공격 계열에 사신 참, 권, 귀, 호로 교, 조, 탄 으로 ㄱㄱ 그리고 각 공격계열 별 1블록, 2블록, 3블록도 추가"): pixelfx 244개를 도구 안에서 코드로 바로 그린다(`vendor/pixelfx/src` 를 번들 — 시트를 미리 뽑지 않는다). 게임에 넣을 때 고른 것만 `npm run fx -- add` 로 시트(속성 색이면 8장)를 뽑는다.
 

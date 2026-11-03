@@ -70,6 +70,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
     <section class="panel">
       <h2>연타</h2>
       <div id="hitbox"></div>
+      <div id="gapbox" aria-label="타격 사이 간격"></div>
       <h2>이펙트 (한 공격에 최대 3개)</h2>
       <div class="row" id="layertabs"></div>
       <div class="row">
@@ -84,7 +85,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
       <select id="fx" aria-label="이펙트"></select>
       <div class="row" id="colorseg" aria-label="색"></div>
       <div class="row" id="anchorseg" aria-label="기준"></div>
-      <div class="row" id="whenseg" aria-label="나오는 때"></div>
+      <div class="row"><span class="dim">나오는 타격</span><div class="row" id="onseg" aria-label="나오는 타격"></div></div>
       <div id="layerbox"></div>
       <label class="row"><input id="altflip" type="checkbox"> 연타 짝수 번째 위아래 뒤집기</label>
     </section>

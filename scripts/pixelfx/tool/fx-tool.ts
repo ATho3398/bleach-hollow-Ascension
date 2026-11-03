@@ -9,7 +9,8 @@ interface FxLayer {
   fx: string;
   color: 'element' | 'original';
   anchor: 'target' | 'attacker';
-  when: 'each' | 'first' | 'last';
+  /** 나오는 타격 (0부터, 사용자 2026-11-04 "3타만 다른거로 바꾸고싶은데") */
+  on: number[];
   delay: number;
   dx: number;
   dy: number;
@@ -18,7 +19,8 @@ interface FxLayer {
   rate: number;
   altFlip: boolean;
 }
-interface StageFx { hits: number; gapMs: number; layers: FxLayer[] }
+/** 한 블록 공격: 타격 수 · 타격 사이 간격(타격마다 따로) · 시전 속도(공격 전체 빠르기, 이펙트 재생도 같이) · 이펙트 */
+interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[] }
 type FamilyFx = StageFx[];
 interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1 }
 interface ToolData {
@@ -40,7 +42,7 @@ declare const claude: { use(name: 'db'): Promise<{ doc(path: string): DocRef } |
 type Mod = { meta: { name?: string; size: [number, number]; origin: [number, number]; fps?: number; duration?: number; loop?: boolean; options?: Record<string, unknown> } };
 const EFFECTS = effects as Record<string, Mod>;
 const D = FX_DATA;
-const LS = 'bha-fx-tool-v2';
+const LS = 'bha-fx-tool-v3';
 const MAX_LAYERS = 3;
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
@@ -62,7 +64,14 @@ const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): 
 };
 const st = (): StageFx => data[entry.key]![stageIx]!;
 const layer = (): FxLayer | null => st().layers[layerIx] ?? null;
-const newLayer = (): FxLayer => ({ fx: 'impacts/hit-spark', color: 'original', anchor: 'target', when: 'each', delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: false });
+const newLayer = (): FxLayer => ({ fx: 'impacts/hit-spark', color: 'original', anchor: 'target', on: Array.from({ length: st().hits }, (_, i) => i), delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: false });
+/** 간격 칸 수를 타격 수에 맞춘다 (늘면 마지막 간격을 잇는다), 없는 타격은 나오는 타격에서 뺀다 */
+function fitStage(s: StageFx): void {
+  const want = Math.max(0, s.hits - 1);
+  while (s.gaps.length < want) s.gaps.push(s.gaps[s.gaps.length - 1] ?? 100);
+  s.gaps.length = want;
+  for (const L of s.layers) L.on = L.on.filter((i) => i < s.hits);
+}
 
 // ── pixelfx 렌더 (pixelfx tools/lib/fxlib.mjs renderFrames 와 같은 방식: 원점에 놓고 fps 마다 한 장, 가장자리 빛 줄이기) ──
 interface Frames { w: number; h: number; fps: number; images: ImageData[] }
@@ -133,10 +142,15 @@ const fit = (): void => {
 new ResizeObserver(fit).observe(stageBox);
 
 /** 재생 조각 하나 = 어떤 층이 어떤 타격에서 언제 시작하는지 */
-interface Inst { L: FxLayer; start: number; f: Frames; cv: HTMLCanvasElement; ctx: CanvasRenderingContext2D; shown: number }
+interface Inst { L: FxLayer; rate: number; start: number; f: Frames; cv: HTMLCanvasElement; ctx: CanvasRenderingContext2D; shown: number }
 let insts: Inst[] = [];
 let span = { from: 0, to: 800 };
-const hitTimes = (s: StageFx): number[] => Array.from({ length: s.hits }, (_, i) => i * s.gapMs);
+/** 타격 시각(ms) = 간격 합 ÷ 시전 속도 */
+const hitTimes = (s: StageFx): number[] => {
+  const out = [0];
+  for (let i = 1; i < s.hits; i++) out.push(out[i - 1]! + (s.gaps[i - 1] ?? 0) / s.speed);
+  return out;
+};
 
 function layout(): void {
   for (const i of insts) i.cv.remove();
@@ -149,9 +163,8 @@ function layout(): void {
   s.layers.forEach((L, li) => {
     const f = framesOf(L.fx, paletteOf(L));
     if (!f) return;
-    const which = L.when === 'first' ? [0] : L.when === 'last' ? [hits.length - 1] : hits.map((_, i) => i);
-    for (const hi of which) {
-      const start = hits[hi]! + L.delay;
+    for (const hi of L.on.filter((i) => i < hits.length)) {
+      const start = hits[hi]! + L.delay / s.speed;
       const cv = h('canvas', 'pxfx');
       cv.width = f.w;
       cv.height = f.h;
@@ -162,9 +175,10 @@ function layout(): void {
         `transform:${pixelFxTransform(entry.dir < 0, L.altFlip && hi % 2 === 1, L.angle)};visibility:hidden`;
       if (li === layerIx) cv.classList.add('is-sel');
       world.insertBefore(cv, $('mark-t'));
-      insts.push({ L, start, f, cv, ctx: cv.getContext('2d')!, shown: -1 });
+      const rate = L.rate * s.speed;
+      insts.push({ L, rate, start, f, cv, ctx: cv.getContext('2d')!, shown: -1 });
       from = Math.min(from, start);
-      to = Math.max(to, start + ((f.images.length / f.fps) * 1000) / L.rate);
+      to = Math.max(to, start + ((f.images.length / f.fps) * 1000) / rate);
     }
   });
   span = { from, to };
@@ -181,7 +195,7 @@ function layout(): void {
 
 function draw(): void {
   for (const i of insts) {
-    const fi = Math.floor(((t - i.start) * i.L.rate * i.f.fps) / 1000);
+    const fi = Math.floor(((t - i.start) * i.rate * i.f.fps) / 1000);
     if (t < i.start || fi >= i.f.images.length) {
       i.cv.style.visibility = 'hidden';
       continue;
@@ -259,6 +273,7 @@ function gauges<T, K extends keyof T & string>(host: HTMLElement, list: Gauge<K>
       const o = get();
       if (!o) return;
       (o as Record<string, unknown>)[g.key] = Number(r.value);
+      if (g.key === 'hits') fitStage(st());
       changed();
     };
     row.append(lab, r, out);
@@ -275,17 +290,64 @@ function gauges<T, K extends keyof T & string>(host: HTMLElement, list: Gauge<K>
     }
   };
 }
-const syncHits = gauges<StageFx, 'hits' | 'gapMs'>($('hitbox'), [
+const syncHits = gauges<StageFx, 'hits' | 'speed'>($('hitbox'), [
   { key: 'hits', label: '타격 수', step: 1, min: 1, max: 6, unit: '번' },
-  { key: 'gapMs', label: '연타 간격', step: 10, min: 0, max: 500, unit: 'ms' },
+  { key: 'speed', label: '시전 속도', step: 0.05, min: 0.25, max: 3, unit: '배' },
 ], st);
+/** 타격 사이 간격: 타격 수만큼 줄이 바뀐다 */
+function syncGaps(): void {
+  const box = $('gapbox');
+  const s = st();
+  if (box.childElementCount !== s.gaps.length) {
+    box.replaceChildren();
+    s.gaps.forEach((_, i) => {
+      const row = h('div', 'field');
+      const lab = h('label', '', `${i + 1}→${i + 2}타`);
+      lab.htmlFor = `gap-${i}`;
+      const r = h('input');
+      r.id = lab.htmlFor;
+      r.type = 'range';
+      r.min = '0';
+      r.max = '800';
+      r.step = '10';
+      r.oninput = () => {
+        st().gaps[i] = Number(r.value);
+        changed();
+      };
+      row.append(lab, r, h('output', 'val'));
+      box.append(row);
+    });
+  }
+  [...box.children].forEach((row, i) => {
+    (row.querySelector('input') as HTMLInputElement).value = String(s.gaps[i]);
+    row.querySelector('output')!.textContent = `${s.gaps[i]}ms`;
+  });
+}
+/** 고른 이펙트가 나오는 타격 (여러 개 고르기) */
+function syncOn(): void {
+  const box = $('onseg');
+  const L = layer();
+  box.replaceChildren();
+  for (let i = 0; i < st().hits; i++) {
+    const b = h('button', 'chip', `${i + 1}타`);
+    b.type = 'button';
+    b.disabled = !L;
+    b.setAttribute('aria-pressed', String(!!L && L.on.includes(i)));
+    b.onclick = () => {
+      if (!L) return;
+      L.on = L.on.includes(i) ? L.on.filter((x) => x !== i) : [...L.on, i].sort((a, c) => a - c);
+      changed();
+    };
+    box.append(b);
+  }
+}
 const syncLayer = gauges<FxLayer, 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate'>($('layerbox'), [
   { key: 'dx', label: '가로', step: 1, min: -400, max: 400, unit: 'px', signed: true },
   { key: 'dy', label: '세로', step: 1, min: -200, max: 200, unit: 'px', signed: true },
   { key: 'scale', label: '크기', step: 0.25, min: 0.25, max: 6, unit: '배' },
   { key: 'angle', label: '각도', step: 1, min: -180, max: 180, unit: '°', signed: true },
   { key: 'delay', label: '늦춤', step: 10, min: -400, max: 800, unit: 'ms', signed: true },
-  { key: 'rate', label: '속도', step: 0.05, min: 0.25, max: 3, unit: '배' },
+  { key: 'rate', label: '재생 속도', step: 0.05, min: 0.25, max: 3, unit: '배' },
 ], layer);
 
 // ── 고르기 ──
@@ -352,7 +414,7 @@ fxSel.onchange = () => {
   L.fx = fxSel.value;
   changed();
 };
-function seg(host: string, items: [string, string][], key: 'color' | 'anchor' | 'when'): () => void {
+function seg(host: string, items: [string, string][], key: 'color' | 'anchor'): () => void {
   const bs = items.map(([v, label]) => {
     const b = h('button', 'chip', label);
     b.type = 'button';
@@ -375,7 +437,6 @@ function seg(host: string, items: [string, string][], key: 'color' | 'anchor' | 
 }
 const syncColor = seg('colorseg', [['element', '속성 색'], ['original', '원래 색']], 'color');
 const syncAnchor = seg('anchorseg', [['target', '맞는 쪽'], ['attacker', '치는 쪽']], 'anchor');
-const syncWhen = seg('whenseg', [['each', '타격마다'], ['first', '첫 타격'], ['last', '마지막 타격']], 'when');
 const flip = $<HTMLInputElement>('altflip');
 flip.onchange = () => {
   const L = layer();
@@ -397,9 +458,14 @@ $('dellayer').onclick = () => {
 $('copystage').onclick = () => {
   const src = clone(st());
   const fam = data[entry.key]!;
-  data[entry.key] = fam.map((s, i) => (i === stageIx ? src : { hits: s.hits, gapMs: s.gapMs, layers: clone(src.layers) }));
+  data[entry.key] = fam.map((s, i) => {
+    if (i === stageIx) return src;
+    const out = { hits: s.hits, gaps: s.gaps, speed: s.speed, layers: clone(src.layers) };
+    fitStage(out);
+    return out;
+  });
   changed();
-  status(`${stageIx + 1}블록 이펙트를 1·2·3블록에 복사했다 (타격 수·간격은 그대로)`);
+  status(`${stageIx + 1}블록 이펙트를 1·2·3블록에 복사했다 (타격 수·간격·시전 속도는 그대로)`);
 };
 $('play').onclick = () => setPlaying(!playing);
 $<HTMLInputElement>('repeat').onchange = (ev) => (repeat = (ev.target as HTMLInputElement).checked);
@@ -441,17 +507,18 @@ function refresh(): void {
   flip.checked = !!L?.altFlip;
   flip.disabled = !L;
   syncHits();
+  syncGaps();
+  syncOn();
   syncLayer();
   syncColor();
   syncAnchor();
-  syncWhen();
   $('summary').textContent = summary();
   layout();
 }
 const summary = (): string => {
   const s = st();
-  const ls = s.layers.map((L, i) => `${i + 1}) ${L.fx} · ${L.anchor === 'target' ? '맞는 쪽' : '치는 쪽'} · ${{ each: '타격마다', first: '첫 타격', last: '마지막 타격' }[L.when]} · ${L.color === 'element' ? '속성 색' : '원래 색'} · 자리 ${L.dx},${L.dy} · 크기 ${L.scale} · ${L.angle}° · 늦춤 ${L.delay}ms · 속도 ${L.rate}${L.altFlip ? ' · 연타 뒤집기' : ''}`);
-  return `${entry.label} ${stageIx + 1}블록 · 타격 ${s.hits}번 · 간격 ${s.gapMs}ms${ls.length ? `\n${ls.join('\n')}` : ''}`;
+  const ls = s.layers.map((L, i) => `${i + 1}) ${L.fx} · ${L.anchor === 'target' ? '맞는 쪽' : '치는 쪽'} · ${L.on.length ? L.on.map((x) => `${x + 1}타`).join('·') : '나오는 타격 없음'} · ${L.color === 'element' ? '속성 색' : '원래 색'} · 자리 ${L.dx},${L.dy} · 크기 ${L.scale} · ${L.angle}° · 늦춤 ${L.delay}ms · 재생 속도 ${L.rate}${L.altFlip ? ' · 연타 뒤집기' : ''}`);
+  return `${entry.label} ${stageIx + 1}블록 · 타격 ${s.hits}번 · 간격 ${s.gaps.join('/') || '-'}ms · 시전 속도 ${s.speed}${ls.length ? `\n${ls.join('\n')}` : ''}`;
 };
 
 // ── 저장 ──
@@ -505,8 +572,23 @@ $('copy').onclick = async () => {
 function load(saved: unknown): boolean {
   try {
     const b = (typeof saved === 'string' ? JSON.parse(saved) : saved) as { stamp?: string; families?: Record<string, FamilyFx> };
-    if (!b || b.stamp !== D.stamp || !b.families) return false;
-    for (const e of D.entries) if (Array.isArray(b.families[e.key]) && b.families[e.key]!.length === 3) data[e.key] = b.families[e.key]!;
+    if (!b || !b.families || (b.stamp !== D.stamp && b.stamp !== 'v2')) return false;
+    for (const e of D.entries) {
+      const fam = b.families[e.key];
+      if (!Array.isArray(fam) || fam.length !== 3) continue;
+      // v2 → v3: gapMs 하나 → 타격마다 간격, when(타격마다/첫/마지막) → 나오는 타격 목록, 시전 속도 1
+      for (const s of fam as (StageFx & { gapMs?: number })[]) {
+        if (!Array.isArray(s.gaps)) s.gaps = Array.from({ length: Math.max(0, s.hits - 1) }, () => s.gapMs ?? 100);
+        delete s.gapMs;
+        if (typeof s.speed !== 'number') s.speed = 1;
+        for (const L of s.layers as (FxLayer & { when?: string })[]) {
+          if (!Array.isArray(L.on)) L.on = L.when === 'first' ? [0] : L.when === 'last' ? [s.hits - 1] : Array.from({ length: s.hits }, (_, i) => i);
+          delete L.when;
+        }
+        fitStage(s);
+      }
+      data[e.key] = fam;
+    }
     return true;
   } catch {
     return false;
