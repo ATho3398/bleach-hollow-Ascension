@@ -220,7 +220,7 @@
   "market": { "name": "시장" },
   "worldmap": {
     "name": "소울 소사이어티", "adventureName": "모험", "spaName": "온천",
-    "layout": { "home": { "x": 45.3, "y": 69, "scale": 1.7 }, "market": { "x": 61.8, "y": 32.1, "scale": 0.98 }, "training": { "x": 62.3, "y": 89.6, "scale": 0.85 }, "adventure": { "x": 17.7, "y": 85.6, "scale": 1.05 }, "tower": { "x": 10.9, "y": 44.5, "scale": 1.15 }, "spa": { "x": 88.5, "y": 55, "scale": 1.29 } }
+    "layout": { "home": { "x": 45.3, "y": 69, "scale": 1.28 }, "market": { "x": 61.8, "y": 32.1, "scale": 0.98 }, "training": { "x": 62.3, "y": 89.6, "scale": 0.85 }, "adventure": { "x": 17.7, "y": 85.6, "scale": 1.05 }, "tower": { "x": 10.9, "y": 44.5, "scale": 1.15 }, "spa": { "x": 88.5, "y": 55, "scale": 1.29 } }
   },
   "room": {
     "shape": "room",
@@ -237,11 +237,11 @@
       "poly": [[0, 0.46], [1, 0.46], [1, 1], [0, 1]]
     },
     "layout": {
-      "book": { "x": 74.6, "y": 66.1, "scale": 1.04 },
+      "book": { "x": 71.4, "y": 68.8, "scale": 0.91 },
       "altar": { "x": 90, "y": 70, "scale": 0.68 },
-      "chest": { "x": 28.9, "y": 91.2, "scale": 0.8 },
+      "chest": { "x": 28.9, "y": 91.2, "scale": 0.86 },
       "outside": { "x": 9, "y": 78, "scale": 1 },
-      "rank": { "x": 71.2, "y": 91.2, "scale": 0.68 }
+      "rank": { "x": 83.7, "y": 87.1, "scale": 1.03 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {

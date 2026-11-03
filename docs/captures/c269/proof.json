@@ -1,0 +1,17 @@
+{
+  "shots": [
+    "1-room-hollow.png",
+    "2-room-shinigami.png"
+  ],
+  "errors": [],
+  "overlaps": {
+    "room.hollow": [
+      "book×rank 1126px²",
+      "chest×outside 208px²"
+    ],
+    "room.shinigami": [
+      "book×rank 1126px²",
+      "chest×outside 208px²"
+    ]
+  }
+}
