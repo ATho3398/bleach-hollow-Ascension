@@ -296,3 +296,19 @@
 @keyframes bha-heal-rise { 0% { opacity: 0; transform: translateY(20%) scaleY(0.6); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-25%) scaleY(1.1); } }
 @keyframes bha-heal-plus { 0% { opacity: 0; transform: translate(-50%, 30%); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -90%); } }
 @media (prefers-reduced-motion: reduce) { .bha-walker.is-healing::before, .bha-walker__heal::after { animation: none; opacity: 0.8; } }
+
+/* ── 모험 준비 화면 탭 [준비] / [타일 배치] (GDD 179장, C.266) ──
+   준비 = 왼쪽 사냥터·난이도·길 미리보기, 오른쪽 탭 + 프리셋. 타일 배치(.is-place) = 사냥터·난이도·설명·프리셋을 숨기고 길(위 한 줄 전체)과 가진 타일(아래 넓게)만. 탭은 머리 줄 오른쪽(도움말 왼쪽), [출발] 띠는 그대로 */
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__sub:not(.bha-plan__line),
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__difficulty,
+.bha-lcd .bha-app.bha-plan.is-place > .bha-exp__head .bha-plan__grounds { display: none; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-plan__modetabs { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; margin-right: calc(var(--bha-touch) + var(--bha-sp-2)); z-index: 1; }
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__line { grid-column: 1 / -1; grid-row: 2; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road { grid-column: 1 / -1; grid-row: 3; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__synline { grid-column: 1 / -1; grid-row: 4; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__noterow { grid-column: 1 / -1; grid-row: 5; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand { grid-column: 1 / -1; grid-row: 6 / 10; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-tilecard { width: calc(25% - var(--bha-sp-2)); min-height: 88px; }
+/* 준비 탭: 배치 요령 줄(타일을 고른 뒤 …)은 배치 탭에서만 */
+.bha-lcd .bha-app.bha-plan:not(.is-place):has(.bha-plan__modetabs) .bha-road__noterow { display: none; }
+
