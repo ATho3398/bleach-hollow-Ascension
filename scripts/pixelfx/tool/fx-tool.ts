@@ -507,7 +507,11 @@ for (const el of D.elements) {
 // 이펙트 목록 (분류 · 이름), 검색
 const fxSel = $<HTMLSelectElement>('fx');
 const fxSearch = $<HTMLInputElement>('fxsearch');
-const ids = Object.keys(EFFECTS).sort();
+// 직접 만든 이펙트(custom/…) 맨 위 (사용자 2026-11-04 "커스텀은 맨위로 올리고")
+const isCustom = (id: string) => id.startsWith('custom/');
+const ids = Object.keys(EFFECTS).sort((a, b) => Number(isCustom(b)) - Number(isCustom(a)) || a.localeCompare(b));
+/** 옮긴 이펙트 id (옛 저장 값을 새 id 로) */
+const RENAMED: Record<string, string> = { 'arcane/cero-oscuras': 'custom/cero-oscuras' };
 function fillFx(q: string): void {
   const cur = layer()?.fx;
   fxSel.replaceChildren();
@@ -723,6 +727,7 @@ function load(saved: unknown): boolean {
           if (!Array.isArray(L.on)) L.on = L.when === 'first' ? [0] : L.when === 'last' ? [s.hits - 1] : Array.from({ length: s.hits }, (_, i) => i);
           delete L.when;
           Object.assign(L, { ...LAYER_DEFAULTS, ...L });
+          L.fx = RENAMED[L.fx] ?? L.fx;
         }
         fitStage(s);
       }

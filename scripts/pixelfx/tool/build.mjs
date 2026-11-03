@@ -44,7 +44,7 @@ for (const [fid, abbr] of ORDER) {
   defaults[key] = TIMING.map(([hits, gapMs]) => ({ hits, gaps: all(hits - 1).map(() => gapMs), speed: 1, layers: fid === 'shinigami' && abbr === '참' ? [{ ...slash, on: all(hits) }] : [] }));
 }
 
-const CAT = { arcane: '비전', critters: '생물', explosions: '폭발', fire: '불', holy: '신성', ice: '얼음', impacts: '타격', lightning: '번개', melee: '근접', moves: '연속기', nature: '자연', pickups: '아이템', projectiles: '투사체', scifi: 'SF', shadow: '어둠', spawn: '등장·소멸', status: '상태', transitions: '화면 전환', ui: 'UI', water: '물', weather: '날씨' };
+const CAT = { custom: '★ 커스텀 (직접 만든 것)', arcane: '비전', critters: '생물', explosions: '폭발', fire: '불', holy: '신성', ice: '얼음', impacts: '타격', lightning: '번개', melee: '근접', moves: '연속기', nature: '자연', pickups: '아이템', projectiles: '투사체', scifi: 'SF', shadow: '어둠', spawn: '등장·소멸', status: '상태', transitions: '화면 전환', ui: 'UI', water: '물', weather: '날씨' };
 
 // 배경 = 실제 전투 1배 캡처(scripts/c268-proof.cjs C268_BG=1, 종족마다), 맞는 몸·치는 몸 가운데(페이지 px)
 const data = {
@@ -60,7 +60,7 @@ const data = {
   built: `게임 ${execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', 'HEAD']).toString().trim()}`,
 };
 
-// 직접 만든 이펙트(scripts/pixelfx/custom, 예 arcane/cero-oscuras 세로 오스큐라스)를 vendor 에 겹쳐 넣고 목록(src/fx/index.js)을 다시 만든다
+// 직접 만든 이펙트(scripts/pixelfx/custom/custom/…, 예 custom/cero-oscuras 세로 오스큐라스)를 vendor 에 겹쳐 넣고 목록(src/fx/index.js)을 다시 만든다
 const VENDOR = join(ROOT, 'vendor/pixelfx');
 if (existsSync(join(ROOT, 'scripts/pixelfx/custom'))) cpSync(join(ROOT, 'scripts/pixelfx/custom'), join(VENDOR, 'src/fx'), { recursive: true });
 execFileSync('node', ['tools/index.mjs'], { cwd: VENDOR, stdio: 'ignore' });

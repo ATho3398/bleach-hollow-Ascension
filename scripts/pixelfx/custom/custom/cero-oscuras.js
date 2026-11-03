@@ -9,7 +9,7 @@
 // rings shocking out across the floor) is adapted from Sprite Fusion's open-source holy light
 // (https://www.spritefusion.com/pixel-art-vfx/holy-light), MIT License, Copyright (c) 2026 Hugo Duprez.
 import { Lights, Rng, PAL, fit, flare, clamp, smooth, ease, noise2, fract, WHITE } from "../../core/index.js";
-import { bayer } from "./_lib.js";
+import { bayer } from "../arcane/_lib.js";
 
 // the circle on the floor (plane px; the floor squashes depth by SY), the column, the beats
 const TOP = 192, W = 11;
@@ -20,7 +20,7 @@ const SKIP = 1.25;
 export const meta = {
   name: "세로 오스큐라스",
   desc: "Cero Oscuras (custom): a thread of light climbs, flashes, and a column of light fires up and breaks apart. Magic circle cast without the circle, rings or glitter.",
-  tags: ["arcane", "cero", "column", "beam", "cast", "ground", "one-shot", "custom"],
+  tags: ["custom", "arcane", "cero", "column", "beam", "cast", "ground", "one-shot", "custom"],
   size: [200, 220],
   origin: [100, 192],
   duration: END - SKIP,
