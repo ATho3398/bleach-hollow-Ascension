@@ -3,6 +3,8 @@
 // 시간은 마법진을 그리던 앞부분을 건너뛰어 빛기둥부터 시작한다(SKIP). 빛기둥·번쩍임·빛만 남김.
 // 2026-11-04 02:2x 사용자 "세로 오스큐라스에서 주변 반짝이 이펙트랑 서클 이펙트도 다 지워줘." → 모이는 빛줄기·불꽃·별·빛 알갱이(반짝이),
 // 바닥 충격파 고리·빛기둥을 오르는 고리(서클) 삭제.
+// 02:3x "오스큐라스 맨 위쪽 기준으로 아예 길게 만들던가, 그라데이션으로 사라지게 수정. 그리고 각도 +90 눕힌게 기본이 되게"
+// → 끝(기둥 위쪽 40%)이 점점 옅어져 사라지고, 기본 각도 = +90°(옵션 angle) 라 앞(오른쪽)으로 누운 빛줄기. 프레임도 가로로.
 // 원본: patch-gg/pixelfx a841596 src/fx/arcane/magic-circle-cast.js (MIT, THIRD_PARTY_NOTICES.md).
 //
 // The column of light (banded across, strands wandering in it, pulses and halos climbing it, stars thrown off,
@@ -21,8 +23,8 @@ export const meta = {
   name: "세로 오스큐라스",
   desc: "Cero Oscuras (custom): a thread of light climbs, flashes, and a column of light fires up and breaks apart. Magic circle cast without the circle, rings or glitter.",
   tags: ["custom", "arcane", "cero", "column", "beam", "cast", "ground", "one-shot", "custom"],
-  size: [200, 220],
-  origin: [100, 192],
+  size: [240, 132],
+  origin: [20, 66],
   duration: END - SKIP,
   loop: false,
   fps: 30,
@@ -38,12 +40,16 @@ export function create(o) {
   const strands = Array.from({ length: 9 }, () => ({ o: Rg.range(-0.85, 0.85), w: Rg.range(0.04, 0.1), f: Rg.range(1, 3) }));
   let t = SKIP, flashed = false;
 
+  // 기본 = +90° 눕혀 앞(오른쪽)으로 쏜다: 놓인 자리·뒤집기는 그대로, 각도만 +90° (옵션 angle 은 pixelfx 가 자리 잡기에 쓰므로 여기서 더한다)
+  const lie = (p) => p.place(p.tx, p.ty, p.fx < 0, (o.angle ?? 0) + Math.PI / 2);
+  // 끝으로 갈수록 옅어진다 (기둥 길이의 60% 부터 끝까지 그라데이션)
+  const tip = (h) => 1 - smooth(TOP * 0.6, TOP, h);
   // the column of light: the thread that climbs first, then the beam that fires up, holds and breaks apart
   function column(p) {
     if (t < FLASH - 0.22 || t > BREAK + 0.6) return;
     if (t < FLASH) {
       const a = smooth(FLASH - 0.22, FLASH - 0.04, t), top = -(TOP - 10) * ease.outCubic(a);
-      for (let y = -1; y >= top; y--) p.dot(0, y, y > top + 6 ? C[6] : WHITE, a * (0.35 + 0.65 * (1 + y / TOP)));
+      for (let y = -1; y >= top; y--) p.dot(0, y, y > top + 6 ? C[6] : WHITE, a * (0.35 + 0.65 * (1 + y / TOP)) * tip(-y));
       p.glow(0, top, 9, C[6], 0.5 * a);
       p.glow(0, -6, 24, C[5], 0.4 * a);
       return;
@@ -61,11 +67,11 @@ export function create(o) {
         let lv = q < 0.2 ? 0 : q < 0.42 ? 1 : q < 0.66 ? 2 : q < 0.88 ? 3 : 4;
         for (const s of strands) if (Math.abs((x + 0.5) / ww - s.o - 0.05 * Math.sin(t * s.f + s.o * 9)) < s.w) lv = Math.max(0, lv - 1);
         lv = white ? 0 : Math.max(0, lv - pulse);
-        const a = (q < 0.88 ? 1 : (1.3 - q) / 0.42) * fade;
+        const a = (q < 0.88 ? 1 : (1.3 - q) / 0.42) * fade * tip(h);
         if (a <= bayer(x, y) * (q < 0.66 ? 0.2 : 1)) continue;
         p.px(x, y, COL[lv]);
       }
-      if ((h & 7) === 0 && h < TOP - ww * 2.4 - 8) p.glow(0, y, ww * 2.4 + 6, C[5], 0.3 * fade);
+      if ((h & 7) === 0 && h < TOP - ww * 2.4 - 8) p.glow(0, y, ww * 2.4 + 6, C[5], 0.3 * fade * tip(h));
     }
     // white-hot where it meets the floor
     p.glow(0, -4, 34, C[6], 0.45 * fade);
@@ -83,9 +89,11 @@ export function create(o) {
       lights.update(dt);
     },
     drawBack(p) {
+      lie(p);
       column(p);
     },
     draw(p) {
+      lie(p);
       // the flash
       if (t >= FLASH && t < FLASH + 0.24) {
         const a = (t - FLASH) / 0.24;
