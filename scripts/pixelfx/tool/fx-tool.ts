@@ -25,12 +25,15 @@ interface FxLayer {
   arc: number;
   tx: number;
   ty: number;
+  /** 사라지는 곳 = 도착점에서 (ex, ey) — 0,0 이면 도착하자마자 사라진다. 아니면 같은 빠르기로 그곳까지 지나가서 사라진다 (사용자 2026-11-04 "사라지는 위치도 조정할 수 있게") */
+  ex: number;
+  ey: number;
   face: boolean;
   /** 시작 기준: hit = 타격 때, arrive = 이 블록 첫 투사체가 도착할 때(같은 타격) */
   sync: 'hit' | 'arrive';
 }
 /** 옛 저장·새 이펙트에 없는 칸 채우기 */
-const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, face: true, sync: 'hit' } as const;
+const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit' } as const;
 /** 한 블록 공격: 타격 수 · 타격 사이 간격(타격마다 따로) · 시전 속도(공격 전체 빠르기, 이펙트 재생도 같이) · 이펙트 */
 interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[] }
 type FamilyFx = StageFx[];
@@ -146,6 +149,7 @@ for (const [id, p] of [['mark-t', D.target], ['mark-a', D.attacker]] as const) {
 }
 const dot = $('dot');
 const dot2 = $('dot2');
+const dot3 = $('dot3');
 let k = 1;
 const fit = (): void => {
   k = stageBox.clientWidth / D.view.w;
@@ -155,7 +159,7 @@ const fit = (): void => {
 new ResizeObserver(fit).observe(stageBox);
 
 /** 재생 조각 하나 = 어떤 층이 어떤 타격에서 언제 시작하는지 */
-interface Inst { L: FxLayer; rate: number; start: number; hi: number; fly: { from: { x: number; y: number }; to: { x: number; y: number }; ms: number } | null; f: Frames; cv: HTMLCanvasElement; ctx: CanvasRenderingContext2D; shown: number }
+interface Inst { L: FxLayer; rate: number; start: number; hi: number; fly: { from: { x: number; y: number }; to: { x: number; y: number }; ms: number; end: { x: number; y: number }; ms2: number } | null; f: Frames; cv: HTMLCanvasElement; ctx: CanvasRenderingContext2D; shown: number }
 let insts: Inst[] = [];
 let span = { from: 0, to: 800 };
 /** 타격 시각(ms) = 간격 합 ÷ 시전 속도 */
@@ -191,9 +195,16 @@ function layout(): void {
       cv.style.width = `${w}px`;
       cv.style.height = `${hh}px`;
       cv.style.visibility = 'hidden';
-      const fly = L.move === 'fly'
-        ? { from: { x: D.attacker.x + L.dx, y: D.attacker.y + L.dy }, to: { x: D.target.x + L.tx, y: D.target.y + L.ty }, ms: Math.max(1, L.travel / s.speed) }
-        : null;
+      let fly: Inst['fly'] = null;
+      if (L.move === 'fly') {
+        const A = { x: D.attacker.x + L.dx, y: D.attacker.y + L.dy };
+        const B = { x: D.target.x + L.tx, y: D.target.y + L.ty };
+        const E = { x: B.x + (L.ex ?? 0), y: B.y + (L.ey ?? 0) };
+        const ms = Math.max(1, L.travel / s.speed);
+        // 도착 뒤 사라지는 곳까지: 첫 구간과 같은 빠르기
+        const v = Math.hypot(B.x - A.x, B.y - A.y) / ms || 1;
+        fly = { from: A, to: B, ms, end: E, ms2: Math.hypot(E.x - B.x, E.y - B.y) / v };
+      }
       if (!fly) {
         const a = anchorOf(L);
         place(cv, a.x + L.dx, a.y + L.dy, w, hh, pixelFxTransform(entry.dir < 0, L.altFlip && hi % 2 === 1, L.angle));
@@ -203,7 +214,7 @@ function layout(): void {
       const rate = L.rate * s.speed;
       insts.push({ L, rate, start, hi, fly, f, cv, ctx: cv.getContext('2d')!, shown: -1 });
       from = Math.min(from, start);
-      to = Math.max(to, start + (fly ? fly.ms : ((f.images.length / f.fps) * 1000) / rate));
+      to = Math.max(to, start + (fly ? fly.ms + fly.ms2 : ((f.images.length / f.fps) * 1000) / rate));
     }
   });
   span = { from, to };
@@ -211,12 +222,15 @@ function layout(): void {
   const L = layer();
   dot.hidden = !L;
   dot2.hidden = !L || L.move !== 'fly';
+  dot3.hidden = !L || L.move !== 'fly' || (!L.ex && !L.ey);
   if (L) {
     const a = L.move === 'fly' ? D.attacker : anchorOf(L);
     dot.style.left = `${a.x + L.dx}px`;
     dot.style.top = `${a.y + L.dy}px`;
     dot2.style.left = `${D.target.x + L.tx}px`;
     dot2.style.top = `${D.target.y + L.ty}px`;
+    dot3.style.left = `${D.target.x + L.tx + (L.ex ?? 0)}px`;
+    dot3.style.top = `${D.target.y + L.ty + (L.ey ?? 0)}px`;
   }
   draw();
 }
@@ -233,17 +247,30 @@ function draw(): void {
     let fi = Math.floor((el * i.rate * i.f.fps) / 1000);
     if (i.fly) {
       // 나는 동안: 곧은 길 + 곡선(포물선), 프레임은 반복, 도착하면 사라진다
-      if (el < 0 || el > i.fly.ms) {
+      if (el < 0 || el > i.fly.ms + i.fly.ms2) {
         i.cv.style.visibility = 'hidden';
         continue;
       }
       fi %= n;
-      const p = el / i.fly.ms;
-      const { from: A, to: B } = i.fly;
-      const x = A.x + (B.x - A.x) * p;
-      const y = A.y + (B.y - A.y) * p - i.L.arc * 4 * p * (1 - p);
-      const vx = B.x - A.x;
-      const vy = B.y - A.y - i.L.arc * 4 * (1 - 2 * p);
+      const { from: A, to: B, end: E } = i.fly;
+      let x: number;
+      let y: number;
+      let vx: number;
+      let vy: number;
+      if (el <= i.fly.ms) {
+        const p = el / i.fly.ms;
+        x = A.x + (B.x - A.x) * p;
+        y = A.y + (B.y - A.y) * p - i.L.arc * 4 * p * (1 - p);
+        vx = B.x - A.x;
+        vy = B.y - A.y - i.L.arc * 4 * (1 - 2 * p);
+      } else {
+        // 도착점을 지나 사라지는 곳까지 곧게
+        const p = (el - i.fly.ms) / (i.fly.ms2 || 1);
+        x = B.x + (E.x - B.x) * p;
+        y = B.y + (E.y - B.y) * p;
+        vx = E.x - B.x;
+        vy = E.y - B.y;
+      }
       const dir = (Math.atan2(vy, vx) * 180) / Math.PI;
       // 시트는 오른쪽을 본다. 왼쪽으로 날면 좌우 뒤집고(배가 위로 안 가게) 그만큼 각도를 되돌린다
       const left = vx < 0;
@@ -402,11 +429,13 @@ const syncLayer = gauges<FxLayer, 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'r
   { key: 'delay', label: '늦춤', step: 10, min: -400, max: 800, unit: 'ms', signed: true },
   { key: 'rate', label: '재생 속도', step: 0.05, min: 0.25, max: 3, unit: '배' },
 ], layer);
-const syncFly = gauges<FxLayer, 'travel' | 'arc' | 'tx' | 'ty'>($('flybox'), [
+const syncFly = gauges<FxLayer, 'travel' | 'arc' | 'tx' | 'ty' | 'ex' | 'ey'>($('flybox'), [
   { key: 'travel', label: '비행 시간', step: 10, min: 50, max: 1500, unit: 'ms' },
   { key: 'arc', label: '곡선 높이', step: 2, min: -150, max: 200, unit: 'px', signed: true },
   { key: 'tx', label: '도착 가로', step: 1, min: -200, max: 200, unit: 'px', signed: true },
   { key: 'ty', label: '도착 세로', step: 1, min: -150, max: 150, unit: 'px', signed: true },
+  { key: 'ex', label: '사라지는 곳 가로', step: 1, min: -400, max: 400, unit: 'px', signed: true },
+  { key: 'ey', label: '사라지는 곳 세로', step: 1, min: -200, max: 200, unit: 'px', signed: true },
 ], layer);
 
 // ── 고르기 ──
@@ -592,7 +621,7 @@ function refresh(): void {
 }
 const summary = (): string => {
   const s = st();
-  const ls = s.layers.map((L, i) => `${i + 1}) ${L.fx} · ${L.move === 'fly' ? `날아감 ${L.travel}ms 곡선 ${L.arc} 도착 ${L.tx},${L.ty}${L.face ? ' 방향 돌림' : ''}` : `${L.anchor === 'target' ? '맞는 쪽' : '치는 쪽'}${L.sync === 'arrive' ? ' · 도착 때' : ''}`} · ${L.on.length ? L.on.map((x) => `${x + 1}타`).join('·') : '나오는 타격 없음'} · ${L.color === 'element' ? '속성 색' : '원래 색'} · 자리 ${L.dx},${L.dy} · 크기 ${L.scale} · ${L.angle}° · 늦춤 ${L.delay}ms · 재생 속도 ${L.rate}${L.altFlip ? ' · 연타 뒤집기' : ''}`);
+  const ls = s.layers.map((L, i) => `${i + 1}) ${L.fx} · ${L.move === 'fly' ? `날아감 ${L.travel}ms 곡선 ${L.arc} 도착 ${L.tx},${L.ty}${L.ex || L.ey ? ` 사라짐 도착+${L.ex},${L.ey}` : ''}${L.face ? ' 방향 돌림' : ''}` : `${L.anchor === 'target' ? '맞는 쪽' : '치는 쪽'}${L.sync === 'arrive' ? ' · 도착 때' : ''}`} · ${L.on.length ? L.on.map((x) => `${x + 1}타`).join('·') : '나오는 타격 없음'} · ${L.color === 'element' ? '속성 색' : '원래 색'} · 자리 ${L.dx},${L.dy} · 크기 ${L.scale} · ${L.angle}° · 늦춤 ${L.delay}ms · 재생 속도 ${L.rate}${L.altFlip ? ' · 연타 뒤집기' : ''}`);
   return `${entry.label} ${stageIx + 1}블록 · 타격 ${s.hits}번 · 간격 ${s.gaps.join('/') || '-'}ms · 시전 속도 ${s.speed}${ls.length ? `\n${ls.join('\n')}` : ''}`;
 };
 
