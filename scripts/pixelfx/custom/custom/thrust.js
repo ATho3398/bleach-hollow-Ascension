@@ -13,7 +13,7 @@ export const meta = {
   tags: ["custom", "melee", "thrust", "stab", "pierce", "punch", "one-shot"],
   size: [196, 76],
   origin: [34, 62],
-  duration: 0.62,
+  duration: 0.4,
   loop: false,
   fps: 30,
   bg: "ground",

@@ -9,7 +9,7 @@ export const meta = {
   tags: ["custom", "impact", "punch", "hit", "heavy", "one-shot"],
   size: [104, 96],
   origin: [52, 48],
-  duration: 0.5,
+  duration: 0.26,
   loop: false,
   fps: 30,
   bg: "dark",

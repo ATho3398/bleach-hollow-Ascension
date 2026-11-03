@@ -15,7 +15,7 @@ export const meta = {
   tags: ["custom", "melee", "uppercut", "punch", "rise", "one-shot"],
   size: [132, 128],
   origin: [48, 110],
-  duration: 0.68,
+  duration: 0.55,
   loop: false,
   fps: 30,
   bg: "ground",
