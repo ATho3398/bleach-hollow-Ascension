@@ -118,7 +118,7 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
 
 describe('C.108 노력치 상한·수련 보상', () => {
   it('상한 = 3~5단계 합계의 약 15% (70·88·110), 능력치 1개 50% — 1·2단계는 C.115(GDD 59)에서 약 8%(24·32)로 내림', () => {
-    expect(SX.evCapTotal).toEqual([24, 32, 70, 88]); // C.220: 4단계 (마지막 110 삭제)
+    expect(SX.evCapTotal).toEqual([36, 44, 70, 88]); // C.280 (GDD 182장 3) 1·2단계 36·44. C.220: 4단계 (마지막 110 삭제)
     SX.evCapTotal.forEach((cap, i) => {
       if (i >= 2) {
         expect(cap / SX.tierTotals[i]!).toBeGreaterThan(0.14);
@@ -127,9 +127,9 @@ describe('C.108 노력치 상한·수련 보상', () => {
       expect(evCaps(i)).toEqual({ total: cap, perStat: Math.floor(cap * 0.5) });
     });
     const e = newEvolution();
-    expect(addEv(e, { atk: 99 })).toEqual({ atk: 12 });
-    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 12 });
-    expect(STAT_IDS.reduce((a, s) => a + e.ev[s], 0)).toBe(24);
+    expect(addEv(e, { atk: 99 })).toEqual({ atk: 18 });
+    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 18 });
+    expect(STAT_IDS.reduce((a, s) => a + e.ev[s], 0)).toBe(36);
   });
   it('수련 4종 노력치 +4~5', () => {
     const G = BALANCE.provisional.training.games;

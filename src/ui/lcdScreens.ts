@@ -40,7 +40,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, evCaps, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
@@ -159,6 +159,12 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     line.append('붕옥·초월체 보너스: ', h('b', '', bonus));
     stats.append(line);
   }
+  // 노력치 합계 / 이 단계 상한 (GDD 182장 3): '노력치가 가득 찼다'가 왜인지 보이게
+  const cap = evCaps(evo.tierIndex);
+  const evLineP = h('p', 'bha-faint');
+  evLineP.dataset.evTotal = String(evTotal(evo.ev));
+  evLineP.append('노력치 ', evText(`${Math.round(evTotal(evo.ev) * 100) / 100} / ${cap.total}`), ` (이 단계 상한 · 능력치 하나 ${cap.perStat})`);
+  stats.append(evLineP);
   const mark = rebirthMark(save.rebirth.count);
   if (mark) {
     const line = h('p', 'bha-faint');
