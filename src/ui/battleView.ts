@@ -39,7 +39,7 @@ import {
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
-import { elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
+import { ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
@@ -60,6 +60,7 @@ import type { SceneBg } from '../data/art/backgrounds';
 import { isTestMode, testSpeedMul } from './testMode';
 import { abilityProcText } from './evolutionPanel';
 import { shownName } from './displayName';
+import { loadPixelFx, readyPixelFx } from './bha/pixelFx';
 
 export interface BattleViewOptions {
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
@@ -853,6 +854,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (fx.shake) replayOnce(arena, 'is-shake', 320);
   };
   const cues: FxCue[] = [];
+  // 도트 시트 자국 미리 받기 (GDD 180장): pixelFx 가 있는 계열 × 속성. 못 받은 시트는 SVG 자국 그대로
+  for (const f of faction.families) if (f.pixelFx) for (const el of ELEMENT_IDS) void loadPixelFx(`${f.pixelFx}-${el}`);
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -869,8 +872,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const f = familyOf(faction, id);
       if (!f) return null;
       const t = f.tiers[stage - 1];
-      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null };
+      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, pixel: f.pixelFx ?? null };
     },
+    // 도트 시트 자국 (GDD 180장): 종족 설정 families[].pixelFx 가 있는 계열만, 아래에서 미리 받아 둔 시트
+    pixelSheet: readyPixelFx,
     nameOf: (e) => {
       if (e.kind !== 'block' || e.damage <= 0) return null;
       if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };

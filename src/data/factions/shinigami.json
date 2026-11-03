@@ -94,6 +94,7 @@
       "name": "참(斬)",
       "abbr": "참",
       "fx": "slash",
+      "pixelFx": "sword-slash",
       "motion": "slash",
       "category": "mixed",
       "tiers": [

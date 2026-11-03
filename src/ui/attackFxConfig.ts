@@ -107,5 +107,8 @@ export const FAMILY_STAGE_FX: readonly FamilyStageFx[] = [
   { hits: 3, gapMs: 90,  scale: 2.0, shake: true },
 ];
 
+/** 도트 시트 자국(GDD 180장) 크기: 시트 한 칸 높이를 맞는 몸 높이의 이만큼에 맞춘다(정수 배율로 반올림, 최소 1) */
+export const PIXEL_MARK_BODY = 0.9;
+
 /** 기술 이름 띄우는 시간(ms, 1배 기준) */
 export const SKILL_NAME_MS = 1100;

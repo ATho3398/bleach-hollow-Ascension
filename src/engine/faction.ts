@@ -46,6 +46,8 @@ export interface FamilyConfig {
   fx: AttackFxKind;
   /** 캐릭터 몸동작 (GDD 118장 2): 사신 권=strike·참=slash·귀=cast. 없으면 특수 동작 그대로(호로) */
   motion?: FamilyMotionKind;
+  /** 맞는 자국을 도트 시트로 (GDD 180장, pixelfx): 시트 이름 앞부분 — 실제 시트 = `<pixelFx>-<속성 id>`(public/fx). 없으면 SVG 자국 */
+  pixelFx?: string;
   /** 공격 분류 (GDD 20-1·118장 2): 물리(조·권) / 특수(탄·귀) / 혼합(교·참). 피해 계산에 쓰는 능력치를 정한다 */
   category: AttackCategory;
   /** 1·2·3단계 기술 */
@@ -566,6 +568,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!isString(x.abbr) || Array.from(x.abbr).length !== 1) errors.push(`families[${i}].abbr: 한 글자`);
       if (!(ATTACK_FX_KINDS as readonly unknown[]).includes(x.fx)) errors.push(`families[${i}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
       if (x.motion !== undefined && !(FAMILY_MOTION_KINDS as readonly unknown[]).includes(x.motion)) errors.push(`families[${i}].motion: ${FAMILY_MOTION_KINDS.join(' | ')}`);
+      if (x.pixelFx !== undefined && !(typeof x.pixelFx === 'string' && /^[a-z0-9-]+$/.test(x.pixelFx))) errors.push(`families[${i}].pixelFx: 소문자·숫자·하이픈 시트 이름`);
       if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`families[${i}].category: ${ATTACK_CATEGORIES.join(' | ')}`);
       const tiers = x.tiers;
       if (!Array.isArray(tiers) || tiers.length !== FAMILY_TIERS) errors.push(`families[${i}].tiers: 기술 ${FAMILY_TIERS}개`);
