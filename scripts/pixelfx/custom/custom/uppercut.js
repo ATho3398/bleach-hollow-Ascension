@@ -1,19 +1,21 @@
 // 어퍼컷 (블리치 할로우 어센션 커스텀, GDD 180장): pixelfx melee/uppercut 에서 별(만화 충격 별·별 둘레 고리·뻗는 선·반짝 별)만 뺐다.
-// 사용자 2026-11-04 "어퍼컷 이펙트에 별 없앤거 만들고 어퍼컷(커스텀)으로 추가". 초승달·속도선·불꽃·빛은 그대로.
+// 사용자 2026-11-04 "어퍼컷 이펙트에 별 없앤거 만들고 어퍼컷(커스텀)으로 추가". 초승달·속도선·빛은 그대로.
+// 03:0x "어퍼컷 커스텀에, 마지막에 터지는 모션은 있어야할듯 … 주먹질처럼 좀 묵직하게 펑 한번 터지는 이펙트가 나을거같아" → 맨 위에서 '주먹 펑'(_punch.js), 불꽃 삭제.
 // 원본: patch-gg/pixelfx a841596 src/fx/melee/uppercut.js (MIT, THIRD_PARTY_NOTICES.md).
 //
 // The crescent recipe is adapted from Sprite Fusion's open-source slash, and the star from his impact
 // (https://www.spritefusion.com/pixel-art-vfx), MIT License, Copyright (c) 2026 Hugo Duprez.
 import { Particles, Lights, P, Rng, fit, hex, clamp, smooth, ease, TAU, WHITE, READY } from "../../core/index.js";
 import { swing, onSwing, slash, slashEnd } from "../melee/_lib.js";
+import { punch } from "./_punch.js";
 
 export const meta = {
   name: "어퍼컷",
-  desc: "Uppercut (custom): a crescent rises from the floor past the face, with speed lines and sparks. Uppercut without the comic star.",
+  desc: "Uppercut (custom): a crescent rises from the floor past the face and ends in one heavy punch burst at the top. No comic star, no sparks.",
   tags: ["custom", "melee", "uppercut", "punch", "rise", "one-shot"],
   size: [132, 128],
   origin: [48, 110],
-  duration: 0.85,
+  duration: 0.68,
   loop: false,
   fps: 30,
   bg: "ground",
@@ -64,10 +66,6 @@ export function create(o) {
         hit = true;
         lights.add(SX, SY, 56, C[4], 0.6, 0.4);
         lights.add(SX, SY, 18, WHITE, 0.7, 0.08);
-        for (let i = 0; i < 16; i++) {
-          const a = -Math.PI / 2 + Rg.range(-1.6, 1.6), sp = Rg.range(120, 320);
-          ps.spawn(P.SPARK, SX, SY, Math.cos(a) * sp, Math.sin(a) * sp, Rg.range(0.15, 0.45));
-        }
       }
       ps.update(dt);
       lights.update(dt);
@@ -85,6 +83,8 @@ export function create(o) {
         const [x, y] = onSwing(A, A.R - 5, A.span * ease.outExpo(clamp(u / A.sweep)));
         p.glow(x, y, 34, C[3], 0.45 * (1 - u / (A.sweep + 0.06)));
       }
+      // 맨 위에서 묵직하게 펑
+      punch(p, C, SX, SY, t - HIT, 0.9, 0, o.seed);
       ps.draw(p);
       lights.draw(p);
     },
