@@ -1,12 +1,12 @@
 // 기모으기 (블리치 할로우 어센션 커스텀, GDD 180장): pixelfx shadow/dark-explosion 의 모으기(빛 알갱이가 소용돌이쳐 들어가고,
 // 빛줄기가 꽂히고, 고리가 좁혀 들고, 검은 핵이 뛰는 것)만 남기고, 그 뒤 터짐(번쩍임·검은 별·불타는 검은 공·파편·연기·마지막 터짐)을 뺐다.
 // 사용자 2026-11-04 "다크 익스플로이드도, 충전하는거만 남기고 뒤에 공 생기는건 지워서 기모으기로 커스텀 이펙스 생성"
-// 다 모이면(REL) 남은 알갱이·연기는 핵에 삼켜지고 끝난다. 원본: patch-gg/pixelfx a841596 src/fx/shadow/dark-explosion.js (MIT, THIRD_PARTY_NOTICES.md).
+// 다 모이면(REL) 모인 모습 그대로 FO 초 동안 점점 옅어져 사라진다(02:4x "기모으기가 너무 갑자기 뚝하고 사라지니까, 페이드아웃으로 사라지게"). 원본: patch-gg/pixelfx a841596 src/fx/shadow/dark-explosion.js (MIT, THIRD_PARTY_NOTICES.md).
 //
 // The pull that swirls motes into the core and the collapse burst are adapted from Sprite Fusion's open-source
 // black-hole (https://www.spritefusion.com/pixel-art-vfx/black-hole), the sparks, rings and smoke from his explosion,
 // MIT License, Copyright (c) 2026 Hugo Duprez.
-import { Particles, P, Rng, fit, clamp, ease, noise, hex, TAU, WHITE, mix } from "../../core/index.js";
+import { Particles, P, Rng, fit, clamp, smooth, ease, noise, hex, TAU, WHITE, mix } from "../../core/index.js";
 import { VOID, Puffs, PK, halo, ringFast, unlight, attract } from "../shadow/_lib.js";
 
 export const meta = {
@@ -15,7 +15,7 @@ export const meta = {
   tags: ["custom", "shadow", "charge", "gather", "void", "dark", "one-shot"],
   size: [280, 248],
   origin: [140, 206],
-  duration: 0.56,
+  duration: 0.94,
   loop: false,
   fps: 30,
   bg: "ground",
@@ -23,7 +23,9 @@ export const meta = {
 };
 
 // the heart of the blast hangs above the floor; the sphere's radius; the beats of the choreography
-const Y = -54, REL = 0.52, SMOKE = hex("#5d5468");
+const Y = -54, REL = 0.52, FO = 0.4, SMOKE = hex("#5d5468");
+// 페이드아웃 동안 붙잡아 두는 모으기 시각 (핵이 흰 점으로 바뀌기 전)
+const HOLD_T = REL - 0.09;
 
 // a black sphere: a void body (a faint crescent of reflected light low on the right, a dull glint high on the
 // left), a white rim, and pointed tongues of violet flame that lean up, flicker and crawl round it
@@ -72,6 +74,9 @@ export function create(o) {
     floor,
   });
   let t = 0, swallowed = false, acc = 0;
+  // 1 → 0: 다 모인 뒤 사라지는 정도 (painter.fade 에 곱한다 — 점은 디더로, 빛은 세기로 옅어진다)
+  const fadeK = () => 1 - smooth(REL, REL + FO, t);
+  const fadeOn = (p) => (p.fade *= fadeK());
 
   const coreR = (tt) => (tt < REL - 0.07 ? 1.5 + 5 * ease.inQuad(tt / REL) : 1);
   return {
@@ -92,11 +97,15 @@ export function create(o) {
           const a = R.range(0, TAU), D = R.range(34, 60);
           puffs.spawn(PK.SOOT, Math.cos(a) * D, Y + Math.sin(a) * D, -Math.sin(a) * 40, Math.cos(a) * 40, R.range(0.6, 0.9), R.range(3, 6));
         }
+      }
+      // 끌어당김은 사라지는 동안에도 계속 (모인 채로 옅어진다)
+      if (t < REL + FO) {
+        const k = Math.min(t, REL) / REL;
         attract(ps.list, 0, Y, 2.2e6 * (0.3 + k), 110, 0.55, 2.5, dt, (q) => (q.k === P.MOTE ? 1 : 0), 420);
         attract(puffs.list, 0, Y, 1.2e6 * (0.3 + k), 90, 0.7, 4, dt, () => 1, 160);
       }
-      // 다 모이면 남은 것은 핵에 삼켜진다
-      if (t >= REL && !swallowed) {
+      // 다 옅어지면 남은 것을 비운다
+      if (t >= REL + FO && !swallowed) {
         swallowed = true;
         ps.list.length = 0;
         puffs.list.length = 0;
@@ -105,21 +114,23 @@ export function create(o) {
       ps.update(dt);
     },
     drawBack(p) {
-      const k = t < REL ? clamp(t / REL) * 0.7 : 0;
+      fadeOn(p);
+      const k = clamp(Math.min(t, REL) / REL) * 0.7;
       puffs.draw(p, PK.SOOT, { x: 0, y: Y, k, reach: 84 });
       ps.draw(p, "back");
       if (k > 0) p.glow(0, -3, 74, C[4], 0.24 * k);
     },
     draw(p) {
-      // the charge: a contracting ring and a black core that beats
+      fadeOn(p);
+      // the charge: a contracting ring and a black core that beats — 다 모인 뒤에는 HOLD_T 모습으로 멈춰 옅어진다
       let cr = 0;
-      if (t < REL) {
-        const q = t / REL, ring = 3 + 74 * (1 - ease.inQuad(q));
-        const beat = 1 + 0.3 * Math.exp(-((t - REL * 0.5) ** 2) / 0.0015) + 0.4 * Math.exp(-((t - REL * 0.8) ** 2) / 0.0015);
-        cr = coreR(t) * beat;
-        ringFast(p, 0, Y, ring, 1, q > 0.7 ? C[6] : C[5], 0.2 + 0.7 * q);
-        if (t > REL - 0.07) p.circle(0, Y, 1.6, WHITE);
-        else sphere(p, C, cr, t, 0.3 + 0.3 * q);
+      if (t < REL + FO) {
+        const tc = Math.min(t, HOLD_T);
+        const q = tc / REL, ring = 3 + 74 * (1 - ease.inQuad(q));
+        const beat = 1 + 0.3 * Math.exp(-((tc - REL * 0.5) ** 2) / 0.0015) + 0.4 * Math.exp(-((tc - REL * 0.8) ** 2) / 0.0015);
+        cr = coreR(tc) * beat;
+        ringFast(p, 0, Y, ring, 1, q > 0.7 ? C[6] : C[5], (0.2 + 0.7 * q) * fadeK());
+        sphere(p, C, cr, t, 0.3 + 0.3 * q);
         halo(p, 0, Y, cr, cr + 14 + 30 * q, C[5], (0.45 + 0.7 * q) * beat);
         p.glow(0, Y, 60 + 30 * q, C[4], 0.12 + 0.3 * q);
       }
