@@ -1795,3 +1795,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 사용자 원문: "호로에 가방도 다시 올렸으니까 사신에도 적용" — `bha-layout-20261104-0113.json`(호로 방 가방 ×0.86 + 가방 그림 업로드, data URL png 320×320).
 - 그림: 업로드 그림을 `public/art/prop-chest.png` 로 교체(옛 C.255 배낭 그림 대체, 파일 규칙 이름이라 manifest 그대로 — 그림 키 prop.chest 는 두 종족 공통). 크기: 두 종족 json `room.layout.chest.scale` 0.8 → 0.86. 나머지 값(책장·진급 시험·월드맵)은 이전 반영과 같아 변경 없음.
 - 테스트: c258-layout-tool 가방 기대값 0.86. 캡처 `docs/captures/c269/`(기기 844×390 1배, `scripts/c269-proof.cjs`): 1 호로 둥지 · 2 사신 대원실. 그림 상자 겹침 가방×월드맵 문 208px²·책장×진급 시험 1126px² — 투명 여백끼리, 눈으로 가림 없음.
+
+## C.270 — 배치 도구 반영 5: 호로 월드맵 둥지 그림·자리 (호로만) (GDD 175장, v5.408, S-23, UI 배치 도구 세션 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스 변경 없음.
+- 사용자 원문: "호로 월드맵 적용 ㄱㄱ. 이건 사신쪽에 적용말고 호로만 적용임" — `bha-layout-20261104-0129.json`(호로 월드맵 둥지 ×1.61 + 둥지 그림 업로드 79×32 png).
+- 그림: 도구는 두 종족 공통 키 `prop.home` 으로 올렸지만, 그대로 넣으면 월드맵이 prop.home 을 먼저 써서 사신 대원실 그림(place-home-shinigami.png)까지 바뀜 → 종족별 장소 그림 `public/art/place-home-hollow.png` 로 넣음(호로만). 도트 그림이라 `.bha-prop__img` pixelated 로 그대로 선명.
+- 자리: 호로 = 공통 기본값 `DEFAULT_WORLDMAP.home` (45.1, 64, ×1.08) → (47.4, 65.6, ×1.61). 사신은 shinigami.json worldmap.layout 이 덮어 그대로. 같은 파일의 방 값·가방 그림은 C.269 와 같아 변경 없음.
+- 테스트 +2(c258-layout-tool C.270: place.home.hollow 그림·prop.home 비어 있음·사신 홈 그대로), 호로 홈 기대값 갱신. 캡처 `docs/captures/c270/`(기기 844×390 1배, `scripts/c270-proof.cjs`): 1 호로 웨코문도(새 둥지) · 2 사신(그대로). 그림 상자 겹침 호로 둥지×시장 3367px² — 가로로 긴 그림이라 칸 위쪽이 투명, 눈으로 가림 없음.

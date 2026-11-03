@@ -200,7 +200,7 @@ describe('C.264 월드맵 배치 반영 (종족별)', () => {
   it('호로 = DEFAULT_WORLDMAP (모험·탑 옮김), json 에 layout 없음', () => {
     expect(FACTIONS.find((f) => f.id === 'hollow')!.worldmap?.layout).toBeUndefined();
     const w = W('hollow');
-    expect(spot(w.home)).toEqual({ x: 45.1, y: 64, scale: 1.08 });
+    expect(spot(w.home)).toEqual({ x: 47.4, y: 65.6, scale: 1.61 }); // C.270 (사용자 2026-11-04 01:29 "호로 월드맵 적용 ㄱㄱ. 이건 사신쪽에 적용말고 호로만 적용임")
     expect(spot(w.adventure)).toEqual({ x: 22.9, y: 85.9, scale: 0.9 });
     expect(spot(w.tower)).toEqual({ x: 11.7, y: 50.1, scale: 1.28 });
     expect(spot(w.spa)).toEqual({ x: 88.7, y: 52.2, scale: 1.29 });
@@ -213,5 +213,17 @@ describe('C.264 월드맵 배치 반영 (종족별)', () => {
     expect(spot(w.adventure)).toEqual({ x: 17.7, y: 85.6, scale: 1.05 });
     expect(spot(w.tower)).toEqual({ x: 10.9, y: 44.5, scale: 1.15 });
     expect(spot(w.spa)).toEqual({ x: 88.5, y: 55, scale: 1.29 });
+  });
+});
+
+// C.270: 호로 월드맵 둥지 그림 = 사용자 업로드(79×32 도트) — 호로만(종족별 장소 그림 place.home.hollow). 공통 키 prop.home 은 비워 둬 사신 대원실 그림은 그대로
+describe('C.270 호로 둥지 월드맵 그림 (호로만)', () => {
+  it('place.home.hollow 그림이 있고, prop.home(두 종족 공통 키)은 비어 사신 대원실 그림이 그대로 쓰인다', () => {
+    expect(artUrls('place.home.hollow').src).toMatch(/place-home-hollow\.png$/);
+    expect(artUrls('place.home.shinigami').src).toMatch(/place-home-shinigami\.png$/);
+    expect(artUrls('prop.home').src).toBeNull();
+  });
+  it('사신 월드맵 홈 자리는 json 값 그대로 (호로 변경 영향 없음)', () => {
+    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 45.3, y: 69, scale: 1.7 });
   });
 });
