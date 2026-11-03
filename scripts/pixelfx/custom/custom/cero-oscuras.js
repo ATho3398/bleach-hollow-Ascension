@@ -12,7 +12,7 @@
 // The column of light (banded across, strands wandering in it, pulses and halos climbing it, stars thrown off,
 // rings shocking out across the floor) is adapted from Sprite Fusion's open-source holy light
 // (https://www.spritefusion.com/pixel-art-vfx/holy-light), MIT License, Copyright (c) 2026 Hugo Duprez.
-import { Lights, Rng, PAL, fit, flare, clamp, smooth, ease, noise2, fract, WHITE } from "../../core/index.js";
+import { Lights, Rng, PAL, fit, flare, clamp, smooth, ease, noise2, fract, WHITE, hex } from "../../core/index.js";
 import { bayer } from "../arcane/_lib.js";
 
 // the circle on the floor (plane px; the floor squashes depth by SY), the column, the beats
@@ -31,15 +31,16 @@ export const meta = {
   loop: false,
   fps: 30,
   bg: "ground",
-  options: { palette: PAL.arcane, seed: 6 },
+  // edge: 테두리 색(없으면 팔레트) — 02:5x "세로랑 세로 오스큐라스 노멀 테두리색은 어두운 검정으로 하자." 도구가 노멀 색일 때 넘긴다
+  options: { palette: PAL.arcane, seed: 6, edge: null },
 };
 
 
 export function create(o) {
-  const C = fit(o.palette, 8), S = o.seed, Rg = new Rng(S);
+  const C = fit(o.palette, 8), EDGE = o.edge ? hex(o.edge) : null, S = o.seed, Rg = new Rng(S);
   const lights = new Lights();
   // 마지막 = 테두리: 짙은 한 색
-  const COL = [WHITE, C[6], C[5], C[4], C[2]];
+  const COL = [WHITE, C[6], C[5], C[4], EDGE ?? C[2]];
   const strands = Array.from({ length: 9 }, () => ({ o: Rg.range(-0.85, 0.85), w: Rg.range(0.04, 0.1), f: Rg.range(1, 3) }));
   let t = SKIP, flashed = false;
 
@@ -47,6 +48,17 @@ export function create(o) {
   const lie = (p) => p.place(p.tx, p.ty, p.fx < 0, (o.angle ?? 0) + Math.PI / 2);
   // 끝으로 갈수록 옅어진다 (기둥 길이의 60% 부터 끝까지 그라데이션)
   const tip = (h) => 1 - smooth(TOP * 0.6, TOP, h);
+  // 테두리 색을 따로 줬으면(edge) 그 칸에는 빛을 얹지 않는다 — 둘레 빛에 씻겨 밝아지지 않게
+  const edgeCells = [];
+  const markEdge = (p, x, y) => EDGE !== null && edgeCells.push(p.cellX(x, y), p.cellY(x, y));
+  const unlightEdges = (p) => {
+    for (let i = 0; i < edgeCells.length; i += 2) {
+      const sx = edgeCells[i], sy = edgeCells[i + 1];
+      if (sx < p.ox || sy < p.oy || sx >= p.ox + p.w || sy >= p.oy + p.h) continue;
+      p.L[(sy - p.oy) * p.w + (sx - p.ox)] = 0;
+    }
+    edgeCells.length = 0;
+  };
   // the column of light: the thread that climbs first, then the beam that fires up, holds and breaks apart
   function column(p) {
     if (t < FLASH - 0.22 || t > BREAK + 0.6) return;
@@ -77,6 +89,7 @@ export function create(o) {
         const a = fade * tip(h);
         if (a <= bayer(x, y) * (q < 0.66 ? 0.2 : 1)) continue;
         p.px(x, y, COL[lv]);
+        if (lv === 4) markEdge(p, x, y);
       }
       if ((h & 7) === 0 && h < TOP - ww * 2.4 - 8) p.glow(0, y, ww * 2.4 + 6, C[5], 0.3 * fade * tip(h));
     }
@@ -108,6 +121,7 @@ export function create(o) {
         p.glow(0, -26, 56, WHITE, 0.5 * (1 - a));
       }
       lights.draw(p);
+      unlightEdges(p);
     },
   };
 }

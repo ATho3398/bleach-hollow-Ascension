@@ -24,7 +24,9 @@ const PALETTES = {
   blood: ['#3a0a14', '#6a101c', '#a01824', '#d42a30', '#ff5a50', '#ff9a8a', '#ffe0da'],
   kyo: ['#2b1252', '#481c88', '#6b2cc0', '#9a48ec', '#c684ff', '#ecc8ff', '#ffffff'],
 };
-const elements = json('src/data/elements/elements.json').map((e) => ({ id: e.id, name: e.name['*'], palette: PALETTES[e.id], color: PALETTES[e.id][4] }));
+// 속성 색일 때 이펙트별 테두리 색 (사용자 2026-11-04 02:5x "세로랑 세로 오스큐라스 노멀 테두리색은 어두운 검정으로 하자.")
+const EDGES = { normal: { 'custom/cero': '#0c0c10', 'custom/cero-oscuras': '#0c0c10' } };
+const elements = json('src/data/elements/elements.json').map((e) => ({ id: e.id, name: e.name['*'], palette: PALETTES[e.id], color: PALETTES[e.id][4], ...(EDGES[e.id] ? { edge: EDGES[e.id] } : {}) }));
 
 // 공격 계열 (사용자 2026-11-04 "사신 참, 권, 귀, 호로 교, 조, 탄"): 종족 json 의 계열 이름으로 찾는다. 내 공격은 왼쪽을 향한다(C.216)
 const ORDER = [['shinigami', '참'], ['shinigami', '권'], ['shinigami', '귀'], ['hollow', '교'], ['hollow', '조'], ['hollow', '탄']];

@@ -45,7 +45,8 @@ interface ToolData {
   view: { x: number; y: number; w: number; h: number };
   target: { x: number; y: number };
   attacker: { x: number; y: number };
-  elements: { id: string; name: string; color: string; palette: string[] }[];
+  /** edge = 이 속성 색일 때 이펙트별 테두리 색 (예 노멀 → 세로·세로 오스큐라스 어두운 검정) */
+  elements: { id: string; name: string; color: string; palette: string[]; edge?: Record<string, string> }[];
   entries: Entry[];
   defaults: Record<string, FamilyFx>;
   catNames: Record<string, string>;
@@ -111,8 +112,8 @@ function edgeFade(L: Uint32Array, w: number, hh: number, E = 8): void {
     }
   }
 }
-function framesOf(id: string, palette: string[] | null): Frames | null {
-  const key = `${id}|${palette?.join(',') ?? ''}`;
+function framesOf(id: string, palette: string[] | null, edge: string | null = null): Frames | null {
+  const key = `${id}|${palette?.join(',') ?? ''}|${edge ?? ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const mod = EFFECTS[id];
@@ -123,6 +124,7 @@ function framesOf(id: string, palette: string[] | null): Frames | null {
   const frame = createFrame(W, H, 0, 0);
   const opts: Record<string, unknown> = { x: meta.origin[0], y: meta.origin[1] };
   if (palette && 'palette' in (meta.options ?? {})) opts.palette = palette;
+  if (edge && 'edge' in (meta.options ?? {})) opts.edge = edge;
   const inst = createFx({ ...mod, meta }, opts);
   const screen = W >= 320 && Math.abs(W / H - 16 / 9) < 0.05;
   const images: ImageData[] = [];
@@ -138,6 +140,7 @@ function framesOf(id: string, palette: string[] | null): Frames | null {
   return out;
 }
 const paletteOf = (L: FxLayer): string[] | null => (L.color === 'element' ? D.elements.find((e) => e.id === element)!.palette : null);
+const edgeOf = (L: FxLayer): string | null => (L.color === 'element' ? D.elements.find((e) => e.id === element)!.edge?.[L.fx] ?? null : null);
 
 // ── 무대 ──
 const world = $('world');
@@ -184,7 +187,7 @@ function layout(): void {
   let from = 0;
   let to = hits[hits.length - 1]! + 300;
   s.layers.forEach((L, li) => {
-    const f = framesOf(L.fx, paletteOf(L));
+    const f = framesOf(L.fx, paletteOf(L), edgeOf(L));
     if (!f) return;
     for (const hi of L.on.filter((i) => i < hits.length)) {
       const base = L.move === 'stay' && L.sync === 'arrive' ? arriveAt(hi) : hits[hi]!;

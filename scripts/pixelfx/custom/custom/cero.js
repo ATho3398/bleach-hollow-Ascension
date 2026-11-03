@@ -6,7 +6,7 @@
 // 02:4x "세로 끝나는 부분 그라데이션으로 없애고, 출발부분은 한 점에서 출발하듯이 수정. 지속시간 반으로 줄이고"
 // → 끝 30% 는 점점 성기게(도트 디더) 사라지고, 출발은 한 점에서 TAPER px 동안 두께가 벌어진다. 유지·사라짐 시간 절반.
 // 번쩍임(flare)·빛은 pixelfx arcane/magic-circle-cast 에서 (MIT, THIRD_PARTY_NOTICES.md).
-import { Lights, PAL, fit, flare, clamp, smooth, ease, WHITE } from "../../core/index.js";
+import { Lights, PAL, fit, flare, clamp, smooth, ease, WHITE, hex } from "../../core/index.js";
 import { bayer } from "../arcane/_lib.js";
 
 // 빔 길이(px), 반 두께(세로 오스큐라스 W 11 의 절반), 뻗는 시간, 유지, 사라짐
@@ -24,11 +24,12 @@ export const meta = {
   loop: false,
   fps: 30,
   bg: "dark",
-  options: { palette: PAL.arcane, seed: 6 },
+  // edge: 테두리 색(없으면 팔레트) — 02:5x "세로랑 세로 오스큐라스 노멀 테두리색은 어두운 검정으로 하자." 도구가 노멀 색일 때 넘긴다
+  options: { palette: PAL.arcane, seed: 6, edge: null },
 };
 
 export function create(o) {
-  const C = fit(o.palette, 8);
+  const C = fit(o.palette, 8), EDGE = o.edge ? hex(o.edge) : null;
   const lights = new Lights();
   let t = 0, flashed = false;
   // 기본 = +90° 눕혀 앞(오른쪽)으로: 놓인 자리·뒤집기는 그대로, 각도만 +90° (옵션 angle 은 pixelfx 가 자리 잡기에 쓰므로 여기서 더한다)
@@ -36,6 +37,17 @@ export function create(o) {
   // 지금 반 두께: 유지 동안 그대로, 끝에 줄어든다
   const half = () => (t < HOLD ? W : W * (1 - ease.inQuad(clamp((t - HOLD) / OUT))));
 
+  // 테두리 색을 따로 줬으면(edge) 그 칸에는 빛을 얹지 않는다 — 둘레 빛에 씻겨 밝아지지 않게
+  const edgeCells = [];
+  const markEdge = (p, x, y) => EDGE !== null && edgeCells.push(p.cellX(x, y), p.cellY(x, y));
+  const unlightEdges = (p) => {
+    for (let i = 0; i < edgeCells.length; i += 2) {
+      const sx = edgeCells[i], sy = edgeCells[i + 1];
+      if (sx < p.ox || sy < p.oy || sx >= p.ox + p.w || sy >= p.oy + p.h) continue;
+      p.L[(sy - p.oy) * p.w + (sx - p.ox)] = 0;
+    }
+    edgeCells.length = 0;
+  };
   function beam(p) {
     const w = half();
     if (w < 0.5) return;
@@ -51,7 +63,8 @@ export function create(o) {
         const q = Math.abs(x + 0.5) / ww;
         if (q > 1 || keep <= bayer(x, y)) continue;
         // 단색: 가운데 한 색, 가장자리(바깥 1/4) 한 색
-        p.px(x, y, white ? WHITE : q < 0.75 ? C[6] : C[4]);
+        p.px(x, y, white ? WHITE : q < 0.75 ? C[6] : EDGE ?? C[4]);
+        if (!white && q >= 0.75) markEdge(p, x, y);
       }
     }
     // 빔 둘레 빛 (빔 안은 그대로)
@@ -79,6 +92,7 @@ export function create(o) {
         flare(p, 0, -2, 18 * Math.pow(1 - a, 1.5), 1 - a, C);
       }
       lights.draw(p);
+      unlightEdges(p);
     },
   };
 }
