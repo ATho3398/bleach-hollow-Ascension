@@ -5,8 +5,20 @@
  },
  "effects": [
   {
+   "name": "double-slash",
+   "id": "melee/double-slash"
+  },
+  {
    "name": "hit-spark",
    "id": "impacts/hit-spark"
+  },
+  {
+   "name": "spin-slash",
+   "id": "melee/spin-slash"
+  },
+  {
+   "name": "sword-slash",
+   "id": "melee/sword-slash"
   }
  ]
 }
