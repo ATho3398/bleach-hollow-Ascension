@@ -19,7 +19,8 @@ compatibility: Node 18 or newer. ffmpeg is optional (GIF and MP4 previews).
 - **색**: `--palette` 에 pixelfx `PAL` 이름(`npm run fx -- palettes`)이나 직접 고른 색을 준다. 종족별 색을 코드에 박지 않는다(CLAUDE.md 2) — 종족마다 다른 시트가 필요하면 이름을 나눠 가져오고, 어느 종족이 무엇을 쓰는지는 `src/data/factions/*.json` 에 둔다.
 - **전투·흡수·진화 연출에 붙이는 것은 기획서 13장 로드맵에서 사용자가 시작하라고 했을 때만**. 그 전에는 가져오기·실험실 확인까지.
 - **라이선스**: pixelfx 는 MIT(`THIRD_PARTY_NOTICES.md`, 배포본 `public/fx/LICENSE-pixelfx.txt`). `gallery/fonts` 의 **Patch Pixel 글꼴은 MIT 가 아니라 쓰지 않는다**(`fx:fetch` 가 받은 뒤 지운다).
-- 보고는 한국어로(CLAUDE.md).
+- **후보 보여 주기**(사용자 2026-11-04 01:0x 원문 "후보를 뽑아오라 하면, 그냥 이펙트만 불러와. 내가 볼 수 있게 gif로. 괜히 게임에 입히면서 토큰낭비하지 말고."): 후보 요청이면 `vendor/pixelfx` 에서 `node tools/render.mjs <id> --gif` 로 이펙트만 gif 로 뽑아 보여 준다. `public/fx` 가져오기·실험실 캡처는 사용자가 고른 뒤에.
+- 보고는 한국어로(CLAUDE.md). 픽셀FX 세션 보고에는 UI 배치 도구 주소를 붙이지 않는다(그 규칙은 UI 배치 도구 세션 것).
 
 # pixelfx
 
