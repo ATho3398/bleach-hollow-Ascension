@@ -79,7 +79,15 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
       <h2>연타</h2>
       <div id="hitbox"></div>
       <div id="gapbox" aria-label="타격 사이 간격"></div>
-      <h2>이펙트 (한 공격에 최대 3개)</h2>
+      <h2>치는 쪽 몸동작</h2>
+      <select id="bodysel" aria-label="몸동작"></select>
+      <div id="bodybox"></div>
+      <div class="row">
+        <label class="row"><input id="bodyfromhit" type="checkbox"> 타격 프레임부터</label>
+        <button class="btn" id="bodyalign" type="button">타격 프레임을 첫 타격에 맞추기</button>
+      </div>
+      <p class="dim" id="bodyinfo" style="margin:0"></p>
+      <h2>이펙트 (한 공격에 최대 5개)</h2>
       <div class="row" id="layertabs"></div>
       <div class="row">
         <button class="btn" id="addlayer" type="button">이펙트 추가</button>

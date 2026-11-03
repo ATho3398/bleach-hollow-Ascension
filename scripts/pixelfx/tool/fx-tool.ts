@@ -1,13 +1,17 @@
 // 이펙트 배치 도구 v2 (GDD 180장): pixelfx 244개를 브라우저에서 바로 그려(코드 그대로, 그림 파일 없음) 실제 전투 1배 화면 위에 올린다.
 // 공격 계열 6개(사신 참·권·귀, 호로 교·조·탄) × 1·2·3블록마다: 연타 수·간격 + 이펙트 최대 3개(기준 = 맞는 쪽/치는 쪽, 나오는 때, 자리·크기·각도·늦춤·속도·색).
 // 값은 아티팩트 db `fx/editor`(편집 중)·`fx/fixed`(확정). 사용자가 "ㅇㅋ" 하면 Claude 가 `fx/fixed` 를 게임 데이터·시트로 옮긴다 (README.md).
+// pixelfx 는 npm run fx:fetch 로 받는 JS(형 정보 없음, CI 에는 없음) — 형 검사에서 뺀다
+// @ts-ignore
 import { effects, categories } from '../../../vendor/pixelfx/src/fx/index.js';
+// @ts-ignore
 import { clearFrame, composite, createFrame, createFx } from '../../../vendor/pixelfx/src/core/index.js';
 import { pixelFxTransform } from '../../../src/ui/bha/pixelFx';
 import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
 import { charArt, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
+import { MOTIONS } from '../../../src/data/art/rig/pose';
 
 interface FxLayer {
   fx: string;
@@ -40,8 +44,11 @@ interface FxLayer {
 }
 /** 옛 저장·새 이펙트에 없는 칸 채우기 */
 const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit', z: 3 } as const;
-/** 한 블록 공격: 타격 수 · 타격 사이 간격(타격마다 따로) · 시전 속도(공격 전체 빠르기, 이펙트 재생도 같이) · 이펙트 */
-interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[] }
+/** 한 블록 공격: 타격 수 · 타격 사이 간격(타격마다 따로) · 시전 속도(공격 전체 빠르기, 이펙트 재생도 같이) · 이펙트
+ *  body = 치는 쪽 몸동작 (사용자 2026-11-04 "각 블록당 종이인형 모션도 설정할 수 있게 … 원하는 모션 원하는 타이밍에 발현할 수 잇게"):
+ *  '' = 게임 기본(계열 몸동작, 첫 타격에 타격 프레임부터), 아니면 종이인형 동작 id(motions.json) / 프레임 그림 동작 이름. bodyAt = 시작 시각(첫 타격 = 0ms 기준), bodyFromHit = 타격 프레임부터 */
+interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[]; body: string; bodyAt: number; bodyFromHit: boolean }
+const STAGE_BODY_DEFAULTS = { body: '', bodyAt: 0, bodyFromHit: true };
 type FamilyFx = StageFx[];
 interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1; motion?: FamilyMotionKind }
 interface ToolData {
@@ -81,7 +88,7 @@ const D = FX_DATA;
   });
 }
 const LS = 'bha-fx-tool-v3';
-const MAX_LAYERS = 3;
+const MAX_LAYERS = 5; // 사용자 2026-11-04 "블록당 이펙트 5개로 늘리자"
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 const data: Record<string, FamilyFx> = clone(D.defaults);
@@ -100,7 +107,7 @@ const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): 
   if (text) n.textContent = text;
   return n;
 };
-const st = (): StageFx => data[entry.key]![stageIx]!;
+const st = (): StageFx => Object.assign(data[entry.key]![stageIx]!, { ...STAGE_BODY_DEFAULTS, ...data[entry.key]![stageIx]! });
 const layer = (): FxLayer | null => st().layers[layerIx] ?? null;
 const newLayer = (): FxLayer => ({ fx: 'impacts/hit-spark', color: 'original', anchor: 'target', on: Array.from({ length: st().hits }, (_, i) => i), delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: false, ...LAYER_DEFAULTS });
 /** 간격 칸 수를 타격 수에 맞춘다 (늘면 마지막 간격을 잇는다), 없는 타격은 나오는 타격에서 뺀다 */
@@ -194,13 +201,41 @@ function mountHero(): void {
   heroHost.append(img);
   hero = { c, img, player: bindAnim(heroHost, img, art) };
 }
-/** 공격 순간(첫 타격 = 0ms): 게임처럼 블록 공격 = 특수 동작(종이인형은 계열 몸동작 묶음), 타격 프레임부터. 특수 동작이 없는 그림이면 공격 동작 */
+// 몸동작 목록: 종이인형 = 게임 motions.json 의 동작 전부(새 동작이 게임 데이터에 들어오면 도구를 다시 만들 때 저절로 늘어난다), 프레임 그림 = 그 그림에 있는 동작
+const MOTION_NAMES: Record<string, string> = {
+  idle: '대기', homeIdle: '홈 대기', move: '걷기', attack: '공격1', attack2: '공격2', skill: '특수1', skill2: '특수2', hit: '맞음',
+  punch: '주먹', kick: '발차기', ultimate: '필살기', straight: '스트레이트', down: '쓰러짐', dying: '빈사', bath: '온천', headbutt: '박치기',
+  lose: '패배', win: '승리',
+};
+interface BodyOpt { id: string; label: string; durationMs: number; hitMs: number | null }
+function bodyOptions(): BodyOpt[] {
+  const c = hero?.c;
+  if (c?.rig) {
+    return Object.entries(MOTIONS).map(([id, m]) => ({ id, label: `${MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration, hitMs: m.hit ?? null }));
+  }
+  const anims = c ? artOfChar(c).anims ?? {} : {};
+  return Object.entries(anims).map(([id, clip]) => {
+    const ms = (clip as { frameMs: number[] }).frameMs.reduce((a, b) => a + b, 0);
+    return { id, label: `${MOTION_NAMES[id] ?? id} (${id})`, durationMs: ms, hitMs: null };
+  });
+}
+const bodyOf = (s: StageFx): BodyOpt | null => (s.body ? bodyOptions().find((b) => b.id === s.body) ?? null : null);
+/** 몸동작 틀기: 고른 동작이 없으면 게임 기본(블록 공격 = 특수 동작·계열 몸동작 묶음, 타격 프레임부터, 특수 동작이 없는 그림이면 공격) */
 function swing(): void {
   const p = hero?.player;
   if (!p) return;
-  const o = { fromHit: true, motion: entry.motion };
-  if (!p.play('skill', o)) p.play('attack', o);
+  const s = st();
+  const b = bodyOf(s);
+  if (!b) {
+    const o = { fromHit: true, motion: entry.motion };
+    if (!p.play('skill', o)) p.play('attack', o);
+    return;
+  }
+  if (hero?.c.rig) p.play('skill', { motionId: b.id, fromHit: s.bodyFromHit });
+  else p.play(b.id as never, { fromHit: s.bodyFromHit });
 }
+/** 몸동작을 트는 시각 (첫 타격 = 0ms, 시전 속도 반영) */
+const bodyAt = (): number => (bodyOf(st()) ? st().bodyAt / st().speed : 0);
 const dot2 = $('dot2');
 const dot3 = $('dot3');
 let k = 1;
@@ -271,6 +306,10 @@ function layout(): void {
       to = Math.max(to, start + (fly ? fly.ms + fly.ms2 : ((f.images.length / f.fps) * 1000) / rate));
     }
   });
+  const ba = bodyAt();
+  const bo = bodyOf(s);
+  from = Math.min(from, ba);
+  if (bo) to = Math.max(to, ba + bo.durationMs);
   span = { from, to };
   if (t < from || t > to + 400) t = from;
   const L = layer();
@@ -354,11 +393,12 @@ const tick = (now: number): void => {
   if (playing) {
     const prev = t;
     t += dt;
-    if (prev < 0 && t >= 0) swing();
+    const at = bodyAt();
+    if (prev < at && t >= at) swing();
     if (t > span.to + 400) {
       if (repeat) {
         t = span.from;
-        if (t >= 0) swing();
+        if (t >= at) swing();
       }
       else {
         t = span.to;
@@ -472,6 +512,41 @@ const syncHits = gauges<StageFx, 'hits' | 'speed'>($('hitbox'), [
   { key: 'hits', label: '타격 수', step: 1, min: 1, max: 6, unit: '번' },
   { key: 'speed', label: '시전 속도', step: 0.05, min: 0.25, max: 3, unit: '배' },
 ], st);
+const syncBody = gauges<StageFx, 'bodyAt'>($('bodybox'), [
+  { key: 'bodyAt', label: '동작 시작', step: 10, min: -1500, max: 1500, unit: 'ms', signed: true },
+], st);
+const bodySel = $<HTMLSelectElement>('bodysel');
+bodySel.onchange = () => {
+  st().body = bodySel.value;
+  changed();
+};
+const bodyHit = $<HTMLInputElement>('bodyfromhit');
+bodyHit.onchange = () => {
+  st().bodyFromHit = bodyHit.checked;
+  changed();
+};
+$('bodyalign').onclick = () => {
+  const b = bodyOf(st());
+  if (!b || b.hitMs === null) return status('타격 프레임이 있는 종이인형 동작을 먼저 골라 줘');
+  // 동작을 처음부터 틀되 그 동작의 타격 프레임이 첫 타격(0ms)에 오게
+  st().bodyAt = -b.hitMs;
+  st().bodyFromHit = false;
+  changed();
+  status(`${b.label}: 타격 프레임(${b.hitMs}ms)이 첫 타격에 오도록 ${-b.hitMs}ms 에 시작`);
+};
+function syncBodySel(): void {
+  const s = st();
+  const opts = bodyOptions();
+  bodySel.replaceChildren(new Option('게임 기본 (계열 몸동작)', ''), ...opts.map((b) => new Option(`${b.label} · ${(b.durationMs / 1000).toFixed(2)}초${b.hitMs !== null ? ` · 타격 ${b.hitMs}ms` : ''}`, b.id)));
+  bodySel.value = opts.some((b) => b.id === s.body) ? s.body : '';
+  const custom = !!bodyOf(s);
+  bodyHit.checked = s.bodyFromHit;
+  bodyHit.disabled = !custom;
+  ($('bodyalign') as HTMLButtonElement).disabled = !custom;
+  $('bodybox').toggleAttribute('data-off', !custom);
+  for (const i of $('bodybox').querySelectorAll<HTMLInputElement | HTMLButtonElement>('input, button')) i.disabled = !custom;
+  $('bodyinfo').textContent = custom ? '' : '게임 기본: 첫 타격 순간 계열 몸동작을 타격 프레임부터';
+}
 /** 타격 사이 간격: 타격 수만큼 줄이 바뀐다 */
 function syncGaps(): void {
   const box = $('gapbox');
@@ -671,7 +746,7 @@ $('copystage').onclick = () => {
   const fam = data[entry.key]!;
   data[entry.key] = fam.map((s, i) => {
     if (i === stageIx) return src;
-    const out = { hits: s.hits, gaps: s.gaps, speed: s.speed, layers: clone(src.layers) };
+    const out = { ...s, layers: clone(src.layers) };
     fitStage(out);
     return out;
   });
@@ -720,6 +795,8 @@ function refresh(): void {
   flip.checked = !!L?.altFlip;
   flip.disabled = !L;
   syncHits();
+  syncBodySel();
+  syncBody();
   syncGaps();
   syncOn();
   syncLayer();
@@ -739,7 +816,9 @@ function refresh(): void {
 const summary = (): string => {
   const s = st();
   const ls = s.layers.map((L, i) => `${i + 1}) ${L.fx} · ${L.move === 'fly' ? `날아감 ${L.travel}ms 곡선 ${L.arc} 도착 ${L.tx},${L.ty}${L.ex || L.ey ? ` 사라짐 도착+${L.ex},${L.ey}` : ''}${L.face ? ' 방향 돌림' : ''}` : `${L.anchor === 'target' ? '맞는 쪽' : '치는 쪽'}${L.sync === 'arrive' ? ' · 도착 때' : ''}`} · ${L.on.length ? L.on.map((x) => `${x + 1}타`).join('·') : '나오는 타격 없음'} · ${L.color === 'element' ? '속성 색' : '원래 색'} · 자리 ${L.dx},${L.dy} · 크기 ${L.scale} · ${L.angle}° · 늦춤 ${L.delay}ms · 재생 속도 ${L.rate} · 레이어 ${L.z ?? 3}${L.altFlip ? ' · 연타 뒤집기' : ''}`);
-  return `${entry.label} ${stageIx + 1}블록 · 타격 ${s.hits}번 · 간격 ${s.gaps.join('/') || '-'}ms · 시전 속도 ${s.speed}${ls.length ? `\n${ls.join('\n')}` : ''}`;
+  const b = bodyOf(s);
+  const body = b ? ` · 몸동작 ${b.label} ${s.bodyAt}ms${s.bodyFromHit ? ' 타격부터' : ''}` : ' · 몸동작 게임 기본';
+  return `${entry.label} ${stageIx + 1}블록 · 타격 ${s.hits}번 · 간격 ${s.gaps.join('/') || '-'}ms · 시전 속도 ${s.speed}${body}${ls.length ? `\n${ls.join('\n')}` : ''}`;
 };
 
 // ── 저장 ──
@@ -802,6 +881,7 @@ function load(saved: unknown): boolean {
         if (!Array.isArray(s.gaps)) s.gaps = Array.from({ length: Math.max(0, s.hits - 1) }, () => s.gapMs ?? 100);
         delete s.gapMs;
         if (typeof s.speed !== 'number') s.speed = 1;
+        Object.assign(s, { ...STAGE_BODY_DEFAULTS, ...s });
         for (const L of s.layers as (FxLayer & { when?: string })[]) {
           if (!Array.isArray(L.on)) L.on = L.when === 'first' ? [0] : L.when === 'last' ? [s.hits - 1] : Array.from({ length: s.hits }, (_, i) => i);
           delete L.when;

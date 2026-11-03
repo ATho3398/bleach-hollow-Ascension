@@ -1,12 +1,13 @@
 // 어퍼컷 (블리치 할로우 어센션 커스텀, GDD 180장): pixelfx melee/uppercut 에서 별(만화 충격 별·별 둘레 고리·뻗는 선·반짝 별)만 뺐다.
 // 사용자 2026-11-04 "어퍼컷 이펙트에 별 없앤거 만들고 어퍼컷(커스텀)으로 추가". 초승달·속도선·빛은 그대로.
 // 03:0x "어퍼컷 커스텀에, 마지막에 터지는 모션은 있어야할듯 … 주먹질처럼 좀 묵직하게 펑 한번 터지는 이펙트가 나을거같아" → 맨 위에서 '주먹 펑'(_punch.js), 불꽃 삭제.
+// 03:1x "어퍼컷 뭔가 베는 모션같거든? 좀 둔탁한거로 올려치는것처럼 끝부분 뭉툭하게 가능?" → 칼날 초승달(양끝 뾰족) 대신 두께가 끝까지 유지되고 머리가 둥근 둔탁한 띠(blunt).
 // 원본: patch-gg/pixelfx a841596 src/fx/melee/uppercut.js (MIT, THIRD_PARTY_NOTICES.md).
 //
 // The crescent recipe is adapted from Sprite Fusion's open-source slash, and the star from his impact
 // (https://www.spritefusion.com/pixel-art-vfx), MIT License, Copyright (c) 2026 Hugo Duprez.
 import { Particles, Lights, P, Rng, fit, hex, clamp, smooth, ease, TAU, WHITE, READY } from "../../core/index.js";
-import { swing, onSwing, slash, slashEnd } from "../melee/_lib.js";
+import { swing, onSwing, smear, slashEnd } from "../melee/_lib.js";
 import { punch } from "./_punch.js";
 
 export const meta = {
@@ -48,6 +49,30 @@ export const act = {
   dust: [{ t: 0.03, x: 8, n: 6 }, { t: 0.6, x: 0, n: 6 }],
 };
 
+// 둔탁한 올려치기 띠: slash 와 같은 길(머리·꼬리 시각)인데 두께가 꼬리 쪽 60% → 머리 100% 로 끝까지 두껍고, 머리는 둥글다.
+// 색은 바깥(진행 방향 쪽) 밝게 → 안쪽 어둡게 단계, 칼날 하이라이트 없음
+function blunt(p, s, t, C) {
+  const u = t - s.t0;
+  if (u < 0) return;
+  const life = s.sweep + s.hold + s.trail;
+  const head = ease.outExpo(clamp(u / s.sweep)), tail = smooth(s.sweep + s.hold, life, u), age = clamp(u / life);
+  const U = s.span * head, T = Math.max(s.span * tail, U - s.span * 0.75), W = s.W * 1.15 * (1 - tail * 0.5);
+  if (tail >= 1 || U - T < 0.01) return;
+  smear(p, s, T, U, W, (uu, r, out) => {
+    const v = (uu - T) / (U - T), w = W * (0.6 + 0.4 * v);
+    const q = (s.R - r) / w;
+    if (q < 0 || q > 1) return;
+    const lv = q < 0.18 ? 6 : q < 0.45 ? 5 : q < 0.75 ? 4 : q < 0.92 ? 3 : 1;
+    out.c = C[Math.max(1, lv - Math.round(age * 2))];
+    out.a = Math.min(1, v / 0.25);
+  });
+  // 둥근 머리
+  const hr = W * 0.5, [hx, hy] = onSwing(s, s.R - hr, U);
+  p.circle(hx, hy, hr + 0.6, C[1], 1);
+  p.circle(hx, hy, hr - 0.4, (d) => (d < 0.45 ? C[6] : C[5]), 1);
+  p.glow(hx, hy, 10 + W, C[4], 0.3 * (1 - age));
+}
+
 export function create(o) {
   const C = fit(o.palette, 7), INK = hex(o.outline), Rg = new Rng(o.seed), ps = new Particles({ rng: Rg, ground: () => 0, sparks: o.sparks }), lights = new Lights();
   // up from the floor in front, bowing forward past the face, to the top
@@ -71,7 +96,7 @@ export function create(o) {
       lights.update(dt);
     },
     draw(p) {
-      slash(p, A, t);
+      blunt(p, A, t, C);
       // speed lines rising beside the crescent while it goes up
       const u = t - A.t0;
       if (u > 0 && u < 0.16)

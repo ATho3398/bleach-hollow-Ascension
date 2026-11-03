@@ -21,6 +21,8 @@ export interface PlayOptions {
   fromHit?: boolean;
   /** 계열 몸동작 (GDD 118장 2): 종이인형은 이 묶음의 동작을 쓴다(없으면 action 그대로). 프레임 그림은 무시 */
   motion?: FamilyMotionKind;
+  /** 이 종이인형 동작 id 를 그대로 (GDD 180장, 이펙트 배치 도구에서 블록마다 고른 몸동작). 없는 id 면 무시. 프레임 그림은 무시 */
+  motionId?: string;
 }
 
 export interface AnimPlayer {

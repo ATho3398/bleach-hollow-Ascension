@@ -74,7 +74,9 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       wake();
     },
     play(a, o = {}) {
-      const fam = byMotion(o.motion);
+      // 동작 id 를 바로 고른 경우(GDD 180장) > 계열 몸동작 묶음 > 게임 동작
+      const pick = o.motionId && motions[o.motionId] ? [o.motionId] : [];
+      const fam = pick.length ? pick : byMotion(o.motion);
       const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
       if (locked && a !== 'win' && a !== 'lose') {
@@ -82,7 +84,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
         return { durationMs: m0.duration, hitAtMs: m0.hit ?? m0.duration / 2 };
       }
       locked = a === 'win' || a === 'lose';
-      const hist = (recent[fam.length ? `m:${o.motion}` : a] ??= []);
+      const hist = (recent[pick.length ? `id:${pick[0]}` : fam.length ? `m:${o.motion}` : a] ??= []);
       const k = pickVariant(list.length, hist, rng);
       hist.push(k);
       if (hist.length > VARIANT_REPEAT_MAX) hist.shift();
