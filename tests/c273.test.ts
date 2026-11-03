@@ -21,6 +21,13 @@ describe('180장 2 온천 가득 안내', () => {
     const i = app.indexOf("if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;");
     expect(app.slice(i, i + 300)).toContain('toRoom();');
   });
+  it('C.274 튜토리얼 회복 안내 중에는 알림·자동 방 이동 없음 (카드 [다음] 이 정한다)', () => {
+    const app = read('src/ui/app.ts');
+    const a = app.indexOf("if (recoverOpen && nav.top?.id === 'spa') return;");
+    const b = app.indexOf("if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;");
+    expect(a).toBeGreaterThan(0);
+    expect(a).toBeLessThan(b);
+  });
   it('[돌아가기]·✓ = 기다리지 않고 바로 방, 나가기 연출이 시작되면 기다림을 끈다', () => {
     const spa = read('src/ui/spaView.ts');
     expect(spa).toContain('const go = clearFullHold();');

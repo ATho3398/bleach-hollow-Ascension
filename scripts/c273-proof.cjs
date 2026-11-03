@@ -1,4 +1,4 @@
-// C.273 proof (GDD 180장 2·3): 온천 가득 순간 온천 안 노란 알림 → 2초 뒤 방(알림 없음) · 튜토리얼 온천 가득 · 고기 1개 배부름 +5. 캡처 1배 844×390
+// C.273·C.274 proof (GDD 180장 2·3): 온천 가득 순간 온천 안 노란 알림 → 2초 뒤 방(알림 없음) · 튜토리얼 온천 가득(C.274: 알림 없이 카드만 → [다음] 뒤 방) · 고기 1개 배부름 +5. 캡처 1배 844×390
 // 실행: node scripts/c273-proof.cjs (C273_URL=<주소>, C273_OUT=<폴더>)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -205,7 +205,27 @@ const proof = { shots: [], checks: {}, errors: [] };
         await page.waitForTimeout(900);
       }
       proof.checks.tutorialSpaEntered = await page.locator('.bha-lcd .bha-spa').count() > 0;
-      proof.checks['tutorial-spa'] = await waitFull(page, 'tutorial-shinigami', 30000);
+      // C.274 (GDD 180장 2 보충): 튜토리얼 온천은 가득 차도 알림·자동 방 이동 없음 — 카드만, [다음] 뒤 방
+      const r = { };
+      const t0 = Date.now();
+      while (Date.now() - t0 < 30000) {
+        const full = await page.evaluate(() => { const g = document.querySelector('.bha-spa .bha-room__gauge--hp .bha-room__gaugenum')?.textContent ?? ''; const [a, b] = g.split('/').map((x) => parseInt(x, 10)); return a > 0 && a === b; });
+        if (full) break;
+        await page.waitForTimeout(100);
+      }
+      await page.waitForTimeout(3500); // 옛 2초 자동 이동 시간보다 길게 기다린다
+      r.screenAfterFull = await screenId(page);
+      r.toast = await toastText(page);
+      r.card = await page.evaluate(() => document.querySelector('.bha-tut')?.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) ?? null);
+      await shot(page, 'tutorial-shinigami-1-spa-full-card-only');
+      await page.locator('.bha-tut button.bha-btn--primary:not([disabled])').filter({ visible: true }).first().click({ timeout: 3000 }).catch(() => {});
+      for (let i = 0; i < 60 && (await screenId(page)) === 'spa'; i++) await page.waitForTimeout(100);
+      r.cardAfterNext = await page.evaluate(() => document.querySelector('.bha-tut')?.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) ?? null);
+      await page.waitForTimeout(600);
+      r.screenAfterNext = await screenId(page);
+      await shot(page, 'tutorial-shinigami-2-room-after-next');
+      r.ok = r.screenAfterFull === 'spa' && !r.toast.some((x) => x.includes('가득')) && r.screenAfterNext === 'room';
+      proof.checks['tutorial-spa'] = r;
       await page.close();
     }
   } finally {

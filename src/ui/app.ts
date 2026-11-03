@@ -310,6 +310,11 @@ export function startApp(host: HTMLElement): void {
           inSpa = true;
           return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);
         } },
+        // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, 4/7 '온천' 카드 [다음] 에서 걸어 나가 방으로 — 5/7 '쉬기'('…로 돌아왔다') 카드는 방 위에 뜬다
+        next: (go) => {
+          const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
+          if (!spaExitFx(leave)) leave();
+        },
       },
       // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로
       'spa-rest': { next: (go) => {
@@ -904,7 +909,9 @@ export function startApp(host: HTMLElement): void {
             persist();
             // 저절로 나오면 방으로 (GDD 127장 2: 장터에서 들어갔어도 방 — C.198 그대로)
             const toRoom = () => { if (nav.top?.id === 'spa') nestScreen(); };
-            // 가득 차서 나올 때 (GDD 180장 2, C.272): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
+            // 튜토리얼 회복 안내 중 (GDD 180장 2 보충, C.274): 알림·자동 방 이동 없이 온천에 그대로 — 안내 카드('체력이 가득 찼다!')와 [다음] 흐름이 방 이동을 정한다
+            if (recoverOpen && nav.top?.id === 'spa') return;
+            // 가득 차서 나올 때 (GDD 180장 2, C.273): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
             if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;
             toRoom();
             showToast({ eyebrow: name, title: spaEndText(e, faction.fullnessName), meta: '' }, 0, 3200);
