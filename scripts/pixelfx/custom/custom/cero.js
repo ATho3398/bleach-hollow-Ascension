@@ -3,11 +3,16 @@
 // 사용자 2026-11-04 "세로 오스큐라스 얇은 선으로 기모으는듯한 이펙트 없애고, 두께 절반으로 줄여서 바로 발사되는 빔 만들어.
 // 이거 이름은 일반 세로. 빔 안에 그라데이션이나 뭔가 움직이는 연출 넣지말고"
 // 나오는 법: 첫 2장 흰 번쩍(뻗는 순간) → 단색 빔 유지 → 두께가 줄어 사라짐. 기본 +90° 눕힘(앞 = 오른쪽으로 쏨, 세로 오스큐라스와 같음).
+// 02:4x "세로 끝나는 부분 그라데이션으로 없애고, 출발부분은 한 점에서 출발하듯이 수정. 지속시간 반으로 줄이고"
+// → 끝 30% 는 점점 성기게(도트 디더) 사라지고, 출발은 한 점에서 TAPER px 동안 두께가 벌어진다. 유지·사라짐 시간 절반.
 // 번쩍임(flare)·빛은 pixelfx arcane/magic-circle-cast 에서 (MIT, THIRD_PARTY_NOTICES.md).
-import { Lights, PAL, fit, flare, clamp, ease, WHITE } from "../../core/index.js";
+import { Lights, PAL, fit, flare, clamp, smooth, ease, WHITE } from "../../core/index.js";
+import { bayer } from "../arcane/_lib.js";
 
 // 빔 길이(px), 반 두께(세로 오스큐라스 W 11 의 절반), 뻗는 시간, 유지, 사라짐
-const LEN = 196, W = 5.5, SHOOT = 0.09, HOLD = 0.75, OUT = 0.22, END = HOLD + OUT + 0.03;
+const LEN = 196, W = 5.5, SHOOT = 0.09, HOLD = 0.37, OUT = 0.11, END = HOLD + OUT + 0.02;
+// 출발점에서 두께가 다 벌어지는 길이(px), 끝에서 사라지기 시작하는 곳(길이 비율)
+const TAPER = 22, FADE = 0.7;
 
 export const meta = {
   name: "일반 세로",
@@ -36,13 +41,19 @@ export function create(o) {
     if (w < 0.5) return;
     const top = -LEN * ease.outExpo(clamp(t / SHOOT));
     const white = t < 0.067;
-    for (let y = 0; y >= Math.ceil(top); y--)
-      for (let x = Math.floor(-w); x <= Math.ceil(w) - 1; x++) {
-        const q = Math.abs(x + 0.5) / w;
-        if (q > 1) continue;
+    for (let y = 0; y >= Math.ceil(top); y--) {
+      const h = -y;
+      // 한 점에서 출발: 처음 TAPER px 동안 두께가 0 → w (부드러운 곡선)
+      const ww = w * Math.sqrt(clamp((h + 0.5) / TAPER));
+      // 끝은 점점 성기게: 길이의 FADE 부터 끝까지 남는 점이 줄어든다(도트 디더)
+      const keep = 1 - smooth(LEN * FADE, LEN, h);
+      for (let x = Math.floor(-ww); x <= Math.ceil(ww) - 1; x++) {
+        const q = Math.abs(x + 0.5) / ww;
+        if (q > 1 || keep <= bayer(x, y)) continue;
         // 단색: 가운데 한 색, 가장자리(바깥 1/4) 한 색
         p.px(x, y, white ? WHITE : q < 0.75 ? C[6] : C[4]);
       }
+    }
     // 빔 둘레 빛 (빔 안은 그대로)
     const k = w / W;
     p.glow(0, -2, 16, C[5], 0.4 * k);
