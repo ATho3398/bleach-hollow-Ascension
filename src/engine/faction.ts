@@ -35,6 +35,19 @@ export interface FamilySkillConfig {
   bonus?: { kind: 'stagger'; value: number };
 }
 
+/** 계열 공격의 도트 자국 (GDD 180장): 시트 + 이펙트 배치 도구(scripts/pixelfx/tool)에서 사용자가 맞춘 자리·크기·각도.
+ *  실제 시트 = `<sheet>-<블록 속성 id>`(public/fx). dx·dy = 맞는 몸 가운데에서 화면 px, scale = 시트 1픽셀당 화면 px,
+ *  angle = 도, bigScale = 3단계 마지막 타격 크기, altFlip = 연타 짝수 번째 위아래 뒤집기 */
+export interface FamilyPixelFx {
+  sheet: string;
+  dx: number;
+  dy: number;
+  scale: number;
+  angle: number;
+  bigScale: number;
+  altFlip: boolean;
+}
+
 /** 공격 계열 (GDD 17-3): 호로 조·교·탄 / 사신 참·권·귀. 특성의 family 가 이 id 를 가리킨다 */
 export interface FamilyConfig {
   id: string;
@@ -46,8 +59,8 @@ export interface FamilyConfig {
   fx: AttackFxKind;
   /** 캐릭터 몸동작 (GDD 118장 2): 사신 권=strike·참=slash·귀=cast. 없으면 특수 동작 그대로(호로) */
   motion?: FamilyMotionKind;
-  /** 맞는 자국을 도트 시트로 (GDD 180장, pixelfx): 시트 이름 앞부분 — 실제 시트 = `<pixelFx>-<속성 id>`(public/fx). 없으면 SVG 자국 */
-  pixelFx?: string;
+  /** 맞는 자국을 도트 시트로 (GDD 180장, pixelfx). 없으면 SVG 자국 */
+  pixelFx?: FamilyPixelFx;
   /** 공격 분류 (GDD 20-1·118장 2): 물리(조·권) / 특수(탄·귀) / 혼합(교·참). 피해 계산에 쓰는 능력치를 정한다 */
   category: AttackCategory;
   /** 1·2·3단계 기술 */
@@ -568,7 +581,12 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!isString(x.abbr) || Array.from(x.abbr).length !== 1) errors.push(`families[${i}].abbr: 한 글자`);
       if (!(ATTACK_FX_KINDS as readonly unknown[]).includes(x.fx)) errors.push(`families[${i}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
       if (x.motion !== undefined && !(FAMILY_MOTION_KINDS as readonly unknown[]).includes(x.motion)) errors.push(`families[${i}].motion: ${FAMILY_MOTION_KINDS.join(' | ')}`);
-      if (x.pixelFx !== undefined && !(typeof x.pixelFx === 'string' && /^[a-z0-9-]+$/.test(x.pixelFx))) errors.push(`families[${i}].pixelFx: 소문자·숫자·하이픈 시트 이름`);
+      if (x.pixelFx !== undefined) {
+        const p = (x.pixelFx ?? {}) as Record<string, unknown>;
+        const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+        if (!(typeof p.sheet === 'string' && /^[a-z0-9-]+$/.test(p.sheet)) || !num(p.dx) || !num(p.dy) || !num(p.angle) || !(num(p.scale) && (p.scale as number) > 0) || !(num(p.bigScale) && (p.bigScale as number) > 0) || typeof p.altFlip !== 'boolean')
+          errors.push(`families[${i}].pixelFx: { sheet: 소문자·숫자·하이픈, dx, dy, scale>0, angle, bigScale>0, altFlip }`);
+      }
       if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`families[${i}].category: ${ATTACK_CATEGORIES.join(' | ')}`);
       const tiers = x.tiers;
       if (!Array.isArray(tiers) || tiers.length !== FAMILY_TIERS) errors.push(`families[${i}].tiers: 기술 ${FAMILY_TIERS}개`);

@@ -94,7 +94,7 @@
       "name": "참(斬)",
       "abbr": "참",
       "fx": "slash",
-      "pixelFx": "sword-slash",
+      "pixelFx": { "sheet": "sword-slash", "dx": 0, "dy": 0, "scale": 1, "angle": 0, "bigScale": 2, "altFlip": true },
       "motion": "slash",
       "category": "mixed",
       "tiers": [

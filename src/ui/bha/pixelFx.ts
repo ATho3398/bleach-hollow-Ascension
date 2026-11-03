@@ -186,9 +186,14 @@ export function playPixelFx(host: HTMLElement, s: PixelFxSheet, o: PixelFxOption
   };
 }
 
+/** 상자 가운데를 축으로 뒤집기·돌리기 (게임과 이펙트 배치 도구가 같은 식을 쓴다 — 도구에서 본 그대로 게임에 나온다) */
+export function pixelFxTransform(flipX: boolean, flipY: boolean, angle: number): string {
+  return `scale(${flipX ? -1 : 1}, ${flipY ? -1 : 1}) rotate(${angle}deg)`;
+}
+
 /** 시트 한 장 크기의 상자를 (cx, cy) 를 가운데로 놓는다 (재생은 부르는 쪽이 pixelFxKeyframes 로). 처음엔 투명 — 키프레임이 시작되면 보인다.
  *  flipX = 좌우(시트는 오른쪽을 본다), flipY = 위아래(연타 올려 베기) */
-export function mountPixelFx(host: HTMLElement, s: PixelFxSheet, o: { cx: number; cy: number; scale: number; flipX?: boolean; flipY?: boolean }): HTMLElement {
+export function mountPixelFx(host: HTMLElement, s: PixelFxSheet, o: { cx: number; cy: number; scale: number; flipX?: boolean; flipY?: boolean; angle?: number }): HTMLElement {
   const el = document.createElement('div');
   el.className = 'bha-pxfx';
   el.setAttribute('aria-hidden', 'true');
@@ -198,7 +203,7 @@ export function mountPixelFx(host: HTMLElement, s: PixelFxSheet, o: { cx: number
   const rows = Math.ceil(s.frames / s.columns);
   el.style.cssText = `left:${(o.cx - w / 2).toFixed(1)}px;top:${(o.cy - h / 2).toFixed(1)}px;width:${w}px;height:${h}px;opacity:0;` +
     `background-image:url("${BASE}${s.image}");background-size:${s.columns * s.frame[0] * o.scale}px ${rows * s.frame[1] * o.scale}px;` +
-    `transform:scale(${o.flipX ? -1 : 1}, ${o.flipY ? -1 : 1})`;
+    `transform:${pixelFxTransform(!!o.flipX, !!o.flipY, o.angle ?? 0)}`;
   host.append(el);
   return el;
 }

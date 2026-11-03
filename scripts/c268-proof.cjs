@@ -123,6 +123,20 @@ async function runFactionInner(browser, fi, tag, proof, traits, page0) {
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: '전투 시작' }).click({ timeout: 4000 });
   await page.waitForTimeout(1500);
+  if (process.env.C268_BG) {
+    // 이펙트 배치 도구 배경: 효과 없는 전투 장면 몇 장 + 맞는 몸 가운데(페이지 px)
+    for (let k = 0; k < 6; k++) {
+      await page.waitForTimeout(170);
+      const geo = await page.evaluate(() => {
+        const b = document.querySelector('.bha-foe__body').getBoundingClientRect();
+        const l = document.querySelector('.bha-afx-layer').getBoundingClientRect();
+        return { foe: { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height }, layer: { x: l.left, y: l.top, w: l.width, h: l.height }, afx: document.querySelectorAll('.bha-afx, .bha-pxfx').length };
+      });
+      await page.screenshot({ path: path.join(OUT, `bg-${tag}-${k}.png`) });
+      proof.trace.push({ tag, bg: k, geo });
+    }
+    return;
+  }
   const seen = [];
   let pixelCount = 0;
   let tries = 0;

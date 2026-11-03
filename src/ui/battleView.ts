@@ -855,7 +855,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   const cues: FxCue[] = [];
   // 도트 시트 자국 미리 받기 (GDD 180장): pixelFx 가 있는 계열 × 속성. 못 받은 시트는 SVG 자국 그대로
-  for (const f of faction.families) if (f.pixelFx) for (const el of ELEMENT_IDS) void loadPixelFx(`${f.pixelFx}-${el}`);
+  for (const f of faction.families) if (f.pixelFx) for (const el of ELEMENT_IDS) void loadPixelFx(`${f.pixelFx.sheet}-${el}`);
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
