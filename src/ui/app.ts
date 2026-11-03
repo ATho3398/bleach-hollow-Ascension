@@ -12,7 +12,7 @@ import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaEndText, spaExitFx, spaView } from './spaView';
+import { spaEndText, spaExitFx, spaHoldFull, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -900,10 +900,13 @@ export function startApp(host: HTMLElement): void {
           backLabel,
           onBack: () => nav.back(),
           onAutoLeave: (e) => {
-            tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다
+            tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다 — 이 뒤로는 회복·배부름 감소 없음 (GDD 180장 2: 알림 2초 동안 멈춤)
             persist();
             // 저절로 나오면 방으로 (GDD 127장 2: 장터에서 들어갔어도 방 — C.198 그대로)
-            if (nav.top?.id === 'spa') nestScreen();
+            const toRoom = () => { if (nav.top?.id === 'spa') nestScreen(); };
+            // 가득 차서 나올 때 (GDD 180장 2, C.272): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
+            if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;
+            toRoom();
             showToast({ eyebrow: name, title: spaEndText(e, faction.fullnessName), meta: '' }, 0, 3200);
           },
         });

@@ -1,0 +1,66 @@
+{
+  "shots": [
+    "hollow-1-spa-full-notice.png",
+    "hollow-2-room-after.png",
+    "feed-basic-plus5.png",
+    "shinigami-1-spa-full-notice.png",
+    "shinigami-2-room-after.png",
+    "tutorial-shinigami-1-spa-full-notice.png",
+    "tutorial-shinigami-2-room-after.png"
+  ],
+  "checks": {
+    "hollow-spa": {
+      "tag": "hollow",
+      "at": 3507,
+      "screenAtNotice": "spa",
+      "toast": [
+        "새 트랙 사신 트랙이 열렸다",
+        "온천 체력이 가득 찼다"
+      ],
+      "seated": true,
+      "toRoomMs": 1846,
+      "screenAfter": "room",
+      "toastAfter": [],
+      "ok": true
+    },
+    "feed": {
+      "before": "69",
+      "after": "74",
+      "label": "짐승 고기 ×5배부름 +5",
+      "bubble": [
+        "짐승 고기: 배부름 +5 · 영압 안정도 +2"
+      ],
+      "ok": true
+    },
+    "shinigami-spa": {
+      "tag": "shinigami",
+      "at": 3507,
+      "screenAtNotice": "spa",
+      "toast": [
+        "새 트랙 호로 트랙이 열렸다",
+        "온천 체력이 가득 찼다"
+      ],
+      "seated": true,
+      "toRoomMs": 1846,
+      "screenAfter": "room",
+      "toastAfter": [],
+      "ok": true
+    },
+    "tutorialSpaEntered": true,
+    "tutorial-spa": {
+      "tag": "tutorial-shinigami",
+      "at": 4535,
+      "screenAtNotice": "spa",
+      "toast": [
+        "새 트랙 호로 트랙이 열렸다",
+        "온천 체력이 가득 찼다"
+      ],
+      "seated": true,
+      "toRoomMs": 1956,
+      "screenAfter": "room",
+      "toastAfter": [],
+      "ok": true
+    }
+  },
+  "errors": []
+}
