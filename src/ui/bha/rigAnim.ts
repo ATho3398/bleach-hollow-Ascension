@@ -189,7 +189,7 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     ctx.clip();
     ctx.imageSmoothingEnabled = false;
     for (const { layer, im } of orderLayers(layers.map((l) => ({ ...l, slot: l.layer.slot })), motion)) {
-      const m = layerMatrix(rig, mats, layer, motion, t);
+      const m = layerMatrix(rig, mats, layer, motion);
       ctx.setTransform(m[0] * K, m[1] * K, m[2] * K, m[3] * K, (m[4] - vx) * K, (m[5] - vy) * K);
       ctx.drawImage(im, 0, 0);
     }

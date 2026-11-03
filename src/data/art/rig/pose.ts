@@ -81,8 +81,6 @@ export interface Motion {
   hit?: number;
   /** 이 동작 동안 그림을 뒤집어 그릴 슬롯(칼 = 칼날 축 기준으로 날·등이 바뀜, 그 밖 = 그림 세로 가운데 기준) */
   flip?: string[];
-  /** flip 을 이 시간(ms)에만 — [시작, 끝). 없으면 동작 내내. 어퍼컷에서 치는 순간만 몸·다리가 반대쪽을 보게 (GDD 115-A 68) */
-  flipSpan?: [number, number];
   /** 이 동작 동안 맨 앞으로 올려 그릴 슬롯(차례대로) — 필살기에서 칼을 몸 위로 (GDD 115-A 48) */
   front?: string[];
   /** 이 동작 동안 숨길 슬롯 — 칼 든 손으로 치는 스트레이트에서 칼을 잠시 감춤 (GDD 115-A 52) */
@@ -314,17 +312,10 @@ export function fxAt(motion: Motion | undefined, t: number, mats: Record<string,
   return out;
 }
 
-/** t 순간 이 슬롯을 뒤집어 그리나: 동작의 flip 에 있고, flipSpan 이 있으면 그 시간 안(t 를 모르면 뒤집음) (GDD 115-A 68) */
-export function flipsAt(motion: Motion | undefined, slot: string, t?: number): boolean {
-  if (!motion?.flip?.includes(slot)) return false;
-  const s = motion.flipSpan;
-  return !s || t === undefined || (t >= s[0] && t < s[1]);
-}
-
-/** 층 하나의 화면 행렬: 뼈 · 자리 · (이 동작의 이 순간 뒤집는 슬롯이면 뒤집기) */
-export function layerMatrix(rig: Rig, mats: Record<string, Mat>, layer: Layer, motion?: Motion, t?: number): Mat {
+/** 층 하나의 화면 행렬: 뼈 · 자리 · (이 동작에서 뒤집는 슬롯이면 뒤집기) */
+export function layerMatrix(rig: Rig, mats: Record<string, Mat>, layer: Layer, motion?: Motion): Mat {
   const m = partMatrix(mats[layer.bone]!, layer.at);
-  return flipsAt(motion, layer.slot, t) ? mul(m, flipMatrix(rig, layer)) : m;
+  return motion?.flip?.includes(layer.slot) ? mul(m, flipMatrix(rig, layer)) : m;
 }
 
 /** 머리카락 층(앞머리·일반머리 = hair, 몸 뒤로 늘어지는 뒷머리 = hair_back) — 둘 다 머리카락 틀 안 */
@@ -378,7 +369,6 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
     if (!(m.duration > 0)) errs.push(`${mid}: 길이 0`);
     if (m.hit !== undefined && (m.hit < 0 || m.hit > m.duration)) errs.push(`${mid}: 타격 시각이 길이 밖`);
     for (const f of m.flip ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 뒤집을 슬롯 ${f} 없음`);
-    if (m.flipSpan && !(m.flipSpan.length === 2 && m.flipSpan[0] >= 0 && m.flipSpan[0] < m.flipSpan[1] && m.flipSpan[1] <= m.duration)) errs.push(`${mid}: 뒤집기 시간이 길이 밖`);
     for (const f of m.front ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 앞으로 올릴 슬롯 ${f} 없음`);
     for (const f of m.hide ?? []) if (!rig.slots.some((s) => s.id === f)) errs.push(`${mid}: 숨길 슬롯 ${f} 없음`);
     for (const f of m.fx ?? []) {
