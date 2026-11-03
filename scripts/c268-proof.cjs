@@ -124,7 +124,17 @@ async function runFactionInner(browser, fi, tag, proof, traits, page0) {
   await page.getByRole('button', { name: '전투 시작' }).click({ timeout: 4000 });
   await page.waitForTimeout(1500);
   if (process.env.C268_BG) {
-    // 이펙트 배치 도구 배경: 효과 없는 전투 장면 몇 장 + 맞는 몸 가운데(페이지 px)
+    // 이펙트 배치 도구 배경: 효과 없는 전투 장면 몇 장 + 맞는 몸 가운데(페이지 px). C268_NOHERO = 내 캐릭터를 숨기고 그 그림 자리·변형을 남긴다(도구가 움직이는 캐릭터를 얹음)
+    if (process.env.C268_NOHERO) {
+      proof.trace.push({ tag, hero: await page.evaluate(() => {
+        const img = document.querySelector('.bha-hero__img');
+        const r = img.getBoundingClientRect();
+        const chain = [];
+        for (let n = img; n && !n.classList?.contains('bha-arena'); n = n.parentElement) chain.push(`${n.className}: ${getComputedStyle(n).transform}`);
+        return { x: r.left, y: r.top, w: r.width, h: r.height, nat: [img.naturalWidth, img.naturalHeight], chain: chain.slice(0, 4) };
+      }) });
+      await page.addStyleTag({ content: '.bha-hero{visibility:hidden!important}' });
+    }
     for (let k = 0; k < 6; k++) {
       await page.waitForTimeout(170);
       const geo = await page.evaluate(() => {

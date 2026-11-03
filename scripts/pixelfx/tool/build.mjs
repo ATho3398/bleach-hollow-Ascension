@@ -2,9 +2,10 @@
 // → <출력>/fx-tool.html 하나(배경·pixelfx 244개 코드·도구 코드 모두 안에). Artifact 로 같은 주소에 다시 올린다(README.md).
 // 먼저 npm run fx:fetch (vendor/pixelfx).
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { build } from 'vite';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 const HERE = join(ROOT, 'scripts/pixelfx/tool');
@@ -40,7 +41,8 @@ for (const [fid, abbr] of ORDER) {
   const fam = fac.families.find((f) => f.abbr === abbr);
   if (!fam) throw new Error(`${fid} 에 ${abbr} 계열 없음`);
   const key = `${fid}/${fam.id}`;
-  entries.push({ key, label: `${fac.name} ${fam.name}`, faction: fid, bg: dataUri(`scripts/pixelfx/tool/battle-bg-${fid}.png`, 'image/png'), dir: -1 });
+  // motion = 계열 몸동작(종이인형이 고르는 동작 묶음, 게임 attackFx 와 같다)
+  entries.push({ key, label: `${fac.name} ${fam.name}`, faction: fid, bg: dataUri(`scripts/pixelfx/tool/battle-bg-${fid}.png`, 'image/png'), dir: -1, ...(fam.motion ? { motion: fam.motion } : {}) });
   // 처음 값: 사신 참 = 지금 붙여 둔 sword-slash(GDD 180장 1), 나머지는 비어 있음
   const all = (n) => Array.from({ length: n }, (_, i) => i);
   defaults[key] = TIMING.map(([hits, gapMs]) => ({ hits, gaps: all(hits - 1).map(() => gapMs), speed: 1, layers: fid === 'shinigami' && abbr === '참' ? [{ ...slash, on: all(hits) }] : [] }));
@@ -67,9 +69,42 @@ const VENDOR = join(ROOT, 'vendor/pixelfx');
 if (existsSync(join(ROOT, 'scripts/pixelfx/custom'))) cpSync(join(ROOT, 'scripts/pixelfx/custom'), join(VENDOR, 'src/fx'), { recursive: true });
 execFileSync('node', ['tools/index.mjs'], { cwd: VENDOR, stdio: 'ignore' });
 
-execFileSync(join(ROOT, 'node_modules/.bin/esbuild'), [join(HERE, 'fx-tool.ts'), '--bundle', '--minify', '--format=iife', `--outfile=${join(OUT, 'fx-tool.js')}`, '--log-level=warning']);
+// 게임 그림 목록 (vite.config.ts artFiles·artAnims 와 같은 규칙) — 게임 코드(charArt)가 그대로 돌게 같은 값으로 넣는다
+function artFiles() {
+  const out = [];
+  for (const f of readdirSync(join(ROOT, 'public/art'))) {
+    if (/\.(png|webp)$/i.test(f)) out.push(f);
+    else if (statSync(join(ROOT, 'public/art', f)).isDirectory()) for (const g of readdirSync(join(ROOT, 'public/art', f))) if (/\.(png|webp)$/i.test(g)) out.push(`${f}/${g}`);
+  }
+  return out.sort();
+}
+function artAnims() {
+  const out = {};
+  for (const f of readdirSync(join(ROOT, 'public/art'))) {
+    const p = join(ROOT, 'public/art', f, 'anim.json');
+    if (existsSync(p)) try { out[f] = JSON.parse(readFileSync(p, 'utf8')); } catch { /* 깨진 파일은 무시 */ }
+  }
+  return out;
+}
+const define = { __ART_FILES__: JSON.stringify(artFiles()), __ART_ANIMS__: JSON.stringify(artAnims()) };
+// 게임 코드가 vite 기능(import.meta.glob)을 써서 vite 로 묶는다 (게임 빌드와 같은 방식)
+async function bundle(entry, file, ssr) {
+  await build({
+    configFile: false,
+    root: ROOT,
+    logLevel: 'error',
+    define,
+    build: { outDir: OUT, emptyOutDir: false, minify: !ssr, ssr: ssr ? entry : undefined, lib: ssr ? undefined : { entry, formats: ['iife'], name: 'FxTool', fileName: () => file }, rollupOptions: ssr ? { output: { entryFileNames: file, format: 'cjs' } } : undefined },
+  });
+}
+// 치는 쪽 캐릭터 그림: 목록을 게임 코드로 뽑아 data URI 로 싣는다 (도구 안에서 상대 주소 → data URI 로 바꿔 끼운다)
+await bundle(join(HERE, 'collect.ts'), 'collect.cjs', true);
+const artList = JSON.parse(execFileSync('node', [join(OUT, 'collect.cjs')]).toString());
+data.art = Object.fromEntries(artList.map((f) => [f, dataUri(`public/${f}`, f.endsWith('.webp') ? 'image/webp' : 'image/png')]));
+
+await bundle(join(HERE, 'fx-tool.ts'), 'fx-tool.js', false);
 const html = readFileSync(join(HERE, 'fx-tool.template.html'), 'utf8')
   .replace('/*DATA*/', () => `var FX_DATA=${JSON.stringify(data)};`)
   .replace('/*JS*/', () => readFileSync(join(OUT, 'fx-tool.js'), 'utf8'));
 writeFileSync(join(OUT, 'fx-tool.html'), html);
-console.log(`fx-tool.html ${(html.length / 1024).toFixed(0)}KB · 계열 ${entries.length}`);
+console.log(`fx-tool.html ${(html.length / 1024).toFixed(0)}KB · 계열 ${entries.length} · 캐릭터 그림 ${artList.length}장`);

@@ -4,6 +4,10 @@
 import { effects, categories } from '../../../vendor/pixelfx/src/fx/index.js';
 import { clearFrame, composite, createFrame, createFx } from '../../../vendor/pixelfx/src/core/index.js';
 import { pixelFxTransform } from '../../../src/ui/bha/pixelFx';
+import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
+import { charArt, type ArtUrls } from '../../../src/data/art/manifest';
+import type { FamilyMotionKind } from '../../../src/engine/faction';
+import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
 
 interface FxLayer {
   fx: string;
@@ -39,7 +43,7 @@ const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0,
 /** 한 블록 공격: 타격 수 · 타격 사이 간격(타격마다 따로) · 시전 속도(공격 전체 빠르기, 이펙트 재생도 같이) · 이펙트 */
 interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[] }
 type FamilyFx = StageFx[];
-interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1 }
+interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1; motion?: FamilyMotionKind }
 interface ToolData {
   stage: { w: number; h: number };
   view: { x: number; y: number; w: number; h: number };
@@ -52,6 +56,8 @@ interface ToolData {
   catNames: Record<string, string>;
   stamp: string;
   built: string;
+  /** 캐릭터 그림 (상대 주소 → data URI) */
+  art: Record<string, string>;
 }
 declare const FX_DATA: ToolData;
 type DocRef = { get(): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>; set(d: Record<string, unknown>): Promise<void> };
@@ -60,6 +66,20 @@ declare const claude: { use(name: 'db'): Promise<{ doc(path: string): DocRef } |
 type Mod = { meta: { name?: string; size: [number, number]; origin: [number, number]; fps?: number; duration?: number; loop?: boolean; options?: Record<string, unknown> } };
 const EFFECTS = effects as Record<string, Mod>;
 const D = FX_DATA;
+// 게임 코드가 그림을 상대 주소(./art/…)로 부르면 실어 둔 data URI 로 바꿔 끼운다 (아티팩트는 저장소 파일을 못 읽는다)
+{
+  const desc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src')!;
+  Object.defineProperty(HTMLImageElement.prototype, 'src', {
+    configurable: true,
+    get() {
+      return desc.get!.call(this);
+    },
+    set(v: string) {
+      const k = String(v).replace(/^\.?\//, '');
+      desc.set!.call(this, D.art[k] ?? v);
+    },
+  });
+}
 const LS = 'bha-fx-tool-v3';
 const MAX_LAYERS = 3;
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -153,6 +173,34 @@ for (const [id, p] of [['mark-t', D.target], ['mark-a', D.attacker]] as const) {
   $(id).style.top = `${p.y}px`;
 }
 const dot = $('dot');
+// ── 치는 쪽 캐릭터 (게임 재생기 그대로: 종이인형 bindRigAnim / 프레임 애니) ──
+const RIG_ART = (look: string): ArtUrls => ({ src: `./art/rig/humanoid/still/${look}.png`, frames: null, scale: 1.78, fieldScale: 1.33, offsetY: 0, rig: { look, partBase: './art/rig/humanoid/' } });
+const artOfChar = (c: ToolChar): ArtUrls => (c.rig ? RIG_ART(c.rig) : charArt(c.faction!, c.tier ?? 0, c.fallback ?? '', './', undefined, undefined, null, undefined, 'male'));
+const heroHost = $('hero');
+let hero: { c: ToolChar; img: HTMLImageElement; player: AnimPlayer | null } | null = null;
+let charId = 'shinigami-m';
+function mountHero(): void {
+  const c = CHARACTERS.find((x) => x.id === charId) ?? CHARACTERS[0]!;
+  if (hero?.c === c) return;
+  heroHost.replaceChildren();
+  const art = artOfChar(c);
+  const s = art.fieldScale ?? art.scale;
+  const img = document.createElement('img');
+  img.alt = c.label;
+  img.draggable = false;
+  img.src = art.src ?? '';
+  const size = HERO_BOX.size * s;
+  img.style.cssText = `position:absolute;left:${HERO_BOX.originX - size / 2}px;top:${HERO_BOX.originY + (HERO_BOX.y - HERO_BOX.originY) * s}px;width:${size}px;height:${size}px;image-rendering:pixelated;pointer-events:none`;
+  heroHost.append(img);
+  hero = { c, img, player: bindAnim(heroHost, img, art) };
+}
+/** 공격 순간(첫 타격 = 0ms): 게임처럼 블록 공격 = 특수 동작(종이인형은 계열 몸동작 묶음), 타격 프레임부터. 특수 동작이 없는 그림이면 공격 동작 */
+function swing(): void {
+  const p = hero?.player;
+  if (!p) return;
+  const o = { fromHit: true, motion: entry.motion };
+  if (!p.play('skill', o)) p.play('attack', o);
+}
 const dot2 = $('dot2');
 const dot3 = $('dot3');
 let k = 1;
@@ -304,9 +352,14 @@ const tick = (now: number): void => {
   const dt = Math.min(100, now - last);
   last = now;
   if (playing) {
+    const prev = t;
     t += dt;
+    if (prev < 0 && t >= 0) swing();
     if (t > span.to + 400) {
-      if (repeat) t = span.from;
+      if (repeat) {
+        t = span.from;
+        if (t >= 0) swing();
+      }
       else {
         t = span.to;
         setPlaying(false);
@@ -319,6 +372,7 @@ const tick = (now: number): void => {
 requestAnimationFrame(tick);
 function setPlaying(on: boolean): void {
   playing = on;
+  hero?.player?.setPaused(!on);
   $('play').textContent = on ? '멈춤' : '재생';
 }
 
@@ -492,6 +546,18 @@ famSel.onchange = () => {
   t = 0;
   refresh();
 };
+for (const c of CHARACTERS) {
+  const b = h('button', 'chip', c.label);
+  b.type = 'button';
+  b.dataset.char = c.id;
+  b.onclick = () => {
+    charId = c.id;
+    t = span.from;
+    refresh();
+    swing();
+  };
+  $('chars').append(b);
+}
 for (let i = 0; i < 3; i++) {
   const b = h('button', 'chip', `${i + 1}블록`);
   b.type = 'button';
@@ -628,6 +694,8 @@ $('reset').onclick = () => {
 
 function refresh(): void {
   if (bgImg.getAttribute('src') !== entry.bg) bgImg.src = entry.bg;
+  mountHero();
+  for (const b of $('chars').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.char === charId));
   for (const b of $('stages').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(Number(b.dataset.stage) === stageIx));
   for (const b of $('elements').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.el === element));
   const tabs = $('layertabs');
