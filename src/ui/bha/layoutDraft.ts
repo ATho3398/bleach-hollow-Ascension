@@ -1,8 +1,9 @@
 // UI 배치 도구의 데이터 (GDD 175장, 개발 전용): 편집본(초안) 구조·저장·장면 목록·미리보기 적용.
 // 게임 데이터 구조를 그대로 읽고 쓴다 — 방 room.layout·props·sceneArt, 시장 market.layout·props·exit, 월드맵 worldmap.layout·이름들(종족 json).
-// 새 물건은 같은 설정의 extras(아이콘만, 기능 없음). 그림·아이콘은 키(prop.<물건>) 단위라 두 종족 공통이다(사용자 2026-11-03 "홈 ui 아이콘은 통일").
+// 새 물건은 같은 설정의 extras(아이콘만, 기능 없음). 그림·아이콘은 그림 키 단위 — prop.<물건> 은 두 종족 공통(사용자 2026-11-03 "홈 ui 아이콘은 통일 (대원실, 둥지 빼고)"),
+// 월드맵 장소 중 공통 그림 파일이 없는 것(홈 등)은 게임처럼 종족별 키 place.<장소>.<종족> (C.272: 둥지·대원실이 한 키에 덮이던 것 수리).
 // 종족 분기 없음: 장면 = 장면 종류(LAYOUT_KINDS) × 종족 목록(FACTIONS). 온천 같은 새 장면은 LAYOUT_KINDS 에 한 항목만 더한다.
-import { artUrls, setRuntimeArt } from '../../data/art/manifest';
+import { ART_MANIFEST, artUrls, setRuntimeArt } from '../../data/art/manifest';
 import {
   MARKET_SPOTS, ROOM_PROPS, WORLD_PLACES, marketOf, roomOf, worldMapOf,
   type ExtraProp, type FactionConfig, type PropSpot, type RoomFloorConfig,
@@ -31,6 +32,9 @@ export interface LayoutDraft {
 
 export const emptyDraft = (): LayoutDraft => ({ v: 1, preview: false, scenes: {}, looks: {} });
 export const emptyScene = (): SceneEdit => ({ items: {}, extras: [] });
+
+/** 그림 파일(목록·파일 규칙)이 있나 — 도구가 건 실행 중 그림은 빼고 본다 (매니페스트 사본을 넘기면 실행 중 그림을 안 본다) */
+export const hasFileArt = (key: string): boolean => !!artUrls(key, '/', { ...ART_MANIFEST }).src;
 
 /** 장면 안 물건 하나 (도구가 그리는 단위) */
 export interface LayoutItem {
@@ -102,9 +106,10 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       const items: BaseItem[] = WORLD_PLACES.map((p) => {
         const place = `place.${p}.${f.id}`;
         return {
-          key: p, name: w.places[p], spot: w.layout[p], artKey: `prop.${p}`,
-          // 월드맵 화면(worldMapView)과 같은 대신 그림: 종족별 장소 그림, 수련장은 그것도 없으면 방 짚인형 (GDD 160장 4)
-          fallbackArt: p === 'training' && !artUrls(place).src ? 'prop.altar' : place,
+          // 그림 키 = 게임(worldMapView)이 실제로 쓰는 것: 공통 그림 prop.<장소> 파일이 있으면 그것(두 종족 공통), 없으면 종족별 장소 그림 place.<장소>.<종족> (홈 = 둥지·대원실 따로)
+          key: p, name: w.places[p], spot: w.layout[p], artKey: hasFileArt(`prop.${p}`) ? `prop.${p}` : place,
+          // 대신 그림: 수련장은 장소 그림이 없으면 방 짚인형 (GDD 160장 4)
+          fallbackArt: p === 'training' && !hasFileArt(place) ? 'prop.altar' : place,
           nameNote: note[p]?.[0] ?? '', nameEditable: note[p]?.[1] ?? false,
         };
       });
@@ -134,7 +139,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       // 시장 화면(marketView)과 같은 목록: 월드맵 물건(나가기) + 자리들(온천은 시장에 안 선다 — GDD 153장 1). 떠돌이 상인은 와 있을 때만 서지만 자리는 편집한다
       const items: BaseItem[] = [
         // 그림 = 지도(prop.worldmap)가 있으면 그것, 없으면 방과 같은 문 그림 — 시장 화면과 같게 (C.255)
-        { key: 'outside', name: roomOf(f).props.outside, spot: mk.exit, artKey: artUrls('prop.worldmap').src ? 'prop.worldmap' : 'prop.outside', fallbackArt: 'prop.door', nameNote: '방의 월드맵 물건과 같은 이름 — 방 장면에서 고친다', nameEditable: false },
+        { key: 'outside', name: roomOf(f).props.outside, spot: mk.exit, artKey: hasFileArt('prop.worldmap') ? 'prop.worldmap' : 'prop.outside', fallbackArt: 'prop.door', nameNote: '방의 월드맵 물건과 같은 이름 — 방 장면에서 고친다', nameEditable: false },
         ...MARKET_SPOTS.filter((p) => p !== 'spa').map((p) => ({
           key: p, name: mk.props[p], spot: mk.layout[p], artKey: `prop.${p}`,
           nameNote: p === 'wanderer' ? '종족 설정 market.props.wanderer — 떠돌이 상인은 와 있을 때만 선다' : `종족 설정 market.props.${p}`, nameEditable: true,
@@ -317,31 +322,63 @@ export function applySceneEdit(def: LayoutSceneDef, f: FactionConfig, ed: SceneE
   let sceneArt: string | undefined;
   if (ed.bg) {
     sceneArt = `scene.layout.${def.id}`;
-    setRuntimeArt(sceneArt, ed.bg);
+    setRuntimeArt(sceneArt, runtimeUrl(ed.bg));
   }
   const extras: ExtraProp[] = dataExtras(base.extras, ed);
   for (const x of ed.extras) {
     const key = extraArtKey(def.id, x.id);
-    setRuntimeArt(key, x.art);
+    setRuntimeArt(key, runtimeUrl(x.art));
     extras.push({ id: x.id, name: x.name, icon: x.icon, x: x.x, y: x.y, scale: x.scale, art: key, ...(x.hidden ? { hidden: true } : {}) });
   }
   def.kind.write(f, { spots, names, sceneArt, extras });
 }
 
+/**
+ * 올린 그림(data URL) → 화면에 거는 주소. 크롬은 2MB 넘는 주소를 그림으로 안 읽어(배경이 까맣게 나옴, C.272) 짧은 blob: 주소로 바꿔 건다.
+ * 같은 그림은 한 번만 만든다. blob 을 못 만드는 환경(테스트 등)이면 data URL 그대로
+ */
+const BLOB_URLS = new Map<string, string>();
+export function runtimeUrl(src: string | null | undefined): string | null | undefined {
+  if (!src || !src.startsWith('data:')) return src;
+  const hit = BLOB_URLS.get(src);
+  if (hit) return hit;
+  try {
+    const m = /^data:([^;,]*)(;base64)?,(.*)$/s.exec(src);
+    if (!m || typeof URL.createObjectURL !== 'function') return src;
+    const raw = m[2] ? atob(m[3]!) : decodeURIComponent(m[3]!);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], { type: m[1] || 'application/octet-stream' }));
+    BLOB_URLS.set(src, url);
+    return url;
+  } catch {
+    return src;
+  }
+}
+
 /** 올린 새 물건 그림의 실행 중 키 */
 export const extraArtKey = (sceneId: string, id: string): string => `prop.extra.${sceneId}.${id}`;
 
-/** 물건 모양(두 종족 공통): 올린 그림·그림 끄기 = 실행 중 그림, 고른 아이콘 = 자리표시 아이콘 표 */
+/** 물건 모양(그림 키 단위): 올린 그림·그림 끄기 = 실행 중 그림, 고른 아이콘 = 자리표시 아이콘 표(아이콘은 물건 단위 — 종족별 장소 키도 그 물건 아이콘) */
 export function applyLooks(d: LayoutDraft, icons: Record<string, string> = PROP_ICON): void {
   for (const [key, l] of Object.entries(d.looks)) {
-    setRuntimeArt(key, l.art);
-    const prop = key.replace(/^prop\./, '');
+    setRuntimeArt(key, runtimeUrl(l.art));
+    const prop = key.replace(/^prop\./, '').replace(/^place\.([^.]+)\..*$/, '$1');
     if (l.icon && prop in icons) icons[prop] = l.icon;
   }
 }
 
+/** 지금 어떤 장면 물건도 쓰지 않는 그림 키의 모양을 버린다 (C.272: 옛 도구가 둥지·대원실을 공통 키 prop.home 에 올려 서로 덮던 것 — 이제 종족별 키라 prop.home 은 안 씀). 버린 키 목록 */
+export function pruneLooks(d: LayoutDraft, factions: readonly FactionConfig[]): string[] {
+  const used = new Set(layoutScenes(factions).flatMap((def) => def.kind.read(factions.find((f) => f.id === def.factionId)!).items.map((i) => i.artKey)));
+  const gone = Object.keys(d.looks).filter((k) => !used.has(k));
+  for (const k of gone) delete d.looks[k];
+  return gone;
+}
+
 /** 미리보기 적용 (게임 시작 전에 부른다): 종족 설정 객체에 편집본을 써 넣는다. 바꾼 장면 수를 돌려준다 */
 export function applyDraft(d: LayoutDraft, factions: readonly FactionConfig[]): number {
+  pruneLooks(d, factions);
   let n = 0;
   for (const def of layoutScenes(factions)) {
     const ed = d.scenes[def.id];

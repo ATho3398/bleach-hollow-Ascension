@@ -13,7 +13,7 @@ import { worldMapView } from '../worldMapView';
 import type { Device } from './device';
 import { button, el, icon } from './dom';
 import {
-  addExtra, applyLooks, applySceneEdit, draftHasEdits, editItem, emptyScene, exportFile, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft,
+  addExtra, applyLooks, applySceneEdit, draftHasEdits, editItem, emptyScene, exportFile, layoutScenes, loadDraft, normalizeDraft, pruneLooks, removeExtra, resolveScene, saveDraft,
   type LayoutDraft, type LayoutItem, type LayoutSceneDef, type ResolvedScene,
 } from './layoutDraft';
 import { layoutOnFloor, PROP_ICON } from './room';
@@ -94,6 +94,40 @@ function readFile(file: File): Promise<string> {
   });
 }
 
+/** 이 크기(바이트)까지는 올린 파일 그대로. 넘으면 webp 로 다시 담는다 (C.272) */
+export const UPLOAD_KEEP_BYTES = 600 * 1024;
+/** 다시 담을 때 긴 변 최대 (배경 = 기기 LCD 의 약 2배, 물건 = 그림 칸 넉넉히) */
+export const UPLOAD_MAX_SIDE = { bg: 2048, prop: 1024 } as const;
+
+/**
+ * 올린 그림 → 저장할 data URL (C.272): 큰 파일(폰 사진·큰 png)은 그대로 담으면 이 브라우저 저장 공간(약 5MB)이 차고,
+ * 화면에도 안 걸린다(배경이 까맣게). 그래서 일정 크기를 넘으면 긴 변을 줄이고 webp(품질 0.92)로 다시 담는다 — 더 커지면 원본 그대로
+ */
+async function prepareImage(file: File, kind: keyof typeof UPLOAD_MAX_SIDE): Promise<{ url: string; note: string }> {
+  const kb = (n: number) => `${Math.round(n / 1024)}KB`;
+  const orig = await readFile(file);
+  if (file.size <= UPLOAD_KEEP_BYTES) return { url: orig, note: `${file.name} (${kb(file.size)})` };
+  try {
+    const img = new Image();
+    img.src = orig;
+    await img.decode();
+    const max = UPLOAD_MAX_SIDE[kind];
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = el('canvas');
+    c.width = Math.max(1, Math.round(img.naturalWidth * k));
+    c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    const g = c.getContext('2d');
+    if (!g) return { url: orig, note: `${file.name} (${kb(file.size)})` };
+    g.drawImage(img, 0, 0, c.width, c.height);
+    const webp = c.toDataURL('image/webp', 0.92);
+    if (!webp.startsWith('data:image/webp') || webp.length >= orig.length) return { url: orig, note: `${file.name} (${kb(file.size)})` };
+    const bytes = Math.round((webp.length - webp.indexOf(',') - 1) * 0.75);
+    return { url: webp, note: `${file.name} — 커서 줄여 담음 ${kb(file.size)} → ${kb(bytes)} (${c.width}×${c.height} webp)` };
+  } catch {
+    return { url: orig, note: `${file.name} (${kb(file.size)})` };
+  }
+}
+
 /** 파일 고르기 (accept 예: image/png,image/webp) */
 function pickFile(accept: string): Promise<File | null> {
   return new Promise((ok) => {
@@ -109,6 +143,9 @@ export function mountLayoutTool(host: HTMLElement): void {
   document.title = 'UI 배치 도구 · 블리치 할로우 어센션';
   const scenes = layoutScenes(FACTIONS);
   let draft: LayoutDraft = loadDraft();
+  // 옛 도구가 남긴, 지금 어느 물건도 안 쓰는 그림(예: 둥지·대원실이 함께 덮던 공통 키 prop.home) 정리 (C.272)
+  const pruned = pruneLooks(draft, FACTIONS);
+  if (pruned.length) saveDraft(draft);
   let undo: string | null = null;
   let sceneId = scenes[0]!.id;
   let picked: string | null = null;
@@ -333,7 +370,8 @@ export function mountLayoutTool(host: HTMLElement): void {
       button({ label: i.spot.hidden ? '보이기' : '숨기기', icon: i.spot.hidden ? 'i-check' : 'i-broken', size: 'small', onClick: () => commit(() => editItem(draft, sceneId, i.key, { hidden: !i.spot.hidden }), i.spot.hidden ? `${i.name} 보임` : `${i.name} 숨김`) }),
       ...(ex ? [button({ label: '지우기', icon: 'i-broken', size: 'small', variant: 'danger', onClick: () => commit(() => { removeExtra(draft, sceneId, i.key); picked = null; }, `${i.name} 지움`) })] : []),
     );
-    if (!i.extra) row(el('span', 'bha-ltool__note', `그림·아이콘은 두 종족 공통 (${i.artKey})`));
+    // 그림 키: prop.<물건> = 두 종족 공통, place.<장소>.<종족> = 이 종족만 (월드맵 홈 등, C.272)
+    if (!i.extra) row(el('span', 'bha-ltool__note', i.artKey.startsWith('place.') ? `그림은 이 종족만 (${i.artKey})` : `그림·아이콘은 두 종족 공통 (${i.artKey})`));
     if (showIcons) {
       const grid = el('div', 'bha-ltool__icons');
       for (const id of spriteIcons()) {
@@ -361,12 +399,12 @@ export function mountLayoutTool(host: HTMLElement): void {
   async function uploadArt(i: LayoutItem): Promise<void> {
     const file = await pickFile('image/png,image/webp,image/gif,image/jpeg');
     if (!file) return;
-    const url = await readFile(file);
+    const { url, note } = await prepareImage(file, 'prop');
     commit(() => {
       const ex = draft.scenes[sceneId]?.extras.find((x) => x.id === i.key);
       if (ex) ex.art = url;
       else draft.looks[i.artKey] = { ...draft.looks[i.artKey], art: url };
-    }, `그림 → ${file.name} (${Math.round(file.size / 1024)}KB)`);
+    }, `그림 → ${note}`);
   }
 
   function resetLook(i: LayoutItem): void {
@@ -400,8 +438,8 @@ export function mountLayoutTool(host: HTMLElement): void {
       button({ label: '배경 바꾸기', icon: 'i-plus', size: 'small', onClick: async () => {
         const file = await pickFile('image/png,image/webp,image/jpeg');
         if (!file) return;
-        const url = await readFile(file);
-        commit(() => ((draft.scenes[sceneId] ??= emptyScene()).bg = url), `배경 → ${file.name} (${Math.round(file.size / 1024)}KB)`);
+        const { url, note } = await prepareImage(file, 'bg');
+        commit(() => ((draft.scenes[sceneId] ??= emptyScene()).bg = url), `배경 → ${note}`);
       } }),
       ...(ed?.bg ? [button({ label: '원래 배경', icon: 'i-return', size: 'small', onClick: () => commit(() => delete draft.scenes[sceneId]!.bg, '원래 배경으로') })] : []),
       button({ label: '이 장면 처음으로', icon: 'i-broken', size: 'small', variant: 'danger', disabled: !ed, onClick: () => {
@@ -465,6 +503,6 @@ export function mountLayoutTool(host: HTMLElement): void {
   dev.view.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }, true);
   render();
   fit();
-  say(draftHasEdits(draft) ? `저장된 편집본을 열었다${draft.preview ? ' · 미리보기 켜짐' : ''}` : '물건을 끌어 옮겨 보자. 바뀐 것은 이 브라우저에 바로 저장된다');
+  say(pruned.length ? `옛 공통 그림 정리: ${pruned.join(', ')} — 홈 그림은 이제 종족마다 따로 올린다` : draftHasEdits(draft) ? `저장된 편집본을 열었다${draft.preview ? ' · 미리보기 켜짐' : ''}` : '물건을 끌어 옮겨 보자. 바뀐 것은 이 브라우저에 바로 저장된다');
 }
 

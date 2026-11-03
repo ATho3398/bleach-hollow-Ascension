@@ -1,0 +1,24 @@
+{
+  "shots": [
+    "1-big-bg-room-hollow.png",
+    "2-worldmap-hollow-home.png",
+    "3-worldmap-shinigami-home.png"
+  ],
+  "errors": [],
+  "prune": "옛 공통 그림 정리: prop.home — 홈 그림은 이제 종족마다 따로 올린다",
+  "bigBytes": 2671577,
+  "bg": {
+    "status": "배경 → big-bg.png — 커서 줄여 담음 2609KB → 1135KB (2048×1182 webp)",
+    "backgroundImage": "url(\"blob:http://loc"
+  },
+  "home": {
+    "worldmap.hollow": "그림은 이 종족만 (place.home.hollow)",
+    "worldmap.shinigami": "그림은 이 종족만 (place.home.shinigami)",
+    "worldmap.hollow.src": "blob:http://localhost:5202/e644640d-6de5",
+    "worldmap.shinigami.src": "blob:http://localhost:5202/9f8bee0d-d60e"
+  },
+  "looks": [
+    "place.home.hollow",
+    "place.home.shinigami"
+  ]
+}

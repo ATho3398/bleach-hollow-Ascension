@@ -5,7 +5,7 @@ import { artUrls, clearRuntimeArt } from '../src/data/art/manifest';
 import { FACTIONS } from '../src/data/factions';
 import { extrasErrors, marketOf, parseFactionConfig, roomOf, worldMapOf, type FactionConfig } from '../src/engine/faction';
 import {
-  addExtra, applyDraft, applyLooks, draftHasEdits, editItem, emptyDraft, exportFile, extraArtKey, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft, LAYOUT_KINDS, LAYOUT_STORE_KEY,
+  addExtra, applyDraft, applyLooks, draftHasEdits, hasFileArt, pruneLooks, runtimeUrl, editItem, emptyDraft, exportFile, extraArtKey, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft, LAYOUT_KINDS, LAYOUT_STORE_KEY,
 } from '../src/ui/bha/layoutDraft';
 
 const clone = (): FactionConfig[] => FACTIONS.map((f) => structuredClone(f) as FactionConfig);
@@ -83,7 +83,7 @@ describe('편집 → 미리보기 적용 (게임 데이터 구조 그대로)', (
     applyDraft(d, fs);
     applyLooks(d, icons);
     expect(roomOf(f).sceneArt).toBe(`scene.layout.room.${f.id}`);
-    expect(artUrls(`scene.layout.room.${f.id}`).src).toBe('data:image/png;base64,AAAA');
+    expect(artUrls(`scene.layout.room.${f.id}`).src).toBe(runtimeUrl('data:image/png;base64,AAAA')); // C.272: 화면엔 짧은 blob: 주소로
     expect(artUrls('prop.book').src).toBeNull();
     expect(icons.book).toBe('i-dex');
     clearRuntimeArt();
@@ -225,5 +225,53 @@ describe('C.270 호로 둥지 월드맵 그림 (호로만)', () => {
   });
   it('사신 월드맵 홈 자리는 json 값 그대로 (호로 변경 영향 없음)', () => {
     expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 45.3, y: 69, scale: 1.28 }); // C.271
+  });
+});
+
+// C.272 (사용자 2026-11-04 01:5x "배경 바꾸기로 배경 넣었는데 까맣게 나오는 이유 찾아서 수정 / 호로랑 사신 각각 둥지랑 대원실 따로 넣었는데 통일된 이유 찾아서 수정")
+describe('C.272 배경 까맣게 · 둥지/대원실 통일 수리', () => {
+  it('올린 그림은 짧은 blob: 주소로 건다 (크롬은 2MB 넘는 data: 주소를 그림으로 안 읽음) — 같은 그림은 같은 주소', () => {
+    const big = `data:image/png;base64,${'A'.repeat(3_000_000)}`;
+    const u = runtimeUrl(big)!;
+    expect(u.startsWith('blob:')).toBe(true);
+    expect(u.length).toBeLessThan(200);
+    expect(runtimeUrl(big)).toBe(u);
+    expect(runtimeUrl('art/x.png')).toBe('art/x.png');
+    expect(runtimeUrl(null)).toBeNull();
+  });
+  it('월드맵 홈 그림 키 = 종족별(place.home.<종족>) — 공통 그림 파일이 있는 장소만 prop.<장소>', () => {
+    for (const f of FACTIONS) {
+      const items = LAYOUT_KINDS.find((k) => k.kind === 'worldmap')!.read(f).items;
+      const key = (p: string) => items.find((i) => i.key === p)!.artKey;
+      expect(key('home')).toBe(`place.home.${f.id}`);
+      for (const p of ['market', 'adventure', 'tower']) expect(key(p)).toBe(hasFileArt(`prop.${p}`) ? `prop.${p}` : `place.${p}.${f.id}`);
+    }
+    expect(hasFileArt('prop.home')).toBe(false);
+  });
+  it('둥지·대원실 그림을 따로 올리면 서로 안 덮는다', () => {
+    const d = emptyDraft();
+    d.looks['place.home.hollow'] = { art: 'data:image/png;base64,QUFB' };
+    d.looks['place.home.shinigami'] = { art: 'data:image/png;base64,QkJC' };
+    applyLooks(d, {});
+    expect(artUrls('place.home.hollow').src).not.toBe(artUrls('place.home.shinigami').src);
+    clearRuntimeArt();
+  });
+  it('어느 물건도 안 쓰는 옛 공통 키(prop.home)는 정리 — 게임 미리보기(applyDraft)도 같은 정리', () => {
+    const d = emptyDraft();
+    d.looks['prop.home'] = { art: 'data:image/png;base64,AAAA' };
+    d.looks['prop.book'] = { icon: 'i-dex' };
+    expect(pruneLooks(d, FACTIONS)).toEqual(['prop.home']);
+    expect(Object.keys(d.looks)).toEqual(['prop.book']);
+    d.looks['prop.home'] = { art: 'data:image/png;base64,AAAA' };
+    applyDraft(d, clone());
+    expect(artUrls('prop.home').src).toBeNull();
+    clearRuntimeArt();
+  });
+  it('큰 그림은 올릴 때 webp 로 줄여 담는다(저장 공간·화면) — 기준값', () => {
+    const tool = read('src/ui/bha/layoutTool.ts');
+    expect(tool).toContain('export const UPLOAD_KEEP_BYTES = 600 * 1024;');
+    expect(tool).toContain("c.toDataURL('image/webp', 0.92)");
+    expect(tool).toContain("prepareImage(file, 'bg')");
+    expect(tool).toContain("prepareImage(file, 'prop')");
   });
 });

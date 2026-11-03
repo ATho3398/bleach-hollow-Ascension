@@ -1808,3 +1808,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 사용자 원문: "이건 사신 월드맵만 적용" — `bha-layout-20261104-0133.json`(사신 월드맵 대원실 ×1.28 + 대원실 그림 업로드 720×480 png).
 - 그림: 업로드를 `public/art/place-home-shinigami.png` 로 교체(옛 320×320 대원실 그림 대체, 사신만 — 도구의 공통 키 prop.home 은 비워 둠, C.270 과 같은 이유). 크기: shinigami.json `worldmap.layout.home.scale` 1.7 → 1.28. 호로는 그대로.
 - 테스트: c258-layout-tool 사신 홈 기대값 1.28. 캡처 `docs/captures/c271/`(기기 844×390 1배, `scripts/c271-proof.cjs`): 1 호로(그대로) · 2 사신(새 대원실). 그림 상자 겹침 사신 대원실×수련장 35px² — 투명 여백, 눈으로 가림 없음.
+
+## C.272 — 배치 도구 수리: 큰 배경 까맣게 · 둥지/대원실 그림 서로 덮임 (GDD 175장, v5.411, S-23, UI 배치 도구 세션 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스·게임 데이터 변경 없음(도구·미리보기 코드만).
+- 사용자 원문: "배경 바꾸기로 배경 넣었는데 까맣게 나오는 이유 찾아서 수정 / 호로랑 사신 각각 둥지랑 대원실 따로 넣었는데 통일된 이유 찾아서 수정"
+- ① 까만 배경 — 재현: 2.7MB png 를 올리면 장면 `--room-art` 가 비고 background-image none(63KB webp 는 정상). 원인: 올린 그림 data URL 을 그대로 CSS·img 주소로 거는데 크롬은 2MB 넘는 주소를 버림 → 배경 칸 투명 → 뒤 LCD 바탕(검정). 같은 크기면 localStorage(약 5MB)도 넘어 저장 실패. 수정: `runtimeUrl`(layoutDraft.ts) = data URL → blob: 주소(같은 그림 한 번만), 실행 중 그림(setRuntimeArt)은 모두 이것으로. 올릴 때 600KB 넘으면 긴 변 배경 2048·물건 1024 로 줄여 webp 0.92 로 담음(`prepareImage`, 더 커지면 원본) — 상태 줄에 '커서 줄여 담음 2609KB → 1135KB'.
+- ② 둥지/대원실 통일 — 원인: 도구가 그림을 그림 키 단위(looks)로 저장하는데 월드맵 홈 키가 두 종족 공통 `prop.home` → 사신에 올리면 호로 것을 덮음(게임 데이터는 C.270·C.271 에서 place-home-hollow/shinigami.png 로 따로 넣어 정상). 수정: 월드맵 장소 그림 키 = 게임이 실제로 쓰는 키(공통 파일 prop.<장소> 있으면 그것, 없으면 place.<장소>.<종족> — 홈·수련장은 종족별), 편집 칸에 '그림은 이 종족만 (place.home.hollow)'. 어느 물건도 안 쓰는 옛 키(prop.home)는 도구를 열 때·게임 미리보기 때 정리(`pruneLooks`). 판단 기준은 실행 중 그림을 뺀 파일만(`hasFileArt`).
+- 테스트 +5(c258-layout-tool C.272: blob 주소·홈 키 종족별·서로 안 덮음·옛 키 정리·줄여 담기 기준값). 캡처 `docs/captures/c272/`(도구 기기 화면 1배, `scripts/c272-proof.cjs`): 1 큰 배경(2.6MB 노이즈 png → 1.1MB webp) 걸린 호로 방 · 2·3 호로 둥지/사신 대원실에 서로 다른 시험 그림 — 따로 보임. proof.json: 옛 prop.home 정리 문구·blob 주소.
