@@ -5,6 +5,8 @@
 // 바닥 충격파 고리·빛기둥을 오르는 고리(서클) 삭제.
 // 02:3x "오스큐라스 맨 위쪽 기준으로 아예 길게 만들던가, 그라데이션으로 사라지게 수정. 그리고 각도 +90 눕힌게 기본이 되게"
 // → 끝(기둥 위쪽 40%)이 점점 옅어져 사라지고, 기본 각도 = +90°(옵션 angle) 라 앞(오른쪽)으로 누운 빛줄기. 프레임도 가로로.
+// 02:4x "세로 오스큐라스도 출발부분 한 점에서 시작하듯 수정, 길이 20% 늘리기, 테두리 짙게 표현, 지속시간 1/3 줄이기"
+// → 출발점에서 TAPER px 동안 두께가 벌어짐, TOP 192 → 230, 테두리(바깥 띠) = 짙은 단색 C[2], 시간이 1.5배 빨리 흐름(SPEED).
 // 원본: patch-gg/pixelfx a841596 src/fx/arcane/magic-circle-cast.js (MIT, THIRD_PARTY_NOTICES.md).
 //
 // The column of light (banded across, strands wandering in it, pulses and halos climbing it, stars thrown off,
@@ -14,7 +16,7 @@ import { Lights, Rng, PAL, fit, flare, clamp, smooth, ease, noise2, fract, WHITE
 import { bayer } from "../arcane/_lib.js";
 
 // the circle on the floor (plane px; the floor squashes depth by SY), the column, the beats
-const TOP = 192, W = 11;
+const TOP = 230, W = 11, TAPER = 30, SPEED = 1.5;
 const FLASH = 1.52, BREAK = 2.42, END = 3.0;
 // 마법진을 그리던 시간을 건너뛴다: 빛줄기가 오르기 직전(FLASH - 0.22)부터, 빛기둥이 사라지면(BREAK + 0.55) 끝
 const SKIP = 1.25;
@@ -23,9 +25,9 @@ export const meta = {
   name: "세로 오스큐라스",
   desc: "Cero Oscuras (custom): a thread of light climbs, flashes, and a column of light fires up and breaks apart. Magic circle cast without the circle, rings or glitter.",
   tags: ["custom", "arcane", "cero", "column", "beam", "cast", "ground", "one-shot", "custom"],
-  size: [240, 132],
+  size: [276, 132],
   origin: [20, 66],
-  duration: END - SKIP,
+  duration: Math.round(((END - SKIP) / SPEED) * 100) / 100,
   loop: false,
   fps: 30,
   bg: "ground",
@@ -36,7 +38,8 @@ export const meta = {
 export function create(o) {
   const C = fit(o.palette, 8), S = o.seed, Rg = new Rng(S);
   const lights = new Lights();
-  const COL = [WHITE, C[6], C[5], C[4], C[3]];
+  // 마지막 = 테두리: 짙은 한 색
+  const COL = [WHITE, C[6], C[5], C[4], C[2]];
   const strands = Array.from({ length: 9 }, () => ({ o: Rg.range(-0.85, 0.85), w: Rg.range(0.04, 0.1), f: Rg.range(1, 3) }));
   let t = SKIP, flashed = false;
 
@@ -59,15 +62,19 @@ export function create(o) {
     const fade = 1 - smooth(BREAK + 0.25, BREAK + 0.55, t), white = u < 0.067;
     if (fade <= 0) return;
     for (let y = 3; y >= Math.ceil(top); y--) {
-      const h = -y, ww = w * (1 + 0.5 * Math.exp(-Math.max(0, h) / 6)), pulse = fract(h * 0.022 - u * 2.6) < 0.07 ? 1 : 0;
-      for (let x = Math.floor(-ww * 1.3); x <= Math.ceil(ww * 1.3); x++) {
+      // 한 점에서 출발: 처음 TAPER px 동안 두께가 0 → w
+      const h = -y, ww = w * Math.sqrt(clamp((Math.max(0, h) + 0.5) / TAPER)), pulse = fract(h * 0.022 - u * 2.6) < 0.07 ? 1 : 0;
+      for (let x = Math.floor(-ww * 1.15); x <= Math.ceil(ww * 1.15) - 1; x++) {
         const q = Math.abs(x + 0.5) / ww;
         // as it breaks, holes open and grow and drift upward until only shards are left
         if (brk > 0 && noise2(x * 0.32, h * 0.11 - (t - BREAK) * 6, S) * 0.5 + 0.5 < brk * 1.25 - 0.1) continue;
         let lv = q < 0.2 ? 0 : q < 0.42 ? 1 : q < 0.66 ? 2 : q < 0.88 ? 3 : 4;
         for (const s of strands) if (Math.abs((x + 0.5) / ww - s.o - 0.05 * Math.sin(t * s.f + s.o * 9)) < s.w) lv = Math.max(0, lv - 1);
         lv = white ? 0 : Math.max(0, lv - pulse);
-        const a = (q < 0.88 ? 1 : (1.3 - q) / 0.42) * fade * tip(h);
+        // 테두리(q 0.88~1.15)는 짙게 꽉 채운다 (예전: 바깥으로 옅어지는 점)
+        if (q > 1.15) continue;
+        if (q >= 0.88) lv = 4;
+        const a = fade * tip(h);
         if (a <= bayer(x, y) * (q < 0.66 ? 0.2 : 1)) continue;
         p.px(x, y, COL[lv]);
       }
@@ -80,7 +87,7 @@ export function create(o) {
 
   return {
     update(dt) {
-      t += dt;
+      t += dt * SPEED;
       if (!flashed && t >= FLASH) {
         flashed = true;
         lights.add(0, -56, 104, C[5], 0.9, 0.6);
