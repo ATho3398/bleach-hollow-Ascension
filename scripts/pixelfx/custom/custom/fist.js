@@ -1,6 +1,6 @@
-// 찌르기 (블리치 할로우 어센션 커스텀, GDD 180장): pixelfx melee/thrust 에서 끝의 긴 별·찌름 고리·불꽃·빛 알갱이·별을 빼고, 끝에서 '주먹 펑'(_punch.js, 앞으로 쏠림).
+// 주먹질 (블리치 할로우 어센션 커스텀, GDD 180장, 옛 이름 찌르기 custom/thrust): pixelfx melee/thrust 에서 끝의 긴 별·찌름 고리·불꽃·빛 알갱이·별을 빼고, 끝에서 '주먹 펑'(_punch.js, 앞으로 쏠림).
 // 사용자 2026-11-04 "트러스트랑 어퍼컷 전부 뭔가 불꽃이 튀는듯한 이펙트잖아. 주먹질처럼 좀 묵직하게 펑 한번 터지는 이펙트가 나을거같아. 커스텀으로 구현해봐"
-// 빛줄기 다발·속도선은 그대로. 원본: patch-gg/pixelfx a841596 src/fx/melee/thrust.js (MIT, THIRD_PARTY_NOTICES.md).
+// 빛줄기 다발은 그대로. 03:2x "찌르기 커스텀을 이름을 주먹질로 바꾸고 … 주변에 한줄짜리 이펙트 같이 날아가잖아. 그거 없애란거였어" → 이름 주먹질, 옆 속도선 삭제. 원본: patch-gg/pixelfx a841596 src/fx/melee/thrust.js (MIT, THIRD_PARTY_NOTICES.md).
 //
 // The speed lines are adapted from Sprite Fusion's open-source dash and the ray star from his sparkle
 // (https://www.spritefusion.com/pixel-art-vfx), MIT License, Copyright (c) 2026 Hugo Duprez.
@@ -8,9 +8,9 @@ import { Lights, Rng, fit, clamp, smooth, ease, WHITE, READY } from "../../core/
 import { punch } from "./_punch.js";
 
 export const meta = {
-  name: "찌르기",
-  desc: "Thrust (custom): a bundle of streaks shoots out to a point and ends in one heavy punch burst. No star, no sparks.",
-  tags: ["custom", "melee", "thrust", "stab", "pierce", "punch", "one-shot"],
+  name: "주먹질",
+  desc: "Fist (custom): a bundle of streaks shoots out to a point and ends in one heavy punch burst. No speed lines, star or sparks.",
+  tags: ["custom", "melee", "fist", "punch", "jab", "one-shot"],
   size: [196, 76],
   origin: [34, 62],
   duration: 0.4,
@@ -53,18 +53,10 @@ export function create(o) {
   const HX = 9, HY = -20, TX = HX + o.reach, TY = HY;
   // the bundle: streaks fanned at the hand, meeting at the point; the middle one hottest
   const streaks = [-7, -4, -2, 0, 2, 4, 7].map((off) => ({ off, x0: HX + 1 + Rg.range(0, 5) + Math.abs(off) * 0.6, t0: Rg.range(0, 0.02) + Math.abs(off) * 0.003, w: off === 0 ? 2 : 1, hot: off === 0, len: Rg.range(0.75, 1) }));
-  const lines = [];
   let t = 0, struck = false;
   return {
     update(dt) {
       t += dt;
-      // speed lines race forward beside the bundle while it shoots out and just after
-      if (t < OUT + 0.08 && Rg.chance(0.5)) {
-        const s = Rg.sign();
-        lines.push({ x: HX + Rg.range(0, o.reach * 0.6), y: HY + s * Rg.range(7, 17), l: Rg.range(18, 42), v: Rg.range(200, 340), t });
-      }
-      for (let i = lines.length - 1; i >= 0; i--) if (t - lines[i].t > 0.24) lines.splice(i, 1);
-      for (const l of lines) l.x += l.v * dt;
       if (!struck && t >= OUT) {
         struck = true;
         lights.add(TX, TY, 44, C[4], 0.45, 0.3);
@@ -73,11 +65,6 @@ export function create(o) {
       lights.update(dt);
     },
     draw(p) {
-      // speed lines: dotted, white at the head, dimming back along their length
-      for (const l of lines) {
-        const k = (t - l.t) / 0.24;
-        for (let d = 0; d < l.l * (1 - k * 0.6); d++) p.dot(l.x - d, l.y, d < 3 ? WHITE : d < l.l * 0.4 ? C[5] : C[3], (1 - d / l.l) * (1 - k));
-      }
       // the bundle: each streak shoots from the hand to the point, holds, then is drawn in to the point
       const pull = smooth(OUT + HOLD, OUT + HOLD + PULL, t);
       for (const s of streaks) {

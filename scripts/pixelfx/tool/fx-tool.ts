@@ -663,7 +663,7 @@ const fxSearch = $<HTMLInputElement>('fxsearch');
 const isCustom = (id: string) => id.startsWith('custom/');
 const ids = Object.keys(EFFECTS).sort((a, b) => Number(isCustom(b)) - Number(isCustom(a)) || a.localeCompare(b));
 /** 옮긴 이펙트 id (옛 저장 값을 새 id 로) */
-const RENAMED: Record<string, string> = { 'arcane/cero-oscuras': 'custom/cero-oscuras' };
+const RENAMED: Record<string, string> = { 'arcane/cero-oscuras': 'custom/cero-oscuras', 'custom/thrust': 'custom/fist' };
 function fillFx(q: string): void {
   const cur = layer()?.fx;
   fxSel.replaceChildren();
