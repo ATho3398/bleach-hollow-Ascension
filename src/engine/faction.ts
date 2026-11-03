@@ -243,12 +243,12 @@ export const DEFAULT_MARKET: MarketConfig = {
   // 방처럼 장면 곳곳에 (GDD 158장 3): 뒤(위)는 작게, 앞(아래)은 크게 — 앞뒤 깊이로 화면 전체를 쓴다. 왼쪽 앞 = 월드맵 물건(exit, 방과 같은 자리).
   // 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1). 떠돌이 상인은 와 있을 때만 가운데
   layout: {
-    shop: { x: 32, y: 48, scale: 0.9 }, gearShop: { x: 58, y: 42, scale: 0.8 }, skinShop: { x: 85, y: 50, scale: 0.9 },
+    shop: { x: 40.3, y: 79, scale: 0.9 }, gearShop: { x: 54.7, y: 39.5, scale: 0.88 }, skinShop: { x: 80.8, y: 41.6, scale: 1.01 },
     // 사용자 2026-11-03: 특성 상점 ×0.8 · 떠돌이 상인 ×1.2 · 대장장이 '너무 왼쪽' → 가운데쯤 (C.254)
-    traitShop: { x: 82, y: 88, scale: 0.92 }, smith: { x: 60, y: 90, scale: 1.15 },
-    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 34, y: 90, scale: 1.02 }, // 떠돌이 상인: 장비 상점 이름표·대장장이·특성 상점과 안 겹치게 (C.253 캡처 점검)
+    traitShop: { x: 88.2, y: 85.2, scale: 1.15 }, smith: { x: 64.9, y: 84.1, scale: 1.23 },
+    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 19.8, y: 45.5, scale: 1.05 }, // 자리·크기 = 사용자가 UI 배치 도구로 호로 기준 잡은 값, 두 종족 공통 (2026-11-03 11:02, C.263)
   },
-  exit: { x: 9, y: 78, scale: 1 },
+  exit: { x: 7.5, y: 83.1, scale: 0.64 },
 };
 
 /** 종족 설정의 market 에 빠진 값을 기본값으로 채운다 */
@@ -293,8 +293,9 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   floor: { aspect: 2, poly: [[0, 0.16], [1, 0.16], [1, 1], [0, 1]] },
   layout: {
     // 사용자 2026-11-03: 홈(대원실 그림)·탑·온천 ×1.2 (C.254)
-    home: { x: 16, y: 84, scale: 1.08 }, market: { x: 50, y: 48, scale: 0.9 }, training: { x: 50, y: 88, scale: 0.9 },
-    adventure: { x: 84, y: 84, scale: 0.9 }, tower: { x: 84, y: 40, scale: 1.08 }, spa: { x: 16, y: 40, scale: 1.08 },
+    // 자리·크기 = 사용자가 UI 배치 도구로 호로 기준 잡은 값, 두 종족 공통 (2026-11-03 11:02, C.263)
+    home: { x: 45.1, y: 64, scale: 1.08 }, market: { x: 60.2, y: 38, scale: 0.98 }, training: { x: 58.3, y: 93.2, scale: 0.9 },
+    adventure: { x: 19.5, y: 65, scale: 0.9 }, tower: { x: 11.8, y: 35.3, scale: 1.28 }, spa: { x: 88.7, y: 52.2, scale: 1.29 },
   },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',

@@ -1,0 +1,25 @@
+{
+  "shots": [
+    "1-room-hollow.png",
+    "2-room-shinigami.png",
+    "3-worldmap-hollow.png",
+    "4-worldmap-shinigami.png",
+    "5-market-hollow.png",
+    "6-market-shinigami.png"
+  ],
+  "errors": [],
+  "overlaps": {
+    "room.hollow": [
+      "chest×outside 62px²"
+    ],
+    "room.shinigami": [
+      "chest×outside 62px²"
+    ],
+    "worldmap.hollow": [],
+    "worldmap.shinigami": [
+      "home×market 128px²"
+    ],
+    "market.hollow": [],
+    "market.shinigami": []
+  }
+}
