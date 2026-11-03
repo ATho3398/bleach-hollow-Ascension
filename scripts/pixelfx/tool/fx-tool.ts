@@ -336,6 +336,40 @@ stageBox.addEventListener('pointerup', endDrag);
 stageBox.addEventListener('pointercancel', endDrag);
 
 // ── 게이지 ──
+/** 게이지 양옆 ◀ ▶ (사용자 2026-11-04 "게이지 좌우로 화살표 추가해서 1px씩 움직일 수 있게"): 한 번 누르면 한 칸(px 게이지 = 1px), 누르고 있으면 계속 */
+function arrowRow(row: HTMLElement, lab: HTMLElement, r: HTMLInputElement, out: HTMLElement): void {
+  const btn = (dir: -1 | 1) => {
+    const b = h('button', 'nudge', dir < 0 ? '◀' : '▶');
+    b.type = 'button';
+    b.setAttribute('aria-label', `${lab.textContent} ${dir < 0 ? '줄이기' : '늘리기'}`);
+    const step = () => {
+      if (r.disabled) return;
+      if (dir < 0) r.stepDown();
+      else r.stepUp();
+      r.dispatchEvent(new Event('input'));
+    };
+    let hold = 0;
+    let rep = 0;
+    const stop = () => {
+      window.clearTimeout(hold);
+      window.clearInterval(rep);
+    };
+    b.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      step();
+      hold = window.setTimeout(() => (rep = window.setInterval(step, 60)), 350);
+    });
+    for (const e of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(e, stop);
+    b.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        step();
+      }
+    });
+    return b;
+  };
+  row.append(lab, btn(-1), r, btn(1), out);
+}
 interface Gauge<K extends string> { key: K; label: string; step: number; min: number; max: number; unit: string; signed?: boolean }
 function gauges<T, K extends keyof T & string>(host: HTMLElement, list: Gauge<K>[], get: () => T | null): () => void {
   const rows = list.map((g) => {
@@ -356,7 +390,7 @@ function gauges<T, K extends keyof T & string>(host: HTMLElement, list: Gauge<K>
       if (g.key === 'hits') fitStage(st());
       changed();
     };
-    row.append(lab, r, out);
+    arrowRow(row, lab, r, out);
     host.append(row);
     return { g, r, out };
   });
@@ -394,7 +428,7 @@ function syncGaps(): void {
         st().gaps[i] = Number(r.value);
         changed();
       };
-      row.append(lab, r, h('output', 'val'));
+      arrowRow(row, lab, r, h('output', 'val'));
       box.append(row);
     });
   }
