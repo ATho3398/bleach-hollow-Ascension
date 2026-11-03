@@ -292,7 +292,11 @@
   "breakthroughText": "광기가 한계를 넘었다. 영압이 흔들리고 공허가 몰려든다…",
   "frenzyName": "폭주",
   "market": { "name": "시장" },
-  "worldmap": { "name": "웨코문도", "adventureName": "모험", "spaName": "온천" },
+  "worldmap": {
+    "name": "웨코문도", "adventureName": "모험", "spaName": "온천",
+    "sceneArt": "scene.worldmap.hollow",
+    "floor": { "aspect": 2, "poly": [[0, 0.16], [1, 0.16], [1, 1], [0, 1]], "view": { "zoom": 1.48, "x": 53.1, "y": 12.2 } }
+  },
   "room": {
     "shape": "cave",
     "sceneArt": "scene.cave",

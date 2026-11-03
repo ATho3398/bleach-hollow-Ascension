@@ -309,9 +309,9 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   floor: { aspect: 2, poly: [[0, 0.16], [1, 0.16], [1, 1], [0, 1]] },
   layout: {
     // 사용자 2026-11-03: 홈(대원실 그림)·탑·온천 ×1.2 (C.254)
-    // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑 → C.270 홈). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
-    home: { x: 47.4, y: 65.6, scale: 1.61 }, market: { x: 60.2, y: 38, scale: 0.98 }, training: { x: 58.3, y: 93.2, scale: 0.9 },
-    adventure: { x: 22.9, y: 85.9, scale: 0.9 }, tower: { x: 11.7, y: 50.1, scale: 1.28 }, spa: { x: 88.7, y: 52.2, scale: 1.29 },
+    // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑 → C.270 홈 → C.278 배경과 함께 전부, 2026-11-04 03:31). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
+    home: { x: 47.2, y: 65.4, scale: 1.61 }, market: { x: 65, y: 39.6, scale: 0.98 }, training: { x: 67.6, y: 86.4, scale: 0.86 },
+    adventure: { x: 19.1, y: 89.7, scale: 0.9 }, tower: { x: 22.1, y: 44.3, scale: 1.28 }, spa: { x: 85.6, y: 58.9, scale: 1.41 },
   },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',

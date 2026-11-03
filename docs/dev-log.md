@@ -1861,3 +1861,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 같이 들어간 작업본(게임 연결 없음): 새 동작 오른손 치기 `rpunch`·어퍼컷 `uppercut`(왼손, 115-A 65·66) — `docs/design/rig-draft/` 만, 게임 데이터(`src/data/art/rig/`)는 안 바꿈.
 - 테스트 새 `tests/c277.test.ts`(4): 종족 설정 값·게임 동작 있음·설정 검사, 연출 큐 단계별 rigMotion, 종이인형 고정(6번 모두 같은 동작)·고정 없으면 예전 무작위. 전체 2597 통과(215 파일), typecheck 통과.
 - 세이브 형식·밸런스 그대로.
+
+## C.278 — 배치 도구 반영 7: 두 종족 월드맵 배경·자리 (GDD 175장, S-23, UI담당자C)
+- 사용자 원문은 GDD 175장 반영 7 줄. 파일 bha-layout-20261104-0331.json 의 draft.scenes.worldmap.<종족>.bg(webp data URL)·bgView·items.
+- 배경: `public/art/scene-worldmap-hollow.webp`(164KB)·`scene-worldmap-shinigami.webp`(309KB) 1672×941, 두 json `worldmap.sceneArt`·`worldmap.floor`(aspect 2·기본 다각형 + view). 자리: 호로 `DEFAULT_WORLDMAP.layout`, 사신 `shinigami.json worldmap.layout`.
+- 테스트: c258-layout-tool(월드맵 자리 기대값 11줄)·c204(sceneArt 종족별) 갱신. 캡처 `docs/captures/c278/` 2장. 배치 도구: https://atho3398.github.io/bleach-hollow-Ascension/?layout
+

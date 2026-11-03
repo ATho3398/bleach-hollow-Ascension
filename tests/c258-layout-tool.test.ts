@@ -200,19 +200,19 @@ describe('C.264 월드맵 배치 반영 (종족별)', () => {
   it('호로 = DEFAULT_WORLDMAP (모험·탑 옮김), json 에 layout 없음', () => {
     expect(FACTIONS.find((f) => f.id === 'hollow')!.worldmap?.layout).toBeUndefined();
     const w = W('hollow');
-    expect(spot(w.home)).toEqual({ x: 47.4, y: 65.6, scale: 1.61 }); // C.270 (사용자 2026-11-04 01:29 "호로 월드맵 적용 ㄱㄱ. 이건 사신쪽에 적용말고 호로만 적용임")
-    expect(spot(w.adventure)).toEqual({ x: 22.9, y: 85.9, scale: 0.9 });
-    expect(spot(w.tower)).toEqual({ x: 11.7, y: 50.1, scale: 1.28 });
-    expect(spot(w.spa)).toEqual({ x: 88.7, y: 52.2, scale: 1.29 });
+    expect(spot(w.home)).toEqual({ x: 47.2, y: 65.4, scale: 1.61 }); // C.278 (2026-11-04 03:31 배경과 함께 전부) // C.270 (사용자 2026-11-04 01:29 "호로 월드맵 적용 ㄱㄱ. 이건 사신쪽에 적용말고 호로만 적용임")
+    expect(spot(w.adventure)).toEqual({ x: 19.1, y: 89.7, scale: 0.9 });
+    expect(spot(w.tower)).toEqual({ x: 22.1, y: 44.3, scale: 1.28 });
+    expect(spot(w.spa)).toEqual({ x: 85.6, y: 58.9, scale: 1.41 });
   });
   it('사신 = shinigami.json worldmap.layout 6곳', () => {
     const w = W('shinigami');
-    expect(spot(w.home)).toEqual({ x: 45.3, y: 69, scale: 1.28 }); // C.271 (사용자 2026-11-04 01:33 "이건 사신 월드맵만 적용"): ×1.7 → ×1.28 + 대원실 그림 교체
-    expect(spot(w.market)).toEqual({ x: 61.8, y: 32.1, scale: 0.98 });
-    expect(spot(w.training)).toEqual({ x: 62.3, y: 89.6, scale: 0.85 });
-    expect(spot(w.adventure)).toEqual({ x: 17.7, y: 85.6, scale: 1.05 });
-    expect(spot(w.tower)).toEqual({ x: 10.9, y: 44.5, scale: 1.15 });
-    expect(spot(w.spa)).toEqual({ x: 88.5, y: 55, scale: 1.29 });
+    expect(spot(w.home)).toEqual({ x: 47.2, y: 70.7, scale: 1.28 }); // C.271 (사용자 2026-11-04 01:33 "이건 사신 월드맵만 적용"): ×1.7 → ×1.28 + 대원실 그림 교체
+    expect(spot(w.market)).toEqual({ x: 66.8, y: 42.7, scale: 0.98 });
+    expect(spot(w.training)).toEqual({ x: 71, y: 90.5, scale: 0.85 });
+    expect(spot(w.adventure)).toEqual({ x: 14.6, y: 90.6, scale: 0.96 });
+    expect(spot(w.tower)).toEqual({ x: 19.6, y: 45.4, scale: 1.15 });
+    expect(spot(w.spa)).toEqual({ x: 88.6, y: 63.1, scale: 1.33 });
   });
 });
 
@@ -224,7 +224,7 @@ describe('C.270 호로 둥지 월드맵 그림 (호로만)', () => {
     expect(artUrls('prop.home').src).toBeNull();
   });
   it('사신 월드맵 홈 자리는 json 값 그대로 (호로 변경 영향 없음)', () => {
-    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 45.3, y: 69, scale: 1.28 }); // C.271
+    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 47.2, y: 70.7, scale: 1.28 }); // C.271 → C.278
   });
 });
 
