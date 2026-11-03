@@ -318,7 +318,11 @@ function setPlaying(on: boolean): void {
 
 // 무대 끌기 = 고른 이펙트 자리 옮기기
 let drag: { x: number; y: number; dx: number; dy: number } | null = null;
+// 무대 그림이 끌려오지 않게 (사용자 2026-11-04 "드래그할 때 배경 이미지가 끌려오거든?"): 그림 끌기·길게 눌러 메뉴·글자 고르기 막기
+bgImg.draggable = false;
+for (const e of ['dragstart', 'contextmenu', 'selectstart']) stageBox.addEventListener(e, (ev) => ev.preventDefault());
 stageBox.addEventListener('pointerdown', (ev) => {
+  ev.preventDefault();
   const L = layer();
   if (!L) return;
   drag = { x: ev.clientX, y: ev.clientY, dx: L.dx, dy: L.dy };
