@@ -5,8 +5,8 @@
 // 종족 분기 없음: 장면 = 장면 종류(LAYOUT_KINDS) × 종족 목록(FACTIONS). 온천 같은 새 장면은 LAYOUT_KINDS 에 한 항목만 더한다.
 import { ART_MANIFEST, artUrls, setRuntimeArt } from '../../data/art/manifest';
 import {
-  MARKET_SPOTS, ROOM_PROPS, WORLD_PLACES, marketOf, roomOf, worldMapOf,
-  type ExtraProp, type FactionConfig, type PropSpot, type RoomFloorConfig,
+  MARKET_SPOTS, ROOM_PROPS, WORLD_PLACES, marketOf, roomOf, sceneViewOk, worldMapOf,
+  type ExtraProp, type FactionConfig, type PropSpot, type RoomFloorConfig, type SceneView,
 } from '../../engine/faction';
 import { PROP_ICON } from './room';
 
@@ -17,7 +17,14 @@ export interface ItemEdit { x?: number; y?: number; scale?: number; name?: strin
 /** 새 물건 (그림은 올린 파일의 data URL) */
 export interface ExtraDraft { id: string; name: string; icon: string; art?: string; x: number; y: number; scale: number; hidden?: boolean }
 /** 장면 하나의 편집 */
-export interface SceneEdit { items: Record<string, ItemEdit>; extras: ExtraDraft[]; /** 배경 그림 data URL */ bg?: string }
+export interface SceneEdit {
+  items: Record<string, ItemEdit>;
+  extras: ExtraDraft[];
+  /** 배경 그림 data URL */
+  bg?: string;
+  /** 배경 확대·위치 (C.275) — 게임 데이터 <장면>.floor.view */
+  bgView?: SceneView;
+}
 /** 물건 모양 (그림 키 단위 — 두 종족 공통). art = 올린 그림 data URL, null = 그림 끄고 아이콘 */
 export interface PropLook { icon?: string; art?: string | null }
 
@@ -61,7 +68,7 @@ export interface LayoutKind {
   label: (f: FactionConfig) => string;
   read: (f: FactionConfig) => { shape: string; sceneArt: string; floor: RoomFloorConfig; charFoot: { x: number; y: number }; items: BaseItem[]; extras: readonly ExtraProp[] };
   /** 종족 설정(실제 객체)에 자리·이름·배경 키·새 물건을 써 넣는다 — 미리보기 켠 게임에서만 */
-  write: (f: FactionConfig, w: { spots: Record<string, PropSpot>; names: Record<string, string>; sceneArt?: string; extras: ExtraProp[] }) => void;
+  write: (f: FactionConfig, w: { spots: Record<string, PropSpot>; names: Record<string, string>; sceneArt?: string; extras: ExtraProp[]; floor?: RoomFloorConfig }) => void;
 }
 
 type Mut<T> = { -readonly [K in keyof T]: T[K] };
@@ -87,6 +94,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       r.props = { ...r.props, ...w.names };
       if (w.sceneArt) r.sceneArt = w.sceneArt;
       r.extras = w.extras;
+      if (w.floor) r.floor = w.floor;
       mut(f).room = r;
     },
   },
@@ -124,6 +132,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       const n = w.names;
       if (n.adventure) wm.adventureName = n.adventure;
       if (n.spa) wm.spaName = n.spa;
+      if (w.floor) wm.floor = w.floor;
       m.worldmap = wm;
       if (n.home) m.nestName = n.home;
       if (n.market) m.market = { ...(f.market ?? {}), name: n.market };
@@ -155,6 +164,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       mk.props = { ...mk.props, ...w.names };
       if (w.sceneArt) mk.sceneArt = w.sceneArt;
       mk.extras = w.extras;
+      if (w.floor) mk.floor = w.floor;
       mut(f).market = mk;
     },
   },
@@ -197,7 +207,12 @@ export function resolveScene(def: LayoutSceneDef, f: FactionConfig, draft: Layou
   // 데이터에 이미 있는 새 물건(반영된 것) + 도구에서 더한 것
   for (const x of dataExtras(base.extras, ed)) items.push(extraItem({ ...x, scale: x.scale ?? 1, art: undefined }, x.art));
   for (const x of ed.extras) items.push(extraItem(x, extraArtKey(def.id, x.id)));
-  return { shape: base.shape, sceneArt: base.sceneArt, floor: base.floor, charFoot: base.charFoot, items, bg: ed.bg };
+  return { shape: base.shape, sceneArt: base.sceneArt, floor: withView(base.floor, ed.bgView), charFoot: base.charFoot, items, bg: ed.bg };
+}
+
+/** 바닥 설정에 배경 보기를 얹는다 (편집 없으면 데이터 값 그대로) */
+export function withView(floor: RoomFloorConfig, view: SceneView | undefined): RoomFloorConfig {
+  return view ? { ...floor, view: { ...view } } : floor;
 }
 
 /** 데이터에 이미 있는 새 물건 + 이 장면 편집(자리·이름·숨김은 items 에 적힌다) */
@@ -291,7 +306,7 @@ export function normalizeDraft(raw: unknown): LayoutDraft {
   d.preview = r.preview === true;
   for (const [id, s] of Object.entries(r.scenes ?? {})) {
     if (!s || typeof s !== 'object') continue;
-    d.scenes[id] = { items: { ...(s.items ?? {}) }, extras: Array.isArray(s.extras) ? s.extras.filter((x) => x && typeof x.id === 'string') : [], ...(typeof s.bg === 'string' ? { bg: s.bg } : {}) };
+    d.scenes[id] = { items: { ...(s.items ?? {}) }, extras: Array.isArray(s.extras) ? s.extras.filter((x) => x && typeof x.id === 'string') : [], ...(typeof s.bg === 'string' ? { bg: s.bg } : {}), ...(sceneViewOk(s.bgView) && s.bgView ? { bgView: s.bgView } : {}) };
   }
   for (const [k, l] of Object.entries(r.looks ?? {})) if (l && typeof l === 'object') d.looks[k] = l;
   return d;
@@ -299,7 +314,7 @@ export function normalizeDraft(raw: unknown): LayoutDraft {
 
 /** 편집이 하나라도 있나 */
 export const draftHasEdits = (d: LayoutDraft): boolean =>
-  Object.keys(d.looks).length > 0 || Object.values(d.scenes).some((s) => Object.keys(s.items).length > 0 || s.extras.length > 0 || !!s.bg);
+  Object.keys(d.looks).length > 0 || Object.values(d.scenes).some((s) => Object.keys(s.items).length > 0 || s.extras.length > 0 || !!s.bg || !!s.bgView);
 
 /** 장면 하나의 편집을 종족 설정 객체에 써 넣는다 (게임 미리보기 = 실제 설정, 도구 = 사본). 올린 그림은 실행 중 그림으로 건다 */
 export function applySceneEdit(def: LayoutSceneDef, f: FactionConfig, ed: SceneEdit | undefined): void {
@@ -330,7 +345,7 @@ export function applySceneEdit(def: LayoutSceneDef, f: FactionConfig, ed: SceneE
     setRuntimeArt(key, runtimeUrl(x.art));
     extras.push({ id: x.id, name: x.name, icon: x.icon, x: x.x, y: x.y, scale: x.scale, art: key, ...(x.hidden ? { hidden: true } : {}) });
   }
-  def.kind.write(f, { spots, names, sceneArt, extras });
+  def.kind.write(f, { spots, names, sceneArt, extras, ...(ed.bgView ? { floor: withView(base.floor, ed.bgView) } : {}) });
 }
 
 /**
@@ -399,7 +414,7 @@ export function exportFile(d: LayoutDraft, factions: readonly FactionConfig[], p
     const f = factions.find((x) => x.id === def.factionId)!;
     const r = resolveScene(def, f, d);
     resolved[def.id] = {
-      faction: f.id, kind: def.kind.kind, bgChanged: !!r.bg,
+      faction: f.id, kind: def.kind.kind, bgChanged: !!r.bg, bgView: ed.bgView ?? null,
       items: r.items.map((i) => ({ key: i.key, extra: i.extra, name: i.name, ...i.spot, icon: i.icon, art: i.extra ? (ed.extras.find((x) => x.id === i.key)?.art ? 'uploaded' : null) : lookState(d.looks[i.artKey]) })),
     };
   }

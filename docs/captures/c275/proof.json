@@ -1,0 +1,18 @@
+{
+  "shots": [
+    "1-before.png",
+    "2-tool-bg-panel.png",
+    "3-after-zoom-pan.png"
+  ],
+  "errors": [],
+  "status": "배경 위치 x 30.1 · y 38.9",
+  "bgView": {
+    "zoom": 1.8,
+    "x": 30.1,
+    "y": 38.9
+  },
+  "style": [
+    "1126.8px auto",
+    "30.1% 38.9%"
+  ]
+}

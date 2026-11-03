@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { artUrls, clearRuntimeArt } from '../src/data/art/manifest';
 import { FACTIONS } from '../src/data/factions';
-import { extrasErrors, marketOf, parseFactionConfig, roomOf, worldMapOf, type FactionConfig } from '../src/engine/faction';
+import { extrasErrors, marketOf, parseFactionConfig, roomOf, sceneViewOk, worldMapOf, type FactionConfig } from '../src/engine/faction';
 import {
   addExtra, applyDraft, applyLooks, draftHasEdits, hasFileArt, pruneLooks, runtimeUrl, editItem, emptyDraft, exportFile, extraArtKey, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft, LAYOUT_KINDS, LAYOUT_STORE_KEY,
 } from '../src/ui/bha/layoutDraft';
@@ -273,5 +273,50 @@ describe('C.272 배경 까맣게 · 둥지/대원실 통일 수리', () => {
     expect(tool).toContain("c.toDataURL('image/webp', 0.92)");
     expect(tool).toContain("prepareImage(file, 'bg')");
     expect(tool).toContain("prepareImage(file, 'prop')");
+  });
+});
+
+// C.275 (사용자 2026-11-04 02:3x "배경 확대 축소 위치이동 가능하게 수정"): 배경 보기 = <장면>.floor.view { zoom, x, y } — 배경 크기·자리와 바닥이 같은 상자를 쓴다
+describe('C.275 배경 확대·위치', () => {
+  it('bgBox: view 없으면 cover·가운데 (옛 계산과 같음), zoom·x·y 는 CSS background-position % 와 같은 뜻', async () => {
+    const { bgBox, imageToScenePx } = await import('../src/ui/bha/roomFloor');
+    const S = { w: 628, h: 296 };
+    const base = bgBox(S, 2);
+    expect([base.w, base.h, base.left + 0, base.top, base.wide]).toEqual([628, 314, 0, -9, true]);
+    expect(bgBox(S, 2, { zoom: 1, x: 50, y: 50 })).toEqual(base);
+    const z = bgBox(S, 2, { zoom: 2, x: 0, y: 100 });
+    expect([z.w, z.h, z.left + 0, z.top]).toEqual([1256, 628, 0, 296 - 628]); // left = (628 − 1256) × 0 (−0 → 0)
+    // 그림 위 점은 같은 상자로: 바닥이 배경을 따라간다
+    expect(imageToScenePx([0.5, 0.5], S, 2, { zoom: 2, x: 0, y: 100 })).toEqual([628, 296 - 628 + 314]);
+  });
+  it('값 검사: zoom 1~4, x·y 0~100', () => {
+    expect(sceneViewOk(undefined)).toBe(true);
+    expect(sceneViewOk({ zoom: 1.5, x: 0, y: 100 })).toBe(true);
+    expect(sceneViewOk({ zoom: 0.5, x: 50, y: 50 })).toBe(false);
+    expect(sceneViewOk({ zoom: 2, x: 120, y: 50 })).toBe(false);
+    const raw = structuredClone(FACTIONS[0]!) as unknown as Record<string, Record<string, unknown>>;
+    raw.room = { ...raw.room, floor: { ...(raw.room!.floor as object), view: { zoom: 9, x: 50, y: 50 } } };
+    expect(() => parseFactionConfig(raw)).toThrow(/room\.floor\.view/);
+  });
+  it('편집 → 미리보기: 방·월드맵·시장 floor.view 로 들어가고 바닥 다각형은 그대로', () => {
+    const fs = clone();
+    const d = emptyDraft();
+    for (const k of ['room', 'worldmap', 'market']) (d.scenes[`${k}.${fs[1]!.id}`] ??= { items: {}, extras: [] }).bgView = { zoom: 1.8, x: 30.1, y: 38.9 };
+    expect(draftHasEdits(d)).toBe(true);
+    applyDraft(d, fs);
+    const f = fs[1]!;
+    for (const fl of [roomOf(f).floor, worldMapOf(f).floor, marketOf(f).floor]) expect(fl.view).toEqual({ zoom: 1.8, x: 30.1, y: 38.9 });
+    expect(roomOf(f).floor.poly).toEqual(roomOf(FACTIONS[1]!).floor.poly);
+    expect(roomOf(fs[0]!).floor.view).toBeUndefined();
+    const j = JSON.parse(exportFile(d, FACTIONS, 'C.275'));
+    expect(j.resolved[`room.${f.id}`].bgView).toEqual({ zoom: 1.8, x: 30.1, y: 38.9 });
+    expect(normalizeDraft(j)).toEqual(d);
+  });
+  it('게임 화면: layoutOnFloor 가 배경 크기·자리를 같은 상자로 건다 · 도구 배경 맞추기 칸', () => {
+    expect(read('src/ui/bha/room.ts')).toContain("scene.style.backgroundPosition = `${floor.view.x}% ${floor.view.y}%`;");
+    const tool = read('src/ui/bha/layoutTool.ts');
+    expect(tool).toContain("label: '배경 맞추기'");
+    expect(tool).toContain("range('확대', 'zoom'");
+    expect(read('src/ui/bha/layout-tool.css')).toContain('.bha-ltool.is-bg .bha-room__scene { touch-action: none; cursor: move; }');
   });
 });

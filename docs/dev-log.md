@@ -1830,3 +1830,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `app.ts` onAutoLeave: 회복 안내가 떠 있고(recoverOpen) 온천 화면이면 tickIdle·저장만 하고 그대로(알림·방 이동 없음). 회복 안내 'to-spa'(4/7) 카드에 next 추가 — [다음] 에서 계단을 올라 걸어 나가 방으로(spaExitFx → spaLeave → 방), 그래서 5/7 '쉬기'('…로 돌아왔다') 카드가 방 위에 뜬다(전에는 가득 전 [다음] 이면 온천 위에 '돌아왔다' 카드가 떴다). 5/7 [다음] 은 방에서 그대로 다음 카드.
 - 테스트 c273 +1(튜토리얼 중 알림보다 먼저 돌아감). 전체 통과.
 - 캡처 `docs/captures/c274/`(1배 844×390, `scripts/c273-proof.cjs` C273_OUT): tutorial-shinigami-1 가득 뒤 3.5초 — 온천 그대로·알림 없음·카드 4/7만 · -2 [다음] 뒤 방(카드 5/7). hollow/shinigami 평소 온천·먹이 +5 는 C.273 과 같음(다시 찍음).
+
+## C.275 — 배치 도구: 배경 확대·위치 (GDD 175장, v5.414, S-23, UI 배치 도구 세션 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스 변경 없음. 게임 데이터 값 변경 없음(구조에 선택 항목 하나 추가).
+- 사용자 원문: "배경 확대 축소 위치이동 가능하게 수정"
+- 데이터: `RoomFloorConfig.view?: { zoom, x, y }`(방·시장·월드맵 floor 공통, parseFactionConfig 검사 zoom 1~4·x·y 0~100). zoom 1 = 지금 cover, x·y = CSS background-position %(50 = 가운데).
+- 계산: `bgBox`(roomFloor.ts) 하나로 배경 상자와 바닥 다각형(`imageToScenePx`·`floorPolyPx`)을 같이 계산 → 확대·이동하면 바닥(물건 발이 서는 곳)도 그림을 따라감. view 없으면 옛 계산과 같음(c153 그대로 통과). 게임은 `layoutOnFloor` 가 `background-size`(한 변만, 그림 비율 유지)·`background-position` 을 건다.
+- 도구: [배경 맞추기] 토글 → 편집 칸 = 확대(×1~4)·가로·세로 슬라이더(끄는 동안 바로 보이고 놓으면 저장) + 장면 빈 곳 손가락 끌기 = 배경 이동(폰 스크롤 막음 is-bg) + [배경 보기 처음으로]. 초안 `SceneEdit.bgView`, 미리보기·내보내기(resolved.bgView) 포함.
+- 기획서 값/실제 값/이유: 축소는 zoom 1(장면을 꽉 채우는 크기)까지 — 더 줄이면 그림 가장자리 밖이 검게 비어 막음. 사진(photo.ts)은 배경을 장면 크기로 늘려 그리는 옛 방식 그대로(이번 범위 밖).
+- 테스트 +4(c258-layout-tool C.275: bgBox·바닥 따라감·값 검사·세 장면 floor.view·내보내기·게임/도구 연결). 캡처 `docs/captures/c275/`(1배, `scripts/c275-proof.cjs`): 1 사신 대원실 원래 · 2 [배경 맞추기] 칸(도구 화면 전체) · 3 ×1.8·끌어 옮긴 뒤 (floor.view {1.8, 30.1, 38.9}).

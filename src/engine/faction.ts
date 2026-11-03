@@ -148,10 +148,24 @@ export interface ExtraProp extends PropSpot {
   art?: string;
 }
 
-/** 바닥 다각형: 좌표는 배경 그림 크기 대비 0~1(왼쪽 위 = 0,0), aspect = 그림 가로÷세로 (장면은 cover 로 깔려 그림 일부가 잘린다) */
+/** 배경 보기 (UI 배치 도구 GDD 175장, C.275): cover 크기에 zoom 배(1 이상)를 곱하고, 남는 만큼을 x·y %(CSS background-position 과 같은 뜻, 50 = 가운데)로 민다 */
+export interface SceneView { zoom: number; x: number; y: number }
+
+/** 바닥 다각형: 좌표는 배경 그림 크기 대비 0~1(왼쪽 위 = 0,0), aspect = 그림 가로÷세로 (장면은 cover 로 깔려 그림 일부가 잘린다).
+ *  view = 배경 확대·위치(없으면 cover·가운데) — 바닥은 그림 위의 영역이라 같이 움직인다 */
 export interface RoomFloorConfig {
   aspect: number;
   poly: [number, number][];
+  view?: SceneView;
+}
+
+/** 배경 보기 값 검사 (zoom 1~4, x·y 0~100) */
+export const SCENE_VIEW_ZOOM = { min: 1, max: 4 } as const;
+export function sceneViewOk(v: unknown): boolean {
+  if (v === undefined) return true;
+  const o = (v ?? {}) as Record<string, unknown>;
+  return typeof o.zoom === 'number' && o.zoom >= SCENE_VIEW_ZOOM.min && o.zoom <= SCENE_VIEW_ZOOM.max
+    && typeof o.x === 'number' && o.x >= 0 && o.x <= 100 && typeof o.y === 'number' && o.y >= 0 && o.y <= 100;
 }
 
 /** 메인 방 화면 설정 (GDD 16장). 모두 선택 항목이라 비워도 기본값(DEFAULT_ROOM)이 쓰인다 */
@@ -635,6 +649,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       const fl = rm.floor as Record<string, unknown>;
       const okPt = (p: unknown) => Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === 'number' && n >= 0 && n <= 1);
       if (!isRec(fl) || typeof fl.aspect !== 'number' || !(fl.aspect > 0) || !Array.isArray(fl.poly) || fl.poly.length < 3 || !fl.poly.every(okPt)) errors.push('room.floor: { aspect: 가로÷세로, poly: [[x, y] ×3 이상, 0~1] } 이어야 한다');
+      else if (!sceneViewOk(fl.view)) errors.push('room.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
     }
     const okPct = (p: unknown) => isRec(p) && typeof p.x === 'number' && typeof p.y === 'number' && p.x >= 0 && p.x <= 100 && p.y >= 0 && p.y <= 100;
     if (rm.characterFoot !== undefined && !okPct(rm.characterFoot)) errors.push('room.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
@@ -652,6 +667,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
         if (!(MARKET_SPOTS as readonly string[]).includes(k) || !ok) errors.push(`market.layout.${k}: 알 수 없는 자리이거나 { x, y } 장면 % 가 아니다`);
       }
       errors.push(...extrasErrors('market', mk.extras));
+      if (isRec(mk.floor) && !sceneViewOk((mk.floor as Record<string, unknown>).view)) errors.push('market.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
       const ex = mk.exit as Record<string, unknown> | undefined;
       if (ex !== undefined && !(isRec(ex) && typeof ex.x === 'number' && typeof ex.y === 'number' && ex.x >= 0 && ex.x <= 100 && ex.y >= 0 && ex.y <= 100)) errors.push('market.exit: { x, y } 장면 % (0~100) 이어야 한다');
     }
@@ -665,6 +681,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       for (const [k, v] of Object.entries((wm.layout ?? {}) as Record<string, unknown>)) if (!(WORLD_PLACES as readonly string[]).includes(k) || !okPct(v)) errors.push(`worldmap.layout.${k}: 알 수 없는 장소이거나 { x, y } 장면 % 가 아니다`);
       if (wm.characterFoot !== undefined && !okPct(wm.characterFoot)) errors.push('worldmap.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
       errors.push(...extrasErrors('worldmap', wm.extras));
+      if (isRec(wm.floor) && !sceneViewOk((wm.floor as Record<string, unknown>).view)) errors.push('worldmap.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
     }
   }
   if (r.cosmetics !== undefined) {
