@@ -31,6 +31,8 @@ export interface FamilySkillConfig {
   fx?: AttackFxKind;
   /** 이 단계 고유 모양·색 (C.63): CSS 클래스 bha-afx--look-<id>, 색은 전용 토큰. 공격 이펙트 색 꾸밈을 입어도 유지 */
   fxLook?: string;
+  /** 이 단계 종이인형 동작 고정 (GDD 181장, 사용자 2026-11-04 03:1x): 있으면 그 동작 하나만(계열 몸동작 묶음·무작위 대신). 없으면 계열 motion 묶음, 그것도 없으면 게임 동작 그대로. 종이인형이 아닌 그림은 무시 */
+  rigMotion?: string;
   multiplier: number;
   bonus?: { kind: 'stagger'; value: number };
 }
@@ -590,6 +592,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
           if (!(typeof y.multiplier === 'number' && y.multiplier > 0)) errors.push(`families[${i}].tiers[${k}].multiplier: 양수`);
           if (y.fx !== undefined && !(ATTACK_FX_KINDS as readonly unknown[]).includes(y.fx)) errors.push(`families[${i}].tiers[${k}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
           if (y.fxLook !== undefined && !(typeof y.fxLook === 'string' && /^[a-z0-9-]+$/.test(y.fxLook))) errors.push(`families[${i}].tiers[${k}].fxLook: 소문자·숫자·하이픈 id`);
+          if (y.rigMotion !== undefined && !(typeof y.rigMotion === 'string' && /^[A-Za-z0-9]+$/.test(y.rigMotion))) errors.push(`families[${i}].tiers[${k}].rigMotion: 종이인형 동작 id(영문·숫자)`);
           if (y.bonus !== undefined) {
             const b = y.bonus as Record<string, unknown>;
             if (b.kind !== 'stagger' || !(typeof b.value === 'number' && b.value > 0)) errors.push(`families[${i}].tiers[${k}].bonus: { kind: stagger, value: 양수 }`);

@@ -99,6 +99,7 @@
       "tiers": [
         {
           "name": "베기",
+          "rigMotion": "attack",
           "multiplier": 1
         },
         {

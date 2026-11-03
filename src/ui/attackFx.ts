@@ -31,6 +31,8 @@ export interface AttackCue {
   look?: string;
   /** 계열 몸동작 (GDD 118장 2, 종족 설정 families[].motion): 종이인형은 이 동작 묶음에서 고른다. 없으면 특수 동작 그대로 */
   motion?: FamilyMotionKind;
+  /** 이 단계 종이인형 동작 고정 (GDD 181장, 종족 설정 tiers[].rigMotion): 있으면 그 동작 하나만 */
+  rigMotion?: string;
   /** 즉발 (GDD 117장 3, 블록 공격): 타격(맞음 반응·자국)을 맨 앞에 보이고 몸 움직임은 뒤따른다. 재생 중인 기본 공격 연출을 기다리지 않는다 */
   instant?: boolean;
   /** 각본 마무리 체인 (GDD 146장): 즉발처럼 기다리지 않고 바로 시작하되, 동작을 처음부터(휘두르기 → 스킬 → 타격) 보인다 */
@@ -40,7 +42,7 @@ export interface AttackCue {
 }
 
 /** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
-export type FamilyFxSpec = AttackFxKind | { fx: AttackFxKind; look?: string | null; motion?: FamilyMotionKind | null };
+export type FamilyFxSpec = AttackFxKind | { fx: AttackFxKind; look?: string | null; motion?: FamilyMotionKind | null; rigMotion?: string | null };
 
 /** 단계의 세기 순위 (클수록 세다) */
 export const tierRank = (t: AttackTier): number => ATTACK_TIER_ORDER.indexOf(t);
@@ -72,6 +74,7 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
         cue.fam = e.family!;
         if (typeof spec === 'object' && spec?.look) cue.look = spec.look;
         if (typeof spec === 'object' && spec?.motion) cue.motion = spec.motion;
+        if (typeof spec === 'object' && spec?.rigMotion) cue.rigMotion = spec.rigMotion;
       }
       return cue;
     }
@@ -636,7 +639,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 즉발(블록 공격, GDD 117장 3): 애니는 타격 순간부터(휘두른 끝 → 되돌아옴), 맞음 반응은 0ms
     const act = from.anim ? animActionOf(cue, (a) => from.anim!.has(a)) : null;
     const quick = !!cue.instant && !cue.windup; // 즉발: 타격 순간부터 / 각본 마무리 체인: 동작 처음부터
-    const clipPlay = act ? from.anim!.play(act, { fromHit: quick, motion: cue.motion }) : null;
+    const clipPlay = act ? from.anim!.play(act, { fromHit: quick, motion: cue.motion, rigMotion: cue.rigMotion }) : null;
     if (mode === 'flash') {
       // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰)
       const at = clipPlay?.hitAtMs ?? 0;

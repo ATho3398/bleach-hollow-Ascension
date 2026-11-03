@@ -3,6 +3,7 @@
 // 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 무작위, 특수 skill·skill2 무작위(같은 것 두 번 연속까지, GDD 117장 4), 맞음 hit,
 // 홈 대기 homeIdle, 빈사 자세 dying, 온천 bath, 패배 = 쓰러짐 down(끝 자세 유지) (GDD 171장). 그 밖(승리·먹기·잠·해방)은 없음 = 기존 연출.
 // 계열 블록은 계열 몸동작(PlayOptions.motion, 종족 설정 families[].motion) 묶음에서 고른다(GDD 118장 2).
+// 단, 종족 설정 단계(tiers[].rigMotion)에 고정 동작이 있으면 그 동작만(GDD 181장 — 사신 참 1단계 = 공격1, 호로 탄 2단계 = 특수1·3단계 = 특수2).
 // 코어(createRigPlayer)는 DOM 없이 돌아 테스트한다.
 import type { AnimAction } from '../../data/art/anim';
 import type { FamilyMotionKind } from '../../engine/faction';
@@ -74,7 +75,9 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       wake();
     },
     play(a, o = {}) {
-      const fam = byMotion(o.motion);
+      // 단계 고정 동작(GDD 181장) → 계열 몸동작 묶음(118장 2) → 게임 동작 순
+      const fixed = o.rigMotion && motions[o.rigMotion] ? [o.rigMotion] : [];
+      const fam = fixed.length ? fixed : byMotion(o.motion);
       const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
       if (locked && a !== 'win' && a !== 'lose') {
@@ -82,7 +85,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
         return { durationMs: m0.duration, hitAtMs: m0.hit ?? m0.duration / 2 };
       }
       locked = a === 'win' || a === 'lose';
-      const hist = (recent[fam.length ? `m:${o.motion}` : a] ??= []);
+      const hist = (recent[fixed.length ? `r:${fixed[0]}` : fam.length ? `m:${o.motion}` : a] ??= []);
       const k = pickVariant(list.length, hist, rng);
       hist.push(k);
       if (hist.length > VARIANT_REPEAT_MAX) hist.shift();
