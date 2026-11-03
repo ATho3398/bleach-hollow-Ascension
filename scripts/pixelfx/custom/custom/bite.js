@@ -2,6 +2,7 @@
 // 사용자 2026-11-04 "짐승 이빨 위 아래로 깨무는듯한 커스텀 이펙트 만들어줘"
 // 흐름: 벌린 턱이 나타나 → 빠르게 닫혀 이빨이 엇갈려 맞물림 → 맞는 순간 흰 번쩍·불꽃·충격선 → 꽉 문 채 짧게 갈림 → 벌어지며 사라짐.
 // 원점 = 깨무는 곳 가운데(맞는 몸 가운데에 놓는다). 이빨 색 = 팔레트(속성 색), 윤곽 = 팔레트 가장 어두운 칸.
+// 02:5x "이빨 좋은데, 위 아래 프레임? 같은건 없애줘. 이빨만 보이게" → 잇몸 띠 삭제, 이빨만(뿌리 줄은 그대로 입 모양으로 휜다).
 import { Particles, P, Rng, PAL, fit, clamp, smooth, ease, WHITE } from "../../core/index.js";
 import { bayer } from "../arcane/_lib.js";
 
@@ -42,19 +43,9 @@ export function create(o) {
   const vis = () => smooth(0, APPEAR * 0.8, t) * (1 - smooth(HOLD + 0.04, END - 0.02, t));
   const flash = () => t >= SHUT && t < SHUT + 0.034;
 
-  // 턱 하나: dir = -1 위턱(이빨이 아래로), +1 아래턱(이빨이 위로). base = 이빨 뿌리 줄(가운데), 양끝은 상대 턱 쪽으로 휜다(입 모양)
+  // 이빨 한 줄: dir = -1 위(이빨이 아래로), +1 아래(이빨이 위로). base = 이빨 뿌리 줄(가운데), 양끝은 상대 쪽으로 휜다(입 모양)
   function jaw(p, dir, base, teeth, a) {
     const curve = (x) => base - dir * 6 * (x / HALF) ** 2;
-    // 잇몸 띠
-    for (let x = -HALF - 2; x <= HALF + 1; x++) {
-      const y0 = curve(x + 0.5);
-      for (let k = 0; k < 6; k++) {
-        const y = Math.round(y0 + dir * k);
-        if (a <= bayer(x, y)) continue;
-        const edge = k === 5 || x <= -HALF - 2 || x >= HALF + 1;
-        p.px(x, y, flash() ? WHITE : edge ? C[1] : k < 2 ? C[4] : C[3]);
-      }
-    }
     // 이빨 (삼각형, 왼쪽 위에서 빛: 왼쪽 밝게 오른쪽 어둡게, 윤곽 어둡게)
     for (const [cx, L, hw] of teeth) {
       const root = curve(cx) - dir * 0;
