@@ -30,7 +30,7 @@ const elements = json('src/data/elements/elements.json').map((e) => ({ id: e.id,
 const ORDER = [['shinigami', '참'], ['shinigami', '권'], ['shinigami', '귀'], ['hollow', '교'], ['hollow', '조'], ['hollow', '탄']];
 // 연타 처음 값 = 지금 게임(src/ui/attackFxConfig.ts FAMILY_STAGE_FX): 1블록 1번 · 2블록 3번 110ms · 3블록 3번 90ms
 const TIMING = [[1, 0], [3, 110], [3, 90]];
-const slash = { fx: 'melee/sword-slash', color: 'element', anchor: 'target', delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: true, move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit' };
+const slash = { fx: 'melee/sword-slash', color: 'element', anchor: 'target', delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: true, move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit', z: 3 };
 const entries = [];
 const defaults = {};
 for (const [fid, abbr] of ORDER) {

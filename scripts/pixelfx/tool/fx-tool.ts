@@ -29,11 +29,13 @@ interface FxLayer {
   ex: number;
   ey: number;
   face: boolean;
+  /** 레이어 1~5: 클수록 앞에 그린다 (사용자 2026-11-04 "이펙트별 레이어도 설정할 수 있게"). 같으면 이펙트 번호 순 */
+  z: number;
   /** 시작 기준: hit = 타격 때, arrive = 이 블록 첫 투사체가 도착할 때(같은 타격) */
   sync: 'hit' | 'arrive';
 }
 /** 옛 저장·새 이펙트에 없는 칸 채우기 */
-const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit' } as const;
+const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit', z: 3 } as const;
 /** 한 블록 공격: 타격 수 · 타격 사이 간격(타격마다 따로) · 시전 속도(공격 전체 빠르기, 이펙트 재생도 같이) · 이펙트 */
 interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[] }
 type FamilyFx = StageFx[];
@@ -209,6 +211,7 @@ function layout(): void {
         const a = anchorOf(L);
         place(cv, a.x + L.dx, a.y + L.dy, w, hh, pixelFxTransform(entry.dir < 0, L.altFlip && hi % 2 === 1, L.angle));
       }
+      cv.style.zIndex = String((L.z ?? 3) * 10 + li);
       if (li === layerIx) cv.classList.add('is-sel');
       world.insertBefore(cv, $('mark-t'));
       const rate = L.rate * s.speed;
@@ -459,7 +462,8 @@ function syncOn(): void {
     box.append(b);
   }
 }
-const syncLayer = gauges<FxLayer, 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate'>($('layerbox'), [
+const syncLayer = gauges<FxLayer, 'z' | 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate'>($('layerbox'), [
+  { key: 'z', label: '레이어', step: 1, min: 1, max: 5, unit: '층' },
   { key: 'dx', label: '가로', step: 1, min: -400, max: 400, unit: 'px', signed: true },
   { key: 'dy', label: '세로', step: 1, min: -200, max: 200, unit: 'px', signed: true },
   { key: 'scale', label: '크기', step: 0.25, min: 0.25, max: 6, unit: '배' },
@@ -663,7 +667,7 @@ function refresh(): void {
 }
 const summary = (): string => {
   const s = st();
-  const ls = s.layers.map((L, i) => `${i + 1}) ${L.fx} · ${L.move === 'fly' ? `날아감 ${L.travel}ms 곡선 ${L.arc} 도착 ${L.tx},${L.ty}${L.ex || L.ey ? ` 사라짐 도착+${L.ex},${L.ey}` : ''}${L.face ? ' 방향 돌림' : ''}` : `${L.anchor === 'target' ? '맞는 쪽' : '치는 쪽'}${L.sync === 'arrive' ? ' · 도착 때' : ''}`} · ${L.on.length ? L.on.map((x) => `${x + 1}타`).join('·') : '나오는 타격 없음'} · ${L.color === 'element' ? '속성 색' : '원래 색'} · 자리 ${L.dx},${L.dy} · 크기 ${L.scale} · ${L.angle}° · 늦춤 ${L.delay}ms · 재생 속도 ${L.rate}${L.altFlip ? ' · 연타 뒤집기' : ''}`);
+  const ls = s.layers.map((L, i) => `${i + 1}) ${L.fx} · ${L.move === 'fly' ? `날아감 ${L.travel}ms 곡선 ${L.arc} 도착 ${L.tx},${L.ty}${L.ex || L.ey ? ` 사라짐 도착+${L.ex},${L.ey}` : ''}${L.face ? ' 방향 돌림' : ''}` : `${L.anchor === 'target' ? '맞는 쪽' : '치는 쪽'}${L.sync === 'arrive' ? ' · 도착 때' : ''}`} · ${L.on.length ? L.on.map((x) => `${x + 1}타`).join('·') : '나오는 타격 없음'} · ${L.color === 'element' ? '속성 색' : '원래 색'} · 자리 ${L.dx},${L.dy} · 크기 ${L.scale} · ${L.angle}° · 늦춤 ${L.delay}ms · 재생 속도 ${L.rate} · 레이어 ${L.z ?? 3}${L.altFlip ? ' · 연타 뒤집기' : ''}`);
   return `${entry.label} ${stageIx + 1}블록 · 타격 ${s.hits}번 · 간격 ${s.gaps.join('/') || '-'}ms · 시전 속도 ${s.speed}${ls.length ? `\n${ls.join('\n')}` : ''}`;
 };
 

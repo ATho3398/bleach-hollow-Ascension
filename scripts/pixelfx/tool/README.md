@@ -4,7 +4,7 @@
 
 | 페이지 | 주소 | 데이터 |
 |---|---|---|
-| 이펙트 배치 도구 | https://claude.ai/artifact/8zYJY6nUzygqcDZGRG32to | db `fx/editor`(편집 중)·`fx/fixed`(확정) — 문서 필드 `json` = `{ stamp: "v3", families: { "<종족>/<계열 id>": [1블록, 2블록, 3블록] }, at }`, 블록 = `{ hits, gaps[타격 사이 ms], speed(시전 속도), layers: [최대 3 × { fx(pixelfx id), color(element·original), anchor(target·attacker), on[나오는 타격 0부터], delay, dx, dy, scale, angle, rate(재생 속도), altFlip, move(stay·fly), travel(비행 ms), arc(곡선 px), tx·ty(도착 자리), ex·ey(사라지는 곳 = 도착에서, 0,0 = 도착하자마자), face(방향 돌림), sync(hit·arrive) }] }` (stamp v3, v2 는 도구가 옮김) |
+| 이펙트 배치 도구 | https://claude.ai/artifact/8zYJY6nUzygqcDZGRG32to | db `fx/editor`(편집 중)·`fx/fixed`(확정) — 문서 필드 `json` = `{ stamp: "v3", families: { "<종족>/<계열 id>": [1블록, 2블록, 3블록] }, at }`, 블록 = `{ hits, gaps[타격 사이 ms], speed(시전 속도), layers: [최대 3 × { fx(pixelfx id), color(element·original), anchor(target·attacker), on[나오는 타격 0부터], delay, dx, dy, scale, angle, rate(재생 속도), altFlip, move(stay·fly), travel(비행 ms), arc(곡선 px), tx·ty(도착 자리), ex·ey(사라지는 곳 = 도착에서, 0,0 = 도착하자마자), face(방향 돌림), sync(hit·arrive), z(레이어 1~5, 클수록 앞) }] }` (stamp v3, v2 는 도구가 옮김) |
 
 투사체(사용자 2026-11-04 "투사체 날라가는 스킬은 이 툴에서 어떻게 구현할까? 너가 잘 만져줄래?"): 이펙트 움직임 = 날아감 → 치는 쪽(+dx,dy)에서 맞는 쪽(+tx,ty)까지 travel ms, 곡선 arc, 나는 동안 프레임 반복, 방향 돌림. 다른 이펙트는 시작 = '투사체 도착 때'(그 블록 첫 투사체, 같은 타격)로 맞출 수 있다. 게임에 넣을 때 맞음 반응(흰 깜빡임·타격)도 도착 시각에 맞춘다.
 
@@ -24,3 +24,4 @@ v2 (사용자 2026-11-04 01:5x "연타 넣을거면 연타 타이밍 조정도 �
 | `custom/cero-oscuras` (옛 `arcane/cero-oscuras`, 도구가 옛 저장 값을 옮김) | 세로 오스큐라스 | pixelfx `arcane/magic-circle-cast` 에서 바닥 마법진(원·룬·육망성·펜)·반짝이(불꽃·별·빛 알갱이·모이는 빛줄기)·고리(바닥 충격파·기둥 고리)를 뺀 것 = 빛줄기 → 번쩍 → 빛기둥 → 갈라져 사라짐(1.75초). 02:2x "세로 오스큐라스에서 주변 반짝이 이펙트랑 서클 이펙트도 다 지워줘." 사용자 2026-11-04 "매직 서클 캐스트에서 매직서클만 없애고 세로 오스큐라스라고 이름붙여서 새 이펙트로 만들어 줄 수있어??" |
 
 - 도구 build.mjs 와 `npm run fx` 가 custom 을 vendor 에 겹쳐 넣는다(도구는 목록 `src/fx/index.js` 도 다시 만든다). `node tools/check.mjs <id>` 통과 확인.
+| `custom/ki-gather` | 기모으기 | pixelfx `shadow/dark-explosion` 의 모으기(알갱이 소용돌이·빛줄기·좁혀 드는 고리·뛰는 검은 핵)만, 터짐(번쩍임·검은 별·불타는 공·파편·연기)은 뺌. 다 모이면 핵에 삼켜지고 끝(0.56초). 02:3x "다크 익스플로이드도, 충전하는거만 남기고 뒤에 공 생기는건 지워서 기모으기로 커스텀 이펙스 생성" |
