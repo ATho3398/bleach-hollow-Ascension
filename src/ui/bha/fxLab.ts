@@ -58,12 +58,14 @@ function card(s: PixelFxSheet): HTMLElement {
   let cur: PixelFxPlay | null = null;
   let plays = 0;
   let ends = 0;
+  // 캐릭터가 하는 동작(melee·moves — 기준점 = 발)은 치는 쪽 발에, 나머지는 맞는 쪽 가슴에
+  const atFeet = /^(melee|moves)\//.test(s.id);
   const play = (): void => {
     cur?.stop();
     plays++;
     cur = playPixelFx(stage, s, {
-      x: 330,
-      y: 165,
+      x: atFeet ? 150 : 330,
+      y: atFeet ? 188 : 165,
       scale,
       onEnd: () => {
         ends++;
