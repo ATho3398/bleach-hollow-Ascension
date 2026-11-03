@@ -131,6 +131,12 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   const noteRow = el('div', 'bha-road__noterow');
   noteRow.append(noteEl);
   const hand = el('div', 'bha-exp__hand bha-road__hand');
+  // 목록이 자리보다 길면 바닥에 '▼ 더 있음' (ⓘ 창·흡수 설명과 같은 방식, GDD 168장 3 · 173장 1) — 끝까지 내리면 숨김 (C.267)
+  const handMore = el('div', 'bha-pop__more bha-road__more', '▼ 더 있음');
+  handMore.setAttribute('aria-hidden', 'true');
+  const syncMore = (): void => { handMore.hidden = hand.scrollTop + hand.clientHeight >= hand.scrollHeight - 2; };
+  hand.addEventListener('scroll', syncMore, { passive: true });
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncMore).observe(hand);
   hand.dataset.scList = '';
   hand.dataset.help = 'plan.hand';
   dragScroll(hand);
@@ -304,6 +310,8 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       };
       hand.append(chip);
     }
+    hand.append(handMore);
+    requestAnimationFrame(syncMore);
   }
 
   // 끌어서 놓기 (C.141, GDD 85장 11번): 손 카드 → 칸 / 놓은 칸 → 다른 칸(이동·교체) / 놓은 칸 → 손(되돌리기). 터치는 잠깐 눌러야 끌리고(그 전에는 화면 스크롤), 마우스는 5px 끌면 시작한다.

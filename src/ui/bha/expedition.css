@@ -307,8 +307,11 @@
 .bha-lcd .bha-app.bha-plan.is-place .bha-road { grid-column: 1 / -1; grid-row: 3; }
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__synline { grid-column: 1 / -1; grid-row: 4; }
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__noterow { grid-column: 1 / -1; grid-row: 5; }
-.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand { grid-column: 1 / -1; grid-row: 6 / 10; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand { grid-column: 1 / -1; grid-row: 9; } /* C.267: 남은 높이(1fr 행)만 쓰고 그 안에서 스크롤 — [출발] 띠 밑에 깔리지 않게 */
 .bha-lcd .bha-app.bha-plan.is-place .bha-tilecard { width: calc(25% - var(--bha-sp-2)); min-height: 88px; }
 /* 준비 탭: 배치 요령 줄(타일을 고른 뒤 …)은 배치 탭에서만 */
 .bha-lcd .bha-app.bha-plan:not(.is-place):has(.bha-plan__modetabs) .bha-road__noterow { display: none; }
+/* 가진 타일 목록 '▼ 더 있음' (C.267): 목록 바닥에 붙는 한 줄 (목록 폭 전체) */
+.bha-road__more { flex: 0 0 100%; bottom: 0; margin: 0; padding: var(--bha-sp-1) 0; }
 
+.bha-sheet .bha-road__more { display: none; } /* 바퀴 끝 배치판 손은 가로 스크롤 한 줄 — 세로 '더 있음' 없음 (C.267) */
