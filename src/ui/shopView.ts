@@ -2,6 +2,7 @@
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 배치 칸만 확인 창 1번, 나머지는 바로 산다. C.140 (GDD 86장 4번): 산 꾸밈·스킨은 보관함에서 착용(여기선 "보유").
 // 떠돌이 상인(GDD 85장 5번)은 장터의 따로 된 창(mode 'wanderer', C.201 GDD 127장 2) — 같은 카드 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
+import { detachEffectText, getDetachTrait } from '../engine/traitShop';
 import { equipInventoryItem, petNoticeOf, unequipInventoryItem } from '../inventory';
 import { pickDialog } from './pickDialog';
 import { SHOP_KIND_TABS, type ShopKind, type ShopTabId, CATEGORIES, getCosmetic, getGoldItem, cosmeticToken, itemCategoryOf, ITEM_CATEGORY_NAMES, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, keyringShapeOf, SHOP_PROVISIONAL, type CosmeticCategory, type ItemCategory, type MedicineCure } from '../data/shop';
@@ -87,7 +88,11 @@ const pickBy = (m: ByFaction | undefined, factionId: string): string => m?.[fact
  *  수치(효과·능력치)는 목록에 쓰지 않고 칸을 눌러 뜨는 상세 창에서 본다. 꾸밈은 분류 이름 */
 export function shopBlurb(row: Pick<ShopRow, 'id'> & { grade?: string }, faction: Pick<FactionConfig, 'id' | 'fullnessName'>): string {
   const factionId = faction.id;
-  if (isTrait(row.id)) return pickBy(BLURBS.kind.trait, factionId);
+  // 특성 상점 = 효과 요약 한 줄 (GDD 176장 19: 4장이 다 '끼우는 특성'이라 구분이 안 됐다 — 158장 8 '목록엔 수치 없음'의 예외)
+  if (isTrait(row.id)) {
+    const dt = getDetachTrait(row.id.slice('trait-'.length));
+    return dt ? detachEffectText(dt) : pickBy(BLURBS.kind.trait, factionId);
+  }
   const gold = getGoldItem(row.id);
   if (gold?.kind === 'gear') return `${BLURBS.gearGrade.normal} ${pickBy(BLURBS.gearNoun[gold.gearKind!], factionId)}`;
   // 음식은 종류마다 하는 일, 체력 회복 물건은 약 (GDD 159장 36·37)

@@ -79,6 +79,10 @@
 .bha-itemmodal__qtyrow { display: flex; align-items: center; gap: var(--bha-sp-2); }
 .bha-itemmodal__qty { margin-right: auto; font-size: var(--bha-fs-sm); }
 .bha-itemmodal__acts { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin-top: auto; }
+/* GDD 173장 2: 상세 창 높이 고정 — 설명 길이·강화 뒤 다시 열림에도 행동 버튼은 늘 창 아래 같은 자리, 긴 설명은 그 안에서 스크롤 */
+.bha-itemmodal { height: 94%; }
+.bha-itemmodal__right { min-height: 0; }
+.bha-itemmodal__desc { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 
 /* C.146 (사용자 "i4"): 보관함 '스킨' 탭 안 꾸밈 종류 칩 */
 .bha-itemchips { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }

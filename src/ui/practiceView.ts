@@ -166,7 +166,8 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
   ];
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
-  seed.append(`시드 ${s.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');
+  if (devText()) seed.append(`시드 ${s.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다'); // 시드·런 로그 = 테스트 모드만 (GDD 176장 21)
+  else seed.append(icon('i-check', 'sm'), ' 기록을 남겼다');
   const dock = el('div', 'bha-dock');
   const two = el('div', 'bha-dock__row bha-dock__row--two');
   two.append(

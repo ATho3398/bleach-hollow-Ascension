@@ -130,9 +130,9 @@ export function tileHint(t: TerrainTileDef): string {
 export function eventHint(ev: TileEvent): string {
   const E = TV.events;
   return {
-    merchant: '골드로 먹이·타일 1개를 산다 · 한 번 밟으면 사라진다',
+    merchant: '골드로 음식·타일 1개를 산다 · 한 번 밟으면 사라진다',
     altar: `리스크 +${E.altar.risk} 대신 장착 특성 하나 위력 +${Math.round(E.altar.traitPower * 100)}% (이번 모험) · 한 번`,
-    treasure: `희귀 먹이 1개 또는 골드 ${E.treasure.gold[0]}~${E.treasure.gold[1]} · 한 번`,
+    treasure: `희귀 음식 1개 또는 골드 ${E.treasure.gold[0]}~${E.treasure.gold[1]} · 한 번`,
     trap: `다음 전투 시작 체력 −${Math.round((1 - E.trap.startHpFraction) * 100)}%, 이기면 보상 ×${E.trap.rewardMult} · 한 번`,
     crossroads: `둘 중 하나: 다음 전투 보호막 ${Math.round(E.crossroads.shield * 100)}% / 골드 ${E.crossroads.gold} · 한 번`,
   }[ev];
@@ -147,8 +147,8 @@ export function variantModsText(m: VariantMods, factionId = ''): string[] {
   if (m.extraBattle) out.push('일반 적 2연전');
   if (m.rewardMult !== undefined) out.push(`보상 ×${m.rewardMult}`);
   if (m.goldMult !== undefined) out.push(m.goldMult >= 1 ? `골드 ×${m.goldMult}` : `골드 ${pct(m.goldMult)}`);
-  if (m.foodMult !== undefined) out.push(`먹이 드롭 ×${m.foodMult}`);
-  if (m.foodChanceBonus) out.push(`먹이 드롭 +${Math.round(m.foodChanceBonus * 100)}%p`);
+  if (m.foodMult !== undefined) out.push(`음식 드롭 ×${m.foodMult}`);
+  if (m.foodChanceBonus) out.push(`음식 드롭 +${Math.round(m.foodChanceBonus * 100)}%p`);
   if (m.enemyAttackMult !== undefined) out.push(`적 공격 ${pct(m.enemyAttackMult)}`);
   if (m.enemyHpMult !== undefined) out.push(`적 체력 ${pct(m.enemyHpMult)}`);
   if (m.eliteHpMult !== undefined) out.push(`강적 체력 ${pct(m.eliteHpMult)}`);
@@ -168,7 +168,7 @@ export function variantModsText(m: VariantMods, factionId = ''): string[] {
 /** 원정이 끝난 이유 문구 */
 export function endReasonText(reason: EndReason, f: FactionConfig): string {
   return {
-    returned: '둥지 칸에서 귀환했다. 얻은 것은 모두 지킨다.',
+    returned: `출발 칸에서 ${f.nestName}에 귀환했다. 얻은 것은 모두 지킨다.`,
     'forced-max-laps': '최대 바퀴를 채워 귀환했다. 얻은 것은 모두 지킨다.',
     // C.175 (GDD 102-3·102장 수정): 원정 패배 = 빈사(이미 빈사였으면 사망) — 남은 시간 안에 구급상자
     'battle-lost': `전투에서 졌다(${f.defeatStateName}). 빈사 상태로 ${f.nestName}에 돌아왔다 — 시간 안에 구급상자를 써야 산다. 마지막 바퀴에서 얻은 것을 잃었다.`,

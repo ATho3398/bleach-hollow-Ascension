@@ -360,7 +360,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [panel({ title: '아이템 생성', aside: TEST_ITEM_KIND_NAMES[kindSel.value as TestItemKind] }, g, row(make, all),
-      note('장비는 종류 × 특수 효과 전부를 고른다(상점 장비 = 노말 종류, 떠돌이 상인 장비 = 레어~전설 종류와 같다). 특수 효과는 영웅·전설에만 붙어서, 노말·레어를 고르면 영웅으로 만든다.'),
+      note('장비는 종류 × 특수 효과 전부를 고른다(상점 장비 = 노멀 종류, 떠돌이 상인 장비 = 레어~전설 종류와 같다). 특수 효과는 영웅·전설에만 붙어서, 노멀·레어를 고르면 영웅으로 만든다.'),
       note('떠돌이 상인 물건은 사는 것과 같은 효과를 공짜로 낸다. 먹이·소모품·뽑기권·수련권은 보관 상한까지, 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·영혼 결정은 상한이 없다.'))];
   }
 

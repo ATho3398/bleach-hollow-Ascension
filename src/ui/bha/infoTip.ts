@@ -2,7 +2,7 @@
 // 누름으로 연 창은 밖을 누르거나·다시 누르거나·뒤로(◀·Esc)로 닫는다(기기 레이어로 등록). 마우스로 연 창은 마우스가 떠나면 닫힌다.
 // 창은 오버레이 자리(LCD 창 안)에 붙어 스크롤 칸·overflow 에 잘리지 않는다. 방 상태 칩·상태 화면·쇠약/피곤/빈사 칩이 같이 쓴다.
 import { el, icon } from './dom';
-import { getOverlayHost, registerLayer } from './overlayHost';
+import { getOverlayHost, isDeviceButtonPress, registerLayer } from './overlayHost';
 import { elementLocalRect } from './viewport';
 
 /** 소제목 + 줄들. mark = 그 묶음에서 강조할 줄(지금 내 수치 구간, C.176 GDD 109장 2) */
@@ -53,7 +53,7 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
     const t = e.target as Node | null;
     if (pop && t && (pop.contains(t) || b.contains(t))) return;
     // 기기 ▲▼ = 창 스크롤 (GDD 168장 3) — 기기 버튼 누름은 '밖 누름'으로 닫지 않는다 (◀ 는 레이어 취소로 닫는다)
-    if (pinned && t instanceof Element && t.closest('.bha-dev__btn')) return;
+    if (pinned && isDeviceButtonPress(t)) return;
     close();
   };
   function close(): void {

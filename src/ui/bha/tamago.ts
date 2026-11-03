@@ -17,7 +17,7 @@ import { showToast } from './nest';
 
 /** 다마고치 모드 첫 진입 안내를 봤는가 (localStorage, 세이브 아님) */
 const TAMA_HINT_KEY = 'bha-tamago-hint';
-import { isTypingTarget } from './shortcuts';
+import { isTypingTarget, registerCancelHook } from './shortcuts';
 import { currentFit, toLocal, type Fit } from './viewport';
 import {
   BODY, SIDE_BANDS, designsLayerPlace, silhouetteBands, deviceSkin, deviceSkinV2, defaultGravity, deviceArtPlacement, deviceArtPlacementV2, edgeThickness, isResting, kick, loadTamagoPrefs, restingAt, saveTamagoPrefs, screenGravity, smoothVec, stepPendulum, tamaLayout, tapKick, PHYS,
@@ -673,6 +673,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       key.hidden = !worn('keyring');
       shield.hidden = false;
       ctrl.hidden = false;
+      dev.setExtraItems([flipBtn, designBtn, zoomBtn]); // 아래 조작 줄도 ▲▼ 로 고른다 (GDD 176장 10)
       frame.classList.add('is-tama');
       paintKey();
       paintDevice();
@@ -699,6 +700,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
       }
       shield.hidden = true;
       ctrl.hidden = true;
+      dev.setExtraItems(null);
       animate(zoomMs(), () => {
         if (on) return;
         frame.classList.remove('is-tama');
@@ -849,6 +851,13 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) wake();
   });
+
+  // 뒤로(◀·Esc) = 다마고치 모드 끄기 (GDD 176장 10): 열린 창·펼친 줄이 없을 때, 화면 뒤로보다 먼저
+  registerCancelHook((top) => {
+    if (!on || top) return false;
+    toggle(false);
+    return true;
+  }, { button: true, last: true });
 
   if (prefs.on) toggle(true);
 

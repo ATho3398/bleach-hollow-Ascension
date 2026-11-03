@@ -72,7 +72,7 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
     try {
       await navigator.clipboard.writeText(text);
       manual = null;
-      say('good', `클립보드에 복사했다 (${text.length.toLocaleString()}자). 메모 등에 붙여넣어 보관한다.`);
+      say('good', '클립보드에 복사했다. 메모 등에 붙여넣어 보관한다.');
     } catch {
       manual = { mode: 'copy', text };
       say('warn', '자동 복사가 막혀 있다. 아래 칸의 글을 직접 전체 선택해 복사한다.');
@@ -154,7 +154,7 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
       { label: '종족', value: f.name },
       { label: '단계', value: `${p.save.evolution.tierIndex + 1}단계 ${f.tierNames[p.save.evolution.tierIndex] ?? ''}` },
       { label: '모험', value: `${p.save.runLog.runs.length}회` },
-      ...(p.migrated ? [{ label: '형식', value: `v${p.fromFormat} → 현재 형식으로 올림` }] : []),
+      ...(p.migrated ? [{ label: '버전', value: '옛 버전 세이브 — 지금 버전에 맞춰 연다' }] : []),
     ];
     const act = el('div', 'bha-backup__row');
     act.append(
@@ -165,10 +165,10 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
   };
 
   const render = () => {
-    const exportP = panel({ title: '내보내기', aside: current ? `형식 v${current.meta.format}` : undefined });
+    const exportP = panel({ title: '내보내기' });
     const row = el('div', 'bha-backup__row');
     row.append(button({ label: '파일로 저장', icon: 'i-deck', onClick: download }), button({ label: '복사', icon: 'i-deck', onClick: () => void copy() }));
-    exportP.append(row, el('p', 'bha-faint', '세이브 전체를 .json 파일이나 글로 보관한다. 조작 판정 설정은 기기마다 달라 담지 않는다.'));
+    exportP.append(row, el('p', 'bha-faint', '세이브 전체를 파일이나 글로 보관한다. 이 기기의 조작 설정은 담지 않는다.'));
     if (manual?.mode === 'copy') exportP.append(textArea()!);
 
     let right: HTMLElement;
@@ -178,7 +178,7 @@ export function backupView(root: HTMLElement, current: SaveData | null, persist:
       right = panel({ title: '불러오기' });
       const r2 = el('div', 'bha-backup__row');
       r2.append(button({ label: '파일 선택', icon: 'i-deck', onClick: pickFile }), button({ label: '붙여넣기', icon: 'i-deck', onClick: () => void paste() }));
-      right.append(r2, el('p', 'bha-faint', '형식을 확인한 뒤 덮어쓰기 전에 한 번 묻는다. 새 버전·손상된 세이브는 거부한다.'));
+      right.append(r2, el('p', 'bha-faint', '덮어쓰기 전에 한 번 묻는다. 더 새로운 버전이나 손상된 세이브는 열 수 없다.'));
       if (manual?.mode === 'paste') right.append(textArea()!);
     }
 

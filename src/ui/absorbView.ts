@@ -11,6 +11,7 @@ import { absorbModeRule, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type
 import { chooseAbsorb, chooseRelease, previewAbsorb, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, notice, tag } from './bha/dom';
+import { showToast } from './bha/nest';
 import { lcdPage } from './bha/lcdpage';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { elementColor, elementDot, elementMark, paintElement } from './bha/element';
@@ -88,6 +89,7 @@ export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m:
   const out: { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] = [{ kind: 'what', text: absorbModeText(faction)[m].sub }];
   const ev = evLine(p.ev, faction.id);
   if (ev) out.push({ kind: 'stat', text: `능력치: ${ev}` });
+  else if (evCapped(exp, m)) out.push({ kind: 'warn', text: EV_FULL_TEXT }); // GDD 176장 11: 노력치 상한이면 능력치 0 을 말로
   // 놓아주기 = 리스크 게이지 −releaseRelief (GDD 168장 2): 게이지가 0 이라 더 못 내려가도 설명은 같은 값 (확인 창·도움말과 같게)
   out.push({ kind: 'risk', text: `${faction.riskGaugeName}: ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}` });
   if (p.frenzy) out.push({ kind: 'warn', text: `한계(${RX.limit})에 닿아 ${faction.frenzyName} 상태가 된다.` });
@@ -98,13 +100,30 @@ export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m:
   return out;
 }
 
+/** 노력치 상한 안내 (GDD 176장 11) */
+export const EV_FULL_TEXT = '노력치가 가득 찼다. 능력치는 오르지 않는다.';
+
+/** 능력치를 주는 갈래인데 노력치가 이미 가득 차 아무것도 안 오르나 (GDD 176장 11) */
+export function evCapped(exp: ExpeditionState, m: AbsorbChoice): boolean {
+  return m !== 'none' && absorbModeRule(m).ev > 0 && evLine(previewAbsorb(exp, m).ev, '') === '';
+}
+
+/** 흡수가 끝난 뒤 한 줄 (GDD 176장 11): "능력치 힘 +2 · 광기 +1 (7 → 8)" / 상한이면 "노력치가 가득 찼다 · …". 값은 previewAbsorb 그대로(실행 전에 부른다) */
+export function absorbResultLine(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): string {
+  const p = previewAbsorb(exp, m);
+  const ev = evLine(p.ev, faction.id);
+  const parts = [ev ? `능력치 ${ev}` : evCapped(exp, m) ? '노력치가 가득 찼다' : ''];
+  parts.push(`${faction.riskGaugeName} ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}`);
+  return parts.filter(Boolean).join(' · ');
+}
+
 /** [흡수] 버튼 글자 (GDD 172장 2): 고른 갈래 이름 + '하기'. 이름이 이미 '~기'(놓아주기)면 그대로. 이름은 종족 설정 absorbModeNames */
 export function absorbRunLabel(label: string): string {
   return /기$/.test(label) ? label : `${label}하기`;
 }
 
 /**
- * 갈래 버튼 4개 + 설명 칸 + [흡수] 버튼 (GDD 163장 2·3 → 172장 1~3): 갈래 버튼 = 고르기만(다시 눌러도 실행 안 함, 설명 칸이 바뀐다),
+ * 갈래 버튼 4개 + 설명 칸 + [흡수] 버튼 (GDD 163장 2·3 → 172장 1~3 → 173장 1: 버튼은 왼쪽 열 맨 아래 고정 자리, 갈래가 바뀌어도 안 움직인다): 갈래 버튼 = 고르기만(다시 눌러도 실행 안 함, 설명 칸이 바뀐다),
  * 설명 칸 바로 아래 [흡수] 버튼(글자 = 고른 갈래 이름 + '하기')을 눌러야 실행. 기기 ▲▼ = 갈래 → [흡수] 버튼(DOM 순서), ✓ = 갈래면 고르기·버튼이면 실행.
  * 처음엔 첫 갈래가 골라진 상태. 흡수 화면과 첫 흡수 연습 화면이 같이 쓴다
  */
@@ -119,6 +138,8 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
     const b = button({ label: names[m].label, variant: frenzy ? 'danger' : undefined, size: 'small' });
     b.dataset.mode = m;
     if (frenzy) b.title = `${faction.frenzyName} 상태가 된다`;
+    // 능력치만 얻는 갈래인데 노력치가 가득 = 흐리게 (GDD 176장 11). 고를 수는 있다(설명 칸에서 이유를 읽게) — 자리도 그대로
+    if (m === 'stat' && evCapped(exp, m)) b.setAttribute('aria-disabled', 'true');
     // ▲▼ 하이라이트가 옮겨 오면 고르기 (기기가 보내는 'bha-select', lcdpage.masterDetail 과 같은 방식)
     b.addEventListener('bha-select', () => select(m));
     // 손가락·기기 ✓ 모두 고르기만 (GDD 172장 1: 같은 버튼을 다시 눌러도 실행하지 않는다)
@@ -135,6 +156,11 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
   go.classList.add('bha-absorb__go');
   go.dataset.absorbGo = '';
   go.onclick = () => run(sel);
+  // 설명 칸 = 버튼 위 남은 자리를 고정 높이로 쓴다(GDD 173장 1). 넘치면 그 안에서 스크롤 + 바닥 '▼ 더 있음'(ⓘ 창과 같은 방식, 168장 3)
+  const more = el('div', 'bha-pop__more', '▼ 더 있음');
+  more.setAttribute('aria-hidden', 'true');
+  const syncMore = (): void => { more.hidden = desc.scrollTop + desc.clientHeight >= desc.scrollHeight - 2; };
+  desc.addEventListener('scroll', syncMore, { passive: true });
   function select(m: AbsorbChoice): void {
     sel = m;
     btns.forEach((b) => {
@@ -148,7 +174,9 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
       const p = el('p', cls, l.text);
       p.dataset.line = l.kind;
       return p;
-    }), ...(extra?.(m) ?? []));
+    }), ...(extra?.(m) ?? []), more);
+    desc.scrollTop = 0;
+    requestAnimationFrame(syncMore);
     const frenzy = m !== 'none' && previewAbsorb(exp, m).frenzy;
     go.textContent = absorbRunLabel(names[m].label);
     go.classList.toggle('bha-btn--danger', frenzy);
@@ -200,8 +228,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   /** 이 화면이 끝났나 (뒤로 처리기를 푼다). owner = 이 흡수 화면 표시 */
   let done = false;
   const owner = `a${++absorbSeq}`;
+  /** 흡수가 끝나면 띄울 한 줄 (GDD 176장 11) — 갈래를 실행하는 순간 정한다 */
+  let resultLine = '';
   const finish = (r: { ok: true } | { ok: false; reason: string }, absorbed: boolean) => {
     if (r.ok) done = true;
+    if (r.ok && absorbed && resultLine) showToast({ eyebrow: act, title: resultLine }, 0, 2500);
     if (!r.ok) {
       error = r.reason;
       render();
@@ -310,6 +341,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   function chooseStep(): StepParts {
     // GDD 163장 → 172장: 갈래 버튼 = 고르기만, 설명 칸 아래 [흡수] 버튼 = 실행. 버튼 아래(왼쪽 아래 전부) = 고른 갈래 설명 칸. 오른쪽 = 지금 리스크 게이지 + 슬롯
     const picker = absorbModePicker(faction, exp, (m) => {
+      resultLine = absorbResultLine(faction, exp, m); // 실행 전 미리보기 = 결과 (GDD 176장 11 흡수 결과 한 줄)
       if (m === 'none') return finish(chooseRelease(exp), false);
       mode = m;
       if (m === 'stat') return finish(chooseAbsorb(exp, null, undefined, 'stat'), true);
@@ -362,7 +394,9 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
 
   function pickStep(): StepParts {
     // 흡수 연출 꾸밈(GDD 25-11)이 사라지게 할 적이 확정 순간에도 보이도록 적 카드를 같이 둔다
-    const nodes: HTMLElement[] = [foeCard(), el('p', 'bha-dim', `${MODE_LABELS[mode].label}: ${foeName}에게서 얻을 특성을 고른다. 고르면 빈 슬롯에 들어간다.`)];
+    // 노멀 후보는 칸에 안 들어가고 노멀 강화만 오른다 (GDD 111장 · 176장 12: 왼쪽 '빈 슬롯에 들어간다'와 카드 '칸에 들어가지 않는다'가 어긋났다)
+    const where = offer!.element === NORMAL_ELEMENT ? `고르면 ${elementName(NORMAL_ELEMENT, faction.id)} 강화가 오른다.` : '고르면 빈 슬롯에 들어간다.';
+    const nodes: HTMLElement[] = [foeCard(), el('p', 'bha-dim', `${MODE_LABELS[mode].label}: ${foeName}에게서 얻을 특성을 고른다. ${where}`)];
     const side: HTMLElement[] = [];
     if (offer!.candidates.length === 0) {
       // 후보가 없을 때(그 속성 특성이 없는 적 등): 가진 속성이면 강화만
@@ -373,7 +407,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       first = go;
       side.push(none, go);
     } else {
-      const list = el('div', 'bha-stack');
+      // 후보 목록 = 남은 높이 고정(넘치면 그 안 스크롤) → 아래 [다시 뽑기] 줄 자리 고정 (GDD 173장 2)
+      const list = el('div', 'bha-stack bha-absorb__cands');
       for (const id of offer!.candidates) {
         const c = candCard(id, 'button');
         first ??= c;

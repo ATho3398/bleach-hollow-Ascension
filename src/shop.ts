@@ -192,7 +192,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 가방 (이벤트 타일 제외)';
     case 'reroll': return `${faction.absorbActionName} 화면 특성 후보를 한 번 다시 뽑는다 (${faction.absorbActionName} 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `모험 길에 놓을 수 있는 타일 칸 +1 (영구, 최대 +${SX.deckSlotPrices.length})`; // GDD 159장 32: '트랙' 말 삭제
-    case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노말 · ★ = 지금 단계 권장 · 능력치 무작위 → 가방 장비 탭에서 착용`;
+    case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노멀 · ★ = 지금 단계 권장 · 능력치 무작위 → 가방 장비 탭에서 착용`;
   }
 }
 

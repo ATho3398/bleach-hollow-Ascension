@@ -64,6 +64,10 @@
 .bha-lcd .bha-exp .bha-sheet::before { display: none; }
 .bha-sheet__scroll { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-2); overflow-y: auto; overscroll-behavior: contain; }
 .bha-lcd .bha-exp .bha-sheet > .bha-continue { flex: none; }
+/* GDD 173장 2: 안 글이 바뀌는 바퀴 끝 창은 높이 고정(최대 높이 그대로) — 버튼 줄이 늘 같은 자리 */
+.bha-lcd .bha-exp .bha-sheet.bha-sheet--fixed { height: calc(100% - 16px); }
+.bha-lcd .bha-exp .bha-sheet.bha-sheet--fixed > .bha-sheet__scroll { flex: 1 1 0; }
+.bha-lcd .bha-exp .bha-event__note { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* C.218 (GDD 140장 2): [귀환]·[한 바퀴 더] 같은 너비·같은 높이 */
 .bha-lcd .bha-exp .bha-sheet > .bha-continue > .bha-grid2 { flex: none; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--bha-sp-1) var(--bha-sp-3); }
 .bha-lcd .bha-exp .bha-sheet .bha-btn { padding: 0 var(--bha-sp-3); gap: var(--bha-sp-2); }

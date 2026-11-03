@@ -35,7 +35,8 @@ describe('화면 (172장 1·3)', () => {
   });
   it('버튼은 bha- 클래스만 (새 색·간격 없음)', () => {
     expect(a).toContain("go.classList.add('bha-absorb__go');");
-    expect(read('src/ui/bha/screens-lcd.css')).not.toContain('bha-absorb__go');
+    // 173장 1 에서 자리 고정 규칙이 붙었다 — 색·간격은 토큰만 (#색·px 없음)
+    for (const l of read('src/ui/bha/screens-lcd.css').split('\n').filter((x) => x.includes('bha-absorb__go'))) expect(l).not.toMatch(/#[0-9a-f]{3}|\d+px/i);
   });
 });
 

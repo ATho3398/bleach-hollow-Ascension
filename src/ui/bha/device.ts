@@ -33,12 +33,18 @@ export interface Device {
   view: HTMLElement;
   lcd: HTMLElement;
   /** 화면이 선택 가능 항목을 등록한다. scope 가 화면에서 사라지면 등록은 저절로 풀리고 자동 탐색으로 돌아간다 */
-  setItems(items: SelectItem[], scope: HTMLElement, onChange?: (item: SelectItem | null) => void): void;
+  setItems(items: SelectItem[], scope: HTMLElement, onChange?: (item: SelectItem | null) => void, focus?: HTMLElement | null): void;
   move(dir: 1 | -1): void;
   confirm(): void;
   cancel(): void;
   /** 다시 계산(화면 이동 뒤·상태 변화 뒤) */
   refresh(): void;
+  /** LCD 밖에서 같이 고를 버튼 (다마고치 모드 아래 조작 줄, GDD 176장 10): 화면 항목 뒤에 붙는다(열린 창·전투 중엔 빼고). null = 없음 */
+  setExtraItems(els: HTMLElement[] | null): void;
+  /** 지금 기기 초점 칸의 표지 (GDD 176장 8): 화면을 쌓기 전에 받아 두었다가 돌아오면 restoreFocus 로 돌려준다 */
+  focusMark(): FocusMark | null;
+  /** 다음 다시 세기에서 이 표지와 같은 칸이 있으면 거기로 초점 (잠깐만 유효) */
+  restoreFocus(mark: unknown): void;
   /** 기기 틀 요소 (.bha-dev: 버튼 + LCD). 다마고치 모드(GDD 27장)가 둘레에 몸체를 붙인다 */
   frame: HTMLElement;
   /**
@@ -56,6 +62,36 @@ export interface Device {
   destroy(): void;
 }
 
+/** 기기 초점 칸의 표지: 화면이 다시 그려져 요소가 새로 만들어져도 같은 칸을 찾는다 (같은 모양이 여럿이면 몇 번째인지) */
+export interface FocusMark {
+  sig: string;
+  nth: number;
+}
+
+/** 칸의 모양 표지: 태그·클래스(상태 클래스 빼고)·data-*(기기용 빼고)·이름(숫자는 지움 — 개수가 바뀌어도 같은 칸) */
+export function focusSig(e: HTMLElement): string {
+  const cls = [...e.classList].filter((c) => c !== 'bha-sel' && !c.startsWith('is-')).sort().join('.');
+  const data = [...e.attributes].filter((a) => a.name.startsWith('data-') && !a.name.startsWith('data-dev')).map((a) => `${a.name}=${a.value}`).sort().join(',');
+  const name = (e.getAttribute('aria-label') ?? e.textContent ?? '').replace(/[\d.,%+−×/:·-]+/g, '#').replace(/\s+/g, ' ').trim().slice(0, 40);
+  return `${e.tagName}|${cls}|${data}|${name}`;
+}
+
+/** 표지에 맞는 칸 자리 (없으면 -1) */
+export function findMark(els: readonly HTMLElement[], mark: FocusMark): number {
+  const same = els.map((e, i) => ({ s: focusSig(e), i })).filter((x) => x.s === mark.sig);
+  if (same.length === 0) return -1;
+  return same[Math.min(mark.nth, same.length - 1)]!.i;
+}
+
+const markOf = (els: readonly HTMLElement[], at: number): FocusMark | null => {
+  const e = els[at];
+  if (!e) return null;
+  const sig = focusSig(e);
+  return { sig, nth: els.slice(0, at).filter((x) => focusSig(x) === sig).length };
+};
+
+const isMark = (m: unknown): m is FocusMark => !!m && typeof (m as FocusMark).sig === 'string' && typeof (m as FocusMark).nth === 'number';
+
 // [data-dev-press] = 버튼이 아닌 누를 대상(전투 블록 칸): ✓ 는 click 대신 'bha-press' 이벤트를 보낸다 (C.197)
 const AUTO_SELECTOR = 'button, a[href], input, select, summary, [role="tab"], [data-dev-press]';
 
@@ -66,7 +102,17 @@ function visible(e: HTMLElement): boolean {
   if (e.closest('[hidden], [inert]')) return false;
   if (e instanceof HTMLButtonElement || e instanceof HTMLInputElement || e instanceof HTMLSelectElement) if (e.disabled) return false;
   if (e instanceof HTMLInputElement && e.type === 'hidden') return false;
-  return e.getClientRects().length > 0;
+  if (e.getClientRects().length === 0) return false;
+  // 자리만 지키고 안 보이는 것(visibility: hidden — 바퀴 끝 창 뒤 모서리 버튼·말풍선 동안의 방 상태 칩)은 고르지 않는다 (GDD 176장 2·4)
+  return !hiddenByVisibility(e);
+}
+
+function hiddenByVisibility(e: HTMLElement): boolean {
+  try {
+    return getComputedStyle(e).visibility === 'hidden';
+  } catch {
+    return false;
+  }
 }
 
 /** 선택 순서 묶음: data-dev-order (기본 0, 작은 것부터) */
@@ -93,6 +139,31 @@ export function orderVisually(els: readonly HTMLElement[], lcd: HTMLElement, ran
   const boxOf = (e: HTMLElement): VisualBox => uiBox(e.getBoundingClientRect(), lr, rotated);
   const ranks = [...new Set(els.map(rank))].sort((a, b) => a - b);
   return ranks.flatMap((k) => visualOrder(els.filter((e) => rank(e) === k), boxOf));
+}
+
+/** 스크롤 칸 끝까지 남은 거리가 이보다 작으면 ▲▼ 는 바로 다음 칸으로 (여백 몇 px 때문에 한 번 더 누르지 않게) */
+const SCROLL_SLACK = 16;
+
+/** 요소를 담은 가장 가까운 세로 스크롤 칸 (LCD 안, 넘치는 것만) */
+function scrollBoxOf(e: HTMLElement | null, stop: HTMLElement): HTMLElement | null {
+  for (let p = e?.parentElement ?? null; p && p !== stop; p = p.parentElement) {
+    if (p.scrollHeight <= p.clientHeight + 1) continue;
+    const oy = getComputedStyle(p).overflowY;
+    if (oy === 'auto' || oy === 'scroll') return p;
+  }
+  return null;
+}
+
+/** dir 쪽으로 더 스크롤할 수 있는 거리 */
+const scrollLeft = (box: HTMLElement, dir: 1 | -1): number => (dir > 0 ? box.scrollHeight - box.clientHeight - box.scrollTop : box.scrollTop);
+
+/** 이전 항목에 없던 시작 자리 이름(data-dev-start 값)을 가진 새 항목 (GDD 176장 2) — 값이 빈 것(전투 첫 블록 칸)은 보지 않는다 */
+function newStart(prev: readonly SelectItem[], next: readonly SelectItem[]): number {
+  const had = new Set(prev.map((i) => i.el.getAttribute('data-dev-start')).filter((v): v is string => !!v));
+  return next.findIndex((i) => {
+    const v = i.el.getAttribute('data-dev-start');
+    return !!v && !had.has(v);
+  });
 }
 
 function devButton(cls: string, label: string, glyph: HTMLElement | SVGElement): HTMLButtonElement {
@@ -238,7 +309,11 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let items: SelectItem[] = [];
   let index = -1;
   let explicit: { scope: HTMLElement; items: SelectItem[]; onChange?: (i: SelectItem | null) => void } | null = null;
-  const layers: { el: HTMLElement; onCancel: () => void }[] = [];
+  const layers: { el: HTMLElement; onCancel: () => void; ret: FocusMark | null }[] = [];
+  /** 돌아온 화면·닫힌 창 뒤에 돌려줄 초점 (GDD 176장 8). until 이 지나면 버린다 */
+  let pending: { mark: FocusMark; until: number } | null = null;
+  let extra: HTMLElement[] = [];
+  const RESTORE_MS = 800;
   /** 전투 커서 중: ▲▼ 가 못 쓰는 대상을 건너뛴다 (GDD 122장 3) */
   let battle = false;
 
@@ -299,11 +374,12 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     else if (ov) next = scanItems(ov, lcd);
     else if (battle) next = scanItems(battleEl!, lcd);
     else if (explicit) {
-      next = explicit.items.filter((i) => i.el.isConnected && !i.el.hasAttribute('hidden'));
+      next = explicit.items.filter((i) => i.el.isConnected && !i.el.hasAttribute('hidden') && !hiddenByVisibility(i.el));
       // 자유 배치 화면(홈)은 등록 순서 대신 보이는 위치 순서로 (GDD 63장)
       if (explicit.scope.dataset.devLayout === 'visual') next = orderVisually(next.map((i) => i.el), lcd, devRank).map((e) => next.find((i) => i.el === e)!);
     }
     else next = scanItems(view, lcd);
+    if (!layer && !ov && !battle && extra.length > 0) next = [...next, ...extra.filter(visible).map((e) => ({ el: e }))];
     items = next;
     if (next.length > 0 && !prev.some((i) => i.el.isConnected && next.some((n) => n.el === i.el))) {
       // 새 화면(이전 항목이 하나도 안 남음): 키보드 초점이 이미 있는 항목이 있으면 그것, 없으면 첫 항목
@@ -316,8 +392,22 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     } else if (battle && !wasBattle && next.some((i) => i.el.hasAttribute('data-dev-start'))) {
       // 전투 커서가 (다시) 켜졌다(튜토리얼 직접 해 보기 시작 등): 첫 블록 칸부터 (GDD 122장 3)
       index = next.findIndex((i) => i.el.hasAttribute('data-dev-start'));
+    } else if (!battle && newStart(prev, next) >= 0) {
+      // 화면 안에 새 창이 떴다(바퀴 끝 창 등, data-dev-start="<이름>"): 그 창의 시작 버튼으로 (GDD 176장 2). 같은 창이 다시 그려질 때는 그대로
+      index = newStart(prev, next);
     } else {
       index = keepSelection(prev.map((i) => i.el), prevIdx, next.map((i) => i.el));
+    }
+    // 뒤로 돌아온 화면·닫힌 창: 들어갔던 칸으로 (GDD 176장 8)
+    if (pending) {
+      if (performance.now() > pending.until) pending = null;
+      else {
+        const at = findMark(next.map((i) => i.el), pending.mark);
+        if (at >= 0) {
+          index = at;
+          pending = null;
+        }
+      }
     }
     // 전투: 블록이 쓰여 커서 칸이 비면 같은 자리에서 가장 가까운 블록으로 (GDD 122장 3)
     const curEl = next[index]?.el;
@@ -390,7 +480,17 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       const to = stepUsable(index, dir, items.map((i) => !unusable(i.el)));
       if (to < 0) return; // 지금 누를 수 있는 대상이 하나도 없다
       index = to;
-    } else index = stepIndex(index, dir, items.length);
+    } else {
+      const to = stepIndex(index, dir, items.length);
+      // 열(스크롤 칸)의 마지막 초점 칸 아래에 글이 더 있으면 ▼ = 그 칸 스크롤 (GDD 176장 7, ⓘ 창 '▼ 더 있음'과 같은 방식). 끝까지 내리면 다음 칸으로
+      const box = scrollBoxOf(items[index]?.el ?? null, lcd);
+      const leaves = !!box && (!box.contains(items[to]!.el) || (dir > 0 ? to < index : to > index)); // 칸을 벗어나거나 처음으로 돈다
+      if (box && leaves && scrollLeft(box, dir) > SCROLL_SLACK) {
+        box.scrollBy({ top: dir * Math.min(scrollLeft(box, dir), Math.max(24, Math.round(box.clientHeight * 0.6))) });
+        return;
+      }
+      index = to;
+    }
     markSel();
     const cur = items[index]!;
     cur.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -532,7 +632,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   scheduleBadges();
 
   setOverlayHost(lcd, (layerEl, onCancel) => {
-    const entry = { el: layerEl, onCancel };
+    // 창이 닫히면 연 칸으로 돌아간다 (GDD 176장 8): 열 때의 초점 칸을 기억
+    const entry = { el: layerEl, onCancel, ret: markOf(items.map((i) => i.el), index) };
     layers.push(entry);
     layerEl.dataset.devLayer = ''; // 기기에 등록된 레이어 표시 (UI 검수 scripts/ui-audit 가 맨 위 층을 찾는다, C.182)
     schedule();
@@ -540,6 +641,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       const i = layers.indexOf(entry);
       if (i >= 0) layers.splice(i, 1);
       delete layerEl.dataset.devLayer;
+      if (entry.ret && i === layers.length) pending = { mark: entry.ret, until: performance.now() + RESTORE_MS }; // 맨 위 창이 닫힐 때만
       schedule();
     };
   });
@@ -549,16 +651,31 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   return {
     view,
     lcd,
-    setItems(list, scope, onChange) {
+    setItems(list, scope, onChange, focus) {
       explicit = { scope, items: list, onChange };
       items = [];
       index = -1;
       refresh();
+      // 화면이 초점 자리를 정했으면(누른 돌보기 버튼·펼침을 연 버튼, GDD 176장 4) 거기로
+      const at = focus ? items.findIndex((i) => i.el === focus) : -1;
+      if (at >= 0 && at !== index) {
+        index = at;
+        markSel();
+        if (!layers.length) explicit.onChange?.(items[at]!);
+      }
     },
     move,
     confirm,
     cancel,
     refresh,
+    setExtraItems(els) {
+      extra = els ?? [];
+      schedule();
+    },
+    focusMark: () => markOf(items.map((i) => i.el), index),
+    restoreFocus(mark) {
+      pending = isMark(mark) ? { mark, until: performance.now() + RESTORE_MS } : null;
+    },
     frame: dev,
     setStage(fn) {
       stageFn = fn;

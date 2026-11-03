@@ -184,13 +184,14 @@
 .bha-chip--liberation { border-color: var(--bha-risk); color: var(--bha-risk); }
 .bha-chip--liberation[hidden] { display: none; }
 /* 해방 오오라 (GDD 83장 5번): 몸 주변 빛 = 내 속성 색(--bha-aura, battleView 가 속성 토큰으로 칠함). 영력 해방 = 옅게, 레스렉시온/만해(.is-unique) = 진하게·빠르게 */
-.bha-battle.is-liberated .bha-unit--me .bha-unit__fig { position: relative; filter: drop-shadow(0 0 8px var(--bha-aura, var(--bha-accent-hi))); }
-.bha-battle.is-liberated .bha-unit--me .bha-unit__fig::before { content: ""; position: absolute; inset: 4% 14% 0; border-radius: 50% 50% 40% 40%; background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--bha-aura, var(--bha-accent-hi)) 55%, transparent), transparent 70%); pointer-events: none; z-index: -1; animation: bha-aura 1.6s ease-in-out infinite alternate; }
-.bha-battle.is-unique .bha-unit--me .bha-unit__fig { filter: drop-shadow(0 0 14px var(--bha-aura, var(--bha-accent-hi))) saturate(1.5); }
-.bha-battle.is-unique .bha-unit--me .bha-unit__fig::before { inset: -6% 4% -2%; background: radial-gradient(ellipse at 50% 65%, color-mix(in srgb, var(--bha-aura, var(--bha-accent-hi)) 80%, transparent), transparent 72%); animation-duration: 0.8s; }
+/* GDD 178장 3 (C.261): 오오라는 그림의 불투명한 부분 모양대로만 — 그림 칸(.bha-unit__fig: 해방 버튼·남은 초 포함) 이 아니라 몸(.bha-hero__body)에 drop-shadow 를 겹친다.
+   옛 타원 빛 덩어리(::before)·그림 칸 필터는 삭제 (그림 칸 전체가 네모로 빛났다) */
+.bha-battle.is-liberated .bha-unit--me .bha-hero__body { filter: drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))); animation: bha-aura-shape 1.6s ease-in-out infinite alternate; }
+.bha-battle.is-unique .bha-unit--me .bha-hero__body { filter: saturate(1.5) drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 18px var(--bha-aura, var(--bha-accent-hi))); animation-duration: 0.8s; }
+@keyframes bha-aura-shape { from { opacity: 0.88; } to { opacity: 1; } }
 .bha-battle.is-liberated { box-shadow: inset 0 0 0 2px var(--bha-aura, var(--bha-accent-hi)); }
 @keyframes bha-aura { from { opacity: 0.55; transform: scale(0.96); } to { opacity: 1; transform: scale(1.06); } }
-@media (prefers-reduced-motion: reduce) { .bha-battle.is-liberated .bha-unit--me .bha-unit__fig::before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .bha-battle.is-liberated .bha-unit--me .bha-hero__body { animation: none; } }
 .bha-libcut { position: absolute; inset: 0; z-index: var(--bha-z-float); display: grid; place-items: center; pointer-events: none; opacity: 0; }
 .bha-libcut.is-on { animation: bha-libcut 1400ms var(--bha-ease-out) both; }
 .bha-libcut__text {
@@ -206,4 +207,5 @@
 
 /* 해방 준비 아우라 (C.216, GDD 139장 3): 규칙은 v2/bha.css 의 .is-lib-ready. 뿜어 나오는 고리 */
 @keyframes bha-lib-burst{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.25)}}
-@media (prefers-reduced-motion: reduce){.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::before,.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-unit__fig::after{animation:none}}
+@keyframes bha-lib-shape{from{filter:drop-shadow(0 0 1px var(--bha-accent-hi)) drop-shadow(0 0 3px var(--bha-accent-hi))}to{filter:drop-shadow(0 0 1px var(--bha-accent-hi)) drop-shadow(0 0 6px var(--bha-accent-hi)) drop-shadow(0 0 12px var(--bha-accent-hi))}} /* 해방 준비 = 몸 그림 모양대로 뿜어 나오는 빛 (GDD 178장 3, 규칙은 v2/bha.css .is-lib-ready) */
+@media (prefers-reduced-motion: reduce){.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-hero__body{animation:none}}

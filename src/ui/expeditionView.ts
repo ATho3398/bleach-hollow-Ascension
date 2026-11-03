@@ -493,6 +493,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       onClick: () => {
         chooseContinue(exp);
         h.onSave();
+        // 바퀴 끝 창 동안 일시정지가 걸려 있었어도 다시 걷는다 (GDD 176장 2: 서 있던 문제)
+        paused = false;
         msg = '다시 출발!';
         render();
         nextStep();
@@ -505,6 +507,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const nx = exp.lap + 1;
     const multLine = el('p', 'bha-continue-mult', `다음 바퀴 보상 ×${fmtMult(lapRewardMult(nx))} · 적 체력 ×${fmtMult(lapScale(nx).hp)} · 공격 ×${fmtMult(lapScale(nx).attack)} · 힐 ${Math.round(winHealOf(nx) * 100)}%`);
     multLine.dataset.continueMult = '';
+    // 창이 뜨면 기기 초점 = [귀환] (GDD 176장 2) — 창 뒤 모서리 버튼은 visibility 로 숨어 초점 순서에서 빠진다
+    ret.dataset.devStart = 'nest-choice';
     const grid = el('div', 'bha-grid2');
     grid.append(ret, more);
     // 버튼 아래 작은 글 두 칸: [귀환] 아래 = 지킨다, [한 바퀴 더] 아래 = 다음 바퀴 배율 (C.218)
@@ -519,7 +523,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const info = el('div', 'bha-sheet__scroll');
     info.append(title);
     // 노란 알림은 맨 위 (GDD 140장 2)
-    if (over) info.append(notice('warn', `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
+    // 권장 바퀴 딱 = '다 돌았다', 넘기면 '넘겼다' (GDD 176장 18: 2바퀴 막 끝냈는데 '넘겼다'였다)
+    if (over) info.append(notice('warn', exp.lap === EX.defaultLaps ? '권장 바퀴를 다 돌았다. 더 돌수록 보상도 위험도 커진다.' : `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
     // 가로 화면 한 장에 다 들어가게 (C.218, GDD 140장 2): 드래프트가 있으면 왼쪽 = 카드 3장(같은 크기 세로 줄), 오른쪽 = 길·손 배치판
     const body = el('div', `bha-nestsheet__body${d ? ' has-draft' : ''}`);
     if (d) sheet.classList.add('bha-sheet--wide');
@@ -561,6 +566,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       planner.refresh();
     }
     if (body.childElementCount > 0) info.append(body);
+    // GDD 173장 2: 고르기·배치로 안 글이 바뀌는 창(뽑기·손·배치판)은 높이 고정 → [귀환]·[한 바퀴 더]가 위아래로 안 움직인다
+    if (body.childElementCount > 0) sheet.classList.add('bha-sheet--fixed');
     sheet.append(info, actions);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
@@ -621,7 +628,11 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         button({ label: `${TRADE_CURRENCY_NAME} +${E.crossroads.gold}`, icon: 'i-rare', onClick: () => act(1) }),
       );
     }
-    if (eventNote) info.append(notice('warn', eventNote));
+    // 실패 이유 줄은 늘 자리를 둔다(한 줄, 비면 안 보임) — 생겼다 없어지며 아래 선택 버튼이 내려가지 않게 (GDD 173장 2)
+    const note = el('p', 'bha-small bha-danger-text bha-event__note', eventNote || '\u00a0');
+    note.style.visibility = eventNote ? 'visible' : 'hidden';
+    note.dataset.eventNote = '';
+    info.append(note);
     // 뒤로 (GDD 128장 4): 그냥 지나가기가 있는 창은 그것, 하나뿐인 선택(보물·함정)은 그 선택, 갈림길은 고르라는 안내
     eventBack = leave || ev.event === 'treasure' || ev.event === 'trap' ? () => act(null) : null;
     const sheet = el('div', 'bha-sheet bha-event');
@@ -631,6 +642,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const grid = el('div', 'bha-event__foot');
     grid.append(choices);
     if (leave) grid.append(leave);
+    // 창이 뜨면 기기 초점 = 첫 고를 수 있는 선택 (GDD 176장 2와 같은 규칙)
+    [...grid.querySelectorAll<HTMLButtonElement>('button')].find((b) => !b.disabled)?.setAttribute('data-dev-start', 'event');
     sheet.append(info, grid);
     return [el('div', 'bha-sheet__scrim'), sheet];
   }

@@ -13,3 +13,5 @@
 .bha-absorbstat__bar { display: block; height: 6px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); overflow: hidden; }
 .bha-absorbstat__bar i { display: block; height: 100%; border-radius: inherit; background: var(--bha-lin-color, var(--bha-accent)); }
 .bha-confirm .bha-modal:has(.bha-absorbstat) { width: min(560px, calc(100% - 24px)); max-width: none; }
+/* GDD 176장 11: 노력치가 가득 찬 능력치 갈래 = 흐리게 (고를 수는 있다, 자리 그대로) */
+.bha-absorb__actions--modes .bha-btn[aria-disabled="true"] { opacity: 0.45; }

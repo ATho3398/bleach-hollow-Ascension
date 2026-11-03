@@ -52,7 +52,9 @@ describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
     expect(read('src/ui/bha/worldmap.css')).toContain('.bha-room.is-force-out .bha-homedock');
   });
   it('탄생 연출 뒤에 뜨고, 도움말에서 다시 보기(방에서)', () => {
-    expect(app).toContain("window.setTimeout(() => { if (nav.top?.id === 'room') runHomeIntro(faction); }, 300);");
+    // C.259 (GDD 176장 5): 연출 끝 → 안내 사이 입력 막기를 같이 건다
+    expect(app).toContain("if (nav.top?.id === 'room') runHomeIntro(faction); // 탄생 연출 뒤 홈 안내 (GDD 131장)");
+    expect(app).toContain('const release = blockInput();');
     expect(app).toContain("label: '홈 안내'");
   });
 });

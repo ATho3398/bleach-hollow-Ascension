@@ -101,7 +101,7 @@ export function setV2Locked(block: HTMLElement, locked: boolean): void {
   }
 }
 
-/** 블록 바: 핸드오프 `.bha-blockbar` 안에 칸 N개 격자. 옛 trayEl 과 같은 부품(root·grid·cells·veil)을 돌려줘 입력·그리기 코드를 그대로 쓴다 */
+/** 블록 바: 핸드오프 `.bha-blockbar` 안에 칸 N개 격자. 옛 trayEl 과 같은 부품(root·grid·cells)을 돌려줘 (봉인 덮개는 GDD 178장 2 에 삭제) 입력·그리기 코드를 그대로 쓴다 */
 export function v2TrayEl(capacity: number): TrayParts {
   const root = document.createElement('div');
   root.className = 'bha-blockbar bha-v2tray';
@@ -119,12 +119,9 @@ export function v2TrayEl(capacity: number): TrayParts {
     return c;
   });
   grid.append(...cells);
-  const veil = document.createElement('div');
-  veil.className = 'bha-v2tray__veil';
-  const veilText = document.createElement('span');
-  veil.append(v2Svg('i-seal'), veilText);
-  root.append(grid, veil);
-  return { root, grid, cells, veil, veilText };
+  // 봉인 덮개 삭제 (GDD 178장 2): 봉인 중에도 블록 칸은 보이고 쓸 수 있다 — 봉인 표시는 [막기] 옆 생성 게이지에만
+  root.append(grid);
+  return { root, grid, cells };
 }
 
 /** 체인 묶음 틀 (`.bha-chain`): 붙은 칸들을 금색(체인2) / 주황(체인3) 테두리로 묶고 위에 탭. 칸 위에 겹쳐 놓는 격자 아이템(클릭은 통과) */

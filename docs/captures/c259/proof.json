@@ -1,0 +1,267 @@
+{
+  "shots": [
+    "03-care-focus-kept.png",
+    "04-status-bottom.png",
+    "05-tamagotchi-bar-focus.png",
+    "01-viewtitle-list-down.png",
+    "07-dying-chip.png",
+    "08-dead-revive.png",
+    "02-lap-end-focus.png",
+    "06-tile-pick-to-cell.png"
+  ],
+  "checks": {
+    "birthGap": {
+      "seq": [
+        "birth",
+        "gate",
+        "tut"
+      ],
+      "worldmapBeforeIntro": false,
+      "ok": true
+    },
+    "care": {
+      "before": {
+        "lab": "참백도 손질",
+        "cls": "bha-homedock__carebtn.bha-homedock__carebtn--pet.bha-sel",
+        "care": "pet",
+        "tama": null
+      },
+      "afterCare": {
+        "lab": "참백도 손질",
+        "cls": "bha-homedock__carebtn.bha-homedock__carebtn--pet.bha-sel",
+        "care": "pet",
+        "tama": null
+      },
+      "afterBubble": {
+        "lab": "참백도 손질",
+        "cls": "bha-homedock__carebtn.bha-homedock__carebtn--pet.bha-sel",
+        "care": "pet",
+        "tama": null
+      },
+      "ok": true
+    },
+    "status": {
+      "scroll": [
+        "0/294,0/436",
+        "0/294,0/436",
+        "0/294,0/436",
+        "0/294,0/436",
+        "15/294,0/436",
+        "200/294,0/436",
+        "294/294,0/436",
+        "294/294,0/436",
+        "294/294,309/436",
+        "294/294,359/436",
+        "294/294,359/436",
+        "294/294,436/436",
+        "52/294,436/436",
+        "52/294,436/436",
+        "52/294,436/436",
+        "52/294,436/436",
+        "52/294,436/436",
+        "52/294,436/436",
+        "237/294,436/436",
+        "294/294,436/436",
+        "294/294,22/436",
+        "294/294,309/436",
+        "294/294,359/436",
+        "294/294,359/436",
+        "294/294,436/436"
+      ],
+      "bottomLeft": [
+        0,
+        0
+      ],
+      "ok": true
+    },
+    "returnFocus": {
+      "book": {
+        "before": {
+          "lab": "책장",
+          "cls": "bha-art.bha-prop.bha-prop--book",
+          "care": null,
+          "tama": null
+        },
+        "after": {
+          "lab": "책장",
+          "cls": "bha-art.bha-prop.bha-prop--book",
+          "care": null,
+          "tama": null
+        },
+        "ok": true
+      },
+      "chest": {
+        "before": {
+          "lab": "가방",
+          "cls": "bha-art.bha-prop.bha-prop--chest",
+          "care": null,
+          "tama": null
+        },
+        "after": {
+          "lab": "가방",
+          "cls": "bha-art.bha-prop.bha-prop--chest",
+          "care": null,
+          "tama": null
+        },
+        "ok": true
+      },
+      "status": {
+        "after": {
+          "lab": "상태 보기: 배부름 80, 컨디션 60, 영압 안정도 ",
+          "cls": "bha-room__status.bha-sel",
+          "care": null,
+          "tama": null
+        },
+        "ok": true
+      }
+    },
+    "tamagotchi": {
+      "tamaOn": true,
+      "order": [
+        "flip",
+        "design",
+        "zoom-in",
+        "상태 보기: 배부름 80, 컨디션 60, 영압 안정도 ",
+        "상태 설명",
+        "월드맵",
+        "캐릭터",
+        "책장",
+        "가방",
+        "진급 시험",
+        "식사 / 영력 보급",
+        "재우기",
+        "참백도 손질",
+        "대기 보상",
+        "더보기",
+        "flip",
+        "design",
+        "zoom-in",
+        "상태 보기: 배부름 80, 컨디션 60, 영압 안정도 ",
+        "상태 설명"
+      ],
+      "tamaSel": {
+        "lab": "뒤집기",
+        "cls": "bha-btn.bha-sel",
+        "care": null,
+        "tama": "flip"
+      },
+      "tamaOff": true,
+      "ok": true
+    },
+    "viewtitle": {
+      "t0": {
+        "lab": "수련장 · 참백도 수련",
+        "cls": "bha-viewtitle__btn.bha-sel",
+        "care": null,
+        "tama": null
+      },
+      "opened": true,
+      "s1": {
+        "lab": "훈련 인형",
+        "cls": "bha-viewtitle__item.bha-sel",
+        "care": null,
+        "tama": null
+      },
+      "stillOpen": true,
+      "closedByBack": true,
+      "ok": true
+    },
+    "dyingChip": {
+      "chip": {
+        "l": 255,
+        "t": 57,
+        "r": 349,
+        "b": 143
+      },
+      "info": {
+        "l": 235,
+        "t": 125,
+        "r": 253,
+        "b": 143
+      },
+      "body": {
+        "l": 357,
+        "t": 128,
+        "r": 487,
+        "b": 268
+      },
+      "side": true,
+      "chipOverBody": false,
+      "band": 0,
+      "normalH": 296,
+      "dyingH": 296,
+      "ok": true
+    },
+    "dead": {
+      "band": 0,
+      "revive": true,
+      "deadSel": {
+        "lab": "부활",
+        "cls": "bha-btn.bha-btn--danger.bha-btn--small",
+        "care": null,
+        "tama": null
+      },
+      "deadH": 296,
+      "ok": true
+    },
+    "lapEnd": {
+      "first": {
+        "lab": "귀환",
+        "cls": "bha-btn.bha-btn--primary.bha-btn--lg",
+        "care": null,
+        "tama": null
+      },
+      "order": [
+        "한 바퀴 더(2바퀴)",
+        "도움말",
+        "하급 호로 출몰지약한 적 출현",
+        "결계전투에서 받는 피해 ↓",
+        "전령신기 보급소배부름·컨디션 회복 · 시간 소모",
+        "0번 칸 (둥지, 고정 칸)",
+        "1번 칸 (비어 있음)",
+        "2번 칸 (비어 있음)",
+        "3번 칸 (비어 있음)",
+        "4번 칸 (비어 있음)",
+        "5번 칸 (비어 있음)",
+        "6번 칸 (비어 있음)",
+        "7번 칸 (비어 있음)",
+        "8번 칸 (비어 있음)",
+        "9번 칸 (비어 있음)",
+        "10번 칸 (비어 있음)",
+        "11번 칸 (비어 있음)",
+        "전령신기 보급소배부름·컨디션 회복 · 시간 소모×1",
+        "하급 호로 출몰지약한 적 출현×2",
+        "귀환",
+        "한 바퀴 더(2바퀴)",
+        "도움말",
+        "하급 호로 출몰지약한 적 출현",
+        "결계전투에서 받는 피해 ↓"
+      ],
+      "pauseInOrder": false,
+      "ok": true,
+      "tile": {
+        "card": {
+          "lab": "전령신기 보급소배부름·컨디션 회복 · 시간 소모×1",
+          "cls": "bha-tilecard.bha-tilecard--rest.bha-sel",
+          "care": null,
+          "tama": null
+        },
+        "afterPick": {
+          "lab": "1번 칸 (놓을 수 있음)",
+          "cls": "bha-road__cell.bha-sel",
+          "care": null,
+          "tama": null
+        },
+        "afterPlace": {
+          "lab": "하급 호로 출몰지약한 적 출현×2",
+          "cls": "bha-tilecard.bha-tilecard--prey.bha-sel",
+          "care": null,
+          "tama": null
+        },
+        "ok": true
+      }
+    }
+  },
+  "trace": [],
+  "errors": []
+}

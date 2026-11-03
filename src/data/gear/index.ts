@@ -9,7 +9,7 @@ export type GearSlot = (typeof GEAR_SLOTS)[number];
 /** 등급 (GDD 91장 3번): 블록 등급과 같은 4단계. 표시 이름은 공통 */
 export const GEAR_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
 export type GearGrade = (typeof GEAR_GRADES)[number];
-export const GEAR_GRADE_NAMES: Record<GearGrade, string> = { normal: '노말', rare: '레어', epic: '영웅', legendary: '전설' };
+export const GEAR_GRADE_NAMES: Record<GearGrade, string> = { normal: '노멀', rare: '레어', epic: '영웅', legendary: '전설' };
 /** 특수 효과 종류 (GDD 91장 4번 예: 조 블록 피해 +10%, 강적에게 피해 +8%): family = 그 계열 블록 피해, elite = 강적·보스에게 피해, critDamage = 치명 피해, shield = 전투 시작 보호막 */
 /** activeShield·activeBurst = 전투 [장비] 버튼 발동 효과 (GDD 105장 수정 4, C.177) */
 export const GEAR_SPECIAL_EFFECTS = ['family', 'elite', 'critDamage', 'shield', 'activeShield', 'activeBurst'] as const;

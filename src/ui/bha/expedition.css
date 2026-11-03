@@ -250,7 +250,8 @@
 .bha-presets__chip .bha-icon { width: 14px; height: 14px; }
 .bha-presets__chip.is-on { border: 2px solid var(--bha-focus); background: var(--bha-bg-3); }
 .bha-presets__chipname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bha-presets__view { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 36px; justify-content: center; }
+.bha-presets__view { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 36px; height: 40px; justify-content: center; } /* GDD 173장 2: 높이 고정(줄무늬+요약 / 빈 칸 안내 / 이름 입력) — 아래 버튼 4개 자리 고정 */
+.bha-presets__view > .bha-faint { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bha-presets__view:has(.bha-presets__input) { flex-direction: row; align-items: center; }
 .bha-presets__sum { font-size: var(--bha-fs-xs); color: var(--bha-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bha-presets__acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }

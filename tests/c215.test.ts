@@ -67,7 +67,7 @@ describe('137장 3 밖으로 고정 · 월드맵 걸어가서 페이드 전환',
       const a = standFoot(L.home), b = standFoot(L.adventure);
       const d = departFoot(a, b);
       expect(Math.hypot(d.x - a.x, d.y - a.y)).toBeLessThan(Math.hypot(b.x - a.x, b.y - a.y) / 2);
-      expect(d.x).toBeGreaterThan(a.x);
+      expect(Math.sign(d.x - a.x)).toBe(Math.sign(b.x - a.x)); // 목적지 쪽으로 (C.263 배치로 모험이 홈 왼쪽)
       expect(departFoot(a, a)).toEqual(a);
     }
     expect(WORLD_DEPART_MS).toBe(400);

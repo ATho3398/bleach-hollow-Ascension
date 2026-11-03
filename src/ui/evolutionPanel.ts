@@ -140,21 +140,21 @@ export function abilityGainRow(gain: AbilityGain, scale: number, factionId: stri
   }
 }
 
-/** 진화 후 달라진 점 행들(임시 수치): 슬롯·속성·고유 특성·종족값·외형 */
+/** 진화 후 달라진 점 행들(임시 수치): 슬롯·체력·속성·특성·능력치 한 줄 (GDD 176장 20: 외형 줄·종족값 수치 뺌) */
 export function evolutionEffectRows(
-  faction: FactionConfig, form: FormDef, slotsAfter?: number, extra?: EvolutionExtra,
+  faction: FactionConfig, form: FormDef, _slotsAfter?: number, extra?: EvolutionExtra,
 ): { icon: string; label: string; value: string | Node; sub?: string; mod?: 'good' | 'stack' }[] {
   const slots = EV.slotsPerEvolution;
   const rows: { icon: string; label: string; value: string | Node; sub?: string; mod?: 'good' | 'stack' }[] = [
     {
       icon: 'i-slot', label: faction.slotName, mod: 'good',
-      value: slotsAfter !== undefined ? `${slotsAfter - slots} → ${slotsAfter}칸` : `+${slots}칸`, sub: `+${slots}`,
+      value: `+${slots}칸`, // 몇 칸 → 몇 칸·종족값 수치는 상태 화면·도감 상세에서 (GDD 176장 20)
     },
     { icon: 'i-heal', label: '체력', value: '가득 회복', mod: 'good' }, // 진화하면 체력 가득 (GDD 145장 2)
   ];
   if (extra) rows.push({ icon: 'i-weak', label: '속성', value: elementsMark(extra.elements, faction.id) });
   if (extra?.abilitySlotsAdded && extra.abilitySlots !== undefined) {
-    rows.push({ icon: 'i-rare', label: '특성 칸', value: `${extra.abilitySlots - extra.abilitySlotsAdded} → ${extra.abilitySlots}칸`, sub: `+${extra.abilitySlotsAdded}`, mod: 'good' });
+    rows.push({ icon: 'i-rare', label: '특성 칸', value: `+${extra.abilitySlotsAdded}칸`, mod: 'good' });
   }
   if (extra?.abilityGain) {
     const r = abilityGainRow(extra.abilityGain, extra.abilityScale ?? 1, faction.id);
@@ -163,10 +163,8 @@ export function evolutionEffectRows(
     const lines = extra ? (extra.ev ? abilityLines(formAbilitiesOf(form, extra.ev, extra.ability), faction.id) : abilityLines(formAbilitiesOf(form, zeroStats(), extra.ability), faction.id)) : [];
     for (const l of lines) rows.push({ icon: 'i-rare', label: `${ABILITY_SLOT_LABEL[l.slot]} 특성`, value: `${l.name} — ${l.description}`, mod: 'stack' });
   }
-  rows.push(
-    { icon: 'i-cond', label: '종족값', value: statsLine(faction.id, extra?.stats ?? form.stats), mod: 'stack' },
-    { icon: 'i-evolve', label: '외형', value: appearanceText(faction), mod: 'stack' },
-  );
+  // 종족값 수치·외형 줄(개발자 말)은 빼고 한 줄 (GDD 176장 20) — 수치는 상태 화면·진화체 도감 상세
+  rows.push({ icon: 'i-cond', label: '능력치', value: '진화체 기본 능력치가 바뀌었다', mod: 'stack' });
   return rows;
 }
 

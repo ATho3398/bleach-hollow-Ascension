@@ -33,8 +33,23 @@ export interface ScreenEntry {
   home?: boolean;
 }
 
+/** 화면 위에 다른 화면을 쌓을 때 아래 화면의 기기 초점을 기억했다가, 뒤로 돌아오면 그 칸으로 돌려준다 (GDD 176장 8 — 월드맵 방식을 모든 화면에) */
+export interface FocusMemory {
+  save: () => unknown;
+  restore: (saved: unknown) => void;
+}
+
 export class ScreenStack {
   private entries: ScreenEntry[] = [];
+  private saved = new WeakMap<ScreenEntry, unknown>();
+  constructor(private readonly memory: FocusMemory | null = null) {}
+
+  /** 아래 화면으로 돌아왔다: 기억한 초점을 돌려줄 준비를 하고 다시 그린다 */
+  private reopen(): void {
+    const t = this.top!;
+    if (this.memory && this.saved.has(t)) this.memory.restore(this.saved.get(t));
+    t.render();
+  }
 
   get size(): number {
     return this.entries.length;
@@ -46,6 +61,8 @@ export class ScreenStack {
 
   /** 새 화면을 쌓고 그린다 */
   push(e: ScreenEntry): void {
+    const below = this.top;
+    if (below && this.memory) this.saved.set(below, this.memory.save());
     this.entries.push(e);
     e.render();
   }
@@ -53,7 +70,9 @@ export class ScreenStack {
   /** 맨 위 화면을 다른 화면으로 바꾼다 (같은 흐름 안의 이동: 원정 → 전투 → 결과). 비어 있으면 push */
   replace(e: ScreenEntry): void {
     this.entries.pop();
-    this.push(e);
+    // 바꿔 넣을 때는 아래 화면의 기억을 그대로 둔다(아래 화면에서 나간 때의 칸)
+    this.entries.push(e);
+    e.render();
   }
 
   /** 스택을 비우고 홈 하나만 남긴다 */
@@ -66,7 +85,7 @@ export class ScreenStack {
   pop(): boolean {
     if (this.entries.length <= 1) return false;
     this.entries.pop();
-    this.top!.render();
+    this.reopen();
     return true;
   }
 
@@ -94,7 +113,7 @@ export class ScreenStack {
     if (t.interceptBack?.()) return true;
     t.beforeBack?.();
     this.entries.pop();
-    this.top!.render();
+    this.reopen();
     return true;
   }
 }

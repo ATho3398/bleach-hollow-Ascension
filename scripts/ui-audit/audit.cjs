@@ -8,7 +8,7 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
-const { snapshotInPage, staticInPage, cardsInPage } = require('./checks.cjs');
+const { snapshotInPage, staticInPage, cardsInPage, boxGlowInPage } = require('./checks.cjs');
 const { SCREENS } = require('./screens.cjs');
 
 const ROOT = path.resolve(__dirname, '../..');
@@ -204,6 +204,11 @@ function makeHelper(page, faction, report) {
       await h.spaceBack(screen);
       // C.218 (GDD 140장 3): 카드 고르는 창 — 같은 줄 카드 크기·카드 글 잘림·창 처음 스크롤 0 (▼ 돌리기 전에 잰다)
       if (!opts.noCards) for (const i of await page.evaluate(cardsInPage)) report.push({ faction, screen, ...i });
+      // C.261 (GDD 178장 3): 그림만 있는 버튼의 강조가 네모 상자로 그려지는가
+      for (const i of await page.evaluate(boxGlowInPage)) {
+        report.push({ faction, screen, ...i });
+        console.log(`\n[강조 네모 상자] ${faction} ${screen} ${i.key} — ${i.detail}`);
+      }
       if (process.env.UI_AUDIT_DUMP) {
         const list = await page.evaluate(() => [...document.querySelectorAll('.bha-lcd button, .bha-lcd [role="tab"], .bha-lcd input')].filter((e) => e.getClientRects().length > 0).map((e) => `${[...e.classList].filter((c) => c.startsWith('bha-')).slice(0, 2).join('.')}|${(e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 18)}`));
         console.log(`\n## ${faction} ${screen}\n${list.join('\n')}`);

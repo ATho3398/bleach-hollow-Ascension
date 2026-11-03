@@ -1,0 +1,218 @@
+{
+  "runs": [
+    {
+      "faction": "hollow",
+      "errors": [],
+      "filling": {
+        "state": "filling",
+        "fill": "67%",
+        "label": "다음 기술 블록까지 67% · 3.3초마다 1개",
+        "tray": 0,
+        "cap": 8,
+        "spawnTimer": 11,
+        "sealTicks": 0,
+        "pill": {
+          "x": 354,
+          "y": 244,
+          "w": 100
+        },
+        "guard": {
+          "x": 461,
+          "y": 244,
+          "w": 100
+        },
+        "item": {
+          "x": 567,
+          "y": 244,
+          "w": 32
+        },
+        "gear": {
+          "x": 605,
+          "y": 244,
+          "w": 32
+        },
+        "cellsVisible": 0,
+        "veil": 0
+      },
+      "full": {
+        "state": "full",
+        "fill": "100%",
+        "label": "블록 바가 가득 차 생성 정지",
+        "tray": 8,
+        "cap": 8,
+        "spawnTimer": 33,
+        "sealTicks": 0,
+        "pill": {
+          "x": 354,
+          "y": 244,
+          "w": 100
+        },
+        "guard": {
+          "x": 461,
+          "y": 244,
+          "w": 100
+        },
+        "item": {
+          "x": 567,
+          "y": 244,
+          "w": 32
+        },
+        "gear": {
+          "x": 605,
+          "y": 244,
+          "w": 32
+        },
+        "cellsVisible": 8,
+        "veil": 0
+      },
+      "sealed": {
+        "state": "sealed",
+        "fill": "0%",
+        "label": "봉인 — 새 기술 블록 생성 정지 5.5초 (있는 블록은 쓸 수 있다)",
+        "tray": 4,
+        "cap": 8,
+        "spawnTimer": 33,
+        "sealTicks": 55,
+        "pill": {
+          "x": 321,
+          "y": 244,
+          "w": 134
+        },
+        "guard": {
+          "x": 461,
+          "y": 244,
+          "w": 100
+        },
+        "item": {
+          "x": 567,
+          "y": 244,
+          "w": 32
+        },
+        "gear": {
+          "x": 605,
+          "y": 244,
+          "w": 32
+        },
+        "cellsVisible": 4,
+        "veil": 0
+      },
+      "sealedUse": {
+        "trayBefore": 4,
+        "trayAfter": 3
+      },
+      "libReady": "none",
+      "libOn": {
+        "app": "rgb(198, 186, 169) 0px 0px 0px 2px inset",
+        "fig": "none",
+        "before": "none"
+      }
+    },
+    {
+      "faction": "shinigami",
+      "errors": [],
+      "filling": {
+        "state": "filling",
+        "fill": "70%",
+        "label": "다음 기술 블록까지 70% · 3.3초마다 1개",
+        "tray": 0,
+        "cap": 8,
+        "spawnTimer": 10,
+        "sealTicks": 0,
+        "pill": {
+          "x": 354,
+          "y": 244,
+          "w": 100
+        },
+        "guard": {
+          "x": 461,
+          "y": 244,
+          "w": 100
+        },
+        "item": {
+          "x": 567,
+          "y": 244,
+          "w": 32
+        },
+        "gear": {
+          "x": 605,
+          "y": 244,
+          "w": 32
+        },
+        "cellsVisible": 0,
+        "veil": 0
+      },
+      "full": {
+        "state": "full",
+        "fill": "100%",
+        "label": "블록 바가 가득 차 생성 정지",
+        "tray": 8,
+        "cap": 8,
+        "spawnTimer": 33,
+        "sealTicks": 0,
+        "pill": {
+          "x": 354,
+          "y": 244,
+          "w": 100
+        },
+        "guard": {
+          "x": 461,
+          "y": 244,
+          "w": 100
+        },
+        "item": {
+          "x": 567,
+          "y": 244,
+          "w": 32
+        },
+        "gear": {
+          "x": 605,
+          "y": 244,
+          "w": 32
+        },
+        "cellsVisible": 8,
+        "veil": 0
+      },
+      "sealed": {
+        "state": "sealed",
+        "fill": "0%",
+        "label": "봉인 — 새 기술 블록 생성 정지 5.5초 (있는 블록은 쓸 수 있다)",
+        "tray": 4,
+        "cap": 8,
+        "spawnTimer": 33,
+        "sealTicks": 55,
+        "pill": {
+          "x": 321,
+          "y": 244,
+          "w": 134
+        },
+        "guard": {
+          "x": 461,
+          "y": 244,
+          "w": 100
+        },
+        "item": {
+          "x": 567,
+          "y": 244,
+          "w": 32
+        },
+        "gear": {
+          "x": 605,
+          "y": 244,
+          "w": 32
+        },
+        "cellsVisible": 4,
+        "veil": 0
+      },
+      "sealedUse": {
+        "trayBefore": 4,
+        "trayAfter": 2
+      },
+      "libReady": "none",
+      "libOn": {
+        "app": "rgb(192, 190, 182) 0px 0px 0px 2px inset",
+        "fig": "none",
+        "before": "none"
+      }
+    }
+  ]
+}

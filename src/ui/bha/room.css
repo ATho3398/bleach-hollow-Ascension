@@ -9,7 +9,7 @@
 .bha-room__name { margin-right: auto; display: inline-flex; align-items: center; gap: var(--bha-sp-2); font-weight: var(--bha-fw-bold); }
 .bha-room__note { font-size: var(--bha-fs-xs); color: var(--bha-warn); flex: none; }
 
-.bha-room__body { flex: 1 1 auto; min-height: 0; display: flex; gap: var(--bha-sp-3); }
+.bha-room__body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; gap: var(--bha-sp-3); }
 
 /* ── 하단 독 (GDD 18-2): 돌보기(색 테두리 버튼) | 메뉴(아이콘). 먹이·더보기는 독 위로 줄이 펼쳐진다(장면에 겹침) ── */
 .bha-homedock { position: relative; flex: none; }
@@ -119,8 +119,8 @@
 /* 그림 캐릭터는 발(몸 상자 92.6%)을 축으로 눕혀 그림자 위 바닥에 눕힌다: 몸 가운데 = 그림자, 몸 아래 끝 = 바닥(발 높이) — 그림 불투명 범위로 잰다 — 발밑 체력 막대와 안 겹친다 (C.200, room.ts --lie-*) */
 .bha-char.is-collapsed .bha-char__body.has-art { transform-origin: 50% 92.6%; translate: var(--lie-dx, 0px) calc(var(--lie-up, 0px) * -1); }
 .bha-room__scene.is-dead { filter: brightness(0.35) grayscale(0.7); }
-.bha-room__hud.is-care { justify-content: flex-start; flex-wrap: wrap; gap: var(--bha-sp-3); }
-.bha-room__hud.is-care > .bha-notice { flex: 1 1 60%; min-width: 0; }
+/* 사망 [부활] (GDD 177장): 방 위 띠 대신 장면 왼쪽 위(장면 밖 형제라 어두운 사망 필터를 안 받는다) — 장면 크기는 늘 같다 */
+.bha-room__revive { position: absolute; left: var(--bha-sp-4); top: var(--bha-sp-4); z-index: var(--bha-z-raised); }
 
 /* ── 캐릭터: 제자리 2프레임 숨쉬기 (step-end 로 두 모양만 번갈아) ── */
 .bha-char {
@@ -208,6 +208,12 @@
   transform: translateY(-100%);
   width: 22px; height: 22px; background: rgb(0 0 0 / 0.55);
 }
+/* 빈사·쓰러짐 자세 (GDD 176장, 171장 남은 것): 띠로 방이 낮아져 머리 위에 칩 자리가 없으면 칩·ⓘ 를 캐릭터 옆 위로 — 머리를 가리지 않는다 (roomView 가 .is-side 를 붙인다).
+   위 끝은 방 안(이름표 포함), 옆은 캐릭터 상자 바깥(--char-half). 캐릭터가 왼쪽에 있으면 오른쪽(.is-right) */
+.bha-room__status.is-side { top: calc(var(--chip-h, 0px) + var(--bha-sp-6)); left: calc(var(--char-x, 50%) - var(--char-half, 65px) - var(--bha-sp-2)); transform: translate(-100%, -100%); }
+.bha-room__status.is-side.is-right { left: calc(var(--char-x, 50%) + var(--char-half, 65px) + var(--bha-sp-2)); transform: translate(0, -100%); }
+.bha-room__statusinfo.is-side { top: calc(var(--chip-h, 0px) + var(--bha-sp-6)); left: calc(var(--char-x, 50%) - var(--char-half, 65px) - var(--bha-sp-2) - 94px - var(--bha-sp-3)); transform: translate(-100%, -100%); }
+.bha-room__statusinfo.is-side.is-right { left: calc(var(--char-x, 50%) + var(--char-half, 65px) + var(--bha-sp-2) + 94px + var(--bha-sp-3)); transform: translate(0, -100%); }
 @keyframes bha-bubble-pop { from { opacity: 0; transform: translate(-50%, -100%) scale(0.9); } }
 @keyframes bha-bubble-pop-side { from { opacity: 0; transform: scale(0.9); } }
 

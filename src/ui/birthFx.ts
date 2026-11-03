@@ -71,8 +71,11 @@ export function playBirth(faction: Pick<FactionConfig, 'birthFx'>, o: BirthOptio
     reveal();
     o.onDone?.();
   };
+  let skipping = false;
   function skip(): void {
-    if (done) return;
+    // 연타해도 한 번만 (GDD 176장 5 같은 종류): 다시 부르면 걷히는 타이머를 지우고 새로 걸어 연출이 끝나지 않았다
+    if (done || skipping) return;
+    skipping = true;
     // 건너뛰기: 바로 드러내고 짧게 걷힌다
     for (const t of timers.splice(0)) window.clearTimeout(t);
     reveal();

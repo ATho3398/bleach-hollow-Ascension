@@ -172,11 +172,11 @@ export type InventoryResult = { ok: true; detail: string; /** 먹이를 뱉음 (
 export function useInventoryItem(save: SaveData, faction: FactionConfig, id: string): InventoryResult {
   if (id.startsWith('food-')) {
     const f = id.slice(5) as FoodId;
-    if (!(FOOD_IDS as readonly string[]).includes(f)) return { ok: false, reason: '모르는 먹이다' };
+    if (!(FOOD_IDS as readonly string[]).includes(f)) return { ok: false, reason: '모르는 음식이다' };
     if (save.activeExpedition != null) return { ok: false, reason: '모험 중인 캐릭터에는 못 쓴다' };
     if (save.nest.dead) return { ok: false, reason: `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` };
     const fed = feedNest(save, f);
-    if (!fed) return { ok: false, reason: '먹이가 없다' };
+    if (!fed) return { ok: false, reason: '먹을 것이 없다' };
     if (fed === 'spat') return { ok: true, detail: '더는 못 먹어 — 뱉었다', spat: true };
     return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}` }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
   }
