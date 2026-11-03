@@ -177,10 +177,11 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
   it('방: 두 종족 room.layout 이 같고 사용자가 잡은 값', () => {
     const [a, b] = FACTIONS.map((f) => roomOf(f).layout);
     for (const k of ['book', 'chest', 'outside', 'rank'] as const) expect(spot(a![k])).toEqual(spot(b![k]));
-    expect(spot(a!.book)).toEqual({ x: 74.6, y: 66.1, scale: 1.04 });
+    // C.268 (사용자 2026-11-04 00:58 "호로 기준으로 홈 진급시험 사이즈랑 위치 맞춰놨으니까, 사신도 똑같이 맞춰"): 책장·진급 시험 다시 잡음
+    expect(spot(a!.book)).toEqual({ x: 71.4, y: 68.8, scale: 0.91 });
     // y 91.7 → 91.2: 기준 장면 바닥 아래 끝(이름표 자리)에서 게임이 91.2 로 끌어 놓던 값을 그대로 적음 (보이는 자리 같음)
     expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.8 });
-    expect(spot(a!.rank)).toEqual({ x: 71.2, y: 91.2, scale: 0.68 });
+    expect(spot(a!.rank)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 });
   });
   it('시장: 종족 json 에 layout 없음 → 공통 기본값 하나', () => {
     for (const f of FACTIONS) expect(f.market?.layout).toBeUndefined();
