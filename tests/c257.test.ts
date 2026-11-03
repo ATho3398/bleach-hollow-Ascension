@@ -47,7 +47,7 @@ describe('C.257 174장 3 잠금 그대로', () => {
   it('해금 단계 전이면 자물쇠·흐림(is-locked) + 토스트, 문구는 해금 단계·종족 이름', () => {
     const rv = read('src/ui/roomView.ts');
     expect(rv).toContain("b.classList.add('is-locked');");
-    expect(rv).toContain("b.append(icon('i-lock'));");
+    expect(rv).toContain('lockProp(b);'); // C.265: 자물쇠는 그림 칸 안 귀퉁이 (room.ts lockProp)
     const app = read('src/ui/app.ts');
     expect(app).toContain('rankLock: rankUnlocked(s.evolution.tierIndex) ? null : rankLockedText(faction),');
     for (const f of FACTIONS) {

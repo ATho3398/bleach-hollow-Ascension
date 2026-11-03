@@ -19,7 +19,7 @@ import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
 import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
 import { confirmDialog } from './confirmDialog';
@@ -191,7 +191,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (p === 'rank' && hd.rankLock) {
       b.classList.add('is-locked');
       b.setAttribute('aria-disabled', 'true');
-      b.append(icon('i-lock'));
+      lockProp(b);
       b.title = hd.rankLock;
       b.setAttribute('aria-description', hd.rankLock);
     }

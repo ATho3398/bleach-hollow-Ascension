@@ -113,8 +113,10 @@
 .bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
 /* 쓰러짐·사망 (GDD 102-7, C.175): 모험 문 잠김 = 흐리게 + 자물쇠, 캐릭터는 눕히고 흐리게, 사망 = 어두운 방, 위 줄 = 큰 안내 + 버튼 */
-.bha-prop.is-locked .bha-prop__shape { opacity: 0.45; border-color: var(--bha-danger); }
-.bha-prop.is-locked > .bha-icon { position: absolute; top: 0; right: 0; width: 16px; height: 16px; color: var(--bha-danger); }
+/* 잠김: 그림만 흐리게, 자물쇠는 그 물건 그림 칸 안 오른쪽 아래 귀퉁이 — 흐림 없이 (C.265: 칸 밖 위 귀퉁이에 붙어 옆 물건 이름표 것처럼 보였다) */
+.bha-prop.is-locked .bha-prop__shape { position: relative; border-color: var(--bha-danger); }
+.bha-prop.is-locked .bha-prop__shape > :not(.bha-prop__lock) { opacity: 0.45; }
+.bha-prop__lock { position: absolute; right: 2px; bottom: 2px; width: 16px; height: 16px; color: var(--bha-danger); filter: drop-shadow(0 0 2px var(--bha-bg-0)); }
 .bha-char.is-collapsed .bha-char__body { rotate: 90deg; opacity: 0.55; }
 /* 그림 캐릭터는 발(몸 상자 92.6%)을 축으로 눕혀 그림자 위 바닥에 눕힌다: 몸 가운데 = 그림자, 몸 아래 끝 = 바닥(발 높이) — 그림 불투명 범위로 잰다 — 발밑 체력 막대와 안 겹친다 (C.200, room.ts --lie-*) */
 .bha-char.is-collapsed .bha-char__body.has-art { transform-origin: 50% 92.6%; translate: var(--lie-dx, 0px) calc(var(--lie-up, 0px) * -1); }

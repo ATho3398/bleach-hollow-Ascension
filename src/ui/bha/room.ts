@@ -52,6 +52,13 @@ export interface PropOpts {
   icon?: string;
 }
 
+/** 잠긴 물건 자물쇠: 그 물건 그림 칸 안쪽 오른쪽 아래 귀퉁이에 (다른 물건 이름표와 안 겹치게 — 방·월드맵·시장 공통, C.265) */
+export function lockProp(b: HTMLElement): void {
+  const lock = icon('i-lock');
+  lock.classList.add('bha-prop__lock');
+  (b.querySelector('.bha-prop__shape') ?? b).append(lock);
+}
+
 /** 방 안 물건 = 선택 항목(button). 이름표는 항상 보인다 */
 export function propButton(o: PropOpts): HTMLButtonElement {
   const b = el('button', `bha-art bha-prop bha-prop--${o.prop}${o.alert ? ' is-alert' : ''}`);

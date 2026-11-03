@@ -10,7 +10,7 @@ import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
+import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
 import { fixParticles } from '../engine/josa';
 
 /** 장소 그림(place.<장소>.<종족>)이 비었을 때 대신 쓰는 그림 키 — 수련장 = 방 짚인형 (GDD 160장 4) */
@@ -112,7 +112,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       b.setAttribute('aria-disabled', 'true');
     }
     if (reason !== undefined) {
-      b.append(icon('i-lock'));
+      lockProp(b);
       b.title = reason;
       b.setAttribute('aria-description', reason);
     }
@@ -124,7 +124,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     // 사망이면 모험·탑·수련장 잠김 표시 (GDD 102-7·139장 1·158장 1). 눌러도 막힘 안내는 onAdventure·onTower·onTraining 쪽
     if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead) {
       b.classList.add('is-locked');
-      b.append(icon('i-lock'));
+      lockProp(b);
     }
     if (wm.layout[p].hidden) b.hidden = true; // UI 배치 도구로 숨긴 장소 (GDD 175장) — 걷기·초점 계산이 단추를 찾으므로 만들고 감춘다
     scene.append(b);
