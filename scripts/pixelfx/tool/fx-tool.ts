@@ -231,6 +231,8 @@ function mountHero(): void {
   img.style.cssText = `position:absolute;left:${HERO_BOX.originX - size / 2}px;top:${HERO_BOX.originY + (HERO_BOX.y - HERO_BOX.originY) * s}px;width:${size}px;height:${size}px;image-rendering:pixelated;pointer-events:none`;
   heroHost.append(img);
   hero = { c, img, player: bindAnim(heroHost, img, art) };
+  // 게임처럼 평소엔 대기 동작을 돌린다 — 없으면 동작이 끝난 순간 그리기가 멈춰 휘두르던 자세로 굳는다(03:3x "모션 버그걸림")
+  hero.player?.setLoop('idle');
 }
 // 몸동작 목록: 종이인형 = 게임 motions.json 의 동작 전부(새 동작이 게임 데이터에 들어오면 도구를 다시 만들 때 저절로 늘어난다), 프레임 그림 = 그 그림에 있는 동작
 const MOTION_NAMES: Record<string, string> = {
