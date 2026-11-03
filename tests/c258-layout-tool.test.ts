@@ -182,22 +182,35 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
     expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.8 });
     expect(spot(a!.rank)).toEqual({ x: 71.2, y: 91.2, scale: 0.68 });
   });
-  it('시장·월드맵: 종족 json 에 layout 없음 → 공통 기본값 하나', () => {
-    for (const f of FACTIONS) {
-      expect(f.market?.layout).toBeUndefined();
-      expect(f.worldmap?.layout).toBeUndefined();
-    }
+  it('시장: 종족 json 에 layout 없음 → 공통 기본값 하나', () => {
+    for (const f of FACTIONS) expect(f.market?.layout).toBeUndefined();
     const m = marketOf(FACTIONS[0]!);
     expect(m.exit).toEqual({ x: 7.5, y: 83.1, scale: 0.64 });
     expect(m.layout.shop).toEqual({ x: 40.3, y: 79, scale: 0.9 });
     expect(m.layout.gearShop).toEqual({ x: 54.7, y: 39.5, scale: 0.88 });
     expect(m.layout.skinShop).toEqual({ x: 80.8, y: 41.6, scale: 1.01 });
-    const w = worldMapOf(FACTIONS[1]!).layout;
-    expect(w.home).toEqual({ x: 45.1, y: 64, scale: 1.08 });
-    expect(w.market).toEqual({ x: 60.2, y: 38, scale: 0.98 });
-    expect(w.training).toEqual({ x: 58.3, y: 93.2, scale: 0.9 });
-    expect(w.adventure).toEqual({ x: 19.5, y: 65, scale: 0.9 });
-    expect(w.tower).toEqual({ x: 11.8, y: 35.3, scale: 1.28 });
-    expect(w.spa).toEqual({ x: 88.7, y: 52.2, scale: 1.29 });
+  });
+});
+
+// C.264 (사용자 2026-11-04 00:19 "월드맵 배치 적용 ㄱㄱ", bha-layout-20261104-0019.json): 월드맵은 종족마다 따로 — 호로 = 공통 기본값, 사신 = shinigami.json worldmap.layout
+describe('C.264 월드맵 배치 반영 (종족별)', () => {
+  const W = (id: string) => worldMapOf(FACTIONS.find((f) => f.id === id)!).layout;
+  const spot = (s: { x: number; y: number; scale?: number }) => ({ x: s.x, y: s.y, scale: s.scale });
+  it('호로 = DEFAULT_WORLDMAP (모험·탑 옮김), json 에 layout 없음', () => {
+    expect(FACTIONS.find((f) => f.id === 'hollow')!.worldmap?.layout).toBeUndefined();
+    const w = W('hollow');
+    expect(spot(w.home)).toEqual({ x: 45.1, y: 64, scale: 1.08 });
+    expect(spot(w.adventure)).toEqual({ x: 22.9, y: 85.9, scale: 0.9 });
+    expect(spot(w.tower)).toEqual({ x: 11.7, y: 50.1, scale: 1.28 });
+    expect(spot(w.spa)).toEqual({ x: 88.7, y: 52.2, scale: 1.29 });
+  });
+  it('사신 = shinigami.json worldmap.layout 6곳', () => {
+    const w = W('shinigami');
+    expect(spot(w.home)).toEqual({ x: 45.3, y: 69, scale: 1.7 });
+    expect(spot(w.market)).toEqual({ x: 61.8, y: 32.1, scale: 0.98 });
+    expect(spot(w.training)).toEqual({ x: 62.3, y: 89.6, scale: 0.85 });
+    expect(spot(w.adventure)).toEqual({ x: 17.7, y: 85.6, scale: 1.05 });
+    expect(spot(w.tower)).toEqual({ x: 10.9, y: 44.5, scale: 1.15 });
+    expect(spot(w.spa)).toEqual({ x: 88.5, y: 55, scale: 1.29 });
   });
 });
