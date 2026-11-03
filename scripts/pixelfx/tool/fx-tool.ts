@@ -166,40 +166,33 @@ stageBox.addEventListener('pointercancel', endDrag);
 // ── 조절 칸 ──
 interface Field { key: 'dx' | 'dy' | 'scale' | 'angle' | 'bigScale'; label: string; step: number; min: number; max: number; unit: string }
 const FIELDS: Field[] = [
-  { key: 'dx', label: '가로', step: 1, min: -400, max: 400, unit: 'px' },
-  { key: 'dy', label: '세로', step: 1, min: -200, max: 200, unit: 'px' },
+  { key: 'dx', label: '가로', step: 1, min: -300, max: 300, unit: 'px' },
+  { key: 'dy', label: '세로', step: 1, min: -150, max: 150, unit: 'px' },
   { key: 'scale', label: '크기', step: 0.25, min: 0.25, max: 6, unit: '배' },
-  { key: 'angle', label: '각도', step: 5, min: -180, max: 180, unit: '°' },
-  { key: 'bigScale', label: '3단계 마지막 크기', step: 0.25, min: 0.25, max: 8, unit: '배' },
+  { key: 'angle', label: '각도', step: 1, min: -180, max: 180, unit: '°' },
+  { key: 'bigScale', label: '3단계 마지막', step: 0.25, min: 0.25, max: 8, unit: '배' },
 ];
-const inputs = new Map<Field['key'], HTMLInputElement>();
-const clamp = (f: Field, v: number) => Math.min(f.max, Math.max(f.min, Math.round(v / (f.step < 1 ? 0.25 : 1)) * (f.step < 1 ? 0.25 : 1)));
+/** 게이지(슬라이더) 한 줄: 이름 · 게이지 · 값 */
+const inputs = new Map<Field['key'], { range: HTMLInputElement; out: HTMLOutputElement; f: Field }>();
 for (const f of FIELDS) {
   const row = h('div', 'field');
   const lab = h('label', '', f.label);
   lab.htmlFor = `f-${f.key}`;
-  const minus = h('button', 'step', '−');
-  minus.type = 'button';
-  minus.setAttribute('aria-label', `${f.label} 줄이기`);
-  const inp = h('input');
-  inp.id = `f-${f.key}`;
-  inp.type = 'number';
-  inp.inputMode = 'decimal';
-  inp.step = String(f.step);
-  const plus = h('button', 'step', '+');
-  plus.type = 'button';
-  plus.setAttribute('aria-label', `${f.label} 늘리기`);
-  const unit = h('span', 'unit', f.unit);
-  const set = (v: number) => {
-    cur()[f.key] = clamp(f, v);
+  const range = h('input');
+  range.id = `f-${f.key}`;
+  range.type = 'range';
+  range.min = String(f.min);
+  range.max = String(f.max);
+  range.step = String(f.step);
+  const out = h('output', 'val');
+  out.htmlFor.add(range.id);
+  range.oninput = () => {
+    cur()[f.key] = Number(range.value);
     changed();
   };
-  minus.onclick = () => set(cur()[f.key] - f.step);
-  plus.onclick = () => set(cur()[f.key] + f.step);
-  inp.onchange = () => set(Number(inp.value) || 0);
-  row.append(lab, minus, inp, plus, unit);
+  row.append(lab, range, out);
   $('fields').append(row);
-  inputs.set(f.key, inp);
+  inputs.set(f.key, { range, out, f });
 }
 const flipBox = $<HTMLInputElement>('altflip');
 flipBox.onchange = () => {
@@ -255,7 +248,10 @@ function refresh(): void {
   for (const b of $('elements').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.el === element));
   for (const b of $('stages').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(Number(b.dataset.stage) === stage));
   const p = cur();
-  for (const f of FIELDS) inputs.get(f.key)!.value = String(p[f.key]);
+  for (const { range, out, f } of inputs.values()) {
+    range.value = String(p[f.key]);
+    out.textContent = `${f.key === 'dx' || f.key === 'dy' ? sign(p[f.key]) : p[f.key]}${f.unit}`;
+  }
   flipBox.checked = p.altFlip;
   $('summary').textContent = summary(p);
   layout();
