@@ -251,7 +251,7 @@ function draw() {
     img.className = 'part' + (l.slot === sel ? ' sel' : '');
     img.style.width = `${l.size[0] * K}px`;
     img.style.height = `${l.size[1] * K}px`;
-    const m = layerMatrix(rig, mats, l, motion ? MOTIONS[motion] : undefined);
+    const m = layerMatrix(rig, mats, l, motion ? MOTIONS[motion] : undefined, mt);
     img.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * K},${m[5] * K})`;
     stage.append(img);
     drawn.push({ slot: l.slot, m, img, size: l.size });

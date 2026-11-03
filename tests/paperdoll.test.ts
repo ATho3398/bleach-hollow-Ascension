@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { HUMANOID, MOTIONS, MOTION_SETS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, MOTION_SETS, apply, bodyBones, boneMatrices, flipsAt, insideFrame, jointMoveShift, layerMatrix, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -306,5 +306,27 @@ describe('동작 전환', () => {
     c.play('attack');
     c.advance(MOTIONS.attack!.duration + 1);
     expect(c.current!.id).toBe('move');
+  });
+});
+
+describe('뒤집기 시간 flipSpan (GDD 115-A 68, 어퍼컷 — 치는 순간만 몸·다리 반대쪽)', () => {
+  const base = { duration: 600, loop: false, tracks: {} };
+  it('flipSpan 이 없으면 동작 내내, 있으면 [시작, 끝) 안에서만 뒤집는다', () => {
+    expect(flipsAt({ ...base, flip: ['torso'] }, 'torso', 10)).toBe(true);
+    const m = { ...base, flip: ['torso'], flipSpan: [200, 400] as [number, number] };
+    expect([199, 200, 399, 400].map((t) => flipsAt(m, 'torso', t))).toEqual([false, true, true, false]);
+    expect(flipsAt(m, 'head', 300)).toBe(false);
+    expect(flipsAt(m, 'torso')).toBe(true); // 시각을 모르면 뒤집음(옛 호출)
+  });
+  it('층 행렬: 뒤집기 시간 밖은 그냥, 안은 그림 세로 가운데 기준 거울', () => {
+    const layer = lookLayers(HUMANOID, Object.keys(HUMANOID.looks)[0]!).find((l) => l.slot === 'torso')!;
+    const mats = boneMatrices(HUMANOID, {});
+    const m = { ...base, flip: ['torso'], flipSpan: [200, 400] as [number, number] };
+    expect(layerMatrix(HUMANOID, mats, layer, m, 100)).toEqual(partMatrix(mats[layer.bone]!, layer.at));
+    expect(layerMatrix(HUMANOID, mats, layer, m, 300)[0]).toBeCloseTo(-1);
+  });
+  it('데이터 점검: 뒤집기 시간이 길이 밖이면 잡는다', () => {
+    const bad = { ...MOTIONS, zz: { ...base, flip: ['torso'], flipSpan: [100, 900] as [number, number] } };
+    expect(validateRig(HUMANOID, bad, MOTION_SETS).join()).toMatch(/zz: 뒤집기 시간이 길이 밖/);
   });
 });

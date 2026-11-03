@@ -135,7 +135,7 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
       for (const p of parts) p.img.style.display = shown.includes(p) ? '' : 'none';
       shown.forEach((p, i) => {
         p.img.style.zIndex = String(i + 1);
-        p.img.style.transform = css(layerMatrix(rig, mats, p.layer, m), k);
+        p.img.style.transform = css(layerMatrix(rig, mats, p.layer, m, t), k);
       });
     }
     fx.style.zIndex = '999';

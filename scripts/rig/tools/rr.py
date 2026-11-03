@@ -33,7 +33,8 @@ for t in ts:
         part=rig['bodies'][body].get(s['id']) or (L.get(s['id']) if isinstance(L.get(s['id']),dict) else None)
         if not part: continue
         m=mul(get(s['bone']),[1,0,0,1,part['at'][0],part['at'][1]])
-        if s['id'] in mot.get('flip',[]):
+        fs=mot.get('flipSpan')
+        if s['id'] in mot.get('flip',[]) and (not fs or fs[0]<=t<fs[1]):
             ax=rig['swordAxis'] if s['id']=='weapon' else {'grip':[part['size'][0]/2,0],'tip':[part['size'][0]/2,1]}
             gx,gy=ax['grip'][0]+.5,ax['grip'][1]+.5;dx,dy=ax['tip'][0]-ax['grip'][0],ax['tip'][1]-ax['grip'][1];n=math.hypot(dx,dy);dx,dy=dx/n,dy/n
             a,b2,d=2*dx*dx-1,2*dx*dy,2*dy*dy-1; m=mul(m,[a,b2,b2,d,gx-a*gx-b2*gy,gy-b2*gx-d*gy])
