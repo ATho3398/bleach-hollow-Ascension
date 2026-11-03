@@ -4,7 +4,9 @@
 
 | 페이지 | 주소 | 데이터 |
 |---|---|---|
-| 이펙트 배치 도구 | https://claude.ai/artifact/8zYJY6nUzygqcDZGRG32to | db `fx/editor`(편집 중)·`fx/fixed`(확정) — 문서 필드 `json` = `{ stamp: "v3", families: { "<종족>/<계열 id>": [1블록, 2블록, 3블록] }, at }`, 블록 = `{ hits, gaps[타격 사이 ms], speed(시전 속도), layers: [최대 3 × { fx(pixelfx id), color(element·original), anchor(target·attacker), on[나오는 타격 0부터], delay, dx, dy, scale, angle, rate(재생 속도), altFlip }] }` (stamp v3, v2 는 도구가 옮김) |
+| 이펙트 배치 도구 | https://claude.ai/artifact/8zYJY6nUzygqcDZGRG32to | db `fx/editor`(편집 중)·`fx/fixed`(확정) — 문서 필드 `json` = `{ stamp: "v3", families: { "<종족>/<계열 id>": [1블록, 2블록, 3블록] }, at }`, 블록 = `{ hits, gaps[타격 사이 ms], speed(시전 속도), layers: [최대 3 × { fx(pixelfx id), color(element·original), anchor(target·attacker), on[나오는 타격 0부터], delay, dx, dy, scale, angle, rate(재생 속도), altFlip, move(stay·fly), travel(비행 ms), arc(곡선 px), tx·ty(도착 자리), face(방향 돌림), sync(hit·arrive) }] }` (stamp v3, v2 는 도구가 옮김) |
+
+투사체(사용자 2026-11-04 "투사체 날라가는 스킬은 이 툴에서 어떻게 구현할까? 너가 잘 만져줄래?"): 이펙트 움직임 = 날아감 → 치는 쪽(+dx,dy)에서 맞는 쪽(+tx,ty)까지 travel ms, 곡선 arc, 나는 동안 프레임 반복, 방향 돌림. 다른 이펙트는 시작 = '투사체 도착 때'(그 블록 첫 투사체, 같은 타격)로 맞출 수 있다. 게임에 넣을 때 맞음 반응(흰 깜빡임·타격)도 도착 시각에 맞춘다.
 
 v2 (사용자 2026-11-04 01:5x "연타 넣을거면 연타 타이밍 조정도 추가하고, 맞는 이펙트도 넣을 수 있도록 한 공격당 이펙트 최대 3개까지 불러올 수 있게 해. 공격 계열에 사신 참, 권, 귀, 호로 교, 조, 탄 으로 ㄱㄱ 그리고 각 공격계열 별 1블록, 2블록, 3블록도 추가"): pixelfx 244개를 도구 안에서 코드로 바로 그린다(`vendor/pixelfx/src` 를 번들 — 시트를 미리 뽑지 않는다). 게임에 넣을 때 고른 것만 `npm run fx -- add` 로 시트(속성 색이면 8장)를 뽑는다.
 

@@ -24,6 +24,7 @@ h1 { font-size: 17px; margin: 0; letter-spacing: .02em; }
 .mark::after { content: attr(data-label); position: absolute; left: 4px; top: 8px; font-size: 10px; color: var(--c); white-space: nowrap; }
 #mark-t { --c: var(--accent); }
 #mark-a { --c: var(--mark-a); }
+#dot2 { position: absolute; pointer-events: none; transform: translate(-50%, -50%); width: 8px; height: 8px; border: 2px solid var(--accent); border-radius: 50%; }
 #dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px #000; }
 .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip, .btn, select, input[type="search"] { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; min-height: 36px; }
@@ -57,7 +58,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
     <div class="row" id="stages" aria-label="블록 수"></div>
   </div>
   <div id="stage" aria-label="전투 화면. 끌어서 고른 이펙트 자리를 옮긴다">
-    <div id="world"><img alt="전투 화면 (1배 캡처)"><div class="mark" id="mark-t" data-label="맞는 쪽"></div><div class="mark" id="mark-a" data-label="치는 쪽"></div><div id="dot"></div></div>
+    <div id="world"><img alt="전투 화면 (1배 캡처)"><div class="mark" id="mark-t" data-label="맞는 쪽"></div><div class="mark" id="mark-a" data-label="치는 쪽"></div><div id="dot"></div><div id="dot2"></div></div>
   </div>
   <div class="row">
     <button class="btn" id="play" type="button">멈춤</button>
@@ -84,7 +85,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
       <input id="fxsearch" type="search" placeholder="찾기 (예: slash, hit, fire, 타격)" aria-label="이펙트 찾기">
       <select id="fx" aria-label="이펙트"></select>
       <div class="row" id="colorseg" aria-label="색"></div>
+      <div class="row" id="moveseg" aria-label="움직임"></div>
       <div class="row" id="anchorseg" aria-label="기준"></div>
+      <div class="row" id="syncseg" aria-label="시작 기준"></div>
+      <div id="flyedit">
+        <p class="dim" style="margin:0">치는 쪽(점)에서 맞는 쪽(동그라미)까지 난다. 무대를 끌면 출발 자리가 옮겨진다.</p>
+        <div id="flybox"></div>
+        <label class="row"><input id="face" type="checkbox"> 날아가는 방향으로 돌리기</label>
+      </div>
       <div class="row"><span class="dim">나오는 타격</span><div class="row" id="onseg" aria-label="나오는 타격"></div></div>
       <div id="layerbox"></div>
       <label class="row"><input id="altflip" type="checkbox"> 연타 짝수 번째 위아래 뒤집기</label>
