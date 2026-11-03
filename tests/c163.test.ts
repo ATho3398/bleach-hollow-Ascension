@@ -20,7 +20,7 @@ describe('C.163 2 수련장 세 화면 제목 토글', () => {
   it('훈련 인형·번호 쟁탈전 화면도 같은 trainingTitle, 서로 바꿔 끼운다', () => {
     const app = read('src/ui/app.ts');
     expect(app).toContain("title: trainingHead(faction, 'practice')");
-    expect(app).toContain("title: trainingHead(faction, 'rank')");
+    expect(app).not.toContain("trainingHead(faction, 'rank')"); // C.257 (GDD 174장 1): 진급 시험은 토글에서 빠졌다
     expect(app).toContain('function switchTraining(');
     expect(read('src/ui/trainingView.ts')).toContain("title: trainingTitle(faction, title, 'train', hd.onSwitch)");
     expect(read('src/ui/practiceView.ts')).toContain('title: h.title ??');

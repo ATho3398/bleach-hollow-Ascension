@@ -1,6 +1,6 @@
 // 방 바닥(걷는 면) 계산 (GDD 95장 A1, C.153): 배경 그림 안의 바닥 다각형 → 장면 좌표, 발 기준점을 바닥 안으로 끌어 놓기.
 // 순수 함수라 DOM 없이 테스트한다 (tests/c153.test.ts). 방 물건·캐릭터는 모두 이 함수를 거쳐 놓이므로 새 물건이 생겨도 바닥 밖으로 나가지 않는다.
-import type { RoomFloorConfig } from '../../engine/faction';
+import type { RoomFloorConfig, SceneView } from '../../engine/faction';
 
 export type Pt = [number, number];
 export interface SceneSize { w: number; h: number }
@@ -10,17 +10,26 @@ export const REF_SCENE: SceneSize = { w: 628, h: 296 };
 /** 이름표·여백을 뺀 기본 높이 (물건 그림 아래 → 이름표 아래 끝, px). 실제 값은 화면에서 잰다 */
 export const REF_LIFT = 26;
 
-/** 배경 그림(cover·가운데 맞춤) 위의 점(그림 대비 0~1) → 장면 px */
-export function imageToScenePx(p: Pt, scene: SceneSize, aspect: number): Pt {
+/** 배경 그림이 장면에 깔리는 상자(px): cover 크기 × zoom, 남는 만큼을 x·y %로 민다(CSS background-position % 와 같은 뜻). view 없으면 cover·가운데 (C.275) */
+export function bgBox(scene: SceneSize, aspect: number, view?: SceneView): { left: number; top: number; w: number; h: number; wide: boolean } {
   const wide = scene.w / scene.h >= aspect;
-  const dw = wide ? scene.w : scene.h * aspect;
-  const dh = wide ? scene.w / aspect : scene.h;
-  return [(scene.w - dw) / 2 + p[0] * dw, (scene.h - dh) / 2 + p[1] * dh];
+  const z = view?.zoom ?? 1;
+  const w = (wide ? scene.w : scene.h * aspect) * z;
+  const h = (wide ? scene.w / aspect : scene.h) * z;
+  const px = (view?.x ?? 50) / 100;
+  const py = (view?.y ?? 50) / 100;
+  return { left: (scene.w - w) * px, top: (scene.h - h) * py, w, h, wide };
 }
 
-/** 바닥 다각형 (장면 px) */
+/** 배경 그림(cover·가운데 맞춤, view 가 있으면 확대·이동) 위의 점(그림 대비 0~1) → 장면 px */
+export function imageToScenePx(p: Pt, scene: SceneSize, aspect: number, view?: SceneView): Pt {
+  const b = bgBox(scene, aspect, view);
+  return [b.left + p[0] * b.w, b.top + p[1] * b.h];
+}
+
+/** 바닥 다각형 (장면 px) — 배경 보기(view)를 따라 같이 움직인다 */
 export function floorPolyPx(floor: RoomFloorConfig, scene: SceneSize): Pt[] {
-  return floor.poly.map((p) => imageToScenePx(p, scene, floor.aspect));
+  return floor.poly.map((p) => imageToScenePx(p, scene, floor.aspect, floor.view));
 }
 
 /** 점이 다각형 안(경계 포함)인가 */

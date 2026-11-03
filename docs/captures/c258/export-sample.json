@@ -1,0 +1,176 @@
+{
+ "format": "bha-layout",
+ "version": 1,
+ "patch": "C.258",
+ "exportedAt": "2026-11-02T17:57:40.952Z",
+ "resolved": {
+  "room.shinigami": {
+   "faction": "shinigami",
+   "kind": "room",
+   "bgChanged": false,
+   "items": [
+    {
+     "key": "book",
+     "extra": false,
+     "name": "책장",
+     "x": 83.4,
+     "y": 74.3,
+     "scale": 0.68,
+     "hidden": false,
+     "icon": "i-shelf",
+     "art": null
+    },
+    {
+     "key": "chest",
+     "extra": false,
+     "name": "가방",
+     "x": 26,
+     "y": 90,
+     "scale": 0.68,
+     "hidden": false,
+     "icon": "i-deck",
+     "art": null
+    },
+    {
+     "key": "outside",
+     "extra": false,
+     "name": "월드맵",
+     "x": 9,
+     "y": 78,
+     "scale": 1,
+     "hidden": false,
+     "icon": "i-loop",
+     "art": null
+    },
+    {
+     "key": "rank",
+     "extra": false,
+     "name": "진급 시험",
+     "x": 76,
+     "y": 90,
+     "scale": 0.68,
+     "hidden": false,
+     "icon": "i-flag-win",
+     "art": null
+    },
+    {
+     "key": "new-1",
+     "extra": true,
+     "name": "우물",
+     "x": 36,
+     "y": 72,
+     "scale": 1,
+     "hidden": false,
+     "icon": "i-tile-rest",
+     "art": null
+    }
+   ]
+  },
+  "worldmap.hollow": {
+   "faction": "hollow",
+   "kind": "worldmap",
+   "bgChanged": false,
+   "items": [
+    {
+     "key": "home",
+     "extra": false,
+     "name": "둥지",
+     "x": 16,
+     "y": 84,
+     "scale": 1.08,
+     "hidden": false,
+     "icon": "i-nest",
+     "art": null
+    },
+    {
+     "key": "market",
+     "extra": false,
+     "name": "시장",
+     "x": 50,
+     "y": 48,
+     "scale": 0.9,
+     "hidden": false,
+     "icon": "i-flag-win",
+     "art": null
+    },
+    {
+     "key": "training",
+     "extra": false,
+     "name": "수련장",
+     "x": 50,
+     "y": 88,
+     "scale": 0.9,
+     "hidden": false,
+     "icon": "i-practice",
+     "art": null
+    },
+    {
+     "key": "adventure",
+     "extra": false,
+     "name": "모험",
+     "x": 84,
+     "y": 84,
+     "scale": 0.9,
+     "hidden": false,
+     "icon": "i-loop",
+     "art": null
+    },
+    {
+     "key": "tower",
+     "extra": false,
+     "name": "도전의 탑",
+     "x": 84,
+     "y": 40,
+     "scale": 1.4,
+     "hidden": false,
+     "icon": "i-title",
+     "art": null
+    },
+    {
+     "key": "spa",
+     "extra": false,
+     "name": "온천",
+     "x": 16,
+     "y": 40,
+     "scale": 1.08,
+     "hidden": false,
+     "icon": "i-tile-rest",
+     "art": null
+    }
+   ]
+  }
+ },
+ "draft": {
+  "v": 1,
+  "preview": true,
+  "scenes": {
+   "room.shinigami": {
+    "items": {
+     "book": {
+      "x": 83.4,
+      "y": 74.3
+     }
+    },
+    "extras": [
+     {
+      "id": "new-1",
+      "name": "우물",
+      "icon": "i-tile-rest",
+      "x": 36,
+      "y": 72,
+      "scale": 1
+     }
+    ]
+   },
+   "worldmap.hollow": {
+    "items": {
+     "tower": {
+      "scale": 1.4
+     }
+    },
+    "extras": []
+   }
+  },
+  "looks": {}
+ }
+}

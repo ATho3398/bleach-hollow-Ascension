@@ -102,7 +102,7 @@ describe('145장 1 → 164장 1: 온천 = 약 20초(옛 5분), 튜토리얼 온�
     expect(n.hpFraction).toBeCloseTo(1, 6);
   });
   it('쉬기 카드: 수치 없이 상황만 (GDD 157장 4 — "튜토리얼 온천은 10초…·평소 n분" 삭제), 평소 약 20초 (GDD 164장 1)', () => {
-    expect(RECOVER_SCENES.find((s) => s.id === 'spa-rest')!.body).toBe('{spaName}에서는 체력이 빠르게 찬다.\n이제 방으로 돌아가자.');
+    expect(RECOVER_SCENES.find((s) => s.id === 'spa-rest')!.body).toBe('{spaName}에서 체력을 가득 채웠다.\n{nestName}(으)로 돌아왔다.');
     expect(Math.round(1 / BALANCE.provisional.nest.homeHp.spa.hpPerSecond)).toBe(20);
   });
 });

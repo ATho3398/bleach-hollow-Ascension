@@ -1,10 +1,11 @@
 // 메인 방 화면의 장면 부품 (GDD 16장, T-1): 방 배경·물건·캐릭터. 그림은 src/data/art 매니페스트의 키로 참조하고,
 // 파일이 없으면 코드로 만든 자리표시 도형(CSS)이 나온다. 나중에 매니페스트에 파일만 적으면 같은 자리에 그림이 들어간다.
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
-import type { MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
+import type { ExtraProp, MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
 import { animOf, bindAnim } from './animPlayer';
 import { button, el, icon } from './dom';
-import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
+import { bgBox, footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
+import { showToast } from './nest';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -14,6 +15,7 @@ export const PROP_ICON: Record<RoomProp | MarketSpot | WorldPlace, string> = {
   gearShop: 'i-guard', skinShop: 'i-rare', traitShop: 'i-slot', smith: 'i-attack', // 상점 4곳 (GDD 150장 2): shop = 소모품 상점 · 대장장이 (153장 2)
   outside: 'i-loop', home: 'i-nest', adventure: 'i-loop', tower: 'i-title', // 월드맵 물건·월드맵 장소 (GDD 130장, C.204 · 탑 139장 1)
   training: 'i-practice', // 월드맵 수련장 (GDD 158장 1): 옛 방 수련장과 같은 아이콘
+  rank: 'i-flag-win', // 방 진급 시험 (GDD 174장 2): 그림 prop.rank 대기 — 진급 시험 화면의 깃발과 같은 아이콘
 };
 
 /** 방 장면 틀. 배경 그림이 있으면 --room-art 로 깔린다 */
@@ -32,7 +34,8 @@ export function sceneBox(room: Pick<RoomConfig, 'shape' | 'sceneArt'>): HTMLElem
 }
 
 export interface PropOpts {
-  prop: RoomProp | MarketSpot | WorldPlace;
+  /** 물건 id. 새 물건(GDD 175장)은 자기 id 라 icon·artKey 를 같이 준다 */
+  prop: RoomProp | MarketSpot | WorldPlace | string;
   name: string;
   x: number;
   y: number;
@@ -43,6 +46,17 @@ export interface PropOpts {
   alert?: boolean;
   /** 제 그림(prop.<물건>)이 없을 때 대신 쓸 그림 키 — 장터 물건은 상점 그림 (C.201, 장터 그림 대기) */
   fallbackArt?: string;
+  /** 그림 키를 prop.<물건> 대신 이것으로 (같은 물건이 화면마다 다른 그림 — 시장의 월드맵 물건 = 지도 그림, C.255 · 새 물건은 자기 키, GDD 175장) */
+  artKey?: string;
+  /** 그림이 없을 때 아이콘 (기본 PROP_ICON) — 새 물건·배치 도구에서 고른 아이콘 */
+  icon?: string;
+}
+
+/** 잠긴 물건 자물쇠: 그 물건 그림 칸 안쪽 오른쪽 아래 귀퉁이에 (다른 물건 이름표와 안 겹치게 — 방·월드맵·시장 공통, C.265) */
+export function lockProp(b: HTMLElement): void {
+  const lock = icon('i-lock');
+  lock.classList.add('bha-prop__lock');
+  (b.querySelector('.bha-prop__shape') ?? b).append(lock);
 }
 
 /** 방 안 물건 = 선택 항목(button). 이름표는 항상 보인다 */
@@ -54,20 +68,37 @@ export function propButton(o: PropOpts): HTMLButtonElement {
   b.style.left = `${o.x}%`;
   b.style.top = `${o.y}%`;
   // 배치 배율(종족 설정 layout) × 그림 배율(ART_MANIFEST prop.<물건>.scale — 월드맵 물건 1.5·장비 상점 1.2, GDD 160장 1·3)
-  const s = (o.scale ?? 1) * artUrls(`prop.${o.prop}`, BASE).scale;
+  const key = o.artKey ?? `prop.${o.prop}`;
+  const s = (o.scale ?? 1) * artUrls(key, BASE).scale;
   if (s !== 1) b.style.setProperty('--prop-s', String(s));
   b.setAttribute('aria-label', o.name);
   const shape = el('span', 'bha-prop__shape bha-art-img');
-  const src = artUrls(`prop.${o.prop}`, BASE).src ?? (o.fallbackArt ? artUrls(o.fallbackArt, BASE).src : null);
+  const src = artUrls(key, BASE).src ?? (o.fallbackArt ? artUrls(o.fallbackArt, BASE).src : null);
   if (src) {
     const img = el('img', 'bha-prop__img') as HTMLImageElement;
     img.src = src;
     img.alt = '';
     shape.append(img);
     shape.classList.add('has-art');
-  } else shape.append(icon(PROP_ICON[o.prop]));
+  } else shape.append(icon(o.icon ?? PROP_ICON[o.prop as RoomProp] ?? 'i-special'));
   b.append(shape, el('span', 'bha-prop__tag', o.name));
   return b;
+}
+
+/** 새 물건 (GDD 175장 3): 아이콘(그림 키가 있으면 그림)만 서 있고 기능은 없다 — 누르면 '준비 중' 알림. 숨긴 것은 뺀다.
+ *  장면에 붙이고 바닥 배치 목록에 더한 뒤 단추들을 돌려준다(기기 선택 목록용) */
+export function extraPropButtons(scene: HTMLElement, extras: readonly ExtraProp[] | undefined, floor: FloorEntry[]): HTMLButtonElement[] {
+  const out: HTMLButtonElement[] = [];
+  for (const x of extras ?? []) {
+    if (x.hidden) continue;
+    const b = propButton({ prop: x.id, name: x.name, x: x.x, y: x.y, scale: x.scale, art: false, artKey: x.art ?? `prop.extra.${x.id}`, icon: x.icon });
+    b.dataset.extra = x.id;
+    b.onclick = () => showToast({ eyebrow: x.name, title: '준비 중' }, 0, 2200);
+    scene.append(b);
+    floor.push({ el: b, foot: x, kind: 'prop' });
+    out.push(b);
+  }
+  return out;
 }
 
 /**
@@ -229,6 +260,15 @@ export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entrie
   const size = sw > 0 && sh > 0 ? { w: sw, h: sh } : REF_SCENE;
   // C.182 UI 검수: 위에 알림 띠(빈사·쇠약 등)가 붙어 장면이 기준보다 낮아지면 물건 그림도 같은 비율로 줄인다 — 발 높이만 줄고 그림 크기는 그대로라 책장·상점이 겹쳤다
   scene.style.setProperty('--room-fit', String(Math.min(1, Math.max(0.6, size.h / REF_SCENE.h))));
+  // 배경 보기 (C.275, UI 배치 도구): 확대·위치가 있으면 배경 크기·자리를 바닥 계산과 같은 상자로 건다. 한 변만 정해 그림 비율은 그대로(찌그러지지 않게)
+  if (floor.view) {
+    const b = bgBox(size, floor.aspect, floor.view);
+    scene.style.backgroundSize = b.wide ? `${b.w}px auto` : `auto ${b.h}px`;
+    scene.style.backgroundPosition = `${floor.view.x}% ${floor.view.y}%`;
+  } else {
+    scene.style.removeProperty('background-size');
+    scene.style.removeProperty('background-position');
+  }
   for (const e of entries) {
     const measured = e.el.offsetHeight > 0;
     if (e.kind === 'prop') {

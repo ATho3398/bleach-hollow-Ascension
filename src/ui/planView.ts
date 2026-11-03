@@ -46,7 +46,7 @@ export function difficultyInfo(faction: FactionConfig, star: number, tierIndex: 
   const enemy = streakEnemyFactor(n);
   const rec = star === recommendedDifficulty(tierIndex) ? ` · ${L.recommended}` : '';
   const head = `${difficultyText(faction, star)}${n > 0 ? ` · 연속 ${n}` : ''}${rec}`;
-  const bonus = [food > 1 ? `먹이·노력치 ${pct(food)}` : '', gold > 1 ? `골드 ${pct(gold)}` : ''].filter(Boolean).join(' · ');
+  const bonus = [food > 1 ? `${faction.foodGroupName}·노력치 ${pct(food)}` : '', gold > 1 ? `골드 ${pct(gold)}` : ''].filter(Boolean).join(' · ');
   return `${head}: 적은 ${star}단계(${faction.tierNames[star - 1] ?? ''}) 기준${enemy > 1 ? ` ${pct(enemy)}` : ''}${bonus ? ` · ${bonus}` : ''}`;
 }
 
@@ -164,32 +164,43 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
       },
     }, (id) => tileName(id, faction.id), `최대 ${h.placeLimit ?? '∞'}칸`)
     : null;
-  // 오른쪽 열 = 손패 / 프리셋 토글 (책장 제목 토글과 같은 seg 버튼, GDD 100장 #24): 스크롤은 오른쪽 목록 하나뿐
+  // 화면 탭 [준비] / [타일 배치] (GDD 179장, 사용자 2026-11-04 "b로 가자" — 옛 오른쪽 손패/프리셋 토글을 대신함):
+  // 준비 = 사냥터·난이도·길 미리보기·프리셋·[출발], 타일 배치 = 길과 가진 타일만 넓게(사냥터·난이도·프리셋은 숨김, [출발]은 그대로)
+  let setMode: ((k: 'prep' | 'place') => void) | null = null;
   if (planner && presetEl) {
     const hand = planner.el.querySelector<HTMLElement>('.bha-road__hand')!;
     presetEl.classList.add('bha-plan__side');
-    const toggle = el('div', 'bha-plan__sidetabs');
-    toggle.setAttribute('role', 'group');
-    toggle.setAttribute('aria-label', '오른쪽 목록');
-    const tabs = (['hand', 'presets'] as const).map((k) => {
-      const b = button({ label: k === 'hand' ? '손패' : '프리셋', icon: k === 'hand' ? 'i-deck' : 'i-check', size: 'small', onClick: () => show(k) });
+    const toggle = el('div', 'bha-plan__sidetabs bha-plan__modetabs');
+    toggle.setAttribute('role', 'tablist');
+    toggle.setAttribute('aria-label', '모험 준비 화면');
+    const tabs = (['prep', 'place'] as const).map((k) => {
+      const b = button({ label: k === 'prep' ? '준비' : '타일 배치', icon: k === 'prep' ? 'i-check' : 'i-deck', size: 'small', onClick: () => setMode?.(k) });
       b.dataset.planSide = k;
+      b.setAttribute('role', 'tab');
       return b;
     });
-    const show = (k: 'hand' | 'presets') => {
-      hand.hidden = k !== 'hand';
-      presetEl.hidden = k !== 'presets';
+    setMode = (k) => {
+      hand.hidden = k !== 'place';
+      presetEl.hidden = k !== 'prep';
+      toggle.closest('.bha-app')?.classList.toggle('is-place', k === 'place');
       tabs.forEach((b) => {
         const on = b.dataset.planSide === k;
         b.classList.toggle('is-on', on);
-        b.setAttribute('aria-pressed', String(on));
+        b.setAttribute('aria-selected', String(on));
       });
     };
     toggle.append(...tabs);
-    // 프리셋 칸·토글도 배치판(planner.el) 안에 둔다: 끌어 놓기·선택 풀기가 배치판 범위를 본다
+    // 준비 탭에서 길 칸을 누르면 타일 배치 탭으로 (길은 미리보기 — 배치는 배치 탭에서만)
+    planner.el.querySelector('.bha-road')?.addEventListener('click', (e) => {
+      if (toggle.closest('.bha-app')?.classList.contains('is-place')) return;
+      e.stopPropagation();
+      e.preventDefault();
+      setMode?.('place');
+    }, true);
+    // 탭·프리셋 칸도 배치판(planner.el) 안에 둔다: 끌어 놓기·선택 풀기가 배치판 범위를 본다
     planner.el.append(toggle, presetEl);
-    show('hand');
   }
   const main = mountApp(root, { fixed: true, cls: `bha-plan${h.tilesLocked ? ' is-locked' : ''}` }, head, gInfo, diff, dInfo, sub, ...(planner ? [planner.el] : []), ...(presetEl && !planner ? [presetEl] : []), go);
   main.dataset.screen = 'expedition-plan';
+  setMode?.('prep');
 }

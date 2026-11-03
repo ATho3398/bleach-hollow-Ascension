@@ -78,6 +78,15 @@ export function traitName(id: string, factionId: string): string {
   return withoutElement(pickFaction(t.name, factionId), t.element, factionId);
 }
 
+/** 속성 글자를 붙인 표시 이름 ('물 조', '노멀 탄') — 아이콘·색 없이 글자만 보이는 곳(결과 '얻은 특성' 등, GDD 176장 17). 옛 기록 이름은 그대로 */
+export function traitNameWithElement(id: string, factionId: string): string {
+  if (retiredRareElement(id)) return traitName(id, factionId);
+  const t = getTrait(id);
+  const name = traitName(id, factionId);
+  const prefix = t.element === 'normal' ? elementName(t.element, factionId) : elementAbbr(t.element, factionId);
+  return name.startsWith(`${prefix} `) ? name : `${prefix} ${name}`;
+}
+
 export function traitDescription(id: string, factionId: string): string {
   return pickFaction(getTrait(id).description, factionId);
 }

@@ -10,7 +10,7 @@ import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
+import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
 import { fixParticles } from '../engine/josa';
 
 /** 장소 그림(place.<장소>.<종족>)이 비었을 때 대신 쓰는 그림 키 — 수련장 = 방 짚인형 (GDD 160장 4) */
@@ -112,7 +112,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       b.setAttribute('aria-disabled', 'true');
     }
     if (reason !== undefined) {
-      b.append(icon('i-lock'));
+      lockProp(b);
       b.title = reason;
       b.setAttribute('aria-description', reason);
     }
@@ -124,12 +124,14 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     // 사망이면 모험·탑·수련장 잠김 표시 (GDD 102-7·139장 1·158장 1). 눌러도 막힘 안내는 onAdventure·onTower·onTraining 쪽
     if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead) {
       b.classList.add('is-locked');
-      b.append(icon('i-lock'));
+      lockProp(b);
     }
+    if (wm.layout[p].hidden) b.hidden = true; // UI 배치 도구로 숨긴 장소 (GDD 175장) — 걷기·초점 계산이 단추를 찾으므로 만들고 감춘다
     scene.append(b);
     btns.set(p, b);
     floor.push({ el: b, foot: wm.layout[p], kind: 'prop' });
   }
+  const extras = extraPropButtons(scene, wm.extras, floor); // 새 물건 (GDD 175장): 아이콘만, 누르면 '준비 중'
   // 캐릭터: 방 그림 그대로, 지금 있던 장소 위에 서 있다 (보기만 — 기기 선택 대상 아님, GDD 132장 2)
   const at = hd.at ?? 'home';
   const char = characterButton(roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)), '캐릭터');
@@ -152,7 +154,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   // 선택 순서 = DOM 순서(홈 → 시장 → 모험, 지도 왼쪽 → 오른쪽). 'visual'(위 → 아래)을 쓰면 가운데 위 시장이 먼저 와서 쓰지 않는다
   if (here) main.dataset.wanderer = '';
   // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 수련장 → 모험 → 탑 → 온천), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
-  const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))]; // 화면 위치 순서: 왼쪽 위 돌아가기 먼저
+  const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))].filter((it) => !it.el.hidden); // 숨긴 장소 빼고 (GDD 175장)
+  items.push(...extras.map((b) => ({ el: b }))); // 새 물건은 장소 뒤 // 화면 위치 순서: 왼쪽 위 돌아가기 먼저
   btns.get(hd.focus ?? at)?.focus({ preventScroll: true });
   dev.setItems(items, main);
 

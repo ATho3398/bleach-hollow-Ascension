@@ -78,8 +78,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.spa': {},
   'scene.spa': {},
   // 장터 (GDD 127장 2, C.201): 방 물건(장터 문)·장터 배경·떠돌이 상인 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
-  // 월드맵 '시장' 장소 그림 = 소모품 상점 수레 그림 (GDD 160장 2). 시장 안 소모품 상점 칸(prop.shop)은 그대로
-  'prop.market': { src: 'art/prop-shop.webp' },
+  // 월드맵 '시장' 장소 그림 = prop-market.png (사용자 2026-11-03 "시장 … 아이콘으로 넣고", 옛 160장 2 수레 그림 지정 해제).
+  // 수레 그림은 떠돌이 상인(prop-wanderer.webp)으로 옮김 — 시장 안 소모품 상점 칸(prop.shop)은 그림 대기(아이콘)
+  'prop.market': {},
   'scene.market': {},
   'prop.wanderer': {},
   // 상점 4곳 (GDD 150장 2, C.227): 소모품 상점 = prop.shop, 나머지 3곳 — 사용자 그림 대기(비어 있으면 아이콘)
@@ -88,11 +89,14 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.traitShop': {},
   'prop.smith': {}, // 대장장이 (GDD 153장 2)
   // 월드맵 (GDD 130장, C.204): 방 물건(월드맵)·월드맵 하이앵글 배경·지도 위 장소(홈·모험; 시장은 prop.market) — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  'prop.worldmap': { scale: 1.5 }, // 시장의 월드맵 물건 = 지도 그림 (C.255, 방의 나가기 문은 prop.outside 그대로)
   'prop.outside': { scale: 1.5 }, // 방·시장의 월드맵 물건 그림 ×1.5 (GDD 160장 1)
   'scene.worldmap': {},
   'prop.home': {},
   'prop.adventure': {},
   // 월드맵 탑 (GDD 139장 1, C.217): 키 = place.tower.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
+  // 탑 그림은 두 종족 같은 그림 prop-tower.png (사용자 2026-11-03 "홈 ui 아이콘은 통일 (대원실, 둥지 빼고)") — 종족별 키는 남김(prop.tower 가 먼저)
+  'prop.tower': {},
   'place.tower.hollow': {},
   'place.tower.shinigami': {},
   // 월드맵 온천 (GDD 153장 1, C.228): 키 = place.spa.<종족 id> — 사용자 그림 대기(비어 있으면 아이콘)
@@ -108,13 +112,24 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'place.rest-spring.shinigami': {},
 };
 
+/** 실행 중에만 덮어쓰는 그림 (UI 배치 도구 미리보기, GDD 175장 4): 키 → 그림 주소(data URL 등) 또는 null(그림 숨김 = 아이콘). 세이브·배포 데이터와 무관 */
+const RUNTIME_ART = new Map<string, string | null>();
+export function setRuntimeArt(key: string, src: string | null | undefined): void {
+  if (src === undefined) RUNTIME_ART.delete(key);
+  else RUNTIME_ART.set(key, src);
+}
+export function clearRuntimeArt(): void {
+  RUNTIME_ART.clear();
+}
+
 /** 그림 키 → 실제 이미지 URL(없으면 null = 자리표시를 쓴다). base 는 배포 경로(Vite BASE_URL) */
 export function artUrls(key: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): ArtUrls {
   const e = manifest[key];
-  const join = (p: string) => (/^(https?:|data:)/.test(p) ? p : `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`);
+  const join = (p: string) => (/^(https?:|data:|blob:)/.test(p) ? p : `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`);
+  const rt = manifest === ART_MANIFEST && RUNTIME_ART.has(key) ? RUNTIME_ART.get(key)! : undefined;
   const auto = !e?.src && !e?.frames ? findArtFile(key, files) : null;
   return {
-    src: e?.src ? join(e.src) : auto ? join(auto) : null,
+    src: rt !== undefined ? (rt ? join(rt) : null) : e?.src ? join(e.src) : auto ? join(auto) : null,
     frames: e?.frames ? [join(e.frames[0]), join(e.frames[1])] : null,
     scale: e?.scale ?? 1,
     ...(e?.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}),

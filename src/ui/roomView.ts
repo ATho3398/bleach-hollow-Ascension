@@ -4,10 +4,11 @@
 import { infoTip } from './bha/infoTip';
 import { fixParticles } from '../engine/josa';
 import { roomStatusInfo } from './bha/statusInfo';
+import type { InfoBody } from './bha/infoTip';
 import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
-import { marketOf, roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
+import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
 import { artSkinOf, careNest, feedNest, tickCare, type SaveData, artTierIndexOf } from '../game';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
@@ -18,10 +19,9 @@ import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, bubbleSpot, characterButton, charTopOffset, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
 import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
-import { notice } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
@@ -33,6 +33,11 @@ import { shownName } from './displayName';
 export interface RoomHandlers {
   onBook: () => void;
   onChest: () => void;
+  /** 진급 시험 물건 (GDD 174장 2, C.257): 책장 아래 — 지금 진급 시험(등급전) 화면, 뒤로 = 방 */
+  onRank: () => void;
+  /** 진급 시험 잠김 이유 (해금 단계 전, GDD 174장 3). 있으면 자물쇠·흐림, 누르면 onRankLocked(월드맵 잠긴 장소와 같은 모양·안내) */
+  rankLock?: string | null;
+  onRankLocked?: () => void;
   onStatus: () => void;
   /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 다른 트랙이 아직 안 열렸으면(5단계 전) null — 다른 종족으로 가는 유일한 길 (C.63) */
   onSwitchTrack: ((factionId: string) => void) | null;
@@ -89,8 +94,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // ── 위 한 줄 ── (원정 이어하기만. 상태는 캐릭터 머리 위 칩)
   const hud = el('header', 'bha-room__hud');
   const items: SelectItem[] = [];
-  /** 빈사 남은 시간 칸 (혼잣말 타이머가 고친다) */
-  let dyingClockEl: HTMLElement | null = null;
   let resumeBtn: HTMLButtonElement | null = null;
   // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★.
   // C.170 (GDD 100장 #8): 방 위 이름+[트랙 전환] 줄은 없앴다 — 이름은 상태 칩 위 작은 이름표, 트랙 전환은 ··· 더보기의 한 칸('호로 트랙'/'사신 트랙', #9)
@@ -102,21 +105,13 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     nameTag = el('span', 'bha-small bha-room__name', shownName(formDisplayName(save.evolution, faction.id)));
     if (stars) nameTag.append(' ', stars);
   }
-  // 빈사·사망 (GDD 102-3·102-7·102장 수정): 위 줄에 큰 안내 + 할 수 있는 일. 사망이면 [부활](확인 창 기본 = 아니오), 빈사면 남은 시간(시:분) + [상점] [보관함]
+  // 빈사·사망 (GDD 177장 — 102-3·102-7 의 방 위 큰 안내 띠는 삭제): 상태는 머리 위 칩으로만, 남은 시간·푸는 법은 칩 ⓘ. 방 장면은 늘 같은 크기.
+  // 사망이면 할 수 있는 일([부활], 확인 창 기본 = 아니오)이 장면 왼쪽 위에 따로 — 아무 안내 없이 막히지 않게 (177장 3)
+  let reviveBtn: HTMLButtonElement | null = null;
   if (n.dead) {
-    const reviveBtn = button({ label: '부활', icon: 'i-return', size: 'small', variant: 'danger', onClick: () => askRevive() });
-    hud.append(notice('danger', '할 수 있는 건 부활뿐이다.', { title: `${CARE_STATUS_NAMES.dead} — 오래 돌보지 않아 숨이 끊어졌다`, icon: 'i-broken' }), reviveBtn);
-    hud.classList.add('is-care');
+    reviveBtn = button({ label: '부활', icon: 'i-return', size: 'small', variant: 'danger', onClick: () => askRevive() });
+    reviveBtn.classList.add('bha-room__revive');
     items.push({ el: reviveBtn });
-  } else if (n.collapsed) {
-    const shopBtn = button({ label: marketOf(faction).shopsLabel, icon: 'i-rare', size: 'small', variant: 'primary', onClick: hd.onShop });
-    const chestBtn = button({ label: room.props.chest, icon: 'i-deck', size: 'small', onClick: hd.onChest });
-    const box = notice('danger', CARE_STATUS_HINTS.collapsed, { title: `${CARE_STATUS_NAMES.collapsed} — 구급상자가 필요하다 · 남은 시간 `, icon: 'i-broken' });
-    dyingClockEl = el('b', 'bha-num', dyingClock(dyingLeftMs(n, Date.now()) ?? 0));
-    box.querySelector('.bha-notice__title')?.append(dyingClockEl);
-    hud.append(box, shopBtn, chestBtn);
-    hud.classList.add('is-care');
-    items.push({ el: shopBtn }, { el: chestBtn });
   }
   /** 부활 확인 창 (GDD 102-3·102-7): 잃는 것 목록, 되돌릴 수 없어 기본 선택 = 아니오(danger) */
   function askRevive(): void {
@@ -162,6 +157,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     bubble.textContent = text;
     // 말풍선은 캐릭터 머리 위 가운데 (C.176, GDD 104장 1 — C.170 의 '옆 허리 높이'는 캐릭터 오른쪽에 떠 보였다). 대사 동안 상태 칩은 잠깐 숨긴다
     scene.classList.add('is-saying');
+    dev.refresh(); // 말풍선 동안 숨은 상태 칩은 기기 초점에서 빠진다 (GDD 176장 4)
     bubble.hidden = false;
     bubble.classList.remove('is-pop');
     void bubble.offsetWidth;
@@ -171,6 +167,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     bubbleTimer = window.setTimeout(() => {
       bubble.hidden = true;
       scene.classList.remove('is-saying');
+      dev.refresh();
     }, ms);
   };
 
@@ -179,19 +176,30 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     book: hd.onBook,
     chest: hd.onChest,
     outside: hd.onOutside, // 월드맵 물건 (GDD 130장 1·158장 2): 옛 모험 문·장터 자리 (137장 3 고정)
+    rank: () => (hd.rankLock ? hd.onRankLocked?.() : hd.onRank()), // 진급 시험 (GDD 174장 2): 책장 아래
   };
-  // 위/아래 순서: 위쪽 줄(책장) → 월드맵 → 상자 → 상태 칩 → 캐릭터 → 독 메뉴
-  const order: RoomProp[] = ['book', 'outside', 'chest'];
+  // 위/아래 순서: 위쪽 줄(책장) → 월드맵 → 상자 → 진급 시험(책장 아래) → 상태 칩 → 캐릭터 → 독 메뉴
+  const order: RoomProp[] = ['book', 'outside', 'chest', 'rank'];
   const props = new Map<RoomProp, HTMLButtonElement>();
   const floorEntries: FloorEntry[] = []; // 바닥 위에 놓일 것 전부 (GDD 95장 A1): 물건·캐릭터는 여기 등록해야 바닥 밖으로 안 나간다
   for (const p of ROOM_PROPS) {
     if (p === 'altar') continue;
+    if (room.layout[p].hidden) continue; // UI 배치 도구로 숨긴 물건 (GDD 175장)
     const b = propButton({ prop: p, name: room.props[p], ...room.layout[p], art: !!artUrls(`prop.${p}`).src, fallbackArt: p === 'outside' ? 'prop.door' : undefined });
     b.onclick = act[p];
+    // 잠긴 진급 시험 (GDD 174장 3): 월드맵 잠긴 장소(탑)와 같은 모양 — 흐림 + 자물쇠 + 이유 툴팁
+    if (p === 'rank' && hd.rankLock) {
+      b.classList.add('is-locked');
+      b.setAttribute('aria-disabled', 'true');
+      lockProp(b);
+      b.title = hd.rankLock;
+      b.setAttribute('aria-description', hd.rankLock);
+    }
     props.set(p, b);
     scene.append(b);
     floorEntries.push({ el: b, foot: room.layout[p], kind: 'prop' });
   }
+  const extras = extraPropButtons(scene, room.extras, floorEntries); // 새 물건 (GDD 175장): 아이콘만, 누르면 '준비 중'
   const charArtUrls = roomCharArt(room, faction.id, artTierIndexOf(save), artSkinOf(save));
   const char = characterButton(charArtUrls, '캐릭터');
   applyCarePose(char, n, { home: true }); // 돌봄 상태 자세 (GDD 171장): 종이인형 = 빈사·쇠약·피곤 → 빈사 자세, 사망 → 쓰러짐, 평소 → 홈 대기. 아니면 눕히고 흐리게(GDD 102-7)
@@ -255,7 +263,15 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   paintGauges();
   requestAnimationFrame(() => scene.style.setProperty('--chip-h', `${statusBtn.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
   // 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위. 누르면(폰)·올리면(PC) 지금 칩마다 무슨 뜻인지·풀리는 법이 창으로 뜬다
-  const statusInfoBtn = infoTip('상태', () => roomStatusInfo(statusChips(n, faction), faction));
+  const statusInfoBtn = infoTip('상태', () => withDyingLeft(roomStatusInfo(statusChips(n, faction), faction)));
+  /** 빈사 줄에 남은 시간·푸는 법 (GDD 177장 2: 방 위 띠에 있던 정보) — 열 때마다 지금 시각으로 */
+  function withDyingLeft(body: InfoBody): InfoBody {
+    if (!n.collapsed || n.dead || typeof body === 'string' || Array.isArray(body)) return body;
+    return {
+      ...body,
+      groups: body.groups.map((g) => (g.title === CARE_STATUS_NAMES.collapsed ? { ...g, mark: undefined, lines: [`남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, CARE_STATUS_HINTS.collapsed] } : g)),
+    };
+  }
   statusInfoBtn.classList.add('bha-room__statusinfo');
   // 발밑 체력 막대 (GDD 123장 3): 홈 체력 '현재 / 최대' — 기존 체력 막대(meter player), 30% 아래면 위험 색. 대기 회복은 아래 타이머가 다시 그린다
   const hpBox = el('div', 'bha-room__hp');
@@ -271,7 +287,22 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   scene.append(char, hpBox, statusBtn, statusInfoBtn, bubble);
   // 이름표는 칩 위에 얹힌다: 칩이 방 위 끝에 붙지 않게 잴 때 이름표 높이도 넣는다
   floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
-  const place = () => layoutOnFloor(scene, room.floor, floorEntries);
+  // 빈사·쓰러짐 자세 (GDD 176장): 머리 위에 칩 자리가 없어 칩이 머리로 내려오면(띠로 방이 낮아짐) 칩·ⓘ 를 캐릭터 옆 위로
+  const lowPose = n.collapsed || n.dead || !!n.weakened || !!n.tired;
+  const placeStatus = () => {
+    for (const b of [statusBtn, statusInfoBtn]) b.classList.remove('is-side', 'is-right');
+    if (!lowPose || !scene.isConnected || scene.clientWidth === 0) return;
+    const cs = getComputedStyle(scene);
+    const natural = parseFloat(cs.getPropertyValue('--char-y')) + charTopOffset(charArtUrls) - (parseFloat(cs.getPropertyValue('--bha-sp-4')) || 0);
+    if (!(statusBtn.offsetTop > natural + 1)) return; // 머리 위에 들어간다
+    scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
+    const right = char.offsetLeft < scene.clientWidth * 0.35; // 캐릭터가 왼쪽에 있으면 오른쪽 옆
+    for (const b of [statusBtn, statusInfoBtn]) b.classList.add('is-side', ...(right ? ['is-right'] : []));
+  };
+  const place = () => {
+    layoutOnFloor(scene, room.floor, floorEntries);
+    placeStatus();
+  };
   place(); // 붙기 전이라 크기를 못 재면 기준 크기로, 붙은 뒤 다시 잰 값으로 놓는다
   requestAnimationFrame(place);
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(place).observe(scene);
@@ -288,7 +319,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
         const fed = food ? feedNest(save, food) : null;
-        if (!fed) return say('먹을 것이 없다. 모험에서 적을 이기면 먹이를 얻는다.');
+        if (!fed) return say(fixParticles(`먹을 것이 없다. 모험에서 적을 이기면 ${faction.foodGroupName}을(를) 얻는다.`));
         if (fed === 'spat') {
           // 10분에 3개를 넘김 (GDD 109장 6): 먹이는 없어지고 효과 없음 — 뱉는 모션 + 말풍선
           hd.persist();
@@ -350,11 +381,12 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },
     ],
     idle: hd.idle,
-    onItemsChange: () => registerItems(),
+    onItemsChange: (focus) => registerItems(focus),
   });
 
   const body = el('div', 'bha-room__body');
   body.append(scene);
+  if (reviveBtn) body.append(reviveBtn); // 장면 밖(어두운 사망 장면 필터를 안 받게), 장면 왼쪽 위에 겹쳐 둔다 (GDD 177장 3)
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
   const main = mountApp(dev.view, { cls: 'bha-room' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
@@ -363,13 +395,17 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 떠돌이 상인이 와 있다 (GDD 85장 5번·127장 3) — 배지는 월드맵 시장에 (130장 2)
 
   // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
-  function registerItems(): void {
+  function registerItems(focus: HTMLElement | null = null): void {
     const list: SelectItem[] = [...items];
-    for (const p of order) list.push({ el: props.get(p)! });
+    for (const p of order) {
+      const b = props.get(p);
+      if (b) list.push({ el: b });
+    }
+    for (const b of extras) list.push({ el: b });
     list.push({ el: statusBtn }, { el: statusInfoBtn }, { el: char });
     const tray = dock.items().filter((b) => b.closest('.bha-homedock__tray'));
     // 펼친 줄(더보기·먹이)이 방 물건을 덮으므로, 펼친 동안은 물건·캐릭터를 고르지 않는다 — 덮인 칸에 하이라이트가 가던 문제 (C.182 UI 검수)
-    dev.setItems([...tray.map((b) => ({ el: b })), ...(tray.length > 0 ? [] : list), ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main);
+    dev.setItems([...tray.map((b) => ({ el: b })), ...(tray.length > 0 ? [] : list), ...dock.items().filter((b) => !b.closest('.bha-homedock__tray')).map((b) => ({ el: b }))], main, undefined, focus);
   }
   dock.setRequest(n.careRequest?.action ?? null);
   // 첫 선택 (GDD 100장 #11): 월드맵 물건(옛 모험 문 자리). 돌봄 요청 중이면 그 돌보기 버튼 — 기기는 새 화면에서 초점 있는 항목부터 고른다
@@ -394,7 +430,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const idle = idleTimer = window.setInterval(() => {
     if (!main.isConnected) return window.clearInterval(idle);
     dock.refreshFeeds(); // 먹이 한도가 10분 뒤 다시 열린다 (GDD 109장 6)
-    if (dyingClockEl) dyingClockEl.textContent = dyingClock(dyingLeftMs(n, Date.now()) ?? 0); // 빈사 남은 시간
     // 돌봄 요청 시계 (GDD 82장): 방에 있는 동안 요청이 생기거나 사라진다
     const had = n.careRequest;
     const created = tickCare(save);

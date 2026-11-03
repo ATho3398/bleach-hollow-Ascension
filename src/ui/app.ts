@@ -12,7 +12,7 @@ import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaEndText, spaExitFx, spaView } from './spaView';
+import { spaEndText, spaExitFx, spaHoldFull, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -37,7 +37,8 @@ import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
-import { ascensionResultView, rankLabel, rankResultView, rankView } from './rankView';
+import { ascensionResultView, rankLabel, rankLockedText, rankResultView, rankView } from './rankView';
+import { rankUnlocked } from '../engine/rank';
 import { getBoss } from '../data/bosses';
 import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
@@ -51,7 +52,7 @@ import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { blockInput, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
@@ -143,7 +144,7 @@ export function startApp(host: HTMLElement): void {
 
   // 기기 틀(GDD 16장): 모든 화면은 LCD 창(dev.view) 안에 그린다. 뒤로 = 열린 창·레이어 닫기(device) → 화면 스택 한 단계 뒤로 → 더 갈 곳이 없는 홈(방)이면 처음 화면 확인(GDD 124장 1, C.198).
   // 잠긴 화면(전투·원정)이나 다른 화면에서는 처음 화면으로 가지 않는다 (104장 7 버그 — 홈 표시(home)가 있는 화면 하나뿐일 때만)
-  const nav = new ScreenStack();
+  const nav = new ScreenStack({ save: () => dev.focusMark(), restore: (m) => dev.restoreFocus(m) }); // 뒤로 돌아오면 들어갔던 칸으로 초점 (GDD 176장 8)
   const dev = createDevice(host, {
     onCancel: () => {
       const r = nav.cancel();
@@ -267,7 +268,7 @@ export function startApp(host: HTMLElement): void {
       chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalSec: String(Math.round(1 / HH.spa.hpPerSecond)), // 튜토리얼 온천 10초 · 평소 약 20초 (GDD 164장 1)
       idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
-      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food,
+      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food, nestName: faction.nestName, // 5/7·7/7 '방' = 종족 이름 (GDD 176장 9)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -309,6 +310,11 @@ export function startApp(host: HTMLElement): void {
           inSpa = true;
           return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);
         } },
+        // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, 4/7 '온천' 카드 [다음] 에서 걸어 나가 방으로 — 5/7 '쉬기'('…로 돌아왔다') 카드는 방 위에 뜬다
+        next: (go) => {
+          const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
+          if (!spaExitFx(leave)) leave();
+        },
       },
       // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로
       'spa-rest': { next: (go) => {
@@ -359,8 +365,6 @@ export function startApp(host: HTMLElement): void {
       tutorialOverlay(faction, {
         scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: '다음', vars,
         script: { step: `회복 안내 ${i + 1} / ${RECOVER_SCENES.length}`, act: st.act },
-        // 기기 뒤로: 건너뛰기 없는 안내라 짧은 안내만 (GDD 131장 2 와 같은 결)
-        onBack: () => showToast({ eyebrow: '튜토리얼', title: st.act ? '강조된 버튼을 눌러 진행한다' : '[다음]을 눌러 진행한다', meta: '' }, 0, 1800),
         onFinish: (status) => {
           if (status !== 'completed') {
             recoverOpen = false;
@@ -426,12 +430,11 @@ export function startApp(host: HTMLElement): void {
     homeIntroOpen = true;
     const { scenes, vars } = homeIntroScenes(faction);
     const total = scenes.length + 1;
-    const hint = () => showToast({ eyebrow: '튜토리얼', title: '[다음]을 눌러 진행한다', meta: '' }, 0, 1800);
     const show = (i: number): void => {
       const scene = scenes[i];
       if (scene) {
         tutorialOverlay(faction, {
-          scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: hint,
+          scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars,
           script: { step: `홈 안내 ${i + 1} / ${total}` },
           onFinish: (st) => (st === 'completed' ? show(i + 1) : void (homeIntroOpen = false)),
         });
@@ -444,7 +447,7 @@ export function startApp(host: HTMLElement): void {
       // 월드맵 물건 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1)
       const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
       window.setTimeout(() => tutorialOverlay(faction, {
-        scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
+        scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars,
         script: { step: `홈 안내 ${total} / ${total}`, act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' } },
         onFinish: () => {
           forceAdventure = false;
@@ -486,7 +489,15 @@ export function startApp(host: HTMLElement): void {
       },
       onDone: () => {
         birthOpen = false;
-        window.setTimeout(() => { if (nav.top?.id === 'room') runHomeIntro(faction); }, 300); // 탄생 연출 뒤 홈 안내 (GDD 131장)
+        // 연출 끝 → 홈 안내가 뜰 때까지 입력을 막는다 (GDD 176장 5: 틈에 ✓ 가 월드맵을 열던 문제). 안내 레이어는 runHomeIntro 안에서 바로 등록된다
+        const release = blockInput();
+        window.setTimeout(() => {
+          try {
+            if (nav.top?.id === 'room') runHomeIntro(faction); // 탄생 연출 뒤 홈 안내 (GDD 131장)
+          } finally {
+            release();
+          }
+        }, 300);
         if (!save) return;
         markGuideDone(save.help, 'birth');
         persist();
@@ -891,10 +902,15 @@ export function startApp(host: HTMLElement): void {
           backLabel,
           onBack: () => nav.back(),
           onAutoLeave: (e) => {
-            tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다
+            tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다 — 이 뒤로는 회복·배부름 감소 없음 (GDD 180장 2: 알림 2초 동안 멈춤)
             persist();
             // 저절로 나오면 방으로 (GDD 127장 2: 장터에서 들어갔어도 방 — C.198 그대로)
-            if (nav.top?.id === 'spa') nestScreen();
+            const toRoom = () => { if (nav.top?.id === 'spa') nestScreen(); };
+            // 튜토리얼 회복 안내 중 (GDD 180장 2 보충, C.274): 알림·자동 방 이동 없이 온천에 그대로 — 안내 카드('체력이 가득 찼다!')와 [다음] 흐름이 방 이동을 정한다
+            if (recoverOpen && nav.top?.id === 'spa') return;
+            // 가득 차서 나올 때 (GDD 180장 2, C.273): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
+            if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;
+            toRoom();
             showToast({ eyebrow: name, title: spaEndText(e, faction.fullnessName), meta: '' }, 0, 3200);
           },
         });
@@ -1001,9 +1017,8 @@ export function startApp(host: HTMLElement): void {
       const line = absenceText(away, faction);
       // 알림 띠는 한 줄(머리말 + 제목)이라 비운 시간·줄어든 양을 제목에 (C.170 알림 띠)
       const head = away.died ? '복귀 · 사망' : away.collapsed ? '복귀 · 빈사' : '복귀';
-      // 빈사·사망이면 방 위 줄에 큰 안내 상자가 있어 위 알림 띠가 그 제목('남은 시간')을 덮었다 → 가운데에 띄운다 (GDD 159장 19)
-      const care = s.nest.dead || s.nest.collapsed;
-      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '', center: care }, 0, 5200), 300);
+      // 방 위 빈사·사망 안내 상자는 없어졌다(GDD 177장) — 알림 띠는 평소 자리 (159장 19 의 가운데 띄우기는 필요 없음)
+      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '' }, 0, 5200), 300);
     }
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
     const notes: { eyebrow: string; title: string; meta: string }[] = [];
@@ -1070,12 +1085,16 @@ export function startApp(host: HTMLElement): void {
       },
       onBook: () => open('dex', () => bookView(root, faction, s)),
       onChest: openChest,
+      // 진급 시험 물건 (GDD 174장 2·3, C.257): 책장 아래. 해금 전이면 자물쇠·흐림 + 탑과 같은 토스트 안내
+      onRank: () => open('rank', () => rankScreen(faction)),
+      rankLock: rankUnlocked(s.evolution.tierIndex) ? null : rankLockedText(faction),
+      onRankLocked: () => showToast({ eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' }, 0, 1800),
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
         persist();
         nestScreen();
-        showToast({ eyebrow: '트랙 전환', title: `${getFaction(fid).name} 트랙`, meta: '키우기는 트랙마다 따로, 먹이·타일·영혼 결정은 같이 쓴다.' }, 0, 3000);
+        showToast({ eyebrow: '트랙 전환', title: `${getFaction(fid).name} 트랙`, meta: `키우기는 트랙마다 따로, ${getFaction(fid).foodGroupName}·타일·영혼 결정은 같이 쓴다.` }, 0, 3000);
       } : null,
       onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
       onSettings: settingsOpener(true),
@@ -1090,7 +1109,7 @@ export function startApp(host: HTMLElement): void {
         f?.();
       },
       onPhoto: () => open('photo', () => photoView(dev, faction, s)),
-      onTamago: () => tama.toggle(true),
+      onTamago: () => tama.toggle(), // 다시 누르면 끈다 (GDD 176장 10)
       // 백업 화면은 진짜 저장소를 직접 다루므로 테스트 모드에서는 숨긴다 (38-2)
       onBackup: testOn ? null : () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })),
       onTest: testOn ? () => open('test', () => renderTest(faction, s)) : null,
@@ -1144,9 +1163,9 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  /** 수련장 세 화면(수련 · 훈련 인형 · 번호 쟁탈전)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1·165장 1)으로 (GDD 99장 2, C.163) */
+  /** 수련장 두 화면(수련 · 훈련 인형)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1·165장 1)으로 (GDD 99장 2, C.163). 진급 시험은 방 물건 (174장 1) */
   function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
-    const render = id === 'practice' ? () => practiceScreen(faction) : id === 'rank' ? () => rankScreen(faction) : () => renderTraining(faction, s);
+    const render = id === 'practice' ? () => practiceScreen(faction) : () => renderTraining(faction, s);
     nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });
   }
   const trainingHead = (faction: FactionConfig, id: TrainingScreenId): HTMLElement | undefined =>
@@ -1839,9 +1858,10 @@ export function startApp(host: HTMLElement): void {
   }
 
   // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──
+  // 들어오는 곳 = 방 책장 아래 물건 (GDD 174장 2, C.257): 머리 제목 = 종족 설정 rankBattleName, 뒤로 = 방
   function rankScreen(faction: FactionConfig): void {
     if (!save) return;
-    rankView(root, faction, save, { onChallenge: (holder) => !careBlocked(save!) && open('rank-battle', () => runRankBattle(faction, holder), true), title: trainingHead(faction, 'rank') });
+    rankView(root, faction, save, { onChallenge: (holder) => !careBlocked(save!) && open('rank-battle', () => runRankBattle(faction, holder), true) });
   }
 
   function runRankBattle(faction: FactionConfig, holder: RankHolderDef): void {

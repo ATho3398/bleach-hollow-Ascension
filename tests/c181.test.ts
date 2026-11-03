@@ -17,18 +17,24 @@ const H = 3_600_000;
 const T = Date.now();
 
 describe('109장 6 먹이 수치', () => {
-  it('고기(basic) +3 · 사냥감(hearty) +5, 다른 먹이도 약 0.09배', () => {
-    expect(NX.foods.basic.hunger).toBe(3);
-    expect(NX.foods.hearty.hunger).toBe(5);
+  // C.272 (GDD 180장 3): 약 ×1.6 — 고기 3 → 5 · 사냥감 5 → 8 · 잔치 7 → 11
+  it('고기(basic) +5 · 사냥감(hearty) +8, 다른 먹이도 약 ×1.6 (C.272)', () => {
+    expect(NX.foods.basic.hunger).toBe(5);
+    expect(NX.foods.hearty.hunger).toBe(8);
+    expect(NX.foods.snack.hunger).toBe(2);
+    expect(NX.foods.tonic.hunger).toBe(3);
+    expect(NX.foods.feast.hunger).toBe(11);
+    expect(NX.feedHunger).toBe(NX.foods.basic.hunger);
     expect(NX.foods.snack.hunger).toBeLessThan(NX.foods.basic.hunger);
     expect(NX.foods.feast.hunger).toBeGreaterThan(NX.foods.hearty.hunger);
-    expect(NX.foods.feast.hunger).toBeLessThanOrEqual(10);
+    expect(NX.foods.feast.hunger).toBeLessThanOrEqual(12);
   });
-  it('한 번 와서 3개 = 고기 약 1.8시간 · 사냥감 3시간 버팀 (시간당 감소)', () => {
+  // C.272: 고기 3개 = +15 약 3시간 · 사냥감 3개 = +24 약 4.8시간
+  it('한 번 와서 3개 = 고기 약 3시간 · 사냥감 약 4.8시간 버팀 (시간당 감소)', () => {
     const r = NX.idleHungerPerHour;
-    expect((3 * NX.foods.basic.hunger) / r).toBeGreaterThanOrEqual(1);
-    expect((3 * NX.foods.basic.hunger) / r).toBeLessThanOrEqual(2);
-    expect((3 * NX.foods.hearty.hunger) / r).toBeLessThanOrEqual(3);
+    expect((3 * NX.foods.basic.hunger) / r).toBeGreaterThanOrEqual(2.5);
+    expect((3 * NX.foods.basic.hunger) / r).toBeLessThanOrEqual(3.5);
+    expect((3 * NX.foods.hearty.hunger) / r).toBeLessThanOrEqual(5);
   });
   it('밤 8시간 비우기: 배부름 61 이상이면 쇠약 없음, 48시간 전에는 빈사 없음', () => {
     const n = newNest(0);
@@ -46,11 +52,11 @@ describe('109장 6 10분에 3개 — 넘으면 뱉음', () => {
     n.hunger = 80;
     expect(feedsLeft(n, T)).toBe(3);
     for (let i = 0; i < 3; i++) expect(feedFood(n, 'basic', T + i * MIN)).toBe('ate');
-    expect(n.hunger).toBe(80 - 9);
+    expect(n.hunger).toBe(80 - 3 * NX.foods.basic.hunger);
     expect(feedsLeft(n, T + 3 * MIN)).toBe(0);
     const bond = n.bond;
     expect(feedFood(n, 'hearty', T + 3 * MIN)).toBe('spat');
-    expect(n.hunger).toBe(71);
+    expect(n.hunger).toBe(80 - 3 * NX.foods.basic.hunger);
     expect(n.bond).toBe(bond);
     expect(feedResetMs(n, T + 3 * MIN)).toBe(2 * MIN + 10 * MIN - 3 * MIN);
   });

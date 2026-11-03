@@ -7,7 +7,7 @@ import { TUTORIAL_SCENES } from '../src/data/help';
 import { FLOAT_SPOTS, HURT_SPOTS } from '../src/ui/bha/battle';
 import { actionChipOf, bagGroupOf, cardDetailOf } from '../src/ui/lcdScreens';
 import { absorbModeText } from '../src/ui/absorbView';
-import { inventoryOf, petEffectText } from '../src/inventory';
+import { HEAL_ROOM_LOCK, inventoryOf, petEffectText } from '../src/inventory';
 import { goldRows } from '../src/shop';
 import { newSaveData } from '../src/game';
 
@@ -102,7 +102,7 @@ describe('포식 (#44~53)', () => {
   const a = read('src/ui/absorbView.ts');
   it('설명 표 삭제, 갈래 버튼은 왼쪽, 오른쪽은 슬롯 목록 (#44·45)', () => {
     expect(a).not.toContain('info([');
-    expect(a).toContain('foeCard(), picker.actions, picker.desc]'); // GDD 163장: 왼쪽 = 상대 + 갈래 버튼 + 설명 칸
+    expect(a).toContain('foeCard(), picker.actions, picker.desc, picker.go]'); // GDD 163장: 왼쪽 = 상대 + 갈래 버튼 + 설명 칸
   });
   it('후보 0개 머리 · 기본 선택 = 첫 후보 · 다시 뽑기 숫자 하나 · 교체 단계 새 특성 카드 · 필요한 단계만 (#49~53)', () => {
     expect(a).toContain("'새 특성 없음 — 강화만'");
@@ -124,6 +124,7 @@ describe('보관함·상점 (#54~65)', () => {
     expect(actionChipOf({ action: 'use' })).toBe('사용');
     expect(actionChipOf({ action: 'equip' })).toBe('착용');
     expect(actionChipOf({ action: 'take' })).toBe('데리고 가기');
+    expect(actionChipOf({ action: 'use', lock: HEAL_ROOM_LOCK })).toBe('모험 중'); // GDD 176장 16
   });
   it("물건 분류에 '타일' 없음 · 타일 탭은 목록·합성만 (#56·57), 슬롯 머리 숫자 = 남는 수 (#55)", () => {
     const l = read('src/ui/lcdScreens.ts');

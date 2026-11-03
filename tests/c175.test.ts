@@ -136,7 +136,7 @@ describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', (
     expect([deathHoursOf(0), deathHoursOf(50), deathHoursOf(100)]).toEqual([6, 15, 24]);
     const n = newNest(0);
     Object.assign(n, { collapsed: true, collapsedAt: 0, bond: 0, lastTickMs: 0 });
-    expect(dyingClock(dyingLeftMs(n, 0)!)).toBe('6:00');
+    expect(dyingClock(dyingLeftMs(n, 0)!)).toBe('6시간 0분');
     tickNestOnline(n, 5.9 * H);
     expect(n.dead).toBe(false);
     tickNestOnline(n, 6 * H);

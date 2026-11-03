@@ -1,0 +1,97 @@
+{
+  "shots": [
+    "01-shinigami-room-rank.png",
+    "04-rank-screen.png",
+    "03-training-toggle.png",
+    "02-hollow-nest-rank-locked.png"
+  ],
+  "errors": [],
+  "room": {
+    "shinigami": {
+      "book": {
+        "x": 546,
+        "y": 134,
+        "w": 77,
+        "h": 85,
+        "name": "책장",
+        "locked": false,
+        "title": null
+      },
+      "rank": {
+        "x": 555,
+        "y": 245,
+        "w": 60,
+        "h": 60,
+        "name": "진급 시험",
+        "locked": false,
+        "title": null
+      },
+      "chest": {
+        "x": 233,
+        "y": 222,
+        "w": 77,
+        "h": 85,
+        "name": "가방",
+        "locked": false,
+        "title": null
+      },
+      "outside": {
+        "x": 109,
+        "y": 65,
+        "w": 142,
+        "h": 207,
+        "name": "월드맵",
+        "locked": false,
+        "title": null
+      }
+    },
+    "hollow": {
+      "book": {
+        "x": 546,
+        "y": 134,
+        "w": 77,
+        "h": 85,
+        "name": "책장",
+        "locked": false,
+        "title": null
+      },
+      "rank": {
+        "x": 549,
+        "y": 245,
+        "w": 71,
+        "h": 60,
+        "name": "번호 쟁탈전",
+        "locked": true,
+        "title": "바스트로데가 되면 번호 쟁탈전이 열린다"
+      },
+      "chest": {
+        "x": 233,
+        "y": 222,
+        "w": 77,
+        "h": 85,
+        "name": "가방",
+        "locked": false,
+        "title": null
+      },
+      "outside": {
+        "x": 109,
+        "y": 65,
+        "w": 142,
+        "h": 207,
+        "name": "월드맵",
+        "locked": false,
+        "title": null
+      }
+    }
+  },
+  "rankTitle": "진급 시험지금 무석 · 0승 0패 상대 임시",
+  "backToRoom": true,
+  "toggle": [
+    "수련장 · 참백도 수련",
+    "훈련 인형"
+  ],
+  "hollowToast": [
+    "번호 쟁탈전 바스트로데가 되면 번호 쟁탈전이 열린다"
+  ],
+  "hollowStillRoom": true
+}

@@ -68,7 +68,8 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
 /** outside = 월드맵 물건 (GDD 130장 1, C.204 · 158장 2 이름 '월드맵'): 누르면 월드맵. 옛 모험 문·장터 물건은 폐기 (GDD 137장 3, C.215) */
 /** altar = 수련장 이름만 (GDD 158장 1·165장 1): 방에는 서지 않고 월드맵 장소 training 의 이름으로 쓴다(그림 prop.altar 짚인형은 월드맵 수련장 폴백) */
-export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside'] as const;
+/** rank = 진급 시험(등급전) 물건 (GDD 174장 2, C.257): 책장 바로 아래. 이름 = 종족 설정 rankBattleName(room.props.rank 로 덮을 수 있다), 그림 키 prop.rank */
+export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside', 'rank'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·수련장(158장 1)·모험(출발 준비 화면)·탑(도전의 탑 화면)·온천(153장 1). ▲▼ 순서도 이 순서 */
 export const WORLD_PLACES = ['home', 'market', 'training', 'adventure', 'tower', 'spa'] as const;
@@ -133,10 +134,38 @@ export interface TrainingConfig {
   games: Record<(typeof TRAINING_GAME_IDS)[number], { name: string; desc: string; shot?: string; prey?: string; predator?: string }>;
 }
 
-/** 바닥 다각형: 좌표는 배경 그림 크기 대비 0~1(왼쪽 위 = 0,0), aspect = 그림 가로÷세로 (장면은 cover 로 깔려 그림 일부가 잘린다) */
+/** 장면 안 물건 자리 = 발 기준점(장면 %)·크기 배율. hidden = 숨김 (UI 배치 도구 GDD 175장: 지우기 대신 숨겨 둔다) */
+export interface PropSpot { x: number; y: number; scale?: number; hidden?: boolean }
+
+/** 새 물건 (UI 배치 도구 GDD 175장 3): 이름·아이콘(또는 그림 키)만 있고 기능은 없다 — 누르면 '준비 중'. 기능은 사용자가 설명하면 코딩 세션이 붙인다 */
+export interface ExtraProp extends PropSpot {
+  /** 장면 안에서 겹치지 않는 id (영문·숫자·-) */
+  id: string;
+  name: string;
+  /** 자리표시 아이콘 (스프라이트 id, 예 i-special) */
+  icon: string;
+  /** 그림 키 (src/data/art/manifest.ts, 예 prop.extra-well). 없거나 그림이 없으면 아이콘 */
+  art?: string;
+}
+
+/** 배경 보기 (UI 배치 도구 GDD 175장, C.275): cover 크기에 zoom 배(1 이상)를 곱하고, 남는 만큼을 x·y %(CSS background-position 과 같은 뜻, 50 = 가운데)로 민다 */
+export interface SceneView { zoom: number; x: number; y: number }
+
+/** 바닥 다각형: 좌표는 배경 그림 크기 대비 0~1(왼쪽 위 = 0,0), aspect = 그림 가로÷세로 (장면은 cover 로 깔려 그림 일부가 잘린다).
+ *  view = 배경 확대·위치(없으면 cover·가운데) — 바닥은 그림 위의 영역이라 같이 움직인다 */
 export interface RoomFloorConfig {
   aspect: number;
   poly: [number, number][];
+  view?: SceneView;
+}
+
+/** 배경 보기 값 검사 (zoom 1~4, x·y 0~100) */
+export const SCENE_VIEW_ZOOM = { min: 1, max: 4 } as const;
+export function sceneViewOk(v: unknown): boolean {
+  if (v === undefined) return true;
+  const o = (v ?? {}) as Record<string, unknown>;
+  return typeof o.zoom === 'number' && o.zoom >= SCENE_VIEW_ZOOM.min && o.zoom <= SCENE_VIEW_ZOOM.max
+    && typeof o.x === 'number' && o.x >= 0 && o.x <= 100 && typeof o.y === 'number' && o.y >= 0 && o.y <= 100;
 }
 
 /** 메인 방 화면 설정 (GDD 16장). 모두 선택 항목이라 비워도 기본값(DEFAULT_ROOM)이 쓰인다 */
@@ -151,7 +180,9 @@ export interface RoomConfig {
   /** 바닥(걷는 면) 범위 (GDD 95장 A1): 방 배경 그림 안의 다각형. 모든 물건·캐릭터·펫의 발 기준점은 이 안으로만 놓인다 */
   floor: RoomFloorConfig;
   /** 소품 위치 = 발 기준점(물건 그림 아래 가운데): 장면 가로 %·세로 %, scale = 크기 배율 (기본 1, GDD 34-6·95장). 이름표는 발 아래에 붙는다. 바닥 밖이면 바닥 안으로 끌어 놓는다 */
-  layout: Record<RoomProp, { x: number; y: number; scale?: number }>;
+  layout: Record<RoomProp, PropSpot>;
+  /** 새 물건 (GDD 175장, 아이콘만·기능 없음) */
+  extras?: ExtraProp[];
   /** 캐릭터 발 기준점 (장면 %, 기본 가운데 아래) */
   characterFoot: { x: number; y: number };
   /** 캐릭터 반응 말풍선 문구 (상태별 여러 개 중 무작위) */
@@ -162,11 +193,12 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { altar: '수련장', book: '책장', chest: '상자', outside: '월드맵' },
+  props: { altar: '수련장', book: '책장', chest: '상자', outside: '월드맵', rank: '진급 시험' },
   floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
     book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
     chest: { x: 26, y: 90, scale: 0.81 }, outside: { x: 9, y: 78, scale: 1 },
+    rank: { x: 76, y: 90, scale: 0.81 }, // 책장 바로 아래 (책장 x 그대로, 바닥 앞쪽 — GDD 174장 2)
   },
   characterFoot: { x: 50, y: 80 },
   talk: {
@@ -177,13 +209,14 @@ export const DEFAULT_ROOM: RoomConfig = {
 };
 
 /** 종족 설정의 room 에 빠진 값을 기본값으로 채운다. talkPack = 입은 말풍선 팩 id(GDD 25-11): 팩이 가진 키만 혼잣말 문구를 덮고, 없는 키는 기본 문구 */
-export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics'>>, talkPack?: string | null): RoomConfig {
+export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics' | 'rankBattleName'>>, talkPack?: string | null): RoomConfig {
   const r = f.room ?? {};
   const pack = talkPack ? f.cosmetics?.talkPacks?.[talkPack] : undefined;
   return {
     ...DEFAULT_ROOM,
     ...r,
-    props: { ...DEFAULT_ROOM.props, ...r.props },
+    // 진급 시험 물건 이름 = 종족 설정 rankBattleName (GDD 174장 2) — room.props.rank 를 적었으면 그것
+    props: { ...DEFAULT_ROOM.props, ...(f.rankBattleName ? { rank: f.rankBattleName } : {}), ...r.props },
     floor: r.floor ?? DEFAULT_ROOM.floor,
     layout: { ...DEFAULT_ROOM.layout, ...r.layout },
     characterFoot: r.characterFoot ?? DEFAULT_ROOM.characterFoot,
@@ -206,9 +239,11 @@ export interface MarketConfig {
   /** 바닥(걷는 면) 범위 — 방과 같은 규칙 */
   floor: RoomFloorConfig;
   /** 자리 발 기준점 (장면 %) */
-  layout: Record<MarketSpot, { x: number; y: number; scale?: number }>;
+  layout: Record<MarketSpot, PropSpot>;
+  /** 새 물건 (GDD 175장, 아이콘만·기능 없음) */
+  extras?: ExtraProp[];
   /** 월드맵 물건 발 기준점 (GDD 158장 3): 방의 월드맵 물건(room.props.outside)과 같은 물건 — 누르면 월드맵으로 나간다 */
-  exit: { x: number; y: number; scale?: number };
+  exit: PropSpot;
 }
 
 export const DEFAULT_MARKET: MarketConfig = {
@@ -222,11 +257,12 @@ export const DEFAULT_MARKET: MarketConfig = {
   // 방처럼 장면 곳곳에 (GDD 158장 3): 뒤(위)는 작게, 앞(아래)은 크게 — 앞뒤 깊이로 화면 전체를 쓴다. 왼쪽 앞 = 월드맵 물건(exit, 방과 같은 자리).
   // 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1). 떠돌이 상인은 와 있을 때만 가운데
   layout: {
-    shop: { x: 32, y: 48, scale: 0.9 }, gearShop: { x: 58, y: 42, scale: 0.8 }, skinShop: { x: 85, y: 50, scale: 0.9 },
-    traitShop: { x: 82, y: 88, scale: 1.15 }, smith: { x: 52, y: 90, scale: 1.15 },
-    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 66, y: 68, scale: 1 },
+    shop: { x: 40.3, y: 79, scale: 0.9 }, gearShop: { x: 54.7, y: 39.5, scale: 0.88 }, skinShop: { x: 80.8, y: 41.6, scale: 1.01 },
+    // 사용자 2026-11-03: 특성 상점 ×0.8 · 떠돌이 상인 ×1.2 · 대장장이 '너무 왼쪽' → 가운데쯤 (C.254)
+    traitShop: { x: 88.2, y: 85.2, scale: 1.15 }, smith: { x: 64.9, y: 84.1, scale: 1.23 },
+    spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 19.8, y: 45.5, scale: 1.05 }, // 자리·크기 = 사용자가 UI 배치 도구로 호로 기준 잡은 값, 두 종족 공통 (2026-11-03 11:02, C.263)
   },
-  exit: { x: 9, y: 78, scale: 1 },
+  exit: { x: 7.5, y: 83.1, scale: 0.64 },
 };
 
 /** 종족 설정의 market 에 빠진 값을 기본값으로 채운다 */
@@ -251,7 +287,9 @@ export interface WorldMapConfig {
   sceneArt: string;
   floor: RoomFloorConfig;
   /** 장소 발 기준점 (장면 %) */
-  layout: Record<WorldPlace, { x: number; y: number; scale?: number }>;
+  layout: Record<WorldPlace, PropSpot>;
+  /** 새 물건 (GDD 175장, 아이콘만·기능 없음) */
+  extras?: ExtraProp[];
   /** 캐릭터 발 기준점 (처음 = 홈 옆) */
   characterFoot: { x: number; y: number };
   /** 모험 장소 이름 (옛 방 모험 문 이름 room.props.door 를 옮김, GDD 137장 3) */
@@ -268,8 +306,10 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   // 장소 6곳 (158장 1 수련장 추가): 위 줄 온천·시장·탑, 아래 줄 홈·수련장·모험 — 서로 겹치지 않게 펼침
   floor: { aspect: 2, poly: [[0, 0.16], [1, 0.16], [1, 1], [0, 1]] },
   layout: {
-    home: { x: 16, y: 84, scale: 0.9 }, market: { x: 50, y: 48, scale: 0.9 }, training: { x: 50, y: 88, scale: 0.9 },
-    adventure: { x: 84, y: 84, scale: 0.9 }, tower: { x: 84, y: 40, scale: 0.9 }, spa: { x: 16, y: 40, scale: 0.9 },
+    // 사용자 2026-11-03: 홈(대원실 그림)·탑·온천 ×1.2 (C.254)
+    // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑 → C.270 홈). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
+    home: { x: 47.4, y: 65.6, scale: 1.61 }, market: { x: 60.2, y: 38, scale: 0.98 }, training: { x: 58.3, y: 93.2, scale: 0.9 },
+    adventure: { x: 22.9, y: 85.9, scale: 0.9 }, tower: { x: 11.7, y: 50.1, scale: 1.28 }, spa: { x: 88.7, y: 52.2, scale: 1.29 },
   },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',
@@ -405,6 +445,8 @@ export interface FactionConfig {
   nestActions: Record<NestAction, string>;
   /** 홈 독 버튼에 쓰는 짧은 이름 (GDD 100장 #14, 4글자 안팎). 없는 행동은 nestActions */
   nestActionsShort?: Partial<Record<NestAction, string>>;
+  /** 먹이 묶음 이름 (GDD 176장 3): 결과 '얻은 …'·가진 것 '…:' 등 화면 글자 — 호로 '먹이' / 사신 '식량' */
+  foodGroupName: string;
   /** 종족 선택 카드 아래 한 줄 소개 (GDD 100장 #6). 없으면 생략 */
   tagline?: string;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
@@ -446,10 +488,28 @@ function isStringTuple(v: unknown, n: number): boolean {
 }
 
 /** 모르는 JSON 을 종족 설정으로 검증한다. 문제가 있으면 무엇이 틀렸는지 담아 던진다 */
+/** 새 물건 목록 검사 (GDD 175장): [{ id, name, icon, art?, x, y, scale?, hidden? }], id 겹침 금지 */
+export function extrasErrors(where: string, v: unknown): string[] {
+  if (v === undefined) return [];
+  if (!Array.isArray(v)) return [`${where}.extras: 목록이어야 한다`];
+  const errs: string[] = [];
+  const seen = new Set<string>();
+  v.forEach((e: unknown, i) => {
+    const o = (e ?? {}) as Record<string, unknown>;
+    const ok = typeof o.id === 'string' && /^[a-z0-9-]+$/.test(o.id) && typeof o.name === 'string' && o.name.trim() !== '' && typeof o.icon === 'string' && o.icon !== ''
+      && (o.art === undefined || typeof o.art === 'string') && typeof o.x === 'number' && typeof o.y === 'number' && o.x >= 0 && o.x <= 100 && o.y >= 0 && o.y <= 100
+      && (o.scale === undefined || (typeof o.scale === 'number' && o.scale > 0)) && (o.hidden === undefined || typeof o.hidden === 'boolean');
+    if (!ok) errs.push(`${where}.extras[${i}]: { id(영문 소문자·숫자·-), name, icon, art?, x, y(0~100), scale? } 이어야 한다`);
+    else if (seen.has(o.id as string)) errs.push(`${where}.extras[${i}]: id 겹침 ${String(o.id)}`);
+    else seen.add(o.id as string);
+  });
+  return errs;
+}
+
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'foodGroupName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   const amn = (r.absorbModeNames ?? {}) as Record<string, unknown>;
@@ -589,9 +649,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       const fl = rm.floor as Record<string, unknown>;
       const okPt = (p: unknown) => Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === 'number' && n >= 0 && n <= 1);
       if (!isRec(fl) || typeof fl.aspect !== 'number' || !(fl.aspect > 0) || !Array.isArray(fl.poly) || fl.poly.length < 3 || !fl.poly.every(okPt)) errors.push('room.floor: { aspect: 가로÷세로, poly: [[x, y] ×3 이상, 0~1] } 이어야 한다');
+      else if (!sceneViewOk(fl.view)) errors.push('room.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
     }
     const okPct = (p: unknown) => isRec(p) && typeof p.x === 'number' && typeof p.y === 'number' && p.x >= 0 && p.x <= 100 && p.y >= 0 && p.y <= 100;
     if (rm.characterFoot !== undefined && !okPct(rm.characterFoot)) errors.push('room.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
+    errors.push(...extrasErrors('room', rm.extras));
     for (const [k, v] of Object.entries((rm.talk ?? {}) as Record<string, unknown>)) if (!(ROOM_TALK as readonly string[]).includes(k) || !Array.isArray(v) || v.length === 0 || !v.every(isString)) errors.push(`room.talk.${k}: 비어 있지 않은 문자열 목록이어야 한다`);
   }
   if (r.market !== undefined) {
@@ -604,6 +666,8 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
         const ok = isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;
         if (!(MARKET_SPOTS as readonly string[]).includes(k) || !ok) errors.push(`market.layout.${k}: 알 수 없는 자리이거나 { x, y } 장면 % 가 아니다`);
       }
+      errors.push(...extrasErrors('market', mk.extras));
+      if (isRec(mk.floor) && !sceneViewOk((mk.floor as Record<string, unknown>).view)) errors.push('market.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
       const ex = mk.exit as Record<string, unknown> | undefined;
       if (ex !== undefined && !(isRec(ex) && typeof ex.x === 'number' && typeof ex.y === 'number' && ex.x >= 0 && ex.x <= 100 && ex.y >= 0 && ex.y <= 100)) errors.push('market.exit: { x, y } 장면 % (0~100) 이어야 한다');
     }
@@ -616,6 +680,8 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       const okPct = (v: unknown) => isRec(v) && typeof v.x === 'number' && typeof v.y === 'number' && v.x >= 0 && v.x <= 100 && v.y >= 0 && v.y <= 100;
       for (const [k, v] of Object.entries((wm.layout ?? {}) as Record<string, unknown>)) if (!(WORLD_PLACES as readonly string[]).includes(k) || !okPct(v)) errors.push(`worldmap.layout.${k}: 알 수 없는 장소이거나 { x, y } 장면 % 가 아니다`);
       if (wm.characterFoot !== undefined && !okPct(wm.characterFoot)) errors.push('worldmap.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
+      errors.push(...extrasErrors('worldmap', wm.extras));
+      if (isRec(wm.floor) && !sceneViewOk((wm.floor as Record<string, unknown>).view)) errors.push('worldmap.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
     }
   }
   if (r.cosmetics !== undefined) {

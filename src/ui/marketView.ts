@@ -9,7 +9,7 @@ import { artSkinOf, artTierIndexOf, type SaveData } from '../game';
 import type { ShopKind } from '../data/shop';
 import { el, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, characterButton, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 
 export interface MarketHandlers {
   /** 상점 4곳 중 하나 (GDD 150장 2) */
@@ -50,13 +50,17 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   };
   const floor: FloorEntry[] = [];
   // 월드맵 물건 (GDD 158장 3): 방의 월드맵 물건과 같은 그림·이름 — 누르면 월드맵으로
-  const exit = propButton({ prop: 'outside', name: room.props.outside, ...mk.exit, art: !!artUrls('prop.outside').src, fallbackArt: 'prop.door' });
+  // 그림 = 지도(prop.worldmap, 사용자 2026-11-03 "월드맵 아이콘으로 변경 (대원실에서 나가기 아이콘은 지금 그대로)") — 없으면 방과 같은 문 그림
+  const exitArt = artUrls('prop.worldmap').src ? 'prop.worldmap' : 'prop.outside';
+  const exit = propButton({ prop: 'outside', name: room.props.outside, ...mk.exit, artKey: exitArt, art: !!artUrls(exitArt).src, fallbackArt: 'prop.door' });
   exit.dataset.exit = '';
   exit.onclick = hd.onBack;
   scene.append(exit);
   floor.push({ el: exit, foot: mk.exit, kind: 'prop' });
+  if (mk.exit.hidden) exit.hidden = true; // UI 배치 도구로 숨김 (GDD 175장) — 나가기는 뒤로로도 된다
   const btns: HTMLButtonElement[] = [];
   for (const p of marketSpots(save)) {
+    if (mk.layout[p].hidden) continue; // UI 배치 도구로 숨긴 자리 (GDD 175장)
     const b = propButton({ prop: p, name: mk.props[p], ...mk.layout[p], art: !!artUrls(`prop.${p}`).src });
     b.dataset.spot = p;
     b.onclick = act[p as Exclude<MarketSpot, 'spa'>];
@@ -64,6 +68,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
     btns.push(b);
     floor.push({ el: b, foot: mk.layout[p], kind: 'prop' });
   }
+  btns.push(...extraPropButtons(scene, mk.extras, floor)); // 새 물건 (GDD 175장): 아이콘만, 누르면 '준비 중'
   // 캐릭터: 방 그림 그대로 월드맵 물건 옆에 서 있다 (보기만 — 기기 선택 대상 아님)
   const char = characterButton(roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)), '캐릭터');
   char.disabled = true;
@@ -84,6 +89,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   main.dataset.devLayout = 'visual';
   // 기기 버튼 (GDD 122장): ▲▼ = 월드맵 물건·자리들(화면 위치 순서), ✓ = 누름, 뒤로 = 월드맵
   const items: SelectItem[] = [{ el: exit }, ...btns.map((b) => ({ el: b }))];
+  if (exit.hidden) items.shift(); // 숨긴 월드맵 물건은 고르지 않는다 (GDD 175장)
   btns[0]?.focus({ preventScroll: true }); // 첫 선택 = 첫 상점 (기기는 초점 있는 항목부터 고른다)
   dev.setItems(items, main);
 }

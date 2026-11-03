@@ -21,7 +21,7 @@
         "id": "practice",
         "targets": ["@.bha-absorb__pick"],
         "title": "첫 {absorbActionName}",
-        "body": "갈래를 누르면 아래에 설명이 나온다.\n같은 갈래를 한 번 더 눌러 {absorbActionName}해 보자."
+        "body": "갈래를 고르면 아래에 설명이 나온다.\n설명 아래 버튼을 눌러 {absorbActionName}해 보자."
       }
     ],
     "first-run-room": [

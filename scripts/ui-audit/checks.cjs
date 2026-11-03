@@ -273,4 +273,34 @@ function cardsInPage() {
   return out;
 }
 
-module.exports = { snapshotInPage, staticInPage, cardsInPage };
+/** 페이지 안 (GDD 178장 3, C.261): '그림만 있는 버튼'(배경·테두리 없는 투명 상자 + 안에 그림 img/svg/canvas)에
+ *  선택 하이라이트(.bha-sel)나 지금 켜진 강조 상태가 네모 상자(outline·box-shadow·배경)로 그려지는지 잰다 — 강조는 그림 모양대로여야 한다 */
+function boxGlowInPage() {
+  const out = [];
+  const SEL = 'button, [role="button"], [tabindex], [data-sc]';
+  const clear = (c) => !c || c === 'transparent' || /rgba\(.*,\s*0\)$/.test(c);
+  const label = (e) => `${[...e.classList].filter((c) => c.startsWith('bha-') && c !== 'bha-sel').slice(0, 2).join('.')}|${(e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 16)}`;
+  for (const e of document.querySelectorAll(`.bha-lcd ${SEL.split(', ').join(', .bha-lcd ')}`)) {
+    if (e.closest('.bha-dev__side, .bha-testband, [hidden]')) continue;
+    const r = e.getBoundingClientRect();
+    if (r.width < 16 || r.height < 16) continue;
+    const art = e.querySelector('img, canvas') || (e.closest('.bha-unit__fig') ? e.parentElement.querySelector('img') : null);
+    if (!art) continue;
+    const ar = art.getBoundingClientRect();
+    if (ar.width * ar.height < r.width * r.height * 0.25) continue; // 그림이 칸의 일부(아이콘 + 글)면 카드·버튼 — 대상 아님
+    const cs = getComputedStyle(e);
+    const framed = !clear(cs.backgroundColor) || cs.backgroundImage !== 'none' || (cs.borderStyle !== 'none' && parseFloat(cs.borderWidth) > 0);
+    if (framed) continue; // 테두리·배경이 있는 카드 = 상자 모양이 원래 생김새
+    const boxy = (st) => (st.outlineStyle !== 'none' && parseFloat(st.outlineWidth) > 0) || st.boxShadow !== 'none' || !clear(st.backgroundColor);
+    if (boxy(cs)) out.push({ kind: '강조 네모 상자', key: label(e), detail: '지금 상태 강조가 그림 칸 네모로 그려진다' });
+    const had = e.classList.contains('bha-sel');
+    if (!had) e.classList.add('bha-sel');
+    const sel = getComputedStyle(e);
+    const bad = boxy(sel);
+    if (!had) e.classList.remove('bha-sel');
+    if (bad) out.push({ kind: '강조 네모 상자', key: label(e), detail: '선택 하이라이트(.bha-sel)가 그림 칸 네모로 그려진다' });
+  }
+  return out;
+}
+
+module.exports = { snapshotInPage, staticInPage, cardsInPage, boxGlowInPage };

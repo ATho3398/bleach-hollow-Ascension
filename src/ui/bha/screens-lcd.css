@@ -253,6 +253,14 @@
 .bha-absorbpage .bha-absorb__actions--modes .bha-btn.is-on { border-color: var(--bha-focus); background: var(--bha-bg-3); box-shadow: inset 0 0 0 1px var(--bha-focus); }
 .bha-absorbpage .bha-absorb__desc { display: grid; gap: var(--bha-sp-1); padding: var(--bha-sp-3) var(--bha-sp-4); }
 .bha-absorbpage .bha-absorb__desc p { margin: 0; }
+/* GDD 173장 1: [흡수] 버튼 = 왼쪽 열 맨 아래 고정 자리. 설명 칸이 남은 높이를 고정으로 차지하고(글 줄 수와 무관) 넘치면 그 안에서 스크롤 */
+.bha-absorbpage .bha-lcdpage__col > .bha-absorb__desc, .bha-absorbpage .bha-absorb__pick > .bha-absorb__desc { flex: 1 1 0; min-height: 0; overflow-y: auto; align-content: start; overscroll-behavior: contain; }
+.bha-absorbpage .bha-lcdpage__col > .bha-absorb__pick { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+.bha-absorbpage .bha-absorb__pick > * { flex: none; }
+.bha-absorbpage .bha-absorb__pick > .bha-absorb__desc { flex: 1 1 0; }
+.bha-absorbpage .bha-absorb__go { flex: none; }
+.bha-absorbpage .bha-lcdpage__col > .bha-absorb__cands { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; padding: var(--bha-sp-1); margin: calc(-1 * var(--bha-sp-1)); }
+.bha-absorbpage .bha-absorb__desc .bha-pop__more { bottom: calc(-1 * var(--bha-sp-3)); margin: 0 calc(-1 * var(--bha-sp-4)) calc(-1 * var(--bha-sp-3)); }
 .bha-absorbpage .bha-absorb__what { color: var(--bha-text-1); font-weight: var(--bha-fw-bold); }
 /* 흡수 화면 블록 (GDD 158장 4): 첫 줄 "1번 물 권", 아래 줄 속성 강화 "n/100" */
 .bha-absorbpage .bha-slot--filled { grid-template-columns: minmax(0, 1fr); gap: 0; align-content: center; }
@@ -324,6 +332,8 @@ button.bha-slot { cursor: pointer; }
 .bha-slot__sub { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-slotpage .bha-slots { gap: var(--bha-sp-3); }
 .bha-slotpage__sel { display: flex; flex-direction: column; gap: var(--bha-sp-1); margin-top: var(--bha-sp-3); }
+/* GDD 173장 2: 고른 칸 설명 두 줄은 늘 한 줄씩 — 긴 이름이 줄바꿈되면 아래 [확인]·[삭제]가 내려갔다 */
+.bha-slotpage__sel > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bha-slotpage__actions { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin-top: var(--bha-sp-3); }
 .bha-slot.is-last { background: var(--bha-bg-3); }
 .bha-lcd .bha-confirm .bha-modal { gap: var(--bha-sp-3); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); width: min(380px, 100%); }
@@ -341,6 +351,10 @@ button.bha-slot { cursor: pointer; }
 .bha-tut.is-practice .bha-tut__hole { box-shadow: none; }       /* 어둡게 덮지 않고 테두리만 */
 .bha-tut.is-nodim .bha-tut__hole { box-shadow: none; }          /* 저절로 뜨는 튜토리얼 안내 전부 (GDD 129장 3·129-1): 회색 덮개 없이 카드·테두리만 */
 .bha-tut.is-nodim .bha-tut__hole.is-none { display: none; }    /* 대상 없는 장면: 테두리도 없음 (카드만) */
+/* 튜토리얼 중 다른 곳을 누르면 누를 대상이 잠깐 깜빡인다 (GDD 180장 1): 대상 자신의 밝기만 — 그림 모양대로, 네모 상자 빛 없음 (178장 3) */
+.bha-tut-nudge { animation: bha-tut-nudge var(--bha-dur-5) var(--bha-ease-linear); }
+@keyframes bha-tut-nudge { 0%, 50%, 100% { filter: none; } 25%, 75% { filter: brightness(1.7); } }
+@media (prefers-reduced-motion: reduce) { .bha-tut-nudge { animation: none; filter: brightness(1.4); } }
 
 /* ═════ 시작 화면 (GDD 18-1): 타이틀 중앙 상단 + 버튼 3개 세로 ═════ */
 .bha-lcd .bha-app.bha-start.bha-start--title {

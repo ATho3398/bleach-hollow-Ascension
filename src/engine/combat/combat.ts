@@ -1879,6 +1879,26 @@ function guardReductionOf(s: CombatState, heavy = false): number {
   return s.guard.ticks > 0 && heavy ? 1 : 0;
 }
 
+/** 블록 생성 게이지 (GDD 178장 1, 화면 표시용 — 규칙은 바꾸지 않고 지금 타이머·간격만 읽는다).
+ *  fill = 다음 블록까지 찬 비율(0~1), intervalSeconds = 지금 생성 간격(피곤·빈사·장비·특성·해방·각성 보정이 다 든 값).
+ *  state: filling(차는 중) · full(블록 바가 가득 차 멈춤) · sealed(봉인 상태이상) · paused(막기·경직 중 멈춤) · off(각본 전투 — 타이머로 안 나옴) */
+export interface SpawnGaugeView {
+  fill: number;
+  intervalSeconds: number;
+  state: 'filling' | 'full' | 'sealed' | 'paused' | 'off';
+}
+
+export function spawnGaugeOf(s: CombatState): SpawnGaugeView {
+  const intervalSeconds = spawnIntervalOf(s);
+  const total = Math.max(1, ticksOf(s.params, intervalSeconds));
+  const fill = Math.min(1, Math.max(0, 1 - s.spawnTimer / total));
+  if (s.script) return { fill: 0, intervalSeconds, state: 'off' };
+  if (s.sealTicks > 0) return { fill, intervalSeconds, state: 'sealed' };
+  if (s.tray.length >= s.params.trayCapacity) return { fill: 1, intervalSeconds, state: 'full' };
+  if (halted(s)) return { fill, intervalSeconds, state: 'paused' };
+  return { fill, intervalSeconds, state: 'filling' };
+}
+
 /** 막기·경직 중인가: 내 자동 공격·블록 생성·블록 사용이 멈춘다 (GDD 84장 2번·101장 추가 결정 2번·105장 1번) */
 export function halted(s: CombatState): boolean {
   return s.guard.ticks > 0 || (s.stunTicks ?? 0) > 0;

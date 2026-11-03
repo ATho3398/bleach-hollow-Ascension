@@ -1,0 +1,55 @@
+/* UI 배치 도구 (GDD 175장, 개발 전용 `?layout`) — 디자인 토큰만 (새 색·간격 없음). 로직은 layoutTool.ts */
+.bha-ltool {
+  position: fixed; inset: 0; overflow: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: var(--bha-sp-3);
+  padding: var(--bha-sp-3);
+  background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop);
+  color: var(--bha-text-1); font-family: var(--bha-font-body); font-size: var(--bha-fs-sm);
+}
+.bha-ltool__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-3); }
+.bha-ltool__title { margin: 0; font-family: var(--bha-font-display); font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-bold); }
+.bha-ltool__select, .bha-ltool__input {
+  min-height: 36px; min-width: 0; padding: 0 var(--bha-sp-3);
+  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm);
+  background: var(--bha-bg-1); color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-sm);
+}
+.bha-ltool__input { flex: 1 1 140px; }
+.bha-ltool__input:disabled { opacity: 0.6; }
+.bha-ltool__note { color: var(--bha-text-3); font-size: var(--bha-fs-xs); }
+.bha-ltool__label { color: var(--bha-text-2); font-size: var(--bha-fs-xs); }
+.bha-ltool__value { font-family: var(--bha-font-num); min-width: 48px; }
+.bha-ltool__range { flex: 1 1 160px; accent-color: var(--bha-accent); }
+.bha-ltool__status { margin: 0; min-height: 1.4em; color: var(--bha-text-2); font-size: var(--bha-fs-xs); }
+
+/* 기기 틀: 게임 기준 844×390 을 화면 폭에 맞춰 줄인다(layoutTool.ts 의 scale). 게임의 .bha-dev 는 화면 전체 고정이라 틀 안에 가둔다 */
+.bha-ltool__stage { position: relative; flex: none; width: 100%; overflow: hidden; }
+.bha-ltool__frame { position: absolute; left: 0; top: 0; width: 844px; height: 390px; transform-origin: 0 0; }
+.bha-ltool__frame > .bha-dev { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bha-ltool__frame .bha-dev__btn { pointer-events: none; }
+
+/* 장면 안: 끌기(스크롤 막음) · 고른 물건 · 바닥 윤곽. 배경 맞추기(is-bg)면 장면 빈 곳 끌기 = 배경 이동 */
+.bha-ltool.is-bg .bha-room__scene { touch-action: none; cursor: move; }
+.bha-ltool .bha-room__scene .bha-prop { touch-action: none; cursor: grab; }
+.bha-ltool .bha-room__scene .bha-prop.is-dragging { cursor: grabbing; }
+.bha-ltool .bha-prop.is-picked > .bha-prop__shape { outline: 2px dashed var(--bha-focus); outline-offset: 2px; border-radius: var(--bha-r-sm); }
+.bha-ltool__floor { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.bha-ltool__floor polygon { fill: none; stroke: var(--bha-accent); stroke-width: 3; stroke-dasharray: 10 6; opacity: 0.8; }
+
+.bha-ltool__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
+.bha-ltool__items { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
+.bha-ltool__items > .is-off { opacity: 0.45; }
+.bha-ltool__panel {
+  display: flex; flex-direction: column; gap: var(--bha-sp-2);
+  padding: var(--bha-sp-3);
+  background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md);
+}
+.bha-ltool__icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--bha-touch), 1fr)); gap: var(--bha-sp-1); }
+.bha-ltool__foot { padding-bottom: var(--bha-sp-6); }
+
+/* 게임 화면 위 표시: 배치 미리보기가 켜져 있음 (누름 없음) */
+.bha-ltool-badge {
+  position: fixed; left: var(--bha-sp-2); bottom: var(--bha-sp-2); z-index: calc(var(--bha-z-tutorial) + 2);
+  padding: var(--bha-sp-1) var(--bha-sp-2);
+  background: var(--bha-bg-3); color: var(--bha-text-2); border: 1px solid var(--bha-accent); border-radius: var(--bha-r-pill);
+  font-size: var(--bha-fs-xs); pointer-events: none; opacity: 0.85;
+}

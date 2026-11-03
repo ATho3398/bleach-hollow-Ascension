@@ -8,7 +8,7 @@ const read = (p: string) => readFileSync(p, 'utf8');
 
 describe('137장 3 밖으로 고정 (옛 스위치·모험 문·장터 폐기)', () => {
   it('방 물건 = 수련장·책장·가방·밖으로(옛 문 자리) — 모험 문·장터는 없다', () => {
-    expect([...ROOM_PROPS]).toEqual(['altar', 'book', 'chest', 'outside']);
+    expect([...ROOM_PROPS]).toEqual(['altar', 'book', 'chest', 'outside', 'rank']); // rank = C.257 (GDD 174장 2)
     for (const f of FACTIONS) {
       const r = roomOf(f);
       expect(r.props.outside).toBe('월드맵'); // C.236 (GDD 158장 2): '밖으로' → '월드맵'

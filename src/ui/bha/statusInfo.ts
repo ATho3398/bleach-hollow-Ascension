@@ -64,10 +64,15 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
         return fx.length > 0 ? fx.join(' · ') : '손해가 없다';
       });
       return gaugeDoc(
-        `${a.feed}(으)로 채우고, 시간이 흐르면 준다`,
+        `${a.feed}(으)로 채우고, ${a.sleep}·${a.pet}을(를) 하거나 시간이 흐르면 준다`,
         [`낮으면 컨디션이 줄고 ${CARE_NAMES.weak}에 걸린다`],
         zones, value,
-        [numLine(a.feed, '먹이마다 정해진 만큼 +'), numLine('시간 흐름', `시간당 ${MINUS}${num(NX.idleHungerPerHour)}`)],
+        [
+          numLine(a.feed, '종류마다 정해진 만큼 +'),
+          numLine(a.sleep, signed(-NX.careFullnessCost)), // 돌보기도 배가 꺼진다 (GDD 170장 1)
+          numLine(a.pet, signed(-NX.careFullnessCost)),
+          numLine('시간 흐름', `시간당 ${MINUS}${num(NX.idleHungerPerHour)}`),
+        ],
       );
     }
     case 'cond': {
@@ -173,7 +178,11 @@ export function roomStatusInfo(chips: readonly StatusChip[], f: Names): InfoBody
       const doc = statusInfo(kind, f, c.value ?? undefined);
       const zones = doc.groups.find((g) => g.title === SECTION.zones);
       if (zones) return { title, lines: zones.mark !== undefined ? [zones.lines[zones.mark]!] : zones.lines.slice(0, 1) };
-      return { title, lines: doc.groups[0]?.lines.slice(0, 1) ?? [] };
+      // 상태 이상(쇠약·피곤·빈사)은 손해 한 줄 + 풀리는 법 (GDD 176장 13: 피곤인데 재우기를 눌러도 안 풀려 헷갈렸다 — 풀리는 길을 방 창에서 바로)
+      const first = doc.groups[0];
+      const cure = doc.groups.find((g) => g.title === SECTION.cure);
+      const cureLines = cure && cure !== first ? cure.lines.map((l) => `${SECTION.cure}: ${l}`) : [];
+      return { title, lines: [...(first?.lines.slice(0, 1) ?? []), ...cureLines] };
     }),
   };
 }

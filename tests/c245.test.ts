@@ -35,7 +35,7 @@ describe('162장 2 먹이 단계', () => {
     expect(feed.title).toBe('{nestActionsShort.feed}');
     for (const fid of ['hollow', 'shinigami'] as const) {
       const f = getFaction(fid);
-      const vars = { ...helpVars(f), foodName: f.foodNames.basic };
+      const vars = { ...helpVars(f), foodName: f.foodNames.basic, spaName: '온천' }; // 앱이 넣는 장소 이름 (GDD 176장 9: '온천' 직접 적기 → {spaName})
       expect(renderHelpText(feed.title, vars)).toBe(f.nestActionsShort!.feed);
       const body = renderHelpText(feed.body, vars);
       expect(body.split('\n')).toHaveLength(2);
@@ -51,6 +51,6 @@ describe('162장 2 먹이 단계', () => {
     expect(app).toContain(`done: { show: () => document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click() }`);
     expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actionBusy()) return showCard(false);');
     expect(by.done!.avoid).toEqual(['@.bha-room__bubble']);
-    expect(by.done!.body).toBe('배가 든든해졌다.\n방에서 쉬어도 체력이 조금씩 찬다.');
+    expect(by.done!.body).toBe('배가 든든해졌다.\n{nestName}에서 쉬어도 체력이 조금씩 찬다.');
   });
 });

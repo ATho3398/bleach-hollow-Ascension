@@ -250,7 +250,8 @@
 .bha-presets__chip .bha-icon { width: 14px; height: 14px; }
 .bha-presets__chip.is-on { border: 2px solid var(--bha-focus); background: var(--bha-bg-3); }
 .bha-presets__chipname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bha-presets__view { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 36px; justify-content: center; }
+.bha-presets__view { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 36px; height: 40px; justify-content: center; } /* GDD 173장 2: 높이 고정(줄무늬+요약 / 빈 칸 안내 / 이름 입력) — 아래 버튼 4개 자리 고정 */
+.bha-presets__view > .bha-faint { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bha-presets__view:has(.bha-presets__input) { flex-direction: row; align-items: center; }
 .bha-presets__sum { font-size: var(--bha-fs-xs); color: var(--bha-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bha-presets__acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }
@@ -295,3 +296,22 @@
 @keyframes bha-heal-rise { 0% { opacity: 0; transform: translateY(20%) scaleY(0.6); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-25%) scaleY(1.1); } }
 @keyframes bha-heal-plus { 0% { opacity: 0; transform: translate(-50%, 30%); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -90%); } }
 @media (prefers-reduced-motion: reduce) { .bha-walker.is-healing::before, .bha-walker__heal::after { animation: none; opacity: 0.8; } }
+
+/* ── 모험 준비 화면 탭 [준비] / [타일 배치] (GDD 179장, C.266) ──
+   준비 = 왼쪽 사냥터·난이도·길 미리보기, 오른쪽 탭 + 프리셋. 타일 배치(.is-place) = 사냥터·난이도·설명·프리셋을 숨기고 길(위 한 줄 전체)과 가진 타일(아래 넓게)만. 탭은 머리 줄 오른쪽(도움말 왼쪽), [출발] 띠는 그대로 */
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__sub:not(.bha-plan__line),
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__difficulty,
+.bha-lcd .bha-app.bha-plan.is-place > .bha-exp__head .bha-plan__grounds { display: none; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-plan__modetabs { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; margin-right: calc(var(--bha-touch) + var(--bha-sp-2)); z-index: 1; }
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__line { grid-column: 1 / -1; grid-row: 2; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road { grid-column: 1 / -1; grid-row: 3; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__synline { grid-column: 1 / -1; grid-row: 4; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__noterow { grid-column: 1 / -1; grid-row: 5; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand { grid-column: 1 / -1; grid-row: 9; } /* C.267: 남은 높이(1fr 행)만 쓰고 그 안에서 스크롤 — [출발] 띠 밑에 깔리지 않게 */
+.bha-lcd .bha-app.bha-plan.is-place .bha-tilecard { width: calc(25% - var(--bha-sp-2)); min-height: 88px; }
+/* 준비 탭: 배치 요령 줄(타일을 고른 뒤 …)은 배치 탭에서만 */
+.bha-lcd .bha-app.bha-plan:not(.is-place):has(.bha-plan__modetabs) .bha-road__noterow { display: none; }
+/* 가진 타일 목록 '▼ 더 있음' (C.267): 목록 바닥에 붙는 한 줄 (목록 폭 전체) */
+.bha-road__more { flex: 0 0 100%; bottom: 0; margin: 0; padding: var(--bha-sp-1) 0; }
+
+.bha-sheet .bha-road__more { display: none; } /* 바퀴 끝 배치판 손은 가로 스크롤 한 줄 — 세로 '더 있음' 없음 (C.267) */

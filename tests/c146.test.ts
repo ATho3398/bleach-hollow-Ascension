@@ -24,16 +24,17 @@ const charBox = (f: { x: number; y: number }): Box => ({ l: (f.x / 100) * SCENE.
 describe.each(['hollow', 'shinigami'])('C.146 방 물건 (%s)', (fid) => {
   const L = getFaction(fid!).room!.layout as Record<string, { x: number; y: number; scale?: number }>;
   const ids = ['outside', 'book', 'altar', 'chest']; // C.215: 밖으로(옛 문 자리) 고정, 장터 물건 폐기 (GDD 137장 3)
-  it('R2 (C.153 A1): 크기 — 밖으로(옛 문)가 가장 크고, 수련장·보관함은 같다', () => {
+  it('R2 (C.153 A1 → C.263·C.268): 크기 = 사용자가 배치 도구로 잡은 값, 두 종족 같음', () => {
     const sc = (i: string) => L[i]!.scale ?? 1;
-    expect(sc('outside')).toBeGreaterThan(sc('altar'));
-    expect(sc('altar')).toBe(sc('chest'));
-    expect(sc('book')).toBe(sc('altar')); // C.159 A4: 보관함·책장·상점·수련장 4개 같은 크기
+    // 옛 '문이 가장 크고 4개 같은 크기'(C.153·159)는 사용자 배치(2026-11-03~04, UI 배치 도구)로 대체 — 값 자체는 c258-layout-tool 이 본다
+    const H = getFaction('hollow').room!.layout as Record<string, { scale?: number }>;
+    for (const i of ['book', 'chest', 'outside', 'rank']) expect(sc(i), i).toBe(H[i]!.scale ?? 1);
   });
   it('R1: 물건끼리·물건과 캐릭터가 겹치지 않는다 (펫 자리 오른쪽 발치 40px 포함)', () => {
     const boxes = Object.fromEntries(ids.map((i) => [i, boxOf(i, L[i]!)]));
     const CHAR = charBox(roomOf(getFaction(fid!)).characterFoot);
-    for (const i of ids) expect(hit(boxes[i]!, { ...CHAR, r: CHAR.r + 40 }), `${i} × 캐릭터`).toBe(false);
+    // C.263·C.268: 사용자 배치에서 책장 왼쪽 끝이 펫 자리(오른쪽 발치 40px)에 걸친다(C.268 약 20px) — 캐릭터 몸과는 안 겹침. 책장은 몸만 본다
+    for (const i of ids) expect(hit(boxes[i]!, { ...CHAR, r: CHAR.r + (i === 'book' ? 0 : 40) }), `${i} × 캐릭터`).toBe(false);
     for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) expect(hit(boxes[ids[a]!]!, boxes[ids[b]!]!), `${ids[a]} × ${ids[b]}`).toBe(false);
   });
   it('밖으로(옛 문)는 맨 왼쪽 · 수련장은 오른쪽 끝 (C.131 규칙 유지)', () => {

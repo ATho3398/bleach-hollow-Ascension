@@ -1,0 +1,151 @@
+{
+ "absorbGoY_after": {
+  "both": {
+   "go": [
+    310,
+    56
+   ],
+   "lines": 5
+  },
+  "trait": {
+   "go": [
+    310,
+    56
+   ],
+   "lines": 4
+  },
+  "stat": {
+   "go": [
+    310,
+    56
+   ],
+   "lines": 4
+  },
+  "none": {
+   "go": [
+    310,
+    56
+   ],
+   "lines": 3
+  }
+ },
+ "absorbGoY_before": {
+  "both": 281,
+  "trait": 261,
+  "stat": 255,
+  "none": 235
+ },
+ "nest_before": {
+  "before": [
+   248,
+   248
+  ],
+  "sheetH": 290,
+  "after": [
+   266,
+   266
+  ],
+  "head": "폐가를 골랐다 — 오른쪽 길에 놓거나 손에 둔다"
+ },
+ "nest_after": {
+  "before": [
+   290,
+   290
+  ],
+  "sheetH": 332,
+  "after": [
+   290,
+   290
+  ],
+  "head": "전령신기 보급소를 골랐다 — 오른쪽 길에 놓거나 손에 둔다"
+ },
+ "reroll_before": {
+  "before": 292,
+  "after": 292
+ },
+ "reroll_after": {
+  "before": 330,
+  "after": 330
+ },
+ "item_before": [
+  {
+   "modal": [
+    81,
+    227
+   ],
+   "act": 240,
+   "name": "정령 대결"
+  },
+  {
+   "modal": [
+    91,
+    209
+   ],
+   "act": 230,
+   "name": "탄막 피하기"
+  },
+  {
+   "modal": [
+    91,
+    209
+   ],
+   "act": 230,
+   "name": "칼날 맞대기"
+  },
+  {
+   "modal": [
+    91,
+    209
+   ],
+   "act": 230,
+   "name": "영자 모으기"
+  }
+ ],
+ "item_after": [
+  {
+   "modal": [
+    34,
+    321
+   ],
+   "act": 287,
+   "name": "정령 대결"
+  },
+  {
+   "modal": [
+    34,
+    321
+   ],
+   "act": 287,
+   "name": "탄막 피하기"
+  },
+  {
+   "modal": [
+    34,
+    321
+   ],
+   "act": 287,
+   "name": "칼날 맞대기"
+  },
+  {
+   "modal": [
+    34,
+    321
+   ],
+   "act": 287,
+   "name": "영자 모으기"
+  }
+ ],
+ "errors": [],
+ "tutorialGoY_after": {
+  "both": 310,
+  "trait": 310,
+  "stat": 310,
+  "none": 310
+ },
+ "hollowGoY_after": {
+  "both": 310,
+  "trait": 310,
+  "stat": 310,
+  "none": 310
+ }
+}

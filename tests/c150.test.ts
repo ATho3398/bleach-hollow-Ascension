@@ -119,7 +119,7 @@ describe('91장 강화·장착·판매 (보관함)', () => {
     equipGearItem(s, a.uid);
     const rows = inventoryOf(s, H).filter((e) => e.category === 'equipment');
     expect(rows.map((e) => e.id)).toEqual([a.uid, b.uid]);
-    expect(rows[0]).toMatchObject({ name: '노말 송곳니', action: 'unequip', gear: { grade: 'normal', kind: 'weapon', slot: 'weapon' } });
+    expect(rows[0]).toMatchObject({ name: '노멀 송곳니', action: 'unequip', gear: { grade: 'normal', kind: 'weapon', slot: 'weapon' } });
     expect(rows[1]).toMatchObject({ name: '전설 발톱 싸개', action: 'equip', detail: '속도 +9 · 강적·보스에게 피해 +12%' });
   });
 });
@@ -217,9 +217,9 @@ describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', ()
   it('기본 상점 장비 탭 = 노말 종류별 4개(★ = 권장) · 떠돌이 상인 = 레어·영웅·전설', () => {
     const s = newSaveData('hollow', 0);
     const rows = goldRows(s, H).filter((r) => getGoldItem(r.id)?.kind === 'gear');
-    expect(rows.map((r) => [r.name, r.price])).toEqual([['노말 송곳니', GX.shopPrice], ['노말 껍질', GX.shopPrice], ['노말 발톱 싸개', GX.shopPrice], ['노말 부적', GX.shopPrice]]);
+    expect(rows.map((r) => [r.name, r.price])).toEqual([['노멀 송곳니', GX.shopPrice], ['노멀 껍질', GX.shopPrice], ['노멀 발톱 싸개', GX.shopPrice], ['노멀 부적', GX.shopPrice]]);
     s.shared.tradeCoins = 500;
-    expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노말 발톱 싸개 → 가방 장비 탭' });
+    expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노멀 발톱 싸개 → 가방 장비 탭' });
     expect(s.shared.gear.items[0]).toMatchObject({ kind: 'shoes', grade: 'normal', star: 1 });
     expect(s.runLog.gear[0]).toMatchObject({ kind: 'get', source: 'shop' });
     expect(['w-gear-rare', 'w-gear-epic', 'w-gear-legend'].map((id) => getWandererItem(id)!.grade)).toEqual(['rare', 'epic', 'legendary']);

@@ -2,7 +2,7 @@
 // 세로 회전 출력(기기를 CSS 로 90° 돌려 그림)에서 창이 세로로 떴다. 버튼을 누르면 제목 토글(viewtitle)과 같은 모양의 목록이
 // 기기 레이어(오버레이 자리)에 기기 안 좌표로 열린다 — ▲▼ 이동·✓ 고르기·뒤로 닫기, 긴 목록은 목록 안 스크롤, 바깥을 누르면 닫힘.
 import { el, icon } from './dom';
-import { getOverlayHost, registerLayer } from './overlayHost';
+import { getOverlayHost, isDeviceButtonPress, registerLayer } from './overlayHost';
 import { elementLocalRect } from './viewport';
 
 export interface PickOption {
@@ -52,6 +52,7 @@ export function pickList(options: readonly PickOption[], value: string, aria: st
   let list: HTMLElement | null = null;
   let unreg = (): void => undefined;
   const outside = (e: Event) => {
+    if (isDeviceButtonPress(e.target)) return; // 기기 버튼은 바깥 누름이 아니다 (GDD 176장 1)
     if (list && !list.contains(e.target as Node) && !btn.contains(e.target as Node)) close();
   };
   function close(): void {

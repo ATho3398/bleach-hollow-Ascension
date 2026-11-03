@@ -108,11 +108,11 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       const nest = el('button', 'bha-road__cell bha-road__cell--nest is-locked');
       nest.type = 'button';
       nest.dataset.nest = ''; // data-cell 이 없어 끌어 놓기 대상이 아니다
-      nest.setAttribute('aria-label', '0번 칸 (둥지, 고정 칸)');
-      nest.title = `${LOCKED_NOTE} (둥지)`;
+      nest.setAttribute('aria-label', '0번 칸 (출발, 고정 칸)');
+      nest.title = `${LOCKED_NOTE} (출발 칸)`;
       nest.append(icon('i-nest'), lockBadge());
       nest.onclick = () => {
-        note = `${LOCKED_NOTE} (둥지)`;
+        note = `${LOCKED_NOTE} (출발 칸)`;
         refresh();
       };
       cells.push(nest);
@@ -131,6 +131,12 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   const noteRow = el('div', 'bha-road__noterow');
   noteRow.append(noteEl);
   const hand = el('div', 'bha-exp__hand bha-road__hand');
+  // 목록이 자리보다 길면 바닥에 '▼ 더 있음' (ⓘ 창·흡수 설명과 같은 방식, GDD 168장 3 · 173장 1) — 끝까지 내리면 숨김 (C.267)
+  const handMore = el('div', 'bha-pop__more bha-road__more', '▼ 더 있음');
+  handMore.setAttribute('aria-hidden', 'true');
+  const syncMore = (): void => { handMore.hidden = hand.scrollTop + hand.clientHeight >= hand.scrollHeight - 2; };
+  hand.addEventListener('scroll', syncMore, { passive: true });
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncMore).observe(hand);
   hand.dataset.scList = '';
   hand.dataset.help = 'plan.hand';
   dragScroll(hand);
@@ -185,15 +191,26 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
         o.onPlaced?.();
       }
     } else if (act === 'place') {
-      const r = placeTile(exp, selected!, i);
-      note = r.ok ? `${o.tileName(selected!)}을(를) ${i}번 칸에 놓았다 (눌러서 옮기거나 되돌릴 수 있다)` : r.reason;
+      const placed = selected!;
+      const r = placeTile(exp, placed, i);
+      note = r.ok ? `${o.tileName(placed)}을(를) ${i}번 칸에 놓았다 (눌러서 옮기거나 되돌릴 수 있다)` : r.reason;
       if (r.ok) {
         placedHere.add(i);
         o.onPlaced?.();
-        if (!exp.hand.includes(selected!)) selected = null;
+        if (!exp.hand.includes(placed)) selected = null;
+        refresh();
+        // 놓으면 기기 초점 = 다음 카드 (GDD 176장 14): 같은 타일이 남았으면 그 카드, 아니면 손의 첫 카드
+        const chips = [...hand.querySelectorAll<HTMLElement>('.bha-tilecard')];
+        gotoEl(chips.find((c) => c.dataset.tile === placed) ?? chips[0] ?? null);
+        return;
       }
     } else note = '아래 타일을 먼저 고른다 (놓은 타일을 눌러도 된다)';
     refresh();
+  }
+
+  /** 기기 초점을 이 칸으로 옮긴다 (기기가 있으면 — device.ts 의 bha-goto) */
+  function gotoEl(t: HTMLElement | null): void {
+    t?.dispatchEvent(new CustomEvent('bha-goto', { bubbles: true }));
   }
 
   function cancelSelection(): boolean {
@@ -288,9 +305,13 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
         selectedCell = null;
         note = selected ? `${o.tileName(id)}: ${tileHint(getTile(id))}. 빈 칸(＋)을 누르거나 끌어서 놓는다` : '';
         refresh();
+        // 카드를 고르면 기기 초점 = 놓을 수 있는 첫 빈 칸 (GDD 176장 14 — 기기 버튼 약 25번 → 몇 번)
+        if (selected) gotoEl(cells.find((c) => c.classList.contains('is-can')) ?? null);
       };
       hand.append(chip);
     }
+    hand.append(handMore);
+    requestAnimationFrame(syncMore);
   }
 
   // 끌어서 놓기 (C.141, GDD 85장 11번): 손 카드 → 칸 / 놓은 칸 → 다른 칸(이동·교체) / 놓은 칸 → 손(되돌리기). 터치는 잠깐 눌러야 끌리고(그 전에는 화면 스크롤), 마우스는 5px 끌면 시작한다.
