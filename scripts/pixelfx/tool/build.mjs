@@ -2,7 +2,7 @@
 // → <출력>/fx-tool.html 하나(배경·pixelfx 244개 코드·도구 코드 모두 안에). Artifact 로 같은 주소에 다시 올린다(README.md).
 // 먼저 npm run fx:fetch (vendor/pixelfx).
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,6 +59,11 @@ const data = {
   stamp: 'v3', // 저장 모양이 바뀔 때만 올린다 (도구 load 가 v2 를 v3 로 옮긴다)
   built: `게임 ${execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', 'HEAD']).toString().trim()}`,
 };
+
+// 직접 만든 이펙트(scripts/pixelfx/custom, 예 arcane/cero-oscuras 세로 오스큐라스)를 vendor 에 겹쳐 넣고 목록(src/fx/index.js)을 다시 만든다
+const VENDOR = join(ROOT, 'vendor/pixelfx');
+if (existsSync(join(ROOT, 'scripts/pixelfx/custom'))) cpSync(join(ROOT, 'scripts/pixelfx/custom'), join(VENDOR, 'src/fx'), { recursive: true });
+execFileSync('node', ['tools/index.mjs'], { cwd: VENDOR, stdio: 'ignore' });
 
 execFileSync(join(ROOT, 'node_modules/.bin/esbuild'), [join(HERE, 'fx-tool.ts'), '--bundle', '--minify', '--format=iife', `--outfile=${join(OUT, 'fx-tool.js')}`, '--log-level=warning']);
 const html = readFileSync(join(HERE, 'fx-tool.template.html'), 'utf8')

@@ -14,3 +14,11 @@ v2 (사용자 2026-11-04 01:5x "연타 넣을거면 연타 타이밍 조정도 �
 - 먼저 `npm run fx:fetch`. 항목 = build.mjs ORDER(사신 참·권·귀, 호로 교·조·탄), 처음 값 = 사신 참 sword-slash(속성 색, 타격마다), 연타 = 지금 게임(1/0, 3/110, 3/90).
 - 무대 = 실제 전투 1배 캡처 `battle-bg-<종족>.png`(`C268_BG=1 node scripts/c268-proof.cjs`), 맞는 몸 가운데 (257, 153) · 치는 몸 가운데 (587, 153) 페이지 px. 자국 위치·크기·뒤집기·각도는 게임과 같은 식(`src/ui/bha/pixelFx.ts` `pixelFxTransform`, `src/ui/attackFx.ts` pixelMark).
 - **확정 처리**(사용자가 "ㅇㅋ"): ArtifactData get `fx/fixed` → `places` 값을 종족 json `families[].pixelFx` 에 넣는다 → 테스트·캡처 → main. 다시 올릴 때 stamp 가 바뀌면 도구는 옛 편집 값을 버리고 게임 값에서 시작한다(확정 안 한 편집 값이 있으면 먼저 넣고 올린다).
+
+## 직접 만든 이펙트 (`scripts/pixelfx/custom/`)
+
+| id | 이름 | 내용 |
+|---|---|---|
+| `arcane/cero-oscuras` | 세로 오스큐라스 | pixelfx `arcane/magic-circle-cast` 에서 바닥 마법진(원·룬·육망성·펜)만 뺀 것, 모이는 빛 → 빛기둥부터(2.75초). 사용자 2026-11-04 "매직 서클 캐스트에서 매직서클만 없애고 세로 오스큐라스라고 이름붙여서 새 이펙트로 만들어 줄 수있어??" |
+
+- 도구 build.mjs 와 `npm run fx` 가 custom 을 vendor 에 겹쳐 넣는다(도구는 목록 `src/fx/index.js` 도 다시 만든다). `node tools/check.mjs <id>` 통과 확인.
